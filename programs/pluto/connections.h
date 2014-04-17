@@ -136,13 +136,13 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
  * structures to change lots.
  */
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
 
 struct virtual_t;
 
-struct ietfAttr;        /* forward declaration of ietfAttr defined in ac.h */
 struct host_pair;       /* opaque type */
 
 struct end {
@@ -173,7 +173,6 @@ struct end {
 	cert_t cert;                    /* end certificate */
 
 	chunk_t ca;                     /* CA distinguished name */
-	struct ietfAttrList *groups;    /* access control groups */
 
 	struct virtual_t *virt;
 
@@ -481,3 +480,6 @@ extern int foreach_connection_by_alias(const char *alias,
 extern struct connection *unoriented_connections;
 
 extern void update_host_pairs(struct connection *c);
+
+extern void unshare_connection_end_strings(struct end *e);
+

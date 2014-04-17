@@ -30,12 +30,10 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "mpzfuncs.h"
 #include "id.h"
 #include "asn1.h"
@@ -1178,10 +1176,11 @@ bool same_serial(chunk_t a, chunk_t b)
 /*
  * free the dynamic memory used to store generalNames
  */
-void free_generalNames(generalName_t* gn, bool free_name)
+void free_generalNames(generalName_t *gn, bool free_name)
 {
 	while (gn != NULL) {
 		generalName_t *gn_top = gn;
+
 		if (free_name)
 			pfree(gn->name.ptr);
 		gn = gn->next;
@@ -1206,7 +1205,7 @@ void free_x509cert(x509cert_t *cert)
 /*
  * free the dynamic memory used to store revoked certificates
  */
-static void free_revoked_certs(revokedCert_t* revokedCerts)
+static void free_revoked_certs(revokedCert_t *revokedCerts)
 {
 	while (revokedCerts != NULL) {
 		revokedCert_t * revokedCert = revokedCerts;
@@ -1354,8 +1353,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 			PORT_FreeArena(arena, PR_FALSE);
 			PORT_SetError(SEC_ERROR_NO_MEMORY);
 			DBG(DBG_X509 | DBG_CONTROL,
-				DBG_log("NSS: error in allocating memory to public key");
-				);
+				DBG_log("NSS: error in allocating memory to public key"));
 			return FALSE;
 		}
 
@@ -1364,19 +1362,16 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 		publicKey->pkcs11Slot = NULL;
 		publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
-		DBG(DBG_X509 | DBG_CONTROL,	/* n */
+		DBG(DBG_X509 | DBG_CONTROL,
+			/* n */
 			DBG_dump("NSS cert: modulus : ",
 				issuer_cert->modulus.ptr,
 				issuer_cert->modulus.len);
-			);
-
-		DBG(DBG_X509 | DBG_CONTROL,	/* e */
+			/* e */
 			DBG_dump("NSS cert: exponent : ",
 				issuer_cert->publicExponent.ptr,
 				issuer_cert->publicExponent.len);
-			);
-
-		DBG(DBG_X509 | DBG_CONTROL,	/* s */
+			/* s */
 			DBG_dump("NSS: input signature : ", sig.ptr, sig.len);
 			);
 
@@ -1386,8 +1381,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 			issuer_cert->modulus.ptr[0] == 0x00) ? 1 : 0;
 		if (skip != 1) {
 			DBG(DBG_X509 | DBG_CONTROL,
-				DBG_log("NSS: RSA Modulus has no leading 0x00 byte, modules < 2^511 ?");
-				);
+				DBG_log("NSS: RSA Modulus has no leading 0x00 byte, modules < 2^511 ?"));
 		}
 		nss_n.data = issuer_cert->modulus.ptr + skip;
 		nss_n.len = issuer_cert->modulus.len - skip;
@@ -1421,16 +1415,14 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 
 		if (skip != 1) {
 			DBG(DBG_X509 | DBG_CONTROL,
-				DBG_log("NSS: RSA Signature has no leading 0x00 byte?");
-				);
+				DBG_log("NSS: RSA Signature has no leading 0x00 byte?"));
 		}
 
 		signature.data = sig.ptr + skip;
 		signature.len  = sig.len - skip;
 		signature.type = siBuffer;
 		DBG(DBG_X509 | DBG_CONTROL,
-			DBG_log("RSA Signature length is %d", signature.len);
-			);
+			DBG_log("RSA Signature length is %d", signature.len));
 
 		dsig.len = signature.len;	/*
 						 * this is a hack! yes,
@@ -1471,8 +1463,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 				digest->len)) {
 			pfree(dsig.data);
 			DBG(DBG_CONTROL,
-				DBG_log("NSS: RSA Signature verified, hash values matched");
-				);
+				DBG_log("NSS: RSA Signature verified, hash values matched"));
 			return TRUE;
 		}
 		pfree(dsig.data);
@@ -1511,12 +1502,10 @@ bool check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 	if (algorithm != OID_UNKNOWN) {
 		DBG(DBG_X509 | DBG_CONTROL,
 			DBG_log("signature algorithm: '%s'",
-				oid_names[algorithm].name);
-			);
+				oid_names[algorithm].name));
 	} else {
 		DBG(DBG_X509 | DBG_CONTROL,
-			DBG_log("unknown signature algorithm");
-			);
+			DBG_log("unknown signature algorithm"));
 	}
 
 	if (!compute_digest(tbs, algorithm, &digest)) {
@@ -1525,8 +1514,7 @@ bool check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 	}
 
 	DBG(DBG_CONTROL,
-		DBG_dump_chunk("  digest:", digest);
-		);
+		DBG_dump_chunk("  digest:", digest));
 
 	if (!decrypt_sig(sig, algorithm, issuer_cert, &digest)) {
 		libreswan_log(" NSS: failure in verifying signature");
@@ -1557,8 +1545,7 @@ static bool parse_basicConstraints(chunk_t blob, int level0)
 		if (objectID == BASIC_CONSTRAINTS_CA) {
 			isCA = object.len && *object.ptr;
 			DBG(DBG_CONTROL,
-				DBG_log("  %s", isCA ? "TRUE" : "FALSE");
-				);
+				DBG_log("  %s", isCA ? "TRUE" : "FALSE"));
 		}
 		objectID++;
 	}
@@ -1604,7 +1591,7 @@ void gntoid(struct id *id, const generalName_t *gn)
 /*
  * extracts a generalName
  */
-static generalName_t*parse_generalName(chunk_t blob, int level0)
+static generalName_t *parse_generalName(chunk_t blob, int level0)
 {
 	asn1_ctx_t ctx;
 	chunk_t object;
@@ -1626,24 +1613,21 @@ static generalName_t*parse_generalName(chunk_t blob, int level0)
 		case GN_OBJ_URI:
 			DBG(DBG_PARSING,
 				DBG_log("  '%.*s'",
-					(int)object.len, object.ptr);
-				);
+					(int)object.len, object.ptr));
 			valid_gn = TRUE;
 			break;
 		case GN_OBJ_DIRECTORY_NAME:
 			DBG(DBG_PARSING,
 				u_char buf[ASN1_BUF_LEN];
 				dntoa((char *)buf, ASN1_BUF_LEN, object);
-				DBG_log("  '%s'", buf);
-				);
+				DBG_log("  '%s'", buf));
 			valid_gn = TRUE;
 			break;
 		case GN_OBJ_IP_ADDRESS:
 			DBG(DBG_PARSING,
 				DBG_log("  '%d.%d.%d.%d'", *object.ptr,
 					*(object.ptr + 1),
-					*(object.ptr + 2), *(object.ptr + 3));
-				);
+					*(object.ptr + 2), *(object.ptr + 3)));
 			valid_gn = TRUE;
 			break;
 		case GN_OBJ_OTHER_NAME:
@@ -1671,7 +1655,7 @@ static generalName_t*parse_generalName(chunk_t blob, int level0)
 /*
  * extracts one or several GNs and puts them into a chained list
  */
-static generalName_t*parse_generalNames(chunk_t blob, int level0,
+static generalName_t *parse_generalNames(chunk_t blob, int level0,
 					bool implicit)
 {
 	asn1_ctx_t ctx;
@@ -1864,8 +1848,7 @@ static void parse_authorityInfoAccess(chunk_t blob, int level0,
 					DBG(DBG_PARSING,
 						DBG_log("  '%.*s'",
 							(int)object.len,
-							object.ptr);
-						);
+							object.ptr));
 
 					/* only HTTP(S) URIs accepted */
 					if (strncasecmp((char *)object.ptr,
@@ -1921,7 +1904,7 @@ static bool parse_extendedKeyUsage(chunk_t blob, int level0)
  *  extracts one or several crlDistributionPoints and puts them into
  *  a chained list
  */
-static generalName_t*parse_crlDistributionPoints(chunk_t blob, int level0)
+static generalName_t *parse_crlDistributionPoints(chunk_t blob, int level0)
 {
 	asn1_ctx_t ctx;
 	chunk_t object;
@@ -1960,6 +1943,10 @@ static generalName_t*parse_crlDistributionPoints(chunk_t blob, int level0)
 
 /*
  *  Parses an X.509v3 certificate
+ *
+ * On success, returns TRUE and the blob's memory is owned by the cert
+ * (so caller must not free the blob in that case!).
+ * Returns FALSE on failure.
  */
 bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 {
@@ -1991,11 +1978,11 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 			cert->tbsCertificate = object;
 			break;
 		case X509_OBJ_VERSION:
+			/* ??? why do we think that object.len is 0 or 1? */
 			cert->version =
-				(object.len) ? (1 + (u_int) * object.ptr) : 1;
+				(object.len) ? (1 + (u_int) *object.ptr) : 1;
 			DBG(DBG_PARSING,
-				DBG_log("  v%d", cert->version);
-				);
+				DBG_log("  v%d", cert->version));
 			break;
 		case X509_OBJ_SERIAL_NUMBER:
 			cert->serialNumber = object;
@@ -2072,8 +2059,7 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 		case X509_OBJ_CRITICAL:
 			critical = object.len && *object.ptr;
 			DBG(DBG_PARSING,
-				DBG_log("  %s", critical ? "TRUE" : "FALSE");
-				);
+				DBG_log("  %s", critical ? "TRUE" : "FALSE"));
 			break;
 		case X509_OBJ_EXTN_VALUE:
 		{
@@ -2172,8 +2158,7 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 			crl->version =
 				(object.len) ? (1 + (u_int) * object.ptr) : 1;
 			DBG(DBG_PARSING,
-				DBG_log("  v%d", crl->version);
-				);
+				DBG_log("  v%d", crl->version));
 			break;
 		case CRL_OBJ_SIG_ALG:
 			crl->sigAlg = parse_algorithmIdentifier(object, level);
@@ -2223,8 +2208,7 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 		case CRL_OBJ_CRITICAL:
 			critical = object.len && *object.ptr;
 			DBG(DBG_PARSING,
-				DBG_log("  %s", critical ? "TRUE" : "FALSE");
-				);
+				DBG_log("  %s", critical ? "TRUE" : "FALSE"));
 			break;
 		case CRL_OBJ_EXTN_VALUE:
 		{

@@ -95,8 +95,6 @@ static void help(void)
 		" [--sendcert]"
 		" [--sendcerttype number]"
 		" \\\n   "
-		" [--ikeport <port-number>]"
-		" \\\n   "
 		" [--nexthop <ip-address>]"
 		" \\\n   "
 		" [--client <subnet> | --clientwithin <address range>]"
@@ -895,8 +893,8 @@ int main(int argc, char **argv)
 	*af_used_by = NULL,
 	*tunnel_af_used_by = NULL;
 
-	char xauthname[128];
-	char xauthpass[128];
+	char xauthname[XAUTH_MAX_NAME_LENGTH];
+	char xauthpass[XAUTH_MAX_PASS_LENGTH];
 	int xauthnamelen = 0, xauthpasslen = 0;
 	bool gotxauthname = FALSE, gotxauthpass = FALSE;
 	const char *ugh;
@@ -1345,8 +1343,6 @@ int main(int argc, char **argv)
 				msg.right.sendcert = cert_neversend;
 			} else if (streq(optarg, "ifasked")) {
 				msg.right.sendcert = cert_sendifasked;
-			} else if (streq(optarg, "forced")) {
-				msg.right.sendcert = cert_forcedtype;
 			} else {
 				diagq("whack sendcert value is not legal",
 				      optarg);

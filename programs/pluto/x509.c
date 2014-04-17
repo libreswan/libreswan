@@ -35,7 +35,6 @@
 #include <sys/types.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "lswconf.h"
@@ -155,11 +154,11 @@ static void release_x509cert(x509cert_t *cert)
 }
 
 /*  release of a certificate decreases the count by one
-   "  the certificate is freed when the counter reaches zero
+ *  the certificate is freed when the counter reaches zero
  */
 void release_cert(cert_t cert)
 {
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_NONE:
 		/* quietly forget about it */
 		break;
@@ -167,9 +166,7 @@ void release_cert(cert_t cert)
 		release_x509cert(cert.u.x509);
 		break;
 	default:
-		loglog(RC_LOG_SERIOUS,"Unknown certificate type: %s (%d)",
-		       enum_show(&cert_type_names, cert.type), cert.type);
-		break;
+		bad_case(cert.ty);
 	}
 }
 
@@ -384,7 +381,7 @@ void load_crls(void)
 	} else {
 		DBG(DBG_CONTROL,
 		    DBG_log("Changing to directory '%s'", oco->crls_dir));
-		n = scandir(oco->crls_dir, &filelist, (void *) file_select,
+		n = scandir(oco->crls_dir, &filelist, (void *) filter_dotfiles,
 			    alphasort);
 
 		if (n > 0) {
@@ -701,7 +698,7 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 
 			cert_t c;
 
-			c.type = CERT_X509_SIGNATURE;
+			c.ty = CERT_X509_SIGNATURE;
 			c.u.x509 = cert;
 
 			whack_log(RC_COMMENT, "%s, count: %d",

@@ -154,7 +154,6 @@
 #include "nat_traversal.h"
 #include "vendor.h"
 #include "ikev1_dpd.h"
-#include "udpfromto.h"
 #include "hostpair.h"
 
 #ifdef HAVE_NM
@@ -2369,7 +2368,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			clonetochunk(st->st_tpacket, reply_stream.start,
 				     pbs_offset(&reply_stream),
-				     "reply packet");
+				     "reply packet for complete_v1_state_transition");
 
 			/* actually send the packet
 			 * Note: this is a great place to implement "impairments"
@@ -2826,7 +2825,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("%s mode peer ID is %s: '%s'",
 			      aggrmode ? "Aggressive" : "Main",
-			      enum_show(&ident_names, id->isaid_idtype), buf);
+			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
 	}
 
 	/* check for certificates */

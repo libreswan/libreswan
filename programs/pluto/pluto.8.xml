@@ -31,6 +31,7 @@
       <arg choice="plain"><replaceable>pluto</replaceable></arg>
       <arg choice="opt">--help</arg>
       <arg choice="opt">--version</arg>
+      <arg choice="opt">--leak_detective</arg>
       <arg choice="opt">--config <replaceable>filename</replaceable></arg>
       <arg choice="opt">--vendorid <replaceable>VID</replaceable></arg>
       <arg choice="opt">--nofork</arg>
@@ -827,7 +828,7 @@
       Domain Name System.</para>
     </refsect2>
 
-    <refsect2 id="setting_up_fbklipsfp_for_fbplutofp">
+    <refsect2 id="setting_up_klips_for_pluto">
       <title>Setting up <emphasis remap="B">KLIPS</emphasis> for <emphasis
       remap="B">pluto</emphasis></title>
 
@@ -872,7 +873,7 @@
         </citerefentry>.</para>
     </refsect2>
 
-    <refsect2 id="setting_up_fbnetkeyfp_for_fbplutofp">
+    <refsect2 id="setting_up_netkey_for_pluto">
       <title>Setting up <emphasis remap="B">NETKEY</emphasis> for <emphasis
       remap="B">pluto</emphasis></title>
 
@@ -982,7 +983,7 @@
       this prevents multiple <emphasis remap="B">pluto</emphasis>s from
       competing Any “leftover” lockfile must be removed before <emphasis
       remap="B">pluto</emphasis> will run. <emphasis
-      remap="B">pluto</emphasis> writes its pid into this file so that scripts
+      remap="B">pluto</emphasis> writes its PID into this file so that scripts
       can find it. This lock will not function properly if it is on an NFS
       volume (but sharing locks on multiple machines doesn't make sense
       anyway).</para>
@@ -1033,9 +1034,14 @@
       working directory. You can specify the --coredir option for pluto, or
       specify the dumpdir= option in ipsec.conf.</para>
 
-      <para>At times it may be desireable to turn off all timed events in
+      <para>At times it may be desirable to turn off all timed events in
       <emphasis remap="B">pluto</emphasis>, this can be done with
       <option>--noretransmits</option>.</para>
+
+      <para>If you are investigating a potential memory leak in pluto,
+      start pluto with the --leak_detective option.  Before the leak
+      causes the system or pluto to die, shut down pluto in the regular
+      way. pluto will display a list of leaks it has detected.  </para>
 
       <para>The <emphasis remap="I">(potential) connection</emphasis> database
       describes attributes of a connection. These include the IP addresses of
@@ -1337,7 +1343,7 @@
           remap="I">yes|forced|always|ifasked|no|never</emphasis></term>
 
           <listitem>
-            <para>Wether or not to send our X.509 certificate credentials.
+            <para>Whether or not to send our X.509 certificate credentials.
             This could potentially give an attacker too much information about
             which identities are allowed to connect to this host. The default
             is to use <emphasis remap="B">ifasked</emphasis> when we are a
@@ -1566,7 +1572,7 @@
 
           <listitem>
             <para>separates the specification of the left and right ends of
-            the connection. Pluto tries to decide wether it is <emphasis
+            the connection. Pluto tries to decide whether it is <emphasis
             remap="I">left</emphasis> or <emphasis remap="I">right</emphasis>
             based on the information provided on both sides of this
             option.</para>
@@ -1779,7 +1785,7 @@
           remap="I">seconds</emphasis></term>
 
           <listitem>
-            <para>Set the delay (in seconds) between Dead Peer Dectection (RFC
+            <para>Set the delay (in seconds) between Dead Peer Detection (RFC
             3706) keepalives (R_U_THERE, R_U_THERE_ACK) that are sent for this
             connection (default 30 seconds).</para>
           </listitem>
@@ -2261,7 +2267,7 @@
 
           <listitem>
             <para>the terminate form tells <emphasis
-            remap="b">pluto</emphasis> to delete any sas that use the
+            remap="b">pluto</emphasis> to delete any SAs that use the
             specified connection and to stop any negotiations in process. it
             does not prevent new negotiations from starting (the delete form
             has this effect).</para>
@@ -3406,7 +3412,7 @@
           <term>•</term>
 
           <listitem>
-            <para>Host authetication can be done by RSA Signatures or
+            <para>Host authentication can be done by RSA Signatures or
             Pre-Shared Secrets.</para>
           </listitem>
         </varlistentry>
@@ -3503,7 +3509,7 @@
     <constant>SIGHUP</constant> by issuing a suggestion that ``<emphasis
     remap="B">whack</emphasis> --listen'' might have been intended.</para>
 
-    <para><emphasis remap="B">Pluto</emphasis> exits when it recieves
+    <para><emphasis remap="B">Pluto</emphasis> exits when it receives
     <constant>SIGTERM</constant>.</para>
   </refsect1>
 
@@ -3618,7 +3624,7 @@
     <para>RFC2407 The Internet IP Security Domain of Interpretation for
     ISAKMP</para>
 
-    <para>The Libreswan web site &lt;htp://www.libreswan.org&gt; and the mailing
+    <para>The Libreswan web site &lt;https://libreswan.org&gt; and the mailing
     lists described there.</para>
   </refsect1>
 
@@ -3637,10 +3643,10 @@
     Keromytis (angelos@dsl.cis.upenn.edu), in May/June 1997, in Athens,
     Greece. Thanks go to John Ioannidis for his help.</para>
 
-    <para>It is currently maintained and extended by Xelerance Corporation, in
-    Canada under the Libreswan name. See CHANGES for details.</para>
+    <para>It is currently maintained and extended by the Libreswan Team
+    under the Libreswan name. See CHANGES for details.</para>
 
-    <para>FreeS/WAN was developed/maintained from 2000-2004 by D. Hugh
+    <para>FreeS/WAN's Pluto was developed/maintained from 2000-2004 by D. Hugh
     Redelmeier (hugh@mimosa.com), in Canada. The regulations of Greece and
     Canada allow the code to be freely redistributable.</para>
 
@@ -3678,7 +3684,7 @@
     <para>There is no good way for a connection to be automatically
     terminated. This is a problem for Road Warrior and Opportunistic
     connections. The <option>--dontrekey</option> option does prevent the SAs
-    from being rekeyed on expiry. Additonally, if a Road Warrior connection
+    from being rekeyed on expiry. Additionally, if a Road Warrior connection
     has a client subnet with a fixed IP address, a negotiation with that
     subnet will cause any other connection instantiations with that same
     subnet to be unoriented (deleted, in effect). See also the --uniqueids

@@ -51,7 +51,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 
 # -DKLIPS enables interface to Kernel LINUX IPsec code
 # -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code
-# -DLEAK_DETECTIVE enables crude code to find memory allocation leaks.
 # -DOLD_RESOLVER.  At some point, the resolver interface changed.
 #    This macro enables Pluto support for the old interface.
 #    It is automatically defined, based on the value of the <resolver.h>
@@ -125,7 +124,7 @@ endif
 
 # the files are defined here so that TAGS: can catch them.
 #
-X509_DIST_OBJS=ac.o x509.o x509more.o
+X509_DIST_OBJS=x509.o x509more.o
 X509_DIST_SRCS=${X509_DIST_OBJS:.o=.c}
 X509_DIST_SRCS+=fetch.h 
 THREADS_DIST_OBJS=fetch.o 
@@ -197,10 +196,6 @@ ifeq ($(USE_SINGLE_CONF_DIR),true)
 SINGLE_CONF_DIR=-DSINGLE_CONF_DIR
 endif
 
-ifeq ($(USE_LEAK_DETECTIVE),true)
-LEAK_CONF=-DLEAK_DETECTIVE
-endif
-
 DEFINES = $(EXTRA_DEFINES) \
 	${VENDORID} \
 	$(KEYRR_DEFINES) \
@@ -217,7 +212,6 @@ DEFINES = $(EXTRA_DEFINES) \
 	${CURL_DEFS}\
 	${SINGLE_CONF_DIR} \
 	${IPSEC_CONNECTION_LIMIT_DEFS} \
-        ${LEAK_CONF} # -DLEAK_DETECTIVE now handled via USE_LEAK_DETECTIVE in Makefile.inc
 
 
 # libefence is a free memory allocation debugger
@@ -238,11 +232,6 @@ LIBSPLUTO+= -lpthread
 ifeq ($(USE_FIPSCHECK),true)
 DEFINES+=-DFIPS_CHECK
 LIBSPLUTO+= -lfipscheck
-endif
-
-ifeq ($(USE_DMALLOC),true)
-DEFINES+=-DDMALLOC
-LIBSPLUTO+= -ldmalloc
 endif
 
 ifeq ($(USE_LIBCAP_NG),true)

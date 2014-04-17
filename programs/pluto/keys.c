@@ -41,7 +41,6 @@
 #endif
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -618,12 +617,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    enum_name(&ppk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PPK_RSA &&
-	    c->spd.this.sendcert != cert_forcedtype &&
-	    (c->spd.this.cert.type == CERT_X509_SIGNATURE ||
-	     c->spd.this.cert.type == CERT_PKCS7_WRAPPED_X509)) {
+	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE) {
 		struct pubkey *my_public_key = allocate_RSA_public_key(
 			c->spd.this.cert);
+
 		passert(my_public_key != NULL);
 
 		best = lsw_find_secret_by_public_key(pluto_secrets,
@@ -634,7 +631,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	}
 
 	if (his_id_was_instantiated(c) && (!(c->policy & POLICY_AGGRESSIVE)) &&
-	    isanyaddr(&c->spd.that.host_addr) ) {
+	    isanyaddr(&c->spd.that.host_addr)) {
 		DBG(DBG_CONTROL,
 		    DBG_log("instantiating him to 0.0.0.0"));
 
@@ -645,9 +642,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 			      &rw_id.ip_addr));
 		his_id = &rw_id;
 		idtoa(his_id, idhim2, IDTOA_BUF);
-	}
-
-	else if ( (c->policy & POLICY_PSK) &&
+	} else if ((c->policy & POLICY_PSK) &&
 		  (kind == PPK_PSK) &&
 		  (((c->kind == CK_TEMPLATE) &&
 		    (c->spd.that.id.kind == ID_NONE)) ||
@@ -935,7 +930,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 						       TRUE));
 
 				whack_log(RC_COMMENT, "       %s '%s'",
-					  enum_show(&ident_names,
+					  enum_show(&ike_idtype_names,
 						    key->id.kind), id_buf);
 
 				if (key->issuer.len > 0) {

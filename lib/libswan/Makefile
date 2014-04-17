@@ -24,7 +24,7 @@ include ${LIBRESWANSRCDIR}/Makefile.ver
 
 MANDIR=$(MANTREE)/man3
 
-X509LIB=x509dn.c certload.c pem.c pkcs.c asn1.c oid.c x509chain.c
+X509LIB=x509dn.c asn1.c oid.c x509chain.c
 
 SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
 	atoasr.c atosubnet.c atoul.c constants.c datatot.c \
@@ -48,13 +48,6 @@ SRCS+=sanitizestring.c pfkey_print.c pfkey_sock.c pfkey_error.c
 
 ifeq ($(USE_KLIPS),true)
 KLIPS_DEFS=-DKLIPS 
-# Linux always supports udpfromto
-UDPFROMTO_SRCS=udpfromto.c
-endif
-
-ifeq ($(USE_BSDKAME),true)
-# BSD always supports udpfromto
-UDPFROMTO_SRCS=udpfromto.c
 endif
 
 ifeq ($(USE_PFKEYv2),true)
@@ -81,7 +74,7 @@ CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 LOGSRCS=lswlog.c lswid.c
 
 
-OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} ${UDPFROMTO_SRCS:.c=.o} version.o
+OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} version.o
 LOGOBJS=${LOGSRCS:.c=.o}
 
 KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
@@ -102,10 +95,6 @@ CFLAGS+= ${WERROR}
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
 CFLAGS+= -DSINGLE_CONF_DIR=1
-endif
-
-ifeq ($(USE_DMALLOC),true)
-CFLAGS+= -DDMALLOC
 endif
 
 ifeq ($(USE_LABELED_IPSEC),true)

@@ -26,7 +26,6 @@
 
 #include <ctype.h>
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include <libreswan/passert.h>
 #include <libreswan/pfkeyv2.h>
 

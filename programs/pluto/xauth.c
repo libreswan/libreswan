@@ -105,11 +105,12 @@ typedef struct {
 	sigjmp_buf jbuf;
 } st_jbuf_t;
 
-struct thread_arg {
+struct xauth_thread_arg {
 	struct state *st;
-	chunk_t name;
-	chunk_t password;
-	chunk_t connname;
+	/* the memory for these is allocated and freed by our thread management */
+	char *name;
+	char *password;
+	char *connname;
 #ifdef XAUTH_HAVE_PAM
 	st_jbuf_t *ptr;
 #endif
@@ -711,9 +712,9 @@ static stf_status modecfg_send_set(struct state *st)
 #endif
 
 /* XXX This does not include IPv6 at this point */
-#define MODECFG_SET_ITEM ( LELEM(INTERNAL_IP4_ADDRESS) | \
-			   LELEM(INTERNAL_IP4_SUBNET) | \
-			   LELEM(INTERNAL_IP4_DNS))
+#define MODECFG_SET_ITEM (LELEM(INTERNAL_IP4_ADDRESS) | \
+			  LELEM(INTERNAL_IP4_SUBNET) | \
+			  LELEM(INTERNAL_IP4_DNS))
 
 	modecfg_resp(st,
 		     MODECFG_SET_ITEM,
@@ -1074,36 +1075,42 @@ static stf_status xauth_send_status(struct state *st, int status)
 static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 		   struct pam_response **response, void *appdata_ptr)
 {
-	struct thread_arg *arg = appdata_ptr;
+	struct xauth_thread_arg *const arg = appdata_ptr;
 	int count = 0;
 	struct pam_response *reply;
 
 	if (num_msg <= 0)
 		return PAM_CONV_ERR;
 
-	reply = (struct pam_response *) alloc_bytes(
+	reply = alloc_bytes(
 			num_msg * sizeof(struct pam_response), "pam_response");
 
 	for (count = 0; count < num_msg; ++count) {
-		char *string = NULL;
+		const char *s = NULL;
 
 		switch (msgm[count]->msg_style) {
 		case PAM_PROMPT_ECHO_OFF:
-			string = alloc_bytes(arg->password.len + 1,
-					     "pam_echo_off");
-			strcpy(string, (const char *)arg->password.ptr);
+			s = arg->password;
 			break;
 		case PAM_PROMPT_ECHO_ON:
-			string = alloc_bytes(arg->name.len + 1, "pam_echo_on");
-			strcpy(string, (const char *)arg->name.ptr);
+			s = arg->name;
 			break;
 		}
 
-		if (string) { /* must add to reply array */
-			/* add string to list of responses */
+		if (s != NULL) {
+			/*
+			 * Add s to list of responses.
+			 * According to pam_conv(3), our caller will
+			 * use free(3) to free these arguments so
+			 * we must allocate them with malloc,
+			 * not our own allocators.
+			 */
+			size_t len = strlen(s) + 1;
+			char *t = malloc(len);
 
+			memcpy(t, s, len);
 			reply[count].resp_retcode = 0;
-			reply[count].resp = string;
+			reply[count].resp = t;
 		}
 	}
 
@@ -1120,7 +1127,7 @@ static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 /* IN AN AUTH THREAD */
 static bool do_pam_authentication(void *varg)
 {
-	struct thread_arg *arg = varg;
+	struct xauth_thread_arg *arg = varg;
 	int retval;
 	pam_handle_t *pamh = NULL;
 	struct pam_conv conv;
@@ -1135,7 +1142,7 @@ static bool do_pam_authentication(void *varg)
 		conv.appdata_ptr = varg;
 
 		what = "pam_start";
-		retval = pam_start("pluto", (const char *)arg->name.ptr, &conv, &pamh);
+		retval = pam_start("pluto", arg->name, &conv, &pamh);
 		if (retval != PAM_SUCCESS)
 			break;
 
@@ -1204,7 +1211,7 @@ static bool do_pam_authentication(void *varg)
 /* IN AN AUTH THREAD */
 static bool do_file_authentication(void *varg)
 {
-	struct thread_arg *arg = varg;
+	struct xauth_thread_arg *arg = varg;
 	char pwdfile[PATH_MAX];
 	char line[1024]; /* we hope that this is more than enough */
 	int lineno = 0;
@@ -1271,12 +1278,12 @@ static bool do_file_authentication(void *varg)
 		 */
 		DBG(DBG_CONTROL,
 		    DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s)",
-			    userid, arg->name.ptr,
+			    userid, arg->name,
 			    passwdhash,
-			    connectionname == NULL? "" : connectionname, arg->connname.ptr));
+			    connectionname == NULL? "" : connectionname, arg->connname));
 
-		if (streq(userid, (char *)arg->name.ptr) &&
-		    (connectionname == NULL || streq(connectionname, (char *)arg->connname.ptr)))
+		if (streq(userid, arg->name) &&
+		    (connectionname == NULL || streq(connectionname, arg->connname)))
 		{
 			char *cp;
 
@@ -1286,10 +1293,10 @@ static bool do_file_authentication(void *varg)
 			pthread_mutex_lock(&crypt_mutex);
 #if defined(__CYGWIN32__)
 			/* password is in the clear! */
-			cp = (char *)arg->password.ptr;
+			cp = arg->password;
 #else
 			/* keep the passwords using whatever utilities we have */
-			cp = crypt((char *)arg->password.ptr, passwdhash);
+			cp = crypt(arg->password, passwdhash);
 #endif
 			win = cp != NULL && streq(cp, passwdhash);
 			pthread_mutex_unlock(&crypt_mutex);
@@ -1319,7 +1326,7 @@ static bool do_file_authentication(void *varg)
 /* IN AN AUTH THREAD */
 static void *do_authentication(void *varg)
 {
-	struct thread_arg *arg = varg;
+	struct xauth_thread_arg *arg = varg;
 	struct state *st = arg->st;
 	bool results = FALSE;
 
@@ -1328,9 +1335,9 @@ static void *do_authentication(void *varg)
 	st_jbuf_t *ptr = arg->ptr;
 
 	if (ptr == NULL) {
-		freeanychunk(arg->password);
-		freeanychunk(arg->name);
-		freeanychunk(arg->connname);
+		pfree(arg->password);
+		pfree(arg->name);
+		pfree(arg->connname);
 		pfree(varg);
 		pthread_mutex_unlock(&st->xauth_mutex);
 		st->xauth_tid = 0;	/* ??? Not well defined for POSIX threads!!! */
@@ -1363,9 +1370,9 @@ static void *do_authentication(void *varg)
 			sigaction(SIGINT, &oldsa, NULL);
 		}
 		pthread_mutex_unlock(&st_jbuf_mutex);
-		freeanychunk(arg->password);
-		freeanychunk(arg->name);
-		freeanychunk(arg->connname);
+		pfree(arg->password);
+		pfree(arg->name);
+		pfree(arg->connname);
 		pfree(varg);
 		pthread_mutex_unlock(&st->xauth_mutex);
 		st->xauth_tid = 0;	/* ??? not valid for POSIX pthreads */
@@ -1380,33 +1387,33 @@ static void *do_authentication(void *varg)
 	sa.sa_flags = SA_RESETHAND | SA_NODEFER | SA_ONSTACK; /* One shot handler */
 	sigaddset(&sa.sa_mask, SIGINT);
 	sigaction(SIGINT, &sa, &oldsa);
-	libreswan_log("XAUTH: User %s: Attempting to login", arg->name.ptr);
+	libreswan_log("XAUTH: User %s: Attempting to login", arg->name);
 
 	switch (st->st_connection->xauthby) {
 #ifdef XAUTH_HAVE_PAM
 	case XAUTHBY_PAM:
 		libreswan_log(
 			"XAUTH: pam authentication being called to authenticate user %s",
-			arg->name.ptr);
+			arg->name);
 		results = do_pam_authentication(varg);
 		break;
 #endif
 	case XAUTHBY_FILE:
 		libreswan_log(
 			"XAUTH: passwd file authentication being called to authenticate user %s",
-			arg->name.ptr);
+			arg->name);
 		results = do_file_authentication(varg);
 		break;
 	case XAUTHBY_ALWAYSOK:
 		libreswan_log(
 			"XAUTH: authentication method 'always ok' requested to authenticate user %s",
-			arg->name.ptr);
+			arg->name);
 		results = TRUE;
 		break;
 	default:
 		libreswan_log(
 			"XAUTH: unknown authentication method requested to authenticate user %s",
-			arg->name.ptr);
+			arg->name);
 		bad_case(st->st_connection->xauthby);
 	}
 
@@ -1418,20 +1425,20 @@ static void *do_authentication(void *varg)
 	if (!results && st->st_connection->xauthfail == XAUTHFAIL_SOFT) {
 		libreswan_log(
 			"XAUTH: authentication for %s failed, but policy is set to soft fail",
-			arg->name.ptr);
+			arg->name);
 		st->st_xauth_soft = TRUE; /* passed to updown for notification */
 		results = TRUE;
 	}
 
 	if (results) {
 		libreswan_log("XAUTH: User %s: Authentication Successful",
-			      arg->name.ptr);
+			      arg->name);
 		xauth_send_status(st, XAUTH_STATUS_OK);
 
 		if (st->quirks.xauth_ack_msgid)
 			st->st_msgid_phase15 = 0;
 
-		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), (char *)arg->name.ptr);
+		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), arg->name);
 	} else {
 		/*
 		 * Login attempt failed, display error, send XAUTH status to client
@@ -1439,7 +1446,7 @@ static void *do_authentication(void *varg)
 		 */
 		libreswan_log(
 			"XAUTH: User %s: Authentication Failed: Incorrect Username or Password",
-			arg->name.ptr);
+			arg->name);
 		xauth_send_status(st, XAUTH_STATUS_FAIL);
 	}
 
@@ -1451,9 +1458,9 @@ static void *do_authentication(void *varg)
 	pthread_mutex_unlock(&st->xauth_mutex);
 	st->xauth_tid = 0;	/* ??? this is not valid in POSIX pthreads */
 
-	freeanychunk(arg->password);
-	freeanychunk(arg->name);
-	freeanychunk(arg->connname);
+	pfree(arg->password);
+	pfree(arg->name);
+	pfree(arg->connname);
 	pfree(varg);
 
 	return NULL;
@@ -1462,28 +1469,41 @@ static void *do_authentication(void *varg)
 /** Launch an authentication prompt
  *
  * @param st State Structure
- * @param name Usernamd
- * @param password password
- * @param connname conn name, from ipsec.conf
+ * @param name Username
+ * @param password Password
+ * @param connname connnection name, from ipsec.conf
  * @return int Return Code - always 0.
  */
 static int xauth_launch_authent(struct state *st,
-			 chunk_t name,
-			 chunk_t password,
-			 chunk_t connname)
+			chunk_t *name,
+			chunk_t *password,
+			const char *connname)
 {
 	pthread_attr_t pattr;
 	st_jbuf_t *ptr;
-	struct thread_arg *arg;
+	struct xauth_thread_arg *arg;
 
 	if (st->xauth_tid)	/* ??? this is not valid in POSIX pthreads */
 		return 0;
 
-	arg = alloc_thing(struct thread_arg, "ThreadArg");
+	/* build arg, the context that a thread gets on creation */
+
+	arg = alloc_thing(struct xauth_thread_arg, "XAUTH ThreadArg");
 	arg->st = st;
-	arg->password = password;
-	arg->name = name;
-	arg->connname = connname;
+
+	/*
+	 * Clone these so they persist as long as we need them.
+	 * Each chunk contains no NUL; we must add one to terminate a string.
+	 * alloc_bytes zeros the memory it returns (so the NUL is free).
+	 */
+	arg->password = alloc_bytes(password->len + 1, "XAUTH Password");
+	memcpy(arg->password, password->ptr, password->len);
+
+	arg->name = alloc_bytes(name->len + 1, "XAUTH Name");
+	memcpy(arg->name, name->ptr, name->len);
+
+	arg->connname = clone_str(connname, "XAUTH connection name");
+
 	/*
 	 * Start any kind of authentication in a thread. This includes file
 	 * authentication as the /etc/ipsec.d/passwd file may reside on a SAN,
@@ -1520,15 +1540,20 @@ static void log_bad_attr(const char *kind, enum_names *ed, unsigned val)
 stf_status xauth_inR0(struct msg_digest *md)
 {
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
+
 	struct state *const st = md->st;
-	chunk_t name, password, connname;
-	bool gotname, gotpassword;
 
-	gotname = gotpassword = FALSE;
-
-	name = empty_chunk;
-	password = empty_chunk;
-	connname = empty_chunk;
+	/*
+	 * There are many ways out of this routine
+	 * so we don't want an obligation to free anything.
+	 * We manage this by making these chunks just
+	 * references to parts of the input packet.
+	 */
+	static unsigned char unknown[] = "<unknown>";
+	chunk_t name,
+		password = empty_chunk;
+	bool gotname = FALSE,
+		gotpassword = FALSE;
 
 	CHECK_QUICK_HASH(md,
 			 xauth_mode_cfg_hash(hash_val, hash_pbs->roof,
@@ -1536,113 +1561,115 @@ stf_status xauth_inR0(struct msg_digest *md)
 					     st),
 			 "XAUTH-HASH", "XAUTH R0");
 
-	{
-		struct isakmp_attribute attr;
+	setchunk(name, unknown, sizeof(unknown) - 1);	/* to make diagnostics easier */
 
-		/* XXX This needs checking with the proper RFC's - ISAKMP_CFG_ACK got added for Cisco interop */
-		if ( (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type
-		      != ISAKMP_CFG_REPLY) &&
-		     (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type
-		      != ISAKMP_CFG_ACK) ) {
-			libreswan_log(
-				"Expecting MODE_CFG_REPLY, got %s instead.",
-				enum_name(&attr_msg_type_names,
-					  md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.
-					  mode_attribute.isama_type));
-			return STF_IGNORE;
+	/* XXX This needs checking with the proper RFC's - ISAKMP_CFG_ACK got added for Cisco interop */
+	switch (md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute.isama_type) {
+	case ISAKMP_CFG_REPLY:
+	case ISAKMP_CFG_ACK:
+		break;	/* OK */
+	default:
+		libreswan_log(
+			"Expecting MODE_CFG_REPLY; got %s instead.",
+			enum_name(&attr_msg_type_names,
+				  md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.
+				  mode_attribute.isama_type));
+		return STF_IGNORE;
+	}
+
+	while (pbs_left(attrs) > 0) {
+		struct isakmp_attribute attr;
+		pb_stream strattr;
+		size_t sz;
+
+		if (!in_struct(&attr, &isakmp_xauth_attribute_desc,
+			       attrs, &strattr)) {
+			/* fail if malformed */
+			return STF_FAIL;
 		}
 
-		while (pbs_left(attrs) > 0) {
-			pb_stream strattr;
-
-			if (!in_struct(&attr, &isakmp_xauth_attribute_desc,
-				       attrs, &strattr)) {
-				/* Skip malformed */
-				return STF_FAIL;
+		switch (attr.isaat_af_type) {
+		case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
+			/* since we only accept XAUTH_TYPE_GENERIC we don't need to record this attribute */
+			if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
+				libreswan_log(
+					"unsupported XAUTH_TYPE value %s received",
+					enum_show(&xauth_type_names,
+						  attr.isaat_lv));
+				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
+			break;
 
-			switch (attr.isaat_af_type) {
-			case XAUTH_TYPE | ISAKMP_ATTR_AF_TV:
-				/* since we only accept XAUTH_TYPE_GENERIC we don't need to record this attribute */
-				if (attr.isaat_lv != XAUTH_TYPE_GENERIC) {
-					libreswan_log(
-						"unsupported XAUTH_TYPE value %s received",
-						enum_show(&xauth_type_names,
-							  attr.isaat_lv));
-					return STF_FAIL + NO_PROPOSAL_CHOSEN;
-				}
-				break;
-
-			case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
-				/* ??? what happens if attribute contains NUL character? */
-				clonetochunk(name, strattr.cur,
-					     pbs_left(&strattr) + 1, "username");
-				name.ptr[name.len - 1] = '\0'; /* Pass NULL terminated strings */
-				gotname = TRUE;
-				break;
-
-			case XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
-				/* ??? what happens if attribute contains NUL character? */
-				clonetochunk(password, strattr.cur,
-					     pbs_left(&strattr) + 1, "password");
-				password.ptr[password.len - 1] = '\0';
-				gotpassword = TRUE;
-				break;
-
-			default:
-				log_bad_attr("XAUTH", &xauth_attr_names, attr.isaat_af_type);
-				break;
+		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
+			if (gotname) {
+				libreswan_log(
+					"XAUTH: two  User Names!  Rejected");
+				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
+			sz = pbs_left(&strattr);
+			if (strnlen((const char *)strattr.cur, sz) != sz) {
+				libreswan_log(
+					"XAUTH User Name contains NUL character: rejected");
+				return STF_FAIL + NO_PROPOSAL_CHOSEN;
+			}
+			setchunk(name, strattr.cur, sz);
+			gotname = TRUE;
+			break;
+
+		case XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
+			if (gotpassword) {
+				libreswan_log(
+					"XAUTH: two  User Passwords!  Rejected");
+				return STF_FAIL + NO_PROPOSAL_CHOSEN;
+			}
+			sz = pbs_left(&strattr);
+			if (strnlen((const char *)strattr.cur, sz) != sz) {
+				libreswan_log(
+					"XAUTH User Password contains NUL character: rejected");
+				return STF_FAIL + NO_PROPOSAL_CHOSEN;
+			}
+			setchunk(password, strattr.cur, sz);
+			gotpassword = TRUE;
+			break;
+
+		default:
+			log_bad_attr("XAUTH", &xauth_attr_names, attr.isaat_af_type);
+			break;
 		}
 	}
 
 	/** we must get a username and a password value */
 	if (!gotname || !gotpassword) {
 		libreswan_log(
-			"Expected MODE_CFG_REPLY did not contain %s%s%s attribute",
-			(!gotname ? "username" : ""),
-			((!gotname && !gotpassword) ? " or " : ""),
-			(!gotpassword ? "password" : ""));
+			"Expected MODE_CFG_REPLY is missing %s%s%s attribute",
+			!gotname ? "username" : "",
+			!gotname && !gotpassword ? " and " : "",
+			!gotpassword ? "password" : "");
 		if (st->hidden_variables.st_xauth_client_attempt++ <
 		    XAUTH_PROMPT_TRIES) {
 			stf_status stat = xauth_send_request(st);
 
 			libreswan_log(
-				"XAUTH: User %s: Authentication Failed (retry %d)",
-				(!gotname ? "<unknown>" : (char *)name.
-				 ptr),
+				"XAUTH: User %.*s: Authentication Failed (retry %d)",
+				(int)name.len, name.ptr,
 				st->hidden_variables.st_xauth_client_attempt);
 			/**
 			 * STF_OK means that we transmitted again okay, but actually
 			 * the state transition failed, as we are prompting again.
 			 */
-			if (stat == STF_OK)
-				return STF_IGNORE;
-			else
-				return stat;
+			return stat == STF_OK ? STF_IGNORE : stat;
 		} else {
 			stf_status stat = xauth_send_status(st, XAUTH_STATUS_FAIL);
 
 			libreswan_log(
-				"XAUTH: User %s: Authentication Failed (Retried %d times)",
-				(!gotname ? "<unknown>" : (char *)name.
-				 ptr),
+				"XAUTH: User %.*s: Authentication Failed (Retried %d times)",
+				(int)name.len, name.ptr,
 				st->hidden_variables.st_xauth_client_attempt);
 
-			if (stat == STF_OK)
-				return STF_FAIL;
-			else
-				return stat;
+			return stat == STF_OK ? STF_FAIL : stat;
 		}
 	} else {
-		clonetochunk(connname,
-			     st->st_connection->name,
-			     strlen(st->st_connection->name) + 1,
-			     "connname");
-
-		connname.ptr[connname.len - 1] = 0; /* Pass NULL terminated strings */
-
-		xauth_launch_authent(st, name, password, connname);
+		xauth_launch_authent(st, &name, &password, st->st_connection->name);
 	}
 	return STF_IGNORE;
 }
@@ -2224,31 +2251,22 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						"Received subnet %s, maskbits %d", caddr,
 						tmp_spd->that.client.maskbits);
 
-					tmp_spd->this.updown =
-						clone_str(
-							tmp_spd->this.updown,
-							"updown");
-					tmp_spd->that.updown =
-						clone_str(
-							tmp_spd->that.updown,
-							"updown");
-
 					tmp_spd->this.cert_filename =
 						NULL;
 					tmp_spd->that.cert_filename =
 						NULL;
 
-					tmp_spd->this.cert.type = 0;
-					tmp_spd->that.cert.type = 0;
+					tmp_spd->this.cert.ty = CERT_NONE;
+					tmp_spd->that.cert.ty = CERT_NONE;
 
 					tmp_spd->this.ca.ptr = NULL;
 					tmp_spd->that.ca.ptr = NULL;
 
-					tmp_spd->this.groups = NULL;
-					tmp_spd->that.groups = NULL;
-
 					tmp_spd->this.virt = NULL;
 					tmp_spd->that.virt = NULL;
+
+					unshare_connection_end_strings(&tmp_spd->this);
+					unshare_connection_end_strings(&tmp_spd->that);
 
 					tmp_spd->next = NULL;
 					tmp_spd2->next = tmp_spd;

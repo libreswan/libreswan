@@ -24,7 +24,6 @@
 #include <arpa/inet.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
@@ -197,7 +196,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 static bool out_attr(int type,
 	      unsigned long val,
 	      struct_desc *attr_desc,
-	      enum_names **attr_val_descs,
+	      enum_names *const *attr_val_descs,
 	      pb_stream *pbs)
 {
 	struct isakmp_attribute attr;
@@ -359,7 +358,7 @@ bool out_sa(pb_stream *outs,
 			struct isakmp_proposal proposal;
 			struct_desc *trans_desc;
 			struct_desc *attr_desc;
-			enum_names **attr_val_descs;
+			enum_names *const *attr_val_descs;
 			unsigned int tn;
 			bool tunnel_mode;
 
@@ -1676,7 +1675,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		val = a.isaat_lv;
 
-		vdesc = ipsec_attr_val_descs[a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK
+		vdesc = ipsec_attr_val_descs[(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK)
 #ifdef HAVE_LABELED_IPSEC
 		/* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
 		/* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
@@ -2415,8 +2414,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case ESP_AES:
 					case ESP_3DES:
 						break;
-#ifdef SUPPORT_ESP_NULL                         /* should be about as secure as AH-only */
-#warning "Building with ESP-Null"
 					case ESP_NULL:
 						if (esp_attrs.transattrs.
 							integ_hash ==
@@ -2436,7 +2433,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							continue; /* try another */
 						}
 						break;
-#endif
 
 					case ESP_DES: /* NOT safe */
 						loglog(RC_LOG_SERIOUS,

@@ -5,7 +5,7 @@
 <emphasis remap='B'>yes</emphasis>, (the default), <emphasis remap='B'>no</emphasis>
 or <emphasis remap='B'>force</emphasis>. 
     </para><para>
-IKE fragmentation capablities are negotiated via <emphasis remap='I'>vendor
+IKE fragmentation capabilities are negotiated via <emphasis remap='I'>vendor
 id</emphasis>.
 If pluto does not receive the FRAGMENTATION vendor id, no IKE fragments will
 be sent, regardless of the ike_frag= setting. When set to

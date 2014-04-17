@@ -19,6 +19,7 @@
 #ifndef _X509MORE_H
 #define _X509MORE_H
 
+#include "defs.h"
 #include "packet.h"
 #include "demux.h"
 #include "server.h"
@@ -37,4 +38,15 @@ extern bool ikev1_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
 			      u_int8_t np);
 extern bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
 				    u_int8_t np);
+extern void load_authcerts(const char *type, const char *path,
+                           u_char auth_flags);
+extern bool trusted_ca(chunk_t a, chunk_t b, int *pathlen);
+extern bool match_requested_ca(generalName_t *requested_ca,
+                               chunk_t our_ca, int *our_pathlen);
+extern int filter_dotfiles(
+#ifdef SCANDIR_HAS_CONST
+        const
+#endif
+        dirent_t *entry);
 #endif /* _X509MORE_H */
+

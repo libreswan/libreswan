@@ -25,11 +25,6 @@
 # include <nss.h>
 # include <pk11pub.h>
 
-struct paththing {
-	char    *path;
-	size_t path_space;
-};
-
 struct lsw_conf_options {
 	char *rootdir;                  /* default is "" --- used for testing */
 	char *confdir;                  /* "/etc" */
@@ -37,12 +32,8 @@ struct lsw_conf_options {
 	char *confddir;                 /* "/etc/ipsec.d" */
 	char *vardir;                   /* "/var/run/pluto" */
 	char *policies_dir;             /* "/etc/ipsec.d/policies" */
-	char *acerts_dir;               /* "/etc/ipsec.d/acerts" */
 	char *cacerts_dir;              /* "/etc/ipsec.d/cacerts" */
 	char *crls_dir;                 /* "/etc/ipsec.d/crls" */
-	char *private_dir;              /* "/etc/ipsec.d/private" */
-	char *certs_dir;                /* "/etc/ipsec.d/certs" */
-	char *aacerts_dir;              /* "/etc/ipsec.d/aacerts" */
 };
 
 typedef struct {
@@ -57,8 +48,8 @@ typedef struct {
 
 extern const struct lsw_conf_options *lsw_init_options(void);
 extern void lsw_conf_free_oco(void);
-extern const struct lsw_conf_options *lsw_init_ipsecdir(const char *ipsec_dir);
-extern const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir);
+extern void lsw_init_ipsecdir(const char *ipsec_dir);
+extern void lsw_init_rootdir(const char *root_dir);
 
 extern secuPWData *lsw_return_nss_password_file_info(void);
 extern char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg);

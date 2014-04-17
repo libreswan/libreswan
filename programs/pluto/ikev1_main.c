@@ -40,7 +40,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
@@ -84,9 +83,6 @@
 
 #include "vendor.h"
 #include "nat_traversal.h"
-#ifdef VIRTUAL_IP
-#include "virtual.h"	/* needs connections.h */
-#endif
 #include "ikev1_dpd.h"
 #include "x509more.h"
 
@@ -562,26 +558,8 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
  * HDR;SA --> HDR;SA
  */
 
-#ifdef DMALLOC
-static unsigned long dm_mark = 0;
-static unsigned long dm_initialized = 0;
-#endif
-
 stf_status main_inI1_outR1(struct msg_digest *md)
 {
-#ifdef DMALLOC
-	if (dm_initialized != 0) {
-		/*
-		 * log unfreed pointers that have been added to the heap
-		 * since mark
-		 */
-		dmalloc_log_changed(dm_mark, 1, 0, 1);
-		dmalloc_log_stats();
-	}
-	dm_mark = dmalloc_mark();
-	dm_initialized = 1;
-#endif
-
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	struct state *st;
 	struct connection *c;
@@ -922,7 +900,7 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 				err_t ugh)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -933,17 +911,20 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
-		if (ke->md)
-			release_md(ke->md);
+		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 		return;
 	}
+
+	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
 	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->md);
+	passert(st->st_suspended_md == ke->ke_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -952,10 +933,10 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = main_inR1_outI2_tail(pcrc, r);
 
-	if (ke->md != NULL) {
-		complete_v1_state_transition(&ke->md, e);
-		if (ke->md)
-			release_md(ke->md);
+	if (ke->ke_md != NULL) {
+		complete_v1_state_transition(&ke->ke_md, e);
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 	}
 
 	reset_cur_state();
@@ -992,7 +973,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 		struct ke_continuation *ke = alloc_thing(
 			struct ke_continuation,
 			"outI2 KE");
-		ke->md = md;
+		ke->ke_md = md;
 
 		passert(!st->st_sec_in_use);
 		pcrc_init(&ke->ke_pcrc, main_inR1_outI2_continue);
@@ -1037,7 +1018,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 				struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 
 	/* Build output packet HDR;KE;Ni */
@@ -1122,7 +1103,7 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 				err_t ugh)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -1133,17 +1114,20 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
-		if (ke->md)
-			release_md(ke->md);
+		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
+		if (ke->ke_md)
+			release_md(ke->ke_md);
 		return;
 	}
+
+	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
 	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->md);
+	passert(st->st_suspended_md == ke->ke_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -1151,10 +1135,10 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	st->st_calculating = FALSE;
 	e = main_inI2_outR2_tail(pcrc, r);
 
-	if (ke->md != NULL) {
-		complete_v1_state_transition(&ke->md, e);
-		if (ke->md)
-			release_md(ke->md);
+	if (ke->ke_md != NULL) {
+		complete_v1_state_transition(&ke->ke_md, e);
+		if (ke->ke_md != NULL)
+			release_md(ke->ke_md);
 	}
 	reset_cur_state();
 }
@@ -1201,7 +1185,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 			struct ke_continuation,
 			"inI2_outR2 KE");
 
-		ke->md = md;
+		ke->ke_md = md;
 		set_suspended(st, md);
 
 		passert(!st->st_sec_in_use);
@@ -1221,10 +1205,10 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE,
 		DBG_log("main inI2_outR2: calculated DH finished"));
 
-	st = state_with_serialno(dh->serialno);
+	st = state_with_serialno(dh->dh_pcrc.pcrc_serialno);
 	if (st == NULL) {
 		libreswan_log("state %ld disappeared during crypto\n",
-			dh->serialno);
+			dh->dh_pcrc.pcrc_serialno);
 		return;
 	}
 
@@ -1258,7 +1242,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 				struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->md;
+	struct msg_digest *md = ke->ke_md;
 	struct state *st = md->st;
 
 	/* send CR if auth is RSA and no preloaded RSA public key exists*/
@@ -1383,8 +1367,8 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 			"main_inI2_outR2_tail");
 		stf_status e;
 
-		dh->md = NULL;
-		dh->serialno = st->st_serialno;
+		dh->dh_md = NULL;
+		dh->dh_pcrc.pcrc_serialno = st->st_serialno;
 		pcrc_init(&dh->dh_pcrc, main_inI2_outR2_calcdone);
 		passert(st->st_suspended_md == NULL);
 
@@ -1419,7 +1403,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 
 static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 				u_int16_t auth,
-				enum ipsec_cert_type certtype,
+				enum ike_cert_type certtype,
 				enum certpolicy policy,
 				bool gotcertrequest,
 				bool send_cert)
@@ -1432,7 +1416,7 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 
 		DBG_log("  I have RSA key: %s cert.type: %s ",
 			enum_showb(&oakley_auth_names, auth, esb, sizeof(esb)),
-			enum_show(&cert_type_names, certtype));
+			enum_show(&ike_cert_type_names, certtype));
 	});
 
 	DBG(DBG_CONTROL,
@@ -1499,15 +1483,14 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	 * to always send one.
 	 */
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.type != CERT_NONE &&
+		mycert.ty != CERT_NONE &&
 		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
 		  st->hidden_variables.st_got_certrequest) ||
-		 st->st_connection->spd.this.sendcert == cert_alwayssend ||
-		 st->st_connection->spd.this.sendcert == cert_forcedtype);
+		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
-			mycert.type,
+			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
 			send_cert);
@@ -1594,7 +1577,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		struct isakmp_cert cert_hd;
 		cert_hd.isacert_np =
 			(send_cr) ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.type;
+		cert_hd.isacert_type = mycert.ty;
 
 		libreswan_log("I am sending my cert");
 
@@ -1604,21 +1587,16 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 					&cert_pbs))
 			return STF_INTERNAL_ERROR;
 
-		if (mycert.forced) {
-			if (!out_chunk(mycert.u.blob, &cert_pbs,
-					"forced CERT"))
-				return STF_INTERNAL_ERROR;
-		} else {
-			if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
-				return STF_INTERNAL_ERROR;
-		}
+		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
+			return STF_INTERNAL_ERROR;
+
 		close_output_pbs(&cert_pbs);
 	}
 
 	/* CR out */
 	if (send_cr) {
 		libreswan_log("I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(mycert.type,
+		if (!ikev1_build_and_ship_CR(mycert.ty,
 					st->st_connection->spd.that.ca,
 					&md->rbody, ISAKMP_NEXT_SIG))
 			return STF_INTERNAL_ERROR;
@@ -1706,7 +1684,7 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 				err_t ugh)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->md;
+	struct msg_digest *md = dh->dh_md;
 	struct state *const st = md->st;
 	stf_status e;
 
@@ -1717,15 +1695,18 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
-		if (dh->md)
-			release_md(dh->md);
+		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 		return;
 	}
+
+	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == dh->md);
+	passert(st->st_suspended_md == dh->dh_md);
 	set_suspended(st, NULL); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -1738,10 +1719,10 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 		e = main_inR2_outI3_continue(md, r);
 	}
 
-	if (dh->md != NULL) {
-		complete_v1_state_transition(&dh->md, e);
-		if (dh->md)
-			release_md(dh->md);
+	if (dh->dh_md != NULL) {
+		complete_v1_state_transition(&dh->dh_md, e);
+		if (dh->dh_md != NULL)
+			release_md(dh->dh_md);
 	}
 	reset_cur_state();
 }
@@ -1761,8 +1742,10 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
 
 	dh = alloc_thing(struct dh_continuation, "aggr outR1 DH");
-	dh->md = md;
+	dh->dh_md = md;
 	set_suspended(st, md);
+	dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
+	
 	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);
 	return start_dh_secretiv(&dh->dh_pcrc, st,
 				st->st_import,
@@ -2059,14 +2042,14 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	mycert = st->st_connection->spd.this.cert;
 
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.type != CERT_NONE &&
+		mycert.ty != CERT_NONE &&
 		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
 		  st->hidden_variables.st_got_certrequest) ||
 		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
-			mycert.type,
+			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
 			send_cert);
@@ -2118,7 +2101,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 		struct isakmp_cert cert_hd;
 		cert_hd.isacert_np = ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.type;
+		cert_hd.isacert_type = mycert.ty;
 
 		libreswan_log("I am sending my cert");
 

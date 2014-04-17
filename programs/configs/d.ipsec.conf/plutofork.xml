@@ -1,8 +1,8 @@
   <varlistentry>
   <term><emphasis remap='B'>plutofork</emphasis></term>
   <listitem>
-<para>Wether<emphasis remap='I'>pluto</emphasis> will turn into a daemon
-by forking in the background, or wether it will remain on the foreground.
+<para>Whether<emphasis remap='I'>pluto</emphasis> will turn into a daemon
+by forking in the background, or whether it will remain on the foreground.
 Valid options are  <emphasis remap='I'>yes</emphasis> (the default) or
  <emphasis remap='I'>no</emphasis>.
 Older init systems, such as sysv initscripts, require that pluto forks

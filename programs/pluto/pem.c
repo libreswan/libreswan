@@ -41,7 +41,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "lswlog.h"
 #include "md5.h"
 #include "pem.h"

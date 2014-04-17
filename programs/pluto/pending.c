@@ -31,7 +31,6 @@
 #include <arpa/nameser.h>       /* missing from <resolv.h> on old systems */
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "kameipsec.h"
 
 #include "sysdep.h"
@@ -40,7 +39,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "log.h"
@@ -87,7 +85,7 @@ void add_pending(int whack_sock,
 	/* look for duplicate pending phase #2, skip add operation */
 	pp = host_pair_first_pending(c);
 
-	for ( p = pp ? *pp : NULL; p != NULL; p = p->next) {
+	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->isakmp_sa == isakmp_sa) {
 			DBG(DBG_CONTROL,
 			    DBG_log("Ignored already queued up pending Quick Mode with %s \"%s\"",

@@ -28,7 +28,6 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "sysdep.h"
 #include "lswalloc.h"
 #include "lswconf.h"
@@ -46,21 +45,6 @@
 #include "pkcs.h"
 #include "paths.h"
 
-/*
- * Filter eliminating the directory entries starting with .,
- * and also "CVS" (thus eliminating '.' and '..')
- */
-int file_select(
-#ifdef SCANDIR_HAS_CONST
-	const
-#endif
-	struct dirent *entry)
-{
-	return entry->d_name[0] != '.' &&
-		strcmp(entry->d_name, "CVS") != 0 &&
-		strcmp(entry->d_name, "RCS") != 0;
-
-}
 
 /*
  * AUTH CERTIFICATE chains
@@ -176,129 +160,7 @@ void add_authcert(x509cert_t *cert, u_char auth_flags)
 	unlock_authcert_list("add_authcert");
 }
 
-/*
- *  Loads authority certificates
- */
-void load_authcerts(const char *type, const char *path, u_char auth_flags)
-{
-	struct dirent **filelist;
-	char buf[ASN1_BUF_LEN];
-	char *save_dir;
-	int n;
-
-	/* change directory to specified path */
-	save_dir = getcwd(buf, ASN1_BUF_LEN);
-
-	if (chdir(path)) {
-		libreswan_log("Could not change to directory '%s': %s",
-			path, strerror(errno));
-	} else {
-		DBG(DBG_CONTROL,
-			DBG_log("Changed path to directory '%s'", path);
-			);
-		n = scandir(".", &filelist, (void *) file_select, alphasort);
-
-		if (n < 0) {
-			char buff[256];
-			strerror_r(errno, buff, 256);
-			libreswan_log("  scandir() ./ error: %s", buff);
-		} else {
-			while (n--) {
-				cert_t cert;
-
-				if (load_cert(filelist[n]->d_name,
-#ifdef SINGLE_CONF_DIR
-						FALSE,	/*
-							 * too verbose in
-							 * single conf dir
-							 */
-#else
-						TRUE,
-#endif
-						type, &cert))
-					add_authcert(cert.u.x509, auth_flags);
-
-				free(filelist[n]);
-			}
-			free(filelist);
-		}
-
-		/* restore directory path */
-		if (chdir(save_dir) != 0) {
-			char buff[256];
-			strerror_r(errno, buff, 256);
-			libreswan_log("  chdir() ./ error: %s", buff);
-		}
-	}
-
-}
-
 /********************** auth cert lists **********/
-
-/*
- * Checks if CA a is trusted by CA b
- */
-bool trusted_ca(chunk_t a, chunk_t b, int *pathlen)
-{
-	bool match = FALSE;
-	char abuf[ASN1_BUF_LEN], bbuf[ASN1_BUF_LEN];
-
-	dntoa(abuf, ASN1_BUF_LEN, a);
-	dntoa(bbuf, ASN1_BUF_LEN, b);
-
-	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("  trusted_ca called with a=%s b=%s", abuf, bbuf);
-		);
-
-	/* no CA b specified -> any CA a is accepted */
-	if (b.ptr == NULL) {
-		*pathlen = (a.ptr == NULL) ? 0 : MAX_CA_PATH_LEN;
-		return TRUE;
-	}
-
-	/* no CA a specified -> trust cannot be established */
-	if (a.ptr == NULL) {
-		*pathlen = MAX_CA_PATH_LEN;
-		return FALSE;
-	}
-
-	*pathlen = 0;
-
-	/* CA a equals CA b -> we have a match */
-	if (same_dn(a, b))
-		return TRUE;
-
-	/* CA a might be a subordinate CA of b */
-	lock_authcert_list("trusted_ca");
-
-	while ((*pathlen)++ < MAX_CA_PATH_LEN) {
-		x509cert_t *cacert = get_authcert(a, empty_chunk, empty_chunk,
-						AUTH_CA);
-
-		/* cacert not found or self-signed root cacert-> exit */
-		if (cacert == NULL || same_dn(cacert->issuer, a))
-			break;
-
-		/* does the issuer of CA a match CA b? */
-		match = same_dn(cacert->issuer, b);
-
-		/* we have a match and exit the loop */
-		if (match)
-			break;
-
-		/* go one level up in the CA chain */
-		a = cacert->issuer;
-	}
-
-	unlock_authcert_list("trusted_ca");
-
-	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("  trusted_ca returning with %s",
-			match ? "match" : "failed");
-		);
-
-	return match;
-}
 
 /*
  * Checks if the current certificate is revoked. It goes through the
@@ -470,9 +332,10 @@ err_t check_validity(const x509cert_t *cert, time_t *until)
 	if (current_time > cert->notAfter) {
 		char tbuf[TIMETOA_BUF];
 
-		DBG_log("  aftercheck : %ld > %ld",
-			(unsigned long)current_time,
-			(unsigned long)cert->notAfter);
+		DBG(DBG_X509 | DBG_PARSING,
+			DBG_log("  aftercheck : %ld > %ld",
+				(unsigned long)current_time,
+				(unsigned long)cert->notAfter));
 		return builddiag(
 			"X.509 certificate expired at %s (it is now %s)",
 			timetoa(&cert->notAfter, TRUE, tbuf,
@@ -483,28 +346,3 @@ err_t check_validity(const x509cert_t *cert, time_t *until)
 	}
 }
 
-/*
- * does our CA match one of the requested CAs?
- */
-bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
-			int *our_pathlen)
-{
-	/* if no ca is requested than any ca will match */
-	if (requested_ca == NULL) {
-		*our_pathlen = 0;
-		return TRUE;
-	}
-
-	*our_pathlen = MAX_CA_PATH_LEN + 1;
-
-	while (requested_ca != NULL) {
-		int pathlen;
-
-		if (trusted_ca(our_ca, requested_ca->name, &pathlen) &&
-			pathlen < *our_pathlen)
-			*our_pathlen = pathlen;
-		requested_ca = requested_ca->next;
-	}
-
-	return *our_pathlen <= MAX_CA_PATH_LEN;
-}

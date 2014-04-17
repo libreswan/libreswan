@@ -2,7 +2,7 @@
   <term><emphasis remap='B'>keep_alive</emphasis></term>
   <listitem>
 <para>The delay (in seconds) for NAT-T keep-alive packets, if these
-are enabled using <emphasis remap='B'>force_keepalive</emphasis>
+are enabled using <emphasis remap='B'>nat_keepalive</emphasis>
 This parameter may eventually become per-connection.</para>
   </listitem>
   </varlistentry>

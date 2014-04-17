@@ -40,21 +40,18 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 #include "kameipsec.h"
 
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
 #include "secrets.h"
 
 #include "defs.h"
-#include "ac.h"
 #include "connections.h" /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -86,24 +83,6 @@
 struct connection *connections = NULL;
 
 struct connection *unoriented_connections = NULL;
-
-
-static void unshare_ietfAttrList(ietfAttrList_t **listp)
-{
-	ietfAttrList_t *list = *listp;
-
-	while (list != NULL) {
-		ietfAttrList_t *el =
-			alloc_thing(ietfAttrList_t, "ietfAttrList");
-
-		el->attr = list->attr;
-		el->attr->count++;
-		el->next = NULL;
-		*listp = el;
-		listp = &el->next;
-		list = list->next;
-	}
-}
 
 /*
  * Find a connection by name.
@@ -217,11 +196,13 @@ void update_host_pairs(struct connection *c)
 static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
-	pfreeany(e->updown);
 	freeanychunk(e->ca);
 	release_cert(e->cert);
-	free_ietfAttrList(e->groups);
+	pfreeany(e->updown);
+	pfreeany(e->cert_filename);
 	pfreeany(e->host_addr_name);
+	pfreeany(e->xauth_password);
+	pfreeany(e->xauth_name);
 }
 
 static void delete_sr(struct spd_route *sr)
@@ -667,7 +648,6 @@ size_t format_end(char *buf,
 			p = add_str(endopts, sizeof(endopts), p, "+XC");
 		{
 			const char *send_cert = "+UNKNOWN";
-			char s[32];
 
 			switch (this->sendcert) {
 			case cert_neversend:
@@ -678,10 +658,6 @@ size_t format_end(char *buf,
 				break;
 			case cert_alwayssend:
 				send_cert = "+S=C";
-				break;
-			case cert_forcedtype:
-				snprintf(s, sizeof(s), "+S%d", this->cert.type);
-				send_cert = s;
 				break;
 			}
 			p = add_str(endopts, sizeof(endopts), p, send_cert);
@@ -733,23 +709,23 @@ static size_t format_connection(char *buf, size_t buf_len,
 			FALSE, c->policy);
 }
 
-static void unshare_connection_end_strings(struct end *e)
+/* spd_route's with end's get copied in xauth.c */
+void unshare_connection_end_strings(struct end *e)
 {
 	/* do "left" */
 	unshare_id_content(&e->id);
-	e->updown = clone_str(e->updown, "updown");
 
-	if(e->cert.type != CERT_NONE) {
+	if(e->cert.ty != CERT_NONE)
 		share_cert(e->cert);
-	}
+
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
-	if (e->xauth_name != NULL)
-		e->xauth_name = clone_str(e->xauth_name, "xauth name");
-
-	if (e->host_addr_name)
-		e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	e->updown = clone_str(e->updown, "updown");
+	e->xauth_name = clone_str(e->xauth_name, "xauth name");
+	e->xauth_password = clone_str(e->xauth_password, "xauth password");
+	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	e->cert_filename = clone_str(e->cert_filename, "cert_filename");
 }
 
 static void unshare_connection_strings(struct connection *c)
@@ -798,7 +774,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	zero(&dst->cert);
 
 	/* initialize end certificate */
-	dst->cert.type = CERT_NONE;
+	dst->cert.ty = CERT_NONE;
 
 	if (filename == NULL)
 		return;
@@ -808,7 +784,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 
 	{
 		/* load cert from file */
-		bool valid_cert = load_cert_from_nss(FALSE, filename, TRUE,
+		bool valid_cert = load_cert_from_nss(filename, TRUE,
 						"host cert", &cert);
 		if (!valid_cert) {
 			whack_log(RC_FATAL,
@@ -820,7 +796,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 		}
 	}
 
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_X509_SIGNATURE:
 		if (dst->id.kind == ID_FROMCERT || dst->id.kind == ID_NONE)
 			select_x509cert_id(cert.u.x509, &dst->id);
@@ -837,7 +813,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 				);
 			add_x509_public_key(&dst->id, cert.u.x509, valid_until,
 					DAL_LOCAL);
-			dst->cert.type = cert.type;
+			dst->cert.ty = cert.ty;
 			dst->cert.u.x509 = add_x509cert(cert.u.x509);
 
 			/* if no CA is defined, use issuer as default */
@@ -845,13 +821,8 @@ static void load_end_certificate(const char *filename, struct end *dst)
 				dst->ca = dst->cert.u.x509->issuer;
 		}
 		break;
-	case CERT_PGP:
-		whack_log(RC_FATAL,"PGP certificates not supported");
-		return;
 	default:
-		whack_log(RC_FATAL,"Unknown certificate type (%d) not "
-			"supported", cert.type);
-		return;
+		bad_case(cert.ty);
 	}
 
 }
@@ -894,24 +865,12 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 		}
 	}
 
-	if (src->sendcert == cert_forcedtype) {
-		/* certificate is a blob */
-		dst->cert.forced = TRUE;
-		dst->cert.type = src->certtype;
-		load_cert_from_nss(TRUE, src->cert, TRUE, "forced cert",
-				&dst->cert);
-		/* ??? what should we do on load_cert_from_nss failure? */
-	} else {
-		/* load local end certificate and extract ID, if any */
-		load_end_certificate(src->cert, dst);
-		/* ??? what should we do on load_end_certificate failure? */
-	}
+	/* load local end certificate and extract ID, if any */
+	load_end_certificate(src->cert, dst);
+	/* ??? what should we do on load_end_certificate failure? */
 
 	/* does id has wildcards? */
 	dst->has_id_wildcards = id_count_wildcards(&dst->id) > 0;
-
-	/* decode group attributes, if any */
-	decode_groups(src->groups, &dst->groups);
 
 	/* the rest is simple copying of corresponding fields */
 	dst->host_type = src->host_type;
@@ -1131,7 +1090,7 @@ static uint32_t gen_reqid(void)
 	return 0; /* never reached, here to make compiler happy */
 }
 
-static bool have_local_nss_certs(const struct whack_message *wm)
+static bool have_wm_certs(const struct whack_message *wm)
 {
 	if (wm->left.cert != NULL) {
 		if (!cert_exists_in_nss(wm->left.cert)) {
@@ -1156,7 +1115,6 @@ static bool have_local_nss_certs(const struct whack_message *wm)
 	return TRUE;
 }
 
-
 void add_connection(const struct whack_message *wm)
 {
 	struct alg_info_ike *alg_info_ike;
@@ -1167,70 +1125,63 @@ void add_connection(const struct whack_message *wm)
 	if (con_by_name(wm->name, FALSE) != NULL) {
 		loglog(RC_DUPNAME, "attempt to redefine connection \"%s\"",
 			wm->name);
+		return;
 	}
-#if 0
-	/*
-	 * A valid proposal done by others to which we need to respond is
-	 * something like  port 80 only, which is assymetric, eg
-	 * leftprotoport=6/80 rightprotoport=6/0 So this check is disabled,
-	 * but it has not been verified this assumption is not
-	 * assumed elsewhere.  -- Paul
-	 */
-	else if (wm->right.protocol != wm->left.protocol) {
-		/*
-		 * this should haven been diagnosed by whack
-		 * !!! overloaded use of RC_CLASH
-		 */
-		loglog(RC_CLASH,
-			"the protocol must be the same for leftport and "
-			"rightport");
+
+	/* pre-check for leftcert/rightcert availablility */
+	if (!have_wm_certs(wm))
+		return;
+
+	if ((wm->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
+		loglog(RC_FATAL,
+			"Failed to add connection \"%s\" with compress because kernel is not configured to do IPCOMP",
+			wm->name);
+		return;
 	}
-#endif
-	else if (wm->ike != NULL &&
-		((alg_info_ike =
-			alg_info_ike_create_from_str(wm->ike,
-						&ugh)) == NULL ||
-			alg_info_ike->alg_info_cnt == 0)) {
+
+	switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
+	case LEMPTY:
+	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
+		loglog(RC_NOALGO,
+			"Must specify either AH or ESP.\n");
+		return;
+	}
+
+	/* ??? illegible assignment inside condition */
+	if (wm->ike != NULL &&
+		((alg_info_ike = alg_info_ike_create_from_str(wm->ike,
+			&ugh)) == NULL || alg_info_ike->alg_info_cnt == 0)) {
+
 		if (alg_info_ike != NULL && alg_info_ike->alg_info_cnt == 0) {
 			loglog(RC_NOALGO,
-				"got 0 transforms for ike=\"%s\"",
-				wm->ike);
+				"got 0 transforms for ike=\"%s\"", wm->ike);
 			return;
 		}
 
-		loglog(RC_NOALGO,
-			"ike string error: %s",
+		loglog(RC_NOALGO, "ike string error: %s",
 			ugh ? ugh : "Unknown");
 		return;
-	} else if ((wm->ike == NULL || alg_info_ike != NULL) &&
+	} 
+
+	if ((wm->ike == NULL || alg_info_ike != NULL) &&
 		check_connection_end(&wm->right, &wm->left, wm) &&
-		check_connection_end(&wm->left, &wm->right, wm)) {
+		check_connection_end(&wm->left, &wm->right, wm))
+	{
+
+		/*
+		 * Connection values are set using strings in the whack
+		 * message, unshare_connection_strings() is responsible
+		 * for cloning the strings before the whack message is
+		 * destroyed.
+		 */
+
 		bool same_rightca, same_leftca;
 		struct connection *c = alloc_thing(struct connection,
 						"struct connection");
 
-		/*
-		 * Set this up so that we can log which end is which after
-		 * orient
-		 */
-		c->spd.this.left = TRUE;
-		c->spd.that.left = FALSE;
-
-		same_rightca = same_leftca = FALSE;
 		c->name = wm->name;
 		c->connalias = wm->connalias;
-
-#ifdef XAUTH_HAVE_PAM
-		c->pamh = NULL;
-#endif
-
-		c->cisco_dns_info = NULL;
-		c->modecfg_domain = NULL;
-		c->modecfg_banner = NULL;
-		c->dnshostname = NULL;
-		if (wm->dnshostname)
-			c->dnshostname = wm->dnshostname;
-
+		c->dnshostname = wm->dnshostname;
 		c->policy = wm->policy;
 
 		DBG(DBG_CONTROL,
@@ -1238,33 +1189,12 @@ void add_connection(const struct whack_message *wm)
 				c->name,
 				prettypolicy(c->policy)));
 
-		if ((c->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
-			loglog(RC_COMMENT,
-				"ignoring --compress in \"%s\" because KLIPS "
-				"is not configured to do IPCOMP",
-				c->name);
-		}
 
 		c->alg_info_esp = NULL;
-		if (wm->esp) {
+		if (wm->esp != NULL) {
 			DBG(DBG_CONTROL,
 				DBG_log("from whack: got --esp=%s",
 					wm->esp ? wm->esp : "NULL"));
-
-			if ( (c->policy & POLICY_AUTHENTICATE) &&
-				(c->policy & POLICY_ENCRYPT)) {
-				loglog(RC_NOALGO,
-					"Can only do AH, or ESP, not AH+ESP\n");
-				pfree(c);
-				return;
-			}
-			if ( !(c->policy & POLICY_AUTHENTICATE) &&
-				!(c->policy & POLICY_ENCRYPT)) {
-				loglog(RC_NOALGO,
-					"Must do at AH or ESP, not neither.\n");
-				pfree(c);
-				return;
-			}
 
 			if (c->policy & POLICY_ENCRYPT)
 				c->alg_info_esp = alg_info_esp_create_from_str(
@@ -1275,7 +1205,7 @@ void add_connection(const struct whack_message *wm)
 					wm->esp ? wm->esp : "", &ugh);
 
 			DBG(DBG_CONTROL,
-				{static char buf[256] = "<NULL>";
+				{static char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
@@ -1306,7 +1236,7 @@ void add_connection(const struct whack_message *wm)
 			c->alg_info_ike = alg_info_ike;
 
 			DBG(DBG_CRYPT | DBG_CONTROL,
-				char buf[256];
+				char buf[256]; /* XXX: fix magic value */
 				alg_info_snprint(buf, sizeof(buf),
 						(struct alg_info *)c->
 						alg_info_ike);
@@ -1330,6 +1260,7 @@ void add_connection(const struct whack_message *wm)
 				return;
 			}
 		}
+
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
@@ -1370,23 +1301,8 @@ void add_connection(const struct whack_message *wm)
 #ifdef HAVE_LABELED_IPSEC
 		c->loopback = wm->loopback;
 		c->labeled_ipsec = wm->labeled_ipsec;
-		c->policy_label = NULL;
-		if (wm->policy_label)
-			c->policy_label = clone_str(wm->policy_label,
-						"security label");
-		DBG(DBG_CONTROL,
-			DBG_log("loopback=%d, labeled_ipsec=%d;",
-				c->loopback, c->labeled_ipsec));
-		DBG(DBG_CONTROL,
-			DBG_log("policy_label=%s;", c->policy_label));
-#else
-		/* This makes our test results consistent */
-		DBG(DBG_CONTROL,
-			DBG_log("loopback=no, labeled_ipsec=no;"));
-		DBG(DBG_CONTROL, DBG_log("policy_label=unset;"));
+		c->policy_label = wm->policy_label;
 #endif
-
-
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
 		c->sa_priority = wm->sa_priority;
@@ -1401,12 +1317,15 @@ void add_connection(const struct whack_message *wm)
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
-		c->requested_ca = NULL;
 
-		/* pre-check for leftcert/rightcert availablility */
-		if (!have_local_nss_certs(wm))
-			return;
+		/*
+		 * Set this up so that we can log which end is which after
+		 * orient
+		 */
+		c->spd.this.left = TRUE;
+		c->spd.that.left = FALSE;
 
+		same_rightca = same_leftca = FALSE;
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
@@ -1439,18 +1358,8 @@ void add_connection(const struct whack_message *wm)
 
 		c->modecfg_dns1 = wm->modecfg_dns1;
 		c->modecfg_dns2 = wm->modecfg_dns2;
-		c->modecfg_domain = NULL;
-		c->modecfg_banner = NULL;
-		if (wm->modecfg_domain)
-			c->modecfg_domain = clone_str(wm->modecfg_domain,
-						"modecfgdomain");
-		if (wm->modecfg_banner)
-			c->modecfg_domain = clone_str(wm->modecfg_banner,
-						"modecfgbanner");
-		DBG(DBG_CONTROL,
-			DBG_log("modecfgdomain=%s;", c->modecfg_domain));
-		DBG(DBG_CONTROL,
-			DBG_log("modecfgbanner=%s;", c->modecfg_banner));
+		c->modecfg_domain = wm->modecfg_domain;
+		c->modecfg_banner = wm->modecfg_banner;
 
 		default_end(&c->spd.this, &c->spd.that.host_addr);
 		default_end(&c->spd.that, &c->spd.this.host_addr);
@@ -1486,6 +1395,10 @@ void add_connection(const struct whack_message *wm)
 		c->newest_isakmp_sa = SOS_NOBODY;
 		c->newest_ipsec_sa = SOS_NOBODY;
 		c->spd.eroute_owner = SOS_NOBODY;
+		c->cisco_dns_info = NULL; /* XXX: scratchpad - should be phased out */
+#ifdef XAUTH_HAVE_PAM
+		c->pamh = NULL;
+#endif
 
 		/* force all oppo connections to have a client */
 		if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -1551,6 +1464,7 @@ void add_connection(const struct whack_message *wm)
 				c->spd.that.has_client = TRUE;
 		}
 
+		/* ensure we allocate copies of all strings */
 		unshare_connection_strings(c);
 
 		(void)orient(c);
@@ -1588,12 +1502,10 @@ void add_connection(const struct whack_message *wm)
 							"updown");
 			tmp_spd->this.cert_filename = NULL;
 			tmp_spd->that.cert_filename = NULL;
-			tmp_spd->this.cert.type = 0;
-			tmp_spd->that.cert.type = 0;
+			tmp_spd->this.cert.ty = CERT_NONE;
+			tmp_spd->that.cert.ty = CERT_NONE;
 			tmp_spd->this.ca.ptr = NULL;
 			tmp_spd->that.ca.ptr = NULL;
-			tmp_spd->this.groups = NULL;
-			tmp_spd->that.groups = NULL;
 			tmp_spd->this.virt = NULL;
 			tmp_spd->that.virt = NULL;
 			tmp_spd->next = NULL;
@@ -1749,8 +1661,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		d->spd.that.has_id_wildcards = FALSE;
 	}
 	unshare_connection_strings(d);
-	unshare_ietfAttrList(&d->spd.this.groups);
-	unshare_ietfAttrList(&d->spd.that.groups);
 
 	d->kind = CK_INSTANCE;
 

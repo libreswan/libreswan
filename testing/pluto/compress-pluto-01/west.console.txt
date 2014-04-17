@@ -83,7 +83,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 000 "westnet-eastnet-compress":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "westnet-eastnet-compress":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "westnet-eastnet-compress":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet-compress":   policy: RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "westnet-eastnet-compress":   policy: RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-compress":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "westnet-eastnet-compress":   dpd: action:clear; delay:0; timeout:0;  
 000 "westnet-eastnet-compress":   newest ISAKMP SA: #0; newest IPsec SA: #0; 

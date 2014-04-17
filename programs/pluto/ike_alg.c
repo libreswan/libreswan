@@ -26,7 +26,6 @@
 #include <errno.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -257,7 +256,7 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 	}
 
 	if (hash_desc->common.name == NULL)
-		hash_desc->common.name = clone_str(alg_name, "hasher name");
+		hash_desc->common.name = clone_str(alg_name, "hasher name (ignore)");
 
 return_out:
 	if (ret == 0)

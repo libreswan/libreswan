@@ -425,6 +425,7 @@ int libreswan_log(const char *message, ...)
 			struct tm tm1, *timeinfo;
 			char fmt[32];
 			time_t rtime;
+
 			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
@@ -463,6 +464,7 @@ void loglog(int mess_no, const char *message, ...)
 			struct tm tm1, *timeinfo;
 			char fmt[32];
 			time_t rtime;
+
 			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
@@ -722,6 +724,7 @@ int DBG_log(const char *message, ...)
 			struct tm tm1, *timeinfo;
 			char fmt[32];
 			time_t rtime;
+
 			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
@@ -1017,19 +1020,19 @@ void log_state(struct state *st, enum state_kind new_state)
 	const char *tun = NULL, *p1 = NULL, *p2 = NULL;
 	enum state_kind save_state;
 
-	if (!pluto_stats_binary)
+	if (pluto_stats_binary == NULL)
 		return;
 
-	if (!st || !st->st_connection || !st->st_connection->name) {
+	if (st == NULL) {
 		DBG(DBG_CONTROLMORE, DBG_log(
 			    "log_state() called without state"));
 		return;
 	}
 
 	conn = st->st_connection;
-	if (!conn) {
+	if (conn == NULL || st->st_connection->name == NULL) {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("log_state() called without st->st_connection (this line cannot fire)"));
+		    DBG_log("log_state() called without st->st_connection or without st->st_connection->name"));
 		return;
 	}
 

@@ -60,8 +60,6 @@ static char tmp_err[512];
 				   STARTUP_ONDEMAND) { conn->options[KBF_AUTO] = \
 							    STARTUP_POLICY; }
 
-static void free_list(char **list);
-static char **new_list(char *value);
 
 #ifdef DNSSEC
 # include <unbound.h>
@@ -187,14 +185,14 @@ static bool error_append(char **perr, const char *fmt, ...)
 	va_end(args);
 
 	len = 1 + strlen(tmp_err) + (*perr ? strlen(*perr) : 0);
-	nerr = xmalloc(len);
+	nerr = alloc_bytes(len,"error_append len");
 	nerr[0] = '\0';
 	if (*perr)
 		strcpy(nerr, *perr);
 	strcat(nerr, tmp_err);
 
 	if (*perr)
-		free(*perr);
+		pfree(*perr);
 	*perr = nerr;
 
 	return TRUE;
@@ -216,6 +214,7 @@ static bool error_append(char **perr, const char *fmt, ...)
 		  conn->policy &= ~fl; \
 	  } }
 
+#define FREE_LIST(v) { if ((v) != NULL) { free_list(v); (v) = NULL; } }
 /**
  * Free the pointer list
  *
@@ -226,9 +225,9 @@ static void free_list(char **list)
 {
 	char **s;
 
-	for (s = list; *s; s++)
-		free(*s);
-	free(list);
+	for (s = list ; *s; s++)
+		pfreeany(*s);
+	pfree(list);
 }
 
 /**
@@ -246,10 +245,7 @@ static char **new_list(char *value)
 		return NULL;
 
 	/* avoid damaging original string */
-	val = xstrdup(value);
-	if (val == NULL)
-		return NULL;
-
+	val = clone_str(value, "new_list value");
 	end = val + strlen(val);
 
 	/* count number of items in string */
@@ -262,24 +258,19 @@ static char **new_list(char *value)
 		b = e + 1;
 	}
 	if (count == 0) {
-		free(val);
+		pfree(val);
 		return NULL;
 	}
 
-	nlist = (char **)malloc((count + 1) * sizeof(char *));
-	if (!nlist) {
-		free(val);
-		return NULL;
-	}
+	nlist = (char **)alloc_bytes((count + 1) * sizeof(char *), "new_list nlist");
 	for (b = val, count = 0; b < end; ) {
-		for (e = b; (*e != '\0'); e++)
-			;
+		e = b + strlen(b);
 		if (e != b)
-			nlist[count++] = xstrdup(b);
+			nlist[count++] = clone_str(b, "new_list item");
 		b = e + 1;
 	}
 	nlist[count] = NULL;
-	free(val);
+	pfree(val);
 	return nlist;
 }
 
@@ -313,35 +304,12 @@ static bool load_setup(struct starter_config *cfg,
 			/* all treated as strings for now */
 			assert(kw->keyword.keydef->field <
 			       sizeof(cfg->setup.strings));
-			if (cfg->setup.strings[kw->keyword.keydef->field])
-				free(cfg->setup.strings[kw->keyword.keydef->
+			pfreeany(cfg->setup.strings[kw->keyword.keydef->
 							field]);
 			cfg->setup.strings[kw->keyword.keydef->field] =
-				xstrdup(kw->string);
+				clone_str(kw->string, "kt_loose_enum kw->string");
 			cfg->setup.strings_set[kw->keyword.keydef->field] =
 				TRUE;
-			break;
-
-		case kt_appendstring:
-		case kt_appendlist:
-			assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
-			if (!cfg->setup.strings[kw->keyword.keydef->field]) {
-				cfg->setup.strings[kw->keyword.keydef->field] =
-					xstrdup(kw->string);
-				cfg->setup.strings_set[kw->keyword.keydef->
-						       field] = TRUE;
-			} else {
-				unsigned int kf = kw->keyword.keydef->field;
-				char *s = cfg->setup.strings[kf];
-				size_t old_len = strlen(s) + 1;	/* includes '\0' */
-				size_t add_len = 1 + strlen(kw->string);	/* includes ' ' */
-
-				s = xrealloc(s, old_len + add_len);
-				s[old_len - 1] = ' ';	/* overwrite '\0' */
-				memcpy(&s[old_len], kw->string, add_len - 1 + 1);	/* includes '\0' */
-				cfg->setup.strings[kf] = s;
-				cfg->setup.strings_set[kf] = TRUE;
-			}
 			break;
 
 		case kt_list:
@@ -371,6 +339,7 @@ static bool load_setup(struct starter_config *cfg,
 
 		case kt_comment:
 			break;
+
 		case kt_obsolete:
 			starter_log(LOG_LEVEL_INFO,
 				    "Warning: ignored obsolete keyword '%s'",
@@ -381,6 +350,9 @@ static bool load_setup(struct starter_config *cfg,
 				    "Warning: ignored obsolete keyword '%s'",
 				    kw->keyword.keydef->keyname);
 			break;
+		default:
+		    /* NEVER HAPPENS */
+		    break;
 		}
 	}
 
@@ -388,7 +360,7 @@ static bool load_setup(struct starter_config *cfg,
 
 	/* interfaces has to be chopped up */
 	if (cfg->setup.interfaces)
-		free_list(cfg->setup.interfaces);
+		FREE_LIST(cfg->setup.interfaces);
 	cfg->setup.interfaces = new_list(cfg->setup.strings[KSF_INTERFACES]);
 
 	return err;
@@ -443,9 +415,8 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		assert(end->strings[KSCF_IP] != NULL);
 
 		if (end->strings[KSCF_IP][0] == '%') {
-			if (end->iface)
-				free(end->iface);
-			end->iface = xstrdup(end->strings[KSCF_IP] + 1);
+			pfree(end->iface);
+			end->iface = clone_str(end->strings[KSCF_IP] + 1, "KH_IPADDR end->iface");
 			if (!starter_iface_find(end->iface, family,
 					       &end->addr,
 					       &end->nexthop))
@@ -513,9 +484,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		     ((strlen(value) >= 5) &&
 		      (strncmp(value, "vnet:", 5) == 0)) ) {
 			er = NULL;
-			end->virt = xstrdup(value);
-			if (!end->virt)
-				ERR_FOUND("can't alloc memory");
+			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
 			er = ttosubnet(value, 0, family, &(end->subnet));
@@ -577,9 +546,8 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	if (end->strings_set[KSCF_ID]) {
 		char *value = end->strings[KSCF_ID];
 
-		if (end->id)
-			free(end->id);
-		end->id = xstrdup(value);
+		pfreeany(end->id);
+		end->id = clone_str(value, "end->id");
 	}
 
 	if (end->options_set[KSCF_RSAKEY1]) {
@@ -598,16 +566,14 @@ static bool validate_end(struct ub_ctx *dnsctx,
 			if (end->strings[KSCF_RSAKEY1] != NULL) {
 				char *value = end->strings[KSCF_RSAKEY1];
 
-				if (end->rsakey1)
-					free(end->rsakey1);
-				end->rsakey1 = (unsigned char *)xstrdup(value);
+				pfreeany(end->rsakey1);
+				end->rsakey1 = (unsigned char *)clone_str(value,"end->rsakey1");
 			}
 			if (end->strings[KSCF_RSAKEY2] != NULL) {
 				char *value = end->strings[KSCF_RSAKEY2];
 
-				if (end->rsakey2)
-					free(end->rsakey2);
-				end->rsakey2 = (unsigned char *)xstrdup(value);
+				pfreeany(end->rsakey2);
+				end->rsakey2 = (unsigned char *)clone_str(value,"end->rsakey2");
 			}
 		}
 	}
@@ -662,13 +628,13 @@ static bool validate_end(struct ub_ctx *dnsctx,
 
 	/* copy certificate path name */
 	if (end->strings_set[KSCF_CERT])
-		end->cert = xstrdup(end->strings[KSCF_CERT]);
+		end->cert = clone_str(end->strings[KSCF_CERT], "KSCF_CERT");
 
 	if (end->strings_set[KSCF_CA])
-		end->ca = xstrdup(end->strings[KSCF_CA]);
+		end->ca = clone_str(end->strings[KSCF_CA], "KSCF_CA");
 
 	if (end->strings_set[KSCF_UPDOWN])
-		end->updown = xstrdup(end->strings[KSCF_UPDOWN]);
+		end->updown = clone_str(end->strings[KSCF_UPDOWN], "KSCF_UPDOWN");
 
 	if (end->strings_set[KSCF_PROTOPORT]) {
 		err_t ugh;
@@ -802,8 +768,7 @@ static bool translate_conn(struct starter_conn *conn,
 					break;
 				}
 			}
-			if ((*the_strings)[field])
-				free((*the_strings)[field]);
+			pfreeany((*the_strings)[field]);
 
 			if (kw->string == NULL) {
 				*error = tmp_err;
@@ -815,25 +780,28 @@ static bool translate_conn(struct starter_conn *conn,
 				break;
 			}
 
-			(*the_strings)[field] = xstrdup(kw->string);
+			(*the_strings)[field] = clone_str(kw->string,"kt_idtype kw->string");
 			(*set_strings)[field] = assigned_value;
 			break;
 
 		case kt_appendstring:
 		case kt_appendlist:
-			/* implicitely, this field can have multiple values */
+			/* implicitly, this field can have multiple values */
 			assert(kw->keyword.keydef->field < KEY_STRINGS_MAX);
-			if (!(*the_strings)[field]) {
-				(*the_strings)[field] = xstrdup(kw->string);
+			if ((*the_strings)[field] == NULL) {
+				(*the_strings)[field] = clone_str(kw->string, "kt_appendlist kw->string");
 			} else {
 				char *s = (*the_strings)[field];
-				size_t old_len = strlen(s) + 1;	/* includes '\0' */
-				size_t add_len = 1 + strlen(kw->string);	/* includes ' ' */
+				size_t old_len = strlen(s);	/* excludes '\0' */
+				size_t new_len = strlen(kw->string);
+				char *n;
 
-				s = xrealloc(s, old_len + add_len);
-				s[old_len - 1] = ' ';	/* overwrite '\0' */
-				memcpy(&s[old_len], kw->string, add_len - 1 + 1);	/* includes '\0' */
-				(*the_strings)[field] = s;
+				n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
+				memcpy(n, s, old_len);
+				n[old_len] = ' ';
+				memcpy(n + old_len + 1, kw->string, new_len + 1);	/* includes '\0' */
+				(*the_strings)[field] = n;
+				pfree(s);
 			}
 			(*set_strings)[field] = TRUE;
 			break;
@@ -870,10 +838,9 @@ static bool translate_conn(struct starter_conn *conn,
 			(*the_options)[field] = kw->number;
 			if (kw->number == LOOSE_ENUM_OTHER) {
 				assert(kw->keyword.string != NULL);
-				if ((*the_strings)[field])
-					free((*the_strings)[field]);
-				(*the_strings)[field] = xstrdup(
-					kw->keyword.string);
+				pfreeany((*the_strings)[field]);
+				(*the_strings)[field] = clone_str(
+					kw->keyword.string, "kt_loose_enum kw->keyword.string");
 			}
 			(*set_options)[field] = assigned_value;
 			break;
@@ -981,17 +948,17 @@ static bool load_conn(struct ub_ctx *dnsctx,
 
 	/* now, process the also's */
 	if (conn->alsos)
-		free_list(conn->alsos);
+		FREE_LIST(conn->alsos);
 	conn->alsos = new_list(conn->strings[KSF_ALSO]);
 
 	if (alsoprocessing && conn->alsos != NULL) {
-		int alsoplace;
-		int alsosize;
 		struct section_list *sl1;
 		/* note: for the duration of this loop body
 		 * conn->alsos is migrated to local variable alsos.
 		 */
 		char **alsos = conn->alsos;
+		int alsosize;
+		int alsoplace;
 
 		conn->alsos = NULL;
 
@@ -1030,20 +997,20 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			 */
 			if (sl1 && !sl1->beenhere) {
 				conn->strings_set[KSF_ALSO] = FALSE;
-				if (conn->strings[KSF_ALSO])
-					free(conn->strings[KSF_ALSO]);
+				pfreeany(conn->strings[KSF_ALSO]);
 				conn->strings[KSF_ALSO] = NULL;
 				sl1->beenhere = TRUE;
 
 				/* translate things, but do not replace earlier settings!*/
 				err |= translate_conn(conn, sl1, k_set, perr);
 
-				if (conn->strings[KSF_ALSO]) {
+				if (conn->strings[KSF_ALSO] != NULL) {
 					/* now, check out the KSF_ALSO, and extend list if we need to */
 					char **newalsos = new_list(
 						conn->strings[KSF_ALSO]);
 
-					if (newalsos && newalsos[0] != NULL) {
+					if (newalsos != NULL) {
+						char **ra;
 						int newalsoplace;
 
 						/* count them */
@@ -1053,12 +1020,14 @@ static bool load_conn(struct ub_ctx *dnsctx,
 						     newalsoplace++)
 							;
 
-						/* extend conn->alsos */
-						alsos = xrealloc(alsos,
-								 (alsosize +
-								  newalsoplace
-								  + 1) *
-								 sizeof(char *));
+						/* extend conn->alss */
+						ra = alloc_bytes((alsosize +
+							newalsoplace + 1) *
+							sizeof(char *),
+							"conn->alsos");
+						memcpy(ra, alsos, alsosize * sizeof(char *));
+						pfree(alsos);
+						alsos = ra;
 						for (newalsoplace = 0;
 						     newalsos[newalsoplace] !=
 						     NULL;
@@ -1070,17 +1039,16 @@ static bool load_conn(struct ub_ctx *dnsctx,
 								LOG_LEVEL_DEBUG,
 								"\twhile processing section '%s' added also=%s",
 								sl1->name,
-								newalsos[
-									newalsoplace]);
+								newalsos[newalsoplace]);
 
 							alsos[alsosize++] =
-								xstrdup(newalsos[
-										newalsoplace]);
+								clone_str(newalsos[newalsoplace],
+									"alsos");
 						}
 						alsos[alsosize] = NULL;
 					}
 
-					free_list(newalsos);
+					FREE_LIST(newalsos);
 				}
 			}
 			alsoplace++;
@@ -1193,45 +1161,45 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		       POLICY_IKEV2_ALLOW_NARROWING);
 
 	if (conn->strings_set[KSF_ESP])
-		conn->esp = xstrdup(conn->strings[KSF_ESP]);
+		conn->esp = clone_str(conn->strings[KSF_ESP],"KSF_ESP");
 
 #ifdef HAVE_LABELED_IPSEC
 	if (conn->strings_set[KSF_POLICY_LABEL])
-		conn->policy_label = xstrdup(conn->strings[KSF_POLICY_LABEL]);
+		conn->policy_label = clone_str(conn->strings[KSF_POLICY_LABEL],"KSF_POLICY_LABEL");
 	starter_log(LOG_LEVEL_DEBUG, "connection's  policy label: %s",
 		    conn->policy_label);
 #endif
 
 	if (conn->strings_set[KSF_IKE])
-		conn->ike = xstrdup(conn->strings[KSF_IKE]);
+		conn->ike = clone_str(conn->strings[KSF_IKE],"KSF_IKE");
 
 	if (conn->strings_set[KSF_MODECFGDNS1]) {
 		starter_log(LOG_LEVEL_DEBUG,
 			    "connection's  conn->modecfg_dns1 set to: %s",
 			    conn->strings[KSF_MODECFGDNS1] );
-		conn->modecfg_dns1 = xstrdup(conn->strings[KSF_MODECFGDNS1]);
+		conn->modecfg_dns1 = clone_str(conn->strings[KSF_MODECFGDNS1],"KSF_MODECFGDNS1");
 	}
 	if (conn->strings_set[KSF_MODECFGDNS2]) {
 		starter_log(LOG_LEVEL_DEBUG,
 			    "connection's  conn->modecfg_dns2 set to: %s",
 			    conn->strings[KSF_MODECFGDNS2] );
-		conn->modecfg_dns2 = xstrdup(conn->strings[KSF_MODECFGDNS2]);
+		conn->modecfg_dns2 = clone_str(conn->strings[KSF_MODECFGDNS2], "KSF_MODECFGDNS2");
 	}
 	if (conn->strings_set[KSF_MODECFGDOMAIN]) {
-		conn->modecfg_domain = xstrdup(conn->strings[KSF_MODECFGDOMAIN]);
+		conn->modecfg_domain = clone_str(conn->strings[KSF_MODECFGDOMAIN],"KSF_MODECFGDOMAIN");
 		starter_log(LOG_LEVEL_DEBUG,
 			    "connection's  conn->modecfg_domain set to: %s",
 			    conn->strings[KSF_MODECFGDOMAIN] );
 	}
 	if (conn->strings_set[KSF_MODECFGBANNER]) {
-		conn->modecfg_banner = xstrdup(conn->strings[KSF_MODECFGBANNER]);
+		conn->modecfg_banner = clone_str(conn->strings[KSF_MODECFGBANNER],"KSF_MODECFGBANNER");
 		starter_log(LOG_LEVEL_DEBUG,
 			    "connection's  conn->modecfg_banner set to: %s",
 			    conn->strings[KSF_MODECFGBANNER] );
 	}
 
 	if (conn->strings_set[KSF_CONNALIAS])
-		conn->connalias = xstrdup(conn->strings[KSF_CONNALIAS]);
+		conn->connalias = clone_str(conn->strings[KSF_CONNALIAS],"KSF_CONNALIAS");
 
 	if (conn->options_set[KBF_PHASE2]) {
 		conn->policy &= ~(POLICY_AUTHENTICATE | POLICY_ENCRYPT);
@@ -1330,62 +1298,50 @@ static void conn_default(struct starter_conn *conn,
 	/* unlink it */
 	zero(&conn->link);
 
-#define CONN_STR2(v, T) if (v) \
-		v = (T)xstrdup((char *)v)
-#define CONN_STR(v) if (v) \
-		v = xstrdup((char *)v)
-	CONN_STR(conn->left.iface);
-	CONN_STR(conn->left.id);
-	CONN_STR2(conn->left.rsakey1, unsigned char * );
-	CONN_STR2(conn->left.rsakey2, unsigned char * );
-	CONN_STR(conn->right.iface);
-	CONN_STR(conn->right.id);
-	CONN_STR2(conn->right.rsakey1, unsigned char *);
-	CONN_STR2(conn->right.rsakey2, unsigned char *);
+	conn->left.iface = clone_str(def->left.iface, "conn default left iface");
+	conn->left.id = clone_str(def->left.id, "conn default leftid");
+	conn->left.rsakey1 = clone_thing(def->left.rsakey1, "conn default left rsakey1");
+	conn->left.rsakey2 = clone_thing(def->left.rsakey2, "conn default left rsakey2");
+	conn->right.iface = clone_str(def->right.iface, "conn default right iface");
+	conn->right.id = clone_str(def->right.id, "conn default rightid");
+	conn->right.rsakey1 = clone_thing(def->right.rsakey1, "conn default right rsakey1");
+	conn->right.rsakey2 = clone_thing(def->right.rsakey2, "conn default right rsakey2");
 
 	for (i = 0; i < KSCF_MAX; i++) {
-		CONN_STR(conn->left.strings[i]);
-		CONN_STR(conn->right.strings[i]);
+		conn->left.strings[i] = clone_str(def->left.strings[i], "conn default left item");
+		conn->right.strings[i] = clone_str(def->right.strings[i], "conn default right item");
 	}
 	for (i = 0; i < KNCF_MAX; i++) {
 		conn->left.options[i] = def->left.options[i];
 		conn->right.options[i] = def->right.options[i];
 	}
 	for (i = 0; i < KSF_MAX; i++)
-		CONN_STR(conn->strings[i]);
+		conn->strings[i] = clone_str(def->strings[i], "conn default string item");
 	for (i = 0; i < KBF_MAX; i++)
 		conn->options[i] = def->options[i];
 
-	CONN_STR(conn->esp);
-	CONN_STR(conn->ike);
+	conn->esp = clone_str(def->esp, "conn default esp");
+	conn->ike = clone_str(def->ike, "conn default ike");
 
-	CONN_STR(conn->modecfg_dns1);
-	CONN_STR(conn->modecfg_dns2);
-	CONN_STR(conn->modecfg_domain);
-	CONN_STR(conn->modecfg_banner);
+	conn->modecfg_dns1 = clone_str(def->modecfg_dns1, "conn default dns1");
+	conn->modecfg_dns2 = clone_str(def->modecfg_dns2, "conn default dns2");
+	conn->modecfg_domain = clone_str(def->modecfg_domain, "conn default domain");
+	conn->modecfg_banner = clone_str(def->modecfg_banner, "conn default banner");
 #ifdef HAVE_LABELED_IPSEC
-	CONN_STR(conn->policy_label);
+	conn->policy_label = clone_str(def->policy_label, "conn default policy_label");
 #endif
 	conn->policy = def->policy;
-#undef CONN_STR
 }
 
-struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name,
-				    err_t *perr)
+struct starter_conn *alloc_add_conn(struct starter_config *cfg, char *name)
 {
 	struct starter_conn *conn;
 
-	conn = (struct starter_conn *)malloc(sizeof(struct starter_conn));
-	if (!conn) {
-		if (perr)
-			*perr = xstrdup("can't allocate mem in confread_load()");
-
-		return NULL;
-	}
+	conn = (struct starter_conn *)alloc_bytes(sizeof(struct starter_conn),"add_conn starter_conn");
 
 	zero(conn);
 	conn_default(conn, &cfg->conn_default);
-	conn->name = xstrdup(name);
+	conn->name = clone_str(name, "add conn name");
 	conn->desired_state = STARTUP_IGNORE;
 	conn->state = STATE_FAILED;
 
@@ -1408,9 +1364,7 @@ static bool init_load_conn(struct ub_ctx *dnsctx,
 
 	starter_log(LOG_LEVEL_DEBUG, "Loading conn %s", sconn->name);
 
-	conn = alloc_add_conn(cfg, sconn->name, perr);
-	if (conn == NULL)
-		return -1;
+	conn = alloc_add_conn(cfg, sconn->name);
 
 	connerr = load_conn(dnsctx, conn, cfgp, sconn, TRUE,
 			    defaultconn, resolvip, perr);
@@ -1449,15 +1403,8 @@ struct starter_config *confread_load(const char *file,
 	if (!cfgp)
 		return NULL;
 
-	cfg = (struct starter_config *)malloc(sizeof(struct starter_config));
-	if (!cfg) {
-		if (perr)
-			*perr = xstrdup("can't allocate mem in confread_load()");
+	cfg = (struct starter_config *)alloc_bytes(sizeof(struct starter_config),"starter_config cfg");
 
-
-		parser_free_conf(cfgp);
-		return NULL;
-	}
 	zero(cfg);
 
 	/**
@@ -1547,39 +1494,36 @@ struct starter_config *confread_load(const char *file,
 	return cfg;
 }
 
-#define FREE_STR(v) { if (v) { free(v); v = NULL; } }
-#define FREE_LST(v) { if (v) { free_list(v); v = NULL; } }
 static void confread_free_conn(struct starter_conn *conn)
 {
 	int i;
 
-	FREE_STR(conn->left.iface);
-	FREE_STR(conn->left.id);
-	FREE_STR(conn->left.rsakey1);
-	FREE_STR(conn->left.rsakey2);
-	FREE_STR(conn->right.iface);
-	FREE_STR(conn->right.id);
-	FREE_STR(conn->right.rsakey1);
-	FREE_STR(conn->right.rsakey2);
+	pfreeany(conn->left.iface);
+	pfreeany(conn->left.id);
+	pfreeany(conn->left.rsakey1);
+	pfreeany(conn->left.rsakey2);
+	pfreeany(conn->right.iface);
+	pfreeany(conn->right.id);
+	pfreeany(conn->right.rsakey1);
+	pfreeany(conn->right.rsakey2);
 	for (i = 0; i < KSCF_MAX; i++) {
-		FREE_STR(conn->left.strings[i]);
-		FREE_STR(conn->right.strings[i]);
+		pfreeany(conn->left.strings[i]);
+		pfreeany(conn->right.strings[i]);
 	}
 	for (i = 0; i < KSF_MAX; i++)
-		FREE_STR(conn->strings[i]);
+		pfreeany(conn->strings[i]);
 
-	FREE_STR(conn->connalias);
-	FREE_STR(conn->name);
+	pfreeany(conn->connalias);
+	pfreeany(conn->name);
 
-#ifdef ALG_PATCH
-	FREE_STR(conn->esp);
-	FREE_STR(conn->ike);
-#endif
-	FREE_STR(conn->modecfg_dns1);
-	FREE_STR(conn->modecfg_dns2);
+	pfreeany(conn->esp);
+	pfreeany(conn->ike);
 
-	FREE_STR(conn->left.virt);
-	FREE_STR(conn->right.virt);
+	pfreeany(conn->modecfg_dns1);
+	pfreeany(conn->modecfg_dns2);
+
+	pfreeany(conn->left.virt);
+	pfreeany(conn->right.virt);
 }
 
 void confread_free(struct starter_config *cfg)
@@ -1587,19 +1531,21 @@ void confread_free(struct starter_config *cfg)
 	int i;
 	struct starter_conn *conn, *c;
 
-	FREE_LST(cfg->setup.interfaces);
-	FREE_STR(cfg->setup.virtual_private);
-	FREE_STR(cfg->setup.listen);
+	FREE_LIST(cfg->setup.interfaces);
+	pfreeany(cfg->setup.virtual_private);
+	pfreeany(cfg->setup.listen);
+	pfree(cfg->ctlbase);
+
 	for (i = 0; i < KSF_MAX; i++)
-		FREE_STR(cfg->setup.strings[i]);
+		
+		pfreeany(cfg->setup.strings[i]);
 	confread_free_conn(&(cfg->conn_default));
 
 	for (conn = cfg->conns.tqh_first; conn != NULL; ) {
 		c = conn;
 		conn = conn->link.tqe_next;
 		confread_free_conn(c);
-		free(c);
+		pfree(c);
 	}
-	free(cfg);
+	pfree(cfg);
 }
-#undef FREE_STR

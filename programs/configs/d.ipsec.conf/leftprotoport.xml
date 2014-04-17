@@ -21,10 +21,10 @@ Note that this option is part of the proposal, so it cannot be arbitrarily left 
 if one end does not care about the traffic selection over this connection - both peers have
 to agree. The Port Selectors show up in the output of
 <emphasis remap='I'>ipsec eroute</emphasis> and <emphasis remap='I'>ipsec auto --status</emphasis>
-eg:<emphasis remap='I'>"l2tp": 193.110.157.131[@aivd.xelernace.com]:7/1701...%any:17/1701</emphasis>
+eg:<emphasis remap='I'>"l2tp": 193.110.157.131[@aivd.libreswan.org]:7/1701...%any:17/1701</emphasis>
 This option only filters outbound traffic.  Inbound traffic selection
 must still be based on firewall rules activated by an updown script. The
-variablees $PLUTO_MY_PROTOCOL, $PLUTO_PEER_PROTOCOL, $PLUTO_MY_PORT, and
+variables $PLUTO_MY_PROTOCOL, $PLUTO_PEER_PROTOCOL, $PLUTO_MY_PORT, and
 $PLUTO_PEER_PORT are available for use in <emphasis remap='I'>updown</emphasis>
 scripts. Older workarounds for bugs involved a setting of <emphasis remap='I'>17/0</emphasis>
 to denote <emphasis remap='I'>any single UDP port</emphasis> (not UDP port 0). Some clients, most notably OSX, uses a random high port, instead of port 1701 for L2TP.

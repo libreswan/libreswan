@@ -489,12 +489,12 @@ void init_vendorid(void)
 			vid->vid_len = strlen(vid->vid);
 		} else if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
-			vid->vid = clone_str(vid->data, "vid->data");
+			vid->vid = clone_str(vid->data, "vid->data (ignore)");
 			vid->vid_len = strlen(vid->data);
 		} else if (vid->flags & VID_MD5HASH) {
 			/** VendorID is a string to hash with MD5 **/
 			unsigned char *vidm = alloc_bytes(MD5_DIGEST_SIZE,
-							 "VendorID MD5");
+							 "VendorID MD5 (ignore)");
 			unsigned const char *d =
 				(unsigned const char *)vid->data;
 			MD5_CTX ctx;
@@ -509,7 +509,7 @@ void init_vendorid(void)
 			/** FreeS/WAN 2.00+ specific hash **/
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
-			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID");
+			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID (ignore)");
 			MD5_CTX ctx;
 			int i;
 

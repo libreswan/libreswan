@@ -15,6 +15,7 @@
  * for more details.
  */
 
+#include <pthread.h>	/* pthread.h must be first include file */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -28,12 +29,6 @@
 #include "constants.h"
 #include "lswlog.h"
 
-/*
- * leave enabled so support functions are always in libswan, and
- * pluto can be recompiled with just the leak detective changes
- * ??? this seems dangerous and stupid
- */
-#define LEAK_DETECTIVE
 #include "lswalloc.h"
 
 bool leak_detective = FALSE;	/* must not change after first alloc! */
@@ -50,7 +45,7 @@ void set_alloc_exit_log_func(exit_log_func_t func)
 /*
  * memory allocation
  *
- * LEAK_DETECTIVE puts a wrapper around each allocation and maintains
+ * --leak_detective puts a wrapper around each allocation and maintains
  * a list of live ones.  If a dead one is freed, an assertion MIGHT fail.
  * If the live list is currupted, that will often be detected.
  * In the end, report_leaks() is called, and the names of remaining
@@ -73,8 +68,11 @@ union mhdr {
 		unsigned long magic;
 		unsigned long size;
 	} i;	/* info */
-	unsigned long junk;	/* force maximal alignment */
+	unsigned long long junk;	/* force maximal alignment */
 };
+
+/* protects updates to the leak-detective linked list */
+static pthread_mutex_t leak_detective_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static union mhdr *allocs = NULL;
 
@@ -108,37 +106,44 @@ static void *alloc_bytes_raw(size_t size, const char *name)
 	if (leak_detective) {
 		p->i.name = name;
 		p->i.size = size;
-		p->i.older = allocs;
-		if (allocs != NULL)
-			allocs->i.newer = p;
-		allocs = p;
-		p->i.newer = NULL;
 		p->i.magic = LEAK_MAGIC;
+		p->i.newer = NULL;
+		{
+			pthread_mutex_lock(&leak_detective_mutex);
+			p->i.older = allocs;
+			if (allocs != NULL)
+				allocs->i.newer = p;
+			allocs = p;
+			pthread_mutex_unlock(&leak_detective_mutex);
+		}
 		return p + 1;
 	} else {
 		return p;
 	}
-
 }
 
 void pfree(void *ptr)
 {
-	union mhdr *p;
-
 	if (leak_detective) {
+		union mhdr *p;
+
 		passert(ptr != NULL);
 		p = ((union mhdr *)ptr) - 1;
 		passert(p->i.magic == LEAK_MAGIC);
-		if (p->i.older != NULL) {
-			passert(p->i.older->i.newer == p);
-			p->i.older->i.newer = p->i.newer;
-		}
-		if (p->i.newer == NULL) {
-			passert(p == allocs);
-			allocs = p->i.older;
-		} else {
-			passert(p->i.newer->i.older == p);
-			p->i.newer->i.older = p->i.older;
+		{
+			pthread_mutex_lock(&leak_detective_mutex);
+			if (p->i.older != NULL) {
+				passert(p->i.older->i.newer == p);
+				p->i.older->i.newer = p->i.newer;
+			}
+			if (p->i.newer == NULL) {
+				passert(p == allocs);
+				allocs = p->i.older;
+			} else {
+				passert(p->i.newer->i.older == p);
+				p->i.newer->i.older = p->i.older;
+			}
+			pthread_mutex_unlock(&leak_detective_mutex);
 		}
 		p->i.magic = ~LEAK_MAGIC;
 		free(p);
@@ -147,16 +152,16 @@ void pfree(void *ptr)
 	}
 }
 
-#ifdef LEAK_DETECTIVE
 void report_leaks(void)
 {
-	union mhdr
-	*p = allocs,
-	*pprev = NULL;
+	union mhdr *p,
+		*pprev = NULL;
 	unsigned long n = 0;
 	unsigned long numleaks = 0;
 	unsigned long total = 0;
 
+	pthread_mutex_lock(&leak_detective_mutex);
+	p = allocs;
 	while (p != NULL) {
 		passert(p->i.magic == LEAK_MAGIC);
 		passert(pprev == p->i.newer);
@@ -164,25 +169,30 @@ void report_leaks(void)
 		p = p->i.older;
 		n++;
 		if (p == NULL || pprev->i.name != p->i.name) {
-			if (n != 1)
-				libreswan_log("leak: %lu * %s, item size: %lu",
-					n, pprev->i.name, pprev->i.size);
-			else
-				libreswan_log("leak: %s, item size: %lu",
-					pprev->i.name, pprev->i.size);
-			numleaks += n;
-			total += pprev->i.size;
-			n = 0;
+			/* filter out one-time leaks we prefer to not fix */
+			if (strstr(pprev->i.name, "(ignore)") == NULL) {
+				if (n != 1)
+					libreswan_log("leak: %lu * %s, item size: %lu",
+						n, pprev->i.name, pprev->i.size);
+				else
+					libreswan_log("leak: %s, item size: %lu",
+						pprev->i.name, pprev->i.size);
+				numleaks += n;
+				total += pprev->i.size;
+				n = 0;
+			} else {
+				n = 0;
+			}
 		}
 	}
+	pthread_mutex_unlock(&leak_detective_mutex);
+
 	if (numleaks != 0)
 		libreswan_log("leak detective found %lu leaks, total size %lu",
 			numleaks, total);
 	else
 		libreswan_log("leak detective found no leaks");
-
 }
-#endif	/* !LEAK_DETECTIVE */
 
 void *alloc_bytes(size_t size, const char *name)
 {

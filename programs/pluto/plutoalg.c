@@ -22,7 +22,6 @@
 #include <libreswan.h>
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/passert.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -142,14 +141,15 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	/*      check for overflows     */
 	passert(cnt < elemsof(alg_info->ike));
 	/*	dont add duplicates	*/
-	for (i = 0; i < cnt; i++)
-		if (    ike_info[i].ike_ealg == ealg_id &&
+	for (i = 0; i < cnt; i++) {
+		if (ike_info[i].ike_ealg == ealg_id &&
 			(!ek_bits || ike_info[i].ike_eklen == ek_bits) &&
 			ike_info[i].ike_halg == aalg_id &&
 			(!ak_bits || ike_info[i].ike_hklen == ak_bits) &&
-			ike_info[i].ike_modp == modp_id
-			)
+			ike_info[i].ike_modp == modp_id) {
 			return;
+		}
+	}
 
 	ike_info[cnt].ike_ealg = ealg_id;
 	ike_info[cnt].ike_eklen = ek_bits;
@@ -282,7 +282,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 			       esp_info->esp_aalg_id,
 			       aklen);
 
-		if ( ret < 0 || (size_t)ret >= buflen) {
+		if (ret < 0 || (size_t)ret >= buflen) {
 			DBG_log("alg_info_snprint_esp: buffer too short for snprintf");
 			break;
 		}
@@ -332,7 +332,7 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 					"AUTH_ALGORITHM_HMAC_"),
 			       esp_info->esp_aalg_id, aklen);
 
-		if ( ret < 0 || (size_t)ret >= buflen) {
+		if (ret < 0 || (size_t)ret >= buflen) {
 			DBG_log("alg_info_snprint_ah: buffer too short for snprintf");
 			break;
 		}
@@ -403,7 +403,7 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 						 ike_info->ike_modp),
 						"OAKLEY_GROUP_"),
 				       ike_info->ike_modp);
-			if ( ret < 0 || (size_t)ret >= buflen) {
+			if (ret < 0 || (size_t)ret >= buflen) {
 				DBG_log("alg_info_snprint_ike: buffer too short for snprintf");
 				break;
 			}
