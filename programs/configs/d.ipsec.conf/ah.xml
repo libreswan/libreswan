@@ -9,7 +9,7 @@ The options must be suitable as a value of
 <option>--ah</option>
 option.
 The default is not to use AH. If for some (invalid) reason you still think you need AH, please
-use esp with the null encryption cipher instead. Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarilly supported here.
+use esp with the null encryption cipher instead. Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarily supported here.
 </para>
   </listitem>
   </varlistentry>

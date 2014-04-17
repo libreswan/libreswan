@@ -2,7 +2,7 @@
   <term><emphasis remap='B'>force_busy</emphasis></term>
   <listitem>
 <para>Emulate a <emphasis remap='I'>busy system</emphasis> and take
-counter meassures. The value can be  <emphasis remap='I'>no</emphasis>
+counter measures. The value can be  <emphasis remap='I'>no</emphasis>
 (the default) or  <emphasis remap='I'>yes</emphasis>. If enabled,
 pluto will be forced to be "busy". In this state, which happens when
 there is a Denial of Service attack,  pluto will use cookies

@@ -2,7 +2,7 @@
   <term><emphasis remap='B'>initial_contact</emphasis></term>
   <listitem>
 <para>whether to send an INITIAL_CONTACT payload to the peer we are initiating to, if we currently have no
-IPsec SA's up with that peer.  Acceptable values are: <emphasis remap='B'>no</emphasis> (the default) and
+IPsec SAs up with that peer.  Acceptable values are: <emphasis remap='B'>no</emphasis> (the default) and
 <emphasis remap='B'>yes</emphasis>.
 
 It is recommended to leave this option unset, unless the remote peer

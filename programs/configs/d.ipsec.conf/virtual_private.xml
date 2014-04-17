@@ -24,7 +24,7 @@ This parameter may eventually become per-connection. See also <emphasis remap='B
 started using 25.0.0.0/8 as their pre-NAT range. This range technically belongs
 to the Defence Interoperable Network Services Authority (DINSA), an agency of
 the Ministry of Defence of the United Kingdom. The network range seems to not
-have been announced for decades, which is probably why these organisasions
+have been announced for decades, which is probably why these organisations
 "borrowed" this range. To support roadwarriors on these 3G networks, you might
 have to add it to the virtual_private= line.
 </para>

@@ -74,7 +74,7 @@ RSA signature keys.</para>
 
 <para><emphasis remap='B'>First packet caching</emphasis> is only implemented
 for the KLIPS(NG) and MAST stacks. NETKEY returns POSIX-breaking responses,
-visiable as <emphasis remap='I'>connect: Resource temporarily unavailable</emphasis>
+visible as <emphasis remap='I'>connect: Resource temporarily unavailable</emphasis>
 errors. This affects Opportunistic Encryption and DPD. Functionality on the BSD
 and Windows stacks is unknown.</para>
 
