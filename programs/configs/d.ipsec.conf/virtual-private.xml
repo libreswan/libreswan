@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>virtual_private</emphasis></term>
+  <term><emphasis remap='B'>virtual-private</emphasis></term>
   <listitem>
 <para>contains the networks that are allowed as subnet= for the remote
 clients when using the <emphasis remap='B'>vhost:</emphasis> or <emphasis remap='B'>vnet:</emphasis>
@@ -15,7 +15,7 @@ and IPv6 is denoted as
 can exclude subnets by using the <emphasis remap='B'>!</emphasis>.
 For example, if the VPN server is giving access to 192.168.1.0/24,
 this option should be set to:
-<emphasis remap='I'>virtual_private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:!192.168.1.0/24</emphasis>.
+<emphasis remap='I'>virtual-private=%v4:10.0.0.0/8,%v4:192.168.0.0/16,%v4:172.16.0.0/12,%v4:!192.168.1.0/24</emphasis>.
 This parameter is only needed on the server side and not on the client side that resides behind the NAT router, as
 the client will just use its IP address for the inner IP setting.
 This parameter may eventually become per-connection. See also <emphasis remap='B'>leftsubnet=</emphasis>
@@ -26,7 +26,7 @@ to the Defence Interoperable Network Services Authority (DINSA), an agency of
 the Ministry of Defence of the United Kingdom. The network range seems to not
 have been announced for decades, which is probably why these organisations
 "borrowed" this range. To support roadwarriors on these 3G networks, you might
-have to add it to the virtual_private= line.
+have to add it to the virtual-private= line.
 </para>
 
   </listitem>

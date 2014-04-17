@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>remote_peer_type</emphasis></term>
+  <term><emphasis remap='B'>remote-peer-type</emphasis></term>
   <listitem>
 <para>Set the remote peer type. This can enable additional processing
 during the IKE negotiation.  Acceptable values are <emphasis

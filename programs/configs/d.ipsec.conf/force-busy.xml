@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>force_busy</emphasis></term>
+  <term><emphasis remap='B'>force-busy</emphasis></term>
   <listitem>
 <para>Emulate a <emphasis remap='I'>busy system</emphasis> and take
 counter measures. The value can be  <emphasis remap='I'>no</emphasis>

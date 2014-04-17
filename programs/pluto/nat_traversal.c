@@ -1166,7 +1166,7 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 void show_setup_natt()
 {
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "nat_traversal=%s, keep_alive=%d, nat_ikeport=%d",
+	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%d, nat-ikeport=%d",
 		nat_traversal_enabled ? "yes" : "no",
 		nat_kap,
 		pluto_natt_float_port);

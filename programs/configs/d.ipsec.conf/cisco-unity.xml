@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>cisco_unity</emphasis></term>
+  <term><emphasis remap='B'>cisco-unity</emphasis></term>
   <listitem>
 <para>whether to send a CISCO_UNITY payload to the peer we are initiating to.
 Acceptable values are: <emphasis remap='B'>no</emphasis> (the default) and

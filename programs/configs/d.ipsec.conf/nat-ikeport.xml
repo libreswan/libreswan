@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>nat_ikeport</emphasis></term>
+  <term><emphasis remap='B'>nat-ikeport</emphasis></term>
   <listitem>
 <para>The IKE NAT Traversal floating port (see RFC-3947) to listen on. The default
 value is <emphasis remap='B'>4500</emphasis>.

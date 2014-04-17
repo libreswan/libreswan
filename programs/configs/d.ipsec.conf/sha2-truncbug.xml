@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>sha2_truncbug</emphasis></term>
+  <term><emphasis remap='B'>sha2-truncbug</emphasis></term>
   <listitem>
 <para>The default ESP hash truncation for sha2_256 is 128 bits. Some
 IPsec implementations (Linux before 2.6.33, some Cisco (2811?) routers)
