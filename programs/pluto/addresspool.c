@@ -495,21 +495,6 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 	struct ip_pool **head = &pluto_pools;
 	struct ip_pool *pool;
 
-	/* Range must not include 0.0.0.0.
-	 * This restriction has the nice and subtle effect that
-	 * it prevents some calculations from overflowing.
-	 */
-	/* ??? someone should enforce this more politely. */
-	passert(!ip_address_isany(&pool_range->start));
-
-	/* We only handle IPv4 pools */
-	/* ??? someone should enforce this more politely. */
-	passert(ip_address_family(&pool_range->start) == AF_INET);
-
-	/* The range should be non-empty */
-	/* ??? someone should enforce this more politely. */
-	passert(ip_address_cmp(&pool_range->start, &pool_range->end) >= 0);
-
 	pool = find_addresspool(pool_range, head);
 	if (pool != NULL) {
 		/* re-use existing pool */

@@ -669,7 +669,11 @@ static bool validate_end(struct ub_ctx *dnsctx,
 			ERR_FOUND("bad end in %addresspool=%s", 
 					leftright, 
 					addresspool);
-
+		if(ip_address_cmp(&end->pool_range.start, 
+					&end->pool_range.end) < 0)
+			ERR_FOUND("invalid range in %addresspool=%s", 
+					leftright, 
+					addresspool);
 	}
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||
