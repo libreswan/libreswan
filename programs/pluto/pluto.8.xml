@@ -31,7 +31,7 @@
       <arg choice="plain"><replaceable>pluto</replaceable></arg>
       <arg choice="opt">--help</arg>
       <arg choice="opt">--version</arg>
-      <arg choice="opt">--leak_detective</arg>
+      <arg choice="opt">--leak-detective</arg>
       <arg choice="opt">--config <replaceable>filename</replaceable></arg>
       <arg choice="opt">--vendorid <replaceable>VID</replaceable></arg>
       <arg choice="opt">--nofork</arg>
@@ -1039,7 +1039,7 @@
       <option>--noretransmits</option>.</para>
 
       <para>If you are investigating a potential memory leak in pluto,
-      start pluto with the --leak_detective option.  Before the leak
+      start pluto with the --leak-detective option.  Before the leak
       causes the system or pluto to die, shut down pluto in the regular
       way. pluto will display a list of leaks it has detected.  </para>
 

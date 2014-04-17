@@ -138,7 +138,7 @@ static void usage(const char *mess)
 		" [--help]"
 		" [--version]"
 		" \\\n\t"
-		"[--leak_detective]"
+		"[--leak-detective]"
 		" [--config <filename>]"
 		" [--vendorid <vendorid>]"
 		" [--nofork]"
@@ -434,7 +434,7 @@ int main(int argc, char **argv)
 
 		/* MUST BE BEFORE ANY allocs */
 		for (i = 1; i < argc; ++i) {
-			if (streq(argv[i], "--leak_detective"))
+			if (streq(argv[i], "--leak-detective"))
 				leak_detective = TRUE;
 		}
 	}
@@ -462,7 +462,7 @@ int main(int argc, char **argv)
 			/* name, has_arg, flag, val */
 			{ "help", no_argument, NULL, 'h' },
 			{ "version", no_argument, NULL, 'v' },
-			{ "leak_detective", no_argument, NULL, 'X' },
+			{ "leak-detective", no_argument, NULL, 'X' },
 			{ "config", required_argument, NULL, 'z' },
 			{ "nofork", no_argument, NULL, 'd' },
 			{ "stderrlog", no_argument, NULL, 'e' },
@@ -607,7 +607,7 @@ int main(int argc, char **argv)
 			usage(NULL);
 			break;	/* not actually reached */
 
-		case 'X':	/* --leak_detective */
+		case 'X':	/* --leak-detective */
 			/*
 			 * Was already enabled at the start of main() because
 			 * we need to enable it before the first alloc()
@@ -1250,7 +1250,7 @@ int main(int argc, char **argv)
 		libreswan_log("secrets file: %s", pluto_shared_secrets_file);
 
 	libreswan_log(leak_detective ?
-		"leak_detective enabled" : "leak_detective disabled");
+		"leak-detective enabled" : "leak-detective disabled");
 
 	/* Check for SAREF support */
 #ifdef KLIPS_MAST
