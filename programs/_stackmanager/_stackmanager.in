@@ -103,13 +103,12 @@ startnetkey() {
     cryptomodules
 
     if [ -f ${ipsecpfkey} ]; then
-	echo -n "Warning: found KLIPS/MAST stack loaded - attempting to unload..." >&2
+	echo "Warning: found KLIPS/MAST stack loaded - attempting to unload..." >&2
 	stopklips
 	if [ -f ${ipsecpfkey} ]; then
 	    echo "FAILURE to unload KLIPS/MAST module" >&2
 	    exit 1
 	fi
-	echo "OK" >&2
     fi
 	
     if [ -f /proc/modules ]; then
@@ -246,13 +245,12 @@ startmast() {
 startklips() {
     cryptomodules
     if [ -f ${kamepfkey} ]; then
-	echo -n "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
+	echo "Warning: found NETKEY/XFRM stack loaded - attempting to unload..." >&2
 	stopnetkey --wait
 	if [ -f ${kamepfkey} ]; then
 	    echo "FAILURE to unload KLIPS/MAST module" >&2
 	    exit 1
 	fi
-	echo "OK" >&2
     fi
     if [ ! -f ${ipsecpfkey} ]; then
 	# KLIPS-related paths
