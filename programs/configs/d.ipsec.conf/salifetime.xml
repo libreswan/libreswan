@@ -26,7 +26,8 @@ although if they do not,
 there will be some clutter of superseded connections on the end
 which thinks the lifetime is longer. </para>
 <para>
-The keywords "keylife" and "lifetime" are aliases for "salifetime."
+The keywords "keylife" and "lifetime" are obsoleted aliases for "salifetime."
+Change your configs to use "salifetime" instead.
 </para>
   </listitem>
   </varlistentry>

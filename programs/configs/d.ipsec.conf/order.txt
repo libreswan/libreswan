@@ -58,7 +58,7 @@ d.ipsec.conf/dpdaction.xml
 d.ipsec.conf/pfs.xml
 d.ipsec.conf/pfsgroup.xml
 d.ipsec.conf/aggrmode.xml
-d.ipsec.conf/keylife.xml
+d.ipsec.conf/salifetime.xml
 d.ipsec.conf/rekey.xml
 d.ipsec.conf/rekeymargin.xml
 d.ipsec.conf/rekeyfuzz.xml
