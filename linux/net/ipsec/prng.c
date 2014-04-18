@@ -15,7 +15,9 @@
  */
 #include "libreswan.h"
 #ifndef __KERNEL__
+#ifndef SWAN_TESTING
 #error This file should only be used for building KLIPS
+#endif
 #endif
 
 #include "libreswan/ipsec_proto.h"
