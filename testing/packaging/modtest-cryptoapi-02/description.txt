@@ -1,6 +1,0 @@
-This test checks that KLIPS will compile as a module with the CRYPTOAPI
-code included, but with AES and 3DES turned off.
-
-This test includes 1DES support in the module.
-
-

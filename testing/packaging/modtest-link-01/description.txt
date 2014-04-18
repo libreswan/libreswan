@@ -1,3 +1,0 @@
-This test checks that KLIPS will compile as a module, on 2.4 and 2.6,
-and will do so without creating new unknown symbols.
-
