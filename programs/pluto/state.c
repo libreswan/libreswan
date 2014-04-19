@@ -75,7 +75,7 @@
  */
 
 u_int16_t pluto_port = IKE_UDP_PORT;                    /* Pluto's port */
-u_int16_t pluto_natt_float_port = NAT_T_IKE_FLOAT_PORT; /* Pluto's NAT-T port */
+u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT; /* Pluto's NAT-T port */
 
 /*
  * This file has the functions that handle the

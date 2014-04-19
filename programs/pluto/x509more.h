@@ -43,6 +43,7 @@ extern void load_authcerts(const char *type, const char *path,
 extern bool trusted_ca(chunk_t a, chunk_t b, int *pathlen);
 extern bool match_requested_ca(generalName_t *requested_ca,
                                chunk_t our_ca, int *our_pathlen);
+extern void select_x509cert_id(x509cert_t *cert, struct id *end_id);
 extern int filter_dotfiles(
 #ifdef SCANDIR_HAS_CONST
         const

@@ -902,8 +902,8 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->has_client = src->has_client;
 	dst->has_client_wildcard = src->has_client_wildcard;
 	dst->updown = src->updown;
-	dst->host_port = IKE_UDP_PORT;
-	if (src->host_port != IKE_UDP_PORT) {
+	dst->host_port = pluto_port;
+	if (src->host_port != pluto_port) {
 		dst->host_port = src->host_port;
 		dst->host_port_specific = TRUE;
 	}

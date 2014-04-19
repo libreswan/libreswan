@@ -345,10 +345,8 @@ static void get_internal_addresses(struct state *st, struct internal_addr *ia)
 			ia->dns[0] = c->modecfg_dns1;
 		if (!isanyaddr(&c->modecfg_dns2))
 			ia->dns[1] = c->modecfg_dns2;
-	} else
-
 #ifdef XAUTH_HAVE_PAM
-	if (c->xauthby == XAUTHBY_PAM) {
+	} else if (c->xauthby == XAUTHBY_PAM) {
 		if (c->pamh == NULL) {
 			/* Start PAM session, using 'pluto' as our PAM name */
 
@@ -404,8 +402,8 @@ static void get_internal_addresses(struct state *st, struct internal_addr *ia)
 			get_addr(c->pamh, "DNS1", &ia->dns[0]);
 			get_addr(c->pamh, "DNS2", &ia->dns[1]);
 		}
-	}
 #endif
+	}
 }
 
 /**

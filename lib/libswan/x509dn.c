@@ -1110,47 +1110,6 @@ void share_x509cert(x509cert_t *cert)
 }
 
 /*
- * choose either subject DN or a subjectAltName as connection end ID
- */
-void select_x509cert_id(x509cert_t *cert, struct id *end_id)
-{
-	bool copy_subject_dn = TRUE;	/* ID is subject DN */
-
-	if (end_id->kind != ID_NONE) {	/* check for matching subjectAltName */
-		generalName_t *gn = cert->subjectAltName;
-
-		while (gn != NULL) {
-			struct id id = empty_id;
-
-			gntoid(&id, gn);
-			if (same_id(&id, end_id)) {
-				/* take subjectAltName instead */
-				copy_subject_dn = FALSE;
-				break;
-			}
-			gn = gn->next;
-		}
-	}
-
-	if (copy_subject_dn) {
-		if (end_id->kind != ID_NONE &&
-			end_id->kind != ID_DER_ASN1_DN &&
-			end_id->kind != ID_FROMCERT) {
-			char buf[IDTOA_BUF];
-
-			idtoa(end_id, buf, IDTOA_BUF);
-			libreswan_log(
-				"  no subjectAltName matches ID '%s', replaced by subject DN",
-				buf);
-		}
-		end_id->kind = ID_DER_ASN1_DN;
-		end_id->name.len = cert->subject.len;
-		end_id->name.ptr = temporary_cyclic_buffer();
-		memcpy(end_id->name.ptr, cert->subject.ptr, cert->subject.len);
-	}
-}
-
-/*
  * check for equality between two key identifiers
  */
 bool same_keyid(chunk_t a, chunk_t b)

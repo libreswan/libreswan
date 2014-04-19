@@ -5,8 +5,9 @@ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 # confirm with a ping to east-in
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
+cp pluto.sysconfig /etc/sysconfig/pluto
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-ah
+ipsec auto --add porttest
 ipsec auto --status
 echo "initdone"

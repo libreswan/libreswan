@@ -805,7 +805,7 @@ int main(int argc, char **argv)
 					port <= 0 || port > 0x10000)
 					usage("<port-number> must be a number between 1 and 65535");
 
-				pluto_natt_float_port = port;
+				pluto_nat_port = port;
 			}
 			continue;
 
@@ -955,7 +955,7 @@ int main(int argc, char **argv)
 				}
 			}
 
-			pluto_natt_float_port =
+			pluto_nat_port =
 				cfg->setup.options[KBF_NATIKEPORT];
 			keep_alive = cfg->setup.options[KBF_KEEPALIVE];
 

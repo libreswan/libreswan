@@ -369,15 +369,7 @@ static int decode_esp(char *algname)
 {
 	int esp_alg;
 
-	if (!strcmp(algname, "3des-md5-96")) {
-		esp_alg = XF_ESP3DESMD596;
-	} else if (!strcmp(algname, "3des-sha1-96")) {
-		esp_alg = XF_ESP3DESSHA196;
-	} else if (!strcmp(algname, "3des")) {
-		esp_alg = XF_ESP3DES;
-#ifdef KERNEL_ALG
-	} else if ((alg_info =
-			    alg_info_esp_create_from_str(algname, &alg_err))) {
+	if ((alg_info = alg_info_esp_create_from_str(algname, &alg_err))) {
 		int esp_ealg_id, esp_aalg_id;
 
 		esp_alg = XF_OTHER_ALG;
@@ -428,7 +420,6 @@ static int decode_esp(char *algname)
 				exit(1);
 			}
 		}
-#endif          /* KERNEL_ALG */
 	} else {
 		fprintf(stderr,
 			"%s: Invalid encryption algorithm '%s' follows '--esp' option.\n",
@@ -1107,7 +1098,6 @@ int main(int argc, char *argv[])
 	}
 
 	switch (alg) {
-#ifdef KERNEL_ALG
 	case XF_OTHER_ALG:
 		/* validate keysizes */
 		if (proc_read_ok) {
@@ -1165,15 +1155,9 @@ int main(int argc, char *argv[])
 			}
 
 		}
-#endif          /* KERNEL_ALG */
 	case XF_IP4:
 	case XF_IP6:
 	case XF_DEL:
-	case XF_AHHMACMD5:
-	case XF_AHHMACSHA1:
-	case XF_ESP3DESMD596:
-	case XF_ESP3DESSHA196:
-	case XF_ESP3DES:
 	case XF_COMPDEFLATE:
 	case XF_COMPLZS:
 		if (!said_opt) {
@@ -1227,16 +1211,9 @@ int main(int argc, char *argv[])
 	case XF_DEL:
 	case XF_IP4:
 	case XF_IP6:
-	case XF_AHHMACMD5:
-	case XF_AHHMACSHA1:
-	case XF_ESP3DESMD596:
-	case XF_ESP3DESSHA196:
-	case XF_ESP3DES:
 	case XF_COMPDEFLATE:
 	case XF_COMPLZS:
-#ifdef KERNEL_ALG
 	case XF_OTHER_ALG:
-#endif          /* NO_KERNEL_ALG */
 		break;
 	default:
 		fprintf(stderr,
@@ -1274,15 +1251,6 @@ int main(int argc, char *argv[])
 	}
 
 	switch (alg) {
-	case XF_AHHMACMD5:
-	case XF_ESP3DESMD596:
-		authalg = SADB_AALG_MD5HMAC;
-		break;
-	case XF_AHHMACSHA1:
-	case XF_ESP3DESSHA196:
-		authalg = SADB_AALG_SHA1HMAC;
-		break;
-#ifdef KERNEL_ALG
 	case XF_OTHER_ALG:
 		authalg = esp_info->authalg;
 		if (debug) {
@@ -1290,24 +1258,16 @@ int main(int argc, char *argv[])
 				progname, authalg);
 		}
 		break;
-#endif          /* KERNEL_ALG */
-	case XF_ESP3DESMD5:
 	default:
 		authalg = SADB_AALG_NONE;
 	}
 	switch (alg) {
-	case XF_ESP3DES:
-	case XF_ESP3DESMD596:
-	case XF_ESP3DESSHA196:
-		encryptalg = SADB_EALG_3DESCBC;
-		break;
 	case XF_COMPDEFLATE:
 		encryptalg = SADB_X_CALG_DEFLATE;
 		break;
 	case XF_COMPLZS:
 		encryptalg = SADB_X_CALG_LZS;
 		break;
-#ifdef KERNEL_ALG
 	case XF_OTHER_ALG:
 		encryptalg = esp_info->encryptalg;
 		if (debug) {
@@ -1315,7 +1275,6 @@ int main(int argc, char *argv[])
 				progname, encryptalg);
 		}
 		break;
-#endif          /* KERNEL_ALG */
 	default:
 		encryptalg = SADB_EALG_NONE;
 	}
@@ -1483,36 +1442,11 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-#ifdef PFKEY_PROXY
-		anyaddr(address_family, &pfkey_address_p_ska);
-		if ((error = pfkey_address_build(&extensions[
-							 SADB_EXT_ADDRESS_PROXY
-						 ],
-						 SADB_EXT_ADDRESS_PROXY,
-						 0,
-						 0,
-						 sockaddrof(&
-							    pfkey_address_p_ska))))
-		{
-			fprintf(stderr,
-				"%s: Trouble building address_p extension, error=%d.\n",
-				progname, error);
-			pfkey_extensions_free(extensions);
-			exit(1);
-		}
-#endif          /* PFKEY_PROXY */
-
 		switch (alg) {
-#ifdef KERNEL_ALG
 		/*	Allow no auth ... after all is local root decision 8)  */
 		case XF_OTHER_ALG:
 			if (!authalg)
 				break;
-#endif                  /* KERNEL_ALG */
-		case XF_AHHMACMD5:
-		case XF_ESP3DESMD596:
-		case XF_AHHMACSHA1:
-		case XF_ESP3DESSHA196:
 			if ((error = pfkey_key_build(&extensions[
 							     SADB_EXT_KEY_AUTH],
 						     SADB_EXT_KEY_AUTH,
@@ -1535,12 +1469,7 @@ int main(int argc, char *argv[])
 		}
 
 		switch (alg) {
-		case XF_ESP3DES:
-		case XF_ESP3DESMD596:
-		case XF_ESP3DESSHA196:
-#ifdef KERNEL_ALG
 		case XF_OTHER_ALG:
-#endif                  /* KERNEL_ALG */
 			if ((error = pfkey_key_build(&extensions[
 							     SADB_EXT_KEY_ENCRYPT
 						     ],
@@ -1563,47 +1492,6 @@ int main(int argc, char *argv[])
 			break;
 		}
 
-#ifdef PFKEY_IDENT /* GG: looks wierd, not touched */
-		if ((pfkey_ident_build(&extensions[SADB_EXT_IDENTITY_SRC],
-				       SADB_EXT_IDENTITY_SRC,
-				       SADB_IDENTTYPE_PREFIX,
-				       0,
-				       strlen(pfkey_ident_s_ska),
-				       pfkey_ident_s_ska))) {
-			fprintf(stderr,
-				"%s: Trouble building ident_s extension, error=%d.\n",
-				progname, error);
-			pfkey_extensions_free(extensions);
-			exit(1);
-		}
-		if (subnettoa(addr, mask, format, pfkey_ident_s_ska,
-			      sizeof(pfkey_ident_s_ska) ) !=
-		    sizeof(pfkey_ident_s_ska) )
-			exit(1);
-
-		if ((error = pfkey_ident_build(&extensions[
-						       SADB_EXT_IDENTITY_DST],
-					       SADB_EXT_IDENTITY_DST,
-					       SADB_IDENTTYPE_PREFIX,
-					       0,
-					       strlen(pfkey_ident_d_ska),
-					       pfkey_ident_d_ska))) {
-			fprintf(stderr,
-				"%s: Trouble building ident_d extension, error=%d.\n",
-				progname, error);
-			pfkey_extensions_free(extensions);
-			exit(1);
-		}
-		if (subnettoa(addr, mask, format, pfkey_ident_d_ska,
-			      sizeof(pfkey_ident_d_ska) ) !=
-		    sizeof(pfkey_ident_d_ska) )
-			exit(1);
-
-		if (debug) {
-			fprintf(stdout, "%s: ident extensions assembled.\n",
-				progname);
-		}
-#endif          /* PFKEY_IDENT */
 	}
 
 	if (natt != 0) {

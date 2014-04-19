@@ -1014,9 +1014,9 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		DBG_log("nat_traversal & NAT_T_DETECTED %" PRIxLSET,
 			(st->hidden_variables.st_nat_traversal &
 				NAT_T_DETECTED));
-		DBG_log(" st_localport != pluto_natt_float_port (%" PRIu16 " != %" PRIu16 ")",
+		DBG_log(" st_localport != pluto_nat_port (%" PRIu16 " != %" PRIu16 ")",
 			st->st_localport,
-			pluto_natt_float_port););
+			pluto_nat_port););
 
 	/*
 	 * If we're initiator and NAT-T is detected, we
@@ -1026,13 +1026,13 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 			(st->st_state == STATE_QUICK_I1) ||
 			(st->st_state == STATE_AGGR_I2)) &&
 		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-		(st->st_localport != pluto_natt_float_port)) {
+		(st->st_localport != pluto_nat_port)) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: floating to port %d",
-				pluto_natt_float_port));
+				pluto_nat_port));
 
-		st->st_localport  = pluto_natt_float_port;
-		st->st_remoteport = pluto_natt_float_port;
+		st->st_localport  = pluto_nat_port;
+		st->st_remoteport = pluto_nat_port;
 
 		/*
 		 * Also update pending connections or they will be deleted if
@@ -1161,7 +1161,7 @@ void show_setup_natt()
 	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%d, nat-ikeport=%d",
 		nat_traversal_enabled ? "yes" : "no",
 		nat_kap,
-		pluto_natt_float_port);
+		pluto_nat_port);
 }
 
 void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
@@ -1268,9 +1268,9 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 			& NAT_T_DETECTED)) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: floating to port %s:%d",
-				ip_str(&md->sender),pluto_natt_float_port));
-		st->st_localport  = pluto_natt_float_port;
-		st->st_remoteport = pluto_natt_float_port;
+				ip_str(&md->sender),pluto_nat_port));
+		st->st_localport  = pluto_nat_port;
+		st->st_remoteport = pluto_nat_port;
 
 		nat_traversal_change_port_lookup(NULL, st);
 	}
