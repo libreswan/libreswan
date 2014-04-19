@@ -20,7 +20,7 @@
 
 struct ip_pool *install_addresspool(const ip_range *pool_range);
 err_t get_addr_lease(const struct connection *c, struct internal_addr *ia /*result*/);
-bool rel_lease_addr(const struct connection *c);
+void rel_lease_addr(const struct connection *c);
 
 #ifdef NEVER
 extern void unreference_addresspool(struct ip_pool *pool);
