@@ -133,7 +133,7 @@ DISTSRC = \
 	ike_alg_aes.c \
 	rcv_whack.c rcv_whack.h \
 	${EXTRA_CRYPTO_SRCS} ike_alg_sha2.c \
-	log.c log.h \
+	log.c log.h lswtime.c \
 	plutomain.c plutoalg.c \
 	pluto_crypt.c crypt_utils.c pluto_crypt.h \
 	crypt_ke.c crypt_dh.c crypt_start_dh.c \
@@ -159,7 +159,7 @@ DIST = $(DISTMISC) $(DISTSRC)
 
 OBJSPLUTO  = connections.o initiate.o terminate.o
 OBJSPLUTO += pending.o cookie.o crypto.o defs.o
-OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
+OBJSPLUTO += foodgroups.o log.o lswtime.o state.o plutomain.o plutoalg.o server.o
 OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
 OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o

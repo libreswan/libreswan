@@ -1,5 +1,6 @@
 /* time related functions
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2014 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,9 +17,6 @@
 #define _LSWTIME_H_
 
 extern time_t now(void);        /* careful version of time(2) */
-
-/* display a date either in local or UTC time */
-extern char* timetoa(const time_t *timep, bool utc, char *buf, size_t blen);
 
 #endif
 

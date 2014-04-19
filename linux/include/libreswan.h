@@ -29,6 +29,10 @@ typedef int bool;
 # define FALSE 0
 #endif
 
+#define UNDEFINED_TIME  0
+/* size of timetoa string buffer */
+#define TIMETOA_BUF     30
+
 #include <stddef.h>
 
 /*
@@ -336,6 +340,7 @@ extern size_t splitkeytoid(const unsigned char *e, size_t elen,
 #define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 extern err_t ttoprotoport(char *src, size_t src_len, u_int8_t *proto, u_int16_t *port,
 		   int *has_port_wildcard);
+extern char* timetoa(const time_t *timep, bool utc, char *buf, size_t blen);
 
 /* initializations */
 extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,
