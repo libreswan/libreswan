@@ -55,6 +55,7 @@
 #include "libreswan/pfkey_debug.h"
 
 /* array of bitmaps to specify payloads for extensions */
+/* ??? why does each bitmap include 1ULL << SADB_EXT_RESERVED? */
 
 pfkey_ext_track extensions_bitmaps
 		[2 /* inbound, outbound */]
@@ -262,16 +263,12 @@ pfkey_ext_track extensions_bitmaps
 				1ULL << K_SADB_EXT_SA |
 				1ULL << K_SADB_EXT_ADDRESS_SRC |
 				1ULL << K_SADB_EXT_ADDRESS_DST
-/*| 1ULL<<K_SADB_EXT_KEY_AUTH*/
-/*| 1ULL<<K_SADB_EXT_KEY_ENCRYPT*/
 				,
 /* K_SADB_ADD */
 			1ULL << K_SADB_EXT_RESERVED |
 				1ULL << K_SADB_EXT_SA |
 				1ULL << K_SADB_EXT_ADDRESS_SRC |
 				1ULL << K_SADB_EXT_ADDRESS_DST
-/*| 1ULL<<K_SADB_EXT_KEY_AUTH*/
-/*| 1ULL<<K_SADB_EXT_KEY_ENCRYPT*/
 				,
 /* K_SADB_DELETE */
 			1ULL << K_SADB_EXT_RESERVED |
@@ -350,12 +347,9 @@ pfkey_ext_track extensions_bitmaps
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_GRPSA */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_DST
-/*| 1ULL<<K_SADB_X_EXT_SATYPE2*/
-/*| 1ULL<<K_SADB_X_EXT_SA2*/
-/*| 1ULL<<K_SADB_X_EXT_ADDRESS_DST2*/
 				,
 /* SADB_X_ADDFLOW */
 			1ULL << SADB_EXT_RESERVED |
