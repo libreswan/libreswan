@@ -103,6 +103,8 @@ main(int argc, char *argv[]) {
 	do_test("sha", PROTO_IPSEC_AH);
 	do_test("sha1", PROTO_IPSEC_AH);
 	do_test("sha2", PROTO_IPSEC_AH);
+	/* these should fail - but not by passert() */
+	do_test("aes-sha1", PROTO_IPSEC_AH);
 	do_test("vanityhash1", PROTO_IPSEC_AH);
 
 #ifdef WORK_IB_PROGRESS
