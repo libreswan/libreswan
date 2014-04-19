@@ -584,8 +584,8 @@ static enum routability could_route(struct connection *c)
 
 	/* if routing would affect IKE messages, reject */
 	if (kern_interface != NO_KERNEL
-	    && c->spd.this.host_port != pluto_natt_float_port
-	    && c->spd.this.host_port != IKE_UDP_PORT &&
+	    && c->spd.this.host_port != pluto_nat_port
+	    && c->spd.this.host_port != pluto_port &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
 		loglog(RC_LOG_SERIOUS,
 		       "cannot install route: peer is within its client");

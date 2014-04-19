@@ -423,7 +423,7 @@ struct state {
 /* global variables */
 
 extern u_int16_t pluto_port;            /* Pluto's port */
-extern u_int16_t pluto_natt_float_port; /* Pluto's NATT floating port */
+extern u_int16_t pluto_nat_port; /* Pluto's NATT floating port */
 
 extern bool states_use_connection(struct connection *c);
 

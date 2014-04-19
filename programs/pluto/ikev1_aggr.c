@@ -230,7 +230,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 #if 0
 	if (c == NULL && md->iface->ike_float) {
 		c = find_host_connection(&md->iface->addr,
-					 pluto_natt_float_port,
+					 pluto_nat_port,
 					 &md->sender, md->sender_port, LEMPTY);
 	}
 #endif

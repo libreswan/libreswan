@@ -2142,7 +2142,7 @@ add_entry:
 						AF_INET) {
 						fd = create_socket(ifp,
 								v->name,
-								pluto_natt_float_port);
+								pluto_nat_port);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(
@@ -2154,9 +2154,9 @@ add_entry:
 						id->id_count++;
 
 						q->ip_addr = ifp->addr;
-						setportof(htons(pluto_natt_float_port),
-							&q->ip_addr);
-						q->port = pluto_natt_float_port;
+						setportof(htons(pluto_nat_port),
+							  &q->ip_addr);
+						q->port = pluto_nat_port;
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;
