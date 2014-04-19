@@ -4,7 +4,7 @@
 <para>how long the keying channel of a connection (buzzphrase:  &ldquo;ISAKMP SA&rdquo;)
 should last before being renegotiated;
 acceptable values as for
-<emphasis remap='B'>keylife</emphasis>
+<emphasis remap='B'>salifetime</emphasis>
 (default set by
 <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 currently
@@ -12,6 +12,6 @@ currently
 maximum
 <emphasis remap='B'>24h</emphasis>).
 The two-ends-disagree case is similar to that of
-<emphasis remap='B'>keylife</emphasis>.</para>
+<emphasis remap='B'>salifetime</emphasis>.</para>
   </listitem>
   </varlistentry>

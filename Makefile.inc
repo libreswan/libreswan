@@ -211,6 +211,10 @@ BISONOSFLAGS?=
 NSSFLAGS?=$(shell pkg-config --cflags nss)
 NSSLIBS?=$(shell pkg-config --libs nss)
 
+GCC?=gcc
+#GCC=clang
+MAKE?=make
+
 ifeq ($(ARCH),i686)
 GCCM?=-m32
 endif

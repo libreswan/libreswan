@@ -9,8 +9,8 @@ if omitted, essentially assumed to be <emphasis remap='I'>left</emphasis><filena
 signifying that the left end of the connection goes to the left participant only</para>
 <para>It supports two magic shorthands <emphasis remap='I'>vhost:</emphasis> and
 <emphasis remap='I'>vnet:</emphasis>, which can list subnets in the same syntax as 
-<emphasis remap='I'>virtual_private</emphasis>. The value <emphasis remap='I'>%priv</emphasis>
-expands to the networks specified in <emphasis remap='I'>virtual_private</emphasis>. The value
+<emphasis remap='I'>virtual-private</emphasis>. The value <emphasis remap='I'>%priv</emphasis>
+expands to the networks specified in <emphasis remap='I'>virtual-private</emphasis>. The value
 <emphasis remap='I'>%no</emphasis> means no subnet. A common use for allowing roadwarriors to
 come in on public IPs or via accepted NATed networks from RFC1918 is to use
 <emphasis remap='I'>leftsubnet=vhost:%no,%priv</emphasis>. The <emphasis remap='I'>vnet:</emphasis>

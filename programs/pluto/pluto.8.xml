@@ -43,11 +43,9 @@
       <arg choice="opt">--use-netkey</arg>
       <arg choice="opt">--use-nostack</arg>
       <arg choice="opt">--uniqueids</arg>
-      <arg choice="opt">--nat_traversal</arg>
-      <arg choice="opt">--virtual_private <replaceable>network_list</replaceable></arg>
-      <arg choice="opt">--keep_alive <replaceable>delay_sec</replaceable></arg>
-      <arg choice="opt">--force_busy</arg>
-      <arg choice="opt">--disable_port_floating</arg>
+      <arg choice="opt">--virtual-private <replaceable>network_list</replaceable></arg>
+      <arg choice="opt">--keep-alive <replaceable>delay_sec</replaceable></arg>
+      <arg choice="opt">--force-busy</arg>
       <arg choice="opt">--nocrsend</arg>
       <arg choice="opt">--strictcrlpolicy</arg>
       <arg choice="opt">--crlcheckinterval</arg>
@@ -65,7 +63,7 @@
       <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--noretransmits</arg>
       <arg choice="opt">--statsbin <replaceable>filename</replaceable></arg>
-      <arg choice="opt">--secctx_attr_value <replaceable>number</replaceable></arg>
+      <arg choice="opt">--secctx-attr-value <replaceable>number</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -931,21 +929,20 @@
       </para>
 
       <para>Pluto supports the NAT-Traversal drafts and the final standard,
-      RFC 3947, if the <option>--nat_traversal</option> is specified. The
+      RFC 3947. The
       allowed range behind the NAT routers is submitted using the
-      <option>--virtual_private</option> option. See <citerefentry>
+      <option>--virtual-private</option> option. See <citerefentry>
           <refentrytitle>ipsec.conf</refentrytitle>
 
           <manvolnum>5</manvolnum>
         </citerefentry> for the syntax. The option
-      <option>--force_keepalive</option> forces the sending of the <emphasis
+      <option>--force-keepalive</option> forces the sending of the <emphasis
       remap="I">keep-alive packets</emphasis>, which are send to prevent the
       NAT router from closing its port when there is not enough traffic on the
-      IPsec connection. The <option>--keep_alive</option> sets the delay (in
+      IPsec connection. The <option>--keep-alive</option> sets the delay (in
       seconds) of these keep-alive packets. The newer NAT-T standards support
       <emphasis remap="I">port floating</emphasis>, and Libreswan enables this
-      per default. It can be disabled using the
-      <option>--disable_port_floating</option> option.</para>
+      per default.
 
       <para>Pluto supports the use of X.509 certificates and sends it
       certificate when needed. This can confuse IKE implementations that do
@@ -1830,9 +1827,7 @@
             when a broken IPsec peer does not properly recognise NAT, it can
             be useful to force RFC-3948 encapsulation using this option. It
             causes pluto lie and tell the remote peer that RFC-3948
-            encapsulation (ESP in UDP port 4500 packets) is required. For this
-            option to have any effect, pluto must have been started with the
-            <option>--nat_traversal</option> option.</para>
+            encapsulation (ESP in UDP port 4500 packets) is required.</para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -3089,7 +3084,7 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--force_busy</option></term>
+          <term><option>--force-busy</option></term>
 
           <listitem>
             <para>if this option has been selected, pluto will be forced

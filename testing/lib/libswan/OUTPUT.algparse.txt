@@ -1,8 +1,56 @@
 
-  Electric Fence 2.1 Copyright (C) 1987-1998 Bruce Perens.
-1 err = (null) alg=3DES(3)_000-SHA1(2); pfsgroup=MODP1024(2);
-1 err = (null) alg=3DES(3)_000-SHA1(2);
-1 err = (null) alg=AES(12)_256-SHA1(2);
-1 err = hash_alg not found, enc_alg="aes", auth_alg="sha2", modp="" alg=AES(12)_256-SHA1(2);
-1 err = (null) alg=ID255(255)_000-MD5(1), ;
-1 err = hash_alg not found, enc_alg="", auth_alg="vanityhash1", modp="" alg=ID255(255)_000-MD5(1), ;
+  Electric Fence 2.2.2 Copyright (C) 1987-1999 Bruce Perens <bruce@perens.com>
+| interpreting ESP sha as sha1
+| interpreting ESP sha as sha1
+| interpreting ESP sha2 as sha2_256
+| interpreting ESP sha as sha1
+| interpreting ESP sha2 as sha2_256
+../algparse ASSERTION FAILED at ./algparse.c:40: aie != NULL
+[  3des-sha1;modp1024]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP1024(2)
+[  3des-sha1;modp1536]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP1536(5)
+[  3des-sha1;modp2048]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP2048(14)
+[      3des-sha1;dh22]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=DH22(22)
+[      3des-sha1;dh23]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=DH23(23)
+[      3des-sha1;dh24]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=DH24(24)
+[           3des-sha1]    OK: alg=3DES(3)_000-SHA1(2)_000
+[           null-sha1]    OK: alg=NULL(11)_000-SHA1(2)_000
+[         aes256-sha1]    OK: alg=AES(12)_256-SHA1(2)_000
+[         aes128-sha1]    OK: alg=AES(12)_128-SHA1(2)_000
+[            aes-sha1]    OK: alg=AES(12)_000-SHA1(2)_000
+[             aes-sha]    OK: alg=AES(12)_000-SHA1(2)_000
+[                 aes]    OK: alg=AES(12)_000-MD5(1)_000, AES(12)_000-SHA1(2)_000
+[          aes256-sha]    OK: alg=AES(12)_256-SHA1(2)_000
+[         aes256-sha2]    OK: alg=AES(12)_256-SHA2_256(5)_000
+[     aes256-sha2_256]    OK: alg=AES(12)_256-SHA2_256(5)_000
+[     aes256-sha2_384]    OK: alg=AES(12)_256-SHA2_384(6)_000
+[     aes256-sha2_512]    OK: alg=AES(12)_256-SHA2_512(7)_000
+[            camellia]    OK: alg=CAMELLIA(22)_000-MD5(1)_000, CAMELLIA(22)_000-SHA1(2)_000
+[  aes_ccm_a-128-null]    OK: alg=AES_CCM_A(14)_128-NONE(0)_000
+[  aes_ccm_a-192-null]    OK: alg=AES_CCM_A(14)_192-NONE(0)_000
+[  aes_ccm_a-256-null]    OK: alg=AES_CCM_A(14)_256-NONE(0)_000
+[  aes_ccm_b-128-null]    OK: alg=AES_CCM_B(15)_128-NONE(0)_000
+[  aes_ccm_b-192-null]    OK: alg=AES_CCM_B(15)_192-NONE(0)_000
+[  aes_ccm_b-256-null]    OK: alg=AES_CCM_B(15)_256-NONE(0)_000
+[  aes_ccm_c-128-null]    OK: alg=AES_CCM_C(16)_128-NONE(0)_000
+[  aes_ccm_c-192-null]    OK: alg=AES_CCM_C(16)_192-NONE(0)_000
+[  aes_ccm_c-256-null]    OK: alg=AES_CCM_C(16)_256-NONE(0)_000
+[  aes_gcm_a-128-null]    OK: alg=AES_GCM_A(18)_128-NONE(0)_000
+[  aes_gcm_a-192-null]    OK: alg=AES_GCM_A(18)_192-NONE(0)_000
+[  aes_gcm_a-256-null]    OK: alg=AES_GCM_A(18)_256-NONE(0)_000
+[  aes_gcm_b-128-null]    OK: alg=AES_GCM_B(19)_128-NONE(0)_000
+[  aes_gcm_b-192-null]    OK: alg=AES_GCM_B(19)_192-NONE(0)_000
+[  aes_gcm_b-256-null]    OK: alg=AES_GCM_B(19)_256-NONE(0)_000
+[  aes_gcm_c-128-null]    OK: alg=AES_GCM_C(20)_128-NONE(0)_000
+[  aes_gcm_c-192-null]    OK: alg=AES_GCM_C(20)_192-NONE(0)_000
+[  aes_gcm_c-256-null]    OK: alg=AES_GCM_C(20)_256-NONE(0)_000
+[             aes_ctr]    OK: alg=AES_CTR(13)_000-MD5(1)_000, AES_CTR(13)_000-SHA1(2)_000
+[             serpent]    OK: alg=SERPENT(252)_000-MD5(1)_000, SERPENT(252)_000-SHA1(2)_000
+[             twofish]    OK: alg=TWOFISH(253)_000-MD5(1)_000, TWOFISH(253)_000-SHA1(2)_000
+[            blowfish]    OK: alg=BLOWFISH(7)_000-MD5(1)_000, BLOWFISH(7)_000-SHA1(2)_000
+[            des-sha1]    OK: alg=DES(2)_000-SHA1(2)_000
+[                mars]    OK: alg=MARS(249)_000-MD5(1)_000, MARS(249)_000-SHA1(2)_000
+[                 md5]    OK: alg=MD5(1)_000
+[                 sha]    OK: alg=SHA1(2)_000
+[                sha1]    OK: alg=SHA1(2)_000
+[                sha2]    OK: alg=SHA2_256(5)_000
+[         vanityhash1] ERROR: hash_alg not found, enc_alg="", auth_alg="vanityhash1", modp=""

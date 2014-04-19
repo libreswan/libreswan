@@ -82,7 +82,7 @@ static bool _read_subnet(const char *src, size_t len, ip_subnet *dst,
 		af = AF_INET;
 		offset = -1;
 		loglog(RC_LOG_SERIOUS,
-		       "fixup for bad virtual_private entry '%s', please fix your virtual_private line!",
+		       "fixup for bad virtual-private entry '%s', please fix your virtual-private line!",
 		       src);
 	} else {
 		return FALSE;
@@ -179,7 +179,7 @@ void init_virtual_ip(const char *private_list)
 		}
 	} else {
 		loglog(RC_LOG_SERIOUS,
-		       "%d bad entries in virtual_private - none loaded", ign);
+		       "%d bad entries in virtual-private - none loaded", ign);
 	}
 }
 
@@ -394,7 +394,7 @@ err_t is_virtual_net_allowed(const struct connection *c,
 		    !net_in_list(peer_net, private_net_ko, private_net_ko_len))
 			return NULL;
 
-		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual_private=)";
+		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=)";
 	}
 
 	if (c->spd.that.virt->n_net) {
@@ -460,7 +460,7 @@ void show_virtual_private()
 	}
 
 	if (nat_traversal_enabled) {
-		whack_log(RC_COMMENT, "virtual_private (%%priv):");
+		whack_log(RC_COMMENT, "virtual-private (%%priv):");
 		whack_log(RC_COMMENT, "- allowed %d subnet%s: %s",
 			private_net_ok_len,
 			(private_net_ok_len == 1) ? "" : "s", all_ok
@@ -472,7 +472,7 @@ void show_virtual_private()
 		);
 		if (truncok || truncko)
 			whack_log(RC_COMMENT,
-				"WARNING: some virtual_private entries were not shown, do you really need that many?");
+				"WARNING: some virtual-private entries were not shown, do you really need that many?");
 
 	}
 	whack_log(RC_COMMENT, " ");     /* spacer */

@@ -14,7 +14,7 @@
 SHELL=/bin/bash
 export SHELL
 
-LIBRESWANSRCDIR?=../../..
+LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
 include $(LIBRESWANSRCDIR)/Makefile.inc
 
 SUBDIRS=

@@ -145,7 +145,7 @@ static void usage(const char *mess)
 		" [--stderrlog]"
 		" [--logfile <filename>]"
 		" [--plutostderrlogtime]"
-		" [--force_busy]"
+		" [--force-busy]"
 		" [--nocrsend]"
 		" [--strictcrlpolicy]"
 		" [--crlcheckinterval]"
@@ -175,7 +175,7 @@ static void usage(const char *mess)
 		"[--nhelpers <number>]"
 #ifdef HAVE_LABELED_IPSEC
 		" \\\n\t"
-		"[--secctx_attr_value <number>]"
+		"[--secctx-attr-value <number>]"
 #endif
 		" \\\n\t"
 		"[--debug-none]"
@@ -199,9 +199,9 @@ static void usage(const char *mess)
 		" [ --debug-pfkey]"
 		" [ --debug-nat-t]"
 		" \\\n\t"
-		"[--keep_alive <delay_sec>]"
+		"[--keep-alive <delay_sec>]"
 		" \\\n\t"
-		"[--virtual_private <network_list>]"
+		"[--virtual-private <network_list>]"
 		"\n"
 		"Libreswan %s\n",
 		ipsec_version_code());
@@ -471,7 +471,8 @@ int main(int argc, char **argv)
 			{ "noklips", no_argument, NULL, 'n' },
 			{ "use-nostack",  no_argument, NULL, 'n' },
 			{ "use-none",     no_argument, NULL, 'n' },
-			{ "force_busy", no_argument, NULL, 'D' },
+			{ "force_busy", no_argument, NULL, 'D' },	/* obsolete _ */
+			{ "force-busy", no_argument, NULL, 'D' },
 			{ "strictcrlpolicy", no_argument, NULL, 'r' },
 			{ "crlcheckinterval", required_argument, NULL, 'x' },
 			{ "uniqueids", no_argument, NULL, 'u' },
@@ -497,23 +498,26 @@ int main(int argc, char **argv)
 			{ "dumpdir", required_argument, NULL, 'C' },
 			{ "statsbin", required_argument, NULL, 'S' },
 			{ "ipsecdir", required_argument, NULL, 'f' },
-			{ "ipsec_dir", required_argument, NULL, 'f' },
+			{ "ipsec_dir", required_argument, NULL, 'f' },	/* redundant: ipsecdir; obsolete _ */
 			{ "foodgroupsdir", required_argument, NULL, 'f' },
 			{ "adns", required_argument, NULL, 'a' },
 			/* obsoleted, ignored */
-			{ "nat_traversal", no_argument, NULL, '1' },
-			{ "keep_alive", required_argument, NULL, '2' },
+			{ "nat_traversal", no_argument, NULL, '1' },	/* obsolete */
+			{ "keep_alive", required_argument, NULL, '2' },	/* obsolete _ */
+			{ "keep-alive", required_argument, NULL, '2' },
 			/* obsolete, ignored */
-			{ "force_keepalive", no_argument, NULL, '3' },
+			{ "force_keepalive", no_argument, NULL, '3' },	/* obsolete _ */
 			/* obsolete, ignored */
 			{ "disable_port_floating", no_argument, NULL, '4' },
-			{ "debug-nat_t", no_argument, NULL, '5' },
-			{ "debug-nattraversal", no_argument, NULL, '5' },
+			{ "debug-nat_t", no_argument, NULL, '5' },	/* obsolete _ */
 			{ "debug-nat-t", no_argument, NULL, '5' },
-			{ "virtual_private", required_argument, NULL, '6' },
+			{ "debug-nattraversal", no_argument, NULL, '5' },	/* ??? redundant spelling */
+			{ "virtual_private", required_argument, NULL, '6' },	/* obsolete _ */
+			{ "virtual-private", required_argument, NULL, '6' },
 			{ "nhelpers", required_argument, NULL, 'j' },
 #ifdef HAVE_LABELED_IPSEC
-			{ "secctx_attr_value", required_argument, NULL, 'w' },
+			{ "secctx_attr_value", required_argument, NULL, 'w' },	/* obsolete _ */
+			{ "secctx-attr-value", required_argument, NULL, 'w' },
 #endif
 			{ "debug-none", no_argument, NULL, 'N' },
 			{ "debug-all", no_argument, NULL, 'A' },
@@ -588,7 +592,14 @@ int main(int argc, char **argv)
 		 * by getopt_long, so we simply pass an empty string as
 		 * the list.  It could be "hvdenp:l:s:" "NARXPECK".
 		 */
-		int c = getopt_long(argc, argv, "", long_opts, NULL);
+		int longindex = -1;
+		int c = getopt_long(argc, argv, "", long_opts, &longindex);
+
+		if (longindex != -1 &&
+			strchr(long_opts[longindex].name, '_') != NULL) {
+			libreswan_log("warning: option \"%s\" with '_' in its name is obsolete; use '-'",
+				long_opts[longindex].name);
+		}
 
 		/* Note: "breaking" from case terminates loop */
 		switch (c) {
@@ -650,15 +661,14 @@ int main(int argc, char **argv)
 			continue;
 
 #ifdef HAVE_LABELED_IPSEC
-		case 'w':	/* --secctx_attr_value */
+		case 'w':	/* --secctx-attr-value */
 			{
 				char *endptr;
 				long value = strtol(optarg, &endptr, 0);
 
 				if (*endptr != '\0' || endptr == optarg ||
 					(value != SECCTX && value != 10))
-					usage("<secctx_attr_value> must be a positive number (32001 by default, 10 for backward compatibility)");
-
+					usage("<secctx-attr-value> must be a positive number (32001 by default, 10 for backward compatibility)");
 				secctx_attr_value = value & ISAKMP_ATTR_RTYPE_MASK;
 			}
 			continue;
@@ -726,7 +736,7 @@ int main(int argc, char **argv)
 			kern_interface = NO_KERNEL;
 			continue;
 
-		case 'D':	/* --force_busy */
+		case 'D':	/* --force-busy */
 			force_busy = TRUE;
 			continue;
 
@@ -855,10 +865,10 @@ int main(int argc, char **argv)
 			log_to_perpeer = TRUE;
 			continue;
 
-		case '1':	/* --nat_traversal has been obsoleted*/
+		case '1':	/* --nat_traversal has been obsoleted */
 			libreswan_log("Ignored obsoleted option --nat_traversal");
 			continue;
-		case '2':	/* --keep_alive */
+		case '2':	/* --keep-alive */
 			keep_alive = atoi(optarg);
 			continue;
 		case '3':	/* --force_keepalive has been obsoleted */
@@ -867,10 +877,10 @@ int main(int argc, char **argv)
 		case '4':	/* --disable_port_floating has been obsoleted */
 			libreswan_log("Ignored obsoleted option --disable_port_floating");
 			continue;
-		case '5':	/* --debug-nat_t */
+		case '5':	/* --debug-nat-t */
 			base_debugging |= DBG_NATT;
 			continue;
-		case '6':	/* --virtual_private */
+		case '6':	/* --virtual-private */
 			virtual_private = optarg;
 			continue;
 
@@ -1438,7 +1448,7 @@ void show_setup_plutomain()
 		ipsec_version_vendorid());
 
         whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, retransmits=%s, force_busy=%s",
+		"nhelpers=%d, uniqueids=%s, retransmits=%s, force-busy=%s",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
 		no_retransmits ? "no" : "yes",
@@ -1452,9 +1462,8 @@ void show_setup_plutomain()
 		pluto_listen ? pluto_listen : "<any>");
 
 #ifdef HAVE_LABELED_IPSEC
-        whack_log(RC_COMMENT, "secctx_attr_value=%d", secctx_attr_value);
+        whack_log(RC_COMMENT, "secctx-attr-value=%d", secctx_attr_value);
 #else
-        whack_log(RC_COMMENT, "secctx_attr_value=<unsupported>");
+        whack_log(RC_COMMENT, "secctx-attr-value=<unsupported>");
 #endif
 }
-

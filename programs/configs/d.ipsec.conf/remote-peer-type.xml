@@ -1,0 +1,13 @@
+  <varlistentry>
+  <term><emphasis remap='B'>remote-peer-type</emphasis></term>
+  <listitem>
+<para>Set the remote peer type. This can enable additional processing
+during the IKE negotiation.  Acceptable values are <emphasis
+remap='B'>cisco</emphasis> or <emphasis remap='B'>ietf</emphasis>
+(the default).  When set to cisco, support for Cisco IPsec gateway
+redirection and Cisco obtained DNS and domainname are enabled.  This
+includes automatically updating (and restoring) /etc/resolv.conf. These
+options require that  XAUTH is also enabled on this connection.  </para>
+  </listitem>
+  </varlistentry>
+

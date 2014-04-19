@@ -1,2 +1,0 @@
-freeswan-userland-*_2.4.18_17.7.x-0.i386.rpm		freeswan-userland
-freeswan-module-*_2.4.18_17.7.x-0.i386.rpm		freeswan-module

@@ -206,7 +206,6 @@ static int aalg_getbyname_esp(const char *str, int len)
 	static const char sha2_256_aka[] = "sha2";
 	static const char sha1_aka[] = "sha";
 
-	DBG_log("entering aalg_getbyname_esp()");
 	if (!str || !*str)
 		return ret;
 
@@ -820,6 +819,7 @@ static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 	return TRUE;
 }
 
+/* This function is tested in testing/lib/libswan/algparse.c */
 struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 						const char **err_p)
 {
@@ -856,6 +856,7 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 
 }
 
+/* This function is tested in testing/lib/libswan/algparse.c */
 struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
 						const char **err_p)
 {
