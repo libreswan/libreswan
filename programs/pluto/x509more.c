@@ -464,8 +464,7 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 			path, strerror(errno));
 	} else {
 		DBG(DBG_CONTROL,
-			DBG_log("Changed path to directory '%s'", path);
-			);
+			DBG_log("Changed path to directory '%s'", path));
 		n = scandir(".", &filelist, (void *) filter_dotfiles, alphasort);
 
 		if (n < 0) {
@@ -516,8 +515,7 @@ bool trusted_ca(chunk_t a, chunk_t b, int *pathlen)
 	dntoa(bbuf, ASN1_BUF_LEN, b);
 
 	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("  trusted_ca called with a=%s b=%s", abuf, bbuf);
-		);
+		DBG_log("  trusted_ca called with a=%s b=%s", abuf, bbuf));
 
 	/* no CA b specified -> any CA a is accepted */
 	if (b.ptr == NULL) {
@@ -563,8 +561,7 @@ bool trusted_ca(chunk_t a, chunk_t b, int *pathlen)
 
 	DBG(DBG_X509 | DBG_CONTROLMORE,
 		DBG_log("  trusted_ca returning with %s",
-			match ? "match" : "failed");
-		);
+			match ? "match" : "failed"));
 
 	return match;
 }

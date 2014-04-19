@@ -544,8 +544,7 @@ void init_vendorid(void)
 #if 0
 		DBG_log("init_vendorid: %d [%s]",
 			vid->id,
-			vid->descr ? vid->descr : ""
-			);
+			vid->descr ? vid->descr : "");
 		if (vid->vid)
 			DBG_dump("VID:", vid->vid, vid->vid_len);
 #endif
@@ -768,8 +767,7 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 			return FALSE; /* not found */
 
 	DBG(DBG_EMITTING,
-	    DBG_log("out_vid(): sending [%s]", pvid->descr);
-	    );
+	    DBG_log("out_vid(): sending [%s]", pvid->descr));
 
 	return out_generic_raw(np, &isakmp_vendor_id_desc, outs,
 			       pvid->vid, pvid->vid_len, "V_ID");

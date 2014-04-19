@@ -1521,8 +1521,7 @@ void scan_proc_shunts(void)
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 
 	DBG(DBG_CONTROL,
-	    DBG_log("scanning for shunt eroutes")
-	    );
+	    DBG_log("scanning for shunt eroutes"));
 
 	/* free any leftover entries: they will be refreshed if still current */
 	while (orphaned_holds != NULL) {

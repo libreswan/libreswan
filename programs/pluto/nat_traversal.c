@@ -508,8 +508,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		p = p->next, i++);
 
 	DBG(DBG_NATT,
-		DBG_log("NAT-Traversal: received %d NAT-OA.", i);
-		);
+		DBG_log("NAT-Traversal: received %d NAT-OA.", i));
 
 	if (i == 0) {
 		return;
@@ -529,8 +528,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	p = md->chain[ISAKMP_NEXT_NATOA_RFC];
 
 	DBG(DBG_PARSING,
-		DBG_dump("NAT-OA:", p->pbs.start, pbs_room(&p->pbs));
-		);
+		DBG_dump("NAT-OA:", p->pbs.start, pbs_room(&p->pbs)));
 
 	switch (p->payload.nat_oa.isanoa_idtype) {
 	case ID_IPV4_ADDR:
@@ -566,13 +564,11 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		break;
 	}
 
-	DBG(DBG_NATT,
-		{
+	DBG(DBG_NATT, {
 			char ip_t[ADDRTOT_BUF];
 			addrtot(&ip, 0, ip_t, sizeof(ip_t));
 			DBG_log("received NAT-OA: %s", ip_t);
-		}
-		);
+	});
 
 	if (isanyaddr(&ip)) {
 		loglog(RC_LOG_SERIOUS,
@@ -637,8 +633,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 			return FALSE;
 
 		DBG(DBG_NATT,
-			DBG_dump("NAT-OAi (S):", ip_val, ip_len);
-			);
+			DBG_dump("NAT-OAi (S):", ip_val, ip_len));
 		close_output_pbs(&pbs);
 	}
 
@@ -673,8 +668,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 			return FALSE;
 
 		DBG(DBG_NATT,
-			DBG_dump("NAT-OAr (S):", ip_val, ip_len);
-			);
+			DBG_dump("NAT-OAr (S):", ip_val, ip_len));
 
 		close_output_pbs(&pbs);
 	}
@@ -710,8 +704,7 @@ void nat_traversal_show_result(u_int32_t nt, u_int16_t sport)
 			NAT_TRAVERSAL_METHOD_IETF_02_03) :
 		"unknown or unsupported method",
 		sport,
-		rslt != NULL ? rslt : "unknown or unsupported result"
-		);
+		rslt != NULL ? rslt : "unknown or unsupported result");
 }
 
 int nat_traversal_espinudp_socket(int sk, const char *fam )
@@ -800,8 +793,7 @@ static void nat_traversal_send_ka(struct state *st)
 		DBG_log("ka_event: send NAT-KA to %s:%d (state=#%lu)",
 			ip_str(&st->st_remoteaddr),
 			st->st_remoteport,
-			st->st_serialno);
-		);
+			st->st_serialno));
 
 	/* send keep alive */
 	DBG(DBG_NATT | DBG_DPD, DBG_log("sending NAT-T Keep Alive"));

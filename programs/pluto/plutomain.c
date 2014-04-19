@@ -1441,7 +1441,7 @@ void show_setup_plutomain()
 
 	whack_log(RC_COMMENT, "sbindir=%s, libexecdir=%s",
 		IPSEC_SBINDIR,
-		IPSEC_EXECDIR );
+		IPSEC_EXECDIR);
 
 	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s",
 		ipsec_version_code(),

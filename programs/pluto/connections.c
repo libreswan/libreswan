@@ -809,8 +809,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 			free_x509cert(cert.u.x509);
 		} else {
 			DBG(DBG_CONTROL,
-				DBG_log("certificate is valid")
-				);
+				DBG_log("certificate is valid"));
 			add_x509_public_key(&dst->id, cert.u.x509, valid_until,
 					DAL_LOCAL);
 			dst->cert.ty = cert.ty;
@@ -1204,15 +1203,15 @@ void add_connection(const struct whack_message *wm)
 				c->alg_info_esp = alg_info_ah_create_from_str(
 					wm->esp ? wm->esp : "", &ugh);
 
-			DBG(DBG_CONTROL,
-				{static char buf[256] = "<NULL>"; /* XXX: fix magic value */
+			DBG(DBG_CONTROL, {
+				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf); }
-			);
+				DBG_log("esp string values: %s", buf);
+			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->alg_info_cnt == 0) {
 					loglog(RC_NOALGO,
@@ -1235,14 +1234,14 @@ void add_connection(const struct whack_message *wm)
 		if (wm->ike) {
 			c->alg_info_ike = alg_info_ike;
 
-			DBG(DBG_CRYPT | DBG_CONTROL,
+			DBG(DBG_CRYPT | DBG_CONTROL, {
 				char buf[256]; /* XXX: fix magic value */
 				alg_info_snprint(buf, sizeof(buf),
 						(struct alg_info *)c->
 						alg_info_ike);
 				DBG_log("ike (phase1) algorihtm values: %s",
 					buf);
-				);
+			});
 			if (c->alg_info_ike) {
 				if (c->alg_info_ike->alg_info_cnt == 0) {
 					loglog(RC_NOALGO,
@@ -1548,8 +1547,7 @@ void add_connection(const struct whack_message *wm)
 				(unsigned long) c->sa_rekey_margin,
 				(unsigned long) c->sa_rekey_fuzz,
 				(unsigned long) c->sa_keying_tries,
-				prettypolicy(c->policy));
-			);
+				prettypolicy(c->policy)));
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
@@ -3122,8 +3120,7 @@ static struct connection *fc_try(const struct connection *c,
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  fc_try concluding with %s [%ld]",
-			(best ? best->name : "none"), best_prio)
-		);
+			(best ? best->name : "none"), best_prio));
 
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
@@ -3232,8 +3229,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  fc_try_oppo concluding with %s [%ld]",
-			(best ? best->name : "none"), best_prio)
-		);
+			(best ? best->name : "none"), best_prio));
 	return best;
 
 }
@@ -3306,8 +3302,7 @@ struct connection *find_client_connection(struct connection *c,
 		DBG(DBG_CONTROLMORE,
 			DBG_log("  fc_try %s gives %s",
 				c->name,
-				(d ? d->name : "none"))
-			);
+				(d ? d->name : "none")));
 
 		if (d == NULL)
 			d = unrouted;
@@ -3362,8 +3357,7 @@ struct connection *find_client_connection(struct connection *c,
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  concluding with d = %s",
-			(d ? d->name : "none"))
-		);
+			(d ? d->name : "none")));
 	return d;
 }
 
@@ -3510,8 +3504,7 @@ static void show_one_sr(struct connection *c,
 					"method:alwaysok;" :
 				"",
 			thisxauthsemi,
-			thatxauthsemi
-			);
+			thatxauthsemi);
 
 		if (isanyaddr(&c->modecfg_dns1))
 			strcpy(dns1, "unset");
@@ -3544,13 +3537,11 @@ static void show_one_sr(struct connection *c,
 			dns1,
 			dns2,
 			(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
-			(c->modecfg_banner == NULL) ? ", banner:unset" : ""
-			);
+			(c->modecfg_banner == NULL) ? ", banner:unset" : "");
 		if (c->modecfg_banner != NULL) {
 			whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
 			c->name, instance, c->modecfg_banner);
 		}
-
 	}
 
 #ifdef HAVE_LABELED_IPSEC
@@ -3561,8 +3552,7 @@ static void show_one_sr(struct connection *c,
 		);
 	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s; ",
 		c->name, instance,
-		(c->policy_label == NULL) ? "unset" : c->policy_label
-		);
+		(c->policy_label == NULL) ? "unset" : c->policy_label);
 #else
 /* this makes output consistent for testing regardless of support */
 	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no, loopback:no; ",
@@ -3688,8 +3678,7 @@ void show_one_connection(struct connection *c)
 			(c->forceencaps) ? "yes" : "no",
 			(c->nat_keepalive) ? "yes" : "no",
 			(c->ikev1_natt == natt_both) ? "both" :
-			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts")
-		);
+			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"));
 	}
 
 	if (c->extra_debugging) {

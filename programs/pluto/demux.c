@@ -375,8 +375,7 @@ static bool read_packet(struct msg_digest *md)
 		    (int) pbs_room(&md->packet_pbs),
 		    ip_str(cur_from), (unsigned) cur_from_port,
 		    ifp->ip_dev->id_rname,
-		    ifp->port)
-	    );
+		    ifp->port));
 
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
@@ -412,8 +411,7 @@ static bool read_packet(struct msg_digest *md)
 		DBG(DBG_NATT,
 		    DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. "
 			    "Ignored. Sender: %s:%u", ip_str(cur_from),
-			    (unsigned) cur_from_port);
-		    );
+			    (unsigned) cur_from_port));
 		return FALSE;
 	}
 

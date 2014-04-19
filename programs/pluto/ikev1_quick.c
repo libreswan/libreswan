@@ -581,8 +581,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 
 	DBG(DBG_PARSING | DBG_CONTROL,
 	    DBG_log("%s protocol/port is %d/%d", which, id->isaiid_protoid,
-		    id->isaiid_port)
-	    );
+		    id->isaiid_port));
 
 	return TRUE;
 }
@@ -636,7 +635,7 @@ static bool check_net_id(struct isakmp_ipsec_id *id,
 	if (*port != id->isaiid_port) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s peer returned port doesn't match my proposal - us:%d vs them:%d",
-		       which, *port, id->isaiid_port );
+		       which, *port, id->isaiid_port);
 		if (*port != 0 && id->isaiid_port != 1701) {
 			loglog(RC_LOG_SERIOUS,
 			       "Allowing bad L2TP/IPsec proposal (see bug #849) anyway");
@@ -1915,7 +1914,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 	}
 
 	passert((p1st->st_policy & POLICY_PFS) == 0 ||
-		p1st->st_pfs_group != NULL );
+		p1st->st_pfs_group != NULL);
 
 	/* now that we are sure of our connection, create our new state, and
 	 * do any asynchronous cryptographic operations that we may need to

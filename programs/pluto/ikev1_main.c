@@ -2264,7 +2264,7 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 	ISAKMP_SA_established(st->st_connection, st->st_serialno);
 
 	passert((st->st_policy & POLICY_PFS) == 0 ||
-		st->st_pfs_group != NULL );
+		st->st_pfs_group != NULL);
 
 	/*
 	 * save last IV from phase 1 so it can be restored later so anything

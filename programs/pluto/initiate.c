@@ -200,7 +200,7 @@ static int initiate_a_connection(struct connection *c,
 				loglog(RC_NOPEERIP,
 				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				       enum_show(&connection_kind_names,
-						 c->kind) );
+						 c->kind));
 				success = 1;
 				c->policy |= POLICY_UP;
 			} else

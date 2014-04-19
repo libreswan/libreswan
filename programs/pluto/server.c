@@ -987,14 +987,12 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 				case SO_EE_ORIGIN_ICMP:
 					snprintf(orname, sizeof(orname),
 						 "ICMP type %d code %d (not authenticated)",
-						 ee->ee_type, ee->ee_code
-						 );
+						 ee->ee_type, ee->ee_code);
 					break;
 				case SO_EE_ORIGIN_ICMP6:
 					snprintf(orname, sizeof(orname),
 						 "ICMP6 type %d code %d (not authenticated)",
-						 ee->ee_type, ee->ee_code
-						 );
+						 ee->ee_type, ee->ee_code);
 					break;
 				default:
 					snprintf(orname, sizeof(orname),

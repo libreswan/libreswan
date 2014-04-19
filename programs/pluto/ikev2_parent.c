@@ -2540,8 +2540,7 @@ static bool ikev2_get_dcookie(u_char *dcookie,  chunk_t st_ni,
 	DBG(DBG_PRIVATE,
 	    DBG_log("ikev2 secret_of_the_day used %s, length %d",
 		    ikev2_secret_of_the_day,
-		    SHA1_DIGEST_SIZE);
-	    );
+		    SHA1_DIGEST_SIZE));
 
 	DBG(DBG_CRYPT,
 	    DBG_dump("computed dcookie: HASH(Ni | IPi | SPIi | <secret>)",

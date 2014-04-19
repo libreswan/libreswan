@@ -532,7 +532,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		if (esp_info->esp_ealg_keylen) {
 				db_attr_add_values(db_ctx,
 						   KEY_LENGTH,
-						   esp_info->esp_ealg_keylen );
+						   esp_info->esp_ealg_keylen);
 		}
 
 	} else if (policy & POLICY_AUTHENTICATE) {
@@ -721,8 +721,7 @@ void kernel_alg_show_status(void)
 			  enum_name(&esp_transformid_names, id),
 			  alg_p->sadb_alg_ivlen,
 			  alg_p->sadb_alg_minbits,
-			  alg_p->sadb_alg_maxbits
-			  );
+			  alg_p->sadb_alg_maxbits);
 
 	}
 	ESP_AALG_FOR_EACH(sadb_id) {
@@ -734,8 +733,7 @@ void kernel_alg_show_status(void)
 			  enum_name(&auth_alg_names,
 				    id),
 			  alg_p->sadb_alg_minbits,
-			  alg_p->sadb_alg_maxbits
-			  );
+			  alg_p->sadb_alg_maxbits);
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */

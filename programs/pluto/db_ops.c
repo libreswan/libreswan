@@ -348,8 +348,7 @@ void db_ops_show_status(void)
 		  DB_OPS_STATS_STR("attrs"),
 		  DB_OPS_STATS_F(db_context_st),
 		  DB_OPS_STATS_F(db_trans_st),
-		  DB_OPS_STATS_F(db_attrs_st)
-		  );
+		  DB_OPS_STATS_F(db_attrs_st));
 }
 #endif /* NO_DB_OPS_STATS */
 /*

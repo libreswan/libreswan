@@ -1623,8 +1623,7 @@ void fmt_state(struct state *st, const time_t n,
 			 (unsigned long)st->st_refhim,
 			 traffic_buf,
 			 (st->st_xauth_username[0] != '\0') ? "XAUTHuser=" : "",
-			 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : ""
-			 );
+			 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");
 
 #       undef add_said
 	}
