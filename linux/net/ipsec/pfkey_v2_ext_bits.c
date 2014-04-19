@@ -54,8 +54,12 @@
 
 #include "libreswan/pfkey_debug.h"
 
-pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
-								 1] = {
+/* array of bitmaps to specify payloads for extensions */
+
+pfkey_ext_track extensions_bitmaps
+		[2 /* inbound, outbound */]
+		[2 /* permitted, required */]
+		[K_SADB_MAX + 1] = {
 
 /* INBOUND EXTENSIONS */
 	{
@@ -73,7 +77,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << SADB_EXT_SPIRANGE
 				,
 /* SADB_UPDATE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -90,7 +94,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_NAT_T_DPORT
 				,
 /* SADB_ADD */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_HARD |
 				1ULL << SADB_EXT_LIFETIME_SOFT |
@@ -110,19 +114,19 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_SAREF
 				,
 /* SADB_DELETE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_GET */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_ACQUIRE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
 				1ULL << SADB_EXT_ADDRESS_PROXY |
@@ -132,19 +136,19 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << SADB_EXT_PROPOSAL
 				,
 /* K_SADB_REGISTER */
-				1ULL << K_SADB_EXT_RESERVED
+			1ULL << K_SADB_EXT_RESERVED
 				,
 /* K_SADB_EXPIRE */
-				0
+			0
 				,
 /* K_SADB_FLUSH */
-				1ULL << K_SADB_EXT_RESERVED
+			1ULL << K_SADB_EXT_RESERVED
 				,
 /* K_SADB_DUMP */
-				1ULL << K_SADB_EXT_RESERVED
+			1ULL << K_SADB_EXT_RESERVED
 				,
 /* SADB_X_PROMISC */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -167,7 +171,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_PCHANGE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -190,7 +194,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_GRPSA */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_DST |
 				1ULL << K_SADB_X_EXT_SATYPE2 |
@@ -198,7 +202,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_ADDFLOW */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
@@ -211,7 +215,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_PROTOCOL
 				,
 /* SADB_X_DELFLOW */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << K_SADB_X_EXT_ADDRESS_SRC_FLOW |
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_FLOW |
@@ -222,11 +226,11 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_PROTOCOL
 				,
 /* SADB_X_DEBUG */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_DEBUG
 				,
 /* SADB_X_NAT_T_NEW_MAPPING */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
@@ -234,11 +238,11 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_NAT_T_DPORT
 				,
 /* SADB_X_PLUMBIF */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_PLUMBIF
 				,
 /* SADB_X_UNPLUMBIF */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_PLUMBIF
 		},
 
@@ -254,7 +258,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_EXT_SPIRANGE
 				,
 /* K_SADB_UPDATE */
-				1ULL << K_SADB_EXT_RESERVED |
+			1ULL << K_SADB_EXT_RESERVED |
 				1ULL << K_SADB_EXT_SA |
 				1ULL << K_SADB_EXT_ADDRESS_SRC |
 				1ULL << K_SADB_EXT_ADDRESS_DST
@@ -262,7 +266,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 /*| 1ULL<<K_SADB_EXT_KEY_ENCRYPT*/
 				,
 /* K_SADB_ADD */
-				1ULL << K_SADB_EXT_RESERVED |
+			1ULL << K_SADB_EXT_RESERVED |
 				1ULL << K_SADB_EXT_SA |
 				1ULL << K_SADB_EXT_ADDRESS_SRC |
 				1ULL << K_SADB_EXT_ADDRESS_DST
@@ -270,37 +274,37 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 /*| 1ULL<<K_SADB_EXT_KEY_ENCRYPT*/
 				,
 /* K_SADB_DELETE */
-				1ULL << K_SADB_EXT_RESERVED |
+			1ULL << K_SADB_EXT_RESERVED |
 				1ULL << K_SADB_EXT_SA |
 				1ULL << K_SADB_EXT_ADDRESS_SRC |
 				1ULL << K_SADB_EXT_ADDRESS_DST
 				,
 /* K_SADB_GET */
-				1ULL << K_SADB_EXT_RESERVED |
+			1ULL << K_SADB_EXT_RESERVED |
 				1ULL << K_SADB_EXT_SA |
 				1ULL << K_SADB_EXT_ADDRESS_SRC |
 				1ULL << K_SADB_EXT_ADDRESS_DST
 				,
 /* K_SADB_ACQUIRE */
-				1ULL << K_SADB_EXT_RESERVED |
+			1ULL << K_SADB_EXT_RESERVED |
 				1ULL << K_SADB_EXT_ADDRESS_SRC |
 				1ULL << K_SADB_EXT_ADDRESS_DST |
 				1ULL << K_SADB_EXT_PROPOSAL
 				,
 /* K_SADB_REGISTER */
-				1ULL << K_SADB_EXT_RESERVED
+			1ULL << K_SADB_EXT_RESERVED
 				,
 /* K_SADB_EXPIRE */
-				0
+			0
 				,
 /* K_SADB_FLUSH */
-				1ULL << K_SADB_EXT_RESERVED
+			1ULL << K_SADB_EXT_RESERVED
 				,
 /* K_SADB_DUMP */
-				1ULL << K_SADB_EXT_RESERVED
+			1ULL << K_SADB_EXT_RESERVED
 				,
 /* SADB_X_PROMISC */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -323,7 +327,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_PCHANGE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -354,7 +358,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 /*| 1ULL<<K_SADB_X_EXT_ADDRESS_DST2*/
 				,
 /* SADB_X_ADDFLOW */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_DST |
 				1ULL << K_SADB_X_EXT_ADDRESS_SRC_FLOW |
@@ -363,21 +367,21 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_MASK
 				,
 /* SADB_X_DELFLOW */
-				1ULL << SADB_EXT_RESERVED
-/*| 1ULL<<SADB_EXT_SA*/
+			1ULL << SADB_EXT_RESERVED
 #if 0   /* SADB_X_CLREROUTE doesn't need all these... */
-				| 1ULL << K_SADB_X_EXT_ADDRESS_SRC_FLOW |
+				|
+				1ULL << K_SADB_X_EXT_ADDRESS_SRC_FLOW |
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_FLOW |
 				1ULL << K_SADB_X_EXT_ADDRESS_SRC_MASK |
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_MASK
 #endif
 				,
 /* SADB_X_DEBUG */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_DEBUG
 				,
 /* SADB_X_NAT_T_NEW_MAPPING */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
@@ -385,11 +389,11 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_NAT_T_DPORT
 				,
 /* SADB_X_PLUMBIF */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_PLUMBIF
 				,
 /* SADB_X_UNPLUMBIF */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_PLUMBIF
 		}
 
@@ -410,7 +414,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_UPDATE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -425,7 +429,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_NAT_T_DPORT
 				,
 /* SADB_ADD */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_HARD |
 				1ULL << SADB_EXT_LIFETIME_SOFT |
@@ -442,13 +446,13 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_SAREF
 				,
 /* SADB_DELETE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_GET */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -467,7 +471,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_NAT_T_OA
 				,
 /* SADB_ACQUIRE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
 				1ULL << SADB_EXT_ADDRESS_PROXY |
@@ -477,12 +481,12 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << SADB_EXT_PROPOSAL
 				,
 /* SADB_REGISTER */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SUPPORTED_AUTH |
 				1ULL << SADB_EXT_SUPPORTED_ENCRYPT
 				,
 /* SADB_EXPIRE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -491,10 +495,10 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_FLUSH */
-				1ULL << SADB_EXT_RESERVED
+			1ULL << SADB_EXT_RESERVED
 				,
 /* SADB_DUMP */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -513,7 +517,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_NAT_T_OA
 				,
 /* SADB_X_PROMISC */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -536,7 +540,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_PCHANGE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -559,7 +563,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_GRPSA */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_DST |
 				1ULL << K_SADB_X_EXT_SATYPE2 |
@@ -567,7 +571,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_ADDFLOW */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
@@ -578,7 +582,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_PROTOCOL
 				,
 /* SADB_X_DELFLOW */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << K_SADB_X_EXT_ADDRESS_SRC_FLOW |
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_FLOW |
@@ -587,11 +591,11 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_PROTOCOL
 				,
 /* SADB_X_DEBUG */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_DEBUG
 				,
 /* SADB_X_NAT_T_NEW_MAPPING */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
@@ -599,11 +603,11 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_NAT_T_DPORT
 				,
 /* SADB_X_PLUMBIF */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_PLUMBIF
 				,
 /* SADB_X_UNPLUMBIF */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_PLUMBIF
 		},
 
@@ -619,25 +623,25 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_UPDATE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_ADD */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_DELETE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_GET */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST
@@ -645,30 +649,26 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 /* | 1ULL<<SADB_EXT_KEY_ENCRYPT */
 				,
 /* SADB_ACQUIRE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
 				1ULL << SADB_EXT_PROPOSAL
 				,
 /* SADB_REGISTER */
-				1ULL << SADB_EXT_RESERVED
-/* | 1ULL<<SADB_EXT_SUPPORTED_AUTH
- | 1ULL<<SADB_EXT_SUPPORTED_ENCRYPT */
+			1ULL << SADB_EXT_RESERVED
 				,
 /* SADB_EXPIRE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
-				1ULL << SADB_EXT_LIFETIME_CURRENT
-/* | 1ULL<<SADB_EXT_LIFETIME_HARD
-| 1ULL<<SADB_EXT_LIFETIME_SOFT */
-				| 1ULL << SADB_EXT_ADDRESS_SRC |
+				1ULL << SADB_EXT_LIFETIME_CURRENT |
+				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_FLUSH */
-				1ULL << SADB_EXT_RESERVED
+			1ULL << SADB_EXT_RESERVED
 				,
 /* SADB_DUMP */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
@@ -676,7 +676,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << SADB_EXT_KEY_ENCRYPT
 				,
 /* SADB_X_PROMISC */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -699,7 +699,7 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_PCHANGE */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_LIFETIME_CURRENT |
 				1ULL << SADB_EXT_LIFETIME_HARD |
@@ -722,12 +722,12 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST2
 				,
 /* SADB_X_GRPSA */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_DST
 				,
 /* SADB_X_ADDFLOW */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_DST |
 				1ULL << K_SADB_X_EXT_ADDRESS_SRC_FLOW |
@@ -736,19 +736,18 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_MASK
 				,
 /* SADB_X_DELFLOW */
-				1ULL << SADB_EXT_RESERVED
-/*| 1ULL<<SADB_EXT_SA*/
-				| 1ULL << K_SADB_X_EXT_ADDRESS_SRC_FLOW |
+			1ULL << SADB_EXT_RESERVED |
+				1ULL << K_SADB_X_EXT_ADDRESS_SRC_FLOW |
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_FLOW |
 				1ULL << K_SADB_X_EXT_ADDRESS_SRC_MASK |
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_MASK
 				,
 /* SADB_X_DEBUG */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_DEBUG
 				,
 /* SADB_X_NAT_T_NEW_MAPPING */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << SADB_EXT_SA |
 				1ULL << SADB_EXT_ADDRESS_SRC |
 				1ULL << SADB_EXT_ADDRESS_DST |
@@ -756,11 +755,11 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 				1ULL << K_SADB_X_EXT_NAT_T_DPORT
 				,
 /* SADB_X_PLUMBIF */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_PLUMBIF
 				,
 /* SADB_X_UNPLUMBIF */
-				1ULL << SADB_EXT_RESERVED |
+			1ULL << SADB_EXT_RESERVED |
 				1ULL << K_SADB_X_EXT_PLUMBIF
 		}
 	}
