@@ -659,7 +659,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 			    leftright, end->strings[KSCF_ADDRESSPOOL] );
 
 		er = ttorange(addresspool, 0, AF_INET, &end->pool_range);
-		if (er) 
+		if (er != NULL) 
 			ERR_FOUND("bad %saddresspool=%s [%s]", leftright, 
 					addresspool, er);
 		if (ip_address_isany(&end->pool_range.start))

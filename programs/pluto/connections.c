@@ -247,7 +247,8 @@ void delete_connection(struct connection *c, bool relations)
 			ip_str(&c->spd.that.host_addr),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
-		rel_lease_addr(c);
+		if (c->pool != NULL)
+			rel_lease_addr(c);
 	} else {
 		libreswan_log("deleting connection");
 	}
