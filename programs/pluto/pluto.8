@@ -2,12 +2,12 @@
 .\"     Title: IPSEC_PLUTO
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 04/17/2014
+.\"      Date: 04/19/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_PLUTO" "8" "04/17/2014" "libreswan" "Executable programs"
+.TH "IPSEC_PLUTO" "8" "04/19/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-leak\-detective] [\-\-config\ \fIfilename\fR] [\-\-vendorid\ \fIVID\fR] [\-\-nofork] [\-\-stderrlog] [\-\-\-\-plutostderrlogtime] [\-\-logfile\ \fIfilename\fR] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-natikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits] [\-\-statsbin\ \fIfilename\fR] [\-\-secctx_attr_value\ \fInumber\fR]
+\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-leak\-detective] [\-\-config\ \fIfilename\fR] [\-\-vendorid\ \fIVID\fR] [\-\-nofork] [\-\-stderrlog] [\-\-\-\-plutostderrlogtime] [\-\-logfile\ \fIfilename\fR] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-virtual\-private\ \fInetwork_list\fR] [\-\-keep\-alive\ \fIdelay_sec\fR] [\-\-force\-busy] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-natikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits] [\-\-statsbin\ \fIfilename\fR] [\-\-secctx\-attr\-value\ \fInumber\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-help] [\-\-version]
 .HP \w'\fBipsec\fR\ 'u
@@ -278,21 +278,17 @@ and
 \fB\-\-config /etc/ipsec\&.conf\fR
 are specified, the last command line argument specified takes precedence\&.
 .PP
-Pluto supports the NAT\-Traversal drafts and the final standard, RFC 3947, if the
-\fB\-\-nat_traversal\fR
-is specified\&. The allowed range behind the NAT routers is submitted using the
-\fB\-\-virtual_private\fR
+Pluto supports RFC 3947 NAT\-Traversal\&. The allowed range behind the NAT routers is submitted using the
+\fB\-\-virtual\-private\fR
 option\&. See
 \fBipsec.conf\fR(5)
 for the syntax\&. The option
-\fB\-\-force_keepalive\fR
+\fB\-\-force\-keepalive\fR
 forces the sending of the
 \fIkeep\-alive packets\fR, which are send to prevent the NAT router from closing its port when there is not enough traffic on the IPsec connection\&. The
-\fB\-\-keep_alive\fR
+\fB\-\-keep\-alive\fR
 sets the delay (in seconds) of these keep\-alive packets\&. The newer NAT\-T standards support
-\fIport floating\fR, and Libreswan enables this per default\&. It can be disabled using the
-\fB\-\-disable_port_floating\fR
-option\&.
+\fIport floating\fR, and Libreswan enables this per default\&.
 .PP
 Pluto supports the use of X\&.509 certificates and sends it certificate when needed\&. This can confuse IKE implementations that do not implement this, such as the old FreeS/WAN implementation\&. The
 \fB\-\-nocrsend\fR
@@ -846,9 +842,7 @@ is used on tunnels that need to be permanently up, and have static IP addresses\
 .PP
 \fB\-\-forceencaps\fR
 .RS 4
-In some cases, for example when ESP packets are filtered or when a broken IPsec peer does not properly recognise NAT, it can be useful to force RFC\-3948 encapsulation using this option\&. It causes pluto lie and tell the remote peer that RFC\-3948 encapsulation (ESP in UDP port 4500 packets) is required\&. For this option to have any effect, pluto must have been started with the
-\fB\-\-nat_traversal\fR
-option\&.
+In some cases, for example when ESP packets are filtered or when a broken IPsec peer does not properly recognise NAT, it can be useful to force RFC\-3948 encapsulation using this option\&. It causes pluto lie and tell the remote peer that RFC\-3948 encapsulation (ESP in UDP port 4500 packets) is required\&.
 .RE
 .PP
 If none of the
@@ -1578,7 +1572,7 @@ disable \(lqdaemon fork\(rq (default is to fork)\&. In addition, after the lock 
 if this option has been selected, whenever a new ISAKMP SA is established, any connection with the same Peer ID but a different Peer IP address is unoriented (causing all its SAs to be deleted)\&. This helps clean up dangling SAs when a connection is lost and then regained at another IP address\&.
 .RE
 .PP
-\fB\-\-force_busy\fR
+\fB\-\-force\-busy\fR
 .RS 4
 if this option has been selected, pluto will be forced to be "busy"\&. In this state, which happens when there is a Denial of Service attack, will force pluto to use cookies before accepting new incoming IKE packets\&. Cookies are send and required in ikev1 Aggressive Mode and in ikev2\&. This option is mostly used for testing purposes, but can be selected by paranoid administrators as well\&.
 .RE

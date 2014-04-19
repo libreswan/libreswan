@@ -112,7 +112,7 @@ void do_whacklisten()
 	reset_adns_restart_count();
 	set_myFQDN();
 	find_ifaces();
-	load_preshared_secrets(NULL_FD);
+	load_preshared_secrets();
 	load_groups();
 }
 
@@ -419,7 +419,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 	}
 
 	if (msg.whack_reread & REREAD_SECRETS)
-		load_preshared_secrets(whackfd);
+		load_preshared_secrets();
 
 	if (msg.whack_list & LIST_PUBKEYS)
 		list_public_keys(msg.whack_utc, msg.whack_check_pub_keys);
