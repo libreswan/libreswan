@@ -88,13 +88,6 @@ static bool read_subnet(const char *src, size_t len,
 	} else if (strncmp(src, "%v6:", 4) == 0) {
 		pl = 4;
 		af = AF_INET6;
-	} else if (strncmp(src, "%4:", 3) == 0) {
-		/* workaround for typo "%4:" instead of "%v4:" introduced in old openswan release */
-		pl = 3;
-		af = AF_INET;
-		loglog(RC_LOG_SERIOUS,
-		       "fixup for bad virtual-private entry '%s'; please fix your virtual-private line to use %%v4.",
-		       src);
 	} else {
 		return FALSE;
 	}
