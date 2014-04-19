@@ -361,13 +361,10 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
 {
 	int i;
 
-	if (!list || !len)
-		return FALSE;
-
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < len; i++)
 		if (subnetinsubnet(peer_net, &(list[i])))
 			return TRUE;
-	}
+
 	return FALSE;
 }
 
