@@ -168,8 +168,8 @@ complibtest() {
     stat=99
     if [ -n "${FILE-}" -a -r "${FILE-}" ]
     then
-	    ${ECHO} "   "CC -g -o $testobj -D$symbol ${FILE} ${LIBRESWANLIB} 
-	    ${CC} -g -o $testobj -DSWAN_TESTING -D$symbol ${MOREFLAGS} ${PORTINCLUDE} ${EXTRAFLAGS} -I${LIBRESWANSRCDIR}/linux/include -I${LIBRESWANSRCDIR} -I${LIBRESWANSRCDIR}/include ${FILE} ${LIBRESWANLIB} ${EXTRALIBS}
+	    ${ECHO} "   "${CC} -g -o $testobj -D$symbol ${FILE} ${LIBRESWANLIB} 
+	    ${CC} -g -o $testobj -DSWAN_TESTING -D$symbol ${MOREFLAGS} ${PORTINCLUDE} ${EXTRAFLAGS} -I${LIBRESWANSRCDIR}/linux/include -I${LIBRESWANSRCDIR} -I${LIBRESWANSRCDIR}/include ${FILE} ${LIBRESWANLIB} ${EXTRALIBS} -Iinclude/
 	    rm -rf lib-$testobj/OUTPUT
 	    mkdir -p lib-$testobj/OUTPUT
     fi
