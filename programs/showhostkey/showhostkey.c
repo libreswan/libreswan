@@ -94,15 +94,6 @@ void (exit_tool)(int x)
 	exit(x);
 }
 
-static void phasemeout_loglog(int mess_no UNUSED, const char *message, ...)
-{
-	va_list args;
-
-	va_start(args, message);
-	vfprintf(stderr, message, args);
-	va_end(args);
-}
-
 static void print_key(struct secret *secret,
 		      struct private_key_stuff *pks,
 		      bool disclose)
@@ -360,7 +351,6 @@ int main(int argc, char *argv[])
 	char *rsakeyid, *keyid;
 	struct secret *host_secrets = NULL;
 	struct secret *s;
-	prompt_pass_t pass;
 
 	rsakeyid = NULL;
 	keyid = NULL;
@@ -466,10 +456,6 @@ usage:
 			"verbosity cannot be set this high\n");
 	}
 
-	/* now load file from indicated location */
-	pass.prompt = phasemeout_loglog;
-	pass.fd = 2; /* stderr */
-
 	if (verbose)
 		fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",
 			oco->confddir);
@@ -488,7 +474,7 @@ usage:
 	PK11_SetPasswordFunc(getNSSPassword);
 
 	lsw_load_preshared_secrets(&host_secrets, verbose > 0 ? TRUE : FALSE,
-				   secrets_file, &pass);
+				   secrets_file);
 
 	NSS_Shutdown();
 	PR_Cleanup();

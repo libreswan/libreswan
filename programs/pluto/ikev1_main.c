@@ -389,8 +389,7 @@ size_t RSA_sign_hash(struct connection *c,
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash_len < sz &&
 		sz <= RSA_MAX_OCTETS);
-	sign_hash(k, hash_val, hash_len, sig_val, sz);
-	return sz;
+	return sign_hash(k, hash_val, hash_len, sig_val, sz);
 }
 
 /*

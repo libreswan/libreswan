@@ -897,10 +897,9 @@
       <para>The file <filename>/etc/ipsec.secrets</filename> is used to keep
       preshared secret keys, RSA private keys, X.509 encoded keyfiles and
       XAUTH passwords. Smartcards are handled via NSS. For
-      debugging, there is an argument to the <emphasis
-      remap="B">pluto</emphasis> command to use a different file. This file is
-      described in <citerefentry>
-          <refentrytitle>ipsec.secrets</refentrytitle>
+      debugging, there is an argument to the <emphasis remap="B">pluto</emphasis>
+      command to use a different file. This file is described in
+      <citerefentry><refentrytitle>ipsec.secrets</refentrytitle>
 
           <manvolnum>5</manvolnum>
         </citerefentry>.</para>
@@ -928,9 +927,7 @@
       command line argument specified takes precedence.
       </para>
 
-      <para>Pluto supports the NAT-Traversal drafts and the final standard,
-      RFC 3947. The
-      allowed range behind the NAT routers is submitted using the
+      <para>Pluto supports RFC 3947 NAT-Traversal. The allowed range behind the NAT routers is submitted using the
       <option>--virtual-private</option> option. See <citerefentry>
           <refentrytitle>ipsec.conf</refentrytitle>
 
@@ -942,7 +939,7 @@
       IPsec connection. The <option>--keep-alive</option> sets the delay (in
       seconds) of these keep-alive packets. The newer NAT-T standards support
       <emphasis remap="I">port floating</emphasis>, and Libreswan enables this
-      per default.
+      per default.</para>
 
       <para>Pluto supports the use of X.509 certificates and sends it
       certificate when needed. This can confuse IKE implementations that do

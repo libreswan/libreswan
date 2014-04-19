@@ -1,1 +1,1 @@
-PLUTO_OPTIONS="--leak_detective"
+PLUTO_OPTIONS="--leak-detective"

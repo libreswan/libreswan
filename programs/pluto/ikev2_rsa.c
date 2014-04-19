@@ -130,11 +130,15 @@ bool ikev2_calculate_rsa_sha1(struct state *st,
 
 	{
 		u_char sig_val[RSA_MAX_OCTETS];
+		size_t tmp_sz;
 
 		/* now generate signature blob */
-		sign_hash(k, signed_octets, signed_len,
+		tmp_sz = sign_hash(k, signed_octets, signed_len,
 			  sig_val, sz);
-		out_raw(sig_val, sz, a_pbs, "rsa signature");
+		if (tmp_sz)
+			out_raw(sig_val, sz, a_pbs, "rsa signature");
+		else
+			return FALSE;
 	}
 
 	return TRUE;
