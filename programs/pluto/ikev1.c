@@ -2807,6 +2807,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* return FALSE; */
 	}
 
+	zero(&peer);
 	peer.kind = id->isaid_idtype;
 
 	if (!extract_peer_id(&peer, id_pbs))
