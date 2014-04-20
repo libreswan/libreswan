@@ -111,7 +111,7 @@ bool ikev2_calculate_rsa_sha1(struct state *st,
 	unsigned int sz;
 
 	if (k == NULL)
-		return 0; /* failure: no key to use */
+		return FALSE; /* failure: no key to use */
 
 	sz = k->pub.k;
 
@@ -129,16 +129,13 @@ bool ikev2_calculate_rsa_sha1(struct state *st,
 	    DBG_dump("v2rsa octets", signed_octets, signed_len));
 
 	{
-		u_char sig_val[RSA_MAX_OCTETS];
-		size_t tmp_sz;
-
 		/* now generate signature blob */
-		tmp_sz = sign_hash(k, signed_octets, signed_len,
-			  sig_val, sz);
-		if (tmp_sz)
-			out_raw(sig_val, sz, a_pbs, "rsa signature");
-		else
+		u_char sig_val[RSA_MAX_OCTETS];
+
+		if (0 == sign_hash(k, signed_octets, signed_len,
+				sig_val, sz))
 			return FALSE;
+		out_raw(sig_val, sz, a_pbs, "rsa signature");
 	}
 
 	return TRUE;

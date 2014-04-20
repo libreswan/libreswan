@@ -149,6 +149,7 @@ void list_psks(void)
 	lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
 }
 
+/* returns the length of the result on success; 0 on failure */
 int sign_hash(const struct RSA_private_key *k,
 		  const u_char *hash_val, size_t hash_len,
 		  u_char *sig_val, size_t sig_len)
