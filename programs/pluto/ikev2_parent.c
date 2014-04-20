@@ -2710,7 +2710,7 @@ bool ship_v2N(unsigned int np, u_int8_t critical,
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
-static void v2_delete_my_family(struct state *pst)
+void v2_delete_my_family(struct state *pst, enum phase1_role role)
 {
 	/* We are a parent: delete our children and
 	 * then prepare to delete ourself.
@@ -2733,14 +2733,16 @@ static void v2_delete_my_family(struct state *pst)
 		struct state *next_st = st->st_hashchain_next;
 
 		if (st->st_clonedfrom == pst->st_serialno) {
-			change_state(st, STATE_CHILDSA_DEL);
+			if (role == RESPONDER)
+				change_state(st, STATE_CHILDSA_DEL);
 			delete_state(st);
 		}
 		st = next_st;
 	}
 
 	/* delete self */
-	change_state(pst, STATE_IKESA_DEL);
+	if (role == RESPONDER)
+		change_state(pst, STATE_IKESA_DEL);
 	delete_state(pst);
 }
 
@@ -3187,7 +3189,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					 * should be the only payload in the informational.
 					 * Now delete the IKE SA state and all its child states
 					 */
-					v2_delete_my_family(st);
+					v2_delete_my_family(st, RESPONDER);
 				}
 				break;
 
@@ -3269,7 +3271,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					 * should be the only payload in the informational.
 					 * Now delete the IKE SA state and all its child states
 					 */
-					v2_delete_my_family(st);
+					v2_delete_my_family(st, RESPONDER);
 				} else {
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("Received an INFORMATIONAL response, "
@@ -3468,6 +3470,7 @@ void ikev2_delete_out(struct state *st)
 			r_hdr.isa_np = ISAKMP_NEXT_v2E;
 			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
+
 			/*set initiator bit if we are initiator*/
 			if (pst->st_state == STATE_PARENT_I2 ||
 			    pst->st_state == STATE_PARENT_I3) {
@@ -3583,6 +3586,9 @@ void ikev2_delete_out(struct state *st)
 
 		send_ike_msg(pst, __FUNCTION__);
 
+		/* delete messages may not be acknowledged.
+		 * increase message ID for next delete message */
+		pst->st_msgid_nextuse++;  
 		/* update state */
 		ikev2_update_counters(&md);
 	}
@@ -3604,7 +3610,7 @@ unhappy_ending:
 		 * Our children will be on the same hash chain
 		 * because we share IKE SPIs.
 		 */
-		v2_delete_my_family(st);
+		v2_delete_my_family(st, RESPONDER);
 	}
 }
 

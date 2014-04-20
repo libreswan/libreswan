@@ -65,6 +65,7 @@
 #include "server.h"
 #include "fetch.h"
 #include "timer.h"
+#include "ikev2.h"
 
 #include "kernel_alg.h"
 #include "ike_alg.h"
@@ -398,9 +399,23 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 		if (st == NULL) {
 			loglog(RC_UNKNOWN_NAME, "no state #%lu to delete",
-			       msg.whack_deletestateno);
+					msg.whack_deletestateno);
+
 		} else {
-			delete_state(st);
+			DBG_log("received whack to delete state %s #%lu %s ",
+				st->st_ikev2 ? "IKEv2" : "IKEv1", 
+				st->st_serialno,
+				enum_name(&state_names, st->st_state));
+
+			if ( st->st_ikev2 && !IS_CHILD_SA(st)) {
+				DBG_log("state #%lu in %s is not a CHILD_SA. "
+					"Could be an ISKAMP SA, also delete "
+					"its IPSEC/Child SAs", st->st_serialno,
+					enum_name(&state_names, st->st_state));
+				v2_delete_my_family(st, INITIATOR);
+			} else {
+				delete_state(st);
+			}
 		}
 	}
 
