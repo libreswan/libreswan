@@ -18,6 +18,7 @@
 #ifndef _ADDRESSPOOL_H
 #define _ADDRESSPOOL_H
 
+<<<<<<< HEAD
 /* 
  * A pool is a range of IPv4 addresses to be individually allocated.
  * A connection may have a pool.
@@ -44,4 +45,14 @@ void rel_lease_addr(const struct connection *c);
 
 extern void unreference_addresspool(struct ip_pool *pool);
 
+=======
+struct ip_pool *install_addresspool(const ip_range *pool_range);
+err_t get_addr_lease(const struct connection *c, struct internal_addr *ia /*result*/);
+void rel_lease_addr(const struct connection *c);
+
+#ifdef NEVER
+extern void unreference_addresspool(struct ip_pool *pool);
+#endif /* NEVER */
+
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 #endif /* _ADDRESSPOOL_H */

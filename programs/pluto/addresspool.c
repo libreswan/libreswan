@@ -42,6 +42,7 @@
 #include "xauth.h"
 #include "addresspool.h"
 
+<<<<<<< HEAD
 /*
  * A lease is an assignment of a single address from a particular pool.
  *
@@ -49,6 +50,13 @@
  * so that the same client (based on ID) will  be assigned the same address 
  * from the pool. In the future we may 
  * implement code to delete a lingering lease to free the address if there is
+=======
+/* A lease is an assignment of a single address from a particular pool.
+ *
+ * When a lease ends, it lingers so that the same client (based on ID) will 
+ * be assigned the same address from the pool. In the future we may
+ * implement code to delete a lingering lease to free the address if there is 
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
  * no free address in the pool.
  *
  * Life cycle:
@@ -56,6 +64,7 @@
  * - created by get_addr_lease if an existing or lingering lease for the
  *   same thatid isn't found.
  *
+<<<<<<< HEAD
  * - released (to linger) by linger_lease_entry. linger_lease_entry is called by
  *   rel_lease_addr.
  *
@@ -86,6 +95,72 @@ struct lease_addr {
  */
 static struct ip_pool *pluto_pools = NULL;
 
+=======
+ * - released (to linger) by linger_lease_entry.  linger_lease_entry is called by
+ *   rel_lease_addr.
+ *
+ * - current code never frees a lease but free_lease_for_index and 
+ *   free_lease_list could do it (LEAK!).
+ */
+struct lease_addr {
+	u_int32_t index;	/* range start + index == IP address */
+	struct id thatid;	/* from connection */
+
+	time_t started;		/* first time it was leased to this id */
+
+	/* 0 until linger_lease_entry is called.
+	 * Then it is the time of the linger_lease_entry call.
+	 * Goes back to 0 when it is re-allocated through find_last_lease
+	 * (for the same thatid).
+	 * Currently only used as if it were a bool.
+	 */
+	time_t ended;		/* 0 is not yet ended; > 0 is when it ended */
+
+	struct lease_addr *next;	/* next in pool's list of leases */
+};
+
+/* A pool is a range of IPv4 addresses to be individually allocated.
+ * A connection may have a pool.
+ * That pool may be shared with other connections (hence the reference count).
+ *
+ * A pool has a linked list of leases.
+ * This list is in monotonically increasing order.
+ */
+struct ip_pool {
+	unsigned refcnt;	/* reference counted! */
+	ip_address start;	/* start of IP range in pool */
+	ip_address end;		/* end of IP range in pool (included) */
+	u_int32_t size;		/* number of addresses within range */
+	u_int32_t used;		/* count, addresses in use */ 
+	u_int32_t lingering;	/* count, lingering addresses */
+	struct lease_addr *leases;	/* monotonically increasing index values */
+
+	struct ip_pool *next;	/* next pool */
+};
+
+/* 
+ * head of chained addresspool list 
+ * addresspool come from ipsec.conf or whacked connection.
+ */
+static struct ip_pool *pluto_pools = NULL;
+
+#ifdef NEVER	/* not currently used */
+static struct lease_addr *free_lease_entry(struct lease_addr *h);	/* reorder to eliminated */
+#endif /* NEVER */
+
+#ifdef NEVER	/* not currently used */
+static void free_lease_list(struct lease_addr **head)
+{
+	DBG(DBG_CONTROL,
+	    DBG_log("%s: addresspool free the lease list ptr %p",
+		    __func__, *head));
+	while (*head != NULL)
+		*head = free_lease_entry(*head);
+}
+#endif /* NEVER */
+
+#ifdef NEVER	/* not currently used */
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 /* note: free_lease_entry returns a pointer to h's list successor.
  * The caller MUST use this to replace the linked list's pointer to h.
  */
@@ -99,6 +174,7 @@ static struct lease_addr *free_lease_entry(struct lease_addr *h)
 	pfree(h);
 	return next;
 }
+<<<<<<< HEAD
 
 static void free_lease_list(struct lease_addr **head)
 {
@@ -113,6 +189,14 @@ static void free_lease_list(struct lease_addr **head)
  * mark a lease as ended. It lingers around.
  * But the lease isn't freed: it lingers, available to be re-activated
  * by get_addr_lease/find_lingering_lease (but only for the same thatid).
+=======
+#endif /* NEVER */
+
+/* 
+ * mark a lease as ended. It lingers around.
+ * But the lease isn't freed: it lingers, available to be re-activated
+ * by get_addr_lease/find_last_lease (but only for the same thatid).
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
  */
 static bool linger_lease_entry(struct lease_addr *head, u_int32_t i)
 {
@@ -124,14 +208,22 @@ static bool linger_lease_entry(struct lease_addr *head, u_int32_t i)
 	for (p = head; p != NULL; p = p->next) {
 		if (p->index == i) {
 			p->ended = time((time_t *)NULL);
+<<<<<<< HEAD
 			passert(p->ended != 0); /* 0 must be distinct */
+=======
+			passert(p->ended != 0);	/* 0 must be distinct */
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 			return FALSE;
 		}
 	}
 	return TRUE;
 }
 
+<<<<<<< HEAD
 #ifdef NEVER    /* not currently used */
+=======
+#ifdef NEVER	/* not currently used */
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 static void free_lease_for_index(struct lease_addr **head, u_int32_t i)
 {
 	struct lease_addr **pp;
@@ -156,7 +248,11 @@ static void free_lease_for_index(struct lease_addr **head, u_int32_t i)
 
 void rel_lease_addr(const struct connection *c)
 {
+<<<<<<< HEAD
 	u_int32_t i;    /* index within range of IPv4 address to be released */
+=======
+	u_int32_t i;	/* index within range of IPv4 address to be released */
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 
 	/* text of addresses */
 	char ta_start[ADDRTOT_BUF];
@@ -192,9 +288,13 @@ void rel_lease_addr(const struct connection *c)
 	}
 
 	/* set the lease ended  */
+<<<<<<< HEAD
 	if (c->spd.that.id.kind == ID_NONE) {
 		free_lease_for_index(&c->pool->leases, i);
 	} else if (linger_lease_entry(c->pool->leases, i)) {
+=======
+	if (linger_lease_entry(c->pool->leases, i)) {
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 		/* this should not happen. So worth logging. */
 		DBG(DBG_CONTROL, DBG_log("failed to end lease "
 					 "that.client.addr %s conn addresspool"
@@ -209,13 +309,19 @@ void rel_lease_addr(const struct connection *c)
 	c->pool->used--;
 	DBG(DBG_CONTROLMORE, DBG_log("ended lease %s from addresspool %s-%s "
 				     "index %u. pool size %u used %u lingering %u",
+<<<<<<< HEAD
 				     ta_client, ta_start, ta_end, i,
 				     c->pool->size, c->pool->used,
+=======
+				     ta_client, ta_start, ta_end, i, 
+				     c->pool->size, c->pool->used, 
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 				     c->pool->lingering));
 
 	return;
 }
 
+<<<<<<< HEAD
 /*
  * return previous lease if there is one lingering for the same ID
  * but ID_NONE does not count.
@@ -226,6 +332,17 @@ void rel_lease_addr(const struct connection *c)
  */
 static bool find_lingering_lease(const struct connection *c,
 				 u_int32_t *index /*result*/)
+=======
+/* 
+ * return previous lease if there is one lingering for the same ID 
+ * but ID_NONE does not count.
+ *
+ * even when unique id is disabled
+ * return the same INTERNAL_IP4_ADDRESS for the same id. 
+ * ??? Is this reasonable ??
+ */
+static bool find_last_lease(const struct connection *c, u_int32_t *index /*result*/)
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 {
 	struct lease_addr *p;
 	char thatid[IDTOA_BUF];
@@ -237,6 +354,7 @@ static bool find_lingering_lease(const struct connection *c,
 	for (p = c->pool->leases; p != NULL; p = p->next) {
 		if (p->thatid.kind != ID_NONE &&
 		    same_id(&p->thatid, &c->spd.that.id)) {
+<<<<<<< HEAD
 			DBG(DBG_CONTROLMORE, {
 				    uint32_t addr;
 				    uint32_t addr_nw;
@@ -259,6 +377,15 @@ static bool find_lingering_lease(const struct connection *c,
 
 			}
 			p->ended = 0;   /* not ended */
+=======
+			DBG(DBG_CONTROLMORE, DBG_log("  addresspool found the "
+						     "old id. re-use address '%s'",
+						     thatid));
+			*index = p->index;
+			if (p->ended != 0)
+				c->pool->lingering--;
+			p->ended = 0;	/* not ended */
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 			return TRUE;
 		}
 	}
@@ -266,8 +393,12 @@ static bool find_lingering_lease(const struct connection *c,
 	return FALSE;
 }
 
+<<<<<<< HEAD
 err_t get_addr_lease(const struct connection *c,
 		     struct internal_addr *ia /*result*/)
+=======
+err_t get_addr_lease(const struct connection *c, struct internal_addr *ia /*result*/)
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 {
 	/* return value is from 1 to size. 0 is error */
 	u_int32_t i = 0;
@@ -333,7 +464,11 @@ err_t get_addr_lease(const struct connection *c,
 		a = alloc_thing(struct lease_addr, "address lease entry");
 		a->index = candidate;
 		a->started = time((time_t *)NULL);
+<<<<<<< HEAD
 		a->ended = 0;   /* not ended */
+=======
+		a->ended = 0;	/* not ended */
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 
 		duplicate_id(&a->thatid, &c->spd.that.id);
 		idtoa(&a->thatid, thatid, sizeof(thatid));
@@ -349,8 +484,13 @@ err_t get_addr_lease(const struct connection *c,
 		     AF_INET, &ia->ipaddr);
 
 	DBG(DBG_CONTROLMORE, DBG_log("%s lease %s from addresspool %s-%s. "
+<<<<<<< HEAD
 				     "index %u size %u used %u lingering %u "
 				     "thatid '%s'", r ? "re-use" : "new",
+=======
+				     "index %u size %u used %u lingering %u thatid '%s'",
+				     r ? "re-use" : "new",
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 				     (addrtot(&ia->ipaddr, 0, abuf3,
 					      sizeof(abuf3)), abuf3),
 				     abuf1, abuf2, i, size,
@@ -359,6 +499,7 @@ err_t get_addr_lease(const struct connection *c,
 	return e;
 }
 
+<<<<<<< HEAD
 static void free_addresspool(struct ip_pool *pool)
 {
 	struct ip_pool **pp;
@@ -379,8 +520,21 @@ static void free_addresspool(struct ip_pool *pool)
 	DBG_log("%s addresspool %p not found in list of pools", __func__,
 		pool);
 	return;
-}
+=======
+#ifdef NEVER	/* not currently used */
+static void free_addresspool(struct ip_pool *pool);	/* reorder to eliminate */
+#endif
 
+#ifdef NEVER	/* not currently used */
+static void free_addresspools(void)
+{
+	while (pluto_pools != NULL)
+		free_addresspool(pluto_pools);
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
+}
+#endif /* NEVER */
+
+<<<<<<< HEAD
 #ifdef NEVER    /* not currently used */
 static void free_addresspools(void)
 {
@@ -403,9 +557,44 @@ void unreference_addresspool(struct ip_pool *pool)
 					    " ptr %p", pool));
 				free_addresspool(pool);
 			}
+=======
+#ifdef NEVER	/* not currently used */
+void unreference_addresspool(struct ip_pool *pool)
+{
+	if (pool != NULL) {
+		pool->refcnt--;
+		if (pool->refcnt == 0) {
+			DBG(DBG_CONTROLMORE, DBG_log("freeing memory for addresspool"
+						     " ptr %p", pool));
+			free_addresspool(pool);
 		}
 	}
 }
+#endif /* NEVER */
+
+#ifdef NEVER	/* not currently used */
+static void free_addresspool(struct ip_pool *pool)
+{
+	struct ip_pool **pp;
+	struct ip_pool *p;
+
+	/* search for pool in list of pools so we can unlink it */
+	if (pool == NULL)
+		return;
+
+	for (pp = &pluto_pools; (p = *pp) != NULL; pp = &p->next) {
+		if (p == pool) {
+			*pp = p->next;	/* unlink pool */
+			free_lease_list(&pool->leases);
+			pfree(pool);
+			return;
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
+		}
+	}
+	DBG_log("%s addresspool %p not found in list of pools", __func__, pool);
+	return;
+}
+#endif /* NEVER */
 
 static void reference_addresspool(struct ip_pool *pool)
 {
@@ -416,8 +605,12 @@ static void reference_addresspool(struct ip_pool *pool)
  * unitize(i) yields a value with the same sign as i but always -1, 0, or 1.
  * Think of it as putting a *cmp result in canonical form.
  */
+<<<<<<< HEAD
 static int unitize(int i)
 {
+=======
+static int unitize(int i) {
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 	return i < 0 ? -1 : i > 0 ? 1 : 0;
 }
 
@@ -428,10 +621,15 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 	struct ip_pool *h;
 
 	for (h = *head; h != NULL; h = h->next) {
+<<<<<<< HEAD
 		int start_cmp =
 			unitize(ip_address_cmp(&pool_range->start, &h->start));
 		int end_cmp =
 			unitize(ip_address_cmp(&pool_range->end, &h->end));
+=======
+		int start_cmp = unitize(ip_address_cmp(&pool_range->start, &h->start));
+		int end_cmp = unitize(ip_address_cmp(&pool_range->end, &h->end));
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 
 		bool match = start_cmp == 0 && end_cmp == 0;
 
@@ -453,6 +651,7 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 		char abuf3[ADDRTOT_BUF];
 		char abuf4[ADDRTOT_BUF];
 		addrtot(&pool_range->start, 0, abuf1,
+<<<<<<< HEAD
 			sizeof(abuf1));
 		addrtot(&pool_range->end, 0, abuf2,
 			sizeof(abuf2));
@@ -475,6 +674,30 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 				      "once", abuf1, abuf2, abuf3,
 				      abuf4);
 		}
+=======
+				sizeof(abuf1));
+		addrtot(&pool_range->end, 0, abuf2,
+				sizeof(abuf2));
+		addrtot(&pool_range->start, 0, 
+				abuf3, sizeof(abuf3));
+		addrtot(&pool_range->end, 0, 
+				abuf4, sizeof(abuf4));
+
+		DBG(DBG_CONTROLMORE, {
+				DBG_log("%s addresspool %s-%s%s%s",
+					match ? "existing" : "new",
+					abuf1, abuf2,
+					start_cmp == 0 ? " same start" : "",
+					end_cmp == 0 ? " same end" : "");
+
+				});
+		if (start_cmp != end_cmp) {
+			libreswan_log("WARNING: new addresspool %s-%s "
+					"INEXACTLY OVERLAPPS with existing %s-%s "
+					"an IP address may be leased more than "
+					"once", abuf1, abuf2, abuf3, abuf4);
+		} 
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 		if (match)
 			return h;
 	}
@@ -484,8 +707,13 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 /*
  * the caller must enforce the following:
  * - Range must not include 0.0.0.0
+<<<<<<< HEAD
  * - Only IPv4 allowed.
  * - The range must be non-empty
+=======
+ * - Only IPv4 allowed. 
+ * - The range must be non-empty 
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
  */
 struct ip_pool *install_addresspool(const ip_range *pool_range)
 {
@@ -497,6 +725,7 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 		/* re-use existing pool */
 		reference_addresspool(pool);
 		DBG(DBG_CONTROLMORE, {
+<<<<<<< HEAD
 			    char abuf1[ADDRTOT_BUF];
 			    char abuf2[ADDRTOT_BUF];
 
@@ -506,6 +735,17 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 				    "used %u size %u ptr %p re-use it",
 				    abuf1, abuf2, pool->refcnt, pool->used,
 				    pool->size, pool);
+=======
+			char abuf1[ADDRTOT_BUF];
+			char abuf2[ADDRTOT_BUF];
+
+			addrtot(&pool->start, 0, abuf1, sizeof(abuf1));
+			addrtot(&pool->end, 0, abuf2, sizeof(abuf2));
+			DBG_log("addresspool %s-%s exists ref count %u "
+				"used %u size %u ptr %p re-use it",
+				abuf1, abuf2, pool->refcnt, pool->used,
+				pool->size, pool);
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 		    });
 
 		return pool;
@@ -515,7 +755,11 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 
 	struct ip_pool *p = alloc_thing(struct ip_pool, "addresspool entry");
 
+<<<<<<< HEAD
 	p->refcnt = 0;
+=======
+	p->refcnt = 1;
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 	reference_addresspool(p);
 	p->start = pool_range->start;
 	p->end = pool_range->end;
@@ -525,6 +769,7 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 	p->lingering = 0;
 
 	DBG(DBG_CONTROLMORE, {
+<<<<<<< HEAD
 		    char abuf1[ADDRTOT_BUF];
 		    char abuf2[ADDRTOT_BUF];
 
@@ -533,6 +778,16 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 		    DBG_log("add new addresspool to global pools %s-%s "
 			    "size %d ptr %p",
 			    abuf1, abuf2, p->size, p);
+=======
+		char abuf1[ADDRTOT_BUF];
+		char abuf2[ADDRTOT_BUF];
+
+		addrtot(&p->start, 0, abuf1, sizeof(abuf1));
+		addrtot(&p->end, 0, abuf2, sizeof(abuf2));
+		DBG_log("add new addresspool to global pools %s-%s "
+			"size %d ptr %p",
+			abuf1, abuf2, p->size, p);
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 	    });
 	p->leases = NULL;
 	p->next = *head;

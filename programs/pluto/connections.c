@@ -247,7 +247,8 @@ void delete_connection(struct connection *c, bool relations)
 			ip_str(&c->spd.that.host_addr),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
-		rel_lease_addr(c);
+		if (c->pool != NULL)
+			rel_lease_addr(c);
 	} else {
 		libreswan_log("deleting connection");
 	}
@@ -256,6 +257,7 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
+<<<<<<< HEAD
 	if ((c->pool != NULL) && (c->kind != CK_GOING_AWAY)) {
 		DBG(DBG_CONTROLMORE, DBG_log("unreference addresspool of conn "
 					"%s [%lu] kind %s refcnt %u",
@@ -263,6 +265,20 @@ void delete_connection(struct connection *c, bool relations)
 					enum_name(&connection_kind_names, 
 						c->kind), c->pool->refcnt));
 		unreference_addresspool(c->pool);
+=======
+#if 0
+	/* TODO:  this will be enabled in the next version */
+	if ((c->pool != NULL) && (c->kind == CK_TEMPLATE)) {
+		DBG(DBG_CONTROLMORE,
+			DBG_log("free addresspool entry for the conn %s "
+				"kind %s conn serial %d pool refcnt %u",
+				c->name, enum_name(&connection_kind_names,
+						c->kind),
+				c->instance_serial,
+				c->pool->refcnt));
+		unreference_addresspool(c->pool);
+		c->pool = NULL;
+>>>>>>> 4d248dad7fa334b3ecb9bbf234acc6367544e4a7
 	}
 
 	/* free up any logging resources */
