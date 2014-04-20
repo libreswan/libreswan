@@ -1614,7 +1614,7 @@ void scan_proc_shunts(void)
 			/* our client */
 
 			context = "source subnet field malformed: ";
-			ugh = ttosubnet((char *)ff[0].ptr, ff[0].len, 0,
+			ugh = ttosubnet((char *)ff[0].ptr, ff[0].len, AF_UNSPEC,
 					&eri.ours);
 			if (ugh != NULL)
 				break;
@@ -1622,7 +1622,7 @@ void scan_proc_shunts(void)
 			/* his client */
 
 			context = "destination subnet field malformed: ";
-			ugh = ttosubnet((char *)ff[2].ptr, ff[2].len, 0,
+			ugh = ttosubnet((char *)ff[2].ptr, ff[2].len, AF_UNSPEC,
 					&eri.his);
 			if (ugh != NULL)
 				break;

@@ -41,17 +41,11 @@ ip_address *dst;
 	case AF_INET:
 		return initaddr((unsigned char *)&v4any, sizeof(v4any), af,
 				dst);
-
-		break;
 	case AF_INET6:
 		return initaddr((unsigned char *)&v6any, sizeof(v6any), af,
 				dst);
-
-		break;
 	default:
 		return "unknown address family in anyaddr/unspecaddr";
-
-		break;
 	}
 }
 
@@ -80,17 +74,11 @@ ip_address *dst;
 	case AF_INET:
 		return initaddr((unsigned char *)&v4loop, sizeof(v4loop), af,
 				dst);
-
-		break;
 	case AF_INET6:
 		return initaddr((unsigned char *)&v6loop, sizeof(v6loop), af,
 				dst);
-
-		break;
 	default:
 		return "unknown address family in loopbackaddr";
-
-		break;
 	}
 }
 
@@ -118,8 +106,6 @@ const ip_address * src;
 
 	default:
 		return 0;
-
-		break;
 	}
 
 	return (cmp == 0) ? 1 : 0;
@@ -153,8 +139,6 @@ const ip_address * src;
 		break;
 	default:
 		return 0;
-
-		break;
 	}
 
 	return (cmp == 0) ? 1 : 0;

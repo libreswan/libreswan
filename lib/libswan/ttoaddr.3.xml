@@ -239,9 +239,12 @@ and
 <function>ttosubnet</function>
 specifies the address family of interest.
 It should be either
-<emphasis remap='B'>AF_INET</emphasis>
+<emphasis remap='B'>AF_INET</emphasis>,
+<emphasis remap='B'>AF_INET6</emphasis>,
 or
-<emphasis remap='B'>AF_INET6</emphasis>.</para>
+<emphasis remap='B'>AF_UNSPEC</emphasis>.
+If it is <emphasis remap='B'>AF_UNSPEC</emphasis>,
+the family will be based on the string.</para>
 
 <para>The
 <varname role='parameter'>dstlen</varname>

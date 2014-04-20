@@ -1348,7 +1348,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	e = ttoaddr(c->dnshostname, 0, 0, &new_addr);
+	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",

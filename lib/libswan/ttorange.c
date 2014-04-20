@@ -61,7 +61,7 @@ ip_range *dst;
 	if (oops != NULL)
 		return oops;
 
-	if (af == 0)
+	if (af == AF_UNSPEC)
 		af = ip_address_family(&addr_start_tmp);
 
 	switch (af) {
@@ -69,11 +69,8 @@ ip_range *dst;
 		break;
 	case AF_INET6:
 		return "address family (AF_INET6) is not supported in ttorange start";
-
 	default:
 		return "unknown address family in ttorange start";
-
-		break;
 	}
 
 	/*extract end ip address*/
@@ -81,19 +78,13 @@ ip_range *dst;
 	if (oops != NULL)
 		return oops;
 
-	if (af == 0)
-		af = ip_address_family(&addr_end_tmp);
-
 	switch (af) {
 	case AF_INET:
 		break;
 	case AF_INET6:
 		return "address family (AF_INET6) is not supported in ttiporange end";
-
 	default:
 		return "unknown address family in ttorange end";
-
-		break;
 	}
 	if (ntohl(addr_end_tmp.u.v4.sin_addr.s_addr) <
 		ntohl(addr_start_tmp.u.v4.sin_addr.s_addr))

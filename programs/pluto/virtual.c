@@ -75,7 +75,7 @@ static bool read_subnet(const char *src, size_t len,
 			bool *isincl)
 {
 	bool incl = TRUE;
-	int af;
+	int af = AF_UNSPEC;	/* AF_UNSPEC means "guess from form" */
 	int pl;
 	err_t ugh;
 
@@ -90,23 +90,17 @@ static bool read_subnet(const char *src, size_t len,
 	} else if (strncmp(src, "%v6:", 4) == 0) {
 		pl = 4;
 		af = AF_INET6;
-	} else {
-		return FALSE;
 	}
 
 	if (src[pl] == '!') {
 		pl++;
+		if (dstexcl == NULL)
+			return FALSE;
 		incl = FALSE;
 	}
 
 	src += pl;
 	len -= pl;
-
-	if (len == 0)
-		return FALSE;
-
-	if (!incl && dstexcl == NULL)
-		return FALSE;
 
 	ugh = ttosubnet(src, len, af, incl ? dst : dstexcl);
 	if (ugh != NULL) {
