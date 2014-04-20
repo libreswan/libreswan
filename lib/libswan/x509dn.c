@@ -1512,42 +1512,6 @@ static bool parse_basicConstraints(chunk_t blob, int level0)
 }
 
 /*
- *  Converts a X.500 generalName into an ID
- */
-void gntoid(struct id *id, const generalName_t *gn)
-{
-	switch (gn->kind) {
-	case GN_DNS_NAME:	/* ID type: ID_FQDN */
-		id->kind = ID_FQDN;
-		id->name = gn->name;
-		break;
-	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
-	{
-		const struct af_info *afi = &af_inet4_info;
-		err_t ugh = NULL;
-
-		id->kind = afi->id_addr;
-		ugh = initaddr(gn->name.ptr, gn->name.len, afi->af,
-			&id->ip_addr);
-		if (!ugh) {
-			libreswan_log(
-				"Warning: gntoid() failed to initaddr(): %s",
-				ugh);
-		}
-
-	}
-	break;
-	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
-		id->kind = ID_USER_FQDN;
-		id->name = gn->name;
-		break;
-	default:
-		id->kind = ID_NONE;
-		id->name = empty_chunk;
-	}
-}
-
-/*
  * extracts a generalName
  */
 static generalName_t *parse_generalName(chunk_t blob, int level0)
