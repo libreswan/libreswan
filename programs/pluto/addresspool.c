@@ -390,19 +390,21 @@ static void free_addresspools(void)
 
 void unreference_addresspool(struct ip_pool *pool)
 {
-	if (pool != NULL) {
-		if (pool->refcnt > 0) {
-			pool->refcnt--;
-		} else {
-			libreswan_log("WARNING: %s can't unreference zero"
-					"refcnt %p", __func__, pool);
-			if (pool->refcnt == 0) {
-				DBG(DBG_CONTROLMORE,
-				    DBG_log("freeing memory for addresspool"
-					    " ptr %p", pool));
-				free_addresspool(pool);
-			}
+	if (pool == NULL) {
+		return;
+	}
+	if (pool->refcnt > 0) {
+		pool->refcnt--;
+		if (pool->refcnt == 0) {
+			DBG(DBG_CONTROLMORE,
+					DBG_log("freeing memory for addresspool"
+						" ptr %p", pool));
+			free_addresspool(pool);
 		}
+	} else {
+		libreswan_log("WARNING: %s can't unreference pool "
+				"refcnt %p refcnt %u", __func__, pool,
+				pool->refcnt);
 	}
 }
 
