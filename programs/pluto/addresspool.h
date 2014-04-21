@@ -18,30 +18,12 @@
 #ifndef _ADDRESSPOOL_H
 #define _ADDRESSPOOL_H
 
-/* 
- * A pool is a range of IPv4 addresses to be individually allocated.
- * A connection may have a pool.
- * That pool may be shared with other connections (hence the reference count).
- *
- * A pool has a linked list of leases.
- * This list is in monotonically increasing order.
- */
-struct ip_pool {
-	unsigned refcnt;        /* reference counted! */
-	ip_address start;       /* start of IP range in pool */
-	ip_address end;         /* end of IP range in pool (included) */
-	u_int32_t size;         /* number of addresses within range */
-	u_int32_t used;         /* count, addresses in use */
-	u_int32_t lingering;    /* count, lingering addresses */
-	struct lease_addr *leases;      /* monotonically increasing index values */
-
-	struct ip_pool *next;   /* next pool */
-};
+struct ip_pool;	/* forward declaration; definition is local to addresspool.c */
 
 struct ip_pool *install_addresspool(const ip_range *pool_range);
 err_t get_addr_lease(const struct connection *c, struct internal_addr *ia /*result*/);
 void rel_lease_addr(const struct connection *c);
 
-extern void unreference_addresspool(struct ip_pool *pool);
+extern void unreference_addresspool(struct connection *c);
 
 #endif /* _ADDRESSPOOL_H */

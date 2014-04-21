@@ -257,14 +257,8 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-	if ((c->pool != NULL) && (c->kind != CK_GOING_AWAY)) {
-		DBG(DBG_CONTROLMORE, DBG_log("unreference addresspool of conn "
-					"%s [%lu] kind %s refcnt %u",
-					c->name, c->instance_serial,
-					enum_name(&connection_kind_names, 
-						c->kind), c->pool->refcnt));
-		unreference_addresspool(c->pool);
-	}
+	if (c->kind != CK_GOING_AWAY)
+		unreference_addresspool(c);
 
 	/* free up any logging resources */
 	perpeer_logfree(c);

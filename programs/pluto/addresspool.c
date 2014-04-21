@@ -1,4 +1,4 @@
-#define NEVER
+#define COMPILE_UNUSED_THING
 /*
  * addresspool management functions used with left/rightaddresspool= option.
  * Currently used for IKEv1 XAUTH/ModeConfig options if we are an XAUTH server.
@@ -41,6 +41,27 @@
 #include "packet.h"
 #include "xauth.h"
 #include "addresspool.h"
+
+
+/* 
+ * A pool is a range of IPv4 addresses to be individually allocated.
+ * A connection may have a pool.
+ * That pool may be shared with other connections (hence the reference count).
+ *
+ * A pool has a linked list of leases.
+ * This list is in monotonically increasing order.
+ */
+struct ip_pool {
+	unsigned refcnt;        /* reference counted! */
+	ip_address start;       /* start of IP range in pool */
+	ip_address end;         /* end of IP range in pool (included) */
+	u_int32_t size;         /* number of addresses within range */
+	u_int32_t used;         /* count, addresses in use */
+	u_int32_t lingering;    /* count, lingering addresses */
+	struct lease_addr *leases;      /* monotonically increasing index values */
+
+	struct ip_pool *next;   /* next pool */
+};
 
 /*
  * A lease is an assignment of a single address from a particular pool.
@@ -131,7 +152,7 @@ static bool linger_lease_entry(struct lease_addr *head, u_int32_t i)
 	return TRUE;
 }
 
-#ifdef NEVER    /* not currently used */
+#ifdef COMPILE_UNUSED_THING
 static void free_lease_for_index(struct lease_addr **head, u_int32_t i)
 {
 	struct lease_addr **pp;
@@ -152,7 +173,7 @@ static void free_lease_for_index(struct lease_addr **head, u_int32_t i)
 	}
 	passert(FALSE);
 }
-#endif /* NEVER */
+#endif /* COMPILE_UNUSED_THING */
 
 void rel_lease_addr(const struct connection *c)
 {
@@ -388,24 +409,30 @@ static void free_addresspools(void)
 }
 #endif /* NEVER */
 
-void unreference_addresspool(struct ip_pool *pool)
+void unreference_addresspool(struct connection *c)
 {
-	if (pool == NULL) {
+	struct ip_pool *pool = c->pool;
+
+	if (pool == NULL)
 		return;
+
+	DBG(DBG_CONTROLMORE, DBG_log("unreference addresspool of conn "
+				"%s [%lu] kind %s refcnt %u",
+				c->name, c->instance_serial,
+				enum_name(&connection_kind_names, 
+					c->kind), pool->refcnt));
+
+	passert(pool->refcnt > 0);
+
+	pool->refcnt--;
+	if (pool->refcnt == 0) {
+		DBG(DBG_CONTROLMORE,
+				DBG_log("freeing memory for addresspool"
+					" ptr %p", pool));
+		free_addresspool(pool);
 	}
-	if (pool->refcnt > 0) {
-		pool->refcnt--;
-		if (pool->refcnt == 0) {
-			DBG(DBG_CONTROLMORE,
-					DBG_log("freeing memory for addresspool"
-						" ptr %p", pool));
-			free_addresspool(pool);
-		}
-	} else {
-		libreswan_log("WARNING: %s can't unreference pool "
-				"refcnt %p refcnt %u", __func__, pool,
-				pool->refcnt);
-	}
+
+	c->pool = NULL;
 }
 
 static void reference_addresspool(struct ip_pool *pool)
