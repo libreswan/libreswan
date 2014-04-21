@@ -875,26 +875,6 @@ static void send_reply(int sock, char *buf, ssize_t len)
 	}
 }
 
-static bool valid_pool(void)
-{
-	ip_range pool_range;
-	err_t  er;
-	er = ttorange(optarg, 0, AF_INET, &pool_range);
-	if (er != NULL) {
-		diagq("bad addresspool %s", er);
-	} else {
-		/* Range must not include 0.0.0.0. */
-		uint32_t addr = htonl(pool_range.start.u.v4.sin_addr.s_addr);
-		if (addr == 0)  {
-			diagq("bad start %s 0.0.0.0 not allowed", optarg);
-		} else {
-			return TRUE;
-
-		}
-	}
-	return FALSE;
-}
-
 /* This is a hack for initiating ISAKMP exchanges. */
 
 int main(int argc, char **argv)
@@ -1726,9 +1706,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL: 
-			if(valid_pool())
-				ttorange(optarg, 0, AF_INET, 
-						&msg.right.pool_range);
+			ttorange(optarg, 0, AF_INET, &msg.right.pool_range,
+					TRUE);
 			continue;
 
 		case CD_MODECFGDNS1: /* --modecfgdns1 */
