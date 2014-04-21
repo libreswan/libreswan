@@ -64,7 +64,6 @@ main(int argc, char *argv[]) {
 	do_test("aes256-sha1", PROTO_IPSEC_ESP);
 	do_test("aes128-sha1", PROTO_IPSEC_ESP);
 	do_test("aes-sha1", PROTO_IPSEC_ESP);
-	do_test("aes-sha", PROTO_IPSEC_ESP);
 	do_test("aes", PROTO_IPSEC_ESP);
 	do_test("aes256-sha", PROTO_IPSEC_ESP);
 	do_test("aes256-sha2", PROTO_IPSEC_ESP);
@@ -97,6 +96,31 @@ main(int argc, char *argv[]) {
 	do_test("des-sha1", PROTO_IPSEC_ESP); /* obsoleted */
 	do_test("mars", PROTO_IPSEC_ESP);
 	/* do_test("modp1536", PROTO_IPSEC_ESP); should we support this?  */
+
+	/* aliases */
+	do_test("aes-sha", PROTO_IPSEC_ESP);
+	do_test("ase-sah", PROTO_IPSEC_ESP);
+	do_test("aes-sah1", PROTO_IPSEC_ESP);
+
+	do_test("aesccma-128-null", PROTO_IPSEC_ESP);
+	do_test("ccm_a-128-null", PROTO_IPSEC_ESP);
+	do_test("ccma-128-null", PROTO_IPSEC_ESP);
+	do_test("aesccmb-128-null", PROTO_IPSEC_ESP);
+	do_test("ccm_b-128-null", PROTO_IPSEC_ESP);
+	do_test("ccmb-128-null", PROTO_IPSEC_ESP);
+	do_test("aesccmc-128-null", PROTO_IPSEC_ESP);
+	do_test("ccm_c-128-null", PROTO_IPSEC_ESP);
+	do_test("ccmc-128-null", PROTO_IPSEC_ESP);
+
+	do_test("aesgcma-128-null", PROTO_IPSEC_ESP);
+	do_test("gcm_a-128-null", PROTO_IPSEC_ESP);
+	do_test("gcma-128-null", PROTO_IPSEC_ESP);
+	do_test("aesgcmb-128-null", PROTO_IPSEC_ESP);
+	do_test("gcm_b-128-null", PROTO_IPSEC_ESP);
+	do_test("gcmb-128-null", PROTO_IPSEC_ESP);
+	do_test("aesgcmc-128-null", PROTO_IPSEC_ESP);
+	do_test("gcm_c-128-null", PROTO_IPSEC_ESP);
+	do_test("gcmc-128-null", PROTO_IPSEC_ESP);
 
 	/* ah= */
 	do_test("md5", PROTO_IPSEC_AH);
