@@ -649,6 +649,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 
 	if (end->strings_set[KSCF_ADDRESSPOOL]) {
 		char *addresspool = end->strings[KSCF_ADDRESSPOOL];
+		ip_range pool_range;
 
 		if (end->strings_set[KSCF_SUBNET])
 			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=",
@@ -657,20 +658,21 @@ static bool validate_end(struct ub_ctx *dnsctx,
 			    "connection's  %saddresspool set to: %s",
 			    leftright, end->strings[KSCF_ADDRESSPOOL] );
 
-		er = ttorange(addresspool, 0, AF_INET, &end->pool_range);
-		if (er != NULL)
+		er = ttorange(addresspool, 0, AF_INET, &pool_range);
+		if (er != NULL) {
 			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
-					addresspool, er);
-		if (ip_address_isany(&end->pool_range.start))
-			ERR_FOUND("bad start in %saddresspool=%s",
-					leftright, addresspool);
-		if (ip_address_isany(&end->pool_range.end))
-			ERR_FOUND("bad end in %addresspool=%s",
-					leftright, addresspool);
-		if(ip_address_cmp(&end->pool_range.start, &end->pool_range.end)
-				< 0)
-			ERR_FOUND("invalid range in %addresspool=%s",
-					leftright, addresspool);
+					addresspool, er); 
+		} else {
+			/* Range must not include 0.0.0.0. */
+			uint32_t addr = htonl(pool_range.start.u.v4.sin_addr.s_addr);
+			if (addr == 0) 
+			{
+				ERR_FOUND("bad start in %saddresspool=%s",
+						leftright, addresspool);
+			} else{
+				er = ttorange(addresspool, 0, AF_INET, &end->pool_range);
+			}
+		}
 	}
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||
