@@ -39,6 +39,32 @@
 /* abstract reference */
 struct oakley_group_desc;
 
+#define MAX_ALG_ALIASES 16
+
+typedef struct alg_alias {
+        const char *alg;
+        const char *alias_set[MAX_ALG_ALIASES];
+} alg_alias;
+
+const alg_alias auth_alg_aliases[] = {
+	/* alg */	/* aliases */
+        "sha2_256",     { "sha2", "sah2", NULL },
+        "sha1",         { "sha", "sah", "sah1", NULL },
+        NULL, { NULL }
+};
+
+const alg_alias esp_trans_aliases[] = {
+	/* alg */	/* aliases */
+	"aes",          { "ase", NULL },
+	"aes_ccm_a",    { "aesccma", "ccm_a", "ccma", NULL },
+	"aes_ccm_b",    { "aesccmb", "ccm_b", "ccmb", NULL },
+	"aes_ccm_c",    { "aesccmc", "ccm_c", "ccmc", NULL },
+	"aes_gcm_a",    { "aesgcma", "gcm_a", "gcma", NULL },
+	"aes_gcm_b",    { "aesgcmb", "gcm_b", "gcmb", NULL },
+	"aes_gcm_c",    { "aesgcmc", "gcm_c", "gcmc", NULL },
+	NULL, { NULL }
+};
+
 /*
  * sadb/ESP aa attrib converters
  * Paul: but aa is two octets, is sadb?
@@ -203,27 +229,9 @@ static int aalg_getbyname_esp(const char *str, int len)
 {
 	int ret = -1;
 	unsigned num;
-	static const char sha2_256_aka[] = "sha2";
-	static const char sha1_aka[] = "sha";
 
 	if (!str || !*str)
 		return ret;
-
-	/* handle "sha2" as "sha2_256" */
-	if (len == sizeof(sha2_256_aka)-1 &&
-		strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
-		DBG_log("interpreting ESP sha2 as sha2_256");
-		str = "sha2_256";
-		len = strlen(str);
-	}
-
-	/* now "sha" as "sha1" */
-	if (len == sizeof(sha1_aka)-1 &&
-	    strncasecmp(str, sha1_aka, sizeof(sha1_aka)-1) == 0) {
-		DBG_log("interpreting ESP sha as sha1");
-		str = "sha1";
-		len = strlen(str);
-	}
 
 	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "",
 			str, len);
@@ -245,6 +253,53 @@ static int aalg_getbyname_esp(const char *str, int len)
 
 	return ret;
 }
+
+/* if str is a known alias, return the real alg */ 
+static const char *alg_find_alias(const alg_alias *alias, const char *str)
+{
+        alg_alias *aa;
+        int i;
+
+        for (aa = (alg_alias *)alias; aa->alg != NULL; aa++) {
+		char **aset = (char **)aa->alias_set;
+
+                for (i = 0; i < MAX_ALG_ALIASES && aset[i] != NULL; i++) {
+                        if (strcasecmp(str, aset[i]) == 0)
+                                return aa->alg;
+                }
+        }
+
+        return NULL;
+}
+
+static int ealg_getbyname_or_alias_esp(const char *str, int len)
+{
+	int alen = len;
+	const char *astr;
+
+	astr = alg_find_alias(esp_trans_aliases, str);
+	if (astr != NULL)
+		alen = strlen(astr);
+	else
+		astr = str;
+
+	return ealg_getbyname_esp(astr, alen);
+}
+
+static int aalg_getbyname_or_alias_esp(const char *str, int len)
+{
+	int alen = len;
+	const char *astr;
+
+	astr = alg_find_alias(auth_alg_aliases, str);
+	if (astr != NULL)
+		alen = strlen(astr);
+	else
+		astr = str;
+
+	return aalg_getbyname_esp(astr, alen);
+}
+
 
 static int modp_getbyname_esp(const char *const str, int len)
 {
@@ -587,9 +642,8 @@ static void parser_init_esp(struct parser_context *p_ctx)
 	p_ctx->ealg_permit = TRUE;
 	p_ctx->aalg_permit = TRUE;
 	p_ctx->state = ST_INI;
-
-	p_ctx->ealg_getbyname = ealg_getbyname_esp;
-	p_ctx->aalg_getbyname = aalg_getbyname_esp;
+	p_ctx->ealg_getbyname = ealg_getbyname_or_alias_esp;
+	p_ctx->aalg_getbyname = aalg_getbyname_or_alias_esp;
 
 }
 
@@ -610,7 +664,7 @@ static void parser_init_ah(struct parser_context *p_ctx)
 	p_ctx->state = ST_INI_AA;
 
 	p_ctx->ealg_getbyname = NULL;
-	p_ctx->aalg_getbyname = aalg_getbyname_esp;
+	p_ctx->aalg_getbyname = aalg_getbyname_or_alias_esp;
 
 }
 
