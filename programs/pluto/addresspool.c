@@ -1,4 +1,4 @@
-#define COMPILE_UNUSED_THING
+#define COMPILE_UNUSED_THINGS
 /*
  * addresspool management functions used with left/rightaddresspool= option.
  * Currently used for IKEv1 XAUTH/ModeConfig options if we are an XAUTH server.
@@ -152,7 +152,7 @@ static bool linger_lease_entry(struct lease_addr *head, u_int32_t i)
 	return TRUE;
 }
 
-#ifdef COMPILE_UNUSED_THING
+#ifdef COMPILE_UNUSED_THINGS
 static void free_lease_for_index(struct lease_addr **head, u_int32_t i)
 {
 	struct lease_addr **pp;
@@ -173,7 +173,7 @@ static void free_lease_for_index(struct lease_addr **head, u_int32_t i)
 	}
 	passert(FALSE);
 }
-#endif /* COMPILE_UNUSED_THING */
+#endif /* COMPILE_UNUSED_THINGS */
 
 void rel_lease_addr(const struct connection *c)
 {
