@@ -416,7 +416,7 @@ void unreference_addresspool(struct connection *c)
 	DBG(DBG_CONTROLMORE, DBG_log("unreference addresspool of conn "
 				"%s [%lu] kind %s refcnt %u",
 				c->name, c->instance_serial,
-				enum_name(&connection_kind_names, 
+				enum_name(&connection_kind_names,
 					c->kind), pool->refcnt));
 
 	passert(pool->refcnt > 0);
@@ -497,8 +497,7 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 			libreswan_log("WARNING: new addresspool %s-%s "
 				      "INEXACTLY OVERLAPPS with existing %s-%s "
 				      "an IP address may be leased more than "
-				      "once", abuf1, abuf2, abuf3,
-				      abuf4);
+				      "once", abuf1, abuf2, abuf3, abuf4);
 		}
 		if (match)
 			return h;
