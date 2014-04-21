@@ -247,7 +247,8 @@ void delete_connection(struct connection *c, bool relations)
 			ip_str(&c->spd.that.host_addr),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
-		rel_lease_addr(c);
+		if (c->pool != NULL)
+			rel_lease_addr(c);
 	} else {
 		libreswan_log("deleting connection");
 	}
@@ -256,20 +257,8 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-#if 0
-	/* TODO:  this will be enabled in the next version */
-	if ((c->pool != NULL) && (c->kind == CK_TEMPLATE)) {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("free addresspool entry for the conn %s "
-				"kind %s conn serial %d pool refcnt %u",
-				c->name, enum_name(&connection_kind_names,
-						c->kind),
-				c->instance_serial,
-				c->pool->refcnt));
-		free_addresspool_entry(c->pool);
-		*&c->pool = NULL;
-	}
-#endif
+	if (c->kind != CK_GOING_AWAY)
+		unreference_addresspool(c);
 
 	/* free up any logging resources */
 	perpeer_logfree(c);
@@ -1340,13 +1329,11 @@ void add_connection(const struct whack_message *wm)
 
 		if (wm->left.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->left.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->left.pool_range);
 		}
 		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->right.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->right.pool_range);
 		}
 
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)

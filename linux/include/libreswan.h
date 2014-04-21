@@ -309,7 +309,8 @@ extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
-extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst);
+extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
+		bool non_zero;);
 extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
 extern size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
 #define SUBNETTOT_BUF   (ADDRTOT_BUF + 1 + 3)

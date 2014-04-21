@@ -17,16 +17,18 @@
  */
 #include "internal.h"
 #include "libreswan.h"
-#define  RANGE_MIN_LEN 15 /* 1.2.3.4-5.6.7.8 */
+#define RANGE_MIN_LEN 15 /* 1.2.3.4-5.6.7.8 */
+#define RANGE_MAX_LEN 31 /* 248.249.250.251-252.253.254.255 */
 
 /*
- * ttorange - convert text "addr1-addr2" to address start address_end
+ * ttorange - convert text "addr1-addr2" to address_start address_end
  */
-err_t ttorange(src, srclen, af, dst)
+err_t ttorange(src, srclen, af, dst, non_zero)
 const char *src;
 size_t srclen;	/* 0 means "apply strlen" */
-int af;	/* AF_INET.  AF_INET6 not supported yet. */
+int af;	/* AF_INET only.  AF_INET6 not supported yet. */
 ip_range *dst;
+bool non_zero;  /* is 0.0.0.0 allowed at the start of the range */
 {
 	const char *dash;
 	const char *high;
@@ -50,6 +52,9 @@ ip_range *dst;
 
 	if (srclen < RANGE_MIN_LEN)
 		return "range is too short min RANGE_MIN_LEN e.g 1.2.3.4-5.6.7.8";
+
+	if (srclen > RANGE_MAX_LEN)
+		return "range is too long max RANGE_MAX_LEN e.g 248.249.250.251-252.253.254.255";
 
 	dash = memchr(src, '-', srclen);
 	if (dash == NULL)
@@ -90,10 +95,16 @@ ip_range *dst;
 		ntohl(addr_start_tmp.u.v4.sin_addr.s_addr))
 		return "range size is -ve. start is grater than the end";
 
+	if (non_zero){
+		uint32_t addr  = ntohl(addr_start_tmp.u.v4.sin_addr.s_addr);
+		if (addr == 0) 
+			return "'0.0.0.0' not allowed as start";
+	}
+
 	/* we validated the range. no put them in dst */
 	dst->start = addr_start_tmp;
 	dst->end = addr_end_tmp;
-	return FALSE;
+	return NULL;
 }
 
 #ifdef TTORANGE_MAIN
@@ -129,7 +140,7 @@ int main(int argc, char *argv[])
 
 	af = AF_INET;
 	p = argv[1];
-	oops = ttorange(p, 0, af, &r);
+	oops = ttorange(p, 0, af, &r, FALSE);
 	if (oops != NULL) {
 		fprintf(stderr, "%s: conversion failed: %s\n", argv[0], oops);
 		exit(1);
@@ -142,7 +153,7 @@ int main(int argc, char *argv[])
 	addrtot(&r.start, 0, buf1, sizeof(buf1));
 	addrtot(&r.end, 0, buf2, sizeof(buf2));
 	snprintf(buf3, sizeof(buf3), "%s-%s", buf1, buf2);
-	oops = ttorange(buf3, 0, af, &r1);
+	oops = ttorange(buf3, 0, af, &r1, FALSE);
 	if (oops != NULL) {
 		fprintf(stderr, "%s: verification conversion failed: %s\n",
 			buf3, oops);
@@ -198,7 +209,7 @@ void regress(void)
 		af = (r->family == 4) ? AF_INET : AF_INET6;
 		strcpy(in, r->input);
 		printf("Testing `%s' ... ", in);
-		oops = ttorange(in, 0, af, &s);
+		oops = ttorange(in, 0, af, &s, FALSE);
 		if (oops != NULL && r->output == NULL)
 			/* Error was expected, do nothing */
 			printf("OK (%s)\n", oops);
