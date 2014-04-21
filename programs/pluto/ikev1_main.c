@@ -374,12 +374,14 @@ main_mode_hash(struct state *st,
  * Poorly specified in draft-ietf-ipsec-ike-01.txt 6.1.1.2.
  * Use PKCS#1 version 1.5 encryption of hash (called
  * RSAES-PKCS1-V1_5) in PKCS#2.
+ * Returns 0 on failure.
  */
 size_t RSA_sign_hash(struct connection *c,
 		u_char sig_val[RSA_MAX_OCTETS],
 		const u_char *hash_val, size_t hash_len)
 {
-	size_t sz = 0;
+	size_t sz;
+	int shr;
 	const struct RSA_private_key *k = get_RSA_private_key(c);
 
 	if (k == NULL)
@@ -389,7 +391,9 @@ size_t RSA_sign_hash(struct connection *c,
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash_len < sz &&
 		sz <= RSA_MAX_OCTETS);
-	return sign_hash(k, hash_val, hash_len, sig_val, sz);
+	shr = sign_hash(k, hash_val, hash_len, sig_val, sz);
+	passert(shr == 0 || (int)sz == shr);
+	return shr;
 }
 
 /*
