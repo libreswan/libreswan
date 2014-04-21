@@ -17,8 +17,6 @@
  */
 #include "internal.h"
 #include "libreswan.h"
-#define RANGE_MIN_LEN 15 /* 1.2.3.4-5.6.7.8 */
-#define RANGE_MAX_LEN 31 /* 248.249.250.251-252.253.254.255 */
 
 /*
  * ttorange - convert text "addr1-addr2" to address_start address_end
@@ -28,7 +26,7 @@ const char *src;
 size_t srclen;	/* 0 means "apply strlen" */
 int af;	/* AF_INET only.  AF_INET6 not supported yet. */
 ip_range *dst;
-bool non_zero;  /* is 0.0.0.0 allowed at the start of the range */
+bool non_zero;  /* is 0.0.0.0 allowed? */
 {
 	const char *dash;
 	const char *high;
@@ -38,70 +36,45 @@ bool non_zero;  /* is 0.0.0.0 allowed at the start of the range */
 	ip_address addr_start_tmp;
 	ip_address addr_end_tmp;
 
-	if (src == NULL)
-		return "src is empty";
+	/* this should be a passert */
+	if (af != AF_INET)
+		return "ttorange only supports IPv4 addresses";
 
 	if (srclen == 0)
 		srclen = strlen(src);
 
-	if (srclen == 0)
-		return "src is an empty string";
-
-	if (af != AF_INET)
-		return "support only AF_INET v4.";
-
-	if (srclen < RANGE_MIN_LEN)
-		return "range is too short min RANGE_MIN_LEN e.g 1.2.3.4-5.6.7.8";
-
-	if (srclen > RANGE_MAX_LEN)
-		return "range is too long max RANGE_MAX_LEN e.g 248.249.250.251-252.253.254.255";
-
 	dash = memchr(src, '-', srclen);
 	if (dash == NULL)
-		return "no - in ip address range specification";
+		return "missing '-' in ip address range";
 
 	high = dash + 1;
-	hlen = srclen - (dash - src) - 1;
+	hlen = srclen - (high - src);
 	oops = ttoaddr(src, dash - src, af, &addr_start_tmp);
 	if (oops != NULL)
 		return oops;
 
-	if (af == AF_UNSPEC)
-		af = ip_address_family(&addr_start_tmp);
+	/*
+	 * If we allowed af == AF_UNSPEC,
+	 * set it to ip_address_family(&addr_start_tmp)
+	 */
 
-	switch (af) {
-	case AF_INET:
-		break;
-	case AF_INET6:
-		return "address family (AF_INET6) is not supported in ttorange start";
-	default:
-		return "unknown address family in ttorange start";
-	}
-
-	/*extract end ip address*/
+	/* extract end ip address */
 	oops = ttoaddr(high, hlen, af, &addr_end_tmp);
 	if (oops != NULL)
 		return oops;
 
-	switch (af) {
-	case AF_INET:
-		break;
-	case AF_INET6:
-		return "address family (AF_INET6) is not supported in ttiporange end";
-	default:
-		return "unknown address family in ttorange end";
-	}
 	if (ntohl(addr_end_tmp.u.v4.sin_addr.s_addr) <
 		ntohl(addr_start_tmp.u.v4.sin_addr.s_addr))
-		return "range size is -ve. start is grater than the end";
+		return "start of range must not be greater than end";
 
 	if (non_zero){
 		uint32_t addr  = ntohl(addr_start_tmp.u.v4.sin_addr.s_addr);
+
 		if (addr == 0) 
-			return "'0.0.0.0' not allowed as start";
+			return "'0.0.0.0' not allowed in range";
 	}
 
-	/* we validated the range. no put them in dst */
+	/* We have validated the range. Now put bounds in dst. */
 	dst->start = addr_start_tmp;
 	dst->end = addr_end_tmp;
 	return NULL;
