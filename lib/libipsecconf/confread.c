@@ -649,7 +649,6 @@ static bool validate_end(struct ub_ctx *dnsctx,
 
 	if (end->strings_set[KSCF_ADDRESSPOOL]) {
 		char *addresspool = end->strings[KSCF_ADDRESSPOOL];
-		ip_range pool_range;
 
 		if (end->strings_set[KSCF_SUBNET])
 			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=",

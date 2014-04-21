@@ -1,4 +1,3 @@
-#define COMPILE_UNUSED_THINGS
 /*
  * addresspool management functions used with left/rightaddresspool= option.
  * Currently used for IKEv1 XAUTH/ModeConfig options if we are an XAUTH server.
@@ -152,7 +151,6 @@ static bool linger_lease_entry(struct lease_addr *head, u_int32_t i)
 	return TRUE;
 }
 
-#ifdef COMPILE_UNUSED_THINGS
 static void free_lease_for_index(struct lease_addr **head, u_int32_t i)
 {
 	struct lease_addr **pp;
@@ -173,7 +171,6 @@ static void free_lease_for_index(struct lease_addr **head, u_int32_t i)
 	}
 	passert(FALSE);
 }
-#endif /* COMPILE_UNUSED_THINGS */
 
 void rel_lease_addr(const struct connection *c)
 {
@@ -419,7 +416,7 @@ void unreference_addresspool(struct connection *c)
 	DBG(DBG_CONTROLMORE, DBG_log("unreference addresspool of conn "
 				"%s [%lu] kind %s refcnt %u",
 				c->name, c->instance_serial,
-				enum_name(&connection_kind_names, 
+				enum_name(&connection_kind_names,
 					c->kind), pool->refcnt));
 
 	passert(pool->refcnt > 0);
@@ -500,8 +497,7 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 			libreswan_log("WARNING: new addresspool %s-%s "
 				      "INEXACTLY OVERLAPPS with existing %s-%s "
 				      "an IP address may be leased more than "
-				      "once", abuf1, abuf2, abuf3,
-				      abuf4);
+				      "once", abuf1, abuf2, abuf3, abuf4);
 		}
 		if (match)
 			return h;
