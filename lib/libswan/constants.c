@@ -1021,7 +1021,7 @@ static enum_names modecfg_cisco_attr_names = {
 	MODECFG_BANNER,
 	CISCO_UNKNOWN_SEEN_ON_IPHONE,
 	modecfg_cisco_attr_name,
-	&modecfg_attr_names_draft
+	NULL
 };
 
 static const char *const modecfg_microsoft_attr_name[] = {
@@ -1037,7 +1037,7 @@ static enum_names modecfg_microsoft_attr_names = {
 
 enum_names modecfg_attr_names = {
 	INTERNAL_IP4_ADDRESS,
-	INTERNAL_IP6_SERVER,
+	HOME_AGENT_ADDRESS,
 	modecfg_attr_name_draft,
 	&modecfg_microsoft_attr_names
 };
