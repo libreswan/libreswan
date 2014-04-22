@@ -1705,7 +1705,7 @@ int main(int argc, char **argv)
 			msg.right.modecfg_server = TRUE;
 			continue;
 
-		case END_ADDRESSPOOL: 
+		case END_ADDRESSPOOL:
 			ttorange(optarg, 0, AF_INET, &msg.right.pool_range,
 					TRUE);
 			continue;

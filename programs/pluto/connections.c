@@ -965,7 +965,7 @@ static bool check_connection_end(const struct whack_end *this,
 	if (this->pool_range.start.u.v4.sin_addr.s_addr) {
 		struct ip_pool *pool = NULL;
 		err_t er = find_addresspool(&this->pool_range, &pool);
-		if (er != NULL) { 
+		if (er != NULL) {
 			loglog(RC_CLASH, "leftaddresspool clash");
 			return FALSE;
 		}
@@ -1159,7 +1159,7 @@ void add_connection(const struct whack_message *wm)
 		loglog(RC_NOALGO, "ike string error: %s",
 			ugh ? ugh : "Unknown");
 		return;
-	} 
+	}
 
 	if ((wm->ike == NULL || alg_info_ike != NULL) &&
 		check_connection_end(&wm->right, &wm->left, wm) &&

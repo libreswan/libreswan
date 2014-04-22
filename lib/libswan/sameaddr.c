@@ -197,14 +197,14 @@ int nbits;
 }
 
 /* only works for IPv4 */
-bool overlaprangev4(a, b) 
+bool overlaprangev4(a, b)
 const ip_range *a;
 const ip_range *b;
 {
 	uint32_t a1 = ntohl(a->start.u.v4.sin_addr.s_addr);
 	uint32_t a2 = ntohl(a->end.u.v4.sin_addr.s_addr);
 	uint32_t b1 = ntohl(b->start.u.v4.sin_addr.s_addr);
-	uint32_t b2 = ntohl(b->end.u.v4.sin_addr.s_addr); 
+	uint32_t b2 = ntohl(b->end.u.v4.sin_addr.s_addr);
 	uint32_t c1;
 	uint32_t c2;
 
@@ -217,6 +217,6 @@ const ip_range *b;
 		c2 = b2;
 		b2 = a2;
 		a2 = c2;
-	} 
+	}
 	return  b1 <= a2;
 }

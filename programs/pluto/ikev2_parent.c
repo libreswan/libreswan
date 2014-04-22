@@ -3588,7 +3588,7 @@ void ikev2_delete_out(struct state *st)
 
 		/* delete messages may not be acknowledged.
 		 * increase message ID for next delete message */
-		pst->st_msgid_nextuse++;  
+		pst->st_msgid_nextuse++;
 		/* update state */
 		ikev2_update_counters(&md);
 	}

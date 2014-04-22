@@ -658,9 +658,9 @@ static bool validate_end(struct ub_ctx *dnsctx,
 			    leftright, end->strings[KSCF_ADDRESSPOOL] );
 
 		er = ttorange(addresspool, 0, AF_INET, &end->pool_range, TRUE);
-		if (er != NULL) 
+		if (er != NULL)
 			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
-					addresspool, er); 
+					addresspool, er);
 	}
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||
@@ -1540,8 +1540,8 @@ void confread_free(struct starter_config *cfg)
 	pfree(cfg->ctlbase);
 
 	for (i = 0; i < KSF_MAX; i++)
-		
 		pfreeany(cfg->setup.strings[i]);
+
 	confread_free_conn(&(cfg->conn_default));
 
 	for (conn = cfg->conns.tqh_first; conn != NULL; ) {

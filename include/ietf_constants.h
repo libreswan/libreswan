@@ -993,7 +993,7 @@ enum ikev1_auth_method {
 	OAKLEY_PRESHARED_KEY = 1,
 	OAKLEY_DSS_SIG = 2,
 	OAKLEY_RSA_SIG = 3,
-	OAKLEY_RSA_ENC = 4, 
+	OAKLEY_RSA_ENC = 4,
 	OAKLEY_RSA_REVISED_MODE = 5, /* Not implemented */
 	/* 6 - 8 Reserved */
 	OAKLEY_ECDSA_P256 = 9, /* RFC 4754 */
@@ -1274,7 +1274,7 @@ enum pubkey_alg {
  * https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-31
  *
  * IKEv2 Identification type values
- * RFC 5996 
+ * RFC 5996
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-10
  *
  * enum ike_ident_names;
@@ -1290,7 +1290,7 @@ enum ike_id_type {
 	ID_USER_FQDN = 3,
 	ID_RFC822_ADDR  = ID_USER_FQDN,  /* alias */
 	ID_IPV4_ADDR_SUBNET = 4, /* XXX IKEv1 only but we use it */
-	ID_IPV6_ADDR = 5, 
+	ID_IPV6_ADDR = 5,
 	ID_IPV6_ADDR_SUBNET = 6, /* XXX IKEv1 only but we use it */
 	ID_IPV4_ADDR_RANGE = 7, /* XXX IKEv1 only but we use it */
 	ID_IPV6_ADDR_RANGE = 8, /* XXX IKEv1 only but we use it */
