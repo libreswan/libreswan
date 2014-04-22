@@ -259,7 +259,7 @@ static enum_names payload_names_ikev1_private_use = {
 	NULL
 };
 
-enum_names payload_names_ikev1 = {
+enum_names ikev1_payload_names = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
 	payload_name_ikev1,
@@ -313,7 +313,7 @@ static enum_names payload_names_ikev2_main = {
 	&payload_names_ikev2_private_use
 };
 
-enum_names payload_names_ikev2 = {
+enum_names ikev2_payload_names = {
 	ISAKMP_NEXT_v2NONE,
 	ISAKMP_NEXT_v2NONE,
 	payload_name_ikev2,
@@ -412,14 +412,14 @@ static enum_names exchange_names_doi = {
 	&exchange_names_private_use
 };
 
-enum_names exchange_names_ikev1 = {
+enum_names ikev1_exchange_names = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
 	exchange_name_ikev1,
 	&exchange_names_doi
 };
 
-static enum_names exchange_names_ikev2 = {
+enum_names ikev2_exchange_names = {
 	ISAKMP_v2_SA_INIT,
 	ISAKMP_v2_IKE_SESSION_RESUME,
 	exchange_name_ikev2,
@@ -430,7 +430,7 @@ static enum_names exchange_names_doi_and_v2 = {
 	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST,
 	ISAKMP_XCHG_NGRP,
 	exchange_name_doi,
-	&exchange_names_ikev2
+	&ikev2_exchange_names
 };
 
 enum_names exchange_names_ikev1orv2 = {
