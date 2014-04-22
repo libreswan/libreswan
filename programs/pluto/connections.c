@@ -944,6 +944,7 @@ static bool check_connection_end(const struct whack_end *this,
 				const struct whack_end *that,
 				const struct whack_message *wm)
 {
+
 	if ((this->host_type == KH_IPADDR || this->host_type == KH_IFACE) &&
 		(wm->addr_family != addrtypeof(&this->host_addr) ||
 			wm->addr_family != addrtypeof(&this->host_nexthop))) {
@@ -959,6 +960,15 @@ static bool check_connection_end(const struct whack_end *this,
 			addrtypeof(&this->host_addr),
 			addrtypeof(&this->host_nexthop));
 		return FALSE;
+	}
+
+	if (this->pool_range.start.u.v4.sin_addr.s_addr) {
+		struct ip_pool *pool = NULL;
+		err_t er = find_addresspool(&this->pool_range, &pool);
+		if (er != NULL) { 
+			loglog(RC_CLASH, "leftaddresspool clash");
+			return FALSE;
+		}
 	}
 
 	if (subnettypeof(&this->client) != subnettypeof(&that->client)) {

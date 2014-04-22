@@ -382,6 +382,7 @@ extern int samesubnettype(const ip_subnet *a, const ip_subnet *b);
 extern int isanyaddr(const ip_address *src);
 extern int isunspecaddr(const ip_address *src);
 extern int isloopbackaddr(const ip_address *src);
+extern int overlaprangev4(const ip_range *a, const ip_range *b);
 
 /* low-level grot */
 extern int portof(const ip_address *src);

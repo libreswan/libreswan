@@ -398,14 +398,6 @@ static void free_addresspool(struct ip_pool *pool)
 	return;
 }
 
-#ifdef NEVER    /* not currently used */
-static void free_addresspools(void)
-{
-	while (pluto_pools != NULL)
-		free_addresspool(pluto_pools);
-}
-#endif /* NEVER */
-
 void unreference_addresspool(struct connection *c)
 {
 	struct ip_pool *pool = c->pool;
@@ -447,16 +439,16 @@ static int unitize(int i)
 }
 
 /* finds an ip_pool that has exactly matching bounds */
-static struct ip_pool *find_addresspool(const ip_range *pool_range,
-					struct ip_pool **const head)
+err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 {
 	struct ip_pool *h;
+	ip_range b;
 
-	for (h = *head; h != NULL; h = h->next) {
+	for (h = pluto_pools; h != NULL; h = h->next) {
 		int start_cmp =
 			unitize(ip_address_cmp(&pool_range->start, &h->start));
 		int end_cmp =
-			unitize(ip_address_cmp(&pool_range->end, &h->end));
+			unitize(ip_address_cmp(&pool_range->end, &h->end)); 
 
 		bool match = start_cmp == 0 && end_cmp == 0;
 
@@ -477,30 +469,28 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 		char abuf2[ADDRTOT_BUF];
 		char abuf3[ADDRTOT_BUF];
 		char abuf4[ADDRTOT_BUF];
+
 		addrtot(&pool_range->start, 0, abuf1,
 			sizeof(abuf1));
 		addrtot(&pool_range->end, 0, abuf2,
 			sizeof(abuf2));
-		addrtot(&pool_range->start, 0,
+		addrtot(&h->start, 0,
 			abuf3, sizeof(abuf3));
-		addrtot(&pool_range->end, 0,
+		addrtot(&h->end, 0,
 			abuf4, sizeof(abuf4));
 
-		DBG(DBG_CONTROLMORE, {
-			    DBG_log("%s addresspool %s-%s%s%s",
-				    match ? "existing" : "new",
-				    abuf1, abuf2,
-				    start_cmp == 0 ? " same start" : "",
-				    end_cmp == 0 ? " same end" : "");
-		    });
-		if (start_cmp != end_cmp) {
-			libreswan_log("WARNING: new addresspool %s-%s "
-				      "INEXACTLY OVERLAPPS with existing %s-%s "
-				      "an IP address may be leased more than "
-				      "once", abuf1, abuf2, abuf3, abuf4);
+		b.start = h->start;
+		b.end = h->end;
+		if (match) {
+			*pool = h;
+			return NULL;
+		} else if (overlaprangev4(pool_range, &b)){
+			libreswan_log("ERROR: new addresspool %s-%s "
+					"INEXACTLY OVERLAPPS with existing one %s-%s.",
+					abuf1, abuf2, abuf3, abuf4); 
+			*pool  = NULL;
+			return "ERROR: partial overlap of addresspool";
 		}
-		if (match)
-			return h;
 	}
 	return NULL;
 }
@@ -514,30 +504,30 @@ static struct ip_pool *find_addresspool(const ip_range *pool_range,
 struct ip_pool *install_addresspool(const ip_range *pool_range)
 {
 	struct ip_pool **head = &pluto_pools;
-	struct ip_pool *pool;
+	struct ip_pool *p = NULL;
 
-	pool = find_addresspool(pool_range, head);
-	if (pool != NULL) {
+	find_addresspool(pool_range, &p); 
+	if (p != NULL) {
 		/* re-use existing pool */
-		reference_addresspool(pool);
+		reference_addresspool(p);
 		DBG(DBG_CONTROLMORE, {
 			    char abuf1[ADDRTOT_BUF];
 			    char abuf2[ADDRTOT_BUF];
 
-			    addrtot(&pool->start, 0, abuf1, sizeof(abuf1));
-			    addrtot(&pool->end, 0, abuf2, sizeof(abuf2));
-			    DBG_log("addresspool %s-%s exists ref count %u "
-				    "used %u size %u ptr %p re-use it",
-				    abuf1, abuf2, pool->refcnt, pool->used,
-				    pool->size, pool);
+			    addrtot(&p->start, 0, abuf1, sizeof(abuf1));
+			    addrtot(&p->end, 0, abuf2, sizeof(abuf2));
+			    DBG_log("re-use addresspool %s-%s exists ref count "
+				    "%u used %u size %u ptr %p re-use it", 
+				    abuf1, abuf2, p->refcnt, p->used, p->size, 
+				    p);
 		    });
 
-		return pool;
+		return p;
 	}
 
 	/* make a new pool */
 
-	struct ip_pool *p = alloc_thing(struct ip_pool, "addresspool entry");
+	p = alloc_thing(struct ip_pool, "addresspool entry");
 
 	p->refcnt = 0;
 	reference_addresspool(p);
