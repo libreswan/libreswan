@@ -196,21 +196,6 @@ int nbits;
 	return 1;
 }
 
-/*
- * samerange - are two IP ranges the same?
- */
-bool samerange(a, b)
-const ip_range * a;
-const ip_range *b;
-{
-	if (!sameaddr(&a->start, &b->start))	/* also does type check */
-		return 0;
-
-	if (!sameaddr(&a->end, &b->end))	/* also does type check */
-		return 0;
-	return 1;
-}
-
 /* only works for IPv4 */
 bool overlaprangev4(a, b) 
 const ip_range *a;
