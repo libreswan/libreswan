@@ -1748,7 +1748,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 	dh->dh_md = md;
 	set_suspended(st, md);
 	dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-	
+
 	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);
 	return start_dh_secretiv(&dh->dh_pcrc, st,
 				st->st_import,

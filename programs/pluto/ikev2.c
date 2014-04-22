@@ -869,7 +869,7 @@ void ikev2_update_counters(struct msg_digest *md)
 	case INITIATOR:
 		/* update lastuse values */
 		pst->st_msgid_lastack = md->msgid_received;
-		if(pst->st_msgid_lastack <= pst->st_msgid_nextuse) 
+		if(pst->st_msgid_lastack <= pst->st_msgid_nextuse)
 			pst->st_msgid_nextuse = pst->st_msgid_lastack + 1;
 		break;
 
@@ -1078,7 +1078,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		/* start liveness checks if set, making sure we only schedule once when moving
 		 * from I2->I3 or R1->R2
 		 */
-		if (st->st_state != from_state && dpd_active_locally(st) && 
+		if (st->st_state != from_state && dpd_active_locally(st) &&
 				IS_V2_ESTABLISHED(st->st_state)) {
 			DBG(DBG_DPD,
 			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));

@@ -403,7 +403,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 		} else {
 			DBG_log("received whack to delete state %s #%lu %s ",
-				st->st_ikev2 ? "IKEv2" : "IKEv1", 
+				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
 				enum_name(&state_names, st->st_state));
 

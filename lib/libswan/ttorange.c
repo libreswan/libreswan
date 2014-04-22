@@ -70,7 +70,7 @@ bool non_zero;  /* is 0.0.0.0 allowed? */
 	if (non_zero){
 		uint32_t addr  = ntohl(addr_start_tmp.u.v4.sin_addr.s_addr);
 
-		if (addr == 0) 
+		if (addr == 0)
 			return "'0.0.0.0' not allowed in range";
 	}
 

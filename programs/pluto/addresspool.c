@@ -42,7 +42,7 @@
 #include "addresspool.h"
 
 
-/* 
+/*
  * A pool is a range of IPv4 addresses to be individually allocated.
  * A connection may have a pool.
  * That pool may be shared with other connections (hence the reference count).
@@ -66,8 +66,8 @@ struct ip_pool {
  * A lease is an assignment of a single address from a particular pool.
  *
  * When a lease ends, if ID is NONE it is freed, othersise it linger
- * so that the same client (based on ID) will  be assigned the same address 
- * from the pool. In the future we may 
+ * so that the same client (based on ID) will  be assigned the same address
+ * from the pool. In the future we may
  * implement code to delete a lingering lease to free the address if there is
  * no free address in the pool.
  *
@@ -448,7 +448,7 @@ err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 		int start_cmp =
 			unitize(ip_address_cmp(&pool_range->start, &h->start));
 		int end_cmp =
-			unitize(ip_address_cmp(&pool_range->end, &h->end)); 
+			unitize(ip_address_cmp(&pool_range->end, &h->end));
 
 		bool match = start_cmp == 0 && end_cmp == 0;
 
@@ -487,7 +487,7 @@ err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 		} else if (overlaprangev4(pool_range, &b)){
 			libreswan_log("ERROR: new addresspool %s-%s "
 					"INEXACTLY OVERLAPPS with existing one %s-%s.",
-					abuf1, abuf2, abuf3, abuf4); 
+					abuf1, abuf2, abuf3, abuf4);
 			*pool  = NULL;
 			return "ERROR: partial overlap of addresspool";
 		}
@@ -506,7 +506,7 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 	struct ip_pool **head = &pluto_pools;
 	struct ip_pool *p = NULL;
 
-	find_addresspool(pool_range, &p); 
+	find_addresspool(pool_range, &p);
 	if (p != NULL) {
 		/* re-use existing pool */
 		reference_addresspool(p);
@@ -517,8 +517,8 @@ struct ip_pool *install_addresspool(const ip_range *pool_range)
 			    addrtot(&p->start, 0, abuf1, sizeof(abuf1));
 			    addrtot(&p->end, 0, abuf2, sizeof(abuf2));
 			    DBG_log("re-use addresspool %s-%s exists ref count "
-				    "%u used %u size %u ptr %p re-use it", 
-				    abuf1, abuf2, p->refcnt, p->used, p->size, 
+				    "%u used %u size %u ptr %p re-use it",
+				    abuf1, abuf2, p->refcnt, p->used, p->size,
 				    p);
 		    });
 
