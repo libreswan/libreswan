@@ -159,7 +159,6 @@ struct end {
 
 	bool key_from_DNS_on_demand;
 	bool has_client;
-	bool has_lease;
 	bool has_client_wildcard;
 	bool has_port_wildcard;
 	bool has_id_wildcards;
@@ -182,9 +181,9 @@ struct end {
 	char *xauth_name;
 	char *xauth_password;
 	ip_range pool_range;    /* store start of v4 addresspool */
+	bool has_lease;	/* from address pool */
 	bool modecfg_server;    /* Give local addresses to tunnel's end */
 	bool modecfg_client;    /* request address for local end */
-
 };
 
 struct spd_route {

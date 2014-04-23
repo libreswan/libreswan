@@ -182,7 +182,7 @@ static void end_lease(struct ip_pool *pool, u_int32_t i, bool linger)
 	pool->used--;
 }
 
-void rel_lease_addr(const struct connection *c)
+void rel_lease_addr(struct connection *c)
 {
 	u_int32_t i;    /* index within range of IPv4 address to be released */
 
@@ -211,11 +211,7 @@ void rel_lease_addr(const struct connection *c)
 
 	/* set the lease ended  */
 	end_lease(c->pool, i, c->spd.that.id.kind != ID_NONE);
-	/* 
-	 * c->spd.that.has_lease = FALSE;  ???? how to set it to false
-	 * c is const here 
-	 * */
-
+	c->spd.that.has_lease = FALSE;
 
 	DBG(DBG_CONTROLMORE, DBG_log("ended lease %s from addresspool %s "
 				     "index %u. pool size %u used %u lingering %u",

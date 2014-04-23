@@ -328,13 +328,14 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
  * @param con A currently active connection struct
  * @param ia internal_addr struct
  * only failure returned is a failed get_addr_lease.
- * ??? may be there are  more  which are not reported.
+ * ??? may be there are more which are not reported.
  */
 static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
-		bool *has_lease)
+		bool *got_lease)
 {
 	struct connection *c = st->st_connection;
 
+	*got_lease = FALSE;
 	if (!isanyaddr(&c->spd.that.client.addr)) {
 		/** assumes IPv4, and also that the mask is ignored */
 
@@ -342,7 +343,7 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 			err_t e = get_addr_lease(c, ia);
 
 			if (e == NULL) {
-				*has_lease = TRUE;
+				*got_lease = TRUE;
 			} else  {
 				libreswan_log("get_addr_lease failure %s", e);
 				return FALSE;
@@ -471,7 +472,6 @@ static stf_status modecfg_resp(struct state *st,
 			u_int16_t ap_id)
 {
 	unsigned char *r_hash_start, *r_hashval;
-	bool has_lease = FALSE;
 
 	/* START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR); */
 
@@ -496,6 +496,7 @@ static stf_status modecfg_resp(struct state *st,
 		int attr_type;
 		struct internal_addr ia;
 		int dns_idx;
+		bool has_lease;
 
 		{
 			struct  isakmp_mode_attr attrh;
@@ -511,16 +512,14 @@ static stf_status modecfg_resp(struct state *st,
 		if (!get_internal_addresses(st, &ia, &has_lease))
 			return STF_INTERNAL_ERROR;
 
-
 		if (!isanyaddr(&ia.dns[0])) /* We got DNS addresses, answer with those */
 			resp |= LELEM(INTERNAL_IP4_DNS);
 		else
 			resp &= ~LELEM(INTERNAL_IP4_DNS);
 
 		if (use_modecfg_addr_as_client_addr) {
-			if (!memeq(&st->st_connection->spd.that.client.addr,
-				   &ia.ipaddr,
-				   sizeof(ia.ipaddr))) {
+			if (!sameaddr(&st->st_connection->spd.that.client.addr,
+				&ia.ipaddr)) {
 				/* Make the Internal IP address and Netmask as
 				 * that client address
 				 */
