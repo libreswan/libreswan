@@ -96,7 +96,7 @@ size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen)
 	l++;
 	/* where to stuff second address (not past end of buffer) */
 	m = l < dstlen? l : dstlen;
-	l += addrtot(&src->start, format, dst + m, dstlen - m);
+	l += addrtot(&src->end, format, dst + m, dstlen - m);
 	return l;	/* length needed, including '\0' */
 }
 
