@@ -311,6 +311,8 @@ extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen)
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
+extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
+#define RANGETOT_BUF     (ADDRTOT_BUF * 2 + 1)
 extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
 extern size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
 #define SUBNETTOT_BUF   (ADDRTOT_BUF + 1 + 3)
@@ -382,7 +384,6 @@ extern int samesubnettype(const ip_subnet *a, const ip_subnet *b);
 extern int isanyaddr(const ip_address *src);
 extern int isunspecaddr(const ip_address *src);
 extern int isloopbackaddr(const ip_address *src);
-extern int overlaprangev4(const ip_range *a, const ip_range *b);
 
 /* low-level grot */
 extern int portof(const ip_address *src);

@@ -80,6 +80,26 @@ bool non_zero;  /* is 0.0.0.0 allowed? */
 	return NULL;
 }
 
+size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen)
+{
+	size_t l, m;
+
+	/* start address: */
+	l = addrtot(&src->start, format, dst, dstlen) - 1;
+	/* l is offset of '\0' at end, at least notionally. */
+
+	/* separator '-' */
+	/* If there is room for '-' and '\0', drop in '-'. */
+	if (dstlen > 0 && l < dstlen - 1)
+		dst[l] = '-';
+	/* count space for '-' */
+	l++;
+	/* where to stuff second address (not past end of buffer) */
+	m = l < dstlen? l : dstlen;
+	l += addrtot(&src->start, format, dst + m, dstlen - m);
+	return l;	/* length needed, including '\0' */
+}
+
 #ifdef TTORANGE_MAIN
 
 #include <stdio.h>
