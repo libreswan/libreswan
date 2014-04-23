@@ -168,7 +168,7 @@ complibtest() {
     stat=99
     if [ -n "${FILE-}" -a -r "${FILE-}" ]
     then
-	    ${ECHO} "   "${CC} -g -o $testobj -D$symbol ${FILE} ${LIBRESWANLIB} 
+	    ${ECHO} " ${CC} -g -o $testobj -DSWAN_TESTING -D$symbol ${MOREFLAGS} ${PORTINCLUDE} ${EXTRAFLAGS} -I${LIBRESWANSRCDIR}/linux/include -I${LIBRESWANSRCDIR} -I${LIBRESWANSRCDIR}/include ${FILE} ${LIBRESWANLIB} ${EXTRALIBS} -Iinclude/"
 	    ${CC} -g -o $testobj -DSWAN_TESTING -D$symbol ${MOREFLAGS} ${PORTINCLUDE} ${EXTRAFLAGS} -I${LIBRESWANSRCDIR}/linux/include -I${LIBRESWANSRCDIR} -I${LIBRESWANSRCDIR}/include ${FILE} ${LIBRESWANLIB} ${EXTRALIBS} -Iinclude/
 	    rm -rf lib-$testobj/OUTPUT
 	    mkdir -p lib-$testobj/OUTPUT
@@ -427,7 +427,7 @@ recordresults() {
 	    regress) echo ${TEST_PROB_REPORT} >$REGRESSRESULTS/$REPORT_NAME/regress.txt;;
 	       goal) echo ${TEST_GOAL_ITEM}   >$REGRESSRESULTS/$REPORT_NAME/goal.txt;;
 	    exploit) echo ${TEST_EXPLOIT_URL} >$REGRESSRESULTS/$REPORT_NAME/exploit.txt;;
-		  *) echo "unknown TEST_PURPOSE (${TEST_PURPOSE})" ;;
+		  *) echo "unknown TEST_PURPOSE ${TEST_PURPOSE}";;
 	    esac
 	)
 

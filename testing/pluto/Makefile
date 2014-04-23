@@ -27,6 +27,7 @@ check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --compile --install --hostname east
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname west
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname road
+	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname north
 	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ./setup.sh; . ${UTILS}/functions.sh; . ./TESTLIST
 
 spotcheck:
