@@ -1,1 +1,1 @@
-s/000 secctx_attr_value=.*/000 secctx_attr_value=XXXX/g
+s/000 secctx-attr-value=.*/000 secctx-attr-value=XXXX/g

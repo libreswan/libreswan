@@ -70,7 +70,7 @@ bool non_zero;  /* is 0.0.0.0 allowed? */
 	if (non_zero){
 		uint32_t addr  = ntohl(addr_start_tmp.u.v4.sin_addr.s_addr);
 
-		if (addr == 0) 
+		if (addr == 0)
 			return "'0.0.0.0' not allowed in range";
 	}
 
@@ -78,6 +78,26 @@ bool non_zero;  /* is 0.0.0.0 allowed? */
 	dst->start = addr_start_tmp;
 	dst->end = addr_end_tmp;
 	return NULL;
+}
+
+size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen)
+{
+	size_t l, m;
+
+	/* start address: */
+	l = addrtot(&src->start, format, dst, dstlen) - 1;
+	/* l is offset of '\0' at end, at least notionally. */
+
+	/* separator '-' */
+	/* If there is room for '-' and '\0', drop in '-'. */
+	if (dstlen > 0 && l < dstlen - 1)
+		dst[l] = '-';
+	/* count space for '-' */
+	l++;
+	/* where to stuff second address (not past end of buffer) */
+	m = l < dstlen? l : dstlen;
+	l += addrtot(&src->end, format, dst + m, dstlen - m);
+	return l;	/* length needed, including '\0' */
 }
 
 #ifdef TTORANGE_MAIN

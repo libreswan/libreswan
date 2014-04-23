@@ -3,7 +3,7 @@
 ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 # make sure that clear text does not get through
 ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::45 -p icmp -j DROP
-# confirm with a ping to east-in
+# confirm with a ping
 ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started

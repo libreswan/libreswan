@@ -48,7 +48,7 @@ char rootdir2[PATH_MAX];     /* or... try this one too */
 static int parser_y_eof(void);
 
 /* we want no actual output! */
-#define ECHO 
+#define ECHO
 
 /* do not define this function, as it is not used, and fails -Werror */
 #if 0
@@ -64,7 +64,7 @@ struct ic_inputsource {
 	int    fileglobcnt;
 	glob_t fileglob;
 };
-	
+
 static struct {
 	int stack_ptr;
 	struct ic_inputsource stack[MAX_INCLUDE_DEPTH];
@@ -127,7 +127,6 @@ static void parser_y_fini(void)
 
 	for (i=0; i<MAX_INCLUDE_DEPTH; i++) {
 		parser_y_close(&ic_private.stack[i]);
-		
 	}
 	memset(&ic_private, 0, sizeof(ic_private));
 }
@@ -139,7 +138,7 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 	int  fcnt;
 
 #if 0
-	printf("fileglobcnt: %d pathc: %d cmp: %u\n", 
+	printf("fileglobcnt: %d pathc: %d cmp: %u\n",
 	       iis->fileglobcnt, stacktop->fileglob.gl_pathc,
 	       (iis->fileglobcnt >= (int)stacktop->fileglob.gl_pathc));
 #endif
@@ -208,7 +207,7 @@ int parser_y_include (const char *filename)
 		    snprintf(newname2, PATH_MAX,
 			     "%s%s", rootdir2, filename);
 		    try = newname2;
-			    
+
 		    globresult = glob(try, GLOB_BRACE|GLOB_NOMAGIC, NULL, &globbuf);
 	    }
 	} else {
@@ -257,7 +256,7 @@ int parser_y_eof(void)
 
 	if(parser_y_nextglobfile(stacktop) == -1) {
 		/* no more glob'ed files to process */
-		
+
 		if (lex_verbosity > 0)
 		{
 			int stackp = ic_private.stack_ptr;
@@ -267,17 +266,17 @@ int parser_y_eof(void)
 			if(stackp > 0) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "resuming %s line %d\n"
-					    , ic_private.stack[stackp-1].filename 
+					    , ic_private.stack[stackp-1].filename
 					    , ic_private.stack[stackp-1].line);
 			}
 		}
-		
+
 		if(stacktop->state != YY_CURRENT_BUFFER)  {
 			yy_switch_to_buffer(stacktop->state);
 		}
 
 		parser_y_close(stacktop);
-		
+
 		if (--ic_private.stack_ptr < 0) {
 			return 1;
 		}
@@ -312,7 +311,7 @@ int parser_y_eof(void)
 	    ch = (char)fgetc(stacktop->file);
 	    if (ch != '\n' && stacktop->once){
 		stacktop->once = 0;
-		return EOL;	
+		return EOL;
 	    }
 	}
 	if(parser_y_eof()) {
@@ -367,7 +366,7 @@ int parser_y_eof(void)
                           BEGIN INITIAL;
 			  return BOOL;
                         }
-  
+
 <BOOLEAN>=		return EQUAL;
 
 <BOOLEAN>\n 	        {
@@ -394,7 +393,7 @@ int parser_y_eof(void)
 			   assert(len>0);
 
 			   /* remove trailing " */
-			   s[len-1]='\0'; 
+			   s[len-1]='\0';
 			   if(yydebug) { fprintf(stderr, "STRING: \"%s\"\n", s);}
 			   yylval.s = strdup(s);
 			   BEGIN INITIAL;
@@ -408,7 +407,7 @@ int parser_y_eof(void)
 			   assert(len>0);
 
 			   /* remove trailing } */
-			   s[len-1]='\0'; 
+			   s[len-1]='\0';
 			   if(yydebug) { fprintf(stderr, "STRING{}: {%s}\n", s);}
 			   yylval.s = strdup(s);
 			   BEGIN INITIAL;
@@ -433,14 +432,14 @@ int parser_y_eof(void)
 		        }
 
 =			{ BEGIN USERDEF; return EQUAL; }
-version                 return VERSION;     
-config			return CONFIG; 
+version                 return VERSION;
+config			return CONFIG;
 setup			return SETUP;
 conn			{ BEGIN USERDEF; return CONN; }
 include			return INCLUDE;
 
 [^\"= \t\n]+	        {  int tok;
-    
+
                            if(yydebug) { fprintf(stderr, "STR/KEY: %s\n", yytext); }
                            tok = parser_find_keyword(yytext, &yylval);
 			   switch(tok)

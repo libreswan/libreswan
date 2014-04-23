@@ -961,6 +961,17 @@ static bool check_connection_end(const struct whack_end *this,
 		return FALSE;
 	}
 
+	/* ??? seems like a nasty test (in-band, low-level) */
+	if (this->pool_range.start.u.v4.sin_addr.s_addr != 0) {
+		struct ip_pool *pool;
+		err_t er = find_addresspool(&this->pool_range, &pool);
+
+		if (er != NULL) {
+			loglog(RC_CLASH, "leftaddresspool clash");
+			return FALSE;
+		}
+	}
+
 	if (subnettypeof(&this->client) != subnettypeof(&that->client)) {
 		/*
 		 * This should have been diagnosed by whack, so we need not
@@ -1149,7 +1160,7 @@ void add_connection(const struct whack_message *wm)
 		loglog(RC_NOALGO, "ike string error: %s",
 			ugh ? ugh : "Unknown");
 		return;
-	} 
+	}
 
 	if ((wm->ike == NULL || alg_info_ike != NULL) &&
 		check_connection_end(&wm->right, &wm->left, wm) &&

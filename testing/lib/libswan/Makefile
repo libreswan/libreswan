@@ -23,10 +23,10 @@ UTILS=${LIBRESWANSRCDIR}/testing/utils
 def:	check
 
 check:
-	${SHELL} -c "export LIBRESWANLIB=${LIBRESWANLIB} REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; . ./TESTLIST"
+	${SHELL} -c "unset module; export LIBRESWANLIB=${LIBRESWANLIB} REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; . ./TESTLIST"
 
 one:
-	${SHELL} -c "export LIBRESWANLIB=${LIBRESWANLIB} REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; eval `grep ${TEST} TESTLIST`"
+	${SHELL} -c "unset module; export LIBRESWANLIB=${LIBRESWANLIB} REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; eval `grep ${TEST} TESTLIST`"
 
 install install_file_list checkprograms programs:
 	@true

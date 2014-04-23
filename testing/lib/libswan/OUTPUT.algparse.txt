@@ -5,7 +5,7 @@
 | interpreting ESP sha2 as sha2_256
 | interpreting ESP sha as sha1
 | interpreting ESP sha2 as sha2_256
-../algparse ASSERTION FAILED at ./algparse.c:40: aie != NULL
+
 [  3des-sha1;modp1024]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP1024(2)
 [  3des-sha1;modp1536]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP1536(5)
 [  3des-sha1;modp2048]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP2048(14)

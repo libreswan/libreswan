@@ -29,7 +29,7 @@ east #
 000 interface ipsec0/eth1 192.1.2.23:500
 000  
 000 fips mode=disabled;
-000 SElinux=enabled
+000 SElinux=XXXXX
 000  
 000 config setup options:
 000  
