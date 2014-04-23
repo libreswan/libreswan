@@ -190,6 +190,9 @@ void rel_lease_addr(const struct connection *c)
 	char ta_client[ADDRTOT_BUF];
 	char ta_range[RANGETOT_BUF];
 
+	if (!c->spd.that.has_lease)
+		return; /* it is not from the addresspool to free */
+
 	passert(ip_address_family(&c->spd.that.client.addr) == AF_INET);
 
 	addrtot(&c->spd.that.client.addr, 0, ta_client, sizeof(ta_client));
@@ -208,6 +211,11 @@ void rel_lease_addr(const struct connection *c)
 
 	/* set the lease ended  */
 	end_lease(c->pool, i, c->spd.that.id.kind != ID_NONE);
+	/* 
+	 * c->spd.that.has_lease = FALSE;  ???? how to set it to false
+	 * c is const here 
+	 * */
+
 
 	DBG(DBG_CONTROLMORE, DBG_log("ended lease %s from addresspool %s "
 				     "index %u. pool size %u used %u lingering %u",

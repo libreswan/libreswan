@@ -329,7 +329,8 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
  * @param ia internal_addr struct
  * ??? no way of signalling a failure to the caller: *ia won't be set!
  */
-static void get_internal_addresses(struct state *st, struct internal_addr *ia)
+static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
+		bool *has_lease)
 {
 	struct connection *c = st->st_connection;
 
@@ -342,6 +343,7 @@ static void get_internal_addresses(struct state *st, struct internal_addr *ia)
 			if (e != NULL) {
 				/* signal this error to the caller ?? */
 				libreswan_log("get_addr_lease failure %s", e);
+				return FALSE;
 			}
 		} else {
 			ia->ipaddr = c->spd.that.client.addr;
@@ -410,6 +412,8 @@ static void get_internal_addresses(struct state *st, struct internal_addr *ia)
 		}
 #endif
 	}
+
+	return TRUE;
 }
 
 /**
@@ -465,6 +469,7 @@ static stf_status modecfg_resp(struct state *st,
 			u_int16_t ap_id)
 {
 	unsigned char *r_hash_start, *r_hashval;
+	bool has_lease = FALSE;
 
 	/* START_HASH_PAYLOAD(rbody, ISAKMP_NEXT_MCFG_ATTR); */
 
@@ -501,7 +506,9 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		zero(&ia);
-		get_internal_addresses(st, &ia);
+		if (!get_internal_addresses(st, &ia, &has_lease))
+			return STF_INTERNAL_ERROR;
+
 
 		if (!isanyaddr(&ia.dns[0])) /* We got DNS addresses, answer with those */
 			resp |= LELEM(INTERNAL_IP4_DNS);
@@ -520,6 +527,8 @@ static stf_status modecfg_resp(struct state *st,
 				st->st_connection->spd.that.client.maskbits =
 					32;
 				st->st_connection->spd.that.has_client = TRUE;
+				if (has_lease)
+					st->st_connection->spd.that.has_lease = TRUE;
 			}
 		}
 

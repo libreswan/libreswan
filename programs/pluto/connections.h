@@ -159,6 +159,7 @@ struct end {
 
 	bool key_from_DNS_on_demand;
 	bool has_client;
+	bool has_lease;
 	bool has_client_wildcard;
 	bool has_port_wildcard;
 	bool has_id_wildcards;
