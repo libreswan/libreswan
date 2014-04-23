@@ -182,13 +182,16 @@ static void end_lease(struct ip_pool *pool, u_int32_t i, bool linger)
 	pool->used--;
 }
 
-void rel_lease_addr(const struct connection *c)
+void rel_lease_addr(struct connection *c)
 {
 	u_int32_t i;    /* index within range of IPv4 address to be released */
 
 	/* text of addresses */
 	char ta_client[ADDRTOT_BUF];
 	char ta_range[RANGETOT_BUF];
+
+	if (!c->spd.that.has_lease)
+		return; /* it is not from the addresspool to free */
 
 	passert(addrtypeof(&c->spd.that.client.addr) == AF_INET);
 
@@ -208,6 +211,7 @@ void rel_lease_addr(const struct connection *c)
 
 	/* set the lease ended  */
 	end_lease(c->pool, i, c->spd.that.id.kind != ID_NONE);
+	c->spd.that.has_lease = FALSE;
 
 	DBG(DBG_CONTROLMORE, DBG_log("ended lease %s from addresspool %s "
 				     "index %u. pool size %u used %u lingering %u",
