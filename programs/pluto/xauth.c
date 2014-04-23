@@ -322,12 +322,13 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 	return baseauth;
 }
 
-/**
+/*
  * Get inside IP address for a connection
  *
  * @param con A currently active connection struct
  * @param ia internal_addr struct
- * ??? no way of signalling a failure to the caller: *ia won't be set!
+ * only failure returned is a failed get_addr_lease.
+ * ??? may be there are  more  which are not reported.
  */
 static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 		bool *has_lease)
@@ -343,8 +344,6 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 			if (e == NULL) {
 				*has_lease = TRUE;
 			} else  {
-			
-				/* signal this error to the caller ?? */
 				libreswan_log("get_addr_lease failure %s", e);
 				return FALSE;
 			}
