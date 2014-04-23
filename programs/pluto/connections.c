@@ -247,7 +247,8 @@ void delete_connection(struct connection *c, bool relations)
 			ip_str(&c->spd.that.host_addr),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
-		rel_lease_addr(c);
+		if (c->pool != NULL)
+			rel_lease_addr(c);
 	} else {
 		libreswan_log("deleting connection");
 	}
@@ -256,20 +257,8 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-#if 0
-	/* TODO:  this will be enabled in the next version */
-	if ((c->pool != NULL) && (c->kind == CK_TEMPLATE)) {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("free addresspool entry for the conn %s "
-				"kind %s conn serial %d pool refcnt %u",
-				c->name, enum_name(&connection_kind_names,
-						c->kind),
-				c->instance_serial,
-				c->pool->refcnt));
-		free_addresspool_entry(c->pool);
-		*&c->pool = NULL;
-	}
-#endif
+	if (c->kind != CK_GOING_AWAY)
+		unreference_addresspool(c);
 
 	/* free up any logging resources */
 	perpeer_logfree(c);
@@ -809,8 +798,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 			free_x509cert(cert.u.x509);
 		} else {
 			DBG(DBG_CONTROL,
-				DBG_log("certificate is valid")
-				);
+				DBG_log("certificate is valid"));
 			add_x509_public_key(&dst->id, cert.u.x509, valid_until,
 					DAL_LOCAL);
 			dst->cert.ty = cert.ty;
@@ -903,8 +891,8 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->has_client = src->has_client;
 	dst->has_client_wildcard = src->has_client_wildcard;
 	dst->updown = src->updown;
-	dst->host_port = IKE_UDP_PORT;
-	if (src->host_port != IKE_UDP_PORT) {
+	dst->host_port = pluto_port;
+	if (src->host_port != pluto_port) {
 		dst->host_port = src->host_port;
 		dst->host_port_specific = TRUE;
 	}
@@ -922,7 +910,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 		switch (dst->host_type) {
 		case KH_IPHOSTNAME:
-			er = ttoaddr(dst->host_addr_name, 0, 0,
+			er = ttoaddr(dst->host_addr_name, 0, AF_UNSPEC,
 				&dst->host_addr);
 
 			/*The above call wipes out the port, put it again*/
@@ -971,6 +959,17 @@ static bool check_connection_end(const struct whack_end *this,
 			addrtypeof(&this->host_addr),
 			addrtypeof(&this->host_nexthop));
 		return FALSE;
+	}
+
+	/* ??? seems like a nasty test (in-band, low-level) */
+	if (this->pool_range.start.u.v4.sin_addr.s_addr != 0) {
+		struct ip_pool *pool;
+		err_t er = find_addresspool(&this->pool_range, &pool);
+
+		if (er != NULL) {
+			loglog(RC_CLASH, "leftaddresspool clash");
+			return FALSE;
+		}
 	}
 
 	if (subnettypeof(&this->client) != subnettypeof(&that->client)) {
@@ -1161,7 +1160,7 @@ void add_connection(const struct whack_message *wm)
 		loglog(RC_NOALGO, "ike string error: %s",
 			ugh ? ugh : "Unknown");
 		return;
-	} 
+	}
 
 	if ((wm->ike == NULL || alg_info_ike != NULL) &&
 		check_connection_end(&wm->right, &wm->left, wm) &&
@@ -1204,15 +1203,15 @@ void add_connection(const struct whack_message *wm)
 				c->alg_info_esp = alg_info_ah_create_from_str(
 					wm->esp ? wm->esp : "", &ugh);
 
-			DBG(DBG_CONTROL,
-				{static char buf[256] = "<NULL>"; /* XXX: fix magic value */
+			DBG(DBG_CONTROL, {
+				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf); }
-			);
+				DBG_log("esp string values: %s", buf);
+			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->alg_info_cnt == 0) {
 					loglog(RC_NOALGO,
@@ -1235,14 +1234,14 @@ void add_connection(const struct whack_message *wm)
 		if (wm->ike) {
 			c->alg_info_ike = alg_info_ike;
 
-			DBG(DBG_CRYPT | DBG_CONTROL,
+			DBG(DBG_CRYPT | DBG_CONTROL, {
 				char buf[256]; /* XXX: fix magic value */
 				alg_info_snprint(buf, sizeof(buf),
 						(struct alg_info *)c->
 						alg_info_ike);
 				DBG_log("ike (phase1) algorihtm values: %s",
 					buf);
-				);
+			});
 			if (c->alg_info_ike) {
 				if (c->alg_info_ike->alg_info_cnt == 0) {
 					loglog(RC_NOALGO,
@@ -1341,13 +1340,11 @@ void add_connection(const struct whack_message *wm)
 
 		if (wm->left.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->left.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->left.pool_range);
 		}
 		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->right.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->right.pool_range);
 		}
 
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
@@ -1548,8 +1545,7 @@ void add_connection(const struct whack_message *wm)
 				(unsigned long) c->sa_rekey_margin,
 				(unsigned long) c->sa_rekey_fuzz,
 				(unsigned long) c->sa_keying_tries,
-				prettypolicy(c->policy));
-			);
+				prettypolicy(c->policy)));
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
@@ -3122,8 +3118,7 @@ static struct connection *fc_try(const struct connection *c,
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  fc_try concluding with %s [%ld]",
-			(best ? best->name : "none"), best_prio)
-		);
+			(best ? best->name : "none"), best_prio));
 
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
@@ -3232,8 +3227,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  fc_try_oppo concluding with %s [%ld]",
-			(best ? best->name : "none"), best_prio)
-		);
+			(best ? best->name : "none"), best_prio));
 	return best;
 
 }
@@ -3306,8 +3300,7 @@ struct connection *find_client_connection(struct connection *c,
 		DBG(DBG_CONTROLMORE,
 			DBG_log("  fc_try %s gives %s",
 				c->name,
-				(d ? d->name : "none"))
-			);
+				(d ? d->name : "none")));
 
 		if (d == NULL)
 			d = unrouted;
@@ -3362,8 +3355,7 @@ struct connection *find_client_connection(struct connection *c,
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  concluding with d = %s",
-			(d ? d->name : "none"))
-		);
+			(d ? d->name : "none")));
 	return d;
 }
 
@@ -3510,8 +3502,7 @@ static void show_one_sr(struct connection *c,
 					"method:alwaysok;" :
 				"",
 			thisxauthsemi,
-			thatxauthsemi
-			);
+			thatxauthsemi);
 
 		if (isanyaddr(&c->modecfg_dns1))
 			strcpy(dns1, "unset");
@@ -3544,13 +3535,11 @@ static void show_one_sr(struct connection *c,
 			dns1,
 			dns2,
 			(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
-			(c->modecfg_banner == NULL) ? ", banner:unset" : ""
-			);
+			(c->modecfg_banner == NULL) ? ", banner:unset" : "");
 		if (c->modecfg_banner != NULL) {
 			whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
 			c->name, instance, c->modecfg_banner);
 		}
-
 	}
 
 #ifdef HAVE_LABELED_IPSEC
@@ -3561,8 +3550,7 @@ static void show_one_sr(struct connection *c,
 		);
 	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s; ",
 		c->name, instance,
-		(c->policy_label == NULL) ? "unset" : c->policy_label
-		);
+		(c->policy_label == NULL) ? "unset" : c->policy_label);
 #else
 /* this makes output consistent for testing regardless of support */
 	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no, loopback:no; ",
@@ -3688,8 +3676,7 @@ void show_one_connection(struct connection *c)
 			(c->forceencaps) ? "yes" : "no",
 			(c->nat_keepalive) ? "yes" : "no",
 			(c->ikev1_natt == natt_both) ? "both" :
-			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts")
-		);
+			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"));
 	}
 
 	if (c->extra_debugging) {

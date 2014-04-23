@@ -336,19 +336,23 @@ static void get_internal_addresses(struct state *st, struct internal_addr *ia)
 	if (!isanyaddr(&c->spd.that.client.addr)) {
 		/** assumes IPv4, and also that the mask is ignored */
 
-		if (c->pool != NULL)
-			get_addr_lease(c, ia);
-		else
+		if (c->pool != NULL) {
+			err_t e = get_addr_lease(c, ia);
+
+			if (e != NULL) {
+				/* signal this error to the caller ?? */
+				libreswan_log("get_addr_lease failure %s", e);
+			}
+		} else {
 			ia->ipaddr = c->spd.that.client.addr;
+		}
 
 		if (!isanyaddr(&c->modecfg_dns1))
 			ia->dns[0] = c->modecfg_dns1;
 		if (!isanyaddr(&c->modecfg_dns2))
 			ia->dns[1] = c->modecfg_dns2;
-	} else
-
 #ifdef XAUTH_HAVE_PAM
-	if (c->xauthby == XAUTHBY_PAM) {
+	} else if (c->xauthby == XAUTHBY_PAM) {
 		if (c->pamh == NULL) {
 			/* Start PAM session, using 'pluto' as our PAM name */
 
@@ -404,8 +408,8 @@ static void get_internal_addresses(struct state *st, struct internal_addr *ia)
 			get_addr(c->pamh, "DNS1", &ia->dns[0]);
 			get_addr(c->pamh, "DNS2", &ia->dns[1]);
 		}
-	}
 #endif
+	}
 }
 
 /**

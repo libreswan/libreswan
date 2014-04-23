@@ -57,6 +57,44 @@
 #include "x509more.h"
 
 /*
+ *  Converts a X.500 generalName into an ID
+ */
+static void gntoid(struct id *id, const generalName_t *gn)
+{
+	*id  = empty_id;
+
+	switch (gn->kind) {
+	case GN_DNS_NAME:	/* ID type: ID_FQDN */
+		id->kind = ID_FQDN;
+		id->name = gn->name;
+		break;
+	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
+	{
+		const struct af_info *afi = &af_inet4_info;
+		err_t ugh = NULL;
+
+		id->kind = afi->id_addr;
+		ugh = initaddr(gn->name.ptr, gn->name.len, afi->af,
+			&id->ip_addr);
+		if (!ugh) {
+			libreswan_log(
+				"Warning: gntoid() failed to initaddr(): %s",
+				ugh);
+		}
+
+	}
+	break;
+	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
+		id->kind = ID_USER_FQDN;
+		id->name = gn->name;
+		break;
+	default:
+		id->kind = ID_NONE;
+		id->name = empty_chunk;
+	}
+}
+
+/*
  * extract id and public key from x.509 certificate and
  * insert it into a pubkeyrec
  */
@@ -87,7 +125,7 @@ void add_x509_public_key(const struct id *keyid,
 	gn = cert->subjectAltName;
 
 	while (gn != NULL) { /* insert all subjectAltNames */
-		struct id id = empty_id;
+		struct id id;
 
 		gntoid(&id, gn);
 		if (id.kind != ID_NONE) {
@@ -464,8 +502,7 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 			path, strerror(errno));
 	} else {
 		DBG(DBG_CONTROL,
-			DBG_log("Changed path to directory '%s'", path);
-			);
+			DBG_log("Changed path to directory '%s'", path));
 		n = scandir(".", &filelist, (void *) filter_dotfiles, alphasort);
 
 		if (n < 0) {
@@ -516,8 +553,7 @@ bool trusted_ca(chunk_t a, chunk_t b, int *pathlen)
 	dntoa(bbuf, ASN1_BUF_LEN, b);
 
 	DBG(DBG_X509 | DBG_CONTROLMORE,
-		DBG_log("  trusted_ca called with a=%s b=%s", abuf, bbuf);
-		);
+		DBG_log("  trusted_ca called with a=%s b=%s", abuf, bbuf));
 
 	/* no CA b specified -> any CA a is accepted */
 	if (b.ptr == NULL) {
@@ -563,8 +599,7 @@ bool trusted_ca(chunk_t a, chunk_t b, int *pathlen)
 
 	DBG(DBG_X509 | DBG_CONTROLMORE,
 		DBG_log("  trusted_ca returning with %s",
-			match ? "match" : "failed");
-		);
+			match ? "match" : "failed"));
 
 	return match;
 }
@@ -593,4 +628,44 @@ bool match_requested_ca(generalName_t *requested_ca, chunk_t our_ca,
 	}
 
 	return *our_pathlen <= MAX_CA_PATH_LEN;
+}
+
+/*
+ * choose either subject DN or a subjectAltName as connection end ID
+ */
+void select_x509cert_id(x509cert_t *cert, struct id *end_id)
+{
+	bool copy_subject_dn = TRUE;	/* ID is subject DN */
+
+	if (end_id->kind != ID_NONE) {	/* check for matching subjectAltName */
+		generalName_t *gn;
+
+		for (gn = cert->subjectAltName; gn != NULL; gn = gn->next) {
+			struct id id = empty_id;
+
+			gntoid(&id, gn);
+			if (same_id(&id, end_id)) {
+				/* take subjectAltName instead */
+				copy_subject_dn = FALSE;
+				break;
+			}
+		}
+	}
+
+	if (copy_subject_dn) {
+		if (end_id->kind != ID_NONE &&
+			end_id->kind != ID_DER_ASN1_DN &&
+			end_id->kind != ID_FROMCERT) {
+			char buf[IDTOA_BUF];
+
+			idtoa(end_id, buf, IDTOA_BUF);
+			libreswan_log(
+				"  no subjectAltName matches ID '%s', replaced by subject DN",
+				buf);
+		}
+		end_id->kind = ID_DER_ASN1_DN;
+		end_id->name.len = cert->subject.len;
+		end_id->name.ptr = temporary_cyclic_buffer();
+		memcpy(end_id->name.ptr, cert->subject.ptr, cert->subject.len);
+	}
 }

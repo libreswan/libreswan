@@ -1,10 +1,10 @@
 libtest	spdbtest good
 libtest spdbmerge good
 libtest spdbfirst good
-libtest skeyidcalc good
-libtest spdbph1 good
 libtest spdbv2  good
 libtest spdbv2c good
+libtest skeyidcalc good
+libtest spdbph1 good
 
 libtest      whackmsgtest     good
 multilibtest refineconnection bad

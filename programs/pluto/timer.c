@@ -174,8 +174,7 @@ static void retransmit_v1_msg(struct state *st)
 	DBG(DBG_CONTROL,
 		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
 			ip_str(&c->spd.that.host_addr),
-			c->name, st->st_serialno);
-		);
+			c->name, st->st_serialno));
 
 	if (st->st_retransmit < maximum_retransmissions)
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
@@ -296,8 +295,7 @@ static void retransmit_v2_msg(struct state *st)
 	DBG(DBG_CONTROL,
 		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
 			ip_str(&c->spd.that.host_addr), c->name,
-			st->st_serialno);
-		);
+			st->st_serialno));
 
 	if (st->st_retransmit < maximum_retransmissions)
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
@@ -408,8 +406,7 @@ void handle_timer_event(void)
 
 	if (ev == (struct event *) NULL) { /* Just paranoid */
 		DBG(DBG_CONTROL,
-			DBG_log("empty event list, yet we're called");
-			);
+			DBG_log("empty event list, yet we're called"));
 		return;
 	}
 
@@ -421,8 +418,7 @@ void handle_timer_event(void)
 			DBG_log("called while no event expired (%lu/%lu, %s)",
 				(unsigned long)tm,
 				(unsigned long)ev->ev_time,
-				enum_show(&timer_event_names, type));
-			);
+				enum_show(&timer_event_names, type)));
 
 		/*
 		 * This will happen if the most close-to-expire event was
@@ -462,8 +458,7 @@ static void liveness_check(struct state *st)
 		pst = state_with_serialno(st->st_clonedfrom);
 		if (!pst) {
 			DBG(DBG_CONTROL,
-				DBG_log("liveness_check error, no parent state");
-				);
+				DBG_log("liveness_check error, no parent state"));
 			return;
 		}
 	} else {
@@ -490,8 +485,7 @@ static void liveness_check(struct state *st)
 
 	DBG(DBG_CONTROL,
 		DBG_log("liveness_check - last_liveness: %lu, tm: %lu",
-			last_liveness, tm);
-		);
+			last_liveness, tm));
 	if (c->dpd_timeout < c->dpd_delay * 3)
 		timeout = c->dpd_delay * 3;
 	else
@@ -500,8 +494,7 @@ static void liveness_check(struct state *st)
 	if (pst->st_pend_liveness && tm - last_liveness >= timeout) {
 		DBG(DBG_CONTROL,
 			DBG_log("liveness_check - peer has not responded in %lu seconds, with a timeout of %d, taking action",
-				tm - last_liveness, timeout);
-			);
+				tm - last_liveness, timeout));
 		switch (c->dpd_action) {
 
 		case DPD_ACTION_CLEAR:
@@ -518,8 +511,7 @@ static void liveness_check(struct state *st)
 
 		default:
 			DBG(DBG_CONTROL,
-				DBG_log("liveness_check - handling default by rescheduling");
-				);
+				DBG_log("liveness_check - handling default by rescheduling"));
 			goto live_ok;
 		}
 
@@ -527,14 +519,12 @@ static void liveness_check(struct state *st)
 		ret = ikev2_send_informational(st);
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROL,
-				DBG_log("failed to send informational");
-				);
+				DBG_log("failed to send informational"));
 			return;
 		}
 live_ok:
 		DBG(DBG_CONTROL,
-			DBG_log("liveness_check - peer is ok");
-			);
+			DBG_log("liveness_check - peer is ok"));
 		delete_liveness_event(st);
 		event_schedule(EVENT_v2_LIVENESS,
 			c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay :
@@ -558,12 +548,9 @@ void handle_next_timer_event(void)
 	type = ev->ev_type;
 	st = ev->ev_state;
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
 		DBG_log("handling event %s",
 			enum_show(&timer_event_names, type));
-		);
-
-	DBG(DBG_CONTROL, {
 		if (evlist != (struct event *) NULL) {
 			DBG_log("event after this is %s in %ld seconds",
 				enum_show(&timer_event_names, evlist->ev_type),
@@ -598,8 +585,7 @@ void handle_next_timer_event(void)
 	case EVENT_REINIT_SECRET:
 		passert(st == NULL);
 		DBG(DBG_CONTROL,
-			DBG_log("event EVENT_REINIT_SECRET handled");
-			);
+			DBG_log("event EVENT_REINIT_SECRET handled"));
 		init_secret();
 		break;
 
@@ -754,8 +740,7 @@ void handle_next_timer_event(void)
 	case EVENT_CRYPTO_FAILED:
 		DBG(DBG_CONTROL,
 			DBG_log("event crypto_failed on state #%lu, aborting",
-				st->st_serialno);
-			);
+				st->st_serialno));
 		delete_state(st);
 		break;
 
@@ -811,8 +796,7 @@ long next_event(void)
 void delete_event(struct state *st)
 {
 	DBG(DBG_CONTROLMORE,
-		DBG_log("deleting event for #%ld", st->st_serialno);
-		);
+		DBG_log("deleting event for #%ld", st->st_serialno));
 	if (st->st_event != (struct event *) NULL) {
 		struct event **ev;
 
@@ -821,8 +805,7 @@ void delete_event(struct state *st)
 				DBG(DBG_CONTROL,
 					DBG_log("event %s to be deleted not found",
 						enum_show(&timer_event_names,
-							st->st_event->ev_type));
-					);
+							st->st_event->ev_type)));
 				break;
 			}
 			if ((*ev) == st->st_event) {
@@ -846,14 +829,12 @@ void delete_liveness_event(struct state *st)
 
 		DBG(DBG_CONTROL,
 			DBG_log("state %ld deleting liveness event",
-				st->st_serialno);
-			);
+				st->st_serialno));
 
 		for (ev = &evlist;; ev = &(*ev)->ev_next) {
 			if (*ev == NULL) {
 				DBG(DBG_CONTROL,
-					DBG_log("liveness event not found");
-					);
+					DBG_log("liveness event not found"));
 				break;
 			}
 			if ((*ev) == st->st_liveness_event) {
@@ -878,8 +859,7 @@ void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
 				enum_show(&timer_event_names,
 					st->st_dpd_event->ev_type) :
 				"none"),
-			file, lineno);
-		);
+			file, lineno));
 
 	if (st->st_dpd_event != (struct event *) NULL) {
 		struct event **ev;
@@ -889,8 +869,7 @@ void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
 				DBG(DBG_DPD | DBG_CONTROL,
 					DBG_log("DPD event %s to be deleted not found",
 						enum_show(&timer_event_names,
-							st->st_dpd_event->ev_type));
-					);
+							st->st_dpd_event->ev_type)));
 				break;
 			}
 			if ((*ev) == st->st_dpd_event) {
@@ -951,38 +930,38 @@ void init_timer(void)
 	char *valstr;
 
 	valstr = getenv("PLUTO_EVENT_RETRANSMIT_DELAY");
-	if (valstr) {
+	if (valstr != NULL) {
+		/* ??? should check that valstr is reasonable */
 		event_retransmit_delay_0 = atoi(valstr);
 		DBG(DBG_CONTROL,
 			DBG_log("PLUTO_EVENT_RETRANSMIT_DELAY set to '%d'",
-				event_retransmit_delay_0);
-			);
+				event_retransmit_delay_0));
 	}
 
 	valstr = getenv("PLUTO_MAXIMUM_RETRANSMISSIONS");
-	if (valstr) {
+	if (valstr != NULL) {
+		/* ??? should check that valstr is reasonable */
 		maximum_retransmissions  = atoi(valstr);
 		DBG(DBG_CONTROL,
 			DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS set to '%d'",
-				maximum_retransmissions);
-			);
+				maximum_retransmissions));
 	}
 
 	valstr = getenv("PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL");
-	if (valstr) {
+	if (valstr != NULL) {
+		/* ??? should check that valstr is reasonable */
 		maximum_retransmissions_initial = atoi(valstr);
 		DBG(DBG_CONTROL,
 			DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL set to '%d'",
-				maximum_retransmissions_initial);
-			);
+				maximum_retransmissions_initial));
 	}
 
 	valstr = getenv("PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1");
-	if (valstr) {
+	if (valstr != NULL) {
+		/* ??? should check that valstr is reasonable */
 		maximum_retransmissions_quick_r1 = atoi(valstr);
 		DBG(DBG_CONTROL,
 			DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1 set to '%d'",
-				maximum_retransmissions_quick_r1);
-			);
+				maximum_retransmissions_quick_r1));
 	}
 }

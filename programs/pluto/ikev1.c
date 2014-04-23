@@ -1313,7 +1313,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			DBG(DBG_CONTROLMORE, DBG_log(" processing received "
 						     "isakmp_xchg_type %s.",
-						     enum_show(&exchange_names_ikev1,
+						     enum_show(&ikev1_exchange_names,
 							       md->hdr.isa_xchg)));
 			DBG(DBG_CONTROLMORE, DBG_log(" this is a%s%s%s%s",
 						     st->st_connection->spd.
@@ -1421,7 +1421,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    "isakmp_xchg_type %s.",
 					    __func__,
 					    __LINE__,
-					    enum_show(&exchange_names_ikev1,
+					    enum_show(&ikev1_exchange_names,
 						      md->hdr.isa_xchg)));
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("this is a%s%s%s%s in state %s. "
@@ -1448,7 +1448,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				   libreswan_log("in state %s isakmp_xchg_types %s not supported."
 				   "reply UNSUPPORTED_EXCHANGE_TYPE"
 				   , enum_name(&state_names, st->st_state)
-				   , enum_show(&exchange_names_ikev1, md->hdr.isa_xchg));
+				   , enum_show(&ikev1_exchange_names, md->hdr.isa_xchg));
 				   SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 				 */
 				return;
@@ -1471,7 +1471,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	case ISAKMP_XCHG_NGRP:
 	default:
 		libreswan_log("unsupported exchange type %s in message",
-			      enum_show(&exchange_names_ikev1, md->hdr.isa_xchg));
+			      enum_show(&ikev1_exchange_names, md->hdr.isa_xchg));
 		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
@@ -1925,7 +1925,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					loglog(RC_LOG_SERIOUS, "%smessage ignored because it contains an unknown or"
 					       " unexpected payload type (%s) at the outermost level",
 					       excuse,
-					       enum_show(&payload_names_ikev1, np));
+					       enum_show(&ikev1_payload_names, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
@@ -1945,14 +1945,14 @@ void process_packet_tail(struct msg_digest **mdp)
 					loglog(RC_LOG_SERIOUS, "%smessage ignored because it "
 					       "contains an unexpected payload type (%s)",
 					       excuse,
-					       enum_show(&payload_names_ikev1, np));
+					       enum_show(&ikev1_payload_names, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
 
 				DBG(DBG_PARSING,
 				    DBG_log("got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
-					    s, enum_show(&payload_names_ikev1, np),
+					    s, enum_show(&ikev1_payload_names, np),
 					    needed, smc->opt_payloads));
 				needed &= ~s;
 			}
@@ -2786,7 +2786,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
         if (st->hidden_variables.st_nat_traversal &&
 	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
 	    ((id->isaid_doi_specific_b == 0) ||
-	     (id->isaid_doi_specific_b == pluto_natt_float_port))) {
+	     (id->isaid_doi_specific_b == pluto_nat_port))) {
 		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
@@ -2795,10 +2795,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	if (!(id->isaid_doi_specific_a == 0 &&
 	      id->isaid_doi_specific_b == 0) &&
 	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
-	      id->isaid_doi_specific_b == IKE_UDP_PORT)) {
+	      id->isaid_doi_specific_b == pluto_port)) {
 		loglog(RC_LOG_SERIOUS, "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d"
 		       " but are %d/%d (attempting to continue)",
-		       IPPROTO_UDP, IKE_UDP_PORT,
+		       IPPROTO_UDP, pluto_port,
 		       id->isaid_doi_specific_a,
 		       id->isaid_doi_specific_b);
 		/* we have turned this into a warning because of bugs in other vendors
@@ -2807,6 +2807,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		/* return FALSE; */
 	}
 
+	zero(&peer);
 	peer.kind = id->isaid_idtype;
 
 	if (!extract_peer_id(&peer, id_pbs))

@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 void whack_log(int rc, const char *msg, ...)
 {
 	va_list args;

@@ -547,7 +547,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		const char *natinfo = "";
 		char esb[ENUM_SHOW_BUF_LEN];
 
-		if ((c->spd.that.host_port != IKE_UDP_PORT &&
+		if ((c->spd.that.host_port != pluto_port &&
 		     c->spd.that.host_port != 0) ||
 		    c->forceencaps) {
 			natinfo = "/NAT";
@@ -653,12 +653,10 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		snprintf(b, sad_len - (b - sadetails) - 1,
 			 "%sXAUTHuser=%s",
 			 ini,
-			 st->st_xauth_username
-			 );
+			 st->st_xauth_username);
 
 		ini = " ";
 		fin = "}";
-
 	}
 
 	strcat(b, fin);

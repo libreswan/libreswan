@@ -10,3 +10,5 @@ s/\(received Delete SA\)(0x.*)\( payload: deleting IPSEC State #\).*/\1(0xSPI1SP
 /byte . of ISAKMP Hash Payload must be zero, but is not/d
 /next payload type of ISAKMP Hash Payload has an unknown value: /d
 /extra debugging enabled for connection:/d
+#
+s/^000 SElinux=.*/000 SElinux=XXXXX/

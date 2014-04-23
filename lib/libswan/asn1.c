@@ -23,7 +23,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
-#include "lswtime.h"
 #include "lswalloc.h"
 #include "asn1.h"
 #include "oid.h"

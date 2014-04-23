@@ -200,7 +200,7 @@ static int initiate_a_connection(struct connection *c,
 				loglog(RC_NOPEERIP,
 				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				       enum_show(&connection_kind_names,
-						 c->kind) );
+						 c->kind));
 				success = 1;
 				c->policy |= POLICY_UP;
 			} else
@@ -1348,7 +1348,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	e = ttoaddr(c->dnshostname, 0, 0, &new_addr);
+	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",

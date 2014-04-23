@@ -29,6 +29,8 @@ typedef int bool;
 # define FALSE 0
 #endif
 
+#define UNDEFINED_TIME  ((time_t)0)
+
 #include <stddef.h>
 
 /*
@@ -307,7 +309,10 @@ extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
-extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst);
+extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
+		bool non_zero);
+extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
+#define RANGETOT_BUF     (ADDRTOT_BUF * 2 + 1)
 extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
 extern size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
 #define SUBNETTOT_BUF   (ADDRTOT_BUF + 1 + 3)
@@ -336,6 +341,9 @@ extern size_t splitkeytoid(const unsigned char *e, size_t elen,
 #define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 extern err_t ttoprotoport(char *src, size_t src_len, u_int8_t *proto, u_int16_t *port,
 		   int *has_port_wildcard);
+
+#define TIMETOA_BUF     30	/* size of timetoa string buffer */
+extern char *timetoa(const time_t *timep, bool utc, char *buf, size_t blen);
 
 /* initializations */
 extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,

@@ -1,0 +1,15 @@
+# east is not used here
+east #
+ echo "done"
+done
+east #
+ ipsec look
+east NOW
+IPSEC TABLE
+ROUTING TABLE
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -100,8 +100,7 @@ static bool find_boundary(const char* tag, chunk_t *line)
 		if (present("-----", line)) {
 			DBG(DBG_PARSING,
 				DBG_log("  -----%s %.*s-----",
-					tag, (int)name.len, name.ptr)
-				);
+					tag, (int)name.len, name.ptr));
 			return TRUE;
 		}
 		line->ptr++;
@@ -152,8 +151,7 @@ static bool extract_token(chunk_t *token, char termination, chunk_t *src)
 static bool extract_parameter(chunk_t *name, chunk_t *value, chunk_t *line)
 {
 	DBG(DBG_PARSING,
-		DBG_log("  %.*s", (int)line->len, line->ptr);
-		);
+		DBG_log("  %.*s", (int)line->len, line->ptr));
 
 	/* extract name */
 	if (!extract_token(name, ':', line))
@@ -264,8 +262,7 @@ err_t pemtobin(chunk_t *blob)
 					blob->len - dst.len, &len);
 				if (ugh) {
 					DBG(DBG_PARSING,
-						DBG_log("  %s", ugh);
-						);
+						DBG_log("  %s", ugh));
 					state = PEM_ABORT;
 					break;
 				} else {
@@ -298,8 +295,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 	int outlen;
 
 	DBG(DBG_CRYPT,
-		DBG_log("NSS: do_3des init start");
-		);
+		DBG_log("NSS: do_3des init start"));
 
 	ciphermech = CKM_DES3_CBC;	/* libreswan provides padding */
 
@@ -362,6 +358,5 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 		SECITEM_FreeItem(secparam, PR_TRUE);
 
 	DBG(DBG_CRYPT,
-		DBG_log("NSS: do_3des init end");
-		);
+		DBG_log("NSS: do_3des init end"));
 }

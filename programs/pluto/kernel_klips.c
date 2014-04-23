@@ -73,7 +73,7 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 
 		if (pluto_listen) {
 			err_t e;
-			e = ttoaddr(pluto_listen, 0, 0, &lip);
+			e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 			if (e) {
 				DBG_log("invalid listen= option ignored: %s\n",
 					e);
@@ -236,7 +236,7 @@ add_entry:
 						    DBG_log("NAT-T KLIPS: calling nat_traversal_espinudp_socket"));
 						fd = create_socket(ifp,
 								   v->name,
-								   pluto_natt_float_port);
+								   pluto_nat_port);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(
@@ -248,9 +248,9 @@ add_entry:
 						id->id_count++;
 
 						q->ip_addr = ifp->addr;
-						setportof(htons(pluto_natt_float_port),
+						setportof(htons(pluto_nat_port),
 							  &q->ip_addr);
-						q->port = pluto_natt_float_port;
+						q->port = pluto_nat_port;
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;

@@ -1,4 +1,3 @@
-#define LEAK_DETECTIVE
 #define PRINT_SA_DEBUG 1
 #include <stdlib.h>
 #include "libreswan.h"
@@ -8,30 +7,22 @@
 #include "plutoalg.h"
 #include "spdb.h"
 #include "ike_alg.h"
+#include "alg_info.h"
+
+#include "seam_exitlog.c"
+#include "seam_whack.c"
+
 
 char *progname;
 
 bool can_do_IPcomp = TRUE;
 
-void exit_log(const char *msg, ...)
-{
-	lsw_abort();
-}
+//#include "../../../lib/libswan/lswlog.c"
 
 struct state *state_with_serialno(so_serial_t sn)
 {
 	lsw_abort();
 	return NULL;
-}
-
-void whack_log(int rc, const char *msg, ...)
-{
-	lsw_abort();
-}
-
-void exit_tool(int stat)
-{
-	exit(stat);
 }
 
 const chunk_t *get_preshared_secret(const struct connection *c)

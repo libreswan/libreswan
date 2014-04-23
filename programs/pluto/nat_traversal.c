@@ -508,8 +508,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		p = p->next, i++);
 
 	DBG(DBG_NATT,
-		DBG_log("NAT-Traversal: received %d NAT-OA.", i);
-		);
+		DBG_log("NAT-Traversal: received %d NAT-OA.", i));
 
 	if (i == 0) {
 		return;
@@ -529,8 +528,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	p = md->chain[ISAKMP_NEXT_NATOA_RFC];
 
 	DBG(DBG_PARSING,
-		DBG_dump("NAT-OA:", p->pbs.start, pbs_room(&p->pbs));
-		);
+		DBG_dump("NAT-OA:", p->pbs.start, pbs_room(&p->pbs)));
 
 	switch (p->payload.nat_oa.isanoa_idtype) {
 	case ID_IPV4_ADDR:
@@ -566,13 +564,11 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		break;
 	}
 
-	DBG(DBG_NATT,
-		{
+	DBG(DBG_NATT, {
 			char ip_t[ADDRTOT_BUF];
 			addrtot(&ip, 0, ip_t, sizeof(ip_t));
 			DBG_log("received NAT-OA: %s", ip_t);
-		}
-		);
+	});
 
 	if (isanyaddr(&ip)) {
 		loglog(RC_LOG_SERIOUS,
@@ -637,8 +633,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 			return FALSE;
 
 		DBG(DBG_NATT,
-			DBG_dump("NAT-OAi (S):", ip_val, ip_len);
-			);
+			DBG_dump("NAT-OAi (S):", ip_val, ip_len));
 		close_output_pbs(&pbs);
 	}
 
@@ -673,8 +668,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 			return FALSE;
 
 		DBG(DBG_NATT,
-			DBG_dump("NAT-OAr (S):", ip_val, ip_len);
-			);
+			DBG_dump("NAT-OAr (S):", ip_val, ip_len));
 
 		close_output_pbs(&pbs);
 	}
@@ -710,8 +704,7 @@ void nat_traversal_show_result(u_int32_t nt, u_int16_t sport)
 			NAT_TRAVERSAL_METHOD_IETF_02_03) :
 		"unknown or unsupported method",
 		sport,
-		rslt != NULL ? rslt : "unknown or unsupported result"
-		);
+		rslt != NULL ? rslt : "unknown or unsupported result");
 }
 
 int nat_traversal_espinudp_socket(int sk, const char *fam )
@@ -800,8 +793,7 @@ static void nat_traversal_send_ka(struct state *st)
 		DBG_log("ka_event: send NAT-KA to %s:%d (state=#%lu)",
 			ip_str(&st->st_remoteaddr),
 			st->st_remoteport,
-			st->st_serialno);
-		);
+			st->st_serialno));
 
 	/* send keep alive */
 	DBG(DBG_NATT | DBG_DPD, DBG_log("sending NAT-T Keep Alive"));
@@ -1022,9 +1014,9 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		DBG_log("nat_traversal & NAT_T_DETECTED %" PRIxLSET,
 			(st->hidden_variables.st_nat_traversal &
 				NAT_T_DETECTED));
-		DBG_log(" st_localport != pluto_natt_float_port (%" PRIu16 " != %" PRIu16 ")",
+		DBG_log(" st_localport != pluto_nat_port (%" PRIu16 " != %" PRIu16 ")",
 			st->st_localport,
-			pluto_natt_float_port););
+			pluto_nat_port););
 
 	/*
 	 * If we're initiator and NAT-T is detected, we
@@ -1034,13 +1026,13 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 			(st->st_state == STATE_QUICK_I1) ||
 			(st->st_state == STATE_AGGR_I2)) &&
 		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-		(st->st_localport != pluto_natt_float_port)) {
+		(st->st_localport != pluto_nat_port)) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: floating to port %d",
-				pluto_natt_float_port));
+				pluto_nat_port));
 
-		st->st_localport  = pluto_natt_float_port;
-		st->st_remoteport = pluto_natt_float_port;
+		st->st_localport  = pluto_nat_port;
+		st->st_remoteport = pluto_nat_port;
 
 		/*
 		 * Also update pending connections or they will be deleted if
@@ -1166,10 +1158,10 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 void show_setup_natt()
 {
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "nat_traversal=%s, keep_alive=%d, nat_ikeport=%d",
+	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%d, nat-ikeport=%d",
 		nat_traversal_enabled ? "yes" : "no",
 		nat_kap,
-		pluto_natt_float_port);
+		pluto_nat_port);
 }
 
 void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
@@ -1276,9 +1268,9 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 			& NAT_T_DETECTED)) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: floating to port %s:%d",
-				ip_str(&md->sender),pluto_natt_float_port));
-		st->st_localport  = pluto_natt_float_port;
-		st->st_remoteport = pluto_natt_float_port;
+				ip_str(&md->sender),pluto_nat_port));
+		st->st_localport  = pluto_nat_port;
+		st->st_remoteport = pluto_nat_port;
 
 		nat_traversal_change_port_lookup(NULL, st);
 	}

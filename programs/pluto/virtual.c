@@ -39,11 +39,9 @@
 #include "virtual.h"	/* needs connections.h */
 
 #define F_VIRTUAL_NO          1
-#define F_VIRTUAL_DHCP        2
-#define F_VIRTUAL_IKE_CONFIG  4
-#define F_VIRTUAL_PRIVATE     8
-#define F_VIRTUAL_ALL         16
-#define F_VIRTUAL_HOST        32
+#define F_VIRTUAL_PRIVATE     2
+#define F_VIRTUAL_ALL         4
+#define F_VIRTUAL_HOST        8
 
 struct virtual_t {
 	unsigned short flags;
@@ -51,139 +49,152 @@ struct virtual_t {
 	ip_subnet net[0];
 };
 
-static ip_subnet *private_net_ok = NULL, *private_net_ko = NULL;
-static unsigned short private_net_ok_len = 0, private_net_ko_len = 0;
+/* subnets to include and to exclude as virtual-private */
 
-/** Read a subnet (IPv4/IPv6)
- * read %v4:x.x.x.x/y or %v6:xxxxxxxxx/yy
- * or %v4:!x.x.x.x/y if dstko not NULL
+static ip_subnet *private_net_incl = NULL;	/* [private_net_incl_len] */
+static int private_net_incl_len = 0;
+
+static ip_subnet *private_net_excl = NULL;	/* [private_net_excl_len] */
+static int private_net_excl_len = 0;
+
+/*
+ * Read a subnet (IPv4/IPv6)
+ * inclusion form: %v4:x.x.x.x/y or %v6:xxxxxxxxx/yy
+ * exclusion form: %v4:!x.x.x.x/y or %v6:xxxxxxxxx/yy
  *
  * @param src String in format (see above)
  * @param len Length of src string
- * @param dst IP Subnet Destination
- * @param dstko IP Subnet
- * @param isok Boolean
+ * @param dst out: IP Subnet * Destination
+ * @param dstexcl out: IP Subnet * for ! form (required iff ! is to be accepted)
+ * @param isincl out: bool * inclusive form or not
  * @return bool If the format string is valid.
  */
-static bool _read_subnet(const char *src, size_t len, ip_subnet *dst,
-			 ip_subnet *dstko,
-			 bool *isok)
+static bool read_subnet(const char *src, size_t len,
+			ip_subnet *dst,
+			ip_subnet *dstexcl,
+			bool *isincl)
 {
-	bool ok;
-	int af;
-	/* workaround for typo "%4:" instead of "%v4:" introduced in old openswan release*/
-	int offset = 0;
+	bool incl = TRUE;
+	int af = AF_UNSPEC;	/* AF_UNSPEC means "guess from form" */
+	int pl;
+	err_t ugh;
 
-	if ((len > 4) && (strncmp(src, "%v4:", 4) == 0)) {
+	/*
+	 * Note: len might not be sufficient for each of these strncmp calls
+	 * but that's OK because the character in src[len] is either ',' or '\0'
+	 * so the result will be a non-match, safely and correctly.
+	 */
+	if (strncmp(src, "%v4:", 4) == 0) {
+		pl = 4;
 		af = AF_INET;
-	} else if ((len > 4) && (strncmp(src, "%v6:", 4) == 0)) {
+	} else if (strncmp(src, "%v6:", 4) == 0) {
+		pl = 4;
 		af = AF_INET6;
-	} else if ((len > 4) && (strncmp(src, "%4:", 3) == 0)) {
-		af = AF_INET;
-		offset = -1;
-		loglog(RC_LOG_SERIOUS,
-		       "fixup for bad virtual_private entry '%s', please fix your virtual_private line!",
-		       src);
-	} else {
-		return FALSE;
 	}
 
-	ok = (src[4 + offset] == '!') ? FALSE : TRUE;
-	src += ok ? (4 + offset) : (5 + offset);
-	len -= ok ? (4 + offset) : (5 + offset);
+	if (src[pl] == '!') {
+		pl++;
+		if (dstexcl == NULL)
+			return FALSE;
+		incl = FALSE;
+	}
 
-	if (!len)
-		return FALSE;
+	src += pl;
+	len -= pl;
 
-	if ((!ok) && (!dstko))
-		return FALSE;
-
-	passert( ((ok) ? (dst) : (dstko)) != NULL );
-
-	if (ttosubnet(src, len, af, ((ok) ? (dst) : (dstko)))) {
-		loglog(RC_LOG_SERIOUS, "fail in ttosubnet ?");
+	ugh = ttosubnet(src, len, af, incl ? dst : dstexcl);
+	if (ugh != NULL) {
+		loglog(RC_LOG_SERIOUS, "virtual-private entry not proper subnet: %s", ugh);
 		return FALSE;
 	}
-	if (isok)
-		*isok = ok;
+	if (isincl != NULL)
+		*isincl = incl;
 	return TRUE;
 }
 
 void free_virtual_ip()
 {
        /* These might be NULL if empty in ipsec.conf */
-       pfreeany(private_net_ok);
-       pfreeany(private_net_ko);
+	private_net_incl_len = 0;
+	pfreeany(private_net_incl);
+
+	private_net_excl_len = 0;
+	pfreeany(private_net_excl);
 }
 
-/** Initialize Virtual IP Support
+/*
+ * Initialize Virtual IP Support
  *
- * @param private_list String (contents of virtual_private= from ipsec.conf)
+ * @param private_list String (contents of virtual-private= from ipsec.conf)
  */
 void init_virtual_ip(const char *private_list)
 {
-	const char *next, *str = private_list;
-	unsigned short ign = 0, i_ok, i_ko;
-	ip_subnet sub;
-	bool ok;
+	const char *str;
+	int ign = 0, i_incl, i_excl;
+
+	free_virtual_ip();
 
 	/** Count **/
-	private_net_ok_len = 0;
-	private_net_ko_len = 0;
-	while (str) {
-		next = strchr(str, ',');
-		if (!next)
+	str = private_list;
+	while (str != NULL) {
+		const char *next = strchr(str, ',');
+		bool incl;
+		ip_subnet sub;	/* sink: value never used */
+
+		if (next == NULL)
 			next = str + strlen(str);
-		if (_read_subnet(str, next - str, &sub, &sub, &ok)) {
-			if (ok)
-				private_net_ok_len++;
+		if (read_subnet(str, next - str, &sub, &sub, &incl)) {
+			if (incl)
+				private_net_incl_len++;
 			else
-				private_net_ko_len++;
+				private_net_excl_len++;
 		} else {
 			ign++;
 		}
-		str = *next ? next + 1 : NULL;
+		str = *next != '\0' ? next + 1 : NULL;
 	}
 
-	if (!ign) {
+	if (ign == 0) {
 		/** Allocate **/
-		if (private_net_ok_len != 0) {
-			private_net_ok = (ip_subnet *)alloc_bytes(
-				(private_net_ok_len * sizeof(ip_subnet)),
-				"private_net_ok subnets");
+		if (private_net_incl_len != 0) {
+			private_net_incl = (ip_subnet *)alloc_bytes(
+				(private_net_incl_len * sizeof(ip_subnet)),
+				"private_net_incl subnets");
 		}
-		if (private_net_ko_len != 0) {
-			private_net_ko = (ip_subnet *)alloc_bytes(
-				(private_net_ko_len * sizeof(ip_subnet)),
-				"private_net_ko subnets");
+		if (private_net_excl_len != 0) {
+			private_net_excl = (ip_subnet *)alloc_bytes(
+				(private_net_excl_len * sizeof(ip_subnet)),
+				"private_net_excl subnets");
 		}
 
 		/** Fill **/
 		str = private_list;
-		i_ok = 0;
-		i_ko = 0;
-		while (str) {
-			next = strchr(str, ',');
-			if (!next)
+		i_incl = 0;
+		i_excl = 0;
+		while (str != NULL) {
+			const char *next = strchr(str, ',');
+			bool incl;
+
+			if (next == NULL)
 				next = str + strlen(str);
-			if (_read_subnet(str, next - str,
-					 &(private_net_ok[i_ok]),
-					 &(private_net_ko[i_ko]),
-					 &ok)) {
-				if (ok)
-					i_ok++;
+			if (read_subnet(str, next - str,
+					 &(private_net_incl[i_incl]),
+					 &(private_net_excl[i_excl]),
+					 &incl)) {
+				if (incl)
+					i_incl++;
 				else
-					i_ko++;
+					i_excl++;
 			}
-			str = *next ? next + 1 : NULL;
+			str = *next != '\0' ? next + 1 : NULL;
 		}
 	} else {
 		loglog(RC_LOG_SERIOUS,
-		       "%d bad entries in virtual_private - none loaded", ign);
+		       "%d bad entries in virtual-private - none loaded", ign);
 	}
 }
 
-/**
+/*
  * virtual string must be :
  * {vhost,vnet}:[%method]*
  *
@@ -191,72 +202,62 @@ void init_virtual_ip(const char *private_list)
  * vnet  = accept any network
  *
  * %no   = no virtual IP (accept public IP)
- * %dhcp = accept DHCP SA (0.0.0.0/0) of affected IP  [not implemented]
- * %ike  = accept affected IKE Config Mode IP         [not implemented]
  * %priv = accept system-wide private net list
  * %v4:x = accept ipv4 in list 'x'
  * %v6:x = accept ipv6 in list 'x'
  * %all  = accept all ips                             [only for testing]
  *
- * ex: vhost:%no,%dhcp,%priv,%v4:192.168.1.0/24
+ * ex: vhost:%no,%priv,%v4:192.168.1.0/24
  *
  * @param c Connection Struct
  * @param string (virtual_private= from ipsec.conf)
  * @return virtual_t
  */
-struct virtual_t
-*create_virtual(const struct connection *c, const char *string)
+struct virtual_t *create_virtual(const struct connection *c, const char *string)
 {
-	unsigned short flags = 0, n_net = 0, i;
-	const char *str = string, *next, *first_net = NULL;
-	ip_subnet sub;
+	unsigned short flags = 0,
+		n_net = 0;
+	const char *str = string,
+		*first_net = NULL;
 	struct virtual_t *v;
 
-	if ((!string) || (string[0] == '\0'))
+	if (string == NULL || string[0] == '\0')
 		return NULL;
 
-	if ((strlen(string) >= 6) && (strncmp(string, "vhost:", 6) == 0)) {
+	if (strlen(string) >= 6 && strncmp(string, "vhost:", 6) == 0) {
 		flags |= F_VIRTUAL_HOST;
 		str += 6;
-	} else if ((strlen(string) >= 5) &&
-		   (strncmp(string, "vnet:", 5) == 0)) {
+	} else if (strlen(string) >= 5 && strncmp(string, "vnet:", 5) == 0) {
 		str += 5;
 	} else {
 		goto fail;
 	}
 
-	/**
+	/*
 	 * Parse string : fill flags & count subnets
 	 */
-	while ((str) && (*str)) {
-		next = strchr(str, ',');
-		if (!next)
+	while (str != NULL && *str != '\0') {
+		ip_subnet sub;	/* sink -- value never used */
+		ptrdiff_t len;
+		const char * next = strchr(str, ',');
+
+		if (next == NULL)
 			next = str + strlen(str);
-		if ((next - str == 3) && (strncmp(str, "%no", 3) == 0)) {
+		len = next - str;
+		if (len == 3 && strncmp(str, "%no", 3) == 0) {
 			flags |= F_VIRTUAL_NO;
-		}
-#if 0
-		else if ((next - str == 4) && (strncmp(str, "%ike", 4) == 0)) {
-			flags |= F_VIRTUAL_IKE_CONFIG;
-		} else if ((next - str == 5) &&
-			   (strncmp(str, "%dhcp", 5) == 0)) {
-			flags |= F_VIRTUAL_DHCP;
-		}
-#endif
-		else if ((next - str == 5) &&
-			 (strncmp(str, "%priv", 5) == 0)) {
+		} else if (len == 5 && strncmp(str, "%priv", 5) == 0) {
 			flags |= F_VIRTUAL_PRIVATE;
-		} else if ((next - str == 4) &&
-			   (strncmp(str, "%all", 4) == 0)) {
+		} else if (len == 4 && strncmp(str, "%all", 4) == 0) {
 			flags |= F_VIRTUAL_ALL;
-		} else if (_read_subnet(str, next - str, &sub, NULL, NULL)) {
+		} else if (read_subnet(str, len, &sub, NULL, NULL)) {
 			n_net++;
-			if (!first_net)
+			if (first_net == NULL)
 				first_net = str;
 		} else {
 			goto fail;
 		}
-		str = *next ? next + 1 : NULL;
+		str = *next != '\0' ? next + 1 : NULL;
 	}
 
 	v = (struct virtual_t *)alloc_bytes(
@@ -265,15 +266,18 @@ struct virtual_t
 
 	v->flags = flags;
 	v->n_net = n_net;
-	if (n_net && first_net) {
-		/**
+	if (n_net != 0 && first_net != NULL) {
+		/*
 		 * Save subnets in newly allocated struct
 		 */
-		for (str = first_net, i = 0; (str) && (*str); ) {
-			next = strchr(str, ',');
-			if (!next)
+		int i = 0;
+
+		for (str = first_net; str != NULL && *str != '\0'; ) {
+			const char *next = strchr(str, ',');
+
+			if (next == NULL)
 				next = str + strlen(str);
-			if (_read_subnet(str, next - str, &(v->net[i]), NULL,
+			if (read_subnet(str, next - str, &(v->net[i]), NULL,
 					 NULL))
 				i++;
 			str = *next ? next + 1 : NULL;
@@ -283,23 +287,24 @@ struct virtual_t
 	return v;
 
 fail:
-	libreswan_log("invalid virtual string [%s] - "
-		      "virtual selection disabled for connection '%s'", string,
-		      c->name);
+	libreswan_log("invalid virtual string [%s] - virtual selection disabled for connection '%s'",
+		string, c->name);
 	return NULL;
 }
 
-/** is_virtual_end - Do we have a virtual IP on the other end?
+/*
+ * is_virtual_end - Do we have a virtual IP on the other end?
  *
  * @param that end structure
  * @return bool True if we do
  */
 bool is_virtual_end(const struct end *that)
 {
-	return (that->virt) ? TRUE : FALSE;
+	return that->virt != NULL;
 }
 
-/** Does this connection have a virtual IP ?
+/*
+ * Does this connection have a virtual IP ?
  *
  * @param c Active Connection struct
  * @return bool True if we do
@@ -309,34 +314,36 @@ bool is_virtual_connection(const struct connection *c)
 	const struct spd_route *sr;
 
 	for (sr = &c->spd; sr != NULL; sr = sr->next)
-		if (sr->that.virt)
+		if (sr->that.virt != NULL)
 			return TRUE;
 
 	return FALSE;
 }
 
-/** Does this spd have a virtual IP ?
+/*
+ * Does this spd have a virtual IP ?
  *
  * @param c Active Connection struct
  * @return bool True if we do
  */
 bool is_virtual_sr(const struct spd_route *sr)
 {
-	return (sr->that.virt) ? TRUE : FALSE;
+	return is_virtual_end(&sr->that);
 }
 
-/** is_virtual_vhost - is the virt set to a host or a net?
+/*
+ * is_virtual_vhost - is the virt set to a host or a net?
  *
  * @param that end structure
  * @return bool True if we do
  */
 bool is_virtual_vhost(const struct end *that)
 {
-	return (that->virt && that->virt->flags &
-		F_VIRTUAL_HOST) ? TRUE : FALSE;
+	return that->virt != NULL && (that->virt->flags & F_VIRTUAL_HOST) != 0;
 }
 
-/** net_in_list - Check if a subnet is in a list
+/*
+ * net_in_list - Check if a subnet is in a list
  *
  * @param peer_net IP Subnet to check
  * @param list IP Subnet list to search within
@@ -344,21 +351,19 @@ bool is_virtual_vhost(const struct end *that)
  * @return bool True if peer_net is in list
  */
 static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
-			unsigned short len)
+			int len)
 {
-	unsigned short i;
+	int i;
 
-	if (!list || !len)
-		return FALSE;
-
-	for (i = 0; i < len; i++) {
+	for (i = 0; i < len; i++)
 		if (subnetinsubnet(peer_net, &(list[i])))
 			return TRUE;
-	}
+
 	return FALSE;
 }
 
-/** is_virtual_net_allowed -
+/*
+ * is_virtual_net_allowed -
  * Check if the virtual network the client proposes is acceptable to us
  *
  * @param c Connection structure (active)
@@ -372,7 +377,7 @@ err_t is_virtual_net_allowed(const struct connection *c,
 {
 	err_t why = NULL;
 
-	if (!c->spd.that.virt)
+	if (c->spd.that.virt == NULL)
 		return NULL;
 
 	if (c->spd.that.virt->flags & F_VIRTUAL_HOST) {
@@ -389,12 +394,12 @@ err_t is_virtual_net_allowed(const struct connection *c,
 	}
 
 	if (c->spd.that.virt->flags & F_VIRTUAL_PRIVATE) {
-		if (net_in_list(peer_net, private_net_ok,
-				private_net_ok_len) &&
-		    !net_in_list(peer_net, private_net_ko, private_net_ko_len))
+		if (net_in_list(peer_net, private_net_incl,
+				private_net_incl_len) &&
+		    !net_in_list(peer_net, private_net_excl, private_net_excl_len))
 			return NULL;
 
-		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual_private=)";
+		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=)";
 	}
 
 	if (c->spd.that.virt->n_net) {
@@ -408,72 +413,52 @@ err_t is_virtual_net_allowed(const struct connection *c,
 	if (c->spd.that.virt->flags & F_VIRTUAL_ALL) {
 		/* %all must only be used for testing - log it */
 		loglog(RC_LOG_SERIOUS, "Warning - "
-		       "v%s:%%all must only be used for testing",
-		       (c->spd.that.virt->flags &
-			F_VIRTUAL_HOST) ? "host" : "net");
+			"v%s:%%all must only be used for testing",
+			(c->spd.that.virt->flags & F_VIRTUAL_HOST) ?
+				"host" : "net");
 		return NULL;
 	}
 
 	return why;
 }
 
+static void show_virtual_private_kind(const char *kind,
+	const ip_subnet *private_net,
+	int private_net_len)
+{
+	if (private_net != NULL) {
+		bool trunc = FALSE;
+		char all[256] = "";  /* arbitrary limit */
+		int i;
+
+		for (i = 0; i < private_net_len; i++) {
+			char sn[SUBNETTOT_BUF];
+			const char *sep = *all == '\0'? "" : ", ";
+
+			subnettot(&private_net[i], 0, sn, sizeof(sn));
+			if (strlen(all) + strlen(sep) +  strlen(sn) <
+					sizeof(all)) {
+				strcat(all, sep);
+				strcat(all, sn);
+			} else {
+				trunc = TRUE;
+				break;
+			}
+		}
+		whack_log(RC_COMMENT, "- %sed subnet%s: %s",
+			kind, i == 1? "" : "s", all);
+		if (trunc)
+			whack_log(RC_COMMENT, "showing only %d of %d!",
+				i, private_net_len);
+	}
+}
+
 void show_virtual_private()
 {
-	char allowed[SUBNETTOT_BUF];
-	char disallowed[SUBNETTOT_BUF];
-	char all_ok[256] = "";  /* arbitrary limit */
-	char all_ko[256] = "";  /* arbitrary limit */
-	int i, truncok = 0, truncko = 0;
-
-	if (private_net_ok != NULL) {
-		for (i = 0; i < private_net_ok_len; i++) {
-			subnettot(&private_net_ok[i], 0, allowed,
-				  sizeof(allowed));
-			if (i != 0)
-				strcat(all_ok, ", ");
-			if ( (strlen(all_ok) + strlen(allowed)) <= 255) {
-				strcat(all_ok, allowed);
-			} else {
-				truncok = 1;
-				i = private_net_ok_len;
-			}
-		}
-	} else {
-		all_ok[0] = '\0';
-	}
-
-	if (private_net_ko != NULL) {
-		for (i = 0; i < private_net_ko_len; i++) {
-			subnettot(&private_net_ko[i], 0, disallowed,
-				  sizeof(disallowed));
-			if (i != 0)
-				strcat(all_ko, ", ");
-			if ( (strlen(all_ko) + strlen(disallowed)) <= 255) {
-				strcat(all_ko, disallowed);
-			} else {
-				truncko = 1;
-				i = private_net_ko_len;
-			}
-		}
-	} else {
-		all_ko[0] = '\0';
-	}
-
 	if (nat_traversal_enabled) {
-		whack_log(RC_COMMENT, "virtual_private (%%priv):");
-		whack_log(RC_COMMENT, "- allowed %d subnet%s: %s",
-			private_net_ok_len,
-			(private_net_ok_len == 1) ? "" : "s", all_ok
-		);
-
-		whack_log(RC_COMMENT, "- disallowed %d subnet%s: %s",
-			private_net_ko_len,
-			(private_net_ko_len == 1) ? "" : "s", all_ko
-		);
-		if (truncok || truncko)
-			whack_log(RC_COMMENT,
-				"WARNING: some virtual_private entries were not shown, do you really need that many?");
-
+		whack_log(RC_COMMENT, "virtual-private (%%priv):");
+		show_virtual_private_kind("allowed", private_net_incl, private_net_incl_len);
+		show_virtual_private_kind("excluded", private_net_excl, private_net_excl_len);
+		whack_log(RC_COMMENT, " ");     /* spacer */
 	}
-	whack_log(RC_COMMENT, " ");     /* spacer */
 }

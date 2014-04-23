@@ -75,7 +75,7 @@
  */
 
 u_int16_t pluto_port = IKE_UDP_PORT;                    /* Pluto's port */
-u_int16_t pluto_natt_float_port = NAT_T_IKE_FLOAT_PORT; /* Pluto's NAT-T port */
+u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT; /* Pluto's NAT-T port */
 
 /*
  * This file has the functions that handle the
@@ -1623,8 +1623,7 @@ void fmt_state(struct state *st, const time_t n,
 			 (unsigned long)st->st_refhim,
 			 traffic_buf,
 			 (st->st_xauth_username[0] != '\0') ? "XAUTHuser=" : "",
-			 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : ""
-			 );
+			 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");
 
 #       undef add_said
 	}

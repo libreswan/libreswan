@@ -1,0 +1,11 @@
+  <varlistentry>
+  <term><emphasis remap='B'>policy-label</emphasis></term>
+  <listitem>
+<para>
+The string representation of an access control security label that is interpreted by the LSM (e.g. SELinux)
+for use with Labeled IPsec. See also loopback=, labeled-ipsec= and secctx-attr-value=. For example,
+<emphasis remap='I'>policy-label=system_u:object_r:ipsec_spd_t:s0-s15:c0.c1023</emphasis>
+</para>
+  </listitem>
+  </varlistentry>
+

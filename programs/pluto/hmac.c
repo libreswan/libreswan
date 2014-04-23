@@ -184,7 +184,8 @@ static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
 		mechanism = SEC_OID_SHA512;
 		break;
 	default:
-		libreswan_log("NSS: key derivation mechanism (hasher->common.algo_id=%d not supported",hasher->common.algo_id );
+		libreswan_log("NSS: key derivation mechanism (hasher->common.algo_id=%d not supported",
+			hasher->common.algo_id);
 		mechanism = 0;	/* ??? what should we do to recover? */
 		break;
 	}

@@ -420,9 +420,10 @@ void show_ifaces_status(void)
 	struct iface_port *p;
 
 	for (p = interfaces; p != NULL; p = p->next)
-		whack_log(RC_COMMENT, "interface %s/%s %s:%d",
+		whack_log(RC_COMMENT, "interface %s/%s %s@%d",
 			  p->ip_dev->id_vname, p->ip_dev->id_rname,
 			  ip_str(&p->ip_addr), p->port);
+	whack_log(RC_COMMENT, " ");     /* spacer */
 }
 
 void show_debug_status(void)
@@ -987,14 +988,12 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 				case SO_EE_ORIGIN_ICMP:
 					snprintf(orname, sizeof(orname),
 						 "ICMP type %d code %d (not authenticated)",
-						 ee->ee_type, ee->ee_code
-						 );
+						 ee->ee_type, ee->ee_code);
 					break;
 				case SO_EE_ORIGIN_ICMP6:
 					snprintf(orname, sizeof(orname),
 						 "ICMP6 type %d code %d (not authenticated)",
-						 ee->ee_type, ee->ee_code
-						 );
+						 ee->ee_type, ee->ee_code);
 					break;
 				default:
 					snprintf(orname, sizeof(orname),

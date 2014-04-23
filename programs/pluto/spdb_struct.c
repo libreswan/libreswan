@@ -161,8 +161,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 					ealg,
 					eklen,
 					enc_desc->keyminlen,
-					enc_desc->keymaxlen
-					);
+					enc_desc->keymaxlen);
 				continue;
 			}
 

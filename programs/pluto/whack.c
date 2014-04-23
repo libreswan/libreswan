@@ -126,7 +126,7 @@ static void help(void)
 		" \\\n   "
 		" [--esp <esp-algos>]"
 		" \\\n   "
-		" [--remote_peer_type <cisco>]"
+		" [--remote-peer-type <cisco>]"
 		" \\\n   "
 		" [--mtu <mtu>]"
 		" \\\n   "
@@ -146,7 +146,7 @@ static void help(void)
 		" [--no-ikepad]"
 		" \\\n   "
 #ifdef HAVE_NM
-		"[--nm_configured]"
+		"[--nm-configured]"
 		" \\\n   "
 #endif
 #ifdef HAVE_LABELED_IPSEC
@@ -158,8 +158,8 @@ static void help(void)
 		" \\\n   "
 		" [--dontrekey]"
 		" [--aggrmode]"
-		" [--initialcontact] [--cisco_unity]"
-		" [--forceencaps] [--no-nat_keepalive]"
+		" [--initialcontact] [--cisco-unity]"
+		" [--forceencaps] [--no-nat-keepalive]"
 		" [--ikev1natt <both|rfc|drafts>"
 		" \\\n   "
 		" [--dpddelay <seconds> --dpdtimeout <seconds>]"
@@ -236,7 +236,7 @@ static void help(void)
 		" [--debug-pfkey]"
 		" [--debug-dpd]"
 		" \\\n   "
-		" [--debug-natt]"
+		" [--debug-nat-t]"
 		" [--debug-x509]"
 		" [--debug-oppo]"
 		" [--debug-oppoinfo]"
@@ -653,7 +653,8 @@ static const struct option long_opts[] = {
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
 	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT + OO },
 	{ "initialcontact", no_argument, NULL,  CD_INITIAL_CONTACT },
-	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },
+	{ "cisco_unity", no_argument, NULL, CD_CISCO_UNITY },	/* obsolete _ */
+	{ "cisco-unity", no_argument, NULL, CD_CISCO_UNITY },
 
 	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
@@ -738,9 +739,9 @@ static const struct option long_opts[] = {
 	{ "debug-whackwatch",  no_argument, NULL, DBG_WHACKWATCH_IX + DO },
 	{ "debug-controlmore", no_argument, NULL, DBG_CONTROLMORE_IX + DO },
 	{ "debug-pfkey",   no_argument, NULL, DBG_PFKEY_IX + DO },
-	{ "debug-nattraversal", no_argument, NULL, DBG_NATT_IX + DO },
-	{ "debug-natt",    no_argument, NULL, DBG_NATT_IX + DO },
-	{ "debug-nat_t",   no_argument, NULL, DBG_NATT_IX + DO },
+	{ "debug-nattraversal", no_argument, NULL, DBG_NATT_IX + DO },	/* ??? redundant spelling */
+	{ "debug-natt",    no_argument, NULL, DBG_NATT_IX + DO },	/* ??? redundant spelling */
+	{ "debug-nat_t",   no_argument, NULL, DBG_NATT_IX + DO },	/* obsolete _ */
 	{ "debug-nat-t",   no_argument, NULL, DBG_NATT_IX + DO },
 	{ "debug-x509",    no_argument, NULL, DBG_X509_IX + DO },
 	{ "debug-dpd",     no_argument, NULL, DBG_DPD_IX + DO },
@@ -1536,14 +1537,14 @@ int main(int argc, char **argv)
 			else if ( streq(optarg, "drafts"))
 				msg.ikev1_natt = natt_drafts;
 			else
-				diag("--ikev1_natt options are 'both', 'rfc' or 'drafts'");
+				diag("--ikev1-natt options are 'both', 'rfc' or 'drafts'");
 			continue;
 
 		case CD_INITIAL_CONTACT: /* --initialcontact */
 			msg.initial_contact = TRUE;
 			continue;
 
-		case CD_CISCO_UNITY: /* --cisco_unity */
+		case CD_CISCO_UNITY: /* --cisco-unity */
 			msg.cisco_unity = TRUE;
 			continue;
 
@@ -1580,8 +1581,8 @@ int main(int argc, char **argv)
 			msg.esp = optarg;
 			continue;
 
-		case CD_REMOTEPEERTYPE: /* --remote_peer_type  <cisco> */
-			if ( streq(optarg, "cisco" ))
+		case CD_REMOTEPEERTYPE: /* --remote-peer-type  <cisco> */
+			if (streq(optarg, "cisco"))
 				msg.remotepeertype = CISCO;
 			else
 				msg.remotepeertype = NON_CISCO;
@@ -1703,8 +1704,10 @@ int main(int argc, char **argv)
 		case END_MODECFGSERVER:
 			msg.right.modecfg_server = TRUE;
 			continue;
+
 		case END_ADDRESSPOOL:
-			ttorange(optarg, 0, AF_INET, &msg.right.pool_range);
+			ttorange(optarg, 0, AF_INET, &msg.right.pool_range,
+					TRUE);
 			continue;
 
 		case CD_MODECFGDNS1: /* --modecfgdns1 */
@@ -1960,7 +1963,7 @@ int main(int argc, char **argv)
 
 	if (msg.remotepeertype != CISCO &&
 	    msg.remotepeertype != NON_CISCO) {
-		diag("remote_peer_type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
+		diag("remote-peer-type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
 		msg.remotepeertype = NON_CISCO; /*NON_CISCO=0*/
 	}
 

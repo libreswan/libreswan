@@ -1,9 +1,6 @@
-: ==== start ====
-TESTNAME=ah-pluto-01
-source /testing/pluto/bin/eastlocal.sh
-
+/testing/guestbin/swan-prep
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-
 ipsec auto --add westnet-eastnet-ah
-ipsec whack --debug-control --debug-controlmore --debug-crypt
+ipsec auto --status
+echo "initdone"

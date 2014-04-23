@@ -71,11 +71,7 @@
 #define CONFIG_KLIPS_DYNDEV 1
 #endif /* CONFIG_KLIPS_DYNDEV */
 
-#ifdef CONFIG_KLIPS_BIGGATE
-# define SADB_HASHMOD   8069
-#else /* CONFIG_KLIPS_BIGGATE */
 # define SADB_HASHMOD   257
-#endif /* CONFIG_KLIPS_BIGGATE */
 
 #endif /* __KERNEL__ */
 

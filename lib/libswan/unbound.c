@@ -111,7 +111,7 @@ bool unbound_init(struct ub_ctx *dnsctx)
 /*
  * synchronous blocking resolving - simple replacement of ttoaddr()
  * src_len == 0 means "apply strlen"
- * af == 0 means "try both families
+ * af == AF_UNSPEC means "try both families"
  */
 bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		ip_address *ipaddr)
@@ -196,7 +196,7 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 		err_t err = tnatoaddr(
 			inet_ntop(af, result->data[0], dst,
 				(af == AF_INET) ? INET_ADDRSTRLEN :
-				INET6_ADDRSTRLEN),
+					INET6_ADDRSTRLEN),
 			0, af, ipaddr);
 		ub_resolve_free(result);
 		if (err == NULL) {

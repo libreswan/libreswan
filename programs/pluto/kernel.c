@@ -584,8 +584,8 @@ static enum routability could_route(struct connection *c)
 
 	/* if routing would affect IKE messages, reject */
 	if (kern_interface != NO_KERNEL
-	    && c->spd.this.host_port != pluto_natt_float_port
-	    && c->spd.this.host_port != IKE_UDP_PORT &&
+	    && c->spd.this.host_port != pluto_nat_port
+	    && c->spd.this.host_port != pluto_port &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
 		loglog(RC_LOG_SERIOUS,
 		       "cannot install route: peer is within its client");
@@ -821,8 +821,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 {
 	if (pp == NULL) {
 		DBG(DBG_CONTROL,
-		    DBG_log("delete bare shunt: null pointer")
-		    );
+		    DBG_log("delete bare shunt: null pointer"));
 	} else {
 		struct bare_shunt *p = *pp;
 
@@ -3100,8 +3099,7 @@ bool get_sa_info(struct state *st, bool inbound, time_t *ago)
 	sa.text_said = text_said;
 
 	DBG(DBG_KERNEL,
-	    DBG_log("get %s", text_said)
-	    );
+	    DBG_log("get %s", text_said));
 	if (!kernel_ops->get_sa(&sa, &bytes))
 		return FALSE;
 

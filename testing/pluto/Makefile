@@ -24,10 +24,11 @@ def:
 	@false
 
 check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
+	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --compile --install --hostname east
+	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname west
+	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname road
+	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname north
 	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ./setup.sh; . ${UTILS}/functions.sh; . ./TESTLIST
-
-spotcheck:
-	@. ${LIBRESWANSRCDIR}/umlsetup.sh; . ./setup.sh; . $${UTILS}/functions.sh; eval `sed -e '/^#/d' ${srcdir}TESTLIST | perl $${UTILS}/shuffle.pl 1`
 
 install install_file_list checkprograms programs:
 	@true

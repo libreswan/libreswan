@@ -81,8 +81,7 @@ void ike_alg_show_status(void)
 			  "algorithm IKE hash: id=%d, name=%s, hashsize=%d",
 			  algo->algo_id,
 			  enum_name(&oakley_hash_names, algo->algo_id),
-			  (int)((struct hash_desc *)algo)->hash_digest_len
-			  );
+			  (int)((struct hash_desc *)algo)->hash_digest_len);
 	}
 #define IKE_DH_ALG_FOR_EACH(idx) for (idx = 0; idx != oakley_group_size; idx++)
 	IKE_DH_ALG_FOR_EACH(i) {
@@ -92,8 +91,7 @@ void ike_alg_show_status(void)
 			  "algorithm IKE dh group: id=%d, name=%s, bits=%d",
 			  gdesc->group,
 			  enum_name(&oakley_group_names, gdesc->group),
-			  (int)gdesc->bytes * BITS_PER_BYTE
-			  );
+			  (int)gdesc->bytes * BITS_PER_BYTE);
 	}
 
 	whack_log(RC_COMMENT, " "); /* spacer */
