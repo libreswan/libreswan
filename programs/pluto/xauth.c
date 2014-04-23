@@ -340,7 +340,10 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 		if (c->pool != NULL) {
 			err_t e = get_addr_lease(c, ia);
 
-			if (e != NULL) {
+			if (e == NULL) {
+				*has_lease = TRUE;
+			} else  {
+			
 				/* signal this error to the caller ?? */
 				libreswan_log("get_addr_lease failure %s", e);
 				return FALSE;
