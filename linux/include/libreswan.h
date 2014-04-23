@@ -217,7 +217,7 @@ typedef struct {
 	ip_address_family((a)) - ip_address_family((b)) : \
 	 (ip_address_family((a)) == AF_INET ? \
 	  memcmp(&(a)->u.v4.sin_addr.s_addr, \
-		 &(a)->u.v4.sin_addr.s_addr, sizeof(u_int32_t)) : \
+		 &(b)->u.v4.sin_addr.s_addr, sizeof(u_int32_t)) : \
 	  memcmp((a)->u.v6.sin6_addr.s6_addr32, \
 		 (b)->u.v6.sin6_addr.s6_addr32, sizeof(u_int32_t) * 4) \
 	 ))
