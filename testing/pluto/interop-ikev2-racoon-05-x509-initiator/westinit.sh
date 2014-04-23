@@ -6,7 +6,7 @@ source /testing/pluto/bin/westnlocal.sh
 ping -n -c 1 192.0.2.254
 # make sure that clear text does not get through
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-# confirm with a ping to east-in
+# confirm with a ping
 ping -n -c 1 192.0.2.254
 
 ipsec setup start
