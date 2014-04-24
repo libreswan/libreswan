@@ -27,16 +27,11 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
- ipsec _stackmanager start
-[ 00.00] NET: Registered protocol family 15
+ ipsec setup start
 west #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
 west #
  /testing/pluto/bin/wait-until-pluto-started
-[ 00.00] alg: No test for cipher_null (cipher_null-generic)
-[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for compress_null (compress_null-generic)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 west #
@@ -60,7 +55,7 @@ west #
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000  
 000 ESP algorithms supported:
 000  

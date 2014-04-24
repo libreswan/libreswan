@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 road #
  ipsec setup start
-[ 00.00] NET: Registered protocol family 15
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started

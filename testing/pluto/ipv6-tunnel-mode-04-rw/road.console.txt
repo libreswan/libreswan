@@ -27,7 +27,7 @@ PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
 --- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
- ipsec _stackmanager start
+ ipsec setup start
 [ 00.00] NET: Registered protocol family 15
 road #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
