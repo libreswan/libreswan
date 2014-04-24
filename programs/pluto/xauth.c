@@ -2523,8 +2523,7 @@ static stf_status xauth_client_resp(struct state *st,
 							TRUE;
 					}
 
-					if (!out_raw(st->st_xauth_password.ptr,
-						     st->st_xauth_password.len,
+					if (!out_chunk(st->st_xauth_password,
 						     &attrval,
 						     "XAUTH password"))
 						return STF_INTERNAL_ERROR;
