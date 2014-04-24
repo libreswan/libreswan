@@ -121,7 +121,7 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 	}
 
 	/* Set up iov and msgh structures. */
-	memset(&msgh, 0, sizeof(struct msghdr));
+	zero(&msgh);
 	iov.iov_base = buf;
 	iov.iov_len = len;
 	msgh.msg_control = cbuf;
@@ -197,14 +197,14 @@ static int sendfromto(int s, void *buf, size_t len, int flags,
 	char cmsgbuf[CMSG_SPACE(sizeof(struct in_pktinfo))];
 	struct in_pktinfo pktinfo, *pktinfo_ptr;
 
-	memset(&pktinfo, 0, sizeof(struct in_pktinfo));
+	zero(&pktinfo);
 #endif
 
 	passert(to != NULL);
 	passert(from != NULL);
 
 	/* Set up iov and msgh structures. */
-	memset(&msgh, 0, sizeof(struct msghdr));
+	zero(&msgh);
 	iov.iov_base = buf;
 	iov.iov_len = len;
 	msgh.msg_iov = &iov;
@@ -285,8 +285,8 @@ int main(int argc, char **argv)
 	in.sin_addr.s_addr = INADDR_ANY;
 	in.sin_port = htons(port);
 	fl = tl = sizeof(struct sockaddr_in);
-	memset(&from, 0, sizeof(from));
-	memset(&to,   0, sizeof(to));
+	zero(&from);
+	zero(&to);
 
 	pid = fork();
 	switch (pid) {
