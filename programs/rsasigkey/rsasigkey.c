@@ -417,8 +417,8 @@ void rsasigkey(int nbits, char *configdir, char *password)
 		static const char suf[] = "/nsspassword";
 
 		if (pwl == cdl + sizeof(suf) - 1 &&
-		    memcmp(password, configdir, cdl) == 0 &&
-		    memcmp(password + cdl, suf, sizeof(suf)) == 0)
+			memcmp(password, configdir, cdl) == 0 &&
+			memcmp(password + cdl, suf, sizeof(suf)) == 0)
 			pwdata.source = PW_FROMFILE;
 		else
 			pwdata.source = PW_PLAINTEXT;
@@ -456,14 +456,16 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	/* slot = PK11_GetBestSlot(CKM_RSA_PKCS_KEY_PAIR_GEN, password ? &pwdata : NULL); */
 	/* or the user may specify the name of a token. */
 
-	/*if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
-	        rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
-	        if (rv != SECSuccess) {
-	                fprintf(stderr, "%s: could not authenticate to token '%s'\n",
-	                        me, PK11_GetTokenName(slot));
-	                return;
-	        }
-	   }*/
+#if 0
+	if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
+		rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
+		if (rv != SECSuccess) {
+			fprintf(stderr, "%s: could not authenticate to token '%s'\n",
+				me, PK11_GetTokenName(slot));
+			return;
+		}
+	}
+#endif /* 0 */
 
 	/* Do some random-number initialization. */
 	UpdateNSS_RNG();
@@ -502,7 +504,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
 	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(
-		       &now));
+			&now));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 	bundp = bundle(E, n, &bs);
