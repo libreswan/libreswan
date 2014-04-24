@@ -983,7 +983,7 @@ void ipsec_tunnel_xsm_complete(struct ipsec_xmit_state *ixs,
 	spin_unlock_bh(&eroute_lock);
 
 	if ( /*((ixs->orgdst != ixs->newdst) || (ixs->orgsrc != ixs->newsrc))*/
-		ip_address_cmp(&ixs->orgedst, &ixs->outgoing_said.dst) != 0 &&
+		!ip_address_eq(&ixs->orgedst, &ixs->outgoing_said.dst) &&
 		!ip_address_isany(&ixs->outgoing_said.dst) &&
 		ixs->eroute) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,

@@ -279,8 +279,8 @@ static err_t decode_iii(char **pp, struct id *gw_id)
 		/* gateway specification is numeric */
 		ip_address ip;
 		err_t ugh = tnatoaddr(p, e - p,
-				      strchr(p,
-					     ':') == NULL ? AF_INET : AF_INET6,
+				      strchr(p, ':') == NULL ?
+					AF_INET : AF_INET6,
 				      &ip);
 
 		if (ugh != NULL) {

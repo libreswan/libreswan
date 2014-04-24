@@ -57,6 +57,44 @@
 #include "x509more.h"
 
 /*
+ *  Converts a X.500 generalName into an ID
+ */
+static void gntoid(struct id *id, const generalName_t *gn)
+{
+	*id  = empty_id;
+
+	switch (gn->kind) {
+	case GN_DNS_NAME:	/* ID type: ID_FQDN */
+		id->kind = ID_FQDN;
+		id->name = gn->name;
+		break;
+	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
+	{
+		const struct af_info *afi = &af_inet4_info;
+		err_t ugh = NULL;
+
+		id->kind = afi->id_addr;
+		ugh = initaddr(gn->name.ptr, gn->name.len, afi->af,
+			&id->ip_addr);
+		if (!ugh) {
+			libreswan_log(
+				"Warning: gntoid() failed to initaddr(): %s",
+				ugh);
+		}
+
+	}
+	break;
+	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
+		id->kind = ID_USER_FQDN;
+		id->name = gn->name;
+		break;
+	default:
+		id->kind = ID_NONE;
+		id->name = empty_chunk;
+	}
+}
+
+/*
  * extract id and public key from x.509 certificate and
  * insert it into a pubkeyrec
  */
@@ -87,7 +125,7 @@ void add_x509_public_key(const struct id *keyid,
 	gn = cert->subjectAltName;
 
 	while (gn != NULL) { /* insert all subjectAltNames */
-		struct id id = empty_id;
+		struct id id;
 
 		gntoid(&id, gn);
 		if (id.kind != ID_NONE) {
@@ -600,9 +638,9 @@ void select_x509cert_id(x509cert_t *cert, struct id *end_id)
 	bool copy_subject_dn = TRUE;	/* ID is subject DN */
 
 	if (end_id->kind != ID_NONE) {	/* check for matching subjectAltName */
-		generalName_t *gn = cert->subjectAltName;
+		generalName_t *gn;
 
-		while (gn != NULL) {
+		for (gn = cert->subjectAltName; gn != NULL; gn = gn->next) {
 			struct id id = empty_id;
 
 			gntoid(&id, gn);
@@ -611,7 +649,6 @@ void select_x509cert_id(x509cert_t *cert, struct id *end_id)
 				copy_subject_dn = FALSE;
 				break;
 			}
-			gn = gn->next;
 		}
 	}
 

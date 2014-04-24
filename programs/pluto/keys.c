@@ -149,6 +149,7 @@ void list_psks(void)
 	lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
 }
 
+/* returns the length of the result on success; 0 on failure */
 int sign_hash(const struct RSA_private_key *k,
 		  const u_char *hash_val, size_t hash_len,
 		  u_char *sig_val, size_t sig_len)
@@ -174,9 +175,9 @@ int sign_hash(const struct RSA_private_key *k,
 	}
 
 	/* XXX: is there no way to detect if we _need_ to authenticate ?? */
-	if ( PK11_Authenticate(slot, PR_FALSE,
+	if (PK11_Authenticate(slot, PR_FALSE,
 			       lsw_return_nss_password_file_info()) ==
-	     SECSuccess ) {
+	     SECSuccess) {
 		DBG(DBG_CRYPT,
 		    DBG_log("NSS: Authentication to NSS successful\n"));
 	} else {
@@ -187,24 +188,23 @@ int sign_hash(const struct RSA_private_key *k,
 	privateKey = PK11_FindKeyByKeyID(slot, &ckaId,
 					 lsw_return_nss_password_file_info());
 	if (privateKey == NULL) {
+		DBG(DBG_CRYPT,
+		    DBG_log("Can't find the private key from the NSS CKA_ID\n"));
 		if (k->pub.nssCert != NULL) {
 			privateKey = PK11_FindKeyByAnyCert(k->pub.nssCert,
 							   lsw_return_nss_password_file_info());
-			DBG(DBG_CRYPT,
-			    DBG_log("Can't find the private key from the NSS CKA_ID\n"));
+			if (privateKey == NULL) {
+				loglog(RC_LOG_SERIOUS,
+				       "Can't find the private key from the NSS CERT (err %d)\n",
+				       PR_GetError());
+			}
 		}
 	}
 
-	if (!privateKey) {
-		loglog(RC_LOG_SERIOUS,
-		       "Can't find the private key from the NSS CERT (err %d)\n",
-		       PR_GetError());
-		PK11_FreeSlot(slot);
-		return 0;
-	}
+	PK11_FreeSlot(slot);
 
-	if (slot)
-		PK11_FreeSlot(slot);
+	if (privateKey == NULL)
+		return 0;
 
 	data.type = siBuffer;
 	data.len = hash_len;

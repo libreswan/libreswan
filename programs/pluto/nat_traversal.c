@@ -206,7 +206,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 *  First one with sender IP & port
 	 */
-	hash_me.ptr = alloc_thing(SHA1_DIGEST_SIZE ,"nat-t hash me");
+	hash_me.ptr = alloc_bytes(SHA1_DIGEST_SIZE ,"nat-t hash me");
 	hash_me.len = SHA1_DIGEST_SIZE;
 	natd_hash(&ikev2_natd_hasher, hash_me.ptr, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ?
@@ -224,7 +224,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 * Second one with my IP & port
 	 */
-	hash_him.ptr = alloc_thing(SHA1_DIGEST_SIZE ,"nat-t hash him");
+	hash_him.ptr = alloc_bytes(SHA1_DIGEST_SIZE ,"nat-t hash him");
 	hash_him.len = SHA1_DIGEST_SIZE;
 	natd_hash(&ikev2_natd_hasher, hash_him.ptr, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :

@@ -1271,8 +1271,8 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 			     d->kind == CK_GOING_AWAY) &&
 			    same_id(&c->spd.this.id, &d->spd.this.id) &&
 			    same_id(&c->spd.that.id, &d->spd.that.id) &&
-			    ip_address_family(&c->spd.that.host_addr) ==
-				ip_address_family(&d->spd.that.host_addr) &&
+			    addrtypeof(&c->spd.that.host_addr) ==
+				addrtypeof(&d->spd.that.host_addr) &&
 			    (!sameaddr(&c->spd.that.host_addr,
 				  &d->spd.that.host_addr) ||
 			      c->spd.that.host_port !=
@@ -1348,7 +1348,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	e = ttoaddr(c->dnshostname, 0, 0, &new_addr);
+	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",

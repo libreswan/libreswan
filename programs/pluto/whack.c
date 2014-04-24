@@ -1704,8 +1704,10 @@ int main(int argc, char **argv)
 		case END_MODECFGSERVER:
 			msg.right.modecfg_server = TRUE;
 			continue;
+
 		case END_ADDRESSPOOL:
-			ttorange(optarg, 0, AF_INET, &msg.right.pool_range);
+			ttorange(optarg, 0, AF_INET, &msg.right.pool_range,
+					TRUE);
 			continue;
 
 		case CD_MODECFGDNS1: /* --modecfgdns1 */

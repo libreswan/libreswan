@@ -17,3 +17,4 @@ testing/x509/serial*
 testing/x509/nss-pw
 osxApp/build
 Makefile.inc.local
+kvmsetup.sh

@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 road #
  ipsec setup start
-[ 00.00] NET: Registered protocol family 15
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
@@ -17,7 +16,7 @@ road #
 003 "road-eastnet-nat" #1: received Vendor ID payload [FRAGMENTATION]
 003 "road-eastnet-nat" #1: received Vendor ID payload [RFC 3947]
 106 "road-eastnet-nat" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "road-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): i am NATed
+003 "road-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
 108 "road-eastnet-nat" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "road-eastnet-nat" #1: received Vendor ID payload [CAN-IKEv2]
 004 "road-eastnet-nat" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}

@@ -55,7 +55,7 @@ ttoaddr_base(const char *src,
 	switch (af) {
 	case AF_INET:
 	case AF_INET6:
-	case 0:	/* guess */
+	case AF_UNSPEC:	/* guess */
 		break;
 
 	default:
@@ -71,7 +71,7 @@ ttoaddr_base(const char *src,
 	}
 
 	if (memchr(src, ':', srclen) != NULL) {
-		if (af == 0)
+		if (af == AF_UNSPEC)
 			af = AF_INET6;
 
 		if (af != AF_INET6)
@@ -80,7 +80,7 @@ ttoaddr_base(const char *src,
 		return colon(src, srclen, dst);
 	}
 
-	if (af == 0 || af == AF_INET) {
+	if (af == AF_UNSPEC || af == AF_INET) {
 		oops = trydotted(src, srclen, dst);
 		if (oops == NULL)
 			return NULL;	/* it worked */
@@ -112,7 +112,7 @@ ip_address *dst;
 	}
 
 	switch (af) {
-	case 0:	/* guess */
+	case AF_UNSPEC:	/* guess */
 		oops = colon(src, srclen, dst);
 		if (oops == NULL)
 			return NULL;
@@ -465,12 +465,11 @@ ttoaddr(const char *src,
 		nultermd = 1;
 	} else {
 		nultermd = 0;	/* at least, not *known* to be terminated */
-
 	}
 	err = ttoaddr_base(src, srclen, af, &numfailed, dst);
 
 	if (err && numfailed) {
-		if (af == 0) {
+		if (af == AF_UNSPEC) {
 			err = tryname(src, srclen, nultermd, AF_INET6, dst);
 			if (err)
 				err = tryname(src, srclen, nultermd, AF_INET,
@@ -568,7 +567,7 @@ void regress()
 			oops = ttoaddr_num(in, strlen(in), 0, &a);
 		} else {
 			/* convert it *to* internal format */
-			oops = ttoaddr(in, strlen(in), 0, &a);
+			oops = ttoaddr(in, strlen(in), AF_UNSPEC, &a);
 		}
 
 		if (r->expectfailure && oops == NULL) {

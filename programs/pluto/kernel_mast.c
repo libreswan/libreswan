@@ -172,7 +172,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 	if (pluto_listen) {
 		err_t e;
-		e = ttoaddr(pluto_listen, 0, 0, &lip);
+		e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 		if (e) {
 			DBG_log("invalid listen= option ignored: %s\n", e);
 			pluto_listen = NULL;

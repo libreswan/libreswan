@@ -171,7 +171,6 @@ extern int dntoa(char *dst, size_t dstlen, chunk_t dn);
 extern int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
 			 const char* null_dn);
 extern err_t atodn(char *src, chunk_t *dn);
-extern void gntoid(struct id *id, const generalName_t *gn);
 extern bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert);
 extern bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl);
 extern int parse_algorithmIdentifier(chunk_t blob, int level0);

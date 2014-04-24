@@ -15,8 +15,7 @@ north #
 north #
  route add -net default gw 192.1.3.254
 north #
- ipsec _stackmanager start
-[ 00.00] NET: Registered protocol family 15
+ ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -26,7 +25,7 @@ north #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] 
 north #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
@@ -38,26 +37,20 @@ north #
 000 interface ipsec0/eth1 192.1.3.32
 000  
 000 fips mode=disabled;
-000 SElinux=enabled
+000 SElinux=XXXXX
 000  
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
 000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
+000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx_attr_value=XXXX
+000 secctx-attr-value=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=yes, keep_alive=20, nat_ikeport=4500
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual_private (%priv):
-000 - allowed 0 subnets: 
-000 - disallowed 0 subnets: 
-000 WARNING: Either virtual_private= is not specified, or there is a syntax 
-000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
-000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
-000          private address space in internal use, it should be excluded!
 000  
 000 ESP algorithms supported:
 000  
@@ -72,11 +65,11 @@ north #
 000  
 000 IKE algorithms supported:
 000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65004, name=OAKLEY_SERPENT_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65005, name=OAKLEY_TWOFISH_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65289, name=OAKLEY_TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -126,7 +119,7 @@ north #
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [FRAGMENTATION]
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [RFC 3947]
 106 "northnet-eastnet-nat" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): i am NATed
+003 "northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500 sender port 500: i am NATed
 108 "northnet-eastnet-nat" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [CAN-IKEv2]
 004 "northnet-eastnet-nat" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
@@ -144,7 +137,7 @@ north #
 003 "northnet-eastnet-nat" #3: received Vendor ID payload [FRAGMENTATION]
 003 "northnet-eastnet-nat" #3: received Vendor ID payload [RFC 3947]
 106 "northnet-eastnet-nat" #3: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #3: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): i am NATed
+003 "northnet-eastnet-nat" #3: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500 sender port 500: i am NATed
 108 "northnet-eastnet-nat" #3: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #3: received Vendor ID payload [CAN-IKEv2]
 004 "northnet-eastnet-nat" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
@@ -164,7 +157,7 @@ north #
 003 "northnet-eastnet-nat" #5: received Vendor ID payload [FRAGMENTATION]
 003 "northnet-eastnet-nat" #5: received Vendor ID payload [RFC 3947]
 106 "northnet-eastnet-nat" #5: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #5: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): i am NATed
+003 "northnet-eastnet-nat" #5: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500 sender port 500: i am NATed
 108 "northnet-eastnet-nat" #5: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #5: received Vendor ID payload [CAN-IKEv2]
 004 "northnet-eastnet-nat" #5: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
@@ -181,10 +174,10 @@ north #
 north NOW
 192.0.3.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.3.32 jiffies=0123456789 natencap=na   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.3.32 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=na   refhim=0
-esp0xSPISPI@192.1.3.32 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=na   refhim=9
-tun0xTUN#@192.1.3.32 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.3.0/24 flags=0x8<> jiffies=0123456789 natencap=na   refhim=9
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.3.32 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.3.32 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.3.32 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=9
+tun0xTUN#@192.1.3.32 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.3.0/24 flags=0x8<> jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=9
 ROUTING TABLES
 default via 192.1.3.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 

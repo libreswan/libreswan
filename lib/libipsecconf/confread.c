@@ -474,8 +474,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		char *value = end->strings[KSCF_SUBNET];
 
 		if (end->strings_set[KSCF_ADDRESSPOOL]) {
-			ERR_FOUND(
-				"cannot specify both %ssubnet= and %saddresspool=", leftright,
+			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=", leftright,
 				leftright);
 		}
 
@@ -655,9 +654,13 @@ static bool validate_end(struct ub_ctx *dnsctx,
 			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=",
 				leftright, leftright);
 		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  addresspool set to: %s",
-			    end->strings[KSCF_ADDRESSPOOL] );
-		ttorange(addresspool, 0, AF_INET, &end->pool_range);
+			    "connection's  %saddresspool set to: %s",
+			    leftright, end->strings[KSCF_ADDRESSPOOL] );
+
+		er = ttorange(addresspool, 0, AF_INET, &end->pool_range, TRUE);
+		if (er != NULL)
+			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
+					addresspool, er);
 	}
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||
@@ -1537,8 +1540,8 @@ void confread_free(struct starter_config *cfg)
 	pfree(cfg->ctlbase);
 
 	for (i = 0; i < KSF_MAX; i++)
-		
 		pfreeany(cfg->setup.strings[i]);
+
 	confread_free_conn(&(cfg->conn_default));
 
 	for (conn = cfg->conns.tqh_first; conn != NULL; ) {

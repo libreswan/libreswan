@@ -11,7 +11,6 @@ north #
  iptables -A OUTPUT -o eth1 -d 192.1.2.23 -p udp --dport 1701 -j REJECT
 north #
  ipsec setup start
-[ 00.00] NET: Registered protocol family 15
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -46,7 +45,7 @@ north #
 003 "north--east-l2tp" #1: received Vendor ID payload [FRAGMENTATION]
 003 "north--east-l2tp" #1: received Vendor ID payload [RFC 3947]
 106 "north--east-l2tp" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "north--east-l2tp" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): i am NATed
+003 "north--east-l2tp" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500: i am NATed
 108 "north--east-l2tp" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "north--east-l2tp" #1: received Vendor ID payload [CAN-IKEv2]
 004 "north--east-l2tp" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
@@ -131,7 +130,7 @@ Certificate Nickname                                         Trust Attributes
 north #
 north #
  grep 'Result using RFC 3947' /tmp/pluto.log
-"north--east-l2tp" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): i am NATed
+"north--east-l2tp" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500: i am NATed
 north #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 north #
