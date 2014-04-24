@@ -417,8 +417,8 @@ void rsasigkey(int nbits, char *configdir, char *password)
 		static const char suf[] = "/nsspassword";
 
 		if (pwl == cdl + sizeof(suf) - 1 &&
-			memcmp(password, configdir, cdl) == 0 &&
-			memcmp(password + cdl, suf, sizeof(suf)) == 0)
+			memeq(password, configdir, cdl) &&
+			memeq(password + cdl, suf, sizeof(suf)))
 			pwdata.source = PW_FROMFILE;
 		else
 			pwdata.source = PW_PLAINTEXT;
