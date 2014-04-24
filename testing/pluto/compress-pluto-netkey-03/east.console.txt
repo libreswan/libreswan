@@ -1,11 +1,6 @@
-[root@east ]# ipsec _stackmanager start
-[ 00.00] NET: Registered protocol family 15
-[root@east ]# /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+[root@east ]# ipsec setup start
+[root@east ]# ipsec setup start
 [root@east ]# /testing/pluto/bin/wait-until-pluto-started
-[ 00.00] alg: No test for cipher_null (cipher_null-generic)
-[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
-[ 00.00] alg: No test for compress_null (compress_null-generic)
 [root@east ]# ipsec auto --add westnet-eastnet-compress
 [root@east ]# ipsec auto --status
 000 using kernel interface: netkey
@@ -21,12 +16,6 @@
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
 000 virtual_private (%priv):
-000 - allowed 0 subnets: 
-000 - disallowed 0 subnets: 
-000 WARNING: Either virtual_private= is not specified, or there is a syntax 
-000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
-000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
-000          private address space in internal use, it should be excluded!
 000  
 000 algorithm ESP encrypt: id=2, name=ESP_DES, ivlen=8, keysizemin=64, keysizemax=64
 000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192

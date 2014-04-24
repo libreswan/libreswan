@@ -11,7 +11,6 @@ north #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 north #
  ipsec setup start
-[ 00.00] NET: Registered protocol family 15
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #

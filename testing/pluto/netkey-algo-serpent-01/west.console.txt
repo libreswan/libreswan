@@ -29,10 +29,10 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
- ipsec _stackmanager start
+ ipsec setup start
 [ 00.00] NET: Registered protocol family 15
 west #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 west #
  /testing/pluto/bin/wait-until-pluto-started
 [ 00.00] alg: No test for cipher_null (cipher_null-generic)

@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 east #
  ipsec setup start
-[ 00.00] NET: Registered protocol family 15
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started

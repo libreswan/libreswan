@@ -83,7 +83,7 @@ ip_subnet *dst;
 		return oops;
 
 	if (af == AF_UNSPEC)
-		af = ip_address_family(&addrtmp);
+		af = addrtypeof(&addrtmp);
 
 	switch (af) {
 	case AF_INET:

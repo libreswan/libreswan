@@ -182,7 +182,7 @@ static void end_lease(struct ip_pool *pool, u_int32_t i, bool linger)
 	pool->used--;
 }
 
-void rel_lease_addr(const struct connection *c)
+void rel_lease_addr(struct connection *c)
 {
 	u_int32_t i;    /* index within range of IPv4 address to be released */
 
@@ -190,7 +190,10 @@ void rel_lease_addr(const struct connection *c)
 	char ta_client[ADDRTOT_BUF];
 	char ta_range[RANGETOT_BUF];
 
-	passert(ip_address_family(&c->spd.that.client.addr) == AF_INET);
+	if (!c->spd.that.has_lease)
+		return; /* it is not from the addresspool to free */
+
+	passert(addrtypeof(&c->spd.that.client.addr) == AF_INET);
 
 	addrtot(&c->spd.that.client.addr, 0, ta_client, sizeof(ta_client));
 	rangetot(&c->pool->r, 0, ta_range, sizeof(ta_range));
@@ -208,6 +211,7 @@ void rel_lease_addr(const struct connection *c)
 
 	/* set the lease ended  */
 	end_lease(c->pool, i, c->spd.that.id.kind != ID_NONE);
+	c->spd.that.has_lease = FALSE;
 
 	DBG(DBG_CONTROLMORE, DBG_log("ended lease %s from addresspool %s "
 				     "index %u. pool size %u used %u lingering %u",
@@ -431,14 +435,14 @@ err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 		const ip_range *a = pool_range;
 		const ip_range *b = &h->r;
 
-		int sc = ip_address_cmp(&a->start, &b->start);
+		int sc = addrcmp(&a->start, &b->start);
 
-		if (sc == 0 && ip_address_cmp(&a->end, &b->end) == 0) {
+		if (sc == 0 && addrcmp(&a->end, &b->end) == 0) {
 			/* exact match */
 			*pool = h;
 			break;
-		} else if (sc < 0 ? ip_address_cmp(&a->end, &b->start) < 0 :
-			ip_address_cmp(&a->start, &b->end) > 0) {
+		} else if (sc < 0 ? addrcmp(&a->end, &b->start) < 0 :
+				    addrcmp(&a->start, &b->end) > 0) {
 			/* before or after */
 		} else {
 			/* overlap */

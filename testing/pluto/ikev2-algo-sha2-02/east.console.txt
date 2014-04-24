@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 east #
  ipsec setup start
-[ 00.00] NET: Registered protocol family 15
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
@@ -28,7 +27,7 @@ east #
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000  
 000 ESP algorithms supported:
 000  

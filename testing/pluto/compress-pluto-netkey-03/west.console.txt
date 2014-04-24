@@ -19,9 +19,9 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 [ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
-[root@west ]# ipsec _stackmanager start
+[root@west ]# ipsec setup start
 [ 00.00] NET: Registered protocol family 15
-[root@west ]# /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+[root@west ]# ipsec setup start
 [root@west ]# /testing/pluto/bin/wait-until-pluto-started
 [ 00.00] alg: No test for cipher_null (cipher_null-generic)
 [ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
@@ -42,12 +42,6 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 000 debug raw+crypt+parsing+emitting+control+lifecycle+klips+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
 000 virtual_private (%priv):
-000 - allowed 0 subnets: 
-000 - disallowed 0 subnets: 
-000 WARNING: Either virtual_private= is not specified, or there is a syntax 
-000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
-000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
-000          private address space in internal use, it should be excluded!
 000  
 000 algorithm ESP encrypt: id=2, name=ESP_DES, ivlen=8, keysizemin=64, keysizemax=64
 000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192

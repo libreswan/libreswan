@@ -322,26 +322,31 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 	return baseauth;
 }
 
-/**
+/*
  * Get inside IP address for a connection
  *
  * @param con A currently active connection struct
  * @param ia internal_addr struct
- * ??? no way of signalling a failure to the caller: *ia won't be set!
+ * only failure returned is a failed get_addr_lease.
+ * ??? may be there are more which are not reported.
  */
-static void get_internal_addresses(struct state *st, struct internal_addr *ia)
+static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
+		bool *got_lease)
 {
 	struct connection *c = st->st_connection;
 
+	*got_lease = FALSE;
 	if (!isanyaddr(&c->spd.that.client.addr)) {
 		/** assumes IPv4, and also that the mask is ignored */
 
 		if (c->pool != NULL) {
 			err_t e = get_addr_lease(c, ia);
 
-			if (e != NULL) {
-				/* signal this error to the caller ?? */
+			if (e == NULL) {
+				*got_lease = TRUE;
+			} else  {
 				libreswan_log("get_addr_lease failure %s", e);
+				return FALSE;
 			}
 		} else {
 			ia->ipaddr = c->spd.that.client.addr;
@@ -410,6 +415,8 @@ static void get_internal_addresses(struct state *st, struct internal_addr *ia)
 		}
 #endif
 	}
+
+	return TRUE;
 }
 
 /**
@@ -489,6 +496,7 @@ static stf_status modecfg_resp(struct state *st,
 		int attr_type;
 		struct internal_addr ia;
 		int dns_idx;
+		bool has_lease;
 
 		{
 			struct  isakmp_mode_attr attrh;
@@ -501,7 +509,8 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		zero(&ia);
-		get_internal_addresses(st, &ia);
+		if (!get_internal_addresses(st, &ia, &has_lease))
+			return STF_INTERNAL_ERROR;
 
 		if (!isanyaddr(&ia.dns[0])) /* We got DNS addresses, answer with those */
 			resp |= LELEM(INTERNAL_IP4_DNS);
@@ -509,9 +518,8 @@ static stf_status modecfg_resp(struct state *st,
 			resp &= ~LELEM(INTERNAL_IP4_DNS);
 
 		if (use_modecfg_addr_as_client_addr) {
-			if (!memeq(&st->st_connection->spd.that.client.addr,
-				   &ia.ipaddr,
-				   sizeof(ia.ipaddr))) {
+			if (!sameaddr(&st->st_connection->spd.that.client.addr,
+				&ia.ipaddr)) {
 				/* Make the Internal IP address and Netmask as
 				 * that client address
 				 */
@@ -520,6 +528,8 @@ static stf_status modecfg_resp(struct state *st,
 				st->st_connection->spd.that.client.maskbits =
 					32;
 				st->st_connection->spd.that.has_client = TRUE;
+				if (has_lease)
+					st->st_connection->spd.that.has_lease = TRUE;
 			}
 		}
 

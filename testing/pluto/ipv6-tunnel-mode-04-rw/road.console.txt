@@ -27,10 +27,10 @@ PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
 --- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
- ipsec _stackmanager start
+ ipsec setup start
 [ 00.00] NET: Registered protocol family 15
 road #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 road #
  /testing/pluto/bin/wait-until-pluto-started
 [ 00.00] alg: No test for cipher_null (cipher_null-generic)
@@ -62,12 +62,6 @@ road #
 000  
 000 nat_traversal=no, keep_alive=20, nat_ikeport=4500
 000 virtual_private (%priv):
-000 - allowed 0 subnets: 
-000 - disallowed 0 subnets: 
-000 WARNING: Either virtual_private= is not specified, or there is a syntax 
-000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
-000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
-000          private address space in internal use, it should be excluded!
 000  
 000 ESP algorithms supported:
 000  

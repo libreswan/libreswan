@@ -15,7 +15,6 @@ Loading conn 'westnet-eastnet-ikev2'
   auto=add
   ike=aes192-sha1
   esp=aes192-sha1
-[ 00.00] NET: Registered protocol family 15
 found netkey IPsec stack
 east #
  echo "initdone"

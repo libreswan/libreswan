@@ -55,7 +55,7 @@ bool non_zero;  /* is 0.0.0.0 allowed? */
 
 	/*
 	 * If we allowed af == AF_UNSPEC,
-	 * set it to ip_address_family(&addr_start_tmp)
+	 * set it to addrtypeof(&addr_start_tmp)
 	 */
 
 	/* extract end ip address */
@@ -96,7 +96,7 @@ size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen)
 	l++;
 	/* where to stuff second address (not past end of buffer) */
 	m = l < dstlen? l : dstlen;
-	l += addrtot(&src->start, format, dst + m, dstlen - m);
+	l += addrtot(&src->end, format, dst + m, dstlen - m);
 	return l;	/* length needed, including '\0' */
 }
 
