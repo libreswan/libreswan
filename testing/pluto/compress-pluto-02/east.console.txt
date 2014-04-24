@@ -8,7 +8,7 @@
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=7 name=cbc(blowfish) keyminbits=96 keymaxbits=448, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] 
-[root@east ]# /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+[root@east ]# ipsec setup start
 [root@east ]# /testing/pluto/bin/wait-until-pluto-started
 [root@east ]# ipsec auto --add westnet-eastnet-compress
 [root@east ]# ipsec auto --status

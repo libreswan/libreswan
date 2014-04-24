@@ -40,7 +40,7 @@ west #
 west #
  export PLUTO_EVENT_RETRANSMIT_DELAY=2
 west #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #

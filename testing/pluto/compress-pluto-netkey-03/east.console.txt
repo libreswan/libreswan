@@ -1,5 +1,5 @@
 [root@east ]# ipsec setup start
-[root@east ]# /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+[root@east ]# ipsec setup start
 [root@east ]# /testing/pluto/bin/wait-until-pluto-started
 [root@east ]# ipsec auto --add westnet-eastnet-compress
 [root@east ]# ipsec auto --status

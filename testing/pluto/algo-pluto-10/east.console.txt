@@ -16,7 +16,7 @@ Redirecting to: systemctl start ipsec.service
 east #
  #ipsec setup start
 east #
- #/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ #ipsec setup start
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

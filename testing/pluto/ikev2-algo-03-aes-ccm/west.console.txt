@@ -33,7 +33,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 west #
  ipsec setup start
 west #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #

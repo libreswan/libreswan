@@ -12,7 +12,7 @@ east #
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
 east #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #

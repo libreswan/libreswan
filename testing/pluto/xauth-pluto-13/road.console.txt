@@ -12,7 +12,7 @@ road #
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
 road #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
