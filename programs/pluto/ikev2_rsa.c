@@ -137,7 +137,8 @@ bool ikev2_calculate_rsa_sha1(struct state *st,
 		if (shr == 0)
 			return FALSE;
 		passert(shr == (int)sz);
-		out_raw(sig_val, sz, a_pbs, "rsa signature");
+		if (!out_raw(sig_val, sz, a_pbs, "rsa signature"))
+			return FALSE;
 	}
 
 	return TRUE;

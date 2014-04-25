@@ -357,7 +357,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st)
 {
 	struct connection *c = st->st_connection;
-	int numvidtosend = 0;
 
 	/* set up reply */
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -428,6 +427,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		}
 	}
 
+	/* ??? from here on, this looks a lot like the end of ikev2_parent_inI1outR1_tail */
+
 	/* send KE */
 	if (!justship_v2KE(st, &st->st_gi, st->st_oakley.groupnum,  &md->rbody,
 			   ISAKMP_NEXT_v2Ni))
@@ -455,18 +456,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		close_output_pbs(&pb);
 	}
 
-	/*
-	 * Check which Vendor ID's we need to send - there will be more soon
-	 * In IKEv2, DPD and NAT-T are no longer vendorid's
-	 */
-
-	if (c->send_vendorid) {
-		numvidtosend++;  /* if we need to send Libreswan VID */
-	}
-
-        /* Send NAT-T Notify payloads */
+	/* Send NAT-T Notify payloads */
 	{
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 
 		zero(&in);
@@ -476,24 +468,22 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 	}
 
-	/* Send Vendor VID if needed */
+	/* Send VendorID VID if needed.  Only one. */
 	if (c->send_vendorid) {
 		const char *myvid = ipsec_version_vendorid();
-		int np = --numvidtosend >
-			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
+		if (!out_generic_raw(ISAKMP_NEXT_v2NONE, &isakmp_vendor_id_desc, &md->rbody,
 				     myvid, strlen(myvid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
-
-		/* ensure our VID chain was valid */
-		passert(numvidtosend == 0);
 	}
 
-	close_message(&md->rbody, st);
+	if (!close_message(&md->rbody, st))
+		return STF_INTERNAL_ERROR;
+
 	close_output_pbs(&reply_stream);
 
+	/* keep it for a retransmit if necessary */
 	freeanychunk(st->st_tpacket);
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
@@ -842,13 +832,9 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 	pb_stream *keyex_pbs;
-	int numvidtosend = 0;
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	if (c->send_vendorid) {
-		numvidtosend++; /* we send Libreswan VID */
-	}
 	/* note that we don't update the state here yet */
 
 	/* record first packet for later checking of signature */
@@ -927,6 +913,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
+	/* ??? from here on, this looks a lot like the end of ikev2_parent_outI1_common */
+
 	/* send KE */
 	if (!ship_v2KE(st, r, &st->st_gr, &md->rbody, ISAKMP_NEXT_v2Nr))
 		return STF_INTERNAL_ERROR;
@@ -956,7 +944,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* Send NAT-T Notify payloads */
 	{
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
 
 		zero(&in);
@@ -964,22 +952,21 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
-
 	}
 
-	/* Send VendrID if needed VID */
+	/* Send VendorID VID if needed.  Only one. */
 	if (c->send_vendorid) {
 		const char *myvid = ipsec_version_vendorid();
-		int np = --numvidtosend >
-			 0 ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
-		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
+		if (!out_generic_raw(ISAKMP_NEXT_v2NONE, &isakmp_vendor_id_desc, &md->rbody,
 				     myvid, strlen(myvid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
 
-	close_message(&md->rbody, st);
+	if (!close_message(&md->rbody, st))
+		return STF_INTERNAL_ERROR;
+
 	close_output_pbs(&reply_stream);
 
 	/* keep it for a retransmit if necessary */
@@ -993,7 +980,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	clonetochunk(st->st_firstpacket_me, reply_stream.start,
 		     pbs_offset(&reply_stream), "saved first packet");
 
-	/* note: retransimission is driven by initiator */
+	/* note: retransmission is driven by initiator, not us */
 
 	return STF_OK;
 }
@@ -1192,7 +1179,9 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	reset_globals();
 }
 
-static void ikev2_padup_pre_encrypt(struct msg_digest *md,
+static bool ikev2_padup_pre_encrypt(struct msg_digest *md,
+				    pb_stream *e_pbs_cipher) MUST_USE_RESULT;
+static bool ikev2_padup_pre_encrypt(struct msg_digest *md,
 				    pb_stream *e_pbs_cipher)
 {
 	struct state *st = md->st;
@@ -1207,13 +1196,16 @@ static void ikev2_padup_pre_encrypt(struct msg_digest *md,
 		char  *b = alloca(blocksize);
 		unsigned int i;
 		size_t padding =  pad_up(pbs_offset(e_pbs_cipher), blocksize);
+
 		if (padding == 0)
 			padding = blocksize;
 
 		for (i = 0; i < padding; i++)
 			b[i] = i;
-		out_raw(b, padding, e_pbs_cipher, "padding and length");
+		if (!out_raw(b, padding, e_pbs_cipher, "padding and length"))
+			return FALSE;
 	}
+	return TRUE;
 }
 
 static unsigned char *ikev2_authloc(struct msg_digest *md,
@@ -1663,7 +1655,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	 * need to extend the packet so that we will know how big it is
 	 * since the length is under the integrity check
 	 */
-	ikev2_padup_pre_encrypt(md, &e_pbs_cipher);
+	if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
+		return STF_INTERNAL_ERROR;
+
 	close_output_pbs(&e_pbs_cipher);
 
 	{
@@ -1699,7 +1693,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	event_schedule(EVENT_v2_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
 	return STF_OK;
-
 }
 
 /*
@@ -2126,7 +2119,9 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			}
 		}
 
-		ikev2_padup_pre_encrypt(md, &e_pbs_cipher);
+		if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
+			return STF_INTERNAL_ERROR;
+
 		close_output_pbs(&e_pbs_cipher);
 
 		{
@@ -2615,7 +2610,6 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 				"error initializing hdr for notify message");
 			return;
 		}
-
 	}
 
 	/* build and add v2N payload to the packet */
@@ -2629,7 +2623,9 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		 type, n_data, &rbody))
 		return;	/* ??? NO WAY TO SIGNAL INTERNAL ERROR */
 
-	close_message(&rbody, p1st);
+	if (!close_message(&rbody, p1st))
+		return; /* ??? NO WAY TO SIGNAL INTERNAL ERROR */
+
 	close_output_pbs(&reply_stream);
 
 	clonetochunk(p1st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream),
@@ -2819,7 +2815,9 @@ static stf_status ikev2_in_create_child_sa_refuse(struct msg_digest *md)
 			&e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
 
-	ikev2_padup_pre_encrypt(md, &e_pbs_cipher);
+	if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
+		return STF_INTERNAL_ERROR;
+
 	close_output_pbs(&e_pbs_cipher);
 
 	{
@@ -3132,7 +3130,9 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 			 * this will end up sending an empty payload
 			 */
 
-			ikev2_padup_pre_encrypt(md, &e_pbs_cipher);
+			if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
+				return STF_INTERNAL_ERROR;
+
 			close_output_pbs(&e_pbs_cipher);
 
 			{
@@ -3369,7 +3369,10 @@ stf_status ikev2_send_informational(struct state *st)
 		encstart = e_pbs_cipher.cur;
 
 		/* This is an empty informational exchange (A.K.A liveness check) */
-		ikev2_padup_pre_encrypt(&md, &e_pbs_cipher);
+
+		if (!ikev2_padup_pre_encrypt(&md, &e_pbs_cipher))
+			return STF_INTERNAL_ERROR;
+
 		close_output_pbs(&e_pbs_cipher);
 
 		{
@@ -3538,9 +3541,9 @@ void ikev2_delete_out(struct state *st)
 
 			/* Emit values of spi to be sent to the peer*/
 			if (IS_CHILD_SA(st)) {
-				if (!out_raw( (u_char *)&st->st_esp.our_spi,
-					      sizeof(ipsec_spi_t), &del_pbs,
-					      "local spis")) {
+				if (!out_raw((u_char *)&st->st_esp.our_spi,
+					     sizeof(ipsec_spi_t), &del_pbs,
+					     "local spis")) {
 					libreswan_log(
 						"error sending spi values in delete payload");
 					goto unhappy_ending;
@@ -3548,10 +3551,13 @@ void ikev2_delete_out(struct state *st)
 			}
 
 			close_output_pbs(&del_pbs);
-
 		}
 
-		ikev2_padup_pre_encrypt(&md, &e_pbs_cipher);
+		if (!ikev2_padup_pre_encrypt(&md, &e_pbs_cipher)) {
+			libreswan_log("error padding before encryption in delete payload");
+			goto unhappy_ending;
+		}
+
 		close_output_pbs(&e_pbs_cipher);
 
 		{

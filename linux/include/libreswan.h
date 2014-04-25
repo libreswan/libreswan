@@ -279,10 +279,12 @@ typedef uint32_t IPsecSAref_t;
 # define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
 # define NEVER_RETURNS __attribute__ ((noreturn))
 # define UNUSED __attribute__ ((unused))
+# define MUST_USE_RESULT  __attribute__ ((warn_unused_result))
 #else
 # define PRINTF_LIKE(n) /* ignore */
 # define NEVER_RETURNS  /* ignore */
 # define UNUSED         /* ignore */
+# define MUST_USE_RESULT	/* ignore */
 #endif
 
 #ifdef COMPILER_HAS_NO_PRINTF_LIKE
