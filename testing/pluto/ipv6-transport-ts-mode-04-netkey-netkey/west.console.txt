@@ -29,10 +29,10 @@ PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ipsec _stackmanager start
+ ipsec setup start
 [ 00.00] NET: Registered protocol family 15
 west #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 west #
  /testing/pluto/bin/wait-until-pluto-started
 [ 00.00] alg: No test for cipher_null (cipher_null-generic)
@@ -56,12 +56,6 @@ west #
 000 debug none
 000  
 000 virtual_private (%priv):
-000 - allowed 0 subnets: 
-000 - disallowed 0 subnets: 
-000 WARNING: Either virtual_private= is not specified, or there is a syntax 
-000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
-000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
-000          private address space in internal use, it should be excluded!
 000  
 000 algorithm ESP encrypt: id=2, name=ESP_DES, ivlen=8, keysizemin=64, keysizemax=64
 000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=8, keysizemin=192, keysizemax=192

@@ -620,9 +620,11 @@ int main(int argc, char **argv)
 
 		case 'X':	/* --leak-detective */
 			/*
-			 * Was already enabled at the start of main() because
-			 * we need to enable it before the first alloc()
-			 * We just need to eat the option here
+			 * Was already processed at the start of main()
+			 * because we need to potentially enable it before
+			 * the first alloc()
+			 * If this option is specfied, we must have already
+			 * set it at the start of main(), so assert it.
 			 */
 			passert(leak_detective);
 			continue;

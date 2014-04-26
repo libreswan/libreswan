@@ -55,7 +55,7 @@ bool non_zero;  /* is 0.0.0.0 allowed? */
 
 	/*
 	 * If we allowed af == AF_UNSPEC,
-	 * set it to ip_address_family(&addr_start_tmp)
+	 * set it to addrtypeof(&addr_start_tmp)
 	 */
 
 	/* extract end ip address */

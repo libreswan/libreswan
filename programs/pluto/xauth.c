@@ -673,14 +673,15 @@ static stf_status modecfg_resp(struct state *st,
 			}
 		}
 
-		close_message(&strattr, st);
+		if (!close_message(&strattr, st))
+			return STF_INTERNAL_ERROR;
 	}
 
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
 
-	close_message(rbody, st);
-
-	encrypt_message(rbody, st);
+	if (!close_message(rbody, st) ||
+	    !encrypt_message(rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
 }
@@ -836,16 +837,21 @@ stf_status xauth_send_request(struct state *st)
 				NULL))
 			return STF_INTERNAL_ERROR;
 
-		close_message(&strattr, st);
+		if (!close_message(&strattr, st))
+			return STF_INTERNAL_ERROR;
 	}
 
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody.cur, st);
 
-	close_message(&rbody, st);
+	if (!close_message(&rbody, st))
+			return STF_INTERNAL_ERROR;
+	
 	close_output_pbs(&reply);
 
 	init_phase2_iv(st, &st->st_msgid_phase15);
-	encrypt_message(&rbody, st);
+
+	if (!encrypt_message(&rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
 		     "XAUTH: req");
@@ -958,16 +964,21 @@ stf_status modecfg_send_request(struct state *st)
 				&strattr, NULL))
 			return STF_INTERNAL_ERROR;
 
-		close_message(&strattr, st);
+		if (!close_message(&strattr, st))
+			return STF_INTERNAL_ERROR;
 	}
 
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody.cur, st);
 
-	close_message(&rbody, st);
+	if (!close_message(&rbody, st))
+		return STF_INTERNAL_ERROR;
+
 	close_output_pbs(&reply);
 
 	init_phase2_iv(st, &st->st_msgid_phase15);
-	encrypt_message(&rbody, st);
+
+	if (!encrypt_message(&rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
 		     "modecfg: req");
@@ -1045,16 +1056,21 @@ static stf_status xauth_send_status(struct state *st, int status)
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL))
 			return STF_INTERNAL_ERROR;
-		close_message(&strattr, st);
+		if (!close_message(&strattr, st))
+			return STF_INTERNAL_ERROR;
 	}
 
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody.cur, st);
 
-	close_message(&rbody, st);
+	if (!close_message(&rbody, st))
+		return STF_INTERNAL_ERROR;
+
 	close_output_pbs(&reply);
 
 	init_phase2_iv(st, &st->st_msgid_phase15);
-	encrypt_message(&rbody, st);
+
+	if (!encrypt_message(&rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	/* free previous transmit packet */
 	freeanychunk(st->st_tpacket);
@@ -2523,8 +2539,7 @@ static stf_status xauth_client_resp(struct state *st,
 							TRUE;
 					}
 
-					if (!out_raw(st->st_xauth_password.ptr,
-						     st->st_xauth_password.len,
+					if (!out_chunk(st->st_xauth_password,
 						     &attrval,
 						     "XAUTH password"))
 						return STF_INTERNAL_ERROR;
@@ -2568,9 +2583,9 @@ static stf_status xauth_client_resp(struct state *st,
 
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
 
-	close_message(rbody, st);
-
-	encrypt_message(rbody, st);
+	if (!close_message(rbody, st) ||
+	    !encrypt_message(rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
 }
@@ -2843,14 +2858,15 @@ static stf_status xauth_client_ackstatus(struct state *st,
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&attrval);
-		close_message(&strattr, st);
+		if (!close_message(&strattr, st))
+			return STF_INTERNAL_ERROR;
 	}
 
 	xauth_mode_cfg_hash(r_hashval, r_hash_start, rbody->cur, st);
 
-	close_message(rbody, st);
-
-	encrypt_message(rbody, st);
+	if (!close_message(rbody, st) ||
+	    !encrypt_message(rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
 }

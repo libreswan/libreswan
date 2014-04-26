@@ -640,7 +640,8 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	/* finish message */
-	close_message(&md->rbody, st);
+	if (!close_message(&md->rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	return STF_OK;
 }
@@ -986,8 +987,9 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 		close_output_pbs(&id_pbs);
 		id_pbs.roof = pbs.cur;
 		id_pbs.cur = pbs.start;
-		in_struct(&id_pd.payload, &isakmp_identification_desc, &id_pbs,
-			  &id_pd.pbs);
+		if (!in_struct(&id_pd.payload, &isakmp_identification_desc, &id_pbs,
+			  &id_pd.pbs))
+			return STF_FAIL + PAYLOAD_MALFORMED;
 	}
 	md->chain[ISAKMP_NEXT_ID] = &id_pd;
 
@@ -1361,7 +1363,9 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	/* finish message */
 
-	close_message(&md->rbody, st);
+	if (!close_message(&md->rbody, st))
+		return STF_INTERNAL_ERROR;
+
 	close_output_pbs(&reply_stream);
 
 	/* let TCL hack it before we mark the length and copy it */

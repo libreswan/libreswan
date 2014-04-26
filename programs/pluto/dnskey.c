@@ -1094,7 +1094,8 @@ static err_t process_answer_section(pb_stream *pbs,
 			if (ugh != NULL)
 				return ugh;
 		}
-		in_raw(NULL, tail, pbs, "RR RDATA");
+		if (!in_raw(NULL, tail, pbs, "RR RDATA"))
+			return "failed to read RR RDATA";
 	}
 
 	return doit &&
@@ -1226,7 +1227,8 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 
 		tail = rrf.rdlength;
 
-		in_raw(NULL, tail, &pbs, "RR RDATA");
+		if (!in_raw(NULL, tail, &pbs, "RR RDATA"))
+			return "failed to read RR RDATA";
 	}
 
 	/* Additional Section processing (just sanity checking) */
@@ -1240,10 +1242,7 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 		TRY(eat_name_helpfully(&pbs, "Additional Section"));
 
 		if (!in_struct(&rrf, &rr_fixed_desc, &pbs, NULL))
-			return
-				"failed to get fixed part of Additional Section Resource Record";
-
-
+			return "failed to get fixed part of Additional Section Resource Record";
 
 		if (rrf.rdlength > pbs_left(&pbs))
 			return "RD Length extends beyond end of message";
@@ -1252,7 +1251,8 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 
 		tail = rrf.rdlength;
 
-		in_raw(NULL, tail, &pbs, "RR RDATA");
+		if (!in_raw(NULL, tail, &pbs, "RR RDATA"))
+			return "failed to read RR RDATA";
 	}
 
 	/* done all sections */

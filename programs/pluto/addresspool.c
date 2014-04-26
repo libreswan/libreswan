@@ -188,7 +188,7 @@ void rel_lease_addr(struct connection *c)
 	if (!c->spd.that.has_lease)
 		return; /* it is not from the addresspool to free */
 
-	passert(ip_address_family(&c->spd.that.client.addr) == AF_INET);
+	passert(addrtypeof(&c->spd.that.client.addr) == AF_INET);
 
 	addrtot(&c->spd.that.client.addr, 0, ta_client, sizeof(ta_client));
 	rangetot(&c->pool->r, 0, ta_range, sizeof(ta_range));
@@ -435,14 +435,14 @@ err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 		const ip_range *a = pool_range;
 		const ip_range *b = &h->r;
 
-		int sc = ip_address_cmp(&a->start, &b->start);
+		int sc = addrcmp(&a->start, &b->start);
 
-		if (sc == 0 && ip_address_cmp(&a->end, &b->end) == 0) {
+		if (sc == 0 && addrcmp(&a->end, &b->end) == 0) {
 			/* exact match */
 			*pool = h;
 			break;
-		} else if (sc < 0 ? ip_address_cmp(&a->end, &b->start) < 0 :
-			ip_address_cmp(&a->start, &b->end) > 0) {
+		} else if (sc < 0 ? addrcmp(&a->end, &b->start) < 0 :
+				    addrcmp(&a->start, &b->end) > 0) {
 			/* before or after */
 		} else {
 			/* overlap */

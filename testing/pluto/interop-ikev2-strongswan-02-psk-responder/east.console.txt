@@ -13,7 +13,6 @@ Loading conn 'westnet-eastnet-ikev2'
   authby=secret
   keyexchange=ikev2
   auto=add
-[ 00.00] NET: Registered protocol family 15
 found netkey IPsec stack
 east #
  echo "initdone"

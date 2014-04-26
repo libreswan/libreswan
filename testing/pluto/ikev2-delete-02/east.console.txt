@@ -24,7 +24,7 @@ Redirecting to: systemctl stop ipsec.service
 [   46.777935] KLIPS cryptoapi interface: alg_type=15 alg_id=7 name=cbc(blowfish) keyminbits=96 keymaxbits=448, found(0)
 [   46.817025] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [   46.887345] 
-[root@east ikev2-delete-02]# /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+[root@east ikev2-delete-02]# ipsec setup start
 [root@east ikev2-delete-02]# /testing/pluto/bin/wait-until-pluto-started
 [root@east ikev2-delete-02]# ipsec auto --add west-east-delete1
 [root@east ikev2-delete-02]# echo "initdone"

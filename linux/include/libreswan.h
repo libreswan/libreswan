@@ -194,9 +194,14 @@ typedef struct {
 	ip_address end;
 } ip_range;
 
+/* for use in KLIPS.  Userland should use addrtypeof() */
 #define ip_address_family(a)    ((a)->u.v4.sin_family)
 
-/* Test two ip_address values for equality */
+/*
+ * ip_address_eq: test two ip_address values for equality.
+ *
+ * For use in KLIPS.  Userland should use sameaddr().
+ */
 #define ip_address_eq(a, b) \
 	(ip_address_family((a)) == ip_address_family((b)) && \
 	 (ip_address_family((a)) == AF_INET ? \
@@ -205,23 +210,7 @@ typedef struct {
 		      (b)->u.v6.sin6_addr.s6_addr32, sizeof(u_int32_t) * 4)) \
 	 ))
 
-/*
- * The ip_address_cmp macro compares the two ip_address_values a and b.
- * It returns an integer less than, equal to, or greater than zero if a is found,
- * respectively, to be less than, to match, or be greater than b.
- * The address family is considered the most significant part of the address.
- * The result is analogous to those of strcmp(3) and memcmp(3).
- */
-#define ip_address_cmp(a, b) \
-	(ip_address_family((a)) != ip_address_family((b)) ? \
-	ip_address_family((a)) - ip_address_family((b)) : \
-	 (ip_address_family((a)) == AF_INET ? \
-	  memcmp(&(a)->u.v4.sin_addr.s_addr, \
-		 &(b)->u.v4.sin_addr.s_addr, sizeof(u_int32_t)) : \
-	  memcmp((a)->u.v6.sin6_addr.s6_addr32, \
-		 (b)->u.v6.sin6_addr.s6_addr32, sizeof(u_int32_t) * 4) \
-	 ))
-
+/* For use in KLIPS.  Userland should use isanyaddr() */
 #define ip_address_isany(a) \
 	(ip_address_family((a)) == AF_INET6 ? \
 	 ((a)->u.v6.sin6_addr.s6_addr[0] == 0 && \
@@ -290,10 +279,12 @@ typedef uint32_t IPsecSAref_t;
 # define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
 # define NEVER_RETURNS __attribute__ ((noreturn))
 # define UNUSED __attribute__ ((unused))
+# define MUST_USE_RESULT  __attribute__ ((warn_unused_result))
 #else
 # define PRINTF_LIKE(n) /* ignore */
 # define NEVER_RETURNS  /* ignore */
 # define UNUSED         /* ignore */
+# define MUST_USE_RESULT	/* ignore */
 #endif
 
 #ifdef COMPILER_HAS_NO_PRINTF_LIKE
