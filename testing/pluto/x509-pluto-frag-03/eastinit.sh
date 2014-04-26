@@ -15,8 +15,6 @@ iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j LOGDROP
 ipsec setup stop
 /usr/local/libexec/ipsec/_stackmanager stop
 rm -fr /var/run/pluto/pluto.pid
-/usr/local/libexec/ipsec/_stackmanager start
-ipsec setup start:
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 

@@ -3,7 +3,6 @@
 
 ipsec setup stop
 /usr/local/libexec/ipsec/_stackmanager stop
-/usr/local/libexec/ipsec/_stackmanager start 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 

@@ -10,8 +10,6 @@ ping -n -c 1 -I 192.0.1.254 192.0.2.254
 
 ipsec setup stop
 /usr/local/libexec/ipsec/_stackmanager stop
-/usr/local/libexec/ipsec/_stackmanager start
-ipsec setup start:
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 

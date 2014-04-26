@@ -5,7 +5,6 @@ ping -n -c 4 192.0.2.254
 iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 # confirm with a ping
 ping -n -c 4 192.0.2.254
-ipsec setup start:
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add road-eastnet-nonat

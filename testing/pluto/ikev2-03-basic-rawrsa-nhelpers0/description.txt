@@ -1,0 +1,5 @@
+Basic pluto with IKEv2 on the initiator (west), and on the responder,
+using RAW RSA keys for authentication.
+
+This test uses nhelpers=0 to test performing all crypto operations inline
+
