@@ -21,7 +21,7 @@
 struct ip_pool;	/* forward declaration; definition is local to addresspool.c */
 
 struct ip_pool *install_addresspool(const ip_range *pool_range);
-err_t get_addr_lease(const struct connection *c, struct internal_addr *ia /*result*/);
+err_t lease_an_address(const struct connection *c, ip_address *ipa /*result*/);
 void rel_lease_addr(struct connection *c);
 
 extern void unreference_addresspool(struct connection *c);
