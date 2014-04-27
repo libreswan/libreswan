@@ -87,6 +87,7 @@ d.ipsec.conf/nat-ikeport.xml
 d.ipsec.conf/keep-alive.xml
 d.ipsec.conf/retransmits.xml
 d.ipsec.conf/virtual-private.xml
+d.ipsec.conf/myvendorid.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml
 d.ipsec.conf/secctx-attr-value.xml

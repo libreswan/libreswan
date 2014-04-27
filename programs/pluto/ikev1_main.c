@@ -198,12 +198,11 @@ stf_status main_outI1(int whack_sock,
 	}
 
 	if (c->send_vendorid) {
-		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
-					myvid, strlen(myvid), "Vendor ID")) {
+					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
 			reset_cur_state();	/* ??? was missing */
 			return STF_INTERNAL_ERROR;
 		}
@@ -828,10 +827,9 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	 */
 
 	if (c->send_vendorid) {
-		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
-					myvid, strlen(myvid), "Vendor ID"))
+					pluto_vendorid, strlen(pluto_vendorid), "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
 

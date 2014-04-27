@@ -95,6 +95,7 @@
 static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 bool no_retransmits = FALSE;
+char *pluto_vendorid;
 
 static pid_t addconn_child_pid = 0;
 
