@@ -83,7 +83,7 @@ struct ip_pool {
  *   ??? This constitutes a leak.
  */
 
-#define	could_share_lease(c) ((c)->spd.that.id.kind != ID_NONE && !uniqueIDs)
+#define	could_share_lease(c) ((c)->spd.that.id.kind != ID_NONE && uniqueIDs)
 
 struct lease_addr {
 	u_int32_t index;	/* range start + index == IP address */
@@ -162,6 +162,8 @@ void rel_lease_addr(struct connection *c)
 {
 	struct ip_pool *pool = c->pool;
 	u_int32_t i;	/* index within range of IPv4 address to be released */
+	unsigned refcnt;
+	bool linger;
 
 	if (!c->spd.that.has_lease)
 		return; /* it is not from the addresspool to free */
@@ -189,16 +191,20 @@ void rel_lease_addr(struct connection *c)
 
 		if (could_share_lease(c)) {
 			/* we could share, so leave lease lingering */
+			linger = TRUE;
 			passert(p->refcnt > 0);
 			p->refcnt--;
 			if (p->refcnt == 0)
 				pool->lingering++;
+			refcnt = p->refcnt;
 		} else {
 			/* cannot share: free it */
 			passert(p->refcnt == 1);
 			p->refcnt--;
+			refcnt = p->refcnt;
 			*pp = free_lease_entry(p);
 			pool->used--;
+			linger = FALSE;
 		}
 	}
 
@@ -211,8 +217,9 @@ void rel_lease_addr(struct connection *c)
 
 		addrtot(&c->spd.that.client.addr, 0, ta_client, sizeof(ta_client));
 		rangetot(&pool->r, 0, ta_range, sizeof(ta_range));
-		DBG_log("lease %s from addresspool %s index=%u. pool size %u used %u lingering=%u address",
-				ta_client, ta_range, i,
+		DBG_log("%s lease refcnt %u %s from addresspool %s index=%u. pool size %u used %u lingering=%u address",
+				linger ? "lingering" : "freed" ,
+				refcnt, ta_client, ta_range, i,
 				pool->size, pool->used,
 				pool->lingering);
 	});
@@ -281,6 +288,7 @@ err_t lease_an_address(const struct connection *c,
 	 * Initialized just to silence GCC.
 	 */
 	u_int32_t i = 0;
+	bool s;
 
 	DBG(DBG_CONTROL, {
 		char rbuf[RANGETOT_BUF];
@@ -296,7 +304,8 @@ err_t lease_an_address(const struct connection *c,
 			rbuf, c->pool->pool_refcount, thatidbuf, abuf);
 	});
 
-	if (!share_lease(c, &i)) {
+	s = share_lease(c, &i);
+	if (!s) {
 		/*
 		 * cannot find or cannot share an existing lease:
 		 * allocate a new one
@@ -340,7 +349,7 @@ err_t lease_an_address(const struct connection *c,
 		*pp = a;
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log("New lease for %u", i));
+			DBG_log("New lease from addresspool index %u", i));
 	}
 
 	/* convert index i in range to an IP_address */
@@ -352,6 +361,20 @@ err_t lease_an_address(const struct connection *c,
 		if (e != NULL)
 			return e;
 	}
+	DBG(DBG_CONTROL, {
+			char rbuf[RANGETOT_BUF];
+			char thatidbuf[IDTOA_BUF];
+			char abuf[ADDRTOT_BUF];
+			char lbuf[ADDRTOT_BUF];
+
+			rangetot(&c->pool->r, 0, rbuf, sizeof(rbuf));
+			idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+			addrtot(&c->spd.that.client.addr, 0, abuf, sizeof(abuf));
+			addrtot(ipa, 0, lbuf, sizeof(lbuf));
+
+			DBG_log("%s lease %s from addresspool %s to that.client.addr %s thatid '%s'",
+				s ? "re-use" : "new" ,lbuf, rbuf, abuf, thatidbuf);
+			});
 
 	return NULL;
 }
@@ -402,7 +425,7 @@ void unreference_addresspool(struct connection *c)
 	c->pool = NULL;
 }
 
-static void reference_addresspool(struct ip_pool *pool)
+void reference_addresspool(struct ip_pool *pool)
 {
 	pool->pool_refcount++;
 }

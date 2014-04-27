@@ -25,6 +25,7 @@ err_t lease_an_address(const struct connection *c, ip_address *ipa /*result*/);
 void rel_lease_addr(struct connection *c);
 
 extern void unreference_addresspool(struct connection *c);
+void reference_addresspool(struct ip_pool *pool);
 extern err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool);
 
 
