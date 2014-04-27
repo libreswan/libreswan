@@ -139,21 +139,21 @@ static struct lease_addr **ref_to_lease(struct ip_pool *pool, u_int32_t i) {
 }
 
 /*
- * mark a lease as ended. 
- * If the ID is distinctive and uniqueid is set, the lease "lingers" 
+ * mark a lease as ended.
+ * If the ID is distinctive and uniqueid is set, the lease "lingers"
  * so that the same  client can be reassigned the same address.
  * But the lease isn't freed: it lingers, available to be re-activated
  * by get_addr_lease/find_lingering_lease to the same thatid when uniqueid is
  * set
  *
- * If uniqueid is set, thatid is ID_NONE and refcnt is zero, we do free the 
+ * If uniqueid is set, thatid is ID_NONE and refcnt is zero, we do free the
  * lease since that ID isn't distinctive.
  */
 static bool end_lease(struct ip_pool *pool, u_int32_t i, bool linger)
 {
 	struct lease_addr **pp = ref_to_lease(pool, i);
 	struct lease_addr *p;
-	bool l; 
+	bool l;
 
 	passert(pp != NULL);	/* not found */
 
@@ -259,7 +259,7 @@ static bool revive_lingering_lease(const struct connection *c,
 				initaddr((unsigned char *)&addr_nw,
 					sizeof(addr_nw), AF_INET, &ipaddr);
 				addrtot(&ipaddr, 0, abuf, sizeof(abuf));
-				snprintf(buf, sizeof(buf), " refcnt %d", 
+				snprintf(buf, sizeof(buf), " refcnt %d",
 					p->refcnt);
 			}
 			idtoa(&c->spd.that.id, thatid, sizeof(thatid));
@@ -298,7 +298,7 @@ err_t get_addr_lease(const struct connection *c,
 			c->pool->refcnt, pthread_self(), thatidbuf, abuf);
 	});
 
-	if(uniqueIDs) 
+	if(uniqueIDs)
 		r = revive_lingering_lease(c, &i);
 	if (!r) {
 		/* allocate a new lease */
