@@ -57,7 +57,6 @@ typedef struct {
 
 extern chunk_t get_mycert(cert_t cert);
 extern bool load_cert(const char *filename,
-		      bool verbose,
 		      const char *label, cert_t *cert);
 
 extern void share_cert(cert_t cert);
@@ -66,11 +65,10 @@ extern void list_certs(bool utc);
 
 extern struct pubkey* allocate_RSA_public_key(const cert_t cert);
 extern bool load_coded_file(const char *filename,
-			    bool verbose,
 			    const char *type, chunk_t *blob);
 extern bool cert_exists_in_nss(const char *nickname);
 extern bool load_cert_from_nss(const char *nssHostCertNickName,
-			       int verbose, const char *label, cert_t *cert);
+			       const char *label, cert_t *cert);
 extern void load_authcerts_from_nss(const char *type, u_char auth_flags);
 
 #endif /* _CERTS_H */

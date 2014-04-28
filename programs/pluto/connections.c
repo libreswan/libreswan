@@ -773,7 +773,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 
 	{
 		/* load cert from file */
-		bool valid_cert = load_cert_from_nss(filename, TRUE,
+		bool valid_cert = load_cert_from_nss(filename,
 						"host cert", &cert);
 		if (!valid_cert) {
 			whack_log(RC_FATAL,
