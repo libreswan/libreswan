@@ -1929,7 +1929,6 @@ static const char *const ppk_name[] = {
 	"PPK_PSK",
 	"PPK_DSS",
 	"PPK_RSA",
-	"PPK_PIN",
 	"PPK_XAUTH",
 	NULL
 };

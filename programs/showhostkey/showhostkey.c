@@ -132,11 +132,6 @@ static void print_key(struct secret *secret,
 			if (disclose)
 				printf("    xauth: \"%s\"\n", pskbuf);
 			break;
-
-		case PPK_PIN:
-			printf("%d:(%d) PIN key-type not yet supported for id: %s\n", lineno, count,
-				idb);
-			break;
 		}
 
 		l = l->next;
@@ -308,9 +303,6 @@ static void show_confkey(struct secret *s,
 		switch (pks->kind) {
 		case PPK_PSK:
 			enumstr = "PPK_PSK";
-			break;
-		case PPK_PIN:
-			enumstr = "PPK_PIN";
 			break;
 		case PPK_XAUTH:
 			enumstr = "PPK_XAUTH";
