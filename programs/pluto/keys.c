@@ -83,13 +83,7 @@ static struct secret *pluto_secrets = NULL;
 
 void load_preshared_secrets()
 {
-	lsw_load_preshared_secrets(&pluto_secrets
-#ifdef SINGLE_CONF_DIR
-				   , FALSE /* to much log noise in a shared directory mode */
-#else
-				   , TRUE
-#endif
-				   , pluto_shared_secrets_file);
+	lsw_load_preshared_secrets(&pluto_secrets , pluto_shared_secrets_file);
 }
 
 void free_preshared_secrets(void)

@@ -451,11 +451,6 @@ usage:
 		goto usage;
 	}
 
-	if (verbose > 2) {
-		fprintf(stderr,
-			"verbosity cannot be set this high\n");
-	}
-
 	if (verbose)
 		fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",
 			oco->confddir);
@@ -473,8 +468,7 @@ usage:
 
 	PK11_SetPasswordFunc(getNSSPassword);
 
-	lsw_load_preshared_secrets(&host_secrets, verbose > 0 ? TRUE : FALSE,
-				   secrets_file);
+	lsw_load_preshared_secrets(&host_secrets, secrets_file);
 
 	NSS_Shutdown();
 	PR_Cleanup();

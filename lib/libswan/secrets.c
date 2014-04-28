@@ -82,10 +82,8 @@ static const struct fld RSA_private_field[] =
 static err_t lsw_process_psk_secret(chunk_t *psk);
 static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
 static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak);
-static void lsw_process_secret_records(struct secret **psecrets,
-				int verbose);
+static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
-				int verbose,
 				const char *file_pat);
 
 
@@ -979,7 +977,7 @@ void unlock_authcert_list(const char *who)
 
 #endif
 
-static void process_secret(struct secret **psecrets, int verbose,
+static void process_secret(struct secret **psecrets,
 			struct secret *s)
 {
 	err_t ugh = NULL;
@@ -1009,7 +1007,7 @@ static void process_secret(struct secret **psecrets, int verbose,
 			ugh = lsw_process_rsa_keycert(
 				&s->pks.u.RSA_private_key);
 		}
-		if (!ugh && verbose) {
+		if (!ugh) {
 			libreswan_log("loaded private key for keyid: %s:%s",
 				enum_name(&ppk_names, s->pks.kind),
 				s->pks.u.RSA_private_key.pub.keyid);
@@ -1056,7 +1054,7 @@ static void process_secret(struct secret **psecrets, int verbose,
 	}
 }
 
-static void lsw_process_secret_records(struct secret **psecrets, int verbose)
+static void lsw_process_secret_records(struct secret **psecrets)
 {
 	/* const struct secret *secret = *psecrets; */
 
@@ -1112,7 +1110,7 @@ static void lsw_process_secret_records(struct secret **psecrets, int verbose)
 			(void) shift();	/* move to Record Boundary, we hope */
 			if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename"))
 			{
-				lsw_process_secrets_file(psecrets, verbose, fn);
+				lsw_process_secrets_file(psecrets, fn);
 				flp->tok = NULL;	/* redundant? */
 			}
 		} else {
@@ -1134,7 +1132,7 @@ static void lsw_process_secret_records(struct secret **psecrets, int verbose)
 				if (tokeq(":")) {
 					/* found key part */
 					shift();	/* eat ":" */
-					process_secret(psecrets, verbose, s);
+					process_secret(psecrets, s);
 					break;
 				}
 
@@ -1202,7 +1200,6 @@ static int globugh(const char *epath, int eerrno)
 }
 
 static void lsw_process_secrets_file(struct secret **psecrets,
-				int verbose,
 				const char *file_pat)
 {
 	struct file_lex_position pos;
@@ -1251,12 +1248,10 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 	/* for each file... */
 	for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 		if (lexopen(&pos, *fnp, FALSE)) {
-			if (verbose)
-				libreswan_log("loading secrets from \"%s\"",
-					*fnp);
+			libreswan_log("loading secrets from \"%s\"", *fnp);
 			(void) flushline(
 				"file starts with indentation (continuation notation)");
-			lsw_process_secret_records(psecrets, verbose);
+			lsw_process_secret_records(psecrets);
 			lexclose();
 		}
 	}
@@ -1310,11 +1305,11 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 	unlock_certs_and_keys("free_preshard_secrets");
 }
 
-void lsw_load_preshared_secrets(struct secret **psecrets, int verbose,
+void lsw_load_preshared_secrets(struct secret **psecrets,
 				const char *secrets_file)
 {
 	lsw_free_preshared_secrets(psecrets);
-	(void) lsw_process_secrets_file(psecrets, verbose, secrets_file);
+	(void) lsw_process_secrets_file(psecrets, secrets_file);
 }
 
 struct pubkey *reference_key(struct pubkey *pk)
