@@ -1,0 +1,4 @@
+A simple pluto with IKEv2 using PSK on the initiator (road), and on the responder(east). This test does not include any other conf files. It is an odd one just to test simple cases. 
+
+It has a v6 and leftsubnets and rekey timers are short.
+
