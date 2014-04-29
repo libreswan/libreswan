@@ -92,7 +92,7 @@ Redirecting to: systemctl stop ipsec.service
 000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEV2_ALLOW+IKEv2Init+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "west-east-delete1":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -163,7 +163,7 @@ rtt min/avg/max/mdev = 0.310/0.586/0.863/0.277 ms
 000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+!IKEv1+IKEV2_ALLOW+IKEv2Init+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
 000 "west-east-delete1":   IKE algorithm newest: _128-SHA1-MODP2048
@@ -223,7 +223,7 @@ done
 000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+!IKEv1+IKEV2_ALLOW+IKEv2Init+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
 000 "west-east-delete1":   IKE algorithm newest: _128-SHA1-MODP2048
@@ -289,7 +289,7 @@ sleeping a bit.. 20
 000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+!IKEv1+IKEV2_ALLOW+IKEv2Init+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "west-east-delete1":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
