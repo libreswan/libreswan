@@ -257,7 +257,8 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-	unreference_addresspool(c);
+	if (c->pool != NULL)
+		unreference_addresspool(c);
 
 	/* free up any logging resources */
 	perpeer_logfree(c);
