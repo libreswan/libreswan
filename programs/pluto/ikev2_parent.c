@@ -470,10 +470,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	/* Send VendorID VID if needed.  Only one. */
 	if (c->send_vendorid) {
-		const char *myvid = ipsec_version_vendorid();
-
 		if (!out_generic_raw(ISAKMP_NEXT_v2NONE, &isakmp_vendor_id_desc, &md->rbody,
-				     myvid, strlen(myvid),
+				     pluto_vendorid, strlen(pluto_vendorid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
@@ -956,10 +954,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* Send VendorID VID if needed.  Only one. */
 	if (c->send_vendorid) {
-		const char *myvid = ipsec_version_vendorid();
-
 		if (!out_generic_raw(ISAKMP_NEXT_v2NONE, &isakmp_vendor_id_desc, &md->rbody,
-				     myvid, strlen(myvid),
+				     pluto_vendorid, strlen(pluto_vendorid),
 				     "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
