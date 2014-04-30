@@ -261,30 +261,6 @@ void state_deletion_xauth_cleanup(struct state *st)
 	pthread_mutex_destroy(&st->xauth_mutex);
 }
 
-#ifdef XAUTH_HAVE_PAM
-
-/**
- * Get IP address from a PAM environment variable
- *
- * @param pamh An open PAM filehandle
- * @param var Environment Variable to get the IP address from.  Usually IPADDR, DNS[12], WINS[12]
- * @param addr Pointer to var where you want IP address stored
- * @return int Return code
- */
-static int get_addr(pam_handle_t *pamh, const char *var, ip_address *addr)
-{
-	const char *c;
-	int retval;
-
-	c = pam_getenv(pamh, var);
-	if (c == NULL)
-		c = "0.0.0.0";
-	retval = inet_pton(AF_INET, c, (void*) &addr->u.v4.sin_addr.s_addr);
-	addr->u.v4.sin_family = AF_INET;
-	return retval > 0;
-}
-#endif
-
 oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 {
 	switch (baseauth) {
@@ -323,12 +299,10 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 }
 
 /*
- * Get inside IP address for a connection
+ * Get inside IP address, INTERNAL_IP4_ADDRESS and DNS if any for a connection
  *
  * @param con A currently active connection struct
  * @param ia internal_addr struct
- * only failure returned is a failed lease_an_address.
- * ??? may be there are more which are not reported.
  */
 static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 		bool *got_lease)
@@ -339,7 +313,7 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 	/** assumes IPv4, and also that the mask is ignored */
 
 	if (c->pool != NULL) {
-		err_t e = lease_an_address(c, ia);
+		err_t e = lease_an_address(c,  &ia->ipaddr);
 
 		if (e != NULL) {
 			libreswan_log("lease_an_address failure %s", e);
@@ -350,6 +324,8 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 	} else if (!isanyaddr(&c->spd.that.client.addr)) {
 		ia->ipaddr = c->spd.that.client.addr;
 	} else {
+		libreswan_log("%s failure c->pool==NULL that.client.addr is "
+				"invalid", __func__);
 		return FALSE;
 	}
 
