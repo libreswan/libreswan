@@ -318,9 +318,7 @@ err_t lease_an_address(const struct connection *c,
 		const u_int32_t size = c->pool->size;
 		struct lease_addr **pp;
 		struct lease_addr *p;
-		struct lease_addr *a;
-		struct lease_addr *victim = NULL;	/* oldest lingerer */
-		time_t since = (time_t) -1;	/* victim's date of lingering */
+		struct lease_addr *ll = NULL;	/* longest lingerer */
 
 		for (pp = &c->pool->leases; (p = *pp) != NULL; pp = &p->next) {
 			/* check that list of leases is
@@ -330,10 +328,10 @@ err_t lease_an_address(const struct connection *c,
 			if (p->index > i)
 				break;
 			/* remember the longest lingering lease found */
-			if (p->refcnt == 0 && p->lingering_since <= since) {
-				victim = p;
-				since = p->lingering_since;
-			}
+			if (p->refcnt == 0 &&
+			    (ll == NULL ||
+			     p->lingering_since <= ll->lingering_since))
+				ll = p;
 			/* Subtle point: this addition won't overflow.
 			 * 0.0.0.0 cannot be in a range
 			 * so the size will be less than 2^32.
@@ -345,7 +343,8 @@ err_t lease_an_address(const struct connection *c,
 
 		if (i < size) {
 			/* we can allocate a new address and lease */
-			a = alloc_thing(struct lease_addr, "address lease entry");
+			struct lease_addr *a = alloc_thing(struct lease_addr, "address lease entry");
+
 			a->index = i;
 			a->refcnt = 1;
 			c->pool->used++;
@@ -357,20 +356,20 @@ err_t lease_an_address(const struct connection *c,
 
 			DBG(DBG_CONTROLMORE,
 				DBG_log("New lease from addresspool index %u", i));
-		} else if (victim != NULL) {
-			/* we take over this lingering lease, victim */
+		} else if (ll != NULL) {
+			/* we take over this lingering lease */
 			DBG(DBG_CONTROLMORE, {
 				char thatidbuf[IDTOA_BUF];
 
-				idtoa(&victim->thatid, thatidbuf, sizeof(thatidbuf));
+				idtoa(&ll->thatid, thatidbuf, sizeof(thatidbuf));
 				DBG_log("grabbed lingering lease index %u from %s",
 					i, thatidbuf);
 			});
-			free_id_content(&victim->thatid);
-			duplicate_id(&victim->thatid, &c->spd.that.id);
+			free_id_content(&ll->thatid);
+			duplicate_id(&ll->thatid, &c->spd.that.id);
 			c->pool->lingering--;
-			victim->refcnt++;
-			i = victim->index;
+			ll->refcnt++;
+			i = ll->index;
 		} else {
 			DBG(DBG_CONTROL,
 			    DBG_log("no free address within pool; size %u, used %u, lingering %u",
