@@ -37,26 +37,40 @@ int known_oid(chunk_t object)
 {
 	int oid = 0;
 
-	while (object.len) {
+	while (object.len > 0) {
 		if (oid_names[oid].octet == *object.ptr) {
-			if (--object.len == 0 || oid_names[oid].down == 0) {
-				return oid; /* found terminal symbol */
+			object.len--;
+			object.ptr++;
+			if (object.len == 0) {
+				/* at end of object */
+				if (oid_names[oid].down == 0)
+					return oid;	/* found terminal symbol */
+				else
+					return OID_UNKNOWN;	/* end of object but not terminal */
 			} else {
-				object.ptr++;
-				oid++; /* advance to next hex octet */
+				/* object continues */
+				if (oid_names[oid].down == 0) {
+					return OID_UNKNOWN;	/* terminal but not end of object */
+				} else {
+					/* advance to next hex octet in table
+					 * so we can match next octet of OID
+					 */
+					oid++;
+				}
 			}
 		} else {
-			if (oid_names[oid].next)
+			if (oid_names[oid].next != 0)
 				oid = oid_names[oid].next;
 			else
 				return OID_UNKNOWN;
 		}
 	}
-	return -1;
+	return OID_UNKNOWN;
 }
 
 /*
- * Decodes the length in bytes of an ASN.1 object
+ * Skip tag and decode the length in bytes of an ASN.1 object.
+ * Blob is updated to reflect the tag and length have been consumed
  */
 size_t asn1_length(chunk_t *blob)
 {
