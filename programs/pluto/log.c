@@ -876,26 +876,26 @@ void daily_log_event(void)
 }
 
 /*
- * we log the time when we are about to do something so that
- * we know what time things happened, when not using syslog
+ * Log the time before handling the next event.
+ * But:
+ * - only if we are logging to stderr or pluto_log_file
+ *   (where each message already has a timestamp)
+ * - and only if we haven't logged the time in the last 60 seconds.
  */
 void log_mark_time(void)
 {
-	if (log_to_stderr || pluto_log_fp != NULL) {
-		time_t n;
-
+	if ((log_to_stderr || pluto_log_fp != NULL) &&
+	    log_did_something) {
 		static time_t lastn = 0;
+		time_t n;
 
 		time(&n);
 
-		if (log_did_something) {
+		log_did_something = FALSE;
+		if (n - lastn > 60) {
 			lastn = n;
-			log_did_something = FALSE;
-			if ((n - lastn) > 60)
-				DBG_log("time is %s (%lu)", ctime(
-						&n), (unsigned long)n);
-
-
+			DBG_log("time is %s (%lu)", ctime(
+					&n), (unsigned long)n);
 		}
 	}
 }
