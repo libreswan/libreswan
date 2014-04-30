@@ -1,3 +1,5 @@
+# Copyright (C) 2003-2004 Andreas Steffen, Zuercher Hochschule Winterthur
+
 0x02                         "ITU-T Administration"
   0x82                       ""
     0x06                     "Germany ITU-T member"
