@@ -162,8 +162,8 @@ void rel_lease_addr(struct connection *c)
 {
 	struct ip_pool *pool = c->pool;
 	u_int32_t i;	/* index within range of IPv4 address to be released */
-	unsigned refcnt;
-	bool linger;
+	unsigned refcnt;	/* for DBG logging */
+	const char *story;	/* for DBG logging */
 
 	if (!c->spd.that.has_lease)
 		return; /* it is not from the addresspool to free */
@@ -191,20 +191,22 @@ void rel_lease_addr(struct connection *c)
 
 		if (could_share_lease(c)) {
 			/* we could share, so leave lease lingering */
-			linger = TRUE;
+			story = "left (shared)";
 			passert(p->refcnt > 0);
 			p->refcnt--;
-			if (p->refcnt == 0)
+			if (p->refcnt == 0) {
+				story = "left (to linger)";
 				pool->lingering++;
+			}
 			refcnt = p->refcnt;
 		} else {
 			/* cannot share: free it */
+			story = "freed";
 			passert(p->refcnt == 1);
 			p->refcnt--;
 			refcnt = p->refcnt;
 			*pp = free_lease_entry(p);
 			pool->used--;
-			linger = FALSE;
 		}
 	}
 
@@ -218,7 +220,7 @@ void rel_lease_addr(struct connection *c)
 		addrtot(&c->spd.that.client.addr, 0, ta_client, sizeof(ta_client));
 		rangetot(&pool->r, 0, ta_range, sizeof(ta_range));
 		DBG_log("%s lease refcnt %u %s from addresspool %s index=%u. pool size %u used %u lingering=%u address",
-				linger ? "lingering" : "freed" ,
+				story,
 				refcnt, ta_client, ta_range, i,
 				pool->size, pool->used,
 				pool->lingering);
@@ -253,29 +255,29 @@ static bool share_lease(const struct connection *c,
 
 	DBG(DBG_CONTROLMORE, {
 			char thatid[IDTOA_BUF];
-			char abuf[ADDRTOT_BUF];
-			ip_address ipaddr;
-			uint32_t addr;
-			uint32_t addr_nw;
-			char buf[128];
 
+			idtoa(&c->spd.that.id, thatid, sizeof(thatid));
 			if (r) {
-				addr = ntohl(c->pool->r.start.u.v4.sin_addr.s_addr) + *index;
-				addr_nw = htonl(addr);
+				char abuf[ADDRTOT_BUF];
+				ip_address ipaddr;
+				uint32_t addr = ntohl(c->pool->r.start.u.v4.sin_addr.s_addr) + *index;
+				uint32_t addr_nw = htonl(addr);
+
 				initaddr((unsigned char *)&addr_nw,
 					sizeof(addr_nw), AF_INET, &ipaddr);
 				addrtot(&ipaddr, 0, abuf, sizeof(abuf));
-				snprintf(buf, sizeof(buf), " refcnt %d",
-					p->refcnt);
+
+				DBG_log("in %s: found a lingering addresspool lease %s refcnt %d for '%s'",
+					__func__,
+					abuf,
+					p->refcnt,
+					thatid);
+			} else {
+				DBG_log("in %s: no lingering addresspool lease for '%s'",
+					__func__,
+					thatid);
 			}
-			idtoa(&c->spd.that.id, thatid, sizeof(thatid));
-			DBG_log("in %s: %s lingering addresspool lease %s %s for '%s'",
-				__func__,
-				r ? "found a" : "no",
-				r ? abuf : "",
-				r ? buf : "",
-				thatid);
-			});
+		});
 
 	return r;
 }
@@ -358,6 +360,7 @@ err_t lease_an_address(const struct connection *c,
 		uint32_t addr_nw = htonl(addr);
 		err_t e = initaddr((unsigned char *)&addr_nw, sizeof(addr_nw),
 			     AF_INET, ipa);
+
 		if (e != NULL)
 			return e;
 	}
@@ -373,7 +376,8 @@ err_t lease_an_address(const struct connection *c,
 			addrtot(ipa, 0, lbuf, sizeof(lbuf));
 
 			DBG_log("%s lease %s from addresspool %s to that.client.addr %s thatid '%s'",
-				s ? "re-use" : "new" ,lbuf, rbuf, abuf, thatidbuf);
+				s ? "re-use" : "new",
+				lbuf, rbuf, abuf, thatidbuf);
 			});
 
 	return NULL;
@@ -403,9 +407,6 @@ static void free_addresspool(struct ip_pool *pool)
 void unreference_addresspool(struct connection *c)
 {
 	struct ip_pool *pool = c->pool;
-
-	if (pool == NULL)
-		return;
 
 	DBG(DBG_CONTROLMORE, DBG_log("unreference addresspool of conn %s [%lu] kind %s refcnt %u",
 				c->name, c->instance_serial,
