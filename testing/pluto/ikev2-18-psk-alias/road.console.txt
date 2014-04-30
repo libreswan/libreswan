@@ -1,26 +1,42 @@
-/testing/guestbin/swan-prep --46
+/testing/guestbin/swan-prep --46 --x509
+Preparing X.509 files
+road #
+ #add address from to be extruded subnet on road.
+road #
+ ifconfig eth0:1 192.0.1.254/24
 road #
  # confirm that the network is alive
 road #
- #ping -n -c 4 -I 192.0.1.254 192.0.2.254
+ ping6 -n -c 4 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=63 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=63 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=63 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=63 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
- # make sure that clear text does not get through
-road #
- #iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
-road #
- # confirm with a ping
-road #
- ping -n -c 3 -I 192.0.1.254 192.0.2.254
-bind: Cannot assign requested address
+ ping -n -c 4 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=63 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=63 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=63 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=63 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec setup start
 Redirecting to: systemctl start ipsec.service
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
- ipsec auto --add roadnet-eastnet-ipv4-psk-ikev2
+ ipsec auto --add road-east-ipv4-psk-ikev2
+multiple ip addresses, using  192.1.3.209 on eth0
 road #
- ipsec auto --add roadnet-eastnet-ipv6-psk-ikev2
+ ipsec auto --add road-east-ipv6-psk-ikev2
+multiple ip addresses, using  192.1.3.209 on eth0
 road #
  ipsec auto --status
 000 using kernel interface: netkey
@@ -30,6 +46,8 @@ road #
 000 interface lo/lo 127.0.0.1@500
 000 interface eth0/eth0 192.1.3.209@4500
 000 interface eth0/eth0 192.1.3.209@500
+000 interface eth0:1/eth0:1 192.0.1.254@4500
+000 interface eth0:1/eth0:1 192.0.1.254@500
 000  
 000  
 000 fips mode=disabled;
@@ -47,8 +65,6 @@ road #
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
-000 - alloweded subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
-000 - excludeded subnets: 192.0.1.0/24, 2001:db8:0:1::/64
 000  
 000 ESP algorithms supported:
 000  
@@ -110,44 +126,47 @@ road #
 000  
 000 Connection list:
 000  
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0": 192.0.1.0/24===192.1.3.209<192.1.3.209>[@road]...192.1.2.254---192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":     oriented; my_ip=unset; their_ip=unset;
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   labeled_ipsec:no, loopback:no; 
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":    policy_label:unset; 
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   ike_life: 300s; ipsec_life: 120s; rekey_margin: 60s; rekey_fuzz: 100%; keyingtries: 0;
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   conn_prio: 24,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   dpd: action:restart; delay:60; timeout:240; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "roadnet-eastnet-ipv4-psk-ikev2/1x0":   aliases: roadnet-eastnet-ipv4-psk-ikev2 
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0": 192.0.11.0/24===192.1.3.209<192.1.3.209>[@road]...192.1.2.254---192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":     oriented; my_ip=unset; their_ip=unset;
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   labeled_ipsec:no, loopback:no; 
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":    policy_label:unset; 
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   ike_life: 300s; ipsec_life: 120s; rekey_margin: 60s; rekey_fuzz: 100%; keyingtries: 0;
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   conn_prio: 24,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   dpd: action:restart; delay:60; timeout:240; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "roadnet-eastnet-ipv4-psk-ikev2/2x0":   aliases: roadnet-eastnet-ipv4-psk-ikev2 
-000 "roadnet-eastnet-ipv6-psk-ikev2": 2001:db8:1:3::/64===2001:db8:1:3::209<2001:db8:1:3::209>[@road]...2001:db8:1:2::23<2001:db8:1:2::23>[@east]===2001:db8:1:2::/64; unrouted; eroute owner: #0
-000 "roadnet-eastnet-ipv6-psk-ikev2":     oriented; my_ip=unset; their_ip=unset;
-000 "roadnet-eastnet-ipv6-psk-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "roadnet-eastnet-ipv6-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "roadnet-eastnet-ipv6-psk-ikev2":   labeled_ipsec:no, loopback:no; 
-000 "roadnet-eastnet-ipv6-psk-ikev2":    policy_label:unset; 
-000 "roadnet-eastnet-ipv6-psk-ikev2":   ike_life: 300s; ipsec_life: 120s; rekey_margin: 60s; rekey_fuzz: 100%; keyingtries: 0;
-000 "roadnet-eastnet-ipv6-psk-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "roadnet-eastnet-ipv6-psk-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "roadnet-eastnet-ipv6-psk-ikev2":   conn_prio: 64,64; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
-000 "roadnet-eastnet-ipv6-psk-ikev2":   dpd: action:restart; delay:60; timeout:240; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "roadnet-eastnet-ipv6-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "road-east-ipv4-psk-ikev2/1x0": 192.0.1.0/24===192.1.3.209<192.1.3.209>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.254---192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "road-east-ipv4-psk-ikev2/1x0":     oriented; my_ip=unset; their_ip=unset; mycert=road; hiscert=east;
+000 "road-east-ipv4-psk-ikev2/1x0":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "road-east-ipv4-psk-ikev2/1x0":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "road-east-ipv4-psk-ikev2/1x0":   labeled_ipsec:no, loopback:no; 
+000 "road-east-ipv4-psk-ikev2/1x0":    policy_label:unset; 
+000 "road-east-ipv4-psk-ikev2/1x0":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "road-east-ipv4-psk-ikev2/1x0":   ike_life: 240s; ipsec_life: 120s; rekey_margin: 60s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-ipv4-psk-ikev2/1x0":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "road-east-ipv4-psk-ikev2/1x0":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "road-east-ipv4-psk-ikev2/1x0":   conn_prio: 24,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
+000 "road-east-ipv4-psk-ikev2/1x0":   dpd: action:restart; delay:60; timeout:240; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "road-east-ipv4-psk-ikev2/1x0":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "road-east-ipv4-psk-ikev2/1x0":   aliases: road-east-ipv4-psk-ikev2 
+000 "road-east-ipv4-psk-ikev2/2x0": 192.0.11.0/24===192.1.3.209<192.1.3.209>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.254---192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "road-east-ipv4-psk-ikev2/2x0":     oriented; my_ip=unset; their_ip=unset; mycert=road; hiscert=east;
+000 "road-east-ipv4-psk-ikev2/2x0":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "road-east-ipv4-psk-ikev2/2x0":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "road-east-ipv4-psk-ikev2/2x0":   labeled_ipsec:no, loopback:no; 
+000 "road-east-ipv4-psk-ikev2/2x0":    policy_label:unset; 
+000 "road-east-ipv4-psk-ikev2/2x0":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "road-east-ipv4-psk-ikev2/2x0":   ike_life: 240s; ipsec_life: 120s; rekey_margin: 60s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-ipv4-psk-ikev2/2x0":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "road-east-ipv4-psk-ikev2/2x0":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "road-east-ipv4-psk-ikev2/2x0":   conn_prio: 24,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
+000 "road-east-ipv4-psk-ikev2/2x0":   dpd: action:restart; delay:60; timeout:240; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "road-east-ipv4-psk-ikev2/2x0":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "road-east-ipv4-psk-ikev2/2x0":   aliases: road-east-ipv4-psk-ikev2 
+000 "road-east-ipv6-psk-ikev2": 2001:db8:1:3::/64===192.1.3.209<192.1.3.209>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.254---192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===2001:db8:1:2::/64; unrouted; eroute owner: #0
+000 "road-east-ipv6-psk-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=road; hiscert=east;
+000 "road-east-ipv6-psk-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "road-east-ipv6-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "road-east-ipv6-psk-ikev2":   labeled_ipsec:no, loopback:no; 
+000 "road-east-ipv6-psk-ikev2":    policy_label:unset; 
+000 "road-east-ipv6-psk-ikev2":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "road-east-ipv6-psk-ikev2":   ike_life: 240s; ipsec_life: 120s; rekey_margin: 60s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-ipv6-psk-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "road-east-ipv6-psk-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "road-east-ipv6-psk-ikev2":   conn_prio: 64,64; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
+000 "road-east-ipv6-psk-ikev2":   dpd: action:restart; delay:60; timeout:240; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "road-east-ipv6-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 3, active 0
 000  
@@ -159,25 +178,38 @@ road #
  echo "initdone"
 initdone
 road #
- ipsec auto --up  roadnet-eastnet-ipv4-psk-ikev2
-000 initiating all conns with alias='roadnet-eastnet-ipv4-psk-ikev2' 
-133 "roadnet-eastnet-ipv4-psk-ikev2/2x0" #1: STATE_PARENT_I1: initiate
-133 "roadnet-eastnet-ipv4-psk-ikev2/1x0" #2: STATE_PARENT_I1: initiate
-133 "roadnet-eastnet-ipv4-psk-ikev2/2x0" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-133 "roadnet-eastnet-ipv4-psk-ikev2/1x0" #2: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "roadnet-eastnet-ipv4-psk-ikev2/2x0" #3: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
-134 "roadnet-eastnet-ipv4-psk-ikev2/1x0" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
-004 "roadnet-eastnet-ipv4-psk-ikev2/2x0" #3: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=active}
-004 "roadnet-eastnet-ipv4-psk-ikev2/1x0" #4: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=active}
+ ipsec auto --up  road-east-ipv4-psk-ikev2
+000 initiating all conns with alias='road-east-ipv4-psk-ikev2' 
+133 "road-east-ipv4-psk-ikev2/2x0" #1: STATE_PARENT_I1: initiate
+133 "road-east-ipv4-psk-ikev2/1x0" #2: STATE_PARENT_I1: initiate
+133 "road-east-ipv4-psk-ikev2/2x0" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+133 "road-east-ipv4-psk-ikev2/1x0" #2: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "road-east-ipv4-psk-ikev2/2x0" #3: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
+134 "road-east-ipv4-psk-ikev2/1x0" #4: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
+004 "road-east-ipv4-psk-ikev2/2x0" #3: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=active}
+004 "road-east-ipv4-psk-ikev2/1x0" #4: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=active}
 road #
- ipsec auto --up  roadnet-eastnet-ipv6-psk-ikev2
-133 "roadnet-eastnet-ipv6-psk-ikev2" #5: STATE_PARENT_I1: initiate
-133 "roadnet-eastnet-ipv6-psk-ikev2" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "roadnet-eastnet-ipv6-psk-ikev2" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
-004 "roadnet-eastnet-ipv6-psk-ikev2" #6: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=active}
+ ipsec auto --up  road-east-ipv6-psk-ikev2
+133 "road-east-ipv6-psk-ikev2" #5: STATE_PARENT_I1: initiate
+133 "road-east-ipv6-psk-ikev2" #5: STATE_PARENT_I1: sent v2I1, expected v2R1
+134 "road-east-ipv6-psk-ikev2" #6: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
+004 "road-east-ipv6-psk-ikev2" #6: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=active}
 road #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
-bind: Cannot assign requested address
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+road #
+ ping6 -n -c 2 2001:db8:1:2::23
+PING 2001:db8:1:2::23(2001:db8:1:2::23) 56 data bytes
+64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
+--- 2001:db8:1:2::23 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  echo done
 done
@@ -185,12 +217,12 @@ road #
  ipsec look
 road NOW
 XFRM state:
-src 2001:db8:1:2::23 dst 2001:db8:1:3::209
+src 192.1.2.23 dst 192.1.3.209
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-src 2001:db8:1:3::209 dst 2001:db8:1:2::23
+src 192.1.3.209 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
@@ -218,15 +250,15 @@ src 192.1.3.209 dst 192.1.2.23
 XFRM policy:
 src 2001:db8:1:3::/64 dst 2001:db8:1:2::/64 
 	dir out priority 25792 ptype main 
-	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
+	tmpl src 192.1.3.209 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
 src 2001:db8:1:2::/64 dst 2001:db8:1:3::/64 
 	dir fwd priority 25792 ptype main 
-	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
+	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 2001:db8:1:2::/64 dst 2001:db8:1:3::/64 
 	dir in priority 25792 ptype main 
-	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
+	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 
@@ -276,12 +308,21 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.3.254 dev eth0 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
 192.1.3.0/24 dev eth0  proto kernel  scope link  src 192.1.3.209 
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
@@ -300,6 +341,14 @@ default via 2001:db8:1:3::254 dev eth0  metric 1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+road                                                         u,u,u
+mainca                                                       ,,   
+east                                                         P,,  
+north                                                        P,,  
+hashsha2                                                     P,,  
+east-ec                                                      P,,  
+west                                                         P,,  
+west-ec                                                      P,,  
 road #
 road #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
