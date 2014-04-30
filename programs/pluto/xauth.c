@@ -336,85 +336,27 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 	struct connection *c = st->st_connection;
 
 	*got_lease = FALSE;
-	if (!isanyaddr(&c->spd.that.client.addr)) {
-		/** assumes IPv4, and also that the mask is ignored */
+	/** assumes IPv4, and also that the mask is ignored */
 
-		if (c->pool != NULL) {
-			err_t e = lease_an_address(c, &ia->ipaddr);
+	if (c->pool != NULL) {
+		err_t e = lease_an_address(c, ia);
 
-			if (e == NULL) {
-				*got_lease = TRUE;
-			} else  {
-				libreswan_log("lease_an_address failure %s", e);
-				return FALSE;
-			}
-		} else {
-			ia->ipaddr = c->spd.that.client.addr;
+		if (e != NULL) {
+			libreswan_log("lease_an_address failure %s", e);
+			return FALSE;
 		}
+		*got_lease = TRUE;
 
-		if (!isanyaddr(&c->modecfg_dns1))
-			ia->dns[0] = c->modecfg_dns1;
-		if (!isanyaddr(&c->modecfg_dns2))
-			ia->dns[1] = c->modecfg_dns2;
-#ifdef XAUTH_HAVE_PAM
-	} else if (c->xauthby == XAUTHBY_PAM) {
-		if (c->pamh == NULL) {
-			/* Start PAM session, using 'pluto' as our PAM name */
-
-			static const struct pam_conv conv = {
-				xauth_pam_conv,
-				NULL
-			};
-			int retval = pam_start("pluto", "user", &conv, &c->pamh);
-
-			zero(ia);
-			if (retval == PAM_SUCCESS) {
-				static const char idpre[] = "ID=";
-				char buf[sizeof(idpre) - 1 + IDTOA_BUF];
-
-				strcpy(buf, idpre);
-				idtoa(&c->spd.that.id, buf + sizeof(idpre) - 1,
-					sizeof(buf) - (sizeof(idpre) - 1));
-				if (c->spd.that.id.kind == ID_DER_ASN1_DN) {
-					/* Keep only the common name, if one exists
-					 * ??? Let's hope no data contains the
-					 * string CN=!
-					 */
-					static const char cnpre[] = "CN=";
-					char *av = strstr(buf, cnpre);
-
-					if (av != NULL) {
-						char *ae;
-
-						av += sizeof(cnpre) - 1;
-						ae = strstr(av, ", ");
-
-						if (ae != NULL)
-							*ae = '\0';
-						else
-							ae = av + strlen(av);
-
-						/* because of possible overlap
-						 * we must use memmove.
-						 */
-						memmove(buf, av, ae-av + 1);
-					}
-				}
-				pam_putenv(c->pamh, buf);
-				pam_open_session(c->pamh, 0);
-			}
-		}
-		if (c->pamh != NULL) {
-			/* Paul: Could pam give these to us? */
-			/** Put IP addresses from various variables into our
-			 *  internal address struct
-			 */
-			get_addr(c->pamh, "IPADDR", &ia->ipaddr);
-			get_addr(c->pamh, "DNS1", &ia->dns[0]);
-			get_addr(c->pamh, "DNS2", &ia->dns[1]);
-		}
-#endif
+	} else if (!isanyaddr(&c->spd.that.client.addr)) {
+		ia->ipaddr = c->spd.that.client.addr;
+	} else {
+		return FALSE;
 	}
+
+	if (!isanyaddr(&c->modecfg_dns1))
+		ia->dns[0] = c->modecfg_dns1;
+	if (!isanyaddr(&c->modecfg_dns2))
+		ia->dns[1] = c->modecfg_dns2;
 
 	return TRUE;
 }
