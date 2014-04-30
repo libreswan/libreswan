@@ -2625,17 +2625,17 @@ stf_status xauth_inI0(struct msg_digest *md)
 				return STF_IGNORE;
 			}
 			DBG_log("Received Cisco XAUTH type: Generic");
-			xauth_resp |= XAUTHLELEM(attr.isaat_af_type);
+			xauth_resp |= XAUTHLELEM(XAUTH_TYPE);
 			break;
 
 		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			DBG_log("Received Cisco XAUTH username");
-			xauth_resp |= XAUTHLELEM(attr.isaat_af_type);
+			xauth_resp |= XAUTHLELEM(XAUTH_USER_NAME);
 			break;
 
 		case XAUTH_USER_PASSWORD | ISAKMP_ATTR_AF_TLV:
 			DBG_log("Received Cisco XAUTH password");
-			xauth_resp |= XAUTHLELEM(attr.isaat_af_type);
+			xauth_resp |= XAUTHLELEM(XAUTH_USER_PASSWORD);
 			break;
 
 		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
@@ -2697,8 +2697,9 @@ stf_status xauth_inI0(struct msg_digest *md)
 		});
 
 		/* sanitize what we were asked to reply to */
-		if (LDISJOINT(xauth_resp, XAUTHLELEM(XAUTH_USER_NAME) |
-				    XAUTHLELEM(XAUTH_USER_PASSWORD)))
+		if (LDISJOINT(xauth_resp,
+			XAUTHLELEM(XAUTH_USER_NAME) |
+			XAUTHLELEM(XAUTH_USER_PASSWORD)))
 		{
 			if (st->st_connection->spd.this.xauth_client) {
 				libreswan_log(
