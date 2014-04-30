@@ -77,6 +77,13 @@ size_t asn1_length(chunk_t *blob)
 	u_char n;
 	size_t len;
 
+	if (blob->len < 2)
+	{
+		DBG(DBG_PARSING, DBG_log(
+			"insufficient number of octets to parse ASN.1 length"));
+		return ASN1_INVALID_LENGTH;
+	}
+
 	/* advance from tag field on to length field */
 	blob->ptr++;
 	blob->len--;
