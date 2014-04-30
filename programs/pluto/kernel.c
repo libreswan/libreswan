@@ -1451,7 +1451,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			goto fail;
 		}
 
-		time((inbound) ? &st->st_esp.our_lastused : &st->st_esp.peer_lastused);
+		if (inbound) {
+			st->st_esp.our_lastused = now();
+		} else {
+			st->st_esp.peer_lastused = now();
+		}
 
 		DBG(DBG_KERNEL,
 		    DBG_log("added tunnel with ref=%u", said_next->ref));
@@ -3068,7 +3072,6 @@ bool get_sa_info(struct state *st, bool inbound, time_t *ago)
 	char text_said[SATOT_BUF];
 	u_int proto;
 	u_int bytes;
-	time_t now;
 	ipsec_spi_t spi;
 	const ip_address *src, *dst;
 	struct kernel_sa sa;
@@ -3103,20 +3106,18 @@ bool get_sa_info(struct state *st, bool inbound, time_t *ago)
 	if (!kernel_ops->get_sa(&sa, &bytes))
 		return FALSE;
 
-	time(&now);
-
 	if (inbound) {
 		if (bytes > st->st_esp.our_bytes) {
 			st->st_esp.our_bytes = bytes;
-			st->st_esp.our_lastused = now;
+			st->st_esp.our_lastused = now();
 		}
-		*ago = now - st->st_esp.our_lastused;
+		*ago = now() - st->st_esp.our_lastused;
 	} else {
 		if (bytes > st->st_esp.peer_bytes) {
 			st->st_esp.peer_bytes = bytes;
-			st->st_esp.peer_lastused = now;
+			st->st_esp.peer_lastused = now();
 		}
-		*ago = now - st->st_esp.peer_lastused;
+		*ago = now() - st->st_esp.peer_lastused;
 	}
 	return TRUE;
 }

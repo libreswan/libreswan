@@ -2442,7 +2442,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	pb_stream r_hdr_pbs;
 	u_char *r_hashval, *r_hash_start;
 	static time_t last_malformed;
-	time_t n = time(NULL);
+	time_t n = now();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
 
 	r_hashval = NULL;

@@ -336,7 +336,7 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 				DBG(DBG_X509,
 				    DBG_log("thisUpdate is not newer - existing crl not replaced"));
 				free_crl(crl);
-				return oldcrl->nextUpdate - time(NULL) > 2 *
+				return oldcrl->nextUpdate - now() > 2 *
 				       crl_check_interval;
 			}
 		}
@@ -348,7 +348,7 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 		unlock_crl_list("insert_crl");
 
 		/* is the fetched crl valid? */
-		return crl->nextUpdate - time(NULL) > 2 * crl_check_interval;
+		return crl->nextUpdate - now() > 2 * crl_check_interval;
 	} else {
 		loglog(RC_LOG_SERIOUS, "  error in X.509 crl %s",
 		       (char *)crl_uri.ptr);
@@ -482,7 +482,7 @@ static bool verify_by_crl(/*const*/ x509cert_t *cert, bool strict,
 							    cert->serialNumber);
 
 			/* is the crl still valid? */
-			expired_crl = time(NULL) > crl->nextUpdate;
+			expired_crl = now() > crl->nextUpdate;
 
 			unlock_crl_list("verify_by_crl");
 
@@ -529,13 +529,12 @@ static bool verify_by_crl(/*const*/ x509cert_t *cert, bool strict,
 void check_crls(void)
 {
 	x509crl_t *crl;
-	time_t current_time = time(NULL);
 
 	lock_crl_list("check_crls");
 	crl = x509crls;
 
 	while (crl != NULL) {
-		time_t time_left = crl->nextUpdate - current_time;
+		time_t time_left = crl->nextUpdate - now();
 		char buf[ASN1_BUF_LEN];
 
 		DBG(DBG_X509, {
@@ -662,11 +661,6 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 				u_char auth_flags,
 				bool utc)
 {
-	time_t tnow;
-
-	/* determine the current time */
-	time(&tnow);
-
 	whack_log(RC_COMMENT, " ");
 	whack_log(RC_COMMENT, "List of X.509 %s Certificates:", caption);
 
@@ -706,7 +700,7 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 				  timetoa(&cert->notBefore, utc, tbuf,
 					  sizeof(tbuf)),
 				  (cert->notBefore <
-				   tnow) ? "ok" : "fatal (not valid yet)");
+				   now()) ? "ok" : "fatal (not valid yet)");
 			whack_log(RC_COMMENT,
 				  "                 not after  %s %s",
 				  timetoa(&cert->notAfter, utc, tbuf,

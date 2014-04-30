@@ -463,7 +463,7 @@ static void *fetch_thread(void *arg UNUSED)
 		int status;
 
 		wait_interval.tv_nsec = 0;
-		wait_interval.tv_sec = time(NULL) + crl_check_interval;
+		wait_interval.tv_sec = now() + crl_check_interval;
 
 		DBG(DBG_CONTROL,
 		    DBG_log("next regular crl check in %ld seconds",
@@ -596,7 +596,7 @@ void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 	*req = empty_fetch_req;
 
 	/* note current time */
-	req->installed = time(NULL);
+	req->installed = now();
 
 	/* clone issuer */
 	clonetochunk(req->issuer, issuer.ptr, issuer.len, "issuer dn");

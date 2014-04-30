@@ -18,7 +18,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <dirent.h>
-#include <time.h>
+#include "lswtime.h"
 #include <sys/types.h>
 
 #include <libreswan.h>
@@ -49,14 +49,11 @@ bool all_zero(const unsigned char *m, size_t len)
 const char *check_expiry(time_t expiration_date, int warning_interval,
 			bool strict)
 {
-	time_t tnow;
+	time_t tnow = now();
 	int time_left;
 
 	if (expiration_date == UNDEFINED_TIME)
 		return "ok (expires never)";
-
-	/* determine the current time */
-	time(&tnow);
 
 	time_left = (expiration_date - tnow);
 	if (time_left < 0)
