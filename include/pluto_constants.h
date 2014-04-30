@@ -788,10 +788,10 @@ enum dns_auth_level {
  * private key types for keys.h
  */
 enum PrivateKeyKind {
+	/* start at one so accidental 0 will not match */
 	PPK_PSK = 1,
-	/* PPK_DSS, */	/* not implemented */
-	PPK_RSA = 3,
-	PPK_XAUTH=4,
+	PPK_RSA,
+	PPK_XAUTH,
 };
 
 #define XAUTH_PROMPT_TRIES 3
