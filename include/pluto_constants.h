@@ -98,10 +98,10 @@ enum event_type {
 	EVENT_PENDING_DDNS,             /* try to start connections where DNS failed at init */
 };
 
-#define EVENT_REINIT_SECRET_DELAY               3600    /* 1 hour */
-#define EVENT_CRYPTO_FAILED_DELAY               300
+#define EVENT_REINIT_SECRET_DELAY               time_t_hour
+#define EVENT_CRYPTO_FAILED_DELAY               (5 * time_t_minute)
 #define EVENT_RETRANSMIT_DELAY_0                10      /* 10 seconds */
-#define EVENT_GIVEUP_ON_DNS_DELAY               300     /* 5 minutes for DNS */
+#define EVENT_GIVEUP_ON_DNS_DELAY               (5 * time_t_minute)
 
 /*
  * operational importance of this cryptographic operation.
@@ -700,6 +700,7 @@ enum sa_policy_bits {
 
 /* for each IPsec attribute, which enum_names describes its values? */
 
+#if 0	/*???? THIS IS DUPLICATED FROM include/ieft_constants.h.  WHY? */
 /* SA Lifetime Type attribute
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
  * Default time specified in 4.5
@@ -717,19 +718,22 @@ enum sa_policy_bits {
 #define SA_LIFE_TYPE_SECONDS   1
 #define SA_LIFE_TYPE_KBYTES    2
 
-#define SA_LIFE_DURATION_DEFAULT    28800       /* eight hours (RFC2407 4.5) */
-#define PLUTO_SA_LIFE_DURATION_DEFAULT    28800 /* eight hours (pluto(8)) */
-#define SA_LIFE_DURATION_MAXIMUM    86400       /* one day */
+#define SA_LIFE_DURATION_DEFAULT (8 * time_t_hour) /* RFC2407 4.5 */
+#define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * time_t_hour) /* pluto(8) */
+#define SA_LIFE_DURATION_MAXIMUM time_t_day
 
-#define SA_REPLACEMENT_MARGIN_DEFAULT       540 /* (IPSEC & IKE) nine minutes */
+#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * time_t_minute) /* IPSEC & IKE */
 #define SA_REPLACEMENT_FUZZ_DEFAULT         100 /* (IPSEC & IKE) 100% of MARGIN */
 #define SA_REPLACEMENT_RETRIES_DEFAULT      0   /*  (IPSEC & IKE) */
 
 #define SA_LIFE_DURATION_K_DEFAULT  0xFFFFFFFFlu
 
+#endif
+
+#if 0	/*???? THIS IS DUPLICATED FROM include/ieft_constants.h.  WHY? */
 /* Oakley Lifetime Type attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
- * As far as I can see, there is not specification for
+ * As far as I can see, there is no specification for
  * OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT.  This could lead to interop problems!
  * For no particular reason, we chose one hour.
  * The value of OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM is our local policy.
@@ -738,8 +742,10 @@ enum sa_policy_bits {
 #define OAKLEY_LIFE_SECONDS   1
 #define OAKLEY_LIFE_KILOBYTES 2
 
-#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT 3600          /* one hour */
-#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM 86400         /* 1 day */
+#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT time_t_hour
+#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM time_t_day
+
+#endif
 
 enum pubkey_source {
 	PUBKEY_NOTSET       = 0,

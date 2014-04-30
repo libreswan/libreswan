@@ -862,13 +862,13 @@ void daily_log_event(void)
 
 	/* attempt to schedule oneself to midnight, local time
 	 * do this by getting seconds in the day, and delaying
-	 * by 86400 - hour*3600+minutes*60+seconds.
+	 * by time_t_day - hour*3600+minutes*60+seconds.
 	 */
 	ltime = localtime_r(&n, &tm1);
-	interval = (24 * 60 * 60) -
+	interval = time_t_day -
 		   (ltime->tm_sec +
-		    ltime->tm_min  * 60 +
-		    ltime->tm_hour * 3600);
+		    ltime->tm_min  * time_t_minute +
+		    ltime->tm_hour * time_t_hour);
 
 	event_schedule(EVENT_LOG_DAILY, interval, NULL);
 

@@ -866,11 +866,11 @@ enum ikev1_ipsec_attr {
 #define SA_LIFE_TYPE_SECONDS 1
 #define SA_LIFE_TYPE_KBYTES 2
 
-#define SA_LIFE_DURATION_DEFAULT 28800 /* eight hours (RFC2407 4.5) */
-#define PLUTO_SA_LIFE_DURATION_DEFAULT 28800 /* eight hours (pluto(8)) */
-#define SA_LIFE_DURATION_MAXIMUM 86400 /* one day */
+#define SA_LIFE_DURATION_DEFAULT (8 * time_t_hour) /* RFC2407 4.5 */
+#define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * time_t_hour) /* pluto(8) */
+#define SA_LIFE_DURATION_MAXIMUM time_t_day
 
-#define SA_REPLACEMENT_MARGIN_DEFAULT 540 /* (IPSEC & IKE) nine minutes */
+#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * time_t_minute) /* IPSEC & IKE */
 #define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
 #define SA_REPLACEMENT_RETRIES_DEFAULT 0 /* (IPSEC & IKE) */
 
@@ -915,7 +915,7 @@ typedef u_int16_t ipsec_auth_t;
 /*
  * Oakley Lifetime Type attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
- * As far as I can see, there is not specification for
+ * As far as I can see, there is no specification for
  * OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT. This could lead to interop problems!
  * For no particular reason, we chose one hour.
  * The value of OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM is our local policy.
@@ -924,8 +924,8 @@ typedef u_int16_t ipsec_auth_t;
 #define OAKLEY_LIFE_SECONDS 1
 #define OAKLEY_LIFE_KILOBYTES 2
 
-#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT 3600 /* one hour */
-#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM 86400 /* 1 day */
+#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT time_t_hour
+#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM time_t_day
 
 /*
  * Oakley PRF attribute (none defined)
