@@ -97,9 +97,6 @@ static int perpeer_count = 0;
 /* what to put in front of debug output */
 static const char debug_prefix = '|';
 
-/* set if we wrote something since last log_mark_time() */
-static bool log_did_something = TRUE;
-
 /*
  * used in some messages to distiguish
  * which pluto is which, when doing unit testing
@@ -417,8 +414,6 @@ int libreswan_log(const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
-	log_did_something = TRUE;
-
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
@@ -455,8 +450,6 @@ void loglog(int mess_no, const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
-	log_did_something = TRUE;
-
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
@@ -490,8 +483,6 @@ void libreswan_log_errno_routine(int e, const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
-	log_did_something = TRUE;
-
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
 			"ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
@@ -512,8 +503,6 @@ void exit_log(const char *message, ...)
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
-
-	log_did_something = TRUE;
 
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -536,8 +525,6 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
-
-	log_did_something = TRUE;
 
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -873,31 +860,6 @@ void daily_log_event(void)
 	event_schedule(EVENT_LOG_DAILY, interval, NULL);
 
 	daily_log_reset();
-}
-
-/*
- * Log the time before handling the next event.
- * But:
- * - only if we are logging to stderr or pluto_log_file
- *   (where each message already has a timestamp)
- * - and only if we haven't logged the time in the last 60 seconds.
- */
-void log_mark_time(void)
-{
-	if ((log_to_stderr || pluto_log_fp != NULL) &&
-	    log_did_something) {
-		static time_t lastn = 0;
-		time_t n;
-
-		time(&n);
-
-		log_did_something = FALSE;
-		if (n - lastn > 60) {
-			lastn = n;
-			DBG_log("time is %s (%lu)", ctime(
-					&n), (unsigned long)n);
-		}
-	}
 }
 
 /*
