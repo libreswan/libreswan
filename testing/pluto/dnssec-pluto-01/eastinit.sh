@@ -1,5 +1,4 @@
 /testing/guestbin/swan-prep
-ipsec _stackmanager start 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/hosts

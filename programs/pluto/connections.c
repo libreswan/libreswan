@@ -257,7 +257,7 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-	if (c->kind != CK_GOING_AWAY)
+	if (c->pool != NULL)
 		unreference_addresspool(c);
 
 	/* free up any logging resources */
@@ -752,6 +752,8 @@ static void unshare_connection_strings(struct connection *c)
 	if (c->alg_info_esp) {
 		alg_info_addref(ESPTOINFO(c->alg_info_esp));
 	}
+	if (c->pool !=  NULL) 
+		reference_addresspool(c->pool);
 }
 
 static void load_end_certificate(const char *filename, struct end *dst)
@@ -773,7 +775,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 
 	{
 		/* load cert from file */
-		bool valid_cert = load_cert_from_nss(filename, TRUE,
+		bool valid_cert = load_cert_from_nss(filename,
 						"host cert", &cert);
 		if (!valid_cert) {
 			whack_log(RC_FATAL,

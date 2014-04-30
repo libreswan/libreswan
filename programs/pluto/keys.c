@@ -83,13 +83,7 @@ static struct secret *pluto_secrets = NULL;
 
 void load_preshared_secrets()
 {
-	lsw_load_preshared_secrets(&pluto_secrets
-#ifdef SINGLE_CONF_DIR
-				   , FALSE /* to much log noise in a shared directory mode */
-#else
-				   , TRUE
-#endif
-				   , pluto_shared_secrets_file);
+	lsw_load_preshared_secrets(&pluto_secrets , pluto_shared_secrets_file);
 }
 
 void free_preshared_secrets(void)
@@ -455,7 +449,6 @@ stf_status RSA_check_signature_gen(struct state *st,
 			    same_id(&c->spd.that.id, &key->id) &&
 			    trusted_ca(key->issuer, c->spd.that.ca,
 				       &pathlen)) {
-				time_t tnow;
 
 				DBG(DBG_CONTROL, {
 					    char buf[IDTOA_BUF];
@@ -466,9 +459,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    });
 
 				/* check if found public key has expired */
-				time(&tnow);
 				if (key->until_time != UNDEFINED_TIME &&
-				    key->until_time < tnow) {
+				    key->until_time < now()) {
 					loglog(RC_LOG_SERIOUS,
 					       "cached RSA public key has expired and has been deleted");
 					*pp = free_public_keyentry(p);

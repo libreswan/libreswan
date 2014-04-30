@@ -514,15 +514,6 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 				cert_t cert;
 
 				if (load_cert(filelist[n]->d_name,
-#ifdef SINGLE_CONF_DIR
-						/*
-						 * too verbose in
-						 * single conf dir
-						 */
-						FALSE,
-#else
-						TRUE,
-#endif
 						type, &cert))
 					add_authcert(cert.u.x509, auth_flags);
 

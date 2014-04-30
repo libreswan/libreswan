@@ -106,6 +106,8 @@ static struct hash_desc ikev2_natd_hasher =
 	.hash_final = (void (*)(u_char *, void *))SHA1Final,
 };
 
+#define IKEV2_NATD_HASH_SIZE	SHA1_DIGEST_SIZE
+
 void init_nat_traversal(unsigned int keep_alive_period)
 {
 	{
@@ -131,7 +133,8 @@ void init_nat_traversal(unsigned int keep_alive_period)
 
 static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 		const u_int8_t *icookie, const u_int8_t *rcookie,
-		const ip_address *ip, u_int16_t port)
+		const ip_address *ip,
+		u_int16_t port /* host order */)
 {
 	union hash_ctx ctx;
 
@@ -162,7 +165,11 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 				sizeof(ip->u.v6.sin6_addr.s6_addr));
 		break;
 	}
-	hasher->hash_update(&ctx, (const u_char *)&port, sizeof(u_int16_t));
+	{
+		u_int16_t netorder_port = htons(port);
+
+		hasher->hash_update(&ctx, (const u_char *)&netorder_port, sizeof(netorder_port));
+	}
 	hasher->hash_final(hash, &ctx);
 	DBG(DBG_NATT, {
 			DBG_log("natd_hash: hasher=%p(%d)", hasher,
@@ -176,7 +183,7 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 					sizeof(ip->u.v4.sin_addr.s_addr));
 				break;
 			}
-			DBG_log("natd_hash: port=%d", ntohs(port));
+			DBG_log("natd_hash: port=%d", port);
 			DBG_dump("natd_hash: hash=", hash,
 				hasher->hash_digest_len);
 		});
@@ -187,55 +194,41 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
  */
 bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 {
-	bool r = TRUE;
-	const ip_address *first, *second;
-	unsigned short firstport, secondport;
 	struct state *st = md->st;
-	chunk_t hash_me;
-	chunk_t hash_him;
+
+	unsigned char hb[IKEV2_NATD_HASH_SIZE];
+	chunk_t hch = { hb, sizeof(hb) };
 
 	DBG(DBG_NATT,
 		DBG_log(" NAT-Traversal support %s add v2N payloads.",
 			nat_traversal_enabled ? " [enabled]" : " [disabled]"));
 
-	first = &st->st_localaddr;
-	firstport = ntohs(st->st_localport);
-	second = &st->st_remoteaddr;
-	secondport = ntohs(st->st_remoteport);
-
 	/*
-	 *  First one with sender IP & port
+	 *  First: one with local (source) IP & port
 	 */
-	hash_me.ptr = alloc_thing(SHA1_DIGEST_SIZE ,"nat-t hash me");
-	hash_me.len = SHA1_DIGEST_SIZE;
-	natd_hash(&ikev2_natd_hasher, hash_me.ptr, st->st_icookie,
+	natd_hash(&ikev2_natd_hasher, hb, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ?
-		md->hdr.isa_rcookie : st->st_rcookie,
-		first, firstport);
+			md->hdr.isa_rcookie : st->st_rcookie,
+		&st->st_localaddr, st->st_localport);
 
-	chunk_t child_spi;
-	memset(&child_spi, 0, sizeof(child_spi));
-
-	ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
-		/* PROTO_ISAKMP */ 0,
-		&child_spi, v2N_NAT_DETECTION_SOURCE_IP,
-		&hash_me, outs);
-
+	/* In v2, for parent, protoid must be 0 and SPI must be empty */
+	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
+		0 /* protoid */, &empty_chunk,
+		v2N_NAT_DETECTION_SOURCE_IP, &hch, outs))
+		return FALSE;
 	/*
-	 * Second one with my IP & port
+	 * Second: one with remote (destination) IP & port
 	 */
-	hash_him.ptr = alloc_thing(SHA1_DIGEST_SIZE ,"nat-t hash him");
-	hash_him.len = SHA1_DIGEST_SIZE;
-	natd_hash(&ikev2_natd_hasher, hash_him.ptr, st->st_icookie,
+	natd_hash(&ikev2_natd_hasher, hb, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
-		st->st_rcookie, second, secondport);
+		st->st_rcookie, &st->st_remoteaddr, st->st_remoteport);
 
-	ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL, /* PROTO_ISAKMP */ 0,
-		&child_spi, v2N_NAT_DETECTION_DESTINATION_IP,
-		&hash_him, outs);
-	pfree(hash_me.ptr);
-	pfree(hash_him.ptr);
-	return r;
+	/* In v2, for parent, protoid must be 0 and SPI must be empty */
+	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+		0 /* protoid */, &empty_chunk,
+		v2N_NAT_DETECTION_DESTINATION_IP, &hch, outs))
+		return FALSE;
+	return TRUE;
 }
 
 /*
@@ -346,13 +339,13 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 	 * First one with my IP & port
 	 */
 	natd_hash(st->st_oakley.prf_hasher, hash_me, st->st_icookie,
-		st->st_rcookie, &(md->iface->ip_addr), ntohs(md->iface->port));
+		st->st_rcookie, &(md->iface->ip_addr), md->iface->port);
 
 	/*
 	 * The others with sender IP & port
 	 */
 	natd_hash(st->st_oakley.prf_hasher, hash_him, st->st_icookie,
-		st->st_rcookie, &(md->sender), ntohs(md->sender_port));
+		st->st_rcookie, &(md->sender), md->sender_port);
 
 	for (p = md->chain[ISAKMP_NEXT_NATD_RFC], i = 0;
 		p != NULL && (!found_me || !found_him);
@@ -376,9 +369,8 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 
 		if (pbs_left(&p->pbs) ==
 			st->st_oakley.prf_hasher->hash_digest_len &&
-			memcmp(p->pbs.cur, hash_him,
-				st->st_oakley.prf_hasher->hash_digest_len) ==
-			0)
+			memeq(p->pbs.cur, hash_him,
+				st->st_oakley.prf_hasher->hash_digest_len))
 			found_him = TRUE;
 
 		i++;
@@ -438,10 +430,11 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	out_modify_previous_np(nat_np, outs);
 
-	first      = &(md->sender);
-	firstport  = ntohs(st->st_remoteport);
-	second     = &(md->iface->ip_addr);
-	secondport = ntohs(st->st_localport);
+	first = &(md->sender);
+	firstport = st->st_remoteport;
+
+	second = &(md->iface->ip_addr);
+	secondport = st->st_localport;
 
 	if (0) {
 		const ip_address *t;
@@ -480,6 +473,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 	natd_hash(st->st_oakley.prf_hasher, hash,
 		st->st_icookie, is_zero_cookie(st->st_rcookie) ?
 		md->hdr.isa_rcookie : st->st_rcookie, second, secondport);
+
 	return out_generic_raw(np, &isakmp_nat_d, outs,
 			hash, st->st_oakley.prf_hasher->hash_digest_len,
 			"NAT-D");
@@ -1166,13 +1160,12 @@ void show_setup_natt()
 
 void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 {
-	unsigned char hash_me[SHA1_DIGEST_SIZE];
-	unsigned char hash_him[SHA1_DIGEST_SIZE];
+	unsigned char hash_me[IKEV2_NATD_HASH_SIZE];
+	unsigned char hash_him[IKEV2_NATD_HASH_SIZE];
 	struct payload_digest *p;
 	struct state *st = md->st;
 	bool found_me = FALSE;
 	bool found_him = FALSE;
-	int i;
 
 	passert(st);
 	passert(md->iface);
@@ -1181,50 +1174,36 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	 * First one with my IP & port
 	 */
 	natd_hash(&ikev2_natd_hasher, hash_me, st->st_icookie, rcookie,
-		&(md->iface->ip_addr), ntohs(md->iface->port));
+		&(md->iface->ip_addr), md->iface->port);
 
 	/*
 	 * The others with sender IP & port
 	 */
 	natd_hash(&ikev2_natd_hasher, hash_him, st->st_icookie, rcookie,
-		&(md->sender), ntohs(md->sender_port));
+		&(md->sender), md->sender_port);
 
-	for (p = md->chain[ISAKMP_NEXT_v2N], i = 0;
-		p != NULL && (!found_me || !found_him);
-		p = p->next) {
-		if ((p->payload.v2n.isan_type !=  v2N_NAT_DETECTION_SOURCE_IP)
-			&& (p->payload.v2n.isan_type !=
-				v2N_NAT_DETECTION_DESTINATION_IP))
+	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
+		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)
 			continue;
 
-		DBG(DBG_NATT, {
-				DBG_log("comparing received %s",
-					enum_name(&ikev2_notify_names,
-						p->payload.v2n.isan_type));
-				DBG_dump("received hash:",
-					p->pbs.cur,
-					pbs_left(&p->pbs));
-
-				DBG_dump("expected NAT-D(me):", hash_me,
-					SHA1_DIGEST_SIZE);
-				DBG_dump("expected NAT-D(him):", hash_him,
-					SHA1_DIGEST_SIZE);
-				});
-
-		if ( (pbs_left(&p->pbs) == SHA1_DIGEST_SIZE) &&
-				(memcmp(p->pbs.cur, hash_me, SHA1_DIGEST_SIZE)== 0))
-			found_me = TRUE;
-
-		if ( (pbs_left(&p->pbs) == SHA1_DIGEST_SIZE) &&
-				(memcmp(p->pbs.cur, hash_him, SHA1_DIGEST_SIZE)== 0))
-			found_him = TRUE;
-
-		i++;
+		switch (p->payload.v2n.isan_type) {
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+		case v2N_NAT_DETECTION_SOURCE_IP:
+			/* ??? do we know from the isan_type which of these to test? */
+			if (memeq(p->pbs.cur, hash_me, sizeof(hash_me)))
+				found_me = TRUE;
+			if (memeq(p->pbs.cur, hash_him, sizeof(hash_him)))
+				found_him = TRUE;
+			break;
+		default:
+			continue;
+		}
+		if (found_me && found_him)
+			break;
 	}
 
-	DBG(DBG_NATT,
-		DBG_log("NAT_TRAVERSAL hash=%d (me:%d) (him:%d)",
-			i, found_me, found_him));
+	zero(&st->hidden_variables.st_natd);
+	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
 	if (!found_me) {
 		DBG(DBG_NATT,
@@ -1234,17 +1213,13 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 		st->hidden_variables.st_natd = md->sender;
 	}
 
-	memset(&st->hidden_variables.st_natd, 0,
-		sizeof(st->hidden_variables.st_natd));
-	anyaddr(AF_INET, &st->hidden_variables.st_natd);
-
 	if (!found_him) {
-		st->hidden_variables.st_nat_traversal |=
-			LELEM(NAT_TRAVERSAL_NAT_BHND_PEER);
-		st->hidden_variables.st_natd = md->sender;
 		DBG(DBG_NATT,
 			DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
 				ip_str(&md->sender)));
+		st->hidden_variables.st_nat_traversal |=
+			LELEM(NAT_TRAVERSAL_NAT_BHND_PEER);
+		st->hidden_variables.st_natd = md->sender;
 	}
 
 	if (st->st_connection->forceencaps) {
@@ -1252,8 +1227,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 			DBG_log("NAT_TRAVERSAL forceencaps enabled"));
 
 		st->hidden_variables.st_nat_traversal |=
-			LELEM(NAT_TRAVERSAL_NAT_BHND_PEER);
-		st->hidden_variables.st_nat_traversal |=
+			LELEM(NAT_TRAVERSAL_NAT_BHND_PEER) |
 			LELEM(NAT_TRAVERSAL_NAT_BHND_ME);
 		st->hidden_variables.st_natd = md->sender;
 	}
@@ -1268,7 +1242,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 			& NAT_T_DETECTED)) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: floating to port %s:%d",
-				ip_str(&md->sender),pluto_nat_port));
+				ip_str(&md->sender), pluto_nat_port));
 		st->st_localport  = pluto_nat_port;
 		st->st_remoteport = pluto_nat_port;
 

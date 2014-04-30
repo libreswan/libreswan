@@ -33,6 +33,7 @@
 #include "lswconf.h"
 #include "constants.h"
 #include "lswlog.h"
+#include "lswtime.h"
 #include "id.h"
 #include "asn1.h"
 #include "oid.h"
@@ -300,10 +301,9 @@ bool trust_authcert_candidate(const x509cert_t *cert,
  */
 err_t check_validity(const x509cert_t *cert, time_t *until)
 {
-	time_t current_time;
 	char curtime[TIMETOA_BUF];
+	time_t current_time = now();
 
-	time(&current_time);
 	timetoa(&current_time, TRUE, curtime, sizeof(curtime));
 
 	DBG(DBG_X509,

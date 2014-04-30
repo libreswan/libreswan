@@ -62,13 +62,6 @@
 
 #include <libreswan.h>
 
-/* GCC magic! */
-#ifdef GCC_LINT
-#define UNUSED __attribute__ ((unused))
-#else
-#define UNUSED	/* ignore */
-#endif
-
 #include "constants.h"
 #include "adns.h"	/* needs <resolv.h> */
 #include "lsw_select.h"

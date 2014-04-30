@@ -74,7 +74,7 @@ def connect_to_kvm(args, prompt = ''):
     # don't match full prompt, we want it to work regardless cwd
 
     done = 0
-    tries = 40
+    tries = 60
     print "Waiting on %s login: or %s prompt"%(args.hostname, prompt)
     while not done and tries != 0:
       try:

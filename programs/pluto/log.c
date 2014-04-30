@@ -391,10 +391,9 @@ static void peerlog(const char *prefix, const char *m)
 	/* despite our attempts above, we may not be able to open the file. */
 	if (cur_connection->log_file != NULL) {
 		char datebuf[32];
-		time_t n;
 		struct tm tm1, *t;
+		time_t n = now();
 
-		time(&n);
 		t = localtime_r(&n, &tm1);
 
 		strftime(datebuf, sizeof(datebuf), "%Y-%m-%d %T", t);
@@ -424,9 +423,8 @@ int libreswan_log(const char *message, ...)
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
-			time_t rtime;
+			time_t rtime = now();
 
-			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
 			fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -463,9 +461,8 @@ void loglog(int mess_no, const char *message, ...)
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
-			time_t rtime;
+			time_t rtime = now();
 
-			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
 			fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -723,9 +720,8 @@ int DBG_log(const char *message, ...)
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
-			time_t rtime;
+			time_t rtime = now();
 
-			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
 			fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -861,13 +857,13 @@ void daily_log_reset(void)
 void daily_log_event(void)
 {
 	struct tm tm1, *ltime;
-	time_t n, interval;
+	time_t interval;
+	time_t n = now();
 
 	/* attempt to schedule oneself to midnight, local time
 	 * do this by getting seconds in the day, and delaying
 	 * by 86400 - hour*3600+minutes*60+seconds.
 	 */
-	time(&n);
 	ltime = localtime_r(&n, &tm1);
 	interval = (24 * 60 * 60) -
 		   (ltime->tm_sec +

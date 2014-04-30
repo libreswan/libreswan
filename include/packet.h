@@ -95,23 +95,23 @@ extern void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
 		     const char *name);
 
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
-		      pb_stream *ins, pb_stream *obj_pbs);
-extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name);
+		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
+extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MUST_USE_RESULT;
 
 extern bool out_struct(const void *struct_ptr, struct_desc *sd,
-		       pb_stream *outs, pb_stream *obj_pbs);
+		       pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
 extern bool out_generic(u_int8_t np, struct_desc *sd,
-			pb_stream *outs, pb_stream *obj_pbs);
+			pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
 extern bool out_generic_raw(u_int8_t np, struct_desc *sd,
 			    pb_stream *outs, const void *bytes, size_t len,
-			    const char *name);
+			    const char *name) MUST_USE_RESULT;
 extern void out_modify_previous_np(u_int8_t np, pb_stream *outs);
 
 #define out_generic_chunk(np, sd, outs, ch, name) \
-	out_generic_raw(np, sd, outs, (ch).ptr, (ch).len, name)
-extern bool out_zero(size_t len, pb_stream *outs, const char *name);
+	out_generic_raw((np), (sd), (outs), (ch).ptr, (ch).len, (name))
+extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
-		    const char *name);
+		    const char *name) MUST_USE_RESULT;
 #define out_chunk(ch, outs, name) out_raw((ch).ptr, (ch).len, (outs), (name))
 extern void close_output_pbs(pb_stream *pbs);
 

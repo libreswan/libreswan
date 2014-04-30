@@ -103,14 +103,13 @@
 # include <libaudit.h>
 #endif
 
-const char *ctlbase = "/var/run/pluto";
+static const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 static bool fork_desired = TRUE;
 
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
-static char *pluto_vendorid;
 static int nhelpers = -1;
 
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
@@ -121,7 +120,7 @@ static void free_pluto_main()
 	pfree(coredir);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
-	pfreeany(pluto_vendorid);
+	pfree(pluto_vendorid);
 }
 
 /*
@@ -440,6 +439,7 @@ int main(int argc, char **argv)
 	}
 
 	coredir = clone_str("/var/run/pluto", "coredir in main()");
+	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 
 	/* set up initial defaults that need a cast */
 	pluto_shared_secrets_file =
@@ -519,6 +519,7 @@ int main(int argc, char **argv)
 			{ "secctx_attr_value", required_argument, NULL, 'w' },	/* obsolete _ */
 			{ "secctx-attr-value", required_argument, NULL, 'w' },
 #endif
+			{ "vendorid", required_argument, NULL, 'V' }, /* --vendorid */
 			{ "debug-none", no_argument, NULL, 'N' },
 			{ "debug-all", no_argument, NULL, 'A' },
 
@@ -620,9 +621,11 @@ int main(int argc, char **argv)
 
 		case 'X':	/* --leak-detective */
 			/*
-			 * Was already enabled at the start of main() because
-			 * we need to enable it before the first alloc()
-			 * We just need to eat the option here
+			 * Was already processed at the start of main()
+			 * because we need to potentially enable it before
+			 * the first alloc()
+			 * If this option is specfied, we must have already
+			 * set it at the start of main(), so assert it.
 			 */
 			passert(leak_detective);
 			continue;
@@ -630,6 +633,11 @@ int main(int argc, char **argv)
 		case 'C':	/* --coredir */
 			pfree(coredir);
 			coredir = clone_str(optarg, "coredir via getopt");
+			continue;
+
+		case 'V':	/* --vendorid */
+			pfree(pluto_vendorid);
+			coredir = clone_str(optarg, "pluto_vendorid via getopt");
 			continue;
 
 		case 'S':	/* --statsdir */
@@ -939,8 +947,12 @@ int main(int argc, char **argv)
 						"coredir via --config");
 			}
 			/* --vendorid */
-			set_cfg_string(&pluto_vendorid,
-				cfg->setup.strings[KSF_MYVENDORID]);
+			if(cfg->setup.strings[KSF_MYVENDORID]) {
+				pfree(pluto_vendorid);
+				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
+						"pluto_vendorid via --config");
+			}
+
 			/* no config option: pluto_adns_option */
 
 			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
@@ -1445,7 +1457,7 @@ void show_setup_plutomain()
 
 	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s",
 		ipsec_version_code(),
-		ipsec_version_vendorid());
+		pluto_vendorid);
 
         whack_log(RC_COMMENT,
 		"nhelpers=%d, uniqueids=%s, retransmits=%s, force-busy=%s",

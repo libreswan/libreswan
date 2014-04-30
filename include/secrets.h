@@ -157,7 +157,6 @@ extern void install_public_key(struct pubkey *pk, struct pubkey_list **head);
 extern void free_public_key(struct pubkey *pk);
 
 extern void lsw_load_preshared_secrets(struct secret **psecrets,
-				       int verbose,
 				       const char *secrets_file);
 extern void lsw_free_preshared_secrets(struct secret **psecrets);
 

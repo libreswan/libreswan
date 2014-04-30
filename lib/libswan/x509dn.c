@@ -506,9 +506,12 @@ static err_t init_rdn(chunk_t dn, chunk_t *rdn, chunk_t *attribute, bool *next)
 /*
  * Fetches the next RDN in a DN
  */
-static err_t get_next_rdn(chunk_t *rdn, chunk_t * attribute, chunk_t *oid,
-			chunk_t *value,
-			asn1_t *type, bool *next)
+static err_t get_next_rdn(chunk_t *rdn,
+	chunk_t *attribute, /* output */
+	chunk_t *oid /* output */,
+	chunk_t *value,	/* output */
+	asn1_t *type,	/* output */
+	bool *next) /* output */
 {
 	chunk_t body;
 
@@ -524,7 +527,7 @@ static err_t get_next_rdn(chunk_t *rdn, chunk_t * attribute, chunk_t *oid,
 
 		attribute->len = asn1_length(rdn);
 
-		if (attribute->len == ASN1_INVALID_LENGTH)
+		if (attribute->len < 1 || attribute->len == ASN1_INVALID_LENGTH)
 			return "Invalid attribute length";
 
 		attribute->ptr = rdn->ptr;
@@ -541,7 +544,7 @@ static err_t get_next_rdn(chunk_t *rdn, chunk_t * attribute, chunk_t *oid,
 	/* extract the attribute body */
 	body.len = asn1_length(attribute);
 
-	if (body.len == ASN1_INVALID_LENGTH)
+	if (body.len < 1 || body.len == ASN1_INVALID_LENGTH)
 		return "Invalid attribute body length";
 
 	body.ptr = attribute->ptr;
@@ -567,6 +570,8 @@ static err_t get_next_rdn(chunk_t *rdn, chunk_t * attribute, chunk_t *oid,
 	body.len -= oid->len;
 
 	/* extract string type */
+	if (body.len < 2)
+	    return "Invalid value in RDN";
 	*type = *body.ptr;
 
 	/* extract string value */
@@ -1443,7 +1448,7 @@ static bool decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 
 	default:
 		loglog(RC_LOG_SERIOUS,
-			"decrypt_sig: RSA Signature FAILED verification - OID RSA algorithm '%d' not supported", alg);
+			"decrypt_sig: Unknown algorithm - pluto OID code '%d' not supported", alg);
 		digest->len = 0;
 		return FALSE;
 	}

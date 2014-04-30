@@ -22,10 +22,14 @@
 
 #include <gmp.h>    /* GNU MP library */
 
-#include "sha1.h"
+#ifdef USE_MD5
 #include "md5.h"
+#endif
+#ifdef USE_SHA1
+#include "sha1.h"
+#endif
 #ifdef USE_SHA2
-#include "libsha2/sha2.h"
+#include "sha2.h"
 #endif
 
 #include <nss.h>

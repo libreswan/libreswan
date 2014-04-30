@@ -489,6 +489,11 @@ kvmplutotest	ikev2-12-transport-psk			good
 kvmplutotest	ikev2-13-ah				good
 kvmplutotest	ikev2-14-missing-ke			good
 kvmplutotest	ikev2-15-fuzzer				good
+kvmplutotest	ikev2-17-rekey				good
+
+kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
+kvmplutotest	ikev2-04-basic-x509-nhelpers0		good
+kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
