@@ -61,21 +61,21 @@ const char *check_expiry(time_t expiration_date, int warning_interval,
 	if (time_left < 0)
 		return strict ? "fatal (expired)" : "warning (expired)";
 
-	if (time_left > time_t_day * warning_interval)
+	if (time_left > secs_per_day * warning_interval)
 		return "ok";
 
 	{
 		static char buf[35]; /* temporary storage */
 		const char *unit = "second";
 
-		if (time_left > 2 * time_t_day) {
-			time_left /= time_t_day;
+		if (time_left > 2 * secs_per_day) {
+			time_left /= secs_per_day;
 			unit = "day";
-		} else if (time_left > 2 * time_t_hour) {
-			time_left /= time_t_hour;
+		} else if (time_left > 2 * secs_per_hour) {
+			time_left /= secs_per_hour;
 			unit = "hour";
-		} else if (time_left > 2 * time_t_minute) {
-			time_left /= time_t_minute;
+		} else if (time_left > 2 * secs_per_minute) {
+			time_left /= secs_per_minute;
 			unit = "minute";
 		}
 		snprintf(buf, sizeof(buf), "warning (expires in %d %s%s)",

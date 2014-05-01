@@ -247,7 +247,7 @@ time_t asn1totime(const chunk_t *utctime, asn1_t type)
 			return 0; /* error in positive timezone offset format */
 
 		/* positive time zone offset */
-		tz_offset = tz_hour * time_t_hour + tz_min * time_t_minute;
+		tz_offset = tz_hour * secs_per_hour + tz_min * secs_per_minute;
 	} else if ((eot = memchr(utctime->ptr, '-', utctime->len)) != NULL) {
 		int tz_hour, tz_min;
 
@@ -255,7 +255,7 @@ time_t asn1totime(const chunk_t *utctime, asn1_t type)
 			return 0; /* error in negative timezone offset format */
 
 		/* negative time zone offset */
-		tz_offset = -(tz_hour * time_t_hour + tz_min * time_t_minute);
+		tz_offset = -(tz_hour * secs_per_hour + tz_min * secs_per_minute);
 	} else {
 		return 0; /* error in time format */
 	}
