@@ -115,7 +115,7 @@ struct msgid_list {
  */
 static char *humanize_number(unsigned long num,
 			     char *buf,
-			     char *buf_roof,
+			     const char *buf_roof,
 			     const char *prefix)
 {
 	size_t buf_len = buf_roof - buf;
@@ -146,7 +146,7 @@ static char *humanize_number(unsigned long num,
 	return buf + ret;
 }
 
-bool unique_msgid(struct state *isakmp_sa, msgid_t msgid)
+bool unique_msgid(const struct state *isakmp_sa, msgid_t msgid)
 {
 	struct msgid_list *p;
 
@@ -170,7 +170,7 @@ void reserve_msgid(struct state *isakmp_sa, msgid_t msgid)
 	isakmp_sa->st_used_msgids = p;
 }
 
-msgid_t generate_msgid(struct state *isakmp_sa)
+msgid_t generate_msgid(const struct state *isakmp_sa)
 {
 	int timeout = 100; /* only try so hard for unique msgid */
 	msgid_t msgid;
@@ -622,7 +622,7 @@ void delete_state(struct state *st)
 /*
  * Is a connection in use by some state?
  */
-bool states_use_connection(struct connection *c)
+bool states_use_connection(const struct connection *c)
 {
 	/* are there any states still using it? */
 	struct state *st = NULL;
@@ -638,19 +638,13 @@ bool states_use_connection(struct connection *c)
 }
 
 /* delete all states that were created for a given connection,
- * additionally delete any states for which func(st, arg)
+ * additionally delete any states for which func(st, c)
  * returns true.
  */
-static void foreach_states_by_connection_func(struct connection *c,
+static void foreach_states_by_connection_func_delete(struct connection *c,
 					      bool (*comparefunc)(
 						      struct state *st,
-						      struct connection *c,
-						      void *arg, int pass),
-					      void (*successfunc)(
-						      struct state *st,
-						      struct connection *c,
-						      void *arg),
-					      void *arg)
+						      struct connection *c))
 {
 	int pass;
 
@@ -680,7 +674,7 @@ static void foreach_states_by_connection_func(struct connection *c,
 					continue;
 
 				/* call comparison function */
-				if ((*comparefunc)(this, c, arg, pass)) {
+				if ((*comparefunc)(this, c)) {
 					struct state *old_cur_state =
 						cur_state == this ?
 						  NULL : cur_state;
@@ -688,7 +682,13 @@ static void foreach_states_by_connection_func(struct connection *c,
 						cur_debugging;
 
 					set_cur_state(this);
-					(*successfunc)(this, c, arg);
+
+					libreswan_log("deleting state (%s)",
+						      enum_show(&state_names, this->st_state));
+
+					if (this->st_event != NULL)
+						delete_event(this);
+					delete_state(this);
 
 					cur_state = old_cur_state;
 					set_debugging(old_cur_debugging);
@@ -698,29 +698,15 @@ static void foreach_states_by_connection_func(struct connection *c,
 	}
 }
 
-static void delete_state_function(struct state *this,
-				  struct connection *c UNUSED,
-				  void *arg UNUSED)
-{
-	libreswan_log("deleting state (%s)",
-		      enum_show(&state_names, this->st_state));
-
-	if (this->st_event != NULL)
-		delete_event(this);
-	delete_state(this);
-}
-
 /*
  * delete all states that were created for a given connection.
  * if relations == TRUE, then also delete states that share
  * the same phase 1 SA.
  */
 static bool same_phase1_sa_relations(struct state *this,
-				     struct connection *c, void *arg,
-				     int pass UNUSED)
+				     struct connection *c)
 {
-	so_serial_t *pparent_sa = (so_serial_t *)arg;
-	so_serial_t parent_sa = *pparent_sa;
+	so_serial_t parent_sa = c->newest_isakmp_sa;
 
 	return this->st_connection == c ||
 	       (parent_sa != SOS_NOBODY &&
@@ -758,16 +744,13 @@ void delete_states_dead_interfaces(void)
  * the same phase 1 SA.
  */
 static bool same_phase1_sa(struct state *this,
-			   struct connection *c,
-			   void *arg UNUSED,
-			   int pass UNUSED)
+			   struct connection *c)
 {
 	return this->st_connection == c;
 }
 
 void delete_states_by_connection(struct connection *c, bool relations)
 {
-	so_serial_t parent_sa = c->newest_isakmp_sa;
 	enum connection_kind ck = c->kind;
 	struct spd_route *sr;
 
@@ -777,15 +760,8 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
-	if (relations) {
-		foreach_states_by_connection_func(c, same_phase1_sa_relations,
-						  delete_state_function,
-						  &parent_sa);
-	} else {
-		foreach_states_by_connection_func(c, same_phase1_sa,
-						  delete_state_function,
-						  &parent_sa);
-	}
+	foreach_states_by_connection_func_delete(c,
+		relations ? same_phase1_sa_relations : same_phase1_sa);
 
 	/*
 	 * Seems to dump here because 1 of the states is NULL.  Removing the Assert
@@ -818,22 +794,16 @@ void delete_states_by_connection(struct connection *c, bool relations)
  * but it only deletes phase 2 states.
  */
 static bool same_phase1_no_phase2(struct state *this,
-				  struct connection *c,
-				  void *arg,
-				  int pass)
+				  struct connection *c)
 {
-	if (pass == 2)
-		return FALSE;
-
 	if (IS_ISAKMP_SA_ESTABLISHED(this->st_state))
 		return FALSE;
 	else
-		return same_phase1_sa_relations(this, c, arg, pass);
+		return same_phase1_sa_relations(this, c);
 }
 
 void delete_p2states_by_connection(struct connection *c)
 {
-	so_serial_t parent_sa = c->newest_isakmp_sa;
 	enum connection_kind ck = c->kind;
 
 	/* save this connection's isakmp SA,
@@ -842,9 +812,8 @@ void delete_p2states_by_connection(struct connection *c)
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
-	foreach_states_by_connection_func(c, same_phase1_no_phase2,
-					  delete_state_function,
-					  &parent_sa);
+	foreach_states_by_connection_func_delete(c, same_phase1_no_phase2);
+
 	if (ck == CK_INSTANCE) {
 		c->kind = ck;
 		delete_connection(c, TRUE);
@@ -1039,7 +1008,7 @@ struct state *find_state_ikev1(const u_char *icookie,
 struct state *find_state_ikev1_loopback(const u_char *icookie,
 					const u_char *rcookie,
 					msgid_t /*network order*/ msgid,
-					struct msg_digest *md)
+					const struct msg_digest *md)
 {
 	struct state *st = *state_hash(icookie, rcookie);
 
@@ -1340,7 +1309,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	return best;
 }
 
-void state_eroute_usage(ip_subnet *ours, ip_subnet *his,
+void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			unsigned long count, time_t nw)
 {
 	struct state *st;
@@ -1403,6 +1372,7 @@ void fmt_state(struct state *st, const time_t n,
 	fmt_conn_instance(c, inst);
 
 	if (st->st_event) {
+		/* tricky: in case time_t is an unsigned type */
 		delta = st->st_event->ev_time >= n ?
 			(long)(st->st_event->ev_time - n) :
 			-(long)(n - st->st_event->ev_time);
@@ -1651,10 +1621,7 @@ static int state_compare(const void *a, const void *b)
 void show_states_status(void)
 {
 	int i;
-	char state_buf[LOG_WIDTH];
-	char state_buf2[LOG_WIDTH];
 	int count;
-	struct state **array;
 
 	whack_log(RC_COMMENT, " ");             /* spacer */
 	whack_log(RC_COMMENT, "State list:");   /* spacer */
@@ -1671,9 +1638,16 @@ void show_states_status(void)
 	}
 
 	if (count != 0) {
+		time_t n = now();
+#if 1
+		/* C99's VLA feature is just what we need */
+		struct state *array[count];
+#else
+		/* no VLA: use alloca (ouch!) */
+		struct state **array = alloca(sizeof(struct state *) * count);
+#endif
+
 		/* build the array */
-		array = alloc_bytes(sizeof(struct state *) * count,
-				    "state array");
 		count = 0;
 		for (i = 0; i < STATE_TABLE_SIZE; i++) {
 			struct state *st;
@@ -1688,9 +1662,11 @@ void show_states_status(void)
 
 		/* now print sorted results */
 		for (i = 0; i < count; i++) {
-			struct state *st;
-			st = array[i];
-			fmt_state(st, now(), state_buf, sizeof(state_buf),
+			char state_buf[LOG_WIDTH];
+			char state_buf2[LOG_WIDTH];
+			struct state *st = array[i];
+
+			fmt_state(st, n, state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
 			whack_log(RC_COMMENT, "%s", state_buf);
 			if (state_buf2[0] != '\0')
@@ -1702,8 +1678,6 @@ void show_states_status(void)
 				show_pending_phase2(st->st_connection, st);
 		}
 
-		/* free the array */
-		pfree(array);
 		whack_log(RC_COMMENT, " "); /* spacer */
 	}
 }
@@ -1765,7 +1739,7 @@ startover:
  * If we can't find one easily, return 0 (a bad SPI,
  * no matter what order) indicating failure.
  */
-ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st)
+ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st)
 {
 	int tries = 0;
 	int i;
@@ -1779,7 +1753,7 @@ startover:
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *s;
+		const struct state *s;
 
 		for (s = statetable[i]; s != NULL; s = s->st_hashchain_next) {
 			if (s->st_ipcomp.present &&
@@ -1821,7 +1795,7 @@ void set_state_ike_endpoints(struct state *st,
 }
 
 /* seems to be a good spot for now */
-bool dpd_active_locally(struct state *st)
+bool dpd_active_locally(const struct state *st)
 {
 	return st->st_connection->dpd_delay && st->st_connection->dpd_timeout;
 }
