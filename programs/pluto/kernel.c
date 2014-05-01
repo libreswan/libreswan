@@ -3067,7 +3067,7 @@ const char *kernel_if_name()
 /*
  * get information about a given sa - needs merging with was_eroute_idle
  */
-bool get_sa_info(struct state *st, bool inbound, time_t *ago)
+bool get_sa_info(struct state *st, bool inbound, time_t *ago /* OUTPUT */)
 {
 	char text_said[SATOT_BUF];
 	u_int proto;

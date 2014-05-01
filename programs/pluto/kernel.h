@@ -364,7 +364,7 @@ extern bool route_and_eroute(struct connection *c,
 			     struct state *st);
 
 extern bool was_eroute_idle(struct state *st, time_t idle_max);
-extern bool get_sa_info(struct state *st, bool inbound, time_t *ago);
+extern bool get_sa_info(struct state *st, bool inbound, time_t *ago /* OUTPUT */);
 
 extern bool update_ipsec_sa(struct state *st);
 
@@ -382,10 +382,9 @@ static inline bool compatible_overlapping_connections(struct connection *a,
 						      struct connection *b)
 {
 	return kernel_ops->overlap_supported &&
-	       a && b &&
+	       a != NULL && b != NULL &&
 	       a != b &&
-	       LIN(POLICY_OVERLAPIP, a->policy) &&
-	       LIN(POLICY_OVERLAPIP, a->policy);
+	       LIN(POLICY_OVERLAPIP, a->policy & b->policy);
 }
 
 #ifdef KLIPS
