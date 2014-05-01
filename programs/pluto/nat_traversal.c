@@ -701,9 +701,9 @@ void nat_traversal_show_result(u_int32_t nt, u_int16_t sport)
 		rslt != NULL ? rslt : "unknown or unsupported result");
 }
 
-int nat_traversal_espinudp_socket(int sk, const char *fam )
+int nat_traversal_espinudp_socket(int sk, const char *fam)
 {
-	int r = -1;
+	int r;
 	struct ifreq ifr;
 	int *fdp = (int *) &ifr.ifr_data;
 
@@ -726,13 +726,17 @@ int nat_traversal_espinudp_socket(int sk, const char *fam )
 		strcpy(ifr.ifr_name, "en0");
 		break;
 	default:
-		/* We have nothing , really prob just abort and return -1 */
+		/* We have nothing, really prob just abort and return -1 */
 		strcpy(ifr.ifr_name, "eth0");
 		break;
 	}
 	fdp[0] = sk;
 	fdp[1] = ESPINUDP_WITH_NON_ESP; /* no longer support non-ike or non-floating */
-	r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr);
+	{
+		const int type = ESPINUDP_WITH_NON_ESP;
+
+		r = setsockopt(sk, SOL_UDP, UDP_ESPINUDP, &type, sizeof(type));
+	}
 	if (r == -1) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for new style NAT-T family %s (errno=%d)",
@@ -746,15 +750,14 @@ int nat_traversal_espinudp_socket(int sk, const char *fam )
 
 #if defined(KLIPS)
 	DBG(DBG_NATT, DBG_log("NAT-Traversal: Trying old style NAT-T"));
-	const int type = ESPINUDP_WITH_NON_ESP;
-	r = setsockopt(sk, SOL_UDP, UDP_ESPINUDP, &type, sizeof(type));
+	r = ioctl(sk, IPSEC_UDP_ENCAP_CONVERT, &ifr);
 	if (r == -1) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-Traversal: ESPINUDP(%d) setup failed for old style NAT-T family %s (errno=%d)",
 				ESPINUDP_WITH_NON_ESP, fam, errno));
 	} else {
 		DBG(DBG_NATT,
-			DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for new style NAT-T family %s",
+			DBG_log("NAT-Traversal: ESPINUDP(%d) setup succeeded for old style NAT-T family %s",
 				ESPINUDP_WITH_NON_ESP, fam));
 		return r;
 	}

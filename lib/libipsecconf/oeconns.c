@@ -91,10 +91,10 @@ static const struct oe_conn oe_packet_default = {
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
 
-		.options[KBF_IKELIFETIME] = 3600,
+		.options[KBF_IKELIFETIME] = time_t_hour,
 		.options_set[KBF_IKELIFETIME] = TRUE,
 
-		.options[KBF_SALIFETIME] = 1800,
+		.options[KBF_SALIFETIME] = time_t_hour / 2,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
 		.desired_state = STARTUP_ONDEMAND,
@@ -189,10 +189,10 @@ static const struct oe_conn oe_clear_or_private = {
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
 
-		.options[KBF_IKELIFETIME] = 3600,
+		.options[KBF_IKELIFETIME] = time_t_hour,
 		.options_set[KBF_IKELIFETIME] = TRUE,
 
-		.options[KBF_SALIFETIME] = 1800,
+		.options[KBF_SALIFETIME] = time_t_hour / 2,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
 		.desired_state = STARTUP_ONDEMAND,
@@ -248,10 +248,10 @@ static const struct oe_conn oe_private_or_clear = {
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
 
-		.options[KBF_IKELIFETIME] = 3600,
+		.options[KBF_IKELIFETIME] = time_t_hour,
 		.options_set[KBF_IKELIFETIME] = TRUE,
 
-		.options[KBF_SALIFETIME] = 1800,
+		.options[KBF_SALIFETIME] = time_t_hour / 2,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
 		.left = {
@@ -308,10 +308,10 @@ static const struct oe_conn oe_private = {
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
 
-		.options[KBF_IKELIFETIME] = 3600,
+		.options[KBF_IKELIFETIME] = time_t_hour,
 		.options_set[KBF_IKELIFETIME] = TRUE,
 
-		.options[KBF_SALIFETIME] = 1800,
+		.options[KBF_SALIFETIME] = time_t_hour / 2,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
 		.left = {
