@@ -482,9 +482,8 @@ static void cannot_oppo(struct connection *c,
 		if (DBGP(DBG_OPPO | DBG_CONTROLMORE)) {
 			char state_buf[LOG_WIDTH];
 			char state_buf2[LOG_WIDTH];
-			const time_t n = now();
 
-			fmt_state(st, n, state_buf, sizeof(state_buf),
+			fmt_state(st, now(), state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
 			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
 			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
