@@ -8,9 +8,10 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
-west #
- ipsec setup start
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
@@ -31,14 +32,16 @@ west #
 west #
  ipsec auto --up west-east
 003 "west-east" #1: multiple DH groups were set in aggressive mode. Only first one used.
-003 "west-east" #1: transform (7,2,2,0) ignored.
+003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 003 "west-east" #1: multiple DH groups were set in aggressive mode. Only first one used.
-003 "west-east" #1: transform (7,2,2,0) ignored.
+003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "west-east" #1: STATE_AGGR_I1: initiate
 003 "west-east" #1: received Vendor ID payload [Dead Peer Detection]
+003 "west-east" #1: received Vendor ID payload [RFC 3947]
+003 "west-east" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP1536}
 117 "west-east" #2: STATE_QUICK_I1: initiate
-004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
+004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=active}
 west #
  # use the tunnel
 west #

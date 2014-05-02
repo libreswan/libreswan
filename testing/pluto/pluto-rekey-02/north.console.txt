@@ -23,9 +23,10 @@ north #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
-north #
- ipsec setup start
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
@@ -33,8 +34,9 @@ north #
 north #
  ipsec auto --status
 000 using kernel interface: klips
-000 interface ipsec0/eth1 192.1.3.32
-000 interface ipsec0/eth1 192.1.3.32
+000 interface ipsec0/eth1 192.1.3.32@4500
+000 interface ipsec0/eth1 192.1.3.32@500
+000  
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
@@ -50,7 +52,7 @@ north #
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
-000 virtual_private (%priv):
+000 virtual-private (%priv):
 000  
 000 ESP algorithms supported:
 000  
@@ -98,7 +100,7 @@ north #
 000 "northnet-eastnet-nat":    policy_label:unset; 
 000 "northnet-eastnet-nat":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "northnet-eastnet-nat":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "northnet-eastnet-nat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "northnet-eastnet-nat":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "northnet-eastnet-nat":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "northnet-eastnet-nat":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "northnet-eastnet-nat":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -119,7 +121,7 @@ north #
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [FRAGMENTATION]
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [RFC 3947]
 106 "northnet-eastnet-nat" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500 sender port 500: i am NATed
+003 "northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
 108 "northnet-eastnet-nat" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [CAN-IKEv2]
 004 "northnet-eastnet-nat" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
@@ -137,7 +139,7 @@ north #
 003 "northnet-eastnet-nat" #3: received Vendor ID payload [FRAGMENTATION]
 003 "northnet-eastnet-nat" #3: received Vendor ID payload [RFC 3947]
 106 "northnet-eastnet-nat" #3: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #3: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500 sender port 500: i am NATed
+003 "northnet-eastnet-nat" #3: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
 108 "northnet-eastnet-nat" #3: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #3: received Vendor ID payload [CAN-IKEv2]
 004 "northnet-eastnet-nat" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
@@ -157,7 +159,7 @@ north #
 003 "northnet-eastnet-nat" #5: received Vendor ID payload [FRAGMENTATION]
 003 "northnet-eastnet-nat" #5: received Vendor ID payload [RFC 3947]
 106 "northnet-eastnet-nat" #5: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #5: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500 sender port 500: i am NATed
+003 "northnet-eastnet-nat" #5: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
 108 "northnet-eastnet-nat" #5: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #5: received Vendor ID payload [CAN-IKEv2]
 004 "northnet-eastnet-nat" #5: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
@@ -175,8 +177,8 @@ north NOW
 192.0.3.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.3.32 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.3.32 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.3.32 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=9
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.3.32 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=nonesp natsport=4500 natdport=4500   refhim=0
+esp0xSPISPI@192.1.3.32 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=nonesp natsport=4500 natdport=4500   refhim=9
 tun0xTUN#@192.1.3.32 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.3.0/24 flags=0x8<> jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=9
 ROUTING TABLES
 default via 192.1.3.254 dev eth1 
