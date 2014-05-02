@@ -2921,11 +2921,11 @@ int pfkey_acquire(struct ipsec_sa *ipsp)
 		{ K_SADB_AALG_MD5HMAC,  K_SADB_EALG_3DESCBC, SADB_SAFLAGS_PFS,
 		  128, 128, 168, 168,
 		  0, 0, 0, 0, 0,
-		  16*time_t_hour, time_t_day, 16*time_t_hour, time_t_day },
+		  16*secs_per_hour, secs_per_day, 16*secs_per_hour, secs_per_day },
 		{ K_SADB_AALG_SHA1HMAC, K_SADB_EALG_3DESCBC, SADB_SAFLAGS_PFS,
 		  160, 160, 168, 168,
 		  0, 0, 0, 0, 0,
-		  16*time_t_hour, time_t_day, 16*time_t_hour, time_t_day },
+		  16*secs_per_hour, secs_per_day, 16*secs_per_hour, secs_per_day },
 	};
 
 	/* XXX This should not be hard-coded.  It should be taken from the spdb */

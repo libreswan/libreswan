@@ -346,10 +346,10 @@ statement_kw:
                 {
 		  if(*endptr == '\0') { /* nothing */ }
 		  else if ((*endptr == 's') && (endptr[1] == '\0')) { }
-		  else if ((*endptr == 'm') && (endptr[1] == '\0')) { val *= time_t_minute; }
-		  else if ((*endptr == 'h') && (endptr[1] == '\0')) { val *= time_t_hour; }
-		  else if ((*endptr == 'd') && (endptr[1] == '\0')) { val *= time_t_day; }
-		  else if ((*endptr == 'w') && (endptr[1] == '\0')) { val *= 7*time_t_day; }
+		  else if ((*endptr == 'm') && (endptr[1] == '\0')) { val *= secs_per_minute; }
+		  else if ((*endptr == 'h') && (endptr[1] == '\0')) { val *= secs_per_hour; }
+		  else if ((*endptr == 'd') && (endptr[1] == '\0')) { val *= secs_per_day; }
+		  else if ((*endptr == 'w') && (endptr[1] == '\0')) { val *= 7*secs_per_day; }
 		  else {
                     snprintf(buf, 80, "bad duration multiplier '%c' on %s", *endptr, str);
                     yyerror(buf);
