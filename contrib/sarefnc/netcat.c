@@ -1784,7 +1784,7 @@ char ** argv;
 	Debug(("fd_set size %d", sizeof(*ding1)))       /* how big *is* it? */
 	FD_SET(0, ding1);                               /* stdin *is* initially open */
 	if (o_random) {
-		SRAND(time(0));
+		SRAND(time(NULL));
 		randports = Hmalloc(65536); /* big flag array for ports */
 	}
 #ifdef GAPING_SECURITY_HOLE
