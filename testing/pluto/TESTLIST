@@ -292,11 +292,11 @@ kvmplutotest	psk-pluto-02		bad
 kvmplutotest	xauth-pluto-03		good
 kvmplutotest	xauth-pluto-04		good
 kvmplutotest	xauth-pluto-05		good
+kvmplutotest	xauth-pluto-05-netkey	good
 kvmplutotest	xauth-pluto-06		good
 kvmplutotest	xauth-pluto-07		good
 kvmplutotest	xauth-pluto-08		good
-
-umlplutotest	xauth-pluto-09		good
+kvmplutotest	xauth-pluto-09		good
 
 umlXhost	xauth-pluto-10		good
 umlXhost	xauth-pluto-11		good
