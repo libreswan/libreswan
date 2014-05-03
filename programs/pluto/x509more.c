@@ -204,7 +204,7 @@ void ikev1_decode_cert(struct msg_digest *md)
 				time_t valid_until;
 
 				if (verify_x509cert(&cert2, strict_crl_policy,
-							&valid_until)) {
+						&valid_until /* OUT */)) {
 					DBG(DBG_X509 | DBG_PARSING,
 						DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,
@@ -263,7 +263,7 @@ void ikev2_decode_cert(struct msg_digest *md)
 				time_t valid_until;
 
 				if (verify_x509cert(&cert2, strict_crl_policy,
-							&valid_until)) {
+						&valid_until /* OUT */)) {
 					DBG(DBG_X509 | DBG_PARSING,
 						DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,

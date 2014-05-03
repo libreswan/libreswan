@@ -178,14 +178,14 @@ extern void parse_authorityKeyIdentifier(chunk_t blob, int level0,
 					 chunk_t *authKeyID,
 					 chunk_t *authKeySerialNumber);
 extern chunk_t get_directoryName(chunk_t blob, int level, bool implicit);
-extern err_t check_validity(const x509cert_t *cert, time_t *until);
+extern err_t check_validity(const x509cert_t *cert, time_t *until /* IN/OUT */);
 extern bool check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 			    const x509cert_t *issuer_cert);
 extern bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict,
-				      time_t *until);
+				      time_t *until /* OUT */);
 extern x509cert_t* add_x509cert(x509cert_t *cert);
 extern x509cert_t* get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
-				x509cert_t* chain);
+				x509cert_t *chain);
 extern x509cert_t* get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 				u_char auth_flags);
 extern void share_x509cert(x509cert_t *cert);

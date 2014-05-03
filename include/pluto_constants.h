@@ -47,7 +47,7 @@ enum dpd_action {
 /* Cisco interop: values remote_peer_type= */
 enum keyword_remotepeertype {
 	NON_CISCO = 0,
-	CISCO  = 1,
+	CISCO = 1,
 };
 
 enum keyword_xauthby {
@@ -66,42 +66,42 @@ enum keyword_xauthfail {
  *   *
  *    */
 enum natt_method {
-	NAT_TRAVERSAL_METHOD_IETF_00_01     =1, /* no longer supported */
-	NAT_TRAVERSAL_METHOD_IETF_02_03     =2,
-	NAT_TRAVERSAL_METHOD_IETF_05        =3, /* same as RFC */
-	NAT_TRAVERSAL_METHOD_IETF_RFC       =4,
+	NAT_TRAVERSAL_METHOD_IETF_00_01	= 1,	/* no longer supported */
+	NAT_TRAVERSAL_METHOD_IETF_02_03	= 2,
+	NAT_TRAVERSAL_METHOD_IETF_05	= 3,	/* same as RFC */
+	NAT_TRAVERSAL_METHOD_IETF_RFC	= 4,
 
-	NAT_TRAVERSAL_NAT_BHND_ME           =30,
-	NAT_TRAVERSAL_NAT_BHND_PEER         =31
+	NAT_TRAVERSAL_NAT_BHND_ME	= 30,
+	NAT_TRAVERSAL_NAT_BHND_PEER	= 31
 };
 
 /* Timer events */
 
 enum event_type {
-	EVENT_NULL,                     /* non-event */
-	EVENT_REINIT_SECRET,            /* Refresh cookie secret */
-	EVENT_SHUNT_SCAN,               /* scan shunt eroutes known to kernel */
-	EVENT_SO_DISCARD,               /* discard unfinished state object */
-	EVENT_RETRANSMIT,               /* Retransmit packet */
-	EVENT_SA_REPLACE,               /* SA replacement event */
-	EVENT_SA_REPLACE_IF_USED,       /* SA replacement event */
-	EVENT_SA_EXPIRE,                /* SA expiration event */
-	EVENT_NAT_T_KEEPALIVE,          /* NAT Traversal Keepalive */
-	EVENT_DPD,                      /* dead peer detection */
-	EVENT_DPD_TIMEOUT,              /* dead peer detection timeout */
+	EVENT_NULL,			/* non-event */
+	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
+	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
+	EVENT_SO_DISCARD,		/* discard unfinished state object */
+	EVENT_RETRANSMIT,		/* Retransmit packet */
+	EVENT_SA_REPLACE,		/* SA replacement event */
+	EVENT_SA_REPLACE_IF_USED,	/* SA replacement event */
+	EVENT_SA_EXPIRE,		/* SA expiration event */
+	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
+	EVENT_DPD,			/* dead peer detection */
+	EVENT_DPD_TIMEOUT,		/* dead peer detection timeout */
 
-	EVENT_LOG_DAILY,                /* reset certain log events/stats */
-	EVENT_CRYPTO_FAILED,            /* after some time, give up on crypto helper */
-	EVENT_PENDING_PHASE2,           /* do not make pending phase2 wait forever */
-	EVENT_v2_RETRANSMIT,            /* Retransmit v2 packet */
+	EVENT_LOG_DAILY,		/* reset certain log events/stats */
+	EVENT_CRYPTO_FAILED,		/* after some time, give up on crypto helper */
+	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
+	EVENT_v2_RETRANSMIT,		/* Retransmit v2 packet */
 	EVENT_v2_LIVENESS,
-	EVENT_PENDING_DDNS,             /* try to start connections where DNS failed at init */
+	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
 };
 
-#define EVENT_REINIT_SECRET_DELAY               secs_per_hour
-#define EVENT_CRYPTO_FAILED_DELAY               (5 * secs_per_minute)
-#define EVENT_RETRANSMIT_DELAY_0                10      /* 10 seconds */
-#define EVENT_GIVEUP_ON_DNS_DELAY               (5 * secs_per_minute)
+#define EVENT_REINIT_SECRET_DELAY	secs_per_hour
+#define EVENT_CRYPTO_FAILED_DELAY	(5 * secs_per_minute)
+#define EVENT_RETRANSMIT_DELAY_0	10	/* 10 seconds */
+#define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
 
 /*
  * operational importance of this cryptographic operation.
