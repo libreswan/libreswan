@@ -22,14 +22,14 @@
 struct state;   /* forward declaration */
 
 struct event {
-	time_t ev_time;
+	monotime_t ev_time;
 	enum event_type ev_type;        /* Event type */
 	struct state   *ev_state;       /* Pointer to relevant state (if any) */
 	struct event   *ev_next;        /* Pointer to next event */
 };
 
 
-extern void event_schedule(enum event_type type, time_t tm, struct state *st);
+extern void event_schedule(enum event_type type, monotime_t tm, struct state *st);
 extern void handle_timer_event(void);
 extern long next_event(void);
 extern void delete_event(struct state *st);

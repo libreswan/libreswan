@@ -298,11 +298,12 @@ bool trust_authcert_candidate(const x509cert_t *cert,
 /*
  * verify the validity of a certificate by
  * checking the notBefore and notAfter dates
+ * Note: *until = min(*until, cert->notAfter)
  */
-err_t check_validity(const x509cert_t *cert, time_t *until)
+err_t check_validity(const x509cert_t *cert, time_t *until /* IN/OUT */)
 {
 	char curtime[TIMETOA_BUF];
-	time_t current_time = now();
+	time_t current_time = time(NULL);
 
 	timetoa(&current_time, TRUE, curtime, sizeof(curtime));
 

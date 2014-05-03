@@ -41,7 +41,7 @@ bool kernel_overlap_supported()
 	return 1;
 }
 
-bool get_sa_info(struct state *st, bool inbound, time_t *ago)
+bool get_sa_info(struct state *st, bool inbound, monotime_t *ago)
 {
 	return FALSE;
 }

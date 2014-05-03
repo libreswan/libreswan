@@ -163,7 +163,7 @@ struct kernel_ops {
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
 			   const struct pfkey_proto_info *proto_info,
-			   time_t use_lifetime,
+			   monotime_t use_lifetime,
 			   unsigned long sa_priority,
 			   enum pluto_sadb_operations op,
 			   const char *text_said
@@ -178,7 +178,7 @@ struct kernel_ops {
 			     const char *opname);
 	bool (*sag_eroute)(struct state *st, struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
-	bool (*eroute_idle)(struct state *st, time_t idle_max);
+	bool (*eroute_idle)(struct state *st, monotime_t idle_max);
 	void (*remove_orphaned_holds)(int transportproto,
 				      const ip_subnet *ours,
 				      const ip_subnet *his);
@@ -281,7 +281,7 @@ struct eroute_info {
  * which %holds are news and which others should expire.
  */
 
-#define SHUNT_SCAN_INTERVAL     (60 * 2)   /* time between scans of eroutes */
+#define SHUNT_SCAN_INTERVAL     (2 * secs_per_minute)   /* time between scans of eroutes */
 
 /* SHUNT_PATIENCE only has resolution down to a multiple of the sample rate,
  * SHUNT_SCAN_INTERVAL.
@@ -297,7 +297,7 @@ struct bare_shunt {
 	ip_said said;
 	int transport_proto;
 	unsigned long count;
-	time_t last_activity;
+	monotime_t last_activity;
 	char *why;
 	struct bare_shunt *next;
 };
@@ -363,8 +363,8 @@ extern bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
 			     struct state *st);
 
-extern bool was_eroute_idle(struct state *st, time_t idle_max);
-extern bool get_sa_info(struct state *st, bool inbound, time_t *ago /* OUTPUT */);
+extern bool was_eroute_idle(struct state *st, monotime_t idle_max);
+extern bool get_sa_info(struct state *st, bool inbound, monotime_t *ago /* OUTPUT */);
 
 extern bool update_ipsec_sa(struct state *st);
 

@@ -460,7 +460,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 
 				/* check if found public key has expired */
 				if (key->until_time != UNDEFINED_TIME &&
-				    key->until_time < now()) {
+				    key->until_time < time(NULL)) {
 					loglog(RC_LOG_SERIOUS,
 					       "cached RSA public key has expired and has been deleted");
 					*pp = free_public_keyentry(p);
@@ -764,7 +764,7 @@ struct pubkey *public_key_from_rsa(const struct RSA_public_key *k)
 	 * invariant: recount > 0.
 	 */
 	p->refcnt = 1;
-	p->installed_time = now();
+	time(&p->installed_time);
 	return p;
 }
 

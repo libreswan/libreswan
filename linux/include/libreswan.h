@@ -29,15 +29,21 @@ typedef int bool;
 # define FALSE 0
 #endif
 
+#include <stddef.h>
+
+#if !defined(__KERNEL__)
+/* time-related stuff */
+#include <time.h>
 #define UNDEFINED_TIME  ((time_t)0)
+
+typedef time_t monotime_t;	/* monotonic time (see clock_gettime(3)) */
 
 enum {
 	secs_per_minute = 60 /* seconds */,
 	secs_per_hour = 60 * secs_per_minute,
 	secs_per_day = 24 * secs_per_hour
 };
-
-#include <stddef.h>
+#endif	/* !defined(__KERNEL__) */
 
 /*
  * When using uclibc, malloc(0) returns NULL instead of success. This is

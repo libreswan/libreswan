@@ -104,6 +104,7 @@
 static char *str_ipaddr(struct sockaddr *);
 static char *str_prefport(u_int, u_int, u_int, u_int);
 static void str_upperspec(u_int, u_int, u_int);
+static char *str_mono_time(time_t);
 static char *str_time(time_t);
 static void str_lifetime_byte(struct sadb_lifetime *, char *);
 
@@ -310,14 +311,14 @@ struct sadb_msg *m;
 
 	/* lifetime */
 	if (m_lftc != NULL) {
-		time_t tmp_time = time(0);
+		time_t nw = time(NULL);
 
 		printf("\tcreated: %s",
 		       str_time(m_lftc->sadb_lifetime_addtime));
-		printf("\tcurrent: %s\n", str_time(tmp_time));
+		printf("\tcurrent: %s\n", str_time(nw));
 		printf("\tdiff: %lu(s)",
 		       (u_long)(m_lftc->sadb_lifetime_addtime == 0 ?
-				0 : (tmp_time -
+				0 : (nw -
 				     m_lftc->sadb_lifetime_addtime)));
 
 		printf("\thard: %lu(s)",
@@ -328,7 +329,7 @@ struct sadb_msg *m;
 				0 : m_lfts->sadb_lifetime_addtime));
 
 		printf("\tlast: %s",
-		       str_time(m_lftc->sadb_lifetime_usetime));
+		       str_mon_time(m_lftc->sadb_lifetime_usetime));
 		printf("\thard: %lu(s)",
 		       (u_long)(m_lfth == NULL ?
 				0 : m_lfth->sadb_lifetime_usetime));
@@ -460,9 +461,9 @@ struct sadb_msg *m;
 	/* lifetime */
 	if (m_lftc) {
 		printf("\tcreated: %s  ",
-		       str_time(m_lftc->sadb_lifetime_addtime));
+		       str_mono_time(m_lftc->sadb_lifetime_addtime));
 		printf("lastused: %s\n",
-		       str_time(m_lftc->sadb_lifetime_usetime));
+		       str_mono_time(m_lftc->sadb_lifetime_usetime));
 	}
 	if (m_lfth) {
 		printf("\tlifetime: %lu(s) ",
@@ -571,19 +572,18 @@ u_int ulp, p1, p2;
 
 /*
  * set "Mon Day Time Year" to buffer
+ * Not re-entrant because it returns a pointer to a static buffer.
  */
-static char *str_time(t)
-time_t t;
+static char *str_time(time_t t)
 {
+	/* ??? What's 20?  What's 128? */
 	static char buf[128];
 
 	if (t == 0) {
-		int i = 0;
-		for (; i < 20; )
-			buf[i++] = ' ';
+		memset(buf, ' ', 20);
 	} else {
-		char *t0;
-		t0 = ctime(&t);
+		char *t0 = ctime(&t);
+
 		memcpy(buf, t0 + 4, 20);
 	}
 
@@ -592,9 +592,26 @@ time_t t;
 	return buf;
 }
 
-static void str_lifetime_byte(x, str)
-struct sadb_lifetime *x;
-char *str;
+/* print a monotonic clock time */
+static char *str_mono_time(time_t t)
+{
+	static time_t now_real;
+	static time_t now_mono;
+
+	if (now_real == 0) {
+		int r = clock_gettime(
+#   if CLOCK_BOOTTIME
+			CLOCK_BOOTTIME	/* best */
+#   else
+			CLOCK_MONOTONIC	/* second best */
+#   endif
+			, &now_mono);
+		time(&now_real);
+	}
+	return str_time(t + (now_real - now_mono));
+}
+
+static void str_lifetime_byte(struct sadb_lifetime *x, char *str)
 {
 	double y;
 	char *unit;

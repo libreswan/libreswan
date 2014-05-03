@@ -241,7 +241,7 @@ void store_x509certs(x509cert_t **firstcert, bool strict)
 		time_t valid_until;
 		x509cert_t *cert = *pp;
 
-		if (verify_x509cert(cert, strict, &valid_until)) {
+		if (verify_x509cert(cert, strict, &valid_until /* OUT */)) {
 			DBG(DBG_X509 | DBG_PARSING,
 			    DBG_log("public key validated"));
 			add_x509_public_key(NULL, cert, valid_until,
@@ -336,8 +336,8 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 				DBG(DBG_X509,
 				    DBG_log("thisUpdate is not newer - existing crl not replaced"));
 				free_crl(crl);
-				return oldcrl->nextUpdate - now() > 2 *
-				       crl_check_interval;
+				return oldcrl->nextUpdate - time(NULL) >
+				       2 * crl_check_interval;
 			}
 		}
 
@@ -348,7 +348,7 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 		unlock_crl_list("insert_crl");
 
 		/* is the fetched crl valid? */
-		return crl->nextUpdate - now() > 2 * crl_check_interval;
+		return crl->nextUpdate - time(NULL) > 2 * crl_check_interval;
 	} else {
 		loglog(RC_LOG_SERIOUS, "  error in X.509 crl %s",
 		       (char *)crl_uri.ptr);
@@ -482,7 +482,7 @@ static bool verify_by_crl(/*const*/ x509cert_t *cert, bool strict,
 							    cert->serialNumber);
 
 			/* is the crl still valid? */
-			expired_crl = now() > crl->nextUpdate;
+			expired_crl = time(NULL) > crl->nextUpdate;
 
 			unlock_crl_list("verify_by_crl");
 
@@ -534,7 +534,7 @@ void check_crls(void)
 	crl = x509crls;
 
 	while (crl != NULL) {
-		time_t time_left = crl->nextUpdate - now();
+		time_t time_left = crl->nextUpdate - time(NULL);
 		char buf[ASN1_BUF_LEN];
 
 		DBG(DBG_X509, {
@@ -560,7 +560,7 @@ void check_crls(void)
 /*
  *  verifies a X.509 certificate
  */
-bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
+bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until /* OUT */)
 {
 	int pathlen;
 
@@ -594,7 +594,7 @@ bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 			    }
 		    });
 
-		ugh = check_validity(cert, until);
+		ugh = check_validity(cert, until /* IN/OUT */);
 
 		if (ugh != NULL) {
 			libreswan_log("checking validity of \"%s\": %s", sbuf,
@@ -699,8 +699,8 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 				  "       validity: not before %s %s",
 				  timetoa(&cert->notBefore, utc, tbuf,
 					  sizeof(tbuf)),
-				  (cert->notBefore <
-				   now()) ? "ok" : "fatal (not valid yet)");
+				  (cert->notBefore < time(NULL)) ?
+					"ok" : "fatal (not valid yet)");
 			whack_log(RC_COMMENT,
 				  "                 not after  %s %s",
 				  timetoa(&cert->notAfter, utc, tbuf,

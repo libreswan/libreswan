@@ -2628,7 +2628,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 	/* note (presumed) success */
 	if (c->gw_info != NULL)
-		c->gw_info->key->last_worked_time = now();
+		time(&c->gw_info->key->last_worked_time);
 
 	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
 	    on this conn, so initialize it */
@@ -2684,7 +2684,7 @@ stf_status quick_inI2(struct msg_digest *md)
 		struct gw_info *gw = st->st_connection->gw_info;
 
 		if (gw != NULL)
-			gw->key->last_worked_time = now();
+			time(&gw->key->last_worked_time);
 	}
 
 	/* If we have dpd delay and dpdtimeout set, then we are doing DPD

@@ -793,8 +793,9 @@ static void load_end_certificate(const char *filename, struct end *dst)
 			select_x509cert_id(cert.u.x509, &dst->id);
 
 		/* check validity of cert */
+
 		valid_until = cert.u.x509->notAfter;
-		ugh = check_validity(cert.u.x509, &valid_until);
+		ugh = check_validity(cert.u.x509, &valid_until /* IN/OUT */);
 		if (ugh != NULL) {
 			libreswan_log("  %s", ugh);
 			free_x509cert(cert.u.x509);
@@ -1269,7 +1270,7 @@ void add_connection(const struct whack_message *wm)
 		c->sa_keying_tries = wm->sa_keying_tries;
 
 		if (c->sa_rekey_margin >= c->sa_ipsec_life_seconds) {
-			time_t new_rkm;
+			monotime_t new_rkm;
 
 			new_rkm = c->sa_ipsec_life_seconds / 2;
 

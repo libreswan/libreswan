@@ -185,7 +185,7 @@ static bool openwhackrecordfile(char *file)
 	char FQDN[HOST_NAME_MAX + 1];
 	u_int32_t magic;
 	struct tm tm1, *tm;
-	time_t n = now();
+	time_t n = time(NULL);
 
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));

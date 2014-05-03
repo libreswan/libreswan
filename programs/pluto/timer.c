@@ -71,7 +71,7 @@ static unsigned int maximum_retransmissions_quick_r1 =
 /*
  * This routine places an event in the event list.
  */
-void event_schedule(enum event_type type, time_t tm, struct state *st)
+void event_schedule(enum event_type type, monotime_t tm, struct state *st)
 {
 	struct event *ev = alloc_thing(struct event,
 				"struct event in event_schedule()");
@@ -87,15 +87,20 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
 	 * if we need to (for example, if we receive a reply).
 	 */
 	if (st != NULL) {
-		if (type == EVENT_DPD || type == EVENT_DPD_TIMEOUT) {
+		switch (type) {
+		case EVENT_DPD:
+		case EVENT_DPD_TIMEOUT:
 			passert(st->st_dpd_event == NULL);
 			st->st_dpd_event = ev;
-		} else if (type == EVENT_v2_LIVENESS) {
+			break;
+		case EVENT_v2_LIVENESS:
 			passert(st->st_liveness_event == NULL);
 			st->st_liveness_event = ev;
-		} else {
+			break;
+		default:
 			passert(st->st_event == NULL);
 			st->st_event = ev;
+			break;
 		}
 	}
 
@@ -160,7 +165,7 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
  */
 static void retransmit_v1_msg(struct state *st)
 {
-	time_t delay = 0;
+	monotime_t delay = 0;
 	struct connection *c;
 	unsigned long try;
 	unsigned long try_limit;
@@ -168,7 +173,7 @@ static void retransmit_v1_msg(struct state *st)
 	passert(st != NULL);
 	c = st->st_connection;
 
-	try       = st->st_try;
+	try = st->st_try;
 	try_limit = c->sa_keying_tries;
 
 	DBG(DBG_CONTROL,
@@ -191,7 +196,7 @@ static void retransmit_v1_msg(struct state *st)
 		libreswan_log(
 			"supressing retransmit because IMPAIR_RETRANSMITS is set");
 		delay = 0;
-		try   = 0;
+		try = 0;
 	}
 
 	if (delay != 0) {
@@ -280,7 +285,7 @@ static void retransmit_v1_msg(struct state *st)
 
 static void retransmit_v2_msg(struct state *st)
 {
-	time_t delay = 0;
+	monotime_t delay = 0;
 	struct connection *c;
 	unsigned long try;
 	unsigned long try_limit;
@@ -313,7 +318,7 @@ static void retransmit_v2_msg(struct state *st)
 		libreswan_log(
 			"supressing retransmit because IMPAIR_RETRANSMITS is set");
 		delay = 0;
-		try   = 0;
+		try = 0;
 	}
 
 	if (delay != 0) {
@@ -396,55 +401,18 @@ static void retransmit_v2_msg(struct state *st)
 }
 
 /*
- * Handle the first event on the list.
+ * Handle events at head of list, if it is their time.
  */
 void handle_timer_event(void)
 {
-	time_t tm;
-	struct event *ev = evlist;
-	int type;
-
-	if (ev == (struct event *) NULL) { /* Just paranoid */
-		DBG(DBG_CONTROL,
-			DBG_log("empty event list, yet we're called"));
-		return;
-	}
-
-	type = ev->ev_type;
-	tm = now();
-
-	if (tm < ev->ev_time) {
-		DBG(DBG_CONTROL,
-			DBG_log("called while no event expired (%lu/%lu, %s)",
-				(unsigned long)tm,
-				(unsigned long)ev->ev_time,
-				enum_show(&timer_event_names, type)));
-
-		/*
-		 * This will happen if the most close-to-expire event was
-		 * a retransmission or cleanup, and we received a packet
-		 * at the same time as the event expired. Due to the processing
-		 * order in call_server(), the packet processing will happen
-		 * first, and the event will be removed.
-		 */
-		return;
-	}
-
-	/*
-	 * we can get behind, try to catch up all expired events
-	 */
-	while (ev && tm >= ev->ev_time) {
-
+	while (evlist != NULL && evlist->ev_time <= now()) {
 		handle_next_timer_event();
-
-		tm = now();
-		ev = evlist;
 	}
 }
 
 static void liveness_check(struct state *st)
 {
-	time_t tm, last_liveness, last_msg;
+	monotime_t tm, last_liveness, last_msg;
 	struct state *pst;
 	stf_status ret;
 	struct connection *c;
@@ -527,15 +495,16 @@ live_ok:
 			DBG_log("liveness_check - peer is ok"));
 		delete_liveness_event(st);
 		event_schedule(EVENT_v2_LIVENESS,
-			c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay :
-			MIN_LIVENESS, st);
+			c->dpd_delay >= MIN_LIVENESS ?
+				c->dpd_delay : MIN_LIVENESS,
+			st);
 	}
 }
 
 void handle_next_timer_event(void)
 {
 	struct event *ev = evlist;
-	time_t tm;
+	monotime_t tm;
 	int type;
 	struct state *st;
 
@@ -760,7 +729,7 @@ void handle_next_timer_event(void)
  */
 long next_event(void)
 {
-	time_t tm;
+	monotime_t tm;
 
 	if (evlist == (struct event *) NULL) {
 		DBG(DBG_CONTROLMORE, DBG_log("no pending events"));
@@ -784,7 +753,7 @@ long next_event(void)
 			}
 		});
 
-	if (evlist->ev_time - tm <= 0)
+	if (evlist->ev_time <= tm)
 		return 0;
 	else
 		return evlist->ev_time - tm;
@@ -887,7 +856,7 @@ void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
  */
 void timer_list(void)
 {
-	time_t tm;
+	monotime_t tm;
 	struct event *ev = evlist;
 	int type;
 	struct state *st;

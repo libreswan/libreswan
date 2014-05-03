@@ -16,7 +16,7 @@
 #ifndef _LSWTIME_H_
 #define _LSWTIME_H_
 
-extern time_t now(void);        /* careful version of time(2) */
+extern monotime_t now(void);	/* monotonic version of time(2) */
 
 #endif
 

@@ -453,24 +453,23 @@ static void fetch_crls(void)
 
 static void *fetch_thread(void *arg UNUSED)
 {
-	struct timespec wait_interval;
-
 	DBG(DBG_CONTROL,
 	    DBG_log("fetch thread started"));
 
 	pthread_mutex_lock(&fetch_wake_mutex);
-	while (1) {
+	for (;;) {
+		struct timespec wakeup_time;
 		int status;
 
-		wait_interval.tv_nsec = 0;
-		wait_interval.tv_sec = now() + crl_check_interval;
+		clock_gettime(CLOCK_REALTIME, &wakeup_time);
+		wakeup_time.tv_sec += crl_check_interval;
 
 		DBG(DBG_CONTROL,
 		    DBG_log("next regular crl check in %ld seconds",
 			    crl_check_interval));
 		status = pthread_cond_timedwait(&fetch_wake_cond,
 						&fetch_wake_mutex,
-						&wait_interval);
+						&wakeup_time);
 
 		if (status == ETIMEDOUT) {
 			DBG(DBG_CONTROL, {
@@ -596,7 +595,7 @@ void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 	*req = empty_fetch_req;
 
 	/* note current time */
-	req->installed = now();
+	time(&req->installed);
 
 	/* clone issuer */
 	clonetochunk(req->issuer, issuer.ptr, issuer.len, "issuer dn");

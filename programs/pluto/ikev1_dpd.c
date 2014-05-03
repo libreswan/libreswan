@@ -159,7 +159,8 @@ stf_status dpd_init(struct state *st)
 
 	/* if it was enabled, and we haven't turned it on already */
 	if (p1st->hidden_variables.st_peer_supports_dpd) {
-		time_t n = now();
+		monotime_t n = now();
+
 		libreswan_log("Dead Peer Detection (RFC 3706): enabled");
 
 		if (st->st_dpd_event == NULL ||
@@ -188,7 +189,7 @@ stf_status dpd_init(struct state *st)
  * Only schedule a new timeout if there isn't one currently,
  * or if it would be sooner than the current timeout.
  */
-static void dpd_sched_timeout(struct state *p1st, time_t tm, time_t timeout)
+static void dpd_sched_timeout(struct state *p1st, monotime_t tm, monotime_t timeout)
 {
 	passert(timeout > 0);
 	if (p1st->st_dpd_event == NULL ||
@@ -208,13 +209,12 @@ static void dpd_sched_timeout(struct state *p1st, time_t tm, time_t timeout)
  * @return void
  */
 static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
-		     time_t delay, time_t timeout)
+		     monotime_t delay, monotime_t timeout)
 {
-	time_t tm;
-	time_t last;
+	monotime_t nw;
+	monotime_t last;
+	monotime_t nextdelay;
 	u_int32_t seqno;
-	bool eroute_idle;
-	time_t nextdelay;
 
 	DBG(DBG_DPD,
 	    DBG_log("DPD: processing for state #%lu (\"%s\")",
@@ -236,7 +236,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	}
 
 	/* find out when now is */
-	tm = now();
+	nw = now();
 
 	/*
 	 * pick least recent activity value, since with multiple phase 2s,
@@ -248,24 +248,26 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 *  At worst, this means that we send a bit more traffic then we need
 	 *  to when there are multiple SAs and one is much less active.
 	 *
+	 * ??? the code actually picks the most recent.  So much for comments.
 	 */
-	last = (p1st->st_last_dpd < st->st_last_dpd ?
-		st->st_last_dpd : p1st->st_last_dpd);
+	last = p1st->st_last_dpd > st->st_last_dpd ?
+		p1st->st_last_dpd : st->st_last_dpd;
 
-	nextdelay = last + delay - tm;
+	nextdelay = last + delay - nw;
 
 	/* has there been enough activity of late? */
 	if (nextdelay > 0) {
 		/* Yes, just reschedule "phase 2" */
 		DBG(DBG_DPD,
 		    DBG_log("DPD: not yet time for dpd event: %lu < %lu",
-			    (unsigned long)tm,
+			    (unsigned long)nw,
 			    (unsigned long)(last + delay)));
 		event_schedule(EVENT_DPD, nextdelay, st);
 		return;
 	}
 
 	/* now plan next check time */
+	/* ??? this test is nuts: it will always succeed! */
 	if (nextdelay < 1)
 		nextdelay = delay;
 
@@ -273,32 +275,29 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 * check the phase 2, if we are supposed to,
 	 * and return if it is active recently
 	 */
-	if (eroute_care && !st->hidden_variables.st_nat_traversal) {
+	if (eroute_care && !st->hidden_variables.st_nat_traversal &&
+			!was_eroute_idle(st, delay)) {
+		DBG(DBG_DPD,
+		    DBG_log("DPD: out event not sent, phase 2 active"));
 
-		eroute_idle = was_eroute_idle(st, delay);
-		if (!eroute_idle) {
+		/* update phase 2 time stamp only */
+		st->st_last_dpd = nw;
+
+		/*
+		 * Since there was activity, kill any EVENT_DPD_TIMEOUT that might
+		 * be waiting. This can happen when a R_U_THERE_ACK is lost, and
+		 * subsequently traffic started flowing over the SA again, and no
+		 * more DPD packets are sent to cancel the outstanding DPD timer.
+		 */
+		if (p1st->st_dpd_event != NULL &&
+		    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT) {
 			DBG(DBG_DPD,
-			    DBG_log("DPD: out event not sent, phase 2 active"));
-
-			/* update phase 2 time stamp only */
-			st->st_last_dpd = tm;
-
-			/*
-			 * Since there was activity, kill any EVENT_DPD_TIMEOUT that might
-			 * be waiting. This can happen when a R_U_THERE_ACK is lost, and
-			 * subsequently traffic started flowing over the SA again, and no
-			 * more DPD packets are sent to cancel the outstanding DPD timer.
-			 */
-			if (p1st->st_dpd_event != NULL &&
-			    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT) {
-				DBG(DBG_DPD,
-			    	    DBG_log("DPD: deleting p1st DPD event"));
-				delete_dpd_event(p1st);
-			}
-
-			event_schedule(EVENT_DPD, nextdelay, st);
-			return;
+			    DBG_log("DPD: deleting p1st DPD event"));
+			delete_dpd_event(p1st);
 		}
+
+		event_schedule(EVENT_DPD, nextdelay, st);
+		return;
 	}
 
 	if (st != p1st) {
@@ -309,7 +308,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		event_schedule(EVENT_DPD, nextdelay, st);
 	}
 
-	if (!p1st->st_dpd_seqno) {
+	if (p1st->st_dpd_seqno == 0) {
 		/* Get a non-zero random value that has room to grow */
 		get_rnd_bytes((u_char *)&p1st->st_dpd_seqno,
 			      sizeof(p1st->st_dpd_seqno));
@@ -322,7 +321,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 * because the send may fail due to network issues, etc, and
 	 * the timeout has to occur anyway
 	 */
-	dpd_sched_timeout(p1st, tm, timeout);
+	dpd_sched_timeout(p1st, nw, timeout);
 
 	DBG(DBG_DPD, DBG_log("DPD: sending R_U_THERE %u to %s:%d (state #%lu)",
 			     p1st->st_dpd_seqno,
@@ -336,16 +335,15 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		return;
 	}
 
-	st->st_last_dpd = tm;
-	p1st->st_last_dpd = tm;
+	st->st_last_dpd = nw;
+	p1st->st_last_dpd = nw;
 	p1st->st_dpd_expectseqno = p1st->st_dpd_seqno++;
-
 }
 
 static void p1_dpd_outI1(struct state *p1st)
 {
-	time_t delay = p1st->st_connection->dpd_delay;
-	time_t timeout = p1st->st_connection->dpd_timeout;
+	monotime_t delay = p1st->st_connection->dpd_delay;
+	monotime_t timeout = p1st->st_connection->dpd_timeout;
 
 	dpd_outI(p1st, p1st, FALSE, delay, timeout);
 }
@@ -353,8 +351,8 @@ static void p1_dpd_outI1(struct state *p1st)
 static void p2_dpd_outI1(struct state *p2st)
 {
 	struct state *st;
-	time_t delay = p2st->st_connection->dpd_delay;
-	time_t timeout = p2st->st_connection->dpd_timeout;
+	monotime_t delay = p2st->st_connection->dpd_delay;
+	monotime_t timeout = p2st->st_connection->dpd_timeout;
 
 	/* find the related Phase 1 state */
 	st = find_phase1_state(p2st->st_connection,
@@ -392,7 +390,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 			struct isakmp_notification *const n,
 			pb_stream *pbs)
 {
-	time_t tm = now();
+	monotime_t nw = now();
 	u_int32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
@@ -400,8 +398,8 @@ stf_status dpd_inI_outR(struct state *p1st,
 		       "DPD: received R_U_THERE for unestablished ISKAMP SA");
 		return STF_IGNORE;
 	}
-	if (n->isan_spisize != COOKIE_SIZE * 2 || pbs_left(pbs) < COOKIE_SIZE *
-	    2) {
+	if (n->isan_spisize != COOKIE_SIZE * 2 ||
+	    pbs_left(pbs) < COOKIE_SIZE * 2) {
 		loglog(RC_LOG_SERIOUS,
 		       "DPD: R_U_THERE has invalid SPI length (%d)",
 		       n->isan_spisize);
@@ -439,7 +437,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	DBG(DBG_DPD,
 	    DBG_log("DPD: received R_U_THERE seq:%u time:%lu (state=#%lu name=\"%s\")",
 		    seqno,
-		    (unsigned long)tm,
+		    (unsigned long)nw,
 		    p1st->st_serialno, p1st->st_connection->name));
 
 	p1st->st_dpd_peerseqno = seqno;
@@ -451,7 +449,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	}
 
 	/* update the time stamp */
-	p1st->st_last_dpd = tm;
+	p1st->st_last_dpd = nw;
 
 	/*
 	 * since there was activity, kill any EVENT_DPD_TIMEOUT that might
@@ -476,7 +474,7 @@ stf_status dpd_inR(struct state *p1st,
 		   struct isakmp_notification *const n,
 		   pb_stream *pbs)
 {
-	time_t tm = now();
+	monotime_t nw = now();
 	u_int32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
@@ -523,7 +521,7 @@ stf_status dpd_inR(struct state *p1st,
 
 	if (seqno == p1st->st_dpd_expectseqno) {
 		/* update the time stamp */
-		p1st->st_last_dpd = tm;
+		p1st->st_last_dpd = nw;
 		p1st->st_dpd_expectseqno = 0;
 	} else if (!p1st->st_dpd_expectseqno) {
 		loglog(RC_LOG_SERIOUS,

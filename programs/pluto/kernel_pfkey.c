@@ -853,7 +853,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      unsigned int transport_proto,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
-		      time_t use_lifetime UNUSED,
+		      monotime_t use_lifetime UNUSED,
 		      unsigned long sa_priority UNUSED,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
@@ -1514,7 +1514,7 @@ void scan_proc_shunts(void)
 {
 	static const char procname[] = "/proc/net/ipsec_eroute";
 	FILE *f;
-	time_t nw = now();
+	monotime_t nw = now();
 	int lino;
 	struct eroute_info *expired = NULL;
 
@@ -1761,7 +1761,7 @@ void scan_proc_shunts(void)
  * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
  * could mean that the SA is broken and needs to be replace anyway.
  */
-bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
+bool pfkey_was_eroute_idle(struct state *st, monotime_t idle_max)
 {
 	static const char procname[] = "/proc/net/ipsec_spi";
 	FILE *f;
@@ -1782,7 +1782,7 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 			ip_said said;
 			ipsec_spi_t spi = 0;
 			static const char idle[] = "idle=";
-			time_t idle_time;                               /* idle time we read from /proc */
+			monotime_t idle_time;                               /* idle time we read from /proc */
 
 			dst = st->st_connection->spd.this.host_addr;    /* inbound SA */
 			if (st->st_ah.present) {

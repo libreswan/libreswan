@@ -45,7 +45,7 @@
 #include "socketwrapper.h"
 #include "constants.h"
 #include "lswlog.h"
-
+#include "lswtime.h"
 #include "defs.h"
 #include "whack.h"
 
@@ -784,10 +784,11 @@ struct sockaddr_un ctl_addr = {
 #endif
 };
 
-static void check_life_time(time_t life, time_t limit, const char *which,
+static void check_life_time(monotime_t life, monotime_t limit,
+			    const char *which,
 			    const struct whack_message *msg)
 {
-	time_t mint = msg->sa_rekey_margin * (100 + msg->sa_rekey_fuzz) / 100;
+	monotime_t mint = msg->sa_rekey_margin * (100 + msg->sa_rekey_fuzz) / 100;
 
 	if (life > limit) {
 		char buf[200]; /* arbitrary limit */

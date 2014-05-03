@@ -1310,7 +1310,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 }
 
 void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
-			unsigned long count, time_t nw)
+			unsigned long count, monotime_t nw)
 {
 	struct state *st;
 	int i;
@@ -1346,7 +1346,7 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 	    });
 }
 
-void fmt_state(struct state *st, const time_t n,
+void fmt_state(struct state *st, const monotime_t n,
 	       char *state_buf, const size_t state_buf_len,
 	       char *state_buf2, const size_t state_buf2_len)
 {
@@ -1366,13 +1366,13 @@ void fmt_state(struct state *st, const time_t n,
 	const char *idlestr;
 
 #if defined(linux) && defined(NETKEY_SUPPORT)
-	time_t ago;
+	monotime_t ago;
 #endif
 
 	fmt_conn_instance(c, inst);
 
 	if (st->st_event) {
-		/* tricky: in case time_t is an unsigned type */
+		/* tricky: in case time_t/monotime_t is an unsigned type */
 		delta = st->st_event->ev_time >= n ?
 			(long)(st->st_event->ev_time - n) :
 			-(long)(n - st->st_event->ev_time);
@@ -1387,23 +1387,24 @@ void fmt_state(struct state *st, const time_t n,
 	} else {
 		if (st->hidden_variables.st_peer_supports_dpd) {
 
+			/* ???why is printing -1 better than 0? */
 			snprintf(dpdbuf, sizeof(dpdbuf),
 				 "; lastdpd=%lds(seq in:%u out:%u)",
-				 st->st_last_dpd != 0 ? now() -
-				 st->st_last_dpd : (long)-1,
+				 st->st_last_dpd != 0 ?
+					now() - st->st_last_dpd : (long)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
 		} else if (dpd_active_locally(st) && st->st_ikev2) {
-			struct state *pst;
-
 			/* stats are on parent sa */
 			if (IS_CHILD_SA(st)) {
-				pst = state_with_serialno(st->st_clonedfrom);
+				struct state *pst = state_with_serialno(st->st_clonedfrom);
+
 				if (pst != NULL) {
 					snprintf(dpdbuf, sizeof(dpdbuf),
-						 "; lastlive=%lds",
-						 pst->st_last_liveness != 0 ?
-						  now() - pst->st_last_liveness : 0);
+						"; lastlive=%lds",
+						pst->st_last_liveness != 0 ?
+						now() - pst->st_last_liveness :
+						0);
 				}
 			}
 		} else {
@@ -1638,7 +1639,7 @@ void show_states_status(void)
 	}
 
 	if (count != 0) {
-		time_t n = now();
+		monotime_t n = now();
 #if 1
 		/* C99's VLA feature is just what we need */
 		struct state *array[count];

@@ -30,12 +30,29 @@
 #include "lswtime.h"
 #include "lswlog.h"
 
-/* monotonic version of time(3) */
+/*
+ * monotonic version of time(2)
+ *
+ * NOT INTENDED TO BE REALTIME!
+ */
 time_t now(void)
 {
+#if _POSIX_MONOTONIC_CLOCK
+	struct timespec t;
+	int r = clock_gettime(
+#   if CLOCK_BOOTTIME
+		CLOCK_BOOTTIME	/* best */
+#   else
+		CLOCK_MONOTONIC	/* second best */
+#   endif
+		, &t);
+
+	passert(r == 0);
+	return t.
+#else
 	static time_t delta = 0,
 		last_time = 0;
-	time_t n = time(NULL);
+	time_t n = time(NULL);	/* third best */
 
 	passert(n != (time_t)-1);
 	if (last_time > n) {
@@ -45,6 +62,7 @@ time_t now(void)
 	}
 	last_time = n;
 	return n + delta;
+#endif
 }
 
 /* Names of the months */

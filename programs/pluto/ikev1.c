@@ -2381,7 +2381,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
-			time_t delay;
+			monotime_t delay;
 			enum event_type kind = smc->timeout_event;
 			bool agreed_time = FALSE;
 			struct connection *c = st->st_connection;

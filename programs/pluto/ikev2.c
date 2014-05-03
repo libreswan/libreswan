@@ -1000,7 +1000,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 	/* Schedule for whatever timeout is specified */
 	{
-		time_t delay;
+		monotime_t delay;
 		enum event_type kind = svm->timeout_event;
 		struct connection *c = st->st_connection;
 
@@ -1017,8 +1017,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 				 */
 				delay = c->sa_ike_life_seconds;
 			} else {
-				/* Delay is what the user said, no negotiation.
-				 */
+				/* Delay is what the user said, no negotiation. */
 				delay = c->sa_ipsec_life_seconds;
 			}
 
@@ -1071,7 +1070,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			/* dos_cookie is one 'valid' event, but it is used more? */
 			break;
 
-		case EVENT_REINIT_SECRET: /* Refresh cookie secret */
+		case EVENT_REINIT_SECRET: /* ??? Refresh cookie secret */
 		default:
 			bad_case(kind);
 		}

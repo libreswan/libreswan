@@ -16,12 +16,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <stdio.h>
 #include <dirent.h>
-#include "lswtime.h"
 #include <sys/types.h>
 
 #include <libreswan.h>
+#include "lswtime.h"
 
 #include "sysdep.h"
 #include "constants.h"
@@ -41,23 +42,25 @@ bool all_zero(const unsigned char *m, size_t len)
 	return TRUE;
 }
 
-/*  checks if the expiration date has been reached and
- *  warns during the warning_interval of the imminent
- *  expiry. strict=TRUE declares a fatal error,
- *  strict=FALSE issues a warning upon expiry.
+/*
+ * checks if the expiration date has been reached and
+ * warns during the warning_interval of the imminent
+ * expiry.
+ * strict == TRUE: expiry yields an error message
+ * strict == FALSE: expiry yields a warning message
  *
  * Note: not re-entrant because the message may be in a static buffer (buf).
  */
 const char *check_expiry(time_t expiration_date, int warning_interval,
 			bool strict)
 {
-	time_t tnow = now();
-	int time_left;
+	long time_left;
 
 	if (expiration_date == UNDEFINED_TIME)
 		return "ok (expires never)";
 
-	time_left = (expiration_date - tnow);
+	time_left = expiration_date - time(NULL);
+
 	if (time_left < 0)
 		return strict ? "fatal (expired)" : "warning (expired)";
 
@@ -78,7 +81,7 @@ const char *check_expiry(time_t expiration_date, int warning_interval,
 			time_left /= secs_per_minute;
 			unit = "minute";
 		}
-		snprintf(buf, sizeof(buf), "warning (expires in %d %s%s)",
+		snprintf(buf, sizeof(buf), "warning (expires in %ld %s%s)",
 			time_left, unit, (time_left == 1) ? "" : "s");
 		return buf;
 	}

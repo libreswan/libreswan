@@ -435,7 +435,7 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @param transport_proto int (Currently unused) Contains protocol (u=tcp, 17=udp, etc...)
  * @param esatype int
  * @param pfkey_proto_info proto_info
- * @param use_lifetime time_t (Currently unused)
+ * @param use_lifetime monotime_t (Currently unused)
  * @param pluto_sadb_opterations sadb_op (operation - ie: ERO_DELETE)
  * @param text_said char
  * @return boolean True if successful
@@ -449,7 +449,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			unsigned int transport_proto,
 			enum eroute_type esatype,
 			const struct pfkey_proto_info *proto_info,
-			time_t use_lifetime UNUSED,
+			monotime_t use_lifetime UNUSED,
 			unsigned long sa_priority,
 			enum pluto_sadb_operations sadb_op,
 			const char *text_said
@@ -1797,9 +1797,9 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
  * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
  * could mean that the SA is broken and needs to be replace anyway.
  */
-static bool netlink_eroute_idle(struct state *st, time_t idle_max)
+static bool netlink_eroute_idle(struct state *st, monotime_t idle_max)
 {
-	time_t idle_time;
+	monotime_t idle_time;
 
 	passert(st != NULL);
 	if (!get_sa_info(st, TRUE, &idle_time))

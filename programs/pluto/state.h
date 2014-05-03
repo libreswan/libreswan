@@ -86,7 +86,7 @@ struct trans_attrs {
 
 	u_int16_t groupnum;		/* for IKEv2 */
 
-	time_t life_seconds;		/* When this SA expires (seconds) */
+	monotime_t life_seconds;		/* When this SA expires (seconds) */
 	u_int32_t life_kilobytes;	/* When this SA is exhausted (kilobytes) */
 
 	/* used in phase1/PARENT SA */
@@ -110,7 +110,7 @@ struct trans_attrs {
 struct ipsec_trans_attrs {
 	struct trans_attrs transattrs;
 	ipsec_spi_t spi;                /* his SPI */
-	time_t life_seconds;            /* When this SA expires */
+	monotime_t life_seconds;            /* When this SA expires */
 	u_int32_t life_kilobytes;       /* When this SA expires */
 	u_int16_t encapsulation;
 #if 0                                   /* not implemented yet */
@@ -129,8 +129,8 @@ struct ipsec_proto_info {
 	u_char *peer_keymat;
 	u_int our_bytes;
 	u_int peer_bytes;
-	time_t our_lastused;
-	time_t peer_lastused;
+	monotime_t our_lastused;
+	monotime_t peer_lastused;
 };
 
 struct ike_frag {
@@ -348,10 +348,11 @@ struct state {
 	unsigned long st_try;                   /* number of times rekeying
 	                                           attempted */
 	                                        /* 0 means the only time */
-	time_t st_margin;                       /* life after EVENT_SA_REPLACE*/
+	monotime_t st_margin;                       /* life after EVENT_SA_REPLACE*/
 	unsigned long st_outbound_count;        /* traffic through eroute */
-	time_t st_outbound_time;                /* time of last change to
-	                                         * st_outbound_count */
+	monotime_t st_outbound_time;		/* time of last change to
+	                                         * st_outbound_count
+						 */
 
 	bool st_calculating;                    /* set to TRUE, if we are
 	                                         * performing cryptographic
@@ -391,22 +392,21 @@ struct state {
 
 	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
-	struct event      *st_event;            /* backpointer for certain
-	                                           events */
-	struct state      *st_hashchain_next;   /* Next in list */
-	struct state      *st_hashchain_prev;   /* Previous in list */
+	struct event *st_event;		/* backpointer for certain events */
+	struct state *st_hashchain_next;	/* Next in list */
+	struct state *st_hashchain_prev;	/* Previous in list */
 
 	struct hidden_variables hidden_variables;
 
 	char st_xauth_username[XAUTH_USERNAME_LEN];
 	chunk_t st_xauth_password;
 
-	time_t st_last_liveness;		/* Time of last v2 informational */
+	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
 	bool st_pend_liveness;			/* Waiting on an informational response */
 	struct event *st_liveness_event;
 
 	/* RFC 3706 Dead Peer Detection */
-	time_t st_last_dpd;                     /* Time of last DPD transmit */
+	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
 	u_int32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
 	u_int32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK
 	                                           to receive */
@@ -436,7 +436,7 @@ extern void unhash_state(struct state *st);
 extern void rehash_state(struct state *st);
 extern void release_whack(struct state *st);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
-			       unsigned long count, time_t nw);
+			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
 struct connection;      /* forward declaration of tag */
 extern void delete_states_by_connection(struct connection *c, bool relations);
@@ -492,7 +492,7 @@ void for_each_state(void (*f)(struct state *, void *data), void *data);
 
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
 extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st);
-extern void fmt_state(struct state *st, const time_t n,
+extern void fmt_state(struct state *st, const monotime_t n,
 		      char *state_buf, const size_t state_buf_len,
 		      char *state_buf2, const size_t state_buf_len2);
 extern void delete_states_by_peer(const ip_address *peer);

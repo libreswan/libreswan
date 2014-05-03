@@ -873,7 +873,7 @@ static bool raw_eroute(const ip_address *this_host,
 		       unsigned int transport_proto,
 		       enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
-		       time_t use_lifetime,
+		       monotime_t use_lifetime,
 		       unsigned long sa_priority,
 		       enum pluto_sadb_operations op,
 		       const char *opname
@@ -3044,7 +3044,7 @@ bool update_ipsec_sa(struct state *st USED_BY_KLIPS)
 	return TRUE;
 }
 
-bool was_eroute_idle(struct state *st, time_t since_when)
+bool was_eroute_idle(struct state *st, monotime_t since_when)
 {
 	if (kernel_ops->eroute_idle)
 		return kernel_ops->eroute_idle(st, since_when);
@@ -3067,7 +3067,7 @@ const char *kernel_if_name()
 /*
  * get information about a given sa - needs merging with was_eroute_idle
  */
-bool get_sa_info(struct state *st, bool inbound, time_t *ago /* OUTPUT */)
+bool get_sa_info(struct state *st, bool inbound, monotime_t *ago /* OUTPUT */)
 {
 	char text_said[SATOT_BUF];
 	u_int proto;

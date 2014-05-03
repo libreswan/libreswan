@@ -90,7 +90,7 @@ struct lease_addr {
 	u_int32_t index;	/* range start + index == IP address */
 	struct id thatid;	/* from connection */
 	unsigned refcnt;	/* reference counted */
-	time_t lingering_since;	/* when did this begin to linger */
+	monotime_t lingering_since;	/* when did this begin to linger */
 
 	struct lease_addr *next;	/* next in pool's list of leases */
 };

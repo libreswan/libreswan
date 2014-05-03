@@ -389,7 +389,7 @@ static void peerlog(const char *prefix, const char *m)
 	if (cur_connection->log_file != NULL) {
 		char datebuf[32];
 		struct tm tm1, *t;
-		time_t n = now();
+		time_t n = time(NULL);
 
 		t = localtime_r(&n, &tm1);
 
@@ -418,7 +418,7 @@ int libreswan_log(const char *message, ...)
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
-			time_t rtime = now();
+			time_t rtime = time(NULL);
 
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
@@ -454,7 +454,7 @@ void loglog(int mess_no, const char *message, ...)
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
-			time_t rtime = now();
+			time_t rtime = time(NULL);
 
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
@@ -707,7 +707,7 @@ int DBG_log(const char *message, ...)
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
-			time_t rtime = now();
+			time_t rtime = time(NULL);
 
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
@@ -844,13 +844,14 @@ void daily_log_reset(void)
 void daily_log_event(void)
 {
 	struct tm tm1, *ltime;
-	time_t interval;
-	time_t n = now();
+	monotime_t interval;
+	time_t n = time(NULL);
 
 	/* attempt to schedule oneself to midnight, local time
 	 * do this by getting seconds in the day, and delaying
 	 * by secs_per_day - hour*3600+minutes*60+seconds.
 	 */
+	tzset();
 	ltime = localtime_r(&n, &tm1);
 	interval = secs_per_day -
 		   (ltime->tm_sec +
