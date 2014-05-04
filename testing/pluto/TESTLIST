@@ -377,6 +377,7 @@ kvmplutotest	netkey-algo-serpent-01	good
 kvmplutotest	klips-algo-serpent-01	good
 kvmplutotest	netkey-algo-camellia-01	good
 kvmplutotest	netkey-algo-cast-01	good
+kvmplutotest	klips-algo-cast-01	good
 kvmplutotest	netkey-algo-null-01	good
 kvmplutotest	netkey-algo-null-02	good
 
