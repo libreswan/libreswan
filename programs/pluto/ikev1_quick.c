@@ -244,6 +244,18 @@ static void compute_proto_keymat(struct state *st,
 			needed_len += AES_CCM_SALT_BYTES;
 			break;
 
+		case ESP_CAST:
+			/* CAST can use 40-28 bits but requires padding up to 128
+			 * We use a minimum of 128bits to avoid padding
+			 * This is also the max keysize for cast128
+			 */
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+                                passert(st->st_esp.attrs.transattrs.enckeylen == 128);
+			}
+			/* minimum = default = maximum */
+			needed_len = CAST_KEY_DEF_LEN / BITS_PER_BYTE;
+			break;
+
 		default:
 			needed_len = kernel_alg_esp_enc_max_keylen(
 					pi->attrs.transattrs.encrypt);
