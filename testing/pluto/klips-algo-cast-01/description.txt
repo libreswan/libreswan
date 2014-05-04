@@ -1,8 +1,8 @@
 Basic pluto test, except the policy has been adjusted to permit only
-cast128 for for phase 2. This uses NETKEY, not KLIPS as KLIPS does not
-support cast128.
+cast128 for for phase 2 via KLIPS CryptoAPI
 
-However, it seems NETKEY does not support cast128 either:
+minor buglet, ipsec look shows:
 
-"westnet-eastnet-cast128" #2: ERROR: netlink response for Add SA esp.fe470ce2@192.1.2.45 included errno 38: Function not implemented
+esp0xSPISPI@192.1.2.23 ESP_ID6_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64  alen=160 aklen=160 e
 
+and shows ESP_ID6 instead of ESP_CAST
