@@ -209,7 +209,8 @@ bool ikev2_calculate_psk_auth(struct state *st,
 	DBG(DBG_CRYPT,
 	    DBG_dump("PSK auth octets", signed_octets, hash_len ));
 
-	out_raw(signed_octets, hash_len, a_pbs, "PSK auth");
+	if (!out_raw(signed_octets, hash_len, a_pbs, "PSK auth"))
+		return FALSE;
 
 	return TRUE;
 }

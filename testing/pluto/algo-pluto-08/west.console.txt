@@ -4,10 +4,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -16,7 +16,7 @@ west #
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 west #
- # confirm with a ping to east-in
+ # confirm with a ping
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -27,8 +27,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
- ipsec _stackmanager start
-[ 00.00] NET: Registered protocol family 15
+ ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -36,14 +35,10 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] alg: No test for cipher_null (cipher_null-generic)
-[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for compress_null (compress_null-generic)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
 west #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
@@ -54,19 +49,19 @@ west #
 000 interface ipsec0/eth1 192.1.2.45
 000  
 000 fips mode=disabled;
-000 SElinux=enabled
+000 SElinux=XXXXX
 000  
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
-000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
+000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
+000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx_attr_value=XXXX
+000 secctx-attr-value=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000  
 000 ESP algorithms supported:
 000  
@@ -114,9 +109,9 @@ west #
 000 "westnet-eastnet-dh15":    policy_label:unset; 
 000 "westnet-eastnet-dh15":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-dh15":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-dh15":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "westnet-eastnet-dh15":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "westnet-eastnet-dh15":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "westnet-eastnet-dh15":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet-dh15":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-dh15":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-dh15":   IKE algorithms wanted: AES_CBC(7)_000-SHA1(2)_000-MODP3072(15)
 000 "westnet-eastnet-dh15":   IKE algorithms found:  AES_CBC(7)_128-SHA1(2)_160-MODP3072(15)
@@ -142,16 +137,16 @@ west #
 003 "westnet-eastnet-dh15" #1: received Vendor ID payload [CAN-IKEv2]
 004 "westnet-eastnet-dh15" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP3072}
 117 "westnet-eastnet-dh15" #2: STATE_QUICK_I1: initiate
-004 "westnet-eastnet-dh15" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_256-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "westnet-eastnet-dh15" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_256-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ipsec look
 west NOW
 192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789 natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=256 jiffies=0123456789 natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=256 jiffies=0123456789 natencap=na   refhim=1
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789 natencap=na   refhim=1
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=256 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=256 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=1
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -172,10 +167,10 @@ west #
 west NOW
 192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0x723b19a9@192.1.2.23  (0)
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0x3711f364@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xade5b13cda1fba23162d86752289b6ae ooowin=64 alen=160 aklen=160 eklen=256 jiffies=4294720947 life(c,s,h)= natencap=na refcount=3 ref=4 refhim=1
-esp0x723b19a9@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0x248a98357047b3c37b00d060dc270aef ooowin=64 alen=160 aklen=160 eklen=256 jiffies=4294720947 life(c,s,h)= natencap=na refcount=3 ref=2 refhim=0
-tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294720947 life(c,s,h)= natencap=na refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294720947 life(c,s,h)= natencap=na refcount=3 ref=3 refhim=1
+esp0x3711f364@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xade5b13cda1fba23162d86752289b6ae ooowin=64 alen=160 aklen=160 eklen=256 jiffies=4294720947 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=4 refhim=1
+esp0x723b19a9@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0x248a98357047b3c37b00d060dc270aef ooowin=64 alen=160 aklen=160 eklen=256 jiffies=4294720947 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
+tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294720947 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
+tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294720947 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=3 refhim=1
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES

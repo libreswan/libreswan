@@ -247,9 +247,9 @@ static bool pfkey_input_ready(void)
 	LSW_FD_ZERO(&readfds);  /* we only care about pfkeyfd */
 	LSW_FD_SET(pfkeyfd, &readfds);
 
-	do
+	do {
 		ndes = lsw_select(pfkeyfd + 1, &readfds, NULL, NULL, &tm);
-	while (ndes == -1 && errno == EINTR);
+	} while (ndes == -1 && errno == EINTR);
 
 	if (ndes < 0) {
 		log_errno((e, "select() failed in pfkey_get()"));
@@ -1521,8 +1521,7 @@ void scan_proc_shunts(void)
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 
 	DBG(DBG_CONTROL,
-	    DBG_log("scanning for shunt eroutes")
-	    );
+	    DBG_log("scanning for shunt eroutes"));
 
 	/* free any leftover entries: they will be refreshed if still current */
 	while (orphaned_holds != NULL) {
@@ -1615,7 +1614,7 @@ void scan_proc_shunts(void)
 			/* our client */
 
 			context = "source subnet field malformed: ";
-			ugh = ttosubnet((char *)ff[0].ptr, ff[0].len, 0,
+			ugh = ttosubnet((char *)ff[0].ptr, ff[0].len, AF_UNSPEC,
 					&eri.ours);
 			if (ugh != NULL)
 				break;
@@ -1623,7 +1622,7 @@ void scan_proc_shunts(void)
 			/* his client */
 
 			context = "destination subnet field malformed: ";
-			ugh = ttosubnet((char *)ff[2].ptr, ff[2].len, 0,
+			ugh = ttosubnet((char *)ff[2].ptr, ff[2].len, AF_UNSPEC,
 					&eri.his);
 			if (ugh != NULL)
 				break;

@@ -42,12 +42,13 @@
 
 #include "sysdep.h"
 #include "lswconf.h"
+#include "lswtime.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "whack.h"              /* needs connections.h */
@@ -65,6 +66,7 @@
 #include "server.h"
 #include "fetch.h"
 #include "timer.h"
+#include "ikev2.h"
 
 #include "kernel_alg.h"
 #include "ike_alg.h"
@@ -112,7 +114,7 @@ void do_whacklisten()
 	reset_adns_restart_count();
 	set_myFQDN();
 	find_ifaces();
-	load_preshared_secrets(NULL_FD);
+	load_preshared_secrets();
 	load_groups();
 }
 
@@ -148,7 +150,6 @@ static FILE *whackrecordfile = NULL;
 static bool writewhackrecord(char *buf, int buflen)
 {
 	u_int32_t header[3];
-	time_t n;
 
 	/* round up buffer length */
 	int abuflen = (buflen + 3) & ~0x3;
@@ -159,8 +160,7 @@ static bool writewhackrecord(char *buf, int buflen)
 
 	header[0] = buflen + sizeof(u_int32_t) * 3;
 	header[1] = 0;
-	time(&n);
-	header[2] = n;
+	header[2] = now();
 
 	/* DBG_log("buflen: %u abuflen: %u\n", header[0], abuflen); */
 
@@ -185,7 +185,7 @@ static bool openwhackrecordfile(char *file)
 	char FQDN[HOST_NAME_MAX + 1];
 	u_int32_t magic;
 	struct tm tm1, *tm;
-	time_t n;
+	time_t n = now();
 
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));
@@ -199,7 +199,6 @@ static bool openwhackrecordfile(char *file)
 		return FALSE;
 	}
 
-	time(&n);
 	tm = localtime_r(&n, &tm1);
 	strftime(when, sizeof(when), "%F %T", tm);
 
@@ -398,9 +397,23 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 		if (st == NULL) {
 			loglog(RC_UNKNOWN_NAME, "no state #%lu to delete",
-			       msg.whack_deletestateno);
+					msg.whack_deletestateno);
+
 		} else {
-			delete_state(st);
+			DBG_log("received whack to delete state %s #%lu %s ",
+				st->st_ikev2 ? "IKEv2" : "IKEv1",
+				st->st_serialno,
+				enum_name(&state_names, st->st_state));
+
+			if ( st->st_ikev2 && !IS_CHILD_SA(st)) {
+				DBG_log("state #%lu in %s is not a CHILD_SA. "
+					"Could be an ISKAMP SA, also delete "
+					"its IPSEC/Child SAs", st->st_serialno,
+					enum_name(&state_names, st->st_state));
+				v2_delete_my_family(st, INITIATOR);
+			} else {
+				delete_state(st);
+			}
 		}
 	}
 
@@ -419,7 +432,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 	}
 
 	if (msg.whack_reread & REREAD_SECRETS)
-		load_preshared_secrets(whackfd);
+		load_preshared_secrets();
 
 	if (msg.whack_list & LIST_PUBKEYS)
 		list_public_keys(msg.whack_utc, msg.whack_check_pub_keys);
@@ -429,14 +442,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 		load_authcerts_from_nss("CA cert", AUTH_CA);
 	}
 
-	if (msg.whack_reread & REREAD_AACERTS)
-		load_authcerts("AA cert", oco->aacerts_dir, AUTH_AA);
-
-	if (msg.whack_reread & REREAD_ACERTS)
-		load_acerts();
-
 	if (msg.whack_reread & REREAD_CRLS)
-
 		load_crls();
 
 	if (msg.whack_list & LIST_PSKS)
@@ -444,15 +450,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_list & LIST_CERTS)
 		list_certs(msg.whack_utc);
-
-	if (msg.whack_list & LIST_AACERTS)
-		list_authcerts("AA", AUTH_AA, msg.whack_utc);
-
-	if (msg.whack_list & LIST_ACERTS)
-		list_acerts(msg.whack_utc);
-
-	if (msg.whack_list & LIST_GROUPS)
-		list_groups(msg.whack_utc);
 
 	if (msg.whack_list & LIST_CACERTS)
 		list_authcerts("CA", AUTH_CA, msg.whack_utc);

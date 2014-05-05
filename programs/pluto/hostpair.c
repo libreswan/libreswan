@@ -34,21 +34,18 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 #include "kameipsec.h"
 
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
 #include "secrets.h"
 
 #include "defs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -155,11 +152,12 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 	 * for the purposes of comparison, port 500 and 4500 are identical,
 	 * but other ports are not.
 	 * So if any port==4500, then set it to 500.
+	 * But we can also have non-RFC values for pluto_port and pluto_nat_port
 	 */
-	if (myport == 4500)
-		myport = 500;
-	if (hisport == 4500)
-		hisport = 500;
+	if (myport == pluto_nat_port)
+		myport = pluto_port;
+	if (hisport == pluto_nat_port)
+		hisport = pluto_port;
 
 	for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next) {
 		DBG(DBG_CONTROLMORE, {

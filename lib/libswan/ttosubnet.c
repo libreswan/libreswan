@@ -36,32 +36,40 @@ ip_subnet *dst;
 	size_t mlen;
 	const char *oops;
 	unsigned long bc;
-	static char def[] = DEFAULTSUBNET;
+	static const char def[] = DEFAULTSUBNET;
 #define DEFLEN (sizeof(def) - 1)	/* -1 for NUL */
-	static char defis4[] = "0/0";
+	static const char defis4[] = "0/0";
 #define DEFIS4LEN (sizeof(defis4) - 1)
-	static char defis6[] = "::/0";
+	static const char defis6[] = "::/0";
 #define DEFIS6LEN (sizeof(defis6) - 1)
 	ip_address addrtmp;
 	ip_address masktmp;
 	int nbits;
 	int i;
 
-	if (srclen == 0)
+	if (srclen == 0) {
 		srclen = strlen(src);
-	if (srclen == 0)
-		return "empty string";
+		if (srclen == 0)
+			return "empty string";
+	}
 
 	/*
-	 * you cannot use af==0 and src=0/0,
+	 * you cannot use af==AF_UNSPEC and src=0/0,
 	 * makes no sense as will it be AF_INET
 	 */
-	if (af == 0 && srclen == DEFLEN && strncmp(src, def, srclen) == 0)
-		return "unknown address family with 0/0 subnet not allowed.";
-
 	if (srclen == DEFLEN && strncmp(src, def, srclen) == 0) {
-		src = (af == AF_INET) ? defis4 : defis6;
-		srclen = (af == AF_INET) ? DEFIS4LEN : DEFIS6LEN;
+		switch (af) {
+		case AF_INET:
+			src = defis4;
+			srclen = DEFIS4LEN;
+			break;
+		case AF_INET6:
+			src = defis6;
+			srclen = DEFIS6LEN;
+			break;
+		default:
+			return "unknown address family with " DEFAULTSUBNET " subnet not allowed.";
+		}
 	}
 
 	slash = memchr(src, '/', srclen);
@@ -74,8 +82,8 @@ ip_subnet *dst;
 	if (oops != NULL)
 		return oops;
 
-	if (af == 0)
-		af = ip_address_family(&addrtmp);
+	if (af == AF_UNSPEC)
+		af = addrtypeof(&addrtmp);
 
 	switch (af) {
 	case AF_INET:
@@ -86,8 +94,6 @@ ip_subnet *dst;
 		break;
 	default:
 		return "unknown address family in ttosubnet";
-
-		break;
 	}
 
 	/* extract port, as last : */

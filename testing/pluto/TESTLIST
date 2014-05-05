@@ -18,7 +18,6 @@
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01	good
-kvmplutotest	basic-pluto-02	bad
 kvmplutotest	basic-pluto-03	good
 
 kvmplutotest	pluto-ipcmp-01	good
@@ -293,11 +292,11 @@ kvmplutotest	psk-pluto-02		bad
 kvmplutotest	xauth-pluto-03		good
 kvmplutotest	xauth-pluto-04		good
 kvmplutotest	xauth-pluto-05		good
+kvmplutotest	xauth-pluto-05-netkey	good
 kvmplutotest	xauth-pluto-06		good
 kvmplutotest	xauth-pluto-07		good
 kvmplutotest	xauth-pluto-08		good
-
-umlplutotest	xauth-pluto-09		good
+kvmplutotest	xauth-pluto-09		good
 
 umlXhost	xauth-pluto-10		good
 umlXhost	xauth-pluto-11		good
@@ -378,6 +377,7 @@ kvmplutotest	netkey-algo-serpent-01	good
 kvmplutotest	klips-algo-serpent-01	good
 kvmplutotest	netkey-algo-camellia-01	good
 kvmplutotest	netkey-algo-cast-01	good
+kvmplutotest	klips-algo-cast-01	good
 kvmplutotest	netkey-algo-null-01	good
 kvmplutotest	netkey-algo-null-02	good
 
@@ -489,6 +489,11 @@ kvmplutotest	ikev2-12-transport-psk			good
 kvmplutotest	ikev2-13-ah				good
 kvmplutotest	ikev2-14-missing-ke			good
 kvmplutotest	ikev2-15-fuzzer				good
+kvmplutotest	ikev2-17-rekey				good
+
+kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
+kvmplutotest	ikev2-04-basic-x509-nhelpers0		good
+kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
@@ -546,6 +551,10 @@ kvmplutotest	interop-ikev1-strongswan-02-psk-responder	good
 kvmplutotest	interop-ikev1-strongswan-03-psk-initiator	good
 kvmplutotest	interop-ikev1-strongswan-04-psk-aes-gcm		good
 kvmplutotest	interop-ikev1-strongswan-04-psk-aes-ccm		good
+kvmplutotest	interop-ikev1-strongswan-07-cast128		good
+# below is a strongswan-strongswan test case that seems to prove CAST
+# is broken for netkey/xfrm in strongswan itself too - kernel changed?
+kvmplutotest	interop-ikev1-strongswan-08-strongswan-cast	good
 
 umlplutotest    interop-ikev2-strongswan-01-noconn		good
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
@@ -593,3 +602,4 @@ kvmplutotest	l2tp-01					good
 kvmplutotest	l2tp-02					good
 kvmplutotest	l2tp-02-netkey				good
 
+kvmplutotest	ikeport-01				wip

@@ -18,15 +18,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <dirent.h>
-#include <time.h>
+#include "lswtime.h"
 #include <sys/types.h>
 
 #include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"
-#include "libreswan/ipsec_policy.h"
-#include "lswtime.h"
 #include "defs.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
@@ -47,42 +45,41 @@ bool all_zero(const unsigned char *m, size_t len)
  *  warns during the warning_interval of the imminent
  *  expiry. strict=TRUE declares a fatal error,
  *  strict=FALSE issues a warning upon expiry.
+ *
+ * Note: not re-entrant because the message may be in a static buffer (buf).
  */
 const char *check_expiry(time_t expiration_date, int warning_interval,
 			bool strict)
 {
-	time_t tnow;
+	time_t tnow = now();
 	int time_left;
 
 	if (expiration_date == UNDEFINED_TIME)
 		return "ok (expires never)";
 
-	/* determine the current time */
-	time(&tnow);
-
 	time_left = (expiration_date - tnow);
 	if (time_left < 0)
 		return strict ? "fatal (expired)" : "warning (expired)";
 
-	if (time_left > 86400 * warning_interval)
+	if (time_left > secs_per_day * warning_interval)
 		return "ok";
 
 	{
 		static char buf[35]; /* temporary storage */
-		const char* unit = "second";
+		const char *unit = "second";
 
-		if (time_left > 172800) {
-			time_left /= 86400;
+		if (time_left > 2 * secs_per_day) {
+			time_left /= secs_per_day;
 			unit = "day";
-		} else if (time_left > 7200) {
-			time_left /= 3600;
+		} else if (time_left > 2 * secs_per_hour) {
+			time_left /= secs_per_hour;
 			unit = "hour";
-		} else if (time_left > 120) {
-			time_left /= 60;
+		} else if (time_left > 2 * secs_per_minute) {
+			time_left /= secs_per_minute;
 			unit = "minute";
 		}
-		snprintf(buf, 35, "warning (expires in %d %s%s)", time_left,
-			 unit, (time_left == 1) ? "" : "s");
+		snprintf(buf, sizeof(buf), "warning (expires in %d %s%s)",
+			time_left, unit, (time_left == 1) ? "" : "s");
 		return buf;
 	}
 }

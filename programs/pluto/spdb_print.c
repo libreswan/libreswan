@@ -23,7 +23,6 @@
 #include <arpa/inet.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -59,7 +58,7 @@ static void print_sa_attr_oakley(struct db_attr *at)
 	if (at->type.oakley == 0)
 		return;
 
-	if (at->type.oakley <= oakley_attr_val_descs_size)
+	if (at->type.oakley < oakley_attr_val_descs_roof)
 		en = oakley_attr_val_descs[at->type.oakley];
 	printf("        type: %u(%s) val: %u(%s)\n",
 	       at->type.oakley,
@@ -75,7 +74,7 @@ static void print_sa_attr_ipsec(struct db_attr *at)
 	if (at->type.ipsec == 0)
 		return;
 
-	if (at->type.ipsec <= ipsec_attr_val_descs_size)
+	if (at->type.ipsec < ipsec_attr_val_descs_roof)
 		en = ipsec_attr_val_descs[at->type.ipsec];
 	printf("        type: %u(%s) val: %u(%s)\n",
 	       at->type.ipsec,
@@ -146,7 +145,7 @@ static void print_sa_v2_trans(struct db_v2_trans *tr)
 	unsigned int i;
 	const struct enum_names *en = NULL;
 
-	if (tr->transform_type <= ikev2_transid_val_descs_size)
+	if (tr->transform_type < ikev2_transid_val_descs_roof)
 		en = ikev2_transid_val_descs[tr->transform_type];
 
 	printf("      type: %u(%s) value: %u(%s) attr_cnt: %u\n",

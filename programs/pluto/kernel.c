@@ -39,7 +39,6 @@
 #include <arpa/inet.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -58,6 +57,8 @@
 #include "kernel_bsdkame.h"
 #include "packet.h"
 #include "x509.h"
+#include "x509more.h"
+#include "certs.h"
 #include "log.h"
 #include "server.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
@@ -583,8 +584,8 @@ static enum routability could_route(struct connection *c)
 
 	/* if routing would affect IKE messages, reject */
 	if (kern_interface != NO_KERNEL
-	    && c->spd.this.host_port != pluto_natt_float_port
-	    && c->spd.this.host_port != IKE_UDP_PORT &&
+	    && c->spd.this.host_port != pluto_nat_port
+	    && c->spd.this.host_port != pluto_port &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
 		loglog(RC_LOG_SERIOUS,
 		       "cannot install route: peer is within its client");
@@ -820,8 +821,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 {
 	if (pp == NULL) {
 		DBG(DBG_CONTROL,
-		    DBG_log("delete bare shunt: null pointer")
-		    );
+		    DBG_log("delete bare shunt: null pointer"));
 	} else {
 		struct bare_shunt *p = *pp;
 
@@ -1451,7 +1451,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			goto fail;
 		}
 
-		time((inbound) ? &st->st_esp.our_lastused : &st->st_esp.peer_lastused);
+		if (inbound) {
+			st->st_esp.our_lastused = now();
+		} else {
+			st->st_esp.peer_lastused = now();
+		}
 
 		DBG(DBG_KERNEL,
 		    DBG_log("added tunnel with ref=%u", said_next->ref));
@@ -1609,6 +1613,16 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			{ FALSE, ESP_AES, AUTH_ALGORITHM_HMAC_SHA1,
 			  AES_CBC_BLOCK_SIZE, HMAC_SHA1_KEY_LEN,
 			  SADB_X_EALG_AESCBC, SADB_AALG_SHA1HMAC },
+
+			{ FALSE, ESP_CAST, AUTH_ALGORITHM_NONE,
+			  CAST_CBC_BLOCK_SIZE, 0,
+			  SADB_X_EALG_CASTCBC, SADB_AALG_NONE },
+			{ FALSE, ESP_CAST, AUTH_ALGORITHM_HMAC_MD5,
+			  CAST_CBC_BLOCK_SIZE, HMAC_MD5_KEY_LEN,
+			  SADB_X_EALG_CASTCBC, SADB_AALG_MD5HMAC },
+			{ FALSE, ESP_CAST, AUTH_ALGORITHM_HMAC_SHA1,
+			  CAST_CBC_BLOCK_SIZE, HMAC_SHA1_KEY_LEN,
+			  SADB_X_EALG_CASTCBC, SADB_AALG_SHA1HMAC },
 		};
 		/* static const int esp_max = elemsof(esp_info); */
 		/* int esp_count; */
@@ -3068,7 +3082,6 @@ bool get_sa_info(struct state *st, bool inbound, time_t *ago)
 	char text_said[SATOT_BUF];
 	u_int proto;
 	u_int bytes;
-	time_t now;
 	ipsec_spi_t spi;
 	const ip_address *src, *dst;
 	struct kernel_sa sa;
@@ -3099,25 +3112,22 @@ bool get_sa_info(struct state *st, bool inbound, time_t *ago)
 	sa.text_said = text_said;
 
 	DBG(DBG_KERNEL,
-	    DBG_log("get %s", text_said)
-	    );
+	    DBG_log("get %s", text_said));
 	if (!kernel_ops->get_sa(&sa, &bytes))
 		return FALSE;
-
-	time(&now);
 
 	if (inbound) {
 		if (bytes > st->st_esp.our_bytes) {
 			st->st_esp.our_bytes = bytes;
-			st->st_esp.our_lastused = now;
+			st->st_esp.our_lastused = now();
 		}
-		*ago = now - st->st_esp.our_lastused;
+		*ago = now() - st->st_esp.our_lastused;
 	} else {
 		if (bytes > st->st_esp.peer_bytes) {
 			st->st_esp.peer_bytes = bytes;
-			st->st_esp.peer_lastused = now;
+			st->st_esp.peer_lastused = now();
 		}
-		*ago = now - st->st_esp.peer_lastused;
+		*ago = now() - st->st_esp.peer_lastused;
 	}
 	return TRUE;
 }

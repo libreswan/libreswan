@@ -29,7 +29,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -280,8 +279,8 @@ static err_t decode_iii(char **pp, struct id *gw_id)
 		/* gateway specification is numeric */
 		ip_address ip;
 		err_t ugh = tnatoaddr(p, e - p,
-				      strchr(p,
-					     ':') == NULL ? AF_INET : AF_INET6,
+				      strchr(p, ':') == NULL ?
+					AF_INET : AF_INET6,
 				      &ip);
 
 		if (ugh != NULL) {
@@ -1095,7 +1094,8 @@ static err_t process_answer_section(pb_stream *pbs,
 			if (ugh != NULL)
 				return ugh;
 		}
-		in_raw(NULL, tail, pbs, "RR RDATA");
+		if (!in_raw(NULL, tail, pbs, "RR RDATA"))
+			return "failed to read RR RDATA";
 	}
 
 	return doit &&
@@ -1227,7 +1227,8 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 
 		tail = rrf.rdlength;
 
-		in_raw(NULL, tail, &pbs, "RR RDATA");
+		if (!in_raw(NULL, tail, &pbs, "RR RDATA"))
+			return "failed to read RR RDATA";
 	}
 
 	/* Additional Section processing (just sanity checking) */
@@ -1241,10 +1242,7 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 		TRY(eat_name_helpfully(&pbs, "Additional Section"));
 
 		if (!in_struct(&rrf, &rr_fixed_desc, &pbs, NULL))
-			return
-				"failed to get fixed part of Additional Section Resource Record";
-
-
+			return "failed to get fixed part of Additional Section Resource Record";
 
 		if (rrf.rdlength > pbs_left(&pbs))
 			return "RD Length extends beyond end of message";
@@ -1253,7 +1251,8 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 
 		tail = rrf.rdlength;
 
-		in_raw(NULL, tail, &pbs, "RR RDATA");
+		if (!in_raw(NULL, tail, &pbs, "RR RDATA"))
+			return "failed to read RR RDATA";
 	}
 
 	/* done all sections */

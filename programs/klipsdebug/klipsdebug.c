@@ -199,9 +199,9 @@ int main(int argc, char **argv)
 					program_name);
 				exit(1);
 			}
-			em_db_tn = em_db_nl = em_db_xf = em_db_er = 
+			em_db_tn = em_db_nl = em_db_xf = em_db_er =
 				em_db_sp = -1;
-			em_db_rj = em_db_es = em_db_ah = em_db_rx = 
+			em_db_rj = em_db_es = em_db_ah = em_db_rx =
 				em_db_ky = -1;
 			em_db_gz = em_db_vb = -1;
 

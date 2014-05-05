@@ -172,7 +172,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 	if (pluto_listen) {
 		err_t e;
-		e = ttoaddr(pluto_listen, 0, 0, &lip);
+		e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 		if (e) {
 			DBG_log("invalid listen= option ignored: %s\n", e);
 			pluto_listen = NULL;
@@ -326,7 +326,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				if (addrtypeof(&ifp->addr) == AF_INET) {
 					fd = create_socket(ifp,
 							   q->ip_dev->id_vname,
-							   pluto_natt_float_port);
+							   pluto_nat_port);
 					if (fd < 0) {
 						libreswan_log(
 							"failed to create socket for NAT-T: %s",
@@ -342,9 +342,9 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 					id->id_count++;
 
 					q->ip_addr = ifp->addr;
-					setportof(htons(pluto_natt_float_port),
+					setportof(htons(pluto_nat_port),
 						  &q->ip_addr);
-					q->port = pluto_natt_float_port;
+					q->port = pluto_nat_port;
 					q->fd = fd;
 					q->change = IFN_ADD;
 					q->ike_float = TRUE;
@@ -432,9 +432,10 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 			   "%s",        /* actual script */
 			   ref,
 			   refhim,
-			   (c->policy &
-			    POLICY_SAREF_TRACK_CONNTRACK) ? "conntrack" :
-			   ( (c->policy & POLICY_SAREF_TRACK) ? "yes" : "no"),
+			   (c->policy & POLICY_SAREF_TRACK_CONNTRACK) ?
+			     "conntrack" :
+			   (c->policy & POLICY_SAREF_TRACK) ?
+			     "yes" : "no",
 			   verb, verb_suffix,
 			   common_shell_out_str,
 			   sr->this.updown == NULL ?

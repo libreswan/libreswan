@@ -295,7 +295,6 @@ static const struct keyword_enum_value kw_sendcert_values[] = {
 	{ "sendifasked",  cert_sendifasked },
 	{ "alwayssend",   cert_alwayssend },
 	{ "always",       cert_alwayssend },
-	{ "forcedtype",   cert_forcedtype },
 };
 
 static const struct keyword_enum_values kw_sendcert_list = VALUES_INITIALIZER(kw_sendcert_values);
@@ -354,12 +353,16 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "crlcheckinterval", kv_config, kt_time,     KBF_CRLCHECKINTERVAL,
 	  NOT_ENUM },
-	{ "force_busy",     kv_config, kt_bool,      KBF_FORCEBUSY, NOT_ENUM },
+	{ "force_busy",     kv_config | kv_alias, kt_bool,      KBF_FORCEBUSY, NOT_ENUM },	/* obsolete _ */
+	{ "force-busy",     kv_config, kt_bool,      KBF_FORCEBUSY, NOT_ENUM },
 	{ "ikeport",        kv_config, kt_number,     KBF_IKEPORT, NOT_ENUM },
 
-	{ "virtual_private", kv_config, kt_string,     KSF_VIRTUALPRIVATE, NOT_ENUM },
-	{ "nat_ikeport",   kv_config, kt_number,      KBF_NATIKEPORT, NOT_ENUM },
-	{ "keep_alive", kv_config, kt_number,    KBF_KEEPALIVE, NOT_ENUM },
+	{ "virtual_private", kv_config | kv_alias, kt_string,     KSF_VIRTUALPRIVATE, NOT_ENUM },	/* obsolete _ */
+	{ "virtual-private", kv_config, kt_string,     KSF_VIRTUALPRIVATE, NOT_ENUM },
+	{ "nat_ikeport",   kv_config | kv_alias, kt_number,      KBF_NATIKEPORT, NOT_ENUM },	/* obsolete _ */
+	{ "nat-ikeport",   kv_config, kt_number,      KBF_NATIKEPORT, NOT_ENUM },
+	{ "keep_alive", kv_config | kv_alias, kt_number,    KBF_KEEPALIVE, NOT_ENUM },	/* obsolete _ */
+	{ "keep-alive", kv_config, kt_number,    KBF_KEEPALIVE, NOT_ENUM },
 	{ "nat_traversal", kv_config, kt_obsolete_quiet, KBF_WARNIGNORE, NOT_ENUM },
 	{ "disable_port_floating", kv_config, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM },
 	{ "force_keepalive", kv_config, kt_obsolete,    KBF_WARNIGNORE,
@@ -370,7 +373,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  &kw_proto_stack },
 	{ "nhelpers", kv_config, kt_number, KBF_NHELPERS, NOT_ENUM },
 #ifdef HAVE_LABELED_IPSEC
-	{ "secctx_attr_value", kv_config, kt_number, KBF_SECCTX, NOT_ENUM },
+	{ "secctx_attr_value", kv_config | kv_alias, kt_number, KBF_SECCTX, NOT_ENUM },	/* obsolete _ */
+	{ "secctx-attr-value", kv_config, kt_number, KBF_SECCTX, NOT_ENUM },
 #endif
 	/* these options are obsoleted. Don't die on them */
 	{ "forwardcontrol", kv_config, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM },
@@ -428,7 +432,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  &kw_keyexchange_list },
 	{ "ikev2",          kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKEv2, &kw_fourvalued_list },
-	{ "ike_frag",       kv_conn | kv_auto | kv_processed, kt_enum,
+	{ "ike_frag",       kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,
+	  KBF_IKE_FRAG, &kw_ynf_list },	/* obsolete _ */
+	{ "ike-frag",       kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKE_FRAG, &kw_ynf_list },
 	{ "narrowing",      kv_conn | kv_auto, kt_bool,
 	  KBF_IKEv2_ALLOW_NARROWING, NOT_ENUM },
@@ -437,16 +443,26 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "pfs",            kv_conn | kv_auto, kt_bool,   KBF_PFS,
 	  NOT_ENUM },
 
-	{ "nat_keepalive",  kv_conn | kv_auto, kt_bool,   KBF_NAT_KEEPALIVE,
+	{ "nat_keepalive",  kv_conn | kv_auto | kv_alias, kt_bool,   KBF_NAT_KEEPALIVE,
+	  NOT_ENUM },	/* obsolete _ */
+	{ "nat-keepalive",  kv_conn | kv_auto, kt_bool,   KBF_NAT_KEEPALIVE,
 	  NOT_ENUM },
 
-	{ "initial_contact", kv_conn | kv_auto, kt_bool,   KBF_INITIAL_CONTACT,
+	{ "initial_contact", kv_conn | kv_auto | kv_alias, kt_bool,   KBF_INITIAL_CONTACT,
+	  NOT_ENUM },	/* obsolete _ */
+	{ "initial-contact", kv_conn | kv_auto, kt_bool,   KBF_INITIAL_CONTACT,
 	  NOT_ENUM },
-	{ "cisco_unity", kv_conn | kv_auto, kt_bool,   KBF_CISCO_UNITY,
+	{ "cisco_unity", kv_conn | kv_auto | kv_alias, kt_bool,   KBF_CISCO_UNITY,
+	  NOT_ENUM },	/* obsolete _ */
+	{ "cisco-unity", kv_conn | kv_auto, kt_bool,   KBF_CISCO_UNITY,
 	  NOT_ENUM },
-	{ "send_vendorid", kv_conn | kv_auto, kt_bool,   KBF_SEND_VENDORID,
+	{ "send_vendorid", kv_conn | kv_auto | kv_alias, kt_bool,   KBF_SEND_VENDORID,
+	  NOT_ENUM },	/* obsolete _ */
+	{ "send-vendorid", kv_conn | kv_auto, kt_bool,   KBF_SEND_VENDORID,
 	  NOT_ENUM },
-	{ "sha2_truncbug",  kv_conn | kv_auto, kt_bool,   KBF_SHA2_TRUNCBUG,
+	{ "sha2_truncbug",  kv_conn | kv_auto | kv_alias, kt_bool,   KBF_SHA2_TRUNCBUG,
+	  NOT_ENUM },	/* obsolete _ */
+	{ "sha2-truncbug",  kv_conn | kv_auto, kt_bool,   KBF_SHA2_TRUNCBUG,
 	  NOT_ENUM },
 	{ "keylife",        kv_conn | kv_auto | kv_alias, kt_time,
 	  KBF_SALIFETIME, NOT_ENUM },
@@ -456,24 +472,34 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{"ikepad",          kv_conn | kv_auto, kt_bool,   KBF_IKEPAD,
 	  NOT_ENUM },
-	{ "ikev1_natt",          kv_conn | kv_auto | kv_processed, kt_enum,
+	{ "ikev1_natt",          kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,
+	  KBF_IKEV1_NATT, &kw_ikev1natt_list },	/* obsolete _ */
+	{ "ikev1-natt",          kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKEV1_NATT, &kw_ikev1natt_list },
 #ifdef HAVE_LABELED_IPSEC
 	{ "loopback",       kv_conn | kv_auto, kt_bool, KBF_LOOPBACK,
 	  NOT_ENUM },
-	{ "labeled_ipsec",   kv_conn | kv_auto, kt_bool, KBF_LABELED_IPSEC,
+	{ "labeled_ipsec",   kv_conn | kv_auto | kv_alias, kt_bool, KBF_LABELED_IPSEC,
+	  NOT_ENUM },	/* obsolete _ */
+	{ "labeled-ipsec",   kv_conn | kv_auto, kt_bool, KBF_LABELED_IPSEC,
 	  NOT_ENUM },
-	{ "policy_label",    kv_conn | kv_auto,         kt_string,
+	{ "policy_label",    kv_conn | kv_auto | kv_alias,         kt_string,
+	  KSF_POLICY_LABEL, NOT_ENUM },	/* obsolete _ */
+	{ "policy-label",    kv_conn | kv_auto,         kt_string,
 	  KSF_POLICY_LABEL, NOT_ENUM },
 #endif
 
 	/* Cisco interop: remote peer type*/
-	{ "remote_peer_type", kv_conn | kv_auto, kt_enum, KBF_REMOTEPEERTYPE,
+	{ "remote_peer_type", kv_conn | kv_auto | kv_alias, kt_enum, KBF_REMOTEPEERTYPE,
+	  &kw_remote_peer_type },	/* obsolete _ */
+	{ "remote-peer-type", kv_conn | kv_auto, kt_enum, KBF_REMOTEPEERTYPE,
 	  &kw_remote_peer_type },
 
 	/* Network Manager support*/
 #ifdef HAVE_NM
-	{ "nm_configured", kv_conn | kv_auto, kt_bool, KBF_NMCONFIGURED,
+	{ "nm_configured", kv_conn | kv_auto | kv_alias, kt_bool, KBF_NMCONFIGURED,
+	  NOT_ENUM },	/* obsolete _ */
+	{ "nm-configured", kv_conn | kv_auto, kt_bool, KBF_NMCONFIGURED,
 	  NOT_ENUM },
 #endif
 

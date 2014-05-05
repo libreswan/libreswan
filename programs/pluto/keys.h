@@ -29,7 +29,7 @@
 
 struct connection;
 
-extern void sign_hash(const struct RSA_private_key *k, const u_char *hash_val,
+extern int sign_hash(const struct RSA_private_key *k, const u_char *hash_val,
 		      size_t hash_len, u_char *sig_val, size_t sig_len);
 
 extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
@@ -39,11 +39,8 @@ extern err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 extern const struct RSA_private_key *get_RSA_private_key(
 	const struct connection *c);
 
-extern const struct RSA_private_key *get_x509_private_key(
-        /*const*/ x509cert_t *cert);
-
 extern bool has_private_key(cert_t cert);
-extern void add_x509_public_key(struct id *keyid,
+extern void add_x509_public_key(const struct id *keyid,
 				x509cert_t *cert, time_t until,
 				enum dns_auth_level dns_auth_level);
 extern void remove_x509_public_key(/*const*/ x509cert_t *cert);
@@ -60,7 +57,7 @@ extern void transfer_to_public_keys(struct gw_info *gateways_from_dns
 extern const chunk_t *get_preshared_secret(const struct connection *c);
 
 extern char *pluto_shared_secrets_file;
-extern void load_preshared_secrets(int whackfd);
+extern void load_preshared_secrets();
 extern void free_preshared_secrets(void);
 
 extern struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,

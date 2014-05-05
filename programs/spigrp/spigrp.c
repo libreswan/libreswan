@@ -155,7 +155,7 @@ int main(int argc, char **argv)
 	if (debug)
 		fprintf(stdout, "...After check for --label option.\n");
 
-	if ( ((stat("/proc/net/pfkey", &sts)) == 0) ) {
+	if (stat("/proc/net/pfkey", &sts) == 0) {
 		fprintf(stderr,
 			"%s: NETKEY does not use the ipsec spigrp command. Use 'ip xfrm' instead.\n",
 			progname);

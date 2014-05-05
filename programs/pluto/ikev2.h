@@ -21,6 +21,7 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 				    );
 
 extern void ikev2_delete_out(struct state *st);
+extern void v2_delete_my_family(struct state *pst, enum phase1_role role);
 
 extern bool ikev2_out_sa(pb_stream *outs,
 			 unsigned int protoid,
@@ -194,8 +195,8 @@ extern stf_status ikev2_send_cert( struct state *st,
 				   unsigned int np,
 				   pb_stream *outpbs);
 extern bool ship_v2N(unsigned int np, u_int8_t critical,
-		     u_int8_t protoid, chunk_t *spi,
-		     u_int16_t type, chunk_t *n_data, pb_stream *rbody);
+		     u_int8_t protoid, const chunk_t *spi,
+		     u_int16_t type, const chunk_t *n_data, pb_stream *rbody);
 
 extern bool force_busy;  /* config option to emulate responder under DOS */
 

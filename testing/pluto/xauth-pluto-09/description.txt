@@ -1,15 +1,5 @@
-This test has a road warrior, ("road") connecting to VPN host east.
-
-It shows up from a random IP.
-
-It uses PSK to authenticate for phase 1.
-It uses aggressive mode.
-It then uses XAUTH to authenticate the phase 1.5.
-It then uses MODECFG to configure the phase 2, in server push mode.
-
-It then proceeds to phase 2.
-
-This differs from xauth-pluto-05 in that left/right in the conn 
+As from xauth-pluto-05 but the left/right in the conn 
 are reversed. This is a test for reported bug 246:
-	http://bugs.libreswan.org/view.php?id=246
+	http://bugs.openswan.org/view.php?id=246
 
+(work in progress)

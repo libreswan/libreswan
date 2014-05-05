@@ -42,6 +42,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -58,7 +59,6 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 #include "vendor.h"
-#include "udpfromto.h"
 #include "kernel.h"
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
@@ -731,8 +731,7 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 		er = &sr->this;
 	}
 
-	DBG(DBG_CONTROLMORE,
-	    {
+	DBG(DBG_CONTROLMORE, {
 		    char ei3[SUBNETTOT_BUF];
 		    char er3[SUBNETTOT_BUF];
 		    subnettot(&ei->client,  0, ei3, sizeof(ei3));
@@ -742,25 +741,23 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 			    d->name, ei3, ei->protocol, ei->port,
 			    er3, er->protocol, er->port,
 			    is_virtual_connection(d) ? "(virt)" : "");
-	    }
-	    );
+	});
 
 	/* compare tsi/r array to this/that, evaluating how well it fits */
 	for (tsi_ni = 0; tsi_ni < tsi_n; tsi_ni++) {
 		for (tsr_ni = 0; tsr_ni < tsr_n; tsr_ni++) {
 			/* does it fit at all? */
 
-			DBG(DBG_CONTROLMORE,
-			    {
+			DBG(DBG_CONTROLMORE, {
 				    char lbi[ADDRTOT_BUF];
 				    char hbi[ADDRTOT_BUF];
 				    char lbr[ADDRTOT_BUF];
 				    char hbr[ADDRTOT_BUF];
-				    addrtot(&tsi[tsi_ni].low,  0, lbi,
+				    addrtot(&tsi[tsi_ni].low, 0, lbi,
 					    sizeof(lbi));
 				    addrtot(&tsi[tsi_ni].high, 0, hbi,
 					    sizeof(hbi));
-				    addrtot(&tsr[tsr_ni].low,  0, lbr,
+				    addrtot(&tsr[tsr_ni].low, 0, lbr,
 					    sizeof(lbr));
 				    addrtot(&tsr[tsr_ni].high, 0, hbr,
 					    sizeof(hbr));
@@ -774,8 +771,7 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 					    tsr[tsr_ni].ipprotoid,
 					    tsr[tsr_ni].startport,
 					    tsr[tsr_ni].endport);
-			    }
-			    );
+			});
 			/* do addresses fit into the policy? */
 
 			/*
@@ -822,13 +818,10 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 					fitbits = fitbits << 1;
 
 				DBG(DBG_CONTROLMORE,
-				    {
 					    DBG_log("      has ts_range1=%u maskbits1=%u ts_range2=%u maskbits2=%u fitbits=%d <> %d",
 						    ts_range1, maskbits1,
 						    ts_range2, maskbits2,
-						    fitbits, bestfit);
-				    }
-				    );
+						    fitbits, bestfit));
 
 				if (fitbits > bestfit)
 					bestfit = fitbits;
@@ -1087,9 +1080,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	if (ret != STF_OK)
 		return ret;           /* should we delete_state st1? */
 
-	if ( role == RESPONDER ) {
-		chunk_t child_spi, notifiy_data;
+	if (role == RESPONDER) {
 		struct payload_digest *p;
+
 		for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 			if (p->payload.v2n.isan_type ==
 			    v2N_USE_TRANSPORT_MODE) {
@@ -1103,17 +1096,20 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					DBG_log("Now responding with USE_TRANSPORT_MODE notify");
 				}
 
-				zero(&child_spi);
-				zero(&notifiy_data);
-				ship_v2N(ISAKMP_NEXT_v2NONE,
+				/* In v2, for parent, protoid must be 0 and SPI must be empty */
+				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
 					 ISAKMP_PAYLOAD_NONCRITICAL,
-				         /*PROTO_ISAKMP*/ 0,
-					 &child_spi,
-					 v2N_USE_TRANSPORT_MODE, &notifiy_data,
-					 outpbs);
+				         0 /* protoid */,
+					 &empty_chunk,
+					 v2N_USE_TRANSPORT_MODE, &empty_chunk,
+					 outpbs))
+					return STF_INTERNAL_ERROR;
 
 				if (st1->st_esp.present) {
-					/*libreswan supports only "esp" with ikev2 it seems, look at ikev2_parse_child_sa_body handling*/
+					/*
+					 * libreswan supports only "esp" with ikev2 it seems.
+					 * Look at ikev2_parse_child_sa_body handling.
+					 */
 					st1->st_esp.attrs.encapsulation =
 						ENCAPSULATION_MODE_TRANSPORT;
 				}

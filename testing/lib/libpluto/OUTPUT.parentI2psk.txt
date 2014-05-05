@@ -12,7 +12,7 @@
 RC=0 "westnet--eastnet-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west,S=C]...192.1.2.23<192.1.2.23>[@east,S=C]===192.0.2.0/24; unrouted; eroute owner: #0
 RC=0 "westnet--eastnet-ikev2":     myip=unset; hisip=unset;
 RC=0 "westnet--eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
-RC=0 "westnet--eastnet-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init; prio: 24,24; interface: eth0; 
+RC=0 "westnet--eastnet-ikev2":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEv2ALLOW+IKEV2_PROPOSE; prio: 24,24; interface: eth0; 
 RC=0 "westnet--eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 | interface "eth0" matched left side
 | ICOOKIE:  00 01 02 03  04 05 06 07
@@ -189,7 +189,7 @@ sending 508 bytes for ikev2_parent_outI1_tail through eth0:500 to 192.1.2.23:500
 |    critical bit: Payload-Critical
 | emitting 16 zero bytes of iv into IKEv2 Encryption Payload
 | IKEv2 thinking whether to send my certificate:
-|  my policy has no RSASIG, the policy is : PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init
+|  my policy has no RSASIG, the policy is : PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEv2ALLOW+IKEV2_PROPOSE
 |  sendcert: CERT_ALWAYSSEND and I did not get a certificate request 
 |  so do not send cert.
 | I did not send a certificate because digital signatures are not being used. (PSK)

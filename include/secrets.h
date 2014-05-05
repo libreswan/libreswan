@@ -25,6 +25,7 @@
 
 #include <nss.h>
 #include <pk11pub.h>
+#include "x509.h"
 
 #ifndef SHARED_SECRETS_FILE
 # define SHARED_SECRETS_FILE  "/etc/ipsec.secrets"
@@ -156,9 +157,7 @@ extern void install_public_key(struct pubkey *pk, struct pubkey_list **head);
 extern void free_public_key(struct pubkey *pk);
 
 extern void lsw_load_preshared_secrets(struct secret **psecrets,
-				       int verbose,
-				       const char *secrets_file,
-				       prompt_pass_t *pass);
+				       const char *secrets_file);
 extern void lsw_free_preshared_secrets(struct secret **psecrets);
 
 extern bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk);
@@ -176,8 +175,7 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
 
-#include "x509.h"
-extern const struct RSA_private_key *lsw_get_x509_private_key(
-	struct secret *secrets, x509cert_t *cert);
+extern const struct RSA_private_key *get_x509_private_key(struct secret *secrets,
+                                                x509cert_t *cert);
 
 #endif /* _SECRETS_H */

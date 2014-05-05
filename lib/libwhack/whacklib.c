@@ -207,7 +207,7 @@ void clear_end(struct whack_end *e)
 	e->cert = NULL;
 	e->ca = NULL;
 	e->updown = NULL;
-	e->host_port = IKE_UDP_PORT;
+	e->host_port = IKE_UDP_PORT; /* XXX should really use ike_port ? */
 }
 
 int whack_get_value(char *buf, size_t bufsize)

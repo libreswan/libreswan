@@ -1223,7 +1223,7 @@ int pfkey_msg_parse(struct sadb_msg *pfkey_msg,
 	int error = 0;
 	int remain;
 	struct sadb_ext *pfkey_ext;
-	pfkey_ext_track extensions_seen = 0;
+	pfkey_ext_track extensions_seen;
 
 	DEBUGGING(PF_KEY_DEBUG_PARSE_STRUCT,
 		  "pfkey_msg_parse: "
@@ -1335,7 +1335,7 @@ int pfkey_msg_parse(struct sadb_msg *pfkey_msg,
 		  remain
 		  );
 
-	extensions_seen = 1;
+	extensions_seen = 1ULL << SADB_EXT_RESERVED;
 
 	while ( (remain * IPSEC_PFKEYv2_ALIGN) >= sizeof(struct sadb_ext) ) {
 		/* Is there enough message left to support another extension header? */
@@ -1456,7 +1456,7 @@ next_ext:
 
 	if (pfkey_extensions_missing(dir, pfkey_msg->sadb_msg_type,
 				     extensions_seen)) {
-		ERROR("required extensions missing.seen=%08llx.\n",
+		ERROR("required extensions missing; seen=%08llx.\n",
 		      (unsigned long long)extensions_seen);
 		SENDERR(EINVAL);
 	}
@@ -1465,33 +1465,14 @@ next_ext:
 	    pfkey_msg->sadb_msg_type == K_SADB_X_DELFLOW &&
 	    (extensions_seen & K_SADB_X_EXT_ADDRESS_DELFLOW) !=
 	     K_SADB_X_EXT_ADDRESS_DELFLOW &&
-	    ((extensions_seen & (1 << SADB_EXT_SA)) == 0 ||
-	     (((struct k_sadb_sa*)extensions[SADB_EXT_SA])->sadb_sa_flags &
+	    ((extensions_seen & (1ULL << SADB_EXT_SA)) == 0 ||
+	     (((struct k_sadb_sa *)extensions[SADB_EXT_SA])->sadb_sa_flags &
 	       SADB_X_SAFLAGS_CLEARFLOW) == 0)) {
 		DEBUGGING(PF_KEY_DEBUG_PARSE_PROBLEM,
 			  "pfkey_msg_parse: "
 			  "required SADB_X_DELFLOW extensions missing: either %16llx must be present or %16llx must be present with SADB_X_SAFLAGS_CLEARFLOW set.\n",
-			/*
-			 * ??? The following is a bit confused.
-			 *
-			 * - K_SADB_X_EXT_ADDRESS_DELFLOW must fit in an int
-			 *   (signed!) since its definition is clearly an int.
-			 *   So why cast it to unsigned long long?
-			 *
-			 * - arithmetic "-" is not a simple operation on
-			 *   ints representing sets.
-			 *
-			 * - the expression computes what this simpler one does:
-			 *	~extensions_seen & K_SADB_X_EXT_ADDRESS_DELFLOW
-			 */
-			  (unsigned long long)K_SADB_X_EXT_ADDRESS_DELFLOW -
-			    (extensions_seen & K_SADB_X_EXT_ADDRESS_DELFLOW),
-			/*
-			 * ??? the following looks to be confused.
-			 * Same as above.
-			 */
-			  (unsigned long long)(1 << SADB_EXT_SA) -
-			    (extensions_seen & (1 << SADB_EXT_SA)));
+			  K_SADB_X_EXT_ADDRESS_DELFLOW & ~extensions_seen,
+			  (1ULL << SADB_EXT_SA) & ~extensions_seen);
 		SENDERR(EINVAL);
 	}
 

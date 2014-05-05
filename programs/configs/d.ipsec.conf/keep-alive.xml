@@ -1,0 +1,9 @@
+  <varlistentry>
+  <term><emphasis remap='B'>keep-alive</emphasis></term>
+  <listitem>
+<para>The delay (in seconds) for NAT-T keep-alive packets, if these
+are enabled using <emphasis remap='B'>nat-keepalive</emphasis>
+This parameter may eventually become per-connection.</para>
+  </listitem>
+  </varlistentry>
+

@@ -24,6 +24,7 @@ v3.9
 * pluto: Simplify/cleanup NSS and cryptohelper code [Hugh]
 * pluto: pluto_crypt.c used non-thread-safe strerror() [Hugh]
 * pluto: ensure addconn thread uses the same ctlbase as pluto did [Paul]
+* pluto: LEAK_DETECTIVE is now a runtime --leak_detective pluto option [Paul]
 * NATT: Added ikev1_natt=drafts|rfc|both to workaround buggy Ciscos [Paul]
 * NATT: non port-floating (4500) NATT draft support removed [Paul]
 * NATT: Change order of NATT payloads to accomodate racoon sensitivity [Paul]

@@ -407,7 +407,7 @@ void regress()
 		strcpy(in, r->input);
 
 		/* convert it *to* internal format */
-		oops = ttoaddr(in, strlen(in), 0, &a);
+		oops = ttoaddr(in, strlen(in), AF_UNSPEC, &a);
 
 		/* now convert it back */
 

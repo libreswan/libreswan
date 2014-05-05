@@ -64,7 +64,6 @@
 
 #include "nat_traversal.h"
 #include "vendor.h"
-#include "udpfromto.h"
 
 #define SEND_NOTIFICATION(t) { \
 		if (st != NULL) \
@@ -385,7 +384,7 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 
 		DBG(DBG_CONTROL,
 		    DBG_log("Now let's proceed with payload (%s)",
-			    enum_show(&payload_names_ikev2, np)));
+			    enum_show(&ikev2_payload_names, np)));
 
 		if (pd == &md->digest[PAYLIMIT]) {
 			loglog(RC_LOG_SERIOUS,
@@ -414,12 +413,12 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 				 */
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",
-				       enum_show(&payload_names_ikev2, np));
+				       enum_show(&ikev2_payload_names, np));
 				return STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
 			}
 			loglog(RC_COMMENT, "non-critical payload ignored because it contains an unknown or"
 			       " unexpected payload type (%s) at the outermost level",
-			       enum_show(&payload_names_ikev2, np));
+			       enum_show(&ikev2_payload_names, np));
 			np = pd->payload.generic.isag_np;
 			continue;
 		}
@@ -433,14 +432,14 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 				/* improperly repeated payload */
 				loglog(RC_LOG_SERIOUS,
 				       "payload (%s) unexpectedly repeated. Message dropped.",
-				       enum_show(&payload_names_ikev2, np));
+				       enum_show(&ikev2_payload_names, np));
 				return STF_FAIL + v2N_INVALID_SYNTAX;
 			}
 			if ((s & (req_payloads | opt_payloads | everywhere_payloads)) == LEMPTY) {
 				/* unexpected payload */
 				loglog(RC_LOG_SERIOUS,
 				       "payload (%s) unexpected. Message dropped.",
-				       enum_show(&payload_names_ikev2, np));
+				       enum_show(&ikev2_payload_names, np));
 				return STF_FAIL + v2N_INVALID_SYNTAX;
 			}
 			seen |= s;
@@ -453,7 +452,7 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 
 		DBG(DBG_PARSING,
 		    DBG_log("processing payload: %s (len=%u)\n",
-			    enum_show(&payload_names_ikev2, np),
+			    enum_show(&ikev2_payload_names, np),
 			    pd->payload.generic.isag_length));
 
 		/* place this payload at the end of the chain for this type */
@@ -567,7 +566,6 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 			/* update lastrecv later on */
 		}
-
 	} else {
 		/* then I am the initiator, and this is a reply */
 
@@ -637,7 +635,6 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	ix = md->hdr.isa_xchg;
 	if (st != NULL) {
-
 		from_state = st->st_state;
 		DBG(DBG_CONTROL,
 		    DBG_log("state found and its state is (%s)",
@@ -684,6 +681,8 @@ void process_v2_packet(struct msg_digest **mdp)
 		return;
 	}
 
+	if (st != NULL)
+		set_cur_state(st);
 	md->svm = svm;
 	md->from_state = from_state;
 	md->st = st;
@@ -748,7 +747,7 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role init)
 
 		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			      enum_show(&ident_names, id->isai_type), buf);
+			      enum_show(&ike_idtype_names, id->isai_type), buf);
 	}
 
 	return TRUE;
@@ -870,7 +869,8 @@ void ikev2_update_counters(struct msg_digest *md)
 	case INITIATOR:
 		/* update lastuse values */
 		pst->st_msgid_lastack = md->msgid_received;
-		pst->st_msgid_nextuse = pst->st_msgid_lastack + 1;
+		if(pst->st_msgid_lastack <= pst->st_msgid_nextuse)
+			pst->st_msgid_nextuse = pst->st_msgid_lastack + 1;
 		break;
 
 	case RESPONDER:
@@ -1078,8 +1078,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		/* start liveness checks if set, making sure we only schedule once when moving
 		 * from I2->I3 or R1->R2
 		 */
-		if (dpd_active_locally(st) && IS_V2_ESTABLISHED(st->st_state) &&
-					      st->st_state != from_state) {
+		if (st->st_state != from_state && dpd_active_locally(st) &&
+				IS_V2_ESTABLISHED(st->st_state)) {
 			DBG(DBG_DPD,
 			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
 			event_schedule(EVENT_v2_LIVENESS,

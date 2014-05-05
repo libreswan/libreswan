@@ -213,10 +213,8 @@ struct state {
 	so_serial_t st_clonedfrom;              /* serial number of parent */
 	int st_usage;
 
-#ifdef XAUTH_HAVE_PAM
 	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
 	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
-#endif
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_rekeytov2;                      /* true if this IKEv1 is about
@@ -423,7 +421,7 @@ struct state {
 /* global variables */
 
 extern u_int16_t pluto_port;            /* Pluto's port */
-extern u_int16_t pluto_natt_float_port; /* Pluto's NATT floating port */
+extern u_int16_t pluto_nat_port; /* Pluto's NATT floating port */
 
 extern bool states_use_connection(struct connection *c);
 

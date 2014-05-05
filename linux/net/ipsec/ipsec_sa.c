@@ -533,9 +533,9 @@ struct ipsec_sa *ipsec_sa_getbyid(ip_said *said, int type)
 	}
 
 	for (; ips; ips = ips->ips_hnext) {
-		if ((ips->ips_said.spi == said->spi) &&
-		    (ip_address_cmp(&ips->ips_said.dst, &said->dst) == 0) &&
-		    (ips->ips_said.proto == said->proto)) {
+		if (ips->ips_said.spi == said->spi &&
+		    ip_address_eq(&ips->ips_said.dst, &said->dst) &&
+		    ips->ips_said.proto == said->proto) {
 			ipsec_sa_get(ips, type);
 			return ips;
 		}

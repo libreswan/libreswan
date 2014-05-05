@@ -1,7 +1,13 @@
 /* LINK seams */
+void lsw_abort()
+{
+	exit(1);
+}
+
 void exit_log(const char *msg, ...)
 {
-	lsw_abort();
+	fprintf(stderr,msg);
+	exit(1);
 }
 
 void exit_tool(int status)

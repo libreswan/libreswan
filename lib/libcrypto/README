@@ -1,0 +1,4 @@
+
+md5, sha1 and sha2 are provided by NSS - our functions are just wrappers around these.
+
+serpent and twofish are NOT provided by NSS - full implemenetations are found here.

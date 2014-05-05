@@ -466,17 +466,17 @@ int ipsec_saref_show(struct seq_file *seq, void *offset)
 		    seq, offset);
 
 #ifdef IP_IPSEC_REFINFO
-	seq_printf(seq, "refinfo patch applied\n", ipsec_version_code());
+	seq_printf(seq, "refinfo patch applied\n");
 #endif
 
 #ifdef IP_IPSEC_BINDREF
-	seq_printf(seq, "bindref patch applied\n", ipsec_version_code());
+	seq_printf(seq, "bindref patch applied\n");
 #endif
 
 #ifdef CONFIG_INET_IPSEC_SAREF
-	seq_printf(seq, "saref enabled\n", ipsec_version_code());
+	seq_printf(seq, "saref enabled (%s)\n", ipsec_version_code());
 #else
-	seq_printf(seq, "saref disabled\n", ipsec_version_code());
+	seq_printf(seq, "saref disabled (%s)\n", ipsec_version_code());
 #endif
 
 	return 0;

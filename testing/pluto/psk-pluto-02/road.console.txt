@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 road #
- /usr/local/libexec/ipsec/_stackmanager start
-[ 00.00] NET: Registered protocol family 15
+ ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -9,9 +8,10 @@ road #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
-road #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
 road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
@@ -19,22 +19,25 @@ road #
 road #
  ipsec auto --status
 000 using kernel interface: klips
-000 interface ipsec0/eth0 192.1.3.209
+000 interface ipsec0/eth0 192.1.3.209@4500
+000 interface ipsec0/eth0 192.1.3.209@500
+000  
 000  
 000 fips mode=disabled;
-000 SElinux=enabled
+000 SElinux=XXXXX
 000  
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
-000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
+000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
+000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx_attr_value=XXXX
+000 secctx-attr-value=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
+000 virtual-private (%priv):
 000  
 000 ESP algorithms supported:
 000  
@@ -82,9 +85,9 @@ road #
 000 "road-eastnet-psk":    policy_label:unset; 
 000 "road-eastnet-psk":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-eastnet-psk":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "road-eastnet-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+AGGRESSIVE+IKEv2ALLOW+SAREFTRACK+IKE_FRAG; 
+000 "road-eastnet-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+AGGRESSIVE+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
-000 "road-eastnet-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "road-eastnet-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "road-eastnet-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "road-eastnet-psk":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA1(2)_000-MODP1536(5), 3DES_CBC(5)_000-SHA1(2)_000-MODP1024(2)
 000 "road-eastnet-psk":   IKE algorithms found:  3DES_CBC(5)_192-SHA1(2)_160-MODP1536(5)3DES_CBC(5)_192-SHA1(2)_160-MODP1024(2)
@@ -101,11 +104,13 @@ initdone
 road #
  ipsec auto --up road-eastnet-psk
 003 "road-eastnet-psk" #1: multiple DH groups were set in aggressive mode. Only first one used.
-003 "road-eastnet-psk" #1: transform (5,2,2,0) ignored.
+003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 003 "road-eastnet-psk" #1: multiple DH groups were set in aggressive mode. Only first one used.
-003 "road-eastnet-psk" #1: transform (5,2,2,0) ignored.
+003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "road-eastnet-psk" #1: STATE_AGGR_I1: initiate
 003 "road-eastnet-psk" #1: received Vendor ID payload [Dead Peer Detection]
+003 "road-eastnet-psk" #1: received Vendor ID payload [RFC 3947]
+003 "road-eastnet-psk" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 003 "road-eastnet-psk" #1: received Hash Payload does not match computed value
 223 "road-eastnet-psk" #1: STATE_AGGR_I1: INVALID_HASH_INFORMATION
 

@@ -1,0 +1,7 @@
+  <varlistentry>
+  <term><emphasis remap='B'>myvendorid</emphasis></term>
+  <listitem>
+<para>The string to use as our vendor id (VID) when send_vendorid=yes. The default is OE-Libreswan-VERSION.
+</para>
+  </listitem>
+  </varlistentry>

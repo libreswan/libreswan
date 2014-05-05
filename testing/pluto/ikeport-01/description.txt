@@ -1,0 +1,4 @@
+basic-pluto-01 on a different IKE port, using forced encaps to test the
+NAT ike port as well.
+
+Work In Progress: code seems to stil make some hidden assumptions

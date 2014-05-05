@@ -26,7 +26,6 @@
 
 #include <ctype.h>
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include <libreswan/passert.h>
 #include <libreswan/pfkeyv2.h>
 
@@ -164,10 +163,6 @@ int alg_enum_search(enum_names *ed, const char *prefix,
 	while (len-- && *postfix)
 		*ptr++ = *postfix++;
 	*ptr = '\0';
-	DBG(DBG_CRYPT,
-		DBG_log("enum_search_ppfix() calling enum_search(%p, \"%s\")",
-			ed, buf);
-		);
 	ret = enum_search(ed, buf);
 	return ret;
 }
@@ -207,14 +202,12 @@ static int aalg_getbyname_esp(const char *str, int len)
 	static const char sha2_256_aka[] = "sha2";
 	static const char sha1_aka[] = "sha";
 
-	DBG_log("entering aalg_getbyname_esp()");
 	if (!str || !*str)
 		return ret;
 
 	/* handle "sha2" as "sha2_256" */
 	if (len == sizeof(sha2_256_aka)-1 &&
 		strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
-		DBG_log("interpreting ESP sha2 as sha2_256");
 		str = "sha2_256";
 		len = strlen(str);
 	}
@@ -222,7 +215,6 @@ static int aalg_getbyname_esp(const char *str, int len)
 	/* now "sha" as "sha1" */
 	if (len == sizeof(sha1_aka)-1 &&
 	    strncasecmp(str, sha1_aka, sizeof(sha1_aka)-1) == 0) {
-		DBG_log("interpreting ESP sha as sha1");
 		str = "sha1";
 		len = strlen(str);
 	}
@@ -295,10 +287,6 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	esp_info[cnt].encryptalg = ealg_id;
 	esp_info[cnt].authalg = alg_info_esp_aa2sadb(aalg_id);
 	alg_info->alg_info_cnt++;
-	DBG(DBG_CRYPT,
-		DBG_log("raw_alg_info_esp_add() ealg=%d aalg=%d cnt=%d",
-			ealg_id, aalg_id, alg_info->alg_info_cnt);
-		);
 }
 
 /*
@@ -663,10 +651,6 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			}
 		}
 
-		DBG(DBG_CRYPT,
-			DBG_log("parser_alg_info_add() ealg_getbyname(\"%s\")=%d",
-				p_ctx->ealg_buf, ealg_id);
-			);
 	}
 	if (p_ctx->aalg_permit && *p_ctx->aalg_buf) {
 		aalg_id = p_ctx->aalg_getbyname(p_ctx->aalg_buf,
@@ -676,10 +660,6 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			return -1;
 		}
 
-		DBG(DBG_CRYPT,
-			DBG_log("parser_alg_info_add() aalg_getbyname(\"%s\")=%d",
-				p_ctx->aalg_buf, aalg_id);
-			);
 	}
 	if (p_ctx->modp_getbyname && *p_ctx->modp_buf) {
 		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf,
@@ -689,10 +669,6 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			return -1;
 		}
 
-		DBG(DBG_CRYPT,
-			DBG_log("parser_alg_info_add() modp_getbyname(\"%s\")=%d",
-				p_ctx->modp_buf, modp_id);
-			);
 
 		if (modp_id && !lookup_group(modp_id)) {
 			p_ctx->err = "found modp group id, but not supported";
@@ -740,12 +716,6 @@ int alg_info_parse_str(struct alg_info *alg_info,
 		switch (ret) {
 		case ST_END:
 		case ST_EOF:
-
-			DBG(DBG_CRYPT,
-				DBG_log("alg_info_parse_str() ealg_buf=%s aalg_buf=%s eklen=%d  aklen=%d",
-					ctx.ealg_buf, ctx.aalg_buf, ctx.eklen,
-					ctx.aklen);
-				);
 
 			if (parser_alg_info_add(&ctx, alg_info,
 						alg_info_add,
@@ -800,10 +770,6 @@ static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 			ret = modp_getbyname_esp(pfs_name, strlen(pfs_name));
 			if (ret < 0) {
 				/* Bomb if pfsgroup not found */
-				DBG(DBG_CRYPT,
-					DBG_log("alg_info_*_create_from_str(): pfsgroup \"%s\" not found",
-						pfs_name);
-					);
 				if (*err_p) {
 					snprintf(err_buf, sizeof(err_buf),
 						"pfsgroup \"%s\" not found",
@@ -821,6 +787,7 @@ static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 	return TRUE;
 }
 
+/* This function is tested in testing/lib/libswan/algparse.c */
 struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 						const char **err_p)
 {
@@ -857,6 +824,7 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 
 }
 
+/* This function is tested in testing/lib/libswan/algparse.c */
 struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
 						const char **err_p)
 {
@@ -900,34 +868,16 @@ void alg_info_addref(struct alg_info *alg_info)
 {
 	if (alg_info != NULL) {
 		alg_info->ref_cnt++;
-		DBG(DBG_CONTROL,
-			DBG_log("alg_info_addref() alg_info->ref_cnt=%d",
-				alg_info->ref_cnt);
-			);
 	}
 }
 void alg_info_delref(struct alg_info **alg_info_p)
 {
 	struct alg_info *alg_info = *alg_info_p;
 
-#if 0
-	DBG(DBG_CONTROL,
-		DBG_log("alg_info_delref(%p) ", alg_info);
-		);
-#endif
-
 	if (alg_info != NULL) {
-		DBG(DBG_CONTROL,
-			DBG_log("alg_info_delref(%p) alg_info->ref_cnt=%d",
-				alg_info, alg_info->ref_cnt);
-			);
 		passert(alg_info->ref_cnt != 0);
 		alg_info->ref_cnt--;
 		if (alg_info->ref_cnt == 0) {
-			DBG(DBG_CONTROL,
-				DBG_log("alg_info_delref(%p) freeing alg_info",
-					alg_info)
-				);
 			alg_info_free(alg_info);
 		}
 		*alg_info_p = NULL;

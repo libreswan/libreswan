@@ -39,7 +39,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 #include "kameipsec.h"
 
@@ -53,7 +52,6 @@
 #include "secrets.h"
 
 #include "defs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -194,7 +192,7 @@ static int initiate_a_connection(struct connection *c,
 	} else if (NEVER_NEGOTIATE(c->policy)) {
 		loglog(RC_INITSHUNT,
 		       "cannot initiate an authby=never connection");
-	} else if ( (c->kind != CK_PERMANENT) &&
+	} else if ((c->kind != CK_PERMANENT) &&
 		    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
@@ -202,7 +200,7 @@ static int initiate_a_connection(struct connection *c,
 				loglog(RC_NOPEERIP,
 				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				       enum_show(&connection_kind_names,
-						 c->kind) );
+						 c->kind));
 				success = 1;
 				c->policy |= POLICY_UP;
 			} else
@@ -253,7 +251,7 @@ static int initiate_a_connection(struct connection *c,
 					c->policy, alg, TRUE);
 
 				if (alg != NULL && phase2_sa == NULL) {
-					whack_log(RC_NOALGO,
+					whack_log(RC_LOG_SERIOUS,
 						  "can not initiate: no acceptable kernel algorithms loaded");
 					reset_cur_connection();
 					close_any(is->whackfd);
@@ -1273,8 +1271,8 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 			     d->kind == CK_GOING_AWAY) &&
 			    same_id(&c->spd.this.id, &d->spd.this.id) &&
 			    same_id(&c->spd.that.id, &d->spd.that.id) &&
-			    ip_address_family(&c->spd.that.host_addr) ==
-				ip_address_family(&d->spd.that.host_addr) &&
+			    addrtypeof(&c->spd.that.host_addr) ==
+				addrtypeof(&d->spd.that.host_addr) &&
 			    (!sameaddr(&c->spd.that.host_addr,
 				  &d->spd.that.host_addr) ||
 			      c->spd.that.host_port !=
@@ -1350,7 +1348,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	e = ttoaddr(c->dnshostname, 0, 0, &new_addr);
+	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",

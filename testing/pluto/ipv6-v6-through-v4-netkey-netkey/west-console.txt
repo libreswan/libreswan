@@ -18,7 +18,7 @@ west #
 west #
  ip6tables -A INPUT -i eth1 -s 2001:db8:0:2::254 -j DROP
 west #
- # confirm with a ping to east-in
+ # confirm with a ping
 west #
  ping6 -n -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
 PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes

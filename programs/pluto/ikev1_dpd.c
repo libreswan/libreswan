@@ -33,7 +33,6 @@
 #include <sys/time.h>           /* for gettimeofday */
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -251,7 +250,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 *
 	 */
 	last = (p1st->st_last_dpd < st->st_last_dpd ?
-		st->st_last_dpd : p1st->st_last_dpd );
+		st->st_last_dpd : p1st->st_last_dpd);
 
 	nextdelay = last + delay - tm;
 

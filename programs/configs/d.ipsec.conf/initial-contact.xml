@@ -1,0 +1,24 @@
+  <varlistentry>
+  <term><emphasis remap='B'>initial-contact</emphasis></term>
+  <listitem>
+<para>whether to send an INITIAL_CONTACT payload to the peer we are initiating to, if we currently have no
+IPsec SAs up with that peer.  Acceptable values are: <emphasis remap='B'>no</emphasis> (the default) and
+<emphasis remap='B'>yes</emphasis>.
+
+It is recommended to leave this option unset, unless the remote peer
+requires it to allow reconnects. The only known peer at this time
+is Cisco, which will not allow a reconnect (despite authentication)
+to replace an existing IPsec SA unless it receives an INITIAL_CONTACT
+payload. Receiving this payload is ignored and the choice to replace
+or add an IPsec SA when libreswan is a responder is purely based on
+the <emphasis remap='B'>uniqueids</emphasis> setting, which should be
+left enabled unless libreswan acts as an XAUTH server using PSK ("group
+secret").  This option can cause a few seconds of downtime on the IPsec
+tunnel between the time the remote clears the old IPsec SA in response
+to our INITIAL_CONTACT message, and the time we finish setting up the
+new IPsec SA. If there is an XAUTH step in between, and especially when
+XAUTH requires the use of some two-factor token, this downtime could be
+even longer.
+</para>
+  </listitem>
+  </varlistentry>

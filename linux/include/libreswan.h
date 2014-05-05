@@ -29,6 +29,14 @@ typedef int bool;
 # define FALSE 0
 #endif
 
+#define UNDEFINED_TIME  ((time_t)0)
+
+enum {
+	secs_per_minute = 60 /* seconds */,
+	secs_per_hour = 60 * secs_per_minute,
+	secs_per_day = 24 * secs_per_hour
+};
+
 #include <stddef.h>
 
 /*
@@ -192,14 +200,23 @@ typedef struct {
 	ip_address end;
 } ip_range;
 
+/* for use in KLIPS.  Userland should use addrtypeof() */
 #define ip_address_family(a)    ((a)->u.v4.sin_family)
-#define ip_address_cmp(a, b) \
-	(ip_address_family((a)) != ip_address_family((b)) || \
+
+/*
+ * ip_address_eq: test two ip_address values for equality.
+ *
+ * For use in KLIPS.  Userland should use sameaddr().
+ */
+#define ip_address_eq(a, b) \
+	(ip_address_family((a)) == ip_address_family((b)) && \
 	 (ip_address_family((a)) == AF_INET ? \
-	  ((a)->u.v4.sin_addr.s_addr != (b)->u.v4.sin_addr.s_addr) : \
-	  memcmp((a)->u.v6.sin6_addr.s6_addr32, \
-		 (b)->u.v6.sin6_addr.s6_addr32, sizeof(u_int32_t) * 4) \
+	  ((a)->u.v4.sin_addr.s_addr == (b)->u.v4.sin_addr.s_addr) : \
+	  (0 == memcmp((a)->u.v6.sin6_addr.s6_addr32, \
+		      (b)->u.v6.sin6_addr.s6_addr32, sizeof(u_int32_t) * 4)) \
 	 ))
+
+/* For use in KLIPS.  Userland should use isanyaddr() */
 #define ip_address_isany(a) \
 	(ip_address_family((a)) == AF_INET6 ? \
 	 ((a)->u.v6.sin6_addr.s6_addr[0] == 0 && \
@@ -268,10 +285,12 @@ typedef uint32_t IPsecSAref_t;
 # define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
 # define NEVER_RETURNS __attribute__ ((noreturn))
 # define UNUSED __attribute__ ((unused))
+# define MUST_USE_RESULT  __attribute__ ((warn_unused_result))
 #else
 # define PRINTF_LIKE(n) /* ignore */
 # define NEVER_RETURNS  /* ignore */
 # define UNUSED         /* ignore */
+# define MUST_USE_RESULT	/* ignore */
 #endif
 
 #ifdef COMPILER_HAS_NO_PRINTF_LIKE
@@ -307,7 +326,10 @@ extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
-extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst);
+extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
+		bool non_zero);
+extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
+#define RANGETOT_BUF     (ADDRTOT_BUF * 2 + 1)
 extern err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
 extern size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
 #define SUBNETTOT_BUF   (ADDRTOT_BUF + 1 + 3)
@@ -336,6 +358,9 @@ extern size_t splitkeytoid(const unsigned char *e, size_t elen,
 #define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 extern err_t ttoprotoport(char *src, size_t src_len, u_int8_t *proto, u_int16_t *port,
 		   int *has_port_wildcard);
+
+#define TIMETOA_BUF     30	/* size of timetoa string buffer */
+extern char *timetoa(const time_t *timep, bool utc, char *buf, size_t blen);
 
 /* initializations */
 extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,

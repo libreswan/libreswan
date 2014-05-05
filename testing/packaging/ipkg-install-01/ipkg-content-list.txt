@@ -1,2 +1,0 @@
-libreswan-module-*.ipk		libreswan-module
-libreswan-utils-*.ipk		libreswan-utils

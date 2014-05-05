@@ -26,7 +26,7 @@
 #include <netinet/in.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
+#include <ietf_constants.h>
 #include <libreswan/passert.h>
 
 #include "constants.h"
@@ -259,7 +259,7 @@ static enum_names payload_names_ikev1_private_use = {
 	NULL
 };
 
-enum_names payload_names_ikev1 = {
+enum_names ikev1_payload_names = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
 	payload_name_ikev1,
@@ -313,7 +313,7 @@ static enum_names payload_names_ikev2_main = {
 	&payload_names_ikev2_private_use
 };
 
-enum_names payload_names_ikev2 = {
+enum_names ikev2_payload_names = {
 	ISAKMP_NEXT_v2NONE,
 	ISAKMP_NEXT_v2NONE,
 	payload_name_ikev2,
@@ -412,14 +412,14 @@ static enum_names exchange_names_doi = {
 	&exchange_names_private_use
 };
 
-enum_names exchange_names_ikev1 = {
+enum_names ikev1_exchange_names = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
 	exchange_name_ikev1,
 	&exchange_names_doi
 };
 
-static enum_names exchange_names_ikev2 = {
+enum_names ikev2_exchange_names = {
 	ISAKMP_v2_SA_INIT,
 	ISAKMP_v2_IKE_SESSION_RESUME,
 	exchange_name_ikev2,
@@ -430,7 +430,7 @@ static enum_names exchange_names_doi_and_v2 = {
 	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST,
 	ISAKMP_XCHG_NGRP,
 	exchange_name_doi,
-	&exchange_names_ikev2
+	&ikev2_exchange_names
 };
 
 enum_names exchange_names_ikev1orv2 = {
@@ -618,62 +618,40 @@ enum_names ipcomp_transformid_names = {
 };
 
 /* Identification type values */
-static const char *const ident_name[] = {
-	"ID_IPV4_ADDR",
+static const char *const ike_idtype_name[] = {
+        /* ID_FROMCERT = (-3), taken from certificate - private to Pluto */
+        /* ID_IMPOSSIBLE = (-2), private to Pluto */
+        /* ID_MYID = (-1), private to Pluto */
+        "ID_NONE" /* = 0, private to Pluto */
+	"ID_IPV4_ADDR", /* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
-	"ID_IPV4_ADDR_SUBNET",
+	"ID_UNASSIGNED_ID4", /* Only in IKEv1 */
 	"ID_IPV6_ADDR",
-	"ID_IPV6_ADDR_SUBNET",
-	"ID_IPV4_ADDR_RANGE",
-	"ID_IPV6_ADDR_RANGE",
+	"ID_UNASSIGNED_ID6", /* Only in IKEv1 */
+	"ID_UNASSIGNED_ID7", /* Only in IKEv1 */
+	"ID_UNASSIGNED_ID8", /* Only in IKEv1 */
 	"ID_DER_ASN1_DN",
 	"ID_DER_ASN1_GN",
 	"ID_KEY_ID",
-	"ID_LIST", /* RFC 3554 */
+	"ID_FC_NAME", /* RFC 3554 */
 };
 
-enum_names ident_names = {
-	ID_IPV4_ADDR,
-	ID_LIST,
-	ident_name,
+enum_names ike_idtype_names = {
+	ID_NONE,
+	ID_FC_NAME,
+	ike_idtype_name,
 	NULL
 };
 
 /* Certificate type values */
-static const char *const cert_type_name[] = {
+static const char *const ike_cert_type_name[] = {
 	"CERT_NONE",
 	"CERT_PKCS7_WRAPPED_X509",
 	"CERT_PGP (unsupported)",
 	"CERT_DNS_SIGNED_KEY",
 	"CERT_X509_SIGNATURE",
-	"CERT_X509_KEY_EXCHANGE",
-	"CERT_KERBEROS_TOKENS",
-	"CERT_CRL",
-	"CERT_ARL",
-	"CERT_SPKI",
-	"CERT_X509_ATTRIBUTE",
-};
-
-enum_names cert_type_names = {
-	CERT_NONE,
-	CERT_X509_ATTRIBUTE,
-	cert_type_name,
-	NULL
-};
-
-/*
- * Certificate type values RFC 4306 3.6
- *
- * TBD AA don't know how to add v2 sepecific ones, now it is mix of v1 & v2
- */
-static const char *const ikev2_cert_type_name[] = {
-	"CERT_RESERVED",
-	"CERT_PKCS7_WRAPPED_X509",
-	"CERT_PGP (unsupported)",
-	"CERT_DNS_SIGNED_KEY",
-	"CERT_X509_SIGNATURE",
-	"CERT_UNUSED",	/* got dropped? was in IKEv1 RFC-2408 */
+	"CERT_RESERVED5", /* was CERT_X509_KEY_EXCHANGE in IKEv1 */
 	"CERT_KERBEROS_TOKENS",
 	"CERT_CRL",
 	"CERT_ARL",
@@ -681,17 +659,16 @@ static const char *const ikev2_cert_type_name[] = {
 	"CERT_X509_ATTRIBUTE",
 	"CERT_RAW_RSA",
 	"CERT_X509_CERT_URL",
-	"CERT_X509_BUNDLE_URL",	/* 13 */
-	/*
-	 * RESERVED for IANA 14 - 200
-	 * PRIVATE USE 201 - 255
-	 */
+	"CERT_X509_BUNDLE_URL", /* 13 */
+	"CERT_OCSP_CONTENT", /* 14 */
+	/* 15 - 200 Reserved */
+	/* 201 - 255 Private use */
 };
 
-enum_names ikev2_cert_type_names = {
+enum_names ike_cert_type_names = {
 	CERT_NONE,
-	CERT_X509_BUNDLE_URL,
-	ikev2_cert_type_name,
+	CERT_OCSP_CONTENT,
+	ike_cert_type_name,
 	NULL
 };
 
@@ -770,7 +747,7 @@ enum_names oakley_attr_names = {
 static enum_names oakley_prf_names;	/* forward declaration */
 static enum_names oakley_group_type_names;	/* forward declaration */
 
-enum_names *oakley_attr_val_descs[] = {
+enum_names *const oakley_attr_val_descs[] = {
 	NULL,	/* (none) */
 	&oakley_enc_names,	/* OAKLEY_ENCRYPTION_ALGORITHM */
 	&oakley_hash_names,	/* OAKLEY_HASH_ALGORITHM */
@@ -790,7 +767,7 @@ enum_names *oakley_attr_val_descs[] = {
 	NULL,	/* OAKLEY_GROUP_ORDER */
 };
 
-const unsigned int oakley_attr_val_descs_size = elemsof(oakley_attr_val_descs);
+const unsigned int oakley_attr_val_descs_roof = elemsof(oakley_attr_val_descs);
 
 /* IPsec DOI attributes (RFC 2407 "IPsec DOI" section 4.5) */
 static const char *const ipsec_attr_name[] = {
@@ -877,7 +854,7 @@ enum_names ipsec_attr_names = {
 };
 
 /* for each IPsec attribute, which enum_names describes its values? */
-enum_names *ipsec_attr_val_descs[] = {
+enum_names *const ipsec_attr_val_descs[] = {
 	NULL,	/* (none) */
 	&sa_lifetime_names,	/* SA_LIFE_TYPE */
 	NULL,	/* SA_LIFE_DURATION */
@@ -892,7 +869,8 @@ enum_names *ipsec_attr_val_descs[] = {
 	NULL,	/*ECN_TUNNEL*/
 #endif
 };
-const unsigned int ipsec_attr_val_descs_size = elemsof(ipsec_attr_val_descs);
+
+const unsigned int ipsec_attr_val_descs_roof = elemsof(ipsec_attr_val_descs);
 
 /* SA Lifetime Type attribute */
 static const char *const sa_lifetime_name[] = {
@@ -1043,7 +1021,7 @@ static enum_names modecfg_cisco_attr_names = {
 	MODECFG_BANNER,
 	CISCO_UNKNOWN_SEEN_ON_IPHONE,
 	modecfg_cisco_attr_name,
-	&modecfg_attr_names_draft
+	NULL
 };
 
 static const char *const modecfg_microsoft_attr_name[] = {
@@ -1059,7 +1037,7 @@ static enum_names modecfg_microsoft_attr_names = {
 
 enum_names modecfg_attr_names = {
 	INTERNAL_IP4_ADDRESS,
-	INTERNAL_IP6_SERVER,
+	HOME_AGENT_ADDRESS,
 	modecfg_attr_name_draft,
 	&modecfg_microsoft_attr_names
 };
@@ -1768,8 +1746,8 @@ enum_names ikev2_trans_type_names = {
 	NULL
 };
 
-/* for each IKEv2 transform attribute,which enum_names describes its values? */
-enum_names *ikev2_transid_val_descs[] = {
+/* for each IKEv2 transform attribute, which enum_names describes its values? */
+enum_names *const ikev2_transid_val_descs[] = {
 	NULL,
 	&ikev2_trans_type_encr_names,         /* 1 */
 	&ikev2_trans_type_prf_names,          /* 2 */
@@ -1778,7 +1756,7 @@ enum_names *ikev2_transid_val_descs[] = {
 	&ikev2_trans_type_esn_names,          /* 5 */
 };
 
-const unsigned int ikev2_transid_val_descs_size =
+const unsigned int ikev2_transid_val_descs_roof =
 	elemsof(ikev2_transid_val_descs);
 
 /* Transform Attributes */
@@ -1793,7 +1771,7 @@ enum_names ikev2_trans_attr_descs = {
 };
 
 /* for each IKEv2 attribute, which enum_names describes its values? */
-enum_names *ikev2_trans_attr_val_descs[] = {
+enum_names *const ikev2_trans_attr_val_descs[] = {
 	NULL,	/* 0 */
 	NULL,	/* 1 */
 	NULL,	/* 2 */
@@ -1949,9 +1927,7 @@ enum_names rr_class_names = {
 
 static const char *const ppk_name[] = {
 	"PPK_PSK",
-	"PPK_DSS",
 	"PPK_RSA",
-	"PPK_PIN",
 	"PPK_XAUTH",
 	NULL
 };

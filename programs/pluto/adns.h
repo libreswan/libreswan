@@ -1,4 +1,6 @@
-/* Pluto Asynchronous DNS Helper Program's Header
+/*
+ * Pluto Asynchronous DNS Helper Program's Header
+ *
  * Copyright (C) 2002  D. Hugh Redelmeier.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -15,28 +17,30 @@
 #ifndef _ADNS_H
 #define _ADNS_H
 
-#ifndef UNBOUND /* whole file! */
+#ifndef UNBOUND	/* whole file! */
 
 #include <resolv.h>
 
-/* The interface in RHL6.x and BIND distribution 8.2.2 are different,
+/*
+ * The interface in RHL6.x and BIND distribution 8.2.2 are different,
  * so we build some of our own :-(
  */
 
-# ifndef NS_MAXDNAME
-#   define NS_MAXDNAME 1025
-# endif
+#ifndef NS_MAXDNAME
+#define NS_MAXDNAME 1025
+#endif
 
-# ifndef NS_PACKETSZ
-#   define NS_PACKETSZ 512
-# endif
+#ifndef NS_PACKETSZ
+#define NS_PACKETSZ 512
+#endif
 
 /* protocol version */
 
 #define ADNS_Q_MAGIC (((((('d' << 8) + 'n') << 8) + 's') << 8) + 4)
 #define ADNS_A_MAGIC (((((('d' << 8) + 'n') << 8) + 's') << 8) + 128 + 4)
 
-/* note: both struct adns_query and struct adns_answer must start with
+/*
+ * note: both struct adns_query and struct adns_answer must start with
  * size_t len;
  */
 
@@ -60,21 +64,21 @@ struct adns_answer {
 };
 
 enum helper_exit_status {
-	HES_CONTINUE = -1,      /* not an exit */
-	HES_OK = 0,             /* all's well that ends well (perhaps EOF) */
-	HES_INVOCATION,         /* improper invocation */
-	HES_IO_ERROR_SELECT,    /* IO error in select() */
-	HES_MALLOC,             /* malloc failed */
-	HES_IO_ERROR_IN,        /* error reading pipe */
-	HES_IO_ERROR_OUT,       /* error reading pipe */
-	HES_PIPE,               /* pipe(2) failed */
-	HES_SYNC,               /* answer from worker doesn't match query */
-	HES_FORK,               /* fork(2) failed */
-	HES_RES_INIT,           /* resolver initialization failed */
-	HES_BAD_LEN,            /* implausible .len field */
-	HES_BAD_MAGIC,          /* .magic field wrong */
+	HES_CONTINUE = -1,	/* not an exit */
+	HES_OK = 0,		/* all's well that ends well (perhaps EOF) */
+	HES_INVOCATION,		/* improper invocation */
+	HES_IO_ERROR_SELECT,	/* IO error in select() */
+	HES_MALLOC,		/* malloc failed */
+	HES_IO_ERROR_IN,	/* error reading pipe */
+	HES_IO_ERROR_OUT,	/* error reading pipe */
+	HES_PIPE,		/* pipe(2) failed */
+	HES_SYNC,		/* answer from worker doesn't match query */
+	HES_FORK,		/* fork(2) failed */
+	HES_RES_INIT,		/* resolver initialization failed */
+	HES_BAD_LEN,		/* implausible .len field */
+	HES_BAD_MAGIC,		/* .magic field wrong */
 };
 
-#endif  /* !USE_UNBOUND */
+#endif	/* UNBOUND */
 
-#endif  /* _ADNS_H */
+#endif	/* _ADNS_H */

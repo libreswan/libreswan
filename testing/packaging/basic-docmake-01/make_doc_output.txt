@@ -1,2 +1,0 @@
-cp /btmp/build/HEAD/2005_11_15/libreswan-2/doc/src/index.html index.html
-nothing here anymore

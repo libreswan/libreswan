@@ -4,6 +4,7 @@
 #
 # Copyright (C) 2003-2004 Andreas Steffen, Zuercher Hochschule Winterthur
 # Copyright (C) 2014 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -36,11 +37,10 @@ print OID_H "/*\n",
 	    " * ", $automatic, "\n",
 	    " * ", $warning, "\n",
 	    " */\n\n",
-            "#include <sys/types.h>\n",
 	    "typedef struct {\n",
-	    "\tu_char octet;\n",
-	    "\tu_int next;\n",
-	    "\tu_int down;\n",
+	    "\tunsigned char octet;\n",
+	    "\tunsigned char down;\t/* bool */\n",
+	    "\tunsigned short next;\n",
 	    "\tconst char *name;\n",
 	    "} oid_t;\n",
 	    "\n",
@@ -59,7 +59,11 @@ $max_order = 0;
 
 while ($line = <SRC>)
 {
-    $line =~ m/( *?)(0x\w{2})\s+(".*?")[ \t]*?([\w_]*?)\Z/;
+    next if ($line =~ m/^\h*$/);	# ignore empty line
+    next if ($line =~ m/^#/);	# ignore comment line
+
+    $line =~ m/^( *?)(0x[0-9a-fA-F]{2})\s+(".*?")[ \t]*?([\w_]*?)\Z/
+    	or die "malformed line: $line";
 
     @order[$counter] = length($1);
     @octet[$counter] = $2;
@@ -97,11 +101,10 @@ print OID_C "/*\n",
 	    " * ", $automatic, "\n",
 	    " * ", $warning, "\n",
 	    " */\n",
-	    "#include <stdlib.h>\n",
-	    "\n",
 	    "#include \"oid.h\"\n",
 	    "\n",
-            "const oid_t oid_names[] = {\n";
+            "const oid_t oid_names[] = {\n",
+	    "\t/* octet, down, next, name */\n";
 
 for ($c = 0; $c < $counter; $c++)
 {
@@ -116,12 +119,12 @@ for ($c = 0; $c < $counter; $c++)
 	}
     }
 
-    printf OID_C "\t{ %s%s,%s%3d, %d, %s%s }%s  /* %3d */\n"
+    printf OID_C "\t{ %s%s,%s%d, %3d, %s%s }%s  /* %3d */\n"
 	,' '  x @order[$c]
 	, @octet[$c]
 	, ' ' x (1 + $max_order - @order[$c])
-	, @next[$c]
 	, @order[$c+1] > @order[$c]
+	, @next[$c]
 	, @name[$c]
 	, ' ' x ($max_name - length(@name[$c]))
 	, $c != $counter-1 ? "," : " "

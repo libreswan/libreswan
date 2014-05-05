@@ -25,7 +25,7 @@ export LIBRESWANSRCDIR
 TESTINGROOT=${LIBRESWANSRCDIR}/testing
 UTILS=`cd ${TESTINGROOT}/utils && pwd`
 KLIPSTOP=${LIBRESWANSRCDIR}/linux
-FIXUPDIR=`cd ${LIBRESWANSRCDIR}/testing/klips/fixups && pwd`
+FIXUPDIR=`cd ${LIBRESWANSRCDIR}/testing/sanitizers && pwd`
 CONSOLEDIFFDEBUG=${CONSOLEDIFFDEBUG-false}
 
 # find this on the path if not already set.

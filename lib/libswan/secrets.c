@@ -19,7 +19,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
-#include <pthread.h>	/* pthread.h must be firts include file */
+#include <pthread.h>	/* pthread.h must be first include file */
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,13 +38,11 @@
 
 #include <gmp.h>
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "lswlog.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "secrets.h"
@@ -79,13 +77,15 @@ static const struct fld RSA_private_field[] =
 	{ "Exponent2", offsetof(struct RSA_private_key, dQ) },
 	{ "Coefficient", offsetof(struct RSA_private_key, qInv) },
 	{ "CKAIDNSS", offsetof(struct RSA_private_key, ckaid) },
-
 };
 
 static err_t lsw_process_psk_secret(chunk_t *psk);
 static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
-static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak,
-				prompt_pass_t *pass);
+static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak);
+static void lsw_process_secret_records(struct secret **psecrets);
+static void lsw_process_secrets_file(struct secret **psecrets,
+				const char *file_pat);
+
 
 static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 {
@@ -224,32 +224,32 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 
 struct pubkey *allocate_RSA_public_key(const cert_t cert)
 {
-	struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
-	chunk_t e, n;
-
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_X509_SIGNATURE:
+	{
+		struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
+		chunk_t e, n;
+
 		e = cert.u.x509->publicExponent;
 		n = cert.u.x509->modulus;
-		break;
+
+		n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
+		n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
+
+		form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
+
+		DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
+
+		pk->alg = PUBKEY_ALG_RSA;
+		pk->id  = empty_id;
+		pk->issuer = empty_chunk;
+
+		return pk;
+	}
 	default:
 		libreswan_log("RSA public key allocation error");
-		pfreeany(pk);
 		return NULL;
 	}
-
-	n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
-	n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
-
-	form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
-
-	DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
-
-	pk->alg = PUBKEY_ALG_RSA;
-	pk->id  = empty_id;
-	pk->issuer = empty_chunk;
-
-	return pk;
 }
 
 void free_RSA_public_content(struct RSA_public_key *rsa)
@@ -530,34 +530,6 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 	return best;
 }
 
-#if 0	/* ??? not used */
-/* check the existence of an RSA private key matching an RSA public
- * key contained in an X.509 or OpenPGP certificate
- */
-bool lsw_has_private_key(struct secret *secrets, cert_t cert)
-{
-	struct secret *s;
-	bool has_key = FALSE;
-	struct pubkey *pubkey;
-
-	pubkey = allocate_RSA_public_key(cert);
-
-	if (pubkey == NULL)
-		return FALSE;
-
-	for (s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PPK_RSA &&
-			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
-					&pubkey->u.rsa)) {
-			has_key = TRUE;
-			break;
-		}
-	}
-	free_public_key(pubkey);
-	return has_key;
-}
-#endif
-
 static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key
 						*rsak,
 						char *nssHostCertNickName)
@@ -577,7 +549,6 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key
 	if (nssCert == NULL)
 		nssCert = PK11_FindCertFromNickname(nssHostCertNickName,
 					lsw_return_nss_password_file_info());
-
 
 	if (nssCert == NULL) {
 		libreswan_log(
@@ -700,62 +671,48 @@ bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
  * is an IP address, a Fully Qualified Domain Name (which will immediately
  * be resolved), or @FQDN which will be left as a name.
  *
- * The key part can be in several forms.
- *
- * The old form of the key is still supported: a simple
- * quoted strings (with no escapes) is taken as a preshred key.
- *
- * The new form starts the key part with a ":".
+ * The form starts the key part with a ":".
  *
  * For Preshared Key, use the "PSK" keyword, and follow it by a string
  * or a data token suitable for ttodata(3).
  *
- * For RSA Private Key, use the "RSA" keyword, followed by a
+ * For raw RSA Keys in NSS, use the "RSA" keyword, followed by a
  * brace-enclosed list of key field keywords and data values.
  * The data values are large integers to be decoded by ttodata(3).
  * The fields are a subset of those used by BIND 8.2 and have the
  * same names.
+ *
+ * For RSA Keys from certificate imports in NSS, use the "RSA" keyword,
+ * followed by the friendly_name used by NSS (usually specified during
+ * key export when creating PKCS#12 files.
+ *
+ * For XAUTH passwords, use @username followed by ":XAUTH" followed by the password
+ *
+ * PIN for smartcard is no longer supported - use NSS with smartcards
  */
 
 /*
- * process rsa key file protected with optional passphrase which can either be
- * read from ipsec.secrets or prompted for by using whack
+ * process rsa key entry from certificate in NSS database
  */
-static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak,
-				prompt_pass_t *pass)
+static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 {
-	char filename[PATH_MAX];
+	char friendly_name[PATH_MAX]; /* XXX: is there an NSS limit < PATH_MAX ? */
 	err_t ugh = NULL;
 
-	zero(&filename);
-	zero(&pass->secret);
+	zero(&friendly_name);
 
-	/* we expect the filename of a PKCS#1 private key file */
-	if (*flp->tok == '"' || *flp->tok == '\'')	/* quoted filename */
-		memcpy(filename, flp->tok + 1, flp->cur - flp->tok - 2);
+	/* we expect the NSS friendly name of a PKCS#1 private key in the NSS store */
+
+	if (*flp->tok == '"' || *flp->tok == '\'')	/* quoted friendly_name */
+		memcpy(friendly_name, flp->tok + 1, flp->cur - flp->tok - 2);
 	else
-		memcpy(filename, flp->tok, flp->cur - flp->tok);
+		memcpy(friendly_name, flp->tok, flp->cur - flp->tok);
 
 	if (shift()) {
-		/* we expect an appended passphrase or passphrase prompt*/
-		if (tokeqword("%prompt")) {
-			if (pass->fd == NULL_FD)
-				return "enter a passphrase using ipsec auto --rereadsecrets";
-		} else if (*flp->tok == '"' || *flp->tok == '\'') {
-			/* quoted passphrase */
-			memcpy(pass->secret, flp->tok + 1,
-				flp->cur - flp->tok - 2);
-			pass->prompt = NULL;
-		} else {
-			memcpy(pass->secret, flp->tok, flp->cur - flp->tok);
-			pass->prompt = NULL;
-		}
-
-		if (shift())
-			ugh = "RSA private key file -- unexpected token after passphrase";
+		ugh = "RSA private key file -- unexpected token after friendly_name";
 	}
 
-	ugh = extract_and_add_secret_from_nss_cert_file(rsak, filename);
+	ugh = extract_and_add_secret_from_nss_cert_file(rsak, friendly_name);
 	if (ugh == NULL)
 		return RSA_public_key_sanity(rsak);
 
@@ -853,23 +810,22 @@ static err_t lsw_process_xauth_secret(chunk_t *xauth)
  */
 static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 {
-	unsigned char buf[RSA_MAX_ENCODING_BYTES];	/*
-							 * limit on size of
-							 * binary
-							 * representation
-							 * of key
-							 */
-	const struct fld *p;
+	/*
+	 * data structure to save public field values
+	 * (Modulus and PublicExponent) for keyid calculation
+	 */
+	unsigned char pfv_space[RSA_MAX_ENCODING_BYTES];
+	unsigned char *pfvs_next = pfv_space;
+	chunk_t pub_field[2];	/* first 2 fields only */
+	chunk_t *pfv_next = &pub_field[0];
 
-	/* save bytes of Modulus and PublicExponent for keyid calculation */
-	unsigned char ebytes[sizeof(buf)];
-	unsigned char *eb_next = ebytes;
-	chunk_t pub_bytes[2];
-	chunk_t *pb_next = &pub_bytes[0];
+	const struct fld *p;
 
 	for (p = RSA_private_field;
 		p < &RSA_private_field[elemsof(RSA_private_field)]; p++) {
-		size_t sz;
+		/* Binary Value of key field */
+		unsigned char bv[RSA_MAX_ENCODING_BYTES];
+		size_t bvlen;
 		char diag_space[TTODATAV_BUF];
 		err_t ugh;
 
@@ -879,52 +835,35 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 			return builddiag(
 				"%s keyword not found where expected in RSA key",
 				p->name);
-		} else if (!(shift()   &&
+		} else if (!(shift() &&
 				(!tokeq(":") || shift()))) {
 			/* ignore optional ":" */
 			return "premature end of RSA key";
 		} else if (NULL !=
-			(ugh = ttodatav(flp->tok, flp->cur - flp->tok,
-					0, (char *)buf,
-					sizeof(buf), &sz,
-					diag_space,
-					sizeof(diag_space),
+			(ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0,
+					(char *)bv, sizeof(bv),
+					&bvlen,
+					diag_space, sizeof(diag_space),
 					TTODATAV_SPACECOUNTS))) {
 			/* in RSA key, ttodata didn't like */
-			return builddiag("RSA data malformed (%s): %s", ugh,
-					flp->tok);
+			return builddiag("RSA data malformed (%s): %s",
+					ugh, flp->tok);
+		} else if (streq(p->name, "CKAIDNSS")) {
+			memcpy(rsak->ckaid, bv, bvlen);
+			rsak->ckaid_len = bvlen;
 		} else {
-			if (strcmp(p->name, "CKAIDNSS") == 0) {
-				memcpy(rsak->ckaid, buf, sz);
-				rsak->ckaid_len = sz;
-			} else {
+			MP_INT *n =
+				(MP_INT *) ((char *)rsak + p->offset);
 
-				MP_INT *n =
-					(MP_INT *) ((char *)rsak + p->offset);
-
-				n_to_mpz(n, buf, sz);
-				if (pb_next < &pub_bytes[elemsof(pub_bytes)]) {
-					if (eb_next - ebytes + sz >
-						sizeof(ebytes))
-						return "public key takes too many bytes";
-					setchunk(*pb_next, eb_next, sz);
-					memcpy(eb_next, buf, sz);
-					eb_next += sz;
-					pb_next++;
-				}
-#if 0	/* debugging info that compromises security */
-				{
-					size_t sz = mpz_sizeinbase(n, 16);
-					/* ought to be big enough */
-					char buf[RSA_MAX_OCTETS * 2 + 2];
-
-					passert(sz <= sizeof(buf));
-					mpz_get_str(buf, 16, n);
-
-					loglog(RC_LOG_SERIOUS, "%s: %s",
-						p->name, buf);
-				}
-#endif
+			n_to_mpz(n, bv, bvlen);
+			if (pfv_next < &pub_field[elemsof(pub_field)]) {
+				if (pfvs_next - pfv_space + bvlen >
+					sizeof(pfv_space))
+					return "public key takes too many bytes";
+				setchunk(*pfv_next, pfvs_next, bvlen);
+				memcpy(pfvs_next, bv, bvlen);
+				pfvs_next += bvlen;
+				pfv_next++;
 			}
 		}
 	}
@@ -943,13 +882,12 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 		unsigned bits = mpz_sizeinbase(&rsak->pub.n, 2);
 
 		rsak->pub.k = (bits + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
-		rsak->pub.keyid[0] = '\0';	/*
-						 * in case of splitkeytoid
-						 * failure
-						 */
-		splitkeytoid(pub_bytes[1].ptr, pub_bytes[1].len,
-			pub_bytes[0].ptr, pub_bytes[0].len,
+
+		rsak->pub.keyid[0] = '\0';	/* in case of failure */
+		splitkeytoid(pub_field[1].ptr, pub_field[1].len,
+			pub_field[0].ptr, pub_field[0].len,
 			rsak->pub.keyid, sizeof(rsak->pub.keyid));
+
 		return RSA_public_key_sanity(rsak);
 	}
 }
@@ -957,7 +895,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 /*
  * get the matching RSA private key belonging to a given X.509 certificate
  */
-const struct RSA_private_key *lsw_get_x509_private_key(struct secret *secrets,
+const struct RSA_private_key *get_x509_private_key(struct secret *secrets,
 						x509cert_t *cert)
 {
 	struct secret *s;
@@ -965,8 +903,7 @@ const struct RSA_private_key *lsw_get_x509_private_key(struct secret *secrets,
 	cert_t c;
 	struct pubkey *pubkey;
 
-	c.forced = FALSE;
-	c.type   = CERT_X509_SIGNATURE;
+	c.ty = CERT_X509_SIGNATURE;
 	c.u.x509 = cert;
 
 	pubkey = allocate_RSA_public_key(c);
@@ -1040,16 +977,13 @@ void unlock_authcert_list(const char *who)
 
 #endif
 
-static void process_secret(struct secret **psecrets, int verbose,
-			struct secret *s, prompt_pass_t *pass)
+static void process_secret(struct secret **psecrets,
+			struct secret *s)
 {
 	err_t ugh = NULL;
 
-	s->pks.kind = PPK_PSK;	/* default */
-	if (*flp->tok == '"' || *flp->tok == '\'') {
-		/* old PSK format: just a string */
-		ugh = lsw_process_psk_secret(&s->pks.u.preshared_secret);
-	} else if (tokeqword("psk")) {
+	if (tokeqword("psk")) {
+		s->pks.kind = PPK_PSK;
 		/* preshared key: quoted string or ttodata format */
 		ugh = !shift() ? "unexpected end of record in PSK" :
 			lsw_process_psk_secret(&s->pks.u.preshared_secret);
@@ -1066,14 +1000,14 @@ static void process_secret(struct secret **psecrets, int verbose,
 		s->pks.kind = PPK_RSA;
 		if (!shift()) {
 			ugh = "bad RSA key syntax";
-		} else if (tokeq("{")) {
+		} else if (tokeq("{")) { /* raw RSA key in NSS */
 			ugh = lsw_process_rsa_secret(
 					&s->pks.u.RSA_private_key);
-		} else {
-			ugh = lsw_process_rsa_keyfile(
-				&s->pks.u.RSA_private_key, pass);
+		} else { /* RSA key in certificate in NSS */
+			ugh = lsw_process_rsa_keycert(
+				&s->pks.u.RSA_private_key);
 		}
-		if (!ugh && verbose) {
+		if (!ugh) {
 			libreswan_log("loaded private key for keyid: %s:%s",
 				enum_name(&ppk_names, s->pks.kind),
 				s->pks.u.RSA_private_key.pub.keyid);
@@ -1120,14 +1054,7 @@ static void process_secret(struct secret **psecrets, int verbose,
 	}
 }
 
-/* forward declaration */
-static void lsw_process_secrets_file(struct secret **psecrets,
-				int verbose,
-				const char *file_pat,
-				prompt_pass_t *pass);
-
-static void lsw_process_secret_records(struct secret **psecrets, int verbose,
-				prompt_pass_t *pass)
+static void lsw_process_secret_records(struct secret **psecrets)
 {
 	/* const struct secret *secret = *psecrets; */
 
@@ -1183,12 +1110,8 @@ static void lsw_process_secret_records(struct secret **psecrets, int verbose,
 			(void) shift();	/* move to Record Boundary, we hope */
 			if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename"))
 			{
-				lsw_process_secrets_file(psecrets, verbose, fn,
-							pass);
-				flp->tok = NULL;	/*
-							 * correct, but
-							 * probably redundant
-							 */
+				lsw_process_secrets_file(psecrets, fn);
+				flp->tok = NULL;	/* redundant? */
 			}
 		} else {
 			/* expecting a list of indices and then the key info */
@@ -1202,18 +1125,14 @@ static void lsw_process_secret_records(struct secret **psecrets, int verbose,
 
 			s->pks.u.RSA_private_key.pub.nssCert = NULL;
 
-			while (1) {
+			for (;;) {
 				struct id id;
 				err_t ugh;
 
 				if (tokeq(":")) {
 					/* found key part */
-					shift();	/*
-							 * discard explicit
-							 * separator
-							 */
-					process_secret(psecrets, verbose, s,
-						pass);
+					shift();	/* eat ":" */
+					process_secret(psecrets, s);
 					break;
 				}
 
@@ -1281,9 +1200,7 @@ static int globugh(const char *epath, int eerrno)
 }
 
 static void lsw_process_secrets_file(struct secret **psecrets,
-				int verbose,
-				const char *file_pat,
-				prompt_pass_t *pass)
+				const char *file_pat)
 {
 	struct file_lex_position pos;
 	char **fnp;
@@ -1331,12 +1248,10 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 	/* for each file... */
 	for (fnp = globbuf.gl_pathv; fnp != NULL && *fnp != NULL; fnp++) {
 		if (lexopen(&pos, *fnp, FALSE)) {
-			if (verbose)
-				libreswan_log("loading secrets from \"%s\"",
-					*fnp);
+			libreswan_log("loading secrets from \"%s\"", *fnp);
 			(void) flushline(
 				"file starts with indentation (continuation notation)");
-			lsw_process_secret_records(psecrets, verbose, pass);
+			lsw_process_secret_records(psecrets);
 			lexclose();
 		}
 	}
@@ -1391,12 +1306,10 @@ void lsw_free_preshared_secrets(struct secret **psecrets)
 }
 
 void lsw_load_preshared_secrets(struct secret **psecrets,
-				int verbose,
-				const char *secrets_file,
-				prompt_pass_t *pass)
+				const char *secrets_file)
 {
 	lsw_free_preshared_secrets(psecrets);
-	(void) lsw_process_secrets_file(psecrets, verbose, secrets_file, pass);
+	(void) lsw_process_secrets_file(psecrets, secrets_file);
 }
 
 struct pubkey *reference_key(struct pubkey *pk)

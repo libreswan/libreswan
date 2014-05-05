@@ -5,5 +5,5 @@ Basic pluto test:
 the policy has been adjusted to permit only AES256 for phase 1 and twofish
 for phase 2.
 
-This test uses twofish from the KLIPS CryptoAPI
+This test uses twofish from the NETKEY IPsec stack
 

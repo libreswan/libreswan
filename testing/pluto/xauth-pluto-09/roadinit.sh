@@ -1,25 +1,7 @@
-#!/bin/sh
-
-: ==== start ====
-
-ipsec setup stop
-umount /var/tmp; mount /var/tmp
-umount /usr/local; mount /usr/local
-
-hostname road.uml.freeswan.org
-
-ifconfig eth0 inet 192.1.3.194
-route delete -net default 
+/testing/guestbin/swan-prep
+ifconfig eth0 192.1.3.194 netmask 255.255.255.0
 route add -net default gw 192.1.3.254
-
-netstat -rn
-
-export TESTNAME=xauth-pluto-09
-source /testing/pluto/bin/roadlocal.sh
-
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-
-echo done
-
-
+ipsec auto --add modecfg-road-eastnet-psk
+echo "initdone"

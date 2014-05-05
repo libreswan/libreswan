@@ -2,15 +2,15 @@
 [root@west ikev2-delete-02]# # confirm that the network is alive
 [root@west ikev2-delete-02]# ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.551 ms
-64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.277 ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.551 ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.277 ms
 
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time 1001ms
 rtt min/avg/max/mdev = 0.277/0.414/0.551/0.137 ms
 [root@west ikev2-delete-02]# # make sure that clear text does not get through
 [root@west ikev2-delete-02]# iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-[root@west ikev2-delete-02]# # confirm with a ping to east-in
+[root@west ikev2-delete-02]# # confirm with a ping
 [root@west ikev2-delete-02]# ping -n -c 1 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 
@@ -41,7 +41,7 @@ Redirecting to: systemctl stop ipsec.service
 [   61.550122] KLIPS cryptoapi interface: alg_type=15 alg_id=7 name=cbc(blowfish) keyminbits=96 keymaxbits=448, found(0)
 [   61.583039] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [   61.656426] 
-[root@west ikev2-delete-02]# /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+[root@west ikev2-delete-02]# ipsec setup start
 [root@west ikev2-delete-02]# /testing/pluto/bin/wait-until-pluto-started
 [root@west ikev2-delete-02]# ipsec whack --whackrecord /var/tmp/ikev2.record
 [root@west ikev2-delete-02]# ipsec auto --add west-east-delete1
@@ -67,8 +67,8 @@ Redirecting to: systemctl stop ipsec.service
 000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
 000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
 000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -92,9 +92,9 @@ Redirecting to: systemctl stop ipsec.service
 000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
-000 "west-east-delete1":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "west-east-delete1":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 1, active 0
@@ -110,8 +110,8 @@ initdone
 004 "west-east-delete1" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xf177499e <0xb9843862 xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 [root@west ikev2-delete-02]# ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.863 ms
-64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.310 ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.863 ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.310 ms
 
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time 1002ms
@@ -138,8 +138,8 @@ rtt min/avg/max/mdev = 0.310/0.586/0.863/0.277 ms
 000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
 000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
 000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -163,7 +163,7 @@ rtt min/avg/max/mdev = 0.310/0.586/0.863/0.277 ms
 000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
 000 "west-east-delete1":   IKE algorithm newest: _128-SHA1-MODP2048
@@ -198,8 +198,8 @@ done
 000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
 000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
 000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -223,7 +223,7 @@ done
 000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
 000 "west-east-delete1":   IKE algorithm newest: _128-SHA1-MODP2048
@@ -264,8 +264,8 @@ sleeping a bit.. 20
 000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
 000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
 000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -289,7 +289,7 @@ sleeping a bit.. 20
 000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
 000 "west-east-delete1":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  

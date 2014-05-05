@@ -33,6 +33,8 @@ installsysconfig:
 	mkdir -p $(SYSCONFIGDIR)
 	@if test ! -f $(SYSCONFIGDIR)/pluto ; then \
 		$(INSTALL) $(INSTCONFFLAGS) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto ; \
+	else \
+		$(INSTALL) $(INSTCONFFLAGS) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto.new ; \
 	fi
 
 oldinitdcheck:

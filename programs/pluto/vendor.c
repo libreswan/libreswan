@@ -489,12 +489,12 @@ void init_vendorid(void)
 			vid->vid_len = strlen(vid->vid);
 		} else if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
-			vid->vid = clone_str(vid->data, "vid->data");
+			vid->vid = clone_str(vid->data, "vid->data (ignore)");
 			vid->vid_len = strlen(vid->data);
 		} else if (vid->flags & VID_MD5HASH) {
 			/** VendorID is a string to hash with MD5 **/
 			unsigned char *vidm = alloc_bytes(MD5_DIGEST_SIZE,
-							 "VendorID MD5");
+							 "VendorID MD5 (ignore)");
 			unsigned const char *d =
 				(unsigned const char *)vid->data;
 			MD5_CTX ctx;
@@ -509,7 +509,7 @@ void init_vendorid(void)
 			/** FreeS/WAN 2.00+ specific hash **/
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
-			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID");
+			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID (ignore)");
 			MD5_CTX ctx;
 			int i;
 
@@ -544,8 +544,7 @@ void init_vendorid(void)
 #if 0
 		DBG_log("init_vendorid: %d [%s]",
 			vid->id,
-			vid->descr ? vid->descr : ""
-			);
+			vid->descr ? vid->descr : "");
 		if (vid->vid)
 			DBG_dump("VID:", vid->vid, vid->vid_len);
 #endif
@@ -768,8 +767,7 @@ bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid)
 			return FALSE; /* not found */
 
 	DBG(DBG_EMITTING,
-	    DBG_log("out_vid(): sending [%s]", pvid->descr);
-	    );
+	    DBG_log("out_vid(): sending [%s]", pvid->descr));
 
 	return out_generic_raw(np, &isakmp_vendor_id_desc, outs,
 			       pvid->vid, pvid->vid_len, "V_ID");

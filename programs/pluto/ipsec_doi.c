@@ -35,7 +35,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 
 #include "sysdep.h"
@@ -197,43 +196,40 @@ bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
  *
  * @param pbs PB Stream
  */
-void close_message(pb_stream *pbs, struct state *st)
+bool close_message(pb_stream *pbs, struct state *st)
 {
 	size_t padding =  pad_up(pbs_offset(pbs), 4);
 
-	/* Workaround for overzealous Checkpoint firewal */
-	if (padding && st && st->st_connection &&
+	/* Workaround for overzealous Checkpoint firewall */
+	if (padding != 0 && st && st->st_connection != NULL &&
 	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
-		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %lu bytes skipped by policy",
+		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %zu bytes skipped by policy",
 			padding));
-		padding = 0;
-	}
-
-	if (padding != 0) {
-		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %lu bytes", padding));
-		(void) out_zero(padding, pbs, "message padding");
+	} else if (padding != 0) {
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %zu bytes", padding));
+		if (!out_zero(padding, pbs, "message padding"))
+			return FALSE;
 	} else {
 		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required"));
 	}
 
 	close_output_pbs(pbs);
+	return TRUE;
 }
 
 static initiator_function *pick_initiator(struct connection *c UNUSED,
 					  lset_t policy)
 {
-	if ((policy & POLICY_IKEV1_DISABLE) == 0 &&
-	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == 0))) {
+	if ((policy & POLICY_IKEV1_DISABLE) == LEMPTY &&
+	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == LEMPTY))) {
 		if (policy & POLICY_AGGRESSIVE) {
 			return aggr_outI1;
 		} else {
 			return main_outI1;
 		}
-
 	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
 		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
 		return ikev2parent_outI1;
-
 	} else {
 		libreswan_log("Neither IKEv1 nor IKEv2 allowed");
 		/*
@@ -269,7 +265,7 @@ void ipsecdoi_initiate(int whack_sock,
 	if (st == NULL) {
 		initiator_function *initiator = pick_initiator(c, policy);
 
-		if (initiator) {
+		if (initiator != NULL) {
 			(void) initiator(whack_sock, c, NULL, policy, try, importance
 #ifdef HAVE_LABELED_IPSEC
 					 , uctx
@@ -424,19 +420,20 @@ bool has_preloaded_public_key(struct state *st)
 bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 {
 	switch (peer->kind) {
+	/* ident types mostly match between IKEv1 and IKEv2 */
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		/* failure mode for initaddr is probably inappropriate address length */
 	{
-		err_t ugh = initaddr(id_pbs->cur, pbs_left(
-					     id_pbs),
-				     peer->kind == ID_IPV4_ADDR ? AF_INET : AF_INET6,
-				     &peer->ip_addr);
+		err_t ugh = initaddr(id_pbs->cur, pbs_left(id_pbs),
+				peer->kind == ID_IPV4_ADDR ? AF_INET : AF_INET6,
+				&peer->ip_addr);
 
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,
-			       "improper %s identification payload: %s",
-			       enum_show(&ident_names, peer->kind), ugh);
+				"improper %s identification payload: %s",
+				enum_show(&ike_idtype_names, peer->kind),
+				ugh);
 			/* XXX Could send notification back */
 			return FALSE;
 		}
@@ -446,17 +443,17 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 	case ID_USER_FQDN:
 		if (memchr(id_pbs->cur, '@', pbs_left(id_pbs)) == NULL) {
 			loglog(RC_LOG_SERIOUS,
-			       "peer's ID_USER_FQDN contains no @: %.*s",
-			       (int) pbs_left(id_pbs),
-			       id_pbs->cur);
+				"peer's ID_USER_FQDN contains no @: %.*s",
+				(int) pbs_left(id_pbs),
+				id_pbs->cur);
 			/* return FALSE; */
 		}
 	/* FALLTHROUGH */
 	case ID_FQDN:
 		if (memchr(id_pbs->cur, '\0', pbs_left(id_pbs)) != NULL) {
 			loglog(RC_LOG_SERIOUS,
-			       "Phase 1 ID Payload of type %s contains a NUL",
-			       enum_show(&ident_names, peer->kind));
+				"Phase 1 (Parent)ID Payload of type %s contains a NUL",
+				enum_show(&ike_idtype_names, peer->kind));
 			return FALSE;
 		}
 
@@ -480,8 +477,8 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 	default:
 		/* XXX Could send notification back */
 		loglog(RC_LOG_SERIOUS,
-		       "Unacceptable identity type (%s) in Phase 1 ID Payload",
-		       enum_show(&ident_names, peer->kind));
+			"Unsupported identity type (%s) in Phase 1 (Parent) ID Payload",
+			enum_show(&ike_idtype_names, peer->kind));
 		return FALSE;
 	}
 
@@ -549,7 +546,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		const char *natinfo = "";
 		char esb[ENUM_SHOW_BUF_LEN];
 
-		if ((c->spd.that.host_port != IKE_UDP_PORT &&
+		if ((c->spd.that.host_port != pluto_port &&
 		     c->spd.that.host_port != 0) ||
 		    c->forceencaps) {
 			natinfo = "/NAT";
@@ -655,12 +652,10 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		snprintf(b, sad_len - (b - sadetails) - 1,
 			 "%sXAUTHuser=%s",
 			 ini,
-			 st->st_xauth_username
-			 );
+			 st->st_xauth_username);
 
 		ini = " ";
 		fin = "}";
-
 	}
 
 	strcat(b, fin);

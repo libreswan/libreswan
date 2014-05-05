@@ -211,6 +211,10 @@ BISONOSFLAGS?=
 NSSFLAGS?=$(shell pkg-config --cflags nss)
 NSSLIBS?=$(shell pkg-config --libs nss)
 
+GCC?=gcc
+#GCC=clang
+MAKE?=make
+
 ifeq ($(ARCH),i686)
 GCCM?=-m32
 endif
@@ -242,13 +246,11 @@ WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wm
 USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} $(GCC_LINT) -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE -DFORCE_PR_ASSERT
 
 KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
-# Additional debugging for developers (warning: can crash libreswan!)
-#USERCOMPILE?=-g -DLEAK_DETECTIVE -lefence
 # You can also run this before starting libreswan on glibc systems:
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
 # extra link flags
-USERLINK?=-Wl,-z,relro,-z,now -g -pie
+USERLINK?=-Wl,-z,relro,-z,now -g -pie #-lefence
 
 PORTINCLUDE?=
 
@@ -386,16 +388,6 @@ USE_EXTRACRYPTO?=true
 # Do we want to limit the number of ipsec connections artificially
 USE_IPSEC_CONNECTION_LIMIT?=false
 IPSEC_CONNECTION_LIMIT?=250
-
-# Whether to use LEAK_DETECTIVE to find memory leaks.
-# disabled for now as it causes some pfree()s due to bad code
-USE_LEAK_DETECTIVE?=false
-
-# Use dmalloc. Requires USE_LEAK_DETECTIVE
-USE_DMALLOC?=false
-ifeq ($(USE_DMALLOC),true)
-USE_LEAK_DETECTIVE=true
-endif
 
 # For Angstrom linux with broken popen() set to true. See bug #1067
 HAVE_BROKEN_POPEN?=false
