@@ -2,6 +2,9 @@
 Preparing X.509 files
 east #
  ipsec setup start
+[ 00.00] 
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -20,8 +23,8 @@ east #
 east #
  ipsec auto --status
 000 using kernel interface: klips
-000 interface ipsec0/eth1 192.1.2.23
-000 interface ipsec0/eth1 192.1.2.23
+000 interface ipsec0/eth1 192.1.2.23@4500
+000 interface ipsec0/eth1 192.1.2.23@500
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
