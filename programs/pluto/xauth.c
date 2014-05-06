@@ -322,9 +322,8 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 	} else if (!isanyaddr(&c->spd.that.client.addr)) {
 		ia->ipaddr = c->spd.that.client.addr;
 	} else {
-		libreswan_log("%s failure c->pool==NULL that.client.addr is "
-				"invalid", __func__);
-		return FALSE;
+		/* lets see if this ever happens. */
+		passert(0);
 	}
 
 	if (!isanyaddr(&c->modecfg_dns1))
