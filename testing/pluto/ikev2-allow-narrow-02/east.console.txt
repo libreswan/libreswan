@@ -1,8 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec setup start
-east #
- ipsec setup start
+Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -10,14 +9,15 @@ east #
 east #
  ipsec auto --status
 000 using kernel interface: netkey
-000 interface lo/lo 127.0.0.1
-000 interface lo/lo 127.0.0.1
-000 interface eth0/eth0 192.0.2.254
-000 interface eth0/eth0 192.0.2.254
-000 interface eth1/eth1 192.1.2.23
-000 interface eth1/eth1 192.1.2.23
-000 interface eth2/eth2 192.9.2.23
-000 interface eth2/eth2 192.9.2.23
+000 interface lo/lo 127.0.0.1@4500
+000 interface lo/lo 127.0.0.1@500
+000 interface eth0/eth0 192.0.2.254@4500
+000 interface eth0/eth0 192.0.2.254@500
+000 interface eth1/eth1 192.1.2.23@4500
+000 interface eth1/eth1 192.1.2.23@500
+000 interface eth2/eth2 192.9.2.23@4500
+000 interface eth2/eth2 192.9.2.23@500
+000  
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
@@ -33,9 +33,9 @@ east #
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
-000 virtual_private (%priv):
-000 - allowed 3 subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
-000 - disallowed 2 subnets: 192.0.2.0/24, 2001:db8:0:2::/64
+000 virtual-private (%priv):
+000 - alloweded subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
+000 - excludeded subnets: 192.0.2.0/24, 2001:db8:0:2::/64
 000  
 000 ESP algorithms supported:
 000  
@@ -105,7 +105,7 @@ east #
 000 "westnet-eastnet-ikev2":    policy_label:unset; 
 000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+IKEv2ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW_ALLOW; 
+000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 

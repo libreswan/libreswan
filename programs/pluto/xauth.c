@@ -111,9 +111,7 @@ struct xauth_thread_arg {
 	char *name;
 	char *password;
 	char *connname;
-#ifdef XAUTH_HAVE_PAM
 	st_jbuf_t *ptr;
-#endif
 };
 
 #ifdef XAUTH_HAVE_PAM

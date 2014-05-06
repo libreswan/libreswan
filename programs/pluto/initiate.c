@@ -251,7 +251,7 @@ static int initiate_a_connection(struct connection *c,
 					c->policy, alg, TRUE);
 
 				if (alg != NULL && phase2_sa == NULL) {
-					whack_log(RC_NOALGO,
+					whack_log(RC_LOG_SERIOUS,
 						  "can not initiate: no acceptable kernel algorithms loaded");
 					reset_cur_connection();
 					close_any(is->whackfd);

@@ -119,7 +119,6 @@ enum rc_type {
 	RC_NORETRANSMISSION,
 	RC_INTERNALERR,
 	RC_OPPOFAILURE,         /* Opportunism failed */
-	RC_NOALGO,              /* algorithm not supported */
 	RC_CRYPTOFAILED,        /* system too busy to perform required
 	                         * cryptographic operations */
 	RC_AGGRALGO,            /* multiple algorithms requested in phase 1 aggressive */

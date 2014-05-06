@@ -4,10 +4,9 @@
  * (C)opyright 2012-2014 Paul Wouters <paul@libreswan.org>
  */
 
+#include "sha1.h"
 #include <pk11pub.h>
 #include "lswlog.h"
-
-#include "sha1.h"
 
 void SHA1Init(SHA1_CTX* context)
 {

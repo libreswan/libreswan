@@ -1144,7 +1144,7 @@ void add_connection(const struct whack_message *wm)
 	switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
 	case LEMPTY:
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
-		loglog(RC_NOALGO,
+		loglog(RC_LOG_SERIOUS,
 			"Must specify either AH or ESP.\n");
 		return;
 	}
@@ -1155,12 +1155,12 @@ void add_connection(const struct whack_message *wm)
 			&ugh)) == NULL || alg_info_ike->alg_info_cnt == 0)) {
 
 		if (alg_info_ike != NULL && alg_info_ike->alg_info_cnt == 0) {
-			loglog(RC_NOALGO,
+			loglog(RC_LOG_SERIOUS,
 				"got 0 transforms for ike=\"%s\"", wm->ike);
 			return;
 		}
 
-		loglog(RC_NOALGO, "ike string error: %s",
+		loglog(RC_LOG_SERIOUS, "ike string error: %s",
 			ugh ? ugh : "Unknown");
 		return;
 	}
@@ -1217,7 +1217,7 @@ void add_connection(const struct whack_message *wm)
 			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->alg_info_cnt == 0) {
-					loglog(RC_NOALGO,
+					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"esp=\"%s\"",
 						wm->esp);
@@ -1225,7 +1225,7 @@ void add_connection(const struct whack_message *wm)
 					return;
 				}
 			} else {
-				loglog(RC_NOALGO,
+				loglog(RC_LOG_SERIOUS,
 					"esp string error: %s",
 					ugh ? ugh : "Unknown");
 				pfree(c);
@@ -1247,7 +1247,7 @@ void add_connection(const struct whack_message *wm)
 			});
 			if (c->alg_info_ike) {
 				if (c->alg_info_ike->alg_info_cnt == 0) {
-					loglog(RC_NOALGO,
+					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"ike=\"%s\"",
 						wm->ike);
@@ -1255,7 +1255,7 @@ void add_connection(const struct whack_message *wm)
 					return;
 				}
 			} else {
-				loglog(RC_NOALGO,
+				loglog(RC_LOG_SERIOUS,
 					"ike string error: %s",
 					ugh ? ugh : "Unknown");
 				pfree(c);

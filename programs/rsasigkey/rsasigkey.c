@@ -612,7 +612,7 @@ mpz_t n;
 size_t *sizep;
 {
 	char *hexp = hexout(n);
-	static unsigned char bundbuf[2 + MAXBITS / 8];
+	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
 	const char *er;
 	size_t size;
 

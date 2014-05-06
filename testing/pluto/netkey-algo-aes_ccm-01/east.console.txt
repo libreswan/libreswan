@@ -1,8 +1,7 @@
 /testing/guestbin/swan-prep
 east #
  ipsec setup start
-east #
- ipsec setup start
+Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -10,10 +9,15 @@ east #
 east #
  ipsec auto --status
 000 using kernel interface: netkey
-000 interface lo/lo 127.0.0.1
-000 interface eth0/eth0 192.0.2.254
-000 interface eth1/eth1 192.1.2.23
-000 interface eth2/eth2 192.9.2.23
+000 interface lo/lo 127.0.0.1@4500
+000 interface lo/lo 127.0.0.1@500
+000 interface eth0/eth0 192.0.2.254@4500
+000 interface eth0/eth0 192.0.2.254@500
+000 interface eth1/eth1 192.1.2.23@4500
+000 interface eth1/eth1 192.1.2.23@500
+000 interface eth2/eth2 192.9.2.23@4500
+000 interface eth2/eth2 192.9.2.23@500
+000  
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
@@ -29,6 +33,7 @@ east #
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
+000 virtual-private (%priv):
 000  
 000 ESP algorithms supported:
 000  
@@ -98,7 +103,7 @@ east #
 000 "westnet-eastnet-ccm":    policy_label:unset; 
 000 "westnet-eastnet-ccm":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ccm":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ccm":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "westnet-eastnet-ccm":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ccm":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-ccm":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ccm":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -141,6 +146,22 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
