@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --46
 east #
  ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
@@ -7,28 +7,43 @@ east #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
-[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=7 name=cbc(blowfish) keyminbits=96 keymaxbits=448, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
-east #
- ipsec setup start
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-6in6
+ ipsec auto --add v6-transport
 east #
  ipsec auto --status
 000 using kernel interface: klips
-000 interface ipsec0/eth1 2001:db8:1:2::23
-000 interface ipsec0/eth1 192.1.2.23
-000 %myid = (none)
+000 interface ipsec0/eth1 2001:db8:1:2::23@500
+000 interface ipsec0/eth1 192.1.2.23@4500
+000 interface ipsec0/eth1 192.1.2.23@500
+000  
+000  
+000 fips mode=disabled;
+000 SElinux=XXXXX
+000  
+000 config setup options:
+000  
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
+000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
+000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
+000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
+000 secctx-attr-value=XXXX
+000 myid = (none)
 000 debug none
 000  
-000 virtual_private (%priv):
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
+000 virtual-private (%priv):
+000  
+000 ESP algorithms supported:
 000  
 000 algorithm ESP encrypt: id=3, name=ESP_3DES, ivlen=64, keysizemin=192, keysizemax=192
 000 algorithm ESP encrypt: id=6, name=ESP_CAST, ivlen=64, keysizemin=128, keysizemax=128
-000 algorithm ESP encrypt: id=7, name=ESP_BLOWFISH, ivlen=64, keysizemin=96, keysizemax=448
 000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
@@ -36,8 +51,13 @@ east #
 000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
 000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
 000  
+000 IKE algorithms supported:
+000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -56,25 +76,32 @@ east #
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
-000 "westnet-eastnet-6in6": 2001:db8:0:2::/64===2001:db8:1:2::23<2001:db8:1:2::23>[@east]...2001:db8:1:2::45<2001:db8:1:2::45>[@west]===2001:db8:0:1::/64; unrouted; eroute owner: #0
-000 "westnet-eastnet-6in6":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-6in6":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "westnet-eastnet-6in6":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
-000 "westnet-eastnet-6in6":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "westnet-eastnet-6in6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
-000 "westnet-eastnet-6in6":   prio: 64,64; interface: eth1; metric: 0, mtu: unset;
-000 "westnet-eastnet-6in6":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 Connection list:
+000  
+000 "v6-transport": 2001:db8:1:2::23<2001:db8:1:2::23>[@east]...2001:db8:1:2::45<2001:db8:1:2::45>[@west]; unrouted; eroute owner: #0
+000 "v6-transport":     oriented; my_ip=unset; their_ip=unset;
+000 "v6-transport":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "v6-transport":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "v6-transport":   labeled_ipsec:no, loopback:no; 
+000 "v6-transport":    policy_label:unset; 
+000 "v6-transport":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "v6-transport":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "v6-transport":   policy: RSASIG+ENCRYPT+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "v6-transport":   conn_prio: 128,128; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "v6-transport":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
+000 State list:
+000  
+000 Shunt list:
 000  
 east #
  echo "initdone"
 initdone
 east #
  ipsec look
-v6-v6-through-v6-klips-klips]# east NOW
-2001:db8:0:2::/64  -> 2001:db8:0:1::/64  => tun0x1001@2001:db8:1:2::45 esp0xafaae4b1@2001:db8:1:2::45  (4)   PAUL: sanitizer missed this line
+east NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
@@ -87,14 +114,11 @@ default via 192.1.2.254 dev eth1
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
 unreachable ::/96 dev lo  metric 1024  error -101
 unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
-2001:db8:0:1::254 via 2001:db8:0:1::254 dev ipsec0  metric 0 
-    cache 
-2001:db8:0:1::/64 dev ipsec0  metric 1024 
 2001:db8:0:2::/64 dev eth0  proto kernel  metric 256 
 2001:db8::/48 via 2001:db8:1:2::45 dev eth1  metric 1024 
 2001:db8:1:2::23 dev ipsec0  proto kernel  metric 256 
-2001:db8:1:2::45 via 2001:db8:1:2::45 dev eth1  metric 0 
-    cache  hoplimit 255
+2001:db8:1:2::45 dev eth1  metric 0 
+    cache 
 2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
 2001:db8:9:2::/64 dev eth2  proto kernel  metric 256 
 unreachable 2002:a00::/24 dev lo  metric 1024  error -101
@@ -108,7 +132,6 @@ fe80::1000:ff:fe64:6423 dev ipsec0  proto kernel  metric 256
 fe80::/64 dev eth0  proto kernel  metric 256 
 fe80::/64 dev eth1  proto kernel  metric 256 
 fe80::/64 dev eth2  proto kernel  metric 256 
-fe80::/64 dev ipsec0  proto kernel  metric 256 
 default via 2001:db8:1:2::254 dev eth1  metric 1 
 default via 2001:db8:1:2::254 dev eth1  metric 1024 
 NSS_CERTIFICATES

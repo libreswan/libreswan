@@ -213,10 +213,8 @@ struct state {
 	so_serial_t st_clonedfrom;              /* serial number of parent */
 	int st_usage;
 
-#ifdef XAUTH_HAVE_PAM
 	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
 	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
-#endif
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_rekeytov2;                      /* true if this IKEv1 is about
