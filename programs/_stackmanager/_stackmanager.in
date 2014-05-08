@@ -438,7 +438,7 @@ case ${action} in
 	if [ -f ${ipsecpfkey} ]; then
 		ipsec eroute --clear
 		# this clears all IP addresses on ipsecX interfaces by unloading the module
-		stopklips()
+		stopklips
 	elif [ -f ${kamepfkey} ]; then
 		ip xfrm state flush
 		ip xfrm policy flush
