@@ -297,7 +297,7 @@ oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth)
 }
 
 /*
- * Get inside IP address, INTERNAL_IP4_ADDRESS and DNS if any for a connection
+ * Get an inside IP address, INTERNAL_IP4_ADDRESS and DNS if any for a connection
  *
  * @param con A currently active connection struct
  * @param ia internal_addr struct
@@ -319,11 +319,9 @@ static bool get_internal_addresses(struct state *st, struct internal_addr *ia,
 		}
 		*got_lease = TRUE;
 
-	} else if (!isanyaddr(&c->spd.that.client.addr)) {
-		ia->ipaddr = c->spd.that.client.addr;
 	} else {
-		/* lets see if this ever happens. */
-		passert(0);
+		passert(!isanyaddr(&c->spd.that.client.addr));
+		ia->ipaddr = c->spd.that.client.addr;
 	}
 
 	if (!isanyaddr(&c->modecfg_dns1))
