@@ -25,9 +25,6 @@
  *  NAT-Traversal defines for nat_traversal type from nat_traversal.h
  */
 
-#define NAT_TRAVERSAL_METHOD  (0xffffffff - LELEM(NAT_TRAVERSAL_NAT_BHND_ME) - \
-			       LELEM(NAT_TRAVERSAL_NAT_BHND_PEER))
-
 /**
  * NAT-Traversal methods which need NAT-D
  */

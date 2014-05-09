@@ -1927,7 +1927,6 @@ enum_names rr_class_names = {
 
 static const char *const ppk_name[] = {
 	"PPK_PSK",
-	"PPK_DSS",
 	"PPK_RSA",
 	"PPK_XAUTH",
 	NULL

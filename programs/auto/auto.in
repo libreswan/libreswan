@@ -1,6 +1,7 @@
 #! /bin/sh
 # user interface to automatic keying and Pluto in general
 # Copyright (C) 1998, 1999, 2000  Henry Spencer.
+# Copyright (C) 2014 Paul Wouters
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -28,14 +29,13 @@ usage="Usage:
 
 	other options: [--config ipsecconfigfile] [--verbose] [--show]"
 
-showonly=
 config=
 shopts=
 async=
-logfilter='$1 != "002"'
 op=
 argc=
 utc=
+verbose=
 
 for dummy
 do
@@ -43,11 +43,11 @@ do
 	--help)		echo "$usage" ; exit 0	;;
 	--version)	echo "$me $IPSEC_VERSION" ; exit 0	;;
 	--show)		shopts=-x		;;
-	--showonly)	showonly=yes		;;
+	--showonly)	showonly='echo '	;;
 	--utc)		utc="$1"		;;
 	--config)	config="--config $2" ; shift	;;
 	--asynchronous)	async="--asynchronous"	;;
-	--verbose)	logfilter='1'		;;
+	--verbose)	verbose=' --verbose '	;;
 	--up|--down|--add|--delete|--replace|--route|--unroute)
 			if test " $op" != " "
 			then
@@ -107,49 +107,30 @@ case "$op$#:$1:$2" in
 *)		echo "$usage" >&2 ; exit 2	;;
 esac
 
-# before we go any further, duplicate stdin/stdout to fds 3/4
-exec 3<&0
-exec 4>&1
-
-runit() {
-	if test "$showonly"
-	then
-		cat
-	else
-		(
-		    echo '('
-		    echo 'exec <&3'     # regain stdin
-		    cat
-		    echo ');'
-		) | sh $shopts |
-			awk "/^= / { exit \$2 } $logfilter { print }"
-	fi
-}
-
 case "$op" in
---ready)          echo "ipsec whack --listen"                | runit ; exit ;;
---rereadsecrets)   echo "ipsec whack --rereadsecrets"        | runit ; exit ;;
---rereadgroups)           echo "ipsec whack --listen"                | runit ; exit ;;
---rereadcacerts)   echo "ipsec whack --rereadcacerts"         | runit ; exit ;;
---rereadaacerts)   echo "ipsec whack --rereadaacerts"         | runit ; exit ;;
---rereadacerts)    echo "ipsec whack --rereadacerts"          | runit ; exit ;;
---rereadcrls)     echo "ipsec whack --rereadcrls"            | runit ; exit ;;
---rereadall)      echo "ipsec whack --rereadall"             | runit ; exit ;;
---listpubkeys)    echo "ipsec whack $utc --listpubkeys"      | runit ; exit ;;
---checkpubkeys)   echo "ipsec whack $utc --checkpubkeys"     | runit ; exit ;;
---listcerts)      echo "ipsec whack $utc --listcerts"        | runit ; exit ;;
---listcacerts)    echo "ipsec whack $utc --listcacerts"      | runit ; exit ;;
---listaacerts)    echo "ipsec whack $utc --listaacerts"      | runit ; exit ;;
---listacerts)     echo "ipsec whack $utc --listacerts"       | runit ; exit ;;
---listgroups)     echo "ipsec whack $utc --listgroups"       | runit ; exit ;; 
---listcrls)       echo "ipsec whack $utc --listcrls"         | runit ; exit ;; 
---listall)        echo "ipsec whack $utc --listall"          | runit ; exit ;;
---up)  echo "ipsec whack $async --name $names --initiate"    | runit ; exit ;;
---down)        echo "ipsec whack --name $names --terminate"          | runit ; exit ;;
---delete)         echo "ipsec whack --name $names --delete"  | runit ; exit ;; 
---route)          echo "ipsec whack --name $names --route"   | runit ; exit ;;
---unroute)        echo "ipsec whack --name $names --unroute" | runit ; exit ;; 
---status)         echo "ipsec whack --status"                | runit ; exit ;; 
+--ready)          $showonly ipsec whack --listen ; exit ;;
+--rereadsecrets)  $showonly ipsec whack --rereadsecrets ; exit ;;
+--rereadgroups)   $showonly ipsec whack --listen ; exit ;;
+--rereadcacerts)  $showonly ipsec whack --rereadcacerts ; exit ;;
+--rereadaacerts)  $showonly ipsec whack --rereadaacerts ; exit ;;
+--rereadacerts)   $showonly ipsec whack --rereadacerts ; exit ;;
+--rereadcrls)     $showonly ipsec whack --rereadcrls ; exit ;;
+--rereadall)      $showonly ipsec whack --rereadall ; exit ;;
+--listpubkeys)    $showonly ipsec whack $utc --listpubkeys ; exit ;;
+--checkpubkeys)   $showonly ipsec whack $utc --checkpubkeys ; exit ;;
+--listcerts)      $showonly ipsec whack $utc --listcerts ; exit ;;
+--listcacerts)    $showonly ipsec whack $utc --listcacerts ; exit ;;
+--listaacerts)    $showonly ipsec whack $utc --listaacerts ; exit ;;
+--listacerts)     $showonly ipsec whack $utc --listacerts ; exit ;;
+--listgroups)     $showonly ipsec whack $utc --listgroups ; exit ;;
+--listcrls)       $showonly ipsec whack $utc --listcrls ; exit ;;
+--listall)        $showonly ipsec whack $utc --listall ; exit ;;
+--up)             $showonly ipsec whack $async --name $names --initiate ; exit ;;
+--down)           $showonly ipsec whack --name $names --terminate ; exit ;;
+--delete)         $showonly ipsec whack --name $names --delete ; exit ;;
+--route)          $showonly ipsec whack --name $names --route ; exit ;;
+--unroute)        $showonly ipsec whack --name $names --unroute ; exit ;;
+--status)         $showonly ipsec whack --status ; exit ;;
 esac
 
 	getphysdev=
@@ -250,7 +231,4 @@ esac
 	defaultroutephys=$phys
 	defaultroutenexthop=$next
 
-echo "ipsec addconn $config $options $names"             | runit
-exit 
- 
-
+$showonly ipsec addconn $verbose $config $options $names

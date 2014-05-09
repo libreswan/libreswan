@@ -136,8 +136,6 @@ extern void show_status(void);
 extern void daily_log_reset(void);
 extern void daily_log_event(void);
 
-extern void log_mark_time(void);
-
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
 

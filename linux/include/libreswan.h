@@ -31,6 +31,12 @@ typedef int bool;
 
 #define UNDEFINED_TIME  ((time_t)0)
 
+enum {
+	secs_per_minute = 60 /* seconds */,
+	secs_per_hour = 60 * secs_per_minute,
+	secs_per_day = 24 * secs_per_hour
+};
+
 #include <stddef.h>
 
 /*
