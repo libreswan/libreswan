@@ -437,7 +437,7 @@ u_int32_t min, max, reqid, seq;
 	      sizeof(struct sadb_address) +
 	      PFKEY_ALIGN8(dst->sa_len);
 
-	if (min > 255 && max < ~0) {
+	if (min > (u_int32_t)255 && max < ~(u_int32_t)0) {
 		need_spirange++;
 		len += sizeof(struct sadb_spirange);
 	}
