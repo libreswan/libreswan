@@ -605,7 +605,7 @@ bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, realtime_t *until 
 		ugh = check_validity(cert, until /* IN/OUT */);
 
 		if (ugh != NULL) {
-			libreswan_log("checking validity of \"%s\": %s", sbuf,
+			loglog(RC_LOG_SERIOUS,"checking validity of \"%s\": %s", sbuf,
 				      ugh);
 			return FALSE;
 		}

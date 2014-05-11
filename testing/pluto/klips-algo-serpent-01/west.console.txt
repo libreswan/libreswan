@@ -180,12 +180,12 @@ done
 west #
  ipsec look
 west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0xbe4a6295@192.1.2.23  (4)
+192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0xESPESP@192.1.2.23  (4)
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0xbe4a6295@192.1.2.23 ESP_SERPENT_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xb75321eae816a388f394e6f227a6eff5 ooowin=64 seq=4 alen=160 aklen=160 eklen=256 jiffies=4294728741 life(c,s,h)=bytes(608,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
-esp0xec3d81be@192.1.2.45 ESP_SERPENT_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0x2a22f1ad5b145ef8b6608d8b5ed71dcd ooowin=64 seq=4 bit=0xf alen=160 aklen=160 eklen=256 jiffies=4294728741 life(c,s,h)=bytes(336,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=4 refhim=1
-tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294728741 life(c,s,h)=bytes(416,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294728741 life(c,s,h)=bytes(336,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=3 refhim=1
+esp0xESPESP@192.1.2.23 ESP_SERPENT_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits 0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 seq=4 alen=160 aklen=160 eklen=256 jiffies=0123456789 life(c,s,h)=bytes(608,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
+esp0xESPESP@192.1.2.45 ESP_SERPENT_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits 0xIVISFORRANDOM000IVISFORRANDOM00 ooowin=64 seq=4 bit=0xf alen=160 aklen=160 eklen=256 jiffies=0123456789 life(c,s,h)=bytes(336,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=4 refhim=1
+tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789 life(c,s,h)=bytes(416,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
+tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789 life(c,s,h)=bytes(336,0,0) idle=2 natencap=none natsport=0 natdport=0 refcount=3 ref=3 refhim=1
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
