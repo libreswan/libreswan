@@ -622,7 +622,7 @@ static const char *const ike_idtype_name[] = {
         /* ID_FROMCERT = (-3), taken from certificate - private to Pluto */
         /* ID_IMPOSSIBLE = (-2), private to Pluto */
         /* ID_MYID = (-1), private to Pluto */
-        "ID_NONE" /* = 0, private to Pluto */
+        "ID_NONE", /* = 0, private to Pluto */
 	"ID_IPV4_ADDR", /* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
