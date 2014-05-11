@@ -892,7 +892,7 @@ struct state *duplicate_state(struct state *st)
 
 	/* record use of the Phase 1 / Parent state */
 	st->st_outbound_count++;
-	st->st_outbound_time = now();
+	st->st_outbound_time = mononow();
 
 	nst = new_state();
 
@@ -1365,19 +1365,15 @@ void fmt_state(struct state *st, const monotime_t n,
 			 "; eroute owner" : "";
 	const char *idlestr;
 
-#if defined(linux) && defined(NETKEY_SUPPORT)
-	monotime_t ago;
-#endif
-
 	fmt_conn_instance(c, inst);
 
-	if (st->st_event) {
+	if (st->st_event != NULL) {
 		/* tricky: in case time_t/monotime_t is an unsigned type */
-		delta = st->st_event->ev_time >= n ?
-			(long)(st->st_event->ev_time - n) :
-			-(long)(n - st->st_event->ev_time);
+		delta = monobefore(n, st->st_event->ev_time) ?
+			(long)(st->st_event->ev_time.mono_secs - n.mono_secs) :
+			-(long)(n.mono_secs - st->st_event->ev_time.mono_secs);
 	} else {
-		delta = -1;
+		delta = -1;	/* ??? sort of odd signifier */
 	}
 
 	dpdbuf[0] = '\0';	/* default to empty string */
@@ -1387,11 +1383,11 @@ void fmt_state(struct state *st, const monotime_t n,
 	} else {
 		if (st->hidden_variables.st_peer_supports_dpd) {
 
-			/* ???why is printing -1 better than 0? */
+			/* ??? why is printing -1 better than 0? */
 			snprintf(dpdbuf, sizeof(dpdbuf),
 				 "; lastdpd=%lds(seq in:%u out:%u)",
-				 st->st_last_dpd != 0 ?
-					now() - st->st_last_dpd : (long)-1,
+				 st->st_last_dpd.mono_secs != UNDEFINED_TIME ?
+					(long)deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (long)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
 		} else if (dpd_active_locally(st) && st->st_ikev2) {
@@ -1402,8 +1398,8 @@ void fmt_state(struct state *st, const monotime_t n,
 				if (pst != NULL) {
 					snprintf(dpdbuf, sizeof(dpdbuf),
 						"; lastlive=%lds",
-						pst->st_last_liveness != 0 ?
-						now() - pst->st_last_liveness :
+						pst->st_last_liveness.mono_secs != UNDEFINED_TIME ?
+						deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
 						0);
 				}
 			}
@@ -1458,9 +1454,9 @@ void fmt_state(struct state *st, const monotime_t n,
 		if (c->spd.eroute_owner == st->st_serialno &&
 		    st->st_outbound_count != 0) {
 			snprintf(lastused, sizeof(lastused),
-				 " used %lus ago;",
-				 (unsigned long) (now() -
-						  st->st_outbound_time));
+				 " used %lds ago;",
+				 (long) deltasecs(monotimediff(mononow(),
+						  st->st_outbound_time)));
 		}
 
 		mbcp = traffic_buf +
@@ -1473,8 +1469,7 @@ void fmt_state(struct state *st, const monotime_t n,
 				 SA_AH);
 /* needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
-
-			if (get_sa_info(st, FALSE, &ago)) {
+			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_ah.peer_bytes,
 						       mbcp,
 						       traffic_buf +
@@ -1485,7 +1480,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
 				 SA_AH);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, TRUE, &ago)) {
+			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_ah.our_bytes,
 						       mbcp,
 						       traffic_buf +
@@ -1506,8 +1501,7 @@ void fmt_state(struct state *st, const monotime_t n,
 				 SA_ESP);
 /* ??? needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
-
-			if (get_sa_info(st, FALSE, &ago)) {
+			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_esp.peer_bytes,
 						       mbcp,
 						       traffic_buf +
@@ -1518,7 +1512,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 SA_ESP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, TRUE, &ago)) {
+			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_esp.our_bytes,
 						       mbcp,
 						       traffic_buf +
@@ -1538,8 +1532,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			add_said(&c->spd.that.host_addr,
 				 st->st_ipcomp.attrs.spi, SA_COMP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-
-			if (get_sa_info(st, FALSE, &ago)) {
+			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.peer_bytes,
 						mbcp,
@@ -1551,7 +1544,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
 				 SA_COMP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, TRUE, &ago)) {
+			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.our_bytes,
 						mbcp,
@@ -1639,7 +1632,7 @@ void show_states_status(void)
 	}
 
 	if (count != 0) {
-		monotime_t n = now();
+		monotime_t n = mononow();
 #if 1
 		/* C99's VLA feature is just what we need */
 		struct state *array[count];
@@ -1798,5 +1791,6 @@ void set_state_ike_endpoints(struct state *st,
 /* seems to be a good spot for now */
 bool dpd_active_locally(const struct state *st)
 {
-	return st->st_connection->dpd_delay && st->st_connection->dpd_timeout;
+	return deltasecs(st->st_connection->dpd_delay) != 0 &&
+		deltasecs(st->st_connection->dpd_timeout) != 0;
 }

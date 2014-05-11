@@ -32,14 +32,14 @@ static const char* months[] = {
 /*
  *  Display a date either in local or UTC time
  */
-char *timetoa(const time_t *timep, bool utc, char *b, size_t blen)
+char *realtimetoa(const realtime_t rtm, bool utc, char *b, size_t blen)
 {
-	if (*timep == UNDEFINED_TIME) {
+	if (isundefinedrealtime(rtm)) {
 		snprintf(b, blen, "--- -- --:--:--%s----",
 			(utc) ? " UTC " : " ");
 	} else {
 		struct tm tmbuf;
-		struct tm *tm = (utc ? gmtime_r : localtime_r)(timep, &tmbuf);
+		struct tm *tm = (utc ? gmtime_r : localtime_r)(&rtm.real_secs, &tmbuf);
 
 		snprintf(b, blen, "%s %02d %02d:%02d:%02d%s%04d",
 			months[tm->tm_mon], tm->tm_mday, tm->tm_hour,

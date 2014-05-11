@@ -17,7 +17,6 @@
 
 #ifndef _TIMER_H
 #define _TIMER_H
-#include "lswtime.h"
 
 struct state;   /* forward declaration */
 
@@ -29,7 +28,7 @@ struct event {
 };
 
 
-extern void event_schedule(enum event_type type, monotime_t tm, struct state *st);
+extern void event_schedule(enum event_type type, time_t delay, struct state *st);
 extern void handle_timer_event(void);
 extern long next_event(void);
 extern void delete_event(struct state *st);

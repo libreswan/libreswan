@@ -2442,7 +2442,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	pb_stream r_hdr_pbs;
 	u_char *r_hashval, *r_hash_start;
 	static monotime_t last_malformed;
-	monotime_t n = now();
+	monotime_t n = mononow();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
 
 	r_hashval = NULL;
@@ -2453,7 +2453,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	switch (type) {
 	case PAYLOAD_MALFORMED:
 		/* only send one per second. */
-		if (n == last_malformed)
+		if (monobefore(last_malformed, n))
 			return;
 
 		last_malformed = n;
@@ -3003,10 +3003,11 @@ void accept_delete(struct state *st, struct msg_digest *md,
 					 */
 #define DELETE_SA_DELAY EVENT_RETRANSMIT_DELAY_0
 					if (dst->st_event != NULL &&
-						dst->st_event->ev_type ==
+					    dst->st_event->ev_type ==
 						  EVENT_SA_REPLACE &&
-						dst->st_event->ev_time <=
-						  DELETE_SA_DELAY + now()) {
+					    !monobefore(monotimesum(mononow(),
+					          deltatime(DELETE_SA_DELAY)),
+						dst->st_event->ev_time)) {
 						/*
 						 * Patch from Angus Lees to
 						 * ignore retransmited
@@ -3016,12 +3017,12 @@ void accept_delete(struct state *st, struct msg_digest *md,
 							"received Delete SA "
 							"payload: already "
 							"replacing IPSEC "
-							"State #%lu in %d "
+							"State #%lu in %ld "
 							"seconds",
 							dst->st_serialno,
-							(int)(dst->st_event->
-								ev_time -
-								now()));
+							(long)deltasecs(monotimediff(dst->st_event->
+								ev_time,
+								mononow())));
 					} else {
 						loglog(RC_LOG_SERIOUS,
 							"received Delete SA "
@@ -3030,8 +3031,8 @@ void accept_delete(struct state *st, struct msg_digest *md,
 							"in %d seconds",
 							dst->st_serialno,
 							DELETE_SA_DELAY);
-						dst->st_margin =
-							DELETE_SA_DELAY;
+						dst->st_margin = deltatime(
+							DELETE_SA_DELAY);
 						delete_event(dst);
 						event_schedule(
 							EVENT_SA_REPLACE,

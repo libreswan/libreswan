@@ -115,7 +115,7 @@ struct kernel_sa {
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
 #endif
 
-	unsigned long sa_lifetime; /* number of seconds until SA expires */
+	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 	unsigned long sa_priority;
 };
 
@@ -163,7 +163,7 @@ struct kernel_ops {
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
 			   const struct pfkey_proto_info *proto_info,
-			   monotime_t use_lifetime,
+			   deltatime_t use_lifetime,
 			   unsigned long sa_priority,
 			   enum pluto_sadb_operations op,
 			   const char *text_said
@@ -178,7 +178,7 @@ struct kernel_ops {
 			     const char *opname);
 	bool (*sag_eroute)(struct state *st, struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
-	bool (*eroute_idle)(struct state *st, monotime_t idle_max);
+	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);
 	void (*remove_orphaned_holds)(int transportproto,
 				      const ip_subnet *ours,
 				      const ip_subnet *his);
@@ -363,8 +363,8 @@ extern bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
 			     struct state *st);
 
-extern bool was_eroute_idle(struct state *st, monotime_t idle_max);
-extern bool get_sa_info(struct state *st, bool inbound, monotime_t *ago /* OUTPUT */);
+extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
+extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 
 extern bool update_ipsec_sa(struct state *st);
 

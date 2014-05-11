@@ -106,7 +106,7 @@ void add_pending(int whack_sock,
 	p->policy = policy;
 	p->try = try;
 	p->replacing = replacing;
-	p->pend_time = now();
+	p->pend_time = mononow();
 #ifdef HAVE_LABELED_IPSEC
 	p->uctx = NULL;
 	if (uctx != NULL) {
@@ -211,7 +211,7 @@ void unpend(struct state *st)
 				    enum_name(&pluto_cryptoimportance_names,
 					      st->st_import)));
 
-			p->pend_time = now();
+			p->pend_time = mononow();
 			if (!st->st_ikev2) {
 				(void) quick_outI1(p->whack_sock, st, p->connection,
 						   p->policy,
@@ -264,15 +264,18 @@ bool pending_check_timeout(struct connection *c)
 	struct pending **pp, *p;
 
 	for (pp = host_pair_first_pending(c); (p = *pp) != NULL; ) {
-		DBG(DBG_DPD,
-		    DBG_log("checking connection \"%s\" for stuck phase 2s (%lu+ 3*%lu) <= %lu",
-			    c->name,
-			    (unsigned long)p->pend_time,
-			    (unsigned long)c->dpd_timeout,
-			    (unsigned long)now()));
+		DBG(DBG_DPD, {
+			deltatime_t waited = monotimediff(mononow(), p->pend_time);
+			DBG_log("checking connection \"%s\" for stuck phase 2s (waited %lds, patience 3*%lds)",
+				c->name,
+				(long) deltasecs(waited),
+				(long) deltasecs(c->dpd_timeout));
+			});
 
-		if (c->dpd_timeout > 0) {
-			if ((p->pend_time + c->dpd_timeout * 3) <= now()) {
+		if (deltasecs(c->dpd_timeout) > 0) {
+			if (!monobefore(mononow(),
+				monotimesum(p->pend_time,
+					deltatimescale(3, 1, c->dpd_timeout)))) {
 				DBG(DBG_DPD,
 				    DBG_log("connection \"%s\" stuck, restarting",
 					    c->name));

@@ -403,7 +403,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	mpz_t e;
 	size_t bs;
 	char n_str[3 + MAXBITS / 4 + 1];
-	time_t now = time((time_t *)NULL);
+	realtime_t now = realnow();
 
 	mpz_init(n);
 	mpz_init(e);
@@ -503,8 +503,8 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
-	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(
-			&now));
+	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
+		ctime(&now.real_secs));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 	bundp = bundle(E, n, &bs);

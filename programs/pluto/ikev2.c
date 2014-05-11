@@ -1000,7 +1000,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 	/* Schedule for whatever timeout is specified */
 	{
-		monotime_t delay;
+		time_t delay;	/* unwrapped deltatime_t */
 		enum event_type kind = svm->timeout_event;
 		struct connection *c = st->st_connection;
 
@@ -1015,10 +1015,10 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 				 * rekeying.  The negative consequences seem
 				 * minor.
 				 */
-				delay = c->sa_ike_life_seconds;
+				delay = deltasecs(c->sa_ike_life_seconds);
 			} else {
 				/* Delay is what the user said, no negotiation. */
-				delay = c->sa_ipsec_life_seconds;
+				delay = deltasecs(c->sa_ipsec_life_seconds);
 			}
 
 			/* By default, we plan to rekey.
@@ -1044,7 +1044,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			 * time stand (implemented by earlier logic).
 			 */
 			if (kind != EVENT_SA_EXPIRE) {
-				unsigned long marg = c->sa_rekey_margin;
+				/* unwrapped deltatime_t */
+				time_t marg = deltasecs(c->sa_rekey_margin);
 
 				if (svm->flags & SMF2_INITIATOR) {
 					marg += marg *
@@ -1054,9 +1055,9 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 					marg /= 2;
 				}
 
-				if ((unsigned long)delay > marg) {
+				if (delay > marg) {
 					delay -= marg;
-					st->st_margin = marg;
+					st->st_margin = deltatime(marg);
 				} else {
 					kind = EVENT_SA_EXPIRE;
 				}
@@ -1082,7 +1083,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			DBG(DBG_DPD,
 			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
 			event_schedule(EVENT_v2_LIVENESS,
-				       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
+				       deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
+					deltasecs(c->dpd_delay) : MIN_LIVENESS,
 				       st);
 		}
 

@@ -72,7 +72,7 @@ static bool win2k_raw_eroute(const ip_address *this_host UNUSED,
 			     unsigned int transport_proto UNUSED,
 			     unsigned int esatype UNUSED,
 			     const struct pfkey_proto_info *proto_info UNUSED,
-			     monotime_t use_lifetime UNUSED,
+			     deltatime_t use_lifetime UNUSED,
 			     unsigned long sa_priority UNUSED,
 			     unsigned int op UNUSED,
 			     const char *text_said UNUSED

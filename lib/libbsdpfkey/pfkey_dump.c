@@ -104,8 +104,8 @@
 static char *str_ipaddr(struct sockaddr *);
 static char *str_prefport(u_int, u_int, u_int, u_int);
 static void str_upperspec(u_int, u_int, u_int);
-static char *str_mono_time(time_t);
-static char *str_time(time_t);
+static char *str_mono_time(monotime_t);
+static char *str_time(deltime_t);
 static void str_lifetime_byte(struct sadb_lifetime *, char *);
 
 struct val2str {
@@ -311,7 +311,7 @@ struct sadb_msg *m;
 
 	/* lifetime */
 	if (m_lftc != NULL) {
-		time_t nw = time(NULL);
+		realtime_t nw = realnow();
 
 		printf("\tcreated: %s",
 		       str_time(m_lftc->sadb_lifetime_addtime));
@@ -574,15 +574,15 @@ u_int ulp, p1, p2;
  * set "Mon Day Time Year" to buffer
  * Not re-entrant because it returns a pointer to a static buffer.
  */
-static char *str_time(time_t t)
+static char *str_real_time(realtime_t t)
 {
-	/* ??? What's 20?  What's 128? */
+	/* ??? What's 20?  What's 128?  Whats 4? */
 	static char buf[128];
 
 	if (t == 0) {
 		memset(buf, ' ', 20);
 	} else {
-		char *t0 = ctime(&t);
+		char *t0 = ctime(&t.real_secs);
 
 		memcpy(buf, t0 + 4, 20);
 	}
@@ -592,23 +592,10 @@ static char *str_time(time_t t)
 	return buf;
 }
 
-/* print a monotonic clock time */
-static char *str_mono_time(time_t t)
+/* print a monotonic clock time converted to real timebase */
+static char *str_mono_time(monotime_t t)
 {
-	static time_t now_real;
-	static time_t now_mono;
-
-	if (now_real == 0) {
-		int r = clock_gettime(
-#   if CLOCK_BOOTTIME
-			CLOCK_BOOTTIME	/* best */
-#   else
-			CLOCK_MONOTONIC	/* second best */
-#   endif
-			, &now_mono);
-		time(&now_real);
-	}
-	return str_time(t + (now_real - now_mono));
+	return str_real_time(realtimesum(realnow(), diffmonotime(t, mononow())));
 }
 
 static void str_lifetime_byte(struct sadb_lifetime *x, char *str)

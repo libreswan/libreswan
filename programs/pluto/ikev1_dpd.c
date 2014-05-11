@@ -36,7 +36,6 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "lswtime.h"
 #include "defs.h"
 #include "state.h"
 #include "id.h"
@@ -159,16 +158,14 @@ stf_status dpd_init(struct state *st)
 
 	/* if it was enabled, and we haven't turned it on already */
 	if (p1st->hidden_variables.st_peer_supports_dpd) {
-		monotime_t n = now();
-
 		libreswan_log("Dead Peer Detection (RFC 3706): enabled");
 
 		if (st->st_dpd_event == NULL ||
-		    (st->st_connection->dpd_delay + n) <
-		    st->st_dpd_event->ev_time) {
+		    monobefore(monotimesum(mononow(), st->st_connection->dpd_delay),
+			st->st_dpd_event->ev_time)) {
 			if (st->st_dpd_event != NULL)
 				delete_dpd_event(st);
-			event_schedule(EVENT_DPD, st->st_connection->dpd_delay,
+			event_schedule(EVENT_DPD, deltasecs(st->st_connection->dpd_delay),
 				       st);
 		}
 	} else {
@@ -189,16 +186,16 @@ stf_status dpd_init(struct state *st)
  * Only schedule a new timeout if there isn't one currently,
  * or if it would be sooner than the current timeout.
  */
-static void dpd_sched_timeout(struct state *p1st, monotime_t tm, monotime_t timeout)
+static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t timeout)
 {
-	passert(timeout > 0);
+	passert(deltasecs(timeout) > 0);
 	if (p1st->st_dpd_event == NULL ||
-	    p1st->st_dpd_event->ev_time > tm + timeout) {
-		DBG(DBG_DPD, DBG_log("DPD: scheduling timeout to %lu",
-				     (unsigned long)timeout));
+	    monobefore(monotimesum(nw, timeout), p1st->st_dpd_event->ev_time)) {
+		DBG(DBG_DPD, DBG_log("DPD: scheduling timeout to %ld",
+				     (long)deltasecs(timeout)));
 		if (p1st->st_dpd_event != NULL)
 			delete_dpd_event(p1st);
-		event_schedule(EVENT_DPD_TIMEOUT, timeout, p1st);
+		event_schedule(EVENT_DPD_TIMEOUT, deltasecs(timeout), p1st);
 	}
 }
 
@@ -209,11 +206,11 @@ static void dpd_sched_timeout(struct state *p1st, monotime_t tm, monotime_t time
  * @return void
  */
 static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
-		     monotime_t delay, monotime_t timeout)
+		     deltatime_t delay, deltatime_t timeout)
 {
 	monotime_t nw;
 	monotime_t last;
-	monotime_t nextdelay;
+	deltatime_t nextdelay;
 	u_int32_t seqno;
 
 	DBG(DBG_DPD,
@@ -236,7 +233,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	}
 
 	/* find out when now is */
-	nw = now();
+	nw = mononow();
 
 	/*
 	 * pick least recent activity value, since with multiple phase 2s,
@@ -250,25 +247,25 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 *
 	 * ??? the code actually picks the most recent.  So much for comments.
 	 */
-	last = p1st->st_last_dpd > st->st_last_dpd ?
+	last = !monobefore(p1st->st_last_dpd, st->st_last_dpd) ?
 		p1st->st_last_dpd : st->st_last_dpd;
 
-	nextdelay = last + delay - nw;
+	nextdelay = monotimediff(monotimesum(last, delay), nw);
 
 	/* has there been enough activity of late? */
-	if (nextdelay > 0) {
+	if (deltasecs(nextdelay) > 0) {
 		/* Yes, just reschedule "phase 2" */
 		DBG(DBG_DPD,
-		    DBG_log("DPD: not yet time for dpd event: %lu < %lu",
-			    (unsigned long)nw,
-			    (unsigned long)(last + delay)));
-		event_schedule(EVENT_DPD, nextdelay, st);
+		    DBG_log("DPD: not yet time for dpd event: %ld < %ld",
+			    (long)nw.mono_secs,
+			    (long)(last.mono_secs + deltasecs(delay))));
+		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
 		return;
 	}
 
 	/* now plan next check time */
 	/* ??? this test is nuts: it will always succeed! */
-	if (nextdelay < 1)
+	if (deltasecs(nextdelay) < 1)
 		nextdelay = delay;
 
 	/*
@@ -296,7 +293,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			delete_dpd_event(p1st);
 		}
 
-		event_schedule(EVENT_DPD, nextdelay, st);
+		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
 		return;
 	}
 
@@ -305,7 +302,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		 * reschedule next event, since we can not do it from the activity
 		 * routine.
 		 */
-		event_schedule(EVENT_DPD, nextdelay, st);
+		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
 	}
 
 	if (p1st->st_dpd_seqno == 0) {
@@ -342,8 +339,8 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 
 static void p1_dpd_outI1(struct state *p1st)
 {
-	monotime_t delay = p1st->st_connection->dpd_delay;
-	monotime_t timeout = p1st->st_connection->dpd_timeout;
+	deltatime_t delay = p1st->st_connection->dpd_delay;
+	deltatime_t timeout = p1st->st_connection->dpd_timeout;
 
 	dpd_outI(p1st, p1st, FALSE, delay, timeout);
 }
@@ -351,8 +348,8 @@ static void p1_dpd_outI1(struct state *p1st)
 static void p2_dpd_outI1(struct state *p2st)
 {
 	struct state *st;
-	monotime_t delay = p2st->st_connection->dpd_delay;
-	monotime_t timeout = p2st->st_connection->dpd_timeout;
+	deltatime_t delay = p2st->st_connection->dpd_delay;
+	deltatime_t timeout = p2st->st_connection->dpd_timeout;
 
 	/* find the related Phase 1 state */
 	st = find_phase1_state(p2st->st_connection,
@@ -390,7 +387,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 			struct isakmp_notification *const n,
 			pb_stream *pbs)
 {
-	monotime_t nw = now();
+	monotime_t nw = mononow();
 	u_int32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
@@ -435,10 +432,11 @@ stf_status dpd_inI_outR(struct state *p1st,
 	}
 
 	DBG(DBG_DPD,
-	    DBG_log("DPD: received R_U_THERE seq:%u time:%lu (state=#%lu name=\"%s\")",
+	    DBG_log("DPD: received R_U_THERE seq:%u monotime:%ld (state=#%lu name=\"%s\")",
 		    seqno,
-		    (unsigned long)nw,
-		    p1st->st_serialno, p1st->st_connection->name));
+		    (long)nw.mono_secs,
+		    p1st->st_serialno,
+		    p1st->st_connection->name));
 
 	p1st->st_dpd_peerseqno = seqno;
 
@@ -474,7 +472,6 @@ stf_status dpd_inR(struct state *p1st,
 		   struct isakmp_notification *const n,
 		   pb_stream *pbs)
 {
-	monotime_t nw = now();
 	u_int32_t seqno;
 
 	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
@@ -483,8 +480,8 @@ stf_status dpd_inR(struct state *p1st,
 		return STF_FAIL;
 	}
 
-	if (n->isan_spisize != COOKIE_SIZE * 2 || pbs_left(pbs) < COOKIE_SIZE *
-	    2) {
+	if (n->isan_spisize != COOKIE_SIZE * 2 ||
+	    pbs_left(pbs) < COOKIE_SIZE * 2) {
 		loglog(RC_LOG_SERIOUS,
 		       "DPD: R_U_THERE_ACK has invalid SPI length (%d)",
 		       n->isan_spisize);
@@ -521,7 +518,7 @@ stf_status dpd_inR(struct state *p1st,
 
 	if (seqno == p1st->st_dpd_expectseqno) {
 		/* update the time stamp */
-		p1st->st_last_dpd = nw;
+		p1st->st_last_dpd = mononow();
 		p1st->st_dpd_expectseqno = 0;
 	} else if (!p1st->st_dpd_expectseqno) {
 		loglog(RC_LOG_SERIOUS,

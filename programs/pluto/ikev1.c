@@ -2381,7 +2381,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
-			monotime_t delay;
+			time_t delay;
 			enum event_type kind = smc->timeout_event;
 			bool agreed_time = FALSE;
 			struct connection *c = st->st_connection;
@@ -2402,42 +2402,30 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					 * rekeying.  The negative consequences seem
 					 * minor.
 					 */
-					delay = c->sa_ike_life_seconds;
+					delay = deltasecs(c->sa_ike_life_seconds);
 					if ((c->policy & POLICY_DONT_REKEY) ||
-					    delay >= st->st_oakley.life_seconds)
+					    delay >= deltasecs(st->st_oakley.life_seconds))
 					{
 						agreed_time = TRUE;
 						delay =
-						    st->st_oakley.life_seconds;
+						    deltasecs(st->st_oakley.life_seconds);
 					}
 				} else {
 					/* Delay is min of up to four things:
 					 * each can limit the lifetime.
 					 */
-					delay = c->sa_ipsec_life_seconds;
-					if (st->st_ah.present &&
-					    delay >=
-					      st->st_ah.attrs.life_seconds) {
-						agreed_time = TRUE;
-						delay =
-						   st->st_ah.attrs.life_seconds;
-					}
-					if (st->st_esp.present &&
-					    delay >=
-					        st->st_esp.attrs.life_seconds)
-					{
-						agreed_time = TRUE;
-						delay =
-						  st->st_esp.attrs.life_seconds;
-					}
-					if (st->st_ipcomp.present &&
-					    delay >=
-					      st->st_ipcomp.attrs.life_seconds)
-					{
-						agreed_time = TRUE;
-						delay =
-						  st->st_ipcomp.attrs.life_seconds;
-					}
+					delay = deltasecs(c->sa_ipsec_life_seconds);
+#define clamp_delay(trans) { \
+		if (st->trans.present && \
+		    delay >= deltasecs(st->trans.attrs.life_seconds)) { \
+			agreed_time = TRUE; \
+			delay = deltasecs(st->trans.attrs.life_seconds); \
+		} \
+	}
+					clamp_delay(st_ah);
+					clamp_delay(st_esp);
+					clamp_delay(st_ipcomp);
+#undef clamp_delay
 				}
 
 				/* By default, we plan to rekey.
@@ -2469,8 +2457,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					       EVENT_SA_EXPIRE;
 				}
 				if (kind != EVENT_SA_EXPIRE) {
-					unsigned long marg =
-						c->sa_rekey_margin;
+					time_t marg = deltasecs(
+						c->sa_rekey_margin);
 
 					if (smc->flags & SMF_INITIATOR) {
 						marg += marg *
@@ -2482,9 +2470,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						marg /= 2;
 					}
 
-					if ((unsigned long)delay > marg) {
+					if (delay > marg) {
 						delay -= marg;
-						st->st_margin = marg;
+						st->st_margin = deltatime(marg);
 					} else {
 						kind = EVENT_SA_EXPIRE;
 					}
@@ -2540,8 +2528,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * SA.
 		 */
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-			if (st->st_connection->dpd_delay > 0 &&
-			    st->st_connection->dpd_timeout > 0) {
+			if (deltasecs(st->st_connection->dpd_delay) > 0 &&
+			    deltasecs(st->st_connection->dpd_timeout) > 0) {
 				/* don't ignore failure */
 				if (dpd_init(st) == STF_FAIL)
 					result = STF_FAIL; /* fall through */

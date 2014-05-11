@@ -48,7 +48,6 @@
 #include "timer.h"
 #include "whack.h"
 #include "ikev1_dpd.h"
-#include "lswtime.h"
 #include "ikev2.h"
 
 #include "nat_traversal.h"
@@ -63,22 +62,23 @@
 static struct event *evlist = (struct event *) NULL;
 
 static unsigned int event_retransmit_delay_0 = EVENT_RETRANSMIT_DELAY_0;
-static unsigned int maximum_retransmissions  = MAXIMUM_RETRANSMISSIONS;
-unsigned int maximum_retransmissions_initial = MAXIMUM_RETRANSMISSIONS_INITIAL;
+static unsigned int maximum_retransmissions  = MAXIMUM_RETRANSMISSIONS;	/* exponent: must be small */
+unsigned int maximum_retransmissions_initial = MAXIMUM_RETRANSMISSIONS_INITIAL;	/* exponent: must be small */
 static unsigned int maximum_retransmissions_quick_r1 =
 	MAXIMUM_RETRANSMISSIONS_QUICK_R1;
 
 /*
  * This routine places an event in the event list.
+ * Delay should really be a monotime_t but this is easier
  */
-void event_schedule(enum event_type type, monotime_t tm, struct state *st)
+void event_schedule(enum event_type type, time_t delay, struct state *st)
 {
 	struct event *ev = alloc_thing(struct event,
 				"struct event in event_schedule()");
 
-	passert(tm >= 0);
+	passert(delay >= 0);
 	ev->ev_type = type;
-	ev->ev_time = tm + now();
+	ev->ev_time = monotimesum(mononow(), deltatime(delay));
 	ev->ev_state = st;
 
 	/*
@@ -108,16 +108,16 @@ void event_schedule(enum event_type type, monotime_t tm, struct state *st)
 			if (st == NULL) {
 				DBG_log("inserting event %s, timeout in %lu seconds",
 					enum_show(&timer_event_names, type),
-					(unsigned long)tm);
+					(unsigned long)delay);
 			} else {
 				DBG_log("inserting event %s, timeout in %lu seconds for #%lu",
 					enum_show(&timer_event_names, type),
-					(unsigned long)tm,
+					(unsigned long)delay,
 					ev->ev_state->st_serialno);
 			}
 		});
 
-	if (evlist == NULL || evlist->ev_time >= ev->ev_time) {
+	if (evlist == NULL || !monobefore(evlist->ev_time, ev->ev_time)) {
 		DBG(DBG_CONTROLMORE, DBG_log("event added at head of queue"));
 		ev->ev_next = evlist;
 		evlist = ev;
@@ -125,7 +125,7 @@ void event_schedule(enum event_type type, monotime_t tm, struct state *st)
 		struct event *evt;
 
 		for (evt = evlist; evt->ev_next != NULL; evt = evt->ev_next)
-			if (evt->ev_next->ev_time >= ev->ev_time)
+			if (!monobefore(evt->ev_next->ev_time, ev->ev_time))
 				break;
 
 		DBG(DBG_CONTROLMORE, {
@@ -165,7 +165,7 @@ void event_schedule(enum event_type type, monotime_t tm, struct state *st)
  */
 static void retransmit_v1_msg(struct state *st)
 {
-	monotime_t delay = 0;
+	time_t delay = 0;	/* relative time; 0 means NO */
 	struct connection *c;
 	unsigned long try;
 	unsigned long try_limit;
@@ -181,16 +181,17 @@ static void retransmit_v1_msg(struct state *st)
 			ip_str(&c->spd.that.host_addr),
 			c->name, st->st_serialno));
 
-	if (st->st_retransmit < maximum_retransmissions)
+	if (st->st_retransmit < maximum_retransmissions) {
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
-	else if ((st->st_state == STATE_MAIN_I1 ||
+	} else if ((st->st_state == STATE_MAIN_I1 ||
 			st->st_state == STATE_AGGR_I1) &&
 		c->sa_keying_tries == 0 &&
-		st->st_retransmit < maximum_retransmissions_initial)
+		st->st_retransmit < maximum_retransmissions_initial) {
 		delay = event_retransmit_delay_0 << maximum_retransmissions;
-	else if (st->st_state == STATE_QUICK_R1 &&
-		st->st_retransmit < maximum_retransmissions_quick_r1)
+	} else if (st->st_state == STATE_QUICK_R1 &&
+		st->st_retransmit < maximum_retransmissions_quick_r1) {
 		delay = event_retransmit_delay_0 << maximum_retransmissions;
+	}
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
@@ -285,7 +286,7 @@ static void retransmit_v1_msg(struct state *st)
 
 static void retransmit_v2_msg(struct state *st)
 {
-	monotime_t delay = 0;
+	time_t delay = 0;
 	struct connection *c;
 	unsigned long try;
 	unsigned long try_limit;
@@ -405,18 +406,19 @@ static void retransmit_v2_msg(struct state *st)
  */
 void handle_timer_event(void)
 {
-	while (evlist != NULL && evlist->ev_time <= now()) {
+	while (evlist != NULL && !monobefore(mononow(), evlist->ev_time)) {
 		handle_next_timer_event();
 	}
 }
 
 static void liveness_check(struct state *st)
 {
-	monotime_t tm, last_liveness, last_msg;
+	monotime_t tm, last_liveness;
+	deltatime_t last_msg_age;
 	struct state *pst;
 	stf_status ret;
 	struct connection *c;
-	int timeout;
+	time_t timeout;
 
 	passert(st != NULL);
 	c = st->st_connection;
@@ -437,32 +439,37 @@ static void liveness_check(struct state *st)
 	 * don't bother sending the check and reset
 	 * liveness stats if there has been incoming traffic
 	 */
-	if (get_sa_info(st, TRUE, &last_msg)) {
-		if (last_msg < c->dpd_timeout) {
+	if (get_sa_info(st, TRUE, &last_msg_age)) {
+		if (deltaless(last_msg_age, c->dpd_timeout)) {
 			pst->st_pend_liveness = FALSE;
-			pst->st_last_liveness = 0;
+			pst->st_last_liveness.mono_secs = UNDEFINED_TIME;
 			goto live_ok;
 		}
 	}
 
-	tm = now();
+	tm = mononow();
 	last_liveness = pst->st_last_liveness;
 	/* ensure that the very first liveness_check works out */
-	if (last_liveness == 0)
+	if (last_liveness.mono_secs == UNDEFINED_TIME)
 		last_liveness = tm;
 
 	DBG(DBG_CONTROL,
-		DBG_log("liveness_check - last_liveness: %lu, tm: %lu",
-			last_liveness, tm));
-	if (c->dpd_timeout < c->dpd_delay * 3)
-		timeout = c->dpd_delay * 3;
-	else
-		timeout = c->dpd_timeout;
+		DBG_log("liveness_check - last_liveness: %ld, tm: %ld",
+			(long)last_liveness.mono_secs,
+			(long)tm.mono_secs));
 
-	if (pst->st_pend_liveness && tm - last_liveness >= timeout) {
+	/* ??? MAX the hard way */
+	if (deltaless(c->dpd_timeout, deltatimescale(3, 1, c->dpd_delay)))
+		timeout = deltasecs(c->dpd_delay) * 3;
+	else
+		timeout = deltasecs(c->dpd_timeout);
+
+	if (pst->st_pend_liveness &&
+	    deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
 		DBG(DBG_CONTROL,
-			DBG_log("liveness_check - peer has not responded in %lu seconds, with a timeout of %d, taking action",
-				tm - last_liveness, timeout));
+			DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
+				(long)deltasecs(monotimediff(tm, last_liveness)),
+				(long)timeout));
 		switch (c->dpd_action) {
 
 		case DPD_ACTION_CLEAR:
@@ -495,8 +502,8 @@ live_ok:
 			DBG_log("liveness_check - peer is ok"));
 		delete_liveness_event(st);
 		event_schedule(EVENT_v2_LIVENESS,
-			c->dpd_delay >= MIN_LIVENESS ?
-				c->dpd_delay : MIN_LIVENESS,
+			deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
+				deltasecs(c->dpd_delay) : MIN_LIVENESS,
 			st);
 	}
 }
@@ -504,11 +511,8 @@ live_ok:
 void handle_next_timer_event(void)
 {
 	struct event *ev = evlist;
-	monotime_t tm;
 	int type;
 	struct state *st;
-
-	tm = now();
 
 	if (ev == (struct event *) NULL)
 		return;
@@ -523,11 +527,10 @@ void handle_next_timer_event(void)
 		if (evlist != (struct event *) NULL) {
 			DBG_log("event after this is %s in %ld seconds",
 				enum_show(&timer_event_names, evlist->ev_type),
-				(long) (evlist->ev_time - tm));
+				(long) deltasecs(monotimediff(evlist->ev_time, mononow())));
 		} else {
 			DBG_log("no more events are scheduled");
 		}
-
 	});
 
 	/*
@@ -612,8 +615,8 @@ void handle_next_timer_event(void)
 					(IS_PHASE1(st->st_state) ||
 						IS_PHASE15(st->st_state )) ?
 					"ISAKMP" : "IPsec", newest));
-		} else if (type == EVENT_SA_REPLACE_IF_USED   &&
-			st->st_outbound_time <= tm - c->sa_rekey_margin) {
+		} else if (type == EVENT_SA_REPLACE_IF_USED &&
+			!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
 			/*
 			 * we observed no recent use: no need to replace
 			 *
@@ -634,12 +637,12 @@ void handle_next_timer_event(void)
 			 */
 			DBG(DBG_LIFECYCLE,
 				libreswan_log(
-					"not replacing stale %s SA: inactive for %lus",
+					"not replacing stale %s SA: inactive for %lds",
 					(IS_PHASE1(st->st_state) ||
 						IS_PHASE15(st->st_state )) ?
 						"ISAKMP" : "IPsec",
-					(unsigned long)(tm -
-						st->st_outbound_time)));
+					(long)deltasecs(monotimediff(mononow(),
+						st->st_outbound_time))));
 		} else {
 			DBG(DBG_LIFECYCLE,
 				libreswan_log("replacing stale %s SA",
@@ -650,7 +653,7 @@ void handle_next_timer_event(void)
 		}
 		delete_liveness_event(st);
 		delete_dpd_event(st);
-		event_schedule(EVENT_SA_EXPIRE, st->st_margin, st);
+		event_schedule(EVENT_SA_EXPIRE, deltasecs(st->st_margin), st);
 	}
 	break;
 
@@ -725,38 +728,38 @@ void handle_next_timer_event(void)
 
 /*
  * Return the time until the next event in the queue
- * expires (never negative = 0 if one has expired), or -1 if no jobs in queue.
+ * expires (positive), or 0 if one has expired, or -1 if no events in queue.
  */
 long next_event(void)
 {
-	monotime_t tm;
+	monotime_t nw;
 
 	if (evlist == (struct event *) NULL) {
 		DBG(DBG_CONTROLMORE, DBG_log("no pending events"));
 		return -1;
 	}
 
-	tm = now();
+	nw = mononow();
 
 	DBG(DBG_CONTROL, {
 			if (evlist->ev_state == NULL) {
 				DBG_log("next event %s in %ld seconds",
 					enum_show(&timer_event_names,
 						evlist->ev_type),
-					(long)evlist->ev_time - (long)tm);
+					(long)deltasecs(monotimediff(evlist->ev_time, nw)));
 			} else {
 				DBG_log("next event %s in %ld seconds for #%lu",
 					enum_show(&timer_event_names,
 						evlist->ev_type),
-					(long)evlist->ev_time - (long)tm,
+					(long)deltasecs(monotimediff(evlist->ev_time, nw)),
 					evlist->ev_state->st_serialno);
 			}
 		});
 
-	if (evlist->ev_time <= tm)
-		return 0;
+	if (monobefore(nw, evlist->ev_time))
+		return deltasecs(monotimediff(evlist->ev_time, nw));
 	else
-		return evlist->ev_time - tm;
+		return 0;
 }
 
 /*
@@ -856,32 +859,30 @@ void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
  */
 void timer_list(void)
 {
-	monotime_t tm;
+	monotime_t nw;
 	struct event *ev = evlist;
-	int type;
-	struct state *st;
 
 	if (ev == (struct event *) NULL) { /* Just paranoid */
 		whack_log(RC_LOG, "no events are queued");
 		return;
 	}
 
-	tm = now();
+	nw = mononow();
 
-	whack_log(RC_LOG, "It is now: %ld seconds since epoch",
-		(unsigned long)tm);
+	whack_log(RC_LOG, "It is now: %ld seconds since monotonic epoch",
+		(unsigned long)nw.mono_secs);
 
-	while (ev) {
-		type = ev->ev_type;
-		st = ev->ev_state;
+	while (ev != NULL) {
+		int type = ev->ev_type;
+		struct state *st = ev->ev_state;
 
-		whack_log(RC_LOG, "event %s is schd: %ld (in %lds) state:%ld",
+		whack_log(RC_LOG, "event %s is schd: %ld (in %lds) #%lu",
 			enum_show(&timer_event_names, type),
-			(unsigned long)ev->ev_time,
-			(unsigned long)(ev->ev_time - tm),
-			st != NULL ? (long signed)st->st_serialno : -1);
+			(long)ev->ev_time.mono_secs,
+			(long)deltasecs(monotimediff(ev->ev_time, nw)),
+			st != NULL ? st->st_serialno : 0);
 
-		if (st && st->st_connection)
+		if (st != NULL && st->st_connection != NULL)
 			whack_log(RC_LOG, "    connection: \"%s\"",
 				st->st_connection->name);
 
@@ -894,43 +895,39 @@ void timer_list(void)
  *   command line arguments for now --- they need to all be whack
  * level items, and all command line arguments go away.
  */
+
+static unsigned long envnumber(const char *name,
+			     unsigned long lwb, unsigned long upb,
+			     unsigned long def)
+{
+	const char *s = getenv(name);
+	/*const*/ char *e;
+	unsigned long res;
+
+	if (s == NULL)
+		return def;
+
+	res = strtoul(s, &e, 0);
+	if (e == s || *e != '\0') {
+		libreswan_log("environment variable %s is \"%s\", not a well-formed number",
+			name, s);
+		return def;
+	}
+	if (res < lwb || upb < res) {
+		libreswan_log("environment variable %s is %lu, but must be between %lu and %lu",
+			name, res, lwb, upb);
+		return def;
+	}
+	DBG(DBG_CONTROL,
+		DBG_log("environment variable %s: '%lu",
+			name, res));
+	return res;
+}
+
 void init_timer(void)
 {
-	char *valstr;
-
-	valstr = getenv("PLUTO_EVENT_RETRANSMIT_DELAY");
-	if (valstr != NULL) {
-		/* ??? should check that valstr is reasonable */
-		event_retransmit_delay_0 = atoi(valstr);
-		DBG(DBG_CONTROL,
-			DBG_log("PLUTO_EVENT_RETRANSMIT_DELAY set to '%d'",
-				event_retransmit_delay_0));
-	}
-
-	valstr = getenv("PLUTO_MAXIMUM_RETRANSMISSIONS");
-	if (valstr != NULL) {
-		/* ??? should check that valstr is reasonable */
-		maximum_retransmissions  = atoi(valstr);
-		DBG(DBG_CONTROL,
-			DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS set to '%d'",
-				maximum_retransmissions));
-	}
-
-	valstr = getenv("PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL");
-	if (valstr != NULL) {
-		/* ??? should check that valstr is reasonable */
-		maximum_retransmissions_initial = atoi(valstr);
-		DBG(DBG_CONTROL,
-			DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL set to '%d'",
-				maximum_retransmissions_initial));
-	}
-
-	valstr = getenv("PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1");
-	if (valstr != NULL) {
-		/* ??? should check that valstr is reasonable */
-		maximum_retransmissions_quick_r1 = atoi(valstr);
-		DBG(DBG_CONTROL,
-			DBG_log("PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1 set to '%d'",
-				maximum_retransmissions_quick_r1));
-	}
+	event_retransmit_delay_0 = envnumber("PLUTO_EVENT_RETRANSMIT_DELAY", 1, secs_per_minute, event_retransmit_delay_0);
+	maximum_retransmissions = envnumber("PLUTO_MAXIMUM_RETRANSMISSIONS", 0, 20, maximum_retransmissions);
+	maximum_retransmissions_initial = envnumber("PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL", 0, 20, maximum_retransmissions_initial);
+	maximum_retransmissions_quick_r1 = envnumber("PLUTO_MAXIMUM_RETRANSMISSIONS_QUICK_R1", 0, 20, maximum_retransmissions_quick_r1);
 }

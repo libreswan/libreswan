@@ -80,8 +80,8 @@
 
 bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support */
 
-static unsigned int nat_kap = 0;
-static unsigned int nat_kap_event = 0;
+static time_t nat_kap = 0;	/* keep-alive period */
+static bool nat_kap_event = FALSE;
 
 /* Copied hash_desc from crypto.c I don't know how to call SHA1 by name
  * RFC 5996 2.23 only allow "SHA-1 digest of the SPIs (in the order they appear
@@ -124,7 +124,7 @@ void init_nat_traversal(unsigned int keep_alive_period)
 		}
 	}
 
-	nat_kap = keep_alive_period ?
+	nat_kap = keep_alive_period != 0 ?
 		keep_alive_period : DEFAULT_KEEP_ALIVE_PERIOD;
 	libreswan_log("   NAT-Traversal support %s",
 		nat_traversal_enabled ? " [enabled]" : " [disabled]");
@@ -777,7 +777,7 @@ void nat_traversal_new_ka_event(void)
 		return;	/* Event already schedule */
 
 	event_schedule(EVENT_NAT_T_KEEPALIVE, nat_kap, NULL);
-	nat_kap_event = 1;
+	nat_kap_event = TRUE;
 }
 
 static void nat_traversal_send_ka(struct state *st)
@@ -883,11 +883,11 @@ void nat_traversal_ka_event(void)
 {
 	unsigned int nat_kap_st = 0;
 
-	nat_kap_event = 0;  /* ready to be reschedule */
+	nat_kap_event = FALSE;  /* ready to be reschedule */
 
 	for_each_state(nat_traversal_ka_event_state, &nat_kap_st);
 
-	if (nat_kap_st) {
+	if (nat_kap_st != 0) {
 		/*
 		 * If there are still states who needs Keep-Alive,
 		 * schedule new event
@@ -1152,9 +1152,9 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 void show_setup_natt()
 {
 	whack_log(RC_COMMENT, " ");     /* spacer */
-	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%d, nat-ikeport=%d",
+	whack_log(RC_COMMENT, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",
 		nat_traversal_enabled ? "yes" : "no",
-		nat_kap,
+		(long) nat_kap,
 		pluto_nat_port);
 }
 

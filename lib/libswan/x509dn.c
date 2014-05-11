@@ -318,7 +318,7 @@ static const asn1Object_t crlObjects[] = {
 
 const x509cert_t empty_x509cert = {
 	NULL,	/* *next */
-	UNDEFINED_TIME,	/* installed */
+	{ UNDEFINED_TIME },	/* installed */
 	0,	/* count */
 	AUTH_NONE,	/* authority_flags */
 	{ NULL, 0 },	/* certificate */
@@ -328,8 +328,8 @@ const x509cert_t empty_x509cert = {
 	OID_UNKNOWN,	/* sigAlg */
 	{ NULL, 0 },	/* issuer */
 		/* validity */
-	0,	/* notBefore */
-	0,	/* notAfter */
+	{ UNDEFINED_TIME },	/* notBefore */
+	{ UNDEFINED_TIME },	/* notAfter */
 	{ NULL, 0 },	/* subject */
 		/* subjectPublicKeyInfo */
 	OID_UNKNOWN,	/* subjectPublicKeyAlgorithm */
@@ -357,15 +357,15 @@ const x509cert_t empty_x509cert = {
 
 const x509crl_t empty_x509crl = {
 	NULL,	/* *next */
-	UNDEFINED_TIME,	/* installed */
+	{ UNDEFINED_TIME },	/* installed */
 	NULL,	/* distributionPoints */
 	{ NULL, 0 },	/* certificateList */
 	{ NULL, 0 },	/* tbsCertList */
 	1,	/* version */
 	OID_UNKNOWN,	/* sigAlg */
 	{ NULL, 0 },	/* issuer */
-	UNDEFINED_TIME,	/* thisUpdate */
-	UNDEFINED_TIME,	/* nextUpdate */
+	{ UNDEFINED_TIME },	/* thisUpdate */
+	{ UNDEFINED_TIME },	/* nextUpdate */
 	NULL,	/* revokedCertificates */
 		/* crlExtensions */
 		/* extension */
@@ -1172,9 +1172,10 @@ void free_x509cert(x509cert_t *cert)
 static void free_revoked_certs(revokedCert_t *revokedCerts)
 {
 	while (revokedCerts != NULL) {
-		revokedCert_t * revokedCert = revokedCerts;
-		revokedCerts = revokedCert->next;
-		pfree(revokedCert);
+		revokedCert_t *n = revokedCerts->next;
+
+		pfree(revokedCerts);
+		revokedCerts = n;
 	}
 }
 
@@ -1632,8 +1633,9 @@ chunk_t get_directoryName(chunk_t blob, int level, bool implicit)
 
 /*
  * extracts and converts a UTCTIME or GENERALIZEDTIME object
+ * ??? Returns UNDEFINED_TIME for many problems and TIME_MAX for others.  Is this reasonable?
  */
-static time_t parse_time(chunk_t blob, int level0)
+static realtime_t parse_time(chunk_t blob, int level0)
 {
 	asn1_ctx_t ctx;
 	chunk_t object;
@@ -1645,7 +1647,7 @@ static time_t parse_time(chunk_t blob, int level0)
 	while (objectID < TIME_ROOF) {
 		if (!extract_object(timeObjects, &objectID, &object, &level,
 					&ctx))
-			return UNDEFINED_TIME;
+			return undefinedrealtime();
 
 		if (objectID == TIME_UTC || objectID == TIME_GENERALIZED) {
 			return asn1totime(&object, (objectID == TIME_UTC) ?
@@ -1653,7 +1655,7 @@ static time_t parse_time(chunk_t blob, int level0)
 		}
 		objectID++;
 	}
-	return UNDEFINED_TIME;
+	return undefinedrealtime();
 }
 
 /*
@@ -2042,7 +2044,7 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 		}
 		objectID++;
 	}
-	time(&cert->installed);
+	cert->installed = realnow();
 	return TRUE;
 }
 
@@ -2162,6 +2164,6 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 		}
 		objectID++;
 	}
-	time(&crl->installed);
+	crl->installed = realnow();
 	return TRUE;
 }

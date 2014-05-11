@@ -401,8 +401,8 @@ static void pluto_init_nss(char *confddir)
 /* by default the CRL policy is lenient */
 bool strict_crl_policy = FALSE;
 
-/* by default pluto does not check crls dynamically */
-long crl_check_interval = 0;
+/* 0 is special and default: do not check crls dynamically */
+deltatime_t crl_check_interval = { 0 };
 
 /* by default pluto sends no cookies in ikev2 or ikev1 aggrmode */
 bool force_busy = FALSE;
@@ -768,7 +768,7 @@ int main(int argc, char **argv)
 					interval <= 0)
 					usage("<interval-time> must be a positive number");
 
-				crl_check_interval = interval;
+				crl_check_interval = deltatime(interval);
 			}
 			continue;
 
@@ -911,8 +911,8 @@ int main(int argc, char **argv)
 			force_busy = cfg->setup.options[KBF_FORCEBUSY];
 			strict_crl_policy =
 				cfg->setup.options[KBF_STRICTCRLPOLICY];
-			crl_check_interval =
-				cfg->setup.options[KBF_CRLCHECKINTERVAL];
+			crl_check_interval = deltatime(
+				cfg->setup.options[KBF_CRLCHECKINTERVAL]);
 			uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
 			/*
 			 * We don't check interfaces= here because that part
@@ -1470,7 +1470,7 @@ void show_setup_plutomain()
 		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s",
 		pluto_port,
 		strict_crl_policy ? "yes" : "no",
-		crl_check_interval,
+		deltasecs(crl_check_interval),
 		pluto_listen ? pluto_listen : "<any>");
 
 #ifdef HAVE_LABELED_IPSEC

@@ -154,7 +154,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 		bs->said.dst = *aftoinfo(subnettypeof(ours))->any;
 
 		bs->count = 0;
-		bs->last_activity = now();
+		bs->last_activity = mononow();
 
 		bs->next = bare_shunts;
 		bare_shunts = bs;
@@ -873,7 +873,7 @@ static bool raw_eroute(const ip_address *this_host,
 		       unsigned int transport_proto,
 		       enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
-		       monotime_t use_lifetime,
+		       deltatime_t use_lifetime,
 		       unsigned long sa_priority,
 		       enum pluto_sadb_operations op,
 		       const char *opname
@@ -1035,7 +1035,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 					       htonl(shunt_spi), SA_INT,
 					       transport_proto,
 					       ET_INT, null_proto_info,
-					       SHUNT_PATIENCE, DEFAULT_IPSEC_SA_PRIORITY,
+					       deltatime(SHUNT_PATIENCE),
+					       DEFAULT_IPSEC_SA_PRIORITY,
 					       ERO_REPLACE, why
 #ifdef HAVE_LABELED_IPSEC
 					       , NULL
@@ -1055,7 +1056,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 					bs->said.spi = htonl(shunt_spi);
 					bs->said.dst = *null_host;
 					bs->count = 0;
-					bs->last_activity = now();
+					bs->last_activity = mononow();
 					bs->next = bare_shunts;
 					bare_shunts = bs;
 					DBG_bare_shunt("add", bs);
@@ -1072,7 +1073,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       SA_INT,
 			       transport_proto,
 			       ET_INT, null_proto_info,
-			       SHUNT_PATIENCE, ERO_ADD,
+			       deltatime(SHUNT_PATIENCE),
+			       ERO_ADD,
 			       DEFAULT_IPSEC_SA_PRIORITY, why
 #ifdef HAVE_LABELED_IPSEC
 			       , NULL
@@ -1100,7 +1102,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       htonl(shunt_spi), SA_INT,
 			       0, /* transport_proto */
 			       ET_INT, null_proto_info,
-			       SHUNT_PATIENCE, DEFAULT_IPSEC_SA_PRIORITY,
+			       deltatime(SHUNT_PATIENCE),
+			       DEFAULT_IPSEC_SA_PRIORITY,
 			       op, why
 #ifdef HAVE_LABELED_IPSEC
 			       , NULL
@@ -1125,7 +1128,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 				bs->said.proto = SA_INT;
 				bs->said.dst = *null_host;
 				bs->count = 0;
-				bs->last_activity = now();
+				bs->last_activity = mononow();
 				DBG_bare_shunt("change", bs);
 			} else {
 				/* delete bare eroute */
@@ -1165,7 +1168,9 @@ bool eroute_connection(struct spd_route *sr,
 			  proto,
 			  sr->this.protocol,
 			  esatype,
-			  proto_info, 0, DEFAULT_IPSEC_SA_PRIORITY, op, buf2
+			  proto_info,
+			  deltatime(0),
+			  DEFAULT_IPSEC_SA_PRIORITY, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 			  , policy_label
 #endif
@@ -1452,9 +1457,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		if (inbound) {
-			st->st_esp.our_lastused = now();
+			st->st_esp.our_lastused = mononow();
 		} else {
-			st->st_esp.peer_lastused = now();
+			st->st_esp.peer_lastused = mononow();
 		}
 
 		DBG(DBG_KERNEL,
@@ -2036,7 +2041,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 					  c->spd.this.protocol,         /* transport_proto */
 					  esatype,                      /* esatype */
 					  proto_info,                   /* " */
-					  0,                            /* lifetime */
+					  deltatime(0),                            /* lifetime */
 					  c->sa_priority,		/* IPsec SA prio */
 					  ERO_ADD_INBOUND,              /* op */
 					  "add inbound"                 /* opname */
@@ -2136,7 +2141,9 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY,
 				  c->spd.this.protocol,
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
-				  null_proto_info, 0, c->sa_priority,
+				  null_proto_info,
+				  deltatime(0),
+				  c->sa_priority,
 				  ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
 				  , c->policy_label
@@ -2745,7 +2752,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 						  0,                    /* transport_proto */
 						  ET_INT,
 						  null_proto_info,
-						  SHUNT_PATIENCE,
+						  deltatime(SHUNT_PATIENCE),
 						  DEFAULT_IPSEC_SA_PRIORITY,
 						  ERO_REPLACE, "restore"
 #ifdef HAVE_LABELED_IPSEC
@@ -3054,9 +3061,9 @@ bool update_ipsec_sa(struct state *st USED_BY_KLIPS)
 	return TRUE;
 }
 
-bool was_eroute_idle(struct state *st, monotime_t since_when)
+bool was_eroute_idle(struct state *st, deltatime_t since_when)
 {
-	if (kernel_ops->eroute_idle)
+	if (kernel_ops->eroute_idle != NULL)
 		return kernel_ops->eroute_idle(st, since_when);
 
 	/* it is never idle if we can't check */
@@ -3077,7 +3084,7 @@ const char *kernel_if_name()
 /*
  * get information about a given sa - needs merging with was_eroute_idle
  */
-bool get_sa_info(struct state *st, bool inbound, monotime_t *ago /* OUTPUT */)
+bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 {
 	char text_said[SATOT_BUF];
 	u_int proto;
@@ -3119,15 +3126,17 @@ bool get_sa_info(struct state *st, bool inbound, monotime_t *ago /* OUTPUT */)
 	if (inbound) {
 		if (bytes > st->st_esp.our_bytes) {
 			st->st_esp.our_bytes = bytes;
-			st->st_esp.our_lastused = now();
+			st->st_esp.our_lastused = mononow();
 		}
-		*ago = now() - st->st_esp.our_lastused;
+		if (ago != NULL)
+			*ago = monotimediff(mononow(), st->st_esp.our_lastused);
 	} else {
 		if (bytes > st->st_esp.peer_bytes) {
 			st->st_esp.peer_bytes = bytes;
-			st->st_esp.peer_lastused = now();
+			st->st_esp.peer_lastused = mononow();
 		}
-		*ago = now() - st->st_esp.peer_lastused;
+		if (ago != NULL)
+			*ago = monotimediff(mononow(), st->st_esp.peer_lastused);
 	}
 	return TRUE;
 }

@@ -456,7 +456,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
 			       const struct pfkey_proto_info *proto_info UNUSED,
-			       monotime_t use_lifetime UNUSED,
+			       deltatime_t use_lifetime UNUSED,
 			       unsigned long sa_priority UNUSED,
 			       enum pluto_sadb_operations op,
 			       const char *text_said UNUSED
@@ -1016,9 +1016,9 @@ static bool bsdkame_del_sa(const struct kernel_sa *sa UNUSED)
  * could mean that the SA is broken and needs to be replace anyway.
  */
 static bool bsdkame_was_eroute_idle(struct state *st UNUSED,
-				    monotime_t idle_max UNUSED)
+				    deltatime_t idle_max UNUSED)
 {
-	passert(0);
+	passert(FALSE);
 	return FALSE;
 }
 

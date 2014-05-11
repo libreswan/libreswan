@@ -559,8 +559,7 @@ bool out_sa(pb_stream *outs,
 						      &trans_pbs))
 						return_on(ret, FALSE);
 					if (!out_attr(OAKLEY_LIFE_DURATION,
-						      st->st_connection->
-						      sa_ike_life_seconds,
+						      deltasecs(st->st_connection->sa_ike_life_seconds),
 						      attr_desc,
 						      attr_val_descs,
 						      &trans_pbs))
@@ -594,8 +593,8 @@ bool out_sa(pb_stream *outs,
 						      &trans_pbs))
 						return_on(ret, FALSE);
 					if (!out_attr(SA_LIFE_DURATION,
-						      st->st_connection->
-						      sa_ipsec_life_seconds,
+						      deltasecs(st->st_connection->
+						        sa_ipsec_life_seconds),
 						      attr_desc,
 						      attr_val_descs,
 						      &trans_pbs))
@@ -973,7 +972,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 		life_type = 0;
 
 		/* initialize only optional field in ta */
-		ta.life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT; /* When this SA expires (seconds) */
+		ta.life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT); /* When this SA expires (seconds) */
 
 		if (no_trans_left == 0) {
 			loglog(RC_LOG_SERIOUS,
@@ -1289,7 +1288,7 @@ rsasig_common:
 								(long) val,
 								OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM);
 					}
-					ta.life_seconds = val;
+					ta.life_seconds = deltatime(val);
 					break;
 				case OAKLEY_LIFE_KILOBYTES:
 					ta.life_kilobytes = val;
@@ -1589,7 +1588,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 static const struct ipsec_trans_attrs null_ipsec_trans_attrs = {
 	.spi = 0,                                               /* spi */
-	.life_seconds = SA_LIFE_DURATION_DEFAULT,               /* life_seconds */
+	.life_seconds = { SA_LIFE_DURATION_DEFAULT },		/* life_seconds */
 	.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
 	.encapsulation = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 };
@@ -1742,12 +1741,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			switch (life_type) {
 			case SA_LIFE_TYPE_SECONDS:
 				/* silently limit duration to our maximum */
-				attrs->life_seconds =
+				attrs->life_seconds = 
 				    val > SA_LIFE_DURATION_MAXIMUM ?
-					SA_LIFE_DURATION_MAXIMUM :
-				    val > st->st_connection->sa_ipsec_life_seconds ?
+					deltatime(SA_LIFE_DURATION_MAXIMUM) :
+				    val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
 				        st->st_connection->sa_ipsec_life_seconds :
-				    val;
+				    deltatime(val);
 				break;
 			case SA_LIFE_TYPE_KBYTES:
 				attrs->life_kilobytes = val;

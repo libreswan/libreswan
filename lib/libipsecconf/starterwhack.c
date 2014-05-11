@@ -507,9 +507,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->right.addrtype == KH_IPHOSTNAME)
 		msg.dnshostname = conn->right.strings[KSCF_IP];
 
-	msg.sa_ike_life_seconds = conn->options[KBF_IKELIFETIME];
-	msg.sa_ipsec_life_seconds = conn->options[KBF_SALIFETIME];
-	msg.sa_rekey_margin = conn->options[KBF_REKEYMARGIN];
+	msg.sa_ike_life_seconds = deltatime(conn->options[KBF_IKELIFETIME]);
+	msg.sa_ipsec_life_seconds = deltatime(conn->options[KBF_SALIFETIME]);
+	msg.sa_rekey_margin = deltatime(conn->options[KBF_REKEYMARGIN]);
 	msg.sa_rekey_fuzz = conn->options[KBF_REKEYFUZZ];
 	msg.sa_keying_tries = conn->options[KBF_KEYINGTRIES];
 
@@ -538,8 +538,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.dpd_action = DPD_ACTION_HOLD;
 	if (conn->options_set[KBF_DPDDELAY] &&
 	    conn->options_set[KBF_DPDTIMEOUT]) {
-		msg.dpd_delay   = conn->options[KBF_DPDDELAY];
-		msg.dpd_timeout = conn->options[KBF_DPDTIMEOUT];
+		msg.dpd_delay = deltatime(conn->options[KBF_DPDDELAY]);
+		msg.dpd_timeout = deltatime(conn->options[KBF_DPDTIMEOUT]);
 		if (conn->options_set[KBF_DPDACTION])
 			msg.dpd_action = conn->options[KBF_DPDACTION];
 

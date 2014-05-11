@@ -1478,7 +1478,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* parent had crypto failed, replace it with rekey! */
 	delete_event(pst);
-	event_schedule(EVENT_SA_REPLACE, c->sa_ike_life_seconds, pst);
+	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), pst);
 
 	/* need to force parent state to I2 */
 	change_state(pst, STATE_PARENT_I2);
@@ -1953,7 +1953,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	c->newest_isakmp_sa = st->st_serialno;
 
 	delete_event(st);
-	event_schedule(EVENT_SA_REPLACE, c->sa_ike_life_seconds, st);
+	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), st);
 
 	authstart = reply_stream.cur;
 	/* send response */
@@ -2912,7 +2912,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 			DBG(DBG_CONTROLMORE | DBG_DPD,
 			    DBG_log("updating st_last_liveness, no pending_liveness"));
 
-			st->st_last_liveness = now();
+			st->st_last_liveness = mononow();
 			st->st_pend_liveness = FALSE;
 
 			/* HDR out */
@@ -3265,7 +3265,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("Received an INFORMATIONAL response, "
 						    "updating liveness, no longer pending."));
-					st->st_last_liveness = now();
+					st->st_last_liveness = mononow();
 					st->st_pend_liveness = FALSE;
 					st->st_msgid_lastrecv =
 						md->msgid_received;

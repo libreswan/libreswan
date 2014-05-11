@@ -449,7 +449,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			unsigned int transport_proto,
 			enum eroute_type esatype,
 			const struct pfkey_proto_info *proto_info,
-			monotime_t use_lifetime UNUSED,
+			deltatime_t use_lifetime UNUSED,
 			unsigned long sa_priority,
 			enum pluto_sadb_operations sadb_op,
 			const char *text_said
@@ -641,7 +641,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
 			req.u.p.action = XFRM_POLICY_BLOCK;
-		req.u.p.lft.soft_use_expires_seconds = use_lifetime;
+		req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime);
 		req.u.p.lft.soft_byte_limit = XFRM_INF;
 		req.u.p.lft.soft_packet_limit = XFRM_INF;
 		req.u.p.lft.hard_byte_limit = XFRM_INF;
@@ -1797,15 +1797,15 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
  * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
  * could mean that the SA is broken and needs to be replace anyway.
  */
-static bool netlink_eroute_idle(struct state *st, monotime_t idle_max)
+static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 {
-	monotime_t idle_time;
+	deltatime_t idle_time;
 
 	passert(st != NULL);
 	if (!get_sa_info(st, TRUE, &idle_time))
 		return TRUE;
 	else
-		return idle_time >= idle_max;
+		return !deltaless(idle_time, idle_max);
 }
 
 static bool netlink_shunt_eroute(struct connection *c,
@@ -1910,7 +1910,9 @@ static bool netlink_shunt_eroute(struct connection *c,
 						SA_ESP : SA_INT,
 					sr->this.protocol,
 					ET_INT,
-					null_proto_info, 0, c->sa_priority,
+					null_proto_info,
+					deltatime(0),
+					c->sa_priority,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label
@@ -1942,7 +1944,9 @@ static bool netlink_shunt_eroute(struct connection *c,
 					SA_ESP : SA_INT,
 					sr->this.protocol,
 					ET_INT,
-					null_proto_info, 0, c->sa_priority,
+					null_proto_info,
+					deltatime(0),
+					c->sa_priority,
 					op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label

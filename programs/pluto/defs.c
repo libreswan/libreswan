@@ -17,12 +17,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>	/* for _POSIX_MONOTONIC_CLOCK etc. */
 #include <stdio.h>
 #include <dirent.h>
 #include <sys/types.h>
 
 #include <libreswan.h>
-#include "lswtime.h"
 
 #include "sysdep.h"
 #include "constants.h"
@@ -43,28 +43,67 @@ bool all_zero(const unsigned char *m, size_t len)
 }
 
 /*
+ * monotonic variant of time(2)
+ *
+ * NOT INTENDED TO BE REALTIME!
+ */
+monotime_t mononow(void)
+{
+	monotime_t m;
+#ifdef _POSIX_MONOTONIC_CLOCK
+	struct timespec t;
+	int r = clock_gettime(
+#   if CLOCK_BOOTTIME
+		CLOCK_BOOTTIME	/* best */
+#   else
+		CLOCK_MONOTONIC	/* second best */
+#   endif
+		, &t);
+
+	passert(r == 0);
+	m.mono_secs =  t.tv_sec;
+#else
+#warning _POSIX_MONOTONIC_CLOCK not defined
+	static time_t delta = 0,
+		last_time = 0;
+	time_t n = time(NULL);	/* third best */
+
+	passert(n != (time_t)-1);
+	if (last_time > n) {
+		libreswan_log("time moved backwards %ld seconds",
+			(long)(last_time - n));
+		delta += last_time - n;
+	}
+	last_time = n;
+	m.mono_secs = n + delta;
+#endif
+	return m;
+}
+
+/*
  * checks if the expiration date has been reached and
  * warns during the warning_interval of the imminent
  * expiry.
+ * warning interval is in days.
  * strict == TRUE: expiry yields an error message
  * strict == FALSE: expiry yields a warning message
  *
  * Note: not re-entrant because the message may be in a static buffer (buf).
  */
-const char *check_expiry(time_t expiration_date, int warning_interval,
+const char *check_expiry(realtime_t expiration_date, time_t warning_interval,
 			bool strict)
 {
-	long time_left;
+	time_t time_left;	/* a deltatime_t, unpacked */
 
-	if (expiration_date == UNDEFINED_TIME)
+	if (isundefinedrealtime(expiration_date))
 		return "ok (expires never)";
 
-	time_left = expiration_date - time(NULL);
+	time_left = deltasecs(realtimediff(expiration_date, realnow()));
 
 	if (time_left < 0)
 		return strict ? "fatal (expired)" : "warning (expired)";
 
-	if (time_left > secs_per_day * warning_interval)
+	if (time_left > warning_interval)
 		return "ok";
 
 	{

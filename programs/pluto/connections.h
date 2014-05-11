@@ -199,9 +199,9 @@ struct connection {
 	char *name;
 	char *connalias;
 	lset_t policy;
-	monotime_t sa_ike_life_seconds;
-	monotime_t sa_ipsec_life_seconds;
-	monotime_t sa_rekey_margin;
+	deltatime_t sa_ike_life_seconds;
+	deltatime_t sa_ipsec_life_seconds;
+	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	unsigned long sa_priority;
@@ -209,8 +209,8 @@ struct connection {
 	int encapsulation;
 
 	/* RFC 3706 DPD */
-	monotime_t dpd_delay;		/* time between checks */
-	monotime_t dpd_timeout;		/* time after which we are dead */
+	deltatime_t dpd_delay;		/* time between checks */
+	deltatime_t dpd_timeout;	/* time after which we are dead */
 	enum dpd_action dpd_action;	/* what to do when we die */
 
 	bool nat_keepalive;		/* Suppress sending NAT-T Keep-Alives */
@@ -220,7 +220,7 @@ struct connection {
 	bool sha2_truncbug;
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 
-	/*Network Manager support*/
+	/* Network Manager support */
 #ifdef HAVE_NM
 	bool nmconfigured;
 #endif
@@ -231,7 +231,7 @@ struct connection {
 	char *policy_label;
 #endif
 
-	/*Cisco interop: remote peer type*/
+	/* Cisco interop: remote peer type */
 	enum keyword_remotepeertype remotepeertype;
 
 	enum keyword_xauthby xauthby;

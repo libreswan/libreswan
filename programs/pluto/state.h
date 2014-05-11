@@ -86,8 +86,8 @@ struct trans_attrs {
 
 	u_int16_t groupnum;		/* for IKEv2 */
 
-	monotime_t life_seconds;		/* When this SA expires (seconds) */
-	u_int32_t life_kilobytes;	/* When this SA is exhausted (kilobytes) */
+	deltatime_t life_seconds;	/* max life of this SA in seconds */
+	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 
 	/* used in phase1/PARENT SA */
 	const struct encrypt_desc *encrypter;	/* package of encryption routines */
@@ -110,8 +110,8 @@ struct trans_attrs {
 struct ipsec_trans_attrs {
 	struct trans_attrs transattrs;
 	ipsec_spi_t spi;                /* his SPI */
-	monotime_t life_seconds;            /* When this SA expires */
-	u_int32_t life_kilobytes;       /* When this SA expires */
+	deltatime_t life_seconds;	/* max life of this SA in seconds */
+	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 	u_int16_t encapsulation;
 #if 0                                   /* not implemented yet */
 	u_int16_t cmprs_dict_sz;
@@ -346,7 +346,7 @@ struct state {
 	unsigned long st_try;                   /* number of times rekeying
 	                                           attempted */
 	                                        /* 0 means the only time */
-	monotime_t st_margin;                       /* life after EVENT_SA_REPLACE*/
+	deltatime_t st_margin;			/* life after EVENT_SA_REPLACE*/
 	unsigned long st_outbound_count;        /* traffic through eroute */
 	monotime_t st_outbound_time;		/* time of last change to
 	                                         * st_outbound_count

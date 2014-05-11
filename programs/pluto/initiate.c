@@ -45,7 +45,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
@@ -483,7 +482,7 @@ static void cannot_oppo(struct connection *c,
 			char state_buf[LOG_WIDTH];
 			char state_buf2[LOG_WIDTH];
 
-			fmt_state(st, now(), state_buf, sizeof(state_buf),
+			fmt_state(st, mononow(), state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
 			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
 			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
@@ -1065,7 +1064,6 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 							   &b->our_client,
 							   &b->peer_client);
 				}
-				time(&c->gw_info->key->last_tried_time);
 				DBG(DBG_OPPO | DBG_CONTROL,
 				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
 					    ours, ourport, his, hisport,

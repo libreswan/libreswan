@@ -429,6 +429,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 	{
 		struct pubkey_list *p, **pp;
 		int pathlen;
+		realtime_t nw = realnow();
 
 		pp = &pluto_pubkeys;
 
@@ -459,8 +460,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    });
 
 				/* check if found public key has expired */
-				if (key->until_time != UNDEFINED_TIME &&
-				    key->until_time < time(NULL)) {
+				if (!isundefinedrealtime(key->until_time) &&
+				    realbefore(key->until_time, nw)) {
 					loglog(RC_LOG_SERIOUS,
 					       "cached RSA public key has expired and has been deleted");
 					*pp = free_public_keyentry(p);
@@ -764,7 +765,7 @@ struct pubkey *public_key_from_rsa(const struct RSA_public_key *k)
 	 * invariant: recount > 0.
 	 */
 	p->refcnt = 1;
-	time(&p->installed_time);
+	p->installed_time = realnow();
 	return p;
 }
 
@@ -838,7 +839,7 @@ err_t add_public_key(const struct id *id,
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
-	pk->until_time = UNDEFINED_TIME;
+	pk->until_time = undefinedrealtime();
 	pk->issuer = empty_chunk;
 
 	install_public_key(pk, head);
@@ -868,22 +869,22 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 			if (!check_pub_keys ||
 			    strncmp(check_expiry_msg, "ok", 2) != 0) {
-				char expires_buf[TIMETOA_BUF];
-				char installed_buf[TIMETOA_BUF];
+				char expires_buf[REALTIMETOA_BUF];
+				char installed_buf[REALTIMETOA_BUF];
 				char id_buf[IDTOA_BUF];
 
 				idtoa(&key->id, id_buf, IDTOA_BUF);
 
 				whack_log(RC_COMMENT,
 					  "%s, %4d RSA Key %s (%s private key), until %s %s",
-					  timetoa(&key->installed_time, utc,
+					  realtimetoa(key->installed_time, utc,
 						  installed_buf,
 						  sizeof(installed_buf)),
 					  8 * key->u.rsa.k,
 					  key->u.rsa.keyid,
 					  (has_private_rawkey(key) ? "has" :
 					   "no"),
-					  timetoa(&key->until_time, utc,
+					  realtimetoa(key->until_time, utc,
 						  expires_buf,
 						  sizeof(expires_buf)),
 					  check_expiry_msg);

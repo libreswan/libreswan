@@ -33,7 +33,7 @@
 #include "lswconf.h"
 #include "constants.h"
 #include "lswlog.h"
-#include "lswtime.h"
+#include "defs.h"
 #include "id.h"
 #include "asn1.h"
 #include "oid.h"
@@ -170,7 +170,7 @@ void add_authcert(x509cert_t *cert, u_char auth_flags)
 bool x509_check_revocation(const x509crl_t *crl, chunk_t serial)
 {
 	revokedCert_t *revokedCert = crl->revokedCertificates;
-	char tbuf[TIMETOA_BUF];
+	char tbuf[REALTIMETOA_BUF];
 
 	DBG(DBG_X509,
 		DBG_dump_chunk("serial number:", serial);
@@ -182,7 +182,7 @@ bool x509_check_revocation(const x509crl_t *crl, chunk_t serial)
 			memeq(revokedCert->userCertificate.ptr, serial.ptr,
 				serial.len)) {
 			libreswan_log("certificate was revoked on %s",
-				timetoa(&revokedCert->revocationDate,
+				realtimetoa(revokedCert->revocationDate,
 					TRUE, tbuf, sizeof(tbuf)));
 			return TRUE;
 		}
@@ -300,45 +300,45 @@ bool trust_authcert_candidate(const x509cert_t *cert,
  * checking the notBefore and notAfter dates
  * Note: *until = min(*until, cert->notAfter)
  */
-err_t check_validity(const x509cert_t *cert, time_t *until /* IN/OUT */)
+err_t check_validity(const x509cert_t *cert, realtime_t *until /* IN/OUT */)
 {
-	char curtime[TIMETOA_BUF];
-	time_t current_time = time(NULL);
+	char curtime[REALTIMETOA_BUF];
+	realtime_t current_time = realnow();
 
-	timetoa(&current_time, TRUE, curtime, sizeof(curtime));
+	realtimetoa(current_time, TRUE, curtime, sizeof(curtime));
 
 	DBG(DBG_X509,
-		char tbuf[TIMETOA_BUF];
+		char tbuf[REALTIMETOA_BUF];
 
 		DBG_log("  not before  : %s",
-			timetoa(&cert->notBefore, TRUE, tbuf, sizeof(tbuf)));
+			realtimetoa(cert->notBefore, TRUE, tbuf, sizeof(tbuf)));
 		DBG_log("  current time: %s", curtime);
 		DBG_log("  not after   : %s",
-			timetoa(&cert->notAfter, TRUE, tbuf, sizeof(tbuf)));
+			realtimetoa(cert->notAfter, TRUE, tbuf, sizeof(tbuf)));
 		);
 
-	if (cert->notAfter < *until)
+	if (realbefore(cert->notAfter, *until))
 		*until = cert->notAfter;
 
-	if (current_time < cert->notBefore) {
-		char tbuf[TIMETOA_BUF];
+	if (realbefore(current_time, cert->notBefore)) {
+		char tbuf[REALTIMETOA_BUF];
 
 		return builddiag(
 			"X.509 certificate is not valid until %s (it is now=%s)",
-			timetoa(&cert->notBefore, TRUE, tbuf,
+			realtimetoa(cert->notBefore, TRUE, tbuf,
 				sizeof(tbuf)), curtime);
 	}
 
-	if (current_time > cert->notAfter) {
-		char tbuf[TIMETOA_BUF];
+	if (realbefore(cert->notAfter, current_time)) {
+		char tbuf[REALTIMETOA_BUF];
 
 		DBG(DBG_X509 | DBG_PARSING,
 			DBG_log("  aftercheck : %ld > %ld",
-				(unsigned long)current_time,
-				(unsigned long)cert->notAfter));
+				(unsigned long)current_time.real_secs,
+				(unsigned long)cert->notAfter.real_secs));
 		return builddiag(
 			"X.509 certificate expired at %s (it is now %s)",
-			timetoa(&cert->notAfter, TRUE, tbuf,
+			realtimetoa(cert->notAfter, TRUE, tbuf,
 				sizeof(tbuf)),
 			curtime);
 	} else {

@@ -758,7 +758,7 @@ static void unshare_connection_strings(struct connection *c)
 
 static void load_end_certificate(const char *filename, struct end *dst)
 {
-	time_t valid_until;
+	realtime_t valid_until;
 	cert_t cert;
 	err_t ugh = NULL;
 
@@ -1269,18 +1269,16 @@ void add_connection(const struct whack_message *wm)
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
 
-		if (c->sa_rekey_margin >= c->sa_ipsec_life_seconds) {
-			monotime_t new_rkm;
+		if (!deltaless(c->sa_rekey_margin, c->sa_ipsec_life_seconds)) {
+			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
 
-			new_rkm = c->sa_ipsec_life_seconds / 2;
-
-			libreswan_log("conn: %s, rekeymargin (%lus) > "
-				"salifetime (%lus); "
-				"reducing rekeymargin to %lu seconds",
+			libreswan_log("conn: %s, rekeymargin (%lds) >= "
+				"salifetime (%lds); "
+				"reducing rekeymargin to %ld seconds",
 				c->name,
-				c->sa_rekey_margin,
-				c->sa_ipsec_life_seconds,
-				new_rkm);
+				(long) deltasecs(c->sa_rekey_margin),
+				(long) deltasecs(c->sa_ipsec_life_seconds),
+				(long) deltasecs(new_rkm));
 
 			c->sa_rekey_margin = new_rkm;
 		}
@@ -1539,15 +1537,15 @@ void add_connection(const struct whack_message *wm)
 #endif
 
 		DBG(DBG_CONTROL,
-			DBG_log("ike_life: %lus; ipsec_life: %lus; "
-				"rekey_margin: %lus; "
-				"rekey_fuzz: %lu%%; keyingtries: "
-				"%lu; policy: %s",
-				(unsigned long) c->sa_ike_life_seconds,
-				(unsigned long) c->sa_ipsec_life_seconds,
-				(unsigned long) c->sa_rekey_margin,
-				(unsigned long) c->sa_rekey_fuzz,
-				(unsigned long) c->sa_keying_tries,
+			DBG_log("ike_life: %lds; ipsec_life: %lds; "
+				"rekey_margin: %lds; "
+				"rekey_fuzz: %lu%%; "
+				"keyingtries: %lu; policy: %s",
+				(long) deltasecs(c->sa_ike_life_seconds),
+				(long) deltasecs(c->sa_ipsec_life_seconds),
+				(long) deltasecs(c->sa_rekey_margin),
+				c->sa_rekey_fuzz,
+				c->sa_keying_tries,
 				prettypolicy(c->policy)));
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
@@ -3605,15 +3603,15 @@ void show_one_connection(struct connection *c)
 	}
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   ike_life: %lus; ipsec_life: %lus;"
-		" rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu;",
+		"\"%s\"%s:   ike_life: %lds; ipsec_life: %lds;"
+		" rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
-		(unsigned long) c->sa_ike_life_seconds,
-		(unsigned long) c->sa_ipsec_life_seconds,
-		(unsigned long) c->sa_rekey_margin,
-		(unsigned long) c->sa_rekey_fuzz,
-		(unsigned long) c->sa_keying_tries);
+		(long) deltasecs(c->sa_ike_life_seconds),
+		(long) deltasecs(c->sa_ipsec_life_seconds),
+		(long) deltasecs(c->sa_rekey_margin),
+		c->sa_rekey_fuzz,
+		c->sa_keying_tries);
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; "
@@ -3667,15 +3665,15 @@ void show_one_connection(struct connection *c)
 		mtustr, sapriostr);
 
 	/* slightly complicated stuff to avoid extra crap */
-	if (c->dpd_timeout > 0 || DBGP(DBG_DPD)) {
+	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
-			"\"%s\"%s:   dpd: %s; delay:%lu; timeout:%lu; "
+			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; "
 			"nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
 			c->name,
 			instance,
 			enum_name(&dpd_action_names, c->dpd_action),
-			(unsigned long)c->dpd_delay,
-			(unsigned long)c->dpd_timeout,
+			(long) deltasecs(c->dpd_delay),
+			(long) deltasecs(c->dpd_timeout),
 			(c->forceencaps) ? "yes" : "no",
 			(c->nat_keepalive) ? "yes" : "no",
 			(c->ikev1_natt == natt_both) ? "both" :

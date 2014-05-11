@@ -2638,13 +2638,10 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 	st->st_connection->newest_ipsec_sa = st->st_serialno;
 
-	/* note (presumed) success */
-	if (c->gw_info != NULL)
-		time(&c->gw_info->key->last_worked_time);
-
 	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
 	    on this conn, so initialize it */
-	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
+	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
+	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
 			delete_ipsec_sa(st, FALSE);
 			return STF_FAIL;
@@ -2691,17 +2688,12 @@ stf_status quick_inI2(struct msg_digest *md)
 
 	update_iv(st);  /* not actually used, but tidy */
 
-	/* note (presumed) success */
-	{
-		struct gw_info *gw = st->st_connection->gw_info;
-
-		if (gw != NULL)
-			time(&gw->key->last_worked_time);
-	}
-
-	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
-	    on this conn, so initialize it */
-	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
+	/*
+	 * If we have dpd delay and dpdtimeout set, then we are doing DPD
+	 * on this conn, so initialize it
+	 */
+	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
+	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
 			delete_ipsec_sa(st, FALSE);
 			return STF_FAIL;

@@ -29,7 +29,6 @@
 #include "libreswan.h"
 #include "lswalloc.h"
 #include "lswlog.h"
-#include "lswtime.h"	/* for now() */
 #include "connections.h"
 #include "defs.h"
 #include "constants.h"
@@ -199,7 +198,7 @@ void rel_lease_addr(struct connection *c)
 			if (p->refcnt == 0) {
 				story = "left (to linger)";
 				pool->lingering++;
-				p->lingering_since = now();
+				p->lingering_since = mononow();
 			}
 			refcnt = p->refcnt;
 		} else {
@@ -330,7 +329,7 @@ err_t lease_an_address(const struct connection *c,
 			/* remember the longest lingering lease found */
 			if (p->refcnt == 0 &&
 			    (ll == NULL ||
-			     p->lingering_since <= ll->lingering_since))
+			     monobefore(ll->lingering_since, p->lingering_since)))
 				ll = p;
 			/* Subtle point: this addition won't overflow.
 			 * 0.0.0.0 cannot be in a range

@@ -66,7 +66,7 @@ typedef struct x509cert x509cert_t;
 
 struct x509cert {
 	x509cert_t     *next;
-	time_t installed;
+	realtime_t installed;
 	int count;
 	u_char authority_flags;
 	chunk_t certificate;
@@ -77,8 +77,8 @@ struct x509cert {
 	int sigAlg;
 	chunk_t issuer;
 	/*   validity */
-	time_t notBefore;
-	time_t notAfter;
+	realtime_t notBefore;
+	realtime_t notAfter;
 	chunk_t subject;
 	/*   subjectPublicKeyInfo */
 	enum pubkey_alg subjectPublicKeyAlgorithm;
@@ -113,7 +113,7 @@ typedef struct revokedCert revokedCert_t;
 struct revokedCert {
 	revokedCert_t *next;
 	chunk_t userCertificate;
-	time_t revocationDate;
+	realtime_t revocationDate;
 };
 
 /* storage structure for an X.509 CRL */
@@ -122,7 +122,7 @@ typedef struct x509crl x509crl_t;
 
 struct x509crl {
 	x509crl_t     *next;
-	time_t installed;
+	realtime_t installed;
 	generalName_t *distributionPoints;
 	chunk_t certificateList;
 	chunk_t tbsCertList;
@@ -130,8 +130,8 @@ struct x509crl {
 	/*  signature */
 	int sigAlg;
 	chunk_t issuer;
-	time_t thisUpdate;
-	time_t nextUpdate;
+	realtime_t thisUpdate;
+	realtime_t nextUpdate;
 	revokedCert_t      *revokedCertificates;
 	/*   v2 extensions */
 	/*   crlExtensions */
@@ -155,7 +155,7 @@ extern bool strict_crl_policy;
 /*
  * check periodically for expired crls
  */
-extern long crl_check_interval;
+extern deltatime_t crl_check_interval;
 
 /* used for initialization */
 extern const x509crl_t empty_x509crl;
@@ -178,11 +178,11 @@ extern void parse_authorityKeyIdentifier(chunk_t blob, int level0,
 					 chunk_t *authKeyID,
 					 chunk_t *authKeySerialNumber);
 extern chunk_t get_directoryName(chunk_t blob, int level, bool implicit);
-extern err_t check_validity(const x509cert_t *cert, time_t *until /* IN/OUT */);
+extern err_t check_validity(const x509cert_t *cert, realtime_t *until /* IN/OUT */);
 extern bool check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 			    const x509cert_t *issuer_cert);
 extern bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict,
-				      time_t *until /* OUT */);
+				      realtime_t *until /* OUT */);
 extern x509cert_t* add_x509cert(x509cert_t *cert);
 extern x509cert_t* get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
 				x509cert_t *chain);

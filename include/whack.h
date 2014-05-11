@@ -120,15 +120,15 @@ struct whack_message {
 	bool whack_async;
 
 	lset_t policy;
-	monotime_t sa_ike_life_seconds;
-	monotime_t sa_ipsec_life_seconds;
-	monotime_t sa_rekey_margin;
+	deltatime_t sa_ike_life_seconds;
+	deltatime_t sa_ipsec_life_seconds;
+	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
-	monotime_t dpd_delay;
-	monotime_t dpd_timeout;
+	deltatime_t dpd_delay;
+	deltatime_t dpd_timeout;
 	enum dpd_action dpd_action;
 	int dpd_count;
 
