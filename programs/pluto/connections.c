@@ -756,7 +756,7 @@ static void unshare_connection_strings(struct connection *c)
 		reference_addresspool(c->pool);
 }
 
-static void load_end_certificate(const char *filename, struct end *dst)
+static void load_end_certificate(const char *name, struct end *dst)
 {
 	time_t valid_until;
 	cert_t cert;
@@ -767,20 +767,19 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	/* initialize end certificate */
 	dst->cert.ty = CERT_NONE;
 
-	if (filename == NULL)
+	if (name == NULL)
 		return;
 
-	libreswan_log("loading certificate from %s\n", filename);
-	dst->cert_filename = clone_str(filename, "certificate filename");
+	DBG(DBG_CONTROL, DBG_log("loading certificate %s\n", name));
+	dst->cert_filename = clone_str(name, "certificate name");
 
 	{
 		/* load cert from file */
-		bool valid_cert = load_cert_from_nss(filename,
+		bool valid_cert = load_cert_from_nss(name,
 						"host cert", &cert);
 		if (!valid_cert) {
-			whack_log(RC_FATAL,
-				"can not load certificate file %s\n",
-				filename);
+			whack_log(RC_FATAL, "can not load certificate %s\n",
+				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;
 			return;
@@ -796,7 +795,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 		valid_until = cert.u.x509->notAfter;
 		ugh = check_validity(cert.u.x509, &valid_until);
 		if (ugh != NULL) {
-			libreswan_log("  %s", ugh);
+			loglog(RC_LOG_SERIOUS,"  %s", ugh);
 			free_x509cert(cert.u.x509);
 		} else {
 			DBG(DBG_CONTROL,
