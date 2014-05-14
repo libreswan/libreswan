@@ -975,7 +975,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		if (can_do_IPcomp)
 			pm |= POLICY_COMPRESS;
 
-		if (!out_sa(&rbody,
+		if (!ikev1_out_sa(&rbody,
 			    &ipsec_sadb[(st->st_policy &
 					 pm) >> POLICY_IPSEC_SHIFT],
 			    st, FALSE, FALSE, ISAKMP_NEXT_NONCE)) {
