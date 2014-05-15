@@ -109,7 +109,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	 */
 
 	if (!ai) {
-		DBG(DBG_CRYPT, DBG_log(
+		DBG(DBG_CONTROL, DBG_log(
 			    "no IKE algorithms for this connection "));
 
 		return NULL;
@@ -302,7 +302,8 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		}
 		transcnt++;
 	}
-	gsp->parentSA = TRUE;
+	if (gsp) 
+		gsp->parentSA = TRUE;
 
 	return gsp;
 }
