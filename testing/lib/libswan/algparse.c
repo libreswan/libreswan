@@ -17,7 +17,7 @@ void exit_tool(int stat)
 
 void do_test(const char *algstr, int ttype) {
 	struct alg_info *aie;
-	const char *err;
+	char err_buf[256];	/* ??? big enough? */
 	char algbuf[256];
 
 	printf("[%*s] ", 20, algstr);
@@ -28,19 +28,19 @@ void do_test(const char *algstr, int ttype) {
 		break;
 	case PROTO_IPSEC_AH:
 		aie = (struct alg_info *)alg_info_ah_create_from_str(
-			algstr, &err);
+			algstr, err_buf, sizeof(err_buf));
 		break;
 #ifdef WORK_IN_PROGRESS
 	case PROTO_ISAKMP:
 		aie = (struct alg_info *)alg_info_ike_create_from_str(
-			algstr, &err);
+			algstr, err_buf, sizeof(err_buf));
 		break;
 #endif
 	}
 	passert(aie != NULL);
 	alg_info_snprint(algbuf, 256, aie);
-	if (err)
-		printf("ERROR: alg=%s  error=%s\n", algbuf, err);
+	if (err_buf[0] != '\0')
+		printf("ERROR: alg=%s  error=%s\n", algbuf, err_buf);
 	else
 		printf("   OK: alg=%s\n", algbuf);
 	alg_info_free(aie);

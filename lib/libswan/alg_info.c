@@ -146,46 +146,44 @@ int alg_info_esp_sadb2aa(int sadb_aalg)
  * Search enum_name array with string, uppercased, prefixed, and postfixed
  */
 int alg_enum_search(enum_names *ed, const char *prefix,
-		const char *postfix, const char *str,
-		int str_len)
+		const char *postfix, const char *name,
+		size_t name_len)
 {
 	char buf[64];
-	char *ptr;
-	int ret;
-	int len = sizeof(buf) - 1;	/* reserve space for final \0 */
+	size_t prelen = strlen(prefix);
+	size_t postlen = strlen(postfix);
 
-	for (ptr = buf; len && *prefix; len--)
-		*ptr++ = *prefix++;
+	if (prelen + name_len + postlen >= sizeof(buf))
+		return -1;	/* cannot match */
 
-	while (str_len-- && len-- && *str)
-		*ptr++ = toupper(*str++);
-
-	while (len-- && *postfix)
-		*ptr++ = *postfix++;
-	*ptr = '\0';
-	ret = enum_search(ed, buf);
-	return ret;
+	memcpy(buf, prefix, prelen);
+	memcpy(buf + prelen, name, name_len);
+	memcpy(buf + prelen + name_len, postfix, postlen + 1);	/* incl. NUL */
+	
+	return enum_search(ed, buf);
 }
 
 /*
  * Search esp_transformid_names for a match, eg:
  *	"3des" <=> "ESP_3DES"
  */
-static int ealg_getbyname_esp(const char *const str, int len)
+static int ealg_getbyname_esp(const char *const str, size_t len)
 {
-	int ret = -1;
-	unsigned num;
+	int ret;
+	int num;
 
-	if (!str || !*str)
-		return ret;
+	if (str == NULL || *str == '\0')
+		return -1;
 
 	ret = alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
 	if (ret >= 0)
 		return ret;
 
 	/* support idXXX as syntax, matching iana numbers directly */
+	/* ??? str is NOT NUL-terminated.  This seems invalid. */
+	num = -1;
 	sscanf(str, "id%d%n", &ret, &num);
-	if (ret >= 0 && num != strlen(str))
+	if (ret >= 0 && num != (int)len)
 		ret = -1;
 
 	return ret;
@@ -195,14 +193,15 @@ static int ealg_getbyname_esp(const char *const str, int len)
  * Search auth_alg_names for a match, eg:
  *	"md5" <=> "AUTH_ALGORITHM_HMAC_MD5"
  */
-static int aalg_getbyname_esp(const char *str, int len)
+static int aalg_getbyname_esp(const char *str, size_t len)
 {
 	int ret = -1;
-	unsigned num;
+	int num;
 	static const char sha2_256_aka[] = "sha2";
 	static const char sha1_aka[] = "sha";
+	static const char null_esp[] = "null";
 
-	if (!str || !*str)
+	if (str == NULL || *str == '\0')
 		return ret;
 
 	/* handle "sha2" as "sha2_256" */
@@ -228,19 +227,24 @@ static int aalg_getbyname_esp(const char *str, int len)
 	if (ret >= 0)
 		return ret;
 
-	/* Special value for no authentication since zero is already used. */
-	ret = INT_MAX;
-	if (!strncasecmp(str, "null", len))
-		return ret;
+	/*
+	 * INT_MAX is used as the special value for "no authentication"
+	 * since 0 is already used.
+	 * ??? this is extremely ugly.
+	 */
+	if (len == sizeof(null_esp)-1 && strncasecmp(str, null_esp, len) == 0)
+		return INT_MAX;
 
+	/* ??? str is NOT NUL-terminated.  This seems invalid. */
+	num = -1;
 	sscanf(str, "id%d%n", &ret, &num);
-	if (ret >= 0 && num != strlen(str))
+	if (ret >= 0 && num != (int)len)
 		ret = -1;
 
 	return ret;
 }
 
-static int modp_getbyname_esp(const char *const str, int len)
+static int modp_getbyname_esp(const char *const str, size_t len)
 {
 	int ret;
 
@@ -269,15 +273,16 @@ static void raw_alg_info_esp_add(struct alg_info_esp *alg_info,
 	struct esp_info *esp_info = alg_info->esp;
 	unsigned cnt = alg_info->alg_info_cnt, i;
 
-	/* check for overflows */
-	passert(cnt < elemsof(alg_info->esp));
-	/* dont add duplicates */
+	/* don't add duplicates */
 	for (i = 0; i < cnt; i++)
 		if (esp_info[i].esp_ealg_id == ealg_id &&
 			(!ek_bits || esp_info[i].esp_ealg_keylen == ek_bits) &&
 			esp_info[i].esp_aalg_id == aalg_id &&
 			(!ak_bits || esp_info[i].esp_aalg_keylen == ak_bits))
 			return;
+
+	/* check for overflows */
+	passert(cnt < elemsof(alg_info->esp));
 
 	esp_info[cnt].esp_ealg_id = ealg_id;
 	esp_info[cnt].esp_ealg_keylen = ek_bits;
@@ -366,6 +371,8 @@ static const char *parser_state_name_esp(enum parser_state_esp state)
 	return parser_state_esp_names[state];
 }
 
+const struct parser_context empty_p_ctx;	/* full of zeros and NULLs */
+
 static inline void parser_set_state(struct parser_context *p_ctx,
 				enum parser_state_esp state)
 {
@@ -385,7 +392,7 @@ static int parser_machine(struct parser_context *p_ctx)
 
 	/* chars that end algo strings */
 	switch (ch) {
-	case 0:		/* end-of-string */
+	case '\0':		/* end-of-string */
 	case ',':	/* algo string separator */
 		switch (p_ctx->state) {
 		case ST_EA:
@@ -397,7 +404,7 @@ static int parser_machine(struct parser_context *p_ctx)
 			enum parser_state_esp next_state = 0;
 
 			switch (ch) {
-			case 0:
+			case '\0':
 				next_state = ST_EOF;
 				break;
 			case ',':
@@ -514,7 +521,7 @@ re_eval:
 		 * Only allow modpXXXX string if we have
 		 * a modp_getbyname method
 		 */
-		if ((p_ctx->modp_getbyname) && isalpha(ch)) {
+		if (p_ctx->modp_getbyname != NULL && isalpha(ch)) {
 			parser_set_state(p_ctx, ST_MODP);
 			goto re_eval;
 		}
@@ -536,7 +543,7 @@ re_eval:
 		 * Only allow modpXXXX string if we have
 		 * a modp_getbyname method
 		 */
-		if ((p_ctx->modp_getbyname) && isalpha(ch)) {
+		if (p_ctx->modp_getbyname != NULL && isalpha(ch)) {
 			parser_set_state(p_ctx, ST_MODP);
 			goto re_eval;
 		}
@@ -568,7 +575,7 @@ err:
  */
 static void parser_init_esp(struct parser_context *p_ctx)
 {
-	zero(p_ctx);
+	*p_ctx = empty_p_ctx;
 
 	p_ctx->protoid = PROTO_IPSEC_ESP;
 	p_ctx->ealg_str = p_ctx->ealg_buf;
@@ -589,17 +596,14 @@ static void parser_init_esp(struct parser_context *p_ctx)
  */
 static void parser_init_ah(struct parser_context *p_ctx)
 {
-	zero(p_ctx);
+	*p_ctx = empty_p_ctx;
 
 	p_ctx->protoid = PROTO_IPSEC_AH;
-	p_ctx->ealg_str = NULL;
-	p_ctx->ealg_permit = FALSE;
 	p_ctx->aalg_str = p_ctx->aalg_buf;
 	p_ctx->aalg_permit = TRUE;
 	p_ctx->modp_str = p_ctx->modp_buf;
 	p_ctx->state = ST_INI_AA;
 
-	p_ctx->ealg_getbyname = NULL;
 	p_ctx->aalg_getbyname = aalg_getbyname_esp;
 
 }
@@ -690,7 +694,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			}
 		}
 	}
-	if (p_ctx->aalg_permit && *p_ctx->aalg_buf) {
+	if (p_ctx->aalg_permit && *p_ctx->aalg_buf != '\0') {
 		aalg_id = p_ctx->aalg_getbyname(p_ctx->aalg_buf,
 					strlen(p_ctx->aalg_buf));
 		if (aalg_id < 0) {
@@ -698,7 +702,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		}
 
 	}
-	if (p_ctx->modp_getbyname && *p_ctx->modp_buf) {
+	if (p_ctx->modp_getbyname != NULL && *p_ctx->modp_buf != '\0') {
 		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf,
 					strlen(p_ctx->modp_buf));
 		if (modp_id < 0) {
@@ -706,7 +710,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		}
 
 
-		if (modp_id && !lookup_group(modp_id)) {
+		if (modp_id != 0 && lookup_group(modp_id) == NULL) {
 			return "found modp group id, but not supported";
 		}
 	}
@@ -721,7 +725,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 
 int alg_info_parse_str(struct alg_info *alg_info,
 		const char *alg_str,
-		const char **err_p,
+		char *err_buf, size_t err_buf_len,
 		void (*parser_init)(struct parser_context *p_ctx),
 		void (*alg_info_add)(struct alg_info *alg_info,
 				int ealg_id, int ek_bits,
@@ -733,17 +737,13 @@ int alg_info_parse_str(struct alg_info *alg_info,
 	struct parser_context ctx;
 	int ret;
 	const char *ptr;
-	static char err_buf[256]; /* TODO: should match parser max */
 
-	*err_buf = 0;
+	err_buf[0] = '\0';
 
 	(*parser_init)(&ctx);
 
-	if (err_p)
-		*err_p = NULL;
-
 	/* use default if null string */
-	if (!*alg_str)
+	if (*alg_str == '\0')
 		(*alg_info_add)(alg_info, 0, 0, 0, 0, 0);
 
 	for (ret = 0, ptr = alg_str; ret < ST_EOF;) {
@@ -758,11 +758,11 @@ int alg_info_parse_str(struct alg_info *alg_info,
 						alg_info_add,
 						lookup_group);
 				if (ugh != NULL) {
-					snprintf(err_buf, sizeof(err_buf),
+					snprintf(err_buf, err_buf_len,
 						"%s, enc_alg=\"%s\"(%d), auth_alg=\"%s\", modp=\"%s\"",
 						ugh, ctx.ealg_buf, ctx.eklen, ctx.aalg_buf,
 						ctx.modp_buf);
-					goto err;
+					return -1;
 				}
 			}
 			/* zero out for next run (ST_END) */
@@ -770,51 +770,40 @@ int alg_info_parse_str(struct alg_info *alg_info,
 			break;
 
 		case ST_ERR:
-			snprintf(err_buf, sizeof(err_buf),
+			snprintf(err_buf, err_buf_len,
 				"%s, just after \"%.*s\" (old_state=%s)",
 				ctx.err,
 				(int)(ptr - alg_str - 1), alg_str,
 				parser_state_name_esp(ctx.old_state));
 
-			goto err;
+			return -1;
 		default:
 			if (!ctx.ch)
 				break;
 		}
 	}
 	return 0;
-
-err:
-	if (err_p)
-		*err_p = err_buf;
-	return -1;
 }
 
 static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 					char *esp_buf,
-					const char **err_p)
+					char *err_buf, size_t err_buf_len)
 {
-	char *pfs_name;
-	static char err_buf[256];
-	int ret;
+	char *pfs_name = index(esp_buf, ';');
 
-	pfs_name = index(esp_buf, ';');
+	err_buf[0] = '\0';
+	if (pfs_name != NULL) {
+		*pfs_name++ = '\0';
 
-	if (pfs_name) {
-		*pfs_name = '\0';
-		pfs_name++;
+		/* if pfs string not null AND first char is not '0' */
+		if (*pfs_name != '\0' && pfs_name[0] != '0') {
+			int ret = modp_getbyname_esp(pfs_name, strlen(pfs_name));
 
-		/* if pfs strings AND first char is not '0' */
-		if (*pfs_name && pfs_name[0] != '0') {
-			ret = modp_getbyname_esp(pfs_name, strlen(pfs_name));
 			if (ret < 0) {
 				/* Bomb if pfsgroup not found */
-				if (*err_p) {
-					snprintf(err_buf, sizeof(err_buf),
-						"pfsgroup \"%s\" not found",
-						pfs_name);
-					*err_p = err_buf;
-				}
+				snprintf(err_buf, err_buf_len,
+					"pfsgroup \"%s\" not found",
+					pfs_name);
 				return FALSE;
 			}
 			aie->esp_pfsgroup = ret;
@@ -828,29 +817,28 @@ static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 
 /* This function is tested in testing/lib/libswan/algparse.c */
 struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
-						const char **err_p)
+						char *err_buf, size_t err_buf_len)
 {
 	/*
 	 * alg_info storage should be sized dynamically
-	 * but this may require 2passes to know
+	 * but this may require two passes to know
 	 * transform count in advance.
 	 */
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
-	char esp_buf[256]; /* XXX should be changed to match parser max */
+	char esp_buf[256];	/* XXX should be changed to match parser max */
 	int ret;
 
-	strcpy(esp_buf, alg_str);	/*
-					 * ??? how do we know that
-					 * it fits?
-					 */
+	jam_str(esp_buf, sizeof(esp_buf), alg_str);
+
 	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf,
-						err_p))
+						err_buf, err_buf_len))
 		return NULL;
 
 	alg_info_esp->alg_info_protoid = PROTO_IPSEC_ESP;
 	ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
-				esp_buf, err_p,
+				esp_buf,
+				err_buf, err_buf_len,
 				parser_init_esp,
 				alg_info_esp_add,
 				NULL);
@@ -864,29 +852,31 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 }
 
 /* This function is tested in testing/lib/libswan/algparse.c */
+/* ??? why is this called _ah_ when almost everything refers to esp? */
+/* ??? the only difference between this and alg_info_esp is in two parameters to alg_info_parse_str */
 struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
-						const char **err_p)
+						char *err_buf, size_t err_buf_len)
 {
-	struct alg_info_esp *alg_info_esp;
-	char esp_buf[256];
-	int ret = 0;
-
 	/*
 	 * alg_info storage should be sized dynamically
-	 * but this may require 2passes to know
+	 * but this may require two passes to know
 	 * transform count in advance.
 	 */
-	alg_info_esp = alloc_thing(struct alg_info_esp, "alg_info_esp");
+	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp, "alg_info_esp");
+	char esp_buf[256];	/* ??? big enough? */
+	int ret;
 
-	strcpy(esp_buf, alg_str);
-	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_p)) {
+	jam_str(esp_buf, sizeof(esp_buf), alg_str);
+
+	if (!alg_info_discover_pfsgroup_hack(alg_info_esp, esp_buf, err_buf, err_buf_len)) {
 		pfree(alg_info_esp);
 		return NULL;
 	}
 
 	alg_info_esp->alg_info_protoid = PROTO_IPSEC_AH;
 	ret = alg_info_parse_str((struct alg_info *)alg_info_esp,
-				esp_buf, err_p,
+				esp_buf,
+				err_buf, err_buf_len,
 				parser_init_ah,
 				alg_info_ah_add,
 				NULL);
