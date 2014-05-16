@@ -176,4 +176,7 @@ extern PK11SymKey *PK11_Derive_lsw(PK11SymKey *base,
 				   CK_MECHANISM_TYPE mechanism,
 				   SECItem *param, CK_MECHANISM_TYPE target,
 				   CK_ATTRIBUTE_TYPE operation, int keySize);
+
+extern int crypto_req_keysize(int ksproto, int algo);
+
 #endif /* _CRYPTO_H */
