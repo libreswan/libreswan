@@ -62,9 +62,8 @@ typedef int bool;
 #endif
 
 #define NULL_FD (-1)    /* NULL file descriptor */
-#define dup_any(fd) ((fd) == NULL_FD ? NULL_FD : dup(fd))
-#define close_any(fd) do { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; \
-			   } } while (0)
+#define dup_any(fd)  ((fd) == NULL_FD ? NULL_FD : dup((fd)))
+#define close_any(fd)  { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; } }
 
 #include <inttypes.h>
 
