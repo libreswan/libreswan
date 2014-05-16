@@ -320,7 +320,6 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
  */
 int crypto_req_keysize(int ksproto, int algo)
 {
-	passert(0 <= ksproto <= 2);
 	switch(ksproto) {
 	case 2: /* IKEv2 */
 		switch(algo) {
@@ -395,6 +394,7 @@ int crypto_req_keysize(int ksproto, int algo)
 		default:
 			return 0;
 		}
+	default:
+		bad_case(ksproto);
 	}
 }
-
