@@ -297,9 +297,9 @@ static void alg_info_esp_add(struct alg_info *alg_info,
 			int aalg_id, int ak_bits,
 			int modp_id UNUSED)
 {
-	/* Policy: default to 3DES */
+	/* Policy: default to AES */
 	if (ealg_id == 0)
-		ealg_id = ESP_3DES;
+		ealg_id = ESP_AES;
 
 	if (ealg_id > 0) {
 
