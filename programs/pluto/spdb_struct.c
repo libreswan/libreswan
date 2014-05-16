@@ -108,10 +108,9 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	 * standard defaults.
 	 */
 
-	if (!ai) {
+	if (ai == NULL) {
 		DBG(DBG_CONTROL, DBG_log(
 			    "no IKE algorithms for this connection "));
-
 		return NULL;
 	}
 
@@ -126,7 +125,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 		if (!ike_info->ike_default) {
 			struct db_attr  *enc, *hash, *auth, *grp, *enc_keylen,
-			*new_auth;
+				*new_auth;
 			struct db_trans *trans;
 			struct db_prop  *prop;
 			struct db_prop_conj *cprop;
@@ -302,7 +301,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		}
 		transcnt++;
 	}
-	if (gsp) 
+	if (gsp != NULL) 
 		gsp->parentSA = TRUE;
 
 	return gsp;
