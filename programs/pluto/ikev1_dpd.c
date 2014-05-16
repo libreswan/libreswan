@@ -371,8 +371,7 @@ static void p2_dpd_outI1(struct state *p2st)
 
 void dpd_event(struct state *st)
 {
-	if (st == NULL)
-		return;
+	passert(st != NULL);
 
 	if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state ))
 		p1_dpd_outI1(st);

@@ -297,9 +297,9 @@ static void alg_info_esp_add(struct alg_info *alg_info,
 			int aalg_id, int ak_bits,
 			int modp_id UNUSED)
 {
-	/* Policy: default to 3DES */
+	/* Policy: default to AES */
 	if (ealg_id == 0)
-		ealg_id = ESP_3DES;
+		ealg_id = ESP_AES;
 
 	if (ealg_id > 0) {
 
@@ -604,7 +604,7 @@ static void parser_init_ah(struct parser_context *p_ctx)
 
 }
 
-static int parser_alg_info_add(struct parser_context *p_ctx,
+static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			struct alg_info *alg_info,
 			void (*alg_info_add)(struct alg_info *alg_info,
 					int ealg_id, int ek_bits,
@@ -613,6 +613,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			const struct oakley_group_desc *(*lookup_group)
 			(u_int16_t group))
 {
+#define COMMON_KEY_LENGTHS(x) (x == 0 || x == 128 || x == 192 || x == 256) 
 	int ealg_id, aalg_id;
 	int modp_id = 0;
 
@@ -627,37 +628,73 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 		}
 #endif
 		if (ealg_id < 0) {
-			p_ctx->err = "enc_alg not found";
-			return -1;
+			return "enc_alg not found";
 		}
 
 		/*
-		 * AES CCM/GCM only allows 128, 192 or 256 bit
-		 * key - excluding salt
+		 * Enforce RFC restrictions in key size, documented in
+		 * ietf_constants.h
 		 */
-		switch(ealg_id) {
-		case ESP_AES_GCM_8:
-		case ESP_AES_GCM_12:
-		case ESP_AES_GCM_16:
-		case ESP_AES_CCM_8:
-		case ESP_AES_CCM_12:
-		case ESP_AES_CCM_16:
-			if (p_ctx->eklen != 128 &&
-				p_ctx->eklen != 192 &&
-				p_ctx->eklen != 256) {
-				p_ctx->err =
-					"wrong encryption key length - AES CCM/GCM only uses 128, 192 or 256";
-				return -1;
+		if (p_ctx->eklen != 0) {
+			switch(alg_info->alg_info_protoid) {
+			case PROTO_ISAKMP:
+				switch(ealg_id) {
+				case OAKLEY_3DES_CBC:
+					return "3DES does not take variable key lengths";
+				case OAKLEY_CAST_CBC:
+					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
+						return "CAST is only supported for 128 bits (to avoid padding)";
+					}
+					break;
+				case OAKLEY_AES_CBC:
+				case OAKLEY_CAMELLIA_CBC:
+				case OAKLEY_SERPENT_CBC:
+				case OAKLEY_TWOFISH_CBC:
+				case OAKLEY_TWOFISH_CBC_SSH:
+					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
+						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
+					}
+					break;
+				}
+				break;
+			case PROTO_IPSEC_ESP:
+				switch(ealg_id) {
+				case ESP_3DES:
+					return "3DES does not take variable key lengths";
+				case ESP_CAST:
+					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
+						return "CAST is only supported for 128 bits (to avoid padding)";
+					}
+					break;
+				case ESP_AES:
+				case ESP_AES_CTR:
+				case ESP_AES_GCM_8:
+				case ESP_AES_GCM_12:
+				case ESP_AES_GCM_16:
+				case ESP_AES_CCM_8:
+				case ESP_AES_CCM_12:
+				case ESP_AES_CCM_16:
+				case ESP_CAMELLIA:
+				case ESP_TWOFISH:
+				case ESP_SERPENT:
+					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
+						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
+					}
+					break;
+				case ESP_SEED_CBC:
+					if (p_ctx->eklen != 128) {
+						return "wrong encryption key length - SEED-CBC key size must be 128";
+					}
+					break;
+				}
 			}
 		}
-
 	}
 	if (p_ctx->aalg_permit && *p_ctx->aalg_buf) {
 		aalg_id = p_ctx->aalg_getbyname(p_ctx->aalg_buf,
 					strlen(p_ctx->aalg_buf));
 		if (aalg_id < 0) {
-			p_ctx->err = "hash_alg not found";
-			return -1;
+			return "hash_alg not found";
 		}
 
 	}
@@ -665,14 +702,12 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf,
 					strlen(p_ctx->modp_buf));
 		if (modp_id < 0) {
-			p_ctx->err = "modp group not found";
-			return -1;
+			return "modp group not found";
 		}
 
 
 		if (modp_id && !lookup_group(modp_id)) {
-			p_ctx->err = "found modp group id, but not supported";
-			return -1;
+			return "found modp group id, but not supported";
 		}
 	}
 
@@ -680,8 +715,9 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			ealg_id, p_ctx->eklen,
 			aalg_id, p_ctx->aklen,
 			modp_id);
-	return 0;
+	return NULL;
 }
+#undef COMMON_KEY_LENGTHS
 
 int alg_info_parse_str(struct alg_info *alg_info,
 		const char *alg_str,
@@ -697,7 +733,7 @@ int alg_info_parse_str(struct alg_info *alg_info,
 	struct parser_context ctx;
 	int ret;
 	const char *ptr;
-	static char err_buf[256];
+	static char err_buf[256]; /* TODO: should match parser max */
 
 	*err_buf = 0;
 
@@ -706,7 +742,7 @@ int alg_info_parse_str(struct alg_info *alg_info,
 	if (err_p)
 		*err_p = NULL;
 
-	/* use default if nul esp string */
+	/* use default if null string */
 	if (!*alg_str)
 		(*alg_info_add)(alg_info, 0, 0, 0, 0, 0);
 
@@ -716,15 +752,18 @@ int alg_info_parse_str(struct alg_info *alg_info,
 		switch (ret) {
 		case ST_END:
 		case ST_EOF:
-
-			if (parser_alg_info_add(&ctx, alg_info,
+			{
+				const char *ugh = parser_alg_info_add(&ctx,
+						alg_info,
 						alg_info_add,
-						lookup_group) < 0) {
-				snprintf(err_buf, sizeof(err_buf),
-					"%s, enc_alg=\"%s\", auth_alg=\"%s\", modp=\"%s\"",
-					ctx.err, ctx.ealg_buf, ctx.aalg_buf,
-					ctx.modp_buf);
-				goto err;
+						lookup_group);
+				if (ugh != NULL) {
+					snprintf(err_buf, sizeof(err_buf),
+						"%s, enc_alg=\"%s\"(%d), auth_alg=\"%s\", modp=\"%s\"",
+						ugh, ctx.ealg_buf, ctx.eklen, ctx.aalg_buf,
+						ctx.modp_buf);
+					goto err;
+				}
 			}
 			/* zero out for next run (ST_END) */
 			parser_init(&ctx);
@@ -798,7 +837,7 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 	 */
 	struct alg_info_esp *alg_info_esp = alloc_thing(struct alg_info_esp,
 							"alg_info_esp");
-	char esp_buf[256];
+	char esp_buf[256]; /* XXX should be changed to match parser max */
 	int ret;
 
 	strcpy(esp_buf, alg_str);	/*
