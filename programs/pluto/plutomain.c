@@ -103,6 +103,8 @@
 # include <libaudit.h>
 #endif
 
+static const char *pluto_name;	/* name (path) we were invoked with */
+
 static const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 static bool fork_desired = TRUE;
@@ -124,23 +126,22 @@ static void free_pluto_main()
 }
 
 /*
- * usage - print diagnostic and usage hint message and exit
+ * invocation_fail - print diagnostic and usage hint message and exit
  *
  * @param mess String - diagnostic message to print
  */
-static void usage(const char *mess)
+static void invocation_fail(const char *mess)
 {
-	fprintf(stderr,
-		"%s\n"
-		"For usage information: pluto --help\n"
+	if (mess != NULL)
+		fprintf(stderr, "%s\n", mess);
+	fprintf(stderr, "For usage information: %s --help\n"
 		"Libreswan %s\n",
-		mess,
-		ipsec_version_code());
+		pluto_name, ipsec_version_code());
 	/* not exit_pluto because we are not initialized yet */
 	exit(1);
 }
 
-static void full_usage(void)
+static void usage(void)
 {
 	fprintf(stderr,
 		"Usage: pluto"
@@ -377,7 +378,7 @@ static struct starter_config *read_cfg_file(char *configfile)
 
 	cfg = confread_load(configfile, &err, FALSE, NULL, TRUE);
 	if (cfg == NULL)
-		usage(err);
+		invocation_fail(err);
 	return cfg;
 }
 
@@ -447,6 +448,8 @@ int main(int argc, char **argv)
 				leak_detective = TRUE;
 		}
 	}
+
+	pluto_name = argv[0];
 
 	coredir = clone_str("/var/run/pluto", "coredir in main()");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
@@ -610,7 +613,7 @@ int main(int argc, char **argv)
 
 		if (longindex != -1 &&
 			strchr(long_opts[longindex].name, '_') != NULL) {
-			libreswan_log("warning: option \"%s\" with '_' in its name is obsolete; use '-'",
+			libreswan_log("warning: option \"--%s\" with '_' in its name is obsolete; use '-'",
 				long_opts[longindex].name);
 		}
 
@@ -619,16 +622,20 @@ int main(int argc, char **argv)
 		case EOF:	/* end of flags */
 			break;
 
-		case 0:	/* long option already handled */
+		case 0:
+			/*
+			 * Long option already handled by getopt_long.
+			 * Not currently used since we always set flag to NULL.
+			 */
 			continue;
 
 		case ':':	/* diagnostic already printed by getopt_long */
 		case '?':	/* diagnostic already printed by getopt_long */
-			ugh = "";
+			invocation_fail(NULL);
 			break;
 
 		case 'h':	/* --help */
-			full_usage();
+			usage();
 			break;	/* not actually reached */
 
 		case 'X':	/* --leak-detective */
@@ -1030,16 +1037,22 @@ int main(int argc, char **argv)
 		if (ugh != NULL) {
 			char mess[200];
 
-			snprintf(mess, sizeof(mess), "%s option: %s",
-				longindex != -1 ?
-					long_opts[longindex].name : "unknown",
-				ugh);
-			usage(mess);
+			if (longindex == -1) {
+				snprintf(mess, sizeof(mess), "unknown option: %s",
+					ugh);
+			} else if (optarg == NULL) {
+				snprintf(mess, sizeof(mess), "--%s option: %s",
+					long_opts[longindex].name, ugh);
+			} else {
+				snprintf(mess, sizeof(mess), "--%s \"%s\" option: %s",
+					long_opts[longindex].name, optarg, ugh);
+			}
+			invocation_fail(mess);
 		}
 		break;
 	}
 	if (optind != argc)
-		usage("unexpected argument");
+		invocation_fail("unexpected argument");
 	reset_debugging();
 
 #ifdef HAVE_NO_FORK
