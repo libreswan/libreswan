@@ -1119,7 +1119,6 @@ static bool have_wm_certs(const struct whack_message *wm)
 void add_connection(const struct whack_message *wm)
 {
 	struct alg_info_ike *alg_info_ike;
-	const char *ugh;
 
 	alg_info_ike = NULL;
 
@@ -1149,19 +1148,22 @@ void add_connection(const struct whack_message *wm)
 	}
 
 	/* ??? illegible assignment inside condition */
-	if (wm->ike != NULL &&
-		((alg_info_ike = alg_info_ike_create_from_str(wm->ike,
-			&ugh)) == NULL || alg_info_ike->alg_info_cnt == 0)) {
+	if (wm->ike != NULL) {
+		char err_buf[256];	/* ??? big enough? */
 
-		if (alg_info_ike != NULL && alg_info_ike->alg_info_cnt == 0) {
+		alg_info_ike = alg_info_ike_create_from_str(wm->ike,
+			err_buf, sizeof(err_buf));
+			
+		if (alg_info_ike == NULL) {
+			loglog(RC_LOG_SERIOUS, "ike string error: %s",
+				err_buf);
+			return;
+		}
+		if (alg_info_ike->alg_info_cnt == 0) {
 			loglog(RC_LOG_SERIOUS,
 				"got 0 transforms for ike=\"%s\"", wm->ike);
 			return;
 		}
-
-		loglog(RC_LOG_SERIOUS, "ike string error: %s",
-			ugh ? ugh : "Unknown");
-		return;
 	}
 
 	if ((wm->ike == NULL || alg_info_ike != NULL) &&
@@ -1176,6 +1178,7 @@ void add_connection(const struct whack_message *wm)
 		 * destroyed.
 		 */
 
+		char err_buf[256] = "";	/* ??? big enough? */
 		bool same_rightca, same_leftca;
 		struct connection *c = alloc_thing(struct connection,
 						"struct connection");
@@ -1199,11 +1202,11 @@ void add_connection(const struct whack_message *wm)
 
 			if (c->policy & POLICY_ENCRYPT)
 				c->alg_info_esp = alg_info_esp_create_from_str(
-					wm->esp ? wm->esp : "", &ugh);
+					wm->esp ? wm->esp : "", err_buf, sizeof(err_buf));
 
 			if (c->policy & POLICY_AUTHENTICATE)
 				c->alg_info_esp = alg_info_ah_create_from_str(
-					wm->esp ? wm->esp : "", &ugh);
+					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
 				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
@@ -1226,7 +1229,7 @@ void add_connection(const struct whack_message *wm)
 			} else {
 				loglog(RC_LOG_SERIOUS,
 					"esp string error: %s",
-					ugh ? ugh : "Unknown");
+					err_buf);
 				pfree(c);
 				return;
 			}
@@ -1241,10 +1244,10 @@ void add_connection(const struct whack_message *wm)
 				alg_info_snprint(buf, sizeof(buf),
 						(struct alg_info *)c->
 						alg_info_ike);
-				DBG_log("ike (phase1) algorihtm values: %s",
+				DBG_log("ike (phase1) algorithm values: %s",
 					buf);
 			});
-			if (c->alg_info_ike) {
+			if (c->alg_info_ike != NULL) {
 				if (c->alg_info_ike->alg_info_cnt == 0) {
 					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
@@ -1256,7 +1259,7 @@ void add_connection(const struct whack_message *wm)
 			} else {
 				loglog(RC_LOG_SERIOUS,
 					"ike string error: %s",
-					ugh ? ugh : "Unknown");
+					err_buf);
 				pfree(c);
 				return;
 			}
@@ -1549,7 +1552,6 @@ void add_connection(const struct whack_message *wm)
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
-
 }
 
 /*

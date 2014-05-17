@@ -243,7 +243,7 @@ static bool out_attr(int type,
  * This has the side-effect of allocating SPIs for us.
  *
  */
-bool out_sa(pb_stream *outs,
+bool ikev1_out_sa(pb_stream *outs,
 	    struct db_sa *sadb,
 	    struct state *st,
 	    bool oakley_mode,
@@ -349,7 +349,7 @@ bool out_sa(pb_stream *outs,
 		pc = &sadb->prop_conjs[pcn];
 		valid_prop_cnt = pc->prop_cnt;
 		DBG(DBG_EMITTING,
-		    DBG_log("out_sa pcn: %d has %d valid proposals",
+		    DBG_log("ikev1_out_sa pcn: %d has %d valid proposals",
 			    pcn, valid_prop_cnt));
 
 		for (pn = 0; pn < pc->prop_cnt; pn++) {
@@ -383,7 +383,7 @@ bool out_sa(pb_stream *outs,
 						  IPSEC_DOI_SPI_SIZE;
 
 			DBG(DBG_EMITTING,
-			    DBG_log("out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
+			    DBG_log("ikev1_out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
 				    pcn, pn, pc->prop_cnt, valid_prop_cnt,
 				    p->trans_cnt));
 
