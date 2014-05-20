@@ -37,12 +37,12 @@ void do_test(const char *algstr, int ttype) {
 		break;
 #endif
 	}
-	passert(aie != NULL);
 	alg_info_snprint(algbuf, 256, aie);
 	if (err_buf[0] != '\0')
 		printf("ERROR: alg=%s  error=%s\n", algbuf, err_buf);
 	else
 		printf("   OK: alg=%s\n", algbuf);
+	}
 	alg_info_free(aie);
 }
 
@@ -60,9 +60,12 @@ main(int argc, char *argv[]) {
 	do_test("3des-sha1;dh23", PROTO_IPSEC_ESP);
 	do_test("3des-sha1;dh24", PROTO_IPSEC_ESP);
 	do_test("3des-sha1", PROTO_IPSEC_ESP);
+	do_test("3des168-sha1", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("null-sha1", PROTO_IPSEC_ESP);
 	do_test("aes256-sha1", PROTO_IPSEC_ESP);
 	do_test("aes128-sha1", PROTO_IPSEC_ESP);
+	do_test("aes224-sha1", PROTO_IPSEC_ESP); /* should get rejected */
+	do_test("aes512-sha1", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes-sha1", PROTO_IPSEC_ESP);
 	do_test("aes-sha", PROTO_IPSEC_ESP);
 	do_test("aes", PROTO_IPSEC_ESP);
@@ -106,6 +109,7 @@ main(int argc, char *argv[]) {
 	/* these should fail - but not by passert() */
 	do_test("aes-sha1", PROTO_IPSEC_AH);
 	do_test("vanityhash1", PROTO_IPSEC_AH);
+
 
 #ifdef WORK_IB_PROGRESS
 	/* ike= */
