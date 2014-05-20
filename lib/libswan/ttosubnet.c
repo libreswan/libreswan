@@ -103,7 +103,7 @@ ip_subnet *dst;
 	} else {
 		unsigned long port;
 
-		oops =  ttoul(colon + 1, mlen - (colon - mask + 1), 0, &port);
+		oops =  ttoulb(colon + 1, mlen - (colon - mask + 1), 0, 0xFFFF, &port);
 		if (oops != NULL)
 			return oops;
 
@@ -111,13 +111,10 @@ ip_subnet *dst;
 		mlen = colon - mask;
 	}
 
-	/*extract mask */
-	oops = ttoul(mask, mlen, 10, &bc);
+	/* extract mask */
+	oops = ttoulb(mask, mlen, 10, nbits, &bc);
 	if (oops == NULL) {
 		/* ttoul succeeded, it's a bit-count mask */
-		if (bc > (unsigned long)nbits)
-			return "subnet mask bit count too large";
-
 		i = bc;
 	} else if (af == AF_INET) {
 		oops = ttoaddr(mask, mlen, af, &masktmp);

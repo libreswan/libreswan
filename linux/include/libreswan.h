@@ -36,9 +36,24 @@ typedef int bool;
 /* ================ time-related declarations ================ */
 
 #include <time.h>
+
+/*
+ * UNDEFINED_TIME is meant to be an impossible exceptional time_t value.
+ *
+ * ??? On UNIX, 0 is a value that means 1970-01-01 00:00:00 +0000 (UTC).
+ *
+ * UNDEFINED_TIME is used as a real time_t value in certificate handling.
+ * Perhaps this is sancioned by X.509.
+ *
+ * UNDEFINED_TIME is used as a mono time_t value in  liveness_check().
+ * 0 is PROBABLY safely distinct in this application.
+ */
 #define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
+
+#define TIME_T_MAX  ((time_t) ((1ull << (sizeof(time_t) * BITS_PER_BYTE - 1)) - 1))
+
 enum {
-	secs_per_minute = 60 /* seconds */,
+	secs_per_minute = 60,
 	secs_per_hour = 60 * secs_per_minute,
 	secs_per_day = 24 * secs_per_hour
 };
@@ -414,6 +429,8 @@ typedef int (*libreswan_keying_debug_func_t)(const char *message, ...);
 
 /* text conversions */
 extern err_t ttoul(const char *src, size_t srclen, int format, unsigned long *dst);
+extern err_t ttoulb(const char *src, size_t srclen, int format,
+	unsigned long upb, unsigned long *dst);
 extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
 #define ULTOT_BUF       (22 + 1)  /* holds 64 bits in octal */
 

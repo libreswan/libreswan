@@ -1474,12 +1474,9 @@ static const char *read_proto(const char * s, size_t * len,
 		*transport_proto = 0;
 		return 0;
 	}
-	ugh = ttoul(p + 1, l - ((p - s) + 1), 10, &proto);
-	if (ugh != 0)
+	ugh = ttoulb(p + 1, l - ((p - s) + 1), 10, 0xFFFF, &proto);
+	if (ugh != NULL)
 		return ugh;
-
-	if (proto > 65535)
-		return "protocol number is too large, legal range is 0-65535";
 
 	*len = p - s;
 	*transport_proto = proto;

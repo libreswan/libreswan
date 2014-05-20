@@ -395,10 +395,18 @@ struct sadb_msg *m;
 		case AF_INET6:
 			if (getnameinfo(sa, sa->sa_len, NULL, 0,
 					pbuf, sizeof(pbuf),
-					NI_NUMERICSERV) != 0)
+					NI_NUMERICSERV) != 0) {
 				sport = 0;      /*XXX*/
-			else
-				sport = atoi(pbuf);
+			} else {
+				unsigned long u = 0;
+				err_t ugh = ttoulb(pbuf, 0, 0, 0xFFFF, &u);
+
+				if (ugh != NULL) {
+					printf("source port: %s\n", ugh);
+					return;
+				}
+				sport = u;
+			}
 			printf("%s%s ", str_ipaddr(sa),
 			       str_prefport(sa->sa_family,
 					    m_saddr->sadb_address_prefixlen,
@@ -417,10 +425,18 @@ struct sadb_msg *m;
 		case AF_INET6:
 			if (getnameinfo(sa, sa->sa_len, NULL, 0,
 					pbuf, sizeof(pbuf),
-					NI_NUMERICSERV) != 0)
+					NI_NUMERICSERV) != 0) {
 				dport = 0;      /*XXX*/
-			else
-				dport = atoi(pbuf);
+			} else {
+				unsigned long u = 0;
+				err_t ugh = ttoulb(pbuf, 0, 0, 0xFFFF, &u);
+
+				if (ugh != NULL) {
+					printf("destination port: %s\n", ugh);
+					return;
+				}
+				dport = u;
+			}
 			printf("%s%s ", str_ipaddr(sa),
 			       str_prefport(sa->sa_family,
 					    m_daddr->sadb_address_prefixlen,

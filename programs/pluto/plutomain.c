@@ -661,20 +661,17 @@ int main(int argc, char **argv)
 			if (streq(optarg, "-1")) {
 				nhelpers = -1;
 			} else {
-				ugh = ttoul(optarg, 0, 10, &u);
+				ugh = ttoulb(optarg, 0, 10, 1000, &u);
 				if (ugh != NULL)
 					break;
-				if (u > 1000) {
-					ugh = "too many helpers specified";
-					break;
-				}
+
 				nhelpers = u;
 			}
 			continue;
 
 #ifdef HAVE_LABELED_IPSEC
 		case 'w':	/* --secctx-attr-value */
-			ugh = ttoul(optarg, 0, 0, &u);
+			ugh = ttoulb(optarg, 0, 0, 0xFFFF, &u);
 			if (ugh != NULL)
 				break;
 			if (u != SECCTX && u != 10) {
@@ -758,7 +755,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'x':	/* --crlcheckinterval <seconds> */
-			ugh = ttoul(optarg, 0, 10, &u);
+			ugh = ttoulb(optarg, 0, 10, TIME_T_MAX, &u);
 			if (ugh != NULL)
 				break;
 			crl_check_interval = deltatime(u);
@@ -782,22 +779,22 @@ int main(int argc, char **argv)
 		 * filters
 		 */
 		case 'p':	/* --ikeport <portnumber> */
-			ugh = ttoul(optarg, 0, 10, &u);
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
 			if (ugh != NULL)
 				break;
-			if (u <= 0 || 0x10000 <= u) {
-				ugh = "<port-number> must be a number between 1 and 65535";
+			if (u == 0) {
+				ugh = "must not be 0";
 				break;
 			}
 			pluto_port = u;
 			continue;
 
 		case 'q':	/* --natikeport <portnumber> */
-			ugh = ttoul(optarg, 0, 10, &u);
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
 			if (ugh != NULL)
 				break;
-			if (u <= 0 || 0x10000 <= u) {
-				ugh = "<port-number> must be a number between 1 and 65535";
+			if (u == 0) {
+				ugh = "must not be 0";
 				break;
 			}
 			pluto_nat_port = u;
@@ -866,13 +863,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case '2':	/* --keep-alive <delay_secs> */
-			ugh = ttoul(optarg, 0, 10, &u);
+			ugh = ttoulb(optarg, 0, 10, secs_per_day, &u);
 			if (ugh != NULL)
 				break;
-			if (secs_per_day < u) {
-				ugh = "too large";
-				break;
-			}
 			keep_alive = u;
 			continue;
 
