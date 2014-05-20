@@ -2288,9 +2288,9 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	{
 		int np;
 #ifdef IMPAIR_UNALIGNED_R1_MSG
-		char *padstr = getenv("PLUTO_UNALIGNED_R1_MSG");
+		const char *padstr = getenv("PLUTO_UNALIGNED_R1_MSG");
 
-		if (padstr)
+		if (padstr != NULL)
 			np = ISAKMP_NEXT_VID;
 		else
 #endif
@@ -2306,12 +2306,17 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 #ifdef IMPAIR_UNALIGNED_R1_MSG
-		if (padstr) {
+		if (padstr != NULL) {
+			unsigned long padsize;
+			err_t ugh = ttoulb(padstr, 0, 10, 100, &padsize);
 			pb_stream vid_pbs;
-			int padsize;
-			padsize = strtoul(padstr, NULL, 0);
 
-			libreswan_log("inserting fake VID payload of %u size",
+			if (ugh != NULL) {
+				libreswan_log("$PLUTO_UNALIGNED_R1_MSG malformed: %s; pretending it is 3", ugh);
+				padsize = 3;
+			}
+
+			libreswan_log("inserting fake VID payload of %lu size",
 				      padsize);
 
 			if (st->st_pfs_group != NULL)
@@ -2592,17 +2597,22 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 	/* HASH(3) out -- sometimes, we add more content */
 	{
-		u_char /* set by START_HASH_PAYLOAD: */
-		*r_hashval;
+		u_char *r_hashval;	/* set by START_HASH_PAYLOAD */
 
 #ifdef IMPAIR_UNALIGNED_I2_MSG
 		{
-			char *padstr = getenv("PLUTO_UNALIGNED_I2_MSG");
+			const char *padstr = getenv("PLUTO_UNALIGNED_I2_MSG");
 
-			if (padstr) {
+			if (padstr != NULL) {
+				unsigned long padsize;
+				err_t ugh = ttoulb(padstr, 0, 10, 100, &padsize)
 				pb_stream vid_pbs;
-				int padsize;
-				padsize = strtoul(padstr, NULL, 0);
+
+				if (ugh != NULL) {
+					libreswan_log("$PLUTO_UNALIGNED_I2_MSG malformed: %s; pretending it is 3",
+						ugh);
+					padsize = 3;
+				}
 
 				libreswan_log(
 					"inserting fake VID payload of %u size",

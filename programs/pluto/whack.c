@@ -2104,9 +2104,8 @@ int main(int argc, char **argv)
 					 * and how it should affect our exit status
 					 */
 					{
-						unsigned long s = strtoul(ls,
-									  NULL,
-									  10);
+						unsigned long s =
+							strtoul(ls, NULL, 10);
 
 						switch (s) {
 						case RC_COMMENT:

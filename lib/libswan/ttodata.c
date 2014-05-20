@@ -190,43 +190,6 @@ size_t *lenp;	/* where to record length (NULL is nowhere) */
 }
 
 /*
- * atodata - convert ASCII to data
- *
- * backward-compatibility interface
- */
-size_t	/* 0 for failure, true length for success */
-atodata(src, srclen, dst, dstlen)
-const char *src;
-size_t srclen;
-char *dst;
-size_t dstlen;
-{
-	size_t len;
-	const char *err;
-
-	err = ttodata(src, srclen, 0, dst, dstlen, &len);
-	if (err != NULL)
-		return 0;
-
-	return len;
-}
-
-/*
- * atobytes - convert ASCII to data bytes
- *
- * another backward-compatibility interface
- */
-const char *atobytes(src, srclen, dst, dstlen, lenp)
-const char *src;
-size_t srclen;
-char *dst;
-size_t dstlen;
-size_t *lenp;
-{
-	return ttodata(src, srclen, 0, dst, dstlen, lenp);
-}
-
-/*
  * unhex - convert two ASCII hex digits to byte
  */
 static int	/* number of result bytes, or error code */
@@ -469,7 +432,7 @@ int main(int argc, char *argv[])
 		}
 		i = datatot(buf, n, 'h', p2, i);
 		if (i == 0) {
-			fprintf(stderr, "%s: error in datatoa retry?!?\n",
+			fprintf(stderr, "%s: error in datatot retry?!?\n",
 				pgm);
 			exit(1);
 		}

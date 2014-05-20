@@ -20,7 +20,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
-#include <stdlib.h>     /* system(), strtoul() */
+#include <stdlib.h>     /* system() */
 #include <sys/stat.h>   /* open() */
 #include <fcntl.h>      /* open() */
 #include <stdio.h>

@@ -19,7 +19,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
-#include <stdlib.h> /* system(), strtoul() */
+#include <stdlib.h> /* system() */
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -139,11 +139,9 @@ int debug = 0;
 
 int main(int argc, char **argv)
 {
-/*	int fd; */
-	char *endptr;
-/*	int ret; */
+	unsigned long u;	/* for ttoulb */
 	int c;
-	const char* error_s;
+	const char *error_s;
 
 	int error = 0;
 
@@ -285,19 +283,17 @@ int main(int argc, char **argv)
 					progname, optarg, spi_opt);
 				exit(1);
 			}
-			said.spi = htonl(strtoul(optarg, &endptr, 0));
-			if (!(endptr == optarg + strlen(optarg))) {
+
+			error_s = ttoulb(optarg, 0, 0, 0xFFFFFFFF, &u);
+			if (error_s == NULL && u < 0x100)
+				error_s = "values less than 0x100 are reserved";
+			if (error_s != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in SPI parameter: %s\n",
-					progname, optarg);
+					"%s: Invalid SPI parameter \"%s\": %s\n",
+					progname, optarg, error_s);
 				exit(1);
 			}
-			if (ntohl(said.spi) < 0x100) {
-				fprintf(stderr,
-					"%s: Illegal reserved spi: %s => 0x%x Must be larger than 0x100.\n",
-					progname, optarg, ntohl(said.spi));
-				exit(1);
-			}
+			said.spi = htonl(u);
 			spi_opt = optarg;
 			break;
 		case 'p':
@@ -513,7 +509,8 @@ int main(int argc, char **argv)
 
 	if (argcount == 1) {
 		struct stat sts;
-		if ( ((stat("/proc/net/pfkey", &sts)) == 0) ) {
+
+		if (stat("/proc/net/pfkey", &sts) == 0) {
 			fprintf(stderr,
 				"%s: NETKEY does not support eroute table.\n",
 				progname);
@@ -521,7 +518,8 @@ int main(int argc, char **argv)
 			exit(1);
 		} else {
 			int ret = 1;
-			if ((stat("/proc/net/ipsec_eroute", &sts)) != 0) {
+
+			if (stat("/proc/net/ipsec_eroute", &sts) != 0) {
 				fprintf(stderr,
 					"%s: No eroute table - no IPsec support in kernel (are the modules loaded?)\n",
 					progname);
@@ -545,22 +543,15 @@ int main(int argc, char **argv)
 		if (proto != 0) {
 			transport_proto = proto->p_proto;
 		} else {
-			transport_proto =
-				strtoul(transport_proto_opt, &endptr, 0);
-			if ((*endptr != '\0') ||
-			    (transport_proto == 0 &&
-			     endptr == transport_proto_opt)) {
+			error_s = ttoulb(optarg, 0, 0, 255, &u);
+			if (error_s != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in --transport-proto parameter: %s\n",
-					progname, transport_proto_opt);
+					"%s: Invalid --transport-proto parameter \"%s\": %s\n",
+					progname, transport_proto_opt, error_s);
 				exit(1);
 			}
-			if (transport_proto > 255) {
-				fprintf(stderr,
-					"%s: --transport-proto parameter: %s must be in the range 0 to 255 inclusive\n",
-					progname, transport_proto_opt);
-				exit(1);
-			}
+
+			transport_proto = u;
 		}
 	}
 
@@ -582,20 +573,14 @@ int main(int argc, char **argv)
 		if (ent != 0) {
 			src_port = ent->s_port;
 		} else {
-			src_port = strtoul(src_port_opt, &endptr, 0);
-			if ((*endptr != '\0') ||
-			    (src_port == 0 && endptr == src_port_opt)) {
+			error_s = ttoulb(optarg, 0, 0, 0xFFFF, &u);
+			if (error_s != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in --src-port parameter: %s\n",
-					progname, src_port_opt);
+					"%s: Invalid --src-port parameter \"%s\": %s\n",
+					progname, src_port_opt, error_s);
 				exit(1);
 			}
-			if (src_port > 65535) {
-				fprintf(stderr,
-					"%s: --src-port parameter: %s must be in the range 0 to 65535 inclusive\n",
-					progname, src_port_opt);
-			}
-			src_port = htons(src_port);
+			src_port = htons(u);
 		}
 	}
 
@@ -604,20 +589,14 @@ int main(int argc, char **argv)
 		if (ent != 0) {
 			dst_port = ent->s_port;
 		} else {
-			dst_port = strtoul(dst_port_opt, &endptr, 0);
-			if ((*endptr != '\0') ||
-			    (dst_port == 0 && endptr == dst_port_opt)) {
+			error_s = ttoulb(optarg, 0, 0, 0xFFFF, &u);
+			if (error_s != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in --dst-port parameter: %s\n",
-					progname, dst_port_opt);
+					"%s: Invalid --dst-port parameter \"%s\": %s\n",
+					progname, src_port_opt, error_s);
 				exit(1);
 			}
-			if (dst_port > 65535) {
-				fprintf(stderr,
-					"%s: --dst-port parameter: %s must be in the range 0 to 65535 inclusive\n",
-					progname, dst_port_opt);
-			}
-			dst_port = htons(dst_port);
+			dst_port = htons(u);
 		}
 	}
 

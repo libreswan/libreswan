@@ -407,6 +407,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 				    struct starter_end *end, const char *lr)
 {
 	const char *err;
+	char err_buf[TTODATAV_BUF];
 	char keyspace[1024 + 4];
 	struct whack_message msg;
 	int ret;
@@ -438,9 +439,10 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = atobytes((char *)end->rsakey1, 0, keyspace,
+			err = ttodatav((char *)end->rsakey1, 0, 0, keyspace,
 				       sizeof(keyspace),
-				       &msg.keyval.len);
+				       &msg.keyval.len,
+				       err_buf, sizeof(err_buf), 0);
 			if (err) {
 				starter_log(LOG_LEVEL_ERR,
 					    "conn %s/%s: rsakey malformed [%s]",
@@ -472,9 +474,10 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = atobytes((char *)end->rsakey2, 0, keyspace,
+			err = ttodatav((char *)end->rsakey2, 0, 0, keyspace,
 				       sizeof(keyspace),
-				       &msg.keyval.len);
+				       &msg.keyval.len,
+				       err_buf, sizeof(err_buf), 0);
 			if (err) {
 				starter_log(LOG_LEVEL_ERR,
 					    "conn %s/%s: rsakey malformed [%s]",

@@ -614,37 +614,6 @@ rangetoa(struct in_addr *addrs, /* two-element array */
 
 /* data types for SA conversion functions */
 
-/* generic data, e.g. keys */
-extern const char *                    /* NULL for success, else string literal */
-atobytes(const char *src,
-	 size_t srclen,         /* 0 means strlen(src) */
-	 char *dst,
-	 size_t dstlen,
-	 size_t *lenp           /* NULL means don't bother telling me */
-	 );
-extern size_t                          /* 0 failure, else true size */
-bytestoa(const unsigned char *src,
-	 size_t srclen,
-	 int format,            /* character; 0 means default */
-	 char *dst,
-	 size_t dstlen
-	 );
-
-/* old versions of generic-data functions; deprecated */
-extern size_t                          /* 0 failure, else true size */
-atodata(const char *src,
-	size_t srclen,          /* 0 means strlen(src) */
-	char *dst,
-	size_t dstlen
-	);
-extern size_t                          /* 0 failure, else true size */
-datatoa(const unsigned char *src,
-	size_t srclen,
-	int format,             /* character; 0 means default */
-	char *dst,
-	size_t dstlen
-	);
-
 /* part extraction and special addresses */
 extern struct in_addr subnetof(struct in_addr addr,
 			struct in_addr mask

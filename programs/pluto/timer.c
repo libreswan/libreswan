@@ -901,21 +901,18 @@ static unsigned long envnumber(const char *name,
 			     unsigned long def)
 {
 	const char *s = getenv(name);
-	/*const*/ char *e;
 	unsigned long res;
+	err_t ugh;
 
 	if (s == NULL)
 		return def;
 
-	res = strtoul(s, &e, 0);
-	if (e == s || *e != '\0') {
-		libreswan_log("environment variable %s is \"%s\", not a well-formed number",
-			name, s);
-		return def;
-	}
-	if (res < lwb || upb < res) {
-		libreswan_log("environment variable %s is %lu, but must be between %lu and %lu",
-			name, res, lwb, upb);
+	ugh = ttoulb(s, 0, 10, upb, &res);
+	if (ugh == NULL && res < lwb)
+		ugh = "too small";
+	if (ugh != NULL) {
+		libreswan_log("environment variable %s is \"%s\", %s",
+			name, s, ugh);
 		return def;
 	}
 	DBG(DBG_CONTROL,
