@@ -69,13 +69,13 @@ const char *ip_str(const ip_address *src)
 	return buf;
 }
 
-main(int argc, char *argv[]){
+main(int argc, char *argv[]) {
 	int i;
 	struct db_sa *gsp = NULL;
 	struct db_sa *sa1 = NULL;
 	struct db_sa *sa2 = NULL;
 	struct alg_info_esp *aii;
-	err_t ugh;
+	char err_buf[100];
 
 	EF_PROTECT_FREE = 1;
 	EF_FREE_WIPES  = 1;
@@ -100,7 +100,7 @@ main(int argc, char *argv[]){
 	esp_ealg_num = 10;
 	esp_aalg_num = 10;
 
-	aii = alg_info_esp_create_from_str("aes128-sha1", &ugh, FALSE);
+	aii = alg_info_esp_create_from_str("aes128-sha1", &err_buf, sizeof(err_buf));
 
 	gsp = kernel_alg_makedb(POLICY_ENCRYPT | POLICY_AUTHENTICATE,
 				aii,
