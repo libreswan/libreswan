@@ -1100,7 +1100,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
  *	    --> HDR, KE, <IDr1_b>PubKey_i, <Nr_b>PubKey_i
  * RPKE_AUTH:
  *	    HDR, [ HASH(1), ] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDi1_b>Ke_i
- * 	    [,<<Cert-I_b>Ke_i]
+ *	    [,<<Cert-I_b>Ke_i]
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
 static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,

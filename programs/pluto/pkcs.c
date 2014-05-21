@@ -141,7 +141,7 @@ bool parse_pkcs7_cert(chunk_t blob, x509cert_t **cert)
 
 	asn1_init(&ctx, blob, 0, FALSE, DBG_RAW);
 
-	for (objectID = 0; objectID < PKCS7_INFO_ROOF; 	objectID++) {
+	for (objectID = 0; objectID < PKCS7_INFO_ROOF; objectID++) {
 		chunk_t object;
 		u_int level;
 

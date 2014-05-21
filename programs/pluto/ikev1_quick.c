@@ -267,7 +267,7 @@ static void compute_proto_keymat(struct state *st,
 				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
 			} else {
 				/*
-				 * If no keylength set, pick mandatory to implement default 
+				 * If no keylength set, pick mandatory to implement default
 				 * {CAMELLIA,TWOFISH,SERPENT}_DEF_KEY_LEN = 128
 				 */
 				needed_len = 128 / BITS_PER_BYTE;

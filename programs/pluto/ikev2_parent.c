@@ -1052,7 +1052,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		if (md->chain[ISAKMP_NEXT_v2N]) {
 			isan_type = md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type;
 			libreswan_log("%s: received %s", from_state_name,
-			      		enum_name(&ikev2_notify_names, isan_type));
+				      enum_name(&ikev2_notify_names, isan_type));
 		}
 
 	}

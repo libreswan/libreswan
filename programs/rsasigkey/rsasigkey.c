@@ -418,7 +418,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	if (password == NULL) {
 		pwdata.source = PW_NONE;
-	} else 	{
+	} else {
 		/* check if passwd == configdir/nsspassword */
 		size_t cdl = strlen(configdir);
 		size_t pwl = strlen(password);
