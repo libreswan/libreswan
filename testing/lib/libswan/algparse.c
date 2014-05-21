@@ -24,7 +24,7 @@ void do_test(const char *algstr, int ttype) {
 	switch(ttype) {
 	case PROTO_IPSEC_ESP:
 		aie = (struct alg_info *)alg_info_esp_create_from_str(
-			algstr, &err);
+			algstr, err_buf, sizeof(err_buf));
 		break;
 	case PROTO_IPSEC_AH:
 		aie = (struct alg_info *)alg_info_ah_create_from_str(
@@ -37,13 +37,17 @@ void do_test(const char *algstr, int ttype) {
 		break;
 #endif
 	}
-	passert(aie != NULL);
-	alg_info_snprint(algbuf, 256, aie);
-	if (err_buf[0] != '\0')
+	algbuf[0] = '\0';
+	if (aie != NULL)
+		alg_info_snprint(algbuf, sizeof(algbuf), aie);
+	if (err_buf[0] != '\0') {
 		printf("ERROR: alg=%s  error=%s\n", algbuf, err_buf);
-	else
+	} else {
+		passert(aie != NULL);
 		printf("   OK: alg=%s\n", algbuf);
-	alg_info_free(aie);
+	}
+	if (aie != NULL)
+		alg_info_free(aie);
 }
 
 main(int argc, char *argv[]) {

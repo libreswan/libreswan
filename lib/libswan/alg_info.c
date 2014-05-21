@@ -920,10 +920,10 @@ int alg_info_snprint(char *buf, int buflen,
 	char *ptr = buf;
 	struct esp_info *esp_info;
 	struct ike_info *ike_info;
+	int cnt;
 
 	passert(buflen > 0);
 
-	int cnt;
 	ptr = buf;
 	switch (alg_info->alg_info_protoid) {
 	case PROTO_IPSEC_ESP:
