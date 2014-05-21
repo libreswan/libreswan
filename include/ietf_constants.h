@@ -338,7 +338,7 @@
  *            128,192 and 256 are the only commonly used ones
  */
 
-/* 
+/*
  * TWOFISH-CBC is a 128-bit block cipher with variable-length key upto 256 bits
  * default is 128. 128,192 and 256 are the only commonly used ones
  */
@@ -355,7 +355,7 @@
 
 /*
  * Camellia CBC and CTR - RFC 5529
- * 128 (default), 192 and 256 
+ * 128 (default), 192 and 256
  */
 #define  CAMELLIA_KEY_MIN_LEN 128
 #define  CAMELLIA_KEY_DEF_LEN 128

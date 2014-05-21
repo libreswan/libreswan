@@ -292,7 +292,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			if (p1st->st_dpd_event != NULL &&
 			    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT) {
 				DBG(DBG_DPD,
-			    	    DBG_log("DPD: deleting p1st DPD event"));
+				    DBG_log("DPD: deleting p1st DPD event"));
 				delete_dpd_event(p1st);
 			}
 
