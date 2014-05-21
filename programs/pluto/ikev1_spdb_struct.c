@@ -13,7 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdio.h>
@@ -49,6 +48,7 @@
 #include "md5.h"
 #include "crypto.h" /* requires sha1.h and md5.h */
 
+#include "ikev1.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
@@ -243,7 +243,7 @@ static bool out_attr(int type,
  * This has the side-effect of allocating SPIs for us.
  *
  */
-bool out_sa(pb_stream *outs,
+bool ikev1_out_sa(pb_stream *outs,
 	    struct db_sa *sadb,
 	    struct state *st,
 	    bool oakley_mode,
@@ -349,7 +349,7 @@ bool out_sa(pb_stream *outs,
 		pc = &sadb->prop_conjs[pcn];
 		valid_prop_cnt = pc->prop_cnt;
 		DBG(DBG_EMITTING,
-		    DBG_log("out_sa pcn: %d has %d valid proposals",
+		    DBG_log("ikev1_out_sa pcn: %d has %d valid proposals",
 			    pcn, valid_prop_cnt));
 
 		for (pn = 0; pn < pc->prop_cnt; pn++) {
@@ -383,7 +383,7 @@ bool out_sa(pb_stream *outs,
 						  IPSEC_DOI_SPI_SIZE;
 
 			DBG(DBG_EMITTING,
-			    DBG_log("out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
+			    DBG_log("ikev1_out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
 				    pcn, pn, pc->prop_cnt, valid_prop_cnt,
 				    p->trans_cnt));
 
@@ -519,15 +519,26 @@ bool out_sa(pb_stream *outs,
 				pb_stream trans_pbs;
 				struct isakmp_transform trans;
 				unsigned int an;
+				bool oakley_keysize = FALSE;
+				bool ipsec_keysize = FALSE;
 
 				trans.isat_np = (tn == p->trans_cnt - 1) ?
 						ISAKMP_NEXT_NONE :
 						ISAKMP_NEXT_T;
 				trans.isat_transnum = tn;
 				trans.isat_transid = t->transid;
+
+				if (!oakley_mode && t->transid == ESP_AES)
+					DBG(DBG_CONTROLMORE,DBG_log("PAUL: GOT ESP_AES should go here!"));
+
 				if (!out_struct(&trans, trans_desc,
 						&proposal_pbs, &trans_pbs))
 					return_on(ret, FALSE);
+
+
+				if (!oakley_mode)
+					DBG(DBG_CONTROLMORE,DBG_log("PAUL: KEYSIZE should go here!"));
+
 
 				/* Within tranform: Attributes. */
 
@@ -538,8 +549,7 @@ bool out_sa(pb_stream *outs,
 				if (p->protoid != PROTO_IPCOMP &&
 				    st->st_pfs_group != NULL) {
 					passert(!oakley_mode);
-					passert(st->st_pfs_group !=
-						&unset_group);
+					passert(st->st_pfs_group != &unset_group);
 					if (!out_attr(GROUP_DESCRIPTION,
 						      st->st_pfs_group->group,
 						      attr_desc,
@@ -665,29 +675,59 @@ bool out_sa(pb_stream *outs,
 
 				}
 
+
+				if (oakley_mode) {
+					oakley_keysize = FALSE;
+					for (an = 0; an != t->attr_cnt; an++) {
+						struct db_attr *a = &t->attrs[an];
+
+						if (a->type.oakley == OAKLEY_KEY_LENGTH) {
+							oakley_keysize = TRUE;
+						}
+					}
+				} else {
+					ipsec_keysize = FALSE;
+					for (an = 0; an != t->attr_cnt; an++) {
+						struct db_attr *a = &t->attrs[an];
+						if (a->type.ipsec == KEY_LENGTH) {
+							 DBG(DBG_CONTROLMORE, DBG_log("PAUL: found IPSEC key length"));
+							ipsec_keysize = TRUE;
+						}
+					}
+					if (!ipsec_keysize) DBG(DBG_CONTROLMORE, DBG_log("PAUL: NO IPSEC key length"));
+				}
+
 				/* spit out attributes from table */
 				for (an = 0; an != t->attr_cnt; an++) {
 					struct db_attr *a = &t->attrs[an];
 
-					if (oakley_mode) {
-						if (!out_attr(a->type.oakley,
-							      a->val,
-							      attr_desc,
-							      attr_val_descs,
-							      &trans_pbs))
-							return_on(ret, FALSE);
-					} else {
-						if (!out_attr(a->type.ipsec,
-							      a->val,
-							      attr_desc,
-							      attr_val_descs,
-							      &trans_pbs))
-							return_on(ret, FALSE);
+					if (!oakley_mode) DBG(DBG_CONTROLMORE, DBG_log("PAUL: ipsec out_attr START"));
 
+					if (!out_attr( oakley_mode ? a->type.oakley : a->type.ipsec ,
+						      a->val,
+						      attr_desc,
+						      attr_val_descs,
+						      &trans_pbs))
+						return_on(ret, FALSE);
+					if (!oakley_mode) DBG(DBG_CONTROLMORE, DBG_log("PAUL: ipsec out_attr END"));
+
+					if (oakley_mode) {
+						if (!oakley_keysize && a->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM) {
+							int defkeysize = crypto_req_keysize(1 /* ikev1 */, a->val);
+							if (defkeysize) {
+								DBG(DBG_CONTROLMORE, DBG_log("inserting default key length attribute payload of %d bits",
+									defkeysize));
+								if (!out_attr(OAKLEY_KEY_LENGTH,
+									defkeysize,
+									attr_desc,
+									attr_val_descs,
+									&trans_pbs))
+									return_on(ret, FALSE);
+							}
+						}
 					}
 
 				}
-
 				close_output_pbs(&trans_pbs);
 			}
 			close_output_pbs(&proposal_pbs);

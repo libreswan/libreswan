@@ -278,26 +278,51 @@
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
 
+/* Various IETF defined key lengths */
+
+/* AES-CBC RFC 3602 The _only_ valid values are 128, 192 and 256 bits */
+#define  AES_KEY_MIN_LEN        128
+#define  AES_KEY_DEF_LEN        128
+#define  AES_KEY_MAX_LEN        256
+
+/* AES-CTR RFC 3686 The _only_ valid values are 128, 192 and 256 bits */
+#define  AES_CTR_KEY_MIN_LEN 128
+#define  AES_CTR_KEY_DEF_LEN 128
+#define  AES_CTR_KEY_MAX_LEN 256
+
 /*
  * RFC 4106 AES GCM
  * http://tools.ietf.org/html/rfc4106#section-8.1
  */
 #define AES_GCM_SALT_BYTES 4
+#define AES_GCM_KEY_MIN_LEN 128
+#define AES_GCM_KEY_DEF_LEN 128
+#define AES_GCM_KEY_MAX_LEN 256
 
 /*
  * RFC 4309 AES CCM
  * http://tools.ietf.org/search/rfc4309#section-7.1
  */
 #define AES_CCM_SALT_BYTES 3
+#define AES_CCM_KEY_MIN_LEN 128
+#define AES_CCM_KEY_DEF_LEN 128
+#define AES_CCM_KEY_MAX_LEN 256
 
-/* Actually, the only valid values are 128, 192 and 256 bits */
+/* The _only_ valid values are 128, 192 and 256 bits */
 #define  AEAD_AES_KEY_MIN_LEN       128
 #define  AEAD_AES_KEY_DEF_LEN       128
 #define  AEAD_AES_KEY_MAX_LEN       256
 
-#define  AES_KEY_MIN_LEN        128
-#define  AES_KEY_DEF_LEN        128
-#define  AES_KEY_MAX_LEN        256
+/* AES-GMAC RFC 4543 The _only_ valid values are 128, 192 and 256 bits */
+#define  AES_GMAC_KEY_MIN_LEN 128
+#define  AES_GMAC_KEY_DEF_LEN 128
+#define  AES_GMAC_KEY_MAX_LEN 256
+
+/* SEED-CBC RFC 4196 The _only_ valid value is 128 */
+#define  SEED_KEY_MIN_LEN 128
+#define  SEED_KEY_DEF_LEN 128
+#define  SEED_KEY_MAX_LEN 128
+
 
 /*
  * http://tools.ietf.org/html/rfc2451#section-2.2
@@ -307,6 +332,39 @@
 #define  CAST_KEY_MIN_LEN        128
 #define  CAST_KEY_DEF_LEN        128
 #define  CAST_KEY_MAX_LEN        128
+
+/*
+ * RFC 2451 - Blowfish accepts key sizes 40-448, default is 128
+ *            128,192 and 256 are the only commonly used ones
+ */
+
+/*
+ * TWOFISH-CBC is a 128-bit block cipher with variable-length key upto 256 bits
+ * default is 128. 128,192 and 256 are the only commonly used ones
+ */
+#define  TWOFISH_KEY_MIN_LEN 128
+#define  TWOFISH_KEY_DEF_LEN 128
+#define  TWOFISH_KEY_MAX_LEN 256
+
+/*
+ * SERPENT default 128, 128,192 and 256 are the only commonly used ones
+ */
+#define  SERPENT_KEY_MIN_LEN 128
+#define  SERPENT_KEY_DEF_LEN 128
+#define  SERPENT_KEY_MAX_LEN 256
+
+/*
+ * Camellia CBC and CTR - RFC 5529
+ * 128 (default), 192 and 256
+ */
+#define  CAMELLIA_KEY_MIN_LEN 128
+#define  CAMELLIA_KEY_DEF_LEN 128
+#define  CAMELLIA_KEY_MAX_LEN 256
+
+#define  CAMELLIA_CTR_KEY_MIN_LEN 128
+#define  CAMELLIA_CTR_KEY_DEF_LEN 128
+#define  CAMELLIA_CTR_KEY_MAX_LEN 256
+
 
  /* ought to be supplied by md5.h */
 #define MD5_DIGEST_SIZE BYTES_FOR_BITS(128)

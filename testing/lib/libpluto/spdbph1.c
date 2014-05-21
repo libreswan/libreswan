@@ -62,7 +62,7 @@ main(int argc, char *argv[]){
 	struct db_sa *sa1 = NULL;
 	struct db_sa *sa2 = NULL;
 	struct alg_info_ike *aii;
-	err_t ugh;
+	char err_buf[256];	/* ??? big enough? */
 
 	progname = argv[0];
 	leak_detective = 1;
@@ -70,7 +70,7 @@ main(int argc, char *argv[]){
 	tool_init_log();
 	init_crypto();
 
-	aii = alg_info_ike_create_from_str("3des", &ugh);
+	aii = alg_info_ike_create_from_str("3des", err_buf, sizeof(err_buf));
 
 	gsp = oakley_alg_makedb(aii,
 				&oakley_sadb[POLICY_RSASIG >>

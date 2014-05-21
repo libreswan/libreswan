@@ -292,7 +292,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			if (p1st->st_dpd_event != NULL &&
 			    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT) {
 				DBG(DBG_DPD,
-			    	    DBG_log("DPD: deleting p1st DPD event"));
+				    DBG_log("DPD: deleting p1st DPD event"));
 				delete_dpd_event(p1st);
 			}
 
@@ -371,8 +371,7 @@ static void p2_dpd_outI1(struct state *p2st)
 
 void dpd_event(struct state *st)
 {
-	if (st == NULL)
-		return;
+	passert(st != NULL);
 
 	if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state ))
 		p1_dpd_outI1(st);
@@ -433,7 +432,25 @@ stf_status dpd_inI_outR(struct state *p1st,
 	if (p1st->st_dpd_peerseqno && seqno <= p1st->st_dpd_peerseqno) {
 		loglog(RC_LOG_SERIOUS,
 		       "DPD: received old or duplicate R_U_THERE");
-		return STF_IGNORE;
+		if (p1st->st_dpd_rdupcount >= DPD_RETRANS_MAX) {
+			loglog(RC_LOG_SERIOUS,
+		       "DPD: received %d or more duplicate R_U_THERE's - will no longer answer",
+				DPD_RETRANS_MAX);
+			return STF_IGNORE;
+		} else {
+			/*
+			 * Needed to work around openbsd bug (isakmpd/dpd.c
+			 * around line 350) where they forget to increase
+			 * isakmp_sa->dpd_seq on unanswered DPD probe violating
+			 * RFC 3706 Section 7 "Security Considerations"
+			 */
+			loglog(RC_LOG_SERIOUS,
+		       "DPD: received less than %d duplicate R_U_THERE's - will reluctantly answer",
+				DPD_RETRANS_MAX);
+			p1st->st_dpd_rdupcount++;
+		}
+	} else {
+		p1st->st_dpd_rdupcount = 0;
 	}
 
 	DBG(DBG_DPD,

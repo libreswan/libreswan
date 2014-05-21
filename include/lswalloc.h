@@ -40,9 +40,9 @@ extern void report_leaks(void);
 #define clone_str(str, name) \
 	((str) == NULL ? NULL : clone_bytes((str), strlen((str)) + 1, (name)))
 
-#define pfreeany(p) do { if ((p) != NULL) \
-				 pfree(p); } while (0)
-#define replace(p, q) do { pfreeany(p); (p) = (q); } while (0)
+#define pfreeany(p) { if ((p) != NULL) pfree(p); }
+
+#define replace(p, q) { pfreeany(p); (p) = (q); }
 
 /* chunk is a simple pointer-and-size abstraction */
 

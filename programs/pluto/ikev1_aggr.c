@@ -1260,7 +1260,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		u_char *sa_start = md->rbody.cur;
 		unsigned policy_index = POLICY_ISAKMP(st->st_policy, c);
 
-		if (!out_sa(&md->rbody,
+		if (!ikev1_out_sa(&md->rbody,
 			    &oakley_am_sadb[policy_index], st,
 			    TRUE, TRUE, ISAKMP_NEXT_KE)) {
 			cur_state = NULL;

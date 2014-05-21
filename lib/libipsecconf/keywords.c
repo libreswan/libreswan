@@ -300,7 +300,7 @@ static const struct keyword_enum_value kw_sendcert_values[] = {
 static const struct keyword_enum_values kw_sendcert_list = VALUES_INITIALIZER(kw_sendcert_values);
 
 /*
- * Values for ikev1_natt={drafts,rfc,both}
+ * Values for nat-ikev1-method={drafts,rfc,both}
  */
 static const struct keyword_enum_value kw_ikev1natt_values[] = {
 	{ "both",       natt_both },
@@ -472,9 +472,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{"ikepad",          kv_conn | kv_auto, kt_bool,   KBF_IKEPAD,
 	  NOT_ENUM },
-	{ "ikev1_natt",          kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,
-	  KBF_IKEV1_NATT, &kw_ikev1natt_list },	/* obsolete _ */
-	{ "ikev1-natt",          kv_conn | kv_auto | kv_processed, kt_enum,
+	{ "nat-ikev1-method", kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKEV1_NATT, &kw_ikev1natt_list },
 #ifdef HAVE_LABELED_IPSEC
 	{ "loopback",       kv_conn | kv_auto, kt_bool, KBF_LOOPBACK,

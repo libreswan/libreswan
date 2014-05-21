@@ -90,9 +90,7 @@ int alg = 0;
 #define XF_OTHER_ALG (XF_CLR - 1)       /* define magic XF_ symbol for alg_info's */
 #include <assert.h>
 const char *alg_string = NULL;          /* algorithm string */
-struct alg_info_esp *alg_info = NULL;   /* algorithm info got from string */
 struct esp_info *esp_info = NULL;       /* esp info from 1st (only) element */
-const char *alg_err;                    /* auxiliar for parsing errors */
 int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 
 int replay_window = 0;
@@ -367,9 +365,12 @@ static bool pfkey_build(int error,
 
 static int decode_esp(char *algname)
 {
+	char err_buf[256] = "";	/* ??? big enough? */
 	int esp_alg;
 
-	if ((alg_info = alg_info_esp_create_from_str(algname, &alg_err))) {
+	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(algname, err_buf, sizeof(err_buf));
+
+	if (alg_info != NULL) {
 		int esp_ealg_id, esp_aalg_id;
 
 		esp_alg = XF_OTHER_ALG;
@@ -422,8 +423,8 @@ static int decode_esp(char *algname)
 		}
 	} else {
 		fprintf(stderr,
-			"%s: Invalid encryption algorithm '%s' follows '--esp' option.\n",
-			progname, algname);
+			"%s: Invalid encryption algorithm '%s' follows '--esp' option %s\n",
+			progname, algname, err_buf);
 		exit(1);
 	}
 	return esp_alg;

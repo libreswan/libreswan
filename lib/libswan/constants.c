@@ -2006,7 +2006,9 @@ const char *strip_prefix(const char *s, const char *prefix)
 }
 
 /*
- * find the value for a name in an enum_names table.  If not found, returns -1
+ * Find the value for a name in an enum_names table.  If not found, returns -1.
+ *
+ * Strings are compared without regard to case.
  *
  * ??? the table contains unsigned long values BUT the function returns an
  * int so there is some potential for overflow.
@@ -2021,7 +2023,7 @@ int enum_search(enum_names *ed, const char *str)
 		for (en = p->en_first; en <= p->en_last; en++) {
 			const char *ptr = p->en_names[en - p->en_first];
 
-			if (ptr != NULL && streq(ptr, str)) {
+			if (ptr != NULL && strcaseeq(ptr, str)) {
 				passert(en <= INT_MAX);
 				return en;
 			}

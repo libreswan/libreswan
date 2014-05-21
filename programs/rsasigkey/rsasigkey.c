@@ -410,7 +410,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	if (password == NULL) {
 		pwdata.source = PW_NONE;
-	} else 	{
+	} else {
 		/* check if passwd == configdir/nsspassword */
 		size_t cdl = strlen(configdir);
 		size_t pwl = strlen(password);
@@ -515,7 +515,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
 	if (ckaID != NULL) {
-		printf("\t# everything after this point is CKA_ID in hex formati - not the real values \n");
+		printf("\t# everything after this point is CKA_ID in hex format - not the real values \n");
 		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
 		printf("\tPrime1: %s\n", hexOut(ckaID));
 		printf("\tPrime2: %s\n", hexOut(ckaID));

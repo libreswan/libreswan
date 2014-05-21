@@ -758,7 +758,7 @@ stf_status xauth_send_request(struct state *st)
 
 	if (!close_message(&rbody, st))
 			return STF_INTERNAL_ERROR;
-	
+
 	close_output_pbs(&reply);
 
 	init_phase2_iv(st, &st->st_msgid_phase15);
