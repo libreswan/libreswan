@@ -13,7 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdio.h>
@@ -514,19 +513,14 @@ bool ikev1_out_sa(pb_stream *outs,
 				}
 			}
 
-#if 0
-			for (tn = 0; tn != p->trans_cnt; tn++) {
-				struct db_trans *t = &p->trans[tn];
-				if 
-#endif
-			
 			/* within proposal: Transform Payloads */
 			for (tn = 0; tn != p->trans_cnt; tn++) {
 				struct db_trans *t = &p->trans[tn];
 				pb_stream trans_pbs;
 				struct isakmp_transform trans;
 				unsigned int an;
-				bool oakley_keysize, ipsec_keysize = FALSE;
+				bool oakley_keysize = FALSE;
+				bool ipsec_keysize = FALSE;
 
 				trans.isat_np = (tn == p->trans_cnt - 1) ?
 						ISAKMP_NEXT_NONE :
@@ -534,10 +528,9 @@ bool ikev1_out_sa(pb_stream *outs,
 				trans.isat_transnum = tn;
 				trans.isat_transid = t->transid;
 
-				if (!oakley_mode)
-					if (t->transid == ESP_AES)
-						DBG(DBG_CONTROLMORE,DBG_log("PAUL: GOT ESP_AES should go here!"));
-					
+				if (!oakley_mode && t->transid == ESP_AES)
+					DBG(DBG_CONTROLMORE,DBG_log("PAUL: GOT ESP_AES should go here!"));
+
 				if (!out_struct(&trans, trans_desc,
 						&proposal_pbs, &trans_pbs))
 					return_on(ret, FALSE);
@@ -729,7 +722,7 @@ bool ikev1_out_sa(pb_stream *outs,
 									attr_desc,
 									attr_val_descs,
 									&trans_pbs))
-                                                       		return_on(ret, FALSE);
+									return_on(ret, FALSE);
 							}
 						}
 					}
