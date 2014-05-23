@@ -42,8 +42,8 @@ struct oakley_group_desc;
 #define MAX_ALG_ALIASES 16
 
 typedef struct alg_alias {
-        const char *alg;
-        const char *alias_set[MAX_ALG_ALIASES];
+	const char *alg;
+	const char *alias_set[MAX_ALG_ALIASES];
 } alg_alias;
 
 /*
@@ -52,23 +52,23 @@ typedef struct alg_alias {
  * examples aes cannot become an alias for aes128 or else a responder
  * with esp=aes would reject aes256.
  */
-const alg_alias auth_alg_aliases[] = {
+static const alg_alias auth_alg_aliases[] = {
 	/* alg */	/* aliases */
-        { "sha2_256",     { "sha2", NULL } },
-        { "sha1",         { "sha", NULL } },
-        { NULL, { NULL } }
+	{ "sha2_256",	{ "sha2", NULL } },
+	{ "sha1",	{ "sha", NULL } },
+	{ NULL, { NULL } }
 };
 
-const alg_alias esp_trans_aliases[] = {
+static const alg_alias esp_trans_aliases[] = {
 	/* alg */	/* aliases */
-	{ "aes_ccm_a",    { "aes_ccm_8",  NULL } },
-	{ "aes_ccm_b",    { "aes_ccm_12", NULL } },
-	{ "aes_ccm_c",    { "aes_ccm_16", "aes_ccm", NULL } },
-	{ "aes_gcm_a",    { "aes_gcm_8", NULL } },
-	{ "aes_gcm_b",    { "aes_gcm_12", NULL } },
-	{ "aes_gcm_c",    { "aes_gcm_16", "aes_gcm", NULL } },
+	{ "aes_ccm_a",	{ "aes_ccm_8",  NULL } },
+	{ "aes_ccm_b",	{ "aes_ccm_12", NULL } },
+	{ "aes_ccm_c",	{ "aes_ccm_16", "aes_ccm", NULL } },
+	{ "aes_gcm_a",	{ "aes_gcm_8", NULL } },
+	{ "aes_gcm_b",	{ "aes_gcm_12", NULL } },
+	{ "aes_gcm_c",	{ "aes_gcm_16", "aes_gcm", NULL } },
 	{ "aes_ctr",	{ "aesctr", NULL } },
-	{ "aes",		{ "aes_cbc", NULL } },
+	{ "aes",	{ "aes_cbc", NULL } },
 	{ NULL, { NULL } }
 };
 
@@ -104,7 +104,6 @@ enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	default:
 		bad_case(auth);
 	}
-	return 0;
 }
 
 /*
@@ -146,9 +145,9 @@ enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti)
 	case IKEv2_AUTH_AES_128_GMAC:
 	case IKEv2_AUTH_AES_192_GMAC:
 	case IKEv2_AUTH_AES_256_GMAC:
+	default:
 		bad_case(ti);
 	}
-	return 0;
 }
 
 int alg_info_esp_sadb2aa(int sadb_aalg)
@@ -244,22 +243,22 @@ static int aalg_getbyname_esp(const char *str, size_t len)
 	return ret;
 }
 
-/* if str is a known alias, return the real alg */ 
+/* if str is a known alias, return the real alg */
 static const char *alg_find_alias(const alg_alias *alias, const char *str)
 {
-        alg_alias *aa;
-        int i;
+	const alg_alias *aa;
+	int i;
 
-        for (aa = (alg_alias *)alias; aa->alg != NULL; aa++) {
-		char **aset = (char **)aa->alias_set;
+	for (aa = alias; aa->alg != NULL; aa++) {
+		const char *const *aset = aa->alias_set;
 
-                for (i = 0; i < MAX_ALG_ALIASES && aset[i] != NULL; i++) {
-                        if (strcasecmp(str, aset[i]) == 0)
-                                return aa->alg;
-                }
-        }
+		for (i = 0; i < MAX_ALG_ALIASES && aset[i] != NULL; i++) {
+			if (strcasecmp(str, aset[i]) == 0)
+				return aa->alg;
+		}
+	}
 
-        return NULL;
+	return NULL;
 }
 
 static int ealg_getbyname_or_alias_esp(const char *str, size_t len)
@@ -289,7 +288,6 @@ static int aalg_getbyname_or_alias_esp(const char *str, size_t len)
 
 	return aalg_getbyname_esp(astr, alen);
 }
-
 
 static int modp_getbyname_esp(const char *const str, size_t len)
 {
