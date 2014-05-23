@@ -95,6 +95,7 @@
 static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
 bool no_retransmits = FALSE;
+char *pluto_vendorid;
 
 static pid_t addconn_child_pid = 0;
 
@@ -420,9 +421,10 @@ void show_ifaces_status(void)
 	struct iface_port *p;
 
 	for (p = interfaces; p != NULL; p = p->next)
-		whack_log(RC_COMMENT, "interface %s/%s %s:%d",
+		whack_log(RC_COMMENT, "interface %s/%s %s@%d",
 			  p->ip_dev->id_vname, p->ip_dev->id_rname,
 			  ip_str(&p->ip_addr), p->port);
+	whack_log(RC_COMMENT, " ");     /* spacer */
 }
 
 void show_debug_status(void)
@@ -688,8 +690,6 @@ void call_server(void)
 		}
 
 		DBG(DBG_CONTROL, DBG_log(" "));
-
-		log_mark_time();
 
 		/* figure out what is interesting */
 		/* do FD's before events are processed */

@@ -278,26 +278,93 @@
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
 
+/* Various IETF defined key lengths */
+
+/* AES-CBC RFC 3602 The _only_ valid values are 128, 192 and 256 bits */
+#define  AES_KEY_MIN_LEN        128
+#define  AES_KEY_DEF_LEN        128
+#define  AES_KEY_MAX_LEN        256
+
+/* AES-CTR RFC 3686 The _only_ valid values are 128, 192 and 256 bits */
+#define  AES_CTR_KEY_MIN_LEN 128
+#define  AES_CTR_KEY_DEF_LEN 128
+#define  AES_CTR_KEY_MAX_LEN 256
+
 /*
  * RFC 4106 AES GCM
  * http://tools.ietf.org/html/rfc4106#section-8.1
  */
 #define AES_GCM_SALT_BYTES 4
+#define AES_GCM_KEY_MIN_LEN 128
+#define AES_GCM_KEY_DEF_LEN 128
+#define AES_GCM_KEY_MAX_LEN 256
 
 /*
  * RFC 4309 AES CCM
  * http://tools.ietf.org/search/rfc4309#section-7.1
  */
 #define AES_CCM_SALT_BYTES 3
+#define AES_CCM_KEY_MIN_LEN 128
+#define AES_CCM_KEY_DEF_LEN 128
+#define AES_CCM_KEY_MAX_LEN 256
 
-/* Actually, the only valid values are 128, 192 and 256 bits */
+/* The _only_ valid values are 128, 192 and 256 bits */
 #define  AEAD_AES_KEY_MIN_LEN       128
 #define  AEAD_AES_KEY_DEF_LEN       128
 #define  AEAD_AES_KEY_MAX_LEN       256
 
-#define  AES_KEY_MIN_LEN        128
-#define  AES_KEY_DEF_LEN        128
-#define  AES_KEY_MAX_LEN        256
+/* AES-GMAC RFC 4543 The _only_ valid values are 128, 192 and 256 bits */
+#define  AES_GMAC_KEY_MIN_LEN 128
+#define  AES_GMAC_KEY_DEF_LEN 128
+#define  AES_GMAC_KEY_MAX_LEN 256
+
+/* SEED-CBC RFC 4196 The _only_ valid value is 128 */
+#define  SEED_KEY_MIN_LEN 128
+#define  SEED_KEY_DEF_LEN 128
+#define  SEED_KEY_MAX_LEN 128
+
+
+/*
+ * http://tools.ietf.org/html/rfc2451#section-2.2
+ * ESP_CAST is the cast5 algorithm, not cast6
+ * We avoid cast-128 padding by enforcing a minimum of 128
+ */
+#define  CAST_KEY_MIN_LEN        128
+#define  CAST_KEY_DEF_LEN        128
+#define  CAST_KEY_MAX_LEN        128
+
+/*
+ * RFC 2451 - Blowfish accepts key sizes 40-448, default is 128
+ *            128,192 and 256 are the only commonly used ones
+ */
+
+/*
+ * TWOFISH-CBC is a 128-bit block cipher with variable-length key upto 256 bits
+ * default is 128. 128,192 and 256 are the only commonly used ones
+ */
+#define  TWOFISH_KEY_MIN_LEN 128
+#define  TWOFISH_KEY_DEF_LEN 128
+#define  TWOFISH_KEY_MAX_LEN 256
+
+/*
+ * SERPENT default 128, 128,192 and 256 are the only commonly used ones
+ */
+#define  SERPENT_KEY_MIN_LEN 128
+#define  SERPENT_KEY_DEF_LEN 128
+#define  SERPENT_KEY_MAX_LEN 256
+
+/*
+ * Camellia CBC and CTR - RFC 5529
+ * 128 (default), 192 and 256
+ */
+#define  CAMELLIA_KEY_MIN_LEN 128
+#define  CAMELLIA_KEY_DEF_LEN 128
+#define  CAMELLIA_KEY_MAX_LEN 256
+
+#define  CAMELLIA_CTR_KEY_MIN_LEN 128
+#define  CAMELLIA_CTR_KEY_DEF_LEN 128
+#define  CAMELLIA_CTR_KEY_MAX_LEN 256
+
 
  /* ought to be supplied by md5.h */
 #define MD5_DIGEST_SIZE BYTES_FOR_BITS(128)
@@ -315,6 +382,7 @@
 
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
+#define CAST_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 
 #define DSS_QBITS 160 /* bits in DSS's "q" (FIPS 186-1) */
 
@@ -866,11 +934,11 @@ enum ikev1_ipsec_attr {
 #define SA_LIFE_TYPE_SECONDS 1
 #define SA_LIFE_TYPE_KBYTES 2
 
-#define SA_LIFE_DURATION_DEFAULT 28800 /* eight hours (RFC2407 4.5) */
-#define PLUTO_SA_LIFE_DURATION_DEFAULT 28800 /* eight hours (pluto(8)) */
-#define SA_LIFE_DURATION_MAXIMUM 86400 /* one day */
+#define SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* RFC2407 4.5 */
+#define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* pluto(8) */
+#define SA_LIFE_DURATION_MAXIMUM secs_per_day
 
-#define SA_REPLACEMENT_MARGIN_DEFAULT 540 /* (IPSEC & IKE) nine minutes */
+#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
 #define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
 #define SA_REPLACEMENT_RETRIES_DEFAULT 0 /* (IPSEC & IKE) */
 
@@ -915,7 +983,7 @@ typedef u_int16_t ipsec_auth_t;
 /*
  * Oakley Lifetime Type attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
- * As far as I can see, there is not specification for
+ * As far as I can see, there is no specification for
  * OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT. This could lead to interop problems!
  * For no particular reason, we chose one hour.
  * The value of OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM is our local policy.
@@ -924,8 +992,8 @@ typedef u_int16_t ipsec_auth_t;
 #define OAKLEY_LIFE_SECONDS 1
 #define OAKLEY_LIFE_KILOBYTES 2
 
-#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT 3600 /* one hour */
-#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM 86400 /* 1 day */
+#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT secs_per_hour
+#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM secs_per_day
 
 /*
  * Oakley PRF attribute (none defined)
@@ -993,7 +1061,7 @@ enum ikev1_auth_method {
 	OAKLEY_PRESHARED_KEY = 1,
 	OAKLEY_DSS_SIG = 2,
 	OAKLEY_RSA_SIG = 3,
-	OAKLEY_RSA_ENC = 4, 
+	OAKLEY_RSA_ENC = 4,
 	OAKLEY_RSA_REVISED_MODE = 5, /* Not implemented */
 	/* 6 - 8 Reserved */
 	OAKLEY_ECDSA_P256 = 9, /* RFC 4754 */
@@ -1274,7 +1342,7 @@ enum pubkey_alg {
  * https://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-31
  *
  * IKEv2 Identification type values
- * RFC 5996 
+ * RFC 5996
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-10
  *
  * enum ike_ident_names;
@@ -1290,7 +1358,7 @@ enum ike_id_type {
 	ID_USER_FQDN = 3,
 	ID_RFC822_ADDR  = ID_USER_FQDN,  /* alias */
 	ID_IPV4_ADDR_SUBNET = 4, /* XXX IKEv1 only but we use it */
-	ID_IPV6_ADDR = 5, 
+	ID_IPV6_ADDR = 5,
 	ID_IPV6_ADDR_SUBNET = 6, /* XXX IKEv1 only but we use it */
 	ID_IPV4_ADDR_RANGE = 7, /* XXX IKEv1 only but we use it */
 	ID_IPV6_ADDR_RANGE = 8, /* XXX IKEv1 only but we use it */

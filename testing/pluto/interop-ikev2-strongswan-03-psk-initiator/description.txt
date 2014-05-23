@@ -2,3 +2,5 @@ Basic pluto with IKEv2 using PSK on the responder (east), and Strongswan on
 the initiator (west).
 
 This is the reverse test of interop-ikev2-strongswan-02
+
+oddity: strongswan sends from udp 4500 even though there is no NAT ??

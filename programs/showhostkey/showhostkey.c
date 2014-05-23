@@ -132,11 +132,6 @@ static void print_key(struct secret *secret,
 			if (disclose)
 				printf("    xauth: \"%s\"\n", pskbuf);
 			break;
-
-		case PPK_PIN:
-			printf("%d:(%d) PIN key-type not yet supported for id: %s\n", lineno, count,
-				idb);
-			break;
 		}
 
 		l = l->next;
@@ -309,9 +304,6 @@ static void show_confkey(struct secret *s,
 		case PPK_PSK:
 			enumstr = "PPK_PSK";
 			break;
-		case PPK_PIN:
-			enumstr = "PPK_PIN";
-			break;
 		case PPK_XAUTH:
 			enumstr = "PPK_XAUTH";
 			break;
@@ -451,11 +443,6 @@ usage:
 		goto usage;
 	}
 
-	if (verbose > 2) {
-		fprintf(stderr,
-			"verbosity cannot be set this high\n");
-	}
-
 	if (verbose)
 		fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",
 			oco->confddir);
@@ -473,8 +460,7 @@ usage:
 
 	PK11_SetPasswordFunc(getNSSPassword);
 
-	lsw_load_preshared_secrets(&host_secrets, verbose > 0 ? TRUE : FALSE,
-				   secrets_file);
+	lsw_load_preshared_secrets(&host_secrets, secrets_file);
 
 	NSS_Shutdown();
 	PR_Cleanup();

@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 east #
  ipsec setup start
-[ 00.00] NET: Registered protocol family 15
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -24,8 +23,6 @@ east #
 initdone
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
-east #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east NOW
 192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
@@ -45,6 +42,8 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi

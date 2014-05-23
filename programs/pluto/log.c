@@ -97,9 +97,6 @@ static int perpeer_count = 0;
 /* what to put in front of debug output */
 static const char debug_prefix = '|';
 
-/* set if we wrote something since last log_mark_time() */
-static bool log_did_something = TRUE;
-
 /*
  * used in some messages to distiguish
  * which pluto is which, when doing unit testing
@@ -391,10 +388,9 @@ static void peerlog(const char *prefix, const char *m)
 	/* despite our attempts above, we may not be able to open the file. */
 	if (cur_connection->log_file != NULL) {
 		char datebuf[32];
-		time_t n;
 		struct tm tm1, *t;
+		time_t n = now();
 
-		time(&n);
 		t = localtime_r(&n, &tm1);
 
 		strftime(datebuf, sizeof(datebuf), "%Y-%m-%d %T", t);
@@ -418,15 +414,12 @@ int libreswan_log(const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
-	log_did_something = TRUE;
-
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
-			time_t rtime;
+			time_t rtime = now();
 
-			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
 			fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -457,15 +450,12 @@ void loglog(int mess_no, const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
-	log_did_something = TRUE;
-
 	if (log_to_stderr || pluto_log_fp != NULL) {
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
-			time_t rtime;
+			time_t rtime = now();
 
-			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
 			fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -493,8 +483,6 @@ void libreswan_log_errno_routine(int e, const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
-	log_did_something = TRUE;
-
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
 			"ERROR: %s. Errno %d: %s\n", m, e, strerror(e));
@@ -515,8 +503,6 @@ void exit_log(const char *message, ...)
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
-
-	log_did_something = TRUE;
 
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -539,8 +525,6 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
-
-	log_did_something = TRUE;
 
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -723,9 +707,8 @@ int DBG_log(const char *message, ...)
 		if (log_with_timestamp) {
 			struct tm tm1, *timeinfo;
 			char fmt[32];
-			time_t rtime;
+			time_t rtime = now();
 
-			time(&rtime);
 			timeinfo = localtime_r(&rtime, &tm1);
 			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
 			fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -861,47 +844,22 @@ void daily_log_reset(void)
 void daily_log_event(void)
 {
 	struct tm tm1, *ltime;
-	time_t n, interval;
+	time_t interval;
+	time_t n = now();
 
 	/* attempt to schedule oneself to midnight, local time
 	 * do this by getting seconds in the day, and delaying
-	 * by 86400 - hour*3600+minutes*60+seconds.
+	 * by secs_per_day - hour*3600+minutes*60+seconds.
 	 */
-	time(&n);
 	ltime = localtime_r(&n, &tm1);
-	interval = (24 * 60 * 60) -
+	interval = secs_per_day -
 		   (ltime->tm_sec +
-		    ltime->tm_min  * 60 +
-		    ltime->tm_hour * 3600);
+		    ltime->tm_min  * secs_per_minute +
+		    ltime->tm_hour * secs_per_hour);
 
 	event_schedule(EVENT_LOG_DAILY, interval, NULL);
 
 	daily_log_reset();
-}
-
-/*
- * we log the time when we are about to do something so that
- * we know what time things happened, when not using syslog
- */
-void log_mark_time(void)
-{
-	if (log_to_stderr || pluto_log_fp != NULL) {
-		time_t n;
-
-		static time_t lastn = 0;
-
-		time(&n);
-
-		if (log_did_something) {
-			lastn = n;
-			log_did_something = FALSE;
-			if ((n - lastn) > 60)
-				DBG_log("time is %s (%lu)", ctime(
-						&n), (unsigned long)n);
-
-
-		}
-	}
 }
 
 /*

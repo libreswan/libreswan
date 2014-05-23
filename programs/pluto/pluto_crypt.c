@@ -338,7 +338,7 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
  *     responsibility remains with the caller (and its callers).
  *     (??? is this discipline followed?)
  *
- * This function may fail if there is no worker that can take 
+ * This function may fail if there is no worker that can take
  * more work items.
  *
  * ??? note that the struct pluto_crypto_req in the request is not

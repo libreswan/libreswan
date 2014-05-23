@@ -259,7 +259,7 @@ static enum_names payload_names_ikev1_private_use = {
 	NULL
 };
 
-enum_names payload_names_ikev1 = {
+enum_names ikev1_payload_names = {
 	ISAKMP_NEXT_NONE,
 	ISAKMP_NEXT_GAP,
 	payload_name_ikev1,
@@ -313,7 +313,7 @@ static enum_names payload_names_ikev2_main = {
 	&payload_names_ikev2_private_use
 };
 
-enum_names payload_names_ikev2 = {
+enum_names ikev2_payload_names = {
 	ISAKMP_NEXT_v2NONE,
 	ISAKMP_NEXT_v2NONE,
 	payload_name_ikev2,
@@ -412,14 +412,14 @@ static enum_names exchange_names_doi = {
 	&exchange_names_private_use
 };
 
-enum_names exchange_names_ikev1 = {
+enum_names ikev1_exchange_names = {
 	ISAKMP_XCHG_NONE,
 	ISAKMP_XCHG_MODE_CFG,
 	exchange_name_ikev1,
 	&exchange_names_doi
 };
 
-static enum_names exchange_names_ikev2 = {
+enum_names ikev2_exchange_names = {
 	ISAKMP_v2_SA_INIT,
 	ISAKMP_v2_IKE_SESSION_RESUME,
 	exchange_name_ikev2,
@@ -430,7 +430,7 @@ static enum_names exchange_names_doi_and_v2 = {
 	ISAKMP_XCHG_STOLEN_BY_OPENSWAN_FOR_ECHOREQUEST,
 	ISAKMP_XCHG_NGRP,
 	exchange_name_doi,
-	&exchange_names_ikev2
+	&ikev2_exchange_names
 };
 
 enum_names exchange_names_ikev1orv2 = {
@@ -622,7 +622,7 @@ static const char *const ike_idtype_name[] = {
         /* ID_FROMCERT = (-3), taken from certificate - private to Pluto */
         /* ID_IMPOSSIBLE = (-2), private to Pluto */
         /* ID_MYID = (-1), private to Pluto */
-        "ID_NONE" /* = 0, private to Pluto */
+        "ID_NONE", /* = 0, private to Pluto */
 	"ID_IPV4_ADDR", /* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
@@ -1021,7 +1021,7 @@ static enum_names modecfg_cisco_attr_names = {
 	MODECFG_BANNER,
 	CISCO_UNKNOWN_SEEN_ON_IPHONE,
 	modecfg_cisco_attr_name,
-	&modecfg_attr_names_draft
+	NULL
 };
 
 static const char *const modecfg_microsoft_attr_name[] = {
@@ -1037,7 +1037,7 @@ static enum_names modecfg_microsoft_attr_names = {
 
 enum_names modecfg_attr_names = {
 	INTERNAL_IP4_ADDRESS,
-	INTERNAL_IP6_SERVER,
+	HOME_AGENT_ADDRESS,
 	modecfg_attr_name_draft,
 	&modecfg_microsoft_attr_names
 };
@@ -1927,9 +1927,7 @@ enum_names rr_class_names = {
 
 static const char *const ppk_name[] = {
 	"PPK_PSK",
-	"PPK_DSS",
 	"PPK_RSA",
-	"PPK_PIN",
 	"PPK_XAUTH",
 	NULL
 };
@@ -2008,7 +2006,9 @@ const char *strip_prefix(const char *s, const char *prefix)
 }
 
 /*
- * find the value for a name in an enum_names table.  If not found, returns -1
+ * Find the value for a name in an enum_names table.  If not found, returns -1.
+ *
+ * Strings are compared without regard to case.
  *
  * ??? the table contains unsigned long values BUT the function returns an
  * int so there is some potential for overflow.
@@ -2023,7 +2023,7 @@ int enum_search(enum_names *ed, const char *str)
 		for (en = p->en_first; en <= p->en_last; en++) {
 			const char *ptr = p->en_names[en - p->en_first];
 
-			if (ptr != NULL && streq(ptr, str)) {
+			if (ptr != NULL && strcaseeq(ptr, str)) {
 				passert(en <= INT_MAX);
 				return en;
 			}

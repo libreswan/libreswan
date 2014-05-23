@@ -474,8 +474,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		char *value = end->strings[KSCF_SUBNET];
 
 		if (end->strings_set[KSCF_ADDRESSPOOL]) {
-			ERR_FOUND(
-				"cannot specify both %ssubnet= and %saddresspool=", leftright,
+			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=", leftright,
 				leftright);
 		}
 
@@ -655,9 +654,13 @@ static bool validate_end(struct ub_ctx *dnsctx,
 			ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=",
 				leftright, leftright);
 		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  addresspool set to: %s",
-			    end->strings[KSCF_ADDRESSPOOL] );
-		ttorange(addresspool, 0, AF_INET, &end->pool_range);
+			    "connection's  %saddresspool set to: %s",
+			    leftright, end->strings[KSCF_ADDRESSPOOL] );
+
+		er = ttorange(addresspool, 0, AF_INET, &end->pool_range, TRUE);
+		if (er != NULL)
+			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
+					addresspool, er);
 	}
 
 	if (end->options_set[KNCF_XAUTHSERVER] ||
@@ -1087,10 +1090,6 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			break;
 
-		case KS_UDPENCAP:
-			/* no way to specify this yet! */
-			break;
-
 		case KS_PASSTHROUGH:
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
@@ -1166,36 +1165,25 @@ static bool load_conn(struct ub_ctx *dnsctx,
 #ifdef HAVE_LABELED_IPSEC
 	if (conn->strings_set[KSF_POLICY_LABEL])
 		conn->policy_label = clone_str(conn->strings[KSF_POLICY_LABEL],"KSF_POLICY_LABEL");
-	starter_log(LOG_LEVEL_DEBUG, "connection's  policy label: %s",
-		    conn->policy_label);
+	if (conn->policy_label != NULL)
+		starter_log(LOG_LEVEL_DEBUG, "connection's  policy label: %s",
+				conn->policy_label);
 #endif
 
 	if (conn->strings_set[KSF_IKE])
 		conn->ike = clone_str(conn->strings[KSF_IKE],"KSF_IKE");
 
 	if (conn->strings_set[KSF_MODECFGDNS1]) {
-		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  conn->modecfg_dns1 set to: %s",
-			    conn->strings[KSF_MODECFGDNS1] );
 		conn->modecfg_dns1 = clone_str(conn->strings[KSF_MODECFGDNS1],"KSF_MODECFGDNS1");
 	}
 	if (conn->strings_set[KSF_MODECFGDNS2]) {
-		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  conn->modecfg_dns2 set to: %s",
-			    conn->strings[KSF_MODECFGDNS2] );
 		conn->modecfg_dns2 = clone_str(conn->strings[KSF_MODECFGDNS2], "KSF_MODECFGDNS2");
 	}
 	if (conn->strings_set[KSF_MODECFGDOMAIN]) {
 		conn->modecfg_domain = clone_str(conn->strings[KSF_MODECFGDOMAIN],"KSF_MODECFGDOMAIN");
-		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  conn->modecfg_domain set to: %s",
-			    conn->strings[KSF_MODECFGDOMAIN] );
 	}
 	if (conn->strings_set[KSF_MODECFGBANNER]) {
 		conn->modecfg_banner = clone_str(conn->strings[KSF_MODECFGBANNER],"KSF_MODECFGBANNER");
-		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  conn->modecfg_banner set to: %s",
-			    conn->strings[KSF_MODECFGBANNER] );
 	}
 
 	if (conn->strings_set[KSF_CONNALIAS])
@@ -1537,8 +1525,8 @@ void confread_free(struct starter_config *cfg)
 	pfree(cfg->ctlbase);
 
 	for (i = 0; i < KSF_MAX; i++)
-		
 		pfreeany(cfg->setup.strings[i]);
+
 	confread_free_conn(&(cfg->conn_default));
 
 	for (conn = cfg->conns.tqh_first; conn != NULL; ) {

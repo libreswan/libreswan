@@ -20,6 +20,7 @@
 #include <sysqueue.h>
 
 extern bool no_retransmits;
+extern char *pluto_vendorid;
 
 extern int ctl_fd;                      /* file descriptor of control (whack) socket */
 extern struct sockaddr_un ctl_addr;     /* address of control (whack) socket */

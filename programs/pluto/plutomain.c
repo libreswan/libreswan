@@ -103,14 +103,15 @@
 # include <libaudit.h>
 #endif
 
-const char *ctlbase = "/var/run/pluto";
+static const char *pluto_name;	/* name (path) we were invoked with */
+
+static const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 static bool fork_desired = TRUE;
 
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
-static char *pluto_vendorid;
 static int nhelpers = -1;
 
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
@@ -121,18 +122,27 @@ static void free_pluto_main()
 	pfree(coredir);
 	pfreeany(pluto_stats_binary);
 	pfreeany(pluto_listen);
-	pfreeany(pluto_vendorid);
+	pfree(pluto_vendorid);
 }
 
 /*
- * usage - print help messages
+ * invocation_fail - print diagnostic and usage hint message and exit
  *
- * @param mess String - alternate message to print
+ * @param mess String - diagnostic message to print
  */
-static void usage(const char *mess)
+static void invocation_fail(const char *mess)
 {
-	if (mess != NULL && *mess != '\0')
+	if (mess != NULL)
 		fprintf(stderr, "%s\n", mess);
+	fprintf(stderr, "For usage information: %s --help\n"
+		"Libreswan %s\n",
+		pluto_name, ipsec_version_code());
+	/* not exit_pluto because we are not initialized yet */
+	exit(1);
+}
+
+static void usage(void)
+{
 	fprintf(stderr,
 		"Usage: pluto"
 		" [--help]"
@@ -199,14 +209,14 @@ static void usage(const char *mess)
 		" [ --debug-pfkey]"
 		" [ --debug-nat-t]"
 		" \\\n\t"
-		"[--keep-alive <delay_sec>]"
+		"[--keep-alive <delay_secs>]"
 		" \\\n\t"
 		"[--virtual-private <network_list>]"
 		"\n"
 		"Libreswan %s\n",
 		ipsec_version_code());
 	/* not exit_pluto because we are not initialized yet */
-	exit(mess == NULL ? 0 : 1);
+	exit(0);
 }
 
 /* string naming compile-time options that have interop implications */
@@ -368,7 +378,7 @@ static struct starter_config *read_cfg_file(char *configfile)
 
 	cfg = confread_load(configfile, &err, FALSE, NULL, TRUE);
 	if (cfg == NULL)
-		usage(err);
+		invocation_fail(err);
 	return cfg;
 }
 
@@ -439,7 +449,10 @@ int main(int argc, char **argv)
 		}
 	}
 
+	pluto_name = argv[0];
+
 	coredir = clone_str("/var/run/pluto", "coredir in main()");
+	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 
 	/* set up initial defaults that need a cast */
 	pluto_shared_secrets_file =
@@ -519,6 +532,7 @@ int main(int argc, char **argv)
 			{ "secctx_attr_value", required_argument, NULL, 'w' },	/* obsolete _ */
 			{ "secctx-attr-value", required_argument, NULL, 'w' },
 #endif
+			{ "vendorid", required_argument, NULL, 'V' }, /* --vendorid */
 			{ "debug-none", no_argument, NULL, 'N' },
 			{ "debug-all", no_argument, NULL, 'A' },
 
@@ -594,10 +608,12 @@ int main(int argc, char **argv)
 		 */
 		int longindex = -1;
 		int c = getopt_long(argc, argv, "", long_opts, &longindex);
+		err_t ugh = NULL;	/* complaint from case */
+		unsigned long u = 0;	/* scratch for case */
 
 		if (longindex != -1 &&
 			strchr(long_opts[longindex].name, '_') != NULL) {
-			libreswan_log("warning: option \"%s\" with '_' in its name is obsolete; use '-'",
+			libreswan_log("warning: option \"--%s\" with '_' in its name is obsolete; use '-'",
 				long_opts[longindex].name);
 		}
 
@@ -606,23 +622,29 @@ int main(int argc, char **argv)
 		case EOF:	/* end of flags */
 			break;
 
-		case 0:	/* long option already handled */
+		case 0:
+			/*
+			 * Long option already handled by getopt_long.
+			 * Not currently used since we always set flag to NULL.
+			 */
 			continue;
 
 		case ':':	/* diagnostic already printed by getopt_long */
 		case '?':	/* diagnostic already printed by getopt_long */
-			usage("");
-			break;	/* not actually reached */
+			invocation_fail(NULL);
+			break;
 
 		case 'h':	/* --help */
-			usage(NULL);
+			usage();
 			break;	/* not actually reached */
 
 		case 'X':	/* --leak-detective */
 			/*
-			 * Was already enabled at the start of main() because
-			 * we need to enable it before the first alloc()
-			 * We just need to eat the option here
+			 * This flag was already processed at the start of main()
+			 * because leak_detective must be immutable from before
+			 * the first alloc().
+			 * If this option is specified, we must have already
+			 * set it at the start of main(), so assert it.
 			 */
 			passert(leak_detective);
 			continue;
@@ -630,6 +652,11 @@ int main(int argc, char **argv)
 		case 'C':	/* --coredir */
 			pfree(coredir);
 			coredir = clone_str(optarg, "coredir via getopt");
+			continue;
+
+		case 'V':	/* --vendorid */
+			pfree(pluto_vendorid);
+			coredir = clone_str(optarg, "pluto_vendorid via getopt");
 			continue;
 
 		case 'S':	/* --statsdir */
@@ -645,32 +672,30 @@ int main(int argc, char **argv)
 			break;	/* not actually reached */
 
 		case 'j':	/* --nhelpers */
-			if (optarg == NULL || !isdigit(optarg[0]))
-				usage("missing number of pluto helpers");
-
-			{
-				char *endptr;
-				long count = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					count < -1)
-					usage("<nhelpers> must be a positive number, 0 or -1");
-
-				nhelpers = count;
+			if (streq(optarg, "-1")) {
+				nhelpers = -1;
+			} else {
+				ugh = ttoul(optarg, 0, 10, &u);
+				if (ugh != NULL)
+					break;
+				if (u > 1000) {
+					ugh = "too many helpers specified";
+					break;
+				}
+				nhelpers = u;
 			}
 			continue;
 
 #ifdef HAVE_LABELED_IPSEC
 		case 'w':	/* --secctx-attr-value */
-			{
-				char *endptr;
-				long value = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					(value != SECCTX && value != 10))
-					usage("<secctx-attr-value> must be a positive number (32001 by default, 10 for backward compatibility)");
-				secctx_attr_value = value & ISAKMP_ATTR_RTYPE_MASK;
+			ugh = ttoul(optarg, 0, 0, &u);
+			if (ugh != NULL)
+				break;
+			if (u != SECCTX && u != 10) {
+				ugh = "must be a positive 32001 (default) or 10 (for backward compatibility)";
+				break;
 			}
+			secctx_attr_value = u;
 			continue;
 #endif
 
@@ -749,19 +774,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'x':	/* --crlcheckinterval <time>*/
-			if (optarg == NULL || !isdigit(optarg[0]))
-				usage("missing interval time");
-
-			{
-				char *endptr;
-				long interval = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					interval <= 0)
-					usage("<interval-time> must be a positive number");
-
-				crl_check_interval = interval;
-			}
+			ugh = ttoul(optarg, 0, 10, &u);
+			if (ugh != NULL)
+				break;
+			crl_check_interval = u;
 			continue;
 
 		case 'u':	/* --uniqueids */
@@ -769,8 +785,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'i':	/* --interface <ifname|ifaddr> */
-			if (!use_interface(optarg))
-				usage("too many --interface specifications");
+			if (!use_interface(optarg)) {
+				ugh = "too many --interface specifications";
+				break;
+			}
 			continue;
 
 		/*
@@ -780,33 +798,25 @@ int main(int argc, char **argv)
 		 * filters
 		 */
 		case 'p':	/* --ikeport <portnumber> */
-			if (optarg == NULL || !isdigit(optarg[0]))
-				usage("missing port number");
-			{
-				char *endptr;
-				long port = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					port <= 0 || port > 0x10000)
-					usage("<port-number> must be a number between 1 and 65535");
-
-				pluto_port = port;
+			ugh = ttoul(optarg, 0, 10, &u);
+			if (ugh != NULL)
+				break;
+			if (u <= 0 || 0x10000 <= u) {
+				ugh = "<port-number> must be a number between 1 and 65535";
+				break;
 			}
+			pluto_port = u;
 			continue;
 
 		case 'q':	/* --natikeport <portnumber> */
-			if (optarg == NULL || !isdigit(optarg[0]))
-				usage("missing port number");
-			{
-				char *endptr;
-				long port = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					port <= 0 || port > 0x10000)
-					usage("<port-number> must be a number between 1 and 65535");
-
-				pluto_nat_port = port;
+			ugh = ttoul(optarg, 0, 10, &u);
+			if (ugh != NULL)
+				break;
+			if (u <= 0 || 0x10000 <= u) {
+				ugh = "<port-number> must be a number between 1 and 65535";
+				break;
 			}
+			pluto_nat_port = u;
 			continue;
 
 		case 'b':	/* --ctlbase <path> */
@@ -824,17 +834,23 @@ int main(int argc, char **argv)
 			ctlbase = optarg;
 			if (snprintf(ctl_addr.sun_path,
 					sizeof(ctl_addr.sun_path),
-					"%s%s", ctlbase, CTL_SUFFIX) == -1)
-				usage("<path>" CTL_SUFFIX " too long for sun_path");
+					"%s%s", ctlbase, CTL_SUFFIX) == -1) {
+				ugh = "<path>" CTL_SUFFIX " too long for sun_path";
+				break;
+			}
 
 			if (snprintf(info_addr.sun_path,
 					sizeof(info_addr.sun_path),
-					"%s%s", ctlbase, INFO_SUFFIX) == -1)
-				usage("<path>" INFO_SUFFIX " too long for sun_path");
+					"%s%s", ctlbase, INFO_SUFFIX) == -1) {
+				ugh = "<path>" INFO_SUFFIX " too long for sun_path";
+				break;
+			}
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
-					"%s%s", ctlbase, LOCK_SUFFIX) == -1)
-				usage("<path>" LOCK_SUFFIX " must fit");
+					"%s%s", ctlbase, LOCK_SUFFIX) == -1) {
+				ugh = "<path>" LOCK_SUFFIX " must fit";
+				break;
+			}
 			continue;
 
 		case 's':	/* --secretsfile <secrets-file> */
@@ -868,8 +884,15 @@ int main(int argc, char **argv)
 		case '1':	/* --nat_traversal has been obsoleted */
 			libreswan_log("Ignored obsoleted option --nat_traversal");
 			continue;
-		case '2':	/* --keep-alive */
-			keep_alive = atoi(optarg);
+		case '2':	/* --keep-alive <delay_secs> */
+			ugh = ttoul(optarg, 0, 10, &u);
+			if (ugh != NULL)
+				break;
+			if (secs_per_day < u) {
+				ugh = "too large";
+				break;
+			}
+			keep_alive = u;
 			continue;
 		case '3':	/* --force_keepalive has been obsoleted */
 			libreswan_log("Ignored obsoleted option --force_keepalive");
@@ -939,8 +962,12 @@ int main(int argc, char **argv)
 						"coredir via --config");
 			}
 			/* --vendorid */
-			set_cfg_string(&pluto_vendorid,
-				cfg->setup.strings[KSF_MYVENDORID]);
+			if(cfg->setup.strings[KSF_MYVENDORID]) {
+				pfree(pluto_vendorid);
+				pluto_vendorid = clone_str(cfg->setup.strings[KSF_MYVENDORID],
+						"pluto_vendorid via --config");
+			}
+
 			/* no config option: pluto_adns_option */
 
 			if (cfg->setup.strings[KSF_STATSBINARY] != NULL) {
@@ -998,18 +1025,34 @@ int main(int argc, char **argv)
 		}
 
 		default:
-			if (DBG_OFFSET <= c && c < DBG_OFFSET +
-				IMPAIR_roof_IX) {
+			if (DBG_OFFSET <= c &&
+			    c < DBG_OFFSET + IMPAIR_roof_IX) {
 				base_debugging |= LELEM(c - DBG_OFFSET);
 				continue;
 			}
 #       undef DBG_OFFSET
 			bad_case(c);
 		}
+		/* if ugh is set, bail with diagnostic */
+		if (ugh != NULL) {
+			char mess[200];
+
+			if (longindex == -1) {
+				snprintf(mess, sizeof(mess), "unknown option: %s",
+					ugh);
+			} else if (optarg == NULL) {
+				snprintf(mess, sizeof(mess), "--%s option: %s",
+					long_opts[longindex].name, ugh);
+			} else {
+				snprintf(mess, sizeof(mess), "--%s \"%s\" option: %s",
+					long_opts[longindex].name, optarg, ugh);
+			}
+			invocation_fail(mess);
+		}
 		break;
 	}
 	if (optind != argc)
-		usage("unexpected argument");
+		invocation_fail("unexpected argument");
 	reset_debugging();
 
 #ifdef HAVE_NO_FORK
@@ -1445,7 +1488,7 @@ void show_setup_plutomain()
 
 	whack_log(RC_COMMENT, "pluto_version=%s, pluto_vendorid=%s",
 		ipsec_version_code(),
-		ipsec_version_vendorid());
+		pluto_vendorid);
 
         whack_log(RC_COMMENT,
 		"nhelpers=%d, uniqueids=%s, retransmits=%s, force-busy=%s",

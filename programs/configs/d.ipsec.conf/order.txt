@@ -21,7 +21,7 @@ d.ipsec.conf/ike.xml
 d.ipsec.conf/phase2.xml
 d.ipsec.conf/phase2alg.xml
 d.ipsec.conf/sha2-truncbug.xml
-d.ipsec.conf/ikev1-natt.xml
+d.ipsec.conf/nat-ikev1-method.xml
 d.ipsec.conf/esp.xml
 d.ipsec.conf/ah.xml
 d.ipsec.conf/ike-frag.xml
@@ -87,6 +87,7 @@ d.ipsec.conf/nat-ikeport.xml
 d.ipsec.conf/keep-alive.xml
 d.ipsec.conf/retransmits.xml
 d.ipsec.conf/virtual-private.xml
+d.ipsec.conf/myvendorid.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml
 d.ipsec.conf/secctx-attr-value.xml

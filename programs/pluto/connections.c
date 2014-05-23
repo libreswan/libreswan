@@ -247,7 +247,8 @@ void delete_connection(struct connection *c, bool relations)
 			ip_str(&c->spd.that.host_addr),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
-		rel_lease_addr(c);
+		if (c->pool != NULL)
+			rel_lease_addr(c);
 	} else {
 		libreswan_log("deleting connection");
 	}
@@ -256,20 +257,8 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-#if 0
-	/* TODO:  this will be enabled in the next version */
-	if ((c->pool != NULL) && (c->kind == CK_TEMPLATE)) {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("free addresspool entry for the conn %s "
-				"kind %s conn serial %d pool refcnt %u",
-				c->name, enum_name(&connection_kind_names,
-						c->kind),
-				c->instance_serial,
-				c->pool->refcnt));
-		free_addresspool_entry(c->pool);
-		*&c->pool = NULL;
-	}
-#endif
+	if (c->pool != NULL)
+		unreference_addresspool(c);
 
 	/* free up any logging resources */
 	perpeer_logfree(c);
@@ -763,9 +752,11 @@ static void unshare_connection_strings(struct connection *c)
 	if (c->alg_info_esp) {
 		alg_info_addref(ESPTOINFO(c->alg_info_esp));
 	}
+	if (c->pool !=  NULL)
+		reference_addresspool(c->pool);
 }
 
-static void load_end_certificate(const char *filename, struct end *dst)
+static void load_end_certificate(const char *name, struct end *dst)
 {
 	time_t valid_until;
 	cert_t cert;
@@ -776,20 +767,19 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	/* initialize end certificate */
 	dst->cert.ty = CERT_NONE;
 
-	if (filename == NULL)
+	if (name == NULL)
 		return;
 
-	libreswan_log("loading certificate from %s\n", filename);
-	dst->cert_filename = clone_str(filename, "certificate filename");
+	DBG(DBG_CONTROL, DBG_log("loading certificate %s\n", name));
+	dst->cert_filename = clone_str(name, "certificate name");
 
 	{
 		/* load cert from file */
-		bool valid_cert = load_cert_from_nss(filename, TRUE,
+		bool valid_cert = load_cert_from_nss(name,
 						"host cert", &cert);
 		if (!valid_cert) {
-			whack_log(RC_FATAL,
-				"can not load certificate file %s\n",
-				filename);
+			whack_log(RC_FATAL, "can not load certificate %s\n",
+				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;
 			return;
@@ -805,7 +795,7 @@ static void load_end_certificate(const char *filename, struct end *dst)
 		valid_until = cert.u.x509->notAfter;
 		ugh = check_validity(cert.u.x509, &valid_until);
 		if (ugh != NULL) {
-			libreswan_log("  %s", ugh);
+			loglog(RC_LOG_SERIOUS,"  %s", ugh);
 			free_x509cert(cert.u.x509);
 		} else {
 			DBG(DBG_CONTROL,
@@ -972,6 +962,17 @@ static bool check_connection_end(const struct whack_end *this,
 		return FALSE;
 	}
 
+	/* ??? seems like a nasty test (in-band, low-level) */
+	if (this->pool_range.start.u.v4.sin_addr.s_addr != 0) {
+		struct ip_pool *pool;
+		err_t er = find_addresspool(&this->pool_range, &pool);
+
+		if (er != NULL) {
+			loglog(RC_CLASH, "leftaddresspool clash");
+			return FALSE;
+		}
+	}
+
 	if (subnettypeof(&this->client) != subnettypeof(&that->client)) {
 		/*
 		 * This should have been diagnosed by whack, so we need not
@@ -1117,7 +1118,6 @@ static bool have_wm_certs(const struct whack_message *wm)
 void add_connection(const struct whack_message *wm)
 {
 	struct alg_info_ike *alg_info_ike;
-	const char *ugh;
 
 	alg_info_ike = NULL;
 
@@ -1141,26 +1141,29 @@ void add_connection(const struct whack_message *wm)
 	switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
 	case LEMPTY:
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
-		loglog(RC_NOALGO,
+		loglog(RC_LOG_SERIOUS,
 			"Must specify either AH or ESP.\n");
 		return;
 	}
 
 	/* ??? illegible assignment inside condition */
-	if (wm->ike != NULL &&
-		((alg_info_ike = alg_info_ike_create_from_str(wm->ike,
-			&ugh)) == NULL || alg_info_ike->alg_info_cnt == 0)) {
+	if (wm->ike != NULL) {
+		char err_buf[256];	/* ??? big enough? */
 
-		if (alg_info_ike != NULL && alg_info_ike->alg_info_cnt == 0) {
-			loglog(RC_NOALGO,
+		alg_info_ike = alg_info_ike_create_from_str(wm->ike,
+			err_buf, sizeof(err_buf));
+
+		if (alg_info_ike == NULL) {
+			loglog(RC_LOG_SERIOUS, "ike string error: %s",
+				err_buf);
+			return;
+		}
+		if (alg_info_ike->alg_info_cnt == 0) {
+			loglog(RC_LOG_SERIOUS,
 				"got 0 transforms for ike=\"%s\"", wm->ike);
 			return;
 		}
-
-		loglog(RC_NOALGO, "ike string error: %s",
-			ugh ? ugh : "Unknown");
-		return;
-	} 
+	}
 
 	if ((wm->ike == NULL || alg_info_ike != NULL) &&
 		check_connection_end(&wm->right, &wm->left, wm) &&
@@ -1174,6 +1177,7 @@ void add_connection(const struct whack_message *wm)
 		 * destroyed.
 		 */
 
+		char err_buf[256] = "";	/* ??? big enough? */
 		bool same_rightca, same_leftca;
 		struct connection *c = alloc_thing(struct connection,
 						"struct connection");
@@ -1197,11 +1201,11 @@ void add_connection(const struct whack_message *wm)
 
 			if (c->policy & POLICY_ENCRYPT)
 				c->alg_info_esp = alg_info_esp_create_from_str(
-					wm->esp ? wm->esp : "", &ugh);
+					wm->esp ? wm->esp : "", err_buf, sizeof(err_buf));
 
 			if (c->policy & POLICY_AUTHENTICATE)
 				c->alg_info_esp = alg_info_ah_create_from_str(
-					wm->esp ? wm->esp : "", &ugh);
+					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
 				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
@@ -1214,7 +1218,7 @@ void add_connection(const struct whack_message *wm)
 			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->alg_info_cnt == 0) {
-					loglog(RC_NOALGO,
+					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"esp=\"%s\"",
 						wm->esp);
@@ -1222,9 +1226,9 @@ void add_connection(const struct whack_message *wm)
 					return;
 				}
 			} else {
-				loglog(RC_NOALGO,
+				loglog(RC_LOG_SERIOUS,
 					"esp string error: %s",
-					ugh ? ugh : "Unknown");
+					err_buf);
 				pfree(c);
 				return;
 			}
@@ -1239,12 +1243,12 @@ void add_connection(const struct whack_message *wm)
 				alg_info_snprint(buf, sizeof(buf),
 						(struct alg_info *)c->
 						alg_info_ike);
-				DBG_log("ike (phase1) algorihtm values: %s",
+				DBG_log("ike (phase1) algorithm values: %s",
 					buf);
 			});
-			if (c->alg_info_ike) {
+			if (c->alg_info_ike != NULL) {
 				if (c->alg_info_ike->alg_info_cnt == 0) {
-					loglog(RC_NOALGO,
+					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"ike=\"%s\"",
 						wm->ike);
@@ -1252,9 +1256,9 @@ void add_connection(const struct whack_message *wm)
 					return;
 				}
 			} else {
-				loglog(RC_NOALGO,
+				loglog(RC_LOG_SERIOUS,
 					"ike string error: %s",
-					ugh ? ugh : "Unknown");
+					err_buf);
 				pfree(c);
 				return;
 			}
@@ -1340,13 +1344,11 @@ void add_connection(const struct whack_message *wm)
 
 		if (wm->left.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->left.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->left.pool_range);
 		}
 		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->right.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->right.pool_range);
 		}
 
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
@@ -1551,7 +1553,6 @@ void add_connection(const struct whack_message *wm)
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
-
 }
 
 /*

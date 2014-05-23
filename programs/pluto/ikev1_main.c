@@ -182,7 +182,7 @@ stf_status main_outI1(int whack_sock,
 		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		int np = numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,
+		if (!ikev1_out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,
 				FALSE, np)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
@@ -198,12 +198,11 @@ stf_status main_outI1(int whack_sock,
 	}
 
 	if (c->send_vendorid) {
-		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend >0 ?
 			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md.rbody,
-					myvid, strlen(myvid), "Vendor ID")) {
+					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
 			reset_cur_state();	/* ??? was missing */
 			return STF_INTERNAL_ERROR;
 		}
@@ -271,7 +270,9 @@ stf_status main_outI1(int whack_sock,
 			"main_inR1_outR2 (num=%d)",
 			numvidtosend);
 
-	close_message(&md.rbody, st);
+	if (!close_message(&md.rbody, st))
+		return STF_INTERNAL_ERROR;
+
 	close_output_pbs(&reply_stream);
 
 	clonetochunk(st->st_tpacket, reply_stream.start,
@@ -532,7 +533,10 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 
 	update_iv(st);
 	DBG_cond_dump(DBG_CRYPT, "next IV:", st->st_iv, st->st_iv_len);
-	close_message(pbs, st);
+
+	if (!close_message(pbs, st))
+		return FALSE;
+
 	return TRUE;
 }
 
@@ -823,10 +827,9 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	 */
 
 	if (c->send_vendorid) {
-		const char *myvid = ipsec_version_vendorid();
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
-					myvid, strlen(myvid), "Vendor ID"))
+					pluto_vendorid, strlen(pluto_vendorid), "Vendor ID"))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -877,7 +880,8 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	/* Ensure our 'next payload' types sync'ed up */
 	passert(numvidtosend == 0);
 
-	close_message(&md->rbody, st);
+	if (!close_message(&md->rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	/* save initiator SA for HASH */
 	clonereplacechunk(st->st_p1isa, sa_pd->pbs.start, pbs_room(
@@ -1076,7 +1080,8 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	/* finish message */
-	close_message(&md->rbody, st);
+	if (!close_message(&md->rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	/* Reinsert the state, using the responder cookie we just received */
 	unhash_state(st);
@@ -1095,7 +1100,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
  *	    --> HDR, KE, <IDr1_b>PubKey_i, <Nr_b>PubKey_i
  * RPKE_AUTH:
  *	    HDR, [ HASH(1), ] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDi1_b>Ke_i
- * 	    [,<<Cert-I_b>Ke_i]
+ *	    [,<<Cert-I_b>Ke_i]
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
 static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
@@ -1342,7 +1347,8 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	/* finish message */
-	close_message(&md->rbody, st);
+	if (!close_message(&md->rbody, st))
+		return STF_INTERNAL_ERROR;
 
 	/*
 	 * next message will be encrypted, so, we need to have
@@ -1748,7 +1754,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 	dh->dh_md = md;
 	set_suspended(st, md);
 	dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-	
+
 	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);
 	return start_dh_secretiv(&dh->dh_pcrc, st,
 				st->st_import,
@@ -2436,7 +2442,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	pb_stream r_hdr_pbs;
 	u_char *r_hashval, *r_hash_start;
 	static time_t last_malformed;
-	time_t n = time(NULL);
+	time_t n = now();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
 
 	r_hashval = NULL;

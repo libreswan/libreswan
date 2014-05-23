@@ -213,10 +213,8 @@ struct state {
 	so_serial_t st_clonedfrom;              /* serial number of parent */
 	int st_usage;
 
-#ifdef XAUTH_HAVE_PAM
 	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
 	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
-#endif
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_rekeytov2;                      /* true if this IKEv1 is about
@@ -411,6 +409,7 @@ struct state {
 	u_int32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK
 	                                           to receive */
 	u_int32_t st_dpd_peerseqno;             /* global variables */
+	u_int32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
 	struct event       *st_dpd_event;       /* backpointer for DPD events */
 
 	bool st_seen_nortel_vid;                /* To work around a nortel bug */

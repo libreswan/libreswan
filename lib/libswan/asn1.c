@@ -37,31 +37,52 @@ int known_oid(chunk_t object)
 {
 	int oid = 0;
 
-	while (object.len) {
+	while (object.len > 0) {
 		if (oid_names[oid].octet == *object.ptr) {
-			if (--object.len == 0 || oid_names[oid].down == 0) {
-				return oid; /* found terminal symbol */
+			object.len--;
+			object.ptr++;
+			if (object.len == 0) {
+				/* at end of object */
+				if (oid_names[oid].down == 0)
+					return oid;	/* found terminal symbol */
+				else
+					return OID_UNKNOWN;	/* end of object but not terminal */
 			} else {
-				object.ptr++;
-				oid++; /* advance to next hex octet */
+				/* object continues */
+				if (oid_names[oid].down == 0) {
+					return OID_UNKNOWN;	/* terminal but not end of object */
+				} else {
+					/* advance to next hex octet in table
+					 * so we can match next octet of OID
+					 */
+					oid++;
+				}
 			}
 		} else {
-			if (oid_names[oid].next)
+			if (oid_names[oid].next != 0)
 				oid = oid_names[oid].next;
 			else
 				return OID_UNKNOWN;
 		}
 	}
-	return -1;
+	return OID_UNKNOWN;
 }
 
 /*
- * Decodes the length in bytes of an ASN.1 object
+ * Skip tag and decode the length in bytes of an ASN.1 object.
+ * Blob is updated to reflect the tag and length have been consumed
  */
 size_t asn1_length(chunk_t *blob)
 {
 	u_char n;
 	size_t len;
+
+	if (blob->len < 2)
+	{
+		DBG(DBG_PARSING, DBG_log(
+			"insufficient number of octets to parse ASN.1 length"));
+		return ASN1_INVALID_LENGTH;
+	}
 
 	/* advance from tag field on to length field */
 	blob->ptr++;
@@ -226,7 +247,7 @@ time_t asn1totime(const chunk_t *utctime, asn1_t type)
 			return 0; /* error in positive timezone offset format */
 
 		/* positive time zone offset */
-		tz_offset = 3600 * tz_hour + 60 * tz_min;
+		tz_offset = tz_hour * secs_per_hour + tz_min * secs_per_minute;
 	} else if ((eot = memchr(utctime->ptr, '-', utctime->len)) != NULL) {
 		int tz_hour, tz_min;
 
@@ -234,7 +255,7 @@ time_t asn1totime(const chunk_t *utctime, asn1_t type)
 			return 0; /* error in negative timezone offset format */
 
 		/* negative time zone offset */
-		tz_offset = -3600 * tz_hour - 60 * tz_min;
+		tz_offset = -(tz_hour * secs_per_hour + tz_min * secs_per_minute);
 	} else {
 		return 0; /* error in time format */
 	}

@@ -42,6 +42,7 @@
 
 #include "sysdep.h"
 #include "lswconf.h"
+#include "lswtime.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -149,7 +150,6 @@ static FILE *whackrecordfile = NULL;
 static bool writewhackrecord(char *buf, int buflen)
 {
 	u_int32_t header[3];
-	time_t n;
 
 	/* round up buffer length */
 	int abuflen = (buflen + 3) & ~0x3;
@@ -160,8 +160,7 @@ static bool writewhackrecord(char *buf, int buflen)
 
 	header[0] = buflen + sizeof(u_int32_t) * 3;
 	header[1] = 0;
-	time(&n);
-	header[2] = n;
+	header[2] = now();
 
 	/* DBG_log("buflen: %u abuflen: %u\n", header[0], abuflen); */
 
@@ -186,7 +185,7 @@ static bool openwhackrecordfile(char *file)
 	char FQDN[HOST_NAME_MAX + 1];
 	u_int32_t magic;
 	struct tm tm1, *tm;
-	time_t n;
+	time_t n = now();
 
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));
@@ -200,7 +199,6 @@ static bool openwhackrecordfile(char *file)
 		return FALSE;
 	}
 
-	time(&n);
 	tm = localtime_r(&n, &tm1);
 	strftime(when, sizeof(when), "%F %T", tm);
 
@@ -403,7 +401,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 		} else {
 			DBG_log("received whack to delete state %s #%lu %s ",
-				st->st_ikev2 ? "IKEv2" : "IKEv1", 
+				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
 				enum_name(&state_names, st->st_state));
 

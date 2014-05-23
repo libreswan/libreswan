@@ -410,15 +410,15 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	if (password == NULL) {
 		pwdata.source = PW_NONE;
-	} else 	{
+	} else {
 		/* check if passwd == configdir/nsspassword */
 		size_t cdl = strlen(configdir);
 		size_t pwl = strlen(password);
 		static const char suf[] = "/nsspassword";
 
 		if (pwl == cdl + sizeof(suf) - 1 &&
-		    memcmp(password, configdir, cdl) == 0 &&
-		    memcmp(password + cdl, suf, sizeof(suf)) == 0)
+			memeq(password, configdir, cdl) &&
+			memeq(password + cdl, suf, sizeof(suf)))
 			pwdata.source = PW_FROMFILE;
 		else
 			pwdata.source = PW_PLAINTEXT;
@@ -456,14 +456,16 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	/* slot = PK11_GetBestSlot(CKM_RSA_PKCS_KEY_PAIR_GEN, password ? &pwdata : NULL); */
 	/* or the user may specify the name of a token. */
 
-	/*if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
-	        rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
-	        if (rv != SECSuccess) {
-	                fprintf(stderr, "%s: could not authenticate to token '%s'\n",
-	                        me, PK11_GetTokenName(slot));
-	                return;
-	        }
-	   }*/
+#if 0
+	if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
+		rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
+		if (rv != SECSuccess) {
+			fprintf(stderr, "%s: could not authenticate to token '%s'\n",
+				me, PK11_GetTokenName(slot));
+			return;
+		}
+	}
+#endif /* 0 */
 
 	/* Do some random-number initialization. */
 	UpdateNSS_RNG();
@@ -502,7 +504,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
 	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(
-		       &now));
+			&now));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 	bundp = bundle(E, n, &bs);
@@ -513,7 +515,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
 	if (ckaID != NULL) {
-		printf("\t# everything after this point is CKA_ID in hex formati - not the real values \n");
+		printf("\t# everything after this point is CKA_ID in hex format - not the real values \n");
 		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
 		printf("\tPrime1: %s\n", hexOut(ckaID));
 		printf("\tPrime2: %s\n", hexOut(ckaID));
@@ -610,7 +612,7 @@ mpz_t n;
 size_t *sizep;
 {
 	char *hexp = hexout(n);
-	static unsigned char bundbuf[2 + MAXBITS / 8];
+	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
 	const char *er;
 	size_t size;
 

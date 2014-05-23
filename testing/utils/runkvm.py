@@ -74,19 +74,27 @@ def connect_to_kvm(args, prompt = ''):
     # don't match full prompt, we want it to work regardless cwd
 
     done = 0
-    tries = 40
+    tries = 60
     print "Waiting on %s login: or %s prompt"%(args.hostname, prompt)
     while not done and tries != 0:
       try:
+        print "sending ctrl-c return"
         child = pexpect.spawn (cmd)
-        child.sendcontrol('c')
+        child.delaybeforesend = 0
+        #child.sendcontrol('c')
         child.sendline ('')
+        print "found, waiting on login: or %s"%prompt
         res = child.expect (['login: ', prompt], timeout=3) 
 	if res == 0:
+           print "sending login name root"
            child.sendline ('root')
+           print "found, expecting password prompt"
            child.expect ('Password:', timeout=1)
+           print "found, sending password"
            child.sendline ('swan')
+           print "waiting on root shell prompt"
            child.expect ('root.*', timeout=1)
+           print "done"
            done = 1
         elif res == 1:
           print  '----------------------------------------------------'

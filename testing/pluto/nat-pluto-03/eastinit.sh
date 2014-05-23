@@ -1,13 +1,5 @@
-#!/bin/sh
-: ==== start ====
-TESTNAME=nat-pluto-03
-source /testing/pluto/bin/eastlocal.sh
-
+/testing/guestbin/swan-prep
 ipsec setup start
-/testing/pluto/bin/wait-until-policy-loaded
-
-echo done.
-
-
-
-
+/testing/pluto/bin/wait-until-pluto-started
+ipsec auto --add road-eastnet
+echo "initdone"

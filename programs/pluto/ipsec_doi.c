@@ -196,26 +196,25 @@ bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
  *
  * @param pbs PB Stream
  */
-void close_message(pb_stream *pbs, struct state *st)
+bool close_message(pb_stream *pbs, struct state *st)
 {
 	size_t padding =  pad_up(pbs_offset(pbs), 4);
 
-	/* Workaround for overzealous Checkpoint firewal */
-	if (padding && st && st->st_connection &&
+	/* Workaround for overzealous Checkpoint firewall */
+	if (padding != 0 && st && st->st_connection != NULL &&
 	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
-		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %lu bytes skipped by policy",
+		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %zu bytes skipped by policy",
 			padding));
-		padding = 0;
-	}
-
-	if (padding != 0) {
-		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %lu bytes", padding));
-		(void) out_zero(padding, pbs, "message padding");
+	} else if (padding != 0) {
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %zu bytes", padding));
+		if (!out_zero(padding, pbs, "message padding"))
+			return FALSE;
 	} else {
 		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required"));
 	}
 
 	close_output_pbs(pbs);
+	return TRUE;
 }
 
 static initiator_function *pick_initiator(struct connection *c UNUSED,

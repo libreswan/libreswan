@@ -244,6 +244,44 @@ static void compute_proto_keymat(struct state *st,
 			needed_len += AES_CCM_SALT_BYTES;
 			break;
 
+		case ESP_CAST:
+			/* CAST can use 40-28 bits but requires padding up to 128
+			 * We use a minimum of 128bits to avoid padding
+			 * This is also the max keysize for cast128
+			 */
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+                                passert(st->st_esp.attrs.transattrs.enckeylen == 128);
+			}
+			/* minimum = default = maximum */
+			needed_len = CAST_KEY_DEF_LEN / BITS_PER_BYTE;
+			break;
+
+		case ESP_CAMELLIA:
+		case ESP_TWOFISH:
+		case ESP_SERPENT:
+			/* valid keysize enforced before we get here */
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
+					st->st_esp.attrs.transattrs.enckeylen == 192 ||
+					st->st_esp.attrs.transattrs.enckeylen == 256);
+				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
+			} else {
+				/*
+				 * If no keylength set, pick mandatory to implement default
+				 * {CAMELLIA,TWOFISH,SERPENT}_DEF_KEY_LEN = 128
+				 */
+				needed_len = 128 / BITS_PER_BYTE;
+			}
+			break;
+
+		case ESP_SEED_CBC:
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+				/* SEED-CBC is always 128bit */
+				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
+				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
+			}
+			break;
+
 		default:
 			needed_len = kernel_alg_esp_enc_max_keylen(
 					pi->attrs.transattrs.encrypt);
@@ -963,7 +1001,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		if (can_do_IPcomp)
 			pm |= POLICY_COMPRESS;
 
-		if (!out_sa(&rbody,
+		if (!ikev1_out_sa(&rbody,
 			    &ipsec_sadb[(st->st_policy &
 					 pm) >> POLICY_IPSEC_SHIFT],
 			    st, FALSE, FALSE, ISAKMP_NEXT_NONCE)) {

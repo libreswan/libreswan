@@ -1416,17 +1416,15 @@ void fmt_state(struct state *st, const time_t n,
 			 (unsigned long)st->st_clonedfrom);
 	} else {
 		if (st->hidden_variables.st_peer_supports_dpd) {
-			time_t tn = time(NULL);
 
 			snprintf(dpdbuf, sizeof(dpdbuf),
 				 "; lastdpd=%lds(seq in:%u out:%u)",
-				 st->st_last_dpd != 0 ? tn -
+				 st->st_last_dpd != 0 ? now() -
 				 st->st_last_dpd : (long)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
 		} else if (dpd_active_locally(st) && st->st_ikev2) {
 			struct state *pst;
-			time_t tn = time(NULL);
 
 			/* stats are on parent sa */
 			if (IS_CHILD_SA(st)) {
@@ -1435,7 +1433,7 @@ void fmt_state(struct state *st, const time_t n,
 					snprintf(dpdbuf, sizeof(dpdbuf),
 						 "; lastlive=%lds",
 						 pst->st_last_liveness != 0 ?
-						  tn - pst->st_last_liveness : 0);
+						  now() - pst->st_last_liveness : 0);
 				}
 			}
 		} else {
@@ -1652,7 +1650,6 @@ static int state_compare(const void *a, const void *b)
 
 void show_states_status(void)
 {
-	const time_t n = now();
 	int i;
 	char state_buf[LOG_WIDTH];
 	char state_buf2[LOG_WIDTH];
@@ -1693,7 +1690,7 @@ void show_states_status(void)
 		for (i = 0; i < count; i++) {
 			struct state *st;
 			st = array[i];
-			fmt_state(st, n, state_buf, sizeof(state_buf),
+			fmt_state(st, now(), state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
 			whack_log(RC_COMMENT, "%s", state_buf);
 			if (state_buf2[0] != '\0')

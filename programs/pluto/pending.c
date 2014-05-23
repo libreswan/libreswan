@@ -106,7 +106,7 @@ void add_pending(int whack_sock,
 	p->policy = policy;
 	p->try = try;
 	p->replacing = replacing;
-	p->pend_time = time(NULL);
+	p->pend_time = now();
 #ifdef HAVE_LABELED_IPSEC
 	p->uctx = NULL;
 	if (uctx != NULL) {
@@ -211,7 +211,7 @@ void unpend(struct state *st)
 				    enum_name(&pluto_cryptoimportance_names,
 					      st->st_import)));
 
-			p->pend_time = time(NULL);
+			p->pend_time = now();
 			if (!st->st_ikev2) {
 				(void) quick_outI1(p->whack_sock, st, p->connection,
 						   p->policy,
@@ -262,7 +262,6 @@ struct connection *first_pending(struct state *st,
 bool pending_check_timeout(struct connection *c)
 {
 	struct pending **pp, *p;
-	time_t n = time(NULL);
 
 	for (pp = host_pair_first_pending(c); (p = *pp) != NULL; ) {
 		DBG(DBG_DPD,
@@ -270,10 +269,10 @@ bool pending_check_timeout(struct connection *c)
 			    c->name,
 			    (unsigned long)p->pend_time,
 			    (unsigned long)c->dpd_timeout,
-			    (unsigned long)n));
+			    (unsigned long)now()));
 
 		if (c->dpd_timeout > 0) {
-			if ((p->pend_time + c->dpd_timeout * 3) <= n) {
+			if ((p->pend_time + c->dpd_timeout * 3) <= now()) {
 				DBG(DBG_DPD,
 				    DBG_log("connection \"%s\" stuck, restarting",
 					    c->name));

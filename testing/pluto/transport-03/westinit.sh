@@ -12,7 +12,7 @@ telnet east-out 3 | wc -l
 iptables -A INPUT -i eth1 -s 192.1.2.23 -p tcp --sport 3 -j REJECT
 iptables -A OUTPUT -o eth1 -d 192.1.2.23 -p tcp --dport 3 -j REJECT
 
-# confirm with a ping to east-in
+# confirm with a ping
 ping -n -c 4 192.0.2.254
 telnet east-out 3 | wc -l
 

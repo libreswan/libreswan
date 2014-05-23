@@ -1,8 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 NSS files
 east #
- ipsec _stackmanager start
-[ 00.00] NET: Registered protocol family 15
+ ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -13,7 +12,7 @@ east #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] 
 east #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
@@ -24,26 +23,20 @@ east #
 000 interface ipsec0/eth1 192.1.2.23
 000  
 000 FIPS=disabled
-000 SElinux=enabled
+000 SElinux=XXXXX
 000  
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp
 000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
+000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx_attr_value=<unsupported>
+000 secctx-attr-value=<unsupported>
 000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual_private (%priv):
-000 - allowed 0 subnets: 
-000 - disallowed 0 subnets: 
-000 WARNING: Either virtual_private= is not specified, or there is a syntax 
-000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
-000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
-000          private address space in internal use, it should be excluded!
 000  
 000 ESP algorithms supported:
 000  
@@ -59,8 +52,8 @@ east #
 000  
 000 IKE algorithms supported:
 000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -108,26 +101,20 @@ east #
 000 interface ipsec0/eth1 192.1.2.23
 000  
 000 FIPS=disabled
-000 SElinux=enabled
+000 SElinux=XXXXX
 000  
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp
 000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
+000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx_attr_value=<unsupported>
+000 secctx-attr-value=<unsupported>
 000 %myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual_private (%priv):
-000 - allowed 0 subnets: 
-000 - disallowed 0 subnets: 
-000 WARNING: Either virtual_private= is not specified, or there is a syntax 
-000          error in that line. 'left/rightsubnet=vhost:%priv' will not work!
-000 WARNING: Disallowed subnets in virtual_private= is empty. If you have 
-000          private address space in internal use, it should be excluded!
 000  
 000 ESP algorithms supported:
 000  
@@ -143,8 +130,8 @@ east #
 000  
 000 IKE algorithms supported:
 000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32

@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 road #
  ipsec setup start
-[ 00.00] NET: Registered protocol family 15
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -61,11 +60,4 @@ road #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-type=AVC msg=audit(1393580364.648:44): avc:  denied  { read } for  pid=1245 comm="pluto" name="ipsec.conf.common" dev="9p" ino=8522179 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
-type=AVC msg=audit(1393580364.648:44): avc:  denied  { open } for  pid=1245 comm="pluto" path="/testing/baseconfigs/all/etc/ipsec.d/ipsec.conf.common" dev="9p" ino=8522179 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
-type=SYSCALL msg=audit(1393580364.648:44): arch=c000003e syscall=2 success=yes exit=12 a0=7fc1a1f0d9c0 a1=0 a2=1b6 a3=7370692f6374652f items=0 ppid=1244 pid=1245 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=4294967295 tty=(none) comm="pluto" exe="/usr/local/libexec/ipsec/pluto" subj=system_u:system_r:ipsec_t:s0 key=(null)
-type=AVC msg=audit(1393580364.651:45): avc:  denied  { read } for  pid=1245 comm="pluto" name="pluto.log" dev="tmpfs" ino=13195 scontext=system_u:system_r:ipsec_t:s0 tcontext=unconfined_u:object_r:user_tmp_t:s0 tclass=lnk_file
-type=AVC msg=audit(1393580364.651:45): avc:  denied  { create } for  pid=1245 comm="pluto" name="road.pluto.log" scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
-type=AVC msg=audit(1393580364.651:45): avc:  denied  { write } for  pid=1245 comm="pluto" name="road.pluto.log" dev="9p" ino=8654134 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
-type=SYSCALL msg=audit(1393580364.651:45): arch=c000003e syscall=2 success=yes exit=3 a0=7fc1a1f19b10 a1=241 a2=1b6 a3=3 items=0 ppid=1244 pid=1245 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=4294967295 tty=(none) comm="pluto" exe="/usr/local/libexec/ipsec/pluto" subj=system_u:system_r:ipsec_t:s0 key=(null)
 

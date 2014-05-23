@@ -19,17 +19,19 @@ int socket(int domain, int type, int protocol)
 {
 	int sk, rc;
 
-	if (!real_socket)
+	if (real_socket == NULL)
 		real_socket = (socket_fn)dlsym(RTLD_NEXT, "socket");
 
 	sk = real_socket(domain, type, protocol);
 
 	if (saref == UNASSIGNED_SAREF) {
 		const char *str;
+
 		saref = INVALID_SAREF;
 		str = getenv("IPSEC_SAREF");
-		if (str) {
+		if (str != NULL) {
 			char tmp = 0;
+
 			rc = sscanf(str, "%u%c", &saref, &tmp);
 			if (rc != 1)
 				saref = INVALID_SAREF;

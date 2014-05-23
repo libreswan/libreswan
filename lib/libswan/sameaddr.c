@@ -26,28 +26,32 @@ static int samenbits(const ip_address *a, const ip_address *b, int n);
  */
 int	/* like memcmp */
 addrcmp(a, b)
-const ip_address * a;
+const ip_address *a;
 const ip_address *b;
 {
 	int at = addrtypeof(a);
 	int bt = addrtypeof(b);
-	unsigned char *ap;
-	unsigned char *bp;
-	size_t as = addrbytesptr(a, &ap);
-	size_t bs = addrbytesptr(b, &bp);
-	size_t n = (as < bs) ? as : bs;	/* min(as, bs) */
-	int c = memcmp(ap, bp, n);
 
-	if (c != 0)	/* bytes differ */
-		return (c < 0) ? -1 : 1;
-
-	if (as != bs)	/* comparison incomplete:  lexical order */
-		return (as < bs) ? -1 : 1;
-
-	if (at != bt)	/* bytes same but not same type:  break tie */
+	if (at != bt) {
 		return (at < bt) ? -1 : 1;
+	} else {
+		unsigned char *ap;
+		unsigned char *bp;
+		size_t as = addrbytesptr(a, &ap);
+		size_t bs = addrbytesptr(b, &bp);
 
-	return 0;
+		size_t n = (as < bs) ? as : bs;	/* min(as, bs) */
+
+		int c = memcmp(ap, bp, n);
+
+		if (c != 0)	/* bytes differ */
+			return (c < 0) ? -1 : 1;
+
+		if (as != bs)	/* comparison incomplete:  lexical order */
+			return (as < bs) ? -1 : 1;
+
+		return 0;
+	}
 }
 
 /*
@@ -57,7 +61,7 @@ bool sameaddr(a, b)
 const ip_address * a;
 const ip_address *b;
 {
-	return (addrcmp(a, b) == 0) ? 1 : 0;
+	return addrcmp(a, b) == 0;
 }
 
 /*

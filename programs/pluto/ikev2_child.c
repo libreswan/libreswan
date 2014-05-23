@@ -1080,9 +1080,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	if (ret != STF_OK)
 		return ret;           /* should we delete_state st1? */
 
-	if ( role == RESPONDER ) {
-		chunk_t child_spi, notifiy_data;
+	if (role == RESPONDER) {
 		struct payload_digest *p;
+
 		for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 			if (p->payload.v2n.isan_type ==
 			    v2N_USE_TRANSPORT_MODE) {
@@ -1096,17 +1096,20 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					DBG_log("Now responding with USE_TRANSPORT_MODE notify");
 				}
 
-				zero(&child_spi);
-				zero(&notifiy_data);
-				ship_v2N(ISAKMP_NEXT_v2NONE,
+				/* In v2, for parent, protoid must be 0 and SPI must be empty */
+				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
 					 ISAKMP_PAYLOAD_NONCRITICAL,
-				         /*PROTO_ISAKMP*/ 0,
-					 &child_spi,
-					 v2N_USE_TRANSPORT_MODE, &notifiy_data,
-					 outpbs);
+				         0 /* protoid */,
+					 &empty_chunk,
+					 v2N_USE_TRANSPORT_MODE, &empty_chunk,
+					 outpbs))
+					return STF_INTERNAL_ERROR;
 
 				if (st1->st_esp.present) {
-					/*libreswan supports only "esp" with ikev2 it seems, look at ikev2_parse_child_sa_body handling*/
+					/*
+					 * libreswan supports only "esp" with ikev2 it seems.
+					 * Look at ikev2_parse_child_sa_body handling.
+					 */
 					st1->st_esp.attrs.encapsulation =
 						ENCAPSULATION_MODE_TRANSPORT;
 				}

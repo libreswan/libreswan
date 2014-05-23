@@ -33,7 +33,7 @@ typedef unsigned long so_serial_t;
 #define SOS_FIRST       1       /* first normal serial number */
 
 /* warns a predefined interval before expiry */
-extern const char* check_expiry(time_t expiration_date,
+extern const char *check_expiry(time_t expiration_date,
 				int warning_interval, bool strict);
 
 /* cleanly exit Pluto */

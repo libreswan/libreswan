@@ -1,6 +1,5 @@
 /testing/guestbin/swan-prep
-ipsec _stackmanager start 
-/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --debug-all --impair-minor-version-bump
 ipsec auto --add westnet-eastnet-ikev2

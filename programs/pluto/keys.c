@@ -83,13 +83,7 @@ static struct secret *pluto_secrets = NULL;
 
 void load_preshared_secrets()
 {
-	lsw_load_preshared_secrets(&pluto_secrets
-#ifdef SINGLE_CONF_DIR
-				   , FALSE /* to much log noise in a shared directory mode */
-#else
-				   , TRUE
-#endif
-				   , pluto_shared_secrets_file);
+	lsw_load_preshared_secrets(&pluto_secrets , pluto_shared_secrets_file);
 }
 
 void free_preshared_secrets(void)
@@ -455,7 +449,6 @@ stf_status RSA_check_signature_gen(struct state *st,
 			    same_id(&c->spd.that.id, &key->id) &&
 			    trusted_ca(key->issuer, c->spd.that.ca,
 				       &pathlen)) {
-				time_t tnow;
 
 				DBG(DBG_CONTROL, {
 					    char buf[IDTOA_BUF];
@@ -466,9 +459,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    });
 
 				/* check if found public key has expired */
-				time(&tnow);
 				if (key->until_time != UNDEFINED_TIME &&
-				    key->until_time < tnow) {
+				    key->until_time < now()) {
 					loglog(RC_LOG_SERIOUS,
 					       "cached RSA public key has expired and has been deleted");
 					*pp = free_public_keyentry(p);
@@ -862,7 +854,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 	if (!check_pub_keys) {
 		whack_log(RC_COMMENT, " ");
-		whack_log(RC_COMMENT, "List of Public Keys:");
+		whack_log(RC_COMMENT, "List of RSA Public Keys:");
 		whack_log(RC_COMMENT, " ");
 	}
 
@@ -870,19 +862,18 @@ void list_public_keys(bool utc, bool check_pub_keys)
 		struct pubkey *key = p->key;
 
 		if (key->alg == PUBKEY_ALG_RSA) {
-			char id_buf[IDTOA_BUF];
-			char expires_buf[TIMETOA_BUF];
-			char installed_buf[TIMETOA_BUF];
-			const char *check_expiry_msg = NULL;
-
-			check_expiry_msg = check_expiry(key->until_time,
+			const char *check_expiry_msg = check_expiry(key->until_time,
 							PUBKEY_WARNING_INTERVAL,
 							TRUE);
 
 			if (!check_pub_keys ||
-			    (check_pub_keys &&
-			     strncmp(check_expiry_msg, "ok", 2))) {
+			    strncmp(check_expiry_msg, "ok", 2) != 0) {
+				char expires_buf[TIMETOA_BUF];
+				char installed_buf[TIMETOA_BUF];
+				char id_buf[IDTOA_BUF];
+
 				idtoa(&key->id, id_buf, IDTOA_BUF);
+
 				whack_log(RC_COMMENT,
 					  "%s, %4d RSA Key %s (%s private key), until %s %s",
 					  timetoa(&key->installed_time, utc,
@@ -895,9 +886,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 					  timetoa(&key->until_time, utc,
 						  expires_buf,
 						  sizeof(expires_buf)),
-					  check_expiry(key->until_time,
-						       PUBKEY_WARNING_INTERVAL,
-						       TRUE));
+					  check_expiry_msg);
 
 				whack_log(RC_COMMENT, "       %s '%s'",
 					  enum_show(&ike_idtype_names,
