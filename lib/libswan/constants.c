@@ -693,6 +693,7 @@ enum_names certpolicy_type_names = {
  * Oakley transform attributes
  * oakley_attr_bit_names does double duty: it is used for enum names
  * and bit names.
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
  */
 const char *const oakley_attr_bit_names[] = {
 	"OAKLEY_ENCRYPTION_ALGORITHM",
@@ -711,7 +712,6 @@ const char *const oakley_attr_bit_names[] = {
 	"OAKLEY_KEY_LENGTH",
 	"OAKLEY_FIELD_SIZE",
 	"OAKLEY_GROUP_ORDER",
-	"OAKLEY_BLOCK_SIZE",
 	NULL	/* termination for bitnamesof() */
 };
 

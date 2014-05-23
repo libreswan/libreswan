@@ -681,7 +681,8 @@ enum sa_policy_bits {
 #define OAKLEY_KEY_LENGTH             14
 #define OAKLEY_FIELD_SIZE             15
 #define OAKLEY_GROUP_ORDER            16        /* B/V */
-#define OAKLEY_BLOCK_SIZE             17
+/* 17-16383 Unassigned */
+/* 16384-32767 Reserved for private use */
 
 /* IPsec DOI attributes
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
