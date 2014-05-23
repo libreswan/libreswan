@@ -22,6 +22,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add xauth-road-eastnet
+002 added connection description "xauth-road-eastnet"
 road #
  echo done
 done
@@ -38,13 +39,13 @@ road #
 003 "xauth-road-eastnet" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 108 "xauth-road-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "xauth-road-eastnet" #1: received Vendor ID payload [CAN-IKEv2]
-002 "xauth-road-eastnet" #1: Main mode peer ID is ID_USER_FQDN: '@east'
+002 "xauth-road-eastnet" #1: Main mode peer ID is ID_FQDN: '@east'
 004 "xauth-road-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP1536}
 041 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Username:
 040 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Password:
 002 "xauth-road-eastnet" #1: XAUTH: Answering XAUTH challenge with user='use1'
 004 "xauth-road-eastnet" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set
-003 "xauth-road-eastnet" #1: XAUTH: Successfully Authenticated
+002 "xauth-road-eastnet" #1: XAUTH: Successfully Authenticated
 004 "xauth-road-eastnet" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set
 002 "xauth-road-eastnet" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+XAUTH+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "xauth-road-eastnet" #2: STATE_QUICK_I1: initiate

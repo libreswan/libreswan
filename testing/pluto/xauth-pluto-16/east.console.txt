@@ -24,12 +24,12 @@ east #
  # these should fail due to overlapping address pools
 east #
  ipsec auto --add modecfg-east-20
-002 ERROR: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
+023 ERROR: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
 023 leftaddresspool clash
 036 attempt to load incomplete connection
 east #
  ipsec auto --add modecfg-road-east
-002 ERROR: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
+023 ERROR: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
 023 leftaddresspool clash
 036 attempt to load incomplete connection
 east #

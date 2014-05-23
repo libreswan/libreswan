@@ -16,6 +16,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add road-eastnet-psk
+002 added connection description "road-eastnet-psk"
 east #
  echo "initdone"
 initdone

@@ -16,10 +16,13 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
+002 added connection description "west-east"
 east #
  ipsec auto --add west-eastnet
+002 added connection description "west-eastnet"
 east #
  ipsec auto --add westnet-east
+002 added connection description "westnet-east"
 east #
  /testing/pluto/bin/wait-until-policy-loaded
 east #
