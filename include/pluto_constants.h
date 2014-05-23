@@ -657,12 +657,10 @@ enum sa_policy_bits {
 #define HAS_IPSEC_POLICY(p) (((p) & POLICY_IPSEC_MASK) != 0)
 
 /* Don't allow negotiation? */
-#define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_PSK | POLICY_RSASIG | \
-				       POLICY_AGGRESSIVE) || \
-			     (((p) & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP))
+#define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
 
 /* Oakley transform attributes
- * draft-ietf-ipsec-ike-01.txt appendix A
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
  */
 
 #define OAKLEY_ENCRYPTION_ALGORITHM    1
