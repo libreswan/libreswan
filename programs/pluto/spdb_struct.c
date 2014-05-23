@@ -301,7 +301,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		}
 		transcnt++;
 	}
-	if (gsp != NULL) 
+	if (gsp != NULL)
 		gsp->parentSA = TRUE;
 
 	return gsp;

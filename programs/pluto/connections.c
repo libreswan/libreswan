@@ -752,7 +752,7 @@ static void unshare_connection_strings(struct connection *c)
 	if (c->alg_info_esp) {
 		alg_info_addref(ESPTOINFO(c->alg_info_esp));
 	}
-	if (c->pool !=  NULL) 
+	if (c->pool !=  NULL)
 		reference_addresspool(c->pool);
 }
 
@@ -1152,7 +1152,7 @@ void add_connection(const struct whack_message *wm)
 
 		alg_info_ike = alg_info_ike_create_from_str(wm->ike,
 			err_buf, sizeof(err_buf));
-			
+
 		if (alg_info_ike == NULL) {
 			loglog(RC_LOG_SERIOUS, "ike string error: %s",
 				err_buf);

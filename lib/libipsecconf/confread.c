@@ -1090,10 +1090,6 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			break;
 
-		case KS_UDPENCAP:
-			/* no way to specify this yet! */
-			break;
-
 		case KS_PASSTHROUGH:
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |

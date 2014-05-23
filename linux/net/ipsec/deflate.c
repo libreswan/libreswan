@@ -1112,7 +1112,7 @@ local block_state deflate_stored(s, flush)
 	s->lookahead = 0;
 
 	/* Emit a stored block if pending_buf will be full: */
- 	max_start = s->block_start + max_block_size;
+	max_start = s->block_start + max_block_size;
         if (s->strstart == 0 || (ulg)s->strstart >= max_start) {
 	    /* strstart == 0 is possible when wraparound on 16-bit machine */
 	    s->lookahead = (uInt)(s->strstart - max_start);
