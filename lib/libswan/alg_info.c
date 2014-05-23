@@ -203,21 +203,11 @@ int alg_enum_search(enum_names *ed, const char *prefix,
 static int ealg_getbyname_esp(const char *const str, size_t len)
 {
 	int ret;
-	int num;
 
 	if (str == NULL || *str == '\0')
 		return -1;
 
 	ret = alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
-	if (ret >= 0)
-		return ret;
-
-	/* support idXXX as syntax, matching iana numbers directly */
-	/* ??? str is NOT NUL-terminated.  This seems invalid. */
-	num = -1;
-	sscanf(str, "id%d%n", &ret, &num);
-	if (ret >= 0 && num != (int)len)
-		ret = -1;
 
 	return ret;
 }
@@ -229,7 +219,6 @@ static int ealg_getbyname_esp(const char *const str, size_t len)
 static int aalg_getbyname_esp(const char *str, size_t len)
 {
 	int ret = -1;
-	unsigned num;
 	static const char null_esp[] = "null";
 
 	if (str == NULL || *str == '\0')
@@ -251,12 +240,6 @@ static int aalg_getbyname_esp(const char *str, size_t len)
 	 */
 	if (len == sizeof(null_esp)-1 && strncasecmp(str, null_esp, len) == 0)
 		return INT_MAX;
-
-	/* ??? str is NOT NUL-terminated.  This seems invalid. */
-	num = -1;
-	sscanf(str, "id%d%n", &ret, &num);
-	if (ret >= 0 && num != (int)len)
-		ret = -1;
 
 	return ret;
 }
