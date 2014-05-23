@@ -1820,7 +1820,7 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 			c->spd.this.has_client = TRUE;
 			subnettot(&c->spd.this.client, 0,
 				  caddr, sizeof(caddr));
-			loglog(RC_LOG_SERIOUS,"Received IP address %s",
+			loglog(RC_LOG,"Received IP address %s",
 				      caddr);
 
 			if (addrbytesptr(&c->spd.this.host_srcip,
@@ -2004,7 +2004,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				c->spd.this.has_client = TRUE;
 				subnettot(&c->spd.this.client, 0,
 					  caddr, sizeof(caddr));
-				loglog(RC_LOG_SERIOUS,
+				loglog(RC_LOG,
 					"Received IPv4 address: %s",
 					caddr);
 
@@ -2033,7 +2033,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
 				addrtot(&a, 0, caddr, sizeof(caddr));
-				loglog(RC_LOG_SERIOUS,
+				loglog(RC_LOG,
 					"Received IP4 NETMASK %s",
 					caddr);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
@@ -2052,7 +2052,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
 				addrtot(&a, 0, caddr, sizeof(caddr));
-				loglog(RC_LOG_SERIOUS,"Received DNS %s",
+				loglog(RC_LOG,"Received DNS %s",
 					caddr);
 
 				{
@@ -2100,7 +2100,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
 							"ModeCFG Domain");
-				loglog(RC_LOG_SERIOUS, "Received Domain: %s",
+				loglog(RC_LOG, "Received Domain: %s",
 				       st->st_connection->modecfg_domain);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
@@ -2111,7 +2111,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
 							"ModeCFG Banner");
-				loglog(RC_LOG_SERIOUS, "Received Banner: %s",
+				loglog(RC_LOG, "Received Banner: %s",
 				       st->st_connection->modecfg_banner);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
@@ -2198,7 +2198,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						caddr,
 						sizeof(caddr));
 
-					loglog(RC_LOG_SERIOUS,
+					loglog(RC_LOG,
 						"Received subnet %s, maskbits %d", caddr,
 						tmp_spd->that.client.maskbits);
 
@@ -2674,7 +2674,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 		if (status && stat == STF_OK) {
 			st->hidden_variables.st_xauth_client_done =
 				TRUE;
-			loglog(RC_LOG_SERIOUS,"XAUTH: Successfully Authenticated");
+			loglog(RC_LOG,"XAUTH: Successfully Authenticated");
 			st->st_oakley.doing_xauth = FALSE;
 
 			return STF_OK;

@@ -142,8 +142,6 @@ static const struct keyword_enum_values kw_connaddrfamily_list = VALUES_INITIALI
 static const struct keyword_enum_value kw_type_values[] = {
 	{ "tunnel",    KS_TUNNEL },
 	{ "transport", KS_TRANSPORT },
-	{ "udp",       KS_UDPENCAP },
-	{ "udpencap",  KS_UDPENCAP },
 	{ "pass",      KS_PASSTHROUGH },
 	{ "passthrough", KS_PASSTHROUGH },
 	{ "reject",    KS_REJECT },

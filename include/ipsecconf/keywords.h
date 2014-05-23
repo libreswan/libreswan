@@ -221,10 +221,9 @@ enum keyword_auto {
 enum keyword_satype {
 	KS_TUNNEL    = 0,
 	KS_TRANSPORT = 1,
-	KS_UDPENCAP  = 2,
-	KS_PASSTHROUGH=3,
-	KS_DROP      = 4,
-	KS_REJECT    = 5,
+	KS_PASSTHROUGH=2,
+	KS_DROP      = 3,
+	KS_REJECT    = 4,
 };
 
 enum keyword_type {

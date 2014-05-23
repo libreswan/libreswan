@@ -1140,13 +1140,18 @@ void add_connection(const struct whack_message *wm)
 
 	switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
 	case LEMPTY:
+		if (!NEVER_NEGOTIATE(wm->policy)) {
+			loglog(RC_LOG_SERIOUS,
+				"Connection without AH or ESP cannot negotiate");
+			return;
+		}
+		break;
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 		loglog(RC_LOG_SERIOUS,
 			"Must specify either AH or ESP.\n");
 		return;
 	}
 
-	/* ??? illegible assignment inside condition */
 	if (wm->ike != NULL) {
 		char err_buf[256];	/* ??? big enough? */
 
