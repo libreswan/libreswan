@@ -1,9 +1,9 @@
-#!/bin/bash 
+#!/bin/bash
 . ../../../kvmsetup.sh
 if [ -f ./testparams.sh ] ; then
-        . ./testparams.sh
+	. ./testparams.sh
 else
-        . ../../default-testparams.sh
+	. ../../default-testparams.sh
 fi
 . ../setup.sh
 . ../../utils/functions.sh
@@ -22,23 +22,23 @@ do
 
 			if [ -f $FIXUPDIR/$fixup ]
 			then
-	    			case $fixup in
+				case $fixup in
 				*.sed) cleanups="$cleanups | sed -f $FIXUPDIR/$fixup";;
 				*.pl)  cleanups="$cleanups | perl $FIXUPDIR/$fixup";;
 				*.awk) cleanups="$cleanups | awk -f $FIXUPDIR/$fixup";;
-		    		*) echo Unknown fixup type: $fixup;;
-            			esac
+				*) echo Unknown fixup type: $fixup;;
+				esac
 			elif [ -f $FIXUPDIR2/$fixup ]
 			then
-	    			case $fixup in
+				case $fixup in
 				*.sed) cleanups="$cleanups | sed -f $FIXUPDIR2/$fixup";;
 				*.pl)  cleanups="$cleanups | perl $FIXUPDIR2/$fixup";;
 				*.awk) cleanups="$cleanups | awk -f $FIXUPDIR2/$fixup";;
-		    		*) echo Unknown fixup type: $fixup;;
-            			esac
+				*) echo Unknown fixup type: $fixup;;
+				esac
 			else
-	    			echo Fixup $fixup not found.
-	    			return
+				echo Fixup $fixup not found.
+				return
 			fi
 		done
 
