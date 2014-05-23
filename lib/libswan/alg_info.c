@@ -46,6 +46,12 @@ typedef struct alg_alias {
         const char *alias_set[MAX_ALG_ALIASES];
 } alg_alias;
 
+/*
+ * Aliases should NOT be used to match a base cipher to a key size,
+ * as that would change the meaning of the loaded connection. For
+ * examples aes cannot become an alias for aes128 or else a responder
+ * with esp=aes would reject aes256.
+ */
 const alg_alias auth_alg_aliases[] = {
 	/* alg */	/* aliases */
         "sha2_256",     { "sha2", "sah2", NULL },
@@ -55,13 +61,14 @@ const alg_alias auth_alg_aliases[] = {
 
 const alg_alias esp_trans_aliases[] = {
 	/* alg */	/* aliases */
-	"aes",          { "ase", NULL },
-	"aes_ccm_a",    { "aesccma", "ccm_a", "ccma", NULL },
-	"aes_ccm_b",    { "aesccmb", "ccm_b", "ccmb", NULL },
-	"aes_ccm_c",    { "aesccmc", "ccm_c", "ccmc", NULL },
-	"aes_gcm_a",    { "aesgcma", "gcm_a", "gcma", NULL },
-	"aes_gcm_b",    { "aesgcmb", "gcm_b", "gcmb", NULL },
-	"aes_gcm_c",    { "aesgcmc", "gcm_c", "gcmc", NULL },
+	"aes_ccm_a",    { "aes_ccm_8",  NULL },
+	"aes_ccm_b",    { "aes_ccm_12", NULL },
+	"aes_ccm_c",    { "aes_ccm_16", "aes_ccm", NULL },
+	"aes_gcm_a",    { "aes_gcm_8", NULL },
+	"aes_gcm_b",    { "aes_gcm_12", NULL },
+	"aes_gcm_c",    { "aes_gcm_16", "aes_gcm", NULL },
+	"aes_ctr",	{ "aesctr", NULL },
+	"aes",		{ "aes_cbc", NULL },
 	NULL, { NULL }
 };
 
