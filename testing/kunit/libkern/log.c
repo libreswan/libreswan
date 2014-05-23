@@ -148,11 +148,11 @@ static bool log_admin(int argc, char **argv)
 	}
 
 	if ((argc == 2 || argc == 3) &&
-	    !strcasecmp(argv[1], "describe_packets")) {
+	    strcaseeq(argv[1], "describe_packets")) {
 
 		if (argc == 3) {
-			describe_packets = !strcasecmp(argv[2], "on") ||
-					   !strcasecmp(argv[2], "true");
+			describe_packets = strcaseeq(argv[2], "on") ||
+					   strcaseeq(argv[2], "true");
 		}
 
 		nfsim_log(argc == 2 ? LOG_ALWAYS : LOG_UI,
@@ -162,7 +162,7 @@ static bool log_admin(int argc, char **argv)
 		return false;
 	}
 
-	if (argc > 1 && !strcmp(*argv[1] == 't' ? argv[1] : argv[1] + 1,
+	if (argc > 1 && streq(*argv[1] == 't' ? argv[1] : argv[1] + 1,
 				"types") ) {
 
 		int newtypemask = 0;

@@ -621,16 +621,16 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	k = ipsec_conf_keywords_v2;
 
 	while (k->keyname != NULL) {
-		if (strcasecmp(s, k->keyname) == 0)
+		if (strcaseeq(s, k->keyname))
 			break;
 
 		if (k->validity & kv_leftright) {
-			if (strncasecmp(s, "left", 4) == 0 &&
-			    strcasecmp(s + 4, k->keyname) == 0) {
+			if (strncaseeq(s, "left", 4) &&
+			    strcaseeq(s + 4, k->keyname)) {
 				keyleft = TRUE;
 				break;
-			} else if (strncasecmp(s, "right", 5) == 0      &&
-				   strcasecmp(s + 5, k->keyname) == 0) {
+			} else if (strncaseeq(s, "right", 5) &&
+				   strcaseeq(s + 5, k->keyname)) {
 				keyleft = FALSE;
 				break;
 			}
@@ -706,8 +706,9 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 		assert(kd->validenum != NULL);
 		for (kevcount = kd->validenum->valuesize,
 		     kev = kd->validenum->values;
-		     kevcount > 0 && strcasecmp(piece, kev->name) != 0;
-		     kev++, kevcount--) ;
+		     kevcount > 0 && !strcaseeq(piece, kev->name);
+		     kev++, kevcount--)
+			;
 
 		/* if we found something */
 		if (kevcount != 0) {
@@ -753,8 +754,9 @@ unsigned int parser_loose_enum(struct keyword *k, const char *s)
 	assert(kd->validenum != NULL && kd->validenum->values != NULL);
 
 	for (kevcount = kd->validenum->valuesize, kev = kd->validenum->values;
-	     kevcount > 0 && strcasecmp(s, kev->name) != 0;
-	     kev++, kevcount--) ;
+	     kevcount > 0 && !strcaseeq(s, kev->name);
+	     kev++, kevcount--)
+		;
 
 	/* if we found something */
 	if (kevcount != 0) {

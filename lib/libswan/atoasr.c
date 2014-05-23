@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (strcmp(argv[1], "-r") == 0) {
+	if (streq(argv[1], "-r")) {
 		regress();
 		fprintf(stderr, "regress() returned?!?\n");
 		exit(1);
@@ -197,7 +197,7 @@ void regress(void)
 				printf("`%s' '%c' reverse failed:  need %ld\n",
 					r->input, type, (long)n);
 				status = 1;
-			} else if (n > 0 && strcmp(r->output, buf) != 0) {
+			} else if (n > 0 && !streq(r->output, buf)) {
 				printf("`%s' '%c' gave `%s', expected `%s'\n",
 					r->input, type, buf, r->output);
 				status = 1;

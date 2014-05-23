@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (strcmp(argv[1], "-r") == 0) {
+	if (streq(argv[1], "-r")) {
 		regress();
 		fprintf(stderr, "regress() returned?!?\n");
 		exit(1);
@@ -219,7 +219,7 @@ void regress(void)
 
 		if (oops == NULL && r->output != NULL) {
 			/* No error, no error expected */
-			if (strcmp(r->output, buf1) == 0) {
+			if (streq(r->output, buf1)) {
 				printf(" %s OK\n", r->output);
 			} else {
 				status = 1;

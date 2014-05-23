@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (strcmp(argv[1], "-r") == 0) {
+	if (streq(argv[1], "-r")) {
 		regress();
 		fprintf(stderr, "regress() returned?!?\n");
 		exit(1);
@@ -202,7 +202,7 @@ void regress()
 				printf("`%s' subnettoa failed:  need %ld\n",
 					r->input, (long)n);
 				status = 1;
-			} else if (strcmp(r->output, buf) != 0) {
+			} else if (!streq(r->output, buf)) {
 				printf("`%s' gave `%s', expected `%s'\n",
 					r->input, buf, r->output);
 				status = 1;

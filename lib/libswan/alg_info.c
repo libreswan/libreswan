@@ -237,7 +237,7 @@ static int aalg_getbyname_esp(const char *str, size_t len)
 	 * since 0 is already used.
 	 * ??? this is extremely ugly.
 	 */
-	if (len == sizeof(null_esp)-1 && strncasecmp(str, null_esp, len) == 0)
+	if (len == sizeof(null_esp)-1 && strncaseeq(str, null_esp, len))
 		return INT_MAX;
 
 	return ret;
@@ -253,7 +253,7 @@ static const char *alg_find_alias(const alg_alias *alias, const char *str)
 		const char *const *aset = aa->alias_set;
 
 		for (i = 0; i < MAX_ALG_ALIASES && aset[i] != NULL; i++) {
-			if (strcasecmp(str, aset[i]) == 0)
+			if (strcaseeq(str, aset[i]))
 				return aa->alg;
 		}
 	}

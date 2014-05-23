@@ -317,13 +317,13 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 #endif
-			if (!strcmp(optarg, "ah"))
+			if (streq(optarg, "ah"))
 				said.proto = SA_AH;
-			if (!strcmp(optarg, "esp"))
+			if (streq(optarg, "esp"))
 				said.proto = SA_ESP;
-			if (!strcmp(optarg, "tun"))
+			if (streq(optarg, "tun"))
 				said.proto = SA_IPIP;
-			if (!strcmp(optarg, "comp"))
+			if (streq(optarg, "comp"))
 				said.proto = SA_COMP;
 			if (said.proto == 0) {
 				fprintf(stderr,
@@ -468,9 +468,9 @@ int main(int argc, char **argv)
 					progname, optarg, said_af_opt);
 				exit(1);
 			}
-			if (!strcmp(optarg, "inet"))
+			if (streq(optarg, "inet"))
 				said_af = AF_INET;
-			if (!strcmp(optarg, "inet6"))
+			if (streq(optarg, "inet6"))
 				said_af = AF_INET6;
 			if (said_af == 0) {
 				fprintf(stderr,
@@ -487,9 +487,9 @@ int main(int argc, char **argv)
 					progname, optarg, eroute_af_opt);
 				exit(1);
 			}
-			if (!strcmp(optarg, "inet"))
+			if (streq(optarg, "inet"))
 				eroute_af = AF_INET;
-			if (!strcmp(optarg, "inet6"))
+			if (streq(optarg, "inet6"))
 				eroute_af = AF_INET6;
 			if (eroute_af == 0) {
 				fprintf(stderr,

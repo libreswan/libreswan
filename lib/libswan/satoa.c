@@ -62,7 +62,7 @@ size_t dstlen;
 	if (tn->name == NULL)
 		return 0;
 
-	if (strcmp(tn->name, PASSTHROUGHTYPE) == 0 &&
+	if (streq(tn->name, PASSTHROUGHTYPE) &&
 		sa.spi == PASSTHROUGHSPI &&
 		sa.dst.s_addr == PASSTHROUGHDST) {
 		strcpy(buf, PASSTHROUGHNAME);

@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (strcmp(argv[1], "-r") == 0) {
+	if (streq(argv[1], "-r")) {
 		regress();
 		fprintf(stderr, "regress() returned?!?\n");
 		exit(1);
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 
 	af = AF_INET;
 	p = argv[1];
-	if (strcmp(argv[1], "-6") == 0) {
+	if (streq(argv[1], "-6")) {
 		af = AF_INET6;
 		p = argv[2];
 	} else if (strchr(argv[1], ':') != NULL) {
@@ -301,7 +301,7 @@ void regress(void)
 			if (n > sizeof(buf))
 				printf("`%s' subnettot failed:  need %ld\n",
 					r->input, (long)n);
-			else if (strcmp(r->output, buf) != 0)
+			else if (!streq(r->output, buf))
 				printf("`%s' gave `%s', expected `%s'\n",
 					r->input, buf, r->output);
 		}

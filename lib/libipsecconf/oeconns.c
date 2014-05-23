@@ -407,7 +407,7 @@ void add_any_oeconns(struct starter_config *cfg,
 	for (sconn = cfgp->sections.tqh_first; sconn != NULL;
 	     sconn = sconn->link.tqe_next) {
 		for (i = 0, oc = implicit_conns; *oc != NULL; oc++, i++) {
-			if (strcmp((*oc)->oe_cn, sconn->name) == 0) {
+			if (streq((*oc)->oe_cn, sconn->name)) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "found non-implicit conn: %s\n",
 					    sconn->name);

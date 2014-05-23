@@ -518,7 +518,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (strcmp(argv[1], "-r") == 0) {
+	if (streq(argv[1], "-r")) {
 		regress();
 		fprintf(stderr, "regress() returned?!?\n");
 		exit(1);
@@ -600,7 +600,7 @@ void regress()
 				r->input, r->format);
 			status++;
 		} else {
-			if (strcasecmp(r->output, buf) != 0) {
+			if (!strcaseeq(r->output, buf)) {
 				printf("`%s' '%u' gave `%s', expected `%s'\n",
 					r->input, r->format, buf, r->output);
 				status++;

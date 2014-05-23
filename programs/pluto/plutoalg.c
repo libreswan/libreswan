@@ -81,7 +81,7 @@ static int aalg_getbyname_ike(const char *str, size_t len)
 
 	/* handle "sha2" as "sha2_256" */
 	if (len == sizeof(sha2_256_aka)-1 &&
-	    strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
+	    strncaseeq(str, sha2_256_aka, sizeof(sha2_256_aka)-1)) {
 		DBG_log("interpreting sha2 as sha2_256");
 		str = "sha2_256";
 		len = strlen(str);
@@ -89,7 +89,7 @@ static int aalg_getbyname_ike(const char *str, size_t len)
 
 	/* now "sha" as "sha1" */
 	if (len == sizeof(sha1_aka)-1 &&
-	    strncasecmp(str, sha1_aka, sizeof(sha1_aka)-1) == 0) {
+	    strncaseeq(str, sha1_aka, sizeof(sha1_aka)-1)) {
 		DBG_log("interpreting sha as sha1");
 		str = "sha1";
 		len = strlen(str);
@@ -101,7 +101,7 @@ static int aalg_getbyname_ike(const char *str, size_t len)
 
 	/* Special value for no authentication since zero is already used. */
 	ret = INT_MAX;
-	if (strncasecmp(str, "null", len) == 0)
+	if (strncaseeq(str, "null", len))
 		return ret;
 
 	/* support idXXX as syntax, matching iana numbers directly */

@@ -1006,9 +1006,9 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'N':  /* nat-type */
-			if (strcasecmp(optarg, "nonesp") == 0) {
+			if (strcaseeq(optarg, "nonesp")) {
 				natt = ESPINUDP_WITH_NON_ESP;
-			} else if (strcasecmp(optarg, "none") == 0) {
+			} else if (strcaseeq(optarg, "none")) {
 				natt = 0;
 			} else {
 				/* ??? what does this do?  Where is it documented? */

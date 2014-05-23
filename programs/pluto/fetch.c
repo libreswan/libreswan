@@ -370,7 +370,7 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 {
 	err_t ugh = NULL;
 
-	if (url.len >= 4 && strncasecmp((const char *)url.ptr, "ldap", 4) == 0)
+	if (url.len >= 4 && strncaseeq((const char *)url.ptr, "ldap", 4))
 		ugh = fetch_ldap_url(url, blob);
 	else
 		ugh = fetch_curl(url, blob);

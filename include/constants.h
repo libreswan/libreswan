@@ -74,9 +74,11 @@ typedef int bool;
 #endif
 #define BYTES_FOR_BITS(b)   (((b) + BITS_PER_BYTE - 1) / BITS_PER_BYTE)
 
-#define streq(a, b) (strcmp((a), (b)) == 0)             /* clearer shorthand */
-#define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)     /* clearer shorthand */
-#define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)	/* clearer shorthand */
+/* clearer shorthand for *cmp functions */
+#define streq(a, b) (strcmp((a), (b)) == 0)
+#define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)
+#define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
+#define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
 
 /* zero an object given a pointer to it.
  * Note: this won't work on an array without an explicit &

@@ -113,7 +113,7 @@ int main(int argc, char **argv)
 	for (i = 0; i < 4; i++)
 		zero(&said_af_array[i]);
 
-	if (argc > 1 && strcmp(argv[1], "--debug") == 0) {
+	if (argc > 1 && streq(argv[1], "--debug")) {
 		debug = 1;
 		if (debug)
 			fprintf(stdout, "\"--debug\" option requested.\n");
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
 			argc + 1);
 	}
 
-	if (argc > 1 && strcmp(argv[1], "--label") == 0) {
+	if (argc > 1 && streq(argv[1], "--label")) {
 		if (argc > 2) {
 			static const char combine_fmt[] = "%s --label %s";
 			size_t room = strlen(argv[0]) +
@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 			"...After check for no option to print /proc/net/ipsec_spigrp.\n");
 
 
-	if (strcmp(argv[1], "--help") == 0) {
+	if (streq(argv[1], "--help")) {
 		if (debug)
 			fprintf(stdout, "\"--help\" option requested.\n");
 		usage(progname);
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
 	if (debug)
 		fprintf(stdout, "...After check for --help option.\n");
 
-	if (strcmp(argv[1], "--version") == 0) {
+	if (streq(argv[1], "--version")) {
 		if (debug)
 			fprintf(stdout, "\"--version\" option requested.\n");
 		fprintf(stderr, "%s, %s\n", progname, ipsec_version_code());
@@ -201,7 +201,7 @@ int main(int argc, char **argv)
 	if (debug)
 		fprintf(stdout, "...After check for --version option.\n");
 
-	if (strcmp(argv[1], "--said") == 0) {
+	if (streq(argv[1], "--said")) {
 		if (debug) {
 			fprintf(stdout,
 				"processing %d args with --said flag.\n",
@@ -258,13 +258,13 @@ int main(int argc, char **argv)
 					ipaddr_txt);
 			}
 		} else {
-			if (!strcmp(argv[i * 4 + 4], "ah"))
+			if (streq(argv[i * 4 + 4], "ah"))
 				said_af_array[i].said.proto = SA_AH;
-			if (!strcmp(argv[i * 4 + 4], "esp"))
+			if (streq(argv[i * 4 + 4], "esp"))
 				said_af_array[i].said.proto = SA_ESP;
-			if (!strcmp(argv[i * 4 + 4], "tun"))
+			if (streq(argv[i * 4 + 4], "tun"))
 				said_af_array[i].said.proto = SA_IPIP;
-			if (!strcmp(argv[i * 4 + 4], "comp"))
+			if (streq(argv[i * 4 + 4], "comp"))
 				said_af_array[i].said.proto = SA_COMP;
 			if (said_af_array[i].said.proto == 0) {
 				fprintf(stderr, "%s: Badly formed proto: %s\n",
@@ -279,9 +279,9 @@ int main(int argc, char **argv)
 					progname, argv[i * 4 + 3]);
 				exit(1);
 			}
-			if (!strcmp(argv[i * 4 + 1], "inet"))
+			if (streq(argv[i * 4 + 1], "inet"))
 				said_af_array[i].af = AF_INET;
-			if (!strcmp(argv[i * 4 + 1], "inet6"))
+			if (streq(argv[i * 4 + 1], "inet6"))
 				said_af_array[i].af = AF_INET6;
 			if ((said_af_array[i].af != AF_INET) &&
 			    (said_af_array[i].af != AF_INET6)) {

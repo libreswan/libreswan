@@ -794,9 +794,9 @@ err_t atodn(char *src, chunk_t *dn)
 					pos++) {
 					if (strlen(x501rdns[pos].name) ==
 						oid.len &&
-						strncasecmp(x501rdns[pos].name,
+						strncaseeq(x501rdns[pos].name,
 							(char *)oid.ptr,
-							oid.len) == 0)
+							oid.len))
 						break;	/* found a valid OID */
 				}
 				if (pos == X501_RDN_ROOF) {
@@ -996,9 +996,9 @@ bool same_dn(chunk_t a, chunk_t b)
 		    (type_a == ASN1_PRINTABLESTRING ||
 		     (type_a == ASN1_IA5STRING &&
 		      known_oid(oid_a) == OID_PKCS9_EMAIL))) {
-			if (strncasecmp((char *)value_a.ptr,
+			if (!strncaseeq((char *)value_a.ptr,
 					(char *)value_b.ptr,
-					value_b.len) != 0)
+					value_b.len))
 				return FALSE;
 		} else {
 			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
@@ -1065,9 +1065,9 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		    (type_a == ASN1_PRINTABLESTRING ||
 		     (type_a == ASN1_IA5STRING &&
 		      known_oid(oid_a) == OID_PKCS9_EMAIL))) {
-			if (strncasecmp((char *)value_a.ptr,
+			if (!strncaseeq((char *)value_a.ptr,
 					(char *)value_b.ptr,
-					value_b.len) != 0)
+					value_b.len))
 				return FALSE;
 		} else {
 			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
@@ -1781,8 +1781,8 @@ static void parse_authorityInfoAccess(chunk_t blob, int level0,
 							object.ptr));
 
 					/* only HTTP(S) URIs accepted */
-					if (strncasecmp((char *)object.ptr,
-							"http", 4) == 0) {
+					if (strncaseeq((char *)object.ptr,
+							"http", 4)) {
 						*accessLocation = object;
 						return;
 					}

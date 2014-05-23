@@ -314,7 +314,7 @@ static err_t process_txt_rr_body(char *str,
 	p += strspn(p, " \t");  /* ignore leading whitespace */
 
 	/* is this for us? */
-	if (strncasecmp(p, our_TXT_attr, sizeof(our_TXT_attr) - 1) != 0)
+	if (!strncaseeq(p, our_TXT_attr, sizeof(our_TXT_attr) - 1))
 		return NULL;            /* neither interesting nor bad */
 
 	p += sizeof(our_TXT_attr) - 1;  /* ignore our attribute name */
@@ -1678,7 +1678,7 @@ static err_t process_lwdnsq_answer(char *ts)
 	/* if rest is NULL, make it "", otherwise eat whitespace after type */
 	rest = rest == NULL ? scratch_null_str : rest + strspn(rest, " \t");
 
-	if (strncasecmp(atype, "AD-", 3) == 0) {
+	if (strncaseeq(atype, "AD-", 3)) {
 		AuthenticatedData = TRUE;
 		atype += 3;
 	}

@@ -382,7 +382,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (strcmp(argv[1], "-r") == 0) {
+	if (streq(argv[1], "-r")) {
 		regress(pgm);	/* should not return */
 		fprintf(stderr, "%s: regress() returned?!?\n", pgm);
 		exit(1);
@@ -727,7 +727,7 @@ char *pgm;
 			printf("': got %d `%s'", n, buf);
 			printf(", expecting %d `%s'\n", should, dr->ascii);
 			status = 1;
-		} else if (strcmp(buf, dr->ascii) != 0) {
+		} else if (!streq(buf, dr->ascii)) {
 			printf("`");
 			hexout(dr->data, strlen(dr->data), stdout);
 			printf("' gave %d `%s'", n, buf);

@@ -161,7 +161,7 @@ static int pickbyid(struct secret *secret UNUSED,
 {
 	char *rsakeyid = (char *)uservoid;
 
-	if (strcmp(pks->u.RSA_private_key.pub.keyid, rsakeyid) == 0)
+	if (streq(pks->u.RSA_private_key.pub.keyid, rsakeyid))
 		return 0;
 
 	return 1;

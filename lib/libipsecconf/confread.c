@@ -501,7 +501,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	if (end->strings_set[KSCF_NEXTHOP]) {
 		char *value = end->strings[KSCF_NEXTHOP];
 
-		if (strcasecmp(value, "%defaultroute") == 0) {
+		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
 			if (tnatoaddr(value, strlen(value), AF_INET,
@@ -765,8 +765,8 @@ static bool translate_conn(struct starter_conn *conn,
 				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
 				if (kw->keyword.string == NULL ||
 				    (*the_strings)[field] == NULL ||
-				    strcmp(kw->keyword.string,
-					   (*the_strings)[field]) != 0) {
+				    !streq(kw->keyword.string,
+					   (*the_strings)[field])) {
 					err = TRUE;
 					break;
 				}
@@ -831,8 +831,8 @@ static bool translate_conn(struct starter_conn *conn,
 				      kw->number == LOOSE_ENUM_OTHER &&
 				      kw->keyword.string != NULL &&
 				      (*the_strings)[field] != NULL &&
-				      strcmp(kw->keyword.string,
-					     (*the_strings)[field]) == 0)) {
+				      streq(kw->keyword.string,
+					     (*the_strings)[field]))) {
 					err = TRUE;
 					break;
 				}
@@ -986,7 +986,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			 */
 			for (sl1 = cfgp->sections.tqh_first;
 			     sl1 != NULL &&
-			     strcmp(alsos[alsoplace], sl1->name) != 0;
+			     !streq(alsos[alsoplace], sl1->name);
 			     sl1 = sl1->link.tqe_next)
 				;
 
@@ -1423,7 +1423,7 @@ struct starter_config *confread_load(const char *file,
 		 */
 		for (sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
-			if (strcmp(sconn->name, "%default") == 0) {
+			if (streq(sconn->name, "%default")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
 				err |= load_conn(dnsctx,
@@ -1433,7 +1433,7 @@ struct starter_config *confread_load(const char *file,
 						 resolvip, perr);
 			}
 
-			if (strcmp(sconn->name, "%oedefault") == 0) {
+			if (streq(sconn->name, "%oedefault")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading oedefault conn");
 				err |= load_conn(dnsctx,
@@ -1451,9 +1451,9 @@ struct starter_config *confread_load(const char *file,
 		 */
 		for (sconn = cfgp->sections.tqh_first; sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
-			if (strcmp(sconn->name, "%default") == 0)
+			if (streq(sconn->name, "%default"))
 				continue;
-			if (strcmp(sconn->name, "%oedefault") == 0)
+			if (streq(sconn->name, "%oedefault"))
 				continue;
 
 			connerr = init_load_conn(dnsctx, cfg, cfgp, sconn,

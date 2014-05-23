@@ -287,7 +287,7 @@ static char *connection_name(struct starter_conn *conn)
 	 */
 	static char buf[32];
 
-	if (strcmp(conn->name, "%auto") == 0) {
+	if (streq(conn->name, "%auto")) {
 		snprintf(buf, sizeof(buf), "conn_%ld", conn->id);
 		return buf;
 	} else {
