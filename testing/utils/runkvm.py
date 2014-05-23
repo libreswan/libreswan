@@ -71,6 +71,8 @@ def connect_to_kvm(args, prompt = ''):
     cmd = "sudo virsh console --force %s"%args.hostname
     timer = 120
     child = pexpect.spawn(cmd)
+    child.delaybeforesend = 0
+    child.logfile = sys.stdout
     # don't match full prompt, we want it to work regardless cwd
 
     done = 0
@@ -79,8 +81,7 @@ def connect_to_kvm(args, prompt = ''):
     while not done and tries != 0:
       try:
         print "sending ctrl-c return"
-        child = pexpect.spawn (cmd)
-        child.delaybeforesend = 0
+        #child = pexpect.spawn (cmd)
         #child.sendcontrol('c')
         child.sendline ('')
         print "found, waiting on login: or %s"%prompt

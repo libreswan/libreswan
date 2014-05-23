@@ -39,6 +39,39 @@
 /* abstract reference */
 struct oakley_group_desc;
 
+#define MAX_ALG_ALIASES 16
+
+typedef struct alg_alias {
+	const char *alg;
+	const char *alias_set[MAX_ALG_ALIASES];
+} alg_alias;
+
+/*
+ * Aliases should NOT be used to match a base cipher to a key size,
+ * as that would change the meaning of the loaded connection. For
+ * examples aes cannot become an alias for aes128 or else a responder
+ * with esp=aes would reject aes256.
+ */
+static const alg_alias auth_alg_aliases[] = {
+	/* alg */	/* aliases */
+	{ "sha2_256",	{ "sha2", NULL } },
+	{ "sha1",	{ "sha", NULL } },
+	{ NULL, { NULL } }
+};
+
+static const alg_alias esp_trans_aliases[] = {
+	/* alg */	/* aliases */
+	{ "aes_ccm_a",	{ "aes_ccm_8",  NULL } },
+	{ "aes_ccm_b",	{ "aes_ccm_12", NULL } },
+	{ "aes_ccm_c",	{ "aes_ccm_16", "aes_ccm", NULL } },
+	{ "aes_gcm_a",	{ "aes_gcm_8", NULL } },
+	{ "aes_gcm_b",	{ "aes_gcm_12", NULL } },
+	{ "aes_gcm_c",	{ "aes_gcm_16", "aes_gcm", NULL } },
+	{ "aes_ctr",	{ "aesctr", NULL } },
+	{ "aes",	{ "aes_cbc", NULL } },
+	{ NULL, { NULL } }
+};
+
 /*
  * sadb/ESP aa attrib converters
  * Paul: but aa is two octets, is sadb?
@@ -71,7 +104,6 @@ enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	default:
 		bad_case(auth);
 	}
-	return 0;
 }
 
 /*
@@ -113,9 +145,9 @@ enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti)
 	case IKEv2_AUTH_AES_128_GMAC:
 	case IKEv2_AUTH_AES_192_GMAC:
 	case IKEv2_AUTH_AES_256_GMAC:
+	default:
 		bad_case(ti);
 	}
-	return 0;
 }
 
 int alg_info_esp_sadb2aa(int sadb_aalg)
@@ -170,21 +202,11 @@ int alg_enum_search(enum_names *ed, const char *prefix,
 static int ealg_getbyname_esp(const char *const str, size_t len)
 {
 	int ret;
-	int num;
 
 	if (str == NULL || *str == '\0')
 		return -1;
 
 	ret = alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
-	if (ret >= 0)
-		return ret;
-
-	/* support idXXX as syntax, matching iana numbers directly */
-	/* ??? str is NOT NUL-terminated.  This seems invalid. */
-	num = -1;
-	sscanf(str, "id%d%n", &ret, &num);
-	if (ret >= 0 && num != (int)len)
-		ret = -1;
 
 	return ret;
 }
@@ -196,27 +218,10 @@ static int ealg_getbyname_esp(const char *const str, size_t len)
 static int aalg_getbyname_esp(const char *str, size_t len)
 {
 	int ret = -1;
-	int num;
-	static const char sha2_256_aka[] = "sha2";
-	static const char sha1_aka[] = "sha";
 	static const char null_esp[] = "null";
 
 	if (str == NULL || *str == '\0')
 		return ret;
-
-	/* handle "sha2" as "sha2_256" */
-	if (len == sizeof(sha2_256_aka)-1 &&
-		strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
-		str = "sha2_256";
-		len = strlen(str);
-	}
-
-	/* now "sha" as "sha1" */
-	if (len == sizeof(sha1_aka)-1 &&
-	    strncasecmp(str, sha1_aka, sizeof(sha1_aka)-1) == 0) {
-		str = "sha1";
-		len = strlen(str);
-	}
 
 	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "",
 			str, len);
@@ -235,13 +240,43 @@ static int aalg_getbyname_esp(const char *str, size_t len)
 	if (len == sizeof(null_esp)-1 && strncasecmp(str, null_esp, len) == 0)
 		return INT_MAX;
 
-	/* ??? str is NOT NUL-terminated.  This seems invalid. */
-	num = -1;
-	sscanf(str, "id%d%n", &ret, &num);
-	if (ret >= 0 && num != (int)len)
-		ret = -1;
-
 	return ret;
+}
+
+/* if str is a known alias, return the real alg */
+static const char *alg_find_alias(const alg_alias *alias, const char *str)
+{
+	const alg_alias *aa;
+	int i;
+
+	for (aa = alias; aa->alg != NULL; aa++) {
+		const char *const *aset = aa->alias_set;
+
+		for (i = 0; i < MAX_ALG_ALIASES && aset[i] != NULL; i++) {
+			if (strcasecmp(str, aset[i]) == 0)
+				return aa->alg;
+		}
+	}
+
+	return NULL;
+}
+
+static int ealg_getbyname_or_alias_esp(const char *str, size_t len)
+{
+	const char *astr = alg_find_alias(esp_trans_aliases, str);
+
+	return astr == NULL ?
+		ealg_getbyname_esp(str, len) :
+		ealg_getbyname_esp(astr, strlen(astr));
+}
+
+static int aalg_getbyname_or_alias_esp(const char *str, size_t len)
+{
+	const char *astr = alg_find_alias(auth_alg_aliases, str);
+
+	return astr == NULL ?
+		aalg_getbyname_esp(str, len) :
+		aalg_getbyname_esp(astr, strlen(astr));
 }
 
 static int modp_getbyname_esp(const char *const str, size_t len)
@@ -585,8 +620,8 @@ static void parser_init_esp(struct parser_context *p_ctx)
 	p_ctx->aalg_permit = TRUE;
 	p_ctx->state = ST_INI;
 
-	p_ctx->ealg_getbyname = ealg_getbyname_esp;
-	p_ctx->aalg_getbyname = aalg_getbyname_esp;
+	p_ctx->ealg_getbyname = ealg_getbyname_or_alias_esp;
+	p_ctx->aalg_getbyname = aalg_getbyname_or_alias_esp;
 
 }
 
@@ -604,7 +639,7 @@ static void parser_init_ah(struct parser_context *p_ctx)
 	p_ctx->modp_str = p_ctx->modp_buf;
 	p_ctx->state = ST_INI_AA;
 
-	p_ctx->aalg_getbyname = aalg_getbyname_esp;
+	p_ctx->aalg_getbyname = aalg_getbyname_or_alias_esp;
 
 }
 

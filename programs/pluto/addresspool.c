@@ -485,7 +485,8 @@ err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 
 			rangetot(pool_range, 0, prbuf, sizeof(prbuf));
 			rangetot(&h->r, 0, hbuf, sizeof(hbuf));
-			libreswan_log("ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
+			loglog(RC_CLASH,
+				"ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
 					prbuf, hbuf);
 			return "ERROR: partial overlap of addresspool";
 		}
