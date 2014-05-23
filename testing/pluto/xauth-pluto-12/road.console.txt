@@ -16,6 +16,7 @@ road #
  /testing/pluto/bin/wait-until-pluto-started
 road #
  ipsec auto --add modecfg-road-eastnet-psk
+002 added connection description "modecfg-road-eastnet-psk"
 road #
  echo initdone
 initdone
@@ -32,21 +33,21 @@ road #
 003 "modecfg-road-eastnet-psk" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
 108 "modecfg-road-eastnet-psk" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "modecfg-road-eastnet-psk" #1: received Vendor ID payload [CAN-IKEv2]
-002 "modecfg-road-eastnet-psk" #1: Main mode peer ID is ID_USER_FQDN: '@east'
+002 "modecfg-road-eastnet-psk" #1: Main mode peer ID is ID_FQDN: '@east'
 004 "modecfg-road-eastnet-psk" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=oakley_3des_cbc_192 prf=sha group=MODP1536}
 041 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Username:
 040 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Password:
 002 "modecfg-road-eastnet-psk" #1: XAUTH: Answering XAUTH challenge with user='use3'
 004 "modecfg-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set
-003 "modecfg-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
+002 "modecfg-road-eastnet-psk" #1: XAUTH: Successfully Authenticated
 004 "modecfg-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set
 002 "modecfg-road-eastnet-psk" #1: modecfg: Sending IP request (MODECFG_I1)
 002 "modecfg-road-eastnet-psk" #1: received mode cfg reply
-003 "modecfg-road-eastnet-psk" #1: Received IPv4 address: 192.0.2.209/32
+002 "modecfg-road-eastnet-psk" #1: Received IPv4 address: 192.0.2.209/32
 002 "modecfg-road-eastnet-psk" #1: setting ip source address to 192.0.2.209/32
-003 "modecfg-road-eastnet-psk" #1: Received IP4 NETMASK 255.255.255.0
-003 "modecfg-road-eastnet-psk" #1: Received DNS 1.2.3.4
-003 "modecfg-road-eastnet-psk" #1: Received DNS 5.6.7.8
+002 "modecfg-road-eastnet-psk" #1: Received IP4 NETMASK 255.255.255.0
+002 "modecfg-road-eastnet-psk" #1: Received DNS 1.2.3.4
+002 "modecfg-road-eastnet-psk" #1: Received DNS 5.6.7.8
 004 "modecfg-road-eastnet-psk" #1: STATE_MAIN_I4: ISAKMP SA established
 002 "modecfg-road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "modecfg-road-eastnet-psk" #2: STATE_QUICK_I1: initiate
