@@ -54,22 +54,22 @@ typedef struct alg_alias {
  */
 const alg_alias auth_alg_aliases[] = {
 	/* alg */	/* aliases */
-        "sha2_256",     { "sha2", NULL },
-        "sha1",         { "sha", NULL },
-        NULL, { NULL }
+        { "sha2_256",     { "sha2", NULL } },
+        { "sha1",         { "sha", NULL } },
+        { NULL, { NULL } }
 };
 
 const alg_alias esp_trans_aliases[] = {
 	/* alg */	/* aliases */
-	"aes_ccm_a",    { "aes_ccm_8",  NULL },
-	"aes_ccm_b",    { "aes_ccm_12", NULL },
-	"aes_ccm_c",    { "aes_ccm_16", "aes_ccm", NULL },
-	"aes_gcm_a",    { "aes_gcm_8", NULL },
-	"aes_gcm_b",    { "aes_gcm_12", NULL },
-	"aes_gcm_c",    { "aes_gcm_16", "aes_gcm", NULL },
-	"aes_ctr",	{ "aesctr", NULL },
-	"aes",		{ "aes_cbc", NULL },
-	NULL, { NULL }
+	{ "aes_ccm_a",    { "aes_ccm_8",  NULL } },
+	{ "aes_ccm_b",    { "aes_ccm_12", NULL } },
+	{ "aes_ccm_c",    { "aes_ccm_16", "aes_ccm", NULL } },
+	{ "aes_gcm_a",    { "aes_gcm_8", NULL } },
+	{ "aes_gcm_b",    { "aes_gcm_12", NULL } },
+	{ "aes_gcm_c",    { "aes_gcm_16", "aes_gcm", NULL } },
+	{ "aes_ctr",	{ "aesctr", NULL } },
+	{ "aes",		{ "aes_cbc", NULL } },
+	{ NULL, { NULL } }
 };
 
 /*
