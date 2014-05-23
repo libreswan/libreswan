@@ -263,30 +263,20 @@ static const char *alg_find_alias(const alg_alias *alias, const char *str)
 
 static int ealg_getbyname_or_alias_esp(const char *str, size_t len)
 {
-	size_t alen = len;
-	const char *astr;
+	const char *astr = alg_find_alias(esp_trans_aliases, str);
 
-	astr = alg_find_alias(esp_trans_aliases, str);
-	if (astr != NULL)
-		alen = strlen(astr);
-	else
-		astr = str;
-
-	return ealg_getbyname_esp(astr, alen);
+	return astr == NULL ?
+		ealg_getbyname_esp(str, len) :
+		ealg_getbyname_esp(astr, strlen(astr));
 }
 
 static int aalg_getbyname_or_alias_esp(const char *str, size_t len)
 {
-	int alen = len;
-	const char *astr;
+	const char *astr = alg_find_alias(auth_alg_aliases, str);
 
-	astr = alg_find_alias(auth_alg_aliases, str);
-	if (astr != NULL)
-		alen = strlen(astr);
-	else
-		astr = str;
-
-	return aalg_getbyname_esp(astr, alen);
+	return astr == NULL ?
+		aalg_getbyname_esp(str, len) :
+		aalg_getbyname_esp(astr, strlen(astr));
 }
 
 static int modp_getbyname_esp(const char *const str, size_t len)
