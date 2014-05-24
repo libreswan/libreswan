@@ -17,6 +17,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add modecfg-road-east
+002 added connection description "modecfg-road-east"
 east #
  echo initdone
 initdone

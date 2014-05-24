@@ -1090,10 +1090,6 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			break;
 
-		case KS_UDPENCAP:
-			/* no way to specify this yet! */
-			break;
-
 		case KS_PASSTHROUGH:
 			conn->policy &=
 				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
@@ -1169,36 +1165,25 @@ static bool load_conn(struct ub_ctx *dnsctx,
 #ifdef HAVE_LABELED_IPSEC
 	if (conn->strings_set[KSF_POLICY_LABEL])
 		conn->policy_label = clone_str(conn->strings[KSF_POLICY_LABEL],"KSF_POLICY_LABEL");
-	starter_log(LOG_LEVEL_DEBUG, "connection's  policy label: %s",
-		    conn->policy_label);
+	if (conn->policy_label != NULL)
+		starter_log(LOG_LEVEL_DEBUG, "connection's  policy label: %s",
+				conn->policy_label);
 #endif
 
 	if (conn->strings_set[KSF_IKE])
 		conn->ike = clone_str(conn->strings[KSF_IKE],"KSF_IKE");
 
 	if (conn->strings_set[KSF_MODECFGDNS1]) {
-		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  conn->modecfg_dns1 set to: %s",
-			    conn->strings[KSF_MODECFGDNS1] );
 		conn->modecfg_dns1 = clone_str(conn->strings[KSF_MODECFGDNS1],"KSF_MODECFGDNS1");
 	}
 	if (conn->strings_set[KSF_MODECFGDNS2]) {
-		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  conn->modecfg_dns2 set to: %s",
-			    conn->strings[KSF_MODECFGDNS2] );
 		conn->modecfg_dns2 = clone_str(conn->strings[KSF_MODECFGDNS2], "KSF_MODECFGDNS2");
 	}
 	if (conn->strings_set[KSF_MODECFGDOMAIN]) {
 		conn->modecfg_domain = clone_str(conn->strings[KSF_MODECFGDOMAIN],"KSF_MODECFGDOMAIN");
-		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  conn->modecfg_domain set to: %s",
-			    conn->strings[KSF_MODECFGDOMAIN] );
 	}
 	if (conn->strings_set[KSF_MODECFGBANNER]) {
 		conn->modecfg_banner = clone_str(conn->strings[KSF_MODECFGBANNER],"KSF_MODECFGBANNER");
-		starter_log(LOG_LEVEL_DEBUG,
-			    "connection's  conn->modecfg_banner set to: %s",
-			    conn->strings[KSF_MODECFGBANNER] );
 	}
 
 	if (conn->strings_set[KSF_CONNALIAS])

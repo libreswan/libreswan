@@ -138,7 +138,7 @@
    randomness about VARARGS??
    --- later stuff to be considered ---
    #define UINT4 ... u-int on alpha/osf, i.e. __alpha/__osf__, ulong elsewhere?
-   dont name it that, though, it'll conflict with extant .h files like md5
+   don't name it that, though, it'll conflict with extant .h files like md5
    randomness about machine/endian.h, machine/inline.h -- bsdi, net/2
    randomness about _PATH_WTMP vs WTMP_FILE and where they even live!!
    #define HAVE_SYS_ERRLIST ... whether it's in stdio.h or not [bsd 4.4]

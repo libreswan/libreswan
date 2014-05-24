@@ -657,12 +657,10 @@ enum sa_policy_bits {
 #define HAS_IPSEC_POLICY(p) (((p) & POLICY_IPSEC_MASK) != 0)
 
 /* Don't allow negotiation? */
-#define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_PSK | POLICY_RSASIG | \
-				       POLICY_AGGRESSIVE) || \
-			     (((p) & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP))
+#define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
 
 /* Oakley transform attributes
- * draft-ietf-ipsec-ike-01.txt appendix A
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
  */
 
 #define OAKLEY_ENCRYPTION_ALGORITHM    1
@@ -681,7 +679,8 @@ enum sa_policy_bits {
 #define OAKLEY_KEY_LENGTH             14
 #define OAKLEY_FIELD_SIZE             15
 #define OAKLEY_GROUP_ORDER            16        /* B/V */
-#define OAKLEY_BLOCK_SIZE             17
+/* 17-16383 Unassigned */
+/* 16384-32767 Reserved for private use */
 
 /* IPsec DOI attributes
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5

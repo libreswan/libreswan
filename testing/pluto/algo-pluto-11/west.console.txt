@@ -41,7 +41,6 @@ Redirecting to: systemctl start ipsec.service
 [ 00.00] 
 west #
  /testing/pluto/bin/wait-until-pluto-started
-[ 00.00] ---[ end trace 7463416d01d84c66 ]---
 west #
  ipsec auto --add westnet-eastnet-dh24
 west #
@@ -65,10 +64,10 @@ west #
 west NOW
 192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789 natencap=nonesp natsport=4500 natdport=4500   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_3DES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=192 jiffies=0123456789 natencap=nonesp natsport=4500 natdport=4500   refhim=0
-esp0xSPISPI@192.1.2.45 ESP_3DES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=192 jiffies=0123456789 natencap=nonesp natsport=4500 natdport=4500   refhim=1
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789 natencap=nonesp natsport=4500 natdport=4500   refhim=1
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_3DES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=192 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_3DES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=192 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=1
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -87,12 +86,12 @@ done
 west #
  ipsec look
 west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0x37dee769@192.1.2.23  (0)
+192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0xESPESP@192.1.2.23  (0)
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0x37dee769@192.1.2.23 ESP_3DES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=64bits iv=0x82bca9fe66376c9b ooowin=64 alen=160 aklen=160 eklen=192 jiffies=4294718538 life(c,s,h)= natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=2 refhim=0
-esp0x780ec76c@192.1.2.45 ESP_3DES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xb3231bcdc2719369 ooowin=64 alen=160 aklen=160 eklen=192 jiffies=4294718538 life(c,s,h)= natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=4 refhim=1
-tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294718538 life(c,s,h)= natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294718538 life(c,s,h)= natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=3 refhim=1
+esp0xESPESP@192.1.2.45 ESP_3DES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=192 jiffies=0123456789 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=4 refhim=1
+esp0xESPESP@192.1.2.23 ESP_3DES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=192 jiffies=0123456789 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
+tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
+tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=3 refhim=1
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES

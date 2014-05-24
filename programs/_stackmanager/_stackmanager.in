@@ -434,19 +434,16 @@ esac
 
 case ${action} in
     stop)
-	# We don't unload on stop - only when we detect a stack change. We do try and cleanup state
-	case ${stack} in
-	    netkey)
+	# We don't unload NETKEY/XFRM on stop - only when we detect a stack change.
+	if [ -f ${ipsecpfkey} ]; then
+		ipsec eroute --clear
+		# this clears all IP addresses on ipsecX interfaces by unloading the module
+		stopklips
+	elif [ -f ${kamepfkey} ]; then
 		ip xfrm state flush
 		ip xfrm policy flush
-		;;
-	    klips)
-		ipsec eroute --clear
-		;;
-	    mast)
-		ipsec eroute --clear
-		;;
-	esac
+		# module unloading skipped on purpose - can hang for a long time or fail
+	fi
 	;;
     start)
 	case ${stack} in

@@ -6,6 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-serpent
+002 added connection description "westnet-eastnet-serpent"
 east #
  ipsec auto --status
 000 using kernel interface: netkey

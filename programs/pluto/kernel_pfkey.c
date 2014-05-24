@@ -1774,7 +1774,7 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 	if (f == NULL) { /** Can't open the file, perhaps were are on 26sec? */
 		ret = TRUE;
 	} else {
-		while (f != NULL) {
+		for (;;) {
 			char *line;
 			char text_said[SATOT_BUF];
 			u_int8_t proto = 0;

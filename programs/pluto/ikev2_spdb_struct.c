@@ -1152,7 +1152,7 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                        
 
 	/* find the policy structures */
 	sadb = st->st_sadb;
-	if (!sadb) {
+	if (sadb == NULL) {
 		st->st_sadb = &oakley_sadb[policy_index];
 		sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
 					 st->st_sadb, 0);
@@ -1357,7 +1357,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 					encrid = tr->transid;
 					observed_encr_keylen = keylen;
 					if (tr->transid == encr_transform &&
-				    	keylen == encr_keylen)
+					keylen == encr_keylen)
 						encr_matched = TRUE;
 				}
 				break;
@@ -1395,7 +1395,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 						integ_matched ? "      " : "failed",
 						enum_name(&ikev2_trans_type_integ_names, integid), observed_integ_keylen,
 						enum_name(&ikev2_trans_type_integ_names,
-						  	  integ_transform), integ_keylen);
+							  integ_transform), integ_keylen);
 					DBG_log("            %s esn=  (policy:%s vs offered:%s)",
 						esn_matched ? "      " : "failed",
 						enum_name(&ikev2_trans_type_esn_names, esnid),
@@ -1418,7 +1418,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 				integ_matched ? "      " : "failed",
 				enum_name(&ikev2_trans_type_integ_names, integid), observed_integ_keylen,
 				enum_name(&ikev2_trans_type_integ_names,
-				  	  integ_transform), integ_keylen);
+					  integ_transform), integ_keylen);
 			DBG_log("            %s esn=  (policy:%s vs offered:%s)",
 				esn_matched ? "      " : "failed",
 				enum_name(&ikev2_trans_type_esn_names, esnid),
@@ -1588,7 +1588,7 @@ stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,                         
 				if (!in_raw(&spival, proposal.isap_spisize,
 					    &proposal_pbs, "CHILD SA SPI")) {
 					loglog(RC_LOG_SERIOUS,
-			       			"Failed to read CHILD SA SPI");
+						"Failed to read CHILD SA SPI");
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 
@@ -1642,7 +1642,7 @@ stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,                         
 
 		{
 			stf_status ret = ikev2_process_transforms(&proposal,
-						    	&proposal_pbs,
+							&proposal_pbs,
 							    itl);
 			if (ret != STF_OK) {
 				DBG(DBG_CONTROL, DBG_log("processing transforms() failed"));

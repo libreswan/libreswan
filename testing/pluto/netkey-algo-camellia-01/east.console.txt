@@ -6,6 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-camellia
+002 added connection description "westnet-eastnet-camellia"
 east #
  echo "initdone"
 initdone

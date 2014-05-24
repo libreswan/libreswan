@@ -16,6 +16,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
+002 added connection description "west-east"
 east #
  echo "initdone"
 initdone
