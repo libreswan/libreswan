@@ -220,36 +220,15 @@ ctltest	 	vpn-dns-01		good
 umlplutotest	nss-leftrsasigkey2-01	good
 
 
-#
-# Test of NAT traversal
-umlXhost	nat-pluto-01		good
-
-#
-# Test of NAT traversal, for extruded IP
-umlXhost	nat-pluto-02		good
-
-#
-# Test of NAT traversal, forced on
-umlXhost	nat-pluto-03		good
-
-# Test of NAT traversal, with subnetwithin/vhost overlap
-umlXhost	nat-pluto-04		good
-
-# Test of NAT traversal, not yet debugged?
-umlXhost	nat-pluto-05		bad
-
-# Test of NAT traversal with non-port 500 origins.
-umlXhost	nat-pluto-06		good
-
-# Test of NAT traversal, with IP address change during negotiation.
-umlXhost	nat-pluto-07		good
-
-# Test of NAT traversal, using vnet: syntax
-umlXhost	nat-pluto-08		good
-
-# Test of NAT traversal, using vnet: syntax with an added subnet per-conn
-umlXhost	nat-pluto-09		good
-
+kvmplutotest	nat-pluto-01		good
+kvmplutotest	nat-pluto-02		good
+kvmplutotest	nat-pluto-03		good
+kvmplutotest	nat-pluto-04		good
+kvmplutotest	nat-pluto-05		bad
+kvmplutotest	nat-pluto-06		good
+kvmplutotest	nat-pluto-07		good
+kvmplutotest	nat-pluto-08		good
+kvmplutotest	nat-pluto-09		good
 kvmplutotest	nat-pluto-10		good
 
 #
