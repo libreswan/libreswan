@@ -597,21 +597,6 @@ subnet6toa(struct in6_addr *addr,
 	   );
 #define SUBNETTOA_BUF SUBNETTOT_BUF     /* large enough for worst case result */
 
-/* ranges */
-extern const char *                    /* NULL for success, else string literal */
-atoasr( const char *src,
-	size_t srclen,          /* 0 means strlen(src) */
-	char *type,             /* 'a', 's', 'r' */
-	struct in_addr *addrs   /* two-element array */
-	);
-extern size_t                          /* space needed for full conversion */
-rangetoa(struct in_addr *addrs, /* two-element array */
-	 int format,            /* character; 0 means default */
-	 char *dst,
-	 size_t dstlen
-	 );
-#define RANGETOA_BUF    34      /* large enough for worst case result */
-
 /* data types for SA conversion functions */
 
 /* part extraction and special addresses */

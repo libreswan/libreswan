@@ -416,11 +416,11 @@ void regress()
 		if (n == 0 && r->output == NULL) {
 		}                       /* okay, error expected */
 		else if (n == 0) {
-			printf("`%s' atoasr failed\n", r->input);
+			printf("`%s' addrtot failed\n", r->input);
 			status = 1;
 
 		} else if (r->output == NULL) {
-			printf("`%s' atoasr succeeded unexpectedly '%c'\n",
+			printf("`%s' addrtot succeeded unexpectedly '%c'\n",
 			       r->input, r->format);
 			status = 1;
 		} else {
