@@ -541,7 +541,7 @@ extern const char libreswan_vendorid[];
 #endif
 
 /*
- * old functions, to be deleted eventually
+ * obsolete functions, to be deleted eventually
  */
 
 /* unsigned long */
@@ -561,11 +561,7 @@ ultoa(  unsigned long n,
                                 /* assuming 64-bit unsigned long! */
 
 /* Internet addresses */
-extern const char *             /* NULL for success, else string literal */
-atoaddr(const char *src,
-	size_t srclen,          /* 0 means strlen(src) */
-	struct in_addr *addr
-	);
+/* obsolete (replaced by addrtot) but still in use */
 extern size_t                   /* space needed for full conversion */
 addrtoa(struct in_addr addr,
 	int format,             /* character; 0 means default */
@@ -575,12 +571,7 @@ addrtoa(struct in_addr addr,
 #define ADDRTOA_BUF     ADDRTOT_BUF
 
 /* subnets */
-extern const char *                    /* NULL for success, else string literal */
-atosubnet(const char *src,
-	  size_t srclen,        /* 0 means strlen(src) */
-	  struct in_addr *addr,
-	  struct in_addr *mask
-	  );
+/* obsolete (replaced by subnettot) but still in use */
 extern size_t                          /* space needed for full conversion */
 subnettoa(struct in_addr addr,
 	  struct in_addr mask,
@@ -588,6 +579,7 @@ subnettoa(struct in_addr addr,
 	  char *dst,
 	  size_t dstlen
 	  );
+/* obsolete (replaced by subnettot) but still in use; no manpage */
 extern size_t                          /* space needed for full conversion */
 subnet6toa(struct in6_addr *addr,
 	   struct in6_addr *mask,
@@ -596,6 +588,8 @@ subnet6toa(struct in6_addr *addr,
 	   size_t dstlen
 	   );
 #define SUBNETTOA_BUF SUBNETTOT_BUF     /* large enough for worst case result */
+
+/* end of obsolete functions */
 
 /* data types for SA conversion functions */
 

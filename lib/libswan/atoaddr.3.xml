@@ -64,7 +64,8 @@
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>These functions are obsolete; see
 <citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-for their replacements.</para>
+for their replacements.
+<function>atoaddr</function> and <function>atosubnet</function> have already been deleted.</para>
 
 <para><emphasis remap='I'>Atoaddr</emphasis>
 converts an ASCII name or dotted-decimal address into a binary address

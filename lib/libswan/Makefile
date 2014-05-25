@@ -26,8 +26,8 @@ MANDIR=$(MANTREE)/man3
 
 X509LIB=x509dn.c asn1.c oid.c
 
-SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
-	atosubnet.c atoul.c constants.c datatot.c \
+SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
+	atoul.c constants.c datatot.c \
 	alloc.c diag.c \
 	goodmask.c id.c initaddr.c initsaid.c initsubnet.c \
 	iprange.c \
@@ -197,9 +197,6 @@ l:
 	$(RANLIB) $(LIB)
 
 t:	$(LIB) 
-	ln -f -s ${KLIPSSRCDIR}/atosubnet.c try.c
-	${CC} ${CFLAGS} -DATOSUBNET_MAIN try.c $(LIB) -o try
-	./try -r
 	ln -f -s ${KLIPSSRCDIR}/ttosubnet.c try1a.c
 	${CC} ${CFLAGS} -DTTOSUBNET_MAIN try1a.c $(LIB) -o try1a
 	./try1a -r
