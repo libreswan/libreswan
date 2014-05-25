@@ -1438,9 +1438,9 @@ void fmt_state(struct state *st, const monotime_t n,
 		char buf[SATOT_BUF * 6 + 1];
 		char *p = buf;
 
-#       define add_said(adst, aspi, aproto) { \
+#	define add_said(adst, aspi, aproto) { \
 		ip_said s; \
-            \
+		\
 		initsaid(adst, aspi, aproto, &s); \
 		if (p < &buf[sizeof(buf) - 1]) \
 		{ \

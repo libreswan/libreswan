@@ -187,7 +187,7 @@ void user_ipv4_handler(u8 *packet, option_data *opt)
 
 	if (opt->spi != 0 && htonl(espH->spi) != opt->spi) {
 /*		nli_timer_stop(spi_change_timer);
-                nli_timer_start(spi_change_timer);*/
+		nli_timer_start(spi_change_timer);*/
 		if (opt->verbose > 1)
 			printf("Wrong SPI %08x\n", espH->spi);
 		return;
@@ -482,13 +482,13 @@ int main(int argc, char *argv[])
 	}
 
 /*	bzero (&arpr, sizeof(arpr));
-        arpr.arp_pa.sa_family = AF_INET;
-        memcpy(arpr.arp_pa.sa_data, (u8 *)&options.gw, 4);
-        strcpy(arpr.arp_dev, options.send_if);
-        if (ioctl (send_s, SIOCGARP, &arpr) < 0) {
-                perror ("ioctl(SIOCGARP)");
-                exit(1);
-        }
+	arpr.arp_pa.sa_family = AF_INET;
+	memcpy(arpr.arp_pa.sa_data, (u8 *)&options.gw, 4);
+	strcpy(arpr.arp_dev, options.send_if);
+	if (ioctl (send_s, SIOCGARP, &arpr) < 0) {
+		perror ("ioctl(SIOCGARP)");
+		exit(1);
+	}
  */
 
 	for (i = 0; i < 6; i++)

@@ -26,22 +26,22 @@
 # include <pk11pub.h>
 
 struct lsw_conf_options {
-	char *rootdir;                  /* default is "" --- used for testing */
-	char *confdir;                  /* "/etc" */
-	char *conffile;                 /* "/etc/ipsec.conf" */
-	char *confddir;                 /* "/etc/ipsec.d" */
-	char *vardir;                   /* "/var/run/pluto" */
-	char *policies_dir;             /* "/etc/ipsec.d/policies" */
-	char *cacerts_dir;              /* "/etc/ipsec.d/cacerts" */
-	char *crls_dir;                 /* "/etc/ipsec.d/crls" */
+	char *rootdir;			/* default is "" --- used for testing */
+	char *confdir;			/* "/etc" */
+	char *conffile;			/* "/etc/ipsec.conf" */
+	char *confddir;			/* "/etc/ipsec.d" */
+	char *vardir;			/* "/var/run/pluto" */
+	char *policies_dir;		/* "/etc/ipsec.d/policies" */
+	char *cacerts_dir;		/* "/etc/ipsec.d/cacerts" */
+	char *crls_dir;			/* "/etc/ipsec.d/crls" */
 };
 
 typedef struct {
 	enum {
-		PW_NONE = 0,            /* no password */
-		PW_FROMFILE = 1,        /* password data in a text file */
-		PW_PLAINTEXT = 2,       /* password data in the clear in memory buffer */
-		PW_EXTERNAL = 3         /* external source, user will be prompted */
+		PW_NONE = 0,		/* no password */
+		PW_FROMFILE = 1,	/* password data in a text file */
+		PW_PLAINTEXT = 2,	/* password data in the clear in memory buffer */
+		PW_EXTERNAL = 3		/* external source, user will be prompted */
 	} source;
 	char *data;
 } secuPWData;

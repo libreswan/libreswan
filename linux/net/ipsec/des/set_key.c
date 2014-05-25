@@ -186,16 +186,16 @@ des_key_schedule schedule;
 
 	/* do PC1 in 60 simple operations */
 /*	PERM_OP(d,c,t,4,0x0f0f0f0fL);
-        HPERM_OP(c,t,-2, 0xcccc0000L);
-        HPERM_OP(c,t,-1, 0xaaaa0000L);
-        HPERM_OP(c,t, 8, 0x00ff0000L);
-        HPERM_OP(c,t,-1, 0xaaaa0000L);
-        HPERM_OP(d,t,-8, 0xff000000L);
-        HPERM_OP(d,t, 8, 0x00ff0000L);
-        HPERM_OP(d,t, 2, 0x33330000L);
-        d=((d&0x00aa00aaL)<<7L)|((d&0x55005500L)>>7L)|(d&0xaa55aa55L);
-        d=(d>>8)|((c&0xf0000000L)>>4);
-        c&=0x0fffffffL; */
+	HPERM_OP(c,t,-2, 0xcccc0000L);
+	HPERM_OP(c,t,-1, 0xaaaa0000L);
+	HPERM_OP(c,t, 8, 0x00ff0000L);
+	HPERM_OP(c,t,-1, 0xaaaa0000L);
+	HPERM_OP(d,t,-8, 0xff000000L);
+	HPERM_OP(d,t, 8, 0x00ff0000L);
+	HPERM_OP(d,t, 2, 0x33330000L);
+	d=((d&0x00aa00aaL)<<7L)|((d&0x55005500L)>>7L)|(d&0xaa55aa55L);
+	d=(d>>8)|((c&0xf0000000L)>>4);
+	c&=0x0fffffffL; */
 
 	/* I now do it in 47 simple operations :-)
 	 * Thanks to John Fletcher (john_fletcher@lccmail.ocf.llnl.gov)

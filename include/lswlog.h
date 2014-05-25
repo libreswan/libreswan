@@ -26,8 +26,8 @@
 /* moved common code to library file */
 #include "libreswan/passert.h"
 
-#define loglog  libreswan_loglog
-#define plog    libreswan_log
+#define loglog	libreswan_loglog
+#define plog	libreswan_log
 extern int libreswan_log(const char *message, ...) PRINTF_LIKE(1);
 
 /* Log to both main log and whack log
@@ -39,12 +39,12 @@ extern void libreswan_log_abort(const char *file_str,
 				int line_no) NEVER_RETURNS;
 #include "constants.h"
 
-extern lset_t base_debugging;   /* bits selecting what to report */
-extern lset_t cur_debugging;    /* current debugging level */
+extern lset_t base_debugging;	/* bits selecting what to report */
+extern lset_t cur_debugging;	/* current debugging level */
 extern void set_debugging(lset_t deb);
 
-#define DBGP(cond)         (cur_debugging & (cond))
-#define DBG(cond, action)   do { if (DBGP(cond)) { action; } } while (0)
+#define DBGP(cond)	(cur_debugging & (cond))
+#define DBG(cond, action)	do { if (DBGP(cond)) { action; } } while (0)
 
 #define DBG_log libreswan_DBG_log
 #define DBG_dump libreswan_DBG_dump
@@ -57,7 +57,7 @@ extern void exit_tool(int) NEVER_RETURNS;
 extern void tool_init_log(void);
 extern void tool_close_log(void);
 
-#define lsw_abort()     libreswan_log_abort(__FILE__, __LINE__)
+#define lsw_abort()	libreswan_log_abort(__FILE__, __LINE__)
 
 #define DBG_cond_dump(cond, label, p, len) DBG(cond, DBG_dump(label, p, len))
 #define DBG_cond_dump_chunk(cond, label, ch) DBG(cond, DBG_dump_chunk(label, \
@@ -73,9 +73,9 @@ extern void tool_close_log(void);
  * restriction is not checked in any way: violators will produce
  * confusing results (without crashing!).
  */
-#define LOG_WIDTH   1024                                        /* roof of number of chars in log line */
+#define LOG_WIDTH	1024	/* roof of number of chars in log line */
 
-extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);    /* NOT RE-ENTRANT */
+extern err_t builddiag(const char *fmt, ...) PRINTF_LIKE(1);	/* NOT RE-ENTRANT */
 
 extern char *progname;
 
@@ -87,11 +87,11 @@ extern char *progname;
  * NOTE: ipsec_auto(8) knows about some of these numbers -- change carefully.
  */
 enum rc_type {
-	RC_COMMENT,             /* non-commital utterance (does not affect exit status) */
-	RC_WHACK_PROBLEM,       /* whack-detected problem */
-	RC_LOG,                 /* message aimed at log (does not affect exit status) */
-	RC_LOG_SERIOUS,         /* serious message aimed at log (does not affect exit status) */
-	RC_SUCCESS,             /* success (exit status 0) */
+	RC_COMMENT,		/* non-commital utterance (does not affect exit status) */
+	RC_WHACK_PROBLEM,	/* whack-detected problem */
+	RC_LOG,			/* message aimed at log (does not affect exit status) */
+	RC_LOG_SERIOUS,		/* serious message aimed at log (does not affect exit status) */
+	RC_SUCCESS,		/* success (exit status 0) */
 
 	/* failure, but not definitive */
 
@@ -99,30 +99,30 @@ enum rc_type {
 
 	/* improper request */
 
-	RC_DUPNAME = 20,        /* attempt to reuse a connection name */
-	RC_UNKNOWN_NAME,        /* connection name unknown or state number */
-	RC_ORIENT,              /* cannot orient connection: neither end is us */
-	RC_CLASH,               /* clash between two Road Warrior connections OVERLOADED */
-	RC_DEAF,                /* need --listen before --initiate */
-	RC_ROUTE,               /* cannot route */
-	RC_RTBUSY,              /* cannot unroute: route busy */
-	RC_BADID,               /* malformed --id */
-	RC_NOKEY,               /* no key found through DNS */
-	RC_NOPEERIP,            /* cannot initiate when peer IP is unknown */
-	RC_INITSHUNT,           /* cannot initiate a shunt-oly connection */
-	RC_WILDCARD,            /* cannot initiate when ID has wildcards */
-	RC_NOVALIDPIN,          /* cannot initiate without valid PIN */
+	RC_DUPNAME = 20,	/* attempt to reuse a connection name */
+	RC_UNKNOWN_NAME,	/* connection name unknown or state number */
+	RC_ORIENT,		/* cannot orient connection: neither end is us */
+	RC_CLASH,		/* clash between two Road Warrior connections OVERLOADED */
+	RC_DEAF,		/* need --listen before --initiate */
+	RC_ROUTE,		/* cannot route */
+	RC_RTBUSY,		/* cannot unroute: route busy */
+	RC_BADID,		/* malformed --id */
+	RC_NOKEY,		/* no key found through DNS */
+	RC_NOPEERIP,		/* cannot initiate when peer IP is unknown */
+	RC_INITSHUNT,		/* cannot initiate a shunt-oly connection */
+	RC_WILDCARD,		/* cannot initiate when ID has wildcards */
+	RC_NOVALIDPIN,		/* cannot initiate without valid PIN */
 
 	/* permanent failure */
 
 	RC_BADWHACKMESSAGE = 30,
 	RC_NORETRANSMISSION,
 	RC_INTERNALERR,
-	RC_OPPOFAILURE,         /* Opportunism failed */
-	RC_CRYPTOFAILED,        /* system too busy to perform required
-	                         * cryptographic operations */
-	RC_AGGRALGO,            /* multiple algorithms requested in phase 1 aggressive */
-	RC_FATAL,               /* fatal error encountered, and negotiation aborted */
+	RC_OPPOFAILURE,		/* Opportunism failed */
+	RC_CRYPTOFAILED,	/* system too busy to perform required
+				* cryptographic operations */
+	RC_AGGRALGO,		/* multiple algorithms requested in phase 1 aggressive */
+	RC_FATAL,		/* fatal error encountered, and negotiation aborted */
 
 	/* entry of secrets */
 	RC_ENTERSECRET = 40,
@@ -137,7 +137,7 @@ enum rc_type {
 	 * Actual value is RC_NOTIFICATION plus code for notification
 	 * that should be generated by this Pluto.
 	 */
-	RC_NOTIFICATION = 200   /* as per IKE notification messages */
+	RC_NOTIFICATION = 200	/* as per IKE notification messages */
 };
 
 /* the following routines do a dance to capture errno before it is changed

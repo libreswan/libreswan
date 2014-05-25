@@ -73,11 +73,11 @@ static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void perpeer_logclose(struct connection *c);     /* forward */
 
 bool
-	log_to_stderr = TRUE,           /* should log go to stderr? */
-	log_to_syslog = TRUE,           /* should log go to syslog? */
-	log_to_perpeer = FALSE,         /* should log go to per-IP file? */
-	log_with_timestamp = FALSE;     /* some people want timestamps, but we
-                                            don't want those in our test output */
+	log_to_stderr = TRUE,		/* should log go to stderr? */
+	log_to_syslog = TRUE,		/* should log go to syslog? */
+	log_to_perpeer = FALSE,		/* should log go to per-IP file? */
+	log_with_timestamp = FALSE;	/* some people want timestamps, but we
+					 * don't want those in our test output */
 
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
