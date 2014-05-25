@@ -62,21 +62,21 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 	} \
 }
 
-extern stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                          /* body of input SA Payload */
-						    const struct ikev2_sa *sa_prop UNUSED,      /* header of input SA Payload */
-						    pb_stream *r_sa_pbs,                        /* if non-NULL, where to emit winning SA */
-						    struct state *st,                           /* current state object */
-						    bool selection                              /* if this SA is a selection, only one
-                                                                                                 * tranform can appear. */
-						    );
+extern stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,				/* body of input SA Payload */
+					     const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
+					     pb_stream *r_sa_pbs,			/* if non-NULL, where to emit winning SA */
+					     struct state *st,				/* current state object */
+					     bool selection				/* if this SA is a selection, only one
+											 * tranform can appear. */
+					     );
 
-extern stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,                           /* body of input SA Payload */
-						   const struct ikev2_sa *sa_prop UNUSED,       /* header of input SA Payload */
-						   pb_stream *r_sa_pbs,                         /* if non-NULL, where to emit winning SA */
-						   struct state *st,                            /* current state object */
-						   bool selection                               /* if this SA is a selection, only one
-                                                                                                 * tranform can appear. */
-						   );
+extern stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,				/* body of input SA Payload */
+					    const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
+					    pb_stream *r_sa_pbs,				/* if non-NULL, where to emit winning SA */
+					    struct state *st,				/* current state object */
+					    bool selection				/* if this SA is a selection, only one
+											 * tranform can appear. */
+					    );
 
 #if 0
 extern v2_notification_t parse_ikev2_sa_body(pb_stream *sa_pbs,
@@ -198,5 +198,5 @@ extern bool ship_v2N(unsigned int np, u_int8_t critical,
 		     u_int8_t protoid, const chunk_t *spi,
 		     u_int16_t type, const chunk_t *n_data, pb_stream *rbody);
 
-extern bool force_busy;  /* config option to emulate responder under DOS */
+extern bool force_busy;	/* config option to emulate responder under DOS */
 

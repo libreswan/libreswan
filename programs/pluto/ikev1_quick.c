@@ -250,7 +250,7 @@ static void compute_proto_keymat(struct state *st,
 			 * This is also the max keysize for cast128
 			 */
 			if (st->st_esp.attrs.transattrs.enckeylen) {
-                                passert(st->st_esp.attrs.transattrs.enckeylen == 128);
+				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
 			}
 			/* minimum = default = maximum */
 			needed_len = CAST_KEY_DEF_LEN / BITS_PER_BYTE;
