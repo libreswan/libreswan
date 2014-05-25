@@ -459,7 +459,7 @@ extern size_t subnetporttot(const ip_subnet *src, int format, char *buf,
 #define SUBNETPROTOTOT_BUF      (SUBNETTOTO_BUF + ULTOT_BUF)
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
 extern size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen);
-#define SATOT_BUF       (5 + ULTOA_BUF + 1 + ADDRTOT_BUF)
+#define SATOT_BUF       (5 + ULTOT_BUF + 1 + ADDRTOT_BUF)
 extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
 	      size_t buflen, size_t *needed);
 extern err_t ttodatav(const char *src, size_t srclen, int base,
@@ -545,20 +545,6 @@ extern const char libreswan_vendorid[];
  */
 
 /* unsigned long */
-extern const char *                    /* NULL for success, else string literal */
-atoul(  const char *src,
-	size_t srclen,          /* 0 means strlen(src) */
-	int base,               /* 0 means figure it out */
-	unsigned long *resultp
-	);
-extern size_t                   /* space needed for full conversion */
-ultoa(  unsigned long n,
-	int base,
-	char *dst,
-	size_t dstlen
-	);
-#define ULTOA_BUF       21      /* just large enough for largest result, */
-                                /* assuming 64-bit unsigned long! */
 
 /* Internet addresses */
 /* obsolete (replaced by addrtot) but still in use */

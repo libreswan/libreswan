@@ -27,7 +27,7 @@ MANDIR=$(MANTREE)/man3
 X509LIB=x509dn.c asn1.c oid.c
 
 SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
-	atoul.c constants.c datatot.c \
+	constants.c datatot.c \
 	alloc.c diag.c \
 	goodmask.c id.c initaddr.c initsaid.c initsubnet.c \
 	iprange.c \
@@ -37,7 +37,7 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
 	portof.c rangetosubnet.c sameaddr.c \
 	satot.c secrets.c subnetof.c subnettoa.c subnettot.c \
 	subnettypeof.c ttoaddr.c ttodata.c ttoprotoport.c \
-	ttorange.c ttosa.c ttosubnet.c ttoul.c ultoa.c ultot.c \
+	ttorange.c ttosa.c ttosubnet.c ttoul.c ultot.c \
 	$(X509LIB)
 
 ifeq ($(USE_DNSSEC),true)
