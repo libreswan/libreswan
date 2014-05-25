@@ -544,8 +544,6 @@ extern const char libreswan_vendorid[];
  * obsolete functions, to be deleted eventually
  */
 
-/* unsigned long */
-
 /* Internet addresses */
 /* obsolete (replaced by addrtot) but still in use */
 extern size_t                   /* space needed for full conversion */
