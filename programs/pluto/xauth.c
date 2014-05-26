@@ -515,15 +515,15 @@ static stf_status modecfg_resp(struct state *st,
 				case MODECFG_DOMAIN:
 				{
 					if(st->st_connection->modecfg_domain) {
-						DBG_log("We are sending '%s' as ModeCFG domain",
+						DBG_log("We are sending '%s' as domain",
 							st->st_connection->modecfg_domain);
 						if (!out_raw(st->st_connection->modecfg_domain,
 							     strlen(st->st_connection->modecfg_domain),
-							     &attrval, "ModeCFG_domain")) {
+							     &attrval, "")) {
 							return STF_INTERNAL_ERROR;
 						}
 					} else {
-						DBG_log("We are not sending a ModeCFG domain");
+						DBG_log("We are not sending a domain");
 					}
 
 				}
@@ -531,15 +531,15 @@ static stf_status modecfg_resp(struct state *st,
 				case MODECFG_BANNER:
 				{
 					if(st->st_connection->modecfg_banner) {
-						DBG_log("We are sending '%s' as ModeCFG banner",
+						DBG_log("We are sending '%s' as banner",
 							st->st_connection->modecfg_banner);
 						if (!out_raw(st->st_connection->modecfg_banner,
 							     strlen(st->st_connection->modecfg_banner),
-							     &attrval, "ModeCFG_banner")) {
+							     &attrval, "")) {
 							return STF_INTERNAL_ERROR;
 						}
 					} else {
-						DBG_log("We are not sending a ModeCFG banner");
+						DBG_log("We are not sending a banner");
 					}
 
 				}
@@ -1902,7 +1902,7 @@ static char *cisco_stringify(pb_stream *pbs, const char *attr_name)
 		}
 	}
 	sanitize_string(strbuf, sizeof(strbuf));
-	libreswan_log("Received Cisco %s: %s", attr_name, strbuf);
+	loglog(RC_INFORMATIONAL, "Received %s: %s", attr_name, strbuf);
 	return clone_str(strbuf, attr_name);
 }
 
@@ -1920,8 +1920,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t resp = LEMPTY;
 
-	DBG(DBG_CONTROL, DBG_log("modecfg_inR1"));
-	libreswan_log("received mode cfg reply");
+	DBG(DBG_CONTROL, DBG_log("modecfg_inR1: received mode cfg reply"));
 
 	st->st_msgid_phase15 = md->hdr.isa_msgid;
 	CHECK_QUICK_HASH(md,
@@ -2004,7 +2003,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				c->spd.this.has_client = TRUE;
 				subnettot(&c->spd.this.client, 0,
 					  caddr, sizeof(caddr));
-				loglog(RC_LOG,
+				loglog(RC_INFORMATIONAL,
 					"Received IPv4 address: %s",
 					caddr);
 
@@ -2012,9 +2011,9 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						 NULL) == 0 ||
 				    isanyaddr(&c->spd.this.host_srcip))
 				{
-					libreswan_log(
+					DBG(DBG_CONTROL, DBG_log(
 						"setting ip source address to %s",
-						caddr);
+						caddr));
 					c->spd.this.host_srcip = a;
 				}
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
@@ -2033,7 +2032,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
 				addrtot(&a, 0, caddr, sizeof(caddr));
-				loglog(RC_LOG,
+				loglog(RC_INFORMATIONAL,
 					"Received IP4 NETMASK %s",
 					caddr);
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
@@ -2052,7 +2051,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
 				addrtot(&a, 0, caddr, sizeof(caddr));
-				loglog(RC_LOG,"Received DNS %s",
+				loglog(RC_INFORMATIONAL, "Received DNS server %s",
 					caddr);
 
 				{
@@ -2087,10 +2086,6 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					}
 				}
 
-				DBG_log("ModeCFG DNS info: %s, len=%zd",
-					st->st_connection->cisco_dns_info,
-					strlen(st->st_connection->cisco_dns_info));
-
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
@@ -2099,9 +2094,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			{
 				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
-							"ModeCFG Domain");
-				loglog(RC_LOG, "Received Domain: %s",
-				       st->st_connection->modecfg_domain);
+							"Domain");
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
@@ -2110,9 +2103,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			{
 				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
-							"ModeCFG Banner");
-				loglog(RC_LOG, "Received Banner: %s",
-				       st->st_connection->modecfg_banner);
+							"Banner");
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
@@ -2198,7 +2189,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						caddr,
 						sizeof(caddr));
 
-					loglog(RC_LOG,
+					loglog(RC_INFORMATIONAL,
 						"Received subnet %s, maskbits %d", caddr,
 						tmp_spd->that.client.maskbits);
 

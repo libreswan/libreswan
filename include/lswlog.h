@@ -92,6 +92,7 @@ enum rc_type {
 	RC_LOG,			/* message aimed at log (does not affect exit status) */
 	RC_LOG_SERIOUS,		/* serious message aimed at log (does not affect exit status) */
 	RC_SUCCESS,		/* success (exit status 0) */
+	RC_INFORMATIONAL,	/* should get relayed to user - if there is one */
 
 	/* failure, but not definitive */
 
