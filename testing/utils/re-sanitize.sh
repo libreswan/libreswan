@@ -8,11 +8,13 @@ fi
 . ../setup.sh
 . ../../utils/functions.sh
 
+failure=0
+
 for host in $LIBRESWANHOSTS
 do
    if [ -f "${host}.console.txt" ]
    then
-	echo "re-sanitizing ${host}"
+	#echo "re-sanitizing ${host}"
 	# sanitize last run
 	if [ -f OUTPUT/${host}.console.verbose.txt ]
 	then
@@ -50,16 +52,23 @@ do
 		echo >>$fixedoutput
 		if diff -N -u -w -b -B ${host}.console.txt $fixedoutput >OUTPUT/${host}.console.diff
 		then
-			echo "${host}Console output matched"
+			echo "# ${host}Console output matched"
 		else
-			echo "${host}Console output differed"
+			echo "# ${host}Console output differed"
+			failure=1
 		fi
 		if [ -f OUTPUT/${host}.console.diff -a \! -s OUTPUT/${host}.console.diff ]
 		then
 			rm OUTPUT/${host}.console.diff
 		fi
-
 	fi
    fi
 done
+
+if [ $failure -eq 0 ]
+then
+	echo "$(basename $(pwd)): passed"
+else
+	echo "$(basename $(pwd)): FAILED"
+fi
 
