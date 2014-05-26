@@ -617,26 +617,21 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	 * NOW SEND VENDOR ID payloads
 	 */
 
-	/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
-	{
-		int np = ISAKMP_NEXT_NONE;
-
-		if (st->hidden_variables.st_nat_traversal)
-			np = ISAKMP_NEXT_VID;
-
-		if (!out_vid(np, &md->rbody, VID_MISC_DPD))
+	if (st->hidden_variables.st_nat_traversal == LEMPTY) {
+		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
+		if (!out_vid(ISAKMP_NEXT_NONE, &md->rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
-	}
-
-	if (st->hidden_variables.st_nat_traversal) {
-		if (!out_vid((st->hidden_variables.st_nat_traversal) ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE,
+	} else {
+		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
+		if (!out_vid(ISAKMP_NEXT_VID, &md->rbody, VID_MISC_DPD))
+			return STF_INTERNAL_ERROR;
+		/* and a couple more NAT VIDs */
+		if (!out_vid(ISAKMP_NEXT_VID,
 			     &md->rbody,
 			     md->quirks.nat_traversal_vid))
 			return STF_INTERNAL_ERROR;
-		if (st->hidden_variables.st_nat_traversal) {
-			if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
-				return STF_INTERNAL_ERROR;
-		}
+		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
+			return STF_INTERNAL_ERROR;
 	}
 
 	/* finish message */
@@ -710,18 +705,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	memcpy(st->st_rcookie, md->hdr.isa_rcookie, COOKIE_SIZE);
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("inR1: checking NAT-t: %d and %d",
-		    nat_traversal_enabled,
-		    st->hidden_variables.st_nat_traversal));
-	if (st->hidden_variables.st_nat_traversal) {
-		nat_traversal_natd_lookup(md);
-		nat_traversal_show_result(
-			st->hidden_variables.st_nat_traversal,
-			md->sender_port);
-	}
-	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA)
-		nat_traversal_new_ka_event();
+	ikev1_natd_init(st, md);
 
 	/* set up second calculation */
 	{
@@ -829,7 +813,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (st->hidden_variables.st_nat_traversal) {
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		if (!nat_traversal_add_natd(auth_payload, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
@@ -955,14 +939,7 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 	u_char idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
 	struct payload_digest id_pd;
 
-	if (st->hidden_variables.st_nat_traversal) {
-		nat_traversal_natd_lookup(md);
-		nat_traversal_show_result(
-			st->hidden_variables.st_nat_traversal,
-			md->sender_port);
-	}
-	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA)
-		nat_traversal_new_ka_event();
+	ikev1_natd_init(st, md);
 
 	/* Reconstruct the peer ID so the peer hash can be authenticated */
 	{

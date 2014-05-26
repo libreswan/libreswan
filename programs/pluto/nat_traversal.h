@@ -32,26 +32,23 @@
 #if 0
 /* not used anymore, since this is true for all supported natt methods */
 #define NAT_T_WITH_NATD \
-	( LELEM(NAT_TRAVERSAL_METHOD_IETF_00_01) | \
-	  LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
+	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 #endif
 
 /**
- * NAT-Traversal methods which need NAT-OA
+ * NAT-Traversal methods which need NAT-OA (Original Address)
  */
 #define NAT_T_WITH_NATOA \
-	( LELEM(NAT_TRAVERSAL_METHOD_IETF_00_01) | \
-	  LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
+	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 /**
  * NAT-Traversal methods which use NAT-KeepAlive
  */
 #define NAT_T_WITH_KA \
-	( LELEM(NAT_TRAVERSAL_METHOD_IETF_00_01) | \
-	  LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
+	( LELEM(NAT_TRAVERSAL_METHOD_IETF_02_03) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_05) | \
 	  LELEM(NAT_TRAVERSAL_METHOD_IETF_RFC) )
 
@@ -83,7 +80,6 @@ extern bool nat_traversal_support_port_floating;
 /**
  * NAT-D
  */
-extern void nat_traversal_natd_lookup(struct msg_digest *md);
 extern bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 				   struct msg_digest *md);
 extern void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie);
@@ -104,7 +100,7 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 void nat_traversal_new_ka_event(void);
 void nat_traversal_ka_event(void);
 
-void nat_traversal_show_result(u_int32_t nt, u_int16_t sport);
+extern void ikev1_natd_init(struct state *st, struct msg_digest *md);
 
 extern int nat_traversal_espinudp_socket(int sk, const char *fam);
 

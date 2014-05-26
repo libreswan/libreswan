@@ -272,7 +272,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 * check the phase 2, if we are supposed to,
 	 * and return if it is active recently
 	 */
-	if (eroute_care && !st->hidden_variables.st_nat_traversal &&
+	if (eroute_care && st->hidden_variables.st_nat_traversal == LEMPTY &&
 			!was_eroute_idle(st, delay)) {
 		DBG(DBG_DPD,
 		    DBG_log("DPD: out event not sent, phase 2 active"));

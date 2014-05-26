@@ -208,13 +208,13 @@ static enum_names natt_method_result_names =
 	  natt_method_result_name, NULL };
 
 static const char *const natt_method_name[] = {
-	"draft-ietf-ipsec-nat-t-ike-00/01", /* 1 */
+	"none",
 	"draft-ietf-ipsec-nat-t-ike-02/03",
 	"draft-ietf-ipsec-nat-t-ike-05",
-	"RFC 3947 (NAT-Traversal)" /* 4*/
+	"RFC 3947 (NAT-Traversal)"
 };
 enum_names natt_method_names =
-	{ NAT_TRAVERSAL_METHOD_IETF_00_01, NAT_TRAVERSAL_METHOD_IETF_RFC,
+	{ NAT_TRAVERSAL_METHOD_none, NAT_TRAVERSAL_METHOD_IETF_RFC,
 	  natt_method_name, &natt_method_result_names };
 
 /* pluto crypto importance */

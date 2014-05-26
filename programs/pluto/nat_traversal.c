@@ -272,13 +272,13 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 	return TRUE;
 }
 
-u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
+enum natt_method nat_traversal_vid_to_method(unsigned short nat_t_vid)
 {
 	switch (nat_t_vid) {
 	case VID_NATT_IETF_00:
 		DBG(DBG_NATT,
 			DBG_log("NAT_TRAVERSAL_METHOD_IETF_00_01 no longer supported"));
-		return 0;
+		return NAT_TRAVERSAL_METHOD_none;
 
 	case VID_NATT_IETF_02:
 	case VID_NATT_IETF_02_N:
@@ -305,7 +305,7 @@ u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid)
 	}
 }
 
-void nat_traversal_natd_lookup(struct msg_digest *md)
+static void nat_traversal_natd_lookup(struct msg_digest *md)
 {
 	unsigned char hash_me[MAX_DIGEST_LEN];
 	unsigned char hash_him[MAX_DIGEST_LEN];
@@ -331,7 +331,7 @@ void nat_traversal_natd_lookup(struct msg_digest *md)
 		loglog(RC_LOG_SERIOUS,
 			"NAT-Traversal: Only %d NAT-D - Aborting NAT-Traversal negotiation",
 			i);
-		st->hidden_variables.st_nat_traversal = 0;
+		st->hidden_variables.st_nat_traversal = LEMPTY;
 		return;
 	}
 
@@ -425,7 +425,7 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	DBG(DBG_EMITTING | DBG_NATT, DBG_log("sending NAT-D payloads"));
 
-	nat_np = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) != 0 ?
+	nat_np = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) != LEMPTY ?
 		ISAKMP_NEXT_NATD_RFC : ISAKMP_NEXT_NATD_DRAFTS;
 
 	out_modify_previous_np(nat_np, outs);
@@ -499,7 +499,8 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	/* Count NAT-OA */
 	for (p = md->chain[ISAKMP_NEXT_NATOA_RFC], i = 0;
 		p != NULL;
-		p = p->next, i++);
+		p = p->next, i++) {
+	}
 
 	DBG(DBG_NATT,
 		DBG_log("NAT-Traversal: received %d NAT-OA.", i));
@@ -592,8 +593,8 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 	passert(st->st_connection);
 
 	nat_np = (st->hidden_variables.st_nat_traversal &
-		NAT_T_WITH_RFC_VALUES) !=
-		0 ? ISAKMP_NEXT_NATOA_RFC : ISAKMP_NEXT_NATOA_DRAFTS;
+		NAT_T_WITH_RFC_VALUES) != LEMPTY ?
+		  ISAKMP_NEXT_NATOA_RFC : ISAKMP_NEXT_NATOA_DRAFTS;
 
 	out_modify_previous_np(nat_np, outs);
 
@@ -669,12 +670,12 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 	return TRUE;
 }
 
-void nat_traversal_show_result(u_int32_t nt, u_int16_t sport)
+static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
 {
-	const char *rslt = NULL;
+	const char *rslt = "unknown or unsupported result";
 
 	switch (nt & NAT_T_DETECTED) {
-	case 0:
+	case LEMPTY:
 		rslt = "no NAT detected";
 		break;
 	case LELEM(NAT_TRAVERSAL_NAT_BHND_ME):
@@ -683,8 +684,8 @@ void nat_traversal_show_result(u_int32_t nt, u_int16_t sport)
 	case LELEM(NAT_TRAVERSAL_NAT_BHND_PEER):
 		rslt = "peer is NATed";
 		break;
-	case LELEM(NAT_TRAVERSAL_NAT_BHND_ME) | LELEM(
-			NAT_TRAVERSAL_NAT_BHND_PEER):
+	case LELEM(NAT_TRAVERSAL_NAT_BHND_ME) |
+	     LELEM(NAT_TRAVERSAL_NAT_BHND_PEER):
 		rslt = "both are NATed";
 		break;
 	}
@@ -692,13 +693,34 @@ void nat_traversal_show_result(u_int32_t nt, u_int16_t sport)
 	loglog(RC_LOG_SERIOUS,
 		"NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
 		LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_RFC) ?
-		enum_name(&natt_method_names, NAT_TRAVERSAL_METHOD_IETF_RFC) :
-		LHAS(nt,NAT_TRAVERSAL_METHOD_IETF_02_03) ?
-		enum_name(&natt_method_names,
-			NAT_TRAVERSAL_METHOD_IETF_02_03) :
+			enum_name(&natt_method_names,
+				  NAT_TRAVERSAL_METHOD_IETF_RFC) :
+		LHAS(nt, NAT_TRAVERSAL_METHOD_IETF_02_03) ?
+			enum_name(&natt_method_names,
+				  NAT_TRAVERSAL_METHOD_IETF_02_03) :
 		"unknown or unsupported method",
 		sport,
-		rslt != NULL ? rslt : "unknown or unsupported result");
+		rslt);
+}
+
+void ikev1_natd_init(struct state *st, struct msg_digest *md)
+{
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("checking NAT-t: %d and 0x%" PRIxLSET,
+		    nat_traversal_enabled,
+		    st->hidden_variables.st_nat_traversal));
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
+		nat_traversal_natd_lookup(md);
+		if (st->hidden_variables.st_nat_traversal != LEMPTY) {
+			nat_traversal_show_result(
+				st->hidden_variables.st_nat_traversal,
+				md->sender_port);
+		}
+	}
+	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {
+		DBG(DBG_NATT, DBG_log(" NAT_T_WITH_KA detected"));
+		nat_traversal_new_ka_event();
+	}
 }
 
 int nat_traversal_espinudp_socket(int sk, const char *fam)
@@ -816,8 +838,8 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 
 	if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-		(st->hidden_variables.st_nat_traversal &
-			LELEM(NAT_TRAVERSAL_NAT_BHND_ME))) {
+		LHAS(st->hidden_variables.st_nat_traversal,
+			NAT_TRAVERSAL_NAT_BHND_ME)) {
 		/*
 		 * - ISAKMP established
 		 * - NAT-Traversal detected
@@ -834,8 +856,8 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 				IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 				(st_newest->hidden_variables.st_nat_traversal &
 					NAT_T_DETECTED) &&
-				(st_newest->hidden_variables.st_nat_traversal &
-					LELEM(NAT_TRAVERSAL_NAT_BHND_ME)))
+				LHAS(st_newest->hidden_variables.st_nat_traversal,
+					NAT_TRAVERSAL_NAT_BHND_ME))
 				return;
 		}
 		/*
@@ -846,11 +868,10 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		(*nat_kap_st)++;
 	}
 
-	if (((st->st_state == STATE_QUICK_R2) ||
-			(st->st_state == STATE_QUICK_I2)) &&
-		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-		(st->hidden_variables.st_nat_traversal &
-			LELEM(NAT_TRAVERSAL_NAT_BHND_ME))) {
+	if ((st->st_state == STATE_QUICK_R2 ||
+	     st->st_state == STATE_QUICK_I2) &&
+	    LHAS(st->hidden_variables.st_nat_traversal,
+			NAT_TRAVERSAL_NAT_BHND_ME)) {
 		/*
 		 * - IPSEC SA established
 		 * - NAT-Traversal detected
@@ -864,13 +885,10 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 			struct state *st_newest = state_with_serialno(c->newest_ipsec_sa);
 
 			if (st_newest != NULL &&
-				((st_newest->st_state == STATE_QUICK_R2) ||
-					(st_newest->st_state ==
-						STATE_QUICK_I2)) &&
-				(st_newest->hidden_variables.st_nat_traversal &
-					NAT_T_DETECTED) &&
-				(st_newest->hidden_variables.st_nat_traversal &
-					LELEM(NAT_TRAVERSAL_NAT_BHND_ME)))
+			    (st_newest->st_state == STATE_QUICK_R2 ||
+			     st_newest->st_state == STATE_QUICK_I2) &&
+			    LHAS(st_newest->hidden_variables.st_nat_traversal,
+				 NAT_TRAVERSAL_NAT_BHND_ME))
 				return;
 		}
 		nat_traversal_send_ka(st);
@@ -1005,7 +1023,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	}
 
 	DBG(DBG_NATT,
-		DBG_log("nat_traversal & NAT_T_DETECTED %" PRIxLSET,
+		DBG_log("nat_traversal & NAT_T_DETECTED 0x%" PRIxLSET,
 			(st->hidden_variables.st_nat_traversal &
 				NAT_T_DETECTED));
 		DBG_log(" st_localport != pluto_nat_port (%" PRIu16 " != %" PRIu16 ")",
@@ -1016,11 +1034,11 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	 * If we're initiator and NAT-T is detected, we
 	 * need to change port (MAIN_I3, QUICK_I1 or AGGR_I2)
 	 */
-	if ( ((st->st_state == STATE_MAIN_I3) ||
-			(st->st_state == STATE_QUICK_I1) ||
-			(st->st_state == STATE_AGGR_I2)) &&
-		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-		(st->st_localport != pluto_nat_port)) {
+	if ((st->st_state == STATE_MAIN_I3 ||
+	     st->st_state == STATE_QUICK_I1 ||
+	     st->st_state == STATE_AGGR_I2) &&
+	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
+	    st->st_localport != pluto_nat_port) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T: floating to port %d",
 				pluto_nat_port));

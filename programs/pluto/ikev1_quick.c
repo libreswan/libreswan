@@ -602,14 +602,13 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			       ughmsg);
 			return FALSE;
 		}
-		DBG(DBG_PARSING | DBG_CONTROL,
-		    {
-			    char temp_buff[SUBNETTOT_BUF];
+		DBG(DBG_PARSING | DBG_CONTROL, {
+			char temp_buff[SUBNETTOT_BUF];
 
-			    subnettot(net, 0, temp_buff, sizeof(temp_buff));
-			    DBG_log("%s is subnet %s (received as range)",
-				    which, temp_buff);
-		    });
+			subnettot(net, 0, temp_buff, sizeof(temp_buff));
+			DBG_log("%s is subnet %s (received as range)",
+				which, temp_buff);
+		});
 		break;
 	}
 	}
@@ -956,12 +955,12 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		/* Duplicate nat_traversal status in new state */
 		st->hidden_variables.st_nat_traversal =
 			isakmp_sa->hidden_variables.st_nat_traversal;
-		if (isakmp_sa->hidden_variables.st_nat_traversal &
-		    LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
+		if (LHAS(isakmp_sa->hidden_variables.st_nat_traversal,
+			 NAT_TRAVERSAL_NAT_BHND_ME))
 			has_client = TRUE;
 		nat_traversal_change_port_lookup(NULL, st);
 	} else {
-		st->hidden_variables.st_nat_traversal = 0;
+		st->hidden_variables.st_nat_traversal = LEMPTY;
 	}
 
 	/* set up reply */
@@ -1058,9 +1057,9 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
-	    (!(st->st_policy & POLICY_TUNNEL)) &&
-	    (st->hidden_variables.st_nat_traversal &
-	     LELEM(NAT_TRAVERSAL_NAT_BHND_ME))) {
+	    !(st->st_policy & POLICY_TUNNEL) &&
+	    LHAS(st->hidden_variables.st_nat_traversal,
+	         NAT_TRAVERSAL_NAT_BHND_ME)) {
 		/** Send NAT-OA if our address is NATed */
 		if (!nat_traversal_add_natoa(ISAKMP_NEXT_NONE, &rbody, st,
 					     TRUE /* initiator */)) {
@@ -1302,11 +1301,15 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 		     NAT_T_WITH_NATOA) &&
 		    (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
-			char idfqdn[32], subnet_buf[SUBNETTOT_BUF];
-			int idlen = pbs_room(&IDci->pbs);
+			char idfqdn[32];	/* ??? large enough? */
+			char subnet_buf[SUBNETTOT_BUF];
+			size_t idlen = pbs_room(&IDci->pbs);
 
-			if (idlen > 31)
-				idlen = 31;
+			if (idlen >= sizeof(idfqdn)) {
+				/* ??? truncation seems rude and dangerous */
+				idlen = sizeof(idfqdn) - 1;
+			}
+			/* ??? what should happen if fqdn contains '\0'? */
 			memcpy(idfqdn, IDci->pbs.cur, idlen);
 			idfqdn[idlen] = '\0';
 
@@ -1759,9 +1762,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		if ((p1st->hidden_variables.st_nat_traversal &
 		      NAT_T_DETECTED) &&
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
-		     (p1st->hidden_variables.st_nat_traversal &
-		      (LELEM(NAT_TRAVERSAL_NAT_BHND_ME) |
-		       LELEM(NAT_TRAVERSAL_NAT_BHND_PEER))) &&
 		     p == NULL) {
 			p = c;
 			DBG(DBG_CONTROL,
@@ -2015,7 +2015,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				p1st->hidden_variables.st_nat_traversal;
 			nat_traversal_change_port_lookup(md, md->st);
 		} else {
-			st->hidden_variables.st_nat_traversal = 0;
+			st->hidden_variables.st_nat_traversal = LEMPTY;
 		}
 
 		passert(st->st_connection != NULL);
@@ -2554,13 +2554,16 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 			     NAT_T_DETECTED) &&
 			    (st->hidden_variables.st_nat_traversal &
 			     NAT_T_WITH_NATOA) &&
-			    (IDcr->payload.ipsec_id.isaiid_idtype ==
-			     ID_FQDN)) {
+			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
+				char idfqdn[32];	/* ??? large enough? */
+				char subnet_buf[SUBNETTOT_BUF];
+				size_t idlen = pbs_room(&IDcr->pbs);
 
-				char idfqdn[32], subnet_buf[SUBNETTOT_BUF];
-				int idlen = pbs_room(&IDcr->pbs);
-				if (idlen > 31)
-					idlen = 31;
+				if (idlen >= sizeof(idfqdn)) {
+					/* ??? truncation seems rude and dangerous */
+					idlen = sizeof(idfqdn) - 1;
+				}
+				/* ??? what should happen if fqdn contains '\0'? */
 				memcpy(idfqdn, IDcr->pbs.cur, idlen);
 				idfqdn[idlen] = '\0';
 
@@ -2573,7 +2576,6 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 				       "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
 				       idfqdn, subnet_buf);
 			}
-
 		} else {
 			/* no IDci, IDcr: we must check that the defaults match our proposal */
 			if (!subnetisaddr(&c->spd.this.client,

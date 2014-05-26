@@ -604,8 +604,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 		{
 			if (md->quirks.nat_traversal_vid < vid->id) {
 				DBG(DBG_NATT, DBG_log(" method set to=%s ",
-						      enum_name(&
-								natt_method_names,
+						      enum_name(&natt_method_names,
 								nat_traversal_vid_to_method(
 									vid->id))));
 				md->quirks.nat_traversal_vid = vid->id;

@@ -1820,14 +1820,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
 				DBG(DBG_NATT,
-				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
+				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is 0x%" PRIxLSET,
 					    st->hidden_variables.
 					    st_nat_traversal));
 				if (st->hidden_variables.st_nat_traversal &
 				    NAT_T_DETECTED) {
 					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if "
-					       "NAT-Traversal is not detected",
+					       "%s must only be used if NAT-Traversal is not detected",
 					       enum_name(&enc_mode_names,
 							 val));
 					return FALSE;
@@ -1838,7 +1837,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
 				DBG(DBG_NATT,
-				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
+				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is 0x%" PRIxLSET,
 					    st->hidden_variables.
 					    st_nat_traversal));
 				if (st->hidden_variables.st_nat_traversal &
@@ -1857,8 +1856,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					} else {
 						return FALSE;
 					}
-				} else if (st->hidden_variables.
-					   st_nat_traversal & NAT_T_DETECTED) {
+				} else if (st->hidden_variables.st_nat_traversal &
+				           NAT_T_DETECTED) {
 					attrs->encapsulation = val -
 							       ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS
 							       +
@@ -1876,13 +1875,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
 				DBG(DBG_NATT,
-				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
-					    st->hidden_variables.
-					    st_nat_traversal));
+				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is 0x%" PRIxLSET,
+					    st->hidden_variables.st_nat_traversal));
 				if ((st->hidden_variables.st_nat_traversal &
 				     NAT_T_DETECTED) &&
 				    (st->hidden_variables.st_nat_traversal &
 				     NAT_T_WITH_ENCAPSULATION_RFC_VALUES)) {
+					/* ??? just what is this arithmetic doing? */
 					attrs->encapsulation = val -
 							       ENCAPSULATION_MODE_UDP_TUNNEL_RFC
 							       +

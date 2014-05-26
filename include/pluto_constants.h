@@ -62,17 +62,21 @@ enum keyword_xauthfail {
 };
 
 /*
- *  * NAT-Traversal defines for nat_traveral type from nat_traversal.h
- *   *
- *    */
+ * NAT-Traversal defines for nat_traveral type from nat_traversal.h
+ *
+ * Elements for a set.
+ * The first members are used to specify the type of NAT Traversal.
+ * The second part says which ends are doing NAT.
+ * ??? perhaps these ought to be partitioned into separate sets.
+ */
 enum natt_method {
-	NAT_TRAVERSAL_METHOD_IETF_00_01	= 1,	/* no longer supported */
-	NAT_TRAVERSAL_METHOD_IETF_02_03	= 2,
-	NAT_TRAVERSAL_METHOD_IETF_05	= 3,	/* same as RFC */
-	NAT_TRAVERSAL_METHOD_IETF_RFC	= 4,
+	NAT_TRAVERSAL_METHOD_none,	/* unknown or unspecified */
+	NAT_TRAVERSAL_METHOD_IETF_02_03,
+	NAT_TRAVERSAL_METHOD_IETF_05,	/* same as RFC */
+	NAT_TRAVERSAL_METHOD_IETF_RFC,
 
-	NAT_TRAVERSAL_NAT_BHND_ME	= 30,
-	NAT_TRAVERSAL_NAT_BHND_PEER	= 31
+	NAT_TRAVERSAL_NAT_BHND_ME,
+	NAT_TRAVERSAL_NAT_BHND_PEER
 };
 
 /* Timer events */

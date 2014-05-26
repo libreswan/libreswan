@@ -871,9 +871,8 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		st->hidden_variables.st_nat_traversal =
 			LELEM(nat_traversal_vid_to_method(
 					md->quirks.nat_traversal_vid));
-		if ((st->hidden_variables.st_nat_traversal) &&
-			(!out_vid(np, &
-				md->rbody, md->quirks.nat_traversal_vid)))
+		if (st->hidden_variables.st_nat_traversal != LEMPTY &&
+		    !out_vid(np, &md->rbody, md->quirks.nat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1072,7 +1071,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	DBG(DBG_NATT, DBG_log("NAT-T checking st_nat_traversal"));
-	if (st->hidden_variables.st_nat_traversal) {
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T found (implies NAT_T_WITH_NATD)"));
 		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
@@ -1169,24 +1168,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	if (st->st_connection->requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
 
-	DBG(DBG_NATT,
-		DBG_log("inI2: checking NAT-T: %d and %d",
-			nat_traversal_enabled,
-			st->hidden_variables.st_nat_traversal));
-
-	if (st->hidden_variables.st_nat_traversal) {
-		DBG(DBG_NATT, DBG_log(" NAT_T_WITH_NATD detected"));
-		nat_traversal_natd_lookup(md);
-	}
-	if (st->hidden_variables.st_nat_traversal) {
-		nat_traversal_show_result(
-			st->hidden_variables.st_nat_traversal,
-			md->sender_port);
-	}
-	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {
-		DBG(DBG_NATT, DBG_log(" NAT_T_WITH_KA detected"));
-		nat_traversal_new_ka_event();
-	}
+	ikev1_natd_init(st, md);
 
 	{
 		struct ke_continuation *ke = alloc_thing(
@@ -1341,7 +1323,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		}
 	}
 
-	if (st->hidden_variables.st_nat_traversal) {
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1543,15 +1525,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 	/* done parsing; initialize crypto */
 
-	if (st->hidden_variables.st_nat_traversal)
-		nat_traversal_natd_lookup(md);
-	if (st->hidden_variables.st_nat_traversal) {
-		nat_traversal_show_result(
-			st->hidden_variables.st_nat_traversal,
-			md->sender_port);
-	}
-	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA)
-		nat_traversal_new_ka_event();
+	ikev1_natd_init(st, md);
 
 	/*
 	 * Build output packet HDR*;IDii;HASH/SIG_I

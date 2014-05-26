@@ -1880,18 +1880,18 @@ void process_packet_tail(struct msg_digest **mdp)
 			 * is no negotiation of NAT-T method. Get it right.
 			 */
 			if (st != NULL && st->st_connection != NULL &&
-			    (st->st_connection->policy & POLICY_AGGRESSIVE) == 0)
+			    (st->st_connection->policy & POLICY_AGGRESSIVE) == LEMPTY)
 			{
 				switch (np) {
 				case ISAKMP_NEXT_NATD_RFC:
 				case ISAKMP_NEXT_NATOA_RFC:
 					if (st == NULL ||
-					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
+					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
 						/*
 						 * don't accept NAT-D/NAT-OA reloc directly in message,
 						 * unless we're using NAT-T RFC
 						 */
-						DBG_log("st_nat_traversal was: %u\n",
+						DBG_log("st_nat_traversal was: 0x%" PRIxLSET,
 							st->hidden_variables.st_nat_traversal);
 						sd = NULL;
 					}
@@ -2181,7 +2181,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	/* VERIFY that we only accept NAT-D/NAT-OE when they sent us the VID */
 	if ((md->chain[ISAKMP_NEXT_NATD_RFC] != NULL ||
 	     md->chain[ISAKMP_NEXT_NATOA_RFC] != NULL) &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
+	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
 		/*
 		 * don't accept NAT-D/NAT-OA reloc directly in message,
 		 * unless we're using NAT-T RFC
@@ -2771,7 +2771,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-        if (st->hidden_variables.st_nat_traversal &&
+        if (st->hidden_variables.st_nat_traversal != LEMPTY &&
 	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
 	    ((id->isaid_doi_specific_b == 0) ||
 	     (id->isaid_doi_specific_b == pluto_nat_port))) {
