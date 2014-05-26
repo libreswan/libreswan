@@ -31,6 +31,12 @@ typedef int bool;
 
 #include <stddef.h>
 
+enum {
+	secs_per_minute = 60,
+	secs_per_hour = 60 * secs_per_minute,
+	secs_per_day = 24 * secs_per_hour
+};
+
 #if !defined(__KERNEL__)
 
 /* ================ time-related declarations ================ */
@@ -51,12 +57,6 @@ typedef int bool;
 #define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
 
 #define TIME_T_MAX  ((time_t) ((1ull << (sizeof(time_t) * BITS_PER_BYTE - 1)) - 1))
-
-enum {
-	secs_per_minute = 60,
-	secs_per_hour = 60 * secs_per_minute,
-	secs_per_day = 24 * secs_per_hour
-};
 
 /*
  * Wrap time_t so that dimensional analysis will be enforced by the compiler.
