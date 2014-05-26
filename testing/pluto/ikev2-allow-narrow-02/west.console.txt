@@ -33,6 +33,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
 west #
  ipsec auto --status
 000 using kernel interface: netkey
@@ -148,16 +149,23 @@ west #
 initdone
 west #
  ipsec auto --up  westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: received v2N_NAT_DETECTION_SOURCE_IP
 134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
+002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 238 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_TS_UNACCEPTABLE
 010 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: retransmission; will wait 20s for response
+002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 238 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_TS_UNACCEPTABLE
 010 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: retransmission; will wait 40s for response
+002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 238 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_TS_UNACCEPTABLE
 010 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: retransmission; will wait 40s for response
+002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 238 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_TS_UNACCEPTABLE
 010 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: retransmission; will wait 40s for response
+002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 238 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_TS_UNACCEPTABLE
 

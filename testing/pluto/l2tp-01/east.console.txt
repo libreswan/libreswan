@@ -16,8 +16,10 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add any--east-l2tp
+002 added connection description "any--east-l2tp"
 east #
  ipsec auto --add north--east-pass
+002 added connection description "north--east-pass"
 east #
  ipsec auto --route north--east-pass
 east #

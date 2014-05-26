@@ -1,0 +1,42 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec setup start
+[ 00.00] NET: Registered protocol family 15
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add any--east-l2tp
+east #
+ #ipsec auto --add north--east-pass
+east #
+ #ipsec auto --route north--east-pass
+east #
+ # make sure that clear text does not get through
+east #
+ iptables -A INPUT -i eth1 -s 192.1.2.254/32 -p udp --dport 1701 -j LOGDROP
+east #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+east #
+ (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log 1>&2 ) &
+[1] 1840
+east #
+ echo done
+done
+east #
+ ipsec look
+east NOW
+IPSEC TABLE
+ROUTING TABLE
+default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+192.0.1.0/24 via 192.1.2.45 dev eth1 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+east #
+east #
+ grep 'Result using RFC 3947' /tmp/pluto.log
+"any--east-l2tp"[1] 192.1.2.254 #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): peer is NATed
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

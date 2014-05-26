@@ -10,17 +10,19 @@ east #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
-east #
- ipsec setup start
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add ipv4-psk-ikev2-transport
+002 added connection description "ipv4-psk-ikev2-transport"
 east #
  ipsec auto --status
 000 using kernel interface: klips
-000 interface ipsec0/eth1 192.1.2.23
-000 interface ipsec0/eth1 192.1.2.23
+000 interface ipsec0/eth1 192.1.2.23@4500
+000 interface ipsec0/eth1 192.1.2.23@500
+000  
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
@@ -36,9 +38,9 @@ east #
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
-000 virtual_private (%priv):
-000 - allowed 3 subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
-000 - disallowed 2 subnets: 192.0.2.0/24, 2001:db8:0:2::/64
+000 virtual-private (%priv):
+000 - alloweded subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
+000 - excludeded subnets: 192.0.2.0/24, 2001:db8:0:2::/64
 000  
 000 ESP algorithms supported:
 000  
@@ -86,7 +88,7 @@ east #
 000 "ipv4-psk-ikev2-transport":    policy_label:unset; 
 000 "ipv4-psk-ikev2-transport":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "ipv4-psk-ikev2-transport":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "ipv4-psk-ikev2-transport":   policy: PSK+ENCRYPT+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "ipv4-psk-ikev2-transport":   policy: PSK+ENCRYPT+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "ipv4-psk-ikev2-transport":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "ipv4-psk-ikev2-transport":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "ipv4-psk-ikev2-transport":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -105,8 +107,8 @@ east #
 east NOW
 192.1.2.23/32      -> 192.1.2.45/32      => esp0xESPSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
-esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=1
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 

@@ -10,17 +10,31 @@ east #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
 Redirecting to: systemctl start ipsec.service
 [ 00.00] 
 east #
- #ipsec setup start
-east #
- #ipsec setup start
-east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-aes256
+002 added connection description "westnet-eastnet-aes256"
+east #
+ ipsec auto --status |grep westnet-eastnet-aes256
+000 "westnet-eastnet-aes256": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-aes256":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-aes256":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-aes256":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet-aes256":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-aes256":    policy_label:unset; 
+000 "westnet-eastnet-aes256":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-aes256":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "westnet-eastnet-aes256":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-aes256":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-aes256":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-aes256":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-aes256":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_256(4)_000-MODP2048(14)
+000 "westnet-eastnet-aes256":   IKE algorithms found:  AES_CBC(7)_256-SHA2_256(4)_256-MODP2048(14)
 east #
  echo "initdone"
 initdone

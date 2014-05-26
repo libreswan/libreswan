@@ -224,7 +224,6 @@ kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good
 kvmplutotest	nat-pluto-03		good
 kvmplutotest	nat-pluto-04		good
-kvmplutotest	nat-pluto-05		bad
 kvmplutotest	nat-pluto-06		good
 kvmplutotest	nat-pluto-07		good
 kvmplutotest	nat-pluto-08		good
