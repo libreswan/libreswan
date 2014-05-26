@@ -1301,7 +1301,7 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 		     NAT_T_WITH_NATOA) &&
 		    (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
-			char idfqdn[32];	/* ??? large enough? */
+			char idfqdn[IDTOA_BUF];
 			char subnet_buf[SUBNETTOT_BUF];
 			size_t idlen = pbs_room(&IDci->pbs);
 
@@ -2555,7 +2555,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 			    (st->hidden_variables.st_nat_traversal &
 			     NAT_T_WITH_NATOA) &&
 			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
-				char idfqdn[32];	/* ??? large enough? */
+				char idfqdn[IDTOA_BUF];
 				char subnet_buf[SUBNETTOT_BUF];
 				size_t idlen = pbs_room(&IDcr->pbs);
 
