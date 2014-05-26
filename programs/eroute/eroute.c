@@ -1012,7 +1012,7 @@ sa_build:
 				errno);
 		}
 /*		fprintf(stderr, "%s: socket write returned errno %d\n",
-                progname, errno);*/
+		progname, errno);*/
 		exit(1);
 	}
 	if (debug)

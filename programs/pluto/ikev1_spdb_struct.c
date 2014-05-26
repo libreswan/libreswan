@@ -869,12 +869,12 @@ lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
  *
  * This routine is used by main_inI1_outR1() and main_inR1_outI2().
  */
-notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input SA Payload */
-				    const struct isakmp_sa *sa, /* header of input SA Payload */
-				    pb_stream *r_sa_pbs,        /* if non-NULL, where to emit winning SA */
-				    bool selection,             /* if this SA is a selection, only one tranform
-                                                                 * can appear. */
-				    struct state *st)           /* current state object */
+notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payload */
+				    const struct isakmp_sa *sa,	/* header of input SA Payload */
+				    pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
+				    bool selection,		/* if this SA is a selection, only one tranform
+								 * can appear. */
+				    struct state *st)		/* current state object */
 {
 	u_int32_t ipsecdoisit;
 	pb_stream proposal_pbs;

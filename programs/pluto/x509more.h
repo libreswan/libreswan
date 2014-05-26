@@ -39,15 +39,15 @@ extern bool ikev1_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
 extern bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
 				    u_int8_t np);
 extern void load_authcerts(const char *type, const char *path,
-                           u_char auth_flags);
+			   u_char auth_flags);
 extern bool trusted_ca(chunk_t a, chunk_t b, int *pathlen);
 extern bool match_requested_ca(generalName_t *requested_ca,
-                               chunk_t our_ca, int *our_pathlen);
+			       chunk_t our_ca, int *our_pathlen);
 extern void select_x509cert_id(x509cert_t *cert, struct id *end_id);
 extern int filter_dotfiles(
 #ifdef SCANDIR_HAS_CONST
-        const
+	const
 #endif
-        dirent_t *entry);
+	dirent_t *entry);
 #endif /* _X509MORE_H */
 

@@ -1158,17 +1158,17 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_INTERNAL_ERROR:
-                /* update the previous packet history */
-                /* TODO: fix: update_retransmit_history(st, md); */
+		/* update the previous packet history */
+		/* TODO: fix: update_retransmit_history(st, md); */
 
-                whack_log(RC_INTERNALERR + md->note,
-                          "%s: internal error",
-                          enum_name(&state_names, st->st_state));
+		whack_log(RC_INTERNALERR + md->note,
+			  "%s: internal error",
+			  enum_name(&state_names, st->st_state));
 
-                DBG(DBG_CONTROL,
-                    DBG_log("state transition function for %s had internal error",
-                            enum_name(&state_names, from_state)));
-                break;
+		DBG(DBG_CONTROL,
+		    DBG_log("state transition function for %s had internal error",
+			    enum_name(&state_names, from_state)));
+		break;
 
 	case STF_TOOMUCHCRYPTO:
 		/* ??? Why is this comment useful:

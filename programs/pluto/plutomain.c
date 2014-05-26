@@ -1473,7 +1473,7 @@ void show_setup_plutomain()
 {
 	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
 	whack_log(RC_COMMENT, " ");	/* spacer */
-        whack_log(RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
@@ -1490,14 +1490,14 @@ void show_setup_plutomain()
 		ipsec_version_code(),
 		pluto_vendorid);
 
-        whack_log(RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"nhelpers=%d, uniqueids=%s, retransmits=%s, force-busy=%s",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
 		no_retransmits ? "no" : "yes",
 		force_busy ? "yes" : "no");
 
-        whack_log(RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s",
 		pluto_port,
 		strict_crl_policy ? "yes" : "no",
@@ -1505,8 +1505,8 @@ void show_setup_plutomain()
 		pluto_listen ? pluto_listen : "<any>");
 
 #ifdef HAVE_LABELED_IPSEC
-        whack_log(RC_COMMENT, "secctx-attr-value=%d", secctx_attr_value);
+	whack_log(RC_COMMENT, "secctx-attr-value=%d", secctx_attr_value);
 #else
-        whack_log(RC_COMMENT, "secctx-attr-value=<unsupported>");
+	whack_log(RC_COMMENT, "secctx-attr-value=<unsupported>");
 #endif
 }

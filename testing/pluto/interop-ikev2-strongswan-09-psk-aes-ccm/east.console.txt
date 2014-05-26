@@ -23,7 +23,6 @@ east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
 east #
  if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
-east #
 Status of IKE charon daemon (strongSwan VERSION):
   uptime: XXX seconds, since YYY
   malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX

@@ -460,8 +460,8 @@ static struct option const longopts[] =
 	{ "noexport",            no_argument, NULL, 'N' },
 	{ "help",                no_argument, NULL, 'h' },
 	/* obsoleted, eat and ignore for compatibility */
-        {"defaultroute",        required_argument, NULL, 'd'},
-        {"defaultroutenexthop", required_argument, NULL, 'n'},
+	{"defaultroute",        required_argument, NULL, 'd'},
+	{"defaultroutenexthop", required_argument, NULL, 'n'},
 
 	{ 0, 0, 0, 0 }
 };
@@ -613,7 +613,7 @@ int main(int argc, char *argv[])
 
 	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
-	err = NULL;  /* reset to no error */
+	err = NULL;	/* reset to no error */
 
 	if (configsetup || checkconfig || dolist) {
 		/* skip if we have no use for them... causes delays */

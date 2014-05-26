@@ -962,19 +962,19 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_HMAC_SHA1 = 2,
 	AUTH_ALGORITHM_DES_MAC = 3,
 	AUTH_ALGORITHM_KPDK = 4,
-	AUTH_ALGORITHM_HMAC_SHA2_256 = 5, /* not in an rfc? */
-	AUTH_ALGORITHM_HMAC_SHA2_384 = 6, /* not in an rfc? */
-	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,  /* not in an rfc? */
-	AUTH_ALGORITHM_HMAC_RIPEMD = 8, /* RFC 2857 */
-	AUTH_ALGORITHM_AES_CBC = 9, /* RFC 3566 */
-	AUTH_ALGORITHM_SIG_RSA = 10, /* RFC 4359 */
-	AUTH_ALGORITHM_AES_128_GMAC = 11, /* RFC 4542 */
-	AUTH_ALGORITHM_AES_192_GMAC = 12, /* RFC 4542 */
-	AUTH_ALGORITHM_AES_256_GMAC =  13, /* RFC 4542 */
+	AUTH_ALGORITHM_HMAC_SHA2_256 = 5,	/* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_SHA2_384 = 6,	/* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,	/* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_RIPEMD = 8,	/* RFC 2857 */
+	AUTH_ALGORITHM_AES_CBC = 9,	/* RFC 3566 */
+	AUTH_ALGORITHM_SIG_RSA = 10,	/* RFC 4359 */
+	AUTH_ALGORITHM_AES_128_GMAC = 11,	/* RFC 4542 */
+	AUTH_ALGORITHM_AES_192_GMAC = 12,	/* RFC 4542 */
+	AUTH_ALGORITHM_AES_256_GMAC =  13,	/* RFC 4542 */
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
 
-	AUTH_ALGORITHM_NULL_KAME = 251, /* why do we load this ? */
+	AUTH_ALGORITHM_NULL_KAME = 251,	/* why do we load this ? */
 	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG = 252,
 };
 
@@ -1349,23 +1349,23 @@ enum pubkey_alg {
  */
 
 enum ike_id_type {
-	ID_FROMCERT = (-3), /* taken from certificate - private to Pluto */
-	ID_IMPOSSIBLE = (-2), /* private to Pluto */
-	ID_MYID = (-1), /* private to Pluto */
-	ID_NONE = 0, /* private to Pluto */
+	ID_FROMCERT = (-3),	/* taken from certificate - private to Pluto */
+	ID_IMPOSSIBLE = (-2),	/* private to Pluto */
+	ID_MYID = (-1),		/* private to Pluto */
+	ID_NONE = 0,	/* private to Pluto */
 	ID_IPV4_ADDR = 1,
 	ID_FQDN = 2,
 	ID_USER_FQDN = 3,
-	ID_RFC822_ADDR  = ID_USER_FQDN,  /* alias */
-	ID_IPV4_ADDR_SUBNET = 4, /* XXX IKEv1 only but we use it */
+	ID_RFC822_ADDR  = ID_USER_FQDN,	/* alias */
+	ID_IPV4_ADDR_SUBNET = 4,	/* XXX IKEv1 only but we use it */
 	ID_IPV6_ADDR = 5,
-	ID_IPV6_ADDR_SUBNET = 6, /* XXX IKEv1 only but we use it */
-	ID_IPV4_ADDR_RANGE = 7, /* XXX IKEv1 only but we use it */
-	ID_IPV6_ADDR_RANGE = 8, /* XXX IKEv1 only but we use it */
+	ID_IPV6_ADDR_SUBNET = 6,	/* XXX IKEv1 only but we use it */
+	ID_IPV4_ADDR_RANGE = 7,	/* XXX IKEv1 only but we use it */
+	ID_IPV6_ADDR_RANGE = 8,	/* XXX IKEv1 only but we use it */
 	ID_DER_ASN1_DN = 9,
 	ID_DER_ASN1_GN = 10,
 	ID_KEY_ID = 11,
-	ID_FC_NAME = 12, /* RFC 4595 */
+	ID_FC_NAME = 12,	/* RFC 4595 */
 	/* In IKEv1 registry, non-IKE value ID_LIST = 12 as per RFC 3554 */
 	/* 13-248 Unassigned */
 	/* 249-255 Reserved for private use */
@@ -1419,13 +1419,13 @@ enum ipsec_authentication_algo {
 	AH_RIPEMD = 8,
 	AH_AES_XCBC_MAC = 9,
 	AH_RSA = 10,
-	AH_AES_128_GMAC = 11,     /* RFC4543 [Errata1821] */
-	AH_AES_192_GMAC = 12,     /* RFC4543 [Errata1821] */
-	AH_AES_256_GMAC = 13,     /* RFC4543 [Errata1821] */
+	AH_AES_128_GMAC = 11,	/* RFC4543 [Errata1821] */
+	AH_AES_192_GMAC = 12,	/* RFC4543 [Errata1821] */
+	AH_AES_256_GMAC = 13,	/* RFC4543 [Errata1821] */
 	/* 14-248 Unassigned */
 	/* 249 - 255 Reserved for private use */
-	AH_NULL = 251,            /* comes from kame? */
-	AH_SHA2_256_TRUNC = 252,  /* our own stolen value */
+	AH_NULL = 251,		/* comes from kame? */
+	AH_SHA2_256_TRUNC = 252,	/* our own stolen value */
 };
 
 /* IPsec ESP transform values
@@ -1436,33 +1436,33 @@ enum ipsec_authentication_algo {
 enum ipsec_cipher_algo {
 	ESP_reserved = 0,
 	ESP_DES_IV64 = 1,
-	ESP_DES = 2, /* obsoleted */
+	ESP_DES = 2,	/* obsoleted */
 	ESP_3DES = 3,
 	ESP_RC5 = 4,
 	ESP_IDEA = 5,
 	ESP_CAST = 6,
-	ESP_BLOWFISH = 7, /* obsoleyed */
+	ESP_BLOWFISH = 7,	/* obsoleyed */
 	ESP_3IDEA = 8,
 	ESP_DES_IV32 = 9,
 	ESP_RC4 = 10,
 	ESP_NULL = 11,
-	ESP_AES = 12, /* CBC 128 bit AES */
+	ESP_AES = 12,	/* CBC 128 bit AES */
 	ESP_AES_CTR = 13,
 	ESP_AES_CCM_8 = 14,
 	ESP_AES_CCM_12 = 15,
 	ESP_AES_CCM_16 = 16,
-	ESP_ID17 = 17, /* unassigned=17 */
+	ESP_ID17 = 17,	/* unassigned=17 */
 	ESP_AES_GCM_8 = 18,
 	ESP_AES_GCM_12 = 19,
 	ESP_AES_GCM_16 = 20,
 	ESP_SEED_CBC = 21,
 	ESP_CAMELLIA = 22,
-	ESP_NULL_AUTH_AES_GMAC = 23, /* [RFC4543][Errata1821] */
+	ESP_NULL_AUTH_AES_GMAC = 23,	/* [RFC4543][Errata1821] */
 	/* 24-248 Unassigned */
 	/* 249-255 reserved for private use */
 	ESP_MARS = 249,
 	ESP_RC6 = 250,
-	ESP_KAME_NULL = 251, /* kame? */
+	ESP_KAME_NULL = 251,	/* kame? */
 	ESP_SERPENT = 252,
 	ESP_TWOFISH = 253,
 	ESP_ID254 = 254,

@@ -18,6 +18,7 @@ east #
  echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/hosts
 east #
  ipsec auto --add westnet-eastnet
+002 added connection description "westnet-eastnet"
 east #
  ipsec auto --status
 000 using kernel interface: klips

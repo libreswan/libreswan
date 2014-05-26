@@ -13,27 +13,27 @@
  * compile with -DZ_PREFIX. The "standard" zlib should be compiled without it.
  */
 #ifdef IPCOMP_PREFIX
-#  define deflateInit_  ipcomp_deflateInit_
-#  define deflate       ipcomp_deflate
-#  define deflateEnd    ipcomp_deflateEnd
-#  define inflateInit_  ipcomp_inflateInit_
-#  define inflate       ipcomp_inflate
-#  define inflateEnd    ipcomp_inflateEnd
-#  define deflateInit2_ ipcomp_deflateInit2_
-#  define deflateSetDictionary ipcomp_deflateSetDictionary
-#  define deflateCopy   ipcomp_deflateCopy
-#  define deflateReset  ipcomp_deflateReset
-#  define deflateParams ipcomp_deflateParams
-#  define inflateInit2_ ipcomp_inflateInit2_
-#  define inflateSetDictionary ipcomp_inflateSetDictionary
-#  define inflateSync   ipcomp_inflateSync
-#  define inflateSyncPoint ipcomp_inflateSyncPoint
-#  define inflateReset  ipcomp_inflateReset
-#  define compress      ipcomp_compress
-#  define compress2     ipcomp_compress2
-#  define uncompress    ipcomp_uncompress
-#  define adler32       ipcomp_adler32
-#  define crc32         ipcomp_crc32
+#  define deflateInit_	ipcomp_deflateInit_
+#  define deflate	ipcomp_deflate
+#  define deflateEnd	ipcomp_deflateEnd
+#  define inflateInit_	ipcomp_inflateInit_
+#  define inflate	ipcomp_inflate
+#  define inflateEnd	ipcomp_inflateEnd
+#  define deflateInit2_	ipcomp_deflateInit2_
+#  define deflateSetDictionary	ipcomp_deflateSetDictionary
+#  define deflateCopy	ipcomp_deflateCopy
+#  define deflateReset	ipcomp_deflateReset
+#  define deflateParams	ipcomp_deflateParams
+#  define inflateInit2_	ipcomp_inflateInit2_
+#  define inflateSetDictionary	ipcomp_inflateSetDictionary
+#  define inflateSync	ipcomp_inflateSync
+#  define inflateSyncPoint	ipcomp_inflateSyncPoint
+#  define inflateReset	ipcomp_inflateReset
+#  define compress	ipcomp_compress
+#  define compress2	ipcomp_compress2
+#  define uncompress	ipcomp_uncompress
+#  define adler32	ipcomp_adler32
+#  define crc32		ipcomp_crc32
 #  define get_crc_table ipcomp_get_crc_table
 /* SSS: these also need to be prefixed to avoid clash with ppp_deflate and ext2compression */
 #  define inflate_blocks ipcomp_deflate_blocks
@@ -66,16 +66,16 @@
 #endif
 
 #ifdef Z_PREFIX
-#  define Byte          z_Byte
-#  define uInt          z_uInt
-#  define uLong         z_uLong
-#  define Bytef         z_Bytef
-#  define charf         z_charf
-#  define intf          z_intf
-#  define uIntf         z_uIntf
-#  define uLongf        z_uLongf
-#  define voidpf        z_voidpf
-#  define voidp         z_voidp
+#  define Byte		z_Byte
+#  define uInt		z_uInt
+#  define uLong		z_uLong
+#  define Bytef		z_Bytef
+#  define charf		z_charf
+#  define intf		z_intf
+#  define uIntf		z_uIntf
+#  define uLongf	z_uLongf
+#  define voidpf	z_voidpf
+#  define voidp		z_voidp
 #endif
 
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(WIN32)
@@ -241,10 +241,10 @@
 #endif
 
 #if !defined(MACOS) && !defined(TARGET_OS_MAC)
-typedef unsigned char Byte;     /* 8 bits */
+typedef unsigned char Byte;	/* 8 bits */
 #endif
-typedef unsigned int uInt;      /* 16 bits or more */
-typedef unsigned long uLong;    /* 32 bits or more */
+typedef unsigned int uInt;	/* 16 bits or more */
+typedef unsigned long uLong;	/* 32 bits or more */
 
 #ifdef SMALL_MEDIUM
 /* Borland C/C++ and some old MSC versions ignore FAR inside typedef */
@@ -266,14 +266,14 @@ typedef Byte     *voidp;
 #endif
 
 #ifdef HAVE_UNISTD_H
-#  include <sys/types.h>        /* for off_t */
-#  include <unistd.h>           /* for SEEK_* and off_t */
+#  include <sys/types.h>	/* for off_t */
+#  include <unistd.h>		/* for SEEK_* and off_t */
 #  define z_off_t  off_t
 #endif
 #ifndef SEEK_SET
-#  define SEEK_SET        0             /* Seek from beginning of file.  */
-#  define SEEK_CUR        1             /* Seek from current position.  */
-#  define SEEK_END        2             /* Set file pointer to EOF plus "offset" */
+#  define SEEK_SET	0	/* Seek from beginning of file.  */
+#  define SEEK_CUR	1	/* Seek from current position.  */
+#  define SEEK_END	2	/* Set file pointer to EOF plus "offset" */
 #endif
 #ifndef z_off_t
 #  define  z_off_t long

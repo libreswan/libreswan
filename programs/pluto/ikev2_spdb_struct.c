@@ -817,9 +817,9 @@ struct ikev2_transform_list {
 static bool ikev2_enc_requires_integ(enum ikev2_trans_type_encr t)
 {
 	switch (t) {
-        case IKEv2_ENCR_AES_GCM_8:
-        case IKEv2_ENCR_AES_GCM_12:
-        case IKEv2_ENCR_AES_GCM_16:
+	case IKEv2_ENCR_AES_GCM_8:
+	case IKEv2_ENCR_AES_GCM_12:
+	case IKEv2_ENCR_AES_GCM_16:
 	case IKEv2_ENCR_AES_CCM_8:
 	case IKEv2_ENCR_AES_CCM_12:
 	case IKEv2_ENCR_AES_CCM_16:
@@ -1126,13 +1126,13 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 	return STF_OK;
 }
 
-stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                         /* body of input SA Payload */
-					     const struct ikev2_sa *sa_prop UNUSED,     /* header of input SA Payload */
-					     pb_stream *r_sa_pbs,                       /* if non-NULL, where to emit winning SA */
-					     struct state *st,                          /* current state object */
-					     bool selection                             /* if this SA is a selection, only one
-                                                                                         * tranform can appear. */
-					     )
+stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA Payload */
+				      const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
+				      pb_stream *r_sa_pbs,			/* if non-NULL, where to emit winning SA */
+				      struct state *st,				/* current state object */
+				      bool selection				/* if this SA is a selection, only one
+										 * tranform can appear. */
+				      )
 {
 	pb_stream proposal_pbs;
 	struct ikev2_prop proposal;
@@ -1524,13 +1524,13 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 	return FALSE;
 }
 
-stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,                          /* body of input SA Payload */
-					    const struct ikev2_sa *sa_prop UNUSED,      /* header of input SA Payload */
-					    pb_stream *r_sa_pbs,                        /* if non-NULL, where to emit winning SA */
-					    struct state *st,                           /* current state object */
-					    bool selection                              /* if this SA is a selection, only one
-                                                                                         * tranform can appear. */
-					    )
+stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,				/* body of input SA Payload */
+				     const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
+				     pb_stream *r_sa_pbs,			/* if non-NULL, where to emit winning SA */
+				     struct state *st,				/* current state object */
+				     bool selection				/* if this SA is a selection, only one
+										 * tranform can appear. */
+				     )
 {
 	pb_stream proposal_pbs;
 	struct ikev2_prop proposal;
