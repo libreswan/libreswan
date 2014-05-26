@@ -8,8 +8,13 @@ north #
 north #
  ping -c 4 -n -I 192.0.3.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.3.254 : 56(84) bytes of data.
+From 192.0.3.254 icmp_seq=1 Destination Host Unreachable
+From 192.0.3.254 icmp_seq=2 Destination Host Unreachable
+From 192.0.3.254 icmp_seq=3 Destination Host Unreachable
+From 192.0.3.254 icmp_seq=4 Destination Host Unreachable
 --- 192.0.2.254 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
+4 packets transmitted, 0 received, +4 errors, 100% packet loss, time XXXX
+pipe 4
 north #
  ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net

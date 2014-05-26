@@ -39,7 +39,7 @@ westnet-eastnet-ikev1[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.
 westnet-eastnet-ikev1[1]: IKEv1 SPIs: SPISPI_i SPISPI_r, pre-shared key reauthentication in 2 hours
 westnet-eastnet-ikev1[1]: IKE proposal: 3DES_CBC/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_1536
 westnet-eastnet-ikev1{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev1{1}:  AES_GCM_16_256, XXX bytes_i (4 pkts, XX ago), XXX bytes_o (4 pkts, XX ago), rekeying in XX minutes
+westnet-eastnet-ikev1{1}:  AES_GCM_16_256, XXX bytes_i (4 pkts, XXs ago), XXX bytes_o (4 pkts, XXs ago), rekeying in XX minutes
 westnet-eastnet-ikev1{1}:   192.0.2.0/24 === 192.0.1.0/24 
 east #
 east #
