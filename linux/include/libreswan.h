@@ -45,7 +45,7 @@ typedef int bool;
  * UNDEFINED_TIME is used as a real time_t value in certificate handling.
  * Perhaps this is sancioned by X.509.
  *
- * UNDEFINED_TIME is used as a mono time_t value in  liveness_check().
+ * UNDEFINED_TIME is used as a mono time_t value in liveness_check().
  * 0 is PROBABLY safely distinct in this application.
  */
 #define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
