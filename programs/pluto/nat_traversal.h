@@ -109,7 +109,7 @@ extern int nat_traversal_espinudp_socket(int sk, const char *fam);
  */
 bool nat_traversal_add_vid(u_int8_t np, pb_stream *outs);
 bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *st);
-u_int32_t nat_traversal_vid_to_method(unsigned short nat_t_vid);
+void set_nat_traversal(struct state *st, const struct msg_digest *md);
 
 void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st);
 
@@ -134,6 +134,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md);
 
 /**
  * Encapsulation mode macro (see demux.c)
+ * ??? Wow.  Wow.
  */
 #define NAT_T_ENCAPSULATION_MODE(st, nat_t_policy) ( \
 		((st)->hidden_variables.st_nat_traversal & NAT_T_DETECTED) \

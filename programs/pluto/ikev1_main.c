@@ -744,8 +744,9 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	st->st_doi = ISAKMP_DOI_IPSEC;
 	st->st_situation = SIT_IDENTITY_ONLY; /* We only support this */
 
-	/* copy the quirks we might have accumulated */
-	copy_quirks(&st->quirks, &md->quirks);
+	merge_quirks(st, md);
+
+	set_nat_traversal(st, md);
 
 	if ((c->kind == CK_INSTANCE) && (c->spd.that.host_port_specific)) {
 		libreswan_log(
@@ -785,7 +786,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Increase VID counter for NAT-T VID */
-	if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
+	if (nat_traversal_enabled && md->quirks.qnat_traversal_vid != VID_none) {
 		DBG(DBG_NATT, DBG_log("nat-t detected, sending nat-t VID"));
 		numvidtosend++;
 	}
@@ -857,22 +858,15 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	 */
 	if (c->spd.this.xauth_server || c->spd.this.xauth_client) {
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		if (!out_vid(np, &md->rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
 
-	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %d and %d",
-				nat_traversal_enabled,
-				md->quirks.nat_traversal_vid));
-
-	if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		/* reply if NAT-Traversal draft is supported */
-		st->hidden_variables.st_nat_traversal =
-			LELEM(nat_traversal_vid_to_method(
-					md->quirks.nat_traversal_vid));
-		if (st->hidden_variables.st_nat_traversal != LEMPTY &&
-		    !out_vid(np, &md->rbody, md->quirks.nat_traversal_vid))
+
+		if (!out_vid(np, &md->rbody, md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -961,19 +955,9 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 							NULL, TRUE, st));
 	}
 
-	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %d and %d",
-				nat_traversal_enabled,
-				md->quirks.nat_traversal_vid));
+	merge_quirks(st, md);
 
-	if (nat_traversal_enabled && md->quirks.nat_traversal_vid) {
-		st->hidden_variables.st_nat_traversal =
-			LELEM(nat_traversal_vid_to_method(
-					md->quirks.nat_traversal_vid));
-		libreswan_log("enabling possible NAT-traversal with method %s",
-			enum_name(&natt_method_names,
-				nat_traversal_vid_to_method(md->quirks.
-							nat_traversal_vid)));
-	}
+	set_nat_traversal(st, md);
 
 	{
 		struct ke_continuation *ke = alloc_thing(

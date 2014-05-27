@@ -302,9 +302,6 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-	/* copy the quirks we might have accumulated */
-	copy_quirks(&st->quirks, &md->quirks);
-
 	st->st_doi = ISAKMP_DOI_IPSEC;
 	st->st_situation = SIT_IDENTITY_ONLY; /* We only support this */
 
@@ -313,18 +310,9 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		      st->st_serialno, st->st_connection->name,
 		      ip_str(&c->spd.that.host_addr));
 
-	DBG(DBG_CONTROLMORE, DBG_log("sender checking NAT-t: %d and %d",
-				     nat_traversal_enabled,
-				     md->quirks.nat_traversal_vid));
-	if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
-		/* reply if NAT-Traversal draft is supported */
-		st->hidden_variables.st_nat_traversal =
-			LELEM(nat_traversal_vid_to_method(md->quirks.nat_traversal_vid));
-		libreswan_log("enabling possible NAT-traversal with method %s",
-			      enum_name(&natt_method_names,
-					nat_traversal_vid_to_method(md->quirks.
-								    nat_traversal_vid)));
-	}
+	merge_quirks(st, md);
+
+	set_nat_traversal(st, md);
 
 	/* save initiator SA for HASH */
 	clonereplacechunk(st->st_p1isa, sa_pd->pbs.start,
@@ -625,10 +613,11 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
 		if (!out_vid(ISAKMP_NEXT_VID, &md->rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
+
 		/* and a couple more NAT VIDs */
 		if (!out_vid(ISAKMP_NEXT_VID,
 			     &md->rbody,
-			     md->quirks.nat_traversal_vid))
+			     md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
@@ -683,14 +672,9 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 			return STF_FAIL + r;
 	}
 
-	/* copy the quirks we might have accumulated */
-	copy_quirks(&st->quirks, &md->quirks);
+	merge_quirks(st, md);
 
-	if (nat_traversal_enabled && md->quirks.nat_traversal_vid)
-		st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(
-								      md->
-								      quirks.
-								      nat_traversal_vid));
+	set_nat_traversal(st, md);
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.group,

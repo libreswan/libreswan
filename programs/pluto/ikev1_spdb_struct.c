@@ -1820,9 +1820,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
 				DBG(DBG_NATT,
-				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is 0x%" PRIxLSET,
-					    st->hidden_variables.
-					    st_nat_traversal));
+				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is %s",
+					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 				if (st->hidden_variables.st_nat_traversal &
 				    NAT_T_DETECTED) {
 					loglog(RC_LOG_SERIOUS,
@@ -1837,9 +1836,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
 				DBG(DBG_NATT,
-				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is 0x%" PRIxLSET,
-					    st->hidden_variables.
-					    st_nat_traversal));
+				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
+					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 				if (st->hidden_variables.st_nat_traversal &
 				    NAT_T_WITH_ENCAPSULATION_RFC_VALUES) {
 					loglog(RC_LOG_SERIOUS,
@@ -1875,8 +1873,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
 				DBG(DBG_NATT,
-				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is 0x%" PRIxLSET,
-					    st->hidden_variables.st_nat_traversal));
+				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
+					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 				if ((st->hidden_variables.st_nat_traversal &
 				     NAT_T_DETECTED) &&
 				    (st->hidden_variables.st_nat_traversal &

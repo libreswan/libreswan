@@ -75,8 +75,8 @@ enum natt_method {
 	NAT_TRAVERSAL_METHOD_IETF_05,	/* same as RFC */
 	NAT_TRAVERSAL_METHOD_IETF_RFC,
 
-	NAT_TRAVERSAL_NAT_BHND_ME,
-	NAT_TRAVERSAL_NAT_BHND_PEER
+	NAT_TRAVERSAL_NAT_BHND_ME,	/* we are behind NAT */
+	NAT_TRAVERSAL_NAT_BHND_PEER	/* peer is behind NAT */
 };
 
 /* Timer events */

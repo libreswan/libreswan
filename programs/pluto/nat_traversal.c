@@ -272,7 +272,7 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 	return TRUE;
 }
 
-enum natt_method nat_traversal_vid_to_method(unsigned short nat_t_vid)
+static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vid)
 {
 	switch (nat_t_vid) {
 	case VID_NATT_IETF_00:
@@ -302,6 +302,20 @@ enum natt_method nat_traversal_vid_to_method(unsigned short nat_t_vid)
 		return NAT_TRAVERSAL_METHOD_IETF_RFC;
 	default:
 		return 0;
+	}
+}
+
+void set_nat_traversal(struct state *st, const struct msg_digest *md)
+{
+	DBG(DBG_CONTROLMORE, DBG_log("sender checking NAT-t: %s and %d",
+				     nat_traversal_enabled ? "enabled" : "disabled",
+				     md->quirks.qnat_traversal_vid));
+	if (nat_traversal_enabled && md->quirks.qnat_traversal_vid != VID_none) {
+		enum natt_method v = nat_traversal_vid_to_method(md->quirks.qnat_traversal_vid);
+
+		st->hidden_variables.st_nat_traversal = LELEM(v);
+		libreswan_log("enabling possible NAT-traversal with method %s",
+			      enum_name(&natt_method_names, v));
 	}
 }
 
@@ -399,10 +413,9 @@ static void nat_traversal_natd_lookup(struct msg_digest *md)
 		DBG(DBG_NATT,
 			DBG_log("NAT_TRAVERSAL forceencaps enabled"));
 
-		st->hidden_variables.st_nat_traversal |= LELEM(
-			NAT_TRAVERSAL_NAT_BHND_PEER);
-		st->hidden_variables.st_nat_traversal |= LELEM(
-			NAT_TRAVERSAL_NAT_BHND_ME);
+		st->hidden_variables.st_nat_traversal |=
+			LELEM(NAT_TRAVERSAL_NAT_BHND_PEER) |
+			LELEM(NAT_TRAVERSAL_NAT_BHND_ME);
 		st->hidden_variables.st_natd = md->sender;
 	}
 
@@ -507,15 +520,14 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 
 	if (i == 0) {
 		return;
-	} else if (!(hv->st_nat_traversal &
-			LELEM(NAT_TRAVERSAL_NAT_BHND_PEER))) {
+	} else if (!LHAS(hv->st_nat_traversal, NAT_TRAVERSAL_NAT_BHND_PEER)) {
 		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: received %d NAT-OA. ignored because peer is not NATed",
+			"NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
 			i);
 		return;
 	} else if (i > 1) {
 		loglog(RC_LOG_SERIOUS,
-			"NAT-Traversal: received %d NAT-OA. using first, ignoring others",
+			"NAT-Traversal: received %d NAT-OA. Using first, ignoring others",
 			i);
 	}
 
@@ -706,9 +718,9 @@ static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
 void ikev1_natd_init(struct state *st, struct msg_digest *md)
 {
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("checking NAT-t: %d and 0x%" PRIxLSET,
-		    nat_traversal_enabled,
-		    st->hidden_variables.st_nat_traversal));
+	    DBG_log("checking NAT-t: %s and %s",
+		    nat_traversal_enabled ? "enabled" : "disabled",
+		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		nat_traversal_natd_lookup(md);
 		if (st->hidden_variables.st_nat_traversal != LEMPTY) {
@@ -837,12 +849,11 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		DBG_log("Sending of NAT-T KEEP-ALIVE enabled by per-conn configuration (nat_keepalive=yes)"));
 
 	if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
-		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-		LHAS(st->hidden_variables.st_nat_traversal,
+	    LHAS(st->hidden_variables.st_nat_traversal,
 			NAT_TRAVERSAL_NAT_BHND_ME)) {
 		/*
 		 * - ISAKMP established
-		 * - NAT-Traversal detected
+		 * - we are behind NAT
 		 * - NAT-KeepAlive needed (we are NATed)
 		 */
 		if (c->newest_isakmp_sa != st->st_serialno) {
@@ -854,8 +865,6 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 
 			if (st_newest != NULL &&
 				IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
-				(st_newest->hidden_variables.st_nat_traversal &
-					NAT_T_DETECTED) &&
 				LHAS(st_newest->hidden_variables.st_nat_traversal,
 					NAT_TRAVERSAL_NAT_BHND_ME))
 				return;
@@ -1023,8 +1032,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	}
 
 	DBG(DBG_NATT,
-		DBG_log("nat_traversal & NAT_T_DETECTED 0x%" PRIxLSET,
-			(st->hidden_variables.st_nat_traversal &
+		DBG_log("nat_traversal & NAT_T_DETECTED == %s",
+			bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal &
 				NAT_T_DETECTED));
 		DBG_log(" st_localport != pluto_nat_port (%" PRIu16 " != %" PRIu16 ")",
 			st->st_localport,

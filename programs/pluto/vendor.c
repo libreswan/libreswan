@@ -102,6 +102,12 @@
  *
  * Juniper, unknown vid:
  * 699369228741c6d4ca094c93e242c9de19e7b7c60000000500000500
+ *
+ * KAME / Apple / Mac OSX?
+ *  While searching (strings) in /usr/sbin/racoon on Mac OS X 10.3.3, I found it :
+ * # echo -n "draft-ietf-ipsec-nat-t-ike" | md5sum
+ *  4df37928e9fc4fd1b3262170d515c662
+ *  But this VID has not been seen in any IETF drafts. (mlafon)
  */
 
 #define MAX_LOG_VID_LEN         32
@@ -130,11 +136,11 @@ struct vid_struct {
 };
 
 #define DEC_MD5_VID_D(id, str, descr) \
-	{ VID_ ## id, VID_MD5HASH, str, descr, NULL, 0 }
+	{ id, VID_MD5HASH, str, descr, NULL, 0 }
 #define DEC_MD5_VID(id, str) \
-	{ VID_ ## id, VID_MD5HASH, str, NULL, NULL, 0 }
+	{ id, VID_MD5HASH, str, NULL, NULL, 0 }
 #define DEC_FSWAN_VID(id, str, descr) \
-	{ VID_ ## id, VID_FSWAN_HASH, str, descr, NULL, 0 }
+	{ id, VID_FSWAN_HASH, str, descr, NULL, 0 }
 
 static struct vid_struct vid_tab[] = {
 
@@ -142,7 +148,7 @@ static struct vid_struct vid_tab[] = {
 
 	{ VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP", NULL, 0 },
 
-	DEC_MD5_VID(KAME_RACOON, "KAME/racoon"),
+	DEC_MD5_VID(VID_KAME_RACOON, "KAME/racoon"),
 	{
 		VID_MS_NT5, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
 		"MS NT5 ISAKMPOAKLEY", NULL, NULL, 0
@@ -158,46 +164,46 @@ static struct vid_struct vid_tab[] = {
 	 */
 
 	/* These two VID's plus VID_MS_NT5 trigger GSS-API support */
-	DEC_MD5_VID(GSSAPILONG, "A GSS-API Authentication Method for IKE"),
-	DEC_MD5_VID(GSSAPI, "GSSAPI"),
+	DEC_MD5_VID(VID_GSSAPILONG, "A GSS-API Authentication Method for IKE"),
+	DEC_MD5_VID(VID_GSSAPI, "GSSAPI"),
 
-	DEC_MD5_VID(SSH_SENTINEL, "SSH Sentinel"),
-	DEC_MD5_VID(SSH_SENTINEL_1_1, "SSH Sentinel 1.1"),
-	DEC_MD5_VID(SSH_SENTINEL_1_2, "SSH Sentinel 1.2"),
-	DEC_MD5_VID(SSH_SENTINEL_1_3, "SSH Sentinel 1.3"),
-	DEC_MD5_VID(SSH_SENTINEL_1_4, "SSH Sentinel 1.4"),
-	DEC_MD5_VID(SSH_SENTINEL_1_4_1, "SSH Sentinel 1.4.1"),
+	DEC_MD5_VID(VID_SSH_SENTINEL, "SSH Sentinel"),
+	DEC_MD5_VID(VID_SSH_SENTINEL_1_1, "SSH Sentinel 1.1"),
+	DEC_MD5_VID(VID_SSH_SENTINEL_1_2, "SSH Sentinel 1.2"),
+	DEC_MD5_VID(VID_SSH_SENTINEL_1_3, "SSH Sentinel 1.3"),
+	DEC_MD5_VID(VID_SSH_SENTINEL_1_4, "SSH Sentinel 1.4"),
+	DEC_MD5_VID(VID_SSH_SENTINEL_1_4_1, "SSH Sentinel 1.4.1"),
 
 	/* These ones come from SSH vendors.txt */
-	DEC_MD5_VID(SSH_IPSEC_1_1_0,
+	DEC_MD5_VID(VID_SSH_IPSEC_1_1_0,
 		    "Ssh Communications Security IPSEC Express version 1.1.0"),
-	DEC_MD5_VID(SSH_IPSEC_1_1_1,
+	DEC_MD5_VID(VID_SSH_IPSEC_1_1_1,
 		    "Ssh Communications Security IPSEC Express version 1.1.1"),
-	DEC_MD5_VID(SSH_IPSEC_1_1_2,
+	DEC_MD5_VID(VID_SSH_IPSEC_1_1_2,
 		    "Ssh Communications Security IPSEC Express version 1.1.2"),
-	DEC_MD5_VID(SSH_IPSEC_1_2_1,
+	DEC_MD5_VID(VID_SSH_IPSEC_1_2_1,
 		    "Ssh Communications Security IPSEC Express version 1.2.1"),
-	DEC_MD5_VID(SSH_IPSEC_1_2_2,
+	DEC_MD5_VID(VID_SSH_IPSEC_1_2_2,
 		    "Ssh Communications Security IPSEC Express version 1.2.2"),
-	DEC_MD5_VID(SSH_IPSEC_2_0_0,
+	DEC_MD5_VID(VID_SSH_IPSEC_2_0_0,
 		    "SSH Communications Security IPSEC Express version 2.0.0"),
-	DEC_MD5_VID(SSH_IPSEC_2_1_0,
+	DEC_MD5_VID(VID_SSH_IPSEC_2_1_0,
 		    "SSH Communications Security IPSEC Express version 2.1.0"),
-	DEC_MD5_VID(SSH_IPSEC_2_1_1,
+	DEC_MD5_VID(VID_SSH_IPSEC_2_1_1,
 		    "SSH Communications Security IPSEC Express version 2.1.1"),
-	DEC_MD5_VID(SSH_IPSEC_2_1_2,
+	DEC_MD5_VID(VID_SSH_IPSEC_2_1_2,
 		    "SSH Communications Security IPSEC Express version 2.1.2"),
-	DEC_MD5_VID(SSH_IPSEC_3_0_0,
+	DEC_MD5_VID(VID_SSH_IPSEC_3_0_0,
 		    "SSH Communications Security IPSEC Express version 3.0.0"),
-	DEC_MD5_VID(SSH_IPSEC_3_0_1,
+	DEC_MD5_VID(VID_SSH_IPSEC_3_0_1,
 		    "SSH Communications Security IPSEC Express version 3.0.1"),
-	DEC_MD5_VID(SSH_IPSEC_4_0_0,
+	DEC_MD5_VID(VID_SSH_IPSEC_4_0_0,
 		    "SSH Communications Security IPSEC Express version 4.0.0"),
-	DEC_MD5_VID(SSH_IPSEC_4_0_1,
+	DEC_MD5_VID(VID_SSH_IPSEC_4_0_1,
 		    "SSH Communications Security IPSEC Express version 4.0.1"),
-	DEC_MD5_VID(SSH_IPSEC_4_1_0,
+	DEC_MD5_VID(VID_SSH_IPSEC_4_1_0,
 		    "SSH Communications Security IPSEC Express version 4.1.0"),
-	DEC_MD5_VID(SSH_IPSEC_4_2_0,
+	DEC_MD5_VID(VID_SSH_IPSEC_4_2_0,
 		    "SSH Communications Security IPSEC Express version 4.2.0"),
 	{
 		VID_CISCO3K, VID_KEEP | VID_SUBSTRING_MATCH,
@@ -223,16 +229,16 @@ static struct vid_struct vid_tab[] = {
 	{ VID_TIMESTEP, VID_STRING | VID_SUBSTRING_DUMPASCII, "TIMESTEP",
 	  NULL, NULL, 0 },
 
-	DEC_FSWAN_VID(FSWAN_2_00_VID,
+	DEC_FSWAN_VID(VID_FSWAN_2_00_VID,
 		      "Linux FreeS/WAN 2.00 PLUTO_SENDS_VENDORID",
 		      "FreeS/WAN 2.00"),
-	DEC_FSWAN_VID(FSWAN_2_00_X509_1_3_1_VID,
+	DEC_FSWAN_VID(VID_FSWAN_2_00_X509_1_3_1_VID,
 		      "Linux FreeS/WAN 2.00 X.509-1.3.1 PLUTO_SENDS_VENDORID",
 		      "FreeS/WAN 2.00 (X.509-1.3.1)"),
-	DEC_FSWAN_VID(FSWAN_2_00_X509_1_3_1_LDAP_VID,
+	DEC_FSWAN_VID(VID_FSWAN_2_00_X509_1_3_1_LDAP_VID,
 		      "Linux FreeS/WAN 2.00 X.509-1.3.1 LDAP PLUTO_SENDS_VENDORID",
 		      "FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)"),
-	DEC_FSWAN_VID(LIBRESWAN2,
+	DEC_FSWAN_VID(VID_LIBRESWAN2,
 		      "Openswan 2.2.0",
 		      "Openswan 2.2.0"),
 	{
@@ -242,26 +248,26 @@ static struct vid_struct vid_tab[] = {
 	},
 
 	/* NAT-Traversal */
-	DEC_MD5_VID(NATT_STENBERG_01, "draft-stenberg-ipsec-nat-traversal-01"),
-	DEC_MD5_VID(NATT_STENBERG_02, "draft-stenberg-ipsec-nat-traversal-02"),
-	DEC_MD5_VID(NATT_HUTTUNEN, "ESPThruNAT"),
-	DEC_MD5_VID(NATT_HUTTUNEN_ESPINUDP,
+	DEC_MD5_VID(VID_NATT_STENBERG_01, "draft-stenberg-ipsec-nat-traversal-01"),
+	DEC_MD5_VID(VID_NATT_STENBERG_02, "draft-stenberg-ipsec-nat-traversal-02"),
+	DEC_MD5_VID(VID_NATT_HUTTUNEN, "ESPThruNAT"),
+	DEC_MD5_VID(VID_NATT_HUTTUNEN_ESPINUDP,
 		    "draft-huttunen-ipsec-esp-in-udp-00.txt"),
-	DEC_MD5_VID(NATT_IETF_00, "draft-ietf-ipsec-nat-t-ike-00"),
-	DEC_MD5_VID(NATT_IETF_01, "draft-ietf-ipsec-nat-t-ike-01"),
-	DEC_MD5_VID(NATT_IETF_02, "draft-ietf-ipsec-nat-t-ike-02"),
+	DEC_MD5_VID(VID_NATT_IETF_00, "draft-ietf-ipsec-nat-t-ike-00"),
+	DEC_MD5_VID(VID_NATT_IETF_01, "draft-ietf-ipsec-nat-t-ike-01"),
+	DEC_MD5_VID(VID_NATT_IETF_02, "draft-ietf-ipsec-nat-t-ike-02"),
 	/* hash in draft-ietf-ipsec-nat-t-ike-02 contains '\n'... Accept both */
-	DEC_MD5_VID_D(NATT_IETF_02_N, "draft-ietf-ipsec-nat-t-ike-02\n",
+	DEC_MD5_VID_D(VID_NATT_IETF_02_N, "draft-ietf-ipsec-nat-t-ike-02\n",
 		      "draft-ietf-ipsec-nat-t-ike-02_n"),
-	DEC_MD5_VID(NATT_IETF_03, "draft-ietf-ipsec-nat-t-ike-03"),
-	DEC_MD5_VID(NATT_IETF_04, "draft-ietf-ipsec-nat-t-ike-04"),
-	DEC_MD5_VID(NATT_IETF_05, "draft-ietf-ipsec-nat-t-ike-05"),
-	DEC_MD5_VID(NATT_IETF_06, "draft-ietf-ipsec-nat-t-ike-06"),
-	DEC_MD5_VID(NATT_IETF_07, "draft-ietf-ipsec-nat-t-ike-07"),
-	DEC_MD5_VID(NATT_IETF_08, "draft-ietf-ipsec-nat-t-ike-08"),
-	DEC_MD5_VID(NATT_DRAFT_IETF_IPSEC_NAT_T_IKE,
+	DEC_MD5_VID(VID_NATT_IETF_03, "draft-ietf-ipsec-nat-t-ike-03"),
+	DEC_MD5_VID(VID_NATT_IETF_04, "draft-ietf-ipsec-nat-t-ike-04"),
+	DEC_MD5_VID(VID_NATT_IETF_05, "draft-ietf-ipsec-nat-t-ike-05"),
+	DEC_MD5_VID(VID_NATT_IETF_06, "draft-ietf-ipsec-nat-t-ike-06"),
+	DEC_MD5_VID(VID_NATT_IETF_07, "draft-ietf-ipsec-nat-t-ike-07"),
+	DEC_MD5_VID(VID_NATT_IETF_08, "draft-ietf-ipsec-nat-t-ike-08"),
+	DEC_MD5_VID(VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE,
 		    "draft-ietf-ipsec-nat-t-ike"),
-	DEC_MD5_VID(NATT_RFC, "RFC 3947"),
+	DEC_MD5_VID(VID_NATT_RFC, "RFC 3947"),
 	{
 		/* SonicWall */
 		VID_SONICWALL_1, VID_KEEP, NULL,
@@ -299,79 +305,79 @@ static struct vid_struct vid_tab[] = {
 	  "\x4d\xf3\x79\x28\xe9\xfc\x4f\xd1\xb3\x26\x21\x70\xd5\x15\xc6\x62",
 	  NULL, 0 },
 
-	DEC_MD5_VID(IKE_FRAGMENTATION, "FRAGMENTATION"),
-	DEC_MD5_VID(INITIAL_CONTACT, "Vid-Initial-Contact"),
+	DEC_MD5_VID(VID_IKE_FRAGMENTATION, "FRAGMENTATION"),
+	DEC_MD5_VID(VID_INITIAL_CONTACT, "Vid-Initial-Contact"),
 
 	/* Microsoft Windows Vista, and maybe Server 2008? */
-	DEC_MD5_VID(VISTA_AUTHIP,  "MS-Negotiation Discovery Capable"),
-	DEC_MD5_VID(VISTA_AUTHIP2, "IKE CGA version 1"),
-	DEC_MD5_VID(VISTA_AUTHIP3, "MS-MamieExists"),
+	DEC_MD5_VID(VID_VISTA_AUTHIP,  "MS-Negotiation Discovery Capable"),
+	DEC_MD5_VID(VID_VISTA_AUTHIP2, "IKE CGA version 1"),
+	DEC_MD5_VID(VID_VISTA_AUTHIP3, "MS-MamieExists"),
 
 	/*
 	 * strongSwan
 	 */
-	DEC_MD5_VID(STRONGSWAN_4_0_0, "strongSwan 4.0.0"),
-	DEC_MD5_VID(STRONGSWAN_4_0_1, "strongSwan 4.0.1"),
-	DEC_MD5_VID(STRONGSWAN_4_0_2, "strongSwan 4.0.2"),
-	DEC_MD5_VID(STRONGSWAN_4_0_3, "strongSwan 4.0.3"),
-	DEC_MD5_VID(STRONGSWAN_4_0_4, "strongSwan 4.0.4"),
-	DEC_MD5_VID(STRONGSWAN_4_0_5, "strongSwan 4.0.5"),
-	DEC_MD5_VID(STRONGSWAN_4_0_6, "strongSwan 4.0.6"),
-	DEC_MD5_VID(STRONGSWAN_4_0_7, "strongSwan 4.0.7"),
-	DEC_MD5_VID(STRONGSWAN_4_1_0, "strongSwan 4.1.0"),
-	DEC_MD5_VID(STRONGSWAN_4_1_1, "strongSwan 4.1.1"),
-	DEC_MD5_VID(STRONGSWAN_4_1_2, "strongSwan 4.1.2"),
-	DEC_MD5_VID(STRONGSWAN_4_1_3, "strongSwan 4.1.3"),
-	DEC_MD5_VID(STRONGSWAN_4_1_4, "strongSwan 4.1.4"),
-	DEC_MD5_VID(STRONGSWAN_4_1_5, "strongSwan 4.1.5"),
-	DEC_MD5_VID(STRONGSWAN_4_1_6, "strongSwan 4.1.6"),
-	DEC_MD5_VID(STRONGSWAN_4_1_7, "strongSwan 4.1.7"),
-	DEC_MD5_VID(STRONGSWAN_4_1_8, "strongSwan 4.1.8"),
-	DEC_MD5_VID(STRONGSWAN_4_1_9, "strongSwan 4.1.9"),
-	DEC_MD5_VID(STRONGSWAN_4_1_10, "strongSwan 4.1.10"),
-	DEC_MD5_VID(STRONGSWAN_4_1_11, "strongSwan 4.1.11"),
-	DEC_MD5_VID(STRONGSWAN_4_2_0, "strongSwan 4.2.0"),
-	DEC_MD5_VID(STRONGSWAN_4_2_1, "strongSwan 4.2.1"),
-	DEC_MD5_VID(STRONGSWAN_4_2_2, "strongSwan 4.2.2"),
-	DEC_MD5_VID(STRONGSWAN_4_2_3, "strongSwan 4.2.3"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_0_0, "strongSwan 4.0.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_0_1, "strongSwan 4.0.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_0_2, "strongSwan 4.0.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_0_3, "strongSwan 4.0.3"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_0_4, "strongSwan 4.0.4"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_0_5, "strongSwan 4.0.5"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_0_6, "strongSwan 4.0.6"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_0_7, "strongSwan 4.0.7"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_0, "strongSwan 4.1.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_1, "strongSwan 4.1.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_2, "strongSwan 4.1.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_3, "strongSwan 4.1.3"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_4, "strongSwan 4.1.4"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_5, "strongSwan 4.1.5"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_6, "strongSwan 4.1.6"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_7, "strongSwan 4.1.7"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_8, "strongSwan 4.1.8"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_9, "strongSwan 4.1.9"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_10, "strongSwan 4.1.10"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_1_11, "strongSwan 4.1.11"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_2_0, "strongSwan 4.2.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_2_1, "strongSwan 4.2.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_2_2, "strongSwan 4.2.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_4_2_3, "strongSwan 4.2.3"),
 
-	DEC_MD5_VID(STRONGSWAN_2_8_8, "strongSwan 2.8.8"),
-	DEC_MD5_VID(STRONGSWAN_2_8_7, "strongSwan 2.8.7"),
-	DEC_MD5_VID(STRONGSWAN_2_8_6, "strongSwan 2.8.6"),
-	DEC_MD5_VID(STRONGSWAN_2_8_5, "strongSwan 2.8.5"),
-	DEC_MD5_VID(STRONGSWAN_2_8_4, "strongSwan 2.8.4"),
-	DEC_MD5_VID(STRONGSWAN_2_8_3, "strongSwan 2.8.3"),
-	DEC_MD5_VID(STRONGSWAN_2_8_2, "strongSwan 2.8.2"),
-	DEC_MD5_VID(STRONGSWAN_2_8_1, "strongSwan 2.8.1"),
-	DEC_MD5_VID(STRONGSWAN_2_8_0, "strongSwan 2.8.0"),
-	DEC_MD5_VID(STRONGSWAN_2_7_3, "strongSwan 2.7.3"),
-	DEC_MD5_VID(STRONGSWAN_2_7_2, "strongSwan 2.7.2"),
-	DEC_MD5_VID(STRONGSWAN_2_7_1, "strongSwan 2.7.1"),
-	DEC_MD5_VID(STRONGSWAN_2_7_0, "strongSwan 2.7.0"),
-	DEC_MD5_VID(STRONGSWAN_2_6_4, "strongSwan 2.6.4"),
-	DEC_MD5_VID(STRONGSWAN_2_6_3, "strongSwan 2.6.3"),
-	DEC_MD5_VID(STRONGSWAN_2_6_2, "strongSwan 2.6.2"),
-	DEC_MD5_VID(STRONGSWAN_2_6_1, "strongSwan 2.6.1"),
-	DEC_MD5_VID(STRONGSWAN_2_6_0, "strongSwan 2.6.0"),
-	DEC_MD5_VID(STRONGSWAN_2_5_7, "strongSwan 2.5.7"),
-	DEC_MD5_VID(STRONGSWAN_2_5_6, "strongSwan 2.5.6"),
-	DEC_MD5_VID(STRONGSWAN_2_5_5, "strongSwan 2.5.5"),
-	DEC_MD5_VID(STRONGSWAN_2_5_4, "strongSwan 2.5.4"),
-	DEC_MD5_VID(STRONGSWAN_2_5_3, "strongSwan 2.5.3"),
-	DEC_MD5_VID(STRONGSWAN_2_5_2, "strongSwan 2.5.2"),
-	DEC_MD5_VID(STRONGSWAN_2_5_1, "strongSwan 2.5.1"),
-	DEC_MD5_VID(STRONGSWAN_2_5_0, "strongSwan 2.5.0"),
-	DEC_MD5_VID(STRONGSWAN_2_4_4, "strongSwan 2.4.4"),
-	DEC_MD5_VID(STRONGSWAN_2_4_3, "strongSwan 2.4.3"),
-	DEC_MD5_VID(STRONGSWAN_2_4_2, "strongSwan 2.4.2"),
-	DEC_MD5_VID(STRONGSWAN_2_4_1, "strongSwan 2.4.1"),
-	DEC_MD5_VID(STRONGSWAN_2_4_0, "strongSwan 2.4.0"),
-	DEC_MD5_VID(STRONGSWAN_2_3_2, "strongSwan 2.3.2"),
-	DEC_MD5_VID(STRONGSWAN_2_3_1, "strongSwan 2.3.1"),
-	DEC_MD5_VID(STRONGSWAN_2_3_0, "strongSwan 2.3.0"),
-	DEC_MD5_VID(STRONGSWAN_2_2_2, "strongSwan 2.2.2"),
-	DEC_MD5_VID(STRONGSWAN_2_2_1, "strongSwan 2.2.1"),
-	DEC_MD5_VID(STRONGSWAN_2_2_0, "strongSwan 2.2.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_8_8, "strongSwan 2.8.8"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_8_7, "strongSwan 2.8.7"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_8_6, "strongSwan 2.8.6"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_8_5, "strongSwan 2.8.5"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_8_4, "strongSwan 2.8.4"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_8_3, "strongSwan 2.8.3"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_8_2, "strongSwan 2.8.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_8_1, "strongSwan 2.8.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_8_0, "strongSwan 2.8.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_7_3, "strongSwan 2.7.3"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_7_2, "strongSwan 2.7.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_7_1, "strongSwan 2.7.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_7_0, "strongSwan 2.7.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_6_4, "strongSwan 2.6.4"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_6_3, "strongSwan 2.6.3"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_6_2, "strongSwan 2.6.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_6_1, "strongSwan 2.6.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_6_0, "strongSwan 2.6.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_5_7, "strongSwan 2.5.7"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_5_6, "strongSwan 2.5.6"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_5_5, "strongSwan 2.5.5"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_5_4, "strongSwan 2.5.4"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_5_3, "strongSwan 2.5.3"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_5_2, "strongSwan 2.5.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_5_1, "strongSwan 2.5.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_5_0, "strongSwan 2.5.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_4_4, "strongSwan 2.4.4"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_4_3, "strongSwan 2.4.3"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_4_2, "strongSwan 2.4.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_4_1, "strongSwan 2.4.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_4_0, "strongSwan 2.4.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_3_2, "strongSwan 2.3.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_3_1, "strongSwan 2.3.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_3_0, "strongSwan 2.3.0"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_2_2, "strongSwan 2.2.2"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_2_1, "strongSwan 2.2.1"),
+	DEC_MD5_VID(VID_STRONGSWAN_2_2_0, "strongSwan 2.2.0"),
 	{
 		/**
 		 * Cisco VPN 3000
@@ -466,9 +472,8 @@ static struct vid_struct vid_tab[] = {
 	  "\xf4\xed\x19\xe0\xc1\x14\xeb\x51\x6f\xaa\xac\x0e\xe3\x7d\xaf\x28\x07\xb4\x38\x1f",
 	  20 },
 
-	/* -- */
+	/* END OF TABLE */
 	{ 0, 0, NULL, NULL, NULL, 0 }
-
 };
 
 static const char hexdig[] = "0123456789abcdef";
@@ -544,7 +549,7 @@ void init_vendorid(void)
 #if 0
 		DBG_log("init_vendorid: %d [%s]",
 			vid->id,
-			vid->descr ? vid->descr : "");
+			vid->descr == NULL ? vid->descr : "");
 		if (vid->vid)
 			DBG_dump("VID:", vid->vid, vid->vid_len);
 #endif
@@ -584,10 +589,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 
 	case VID_NATT_IETF_00:
 	case VID_NATT_IETF_01:
-			vid_useful = FALSE; /* no longer supported */
-			break;
-		if (nat_traversal_enabled && !md->quirks.nat_traversal_vid)
-			md->quirks.nat_traversal_vid = vid->id;
+		vid_useful = FALSE; /* no longer supported */
 		break;
 
 	case VID_NATT_IETF_02:
@@ -601,19 +603,15 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 		/* Fall through */
 	case VID_NATT_RFC:
-		{
-			if (md->quirks.nat_traversal_vid < vid->id) {
-				DBG(DBG_NATT, DBG_log(" method set to=%s ",
-						      enum_name(&natt_method_names,
-								nat_traversal_vid_to_method(
-									vid->id))));
-				md->quirks.nat_traversal_vid = vid->id;
-			} else {
-				DBG(DBG_NATT,
-				    DBG_log("Ignoring older NAT-T Vendor ID paylad [%s]",
-					    vid->descr));
-				vid_useful = FALSE;
-			}
+		if (md->quirks.qnat_traversal_vid < vid->id) {
+			DBG(DBG_NATT, DBG_log(" quirks.qnat_traversal_vid set to=%d ",
+					      vid->id));
+			md->quirks.qnat_traversal_vid = vid->id;
+		} else {
+			DBG(DBG_NATT,
+			    DBG_log("Ignoring older NAT-T Vendor ID paylad [%s]",
+				    vid->descr));
+			vid_useful = FALSE;
 		}
 		break;
 

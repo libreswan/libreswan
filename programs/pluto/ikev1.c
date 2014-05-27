@@ -1891,8 +1891,10 @@ void process_packet_tail(struct msg_digest **mdp)
 						 * don't accept NAT-D/NAT-OA reloc directly in message,
 						 * unless we're using NAT-T RFC
 						 */
-						DBG_log("st_nat_traversal was: 0x%" PRIxLSET,
-							st->hidden_variables.st_nat_traversal);
+						DBG(DBG_NATT,
+						    DBG_log("st_nat_traversal was: %s",
+							    bitnamesof(natt_bit_names, 
+								       st->hidden_variables.st_nat_traversal)));
 						sd = NULL;
 					}
 					break;
@@ -2772,9 +2774,9 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * other than 0 in Phase 1.
 	 */
         if (st->hidden_variables.st_nat_traversal != LEMPTY &&
-	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
-	    ((id->isaid_doi_specific_b == 0) ||
-	     (id->isaid_doi_specific_b == pluto_nat_port))) {
+	    id->isaid_doi_specific_a == IPPROTO_UDP &&
+	    (id->isaid_doi_specific_b == 0 ||
+	     id->isaid_doi_specific_b == pluto_nat_port)) {
 		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);

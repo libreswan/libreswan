@@ -162,7 +162,7 @@ struct hidden_variables {
 						 * NOTE: dpd_active_locally() tracks
 						 * the local enablement of DPD */
 	bool st_logged_p1algos;                 /* if we have logged algos */
-	lset_t  st_nat_traversal;               /* bit field of permitted
+	lset_t st_nat_traversal;                /* bit field of permitted
 	                                         * methods. If non-zero, then
 	                                         * NAT-T has been detected, and
 	                                         * should be used. */
