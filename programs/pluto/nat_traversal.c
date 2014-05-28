@@ -395,8 +395,7 @@ static void nat_traversal_natd_lookup(struct msg_digest *md)
 			i, found_me, found_him));
 
 	if (!found_me) {
-		st->hidden_variables.st_nat_traversal |= LELEM(
-			NAT_TRAVERSAL_NAT_BHND_ME);
+		st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
 		st->hidden_variables.st_natd = md->sender;
 	}
 
@@ -404,8 +403,7 @@ static void nat_traversal_natd_lookup(struct msg_digest *md)
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
 	if (!found_him) {
-		st->hidden_variables.st_nat_traversal |= LELEM(
-			NAT_TRAVERSAL_NAT_BHND_PEER);
+		st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
 		st->hidden_variables.st_natd = md->sender;
 	}
 
@@ -414,8 +412,7 @@ static void nat_traversal_natd_lookup(struct msg_digest *md)
 			DBG_log("NAT_TRAVERSAL forceencaps enabled"));
 
 		st->hidden_variables.st_nat_traversal |=
-			LELEM(NAT_TRAVERSAL_NAT_BHND_PEER) |
-			LELEM(NAT_TRAVERSAL_NAT_BHND_ME);
+			LELEM(NATED_PEER) | LELEM(NATED_HOST);
 		st->hidden_variables.st_natd = md->sender;
 	}
 
@@ -520,7 +517,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 
 	if (i == 0) {
 		return;
-	} else if (!LHAS(hv->st_nat_traversal, NAT_TRAVERSAL_NAT_BHND_PEER)) {
+	} else if (!LHAS(hv->st_nat_traversal, NATED_PEER)) {
 		loglog(RC_LOG_SERIOUS,
 			"NAT-Traversal: received %d NAT-OA. Ignored because peer is not NATed",
 			i);
@@ -684,23 +681,9 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 
 static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
 {
-	const char *rslt = "unknown or unsupported result";
-
-	switch (nt & NAT_T_DETECTED) {
-	case LEMPTY:
-		rslt = "no NAT detected";
-		break;
-	case LELEM(NAT_TRAVERSAL_NAT_BHND_ME):
-		rslt = "i am NATed";
-		break;
-	case LELEM(NAT_TRAVERSAL_NAT_BHND_PEER):
-		rslt = "peer is NATed";
-		break;
-	case LELEM(NAT_TRAVERSAL_NAT_BHND_ME) |
-	     LELEM(NAT_TRAVERSAL_NAT_BHND_PEER):
-		rslt = "both are NATed";
-		break;
-	}
+	const char *rslt = (nt & NAT_T_DETECTED) ?
+		bitnamesof(natt_bit_names, nt & NAT_T_DETECTED) :
+		"no actual NAT detected";
 
 	loglog(RC_LOG_SERIOUS,
 		"NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",
@@ -849,8 +832,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 		DBG_log("Sending of NAT-T KEEP-ALIVE enabled by per-conn configuration (nat_keepalive=yes)"));
 
 	if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
-	    LHAS(st->hidden_variables.st_nat_traversal,
-			NAT_TRAVERSAL_NAT_BHND_ME)) {
+	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/*
 		 * - ISAKMP established
 		 * - we are behind NAT
@@ -866,7 +848,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 			if (st_newest != NULL &&
 				IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 				LHAS(st_newest->hidden_variables.st_nat_traversal,
-					NAT_TRAVERSAL_NAT_BHND_ME))
+					NATED_HOST))
 				return;
 		}
 		/*
@@ -879,8 +861,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 
 	if ((st->st_state == STATE_QUICK_R2 ||
 	     st->st_state == STATE_QUICK_I2) &&
-	    LHAS(st->hidden_variables.st_nat_traversal,
-			NAT_TRAVERSAL_NAT_BHND_ME)) {
+	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/*
 		 * - IPSEC SA established
 		 * - NAT-Traversal detected
@@ -897,7 +878,7 @@ static void nat_traversal_ka_event_state(struct state *st, void *data)
 			    (st_newest->st_state == STATE_QUICK_R2 ||
 			     st_newest->st_state == STATE_QUICK_I2) &&
 			    LHAS(st_newest->hidden_variables.st_nat_traversal,
-				 NAT_TRAVERSAL_NAT_BHND_ME))
+				 NATED_HOST))
 				return;
 		}
 		nat_traversal_send_ka(st);
@@ -1235,8 +1216,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	if (!found_me) {
 		DBG(DBG_NATT,
 			DBG_log("NAT_TRAVERSAL this end is behind NAT"));
-		st->hidden_variables.st_nat_traversal |=
-			LELEM(NAT_TRAVERSAL_NAT_BHND_ME);
+		st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
 		st->hidden_variables.st_natd = md->sender;
 	}
 
@@ -1244,8 +1224,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 		DBG(DBG_NATT,
 			DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
 				ip_str(&md->sender)));
-		st->hidden_variables.st_nat_traversal |=
-			LELEM(NAT_TRAVERSAL_NAT_BHND_PEER);
+		st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
 		st->hidden_variables.st_natd = md->sender;
 	}
 
@@ -1254,8 +1233,7 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 			DBG_log("NAT_TRAVERSAL forceencaps enabled"));
 
 		st->hidden_variables.st_nat_traversal |=
-			LELEM(NAT_TRAVERSAL_NAT_BHND_PEER) |
-			LELEM(NAT_TRAVERSAL_NAT_BHND_ME);
+			LELEM(NATED_PEER) | LELEM(NATED_HOST);
 		st->hidden_variables.st_natd = md->sender;
 	}
 

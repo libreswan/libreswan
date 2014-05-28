@@ -67,9 +67,7 @@
 /**
  * NAT-Traversal detected
  */
-#define NAT_T_DETECTED \
-	( LELEM(NAT_TRAVERSAL_NAT_BHND_ME) | \
-	  LELEM(NAT_TRAVERSAL_NAT_BHND_PEER) )
+#define NAT_T_DETECTED  ( LELEM(NATED_HOST) | LELEM(NATED_PEER) )
 
 void init_nat_traversal(unsigned int keep_alive_period);
 

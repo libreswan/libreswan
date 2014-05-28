@@ -211,15 +211,15 @@ const char *const natt_bit_names[] = {
 	"none",
 	"draft-ietf-ipsec-nat-t-ike-02/03",
 	"draft-ietf-ipsec-nat-t-ike-05",
-	"RFC 3947 (NAT-Traversal)"
+	"RFC 3947 (NAT-Traversal)",
 
-	"I am behind NAT",
-	"peer behind NAT",
+	"host-behind-NAT",
+	"peer-behind-NAT",
 	NULL	/* end for bitnamesof() */
 };
 
 enum_names natt_method_names =
-	{ NAT_TRAVERSAL_METHOD_none, NAT_TRAVERSAL_NAT_BHND_PEER,
+	{ NAT_TRAVERSAL_METHOD_none, NATED_PEER,
 	  natt_bit_names, NULL };
 
 /* pluto crypto importance */

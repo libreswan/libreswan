@@ -956,7 +956,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		st->hidden_variables.st_nat_traversal =
 			isakmp_sa->hidden_variables.st_nat_traversal;
 		if (LHAS(isakmp_sa->hidden_variables.st_nat_traversal,
-			 NAT_TRAVERSAL_NAT_BHND_ME))
+			 NATED_HOST))
 			has_client = TRUE;
 		nat_traversal_change_port_lookup(NULL, st);
 	} else {
@@ -1058,8 +1058,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 	    !(st->st_policy & POLICY_TUNNEL) &&
-	    LHAS(st->hidden_variables.st_nat_traversal,
-	         NAT_TRAVERSAL_NAT_BHND_ME)) {
+	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/** Send NAT-OA if our address is NATed */
 		if (!nat_traversal_add_natoa(ISAKMP_NEXT_NONE, &rbody, st,
 					     TRUE /* initiator */)) {
