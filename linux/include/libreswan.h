@@ -31,6 +31,8 @@ typedef int bool;
 
 #include <stddef.h>
 
+/* ================ time-related declarations ================ */
+
 enum {
 	secs_per_minute = 60,
 	secs_per_hour = 60 * secs_per_minute,
@@ -39,7 +41,6 @@ enum {
 
 #if !defined(__KERNEL__)
 
-/* ================ time-related declarations ================ */
 
 #include <time.h>
 
@@ -154,9 +155,9 @@ static inline deltatime_t monotimediff(monotime_t a, monotime_t b) {
 
 /* defs.h declares extern monotime_t mononow(void) */
 
-/* ================ end of time-related declarations ================ */
-
 #endif	/* !defined(__KERNEL__) */
+
+/* ================ end of time-related declarations ================ */
 
 /*
  * When using uclibc, malloc(0) returns NULL instead of success. This is
