@@ -428,11 +428,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username[0] != '\0')
-				libreswan_log("%s XAUTHuser=%s", statebuf,
-					      st->st_xauth_username);
-			else
-				libreswan_log("%s", statebuf);
+			loglog(RC_INFORMATIONAL, "%s%s%s",
+				statebuf,
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 		}
 
 		if (st->st_ah.present) {
@@ -446,11 +445,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username[0] != '\0')
-				libreswan_log("%s XAUTHuser=%s", statebuf,
-					      st->st_xauth_username);
-			else
-				libreswan_log("%s", statebuf);
+			loglog(RC_INFORMATIONAL, "%s%s%s",
+				statebuf,
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 		}
 
 		if (st->st_ipcomp.present) {
@@ -464,11 +462,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username[0] != '\0')
-				libreswan_log("%s XAUTHuser=%s", statebuf,
-					      st->st_xauth_username);
-			else
-				libreswan_log("%s", statebuf);
+			loglog(RC_INFORMATIONAL, "%s%s%s",
+				statebuf,
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 		}
 	}
 
