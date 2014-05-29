@@ -180,7 +180,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
  * Send netlink query message and read reply.
  */
 static
-int netlink_query(char *msgbuf)
+ssize_t netlink_query(char *msgbuf)
 {
 	struct nlmsghdr *nlmsg;
 	int sock;
@@ -188,7 +188,7 @@ int netlink_query(char *msgbuf)
 	/* Create socket */
 	if ((sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE)) < 0) {
 		int e = errno;
-		printf("create socket: (%d: %s)", e, strerror(e));
+		printf("create netlink socket: (%d: %s)", e, strerror(e));
 		return -1;
 	}
 
@@ -196,15 +196,17 @@ int netlink_query(char *msgbuf)
 	nlmsg = (struct nlmsghdr *)msgbuf;
 	if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0) {
 		int e = errno;
-		printf("write socket: (%d: %s)", e, strerror(e));
+		printf("write netlink socket: (%d: %s)", e, strerror(e));
 		return -1;
 	}
 
 	/* Read response */
-	int len = netlink_read_reply(sock, msgbuf, 1, getpid());
+	ssize_t len = netlink_read_reply(sock, msgbuf, 1, getpid());
+
 	if (len < 0) {
 		int e = errno;
-		printf("read socket: (%d: %s)", e, strerror(e));
+
+		printf("read netlink socket: (%d: %s)", e, strerror(e));
 		return -1;
 	}
 	close(sock);
@@ -220,7 +222,6 @@ static
 int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 {
 	struct ifaddrs *ifap, *ifa;
-	struct sockaddr *sa;
 
 	/* Get info about all interfaces */
 	if (getifaddrs(&ifap) != 0)
@@ -230,12 +231,15 @@ int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next)
 		if ((ifa->ifa_flags & IFF_POINTOPOINT) != 0 &&
 		    streq(ifa->ifa_name, interface)) {
-			sa = ifa->ifa_ifu.ifu_dstaddr;
+			struct sockaddr *sa = ifa->ifa_ifu.ifu_dstaddr;
+
 			if (sa != NULL && sa->sa_family == family &&
-			    getnameinfo(sa, ((sa->sa_family == AF_INET) ?
+			    getnameinfo(sa,
+					((sa->sa_family == AF_INET) ?
 					     sizeof(struct sockaddr_in) :
 					     sizeof(struct sockaddr_in6)),
-					peer, NI_MAXHOST, NULL, 0,
+					peer, NI_MAXHOST,
+					NULL, 0,
 					NI_NUMERICHOST) == 0) {
 				if (verbose) {
 					printf("found peer %s to interface %s\n", peer,
@@ -251,90 +255,122 @@ int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 
 /*
  * See if left->addr or left->next is %defaultroute and change it to IP.
+ *
+ * Returns:
+ * -1: failure
+ *  0: done
+ *  1: please call again: more to do
  */
-static
-int resolve_defaultroute_one(struct starter_end *left,
-			     struct starter_end *right)
+static int resolve_defaultroute_one(struct starter_end *host,
+				    struct starter_end *peer)
 {
-	/* "left="         == left->addrtype + left->addr
-	 * "leftnexthop="  == left->nexttype + left->nexthop
+	/*
+	 * "left="         == host->addrtype and host->addr
+	 * "leftnexthop="  == host->nexttype and host->nexthop
 	 */
 
-	/* What kind of result we want to parse? */
-	int parse_src = (left->addrtype == KH_DEFAULTROUTE);
-	int parse_gateway = (left->nexttype == KH_DEFAULTROUTE);
+	/* What kind of result are we seeking? */
+	bool seeking_src = (host->addrtype == KH_DEFAULTROUTE);
+	bool seeking_gateway = (host->nexttype == KH_DEFAULTROUTE);
 
-	if (parse_src == 0 && parse_gateway == 0)
-		return 0;
+	char msgbuf[RTNL_BUFSIZE];
+	bool has_dst = FALSE;
+	int query_again = 0;
+
+	if (!seeking_src && !seeking_gateway)
+		return 0;	/* this end already figured out */
 
 	/* Fill netlink request */
-	char msgbuf[RTNL_BUFSIZE];
-	int has_dst = 0, query_again = 0;
-	netlink_query_init(msgbuf, left->addr_family);
-	if (left->nexttype == KH_IPADDR) { /* My nexthop is specified */
-		netlink_query_add(msgbuf, RTA_DST, &left->nexthop);
-		has_dst = 1;
-	} else if (right->addrtype == KH_IPADDR) { /* Peer IP is specified */
-		netlink_query_add(msgbuf, RTA_DST, &right->addr);
-		has_dst = 1;
-		if (parse_src && parse_gateway &&
-		    left->addr_family == AF_INET) {
+	netlink_query_init(msgbuf, host->addr_family);
+	if (host->nexttype == KH_IPADDR) {
+		/*
+		 * My nexthop (gateway) is specified.
+		 * We need to figure out our source IP to get there.
+		 */
+		netlink_query_add(msgbuf, RTA_DST, &host->nexthop);
+		has_dst = TRUE;
+	} else if (peer->addrtype == KH_IPADDR) {
+		/*
+		 * Peer IP is specified.
+		 * We may need to figure out source IP
+		 * and gateway IP to get there.
+		 */
+		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
+		has_dst = TRUE;
+		if (seeking_src && seeking_gateway &&
+		    host->addr_family == AF_INET) {
 			/* If we have only peer IP and no gateway/src we must do two
 			 * queries:
 			 * 1) find out gateway for dst
 			 * 2) find out src for that gateway
 			 * Doing both in one query returns src for dst.
 			 *
-			 * IPv6 returns link-local for gateway so query both in one query.
+			 * (IPv6 returns link-local for gateway so we can and do
+			 * seek both in one query.)
 			 */
-			parse_src = 0;
+			seeking_src = FALSE;
 			query_again = 1;
 		}
 	}
-	if (has_dst && left->addrtype == KH_IPADDR) /* SRC works only with DST */
-		netlink_query_add(msgbuf, RTA_SRC, &left->addr);
+	if (has_dst && host->addrtype == KH_IPADDR) {
+		/* SRC works only with DST */
+		netlink_query_add(msgbuf, RTA_SRC, &host->addr);
+	}
 
-	/* If we have for example left=%defaultroute + right=%any (no destination)
+	/* If we have for example host=%defaultroute + peer=%any (no destination)
 	 * the netlink reply will be full routing table. We must do two queries:
 	 * 1) find out default gateway
 	 * 2) find out src for that default gateway
 	 */
-	if (has_dst == 0) {
+	if (!has_dst) {
 		struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+
 		nlmsg->nlmsg_flags |= NLM_F_DUMP;
-		if (parse_src && parse_gateway) {
-			parse_src = 0;
+		if (seeking_src && seeking_gateway) {
+			seeking_src = FALSE;
 			query_again = 1;
 		}
 	}
 	if (verbose)
-		printf("\nparse_src = %d, parse_gateway = %d, has_dst = %d\n",
-		       parse_src, parse_gateway, has_dst);
+		printf("\nseeking_src = %d, seeking_gateway = %d, has_dst = %d\n",
+		       seeking_src, seeking_gateway, has_dst);
 
 	/* Send netlink get_route request */
+
 	ssize_t len = netlink_query(msgbuf);
+
 	if (len < 0)
 		return -1;
 
 	/* Parse reply */
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+
 	for (; NLMSG_OK(nlmsg, len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
 		struct rtmsg *rtmsg;
 		struct rtattr *rtattr;
 		int rtlen;
-		char r_interface[IF_NAMESIZE];
+		char r_interface[IF_NAMESIZE+1];
 		char r_source[ADDRTOT_BUF];
 		char r_gateway[ADDRTOT_BUF];
 		char r_destination[ADDRTOT_BUF];
 
-		/* Check for IPv4 / IPv6 */
+		if (nlmsg->nlmsg_type == NLMSG_DONE)
+			break;
+
+		if (nlmsg->nlmsg_type == NLMSG_ERROR) {
+			printf("netlink error\n");
+			return -1;
+			break;
+		}
+
+		/* ignore all but IPv4 and IPv6 */
 		rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
 		if (rtmsg->rtm_family != AF_INET &&
 		    rtmsg->rtm_family != AF_INET6)
 			continue;
 
 		/* Parse one route entry */
-		*r_interface = *r_source = *r_gateway = *r_destination = 0;
+		r_interface[0] = r_interface[IF_NAMESIZE] = r_source[0] = r_gateway[0] = r_destination[0] = '\0';
 		rtattr = (struct rtattr *) RTM_RTA(rtmsg);
 		rtlen = RTM_PAYLOAD(nlmsg);
 		for (;
@@ -363,45 +399,50 @@ int resolve_defaultroute_one(struct starter_end *left,
 			}
 		}
 		if (verbose) {
-			printf("dst %s via %s dev %s src %s\n",
+			printf("dst %s via %s dev %s src %s table %d\n",
 			       r_destination, r_gateway, r_interface,
-			       r_source);
+			       r_source, rtmsg->rtm_table);
 		}
 
-		err_t err;
-		if (parse_src && *r_source != 0) {
-			err = tnatoaddr(r_source, 0, rtmsg->rtm_family,
-					&left->addr);
+		if (seeking_src && r_source[0] != '\0') {
+			err_t err = tnatoaddr(r_source, 0, rtmsg->rtm_family,
+					&host->addr);
 			if (err == NULL) {
-				left->addrtype = KH_IPADDR;
-				parse_src = 0;
+				host->addrtype = KH_IPADDR;
+				seeking_src = FALSE;
 				if (verbose)
 					printf("set addr: %s\n", r_source);
 			} else if (verbose) {
-				printf("unknown source results from kernel: %s\n",
-					err);
+				printf("unknown source results from kernel (%s): %s\n",
+					r_source, err);
 			}
 		}
-		if (parse_gateway && *r_gateway == 0 && *r_interface != 0 &&
-		    (has_dst || *r_source == 0)) {
-			/* Point-to-Point default gw without "via IP" */
-			resolve_ppp_peer(r_interface, left->addr_family,
-					 r_gateway);
-		}
-		if (parse_gateway && *r_gateway != 0 &&
-		    (has_dst || *r_source == 0)) {
-			err = tnatoaddr(r_gateway, 0, rtmsg->rtm_family,
-					&left->nexthop);
-			if (err == NULL) {
-				left->nexttype = KH_IPADDR;
-				parse_gateway = 0; /* Use first if multiple */
-				if (verbose)
-					printf("set nexthop: %s\n", r_gateway);
 
+		if (seeking_gateway && (has_dst || r_source[0] == '\0')) {
+			if (r_gateway[0] == '\0' && r_interface[0] != '\0') {
+				/*
+				 * Point-to-Point default gw without "via IP"
+				 * Attempt to find r_gateway as the IP address
+				 * on the interface.
+				 */
+				if (resolve_ppp_peer(r_interface, host->addr_family,
+						 r_gateway) == -1)
+					return -1;
+			}
+			if (r_gateway[0] != '\0') {
+				err_t err = tnatoaddr(r_gateway, 0, rtmsg->rtm_family,
+						&host->nexthop);
 
-			} else if (verbose) {
-				printf("unknown gateway results from kernel: %s\n",
-					err);
+				if (err != NULL) {
+					printf("unknown gateway results from kernel: %s\n",
+						err);
+				} else if (verbose) {
+					/* Note: Use first even if multiple */
+					host->nexttype = KH_IPADDR;
+					seeking_gateway = FALSE;
+					if (verbose)
+						printf("set nexthop: %s\n", r_gateway);
+				}
 			}
 		}
 	}
