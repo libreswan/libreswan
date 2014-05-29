@@ -19,7 +19,7 @@
 /*
  * ttoul - convert text substring to unsigned long number
  */
-const char *	/* NULL for success, else string literal */
+err_t	/* NULL for success, else string literal */
 ttoul(src, srclen, base, resultp)
 const char *src;
 size_t srclen;	/* 0 means strlen(src) */
@@ -92,4 +92,17 @@ unsigned long *resultp;
 
 	*resultp = r;
 	return NULL;
+}
+
+err_t	/* NULL for success, else string literal */
+ttoulb(src, srclen, base, upb, resultp)
+const char *src;
+size_t srclen;	/* 0 means strlen(src) */
+int base;	/* 0 means figure it out */
+unsigned long upb;	/* upper bound */
+unsigned long *resultp;
+{
+	const char *ugh = ttoul(src, srclen, base, resultp);
+
+	return ugh != NULL ? ugh : *resultp > upb ? "too large" : NULL;
 }

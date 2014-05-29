@@ -142,8 +142,6 @@ static const struct keyword_enum_values kw_connaddrfamily_list = VALUES_INITIALI
 static const struct keyword_enum_value kw_type_values[] = {
 	{ "tunnel",    KS_TUNNEL },
 	{ "transport", KS_TRANSPORT },
-	{ "udp",       KS_UDPENCAP },
-	{ "udpencap",  KS_UDPENCAP },
 	{ "pass",      KS_PASSTHROUGH },
 	{ "passthrough", KS_PASSTHROUGH },
 	{ "reject",    KS_REJECT },
@@ -300,7 +298,7 @@ static const struct keyword_enum_value kw_sendcert_values[] = {
 static const struct keyword_enum_values kw_sendcert_list = VALUES_INITIALIZER(kw_sendcert_values);
 
 /*
- * Values for ikev1_natt={drafts,rfc,both}
+ * Values for nat-ikev1-method={drafts,rfc,both}
  */
 static const struct keyword_enum_value kw_ikev1natt_values[] = {
 	{ "both",       natt_both },
@@ -472,9 +470,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{"ikepad",          kv_conn | kv_auto, kt_bool,   KBF_IKEPAD,
 	  NOT_ENUM },
-	{ "ikev1_natt",          kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,
-	  KBF_IKEV1_NATT, &kw_ikev1natt_list },	/* obsolete _ */
-	{ "ikev1-natt",          kv_conn | kv_auto | kv_processed, kt_enum,
+	{ "nat-ikev1-method", kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKEV1_NATT, &kw_ikev1natt_list },
 #ifdef HAVE_LABELED_IPSEC
 	{ "loopback",       kv_conn | kv_auto, kt_bool, KBF_LOOPBACK,
@@ -625,16 +621,16 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	k = ipsec_conf_keywords_v2;
 
 	while (k->keyname != NULL) {
-		if (strcasecmp(s, k->keyname) == 0)
+		if (strcaseeq(s, k->keyname))
 			break;
 
 		if (k->validity & kv_leftright) {
-			if (strncasecmp(s, "left", 4) == 0 &&
-			    strcasecmp(s + 4, k->keyname) == 0) {
+			if (strncaseeq(s, "left", 4) &&
+			    strcaseeq(s + 4, k->keyname)) {
 				keyleft = TRUE;
 				break;
-			} else if (strncasecmp(s, "right", 5) == 0      &&
-				   strcasecmp(s + 5, k->keyname) == 0) {
+			} else if (strncaseeq(s, "right", 5) &&
+				   strcaseeq(s + 5, k->keyname)) {
 				keyleft = FALSE;
 				break;
 			}
@@ -710,8 +706,9 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 		assert(kd->validenum != NULL);
 		for (kevcount = kd->validenum->valuesize,
 		     kev = kd->validenum->values;
-		     kevcount > 0 && strcasecmp(piece, kev->name) != 0;
-		     kev++, kevcount--) ;
+		     kevcount > 0 && !strcaseeq(piece, kev->name);
+		     kev++, kevcount--)
+			;
 
 		/* if we found something */
 		if (kevcount != 0) {
@@ -757,8 +754,9 @@ unsigned int parser_loose_enum(struct keyword *k, const char *s)
 	assert(kd->validenum != NULL && kd->validenum->values != NULL);
 
 	for (kevcount = kd->validenum->valuesize, kev = kd->validenum->values;
-	     kevcount > 0 && strcasecmp(s, kev->name) != 0;
-	     kev++, kevcount--) ;
+	     kevcount > 0 && !strcaseeq(s, kev->name);
+	     kev++, kevcount--)
+		;
 
 	/* if we found something */
 	if (kevcount != 0) {

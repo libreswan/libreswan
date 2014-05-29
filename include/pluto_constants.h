@@ -47,7 +47,7 @@ enum dpd_action {
 /* Cisco interop: values remote_peer_type= */
 enum keyword_remotepeertype {
 	NON_CISCO = 0,
-	CISCO  = 1,
+	CISCO = 1,
 };
 
 enum keyword_xauthby {
@@ -62,46 +62,50 @@ enum keyword_xauthfail {
 };
 
 /*
- *  * NAT-Traversal defines for nat_traveral type from nat_traversal.h
- *   *
- *    */
+ * NAT-Traversal defines for nat_traveral type from nat_traversal.h
+ *
+ * Elements for a set.
+ * The first members are used to specify the type of NAT Traversal.
+ * The second part says which ends are doing NAT.
+ * ??? perhaps these ought to be partitioned into separate sets.
+ */
 enum natt_method {
-	NAT_TRAVERSAL_METHOD_IETF_00_01     =1, /* no longer supported */
-	NAT_TRAVERSAL_METHOD_IETF_02_03     =2,
-	NAT_TRAVERSAL_METHOD_IETF_05        =3, /* same as RFC */
-	NAT_TRAVERSAL_METHOD_IETF_RFC       =4,
+	NAT_TRAVERSAL_METHOD_none,	/* unknown or unspecified */
+	NAT_TRAVERSAL_METHOD_IETF_02_03,
+	NAT_TRAVERSAL_METHOD_IETF_05,	/* same as RFC */
+	NAT_TRAVERSAL_METHOD_IETF_RFC,
 
-	NAT_TRAVERSAL_NAT_BHND_ME           =30,
-	NAT_TRAVERSAL_NAT_BHND_PEER         =31
+	NATED_HOST,	/* we are behind NAT */
+	NATED_PEER	/* peer is behind NAT */
 };
 
 /* Timer events */
 
 enum event_type {
-	EVENT_NULL,                     /* non-event */
-	EVENT_REINIT_SECRET,            /* Refresh cookie secret */
-	EVENT_SHUNT_SCAN,               /* scan shunt eroutes known to kernel */
-	EVENT_SO_DISCARD,               /* discard unfinished state object */
-	EVENT_RETRANSMIT,               /* Retransmit packet */
-	EVENT_SA_REPLACE,               /* SA replacement event */
-	EVENT_SA_REPLACE_IF_USED,       /* SA replacement event */
-	EVENT_SA_EXPIRE,                /* SA expiration event */
-	EVENT_NAT_T_KEEPALIVE,          /* NAT Traversal Keepalive */
-	EVENT_DPD,                      /* dead peer detection */
-	EVENT_DPD_TIMEOUT,              /* dead peer detection timeout */
+	EVENT_NULL,			/* non-event */
+	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
+	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
+	EVENT_SO_DISCARD,		/* discard unfinished state object */
+	EVENT_RETRANSMIT,		/* Retransmit packet */
+	EVENT_SA_REPLACE,		/* SA replacement event */
+	EVENT_SA_REPLACE_IF_USED,	/* SA replacement event */
+	EVENT_SA_EXPIRE,		/* SA expiration event */
+	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
+	EVENT_DPD,			/* dead peer detection */
+	EVENT_DPD_TIMEOUT,		/* dead peer detection timeout */
 
-	EVENT_LOG_DAILY,                /* reset certain log events/stats */
-	EVENT_CRYPTO_FAILED,            /* after some time, give up on crypto helper */
-	EVENT_PENDING_PHASE2,           /* do not make pending phase2 wait forever */
-	EVENT_v2_RETRANSMIT,            /* Retransmit v2 packet */
+	EVENT_LOG_DAILY,		/* reset certain log events/stats */
+	EVENT_CRYPTO_FAILED,		/* after some time, give up on crypto helper */
+	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
+	EVENT_v2_RETRANSMIT,		/* Retransmit v2 packet */
 	EVENT_v2_LIVENESS,
-	EVENT_PENDING_DDNS,             /* try to start connections where DNS failed at init */
+	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
 };
 
-#define EVENT_REINIT_SECRET_DELAY               secs_per_hour
-#define EVENT_CRYPTO_FAILED_DELAY               (5 * secs_per_minute)
-#define EVENT_RETRANSMIT_DELAY_0                10      /* 10 seconds */
-#define EVENT_GIVEUP_ON_DNS_DELAY               (5 * secs_per_minute)
+#define EVENT_REINIT_SECRET_DELAY	secs_per_hour
+#define EVENT_CRYPTO_FAILED_DELAY	(5 * secs_per_minute)
+#define EVENT_RETRANSMIT_DELAY_0	10	/* 10 seconds */
+#define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
 
 /*
  * operational importance of this cryptographic operation.
@@ -657,12 +661,10 @@ enum sa_policy_bits {
 #define HAS_IPSEC_POLICY(p) (((p) & POLICY_IPSEC_MASK) != 0)
 
 /* Don't allow negotiation? */
-#define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_PSK | POLICY_RSASIG | \
-				       POLICY_AGGRESSIVE) || \
-			     (((p) & POLICY_SHUNT_MASK) != POLICY_SHUNT_TRAP))
+#define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
 
 /* Oakley transform attributes
- * draft-ietf-ipsec-ike-01.txt appendix A
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
  */
 
 #define OAKLEY_ENCRYPTION_ALGORITHM    1
@@ -681,7 +683,8 @@ enum sa_policy_bits {
 #define OAKLEY_KEY_LENGTH             14
 #define OAKLEY_FIELD_SIZE             15
 #define OAKLEY_GROUP_ORDER            16        /* B/V */
-#define OAKLEY_BLOCK_SIZE             17
+/* 17-16383 Unassigned */
+/* 16384-32767 Reserved for private use */
 
 /* IPsec DOI attributes
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5

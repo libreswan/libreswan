@@ -13,7 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdio.h>
@@ -49,6 +48,7 @@
 #include "md5.h"
 #include "crypto.h" /* requires sha1.h and md5.h */
 
+#include "ikev1.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "ike_alg.h"
@@ -243,7 +243,7 @@ static bool out_attr(int type,
  * This has the side-effect of allocating SPIs for us.
  *
  */
-bool out_sa(pb_stream *outs,
+bool ikev1_out_sa(pb_stream *outs,
 	    struct db_sa *sadb,
 	    struct state *st,
 	    bool oakley_mode,
@@ -349,7 +349,7 @@ bool out_sa(pb_stream *outs,
 		pc = &sadb->prop_conjs[pcn];
 		valid_prop_cnt = pc->prop_cnt;
 		DBG(DBG_EMITTING,
-		    DBG_log("out_sa pcn: %d has %d valid proposals",
+		    DBG_log("ikev1_out_sa pcn: %d has %d valid proposals",
 			    pcn, valid_prop_cnt));
 
 		for (pn = 0; pn < pc->prop_cnt; pn++) {
@@ -383,7 +383,7 @@ bool out_sa(pb_stream *outs,
 						  IPSEC_DOI_SPI_SIZE;
 
 			DBG(DBG_EMITTING,
-			    DBG_log("out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
+			    DBG_log("ikev1_out_sa pcn: %d pn: %d<%d valid_count: %d trans_cnt: %d",
 				    pcn, pn, pc->prop_cnt, valid_prop_cnt,
 				    p->trans_cnt));
 
@@ -519,15 +519,26 @@ bool out_sa(pb_stream *outs,
 				pb_stream trans_pbs;
 				struct isakmp_transform trans;
 				unsigned int an;
+				bool oakley_keysize = FALSE;
+				bool ipsec_keysize = FALSE;
 
 				trans.isat_np = (tn == p->trans_cnt - 1) ?
 						ISAKMP_NEXT_NONE :
 						ISAKMP_NEXT_T;
 				trans.isat_transnum = tn;
 				trans.isat_transid = t->transid;
+
+				if (!oakley_mode && t->transid == ESP_AES)
+					DBG(DBG_CONTROLMORE,DBG_log("PAUL: GOT ESP_AES should go here!"));
+
 				if (!out_struct(&trans, trans_desc,
 						&proposal_pbs, &trans_pbs))
 					return_on(ret, FALSE);
+
+
+				if (!oakley_mode)
+					DBG(DBG_CONTROLMORE,DBG_log("PAUL: KEYSIZE should go here!"));
+
 
 				/* Within tranform: Attributes. */
 
@@ -538,8 +549,7 @@ bool out_sa(pb_stream *outs,
 				if (p->protoid != PROTO_IPCOMP &&
 				    st->st_pfs_group != NULL) {
 					passert(!oakley_mode);
-					passert(st->st_pfs_group !=
-						&unset_group);
+					passert(st->st_pfs_group != &unset_group);
 					if (!out_attr(GROUP_DESCRIPTION,
 						      st->st_pfs_group->group,
 						      attr_desc,
@@ -559,8 +569,7 @@ bool out_sa(pb_stream *outs,
 						      &trans_pbs))
 						return_on(ret, FALSE);
 					if (!out_attr(OAKLEY_LIFE_DURATION,
-						      st->st_connection->
-						      sa_ike_life_seconds,
+						      deltasecs(st->st_connection->sa_ike_life_seconds),
 						      attr_desc,
 						      attr_val_descs,
 						      &trans_pbs))
@@ -594,8 +603,8 @@ bool out_sa(pb_stream *outs,
 						      &trans_pbs))
 						return_on(ret, FALSE);
 					if (!out_attr(SA_LIFE_DURATION,
-						      st->st_connection->
-						      sa_ipsec_life_seconds,
+						      deltasecs(st->st_connection->
+						        sa_ipsec_life_seconds),
 						      attr_desc,
 						      attr_val_descs,
 						      &trans_pbs))
@@ -665,29 +674,59 @@ bool out_sa(pb_stream *outs,
 
 				}
 
+
+				if (oakley_mode) {
+					oakley_keysize = FALSE;
+					for (an = 0; an != t->attr_cnt; an++) {
+						struct db_attr *a = &t->attrs[an];
+
+						if (a->type.oakley == OAKLEY_KEY_LENGTH) {
+							oakley_keysize = TRUE;
+						}
+					}
+				} else {
+					ipsec_keysize = FALSE;
+					for (an = 0; an != t->attr_cnt; an++) {
+						struct db_attr *a = &t->attrs[an];
+						if (a->type.ipsec == KEY_LENGTH) {
+							 DBG(DBG_CONTROLMORE, DBG_log("PAUL: found IPSEC key length"));
+							ipsec_keysize = TRUE;
+						}
+					}
+					if (!ipsec_keysize) DBG(DBG_CONTROLMORE, DBG_log("PAUL: NO IPSEC key length"));
+				}
+
 				/* spit out attributes from table */
 				for (an = 0; an != t->attr_cnt; an++) {
 					struct db_attr *a = &t->attrs[an];
 
-					if (oakley_mode) {
-						if (!out_attr(a->type.oakley,
-							      a->val,
-							      attr_desc,
-							      attr_val_descs,
-							      &trans_pbs))
-							return_on(ret, FALSE);
-					} else {
-						if (!out_attr(a->type.ipsec,
-							      a->val,
-							      attr_desc,
-							      attr_val_descs,
-							      &trans_pbs))
-							return_on(ret, FALSE);
+					if (!oakley_mode) DBG(DBG_CONTROLMORE, DBG_log("PAUL: ipsec out_attr START"));
 
+					if (!out_attr( oakley_mode ? a->type.oakley : a->type.ipsec ,
+						      a->val,
+						      attr_desc,
+						      attr_val_descs,
+						      &trans_pbs))
+						return_on(ret, FALSE);
+					if (!oakley_mode) DBG(DBG_CONTROLMORE, DBG_log("PAUL: ipsec out_attr END"));
+
+					if (oakley_mode) {
+						if (!oakley_keysize && a->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM) {
+							int defkeysize = crypto_req_keysize(1 /* ikev1 */, a->val);
+							if (defkeysize) {
+								DBG(DBG_CONTROLMORE, DBG_log("inserting default key length attribute payload of %d bits",
+									defkeysize));
+								if (!out_attr(OAKLEY_KEY_LENGTH,
+									defkeysize,
+									attr_desc,
+									attr_val_descs,
+									&trans_pbs))
+									return_on(ret, FALSE);
+							}
+						}
 					}
 
 				}
-
 				close_output_pbs(&trans_pbs);
 			}
 			close_output_pbs(&proposal_pbs);
@@ -829,12 +868,12 @@ lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
  *
  * This routine is used by main_inI1_outR1() and main_inR1_outI2().
  */
-notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input SA Payload */
-				    const struct isakmp_sa *sa, /* header of input SA Payload */
-				    pb_stream *r_sa_pbs,        /* if non-NULL, where to emit winning SA */
-				    bool selection,             /* if this SA is a selection, only one tranform
-                                                                 * can appear. */
-				    struct state *st)           /* current state object */
+notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payload */
+				    const struct isakmp_sa *sa,	/* header of input SA Payload */
+				    pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
+				    bool selection,		/* if this SA is a selection, only one tranform
+								 * can appear. */
+				    struct state *st)		/* current state object */
 {
 	u_int32_t ipsecdoisit;
 	pb_stream proposal_pbs;
@@ -973,7 +1012,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 		life_type = 0;
 
 		/* initialize only optional field in ta */
-		ta.life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT; /* When this SA expires (seconds) */
+		ta.life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT); /* When this SA expires (seconds) */
 
 		if (no_trans_left == 0) {
 			loglog(RC_LOG_SERIOUS,
@@ -1289,7 +1328,7 @@ rsasig_common:
 								(long) val,
 								OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM);
 					}
-					ta.life_seconds = val;
+					ta.life_seconds = deltatime(val);
 					break;
 				case OAKLEY_LIFE_KILOBYTES:
 					ta.life_kilobytes = val;
@@ -1589,7 +1628,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 static const struct ipsec_trans_attrs null_ipsec_trans_attrs = {
 	.spi = 0,                                               /* spi */
-	.life_seconds = SA_LIFE_DURATION_DEFAULT,               /* life_seconds */
+	.life_seconds = { SA_LIFE_DURATION_DEFAULT },		/* life_seconds */
 	.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
 	.encapsulation = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 };
@@ -1742,12 +1781,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			switch (life_type) {
 			case SA_LIFE_TYPE_SECONDS:
 				/* silently limit duration to our maximum */
-				attrs->life_seconds =
+				attrs->life_seconds = 
 				    val > SA_LIFE_DURATION_MAXIMUM ?
-					SA_LIFE_DURATION_MAXIMUM :
-				    val > st->st_connection->sa_ipsec_life_seconds ?
+					deltatime(SA_LIFE_DURATION_MAXIMUM) :
+				    val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
 				        st->st_connection->sa_ipsec_life_seconds :
-				    val;
+				    deltatime(val);
 				break;
 			case SA_LIFE_TYPE_KBYTES:
 				attrs->life_kilobytes = val;
@@ -1781,14 +1820,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
 				DBG(DBG_NATT,
-				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
-					    st->hidden_variables.
-					    st_nat_traversal));
+				    DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is %s",
+					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 				if (st->hidden_variables.st_nat_traversal &
 				    NAT_T_DETECTED) {
 					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if "
-					       "NAT-Traversal is not detected",
+					       "%s must only be used if NAT-Traversal is not detected",
 					       enum_name(&enc_mode_names,
 							 val));
 					return FALSE;
@@ -1799,9 +1836,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
 				DBG(DBG_NATT,
-				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
-					    st->hidden_variables.
-					    st_nat_traversal));
+				    DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
+					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 				if (st->hidden_variables.st_nat_traversal &
 				    NAT_T_WITH_ENCAPSULATION_RFC_VALUES) {
 					loglog(RC_LOG_SERIOUS,
@@ -1818,8 +1854,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					} else {
 						return FALSE;
 					}
-				} else if (st->hidden_variables.
-					   st_nat_traversal & NAT_T_DETECTED) {
+				} else if (st->hidden_variables.st_nat_traversal &
+				           NAT_T_DETECTED) {
 					attrs->encapsulation = val -
 							       ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS
 							       +
@@ -1837,13 +1873,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
 				DBG(DBG_NATT,
-				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'",
-					    st->hidden_variables.
-					    st_nat_traversal));
+				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
+					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 				if ((st->hidden_variables.st_nat_traversal &
 				     NAT_T_DETECTED) &&
 				    (st->hidden_variables.st_nat_traversal &
 				     NAT_T_WITH_ENCAPSULATION_RFC_VALUES)) {
+					/* ??? just what is this arithmetic doing? */
 					attrs->encapsulation = val -
 							       ENCAPSULATION_MODE_UDP_TUNNEL_RFC
 							       +

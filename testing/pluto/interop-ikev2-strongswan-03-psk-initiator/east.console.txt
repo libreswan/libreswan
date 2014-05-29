@@ -16,13 +16,12 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
 east #
  echo "initdone"
 initdone
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
-east #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east NOW
 192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
@@ -42,6 +41,8 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi

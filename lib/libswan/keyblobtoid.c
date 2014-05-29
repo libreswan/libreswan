@@ -122,7 +122,7 @@ char *argv[];
 			argv[0], n, bl);
 		st = 1;
 	}
-	if (strcmp(buf, b) != 0) {
+	if (!streq(buf, b)) {
 		fprintf(stderr, "%s: keyblobtoid generated `%s' not `%s'\n",
 			argv[0], buf, b);
 		st = 1;
@@ -134,7 +134,7 @@ char *argv[];
 			argv[0], n, bl);
 		st = 1;
 	}
-	if (strcmp(buf, b) != 0) {
+	if (!streq(buf, b)) {
 		fprintf(stderr, "%s: splitkeytoid generated `%s' not `%s'\n",
 			argv[0], buf, b);
 		st = 1;

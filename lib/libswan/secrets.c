@@ -1476,7 +1476,7 @@ void install_public_key(struct pubkey *pk, struct pubkey_list **head)
 					"issuer dn");
 
 	/* store the time the public key was installed */
-	time(&pk->installed_time);
+	pk->installed_time = realnow();
 
 	/* install new key at front */
 	p->key = reference_key(pk);

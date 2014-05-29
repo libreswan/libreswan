@@ -402,7 +402,7 @@ bool has_preloaded_public_key(struct state *st)
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
-			    key->until_time == UNDEFINED_TIME) {
+			    isundefinedrealtime(key->until_time)) {
 				/* found a preloaded public key */
 				return TRUE;
 			}
@@ -543,28 +543,20 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	/* -1 is to leave space for "fin" */
 
 	if (st->st_esp.present) {
-		const char *natinfo = "";
 		char esb[ENUM_SHOW_BUF_LEN];
 
-		if ((c->spd.that.host_port != pluto_port &&
-		     c->spd.that.host_port != 0) ||
-		    c->forceencaps) {
-			natinfo = "/NAT";
-		} else {
-			DBG(DBG_NATT,
-			    DBG_log("NAT-T: their IKE port is '%d'",
+		if ( (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ||
+			c->forceencaps) {
+			DBG(DBG_NATT, DBG_log("NAT-T: their IKE port is '%d'",
 				    c->spd.that.host_port));
-			DBG(DBG_NATT,
-			    DBG_log("NAT-T: forceencaps is '%s'",
-				    c->forceencaps ? "enabled"
-				    :
-				    "disabled"));
+			DBG(DBG_NATT, DBG_log("NAT-T: forceencaps is '%s'",
+				    c->forceencaps ? "enabled" : "disabled"));
 		}
 
 		snprintf(b, sad_len - (b - sadetails) - 1,
 			 "%sESP%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
-			 natinfo,
+			 (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? "/NAT" : "",
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 strip_prefix(enum_showb(&esp_transformid_names,

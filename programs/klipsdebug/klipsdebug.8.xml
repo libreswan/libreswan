@@ -148,8 +148,7 @@ Most systems are set up
 to log these messages to
 <filename>/var/log/messages</filename>.
 Beware that
-<emphasis remap='B'>klipsdebug</emphasis>
-<option>--all</option>
+<emphasis remap='B'>klipsdebug</emphasis> <option>--all</option>
 produces a lot of output and the log file will grow quickly.</para>
 
 <para>The file format for /proc/net/ipsec_klipsdebug is discussed in

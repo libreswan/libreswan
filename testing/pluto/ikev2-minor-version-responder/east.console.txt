@@ -18,6 +18,7 @@ east #
  ipsec whack --debug-all --impair-minor-version-bump
 east #
  ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
 east #
 east #
  echo "initdone"

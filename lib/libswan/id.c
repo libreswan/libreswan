@@ -437,8 +437,8 @@ bool same_id(const struct id *a, const struct id *b)
 		while (bl > 0 && b->name.ptr[bl - 1] == '.')
 			bl--;
 		return al == bl &&
-			strncasecmp((char *)a->name.ptr,
-				(char *)b->name.ptr, al) == 0;
+			strncaseeq((char *)a->name.ptr,
+				(char *)b->name.ptr, al);
 	}
 
 	case ID_DER_ASN1_DN:

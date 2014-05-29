@@ -287,7 +287,7 @@ static char *connection_name(struct starter_conn *conn)
 	 */
 	static char buf[32];
 
-	if (strcmp(conn->name, "%auto") == 0) {
+	if (streq(conn->name, "%auto")) {
 		snprintf(buf, sizeof(buf), "conn_%ld", conn->id);
 		return buf;
 	} else {
@@ -339,18 +339,14 @@ static void set_whack_end(struct starter_config *cfg,
 	w->host_addr_name = l->strings[KSCF_IP];
 
 	switch (l->nexttype) {
-	case KH_DEFAULTROUTE:
-		w->host_nexthop = cfg->dnh;
-		break;
-
 	case KH_IPADDR:
 		w->host_nexthop = l->nexthop;
 		break;
 
+	case KH_DEFAULTROUTE: /* acceptable to set nexthop to %defaultroute */
 	case KH_NOTSET:  /* acceptable to not set nexthop */
 		/* but, get the family set up right
 		 * XXX the nexthop type has to get into the whack message!
-		 *
 		 */
 		anyaddr(addrtypeof(&l->addr), &w->host_nexthop);
 		break;
@@ -407,6 +403,7 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 				    struct starter_end *end, const char *lr)
 {
 	const char *err;
+	char err_buf[TTODATAV_BUF];
 	char keyspace[1024 + 4];
 	struct whack_message msg;
 	int ret;
@@ -438,9 +435,10 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = atobytes((char *)end->rsakey1, 0, keyspace,
+			err = ttodatav((char *)end->rsakey1, 0, 0, keyspace,
 				       sizeof(keyspace),
-				       &msg.keyval.len);
+				       &msg.keyval.len,
+				       err_buf, sizeof(err_buf), 0);
 			if (err) {
 				starter_log(LOG_LEVEL_ERR,
 					    "conn %s/%s: rsakey malformed [%s]",
@@ -472,9 +470,10 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
-			err = atobytes((char *)end->rsakey2, 0, keyspace,
+			err = ttodatav((char *)end->rsakey2, 0, 0, keyspace,
 				       sizeof(keyspace),
-				       &msg.keyval.len);
+				       &msg.keyval.len,
+				       err_buf, sizeof(err_buf), 0);
 			if (err) {
 				starter_log(LOG_LEVEL_ERR,
 					    "conn %s/%s: rsakey malformed [%s]",
@@ -507,9 +506,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->right.addrtype == KH_IPHOSTNAME)
 		msg.dnshostname = conn->right.strings[KSCF_IP];
 
-	msg.sa_ike_life_seconds = conn->options[KBF_IKELIFETIME];
-	msg.sa_ipsec_life_seconds = conn->options[KBF_SALIFETIME];
-	msg.sa_rekey_margin = conn->options[KBF_REKEYMARGIN];
+	msg.sa_ike_life_seconds = deltatime(conn->options[KBF_IKELIFETIME]);
+	msg.sa_ipsec_life_seconds = deltatime(conn->options[KBF_SALIFETIME]);
+	msg.sa_rekey_margin = deltatime(conn->options[KBF_REKEYMARGIN]);
 	msg.sa_rekey_fuzz = conn->options[KBF_REKEYFUZZ];
 	msg.sa_keying_tries = conn->options[KBF_KEYINGTRIES];
 
@@ -538,8 +537,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.dpd_action = DPD_ACTION_HOLD;
 	if (conn->options_set[KBF_DPDDELAY] &&
 	    conn->options_set[KBF_DPDTIMEOUT]) {
-		msg.dpd_delay   = conn->options[KBF_DPDDELAY];
-		msg.dpd_timeout = conn->options[KBF_DPDTIMEOUT];
+		msg.dpd_delay = deltatime(conn->options[KBF_DPDDELAY]);
+		msg.dpd_timeout = deltatime(conn->options[KBF_DPDTIMEOUT]);
 		if (conn->options_set[KBF_DPDACTION])
 			msg.dpd_action = conn->options[KBF_DPDACTION];
 

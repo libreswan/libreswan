@@ -314,7 +314,7 @@ static err_t process_txt_rr_body(char *str,
 	p += strspn(p, " \t");  /* ignore leading whitespace */
 
 	/* is this for us? */
-	if (strncasecmp(p, our_TXT_attr, sizeof(our_TXT_attr) - 1) != 0)
+	if (!strncaseeq(p, our_TXT_attr, sizeof(our_TXT_attr) - 1))
 		return NULL;            /* neither interesting nor bad */
 
 	p += sizeof(our_TXT_attr) - 1;  /* ignore our attribute name */
@@ -452,7 +452,6 @@ static err_t process_txt_rr_body(char *str,
 		gi.refcnt = 1;
 		gi.pref = pref;
 		gi.key->dns_auth_level = dns_auth_level;
-		gi.key->last_tried_time = gi.key->last_worked_time = NO_TIME;
 
 		/* find insertion point */
 		for (gwip = &cr->gateways_from_dns;
@@ -1634,11 +1633,10 @@ static err_t process_lwdnsq_answer(char *ts)
 	char *endofnumber;
 	struct adns_continuation *cr = NULL;
 	unsigned long qtid;
-	time_t anstime;                         /* time of answer */
-	char *atype;                            /* type of answer */
-	long ttl;                               /* ttl of answer; int, but long for conversion */
+	char *atype;		/* type of answer */
+	long ttl;		/* ttl of answer; int, but long for conversion */
 	bool AuthenticatedData = FALSE;
-	static char scratch_null_str[] = "";    /* cannot be const, but isn't written */
+	static char scratch_null_str[] = "";	/* cannot be const, but isn't written */
 
 	/* query transaction id */
 	rest = ts;
@@ -1654,12 +1652,12 @@ static err_t process_lwdnsq_answer(char *ts)
 	if (qtid != 0 && cr == NULL)
 		return "lwdnsq: unrecognized qtid"; /* can't happen! */
 
-	/* time */
+	/* time (??? discarded) */
 	p = strsep(&rest, " \t");
 	if (p == NULL)
 		return "lwdnsq: missing time";
 
-	anstime = strtoul(p, &endofnumber, 10);
+	(void)strtoul(p, &endofnumber, 10);
 	if (*endofnumber != '\0')
 		return "lwdnsq: malformed time";
 
@@ -1680,7 +1678,7 @@ static err_t process_lwdnsq_answer(char *ts)
 	/* if rest is NULL, make it "", otherwise eat whitespace after type */
 	rest = rest == NULL ? scratch_null_str : rest + strspn(rest, " \t");
 
-	if (strncasecmp(atype, "AD-", 3) == 0) {
+	if (strncaseeq(atype, "AD-", 3)) {
 		AuthenticatedData = TRUE;
 		atype += 3;
 	}

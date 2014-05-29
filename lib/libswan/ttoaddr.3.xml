@@ -129,8 +129,7 @@ The result of applying
 to an IPv4 address is always complete and does not contain leading zeros.</para>
 
 <para>Use of hexadecimal addresses is
-<emphasis remap='B'>strongly</emphasis>
-<emphasis remap='B'>discouraged</emphasis>;
+<emphasis remap='B'>strongly discouraged</emphasis>;
 they are included only to save hassles when dealing with
 the handful of perverted programs which already print 
 network addresses in hexadecimal.</para>

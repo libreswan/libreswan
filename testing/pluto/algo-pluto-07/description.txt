@@ -1,11 +1,9 @@
 Unsupported alg pluto test:
 
-"westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24
-
 The policy has been adjusted to request SHA2 for phase 2, which is supported
-by NETKEY, but not by KLIPS.
+by NETKEY, but not by KLIPS. [PAUL: not true with cryptoapi?]
 
 When using NETKEY, this apparently crashes pluto. This is bug #496
 
-Note: This testcase will only properly work once the testing harness can
-properly set the protostack=netkey
+PAUL: The "4096" seems bogus and we ignore it (should we even load it?)
+      However, connection 'works' and no crash ???

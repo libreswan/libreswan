@@ -64,7 +64,8 @@
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para>These functions are obsolete; see
 <citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-for their replacements.</para>
+for their replacements.
+<function>atoaddr</function> and <function>atosubnet</function> have already been deleted.</para>
 
 <para><emphasis remap='I'>Atoaddr</emphasis>
 converts an ASCII name or dotted-decimal address into a binary address
@@ -121,8 +122,7 @@ is always complete and does not contain leading zeros.</para>
 <para>The letters in
 a hexadecimal address may be uppercase or lowercase or any mixture thereof.
 Use of hexadecimal addresses is
-<emphasis remap='B'>strongly</emphasis>
-<emphasis remap='B'>discouraged</emphasis>;
+<emphasis remap='B'>strongly discouraged</emphasis>;
 they are included only to save hassles when dealing with
 the handful of perverted programs which already print 
 network addresses in hexadecimal.</para>

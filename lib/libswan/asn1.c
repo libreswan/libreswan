@@ -27,7 +27,7 @@
 #include "asn1.h"
 #include "oid.h"
 
-#define TIME_MAX 0x7fffffff
+#define TIME_MAX 0x7fffffff	/* ??? doesn't seem portable */
 
 /*
  * If the oid is listed in the oid_names table then the corresponding
@@ -231,20 +231,22 @@ bool is_printablestring(chunk_t str)
 
 /*
  * Converts ASN.1 UTCTIME or GENERALIZEDTIME into calender time
+ * ??? Returns UNDEFINED_TIME for many problems and TIME_MAX for others.  Is this reasonable?
  */
-time_t asn1totime(const chunk_t *utctime, asn1_t type)
+realtime_t asn1totime(const chunk_t *utctime, asn1_t type)
 {
 	struct tm t;
-	time_t tc, tz_offset;
+	time_t tz_offset;
 	char *eot = NULL;
 
 	if ((eot = memchr(utctime->ptr, 'Z', utctime->len)) != NULL) {
+		/* ??? a Z anywhere in the tz is sufficient? */
 		tz_offset = 0; /* Zulu time with a zero time zone offset */
 	} else if ((eot = memchr(utctime->ptr, '+', utctime->len)) != NULL) {
 		int tz_hour, tz_min;
 
 		if (sscanf(eot + 1, "%2d%2d", &tz_hour, &tz_min) != 2)
-			return 0; /* error in positive timezone offset format */
+			return undefinedrealtime(); /* error in positive timezone offset format */
 
 		/* positive time zone offset */
 		tz_offset = tz_hour * secs_per_hour + tz_min * secs_per_minute;
@@ -252,12 +254,12 @@ time_t asn1totime(const chunk_t *utctime, asn1_t type)
 		int tz_hour, tz_min;
 
 		if (sscanf(eot + 1, "%2d%2d", &tz_hour, &tz_min) != 2)
-			return 0; /* error in negative timezone offset format */
+			return undefinedrealtime(); /* error in negative timezone offset format */
 
 		/* negative time zone offset */
 		tz_offset = -(tz_hour * secs_per_hour + tz_min * secs_per_minute);
 	} else {
-		return 0; /* error in time format */
+		return undefinedrealtime(); /* error in time format */
 	}
 
 	/* parse ASN.1 time string */
@@ -267,13 +269,13 @@ time_t asn1totime(const chunk_t *utctime, asn1_t type)
 			  "%4d%2d%2d%2d%2d",
 			&t.tm_year, &t.tm_mon, &t.tm_mday,
 			&t.tm_hour, &t.tm_min) != 5)
-		return 0; /* error in time st [yy]yymmddhhmm time format */
+		return undefinedrealtime();	/* error in time st [yy]yymmddhhmm time format */
 
 	/* is there a seconds field? */
 	if ((eot - (char *)utctime->ptr) ==
 	    ((type == ASN1_UTCTIME) ? 12 : 14)) {
 		if (sscanf(eot - 2, "%2d", &t.tm_sec) != 1)
-			return 0; /* error in ss seconds field format */
+			return undefinedrealtime();	/* error in ss seconds field format */
 
 	} else {
 		t.tm_sec = 0;
@@ -283,12 +285,12 @@ time_t asn1totime(const chunk_t *utctime, asn1_t type)
 	if (t.tm_year >= 1900)
 		t.tm_year -= 1900;
 	else if (t.tm_year >= 100)
-		return 0;
+		return undefinedrealtime();
 	else if (t.tm_year < 50)
 		t.tm_year += 100;
 
 	if (t.tm_mon < 1 || t.tm_mon > 12)
-		return 0; /* error in month format */
+		return undefinedrealtime(); /* error in month format */
 
 	/* representation of month 0..11 in struct tm */
 	t.tm_mon--;
@@ -296,9 +298,14 @@ time_t asn1totime(const chunk_t *utctime, asn1_t type)
 	/* set daylight saving time to off */
 	t.tm_isdst = 0;
 
-	tc = mktime(&t);
 	/* if no conversion overflow occurred, compensate timezone */
-	return (tc == -1) ? TIME_MAX : tc - timezone - tz_offset;
+	/* ??? is TIME_MAX really a good failure mode? */
+	{
+		time_t tc = mktime(&t);
+		realtime_t r = { tc == -1 ? TIME_MAX : tc - timezone - tz_offset };
+
+		return r;
+	}
 }
 
 /*
@@ -458,10 +465,9 @@ bool extract_object(const asn1Object_t *const objects,
 		case ASN1_UTCTIME:
 		case ASN1_GENERALIZEDTIME:
 			DBG(DBG_PARSING,
-				time_t timep = asn1totime(object, obj.type);
-				char tbuf[TIMETOA_BUF];
+				char tbuf[REALTIMETOA_BUF];
 				DBG_log("  '%s'",
-					timetoa(&timep, TRUE, tbuf,
+					realtimetoa(asn1totime(object, obj.type), TRUE, tbuf,
 						sizeof(tbuf)));
 				);
 			return TRUE;

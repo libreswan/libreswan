@@ -26,18 +26,18 @@ MANDIR=$(MANTREE)/man3
 
 X509LIB=x509dn.c asn1.c oid.c
 
-SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c atoaddr.c \
-	atoasr.c atosubnet.c atoul.c constants.c datatot.c \
+SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
+	constants.c datatot.c \
 	alloc.c diag.c \
 	goodmask.c id.c initaddr.c initsaid.c initsubnet.c \
 	iprange.c \
         keyblobtoid.c \
 	kernel_alg.c lex.c mpzfuncs.c \
-	timetoa.c lswconf.c \
-	portof.c rangetoa.c rangetosubnet.c sameaddr.c \
+	realtimetoa.c lswconf.c \
+	portof.c rangetosubnet.c sameaddr.c \
 	satot.c secrets.c subnetof.c subnettoa.c subnettot.c \
 	subnettypeof.c ttoaddr.c ttodata.c ttoprotoport.c \
-	ttorange.c ttosa.c ttosubnet.c ttoul.c ultoa.c ultot.c \
+	ttorange.c ttosa.c ttosubnet.c ttoul.c ultot.c \
 	$(X509LIB)
 
 ifeq ($(USE_DNSSEC),true)
@@ -115,7 +115,7 @@ CFLAGS+=-DIPSEC_SBINDIR=\"$(FINALSBINDIR)\"
 ARFLAGS=crvs
 EXTHDRS=des.h
 EXTLIBS=libdes.a
-MANS=anyaddr.3 atoaddr.3 atoasr.3 atoul.3 goodmask.3 \
+MANS=anyaddr.3 atoaddr.3 atoul.3 goodmask.3 \
 	initaddr.3 initsubnet.3 portof.3 rangetosubnet.3 \
 	sameaddr.3 subnetof.3 ttoaddr.3 ttodata.3 ttosa.3 ttoul.3 
 
@@ -197,18 +197,12 @@ l:
 	$(RANLIB) $(LIB)
 
 t:	$(LIB) 
-	ln -f -s ${KLIPSSRCDIR}/atosubnet.c try.c
-	${CC} ${CFLAGS} -DATOSUBNET_MAIN try.c $(LIB) -o try
-	./try -r
 	ln -f -s ${KLIPSSRCDIR}/ttosubnet.c try1a.c
 	${CC} ${CFLAGS} -DTTOSUBNET_MAIN try1a.c $(LIB) -o try1a
 	./try1a -r
 	ln -f -s ${KLIPSSRCDIR}/ttodata.c try2.c
 	${CC} ${CFLAGS} -DTTODATA_MAIN try2.c $(LIB) -o try2
 	./try2 -r
-	ln -f -s ${KLIPSSRCDIR}/atoasr.c try3.c
-	${CC} ${CFLAGS} -DATOASR_MAIN try3.c $(LIB) -o try3
-	./try3 -r
 	ln -f -s ${KLIPSSRCDIR}/ttosa.c try4a.c
 	${CC} ${CFLAGS} -DTTOSA_MAIN try4a.c $(LIB) -o try4a
 	./try4a -r

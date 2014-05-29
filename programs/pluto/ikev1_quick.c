@@ -250,10 +250,36 @@ static void compute_proto_keymat(struct state *st,
 			 * This is also the max keysize for cast128
 			 */
 			if (st->st_esp.attrs.transattrs.enckeylen) {
-                                passert(st->st_esp.attrs.transattrs.enckeylen == 128);
+				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
 			}
 			/* minimum = default = maximum */
 			needed_len = CAST_KEY_DEF_LEN / BITS_PER_BYTE;
+			break;
+
+		case ESP_CAMELLIA:
+		case ESP_TWOFISH:
+		case ESP_SERPENT:
+			/* valid keysize enforced before we get here */
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+				passert(st->st_esp.attrs.transattrs.enckeylen == 128 ||
+					st->st_esp.attrs.transattrs.enckeylen == 192 ||
+					st->st_esp.attrs.transattrs.enckeylen == 256);
+				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
+			} else {
+				/*
+				 * If no keylength set, pick mandatory to implement default
+				 * {CAMELLIA,TWOFISH,SERPENT}_DEF_KEY_LEN = 128
+				 */
+				needed_len = 128 / BITS_PER_BYTE;
+			}
+			break;
+
+		case ESP_SEED_CBC:
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+				/* SEED-CBC is always 128bit */
+				passert(st->st_esp.attrs.transattrs.enckeylen == 128);
+				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
+			}
 			break;
 
 		default:
@@ -576,14 +602,13 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			       ughmsg);
 			return FALSE;
 		}
-		DBG(DBG_PARSING | DBG_CONTROL,
-		    {
-			    char temp_buff[SUBNETTOT_BUF];
+		DBG(DBG_PARSING | DBG_CONTROL, {
+			char temp_buff[SUBNETTOT_BUF];
 
-			    subnettot(net, 0, temp_buff, sizeof(temp_buff));
-			    DBG_log("%s is subnet %s (received as range)",
-				    which, temp_buff);
-		    });
+			subnettot(net, 0, temp_buff, sizeof(temp_buff));
+			DBG_log("%s is subnet %s (received as range)",
+				which, temp_buff);
+		});
 		break;
 	}
 	}
@@ -930,12 +955,12 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		/* Duplicate nat_traversal status in new state */
 		st->hidden_variables.st_nat_traversal =
 			isakmp_sa->hidden_variables.st_nat_traversal;
-		if (isakmp_sa->hidden_variables.st_nat_traversal &
-		    LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
+		if (LHAS(isakmp_sa->hidden_variables.st_nat_traversal,
+			 NATED_HOST))
 			has_client = TRUE;
 		nat_traversal_change_port_lookup(NULL, st);
 	} else {
-		st->hidden_variables.st_nat_traversal = 0;
+		st->hidden_variables.st_nat_traversal = LEMPTY;
 	}
 
 	/* set up reply */
@@ -975,7 +1000,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		if (can_do_IPcomp)
 			pm |= POLICY_COMPRESS;
 
-		if (!out_sa(&rbody,
+		if (!ikev1_out_sa(&rbody,
 			    &ipsec_sadb[(st->st_policy &
 					 pm) >> POLICY_IPSEC_SHIFT],
 			    st, FALSE, FALSE, ISAKMP_NEXT_NONCE)) {
@@ -1032,9 +1057,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
-	    (!(st->st_policy & POLICY_TUNNEL)) &&
-	    (st->hidden_variables.st_nat_traversal &
-	     LELEM(NAT_TRAVERSAL_NAT_BHND_ME))) {
+	    !(st->st_policy & POLICY_TUNNEL) &&
+	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/** Send NAT-OA if our address is NATed */
 		if (!nat_traversal_add_natoa(ISAKMP_NEXT_NONE, &rbody, st,
 					     TRUE /* initiator */)) {
@@ -1276,11 +1300,15 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 		     NAT_T_WITH_NATOA) &&
 		    (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
-			char idfqdn[32], subnet_buf[SUBNETTOT_BUF];
-			int idlen = pbs_room(&IDci->pbs);
+			char idfqdn[IDTOA_BUF];
+			char subnet_buf[SUBNETTOT_BUF];
+			size_t idlen = pbs_room(&IDci->pbs);
 
-			if (idlen > 31)
-				idlen = 31;
+			if (idlen >= sizeof(idfqdn)) {
+				/* ??? truncation seems rude and dangerous */
+				idlen = sizeof(idfqdn) - 1;
+			}
+			/* ??? what should happen if fqdn contains '\0'? */
 			memcpy(idfqdn, IDci->pbs.cur, idlen);
 			idfqdn[idlen] = '\0';
 
@@ -1733,9 +1761,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		if ((p1st->hidden_variables.st_nat_traversal &
 		      NAT_T_DETECTED) &&
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
-		     (p1st->hidden_variables.st_nat_traversal &
-		      (LELEM(NAT_TRAVERSAL_NAT_BHND_ME) |
-		       LELEM(NAT_TRAVERSAL_NAT_BHND_PEER))) &&
 		     p == NULL) {
 			p = c;
 			DBG(DBG_CONTROL,
@@ -1934,8 +1959,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 	 */
 
 	hv = p1st->hidden_variables;
-	if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-	    (p1st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
+	if ((hv.st_nat_traversal & NAT_T_DETECTED) &&
+	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
 		nat_traversal_natoa_lookup(md, &hv);
 
 	/* now that we are sure of our connection, create our new state */
@@ -1985,11 +2010,13 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				(c->policy & ~POLICY_ID_AUTH_MASK);
 
 		if (p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
+			/* ??? this partially overwrites what was done via hv */
 			st->hidden_variables.st_nat_traversal =
 				p1st->hidden_variables.st_nat_traversal;
 			nat_traversal_change_port_lookup(md, md->st);
 		} else {
-			st->hidden_variables.st_nat_traversal = 0;
+			/* ??? this partially overwrites what was done via hv */
+			st->hidden_variables.st_nat_traversal = LEMPTY;
 		}
 
 		passert(st->st_connection != NULL);
@@ -2262,9 +2289,9 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	{
 		int np;
 #ifdef IMPAIR_UNALIGNED_R1_MSG
-		char *padstr = getenv("PLUTO_UNALIGNED_R1_MSG");
+		const char *padstr = getenv("PLUTO_UNALIGNED_R1_MSG");
 
-		if (padstr)
+		if (padstr != NULL)
 			np = ISAKMP_NEXT_VID;
 		else
 #endif
@@ -2280,12 +2307,17 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 #ifdef IMPAIR_UNALIGNED_R1_MSG
-		if (padstr) {
+		if (padstr != NULL) {
+			unsigned long padsize;
+			err_t ugh = ttoulb(padstr, 0, 10, 100, &padsize);
 			pb_stream vid_pbs;
-			int padsize;
-			padsize = strtoul(padstr, NULL, 0);
 
-			libreswan_log("inserting fake VID payload of %u size",
+			if (ugh != NULL) {
+				libreswan_log("$PLUTO_UNALIGNED_R1_MSG malformed: %s; pretending it is 3", ugh);
+				padsize = 3;
+			}
+
+			libreswan_log("inserting fake VID payload of %lu size",
 				      padsize);
 
 			if (st->st_pfs_group != NULL)
@@ -2523,13 +2555,16 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 			     NAT_T_DETECTED) &&
 			    (st->hidden_variables.st_nat_traversal &
 			     NAT_T_WITH_NATOA) &&
-			    (IDcr->payload.ipsec_id.isaiid_idtype ==
-			     ID_FQDN)) {
+			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
+				char idfqdn[IDTOA_BUF];
+				char subnet_buf[SUBNETTOT_BUF];
+				size_t idlen = pbs_room(&IDcr->pbs);
 
-				char idfqdn[32], subnet_buf[SUBNETTOT_BUF];
-				int idlen = pbs_room(&IDcr->pbs);
-				if (idlen > 31)
-					idlen = 31;
+				if (idlen >= sizeof(idfqdn)) {
+					/* ??? truncation seems rude and dangerous */
+					idlen = sizeof(idfqdn) - 1;
+				}
+				/* ??? what should happen if fqdn contains '\0'? */
 				memcpy(idfqdn, IDcr->pbs.cur, idlen);
 				idfqdn[idlen] = '\0';
 
@@ -2542,7 +2577,6 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 				       "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
 				       idfqdn, subnet_buf);
 			}
-
 		} else {
 			/* no IDci, IDcr: we must check that the defaults match our proposal */
 			if (!subnetisaddr(&c->spd.this.client,
@@ -2566,17 +2600,22 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 	/* HASH(3) out -- sometimes, we add more content */
 	{
-		u_char /* set by START_HASH_PAYLOAD: */
-		*r_hashval;
+		u_char *r_hashval;	/* set by START_HASH_PAYLOAD */
 
 #ifdef IMPAIR_UNALIGNED_I2_MSG
 		{
-			char *padstr = getenv("PLUTO_UNALIGNED_I2_MSG");
+			const char *padstr = getenv("PLUTO_UNALIGNED_I2_MSG");
 
-			if (padstr) {
+			if (padstr != NULL) {
+				unsigned long padsize;
+				err_t ugh = ttoulb(padstr, 0, 10, 100, &padsize)
 				pb_stream vid_pbs;
-				int padsize;
-				padsize = strtoul(padstr, NULL, 0);
+
+				if (ugh != NULL) {
+					libreswan_log("$PLUTO_UNALIGNED_I2_MSG malformed: %s; pretending it is 3",
+						ugh);
+					padsize = 3;
+				}
 
 				libreswan_log(
 					"inserting fake VID payload of %u size",
@@ -2638,13 +2677,10 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 	st->st_connection->newest_ipsec_sa = st->st_serialno;
 
-	/* note (presumed) success */
-	if (c->gw_info != NULL)
-		c->gw_info->key->last_worked_time = now();
-
 	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
 	    on this conn, so initialize it */
-	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
+	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
+	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
 			delete_ipsec_sa(st, FALSE);
 			return STF_FAIL;
@@ -2691,17 +2727,12 @@ stf_status quick_inI2(struct msg_digest *md)
 
 	update_iv(st);  /* not actually used, but tidy */
 
-	/* note (presumed) success */
-	{
-		struct gw_info *gw = st->st_connection->gw_info;
-
-		if (gw != NULL)
-			gw->key->last_worked_time = now();
-	}
-
-	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
-	    on this conn, so initialize it */
-	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
+	/*
+	 * If we have dpd delay and dpdtimeout set, then we are doing DPD
+	 * on this conn, so initialize it
+	 */
+	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
+	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
 			delete_ipsec_sa(st, FALSE);
 			return STF_FAIL;

@@ -81,6 +81,7 @@ extern enum_names ikev2_ts_type_names;
 extern u_int16_t secctx_attr_value;	/* ??? NOT A CONSTANT! */
 #endif
 
+extern const char *const natt_bit_names[];
 extern enum_names natt_method_names;
 
 /* socket address family info */

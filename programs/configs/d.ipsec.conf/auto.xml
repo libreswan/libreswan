@@ -5,22 +5,18 @@
 currently-accepted values are
 <emphasis remap='B'>add</emphasis>
 (signifying an
-<emphasis remap='B'>ipsec auto</emphasis>
-<option>--add</option>),
+<emphasis remap='B'>ipsec auto</emphasis> <option>--add</option>),
 <emphasis remap='B'>ondemand</emphasis>
 (signifying that plus an
-<emphasis remap='B'>ipsec auto</emphasis>
-<option>--ondemand</option>),
+<emphasis remap='B'>ipsec auto</emphasis> <option>--ondemand</option>),
 <emphasis remap='B'>start</emphasis>
 (signifying that plus an
-<emphasis remap='B'>ipsec auto</emphasis>
-<option>--up</option>),
+<emphasis remap='B'>ipsec auto</emphasis> <option>--up</option>),
 and
 <emphasis remap='B'>ignore</emphasis>
 (also the default) (signifying no automatic startup operation).
 See the
-<emphasis remap='B'>config</emphasis>
-<emphasis remap='B'>setup</emphasis>
+<emphasis remap='B'>config setup</emphasis>
 discussion below.
 Relevant only locally, other end need not agree on it
 (but in general, for an intended-to-be-permanent connection,

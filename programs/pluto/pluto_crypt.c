@@ -154,10 +154,15 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		const char *d = getenv("PLUTO_CRYPTO_HELPER_DELAY");
 
 		if (d != NULL) {
-			int delay = atoi(d);
+			unsigned long delay;
+			err_t ugh = ttoulb(d, 0, 0, secs_per_hour, &delay);
 
-			DBG_log("crypto helper is pausing for %d seconds", delay);
-			sleep(delay);
+			if (ugh != NULL) {
+				libreswan_log("$PLUTO_CRYPTO_HELPER_DELAY malformed: %s", ugh);
+			} else {
+				DBG_log("crypto helper is pausing for %lu seconds", delay);
+				sleep(delay);
+			}
 		}
 	}
 

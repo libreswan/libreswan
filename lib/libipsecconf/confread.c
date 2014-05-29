@@ -375,20 +375,19 @@ static bool load_setup(struct starter_config *cfg,
  *
  * @param conn_st a connection definition
  * @param end a connection end
- * @param left boolean (are we 'left'? 1 = yes, 0 = no)
+ * @param leftright const char * "left" or "right"
  * @param perr pointer to char containing error value
  * @return bool TRUE if failed
  */
 static bool validate_end(struct ub_ctx *dnsctx,
 			struct starter_conn *conn_st,
 			struct starter_end *end,
-			bool left,
+			const char *leftright,
 			bool resolvip UNUSED,
 			err_t *perr)
 {
 	err_t er = NULL;
 	char *err_str = NULL;
-	const char *leftright = (left ? "left" : "right");
 	int family = conn_st->options[KBF_CONNADDRFAMILY];
 	bool err = FALSE;
 #  define ERR_FOUND(args ...) do err |= error_append(&err_str, ## args); while (0)
@@ -501,7 +500,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	if (end->strings_set[KSCF_NEXTHOP]) {
 		char *value = end->strings[KSCF_NEXTHOP];
 
-		if (strcasecmp(value, "%defaultroute") == 0) {
+		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
 			if (tnatoaddr(value, strlen(value), AF_INET,
@@ -539,6 +538,10 @@ static bool validate_end(struct ub_ctx *dnsctx,
 
 #endif
 		anyaddr(family, &end->nexthop);
+
+		if (end->addrtype == KH_DEFAULTROUTE) {
+			end->nexttype = KH_DEFAULTROUTE;
+		}
 	}
 
 	/* validate the KSCF_ID */
@@ -765,8 +768,8 @@ static bool translate_conn(struct starter_conn *conn,
 				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
 				if (kw->keyword.string == NULL ||
 				    (*the_strings)[field] == NULL ||
-				    strcmp(kw->keyword.string,
-					   (*the_strings)[field]) != 0) {
+				    !streq(kw->keyword.string,
+					   (*the_strings)[field])) {
 					err = TRUE;
 					break;
 				}
@@ -831,8 +834,8 @@ static bool translate_conn(struct starter_conn *conn,
 				      kw->number == LOOSE_ENUM_OTHER &&
 				      kw->keyword.string != NULL &&
 				      (*the_strings)[field] != NULL &&
-				      strcmp(kw->keyword.string,
-					     (*the_strings)[field]) == 0)) {
+				      streq(kw->keyword.string,
+					     (*the_strings)[field]))) {
 					err = TRUE;
 					break;
 				}
@@ -986,7 +989,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			 */
 			for (sl1 = cfgp->sections.tqh_first;
 			     sl1 != NULL &&
-			     strcmp(alsos[alsoplace], sl1->name) != 0;
+			     !streq(alsos[alsoplace], sl1->name);
 			     sl1 = sl1->link.tqe_next)
 				;
 
@@ -1088,10 +1091,6 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		case KS_TRANSPORT:
 			conn->policy &= ~POLICY_TUNNEL;
 			conn->policy &= ~POLICY_SHUNT_MASK;
-			break;
-
-		case KS_UDPENCAP:
-			/* no way to specify this yet! */
 			break;
 
 		case KS_PASSTHROUGH:
@@ -1260,8 +1259,8 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		}
 	}
 
-	err |= validate_end(dnsctx, conn, &conn->left,  TRUE,  resolvip, perr);
-	err |= validate_end(dnsctx, conn, &conn->right, FALSE, resolvip, perr);
+	err |= validate_end(dnsctx, conn, &conn->left,  "left",  resolvip, perr);
+	err |= validate_end(dnsctx, conn, &conn->right, "right", resolvip, perr);
 	/*
 	 * TODO:
 	 * verify both ends are using the same inet family, if one end
@@ -1427,7 +1426,7 @@ struct starter_config *confread_load(const char *file,
 		 */
 		for (sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
-			if (strcmp(sconn->name, "%default") == 0) {
+			if (streq(sconn->name, "%default")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
 				err |= load_conn(dnsctx,
@@ -1437,7 +1436,7 @@ struct starter_config *confread_load(const char *file,
 						 resolvip, perr);
 			}
 
-			if (strcmp(sconn->name, "%oedefault") == 0) {
+			if (streq(sconn->name, "%oedefault")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading oedefault conn");
 				err |= load_conn(dnsctx,
@@ -1455,9 +1454,9 @@ struct starter_config *confread_load(const char *file,
 		 */
 		for (sconn = cfgp->sections.tqh_first; sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
-			if (strcmp(sconn->name, "%default") == 0)
+			if (streq(sconn->name, "%default"))
 				continue;
-			if (strcmp(sconn->name, "%oedefault") == 0)
+			if (streq(sconn->name, "%oedefault"))
 				continue;
 
 			connerr = init_load_conn(dnsctx, cfg, cfgp, sconn,

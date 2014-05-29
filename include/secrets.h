@@ -20,7 +20,7 @@
 #ifndef _SECRETS_H
 #define _SECRETS_H
 
-#include <gmp.h>    /* GNU MP library */
+#include <gmp.h>	/* GNU MP library */
 #include "id.h"
 
 #include <nss.h>
@@ -31,34 +31,34 @@
 # define SHARED_SECRETS_FILE  "/etc/ipsec.secrets"
 #endif
 
-struct state;   /* forward declaration */
-struct secret;  /* opaque definition, private to secrets.c */
+struct state;	/* forward declaration */
+struct secret;	/* opaque definition, private to secrets.c */
 
 struct RSA_public_key {
-	char keyid[KEYID_BUF];  /* see ipsec_keyblobtoid(3) */
+	char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
 
 	/* length of modulus n in octets: [RSA_MIN_OCTETS, RSA_MAX_OCTETS] */
 	unsigned k;
 
 	/* public: */
 	MP_INT
-		n,      /* modulus: p * q */
-		e;      /* exponent: relatively prime to (p-1) * (q-1) [probably small] */
+		n,	/* modulus: p * q */
+		e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
 	CERTCertificate *nssCert;
 };
 
 struct RSA_private_key {
-	struct RSA_public_key pub; /* must be at start for RSA_show_public_key */
+	struct RSA_public_key pub;	/* must be at start for RSA_show_public_key */
 
 	MP_INT
-		d,                              /* private exponent: (e^-1) mod ((p-1) * (q-1)) */
+		d,				/* private exponent: (e^-1) mod ((p-1) * (q-1)) */
 	/* help for Chinese Remainder Theorem speedup: */
-		p,                              /* first secret prime */
-		q,                              /* second secret prime */
-		dP,                             /* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
-		dQ,                             /* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
-		qInv;                           /* (q^-1) mod p */
-	unsigned char ckaid[HMAC_BUFSIZE];      /*ckaid for use in NSS*/
+		p,				/* first secret prime */
+		q,				/* second secret prime */
+		dP,				/* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
+		dQ,				/* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
+		qInv;				/* (q^-1) mod p */
+	unsigned char ckaid[HMAC_BUFSIZE];	/*ckaid for use in NSS*/
 	unsigned int ckaid_len;
 };
 
@@ -93,16 +93,14 @@ extern struct secret *lsw_foreach_secret(struct secret *secrets,
 					 secret_eval func, void *uservoid);
 extern struct secret *lsw_get_defaultsecret(struct secret *secrets);
 
-/* public key machinery  */
+/* public key machinery */
 struct pubkey {
 	struct id id;
 	unsigned refcnt; /* reference counted! */
 	enum dns_auth_level dns_auth_level;
 	char *dns_sig;
-	time_t installed_time,
-	       last_tried_time,
-	       last_worked_time,
-	       until_time;
+	realtime_t installed_time;
+	realtime_t until_time;
 	chunk_t issuer;
 	enum pubkey_alg alg;
 	union {
@@ -118,8 +116,8 @@ struct pubkey_list {
 /* struct used to prompt for a secret passphrase
  * from a console with file descriptor fd
  */
-#define MAX_PROMPT_PASS_TRIALS  5
-#define PROMPT_PASS_LEN         64
+#define MAX_PROMPT_PASS_TRIALS	5
+#define PROMPT_PASS_LEN		64
 
 typedef void (*pass_prompt_func)(int mess_no, const char *message,
 				 ...) PRINTF_LIKE (2);
@@ -130,7 +128,7 @@ typedef struct {
 	int fd;
 } prompt_pass_t;
 
-extern struct pubkey_list *pubkeys;     /* keys from ipsec.conf */
+extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 
 extern struct pubkey *public_key_from_rsa(const struct RSA_public_key *k);
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
@@ -176,6 +174,6 @@ extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
 
 extern const struct RSA_private_key *get_x509_private_key(struct secret *secrets,
-                                                x509cert_t *cert);
+							  x509cert_t *cert);
 
 #endif /* _SECRETS_H */

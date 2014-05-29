@@ -97,9 +97,9 @@ char ** argv;
 	x = getpid() + 687319;
 /* if your library doesnt have srandom/random, use srand/rand. [from rnd.c] */
 #ifndef HAVE_RANDOM
-	srand(time(0) + x);
+	srand(time(NULL) + x);
 #else
-	srandom(time(0) + x);
+	srandom(time(NULL) + x);
 #endif
 
 #ifdef O_BINARY

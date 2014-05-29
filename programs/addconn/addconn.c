@@ -229,7 +229,7 @@ int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 	/* Find the right interface */
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next)
 		if ((ifa->ifa_flags & IFF_POINTOPOINT) != 0 &&
-		    strcmp(ifa->ifa_name, interface) == 0) {
+		    streq(ifa->ifa_name, interface)) {
 			sa = ifa->ifa_ifu.ifu_dstaddr;
 			if (sa != NULL && sa->sa_family == family &&
 			    getnameinfo(sa, ((sa->sa_family == AF_INET) ?
@@ -460,8 +460,8 @@ static struct option const longopts[] =
 	{ "noexport",            no_argument, NULL, 'N' },
 	{ "help",                no_argument, NULL, 'h' },
 	/* obsoleted, eat and ignore for compatibility */
-        {"defaultroute",        required_argument, NULL, 'd'},
-        {"defaultroutenexthop", required_argument, NULL, 'n'},
+	{"defaultroute",        required_argument, NULL, 'd'},
+	{"defaultroutenexthop", required_argument, NULL, 'n'},
 
 	{ 0, 0, 0, 0 }
 };
@@ -613,7 +613,7 @@ int main(int argc, char *argv[])
 
 	starter_use_log(verbose != 0, TRUE, verbose == 0);
 
-	err = NULL;  /* reset to no error */
+	err = NULL;	/* reset to no error */
 
 	if (configsetup || checkconfig || dolist) {
 		/* skip if we have no use for them... causes delays */
@@ -691,7 +691,7 @@ int main(int argc, char *argv[])
 			for (conn = cfg->conns.tqh_first;
 			     conn != NULL;
 			     conn = conn->link.tqe_next) {
-				if (strcmp(conn->name, connname) == 0) {
+				if (streq(conn->name, connname)) {
 					if (conn->state == STATE_ADDED) {
 						printf("\nconn %s already added\n",
 							conn->name);

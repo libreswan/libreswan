@@ -16,6 +16,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-dh24
+002 added connection description "westnet-eastnet-dh24"
 east #
  echo "initdone"
 initdone
@@ -42,6 +43,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  grep calc_dh_shared /tmp/pluto.log
+XXXXX: SHOULD SHOW HERE
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi

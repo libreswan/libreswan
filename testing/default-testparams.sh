@@ -23,3 +23,4 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS pluto-log-sanitize.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS openswan.sed"
 # temp silence klips nat-t oops
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS temp-natt-klips.oops.sed"
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS temp-selinux-ignore.sed"

@@ -369,7 +369,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (strcmp(argv[1], "-r") == 0) {
+	if (streq(argv[1], "-r")) {
 		regress();
 		fprintf(stderr, "regress() returned?!?\n");
 		exit(1);
@@ -416,15 +416,15 @@ void regress()
 		if (n == 0 && r->output == NULL) {
 		}                       /* okay, error expected */
 		else if (n == 0) {
-			printf("`%s' atoasr failed\n", r->input);
+			printf("`%s' addrtot failed\n", r->input);
 			status = 1;
 
 		} else if (r->output == NULL) {
-			printf("`%s' atoasr succeeded unexpectedly '%c'\n",
+			printf("`%s' addrtot succeeded unexpectedly '%c'\n",
 			       r->input, r->format);
 			status = 1;
 		} else {
-			if (strcasecmp(r->output, buf) != 0) {
+			if (!strcaseeq(r->output, buf)) {
 				printf("`%s' '%c' gave `%s', expected `%s'\n",
 				       r->input, r->format, buf, r->output);
 				status = 1;
