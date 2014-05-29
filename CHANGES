@@ -49,6 +49,8 @@ v3.9
 * DPD: openbsd isakmpd bug workaround for duplicate DPD seqno [Paul]
 * Bugtracker bugs fixed:
   #67: uniqueids: don't compare ipv4 and ipv6 addresses
+  #86: left=%defaultroute does not work in a conn [Hugh/Paul]
+
 
 v3.8 (January 15, 2014)
 * SECURITY: CVE-2013-6467 missing IKEv2 payloads causes restart [Iustina/Hugh]
