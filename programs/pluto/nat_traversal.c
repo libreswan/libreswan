@@ -683,7 +683,7 @@ static void nat_traversal_show_result(lset_t nt, u_int16_t sport)
 {
 	const char *rslt = (nt & NAT_T_DETECTED) ?
 		bitnamesof(natt_bit_names, nt & NAT_T_DETECTED) :
-		"no actual NAT detected";
+		"no NAT detected";
 
 	loglog(RC_LOG_SERIOUS,
 		"NAT-Traversal: Result using %s sender port %" PRIu16 ": %s",

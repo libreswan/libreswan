@@ -213,8 +213,8 @@ const char *const natt_bit_names[] = {
 	"draft-ietf-ipsec-nat-t-ike-05",
 	"RFC 3947 (NAT-Traversal)",
 
-	"host-behind-NAT",
-	"peer-behind-NAT",
+	"I am behind NAT",
+	"peer behind NAT",
 	NULL	/* end for bitnamesof() */
 };
 
