@@ -32,8 +32,7 @@ but it may include shell wildcards (see
 <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>);
 for example:</para>
 
-<para><emphasis remap='B'>include</emphasis>
-<emphasis remap='B'>ipsec.*.conf</emphasis></para>
+<para><emphasis remap='B'>include</emphasis> <emphasis remap='B'>ipsec.*.conf</emphasis></para>
 
 <para>The intention of the include facility is mostly to permit keeping
 information on connections, or sets of connections,
@@ -57,8 +56,7 @@ of this specification that it conforms to:</para>
 <para>A section
 begins with a line of the form:</para>
 
-<para><emphasis remap='I'>type</emphasis>
-<emphasis remap='I'>name</emphasis></para>
+<para><emphasis remap='I'>type</emphasis> <emphasis remap='I'>name</emphasis></para>
 
 <para>where
 <emphasis remap='I'>type</emphasis>
