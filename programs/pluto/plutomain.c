@@ -308,7 +308,7 @@ static struct starter_config *read_cfg_file(char *configfile)
 static void set_cfg_string(char **target, char *value)
 {
 	/* Do nothing if value is unset. */
-	if (value == NULL || *value == 0)
+	if (value == NULL || *value == '\0')
 		return;
 
 	/* Don't free previous target, it might be statically set. */

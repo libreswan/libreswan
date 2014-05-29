@@ -1523,8 +1523,6 @@ void confread_free(struct starter_config *cfg)
 	struct starter_conn *conn, *c;
 
 	FREE_LIST(cfg->setup.interfaces);
-	pfreeany(cfg->setup.virtual_private);
-	pfreeany(cfg->setup.listen);
 	pfree(cfg->ctlbase);
 
 	for (i = 0; i < KSF_MAX; i++)
