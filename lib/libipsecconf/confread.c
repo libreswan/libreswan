@@ -538,6 +538,10 @@ static bool validate_end(struct ub_ctx *dnsctx,
 
 #endif
 		anyaddr(family, &end->nexthop);
+
+		if (end->addrtype == KH_DEFAULTROUTE) {
+			end->nexttype = KH_DEFAULTROUTE;
+		}
 	}
 
 	/* validate the KSCF_ID */

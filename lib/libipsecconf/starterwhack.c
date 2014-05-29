@@ -339,18 +339,14 @@ static void set_whack_end(struct starter_config *cfg,
 	w->host_addr_name = l->strings[KSCF_IP];
 
 	switch (l->nexttype) {
-	case KH_DEFAULTROUTE:
-		w->host_nexthop = cfg->dnh;
-		break;
-
 	case KH_IPADDR:
 		w->host_nexthop = l->nexthop;
 		break;
 
+	case KH_DEFAULTROUTE: /* acceptable to set nexthop to %defaultroute */
 	case KH_NOTSET:  /* acceptable to not set nexthop */
 		/* but, get the family set up right
 		 * XXX the nexthop type has to get into the whack message!
-		 *
 		 */
 		anyaddr(addrtypeof(&l->addr), &w->host_nexthop);
 		break;
