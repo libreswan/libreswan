@@ -31,7 +31,7 @@ road #
 003 "modecfg-road-east" #1: received Vendor ID payload [RFC 3947]
 002 "modecfg-road-east" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "modecfg-road-east" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "modecfg-road-east" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
+003 "modecfg-road-east" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: I am behind NAT
 002 "modecfg-road-east" #1: I am sending my cert
 002 "modecfg-road-east" #1: I am sending a certificate request
 108 "modecfg-road-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3

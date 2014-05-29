@@ -41,7 +41,7 @@ north #
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [RFC 3947]
 002 "northnet-eastnet-nat" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "northnet-eastnet-nat" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
+003 "northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: I am behind NAT
 002 "northnet-eastnet-nat" #1: I am sending my cert
 002 "northnet-eastnet-nat" #1: I am sending a certificate request
 108 "northnet-eastnet-nat" #1: STATE_MAIN_I3: sent MI3, expecting MR3
@@ -67,7 +67,7 @@ done
 north #
 north #
  grep 'Result using RFC 3947' /tmp/pluto.log
-"northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
+"northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: I am behind NAT
 north #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 north #
