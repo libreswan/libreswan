@@ -375,20 +375,19 @@ static bool load_setup(struct starter_config *cfg,
  *
  * @param conn_st a connection definition
  * @param end a connection end
- * @param left boolean (are we 'left'? 1 = yes, 0 = no)
+ * @param leftright const char * "left" or "right"
  * @param perr pointer to char containing error value
  * @return bool TRUE if failed
  */
 static bool validate_end(struct ub_ctx *dnsctx,
 			struct starter_conn *conn_st,
 			struct starter_end *end,
-			bool left,
+			const char *leftright,
 			bool resolvip UNUSED,
 			err_t *perr)
 {
 	err_t er = NULL;
 	char *err_str = NULL;
-	const char *leftright = (left ? "left" : "right");
 	int family = conn_st->options[KBF_CONNADDRFAMILY];
 	bool err = FALSE;
 #  define ERR_FOUND(args ...) do err |= error_append(&err_str, ## args); while (0)
@@ -1256,8 +1255,8 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		}
 	}
 
-	err |= validate_end(dnsctx, conn, &conn->left,  TRUE,  resolvip, perr);
-	err |= validate_end(dnsctx, conn, &conn->right, FALSE, resolvip, perr);
+	err |= validate_end(dnsctx, conn, &conn->left,  "left",  resolvip, perr);
+	err |= validate_end(dnsctx, conn, &conn->right, "right", resolvip, perr);
 	/*
 	 * TODO:
 	 * verify both ends are using the same inet family, if one end
