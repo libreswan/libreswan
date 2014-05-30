@@ -536,10 +536,6 @@ bool ikev1_out_sa(pb_stream *outs,
 					return_on(ret, FALSE);
 
 
-				if (!oakley_mode)
-					DBG(DBG_CONTROLMORE,DBG_log("PAUL: KEYSIZE should go here!"));
-
-
 				/* Within tranform: Attributes. */
 
 				/* For Phase 2 / Quick Mode, GROUP_DESCRIPTION is
@@ -689,18 +685,14 @@ bool ikev1_out_sa(pb_stream *outs,
 					for (an = 0; an != t->attr_cnt; an++) {
 						struct db_attr *a = &t->attrs[an];
 						if (a->type.ipsec == KEY_LENGTH) {
-							 DBG(DBG_CONTROLMORE, DBG_log("PAUL: found IPSEC key length"));
 							ipsec_keysize = TRUE;
 						}
 					}
-					if (!ipsec_keysize) DBG(DBG_CONTROLMORE, DBG_log("PAUL: NO IPSEC key length"));
 				}
 
 				/* spit out attributes from table */
 				for (an = 0; an != t->attr_cnt; an++) {
 					struct db_attr *a = &t->attrs[an];
-
-					if (!oakley_mode) DBG(DBG_CONTROLMORE, DBG_log("PAUL: ipsec out_attr START"));
 
 					if (!out_attr( oakley_mode ? a->type.oakley : a->type.ipsec ,
 						      a->val,
@@ -708,15 +700,28 @@ bool ikev1_out_sa(pb_stream *outs,
 						      attr_val_descs,
 						      &trans_pbs))
 						return_on(ret, FALSE);
-					if (!oakley_mode) DBG(DBG_CONTROLMORE, DBG_log("PAUL: ipsec out_attr END"));
 
 					if (oakley_mode) {
 						if (!oakley_keysize && a->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM) {
 							int defkeysize = crypto_req_keysize(1 /* ikev1 */, a->val);
 							if (defkeysize) {
-								DBG(DBG_CONTROLMORE, DBG_log("inserting default key length attribute payload of %d bits",
+								DBG(DBG_CONTROLMORE, DBG_log("inserting default oakley key length attribute payload of %d bits",
 									defkeysize));
 								if (!out_attr(OAKLEY_KEY_LENGTH,
+									defkeysize,
+									attr_desc,
+									attr_val_descs,
+									&trans_pbs))
+									return_on(ret, FALSE);
+							}
+						}
+					} else { /* ipsec_mode */
+						if (!ipsec_keysize) {
+							int defkeysize = crypto_req_keysize(0 /* ESP */, t->transid);
+							if (defkeysize) {
+								DBG(DBG_CONTROLMORE, DBG_log("inserting default ipsec key length attribute payload of %d bits",
+									defkeysize));
+								if (!out_attr(KEY_LENGTH,
 									defkeysize,
 									attr_desc,
 									attr_val_descs,
@@ -1915,22 +1920,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
 			attrs->transattrs.enckeylen = val;
 			break;
-#if 0
-		case KEY_ROUNDS | ISAKMP_ATTR_AF_TV:
-			attrs->key_rounds = val;
-			break;
-#endif
-#if 0                   /* not yet implemented */
-		case COMPRESS_DICT_SIZE | ISAKMP_ATTR_AF_TV:
-			break;
-		case COMPRESS_PRIVATE_ALG | ISAKMP_ATTR_AF_TV:
-			break;
-
-		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
-			break;
-		case COMPRESS_PRIVATE_ALG | ISAKMP_ATTR_AF_TLV:
-			break;
-#endif
 		default:
 #ifdef HAVE_LABELED_IPSEC
 			if (a.isaat_af_type ==
@@ -1999,7 +1988,28 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 	}
 
-	/* ??? should check for key_len and/or key_rounds if required */
+	/* Check ealg and key length validity */
+	{
+		int ipsec_keysize = crypto_req_keysize(0 /* ESP */, attrs->transattrs.encrypt);
+		if (!LHAS(seen_attrs, KEY_LENGTH)) {
+			if (ipsec_keysize != 0) { /* ealg requires a key length attr */
+				loglog(RC_LOG_SERIOUS,
+		       			"IPsec encryption transform did not specify required KEY_LENGTH attribute");
+				return FALSE;
+			}
+		}
+
+		err_t ugh = kernel_alg_esp_enc_ok(
+				attrs->transattrs.encrypt,
+				attrs->transattrs.enckeylen);
+		if (ugh != NULL) {
+			loglog(RC_LOG_SERIOUS,
+	       			"IPsec encryption transform rejected: %s",
+				ugh);
+			return FALSE;
+		}
+
+	}
 
 	return TRUE;
 }
@@ -2441,8 +2451,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (c->alg_info_esp) {
 					ugh = kernel_alg_esp_enc_ok(
 						esp_attrs.transattrs.encrypt,
-						esp_attrs.transattrs.enckeylen,
-						c->alg_info_esp);
+						esp_attrs.transattrs.enckeylen);
 				}
 
 				if (ugh != NULL) {
