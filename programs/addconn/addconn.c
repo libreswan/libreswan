@@ -362,11 +362,16 @@ int resolve_defaultroute_one(struct starter_end *left,
 				break;
 			}
 		}
+
 		if (verbose) {
-			printf("dst %s via %s dev %s src %s\n",
+			printf("dst %s via %s dev %s src %s table %d\n",
 			       r_destination, r_gateway, r_interface,
-			       r_source);
+			       r_source, rtmsg->rtm_table);
 		}
+
+		/* Use only Main table (254) */
+		if (rtmsg->rtm_table != 254 || (has_dst == 0 && parse_gateway && *r_destination != 0))
+			continue;
 
 		err_t err;
 		if (parse_src && *r_source != 0) {
