@@ -361,7 +361,15 @@ int main(int argc, char *argv[])
 		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
 		nbits = 3072 + 16 * rand() % 64;
 	} else {
-		nbits = atoi(argv[optind]);
+		unsigned long u;
+		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);
+
+		if (ugh != NULL) {
+			fprintf(stderr, "%s: keysize specification is malformed: %s\n",
+				me, ugh);
+			exit(1);
+		}
+		nbits = u;
 	}
 
 	if (nbits < MIN_KEYBIT ) {
@@ -403,14 +411,14 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	mpz_t e;
 	size_t bs;
 	char n_str[3 + MAXBITS / 4 + 1];
-	time_t now = time((time_t *)NULL);
+	realtime_t now = realnow();
 
 	mpz_init(n);
 	mpz_init(e);
 
 	if (password == NULL) {
 		pwdata.source = PW_NONE;
-	} else 	{
+	} else {
 		/* check if passwd == configdir/nsspassword */
 		size_t cdl = strlen(configdir);
 		size_t pwl = strlen(password);
@@ -503,8 +511,8 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
-	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(
-			&now));
+	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
+		ctime(&now.real_secs));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 	bundp = bundle(E, n, &bs);
@@ -515,7 +523,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
 	if (ckaID != NULL) {
-		printf("\t# everything after this point is CKA_ID in hex formati - not the real values \n");
+		printf("\t# everything after this point is CKA_ID in hex format - not the real values \n");
 		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
 		printf("\tPrime1: %s\n", hexOut(ckaID));
 		printf("\tPrime2: %s\n", hexOut(ckaID));
@@ -612,7 +620,7 @@ mpz_t n;
 size_t *sizep;
 {
 	char *hexp = hexout(n);
-	static unsigned char bundbuf[2 + MAXBITS / 8];
+	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
 	const char *er;
 	size_t size;
 

@@ -691,8 +691,6 @@ void call_server(void)
 
 		DBG(DBG_CONTROL, DBG_log(" "));
 
-		log_mark_time();
-
 		/* figure out what is interesting */
 		/* do FD's before events are processed */
 

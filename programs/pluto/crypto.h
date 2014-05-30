@@ -22,10 +22,14 @@
 
 #include <gmp.h>    /* GNU MP library */
 
-#include "sha1.h"
+#ifdef USE_MD5
 #include "md5.h"
+#endif
+#ifdef USE_SHA1
+#include "sha1.h"
+#endif
 #ifdef USE_SHA2
-#include "libsha2/sha2.h"
+#include "sha2.h"
 #endif
 
 #include <nss.h>
@@ -172,4 +176,7 @@ extern PK11SymKey *PK11_Derive_lsw(PK11SymKey *base,
 				   CK_MECHANISM_TYPE mechanism,
 				   SECItem *param, CK_MECHANISM_TYPE target,
 				   CK_ATTRIBUTE_TYPE operation, int keySize);
+
+extern int crypto_req_keysize(int ksproto, int algo);
+
 #endif /* _CRYPTO_H */

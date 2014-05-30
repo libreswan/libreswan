@@ -87,7 +87,6 @@ extern err_t start_adns_query(const struct id *id,      /* domain to query */
 struct gw_info {
 	unsigned refcnt;        /* reference counted! */
 	unsigned pref;          /* preference: lower is better */
-#define NO_TIME ((time_t) -2)   /* time_t value meaning "not_yet" */
 	struct id client_id;    /* id of client of peer */
 	struct id gw_id;        /* id of peer (if id_is_ipaddr, .ip_addr is address) */
 	bool gw_key_present;

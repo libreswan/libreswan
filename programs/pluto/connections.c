@@ -752,13 +752,13 @@ static void unshare_connection_strings(struct connection *c)
 	if (c->alg_info_esp) {
 		alg_info_addref(ESPTOINFO(c->alg_info_esp));
 	}
-	if (c->pool !=  NULL) 
+	if (c->pool !=  NULL)
 		reference_addresspool(c->pool);
 }
 
-static void load_end_certificate(const char *filename, struct end *dst)
+static void load_end_certificate(const char *name, struct end *dst)
 {
-	time_t valid_until;
+	realtime_t valid_until;
 	cert_t cert;
 	err_t ugh = NULL;
 
@@ -767,20 +767,19 @@ static void load_end_certificate(const char *filename, struct end *dst)
 	/* initialize end certificate */
 	dst->cert.ty = CERT_NONE;
 
-	if (filename == NULL)
+	if (name == NULL)
 		return;
 
-	libreswan_log("loading certificate from %s\n", filename);
-	dst->cert_filename = clone_str(filename, "certificate filename");
+	DBG(DBG_CONTROL, DBG_log("loading certificate %s\n", name));
+	dst->cert_filename = clone_str(name, "certificate name");
 
 	{
 		/* load cert from file */
-		bool valid_cert = load_cert_from_nss(filename, TRUE,
+		bool valid_cert = load_cert_from_nss(name,
 						"host cert", &cert);
 		if (!valid_cert) {
-			whack_log(RC_FATAL,
-				"can not load certificate file %s\n",
-				filename);
+			whack_log(RC_FATAL, "can not load certificate %s\n",
+				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;
 			return;
@@ -793,10 +792,11 @@ static void load_end_certificate(const char *filename, struct end *dst)
 			select_x509cert_id(cert.u.x509, &dst->id);
 
 		/* check validity of cert */
+
 		valid_until = cert.u.x509->notAfter;
-		ugh = check_validity(cert.u.x509, &valid_until);
+		ugh = check_validity(cert.u.x509, &valid_until /* IN/OUT */);
 		if (ugh != NULL) {
-			libreswan_log("  %s", ugh);
+			loglog(RC_LOG_SERIOUS,"  %s", ugh);
 			free_x509cert(cert.u.x509);
 		} else {
 			DBG(DBG_CONTROL,
@@ -1119,7 +1119,6 @@ static bool have_wm_certs(const struct whack_message *wm)
 void add_connection(const struct whack_message *wm)
 {
 	struct alg_info_ike *alg_info_ike;
-	const char *ugh;
 
 	alg_info_ike = NULL;
 
@@ -1142,26 +1141,34 @@ void add_connection(const struct whack_message *wm)
 
 	switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
 	case LEMPTY:
+		if (!NEVER_NEGOTIATE(wm->policy)) {
+			loglog(RC_LOG_SERIOUS,
+				"Connection without AH or ESP cannot negotiate");
+			return;
+		}
+		break;
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
-		loglog(RC_NOALGO,
+		loglog(RC_LOG_SERIOUS,
 			"Must specify either AH or ESP.\n");
 		return;
 	}
 
-	/* ??? illegible assignment inside condition */
-	if (wm->ike != NULL &&
-		((alg_info_ike = alg_info_ike_create_from_str(wm->ike,
-			&ugh)) == NULL || alg_info_ike->alg_info_cnt == 0)) {
+	if (wm->ike != NULL) {
+		char err_buf[256];	/* ??? big enough? */
 
-		if (alg_info_ike != NULL && alg_info_ike->alg_info_cnt == 0) {
-			loglog(RC_NOALGO,
+		alg_info_ike = alg_info_ike_create_from_str(wm->ike,
+			err_buf, sizeof(err_buf));
+
+		if (alg_info_ike == NULL) {
+			loglog(RC_LOG_SERIOUS, "ike string error: %s",
+				err_buf);
+			return;
+		}
+		if (alg_info_ike->alg_info_cnt == 0) {
+			loglog(RC_LOG_SERIOUS,
 				"got 0 transforms for ike=\"%s\"", wm->ike);
 			return;
 		}
-
-		loglog(RC_NOALGO, "ike string error: %s",
-			ugh ? ugh : "Unknown");
-		return;
 	}
 
 	if ((wm->ike == NULL || alg_info_ike != NULL) &&
@@ -1176,6 +1183,7 @@ void add_connection(const struct whack_message *wm)
 		 * destroyed.
 		 */
 
+		char err_buf[256] = "";	/* ??? big enough? */
 		bool same_rightca, same_leftca;
 		struct connection *c = alloc_thing(struct connection,
 						"struct connection");
@@ -1199,11 +1207,11 @@ void add_connection(const struct whack_message *wm)
 
 			if (c->policy & POLICY_ENCRYPT)
 				c->alg_info_esp = alg_info_esp_create_from_str(
-					wm->esp ? wm->esp : "", &ugh);
+					wm->esp ? wm->esp : "", err_buf, sizeof(err_buf));
 
 			if (c->policy & POLICY_AUTHENTICATE)
 				c->alg_info_esp = alg_info_ah_create_from_str(
-					wm->esp ? wm->esp : "", &ugh);
+					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
 				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
@@ -1216,7 +1224,7 @@ void add_connection(const struct whack_message *wm)
 			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->alg_info_cnt == 0) {
-					loglog(RC_NOALGO,
+					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"esp=\"%s\"",
 						wm->esp);
@@ -1224,9 +1232,9 @@ void add_connection(const struct whack_message *wm)
 					return;
 				}
 			} else {
-				loglog(RC_NOALGO,
+				loglog(RC_LOG_SERIOUS,
 					"esp string error: %s",
-					ugh ? ugh : "Unknown");
+					err_buf);
 				pfree(c);
 				return;
 			}
@@ -1241,12 +1249,12 @@ void add_connection(const struct whack_message *wm)
 				alg_info_snprint(buf, sizeof(buf),
 						(struct alg_info *)c->
 						alg_info_ike);
-				DBG_log("ike (phase1) algorihtm values: %s",
+				DBG_log("ike (phase1) algorithm values: %s",
 					buf);
 			});
-			if (c->alg_info_ike) {
+			if (c->alg_info_ike != NULL) {
 				if (c->alg_info_ike->alg_info_cnt == 0) {
-					loglog(RC_NOALGO,
+					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"ike=\"%s\"",
 						wm->ike);
@@ -1254,9 +1262,9 @@ void add_connection(const struct whack_message *wm)
 					return;
 				}
 			} else {
-				loglog(RC_NOALGO,
+				loglog(RC_LOG_SERIOUS,
 					"ike string error: %s",
-					ugh ? ugh : "Unknown");
+					err_buf);
 				pfree(c);
 				return;
 			}
@@ -1268,18 +1276,16 @@ void add_connection(const struct whack_message *wm)
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
 
-		if (c->sa_rekey_margin >= c->sa_ipsec_life_seconds) {
-			time_t new_rkm;
+		if (!deltaless(c->sa_rekey_margin, c->sa_ipsec_life_seconds)) {
+			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
 
-			new_rkm = c->sa_ipsec_life_seconds / 2;
-
-			libreswan_log("conn: %s, rekeymargin (%lus) > "
-				"salifetime (%lus); "
-				"reducing rekeymargin to %lu seconds",
+			libreswan_log("conn: %s, rekeymargin (%lds) >= "
+				"salifetime (%lds); "
+				"reducing rekeymargin to %ld seconds",
 				c->name,
-				c->sa_rekey_margin,
-				c->sa_ipsec_life_seconds,
-				new_rkm);
+				(long) deltasecs(c->sa_rekey_margin),
+				(long) deltasecs(c->sa_ipsec_life_seconds),
+				(long) deltasecs(new_rkm));
 
 			c->sa_rekey_margin = new_rkm;
 		}
@@ -1538,20 +1544,19 @@ void add_connection(const struct whack_message *wm)
 #endif
 
 		DBG(DBG_CONTROL,
-			DBG_log("ike_life: %lus; ipsec_life: %lus; "
-				"rekey_margin: %lus; "
-				"rekey_fuzz: %lu%%; keyingtries: "
-				"%lu; policy: %s",
-				(unsigned long) c->sa_ike_life_seconds,
-				(unsigned long) c->sa_ipsec_life_seconds,
-				(unsigned long) c->sa_rekey_margin,
-				(unsigned long) c->sa_rekey_fuzz,
-				(unsigned long) c->sa_keying_tries,
+			DBG_log("ike_life: %lds; ipsec_life: %lds; "
+				"rekey_margin: %lds; "
+				"rekey_fuzz: %lu%%; "
+				"keyingtries: %lu; policy: %s",
+				(long) deltasecs(c->sa_ike_life_seconds),
+				(long) deltasecs(c->sa_ipsec_life_seconds),
+				(long) deltasecs(c->sa_rekey_margin),
+				c->sa_rekey_fuzz,
+				c->sa_keying_tries,
 				prettypolicy(c->policy)));
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
-
 }
 
 /*
@@ -3604,15 +3609,15 @@ void show_one_connection(struct connection *c)
 	}
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   ike_life: %lus; ipsec_life: %lus;"
-		" rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu;",
+		"\"%s\"%s:   ike_life: %lds; ipsec_life: %lds;"
+		" rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
-		(unsigned long) c->sa_ike_life_seconds,
-		(unsigned long) c->sa_ipsec_life_seconds,
-		(unsigned long) c->sa_rekey_margin,
-		(unsigned long) c->sa_rekey_fuzz,
-		(unsigned long) c->sa_keying_tries);
+		(long) deltasecs(c->sa_ike_life_seconds),
+		(long) deltasecs(c->sa_ipsec_life_seconds),
+		(long) deltasecs(c->sa_rekey_margin),
+		c->sa_rekey_fuzz,
+		c->sa_keying_tries);
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; "
@@ -3666,15 +3671,15 @@ void show_one_connection(struct connection *c)
 		mtustr, sapriostr);
 
 	/* slightly complicated stuff to avoid extra crap */
-	if (c->dpd_timeout > 0 || DBGP(DBG_DPD)) {
+	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
-			"\"%s\"%s:   dpd: %s; delay:%lu; timeout:%lu; "
+			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; "
 			"nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
 			c->name,
 			instance,
 			enum_name(&dpd_action_names, c->dpd_action),
-			(unsigned long)c->dpd_delay,
-			(unsigned long)c->dpd_timeout,
+			(long) deltasecs(c->dpd_delay),
+			(long) deltasecs(c->dpd_timeout),
 			(c->forceencaps) ? "yes" : "no",
 			(c->nat_keepalive) ? "yes" : "no",
 			(c->ikev1_natt == natt_both) ? "both" :

@@ -118,4 +118,13 @@ static inline stf_status aggr_id_and_auth(struct msg_digest *md,
 	return oakley_id_and_auth(md, initiator, TRUE, cont_fn, kc);
 }
 
+#if 0	/* not yet disentangled from spdb.h */
+extern bool ikev1_out_sa(pb_stream *outs,
+		struct db_sa *sadb,
+		struct state *st,
+		bool oakley_mode,
+		bool aggressive_mode,
+		u_int8_t np);
+#endif
+
 #endif

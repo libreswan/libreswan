@@ -32,7 +32,7 @@
    for your own architecture [and please send diffs...]: */
 /* #undef _POSIX_SOURCE		/* might need this for something? */
 #define HAVE_BIND               /* ASSUMPTION -- seems to work everywhere! */
-#define HAVE_HELP               /* undefine if you dont want the help text */
+#define HAVE_HELP               /* undefine if you don't want the help text */
 /* #define ANAL			/* if you want case-sensitive DNS matching */
 
 #ifdef HAVE_STDLIB_H
@@ -1072,7 +1072,7 @@ whoisit:
    thing to emerge after all the intervening crud.  Doesn't work for UDP on
    any machines I've tested, but feel free to surprise me. */
 #ifdef IP_OPTIONS
-	if (!o_verbose)                 /* if we wont see it, we dont care */
+	if (!o_verbose)                 /* if we won't see it, we don't care */
 		goto dol_noop;
 	optbuf = Hmalloc(40);
 	x = 40;
@@ -1604,7 +1604,7 @@ char ** argv;
 		cp = Hmalloc(BIGSIZ);
 		argv[1] = cp;                                   /* head of new arg block */
 		fprintf(stderr, "Cmd line: ");
-		fflush(stderr);                                 /* I dont care if it's unbuffered or not! */
+		fflush(stderr);                                 /* I don't care if it's unbuffered or not! */
 		insaved = read(0, cp, BIGSIZ - 1);              /* we're gonna fake fgets() here */
 		cp[BIGSIZ - 1] = '\0';
 		if (insaved <= 0)
@@ -1784,7 +1784,7 @@ char ** argv;
 	Debug(("fd_set size %d", sizeof(*ding1)))       /* how big *is* it? */
 	FD_SET(0, ding1);                               /* stdin *is* initially open */
 	if (o_random) {
-		SRAND(time(0));
+		SRAND(time(NULL));
 		randports = Hmalloc(65536); /* big flag array for ports */
 	}
 #ifdef GAPING_SECURITY_HOLE

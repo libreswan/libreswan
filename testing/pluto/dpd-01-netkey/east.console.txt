@@ -1,12 +1,12 @@
 /testing/guestbin/swan-prep
 east #
  ipsec setup start
-[ 00.00] IPv4 over IPSec tunneling driver
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
+002 added connection description "west-east"
 east #
  echo "initdone"
 initdone

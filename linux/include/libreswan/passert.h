@@ -31,11 +31,7 @@ extern libreswan_passert_fail_t libreswan_passert_fail;
 extern void pexpect_log(const char *pred_str,
 			const char *file_str, unsigned long line_no);
 
-#define impossible() do { \
-		if (libreswan_passert_fail) {                                        \
-			(*libreswan_passert_fail)("impossible", __FILE__, \
-						  __LINE__); \
-		} } while (0)
+#define impossible()  libreswan_passert_fail("impossible", __FILE__, __LINE__)
 
 extern void libreswan_switch_fail(int n,
 				  const char *file_str,
@@ -45,24 +41,19 @@ extern void libreswan_switch_fail(int n,
 
 #define passert(pred) do { \
 		if (!(pred)) \
-			if (libreswan_passert_fail) { \
-				(*libreswan_passert_fail)(#pred, __FILE__, \
-							  __LINE__);       \
-			} \
-} while (0)
+			libreswan_passert_fail(#pred, __FILE__,  __LINE__); \
+	} while (0)
 
 #define pexpect(pred) do { \
 		if (!(pred)) \
 			pexpect_log(#pred, __FILE__, __LINE__); \
-} while (0)
+	} while (0)
 
-/* assert that an err_t is NULL; evaluate exactly once */
+/* evaluate x exactly once; assert that err_t result is NULL; */
 #define happy(x) { \
 		err_t ugh = x; \
 		if (ugh != NULL) \
-			if (libreswan_passert_fail) { (*libreswan_passert_fail)( \
-							      ugh, __FILE__, \
-							      __LINE__); }  \
-}
+			libreswan_passert_fail(ugh, __FILE__, __LINE__); \
+	}
 
 #endif /* _LIBRESWAN_PASSERT_H */

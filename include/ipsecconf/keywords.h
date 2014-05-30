@@ -221,10 +221,9 @@ enum keyword_auto {
 enum keyword_satype {
 	KS_TUNNEL    = 0,
 	KS_TRANSPORT = 1,
-	KS_UDPENCAP  = 2,
-	KS_PASSTHROUGH=3,
-	KS_DROP      = 4,
-	KS_REJECT    = 5,
+	KS_PASSTHROUGH=2,
+	KS_DROP      = 3,
+	KS_REJECT    = 4,
 };
 
 enum keyword_type {
@@ -303,7 +302,6 @@ struct config_parsed {
 	struct starter_comments_list comments;
 
 	struct section_list conn_default;
-	bool got_default;
 };
 
 extern const struct keyword_def ipsec_conf_keywords_v2[];

@@ -47,9 +47,9 @@
  *
  * @param str String containing ALG name (eg: AES, 3DES)
  * @param len Length of str (note: not NUL-terminated)
- * @return int Registered # of ALG if loaded.
+ * @return int Registered # of ALG if loaded or -1 on failure.
  */
-static int ealg_getbyname_ike(const char *const str, int len)
+static int ealg_getbyname_ike(const char *const str, size_t len)
 {
 	int ret;
 
@@ -68,7 +68,7 @@ static int ealg_getbyname_ike(const char *const str, int len)
  * @param len Length of str (note: not NUL-terminated)
  * @return int Registered # of Hash ALG if loaded.
  */
-static int aalg_getbyname_ike(const char *str, int len)
+static int aalg_getbyname_ike(const char *str, size_t len)
 {
 	int ret = -1;
 	int num_read;
@@ -81,7 +81,7 @@ static int aalg_getbyname_ike(const char *str, int len)
 
 	/* handle "sha2" as "sha2_256" */
 	if (len == sizeof(sha2_256_aka)-1 &&
-	    strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
+	    strncaseeq(str, sha2_256_aka, sizeof(sha2_256_aka)-1)) {
 		DBG_log("interpreting sha2 as sha2_256");
 		str = "sha2_256";
 		len = strlen(str);
@@ -89,7 +89,7 @@ static int aalg_getbyname_ike(const char *str, int len)
 
 	/* now "sha" as "sha1" */
 	if (len == sizeof(sha1_aka)-1 &&
-	    strncasecmp(str, sha1_aka, sizeof(sha1_aka)-1) == 0) {
+	    strncaseeq(str, sha1_aka, sizeof(sha1_aka)-1)) {
 		DBG_log("interpreting sha as sha1");
 		str = "sha1";
 		len = strlen(str);
@@ -101,11 +101,13 @@ static int aalg_getbyname_ike(const char *str, int len)
 
 	/* Special value for no authentication since zero is already used. */
 	ret = INT_MAX;
-	if (strncasecmp(str, "null", len) == 0)
+	if (strncaseeq(str, "null", len))
 		return ret;
 
 	/* support idXXX as syntax, matching iana numbers directly */
-	if (sscanf(str, "id%d%n", &ret, &num_read) >= 1 && num_read == len)
+	/* ??? this sscanf is bogus since we don't know what appears at str[len] */
+	num_read = -1;
+	if (sscanf(str, "id%d%n", &ret, &num_read) >= 1 && num_read == (int)len)
 		return ret;
 
 	return -1;
@@ -117,7 +119,7 @@ static int aalg_getbyname_ike(const char *str, int len)
  * @param len Length of str (note: not NUL-terminated)
  * @return int Registered # of MODP Group, if supported.
  */
-static int modp_getbyname_ike(const char *const str, int len)
+static int modp_getbyname_ike(const char *const str, size_t len)
 {
 	int ret = -1;
 
@@ -138,9 +140,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	struct ike_info *ike_info = alg_info->ike;
 	unsigned cnt = alg_info->alg_info_cnt, i;
 
-	/*      check for overflows     */
-	passert(cnt < elemsof(alg_info->ike));
-	/*	dont add duplicates	*/
+	/* don't add duplicates */
 	for (i = 0; i < cnt; i++) {
 		if (ike_info[i].ike_ealg == ealg_id &&
 			(!ek_bits || ike_info[i].ike_eklen == ek_bits) &&
@@ -150,6 +150,9 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 			return;
 		}
 	}
+
+	/* check for overflows */
+	passert(cnt < elemsof(alg_info->ike));
 
 	ike_info[cnt].ike_ealg = ealg_id;
 	ike_info[cnt].ike_eklen = ek_bits;
@@ -249,7 +252,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL) != NULL) {
+		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0) != NULL) {
 			DBG_log("esp algid=%d not available",
 				esp_info->esp_ealg_id);
 			continue;
@@ -374,7 +377,7 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 	ALG_INFO_IKE_FOREACH(alg_info, ike_info, cnt) {
 		if (ike_alg_enc_present(ike_info->ike_ealg) &&
 		    (ike_alg_hash_present(ike_info->ike_halg)) &&
-		    (lookup_group(ike_info->ike_modp))) {
+		    (lookup_group(ike_info->ike_modp) != NULL)) {
 
 			enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
 			passert(enc_desc != NULL);
@@ -419,7 +422,8 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
  */
 static void parser_init_ike(struct parser_context *p_ctx)
 {
-	zero(p_ctx);
+	*p_ctx = empty_p_ctx;
+
 	p_ctx->protoid = PROTO_ISAKMP;
 
 	p_ctx->ealg_str = p_ctx->ealg_buf;
@@ -434,18 +438,19 @@ static void parser_init_ike(struct parser_context *p_ctx)
 }
 
 struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
-						  const char **err_p)
+						  char *err_buf, size_t err_buf_len)
 {
 	/*
 	 *      alg_info storage should be sized dynamically
-	 *      but this may require 2passes to know
+	 *      but this may require two passes to know
 	 *      transform count in advance.
 	 */
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
 
 	alg_info_ike->alg_info_protoid = PROTO_ISAKMP;
 	if (alg_info_parse_str((struct alg_info *)alg_info_ike,
-			       alg_str, err_p,
+			       alg_str,
+			       err_buf, err_buf_len,
 			       parser_init_ike,
 			       alg_info_ike_add,
 			       lookup_group) < 0) {
@@ -453,34 +458,6 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 		alg_info_ike = NULL;
 	}
 	return alg_info_ike;
-}
-
-static void kernel_alg_policy_algorithms(struct esp_info *esp_info)
-{
-	int ealg_i = esp_info->esp_ealg_id;
-
-	switch (ealg_i) {
-	case 0:
-	case ESP_DES:
-	case ESP_3DES:
-	case ESP_NULL:
-	case ESP_CAST:
-		break;
-	default:
-		if (!esp_info->esp_ealg_keylen) {
-			/**
-			 * algos that need  KEY_LENGTH
-			 *
-			 * Note: this is a very dirty hack ;-)
-			 *
-			 * XXX:jjo
-			 * Idea: Add a key_length_needed attribute to
-			 * esp_ealg ??
-			 */
-			esp_info->esp_ealg_keylen =
-				esp_ealg[ealg_i].sadb_alg_maxbits;
-		}
-	}
 }
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
@@ -512,9 +489,6 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			aalg_i);
 		return FALSE;
 	}
-
-	/*      do algo policy */
-	kernel_alg_policy_algorithms(esp_info);
 
 	if (policy & POLICY_ENCRYPT) {
 		/*	open new transformation */
@@ -593,8 +567,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	 *      if NULL alg_info, propose everything ...
 	 */
 
-	/* passert(alg_info!=0); */
-	if (alg_info) {
+	if (alg_info != NULL) {
 		ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
 			bool thistime;
 
@@ -656,7 +629,7 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 			     struct alg_info_esp *alg_info)
 {
-	int ealg_insecure;
+	bool ealg_insecure;
 
 	/*
 	 * key_len passed comes from esp_attrs read from peer
@@ -668,23 +641,24 @@ bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 		key_len = kernel_alg_esp_enc_max_keylen(ealg) * BITS_PER_BYTE;
 
 	/*
-	 * simple test to toss low key_len, will accept it only
-	 * if specified in "esp" string
+	 * Simple test to toss low key_len.
+	 * Will accept it only if specified in "esp" string.
 	 */
 	ealg_insecure = (key_len < 128);
-	if (ealg_insecure || alg_info) {
-		int i;
-		struct esp_info *esp_info;
-		if (alg_info) {
+	if (ealg_insecure || alg_info != NULL) {
+		if (alg_info != NULL) {
+			struct esp_info *esp_info;
+			int i;
+
 			ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
-				if ((esp_info->esp_ealg_id == ealg) &&
-				    ((esp_info->esp_ealg_keylen == 0) ||
-				     (key_len == 0) ||
-				     (esp_info->esp_ealg_keylen == key_len)) &&
-				    (esp_info->esp_aalg_id == aalg)) {
+				if (esp_info->esp_ealg_id == ealg &&
+				    (esp_info->esp_ealg_keylen == 0 ||
+				     key_len == 0 ||
+				     esp_info->esp_ealg_keylen == key_len) &&
+				    esp_info->esp_aalg_id == aalg) {
 					if (ealg_insecure) {
 						loglog(RC_LOG_SERIOUS,
-						       "You should NOT use insecure/broken ESP algorithms [%s (%d)]!",
+						       "warning: You should NOT use insecure/broken ESP algorithms [%s (%d)]!",
 						       enum_name(&esp_transformid_names,
 								 ealg),
 						       key_len);

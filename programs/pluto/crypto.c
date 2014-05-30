@@ -311,9 +311,90 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
 #endif
 
 	e->do_crypt(buf, size, st->st_enc_key_nss, st->st_new_iv, enc);
+}
 
-	/*
-	   e->set_key(&ctx, st->st_enc_key_nss);
-	   e->cbc_crypt(&ctx, buf, size, st->st_new_iv, enc);
-	 */
+/*
+ * Return a required oakley or ipsec keysize or 0 if not required.
+ * The first parameter uses 0 for ESP, and anything above that for
+ * IKE major version
+ */
+int crypto_req_keysize(int ksproto, int algo)
+{
+	switch(ksproto) {
+	case 2: /* IKEv2 */
+		switch(algo) {
+		case IKEv2_ENCR_CAST:
+			return CAST_KEY_DEF_LEN;
+		case IKEv2_ENCR_AES_CBC:
+		case IKEv2_ENCR_AES_CTR:
+		case IKEv2_ENCR_AES_CCM_8:
+		case IKEv2_ENCR_AES_CCM_12:
+		case IKEv2_ENCR_AES_CCM_16:
+		case IKEv2_ENCR_AES_GCM_8:
+		case IKEv2_ENCR_AES_GCM_12:
+		case IKEv2_ENCR_AES_GCM_16:
+		case IKEv2_ENCR_NULL_AUTH_AES_GMAC:
+			return AES_KEY_DEF_LEN;
+		case IKEv2_ENCR_CAMELLIA_CTR:
+		case IKEv2_ENCR_CAMELLIA_CCM_A:
+		case IKEv2_ENCR_CAMELLIA_CCM_B:
+		case IKEv2_ENCR_CAMELLIA_CCM_C:
+			return CAMELLIA_KEY_DEF_LEN;
+		/* private use */
+		case IKEv2_ENCR_SERPENT_CBC:
+			return SERPENT_KEY_DEF_LEN;
+		case IKEv2_ENCR_TWOFISH_CBC:
+		case IKEv2_ENCR_TWOFISH_CBC_SSH: /* ?? */
+			return TWOFISH_KEY_DEF_LEN;
+		default:
+			return 0;
+		}
+	case 1: /* IKEv1 */
+		switch(algo) {
+		case OAKLEY_CAST_CBC:
+			return CAST_KEY_DEF_LEN;
+		case OAKLEY_AES_CBC:
+			return AES_KEY_DEF_LEN;
+		case OAKLEY_CAMELLIA_CBC:
+			return CAMELLIA_KEY_DEF_LEN;
+		/* private use */
+		case OAKLEY_SERPENT_CBC:
+			return SERPENT_KEY_DEF_LEN;
+		case OAKLEY_TWOFISH_CBC:
+		case OAKLEY_TWOFISH_CBC_SSH: /* ?? */
+			return TWOFISH_KEY_DEF_LEN;
+		default:
+			return 0;
+		}
+	case 0: /* ESP */
+		switch(algo) {
+		case ESP_CAST:
+			return CAST_KEY_DEF_LEN;
+		case ESP_AES:
+			return AES_KEY_DEF_LEN;
+		case ESP_AES_CTR:
+			return AES_CTR_KEY_DEF_LEN;
+		case ESP_AES_CCM_8:
+		case ESP_AES_CCM_12:
+		case ESP_AES_CCM_16:
+			return AES_CCM_KEY_DEF_LEN;
+		case ESP_AES_GCM_8:
+		case ESP_AES_GCM_12:
+		case ESP_AES_GCM_16:
+			return AES_GCM_KEY_DEF_LEN;
+		case ESP_CAMELLIA:
+			return CAMELLIA_KEY_DEF_LEN;
+		case ESP_NULL_AUTH_AES_GMAC:
+			return AES_GMAC_KEY_DEF_LEN;
+		/* private use */
+		case ESP_SERPENT:
+			return SERPENT_KEY_DEF_LEN;
+		case ESP_TWOFISH:
+			return TWOFISH_KEY_DEF_LEN;
+		default:
+			return 0;
+		}
+	default:
+		bad_case(ksproto);
+	}
 }

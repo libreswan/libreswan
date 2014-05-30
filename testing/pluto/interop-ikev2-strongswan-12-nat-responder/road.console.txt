@@ -14,15 +14,20 @@ Redirecting to: systemctl start ipsec.service
 [ 00.00] 
 road #
  ipsec auto --add road-eastnet-ikev2
+002 added connection description "road-eastnet-ikev2"
 road #
  echo "initdone"
 initdone
 road #
  ipsec auto --up road-eastnet-ikev2
+002 "road-eastnet-ikev2" #1: initiating v2 parent SA
 133 "road-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
 133 "road-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
+002 "road-eastnet-ikev2" #1: STATE_PARENT_I1: received v2N_NAT_DETECTION_SOURCE_IP
 134 "road-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
-004 "road-eastnet-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
+002 "road-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "road-eastnet-ikev2" #2: negotiated tunnel [192.1.3.209,192.1.3.209:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+004 "road-eastnet-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP/NAT=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=192.1.2.23:4500 DPD=passive}
 road #
  ping -n -c 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
@@ -41,10 +46,10 @@ road #
 road NOW
 192.1.3.209/32     -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth0 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.3.209 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.3.209 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.3.209 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
 esp0xSPISPI@192.1.3.209 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=1
-tun0xTUN#@192.1.3.209 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.1.3.209/32 flags=0x8<> jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=1
+tun0xTUN#@192.1.3.209 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.1.3.209/32 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.3.254 dev eth0 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -60,11 +65,4 @@ road #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
-type=AVC msg=audit(1393580364.648:44): avc:  denied  { read } for  pid=1245 comm="pluto" name="ipsec.conf.common" dev="9p" ino=8522179 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
-type=AVC msg=audit(1393580364.648:44): avc:  denied  { open } for  pid=1245 comm="pluto" path="/testing/baseconfigs/all/etc/ipsec.d/ipsec.conf.common" dev="9p" ino=8522179 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
-type=SYSCALL msg=audit(1393580364.648:44): arch=c000003e syscall=2 success=yes exit=12 a0=7fc1a1f0d9c0 a1=0 a2=1b6 a3=7370692f6374652f items=0 ppid=1244 pid=1245 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=4294967295 tty=(none) comm="pluto" exe="/usr/local/libexec/ipsec/pluto" subj=system_u:system_r:ipsec_t:s0 key=(null)
-type=AVC msg=audit(1393580364.651:45): avc:  denied  { read } for  pid=1245 comm="pluto" name="pluto.log" dev="tmpfs" ino=13195 scontext=system_u:system_r:ipsec_t:s0 tcontext=unconfined_u:object_r:user_tmp_t:s0 tclass=lnk_file
-type=AVC msg=audit(1393580364.651:45): avc:  denied  { create } for  pid=1245 comm="pluto" name="road.pluto.log" scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
-type=AVC msg=audit(1393580364.651:45): avc:  denied  { write } for  pid=1245 comm="pluto" name="road.pluto.log" dev="9p" ino=8654134 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
-type=SYSCALL msg=audit(1393580364.651:45): arch=c000003e syscall=2 success=yes exit=3 a0=7fc1a1f19b10 a1=241 a2=1b6 a3=3 items=0 ppid=1244 pid=1245 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=4294967295 tty=(none) comm="pluto" exe="/usr/local/libexec/ipsec/pluto" subj=system_u:system_r:ipsec_t:s0 key=(null)
 

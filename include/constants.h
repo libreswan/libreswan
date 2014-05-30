@@ -62,9 +62,8 @@ typedef int bool;
 #endif
 
 #define NULL_FD (-1)    /* NULL file descriptor */
-#define dup_any(fd) ((fd) == NULL_FD ? NULL_FD : dup(fd))
-#define close_any(fd) do { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; \
-			   } } while (0)
+#define dup_any(fd)  ((fd) == NULL_FD ? NULL_FD : dup((fd)))
+#define close_any(fd)  { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; } }
 
 #include <inttypes.h>
 
@@ -75,9 +74,11 @@ typedef int bool;
 #endif
 #define BYTES_FOR_BITS(b)   (((b) + BITS_PER_BYTE - 1) / BITS_PER_BYTE)
 
-#define streq(a, b) (strcmp((a), (b)) == 0)             /* clearer shorthand */
-#define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)     /* clearer shorthand */
-#define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)	/* clearer shorthand */
+/* clearer shorthand for *cmp functions */
+#define streq(a, b) (strcmp((a), (b)) == 0)
+#define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)
+#define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
+#define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
 
 /* zero an object given a pointer to it.
  * Note: this won't work on an array without an explicit &

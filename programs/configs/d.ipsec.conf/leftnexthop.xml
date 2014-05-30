@@ -21,8 +21,7 @@ is
 and
 <emphasis remap='B'>interfaces=%defaultroute</emphasis>
 is used in the
-<emphasis remap='B'>config</emphasis>
-<emphasis remap='B'>setup</emphasis>
+<emphasis remap='B'>config setup</emphasis>
 section,
 the next-hop gateway address of the default-route interface
 will be used.

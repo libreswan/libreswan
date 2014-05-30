@@ -132,11 +132,6 @@ static void print_key(struct secret *secret,
 			if (disclose)
 				printf("    xauth: \"%s\"\n", pskbuf);
 			break;
-
-		case PPK_PIN:
-			printf("%d:(%d) PIN key-type not yet supported for id: %s\n", lineno, count,
-				idb);
-			break;
 		}
 
 		l = l->next;
@@ -166,7 +161,7 @@ static int pickbyid(struct secret *secret UNUSED,
 {
 	char *rsakeyid = (char *)uservoid;
 
-	if (strcmp(pks->u.RSA_private_key.pub.keyid, rsakeyid) == 0)
+	if (streq(pks->u.RSA_private_key.pub.keyid, rsakeyid))
 		return 0;
 
 	return 1;
@@ -309,9 +304,6 @@ static void show_confkey(struct secret *s,
 		case PPK_PSK:
 			enumstr = "PPK_PSK";
 			break;
-		case PPK_PIN:
-			enumstr = "PPK_PIN";
-			break;
 		case PPK_XAUTH:
 			enumstr = "PPK_XAUTH";
 			break;
@@ -380,11 +372,16 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'p':
-			precedence = atoi(optarg);
-			if ( (precedence < 0) || (precedence > 255)) {
-				fprintf(stderr,
-					"precedence must be between 0 and 255\n");
-				exit(5);
+			{
+				unsigned long u;
+				err_t ugh = ttoulb(optarg, 0, 10, 255, &u);
+
+				if (ugh != NULL) {
+					fprintf(stderr,
+						"precedence malformed: %s\n", ugh);
+					exit(5);
+				}
+				precedence = u;
 			}
 			break;
 		case 'L':
@@ -451,11 +448,6 @@ usage:
 		goto usage;
 	}
 
-	if (verbose > 2) {
-		fprintf(stderr,
-			"verbosity cannot be set this high\n");
-	}
-
 	if (verbose)
 		fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",
 			oco->confddir);
@@ -473,8 +465,7 @@ usage:
 
 	PK11_SetPasswordFunc(getNSSPassword);
 
-	lsw_load_preshared_secrets(&host_secrets, verbose > 0 ? TRUE : FALSE,
-				   secrets_file);
+	lsw_load_preshared_secrets(&host_secrets, secrets_file);
 
 	NSS_Shutdown();
 	PR_Cleanup();

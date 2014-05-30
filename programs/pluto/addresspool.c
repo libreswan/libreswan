@@ -89,6 +89,7 @@ struct lease_addr {
 	u_int32_t index;	/* range start + index == IP address */
 	struct id thatid;	/* from connection */
 	unsigned refcnt;	/* reference counted */
+	monotime_t lingering_since;	/* when did this begin to linger */
 
 	struct lease_addr *next;	/* next in pool's list of leases */
 };
@@ -197,6 +198,7 @@ void rel_lease_addr(struct connection *c)
 			if (p->refcnt == 0) {
 				story = "left (to linger)";
 				pool->lingering++;
+				p->lingering_since = mononow();
 			}
 			refcnt = p->refcnt;
 		} else {
@@ -243,11 +245,11 @@ static bool share_lease(const struct connection *c,
 	for (p = c->pool->leases; p != NULL; p = p->next) {
 		if (same_id(&p->thatid, &c->spd.that.id)) {
 			*index = p->index;
-			p->refcnt++;
-			if (p->refcnt == 1) {
+			if (p->refcnt == 0) {
 				c->pool->lingering--;
 				c->pool->used++;
 			}
+			p->refcnt++;
 			r = TRUE;
 			break;
 		}
@@ -315,7 +317,7 @@ err_t lease_an_address(const struct connection *c,
 		const u_int32_t size = c->pool->size;
 		struct lease_addr **pp;
 		struct lease_addr *p;
-		struct lease_addr *a;
+		struct lease_addr *ll = NULL;	/* longest lingerer */
 
 		for (pp = &c->pool->leases; (p = *pp) != NULL; pp = &p->next) {
 			/* check that list of leases is
@@ -324,6 +326,11 @@ err_t lease_an_address(const struct connection *c,
 			passert(p->index >= i);
 			if (p->index > i)
 				break;
+			/* remember the longest lingering lease found */
+			if (p->refcnt == 0 &&
+			    (ll == NULL ||
+			     monobefore(ll->lingering_since, p->lingering_since)))
+				ll = p;
 			/* Subtle point: this addition won't overflow.
 			 * 0.0.0.0 cannot be in a range
 			 * so the size will be less than 2^32.
@@ -333,25 +340,42 @@ err_t lease_an_address(const struct connection *c,
 			i = p->index + 1;
 		}
 
-		if (i >= size) {
+		if (i < size) {
+			/* we can allocate a new address and lease */
+			struct lease_addr *a = alloc_thing(struct lease_addr, "address lease entry");
+
+			a->index = i;
+			a->refcnt = 1;
+			c->pool->used++;
+
+			duplicate_id(&a->thatid, &c->spd.that.id);
+
+			a->next = p;
+			*pp = a;
+
+			DBG(DBG_CONTROLMORE,
+				DBG_log("New lease from addresspool index %u", i));
+		} else if (ll != NULL) {
+			/* we take over this lingering lease */
+			DBG(DBG_CONTROLMORE, {
+				char thatidbuf[IDTOA_BUF];
+
+				idtoa(&ll->thatid, thatidbuf, sizeof(thatidbuf));
+				DBG_log("grabbed lingering lease index %u from %s",
+					i, thatidbuf);
+			});
+			free_id_content(&ll->thatid);
+			duplicate_id(&ll->thatid, &c->spd.that.id);
+			c->pool->lingering--;
+			ll->refcnt++;
+			i = ll->index;
+		} else {
 			DBG(DBG_CONTROL,
 			    DBG_log("no free address within pool; size %u, used %u, lingering %u",
 				size, c->pool->used, c->pool->lingering));
 			passert(size == c->pool->used);
 			return "no free address in addresspool";
 		}
-		a = alloc_thing(struct lease_addr, "address lease entry");
-		a->index = i;
-		a->refcnt = 1;
-		c->pool->used++;
-
-		duplicate_id(&a->thatid, &c->spd.that.id);
-
-		a->next = p;
-		*pp = a;
-
-		DBG(DBG_CONTROLMORE,
-			DBG_log("New lease from addresspool index %u", i));
 	}
 
 	/* convert index i in range to an IP_address */
@@ -365,20 +389,20 @@ err_t lease_an_address(const struct connection *c,
 			return e;
 	}
 	DBG(DBG_CONTROL, {
-			char rbuf[RANGETOT_BUF];
-			char thatidbuf[IDTOA_BUF];
-			char abuf[ADDRTOT_BUF];
-			char lbuf[ADDRTOT_BUF];
+		char rbuf[RANGETOT_BUF];
+		char thatidbuf[IDTOA_BUF];
+		char abuf[ADDRTOT_BUF];
+		char lbuf[ADDRTOT_BUF];
 
-			rangetot(&c->pool->r, 0, rbuf, sizeof(rbuf));
-			idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
-			addrtot(&c->spd.that.client.addr, 0, abuf, sizeof(abuf));
-			addrtot(ipa, 0, lbuf, sizeof(lbuf));
+		rangetot(&c->pool->r, 0, rbuf, sizeof(rbuf));
+		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+		addrtot(&c->spd.that.client.addr, 0, abuf, sizeof(abuf));
+		addrtot(ipa, 0, lbuf, sizeof(lbuf));
 
-			DBG_log("%s lease %s from addresspool %s to that.client.addr %s thatid '%s'",
-				s ? "re-use" : "new",
-				lbuf, rbuf, abuf, thatidbuf);
-			});
+		DBG_log("%s lease %s from addresspool %s to that.client.addr %s thatid '%s'",
+			s ? "re-use" : "new",
+			lbuf, rbuf, abuf, thatidbuf);
+	});
 
 	return NULL;
 }
@@ -461,7 +485,8 @@ err_t find_addresspool(const ip_range *pool_range, struct ip_pool **pool)
 
 			rangetot(pool_range, 0, prbuf, sizeof(prbuf));
 			rangetot(&h->r, 0, hbuf, sizeof(hbuf));
-			libreswan_log("ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
+			loglog(RC_CLASH,
+				"ERROR: new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
 					prbuf, hbuf);
 			return "ERROR: partial overlap of addresspool";
 		}

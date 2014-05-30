@@ -950,10 +950,10 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 	/* if requested, send the new reply packet */
 	if (svm->flags & SMF2_REPLY) {
-
 		/* free previously transmitted packet */
 		freeanychunk(st->st_tpacket);
-		if (nat_traversal_enabled && (from_state != STATE_PARENT_I1)) {
+
+		if (nat_traversal_enabled && from_state != STATE_PARENT_I1) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
@@ -1000,7 +1000,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 	/* Schedule for whatever timeout is specified */
 	{
-		time_t delay;
+		time_t delay;	/* unwrapped deltatime_t */
 		enum event_type kind = svm->timeout_event;
 		struct connection *c = st->st_connection;
 
@@ -1015,11 +1015,10 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 				 * rekeying.  The negative consequences seem
 				 * minor.
 				 */
-				delay = c->sa_ike_life_seconds;
+				delay = deltasecs(c->sa_ike_life_seconds);
 			} else {
-				/* Delay is what the user said, no negotiation.
-				 */
-				delay = c->sa_ipsec_life_seconds;
+				/* Delay is what the user said, no negotiation. */
+				delay = deltasecs(c->sa_ipsec_life_seconds);
 			}
 
 			/* By default, we plan to rekey.
@@ -1045,7 +1044,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			 * time stand (implemented by earlier logic).
 			 */
 			if (kind != EVENT_SA_EXPIRE) {
-				unsigned long marg = c->sa_rekey_margin;
+				/* unwrapped deltatime_t */
+				time_t marg = deltasecs(c->sa_rekey_margin);
 
 				if (svm->flags & SMF2_INITIATOR) {
 					marg += marg *
@@ -1055,9 +1055,9 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 					marg /= 2;
 				}
 
-				if ((unsigned long)delay > marg) {
+				if (delay > marg) {
 					delay -= marg;
-					st->st_margin = marg;
+					st->st_margin = deltatime(marg);
 				} else {
 					kind = EVENT_SA_EXPIRE;
 				}
@@ -1071,7 +1071,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			/* dos_cookie is one 'valid' event, but it is used more? */
 			break;
 
-		case EVENT_REINIT_SECRET: /* Refresh cookie secret */
+		case EVENT_REINIT_SECRET: /* ??? Refresh cookie secret */
 		default:
 			bad_case(kind);
 		}
@@ -1083,7 +1083,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			DBG(DBG_DPD,
 			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
 			event_schedule(EVENT_v2_LIVENESS,
-				       c->dpd_delay >= MIN_LIVENESS ? c->dpd_delay : MIN_LIVENESS,
+				       deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
+					deltasecs(c->dpd_delay) : MIN_LIVENESS,
 				       st);
 		}
 
@@ -1158,17 +1159,17 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_INTERNAL_ERROR:
-                /* update the previous packet history */
-                /* TODO: fix: update_retransmit_history(st, md); */
+		/* update the previous packet history */
+		/* TODO: fix: update_retransmit_history(st, md); */
 
-                whack_log(RC_INTERNALERR + md->note,
-                          "%s: internal error",
-                          enum_name(&state_names, st->st_state));
+		whack_log(RC_INTERNALERR + md->note,
+			  "%s: internal error",
+			  enum_name(&state_names, st->st_state));
 
-                DBG(DBG_CONTROL,
-                    DBG_log("state transition function for %s had internal error",
-                            enum_name(&state_names, from_state)));
-                break;
+		DBG(DBG_CONTROL,
+		    DBG_log("state transition function for %s had internal error",
+			    enum_name(&state_names, from_state)));
+		break;
 
 	case STF_TOOMUCHCRYPTO:
 		/* ??? Why is this comment useful:

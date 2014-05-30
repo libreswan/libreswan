@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>     /* system(), strtoul() */
+#include <stdlib.h>     /* system() */
 #include <unistd.h>     /* getuid() */
 #include <linux/types.h>
 #include <sys/ioctl.h>  /* ioctl() */

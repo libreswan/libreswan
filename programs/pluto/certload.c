@@ -59,12 +59,10 @@ chunk_t get_mycert(cert_t cert)
 /*
  * load a coded key or certificate file with autodetection
  * of binary DER or base64 PEM ASN.1 formats.
- * ??? Some error messages are suppressed if !verbose.
  * On success, returns TRUE, leaving a dynamically allocated blob in *blob.
  * On failure, returns FALSE.
  */
 bool load_coded_file(const char *filename,
-		bool verbose,
 		const char *type, chunk_t *blob)
 {
 	err_t ugh = NULL;
@@ -81,10 +79,8 @@ bool load_coded_file(const char *filename,
 
 		/* a cert file larger than 50K seems wrong */
 		if (sz_ftell <= 0 || sz_ftell > 50000) {
-			if (verbose) {
-				libreswan_log("  discarded %s file '%s', bad size %lu bytes",
-					type, filename, sz_ftell);
-			}
+			libreswan_log("  discarded %s file '%s', bad size %lu bytes",
+				type, filename, sz_ftell);
 			fclose(fd);
 			return FALSE;
 		}
@@ -100,9 +96,8 @@ bool load_coded_file(const char *filename,
 			return FALSE;
 		}
 
-		if (verbose)
-			libreswan_log("  loaded %s file '%s' (%ld bytes)",
-				type, filename, sz_ftell);
+		libreswan_log("  loading %s file '%s' (%ld bytes)",
+			type, filename, sz_ftell);
 
 		/* try DER format */
 		if (is_asn1(*blob)) {
@@ -124,8 +119,7 @@ bool load_coded_file(const char *filename,
 		}
 
 		/* a conversion error has occured */
-		if (verbose)
-			libreswan_log("  %s", ugh);
+		libreswan_log("ERROR: file rejected: %s", ugh);
 		freeanychunk(*blob);
 	}
 	return FALSE;
@@ -133,10 +127,8 @@ bool load_coded_file(const char *filename,
 
 /*
  *  Loads a X.509 or certificate
- * ??? Some error messages are suppressed if !verbose.
  */
 bool load_cert(const char *filename,
-	bool verbose,
 	const char *label, cert_t *cert)
 {
 	chunk_t blob = empty_chunk;
@@ -144,7 +136,7 @@ bool load_cert(const char *filename,
 	/* initialize cert struct */
 	cert->u.x509 = NULL;
 
-	if (load_coded_file(filename, verbose, label, &blob)) {
+	if (load_coded_file(filename, label, &blob)) {
 
 		x509cert_t *x509cert = alloc_thing(x509cert_t,
 						"x509cert");
@@ -196,7 +188,6 @@ bool cert_exists_in_nss(const char *nickname)
 }
 
 bool load_cert_from_nss(const char *nssHostCertNickName,
-			int verbose,
 			const char *label, cert_t *cert)
 {
 	chunk_t blob = empty_chunk;
@@ -223,9 +214,7 @@ bool load_cert_from_nss(const char *nssHostCertNickName,
 	clonetochunk(blob, nssCert->derCert.data, nssCert->derCert.len, label);
 
 	if (!is_asn1(blob)) {
-		if (verbose)
-			libreswan_log("  cert read from NSS db is not in DER format");
-		/* failure */
+		libreswan_log("  cert read from NSS db is not in DER format");
 		pfree(blob.ptr);
 		return FALSE;
 	} else {
@@ -261,15 +250,7 @@ void load_authcerts_from_nss(const char *type, u_char auth_flags)
 
 			cert_t cert;
 
-			/*
-			 * too verbose in single conf dir
-			 */
 			if (load_cert_from_nss(node->cert->nickname,
-#ifdef SINGLE_CONF_DIR
-						FALSE,
-#else
-						TRUE,
-#endif
 						type, &cert))
 				add_authcert(cert.u.x509, auth_flags);
 		}

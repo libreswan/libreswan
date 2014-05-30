@@ -33,7 +33,7 @@ extern bool pfkey_grp_sa(const struct kernel_sa *sa0,
 extern bool pfkey_del_sa(const struct kernel_sa *sa);
 extern bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 			     unsigned op, const char *opname);
-extern bool pfkey_was_eroute_idle(struct state *st, time_t idle_max);
+extern bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern void pfkey_set_debug(int cur_debug,
 			    libreswan_keying_debug_func_t debug_func,
 			    libreswan_keying_debug_func_t error_func);
@@ -50,7 +50,7 @@ extern bool pfkey_raw_eroute(const ip_address *this_host,
 			     unsigned int transport_proto,
 			     enum eroute_type esatype,
 			     const struct pfkey_proto_info *proto_info UNUSED,
-			     time_t use_lifetime UNUSED,
+			     deltatime_t use_lifetime UNUSED,
 			     unsigned long sa_priority,
 			     enum pluto_sadb_operations op,
 			     const char *text_said

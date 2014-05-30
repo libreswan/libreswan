@@ -27,12 +27,12 @@
 
 /* advance warning of imminent expiry of
  * cacerts, public keys, and crls
+ * unused: OCSP_CERT_WARNING_INTERVAL	(30 * secs_per_day)
+ * unused: ACERT_WARNING_INTERVAL	(1 * secs_per_day)
  */
-#define CA_CERT_WARNING_INTERVAL        30      /* days */
-#define OCSP_CERT_WARNING_INTERVAL      30      /* days */
-#define PUBKEY_WARNING_INTERVAL         14      /* days */
-#define CRL_WARNING_INTERVAL             7      /* days */
-#define ACERT_WARNING_INTERVAL           1      /* day */
+#define CA_CERT_WARNING_INTERVAL	(30 * secs_per_day)
+#define PUBKEY_WARNING_INTERVAL		(14 * secs_per_day)
+#define CRL_WARNING_INTERVAL		(7 * secs_per_day)
 
 /* access structure for RSA private keys */
 
@@ -57,7 +57,6 @@ typedef struct {
 
 extern chunk_t get_mycert(cert_t cert);
 extern bool load_cert(const char *filename,
-		      bool verbose,
 		      const char *label, cert_t *cert);
 
 extern void share_cert(cert_t cert);
@@ -66,11 +65,10 @@ extern void list_certs(bool utc);
 
 extern struct pubkey* allocate_RSA_public_key(const cert_t cert);
 extern bool load_coded_file(const char *filename,
-			    bool verbose,
 			    const char *type, chunk_t *blob);
 extern bool cert_exists_in_nss(const char *nickname);
 extern bool load_cert_from_nss(const char *nssHostCertNickName,
-			       int verbose, const char *label, cert_t *cert);
+			       const char *label, cert_t *cert);
 extern void load_authcerts_from_nss(const char *type, u_char auth_flags);
 
 #endif /* _CERTS_H */

@@ -619,10 +619,10 @@ enum_names ipcomp_transformid_names = {
 
 /* Identification type values */
 static const char *const ike_idtype_name[] = {
-        /* ID_FROMCERT = (-3), taken from certificate - private to Pluto */
-        /* ID_IMPOSSIBLE = (-2), private to Pluto */
-        /* ID_MYID = (-1), private to Pluto */
-        "ID_NONE" /* = 0, private to Pluto */
+	/* ID_FROMCERT = (-3), taken from certificate - private to Pluto */
+	/* ID_IMPOSSIBLE = (-2), private to Pluto */
+	/* ID_MYID = (-1), private to Pluto */
+	"ID_NONE", /* = 0, private to Pluto */
 	"ID_IPV4_ADDR", /* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
@@ -693,6 +693,7 @@ enum_names certpolicy_type_names = {
  * Oakley transform attributes
  * oakley_attr_bit_names does double duty: it is used for enum names
  * and bit names.
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
  */
 const char *const oakley_attr_bit_names[] = {
 	"OAKLEY_ENCRYPTION_ALGORITHM",
@@ -711,7 +712,6 @@ const char *const oakley_attr_bit_names[] = {
 	"OAKLEY_KEY_LENGTH",
 	"OAKLEY_FIELD_SIZE",
 	"OAKLEY_GROUP_ORDER",
-	"OAKLEY_BLOCK_SIZE",
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -1927,9 +1927,7 @@ enum_names rr_class_names = {
 
 static const char *const ppk_name[] = {
 	"PPK_PSK",
-	"PPK_DSS",
 	"PPK_RSA",
-	"PPK_PIN",
 	"PPK_XAUTH",
 	NULL
 };
@@ -2008,7 +2006,9 @@ const char *strip_prefix(const char *s, const char *prefix)
 }
 
 /*
- * find the value for a name in an enum_names table.  If not found, returns -1
+ * Find the value for a name in an enum_names table.  If not found, returns -1.
+ *
+ * Strings are compared without regard to case.
  *
  * ??? the table contains unsigned long values BUT the function returns an
  * int so there is some potential for overflow.
@@ -2023,7 +2023,7 @@ int enum_search(enum_names *ed, const char *str)
 		for (en = p->en_first; en <= p->en_last; en++) {
 			const char *ptr = p->en_names[en - p->en_first];
 
-			if (ptr != NULL && streq(ptr, str)) {
+			if (ptr != NULL && strcaseeq(ptr, str)) {
 				passert(en <= INT_MAX);
 				return en;
 			}

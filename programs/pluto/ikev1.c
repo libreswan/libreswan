@@ -1880,19 +1880,21 @@ void process_packet_tail(struct msg_digest **mdp)
 			 * is no negotiation of NAT-T method. Get it right.
 			 */
 			if (st != NULL && st->st_connection != NULL &&
-			    (st->st_connection->policy & POLICY_AGGRESSIVE) == 0)
+			    (st->st_connection->policy & POLICY_AGGRESSIVE) == LEMPTY)
 			{
 				switch (np) {
 				case ISAKMP_NEXT_NATD_RFC:
 				case ISAKMP_NEXT_NATOA_RFC:
 					if (st == NULL ||
-					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
+					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
 						/*
 						 * don't accept NAT-D/NAT-OA reloc directly in message,
 						 * unless we're using NAT-T RFC
 						 */
-						DBG_log("st_nat_traversal was: %u\n",
-							st->hidden_variables.st_nat_traversal);
+						DBG(DBG_NATT,
+						    DBG_log("st_nat_traversal was: %s",
+							    bitnamesof(natt_bit_names, 
+								       st->hidden_variables.st_nat_traversal)));
 						sd = NULL;
 					}
 					break;
@@ -2181,7 +2183,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	/* VERIFY that we only accept NAT-D/NAT-OE when they sent us the VID */
 	if ((md->chain[ISAKMP_NEXT_NATD_RFC] != NULL ||
 	     md->chain[ISAKMP_NEXT_NATOA_RFC] != NULL) &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
+	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
 		/*
 		 * don't accept NAT-D/NAT-OA reloc directly in message,
 		 * unless we're using NAT-T RFC
@@ -2402,42 +2404,30 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					 * rekeying.  The negative consequences seem
 					 * minor.
 					 */
-					delay = c->sa_ike_life_seconds;
+					delay = deltasecs(c->sa_ike_life_seconds);
 					if ((c->policy & POLICY_DONT_REKEY) ||
-					    delay >= st->st_oakley.life_seconds)
+					    delay >= deltasecs(st->st_oakley.life_seconds))
 					{
 						agreed_time = TRUE;
 						delay =
-						    st->st_oakley.life_seconds;
+						    deltasecs(st->st_oakley.life_seconds);
 					}
 				} else {
 					/* Delay is min of up to four things:
 					 * each can limit the lifetime.
 					 */
-					delay = c->sa_ipsec_life_seconds;
-					if (st->st_ah.present &&
-					    delay >=
-					      st->st_ah.attrs.life_seconds) {
-						agreed_time = TRUE;
-						delay =
-						   st->st_ah.attrs.life_seconds;
-					}
-					if (st->st_esp.present &&
-					    delay >=
-					        st->st_esp.attrs.life_seconds)
-					{
-						agreed_time = TRUE;
-						delay =
-						  st->st_esp.attrs.life_seconds;
-					}
-					if (st->st_ipcomp.present &&
-					    delay >=
-					      st->st_ipcomp.attrs.life_seconds)
-					{
-						agreed_time = TRUE;
-						delay =
-						  st->st_ipcomp.attrs.life_seconds;
-					}
+					delay = deltasecs(c->sa_ipsec_life_seconds);
+#define clamp_delay(trans) { \
+		if (st->trans.present && \
+		    delay >= deltasecs(st->trans.attrs.life_seconds)) { \
+			agreed_time = TRUE; \
+			delay = deltasecs(st->trans.attrs.life_seconds); \
+		} \
+	}
+					clamp_delay(st_ah);
+					clamp_delay(st_esp);
+					clamp_delay(st_ipcomp);
+#undef clamp_delay
 				}
 
 				/* By default, we plan to rekey.
@@ -2469,8 +2459,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					       EVENT_SA_EXPIRE;
 				}
 				if (kind != EVENT_SA_EXPIRE) {
-					unsigned long marg =
-						c->sa_rekey_margin;
+					time_t marg = deltasecs(
+						c->sa_rekey_margin);
 
 					if (smc->flags & SMF_INITIATOR) {
 						marg += marg *
@@ -2482,9 +2472,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						marg /= 2;
 					}
 
-					if ((unsigned long)delay > marg) {
+					if (delay > marg) {
 						delay -= marg;
-						st->st_margin = marg;
+						st->st_margin = deltatime(marg);
 					} else {
 						kind = EVENT_SA_EXPIRE;
 					}
@@ -2540,8 +2530,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * SA.
 		 */
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-			if (st->st_connection->dpd_delay > 0 &&
-			    st->st_connection->dpd_timeout > 0) {
+			if (deltasecs(st->st_connection->dpd_delay) > 0 &&
+			    deltasecs(st->st_connection->dpd_timeout) > 0) {
 				/* don't ignore failure */
 				if (dpd_init(st) == STF_FAIL)
 					result = STF_FAIL; /* fall through */
@@ -2783,10 +2773,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-        if (st->hidden_variables.st_nat_traversal &&
-	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
-	    ((id->isaid_doi_specific_b == 0) ||
-	     (id->isaid_doi_specific_b == pluto_nat_port))) {
+        if (st->hidden_variables.st_nat_traversal != LEMPTY &&
+	    id->isaid_doi_specific_a == IPPROTO_UDP &&
+	    (id->isaid_doi_specific_b == 0 ||
+	     id->isaid_doi_specific_b == pluto_nat_port)) {
 		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);

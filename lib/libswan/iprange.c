@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	int af;
 	int i;
 
-	if (argc == 2 && strcmp(argv[1], "-r") == 0) {
+	if (argc == 2 && streq(argv[1], "-r")) {
 		regress();
 		fprintf(stderr, "regress() returned?!?\n");
 		exit(1);
@@ -148,7 +148,7 @@ int main(int argc, char *argv[])
 
 	af = AF_INET;
 	i = 1;
-	if (strcmp(argv[i], "-6") == 0) {
+	if (streq(argv[i], "-6")) {
 		af = AF_INET6;
 		i++;
 	}

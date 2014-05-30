@@ -24,7 +24,7 @@
 #  define MYHACKFORTHIS 1
 # endif
 # include <endian.h>
-# if 0   /* kernel's <asm/byteorder.h> clashes with glibc's <netinet/in.h> */
+# if 0	/* kernel's <asm/byteorder.h> clashes with glibc's <netinet/in.h> */
 /* The problem (in RedHat 5.0) is the typing of the "longs" (32-bit values)
  * in the [nh]to[hn]l functions:
  * - <asm/byteorder.h> uses unsigned long

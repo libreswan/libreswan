@@ -41,6 +41,7 @@
 #include <stdio.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <libreswan.h>
 #if 0
 #include <linux/autoconf.h>    /* CONFIG_IPSEC_PFKEYv2 */
@@ -71,7 +72,7 @@
 struct encap_msghdr *em;
 
 char *progname;
-int debug = 0;
+bool debug = FALSE;
 int dumpsaref = 0;
 int saref_him = 0;
 int saref_me  = 0;
@@ -90,9 +91,7 @@ int alg = 0;
 #define XF_OTHER_ALG (XF_CLR - 1)       /* define magic XF_ symbol for alg_info's */
 #include <assert.h>
 const char *alg_string = NULL;          /* algorithm string */
-struct alg_info_esp *alg_info = NULL;   /* algorithm info got from string */
 struct esp_info *esp_info = NULL;       /* esp info from 1st (only) element */
-const char *alg_err;                    /* auxiliar for parsing errors */
 int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 
 int replay_window = 0;
@@ -114,40 +113,36 @@ enum life_type {
 	life_maxtype = 5
 };
 
-#define streql(_a, _b) (!strcmp((_a), (_b)))
-
 static const char *usage_string =
-	"\
-Usage:\n\
-	in the following, <SA> is: --af <inet | inet6> --edst <dstaddr> --spi <spi> --proto <proto>\n\
-                               OR: --said <proto><.|:><spi>@<dstaddr>\n\
-	                  <life> is: --life <soft|hard>-<allocations|bytes|addtime|usetime|packets>=<value>[,...]\n\
-spi --clear\n\
-spi --help\n\
-spi --version\n\
-spi\n\
-spi --del <SA>\n\
-spi --ip4 <SA> --src <encap-src> --dst <encap-dst>\n\
-spi --ip6 <SA> --src <encap-src> --dst <encap-dst>\n\
-spi --ah <algo> <SA> [<life> ][ --replay_window <replay_window> ] --authkey <key>\n\
-	where <algo> is one of:	hmac-md5-96 | hmac-sha1-96 | something-loaded \n\
-spi --esp <algo> <SA> [<life> ][ --replay_window <replay-window> ] --enckey <ekey> --authkey <akey>\n\
-	where <algo> is one of:	3des-md5-96 | 3des-sha1-96\n | something-loaded\
-	also, --natt will enable UDP encapsulation, and --sport/--dport will set\n\
-        the source/destination UDP ports.\n\
-spi --esp <algo> <SA> [<life> ][ --replay_window <replay-window> ] --enckey <ekey>\n\
-	where <algo> is:	3des\n\
-spi --comp <algo> <SA>\n\
-	where <algo> is:	deflate | lzs\n\
-[ --sarefme=XXX ]  set the saref to use for this SA\n\
-[ --sarefhim=XXX ] set the saref to use for paired SA\n\
-[ --dumpsaref ] show the saref allocated\n\
-[ --outif=XXX ] set the outgoing interface to use \n\
-[ --debug ] is optional to any spi command.\n\
-[ --label <label> ] is optional to any spi command.\n\
-[ --listenreply ]   is optional, and causes the command to stick\n\
-                    around and listen to what the PF_KEY socket says.\n\
-";
+	"Usage:\n"
+	"	in the following, <SA> is: --af <inet | inet6> --edst <dstaddr> --spi <spi> --proto <proto>\n"
+	"                               OR: --said <proto><.|:><spi>@<dstaddr>\n"
+	"	                  <life> is: --life <soft|hard>-<allocations|bytes|addtime|usetime|packets>=<value>[,...]\n"
+	"spi --clear\n"
+	"spi --help\n"
+	"spi --version\n"
+	"spi\n"
+	"spi --del <SA>\n"
+	"spi --ip4 <SA> --src <encap-src> --dst <encap-dst>\n"
+	"spi --ip6 <SA> --src <encap-src> --dst <encap-dst>\n"
+	"spi --ah <algo> <SA> [<life> ][ --replay_window <replay_window> ] --authkey <key>\n"
+	"	where <algo> is one of:	hmac-md5-96 | hmac-sha1-96 | something-loaded \n"
+	"spi --esp <algo> <SA> [<life> ][ --replay_window <replay-window> ] --enckey <ekey> --authkey <akey>\n"
+	"	where <algo> is one of:	3des-md5-96 | 3des-sha1-96\n | something-loaded"
+	"	also, --natt will enable UDP encapsulation, and --sport/--dport will set\n"
+	"        the source/destination UDP ports.\n"
+	"spi --esp <algo> <SA> [<life> ][ --replay_window <replay-window> ] --enckey <ekey>\n"
+	"	where <algo> is:	3des\n"
+	"spi --comp <algo> <SA>\n"
+	"	where <algo> is:	deflate | lzs\n"
+	"[ --sarefme=XXX ]  set the saref to use for this SA\n"
+	"[ --sarefhim=XXX ] set the saref to use for paired SA\n"
+	"[ --dumpsaref ] show the saref allocated\n"
+	"[ --outif=XXX ] set the outgoing interface to use \n"
+	"[ --debug ] is optional to any spi command.\n"
+	"[ --label <label> ] is optional to any spi command.\n"
+	"[ --listenreply ]   is optional, and causes the command to stick\n"
+	"                    around and listen to what the PF_KEY socket says.\n";
 
 static void usage(char *s, FILE *f)
 {
@@ -195,7 +190,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				optargp,
 				(int)sizeof("soft"));
 		}
-		if (*(optargp++) != '-') {
+		if (*optargp++ != '-') {
 			fprintf(stderr,
 				"%s: expected '-' after severity of lifetime parameter to --life option.\n",
 				progname);
@@ -257,7 +252,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				life_opt[life_severity][life_type]);
 			return 1;
 		}
-		if (*(optargp++) != '=') {
+		if (*optargp++ != '=') {
 			fprintf(stderr,
 				"%s: expected '=' after type of lifetime parameter to --life option.\n",
 				progname);
@@ -283,10 +278,15 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 			usage(progname, stderr);
 			return 1;
 		}
+
 		life[life_severity][life_type] = strtoul(optargp, &endptr, 0);
 
-		if (!((endptr == optargp + strlen(optargp)) ||
-		      (endptr == optargp + strcspn(optargp, ", ")))) {
+		switch (*endptr) {
+		case '\0':
+		case ',':
+		case ' ':
+			break;	/* OK */
+		default:
 			fprintf(stderr,
 				"%s: Invalid character='%c' at offset %d in lifetime option parameter: '%s', parameter string is %d characters long, %d valid value characters found.\n",
 				progname,
@@ -304,7 +304,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				(unsigned long)life[life_severity][life_type]);
 		}
 		optargp = endptr + 1;
-	} while (*endptr == ',' || isspace(*endptr));
+	} while (*endptr != '\0');
 
 	return 0;
 }
@@ -367,9 +367,12 @@ static bool pfkey_build(int error,
 
 static int decode_esp(char *algname)
 {
+	char err_buf[256] = "";	/* ??? big enough? */
 	int esp_alg;
 
-	if ((alg_info = alg_info_esp_create_from_str(algname, &alg_err))) {
+	struct alg_info_esp *alg_info = alg_info_esp_create_from_str(algname, err_buf, sizeof(err_buf));
+
+	if (alg_info != NULL) {
 		int esp_ealg_id, esp_aalg_id;
 
 		esp_alg = XF_OTHER_ALG;
@@ -398,7 +401,7 @@ static int decode_esp(char *algname)
 
 			proc_read_ok++;
 
-			ugh = kernel_alg_esp_enc_ok(esp_ealg_id, 0, 0);
+			ugh = kernel_alg_esp_enc_ok(esp_ealg_id, 0);
 			if (ugh != NULL) {
 				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
 					"not present - %s\n",
@@ -422,11 +425,71 @@ static int decode_esp(char *algname)
 		}
 	} else {
 		fprintf(stderr,
-			"%s: Invalid encryption algorithm '%s' follows '--esp' option.\n",
-			progname, algname);
+			"%s: Invalid encryption algorithm '%s' follows '--esp' option %s\n",
+			progname, algname, err_buf);
 		exit(1);
 	}
 	return esp_alg;
+}
+
+static void decode_blob(const char *optarg, const char *name, unsigned char **pp, size_t *lp)
+{
+	char err_buf[TTODATAV_BUF];
+	size_t len;
+	/*
+	 * err_t ttodatav(const char *src, size_t srclen, int base,
+         *                char *dst, size_t dstlen, size_t *lenp,
+         *                char *errp, size_t errlen, int flags);
+	 */
+	err_t ugh = ttodatav(optarg, 0, 0, NULL, 0, &len, err_buf, sizeof(err_buf), 0);
+
+	if (ugh != NULL) {
+		fprintf(stderr,
+			"%s: malformed %s: %s\n",
+			progname, name, ugh);
+		exit(1);
+	}
+	*pp = malloc(len);
+	if (*pp == NULL) {
+		fprintf(stderr,
+			"%s: Memory allocation error for %s.\n",
+			progname, name);
+		exit(1);
+	}
+	ugh = ttodatav(optarg, 0, 0, (char *)*pp, len, lp, err_buf, sizeof(err_buf), 0);
+}
+
+static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
+	char *lo[life_maxtype], u_int32_t l[life_maxtype])
+{
+	if (lo[life_alloc] != NULL ||
+	    lo[life_bytes] != NULL ||
+	    lo[life_addtime] != NULL ||
+	    lo[life_usetime] != NULL ||
+	    lo[life_packets] != NULL) {
+		int error = pfkey_lifetime_build(
+			&extensions[exttype],
+			exttype,
+			l[life_alloc],
+			l[life_bytes],
+			l[life_addtime],
+			l[life_usetime],
+			l[life_packets]);
+
+		if (error != 0)
+		{
+			fprintf(stderr,
+				"%s: Trouble building %s extension, error=%d.\n",
+				progname, extname, error);
+			pfkey_extensions_free(extensions);
+			exit(1);
+		}
+		if (debug) {
+			fprintf(stdout,
+				"%s: %s extension assembled.\n",
+				progname, extname);
+		}
+	}
 }
 
 int main(int argc, char *argv[])
@@ -434,7 +497,6 @@ int main(int argc, char *argv[])
 	char *endptr;
 	__u32 spi = 0;
 	int c;
-/*	int ret; */
 	ip_said said;
 	const char* error_s;
 	char ipaddr_txt[ADDRTOT_BUF];
@@ -452,12 +514,6 @@ int main(int argc, char *argv[])
 	struct sadb_msg *pfkey_msg;
 	char *edst_opt, *spi_opt, *proto_opt, *af_opt, *said_opt, *dst_opt,
 	*src_opt;
-
-#if 0
-	ip_address pfkey_address_p_ska;
-	ip_address pfkey_ident_s_ska;
-	ip_address pfkey_ident_d_ska;
-#endif
 	u_int32_t natt;
 	u_int16_t sport, dport;
 	uint32_t life[life_maxsever][life_maxtype];
@@ -478,6 +534,7 @@ int main(int argc, char *argv[])
 		src_opt = NULL;
 	{
 		int i, j;
+
 		for (i = 0; i < life_maxsever; i++) {
 			for (j = 0; j < life_maxtype; j++) {
 				life_opt[i][j] = NULL;
@@ -489,9 +546,12 @@ int main(int argc, char *argv[])
 	while ((c = getopt_long(argc, argv,
 				"" /*"H:P:Z:46dcA:E:e:s:a:w:i:D:S:hvgl:+:f:"*/,
 				longopts, 0)) != EOF) {
+		unsigned long u;
+		err_t ugh;
+		
 		switch (c) {
 		case 'g':
-			debug = 1;
+			debug = TRUE;
 			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
 			/* paul: this is a plutoism? cur_debugging = 0xffffffff; */
 			argcount--;
@@ -508,35 +568,38 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'b':  /* set the SAref to use */
-			saref_me = strtoul(optarg, &endptr, 0);
-			if (!(endptr == optarg + strlen(optarg))) {
+			ugh = ttoulb(optarg, 0, 0, INT_MAX, &u);
+			if (ugh != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in SAREFi parameter: %s\n",
-					progname, optarg);
+					"%s: Invalid SAREFi parameter \"%s\": %s\n",
+					progname, optarg, ugh);
 				exit(1);
 			}
+			saref_me = u;
 			argcount--;
 			break;
 
 		case 'B':  /* set the SAref to use for outgoing packets */
-			saref_him = strtoul(optarg, &endptr, 0);
-			if (!(endptr == optarg + strlen(optarg))) {
+			ugh = ttoulb(optarg, 0, 0, INT_MAX, &u);
+			if (ugh != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in SAREFo parameter: %s\n",
-					progname, optarg);
+					"%s: Invalid SAREFo parameter \"%s\": %s\n",
+					progname, optarg, ugh);
 				exit(1);
 			}
+			saref_him = u;
 			argcount--;
 			break;
 
 		case 'O':  /* set interface from which packet should arrive */
-			outif = strtoul(optarg, &endptr, 0);
-			if (!(endptr == optarg + strlen(optarg))) {
+			ugh = ttoulb(optarg, 0, 0, INT_MAX, &u);
+			if (ugh != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in outif parameter: %s\n",
-					progname, optarg);
+					"%s: Invalid outif parameter \"%s\": %s\n",
+					progname, optarg, ugh);
 				exit(1);
 			}
+			outif = u;
 			argcount--;
 			break;
 
@@ -564,9 +627,9 @@ int main(int argc, char *argv[])
 					progname);
 				exit(1);
 			}
-			if (!strcmp(optarg, "hmac-md5-96")) {
+			if (streq(optarg, "hmac-md5-96")) {
 				alg = XF_AHHMACMD5;
-			} else if (!strcmp(optarg, "hmac-sha1-96")) {
+			} else if (streq(optarg, "hmac-sha1-96")) {
 				alg = XF_AHHMACSHA1;
 			} else {
 				fprintf(stderr,
@@ -580,6 +643,7 @@ int main(int argc, char *argv[])
 					alg);
 			}
 			break;
+
 		case 'P':
 			if (alg) {
 				fprintf(stderr,
@@ -596,6 +660,7 @@ int main(int argc, char *argv[])
 					alg);
 			}
 			break;
+
 		case 'Z':
 			if (alg) {
 				fprintf(stderr,
@@ -603,9 +668,9 @@ int main(int argc, char *argv[])
 					progname);
 				exit(1);
 			}
-			if (!strcmp(optarg, "deflate")) {
+			if (streq(optarg, "deflate")) {
 				alg = XF_COMPDEFLATE;
-			} else if (!strcmp(optarg, "lzs")) {
+			} else if (streq(optarg, "lzs")) {
 				alg = XF_COMPLZS;
 			} else {
 				fprintf(stderr,
@@ -619,6 +684,7 @@ int main(int argc, char *argv[])
 					alg);
 			}
 			break;
+
 		case '4':
 			if (alg) {
 				fprintf(stderr,
@@ -634,6 +700,7 @@ int main(int argc, char *argv[])
 					alg);
 			}
 			break;
+
 		case '6':
 			if (alg) {
 				fprintf(stderr,
@@ -649,6 +716,7 @@ int main(int argc, char *argv[])
 					alg);
 			}
 			break;
+
 		case 'd':
 			if (alg) {
 				fprintf(stderr,
@@ -663,6 +731,7 @@ int main(int argc, char *argv[])
 					alg);
 			}
 			break;
+
 		case 'c':
 			if (alg) {
 				fprintf(stderr,
@@ -677,6 +746,7 @@ int main(int argc, char *argv[])
 					alg);
 			}
 			break;
+
 		case 'e':
 			if (said_opt) {
 				fprintf(stderr,
@@ -708,56 +778,55 @@ int main(int argc, char *argv[])
 					ipaddr_txt);
 			}
 			break;
+
 		case 's':
-			if (said_opt) {
+			if (said_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, SPI parameter redefined:%s, already defined in SA:%s\n",
 					progname, optarg, said_opt);
 				exit(1);
 			}
-			if (spi_opt) {
+			if (spi_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, SPI parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, spi_opt);
 				exit(1);
 			}
-			spi = strtoul(optarg, &endptr, 0);
-			if (!(endptr == optarg + strlen(optarg))) {
+			ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFFFFFFFFFF, &u);
+			if (ugh == NULL && u < 0x100)
+				ugh = "0 - 0xFF are reserved";
+			if (ugh != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in SPI parameter: %s\n",
-					progname, optarg);
+					"%s: Invalid SPI parameter \"%s\": %s\n",
+					progname, optarg, ugh);
 				exit(1);
 			}
-			if (spi < 0x100) {
-				fprintf(stderr,
-					"%s: Illegal reserved spi: %s => 0x%x Must be larger than 0x100.\n",
-					progname, optarg, spi);
-				exit(1);
-			}
+			spi = u;
 			spi_opt = optarg;
 			break;
+
 		case 'p':
-			if (said_opt) {
+			if (said_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, PROTO parameter redefined:%s, already defined in SA:%s\n",
 					progname, optarg, said_opt);
 				exit(1);
 			}
-			if (proto_opt) {
+			if (proto_opt != NULL) {
 				fprintf(stderr,
 					"%s: Error, PROTO parameter redefined:%s, already defined as:%s\n",
 					progname, optarg, proto_opt);
 				exit(1);
 			}
-			if (!strcmp(optarg, "ah"))
+			if (streq(optarg, "ah"))
 				proto = SA_AH;
-			if (!strcmp(optarg, "esp"))
+			else if (streq(optarg, "esp"))
 				proto = SA_ESP;
-			if (!strcmp(optarg, "tun"))
+			else if (streq(optarg, "tun"))
 				proto = SA_IPIP;
-			if (!strcmp(optarg, "comp"))
+			else if (streq(optarg, "comp"))
 				proto = SA_COMP;
-			if (proto == 0) {
+			else {
 				fprintf(stderr,
 					"%s: Invalid PROTO parameter: %s\n",
 					progname, optarg);
@@ -765,6 +834,7 @@ int main(int argc, char *argv[])
 			}
 			proto_opt = optarg;
 			break;
+
 		case 'a':
 			if (said_opt) {
 				fprintf(stderr,
@@ -778,23 +848,19 @@ int main(int argc, char *argv[])
 					progname, optarg, af_opt);
 				exit(1);
 			}
-			if (strcmp(optarg, "inet") == 0) {
+			if (streq(optarg, "inet")) {
 				address_family = AF_INET;
 				/* currently we ensure that all addresses belong to the same address family */
 				anyaddr(address_family, &dst);
 				anyaddr(address_family, &edst);
 				anyaddr(address_family, &src);
-			}
-			if (strcmp(optarg, "inet6") == 0) {
+			} else if (streq(optarg, "inet6")) {
 				address_family = AF_INET6;
 				/* currently we ensure that all addresses belong to the same address family */
 				anyaddr(address_family, &dst);
 				anyaddr(address_family, &edst);
 				anyaddr(address_family, &src);
-			}
-			if ((strcmp(optarg,
-				    "inet") != 0) &&
-			    (strcmp(optarg, "inet6") != 0)) {
+			} else {
 				fprintf(stderr,
 					"%s: Invalid ADDRESS FAMILY parameter: %s.\n",
 					progname, optarg);
@@ -802,6 +868,7 @@ int main(int argc, char *argv[])
 			}
 			af_opt = optarg;
 			break;
+
 		case 'I':
 			if (said_opt) {
 				fprintf(stderr,
@@ -855,73 +922,18 @@ int main(int argc, char *argv[])
 			anyaddr(address_family, &src);
 			said_opt = optarg;
 			break;
+
 		case 'A':
-			if (optarg[0] == '0') {
-				switch (optarg[1]) {
-				case 't':
-				case 'x':
-				case 's':
-					break;
-				default:
-					fprintf(stderr,
-						"%s: Authentication key must have a '0x', '0t' or '0s' prefix to select the format: %s\n",
-						progname, optarg);
-					exit(1);
-				}
-			}
-			authkeylen = atodata(optarg, 0, NULL, 0);
-			if (!authkeylen) {
-				fprintf(stderr,
-					"%s: unknown format or syntax error in authentication key: %s\n",
-					progname, optarg);
-				exit(1);
-			}
-			authkey = malloc(authkeylen);
-			if (authkey == NULL) {
-				fprintf(stderr,
-					"%s: Memory allocation error.\n",
-					progname);
-				exit(1);
-			}
-			memset(authkey, 0, authkeylen);
-			authkeylen = atodata(optarg, 0, (char *)authkey,
-					     authkeylen);
+			decode_blob(optarg, "Authentication Key", &authkey, &authkeylen);
 			break;
+
 		case 'E':
-			if (optarg[0] == '0') {
-				switch (optarg[1]) {
-				case 't':
-				case 'x':
-				case 's':
-					break;
-				default:
-					fprintf(stderr,
-						"%s: Encryption key must have a '0x', '0t' or '0s' prefix to select the format: %s\n",
-						progname, optarg);
-					exit(1);
-				}
-			}
-			enckeylen = atodata(optarg, 0, NULL, 0);
-			if (!enckeylen) {
-				fprintf(stderr,
-					"%s: unknown format or syntax error in encryption key: %s\n",
-					progname, optarg);
-				exit(1);
-			}
-			enckey = malloc(enckeylen);
-			if (enckey == NULL) {
-				fprintf(stderr,
-					"%s: Memory allocation error.\n",
-					progname);
-				exit(1);
-			}
-			memset(enckey, 0, enckeylen);
-			enckeylen = atodata(optarg, 0, (char *)enckey,
-					    enckeylen);
+			decode_blob(optarg, "Encryption Key", &enckey, &enckeylen);
 			break;
+
 		case 'w':
 			replay_window = strtoul(optarg, &endptr, 0);
-			if (!(endptr == optarg + strlen(optarg))) {
+			if (*endptr != '\0') {
 				fprintf(stderr,
 					"%s: Invalid character in replay_window parameter: %s\n",
 					progname, optarg);
@@ -934,37 +946,11 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			break;
+
 		case 'i':
-			if (optarg[0] == '0') {
-				switch (optarg[1]) {
-				case 't':
-				case 'x':
-				case 's':
-					break;
-				default:
-					fprintf(stderr,
-						"%s: IV must have a '0x', '0t' or '0s' prefix to select the format, found '%c'.\n",
-						progname, optarg[1]);
-					exit(1);
-				}
-			}
-			ivlen = atodata(optarg, 0, NULL, 0);
-			if (!ivlen) {
-				fprintf(stderr,
-					"%s: unknown format or syntax error in IV: %s\n",
-					progname, optarg);
-				exit(1);
-			}
-			iv = malloc(ivlen);
-			if (iv == NULL) {
-				fprintf(stderr,
-					"%s: Memory allocation error.\n",
-					progname);
-				exit(1);
-			}
-			memset(iv, 0, ivlen);
-			ivlen = atodata(optarg, 0, (char *)iv, ivlen);
+			decode_blob(optarg, "IV", &iv, &ivlen);
 			break;
+
 		case 'D':
 			if (dst_opt) {
 				fprintf(stderr,
@@ -990,38 +976,52 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'F':  /* src port */
-			sport = strtoul(optarg, &endptr, 0);
-			if (!(endptr == optarg + strlen(optarg))) {
-				fprintf(stderr,
-					"%s: Invalid character in source parameter: %s\n",
-					progname, optarg);
-				exit(1);
+			{
+				unsigned long u;
+				err_t ugh = ttoulb(optarg, 0, 0, 0xFFFF, &u);
+
+				if (ugh != NULL) {
+					fprintf(stderr,
+						"%s: Invalid source port parameter \"%s\": %s\n",
+						progname, optarg, ugh);
+					exit(1);
+				}
+				sport = u;
 			}
 			break;
 
 		case 'G':  /* dst port */
-			dport = strtoul(optarg, &endptr, 0);
-			if (!(endptr == optarg + strlen(optarg))) {
-				fprintf(stderr,
-					"%s: Invalid character in source parameter: %s\n",
-					progname, optarg);
-				exit(1);
+			{
+				unsigned long u;
+				err_t ugh = ttoulb(optarg, 0, 0, 0xFFFF, &u);
+
+				if (ugh != NULL) {
+					fprintf(stderr,
+						"%s: Invalid destination port parameter \"%s\": %s\n",
+						progname, optarg, ugh);
+					exit(1);
+				}
+				dport = u;
 			}
 			break;
 
 		case 'N':  /* nat-type */
-			if (strcasecmp(optarg, "nonesp") == 0) {
+			if (strcaseeq(optarg, "nonesp")) {
 				natt = ESPINUDP_WITH_NON_ESP;
-			} else if (strcasecmp(optarg, "none") == 0) {
+			} else if (strcaseeq(optarg, "none")) {
 				natt = 0;
 			} else {
-				natt = strtoul(optarg, &endptr, 0);
-				if (!(endptr == optarg + strlen(optarg))) {
+				/* ??? what does this do?  Where is it documented? */
+				unsigned long u;
+				err_t ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFF, &u);
+
+				if (ugh != NULL) {
 					fprintf(stderr,
-						"%s: Invalid character in source parameter: %s\n",
-						progname, optarg);
+						"%s: Invalid character in natt parameter \"%s\": %s\n",
+						progname, optarg, ugh);
 					exit(1);
 				}
+				natt = u;
 			}
 			break;
 
@@ -1048,22 +1048,27 @@ int main(int argc, char *argv[])
 					ipaddr_txt);
 			}
 			break;
+
 		case 'h':
 			usage(progname, stdout);
 			exit(0);
+
 		case '?':
 			usage(progname, stderr);
 			exit(1);
+
 		case 'v':
 			fprintf(stdout, "%s, %s\n", progname,
 				ipsec_version_code());
 			exit(1);
+
 		case 'f':
 			if (parse_life_options(life,
 					       life_opt,
 					       optarg) != 0)
 				exit(1);
 			break;
+
 		default:
 			fprintf(stderr,
 				"%s: unrecognized option '%c', update option processing.\n",
@@ -1076,7 +1081,7 @@ int main(int argc, char *argv[])
 			progname);
 	}
 
-	if ( ((stat("/proc/net/pfkey", &sts)) == 0) ) {
+	if (stat("/proc/net/pfkey", &sts) == 0) {
 		fprintf(stderr,
 			"%s: NETKEY does not use the ipsec spi command. Use 'ip xfrm' instead.\n",
 			progname);
@@ -1085,6 +1090,7 @@ int main(int argc, char *argv[])
 
 	if (argcount == 1) {
 		int ret = 1;
+
 		if ((stat("/proc/net/ipsec_spi", &sts)) != 0) {
 			fprintf(stderr,
 				"%s: No spi - no IPsec support in kernel (are the modules loaded?)\n",
@@ -1235,14 +1241,15 @@ int main(int argc, char *argv[])
 	/*   Lifetime(HS) could be added before addresses. */
 	pfkey_extensions_init(extensions);
 
-	if ((error = pfkey_msg_hdr_build(&extensions[0],
-					 (alg == XF_DEL ? SADB_DELETE :
-					   alg == XF_CLR ? SADB_FLUSH :
-					   SADB_ADD),
-					 proto2satype(proto),
-					 0,
-					 ++pfkey_seq,
-					 mypid))) {
+	error = pfkey_msg_hdr_build(&extensions[0],
+				    alg == XF_DEL ? SADB_DELETE :
+					alg == XF_CLR ? SADB_FLUSH :
+					SADB_ADD,
+				    proto2satype(proto),
+				    0,
+				    ++pfkey_seq,
+				    mypid);
+	if (error != 0) {
 		fprintf(stderr,
 			"%s: Trouble building message header, error=%d.\n",
 			progname, error);
@@ -1294,7 +1301,8 @@ int main(int argc, char *argv[])
 		sab.sa_base.sadb_x_reserved[2] = 0;
 		sab.sa_base.sadb_x_reserved[3] = 0;
 
-		if ((error = pfkey_sa_builds(&extensions[SADB_EXT_SA], sab))) {
+		error = pfkey_sa_builds(&extensions[SADB_EXT_SA], sab);
+		if (error != 0) {
 			fprintf(stderr,
 				"%s: Trouble building sa extension, error=%d.\n",
 				progname, error);
@@ -1316,9 +1324,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (outif != 0) {
-			if ((error = pfkey_outif_build(&extensions[
+			error = pfkey_outif_build(&extensions[
 							   SADB_X_EXT_PLUMBIF],
-						       outif))) {
+						  outif);
+			if (error != 0) {
 				fprintf(stderr,
 					"%s: Trouble building outif extension, error=%d.\n",
 					progname, error);
@@ -1343,6 +1352,7 @@ int main(int argc, char *argv[])
 
 		if (debug) {
 			int i, j;
+
 			for (i = 0; i < life_maxsever; i++) {
 				for (j = 0; j < life_maxtype; j++) {
 					fprintf(stdout,
@@ -1353,59 +1363,9 @@ int main(int argc, char *argv[])
 				}
 			}
 		}
-		if (life_opt[life_soft][life_alloc] != NULL ||
-		    life_opt[life_soft][life_bytes] != NULL ||
-		    life_opt[life_soft][life_addtime] != NULL ||
-		    life_opt[life_soft][life_usetime] != NULL ||
-		    life_opt[life_soft][life_packets] != NULL) {
-			if ((error = pfkey_lifetime_build(
-				&extensions[SADB_EXT_LIFETIME_SOFT],
-				SADB_EXT_LIFETIME_SOFT,
-				life[life_soft][life_alloc],
-				life[life_soft][life_bytes],
-				life[life_soft][life_addtime],
-				life[life_soft][life_usetime],
-				life[life_soft][life_packets])))
-			{
-				fprintf(stderr,
-					"%s: Trouble building lifetime_s extension, error=%d.\n",
-					progname, error);
-				pfkey_extensions_free(extensions);
-				exit(1);
-			}
-			if (debug) {
-				fprintf(stdout,
-					"%s: lifetime_s extension assembled.\n",
-					progname);
-			}
-		}
 
-		if (life_opt[life_hard][life_alloc] != NULL ||
-		    life_opt[life_hard][life_bytes] != NULL ||
-		    life_opt[life_hard][life_addtime] != NULL ||
-		    life_opt[life_hard][life_usetime] != NULL ||
-		    life_opt[life_hard][life_packets] != NULL) {
-			if ((error = pfkey_lifetime_build(
-				&extensions[SADB_EXT_LIFETIME_HARD],
-				SADB_EXT_LIFETIME_HARD,
-				life[life_hard][life_alloc],
-				life[life_hard][life_bytes],
-				life[life_hard][life_addtime],
-				life[life_hard][life_usetime],
-				life[life_hard][life_packets])))
-			{
-				fprintf(stderr,
-					"%s: Trouble building lifetime_h extension, error=%d.\n",
-					progname, error);
-				pfkey_extensions_free(extensions);
-				exit(1);
-			}
-			if (debug) {
-				fprintf(stdout,
-					"%s: lifetime_h extension assembled.\n",
-					progname);
-			}
-		}
+		emit_lifetime("lifetime_s", SADB_EXT_LIFETIME_SOFT, extensions, life_opt[life_soft], life[life_soft]);
+		emit_lifetime("lifetime_h", SADB_EXT_LIFETIME_HARD, extensions, life_opt[life_hard], life[life_hard]);
 
 		if (debug) {
 			addrtot(&src, 0, ipaddr_txt, sizeof(ipaddr_txt));
@@ -1414,12 +1374,12 @@ int main(int argc, char *argv[])
 				progname, ipaddr_txt);
 		}
 
-		if ((error = pfkey_address_build(&extensions[
-							 SADB_EXT_ADDRESS_SRC],
-						 SADB_EXT_ADDRESS_SRC,
-						 0,
-						 0,
-						 sockaddrof(&src)))) {
+		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_SRC],
+					    SADB_EXT_ADDRESS_SRC,
+					    0,
+					    0,
+					    sockaddrof(&src));
+		if (error != 0) {
 			addrtot(&src, 0, ipaddr_txt, sizeof(ipaddr_txt));
 			fprintf(stderr,
 				"%s: Trouble building address_s extension (%s), error=%d.\n",
@@ -1428,12 +1388,12 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 
-		if ((error = pfkey_address_build(&extensions[
-							 SADB_EXT_ADDRESS_DST],
-						 SADB_EXT_ADDRESS_DST,
-						 0,
-						 0,
-						 sockaddrof(&edst)))) {
+		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_DST],
+					    SADB_EXT_ADDRESS_DST,
+					    0,
+					    0,
+					    sockaddrof(&edst));
+		if (error != 0) {
 			addrtot(&edst, 0, ipaddr_txt, sizeof(ipaddr_txt));
 			fprintf(stderr,
 				"%s: Trouble building address_d extension (%s), error=%d.\n",
@@ -1447,11 +1407,11 @@ int main(int argc, char *argv[])
 		case XF_OTHER_ALG:
 			if (!authalg)
 				break;
-			if ((error = pfkey_key_build(&extensions[
-							     SADB_EXT_KEY_AUTH],
-						     SADB_EXT_KEY_AUTH,
-						     authkeylen * 8,
-						     authkey))) {
+			error = pfkey_key_build(&extensions[SADB_EXT_KEY_AUTH],
+						SADB_EXT_KEY_AUTH,
+						authkeylen * 8,
+						authkey);
+			if (error != 0) {
 				fprintf(stderr,
 					"%s: Trouble building key_a extension, error=%d.\n",
 					progname, error);
@@ -1470,12 +1430,11 @@ int main(int argc, char *argv[])
 
 		switch (alg) {
 		case XF_OTHER_ALG:
-			if ((error = pfkey_key_build(&extensions[
-							     SADB_EXT_KEY_ENCRYPT
-						     ],
-						     SADB_EXT_KEY_ENCRYPT,
-						     enckeylen * 8,
-						     enckey))) {
+			error = pfkey_key_build(&extensions[SADB_EXT_KEY_ENCRYPT],
+						SADB_EXT_KEY_ENCRYPT,
+						enckeylen * 8,
+						enckey);
+			if (error != 0) {
 				fprintf(stderr,
 					"%s: Trouble building key_e extension, error=%d.\n",
 					progname, error);
@@ -1561,7 +1520,8 @@ int main(int argc, char *argv[])
 		fprintf(stdout, "%s: assembling pfkey msg....\n",
 			progname);
 	}
-	if ((error = pfkey_msg_build(&pfkey_msg, extensions, EXT_BITS_IN))) {
+	error = pfkey_msg_build(&pfkey_msg, extensions, EXT_BITS_IN);
+	if (error != 0) {
 		fprintf(stderr,
 			"%s: Trouble building pfkey message, error=%d.\n",
 			progname, error);

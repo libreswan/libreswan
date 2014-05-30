@@ -1,4 +1,4 @@
-ipsec auto --up north--east-l2tp
+ipsec auto --up north-east-l2tp
 echo "c server" > /var/run/xl2tpd/l2tp-control
 sleep 5
 ipsec look

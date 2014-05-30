@@ -52,7 +52,7 @@ int add_debugging = DBG_EMITTING | DBG_CONTROL | DBG_CONTROLMORE |
 
 #include "seam_recv1i.c"
 
-long crl_check_interval = 0;
+deltatime_t crl_check_interval = { 0 };
 
 main(int argc, char *argv[]){
 	int len;

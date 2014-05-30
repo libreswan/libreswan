@@ -62,8 +62,8 @@ The destination/SPI/protocol combination is used to select a relevant SA.
 for discussion of how multiple transforms are combined.)</para>
 
 <para>An
-<emphasis remap='I'>spi ,</emphasis>
-<emphasis remap='I'>proto,</emphasis>
+<emphasis remap='I'>spi</emphasis>,
+<emphasis remap='I'>proto</emphasis>,
 <emphasis remap='I'>daddr</emphasis>
 and
 <emphasis remap='I'>address_family</emphasis>

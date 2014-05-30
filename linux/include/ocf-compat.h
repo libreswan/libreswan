@@ -354,7 +354,7 @@ static inline int ocf_run_thread(void *arg)
 
 #define kthread_bind(t, cpu)     /**/
 
-#define kthread_should_stop()   (strcmp(current->comm, "stopping") == 0)
+#define kthread_should_stop()   streq(current->comm, "stopping")
 
 #define kthread_stop(t) \
 	({ \

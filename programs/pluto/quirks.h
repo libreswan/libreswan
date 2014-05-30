@@ -15,9 +15,13 @@
 #ifndef _QUIRKS_H_
 #define _QUIRKS_H_
 
+#include "known_vendorid.h"	/* for enum known_vendorid */
+
 /*
  * PAUL: Why are the quirks in the message digest and not in the state?
  *       EECK: they are in both! Candidate to phase out completely
+ *
+ * message digest quirks are merged into state quirks by merge_quirks.
  */
 
 /**
@@ -28,11 +32,13 @@ struct isakmp_quirks {
 	bool xauth_ack_msgid;                   /**< Whether to reset the msgid after an
 	                                         * xauth set, such as for SSH Sentinel. */
 	bool modecfg_pull_mode;                 /* if the client should request his IP */
-	unsigned short nat_traversal_vid;       /**< which NAT-type vendor IDs we got */
+	enum known_vendorid qnat_traversal_vid;       /**< which NAT-type vendor IDs we got */
 	bool xauth_vid;                         /**< if the client has XAUTH */
 };
 
-extern void copy_quirks(struct isakmp_quirks *dq,
-			struct isakmp_quirks *sq);
+struct state;
+struct msg_digest;
+extern void merge_quirks(struct state *st,
+			 const struct msg_digest *md);
 
 #endif

@@ -1,19 +1,24 @@
 /testing/guestbin/swan-prep
 east #
  ipsec setup start
-east #
- ipsec setup start
+Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-esp-null-alg
+002 added connection description "westnet-eastnet-esp-null-alg"
 east #
  ipsec auto --status
 000 using kernel interface: netkey
-000 interface lo/lo 127.0.0.1
-000 interface eth0/eth0 192.0.2.254
-000 interface eth1/eth1 192.1.2.23
-000 interface eth2/eth2 192.9.2.23
+000 interface lo/lo 127.0.0.1@4500
+000 interface lo/lo 127.0.0.1@500
+000 interface eth0/eth0 192.0.2.254@4500
+000 interface eth0/eth0 192.0.2.254@500
+000 interface eth1/eth1 192.1.2.23@4500
+000 interface eth1/eth1 192.1.2.23@500
+000 interface eth2/eth2 192.9.2.23@4500
+000 interface eth2/eth2 192.9.2.23@500
+000  
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
@@ -29,6 +34,7 @@ east #
 000 debug none
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
+000 virtual-private (%priv):
 000  
 000 ESP algorithms supported:
 000  
@@ -59,12 +65,12 @@ east #
 000  
 000 IKE algorithms supported:
 000  
-000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=131
-000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=131
-000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=131
-000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=16, v2name=AES_CCM_C, blocksize=16, keydeflen=131
-000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=15, v2name=AES_CCM_B, blocksize=16, keydeflen=131
-000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=14, v2name=AES_CCM_A, blocksize=16, keydeflen=131
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=16, v2name=AES_CCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=15, v2name=AES_CCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=14, v2name=AES_CCM_A, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
@@ -98,7 +104,7 @@ east #
 000 "westnet-eastnet-esp-null-alg":    policy_label:unset; 
 000 "westnet-eastnet-esp-null-alg":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-esp-null-alg":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-esp-null-alg":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "westnet-eastnet-esp-null-alg":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-esp-null-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-esp-null-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-esp-null-alg":   ESP algorithms wanted: NULL(11)_000-SHA1(2)_096
@@ -121,12 +127,12 @@ src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc ecb(cipher_null) 0xENCKEY
+	enc ecb(cipher_null) 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc ecb(cipher_null) 0xENCKEY
+	enc ecb(cipher_null) 
 XFRM policy:
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir out priority 2344 ptype main 
@@ -140,6 +146,22 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 

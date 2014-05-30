@@ -278,26 +278,93 @@
 #define COOKIE_SIZE 8
 #define MAX_ISAKMP_SPI_SIZE 16
 
+/* Various IETF defined key lengths */
+
+/* AES-CBC RFC 3602 The _only_ valid values are 128, 192 and 256 bits */
+#define  AES_KEY_MIN_LEN        128
+#define  AES_KEY_DEF_LEN        128
+#define  AES_KEY_MAX_LEN        256
+
+/* AES-CTR RFC 3686 The _only_ valid values are 128, 192 and 256 bits */
+#define  AES_CTR_KEY_MIN_LEN 128
+#define  AES_CTR_KEY_DEF_LEN 128
+#define  AES_CTR_KEY_MAX_LEN 256
+
 /*
  * RFC 4106 AES GCM
  * http://tools.ietf.org/html/rfc4106#section-8.1
  */
 #define AES_GCM_SALT_BYTES 4
+#define AES_GCM_KEY_MIN_LEN 128
+#define AES_GCM_KEY_DEF_LEN 128
+#define AES_GCM_KEY_MAX_LEN 256
 
 /*
  * RFC 4309 AES CCM
  * http://tools.ietf.org/search/rfc4309#section-7.1
  */
 #define AES_CCM_SALT_BYTES 3
+#define AES_CCM_KEY_MIN_LEN 128
+#define AES_CCM_KEY_DEF_LEN 128
+#define AES_CCM_KEY_MAX_LEN 256
 
-/* Actually, the only valid values are 128, 192 and 256 bits */
+/* The _only_ valid values are 128, 192 and 256 bits */
 #define  AEAD_AES_KEY_MIN_LEN       128
 #define  AEAD_AES_KEY_DEF_LEN       128
 #define  AEAD_AES_KEY_MAX_LEN       256
 
-#define  AES_KEY_MIN_LEN        128
-#define  AES_KEY_DEF_LEN        128
-#define  AES_KEY_MAX_LEN        256
+/* AES-GMAC RFC 4543 The _only_ valid values are 128, 192 and 256 bits */
+#define  AES_GMAC_KEY_MIN_LEN 128
+#define  AES_GMAC_KEY_DEF_LEN 128
+#define  AES_GMAC_KEY_MAX_LEN 256
+
+/* SEED-CBC RFC 4196 The _only_ valid value is 128 */
+#define  SEED_KEY_MIN_LEN 128
+#define  SEED_KEY_DEF_LEN 128
+#define  SEED_KEY_MAX_LEN 128
+
+
+/*
+ * http://tools.ietf.org/html/rfc2451#section-2.2
+ * ESP_CAST is the cast5 algorithm, not cast6
+ * We avoid cast-128 padding by enforcing a minimum of 128
+ */
+#define  CAST_KEY_MIN_LEN        128
+#define  CAST_KEY_DEF_LEN        128
+#define  CAST_KEY_MAX_LEN        128
+
+/*
+ * RFC 2451 - Blowfish accepts key sizes 40-448, default is 128
+ *            128,192 and 256 are the only commonly used ones
+ */
+
+/*
+ * TWOFISH-CBC is a 128-bit block cipher with variable-length key upto 256 bits
+ * default is 128. 128,192 and 256 are the only commonly used ones
+ */
+#define  TWOFISH_KEY_MIN_LEN 128
+#define  TWOFISH_KEY_DEF_LEN 128
+#define  TWOFISH_KEY_MAX_LEN 256
+
+/*
+ * SERPENT default 128, 128,192 and 256 are the only commonly used ones
+ */
+#define  SERPENT_KEY_MIN_LEN 128
+#define  SERPENT_KEY_DEF_LEN 128
+#define  SERPENT_KEY_MAX_LEN 256
+
+/*
+ * Camellia CBC and CTR - RFC 5529
+ * 128 (default), 192 and 256
+ */
+#define  CAMELLIA_KEY_MIN_LEN 128
+#define  CAMELLIA_KEY_DEF_LEN 128
+#define  CAMELLIA_KEY_MAX_LEN 256
+
+#define  CAMELLIA_CTR_KEY_MIN_LEN 128
+#define  CAMELLIA_CTR_KEY_DEF_LEN 128
+#define  CAMELLIA_CTR_KEY_MAX_LEN 256
+
 
  /* ought to be supplied by md5.h */
 #define MD5_DIGEST_SIZE BYTES_FOR_BITS(128)
@@ -315,6 +382,7 @@
 
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
+#define CAST_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 
 #define DSS_QBITS 160 /* bits in DSS's "q" (FIPS 186-1) */
 
@@ -866,11 +934,11 @@ enum ikev1_ipsec_attr {
 #define SA_LIFE_TYPE_SECONDS 1
 #define SA_LIFE_TYPE_KBYTES 2
 
-#define SA_LIFE_DURATION_DEFAULT 28800 /* eight hours (RFC2407 4.5) */
-#define PLUTO_SA_LIFE_DURATION_DEFAULT 28800 /* eight hours (pluto(8)) */
-#define SA_LIFE_DURATION_MAXIMUM 86400 /* one day */
+#define SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* RFC2407 4.5 */
+#define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* pluto(8) */
+#define SA_LIFE_DURATION_MAXIMUM secs_per_day
 
-#define SA_REPLACEMENT_MARGIN_DEFAULT 540 /* (IPSEC & IKE) nine minutes */
+#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
 #define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
 #define SA_REPLACEMENT_RETRIES_DEFAULT 0 /* (IPSEC & IKE) */
 
@@ -894,19 +962,19 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_HMAC_SHA1 = 2,
 	AUTH_ALGORITHM_DES_MAC = 3,
 	AUTH_ALGORITHM_KPDK = 4,
-	AUTH_ALGORITHM_HMAC_SHA2_256 = 5, /* not in an rfc? */
-	AUTH_ALGORITHM_HMAC_SHA2_384 = 6, /* not in an rfc? */
-	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,  /* not in an rfc? */
-	AUTH_ALGORITHM_HMAC_RIPEMD = 8, /* RFC 2857 */
-	AUTH_ALGORITHM_AES_CBC = 9, /* RFC 3566 */
-	AUTH_ALGORITHM_SIG_RSA = 10, /* RFC 4359 */
-	AUTH_ALGORITHM_AES_128_GMAC = 11, /* RFC 4542 */
-	AUTH_ALGORITHM_AES_192_GMAC = 12, /* RFC 4542 */
-	AUTH_ALGORITHM_AES_256_GMAC =  13, /* RFC 4542 */
+	AUTH_ALGORITHM_HMAC_SHA2_256 = 5,	/* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_SHA2_384 = 6,	/* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,	/* not in an rfc? */
+	AUTH_ALGORITHM_HMAC_RIPEMD = 8,	/* RFC 2857 */
+	AUTH_ALGORITHM_AES_CBC = 9,	/* RFC 3566 */
+	AUTH_ALGORITHM_SIG_RSA = 10,	/* RFC 4359 */
+	AUTH_ALGORITHM_AES_128_GMAC = 11,	/* RFC 4542 */
+	AUTH_ALGORITHM_AES_192_GMAC = 12,	/* RFC 4542 */
+	AUTH_ALGORITHM_AES_256_GMAC =  13,	/* RFC 4542 */
 	/* 14-61439 Unassigned */
 	/* 61440-65535 Reserved for private use */
 
-	AUTH_ALGORITHM_NULL_KAME = 251, /* why do we load this ? */
+	AUTH_ALGORITHM_NULL_KAME = 251,	/* why do we load this ? */
 	AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG = 252,
 };
 
@@ -915,7 +983,7 @@ typedef u_int16_t ipsec_auth_t;
 /*
  * Oakley Lifetime Type attribute
  * draft-ietf-ipsec-ike-01.txt appendix A
- * As far as I can see, there is not specification for
+ * As far as I can see, there is no specification for
  * OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT. This could lead to interop problems!
  * For no particular reason, we chose one hour.
  * The value of OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM is our local policy.
@@ -924,8 +992,8 @@ typedef u_int16_t ipsec_auth_t;
 #define OAKLEY_LIFE_SECONDS 1
 #define OAKLEY_LIFE_KILOBYTES 2
 
-#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT 3600 /* one hour */
-#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM 86400 /* 1 day */
+#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT secs_per_hour
+#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM secs_per_day
 
 /*
  * Oakley PRF attribute (none defined)
@@ -1281,23 +1349,23 @@ enum pubkey_alg {
  */
 
 enum ike_id_type {
-	ID_FROMCERT = (-3), /* taken from certificate - private to Pluto */
-	ID_IMPOSSIBLE = (-2), /* private to Pluto */
-	ID_MYID = (-1), /* private to Pluto */
-	ID_NONE = 0, /* private to Pluto */
+	ID_FROMCERT = (-3),	/* taken from certificate - private to Pluto */
+	ID_IMPOSSIBLE = (-2),	/* private to Pluto */
+	ID_MYID = (-1),		/* private to Pluto */
+	ID_NONE = 0,	/* private to Pluto */
 	ID_IPV4_ADDR = 1,
 	ID_FQDN = 2,
 	ID_USER_FQDN = 3,
-	ID_RFC822_ADDR  = ID_USER_FQDN,  /* alias */
-	ID_IPV4_ADDR_SUBNET = 4, /* XXX IKEv1 only but we use it */
+	ID_RFC822_ADDR  = ID_USER_FQDN,	/* alias */
+	ID_IPV4_ADDR_SUBNET = 4,	/* XXX IKEv1 only but we use it */
 	ID_IPV6_ADDR = 5,
-	ID_IPV6_ADDR_SUBNET = 6, /* XXX IKEv1 only but we use it */
-	ID_IPV4_ADDR_RANGE = 7, /* XXX IKEv1 only but we use it */
-	ID_IPV6_ADDR_RANGE = 8, /* XXX IKEv1 only but we use it */
+	ID_IPV6_ADDR_SUBNET = 6,	/* XXX IKEv1 only but we use it */
+	ID_IPV4_ADDR_RANGE = 7,	/* XXX IKEv1 only but we use it */
+	ID_IPV6_ADDR_RANGE = 8,	/* XXX IKEv1 only but we use it */
 	ID_DER_ASN1_DN = 9,
 	ID_DER_ASN1_GN = 10,
 	ID_KEY_ID = 11,
-	ID_FC_NAME = 12, /* RFC 4595 */
+	ID_FC_NAME = 12,	/* RFC 4595 */
 	/* In IKEv1 registry, non-IKE value ID_LIST = 12 as per RFC 3554 */
 	/* 13-248 Unassigned */
 	/* 249-255 Reserved for private use */
@@ -1351,13 +1419,13 @@ enum ipsec_authentication_algo {
 	AH_RIPEMD = 8,
 	AH_AES_XCBC_MAC = 9,
 	AH_RSA = 10,
-	AH_AES_128_GMAC = 11,     /* RFC4543 [Errata1821] */
-	AH_AES_192_GMAC = 12,     /* RFC4543 [Errata1821] */
-	AH_AES_256_GMAC = 13,     /* RFC4543 [Errata1821] */
+	AH_AES_128_GMAC = 11,	/* RFC4543 [Errata1821] */
+	AH_AES_192_GMAC = 12,	/* RFC4543 [Errata1821] */
+	AH_AES_256_GMAC = 13,	/* RFC4543 [Errata1821] */
 	/* 14-248 Unassigned */
 	/* 249 - 255 Reserved for private use */
-	AH_NULL = 251,            /* comes from kame? */
-	AH_SHA2_256_TRUNC = 252,  /* our own stolen value */
+	AH_NULL = 251,		/* comes from kame? */
+	AH_SHA2_256_TRUNC = 252,	/* our own stolen value */
 };
 
 /* IPsec ESP transform values
@@ -1368,33 +1436,33 @@ enum ipsec_authentication_algo {
 enum ipsec_cipher_algo {
 	ESP_reserved = 0,
 	ESP_DES_IV64 = 1,
-	ESP_DES = 2, /* obsoleted */
+	ESP_DES = 2,	/* obsoleted */
 	ESP_3DES = 3,
 	ESP_RC5 = 4,
 	ESP_IDEA = 5,
 	ESP_CAST = 6,
-	ESP_BLOWFISH = 7, /* obsoleyed */
+	ESP_BLOWFISH = 7,	/* obsoleyed */
 	ESP_3IDEA = 8,
 	ESP_DES_IV32 = 9,
 	ESP_RC4 = 10,
 	ESP_NULL = 11,
-	ESP_AES = 12, /* CBC 128 bit AES */
+	ESP_AES = 12,	/* CBC 128 bit AES */
 	ESP_AES_CTR = 13,
 	ESP_AES_CCM_8 = 14,
 	ESP_AES_CCM_12 = 15,
 	ESP_AES_CCM_16 = 16,
-	ESP_ID17 = 17, /* unassigned=17 */
+	ESP_ID17 = 17,	/* unassigned=17 */
 	ESP_AES_GCM_8 = 18,
 	ESP_AES_GCM_12 = 19,
 	ESP_AES_GCM_16 = 20,
 	ESP_SEED_CBC = 21,
 	ESP_CAMELLIA = 22,
-	ESP_NULL_AUTH_AES_GMAC = 23, /* [RFC4543][Errata1821] */
+	ESP_NULL_AUTH_AES_GMAC = 23,	/* [RFC4543][Errata1821] */
 	/* 24-248 Unassigned */
 	/* 249-255 reserved for private use */
 	ESP_MARS = 249,
 	ESP_RC6 = 250,
-	ESP_KAME_NULL = 251, /* kame? */
+	ESP_KAME_NULL = 251,	/* kame? */
 	ESP_SERPENT = 252,
 	ESP_TWOFISH = 253,
 	ESP_ID254 = 254,

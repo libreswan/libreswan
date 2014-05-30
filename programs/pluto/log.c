@@ -73,11 +73,11 @@ static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void perpeer_logclose(struct connection *c);     /* forward */
 
 bool
-	log_to_stderr = TRUE,           /* should log go to stderr? */
-	log_to_syslog = TRUE,           /* should log go to syslog? */
-	log_to_perpeer = FALSE,         /* should log go to per-IP file? */
-	log_with_timestamp = FALSE;     /* some people want timestamps, but we
-                                            don't want those in our test output */
+	log_to_stderr = TRUE,		/* should log go to stderr? */
+	log_to_syslog = TRUE,		/* should log go to syslog? */
+	log_to_perpeer = FALSE,		/* should log go to per-IP file? */
+	log_with_timestamp = FALSE;	/* some people want timestamps, but we
+					 * don't want those in our test output */
 
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
@@ -96,9 +96,6 @@ static int perpeer_count = 0;
 
 /* what to put in front of debug output */
 static const char debug_prefix = '|';
-
-/* set if we wrote something since last log_mark_time() */
-static bool log_did_something = TRUE;
 
 /*
  * used in some messages to distiguish
@@ -377,6 +374,19 @@ static void open_peerlog(struct connection *c)
 	perpeer_count++;
 }
 
+#ifdef GCC_LINT
+static void prettynow(char *buf, size_t buflen, const char *fmt) __attribute__ ((format (__strftime__, 3, 0)));
+#endif
+static void prettynow(char *buf, size_t buflen, const char *fmt)
+{
+	realtime_t n = realnow();
+	struct tm tm1;
+	struct tm *t = localtime_r(&n.real_secs, &tm1);
+
+	/* the cast suppresses a warning: <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=39438> */
+	((size_t (*)(char *, size_t, const char *, const struct tm *))strftime)(buf, buflen, fmt, t);
+}
+
 /* log a line to cur_connection's log */
 static void peerlog(const char *prefix, const char *m)
 {
@@ -391,15 +401,10 @@ static void peerlog(const char *prefix, const char *m)
 	/* despite our attempts above, we may not be able to open the file. */
 	if (cur_connection->log_file != NULL) {
 		char datebuf[32];
-		time_t n;
-		struct tm tm1, *t;
 
-		time(&n);
-		t = localtime_r(&n, &tm1);
-
-		strftime(datebuf, sizeof(datebuf), "%Y-%m-%d %T", t);
-		fprintf(cur_connection->log_file, "%s %s%s\n", datebuf, prefix,
-			m);
+		prettynow(datebuf, sizeof(datebuf), "%Y-%m-%d %T");
+		fprintf(cur_connection->log_file, "%s %s%s\n",
+			datebuf, prefix, m);
 
 		/* now move it to the front of the list */
 		CIRCLEQ_REMOVE(&perpeer_list, cur_connection, log_link);
@@ -418,23 +423,13 @@ int libreswan_log(const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
-	log_did_something = TRUE;
-
 	if (log_to_stderr || pluto_log_fp != NULL) {
-		if (log_with_timestamp) {
-			struct tm tm1, *timeinfo;
-			char fmt[32];
-			time_t rtime;
+		char buf[34] = "";
 
-			time(&rtime);
-			timeinfo = localtime_r(&rtime, &tm1);
-			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%s: %s\n", fmt, m);
-		} else {
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%s\n", m);
-		}
+		if (log_with_timestamp)
+			prettynow(buf, sizeof(buf), "%b %e %T: ");
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
+			"%s%s\n", buf, m);
 	}
 	if (log_to_syslog)
 		syslog(LOG_WARNING, "%s", m);
@@ -457,23 +452,13 @@ void loglog(int mess_no, const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
-	log_did_something = TRUE;
-
 	if (log_to_stderr || pluto_log_fp != NULL) {
-		if (log_with_timestamp) {
-			struct tm tm1, *timeinfo;
-			char fmt[32];
-			time_t rtime;
+		char buf[34] = "";
 
-			time(&rtime);
-			timeinfo = localtime_r(&rtime, &tm1);
-			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%s: %s\n", fmt, m);
-		} else {
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%s\n", m);
-		}
+		if (log_with_timestamp)
+			prettynow(buf, sizeof(buf), "%b %e %T: ");
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
+			"%s%s\n", buf, m);
 	}
 	if (log_to_syslog)
 		syslog(LOG_WARNING, "%s", m);
@@ -492,8 +477,6 @@ void libreswan_log_errno_routine(int e, const char *message, ...)
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
-
-	log_did_something = TRUE;
 
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -516,8 +499,6 @@ void exit_log(const char *message, ...)
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
 
-	log_did_something = TRUE;
-
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
 			"FATAL ERROR: %s\n", m);
@@ -539,8 +520,6 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 	va_start(args, message);
 	fmt_log(m, sizeof(m), message, args);
 	va_end(args);
-
-	log_did_something = TRUE;
 
 	if (log_to_stderr || pluto_log_fp != NULL)
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
@@ -720,20 +699,12 @@ int DBG_log(const char *message, ...)
 	sanitize_string(m, sizeof(m));
 
 	if (log_to_stderr || pluto_log_fp != NULL) {
-		if (log_with_timestamp) {
-			struct tm tm1, *timeinfo;
-			char fmt[32];
-			time_t rtime;
+		char buf[34] = "";
 
-			time(&rtime);
-			timeinfo = localtime_r(&rtime, &tm1);
-			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%c %s: %s\n", debug_prefix, fmt, m);
-		} else {
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%c %s\n", debug_prefix, m);
-		}
+		if (log_with_timestamp)
+			prettynow(buf, sizeof(buf), "%b %e %T: ");
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
+			"%c %s%s\n", debug_prefix, buf, m);
 	}
 	if (log_to_syslog)
 		syslog(LOG_DEBUG, "%c %s", debug_prefix, m);
@@ -861,47 +832,24 @@ void daily_log_reset(void)
 void daily_log_event(void)
 {
 	struct tm tm1, *ltime;
-	time_t n, interval;
+	time_t interval;
+	realtime_t n = realnow();
 
-	/* attempt to schedule oneself to midnight, local time
-	 * do this by getting seconds in the day, and delaying
-	 * by 86400 - hour*3600+minutes*60+seconds.
-	 */
-	time(&n);
-	ltime = localtime_r(&n, &tm1);
-	interval = (24 * 60 * 60) -
+	/* schedule event for midnight, local time */
+	tzset();
+	ltime = localtime_r(&n.real_secs, &tm1);
+	interval = secs_per_day -
 		   (ltime->tm_sec +
-		    ltime->tm_min  * 60 +
-		    ltime->tm_hour * 3600);
+		    ltime->tm_min * secs_per_minute +
+		    ltime->tm_hour * secs_per_hour);
+
+	/* this might happen during a leap second */
+	if (interval <= 0)
+		interval = secs_per_day;
 
 	event_schedule(EVENT_LOG_DAILY, interval, NULL);
 
 	daily_log_reset();
-}
-
-/*
- * we log the time when we are about to do something so that
- * we know what time things happened, when not using syslog
- */
-void log_mark_time(void)
-{
-	if (log_to_stderr || pluto_log_fp != NULL) {
-		time_t n;
-
-		static time_t lastn = 0;
-
-		time(&n);
-
-		if (log_did_something) {
-			lastn = n;
-			log_did_something = FALSE;
-			if ((n - lastn) > 60)
-				DBG_log("time is %s (%lu)", ctime(
-						&n), (unsigned long)n);
-
-
-		}
-	}
 }
 
 /*

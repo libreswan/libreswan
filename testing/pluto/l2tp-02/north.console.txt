@@ -25,32 +25,38 @@ Redirecting to: systemctl start ipsec.service
 north #
  /testing/pluto/bin/wait-until-pluto-started
 north #
- ipsec auto --add north--east-l2tp
+ ipsec auto --add north-east-l2tp
+002 added connection description "north-east-l2tp"
 north #
- ipsec auto --add north--east-pass
+ ipsec auto --add north-east-pass
+002 added connection description "north-east-pass"
 north #
- ipsec auto --route north--east-pass
+ ipsec auto --route north-east-pass
 north #
- (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
-[1] 1564
+ (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log 1>&2) &
+[1] XXXX
 north #
- ipsec auto --route north--east-l2tp
+ ipsec auto --route north-east-l2tp
 north #
  echo done
 done
 north #
- ipsec auto --up north--east-l2tp
-104 "north--east-l2tp" #1: STATE_MAIN_I1: initiate
-003 "north--east-l2tp" #1: received Vendor ID payload [Dead Peer Detection]
-003 "north--east-l2tp" #1: received Vendor ID payload [FRAGMENTATION]
-003 "north--east-l2tp" #1: received Vendor ID payload [RFC 3947]
-106 "north--east-l2tp" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "north--east-l2tp" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500: i am NATed
-108 "north--east-l2tp" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-003 "north--east-l2tp" #1: received Vendor ID payload [CAN-IKEv2]
-004 "north--east-l2tp" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
-117 "north--east-l2tp" #2: STATE_QUICK_I1: initiate
-004 "north--east-l2tp" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+ ipsec auto --up north-east-l2tp
+002 "north-east-l2tp" #1: initiating Main Mode
+104 "north-east-l2tp" #1: STATE_MAIN_I1: initiate
+003 "north-east-l2tp" #1: received Vendor ID payload [Dead Peer Detection]
+003 "north-east-l2tp" #1: received Vendor ID payload [FRAGMENTATION]
+003 "north-east-l2tp" #1: received Vendor ID payload [RFC 3947]
+002 "north-east-l2tp" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
+106 "north-east-l2tp" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+003 "north-east-l2tp" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: I am behind NAT
+108 "north-east-l2tp" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+003 "north-east-l2tp" #1: received Vendor ID payload [CAN-IKEv2]
+002 "north-east-l2tp" #1: Main mode peer ID is ID_FQDN: '@east'
+004 "north-east-l2tp" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
+002 "north-east-l2tp" #2: initiating Quick Mode RSASIG+ENCRYPT+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+117 "north-east-l2tp" #2: STATE_QUICK_I1: initiate
+004 "north-east-l2tp" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 north #
  echo "c server" > /var/run/xl2tpd/l2tp-control
 north #
@@ -106,11 +112,11 @@ done
 north #
  ipsec look
 north NOW
-192.1.3.33/32      -> 192.1.2.23/32      => %pass (26)
-192.1.3.33/32:1701 -> 192.1.2.23/32:1701 => esp0x8b3d49ce@192.1.2.23:17 (26)
+192.1.3.33/32      -> 192.1.2.23/32      => %pass (25)
+192.1.3.33/32:1701 -> 192.1.2.23/32:1701 => esp0xdfac41a7@192.1.2.23:17 (25)
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0x2e8c9bb7@192.1.3.33 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0x2ff0ec895b892f4413803b99797c3891 ooowin=64 seq=25 bit=0x1ffffff alen=160 aklen=160 eklen=128 jiffies=4294714306 life(c,s,h)=bytes(1375,0,0) idle=2 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=2 refhim=1
-esp0x8b3d49ce@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.3.33 iv_bits=128bits iv=0x343c7bd45bc169f8a96272679f40190a ooowin=64 seq=26 alen=160 aklen=160 eklen=128 jiffies=4294714306 life(c,s,h)=bytes(3216,0,0) idle=2 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=1 refhim=0
+esp0xa45af41f@192.1.3.33 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0x76758dfa0362dbe60510b9c3d8b190c4 ooowin=64 seq=23 bit=0x7fffff alen=160 aklen=160 eklen=128 jiffies=4294714771 life(c,s,h)=bytes(1300,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=2 refhim=1
+esp0xdfac41a7@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.3.33 iv_bits=128bits iv=0x674e2eb5eb352bd9aa12ca8d73e4a209 ooowin=64 seq=25 alen=160 aklen=160 eklen=128 jiffies=4294714771 life(c,s,h)=bytes(3112,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=1 refhim=0
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
@@ -130,7 +136,7 @@ Certificate Nickname                                         Trust Attributes
 north #
 north #
  grep 'Result using RFC 3947' /tmp/pluto.log
-"north--east-l2tp" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500 sender port 500: i am NATed
+"north-east-l2tp" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: I am behind NAT
 north #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 north #

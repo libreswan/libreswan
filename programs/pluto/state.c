@@ -115,7 +115,7 @@ struct msgid_list {
  */
 static char *humanize_number(unsigned long num,
 			     char *buf,
-			     char *buf_roof,
+			     const char *buf_roof,
 			     const char *prefix)
 {
 	size_t buf_len = buf_roof - buf;
@@ -146,7 +146,7 @@ static char *humanize_number(unsigned long num,
 	return buf + ret;
 }
 
-bool unique_msgid(struct state *isakmp_sa, msgid_t msgid)
+bool unique_msgid(const struct state *isakmp_sa, msgid_t msgid)
 {
 	struct msgid_list *p;
 
@@ -170,7 +170,7 @@ void reserve_msgid(struct state *isakmp_sa, msgid_t msgid)
 	isakmp_sa->st_used_msgids = p;
 }
 
-msgid_t generate_msgid(struct state *isakmp_sa)
+msgid_t generate_msgid(const struct state *isakmp_sa)
 {
 	int timeout = 100; /* only try so hard for unique msgid */
 	msgid_t msgid;
@@ -428,11 +428,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username[0] != '\0')
-				libreswan_log("%s XAUTHuser=%s", statebuf,
-					      st->st_xauth_username);
-			else
-				libreswan_log("%s", statebuf);
+			loglog(RC_INFORMATIONAL, "%s%s%s",
+				statebuf,
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 		}
 
 		if (st->st_ah.present) {
@@ -446,11 +445,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username[0] != '\0')
-				libreswan_log("%s XAUTHuser=%s", statebuf,
-					      st->st_xauth_username);
-			else
-				libreswan_log("%s", statebuf);
+			loglog(RC_INFORMATIONAL, "%s%s%s",
+				statebuf,
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 		}
 
 		if (st->st_ipcomp.present) {
@@ -464,11 +462,10 @@ void delete_state(struct state *st)
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
-			if (st->st_xauth_username[0] != '\0')
-				libreswan_log("%s XAUTHuser=%s", statebuf,
-					      st->st_xauth_username);
-			else
-				libreswan_log("%s", statebuf);
+			loglog(RC_INFORMATIONAL, "%s%s%s",
+				statebuf,
+				(st->st_xauth_username[0] != '\0') ? " XAUTHuser=" : "",
+				st->st_xauth_username);
 		}
 	}
 
@@ -622,7 +619,7 @@ void delete_state(struct state *st)
 /*
  * Is a connection in use by some state?
  */
-bool states_use_connection(struct connection *c)
+bool states_use_connection(const struct connection *c)
 {
 	/* are there any states still using it? */
 	struct state *st = NULL;
@@ -638,19 +635,13 @@ bool states_use_connection(struct connection *c)
 }
 
 /* delete all states that were created for a given connection,
- * additionally delete any states for which func(st, arg)
+ * additionally delete any states for which func(st, c)
  * returns true.
  */
-static void foreach_states_by_connection_func(struct connection *c,
+static void foreach_states_by_connection_func_delete(struct connection *c,
 					      bool (*comparefunc)(
 						      struct state *st,
-						      struct connection *c,
-						      void *arg, int pass),
-					      void (*successfunc)(
-						      struct state *st,
-						      struct connection *c,
-						      void *arg),
-					      void *arg)
+						      struct connection *c))
 {
 	int pass;
 
@@ -680,7 +671,7 @@ static void foreach_states_by_connection_func(struct connection *c,
 					continue;
 
 				/* call comparison function */
-				if ((*comparefunc)(this, c, arg, pass)) {
+				if ((*comparefunc)(this, c)) {
 					struct state *old_cur_state =
 						cur_state == this ?
 						  NULL : cur_state;
@@ -688,7 +679,13 @@ static void foreach_states_by_connection_func(struct connection *c,
 						cur_debugging;
 
 					set_cur_state(this);
-					(*successfunc)(this, c, arg);
+
+					libreswan_log("deleting state (%s)",
+						      enum_show(&state_names, this->st_state));
+
+					if (this->st_event != NULL)
+						delete_event(this);
+					delete_state(this);
 
 					cur_state = old_cur_state;
 					set_debugging(old_cur_debugging);
@@ -698,29 +695,15 @@ static void foreach_states_by_connection_func(struct connection *c,
 	}
 }
 
-static void delete_state_function(struct state *this,
-				  struct connection *c UNUSED,
-				  void *arg UNUSED)
-{
-	libreswan_log("deleting state (%s)",
-		      enum_show(&state_names, this->st_state));
-
-	if (this->st_event != NULL)
-		delete_event(this);
-	delete_state(this);
-}
-
 /*
  * delete all states that were created for a given connection.
  * if relations == TRUE, then also delete states that share
  * the same phase 1 SA.
  */
 static bool same_phase1_sa_relations(struct state *this,
-				     struct connection *c, void *arg,
-				     int pass UNUSED)
+				     struct connection *c)
 {
-	so_serial_t *pparent_sa = (so_serial_t *)arg;
-	so_serial_t parent_sa = *pparent_sa;
+	so_serial_t parent_sa = c->newest_isakmp_sa;
 
 	return this->st_connection == c ||
 	       (parent_sa != SOS_NOBODY &&
@@ -758,16 +741,13 @@ void delete_states_dead_interfaces(void)
  * the same phase 1 SA.
  */
 static bool same_phase1_sa(struct state *this,
-			   struct connection *c,
-			   void *arg UNUSED,
-			   int pass UNUSED)
+			   struct connection *c)
 {
 	return this->st_connection == c;
 }
 
 void delete_states_by_connection(struct connection *c, bool relations)
 {
-	so_serial_t parent_sa = c->newest_isakmp_sa;
 	enum connection_kind ck = c->kind;
 	struct spd_route *sr;
 
@@ -777,15 +757,8 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
-	if (relations) {
-		foreach_states_by_connection_func(c, same_phase1_sa_relations,
-						  delete_state_function,
-						  &parent_sa);
-	} else {
-		foreach_states_by_connection_func(c, same_phase1_sa,
-						  delete_state_function,
-						  &parent_sa);
-	}
+	foreach_states_by_connection_func_delete(c,
+		relations ? same_phase1_sa_relations : same_phase1_sa);
 
 	/*
 	 * Seems to dump here because 1 of the states is NULL.  Removing the Assert
@@ -818,22 +791,16 @@ void delete_states_by_connection(struct connection *c, bool relations)
  * but it only deletes phase 2 states.
  */
 static bool same_phase1_no_phase2(struct state *this,
-				  struct connection *c,
-				  void *arg,
-				  int pass)
+				  struct connection *c)
 {
-	if (pass == 2)
-		return FALSE;
-
 	if (IS_ISAKMP_SA_ESTABLISHED(this->st_state))
 		return FALSE;
 	else
-		return same_phase1_sa_relations(this, c, arg, pass);
+		return same_phase1_sa_relations(this, c);
 }
 
 void delete_p2states_by_connection(struct connection *c)
 {
-	so_serial_t parent_sa = c->newest_isakmp_sa;
 	enum connection_kind ck = c->kind;
 
 	/* save this connection's isakmp SA,
@@ -842,9 +809,8 @@ void delete_p2states_by_connection(struct connection *c)
 	if (ck == CK_INSTANCE)
 		c->kind = CK_GOING_AWAY;
 
-	foreach_states_by_connection_func(c, same_phase1_no_phase2,
-					  delete_state_function,
-					  &parent_sa);
+	foreach_states_by_connection_func_delete(c, same_phase1_no_phase2);
+
 	if (ck == CK_INSTANCE) {
 		c->kind = ck;
 		delete_connection(c, TRUE);
@@ -923,7 +889,7 @@ struct state *duplicate_state(struct state *st)
 
 	/* record use of the Phase 1 / Parent state */
 	st->st_outbound_count++;
-	st->st_outbound_time = now();
+	st->st_outbound_time = mononow();
 
 	nst = new_state();
 
@@ -1039,7 +1005,7 @@ struct state *find_state_ikev1(const u_char *icookie,
 struct state *find_state_ikev1_loopback(const u_char *icookie,
 					const u_char *rcookie,
 					msgid_t /*network order*/ msgid,
-					struct msg_digest *md)
+					const struct msg_digest *md)
 {
 	struct state *st = *state_hash(icookie, rcookie);
 
@@ -1340,8 +1306,8 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 	return best;
 }
 
-void state_eroute_usage(ip_subnet *ours, ip_subnet *his,
-			unsigned long count, time_t nw)
+void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
+			unsigned long count, monotime_t nw)
 {
 	struct state *st;
 	int i;
@@ -1377,7 +1343,7 @@ void state_eroute_usage(ip_subnet *ours, ip_subnet *his,
 	    });
 }
 
-void fmt_state(struct state *st, const time_t n,
+void fmt_state(struct state *st, const monotime_t n,
 	       char *state_buf, const size_t state_buf_len,
 	       char *state_buf2, const size_t state_buf2_len)
 {
@@ -1396,18 +1362,15 @@ void fmt_state(struct state *st, const time_t n,
 			 "; eroute owner" : "";
 	const char *idlestr;
 
-#if defined(linux) && defined(NETKEY_SUPPORT)
-	time_t ago;
-#endif
-
 	fmt_conn_instance(c, inst);
 
-	if (st->st_event) {
-		delta = st->st_event->ev_time >= n ?
-			(long)(st->st_event->ev_time - n) :
-			-(long)(n - st->st_event->ev_time);
+	if (st->st_event != NULL) {
+		/* tricky: in case time_t/monotime_t is an unsigned type */
+		delta = monobefore(n, st->st_event->ev_time) ?
+			(long)(st->st_event->ev_time.mono_secs - n.mono_secs) :
+			-(long)(n.mono_secs - st->st_event->ev_time.mono_secs);
 	} else {
-		delta = -1;
+		delta = -1;	/* ??? sort of odd signifier */
 	}
 
 	dpdbuf[0] = '\0';	/* default to empty string */
@@ -1416,26 +1379,25 @@ void fmt_state(struct state *st, const time_t n,
 			 (unsigned long)st->st_clonedfrom);
 	} else {
 		if (st->hidden_variables.st_peer_supports_dpd) {
-			time_t tn = time(NULL);
 
+			/* ??? why is printing -1 better than 0? */
 			snprintf(dpdbuf, sizeof(dpdbuf),
 				 "; lastdpd=%lds(seq in:%u out:%u)",
-				 st->st_last_dpd != 0 ? tn -
-				 st->st_last_dpd : (long)-1,
+				 st->st_last_dpd.mono_secs != UNDEFINED_TIME ?
+					(long)deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (long)-1,
 				 st->st_dpd_seqno,
 				 st->st_dpd_expectseqno);
 		} else if (dpd_active_locally(st) && st->st_ikev2) {
-			struct state *pst;
-			time_t tn = time(NULL);
-
 			/* stats are on parent sa */
 			if (IS_CHILD_SA(st)) {
-				pst = state_with_serialno(st->st_clonedfrom);
+				struct state *pst = state_with_serialno(st->st_clonedfrom);
+
 				if (pst != NULL) {
 					snprintf(dpdbuf, sizeof(dpdbuf),
-						 "; lastlive=%lds",
-						 pst->st_last_liveness != 0 ?
-						  tn - pst->st_last_liveness : 0);
+						"; lastlive=%lds",
+						pst->st_last_liveness.mono_secs != UNDEFINED_TIME ?
+						deltasecs(monotimediff(mononow(), pst->st_last_liveness)) :
+						0);
 				}
 			}
 		} else {
@@ -1473,9 +1435,9 @@ void fmt_state(struct state *st, const time_t n,
 		char buf[SATOT_BUF * 6 + 1];
 		char *p = buf;
 
-#       define add_said(adst, aspi, aproto) { \
+#	define add_said(adst, aspi, aproto) { \
 		ip_said s; \
-            \
+		\
 		initsaid(adst, aspi, aproto, &s); \
 		if (p < &buf[sizeof(buf) - 1]) \
 		{ \
@@ -1489,9 +1451,9 @@ void fmt_state(struct state *st, const time_t n,
 		if (c->spd.eroute_owner == st->st_serialno &&
 		    st->st_outbound_count != 0) {
 			snprintf(lastused, sizeof(lastused),
-				 " used %lus ago;",
-				 (unsigned long) (now() -
-						  st->st_outbound_time));
+				 " used %lds ago;",
+				 (long) deltasecs(monotimediff(mononow(),
+						  st->st_outbound_time)));
 		}
 
 		mbcp = traffic_buf +
@@ -1504,8 +1466,7 @@ void fmt_state(struct state *st, const time_t n,
 				 SA_AH);
 /* needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
-
-			if (get_sa_info(st, FALSE, &ago)) {
+			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_ah.peer_bytes,
 						       mbcp,
 						       traffic_buf +
@@ -1516,7 +1477,7 @@ void fmt_state(struct state *st, const time_t n,
 			add_said(&c->spd.this.host_addr, st->st_ah.our_spi,
 				 SA_AH);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, TRUE, &ago)) {
+			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_ah.our_bytes,
 						       mbcp,
 						       traffic_buf +
@@ -1537,8 +1498,7 @@ void fmt_state(struct state *st, const time_t n,
 				 SA_ESP);
 /* ??? needs proper fix, via kernel_ops? */
 #if defined(linux) && defined(NETKEY_SUPPORT)
-
-			if (get_sa_info(st, FALSE, &ago)) {
+			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(st->st_esp.peer_bytes,
 						       mbcp,
 						       traffic_buf +
@@ -1549,7 +1509,7 @@ void fmt_state(struct state *st, const time_t n,
 			add_said(&c->spd.this.host_addr, st->st_esp.our_spi,
 				 SA_ESP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, TRUE, &ago)) {
+			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(st->st_esp.our_bytes,
 						       mbcp,
 						       traffic_buf +
@@ -1569,8 +1529,7 @@ void fmt_state(struct state *st, const time_t n,
 			add_said(&c->spd.that.host_addr,
 				 st->st_ipcomp.attrs.spi, SA_COMP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-
-			if (get_sa_info(st, FALSE, &ago)) {
+			if (get_sa_info(st, FALSE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.peer_bytes,
 						mbcp,
@@ -1582,7 +1541,7 @@ void fmt_state(struct state *st, const time_t n,
 			add_said(&c->spd.this.host_addr, st->st_ipcomp.our_spi,
 				 SA_COMP);
 #if defined(linux) && defined(NETKEY_SUPPORT)
-			if (get_sa_info(st, TRUE, &ago)) {
+			if (get_sa_info(st, TRUE, NULL)) {
 				mbcp = humanize_number(
 						st->st_ipcomp.our_bytes,
 						mbcp,
@@ -1652,12 +1611,8 @@ static int state_compare(const void *a, const void *b)
 
 void show_states_status(void)
 {
-	const time_t n = now();
 	int i;
-	char state_buf[LOG_WIDTH];
-	char state_buf2[LOG_WIDTH];
 	int count;
-	struct state **array;
 
 	whack_log(RC_COMMENT, " ");             /* spacer */
 	whack_log(RC_COMMENT, "State list:");   /* spacer */
@@ -1674,9 +1629,16 @@ void show_states_status(void)
 	}
 
 	if (count != 0) {
+		monotime_t n = mononow();
+#if 1
+		/* C99's VLA feature is just what we need */
+		struct state *array[count];
+#else
+		/* no VLA: use alloca (ouch!) */
+		struct state **array = alloca(sizeof(struct state *) * count);
+#endif
+
 		/* build the array */
-		array = alloc_bytes(sizeof(struct state *) * count,
-				    "state array");
 		count = 0;
 		for (i = 0; i < STATE_TABLE_SIZE; i++) {
 			struct state *st;
@@ -1691,8 +1653,10 @@ void show_states_status(void)
 
 		/* now print sorted results */
 		for (i = 0; i < count; i++) {
-			struct state *st;
-			st = array[i];
+			char state_buf[LOG_WIDTH];
+			char state_buf2[LOG_WIDTH];
+			struct state *st = array[i];
+
 			fmt_state(st, n, state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
 			whack_log(RC_COMMENT, "%s", state_buf);
@@ -1705,8 +1669,6 @@ void show_states_status(void)
 				show_pending_phase2(st->st_connection, st);
 		}
 
-		/* free the array */
-		pfree(array);
 		whack_log(RC_COMMENT, " "); /* spacer */
 	}
 }
@@ -1768,7 +1730,7 @@ startover:
  * If we can't find one easily, return 0 (a bad SPI,
  * no matter what order) indicating failure.
  */
-ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st)
+ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st)
 {
 	int tries = 0;
 	int i;
@@ -1782,7 +1744,7 @@ startover:
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *s;
+		const struct state *s;
 
 		for (s = statetable[i]; s != NULL; s = s->st_hashchain_next) {
 			if (s->st_ipcomp.present &&
@@ -1799,12 +1761,16 @@ startover:
 	return cpi;
 }
 
-void copy_quirks(struct isakmp_quirks *dq,
-		 struct isakmp_quirks *sq)
+void merge_quirks(struct state *st, const struct msg_digest *md)
 {
+	struct isakmp_quirks *dq = &st->quirks;
+	const struct isakmp_quirks *sq = &md->quirks;
+
 	dq->xauth_ack_msgid   |= sq->xauth_ack_msgid;
 	dq->modecfg_pull_mode |= sq->modecfg_pull_mode;
-	dq->nat_traversal_vid |= sq->nat_traversal_vid;
+	/* ??? st->quirks.qnat_traversal is never used */
+	if (dq->qnat_traversal_vid < sq->qnat_traversal_vid)
+		dq->qnat_traversal_vid = sq->qnat_traversal_vid;
 	dq->xauth_vid |= sq->xauth_vid;
 }
 
@@ -1824,7 +1790,8 @@ void set_state_ike_endpoints(struct state *st,
 }
 
 /* seems to be a good spot for now */
-bool dpd_active_locally(struct state *st)
+bool dpd_active_locally(const struct state *st)
 {
-	return st->st_connection->dpd_delay && st->st_connection->dpd_timeout;
+	return deltasecs(st->st_connection->dpd_delay) != 0 &&
+		deltasecs(st->st_connection->dpd_timeout) != 0;
 }

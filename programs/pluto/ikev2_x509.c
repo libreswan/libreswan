@@ -202,17 +202,17 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 /* just for ref copy from ikev1_main.c
 
      doi_log_cert_thinking(md , st->st_oakley.auth
-                          , mycert.type
-                          , st->st_connection->spd.this.sendcert
-                          , st->hidden_variables.st_got_certrequest
-                          , send_cert);
+			   , mycert.type
+			   , st->st_connection->spd.this.sendcert
+			   , st->hidden_variables.st_got_certrequest
+			   , send_cert);
 
      doi_log_cert_thinking(struct msg_digest *md UNUSED
-                      , u_int16_t auth
-                      , enum ike_cert_type certtype
-                      , enum certpolicy policy
-                      , bool gotcertrequest
-                      , bool send_cert)
+			   , u_int16_t auth
+			   , enum ike_cert_type certtype
+			   , enum certpolicy policy
+			   , bool gotcertrequest
+			   , bool send_cert)
  */
 
 bool doi_send_ikev2_cert_thinking(struct state *st)

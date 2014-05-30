@@ -25,8 +25,7 @@ config setup
 <para>The currently-accepted
 <emphasis remap='I'>parameter</emphasis>
 names in a
-<emphasis remap='B'>config</emphasis>
-<emphasis remap='B'>setup</emphasis>
+<emphasis remap='B'>config setup</emphasis>
 section are:</para>
 
 <variablelist remap='TP'>

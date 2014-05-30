@@ -182,7 +182,7 @@ stf_status main_outI1(int whack_sock,
 		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		int np = numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,
+		if (!ikev1_out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,
 				FALSE, np)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
@@ -477,16 +477,16 @@ static stf_status RSA_check_signature(struct state *st,
 notification_t accept_v1_nonce(struct msg_digest *md, chunk_t *dest,
 			const char *name)
 {
-        pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
-        size_t len = pbs_left(nonce_pbs);
+	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
+	size_t len = pbs_left(nonce_pbs);
 
-        if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
-                loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
-                       name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
-                return PAYLOAD_MALFORMED; /* ??? */
-        }
-        clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
-        return NOTHING_WRONG;
+	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
+		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
+		       name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
+		return PAYLOAD_MALFORMED; /* ??? */
+	}
+	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
+	return NOTHING_WRONG;
 }
 
 /*
@@ -744,8 +744,9 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	st->st_doi = ISAKMP_DOI_IPSEC;
 	st->st_situation = SIT_IDENTITY_ONLY; /* We only support this */
 
-	/* copy the quirks we might have accumulated */
-	copy_quirks(&st->quirks, &md->quirks);
+	merge_quirks(st, md);
+
+	set_nat_traversal(st, md);
 
 	if ((c->kind == CK_INSTANCE) && (c->spd.that.host_port_specific)) {
 		libreswan_log(
@@ -785,7 +786,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Increase VID counter for NAT-T VID */
-	if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
+	if (nat_traversal_enabled && md->quirks.qnat_traversal_vid != VID_none) {
 		DBG(DBG_NATT, DBG_log("nat-t detected, sending nat-t VID"));
 		numvidtosend++;
 	}
@@ -857,23 +858,15 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	 */
 	if (c->spd.this.xauth_server || c->spd.this.xauth_client) {
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		if (!out_vid(np, &md->rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
 
-	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %d and %d",
-				nat_traversal_enabled,
-				md->quirks.nat_traversal_vid));
-
-	if (md->quirks.nat_traversal_vid && nat_traversal_enabled) {
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		/* reply if NAT-Traversal draft is supported */
-		st->hidden_variables.st_nat_traversal =
-			LELEM(nat_traversal_vid_to_method(
-					md->quirks.nat_traversal_vid));
-		if ((st->hidden_variables.st_nat_traversal) &&
-			(!out_vid(np, &
-				md->rbody, md->quirks.nat_traversal_vid)))
+
+		if (!out_vid(np, &md->rbody, md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -962,19 +955,9 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 							NULL, TRUE, st));
 	}
 
-	DBG(DBG_NATT, DBG_log("sender checking NAT-T: %d and %d",
-				nat_traversal_enabled,
-				md->quirks.nat_traversal_vid));
+	merge_quirks(st, md);
 
-	if (nat_traversal_enabled && md->quirks.nat_traversal_vid) {
-		st->hidden_variables.st_nat_traversal =
-			LELEM(nat_traversal_vid_to_method(
-					md->quirks.nat_traversal_vid));
-		libreswan_log("enabling possible NAT-traversal with method %s",
-			enum_name(&natt_method_names,
-				nat_traversal_vid_to_method(md->quirks.
-							nat_traversal_vid)));
-	}
+	set_nat_traversal(st, md);
 
 	{
 		struct ke_continuation *ke = alloc_thing(
@@ -1072,7 +1055,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	DBG(DBG_NATT, DBG_log("NAT-T checking st_nat_traversal"));
-	if (st->hidden_variables.st_nat_traversal) {
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		DBG(DBG_NATT,
 			DBG_log("NAT-T found (implies NAT_T_WITH_NATD)"));
 		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
@@ -1100,7 +1083,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
  *	    --> HDR, KE, <IDr1_b>PubKey_i, <Nr_b>PubKey_i
  * RPKE_AUTH:
  *	    HDR, [ HASH(1), ] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDi1_b>Ke_i
- * 	    [,<<Cert-I_b>Ke_i]
+ *	    [,<<Cert-I_b>Ke_i]
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
 static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
@@ -1169,24 +1152,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	if (st->st_connection->requested_ca != NULL)
 		st->hidden_variables.st_got_certrequest = TRUE;
 
-	DBG(DBG_NATT,
-		DBG_log("inI2: checking NAT-T: %d and %d",
-			nat_traversal_enabled,
-			st->hidden_variables.st_nat_traversal));
-
-	if (st->hidden_variables.st_nat_traversal) {
-		DBG(DBG_NATT, DBG_log(" NAT_T_WITH_NATD detected"));
-		nat_traversal_natd_lookup(md);
-	}
-	if (st->hidden_variables.st_nat_traversal) {
-		nat_traversal_show_result(
-			st->hidden_variables.st_nat_traversal,
-			md->sender_port);
-	}
-	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA) {
-		DBG(DBG_NATT, DBG_log(" NAT_T_WITH_KA detected"));
-		nat_traversal_new_ka_event();
-	}
+	ikev1_natd_init(st, md);
 
 	{
 		struct ke_continuation *ke = alloc_thing(
@@ -1341,7 +1307,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		}
 	}
 
-	if (st->hidden_variables.st_nat_traversal) {
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 		if (!nat_traversal_add_natd(ISAKMP_NEXT_NONE, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1543,15 +1509,7 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 	/* done parsing; initialize crypto */
 
-	if (st->hidden_variables.st_nat_traversal)
-		nat_traversal_natd_lookup(md);
-	if (st->hidden_variables.st_nat_traversal) {
-		nat_traversal_show_result(
-			st->hidden_variables.st_nat_traversal,
-			md->sender_port);
-	}
-	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA)
-		nat_traversal_new_ka_event();
+	ikev1_natd_init(st, md);
 
 	/*
 	 * Build output packet HDR*;IDii;HASH/SIG_I
@@ -2441,8 +2399,8 @@ static void send_notification(struct state *sndst, notification_t type,
 
 	pb_stream r_hdr_pbs;
 	u_char *r_hashval, *r_hash_start;
-	static time_t last_malformed;
-	time_t n = time(NULL);
+	static monotime_t last_malformed;
+	monotime_t n = mononow();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
 
 	r_hashval = NULL;
@@ -2453,7 +2411,7 @@ static void send_notification(struct state *sndst, notification_t type,
 	switch (type) {
 	case PAYLOAD_MALFORMED:
 		/* only send one per second. */
-		if (n == last_malformed)
+		if (monobefore(last_malformed, n))
 			return;
 
 		last_malformed = n;
@@ -3003,10 +2961,11 @@ void accept_delete(struct state *st, struct msg_digest *md,
 					 */
 #define DELETE_SA_DELAY EVENT_RETRANSMIT_DELAY_0
 					if (dst->st_event != NULL &&
-						dst->st_event->ev_type ==
+					    dst->st_event->ev_type ==
 						  EVENT_SA_REPLACE &&
-						dst->st_event->ev_time <=
-						  DELETE_SA_DELAY + now()) {
+					    !monobefore(monotimesum(mononow(),
+					          deltatime(DELETE_SA_DELAY)),
+						dst->st_event->ev_time)) {
 						/*
 						 * Patch from Angus Lees to
 						 * ignore retransmited
@@ -3016,12 +2975,12 @@ void accept_delete(struct state *st, struct msg_digest *md,
 							"received Delete SA "
 							"payload: already "
 							"replacing IPSEC "
-							"State #%lu in %d "
+							"State #%lu in %ld "
 							"seconds",
 							dst->st_serialno,
-							(int)(dst->st_event->
-								ev_time -
-								now()));
+							(long)deltasecs(monotimediff(dst->st_event->
+								ev_time,
+								mononow())));
 					} else {
 						loglog(RC_LOG_SERIOUS,
 							"received Delete SA "
@@ -3030,8 +2989,8 @@ void accept_delete(struct state *st, struct msg_digest *md,
 							"in %d seconds",
 							dst->st_serialno,
 							DELETE_SA_DELAY);
-						dst->st_margin =
-							DELETE_SA_DELAY;
+						dst->st_margin = deltatime(
+							DELETE_SA_DELAY);
 						delete_event(dst);
 						event_schedule(
 							EVENT_SA_REPLACE,

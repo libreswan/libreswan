@@ -75,8 +75,6 @@ main(int argc, char *argv[]) {
 	do_test(&ikev2_trans_type_names, 256);
 	do_test(&ike_cert_type_names, 256);
 	do_test(&modecfg_attr_names, 256);
-
-	/* these seem to crash - needs fixing */
 	do_test(&ike_idtype_names, 256);
 
 	report_leaks();

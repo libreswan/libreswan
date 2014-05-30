@@ -45,7 +45,6 @@
 #include "socketwrapper.h"
 #include "constants.h"
 #include "lswlog.h"
-
 #include "defs.h"
 #include "whack.h"
 
@@ -784,30 +783,35 @@ struct sockaddr_un ctl_addr = {
 #endif
 };
 
-static void check_life_time(time_t life, time_t limit, const char *which,
+/* ??? there seems to be no consequence for invalid life_time. */
+static void check_life_time(deltatime_t life, time_t raw_limit,
+			    const char *which,
 			    const struct whack_message *msg)
 {
-	time_t mint = msg->sa_rekey_margin * (100 + msg->sa_rekey_fuzz) / 100;
+	deltatime_t limit = deltatime(raw_limit);
+	deltatime_t mint = deltatimescale(100 + msg->sa_rekey_fuzz, 100, msg->sa_rekey_margin);
 
-	if (life > limit) {
+	if (deltaless(limit, life)) {
 		char buf[200]; /* arbitrary limit */
 
 		snprintf(buf, sizeof(buf),
-			 "%s [%lu seconds] must be less than %lu seconds",
-			 which, (unsigned long)life, (unsigned long)limit);
+			 "%s [%ld seconds] must be less than %ld seconds",
+			 which,
+			 (long)deltasecs(life),
+			 (long)deltasecs(limit));
 		diag(buf);
 	}
-	if ((msg->policy & POLICY_DONT_REKEY) == LEMPTY && life <= mint) {
+	if ((msg->policy & POLICY_DONT_REKEY) == LEMPTY && !deltaless(mint, life)) {
 		char buf[200]; /* arbitrary limit */
 
 		snprintf(buf, sizeof(buf),
-			 "%s [%lu] must be greater than"
-			 " rekeymargin*(100+rekeyfuzz)/100 [%lu*(100+%lu)/100 = %lu]",
+			 "%s [%ld] must be greater than"
+			 " rekeymargin*(100+rekeyfuzz)/100 [%ld*(100+%lu)/100 = %ld]",
 			 which,
-			 (unsigned long)life,
-			 (unsigned long)msg->sa_rekey_margin,
-			 (unsigned long)msg->sa_rekey_fuzz,
-			 (unsigned long)mint);
+			 (long)deltasecs(life),
+			 (long)deltasecs(msg->sa_rekey_margin),
+			 msg->sa_rekey_fuzz,
+			 (long)deltasecs(mint));
 		diag(buf);
 	}
 }
@@ -942,9 +946,9 @@ int main(int argc, char **argv)
 	msg.modecfg_domain = NULL;
 	msg.modecfg_banner = NULL;
 
-	msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
-	msg.sa_ipsec_life_seconds = PLUTO_SA_LIFE_DURATION_DEFAULT;
-	msg.sa_rekey_margin = SA_REPLACEMENT_MARGIN_DEFAULT;
+	msg.sa_ike_life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT);
+	msg.sa_ipsec_life_seconds = deltatime(PLUTO_SA_LIFE_DURATION_DEFAULT);
+	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
 
@@ -1502,15 +1506,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKELIFETIME: /* --ikelifetime <seconds> */
-			msg.sa_ike_life_seconds = opt_whole;
+			msg.sa_ike_life_seconds = deltatime(opt_whole);
 			continue;
 
 		case CD_IPSECLIFETIME: /* --ipseclifetime <seconds> */
-			msg.sa_ipsec_life_seconds = opt_whole;
+			msg.sa_ipsec_life_seconds = deltatime(opt_whole);
 			continue;
 
 		case CD_RKMARGIN: /* --rekeymargin <seconds> */
-			msg.sa_rekey_margin = opt_whole;
+			msg.sa_rekey_margin = deltatime(opt_whole);
 			continue;
 
 		case CD_RKFUZZ: /* --rekeyfuzz <percentage> */
@@ -1549,11 +1553,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_DPDDELAY:
-			msg.dpd_delay = opt_whole;
+			msg.dpd_delay = deltatime(opt_whole);
 			continue;
 
 		case CD_DPDTIMEOUT:
-			msg.dpd_timeout = opt_whole;
+			msg.dpd_timeout = deltatime(opt_whole);
 			continue;
 
 		case CD_DPDACTION:
@@ -1930,12 +1934,14 @@ int main(int argc, char **argv)
 
 	update_ports(&msg);
 
-	/* tricky quick and dirty check for wild values */
-	/* ??? This is horrible. */
-	if (msg.sa_rekey_margin != 0 &&
-	    msg.sa_rekey_fuzz * msg.sa_rekey_margin * 4 / msg.sa_rekey_margin /
-	    4 !=
-	    msg.sa_rekey_fuzz)
+	/*
+	 * Check for wild values
+	 * Must never overflow: rekeymargin*(100+rekeyfuzz)/100
+	 * We don't know the maximum value for a time_t, so we use INT_MAX
+	 * ??? this should be checked wherever any of these is set in Pluto too.
+	 */
+	if (msg.sa_rekey_fuzz > INT_MAX - 100 ||
+	    deltasecs(msg.sa_rekey_margin) > (time_t)(INT_MAX / (100 + msg.sa_rekey_fuzz)))
 		diag("rekeymargin or rekeyfuzz values are so large that they cause oveflow");
 
 
@@ -1946,11 +1952,12 @@ int main(int argc, char **argv)
 	check_life_time(msg.sa_ipsec_life_seconds, SA_LIFE_DURATION_MAXIMUM,
 			"ipseclifetime", &msg);
 
-	if (msg.dpd_delay && !msg.dpd_timeout)
+	if (deltasecs(msg.dpd_delay) != 0 &&
+	    deltasecs(msg.dpd_timeout) == 0)
 		diag("dpddelay specified, but dpdtimeout is zero, both should be specified");
 
-
-	if (!msg.dpd_delay && msg.dpd_timeout)
+	if (deltasecs(msg.dpd_delay) == 0 &&
+	    deltasecs(msg.dpd_timeout) != 0)
 		diag("dpdtimeout specified, but dpddelay is zero, both should be specified");
 
 
@@ -2097,9 +2104,8 @@ int main(int argc, char **argv)
 					 * and how it should affect our exit status
 					 */
 					{
-						unsigned long s = strtoul(ls,
-									  NULL,
-									  10);
+						unsigned long s =
+							strtoul(ls, NULL, 10);
 
 						switch (s) {
 						case RC_COMMENT:

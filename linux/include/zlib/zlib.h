@@ -394,11 +394,11 @@ ZEXTERN int ZEXPORT inflateEnd OF((z_streamp strm));
 
 /*
    ZEXTERN int ZEXPORT deflateInit2 OF((z_streamp strm,
-                                     int  level,
-                                     int  method,
-                                     int  windowBits,
-                                     int  memLevel,
-                                     int  strategy));
+					int  level,
+					int  method,
+					int  windowBits,
+					int  memLevel,
+					int  strategy));
 
      This is another version of deflateInit with more compression options. The
    fields next_in, zalloc, zfree and opaque must be initialized before by

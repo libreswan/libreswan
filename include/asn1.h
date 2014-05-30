@@ -108,7 +108,7 @@ extern u_char *build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
 extern u_char *build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
 					  asn1_t inner_type, size_t datalen);
 extern bool is_printablestring(chunk_t str);
-extern time_t asn1totime(const chunk_t *utctime, asn1_t type);
+extern realtime_t asn1totime(const chunk_t *utctime, asn1_t type);
 extern void asn1_init(asn1_ctx_t *ctx, chunk_t blob,
 		      u_int level0, bool implicit, u_int cond);
 extern bool extract_object(const asn1Object_t *const objects,

@@ -62,7 +62,7 @@ size_t dstlen;
 	if (tn->name == NULL)
 		return 0;
 
-	if (strcmp(tn->name, PASSTHROUGHTYPE) == 0 &&
+	if (streq(tn->name, PASSTHROUGHTYPE) &&
 		sa.spi == PASSTHROUGHSPI &&
 		sa.dst.s_addr == PASSTHROUGHDST) {
 		strcpy(buf, PASSTHROUGHNAME);
@@ -95,7 +95,7 @@ size_t dstlen;
 	if (len == 0) {
 		strcpy(buf, tn->name);
 		len = strlen(buf);
-		len += ultoa(ntohl(sa.spi), base, buf + len, sizeof(buf) - len);
+		len += ultot(ntohl(sa.spi), base, buf + len, sizeof(buf) - len);
 		*(buf + len - 1) = '@';
 		len += addrtoa(sa.dst, 0, buf + len, sizeof(buf) - len);
 	}

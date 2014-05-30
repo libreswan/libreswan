@@ -45,7 +45,6 @@
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
@@ -251,7 +250,7 @@ static int initiate_a_connection(struct connection *c,
 					c->policy, alg, TRUE);
 
 				if (alg != NULL && phase2_sa == NULL) {
-					whack_log(RC_NOALGO,
+					whack_log(RC_LOG_SERIOUS,
 						  "can not initiate: no acceptable kernel algorithms loaded");
 					reset_cur_connection();
 					close_any(is->whackfd);
@@ -482,9 +481,8 @@ static void cannot_oppo(struct connection *c,
 		if (DBGP(DBG_OPPO | DBG_CONTROLMORE)) {
 			char state_buf[LOG_WIDTH];
 			char state_buf2[LOG_WIDTH];
-			const time_t n = now();
 
-			fmt_state(st, n, state_buf, sizeof(state_buf),
+			fmt_state(st, mononow(), state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
 			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
 			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
@@ -1066,7 +1064,6 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 							   &b->our_client,
 							   &b->peer_client);
 				}
-				c->gw_info->key->last_tried_time = now();
 				DBG(DBG_OPPO | DBG_CONTROL,
 				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
 					    ours, ourport, his, hisport,
@@ -1312,8 +1309,8 @@ struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 }
 
 
-#define PENDING_DDNS_INTERVAL (60) /* time before retrying DDNS host lookup
-	                              for phase 1*/
+/* time before retrying DDNS host lookup for phase 1 */
+#define PENDING_DDNS_INTERVAL secs_per_minute
 
 /*
  * call me periodically to check to see if any DDNS tunnel can come up
@@ -1422,7 +1419,8 @@ void connection_check_ddns(void)
 	check_orientations();
 }
 
-#define PENDING_PHASE2_INTERVAL (60 * 2) /*time between scans of pending phase2*/
+/* time between scans of pending phase2 */
+#define PENDING_PHASE2_INTERVAL (2 * secs_per_minute)
 
 /*
  * call me periodically to check to see if pending phase2s ever got
@@ -1458,6 +1456,7 @@ void connection_check_phase2(void)
 
 		if (pending_check_timeout(c)) {
 			struct state *p1st;
+
 			libreswan_log(
 				"pending Quick Mode with %s \"%s\" took too long -- replacing phase 1",
 				ip_str(&c->spd.that.host_addr),
@@ -1467,20 +1466,19 @@ void connection_check_phase2(void)
 						 ISAKMP_SA_ESTABLISHED_STATES |
 						 PHASE1_INITIATOR_STATES);
 
-			if (p1st) {
+			if (p1st != NULL) {
 				/* arrange to rekey the phase 1, if there was one. */
 				if (c->dnshostname != NULL) {
 					restart_connections_by_peer(c);
 				} else {
-				delete_event(p1st);
-				event_schedule(EVENT_SA_REPLACE, 0, p1st);
-			}
-
+					delete_event(p1st);
+					event_schedule(EVENT_SA_REPLACE, 0, p1st);
+				}
 			} else {
 				/* start a new connection. Something wanted it up */
 				struct initiate_stuff is;
 
-				is.whackfd   = NULL_FD;
+				is.whackfd = NULL_FD;
 				is.moredebug = 0;
 				is.importance = pcim_local_crypto;
 

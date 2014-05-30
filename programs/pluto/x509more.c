@@ -100,7 +100,7 @@ static void gntoid(struct id *id, const generalName_t *gn)
  */
 void add_x509_public_key(const struct id *keyid,
 			x509cert_t *cert,
-			time_t until,
+			realtime_t until,
 			enum dns_auth_level dns_auth_level)
 {
 	generalName_t *gn;
@@ -201,10 +201,10 @@ void ikev1_decode_cert(struct msg_digest *md)
 			x509cert_t cert2 = empty_x509cert;
 
 			if (parse_x509cert(blob, 0, &cert2)) {
-				time_t valid_until;
+				realtime_t valid_until;
 
 				if (verify_x509cert(&cert2, strict_crl_policy,
-							&valid_until)) {
+						&valid_until /* OUT */)) {
 					DBG(DBG_X509 | DBG_PARSING,
 						DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,
@@ -260,10 +260,10 @@ void ikev2_decode_cert(struct msg_digest *md)
 			x509cert_t cert2 = empty_x509cert;
 
 			if (parse_x509cert(blob, 0, &cert2)) {
-				time_t valid_until;
+				realtime_t valid_until;
 
 				if (verify_x509cert(&cert2, strict_crl_policy,
-							&valid_until)) {
+						&valid_until /* OUT */)) {
 					DBG(DBG_X509 | DBG_PARSING,
 						DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,
@@ -514,15 +514,6 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 				cert_t cert;
 
 				if (load_cert(filelist[n]->d_name,
-#ifdef SINGLE_CONF_DIR
-						/*
-						 * too verbose in
-						 * single conf dir
-						 */
-						FALSE,
-#else
-						TRUE,
-#endif
 						type, &cert))
 					add_authcert(cert.u.x509, auth_flags);
 

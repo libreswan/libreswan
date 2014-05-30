@@ -145,8 +145,7 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	return 1;
 }
 
-err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
-			struct alg_info_esp *alg_info __attribute__((unused)))
+err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len)
 {
 	err_t ugh = NULL;
 

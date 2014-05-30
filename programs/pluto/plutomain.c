@@ -103,6 +103,8 @@
 # include <libaudit.h>
 #endif
 
+static const char *pluto_name;	/* name (path) we were invoked with */
+
 static const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 static bool fork_desired = TRUE;
@@ -124,88 +126,19 @@ static void free_pluto_main()
 }
 
 /*
- * usage - print help messages
+ * invocation_fail - print diagnostic and usage hint message and exit
  *
- * @param mess String - alternate message to print
+ * @param mess String - diagnostic message to print
  */
-static void usage(const char *mess)
+static void invocation_fail(const char *mess)
 {
-	if (mess != NULL && *mess != '\0')
+	if (mess != NULL)
 		fprintf(stderr, "%s\n", mess);
-	fprintf(stderr,
-		"Usage: pluto"
-		" [--help]"
-		" [--version]"
-		" \\\n\t"
-		"[--leak-detective]"
-		" [--config <filename>]"
-		" [--vendorid <vendorid>]"
-		" [--nofork]"
-		" [--stderrlog]"
-		" [--logfile <filename>]"
-		" [--plutostderrlogtime]"
-		" [--force-busy]"
-		" [--nocrsend]"
-		" [--strictcrlpolicy]"
-		" [--crlcheckinterval]"
-		" [--uniqueids]"
-		" [--use-klips]"
-		" [--use-netkey]"
-		" [--use-mast]"
-		" [--use-bsdkame]"
-		" [--use-nostack]"	/* old --no_klips */
-		" \\\n\t"
-		"[--interface <ifname|ifaddr>]"
-		" [--ikeport <port-number>]"
-		" [--natikeport <port-number>]"
-		"[--listen <ifaddr>]"
-		" \\\n\t"
-		"[--ctlbase <path>]"
-		" \\\n\t"
-		"[--perpeerlogbase <path>] [--perpeerlog]"
-		" \\\n\t"
-		"[--coredir <dirname>] [--noretransmits]"
-		"[--statsbin <filename>]"
-		" \\\n\t"
-		"[--secretsfile <secrets-file>]"
-		" [--ipsecdir <ipsec-dir>]"
-		" \\\n\t"
-		"[--adns <pathname>]"
-		"[--nhelpers <number>]"
-#ifdef HAVE_LABELED_IPSEC
-		" \\\n\t"
-		"[--secctx-attr-value <number>]"
-#endif
-		" \\\n\t"
-		"[--debug-none]"
-		" [--debug-all]"
-		" \\\n\t"
-		"[--debug-raw]"
-		" [--debug-crypt]"
-		" [--debug-crypto]"
-		" [--debug-parsing]"
-		" [--debug-emitting]"
-		" \\\n\t"
-		"[--debug-control]"
-		"[--debug-lifecycle]"
-		" [--debug-kernel]"
-		" [--debug-x509]"
-		" [--debug-dns]"
-		" [--debug-oppo]"
-		" [--debug-oppoinfo]"
-		" [--debug-dpd]"
-		" [ --debug-private]"
-		" [ --debug-pfkey]"
-		" [ --debug-nat-t]"
-		" \\\n\t"
-		"[--keep-alive <delay_sec>]"
-		" \\\n\t"
-		"[--virtual-private <network_list>]"
-		"\n"
+	fprintf(stderr, "For usage information: %s --help\n"
 		"Libreswan %s\n",
-		ipsec_version_code());
+		pluto_name, ipsec_version_code());
 	/* not exit_pluto because we are not initialized yet */
-	exit(mess == NULL ? 0 : 1);
+	exit(1);
 }
 
 /* string naming compile-time options that have interop implications */
@@ -367,7 +300,7 @@ static struct starter_config *read_cfg_file(char *configfile)
 
 	cfg = confread_load(configfile, &err, FALSE, NULL, TRUE);
 	if (cfg == NULL)
-		usage(err);
+		invocation_fail(err);
 	return cfg;
 }
 
@@ -375,7 +308,7 @@ static struct starter_config *read_cfg_file(char *configfile)
 static void set_cfg_string(char **target, char *value)
 {
 	/* Do nothing if value is unset. */
-	if (value == NULL || *value == 0)
+	if (value == NULL || *value == '\0')
 		return;
 
 	/* Don't free previous target, it might be statically set. */
@@ -401,8 +334,8 @@ static void pluto_init_nss(char *confddir)
 /* by default the CRL policy is lenient */
 bool strict_crl_policy = FALSE;
 
-/* by default pluto does not check crls dynamically */
-long crl_check_interval = 0;
+/* 0 is special and default: do not check crls dynamically */
+deltatime_t crl_check_interval = { 0 };
 
 /* by default pluto sends no cookies in ikev2 or ikev1 aggrmode */
 bool force_busy = FALSE;
@@ -413,6 +346,185 @@ enum kernel_interface kern_interface = USE_NETKEY;	/* new default */
 #ifdef HAVE_LABELED_IPSEC
 u_int16_t secctx_attr_value = SECCTX;
 #endif
+
+/*
+ * Table of Pluto command-line options.
+ *
+ * For getopt_ling(3), but with twists.
+ *
+ * We never find that letting getopt set an option makes sense
+ * so flag is always NULL.
+ *
+ * Trick: we split the "name" string with a '\0'.
+ * Before it is the option name, as seen by getopt_long.
+ * After it is meta-information:
+ * - _ means: obsolete due to _ in name: replace _ with -
+ * - > means: obsolete spelling; use spelling from rest of string
+ * - ! means: obsolete and ignored (no replacement)
+ * - anything else is a description of the options argument (printed by --help)
+ *   If it starts with ^, that means start a newline in the --help output.
+ *
+ * The table should be ordered to maximize the clarity of --help.
+ *
+ * val values free due to removal of options: '1', '3', '4', 'G'
+ */
+ 
+#define DBG_OFFSET 256
+static const struct option long_opts[] = {
+	/* name, has_arg, flag, val */
+	{ "help\0", no_argument, NULL, 'h' },
+	{ "version\0", no_argument, NULL, 'v' },
+	{ "config\0<filename>", required_argument, NULL, 'z' },
+	{ "nofork\0", no_argument, NULL, 'd' },
+	{ "stderrlog\0", no_argument, NULL, 'e' },
+	{ "logfile\0<filename>", required_argument, NULL, 'g' },
+	{ "plutostderrlogtime\0", no_argument, NULL, 't' },
+	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
+	{ "force-busy\0", no_argument, NULL, 'D' },
+	{ "strictcrlpolicy\0", no_argument, NULL, 'r' },
+	{ "crlcheckinterval\0<seconds>", required_argument, NULL, 'x' },
+	{ "uniqueids\0", no_argument, NULL, 'u' },
+	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
+	{ "use-nostack\0",  no_argument, NULL, 'n' },
+	{ "use-none\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
+	{ "useklips\0>use-klips",  no_argument, NULL, 'k' },	/* redundant spelling */
+	{ "use-klips\0",  no_argument, NULL, 'k' },
+	{ "use-auto\0>use-netkey",  no_argument, NULL, 'K' },	/* rednundate spelling (sort of) */
+	{ "usenetkey\0>use-netkey", no_argument, NULL, 'K' },	/* redundant spelling */
+	{ "use-netkey\0", no_argument, NULL, 'K' },
+	{ "use-mast\0",   no_argument, NULL, 'M' },
+	{ "use-mastklips\0",   no_argument, NULL, 'M' },
+	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
+	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
+	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
+	{ "ikeport\0<port-number>", required_argument, NULL, 'p' },
+	{ "natikeport\0<port-number>", required_argument, NULL, 'q' },
+	{ "ctlbase\0<path>", required_argument, NULL, 'b' },
+	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
+	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },
+	{ "perpeerlog\0", no_argument, NULL, 'l' },
+	{ "noretransmits\0", no_argument, NULL, 'R' },
+	{ "coredir\0>dumpdir", required_argument, NULL, 'C' },	/* redundant spelling */
+	{ "dumpdir\0<dirname>", required_argument, NULL, 'C' },
+	{ "statsbin\0<filename>", required_argument, NULL, 'S' },
+	{ "ipsecdir\0<ipsec-dir>", required_argument, NULL, 'f' },
+	{ "ipsec_dir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling; _ */
+	{ "foodgroupsdir\0>ipsecdir", required_argument, NULL, 'f' },	/* redundant spelling */
+	{ "adns\0<pathname>", required_argument, NULL, 'a' },
+	{ "nat_traversal\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
+	{ "keep_alive\0_", required_argument, NULL, '2' },	/* _ */
+	{ "keep-alive\0<delay_secs>", required_argument, NULL, '2' },
+	{ "force_keepalive\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
+	{ "disable_port_floating\0!", no_argument, NULL, 'h' },	/* obsolete; _ */
+	{ "virtual_private\0_", required_argument, NULL, '6' },	/* _ */
+	{ "virtual-private\0<network_list>", required_argument, NULL, '6' },
+	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
+#ifdef HAVE_LABELED_IPSEC
+	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* _ */
+	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },
+#endif
+	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
+
+	{ "leak-detective\0", no_argument, NULL, 'X' },
+	{ "debug-nat_t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling; _ */
+	{ "debug-nat-t\0>debug-nattraversal", no_argument, NULL, '5' },	/* redundant spelling */
+	{ "debug-nattraversal\0", no_argument, NULL, '5' },
+	{ "debug-none\0^", no_argument, NULL, 'N' },
+	{ "debug-all\0", no_argument, NULL, 'A' },
+
+	/* --debug-* options (using D for shorthand) */
+#define D(name, code) { "debug-" name, no_argument, NULL, (code) + DBG_OFFSET }
+	D("raw\0", DBG_RAW_IX),
+	D("crypt\0", DBG_CRYPT_IX),
+	D("crypto\0>crypt", DBG_CRYPT_IX),	/* redundant spelling */
+	D("parsing\0", DBG_PARSING_IX),
+	D("emitting\0", DBG_EMITTING_IX),
+	D("control\0", DBG_CONTROL_IX),
+	D("lifecycle\0", DBG_LIFECYCLE_IX),
+	D("kernel\0", DBG_KERNEL_IX),
+	D("klips\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
+	D("netkey\0>kernel", DBG_KERNEL_IX),	/* redundant spelling */
+	D("dns\0", DBG_DNS_IX),
+	D("oppo\0", DBG_OPPO_IX),
+	D("oppoinfo\0", DBG_OPPOINFO_IX),
+	D("controlmore\0", DBG_CONTROLMORE_IX),
+	D("dpd\0", DBG_DPD_IX),
+	D("x509\0", DBG_X509_IX),
+	D("private\0", DBG_PRIVATE_IX),
+	D("pfkey\0", DBG_PFKEY_IX),
+#undef D
+
+	/* --impair-* options (using I for shorthand) */
+#define I(name, code) { "impair-" name, no_argument, NULL, (code) + DBG_OFFSET }
+	I("delay-adns-key-answer\0^", IMPAIR_DELAY_ADNS_KEY_ANSWER_IX),
+	I("delay-adns-txt-answer\0", IMPAIR_DELAY_ADNS_TXT_ANSWER_IX),
+	I("bust-mi2\0", IMPAIR_BUST_MI2_IX),
+	I("bust-mr2\0", IMPAIR_BUST_MR2_IX),
+	I("sa-creation\0", IMPAIR_SA_CREATION_IX),
+	I("die-oninfo\0", IMPAIR_DIE_ONINFO_IX),
+	I("jacob-two-two\0", IMPAIR_JACOB_TWO_TWO_IX),
+	I("major-version-bump\0", IMPAIR_MAJOR_VERSION_BUMP_IX),
+	I("minor-version-bump\0", IMPAIR_MINOR_VERSION_BUMP_IX),
+	I("retransmits\0", IMPAIR_RETRANSMITS_IX),
+	I("send-bogus-isakmp-flag\0", IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX),
+	I("send-ikev2-ke\0", IMPAIR_SEND_IKEv2_KE_IX),
+#undef I
+	{ 0, 0, 0, 0 }
+};
+
+/* print full usage (from long_opts[]) */
+static void usage(void)
+{
+	const struct option *opt;
+	char line[72];
+	size_t lw;
+
+	snprintf(line, sizeof(line), "Usage: %s", pluto_name);
+	lw = strlen(line);
+
+	for (opt = long_opts; opt->name != NULL; opt++) {
+		const char *nm = opt->name;
+		const char *meta = nm + strlen(nm) + 1;
+		bool force_nl = FALSE;
+		char chunk[sizeof(line) - 1];
+		int cw;
+
+		switch (*meta) {
+		case '_':
+		case '>':
+		case '!':
+			/* ignore these entries */
+			break;
+		case '^':
+			force_nl = TRUE;
+			meta++;	/* eat ^ */
+			/* fall through */
+		default:
+			if (*meta == '\0')
+				snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
+			else
+				snprintf(chunk, sizeof(chunk),  "[--%s %s]", nm, meta);
+			cw = strlen(chunk);
+
+			if (force_nl || lw + cw + 2 >= sizeof(line)) {
+				fprintf(stderr, "%s\n", line);
+				line[0] = '\t';
+				lw = 1;
+			} else {
+				line[lw++] = ' ';
+			}
+			passert(lw + cw + 1 < sizeof(line));
+			strcpy(&line[lw], chunk);
+			lw += cw;
+		}
+	}
+
+	fprintf(stderr, "%s\n", line);
+
+	fprintf(stderr, "Libreswan %s\n", ipsec_version_code());
+	/* not exit_pluto because we are not initialized yet */
+	exit(0);
+}
 
 int main(int argc, char **argv)
 {
@@ -438,6 +550,8 @@ int main(int argc, char **argv)
 		}
 	}
 
+	pluto_name = argv[0];
+
 	coredir = clone_str("/var/run/pluto", "coredir in main()");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 
@@ -457,137 +571,6 @@ int main(int argc, char **argv)
 
 	/* handle arguments */
 	for (;; ) {
-#       define DBG_OFFSET 256
-		static const struct option long_opts[] = {
-			/* name, has_arg, flag, val */
-			{ "help", no_argument, NULL, 'h' },
-			{ "version", no_argument, NULL, 'v' },
-			{ "leak-detective", no_argument, NULL, 'X' },
-			{ "config", required_argument, NULL, 'z' },
-			{ "nofork", no_argument, NULL, 'd' },
-			{ "stderrlog", no_argument, NULL, 'e' },
-			{ "logfile", required_argument, NULL, 'g' },
-			{ "plutostderrlogtime", no_argument, NULL, 't' },
-			{ "noklips", no_argument, NULL, 'n' },
-			{ "use-nostack",  no_argument, NULL, 'n' },
-			{ "use-none",     no_argument, NULL, 'n' },
-			{ "force_busy", no_argument, NULL, 'D' },	/* obsolete _ */
-			{ "force-busy", no_argument, NULL, 'D' },
-			{ "strictcrlpolicy", no_argument, NULL, 'r' },
-			{ "crlcheckinterval", required_argument, NULL, 'x' },
-			{ "uniqueids", no_argument, NULL, 'u' },
-			{ "useklips",  no_argument, NULL, 'k' },
-			{ "use-klips",  no_argument, NULL, 'k' },
-			{ "use-auto",  no_argument, NULL, 'G' },
-			{ "usenetkey", no_argument, NULL, 'K' },
-			{ "use-netkey", no_argument, NULL, 'K' },
-			{ "use-mast",   no_argument, NULL, 'M' },
-			{ "use-mastklips",   no_argument, NULL, 'M' },
-			{ "use-bsdkame",   no_argument, NULL, 'F' },
-			{ "interface", required_argument, NULL, 'i' },
-			{ "listen", required_argument, NULL, 'L' },
-			{ "ikeport", required_argument, NULL, 'p' },
-			{ "natikeport", required_argument, NULL, 'q' },
-			{ "ctlbase", required_argument, NULL, 'b' },
-			{ "secretsfile", required_argument, NULL, 's' },
-			{ "perpeerlogbase", required_argument, NULL, 'P' },
-			{ "perpeerlog", no_argument, NULL, 'l' },
-			{ "noretransmits", no_argument, NULL, 'R' },
-			{ "coredir", required_argument, NULL, 'C' },
-			/* alias for coredir */
-			{ "dumpdir", required_argument, NULL, 'C' },
-			{ "statsbin", required_argument, NULL, 'S' },
-			{ "ipsecdir", required_argument, NULL, 'f' },
-			{ "ipsec_dir", required_argument, NULL, 'f' },	/* redundant: ipsecdir; obsolete _ */
-			{ "foodgroupsdir", required_argument, NULL, 'f' },
-			{ "adns", required_argument, NULL, 'a' },
-			/* obsoleted, ignored */
-			{ "nat_traversal", no_argument, NULL, '1' },	/* obsolete */
-			{ "keep_alive", required_argument, NULL, '2' },	/* obsolete _ */
-			{ "keep-alive", required_argument, NULL, '2' },
-			/* obsolete, ignored */
-			{ "force_keepalive", no_argument, NULL, '3' },	/* obsolete _ */
-			/* obsolete, ignored */
-			{ "disable_port_floating", no_argument, NULL, '4' },
-			{ "debug-nat_t", no_argument, NULL, '5' },	/* obsolete _ */
-			{ "debug-nat-t", no_argument, NULL, '5' },
-			{ "debug-nattraversal", no_argument, NULL, '5' },	/* ??? redundant spelling */
-			{ "virtual_private", required_argument, NULL, '6' },	/* obsolete _ */
-			{ "virtual-private", required_argument, NULL, '6' },
-			{ "nhelpers", required_argument, NULL, 'j' },
-#ifdef HAVE_LABELED_IPSEC
-			{ "secctx_attr_value", required_argument, NULL, 'w' },	/* obsolete _ */
-			{ "secctx-attr-value", required_argument, NULL, 'w' },
-#endif
-			{ "vendorid", required_argument, NULL, 'V' }, /* --vendorid */
-			{ "debug-none", no_argument, NULL, 'N' },
-			{ "debug-all", no_argument, NULL, 'A' },
-
-			{ "debug-raw", no_argument, NULL,
-				DBG_RAW_IX + DBG_OFFSET },
-			{ "debug-crypt", no_argument, NULL,
-				DBG_CRYPT_IX + DBG_OFFSET },
-			{ "debug-crypto", no_argument, NULL,
-				DBG_CRYPT_IX + DBG_OFFSET },
-			{ "debug-parsing", no_argument, NULL,
-				DBG_PARSING_IX + DBG_OFFSET },
-			{ "debug-emitting", no_argument, NULL,
-				DBG_EMITTING_IX + DBG_OFFSET },
-			{ "debug-control", no_argument, NULL,
-				DBG_CONTROL_IX + DBG_OFFSET },
-			{ "debug-lifecycle", no_argument, NULL,
-				DBG_LIFECYCLE_IX + DBG_OFFSET },
-			{ "debug-kernel", no_argument, NULL,
-				DBG_KERNEL_IX + DBG_OFFSET },
-			{ "debug-dns", no_argument, NULL,
-				DBG_DNS_IX + DBG_OFFSET },
-			{ "debug-oppo", no_argument, NULL,
-				DBG_OPPO_IX + DBG_OFFSET },
-			{ "debug-oppoinfo", no_argument, NULL,
-				DBG_OPPOINFO_IX + DBG_OFFSET },
-			{ "debug-controlmore", no_argument, NULL,
-				DBG_CONTROLMORE_IX + DBG_OFFSET },
-			{ "debug-dpd", no_argument, NULL,
-				DBG_DPD_IX + DBG_OFFSET },
-			{ "debug-x509", no_argument, NULL,
-				DBG_X509_IX + DBG_OFFSET },
-			{ "debug-private", no_argument, NULL,
-				DBG_PRIVATE_IX + DBG_OFFSET },
-			{ "debug-pfkey", no_argument, NULL,
-				DBG_PFKEY_IX + DBG_OFFSET },
-
-			/* for backwards compatibility */
-			{ "debug-klips", no_argument, NULL,
-				DBG_KERNEL_IX + DBG_OFFSET },
-			{ "debug-netkey", no_argument, NULL,
-				DBG_KERNEL_IX + DBG_OFFSET },
-			{ "impair-delay-adns-key-answer", no_argument, NULL,
-				IMPAIR_DELAY_ADNS_KEY_ANSWER_IX + DBG_OFFSET },
-			{ "impair-delay-adns-txt-answer", no_argument, NULL,
-				IMPAIR_DELAY_ADNS_TXT_ANSWER_IX + DBG_OFFSET },
-			{ "impair-bust-mi2", no_argument, NULL,
-				IMPAIR_BUST_MI2_IX + DBG_OFFSET },
-			{ "impair-bust-mr2", no_argument, NULL,
-				IMPAIR_BUST_MR2_IX + DBG_OFFSET },
-			{ "impair-sa-creation", no_argument, NULL,
-				IMPAIR_SA_CREATION_IX + DBG_OFFSET },
-			{ "impair-die-oninfo", no_argument, NULL,
-				IMPAIR_DIE_ONINFO_IX + DBG_OFFSET },
-			{ "impair-jacob-two-two", no_argument, NULL,
-				IMPAIR_JACOB_TWO_TWO_IX + DBG_OFFSET },
-			{ "impair-major-version-bump", no_argument, NULL,
-				IMPAIR_MAJOR_VERSION_BUMP_IX + DBG_OFFSET },
-			{ "impair-minor-version-bump", no_argument, NULL,
-				IMPAIR_MINOR_VERSION_BUMP_IX + DBG_OFFSET },
-			{ "impair-retransmits", no_argument, NULL,
-				IMPAIR_RETRANSMITS_IX + DBG_OFFSET },
-			{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
-				IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX +
-				DBG_OFFSET },
-			{ "impair-send-ikev2-ke", no_argument, NULL,
-				IMPAIR_SEND_IKEv2_KE_IX + DBG_OFFSET },
-			{ 0, 0, 0, 0 }
-		};
 		/*
 		 * Note: we don't like the way short options get parsed
 		 * by getopt_long, so we simply pass an empty string as
@@ -595,11 +578,29 @@ int main(int argc, char **argv)
 		 */
 		int longindex = -1;
 		int c = getopt_long(argc, argv, "", long_opts, &longindex);
+		const char *optname = NULL;
+		err_t ugh = NULL;	/* complaint from case */
+		unsigned long u = 0;	/* scratch for case */
 
-		if (longindex != -1 &&
-			strchr(long_opts[longindex].name, '_') != NULL) {
-			libreswan_log("warning: option \"%s\" with '_' in its name is obsolete; use '-'",
-				long_opts[longindex].name);
+		if (longindex != -1) {
+			const char *optmeta;
+			optname = long_opts[longindex].name;
+
+			optmeta = optname + strlen(optname) + 1;	/* after '\0' */
+			switch (optmeta[0]) {
+			case '_':
+				libreswan_log("warning: option \"--%s\" with '_' in its name is obsolete; use '-'",
+					optname);
+				break;
+			case '>':
+				libreswan_log("warning: option \"--%s\" is obsolete; use \"--%s\"",
+					optname, optmeta + 1);
+				break;
+			case '!':
+				libreswan_log("warning: option \"--%s\" is obsolete; ignored",
+					optname);
+				continue;	/* ignore it! */
+			}
 		}
 
 		/* Note: "breaking" from case terminates loop */
@@ -607,24 +608,28 @@ int main(int argc, char **argv)
 		case EOF:	/* end of flags */
 			break;
 
-		case 0:	/* long option already handled */
+		case 0:
+			/*
+			 * Long option already handled by getopt_long.
+			 * Not currently used since we always set flag to NULL.
+			 */
 			continue;
 
 		case ':':	/* diagnostic already printed by getopt_long */
 		case '?':	/* diagnostic already printed by getopt_long */
-			usage("");
-			break;	/* not actually reached */
+			invocation_fail(NULL);
+			break;
 
 		case 'h':	/* --help */
-			usage(NULL);
+			usage();
 			break;	/* not actually reached */
 
 		case 'X':	/* --leak-detective */
 			/*
-			 * Was already processed at the start of main()
-			 * because we need to potentially enable it before
-			 * the first alloc()
-			 * If this option is specfied, we must have already
+			 * This flag was already processed at the start of main()
+			 * because leak_detective must be immutable from before
+			 * the first alloc().
+			 * If this option is specified, we must have already
 			 * set it at the start of main(), so assert it.
 			 */
 			passert(leak_detective);
@@ -653,32 +658,27 @@ int main(int argc, char **argv)
 			break;	/* not actually reached */
 
 		case 'j':	/* --nhelpers */
-			if (optarg == NULL || !isdigit(optarg[0]))
-				usage("missing number of pluto helpers");
+			if (streq(optarg, "-1")) {
+				nhelpers = -1;
+			} else {
+				ugh = ttoulb(optarg, 0, 10, 1000, &u);
+				if (ugh != NULL)
+					break;
 
-			{
-				char *endptr;
-				long count = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					count < -1)
-					usage("<nhelpers> must be a positive number, 0 or -1");
-
-				nhelpers = count;
+				nhelpers = u;
 			}
 			continue;
 
 #ifdef HAVE_LABELED_IPSEC
 		case 'w':	/* --secctx-attr-value */
-			{
-				char *endptr;
-				long value = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					(value != SECCTX && value != 10))
-					usage("<secctx-attr-value> must be a positive number (32001 by default, 10 for backward compatibility)");
-				secctx_attr_value = value & ISAKMP_ATTR_RTYPE_MASK;
+			ugh = ttoulb(optarg, 0, 0, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			if (u != SECCTX && u != 10) {
+				ugh = "must be a positive 32001 (default) or 10 (for backward compatibility)";
+				break;
 			}
+			secctx_attr_value = u;
 			continue;
 #endif
 
@@ -699,12 +699,6 @@ int main(int argc, char **argv)
 			log_with_timestamp = TRUE;
 			continue;
 
-		case 'G':	/* --use-auto */
-			libreswan_log(
-				"The option --use-auto is obsoleted, falling back to  --use-netkey\n");
-			kern_interface = USE_NETKEY;
-			continue;
-
 		case 'k':	/* --use-klips */
 			kern_interface = USE_KLIPS;
 			continue;
@@ -715,6 +709,10 @@ int main(int argc, char **argv)
 			err_t e = ttoaddr(optarg, 0, AF_UNSPEC, &lip);
 
 			if (e != NULL) {
+				/*
+				 *??? should we continue on failure?
+				 * If not, use ugh mechanism.
+				 */
 				libreswan_log(
 					"invalid listen argument ignored: %s\n",
 					e);
@@ -756,20 +754,11 @@ int main(int argc, char **argv)
 			no_retransmits = TRUE;
 			continue;
 
-		case 'x':	/* --crlcheckinterval <time>*/
-			if (optarg == NULL || !isdigit(optarg[0]))
-				usage("missing interval time");
-
-			{
-				char *endptr;
-				long interval = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					interval <= 0)
-					usage("<interval-time> must be a positive number");
-
-				crl_check_interval = interval;
-			}
+		case 'x':	/* --crlcheckinterval <seconds> */
+			ugh = ttoulb(optarg, 0, 10, TIME_T_MAX, &u);
+			if (ugh != NULL)
+				break;
+			crl_check_interval = deltatime(u);
 			continue;
 
 		case 'u':	/* --uniqueids */
@@ -777,8 +766,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'i':	/* --interface <ifname|ifaddr> */
-			if (!use_interface(optarg))
-				usage("too many --interface specifications");
+			if (!use_interface(optarg)) {
+				ugh = "too many --interface specifications";
+				break;
+			}
 			continue;
 
 		/*
@@ -788,33 +779,25 @@ int main(int argc, char **argv)
 		 * filters
 		 */
 		case 'p':	/* --ikeport <portnumber> */
-			if (optarg == NULL || !isdigit(optarg[0]))
-				usage("missing port number");
-			{
-				char *endptr;
-				long port = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					port <= 0 || port > 0x10000)
-					usage("<port-number> must be a number between 1 and 65535");
-
-				pluto_port = port;
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			if (u == 0) {
+				ugh = "must not be 0";
+				break;
 			}
+			pluto_port = u;
 			continue;
 
 		case 'q':	/* --natikeport <portnumber> */
-			if (optarg == NULL || !isdigit(optarg[0]))
-				usage("missing port number");
-			{
-				char *endptr;
-				long port = strtol(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg ||
-					port <= 0 || port > 0x10000)
-					usage("<port-number> must be a number between 1 and 65535");
-
-				pluto_nat_port = port;
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			if (u == 0) {
+				ugh = "must not be 0";
+				break;
 			}
+			pluto_nat_port = u;
 			continue;
 
 		case 'b':	/* --ctlbase <path> */
@@ -832,17 +815,23 @@ int main(int argc, char **argv)
 			ctlbase = optarg;
 			if (snprintf(ctl_addr.sun_path,
 					sizeof(ctl_addr.sun_path),
-					"%s%s", ctlbase, CTL_SUFFIX) == -1)
-				usage("<path>" CTL_SUFFIX " too long for sun_path");
+					"%s%s", ctlbase, CTL_SUFFIX) == -1) {
+				ugh = "<path>" CTL_SUFFIX " too long for sun_path";
+				break;
+			}
 
 			if (snprintf(info_addr.sun_path,
 					sizeof(info_addr.sun_path),
-					"%s%s", ctlbase, INFO_SUFFIX) == -1)
-				usage("<path>" INFO_SUFFIX " too long for sun_path");
+					"%s%s", ctlbase, INFO_SUFFIX) == -1) {
+				ugh = "<path>" INFO_SUFFIX " too long for sun_path";
+				break;
+			}
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
-					"%s%s", ctlbase, LOCK_SUFFIX) == -1)
-				usage("<path>" LOCK_SUFFIX " must fit");
+					"%s%s", ctlbase, LOCK_SUFFIX) == -1) {
+				ugh = "<path>" LOCK_SUFFIX " must fit";
+				break;
+			}
 			continue;
 
 		case 's':	/* --secretsfile <secrets-file> */
@@ -873,18 +862,13 @@ int main(int argc, char **argv)
 			log_to_perpeer = TRUE;
 			continue;
 
-		case '1':	/* --nat_traversal has been obsoleted */
-			libreswan_log("Ignored obsoleted option --nat_traversal");
+		case '2':	/* --keep-alive <delay_secs> */
+			ugh = ttoulb(optarg, 0, 10, secs_per_day, &u);
+			if (ugh != NULL)
+				break;
+			keep_alive = u;
 			continue;
-		case '2':	/* --keep-alive */
-			keep_alive = atoi(optarg);
-			continue;
-		case '3':	/* --force_keepalive has been obsoleted */
-			libreswan_log("Ignored obsoleted option --force_keepalive");
-			continue;
-		case '4':	/* --disable_port_floating has been obsoleted */
-			libreswan_log("Ignored obsoleted option --disable_port_floating");
-			continue;
+
 		case '5':	/* --debug-nat-t */
 			base_debugging |= DBG_NATT;
 			continue;
@@ -911,8 +895,8 @@ int main(int argc, char **argv)
 			force_busy = cfg->setup.options[KBF_FORCEBUSY];
 			strict_crl_policy =
 				cfg->setup.options[KBF_STRICTCRLPOLICY];
-			crl_check_interval =
-				cfg->setup.options[KBF_CRLCHECKINTERVAL];
+			crl_check_interval = deltatime(
+				cfg->setup.options[KBF_CRLCHECKINTERVAL]);
 			uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
 			/*
 			 * We don't check interfaces= here because that part
@@ -1010,18 +994,33 @@ int main(int argc, char **argv)
 		}
 
 		default:
-			if (DBG_OFFSET <= c && c < DBG_OFFSET +
-				IMPAIR_roof_IX) {
+			if (DBG_OFFSET <= c &&
+			    c < DBG_OFFSET + IMPAIR_roof_IX) {
 				base_debugging |= LELEM(c - DBG_OFFSET);
 				continue;
 			}
-#       undef DBG_OFFSET
 			bad_case(c);
+		}
+		/* if ugh is set, bail with diagnostic */
+		if (ugh != NULL) {
+			char mess[200];
+
+			if (longindex == -1) {
+				snprintf(mess, sizeof(mess), "unknown option: %s",
+					ugh);
+			} else if (optarg == NULL) {
+				snprintf(mess, sizeof(mess), "--%s option: %s",
+					optname, ugh);
+			} else {
+				snprintf(mess, sizeof(mess), "--%s \"%s\" option: %s",
+					optname, optarg, ugh);
+			}
+			invocation_fail(mess);
 		}
 		break;
 	}
 	if (optind != argc)
-		usage("unexpected argument");
+		invocation_fail("unexpected argument");
 	reset_debugging();
 
 #ifdef HAVE_NO_FORK
@@ -1442,7 +1441,7 @@ void show_setup_plutomain()
 {
 	whack_log(RC_COMMENT, "config setup options:");	/* spacer */
 	whack_log(RC_COMMENT, " ");	/* spacer */
-        whack_log(RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, dumpdir=%s, statsbin=%s",
 		oco->confdir,
 		oco->conffile,
@@ -1459,23 +1458,23 @@ void show_setup_plutomain()
 		ipsec_version_code(),
 		pluto_vendorid);
 
-        whack_log(RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"nhelpers=%d, uniqueids=%s, retransmits=%s, force-busy=%s",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
 		no_retransmits ? "no" : "yes",
 		force_busy ? "yes" : "no");
 
-        whack_log(RC_COMMENT,
+	whack_log(RC_COMMENT,
 		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s",
 		pluto_port,
 		strict_crl_policy ? "yes" : "no",
-		crl_check_interval,
+		deltasecs(crl_check_interval),
 		pluto_listen ? pluto_listen : "<any>");
 
 #ifdef HAVE_LABELED_IPSEC
-        whack_log(RC_COMMENT, "secctx-attr-value=%d", secctx_attr_value);
+	whack_log(RC_COMMENT, "secctx-attr-value=%d", secctx_attr_value);
 #else
-        whack_log(RC_COMMENT, "secctx-attr-value=<unsupported>");
+	whack_log(RC_COMMENT, "secctx-attr-value=<unsupported>");
 #endif
 }

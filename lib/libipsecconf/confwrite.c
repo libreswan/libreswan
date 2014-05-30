@@ -350,10 +350,10 @@ static void confwrite_side(FILE *out,
 		}
 	}
 
-	if (end->rsakey1 != NULL)
+	if (end->rsakey1 != NULL && end->rsakey1[0] != '\0')
 		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
 
-	if (end->rsakey2 != NULL)
+	if (end->rsakey2 != NULL && end->rsakey2[0] != '\0')
 		fprintf(out, "\t%srsasigkey2=%s\n", side, end->rsakey2);
 
 	if (end->port != 0 || end->protocol != 0) {
