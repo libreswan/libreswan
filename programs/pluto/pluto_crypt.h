@@ -267,7 +267,6 @@ typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
  * when the work is complete.
  */
 struct pluto_crypto_req_cont {
-
 	crypto_req_func pcrc_func;	/* function to continue with */
 	/*
 	 * Sponsoring state's serial number and state pointer.
