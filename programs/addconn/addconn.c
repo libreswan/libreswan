@@ -370,7 +370,7 @@ int resolve_defaultroute_one(struct starter_end *left,
 		}
 
 		/* Use only Main table (254) */
-		if (rtmsg->rtm_table != 254 || (has_dst == 0 && parse_gateway && *r_destination != 0))
+		if (rtmsg->rtm_table != 254)
 			continue;
 
 		err_t err;
