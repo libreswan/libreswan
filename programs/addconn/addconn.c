@@ -442,7 +442,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 				if (err != NULL) {
 					printf("unknown gateway results from kernel: %s\n",
 						err);
-				} else if (verbose) {
+				} else {
 					/* Note: Use first even if multiple */
 					host->nexttype = KH_IPADDR;
 					seeking_gateway = FALSE;
