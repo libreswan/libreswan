@@ -70,7 +70,7 @@ static const char *const dpd_action_name[] = {
 };
 
 enum_names dpd_action_names =
-	{ EVENT_NULL, DPD_ACTION_RESTART, dpd_action_name, NULL };
+	{ DPD_ACTION_CLEAR, DPD_ACTION_RESTART, dpd_action_name, NULL };
 
 /* Timer events */
 static const char *const timer_event_name[] = {
