@@ -400,18 +400,20 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		}
 
 		if (verbose) {
-			printf("dst %s via %s dev %s src %s table %d\n",
+			printf("dst %s via %s dev %s src %s table %d%s\n",
 			       r_destination, r_gateway, r_interface,
-			       r_source, rtmsg->rtm_table);
+			       r_source, rtmsg->rtm_table,
+			       rtmsg->rtm_table == 254 ? "" :
+				  " (ignored)");
 		}
-
-		if (seeking_src && r_source[0] != '\0') {
-			err_t err = tnatoaddr(r_source, 0, rtmsg->rtm_family,
-					&host->addr);
 
 		/* Use only Main table (254) */
 		if (rtmsg->rtm_table != 254)
 			continue;
+
+		if (seeking_src && r_source[0] != '\0') {
+			err_t err = tnatoaddr(r_source, 0, rtmsg->rtm_family,
+					&host->addr);
 
 			if (err == NULL) {
 				host->addrtype = KH_IPADDR;
