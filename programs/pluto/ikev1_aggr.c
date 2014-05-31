@@ -1342,7 +1342,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	send_ike_msg(st, "aggr_outI1");
 
-	/* Set up a retransmission event, half a minute henceforth */
+	/* Set up a retransmission event, half a minute hence */
 	delete_event(st);
 	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
