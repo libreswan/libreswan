@@ -1571,6 +1571,11 @@ stf_status xauth_inR0(struct msg_digest *md)
 				return STF_FAIL + NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
+			if (sz > 0 && strattr.cur[sz-1] == '\0') {
+				libreswan_log(
+					"Ignoring NUL at end of XAUTH User Password (Android Issue 36879?)");
+				sz--;
+			}
 			if (strnlen((const char *)strattr.cur, sz) != sz) {
 				libreswan_log(
 					"XAUTH User Password contains NUL character: rejected");

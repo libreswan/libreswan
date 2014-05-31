@@ -252,7 +252,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL) != NULL) {
+		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0) != NULL) {
 			DBG_log("esp algid=%d not available",
 				esp_info->esp_ealg_id);
 			continue;
@@ -460,34 +460,6 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 	return alg_info_ike;
 }
 
-static void kernel_alg_policy_algorithms(struct esp_info *esp_info)
-{
-	int ealg_i = esp_info->esp_ealg_id;
-
-	switch (ealg_i) {
-	case 0:
-	case ESP_DES:
-	case ESP_3DES:
-	case ESP_NULL:
-	case ESP_CAST:
-		break;
-	default:
-		if (!esp_info->esp_ealg_keylen) {
-			/**
-			 * algos that need  KEY_LENGTH
-			 *
-			 * Note: this is a very dirty hack ;-)
-			 *
-			 * XXX:jjo
-			 * Idea: Add a key_length_needed attribute to
-			 * esp_ealg ??
-			 */
-			esp_info->esp_ealg_keylen =
-				esp_ealg[ealg_i].sadb_alg_maxbits;
-		}
-	}
-}
-
 static bool kernel_alg_db_add(struct db_context *db_ctx,
 			      struct esp_info *esp_info,
 			      lset_t policy,
@@ -517,9 +489,6 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			aalg_i);
 		return FALSE;
 	}
-
-	/*      do algo policy */
-	kernel_alg_policy_algorithms(esp_info);
 
 	if (policy & POLICY_ENCRYPT) {
 		/*	open new transformation */

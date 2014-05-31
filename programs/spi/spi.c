@@ -401,7 +401,7 @@ static int decode_esp(char *algname)
 
 			proc_read_ok++;
 
-			ugh = kernel_alg_esp_enc_ok(esp_ealg_id, 0, 0);
+			ugh = kernel_alg_esp_enc_ok(esp_ealg_id, 0);
 			if (ugh != NULL) {
 				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
 					"not present - %s\n",

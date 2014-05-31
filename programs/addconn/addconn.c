@@ -398,6 +398,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 				break;
 			}
 		}
+
 		if (verbose) {
 			printf("dst %s via %s dev %s src %s table %d\n",
 			       r_destination, r_gateway, r_interface,
@@ -407,6 +408,11 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		if (seeking_src && r_source[0] != '\0') {
 			err_t err = tnatoaddr(r_source, 0, rtmsg->rtm_family,
 					&host->addr);
+
+		/* Use only Main table (254) */
+		if (rtmsg->rtm_table != 254)
+			continue;
+
 			if (err == NULL) {
 				host->addrtype = KH_IPADDR;
 				seeking_src = FALSE;

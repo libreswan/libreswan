@@ -132,7 +132,7 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 	 * simple test to toss low key_len, will accept it only
 	 * if specified in "esp" string
 	 */
-	int ealg_insecure = (key_len < 128);
+	bool ealg_insecure = (key_len < 128);
 
 	if (ealg_insecure || alg_info_ike) {
 		int i;
