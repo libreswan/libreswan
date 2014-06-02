@@ -1011,50 +1011,54 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	struct state *st = md->st;
 	/* struct connection *c = st->st_connection; */
 	pb_stream *keyex_pbs;
+	struct payload_digest *np;
 
-	/* check if the responder replied with v2N with DOS COOKIE */
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL &&
-	    md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type == v2N_COOKIE) {
-		u_int8_t spisize;
-		const pb_stream *dc_pbs;
-
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("inR1OutI2 received a DOS v2N_COOKIE from the responder");
-		    DBG_log("resend the I1 with a cookie payload"));
-		spisize = md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_spisize;
-		dc_pbs = &md->chain[ISAKMP_NEXT_v2N]->pbs;
-		clonetochunk(st->st_dcookie,  (dc_pbs->cur + spisize),
-			     (pbs_left(dc_pbs) - spisize),
-			     "saved received dcookie");
-
-		DBG(DBG_CONTROLMORE,
-		    DBG_dump_chunk("dcookie received (instead of a R1):",
-				   st->st_dcookie);
-		    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
-
-		md->svm = &ikev2_parent_firststate_microcode;
-
-		change_state(st, STATE_PARENT_I1);
-		st->st_msgid_lastack = INVALID_MSGID;
-		md->msgid_received = INVALID_MSGID; /* AAA hack  */
-		st->st_msgid_nextuse = 0;
-
-		return ikev2_parent_outI1_common(md, st);
-	}
-
-	{
+	for (np = md->chain[ISAKMP_NEXT_v2N]; np != NULL; np = np->next) {
 		/*
-		 * Check for a Notify - can this happen here? XXX
+		 * Check if the responder replied with v2N with DOS COOKIE
+		 *
+		 * ??? anything else in the packet, including other v2Ns
+		 * will be ignored.
+		 * ??? could this case be handled better by a different
+		 * state microcode entry?
 		 */
-		const char *from_state_name = enum_name(&state_names, st->st_state);
-		u_int16_t isan_type = 0; /* no notify payload */
+		if (np->payload.v2n.isan_type == v2N_COOKIE) {
+			u_int8_t spisize;
+			const pb_stream *dc_pbs;
 
-		if (md->chain[ISAKMP_NEXT_v2N]) {
-			isan_type = md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type;
-			libreswan_log("%s: received %s", from_state_name,
-				      enum_name(&ikev2_notify_names, isan_type));
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("inR1OutI2 received a DOS v2N_COOKIE from the responder");
+			    DBG_log("resend the I1 with a cookie payload"));
+			spisize = np->payload.v2n.isan_spisize;
+			dc_pbs = &np->pbs;
+			clonetochunk(st->st_dcookie,  (dc_pbs->cur + spisize),
+				     (pbs_left(dc_pbs) - spisize),
+				     "saved received dcookie");
+
+			DBG(DBG_CONTROLMORE,
+			    DBG_dump_chunk("dcookie received (instead of a R1):",
+					   st->st_dcookie);
+			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
+
+			md->svm = &ikev2_parent_firststate_microcode;
+
+			change_state(st, STATE_PARENT_I1);
+			st->st_msgid_lastack = INVALID_MSGID;
+			md->msgid_received = INVALID_MSGID; /* AAA hack  */
+			st->st_msgid_nextuse = 0;
+
+			return ikev2_parent_outI1_common(md, st);
 		}
 
+		/*
+		 * Check for a different Notify - can this happen here? XXX
+		 */
+		if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
+			libreswan_log("%s: received %s",
+				enum_name(&state_names, st->st_state),
+				enum_name(&ikev2_notify_names,
+					md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type));
+		}
 	}
 
 	/*

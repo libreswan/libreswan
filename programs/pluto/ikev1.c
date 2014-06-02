@@ -192,8 +192,8 @@ struct state_microcode {
 #define SMF_DS_AUTH     (LELEM(OAKLEY_DSS_SIG) | LELEM(OAKLEY_RSA_SIG))
 #define SMF_PKE_AUTH    LELEM(OAKLEY_RSA_ENC)
 #define SMF_RPKE_AUTH   LELEM(OAKLEY_RSA_REVISED_MODE)
-/* misc flags */
 
+/* misc flags */
 #define SMF_INITIATOR   LELEM(OAKLEY_AUTH_ROOF + 0)
 #define SMF_FIRST_ENCRYPTED_INPUT       LELEM(OAKLEY_AUTH_ROOF + 1)
 #define SMF_INPUT_ENCRYPTED     LELEM(OAKLEY_AUTH_ROOF + 2)
@@ -2487,8 +2487,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				}
 				break;
 
-			case EVENT_NULL:                /* non-event */
-			case EVENT_REINIT_SECRET:       /* Refresh cookie secret */
 			default:
 				bad_case(kind);
 			}

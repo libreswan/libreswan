@@ -1069,9 +1069,9 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		case EVENT_NULL:
 			/* XXX: Is there really no case where we want to set no timer? */
 			/* dos_cookie is one 'valid' event, but it is used more? */
+			DBG_log("V2 microcode entry has unspecified timeout_event");
 			break;
 
-		case EVENT_REINIT_SECRET: /* ??? Refresh cookie secret */
 		default:
 			bad_case(kind);
 		}

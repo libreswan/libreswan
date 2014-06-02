@@ -39,9 +39,10 @@ enum kernel_interface {
 
 /* RFC 3706 Dead Peer Detection */
 enum dpd_action {
-	DPD_ACTION_CLEAR = 0,
-	DPD_ACTION_HOLD  = 1,
-	DPD_ACTION_RESTART = 2
+	DPD_ACTION_uninitialized,	/* should not happen */
+	DPD_ACTION_CLEAR,
+	DPD_ACTION_HOLD,
+	DPD_ACTION_RESTART
 };
 
 /* Cisco interop: values remote_peer_type= */
@@ -83,23 +84,30 @@ enum natt_method {
 
 enum event_type {
 	EVENT_NULL,			/* non-event */
+
+	/* events not associated with states */
+
 	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
 	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
-	EVENT_SO_DISCARD,		/* discard unfinished state object */
-	EVENT_RETRANSMIT,		/* Retransmit packet */
-	EVENT_SA_REPLACE,		/* SA replacement event */
-	EVENT_SA_REPLACE_IF_USED,	/* SA replacement event */
-	EVENT_SA_EXPIRE,		/* SA expiration event */
-	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
-	EVENT_DPD,			/* dead peer detection */
-	EVENT_DPD_TIMEOUT,		/* dead peer detection timeout */
-
 	EVENT_LOG_DAILY,		/* reset certain log events/stats */
-	EVENT_CRYPTO_FAILED,		/* after some time, give up on crypto helper */
-	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
-	EVENT_v2_RETRANSMIT,		/* Retransmit v2 packet */
-	EVENT_v2_LIVENESS,
 	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
+	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
+
+	/* events associated with states */
+
+	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
+	EVENT_RETRANSMIT,		/* v1 Retransmit packet */
+	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
+	EVENT_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
+	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
+	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
+	EVENT_DPD,			/* v1 dead peer detection */
+	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
+	EVENT_CRYPTO_FAILED,		/* v1/v2 after some time, give up on crypto helper */
+
+	EVENT_v2_RETRANSMIT,		/* Retransmit v2 packet */
+	EVENT_v2_RESPONDER_TIMEOUT,	/* give up on Initiator */
+	EVENT_v2_LIVENESS,		/* for dead peer detection */
 };
 
 #define EVENT_REINIT_SECRET_DELAY	secs_per_hour
