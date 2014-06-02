@@ -200,7 +200,7 @@ uprule() {
 }
 
 downrule() {
-    if [ -n "${PLUTO_MY_SOURCEIP}" ]; then
+    if [ -n "${PLUTO_MY_SOURCEIP}"  -a ${PLUTO_IS_PEER_CISCO} -eq 1 ]; then
 	dorule delete
 	ip route flush cache
     fi
