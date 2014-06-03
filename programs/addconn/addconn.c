@@ -219,13 +219,13 @@ ssize_t netlink_query(char *msgbuf)
  *         -1 = not found
  */
 static
-int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
+void resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 {
 	struct ifaddrs *ifap, *ifa;
 
 	/* Get info about all interfaces */
 	if (getifaddrs(&ifap) != 0)
-		return -1;
+		return;
 
 	/* Find the right interface */
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next)
@@ -246,11 +246,10 @@ int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 						interface);
 				}
 				freeifaddrs(ifap);
-				return 0;
+				return;
 			}
 		}
 	freeifaddrs(ifap);
-	return -1;
 }
 
 /*
@@ -323,14 +322,17 @@ static int resolve_defaultroute_one(struct starter_end *host,
 	 * 2) find out src for that default gateway
 	 */
 	if (!has_dst) {
-		struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
-
-		nlmsg->nlmsg_flags |= NLM_F_DUMP;
 		if (seeking_src && seeking_gateway) {
 			seeking_src = FALSE;
 			query_again = 1;
 		}
 	}
+	if (seeking_gateway) {
+		struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+
+		nlmsg->nlmsg_flags |= NLM_F_DUMP;
+        }
+
 	if (verbose)
 		printf("\nseeking_src = %d, seeking_gateway = %d, has_dst = %d\n",
 		       seeking_src, seeking_gateway, has_dst);
@@ -405,14 +407,14 @@ static int resolve_defaultroute_one(struct starter_end *host,
 				r_gateway,
 				r_interface,
 				r_source, rtmsg->rtm_table,
-				(rtmsg->rtm_table != 254
+				(rtmsg->rtm_table != RT_TABLE_MAIN
 				|| strncmp(r_interface, "ipsec", 5) == 0
 				|| strncmp(r_interface,"mast", 4) == 0)
 				  ? "" : " (ignored)");
 		}
 
 		/* Use only Main table (254) */
-		if (rtmsg->rtm_table != 254)
+		if (rtmsg->rtm_table != RT_TABLE_MAIN)
 			continue;
 
 		/* Ignore routes over ipsecX or mastX */
@@ -434,16 +436,15 @@ static int resolve_defaultroute_one(struct starter_end *host,
 			}
 		}
 
-		if (seeking_gateway && (has_dst || r_source[0] == '\0')) {
+		if (seeking_gateway && r_destination[0] == '\0' && (has_dst || r_source[0] == '\0')) {
 			if (r_gateway[0] == '\0' && r_interface[0] != '\0') {
 				/*
 				 * Point-to-Point default gw without "via IP"
 				 * Attempt to find r_gateway as the IP address
 				 * on the interface.
 				 */
-				if (resolve_ppp_peer(r_interface, host->addr_family,
-						 r_gateway) == -1)
-					return -1;
+				resolve_ppp_peer(r_interface, host->addr_family,
+						 r_gateway);
 			}
 			if (r_gateway[0] != '\0') {
 				err_t err = tnatoaddr(r_gateway, 0, rtmsg->rtm_family,
