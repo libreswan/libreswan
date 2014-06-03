@@ -401,14 +401,22 @@ static int resolve_defaultroute_one(struct starter_end *host,
 
 		if (verbose) {
 			printf("dst %s via %s dev %s src %s table %d%s\n",
-			       r_destination, r_gateway, r_interface,
-			       r_source, rtmsg->rtm_table,
-			       rtmsg->rtm_table == 254 ? "" :
-				  " (ignored)");
+				r_destination,
+				r_gateway,
+				r_interface,
+				r_source, rtmsg->rtm_table,
+				(rtmsg->rtm_table != 254
+				|| strncmp(r_interface, "ipsec", 5) == 0
+				|| strncmp(r_interface,"mast", 4) == 0)
+				  ? "" : " (ignored)");
 		}
 
 		/* Use only Main table (254) */
 		if (rtmsg->rtm_table != 254)
+			continue;
+
+		/* Ignore routes over ipsecX or mastX */
+		if (strncmp(r_interface, "ipsec", 5) == 0 || strncmp(r_interface,"mast", 4) == 0)
 			continue;
 
 		if (seeking_src && r_source[0] != '\0') {
