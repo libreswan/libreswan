@@ -497,27 +497,27 @@ enum ikev2_last_transform {
 enum next_payload_types_ikev2 {
 	ISAKMP_NEXT_v2NONE = 0,
 	/* 1 - 32 Reserved for IKEv1 */
-	ISAKMP_NEXT_v2SA = 33, /* security association */
-	ISAKMP_NEXT_v2KE = 34, /* key exchange payload */
-	ISAKMP_NEXT_v2IDi = 35, /* Initiator ID payload */
-	ISAKMP_NEXT_v2IDr = 36, /* Responder ID payload */
-	ISAKMP_NEXT_v2CERT = 37, /* Certificate */
-	ISAKMP_NEXT_v2CERTREQ = 38, /* Certificate Request */
-	ISAKMP_NEXT_v2AUTH = 39, /* Authentication */
-	ISAKMP_NEXT_v2Ni = 40, /* Nonce - initiator */
-	ISAKMP_NEXT_v2Nr = 40, /* Nonce - responder */
-	ISAKMP_NEXT_v2N = 41, /* Notify */
-	ISAKMP_NEXT_v2D = 42, /* Delete */
-	ISAKMP_NEXT_v2V = 43, /* Vendor ID */
-	ISAKMP_NEXT_v2TSi = 44, /* Traffic Selector, initiator */
-	ISAKMP_NEXT_v2TSr = 45, /* Traffic Selector, responder */
-	ISAKMP_NEXT_v2E = 46, /* Encrypted payload */
-	ISAKMP_NEXT_v2CP = 47, /* Configuration payload (MODECFG) */
-	ISAKMP_NEXT_v2EAP = 48, /* Extensible authentication*/
+	ISAKMP_NEXT_v2SA = 33,	/* Security Association */
+	ISAKMP_NEXT_v2KE = 34,	/* Key Exchange payload */
+	ISAKMP_NEXT_v2IDi = 35,	/* ID payload - initiator */
+	ISAKMP_NEXT_v2IDr = 36,	/* ID payload - responder */
+	ISAKMP_NEXT_v2CERT = 37,	/* CERTificate */
+	ISAKMP_NEXT_v2CERTREQ = 38,	/* CERTificate REQuest */
+	ISAKMP_NEXT_v2AUTH = 39,	/* AUTHentication */
+	ISAKMP_NEXT_v2Ni = 40,	/* Nonce - initiator */
+	ISAKMP_NEXT_v2Nr = ISAKMP_NEXT_v2Ni,	/* Nonce - responder */
+	ISAKMP_NEXT_v2N = 41,	/* Notify */
+	ISAKMP_NEXT_v2D = 42,	/* Delete */
+	ISAKMP_NEXT_v2V = 43,	/* Vendor ID */
+	ISAKMP_NEXT_v2TSi = 44,	/* Traffic Selector - initiator */
+	ISAKMP_NEXT_v2TSr = 45,	/* Traffic Selector - responder */
+	ISAKMP_NEXT_v2E = 46,	/* Encrypted payload */
+	ISAKMP_NEXT_v2CP = 47,	/* Configuration Payload (MODECFG) */
+	ISAKMP_NEXT_v2EAP = 48,	/* Extensible Authentication Payload */
 	/* 128 - 255 Private Use */
 	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
 	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
-	ISAKMP_NEXT_v2ROOF, /* roof on payload types */
+	ISAKMP_NEXT_v2ROOF,	/* roof on payload types */
 };
 
 #define ISAKMP_v2PAYLOAD_TYPE_BASE	ISAKMP_NEXT_v2SA	/* lowest value of a v2 payload type */

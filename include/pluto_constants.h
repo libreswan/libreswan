@@ -264,6 +264,8 @@ enum {
  * The name of the state describes the last message sent, not the
  * message currently being input or output (except during retry).
  * In effect, the state represents the last completed action.
+ * All routines are about transitioning to the next state
+ * (which might actually be the same state).
  *
  * Messages are named [MQ][IR]n where
  * - M stands for Main Mode (Phase 1);
@@ -334,20 +336,26 @@ enum state_kind {
 	STATE_XAUTH_I1,                 /* client state is awaiting result code */
 	STATE_IKE_ROOF,
 
-	/* IKEv2 states.
+	/*
+	 * IKEv2 states.
 	 * Note that message reliably sending is done by initiator only,
 	 * unlike with IKEv1.
 	 */
-	STATE_IKEv2_BASE,
-	/* INITIATOR states */
-	STATE_PARENT_I1,        /* sent initial message, waiting for reply */
-	STATE_PARENT_I2,        /* sent auth message, waiting for reply */
-	STATE_PARENT_I3,        /* received auth message, done. */
+	STATE_IKEv2_BASE,	/* state when faking a state */
 
-	/* RESPONDER states  --- no real actions, initiator is responsible
-	 * for all work states. */
-	STATE_PARENT_R1,
-	STATE_PARENT_R2,
+	/* INITIATOR states */
+	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
+	STATE_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
+	STATE_PARENT_I3,        /* IKE_AUTH done: received auth response */
+
+	/*
+	 * RESPONDER states
+	 * No real actions, initiator is responsible
+	 * for all work states.
+	 * ??? what does that mean?
+	 */
+	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
+	STATE_PARENT_R2,	/* IKE_AUTH: sent response */
 
 	/* IKEv2 Delete States */
 	STATE_IKESA_DEL,

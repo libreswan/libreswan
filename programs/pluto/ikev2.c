@@ -126,53 +126,49 @@ enum smf2_flags {
  *
  */
 
+
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
  * Initiator                         Responder
  * -------------------------------------------------------------------
+ *
+ * IKE_SA_INIT exchange (initial exchange):
+ *
  * HDR, SAi1, KEi, Ni            -->
  *                                 <--  HDR, SAr1, KEr, Nr, [CERTREQ]
+ *
+ * IKE_AUTH exchange (after IKE_SA_INIT exchange):
  *
  * HDR, SK {IDi, [CERT,] [CERTREQ,]
  *        [IDr,] AUTH, SAi2,
  *        TSi, TSr}              -->
  *                                 <--  HDR, SK {IDr, [CERT,] AUTH,
  *                                           SAr2, TSi, TSr}
- * [Parent SA established]
- *
- * HDR, SK {SA, Ni, [KEi],
- *               TSi, TSr}      -->
- *
- *                                <--  HDR, SK {SA, Nr, [KEr],
- *                                          TSi, TSr}
- * [Child SA established]
+ * [Parent SA (SAx1) established. Child SA (SAx2) may have been established]
  *
  *
- * CREATE_CHILD_SA Exchanges:
  *
- * New Child SA
+ * CREATE_CHILD_SA Exchange (new child variant RFC 5996 1.3.1):
  *
  * HDR, SK {SA, Ni, [KEi],
  *            TSi, TSr}  -->
- *
  *                              <--  HDR, SK {SA, Nr, [KEr],
  *                                       TSi, TSr}
  *
- * Rekey Child SA
+ *
+ * CREATE_CHILD_SA Exchange (rekey child variant RFC 5996 1.3.3):
  *
  * HDR, SK {N(REKEY_SA), SA, Ni, [KEi],
  *     TSi, TSr}   -->
- *
  *                    <--  HDR, SK {SA, Nr, [KEr],
  *                             TSi, TSr}
  *
- * Rekey IKE SA (yes, IKE SA can be rekeyed using CREATE_CHILD_SA)
+ *
+ * CREATE_CHILD_SA Exchange (rekey parent SA variant RFC 5996 1.3.2):
  *
  * HDR, SK {SA, Ni, KEi} -->
- *
  *                            <--  HDR, SK {SA, Nr, KEr}
- *
  */
 
 /* Short forms for building payload type sets */
