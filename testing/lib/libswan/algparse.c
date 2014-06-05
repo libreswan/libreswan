@@ -103,6 +103,7 @@ main(int argc, char *argv[]) {
 	do_test("3des168-sha1", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes224-sha1", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes512-sha1", PROTO_IPSEC_ESP); /* should get rejected */
+	do_test("aes-sha1555", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("blowfish", PROTO_IPSEC_ESP); /* obsoleted */
 	do_test("des-sha1", PROTO_IPSEC_ESP); /* obsoleted */
 	do_test("vanitycipher", PROTO_IPSEC_ESP);
