@@ -445,7 +445,7 @@ static void show_virtual_private_kind(const char *kind,
 				break;
 			}
 		}
-		whack_log(RC_COMMENT, "- %sed subnet%s: %s",
+		whack_log(RC_COMMENT, "- %s subnet%s: %s",
 			kind, i == 1? "" : "s", all);
 		if (trunc)
 			whack_log(RC_COMMENT, "showing only %d of %d!",

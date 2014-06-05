@@ -295,8 +295,7 @@ static char *connection_name(struct starter_conn *conn)
 	}
 }
 
-static void set_whack_end(struct starter_config *cfg,
-			  char *lr,
+static void set_whack_end(char *lr,
 			  struct whack_end *w,
 			  struct starter_end *l)
 {
@@ -304,17 +303,12 @@ static void set_whack_end(struct starter_config *cfg,
 	w->host_type = l->addrtype;
 
 	switch (l->addrtype) {
-	case KH_DEFAULTROUTE:
-		w->host_addr = cfg->dr;
-		if (addrtypeof(&w->host_addr) == 0)
-			w->host_addr = *aftoinfo(l->addr_family)->any;
-		break;
-
 	case KH_IPADDR:
 	case KH_IFACE:
 		w->host_addr = l->addr;
 		break;
 
+	case KH_DEFAULTROUTE:
 	case KH_IPHOSTNAME:
 		/* note: we always copy the name string below */
 		anyaddr(l->addr_family, &w->host_addr);
@@ -644,8 +638,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 				    "Ignoring modecfgdns2= entry, it is not a valid IPv4 or IPv6 address");
 	}
 
-	set_whack_end(cfg, "left",  &msg.left, &conn->left);
-	set_whack_end(cfg, "right", &msg.right, &conn->right);
+	set_whack_end("left",  &msg.left, &conn->left);
+	set_whack_end("right", &msg.right, &conn->right);
 
 	/* for bug #1004 */
 	update_ports(&msg);

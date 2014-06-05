@@ -1,0 +1,4 @@
+
+This tests addconn orientation. It includes testing a --replace
+while a 0.0.0.0/0 tunnel is in place to see if we pick the
+right for nexthop=%defaultroute

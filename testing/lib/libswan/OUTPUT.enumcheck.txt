@@ -522,17 +522,18 @@ OK: [   17] -> INTERNAL_IP6_LINK -> 17
 OK: [   18] -> INTERNAL_IP6_PREFIX -> 18
 OK: [   19] -> HOME_AGENT_ADDRESS -> 19
 
-OK: [    0] -> ID_NONEID_IPV4_ADDR -> 0
-OK: [    1] -> ID_FQDN -> 1
-OK: [    2] -> ID_USER_FQDN -> 2
-OK: [    3] -> ID_UNASSIGNED_ID4 -> 3
-OK: [    4] -> ID_IPV6_ADDR -> 4
-OK: [    5] -> ID_UNASSIGNED_ID6 -> 5
-OK: [    6] -> ID_UNASSIGNED_ID7 -> 6
-OK: [    7] -> ID_UNASSIGNED_ID8 -> 7
-OK: [    8] -> ID_DER_ASN1_DN -> 8
-OK: [    9] -> ID_DER_ASN1_GN -> 9
-OK: [   10] -> ID_KEY_ID -> 10
-OK: [   11] -> ID_FC_NAME -> 11
+OK: [    0] -> ID_NONE -> 0
+OK: [    1] -> ID_IPV4_ADDR -> 1
+OK: [    2] -> ID_FQDN -> 2
+OK: [    3] -> ID_USER_FQDN -> 3
+OK: [    4] -> ID_UNASSIGNED_ID4 -> 4
+OK: [    5] -> ID_IPV6_ADDR -> 5
+OK: [    6] -> ID_UNASSIGNED_ID6 -> 6
+OK: [    7] -> ID_UNASSIGNED_ID7 -> 7
+OK: [    8] -> ID_UNASSIGNED_ID8 -> 8
+OK: [    9] -> ID_DER_ASN1_DN -> 9
+OK: [   10] -> ID_DER_ASN1_GN -> 10
+OK: [   11] -> ID_KEY_ID -> 11
+OK: [   12] -> ID_FC_NAME -> 12
 
 ../enumcheck leak detective found no leaks

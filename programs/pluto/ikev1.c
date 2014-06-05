@@ -1923,9 +1923,15 @@ void process_packet_tail(struct msg_digest **mdp)
 					sd = payload_desc(np);
 					break;
 
+				case ISAKMP_NEXT_SAK: /* AKA ISAKMP_NEXT_NATD_BADDRAFTS */
+					loglog(RC_LOG_SERIOUS,
+						"%smessage with unsupported payload ISAKMP_NEXT_SAK (as ISAKMP_NEXT_NATD_BADDRAFTS) ignored",
+						excuse);
+					break;
+
 				default:
-					loglog(RC_LOG_SERIOUS, "%smessage ignored because it contains an unknown or"
-					       " unexpected payload type (%s) at the outermost level",
+					loglog(RC_LOG_SERIOUS,
+						"%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 					       excuse,
 					       enum_show(&ikev1_payload_names, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
