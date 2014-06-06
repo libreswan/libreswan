@@ -491,8 +491,23 @@ void delete_state(struct state *st)
 
 	/* tell the other side of any IPSEC SAs that are going down */
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
-	    IS_ISAKMP_SA_ESTABLISHED(st->st_state))
-		send_delete(st);
+			IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+
+		if (IS_CHILD_SA(st)) {
+			/* child SA */
+			struct state *pst = NULL;
+			pst = state_with_serialno(st->st_clonedfrom);
+			if ( pst != NULL ) {
+				send_delete(st);
+			} else  {
+				DBG(DBG_CONTROL, DBG_log("IKE SA does not exist for this child SA"));
+				DBG(DBG_CONTROL, DBG_log("INFORMATIONAL exchange can not be sent, deleting state"));
+				change_state(st, STATE_CHILDSA_DEL);
+			}
+		} else  {
+			send_delete(st);
+		}
+	}
 
 	delete_event(st); /* delete any pending timer event */
 
