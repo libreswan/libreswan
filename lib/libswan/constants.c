@@ -490,6 +490,14 @@ enum_names ikev2_protocol_names = {
 	NULL
 };
 
+/* subset of protocol names accepted by IKEv2 Delete */
+enum_names ikev2_del_protocol_names = {
+	PROTO_ISAKMP,
+	PROTO_IPSEC_ESP,
+	&protocol_name[PROTO_ISAKMP],
+	NULL
+};
+
 /* IPsec ISAKMP transform values */
 static const char *const isakmp_transform_name[] = {
 	"KEY_IKE",
