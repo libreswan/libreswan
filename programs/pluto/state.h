@@ -58,8 +58,10 @@
  */
 
 /* msgid_t defined in defs.h */
-#define MAINMODE_MSGID    ((msgid_t) 0)
-#define INVALID_MSGID     0xffffffff
+
+#define MAINMODE_MSGID    ((msgid_t) 0)	/* network or host order */
+
+#define INVALID_MSGID     ((msgid_t) 0xffffffff)	/* host order */
 
 struct state;   /* forward declaration of tag */
 extern void reserve_msgid(struct state *isakmp_sa, msgid_t msgid);
@@ -267,18 +269,19 @@ struct state {
 	bool st_reserve_msgid;                  /* if TRUE, then message id
 	                                           has been reserved already */
 
-	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 */
-	msgid_t st_msgid_phase15b;              /* msgid for phase 1.5 */
+	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 - Network Order! */
+	msgid_t st_msgid_phase15b;              /* msgid for phase 1.5 - Network Order! */
+
 	/* only for a state representing an ISAKMP SA */
 	struct msgid_list  *st_used_msgids;     /* used-up msgids */
 
-	/* IKEv2 things */
+	/** IKEv2 only things **/
 	/* message ID sequence for things we send (as initiator) */
-	msgid_t st_msgid_lastack;               /* last one peer acknowledged */
-	msgid_t st_msgid_nextuse;               /* next one to use */
-
+	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
+	msgid_t st_msgid_nextuse;               /* next one to use - host order */
 	/* message ID sequence for things we receive (as responder) */
-	msgid_t st_msgid_lastrecv;             /* last one peer sent */
+	msgid_t st_msgid_lastrecv;             /* last one peer sent - Host order v2 only */
+
 
 	/* symmetric stuff */
 
@@ -291,7 +294,7 @@ struct state {
 	chunk_t st_gr;                          /* Responder public value */
 	u_int8_t st_rcookie[COOKIE_SIZE];       /* Responder Cookie */
 	chunk_t st_nr;                          /* Nr nonce */
-	chunk_t st_dcookie;                     /* DOS cookie of responder */
+	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */
 
 	/* my stuff */
 	chunk_t st_tpacket;                     /* Transmitted packet */
