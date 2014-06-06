@@ -551,6 +551,11 @@ void process_v2_packet(struct msg_digest **mdp)
 		}
 
 		if (st != NULL) {
+			/*
+			 * XXX: This solution is broken. If two exchanges (after the
+			 * initial exchange) are interleaved, we ignore the first
+			 * This is https://bugs.libreswan.org/show_bug.cgi?id=185
+			 */
 			if (st->st_msgid_lastrecv > md->msgid_received) {
 				/* this is an OLD retransmit. we can't do anything */
 				libreswan_log(
@@ -637,7 +642,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	if (st != NULL) {
 		from_state = st->st_state;
 		DBG(DBG_CONTROL,
-		    DBG_log("state found and its state is (%s)",
+		    DBG_log("state found and its state is %s",
 			    enum_show(&state_names, from_state)));
 	}
 
