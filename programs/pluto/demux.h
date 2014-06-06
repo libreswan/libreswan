@@ -73,7 +73,7 @@ struct msg_digest {
 	struct state *pst;                      /* parent state object (if any) */
 
 	enum phase1_role role;                  /* (ikev2 only) */
-	msgid_t msgid_received;                 /* (ikev2 only) */
+	msgid_t msgid_received;                 /* (ikev2 only) - Host order! */
 
 	pb_stream rbody;                        /* room for reply body (after header) */
 	notification_t note;                    /* reason for failure */
