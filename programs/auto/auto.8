@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: IPSEC_AUTO
 .\"    Author: Paul Wouters
-.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/16/2012
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 06/05/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_AUTO" "8" "12/16/2012" "libreswan" "Executable programs"
+.TH "IPSEC_AUTO" "8" "06/05/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,13 +31,13 @@
 ipsec_auto \- control automatically\-keyed IPsec connections
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIauto\fR [\-\-show] [\-\-showonly] [\-\-asynchronous]
+\fBipsec\fR \fIauto\fR [\-\-showonly] [\-\-asynchronous]
 .br
 [\-\-config\ \fIconfigfile\fR] [\-\-verbose] \fIoperation\ connection\fR
 .br
 
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIauto\fR [\-\-show] [\-\-showonly] [\-\-asynchronous]
+\fBipsec\fR \fIauto\fR [\-\-showonly] [\-\-asynchronous]
 .br
 [\-\-config\ \fIconfigfile\fR] [\-\-verbose] \fIoperation\ connection\fR
 .br
@@ -46,7 +46,7 @@ ipsec_auto \- control automatically\-keyed IPsec connections
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIauto\fR {\ \-\-add\ |\ \-\-delete\ |\ \-\-replace\ |\ \-\-up\ |\ \-\-down\ } \fIconnection\fR
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIauto\fR {\ \-\-status\ |\ \-\-ready\ } \fIconnection\fR
+\fBipsec\fR \fIauto\fR {\ \-\-status\ |\ \-\-ready\ }
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIauto\fR {\ \-\-route\ |\ \-\-unroute\ } \fIconnection\fR
 .HP \w'\fBipsec\fR\ 'u
@@ -69,8 +69,7 @@ is
 \fB\-\-ready\fR,
 \fB\-\-rereadsecrets\fR,
 \fB\-\-rereadgroups\fR, and
-\fB\-\-status\fR
-\fIoperations\fR
+\fB\-\-status\fR\fIoperations\fR
 do not take a connection name\&.
 \fIAuto\fR
 generates suitable commands and feeds them to a shell for execution\&.
@@ -83,11 +82,11 @@ operation adds a connection specification to the internal database within
 already has a specification by that name\&. The
 \fB\-\-delete\fR
 operation deletes a connection specification from
-\fIpluto\fR\*(Aqs internal database (also tearing down any connections based on it); it will fail if the specification does not exist\&. The
+\fIpluto\fR\*(Aqs internal database (also tearing down any connections based on it); The
 \fB\-\-replace\fR
 operation is equivalent to
 \fB\-\-delete\fR
-(if there is already a specification by the given name) followed by
+(if there is already a loaded connection by the given name) followed by
 \fB\-\-add\fR, and is a convenience for updating
 \fIpluto\fR\*(Aqs internal specification to match an external one\&. (Note that a
 \fB\-\-rereadsecrets\fR
@@ -110,12 +109,12 @@ Normally,
 \fIpluto\fR
 establishes a route to the destination specified for a connection as part of the
 \fB\-\-up\fR
-operation\&. However, the route and only the route can be established with the
+operation\&. However, the route (for KLIPS) and packet capture (KLIPS and NETKEY) can be established with the
 \fB\-\-route\fR
 operation\&. Until and unless an actual connection is established, this discards any packets sent there, which may be preferable to having them sent elsewhere based on a more general route (e\&.g\&., a default route)\&.
 .PP
 Normally,
-\fIpluto\fR\*(Aqs route to a destination remains in place when a
+\fIpluto\fR\*(Aqs route (KLIPS) or packet capture (NETKEY) to a destination remains in place when a
 \fB\-\-down\fR
 operation is used to take the connection down (or if connection setup, or later automatic rekeying, fails)\&. This permits establishing a new connection (perhaps using a different specification; the route is altered as necessary) without having a \(lqwindow\(rq in which packets might go elsewhere based on a more general route\&. Such a route can be removed using the
 \fB\-\-unroute\fR
@@ -155,25 +154,15 @@ but that may change\&.)
 .PP
 The
 \fB\-\-rereadcacerts\fR
-operation reads all certificate files contained in the /etc/ipsec\&.d/cacerts directory and adds them to pluto\(^as list of Certification Authority (CA) certificates\&.
-.PP
-The
-\fB\-\-rereadaacerts\fR
-operation reads all certificate files contained in the /etc/ipsec\&.d/aacerts directory and adds them to pluto\(^as list of Authorization Authority (AA) certificates\&.
-.PP
-The
-\fB\-\-rereadacerts\fR
-operation reads all certificate files contained in the /etc/ipsec\&.d/acerts directory and adds them to pluto\(^as list of attribute certificates\&.
+operation reads all certificate files contained in the /etc/ipsec\&.d/cacerts directory and adds them to pluto\*(Aqs list of Certification Authority (CA) certificates\&. Note CA certificates can and should be stored inside NSS instead of in the /etc/ipsec\&.d/cacerts directory which will result in automatic updates\&. This option will be obsoleted in the near future\&.
 .PP
 The
 \fB\-\-rereadcrls\fR
-operation reads all certificate revocation list (CRL) files contained in the /etc/ipsec\&.d/crls directory and adds them to pluto\(^as list of CRLs\&.
+operation reads all certificate revocation list (CRL) files contained in the /etc/ipsec\&.d/crls directory and adds them to pluto\*(Aqs list of CRLs\&. Note CRLs can and should be stored inside NSS instead of in the /etc/ipsec\&.d/crls directory which will result in automatic updates\&. This option will be obsoleted in the near future\&.
 .PP
 The
 \fB\-\-rereadall\fR
-operation is equivalent to the execution of \-\-rereadse\- crets,
-\fB\-\-rereadcacerts,\fR
-\-\-rereadaacerts, \-\-rereadac\- erts, and \-\-rereadcrls\&.
+operation is equivalent to the execution of \-\-rereadsecrets, \-\-rereadcacerts and \-\-rereadcrls\&.
 .PP
 The
 \fB\-\-listpubkeys\fR
@@ -181,7 +170,8 @@ operation lists all RSA public keys either received from peers via the IKE proto
 .PP
 The
 \fB\-\-listcerts\fR
-operation lists all X\&.509 certificates loaded locally using the rightcert and leftcert parameters in ipsec\&.conf(5)\&.
+operation lists all X\&.509 certificates loaded locally using the rightcert and leftcert parameters in ipsec\&.conf(5)\&. To see all certificates in the NSS database, use
+\fBcertutil \-d /etc/ipsec\&.d \-L\fR\&.
 .PP
 The
 \fB\-\-checkpubkeys\fR
@@ -192,20 +182,8 @@ The
 operation lists all X\&.509 CA certificates either loaded locally from the /etc/ipsec\&.d/cacerts directory or received in PKCS#7\-wrapped certificate payloads via the IKE protocol\&.
 .PP
 The
-\fB\-\-listaacerts\fR
-operation lists all X\&.509 AA certificates loaded locally from the /etc/ipsec\&.d/aacerts directory\&.
-.PP
-The
-\fB\-\-listacerts\fR
-operation lists all X\&.509 attribute certificates loaded locally from the /etc/ipsec\&.d/acerts directory\&.
-.PP
-The
-\fB\-\-listgropus\fR
+\fB\-\-listgroups\fR
 operation lists all groups that are either used in connection definitions in ipsec\&.conf(5) or are embedded in loaded X\&.509 attributes certificates\&.
-.PP
-The
-\fB\-\-listcainfos\fR
-operation lists the certification authority informa\- tion specified in the ca sections of ipsec\&.conf(5)\&.
 .PP
 The
 \fB\-\-listcrls\fR
@@ -213,7 +191,7 @@ operation lists all Certificate Revocation Lists (CRLs) either loaded locally fr
 .PP
 The
 \fB\-\-listall\fR
-operation is equivalent to the execution of \-\-listpubkeys, \-\-listcerts, \-\-listcacerts, \-\-listaacerts, \-\-listoc\- spcerts, \-\-listacerts, \-\-listgroups, \-\-listcainfos, \-\-listcrls\&.
+operation is equivalent to the execution of \-\-listpubkeys, \-\-listcerts, \-\-listcacerts, \-\-listgroups, \-\-listcrls\&.
 .PP
 The
 \fB\-\-showonly\fR
@@ -237,12 +215,6 @@ to pass through all output from
 \fBipsec_whack\fR(8), including log output that is normally filtered out as uninteresting\&.
 .PP
 The
-\fB\-\-show\fR
-option turns on the
-\fB\-x\fR
-option of the shell used to execute the commands, so each command is shown as it is executed\&.
-.PP
-The
 \fB\-\-config\fR
 option specifies a non\-standard location for the IPsec configuration file (default
 /etc/ipsec\&.conf)\&.
@@ -252,8 +224,6 @@ See
 for details of the configuration file\&.
 .SH "FILES"
 .PP
-
-.sp
 .if n \{\
 .RS 4
 .\}

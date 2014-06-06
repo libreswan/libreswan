@@ -19,18 +19,15 @@ usage="Usage:
 	$me [--showonly] --{add|delete|replace|down} connectionname
 	$me [--showonly] --{route|unroute} connectionname
 	$me [--showonly] --{ready|status|rereadsecrets|rereadgroups}
-        $me [--showonly] --{rereadcacerts|rereadaacerts}
-        $me [--showonly] --{rereadacerts|rereadcrls|rereadall}
+        $me [--showonly] --{rereadcacerts|rereadcrls|rereadall}
         $me [--showonly] [--utc] --{listpubkeys|listcerts}
         $me [--showonly] [--utc] --checkpubkeys
-        $me [--showonly] [--utc] --{listcacerts|listaacerts}
-        $me [--showonly] [--utc] --{listacerts|listgroups}
+        $me [--showonly] [--utc] --{listcacerts|listgroups}
         $me [--showonly] [--utc] --{listcrls|listall}
 
-	other options: [--config ipsecconfigfile] [--verbose] [--show]"
+	other options: [--config ipsecconfigfile] [--verbose]"
 
 config=
-shopts=
 async=
 op=
 argc=
@@ -42,7 +39,7 @@ do
 	case "$1" in
 	--help)		echo "$usage" ; exit 0	;;
 	--version)	echo "$me $IPSEC_VERSION" ; exit 0	;;
-	--show)		shopts=-x		;;
+	--show)			;;
 	--showonly)	showonly='echo '	;;
 	--utc)		utc="$1"		;;
 	--config)	config="--config $2" ; shift	;;
@@ -58,12 +55,10 @@ do
 			argc=1
 			;;
 	--ready|--status|--rereadsecrets|--rereadgroups|\
-        --rereadcacerts|--rereadaacerts|\
-        --rereadacerts|--rereadcrls|--rereadall|\
+        --rereadcacerts|--rereadcrls|--rereadall|\
         --listpubkeys|--listcerts|\
         --checkpubkeys|\
-        --listcacerts|--listaacerts|\
-        --listacerts|--listgroups|\
+        --listcacerts|--listgroups|\
         --listcrls|--listall)
 			if test " $op" != " "
 			then
@@ -88,11 +83,9 @@ case "$op$#:$1:$2" in
 		op="--$2"
 		;;
 1:ready:|1:status:|1:rereadsecrets:|\
-1:rereadcacerts:|1:rereadaacerts:|\
-1:rereadacerts:|1:rereadcrls:|1:rereadall:\
+1:rereadcacerts:|1:rereadcrls:|1:rereadall:\
 1:listpubkeys:|1:listcerts:|\
-1:listcacerts:|1:listaacerts:|\
-1:listacerts:|1:listgroups:|\
+1:listcacerts:|1:listgroups:|\
 1:listcrls:|1:listall:)
 		echo "$me: warning: obsolete command syntax used" >&2
 		op="--$1"
@@ -112,16 +105,12 @@ case "$op" in
 --rereadsecrets)  $showonly ipsec whack --rereadsecrets ; exit ;;
 --rereadgroups)   $showonly ipsec whack --listen ; exit ;;
 --rereadcacerts)  $showonly ipsec whack --rereadcacerts ; exit ;;
---rereadaacerts)  $showonly ipsec whack --rereadaacerts ; exit ;;
---rereadacerts)   $showonly ipsec whack --rereadacerts ; exit ;;
 --rereadcrls)     $showonly ipsec whack --rereadcrls ; exit ;;
 --rereadall)      $showonly ipsec whack --rereadall ; exit ;;
 --listpubkeys)    $showonly ipsec whack $utc --listpubkeys ; exit ;;
 --checkpubkeys)   $showonly ipsec whack $utc --checkpubkeys ; exit ;;
 --listcerts)      $showonly ipsec whack $utc --listcerts ; exit ;;
 --listcacerts)    $showonly ipsec whack $utc --listcacerts ; exit ;;
---listaacerts)    $showonly ipsec whack $utc --listaacerts ; exit ;;
---listacerts)     $showonly ipsec whack $utc --listacerts ; exit ;;
 --listgroups)     $showonly ipsec whack $utc --listgroups ; exit ;;
 --listcrls)       $showonly ipsec whack $utc --listcrls ; exit ;;
 --listall)        $showonly ipsec whack $utc --listall ; exit ;;

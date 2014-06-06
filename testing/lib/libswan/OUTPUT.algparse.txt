@@ -1,11 +1,7 @@
 
   Electric Fence 2.2.2 Copyright (C) 1987-1999 Bruce Perens <bruce@perens.com>
-| interpreting ESP sha as sha1
-| interpreting ESP sha as sha1
-| interpreting ESP sha2 as sha2_256
-| interpreting ESP sha as sha1
-| interpreting ESP sha2 as sha2_256
 
+---- ESP tests that should succeed ----
 [  3des-sha1;modp1024]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP1024(2)
 [  3des-sha1;modp1536]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP1536(5)
 [  3des-sha1;modp2048]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP2048(14)
@@ -14,17 +10,23 @@
 [      3des-sha1;dh24]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=DH24(24)
 [           3des-sha1]    OK: alg=3DES(3)_000-SHA1(2)_000
 [           null-sha1]    OK: alg=NULL(11)_000-SHA1(2)_000
-[         aes256-sha1]    OK: alg=AES(12)_256-SHA1(2)_000
-[         aes128-sha1]    OK: alg=AES(12)_128-SHA1(2)_000
-[            aes-sha1]    OK: alg=AES(12)_000-SHA1(2)_000
-[             aes-sha]    OK: alg=AES(12)_000-SHA1(2)_000
 [                 aes]    OK: alg=AES(12)_000-MD5(1)_000, AES(12)_000-SHA1(2)_000
+[             aes_cbc]    OK: alg=AES(12)_000-MD5(1)_000, AES(12)_000-SHA1(2)_000
+[             aes-sha]    OK: alg=AES(12)_000-SHA1(2)_000
+[            aes-sha1]    OK: alg=AES(12)_000-SHA1(2)_000
+[            aes-sha2]    OK: alg=AES(12)_000-SHA2_256(5)_000
+[         aes128-sha1]    OK: alg=AES(12)_128-SHA1(2)_000
+[         aes192-sha1]    OK: alg=AES(12)_192-SHA1(2)_000
+[         aes256-sha1]    OK: alg=AES(12)_256-SHA1(2)_000
 [          aes256-sha]    OK: alg=AES(12)_256-SHA1(2)_000
 [         aes256-sha2]    OK: alg=AES(12)_256-SHA2_256(5)_000
 [     aes256-sha2_256]    OK: alg=AES(12)_256-SHA2_256(5)_000
 [     aes256-sha2_384]    OK: alg=AES(12)_256-SHA2_384(6)_000
 [     aes256-sha2_512]    OK: alg=AES(12)_256-SHA2_512(7)_000
 [            camellia]    OK: alg=CAMELLIA(22)_000-MD5(1)_000, CAMELLIA(22)_000-SHA1(2)_000
+[         camellia128]    OK: alg=CAMELLIA(22)_128-MD5(1)_000, CAMELLIA(22)_128-SHA1(2)_000
+[         camellia192]    OK: alg=CAMELLIA(22)_192-MD5(1)_000, CAMELLIA(22)_192-SHA1(2)_000
+[         camellia256]    OK: alg=CAMELLIA(22)_256-MD5(1)_000, CAMELLIA(22)_256-SHA1(2)_000
 [  aes_ccm_a-128-null]    OK: alg=AES_CCM_A(14)_128-NONE(0)_000
 [  aes_ccm_a-192-null]    OK: alg=AES_CCM_A(14)_192-NONE(0)_000
 [  aes_ccm_a-256-null]    OK: alg=AES_CCM_A(14)_256-NONE(0)_000
@@ -43,14 +45,57 @@
 [  aes_gcm_c-128-null]    OK: alg=AES_GCM_C(20)_128-NONE(0)_000
 [  aes_gcm_c-192-null]    OK: alg=AES_GCM_C(20)_192-NONE(0)_000
 [  aes_gcm_c-256-null]    OK: alg=AES_GCM_C(20)_256-NONE(0)_000
+[        aes_ccm-null]    OK: alg=AES_CCM_C(16)_000-NONE(0)_000
+[        aes_gcm-null]    OK: alg=AES_GCM_C(20)_000-NONE(0)_000
+[    aes_ccm-256-null]    OK: alg=AES_CCM_C(16)_256-NONE(0)_000
+[    aes_gcm-192-null]    OK: alg=AES_GCM_C(20)_192-NONE(0)_000
+[  aes_ccm_8-128-null]    OK
+[  aes_ccm_8-192-null]    OK
+[  aes_ccm_8-256-null]    OK
+[ aes_ccm_12-128-null]    OK
+[ aes_ccm_12-192-null]    OK
+[ aes_ccm_12-256-null]    OK
+[ aes_ccm_16-128-null]    OK
+[ aes_ccm_16-192-null]    OK
+[ aes_ccm_16-256-null]    OK
+[  aes_gcm_8-128-null]    OK
+[  aes_gcm_8-192-null]    OK
+[  aes_gcm_8-256-null]    OK
+[ aes_gcm_12-128-null]    OK
+[ aes_gcm_12-192-null]    OK
+[ aes_gcm_12-256-null]    OK
+[ aes_gcm_16-128-null]    OK
+[ aes_gcm_16-192-null]    OK
+[ aes_gcm_16-256-null]    OK
 [             aes_ctr]    OK: alg=AES_CTR(13)_000-MD5(1)_000, AES_CTR(13)_000-SHA1(2)_000
+[              aesctr]    OK: alg=AES_CTR(13)_000-MD5(1)_000, AES_CTR(13)_000-SHA1(2)_000
+[          aes128_ctr]    OK:
 [             serpent]    OK: alg=SERPENT(252)_000-MD5(1)_000, SERPENT(252)_000-SHA1(2)_000
 [             twofish]    OK: alg=TWOFISH(253)_000-MD5(1)_000, TWOFISH(253)_000-SHA1(2)_000
-[            blowfish]    OK: alg=BLOWFISH(7)_000-MD5(1)_000, BLOWFISH(7)_000-SHA1(2)_000
-[            des-sha1]    OK: alg=DES(2)_000-SHA1(2)_000
 [                mars]    OK: alg=MARS(249)_000-MD5(1)_000, MARS(249)_000-SHA1(2)_000
+[            modp1536]    OK:
+
+---- ESP tests that should fail----
+[        3des168-sha1] ERROR: alg=  error=3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
+[         aes224-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
+[         aes512-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(512), auth_alg="sha1", modp=""
+[         aes-sha1555] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(0), auth_alg="sha1555", modp=""
+[            blowfish] ERROR:
+[            des-sha1] ERROR:
+[        vanitycipher] ERROR: alg=  error=enc_alg not found, enc_alg="vanitycipher"(0), auth_alg="", modp=""
+[             ase-sah] ERROR: alg=  error=enc_alg not found, enc_alg="ase"(0), auth_alg="sah", modp=""
+[            aes-sah1] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(0), auth_alg="sah1", modp=""
+[                 id3] ERROR: alg=  error=enc_alg not found, enc_alg="id"(3), auth_alg="", modp=""
+[                id12] ERROR: alg=  error=enc_alg not found, enc_alg="id"(12), auth_alg="", modp=""
+
+---- AH tests that should succeed ----
 [                 md5]    OK: alg=MD5(1)_000
 [                 sha]    OK: alg=SHA1(2)_000
 [                sha1]    OK: alg=SHA1(2)_000
 [                sha2]    OK: alg=SHA2_256(5)_000
-[         vanityhash1] ERROR: hash_alg not found, enc_alg="", auth_alg="vanityhash1", modp=""
+
+---- AH tests that should fail ----
+[                null] ERROR:
+[         vanityhash1] ERROR:
+[       aes_gcm_c-256] ERROR:
+[                 id3] ERROR:
