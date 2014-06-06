@@ -1055,7 +1055,7 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 		    st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
-			    DBG_log("v2 peer and cookies match on #%ld",
+			    DBG_log("parent v2 peer and cookies match on #%ld",
 				    st->st_serialno));
 			break;
 		}
@@ -1064,7 +1064,7 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
-			    DBG_log("v2 state object not found");
+			    DBG_log("parent v2 state object not found");
 		    } else {
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
@@ -1088,7 +1088,7 @@ struct state *find_state_ikev2_parent_init(const u_char *icookie)
 		    st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
-			    DBG_log("v2 peer and cookies match on #%ld",
+			    DBG_log("parent_init v2 peer and cookies match on #%ld",
 				    st->st_serialno));
 			break;
 		}
@@ -1097,7 +1097,7 @@ struct state *find_state_ikev2_parent_init(const u_char *icookie)
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
-			    DBG_log("v2 state object not found");
+			    DBG_log("parent_init v2 state object not found");
 		    } else {
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
@@ -1157,10 +1157,19 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 	while (st != (struct state *) NULL) {
 		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    st->st_ikev2) {
-			struct ipsec_proto_info *pr =
-				protoid == PROTO_IPSEC_AH ?
-					&st->st_ah : &st->st_esp;
+		    st->st_ikev2 && IS_CHILD_SA(st)) {
+			struct ipsec_proto_info *pr;
+
+			switch (protoid) {
+			case PROTO_IPSEC_AH:
+				pr = &st->st_ah;
+				break;
+			case PROTO_IPSEC_ESP:
+				pr = &st->st_esp;
+				break;
+			default:
+				bad_case(protoid);
+			}
 
 			if (pr->present) {
 				if (pr->attrs.spi == spi)
