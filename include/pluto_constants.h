@@ -441,6 +441,9 @@ enum phase1_role {
 
 #define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
 
+#define IS_IKE_SA(st) (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) ||\
+		IS_PARENT_SA(st))
+
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.
  */

@@ -421,6 +421,7 @@ static void liveness_check(struct state *st)
 	time_t timeout;
 
 	passert(st != NULL);
+	passert(st->st_ikev2);
 	c = st->st_connection;
 
 	/* this should be called on a child sa */
@@ -599,21 +600,17 @@ void handle_next_timer_event(void)
 	{
 		struct connection *c;
 		so_serial_t newest;
-
 		passert(st != NULL);
 		c = st->st_connection;
-		newest = (IS_PHASE1(st->st_state) ||
-			IS_PHASE15(st->st_state )) ?
+		newest = IS_IKE_SA(st) ?
 			c->newest_isakmp_sa : c->newest_ipsec_sa;
 
-		if (newest > st->st_serialno &&
-			newest != SOS_NOBODY) {
+		if (newest > st->st_serialno && newest != SOS_NOBODY) {
 			/* not very interesting: no need to replace */
 			DBG(DBG_LIFECYCLE,
 				libreswan_log(
 					"not replacing stale %s SA: #%lu will do",
-					(IS_PHASE1(st->st_state) ||
-						IS_PHASE15(st->st_state )) ?
+					IS_IKE_SA(st) ?
 					"ISAKMP" : "IPsec", newest));
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
 			!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
@@ -638,17 +635,13 @@ void handle_next_timer_event(void)
 			DBG(DBG_LIFECYCLE,
 				libreswan_log(
 					"not replacing stale %s SA: inactive for %lds",
-					(IS_PHASE1(st->st_state) ||
-						IS_PHASE15(st->st_state )) ?
-						"ISAKMP" : "IPsec",
+					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
 					(long)deltasecs(monotimediff(mononow(),
 						st->st_outbound_time))));
 		} else {
 			DBG(DBG_LIFECYCLE,
 				libreswan_log("replacing stale %s SA",
-					(IS_PHASE1(st->st_state) ||
-						IS_PHASE15(st->st_state)) ?
-					"ISAKMP" : "IPsec"));
+					IS_IKE_SA(st) ? "ISAKMP" : "IPsec"));
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
 		delete_liveness_event(st);
@@ -666,7 +659,7 @@ void handle_next_timer_event(void)
 		passert(st != NULL);
 		c = st->st_connection;
 
-		if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state)) {
+		if (IS_IKE_SA(st)) {
 			satype = "ISAKMP";
 			latest = c->newest_isakmp_sa;
 		} else {
