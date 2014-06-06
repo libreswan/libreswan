@@ -67,8 +67,8 @@ west #
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
-000 - alloweded subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
-000 - excludeded subnets: 192.0.1.0/24, 2001:db8:0:1::/64
+000 - allowed subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
+000 - excluded subnets: 192.0.1.0/24, 2001:db8:0:1::/64
 000  
 000 ESP algorithms supported:
 000  

@@ -39,7 +39,7 @@ east #
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
-000 - alloweded subnets: 10.0.0.0/8, 172.16.0.0/12, 192.0.0.0/8
+000 - allowed subnets: 10.0.0.0/8, 172.16.0.0/12, 192.0.0.0/8
 000  
 000 ESP algorithms supported:
 000  
