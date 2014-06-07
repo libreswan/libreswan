@@ -427,7 +427,7 @@ enum phase1_role {
 
 #define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 
-#define IS_IKE_SA_ESTABLISHED(s) (IS_ISAKMP_SA_ESTABLISHED(s) || IS_V2_ESTABLISHED(s))
+#define IS_IKE_SA_ESTABLISHED(s) (IS_ISAKMP_SA_ESTABLISHED(s) || IS_PARENT_SA_ESTABLISHED(s))
 /*
  * ??? Issue here is that our child SA appears as a
  * STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
