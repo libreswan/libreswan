@@ -202,7 +202,7 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 			if (sa_p->ips_iv == NULL) {
 				/*
 				 * ocf doesn't set the IV
-				 * so fake it for the UML tests
+				 * so fake it for the test cases
 				 */
 				seq_printf(seq, "%02x", 0xA5 + j);
 			} else
