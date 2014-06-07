@@ -1012,14 +1012,6 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		}
 	}
 
-	DBG(DBG_NATT,
-		DBG_log("nat_traversal & NAT_T_DETECTED == %s",
-			bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal &
-				NAT_T_DETECTED));
-		DBG_log(" st_localport != pluto_nat_port (%" PRIu16 " != %" PRIu16 ")",
-			st->st_localport,
-			pluto_nat_port););
-
 	/*
 	 * If we're initiator and NAT-T is detected, we
 	 * need to change port (MAIN_I3, QUICK_I1 or AGGR_I2)
@@ -1030,8 +1022,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	    (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    st->st_localport != pluto_nat_port) {
 		DBG(DBG_NATT,
-			DBG_log("NAT-T: floating to port %d",
-				pluto_nat_port));
+			DBG_log("NAT-T: floating local port %d to nat port %d",
+				st->st_localport, pluto_nat_port));
 
 		st->st_localport  = pluto_nat_port;
 		st->st_remoteport = pluto_nat_port;
