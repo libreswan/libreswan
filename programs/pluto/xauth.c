@@ -57,6 +57,7 @@
 
 #include "defs.h"
 #include "state.h"
+#include "ikev1_msgid.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"

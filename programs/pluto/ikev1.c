@@ -135,6 +135,7 @@
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
+#include "ikev1_msgid.h"
 #include "packet.h"
 #include "md5.h"
 #include "sha1.h"
@@ -1070,7 +1071,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		break;
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
-		st = find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
+		st = ikev1_find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
 				     &md->sender, MAINMODE_MSGID);
 
 		if (st == NULL) {
@@ -1286,7 +1287,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		st = find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
+		st = ikev1_find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
 				     &md->sender, md->hdr.isa_msgid);
 
 		if (st == NULL) {
@@ -1298,7 +1299,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * See if we have a Main Mode state.
 			 * ??? what if this is a duplicate of another message?
 			 */
-			st = find_info_state(md->hdr.isa_icookie,
+			st = ikev1_find_info_state(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie,
 					     &md->sender, 0);
 

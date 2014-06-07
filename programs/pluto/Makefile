@@ -122,6 +122,7 @@ DISTSRC = \
 	spdb.c spdb_struct.c spdb_print.c spdb.h \
 	ikev1.c ikev1_quick.c ikev1_continuations.h \
 	ikev1_dpd.c ikev1_dpd.h ikev1_spdb_struct.c \
+	ikev1_msgid.c \
         ikev2.c ikev2_parent.c ikev2_child.c ikev2_crypto.c \
 	ikev2_prfplus.c ikev2_spdb_struct.c \
 	ikev2_rsa.c ikev2_psk.c ikev2_x509.c \
@@ -162,7 +163,7 @@ OBJSPLUTO += pending.o cookie.o crypto.o defs.o
 OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
-OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o
+OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o 
 OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_x509.o ikev2_crypto.o ikev2_prfplus.o
 OBJSPLUTO += kernel.o
