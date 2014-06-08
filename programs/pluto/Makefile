@@ -70,7 +70,7 @@ endif
 LIBSADNS = $(LIBRESWANLIB)
 LIBSADNS += -lresolv # -lefence
 
-LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)
+LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB) -lrt
 ifeq ($(USE_DNSSEC),true)
 LIBSPLUTO += -lunbound
 endif
