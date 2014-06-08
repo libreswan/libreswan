@@ -119,7 +119,7 @@ void ikev1_clear_msgid_list(const struct state *st)
 { 
 	struct msgid_list *p = st->st_used_msgids; 
  
-	passert(IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state));
+	passert(st->st_state == STATE_UNDEFINED);
 	while (p != NULL) { 
 		struct msgid_list *q = p; 
 
