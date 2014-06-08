@@ -49,6 +49,7 @@
 #endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
+#include "ikev1_msgid.h"
 #include "kernel.h"             /* needs connections.h */
 #include "log.h"
 #include "packet.h"             /* so we can calculate sizeof(struct isakmp_hdr) */
@@ -81,31 +82,6 @@ u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT; /* Pluto's NAT-T port */
  * This file has the functions that handle the
  * state hash table and the Message ID list.
  */
-
-/* Message-IDs
- *
- * A Message ID is contained in each IKE message header.
- * For Phase 1 exchanges (Main and Aggressive), it will be zero.
- * For other exchanges, which must be under the protection of an
- * ISAKMP SA, the Message ID must be unique within that ISAKMP SA.
- * Effectively, this labels the message as belonging to a particular
- * exchange.
- * BTW, we feel this uniqueness allows rekeying to be somewhat simpler
- * than specified by draft-jenkins-ipsec-rekeying-06.txt.
- *
- * A MessageID is a 32 bit unsigned number.  We represent the value
- * internally in network order -- they are just blobs to us.
- * They are unsigned numbers to make hashing and comparing easy.
- *
- * The following mechanism is used to allocate message IDs.  This
- * requires that we keep track of which numbers have already been used
- * so that we don't allocate one in use.
- */
-
-struct msgid_list {
-	msgid_t msgid;           /* network order */
-	struct msgid_list     *next;
-};
 
 /* humanize_number: make large numbers clearer by expressing them as KB or MB, as appropriate.
  * The prefix is literally copied into the output.
@@ -146,51 +122,6 @@ static char *humanize_number(unsigned long num,
 	return buf + ret;
 }
 
-bool unique_msgid(const struct state *isakmp_sa, msgid_t msgid)
-{
-	struct msgid_list *p;
-
-	passert(msgid != MAINMODE_MSGID);
-	passert(IS_ISAKMP_ENCRYPTED(isakmp_sa->st_state));
-
-	for (p = isakmp_sa->st_used_msgids; p != NULL; p = p->next)
-		if (p->msgid == msgid)
-			return FALSE;
-
-	return TRUE;
-}
-
-void reserve_msgid(struct state *isakmp_sa, msgid_t msgid)
-{
-	struct msgid_list *p;
-
-	p = alloc_thing(struct msgid_list, "msgid");
-	p->msgid = msgid;
-	p->next = isakmp_sa->st_used_msgids;
-	isakmp_sa->st_used_msgids = p;
-}
-
-msgid_t generate_msgid(const struct state *isakmp_sa)
-{
-	int timeout = 100; /* only try so hard for unique msgid */
-	msgid_t msgid;
-
-	passert(IS_ISAKMP_ENCRYPTED(isakmp_sa->st_state));
-
-	for (;; ) {
-		get_rnd_bytes((void *) &msgid, sizeof(msgid));
-		if (msgid != 0 && unique_msgid(isakmp_sa, msgid))
-			break;
-
-		if (--timeout == 0) {
-			libreswan_log(
-				"gave up looking for unique msgid; using 0x%08lx",
-				(unsigned long) msgid);
-			break;
-		}
-	}
-	return msgid;
-}
 
 /* State Table Functions
  *
@@ -558,16 +489,7 @@ void delete_state(struct state *st)
 
 	/* from here on we are just freeing RAM */
 
-	{
-		struct msgid_list *p = st->st_used_msgids;
-
-		while (p != NULL) {
-			struct msgid_list *q = p;
-			p = p->next;
-			pfree(q);
-		}
-	}
-
+	ikev1_clear_msgid_list(st);
 	unreference_key(&st->st_peer_pubkey);
 	release_fragments(st);
 
@@ -867,9 +789,7 @@ void delete_states_by_peer(const ip_address *peer)
 
 				if (sameaddr(&this->st_remoteaddr, peer)) {
 					if (ph1 == 0 &&
-					    (IS_PHASE1(this->st_state) ||
-					     IS_PHASE15(st->st_state ))) {
-
+					    IS_IKE_SA(this)) {
 						whack_log(RC_COMMENT,
 							  "peer %s for connection %s crashed, replacing",
 							  peerstr,
@@ -1213,7 +1133,7 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 /*
  * Find a state object.
  */
-struct state *find_info_state(const u_char *icookie,
+struct state *ikev1_find_info_state(const u_char *icookie,
 			      const u_char *rcookie,
 			      const ip_address *peer UNUSED,
 			      msgid_t /*network order*/ msgid)
@@ -1688,8 +1608,7 @@ void show_states_status(void)
 				whack_log(RC_COMMENT, "%s", state_buf2);
 
 			/* show any associated pending Phase 2s */
-			if (IS_PHASE1(st->st_state) ||
-			    IS_PHASE15(st->st_state ))
+			if (IS_IKE_SA(st))
 				show_pending_phase2(st->st_connection, st);
 		}
 
