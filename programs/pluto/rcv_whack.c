@@ -404,10 +404,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 				st->st_serialno,
 				enum_name(&state_names, st->st_state));
 
-			if ( st->st_ikev2 && !IS_CHILD_SA(st)) {
-				DBG_log("state #%lu in %s is not a CHILD_SA. "
-					"Could be an ISKAMP SA, also delete "
-					"its IPSEC/Child SAs", st->st_serialno,
+			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
+				DBG_log("state IKEv2 #%lu in %s is a PARENT_SA, also deleting corresponding CHILD_SAs",
+					st->st_serialno,
 					enum_name(&state_names, st->st_state));
 				v2_delete_my_family(st, INITIATOR);
 			} else {
