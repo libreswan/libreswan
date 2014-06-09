@@ -96,7 +96,7 @@ enum event_type {
 	/* events associated with states */
 
 	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
-	EVENT_RETRANSMIT,		/* v1 Retransmit packet */
+	EVENT_RETRANSMIT,		/* v1 Retransmit IKE packet */
 	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
 	EVENT_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
 	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
@@ -105,8 +105,8 @@ enum event_type {
 	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_CRYPTO_FAILED,		/* v1/v2 after some time, give up on crypto helper */
 
-	EVENT_v2_RETRANSMIT,		/* Retransmit v2 packet */
-	EVENT_v2_RESPONDER_TIMEOUT,	/* give up on Initiator */
+	EVENT_v2_RETRANSMIT,		/* v2 Initiator: Retransmit IKE packet */
+	EVENT_v2_GIVEUP,		/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 };
 

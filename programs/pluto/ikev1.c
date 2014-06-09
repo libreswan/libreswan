@@ -2508,7 +2508,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 				fmt_ipsec_sa_established(st, sadetails,
 							 sizeof(sadetails));
-
 			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 				   !st->hidden_variables.st_logged_p1algos) {
 				fmt_isakmp_sa_established(st, sadetails,
