@@ -1603,47 +1603,49 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* send out the AUTH payload */
 	{
-		lset_t policy;
-		struct connection *c0 = first_pending(pst, &policy,
-						      &st->st_whack_sock);
-		unsigned int np = c0 == NULL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2SA;
+		unsigned int np = ISAKMP_NEXT_v2SA;
 
-		stf_status authstat = ikev2_send_auth(c, st,
-						      INITIATOR,
-						      np,
-						      idhash, &e_pbs_cipher);
+		stf_status authstat = ikev2_send_auth(c, st, INITIATOR, np,
+				idhash, &e_pbs_cipher);
 		if (authstat != STF_OK)
 			return authstat;
-
 		/*
-		 * now, find an eligible child SA from the pending list, and emit
-		 * SA2i, TSi and TSr and (v2N_USE_TRANSPORT_MODE notification in transport mode) for it .
+		 * emit SA2i, TSi and TSr and 
+		 * (v2N_USE_TRANSPORT_MODE notification in transport mode) 
+		 * for it.
 		 */
-		if (c0 != NULL) {
-			st->st_connection = c0;
+		lset_t policy;
+		struct connection *c0 = first_pending(pst, &policy,
+				&st->st_whack_sock);
+		if (c0 == NULL) {
+			DBG_log("no pending CHILD SAs found for %s",
+					st->st_connection->name);
+			DBG_log("this could be replacing SA by Reauthentication"
+					" %s. use the original policy",
+					st->st_connection->name);
+			c0 = st->st_connection;
+			policy = c->policy;
+		}
+		st->st_connection = c0;
 
-			ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
-					    ISAKMP_NEXT_v2TSi, c0, policy);
+		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
+				ISAKMP_NEXT_v2TSi, c0, policy);
 
-			st->st_ts_this = ikev2_end_to_ts(&c0->spd.this);
-			st->st_ts_that = ikev2_end_to_ts(&c0->spd.that);
+		st->st_ts_this = ikev2_end_to_ts(&c0->spd.this);
+		st->st_ts_that = ikev2_end_to_ts(&c0->spd.that);
 
-			ikev2_calc_emit_ts(md, &e_pbs_cipher, INITIATOR, c0,
-					   policy);
+		ikev2_calc_emit_ts(md, &e_pbs_cipher, INITIATOR, c0,
+				policy);
 
-			if ((st->st_connection->policy & POLICY_TUNNEL) == LEMPTY) {
-				DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
-				/* In v2, for parent, protoid must be 0 and SPI must be empty */
-				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-					      ISAKMP_PAYLOAD_NONCRITICAL, 0 /* protoid */,
-					      &empty_chunk,
-					      v2N_USE_TRANSPORT_MODE, &empty_chunk,
-					      &e_pbs_cipher))
-					return STF_INTERNAL_ERROR;
-			}
-		} else {
-			libreswan_log(
-				"no pending SAs found, PARENT SA keyed only");
+		if ((st->st_connection->policy & POLICY_TUNNEL) == LEMPTY) {
+			DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
+			/* In v2, for parent, protoid must be 0 and SPI must be empty */
+			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
+						ISAKMP_PAYLOAD_NONCRITICAL, 0 /* protoid */,
+						&empty_chunk,
+						v2N_USE_TRANSPORT_MODE, &empty_chunk,
+						&e_pbs_cipher))
+				return STF_INTERNAL_ERROR;
 		}
 	}
 
