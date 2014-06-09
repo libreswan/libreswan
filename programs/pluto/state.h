@@ -59,9 +59,11 @@
 
 /* msgid_t defined in defs.h */
 
-#define MAINMODE_MSGID    ((msgid_t) 0)	/* network or host order */
+#define v1_MAINMODE_MSGID  ((msgid_t) 0)	/* network and host order */
 
-#define INVALID_MSGID     ((msgid_t) 0xffffffff)	/* host order */
+#define v2_INITIAL_MSGID  ((msgid_t) 0)	/* network and host order */
+
+#define v2_INVALID_MSGID  ((msgid_t) 0xffffffff)	/* network and host order */
 
 struct state;   /* forward declaration of tag */
 

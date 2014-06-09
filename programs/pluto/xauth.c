@@ -992,7 +992,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
 		     "XAUTH: status");
 
-	/* Set up a retransmission event, half a minute henceforth */
+	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with master thread */
 	delete_event(st);
 	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
