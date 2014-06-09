@@ -1723,17 +1723,12 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 {
 	struct state *st = md->st;
 
-	/* struct connection *c = st->st_connection; */
+	nat_traversal_change_port_lookup(md, st);
 
 	/*
 	 * the initiator sent us an encrypted payload. We need to calculate
 	 * our g^xy, and skeyseed values, and then decrypt the payload.
 	 */
-
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("Antony %s new nat lookup ", __FUNCTION__));
-
-	nat_traversal_change_port_lookup(md, st);
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2"));
