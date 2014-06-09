@@ -643,6 +643,8 @@ void handle_next_timer_event(void)
 		}
 		delete_liveness_event(st);
 		delete_dpd_event(st);
+		if(st->st_ikev2)
+			ikev2_replace_delay(st, 0, NULL);
 		event_schedule(EVENT_SA_EXPIRE, deltasecs(st->st_margin), st);
 	}
 	break;
@@ -684,7 +686,10 @@ void handle_next_timer_event(void)
 			set_suspended(st, NULL);
 		}
 #endif
-		delete_state(st);
+		if(st->st_ikev2 && IS_IKE_SA(st)) /* IKEv2 parent, delete children to */
+			v2_delete_my_family(st,INITIATOR);
+		else
+			delete_state(st);
 		break;
 
 	case EVENT_DPD:
