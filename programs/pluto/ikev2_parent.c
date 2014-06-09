@@ -1451,8 +1451,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
-	struct state *st      = md->st;
-	struct connection *c  = st->st_connection;
+	struct state *st = md->st;
+	struct connection *c = st->st_connection;
 	struct ikev2_generic e;
 	unsigned char *encstart;
 	pb_stream e_pbs, e_pbs_cipher;
@@ -1603,41 +1603,41 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* send out the AUTH payload */
 	{
-		unsigned int np = ISAKMP_NEXT_v2SA;
-
-		stf_status authstat = ikev2_send_auth(c, st, INITIATOR, np,
+		stf_status authstat = ikev2_send_auth(c, st, INITIATOR, ISAKMP_NEXT_v2SA,
 				idhash, &e_pbs_cipher);
+
 		if (authstat != STF_OK)
 			return authstat;
+	}
+	{
 		/*
 		 * emit SA2i, TSi and TSr and 
 		 * (v2N_USE_TRANSPORT_MODE notification in transport mode) 
 		 * for it.
 		 */
 		lset_t policy;
-		struct connection *c0 = first_pending(pst, &policy,
-				&st->st_whack_sock);
-		if (c0 == NULL) {
-			DBG_log("no pending CHILD SAs found for %s",
-					st->st_connection->name);
-			DBG_log("this could be replacing SA by Reauthentication"
-					" %s. use the original policy",
-					st->st_connection->name);
-			c0 = st->st_connection;
+
+		passert(c == st->st_connection);
+		c = first_pending(pst, &policy, &st->st_whack_sock);
+
+		if (c == NULL) {
+			c = st->st_connection;
+			DBG_log("no pending CHILD SAs found for %s: Reauthentication so use the original policy",
+				c->name);
 			policy = c->policy;
 		}
-		st->st_connection = c0;
+		st->st_connection = c;
 
 		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
-				ISAKMP_NEXT_v2TSi, c0, policy);
+				ISAKMP_NEXT_v2TSi, c, policy);
 
-		st->st_ts_this = ikev2_end_to_ts(&c0->spd.this);
-		st->st_ts_that = ikev2_end_to_ts(&c0->spd.that);
+		st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
+		st->st_ts_that = ikev2_end_to_ts(&c->spd.that);
 
-		ikev2_calc_emit_ts(md, &e_pbs_cipher, INITIATOR, c0,
+		ikev2_calc_emit_ts(md, &e_pbs_cipher, INITIATOR, c,
 				policy);
 
-		if ((st->st_connection->policy & POLICY_TUNNEL) == LEMPTY) {
+		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
 			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
