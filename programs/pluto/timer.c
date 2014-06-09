@@ -598,14 +598,11 @@ void handle_next_timer_event(void)
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_REPLACE_IF_USED:
 	{
-		struct connection *c;
-		so_serial_t newest;
-		passert(st != NULL);
-		c = st->st_connection;
-		newest = IS_IKE_SA(st) ?
+		struct connection *c = st->st_connection;
+		so_serial_t newest = IS_IKE_SA(st) ?
 			c->newest_isakmp_sa : c->newest_ipsec_sa;
 
-		if (newest > st->st_serialno && newest != SOS_NOBODY) {
+		if (newest != SOS_NOBODY && newest > st->st_serialno) {
 			/* not very interesting: no need to replace */
 			DBG(DBG_LIFECYCLE,
 				libreswan_log(

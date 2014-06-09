@@ -116,15 +116,14 @@ msgid_t generate_msgid(const struct state *st)
 }
 
 void ikev1_clear_msgid_list(const struct state *st)
-{ 
-	struct msgid_list *p = st->st_used_msgids; 
- 
-	passert(IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state));
-	while (p != NULL) { 
-		struct msgid_list *q = p; 
+{
+	struct msgid_list *p = st->st_used_msgids;
 
-		p = p->next; 
-		pfree(q); 
-	} 
+	passert(st->st_state == STATE_UNDEFINED);
+	while (p != NULL) {
+		struct msgid_list *q = p;
+
+		p = p->next;
+		pfree(q);
+	}
 }
-

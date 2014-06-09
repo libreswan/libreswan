@@ -731,9 +731,7 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 						enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
 						encr_keylen,
 						enum_show(&ikev2_trans_type_encr_names, encr_transform),
-						keylen
-						
-						);
+						keylen);
 					/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
 					DBG_log("            %s integ=(policy:%s vs offered:%s)",
 						integ_matched ? "succeeded" : "failed",
