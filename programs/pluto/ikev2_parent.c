@@ -2893,7 +2893,21 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 	{
 		struct payload_digest *p;
 		stf_status ret;
-		struct state *const st = md->st;
+		struct state *st = md->st;
+
+		if (IS_CHILD_SA(st)) {
+			/* we picked incomplete child, change to parent */
+			so_serial_t c_serialno = st->st_serialno;
+
+			st = state_with_serialno(st->st_clonedfrom);
+			if (st == NULL)
+				return STF_INTERNAL_ERROR;
+			md->st = st;
+			set_cur_state(st);
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("Informational exchange matched Child SA #%lu - switched to its Parent SA #%lu",
+				c_serialno, st->st_serialno));
+		}
 
 		/* Only send response if it is request*/
 		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_R)) {
@@ -2943,26 +2957,42 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 			} /*HDR Done*/
 
 			/* insert an Encryption payload header */
-			if (md->chain[ISAKMP_NEXT_v2D]) {
-				bool ikesa_flag = FALSE;
-				/* Search if there is a IKE SA delete payload*/
-				for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL;
-				     p = p->next) {
-					if (p->payload.v2delete.isad_protoid ==
-					    PROTO_ISAKMP) {
-						e.isag_np = ISAKMP_NEXT_v2NONE;
-						ikesa_flag = TRUE;
-						break;
-					}
-				}
-				/* if there is no IKE SA DELETE PAYLOAD
-				 * That means, there are AH OR ESP
-				 */
-				if (!ikesa_flag)
-					e.isag_np = ISAKMP_NEXT_v2D;
 
-			} else {
-				e.isag_np = ISAKMP_NEXT_v2NONE;
+			/*
+			 * We only process Delete Payloads. The rest are
+			 * ignored.
+			 *
+			 * If no delete payloads were received, the Next 
+			 * Payload type to send will be NONE.
+			 *
+			 * IKE SA Delete cannot be combined with anything
+			 * else (including IPsec SA Delete) and its confirmation
+			 * is an empty message so Next Payload type would be
+			 * NONE.
+			 *
+			 * There can be any number of IPsec SA Delete payloads
+			 * and the next payload type will be v2D or NONE.
+			 */
+			e.isag_np = ISAKMP_NEXT_v2NONE;
+			if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
+				/* IKE SA delete payloads are always by themselves */
+				struct ikev2_delete *v2del =
+					&md->chain[ISAKMP_NEXT_v2D]->payload.v2delete;
+
+				if (v2del->isad_protoid == PROTO_ISAKMP) {
+					if (md->chain[ISAKMP_NEXT_v2D]->next != NULL) {
+						libreswan_log(
+							"IKE SA Delete must be the only payload");
+						return STF_FAIL + v2N_INVALID_SYNTAX;
+					}
+					if (v2del->isad_nrspi != 0 ||
+						v2del->isad_spisize != 0) {
+						libreswan_log("IKE SA Delete has non-zero SPI size or number of SPIs");
+						return STF_FAIL + v2N_INVALID_SYNTAX;
+					}
+				} else {
+					e.isag_np = ISAKMP_NEXT_v2D;
+				}
 			}
 
 			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -2993,9 +3023,15 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 				switch (v2del->isad_protoid) {
 				case PROTO_ISAKMP:
-					/* My understanding is that delete payload for IKE SA
-					 *  should be the only payload in the informational exchange
+					/*
+					 * There can be only one Delete Payload
+					 * if it is ISAKMP
 					 */
+					if (p != md->chain[ISAKMP_NEXT_v2D]) {
+						libreswan_log(
+							"IKE SA delete cannot be mixed with IPsec SA Deletes.");
+						return STF_FAIL + v2N_INVALID_SYNTAX;
+					}
 					break;
 
 				case PROTO_IPSEC_AH:
@@ -3007,13 +3043,10 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					u_int16_t i, j = 0;
 					u_char *spi;
 
-					for (i = 0;
-					     i < v2del->isad_nrspi;
-					     i++ )
+					for (i = 0; i < v2del->isad_nrspi; i++)
 					{
 						spi = p->pbs.cur +
-						      (i *
-						       v2del->isad_spisize);
+						      (i * v2del->isad_spisize);
 						DBG(DBG_CONTROLMORE, DBG_log(
 							    "received delete request for %s SA(0x%08lx)",
 							    enum_show(
@@ -3032,12 +3065,11 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 								*(ipsec_spi_t *)spi);
 
 						if (dst != NULL) {
-							struct ipsec_proto_info
-							*pr =v2del->isad_protoid
-								== PROTO_IPSEC_AH ?
+							struct ipsec_proto_info *pr =
+								v2del->isad_protoid == PROTO_IPSEC_AH ?
 								&dst->st_ah :
-
 								&dst->st_esp;
+
 							DBG(DBG_CONTROLMORE,
 								DBG_log("our side spi that needs to be sent: %s SA(0x%08lx)",
 									enum_show(&protocol_names,
@@ -3046,8 +3078,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 									ntohl(pr->our_spi)));
 
 							memcpy(spi_buf +
-								(j *
-								 v2del->isad_spisize),
+								(j * v2del->isad_spisize),
 								(u_char *)&pr->our_spi,
 								v2del->isad_spisize);
 							j++;
@@ -3073,8 +3104,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 							    j);
 						    DBG_dump(" Emit SPIs",
 							    spi_buf,
-							    j *
-							    v2del->isad_spisize));
+							    j * v2del->isad_spisize));
 					}
 
 					zero(&v2del_tmp);
@@ -3100,11 +3130,11 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 							STF_INTERNAL_ERROR;
 					}
 
-					/* Emit values of spi to be sent to the peer*/
-					if (!out_raw(spi_buf, j *
-						     v2del->isad_spisize,
-						     &del_pbs,
-						     "local spis"))
+					/* Emit values of spi to be sent to the peer */
+					if (!out_raw(spi_buf,
+							j * v2del->isad_spisize,
+							&del_pbs,
+							"local spis"))
 					{
 						libreswan_log(
 							"error sending spi values in delete payload");
@@ -3116,13 +3146,8 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				break;
 
 				default:
-					/*Unrecongnized protocol */
-					return STF_IGNORE;
+					bad_case(v2del->isad_protoid);
 				}
-
-				/* this will break from for loop*/
-				if (v2del->isad_protoid == PROTO_ISAKMP)
-					break;
 			}
 
 			/* If there are no payloads or in other words empty payload in request
@@ -3169,7 +3194,6 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 		if (md->chain[ISAKMP_NEXT_v2D] &&
 		    st->st_state != STATE_IKESA_DEL) {
-
 			for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL;
 			     p = p->next) {
 				struct ikev2_delete *v2del =
@@ -3177,29 +3201,24 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 				switch (v2del->isad_protoid) {
 				case PROTO_ISAKMP: /* Parent SA */
-				{
-					/* My understanding is that delete payload for IKE SA
-					 * should be the only payload in the informational.
-					 * Now delete the IKE SA state and all its child states
-					 */
 					v2_delete_my_family(st, RESPONDER);
-				}
-				break;
+					break;
 
 				case PROTO_IPSEC_AH: /* Child SAs */
 				case PROTO_IPSEC_ESP: /* Child SAs */
 				{
-					/* pb_stream del_pbs; */
 					struct ikev2_delete;
 					u_int16_t i;
 					u_char *spi;
 
-					for (i = 0;
-					     i < v2del->isad_nrspi;
-					     i++ ) {
+					if (v2del->isad_spisize == sizeof(ipsec_spi_t)) {
+						libreswan_log("IPsec Delete SPI size is not 4");
+						return STF_FAIL + v2N_INVALID_SYNTAX;
+					}
+
+					for (i = 0; i < v2del->isad_nrspi; i++ ) {
 						spi = p->pbs.cur +
-						      (i *
-						       v2del->isad_spisize);
+						      (i * v2del->isad_spisize);
 						DBG(DBG_CONTROLMORE, DBG_log(
 							    "Now doing actual deletion for request: %s SA(0x%08lx)",
 							    enum_show(&protocol_names,
@@ -3217,27 +3236,21 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 								*(ipsec_spi_t *)spi);
 
 						if (dst != NULL) {
-							struct ipsec_proto_info
-								*pr =
-					v2del->isad_protoid == PROTO_IPSEC_AH ?
-								&dst->st_ah :
-								&dst->st_esp;
 							DBG(DBG_CONTROLMORE,
 								DBG_log("our side spi that needs to be deleted: %s SA(0x%08lx)",
 									enum_show(&protocol_names,
 										v2del->isad_protoid),
-									(unsigned long)
-									ntohl(pr->our_spi)));
+									(unsigned long)ntohl(*(ipsec_spi_t *)spi)));
 
 							/* now delete the state*/
 							change_state(dst,
 								STATE_CHILDSA_DEL);
 							delete_state(dst);
 						} else {
-							DBG(DBG_CONTROLMORE,
-							    DBG_log("received delete request for %s SA(0x%08lx) but local state is not found",
+							libreswan_log(
+							    "received delete request for %s SA(0x%08lx) but corresponding state not found",
 								    enum_show(&protocol_names, v2del->isad_protoid),
-									(unsigned long)ntohl((unsigned long)*(ipsec_spi_t *)spi)));
+									(unsigned long)ntohl((unsigned long)*(ipsec_spi_t *)spi));
 						}
 					}
 				}

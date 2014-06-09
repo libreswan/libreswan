@@ -324,12 +324,11 @@ void ipsecdoi_replace(struct state *st,
 	int whack_sock = dup_any(st->st_whack_sock);
 	lset_t policy = st->st_policy;
 
-	if (IS_PHASE1(st->st_state) || IS_PARENT_SA(st) ||
-	    IS_PHASE15(st->st_state) || (st->st_state == STATE_PARENT_I2)) {
+	if (IS_IKE_SA(st)) {
 		struct connection *c = st->st_connection;
-		policy = c->policy & ~POLICY_IPSEC_MASK;
-		policy = policy & ~policy_del;
-		policy = policy | policy_add;
+
+		policy = (c->policy & ~POLICY_IPSEC_MASK & ~policy_del) |
+			policy_add;
 
 		initiator = pick_initiator(c, policy);
 		passert(!HAS_IPSEC_POLICY(policy));

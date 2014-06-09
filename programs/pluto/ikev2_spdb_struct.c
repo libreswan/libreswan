@@ -725,12 +725,13 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 					   statement is dangerous */
 					char esb[ENUM_SHOW_BUF_LEN];
 
-					DBG_log("proposal %u %s encr= (policy:%s vs offered:%s)",
+					DBG_log("proposal %u %s encr= (policy:%s(%d) vs offered:%s(%d))",
 						propnum,
 						encr_matched ? "succeeded" : "failed",
 						enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
-						enum_show(&ikev2_trans_type_encr_names,
-							  encr_transform));
+						encr_keylen,
+						enum_show(&ikev2_trans_type_encr_names, encr_transform),
+						keylen);
 					/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
 					DBG_log("            %s integ=(policy:%s vs offered:%s)",
 						integ_matched ? "succeeded" : "failed",

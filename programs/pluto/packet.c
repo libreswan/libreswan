@@ -1041,7 +1041,7 @@ static field_desc ikev2_delete_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "protocol ID", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &ikev2_del_protocol_names },
 	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "number of SPIs", NULL },
 	{ ft_end, 0, NULL, NULL }

@@ -14,6 +14,11 @@
 
 #ifndef PLUTO_RND_H
 #define PLUTO_RND_H
+
+/* for SHA1_DIGEST_SIZE */
+#include "constants.h"
+#include "ietf_constants.h"
+
 extern u_char secret_of_the_day[SHA1_DIGEST_SIZE];
 extern u_char ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
 

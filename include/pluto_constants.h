@@ -443,6 +443,8 @@ enum phase1_role {
 
 #define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 
+#define IS_IKE_SA_ESTABLISHED(s) (IS_ISAKMP_SA_ESTABLISHED(s) || IS_PARENT_SA_ESTABLISHED(s))
+
 /*
  * ??? Issue here is that our child SA appears as a
  * STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
@@ -450,12 +452,15 @@ enum phase1_role {
  */
 #define IS_CHILD_SA_ESTABLISHED(st) \
     (((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) && \
-      st->st_clonedfrom != SOS_NOBODY) || \
+      IS_CHILD_SA(st)) || \
      st->st_state == STATE_CHILDSA_DEL)
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 
 #define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
+
+#define IS_IKE_SA(st) (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) ||\
+		IS_PARENT_SA(st))
 
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.
