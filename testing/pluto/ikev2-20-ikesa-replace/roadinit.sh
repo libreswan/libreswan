@@ -6,5 +6,4 @@ ping -n -c 4 192.0.2.254
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add road-east-ipv4-ikev2
-ipsec auto --status
 echo "initdone"

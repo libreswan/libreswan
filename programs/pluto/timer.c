@@ -512,7 +512,7 @@ live_ok:
 void handle_next_timer_event(void)
 {
 	struct event *ev = evlist;
-	int type;
+	enum event_type type;
 	struct state *st;
 
 	if (ev == (struct event *) NULL)
@@ -643,7 +643,19 @@ void handle_next_timer_event(void)
 		}
 		delete_liveness_event(st);
 		delete_dpd_event(st);
-		event_schedule(EVENT_SA_EXPIRE, deltasecs(st->st_margin), st);
+		{
+			/*
+			 * ??? this odd code is my best reconstruction of
+			 * what was intended by the original author.
+			 * It doesn't make complete sense.
+			 */
+			enum event_type x = EVENT_SA_EXPIRE;
+			time_t d = deltasecs(st->st_margin);
+
+			if(st->st_ikev2)
+				d = ikev2_replace_delay(st, &x, NULL);
+			event_schedule(x, d, st);
+		}
 	}
 	break;
 
@@ -684,7 +696,10 @@ void handle_next_timer_event(void)
 			set_suspended(st, NULL);
 		}
 #endif
-		delete_state(st);
+		if(st->st_ikev2 && IS_IKE_SA(st)) /* IKEv2 parent, delete children to */
+			v2_delete_my_family(st,INITIATOR);
+		else
+			delete_state(st);
 		break;
 
 	case EVENT_DPD:
