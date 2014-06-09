@@ -177,9 +177,9 @@ static void retransmit_v1_msg(struct state *st)
 	try_limit = c->sa_keying_tries;
 
 	DBG(DBG_CONTROL,
-		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
+		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
 			ip_str(&c->spd.that.host_addr),
-			c->name, st->st_serialno));
+			c->name, st->st_serialno, try, try_limit));
 
 	if (st->st_retransmit < maximum_retransmissions) {
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
@@ -206,8 +206,8 @@ static void retransmit_v1_msg(struct state *st)
 			"%s: retransmission; will wait %lus for response",
 			enum_name(&state_names, st->st_state),
 			(unsigned long)delay);
-		resend_ike_v1_msg(st, "EVENT_RETRANSMIT");
-		event_schedule(EVENT_RETRANSMIT, delay, st);
+		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
+		event_schedule(EVENT_v1_RETRANSMIT, delay, st);
 	} else {
 		/* check if we've tried rekeying enough times.
 		 * st->st_try == 0 means that this should be the only try.
@@ -217,10 +217,12 @@ static void retransmit_v1_msg(struct state *st)
 
 		switch (st->st_state) {
 		case STATE_MAIN_I3:
+		case STATE_AGGR_I2:
 			details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
 			break;
 		case STATE_MAIN_I1:
-			details = ".  No response (or no acceptable response) to our first IKE message";
+		case STATE_AGGR_I1:
+			details = ".  No response (or no acceptable response) to our first IKEv1 message";
 			break;
 		case STATE_QUICK_I1:
 			if (c->newest_ipsec_sa == SOS_NOBODY) {
@@ -299,9 +301,9 @@ static void retransmit_v2_msg(struct state *st)
 	try++;
 
 	DBG(DBG_CONTROL,
-		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
+		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
 			ip_str(&c->spd.that.host_addr), c->name,
-			st->st_serialno));
+			st->st_serialno, try, try_limit));
 
 	if (st->st_retransmit < maximum_retransmissions)
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
@@ -344,7 +346,7 @@ static void retransmit_v2_msg(struct state *st)
 		details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
 		break;
 	case STATE_PARENT_I1:
-		details = ".  No response (or no acceptable response) to our first IKE message";
+		details = ".  No response (or no acceptable response) to our first IKEv2 message";
 		break;
 	default:
 		break;
@@ -583,7 +585,7 @@ void handle_next_timer_event(void)
 		daily_log_event();
 		break;
 
-	case EVENT_RETRANSMIT:
+	case EVENT_v1_RETRANSMIT:
 		retransmit_v1_msg(st);
 		break;
 
@@ -788,7 +790,7 @@ void delete_event(struct state *st)
 			if ((*ev) == st->st_event) {
 				*ev = (*ev)->ev_next;
 
-				if (st->st_event->ev_type == EVENT_RETRANSMIT)
+				if (st->st_event->ev_type == EVENT_v1_RETRANSMIT)
 					st->st_retransmit = 0;
 				pfree(st->st_event);
 				st->st_event = (struct event *) NULL;

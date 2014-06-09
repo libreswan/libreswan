@@ -83,7 +83,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_PENDING_PHASE2",
 
 	"EVENT_SO_DISCARD",
-	"EVENT_RETRANSMIT",
+	"EVENT_v1_RETRANSMIT",
 	"EVENT_SA_REPLACE",
 	"EVENT_SA_REPLACE_IF_USED",
 	"EVENT_SA_EXPIRE",

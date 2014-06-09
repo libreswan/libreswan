@@ -96,7 +96,7 @@ enum event_type {
 	/* events associated with states */
 
 	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
-	EVENT_RETRANSMIT,		/* v1 Retransmit IKE packet */
+	EVENT_v1_RETRANSMIT,		/* v1 Retransmit IKE packet */
 	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
 	EVENT_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
 	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */

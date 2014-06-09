@@ -284,7 +284,7 @@ stf_status main_outI1(int whack_sock,
 	send_ike_msg(st, "main_outI1");
 
 	delete_event(st);
-	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);
