@@ -326,9 +326,9 @@ void ipsecdoi_replace(struct state *st,
 
 	if (IS_IKE_SA(st)) {
 		struct connection *c = st->st_connection;
-		policy = c->policy & ~POLICY_IPSEC_MASK;
-		policy = policy & ~policy_del;
-		policy = policy | policy_add;
+
+		policy = (c->policy & ~POLICY_IPSEC_MASK & ~policy_del) |
+			policy_add;
 
 		initiator = pick_initiator(c, policy);
 		passert(!HAS_IPSEC_POLICY(policy));
