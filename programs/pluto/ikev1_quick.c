@@ -1790,11 +1790,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			he.port = b->his.port;
 
 			l = format_end(buf, sizeof(buf), &me, NULL, TRUE,
-				       LEMPTY);
+				       LEMPTY, oriented(*c));
 			snprintf(buf + l, sizeof(buf) - l, "...");
 			l += strlen(buf + l);
 			(void)format_end(buf + l, sizeof(buf) - l, &he, NULL,
-					 FALSE, LEMPTY);
+					 FALSE, LEMPTY, oriented(*c));
 			libreswan_log("cannot respond to IPsec SA request"
 				      " because no connection is known for %s",
 				      buf);
@@ -1942,7 +1942,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			}
 
 			format_end(cthat, sizeof(cthat), &c->spd.that, NULL,
-				   TRUE, LEMPTY);
+				   TRUE, LEMPTY, oriented(*c));
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("setting phase 2 virtual values to %s",
 				    cthat));
@@ -2270,11 +2270,11 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 		struct spd_route *sr = &c->spd;
 
 		format_end(instbuf, sizeof(instbuf), &sr->this, &sr->that,
-			   TRUE, LEMPTY);
+			   TRUE, LEMPTY, oriented(*c));
 		libreswan_log("    us: %s", instbuf);
 
 		format_end(instbuf, sizeof(instbuf), &sr->that, &sr->this,
-			   FALSE, LEMPTY);
+			   FALSE, LEMPTY, oriented(*c));
 		libreswan_log("  them: %s", instbuf);
 	}
 
