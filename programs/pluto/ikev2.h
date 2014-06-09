@@ -200,5 +200,5 @@ extern bool ship_v2N(unsigned int np, u_int8_t critical,
 
 extern bool force_busy;	/* config option to emulate responder under DOS */
 
-extern time_t ikev2_replace_delay(struct state *st, enum event_type kind,
+extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		                const struct state_v2_microcode *svm);

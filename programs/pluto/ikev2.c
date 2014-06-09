@@ -888,9 +888,10 @@ void ikev2_update_counters(struct msg_digest *md)
 	}
 }
 
-time_t ikev2_replace_delay(struct state *st, enum event_type kind,
+time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		const struct state_v2_microcode *svm)
 {
+	enum event_type kind = *pkind;
 	time_t delay;   /* unwrapped deltatime_t */
 	struct connection *c = st->st_connection;
 
@@ -947,12 +948,11 @@ time_t ikev2_replace_delay(struct state *st, enum event_type kind,
 			delay -= marg;
 			st->st_margin = deltatime(marg);
 		} else {
-			kind = EVENT_SA_EXPIRE;
+			*pkind = kind = EVENT_SA_EXPIRE;
 		}
 	}
 	return delay;
 }
-
 
 static void success_v2_state_transition(struct msg_digest **mdp)
 {
@@ -1077,7 +1077,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		switch (kind) {
 		case EVENT_SA_REPLACE: /* SA replacement event */
-			delay =  ikev2_replace_delay(st, kind, svm);
+			delay = ikev2_replace_delay(st, &kind, svm);
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;
