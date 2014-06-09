@@ -19,8 +19,8 @@ west #
  # confirm with a ping
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
+PING 192.0.2.254 (192.0.2.254) f[   35.403083] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
+rom 192.0.1.254 : 56(84) bytes of data.
 [ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
 [ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=3 
 [ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
@@ -83,40 +83,74 @@ west #
 west #
  # we lose whack just before the fallback to ikev1, give it some time
 west #
+ echo "need to wait for many retries"
+need to wait for many retries
+west #
  sleep 15
 west #
  sleep 15
+west #
+ sleep 15
+west #
+ sleep 15
+west #
+ echo one minute
+one minute
+west #
+ sleep 15
+west #
+ sleep 15
+west #
+ sleep 15
+west #
+ sleep 15
+west #
+ echo two minutes
+two minutes
 west #
  sleep 15
 west #
  ipsec auto --status |grep STATE_MAIN_I4
+000 #3: "westnet-eastnet-ikev2-fallback":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
-[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
-2 packets transmitted, 0 received, 100% packet loss, time XXXX
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  echo done
 done
 west #
  ipsec look
 west NOW
+192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
 169.254.0.0/16 dev eth2  scope link  metric 1004 
 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
-192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.0.2.0/24 dev ipsec0  scope link 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
 192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
+west #
+ ipsec stop
+Redirecting to: systemctl stop ipsec.service
+[ 00.00] IPSEC EVENT: KLIPS device ipsec0 shut down.
+[ 00.00] 
+[ 00.00] 
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
 west #
