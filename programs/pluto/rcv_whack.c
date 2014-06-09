@@ -397,17 +397,14 @@ void whack_process(int whackfd, const struct whack_message msg)
 		if (st == NULL) {
 			loglog(RC_UNKNOWN_NAME, "no state #%lu to delete",
 					msg.whack_deletestateno);
-
 		} else {
-			DBG_log("received whack to delete state %s #%lu %s ",
+			DBG_log("received whack to delete %s state #%lu %s",
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
 				enum_name(&state_names, st->st_state));
 
 			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
-				DBG_log("state IKEv2 #%lu in %s is a PARENT_SA, also deleting corresponding CHILD_SAs",
-					st->st_serialno,
-					enum_name(&state_names, st->st_state));
+				DBG_log("Also deleting any corresponding CHILD_SAs");
 				v2_delete_my_family(st, INITIATOR);
 			} else {
 				delete_state(st);
