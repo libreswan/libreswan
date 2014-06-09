@@ -148,6 +148,21 @@ enum smf2_flags {
  * [Parent SA (SAx1) established. Child SA (SAx2) may have been established]
  *
  *
+ * Extended IKE_AUTH (see RFC 5996bis 2.6):
+ *
+ * HDR(A,0), SAi1, KEi, Ni  -->
+ *                              <--  HDR(A,0), N(COOKIE)
+ * HDR(A,0), N(COOKIE), SAi1,
+ *     KEi, Ni  -->
+ *                              <--  HDR(A,B), SAr1, KEr,
+ *                                       Nr, [CERTREQ]
+ * HDR(A,B), SK {IDi, [CERT,]
+ *     [CERTREQ,] [IDr,] AUTH,
+ *     SAi2, TSi, TSr}  -->
+ *                              <--  HDR(A,B), SK {IDr, [CERT,]
+ *                                       AUTH, SAr2, TSi, TSr}
+ * [Parent SA (SAx1) established. Child SA (SAx2) may have been established]
+ *
  *
  * CREATE_CHILD_SA Exchange (new child variant RFC 5996 1.3.1):
  *
@@ -212,6 +227,18 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 
 /* microcode for input packet processing */
 static const struct state_v2_microcode v2_state_microcode_table[] = {
+
+	/* STATE_PARENT_I1: R1B --> I1B
+	 *                     <--  HDR, N
+	 * HDR, N, SAi1, KEi, Ni -->
+	 */
+	{ .state      = STATE_PARENT_I1,
+	  .next_state = STATE_PARENT_I1,
+	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY,
+	  .req_clear_payloads = P(N),
+	  .opt_clear_payloads = LEMPTY,
+	  .processor  = ikev2parent_inR1BoutI1B,
+	  .recv_type  = ISAKMP_v2_SA_INIT, },
 
 	/* STATE_PARENT_I1: R1 --> I2
 	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
@@ -574,7 +601,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 		DBG(DBG_CONTROL, DBG_log("I am IKE SA Initiator"));
 
-		if (md->msgid_received == MAINMODE_MSGID) {
+		if (md->msgid_received == v2_INITIAL_MSGID) {
 			st = find_state_ikev2_parent(md->hdr.isa_icookie,
 						     md->hdr.isa_rcookie);
 			if (st == NULL) {
@@ -616,7 +643,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * if so, drop it.
 			 * NOTE: in_struct() changed the byte order.
 			 */
-			if (st->st_msgid_lastack != INVALID_MSGID &&
+			if (st->st_msgid_lastack != v2_INVALID_MSGID &&
 			    md->msgid_received <= st->st_msgid_lastack) {
 				/* it's fine, it's just a retransmit */
 				DBG(DBG_CONTROL,

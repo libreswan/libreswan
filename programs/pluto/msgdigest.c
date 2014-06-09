@@ -104,9 +104,6 @@ struct msg_digest *alloc_md(void)
 
 void release_md(struct msg_digest *md)
 {
-	if (md == NULL)
-		return;
-
 	freeanychunk(md->raw_packet);
 	pfreeany(md->packet_pbs.start);
 
@@ -117,3 +114,10 @@ void release_md(struct msg_digest *md)
 	md_pool = md;
 }
 
+void release_any_md(struct msg_digest **mdp)
+{
+	if (*mdp != NULL) {
+		release_md(*mdp);
+		*mdp = NULL;
+	}
+}

@@ -72,7 +72,7 @@ bool unique_msgid(const struct state *st, msgid_t msgid)
 {
 	struct msgid_list *p;
 
-	passert(msgid != MAINMODE_MSGID);
+	passert(msgid != v1_MAINMODE_MSGID);
 	passert(IS_ISAKMP_ENCRYPTED(st->st_state));
 
 	for (p = st->st_used_msgids; p != NULL; p = p->next)

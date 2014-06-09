@@ -120,7 +120,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 	initialize_new_state(st, c, policy, try, whack_sock, importance);
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_I1);
-	st->st_msgid_lastack = INVALID_MSGID;
+	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 	st->st_try   = try;
 
@@ -140,19 +140,16 @@ stf_status ikev2parent_outI1(int whack_sock,
 			    );
 	}
 
-	if (predecessor == NULL)
-		libreswan_log("initiating v2 parent SA");
-	else
-		libreswan_log("initiating v2 parent SA to replace #%lu",
-			      predecessor->st_serialno);
-
 	if (predecessor != NULL) {
+		libreswan_log("initiating v2 parent SA");
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1,
 			  "%s: initiate, replacing #%lu",
 			  enum_name(&state_names, st->st_state),
 			  predecessor->st_serialno);
 	} else {
+		libreswan_log("initiating v2 parent SA to replace #%lu",
+			      predecessor->st_serialno);
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1,
 			  "%s: initiate",
 			  enum_name(&state_names, st->st_state));
@@ -261,8 +258,7 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 		return;
 	}
 
@@ -284,8 +280,7 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	if (ke->ke_md != NULL) {
 		complete_v2_state_transition(&ke->ke_md, e);
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 	}
 	reset_cur_state();
 	reset_globals();
@@ -366,15 +361,15 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr);                             /* default to 0 */
+		zero(&hdr);	/* default to 0 */
 		/* Impair function will raise major/minor by 1 for testing */
 		hdr.isa_version = build_ike_version();
-		if (st->st_dcookie.ptr)
-			hdr.isa_np   = ISAKMP_NEXT_v2N;
-		else
-			hdr.isa_np   = ISAKMP_NEXT_v2SA;
+
+		hdr.isa_np = st->st_dcookie.ptr != NULL?
+			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2SA;
 		hdr.isa_xchg = ISAKMP_v2_SA_INIT;
 		hdr.isa_flags = ISAKMP_FLAGS_I;
+		hdr.isa_msgid = v2_INITIAL_MSGID;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		/* R-cookie, are left zero */
 
@@ -388,7 +383,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	 * send an anti DOS cookie, 4306 2.6, if we have received one from the
 	 * responder
 	 */
-	if (st->st_dcookie.ptr) {
+	if (st->st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
 		if (!ship_v2N(ISAKMP_NEXT_v2SA,
 			 DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
@@ -640,7 +635,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 				     pcim_stranger_crypto);
 		st->st_ikev2 = TRUE;
 		change_state(st, STATE_PARENT_R1);
-		st->st_msgid_lastack = INVALID_MSGID;
+		st->st_msgid_lastack = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
 
 		md->st = st;
@@ -791,8 +786,7 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 		return;
 	}
 
@@ -814,8 +808,7 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	if (ke->ke_md != NULL) {
 		complete_v2_state_transition(&ke->ke_md, e);
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 	}
 	reset_globals();
 }
@@ -990,6 +983,74 @@ static stf_status ikev2_parent_inI1outR1_tail(
  *
  *
  */
+/* STATE_PARENT_I1: R1B --> I1B
+ *                     <--  HDR, N
+ * HDR, N, SAi1, KEi, Ni -->
+ */
+stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	/* struct connection *c = st->st_connection; */
+	struct payload_digest *ntfy;
+
+	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_COOKIE:
+		{
+			/*
+			 * Responder replied with N(COOKIE) for DOS avoidance.
+			 * See rfc5996bis-04 2.6.
+			 * Responder SPI ought to have been 0 (but might not be).
+			 * Our state should not advance.  Instead
+			 * we should send our I1 packet with the same cookie.
+			 */
+			u_int8_t spisize;
+			const pb_stream *dc_pbs;
+
+			if (ntfy != md->chain[ISAKMP_NEXT_v2N] || ntfy->next != NULL) {
+				libreswan_log("v2N_COOKIE must be only notification in packet");
+				return STF_FAIL + v2N_INVALID_SYNTAX;
+			}
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("inR1OutI2 received a DOS v2N_COOKIE from the responder");
+			    DBG_log("resend the I1 with a cookie payload"));
+			spisize = ntfy->payload.v2n.isan_spisize;
+			dc_pbs = &ntfy->pbs;
+			clonetochunk(st->st_dcookie,  (dc_pbs->cur + spisize),
+				     (pbs_left(dc_pbs) - spisize),
+				     "saved received dcookie");
+
+			DBG(DBG_CONTROLMORE,
+			    DBG_dump_chunk("dcookie received (instead of a R1):",
+					   st->st_dcookie);
+			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
+
+			md->svm = &ikev2_parent_firststate_microcode;
+
+			change_state(st, STATE_PARENT_I1);
+			st->st_msgid_lastack = v2_INVALID_MSGID;
+			md->msgid_received = v2_INVALID_MSGID; /* AAA hack  */
+			st->st_msgid_nextuse = 0;
+
+			return ikev2_parent_outI1_common(md, st);
+		}
+		case v2N_INVALID_KE_PAYLOAD:
+		case v2N_NO_PROPOSAL_CHOSEN:
+		default:
+			/*
+			 * ??? At least INVALID_KE_PAYLOAD and NO_PROPOSAL_CHOSEN
+			 * are legal and should keep us in this state.
+			 * The responder SPI ought to have been 0 (but might not be).
+			 * See rfc5996bis-04 2.6.
+			 */
+			libreswan_log("%s: received %s but is ignoring it",
+				enum_name(&state_names, st->st_state),
+				enum_name(&ikev2_notify_names,
+					ntfy->payload.v2n.isan_type));
+		}
+	}
+	return STF_IGNORE;	/* ??? because we don't know what to do */
+}
 
 /* STATE_PARENT_I1: R1 --> I2
  *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
@@ -1011,53 +1072,23 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	struct state *st = md->st;
 	/* struct connection *c = st->st_connection; */
 	pb_stream *keyex_pbs;
-	struct payload_digest *np;
+	struct payload_digest *ntfy;
 
-	for (np = md->chain[ISAKMP_NEXT_v2N]; np != NULL; np = np->next) {
-		/*
-		 * Check if the responder replied with v2N with DOS COOKIE
-		 *
-		 * ??? anything else in the packet, including other v2Ns
-		 * will be ignored.
-		 * ??? could this case be handled better by a different
-		 * state microcode entry?
-		 */
-		if (np->payload.v2n.isan_type == v2N_COOKIE) {
-			u_int8_t spisize;
-			const pb_stream *dc_pbs;
+	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		switch (ntfy->payload.v2n.isan_type) {
+		case v2N_COOKIE:
+		case v2N_INVALID_KE_PAYLOAD:
+		case v2N_NO_PROPOSAL_CHOSEN:
+			libreswan_log("%s cannot appear with other payloads",
+				enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type));
+			return STF_FAIL + v2N_INVALID_SYNTAX;
 
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("inR1OutI2 received a DOS v2N_COOKIE from the responder");
-			    DBG_log("resend the I1 with a cookie payload"));
-			spisize = np->payload.v2n.isan_spisize;
-			dc_pbs = &np->pbs;
-			clonetochunk(st->st_dcookie,  (dc_pbs->cur + spisize),
-				     (pbs_left(dc_pbs) - spisize),
-				     "saved received dcookie");
-
-			DBG(DBG_CONTROLMORE,
-			    DBG_dump_chunk("dcookie received (instead of a R1):",
-					   st->st_dcookie);
-			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
-
-			md->svm = &ikev2_parent_firststate_microcode;
-
-			change_state(st, STATE_PARENT_I1);
-			st->st_msgid_lastack = INVALID_MSGID;
-			md->msgid_received = INVALID_MSGID; /* AAA hack  */
-			st->st_msgid_nextuse = 0;
-
-			return ikev2_parent_outI1_common(md, st);
-		}
-
-		/*
-		 * Check for a different Notify - can this happen here? XXX
-		 */
-		if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
-			libreswan_log("%s: received %s",
+		default:
+			libreswan_log("%s: received %s but is ignoring it",
 				enum_name(&state_names, st->st_state),
 				enum_name(&ikev2_notify_names,
-					md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type));
+					ntfy->payload.v2n.isan_type));
 		}
 	}
 
@@ -1150,8 +1181,7 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -1173,8 +1203,7 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	if (dh->dh_md != NULL) {
 		complete_v2_state_transition(&dh->dh_md, e);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 	}
 	reset_globals();
 }
@@ -1791,8 +1820,7 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -1823,8 +1851,7 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	if (dh->dh_md != NULL) {
 		complete_v2_state_transition(&dh->dh_md, e);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 	}
 	reset_globals();
 }
@@ -3096,7 +3123,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 
 					if (j == 0) {
 						DBG(DBG_CONTROLMORE, DBG_log(
-							    "This delete payload does not contain a single spi that has any local state, ignoring"));
+							    "This delete payload does not contain a single SPI that has any local state; ignoring"));
 						return STF_IGNORE;
 					} else {
 						DBG(DBG_CONTROLMORE, DBG_log(
@@ -3257,7 +3284,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 				break;
 
 				default:
-					/*Unrecongnized protocol */
+					/* Unrecongnized protocol */
 					return STF_IGNORE;
 				}
 
