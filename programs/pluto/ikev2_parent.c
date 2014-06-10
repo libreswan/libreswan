@@ -63,10 +63,10 @@
 #include "nat_traversal.h"
 
 #define SEND_NOTIFICATION_AA(t, d) \
-	if (st) \
-		send_v2_notification_from_state(st, st->st_state, t, d); \
+	if (st != NULL) \
+		send_v2_notification_from_state(st, st->st_state, (t), (d)); \
 	else \
-		send_v2_notification_from_md(md, t, d);
+		send_v2_notification_from_md(md, (t), (d));
 
 #define SEND_NOTIFICATION(t) \
 	if (st) \
@@ -559,8 +559,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d;
-			d = find_host_connection(&md->iface->ip_addr,
+			struct connection *d = find_host_connection(&md->iface->ip_addr,
 						 pluto_port,
 						 (ip_address*)NULL,
 						 md->sender_port, policy);
@@ -650,25 +649,24 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	if (force_busy) {
 		u_char dcookie[SHA1_DIGEST_SIZE];
 		chunk_t dc;
-		ikev2_get_dcookie( dcookie, st->st_ni, &md->sender,
+
+		ikev2_get_dcookie(dcookie, st->st_ni, &md->sender,
 				   st->st_icookie);
 		dc.ptr = dcookie;
 		dc.len = SHA1_DIGEST_SIZE;
 
-		/* check if I1 packet contains KE and a v2N payload with type COOKIE */
-		if ( md->chain[ISAKMP_NEXT_v2KE] &&
-		     md->chain[ISAKMP_NEXT_v2N] &&
-		     (md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type ==
-		      v2N_COOKIE)) {
+		/* check a v2N payload with type COOKIE */
+		if (md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type ==
+		    v2N_COOKIE) {
 			u_int8_t spisize;
 			const pb_stream *dc_pbs;
 			chunk_t blob;
+
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("received a DOS cookie in I1 verify it"));
 			/* we received dcookie we send earlier verify it */
-			spisize =
-				md->chain[ISAKMP_NEXT_v2N]->payload.v2n.
-				isan_spisize;
+			spisize = md->chain[ISAKMP_NEXT_v2N]->
+				payload.v2n.isan_spisize;
 			dc_pbs = &md->chain[ISAKMP_NEXT_v2N]->pbs;
 			blob.ptr = dc_pbs->cur + spisize;
 			blob.len = pbs_left(dc_pbs) - spisize;
@@ -680,7 +678,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 			if (!memeq(blob.ptr, dcookie, SHA1_DIGEST_SIZE)) {
 				libreswan_log(
-					"mismatch in DOS v2N_COOKIE,send a new one");
+					"mismatch in DOS v2N_COOKIE: ignoring message (possible DoS attack)");
 				SEND_NOTIFICATION_AA(v2N_COOKIE, &dc);
 				return STF_FAIL + v2N_INVALID_IKE_SPI;
 			}
@@ -689,7 +687,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		} else {
 			/* we are under DOS attack I1 contains no DOS COOKIE */
 			DBG(DBG_CONTROLMORE,
-			    DBG_log("busy mode on. receieved I1 without a valid dcookie");
+			    DBG_log("busy mode on. received I1 without a valid dcookie");
 			    DBG_log("send a dcookie and forget this state"));
 			SEND_NOTIFICATION_AA(v2N_COOKIE, &dc);
 			return STF_FAIL;
@@ -1667,8 +1665,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
 		st->st_ts_that = ikev2_end_to_ts(&c->spd.that);
 
-		ikev2_calc_emit_ts(md, &e_pbs_cipher, INITIATOR, c,
-				policy);
+		ikev2_calc_emit_ts(md, &e_pbs_cipher, INITIATOR, c, policy);
 
 		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
