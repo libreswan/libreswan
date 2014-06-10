@@ -126,53 +126,64 @@ enum smf2_flags {
  *
  */
 
+
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
  * Initiator                         Responder
  * -------------------------------------------------------------------
+ *
+ * IKE_SA_INIT exchange (initial exchange):
+ *
  * HDR, SAi1, KEi, Ni            -->
  *                                 <--  HDR, SAr1, KEr, Nr, [CERTREQ]
+ *
+ * IKE_AUTH exchange (after IKE_SA_INIT exchange):
  *
  * HDR, SK {IDi, [CERT,] [CERTREQ,]
  *        [IDr,] AUTH, SAi2,
  *        TSi, TSr}              -->
  *                                 <--  HDR, SK {IDr, [CERT,] AUTH,
  *                                           SAr2, TSi, TSr}
- * [Parent SA established]
- *
- * HDR, SK {SA, Ni, [KEi],
- *               TSi, TSr}      -->
- *
- *                                <--  HDR, SK {SA, Nr, [KEr],
- *                                          TSi, TSr}
- * [Child SA established]
+ * [Parent SA (SAx1) established. Child SA (SAx2) may have been established]
  *
  *
- * CREATE_CHILD_SA Exchanges:
+ * Extended IKE_AUTH (see RFC 5996bis 2.6):
  *
- * New Child SA
+ * HDR(A,0), SAi1, KEi, Ni  -->
+ *                              <--  HDR(A,0), N(COOKIE)
+ * HDR(A,0), N(COOKIE), SAi1,
+ *     KEi, Ni  -->
+ *                              <--  HDR(A,B), SAr1, KEr,
+ *                                       Nr, [CERTREQ]
+ * HDR(A,B), SK {IDi, [CERT,]
+ *     [CERTREQ,] [IDr,] AUTH,
+ *     SAi2, TSi, TSr}  -->
+ *                              <--  HDR(A,B), SK {IDr, [CERT,]
+ *                                       AUTH, SAr2, TSi, TSr}
+ * [Parent SA (SAx1) established. Child SA (SAx2) may have been established]
+ *
+ *
+ * CREATE_CHILD_SA Exchange (new child variant RFC 5996 1.3.1):
  *
  * HDR, SK {SA, Ni, [KEi],
  *            TSi, TSr}  -->
- *
  *                              <--  HDR, SK {SA, Nr, [KEr],
  *                                       TSi, TSr}
  *
- * Rekey Child SA
+ *
+ * CREATE_CHILD_SA Exchange (rekey child variant RFC 5996 1.3.3):
  *
  * HDR, SK {N(REKEY_SA), SA, Ni, [KEi],
  *     TSi, TSr}   -->
- *
  *                    <--  HDR, SK {SA, Nr, [KEr],
  *                             TSi, TSr}
  *
- * Rekey IKE SA (yes, IKE SA can be rekeyed using CREATE_CHILD_SA)
+ *
+ * CREATE_CHILD_SA Exchange (rekey parent SA variant RFC 5996 1.3.2):
  *
  * HDR, SK {SA, Ni, KEi} -->
- *
  *                            <--  HDR, SK {SA, Nr, KEr}
- *
  */
 
 /* Short forms for building payload type sets */
@@ -216,6 +227,18 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 
 /* microcode for input packet processing */
 static const struct state_v2_microcode v2_state_microcode_table[] = {
+
+	/* STATE_PARENT_I1: R1B --> I1B
+	 *                     <--  HDR, N
+	 * HDR, N, SAi1, KEi, Ni -->
+	 */
+	{ .state      = STATE_PARENT_I1,
+	  .next_state = STATE_PARENT_I1,
+	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY,
+	  .req_clear_payloads = P(N),
+	  .opt_clear_payloads = LEMPTY,
+	  .processor  = ikev2parent_inR1BoutI1B,
+	  .recv_type  = ISAKMP_v2_SA_INIT, },
 
 	/* STATE_PARENT_I1: R1 --> I2
 	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
@@ -578,7 +601,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 		DBG(DBG_CONTROL, DBG_log("I am IKE SA Initiator"));
 
-		if (md->msgid_received == MAINMODE_MSGID) {
+		if (md->msgid_received == v2_INITIAL_MSGID) {
 			st = find_state_ikev2_parent(md->hdr.isa_icookie,
 						     md->hdr.isa_rcookie);
 			if (st == NULL) {
@@ -620,7 +643,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * if so, drop it.
 			 * NOTE: in_struct() changed the byte order.
 			 */
-			if (st->st_msgid_lastack != INVALID_MSGID &&
+			if (st->st_msgid_lastack != v2_INVALID_MSGID &&
 			    md->msgid_received <= st->st_msgid_lastack) {
 				/* it's fine, it's just a retransmit */
 				DBG(DBG_CONTROL,
@@ -888,9 +911,10 @@ void ikev2_update_counters(struct msg_digest *md)
 	}
 }
 
-time_t ikev2_replace_delay(struct state *st, enum event_type kind,
+time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		const struct state_v2_microcode *svm)
 {
+	enum event_type kind = *pkind;
 	time_t delay;   /* unwrapped deltatime_t */
 	struct connection *c = st->st_connection;
 
@@ -947,12 +971,11 @@ time_t ikev2_replace_delay(struct state *st, enum event_type kind,
 			delay -= marg;
 			st->st_margin = deltatime(marg);
 		} else {
-			kind = EVENT_SA_EXPIRE;
+			*pkind = kind = EVENT_SA_EXPIRE;
 		}
 	}
 	return delay;
 }
-
 
 static void success_v2_state_transition(struct msg_digest **mdp)
 {
@@ -1077,7 +1100,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		switch (kind) {
 		case EVENT_SA_REPLACE: /* SA replacement event */
-			delay =  ikev2_replace_delay(st, kind, svm);
+			delay = ikev2_replace_delay(st, &kind, svm);
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;
@@ -1085,9 +1108,9 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		case EVENT_NULL:
 			/* XXX: Is there really no case where we want to set no timer? */
 			/* dos_cookie is one 'valid' event, but it is used more? */
+			DBG_log("V2 microcode entry has unspecified timeout_event");
 			break;
 
-		case EVENT_REINIT_SECRET: /* ??? Refresh cookie secret */
 		default:
 			bad_case(kind);
 		}

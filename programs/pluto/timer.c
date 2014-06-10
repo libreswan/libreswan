@@ -177,9 +177,9 @@ static void retransmit_v1_msg(struct state *st)
 	try_limit = c->sa_keying_tries;
 
 	DBG(DBG_CONTROL,
-		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
+		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
 			ip_str(&c->spd.that.host_addr),
-			c->name, st->st_serialno));
+			c->name, st->st_serialno, try, try_limit));
 
 	if (st->st_retransmit < maximum_retransmissions) {
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
@@ -206,8 +206,8 @@ static void retransmit_v1_msg(struct state *st)
 			"%s: retransmission; will wait %lus for response",
 			enum_name(&state_names, st->st_state),
 			(unsigned long)delay);
-		resend_ike_v1_msg(st, "EVENT_RETRANSMIT");
-		event_schedule(EVENT_RETRANSMIT, delay, st);
+		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
+		event_schedule(EVENT_v1_RETRANSMIT, delay, st);
 	} else {
 		/* check if we've tried rekeying enough times.
 		 * st->st_try == 0 means that this should be the only try.
@@ -217,10 +217,12 @@ static void retransmit_v1_msg(struct state *st)
 
 		switch (st->st_state) {
 		case STATE_MAIN_I3:
+		case STATE_AGGR_I2:
 			details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
 			break;
 		case STATE_MAIN_I1:
-			details = ".  No response (or no acceptable response) to our first IKE message";
+		case STATE_AGGR_I1:
+			details = ".  No response (or no acceptable response) to our first IKEv1 message";
 			break;
 		case STATE_QUICK_I1:
 			if (c->newest_ipsec_sa == SOS_NOBODY) {
@@ -295,25 +297,24 @@ static void retransmit_v2_msg(struct state *st)
 	passert(st != NULL);
 	c = st->st_connection;
 	try_limit = c->sa_keying_tries;
-	try = st->st_try;
-	try++;
+	try = st->st_try + 1;
 
 	DBG(DBG_CONTROL,
-		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
+		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
 			ip_str(&c->spd.that.host_addr), c->name,
-			st->st_serialno));
+			st->st_serialno, try, try_limit));
 
-	if (st->st_retransmit < maximum_retransmissions)
+	if (st->st_retransmit < maximum_retransmissions) {
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
-
-	else if (st->st_state == STATE_PARENT_I1 &&
+	} else if (st->st_state == STATE_PARENT_I1 &&
 		c->sa_keying_tries == 0 &&
-		st->st_retransmit < maximum_retransmissions_initial)
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
-	else if ((st->st_state == STATE_PARENT_I2 ||
+		st->st_retransmit < maximum_retransmissions_initial) {
+		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
+	} else if ((st->st_state == STATE_PARENT_I2 ||
 			st->st_state == STATE_PARENT_I3) &&
-		st->st_retransmit < maximum_retransmissions_quick_r1)
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
+		st->st_retransmit < maximum_retransmissions_quick_r1) {
+		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
+	}
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
@@ -344,7 +345,7 @@ static void retransmit_v2_msg(struct state *st)
 		details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
 		break;
 	case STATE_PARENT_I1:
-		details = ".  No response (or no acceptable response) to our first IKE message";
+		details = ".  No response (or no acceptable response) to our first IKEv2 message";
 		break;
 	default:
 		break;
@@ -386,8 +387,8 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "%s", story);
 		}
 
-		if ((try % 3) == 0 &&
-			(c->policy & POLICY_IKEV1_DISABLE) == 0) {
+		if (try % 3 == 0 &&
+			(c->policy & POLICY_IKEV1_DISABLE) == LEMPTY) {
 			/*
 			 * so, let's retry with IKEv1, alternating every
 			 * three messages
@@ -512,7 +513,7 @@ live_ok:
 void handle_next_timer_event(void)
 {
 	struct event *ev = evlist;
-	int type;
+	enum event_type type;
 	struct state *st;
 
 	if (ev == (struct event *) NULL)
@@ -583,7 +584,7 @@ void handle_next_timer_event(void)
 		daily_log_event();
 		break;
 
-	case EVENT_RETRANSMIT:
+	case EVENT_v1_RETRANSMIT:
 		retransmit_v1_msg(st);
 		break;
 
@@ -643,9 +644,19 @@ void handle_next_timer_event(void)
 		}
 		delete_liveness_event(st);
 		delete_dpd_event(st);
-		if(st->st_ikev2)
-			ikev2_replace_delay(st, 0, NULL);
-		event_schedule(EVENT_SA_EXPIRE, deltasecs(st->st_margin), st);
+		{
+			/*
+			 * ??? this odd code is my best reconstruction of
+			 * what was intended by the original author.
+			 * It doesn't make complete sense.
+			 */
+			enum event_type x = EVENT_SA_EXPIRE;
+			time_t d = deltasecs(st->st_margin);
+
+			if(st->st_ikev2)
+				d = ikev2_replace_delay(st, &x, NULL);
+			event_schedule(x, d, st);
+		}
 	}
 	break;
 
@@ -681,8 +692,8 @@ void handle_next_timer_event(void)
 	case EVENT_SO_DISCARD:
 		/* Delete this state object.  It must be in the hash table. */
 #if 0           /* delete_state will take care of this better ? */
-		if (st->st_suspended_md) {
-			release_md(st->st_suspended_md);
+		if (st->st_suspended_md != NULL) {
+			release_any_md(&st->st_suspended_md);
 			set_suspended(st, NULL);
 		}
 #endif
@@ -778,7 +789,7 @@ void delete_event(struct state *st)
 			if ((*ev) == st->st_event) {
 				*ev = (*ev)->ev_next;
 
-				if (st->st_event->ev_type == EVENT_RETRANSMIT)
+				if (st->st_event->ev_type == EVENT_v1_RETRANSMIT)
 					st->st_retransmit = 0;
 				pfree(st->st_event);
 				st->st_event = (struct event *) NULL;

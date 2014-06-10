@@ -217,8 +217,7 @@ void comm_handle(const struct iface_port *ifp)
 	if (read_packet(md))
 		process_packet(&md);
 
-	if (md != NULL)
-		release_md(md);
+	release_any_md(&md);
 
 	cur_state = NULL;
 	reset_cur_connection();

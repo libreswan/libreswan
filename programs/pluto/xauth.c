@@ -660,10 +660,10 @@ static stf_status modecfg_send_set(struct state *st)
 	send_ike_msg(st, "ModeCfg set");
 
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
-	if (st->st_event->ev_type != EVENT_RETRANSMIT &&
+	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT &&
 	    st->st_event->ev_type != EVENT_NULL) {
 		delete_event(st);
-		event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+		event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 	}
 
 	return STF_OK;
@@ -775,9 +775,9 @@ stf_status xauth_send_request(struct state *st)
 	send_ike_msg(st, "XAUTH: req");
 
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
-	if (st->st_event->ev_type != EVENT_RETRANSMIT) {
+	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
-		event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0 * 3,
+		event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0 * 3,
 			       st);
 	}
 
@@ -902,9 +902,9 @@ stf_status modecfg_send_request(struct state *st)
 	send_ike_msg(st, "modecfg: req");
 
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
-	if (st->st_event->ev_type != EVENT_RETRANSMIT) {
+	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
-		event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0 * 3,
+		event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0 * 3,
 			       st);
 	}
 	st->hidden_variables.st_modecfg_started = TRUE;
@@ -992,10 +992,10 @@ static stf_status xauth_send_status(struct state *st, int status)
 	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
 		     "XAUTH: status");
 
-	/* Set up a retransmission event, half a minute henceforth */
+	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with master thread */
 	delete_event(st);
-	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
 	/* Transmit */
 

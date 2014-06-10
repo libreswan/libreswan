@@ -328,8 +328,9 @@ void release_fragments(struct state *st)
 		return;
 
 	frag = st->ike_frags;
-	while (frag) {
+	while (frag != NULL) {
 		struct ike_frag *this = frag;
+
 		frag = this->next;
 		release_md(this->md);
 		free(this);

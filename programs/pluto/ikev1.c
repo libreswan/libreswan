@@ -193,8 +193,8 @@ struct state_microcode {
 #define SMF_DS_AUTH     (LELEM(OAKLEY_DSS_SIG) | LELEM(OAKLEY_RSA_SIG))
 #define SMF_PKE_AUTH    LELEM(OAKLEY_RSA_ENC)
 #define SMF_RPKE_AUTH   LELEM(OAKLEY_RSA_REVISED_MODE)
-/* misc flags */
 
+/* misc flags */
 #define SMF_INITIATOR   LELEM(OAKLEY_AUTH_ROOF + 0)
 #define SMF_FIRST_ENCRYPTED_INPUT       LELEM(OAKLEY_AUTH_ROOF + 1)
 #define SMF_INPUT_ENCRYPTED     LELEM(OAKLEY_AUTH_ROOF + 2)
@@ -249,7 +249,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE),
-	  EVENT_RETRANSMIT, main_inI1_outR1 },
+	  EVENT_v1_RETRANSMIT, main_inI1_outR1 },
 
 	/* STATE_MAIN_I1: R1 --> I2
 	 * HDR, SA --> auth dependent
@@ -264,7 +264,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_I1, STATE_MAIN_I2,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE), /* don't know yet */
-	  EVENT_RETRANSMIT, main_inR1_outI2 },
+	  EVENT_v1_RETRANSMIT, main_inR1_outI2 },
 
 	/* STATE_MAIN_R1: I2 --> R2
 	 * SMF_PSK_AUTH, SMF_DS_AUTH: HDR, KE, Ni --> HDR, KE, Nr
@@ -277,18 +277,18 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R1, STATE_MAIN_R2,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(NONE)
-	  , EVENT_RETRANSMIT, main_inI2_outR2 },
+	  , EVENT_v1_RETRANSMIT, main_inI2_outR2 },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_REPLY,
 	  P(KE) | P(ID) | P(NONCE), P(VID) | P(CR) | P(HASH), PT(KE),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
 	  SMF_RPKE_AUTH | SMF_REPLY,
 	  P(NONCE) | P(KE) | P(ID), P(VID) | P(CR) | P(HASH) | P(CERT), PT(
 		  NONCE),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	/* for states from here on, output message must be encrypted */
 
@@ -304,17 +304,17 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED |
 	  SMF_REPLY
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(ID)
-	  , EVENT_RETRANSMIT, main_inR2_outI3 },
+	  , EVENT_v1_RETRANSMIT, main_inR2_outI3 },
 
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
 	  P(KE) | P(ID) | P(NONCE), P(VID) | P(CR), PT(HASH),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
 	  P(NONCE) | P(KE) | P(ID), P(VID) | P(CR), PT(HASH),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	/* for states from here on, input message must be encrypted */
 
@@ -390,12 +390,12 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_RETRANSMIT, aggr_inI1_outR1_psk },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_psk },
 
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_RETRANSMIT, aggr_inI1_outR1_rsasig },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_rsasig },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
@@ -462,7 +462,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY
 	  , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(
 		  NATOA_RFC), PT(NONE)
-	  , EVENT_RETRANSMIT, quick_inI1_outR1 },
+	  , EVENT_v1_RETRANSMIT, quick_inI1_outR1 },
 
 	/* STATE_QUICK_I1:
 	 * HDR*, HASH(2), SA, Nr [, KE ] [, IDci, IDcr ] -->
@@ -658,7 +658,7 @@ static stf_status informational(struct msg_digest *md)
 			return dpd_inR(st, n, n_pbs);
 
 		case PAYLOAD_MALFORMED:
-			if (st) {
+			if (st != NULL) {
 				st->hidden_variables.st_malformed_received++;
 
 				libreswan_log(
@@ -681,7 +681,7 @@ static stf_status informational(struct msg_digest *md)
 			return STF_IGNORE;
 
 		case ISAKMP_N_CISCO_LOAD_BALANCE:
-			if (st && IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			if (st != NULL && IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				char *tmp_name;
 				int tmp_whack_sock;
 				struct connection *tmp_c;
@@ -992,7 +992,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 	case ISAKMP_XCHG_AGGR:
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
-		if (md->hdr.isa_msgid != MAINMODE_MSGID) {
+		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
 			libreswan_log(
 				"Message ID was 0x%08lx but should be zero in phase 1",
 				(unsigned long) md->hdr.isa_msgid);
@@ -1072,7 +1072,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
 		st = ikev1_find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
-				     &md->sender, MAINMODE_MSGID);
+				     &md->sender, v1_MAINMODE_MSGID);
 
 		if (st == NULL) {
 			/*
@@ -1080,7 +1080,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * message, in which case, we don't know the rcookie yet.
 			 */
 			st = find_state_ikev1(md->hdr.isa_icookie, zero_cookie,
-					      MAINMODE_MSGID);
+					      v1_MAINMODE_MSGID);
 		}
 
 		if (st != NULL)
@@ -1112,7 +1112,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-			if (md->hdr.isa_msgid == MAINMODE_MSGID) {
+			if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
 				loglog(RC_LOG_SERIOUS, "Informational Exchange message is invalid because"
 				       " it has a Message ID of 0");
 				/* XXX Could send notification back */
@@ -1159,7 +1159,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		if (md->hdr.isa_msgid == MAINMODE_MSGID) {
+		if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
 			libreswan_log("Quick Mode message is invalid because"
 				      " it has a Message ID of 0");
 			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
@@ -1197,7 +1197,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 */
 			st = find_state_ikev1(md->hdr.isa_icookie,
 					      md->hdr.isa_rcookie,
-					      MAINMODE_MSGID);
+					      v1_MAINMODE_MSGID);
 
 			if (st == NULL) {
 				libreswan_log("Quick Mode message is for a non-existent (expired?)"
@@ -1551,7 +1551,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		/* Add the fragment to the state */
 		i = &st->ike_frags;
-		while (1) {
+		for (;;) {
 			if (ike_frag) {
 				/* Still looking for a place to insert ike_frag */
 				if (*i == NULL || (*i)->index >
@@ -1562,6 +1562,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				} else if ((*i)->index == ike_frag->index) {
 					/* Replace fragment with same index */
 					struct ike_frag *old = *i;
+
 					ike_frag->next = old->next;
 					*i = ike_frag;
 					release_md(old->md);
@@ -1572,14 +1573,15 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			if (*i == NULL)
 				break;
-			else if ((*i)->last)
+
+			if ((*i)->last)
 				last_frag_index = (*i)->index;
 
 			i = &(*i)->next;
 		}
 
 		/* We have the last fragment, reassemble if complete */
-		if (last_frag_index) {
+		if (last_frag_index != 0) {
 			size_t size = 0;
 			int prev_index = 0;
 			struct ike_frag *frag;
@@ -1616,8 +1618,7 @@ void process_v1_packet(struct msg_digest **mdp)
 						 "packet");
 
 					process_packet(&whole_md);
-					if (whole_md != NULL)
-						release_md(whole_md);
+					release_any_md(&whole_md);
 					release_fragments(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_seen_fragments = TRUE;
@@ -1735,11 +1736,11 @@ void process_v1_packet(struct msg_digest **mdp)
 		/* if there was a previous packet, let it go, and go with most
 		 * recent one.
 		 */
-		if (st->st_suspended_md) {
+		if (st->st_suspended_md != NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("releasing suspended operation before completion: %p",
 				    st->st_suspended_md));
-			release_md(st->st_suspended_md);
+			release_any_md(&st->st_suspended_md);
 		}
 
 		set_suspended(st, md);
@@ -2281,18 +2282,22 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	case STF_IGNORE:
 		break;
 
-	case STF_INLINE:         /* this is second time through complete
-		                  * state transition, so the MD has already
-		                  * been freed.
-		                  */
-		*mdp = NULL;
+	case STF_INLINE:
+		/*
+		 * this is second time through complete state transition,
+		 * so the MD has already been freed.
+		 */
+		passert(md == NULL);
 		break;
 
 	case STF_SUSPEND:
 		/* update the previous packet history */
 		update_retransmit_history(st, md);
 
-		/* the stf didn't complete its job: don't relase md */
+		/*
+		 * the stf didn't complete its job:
+		 * detach from *mdp so *md won't be released by our caller.
+		 */
 		*mdp = NULL;
 		break;
 
@@ -2305,7 +2310,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		if (!st->st_reserve_msgid &&
 		    IS_CHILD_SA(st) &&
-		    st->st_msgid != MAINMODE_MSGID) {
+		    st->st_msgid != v1_MAINMODE_MSGID) {
 			struct state *p1st = state_with_serialno(
 				st->st_clonedfrom);
 
@@ -2396,7 +2401,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			struct connection *c = st->st_connection;
 
 			switch (kind) {
-			case EVENT_RETRANSMIT: /* Retransmit packet */
+			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
 				delay = EVENT_RETRANSMIT_DELAY_0;
 				break;
 
@@ -2488,8 +2493,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				}
 				break;
 
-			case EVENT_NULL:                /* non-event */
-			case EVENT_REINIT_SECRET:       /* Refresh cookie secret */
 			default:
 				bad_case(kind);
 			}
@@ -2511,7 +2514,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 				fmt_ipsec_sa_established(st, sadetails,
 							 sizeof(sadetails));
-
 			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 				   !st->hidden_variables.st_logged_p1algos) {
 				fmt_isakmp_sa_established(st, sadetails,
@@ -2760,7 +2762,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			delete_state(st);
 		break;
 	}
-
 }
 
 bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)

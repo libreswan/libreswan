@@ -284,7 +284,7 @@ stf_status main_outI1(int whack_sock,
 	send_ike_msg(st, "main_outI1");
 
 	delete_event(st);
-	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);
@@ -913,8 +913,7 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
 		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 		return;
 	}
 
@@ -936,8 +935,7 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	if (ke->ke_md != NULL) {
 		complete_v1_state_transition(&ke->ke_md, e);
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 	}
 
 	reset_cur_state();
@@ -1107,8 +1105,7 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
 		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (ke->ke_md)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 		return;
 	}
 
@@ -1129,8 +1126,7 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	if (ke->ke_md != NULL) {
 		complete_v1_state_transition(&ke->ke_md, e);
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 	}
 	reset_cur_state();
 }
@@ -1207,8 +1203,7 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 
 		set_suspended(st, NULL);
 		process_packet_tail(&md);
-		if (md != NULL)
-			release_md(md);
+		release_any_md(&md);
 	}
 	reset_cur_state();
 }
@@ -1664,8 +1659,7 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
 		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -1689,8 +1683,7 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 	}
 	reset_cur_state();
 }
@@ -1943,8 +1936,7 @@ void key_continue(struct adns_continuation *cr,
 		}
 		complete_v1_state_transition(&kc->md, r);
 	}
-	if (kc->md != NULL)
-		release_md(kc->md);
+	release_any_md(&kc->md);
 	cur_state = NULL;
 }
 
@@ -2587,7 +2579,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 				PROTO_ISAKMP);
 	} else {
 		/* no ISAKMP SA established - don't encrypt notification */
-		send_notification(st, type, NULL, MAINMODE_MSGID,
+		send_notification(st, type, NULL, v1_MAINMODE_MSGID,
 				st->st_icookie, st->st_rcookie,
 				PROTO_ISAKMP);
 	}
@@ -2886,7 +2878,7 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			struct state *dst = find_state_ikev1(spi, /* iCookie */
 							/* rCookie */
 							spi + COOKIE_SIZE,
-							MAINMODE_MSGID);
+							v1_MAINMODE_MSGID);
 
 			if (dst == NULL) {
 				loglog(RC_LOG_SERIOUS, "ignoring Delete SA "

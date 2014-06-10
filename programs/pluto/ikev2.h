@@ -40,6 +40,7 @@ extern stf_status ikev2_in_create_child_sa(struct msg_digest *md);
 
 extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1(struct msg_digest *md);
+extern stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md);
 extern stf_status ikev2parent_inR1outI2(struct msg_digest *md);
 extern stf_status ikev2parent_inI2outR2(struct msg_digest *md);
 extern stf_status ikev2parent_inR2(struct msg_digest *md);
@@ -200,5 +201,5 @@ extern bool ship_v2N(unsigned int np, u_int8_t critical,
 
 extern bool force_busy;	/* config option to emulate responder under DOS */
 
-extern time_t ikev2_replace_delay(struct state *st, enum event_type kind,
+extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		                const struct state_v2_microcode *svm);

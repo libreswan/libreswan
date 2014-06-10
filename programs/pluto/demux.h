@@ -101,6 +101,7 @@ struct msg_digest {
 
 extern struct msg_digest *alloc_md(void);
 extern void release_md(struct msg_digest *md);
+extern void release_any_md(struct msg_digest **mdp);
 
 typedef stf_status state_transition_fn (struct msg_digest *md);
 
