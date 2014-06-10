@@ -297,25 +297,24 @@ static void retransmit_v2_msg(struct state *st)
 	passert(st != NULL);
 	c = st->st_connection;
 	try_limit = c->sa_keying_tries;
-	try = st->st_try;
-	try++;
+	try = st->st_try + 1;
 
 	DBG(DBG_CONTROL,
 		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
 			ip_str(&c->spd.that.host_addr), c->name,
 			st->st_serialno, try, try_limit));
 
-	if (st->st_retransmit < maximum_retransmissions)
+	if (st->st_retransmit < maximum_retransmissions) {
 		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
-
-	else if (st->st_state == STATE_PARENT_I1 &&
+	} else if (st->st_state == STATE_PARENT_I1 &&
 		c->sa_keying_tries == 0 &&
-		st->st_retransmit < maximum_retransmissions_initial)
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
-	else if ((st->st_state == STATE_PARENT_I2 ||
+		st->st_retransmit < maximum_retransmissions_initial) {
+		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
+	} else if ((st->st_state == STATE_PARENT_I2 ||
 			st->st_state == STATE_PARENT_I3) &&
-		st->st_retransmit < maximum_retransmissions_quick_r1)
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
+		st->st_retransmit < maximum_retransmissions_quick_r1) {
+		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
+	}
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
@@ -388,8 +387,8 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "%s", story);
 		}
 
-		if ((try % 3) == 0 &&
-			(c->policy & POLICY_IKEV1_DISABLE) == 0) {
+		if (try % 3 == 0 &&
+			(c->policy & POLICY_IKEV1_DISABLE) == LEMPTY) {
 			/*
 			 * so, let's retry with IKEv1, alternating every
 			 * three messages

@@ -498,9 +498,9 @@ void initialize_new_state(struct state *st,
 	set_state_ike_endpoints(st, c);
 
 	set_cur_state(st);                                      /* we must reset before exit */
-	st->st_policy     = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
+	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
 	st->st_whack_sock = whack_sock;
-	st->st_try   = try;
+	st->st_try = try;
 
 	st->st_import = importance;
 

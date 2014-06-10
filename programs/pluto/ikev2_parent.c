@@ -122,12 +122,12 @@ stf_status ikev2parent_outI1(int whack_sock,
 	change_state(st, STATE_PARENT_I1);
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
-	st->st_try   = try;
+	st->st_try = try;
 
 	if (HAS_IPSEC_POLICY(policy)) {
 #ifdef HAVE_LABELED_IPSEC
 		st->sec_ctx = NULL;
-		if ( uctx != NULL)
+		if (uctx != NULL)
 			libreswan_log(
 				"Labeled ipsec is not supported with ikev2 yet");
 #endif
