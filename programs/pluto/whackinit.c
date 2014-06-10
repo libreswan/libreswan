@@ -82,8 +82,10 @@ static const char *name = NULL;         /* --name operand, saved for diagnostics
 /** Print a string as a diagnostic, then exit whack unhappily
  *
  * @param mess The error message to print when exiting
- * @return void
+ * @return NEVER
  */
+static void diag(const char *mess) NEVER_RETURNS;
+
 static void diag(const char *mess)
 {
 	if (mess != NULL) {

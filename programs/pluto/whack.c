@@ -293,8 +293,10 @@ static const char *name = NULL;         /* --name operand, saved for diagnostics
 /** Print a string as a diagnostic, then exit whack unhappily
  *
  * @param mess The error message to print when exiting
- * @return void
+ * @return NEVER
  */
+static void diag(const char *mess) NEVER_RETURNS;
+
 static void diag(const char *mess)
 {
 	if (mess != NULL) {
@@ -842,7 +844,6 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 		if (isanyaddr(&that->host_addr))
 			diag("our nexthop must be specified when other host is a %any or %opportunistic");
 
-
 		this->host_nexthop = that->host_addr;
 	}
 
@@ -1098,7 +1099,6 @@ int main(int argc, char **argv)
 				     "%s%s", optarg, CTL_SUFFIX) == -1)
 				diag("<ctlbase>" CTL_SUFFIX " must be fit in a sun_addr");
 
-
 			continue;
 
 		case OPT_NAME: /* --name <connection-name> */
@@ -1328,7 +1328,6 @@ int main(int argc, char **argv)
 				if (LHAS(end_seen, END_CLIENT - END_FIRST))
 					diag("--host %group clashes with --client");
 
-
 				end_seen |= LELEM(END_CLIENT - END_FIRST);
 			}
 			if (new_policy & POLICY_OPPORTUNISTIC)
@@ -1398,7 +1397,6 @@ int main(int argc, char **argv)
 			if (end_seen & LELEM(END_CLIENTWITHIN - END_FIRST))
 				diag("--client conflicts with --clientwithin");
 
-
 			tunnel_af_used_by = long_opts[long_index].name;
 			if ( ((strlen(optarg) >= 6) &&
 			      (strncmp(optarg, "vhost:", 6) == 0)) ||
@@ -1417,7 +1415,6 @@ int main(int argc, char **argv)
 		case END_CLIENTWITHIN: /* --clienwithin <address range> */
 			if (end_seen & LELEM(END_CLIENT - END_FIRST))
 				diag("--clientwithin conflicts with --client");
-
 
 			tunnel_af_used_by = long_opts[long_index].name;
 			diagq(ttosubnet(optarg, 0, msg.tunnel_addr_family,
@@ -1449,6 +1446,7 @@ int main(int argc, char **argv)
 			/* process right end, move it to left, reset it */
 			if (!LHAS(end_seen, END_HOST - END_FIRST))
 				diag("connection missing --host before --to");
+
 			msg.left = msg.right;
 			clear_end(&msg.right);
 			end_seen_before_to = end_seen;
@@ -1652,10 +1650,8 @@ int main(int argc, char **argv)
 			if (LHAS(cd_seen, CD_TUNNELIPV6 - CD_FIRST))
 				diag("--tunnelipv4 conflicts with --tunnelipv6");
 
-
 			if (tunnel_af_used_by != NULL)
 				diagq("--tunnelipv4 must precede", af_used_by);
-
 
 			msg.tunnel_addr_family = AF_INET;
 			continue;
@@ -1664,10 +1660,8 @@ int main(int argc, char **argv)
 			if (LHAS(cd_seen, CD_TUNNELIPV4 - CD_FIRST))
 				diag("--tunnelipv6 conflicts with --tunnelipv4");
 
-
 			if (tunnel_af_used_by != NULL)
 				diagq("--tunnelipv6 must precede", af_used_by);
-
 
 			msg.tunnel_addr_family = AF_INET6;
 			continue;
@@ -1854,7 +1848,6 @@ int main(int argc, char **argv)
 			    POLICY_RSASIG)
 				diag("only RSASIG is supported for opportunism");
 
-
 			if ((msg.policy & POLICY_PFS) == 0)
 				diag("PFS required for opportunism");
 			if ((msg.policy & POLICY_ENCRYPT) == 0)
@@ -1873,7 +1866,6 @@ int main(int argc, char **argv)
 		    subnettypeof(&msg.right.client))
 			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
-
 		if (NEVER_NEGOTIATE(msg.policy)) {
 			/* we think this is just a shunt (because he didn't specify
 			 * a host authentication method).  If he didn't specify a
@@ -1887,12 +1879,9 @@ int main(int argc, char **argv)
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY)
 				diag("must specify --rsasig or --psk for a connection");
 
-
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
 			    (msg.left.has_client || msg.right.has_client))
 				diag("must not specify clients for ISAKMP-only connection");
-
-
 		}
 
 		msg.whack_connection = TRUE;
@@ -1928,8 +1917,6 @@ int main(int argc, char **argv)
 	if (msg.policy & POLICY_AGGRESSIVE) {
 		if (msg.ike == NULL)
 			diag("can not specify aggressive mode without ike= to set algorithm");
-
-
 	}
 
 	update_ports(&msg);
@@ -1943,7 +1930,6 @@ int main(int argc, char **argv)
 	if (msg.sa_rekey_fuzz > INT_MAX - 100 ||
 	    deltasecs(msg.sa_rekey_margin) > (time_t)(INT_MAX / (100 + msg.sa_rekey_fuzz)))
 		diag("rekeymargin or rekeyfuzz values are so large that they cause oveflow");
-
 
 	check_life_time(msg.sa_ike_life_seconds,
 			OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM,
@@ -1960,12 +1946,14 @@ int main(int argc, char **argv)
 	    deltasecs(msg.dpd_timeout) != 0)
 		diag("dpdtimeout specified, but dpddelay is zero, both should be specified");
 
-
-	if (msg.dpd_action != DPD_ACTION_CLEAR &&
-	    msg.dpd_action != DPD_ACTION_HOLD &&
-	    msg.dpd_action != DPD_ACTION_RESTART) {
-		diag("dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
-		msg.dpd_action = DPD_ACTION_HOLD;
+	switch (msg.dpd_action) {
+	case DPD_ACTION_uninitialized:
+	case DPD_ACTION_CLEAR:
+	case DPD_ACTION_HOLD:
+	case DPD_ACTION_RESTART:
+		break;
+	default:
+		diag("dpdaction can only be \"clear\", \"hold\" or \"restart\"");
 	}
 
 	if (msg.remotepeertype != CISCO &&

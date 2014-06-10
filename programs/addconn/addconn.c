@@ -745,7 +745,6 @@ int main(int argc, char *argv[])
 		}
 		if (verbose)
 			printf("\n");
-
 	} else {
 		/* load named conns, regardless of their state */
 		int connum;

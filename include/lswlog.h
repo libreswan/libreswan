@@ -151,9 +151,9 @@ extern void libreswan_log_errno_routine(int e, const char *message,
 					...) PRINTF_LIKE(2);
 #define exit_log_errno(a) do { int e = errno; \
 			       libreswan_exit_log_errno_routine a; } while (0)
+
 extern void libreswan_exit_log_errno_routine(int e, const char *message,
-					     ...) PRINTF_LIKE(2) NEVER_RETURNS
-NEVER_RETURNS;
+					     ...) PRINTF_LIKE(2) NEVER_RETURNS;
 
 /*
  * general utilities
