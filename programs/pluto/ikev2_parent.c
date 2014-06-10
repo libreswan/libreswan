@@ -2579,7 +2579,8 @@ static bool ikev2_get_dcookie(u_char *dcookie,  chunk_t st_ni,
  *
  */
 
-void send_v2_notification(struct state *p1st, u_int16_t type,
+void send_v2_notification(struct state *p1st,
+			  v2_notification_t type,
 			  struct state *encst,
 			  u_char *icookie,
 			  u_char *rcookie,
@@ -2593,7 +2594,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 	pb_stream rbody;
 
 	/*
-	 * this function is not generic enough yet just enough for 6msg
+	 * TBD check which of these comments below is still true :)
 	 * TBD accept HDR FLAGS as arg. default ISAKMP_FLAGS_R
 	 * TBD when there is a child SA use that SPI in the notify paylod.
 	 * TBD support encrypted notifications payloads.
@@ -2638,7 +2639,7 @@ void send_v2_notification(struct state *p1st, u_int16_t type,
 		 DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
 		   (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
 		   ISAKMP_PAYLOAD_NONCRITICAL,
-		 0 /* protoid */,
+		 0 /* protoid = ISAKMP */,
 		 &empty_chunk,
 		 type, n_data, &rbody))
 		return;	/* ??? NO WAY TO SIGNAL INTERNAL ERROR */

@@ -79,20 +79,14 @@ extern stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,				/* body of inp
 											 * tranform can appear. */
 					    );
 
-#if 0
-extern v2_notification_t parse_ikev2_sa_body(pb_stream *sa_pbs,
-					     const struct ikev2_sa *sa,
-					     pb_stream *r_sa_pbs,
-					     struct state *st,
-					     bool selection,
-					     bool parentSA);
-#endif
 
 extern void send_v2_notification_from_state(struct state *st,
 					    enum state_kind state,
-					    u_int16_t type, chunk_t *data);
+					    v2_notification_t type,
+					    chunk_t *data);
 
-extern void send_v2_notification_from_md(struct msg_digest *md, u_int16_t type,
+extern void send_v2_notification_from_md(struct msg_digest *md,
+					 v2_notification_t type,
 					 chunk_t *data);
 
 extern stf_status ikev2_process_encrypted_payloads(struct msg_digest *md,
@@ -182,7 +176,8 @@ extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 extern void ikev2_update_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);
 
-extern void send_v2_notification(struct state *p1st, u_int16_t type,
+extern void send_v2_notification(struct state *p1st,
+				 v2_notification_t type,
 				 struct state *encst,
 				 u_char *icookie,
 				 u_char *rcookie,

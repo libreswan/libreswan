@@ -692,7 +692,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0)))
 			continue;
 
-		/* must be the right state */
+		/* must be the right state machine entry */
 		break;
 	}
 
@@ -838,8 +838,10 @@ void ikev2_log_parentSA(struct state *st)
 	}
 }
 
-void send_v2_notification_from_state(struct state *st, enum state_kind state,
-				     u_int16_t type, chunk_t *data)
+void send_v2_notification_from_state(struct state *st,
+				     enum state_kind state,
+				     v2_notification_t type,
+				     chunk_t *data)
 {
 	passert(st != NULL);
 
@@ -850,7 +852,8 @@ void send_v2_notification_from_state(struct state *st, enum state_kind state,
 			     data);
 }
 
-void send_v2_notification_from_md(struct msg_digest *md UNUSED, u_int16_t type,
+void send_v2_notification_from_md(struct msg_digest *md,
+				  v2_notification_t type,
 				  chunk_t *data)
 {
 	struct state st;
@@ -865,7 +868,7 @@ void send_v2_notification_from_md(struct msg_digest *md UNUSED, u_int16_t type,
 	 *   st_connection->that.host_port
 	 *   st_connection->interface
 	 */
-	passert(md);
+	passert(md != NULL);
 
 	zero(&st);
 	zero(&cnx);
