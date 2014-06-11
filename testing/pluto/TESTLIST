@@ -21,6 +21,78 @@ kvmplutotest	basic-pluto-01	good
 kvmplutotest	basic-pluto-02	good
 kvmplutotest	basic-pluto-03	good
 
+#################################################################
+# IKEv2 tests
+#################################################################
+kvmplutotest	ikev2-01-fallback-ikev1			good
+kvmplutotest	ikev2-02-responder-send-notify		good
+kvmplutotest	ikev2-03-basic-rawrsa			good
+kvmplutotest	ikev2-04-basic-x509			good
+kvmplutotest	ikev2-05-basic-psk			good
+kvmplutotest	ikev2-06-6msg				good
+
+umlplutotest	ikev2-07-biddown			good
+umlplutotest	ikev2-08-delete-notify			good
+
+kvmplutotest	ikev2-09-rw-rsa				good
+kvmplutotest	ikev2-11-simple-psk			good
+kvmplutotest	ikev2-12-x509-ikev1			bad
+kvmplutotest	ikev2-12-transport-psk			good
+kvmplutotest	ikev2-13-ah				good
+kvmplutotest	ikev2-14-missing-ke			good
+kvmplutotest	ikev2-15-fuzzer				good
+kvmplutotest	ikev2-17-rekey				good
+kvmplutotest	ikev2-18-x509-alias			good
+kvmplutotest	ikev2-19-x509-auto-start		good
+kvmplutotest	ikev2-17-rekey-parent			good
+kvmplutotest	ikev2-16-rekey-child			good
+
+kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
+kvmplutotest	ikev2-04-basic-x509-nhelpers0		good
+kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
+
+umlplutotest	ikev2-x509-01		good
+umlplutotest	ikev2-x509-02		good
+
+# modp tests for checking if we deal with sending different KE's
+kvmplutotest	ikev2-algo-01-modp2048-initiator	good
+kvmplutotest	ikev2-algo-02-modp2048-responder	good
+kvmplutotest	ikev2-algo-03-aes-ccm			good
+kvmplutotest	ikev2-algo-04-aes-gcm			good
+kvmplutotest	netkey-algo-aes_gcm-01			good
+kvmplutotest	netkey-algo-aes_ccm-01			good
+
+# various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
+kvmplutotest	ikev2-algo-sha2-01			good
+kvmplutotest	ikev2-algo-sha2-02			good
+kvmplutotest	ikev2-algo-sha2-03			good
+kvmplutotest	ikev2-algo-sha2-04			good
+kvmplutotest	ikev2-algo-sha2-05			bad
+
+# various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
+kvmplutotest	ikev2-algo-ike-sha2-01			good
+kvmplutotest	ikev2-algo-ike-sha2-02			good
+kvmplutotest	ikev2-algo-ike-sha2-03			good
+kvmplutotest	ikev1-algo-ike-sha2-01			good
+kvmplutotest	ikev1-algo-ike-sha2-02			good
+kvmplutotest	ikev1-algo-ike-sha2-03			good
+
+# Various corner case tests for IKEv2
+kvmplutotest	ikev2-major-version-initiator		good
+kvmplutotest	ikev2-major-version-responder		good
+kvmplutotest	ikev2-minor-version-initiator		good
+kvmplutotest	ikev2-minor-version-responder		good
+kvmplutotest	ikev2-isakmp-reserved-flags-01		good
+kvmplutotest	ikev2-isakmp-reserved-flags-02		good
+kvmplutotest	ikev2-allow-narrow-01			good
+kvmplutotest	ikev2-allow-narrow-02			good
+kvmplutotest	ikev2-allow-narrow-03			good
+kvmplutotest	ikev2-allow-narrow-04			good
+kvmplutotest	ikev2-allow-narrow-05			good
+kvmplutotest	ikev2-allow-narrow-06			good
+kvmplutotest	ikev2-allow-narrow-07			good
+
+kvmplutotest	ikev2-no-nhelpers-01			good
 kvmplutotest	pluto-ipcmp-01	good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
@@ -450,76 +522,6 @@ kvmplutotest	ipv6-tunnel-mode-03-rw			good
 kvmplutotest	ipv6-tunnel-mode-04-rw			good
 
 
-#################################################################
-# IKEv2 tests
-#################################################################
-kvmplutotest	ikev2-01-fallback-ikev1			good
-kvmplutotest	ikev2-02-responder-send-notify		good
-kvmplutotest	ikev2-03-basic-rawrsa			good
-kvmplutotest	ikev2-04-basic-x509			good
-kvmplutotest	ikev2-05-basic-psk			good
-umlplutotest	ikev2-06-6msg				good
-umlplutotest	ikev2-07-biddown			good
-umlplutotest	ikev2-08-delete-notify			good
-kvmplutotest	ikev2-09-rw-rsa				good
-kvmplutotest	ikev2-11-simple-psk			good
-kvmplutotest	ikev2-12-x509-ikev1			bad
-kvmplutotest	ikev2-12-transport-psk			good
-kvmplutotest	ikev2-13-ah				good
-kvmplutotest	ikev2-14-missing-ke			good
-kvmplutotest	ikev2-15-fuzzer				good
-kvmplutotest	ikev2-17-rekey				good
-kvmplutotest	ikev2-18-x509-alias			good
-kvmplutotest	ikev2-19-x509-auto-start		good
-kvmplutotest	ikev2-17-rekey-parent			good
-kvmplutotest	ikev2-16-rekey-child			good
-
-kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
-kvmplutotest	ikev2-04-basic-x509-nhelpers0		good
-kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
-
-umlplutotest	ikev2-x509-01		good
-umlplutotest	ikev2-x509-02		good
-
-# modp tests for checking if we deal with sending different KE's
-kvmplutotest	ikev2-algo-01-modp2048-initiator	good
-kvmplutotest	ikev2-algo-02-modp2048-responder	good
-kvmplutotest	ikev2-algo-03-aes-ccm			good
-kvmplutotest	ikev2-algo-04-aes-gcm			good
-kvmplutotest	netkey-algo-aes_gcm-01			good
-kvmplutotest	netkey-algo-aes_ccm-01			good
-
-# various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
-kvmplutotest	ikev2-algo-sha2-01			good
-kvmplutotest	ikev2-algo-sha2-02			good
-kvmplutotest	ikev2-algo-sha2-03			good
-kvmplutotest	ikev2-algo-sha2-04			good
-kvmplutotest	ikev2-algo-sha2-05			bad
-
-# various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
-kvmplutotest	ikev2-algo-ike-sha2-01			good
-kvmplutotest	ikev2-algo-ike-sha2-02			good
-kvmplutotest	ikev2-algo-ike-sha2-03			good
-kvmplutotest	ikev1-algo-ike-sha2-01			good
-kvmplutotest	ikev1-algo-ike-sha2-02			good
-kvmplutotest	ikev1-algo-ike-sha2-03			good
-
-# Various corner case tests for IKEv2
-kvmplutotest	ikev2-major-version-initiator		good
-kvmplutotest	ikev2-major-version-responder		good
-kvmplutotest	ikev2-minor-version-initiator		good
-kvmplutotest	ikev2-minor-version-responder		good
-kvmplutotest	ikev2-isakmp-reserved-flags-01		good
-kvmplutotest	ikev2-isakmp-reserved-flags-02		good
-kvmplutotest	ikev2-allow-narrow-01			good
-kvmplutotest	ikev2-allow-narrow-02			good
-kvmplutotest	ikev2-allow-narrow-03			good
-kvmplutotest	ikev2-allow-narrow-04			good
-kvmplutotest	ikev2-allow-narrow-05			good
-kvmplutotest	ikev2-allow-narrow-06			good
-kvmplutotest	ikev2-allow-narrow-07			good
-
-kvmplutotest	ikev2-no-nhelpers-01			good
 
 #################################################################
 # Interop tests
