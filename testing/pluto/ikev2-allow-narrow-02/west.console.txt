@@ -161,10 +161,7 @@ west #
 010 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: retransmission; will wait 40s for response
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 238 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_TS_UNACCEPTABLE
-010 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: retransmission; will wait 40s for response
-002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
-238 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_TS_UNACCEPTABLE
-010 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: retransmission; will wait 40s for response
+010 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: retransmission; will wait 80s for response
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 238 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_TS_UNACCEPTABLE
 
