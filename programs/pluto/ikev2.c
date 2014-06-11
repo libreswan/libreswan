@@ -73,6 +73,7 @@
 			send_v2_notification_from_md(md, t, NULL); }
 
 struct state_v2_microcode {
+	const char *const story;
 	enum state_kind state, next_state;
 	enum isakmp_xchg_types recv_type;
 	lset_t flags;
@@ -88,6 +89,7 @@ enum smf2_flags {
 	SMF2_INITIATOR = LELEM(1),
 	SMF2_STATENEEDED = LELEM(2),
 	SMF2_REPLY = LELEM(3),
+	SMF2_CONTINUE_MATCH = LELEM(4)	/* multiple SMC entries for this state: try the next if payloads don't work */
 };
 
 /*
@@ -232,9 +234,10 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                     <--  HDR, N
 	 * HDR, N, SAi1, KEi, Ni -->
 	 */
-	{ .state      = STATE_PARENT_I1,
+	{ .story      = "Initiator: process anti-spoofing cookie",
+	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
-	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY,
+	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY | SMF2_CONTINUE_MATCH,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
@@ -246,7 +249,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *      [IDr,] AUTH, SAi2,
 	 *      TSi, TSr}      -->
 	 */
-	{ .state      = STATE_PARENT_I1,
+	{ .story      = "Initiator: process IKE_SA_INIT reply",
+	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
 	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
@@ -390,15 +394,18 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 
 /*
  * split up an incoming message into payloads
+ *
+ * Warning: may change md->svm based on payload matching.
  */
-static stf_status ikev2_process_payloads(struct msg_digest *md,
+stf_status ikev2_process_payloads(struct msg_digest *md,
 				  pb_stream    *in_pbs,
-				  unsigned int np,
-				  lset_t req_payloads,
-				  lset_t opt_payloads)
+				  enum next_payload_types_ikev2 np,
+				  bool enc)
 {
 	struct payload_digest *pd = md->digest_roof;
+	const struct state_v2_microcode *svm = md->svm;
 	lset_t seen = LEMPTY;
+	lset_t repeated = LEMPTY;
 
 	/* ??? zero out the digest descriptors -- might nuke ISAKMP_NEXT_v2E digest! */
 
@@ -451,20 +458,7 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 		{
 			lset_t s = LELEM(np - ISAKMP_v2PAYLOAD_TYPE_BASE);
 
-			if (s & seen & ~repeatable_payloads) {
-				/* improperly repeated payload */
-				loglog(RC_LOG_SERIOUS,
-				       "payload (%s) unexpectedly repeated. Message dropped.",
-				       enum_show(&ikev2_payload_names, np));
-				return STF_FAIL + v2N_INVALID_SYNTAX;
-			}
-			if ((s & (req_payloads | opt_payloads | everywhere_payloads)) == LEMPTY) {
-				/* unexpected payload */
-				loglog(RC_LOG_SERIOUS,
-				       "payload (%s) unexpected. Message dropped.",
-				       enum_show(&ikev2_payload_names, np));
-				return STF_FAIL + v2N_INVALID_SYNTAX;
-			}
+			repeated |= seen & s;
 			seen |= s;
 		}
 
@@ -515,25 +509,50 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 		pd++;
 	}
 
-	if (req_payloads & ~seen) {
-		loglog(RC_LOG_SERIOUS,
-		       "missing payload(s) (%s). Message dropped.",
-		       bitnamesof(payload_name_ikev2_main, req_payloads & ~seen));
+	for (;;) {
+		lset_t req_payloads = enc ? svm->req_enc_payloads : svm->req_clear_payloads;
+		lset_t opt_payloads = enc ? svm->opt_enc_payloads : svm->opt_clear_payloads;
+		lset_t bad_repeat = repeated & ~repeatable_payloads;
+		lset_t missing = req_payloads & ~seen;
+		lset_t unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads;
+
+		if ((bad_repeat | missing | unexpected) == LEMPTY)
+			break;	/* all good */
+
+		if (svm->flags & SMF2_CONTINUE_MATCH) {
+			/* try the next microcode entry */
+			DBG(DBG_CONTROL,
+				DBG_log("ikev2_process_payload trying next svm"));
+			svm++;
+			continue;
+		}
+
+		/* report problems */
+		if (missing) {
+			loglog(RC_LOG_SERIOUS,
+			       "missing payload(s) (%s). Message dropped.",
+			       bitnamesof(payload_name_ikev2_main, missing));
+		}
+		if (unexpected) {
+			loglog(RC_LOG_SERIOUS,
+			       "payload(s) (%s) unexpected. Message dropped.",
+			       bitnamesof(payload_name_ikev2_main, unexpected));
+		}
+		if (bad_repeat) {
+			loglog(RC_LOG_SERIOUS,
+				"payload(s) (%s) unexpectedly repeated. Message dropped.",
+				bitnamesof(payload_name_ikev2_main, bad_repeat));
+		}
 		return STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 
+	md->svm = svm;	/* might have changed! */
+
 	DBG(DBG_CONTROL,
-	    DBG_log("Finished and now at the end of ikev2_process_payload"));
+	    DBG_log("Finished and now at the end of ikev2_process_payload %s",
+		svm->story == NULL ? "" : svm->story));
 	md->digest_roof = pd;
 	return STF_OK;
-}
-
-/* this stub is needed because struct state_v2_microcode is local to this file */
-stf_status ikev2_process_encrypted_payloads(struct msg_digest *md,
-					 pb_stream   *in_pbs,
-					 unsigned int np)
-{
-	return ikev2_process_payloads(md, in_pbs, np, md->svm->req_enc_payloads, md->svm->opt_enc_payloads);
 }
 
 /*
@@ -717,11 +736,12 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	{
 		stf_status stf = ikev2_process_payloads(md, &md->message_pbs,
-			md->hdr.isa_np,
-			svm->req_clear_payloads, svm->opt_clear_payloads);
+			md->hdr.isa_np, FALSE);
 
+		svm = md->svm;	/* ikev2_process_payloads updates */
 		DBG(DBG_CONTROL,
-		    DBG_log("Finished processing ikev2_process_payloads"));
+		    DBG_log("Finished processing ikev2_process_payloads %s",
+			svm->story == NULL ? "" : svm->story));
 
 		if (stf != STF_OK) {
 			complete_v2_state_transition(mdp, stf);
@@ -740,6 +760,9 @@ void process_v2_packet(struct msg_digest **mdp)
 	DBG(DBG_CONTROL,
 	    DBG_log("Now lets proceed with state specific processing"));
 
+	DBG(DBG_CONTROL,
+	    DBG_log("calling processor %s",
+		svm->story == NULL ? "" : svm->story));
 	complete_v2_state_transition(mdp, (svm->processor)(md));
 }
 

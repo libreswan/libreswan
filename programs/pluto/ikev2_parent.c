@@ -379,8 +379,8 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		}
 	}
 	/*
-	 * send an anti DOS cookie, 4306 2.6, if we have received one from the
-	 * responder
+	 * http://tools.ietf.org/html/rfc5996#section-2.6
+	 * reply with the anti DDOS cookie if we received one (remote is under attack)
 	 */
 	if (st->st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
@@ -1028,9 +1028,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				libreswan_log("v2N_COOKIE must be only notification in packet");
 				return STF_FAIL + v2N_INVALID_SYNTAX;
 			}
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("inR1OutI2 received a DOS v2N_COOKIE from the responder");
-			    DBG_log("resend the I1 with a cookie payload"));
+			libreswan_log("Received anti-DDOS COOKIE -resending I1 with cookie payload");
 			spisize = ntfy->payload.v2n.isan_spisize;
 			dc_pbs = &ntfy->pbs;
 			clonetochunk(st->st_dcookie,  (dc_pbs->cur + spisize),
@@ -1066,7 +1064,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 					ntfy->payload.v2n.isan_type));
 		}
 	}
-	return STF_IGNORE;	/* ??? because we don't know what to do */
+	return STF_IGNORE;
 }
 
 /* STATE_PARENT_I1: R1 --> I2
@@ -1101,8 +1099,13 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 						ntfy->payload.v2n.isan_type));
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 
+		case v2N_USE_TRANSPORT_MODE:
+		case v2N_NAT_DETECTION_SOURCE_IP:
+		case v2N_NAT_DETECTION_DESTINATION_IP:
+			/* we do handle these further down */
+			break;
 		default:
-			libreswan_log("%s: received %s but is ignoring it",
+			libreswan_log("%s: received %s but ignoring it",
 				enum_name(&state_names, st->st_state),
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type));
@@ -1441,7 +1444,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 			 "cleartext");
 	}
 
-	return ikev2_process_encrypted_payloads(md, &md->clr_pbs, np);
+	return ikev2_process_payloads(md, &md->clr_pbs, np, TRUE);
 }
 
 static stf_status ikev2_send_auth(struct connection *c,

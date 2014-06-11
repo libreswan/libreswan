@@ -89,9 +89,10 @@ extern void send_v2_notification_from_md(struct msg_digest *md,
 					 v2_notification_t type,
 					 chunk_t *data);
 
-extern stf_status ikev2_process_encrypted_payloads(struct msg_digest *md,
+extern stf_status ikev2_process_payloads(struct msg_digest *md,
 					 pb_stream   *in_pbs,
-					 unsigned int np);
+					 enum next_payload_types_ikev2 np,
+					 bool enc);
 
 extern bool ikev2_decode_peer_id(struct msg_digest *md,
 				 enum phase1_role initiator);
