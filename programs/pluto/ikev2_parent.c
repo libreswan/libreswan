@@ -68,11 +68,12 @@
 	else \
 		send_v2_notification_from_md(md, (t), (d));
 
-#define SEND_NOTIFICATION(t) \
-	if (st) \
-		send_v2_notification_from_state(st, st->st_state, t, NULL); \
-	else \
-		send_v2_notification_from_md(md, t, NULL);
+#define SEND_NOTIFICATION(t) { \
+		if (st) \
+			send_v2_notification_from_state(st, st->st_state, t, NULL); \
+		else \
+			send_v2_notification_from_md(md, t, NULL); \
+	}
 
 static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 					struct pluto_crypto_req *r,
@@ -839,7 +840,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
-	pb_stream *keyex_pbs;
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
@@ -899,21 +899,33 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		}
 	}
 
+	/* KE in */
 	{
-		v2_notification_t rn;
-		chunk_t dc;
-		keyex_pbs = &md->chain[ISAKMP_NEXT_v2KE]->pbs;
-		/* KE in */
-		rn = accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
-			       keyex_pbs);
-		if (rn != v2N_NOTHING_WRONG) {
+		/* note: v1 notification! */
+		notification_t rn = accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
+			       &md->chain[ISAKMP_NEXT_v2KE]->pbs);
+
+		switch (rn) {
+		case NOTHING_WRONG:
+			break;
+		case INVALID_KEY_INFORMATION:
+		{
+			/*
+			 * RFC 5996 1.3 says that we should return
+			 * our desired group number when rejecting sender's.
+			 */
 			u_int16_t group_number = htons(
 				st->st_oakley.group->group);
+			chunk_t dc = { (unsigned char *)&group_number,
+				sizeof(group_number) };
 
-			dc.ptr = (unsigned char *)&group_number;
-			dc.len = 2;
-			SEND_NOTIFICATION_AA(v2N_INVALID_KE_PAYLOAD, &dc);
+			send_v2_notification_from_state(st, st->st_state,
+				v2N_INVALID_KE_PAYLOAD, &dc);
 			delete_state(st);
+			return STF_FAIL;	/* don't send second notification */
+		}
+		default:
+			/* hope v1 and v2 notifications correspond! */
 			return STF_FAIL + rn;
 		}
 	}

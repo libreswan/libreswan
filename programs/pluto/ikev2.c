@@ -1296,7 +1296,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			  from_state_name,
 			  enum_name(&ikev2_notify_names, md->note));
 
-		if (md->note > 0) {
+		if (md->note != NOTHING_WRONG) {
 			/* only send a notify is this packet was a question, not if it was an answer */
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_R))
 				SEND_NOTIFICATION(md->note);
