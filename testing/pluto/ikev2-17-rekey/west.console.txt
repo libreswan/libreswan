@@ -43,7 +43,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
-002 conn: westnet-eastnet-ikev2, rekeymargin (540s) > salifetime (60s); reducing rekeymargin to 30 seconds
+002 conn: westnet-eastnet-ikev2, rekeymargin (540s) >= salifetime (60s); reducing rekeymargin to 30 seconds
 002 added connection description "westnet-eastnet-ikev2"
 west #
  ipsec auto --status

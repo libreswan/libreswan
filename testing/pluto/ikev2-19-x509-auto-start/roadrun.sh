@@ -22,4 +22,5 @@ echo 15
 echo 15
 echo four minutes
 echo 15
+ipsec auto --status | grep road-east-ipv4-ikev2
 echo done
