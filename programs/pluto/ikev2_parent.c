@@ -1476,7 +1476,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 		a.isaa_type = IKEv2_AUTH_PSK;
 	} else {
 		/* what else is there?... DSS not implemented. */
-		return STF_FAIL;
+		loglog(RC_LOG_SERIOUS, "Unknown or not implemented IKEv2 AUTH policy");
+		return STF_FATAL;
 	}
 
 	if (!out_struct(&a,
@@ -1486,12 +1487,16 @@ static stf_status ikev2_send_auth(struct connection *c,
 		return STF_INTERNAL_ERROR;
 
 	if (c->policy & POLICY_RSASIG) {
-		if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs))
-			return STF_FATAL + v2N_AUTHENTICATION_FAILED;
+		if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs)) {
+				loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
+			return STF_FATAL;
+		}
 
 	} else if (c->policy & POLICY_PSK) {
-		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs))
-			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs)) {
+				loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
+			return STF_FATAL;
+		}
 	}
 
 	close_output_pbs(&a_pbs);
