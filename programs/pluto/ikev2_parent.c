@@ -1533,6 +1533,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	unsigned char *authstart;
 	struct state *pst = st;
 	bool send_cert = FALSE;
+	time_t delay;
+	enum event_type x = EVENT_SA_REPLACE;
 
 	finish_dh_v2(st, r);
 
@@ -1548,7 +1550,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* parent had crypto failed, replace it with rekey! */
 	delete_event(pst);
-	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), pst);
+	delay = ikev2_replace_delay(st, &x, INITIATOR);
+	event_schedule(EVENT_SA_REPLACE, delay, pst);
 
 	/* need to force parent state to I2 */
 	change_state(pst, STATE_PARENT_I2);
@@ -1901,6 +1904,9 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	unsigned char *authstart;
 	unsigned int np;
 	int v2_notify_num = 0;
+	time_t delay;
+	enum event_type x = EVENT_SA_REPLACE;
+
 
 	/* extract calculated values from r */
 	finish_dh_v2(st, r);
@@ -2017,7 +2023,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	c->newest_isakmp_sa = st->st_serialno;
 
 	delete_event(st);
-	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), st);
+	delay = ikev2_replace_delay(st, &x, RESPONDER);
+	event_schedule(EVENT_SA_REPLACE, delay, st);
 
 	authstart = reply_stream.cur;
 	/* send response */

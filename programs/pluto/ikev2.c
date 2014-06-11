@@ -947,7 +947,7 @@ void ikev2_update_counters(struct msg_digest *md)
 }
 
 time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-		const struct state_v2_microcode *svm)
+		enum phase1_role role)
 {
 	enum event_type kind = *pkind;
 	time_t delay;   /* unwrapped deltatime_t */
@@ -994,7 +994,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		/* unwrapped deltatime_t */
 		time_t marg = deltasecs(c->sa_rekey_margin);
 
-		if ((svm != NULL)  && (svm->flags & SMF2_INITIATOR)) {
+		if (role == INITIATOR) {
 			marg += marg *
 				c->sa_rekey_fuzz / 100.E0 *
 				(rand() / (RAND_MAX + 1.E0));
@@ -1135,7 +1135,9 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		switch (kind) {
 		case EVENT_SA_REPLACE: /* SA replacement event */
-			delay = ikev2_replace_delay(st, &kind, svm);
+			delay = ikev2_replace_delay(st, &kind,
+					(svm->flags & SMF2_INITIATOR) ?
+					INITIATOR : RESPONDER);
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;

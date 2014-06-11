@@ -651,11 +651,7 @@ void handle_next_timer_event(void)
 			 * It doesn't make complete sense.
 			 */
 			enum event_type x = EVENT_SA_EXPIRE;
-			time_t d = deltasecs(st->st_margin);
-
-			if(st->st_ikev2)
-				d = ikev2_replace_delay(st, &x, NULL);
-			event_schedule(x, d, st);
+			event_schedule(x, deltasecs(st->st_margin), st);
 		}
 	}
 	break;
