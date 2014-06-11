@@ -222,7 +222,8 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
-	{ .state      = STATE_UNDEFINED,
+	{ .story      = "initiate IKE_SA_INIT",
+	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_INITIATOR,
 	  .processor  = NULL, };
@@ -249,7 +250,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *      [IDr,] AUTH, SAi2,
 	 *      TSi, TSr}      -->
 	 */
-	{ .story      = "Initiator: process IKE_SA_INIT reply",
+	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
 	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY,
@@ -263,7 +264,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                               SAr2, TSi, TSr}
 	 * [Parent SA established]
 	 */
-	{ .state      = STATE_PARENT_I2,
+	{ .story      = "Initiator: process IKE_AUTH response",
+	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I3,
 	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -277,7 +279,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                <-- HDR, SAi1, KEi, Ni
 	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
 	 */
-	{ .state      = STATE_UNDEFINED,
+	{ .story      = "Respond to IKE_SA_INIT",
+	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_R1,
 	  .flags =  /* not SMF2_INITIATOR, not SMF2_STATENEEDED */ SMF2_REPLY,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
@@ -294,7 +297,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *
 	 * [Parent SA established]
 	 */
-	{ .state      = STATE_PARENT_R1,
+	{ .story      = "respond to IKE_AUTH",
+	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R2,
 	  .flags =  /* not SMF2_INITIATOR */ SMF2_STATENEEDED | SMF2_REPLY,
 	  .req_clear_payloads = P(E),
@@ -312,7 +316,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
 	 */
 
-	{ .state      = STATE_PARENT_I2,
+	{ .story      = "I2: process INFORMATIONAL",
+	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I2,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -321,7 +326,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
 
 	/* Informational Exchange*/
-	{ .state      = STATE_PARENT_R1,
+	{ .story      = "R1: process INFORMATIONAL",
+	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R1,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -330,7 +336,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
 
 	/* Informational Exchange*/
-	{ .state      = STATE_PARENT_I3,
+	{ .story      = "I3: INFORMATIONAL",
+	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -349,7 +356,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 
 	/* Create Child SA Exchange*/
-	{ .state      = STATE_PARENT_I3,
+	{ .story      = "I3: CREATE_CHILD_SA",
+	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
 	  .req_clear_payloads = P(E),
@@ -359,7 +367,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
 
 	/* Create Child SA Exchange*/
-	{ .state      = STATE_PARENT_R2,
+	{ .story      = "R2: CREATE_CHILD_SA",
+	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
 	  .req_clear_payloads = P(E),
@@ -369,7 +378,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
 
 	/* Informational Exchange*/
-	{ .state      = STATE_PARENT_R2,
+	{ .story      = "R2: process INFORMATIONAL",
+	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -378,7 +388,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
 
 	/* Informational Exchange*/
-	{ .state      = STATE_IKESA_DEL,
+	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
+	  .state      = STATE_IKESA_DEL,
 	  .next_state = STATE_IKESA_DEL,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -387,7 +398,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
 
 	/* last entry */
-	{ .state      = STATE_IKEv2_ROOF }
+	{ .story      = "roof",
+	  .state      = STATE_IKEv2_ROOF }
 };
 
 #undef P
@@ -522,9 +534,10 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 
 		if (svm->flags & SMF2_CONTINUE_MATCH) {
 			/* try the next microcode entry */
-			DBG(DBG_CONTROL,
-				DBG_log("ikev2_process_payload trying next svm"));
 			svm++;
+			DBG(DBG_CONTROL,
+				DBG_log("ikev2_process_payload trying next svm: %s",
+					svm->story));
 			continue;
 		}
 
@@ -549,9 +562,6 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 
 	md->svm = svm;	/* might have changed! */
 
-	DBG(DBG_CONTROL,
-	    DBG_log("Finished and now at the end of ikev2_process_payload %s",
-		svm->story == NULL ? "" : svm->story));
 	md->digest_roof = pd;
 	return STF_OK;
 }
@@ -716,6 +726,8 @@ void process_v2_packet(struct msg_digest **mdp)
 		break;
 	}
 
+	DBG(DBG_CONTROL, DBG_log("selected state microcode %s", svm->story));
+
 	if (svm->state == STATE_IKEv2_ROOF) {
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
 
@@ -740,9 +752,6 @@ void process_v2_packet(struct msg_digest **mdp)
 			md->hdr.isa_np, FALSE);
 
 		svm = md->svm;	/* ikev2_process_payloads updates */
-		DBG(DBG_CONTROL,
-		    DBG_log("Finished processing ikev2_process_payloads %s",
-			svm->story == NULL ? "" : svm->story));
 
 		if (stf != STF_OK) {
 			complete_v2_state_transition(mdp, stf);
@@ -762,8 +771,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	    DBG_log("Now lets proceed with state specific processing"));
 
 	DBG(DBG_CONTROL,
-	    DBG_log("calling processor %s",
-		svm->story == NULL ? "" : svm->story));
+	    DBG_log("calling processor %s", svm->story));
 	complete_v2_state_transition(mdp, (svm->processor)(md));
 }
 
