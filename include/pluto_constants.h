@@ -106,7 +106,7 @@ enum event_type {
 	EVENT_CRYPTO_FAILED,		/* v1/v2 after some time, give up on crypto helper */
 
 	EVENT_v2_RETRANSMIT,		/* v2 Initiator: Retransmit IKE packet */
-	EVENT_v2_GIVEUP,		/* v2 Responder: give up on IKE Initiator */
+	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
 };
 

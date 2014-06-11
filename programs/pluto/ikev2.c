@@ -282,7 +282,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags =  /* not SMF2_INITIATOR, not SMF2_STATENEEDED */ SMF2_REPLY,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2parent_inI1outR1,
-	  .recv_type  = ISAKMP_v2_SA_INIT, },
+	  .recv_type  = ISAKMP_v2_SA_INIT,
+	  .timeout_event = EVENT_v2_RESPONDER_TIMEOUT, },
 
 	/* STATE_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -1129,6 +1130,12 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			delay = ikev2_replace_delay(st, &kind, svm);
 			delete_event(st);
 			event_schedule(kind, delay, st);
+			break;
+
+		case EVENT_v2_RESPONDER_TIMEOUT:
+			delete_event(st);
+			event_schedule(kind, (MAXIMUM_RETRANSMISSIONS_INITIAL * 
+					EVENT_RETRANSMIT_DELAY_0), st);
 			break;
 
 		case EVENT_NULL:
