@@ -1,3 +1,5 @@
 Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
 
 This is to verify we can use SHA2 for ESP, specifically esp=aes-sha2
+
+sha2 is an alias for sha2_128 (formerly sha2_256)
