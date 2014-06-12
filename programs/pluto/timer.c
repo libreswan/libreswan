@@ -644,15 +644,8 @@ void handle_next_timer_event(void)
 		}
 		delete_liveness_event(st);
 		delete_dpd_event(st);
-		{
-			/*
-			 * ??? this odd code is my best reconstruction of
-			 * what was intended by the original author.
-			 * It doesn't make complete sense.
-			 */
-			enum event_type x = EVENT_SA_EXPIRE;
-			event_schedule(x, deltasecs(st->st_margin), st);
-		}
+		enum event_type x = EVENT_SA_EXPIRE;
+		event_schedule(x, deltasecs(st->st_margin), st);
 	}
 	break;
 
