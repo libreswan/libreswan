@@ -1789,28 +1789,28 @@ static err_t process_lwdnsq_answer(char *ts)
 
 static void recover_adns_die(void)
 {
-	struct adns_continuation *cr = NULL;
-
 	adns_pid = 0;
 	if (adns_restart_count < ADNS_RESTART_MAX) {
+		struct adns_continuation *cr = continuations;
+
 		adns_restart_count++;
 
-		/* next DNS query will restart it */
-
-		/* we have to walk the list of the outstanding requests,
+		/*
+		 * next DNS query will restart it
+		 *
+		 * We have to walk the list of the outstanding requests,
 		 * and redo them!
 		 */
 
-		cr = continuations;
+		if (cr != NULL) {
+			unsent_ADNS_queries = TRUE;
 
-		/* find the head of the list */
-		if (continuations != NULL)
-			for (; cr->previous != NULL; cr = cr->previous) ;
+			/* find the head of the list */
+			for (; cr->previous != NULL; cr = cr->previous)
+				continue;
+		}
 
 		next_query = cr;
-
-		if (next_query != NULL)
-			unsent_ADNS_queries = TRUE;
 	}
 }
 

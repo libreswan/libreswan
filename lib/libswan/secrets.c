@@ -159,7 +159,7 @@ struct id_list *lsw_get_idlist(const struct secret *s)
 }
 
 /*
- * This is a bad assumption, and failes when people put PSK
+ * This is a bad assumption, and fails when people put PSK
  * entries before the default RSA case, which most people do
  */
 struct secret *lsw_get_defaultsecret(struct secret *secrets)
@@ -169,8 +169,10 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 	/* Search for PPK_RSA pks */
 	s2 = secrets;
 	while (s2) {
-		for (; s2 && s2->pks.kind == PPK_RSA; s2 = s2->next) ;
-		for (s = s2; s && s->pks.kind != PPK_RSA; s = s->next) ;
+		for (; s2 && s2->pks.kind == PPK_RSA; s2 = s2->next)
+			continue;
+		for (s = s2; s && s->pks.kind != PPK_RSA; s = s->next)
+			continue;
 		if (s) {
 			struct secret *tmp = s->next;
 			struct secret curr = *s;

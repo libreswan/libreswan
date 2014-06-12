@@ -2437,7 +2437,8 @@ struct connection *find_host_connection(const ip_address *me,
 
 	}
 
-	for (; c != NULL && NEVER_NEGOTIATE(c->policy); c = c->hp_next) ;
+	for (; c != NULL && NEVER_NEGOTIATE(c->policy); c = c->hp_next)
+		continue;
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("find_host_connection returns %s",
