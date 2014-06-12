@@ -644,8 +644,10 @@ void handle_next_timer_event(void)
 		}
 		delete_liveness_event(st);
 		delete_dpd_event(st);
-		enum event_type x = EVENT_SA_EXPIRE;
-		event_schedule(x, deltasecs(st->st_margin), st);
+		{
+			enum event_type x = EVENT_SA_EXPIRE;
+			event_schedule(x, deltasecs(st->st_margin), st);
+		}
 	}
 	break;
 
