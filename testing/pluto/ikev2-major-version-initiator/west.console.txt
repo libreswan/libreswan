@@ -59,8 +59,6 @@ west #
 003 "westnet-eastnet-ikev2-major" #1: Informational Exchange message must be encrypted
 010 "westnet-eastnet-ikev2-major" #1: STATE_PARENT_I1: retransmission; will wait 40s for response
 003 "westnet-eastnet-ikev2-major" #1: Informational Exchange message must be encrypted
-010 "westnet-eastnet-ikev2-major" #1: STATE_PARENT_I1: retransmission; will wait 40s for response
-003 "westnet-eastnet-ikev2-major" #1: Informational Exchange message must be encrypted
-010 "westnet-eastnet-ikev2-major" #1: STATE_PARENT_I1: retransmission; will wait 40s for response
+010 "westnet-eastnet-ikev2-major" #1: STATE_PARENT_I1: retransmission; will wait 80s for response
 003 "westnet-eastnet-ikev2-major" #1: Informational Exchange message must be encrypted
 

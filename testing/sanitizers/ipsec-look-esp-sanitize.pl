@@ -71,7 +71,7 @@ while(<>) {
     print;
     next;
 
-  } elsif(m/^(\S*)\:\~\#/) {
+  } elsif(m/^(east|west|sunrise|sunset|road|nic|north|south|pole|park|beet|carrot)\s\#/) {
     $inlook=0;
     $inroute=0;
     print;

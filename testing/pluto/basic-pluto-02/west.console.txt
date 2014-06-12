@@ -87,18 +87,18 @@ west #
 002 added connection description "orient12"
 west #
  ipsec status |grep orient |grep "eroute owner"
-000 "orient1": 192.1.2.45---192.1.2.254...192.1.2.254---%any; unrouted; eroute owner: #0
-000 "orient10": 192.1.2.45---192.1.2.254...192.1.2.254---8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
+000 "orient1": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
+000 "orient10": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 000 "orient11": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 000 "orient12": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
-000 "orient2": 192.1.2.45---192.1.2.254...192.1.2.254---%any; unrouted; eroute owner: #0
+000 "orient2": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
 000 "orient3": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
 000 "orient4": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
-000 "orient5": 192.1.2.45<192.1.2.45>...192.1.2.254---8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
-000 "orient6": 192.1.2.45<192.1.2.45>---192.1.2.254...192.1.2.254---8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
+000 "orient5": 192.1.2.45<192.1.2.45>...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
+000 "orient6": 192.1.2.45<192.1.2.45>---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 000 "orient7": 192.1.2.45<192.1.2.45>---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 000 "orient8": 192.1.2.45<192.1.2.45>...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
-000 "orient9": 192.1.2.45---192.1.2.254...192.1.2.254---8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
+000 "orient9": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 west #
  echo "initdone"
 initdone

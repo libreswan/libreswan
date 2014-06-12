@@ -1165,7 +1165,7 @@ enum ike_trans_type_dh {
  * extern enum_names ipsec_notification_names;
  */
 typedef enum {
-	NOTHING_WRONG = 0, /* unofficial! */
+	NOTHING_WRONG = 0, /* Unofficial! Must be zero to match default C initial value. */
 	INVALID_PAYLOAD_TYPE = 1,
 	DOI_NOT_SUPPORTED = 2,
 	SITUATION_NOT_SUPPORTED = 3,
@@ -1242,7 +1242,7 @@ typedef enum {
 typedef enum {
 	/* IKEv2 */
 	/* 0-8191 Reserved, ExpertReview */
-	v2N_NOTHING_WRONG = 0, /* unofficial! */
+	v2N_NOTHING_WRONG = 0, /* Unofficial! Must be zero to match default C initial value. */
 	v2N_UNSUPPORTED_CRITICAL_PAYLOAD = 1,
 	/* Reserved = 2, */
 	/* Reserved = 3, */

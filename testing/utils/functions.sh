@@ -79,9 +79,13 @@ kvmplutotest () {
 		echo "****** skip test $testdir found stop-tests-now *****"
 	else
 		echo '***** KVM PLUTO RUNNING' $testdir${KLIPS_MODULE} '*******'
-		cd $testdir 
-		${UTILS}/dotest.sh 
-		cd ../
+		if [ -d $testdir ] ; then
+			cd $testdir 
+			${UTILS}/dotest.sh 
+			cd ../
+		else
+			echo '**** Skipping non-existing test $testdir *****'
+		fi
 	fi
 }
 

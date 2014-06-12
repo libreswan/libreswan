@@ -73,6 +73,7 @@
 			send_v2_notification_from_md(md, t, NULL); }
 
 struct state_v2_microcode {
+	const char *const story;
 	enum state_kind state, next_state;
 	enum isakmp_xchg_types recv_type;
 	lset_t flags;
@@ -88,6 +89,7 @@ enum smf2_flags {
 	SMF2_INITIATOR = LELEM(1),
 	SMF2_STATENEEDED = LELEM(2),
 	SMF2_REPLY = LELEM(3),
+	SMF2_CONTINUE_MATCH = LELEM(4)	/* multiple SMC entries for this state: try the next if payloads don't work */
 };
 
 /*
@@ -220,7 +222,8 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
-	{ .state      = STATE_UNDEFINED,
+	{ .story      = "initiate IKE_SA_INIT",
+	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_INITIATOR,
 	  .processor  = NULL, };
@@ -232,9 +235,10 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                     <--  HDR, N
 	 * HDR, N, SAi1, KEi, Ni -->
 	 */
-	{ .state      = STATE_PARENT_I1,
+	{ .story      = "Initiator: process anti-spoofing cookie",
+	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
-	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY,
+	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY | SMF2_CONTINUE_MATCH,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
@@ -246,7 +250,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *      [IDr,] AUTH, SAi2,
 	 *      TSi, TSr}      -->
 	 */
-	{ .state      = STATE_PARENT_I1,
+	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH",
+	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
 	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
@@ -254,12 +259,13 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .processor  = ikev2parent_inR1outI2,
 	  .recv_type  = ISAKMP_v2_SA_INIT, },
 
-	/* STATE_PARENT_I2: R2 --> I3
+	/* STATE_PARENT_I2: R2 -->
 	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
 	 *                               SAr2, TSi, TSr}
 	 * [Parent SA established]
 	 */
-	{ .state      = STATE_PARENT_I2,
+	{ .story      = "Initiator: process IKE_AUTH response",
+	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I3,
 	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -273,12 +279,14 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                <-- HDR, SAi1, KEi, Ni
 	 * HDR, SAr1, KEr, Nr, [CERTREQ] -->
 	 */
-	{ .state      = STATE_UNDEFINED,
+	{ .story      = "Respond to IKE_SA_INIT",
+	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_R1,
 	  .flags =  /* not SMF2_INITIATOR, not SMF2_STATENEEDED */ SMF2_REPLY,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2parent_inI1outR1,
-	  .recv_type  = ISAKMP_v2_SA_INIT, },
+	  .recv_type  = ISAKMP_v2_SA_INIT,
+	  .timeout_event = EVENT_v2_RESPONDER_TIMEOUT, },
 
 	/* STATE_PARENT_R1: I2 --> R2
 	 *                  <-- HDR, SK {IDi, [CERT,] [CERTREQ,]
@@ -289,7 +297,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *
 	 * [Parent SA established]
 	 */
-	{ .state      = STATE_PARENT_R1,
+	{ .story      = "respond to IKE_AUTH",
+	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R2,
 	  .flags =  /* not SMF2_INITIATOR */ SMF2_STATENEEDED | SMF2_REPLY,
 	  .req_clear_payloads = P(E),
@@ -307,7 +316,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
 	 */
 
-	{ .state      = STATE_PARENT_I2,
+	{ .story      = "I2: process INFORMATIONAL",
+	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I2,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -316,7 +326,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
 
 	/* Informational Exchange*/
-	{ .state      = STATE_PARENT_R1,
+	{ .story      = "R1: process INFORMATIONAL",
+	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R1,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -325,7 +336,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
 
 	/* Informational Exchange*/
-	{ .state      = STATE_PARENT_I3,
+	{ .story      = "I3: INFORMATIONAL",
+	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -344,7 +356,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 */
 
 	/* Create Child SA Exchange*/
-	{ .state      = STATE_PARENT_I3,
+	{ .story      = "I3: CREATE_CHILD_SA",
+	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
 	  .req_clear_payloads = P(E),
@@ -354,7 +367,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
 
 	/* Create Child SA Exchange*/
-	{ .state      = STATE_PARENT_R2,
+	{ .story      = "R2: CREATE_CHILD_SA",
+	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
 	  .req_clear_payloads = P(E),
@@ -364,7 +378,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
 
 	/* Informational Exchange*/
-	{ .state      = STATE_PARENT_R2,
+	{ .story      = "R2: process INFORMATIONAL",
+	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -373,7 +388,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
 
 	/* Informational Exchange*/
-	{ .state      = STATE_IKESA_DEL,
+	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
+	  .state      = STATE_IKESA_DEL,
 	  .next_state = STATE_IKESA_DEL,
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
@@ -382,7 +398,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
 
 	/* last entry */
-	{ .state      = STATE_IKEv2_ROOF }
+	{ .story      = "roof",
+	  .state      = STATE_IKEv2_ROOF }
 };
 
 #undef P
@@ -390,15 +407,18 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 
 /*
  * split up an incoming message into payloads
+ *
+ * Warning: may change md->svm based on payload matching.
  */
-static stf_status ikev2_process_payloads(struct msg_digest *md,
+stf_status ikev2_process_payloads(struct msg_digest *md,
 				  pb_stream    *in_pbs,
-				  unsigned int np,
-				  lset_t req_payloads,
-				  lset_t opt_payloads)
+				  enum next_payload_types_ikev2 np,
+				  bool enc)
 {
 	struct payload_digest *pd = md->digest_roof;
+	const struct state_v2_microcode *svm = md->svm;
 	lset_t seen = LEMPTY;
+	lset_t repeated = LEMPTY;
 
 	/* ??? zero out the digest descriptors -- might nuke ISAKMP_NEXT_v2E digest! */
 
@@ -451,20 +471,7 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 		{
 			lset_t s = LELEM(np - ISAKMP_v2PAYLOAD_TYPE_BASE);
 
-			if (s & seen & ~repeatable_payloads) {
-				/* improperly repeated payload */
-				loglog(RC_LOG_SERIOUS,
-				       "payload (%s) unexpectedly repeated. Message dropped.",
-				       enum_show(&ikev2_payload_names, np));
-				return STF_FAIL + v2N_INVALID_SYNTAX;
-			}
-			if ((s & (req_payloads | opt_payloads | everywhere_payloads)) == LEMPTY) {
-				/* unexpected payload */
-				loglog(RC_LOG_SERIOUS,
-				       "payload (%s) unexpected. Message dropped.",
-				       enum_show(&ikev2_payload_names, np));
-				return STF_FAIL + v2N_INVALID_SYNTAX;
-			}
+			repeated |= seen & s;
 			seen |= s;
 		}
 
@@ -515,25 +522,48 @@ static stf_status ikev2_process_payloads(struct msg_digest *md,
 		pd++;
 	}
 
-	if (req_payloads & ~seen) {
-		loglog(RC_LOG_SERIOUS,
-		       "missing payload(s) (%s). Message dropped.",
-		       bitnamesof(payload_name_ikev2_main, req_payloads & ~seen));
+	for (;;) {
+		lset_t req_payloads = enc ? svm->req_enc_payloads : svm->req_clear_payloads;
+		lset_t opt_payloads = enc ? svm->opt_enc_payloads : svm->opt_clear_payloads;
+		lset_t bad_repeat = repeated & ~repeatable_payloads;
+		lset_t missing = req_payloads & ~seen;
+		lset_t unexpected = seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads;
+
+		if ((bad_repeat | missing | unexpected) == LEMPTY)
+			break;	/* all good */
+
+		if (svm->flags & SMF2_CONTINUE_MATCH) {
+			/* try the next microcode entry */
+			svm++;
+			DBG(DBG_CONTROL,
+				DBG_log("ikev2_process_payload trying next svm: %s",
+					svm->story));
+			continue;
+		}
+
+		/* report problems */
+		if (missing) {
+			loglog(RC_LOG_SERIOUS,
+			       "missing payload(s) (%s). Message dropped.",
+			       bitnamesof(payload_name_ikev2_main, missing));
+		}
+		if (unexpected) {
+			loglog(RC_LOG_SERIOUS,
+			       "payload(s) (%s) unexpected. Message dropped.",
+			       bitnamesof(payload_name_ikev2_main, unexpected));
+		}
+		if (bad_repeat) {
+			loglog(RC_LOG_SERIOUS,
+				"payload(s) (%s) unexpectedly repeated. Message dropped.",
+				bitnamesof(payload_name_ikev2_main, bad_repeat));
+		}
 		return STF_FAIL + v2N_INVALID_SYNTAX;
 	}
 
-	DBG(DBG_CONTROL,
-	    DBG_log("Finished and now at the end of ikev2_process_payload"));
+	md->svm = svm;	/* might have changed! */
+
 	md->digest_roof = pd;
 	return STF_OK;
-}
-
-/* this stub is needed because struct state_v2_microcode is local to this file */
-stf_status ikev2_process_encrypted_payloads(struct msg_digest *md,
-					 pb_stream   *in_pbs,
-					 unsigned int np)
-{
-	return ikev2_process_payloads(md, in_pbs, np, md->svm->req_enc_payloads, md->svm->opt_enc_payloads);
 }
 
 /*
@@ -692,9 +722,11 @@ void process_v2_packet(struct msg_digest **mdp)
 		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0)))
 			continue;
 
-		/* must be the right state */
+		/* must be the right state machine entry */
 		break;
 	}
+
+	DBG(DBG_CONTROL, DBG_log("selected state microcode %s", svm->story));
 
 	if (svm->state == STATE_IKEv2_ROOF) {
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
@@ -717,11 +749,9 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	{
 		stf_status stf = ikev2_process_payloads(md, &md->message_pbs,
-			md->hdr.isa_np,
-			svm->req_clear_payloads, svm->opt_clear_payloads);
+			md->hdr.isa_np, FALSE);
 
-		DBG(DBG_CONTROL,
-		    DBG_log("Finished processing ikev2_process_payloads"));
+		svm = md->svm;	/* ikev2_process_payloads updates */
 
 		if (stf != STF_OK) {
 			complete_v2_state_transition(mdp, stf);
@@ -740,6 +770,8 @@ void process_v2_packet(struct msg_digest **mdp)
 	DBG(DBG_CONTROL,
 	    DBG_log("Now lets proceed with state specific processing"));
 
+	DBG(DBG_CONTROL,
+	    DBG_log("calling processor %s", svm->story));
 	complete_v2_state_transition(mdp, (svm->processor)(md));
 }
 
@@ -838,8 +870,10 @@ void ikev2_log_parentSA(struct state *st)
 	}
 }
 
-void send_v2_notification_from_state(struct state *st, enum state_kind state,
-				     u_int16_t type, chunk_t *data)
+void send_v2_notification_from_state(struct state *st,
+				     enum state_kind state,
+				     v2_notification_t type,
+				     chunk_t *data)
 {
 	passert(st != NULL);
 
@@ -850,7 +884,8 @@ void send_v2_notification_from_state(struct state *st, enum state_kind state,
 			     data);
 }
 
-void send_v2_notification_from_md(struct msg_digest *md UNUSED, u_int16_t type,
+void send_v2_notification_from_md(struct msg_digest *md,
+				  v2_notification_t type,
 				  chunk_t *data)
 {
 	struct state st;
@@ -865,7 +900,7 @@ void send_v2_notification_from_md(struct msg_digest *md UNUSED, u_int16_t type,
 	 *   st_connection->that.host_port
 	 *   st_connection->interface
 	 */
-	passert(md);
+	passert(md != NULL);
 
 	zero(&st);
 	zero(&cnx);
@@ -912,7 +947,7 @@ void ikev2_update_counters(struct msg_digest *md)
 }
 
 time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-		const struct state_v2_microcode *svm)
+		enum phase1_role role)
 {
 	enum event_type kind = *pkind;
 	time_t delay;   /* unwrapped deltatime_t */
@@ -959,7 +994,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		/* unwrapped deltatime_t */
 		time_t marg = deltasecs(c->sa_rekey_margin);
 
-		if ((svm != NULL)  && (svm->flags & SMF2_INITIATOR)) {
+		if (role == INITIATOR) {
 			marg += marg *
 				c->sa_rekey_fuzz / 100.E0 *
 				(rand() / (RAND_MAX + 1.E0));
@@ -990,6 +1025,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 			      enum_name(&state_names, from_state),
 			      enum_name(&state_names, svm->next_state));
 	}
+
 	change_state(st, svm->next_state);
 	w = RC_NEW_STATE + st->st_state;
 
@@ -997,7 +1033,6 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 	/* tell whack and log of progress, if we are actually advancing */
 	if (from_state != svm->next_state) {
-		const char *story = enum_name(&state_stories, st->st_state);
 		char sadetails[512];
 
 		passert(st->st_state >= STATE_IKEv2_BASE);
@@ -1007,8 +1042,8 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		/* document IPsec SA details for admin's pleasure */
 		if (IS_CHILD_SA_ESTABLISHED(st)) {
-			char usubl[128], usubh[128];
-			char tsubl[128], tsubh[128];
+			char usubl[ADDRTOT_BUF], usubh[ADDRTOT_BUF];
+			char tsubl[ADDRTOT_BUF], tsubh[ADDRTOT_BUF];
 
 			addrtot(&st->st_ts_this.low,  0, usubl, sizeof(usubl));
 			addrtot(&st->st_ts_this.high, 0, usubh, sizeof(usubh));
@@ -1038,7 +1073,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		loglog(w,
 		       "%s: %s%s",
 		       enum_name(&state_names, st->st_state),
-		       story,
+		       enum_name(&state_stories, st->st_state),
 		       sadetails);
 	}
 
@@ -1076,17 +1111,17 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	}
 
 	if (w == RC_SUCCESS) {
-		struct state *pst;
-
 		DBG_log("releasing whack for #%lu (sock=%d)",
 			st->st_serialno, st->st_whack_sock);
 		release_whack(st);
 
 		/* XXX should call unpend again on parent SA */
 		if (IS_CHILD_SA(st)) {
-			pst = state_with_serialno(st->st_clonedfrom); /* with failed child sa, we end up here with an orphan?? */
-			DBG_log("releasing whack and unpending for #%lu (sock=%d)",
-				pst->st_serialno, pst->st_whack_sock);
+			/* with failed child sa, we end up here with an orphan?? */
+			struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+			DBG_log("releasing whack and unpending for parent #%lu",
+				pst->st_serialno);
 			unpend(pst);
 			release_whack(pst);
 		}
@@ -1100,15 +1135,24 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		switch (kind) {
 		case EVENT_SA_REPLACE: /* SA replacement event */
-			delay = ikev2_replace_delay(st, &kind, svm);
+			delay = ikev2_replace_delay(st, &kind,
+					(svm->flags & SMF2_INITIATOR) ?
+					INITIATOR : RESPONDER);
 			delete_event(st);
 			event_schedule(kind, delay, st);
+			break;
+
+		case EVENT_v2_RESPONDER_TIMEOUT:
+			delete_event(st);
+			event_schedule(kind, (MAXIMUM_RETRANSMISSIONS_INITIAL * 
+					EVENT_RETRANSMIT_DELAY_0), st);
 			break;
 
 		case EVENT_NULL:
 			/* XXX: Is there really no case where we want to set no timer? */
 			/* dos_cookie is one 'valid' event, but it is used more? */
-			DBG_log("V2 microcode entry has unspecified timeout_event");
+			DBG_log("V2 microcode entry (%s) has unspecified timeout_event",
+				svm->story);
 			break;
 
 		default:
@@ -1157,30 +1201,31 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 * (below) to let the peer know why we've rejected the request.
 	 */
 	if (st != NULL) {
-		from_state_name = enum_name(&state_names, st->st_state);
-		from_state   = st->st_state;
+		from_state = st->st_state;
+		from_state_name = enum_name(&state_names, from_state);
 	} else {
 		from_state_name = "no-state";
 	}
 
 	md->result = result;
-	result = md->result;
 
 	/* advance the state */
 	DBG(DBG_CONTROL,
 	    DBG_log("complete v2 state transition with %s",
 		    enum_name(&stfstatus_name,
-			      (result > STF_FAIL) ? STF_FAIL : result)));
+			      result > STF_FAIL ? STF_FAIL : result)));
 
 	switch (result) {
 	case STF_IGNORE:
 		break;
 
-	case STF_INLINE:     /* this is second time through complete
-		              * state transition, so the MD has already
-		              * been freed.
-		                0				  */
-		*mdp = NULL;
+	case STF_INLINE:
+		/*
+		 * this is second time through complete
+		 * state transition, so the MD has already
+		 * been freed.
+		 */
+		passert(*mdp == NULL);
 		break;
 
 	case STF_SUSPEND:
@@ -1218,8 +1263,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		passert(st != NULL);
 		set_suspended(st, NULL);
 		pexpect(!st->st_calculating);
-		libreswan_log("message in state %s ignored due to "
-			      "cryptographic overload",
+		libreswan_log("message in state %s ignored due to cryptographic overload",
 			      from_state_name);
 		break;
 
@@ -1255,7 +1299,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			  from_state_name,
 			  enum_name(&ikev2_notify_names, md->note));
 
-		if (md->note > 0) {
+		if (md->note != NOTHING_WRONG) {
 			/* only send a notify is this packet was a question, not if it was an answer */
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_R))
 				SEND_NOTIFICATION(md->note);
@@ -1264,14 +1308,15 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s failed: %s",
 			    from_state_name,
-			    (md->note) ? enum_name(&ikev2_notify_names,
-						   md->note) :
-			    "<no reason given>" ));
+			    md->note == NOTHING_WRONG ?
+				"<no reason given>" : 
+				enum_name(&ikev2_notify_names, md->note)));
 	}
 }
 
-v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
-				  const char *name)
+v2_notification_t accept_v2_nonce(struct msg_digest *md,
+				chunk_t *dest,
+				const char *name)
 {
 	pb_stream *nonce_pbs;
 	size_t len;

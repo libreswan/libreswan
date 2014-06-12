@@ -2735,7 +2735,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			  "%s: %s", enum_name(&state_names, st->st_state),
 			  enum_name(&ikev1_notify_names, md->note));
 
-		if (md->note > 0)
+		if (md->note != NOTHING_WRONG)
 			SEND_NOTIFICATION(md->note);
 
 		DBG(DBG_CONTROL,
