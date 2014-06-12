@@ -226,7 +226,8 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_INITIATOR,
-	  .processor  = NULL, };
+	  .processor  = NULL,
+	  .timeout_event = EVENT_NULL, };
 
 /* microcode for input packet processing */
 static const struct state_v2_microcode v2_state_microcode_table[] = {
@@ -242,7 +243,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
-	  .recv_type  = ISAKMP_v2_SA_INIT, },
+	  .recv_type  = ISAKMP_v2_SA_INIT,
+	  .timeout_event = EVENT_NULL, },
 
 	/* STATE_PARENT_I1: R1 --> I2
 	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
@@ -257,7 +259,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2parent_inR1outI2,
-	  .recv_type  = ISAKMP_v2_SA_INIT, },
+	  .recv_type  = ISAKMP_v2_SA_INIT,
+	  .timeout_event = EVENT_NULL, },
 
 	/* STATE_PARENT_I2: R2 -->
 	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
@@ -323,7 +326,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_NULL, },
 
 	/* Informational Exchange*/
 	{ .story      = "R1: process INFORMATIONAL",
@@ -333,7 +337,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_NULL, },
 
 	/* Informational Exchange*/
 	{ .story      = "I3: INFORMATIONAL",
@@ -343,7 +348,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_NULL, },
 
 	/*
 	 * There are three different CREATE_CHILD_SA's invocations,
@@ -364,7 +370,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
 	  .processor  = ikev2_in_create_child_sa,
-	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_NULL, },
 
 	/* Create Child SA Exchange*/
 	{ .story      = "R2: CREATE_CHILD_SA",
@@ -375,7 +382,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
 	  .processor  = ikev2_in_create_child_sa,
-	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA, },
+	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .timeout_event = EVENT_NULL, },
 
 	/* Informational Exchange*/
 	{ .story      = "R2: process INFORMATIONAL",
@@ -385,7 +393,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_NULL, },
 
 	/* Informational Exchange*/
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
@@ -395,7 +404,8 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL, },
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_NULL, },
 
 	/* last entry */
 	{ .story      = "roof",
