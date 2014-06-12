@@ -1547,6 +1547,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	md->pst = pst;
 
 	/* parent had crypto failed, replace it with rekey! */
+	/* ??? seems wrong: not conditional at all */
 	delete_event(pst);
 	{
 		enum event_type x = EVENT_SA_REPLACE;
