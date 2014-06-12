@@ -414,21 +414,16 @@ void handle_timer_event(void)
 
 static void liveness_check(struct state *st)
 {
-	monotime_t tm, last_liveness;
-	deltatime_t last_msg_age;
 	struct state *pst;
-	stf_status ret;
-	struct connection *c;
-	time_t timeout;
+	struct connection *c = st->st_connection;
+	deltatime_t last_msg_age;
 
-	passert(st != NULL);
 	passert(st->st_ikev2);
-	c = st->st_connection;
 
 	/* this should be called on a child sa */
 	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
-		if (!pst) {
+		if (pst == NULL) {
 			DBG(DBG_CONTROL,
 				DBG_log("liveness_check error, no parent state"));
 			return;
@@ -441,73 +436,76 @@ static void liveness_check(struct state *st)
 	 * don't bother sending the check and reset
 	 * liveness stats if there has been incoming traffic
 	 */
-	if (get_sa_info(st, TRUE, &last_msg_age)) {
-		if (deltaless(last_msg_age, c->dpd_timeout)) {
-			pst->st_pend_liveness = FALSE;
-			pst->st_last_liveness.mono_secs = UNDEFINED_TIME;
-			goto live_ok;
+	if (get_sa_info(st, TRUE, &last_msg_age) &&
+		deltaless(last_msg_age, c->dpd_timeout)) {
+		pst->st_pend_liveness = FALSE;
+		pst->st_last_liveness.mono_secs = UNDEFINED_TIME;
+	} else {
+		monotime_t tm = mononow();
+		monotime_t last_liveness = pst->st_last_liveness;
+		time_t timeout;
+
+		/* ensure that the very first liveness_check works out */
+		if (last_liveness.mono_secs == UNDEFINED_TIME)
+			last_liveness = tm;
+
+		DBG(DBG_CONTROL,
+			DBG_log("liveness_check - last_liveness: %ld, tm: %ld",
+				(long)last_liveness.mono_secs,
+				(long)tm.mono_secs));
+
+		/* ??? MAX the hard way */
+		if (deltaless(c->dpd_timeout, deltatimescale(3, 1, c->dpd_delay)))
+			timeout = deltasecs(c->dpd_delay) * 3;
+		else
+			timeout = deltasecs(c->dpd_timeout);
+
+		if (pst->st_pend_liveness &&
+		    deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
+			DBG(DBG_CONTROL,
+				DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
+					(long)deltasecs(monotimediff(tm, last_liveness)),
+					(long)timeout));
+			switch (c->dpd_action) {
+			case DPD_ACTION_CLEAR:
+				libreswan_log(
+					"IKEv2 peer liveness - clearing connection");
+				delete_states_by_connection(c, TRUE);
+				unroute_connection(c);
+				return;
+
+			case DPD_ACTION_RESTART:
+				libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
+				restart_connections_by_peer(c);
+				return;
+
+			case DPD_ACTION_HOLD:
+				DBG(DBG_CONTROL,
+					DBG_log("liveness_check - handling default by rescheduling"));
+				break;
+
+			default:
+				bad_case(c->dpd_action);
+			}
+
+		} else {
+			stf_status ret = ikev2_send_informational(st);
+
+			if (ret != STF_OK) {
+				DBG(DBG_CONTROL,
+					DBG_log("failed to send informational"));
+				return;
+			}
 		}
 	}
-
-	tm = mononow();
-	last_liveness = pst->st_last_liveness;
-	/* ensure that the very first liveness_check works out */
-	if (last_liveness.mono_secs == UNDEFINED_TIME)
-		last_liveness = tm;
 
 	DBG(DBG_CONTROL,
-		DBG_log("liveness_check - last_liveness: %ld, tm: %ld",
-			(long)last_liveness.mono_secs,
-			(long)tm.mono_secs));
-
-	/* ??? MAX the hard way */
-	if (deltaless(c->dpd_timeout, deltatimescale(3, 1, c->dpd_delay)))
-		timeout = deltasecs(c->dpd_delay) * 3;
-	else
-		timeout = deltasecs(c->dpd_timeout);
-
-	if (pst->st_pend_liveness &&
-	    deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
-		DBG(DBG_CONTROL,
-			DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
-				(long)deltasecs(monotimediff(tm, last_liveness)),
-				(long)timeout));
-		switch (c->dpd_action) {
-
-		case DPD_ACTION_CLEAR:
-			libreswan_log(
-				"IKEv2 peer liveness - clearing connection");
-			delete_states_by_connection(c, TRUE);
-			unroute_connection(c);
-			break;
-
-		case DPD_ACTION_RESTART:
-			libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
-			restart_connections_by_peer(c);
-			break;
-
-		default:
-			DBG(DBG_CONTROL,
-				DBG_log("liveness_check - handling default by rescheduling"));
-			goto live_ok;
-		}
-
-	} else {
-		ret = ikev2_send_informational(st);
-		if (ret != STF_OK) {
-			DBG(DBG_CONTROL,
-				DBG_log("failed to send informational"));
-			return;
-		}
-live_ok:
-		DBG(DBG_CONTROL,
-			DBG_log("liveness_check - peer is ok"));
-		delete_liveness_event(st);
-		event_schedule(EVENT_v2_LIVENESS,
-			deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
-				deltasecs(c->dpd_delay) : MIN_LIVENESS,
-			st);
-	}
+		DBG_log("liveness_check - peer is ok"));
+	delete_liveness_event(st);
+	event_schedule(EVENT_v2_LIVENESS,
+		deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
+			deltasecs(c->dpd_delay) : MIN_LIVENESS,
+		st);
 }
 
 void handle_next_timer_event(void)

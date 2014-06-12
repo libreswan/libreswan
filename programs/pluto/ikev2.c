@@ -1069,14 +1069,11 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 			fmt_ipsec_sa_established(st,  sadetails,
 						 sizeof(sadetails));
+			/* log our success */
+			w = RC_SUCCESS;
 		} else if (IS_PARENT_SA_ESTABLISHED(st->st_state)) {
 			fmt_isakmp_sa_established(st, sadetails,
 						  sizeof(sadetails));
-		}
-
-		if (IS_CHILD_SA_ESTABLISHED(st)) {
-			/* log our success */
-			w = RC_SUCCESS;
 		}
 
 		/* tell whack and logs our progress */
@@ -1154,8 +1151,10 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		case EVENT_v2_RESPONDER_TIMEOUT:
 			delete_event(st);
-			event_schedule(kind, (MAXIMUM_RETRANSMISSIONS_INITIAL * 
-					EVENT_RETRANSMIT_DELAY_0), st);
+			event_schedule(kind,
+				MAXIMUM_RETRANSMISSIONS_INITIAL *
+					EVENT_RETRANSMIT_DELAY_0,
+				st);
 			break;
 
 		case EVENT_NULL:
