@@ -1547,8 +1547,14 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	md->pst = pst;
 
 	/* parent had crypto failed, replace it with rekey! */
+	/* ??? seems wrong: not conditional at all */
 	delete_event(pst);
-	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), pst);
+	{
+		enum event_type x = EVENT_SA_REPLACE;
+		time_t delay = ikev2_replace_delay(st, &x, INITIATOR);
+
+		event_schedule(x, delay, pst);
+	}
 
 	/* need to force parent state to I2 */
 	change_state(pst, STATE_PARENT_I2);
@@ -2017,7 +2023,12 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	c->newest_isakmp_sa = st->st_serialno;
 
 	delete_event(st);
-	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), st);
+	{
+		enum event_type x = EVENT_SA_REPLACE;
+		time_t delay = ikev2_replace_delay(st, &x, RESPONDER);
+
+		event_schedule(x, delay, st);
+	}
 
 	authstart = reply_stream.cur;
 	/* send response */

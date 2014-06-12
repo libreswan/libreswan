@@ -1543,7 +1543,7 @@ static const char *const ikev2_notify_name[] = {
 };
 
 enum_names ikev2_notify_names = {
-	0,
+	v2N_NOTHING_WRONG,
 	v2N_CHILD_SA_NOT_FOUND,
 	ikev2_notify_name,
 	&ikev2_notify_names_16384
