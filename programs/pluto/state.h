@@ -84,7 +84,7 @@ struct trans_attrs {
 
 	bool doing_xauth;		/* did we negotiate Extended Authentication and still doing it? */
 
-	u_int16_t groupnum;		/* for IKEv2 */
+	oakley_group_t groupnum;		/* for IKEv2 */
 
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
 	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */

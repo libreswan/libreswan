@@ -346,10 +346,18 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
  * This function may fail if there is no worker that can take
  * more work items.
  *
+ * Return values:
+ *	STF_INLINE: computation and continuation done.
+ *	STF_FAIL: failure; message logged
+ *	STF_SUSPEND: computation queued for later completion
+ *	STF_TOOMUCHCRYPTO: queue overloaded: we won't do this; message logged
+ *
  * ??? note that the struct pluto_crypto_req in the request is not
  * the same as in the response.  That makes using the continuation
  * to handle failure cases a little dodgy.  Besides, none of the
  * continuation functions handles a non-NULL ugh parameter.
+ * On the other hand, the continuation is in a better position to
+ * provide context in a diagnostic message.
  * The parameter ought to be removed or used.
  */
 

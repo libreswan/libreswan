@@ -1171,29 +1171,9 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	if(md->chain[ISAKMP_NEXT_v2N] != NULL)
 		ikev2_natd_lookup(md, st->st_rcookie);
 
-	/* now. we need to go calculate the g^xy */
-	{
-		struct dh_continuation *dh = alloc_thing(
-			struct dh_continuation,
-			"ikev2_inR1outI2 KE");
-		stf_status e;
-
-		dh->dh_md = md;
-		set_suspended(st, dh->dh_md);
-		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-
-		pcrc_init(&dh->dh_pcrc, ikev2_parent_inR1outI2_continue);
-		e = start_dh_v2(&dh->dh_pcrc, st, st->st_import, INITIATOR,
-				st->st_oakley.groupnum);
-		if (e != STF_SUSPEND && e != STF_INLINE) {
-			loglog(RC_CRYPTOFAILED, "system too busy");
-			delete_state(st);
-		}
-
-		reset_globals();
-
-		return e;
-	}
+	/* initiate calculation of g^xy */
+	return start_dh_v2(md, "ikev2_inR1outI2 KE", INITIATOR,
+		ikev2_parent_inR1outI2_continue);
 }
 
 static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
@@ -1291,7 +1271,7 @@ static unsigned char *ikev2_authloc(struct msg_digest *md,
 }
 
 static stf_status ikev2_encrypt_msg(struct msg_digest *md,
-				    enum phase1_role init,
+				    enum phase1_role role,
 				    unsigned char *authstart,
 				    unsigned char *iv,
 				    unsigned char *encstart,
@@ -1306,7 +1286,7 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
-	if (init == INITIATOR) {
+	if (role == INITIATOR) {
 		cipherkey = pst->st_skey_ei_nss;
 		authkey = pst->st_skey_ai_nss;
 	} else {
@@ -1362,7 +1342,7 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 
 static
 stf_status ikev2_decrypt_msg(struct msg_digest *md,
-			     enum phase1_role init)
+			     enum phase1_role role)
 {
 	struct state *st = md->st;
 	unsigned char *encend;
@@ -1376,7 +1356,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
-	if (init == INITIATOR) {
+	if (role == INITIATOR) {
 		cipherkey = pst->st_skey_er_nss;
 		authkey = pst->st_skey_ar_nss;
 	} else {
@@ -1817,29 +1797,9 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 		return STF_FATAL;
 	}
 
-	/* now. we need to go calculate the g^xy */
-	{
-		struct dh_continuation *dh = alloc_thing(
-			struct dh_continuation,
-			"ikev2_inI2outR2 KE");
-		stf_status e;
-
-		dh->dh_md = md;
-		set_suspended(st, dh->dh_md);
-		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-
-		pcrc_init(&dh->dh_pcrc, ikev2_parent_inI2outR2_continue);
-		e = start_dh_v2(&dh->dh_pcrc, st, st->st_import, RESPONDER,
-				st->st_oakley.groupnum);
-		if (e != STF_SUSPEND && e != STF_INLINE) {
-			loglog(RC_CRYPTOFAILED, "system too busy");
-			delete_state(st);
-		}
-
-		reset_globals();
-
-		return e;
-	}
+	/* initiate calculation of g^xy */
+	return start_dh_v2(md, "ikev2_inI2outR2 KE", RESPONDER,
+		ikev2_parent_inI2outR2_continue);
 }
 
 static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,

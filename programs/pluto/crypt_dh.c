@@ -419,7 +419,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		*skeyid_a,
 		*skeyid_e,
 		*enc_key;
-	/* const struct encrypt_desc *encrypter = crypto_get_encrypter(skq->encrypt_algo);*/
 	const struct encrypt_desc *encrypter = skq->encrypter;
 
 	/* this doesn't allocate any memory */
@@ -1035,7 +1034,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	 * need gi on responder, gr on initiator
 	 */
 
-	setchunk_from_wire(g, &dhq, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr);
+	setchunk_from_wire(g, &dhq, dhq.role == RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT,
 	    DBG_dump_chunk("peer's g: ", g));
@@ -1092,7 +1091,7 @@ void calc_dh(struct pluto_crypto_req *r)
 
 	/* now calculate the (g^x)(g^y) */
 
-	setchunk_from_wire(g, &dhq, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr);
+	setchunk_from_wire(g, &dhq, dhq.role == RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
@@ -1493,7 +1492,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 
 	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
 
-	setchunk_from_wire(g, &dhq, dhq.init == RESPONDER ? &dhq.gi : &dhq.gr);
+	setchunk_from_wire(g, &dhq, dhq.role == RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 

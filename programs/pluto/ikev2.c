@@ -785,14 +785,10 @@ void process_v2_packet(struct msg_digest **mdp)
 	complete_v2_state_transition(mdp, (svm->processor)(md));
 }
 
-bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role init)
+bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
 {
-	/* struct state *const st = md->st; */
-	unsigned int hisID = (init == INITIATOR) ?
+	unsigned int hisID = role == INITIATOR ?
 			     ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
-	/* unsigned int myID  = initiator ? ISAKMP_NEXT_v2IDi: ISAKMP_NEXT_v2IDr;
-	 * struct payload_digest *const id_me  = md->chain[myID];
-	 */
 	struct payload_digest *const id_him = md->chain[hisID];
 	const pb_stream * id_pbs;
 	struct ikev2_id * id;
