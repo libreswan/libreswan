@@ -330,7 +330,7 @@ static int db_attr_add(struct db_context *ctx, const struct db_attr *a)
 /*	Add attr copy (by value) to current transform,
  *	expanding attrs0 if needed, just calls db_attr_add().
  */
-int db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
+int db_attr_add_values(struct db_context *ctx,  enum ikev1_oakley_attr type, u_int16_t val)
 {
 	struct db_attr attr;
 

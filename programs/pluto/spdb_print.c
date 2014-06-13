@@ -55,7 +55,7 @@ static void print_sa_attr_oakley(struct db_attr *at)
 {
 	const struct enum_names *en = NULL;
 
-	if (at->type.oakley == 0)
+	if (at->type.oakley == OAKLEY_ATTR_undefined)
 		return;
 
 	if (at->type.oakley < oakley_attr_val_descs_roof)

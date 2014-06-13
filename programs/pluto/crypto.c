@@ -221,7 +221,7 @@ void init_crypto(void)
  * RFC-3526 "More Modular Exponential (MODP) Diffie-Hellman groups"
  */
 
-const struct oakley_group_desc unset_group = { 0, NULL, NULL, 0 };      /* magic signifier */
+const struct oakley_group_desc unset_group = { OAKLEY_GROUP_invalid, NULL, NULL, 0 };      /* magic signifier */
 
 const struct oakley_group_desc oakley_group[] = {
 	/* modp768_modulus no longer supported - too weak */

@@ -99,6 +99,7 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
 			       "missing KE payload in %s message", msg_name);
 			return INVALID_KEY_INFORMATION;
 		}
+		return NOTHING_WRONG;
 	} else {
 		if (st->st_pfs_group == NULL) {
 			loglog(RC_LOG_SERIOUS,
@@ -115,7 +116,6 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
 		return accept_KE(dest, val_name, st->st_pfs_group,
 				 &ke_pd->pbs);
 	}
-	return NOTHING_WRONG;
 }
 
 /* Initiate quick mode.

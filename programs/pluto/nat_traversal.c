@@ -213,7 +213,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(ISAKMP_NEXT_v2N, ISAKMP_PAYLOAD_NONCRITICAL,
-		0 /* protoid */, &empty_chunk,
+		PROTO_v2_RESERVED, &empty_chunk,
 		v2N_NAT_DETECTION_SOURCE_IP, &hch, outs))
 		return FALSE;
 	/*
@@ -225,7 +225,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
-		0 /* protoid */, &empty_chunk,
+		PROTO_v2_RESERVED, &empty_chunk,
 		v2N_NAT_DETECTION_DESTINATION_IP, &hch, outs))
 		return FALSE;
 	return TRUE;

@@ -735,6 +735,7 @@ extern const char *const critical_names[];
 #define PROTO_IPSEC_ESP 3
 #define PROTO_IPCOMP 4 /* only in IKEv1 */
 
+/* ??? Are these really the same as enum ikev2_sec_proto_id? */
 #define PROTO_v2_RESERVED 0
 #define PROTO_v2_ISAKMP 1
 #define PROTO_v2_AH 2
@@ -878,6 +879,7 @@ typedef u_int16_t cpi_t;
  */
 
 enum ikev1_oakley_attr {
+	OAKLEY_ATTR_undefined = 0,	/* not in standard */
 	OAKLEY_ENCRYPTION_ALGORITHM = 1,
 	OAKLEY_HASH_ALGORITHM = 2,
 	OAKLEY_AUTHENTICATION_METHOD = 3,
@@ -1113,6 +1115,7 @@ typedef enum ike_trans_type_dh oakley_group_t;
 
 /*	you must also touch: constants.c, crypto.c */
 enum ike_trans_type_dh {
+	OAKLEY_GROUP_invalid = 0,	/* not in standard */
 	OAKLEY_GROUP_MODP768 = 1,
 	OAKLEY_GROUP_MODP1024 = 2,
 	OAKLEY_GROUP_GP155 = 3,

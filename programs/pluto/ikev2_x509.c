@@ -55,14 +55,16 @@
 #include "keys.h"
 #include "ipsec_doi.h"
 
-static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
-				      enum phase1_role role,
-				      unsigned int np, pb_stream *outpbs);
+static stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
+				     enum phase1_role role,
+				     enum next_payload_types_ikev2 np,
+				     pb_stream *outpbs);
 
 /* Send v2CERT and v2 CERT */
-stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
-			    enum phase1_role role,
-			    unsigned int np, pb_stream *outpbs)
+stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
+			   enum phase1_role role,
+			   enum next_payload_types_ikev2 np,
+			   pb_stream *outpbs)
 {
 	struct ikev2_cert cert;
 	/*  flag : to send a certificate request aka CERTREQ */
@@ -157,9 +159,10 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 	}
 	return STF_OK;
 }
-static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
-				      enum phase1_role role UNUSED,
-				      unsigned int np, pb_stream *outpbs)
+static stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
+				     enum phase1_role role UNUSED,
+				     enum next_payload_types_ikev2 np,
+				     pb_stream *outpbs)
 {
 	if (st->st_connection->kind == CK_PERMANENT) {
 		DBG(DBG_CONTROL,

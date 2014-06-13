@@ -76,7 +76,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	dhq->role = role;
 	dhq->keysize = st->st_oakley.enckeylen / BITS_PER_BYTE;
 
-	passert(r.pcr_d.dhq.oakley_group != 0);
+	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 	DBG(DBG_CONTROL | DBG_CRYPT,
 	    DBG_log("parent1 type: %d group: %d len: %d\n", r.pcr_type,
 		    r.pcr_d.dhq.oakley_group, (int)r.pcr_len));
@@ -103,7 +103,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
-	passert(dhq->oakley_group != 0);
+	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
 	return send_crypto_helper_request(&r, cn);
 }
 
@@ -222,7 +222,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	dhq->role = role;
 	dhq->keysize = st->st_oakley.enckeylen / BITS_PER_BYTE;
 
-	passert(r.pcr_d.dhq.oakley_group != 0);
+	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 
 	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
 	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
@@ -244,7 +244,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
-	passert(dhq->oakley_group != 0);
+	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
 
 	{
 		stf_status e = send_crypto_helper_request(&r, &dh->dh_pcrc);

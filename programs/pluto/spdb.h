@@ -155,7 +155,7 @@ extern bool ikev1_out_sa(pb_stream *outs,
 		   struct state *st,
 		   bool oakley_mode,
 		   bool aggressive_mode,
-		   u_int8_t np);
+		   enum next_payload_types_ikev1 np);
 
 #if 0
 extern complaint_t accept_oakley_auth_method(struct state *st,  /* current state object */

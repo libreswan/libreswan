@@ -103,11 +103,11 @@ static bool ikev2_out_attr(int type,
 }
 
 bool ikev2_out_sa(pb_stream *outs,
-		  unsigned int protoid,
+		  enum ikev2_sec_proto_id protoid,
 		  struct db_sa *sadb,
 		  struct state *st,
 		  bool parentSA,
-		  u_int8_t np)
+		  enum next_payload_types_ikev2 np)
 {
 	pb_stream sa_pbs;
 	unsigned int pc_cnt;
@@ -117,7 +117,7 @@ bool ikev2_out_sa(pb_stream *outs,
 		struct ikev2_sa sa;
 
 		zero(&sa);
-		sa.isasa_np       = np;
+		sa.isasa_np = np;
 		sa.isasa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			libreswan_log(
@@ -282,7 +282,7 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	}
 }
 
-static enum ikev2_trans_type_integ v1tov2_integ(int oakley)
+static enum ikev2_trans_type_integ v1tov2_integ(enum ikev2_trans_type_integ oakley)
 {
 	switch (oakley) {
 	case OAKLEY_MD5:
@@ -328,7 +328,7 @@ static enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth
 	}
 }
 
-static enum ikev2_trans_type_prf v1tov2_prf(int oakley)
+static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 {
 	switch (oakley) {
 	case OAKLEY_MD5:
@@ -1735,7 +1735,7 @@ stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,				/* body of input SA P
 
 stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 			       pb_stream *outpbs,
-			       unsigned int np,
+			       enum next_payload_types_ikev2 np,
 			       struct connection *c,
 			       lset_t policy)
 {
@@ -1743,9 +1743,9 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 	struct db_sa *p2alg;
 
 	if (c->policy & POLICY_ENCRYPT)
-		proto = PROTO_IPSEC_ESP;
+		proto = PROTO_v2_ESP;
 	else if (c->policy & POLICY_AUTHENTICATE)
-		proto = PROTO_IPSEC_AH;
+		proto = PROTO_v2_AH;
 	else
 		return STF_FATAL;
 

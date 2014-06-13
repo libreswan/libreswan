@@ -181,7 +181,8 @@ stf_status main_outI1(int whack_sock,
 	{
 		u_char *sa_start = md.rbody.cur;
 		unsigned policy_index = POLICY_ISAKMP(policy, c);
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		enum next_payload_types_ikev1 np =
+			numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!ikev1_out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,
 				FALSE, np)) {
@@ -1134,11 +1135,10 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 stf_status main_inI2_outR2(struct msg_digest *md)
 {
 	struct state *const st = md->st;
-	pb_stream *keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
-						keyex_pbs));
+				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
@@ -1691,13 +1691,12 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 stf_status main_inR2_outI3(struct msg_digest *md)
 {
 	struct dh_continuation *dh;
-	pb_stream *const keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
 	struct state *const st = md->st;
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr",
-						st->st_oakley.group,
-						keyex_pbs));
+				     st->st_oakley.group,
+				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));

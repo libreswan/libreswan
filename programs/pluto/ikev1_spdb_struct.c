@@ -248,7 +248,7 @@ bool ikev1_out_sa(pb_stream *outs,
 	    struct state *st,
 	    bool oakley_mode,
 	    bool aggressive_mode,
-	    u_int8_t np)
+	    enum next_payload_types_ikev1 np)
 {
 	pb_stream sa_pbs;
 	unsigned int pcn;

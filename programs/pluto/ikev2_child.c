@@ -1099,7 +1099,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				/* In v2, for parent, protoid must be 0 and SPI must be empty */
 				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
 					 ISAKMP_PAYLOAD_NONCRITICAL,
-				         0 /* protoid */,
+				         PROTO_v2_RESERVED,
 					 &empty_chunk,
 					 v2N_USE_TRANSPORT_MODE, &empty_chunk,
 					 outpbs))

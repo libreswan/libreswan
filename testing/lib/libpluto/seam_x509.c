@@ -71,8 +71,8 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 {
 }
 
-bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
-			     u_int8_t np)
+bool ikev2_build_and_ship_CR(enum ike_cert_type type, chunk_t ca, pb_stream *outs,
+			     enum next_payload_types_ikev2 np)
 {
 	return FALSE;
 }

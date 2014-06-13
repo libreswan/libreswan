@@ -325,7 +325,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_informational_ikev2,
+	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_NULL, },
 
@@ -336,7 +336,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_informational_ikev2,
+	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_NULL, },
 
@@ -347,7 +347,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_informational_ikev2,
+	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_NULL, },
 
@@ -392,7 +392,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_informational_ikev2,
+	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_NULL, },
 
@@ -403,7 +403,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags      = SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_informational_ikev2,
+	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_NULL, },
 
@@ -1295,10 +1295,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		passert(result > STF_FAIL);
 		md->note = result - STF_FAIL;
 		result = STF_FAIL;
-	/* FALL THROUGH ... */
-
+		/* FALL THROUGH ... */
 	case STF_FAIL:
-
 		whack_log(RC_NOTIFICATION + md->note,
 			  "%s: %s",
 			  from_state_name,
@@ -1316,6 +1314,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			    md->note == NOTHING_WRONG ?
 				"<no reason given>" : 
 				enum_name(&ikev2_notify_names, md->note)));
+		break;
 	}
 }
 
@@ -1323,13 +1322,12 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 				chunk_t *dest,
 				const char *name)
 {
+	/*
+	 * note ISAKMP_NEXT_v2Ni == ISAKMP_NEXT_v2Nr
+	 * so when we refer to ISAKMP_NEXT_v2Ni, it might be ISAKMP_NEXT_v2Nr
+	 */
 	pb_stream *nonce_pbs;
 	size_t len;
-
-	if(md->chain[ISAKMP_NEXT_v2Ni] == NULL) {
-		loglog(RC_LOG_SERIOUS, "missing nonce Ni");
-		return v2N_INVALID_SYNTAX;
-	}
 
 	nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
 	len = pbs_left(nonce_pbs);

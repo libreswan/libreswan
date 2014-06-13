@@ -217,7 +217,6 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 	 */
 	struct state *st;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	pb_stream *keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
 	struct connection *c = find_host_connection(&md->iface->ip_addr,
 						    md->iface->port,
 						    &md->sender,
@@ -330,7 +329,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
-				     keyex_pbs));
+				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
@@ -640,7 +639,6 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	 * Warrior).  So our first task is to unravel the ID payload.
 	 */
 	struct state *st = md->st;
-	pb_stream *keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
 
 	st->st_policy |= POLICY_AGGRESSIVE;
 
@@ -674,7 +672,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.group,
-				     keyex_pbs));
+				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
