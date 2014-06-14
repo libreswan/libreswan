@@ -1090,7 +1090,7 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 
 		if (ta.enckeylen == 0) {
 			/* pick up from received proposal, if any */
-			int stoe = st->st_oakley.enckeylen;
+			unsigned int stoe = st->st_oakley.enckeylen;
 			if (stoe != 0) {
 				if (stoe == ta.encrypter->keyminlen ||
 				    stoe == ta.encrypter->keydeflen ||
