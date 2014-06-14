@@ -16,32 +16,32 @@
 #  bad  - output should NOT match [only for unit tests, not pluto test]
 #  wip  - this test still need work. 
 
-#TEMP # basic pluto test - bring up your basic CONN between eastnet-westnet.
-#TEMP kvmplutotest	basic-pluto-01	good
-#TEMP kvmplutotest	basic-pluto-02	good
-#TEMP kvmplutotest	basic-pluto-03	good
-#TEMP 
-#TEMP #################################################################
-#TEMP # IKEv2 tests
-#TEMP #################################################################
-#TEMP kvmplutotest	ikev2-01-fallback-ikev1			good
-#TEMP kvmplutotest	ikev2-02-responder-send-notify		good
-#TEMP kvmplutotest	ikev2-03-basic-rawrsa			good
-#TEMP kvmplutotest	ikev2-04-basic-x509			good
-#TEMP kvmplutotest	ikev2-05-basic-psk			good
-#TEMP kvmplutotest	ikev2-06-6msg				good
-#TEMP 
-#TEMP umlplutotest	ikev2-07-biddown			good
-#TEMP umlplutotest	ikev2-08-delete-notify			good
-#TEMP 
-#TEMP kvmplutotest	ikev2-09-rw-rsa				good
-#TEMP kvmplutotest	ikev2-11-simple-psk			good
-#TEMP kvmplutotest	ikev2-12-x509-ikev1			bad
-#TEMP kvmplutotest	ikev2-12-transport-psk			good
-#TEMP kvmplutotest	ikev2-13-ah				good
-#TEMP kvmplutotest	ikev2-14-missing-ke			good
-#TEMP kvmplutotest	ikev2-15-fuzzer				good
-#TEMP kvmplutotest	ikev2-17-rekey				good
+# basic pluto test - bring up your basic CONN between eastnet-westnet.
+kvmplutotest	basic-pluto-01	good
+kvmplutotest	basic-pluto-02	good
+kvmplutotest	basic-pluto-03	good
+
+#################################################################
+# IKEv2 tests
+#################################################################
+kvmplutotest	ikev2-01-fallback-ikev1			good
+kvmplutotest	ikev2-02-responder-send-notify		good
+kvmplutotest	ikev2-03-basic-rawrsa			good
+kvmplutotest	ikev2-04-basic-x509			good
+kvmplutotest	ikev2-05-basic-psk			good
+kvmplutotest	ikev2-06-6msg				good
+
+umlplutotest	ikev2-07-biddown			good
+umlplutotest	ikev2-08-delete-notify			good
+
+kvmplutotest	ikev2-09-rw-rsa				good
+kvmplutotest	ikev2-11-simple-psk			good
+kvmplutotest	ikev2-12-x509-ikev1			bad
+kvmplutotest	ikev2-12-transport-psk			good
+kvmplutotest	ikev2-13-ah				good
+kvmplutotest	ikev2-14-missing-ke			good
+kvmplutotest	ikev2-15-fuzzer				good
+kvmplutotest	ikev2-17-rekey				good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
 #kvmplutotest	ikev2-17-rekey-parent			good
