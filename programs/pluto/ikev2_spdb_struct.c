@@ -469,6 +469,12 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 						}
 					}
 				}
+				/* Ensure KEY_LENGTH or OAKLEY_KEY_LENGTH if encr algo requires one */
+				if (dtfone->encr_keylen == 0) 
+					dtfone->encr_keylen = crypto_req_keysize(
+						f->parentSA ? 2 /* IKev2 */ : 0 /* ESP */,
+						dtfone->encr_transid);
+
 				tot_trans++;
 			}
 		}
@@ -686,8 +692,11 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 			switch (tr->transform_type) {
 			case IKEv2_TRANS_TYPE_ENCR:
 				encrid = tr->transid;
+				DBG(DBG_CONTROL, DBG_log(
+					"encrid(%d), keylen(%d), encr_keylen(%d)",
+					encrid, keylen, encr_keylen));
 				if (tr->transid == encr_transform &&
-				    keylen == encr_keylen)
+				    (keylen == -1 || encr_keylen == -1 || keylen == encr_keylen))
 					encr_matched = TRUE;
 				break;
 
@@ -729,9 +738,9 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 						propnum,
 						encr_matched ? "succeeded" : "failed",
 						enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
-						encr_keylen,
+						keylen,
 						enum_show(&ikev2_trans_type_encr_names, encr_transform),
-						keylen);
+						encr_keylen);
 					/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
 					DBG_log("            %s integ=(policy:%s vs offered:%s)",
 						integ_matched ? "succeeded" : "failed",
@@ -756,12 +765,13 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 			   statement is dangerous */
 			char esb[ENUM_SHOW_BUF_LEN];
 
-			DBG_log("proposal %u %s encr= (policy:%s vs offered:%s)",
+			DBG_log("proposal %u %s encr= (policy:%s(xx) vs offered:%s(%d))",
 				propnum,
 				encr_matched ? "succeeded" : "failed",
 				enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
 				enum_show(&ikev2_trans_type_encr_names,
-					  encr_transform));
+					  encr_transform),
+					encr_keylen);
 			/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
 			DBG_log("            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "succeeded" : "failed",
@@ -1064,16 +1074,50 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 	if (!out_struct(&r_trans, &ikev2_trans_desc,
 			&r_proposal_pbs, &r_trans_pbs))
 		impossible();
-	if (ta.encrypter && ta.encrypter->keyminlen !=
-	    ta.encrypter->keymaxlen) {
-		if(!ikev2_out_attr(IKEv2_KEY_LENGTH, ta.enckeylen,
-			       &ikev2_trans_attr_desc,
-			       ikev2_trans_attr_val_descs,
-			       &r_trans_pbs)) {
-			libreswan_log("ikev2_out_attr() failed");
-			return STF_INTERNAL_ERROR;
+
+	if (ta.encrypter != NULL) {
+		int defkeysize = crypto_req_keysize( parentSA ? 2 /* IKEv2 */ : 0 /* IPsec */ ,
+			ta.encrypt);
+
+		if (ta.enckeylen != 0){
+			if (ta.enckeylen != ta.encrypter->keydeflen &&
+			    ta.enckeylen != ta.encrypter->keyminlen &&
+			    ta.enckeylen != ta.encrypter->keymaxlen) {
+
+				return STF_INTERNAL_ERROR;
+			}
+		}
+
+		if (ta.enckeylen == 0) {
+			/* pick up from received proposal, if any */
+			unsigned int stoe = st->st_oakley.enckeylen;
+			if (stoe != 0) {
+				if (stoe == ta.encrypter->keyminlen ||
+				    stoe == ta.encrypter->keydeflen ||
+				    stoe == ta.encrypter->keymaxlen) {
+
+					ta.enckeylen = stoe;
+				}
+			} else {
+				ta.enckeylen = defkeysize;
+			}
+		}
+		/* check for mandatory keysize, add if needed */
+		if (defkeysize != 0) {
+			DBG(DBG_CONTROL,DBG_log(
+				"keysize is required - sending key length attribute"));
+			if(!ikev2_out_attr(IKEv2_KEY_LENGTH,
+					ta.enckeylen,
+					&ikev2_trans_attr_desc,
+					ikev2_trans_attr_val_descs,
+					&r_trans_pbs)) {
+
+					libreswan_log("ikev2_out_attr() failed");
+					return STF_INTERNAL_ERROR;
+				}
 		}
 	}
+
 	close_output_pbs(&r_trans_pbs);
 
 	/* Transform - integrity check */
@@ -1277,6 +1321,7 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA P
 	ta.integ_hash  = itl->integ_transforms[itl->integ_i];
 	ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
 								 ta.integ_hash);
+	/* XXX not true for AES_GCM */
 	passert(ta.integ_hasher != NULL);
 
 	ta.prf_hash    = itl->prf_transforms[itl->prf_i];
@@ -1346,7 +1391,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 			     attr_cnt++) {
 				struct db_attr *attr = &tr->attrs[attr_cnt];
 
-				if (attr->type.ikev2 == IKEv2_KEY_LENGTH)
+				if (attr->type.ipsec == IKEv2_KEY_LENGTH)
 					keylen = attr->val;
 			}
 
@@ -1358,7 +1403,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 					encrid = tr->transid;
 					observed_encr_keylen = keylen;
 					if (tr->transid == encr_transform &&
-					keylen == encr_keylen)
+					(keylen == -1 || encr_keylen == -1 || keylen == encr_keylen))
 						encr_matched = TRUE;
 				}
 				break;
@@ -1382,46 +1427,50 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 				continue;
 			}
 
-			if (esn_matched && integ_matched && encr_matched) {
-				DBG(DBG_CONTROLMORE, {
-					DBG_log("proposal %u", propnum);
+
+			DBG(DBG_CONTROLMORE, {
+					DBG_log("%s proposal %u",
+						(esn_matched && integ_matched && encr_matched) ? "matched" : "failed",
+						propnum);
 					if (pj->protoid == PROTO_v2_ESP) {
 					   DBG_log("            %s encr= (policy:%s(%d) vs offered:%s(%d))",
-						encr_matched ? "      " : "failed",
+						encr_matched ? "succeeded" : "failed",
 						enum_name(&ikev2_trans_type_encr_names, encrid), observed_encr_keylen,
 						enum_name(&ikev2_trans_type_encr_names,
 							  encr_transform), encr_keylen);
 					}
 					DBG_log("            %s integ=(policy:%s(%d) vs offered:%s(%d))",
-						integ_matched ? "      " : "failed",
+						integ_matched ? "succeeded" : "failed",
 						enum_name(&ikev2_trans_type_integ_names, integid), observed_integ_keylen,
 						enum_name(&ikev2_trans_type_integ_names,
 							  integ_transform), integ_keylen);
 					DBG_log("            %s esn=  (policy:%s vs offered:%s)",
-						esn_matched ? "      " : "failed",
+						esn_matched ? "succeeded" : "failed",
 						enum_name(&ikev2_trans_type_esn_names, esnid),
 						enum_name(&ikev2_trans_type_esn_names,
 							  esn_transform));
-				});
+			});
+
+			if (esn_matched && integ_matched && encr_matched) {
 				return TRUE;
 			}
 		}
 		DBG(DBG_CONTROLMORE, {
-			DBG_log("proposal %u", propnum);
+			DBG_log("not matched proposal %u", propnum);
 			if (pj->protoid == PROTO_v2_ESP) {
 			   DBG_log("            %s encr= (policy:%s(%d) vs offered:%s(%d))",
-				encr_matched ? "      " : "failed",
+				encr_matched ? "succeeded" : "failed",
 				enum_name(&ikev2_trans_type_encr_names, encrid), observed_encr_keylen,
 				enum_name(&ikev2_trans_type_encr_names,
 					  encr_transform), encr_keylen);
 			}
 			DBG_log("            %s integ=(policy:%s(%d) vs offered:%s(%d))",
-				integ_matched ? "      " : "failed",
+				integ_matched ? "succeeded" : "failed",
 				enum_name(&ikev2_trans_type_integ_names, integid), observed_integ_keylen,
 				enum_name(&ikev2_trans_type_integ_names,
 					  integ_transform), integ_keylen);
 			DBG_log("            %s esn=  (policy:%s vs offered:%s)",
-				esn_matched ? "      " : "failed",
+				esn_matched ? "succeeded" : "failed",
 				enum_name(&ikev2_trans_type_esn_names, esnid),
 				enum_name(&ikev2_trans_type_esn_names,
 					  esn_transform));
