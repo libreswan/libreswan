@@ -24,13 +24,16 @@
 
 /* Attribute type and value pair.
  * Note: only "basic" values are represented so far.
+ * v2 is drastically simplified: there is only one attribute type
+ * and it applies to any v2 protocols.
  */
 struct db_attr {
 	union {
-		enum ikev1_oakley_attr oakley; /* ISAKMP_ATTR_AF_TV is implied;
-		                                  0 for end */
+		enum ikev1_oakley_attr oakley;	/* ISAKMP_ATTR_AF_TV is implied;
+						 * 0 for end
+						 */
 		enum ikev1_ipsec_attr ipsec;
-		unsigned int ikev2;
+		enum ikev2_trans_attr_type v2;	/* all v2 protocols */
 	} type;
 	u_int16_t val;
 };

@@ -849,9 +849,12 @@ enum ikev2_trans_type_esn {
 	IKEv2_ESN_ENABLED = 1,
 };
 
-/* RFC 4306 Section 3.3.5 */
+/*
+ * RFC 4306 Section 3.3.5
+ * Interestingly, there is only one attribute defined.
+ */
 enum ikev2_trans_attr_type {
-	IKEv2_KEY_LENGTH = 14,
+	IKEv2_KEY_LENGTH = 14,	/* note: == OAKLEY_KEY_LENGTH */
 };
 
 /* RFC 5966 Section 3.13.1 */
