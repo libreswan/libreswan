@@ -981,6 +981,7 @@ int alg_info_snprint(char *buf, int buflen,
 	{
 		struct alg_info_esp *alg_info_esp =
 			(struct alg_info_esp *)alg_info;
+
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
 			snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d)_%03d",
 				enum_name(&esp_transformid_names, esp_info->esp_ealg_id) +
@@ -1022,6 +1023,7 @@ int alg_info_snprint(char *buf, int buflen,
 	{
 		struct alg_info_esp *alg_info_esp =
 			(struct alg_info_esp *)alg_info;
+
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
 			snprintf(ptr, buflen, "%s(%d)_%03d",
 				enum_name(&auth_alg_names, esp_info->esp_aalg_id) +
