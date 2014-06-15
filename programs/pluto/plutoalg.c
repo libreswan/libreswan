@@ -412,6 +412,7 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 			}
 			ptr += ret;
 			buflen -= ret;
+			sep = ", ";
 		}
 	}
 }
