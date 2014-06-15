@@ -1767,6 +1767,11 @@ enum_names *const ikev2_transid_val_descs[] = {
 const unsigned int ikev2_transid_val_descs_roof =
 	elemsof(ikev2_transid_val_descs);
 
+const struct enum_enum_names v2_transform_ID_enums = {
+	IKEv2_TRANS_TYPE_ENCR,	IKEv2_TRANS_TYPE_ESN,
+	&ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ENCR]
+};
+
 /* Transform Attributes */
 static const char *const ikev2_trans_attr_name[] = {
 	"IKEv2_KEY_LENGTH",
