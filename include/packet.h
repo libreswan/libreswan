@@ -45,6 +45,7 @@ enum field_type {
 	ft_lv,			/* length/value field of attribute */
 	ft_enum,		/* value from an enumeration */
 	ft_loose_enum,		/* value from an enumeration with only some names known */
+	ft_enum_enum,		/* value from an enumeration with name table based on previous enum */
 	ft_af_enum,		/* Attribute Format + value from an enumeration */
 	ft_af_loose_enum,	/* Attribute Format + enumeration, some names known */
 	ft_set,			/* bits representing set */
@@ -57,7 +58,13 @@ typedef const struct field_desc {
 	enum field_type field_type;
 	int size;		/* size, in bytes, of field */
 	const char *name;
-	const void *desc;	/* enum_names for enum or char *[] for bits */
+	/*
+	 * cheap union:
+	 *   enum_names * for ft_enum,
+	 *   enum_enum_names * for ft_enum_enum,
+	 *   char *[] for ft_set
+	 */
+	const void *desc;
 } field_desc;
 
 /* The formatting of input and output of packets is done
