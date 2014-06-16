@@ -632,7 +632,7 @@ bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 	 * ... then get default (really max!) key_len
 	 */
 	if (key_len == 0)
-		key_len = kernel_alg_esp_enc_max_keylen(ealg) * BITS_PER_BYTE;
+		key_len = crypto_req_keysize(0 /* ESP */, ealg);
 
 	/*
 	 * Simple test to toss low key_len.
@@ -666,7 +666,7 @@ bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 			enum_name(&esp_transformid_names, ealg),
 			key_len,
 			enum_name(&auth_alg_names, aalg),
-			ealg_insecure ? "insecure key_len and enc. alg. not listed in \"esp\" string" : "strict flag");
+			ealg_insecure ? "insecure key length" : "strict flag");
 		return FALSE;
 	}
 	return TRUE;
