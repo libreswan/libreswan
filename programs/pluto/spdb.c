@@ -1339,6 +1339,7 @@ struct db_sa *sa_copy_sa_first(struct db_sa *sa)
 	struct db_prop *p;
 
 	nsa = clone_thing(*sa, "sa copy prop_conj");
+	nsa->dynamic = TRUE;
 	if (nsa->prop_conj_cnt == 0)
 		return nsa;
 
