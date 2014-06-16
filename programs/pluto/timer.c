@@ -181,16 +181,17 @@ static void retransmit_v1_msg(struct state *st)
 			ip_str(&c->spd.that.host_addr),
 			c->name, st->st_serialno, try, try_limit));
 
+	/* first calculate delay as the value BEFORE backoff */
 	if (st->st_retransmit < maximum_retransmissions) {
-		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
+		delay = event_retransmit_delay_0;
 	} else if ((st->st_state == STATE_MAIN_I1 ||
 			st->st_state == STATE_AGGR_I1) &&
 		c->sa_keying_tries == 0 &&
 		st->st_retransmit < maximum_retransmissions_initial) {
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
+		delay = event_retransmit_delay_0;
 	} else if (st->st_state == STATE_QUICK_R1 &&
 		st->st_retransmit < maximum_retransmissions_quick_r1) {
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
+		delay = event_retransmit_delay_0;
 	}
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
@@ -201,7 +202,19 @@ static void retransmit_v1_msg(struct state *st)
 	}
 
 	if (delay != 0) {
-		st->st_retransmit++;
+		/*
+		 * Very carefully calculate capped exponential backoff.
+		 * The test is expressed as a right shift to avoid overflow.
+		 * Even then, we must avoid a right shift of the width of
+		 * the data or more since it is not defined by the C standard.
+		 * Surely a bound of 8 (factor of 256) is safe and more than enough.
+		 */
+		u_int8_t x = st->st_retransmit++;	/* ??? odd type */
+
+		delay = (x > 8 ||
+			EVENT_RETRANSMIT_DELAY_CAP >> x < delay) ?
+			EVENT_RETRANSMIT_DELAY_CAP : delay << x;
+
 		whack_log(RC_RETRANSMISSION,
 			"%s: retransmission; will wait %lus for response",
 			enum_name(&state_names, st->st_state),
@@ -304,16 +317,17 @@ static void retransmit_v2_msg(struct state *st)
 			ip_str(&c->spd.that.host_addr), c->name,
 			st->st_serialno, try, try_limit));
 
+	/* first calculate delay as the value BEFORE backoff */
 	if (st->st_retransmit < maximum_retransmissions) {
-		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
+		delay = event_retransmit_delay_0;
 	} else if (st->st_state == STATE_PARENT_I1 &&
 		c->sa_keying_tries == 0 &&
 		st->st_retransmit < maximum_retransmissions_initial) {
-		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
+		delay = event_retransmit_delay_0;
 	} else if ((st->st_state == STATE_PARENT_I2 ||
 			st->st_state == STATE_PARENT_I3) &&
 		st->st_retransmit < maximum_retransmissions_quick_r1) {
-		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
+		delay = event_retransmit_delay_0;
 	}
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
@@ -324,7 +338,18 @@ static void retransmit_v2_msg(struct state *st)
 	}
 
 	if (delay != 0) {
-		st->st_retransmit++;
+		/*
+		 * Very carefully calculate capped exponential backoff.
+		 * The test is expressed as a right shift to avoid overflow.
+		 * Even then, we must avoid a right shift of the width of
+		 * the data or more since it is not defined by the C standard.
+		 * Surely a bound of 8 (factor of 256) is safe and more than enough.
+		 */
+		u_int8_t x = st->st_retransmit++;	/* ??? odd type */
+
+		delay = (x > 8 ||
+			EVENT_RETRANSMIT_DELAY_CAP >> x < delay) ?
+			EVENT_RETRANSMIT_DELAY_CAP : delay << x;
 
 		whack_log(RC_RETRANSMISSION,
 			"%s: retransmission; will wait %lus for response",
@@ -644,19 +669,7 @@ void handle_next_timer_event(void)
 		}
 		delete_liveness_event(st);
 		delete_dpd_event(st);
-		{
-			/*
-			 * ??? this odd code is my best reconstruction of
-			 * what was intended by the original author.
-			 * It doesn't make complete sense.
-			 */
-			enum event_type x = EVENT_SA_EXPIRE;
-			time_t d = deltasecs(st->st_margin);
-
-			if(st->st_ikev2)
-				d = ikev2_replace_delay(st, &x, NULL);
-			event_schedule(x, d, st);
-		}
+		event_schedule(EVENT_SA_EXPIRE, deltasecs(st->st_margin), st);
 	}
 	break;
 

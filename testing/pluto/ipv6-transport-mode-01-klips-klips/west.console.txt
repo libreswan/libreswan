@@ -14,7 +14,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  # make sure that clear text does not get through
 west #
- ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::45 -p ipv6-icmp --icmpv6-type echo-reply -j DROP
+ ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::23 -p ipv6-icmp --icmpv6-type echo-reply -j DROP
 west #
  # confirm with a ping
 west #
@@ -39,6 +39,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add v6-transport
+002 added connection description "v6-transport"
 west #
  ipsec auto --status
 000 using kernel interface: klips
@@ -124,15 +125,19 @@ west #
 initdone
 west #
  ipsec auto --up  v6-transport
+002 "v6-transport" #1: initiating Main Mode
 104 "v6-transport" #1: STATE_MAIN_I1: initiate
 003 "v6-transport" #1: received Vendor ID payload [Dead Peer Detection]
 003 "v6-transport" #1: received Vendor ID payload [FRAGMENTATION]
 003 "v6-transport" #1: received Vendor ID payload [RFC 3947]
+002 "v6-transport" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "v6-transport" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 003 "v6-transport" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 108 "v6-transport" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "v6-transport" #1: received Vendor ID payload [CAN-IKEv2]
+002 "v6-transport" #1: Main mode peer ID is ID_FQDN: '@east'
 004 "v6-transport" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
+002 "v6-transport" #2: initiating Quick Mode RSASIG+ENCRYPT+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "v6-transport" #2: STATE_QUICK_I1: initiate
 004 "v6-transport" #2: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
@@ -144,11 +149,11 @@ PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
 64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 2001:db8:1:2::23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+
 west #
  ipsec look
 west NOW
-2001:db8:1:2::45/128 -> 2001:db8:1:2::23/128 => esp0x924c2d61@2001:db8:1:2::23  (8)
+2001:db8:1:2::45/128 -> 2001:db8:1:2::23/128 => esp0x43952d72@2001:db8:1:2::23  (8)
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
@@ -191,10 +196,10 @@ done
 west #
  ipsec look
 west NOW
-2001:db8:1:2::45/128 -> 2001:db8:1:2::23/128 => esp0x924c2d61@2001:db8:1:2::23  (8)
+2001:db8:1:2::45/128 -> 2001:db8:1:2::23/128 => esp0x43952d72@2001:db8:1:2::23  (8)
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0x65a97063@2001:db8:1:2::45 ESP_AES_HMAC_SHA1: dir=in  src=2001:db8:1:2::23 iv_bits=128bits iv=0xa9b4fbac18dc238d426680c249b4e187 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=4294723049 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=1
-esp0x924c2d61@2001:db8:1:2::23 ESP_AES_HMAC_SHA1: dir=out src=2001:db8:1:2::45 iv_bits=128bits iv=0x0143cdb5f7beed0535e09cda3533af34 ooowin=64 seq=4 alen=160 aklen=160 eklen=128 jiffies=4294723049 life(c,s,h)=bytes(624,0,0) idle=12 natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
+esp0x41aba629@2001:db8:1:2::45 ESP_AES_HMAC_SHA1: dir=in  src=2001:db8:1:2::23 iv_bits=128bits iv=0x4a3edae1b3c687e351d7e4917b1f45d0 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=4294762534 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=1
+esp0x43952d72@2001:db8:1:2::23 ESP_AES_HMAC_SHA1: dir=out src=2001:db8:1:2::45 iv_bits=128bits iv=0xb7c52f7d337a0b4e12162af1005eb234 ooowin=64 seq=4 alen=160 aklen=160 eklen=128 jiffies=4294762534 life(c,s,h)=bytes(624,0,0) idle=12 natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES

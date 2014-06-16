@@ -209,7 +209,7 @@ bool ikev2_out_sa(pb_stream *outs,
 					struct db_attr *attr =
 						&tr->attrs[attr_cnt];
 
-					if(!ikev2_out_attr(attr->type.ikev2,
+					if(!ikev2_out_attr(attr->type.v2,
 						       attr->val,
 						       &ikev2_trans_attr_desc,
 						       ikev2_trans_attr_val_descs,
@@ -469,6 +469,12 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 						}
 					}
 				}
+				/* Ensure KEY_LENGTH or OAKLEY_KEY_LENGTH if encr algo requires one */
+				if (dtfone->encr_keylen == 0)
+					dtfone->encr_keylen = crypto_req_keysize(
+						f->parentSA ? 2 /* IKev2 */ : 0 /* ESP */,
+						dtfone->encr_transid);
+
 				tot_trans++;
 			}
 		}
@@ -563,7 +569,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 
 			tr[tr_pos].attrs = attrs;
 			tr[tr_pos].attr_cnt = 1;
-			attrs->type.ikev2 = IKEv2_KEY_LENGTH;
+			attrs->type.v2 = IKEv2_KEY_LENGTH;
 			attrs->val = dtfone->encr_keylen;
 		}
 		tr_pos++;
@@ -655,6 +661,7 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 		struct db_v2_trans      *tr;
 		unsigned int tr_cnt;
 		int encrid, integid, prfid, dhid, esnid;
+		int encrwin = -2, integwin = -2, prfwin = -2;
 
 		pd = &sadb->prop_disj[pd_cnt];
 		encrid = integid = prfid = dhid = esnid = 0;
@@ -674,80 +681,107 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 
 			tr = &pj->trans[tr_cnt];
 
+			DBG(DBG_CONTROL, DBG_log(
+				"considering Transform Type %s, TransID %d",
+				enum_name(&ikev2_trans_type_names,
+					tr->transform_type),
+				tr->transid));
+
 			for (attr_cnt = 0; attr_cnt < tr->attr_cnt;
 			     attr_cnt++) {
 				struct db_attr *attr = &tr->attrs[attr_cnt];
 
-				if (attr->type.ikev2 == IKEv2_KEY_LENGTH)
+				if (attr->type.v2 == IKEv2_KEY_LENGTH) {
 					keylen = attr->val;
+					DBG(DBG_CONTROL, DBG_log(
+						"IKEv2_KEY_LENGTH attribute %d",
+						keylen));
+				}
 			}
 
-/* shouldn't these assignments of tr->transid be inside their if statements? */
 			switch (tr->transform_type) {
 			case IKEv2_TRANS_TYPE_ENCR:
 				encrid = tr->transid;
+				DBG(DBG_CONTROL, DBG_log(
+					"encrid(%d), keylen(%d), encr_keylen(%d)",
+					encrid, keylen, encr_keylen));
 				if (tr->transid == encr_transform &&
-				    keylen == encr_keylen)
+				    (keylen == 0 || encr_keylen == -1 || keylen == encr_keylen)) {
 					encr_matched = TRUE;
+					encrwin = keylen == -1 || keylen == 0 ? encr_keylen : keylen;
+				}
+				DBG(DBG_CONTROLMORE, {
+					char esb[ENUM_SHOW_BUF_LEN];
+					DBG_log("proposal %u %s encr= (policy:%s(%d) vs offered:%s(%d))",
+						propnum,
+						encr_matched ? "succeeded" : "failed",
+						enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
+						encrwin,
+						enum_show(&ikev2_trans_type_encr_names, encr_transform),
+						encr_keylen);
+				});
 				break;
 
 			case IKEv2_TRANS_TYPE_INTEG:
 				integid = tr->transid;
 				if (tr->transid == integ_transform &&
-				    keylen == integ_keylen)
+				    keylen == integ_keylen) {
 					integ_matched = TRUE;
-				keylen = integ_keylen;
+					integwin = keylen;
+				}
+				DBG(DBG_CONTROLMORE, {
+					char esb[ENUM_SHOW_BUF_LEN];
+					DBG_log("            %s integ=(policy:%s(%d) vs offered:%s(%d))",
+						integ_matched ? "succeeded" : "failed",
+						enum_showb(&ikev2_trans_type_integ_names, integid, esb, sizeof(esb)),
+						integwin,
+						enum_show(&ikev2_trans_type_integ_names,
+							  integ_transform),
+						integ_keylen);
+				});
 				break;
 
 			case IKEv2_TRANS_TYPE_PRF:
 				prfid = tr->transid;
 				if (tr->transid == prf_transform &&
-				    keylen == prf_keylen)
+				    keylen == prf_keylen) {
 					prf_matched = TRUE;
-				keylen = prf_keylen;
+					prfwin = keylen;
+				}
+				DBG(DBG_CONTROLMORE, {
+					char esb[ENUM_SHOW_BUF_LEN];
+					DBG_log("            %s prf=  (policy:%s(%d) vs offered:%s(%d))",
+						prf_matched ? "succeeded" : "failed",
+						enum_showb(&ikev2_trans_type_prf_names, prfid, esb, sizeof(esb)),
+						prfwin,
+						enum_show(&ikev2_trans_type_prf_names,
+							  prf_transform),
+						prf_keylen);
+				});
 				break;
 
 			case IKEv2_TRANS_TYPE_DH:
+				/* demand keylen == -1? */
 				dhid = tr->transid;
 				if (tr->transid == dh_transform)
 					dh_matched = TRUE;
+				DBG(DBG_CONTROLMORE, {
+					char esb[ENUM_SHOW_BUF_LEN];
+					DBG_log("            %s dh=   (policy:%s vs offered:%s)",
+						dh_matched ? "succeeded" : "failed",
+						enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
+						enum_show(&oakley_group_names, dh_transform));
+				});
 				break;
 
 			default:
-				continue; /* could be clearer as a break */
+				/* ignore this unknown or uninteresting transform */
+				continue;
 			}
 
 			/* TODO: esn_matched not tested! */
 			/* TODO: This does not support AES GCM with no integ */
 			if (dh_matched && prf_matched && integ_matched && encr_matched) {
-				if (DBGP(DBG_CONTROLMORE)) {
-					/* note: enum_show uses a static buffer so more than one call per
-					   statement is dangerous */
-					char esb[ENUM_SHOW_BUF_LEN];
-
-					DBG_log("proposal %u %s encr= (policy:%s(%d) vs offered:%s(%d))",
-						propnum,
-						encr_matched ? "succeeded" : "failed",
-						enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
-						encr_keylen,
-						enum_show(&ikev2_trans_type_encr_names, encr_transform),
-						keylen);
-					/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
-					DBG_log("            %s integ=(policy:%s vs offered:%s)",
-						integ_matched ? "succeeded" : "failed",
-						enum_showb(&ikev2_trans_type_integ_names, integid, esb, sizeof(esb)),
-						enum_show(&ikev2_trans_type_integ_names,
-							  integ_transform));
-					DBG_log("            %s prf=  (policy:%s vs offered:%s)",
-						prf_matched ? "succeeded" : "failed",
-						enum_showb(&ikev2_trans_type_prf_names, prfid, esb, sizeof(esb)),
-						enum_show(&ikev2_trans_type_prf_names,
-							  prf_transform));
-					DBG_log("            %s dh=   (policy:%s vs offered:%s)",
-						dh_matched ? "succeeded" : "failed",
-						enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
-						enum_show(&oakley_group_names, dh_transform));
-				}
 				return TRUE;
 			}
 		}
@@ -756,12 +790,14 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 			   statement is dangerous */
 			char esb[ENUM_SHOW_BUF_LEN];
 
-			DBG_log("proposal %u %s encr= (policy:%s vs offered:%s)",
+			DBG_log("proposal %u %s encr= (policy:%s(%d) vs offered:%s(%d))",
 				propnum,
 				encr_matched ? "succeeded" : "failed",
 				enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
+				encrwin,
 				enum_show(&ikev2_trans_type_encr_names,
-					  encr_transform));
+					  encr_transform),
+					encr_keylen);
 			/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
 			DBG_log("            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "succeeded" : "failed",
@@ -778,7 +814,6 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
 				enum_show(&oakley_group_names, dh_transform));
 		}
-
 	}
 	return FALSE;
 }
@@ -1064,16 +1099,50 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 	if (!out_struct(&r_trans, &ikev2_trans_desc,
 			&r_proposal_pbs, &r_trans_pbs))
 		impossible();
-	if (ta.encrypter && ta.encrypter->keyminlen !=
-	    ta.encrypter->keymaxlen) {
-		if(!ikev2_out_attr(IKEv2_KEY_LENGTH, ta.enckeylen,
-			       &ikev2_trans_attr_desc,
-			       ikev2_trans_attr_val_descs,
-			       &r_trans_pbs)) {
-			libreswan_log("ikev2_out_attr() failed");
-			return STF_INTERNAL_ERROR;
+
+	if (ta.encrypter != NULL) {
+		int defkeysize = crypto_req_keysize( parentSA ? 2 /* IKEv2 */ : 0 /* IPsec */ ,
+			ta.encrypt);
+
+		if (ta.enckeylen != 0){
+			if (ta.enckeylen != ta.encrypter->keydeflen &&
+			    ta.enckeylen != ta.encrypter->keyminlen &&
+			    ta.enckeylen != ta.encrypter->keymaxlen) {
+
+				return STF_INTERNAL_ERROR;
+			}
+		}
+
+		if (ta.enckeylen == 0) {
+			/* pick up from received proposal, if any */
+			unsigned int stoe = st->st_oakley.enckeylen;
+			if (stoe != 0) {
+				if (stoe == ta.encrypter->keyminlen ||
+				    stoe == ta.encrypter->keydeflen ||
+				    stoe == ta.encrypter->keymaxlen) {
+
+					ta.enckeylen = stoe;
+				}
+			} else {
+				ta.enckeylen = defkeysize;
+			}
+		}
+		/* check for mandatory keysize, add if needed */
+		if (defkeysize != 0) {
+			DBG(DBG_CONTROL,DBG_log(
+				"keysize is required - sending key length attribute"));
+			if(!ikev2_out_attr(IKEv2_KEY_LENGTH,
+					ta.enckeylen,
+					&ikev2_trans_attr_desc,
+					ikev2_trans_attr_val_descs,
+					&r_trans_pbs)) {
+
+					libreswan_log("ikev2_out_attr() failed");
+					return STF_INTERNAL_ERROR;
+				}
 		}
 	}
+
 	close_output_pbs(&r_trans_pbs);
 
 	/* Transform - integrity check */
@@ -1156,7 +1225,7 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA P
 	if (sadb == NULL) {
 		st->st_sadb = &oakley_sadb[policy_index];
 		sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-					 st->st_sadb, 0);
+					 st->st_sadb, FALSE);
 		if (sadb != NULL)
 			st->st_sadb = sadb;
 		sadb = st->st_sadb;
@@ -1277,6 +1346,7 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA P
 	ta.integ_hash  = itl->integ_transforms[itl->integ_i];
 	ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
 								 ta.integ_hash);
+	/* XXX not true for AES_GCM */
 	passert(ta.integ_hasher != NULL);
 
 	ta.prf_hash    = itl->prf_transforms[itl->prf_i];
@@ -1324,13 +1394,12 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 		pd = &sadb->prop_disj[pd_cnt];
 		encrid = integid = prfid = dhid = esnid = 0;
 
-
 		/* XXX need to fix this */
 		if (pd->prop_cnt != 1)
 			continue;
 
 		pj = &pd->props[0];
-		if (pj->protoid == PROTO_ISAKMP)
+		if (pj->protoid == PROTO_v2_ISAKMP)
 			continue;
 
 		if (pj->protoid == PROTO_v2_AH)
@@ -1346,7 +1415,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 			     attr_cnt++) {
 				struct db_attr *attr = &tr->attrs[attr_cnt];
 
-				if (attr->type.ikev2 == IKEv2_KEY_LENGTH)
+				if (attr->type.v2 == IKEv2_KEY_LENGTH)
 					keylen = attr->val;
 			}
 
@@ -1358,7 +1427,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 					encrid = tr->transid;
 					observed_encr_keylen = keylen;
 					if (tr->transid == encr_transform &&
-					keylen == encr_keylen)
+					(keylen == -1 || encr_keylen == -1 || keylen == encr_keylen))
 						encr_matched = TRUE;
 				}
 				break;
@@ -1382,46 +1451,50 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 				continue;
 			}
 
-			if (esn_matched && integ_matched && encr_matched) {
-				DBG(DBG_CONTROLMORE, {
-					DBG_log("proposal %u", propnum);
+
+			DBG(DBG_CONTROLMORE, {
+					DBG_log("%s proposal %u",
+						(esn_matched && integ_matched && encr_matched) ? "matched" : "failed",
+						propnum);
 					if (pj->protoid == PROTO_v2_ESP) {
 					   DBG_log("            %s encr= (policy:%s(%d) vs offered:%s(%d))",
-						encr_matched ? "      " : "failed",
+						encr_matched ? "succeeded" : "failed",
 						enum_name(&ikev2_trans_type_encr_names, encrid), observed_encr_keylen,
 						enum_name(&ikev2_trans_type_encr_names,
 							  encr_transform), encr_keylen);
 					}
 					DBG_log("            %s integ=(policy:%s(%d) vs offered:%s(%d))",
-						integ_matched ? "      " : "failed",
+						integ_matched ? "succeeded" : "failed",
 						enum_name(&ikev2_trans_type_integ_names, integid), observed_integ_keylen,
 						enum_name(&ikev2_trans_type_integ_names,
 							  integ_transform), integ_keylen);
 					DBG_log("            %s esn=  (policy:%s vs offered:%s)",
-						esn_matched ? "      " : "failed",
+						esn_matched ? "succeeded" : "failed",
 						enum_name(&ikev2_trans_type_esn_names, esnid),
 						enum_name(&ikev2_trans_type_esn_names,
 							  esn_transform));
-				});
+			});
+
+			if (esn_matched && integ_matched && encr_matched) {
 				return TRUE;
 			}
 		}
 		DBG(DBG_CONTROLMORE, {
-			DBG_log("proposal %u", propnum);
+			DBG_log("not matched proposal %u", propnum);
 			if (pj->protoid == PROTO_v2_ESP) {
 			   DBG_log("            %s encr= (policy:%s(%d) vs offered:%s(%d))",
-				encr_matched ? "      " : "failed",
+				encr_matched ? "succeeded" : "failed",
 				enum_name(&ikev2_trans_type_encr_names, encrid), observed_encr_keylen,
 				enum_name(&ikev2_trans_type_encr_names,
 					  encr_transform), encr_keylen);
 			}
 			DBG_log("            %s integ=(policy:%s(%d) vs offered:%s(%d))",
-				integ_matched ? "      " : "failed",
+				integ_matched ? "succeeded" : "failed",
 				enum_name(&ikev2_trans_type_integ_names, integid), observed_integ_keylen,
 				enum_name(&ikev2_trans_type_integ_names,
 					  integ_transform), integ_keylen);
 			DBG_log("            %s esn=  (policy:%s vs offered:%s)",
-				esn_matched ? "      " : "failed",
+				esn_matched ? "succeeded" : "failed",
 				enum_name(&ikev2_trans_type_esn_names, esnid),
 				enum_name(&ikev2_trans_type_esn_names,
 					  esn_transform));
@@ -1762,4 +1835,3 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 
 	return STF_OK;
 }
-

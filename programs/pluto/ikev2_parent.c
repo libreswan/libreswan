@@ -68,11 +68,12 @@
 	else \
 		send_v2_notification_from_md(md, (t), (d));
 
-#define SEND_NOTIFICATION(t) \
-	if (st) \
-		send_v2_notification_from_state(st, st->st_state, t, NULL); \
-	else \
-		send_v2_notification_from_md(md, t, NULL);
+#define SEND_NOTIFICATION(t) { \
+		if (st) \
+			send_v2_notification_from_state(st, st->st_state, t, NULL); \
+		else \
+			send_v2_notification_from_md(md, t, NULL); \
+	}
 
 static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 					struct pluto_crypto_req *r,
@@ -166,7 +167,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 
 		st->st_sadb = &oakley_sadb[policy_index];
 		sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-					 st->st_sadb, 0);
+					 st->st_sadb, FALSE);
 		if (sadb != NULL)
 			st->st_sadb = sadb;
 		sadb = st->st_sadb = sa_v2_convert(st->st_sadb);
@@ -839,7 +840,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
-	pb_stream *keyex_pbs;
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
@@ -899,21 +899,33 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		}
 	}
 
+	/* KE in */
 	{
-		v2_notification_t rn;
-		chunk_t dc;
-		keyex_pbs = &md->chain[ISAKMP_NEXT_v2KE]->pbs;
-		/* KE in */
-		rn = accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
-			       keyex_pbs);
-		if (rn != v2N_NOTHING_WRONG) {
+		/* note: v1 notification! */
+		notification_t rn = accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
+			       &md->chain[ISAKMP_NEXT_v2KE]->pbs);
+
+		switch (rn) {
+		case NOTHING_WRONG:
+			break;
+		case INVALID_KEY_INFORMATION:
+		{
+			/*
+			 * RFC 5996 1.3 says that we should return
+			 * our desired group number when rejecting sender's.
+			 */
 			u_int16_t group_number = htons(
 				st->st_oakley.group->group);
+			chunk_t dc = { (unsigned char *)&group_number,
+				sizeof(group_number) };
 
-			dc.ptr = (unsigned char *)&group_number;
-			dc.len = 2;
-			SEND_NOTIFICATION_AA(v2N_INVALID_KE_PAYLOAD, &dc);
+			send_v2_notification_from_state(st, st->st_state,
+				v2N_INVALID_KE_PAYLOAD, &dc);
 			delete_state(st);
+			return STF_FAIL;	/* don't send second notification */
+		}
+		default:
+			/* hope v1 and v2 notifications correspond! */
 			return STF_FAIL + rn;
 		}
 	}
@@ -1058,7 +1070,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 * The responder SPI ought to have been 0 (but might not be).
 			 * See rfc5996bis-04 2.6.
 			 */
-			libreswan_log("%s: received %s but is ignoring it",
+			libreswan_log("%s: received %s - ignored possibly spoofed packet",
 				enum_name(&state_names, st->st_state),
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type));
@@ -1476,7 +1488,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 		a.isaa_type = IKEv2_AUTH_PSK;
 	} else {
 		/* what else is there?... DSS not implemented. */
-		return STF_FAIL;
+		loglog(RC_LOG_SERIOUS, "Unknown or not implemented IKEv2 AUTH policy");
+		return STF_FATAL;
 	}
 
 	if (!out_struct(&a,
@@ -1486,12 +1499,16 @@ static stf_status ikev2_send_auth(struct connection *c,
 		return STF_INTERNAL_ERROR;
 
 	if (c->policy & POLICY_RSASIG) {
-		if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs))
-			return STF_FATAL + v2N_AUTHENTICATION_FAILED;
+		if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs)) {
+				loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
+			return STF_FATAL;
+		}
 
 	} else if (c->policy & POLICY_PSK) {
-		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs))
-			return STF_FAIL + v2N_AUTHENTICATION_FAILED;
+		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs)) {
+				loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
+			return STF_FATAL;
+		}
 	}
 
 	close_output_pbs(&a_pbs);
@@ -1530,8 +1547,14 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	md->pst = pst;
 
 	/* parent had crypto failed, replace it with rekey! */
+	/* ??? seems wrong: not conditional at all */
 	delete_event(pst);
-	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), pst);
+	{
+		enum event_type x = EVENT_SA_REPLACE;
+		time_t delay = ikev2_replace_delay(st, &x, INITIATOR);
+
+		event_schedule(x, delay, pst);
+	}
 
 	/* need to force parent state to I2 */
 	change_state(pst, STATE_PARENT_I2);
@@ -2000,7 +2023,12 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	c->newest_isakmp_sa = st->st_serialno;
 
 	delete_event(st);
-	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), st);
+	{
+		enum event_type x = EVENT_SA_REPLACE;
+		time_t delay = ikev2_replace_delay(st, &x, RESPONDER);
+
+		event_schedule(x, delay, st);
+	}
 
 	authstart = reply_stream.cur;
 	/* send response */

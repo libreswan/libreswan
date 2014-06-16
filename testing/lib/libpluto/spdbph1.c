@@ -75,7 +75,7 @@ main(int argc, char *argv[]){
 	gsp = oakley_alg_makedb(aii,
 				&oakley_sadb[POLICY_RSASIG >>
 					     POLICY_ISAKMP_SHIFT],
-				-1);
+				FALSE);
 
 	sa_print(gsp);
 

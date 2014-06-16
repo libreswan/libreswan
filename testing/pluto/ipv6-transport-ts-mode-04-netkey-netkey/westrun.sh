@@ -1,4 +1,3 @@
 ipsec auto --up  v6-transport
-ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-ipsec look
+echo "transmitted test" | nc -p 1701 2001:db8:1:2::23 1701
 echo done
