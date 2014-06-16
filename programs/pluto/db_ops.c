@@ -169,7 +169,7 @@ out:
 }
 
 /*	Expand storage for transforms by number delta_trans */
-static int db_trans_expand(struct db_context *ctx, int delta_trans)
+static void db_trans_expand(struct db_context *ctx, int delta_trans)
 {
 	int ret = -1;
 	struct db_trans *new_trans, *old_trans;
@@ -179,8 +179,10 @@ static int db_trans_expand(struct db_context *ctx, int delta_trans)
 	old_trans = ctx->trans0;
 	new_trans = ALLOC_BYTES_ST( sizeof(struct db_trans) * max_trans,
 				    "db_context->trans (expand)", db_trans_st);
-	if (!new_trans)
-		goto out;
+	if (!new_trans) {
+		libreswan_log("alloc failed in db_trans_expand()");
+		return;
+	}
 	memcpy(new_trans, old_trans, ctx->max_trans * sizeof(struct db_trans));
 
 	/* update trans0 (obviously) */
@@ -198,17 +200,13 @@ static int db_trans_expand(struct db_context *ctx, int delta_trans)
 	ctx->max_trans = max_trans;
 	if (old_trans)
 		PFREE_ST(old_trans, db_trans_st);
-	ret = 0;
-out:
-	return ret;
 }
 /*
  *	Expand storage for attributes by delta_attrs number AND
  *	rewrite trans->attr pointers
  */
-static int db_attrs_expand(struct db_context *ctx, int delta_attrs)
+static void db_attrs_expand(struct db_context *ctx, int delta_attrs)
 {
-	int ret = -1;
 	struct db_attr *new_attrs, *old_attrs;
 	struct db_trans *t;
 	unsigned int ti;
@@ -218,8 +216,10 @@ static int db_attrs_expand(struct db_context *ctx, int delta_attrs)
 	old_attrs = ctx->attrs0;
 	new_attrs = ALLOC_BYTES_ST( sizeof(struct db_attr) * max_attrs,
 				    "db_context->attrs (expand)", db_attrs_st);
-	if (!new_attrs)
-		goto out;
+	if (!new_attrs) {
+		libreswan_log("alloc failed in db_attrs_expand()");
+		return;
+	}
 
 	memcpy(new_attrs, old_attrs, ctx->max_attrs * sizeof(struct db_attr));
 
@@ -251,9 +251,6 @@ static int db_attrs_expand(struct db_context *ctx, int delta_attrs)
 	ctx->max_attrs = max_attrs;
 	if (old_attrs)
 		PFREE_ST(old_attrs, db_attrs_st);
-	ret = 0;
-out:
-	return ret;
 }
 
 /*	Allocate a new db object */
@@ -285,7 +282,7 @@ void db_destroy(struct db_context *ctx)
 }
 
 /*	Start a new transform, expand trans0 is needed */
-int db_trans_add(struct db_context *ctx, u_int8_t transid)
+void db_trans_add(struct db_context *ctx, u_int8_t transid)
 {
 	/*	skip incrementing current trans pointer the 1st time*/
 	if (ctx->trans_cur && ctx->trans_cur->attr_cnt)
@@ -300,37 +297,31 @@ int db_trans_add(struct db_context *ctx, u_int8_t transid)
 	 */
 	passert(ctx->trans_cur != NULL);
 	if ((ctx->trans_cur - ctx->trans0) >= ctx->max_trans) {
-		/* XXX:jjo if fails should shout and flag it */
-		if (db_trans_expand(ctx, ctx->max_trans / 2 + 1) < 0)
-			return -1;
+		db_trans_expand(ctx, ctx->max_trans / 2 + 1);
 	}
 	ctx->trans_cur->transid = transid;
 	ctx->trans_cur->attrs = ctx->attrs_cur;
 	ctx->trans_cur->attr_cnt = 0;
 	ctx->prop.trans_cnt++;
-	return 0;
 }
 
 /*	Add attr copy to current transform, expanding attrs0 if needed */
-static int db_attr_add(struct db_context *ctx, const struct db_attr *a)
+static void db_attr_add(struct db_context *ctx, const struct db_attr *a)
 {
 	/*
 	 *	Strategy: if more space is needed, expand by
 	 *	          <current_size>/2 + 1
 	 */
 	if ((ctx->attrs_cur - ctx->attrs0) >= ctx->max_attrs) {
-		/* XXX:jjo if fails should shout and flag it */
-		if (db_attrs_expand(ctx, ctx->max_attrs / 2 + 1) < 0)
-			return -1;
+		db_attrs_expand(ctx, ctx->max_attrs / 2 + 1);
 	}
 	*ctx->attrs_cur++ = *a;
 	ctx->trans_cur->attr_cnt++;
-	return 0;
 }
 /*	Add attr copy (by value) to current transform,
  *	expanding attrs0 if needed, just calls db_attr_add().
  */
-int db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
+void db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
 {
 	struct db_attr attr;
 
