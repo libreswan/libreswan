@@ -1274,11 +1274,13 @@ void free_sa(struct db_sa *f)
 	}
 }
 
-static void clone_trans(struct db_trans *tr)
+void clone_trans(struct db_trans *tr, int extra)
 {
 	tr->attrs = clone_bytes(tr->attrs,
-				tr->attr_cnt * sizeof(tr->attrs[0]),
+				(tr->attr_cnt + extra) * sizeof(tr->attrs[0]),
 				"sa copy attrs array");
+	if (extra)
+		tr->attr_cnt = tr->attr_cnt + extra;
 }
 
 static void clone_prop(struct db_prop *p, int extra)
@@ -1290,7 +1292,7 @@ static void clone_prop(struct db_prop *p, int extra)
 			       "sa copy trans array");
 	/* p->trans_cnt is unchanged */
 	for (i = 0; i < p->trans_cnt; i++)
-		clone_trans(&p->trans[i]);
+		clone_trans(&p->trans[i], 0);
 }
 
 static void clone_propconj(struct db_prop_conj *pc, int extra)
@@ -1363,7 +1365,7 @@ struct db_sa *sa_copy_sa_first(struct db_sa *sa)
 			       sizeof(p->trans[0]),
 			       "sa copy 1 trans array");
 
-	clone_trans(&p->trans[0]);
+	clone_trans(&p->trans[0], 0);
 	return nsa;
 }
 
@@ -1420,7 +1422,7 @@ struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 			pa->trans = t;
 			pa->trans_cnt = t_cnt;
 			for (k = 0; k < pa->trans_cnt; k++)
-				clone_trans(&pa->trans[k]);
+				clone_trans(&pa->trans[k], 0);
 		}
 	}
 
