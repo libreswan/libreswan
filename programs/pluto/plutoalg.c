@@ -485,10 +485,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	}
 
 	if (policy & POLICY_ENCRYPT) {
+
 		/*	open new transformation */
 		db_trans_add(db_ctx, ealg_i);
 
-#warning todo: needs to handle ikev2 now as well -
 		/* add ESP auth attr (if present) */
 		if (esp_info->esp_aalg_id != AUTH_ALGORITHM_NONE) {
 			db_attr_add_values(db_ctx,
@@ -497,10 +497,34 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 
 		/*	add keylegth if specified in esp= string */
-		if (esp_info->esp_ealg_keylen) {
+		if (esp_info->esp_ealg_keylen != 0) {
 				db_attr_add_values(db_ctx,
 						   KEY_LENGTH,
 						   esp_info->esp_ealg_keylen);
+		} else {
+			/* no key length - if required add default here and add another max entry */
+			int def_ks = crypto_req_keysize(0 /*ESP*/, ealg_i);
+			if (def_ks) {
+				int max_ks = BITS_PER_BYTE * 
+					kernel_alg_esp_enc_max_keylen(ealg_i);
+
+				db_attr_add_values(db_ctx,
+					KEY_LENGTH,
+					def_ks);
+				/* add this trans again with max key size */
+				if (def_ks != max_ks) {
+					db_trans_add(db_ctx, ealg_i);
+					if (esp_info->esp_aalg_id != AUTH_ALGORITHM_NONE) {
+						db_attr_add_values(db_ctx,
+							AUTH_ALGORITHM,
+							esp_info->esp_aalg_id);
+					}
+					db_attr_add_values(db_ctx,
+						KEY_LENGTH,
+						max_ks);
+				}
+			}
+
 		}
 
 	} else if (policy & POLICY_AUTHENTICATE) {
