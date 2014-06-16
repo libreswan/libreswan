@@ -113,6 +113,7 @@ enum event_type {
 #define EVENT_REINIT_SECRET_DELAY	secs_per_hour
 #define EVENT_CRYPTO_FAILED_DELAY	(5 * secs_per_minute)
 #define EVENT_RETRANSMIT_DELAY_0	10	/* 10 seconds */
+#define EVENT_RETRANSMIT_DELAY_CAP	60	/* 10 seconds */
 #define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
 
 /*

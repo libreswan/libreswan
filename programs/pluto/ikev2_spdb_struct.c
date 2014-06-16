@@ -209,7 +209,7 @@ bool ikev2_out_sa(pb_stream *outs,
 					struct db_attr *attr =
 						&tr->attrs[attr_cnt];
 
-					if(!ikev2_out_attr(attr->type.ikev2,
+					if(!ikev2_out_attr(attr->type.v2,
 						       attr->val,
 						       &ikev2_trans_attr_desc,
 						       ikev2_trans_attr_val_descs,
@@ -470,7 +470,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 					}
 				}
 				/* Ensure KEY_LENGTH or OAKLEY_KEY_LENGTH if encr algo requires one */
-				if (dtfone->encr_keylen == 0) 
+				if (dtfone->encr_keylen == 0)
 					dtfone->encr_keylen = crypto_req_keysize(
 						f->parentSA ? 2 /* IKev2 */ : 0 /* ESP */,
 						dtfone->encr_transid);
@@ -569,7 +569,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 
 			tr[tr_pos].attrs = attrs;
 			tr[tr_pos].attr_cnt = 1;
-			attrs->type.ikev2 = IKEv2_KEY_LENGTH;
+			attrs->type.v2 = IKEv2_KEY_LENGTH;
 			attrs->val = dtfone->encr_keylen;
 		}
 		tr_pos++;
@@ -684,7 +684,7 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 			     attr_cnt++) {
 				struct db_attr *attr = &tr->attrs[attr_cnt];
 
-				if (attr->type.ikev2 == IKEv2_KEY_LENGTH)
+				if (attr->type.v2 == IKEv2_KEY_LENGTH)
 					keylen = attr->val;
 			}
 
@@ -1369,13 +1369,12 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 		pd = &sadb->prop_disj[pd_cnt];
 		encrid = integid = prfid = dhid = esnid = 0;
 
-
 		/* XXX need to fix this */
 		if (pd->prop_cnt != 1)
 			continue;
 
 		pj = &pd->props[0];
-		if (pj->protoid == PROTO_ISAKMP)
+		if (pj->protoid == PROTO_v2_ISAKMP)
 			continue;
 
 		if (pj->protoid == PROTO_v2_AH)
@@ -1391,7 +1390,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 			     attr_cnt++) {
 				struct db_attr *attr = &tr->attrs[attr_cnt];
 
-				if (attr->type.ipsec == IKEv2_KEY_LENGTH)
+				if (attr->type.v2 == IKEv2_KEY_LENGTH)
 					keylen = attr->val;
 			}
 
