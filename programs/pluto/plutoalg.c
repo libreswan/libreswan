@@ -265,14 +265,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 		}
 
 		eklen = esp_info->esp_ealg_keylen;
-		if (!eklen) {
-			eklen = kernel_alg_esp_enc_max_keylen(esp_info->esp_ealg_id)
-				* BITS_PER_BYTE;
-		}
 		aklen = esp_info->esp_aalg_keylen;
-		if (!aklen)
-			aklen = kernel_alg_esp_auth_keylen(
-				esp_info->esp_aalg_id) * BITS_PER_BYTE;
 
 		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d",
 			       sep,
