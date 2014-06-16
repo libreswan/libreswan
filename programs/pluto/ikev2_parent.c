@@ -3283,8 +3283,9 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 					u_int16_t i;
 					u_char *spi;
 
-					if (v2del->isad_spisize == sizeof(ipsec_spi_t)) {
-						libreswan_log("IPsec Delete SPI size is not 4");
+					if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
+						libreswan_log("IPsec Delete SPI size should be 4 but is %d",
+							v2del->isad_spisize);
 						return STF_FAIL + v2N_INVALID_SYNTAX;
 					}
 
