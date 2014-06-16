@@ -263,7 +263,7 @@ bool ikev1_out_sa(pb_stream *outs,
 		revised_sadb = oakley_alg_makedb(
 			st->st_connection->alg_info_ike,
 			sadb,
-			aggressive_mode ? 2 : -1);
+			aggressive_mode);
 	} else {
 		revised_sadb = kernel_alg_makedb(st->st_connection->policy,
 						 st->st_connection->alg_info_esp,
