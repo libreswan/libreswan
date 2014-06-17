@@ -128,11 +128,9 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
  *	max_trans and max_attrs can be 0, will be dynamically expanded
  *	as a result of "add" operations
  */
-static int db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
+static void db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
 		 int max_attrs)
 {
-	int ret = -1;
-
 	ctx->trans0 = NULL;
 	ctx->attrs0 = NULL;
 
@@ -148,12 +146,7 @@ static int db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
 			sizeof(struct db_attr) * max_attrs,
 			"db_context->attrs", db_attrs_st);
 	}
-	ret = 0;
-out:
-	if (ret < 0 && ctx->trans0) {
-		PFREE_ST(ctx->trans0, db_trans_st);
-		ctx->trans0 = NULL;
-	}
+
 	ctx->max_trans = max_trans;
 	ctx->max_attrs = max_attrs;
 	ctx->trans_cur = ctx->trans0;
@@ -161,13 +154,11 @@ out:
 	ctx->prop.protoid = protoid;
 	ctx->prop.trans = ctx->trans0;
 	ctx->prop.trans_cnt = 0;
-	return ret;
 }
 
 /*	Expand storage for transforms by number delta_trans */
 static void db_trans_expand(struct db_context *ctx, int delta_trans)
 {
-	int ret = -1;
 	struct db_trans *new_trans, *old_trans;
 	int max_trans = ctx->max_trans + delta_trans;
 	ptrdiff_t offset;
@@ -249,11 +240,7 @@ struct db_context *db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
 	ctx = ALLOC_BYTES_ST( sizeof(struct db_context), "db_context",
 			      db_context_st);
 
-	if (db_prop_init(ctx, protoid, max_trans, max_attrs) < 0) {
-		PFREE_ST(ctx, db_context_st);
-		ctx = NULL;
-	}
-
+	db_prop_init(ctx, protoid, max_trans, max_attrs);
 	return ctx;
 }
 
@@ -313,7 +300,7 @@ void db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
 
 	attr.type.oakley = type;
 	attr.val = val;
-	return db_attr_add(ctx, &attr);
+	db_attr_add(ctx, &attr);
 }
 #ifndef NO_DB_OPS_STATS
 void db_ops_show_status(void)
