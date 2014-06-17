@@ -141,16 +141,12 @@ static int db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
 			sizeof(struct db_trans) * max_trans,
 			"db_context->trans",
 			db_trans_st);
-		if (!ctx->trans0)
-			goto out;
 	}
 
 	if (max_attrs > 0) { /* quite silly if not */
 		ctx->attrs0 = ALLOC_BYTES_ST(
 			sizeof(struct db_attr) * max_attrs,
 			"db_context->attrs", db_attrs_st);
-		if (!ctx->attrs0)
-			goto out;
 	}
 	ret = 0;
 out:
@@ -179,10 +175,6 @@ static void db_trans_expand(struct db_context *ctx, int delta_trans)
 	old_trans = ctx->trans0;
 	new_trans = ALLOC_BYTES_ST( sizeof(struct db_trans) * max_trans,
 				    "db_context->trans (expand)", db_trans_st);
-	if (!new_trans) {
-		libreswan_log("alloc failed in db_trans_expand()");
-		return;
-	}
 	memcpy(new_trans, old_trans, ctx->max_trans * sizeof(struct db_trans));
 
 	/* update trans0 (obviously) */
@@ -216,10 +208,6 @@ static void db_attrs_expand(struct db_context *ctx, int delta_attrs)
 	old_attrs = ctx->attrs0;
 	new_attrs = ALLOC_BYTES_ST( sizeof(struct db_attr) * max_attrs,
 				    "db_context->attrs (expand)", db_attrs_st);
-	if (!new_attrs) {
-		libreswan_log("alloc failed in db_attrs_expand()");
-		return;
-	}
 
 	memcpy(new_attrs, old_attrs, ctx->max_attrs * sizeof(struct db_attr));
 
@@ -260,14 +248,12 @@ struct db_context *db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
 
 	ctx = ALLOC_BYTES_ST( sizeof(struct db_context), "db_context",
 			      db_context_st);
-	if (!ctx)
-		goto out;
 
 	if (db_prop_init(ctx, protoid, max_trans, max_attrs) < 0) {
 		PFREE_ST(ctx, db_context_st);
 		ctx = NULL;
 	}
-out:
+
 	return ctx;
 }
 
