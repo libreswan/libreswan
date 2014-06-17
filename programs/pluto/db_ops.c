@@ -218,7 +218,6 @@ struct db_context *db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
 			      db_context_st);
 
 	db_prop_init(ctx, protoid, max_trans, max_attrs);
-
 	return ctx;
 }
 

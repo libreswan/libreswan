@@ -767,6 +767,8 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
 	{ "impair-send-ikev2-ke", no_argument, NULL,
 		IMPAIR_SEND_IKEv2_KE_IX + DO },
+	{ "impair-send-key-size-check", no_argument, NULL,
+		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
 	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +

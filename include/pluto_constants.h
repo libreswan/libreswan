@@ -218,6 +218,7 @@ enum {
 	IMPAIR_RETRANSMITS_IX,			/* cause pluto to never retransmit */
 	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,	/* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
 	IMPAIR_SEND_IKEv2_KE_IX,		/* causes pluto to omit sending the KE payload in IKEv2 */
+	IMPAIR_SEND_KEY_SIZE_CHECK_IX,		/* causes pluto to omit checking configured ESP key sizes for testing */
 	IMPAIR_roof_IX	/* first unasigned IMPAIR */
 };
 
@@ -259,6 +260,7 @@ enum {
 #define IMPAIR_RETRANSMITS	LELEM(IMPAIR_RETRANSMITS_IX)
 #define IMPAIR_SEND_BOGUS_ISAKMP_FLAG	LELEM(IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX)
 #define IMPAIR_SEND_IKEv2_KE	LELEM(IMPAIR_SEND_IKEv2_KE_IX)
+#define IMPAIR_SEND_KEY_SIZE_CHECK	LELEM(IMPAIR_SEND_KEY_SIZE_CHECK_IX)
 
 /* State of exchanges
  *
