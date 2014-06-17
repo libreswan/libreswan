@@ -167,7 +167,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 
 		st->st_sadb = &oakley_sadb[policy_index];
 		sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-					 st->st_sadb, 0);
+					 st->st_sadb, FALSE);
 		if (sadb != NULL)
 			st->st_sadb = sadb;
 		sadb = st->st_sadb = sa_v2_convert(st->st_sadb);
@@ -3222,8 +3222,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					u_int16_t i;
 					u_char *spi;
 
-					if (v2del->isad_spisize == sizeof(ipsec_spi_t)) {
-						libreswan_log("IPsec Delete SPI size is not 4");
+					if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
+						libreswan_log("IPsec Delete SPI size should be 4 but is %d",
+							v2del->isad_spisize);
 						return STF_FAIL + v2N_INVALID_SYNTAX;
 					}
 

@@ -1,4 +1,3 @@
-ipsec look
 grep -A 1 KEY_LENGTH /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status

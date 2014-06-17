@@ -1226,11 +1226,12 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	case STF_INLINE:
 		/*
-		 * this is second time through complete
-		 * state transition, so the MD has already
-		 * been freed.
-		 */
-		passert(*mdp == NULL);
+		 * this is second time through complete state transition,
+		 * so the MD has already been freed.
+		 * ??? This comment is not true.
+		* This has been proven by passert(md == NULL) failing.
+		*/
+		*mdp = NULL;
 		break;
 
 	case STF_SUSPEND:

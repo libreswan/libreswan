@@ -199,4 +199,6 @@ extern struct db_sa *sa_v2_convert(struct db_sa *f);
 
 extern bool ikev2_acceptable_group(struct state *st, oakley_group_t group);
 
+extern void clone_trans(struct db_trans *tr, int extra);
+
 #endif /*  _SPDB_H_ */
