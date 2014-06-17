@@ -468,7 +468,7 @@ static const struct option long_opts[] = {
 	I("retransmits\0", IMPAIR_RETRANSMITS_IX),
 	I("send-bogus-isakmp-flag\0", IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX),
 	I("send-ikev2-ke\0", IMPAIR_SEND_IKEv2_KE_IX),
-	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK),
+	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK_IX),
 #undef I
 	{ 0, 0, 0, 0 }
 };
