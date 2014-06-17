@@ -197,6 +197,7 @@ const char *const debug_bit_names[] = {
 	"impair-retransmits",	/* 30 */
 	"impair-send-bogus-isakmp-flag",	/* 31 */
 	"impair-send-ikev2-ke",	/* 32 */
+	"impair-send-key-size-check", /* 33 */
 	NULL	/* termination for bitnamesof() */
 };
 
