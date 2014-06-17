@@ -689,8 +689,10 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		/*
 		 * Enforce RFC restrictions in key size, documented in
 		 * ietf_constants.h
+		 * If using --impair-send-key-size-check this check is bypassed
+		 * for testing purposes.
 		 */
-		if (p_ctx->eklen != 0) {
+		if (p_ctx->eklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
 			switch(alg_info->alg_info_protoid) {
 			case PROTO_ISAKMP:
 				switch(ealg_id) {
@@ -744,6 +746,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				}
 			}
 		}
+
 	}
 	if (p_ctx->aalg_permit && *p_ctx->aalg_buf != '\0') {
 		aalg_id = p_ctx->aalg_getbyname(p_ctx->aalg_buf,
