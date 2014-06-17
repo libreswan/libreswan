@@ -457,6 +457,7 @@ kvmplutotest    algo-pluto-09          good
 kvmplutotest    algo-pluto-10          good
 kvmplutotest    algo-pluto-11          good
 kvmplutotest    algo-pluto-12-aes-default	good
+kvmplutotest    algo-pluto-13-invalid-3des	good
 #
 # tests for usnig multiple subnets using conn aliases
 #

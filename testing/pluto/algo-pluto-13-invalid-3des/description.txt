@@ -1,0 +1,139 @@
+
+Send KEY_LEGTH attribute for ESP ENCR for 3DES. This is invalid and should
+be rejected or ignored on the remote side. It requires starting with
+--impair-check-keysize which allows specifying bad key sizes.
+
+curently: this is rejected by the other end, but west then sends another
+packet which seems to contain garbage:
+
+| *received 300 bytes from 192.1.2.45:500 on eth1 (port=500)
+|   4e bd fb bc  0d c4 44 c2  8e 9e 21 ee  f5 1f f0 4a
+|   08 10 20 01  66 1b 6a 0d  00 00 01 2c  0b 1f bd d3
+|   55 ee cf 79  80 82 b6 c9  d8 3d fd 76  8e 2c e2 c6
+|   32 62 54 a0  df 52 4c d8  b3 f0 03 57  8f cc 14 94
+|   ab 15 4b 17  14 bf a0 45  a5 cf ce 1c  06 b6 4d 62
+|   01 13 e8 ed  b9 80 7d e8  d6 1c 44 46  a2 65 0c d1
+|   77 44 ee b2  83 d4 96 cb  0a b0 35 3c  06 2c 1f 5b
+|   8d 14 7d 78  34 f2 1d 6a  50 34 64 0b  a9 f7 c4 cd
+|   3c 69 50 a0  f0 4e 52 01  c6 38 cd f2  ff 0b f9 bd
+|   7b c8 5b 61  b7 17 9d f7  c5 52 42 5b  98 af 75 17
+|   cd fd cf 4e  10 f8 95 bb  16 89 7e 5e  e6 9e 3d f5
+|   5c 5f 7d 0d  b0 69 20 a7  90 22 52 0d  ec ea 8c 16
+|   8a 95 2b ea  0b 56 12 58  19 b7 de 87  cf 74 a4 18
+|   cd 33 db 6c  4b 59 dc 26  d5 6a 73 20  34 d4 b0 e8
+|   bf 61 c1 ad  9c 52 fc 4e  d8 16 46 ad  4e 76 87 d5
+|   a9 53 2c 14  23 06 26 ed  74 ec 9c 0f  4e 8f 0e 45
+|   0b 43 b3 39  fb b2 cb ce  9d b3 ea e2  76 f9 d9 6b
+|   43 87 a7 60  c2 b0 4c 5c  b9 7f 80 08  03 58 35 7e
+|   1c 04 61 b9  fc 3d fa 11  20 33 7f 87
+| **parse ISAKMP Message:
+|    initiator cookie:
+|   4e bd fb bc  0d c4 44 c2
+|    responder cookie:
+|   8e 9e 21 ee  f5 1f f0 4a
+|    next payload type: ISAKMP_NEXT_HASH
+|    ISAKMP version: ISAKMP Version 1.0 (rfc2407)
+|    exchange type: ISAKMP_XCHG_QUICK
+|    flags: ISAKMP_FLAG_ENCRYPTION
+|    message ID:  66 1b 6a 0d
+|    length: 300
+|  processing version=1.0 packet with exchange type=ISAKMP_XCHG_QUICK (32)
+| ICOOKIE:  4e bd fb bc  0d c4 44 c2
+| RCOOKIE:  8e 9e 21 ee  f5 1f f0 4a
+| state hash entry 22
+| v1 peer and cookies match on #1, provided msgid 661b6a0d vs 00000000
+| v1 state object not found
+| ICOOKIE:  4e bd fb bc  0d c4 44 c2
+| RCOOKIE:  8e 9e 21 ee  f5 1f f0 4a
+| state hash entry 22
+| v1 peer and cookies match on #1, provided msgid 00000000 vs 00000000
+| v1 state object #1 found, in STATE_MAIN_R3
+| processing connection westnet-eastnet-aes256
+| last Phase 1 IV:  b6 fe f7 35  cd 8c 1a b7  a9 d5 d3 24  8e c9 68 43
+| current Phase 1 IV:  b6 fe f7 35  cd 8c 1a b7  a9 d5 d3 24  8e c9 68 43
+| computed Phase 2 IV:
+|   cd c8 29 9f  0b bc e5 22  1d 7f b4 4f  9f 18 05 6e
+|   c6 84 54 01
+| received encrypted packet from 192.1.2.45:500
+| decrypting 272 bytes using algorithm OAKLEY_AES_CBC
+| NSS do_aes: enter
+| NSS do_aes: exit
+| decrypted:
+|   01 00 00 18  7e d0 36 41  cf 04 aa 26  78 12 52 c7
+|   60 47 7e e9  35 67 82 d7  0a 00 00 38  00 00 00 01
+|   00 00 00 01  00 00 00 2c  00 03 04 01  ec 91 81 45
+|   00 00 00 20  00 03 00 00  80 03 00 02  80 04 00 01
+|   80 01 00 01  80 02 70 80  80 05 00 02  80 06 01 4d
+|   04 00 00 14  f1 43 8f bc  42 70 1f 26  fa 94 85 ab
+|   f9 dc 65 9d  05 00 00 84  eb c9 ae 38  dd 95 34 bb
+|   bc 54 d3 26  a1 ec f3 5f  b9 cb 80 47  04 18 07 c8
+|   7d 96 0a d5  e7 0f fa 06  c9 07 8d c5  46 c6 57 67
+|   6d 1e ea d7  30 9f 1a 30  80 9f 7b 84  53 2b 69 e8
+|   55 54 b0 90  a7 9a 67 00  27 3a 60 68  30 5b d7 39
+|   5b 1d 1b 81  d5 00 1d f7  f6 39 6c 33  53 3a c2 fb
+|   53 1d ec 63  b1 64 9b 8e  87 68 e0 f8  82 1a 00 59
+|   91 1d 07 25  81 ad 77 86  dc 8a fa 49  b9 06 6a e5
+|   2f 78 5d 4d  1e 0d e8 f0  05 00 00 10  04 00 00 00
+|   c0 00 01 00  ff ff ff 00  00 00 00 10  04 00 00 00
+|   c0 00 02 00  ff ff ff 00  00 00 00 00  00 00 00 00
+| next IV:  03 58 35 7e  1c 04 61 b9  fc 3d fa 11  20 33 7f 87
+| got payload 0x100  (ISAKMP_NEXT_HASH) needed: 0x502opt: 0x200030
+| ***parse ISAKMP Hash Payload:
+|    next payload type: ISAKMP_NEXT_SA
+|    length: 24
+| got payload 0x2  (ISAKMP_NEXT_SA) needed: 0x402opt: 0x200030
+| ***parse ISAKMP Security Association Payload:
+|    next payload type: ISAKMP_NEXT_NONCE
+|    length: 56
+|    DOI: ISAKMP_DOI_IPSEC
+| got payload 0x400  (ISAKMP_NEXT_NONCE) needed: 0x400opt: 0x200030
+| ***parse ISAKMP Nonce Payload:
+|    next payload type: ISAKMP_NEXT_KE
+|    length: 20
+| got payload 0x10  (ISAKMP_NEXT_KE) needed: 0x0opt: 0x200030
+| ***parse ISAKMP Key Exchange Payload:
+|    next payload type: ISAKMP_NEXT_ID
+|    length: 132
+| got payload 0x20  (ISAKMP_NEXT_ID) needed: 0x0opt: 0x200030
+| ***parse ISAKMP Identification Payload (IPsec DOI):
+|    next payload type: ISAKMP_NEXT_ID
+|    length: 16
+|    ID type: ID_UNASSIGNED_ID4
+|    Protocol ID: 0
+|    port: 0
+|      obj:   c0 00 01 00  ff ff ff 00
+| got payload 0x20  (ISAKMP_NEXT_ID) needed: 0x0opt: 0x200030
+| ***parse ISAKMP Identification Payload (IPsec DOI):
+|    next payload type: ISAKMP_NEXT_NONE
+|    length: 16
+|    ID type: ID_UNASSIGNED_ID4
+|    Protocol ID: 0
+|    port: 0
+|      obj:   c0 00 02 00  ff ff ff 00
+| removing 8 bytes of padding
+| hmac_update data value:
+|   66 1b 6a 0d
+| hmac_update: inside if
+| hmac_update: after digest
+| hmac_update: after assert
+| hmac_update data value:
+|   0a 00 00 38  00 00 00 01  00 00 00 01  00 00 00 2c
+|   00 03 04 01  ec 91 81 45  00 00 00 20  00 03 00 00
+|   80 03 00 02  80 04 00 01  80 01 00 01  80 02 70 80
+|   80 05 00 02  80 06 01 4d  04 00 00 14  f1 43 8f bc
+|   42 70 1f 26  fa 94 85 ab  f9 dc 65 9d  05 00 00 84
+|   eb c9 ae 38  dd 95 34 bb  bc 54 d3 26  a1 ec f3 5f
+|   b9 cb 80 47  04 18 07 c8  7d 96 0a d5  e7 0f fa 06
+|   c9 07 8d c5  46 c6 57 67  6d 1e ea d7  30 9f 1a 30
+|   80 9f 7b 84  53 2b 69 e8  55 54 b0 90  a7 9a 67 00
+|   27 3a 60 68  30 5b d7 39  5b 1d 1b 81  d5 00 1d f7
+|   f6 39 6c 33  53 3a c2 fb  53 1d ec 63  b1 64 9b 8e
+|   87 68 e0 f8  82 1a 00 59  91 1d 07 25  81 ad 77 86
+|   dc 8a fa 49  b9 06 6a e5  2f 78 5d 4d  1e 0d e8 f0
+|   05 00 00 10  04 00 00 00  c0 00 01 00  ff ff ff 00
+|   00 00 00 10  04 00 00 00  c0 00 02 00  ff ff ff 00
+| hmac_update: inside if
+| hmac_update: after digest
+| hmac_update: after assert
+| HASH(1) computed:
+
