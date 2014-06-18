@@ -1827,18 +1827,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			outgoing_ref_set  = TRUE;
 		}
 
-		if (inbound) {
-			/*
-			 * set corresponding outbound SA. We can do this on
-			 * each SA in the bundle without harm.
-			 */
-			said_next->refhim = refhim;
-		} else if (!outgoing_ref_set) {
-			/* on outbound, pick up the SAref if not already done */
-			said_next->ref    = refhim;
-			outgoing_ref_set  = TRUE;
-		}
-
 		if (!kernel_ops->add_sa(said_next, replace)) {
 			memset(said_next->enckey, 0, said_next->enckeylen);
 			memset(said_next->authkey, 0, said_next->authkeylen);
@@ -1918,18 +1906,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 #ifdef HAVE_LABELED_IPSEC
 		said_next->sec_ctx = st->sec_ctx;
 #endif
-
-		if (inbound) {
-			/*
-			 * set corresponding outbound SA. We can do this on
-			 * each SA in the bundle without harm.
-			 */
-			said_next->refhim = refhim;
-		} else if (!outgoing_ref_set) {
-			/* on outbound, pick up the SAref if not already done */
-			said_next->ref    = refhim;
-			outgoing_ref_set  = TRUE;
-		}
 
 		if (inbound) {
 			/*
