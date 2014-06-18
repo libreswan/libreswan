@@ -1439,18 +1439,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			outgoing_ref_set  = TRUE;
 		}
 
-		if (inbound) {
-			/*
-			 * set corresponding outbound SA. We can do this on
-			 * each SA in the bundle without harm.
-			 */
-			said_next->refhim = refhim;
-		} else if (!outgoing_ref_set) {
-			/* on outbound, pick up the SAref if not already done */
-			said_next->ref    = refhim;
-			outgoing_ref_set  = TRUE;
-		}
-
 		if (!kernel_ops->add_sa(said_next, replace)) {
 			DBG(DBG_KERNEL, DBG_log("add_sa tunnel failed"));
 			goto fail;
