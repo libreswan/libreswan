@@ -773,6 +773,7 @@ enum ikev2_trans_type {
  * (TODO: rename this to ikev2_encr_esp_ike)
  */
 enum ikev2_trans_type_encr {
+	IKEv2_ENCR_reserved = 0,
 	IKEv2_ENCR_DES_IV64 = 1,
 	IKEv2_ENCR_DES = 2,
 	IKEv2_ENCR_3DES = 3,

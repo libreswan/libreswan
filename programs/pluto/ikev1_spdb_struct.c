@@ -2047,7 +2047,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	} else {
 		pi->our_spi = get_ipsec_spi(pi->attrs.spi,
 					    r_proposal.isap_protoid == PROTO_IPSEC_AH ?
-					    IPPROTO_AH : IPPROTO_ESP,
+						IPPROTO_AH : IPPROTO_ESP,
 					    sr,
 					    tunnel_mode);
 		/* XXX should check for errors */

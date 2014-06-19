@@ -2509,17 +2509,14 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	} /* end of TS check block */
 
 	{
-		stf_status ret;
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
-
-		ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
+		stf_status ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
 					       &sa_pd->payload.v2sa,
 					       NULL, st, FALSE);
 
-		if (ret != STF_OK) {
+		if (ret != STF_OK)
 			return ret;
-		}
 	}
 
 	{
@@ -2553,8 +2550,11 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("Initiator policy is transport, responder sends v2N_USE_TRANSPORT_MODE, setting CHILD SA to transport mode"));
 					if (st->st_esp.present) {
-						/* libreswan supports only "esp" with ikev2 it seems, look at ikev2_parse_child_sa_body handling */
 						st->st_esp.attrs.encapsulation
+							= ENCAPSULATION_MODE_TRANSPORT;
+					}
+					if (st->st_ah.present) {
+						st->st_ah.attrs.encapsulation
 							= ENCAPSULATION_MODE_TRANSPORT;
 					}
 				}

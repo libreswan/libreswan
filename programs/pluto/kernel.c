@@ -233,6 +233,7 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid, int proto, struct spd_route *sr,
 	static ipsec_spi_t spi = 0; /* host order, so not returned directly! */
 	char text_said[SATOT_BUF];
 
+	passert(proto == IPPROTO_AH || proto == IPPROTO_ESP);
 	set_text_said(text_said, &sr->this.host_addr, 0, proto);
 
 	if (kernel_ops->get_spi) {
@@ -1809,9 +1810,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
 		DBG(DBG_CRYPT, {
-			    DBG_dump("esp enckey:",  said_next->enckey,
+			    DBG_dump("ESP enckey:",  said_next->enckey,
 				     said_next->enckeylen);
-			    DBG_dump("esp authkey:", said_next->authkey,
+			    DBG_dump("ESP authkey:", said_next->authkey,
 				     said_next->authkeylen);
 		    });
 
@@ -1861,16 +1862,19 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			inbound ? st->st_ah.our_spi : st->st_ah.attrs.spi;
 		u_char *ah_dst_keymat =
 			inbound ? st->st_ah.our_keymat : st->st_ah.peer_keymat;
+		u_int16_t key_len;
 
 		unsigned char authalg;
 
 		switch (st->st_ah.attrs.transattrs.integ_hash) {
 		case AUTH_ALGORITHM_HMAC_MD5:
 			authalg = SADB_AALG_MD5HMAC;
+			key_len = HMAC_MD5_KEY_LEN;
 			break;
 
 		case AUTH_ALGORITHM_HMAC_SHA1:
 			authalg = SADB_AALG_SHA1HMAC;
+			key_len = HMAC_SHA1_KEY_LEN;
 			break;
 
 		case AUTH_ALGORITHM_KPDK:
@@ -1881,6 +1885,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 					 st->st_ah.attrs.transattrs.integ_hash));
 			goto fail;
 		}
+
+		passert(st->st_ah.keymat_len == key_len);
 
 		set_text_said(text_said, &dst.addr, ah_spi, SA_AH);
 
@@ -1906,6 +1912,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 #ifdef HAVE_LABELED_IPSEC
 		said_next->sec_ctx = st->sec_ctx;
 #endif
+
+		DBG(DBG_CRYPT, {
+			DBG_dump("AH authkey:", said_next->authkey,
+				said_next->authkeylen);
+		    });
 
 		if (inbound) {
 			/*
