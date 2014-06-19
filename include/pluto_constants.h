@@ -28,6 +28,12 @@
 #define LOCK_SUFFIX ".pid"      /* for pluto's lock */
 #define INFO_SUFFIX ".info"     /* for UNIX domain socket for apps */
 
+/* default proposal values and preferences */
+/* kept small because in IKEv1 it explodes in transforms of all possible combinations */
+#define DEFAULT_OAKLEY_GROUPS    OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024
+#define DEFAULT_OAKLEY_EALGS	OAKLEY_AES_CBC, OAKLEY_3DES_CBC
+#define DEFAULT_OAKLEY_AALGS	OAKLEY_SHA1, OAKLEY_MD5
+
 enum kernel_interface {
 	NO_KERNEL = 1,
 	USE_KLIPS = 2,

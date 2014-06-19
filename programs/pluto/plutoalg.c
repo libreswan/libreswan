@@ -170,10 +170,9 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
  *      Proposals will be built by looping over default_ike_groups array and
  *      merging alg_info (ike_info) contents
  */
-static const int default_ike_groups[] = {
-	OAKLEY_GROUP_MODP1536,
-	OAKLEY_GROUP_MODP1024
-};
+static const int default_ike_groups[] = { DEFAULT_OAKLEY_GROUPS };
+static const int default_ike_ealgs[] = { DEFAULT_OAKLEY_EALGS };
+static const int default_ike_aalgs[] = { DEFAULT_OAKLEY_AALGS };
 
 /*
  *	Add IKE alg info _with_ logic (policy):
@@ -183,10 +182,17 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 			     int aalg_id, int ak_bits,
 			     int modp_id)
 {
-	/*	Policy: default to 3DES */
-	if (ealg_id == 0)
-		ealg_id = OAKLEY_3DES_CBC;
-	if (ealg_id > 0) {
+	if (ealg_id == 0) { /* use all our default enc algs */
+		int i;
+
+		for (i=0; i != elemsof(default_ike_ealgs); i++) {
+			per_group_alg_info_ike_add(alg_info, default_ike_ealgs[i], ek_bits,
+				aalg_id, ak_bits, modp_id);
+		}
+		return;
+	}
+
+	{
 		if (aalg_id > 0) {
 			raw_alg_info_ike_add(
 				(struct alg_info_ike *)alg_info,
@@ -194,17 +200,14 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 				aalg_id, ak_bits,
 				modp_id);
 		} else {
-			/*	Policy: default to MD5 and SHA */
-			raw_alg_info_ike_add(
-				(struct alg_info_ike *)alg_info,
-				ealg_id, ek_bits,
-				OAKLEY_MD5, ak_bits,
-				modp_id);
-			raw_alg_info_ike_add(
-				(struct alg_info_ike *)alg_info,
-				ealg_id, ek_bits,
-				OAKLEY_SHA1, ak_bits,
-				modp_id);
+			int j;
+			for (j=0; j != elemsof(default_ike_aalgs); j++) {
+				raw_alg_info_ike_add(
+					(struct alg_info_ike *)alg_info,
+					ealg_id, ek_bits,
+					default_ike_aalgs[j], ak_bits,
+					modp_id);
+			}
 		}
 	}
 }
