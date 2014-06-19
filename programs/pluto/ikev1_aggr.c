@@ -1157,10 +1157,6 @@ stf_status aggr_outI1(int whack_sock,
 			pcrc_init(&ke->ke_pcrc, aggr_outI1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     importance);
-			if (e != STF_SUSPEND && e != STF_INLINE) {
-				loglog(RC_CRYPTOFAILED, "system too busy");
-				delete_state(st);
-			}
 		} else {
 			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			e = aggr_outI1_tail(&ke->ke_pcrc, NULL);

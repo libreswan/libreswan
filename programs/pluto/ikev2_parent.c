@@ -1185,10 +1185,6 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		pcrc_init(&dh->dh_pcrc, ikev2_parent_inR1outI2_continue);
 		e = start_dh_v2(&dh->dh_pcrc, st, st->st_import, INITIATOR,
 				st->st_oakley.groupnum);
-		if (e != STF_SUSPEND && e != STF_INLINE) {
-			loglog(RC_CRYPTOFAILED, "system too busy");
-			delete_state(st);
-		}
 
 		reset_globals();
 
@@ -1831,10 +1827,6 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 		pcrc_init(&dh->dh_pcrc, ikev2_parent_inI2outR2_continue);
 		e = start_dh_v2(&dh->dh_pcrc, st, st->st_import, RESPONDER,
 				st->st_oakley.groupnum);
-		if (e != STF_SUSPEND && e != STF_INLINE) {
-			loglog(RC_CRYPTOFAILED, "system too busy");
-			delete_state(st);
-		}
 
 		reset_globals();
 
