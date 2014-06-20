@@ -1070,7 +1070,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 * The responder SPI ought to have been 0 (but might not be).
 			 * See rfc5996bis-04 2.6.
 			 */
-			libreswan_log("%s: received %s - ignored possibly spoofed packet",
+			libreswan_log("%s: received unauthenticated %s - ignored",
 				enum_name(&state_names, st->st_state),
 				enum_name(&ikev2_notify_names,
 					ntfy->payload.v2n.isan_type));
