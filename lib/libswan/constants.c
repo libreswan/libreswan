@@ -631,54 +631,90 @@ static const char *const ike_idtype_name[] = {
 	/* ID_FROMCERT = (-3), taken from certificate - private to Pluto */
 	/* ID_IMPOSSIBLE = (-2), private to Pluto */
 	/* ID_MYID = (-1), private to Pluto */
+
 	"ID_NONE", /* = 0, private to Pluto */
-	"ID_IPV4_ADDR", /* 1 */
+
+	"ID_IPV4_ADDR",	/* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
-	"ID_UNASSIGNED_ID4", /* Only in IKEv1 */
+	"ID_USER_FQDN",	/* v1 only */
 	"ID_IPV6_ADDR",
-	"ID_UNASSIGNED_ID6", /* Only in IKEv1 */
-	"ID_UNASSIGNED_ID7", /* Only in IKEv1 */
-	"ID_UNASSIGNED_ID8", /* Only in IKEv1 */
+	"ID_IPV6_ADDR_SUBNET",	/* v1 only */
+	"ID_IPV4_ADDR_RANGE",	/* v1 only */
+	"ID_IPV6_ADDR_RANGE",	/* v1 only */
 	"ID_DER_ASN1_DN",
 	"ID_DER_ASN1_GN",
 	"ID_KEY_ID",
 	"ID_FC_NAME", /* RFC 3554 */
 };
 
+/* IKEv1 */
 enum_names ike_idtype_names = {
-	ID_NONE,
-	ID_FC_NAME,
-	ike_idtype_name,
+	ID_IPV4_ADDR, ID_FC_NAME,
+	&ike_idtype_name[ID_IPV4_ADDR],
 	NULL
+};
+
+
+static enum_names ikev2_idtype_names_3 = {
+	ID_DER_ASN1_DN, ID_FC_NAME,
+	&ike_idtype_name[ID_DER_ASN1_DN],
+	NULL
+};
+
+static enum_names ikev2_idtype_names_2 = {
+	ID_IPV6_ADDR, ID_IPV6_ADDR,
+	&ike_idtype_name[ID_IPV6_ADDR],
+	&ikev2_idtype_names_3
+};
+
+enum_names ikev2_idtype_names = {
+	ID_IPV4_ADDR, ID_RFC822_ADDR,
+	&ike_idtype_name[ID_IPV4_ADDR],
+	&ikev2_idtype_names_2
 };
 
 /* Certificate type values */
 static const char *const ike_cert_type_name[] = {
-	"CERT_NONE",
+	"CERT_NONE",	/* private to Pluto */
+
 	"CERT_PKCS7_WRAPPED_X509",
-	"CERT_PGP (unsupported)",
+	"CERT_PGP",
 	"CERT_DNS_SIGNED_KEY",
 	"CERT_X509_SIGNATURE",
-	"CERT_RESERVED5", /* was CERT_X509_KEY_EXCHANGE in IKEv1 */
+	"CERT_X509_KEY_EXCHANGE",	/* v1 only */
 	"CERT_KERBEROS_TOKENS",
 	"CERT_CRL",
 	"CERT_ARL",
 	"CERT_SPKI",
 	"CERT_X509_ATTRIBUTE",
+
+	/* IKEv2 only from here */
 	"CERT_RAW_RSA",
 	"CERT_X509_CERT_URL",
-	"CERT_X509_BUNDLE_URL", /* 13 */
+	"CERT_X509_BUNDLE_URL",
 	"CERT_OCSP_CONTENT", /* 14 */
 	/* 15 - 200 Reserved */
 	/* 201 - 255 Private use */
 };
 
 enum_names ike_cert_type_names = {
-	CERT_NONE,
-	CERT_OCSP_CONTENT,
-	ike_cert_type_name,
+	CERT_PKCS7_WRAPPED_X509, CERT_X509_ATTRIBUTE,
+	&ike_cert_type_name[CERT_PKCS7_WRAPPED_X509],
 	NULL
+};
+
+
+static enum_names ikev2_cert_type_names_2 = {
+	CERT_KERBEROS_TOKENS, CERT_OCSP_CONTENT,
+	&ike_cert_type_name[CERT_KERBEROS_TOKENS],
+	NULL
+};
+
+enum_names ikev2_cert_type_names = {
+	CERT_PKCS7_WRAPPED_X509, CERT_X509_SIGNATURE,
+	&ike_cert_type_name[CERT_PKCS7_WRAPPED_X509],
+	&ikev2_cert_type_names_2
 };
 
 /*

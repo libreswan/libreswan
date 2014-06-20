@@ -869,7 +869,7 @@ static field_desc ikev2id_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "id_type", &ike_idtype_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "id_type", &ikev2_idtype_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
@@ -898,7 +898,7 @@ static field_desc ikev2_cert_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
-	  &ike_cert_type_names },
+	  &ikev2_cert_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -927,7 +927,7 @@ static field_desc ikev2_cert_req_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
-	  &ike_cert_type_names },
+	  &ikev2_cert_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
 

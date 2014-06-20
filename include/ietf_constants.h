@@ -1351,8 +1351,6 @@ enum pubkey_alg {
  * IKEv2 Identification type values
  * RFC 5996
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-10
- *
- * enum ike_ident_names;
  */
 
 enum ike_id_type {
@@ -1360,6 +1358,7 @@ enum ike_id_type {
 	ID_IMPOSSIBLE = (-2),	/* private to Pluto */
 	ID_MYID = (-1),		/* private to Pluto */
 	ID_NONE = 0,	/* private to Pluto */
+
 	ID_IPV4_ADDR = 1,
 	ID_FQDN = 2,
 	ID_USER_FQDN = 3,
@@ -1388,17 +1387,18 @@ enum ike_id_type {
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-11
  */
 enum ike_cert_type {
-	CERT_NONE = 0, /* none, or guess from file contents */
+	CERT_NONE = 0,	/* (non-RFC) none, or guess from file contents */
 	CERT_PKCS7_WRAPPED_X509 = 1, /* self-signed certificate from disk */
-	CERT_PGP = 2, /* We no longer support PGP keys */
+	CERT_PGP = 2,
 	CERT_DNS_SIGNED_KEY = 3, /* KEY RR from DNS */
 	CERT_X509_SIGNATURE = 4,
-	/* 5 - Reserved - was CERT_X509_KEY_EXCHANGE in IKEv1 */
+	CERT_X509_KEY_EXCHANGE = 5,	/* v1 only */
 	CERT_KERBEROS_TOKENS = 6,
 	CERT_CRL = 7,
 	CERT_ARL = 8,
 	CERT_SPKI = 9,
 	CERT_X509_ATTRIBUTE = 10,
+
 	/* IKEv2 only from here */
 	CERT_RAW_RSA = 11, /* raw RSA from config file */
 	CERT_X509_CERT_URL = 12,
