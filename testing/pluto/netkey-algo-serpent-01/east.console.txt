@@ -109,7 +109,7 @@ east #
 000 "westnet-eastnet-serpent":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-serpent":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-serpent":   ESP algorithms wanted: SERPENT(252)_000-SHA1(2)_000
-000 "westnet-eastnet-serpent":   ESP algorithms loaded: SERPENT(252)_256-SHA1(2)_160
+000 "westnet-eastnet-serpent":   ESP algorithms loaded: SERPENT(252)_000-SHA1(2)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  

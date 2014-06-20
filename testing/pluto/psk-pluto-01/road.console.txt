@@ -23,9 +23,11 @@ initdone
 road #
  ipsec auto --up road-eastnet-psk
 003 "road-eastnet-psk" #1: multiple DH groups were set in aggressive mode. Only first one used.
+003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1536 keylen 0) ignored.
 003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 002 "road-eastnet-psk" #1: initiating Aggressive Mode #1, connection "road-eastnet-psk"
 003 "road-eastnet-psk" #1: multiple DH groups were set in aggressive mode. Only first one used.
+003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1536 keylen 0) ignored.
 003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "road-eastnet-psk" #1: STATE_AGGR_I1: initiate
 003 "road-eastnet-psk" #1: received Vendor ID payload [Dead Peer Detection]
@@ -33,7 +35,7 @@ road #
 002 "road-eastnet-psk" #1: Aggressive mode peer ID is ID_FQDN: '@east'
 002 "road-eastnet-psk" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 003 "road-eastnet-psk" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
-004 "road-eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=oakley_3des_cbc_192 prf=sha group=MODP1536}
+004 "road-eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=oakley_3des_cbc_192 prf=sha group=MODP2048}
 002 "road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "road-eastnet-psk" #2: STATE_QUICK_I1: initiate
 004 "road-eastnet-psk" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}

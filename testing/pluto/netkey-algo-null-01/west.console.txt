@@ -140,7 +140,7 @@ west #
 000 "westnet-eastnet-null":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-null":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-null":   ESP algorithms wanted: NULL(11)_000-MD5(1)_000
-000 "westnet-eastnet-null":   ESP algorithms loaded: NULL(11)_000-MD5(1)_128
+000 "westnet-eastnet-null":   ESP algorithms loaded: NULL(11)_000-MD5(1)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -164,7 +164,7 @@ west #
 108 "westnet-eastnet-null" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "westnet-eastnet-null" #1: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-eastnet-null" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-null" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
+004 "westnet-eastnet-null" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 prf=sha group=MODP2048}
 002 "westnet-eastnet-null" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-null" #2: STATE_QUICK_I1: initiate
 003 "westnet-eastnet-null" #2: warning: You should NOT use insecure/broken ESP algorithms [ESP_NULL (0)]!
