@@ -286,7 +286,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				}
 				free_sa(emp_sp);
 			} else {
-				if (gsp == NULL) {
+				if (gsp != NULL) {
 					/* now merge emp_sa and gsp */
 					struct db_sa *new = sa_merge_proposals(gsp, emp_sp);
 
