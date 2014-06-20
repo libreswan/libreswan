@@ -2539,19 +2539,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
-			/*
-			 * ML: at last check for allowed transforms in alg_info_esp
-			 *
-			 */
-			if (c->alg_info_esp != NULL &&
-			    !kernel_alg_esp_ok_final(esp_attrs.transattrs.
-						     encrypt,
-						     esp_attrs.transattrs.
-						     enckeylen,
-						     esp_attrs.transattrs.
-						     integ_hash,
-						     c->alg_info_esp))
-				continue;
+
 			esp_attrs.spi = esp_spi;
 			inner_proto = IPPROTO_ESP;
 			if (esp_attrs.encapsulation ==
