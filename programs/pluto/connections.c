@@ -480,7 +480,8 @@ size_t format_end(char *buf,
 		const struct end *this,
 		const struct end *that,
 		bool is_left,
-		lset_t policy)
+		lset_t policy,
+		bool filter_rnh)
 {
 	char client[SUBNETTOT_BUF];
 	const char *client_sep = "";
@@ -656,7 +657,7 @@ size_t format_end(char *buf,
 	/* [---hop] */
 	hop[0] = '\0';
 	hop_sep = "";
-	if (that != NULL && !sameaddr(&this->host_nexthop, &that->host_addr)) {
+	if (that != NULL && !filter_rnh && !sameaddr(&this->host_nexthop, &that->host_addr)) {
 		addrtot(&this->host_nexthop, 0, hop, sizeof(hop));
 		hop_sep = "---";
 	}
@@ -690,12 +691,12 @@ static size_t format_connection(char *buf, size_t buf_len,
 			struct spd_route *sr)
 {
 	size_t w =
-		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY);
+		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY, FALSE);
 
 	snprintf(buf + w, buf_len - w, "...");
 	w += strlen(buf + w);
 	return w + format_end(buf + w, buf_len - w, &sr->that, &sr->this,
-			FALSE, c->policy);
+			FALSE, c->policy, oriented(*c));
 }
 
 /* spd_route's with end's get copied in xauth.c */

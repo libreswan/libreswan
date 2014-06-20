@@ -25,13 +25,15 @@ def:
 
 check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
 # skip rebuilding KVMs unless started with: make check UPDATE=1
-ifeq ($(UPDATE),)
+ifneq ($(UPDATE)$(UPDATEONLY),)
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --compile --install --hostname east
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname west
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname road
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname north
 endif
+ifeq ($(UPDATEONLY),)
 	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ./setup.sh; . ${UTILS}/functions.sh; . ./TESTLIST
+endif
 
 install install_file_list checkprograms programs:
 	@true

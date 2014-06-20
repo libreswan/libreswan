@@ -306,7 +306,7 @@ errlab:
 	return error;
 }
 
-int pfkey_sa_build(struct sadb_ext **       pfkey_ext,
+int pfkey_sa_build(struct sadb_ext **pfkey_ext,
 		   uint16_t exttype,
 		   uint32_t spi,
 		   uint8_t replay_window,

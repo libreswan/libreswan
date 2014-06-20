@@ -70,31 +70,35 @@ static const char *const dpd_action_name[] = {
 };
 
 enum_names dpd_action_names =
-	{ EVENT_NULL, DPD_ACTION_RESTART, dpd_action_name, NULL };
+	{ DPD_ACTION_CLEAR, DPD_ACTION_RESTART, dpd_action_name, NULL };
 
 /* Timer events */
 static const char *const timer_event_name[] = {
 	"EVENT_NULL",
+
 	"EVENT_REINIT_SECRET",
 	"EVENT_SHUNT_SCAN",
+	"EVENT_LOG_DAILY",
+	"EVENT_PENDING_DDNS",
+	"EVENT_PENDING_PHASE2",
+
 	"EVENT_SO_DISCARD",
-	"EVENT_RETRANSMIT",
+	"EVENT_v1_RETRANSMIT",
 	"EVENT_SA_REPLACE",
 	"EVENT_SA_REPLACE_IF_USED",
 	"EVENT_SA_EXPIRE",
 	"EVENT_NAT_T_KEEPALIVE",
 	"EVENT_DPD",
 	"EVENT_DPD_TIMEOUT",
-	"EVENT_LOG_DAILY",
 	"EVENT_CRYPTO_FAILED",
-	"EVENT_PENDING_PHASE2",
+
 	"EVENT_v2_RETRANSMIT",
+	"EVENT_v2_RESPONDER_TIMEOUT",
 	"EVENT_v2_LIVENESS",
-	"EVENT_PENDING_DDNS"
 };
 
 enum_names timer_event_names =
-	{ EVENT_NULL, EVENT_PENDING_DDNS, timer_event_name, NULL };
+	{ EVENT_NULL, EVENT_v2_LIVENESS, timer_event_name, NULL };
 
 /* State of exchanges */
 static const char *const state_name[] = {
@@ -143,7 +147,6 @@ static const char *const state_name[] = {
 	"STATE_PARENT_R1",
 	"STATE_PARENT_R2",
 	"STATE_IKEv2_ROOF"
-
 };
 
 enum_names state_names =

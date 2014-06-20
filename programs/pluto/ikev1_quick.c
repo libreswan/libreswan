@@ -38,6 +38,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
+#include "ikev1_msgid.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
@@ -790,8 +791,7 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(qke->qke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (qke->qke_md != NULL)
-			release_md(qke->qke_md);
+		release_any_md(&qke->qke_md);
 		return;
 	}
 
@@ -1091,7 +1091,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	send_ike_msg(st, "quick_outI1");
 
 	delete_event(st);
-	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
 	if (qke->qke_replacing == SOS_NOBODY) {
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
@@ -1411,8 +1411,7 @@ static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
 		}
 		complete_v1_state_transition(&b->md, r);
 	}
-	if (b->md != NULL)
-		release_md(b->md);
+	release_any_md(&b->md);
 	cur_state = NULL;
 }
 
@@ -1791,11 +1790,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			he.port = b->his.port;
 
 			l = format_end(buf, sizeof(buf), &me, NULL, TRUE,
-				       LEMPTY);
+				       LEMPTY, oriented(*c));
 			snprintf(buf + l, sizeof(buf) - l, "...");
 			l += strlen(buf + l);
 			(void)format_end(buf + l, sizeof(buf) - l, &he, NULL,
-					 FALSE, LEMPTY);
+					 FALSE, LEMPTY, oriented(*c));
 			libreswan_log("cannot respond to IPsec SA request"
 				      " because no connection is known for %s",
 				      buf);
@@ -1943,7 +1942,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			}
 
 			format_end(cthat, sizeof(cthat), &c->spd.that, NULL,
-				   TRUE, LEMPTY);
+				   TRUE, LEMPTY, oriented(*c));
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("setting phase 2 virtual values to %s",
 				    cthat));
@@ -2101,8 +2100,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(qke->qke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (qke->qke_md != NULL)
-			release_md(qke->qke_md);
+		release_any_md(&qke->qke_md);
 		return;
 	}
 
@@ -2148,8 +2146,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 		if (e != STF_SUSPEND && e != STF_INLINE) {
 			if (dh->dh_md != NULL) {
 				complete_v1_state_transition(&qke->qke_md, e);
-				if (dh->dh_md != NULL)
-					release_md(qke->qke_md);
+				release_any_md(&qke->qke_md);
 			}
 		}
 
@@ -2162,8 +2159,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 			if (md != NULL) {
 				/* note: use qke-> pointer */
 				complete_v1_state_transition(&qke->qke_md, e);
-				if (qke->qke_md != NULL)
-					release_md(qke->qke_md);
+				release_any_md(&qke->qke_md);
 			}
 		}
 	}
@@ -2188,8 +2184,7 @@ static void quick_inI1_outR1_cryptocontinue2(
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -2210,8 +2205,7 @@ static void quick_inI1_outR1_cryptocontinue2(
 	if (e == STF_OK) {
 		if (dh->dh_md != NULL) {
 			complete_v1_state_transition(&dh->dh_md, e);
-			if (dh->dh_md != NULL)
-				release_md(dh->dh_md);
+			release_any_md(&dh->dh_md);
 		}
 	}
 
@@ -2276,11 +2270,11 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 		struct spd_route *sr = &c->spd;
 
 		format_end(instbuf, sizeof(instbuf), &sr->this, &sr->that,
-			   TRUE, LEMPTY);
+			   TRUE, LEMPTY, oriented(*c));
 		libreswan_log("    us: %s", instbuf);
 
 		format_end(instbuf, sizeof(instbuf), &sr->that, &sr->this,
-			   FALSE, LEMPTY);
+			   FALSE, LEMPTY, oriented(*c));
 		libreswan_log("  them: %s", instbuf);
 	}
 
@@ -2475,8 +2469,7 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -2497,8 +2490,7 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 	}
 	reset_cur_state();
 }

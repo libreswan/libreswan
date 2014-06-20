@@ -1106,11 +1106,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					return STF_INTERNAL_ERROR;
 
 				if (st1->st_esp.present) {
-					/*
-					 * libreswan supports only "esp" with ikev2 it seems.
-					 * Look at ikev2_parse_child_sa_body handling.
-					 */
 					st1->st_esp.attrs.encapsulation =
+						ENCAPSULATION_MODE_TRANSPORT;
+				}
+				if (st1->st_ah.present) {
+					st1->st_ah.attrs.encapsulation =
 						ENCAPSULATION_MODE_TRANSPORT;
 				}
 				break;

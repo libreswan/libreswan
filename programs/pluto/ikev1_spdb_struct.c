@@ -263,7 +263,7 @@ bool ikev1_out_sa(pb_stream *outs,
 		revised_sadb = oakley_alg_makedb(
 			st->st_connection->alg_info_ike,
 			sadb,
-			aggressive_mode ? 2 : -1);
+			aggressive_mode);
 	} else {
 		revised_sadb = kernel_alg_makedb(st->st_connection->policy,
 						 st->st_connection->alg_info_esp,
@@ -1534,7 +1534,6 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	struct db_trans *trans;
 	struct db_prop  *prop;
 	struct db_prop_conj *cprop;
-	struct db_sa    *sa;
 	struct db_sa    *revised_sadb;
 	struct connection *c = st->st_connection;
 	unsigned policy_index = POLICY_ISAKMP(policy, c);
@@ -1545,12 +1544,10 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	ta.life_seconds = st->st_connection->sa_ike_life_seconds;
 	ta.life_kilobytes = 1000000;
 
-	passert(policy_index < elemsof(oakley_am_sadb));
-	sa = &oakley_am_sadb[policy_index];
-
 	/* Max transforms == 2 - Multiple transforms, 1 DH group */
+	passert(policy_index < elemsof(oakley_am_sadb));
 	revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-					 sa, 2);
+		&oakley_am_sadb[policy_index], TRUE);
 
 	if (revised_sadb == NULL)
 		return FALSE;
@@ -2050,7 +2047,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	} else {
 		pi->our_spi = get_ipsec_spi(pi->attrs.spi,
 					    r_proposal.isap_protoid == PROTO_IPSEC_AH ?
-					    IPPROTO_AH : IPPROTO_ESP,
+						IPPROTO_AH : IPPROTO_ESP,
 					    sr,
 					    tunnel_mode);
 		/* XXX should check for errors */
@@ -2542,19 +2539,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
-			/*
-			 * ML: at last check for allowed transforms in alg_info_esp
-			 *
-			 */
-			if (c->alg_info_esp != NULL &&
-			    !kernel_alg_esp_ok_final(esp_attrs.transattrs.
-						     encrypt,
-						     esp_attrs.transattrs.
-						     enckeylen,
-						     esp_attrs.transattrs.
-						     integ_hash,
-						     c->alg_info_esp))
-				continue;
+
 			esp_attrs.spi = esp_spi;
 			inner_proto = IPPROTO_ESP;
 			if (esp_attrs.encapsulation ==

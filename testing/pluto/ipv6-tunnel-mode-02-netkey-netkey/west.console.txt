@@ -14,19 +14,16 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  # make sure that clear text does not get through
 west #
- ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::45 -p icmp -j DROP
+ ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::23 -p ipv6-icmp --icmpv6-type echo-reply -j DROP
+west #
+ ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
  # confirm with a ping
 west #
  ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
 PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
-64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
  ipsec setup start
 Redirecting to: systemctl start ipsec.service
@@ -162,7 +159,7 @@ west #
 108 "v6-tunnel" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "v6-tunnel" #1: received Vendor ID payload [CAN-IKEv2]
 002 "v6-tunnel" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "v6-tunnel" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
+004 "v6-tunnel" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 prf=sha group=MODP2048}
 002 "v6-tunnel" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "v6-tunnel" #2: STATE_QUICK_I1: initiate
 004 "v6-tunnel" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}

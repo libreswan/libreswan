@@ -359,6 +359,7 @@ static int resolve_defaultroute_one(struct starter_end *host,
 		char r_source[ADDRTOT_BUF];
 		char r_gateway[ADDRTOT_BUF];
 		char r_destination[ADDRTOT_BUF];
+		bool ignore;
 
 		if (nlmsg->nlmsg_type == NLMSG_DONE)
 			break;
@@ -407,25 +408,24 @@ static int resolve_defaultroute_one(struct starter_end *host,
 			}
 		}
 
+		/*
+		 * Ignore if not main table.
+		 * Ignore ipsecX or mastX interfaces.
+		 */
+		ignore = rtmsg->rtm_table != RT_TABLE_MAIN ||
+			startswith(r_interface, "ipsec") ||
+			startswith(r_interface, "mast");
+
 		if (verbose) {
 			printf("dst %s via %s dev %s src %s table %d%s\n",
 				r_destination,
 				r_gateway,
 				r_interface,
 				r_source, rtmsg->rtm_table,
-				(rtmsg->rtm_table != RT_TABLE_MAIN
-				|| strncmp(r_interface, "ipsec", 5) == 0
-				|| strncmp(r_interface, "mast", 4) == 0)
-				? "" : " (ignored)");
+				ignore ? "" : " (ignored)");
 		}
 
-		/* Use only Main table (254) */
-		if (rtmsg->rtm_table != RT_TABLE_MAIN)
-			continue;
-
-		/* Ignore routes over ipsecX or mastX */
-		if (strncmp(r_interface, "ipsec", 5) == 0 ||
-			strncmp(r_interface, "mast", 4) == 0)
+		if (ignore)
 			continue;
 
 		if (seeking_src && r_source[0] != '\0') {
@@ -745,7 +745,6 @@ int main(int argc, char *argv[])
 		}
 		if (verbose)
 			printf("\n");
-
 	} else {
 		/* load named conns, regardless of their state */
 		int connum;

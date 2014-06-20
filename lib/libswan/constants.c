@@ -197,6 +197,7 @@ const char *const debug_bit_names[] = {
 	"impair-retransmits",	/* 30 */
 	"impair-send-bogus-isakmp-flag",	/* 31 */
 	"impair-send-ikev2-ke",	/* 32 */
+	"impair-send-key-size-check", /* 33 */
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -487,6 +488,14 @@ enum_names ikev2_protocol_names = {
 	PROTO_v2_RESERVED,
 	PROTO_v2_ESP,
 	ikev2_protocol_name,
+	NULL
+};
+
+/* subset of protocol names accepted by IKEv2 Delete */
+enum_names ikev2_del_protocol_names = {
+	PROTO_ISAKMP,
+	PROTO_IPSEC_ESP,
+	&protocol_name[PROTO_ISAKMP],
 	NULL
 };
 
@@ -1535,7 +1544,7 @@ static const char *const ikev2_notify_name[] = {
 };
 
 enum_names ikev2_notify_names = {
-	0,
+	v2N_NOTHING_WRONG,
 	v2N_CHILD_SA_NOT_FOUND,
 	ikev2_notify_name,
 	&ikev2_notify_names_16384
@@ -1758,6 +1767,11 @@ enum_names *const ikev2_transid_val_descs[] = {
 
 const unsigned int ikev2_transid_val_descs_roof =
 	elemsof(ikev2_transid_val_descs);
+
+const struct enum_enum_names v2_transform_ID_enums = {
+	IKEv2_TRANS_TYPE_ENCR,	IKEv2_TRANS_TYPE_ESN,
+	&ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ENCR]
+};
 
 /* Transform Attributes */
 static const char *const ikev2_trans_attr_name[] = {

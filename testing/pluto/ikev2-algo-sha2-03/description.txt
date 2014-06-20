@@ -2,4 +2,5 @@ Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
 
 This is to verify we can use SHA2 for ESP, specifically esp=aes-sha2_384
 
-This test uses netkey, as klips does not support sha2 (is that true, should work via cryptoapi?)
+with netkey we see: ERROR: netlink response for Add SA esp.9720ea89@192.1.2.45 included errno 38: Function not implemented
+

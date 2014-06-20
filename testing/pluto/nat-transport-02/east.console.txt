@@ -22,10 +22,10 @@ east #
 002 added connection description "north-east-pass"
 east #
  nc -4 -l 192.1.2.23 2 &
-[1] XXXX
+[1] 2133
 east #
  nc -4 -l 192.1.2.23 3 &
-[2] XXXX
+[2] 2134
 east #
  echo "initdone"
 initdone

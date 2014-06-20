@@ -568,7 +568,7 @@ stf_status dpd_inR(struct state *p1st,
 void dpd_timeout(struct state *st)
 {
 	struct connection *c = st->st_connection;
-	int action = c->dpd_action;
+	enum dpd_action action = c->dpd_action;
 
 	/** delete the state, which is probably in phase 2 */
 	set_cur_connection(c);

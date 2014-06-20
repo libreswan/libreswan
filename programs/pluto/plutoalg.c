@@ -170,10 +170,9 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
  *      Proposals will be built by looping over default_ike_groups array and
  *      merging alg_info (ike_info) contents
  */
-static const int default_ike_groups[] = {
-	OAKLEY_GROUP_MODP1536,
-	OAKLEY_GROUP_MODP1024
-};
+static const int default_ike_groups[] = { DEFAULT_OAKLEY_GROUPS };
+static const int default_ike_ealgs[] = { DEFAULT_OAKLEY_EALGS };
+static const int default_ike_aalgs[] = { DEFAULT_OAKLEY_AALGS };
 
 /*
  *	Add IKE alg info _with_ logic (policy):
@@ -183,10 +182,17 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 			     int aalg_id, int ak_bits,
 			     int modp_id)
 {
-	/*	Policy: default to 3DES */
-	if (ealg_id == 0)
-		ealg_id = OAKLEY_3DES_CBC;
-	if (ealg_id > 0) {
+	if (ealg_id == 0) { /* use all our default enc algs */
+		int i;
+
+		for (i=0; i != elemsof(default_ike_ealgs); i++) {
+			per_group_alg_info_ike_add(alg_info, default_ike_ealgs[i], ek_bits,
+				aalg_id, ak_bits, modp_id);
+		}
+		return;
+	}
+
+	{
 		if (aalg_id > 0) {
 			raw_alg_info_ike_add(
 				(struct alg_info_ike *)alg_info,
@@ -194,17 +200,14 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 				aalg_id, ak_bits,
 				modp_id);
 		} else {
-			/*	Policy: default to MD5 and SHA */
-			raw_alg_info_ike_add(
-				(struct alg_info_ike *)alg_info,
-				ealg_id, ek_bits,
-				OAKLEY_MD5, ak_bits,
-				modp_id);
-			raw_alg_info_ike_add(
-				(struct alg_info_ike *)alg_info,
-				ealg_id, ek_bits,
-				OAKLEY_SHA1, ak_bits,
-				modp_id);
+			int j;
+			for (j=0; j != elemsof(default_ike_aalgs); j++) {
+				raw_alg_info_ike_add(
+					(struct alg_info_ike *)alg_info,
+					ealg_id, ek_bits,
+					default_ike_aalgs[j], ak_bits,
+					modp_id);
+			}
 		}
 	}
 }
@@ -265,14 +268,7 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 		}
 
 		eklen = esp_info->esp_ealg_keylen;
-		if (!eklen) {
-			eklen = kernel_alg_esp_enc_max_keylen(esp_info->esp_ealg_id)
-				* BITS_PER_BYTE;
-		}
 		aklen = esp_info->esp_aalg_keylen;
-		if (!aklen)
-			aklen = kernel_alg_esp_auth_keylen(
-				esp_info->esp_aalg_id) * BITS_PER_BYTE;
 
 		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d",
 			       sep,
@@ -412,6 +408,7 @@ void alg_info_snprint_ike(char *buf, size_t buflen,
 			}
 			ptr += ret;
 			buflen -= ret;
+			sep = ", ";
 		}
 	}
 }
@@ -491,10 +488,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	}
 
 	if (policy & POLICY_ENCRYPT) {
+
 		/*	open new transformation */
 		db_trans_add(db_ctx, ealg_i);
 
-#warning todo: needs to handle ikev2 now as well -
 		/* add ESP auth attr (if present) */
 		if (esp_info->esp_aalg_id != AUTH_ALGORITHM_NONE) {
 			db_attr_add_values(db_ctx,
@@ -503,10 +500,34 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 
 		/*	add keylegth if specified in esp= string */
-		if (esp_info->esp_ealg_keylen) {
+		if (esp_info->esp_ealg_keylen != 0) {
 				db_attr_add_values(db_ctx,
 						   KEY_LENGTH,
 						   esp_info->esp_ealg_keylen);
+		} else {
+			/* no key length - if required add default here and add another max entry */
+			int def_ks = crypto_req_keysize(0 /*ESP*/, ealg_i);
+			if (def_ks) {
+				int max_ks = BITS_PER_BYTE * 
+					kernel_alg_esp_enc_max_keylen(ealg_i);
+
+				db_attr_add_values(db_ctx,
+					KEY_LENGTH,
+					def_ks);
+				/* add this trans again with max key size */
+				if (def_ks != max_ks) {
+					db_trans_add(db_ctx, ealg_i);
+					if (esp_info->esp_aalg_id != AUTH_ALGORITHM_NONE) {
+						db_attr_add_values(db_ctx,
+							AUTH_ALGORITHM,
+							esp_info->esp_aalg_id);
+					}
+					db_attr_add_values(db_ctx,
+						KEY_LENGTH,
+						max_ks);
+				}
+			}
+
 		}
 
 	} else if (policy & POLICY_AUTHENTICATE) {
@@ -621,61 +642,6 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	prop->trans_cnt = tn;
 
 	return ctx_new;
-}
-
-/*
- * ML: make F_STRICT logic consider enc,auth algorithms
- */
-bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
-			     struct alg_info_esp *alg_info)
-{
-	bool ealg_insecure;
-
-	/*
-	 * key_len passed comes from esp_attrs read from peer
-	 * For many older algoritms (eg 3DES) this key_len is fixed
-	 * and get passed as 0.
-	 * ... then get default (really max!) key_len
-	 */
-	if (key_len == 0)
-		key_len = kernel_alg_esp_enc_max_keylen(ealg) * BITS_PER_BYTE;
-
-	/*
-	 * Simple test to toss low key_len.
-	 * Will accept it only if specified in "esp" string.
-	 */
-	ealg_insecure = (key_len < 128);
-	if (ealg_insecure || alg_info != NULL) {
-		if (alg_info != NULL) {
-			struct esp_info *esp_info;
-			int i;
-
-			ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
-				if (esp_info->esp_ealg_id == ealg &&
-				    (esp_info->esp_ealg_keylen == 0 ||
-				     key_len == 0 ||
-				     esp_info->esp_ealg_keylen == key_len) &&
-				    esp_info->esp_aalg_id == aalg) {
-					if (ealg_insecure) {
-						loglog(RC_LOG_SERIOUS,
-						       "warning: You should NOT use insecure/broken ESP algorithms [%s (%d)]!",
-						       enum_name(&esp_transformid_names,
-								 ealg),
-						       key_len);
-					}
-					return TRUE;
-				}
-			}
-		}
-		libreswan_log(
-			"IPsec Transform [%s (%d), %s] refused due to %s",
-			enum_name(&esp_transformid_names, ealg),
-			key_len,
-			enum_name(&auth_alg_names, aalg),
-			ealg_insecure ? "insecure key_len and enc. alg. not listed in \"esp\" string" : "strict flag");
-		return FALSE;
-	}
-	return TRUE;
 }
 
 void kernel_alg_show_status(void)

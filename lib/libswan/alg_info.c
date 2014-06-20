@@ -80,13 +80,13 @@ enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	enum ikev1_auth_attribute auth)
 {
 	switch (auth) {
-	case AUTH_ALGORITHM_HMAC_MD5:
+	case AUTH_ALGORITHM_HMAC_MD5: /* 2 */
 		return AH_MD5;
 
 	case AUTH_ALGORITHM_HMAC_SHA1:
 		return AH_SHA;
 
-	case AUTH_ALGORITHM_HMAC_SHA2_256:
+	case AUTH_ALGORITHM_HMAC_SHA2_256: /* 5 */
 		return AH_SHA2_256;
 
 	case AUTH_ALGORITHM_HMAC_SHA2_384:
@@ -98,7 +98,23 @@ enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	case AUTH_ALGORITHM_HMAC_RIPEMD:
 		return AH_RIPEMD;
 
-	case AUTH_ALGORITHM_NONE:
+	case AUTH_ALGORITHM_AES_CBC: /* 9 */
+		return AH_AES_XCBC_MAC;
+
+	/* AH_RSA not supported */
+	case AUTH_ALGORITHM_SIG_RSA:
+		return AH_RSA;
+
+	case AUTH_ALGORITHM_AES_128_GMAC:
+		return AH_AES_128_GMAC;
+
+	case AUTH_ALGORITHM_AES_192_GMAC:
+		return AH_AES_192_GMAC;
+
+	case AUTH_ALGORITHM_AES_256_GMAC:
+		return AH_AES_256_GMAC;
+
+	case AUTH_ALGORITHM_NONE: /* private use 251 */
 		return AH_NONE;
 
 	default:
@@ -673,8 +689,10 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		/*
 		 * Enforce RFC restrictions in key size, documented in
 		 * ietf_constants.h
+		 * If using --impair-send-key-size-check this check is bypassed
+		 * for testing purposes.
 		 */
-		if (p_ctx->eklen != 0) {
+		if (p_ctx->eklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
 			switch(alg_info->alg_info_protoid) {
 			case PROTO_ISAKMP:
 				switch(ealg_id) {
@@ -728,6 +746,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				}
 			}
 		}
+
 	}
 	if (p_ctx->aalg_permit && *p_ctx->aalg_buf != '\0') {
 		aalg_id = p_ctx->aalg_getbyname(p_ctx->aalg_buf,

@@ -7,14 +7,14 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add road-east-ipv4-psk-ikev2
-002 conn: road-east-ipv4-psk-ikev2/1x0, rekeymargin (540s) > salifetime (120s); reducing rekeymargin to 60 seconds
+002 conn: road-east-ipv4-psk-ikev2/1x0, rekeymargin (540s) >= salifetime (120s); reducing rekeymargin to 60 seconds
 002 added connection description "road-east-ipv4-psk-ikev2/1x0"
-002 conn: road-east-ipv4-psk-ikev2/2x0, rekeymargin (540s) > salifetime (120s); reducing rekeymargin to 60 seconds
+002 conn: road-east-ipv4-psk-ikev2/2x0, rekeymargin (540s) >= salifetime (120s); reducing rekeymargin to 60 seconds
 002 added connection description "road-east-ipv4-psk-ikev2/2x0"
 east #
  ipsec auto --add road-east-ipv6-psk-ikev2
 002 "road-east-ipv6-psk-ikev2": deleting connection
-002 conn: road-east-ipv6-psk-ikev2, rekeymargin (540s) > salifetime (120s); reducing rekeymargin to 60 seconds
+002 conn: road-east-ipv6-psk-ikev2, rekeymargin (540s) >= salifetime (120s); reducing rekeymargin to 60 seconds
 002 added connection description "road-east-ipv6-psk-ikev2"
 east #
  ipsec auto --status

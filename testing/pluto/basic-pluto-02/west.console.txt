@@ -87,18 +87,18 @@ west #
 002 added connection description "orient12"
 west #
  ipsec status |grep orient |grep "eroute owner"
-000 "orient1": 192.1.2.45---192.1.2.254...192.1.2.254---%any; unrouted; eroute owner: #0
-000 "orient10": 192.1.2.45---192.1.2.254...192.1.2.254---8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
+000 "orient1": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
+000 "orient10": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 000 "orient11": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 000 "orient12": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
-000 "orient2": 192.1.2.45---192.1.2.254...192.1.2.254---%any; unrouted; eroute owner: #0
+000 "orient2": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
 000 "orient3": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
 000 "orient4": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
-000 "orient5": 192.1.2.45<192.1.2.45>...192.1.2.254---8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
-000 "orient6": 192.1.2.45<192.1.2.45>---192.1.2.254...192.1.2.254---8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
+000 "orient5": 192.1.2.45<192.1.2.45>...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
+000 "orient6": 192.1.2.45<192.1.2.45>---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 000 "orient7": 192.1.2.45<192.1.2.45>---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 000 "orient8": 192.1.2.45<192.1.2.45>...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
-000 "orient9": 192.1.2.45---192.1.2.254...192.1.2.254---8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
+000 "orient9": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 west #
  echo "initdone"
 initdone
@@ -115,7 +115,7 @@ west #
 108 "westnet-all" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "westnet-all" #1: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-all" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "westnet-all" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
+004 "westnet-all" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 prf=sha group=MODP2048}
 002 "westnet-all" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-all" #2: STATE_QUICK_I1: initiate
 004 "westnet-all" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}

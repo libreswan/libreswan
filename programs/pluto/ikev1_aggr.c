@@ -110,8 +110,7 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -132,8 +131,7 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 	}
 	reset_cur_state();
 }
@@ -160,8 +158,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 		return;
 	}
 
@@ -202,8 +199,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 		if (e != STF_SUSPEND) {
 			if (dh->dh_md != NULL) {
 				complete_v1_state_transition(&dh->dh_md, e);
-				if (dh->dh_md != NULL)
-					release_md(dh->dh_md);
+				release_any_md(&dh->dh_md);
 			}
 		}
 
@@ -725,8 +721,7 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -747,8 +742,7 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 	}
 	reset_cur_state();
 }
@@ -1042,8 +1036,7 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 		return;
 	}
 
@@ -1065,8 +1058,7 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	if (ke->ke_md != NULL) {
 		complete_v1_state_transition(&ke->ke_md, e);
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 	}
 	reset_globals();
 
@@ -1165,10 +1157,6 @@ stf_status aggr_outI1(int whack_sock,
 			pcrc_init(&ke->ke_pcrc, aggr_outI1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     importance);
-			if (e != STF_SUSPEND && e != STF_INLINE) {
-				loglog(RC_CRYPTOFAILED, "system too busy");
-				delete_state(st);
-			}
 		} else {
 			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			e = aggr_outI1_tail(&ke->ke_pcrc, NULL);
@@ -1342,9 +1330,9 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	send_ike_msg(st, "aggr_outI1");
 
-	/* Set up a retransmission event, half a minute henceforth */
+	/* Set up a retransmission event, half a minute hence */
 	delete_event(st);
-	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
 	whack_log(RC_NEW_STATE + STATE_AGGR_I1,
 		  "%s: initiate", enum_name(&state_names, st->st_state));

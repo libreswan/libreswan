@@ -2,5 +2,5 @@
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add v6-transport
-ipsec auto --status
+nc -l 1701 &
 echo "initdone"

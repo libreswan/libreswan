@@ -58,14 +58,14 @@
  */
 
 /* msgid_t defined in defs.h */
-#define MAINMODE_MSGID    ((msgid_t) 0)
-#define INVALID_MSGID     0xffffffff
+
+#define v1_MAINMODE_MSGID  ((msgid_t) 0)	/* network and host order */
+
+#define v2_INITIAL_MSGID  ((msgid_t) 0)	/* network and host order */
+
+#define v2_INVALID_MSGID  ((msgid_t) 0xffffffff)	/* network and host order */
 
 struct state;   /* forward declaration of tag */
-extern void reserve_msgid(struct state *isakmp_sa, msgid_t msgid);
-extern bool unique_msgid(const struct state *isakmp_sa, msgid_t msgid);
-
-extern msgid_t generate_msgid(const struct state *isakmp_sa);
 
 #define XAUTH_USERNAME_LEN 64
 
@@ -267,18 +267,19 @@ struct state {
 	bool st_reserve_msgid;                  /* if TRUE, then message id
 	                                           has been reserved already */
 
-	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 */
-	msgid_t st_msgid_phase15b;              /* msgid for phase 1.5 */
+	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 - Network Order! */
+	msgid_t st_msgid_phase15b;              /* msgid for phase 1.5 - Network Order! */
+
 	/* only for a state representing an ISAKMP SA */
 	struct msgid_list  *st_used_msgids;     /* used-up msgids */
 
-	/* IKEv2 things */
+	/** IKEv2 only things **/
 	/* message ID sequence for things we send (as initiator) */
-	msgid_t st_msgid_lastack;               /* last one peer acknowledged */
-	msgid_t st_msgid_nextuse;               /* next one to use */
-
+	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
+	msgid_t st_msgid_nextuse;               /* next one to use - host order */
 	/* message ID sequence for things we receive (as responder) */
-	msgid_t st_msgid_lastrecv;             /* last one peer sent */
+	msgid_t st_msgid_lastrecv;             /* last one peer sent - Host order v2 only */
+
 
 	/* symmetric stuff */
 
@@ -291,7 +292,7 @@ struct state {
 	chunk_t st_gr;                          /* Responder public value */
 	u_int8_t st_rcookie[COOKIE_SIZE];       /* Responder Cookie */
 	chunk_t st_nr;                          /* Nr nonce */
-	chunk_t st_dcookie;                     /* DOS cookie of responder */
+	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */
 
 	/* my stuff */
 	chunk_t st_tpacket;                     /* Transmitted packet */
@@ -473,7 +474,7 @@ extern struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 						      u_int8_t protoid,
 						      ipsec_spi_t spi);
 
-extern struct state *find_info_state(const u_char *icookie,
+extern struct state *ikev1_find_info_state(const u_char *icookie,
 				     const u_char *rcookie,
 				     const ip_address *peer,
 				     msgid_t msgid);
