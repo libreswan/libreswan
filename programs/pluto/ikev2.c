@@ -1166,8 +1166,10 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		/* start liveness checks if set, making sure we only schedule once when moving
 		 * from I2->I3 or R1->R2
 		 */
-		if (st->st_state != from_state && dpd_active_locally(st) &&
-				IS_V2_ESTABLISHED(st->st_state)) {
+		if (st->st_state != from_state &&
+			st->st_state != STATE_UNDEFINED &&
+			IS_V2_ESTABLISHED(st->st_state) &&
+			dpd_active_locally(st)) {
 			DBG(DBG_DPD,
 			    DBG_log("dpd enabled, scheduling ikev2 liveness checks"));
 			event_schedule(EVENT_v2_LIVENESS,
@@ -1190,7 +1192,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	cur_state = st = md->st; /* might have changed */
 
-	/* passert(st != NULL);   apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
+	pexpect(st != NULL);   /*  STF_TOOMUCH_CRYPTO used to call delete_state(st); hitting this*/
 	/*
 	 * XXX/SML:  There is no need to abort here in all cases if state is
 	 * null, so moved this precondition to where it's needed.  Some previous
@@ -1262,16 +1264,11 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_TOOMUCHCRYPTO:
-		/* ??? Why is this comment useful:
-		 * well, this should never happen during a whack, since
-		 * a whack will always force crypto.
-		 */
-		passert(st != NULL);
 		set_suspended(st, NULL);
 		pexpect(!st->st_calculating);
 		libreswan_log("message in state %s ignored due to cryptographic overload",
 			      from_state_name);
-		break;
+		/* FALL THROUGH */
 
 	case STF_FATAL:
 		/* update the previous packet history */

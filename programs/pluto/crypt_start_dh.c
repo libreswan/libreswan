@@ -249,18 +249,6 @@ stf_status start_dh_v2(struct msg_digest *md,
 	{
 		stf_status e = send_crypto_helper_request(&r, &dh->dh_pcrc);
 
-		switch (e) {
-		case STF_INLINE: /* computation and continuation done. */
-		case STF_SUSPEND: /* computation queued for later completion */
-			break;
-		case STF_FAIL: /* failure; message logged */
-		case STF_TOOMUCHCRYPTO: /* queue overloaded: we won't do this; message logged */
-			delete_state(st);
-			break;
-		default:
-			bad_case(e);
-		}
-
 		reset_globals(); /* XXX suspicious - why was this deemed neccessary? */
 
 		return e;
