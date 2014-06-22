@@ -310,13 +310,11 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 {
 	int result;
 	char
-		me_str[ADDRTOT_BUF],
 		myid_str2[IDTOA_BUF],
 		srcip_str[ADDRTOT_BUF + sizeof("PLUTO_MY_SOURCEIP=") + 4],
 		myclient_str[SUBNETTOT_BUF],
 		myclientnet_str[ADDRTOT_BUF],
 		myclientmask_str[ADDRTOT_BUF],
-		peer_str[ADDRTOT_BUF],
 		peerid_str[IDTOA_BUF],
 		metric_str[sizeof("PLUTO_METRIC") + 5],
 		connmtu_str[sizeof("PLUTO_MTU") + 5],
@@ -329,6 +327,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		nexthop_str[sizeof("PLUTO_NEXT_HOP='' ") + ADDRTOT_BUF],
 		secure_xauth_username_str[IDTOA_BUF] = "";
 
+	ipstr_buf bme, bpeer;
 	ip_address ta;
 
 	nexthop_str[0] = '\0';
@@ -341,7 +340,6 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		add_str(nexthop_str, sizeof(nexthop_str), n, "' ");
 	}
 
-	addrtot(&sr->this.host_addr, 0, me_str, sizeof(me_str));
 	idtoa(&sr->this.id, myid_str2, sizeof(myid_str2));
 	escape_metachar(myid_str2, secure_myid_str, sizeof(secure_myid_str));
 	subnettot(&sr->this.client, 0, myclient_str, sizeof(myclientnet_str));
@@ -350,7 +348,6 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	maskof(&sr->this.client, &ta);
 	addrtot(&ta, 0, myclientmask_str, sizeof(myclientmask_str));
 
-	addrtot(&sr->that.host_addr, 0, peer_str, sizeof(peer_str));
 	idtoa(&sr->that.id, peerid_str, sizeof(peerid_str));
 	escape_metachar(peerid_str, secure_peerid_str,
 			sizeof(secure_peerid_str));
@@ -451,7 +448,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  , c->name,
 			  c->interface->ip_dev->id_vname,
 			  nexthop_str,
-			  me_str,
+			  ipstr(&sr->this.host_addr, &bme),
 			  secure_myid_str,
 			  myclient_str,
 			  myclientnet_str,
@@ -459,7 +456,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  sr->this.port,
 			  sr->this.protocol,
 			  sr->reqid,
-			  peer_str,
+			  ipstr(&sr->that.host_addr, &bpeer),
 			  secure_peerid_str,
 			  peerclient_str,
 			  peerclientnet_str,
@@ -919,6 +916,7 @@ static bool raw_eroute(const ip_address *this_host,
 #endif
 					);
 
+	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (!result || DBGP(DBG_CONTROL | DBG_KERNEL))
 		DBG_log("raw_eroute result=%u\n", result);
 
@@ -2339,6 +2337,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 	passert(c->kind == CK_PERMANENT || c->kind == CK_INSTANCE);
 	if (c->spd.that.has_client) {
 		for (;; ) {
+			ipstr_buf b;
 			struct spd_route *esr;
 			struct connection *o = route_owner(c, &c->spd, &esr,
 							   NULL, NULL);
@@ -2373,7 +2372,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 
 			loglog(RC_LOG_SERIOUS,
 			       "route to peer's client conflicts with \"%s\" %s; releasing old connection to free the route",
-			       o->name, ip_str(&o->spd.that.host_addr));
+			       o->name, ipstr(&o->spd.that.host_addr, &b));
 			release_connection(o, FALSE);
 		}
 	}

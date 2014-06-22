@@ -1961,15 +1961,17 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 	ip_address lip;	/* --listen filter option */
 
 	if (pluto_listen) {
-		err_t e;
-		e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
-		if (e) {
+		err_t e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
+
+		if (e != NULL) {
 			DBG_log("invalid listen= option ignored: %s\n", e);
 			pluto_listen = NULL;
 		}
-		DBG(DBG_CONTROL,
+		DBG(DBG_CONTROL, {
+			ipstr_buf b;
 			DBG_log("Only looking to listen on %s\n",
-				ip_str(&lip)));
+				ipstr(&lip, &b));
+		});
 	}
 
 	/*
@@ -2007,10 +2009,12 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 						sizeof(IPSECDEVPREFIX) - 1) ==
 					0) {
 					if (v != NULL) {
+						ipstr_buf b;
+
 						loglog(RC_LOG_SERIOUS,
 							"ipsec interfaces %s and %s share same address %s",
 							v->name, vfp->name,
-							ip_str(&ifp->addr));
+							ipstr(&ifp->addr, &b));
 						bad = TRUE;
 					} else {
 						/* current winner */
@@ -2030,10 +2034,12 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 						continue;
 					}
 					if (after) {
+						ipstr_buf b;
+
 						loglog(RC_LOG_SERIOUS,
 							"IP interfaces %s and %s share address %s!",
 							ifp->name, vfp->name,
-							ip_str(&ifp->addr));
+							ipstr(&ifp->addr, &b));
 					}
 					bad = TRUE;
 				}
@@ -2062,10 +2068,12 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					(sizeof(fvp) - 1));
 				v = &fake_v;
 			} else {
-				DBG(DBG_CONTROL,
+				DBG(DBG_CONTROL, {
+					ipstr_buf b;
 					DBG_log("IP interface %s %s has no matching ipsec* interface -- ignored",
 						ifp->name,
-						ip_str(&ifp->addr)));
+						ipstr(&ifp->addr, &b));
+				});
 				continue;
 			}
 		}
@@ -2083,8 +2091,10 @@ add_entry:
 		 */
 		if (pluto_listen != NULL) {
 			if (!sameaddr(&lip, &ifp->addr)) {
+				ipstr_buf b;
+
 				libreswan_log("skipping interface %s with %s",
-					ifp->name, ip_str(&ifp->addr));
+					ifp->name, ipstr(&ifp->addr, &b));
 				continue;
 			}
 		}
@@ -2099,6 +2109,7 @@ add_entry:
 				/* search is over if at end of list */
 				if (q == NULL) {
 					/* matches nothing -- create a new entry */
+					ipstr_buf b;
 					int fd = create_socket(ifp, v->name,
 							pluto_port);
 
@@ -2133,7 +2144,7 @@ add_entry:
 						"adding interface %s/%s %s:%d",
 						q->ip_dev->id_vname,
 						q->ip_dev->id_rname,
-						ip_str(&q->ip_addr),
+						ipstr(&q->ip_addr, &b),
 						q->port);
 
 					/*
@@ -2169,7 +2180,7 @@ add_entry:
 						libreswan_log(
 							"adding interface %s/%s %s:%d",
 							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							ip_str(&q->ip_addr),
+							ipstr(&q->ip_addr, &b),
 							q->port);
 					}
 

@@ -499,7 +499,6 @@ int main(int argc, char *argv[])
 	int c;
 	ip_said said;
 	const char* error_s;
-	char ipaddr_txt[ADDRTOT_BUF];
 	char ipsaid_txt[SATOT_BUF];
 
 	int outif = 0;
@@ -771,11 +770,11 @@ int main(int argc, char *argv[])
 			}
 			edst_opt = optarg;
 			if (debug) {
-				addrtot(&edst, 0, ipaddr_txt,
-					sizeof(ipaddr_txt));
+				ipstr_buf b;
+
 				fprintf(stdout, "%s: edst=%s.\n",
 					progname,
-					ipaddr_txt);
+					ipstr(&edst, &b));
 			}
 			break;
 
@@ -967,11 +966,11 @@ int main(int argc, char *argv[])
 			}
 			dst_opt = optarg;
 			if (debug) {
-				addrtot(&dst, 0, ipaddr_txt,
-					sizeof(ipaddr_txt));
+				ipstr_buf b;
+
 				fprintf(stdout, "%s: dst=%s.\n",
 					progname,
-					ipaddr_txt);
+					ipstr(&dst, &b));
 			}
 			break;
 
@@ -1041,11 +1040,11 @@ int main(int argc, char *argv[])
 			}
 			src_opt = optarg;
 			if (debug) {
-				addrtot(&src, 0, ipaddr_txt,
-					sizeof(ipaddr_txt));
+				ipstr_buf b;
+
 				fprintf(stdout, "%s: src=%s.\n",
 					progname,
-					ipaddr_txt);
+					ipstr(&src, &b));
 			}
 			break;
 
@@ -1368,10 +1367,11 @@ int main(int argc, char *argv[])
 		emit_lifetime("lifetime_h", SADB_EXT_LIFETIME_HARD, extensions, life_opt[life_hard], life[life_hard]);
 
 		if (debug) {
-			addrtot(&src, 0, ipaddr_txt, sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stdout,
 				"%s: assembling address_s extension (%s).\n",
-				progname, ipaddr_txt);
+				progname, ipstr(&src, &b));
 		}
 
 		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_SRC],
@@ -1380,10 +1380,11 @@ int main(int argc, char *argv[])
 					    0,
 					    sockaddrof(&src));
 		if (error != 0) {
-			addrtot(&src, 0, ipaddr_txt, sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_s extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&src, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -1394,10 +1395,11 @@ int main(int argc, char *argv[])
 					    0,
 					    sockaddrof(&edst));
 		if (error != 0) {
-			addrtot(&edst, 0, ipaddr_txt, sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_d extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&edst, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -1503,13 +1505,15 @@ int main(int argc, char *argv[])
 #if 0
 		/* not yet implemented */
 		if (natt != 0 && !isanyaddr(&natt_oa)) {
+			ip_str_buf b;
+
 			success = pfkeyext_address(SADB_X_EXT_NAT_T_OA,
 						   &natt_oa,
 						   "pfkey_nat_t_oa Add ESP SA",
 						   ipsaid_txt, extensions);
 			if (debug)
 				fprintf(stderr, "setting nat_oa to %s\n",
-					ip_str(&natt_oa));
+					ipstr(&natt_oa, &b));
 			if (!success)
 				return FALSE;
 		}

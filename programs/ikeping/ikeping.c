@@ -197,7 +197,7 @@ static void receive_ping(int afamily, int s, int reply, int natt)
 	ip_address sender;
 	struct isakmp_hdr ih;
 	char rbuf[256];
-	char buf[64];
+	char buf[ADDRTOT_BUF];
 	int n, rport;
 	unsigned int sendlen;
 	const char *xchg_name;
@@ -494,7 +494,7 @@ int main(int argc, char **argv)
 			char *port;
 			char *host;
 			int dport = 500;
-			char namebuf[128];
+			ipstr_buf b;
 
 			host = argv[optind];
 
@@ -521,9 +521,8 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 
-			addrtot(&raddr, 0, namebuf, sizeof(namebuf));
-
-			printf("Sending packet to %s/%d\n", namebuf, dport);
+			printf("Sending packet to %s/%d\n",
+				ipstr(&raddr, &b), dport);
 
 			send_ping(afamily, s, &raddr, dport);
 			numSenders++;

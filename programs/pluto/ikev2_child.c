@@ -63,20 +63,18 @@
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
 
+/* ??? this routine only produces DBG output.  Calls should be conditional but they are not */
 void ikev2_print_ts(struct traffic_selector *ts)
 {
-	char lbx[ADDRTOT_BUF];
-	char hbx[ADDRTOT_BUF];
+	ipstr_buf b;
 
 	DBG_log("printing contents struct traffic_selector");
 	DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
 	DBG_log("  ipprotoid: %d", ts->ipprotoid);
 	DBG_log("  startport: %d", ts->startport);
 	DBG_log("  endport: %d", ts->endport);
-	addrtot(&ts->low,  0, lbx, sizeof(lbx));
-	addrtot(&ts->high, 0, hbx, sizeof(hbx));
-	DBG_log("  ip low: %s", lbx);
-	DBG_log("  ip high: %s", hbx);
+	DBG_log("  ip low: %s", ipstr(&ts->low, &b));
+	DBG_log("  ip high: %s", ipstr(&ts->high, &b));
 }
 
 /* rewrite me with addrbytesptr() */
@@ -732,15 +730,15 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 	}
 
 	DBG(DBG_CONTROLMORE, {
-		    char ei3[SUBNETTOT_BUF];
-		    char er3[SUBNETTOT_BUF];
-		    subnettot(&ei->client,  0, ei3, sizeof(ei3));
-		    subnettot(&er->client,  0, er3, sizeof(er3));
-		    DBG_log("  ikev2_evaluate_connection_fit evaluating our "
-			    "I=%s:%s:%d/%d R=%s:%d/%d %s to their:",
-			    d->name, ei3, ei->protocol, ei->port,
-			    er3, er->protocol, er->port,
-			    is_virtual_connection(d) ? "(virt)" : "");
+		char ei3[SUBNETTOT_BUF];
+		char er3[SUBNETTOT_BUF];
+		subnettot(&ei->client,  0, ei3, sizeof(ei3));
+		subnettot(&er->client,  0, er3, sizeof(er3));
+		DBG_log("  ikev2_evaluate_connection_fit evaluating our "
+			"I=%s:%s:%d/%d R=%s:%d/%d %s to their:",
+			d->name, ei3, ei->protocol, ei->port,
+			er3, er->protocol, er->port,
+			is_virtual_connection(d) ? "(virt)" : "");
 	});
 
 	/* compare tsi/r array to this/that, evaluating how well it fits */
@@ -749,28 +747,23 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 			/* does it fit at all? */
 
 			DBG(DBG_CONTROLMORE, {
-				    char lbi[ADDRTOT_BUF];
-				    char hbi[ADDRTOT_BUF];
-				    char lbr[ADDRTOT_BUF];
-				    char hbr[ADDRTOT_BUF];
-				    addrtot(&tsi[tsi_ni].low, 0, lbi,
-					    sizeof(lbi));
-				    addrtot(&tsi[tsi_ni].high, 0, hbi,
-					    sizeof(hbi));
-				    addrtot(&tsr[tsr_ni].low, 0, lbr,
-					    sizeof(lbr));
-				    addrtot(&tsr[tsr_ni].high, 0, hbr,
-					    sizeof(hbr));
-
-				    DBG_log("    tsi[%u]=%s/%s proto=%d portrange %d-%d, tsr[%u]=%s/%s proto=%d portrange %d-%d",
-					    tsi_ni, lbi, hbi,
-					    tsi[tsi_ni].ipprotoid,
-					    tsi[tsi_ni].startport,
-					    tsi[tsi_ni].endport,
-					    tsr_ni, lbr, hbr,
-					    tsr[tsr_ni].ipprotoid,
-					    tsr[tsr_ni].startport,
-					    tsr[tsr_ni].endport);
+				ipstr_buf bli;
+				ipstr_buf bhi;
+				ipstr_buf blr;
+				ipstr_buf bhr;
+				DBG_log("    tsi[%u]=%s/%s proto=%d portrange %d-%d, tsr[%u]=%s/%s proto=%d portrange %d-%d",
+					tsi_ni,
+					ipstr(&tsi[tsi_ni].low, &bli),
+					ipstr(&tsi[tsi_ni].high, &bhi),
+					tsi[tsi_ni].ipprotoid,
+					tsi[tsi_ni].startport,
+					tsi[tsi_ni].endport,
+					tsr_ni,
+					ipstr(&tsr[tsr_ni].low, &blr),
+					ipstr(&tsr[tsr_ni].high, &bhr),
+					tsr[tsr_ni].ipprotoid,
+					tsr[tsr_ni].startport,
+					tsr[tsr_ni].endport);
 			});
 			/* do addresses fit into the policy? */
 
@@ -931,8 +924,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					    &sra->that.host_addr,
 					    sra->that.host_port);
 
-			if (DBGP(DBG_CONTROLMORE)) {
-				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
+			DBG(DBG_CONTROLMORE, {
+				char s2[SUBNETTOT_BUF];
+				char d2[SUBNETTOT_BUF];
 
 				subnettot(&sra->this.client, 0, s2,
 					  sizeof(s2));
@@ -942,7 +936,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				DBG_log("  checking hostpair %s -> %s is %s",
 					s2, d2,
 					(hp ? "found" : "not found"));
-			}
+			});
 
 			if (!hp)
 				continue;

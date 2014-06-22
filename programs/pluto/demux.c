@@ -326,9 +326,11 @@ static bool read_packet(struct msg_digest *md)
 				   "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s",
 				   ifp->ip_dev->id_rname, from_ugh));
 		} else {
+			ipstr_buf b;
+
 			log_errno((e, "recvfrom on %s from %s:%u failed",
 				   ifp->ip_dev->id_rname,
-				   ip_str(&md->sender),
+				   ipstr(&md->sender, &b),
 				   (unsigned)md->sender_port));
 		}
 
@@ -344,16 +346,21 @@ static bool read_packet(struct msg_digest *md)
 
 	if (ifp->ike_float) {
 		u_int32_t non_esp;
+
 		if (packet_len < (int)sizeof(u_int32_t)) {
+			ipstr_buf b;
+
 			libreswan_log("recvfrom %s:%u too small packet (%d)",
-				      ip_str(cur_from), (unsigned) cur_from_port,
+				      ipstr(cur_from, &b), (unsigned) cur_from_port,
 				      packet_len);
 			return FALSE;
 		}
 		memcpy(&non_esp, _buffer, sizeof(u_int32_t));
 		if (non_esp != 0) {
+			ipstr_buf b;
+
 			libreswan_log("recvfrom %s:%u has no Non-ESP marker",
-				      ip_str(cur_from),
+				      ipstr(cur_from, &b),
 				      (unsigned) cur_from_port);
 			return FALSE;
 		}
@@ -369,12 +376,14 @@ static bool read_packet(struct msg_digest *md)
 			       "message buffer in comm_handle()")
 		 , packet_len, "packet");
 
-	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL,
-	    DBG_log("*received %d bytes from %s:%u on %s (port=%d)",
-		    (int) pbs_room(&md->packet_pbs),
-		    ip_str(cur_from), (unsigned) cur_from_port,
-		    ifp->ip_dev->id_rname,
-		    ifp->port));
+	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL, {
+		ipstr_buf b;
+		DBG_log("*received %d bytes from %s:%u on %s (port=%d)",
+			(int) pbs_room(&md->packet_pbs),
+			ipstr(cur_from, &b), (unsigned) cur_from_port,
+			ifp->ip_dev->id_rname,
+			ifp->port);
+	});
 
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
@@ -407,10 +416,12 @@ static bool read_packet(struct msg_digest *md)
 		 * layer. But boggus keep-alive packets (sent with a non-esp marker)
 		 * can reach this point. Complain and discard them.
 		 */
-		DBG(DBG_NATT,
-		    DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. "
-			    "Ignored. Sender: %s:%u", ip_str(cur_from),
-			    (unsigned) cur_from_port));
+		DBG(DBG_NATT, {
+			ipstr_buf b;
+			DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. "
+				"Ignored. Sender: %s:%u", ipstr(cur_from, &b),
+				(unsigned) cur_from_port);
+		});
 		return FALSE;
 	}
 

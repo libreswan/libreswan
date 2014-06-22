@@ -320,11 +320,14 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 */
 	dpd_sched_timeout(p1st, nw, timeout);
 
-	DBG(DBG_DPD, DBG_log("DPD: sending R_U_THERE %u to %s:%d (state #%lu)",
-			     p1st->st_dpd_seqno,
-			     ip_str(&p1st->st_remoteaddr),
-			     p1st->st_remoteport,
-			     p1st->st_serialno));
+	DBG(DBG_DPD, {
+		ipstr_buf b;
+		DBG_log("DPD: sending R_U_THERE %u to %s:%d (state #%lu)",
+			 p1st->st_dpd_seqno,
+			 ipstr(&p1st->st_remoteaddr, &b),
+			 p1st->st_remoteport,
+			 p1st->st_serialno);
+	});
 
 	if (send_isakmp_notification(p1st, R_U_THERE,
 				     &seqno, sizeof(seqno)) != STF_IGNORE) {

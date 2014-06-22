@@ -835,7 +835,7 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				return TRUE;
 			}
 		}
-		if (DBGP(DBG_CONTROLMORE)) {
+		DBG(DBG_CONTROLMORE, {
 			/* note: enum_show uses a static buffer so more than one call per
 			   statement is dangerous */
 			char esb[ENUM_SHOW_BUF_LEN];
@@ -863,7 +863,7 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				dh_matched ? "succeeded" : "failed",
 				enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
 				enum_show(&oakley_group_names, dh_transform));
-		}
+		});
 	}
 	return FALSE;
 }

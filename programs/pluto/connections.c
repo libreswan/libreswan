@@ -240,11 +240,13 @@ void delete_connection(struct connection *c, bool relations)
 	 */
 	passert(c->kind != CK_GOING_AWAY);
 	if (c->kind == CK_INSTANCE) {
+		ipstr_buf b;
+
 		libreswan_log(
 			"deleting connection \"%s\" instance with peer %s "
 			"{isakmp=#%lu/ipsec=#%lu}",
 			c->name,
-			ip_str(&c->spd.that.host_addr),
+			ipstr(&c->spd.that.host_addr, &b),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
 		if (c->pool != NULL)
@@ -576,7 +578,6 @@ size_t format_end(char *buf,
 				loglog(RC_BADID,
 					"format_end: buffer too small for "
 					"dohost_name - should not happen\n");
-
 		}
 	}
 
@@ -1729,8 +1730,10 @@ struct connection *rw_instantiate(struct connection *c,
 		d->spd.that.client = *aftoinfo(subnettypeof(
 						&d->spd.that.client))->none;
 	}
-	DBG(DBG_CONTROL,
-		DBG_log("instantiated \"%s\" for %s", d->name, ip_str(him)));
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
+		DBG_log("instantiated \"%s\" for %s", d->name, ipstr(him, &b));
+	});
 	return d;
 }
 
@@ -1958,8 +1961,7 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 			strcpy(p, w == 0 ? " ..." : "=== ...");
 			p += strlen(p);
 
-			addrtot(&c->spd.that.host_addr, 0, p, ADDRTOT_BUF);
-			p += strlen(p);
+			p += addrtot(&c->spd.that.host_addr, 0, p, ADDRTOT_BUF) - 1;
 
 			(void) fmt_client(&c->spd.that.client,
 					&c->spd.that.host_addr, "===", p);
@@ -2005,16 +2007,16 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
 	DBG(DBG_CONTROL, {
-			char ocb[ADDRTOT_BUF];
-			char pcb[ADDRTOT_BUF];
+		ipstr_buf a;
+		ipstr_buf b;
 
-			addrtot(our_client, 0, ocb, sizeof(ocb));
-			addrtot(peer_client, 0, pcb, sizeof(pcb));
-			DBG_log("find_connection: looking for policy for "
-				"connection: %s:%d/%d -> %s:%d/%d",
-				ocb, transport_proto, our_port, pcb,
-				transport_proto, peer_port);
-		});
+		DBG_log("find_connection: looking for policy for "
+			"connection: %s:%d/%d -> %s:%d/%d",
+			ipstr(our_client, &a),
+			transport_proto, our_port,
+			ipstr(peer_client, &b),
+			transport_proto, peer_port);
+	});
 
 	for (c = connections; c != NULL; c = c->ac_next) {
 		if (c->kind == CK_GROUP)
@@ -2111,11 +2113,10 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	if (srp != NULL && best != NULL)
 		*srp = best_sr;
 
-	if (DBGP(DBG_CONTROL)) {
-		if (best) {
+	DBG(DBG_CONTROL, {
+		if (best != NULL) {
 			char cib[CONN_INST_BUF];
-			DBG_log("find_connection: concluding with \"%s\"%s "
-				"[pri:%ld]{%p} kind=%s",
+			DBG_log("find_connection: concluding with \"%s\"%s [pri:%ld]{%p} kind=%s",
 				best->name,
 				(fmt_conn_instance(best, cib), cib),
 				best_prio,
@@ -2124,7 +2125,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		} else {
 			DBG_log("find_connection: concluding with empty");
 		}
-	}
+	});
 
 	return best;
 }
@@ -2159,10 +2160,6 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 	struct iface_port *p;
 	struct connection *best = NULL;
 	struct spd_route *sr, *bestsr;
-	char ocb[ADDRTOT_BUF], pcb[ADDRTOT_BUF];
-
-	addrtot(our_client, 0, ocb, sizeof(ocb));
-	addrtot(peer_client, 0, pcb, sizeof(pcb));
 
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
@@ -2395,18 +2392,14 @@ struct connection *find_host_connection(const ip_address *me,
 	struct connection *c;
 
 	DBG(DBG_CONTROLMORE, {
-			char mebuf[ADDRTOT_BUF];
-			char himbuf[ADDRTOT_BUF];
-			DBG_log("find_host_connection "
-				"me=%s:%d him=%s:%d policy=%s",
-				(addrtot(me, 0, mebuf,
-					sizeof(mebuf)), mebuf), my_port,
-				him ? (addrtot(him, 0, himbuf,
-							sizeof(himbuf)),
-					himbuf) : "%any",
-				his_port, bitnamesof(sa_policy_bit_names,
-						policy));
-		});
+		ipstr_buf a;
+		ipstr_buf b;
+		DBG_log("find_host_connection me=%s:%d him=%s:%d policy=%s",
+			ipstr(me, &a), my_port,
+			him != NULL ? ipstr(him, &b) : "%any",
+			his_port,
+			bitnamesof(sa_policy_bit_names, policy));
+	});
 	c = find_host_pair_connections(__FUNCTION__, me, my_port, him,
 				his_port);
 
@@ -3027,9 +3020,10 @@ static struct connection *fc_try(const struct connection *c,
 
 		for (sr = &d->spd; best != d && sr != NULL; sr = sr->next) {
 			policy_prio_t prio;
-			char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
 
-			if (DBGP(DBG_CONTROLMORE)) {
+			DBG(DBG_CONTROLMORE, {
+				char s3[SUBNETTOT_BUF];
+				char d3[SUBNETTOT_BUF];
 				subnettot(&sr->this.client, 0, s3,
 					sizeof(s3));
 				subnettot(&sr->that.client, 0, d3,
@@ -3045,12 +3039,14 @@ static struct connection *fc_try(const struct connection *c,
 					sr->this.protocol, sr->this.port,
 					d3, sr->that.protocol, sr->that.port,
 					is_virtual_sr(sr) ? "(virt)" : "");
-			}
+			});
 
 			if (!samesubnet(&sr->this.client, our_net)) {
 				DBG(DBG_CONTROLMORE,
-					DBG_log("   our client(%s) not in "
-						"our_net (%s)",
+					char s3[SUBNETTOT_BUF];
+					subnettot(&sr->this.client, 0, s3,
+						sizeof(s3));
+					DBG_log("   our client(%s) not in our_net (%s)",
 						s3, s1));
 
 				continue;
@@ -3065,12 +3061,13 @@ static struct connection *fc_try(const struct connection *c,
 					if (!samesubnet(&sr->that.client,
 							 peer_net) &&
 					    !is_virtual_sr(sr)) {
-						DBG(DBG_CONTROLMORE,
-							DBG_log("   their "
-								"client(%s) "
-								"not in same "
-								"peer_net (%s)",
-								d3, d1));
+						DBG(DBG_CONTROLMORE, {
+							char d3[SUBNETTOT_BUF];
+							subnettot(&sr->that.client, 0, d3,
+								sizeof(d3));
+							DBG_log("   their client(%s) not in same peer_net (%s)",
+								d3, d1);
+						});
 						continue;
 					}
 
@@ -3088,9 +3085,7 @@ static struct connection *fc_try(const struct connection *c,
 						    peer_id : &sr->that.id)))
 					{
 						DBG(DBG_CONTROLMORE,
-							DBG_log("   virtual "
-								"net not "
-								"allowed"));
+							DBG_log("   virtual net not allowed"));
 						continue;
 					}
 				}
@@ -3186,9 +3181,11 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		 * be marked as opportunistic.
 		 */
 		for (sr = &d->spd; sr != NULL; sr = sr->next) {
-			if (DBGP(DBG_CONTROLMORE)) {
-				char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
-				char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
+			DBG(DBG_CONTROLMORE, {
+				char s1[SUBNETTOT_BUF];
+				char d1[SUBNETTOT_BUF];
+				char s3[SUBNETTOT_BUF];
+				char d3[SUBNETTOT_BUF];
 
 				subnettot(our_net, 0, s1, sizeof(s1));
 				subnettot(peer_net, 0, d1, sizeof(d1));
@@ -3199,7 +3196,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				DBG_log("  fc_try_oppo trying %s:%s -> "
 					"%s vs %s:%s -> %s",
 					c->name, s1, d1, d->name, s3, d3);
-			}
+			});
 
 			if (!subnetinsubnet(our_net, &sr->this.client) ||
 				!subnetinsubnet(peer_net, &sr->that.client))
@@ -3252,8 +3249,9 @@ struct connection *find_client_connection(struct connection *c,
 	struct connection *d;
 	struct spd_route *sr;
 
-	if (DBGP(DBG_CONTROLMORE)) {
-		char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
+	DBG(DBG_CONTROLMORE, {
+		char s1[SUBNETTOT_BUF];
+		char d1[SUBNETTOT_BUF];
 
 		subnettot(our_net, 0, s1, sizeof(s1));
 		subnettot(peer_net, 0, d1, sizeof(d1));
@@ -3263,7 +3261,7 @@ struct connection *find_client_connection(struct connection *c,
 		DBG_log("  looking for %s:%d/%d -> %s:%d/%d",
 			s1, our_protocol, our_port,
 			d1, peer_protocol, peer_port);
-	}
+	});
 
 	/*
 	 * Give priority to current connection
@@ -3277,14 +3275,15 @@ struct connection *find_client_connection(struct connection *c,
 			sr = sr->next) {
 			srnum++;
 
-			if (DBGP(DBG_CONTROLMORE)) {
-				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
+			DBG(DBG_CONTROLMORE, {
+				char s2[SUBNETTOT_BUF];
+				char d2[SUBNETTOT_BUF];
 
 				subnettot(&sr->this.client, 0, s2, sizeof(s2));
 				subnettot(&sr->that.client, 0, d2, sizeof(d2));
 				DBG_log("  concrete checking against sr#%d "
 					"%s -> %s", srnum, s2, d2);
-		}
+			});
 
 			if (samesubnet(&sr->this.client, our_net) &&
 				samesubnet(&sr->that.client, peer_net) &&
@@ -3326,8 +3325,9 @@ struct connection *find_client_connection(struct connection *c,
 					sra->this.host_port,
 					NULL,
 					sra->that.host_port);
-			if (DBGP(DBG_CONTROLMORE)) {
-				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
+			DBG(DBG_CONTROLMORE, {
+				char s2[SUBNETTOT_BUF];
+				char d2[SUBNETTOT_BUF];
 
 				subnettot(&sra->this.client, 0, s2,
 					sizeof(s2));
@@ -3337,7 +3337,7 @@ struct connection *find_client_connection(struct connection *c,
 				DBG_log("  checking hostpair %s -> %s is %s",
 					s2, d2,
 					(hp ? "found" : "not found"));
-			}
+			});
 		}
 
 		if (hp != NULL) {
@@ -3673,6 +3673,7 @@ void show_one_connection(struct connection *c)
 		mtustr, sapriostr);
 
 	/* slightly complicated stuff to avoid extra crap */
+	/* ??? real-world and DBG control flow mixed */
 	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; "

@@ -1091,9 +1091,11 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 						   sa->natt_oa,
 						   "pfkey_nat_t_oa Add ESP SA",
 						   sa->text_said, extensions);
-			DBG(DBG_KERNEL,
-			    DBG_log("setting nat_oa to %s\n",
-				    ip_str(sa->natt_oa)));
+			DBG(DBG_KERNEL, {
+				ipstr_buf b;
+				DBG_log("setting nat_oa to %s\n",
+					ipstr(sa->natt_oa, &b));
+			});
 			if (!success)
 				return FALSE;
 		}

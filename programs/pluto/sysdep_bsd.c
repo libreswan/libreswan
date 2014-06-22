@@ -294,8 +294,11 @@ struct raw_iface *find_raw_ifaces4(void)
 			       sizeof(struct in_addr),
 			       AF_INET, &ri.addr));
 
-		DBG(DBG_CONTROL, DBG_log("found %s with address %s",
-					 ri.name, ip_str(&ri.addr)));
+		DBG(DBG_CONTROL, {
+			ipstr_buf b;
+			DBG_log("found %s with address %s",
+				ri.name, ipstr(&ri.addr, &b));
+		});
 		ri.next = rifaces;
 		rifaces = clone_thing(ri, "struct raw_iface");
 	}
@@ -353,7 +356,6 @@ bool do_command_freebsd(struct connection *c, struct spd_route *sr,
 			myclient_str[SUBNETTOT_BUF],
 			myclientnet_str[ADDRTOT_BUF],
 			myclientmask_str[ADDRTOT_BUF],
-			peer_str[ADDRTOT_BUF],
 			peerid_str[IDTOA_BUF],
 			peerclient_str[SUBNETTOT_BUF],
 			peerclientnet_str[ADDRTOT_BUF],
@@ -363,6 +365,7 @@ bool do_command_freebsd(struct connection *c, struct spd_route *sr,
 			secure_peerca_str[IDTOA_BUF] = "",
 			secure_xauth_username_str[IDTOA_BUF] = "";
 
+		ipstr_buf bme, bpeer;
 		ip_address ta;
 
 		nexthop_str[0] = '\0';
@@ -375,7 +378,6 @@ bool do_command_freebsd(struct connection *c, struct spd_route *sr,
 			add_str(nexthop_str, sizeof(nexthop_str), n, "' ");
 		}
 
-		addrtot(&sr->this.host_addr, 0, me_str, sizeof(me_str));
 		idtoa(&sr->this.id, myid_str, sizeof(myid_str));
 		escape_metachar(myid_str, secure_myid_str,
 				sizeof(secure_myid_str));
@@ -386,7 +388,6 @@ bool do_command_freebsd(struct connection *c, struct spd_route *sr,
 		maskof(&sr->this.client, &ta);
 		addrtot(&ta, 0, myclientmask_str, sizeof(myclientmask_str));
 
-		addrtot(&sr->that.host_addr, 0, peer_str, sizeof(peer_str));
 		idtoa(&sr->that.id, peerid_str, sizeof(peerid_str));
 		escape_metachar(peerid_str, secure_peerid_str,
 				sizeof(secure_peerid_str));
@@ -469,14 +470,14 @@ bool do_command_freebsd(struct connection *c, struct spd_route *sr,
 				   c->name,
 				   nexthop_str,
 				   c->interface->ip_dev->id_vname,
-				   me_str,
+				   ipstr(&sr->this.host_addr, &bme),
 				   secure_myid_str,
 				   myclient_str,
 				   myclientnet_str,
 				   myclientmask_str,
 				   sr->this.port,
 				   sr->this.protocol,
-				   peer_str,
+				   ipstr(&sr->that.host_addr, &bpeer),
 				   secure_peerid_str,
 				   peerclient_str,
 				   peerclientnet_str,

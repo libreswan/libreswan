@@ -53,9 +53,11 @@ void recv_pcap_packet_gen(u_char *user,
 			     "message buffer in comm_handle()"),
 		 packet_len, "packet");
 
+	ipstr_buf b;
+
 	DBG_log("*received %d bytes from %s:%u on %s (port=%d)",
 		(int) pbs_room(&md->packet_pbs),
-		ip_str(&md->sender), (unsigned) md->sender_port,
+		ipstr(&md->sender, &b), (unsigned) md->sender_port,
 		ifp->ip_dev->id_rname,
 		ifp->port);
 

@@ -1084,6 +1084,8 @@ static bool do_pam_authentication(void *varg)
 	 * Failure is handled by "break".
 	 */
 	do {
+		ipstr_buf ra;
+
 		conv.conv = xauth_pam_conv;
 		conv.appdata_ptr = varg;
 
@@ -1097,7 +1099,7 @@ static bool do_pam_authentication(void *varg)
 		/* Send the remote host address to PAM */
 		what = "pam_set_item";
 		retval = pam_set_item(pamh, PAM_RHOST,
-				      pluto_ip_str(&arg->st->st_remoteaddr));
+				      ipstr(&arg->st->st_remoteaddr, &ra));
 		if (retval != PAM_SUCCESS)
 			break;
 
@@ -1247,6 +1249,7 @@ static bool do_file_authentication(void *varg)
 			win = cp != NULL && streq(cp, passwdhash);
 			pthread_mutex_unlock(&crypt_mutex);
 
+			/* ??? DBG and real-world code mixed */
 			if (DBGP(DBG_CRYPT)) {
 				DBG_log("XAUTH: checking user(%s:%s) pass %s vs %s", userid, connectionname, cp,
 					passwdhash);
@@ -2029,18 +2032,16 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-				char caddr[SUBNETTOT_BUF];
+				ipstr_buf b;
+				u_int32_t *ap = (u_int32_t *)(strattr.cur);
 
-				u_int32_t *ap =
-					(u_int32_t *)(strattr.cur);
 				a.u.v4.sin_family = AF_INET;
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
-				addrtot(&a, 0, caddr, sizeof(caddr));
 				loglog(RC_INFORMATIONAL,
 					"Received IP4 NETMASK %s",
-					caddr);
+					ipstr(&a, &b));
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
@@ -2067,13 +2068,13 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 					if (old == NULL) {
 						c->cisco_dns_info =
-							clone_str(
-								caddr,
+							clone_str(caddr,
 								"cisco_dns_info");
 					} else {
 						/*
-						 * concatenate new IP address string on end of
-						 * existing string, separated by ' '.
+						 * concatenate new IP address
+						 * string on end of existing
+						 * string, separated by ' '.
 						 */
 						size_t sz_old = strlen(old);
 						size_t sz_added =

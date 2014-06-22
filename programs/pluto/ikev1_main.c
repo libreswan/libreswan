@@ -583,9 +583,11 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 				md->sender_port, LEMPTY);
 
 	if (c != NULL && (c->policy & POLICY_IKEV1_DISABLE)) {
+		ipstr_buf b;
+
 		loglog(RC_LOG_SERIOUS, "discard matching conn %s for I1 from "
 			"%s:%u. has ikev2=insist", c->name,
-			ip_str(&md->iface->ip_addr),
+			ipstr(&md->iface->ip_addr, &b),
 			ntohs(portof(&md->iface->ip_addr)));
 		c = NULL;
 	}
@@ -628,18 +630,22 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 			for (; d != NULL; d = d->hp_next) {
 				if (d->policy & POLICY_IKEV1_DISABLE) {
-					DBG(DBG_CONTROL,DBG_log(
-						"discard matching conn %s for "
-						"I1 from %s:%u. %s %s %s has "
-						"ikev2=insist ", d->name,
-						ip_str(&md->iface->ip_addr),
-						ntohs(portof(&md->iface->ip_addr)),
-						d->name,
-						(policy != LEMPTY) ?
-						" with policy=" : "",
-						(policy != LEMPTY) ?
-						bitnamesof(sa_policy_bit_names,
-							policy) : ""));
+					DBG(DBG_CONTROL, {
+						ipstr_buf b;
+						DBG_log(
+							"discard matching conn %s for "
+							"I1 from %s:%u. %s %s %s has "
+							"ikev2=insist ", d->name,
+							ipstr(&md->iface->ip_addr, &b),
+							ntohs(portof(&md->iface->ip_addr)),
+							d->name,
+							(policy != LEMPTY) ?
+								" with policy=" : "",
+							(policy != LEMPTY) ?
+								bitnamesof(sa_policy_bit_names,
+								policy) :
+								"");
+					});
 					d=NULL;
 					continue;
 				}
@@ -673,10 +679,12 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		}
 
 		if (c == NULL) {
+			ipstr_buf b;
+
 			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
 				"received on %s:%u "
 				"but no connection has been authorized%s%s",
-				ip_str(&md->iface->ip_addr),
+				ipstr(&md->iface->ip_addr, &b),
 				ntohs(portof(&md->iface->ip_addr)),
 				(policy != LEMPTY) ? " with policy=" : "",
 				(policy != LEMPTY) ?
@@ -684,10 +692,13 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else if (c->kind != CK_TEMPLATE) {
+			ipstr_buf b;
+
 			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
 				"received on %s:%u "
 				"but \"%s\" forbids connection",
-				ip_str(&md->iface->ip_addr), pluto_port,
+				ipstr(&md->iface->ip_addr, &b),
+				pluto_port,
 				c->name);
 			/* XXX notification is in order! */
 			return STF_IGNORE;
@@ -697,12 +708,14 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			 * of this one.
 			 * His ID isn't declared yet.
 			 */
-			DBG(DBG_CONTROL,
+			DBG(DBG_CONTROL, {
+				ipstr_buf b;
 				DBG_log("instantiating \"%s\" for initial "
 					"Main Mode message received on %s:%u",
 					c->name,
-					ip_str(&md->iface->ip_addr),
-					pluto_port));
+					ipstr(&md->iface->ip_addr, &b),
+					pluto_port);
+			});
 			c = rw_instantiate(c, &md->sender,
 					NULL, NULL);
 		}
@@ -751,13 +764,17 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	set_nat_traversal(st, md);
 
 	if ((c->kind == CK_INSTANCE) && (c->spd.that.host_port_specific)) {
+		ipstr_buf b;
+
 		libreswan_log(
 			"responding to Main Mode from unknown peer %s:%u",
-			ip_str(&c->spd.that.host_addr),
+			ipstr(&c->spd.that.host_addr, &b),
 			c->spd.that.host_port);
 	} else if (c->kind == CK_INSTANCE) {
+		ipstr_buf b;
+
 		libreswan_log("responding to Main Mode from unknown peer %s",
-			ip_str(&c->spd.that.host_addr));
+			ipstr(&c->spd.that.host_addr, &b));
 	} else {
 		libreswan_log("responding to Main Mode");
 	}
@@ -2443,11 +2460,15 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state))
 		encst = NULL;
 
-	libreswan_log("sending %snotification %s to %s:%u",
-		encst ? "encrypted " : "",
-		enum_name(&ikev1_notify_names, type),
-		ip_str(&sndst->st_remoteaddr),
-		sndst->st_remoteport);
+	{
+		ipstr_buf b;
+
+		libreswan_log("sending %snotification %s to %s:%u",
+			encst ? "encrypted " : "",
+			enum_name(&ikev1_notify_names, type),
+			ipstr(&sndst->st_remoteaddr, &b),
+			sndst->st_remoteport);
+	}
 
 	zero(&buffer);
 	init_pbs(&pbs, buffer, sizeof(buffer), "notification msg");

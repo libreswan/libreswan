@@ -664,9 +664,11 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			}
 		}
 		if (c == NULL) {
+			ipstr_buf b;
+
 			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
 			       " but no connection has been authorized%s%s",
-			       ip_str(&md->iface->ip_addr),
+			       ipstr(&md->iface->ip_addr, &b),
 			       ntohs(portof(&md->iface->ip_addr)),
 			       (policy != LEMPTY) ? " with policy=" : "",
 			       (policy !=LEMPTY) ?
@@ -674,9 +676,11 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		if (c->kind != CK_TEMPLATE) {
+			ipstr_buf b;
+
 			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
 			       " but \"%s\" forbids connection",
-			       ip_str(&md->iface->ip_addr), pluto_port, c->name);
+			       ipstr(&md->iface->ip_addr, &b), pluto_port, c->name);
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		c = rw_instantiate(c, &md->sender, NULL, NULL);
@@ -727,12 +731,12 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 */
 	{
 		struct ikev2_ke *ke;
-		char fromname[ADDRTOT_BUF];
-		addrtot(&md->sender, 0, fromname, ADDRTOT_BUF);
 
 		if (!md->chain[ISAKMP_NEXT_v2KE]) {
+			ipstr_buf b;
+
 			/* is this a notify? If so, log it */
-			if(md->chain[ISAKMP_NEXT_v2N]) {
+			if (md->chain[ISAKMP_NEXT_v2N]) {
 				libreswan_log("Received Notify(%d): %s",
 					md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_type,
 					enum_name(&ikev2_notify_names,
@@ -740,16 +744,18 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			}
 			libreswan_log(
 				"rejecting I1 from %s:%u, no KE payload present",
-				fromname, md->sender_port);
+				ipstr(&md->sender, &b), md->sender_port);
 			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		}
 		ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
 
 		st->st_oakley.group = lookup_group(ke->isak_group);
 		if (st->st_oakley.group == NULL) {
+			ipstr_buf b;
+
 			libreswan_log(
 				"rejecting I1 from %s:%u, invalid DH group=%u",
-				fromname, md->sender_port,
+				ipstr(&md->sender, &b), md->sender_port,
 				ke->isak_group);
 			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		}
@@ -1507,6 +1513,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	finish_dh_v2(st, r);
 
+	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
 		ikev2_log_parentSA(st);
 
@@ -1864,6 +1871,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	/* extract calculated values from r */
 	finish_dh_v2(st, r);
 
+	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
 		ikev2_log_parentSA(st);
 
@@ -2602,11 +2610,14 @@ void send_v2_notification(struct state *p1st,
 	 * do we need to support more Protocol ID? more than PROTO_ISAKMP
 	 */
 
-	DBG(DBG_CONTROL, DBG_log("sending %s notification %s to %s:%u",
-		      encst ? "encrypted " : "",
-		      enum_name(&ikev2_notify_names, type),
-		      ip_str(&p1st->st_remoteaddr),
-		      p1st->st_remoteport));
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
+		DBG_log("sending %s notification %s to %s:%u",
+			encst ? "encrypted " : "",
+			enum_name(&ikev2_notify_names, type),
+			ipstr(&p1st->st_remoteaddr, &b),
+			p1st->st_remoteport);
+	});
 
 	zero(&buffer);
 	init_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");

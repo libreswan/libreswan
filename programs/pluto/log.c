@@ -181,12 +181,11 @@ static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 		snprintf(bp, be - bp, ": ");
 	} else if (cur_from != NULL) {
 		/* peer's IP address */
-		/* Note: must not use ip_str() because our caller might! */
-		char ab[ADDRTOT_BUF];
+		ipstr_buf b;
 
-		(void) addrtot(cur_from, 0, ab, sizeof(ab));
 		snprintf(buf, buf_len, "packet from %s:%u: ",
-			 ab, (unsigned)cur_from_port);
+			 ipstr(cur_from, &b),
+			 (unsigned)cur_from_port);
 	}
 
 	ps = strlen(buf);
@@ -307,12 +306,11 @@ static void open_peerlog(struct connection *c)
 
 	if (c->log_file_name == NULL) {
 		char peername[ADDRTOT_BUF], dname[ADDRTOT_BUF];
-		int peernamelen, lf_len;
+		size_t peernamelen = addrtot(&c->spd.that.host_addr, 'Q', peername,
+			sizeof(peername)) - 1;
+		int lf_len;
 
-		addrtot(&c->spd.that.host_addr, 'Q', peername,
-			sizeof(peername));
-		peernamelen = strlen(peername);
-
+		
 		/* copy IP address, turning : and . into / */
 		{
 			char ch, *p, *q;

@@ -504,15 +504,19 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return FALSE;
 		}
 		if (isanyaddr(&temp_address)) {
+			ipstr_buf b;
+
 			loglog(RC_LOG_SERIOUS,
 			       "%s ID payload %s is invalid (%s) in Quick I1",
-			       which, idtypename, ip_str(&temp_address));
+			       which, idtypename, ipstr(&temp_address, &b));
 			/* XXX Could send notification back */
 			return FALSE;
 		}
 		happy(addrtosubnet(&temp_address, net));
-		DBG(DBG_PARSING | DBG_CONTROL,
-		    DBG_log("%s is %s", which, ip_str(&temp_address)));
+		DBG(DBG_PARSING | DBG_CONTROL, {
+			ipstr_buf b;
+			DBG_log("%s is %s", which, ipstr(&temp_address, &b));
+		});
 		break;
 	}
 
@@ -591,15 +595,12 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		if (ughmsg == NULL && subnetisnone(net))
 			ughmsg = "contains only anyaddr";
 		if (ughmsg != NULL) {
-			char temp_buff1[ADDRTOT_BUF], temp_buff2[ADDRTOT_BUF];
+			ipstr_buf a, b;
 
-			addrtot(&temp_address_from, 0, temp_buff1,
-				sizeof(temp_buff1));
-			addrtot(&temp_address_to, 0, temp_buff2,
-				sizeof(temp_buff2));
-			loglog(RC_LOG_SERIOUS, "%s ID payload in Quick I1, %s"
-			       " %s - %s unacceptable: %s",
-			       which, idtypename, temp_buff1, temp_buff2,
+			loglog(RC_LOG_SERIOUS, "%s ID payload in Quick I1, %s %s - %s unacceptable: %s",
+			       which, idtypename,
+			       ipstr(&temp_address_from, &a),
+			       ipstr(&temp_address_to, &b),
 			       ughmsg);
 			return FALSE;
 		}
@@ -1353,8 +1354,7 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 static void report_verify_failure(struct verify_oppo_bundle *b, err_t ugh)
 {
 	struct state *st = b->md->st;
-	char fgwb[ADDRTOT_BUF],
-	     cb[ADDRTOT_BUF];
+	ipstr_buf ib1, ib2;
 	ip_address client;
 	err_t which;
 
@@ -1380,11 +1380,11 @@ static void report_verify_failure(struct verify_oppo_bundle *b, err_t ugh)
 		bad_case(b->step);
 	}
 
-	addrtot(&st->st_connection->spd.that.host_addr, 0, fgwb, sizeof(fgwb));
-	addrtot(&client, 0, cb, sizeof(cb));
 	loglog(RC_OPPOFAILURE,
 	       "gateway %s wants connection with %s as %s client, but DNS fails to confirm delegation: %s {msgid:%08x}",
-	       fgwb, cb, which, ugh, st->st_msgid);
+	       ipstr(&st->st_connection->spd.that.host_addr, &ib1),
+	       ipstr(&client, &ib2),
+	       which, ugh, st->st_msgid);
 }
 
 static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)

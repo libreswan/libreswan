@@ -108,10 +108,12 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 				after = TRUE;
 			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
 				if (after) {
+					ipstr_buf b;
+
 					loglog(RC_LOG_SERIOUS,
 					       "IP interfaces %s and %s share address %s!",
 					       ifp->name, vfp->name,
-					       ip_str(&ifp->addr));
+					       ipstr(&ifp->addr, &b));
 				}
 				bad = TRUE;
 			}
@@ -135,6 +137,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					/* matches nothing -- create a new entry */
 					int fd = create_socket(ifp, ifp->name,
 							       pluto_port);
+					ipstr_buf b;
 
 					if (fd < 0)
 						break;
@@ -167,7 +170,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						"adding interface %s/%s %s:%d",
 						q->ip_dev->id_vname,
 						q->ip_dev->id_rname,
-						ip_str(&q->ip_addr),
+						ipstr(&q->ip_addr, &b),
 						q->port);
 
 					/*
@@ -204,8 +207,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						libreswan_log(
 							"adding interface %s/%s %s:%d",
 							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							ip_str(&q->
-							       ip_addr),
+							ipstr(&q->ip_addr, &b),
 							q->port);
 					}
 					break;

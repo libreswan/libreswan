@@ -44,6 +44,14 @@ extern lset_t cur_debugging;	/* current debugging level */
 extern void set_debugging(lset_t deb);
 
 #define DBGP(cond)	(cur_debugging & (cond))
+
+/*
+ * NOTE: DBG's action can be a { } block, but that block must not
+ * contain commas that are outside quotes or parenthesis.
+ * If it does, they will be interpreted by the C preprocesser
+ * as macro argument separators.  This happens accidentally if
+ * multiple variables are declared in one declaration.
+ */
 #define DBG(cond, action)	do { if (DBGP(cond)) { action; } } while (0)
 
 #define DBG_log libreswan_DBG_log

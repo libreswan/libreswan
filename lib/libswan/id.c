@@ -516,22 +516,6 @@ int id_count_wildcards(const struct id *id)
 	return count;
 }
 
-/*
- * ip_str: a simple to use variant of addrtot.
- *
- * It stores its result in a static buffer -- NOT RE-ENTRANT.
- * This means that newer calls overwrite the storage of older calls.
- * Note: this is not used in any of the logging functions, so their
- * callers may use it. (this is here for unit testing)
- */
-const char *pluto_ip_str(const ip_address *src)
-{
-	static char buf[ADDRTOT_BUF];
-
-	addrtot(src, 0, buf, sizeof(buf));
-	return buf;
-}
-
 void duplicate_id(struct id *dst, const struct id *src)
 {
 	dst->kind = src->kind;

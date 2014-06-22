@@ -828,28 +828,28 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
  * command is used to remove the initial text.
  *
  */
+/* ??? this is kind of odd: regular control flow only selecting DBG output */
 void ikev2_log_parentSA(struct state *st)
 {
-	const char *authalgo;
-	char encalgo[128];
-
-	if (st->st_oakley.integ_hasher == NULL ||
-	    st->st_oakley.encrypter == NULL)
-		return;
-
-	authalgo = st->st_oakley.integ_hasher->common.officname;
-
-	if (st->st_oakley.enckeylen != 0) {
-		/* 3des will use '3des', while aes becomes 'aes128' */
-		snprintf(encalgo, sizeof(encalgo), "%s%u",
-			 st->st_oakley.encrypter->common.officname,
-			 st->st_oakley.enckeylen);
-	} else {
-		snprintf(encalgo, sizeof(encalgo), "%s",
-			st->st_oakley.encrypter->common.officname);
-	}
-
 	if (DBGP(DBG_CRYPT)) {
+		const char *authalgo;
+		char encalgo[128];
+
+		if (st->st_oakley.integ_hasher == NULL ||
+		    st->st_oakley.encrypter == NULL)
+			return;
+
+		authalgo = st->st_oakley.integ_hasher->common.officname;
+
+		if (st->st_oakley.enckeylen != 0) {
+			/* 3des will use '3des', while aes becomes 'aes128' */
+			snprintf(encalgo, sizeof(encalgo), "%s%u",
+				 st->st_oakley.encrypter->common.officname,
+				 st->st_oakley.enckeylen);
+		} else {
+			snprintf(encalgo, sizeof(encalgo), "%s",
+				st->st_oakley.encrypter->common.officname);
+		}
 		DBG_log("ikev2 I 0x%02x%02x%02x%02x%02x%02x%02x%02x 0x%02x%02x%02x%02x%02x%02x%02x%02x %s %s",
 			st->st_icookie[0], st->st_icookie[1],
 			st->st_icookie[2], st->st_icookie[3],
@@ -1048,19 +1048,17 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 
 		/* document IPsec SA details for admin's pleasure */
 		if (IS_CHILD_SA_ESTABLISHED(st)) {
-			char usubl[ADDRTOT_BUF], usubh[ADDRTOT_BUF];
-			char tsubl[ADDRTOT_BUF], tsubh[ADDRTOT_BUF];
-
-			addrtot(&st->st_ts_this.low,  0, usubl, sizeof(usubl));
-			addrtot(&st->st_ts_this.high, 0, usubh, sizeof(usubh));
-			addrtot(&st->st_ts_that.low,  0, tsubl, sizeof(tsubl));
-			addrtot(&st->st_ts_that.high, 0, tsubh, sizeof(tsubh));
+			ipstr_buf bul, buh, bhl, bhh;
 
 			/* but if this is the parent st, this information is not set! you need to check the child sa! */
 			libreswan_log(
 				"negotiated tunnel [%s,%s:%d-%d %d] -> [%s,%s:%d-%d %d]",
-				usubl, usubh, st->st_ts_this.startport, st->st_ts_this.endport, st->st_ts_this.ipprotoid,
-				tsubl, tsubh, st->st_ts_that.startport, st->st_ts_that.endport,
+				ipstr(&st->st_ts_this.low, &bul),
+				ipstr(&st->st_ts_this.high, &buh),
+				st->st_ts_this.startport, st->st_ts_this.endport, st->st_ts_this.ipprotoid,
+				ipstr(&st->st_ts_that.low, &bhl),
+				ipstr(&st->st_ts_that.high, &bhh),
+				st->st_ts_that.startport, st->st_ts_that.endport,
 				st->st_ts_that.ipprotoid);
 
 			fmt_ipsec_sa_established(st,  sadetails,
@@ -1091,10 +1089,9 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		}
 
 		DBG(DBG_CONTROL, {
-			    char buf[ADDRTOT_BUF];
+			    ipstr_buf b;
 			    DBG_log("sending reply packet to %s:%u (from port %u)",
-				    (addrtot(&st->st_remoteaddr,
-					     0, buf, sizeof(buf)), buf),
+				    ipstr(&st->st_remoteaddr, &b),
 				    st->st_remoteport,
 				    st->st_interface->port);
 		    });

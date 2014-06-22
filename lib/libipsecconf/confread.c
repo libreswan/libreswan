@@ -433,10 +433,9 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		}
 
 		if (end->id == NULL) {
-			char idbuf[ADDRTOT_BUF];
-			addrtot(&end->addr, 0, idbuf, sizeof(idbuf));
+			ipstr_buf b;
 
-			end->id = clone_str(idbuf, "end if");
+			end->id = clone_str(ipstr(&end->addr, &b), "end if");
 		}
 		break;
 

@@ -350,8 +350,11 @@ struct raw_iface *find_raw_ifaces4(void)
 			       sizeof(struct in_addr),
 			       AF_INET, &ri.addr));
 
-		DBG(DBG_CONTROLMORE, DBG_log("found %s with address %s",
-					     ri.name, ip_str(&ri.addr)));
+		DBG(DBG_CONTROLMORE, {
+			ipstr_buf b;
+			DBG_log("found %s with address %s",
+				ri.name, ipstr(&ri.addr, &b));
+		});
 		ri.next = rifaces;
 		rifaces = clone_thing(ri, "struct raw_iface");
 	}

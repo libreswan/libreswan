@@ -176,10 +176,12 @@ static void retransmit_v1_msg(struct state *st)
 	try = st->st_try;
 	try_limit = c->sa_keying_tries;
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
 		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
-			ip_str(&c->spd.that.host_addr),
-			c->name, st->st_serialno, try, try_limit));
+			ipstr(&c->spd.that.host_addr, &b),
+			c->name, st->st_serialno, try, try_limit);
+	});
 
 	/* first calculate delay as the value BEFORE backoff */
 	if (st->st_retransmit < maximum_retransmissions) {
@@ -264,6 +266,7 @@ static void retransmit_v1_msg(struct state *st)
 				"starting keying attempt %ld of at most %ld",
 				try, try_limit);
 
+			/* ??? DBG and real-world code mixed */
 			if (!DBGP(DBG_WHACKWATCH)) {
 				if (st->st_whack_sock != NULL_FD) {
 					/*
@@ -312,10 +315,12 @@ static void retransmit_v2_msg(struct state *st)
 	try_limit = c->sa_keying_tries;
 	try = st->st_try + 1;
 
-	DBG(DBG_CONTROL,
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
 		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
-			ip_str(&c->spd.that.host_addr), c->name,
-			st->st_serialno, try, try_limit));
+			ipstr(&c->spd.that.host_addr, &b), c->name,
+			st->st_serialno, try, try_limit);
+	});
 
 	/* first calculate delay as the value BEFORE backoff */
 	if (st->st_retransmit < maximum_retransmissions) {
@@ -395,6 +400,7 @@ static void retransmit_v2_msg(struct state *st)
 			"starting keying attempt %ld of at most %ld",
 			try, try_limit);
 
+		/* ??? DBG and real-world code mixed */
 		if (!DBGP(DBG_WHACKWATCH)) {
 			if (st->st_whack_sock != NULL_FD) {
 				/*

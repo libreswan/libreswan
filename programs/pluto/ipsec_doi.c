@@ -615,11 +615,12 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 
 		strcpy(oa, "none");
 		if (!isanyaddr(&st->hidden_variables.st_natd)) {
-			char oa2[ADDRTOT_BUF];
-			addrtot(&st->hidden_variables.st_natd, 0,
-				oa2, sizeof(oa2));
+			ipstr_buf b1;
+
 			snprintf(oa, sizeof(oa),
-				 "%s:%d", oa2, st->st_remoteport);
+				 "%s:%d",
+				 ipstr(&st->hidden_variables.st_natd, &b1),
+				 st->st_remoteport);
 		}
 		snprintf(b, sad_len - (b - sadetails) - 1,
 			 "%sNATD=%s",

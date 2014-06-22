@@ -569,9 +569,9 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	}
 
 	DBG(DBG_NATT, {
-			char ip_t[ADDRTOT_BUF];
-			addrtot(&ip, 0, ip_t, sizeof(ip_t));
-			DBG_log("received NAT-OA: %s", ip_t);
+		ipstr_buf b;
+		DBG_log("received NAT-OA: %s",
+			ipstr(&ip, &b));
 	});
 
 	if (isanyaddr(&ip)) {
@@ -800,11 +800,13 @@ void nat_traversal_new_ka_event(void)
 static void nat_traversal_send_ka(struct state *st)
 {
 	set_cur_state(st);
-	DBG(DBG_NATT | DBG_DPD,
+	DBG(DBG_NATT | DBG_DPD, {
+		ipstr_buf b;
 		DBG_log("ka_event: send NAT-KA to %s:%d (state=#%lu)",
-			ip_str(&st->st_remoteaddr),
+			ipstr(&st->st_remoteaddr, &b),
 			st->st_remoteport,
-			st->st_serialno));
+			st->st_serialno);
+	});
 
 	/* send keep alive */
 	DBG(DBG_NATT | DBG_DPD, DBG_log("sending NAT-T Keep Alive"));
@@ -919,17 +921,15 @@ static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
 				st->st_clonedfrom ==
 				nfo->st->st_clonedfrom)) ||
 		st->st_serialno == nfo->st->st_serialno) {
-		char b1[ADDRTOT_BUF];
-		char b2[ADDRTOT_BUF];
+		ipstr_buf b1, b2;
 		struct connection *c = st->st_connection;
-
-		addrtot(&st->st_remoteaddr, 0, b1, ADDRTOT_BUF);
-		addrtot(&nfo->addr, 0, b2, ADDRTOT_BUF);
 
 		libreswan_log("new NAT mapping for #%u, was %s:%d, now %s:%d",
 			(unsigned int)st->st_serialno,
-			b1, st->st_remoteport,
-			b2, nfo->port);
+			ipstr(&st->st_remoteaddr, &b1),
+			st->st_remoteport,
+			ipstr(&nfo->addr, &b2),
+			nfo->port);
 
 		/* update it */
 		st->st_remoteaddr = nfo->addr;
@@ -946,24 +946,23 @@ static int nat_traversal_new_mapping(struct state *st,
 				u_int16_t nsrcport)
 {
 	struct new_mapp_nfo nfo;
-	char ba[ADDRTOT_BUF];
 
-	addrtot(nsrc, 0, ba, ADDRTOT_BUF);
-
-	DBG(DBG_CONTROLMORE,
+	DBG(DBG_CONTROLMORE, {
+		ipstr_buf b;
 		DBG_log("state #%u NAT-T: new mapping %s:%d",
-			(unsigned int)st->st_serialno, ba, nsrcport));
+			(unsigned int)st->st_serialno,
+			ipstr(nsrc, &b),
+			nsrcport);
+	});
 
 #if 0
 	if (!sameaddr(src, dst)) {
-		char srca[ADDRTOT_BUF];
-		char srcb[ADDRTOT_BUF];
-		addrtot(src, 0, srca, ADDRTOT_BUF);
-		addrtot(dst, 0, dsta, ADDRTOT_BUF);
+		ipstr_buf a, b;
 
 		loglog(RC_LOG_SERIOUS,
 			"nat_traversal_new_mapping: address change currently not supported [%s:%d,%s:%d]",
-			srca, sport, dsta, dport);
+			ipstr(src, &a), sport,
+			ipstr(dst, &b), dport);
 		return -1;
 	}
 
@@ -1043,16 +1042,14 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 			st->st_localport == st->st_interface->port)) {
 
 		DBG(DBG_NATT, {
-				char b1[ADDRTOT_BUF];
-				char b2[ADDRTOT_BUF];
-				DBG_log("NAT-T connection has wrong interface definition %s:%u vs %s:%u",
-					(addrtot(&st->st_localaddr, 0, b1,
-						sizeof(b1)), b1),
-					st->st_localport,
-					(addrtot(&st->st_interface->ip_addr,
-						0, b2, sizeof(b2)), b2),
-					st->st_interface->port);
-			});
+			ipstr_buf b1;
+			ipstr_buf b2;
+			DBG_log("NAT-T connection has wrong interface definition %s:%u vs %s:%u",
+				ipstr(&st->st_localaddr, &b1),
+				st->st_localport,
+				ipstr(&st->st_interface->ip_addr, &b2),
+				st->st_interface->port);
+		});
 
 		for (i = interfaces; i !=  NULL; i = i->next) {
 			if ((sameaddr(&st->st_localaddr, &i->ip_addr)) &&
@@ -1125,20 +1122,19 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 			ntohs(((const struct sockaddr_in *)dsta)->sin_port);
 
 		DBG(DBG_NATT, {
-				char text_said[SATOT_BUF];
-				char b_srca[ADDRTOT_BUF];
-				char b_dsta[ADDRTOT_BUF];
-				ip_said said;
+			char text_said[SATOT_BUF];
+			ip_said said;
+			ipstr_buf bs;
+			ipstr_buf bd;
 
-				initsaid(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP,
-					&said);
-				satot(&said, 0, text_said, SATOT_BUF);
-				addrtot(&nfo.src, 0, b_srca, ADDRTOT_BUF);
-				addrtot(&nfo.dst, 0, b_dsta, ADDRTOT_BUF);
-				DBG_log("new klips mapping %s %s:%d %s:%d",
-					text_said, b_srca, nfo.sport, b_dsta,
-					nfo.dport);
-			});
+			initsaid(&nfo.src, nfo.sa->sadb_sa_spi, SA_ESP,
+				&said);
+			satot(&said, 0, text_said, SATOT_BUF);
+			DBG_log("new klips mapping %s %s:%d %s:%d",
+				text_said,
+				ipstr(&nfo.src, &bs), nfo.sport,
+				ipstr(&nfo.dst, &bd), nfo.dport);
+		});
 
 		for_each_state(nat_t_new_klips_mapp, &nfo);
 	}
@@ -1213,9 +1209,11 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	}
 
 	if (!found_him) {
-		DBG(DBG_NATT,
+		DBG(DBG_NATT, {
+			ipstr_buf b;
 			DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
-				ip_str(&md->sender)));
+				ipstr(&md->sender, &b));
+		});
 		st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
 		st->hidden_variables.st_natd = md->sender;
 	}
@@ -1230,16 +1228,20 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	}
 
 	if (st->st_connection->nat_keepalive) {
-		DBG(DBG_NATT,
+		DBG(DBG_NATT, {
+			ipstr_buf b;
 			DBG_log("NAT_TRAVERSAL nat_keepalive enabled %s",
-				ip_str(&md->sender)));
+				ipstr(&md->sender, &b));
+		});
 	}
 	if ((st->st_state == STATE_PARENT_I1) &&
 		(st->hidden_variables.st_nat_traversal
 			& NAT_T_DETECTED)) {
-		DBG(DBG_NATT,
+		DBG(DBG_NATT, {
+			ipstr_buf b;
 			DBG_log("NAT-T: floating to port %s:%d",
-				ip_str(&md->sender), pluto_nat_port));
+				ipstr(&md->sender, &b), pluto_nat_port);
+		});
 		st->st_localport  = pluto_nat_port;
 		st->st_remoteport = pluto_nat_port;
 

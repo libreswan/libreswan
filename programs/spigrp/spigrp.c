@@ -95,7 +95,6 @@ int main(int argc, char **argv)
 	int said_opt = 0;
 
 	const char* error_s = NULL;
-	char ipaddr_txt[ADDRTOT_BUF];
 	int j;
 	struct said_af said_af_array[4];
 
@@ -252,10 +251,10 @@ int main(int argc, char **argv)
 			said_af_array[i].af =
 				addrtypeof(&(said_af_array[i].said.dst));
 			if (debug) {
-				addrtot(&said_af_array[i].said.dst, 0,
-					ipaddr_txt, sizeof(ipaddr_txt));
+				ipstr_buf b;
+
 				fprintf(stdout, "said[%d].dst=%s.\n", i,
-					ipaddr_txt);
+					ipstr(&said_af_array[i].said.dst, &b));
 			}
 		} else {
 			if (streq(argv[i * 4 + 4], "ah"))
@@ -301,15 +300,15 @@ int main(int argc, char **argv)
 			}
 		}
 		if (debug) {
+			ipstr_buf b;
+
 			fprintf(stdout, "SA %d contains: ", i + 1);
 			fprintf(stdout, "\n");
 			fprintf(stdout, "proto = %d\n",
 				said_af_array[i].said.proto);
 			fprintf(stdout, "spi = %08x\n",
 				said_af_array[i].said.spi);
-			addrtot(&said_af_array[i].said.dst, 0, ipaddr_txt,
-				sizeof(ipaddr_txt));
-			fprintf(stdout, "edst = %s\n", ipaddr_txt);
+			fprintf(stdout, "edst = %s\n", ipstr(&said_af_array[i].said.dst, &b));
 		}
 	}
 
@@ -402,7 +401,7 @@ int main(int argc, char **argv)
 			}
 
 #if 0
-			if (!j) {
+			if (j == 0) {
 				anyaddr(said_af_array[i].af,
 					&pfkey_address_s_ska);                      /* Is the address family correct ?? */
 				if ((error = pfkey_address_build(&extensions[
@@ -414,37 +413,33 @@ int main(int argc, char **argv)
 								 sockaddrof(&
 									    pfkey_address_s_ska))))
 				{
-					addrtot(&pfkey_address_s_ska, 0,
-						ipaddr_txt,
-						sizeof(ipaddr_txt));
+					ipstr_buf b;
+
 					fprintf(stderr,
 						"%s: Trouble building address_s extension (%s), error=%d.\n",
-						progname, ipaddr_txt, error);
+						progname, ipstr(&pfkey_address_s_ska, &b), error);
 					pfkey_extensions_free(extensions);
 					exit(1);
 				}
 			}
 #endif
-			if ((error = pfkey_address_build(&extensions[!j ?
-								     SADB_EXT_ADDRESS_DST
-								     :
-								     SADB_X_EXT_ADDRESS_DST2
-							 ],
-							 !j ?
-							 SADB_EXT_ADDRESS_DST :
-							 SADB_X_EXT_ADDRESS_DST2,
-							 0,
-							 0,
-							 sockaddrof(&
-								    said_af_array
-								    [i +
-								     j].said.
-								    dst)))) {
-				addrtot(&said_af_array[i + j].said.dst,
-					0, ipaddr_txt, sizeof(ipaddr_txt));
+
+			{
+				uint16_t x = j == 0 ? SADB_EXT_ADDRESS_DST : SADB_X_EXT_ADDRESS_DST2;
+
+				error = pfkey_address_build(
+					&extensions[x], x, 0, 0,
+					sockaddrof(&said_af_array[i + j].said.dst));
+			}
+
+			if (error) {
+				ipstr_buf b;
+
 				fprintf(stderr,
 					"%s: Trouble building address_d extension (%s), error=%d.\n",
-					progname, ipaddr_txt, error);
+					progname,
+					ipstr(&said_af_array[i + j].said.dst, &b),
+					error);
 				pfkey_extensions_free(extensions);
 				exit(1);
 			}

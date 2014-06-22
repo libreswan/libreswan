@@ -239,9 +239,11 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 					 (ip_address*)NULL, md->sender_port,
 					 policy);
 		if (c == NULL || (c->policy & POLICY_AGGRESSIVE) == 0) {
+			ipstr_buf b;
+
 			loglog(RC_LOG_SERIOUS, "initial Aggressive Mode message from %s"
 			       " but no (wildcard) connection has been configured%s%s",
-			       ip_str(&md->sender),
+			       ipstr(&md->sender, &b),
 			       (policy != LEMPTY) ? " with policy=" : "",
 			       (policy != LEMPTY) ?
 			       bitnamesof(sa_policy_bit_names, policy) : "");
@@ -275,13 +277,14 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
+		ipstr_buf b;
 
 		(void) idtoa(&st->st_connection->spd.that.id, buf,
 			     sizeof(buf));
 		loglog(RC_LOG_SERIOUS,
 		       "initial Aggressive Mode packet claiming to be from %s"
 		       " on %s but no connection has been authorized",
-		       buf, ip_str(&md->sender));
+		       buf, ipstr(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
@@ -300,10 +303,13 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 	st->st_doi = ISAKMP_DOI_IPSEC;
 	st->st_situation = SIT_IDENTITY_ONLY; /* We only support this */
 
-	libreswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\""
-		      " from %s",
-		      st->st_serialno, st->st_connection->name,
-		      ip_str(&c->spd.that.host_addr));
+	{
+		ipstr_buf b;
+
+		libreswan_log("responding to Aggressive Mode, state #%lu, connection \"%s\" from %s",
+			st->st_serialno, st->st_connection->name,
+			ipstr(&c->spd.that.host_addr, &b));
+	}
 
 	merge_quirks(st, md);
 
@@ -644,13 +650,14 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
+		ipstr_buf b;
 
 		(void) idtoa(&st->st_connection->spd.that.id, buf,
 			     sizeof(buf));
 		loglog(RC_LOG_SERIOUS,
 		       "initial Aggressive Mode packet claiming to be from %s"
 		       " on %s but no connection has been authorized",
-		       buf, ip_str(&md->sender));
+		       buf, ipstr(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}

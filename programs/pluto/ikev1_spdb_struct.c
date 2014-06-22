@@ -2395,20 +2395,21 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (!ok_auth) {
 					char esb[ENUM_SHOW_BUF_LEN];
 
-					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("%s attribute unsupported"
-						    " in %s Transform from %s",
-						    enum_showb(&auth_alg_names,
-							      ah_attrs.
-							      transattrs.
-							      integ_hash,
-							      esb, sizeof(esb)),
-						    enum_show(&ah_transformid_names,
-							      ah_attrs.
-							      transattrs.
-							      encrypt),
-						    ip_str(&c->spd.that.
-							   host_addr)));
+					DBG(DBG_CONTROL | DBG_CRYPT, {
+						ipstr_buf b;
+						DBG_log("%s attribute unsupported in %s Transform from %s",
+							enum_showb(&auth_alg_names,
+								  ah_attrs.
+								  transattrs.
+								  integ_hash,
+								  esb, sizeof(esb)),
+							enum_show(&ah_transformid_names,
+								  ah_attrs.
+								  transattrs.
+								  encrypt),
+							ipstr(&c->spd.that.
+							       host_addr, &b));
+					});
 					continue;       /* try another */
 				}
 				break;                  /* we seem to be happy */
@@ -2468,10 +2469,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 						if (st->st_policy &
 						    POLICY_ENCRYPT) {
-							DBG(DBG_CONTROL | DBG_CRYPT,
-							    DBG_log("ESP_NULL Transform Proposal from %s"
-									" does not satisfy POLICY_ENCRYPT",
-								    ip_str(&c->spd.that.host_addr)));
+							DBG(DBG_CONTROL | DBG_CRYPT, {
+								ipstr_buf b;
+								DBG_log("ESP_NULL Transform Proposal from %s does not satisfy POLICY_ENCRYPT",
+									ipstr(&c->spd.that.host_addr, &b));
+							});
 							continue; /* try another */
 						}
 						break;
@@ -2481,6 +2483,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						       "1DES was proposed, it is insecure and was rejected");
 						/* Fall through */
 					default:
+						{
+						ipstr_buf b;
+
 						loglog(RC_LOG_SERIOUS,
 						       "kernel algorithm does not like: %s",
 						       ugh);
@@ -2490,9 +2495,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 								 esp_attrs.
 								 transattrs.
 								 encrypt),
-						       ip_str(&c->spd.that.
-							      host_addr));
+						       ipstr(&c->spd.that.
+							      host_addr, &b));
 						continue; /* try another */
+						}
 					}
 				}
 
@@ -2505,9 +2511,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					{
 					case AUTH_ALGORITHM_NONE:
 						if (!ah_seen) {
-							DBG(DBG_CONTROL | DBG_CRYPT,
-							    DBG_log("ESP from %s must either have AUTH or be combined with AH",
-								    ip_str(&c->spd.that.host_addr)));
+							DBG(DBG_CONTROL | DBG_CRYPT, {
+								ipstr_buf b;
+								DBG_log("ESP from %s must either have AUTH or be combined with AH",
+								    ipstr(&c->spd.that.host_addr, &b));
+							});
 							continue; /* try another */
 						}
 						break;
@@ -2515,15 +2523,19 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case AUTH_ALGORITHM_HMAC_SHA1:
 						break;
 					default:
+						{
+						ipstr_buf b;
+
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP auth alg %s from %s",
 						       enum_show(&auth_alg_names,
 								 esp_attrs.
 								 transattrs.
 								 integ_hash),
-						       ip_str(&c->spd.that.
-							      host_addr));
+						       ipstr(&c->spd.that.
+							      host_addr, &b));
 						continue; /* try another */
+						}
 					}
 				}
 
@@ -2558,15 +2570,18 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			    ENCAPSULATION_MODE_TUNNEL)
 				tunnel_mode = TRUE;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
-			DBG(DBG_CONTROL | DBG_CRYPT,
-			    DBG_log("policy for \"%s\" requires encryption but ESP not in Proposal from %s",
-				    c->name, ip_str(&c->spd.that.host_addr)));
+			DBG(DBG_CONTROL | DBG_CRYPT, {
+				ipstr_buf b;
+				DBG_log("policy for \"%s\" requires encryption but ESP not in Proposal from %s",
+					c->name, ipstr(&c->spd.that.host_addr, &b));
+			});
 			continue; /* we needed encryption, but didn't find ESP */
 		} else if ((st->st_policy & POLICY_AUTHENTICATE) && !ah_seen) {
-			DBG(DBG_CONTROL | DBG_CRYPT,
-			    DBG_log("policy for \"%s\" requires authentication"
-				    " but none in Proposal from %s",
-				    c->name, ip_str(&c->spd.that.host_addr)));
+			DBG(DBG_CONTROL | DBG_CRYPT, {
+				ipstr_buf b;
+				DBG_log("policy for \"%s\" requires authentication but none in Proposal from %s",
+					c->name, ipstr(&c->spd.that.host_addr, &b));
+			});
 			continue; /* we need authentication, but we found neither ESP nor AH */
 		}
 
@@ -2575,17 +2590,21 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			int tn;
 
 			if (!(st->st_policy & POLICY_COMPRESS)) {
+				ipstr_buf b;
+
 				libreswan_log(
 					"compression proposed by %s, but policy for \"%s\" forbids it",
-					ip_str(&c->spd.that.host_addr),
+					ipstr(&c->spd.that.host_addr, &b),
 					c->name);
 				return BAD_PROPOSAL_SYNTAX;
 			}
 
 			if (!can_do_IPcomp) {
+				ipstr_buf b;
+
 				libreswan_log(
 					"compression proposed by %s, but kernel has no IPCOMP support",
-					ip_str(&c->spd.that.host_addr));
+					ipstr(&c->spd.that.host_addr, &b));
 				return BAD_PROPOSAL_SYNTAX;
 			}
 
@@ -2625,14 +2644,16 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					break;
 
 				default:
-					DBG(DBG_CONTROL | DBG_CRYPT,
-					    DBG_log("unsupported IPCOMP Transform %s from %s",
-						    enum_show(&ipcomp_transformid_names,
-							      ipcomp_attrs.
-							      transattrs.
-							      encrypt),
-						    ip_str(&c->spd.that.
-							   host_addr)));
+					DBG(DBG_CONTROL | DBG_CRYPT, {
+						ipstr_buf b;
+						DBG_log("unsupported IPCOMP Transform %s from %s",
+							enum_show(&ipcomp_transformid_names,
+								  ipcomp_attrs.
+								  transattrs.
+								  encrypt),
+							ipstr(&c->spd.that.
+							       host_addr, &b));
+					});
 					continue; /* try another */
 				}
 

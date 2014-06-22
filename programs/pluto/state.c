@@ -774,13 +774,15 @@ void delete_states_by_peer(const ip_address *peer)
 			for (st = statetable[i]; st != NULL; ) {
 				struct state *this = st;
 				struct connection *c = this->st_connection;
-				char ra[ADDRTOT_BUF];
 
 				st = st->st_hashchain_next; /* before this is deleted */
 
-				addrtot(&this->st_remoteaddr, 0, ra,
-					sizeof(ra));
-				DBG_log("comparing %s to %s\n", ra, peerstr);
+				DBG(DBG_CONTROL, {
+					ipstr_buf b;
+					DBG_log("comparing %s to %s\n",
+						ipstr(&this->st_remoteaddr, &b),
+						peerstr);
+				});
 
 				if (sameaddr(&this->st_remoteaddr, peer)) {
 					if (ph1 == 0 &&
