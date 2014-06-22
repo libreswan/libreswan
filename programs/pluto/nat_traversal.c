@@ -323,20 +323,21 @@ static void nat_traversal_natd_lookup(struct msg_digest *md)
 {
 	unsigned char hash_me[MAX_DIGEST_LEN];
 	unsigned char hash_him[MAX_DIGEST_LEN];
-	struct payload_digest *p;
 	struct state *st = md->st;
+	const struct hash_desc *const hasher = st->st_oakley.prf_hasher;
+	const size_t hl = hasher->hash_digest_len;
+	const struct payload_digest *const hd = md->chain[ISAKMP_NEXT_NATD_RFC];
+	const struct payload_digest *p;
 	bool found_me = FALSE;
 	bool found_him = FALSE;
 	int i;
 
-	passert(st);
-	passert(md->iface);
-	passert(st->st_oakley.prf_hasher);
+	passert(md->iface != NULL);
 
 	/* Count NAT-D */
-	for (p = md->chain[ISAKMP_NEXT_NATD_RFC], i = 0;
-		p != NULL;
-		p = p->next, i++);
+	i = 0;
+	for (p = hd; p != NULL; p = p->next)
+		i++;
 
 	/*
 	 * We need at least 2 NAT-D (1 for us, many for peer)
@@ -352,47 +353,40 @@ static void nat_traversal_natd_lookup(struct msg_digest *md)
 	/*
 	 * First one with my IP & port
 	 */
-	natd_hash(st->st_oakley.prf_hasher, hash_me, st->st_icookie,
-		st->st_rcookie, &(md->iface->ip_addr), md->iface->port);
+	natd_hash(hasher, hash_me, st->st_icookie,
+		st->st_rcookie, &md->iface->ip_addr, md->iface->port);
 
 	/*
-	 * The others with sender IP & port
+	 * The other with sender IP & port
 	 */
-	natd_hash(st->st_oakley.prf_hasher, hash_him, st->st_icookie,
-		st->st_rcookie, &(md->sender), md->sender_port);
+	natd_hash(hasher, hash_him, st->st_icookie,
+		st->st_rcookie, &md->sender, md->sender_port);
 
-	for (p = md->chain[ISAKMP_NEXT_NATD_RFC], i = 0;
-		p != NULL && (!found_me || !found_him);
-		p = p->next) {
-		DBG(DBG_NATT, {
-				DBG_log("NAT_TRAVERSAL hash=%d (me:%d) (him:%d)",
-					i, found_me, found_him);
-				DBG_dump("expected NAT-D(me):", hash_me,
-					st->st_oakley.prf_hasher->hash_digest_len);
-				DBG_dump("expected NAT-D(him):", hash_him,
-					st->st_oakley.prf_hasher->hash_digest_len);
-				DBG_dump("received NAT-D:", p->pbs.cur,
-					pbs_left(&p->pbs));
-			});
+	DBG(DBG_NATT, {
+		DBG_dump("expected NAT-D(me):", hash_me, hl);
+		DBG_dump("expected NAT-D(him):", hash_him, hl);
+	});
 
-		if (pbs_left(&p->pbs) ==
-			st->st_oakley.prf_hasher->hash_digest_len &&
-			memeq(p->pbs.cur, hash_me,
-				st->st_oakley.prf_hasher->hash_digest_len))
-			found_me = TRUE;
+	for (p = hd; p != NULL; p = p->next) {
+		DBG(DBG_NATT,
+			DBG_dump("received NAT-D:", p->pbs.cur,
+				pbs_left(&p->pbs)));
 
-		if (pbs_left(&p->pbs) ==
-			st->st_oakley.prf_hasher->hash_digest_len &&
-			memeq(p->pbs.cur, hash_him,
-				st->st_oakley.prf_hasher->hash_digest_len))
-			found_him = TRUE;
+		if (pbs_left(&p->pbs) == hl) {
+			if (memeq(p->pbs.cur, hash_me, hl))
+				found_me = TRUE;
 
-		i++;
+			if (memeq(p->pbs.cur, hash_him, hl))
+				found_him = TRUE;
+
+			if (found_me && found_him)
+				break;
+		}
 	}
 
 	DBG(DBG_NATT,
-		DBG_log("NAT_TRAVERSAL hash=%d (me:%d) (him:%d)",
-			i, found_me, found_him));
+		DBG_log("NAT_TRAVERSAL (me:%d) (him:%d)",
+			found_me, found_him));
 
 	if (!found_me) {
 		st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
