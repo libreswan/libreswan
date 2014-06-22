@@ -1448,14 +1448,14 @@ static void netlink_acquire(struct nlmsghdr *n)
 	 * XXX also the type of src/dst should be checked to make sure
 	 *     that they aren't v4 to v6 or something goofy
 	 */
-	if (!(ugh = xfrm_to_ip_address(family, srcx, &src)) &&
-		!(ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
-		!(ugh = add_port(family, &src, acquire->sel.sport)) &&
-		!(ugh = add_port(family, &dst, acquire->sel.dport)) &&
-		!(ugh = src_proto == dst_proto ?
+	if (NULL == (ugh = xfrm_to_ip_address(family, srcx, &src)) &&
+	    NULL == (ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
+	    NULL == (ugh = add_port(family, &src, acquire->sel.sport)) &&
+	    NULL == (ugh = add_port(family, &dst, acquire->sel.dport)) &&
+	    NULL == (ugh = src_proto == dst_proto ?
 			NULL : "src and dst protocols differ") &&
-		!(ugh = addrtosubnet(&src, &ours)) &&
-		!(ugh = addrtosubnet(&dst, &his)))
+	    NULL == (ugh = addrtosubnet(&src, &ours)) &&
+	    NULL == (ugh = addrtosubnet(&dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, transport_proto,
 #ifdef HAVE_LABELED_IPSEC
 						uctx,
@@ -2153,8 +2153,7 @@ add_entry:
 					 * not support it, and gave an error
 					 * it one tried to turn it on.
 					 */
-					if (addrtypeof(&ifp->addr) ==
-						AF_INET) {
+					if (addrtypeof(&ifp->addr) == AF_INET) {
 						fd = create_socket(ifp,
 								v->name,
 								pluto_nat_port);

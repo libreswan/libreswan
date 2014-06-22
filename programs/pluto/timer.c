@@ -655,8 +655,8 @@ void handle_next_timer_event(void)
 			 * be unimportant.
 			 * This is just an optimization: correctness is not
 			 * at stake.
-			 *
-			 * Note: we are abusing the DBG mechanism to control
+			 */
+			/* ??? we are abusing the DBG mechanism to control
 			 * normal log output.
 			 */
 			DBG(DBG_LIFECYCLE,
@@ -666,6 +666,9 @@ void handle_next_timer_event(void)
 					(long)deltasecs(monotimediff(mononow(),
 						st->st_outbound_time))));
 		} else {
+			/* ??? we are abusing the DBG mechanism to control
+			 * normal log output.
+			 */
 			DBG(DBG_LIFECYCLE,
 				libreswan_log("replacing stale %s SA",
 					IS_IKE_SA(st) ? "ISAKMP" : "IPsec"));
