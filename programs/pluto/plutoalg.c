@@ -644,61 +644,6 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	return ctx_new;
 }
 
-/*
- * ML: make F_STRICT logic consider enc,auth algorithms
- */
-bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
-			     struct alg_info_esp *alg_info)
-{
-	bool ealg_insecure;
-
-	/*
-	 * key_len passed comes from esp_attrs read from peer
-	 * For many older algoritms (eg 3DES) this key_len is fixed
-	 * and get passed as 0.
-	 * ... then get default (really max!) key_len
-	 */
-	if (key_len == 0)
-		key_len = crypto_req_keysize(0 /* ESP */, ealg);
-
-	/*
-	 * Simple test to toss low key_len.
-	 * Will accept it only if specified in "esp" string.
-	 */
-	ealg_insecure = (key_len < 128);
-	if (ealg_insecure || alg_info != NULL) {
-		if (alg_info != NULL) {
-			struct esp_info *esp_info;
-			int i;
-
-			ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
-				if (esp_info->esp_ealg_id == ealg &&
-				    (esp_info->esp_ealg_keylen == 0 ||
-				     key_len == 0 ||
-				     esp_info->esp_ealg_keylen == key_len) &&
-				    esp_info->esp_aalg_id == aalg) {
-					if (ealg_insecure) {
-						loglog(RC_LOG_SERIOUS,
-						       "warning: You should NOT use insecure/broken ESP algorithms [%s (%d)]!",
-						       enum_name(&esp_transformid_names,
-								 ealg),
-						       key_len);
-					}
-					return TRUE;
-				}
-			}
-		}
-		libreswan_log(
-			"IPsec Transform [%s (%d), %s] refused due to %s",
-			enum_name(&esp_transformid_names, ealg),
-			key_len,
-			enum_name(&auth_alg_names, aalg),
-			ealg_insecure ? "insecure key length" : "strict flag");
-		return FALSE;
-	}
-	return TRUE;
-}
-
 void kernel_alg_show_status(void)
 {
 	unsigned sadb_id, id;

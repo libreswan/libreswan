@@ -109,7 +109,7 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES(12)_128-SHA2_256(5)_000
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES(12)_128-SHA2_256(5)_256
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES(12)_128-SHA2_256(5)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  

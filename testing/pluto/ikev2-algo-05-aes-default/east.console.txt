@@ -43,12 +43,6 @@ east #
 | IKEv2_KEY_LENGTH attribute 128
 | encrid(12), keylen(128), encr_keylen(128)
 --
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(128)
---
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
 |    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
 --
@@ -60,12 +54,6 @@ east #
 --
 |    af+type: IKEv2_KEY_LENGTH
 |    length/value: 256
---
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(256)
---
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(256)
 --
 | IKEv2_KEY_LENGTH attribute 128
 | encrid(12), keylen(128), encr_keylen(256)
@@ -88,12 +76,6 @@ east #
 | IKEv2_KEY_LENGTH attribute 128
 | encrid(12), keylen(128), encr_keylen(128)
 --
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(128)
---
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(128)
---
 |    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
 --
@@ -105,12 +87,6 @@ east #
 --
 |    af+type: IKEv2_KEY_LENGTH
 |    length/value: 256
---
-| IKEv2_KEY_LENGTH attribute 128
-| encrid(12), keylen(128), encr_keylen(256)
---
-| IKEv2_KEY_LENGTH attribute 256
-| encrid(12), keylen(256), encr_keylen(256)
 --
 | IKEv2_KEY_LENGTH attribute 128
 | encrid(12), keylen(128), encr_keylen(256)

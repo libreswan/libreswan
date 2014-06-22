@@ -16,6 +16,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add v6-tunnel
+002 added connection description "v6-tunnel"
 east #
  ipsec auto --status
 000 using kernel interface: klips
@@ -103,8 +104,10 @@ initdone
 east #
  ipsec look
 east NOW
-2001:db8:1:2::23/128 -> 2001:db8:1:2::45/128 => tun0x1001@2001:db8:1:2::45 esp0x7a944540@2001:db8:1:2::45  (0)
+2001:db8:1:2::23/128 -> 2001:db8:1:2::45/128 => tun0xIPIP@2001:db8:1:2::45 esp0xESPSPI@2001:db8:1:2::45
 ipsec0->eth1 mtu=16260(9999)->1500
+
+
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
