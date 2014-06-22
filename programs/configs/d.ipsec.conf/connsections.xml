@@ -32,7 +32,7 @@ but it may include shell wildcards (see
 <citerefentry><refentrytitle>sh</refentrytitle><manvolnum>1</manvolnum></citerefentry>);
 for example:</para>
 
-<para><emphasis remap='B'>include</emphasis> <emphasis remap='B'>ipsec.*.conf</emphasis></para>
+<para><emphasis remap='B'>include </emphasis> <emphasis remap='B'>/etc/ipsec.d/*.conf</emphasis></para>
 
 <para>The intention of the include facility is mostly to permit keeping
 information on connections, or sets of connections,
@@ -48,8 +48,9 @@ and
 parameters (described below) which permit splitting a single logical section
 (e.g. a connection description) into several actual sections.</para>
 
-<para>The first significant line of the file must specify the version
-of this specification that it conforms to:</para>
+<para>The first significant line of the file may specify a version
+of this specification for backwards compatibility with freeswan and openswan. It
+is ignored and unused. For compatibility with openswan, specify:</para>
 
 <para><emphasis remap='B'>version 2</emphasis></para>
 
