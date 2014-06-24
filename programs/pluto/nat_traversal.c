@@ -319,7 +319,49 @@ void set_nat_traversal(struct state *st, const struct msg_digest *md)
 	}
 }
 
-static void nat_traversal_natd_lookup(struct msg_digest *md)
+static void natd_lookup_common(struct state *st,
+	const ip_address *sender,
+	bool found_me, bool found_him)
+{
+	zero(&st->hidden_variables.st_natd);
+	anyaddr(AF_INET, &st->hidden_variables.st_natd);
+
+	if (!found_me) {
+		DBG(DBG_NATT,
+			DBG_log("NAT_TRAVERSAL this end is behind NAT"));
+		st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
+		st->hidden_variables.st_natd = *sender;
+	}
+
+	if (!found_him) {
+		DBG(DBG_NATT, {
+			ipstr_buf b;
+			DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
+				ipstr(sender, &b));
+		});
+		st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
+		st->hidden_variables.st_natd = *sender;
+	}
+
+	if (st->st_connection->forceencaps) {
+		DBG(DBG_NATT,
+			DBG_log("NAT_TRAVERSAL forceencaps enabled"));
+
+		st->hidden_variables.st_nat_traversal |=
+			LELEM(NATED_PEER) | LELEM(NATED_HOST);
+		st->hidden_variables.st_natd = *sender;
+	}
+
+	if (st->st_connection->nat_keepalive) {
+		DBG(DBG_NATT, {
+			ipstr_buf b;
+			DBG_log("NAT_TRAVERSAL nat_keepalive enabled %s",
+				ipstr(sender, &b));
+		});
+	}
+}
+
+static void ikev1_natd_lookup(struct msg_digest *md)
 {
 	unsigned char hash_me[MAX_DIGEST_LEN];
 	unsigned char hash_him[MAX_DIGEST_LEN];
@@ -384,36 +426,7 @@ static void nat_traversal_natd_lookup(struct msg_digest *md)
 		}
 	}
 
-	DBG(DBG_NATT,
-		DBG_log("NAT_TRAVERSAL (me:%d) (him:%d)",
-			found_me, found_him));
-
-	if (!found_me) {
-		st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
-		st->hidden_variables.st_natd = md->sender;
-	}
-
-	zero(&st->hidden_variables.st_natd);
-	anyaddr(AF_INET, &st->hidden_variables.st_natd);
-
-	if (!found_him) {
-		st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
-		st->hidden_variables.st_natd = md->sender;
-	}
-
-	if (st->st_connection->forceencaps) {
-		DBG(DBG_NATT,
-			DBG_log("NAT_TRAVERSAL forceencaps enabled"));
-
-		st->hidden_variables.st_nat_traversal |=
-			LELEM(NATED_PEER) | LELEM(NATED_HOST);
-		st->hidden_variables.st_natd = md->sender;
-	}
-
-	if (st->st_connection->nat_keepalive) {
-		DBG(DBG_NATT,
-			DBG_log("NAT_TRAVERSAL nat_keepalive enabled"));
-	}
+	natd_lookup_common(st, &md->sender, found_me, found_him);
 }
 
 bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
@@ -699,7 +712,7 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 		    nat_traversal_enabled ? "enabled" : "disabled",
 		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		nat_traversal_natd_lookup(md);
+		ikev1_natd_lookup(md);
 		if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 			nat_traversal_show_result(
 				st->hidden_variables.st_nat_traversal,
@@ -1192,42 +1205,8 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 			break;
 	}
 
-	zero(&st->hidden_variables.st_natd);
-	anyaddr(AF_INET, &st->hidden_variables.st_natd);
+	natd_lookup_common(st, &md->sender, found_me, found_him);
 
-	if (!found_me) {
-		DBG(DBG_NATT,
-			DBG_log("NAT_TRAVERSAL this end is behind NAT"));
-		st->hidden_variables.st_nat_traversal |= LELEM(NATED_HOST);
-		st->hidden_variables.st_natd = md->sender;
-	}
-
-	if (!found_him) {
-		DBG(DBG_NATT, {
-			ipstr_buf b;
-			DBG_log("NAT_TRAVERSAL that end is behind NAT %s",
-				ipstr(&md->sender, &b));
-		});
-		st->hidden_variables.st_nat_traversal |= LELEM(NATED_PEER);
-		st->hidden_variables.st_natd = md->sender;
-	}
-
-	if (st->st_connection->forceencaps) {
-		DBG(DBG_NATT,
-			DBG_log("NAT_TRAVERSAL forceencaps enabled"));
-
-		st->hidden_variables.st_nat_traversal |=
-			LELEM(NATED_PEER) | LELEM(NATED_HOST);
-		st->hidden_variables.st_natd = md->sender;
-	}
-
-	if (st->st_connection->nat_keepalive) {
-		DBG(DBG_NATT, {
-			ipstr_buf b;
-			DBG_log("NAT_TRAVERSAL nat_keepalive enabled %s",
-				ipstr(&md->sender, &b));
-		});
-	}
 	if ((st->st_state == STATE_PARENT_I1) &&
 		(st->hidden_variables.st_nat_traversal
 			& NAT_T_DETECTED)) {
