@@ -324,7 +324,11 @@ void ipsecdoi_replace(struct state *st,
 	int whack_sock = dup_any(st->st_whack_sock);
 	lset_t policy = st->st_policy;
 
-	if (IS_IKE_SA(st)) {
+	/*
+	 * this is an improvement when an initiator does not get R2.
+	 * when we support CREATE_CHILD_SA revisit this code.
+	 */
+	if (IS_IKE_SA(st) || !HAS_IPSEC_POLICY(policy)) {
 		struct connection *c = st->st_connection;
 
 		policy = (c->policy & ~POLICY_IPSEC_MASK & ~policy_del) |
@@ -367,9 +371,6 @@ void ipsecdoi_replace(struct state *st,
 			    ENCAPSULATION_MODE_TUNNEL)
 				policy |= POLICY_TUNNEL;
 		}
-		/* retain policy so child sa rekey attempt does not blow up */
-		if (st->st_state == STATE_PARENT_I3)
-			policy = st->st_connection->policy;
 
 		passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(whack_sock, st->st_connection, policy, try,
