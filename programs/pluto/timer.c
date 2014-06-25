@@ -680,6 +680,7 @@ void handle_next_timer_event(void)
 	}
 	break;
 
+	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
 	{
 		const char *satype;
@@ -697,13 +698,14 @@ void handle_next_timer_event(void)
 			latest = c->newest_ipsec_sa;
 		}
 
-		if (st->st_serialno != latest) {
+		if (st->st_serialno < latest) {
 			/* not very interesting: already superseded */
 			DBG(DBG_LIFECYCLE,
 				libreswan_log("%s SA expired (superseded by #%lu)",
 					satype, latest));
 		} else {
-			libreswan_log("%s SA expired (%s)", satype,
+			libreswan_log("%s %s (%s)", satype,
+				type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
 				(c->policy & POLICY_DONT_REKEY) ?
 					"--dontrekey" : "LATEST!");
 		}
