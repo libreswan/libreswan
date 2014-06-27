@@ -1,5 +1,6 @@
-Scenario: To setup ipsec with certs in tunnel mode using NSS
-------------------------------------------------------------
+#########################################################################
+# Scenario: To setup ipsec with certs in tunnel mode using NSS
+#########################################################################
 
 GW Mahine 1: w1.x1.y1.z1 
 GW Mahine 2: w2.x2.y2.z2 
@@ -102,4 +103,35 @@ ipsec.secrets at machine 1:
  : RSA usercert2
 
 
+#########################################################################
+# Import certificates 
+#########################################################################
+This example show how to import certificates in nss.
+Is useful if you want to migrate from openswan to libreswan.
 
+Import a CA:    
+    certutil -A -i <ca_cert_file>  -n "<ca_cert_alias>" -t "C,C,C" -d /etc/ipsec.d/
+    example: certutil -A -i /etc/ipsec.d/cacerts/CaCert.pem  -n "CaCert" -t "C,C,C" -d /etc/ipsec.d/
+	
+	
+	
+Import a cert:  
+    certutil -A -i <cert_file>  -n "<cert_alias>" -t "C,C,C" -d /etc/ipsec.d/
+    example: certutil -A -i /etc/ipsec.d/certs/serverCert.pemm  -n "serverCert" -t "C,C,C" -d /etc/ipsec.d/
+
+   
+   
+Import a client cert: 
+    certutil -A -i <cert_file>  -n "<cert_alias>" -t "u,u,u" -d /etc/ipsec.d/
+    example: certutil -A -i /etc/ipsec.d/certs/userCert.pem  -n "userCert" -t "u,u,u" -d /etc/ipsec.d/
+Convert key:
+    openssl pkcs12 -export -in /etc/ipsec.d/certs/userCert.pem -inkey /etc/ipsec.d/private/userKey.pem -name "userCert" -out /etc/ipsec.d/private/userKey.p12
+Import Key:            
+    pk12util -i /etc/ipsec.d/private/userKey.p12 -d /etc/ipsec.d       
+In your secret file you can use:
+    : RSA  "userCert"	
+
+	
+
+Show a list of the current certificates and trust attributes in a certificate database:
+    certutil -L -d /etc/ipsec.d/			
