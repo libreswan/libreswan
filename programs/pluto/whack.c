@@ -773,8 +773,7 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
-	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +
-	  OO },
+	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },
 #   undef OO
 	{ 0, 0, 0, 0 }
 };
