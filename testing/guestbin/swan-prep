@@ -123,7 +123,7 @@ commands.getoutput("ip6tables-restore /etc/sysconfig/ip6tables")
 # we can core directly in testcase dir but that requires fixing all final.sh and console output
 #commands.getoutput("sysctl -w kernel.core_pattern=/testing/pluto/%s/OUTPUT/core.%%h.%%e.%%p"%testname)
 #
-commands.getoutput("sysctl -w kernel.core_pattern=/tmp/core.%%h.%%e.%%p")
+commands.getoutput("sysctl -w kernel.core_pattern=/tmp/core.%h.%e.%p")
 if not os.path.isfile("/etc/sysctl.d/coredump.conf") and not os.path.islink("/etc/sysctl.d/coredump.conf"):
 	os.symlink("/dev/null", "/etc/sysctl.d/coredump.conf")
 	commands.getoutput("/lib/systemd/systemd-sysctl")
