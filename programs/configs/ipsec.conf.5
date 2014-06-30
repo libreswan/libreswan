@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 06/22/2014
+.\"      Date: 06/29/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "06/22/2014" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "06/29/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -467,9 +467,9 @@ option\&. The default is to use IKE, and to allow all combinations of:
 .\}
 .nf
 \fB
-                cipher:                 3des or aes
+                cipher:                 3des or aes128 or aes256
                 hash:                   sha1 or md5
-                pfsgroup (DHgroup):     modp1024 or modp1536
+                pfsgroup (DHgroup):     modp1024 or modp1536 or modp2048
 \fR
 .fi
 .if n \{\
