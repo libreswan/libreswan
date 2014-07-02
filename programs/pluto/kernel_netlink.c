@@ -153,7 +153,7 @@ static sparse_names ealg_list = {
 	{ SADB_EALG_NULL, "cipher_null" },
 	/* { SADB_EALG_DESCBC, "des" }, obsoleted */
 	{ SADB_EALG_3DESCBC, "des3_ede" },
-	{ SADB_X_EALG_CASTCBC, "cast128" },
+	{ SADB_X_EALG_CASTCBC, "cast5" },
 	/* { SADB_X_EALG_BLOWFISHCBC, "blowfish" }, obsoleted */
 	{ SADB_X_EALG_AESCBC, "aes" },
 	{ SADB_X_EALG_AESCTR, "ctr(aes)" },
