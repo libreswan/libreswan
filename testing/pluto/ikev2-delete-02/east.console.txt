@@ -88,7 +88,7 @@ ikev2-delete-02]# 000 using kernel interface: klips
 000 #2: "west-east-delete1":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in 28493s; newest IPSEC; eroute owner; nodpd; idle; import:respond to stranger
 000 #1: "west-east-delete1":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in 3562s; newest ISAKMP; nodpd; idle; import:respond to stranger
 000  
-[root@east ikev2-delete-02]# if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+[root@east ikev2-delete-02]# if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 [root@east ikev2-delete-02]# if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 [root@east ikev2-delete-02]# : ==== end ====
 [root@east ikev2-delete-02]# 

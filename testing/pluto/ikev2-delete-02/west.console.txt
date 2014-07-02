@@ -234,7 +234,7 @@ done
 000 #2: "west-east-delete1":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in 27803s; newest IPSEC; eroute owner; nodpd; idle; import:admin initiate
 000 #1: "west-east-delete1":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in 3595s; newest ISAKMP; nodpd; idle; import:admin initiate
 000  
-[root@west ikev2-delete-02]# if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+[root@west ikev2-delete-02]# if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 [root@west ikev2-delete-02]# if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 [root@west ikev2-delete-02]# : ==== end ====
 [root@west ikev2-delete-02]# echo "sleeping a bit.. 20"
