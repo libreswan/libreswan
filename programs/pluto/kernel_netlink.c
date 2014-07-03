@@ -140,10 +140,10 @@ static sparse_names aalg_list = {
 	{ SADB_X_AALG_NULL, "digest_null" },
 	{ SADB_AALG_MD5HMAC, "md5" },
 	{ SADB_AALG_SHA1HMAC, "sha1" },
-	{ SADB_X_AALG_SHA2_256HMAC, "sha256" },
+	{ SADB_X_AALG_SHA2_256HMAC, "hmac(sha256)" },
 	{ SADB_X_AALG_SHA2_256HMAC_TRUNCBUG, "hmac(sha256)" },
-	{ SADB_X_AALG_SHA2_384HMAC, "sha384" },
-	{ SADB_X_AALG_SHA2_512HMAC, "sha512" },
+	{ SADB_X_AALG_SHA2_384HMAC, "hmac(sha384)" },
+	{ SADB_X_AALG_SHA2_512HMAC, "hmac(sha512)" },
 	{ SADB_X_AALG_RIPEMD160HMAC, "ripemd160" },
 	{ 0, sparse_end }
 };
@@ -153,7 +153,7 @@ static sparse_names ealg_list = {
 	{ SADB_EALG_NULL, "cipher_null" },
 	/* { SADB_EALG_DESCBC, "des" }, obsoleted */
 	{ SADB_EALG_3DESCBC, "des3_ede" },
-	{ SADB_X_EALG_CASTCBC, "cast128" },
+	{ SADB_X_EALG_CASTCBC, "cast5" },
 	/* { SADB_X_EALG_BLOWFISHCBC, "blowfish" }, obsoleted */
 	{ SADB_X_EALG_AESCBC, "aes" },
 	{ SADB_X_EALG_AESCTR, "ctr(aes)" },
@@ -894,20 +894,30 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * xfrm_algo_auth to  replace struct xfrm_algo to deal with
 		 * this.
 		 */
-		if ((sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256) ||
-			(sa->authalg ==
-				AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG)) {
+
+		if (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 ||
+			sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) {
 			struct xfrm_algo_auth algo;
+
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
-			algo.alg_trunc_len =
-				sa->authalg ==
-				AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG ?
-				96 : 128;
+			switch(sa->authalg) {
+			case AUTH_ALGORITHM_HMAC_SHA2_256:
+			case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
+				algo.alg_trunc_len =
+					sa->authalg ==
+						AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG ?
+							96 : 128;
+				/* fixup to the real number, not our private number */
+				sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
+			case AUTH_ALGORITHM_HMAC_SHA2_384:
+				algo.alg_trunc_len = 192;
+			case AUTH_ALGORITHM_HMAC_SHA2_512:
+				algo.alg_trunc_len = 256;
+			}
+
 			attr->rta_type = XFRMA_ALG_AUTH_TRUNC;
 			attr->rta_len = RTA_LENGTH(
 				sizeof(algo) + sa->authkeylen);
-			/* fixup to the real number, not our private number */
-			sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
 
 			strcpy(algo.alg_name, name);
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
@@ -917,6 +927,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
+
 		} else {
 			struct xfrm_algo algo;
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;

@@ -1,7 +1,5 @@
 Basic pluto test, except the policy has been adjusted to permit only
-cast128 for for phase 2. This uses NETKEY
+CAST for for phase 2. This uses NETKEY.
 
-However, it seems NETKEY does not support cast128 properly (it works with KLIPS)
-
-"westnet-eastnet-cast128" #2: ERROR: netlink response for Add SA esp.fe470ce2@192.1.2.45 included errno 38: Function not implemented
-
+This tests for a bug that used the wrong cast identifier for NETKEY.
+This was fixed in libreswan 3.9

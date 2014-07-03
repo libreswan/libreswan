@@ -104,7 +104,7 @@ west #
 west #
  grep ID_UNASSIGNED_ID4 /tmp/pluto.log
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

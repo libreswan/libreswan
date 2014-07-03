@@ -2521,6 +2521,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						break;
 					case AUTH_ALGORITHM_HMAC_MD5:
 					case AUTH_ALGORITHM_HMAC_SHA1:
+					case AUTH_ALGORITHM_HMAC_SHA2_256:
+					case AUTH_ALGORITHM_HMAC_SHA2_384:
+					case AUTH_ALGORITHM_HMAC_SHA2_512:
 						break;
 					default:
 						{

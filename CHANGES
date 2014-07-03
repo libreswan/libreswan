@@ -77,6 +77,7 @@ v3.9
 * OCF: ipsec_ocf_cbimm KLIPS option was always ignored by mistake [Hugh]
 * OCF: Remove obsoleted HAVE_OCF support for IKE acceleration [Paul]
        (kernel OCF support is still available and supported)
+* NETKEY: esp=cast failed due to wrong crypto identifier [Paul]
 * KLIPS: SAref patches for Ubuntu kernel 3.11.0-15.25 [Simon Deziel]
 * KLIPS: Improved suport for various 3.x Linux kernels [various]
 * KLIPS: support for CONFIG_USER_NS [Matt]
