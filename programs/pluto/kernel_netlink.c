@@ -894,9 +894,12 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * xfrm_algo_auth to  replace struct xfrm_algo to deal with
 		 * this.
 		 */
-			struct xfrm_algo_auth algo;
-			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 
+		if (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 ||
+			sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) {
+			struct xfrm_algo_auth algo;
+
+			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			switch(sa->authalg) {
 			case AUTH_ALGORITHM_HMAC_SHA2_256:
 			case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
@@ -925,7 +928,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 
-#if 0
 		} else {
 			struct xfrm_algo algo;
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
@@ -941,7 +943,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 		}
-#endif
 	}
 
 	aead = get_aead_alg(sa->encalg);
