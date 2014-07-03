@@ -719,10 +719,12 @@ void handle_next_timer_event(void)
 			set_suspended(st, NULL);
 		}
 #endif
-		if(st->st_ikev2 && IS_IKE_SA(st)) /* IKEv2 parent, delete children to */
-			v2_delete_my_family(st,INITIATOR);
-		else
+		if (st->st_ikev2 && IS_IKE_SA(st)) {
+			/* IKEv2 parent, delete children too */
+			v2_delete_my_family(st, INITIATOR);
+		} else {
 			delete_state(st);
+		}
 		break;
 
 	case EVENT_DPD:
