@@ -97,7 +97,7 @@ const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype,
 static void kernel_alg_init(void)
 {
 	DBG(DBG_KERNEL,
-		DBG_log("alg_init(): memset(%p, 0, %d) memset(%p, 0, %d)",
+		DBG_log("kernel_alg_init(): memset(%p, 0, %d) memset(%p, 0, %d)",
 			&esp_aalg,  (int)sizeof(esp_aalg),
 			&esp_ealg,  (int)sizeof(esp_ealg));
 		);
