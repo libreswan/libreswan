@@ -153,42 +153,53 @@ err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len)
 	 * test #1: encrypt algo must be present
 	 */
 	if (!ESP_EALG_PRESENT(alg_id)) {
-		/*
-		 * ??? why is this OK?
-		 * Perhaps: ugh = "alg not present in system";
-		 */
 		DBG(DBG_KERNEL,
 			DBG_log("kernel_alg_esp_enc_ok(%d,%d): alg not present in system",
 				alg_id, key_len);
 			);
+		ugh = "esp alg not present in system";
 	} else {
 		struct sadb_alg *alg_p = &esp_ealg[alg_id];
 
 		passert(alg_p != NULL);
-		if (alg_id == ESP_AES_GCM_8 ||
-			alg_id == ESP_AES_GCM_12 ||
-			alg_id == ESP_AES_GCM_16) {
-			if (key_len != 128 && key_len != 192 &&
-				key_len != 256) {
+		switch (alg_id) {
+		case ESP_AES_GCM_8:
+		case ESP_AES_GCM_12:
+		case ESP_AES_GCM_16:
+		case ESP_AES_CCM_8:
+		case ESP_AES_CCM_12:
+		case ESP_AES_CCM_16:
+		case ESP_AES_CTR:
+		case ESP_CAMELLIA:
+			if (key_len && (key_len != 128 && key_len != 192 &&
+				key_len != 256)) {
 				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
 						alg_id, key_len,
 						alg_p->sadb_alg_minbits,
 						alg_p->sadb_alg_maxbits);
 			}
-		}
-
-		/*
-		 * test #2: if key_len specified, it must be in range
-		 */
-		if (ugh == NULL && key_len != 0 &&
-			(key_len < alg_p->sadb_alg_minbits ||
-				key_len > alg_p->sadb_alg_maxbits)) {
-
-			ugh = builddiag("kernel_alg_db_add() key_len not in range: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+			break;
+		case ESP_SEED_CBC:
+		case ESP_CAST:
+			if (key_len != 128) {
+				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
+						alg_id, key_len,
+						alg_p->sadb_alg_minbits,
+						alg_p->sadb_alg_maxbits);
+			}
+			break;
+		default:
+			/* old behaviour - not necc. correct */
+			if (key_len != 0 && (key_len < alg_p->sadb_alg_minbits
+				|| key_len > alg_p->sadb_alg_maxbits)) {
+				ugh = builddiag("kernel_alg_db_add() key_len not in range: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",
 					alg_id, key_len,
 					alg_p->sadb_alg_minbits,
 					alg_p->sadb_alg_maxbits);
+			}
+
 		}
+
 		if (ugh != NULL) {
 			DBG(DBG_KERNEL,
 				DBG_log("kernel_alg_esp_enc_ok(%d,%d): %s alg_id=%d, alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, res=%d",
