@@ -111,7 +111,8 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 	if "Restart=always" in service:
 		fp = open("/lib/systemd/system/ipsec.service","w")
 		fp.write("".join(service).replace("Restart=always","Restart=no"))
-		commands.getoutput("/usr/bin/systemctl daemon-reload")
+	# always reload to avoid "service is masked" errors
+	commands.getoutput("/usr/bin/systemctl daemon-reload")
 
 # easy way to ensure we have the LOGDROP table for those OSes where we don't start a firewall with config
 commands.getoutput("iptables-restore /etc/sysconfig/iptables")
