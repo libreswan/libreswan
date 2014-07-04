@@ -974,12 +974,8 @@ int main(int argc, char **argv)
 		/* decode a numeric argument, if expected */
 		if (0 <= c) {
 			if (c & NUMERIC_ARG) {
-				char *endptr;
-
 				c -= NUMERIC_ARG;
-				opt_whole = strtoul(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg)
+				if (ttoul(optarg, 0, 0, &opt_whole) != NULL)
 					diagq("badly formed numeric argument",
 					      optarg);
 			}
@@ -2093,6 +2089,11 @@ int main(int argc, char **argv)
 
 					/* figure out prefix number
 					 * and how it should affect our exit status
+					 */
+					/*
+					 * we don't generally use strtoul but
+					 * in this case, its failure mode
+					 * (0 for nonsense) is probably OK.
 					 */
 					{
 						unsigned long s =

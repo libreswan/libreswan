@@ -136,6 +136,11 @@ static int starter_whack_read_reply(int sock,
 			 * our exit status
 			 */
 			{
+				/*
+				 * we don't generally use strtoul but
+				 * in this case, its failure mode
+				 * (0 for nonsense) is probably OK.
+				 */
 				unsigned long s = strtoul(ls, NULL, 10);
 
 				switch (s) {
@@ -143,6 +148,7 @@ static int starter_whack_read_reply(int sock,
 				case RC_LOG:
 					/* ignore */
 					break;
+
 				case RC_SUCCESS:
 					/* be happy */
 					ret = 0;
@@ -199,7 +205,6 @@ static int starter_whack_read_reply(int sock,
 
 					break;
 
-				/* case RC_LOG_SERIOUS: */
 				default:
 					/* pass through */
 					ret = s;

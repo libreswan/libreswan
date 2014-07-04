@@ -91,7 +91,6 @@ int debug = 0;
 int main(int argc, char **argv)
 {
 	int i, nspis;
-	char *endptr;
 	int said_opt = 0;
 
 	const char* error_s = NULL;
@@ -257,45 +256,66 @@ int main(int argc, char **argv)
 					ipstr(&said_af_array[i].said.dst, &b));
 			}
 		} else {
-			if (streq(argv[i * 4 + 4], "ah"))
-				said_af_array[i].said.proto = SA_AH;
-			if (streq(argv[i * 4 + 4], "esp"))
-				said_af_array[i].said.proto = SA_ESP;
-			if (streq(argv[i * 4 + 4], "tun"))
-				said_af_array[i].said.proto = SA_IPIP;
-			if (streq(argv[i * 4 + 4], "comp"))
-				said_af_array[i].said.proto = SA_COMP;
-			if (said_af_array[i].said.proto == 0) {
-				fprintf(stderr, "%s: Badly formed proto: %s\n",
-					progname, argv[i * 4 + 4]);
-				exit(1);
-			}
-			said_af_array[i].said.spi =
-				htonl(strtoul(argv[i * 4 + 3], &endptr, 0));
-			if (!(endptr ==
-			      argv[i * 4 + 3] + strlen(argv[i * 4 + 3]))) {
-				fprintf(stderr, "%s: Badly formed spi: %s\n",
-					progname, argv[i * 4 + 3]);
-				exit(1);
-			}
-			if (streq(argv[i * 4 + 1], "inet"))
+			/*
+			 * decode four args from i * 4 + 1
+			 * +0: address family
+			 * +1: IP address
+			 * +2: SPI
+			 * +3: proto
+			 */
+			char **p = &argv[i * 4 + 1];
+
+			/* address family */
+			if (streq(p[0], "inet")) {
 				said_af_array[i].af = AF_INET;
-			if (streq(argv[i * 4 + 1], "inet6"))
+			} else if (streq(p[0], "inet6")) {
 				said_af_array[i].af = AF_INET6;
-			if ((said_af_array[i].af != AF_INET) &&
-			    (said_af_array[i].af != AF_INET6)) {
+			} else {
 				fprintf(stderr,
 					"%s: Address family %s not supported\n",
-					progname, argv[i * 4 + 1]);
+					progname, p[0]);
 				exit(1);
 			}
-			error_s = ttoaddr(argv[i * 4 + 2], 0,
-					  said_af_array[i].af,
-					  &(said_af_array[i].said.dst));
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting %dth address argument:%s\n",
-					progname, error_s, i, argv[i * 4 + 2]);
+
+			/* IP address */
+			{
+				err_t error_s = ttoaddr(p[1], 0,
+						  said_af_array[i].af,
+						  &(said_af_array[i].said.dst));
+
+				if (error_s != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting %dth address argument:%s\n",
+						progname, error_s, i, p[1]);
+					exit(1);
+				}
+			}
+
+			/* SPI */
+			{
+				unsigned long spi;
+				err_t ugh = ttoulb(p[2], 0, 0, 0xFFFFFFFF, &spi);
+
+				if (ugh != NULL) {
+					fprintf(stderr, "%s: Badly formed spi: %s \"%s\"\n",
+						progname, ugh, p[2]);
+					exit(1);
+				}
+				said_af_array[i].said.spi = htonl(spi);
+			}
+
+			/* proto */
+			if (streq(p[3], "ah")) {
+				said_af_array[i].said.proto = SA_AH;
+			} else if (streq(p[3], "esp")) {
+				said_af_array[i].said.proto = SA_ESP;
+			} else if (streq(p[3], "tun")) {
+				said_af_array[i].said.proto = SA_IPIP;
+			} else if (streq(p[3], "comp")) {
+				said_af_array[i].said.proto = SA_COMP;
+			} else {
+				fprintf(stderr, "%s: Badly formed proto: %s\n",
+					progname, p[3]);
 				exit(1);
 			}
 		}
