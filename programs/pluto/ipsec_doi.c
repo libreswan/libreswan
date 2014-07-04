@@ -629,7 +629,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sadetails, size_t sad_len
 
 	/* document ISAKMP SA details for admin's pleasure */
 	char *b = sadetails;
-	const char *authname;
+	const char *authname, *prfname;
 	const char *integstr, *integname;
 	char integname_tmp[20];
 
@@ -640,6 +640,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sadetails, size_t sad_len
 	if (st->st_ikev2) {
 		authname = "IKEv2";
 		integstr = " integ=";
+		prfname = "prf=";
 		snprintf(integname_tmp, sizeof(integname_tmp), "%s_%zu",
 			 st->st_oakley.integ_hasher->common.officname,
 			 st->st_oakley.integ_hasher->hash_integ_len *
@@ -649,14 +650,16 @@ void fmt_isakmp_sa_established(struct state *st, char *sadetails, size_t sad_len
 		authname = enum_show(&oakley_auth_names, st->st_oakley.auth);
 		integstr = "";
 		integname = "";
+		prfname = "integ=";
 	}
 
 	snprintf(b, sad_len - (b - sadetails) - 1,
-		 " {auth=%s cipher=%s_%d%s%s prf=%s group=%s}",
+		 " {auth=%s cipher=%s_%d%s%s %s%s group=%s}",
 		 strip_prefix(authname,"OAKLEY_"),
 		 st->st_oakley.encrypter->common.name,
 		 st->st_oakley.enckeylen,
 		 integstr, integname,
+		 prfname,
 		 strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"),
 		 strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
 	st->hidden_variables.st_logged_p1algos = TRUE;
