@@ -101,7 +101,7 @@ static int aalg_getbyname_ike(const char *str, size_t len)
 
 	/* Special value for no authentication since zero is already used. */
 	ret = INT_MAX;
-	if (strncaseeq(str, "null", len))
+	if (len == 4 && strncaseeq(str, "null", len))
 		return ret;
 
 	/* support idXXX as syntax, matching iana numbers directly */
