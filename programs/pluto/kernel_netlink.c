@@ -902,17 +902,14 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			switch(sa->authalg) {
 			case AUTH_ALGORITHM_HMAC_SHA2_256:
+				algo.alg_trunc_len = 128;
+				break;
+
 			case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
-				algo.alg_trunc_len =
-					sa->authalg ==
-						AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG ?
-							96 : 128;
+				algo.alg_trunc_len = 96;
 				/* fixup to the real number, not our private number */
 				sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
-			case AUTH_ALGORITHM_HMAC_SHA2_384:
-				algo.alg_trunc_len = 192;
-			case AUTH_ALGORITHM_HMAC_SHA2_512:
-				algo.alg_trunc_len = 256;
+				break;
 			}
 
 			attr->rta_type = XFRMA_ALG_AUTH_TRUNC;

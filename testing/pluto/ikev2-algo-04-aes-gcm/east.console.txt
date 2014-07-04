@@ -109,7 +109,7 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   ESP algorithms wanted: AES_GCM_C(20)_256-NONE(0)_000
-000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   ESP algorithms loaded: none
+000 "westnet-eastnet-ipv4-psk-ikev2-gcm-c":   ESP algorithms loaded: AES_GCM_C(20)_256-NONE(0)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
