@@ -1397,10 +1397,8 @@ int main(int argc, char **argv)
 				diag("--client conflicts with --clientwithin");
 
 			tunnel_af_used_by = long_opts[long_index].name;
-			if ( ((strlen(optarg) >= 6) &&
-			      (strncmp(optarg, "vhost:", 6) == 0)) ||
-			     ((strlen(optarg) >= 5) &&
-			      (strncmp(optarg, "vnet:", 5) == 0)) ) {
+			if (startswith(optarg, "vhost:") ||
+			    startswith(optarg, "vnet:")) {
 				msg.right.virt = optarg;
 			} else {
 				diagq(ttosubnet(optarg, 0,

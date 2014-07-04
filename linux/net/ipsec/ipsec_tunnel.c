@@ -1889,8 +1889,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 				    "NETDEV_DOWN dev=%s flags=%x\n",
 				    dev->name,
 				    dev->flags);
-			if (strncmp(dev->name, "ipsec",
-				    strlen("ipsec")) == 0) {
+			if (startswith(dev->name, "ipsec")) {
 				printk(KERN_CRIT "IPSEC EVENT: KLIPS device %s shut down.\n",
 					dev->name);
 			}

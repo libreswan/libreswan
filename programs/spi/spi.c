@@ -162,12 +162,10 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		int life_severity, life_type;
 		char *optargt = optargp;
 
-		if (strncmp(optargp, "soft", sizeof("soft") - 1) == 0) {
+		if (eat(optargp, "soft")) {
 			life_severity = life_soft;
-			optargp += sizeof("soft") - 1;
-		} else if (strncmp(optargp, "hard", sizeof("hard") - 1) == 0) {
+		} else if (eat(optargp, "hard")) {
 			life_severity = life_hard;
-			optargp += sizeof("hard") - 1;
 		} else {
 			fprintf(stderr,
 				"%s: missing lifetime severity in %s, optargt=0p%p, optargp=0p%p, sizeof(\"soft\")=%d\n",
@@ -199,37 +197,21 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		}
 		if (debug) {
 			fprintf(stdout,
-				"%s: debug: optargt=0p%p=\"%s\", optargp=0p%p=\"%s\", strlen(optargt)=%d, strlen(optargp)=%d, strncmp(optargp, \"addtime\", sizeof(\"addtime\")-1)=%d\n",
+				"%s: debug: optargt=\"%s\", optargp=\"%s\"\n",
 				progname,
 				optargt,
-				optargt,
-				optargp,
-				optargp,
-				(int)strlen(optargt),
-				(int)strlen(optargp),
-				strncmp(optargp, "addtime", sizeof("addtime") -
-					1));
+				optargp);
 		}
-		if (strncmp(optargp, "allocations", sizeof("allocations") -
-			    1) == 0) {
+		if (eat(optargp, "allocations")) {
 			life_type = life_alloc;
-			optargp += sizeof("allocations") - 1;
-		} else if (strncmp(optargp, "bytes",
-				   sizeof("bytes") - 1) == 0) {
+		} else if (eat(optargp, "bytes")) {
 			life_type = life_bytes;
-			optargp += sizeof("bytes") - 1;
-		} else if (strncmp(optargp, "addtime", sizeof("addtime") -
-				   1) == 0) {
+		} else if (eat(optargp, "addtime")) {
 			life_type = life_addtime;
-			optargp += sizeof("addtime") - 1;
-		} else if (strncmp(optargp, "usetime", sizeof("usetime") -
-				   1) == 0) {
+		} else if (eat(optargp, "usetime")) {
 			life_type = life_usetime;
-			optargp += sizeof("usetime") - 1;
-		} else if (strncmp(optargp, "packets", sizeof("packets") -
-				   1) == 0) {
+		} else if (eat(optargp, "packets")) {
 			life_type = life_packets;
-			optargp += sizeof("packets") - 1;
 		} else {
 			fprintf(stderr,
 				"%s: missing lifetime type after '-' in %s\n",

@@ -76,10 +76,12 @@ typedef int bool;
 
 /* clearer shorthand for *cmp functions */
 #define streq(a, b) (strcmp((a), (b)) == 0)
-#define startswith(a, b) (strncmp((a), (b), sizeof(b)-1) == 0)
+#define startswith(a, b) (strncmp((a), (b), sizeof(b)-1) == 0)	/* b must be literal! */
+#define eat(a, b) (startswith((a), (b))? ((a) += sizeof(b) - 1), TRUE : FALSE)
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)
 #define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
 #define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
+
 
 /* zero an object given a pointer to it.
  * Note: this won't work on an array without an explicit &

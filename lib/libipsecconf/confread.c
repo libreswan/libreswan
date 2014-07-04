@@ -476,17 +476,14 @@ static bool validate_end(struct ub_ctx *dnsctx,
 				leftright);
 		}
 
-		if ( ((strlen(value) >= 6) &&
-		      (strncmp(value, "vhost:", 6) == 0)) ||
-		     ((strlen(value) >= 5) &&
-		      (strncmp(value, "vnet:", 5) == 0)) ) {
+		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
 			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
 			er = ttosubnet(value, 0, family, &(end->subnet));
 		}
-		if (er)
+		if (er != NULL)
 			ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright,
 				  value, er);
 	}
