@@ -709,6 +709,10 @@ int ikev2_evaluate_connection_port_fit(struct connection *d,
 	return bestfit_p;
 }
 
+/*
+ * RFC 5996 section 2.9 "Traffic Selector Negotiation"
+ * Future: section 2.19 "Requesting an Internal Address on a Remote Network"
+ */
 int ikev2_evaluate_connection_fit(struct connection *d,
 				  struct spd_route *sr,
 				  enum phase1_role role,
@@ -774,8 +778,7 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 			if (addrinsubnet(&tsi[tsi_ni].low, &ei->client) &&
 			    addrinsubnet(&tsi[tsi_ni].high, &ei->client) &&
 			    addrinsubnet(&tsr[tsr_ni].low,  &er->client) &&
-			    addrinsubnet(&tsr[tsr_ni].high, &er->client)
-			    ) {
+			    addrinsubnet(&tsr[tsr_ni].high, &er->client)) {
 				/*
 				 * now, how good a fit is it? --- sum of bits gives
 				 * how good a fit this is.
@@ -800,12 +803,12 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 					    ei->port,
 					    tsi[tsi_ni].startport,
 					    tsi[tsi_ni].endport));
-				if ( ei->port &&
+				if (ei->port &&
 				     (tsi[tsi_ni].startport == ei->port &&
 				      tsi[tsi_ni].endport == ei->port))
 					fitbits = fitbits << 1;
 
-				if ( er->port &&
+				if (er->port &&
 				     (tsr[tsr_ni].startport == er->port &&
 				      tsr[tsr_ni].endport == er->port))
 					fitbits = fitbits << 1;
