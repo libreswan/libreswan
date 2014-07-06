@@ -27,7 +27,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <getopt.h>
-#include <assert.h>
 #include <poll.h>
 
 #include <libreswan.h>
@@ -442,7 +441,7 @@ int main(int argc, char **argv)
 			continue;
 
 		default:
-			assert(FALSE); /* unknown return value */
+			exit(1);
 		}
 	}
 

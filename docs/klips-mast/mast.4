@@ -55,7 +55,7 @@ The mast network interface is a pseudo device that allows tunnelling protocols t
 The network interfaces are named anything that can fit in 16 printable characters. We suggest \fBmast0\fR, \fBmast1\fR and so on, as many as desired, but they could also be named \fBmast\-rome\fR or even \fBvpn\-rome\fR or other more descriptive names. The names should be unique in the namespace of the network devices.
 
 .PP
-They are created with the "ip tunnel" command. (XXX? are they. Maybe, maybe not.)
+They are created with the "ip tncfg" command.
 
 .PP
 The mast device provides a way to anchor routing daemon to virtual topologies. It provides a consistent abstraction to various kinds of tunnelling technology: IP\-encap (protocol 4), IPv6 (protocol 41), GRE (protocol 47), ESP (protocol 50), AH (protocol 51), IPIP (protocol 94) and ENCAP (protocol 98).

@@ -367,7 +367,7 @@ startklips() {
 		if ($1 == "inet")
 		    sub(" [^ ]+:[^ ]+"," ",$0)
 		    sub("/.*","",$2)
-		    sub("dynamic","",$7)
+		    sub("dynamic","",$0)
 		    for (i = 2; i < NF; i++) {
 			if ($i == "brd" || $i == "peer" || $i == "secondary")
 			    i++

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: IPSEC_EROUTE
 .\"    Author: Paul Wouters
-.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/16/2012
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 07/03/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_EROUTE" "8" "12/16/2012" "libreswan" "Executable programs"
+.TH "IPSEC_EROUTE" "8" "07/03/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -141,11 +141,7 @@ means that matches are to allowed to pass without IPSEC processing
 The format of /proc/net/ipsec_eroute is listed in ipsec_eroute(5)\&.
 .SH "EXAMPLES"
 .PP
-\fBipsec eroute \-\-add \-\-eraf inet \-\-src 192\&.168\&.0\&.1/32 \e\fR
-
-\fB \-\-dst 192\&.168\&.2\&.0/24 \-\-af inet \-\-edst 192\&.168\&.0\&.2 \e\fR
-
-\fB \-\-spi 0x135 \-\-proto tun\fR
+\fBipsec eroute \-\-add \-\-eraf inet \-\-src 192\&.168\&.0\&.1/32 \e\fR\fB \-\-dst 192\&.168\&.2\&.0/24 \-\-af inet \-\-edst 192\&.168\&.0\&.2 \e\fR\fB \-\-spi 0x135 \-\-proto tun\fR
 .PP
 sets up an
 \fBeroute\fR
@@ -164,11 +160,7 @@ and protocol
 \fBtun\fR
 (50, IPPROTO_ESP)\&.
 .PP
-\fBipsec eroute \-\-add \-\-eraf inet6 \-\-src 3049:1::1/128 \e\fR
-
-\fB \-\-dst 3049:2::/64 \-\-af inet6 \-\-edst 3049:1::2 \e\fR
-
-\fB \-\-spi 0x145 \-\-proto tun\fR
+\fBipsec eroute \-\-add \-\-eraf inet6 \-\-src 3049:1::1/128 \e\fR\fB \-\-dst 3049:2::/64 \-\-af inet6 \-\-edst 3049:1::2 \e\fR\fB \-\-spi 0x145 \-\-proto tun\fR
 .PP
 sets up an
 \fBeroute\fR
@@ -187,9 +179,7 @@ and protocol
 \fBtun\fR
 (50, IPPROTO_ESP)\&.
 .PP
-\fBipsec eroute \-\-replace \-\-eraf inet \-\-src company\&.com/24 \e\fR
-
-\fB \-\-dst ftp\&.ngo\&.org/32 \-\-said tun\&.135@gw\&.ngo\&.org\fR
+\fBipsec eroute \-\-replace \-\-eraf inet \-\-src company\&.com/24 \e\fR\fB \-\-dst ftp\&.ngo\&.org/32 \-\-said tun\&.135@gw\&.ngo\&.org\fR
 .PP
 replaces an
 \fBeroute\fR
@@ -204,9 +194,7 @@ via Security Gateway
 using the Security Association with Security Association ID
 \fBtun0x135@gw\&.ngo\&.org\fR
 .PP
-\fBipsec eroute \-\-del \-\-eraf inet \-\-src company\&.com/24 \e\fR
-
-\fB \-\-dst www\&.ietf\&.org/32 \-\-said %passthrough4\fR
+\fBipsec eroute \-\-del \-\-eraf inet \-\-src company\&.com/24 \e\fR\fB \-\-dst www\&.ietf\&.org/32 \-\-said %passthrough4\fR
 .PP
 deletes an
 \fBeroute\fR
@@ -218,11 +206,7 @@ bits of subnet mask and the host
 \fBwww\&.ietf\&.org\fR
 to pass in the clear, unprocessed\&.
 .PP
-\fBipsec eroute \-\-add \-\-eraf inet \-\-src company\&.com/24 \e\fR
-
-\fB \-\-dst mail\&.ngo\&.org/32 \-\-transport\-proto 6 \e\fR
-
-\fB \-\-dst\-port 110 \-\-said tun\&.135@mail\&.ngo\&.org\fR
+\fBipsec eroute \-\-add \-\-eraf inet \-\-src company\&.com/24 \e\fR\fB \-\-dst mail\&.ngo\&.org/32 \-\-transport\-proto 6 \e\fR\fB \-\-dst\-port 110 \-\-said tun\&.135@mail\&.ngo\&.org\fR
 .PP
 sets up an
 \fBeroute\fR
@@ -244,15 +228,13 @@ will be encrypted but all other traffic to/from
 \fBmail\&.ngo\&.org\fR
 will be in clear text\&.
 .PP
-\fBipsec eroute \-\-add \-\-eraf inet \-\-src company\&.com/24 \e\fR
-
-\fB \-\-dst mail\&.ngo\&.org/32 \-\-said %pass\fR
+\fBipsec eroute \-\-add \-\-eraf inet \-\-src company\&.com/24 \e\fR\fB \-\-dst mail\&.ngo\&.org/32 \-\-said %pass\fR
 .SH "FILES"
 .PP
 /proc/net/ipsec_eroute, /usr/local/bin/ipsec
 .SH "SEE ALSO"
 .PP
-ipsec(8), ipsec_manual(8), ipsec_tncfg(8), ipsec_spi(8), ipsec_spigrp(8), ipsec_klipsdebug(8), ipsec_eroute(5)
+ipsec(8), ipsec_tncfg(8), ipsec_spi(8), ipsec_spigrp(8), ipsec_klipsdebug(8), ipsec_eroute(5)
 .SH "HISTORY"
 .PP
 Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org/\fR\m[]> by Richard Guy Briggs\&.

@@ -115,6 +115,8 @@ static void help(void)
 		" \\\n   "
 		" [--pfsgroup [modp1024] | [modp1536] | [modp2048] | [modp3072] | [modp4096] | [modp6144] | [modp8192]]"
 		" \\\n   "
+		"             [dh22] | [dh23] | [dh24]"
+		" \\\n   "
 		" [--ikelifetime <seconds>]"
 		" [--ipseclifetime <seconds>]"
 		" \\\n   "
@@ -771,8 +773,7 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
-	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +
-	  OO },
+	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },
 #   undef OO
 	{ 0, 0, 0, 0 }
 };

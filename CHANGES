@@ -45,7 +45,6 @@ v3.9
 * NATT: Added nat-ikev1-method=drafts|rfc|both to workaround buggy Ciscos [Paul]
 * NATT: non port-floating (4500) NATT draft support removed [Paul]
 * NATT: Change order of NATT payloads to accomodate racoon sensitivity [Paul]
-* NATT: Added support for NATT in IKEv2 [Antony]
 * NATT: ignore incoming ISAKMP_NEXT_SAK (AKA ISAKMP_NEXT_NATD_BADDRAFTS) [Paul]
 * NATT: Addded IKEv2 NAT-Traversal support [Antony]
 * XAUTH: Cleanup code [Hugh]
@@ -77,6 +76,7 @@ v3.9
 * OCF: ipsec_ocf_cbimm KLIPS option was always ignored by mistake [Hugh]
 * OCF: Remove obsoleted HAVE_OCF support for IKE acceleration [Paul]
        (kernel OCF support is still available and supported)
+* NETKEY: esp=cast failed due to wrong crypto identifier [Paul]
 * KLIPS: SAref patches for Ubuntu kernel 3.11.0-15.25 [Simon Deziel]
 * KLIPS: Improved suport for various 3.x Linux kernels [various]
 * KLIPS: support for CONFIG_USER_NS [Matt]
@@ -85,7 +85,7 @@ v3.9
 * packaging: NSS fixups for deb packaging [mountaincat]
 * testing: a LOT of test case updates [many people]
 * Bugtracker bugs fixed:
-  #67: uniqueids: don't compare ipv4 and ipv6 addresses
+  #67: uniqueids: don't compare ipv4 and ipv6 addresses [Tuomo]
   #86: left=%defaultroute does not work in a conn [Hugh/Paul]
 
 v3.8 (January 15, 2014)

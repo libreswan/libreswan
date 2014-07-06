@@ -2,12 +2,12 @@
 .\"     Title: IPSEC_PLUTO
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 04/19/2014
+.\"      Date: 06/29/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_PLUTO" "8" "04/19/2014" "libreswan" "Executable programs"
+.TH "IPSEC_PLUTO" "8" "06/29/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -39,21 +39,15 @@ pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-name\ \fIconnection\-name\fR [[\-\-ipv4] | [\-\-ipv6]] [[\-\-tunnelipv4] | [\-\-tunnelipv6]]
 .br
-
-.br
 [\-\-id\ \fIidentity\fR] [\-\-host\ \fIip\-address\fR] [\-\-cert\ \fIpath\fR] [\-\-ca\ \fIdistinguished\ name\fR] [\-\-groups\ \fIaccess\ control\ groups\fR] [\-\-sendcert\ yes\ |\ forced\ |\ always\ |\ ifasked\ |\ no\ |\ never] [\-\-certtype\ \fInumber\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-nexthop\ \fIip\-address\fR] [[\-\-client\ \fIsubnet\fR] | [\-\-clientwithin\ \fIsubnet\fR]] [\-\-clientprotoport\ \fIprotocol\fR/\fIport\fR] [\-\-srcip\ \fIip\-address\fR] [\-\-xauthserver] [\-\-xauthclient] [\-\-modecfgserver] [\-\-modecfgclient] [\-\-modecfgdns1\ \fIip\-address\fR] [\-\-modecfgdns2\ \fIip\-address\fR] [\-\-modecfgdomain\ \fIDNS\-domain\fR] [\-\-modecfgbanner\ \fIlogin\-banner\fR] [\-\-dnskeyondemand] [\-\-updown\ \fIupdown\fR]
 .br
-
-.br
 \-\-to
-.br
-
 .br
 [\-\-id\ \fIidentity\fR] [\-\-host\ \fIip\-address\fR] [\-\-cert\ \fIpath\fR] [\-\-ca\ \fIdistinguished\ name\fR] [\-\-groups\ \fIaccess\ control\ groups\fR] [\-\-sendcert\ yes\ |\ always\ |\ ifasked\ |\ no\ |\ never] [\-\-certtype\ \fInumber\fR] [\-\-ikeport\ \fIport\-number\fR] [\-\-nexthop\ \fIip\-address\fR] [\-\-client\ \fIsubnet\fR] [\-\-clientwithin\ \fIsubnet\fR] [\-\-clientprotoport\ \fIprotocol\fR/\fIport\fR] [\-\-srcip\ \fIip\-address\fR] [\-\-xauthserver] [\-\-xauthclient] [\-\-modecfgserver] [\-\-modecfgclient] [\-\-modecfgdns1\ \fIip\-address\fR] [\-\-modecfgdns2\ \fIip\-address\fR] [\-\-modecfgdomain\ \fIDNS\-domain\fR] [\-\-dnskeyondemand] [\-\-updown\ \fIupdown\fR]
 .br
 
 .br
-[\-\-tunnel] [\-\-psk] [\-\-rsasig] [\-\-encrypt] [\-\-authenticate] [\-\-compress] [\-\-pfs] [\-\-pfsgroup\ [modp1024]\ |\ [modp1536]\ |\ [modp2048]\ |\ [modp3072]\ |\ [modp4096]\ |\ [modp6144]\ |\ [modp8192]] [\-\-disablearrivalcheck] [\-\-ikelifetime\ \fIseconds\fR] [\-\-ipseclifetime\ \fIseconds\fR] [\-\-rekeymargin\ \fIseconds\fR] [\-\-rekeyfuzz\ \fIpercentage\fR] [\-\-keyingtries\ \fIcount\fR] [\-\-esp\ \fIesp\-algos\fR] [\-\-dontrekey] [\-\-aggrmode] [\-\-modecfgpull] [[\-\-dpddelay\ \fIseconds\fR] | [\-\-dpdtimeout\ \fIseconds\fR]] [\-\-dpdaction\ [clear]\ |\ [hold]\ |\ [restart]] [\-\-forceencaps] [\-\-no\-keep\-alive] [[\-\-initiateontraffic]\ |\ [\-\-pass]\ |\ [\-\-drop]\ |\ [\-\-reject]] [[\-\-failnone]\ |\ [\-\-failpass]\ |\ [\-\-faildrop]\ |\ [\-\-failreject]] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
+[\-\-tunnel] [\-\-psk] [\-\-rsasig] [\-\-encrypt] [\-\-authenticate] [\-\-compress] [\-\-pfs] [\-\-pfsgroup\ [modp1024]\ |\ [modp1536]\ |\ [modp2048]\ |\ [modp3072]\ |\ [modp4096]\ |\ [modp6144]\ |\ [modp8192]\ |\ [dh22]\ |\ [dh23]\ |\ [dh24]] [\-\-disablearrivalcheck] [\-\-ikelifetime\ \fIseconds\fR] [\-\-ipseclifetime\ \fIseconds\fR] [\-\-rekeymargin\ \fIseconds\fR] [\-\-rekeyfuzz\ \fIpercentage\fR] [\-\-keyingtries\ \fIcount\fR] [\-\-esp\ \fIesp\-algos\fR] [\-\-dontrekey] [\-\-aggrmode] [\-\-modecfgpull] [[\-\-dpddelay\ \fIseconds\fR] | [\-\-dpdtimeout\ \fIseconds\fR]] [\-\-dpdaction\ [clear]\ |\ [hold]\ |\ [restart]] [\-\-forceencaps] [\-\-no\-keep\-alive] [[\-\-initiateontraffic]\ |\ [\-\-pass]\ |\ [\-\-drop]\ |\ [\-\-reject]] [[\-\-failnone]\ |\ [\-\-failpass]\ |\ [\-\-faildrop]\ |\ [\-\-failreject]] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-keyid\ \fIid\fR [\-\-addkey] [\-\-pubkeyrsa\ \fIkey\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
@@ -414,7 +408,7 @@ All of these routing characteristics are expected change when
 and
 \fBNETKEY\fR
 merge into a single new stack\&.
-.SS "Using Whack"
+.SS "Using whack"
 .PP
 \fBwhack\fR
 is used to command a running
@@ -1892,61 +1886,33 @@ describes the format of the secrets file\&.
 .PP
 For more information on IPsec, the mailing list, and the relevant documents, see:
 .PP
-\fI\m[blue]\fBhttp://www\&.ietf\&.cnri\&.reston\&.va\&.us/html\&.charters/ipsec\-charter\&.html\fR\m[]\fR
+\fI\m[blue]\fBhttps://datatracker\&.ietf\&.org/wg/ipsecme/charter/\fR\m[]\fR
 .PP
 At the time of writing, the most relevant IETF RFCs are:
 .PP
-RFC2409 The Internet Key Exchange (IKE)
-.PP
-RFC2408 Internet Security Association and Key Management Protocol (ISAKMP)
-.PP
-RFC2407 The Internet IP Security Domain of Interpretation for ISAKMP
+RFC5996 Internet Key Exchange Protocol Version 2 (IKEv2)
 .PP
 The Libreswan web site <https://libreswan\&.org> and the mailing lists described there\&.
 .SH "HISTORY"
 .PP
-This code is released under the GPL terms\&. See the accompanying files COPYING and CREDITS for more details\&. The GPL does NOT apply to those pieces of code written by others which are included in this distribution, except as noted by the individual authors\&.
+This code is released under the GPL terms\&. See the accompanying files COPYING and CREDITS\&.* for more details\&.
 .PP
 This software was originally written for the FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]>, founded by John Gilmore and managed by Hugh Daniel\&. It was written by Angelos D\&. Keromytis (angelos@dsl\&.cis\&.upenn\&.edu), in May/June 1997, in Athens, Greece\&. Thanks go to John Ioannidis for his help\&.
 .PP
-It is currently maintained and extended by the Libreswan Team under the Libreswan name\&. See CHANGES for details\&.
-.PP
 FreeS/WAN\*(Aqs Pluto was developed/maintained from 2000\-2004 by D\&. Hugh Redelmeier (hugh@mimosa\&.com), in Canada\&. The regulations of Greece and Canada allow the code to be freely redistributable\&.
 .PP
-Kai Martius (admin@imib\&.med\&.tu\-dresden\&.de) contributed the initial version of the code supporting PFS\&.
+Richard Guy Briggs <rgb@conscoop\&.ottawa\&.on\&.ca> was the main resource on KLIPS development
 .PP
-Richard Guy Briggs <rgb@conscoop\&.ottawa\&.on\&.ca> and Peter Onion <ponion@srd\&.bt\&.co\&.uk> added the PFKEY2 support\&.
+IKE version 2 was initially written by Michael Richardson, Antony Antony and Paul Wouters\&. It has since been extended by Avesh Agarwal, D\&. Hugh Redelmeier, Matt Rogers, Antony Antony and Paul Wouters\&.
 .PP
-We gratefully acknowledge that we use parts of Eric Young\*(Aqs
-\fIlibdes\fR
-package; see
-\fI\&.\&./libdes/COPYRIGHT\fR\&.
+From 2003 onwards, the code was developed and maintained by The Openswan Project by developers worldwide and distributed from The Netherland and Finland\&. Due to a lawsuit by Xelerance over the trademark, the project was forced to rename itself and the code to The Libreswan Project in 2012\&.
+.PP
+See further: the CHANGES/CREDITS files in the main directory and the doc/ directory\&.
 .SH "BUGS"
 .PP
-\fBpluto\fR
-is a work\-in\-progress\&. It currently has many limitations\&. For example, it ignores notification messages that it receives, and it generates only Delete Notifications and those only for IPSEC SAs\&.
+Please see <\m[blue]\fBhttps://bugs\&.libreswan\&.org\fR\m[]> for a list of currently known bugs and missing features\&.
 .PP
-\fBpluto\fR
-does not support the Commit Flag\&. The Commit Flag is a bad feature of the IKE protocol\&. It isn\*(Aqt protected \-\- neither encrypted nor authenticated\&. A man in the middle could turn it on, leading to DoS\&. We just ignore it, with a warning\&. This should let us interoperate with implementations that insist on it, with minor damage\&.
-.PP
-\fBpluto\fR
-does not check that the SA returned by the Responder is actually one that was proposed\&. It only checks that the SA is acceptable\&. The difference is not large, but can show up in attributes such as SA lifetime\&.
-.PP
-There is no good way for a connection to be automatically terminated\&. This is a problem for Road Warrior and Opportunistic connections\&. The
-\fB\-\-dontrekey\fR
-option does prevent the SAs from being rekeyed on expiry\&. Additionally, if a Road Warrior connection has a client subnet with a fixed IP address, a negotiation with that subnet will cause any other connection instantiations with that same subnet to be unoriented (deleted, in effect)\&. See also the \-\-uniqueids option for an extension of this\&.
-.PP
-When
-\fBpluto\fR
-sends a message to a peer that has disappeared,
-\fBpluto\fR
-receives incomplete information from the kernel, so it logs the unsatisfactory message \(lqsome IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)\(rq\&. John Denker suggests that this command is useful for tracking down the source of these problems:
-tcpdump \-i eth0 icmp[0] != 8 and icmp[0] != 0
-Substitute your public interface for eth0 if it is different\&.
-.PP
-The word \(lqauthenticate\(rq is used for two different features\&. We must authenticate each IKE peer to the other\&. This is an important task of Phase 1\&. Each packet must be authenticated, both in IKE and in IPsec, and the method for IPsec is negotiated as an AH SA or part of an ESP SA\&. Unfortunately, the protocol has no mechanism for authenticating the Phase 2 identities\&.
-.PP
-Bugs should be reported to the <users@lists\&.libreswan\&.org> mailing list\&.
+Bugs should be reported to the <swan\-dev@lists\&.libreswan\&.org> mailing list\&.
 .SH "AUTHOR"
 .PP
 \fBPaul Wouters\fR

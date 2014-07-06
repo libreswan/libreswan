@@ -316,7 +316,7 @@ for details of the configuration file.
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_whack</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_manual</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_whack</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>

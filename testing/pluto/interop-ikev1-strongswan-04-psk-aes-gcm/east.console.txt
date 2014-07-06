@@ -43,7 +43,7 @@ westnet-eastnet-ikev1{1}:  AES_GCM_16_256, XXX bytes_i (4 pkts, XXs ago), XXX by
 westnet-eastnet-ikev1{1}:   192.0.2.0/24 === 192.0.1.0/24 
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -20,6 +20,8 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 srcdir?=./
 
+INSTMANFLAGS?=--mode=0644
+
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${srcdir}Makefile.options
 -include ${srcdir}Makefile.extra
@@ -105,7 +107,7 @@ RMFLAGS = -f
 # files for a (source) distribution
 
 DISTMISC = CHANGES PLUTO-CONVENTIONS TODO ipsec.secrets Makefile routing.txt \
-	 pluto.8 ipsec.secrets.5 .cvsignore
+	 pluto.8 ipsec_whack.8 ipsec.secrets.5 .cvsignore
 
 DISTSRC = \
         connections.c initiate.c terminate.c connections.h \
@@ -218,6 +220,7 @@ doinstall: all
 	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
 	g=`if [ -r pluto.8 ]; then echo pluto.8; else echo ${srcdir}/pluto.8; fi`; \
 	$(INSTALL) $(INSTMANFLAGS) $$g $(PMANDIR)/ipsec_pluto.8 || exit 1; \
+	echo '.so man8/ipsec_pluto.8' > $(PMANDIR)/ipsec_whack.8 || exit 1; \
 	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \
 		while read from to ; \
 		do \
@@ -248,9 +251,6 @@ install_file_list:
 			echo $(FMANDIR)/$$to; \
 		done
 
-alg_info_test: alg_info_test.o ike_alg.o constants.o defs.o log.o db_ops.o crypto.o $(LIBRESWANLIB)
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBSPLUTO)
-
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
 	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
 
@@ -262,9 +262,6 @@ $(BINNAMEWHACK): $(OBJSWHACK)
 
 $(BINNAMEWHACKINIT): $(OBJSWHACKINIT)
 	$(CC) -o $(BINNAMEWHACKINIT) $(LDFLAGS) $(OBJSWHACKINIT) $(USERLINK) $(LIBSWHACK)
-
-distlist:
-	@echo $(DIST)
 
 cleanall:
 	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \
