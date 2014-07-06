@@ -318,10 +318,10 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
  * The first parameter uses 0 for ESP, and anything above that for
  * IKE major version
  */
-int crypto_req_keysize(int ksproto, int algo)
+int crypto_req_keysize(enum crk_proto ksproto, int algo)
 {
 	switch(ksproto) {
-	case 2: /* IKEv2 */
+	case CRK_IKEv2:
 		switch(algo) {
 		case IKEv2_ENCR_CAST:
 			return CAST_KEY_DEF_LEN;
@@ -349,7 +349,8 @@ int crypto_req_keysize(int ksproto, int algo)
 		default:
 			return 0;
 		}
-	case 1: /* IKEv1 */
+
+	case CRK_IKEv1:
 		switch(algo) {
 		case OAKLEY_CAST_CBC:
 			return CAST_KEY_DEF_LEN;
@@ -366,7 +367,8 @@ int crypto_req_keysize(int ksproto, int algo)
 		default:
 			return 0;
 		}
-	case 0: /* ESP */
+
+	case CRK_ESPorAH:
 		switch(algo) {
 		case ESP_CAST:
 			return CAST_KEY_DEF_LEN;
@@ -394,7 +396,5 @@ int crypto_req_keysize(int ksproto, int algo)
 		default:
 			return 0;
 		}
-	default:
-		bad_case(ksproto);
 	}
 }

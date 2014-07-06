@@ -308,7 +308,6 @@ bool ikev1_out_sa(pb_stream *outs,
 			/* ... use our new one instead */
 			revised_sadb->prop_conjs->props = ipcomp_prop;
 			revised_sadb->prop_conjs->prop_cnt += 1;
-
 		}
 	}
 
@@ -342,18 +341,16 @@ bool ikev1_out_sa(pb_stream *outs,
 	 */
 
 	for (pcn = 0; pcn < sadb->prop_conj_cnt; pcn++) {
-		struct db_prop_conj *pc;
+		struct db_prop_conj *const pc = &sadb->prop_conjs[pcn];
+		int valid_prop_cnt = pc->prop_cnt;
 		unsigned int pn;
-		int valid_prop_cnt;
 
-		pc = &sadb->prop_conjs[pcn];
-		valid_prop_cnt = pc->prop_cnt;
 		DBG(DBG_EMITTING,
 		    DBG_log("ikev1_out_sa pcn: %d has %d valid proposals",
 			    pcn, valid_prop_cnt));
 
 		for (pn = 0; pn < pc->prop_cnt; pn++) {
-			struct db_prop *p;
+			struct db_prop *const p = &pc->props[pn];
 			pb_stream proposal_pbs;
 			struct isakmp_proposal proposal;
 			struct_desc *trans_desc;
@@ -373,7 +370,6 @@ bool ikev1_out_sa(pb_stream *outs,
 			/*
 			 * pick the part of the proposal we are trying to work on
 			 */
-			p = &pc->props[pn];
 
 			proposal.isap_proposal = pcn;
 			proposal.isap_protoid = p->protoid;
@@ -419,9 +415,7 @@ bool ikev1_out_sa(pb_stream *outs,
 			{
 				ipsec_spi_t *spi_ptr = NULL;
 				int proto = 0;
-				bool *spi_generated;
-
-				spi_generated = NULL;
+				bool *spi_generated = NULL;
 
 				switch (p->protoid) {
 				case PROTO_ISAKMP:
@@ -495,15 +489,11 @@ bool ikev1_out_sa(pb_stream *outs,
 				}
 
 				if (spi_ptr != NULL) {
-					if (spi_generated != NULL &&
-					    !*spi_generated) {
+					if (!*spi_generated) {
 						*spi_ptr = get_ipsec_spi(0,
 									 proto,
 									 &st->st_connection->spd,
 									 tunnel_mode);
-						if (*spi_ptr == 0)
-							return FALSE;
-
 						*spi_generated = TRUE;
 					}
 					if (!out_raw((u_char *)spi_ptr,
@@ -515,7 +505,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 			/* within proposal: Transform Payloads */
 			for (tn = 0; tn != p->trans_cnt; tn++) {
-				struct db_trans *t = &p->trans[tn];
+				struct db_trans *const t = &p->trans[tn];
 				pb_stream trans_pbs;
 				struct isakmp_transform trans;
 				unsigned int an;
@@ -534,7 +524,6 @@ bool ikev1_out_sa(pb_stream *outs,
 				if (!out_struct(&trans, trans_desc,
 						&proposal_pbs, &trans_pbs))
 					return_on(ret, FALSE);
-
 
 				/* Within tranform: Attributes. */
 
@@ -684,6 +673,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					ipsec_keysize = FALSE;
 					for (an = 0; an != t->attr_cnt; an++) {
 						struct db_attr *a = &t->attrs[an];
+
 						if (a->type.ipsec == KEY_LENGTH) {
 							ipsec_keysize = TRUE;
 						}
@@ -703,8 +693,9 @@ bool ikev1_out_sa(pb_stream *outs,
 
 					if (oakley_mode) {
 						if (!oakley_keysize && a->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM) {
-							int defkeysize = crypto_req_keysize(1 /* ikev1 */, a->val);
-							if (defkeysize) {
+							int defkeysize = crypto_req_keysize(CRK_IKEv1, a->val);
+
+							if (defkeysize != 0) {
 								DBG(DBG_CONTROLMORE, DBG_log("inserting default oakley key length attribute payload of %d bits",
 									defkeysize));
 								if (!out_attr(OAKLEY_KEY_LENGTH,
@@ -715,10 +706,12 @@ bool ikev1_out_sa(pb_stream *outs,
 									return_on(ret, FALSE);
 							}
 						}
-					} else { /* ipsec_mode */
+					} else {
+						/* ipsec_mode */
 						if (!ipsec_keysize) {
-							int defkeysize = crypto_req_keysize(0 /* ESP */, t->transid);
-							if (defkeysize) {
+							int defkeysize = crypto_req_keysize(CRK_ESPorAH, t->transid);
+
+							if (defkeysize != 0) {
 								DBG(DBG_CONTROLMORE, DBG_log("inserting default ipsec key length attribute payload of %d bits",
 									defkeysize));
 								if (!out_attr(KEY_LENGTH,
@@ -730,7 +723,6 @@ bool ikev1_out_sa(pb_stream *outs,
 							}
 						}
 					}
-
 				}
 				close_output_pbs(&trans_pbs);
 			}
@@ -1313,7 +1305,7 @@ rsasig_common:
 
 			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
 				val = decode_long_duration(&attr_pbs);
-			/* fall through */
+				/* fall through */
 			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 				if (!LHAS(seen_attrs, OAKLEY_LIFE_TYPE)) {
 					ugh = "OAKLEY_LIFE_DURATION attribute not preceded by OAKLEY_LIFE_TYPE attribute";
@@ -1646,12 +1638,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				  bool is_ipcomp,
 				  struct state *st) /* current state object */
 {
-	lset_t seen_attrs = 0,
-	       seen_durations = 0;
-	u_int16_t life_type;
+	lset_t seen_attrs = LEMPTY,
+	       seen_durations = LEMPTY;
+	u_int16_t life_type = 0;
 	const struct oakley_group_desc *pfs_group = NULL;
-
-	life_type = 0;
 
 	if (!in_struct(trans, trans_desc, prop_pbs, trans_pbs))
 		return FALSE;
@@ -1766,9 +1756,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			seen_durations |= LELEM(val);
 			life_type = val;
 			break;
+
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
 			val = decode_long_duration(&attr_pbs);
-		/* fall through */
+			/* fall through */
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
 			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
@@ -1971,7 +1962,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			/* draft-shacham-ippcp-rfc2393bis-05.txt 4.1:
 			 * "If the Encapsulation Mode is unspecified,
 			 * the default value of Transport Mode is assumed."
-			 * This contradicts/overrides the DOI (quuoted below).
+			 * This contradicts/overrides the DOI (quoted below).
 			 */
 			attrs->encapsulation = ENCAPSULATION_MODE_TRANSPORT;
 		} else {
@@ -1987,7 +1978,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 	/* Check ealg and key length validity */
 	if (!is_ipcomp) {
-		int ipsec_keysize = crypto_req_keysize(0 /* ESP */, attrs->transattrs.encrypt);
+		int ipsec_keysize = crypto_req_keysize(CRK_ESPorAH, attrs->transattrs.encrypt);
+
 		if (!LHAS(seen_attrs, KEY_LENGTH)) {
 			if (ipsec_keysize != 0) { /* ealg requires a key length attr */
 				loglog(RC_LOG_SERIOUS,
@@ -2005,7 +1997,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				ugh);
 			return FALSE;
 		}
-
 	}
 
 	return TRUE;

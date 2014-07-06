@@ -522,7 +522,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 				/* Ensure KEY_LENGTH or OAKLEY_KEY_LENGTH if encr algo requires one */
 				if (dtfone->encr_keylen == 0)
 					dtfone->encr_keylen = crypto_req_keysize(
-						f->parentSA ? 2 /* IKev2 */ : 0 /* ESP */,
+						f->parentSA ? CRK_IKEv2 : CRK_ESPorAH,
 						dtfone->encr_transid);
 
 				tot_trans++;
@@ -1172,7 +1172,7 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 			impossible();
 
 		if (ta.encrypter != NULL) {
-			int defkeysize = crypto_req_keysize( parentSA ? 2 /* IKEv2 */ : 0 /* IPsec */ ,
+			int defkeysize = crypto_req_keysize(parentSA ? CRK_IKEv2 : CRK_ESPorAH,
 				ta.encrypt);
 
 			if (ta.enckeylen != 0){

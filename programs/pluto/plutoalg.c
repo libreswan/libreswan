@@ -488,7 +488,6 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	}
 
 	if (policy & POLICY_ENCRYPT) {
-
 		/*	open new transformation */
 		db_trans_add(db_ctx, ealg_i);
 
@@ -506,7 +505,8 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 						   esp_info->esp_ealg_keylen);
 		} else {
 			/* no key length - if required add default here and add another max entry */
-			int def_ks = crypto_req_keysize(0 /*ESP*/, ealg_i);
+			int def_ks = crypto_req_keysize(CRK_ESPorAH, ealg_i);
+
 			if (def_ks) {
 				int max_ks = BITS_PER_BYTE * 
 					kernel_alg_esp_enc_max_keylen(ealg_i);
@@ -527,17 +527,14 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 						max_ks);
 				}
 			}
-
 		}
-
 	} else if (policy & POLICY_AUTHENTICATE) {
-		/*	open new transformation */
+		/* open new transformation */
 		db_trans_add(db_ctx, aalg_i);
 
 		/* add ESP auth attr */
 		db_attr_add_values(db_ctx,
 				   AUTH_ALGORITHM, esp_info->esp_aalg_id);
-
 	}
 
 	return TRUE;
