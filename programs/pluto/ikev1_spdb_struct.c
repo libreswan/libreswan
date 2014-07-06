@@ -1986,7 +1986,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	/* Check ealg and key length validity */
-	{
+	if (!is_ipcomp) {
 		int ipsec_keysize = crypto_req_keysize(0 /* ESP */, attrs->transattrs.encrypt);
 		if (!LHAS(seen_attrs, KEY_LENGTH)) {
 			if (ipsec_keysize != 0) { /* ealg requires a key length attr */
