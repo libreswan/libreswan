@@ -1771,7 +1771,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		/* fall through */
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
-			if (!LHAS(seen_attrs, SA_LIFE_DURATION)) {
+			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
 				loglog(RC_LOG_SERIOUS,
 				       "SA_LIFE_DURATION IPsec attribute not preceded by SA_LIFE_TYPE attribute");
 				return FALSE;
