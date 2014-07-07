@@ -13,6 +13,8 @@ Loading conn 'westnet-eastnet-ikev2'
   authby=secret
   keyexchange=ikev2
   auto=add
+  esp=aes128-sha2_512
+  ike=3des-md5-modp2048
 found netkey IPsec stack
 west #
  echo "initdone"

@@ -46,6 +46,8 @@ packet from 192.1.2.45:500: sending notification INVALID_MAJOR_VERSION to 192.1.
 |    Notify Message Type: INVALID_MAJOR_VERSION
 packet from 192.1.2.45:500: sending notification INVALID_MAJOR_VERSION to 192.1.2.45:500
 |    Notify Message Type: INVALID_MAJOR_VERSION
+packet from 192.1.2.45:500: sending notification INVALID_MAJOR_VERSION to 192.1.2.45:500
+|    Notify Message Type: INVALID_MAJOR_VERSION
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

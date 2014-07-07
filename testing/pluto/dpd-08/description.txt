@@ -8,3 +8,5 @@ breaking phase2, and DPD should declare the peer dead.
 
 dpd should hit, and we should see an infinite amount of keying
 attempts - confirming rhbz#848132 is fixed.
+
+(note: the eroute --clear cannot work because west cannot reach east)

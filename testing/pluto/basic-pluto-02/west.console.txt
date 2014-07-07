@@ -86,7 +86,7 @@ west #
 002 added connection description "orient11"
 002 added connection description "orient12"
 west #
- ipsec status |grep orient |grep "eroute owner"
+ ipsec auto --status |grep orient |grep "eroute owner"
 000 "orient1": 192.1.2.45---192.1.2.254...%any; unrouted; eroute owner: #0
 000 "orient10": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
 000 "orient11": 192.1.2.45---192.1.2.254...8.8.8.8<8.8.8.8>; unrouted; eroute owner: #0
@@ -156,7 +156,7 @@ west #
 002 "westnet-all" #1: deleting state (STATE_MAIN_I4)
 002 added connection description "westnet-all"
 west #
- ipsec status |grep westnet
+ ipsec auto --status |grep westnet
 000 "westnet-all": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===0.0.0.0/0; unrouted; eroute owner: #0
 000 "westnet-all":     oriented; my_ip=unset; their_ip=unset;
 000 "westnet-all":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
