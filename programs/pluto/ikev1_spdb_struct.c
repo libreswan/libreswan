@@ -1635,7 +1635,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				  int previous_transnum, /* or -1 if none */
 				  bool selection,
 				  bool is_last,
-				  bool is_ipcomp,
+				  u_int8_t proto,
 				  struct state *st) /* current state object */
 {
 	lset_t seen_attrs = LEMPTY,
@@ -1682,7 +1682,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		pb_stream attr_pbs;
 		enum_names *vdesc;
 		u_int32_t val;                          /* room for larger value */
-		bool ipcomp_inappropriate = is_ipcomp;  /* will get reset if OK */
+		bool ipcomp_inappropriate = (proto == PROTO_IPCOMP);  /* will get reset if OK */
 
 		if (!in_struct(&a, &isakmp_ipsec_attribute_desc, trans_pbs,
 			       &attr_pbs))
@@ -1789,7 +1789,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 			break;
 		case GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
-			if (is_ipcomp) {
+			if (proto == PROTO_IPCOMP) {
 				/* Accept reluctantly.  Should not happen, according to
 				 * draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
 				 */
@@ -1939,7 +1939,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	 * if it does, demand that it be consistent.
 	 * See draft-shacham-ippcp-rfc2393bis-05.txt 4.1.
 	 */
-	if (!is_ipcomp || pfs_group != NULL) {
+	if (proto != PROTO_IPCOMP || pfs_group != NULL) {
 		if (st->st_pfs_group == &unset_group)
 			st->st_pfs_group = pfs_group;
 
@@ -1958,7 +1958,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	if (!LHAS(seen_attrs, ENCAPSULATION_MODE)) {
-		if (is_ipcomp) {
+		if (proto == PROTO_IPCOMP) {
 			/* draft-shacham-ippcp-rfc2393bis-05.txt 4.1:
 			 * "If the Encapsulation Mode is unspecified,
 			 * the default value of Transport Mode is assumed."
@@ -1977,7 +1977,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	/* Check ealg and key length validity */
-	if (!is_ipcomp) {
+	if (proto == PROTO_IPSEC_ESP) {
 		int ipsec_keysize = crypto_req_keysize(CRK_ESPorAH, attrs->transattrs.encrypt);
 
 		if (!LHAS(seen_attrs, KEY_LENGTH)) {
@@ -2139,7 +2139,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 		/* for each proposal in the conjunction */
 		do {
-
 			if (next_proposal.isap_protoid == PROTO_IPCOMP) {
 				/* IPCOMP CPI */
 				if (next_proposal.isap_spisize ==
@@ -2328,7 +2327,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							   previous_transnum,
 							   selection,
 							   tn == ah_proposal.isap_notrans - 1,
-							   FALSE,
+							   PROTO_IPSEC_AH,
 							   st))
 					return BAD_PROPOSAL_SYNTAX;
 
@@ -2429,7 +2428,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				      previous_transnum,
 				      selection,
 				      tn == esp_proposal.isap_notrans - 1,
-				      FALSE,
+				      PROTO_IPSEC_ESP,
 				      st))
 					return BAD_PROPOSAL_SYNTAX;
 
@@ -2607,7 +2606,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				       previous_transnum,
 				       selection,
 				       tn == ipcomp_proposal.isap_notrans - 1,
-				       TRUE,
+				       PROTO_IPCOMP,
 				       st))
 					return BAD_PROPOSAL_SYNTAX;
 

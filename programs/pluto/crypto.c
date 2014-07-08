@@ -396,5 +396,8 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 		default:
 			return 0;
 		}
+
+	default:
+		bad_case(ksproto);
 	}
 }
