@@ -28,6 +28,9 @@
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
 
+#include <signal.h>
+typedef void (*sighandler_t)(int);
+
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -122,6 +125,7 @@ bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
 	});
 #	undef CHUNK_WIDTH
 
+
 	{
 		/* invoke the script, catching stderr and stdout
 		 * It may be of concern that some file descriptors will
@@ -130,11 +134,8 @@ bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
 		 * Any used by library routines (perhaps the resolver or syslog)
 		 * will remain.
 		 */
-		__sighandler_t savesig;
-		FILE *f;
-
-		savesig = signal(SIGCHLD, SIG_DFL);
-		f = popen(cmd, "r");
+		sighandler_t savesig = signal(SIGCHLD, SIG_DFL);
+		FILE *f = popen(cmd, "r");
 
 		if (f == NULL) {
 #ifdef HAVE_BROKEN_POPEN
