@@ -1,5 +1,5 @@
 ipsec look
-# stop on east causes crash on west
+# stop on east caused crash on west
 hostname |grep west > /dev/null || ipsec stop
 : ==== cut ====
 ipsec auto --status

@@ -1,4 +1,4 @@
-Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+Basic pluto with IKEv2 using RSA on the initiator (west), and on the responder.
 
 This test adds a bogus ISAKMP RESERVED flag to the payload on the responder
 

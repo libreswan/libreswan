@@ -13,3 +13,5 @@ s/([0-9]* bytes)/(XXX bytes)/g
 s/\(INSTALLED, TUNNEL, .* in UDP SPIs: \)[a-z0-9]*_i [a-z0-9]*_o/\1SPISPI_i SPISPI_o/g
 /^  worker threads: .*$/d
 /^  loaded plugins: .*$/d
+s/QUICK_MODE request [0-9]* /QUICK_MODE request 0123456789/g
+s/QUICK_MODE response [0-9]* /QUICK_MODE response 0123456789/g

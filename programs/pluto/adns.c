@@ -169,6 +169,10 @@ static enum helper_exit_status write_pipe(int fd, const unsigned char *stuff)
 #define OLD_RESOLVER 1
 #endif
 
+#ifndef __GLIBC__
+#define OLD_RESOLVER 1
+#endif
+
 #ifdef OLD_RESOLVER
 
 # define res_ninit(statp) res_init()

@@ -366,7 +366,7 @@ static void confwrite_side(FILE *out,
 			snprintf(protostr, sizeof(protostr), "%u", end->protocol);
 
 		fprintf(out, "\t%sprotoport=%s/%s\n", side,
-			portstr, protostr);
+			protostr, portstr);
 	}
 
 	if (end->cert)

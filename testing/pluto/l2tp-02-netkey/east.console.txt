@@ -5,13 +5,14 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- # pass non-l2tp plaintext, this also tests passthrough has higher priority
+ # pass non-l2tp plaintext, netkey needs no passthrough conns
 east #
  ipsec auto --add any-east-l2tp
+002 added connection description "any-east-l2tp"
 east #
- ipsec auto --add north-east-pass
+ #ipsec auto --add north-east-pass
 east #
- ipsec auto --route north-east-pass
+ #ipsec auto --route north-east-pass
 east #
  # make sure that clear text does not get through
 east #

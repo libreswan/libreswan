@@ -108,8 +108,10 @@ east #
 000 "westnet-eastnet-ipv4-psk-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-ipv4-psk-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES(12)_000-SHA2_256(5)_000
-000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES(12)_256-SHA2_256(5)_256
+000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms wanted: AES_CBC(7)_256-SHA2_512(6)_000-MODP1536(5)
+000 "westnet-eastnet-ipv4-psk-ikev2":   IKE algorithms found:  AES_CBC(7)_256-SHA2_512(6)_512-MODP1536(5)
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms wanted: AES(12)_256-SHA2_512(7)_000
+000 "westnet-eastnet-ipv4-psk-ikev2":   ESP algorithms loaded: AES(12)_256-SHA2_512(7)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -124,7 +126,29 @@ east #
  ipsec look
 east NOW
 XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha512) 0xHASHKEY 256
+	enc cbc(aes) 0xENCKEY
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha512) 0xHASHKEY 256
+	enc cbc(aes) 0xENCKEY
 XFRM policy:
+src 192.0.2.0/24 dst 192.0.1.0/24 
+	dir out priority 2344 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir fwd priority 2344 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.1.0/24 dst 192.0.2.0/24 
+	dir in priority 2344 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -172,6 +196,11 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+east #
+ # stop on east caused crash on west
+east #
+ hostname |grep west > /dev/null || ipsec stop
+Redirecting to: systemctl stop ipsec.service
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

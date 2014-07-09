@@ -1,5 +1,5 @@
 #ifndef _IKEV1_H
-#define _IKEv1_H
+#define _IKEV1_H
 
 #include "pluto_crypt.h"
 #include "ikev1_continuations.h"
