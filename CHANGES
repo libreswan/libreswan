@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.9 (July 8, 2014)
+v3.9 (July 9, 2014)
 * Documentation: cleanup of README.* and docs/* [Paul]
 * libswan: Cleanup allocation and  certificate handling functions [Hugh]
 * libswan: Introduce add_str() to replace abused strncat() [Hugh]
