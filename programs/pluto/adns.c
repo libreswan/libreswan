@@ -180,7 +180,7 @@ static enum helper_exit_status write_pipe(int fd, const unsigned char *stuff)
 	res_query(dname, class, type, answer, anslen)
 # define res_nclose(statp) res_close()
 
-#define statp  ((struct __res_state *)(&_res))
+# define statp  ((struct __res_state *)(&_res))
 
 #else /* !OLD_RESOLVER */
 
@@ -188,6 +188,7 @@ static struct __res_state my_res_state /* = { 0 } */;
 static res_state statp = &my_res_state;
 
 #endif /* !OLD_RESOLVER */
+
 
 static int worker(int qfd, int afd)
 {
