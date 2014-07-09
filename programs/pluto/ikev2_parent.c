@@ -1517,7 +1517,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
 		ikev2_log_parentSA(st);
 
-	pst = st;
 	st = duplicate_state(pst);
 	st->st_msgid = htonl(pst->st_msgid_nextuse); /* PAUL: note ordering */
 	insert_state(st);

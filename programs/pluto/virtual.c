@@ -76,7 +76,7 @@ static bool read_subnet(const char *src, size_t len,
 {
 	bool incl = TRUE;
 	int af = AF_UNSPEC;	/* AF_UNSPEC means "guess from form" */
-	int pl;
+	int pl = 0;
 	err_t ugh;
 
 	/*

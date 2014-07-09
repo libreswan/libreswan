@@ -486,13 +486,11 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 	return match;
 }
 
-/* count the numer of wildcards in an id */
+/* count the number of wildcards in an id */
 int id_count_wildcards(const struct id *id)
 {
-	int count;
+	int count = 0;
 	char idbuf[IDTOA_BUF];
-
-	count = 0;
 
 	switch (id->kind) {
 	case ID_NONE:
@@ -502,7 +500,6 @@ int id_count_wildcards(const struct id *id)
 		count = dn_count_wildcards(id->name);
 		break;
 	default:
-		count = 0;
 		break;
 	}
 

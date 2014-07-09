@@ -2443,11 +2443,11 @@ static stf_status xauth_client_resp(struct state *st,
 
 						/* replace the first newline character with a string-terminating \0. */
 						{
-							char* cptr = memchr(xauth_password,
+							char *cptr = memchr(xauth_password,
 								'\n',
 								sizeof(xauth_password));
-							if (cptr)
-								cptr = '\0';
+							if (cptr != NULL)
+								*cptr = '\0';
 						}
 						clonereplacechunk(
 							st->st_xauth_password,

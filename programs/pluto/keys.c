@@ -119,12 +119,13 @@ static int print_secrets(struct secret *secret,
 	strcpy(idb1, "%any");
 	strcpy(idb2, "");
 
-	if (ids != NULL)
+	if (ids != NULL) {
 		idtoa(&ids->id, idb1, sizeof(idb1));
-	if (ids->next != NULL) {
-		idtoa(&ids->next->id, idb2, sizeof(idb2));
-		if (ids->next->next)
-			more = "more";
+		if (ids->next != NULL) {
+			idtoa(&ids->next->id, idb2, sizeof(idb2));
+			if (ids->next->next)
+				more = "more";
+		}
 	}
 
 	whack_log(RC_COMMENT, "    %d: %s %s %s%s", lsw_get_secretlineno(

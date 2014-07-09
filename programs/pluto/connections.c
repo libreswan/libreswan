@@ -1714,7 +1714,7 @@ struct connection *rw_instantiate(struct connection *c,
 {
 	struct connection *d = instantiate(c, him, his_id);
 
-	if (d && his_net && is_virtual_connection(c)) {
+	if (his_net != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *his_net;
 		if (subnetishost(his_net) && addrinsubnet(him, his_net))
 			d->spd.that.has_client = FALSE;
@@ -1995,7 +1995,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					const ip_address *peer_client,
 					int transport_proto)
 {
-	struct connection *c = connections, *best = NULL;
+	struct connection *c, *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
 	struct spd_route *sr;
 	struct spd_route *best_sr;
@@ -3257,7 +3257,7 @@ struct connection *find_client_connection(struct connection *c,
 		subnettot(peer_net, 0, d1, sizeof(d1));
 
 		DBG_log("find_client_connection starting with %s",
-			(c ? c->name : "(none)"));
+			(c != NULL ? c->name : "(none)"));
 		DBG_log("  looking for %s:%d/%d -> %s:%d/%d",
 			s1, our_protocol, our_port,
 			d1, peer_protocol, peer_port);

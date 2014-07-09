@@ -116,7 +116,7 @@ static void RSA_show_public_key(struct RSA_public_key *k)
 	RSA_show_key_fields((struct RSA_private_key *)k, 2);
 }
 
-static const char *RSA_public_key_sanity(struct RSA_private_key *k)
+static err_t RSA_public_key_sanity(struct RSA_private_key *k)
 {
 	/* note that the *last* error found is reported */
 	err_t ugh = NULL;
@@ -712,11 +712,11 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 
 	if (shift()) {
 		ugh = "RSA private key file -- unexpected token after friendly_name";
+	} else {
+		ugh = extract_and_add_secret_from_nss_cert_file(rsak, friendly_name);
+		if (ugh == NULL)
+			ugh = RSA_public_key_sanity(rsak);
 	}
-
-	ugh = extract_and_add_secret_from_nss_cert_file(rsak, friendly_name);
-	if (ugh == NULL)
-		return RSA_public_key_sanity(rsak);
 
 	return ugh;
 }
