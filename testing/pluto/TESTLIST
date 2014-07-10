@@ -45,7 +45,7 @@ kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey				good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
-#kvmplutotest	ikev2-17-rekey-parent			good
+kvmplutotest	ikev2-17-rekey				good
 kvmplutotest	ikev2-16-rekey-child			good
 
 kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
@@ -473,7 +473,8 @@ umlplutotest	transport-02		good
 umlplutotest	transport-03		bad
 kvmplutotest	nat-transport-02	wip
 
-#
+kvmplutotest	ah-pluto-01		good
+
 umlplutotest	protoport-01		good
 umlplutotest	protoport-02		good
 
