@@ -629,13 +629,13 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 				if (d->policy & POLICY_IKEV1_DISABLE) {
 					DBG(DBG_CONTROL,DBG_log(
 						"discard matching conn %s for "
-						"I1 from %s:%u. %s %s %s has "
+						"I1 from %s:%u. %s%s %s has "
 						"ikev2=insist ", d->name,
 						ip_str(&md->iface->ip_addr),
 						ntohs(portof(&md->iface->ip_addr)),
 						d->name,
 						(policy != LEMPTY) ?
-						"with policy=" : "",
+						" with policy=" : "",
 						(policy != LEMPTY) ?
 						bitnamesof(sa_policy_bit_names,
 							policy) : ""));
