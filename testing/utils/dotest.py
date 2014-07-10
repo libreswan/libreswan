@@ -8,6 +8,7 @@ import re
 import ujson
 import os,sys,socket,shutil
 import logging
+import platform
 
 try:
 	import argparse
@@ -21,6 +22,7 @@ except ImportError as e:
 r_init = threading.Event()
 i_ran = threading.Event()
 n_init = threading.Event()
+result_file_lock = threading.Lock()
 
 
 class guest (threading.Thread):
@@ -31,6 +33,7 @@ class guest (threading.Thread):
 		self.testname = testname 
 		self.status = "NEW"
 		self.bootwait = args.bootwait
+		self.stoponerror = args.stoponerror
 
 		self.reboot = True
 		if args.noreboot:
@@ -143,16 +146,20 @@ class guest (threading.Thread):
 
 		logline = dict ()
 		#output_file = "./OUTPUT/RESULT"
-		f = open(filename, 'a')
 		logline ["epoch"] = time.time()
 		logline ["hostname"]  =  self.hostname 
 		logline ["testname"]  =  self.testname 
 		logline ["msg"] = msg 
 		logline ["runtime"] = time.time() - self.start
 		logline ["time"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+
+		result_file_lock.acquire()
+		f = open(filename, 'a')
 		f.write(ujson.dumps(logline, ensure_ascii=True,  double_precision=2))
 		f.write("\n")
 		f.close
+		result_file_lock.release()
+
 
 	def connect_to_kvm(self):
 
@@ -179,11 +186,15 @@ class guest (threading.Thread):
 		if not running:
 				print("Booting %s - pausing %s seconds"%(self.hostname,pause))
 				v_start = commands.getoutput("sudo virsh start %s"%self.hostname)
-				re_e = re.search(r'error:', line, re.I )
+				logging.debug(v_start)
+				re_e = re.search(r'error:', v_start, re.I )
 				if re_e:
+					# just abort this test
+					logging.error(v_start)
 					self.log_line('./OUTPUT/stop-tests-now', v_start)
-					self.log_line('../stop-tests-now', v_start)
-					# show ends here
+					if self.stoponerror:
+						# the whole show ends here
+						self.log_line('../stop-tests-now', v_start)
 					
 
 				time.sleep(pause)
@@ -232,9 +243,13 @@ class guest (threading.Thread):
 					time.sleep(1)
 
 		if not done:
-			err = '%s abort console is not answering'%self.hostname
+			err = '%s console is not answering abort %s'%(self.hostname,self.testname)
 			logging.error(err)
-			self.log_line('../stop-tests-now', err)
+			self.log_line('./OUTPUT/stop-tests-now', err)
+
+			if self.stoponerror:
+				logging.error("stop")
+				self.log_line('../stop-tests-now', err)
 			return err
 
 		child.sendline ('TERM=dumb; export TERM; unset LS_COLORS')
@@ -419,6 +434,7 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None):
 	logline ["result"] = result 
 	logline ["time"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
 	logline ["runtime"] = time.time() - start
+	logline ["node"] = platform.node()
 	if e:
 		logline ["error"] = e 
 	f.write(ujson.dumps(logline, ensure_ascii=True, double_precision=2))
@@ -431,15 +447,23 @@ DEFAULTCONFIG =  {
 	'bootwait' : 60, 
 	'swanhosts' : ['east', 'west', 'rooad', 'north'],
 	'regualrhosts' : ['nic'],
-	'shutdownwait': 21
+	'shutdownwait': 21,
+	'newrun' : None,
+	'stoponerror' : None
+
 }
 
 def cmdline():
 	parser = argparse.ArgumentParser(description='dotest arguments.')
 
+	parser.add_argument("--stoponerror",
+						default=DEFAULTCONFIG['stoponerror'], action="store_true",
+						help="Stop on kvm errors. Default coninues")
+
 	parser.add_argument("--newrun",
-						default=None, action="store_true",
-						help="overwrite the results in %s. Default None"%DEFAULTCONFIG['resultsdir'])
+						default=DEFAULTCONFIG['newrun'], action="store_true",
+						help="overwrite the results in %s. Default %s" % (DEFAULTCONFIG['resultsdir'], DEFAULTCONFIG['newrun']))
+
 	parser.add_argument("--resultdir",
 						default=DEFAULTCONFIG['resultsdir'],
 						help="test results directory %s"%DEFAULTCONFIG['resultsdir'])
@@ -599,6 +623,8 @@ def do_test_list(args, start):
 		if (not args.newrun) and os.path.exists(r_dir):
 			logging.info("result [%s] exist and not newrun. skip this test", r_dir)
 			continue 
+		elif (os.path.exists(r_dir)):
+			logging.info("result [%s] exist and newrun run this test", r_dir)
 		else:
 			logging.debug("%s is not there run this test", r_dir)
 
