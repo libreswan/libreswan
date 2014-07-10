@@ -473,7 +473,8 @@ umlplutotest	transport-02		good
 umlplutotest	transport-03		bad
 kvmplutotest	nat-transport-02	wip
 
-#
+kvmplutotest	ah-pluto-01		good
+
 umlplutotest	protoport-01		good
 umlplutotest	protoport-02		good
 
