@@ -1588,13 +1588,13 @@ enum_names attr_msg_type_names = {
  * IKEv2 Critical bit and RESERVED (7) bits
  */
 const char *const critical_names[] = {
-	"RESERVED",	/* bit 0 */
-	"RESERVED",	/* bit 1 */
-	"RESERVED",	/* bit 2 */
-	"RESERVED",	/* bit 3 */
-	"RESERVED",	/* bit 4 */
-	"RESERVED",	/* bit 5 */
-	"RESERVED",	/* bit 6 */
+	"RESERVED bit 0",	/* bit 0 */
+	"RESERVED bit 1",	/* bit 1 */
+	"RESERVED bit 2",	/* bit 2 */
+	"RESERVED bit 3",	/* bit 3 */
+	"RESERVED bit 4",	/* bit 4 */
+	"RESERVED bit 5",	/* bit 5 */
+	"RESERVED bit 6",	/* bit 6 */
 	"PAYLOAD_CRITICAL",	/* bit 7*/
 };
 
