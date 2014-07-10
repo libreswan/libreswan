@@ -6,7 +6,7 @@ ipsec look
 cat /tmp/xl2tpd.log
 : ==== tuc ====
 ping -c 4 -n 192.0.2.254
-# testing passthrough conn
+# testing passthrough plaintext
 echo quit | nc 192.0.2.254 22
 ip addr show dev ppp0
 echo done

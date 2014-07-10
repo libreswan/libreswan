@@ -111,7 +111,7 @@ east #
 000 "westnet-eastnet-gcm":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)_000-MODP2048(14), AES_CBC(7)_256-MD5(1)_000-MODP2048(14), AES_CBC(7)_256-SHA1(2)_000-MODP1536(5), AES_CBC(7)_256-MD5(1)_000-MODP1536(5), AES_CBC(7)_256-SHA1(2)_000-MODP1024(2), AES_CBC(7)_256-MD5(1)_000-MODP1024(2)
 000 "westnet-eastnet-gcm":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)_160-MODP2048(14), AES_CBC(7)_256-MD5(1)_128-MODP2048(14), AES_CBC(7)_256-SHA1(2)_160-MODP1536(5), AES_CBC(7)_256-MD5(1)_128-MODP1536(5), AES_CBC(7)_256-SHA1(2)_160-MODP1024(2), AES_CBC(7)_256-MD5(1)_128-MODP1024(2)
 000 "westnet-eastnet-gcm":   ESP algorithms wanted: AES_GCM_C(20)_192-NONE(0)_000
-000 "westnet-eastnet-gcm":   ESP algorithms loaded: none
+000 "westnet-eastnet-gcm":   ESP algorithms loaded: AES_GCM_C(20)_192-NONE(0)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
