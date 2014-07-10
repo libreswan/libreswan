@@ -1,4 +1,5 @@
-/testing/guestbin/swan-prep
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
 east #
  ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
@@ -15,8 +16,8 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- ipsec auto --add westnet-eastnet-ah
-002 added connection description "westnet-eastnet-ah"
+ ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
 east #
  ipsec auto --status
 000 using kernel interface: klips
@@ -39,6 +40,8 @@ east #
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
 000 virtual-private (%priv):
+000 - allowed subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
+000 - excluded subnets: 192.0.2.0/24, 2001:db8:0:2::/64
 000  
 000 ESP algorithms supported:
 000  
@@ -78,18 +81,19 @@ east #
 000  
 000 Connection list:
 000  
-000 "westnet-eastnet-ah": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ah":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ah":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
-000 "westnet-eastnet-ah":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ah":   labeled_ipsec:no, loopback:no; 
-000 "westnet-eastnet-ah":    policy_label:unset; 
-000 "westnet-eastnet-ah":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet-ah":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ah":   policy: RSASIG+AUTHENTICATE+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "westnet-eastnet-ah":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "westnet-eastnet-ah":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "westnet-eastnet-ah":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-ikev2": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]...%any[%fromcert]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=east;
+000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet-ikev2":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ikev2":    policy_label:unset; 
+000 "westnet-eastnet-ikev2":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -103,24 +107,26 @@ initdone
 east #
  ipsec look
 east NOW
-192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 ah0xAHSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-ah0xSPISPI@192.1.2.45 AH_HMAC_SHA1: dir=out src=192.1.2.23 ooowin=64  alen=160 aklen=160 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-ah0xSPISPI@192.1.2.23 AH_HMAC_SHA1: dir=in  src=192.1.2.45 ooowin=64   alen=160 aklen=160 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
-tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
 169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev ipsec0  scope link 
+192.0.1.0/24 via 192.1.2.45 dev eth1 
 192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+east                                                         u,u,u
+mainca                                                       ,,   
+road                                                         P,,  
+north                                                        P,,  
+hashsha2                                                     P,,  
+west                                                         P,,  
+west-ec                                                      P,,  
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

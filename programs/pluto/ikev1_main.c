@@ -630,23 +630,18 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 			for (; d != NULL; d = d->hp_next) {
 				if (d->policy & POLICY_IKEV1_DISABLE) {
-					DBG(DBG_CONTROL, {
-						ipstr_buf b;
-						DBG_log(
-							"discard matching conn %s for "
-							"I1 from %s:%u. %s %s %s has "
-							"ikev2=insist ", d->name,
-							ipstr(&md->iface->ip_addr, &b),
-							ntohs(portof(&md->iface->ip_addr)),
-							d->name,
-							(policy != LEMPTY) ?
-								" with policy=" : "",
-							(policy != LEMPTY) ?
-								bitnamesof(sa_policy_bit_names,
-								policy) :
-								"");
-					});
-					d=NULL;	/* ??? guaranteed crash */
+					DBG(DBG_CONTROL,DBG_log(
+						"discard matching conn %s for "
+						"I1 from %s:%u. %s%s %s has "
+						"ikev2=insist ", d->name,
+						ip_str(&md->iface->ip_addr),
+						ntohs(portof(&md->iface->ip_addr)),
+						d->name,
+						(policy != LEMPTY) ?
+						" with policy=" : "",
+						(policy != LEMPTY) ?
+						bitnamesof(sa_policy_bit_names,
+							policy) : ""));
 					continue;
 				}
 

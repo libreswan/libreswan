@@ -131,7 +131,7 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %files 
 %defattr(-,root,root)
-%doc BUGS CHANGES COPYING CREDITS README LICENSE
+%doc CHANGES COPYING CREDITS README LICENSE
 %doc OBJ.linux.*/programs/examples/*.conf
 #%doc doc/manpage.d/*
 # /usr/share/doc/libreswan/*
