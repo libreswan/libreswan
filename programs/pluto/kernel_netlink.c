@@ -1448,8 +1448,6 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 #endif
 
-	src_proto = 0;	/* XXX-MCR where to get protocol from? */
-	dst_proto = 0;	/* ditto */
 	src_proto = dst_proto = acquire->sel.proto;
 
 	/*
@@ -1900,12 +1898,7 @@ static bool netlink_shunt_eroute(struct connection *c,
 	}
 
 	{
-		const ip_address *peer = &sr->that.host_addr;
 		char buf2[256];
-		const struct af_info *fam = aftoinfo(addrtypeof(peer));
-
-		if (fam == NULL)
-			fam = aftoinfo(AF_INET);
 
 		snprintf(buf2, sizeof(buf2), "eroute_connection %s", opname);
 

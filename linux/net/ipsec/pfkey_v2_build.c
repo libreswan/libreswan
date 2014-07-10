@@ -672,6 +672,7 @@ errlab:
 	return error;
 }
 
+#if 0	/* ??? not yet used or working */
 int pfkey_sens_build(struct sadb_ext **pfkey_ext,
 		     uint32_t dpd,
 		     uint8_t sens_level,
@@ -689,12 +690,16 @@ int pfkey_sens_build(struct sadb_ext **pfkey_ext,
 	DEBUGGING(PF_KEY_DEBUG_BUILD,
 		  "pfkey_sens_build:\n");
 	/* sanity checks... */
-	if (pfkey_sens) {
+	if (pfkey_sens != NULL) {
 		ERROR("pfkey_sens_build: "
 		      "why is pfkey_sens already pointing to something?\n");
 		SENDERR(EINVAL);
 	}
 
+	/*
+	 * ??? we've just determined that *pfkey_ext == NULL, why are we dereferencing it?
+	 * I guess that this is an insanity check.
+	 */
 	DEBUGGING(PF_KEY_DEBUG_BUILD,
 		  "pfkey_sens_build: "
 		  "Sorry, I can't build exttype=%d yet.\n",
@@ -742,6 +747,7 @@ int pfkey_sens_build(struct sadb_ext **pfkey_ext,
 errlab:
 	return error;
 }
+#endif
 
 int pfkey_prop_build(struct sadb_ext**      pfkey_ext,
 		     uint8_t replay,

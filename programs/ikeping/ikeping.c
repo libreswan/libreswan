@@ -151,18 +151,16 @@ static void send_ping(int afamily,
  * send an IKE ping reply
  *
  */
-static void reply_packet(int afamily,
-			 int s,
+static void reply_packet(int s,
 			 ip_address *dst_addr,
 			 int dst_len,
 			 struct isakmp_hdr *op)
 {
-	int i, tmp, len;
-
-	tmp = afamily;  /* shut up compiler */
+	int i, len;
 
 	for (i = 0; i < COOKIE_SIZE; i++) {
-		tmp = op->isa_icookie[i];
+		int tmp = op->isa_icookie[i];
+
 		op->isa_icookie[i] = op->isa_rcookie[i];
 		op->isa_rcookie[i] = tmp;
 	}
@@ -177,7 +175,7 @@ static void reply_packet(int afamily,
 	hton_ping(op);
 
 	len = sizeof(*op);
-	if (plen) {
+	if (plen != 0) {
 		if (plen > len) {
 			plen = len;
 			fprintf(stderr, "%s: Packet length capped at %d - no more data",
@@ -280,7 +278,7 @@ static void receive_ping(int afamily, int s, int reply, int natt)
 	       ih.isa_xchg);
 
 	if (reply && xchg == ISAKMP_XCHG_ECHOREQUEST_PRIVATE)
-		reply_packet(afamily, s, &sender, sendlen, &ih);
+		reply_packet(s, &sender, sendlen, &ih);
 }
 
 static const struct option long_opts[] = {

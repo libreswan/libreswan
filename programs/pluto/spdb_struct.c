@@ -196,9 +196,6 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			if (ealg > 0)
 				enc->val = ealg;
 
-			modp = ike_info->ike_modp;
-			eklen = ike_info->ike_eklen;
-
 			passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
 			if (halg > 0)
 				hash->val = halg;

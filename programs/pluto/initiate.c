@@ -517,14 +517,14 @@ static void cannot_oppo(struct connection *c,
 	}
 }
 
-static int initiate_ondemand_body(struct find_oppo_bundle *b,
+static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac, err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
 				  , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				  ); /* forward */
 
-int initiate_ondemand(const ip_address *our_client,
+bool initiate_ondemand(const ip_address *our_client,
 		      const ip_address *peer_client,
 		      int transport_proto,
 		      bool held,
@@ -668,7 +668,7 @@ static err_t check_txt_recs(enum myid_state try_state,
 
 /* note: gateways_from_dns must be NULL iff this is the first call */
 /* return true if we did something */
-static int initiate_ondemand_body(struct find_oppo_bundle *b,
+static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac,
 				  err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
@@ -684,7 +684,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 	int hisport;
 	char demandbuf[256];
 	bool loggedit = FALSE;
-	int work = 0;
+	bool work = FALSE;
 
 	/* on klips/mast assume we will do something */
 	work = kern_interface == USE_KLIPS ||
@@ -726,7 +726,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 
 	if (isanyaddr(&b->our_client) || isanyaddr(&b->peer_client)) {
 		cannot_oppo(NULL, b, "impossible IP address");
-		work = 0;
+		work = FALSE;
 	} else if (!(c = find_connection_for_clients(&sr,
 						     &b->our_client,
 						     &b->peer_client,
@@ -740,7 +740,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 			loggedit = TRUE;
 		}
 		cannot_oppo(NULL, b, "no routed template covers this pair");
-		work = 0;
+		work = FALSE;
 	} else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
@@ -749,7 +749,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 		loglog(RC_NOPEERIP,
 		       "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
 		       ours, ourport, his, hisport, b->transport_proto);
-		work = 0;
+		work = FALSE;
 	} else if (c->kind != CK_TEMPLATE) {
 		/* We've found a connection that can serve.
 		 * Do we have to initiate it?

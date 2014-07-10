@@ -531,7 +531,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 {
 	char *b = sadetails;
 	const char *ini = " {";
-	const char *fin = "";
 	struct connection *c = st->st_connection;
 
 	passert(c != NULL);
@@ -540,7 +539,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		" tunnel mode" : " transport mode"));
 	b += strlen(sadetails);
 
-	/* -1 is to leave space for "fin" */
+	/* -1 is to leave space for "}" */
 
 	if (st->st_esp.present) {
 		char esb[ENUM_SHOW_BUF_LEN];
@@ -565,7 +564,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 strip_prefix(enum_show(&auth_alg_names,
 				   st->st_esp.attrs.transattrs.integ_hash), "AUTH_ALGORITHM_"));
 		ini = " ";
-		fin = "}";
 	}
 	/* advance b to end of string */
 	b = b + strlen(b);
@@ -577,7 +575,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
 			 (unsigned long)ntohl(st->st_ah.our_spi));
 		ini = " ";
-		fin = "}";
 	}
 	/* advance b to end of string */
 	b = b + strlen(b);
@@ -589,7 +586,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 (unsigned long)ntohl(st->st_ipcomp.attrs.spi),
 			 (unsigned long)ntohl(st->st_ipcomp.our_spi));
 		ini = " ";
-		fin = "}";
 	}
 
 	/* advance b to end of string */
@@ -607,7 +603,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 "%sNATOA=%s",
 			 ini, oa);
 		ini = " ";
-		fin = "}";
 	}
 
 	b = b + strlen(b);
@@ -627,7 +622,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 "%sNATD=%s",
 			 ini, oa);
 		ini = " ";
-		fin = "}";
 	}
 
 	/* advance b to end of string */
@@ -637,21 +631,14 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		 "%sDPD=%s", ini,
 		 dpd_active_locally(st) ? "active" : "passive");
 
-	ini = " ";
-	fin = "}";
-
 	if (st->st_xauth_username[0] != '\0') {
 		b = b + strlen(b);
 		snprintf(b, sad_len - (b - sadetails) - 1,
-			 "%sXAUTHuser=%s",
-			 ini,
+			 " XAUTHuser=%s",
 			 st->st_xauth_username);
-
-		ini = " ";
-		fin = "}";
 	}
 
-	strcat(b, fin);
+	strcat(b, "}");
 }
 
 void fmt_isakmp_sa_established(struct state *st, char *sadetails, int sad_len)

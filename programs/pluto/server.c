@@ -475,13 +475,14 @@ static void reapchildren(void)
 		/* got a child to reap */
 		if (adns_reapchild(child, status))
 			continue;
+
 		if (child == addconn_child_pid) {
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("reaped addconn helper child"));
 			addconn_child_pid = 0;
 			continue;
 		}
-		/*Threads are created instead of child processes when using LIBNSS*/
+		/* Threads are created instead of child processes when using LIBNSS */
 		libreswan_log("child pid=%d (status=%d) is not my child!",
 			      child, status);
 	}

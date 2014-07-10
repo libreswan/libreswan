@@ -2102,7 +2102,10 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
 							"Domain");
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				/*
+				 * ??? this won't work because MODECFG_DOMAIN is way bigger than LELEM_ROOF
+				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				 */
 				break;
 			}
 
@@ -2111,7 +2114,10 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
 							"Banner");
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				/*
+				 * ??? this won't work because MODECFG_BANNER is way bigger than LELEM_ROOF
+				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				 */
 				break;
 			}
 
@@ -2221,7 +2227,10 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					tmp_spd2->next = tmp_spd;
 					tmp_spd2 = tmp_spd;
 				}
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				/*
+				 * ??? this won't work because CISCO_SPLIT_INC is way bigger than LELEM_ROOF
+				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				 */
 				break;
 			}
 
@@ -2229,14 +2238,16 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			case INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
 			{
 				DBG_log("Received and ignored obsoleted Cisco NetBEUI NS info");
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				/*
+				 * ??? this won't work because INTERNAL_IP4_NBNS and INTERNAL_IP6_NBNS are way bigger than LELEM_ROOF
+				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				 */
 				break;
 			}
 
 			default:
 			{
 				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
 
@@ -2529,7 +2540,6 @@ stf_status xauth_inI0(struct msg_digest *md)
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t xauth_resp = LEMPTY;
-	lset_t mcfg_resp = LEMPTY;	/* ??? value never used */
 
 	int status = 0;
 	stf_status stat = STF_FAIL;
@@ -2633,27 +2643,22 @@ stf_status xauth_inI0(struct msg_digest *md)
 
 		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			DBG_log("Received Cisco Internal IPv4 address");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			DBG_log("Received Cisco Internal IPv4 netmask");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			DBG_log("Received Cisco IPv4 DNS info");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TV:
 			DBG_log("Received Cisco IPv4 Subnet info");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TV:
 			DBG_log("Received Cisco NetBEUI NS info");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		default:

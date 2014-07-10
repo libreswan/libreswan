@@ -494,15 +494,13 @@ size_t format_end(char *buf,
 	char host_port[sizeof(":65535")];
 	char host_id[IDTOA_BUF + 2];
 	char hop[ADDRTOT_BUF];
-	char endopts[sizeof("MS+MC+XS+XC+Sxx") + 1];
+	char endopts[sizeof("MS+MC+XS+XC+Sxx") + 1] = "";
 	const char *hop_sep = "";
 	const char *open_brackets  = "";
 	const char *close_brackets = "";
 	const char *id_obrackets = "";
 	const char *id_cbrackets = "";
 	const char *id_comma = "";
-
-	zero(&endopts);
 
 	if (isanyaddr(&this->host_addr)) {
 		if (this->host_type == KH_IPHOSTNAME) {
@@ -617,8 +615,6 @@ size_t format_end(char *buf,
 	    this->sendcert != cert_defaultcertpolicy) {
 		char *p = endopts;
 
-		endopts[0] = '\0';
-
 		if (id_obrackets[0] == '[') {
 			id_comma = ",";
 		} else {
@@ -637,6 +633,7 @@ size_t format_end(char *buf,
 
 		if (this->xauth_client)
 			p = add_str(endopts, sizeof(endopts), p, "+XC");
+
 		{
 			const char *send_cert = "+UNKNOWN";
 
@@ -1334,7 +1331,6 @@ void add_connection(const struct whack_message *wm)
 		c->spd.this.left = TRUE;
 		c->spd.that.left = FALSE;
 
-		same_rightca = same_leftca = FALSE;
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
@@ -3257,7 +3253,7 @@ struct connection *find_client_connection(struct connection *c,
 		subnettot(peer_net, 0, d1, sizeof(d1));
 
 		DBG_log("find_client_connection starting with %s",
-			(c != NULL ? c->name : "(none)"));
+			c->name);
 		DBG_log("  looking for %s:%d/%d -> %s:%d/%d",
 			s1, our_protocol, our_port,
 			d1, peer_protocol, peer_port);

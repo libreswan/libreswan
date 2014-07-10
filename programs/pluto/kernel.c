@@ -1924,8 +1924,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->refhim = refhim;
 		} else if (!outgoing_ref_set) {
 			/* on outbound, pick up the SAref if not already done */
-			said_next->ref    = refhim;
-			outgoing_ref_set  = TRUE;
+			said_next->ref = refhim;
+			outgoing_ref_set = TRUE;
 		}
 
 		if (!kernel_ops->add_sa(said_next, replace)) {

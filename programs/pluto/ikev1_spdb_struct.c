@@ -1395,8 +1395,9 @@ rsasig_common:
 		if (ugh == NULL) {
 			if (!ike_alg_ok_final(ta.encrypt, ta.enckeylen,
 					      ta.prf_hash,
-					      ta.group ? ta.group->group :
-					      65535, c->alg_info_ike))
+					      ta.group != NULL ?
+						ta.group->group : 65535,
+					      c->alg_info_ike))
 				ugh = "OAKLEY proposal refused";
 		}
 

@@ -275,14 +275,14 @@ int pfkey_x_nat_t_port_build(struct sadb_ext**  pfkey_ext,
 			     uint16_t exttype,
 			     uint16_t port);
 
-int pfkey_sens_build(struct sadb_ext**      pfkey_ext,
+int pfkey_sens_build(struct sadb_ext **pfkey_ext,
 		     uint32_t dpd,
 		     uint8_t sens_level,
 		     uint8_t sens_len,
-		     uint64_t*              sens_bitmap,
+		     uint64_t *sens_bitmap,
 		     uint8_t integ_level,
 		     uint8_t integ_len,
-		     uint64_t*              integ_bitmap);
+		     uint64_t *integ_bitmap);
 
 int pfkey_x_protocol_build(struct sadb_ext **, uint8_t);
 

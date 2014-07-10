@@ -350,13 +350,13 @@ void delete_state(struct state *st)
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 		/* Note that a state/SA can have more then one of ESP/AH/IPCOMP */
 		if (st->st_esp.present) {
-			char statebuf[1024], *sbcp;
-
-			sbcp = humanize_number(st->st_esp.peer_bytes,
-					       statebuf, statebuf +
-					       sizeof(statebuf),
+			char statebuf[1024];
+			char *sbcp = humanize_number(st->st_esp.peer_bytes,
+					       statebuf,
+					       statebuf + sizeof(statebuf),
 					       "ESP traffic information: in=");
-			sbcp = humanize_number(st->st_esp.our_bytes,
+
+			(void)humanize_number(st->st_esp.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -367,13 +367,13 @@ void delete_state(struct state *st)
 		}
 
 		if (st->st_ah.present) {
-			char statebuf[1024], *sbcp;
-
-			sbcp = humanize_number(st->st_ah.peer_bytes,
-					       statebuf, statebuf +
-					       sizeof(statebuf),
+			char statebuf[1024];
+			char *sbcp = humanize_number(st->st_ah.peer_bytes,
+					       statebuf,
+					       statebuf + sizeof(statebuf),
 					       "AH traffic information: in=");
-			sbcp = humanize_number(st->st_ah.our_bytes,
+
+			(void)humanize_number(st->st_ah.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -384,13 +384,13 @@ void delete_state(struct state *st)
 		}
 
 		if (st->st_ipcomp.present) {
-			char statebuf[1024], *sbcp;
-
-			sbcp = humanize_number(st->st_ipcomp.peer_bytes,
-					       statebuf, statebuf +
-					       sizeof(statebuf),
+			char statebuf[1024];
+			char *sbcp = humanize_number(st->st_ipcomp.peer_bytes,
+					       statebuf,
+					       statebuf + sizeof(statebuf),
 					       " IPCOMP traffic information: in=");
-			sbcp = humanize_number(st->st_ipcomp.our_bytes,
+
+			(void)humanize_number(st->st_ipcomp.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -1495,8 +1495,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			mbcp = humanize_number(
 					(u_long)st->st_ipcomp.attrs.life_kilobytes,
 					mbcp,
-					traffic_buf +
-					  sizeof(traffic_buf),
+					traffic_buf + sizeof(traffic_buf),
 					"! IPCOMPmax=");
 		}
 #ifdef KLIPS

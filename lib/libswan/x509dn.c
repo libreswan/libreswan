@@ -2054,19 +2054,16 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 {
 	asn1_ctx_t ctx;
-	bool critical;
-	chunk_t extnID;
-	chunk_t userCertificate;
-	chunk_t object;
-	u_int level;
+	chunk_t extnID = empty_chunk;
+	chunk_t userCertificate = empty_chunk;
 	u_int objectID = 0;
-
-	userCertificate.len = 0;
-	userCertificate.ptr = NULL;
 
 	asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
 	while (objectID < CRL_OBJ_ROOF) {
+		chunk_t object;
+		u_int level;
+
 		if (!extract_object(crlObjects, &objectID, &object, &level,
 					&ctx))
 			return FALSE;
@@ -2086,7 +2083,7 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 			break;
 		case CRL_OBJ_VERSION:
 			crl->version =
-				(object.len) ? (1 + (u_int) * object.ptr) : 1;
+				object.len == 0 ? 1 : 1 + *object.ptr;
 			DBG(DBG_PARSING,
 				DBG_log("  v%d", crl->version));
 			break;
@@ -2136,10 +2133,15 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 			break;
 		case CRL_OBJ_CRL_ENTRY_CRITICAL:
 		case CRL_OBJ_CRITICAL:
-			critical = object.len && *object.ptr;
+		{
+			/* ??? no consequence */
+			bool critical;
+
+			critical = object.len != 0 && *object.ptr != 0;
 			DBG(DBG_PARSING,
 				DBG_log("  %s", critical ? "TRUE" : "FALSE"));
-			break;
+		}
+		break;
 		case CRL_OBJ_EXTN_VALUE:
 		{
 			u_int extn_oid = known_oid(extnID);

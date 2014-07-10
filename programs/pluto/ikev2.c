@@ -67,7 +67,7 @@
 
 #define SEND_NOTIFICATION(t) { \
 		if (st != NULL) \
-			send_v2_notification_from_state(st, from_state, t, \
+			send_v2_notification_from_state(st, t, \
 							NULL); \
 		else \
 			send_v2_notification_from_md(md, t, NULL); }
@@ -877,15 +877,9 @@ void ikev2_log_parentSA(struct state *st)
 }
 
 void send_v2_notification_from_state(struct state *st,
-				     enum state_kind state,
 				     v2_notification_t type,
 				     chunk_t *data)
 {
-	passert(st != NULL);
-
-	if (state == STATE_UNDEFINED)
-		state = st->st_state;
-
 	send_v2_notification(st, type, NULL, st->st_icookie, st->st_rcookie,
 			     data);
 }
@@ -1266,7 +1260,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		libreswan_log("message in state %s ignored due to cryptographic overload",
 			      from_state_name);
 		/* FALL THROUGH */
-
 	case STF_FATAL:
 		/* update the previous packet history */
 		/* update_retransmit_history(st, md); */
@@ -1289,7 +1282,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	default: /* a shortcut to STF_FAIL, setting md->note */
 		passert(result > STF_FAIL);
 		md->note = result - STF_FAIL;
-		result = STF_FAIL;
+		result = STF_FAIL;	/* not actually used */
 		/* FALL THROUGH ... */
 	case STF_FAIL:
 		whack_log(RC_NOTIFICATION + md->note,

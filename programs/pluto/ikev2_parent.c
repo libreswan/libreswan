@@ -64,13 +64,13 @@
 
 #define SEND_NOTIFICATION_AA(t, d) \
 	if (st != NULL) \
-		send_v2_notification_from_state(st, st->st_state, (t), (d)); \
+		send_v2_notification_from_state(st, (t), (d)); \
 	else \
 		send_v2_notification_from_md(md, (t), (d));
 
 #define SEND_NOTIFICATION(t) { \
 		if (st) \
-			send_v2_notification_from_state(st, st->st_state, t, NULL); \
+			send_v2_notification_from_state(st, t, NULL); \
 		else \
 			send_v2_notification_from_md(md, t, NULL); \
 	}
@@ -165,22 +165,28 @@ stf_status ikev2parent_outI1(int whack_sock,
 		struct db_sa *sadb;
 		unsigned int pc_cnt;
 
-		st->st_sadb = &oakley_sadb[policy_index];
-		sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-					 st->st_sadb, FALSE);
-		if (sadb != NULL)
-			st->st_sadb = sadb;
-		sadb = st->st_sadb = sa_v2_convert(st->st_sadb);
+		/* inscrutable dance of the sadbs */
+		sadb = &oakley_sadb[policy_index];
+		{
+			struct db_sa *sadb_plus =
+				oakley_alg_makedb(st->st_connection->alg_info_ike,
+					 sadb, FALSE);
+
+			if (sadb_plus != NULL)
+				sadb = sadb_plus;
+		}
+		sadb = sa_v2_convert(sadb);
+		st->st_sadb = sadb;
 
 		/* look at all the proposals for the first group specified */
 
 		for (pc_cnt = 0;
-		     pc_cnt < st->st_sadb->prop_disj_cnt &&
+		     pc_cnt < sadb->prop_disj_cnt &&
 		     groupnum == 0;
 		     pc_cnt++)
 		{
 			/* look at all the proposals in this disjunction */
-			struct db_v2_prop *vp = &st->st_sadb->prop_disj[pc_cnt];
+			struct db_v2_prop *vp = &sadb->prop_disj[pc_cnt];
 			unsigned int pr_cnt;
 
 			for (pr_cnt = 0;
@@ -925,7 +931,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			chunk_t dc = { (unsigned char *)&group_number,
 				sizeof(group_number) };
 
-			send_v2_notification_from_state(st, st->st_state,
+			send_v2_notification_from_state(st,
 				v2N_INVALID_KE_PAYLOAD, &dc);
 			delete_state(st);
 			return STF_FAIL;	/* don't send second notification */

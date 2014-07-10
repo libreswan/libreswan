@@ -2450,6 +2450,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (deltasecs(st->st_connection->dpd_delay) > 0 &&
 			    deltasecs(st->st_connection->dpd_timeout) > 0) {
 				/* don't ignore failure */
+				/* ??? in fact, we do ignore this:
+				 * result is NEVER used
+				 */
 				if (dpd_init(st) == STF_FAIL)
 					result = STF_FAIL; /* fall through */
 			}
@@ -2633,8 +2636,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		passert(result > STF_FAIL);
 		md->note = result - STF_FAIL;
 		result = STF_FAIL;
-	/* FALL THROUGH ... */
-
+		/* FALL THROUGH ... */
 	case STF_FAIL:
 		/* As it is, we act as if this message never happened:
 		 * whatever retrying was in place, remains in place.

@@ -700,36 +700,41 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				 int prf_keylen,
 				 unsigned dh_transform)
 {
-	struct db_v2_prop *pd;
 	unsigned int pd_cnt;
-	bool encr_matched, integ_matched, prf_matched, dh_matched;
-
-	encr_matched = integ_matched = prf_matched = dh_matched = FALSE;
 
 	for (pd_cnt = 0; pd_cnt < sadb->prop_disj_cnt; pd_cnt++) {
-		struct db_v2_prop_conj  *pj;
-		struct db_v2_trans      *tr;
+		struct db_v2_prop *pd = &sadb->prop_disj[pd_cnt];
+		struct db_v2_prop_conj *pj;
 		unsigned int tr_cnt;
-		int encrid, integid, prfid, dhid, esnid;
-		int encrwin = -2, integwin = -2, prfwin = -2;
+		bool
+			encr_matched = FALSE,
+			integ_matched = FALSE,
+			prf_matched = FALSE,
+			dh_matched = FALSE;
+		int
+			encrid = 0,
+			integid = 0,
+			prfid = 0,
+			dhid = 0;
+		int
+			encrwin = -2,
+			integwin = -2,
+			prfwin = -2;
 
-		pd = &sadb->prop_disj[pd_cnt];
-		encrid = integid = prfid = dhid = esnid = 0;
-		encr_matched = integ_matched = prf_matched = dh_matched =
-								     FALSE;
+		/* In PARENT SAs, we only support one conjunctive item */
 		if (pd->prop_cnt != 1)
 			continue;
 
-		/* In PARENT SAs, we only support one conjunctive item */
 		pj = &pd->props[0];
-		if (pj->protoid  != PROTO_ISAKMP)
+
+		/* ??? is any other protoid even legal? */
+		if (pj->protoid != PROTO_ISAKMP)
 			continue;
 
 		for (tr_cnt = 0; tr_cnt < pj->trans_cnt; tr_cnt++) {
+			struct db_v2_trans *tr = &pj->trans[tr_cnt];
 			int keylen = -1;
 			unsigned int attr_cnt;
-
-			tr = &pj->trans[tr_cnt];
 
 			DBG(DBG_CONTROL, DBG_log(
 				"considering Transform Type %s, TransID %d",
@@ -1269,6 +1274,8 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 	return STF_OK;
 }
 
+/* ??? parts of ikev2_parse_parent_sa_body and ikev2_parse_child_sa_body are enough alike that they share bugs */
+
 stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA Payload */
 				      const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
 				      pb_stream *r_sa_pbs,			/* if non-NULL, where to emit winning SA */
@@ -1282,7 +1289,7 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA P
 	unsigned int lp = v2_PROPOSAL_NON_LAST;
 	/* we need to parse proposal structures until there are none */
 	unsigned int lastpropnum = -1;
-	bool conjunction, gotmatch;
+	bool gotmatch;
 	struct ikev2_prop winning_prop;
 	struct db_sa *sadb;
 	struct trans_attrs ta;
@@ -1306,10 +1313,11 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA P
 	sadb = st->st_sadb = sa_v2_convert(sadb);
 
 	gotmatch = FALSE;
-	conjunction = FALSE;
 	zero(&ta);
 
 	while (lp == v2_PROPOSAL_NON_LAST) {
+		bool conjunction;
+
 		/*
 		 * note: we don't support ESN,
 		 * so ignore any proposal that insists on it
@@ -1340,12 +1348,8 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA P
 			return STF_FAIL + v2N_INVALID_SPI;
 		}
 
-		if (proposal.isap_propnum == lastpropnum) {
-			conjunction = TRUE;
-		} else {
-			lastpropnum = proposal.isap_propnum;
-			conjunction = FALSE;
-		}
+		conjunction = (proposal.isap_propnum == lastpropnum);
+		lastpropnum = proposal.isap_propnum;
 
 		if (gotmatch && !conjunction) {
 			/* we already got a winner, and it was an OR with this one,
@@ -1367,6 +1371,7 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA P
 			stf_status ret = ikev2_process_transforms(&proposal,
 							    &proposal_pbs,
 							    itl);
+
 			if (ret != STF_OK) {
 				DBG(DBG_CONTROLMORE, DBG_log("ikev2_process_transforms() failed"));
 				return ret;
@@ -1682,6 +1687,8 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 	return FALSE;
 }
 
+/* ??? parts of ikev2_parse_parent_sa_body and ikev2_parse_child_sa_body are enough alike that they share bugs */
+
 stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,		/* body of input SA Payload */
 				     const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
 				     pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
@@ -1697,7 +1704,7 @@ stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,		/* body of input SA Pay
 	struct ipsec_proto_info *proto_info = NULL;
 	/* we need to parse proposal structures until there are none */
 	unsigned int lastpropnum = -1;
-	bool conjunction, gotmatch;
+	bool gotmatch;
 	struct ikev2_prop winning_prop;
 	struct db_sa *p2alg;
 	struct trans_attrs ta, ta1;
@@ -1721,11 +1728,12 @@ stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,		/* body of input SA Pay
 	p2alg = sa_v2_convert(p2alg);
 
 	gotmatch = FALSE;
-	conjunction = FALSE;
 	zero(&ta);
 	zero(&ta1);
 
 	while (lp == v2_PROPOSAL_NON_LAST) {
+		bool conjunction;
+
 		/*
 		 * note: we don't support ESN,
 		 * so ignore any proposal that insists on it

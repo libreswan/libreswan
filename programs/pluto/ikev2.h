@@ -82,7 +82,6 @@ extern stf_status ikev2_parse_child_sa_body(
 
 
 extern void send_v2_notification_from_state(struct state *st,
-					    enum state_kind state,
 					    v2_notification_t type,
 					    chunk_t *data);
 

@@ -622,8 +622,8 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d;
-			d = find_host_connection(&md->iface->ip_addr,
+			struct connection *d =
+				find_host_connection(&md->iface->ip_addr,
 						pluto_port,
 						(ip_address*)NULL,
 						md->sender_port, policy);
@@ -646,7 +646,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 								policy) :
 								"");
 					});
-					d=NULL;
+					d=NULL;	/* ??? guaranteed crash */
 					continue;
 				}
 

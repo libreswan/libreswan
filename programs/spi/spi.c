@@ -449,6 +449,7 @@ static void decode_blob(const char *optarg, const char *name, unsigned char **pp
 		exit(1);
 	}
 	ugh = ttodatav(optarg, 0, 0, (char *)*pp, len, lp, err_buf, sizeof(err_buf), 0);
+	assert(ugh == NULL);
 }
 
 static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],

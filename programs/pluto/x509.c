@@ -282,17 +282,11 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 					   crl->authKeyID, AUTH_CA);
 
 		if (issuer_cert == NULL) {
-			char distpoint[PATH_MAX];
-
-			distpoint[0] = '\0';
-			strncat(distpoint,
-				(char *)crl->distributionPoints->name.ptr,
-				(crl->distributionPoints->name.len < PATH_MAX ?
-				 crl->distributionPoints->name.len : PATH_MAX));
+			chunk_t *n = &crl->distributionPoints->name;
 
 			loglog(RC_LOG_SERIOUS,
-			       "CRL rejected: crl issuer cacert not found for (%s)",
-			       distpoint);
+			       "CRL rejected: crl issuer cacert not found for %.*s",
+			       (int)n->len, (char *)n->ptr);
 
 			free_crl(crl);
 			unlock_authcert_list("insert_crl");
