@@ -635,11 +635,10 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 						ntohs(portof(&md->iface->ip_addr)),
 						d->name,
 						(policy != LEMPTY) ?
-						" with policy=" : "",
+						"with policy=" : "",
 						(policy != LEMPTY) ?
 						bitnamesof(sa_policy_bit_names,
 							policy) : ""));
-					d=NULL;
 					continue;
 				}
 
