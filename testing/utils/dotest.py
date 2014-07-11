@@ -42,7 +42,6 @@ class guest (threading.Thread):
 	def run(self):
 		self.start = time.time()
 		e = self.boot_n_grab_console()
-		logging.info("%s Exiting  ran %s sec %s",  self.hostname, (time.time() - self.start), e)
 		self.status = "INIT"
 		if e:
 			self.clean_abort();
@@ -52,6 +51,8 @@ class guest (threading.Thread):
 		if not e:
 			e = "end" 
 		self.log_line('./OUTPUT/RESULT', e)
+		logging.info("%s done %s ran %s sec %s", self.hostname, self.testname,
+				(time.time() - self.start), e)
 
 	def boot_n_grab_console(self):
 		e = self.connect_to_kvm()
@@ -186,10 +187,11 @@ class guest (threading.Thread):
 		if not running:
 				print("Booting %s - pausing %s seconds"%(self.hostname,pause))
 				v_start = commands.getoutput("sudo virsh start %s"%self.hostname)
-				logging.debug(v_start)
+				logging.info(v_start)
 				re_e = re.search(r'error:', v_start, re.I )
 				if re_e:
 					# just abort this test
+					v_start = "KVMERROR " + v_start
 					logging.error(v_start)
 					self.log_line('./OUTPUT/stop-tests-now', v_start)
 					if self.stoponerror:
@@ -243,8 +245,8 @@ class guest (threading.Thread):
 					time.sleep(1)
 
 		if not done:
-			err = '%s console is not answering abort %s'%(self.hostname,self.testname)
-			logging.error(err)
+			err = 'KVMERROR console is not answering abort test'
+			logging.error("%s %s %s",self.hostname, err, self.testname)
 			self.log_line('./OUTPUT/stop-tests-now', err)
 
 			if self.stoponerror:
@@ -314,7 +316,7 @@ def shut_down_hosts(args, test_hosts):
 		tries -= 1
 		time.sleep(1)
 	if len(running):
-		e = "abort not able to shutdown %s guests: [%s]" % (len(running), ' '.join(map(str, running)))
+		e = "KVMERROR not able to shutdown %s guests: [%s] abort" % (len(running), ' '.join(map(str, running)))
 		logging.error (e)
 		return e
 
@@ -390,7 +392,7 @@ def read_exec_shell_cmd(ex, filename, prompt, timer, hostname = ""):
 def kill_zombie_tcpdump():
 	pids = commands.getoutput("pidof tcpdump")
 	for pid in (pids.split()):
-		logging.info("Killing existing tcpdump process %s", pid)
+		logging.info("killing tcpdump process %s", pid)
 		os.kill(int(pid),9)
 
 # kill all hanging previous of instance of this script.
@@ -399,7 +401,7 @@ def kill_zombies(proctitle):
 	zombie_pids = commands.getoutput("pidof %s"%proctitle)
 	for pid in ( zombie_pids.split() ):
 		if int(pid) != int(me):
-			logging.info ("Killing existing %s VM controllers pid %s from [%s] my pid %s", proctitle, pid, zombie_pids, me)
+			logging.info ("killing %s pid %s from [%s] my pid %s", proctitle, pid, zombie_pids, me)
 			os.kill(int(pid),9)
 	kill_zombie_tcpdump()
 
