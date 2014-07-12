@@ -32,7 +32,10 @@ kvmplutotest	ikev2-05-basic-psk			good
 kvmplutotest	ikev2-06-6msg				good
 
 umlplutotest	ikev2-07-biddown			good
-umlplutotest	ikev2-08-delete-notify			good
+kvmplutotest	ikev2-08-delete-notify			good
+kvmplutotest	ikev2-delete-01				good
+kvmplutotest	ikev2-delete-02				good
+
 
 kvmplutotest	ikev2-09-rw-rsa				good
 kvmplutotest	ikev2-11-simple-psk			good
