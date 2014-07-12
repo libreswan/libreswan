@@ -90,7 +90,6 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
  grep calc_dh_shared /tmp/pluto.log
-XXXXX: SHOULD SHOW HERE
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

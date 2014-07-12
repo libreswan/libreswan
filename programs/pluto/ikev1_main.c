@@ -630,11 +630,13 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 			for (; d != NULL; d = d->hp_next) {
 				if (d->policy & POLICY_IKEV1_DISABLE) {
+					ipstr_buf b;
+
 					DBG(DBG_CONTROL,DBG_log(
 						"discard matching conn %s for "
 						"I1 from %s:%u. %s%s %s has "
 						"ikev2=insist ", d->name,
-						ip_str(&md->iface->ip_addr),
+						ipstr(&md->iface->ip_addr, &b),
 						ntohs(portof(&md->iface->ip_addr)),
 						d->name,
 						(policy != LEMPTY) ?

@@ -8,6 +8,7 @@ import re
 import ujson
 import os,sys,socket,shutil
 import logging
+import platform
 
 try:
 	import argparse
@@ -21,6 +22,7 @@ except ImportError as e:
 r_init = threading.Event()
 i_ran = threading.Event()
 n_init = threading.Event()
+result_file_lock = threading.Lock()
 
 
 class guest (threading.Thread):
@@ -31,6 +33,7 @@ class guest (threading.Thread):
 		self.testname = testname 
 		self.status = "NEW"
 		self.bootwait = args.bootwait
+		self.stoponerror = args.stoponerror
 
 		self.reboot = True
 		if args.noreboot:
@@ -39,7 +42,6 @@ class guest (threading.Thread):
 	def run(self):
 		self.start = time.time()
 		e = self.boot_n_grab_console()
-		logging.info("%s Exiting  ran %s sec %s",  self.hostname, (time.time() - self.start), e)
 		self.status = "INIT"
 		if e:
 			self.clean_abort();
@@ -49,6 +51,8 @@ class guest (threading.Thread):
 		if not e:
 			e = "end" 
 		self.log_line('./OUTPUT/RESULT', e)
+		logging.info("%s done %s ran %s sec %s", self.hostname, self.testname,
+				(time.time() - self.start), e)
 
 	def boot_n_grab_console(self):
 		e = self.connect_to_kvm()
@@ -132,7 +136,7 @@ class guest (threading.Thread):
 		if os.path.exists(cmd):
 			e =  read_exec_shell_cmd( child, cmd, prompt, timer, self.hostname)
 			if e:
-				f.close 
+				f.close
 				return e   
 		f.close
 
@@ -143,16 +147,20 @@ class guest (threading.Thread):
 
 		logline = dict ()
 		#output_file = "./OUTPUT/RESULT"
-		f = open(filename, 'a')
 		logline ["epoch"] = time.time()
 		logline ["hostname"]  =  self.hostname 
 		logline ["testname"]  =  self.testname 
 		logline ["msg"] = msg 
 		logline ["runtime"] = time.time() - self.start
 		logline ["time"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+
+		result_file_lock.acquire()
+		f = open(filename, 'a')
 		f.write(ujson.dumps(logline, ensure_ascii=True,  double_precision=2))
 		f.write("\n")
 		f.close
+		result_file_lock.release()
+
 
 	def connect_to_kvm(self):
 
@@ -177,20 +185,38 @@ class guest (threading.Thread):
 			pause = 15
 
 		if not running:
-				print("Booting %s - pausing %s seconds"%(self.hostname,pause))
-				v_start = commands.getoutput("sudo virsh start %s"%self.hostname)
-				re_e = re.search(r'error:', line, re.I )
-				if re_e:
-					self.log_line('./OUTPUT/stop-tests-now', v_start)
-					self.log_line('../stop-tests-now', v_start)
-					# show ends here
-					
+			done = 0
+			v_start = ''
+			tries =  bootwait;
+			while not done and tries != 0:
+				if os.path.isfile("./OUTPUT/stop-tests-now"):
+					return "aborting found ./OUTPUT/stop-tests-now"
 
-				time.sleep(pause)
+				print("Booting %s %s/%s"%(self.hostname,tries, bootwait))
+				v_start = commands.getoutput("sudo virsh start %s"%self.hostname)
+				logging.info(v_start)
+				re_e = re.search(r'error:', v_start, re.I )
+				if re_e:
+					tries -= 1
+					time.sleep(1)
+				else:
+					done = True
+
+					# just abort this test
+			if not done:
+				v_start = "KVMERROR %s "%self.hostname + v_start
+				logging.error(v_start)
+				self.log_line('./OUTPUT/stop-tests-now', v_start)
+				if self.stoponerror:
+					# the whole show ends here
+					self.log_line('../stop-tests-now', v_start)
+					return v_start
+
+			time.sleep(pause)
 		elif self.reboot :
-				commands.getoutput("sudo virsh reboot %s"%self.hostname)
-				print("Rebooting %s - pausing %s seconds"%(self.hostname,pause))
-				time.sleep(pause)
+			commands.getoutput("sudo virsh reboot %s"%self.hostname)
+			print("Rebooting %s - pausing %s seconds"%(self.hostname,pause))
+			time.sleep(pause)
 
 		print("Taking %s console by force"%self.hostname)
 		cmd = "sudo virsh console --force %s"%self.hostname
@@ -206,35 +232,41 @@ class guest (threading.Thread):
 
 		print("Waiting on %s login: %s"%(self.hostname, prompt))
 		while not done and tries != 0:
-				try:
-					child.sendline ('')
-					print("found, waiting on login: or %s"%prompt)
-					res = child.expect (['login: ', prompt], timeout=3) 
-					if res == 0:
-							print("sending login name root")
-							child.sendline ('root')
-							print("found, expecting password prompt")
-							child.expect ('Password:', timeout=1)
-							print("found, sending password")
-							child.sendline ('swan')
-							print("waiting on root shell prompt")
-							child.expect ('root.*', timeout=1)
-							print("got prompt %s"%prompt.replace("\\",""))
-							done = 1
-					elif res == 1:
-							print('----------------------------------------------')
-							print(' Already logged in as root on %s'%prompt.replace("\\",""))
-							print('----------------------------------------------')
-							done = 1
-				except:
-					print("(%s [%s] waiting)"%(self.hostname,tries))
-					tries -= 1
-					time.sleep(1)
+			if os.path.isfile("./OUTPUT/stop-tests-now"):
+				return "aborting found ./OUTPUT/stop-tests-now"
+			try:
+				child.sendline ('')
+				print("%s [%s] waiting on login: or %s"%(self.hostname,
+					tries, prompt))
+				res = child.expect (['login: ', prompt], timeout=3) 
+				if res == 0:
+					print("%s sending login name root"%self.hostname)
+					child.sendline ('root')
+					print("%s found, expecting password prompt"%self.hostname)
+					child.expect ('Password:', timeout=1)
+					print("%s found, sending password"%self.hostname)
+					child.sendline ('swan')
+					print("%s waiting on root shell prompt %s"%(self.hostname, prompt))
+					child.expect ('root.*', timeout=1)
+					print("got prompt %s"%prompt.replace("\\",""))
+					done = 1
+				elif res == 1:
+					print('----------------------------------------------')
+					print(' Already logged in as root on %s'%prompt.replace("\\",""))
+					print('----------------------------------------------')
+					done = 1
+			except:
+				tries -= 1
+				time.sleep(1)
 
 		if not done:
-			err = '%s abort console is not answering'%self.hostname
-			logging.error(err)
-			self.log_line('../stop-tests-now', err)
+			err = 'KVMERROR console is not answering abort test'
+			logging.error("%s %s %s",self.hostname, err, self.testname)
+			self.log_line('./OUTPUT/stop-tests-now', err)
+
+			if self.stoponerror:
+				logging.error("stop")
+				self.log_line('../stop-tests-now', err)
 			return err
 
 		child.sendline ('TERM=dumb; export TERM; unset LS_COLORS')
@@ -299,7 +331,7 @@ def shut_down_hosts(args, test_hosts):
 		tries -= 1
 		time.sleep(1)
 	if len(running):
-		e = "abort not able to shutdown %s guests: [%s]" % (len(running), ' '.join(map(str, running)))
+		e = "KVMERROR not able to shutdown %s guests: [%s] abort" % (len(running), ' '.join(map(str, running)))
 		logging.error (e)
 		return e
 
@@ -354,10 +386,14 @@ def read_exec_shell_cmd(ex, filename, prompt, timer, hostname = ""):
 				try:
 					ex.expect (prompt,timeout=timer, searchwindowsize=100) 
 				except:
-					err = "%s failed to send line: %s"%(prompt,line)
-					logging.error(err)
-					f_cmds.close
-					return err
+					err = "#%s timedout send line: %s"%(prompt,line)
+					logging.error("%s try sending CTRL+c and continue",err)
+					ex.sendcontrol('c')
+					ex.sendline(err)
+					# in the old days the function would return here.
+					#f_cmds.close
+					#return err
+					err = ''
 
 		f_cmds.close
 
@@ -375,8 +411,11 @@ def read_exec_shell_cmd(ex, filename, prompt, timer, hostname = ""):
 def kill_zombie_tcpdump():
 	pids = commands.getoutput("pidof tcpdump")
 	for pid in (pids.split()):
-		logging.info("Killing existing tcpdump process %s", pid)
-		os.kill(int(pid),9)
+		logging.info("killing tcpdump process %s", pid)
+		try:
+			os.kill(int(pid),9)
+		except OSError as e:
+			logging.ERROR("killing tcpdump process %s %s", pid, e)
 
 # kill all hanging previous of instance of this script.
 def kill_zombies(proctitle):
@@ -384,7 +423,7 @@ def kill_zombies(proctitle):
 	zombie_pids = commands.getoutput("pidof %s"%proctitle)
 	for pid in ( zombie_pids.split() ):
 		if int(pid) != int(me):
-			logging.info ("Killing existing %s VM controllers pid %s from [%s] my pid %s", proctitle, pid, zombie_pids, me)
+			logging.info ("killing %s pid %s from [%s] my pid %s", proctitle, pid, zombie_pids, me)
 			os.kill(int(pid),9)
 	kill_zombie_tcpdump()
 
@@ -397,7 +436,8 @@ def init_output_dir():
 	
 def sanitize(cmd):
 	sanity =  commands.getoutput(cmd)
-	logging.info ("sanitizer output %s", sanity.replace("\n", " "))
+	#logging.info ("sanitizer output %s", sanity.replace("\n", " "))
+	logging.info ("sanitizer output %s", sanity)
 	return sanity
 
 def write_result(args, start, testname, sanity, result = 'FAILED', e = None):
@@ -419,6 +459,7 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None):
 	logline ["result"] = result 
 	logline ["time"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
 	logline ["runtime"] = time.time() - start
+	logline ["node"] = platform.node()
 	if e:
 		logline ["error"] = e 
 	f.write(ujson.dumps(logline, ensure_ascii=True, double_precision=2))
@@ -431,15 +472,28 @@ DEFAULTCONFIG =  {
 	'bootwait' : 60, 
 	'swanhosts' : ['east', 'west', 'rooad', 'north'],
 	'regualrhosts' : ['nic'],
-	'shutdownwait': 21
+	'shutdownwait': 21,
+	'newrun' : None,
+	'stoponerror' : None,
+	'retry' : 5
+
 }
 
 def cmdline():
 	parser = argparse.ArgumentParser(description='dotest arguments.')
 
+	parser.add_argument("--retry",
+			default=DEFAULTCONFIG['retry'], type=int,
+			help="retry when there is console error.")
+
+	parser.add_argument("--stoponerror",
+			default=DEFAULTCONFIG['stoponerror'], action="store_true",
+			help="Stop on kvm errors. Default coninues")
+
 	parser.add_argument("--newrun",
-						default=None, action="store_true",
-						help="overwrite the results in %s. Default None"%DEFAULTCONFIG['resultsdir'])
+			default=DEFAULTCONFIG['newrun'], action="store_true",
+			help="overwrite the results in %s. Default %s" % (DEFAULTCONFIG['resultsdir'], DEFAULTCONFIG['newrun']))
+
 	parser.add_argument("--resultdir",
 						default=DEFAULTCONFIG['resultsdir'],
 						help="test results directory %s"%DEFAULTCONFIG['resultsdir'])
@@ -480,6 +534,24 @@ def cmdline():
 		logger.setLevel(logging.DEBUG) 
 
 	return args
+
+def kvm_error(r_file):
+	if not os.path.exists(r_file):
+		return  False
+	f = open(r_file, 'r')
+	for line in f:
+		x = ujson.loads(line)
+		try:
+			re_e = re.search(r'KVMERROR', x['msg'], re.I )
+			if re_e:
+				logging.info(line)
+				f.close
+				return line
+		except:
+			pass
+	f.close
+	return False
+
 
 def do_test(args, start=''):
 	if not start:
@@ -539,7 +611,7 @@ def do_test(args, start=''):
 	s = sanitize(args.sanitizer)
 	write_result(args, start, testname, s)
 
-def do_test_list(args, start):
+def do_test_list(args, start, tried):
 	r = "./TESTLIST"
 	if not os.path.exists(r):
 		return None 
@@ -565,7 +637,7 @@ def do_test_list(args, start):
 		logging.info("sub directory %s exist", output_dir)
 
 	s = './stop-tests-now'
-	if os.path.exists('./stop-tests-now'):
+	if os.path.exists('./stop-tests-now') and (tried == 0):
 		os.unlink(s)
 		logging.debug("removing existing %s"%s)
 
@@ -595,16 +667,31 @@ def do_test_list(args, start):
 					os.getcwd(), testdir)
 			continue 
 
-		r_dir = output_dir + '/' + testdir  + '/OUTPUT/RESULT'
-		if (not args.newrun) and os.path.exists(r_dir):
-			logging.info("result [%s] exist and not newrun. skip this test", r_dir)
-			continue 
-		else:
-			logging.debug("%s is not there run this test", r_dir)
+		r_file = output_dir + '/' + testdir  + '/OUTPUT/RESULT'
+		if args.newrun and os.path.exists(r_file) and (tried == 0):
+			logging.info("result [%s] exist and newrun. run this test", r_file)
+		if os.path.exists(r_file) and tried and (tried < args.retry):
+			if kvm_error(r_file):
+				logging.info("result [%s] KVMERROR. delete previous run, retry %s/%s rutn this", r_file, tried, args.retry)
+				o_dir = output_dir + '/' + testdir
+				shutil.rmtree(o_dir)
+				try:
+					os.mkdir(o_dir, 0o755)
+				except:
+					logging.error("failed to create directory %s", output_dir)
+
+			else:
+				continue
+		elif not os.path.exists(r_file):
+			logging.debug("%s is not there run this test", r_file)
+		else :
+			continue
 
 		os.chdir(testdir)
 		if os.path.exists('./stop-tests-now'):
 			logging.error("****** skip test %s found stop-tests-now *****", testdir) 
+			os.chdir("../")
+			continue
 
 		logging.debug("****** next test %s *****", testdir) 
 		do_test(args)
@@ -617,7 +704,7 @@ def do_test_list(args, start):
 			except:
 				pass
 		else:
-			logging.inofo("missing output dir %s. don't copy results",output_dir)
+			logging.info("missing output dir %s. don't copy results",output_dir)
 
 	f.close
 	return True
@@ -625,8 +712,14 @@ def do_test_list(args, start):
 def main():
 	start = time.time() 
 	args = cmdline() 
+	tried = 0
 
-	if not do_test_list(args, start): #try if there is a TESTLIST
+	if do_test_list(args, start, tried): #try if there is a TESTLIST
+		while (tried < args.retry):
+			tried = 1 + tried
+			logging.info("retry TESTLIST %s/%s ", tried, args.retry)
+			do_test_list(args, start, tried)
+	else:
 		do_test(args,start)  # no TESTLIST. Lets try single test
 
 if __name__ == "__main__":
