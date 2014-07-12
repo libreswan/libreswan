@@ -1262,7 +1262,16 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 				   &b.his.net, "peer client"))
 			return STF_FAIL + INVALID_ID_INFORMATION;
 
-		/* Hack for MS 818043 NAT-T Update */
+		/* Hack for MS 818043 NAT-T Update.
+		 *
+		 * <http://support.microsoft.com/kb/818043>
+		 * "L2TP/IPsec NAT-T update for Windows XP and Windows 2000"
+		 * This update is has a bug.  We choose to work around that
+		 * bug rather than failing to interoperate.
+		 * As to what the bug is, Paul says:
+		 * "I believe on rekey, it sent a bogus subnet or wrong type of ID."
+		 * ??? needs more complete description.
+		 */
 		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			loglog(RC_LOG_SERIOUS,
 			       "Applying workaround for MS-818043 NAT-T bug");
