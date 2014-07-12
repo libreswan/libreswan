@@ -322,18 +322,15 @@ void release_whack(struct state *st)
 
 void release_fragments(struct state *st)
 {
-	struct ike_frag *frag;
+	struct ike_frag *frag = st->ike_frags;
 
-	if (!st)
-		return;
-
-	frag = st->ike_frags;
 	while (frag != NULL) {
 		struct ike_frag *this = frag;
 
 		frag = this->next;
 		release_md(this->md);
-		free(this);
+
+		pfree(this);
 	}
 
 	st->ike_frags = NULL;

@@ -1430,7 +1430,7 @@ void exit_pluto(int status)
 	free_virtual_ip();	/* virtual_private= */
 	free_pluto_main();	/* our static chars */
 
-	/* report memory leaks now, after all free()s */
+	/* report memory leaks now, after all free_* calls */
 	if(leak_detective)
 		report_leaks();
 

@@ -83,7 +83,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 					 pb_stream *rbody,
 					 u_int16_t ap_id);
 
-/* BEWARE:This code is multi-threaded.
+/* BEWARE: This code is multi-threaded.
  *
  * Any static object is likely shared and probably has to be protected by
  * a lock.
@@ -147,7 +147,7 @@ static void dealloc_st_jbuf(st_jbuf_t *ptr)
 	}
 
 	/* no remaining entries in use: free array */
-	free(st_jbuf_mem);
+	free(st_jbuf_mem);	/* was calloc()ed or realloc()ed */
 	st_jbuf_mem = NULL;
 }
 

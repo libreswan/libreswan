@@ -411,7 +411,7 @@ static void bsdkame_dequeue(void)
 		TAILQ_REMOVE(&pfkey_iq, pi, list);
 
 		bsdkame_pfkey_async(pi->msg);
-		free(pi->msg);
+		free(pi->msg);	/* was malloced by pfkey_recv() */
 		pfree(pi);
 
 	}
@@ -423,7 +423,7 @@ static void bsdkame_event(void)
 	struct sadb_msg *reply = pfkey_recv(pfkeyfd);
 
 	bsdkame_pfkey_async(reply);
-	free(reply);
+	free(reply);	/* was malloced by pfkey_recv() */
 }
 
 static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)

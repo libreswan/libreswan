@@ -73,8 +73,7 @@
 /*
  *      Allocator cache:
  *      Because of the single-threaded nature of pluto/spdb.c,
- *      alloc()/free() is exercised many times with very small
- *      lifetime objects.
+ *      many heap allocations are made with very short lifetimes.
  *      Just caching last object (currently it will select the
  *      largest) will avoid this allocation mas^Wperturbations
  *

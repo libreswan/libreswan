@@ -399,10 +399,10 @@ void load_crls(void)
 						 filename);
 					insert_crl(blob, crl_uri);
 				}
-				free(filelist[n]);
+				free(filelist[n]);	/* was malloced by scandir(3) */
 			}
 		}
-		free(filelist);
+		free(filelist);	/* was malloced by scandir(3) */
 	}
 	/* restore directory path */
 	if (chdir(save_dir) == -1) {

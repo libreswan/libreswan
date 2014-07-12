@@ -1454,10 +1454,10 @@ void process_v1_packet(struct msg_digest **mdp)
 		/* Add the fragment to the state */
 		i = &st->ike_frags;
 		for (;;) {
-			if (ike_frag) {
+			if (ike_frag != NULL) {
 				/* Still looking for a place to insert ike_frag */
-				if (*i == NULL || (*i)->index >
-				    ike_frag->index) {
+				if (*i == NULL ||
+				    (*i)->index > ike_frag->index) {
 					ike_frag->next = *i;
 					*i = ike_frag;
 					ike_frag = NULL;
@@ -1468,7 +1468,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					ike_frag->next = old->next;
 					*i = ike_frag;
 					release_md(old->md);
-					free(old);
+					pfree(old);
 					ike_frag = NULL;
 				}
 			}
@@ -1505,7 +1505,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					/* Reassemble fragments in buffer */
 					frag = st->ike_frags;
-					while (frag &&
+					while (frag != NULL &&
 					       frag->index <= last_frag_index)
 					{
 						passert(offset + frag->size <=
@@ -2241,14 +2241,16 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * actual end of phase 1. With modecfg, negotiation ends with
 		 * STATE_MAIN_I4 already.
 		 */
-		/*if(st->st_connection->spd.this.xauth_client
+#if 0	/* ??? what's this code for? */
+		if (st->st_connection->spd.this.xauth_client
 		    && st->hidden_variables.st_xauth_client_done
 		    && !st->st_connection->spd.this.modecfg_client
 		    && st->st_state == STATE_XAUTH_I1) {
-		    DBG(DBG_CONTROL, DBG_log("As XAUTH is done and modecfg is not configured,
-		                                    so Phase 1 neogtiation finishes successfully"));
-		    change_state(st, STATE_MAIN_I4);
-		   }*/
+			DBG(DBG_CONTROL,
+				DBG_log("As XAUTH is done and modecfg is not configured, so Phase 1 neogtiation finishes successfully"));
+			change_state(st, STATE_MAIN_I4);
+		}
+#endif
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {

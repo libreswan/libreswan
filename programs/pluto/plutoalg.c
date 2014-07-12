@@ -544,6 +544,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
  *	Create proposal with runtime kernel algos, merging
  *	with passed proposal if not NULL
  *
+ * ??? is this still true?  Certainly not free(3):
  *	for now this function does free() previous returned
  *	malloced pointer (this quirk allows easier spdb.c change)
  */

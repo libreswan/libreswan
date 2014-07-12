@@ -512,6 +512,7 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 
 		if (n < 0) {
 			char buff[256];
+
 			strerror_r(errno, buff, 256);
 			libreswan_log("  scandir() ./ error: %s", buff);
 		} else {
@@ -522,9 +523,9 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 						type, &cert))
 					add_authcert(cert.u.x509, auth_flags);
 
-				free(filelist[n]);
+				free(filelist[n]);	/* was malloced by scandir(3) */
 			}
-			free(filelist);
+			free(filelist);	/* was malloced by scandir(3) */
 		}
 
 		/* restore directory path */
