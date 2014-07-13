@@ -346,27 +346,30 @@ def orient (t):
 		t["nic"] = "nic"
 		test_hosts.append(t["nic"])
 	
-	pcap_file = "swan12.pcap" 
-	tcpdump_dev ="swan12"
+	tcpdump_devs = ["swan12"]
 	tcpdump_filter = "not stp and not port 22"
 
 	if os.path.exists("westrun.sh"):
 		t["initiator"] = "west"
 	elif os.path.exists("roadrun.sh"):
 		t["initiator"] = "road"
+		tcpdump_devs.append("swan13")
 	elif os.path.exists("northrun.sh"):
 		t["initiator"] = "north"
-		pcap_file = "swan13.pcap" 
-		tcpdump_dev = "swan13"
+		tcpdump_devs.append("swan13")
 	else:
 		sys.exit("ABORT can't identify INITIATOR in directory %s"%os.getcwd())
 
 	test_hosts.append(t["initiator"])
 	test_hosts.append(t["responder"])
+	cmds = []
+	for iface in tcpdump_devs: 
+		pcap_file =  './OUTPUT/' + iface + '.pcap'
+		cmd = "/sbin/tcpdump -s 0 -w %s -n -i %s %s &" %(pcap_file, iface, tcpdump_filter) 
+		logging.debug(cmd)
+		cmds.append(cmd)
 
-	cmd = "/sbin/tcpdump -s 0 -w ./OUTPUT/%s -n -i %s %s &" %(pcap_file, tcpdump_dev, tcpdump_filter) 
-
-	return cmd, test_hosts
+	return cmds, test_hosts
 
 def read_exec_shell_cmd(ex, filename, prompt, timer, hostname = ""):
 
@@ -568,7 +571,7 @@ def do_test(args, start=''):
 	logging.info("***** KVM PLUTO RUNNING test %s *******", testname)
 
 	t = dict()
-	tcpdump_cmd, test_hosts = orient(t)
+	tcpdump_cmds, test_hosts = orient(t)
 
 	e = shut_down_hosts(args, test_hosts)
 
@@ -580,7 +583,8 @@ def do_test(args, start=''):
 		# we can't call exit(1) "make check" will abort then
 		return e
 
-	os.system(tcpdump_cmd)
+	for cmd in tcpdump_cmds:
+		os.system(cmd)
 
 	r_init.clear()
 	i_ran.clear()
