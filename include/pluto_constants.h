@@ -693,29 +693,6 @@ enum sa_policy_bits {
 /* Don't allow negotiation? */
 #define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
 
-/* Oakley transform attributes
- * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
- */
-
-#define OAKLEY_ENCRYPTION_ALGORITHM    1
-#define OAKLEY_HASH_ALGORITHM          2
-#define OAKLEY_AUTHENTICATION_METHOD   3
-#define OAKLEY_GROUP_DESCRIPTION       4
-#define OAKLEY_GROUP_TYPE              5
-#define OAKLEY_GROUP_PRIME             6        /* B/V */
-#define OAKLEY_GROUP_GENERATOR_ONE     7        /* B/V */
-#define OAKLEY_GROUP_GENERATOR_TWO     8        /* B/V */
-#define OAKLEY_GROUP_CURVE_A           9        /* B/V */
-#define OAKLEY_GROUP_CURVE_B          10        /* B/V */
-#define OAKLEY_LIFE_TYPE              11
-#define OAKLEY_LIFE_DURATION          12        /* B/V */
-#define OAKLEY_PRF                    13
-#define OAKLEY_KEY_LENGTH             14
-#define OAKLEY_FIELD_SIZE             15
-#define OAKLEY_GROUP_ORDER            16        /* B/V */
-/* 17-16383 Unassigned */
-/* 16384-32767 Reserved for private use */
-
 /* IPsec DOI attributes
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
  */

@@ -880,6 +880,7 @@ typedef u_int16_t cpi_t;
 /*
  * Oakley transform attributes
  * draft-ietf-ipsec-ike-01.txt appendix A
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
  */
 
 enum ikev1_oakley_attr {
@@ -900,7 +901,9 @@ enum ikev1_oakley_attr {
 	OAKLEY_KEY_LENGTH = 14,
 	OAKLEY_FIELD_SIZE = 15,
 	OAKLEY_GROUP_ORDER = 16, /* B/V */
-	OAKLEY_BLOCK_SIZE = 17,
+	/* OAKLEY_BLOCK_SIZE = 17, */	/* ??? where does this come from? */
+	/* 17-16383 Unassigned */
+	/* 16384-32767 Reserved for private use */
 };
 
 /*
