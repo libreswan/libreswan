@@ -120,12 +120,14 @@ static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 			  struct pam_response **response, void *appdata_ptr);
 #endif
 
-/* pointer to an array of st_jbuf_t elements.
+/*
+ * pointer to an array of st_jbuf_t elements.
  * The last element has .st==NULL (and !.in_use).
  * Unused ones (not the last) have some meaningless non-NULL value in .st.  Yuck!
  * All manipulations must be protected via st_jbuf_mutex.
  * If no entries are in use, the array must be freed:
  * two tests in do_authentication depend on this.
+ * Note: managed by calloc/realloc/free
  */
 static st_jbuf_t *st_jbuf_mem = NULL;
 
@@ -163,7 +165,8 @@ static st_jbuf_t *get_ptr_matching_tid(void)
 	return NULL;
 }
 
-/* Find or create a free slot in the st_jbuf_mem array.
+/*
+ * Find or create a free slot in the st_jbuf_mem array.
  * Note: after return, caller MUST set the .st field of the result to a
  * non-NULL value or bad things happen. The only caller does this.
  * The caller must not have locked st_jbuf_mutex: we will.
@@ -174,12 +177,17 @@ static st_jbuf_t *alloc_st_jbuf(void)
 
 	pthread_mutex_lock(&st_jbuf_mutex);
 	if (st_jbuf_mem == NULL) {
-		/* no array: allocate one slot plus endmarker
-		 * calloc ensures that the endmarker has .st == NULL
-		 */
+		/* no array: allocate one slot plus endmarker */
 		st_jbuf_mem = calloc(2, sizeof(st_jbuf_t));
 		if (st_jbuf_mem == NULL)
 			lsw_abort();
+
+		/*
+		 * Initialize end marker.
+		 * calloc(3) does not guarantee that pointer .st is
+		 * initialized to NULL but it will set .in_use to FALSE.
+		 */
+		st_jbuf_mem[1].st = NULL;
 
 		ptr = st_jbuf_mem;
 		/* new entry is going in first slot in our new array */
@@ -1052,7 +1060,7 @@ static int xauth_pam_conv(int num_msg,
 			 * not our own allocators.
 			 */
 			size_t len = strlen(s) + 1;
-			char *t = malloc(len);
+			char *t = malloc(len);	/* must be malloced */
 
 			memcpy(t, s, len);
 			reply[count].resp_retcode = 0;

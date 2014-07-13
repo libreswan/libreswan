@@ -145,16 +145,17 @@ static void free_fetch_request(fetch_req_t *req)
 
 #ifdef LIBCURL
 /*
- * writes data into a buffer
- * needed for libcurl
+ * Appends *ptr into (chunk_t *)data.
+ * A call-back used with libcurl.
  */
 static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
 {
 	size_t realsize = size * nmemb;
-	chunk_t *mem = (chunk_t*)data;
+	chunk_t *mem = (chunk_t *)data;
 
-	mem->ptr = (u_char *)realloc(mem->ptr, mem->len + realsize);
-	if (mem->ptr) {
+	/* note: memory allocated by realloc(3) */
+	mem->ptr = realloc(mem->ptr, mem->len + realsize);
+	if (mem->ptr != NULL) {
 		memcpy(&(mem->ptr[mem->len]), ptr, realsize);
 		mem->len += realsize;
 	}
@@ -171,7 +172,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 #ifdef LIBCURL
 	char errorbuffer[CURL_ERROR_SIZE] = "";
 	char *uri;
-	chunk_t response = empty_chunk;
+	chunk_t response = empty_chunk;	/* managed by realloc/free */
 	CURLcode res;
 
 	/* get it with libcurl */
@@ -198,23 +199,21 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 		res = curl_easy_perform(curl);
 
 		if (res == CURLE_OK) {
-			blob->len = response.len;
-			blob->ptr = alloc_bytes(response.len, "curl blob");
-			memcpy(blob->ptr, response.ptr, response.len);
+			/* clone from realloc(3)ed memory to pluto-allocated memory */
+			clonetochunk(*blob, response.ptr, response.len, "curl blob");
 		} else {
 			libreswan_log("fetching uri (%s) with libcurl failed: %s", uri,
 			     errorbuffer);
 		}
 		curl_easy_cleanup(curl);
 		pfree(uri);
-		/* not using freeanychunk because of realloc (no leak detective) */
-		curl_free(response.ptr);
+
+		if (response.ptr != NULL)
+			free(response.ptr);	/* allocated via realloc(3) */
 	}
 	return strlen(errorbuffer) > 0 ? "libcurl error" : NULL;
-
 #else
 	return "not compiled with libcurl support";
-
 #endif
 }
 

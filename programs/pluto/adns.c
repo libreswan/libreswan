@@ -266,7 +266,13 @@ struct worker_info {
 static struct worker_info wi[MAX_WORKERS];
 static struct worker_info *wi_roof = wi;
 
-/* request FIFO */
+/*
+ * request FIFO
+ *
+ * Note: struct query_list objects are allocated by malloc(3).
+ * They are made available for reuse by putting them on the free_queries list
+ * but never actually freed (free(3)).
+ */
 
 struct query_list {
 	struct query_list *next;
