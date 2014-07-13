@@ -3714,41 +3714,42 @@ void show_one_connection(struct connection *c)
 
 void show_connections_status(void)
 {
-	int count, i, active;
+	int count = 0;
+	int active = 0;
 	struct connection *c;
-	struct connection **array;
 
 	whack_log(RC_COMMENT, " "); /* spacer */
 	whack_log(RC_COMMENT, "Connection list:"); /* spacer */
 	whack_log(RC_COMMENT, " "); /* spacer */
 
-	/* make an array of connections, and sort it */
-	count = 0;
-	for (c = connections; c != NULL; c = c->ac_next)
-		count++;
-	if (count == 0)
-		/* abort early to avoid a malloc(0) that uclibc does not like */
-		return;
-
-	array = alloc_bytes(sizeof(struct connection *) * count,
-			"connection array");
-
-	count = 0;
-	active = 0;
 	for (c = connections; c != NULL; c = c->ac_next) {
-		array[count++] = c;
+		count++;
 		if (c->spd.routing == RT_ROUTED_TUNNEL)
 			active++;
 	}
 
-	/* sort it! */
-	qsort(array, count, sizeof(struct connection *),
-		connection_compare_qsort);
+	if (count != 0) {
+		/* make an array of connections, sort it, and report it */
 
-	for (i = 0; i < count; i++)
-		show_one_connection(array[i]);
-	pfree(array);
-	whack_log(RC_COMMENT, " "); /* spacer */
+		struct connection **array =
+			alloc_bytes(sizeof(struct connection *) * count,
+				"connection array");
+		int i = 0;
+
+		for (c = connections; c != NULL; c = c->ac_next)
+			array[i++] = c;
+
+		/* sort it! */
+		qsort(array, count, sizeof(struct connection *),
+			connection_compare_qsort);
+
+		for (i = 0; i < count; i++)
+			show_one_connection(array[i]);
+
+		pfree(array);
+		whack_log(RC_COMMENT, " "); /* spacer */
+	}
+
 	whack_log(RC_COMMENT, "Total IPsec connections: loaded %d, active %d",
 		count, active);
 }

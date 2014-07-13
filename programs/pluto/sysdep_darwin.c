@@ -189,14 +189,20 @@ bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
 
 struct raw_iface *find_raw_ifaces4(void)
 {
-	static const int on = TRUE;                                             /* by-reference parameter; constant, we hope */
-	int j;                                                                  /* index into buf */
-	static int num = 64;                                                    /* number of interfaces */
+	static const int on = TRUE;	/* by-reference parameter; constant, we hope */
+	int j;	/* index into buf */
 	struct ifconf ifconf;
-	struct ifreq *buf;                                                      /* for list of interfaces -- arbitrary limit */
-	struct ifreq *bp;                                                       /* cursor into buf */
+	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
+	struct ifreq *bp;	/* cursor into buf */
 	struct raw_iface *rifaces = NULL;
 	int master_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);        /* Get a UDP socket */
+
+	/*
+	 * Current upper bound on number of interfaces.
+	 * Tricky: because this is a static, we won't have to start from
+	 * 64 in subsequent calls.
+	 */
+	static int num = 64;	/* number of interfaces */
 
 	/* get list of interfaces with assigned IPv4 addresses from system */
 
@@ -217,23 +223,19 @@ struct raw_iface *find_raw_ifaces4(void)
 			 sockaddrlenof(&any)) < 0)
 			exit_log_errno((e,
 					"bind() failed in find_raw_ifaces4()"));
-
-
 	}
 
-	buf = NULL;
-
 	/* a million interfaces is probably the maximum, ever... */
-	while (num < (1024 * 1024)) {
-		/* Get local interfaces.  See netdevice(7). */
+	for (; num < (1024 * 1024); num *= 2) {
+		/* Get num local interfaces.  See netdevice(7). */
 		ifconf.ifc_len = num * sizeof(struct ifreq);
-		buf = (void *) realloc(buf, ifconf.ifc_len);
-		if (!buf) {
+		buf = realloc(buf, ifconf.ifc_len);
+		if (buf == NULL) {
 			exit_log_errno((e,
 					"realloc of %d in find_raw_ifaces4()",
 					ifconf.ifc_len));
 		}
-		memset(buf, 0, num * sizeof(struct ifreq));
+		memset(buf, 0x00, num * sizeof(struct ifreq));
 		ifconf.ifc_buf = (void *) buf;
 
 		if (ioctl(master_sock, SIOCGIFCONF, &ifconf) == -1)
@@ -244,9 +246,6 @@ struct raw_iface *find_raw_ifaces4(void)
 		/* if we got back less than we asked for, we have them all */
 		if (ifconf.ifc_len < (int)(sizeof(struct ifreq) * num))
 			break;
-
-		/* try again and ask for more this time */
-		num *= 2;
 	}
 
 	/* Add an entry to rifaces for each interesting interface.
@@ -309,8 +308,8 @@ struct raw_iface *find_raw_ifaces4(void)
 		rifaces = clone_thing(ri, "struct raw_iface");
 	}
 
+	free(buf);	/* was allocated via realloc() */
 	close(master_sock);
-
 	return rifaces;
 }
 
