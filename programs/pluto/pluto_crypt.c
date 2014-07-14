@@ -555,7 +555,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 					w->pcw_helpernum));
 				/* discard request ??? is this the best action? */
 				/* XXX invoke callback with failure */
-				passert(0);
+				passert(FALSE);
 				if (pbs_offset(&cn->pcrc_reply_stream) != 0) {
 					pfree(cn->pcrc_reply_buffer);
 					cn->pcrc_reply_buffer = NULL;
@@ -573,7 +573,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 		/* send the request, and then mark the worker as having more work */
 		if (!crypto_write_request(w, r)) {
 			/* XXX invoke callback with failure */
-			passert(0);
+			passert(FALSE);
 			if (pbs_offset(&cn->pcrc_reply_stream) != 0)
 				pfree(cn->pcrc_reply_buffer);
 			cn->pcrc_reply_buffer = NULL;

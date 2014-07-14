@@ -1036,7 +1036,7 @@ static void bsdkame_remove_orphaned_holds(int transport_proto UNUSED,
 					  const ip_subnet *ours UNUSED,
 					  const ip_subnet *his UNUSED)
 {
-	passert(0);
+	passert(FALSE);
 }
 
 static bool bsdkame_except_socket(int socketfd, int family)
