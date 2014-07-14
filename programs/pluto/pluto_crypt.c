@@ -66,7 +66,36 @@
 
 TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 
-/* Note: this per-helper struct is never modified in a helper thread */
+/*
+ * Note: this per-helper struct is never modified in a helper thread
+ *
+ * Life cycle:
+ * - array of nhelpers pointers to this struct created by init_crypto_helpers
+ *   Each is initialized by init_crypto_helper (and thread is created):
+ *	pcw_work = 0
+ *	pcw_dead = FALSE (TRUE if thread creation failed)
+ *	pcw_active some kind of queue
+ *
+ * - cleanup_crypto_helper.
+ *   Called by send_crypto_helper_request (if worker is dead and reaped)
+ *   Called by handle_helper_answer on EOF if reaped (set dead)
+ *	pcw_work = 0
+ *	pcw_dead = FALSE (marking as not dead -- lets it live again)
+ *
+ * - kill_helper does a pthread_cancel.
+ *   It is called if the main program's handle_helper_answer cannot
+ *   read correctly from helper.
+ *	pcw_dead = TRUE
+ *
+ * - handle_helper_answer reads from helper
+ *   + calls kill_helper on read error
+ *	pcw_dead = TRUE on EOF
+ *
+ * pcw_work:
+ * - send_crypto_helper_request increments it at end
+ * - crypto_send_backlog increments it at end
+ * - handle_helper_answer decrements it after reading
+ */
 struct pluto_crypto_worker {
 	int pcw_helpernum;
 	pthread_t pcw_pid;
