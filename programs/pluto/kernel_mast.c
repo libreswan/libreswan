@@ -105,8 +105,7 @@ static int recalculate_mast_device_list(struct raw_iface *rifaces)
 
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		/* look for virtual (mast*) interface */
-		if (strncmp(ifp->name, MASTDEVPREFIX, sizeof(MASTDEVPREFIX) -
-			    1))
+		if (!startswith(ifp->name, MASTDEVPREFIX))
 			continue;
 
 		if (sscanf(ifp->name, "mast%d", &mastno) == 1) {
@@ -195,19 +194,17 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		/* ignore if virtual (ipsec*) interface */
-		if (strncmp(ifp->name, IPSECDEVPREFIX, sizeof(IPSECDEVPREFIX) -
-			    1) == 0)
+		if (startswith(ifp->name, IPSECDEVPREFIX))
 			continue;
 
 		/* ignore if virtual (mast*) interface */
-		if (strncmp(ifp->name, MASTDEVPREFIX, sizeof(MASTDEVPREFIX) -
-			    1) == 0) {
+		if (startswith(ifp->name, MASTDEVPREFIX)) {
 			found_mast = TRUE;
 			continue;
 		}
 
 		/* ignore if loopback interface */
-		if (strncmp(ifp->name, "lo", 2) == 0)
+		if (startswith(ifp->name, "lo"))
 			continue;
 
 		/* ignore if --listen is specified and we do not match */

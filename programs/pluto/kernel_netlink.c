@@ -1987,13 +1987,11 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 		struct raw_iface *vfp;
 
 		/* ignore if virtual (ipsec*) interface */
-		if (strncmp(ifp->name, IPSECDEVPREFIX,
-				sizeof(IPSECDEVPREFIX) - 1) == 0)
+		if (startswith(ifp->name, IPSECDEVPREFIX))
 			continue;
 
 		/* ignore if virtual (mast*) interface */
-		if (strncmp(ifp->name, MASTDEVPREFIX,
-				sizeof(MASTDEVPREFIX) - 1) == 0)
+		if (startswith(ifp->name, MASTDEVPREFIX))
 			continue;
 
 		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
@@ -2006,9 +2004,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				 *
 				 * Many interesting cases.
 				 */
-				if (strncmp(vfp->name, IPSECDEVPREFIX,
-						sizeof(IPSECDEVPREFIX) - 1) ==
-					0) {
+				if (startswith(vfp->name, IPSECDEVPREFIX)) {
 					if (v != NULL) {
 						ipstr_buf b;
 

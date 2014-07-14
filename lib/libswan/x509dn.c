@@ -1001,8 +1001,8 @@ bool same_dn(chunk_t a, chunk_t b)
 					value_b.len))
 				return FALSE;
 		} else {
-			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
-				    value_b.len) != 0)
+			if (!strneq((char *)value_a.ptr, (char *)value_b.ptr,
+				    value_b.len))
 				return FALSE;
 		}
 	}
@@ -1070,8 +1070,8 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 					value_b.len))
 				return FALSE;
 		} else {
-			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
-				    value_b.len) != 0)
+			if (!strneq((char *)value_a.ptr, (char *)value_b.ptr,
+				    value_b.len))
 				return FALSE;
 		}
 	}

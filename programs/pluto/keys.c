@@ -869,7 +869,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 							TRUE);
 
 			if (!check_pub_keys ||
-			    strncmp(check_expiry_msg, "ok", 2) != 0) {
+			    !startswith(check_expiry_msg, "ok")) {
 				char expires_buf[REALTIMETOA_BUF];
 				char installed_buf[REALTIMETOA_BUF];
 				char id_buf[IDTOA_BUF];
