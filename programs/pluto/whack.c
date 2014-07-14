@@ -2099,6 +2099,7 @@ int main(int argc, char **argv)
 
 						switch (s) {
 						case RC_COMMENT:
+						case RC_INFORMATIONAL:
 						case RC_LOG:
 							/* ignore */
 							break;
