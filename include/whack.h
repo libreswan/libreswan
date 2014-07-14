@@ -48,10 +48,10 @@
  * and because whack is a separate program from pluto.
  */
 struct whack_end {
-	char *id;       /* id string (if any) -- decoded by pluto */
-	char *cert;     /* path string (if any) -- loaded by pluto  */
-	char *ca;       /* distinguished name string (if any) -- parsed by pluto */
-	char *groups;   /* access control groups (if any) -- parsed by pluto */
+	char *id;	/* id string (if any) -- decoded by pluto */
+	char *cert;	/* path string (if any) -- loaded by pluto  */
+	char *ca;	/* distinguished name string (if any) -- parsed by pluto */
+	char *groups;	/* access control groups (if any) -- parsed by pluto */
 
 	enum keyword_host host_type;
 	ip_address host_addr,
@@ -63,32 +63,32 @@ struct whack_end {
 	bool has_client;
 	bool has_client_wildcard;
 	bool has_port_wildcard;
-	char *updown;           /* string */
-	u_int16_t host_port;    /* host order  (for IKE communications) */
-	u_int16_t port;         /* host order */
+	char *updown;		/* string */
+	u_int16_t host_port;	/* host order  (for IKE communications) */
+	u_int16_t port;		/* host order */
 	u_int8_t protocol;
 	char *virt;
-	ip_range pool_range;    /* store start of v4 addresspool */
-	bool xauth_server;      /* for XAUTH */
+	ip_range pool_range;	/* store start of v4 addresspool */
+	bool xauth_server;	/* for XAUTH */
 	bool xauth_client;
 	char *xauth_name;
-	bool modecfg_server;    /* for MODECFG */
+	bool modecfg_server;	/* for MODECFG */
 	bool modecfg_client;
 	unsigned int tundev;
 	enum certpolicy sendcert;
 	enum ike_cert_type certtype;
 
-	char *host_addr_name;   /* DNS name for host, of hosttype==IPHOSTNAME*/
-	                        /* pluto will convert to IP address again,
-	                         * if this is non-NULL when conn fails.
-	                         */
+	char *host_addr_name;	/* DNS name for host, of hosttype==IPHOSTNAME*/
+				/* pluto will convert to IP address again,
+				 * if this is non-NULL when conn fails.
+				 */
 };
 
 enum whack_opt_set {
-	WHACK_ADJUSTOPTIONS=0,          /* normal case */
-	WHACK_SETDUMPDIR=1,             /* string1 contains new dumpdir */
-	WHACK_STARTWHACKRECORD=2,       /* string1 contains file to write options to */
-	WHACK_STOPWHACKRECORD=3,        /* turn off recording to file */
+	WHACK_ADJUSTOPTIONS=0,		/* normal case */
+	WHACK_SETDUMPDIR=1,		/* string1 contains new dumpdir */
+	WHACK_STARTWHACKRECORD=2,	/* string1 contains file to write options to */
+	WHACK_STOPWHACKRECORD=3,	/* turn off recording to file */
 };
 
 struct whack_message {
@@ -183,23 +183,23 @@ struct whack_message {
 	struct whack_end right;
 
 	/* note: if the client is the gateway, the following must be equal */
-	sa_family_t addr_family;        /* between gateways */
-	sa_family_t tunnel_addr_family; /* between clients */
+	sa_family_t addr_family;	/* between gateways */
+	sa_family_t tunnel_addr_family;	/* between clients */
 
-	char *ike;                      /* ike algo string (separated by commas) */
-	char *pfsgroup;                 /* pfsgroup will be "encapsulated" in esp string for pluto */
-	char *esp;                      /* esp algo string (separated by commas) */
+	char *ike;			/* ike algo string (separated by commas) */
+	char *pfsgroup;			/* pfsgroup will be "encapsulated" in esp string for pluto */
+	char *esp;			/* esp algo string (separated by commas) */
 
 	/* for WHACK_KEY: */
 	bool whack_key;
 	bool whack_addkey;
-	char *keyid;    /* string 8 */
+	char *keyid;	/* string 8 */
 	enum pubkey_alg pubkey_alg;
-	chunk_t keyval; /* chunk */
+	chunk_t keyval;	/* chunk */
 
 	/* for WHACK_MYID: */
 	bool whack_myid;
-	char *myid; /* string 7 */
+	char *myid;	/* string 7 */
 
 	/* for WHACK_ROUTE: */
 	bool whack_route;
@@ -296,29 +296,29 @@ struct whack_message {
 
 /* options of whack --list*** command */
 
-#define LIST_NONE       0x0000  /* don't list anything */
-#define LIST_PUBKEYS    0x0001  /* list all public keys */
-#define LIST_CERTS      0x0002  /* list all host/user certs */
-#define LIST_CACERTS    0x0004  /* list all ca certs */
-#define LIST_CRLS       0x0008  /* list all crls */
-#define LIST_PSKS       0x0010  /* list all preshared keys (by name) */
-#define LIST_EVENTS     0x0020  /* list all queued events */
+#define LIST_NONE	0x0000	/* don't list anything */
+#define LIST_PUBKEYS	0x0001	/* list all public keys */
+#define LIST_CERTS	0x0002	/* list all host/user certs */
+#define LIST_CACERTS	0x0004	/* list all ca certs */
+#define LIST_CRLS	0x0008	/* list all crls */
+#define LIST_PSKS	0x0010	/* list all preshared keys (by name) */
+#define LIST_EVENTS	0x0020	/* list all queued events */
 
 /* omit events from listing options */
-#define LIST_ALL        LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */
+#define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */
 
 /* options of whack --reread*** command */
 
-#define REREAD_NONE       0x00                                  /* don't reread anything */
-#define REREAD_SECRETS    0x01                                  /* reread /etc/ipsec.secrets */
-#define REREAD_CACERTS    0x02                                  /* reread certs in /etc/ipsec.d/cacerts */
-#define REREAD_CRLS       0x04                                  /* reread crls in /etc/ipsec.d/crls */
-#define REREAD_ALL      LRANGES(REREAD_SECRETS, REREAD_CRLS)    /* all reread options */
+#define REREAD_NONE	0x00		/* don't reread anything */
+#define REREAD_SECRETS	0x01		/* reread /etc/ipsec.secrets */
+#define REREAD_CACERTS	0x02		/* reread certs in /etc/ipsec.d/cacerts */
+#define REREAD_CRLS	0x04		/* reread crls in /etc/ipsec.d/crls */
+#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_CRLS)	/* all reread options */
 
 struct whackpacker {
 	struct whack_message *msg;
-	unsigned char        *str_roof;
-	unsigned char        *str_next;
+	unsigned char *str_roof;
+	unsigned char *str_next;
 	int n;
 };
 
