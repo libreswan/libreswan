@@ -952,71 +952,13 @@ err_t atodn(char *src, chunk_t *dn)
  */
 bool same_dn(chunk_t a, chunk_t b)
 {
-	chunk_t rdn_a, rdn_b, attribute_a, attribute_b;
-	chunk_t oid_a, oid_b, value_a, value_b;
-	asn1_t type_a, type_b;
-	bool next_a, next_b;
-
-	/* same lengths for the DNs */
-	if (a.len != b.len)
-		return FALSE;
-
-	/* try a binary comparison first */
-	if (memeq(a.ptr, b.ptr, b.len))
-		return TRUE;
-
-	/* initialize DN parsing */
-	if (init_rdn(a, &rdn_a, &attribute_a, &next_a) != NULL ||
-		init_rdn(b, &rdn_b, &attribute_b, &next_b) != NULL)
-		return FALSE;
-
-	/* fetch next RDN pair */
-	while (next_a && next_b) {
-		/* parse next RDNs and check for errors */
-		if (get_next_rdn(&rdn_a, &attribute_a, &oid_a, &value_a,
-					&type_a, &next_a) != NULL ||
-			get_next_rdn(&rdn_b, &attribute_b, &oid_b, &value_b,
-				&type_b, &next_b) != NULL)
-			return FALSE;
-
-		/* OIDs must agree */
-		if (oid_a.len != oid_b.len ||
-			!memeq(oid_a.ptr, oid_b.ptr, oid_b.len))
-			return FALSE;
-
-		/* same lengths for values */
-		if (value_a.len != value_b.len)
-			return FALSE;
-
-		/*
-		 * printableStrings and email RDNs require uppercase
-		 * comparison
-		 */
-		if (type_a == type_b &&
-		    (type_a == ASN1_PRINTABLESTRING ||
-		     (type_a == ASN1_IA5STRING &&
-		      known_oid(oid_a) == OID_PKCS9_EMAIL))) {
-			if (!strncaseeq((char *)value_a.ptr,
-					(char *)value_b.ptr,
-					value_b.len))
-				return FALSE;
-		} else {
-			if (!strneq((char *)value_a.ptr, (char *)value_b.ptr,
-				    value_b.len))
-				return FALSE;
-		}
-	}
-	/* both DNs must have same number of RDNs */
-	if (next_a || next_b)
-		return FALSE;
-
-	/* the two DNs are equal! */
-	return TRUE;
+	return match_dn(a, b, NULL);	/* degenerate case of match_dn() */
 }
 
 /*
  * compare two distinguished names by comparing the individual RDNs.
  * A single'*' character designates a wildcard RDN in DN b.
+ * If wildcards is NULL, exact match is required.
  */
 bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 {
@@ -1025,8 +967,19 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	asn1_t type_a, type_b;
 	bool next_a, next_b;
 
-	/* initialize wildcard counter */
-	*wildcards = 0;
+	if (wildcards != NULL) {
+		/* initialize wildcard counter */
+		*wildcards = 0;
+	} else {
+		/* fast checks possible without wildcards */
+		/* same lengths for the DNs */
+		if (a.len != b.len)
+			return FALSE;
+
+		/* try a binary comparison first */
+		if (memeq(a.ptr, b.ptr, b.len))
+			return TRUE;
+	}
 
 	/* initialize DN parsing */
 	if (init_rdn(a, &rdn_a, &attribute_a, &next_a) != NULL ||
@@ -1048,7 +1001,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			return FALSE;
 
 		/* does rdn_b contain a wildcard? */
-		if (value_b.len == 1 && *value_b.ptr == '*') {
+		if (wildcards != NULL && value_b.len == 1 && *value_b.ptr == '*') {
 			(*wildcards)++;
 			continue;
 		}
@@ -1077,7 +1030,8 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	}
 	/* both DNs must have same number of RDNs */
 	if (next_a || next_b) {
-		if (*wildcards) {
+		if (wildcards != NULL && *wildcards != 0) {
+			/* ??? for some reason we think a failure with wildcards is worth logging */
 			char abuf[ASN1_BUF_LEN];
 			char bbuf[ASN1_BUF_LEN];
 
