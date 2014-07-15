@@ -648,7 +648,7 @@ size_t format_end(char *buf,
 				send_cert = "+S=C";
 				break;
 			}
-			p = add_str(endopts, sizeof(endopts), p, send_cert);
+			add_str(endopts, sizeof(endopts), p, send_cert);
 		}
 	}
 
