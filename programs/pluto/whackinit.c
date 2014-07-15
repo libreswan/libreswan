@@ -219,19 +219,20 @@ static bool pack_str(char **p)
 static size_t get_secret(char *buf, size_t bufsize)
 {
 	const char *secret;
-	int len;
+	size_t len;
 
 	fflush(stdout);
 	usleep(20000); /* give fflush time for flushing */
 	/* ??? the function getpass(3) is obsolete! */
 	secret = getpass("Enter passphrase: ");
-	secret = (secret == NULL) ? "" : secret;
 
-	buf[0] = '\0'
-	strncat(buf, secret, bufsize-1);
-
-	len = strlen(buf) + 1;
-
+	len = (secret == NULL? 0 : strlen(secret)) + 1;
+	if (len > bufsize)
+		len = bufsize;
+	if (len > 0) {
+		memcpy(buf, secret, len - 1);
+		buf[len - 1] = '\0';
+	}
 	return len;
 }
 

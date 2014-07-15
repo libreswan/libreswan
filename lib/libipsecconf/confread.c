@@ -184,15 +184,14 @@ static bool error_append(char **perr, const char *fmt, ...)
 	vsnprintf(tmp_err, sizeof(tmp_err) - 1, fmt, args);
 	va_end(args);
 
-	len = 1 + strlen(tmp_err) + (*perr ? strlen(*perr) : 0);
-	nerr = alloc_bytes(len,"error_append len");
+	len = 1 + strlen(tmp_err) + (*perr != NULL ? strlen(*perr) : 0);
+	nerr = alloc_bytes(len, "error_append len");
 	nerr[0] = '\0';
-	if (*perr)
-		strcpy(nerr, *perr);
-	strcat(nerr, tmp_err);
-
-	if (*perr)
+	if (*perr != NULL) {
+		strcpy(nerr, *perr);	/* safe: see allocation above */
 		pfree(*perr);
+	}
+	strcat(nerr, tmp_err);	/* safe: see allocation above */
 	*perr = nerr;
 
 	return TRUE;

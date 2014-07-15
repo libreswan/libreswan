@@ -441,8 +441,8 @@ static void show_virtual_private_kind(const char *kind,
 			subnettot(&private_net[i], 0, sn, sizeof(sn));
 			if (strlen(all) + strlen(sep) +  strlen(sn) <
 					sizeof(all)) {
-				strcat(all, sep);
-				strcat(all, sn);
+				strcat(all, sep);	/* safe: see allocation above */
+				strcat(all, sn);	/* safe: see allocation above */
 			} else {
 				trunc = TRUE;
 				break;

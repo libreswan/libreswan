@@ -99,12 +99,13 @@ char *jam_str(char *dest, size_t size, const char *src)
  *
  * Warning: strncat's bound is NOT on the whole buffer!
  * strncat(dest, src, n) adds at most n+1 bytes after the contents of dest.
- * People think it does strncat(dest, src, n - strlen(dest) - 1).
- * A falacious strncat(dest, src, n) should be written as
- * (void)add_str(dest, n, dest, src).
+ * Many people think that the limit is n bytes.
  *
  * Warning: Is it really wise to silently truncate?  Only the caller knows.
  * The caller SHOULD check by seeing if the result equals dest's roof.
+ * Overflow at any point in a chain of jam_str and add_str calls will
+ * be reflected in the final return result so checking of intermediate
+ * return values is not required.
  */
 char *add_str(char *buf, size_t size, char *hint, const char *src)
 {

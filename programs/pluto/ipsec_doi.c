@@ -527,19 +527,16 @@ void send_delete(struct state *st)
 		ikev1_delete_out(st);
 }
 
-void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
+void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 {
-	char *b = sadetails;
+	struct connection *const c = st->st_connection;
+	char *b;
 	const char *ini = " {";
-	struct connection *c = st->st_connection;
+	ipstr_buf ipb;
 
-	passert(c != NULL);
-	strcpy(sadetails,
-	       (c->policy & POLICY_TUNNEL ?
-		" tunnel mode" : " transport mode"));
-	b += strlen(sadetails);
-
-	/* -1 is to leave space for "}" */
+	b = jam_str(sadetails, sad_len,
+	       c->policy & POLICY_TUNNEL ?
+		" tunnel mode" : " transport mode");
 
 	if (st->st_esp.present) {
 		char esb[ENUM_SHOW_BUF_LEN];
@@ -552,7 +549,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 				    c->forceencaps ? "enabled" : "disabled"));
 		}
 
-		snprintf(b, sad_len - (b - sadetails) - 1,
+		snprintf(b, sad_len - (b - sadetails),
 			 "%sESP%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
 			 (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? "/NAT" : "",
@@ -563,85 +560,71 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 st->st_esp.attrs.transattrs.enckeylen,
 			 strip_prefix(enum_show(&auth_alg_names,
 				   st->st_esp.attrs.transattrs.integ_hash), "AUTH_ALGORITHM_"));
+
+		/* advance b to end of string */
+		b = b + strlen(b);
+
 		ini = " ";
 	}
-	/* advance b to end of string */
-	b = b + strlen(b);
 
 	if (st->st_ah.present) {
-		snprintf(b, sad_len - (b - sadetails) - 1,
+		snprintf(b, sad_len - (b - sadetails),
 			 "%sAH=>0x%08lx <0x%08lx",
 			 ini,
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
 			 (unsigned long)ntohl(st->st_ah.our_spi));
+
+		/* advance b to end of string */
+		b = b + strlen(b);
+
 		ini = " ";
 	}
-	/* advance b to end of string */
-	b = b + strlen(b);
 
 	if (st->st_ipcomp.present) {
-		snprintf(b, sad_len - (b - sadetails) - 1,
+		snprintf(b, sad_len - (b - sadetails),
 			 "%sIPCOMP=>0x%08lx <0x%08lx",
 			 ini,
 			 (unsigned long)ntohl(st->st_ipcomp.attrs.spi),
 			 (unsigned long)ntohl(st->st_ipcomp.our_spi));
+
+		/* advance b to end of string */
+		b = b + strlen(b);
+
 		ini = " ";
 	}
 
-	/* advance b to end of string */
-	b = b + strlen(b);
+	b = add_str(sadetails, sad_len, b, ini);
+	b = add_str(sadetails, sad_len, b, "NATOA=");
+	b = add_str(sadetails, sad_len, b,
+		isanyaddr(&st->hidden_variables.st_nat_oa) ? "none" :
+			ipstr(&st->hidden_variables.st_nat_oa, &ipb));
 
-	{
-		char oa[ADDRTOT_BUF];
+	b = add_str(sadetails, sad_len, b, " NATD=");
 
-		strcpy(oa, "none");
-		if (!isanyaddr(&st->hidden_variables.st_nat_oa)) {
-			addrtot(&st->hidden_variables.st_nat_oa, 0,
-				oa, sizeof(oa));
-		}
-		snprintf(b, sad_len - (b - sadetails) - 1,
-			 "%sNATOA=%s",
-			 ini, oa);
-		ini = " ";
-	}
-
-	b = b + strlen(b);
-	{
+	if (isanyaddr(&st->hidden_variables.st_natd)) {
+		b = add_str(sadetails, sad_len, b, "none");
+	} else {
 		char oa[ADDRTOT_BUF + sizeof(":00000")];
 
-		strcpy(oa, "none");
-		if (!isanyaddr(&st->hidden_variables.st_natd)) {
-			ipstr_buf b1;
-
-			snprintf(oa, sizeof(oa),
-				 "%s:%d",
-				 ipstr(&st->hidden_variables.st_natd, &b1),
-				 st->st_remoteport);
-		}
-		snprintf(b, sad_len - (b - sadetails) - 1,
-			 "%sNATD=%s",
-			 ini, oa);
-		ini = " ";
+		snprintf(oa, sizeof(oa),
+			 "%s:%d",
+			 ipstr(&st->hidden_variables.st_natd, &ipb),
+			 st->st_remoteport);
+		b = add_str(sadetails, sad_len, b, oa);
 	}
 
-	/* advance b to end of string */
-	b = b + strlen(b);
-
-	snprintf(b, sad_len - (b - sadetails) - 1,
-		 "%sDPD=%s", ini,
-		 dpd_active_locally(st) ? "active" : "passive");
+	b = add_str(sadetails, sad_len, b,
+		dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
 	if (st->st_xauth_username[0] != '\0') {
-		b = b + strlen(b);
-		snprintf(b, sad_len - (b - sadetails) - 1,
-			 " XAUTHuser=%s",
-			 st->st_xauth_username);
+		b = add_str(sadetails, sad_len, b, " XAUTHuser=");
+		b = add_str(sadetails, sad_len, b, st->st_xauth_username);
 	}
 
-	strcat(b, "}");
+	add_str(sadetails, sad_len, b, "}");
 }
 
-void fmt_isakmp_sa_established(struct state *st, char *sadetails, int sad_len)
+void fmt_isakmp_sa_established(struct state *st, char *sadetails, size_t sad_len)
 {
 
 	/* document ISAKMP SA details for admin's pleasure */

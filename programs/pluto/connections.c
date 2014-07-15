@@ -3401,150 +3401,81 @@ static void show_one_sr(struct connection *c,
 			char *instance)
 {
 	char topo[CONN_BUF_LEN];
-	char srcip[ADDRTOT_BUF], dstip[ADDRTOT_BUF];
-	char thissemi[3 + sizeof("myup=")];
-	char thatsemi[3 + sizeof("theirup=")];
-	char thiscertsemi[3 + sizeof("mycert=") + PATH_MAX];
-	char thatcertsemi[3 + sizeof("hiscert=") + PATH_MAX];
-	char *thisup, *thatup;
+	ipstr_buf thisipb, thatipb, dns1b, dns2b;
 
 	(void) format_connection(topo, sizeof(topo), c, sr);
 	whack_log(RC_COMMENT, "\"%s\"%s: %s; %s; eroute owner: #%lu",
 		c->name, instance, topo,
 		enum_name(&routing_story, sr->routing),
 		sr->eroute_owner);
-	if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
-		isanyaddr(&c->spd.this.host_srcip))
-		strcpy(srcip, "unset");
-	else
-		addrtot(&sr->this.host_srcip, 0, srcip, sizeof(srcip));
-	if (addrbytesptr(&c->spd.that.host_srcip, NULL) == 0 ||
-		isanyaddr(&c->spd.that.host_srcip))
-		strcpy(dstip, "unset");
-	else
-		addrtot(&sr->that.host_srcip, 0, dstip, sizeof(dstip));
 
-	thissemi[0] = '\0';
-	thisup = thissemi;
-	if (sr->this.updown) {
-		thissemi[0] = ';';
-		thissemi[1] = ' ';
-		thissemi[2] = '\0';
-		strcat(thissemi, "myup=");
-		thisup = sr->this.updown;
-	}
+#define OPT_HOST(h, ipb)  (addrbytesptr(h, NULL) == 0 || isanyaddr(h) ? \
+			"unset" : ipstr(h, &ipb))
 
-	thatsemi[0] = '\0';
-	thatup = thatsemi;
-	if (sr->that.updown) {
-		thatsemi[0] = ';';
-		thatsemi[1] = ' ';
-		thatsemi[2] = '\0';
-		strcat(thatsemi, "theirup=");
-		thatup = sr->that.updown;
-	}
-
-	thiscertsemi[0] = '\0';
-	if (sr->this.cert_filename) {
-		snprintf(thiscertsemi, sizeof(thiscertsemi) - 1,
-			"; mycert=%s",
-			sr->this.cert_filename);
-	}
-
-	thatcertsemi[0] = '\0';
-	if (sr->that.cert_filename) {
-		snprintf(thatcertsemi, sizeof(thatcertsemi) - 1,
-			"; hiscert=%s",
-			sr->that.cert_filename);
-	}
+		/* note: this macro generates a pair of arguments */
+#define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s%s%s;",
+		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s%s%s%s%s",
 		c->name, instance,
 		oriented(*c) ? "oriented" : "unoriented",
-		srcip, dstip,
-		thissemi, thisup,
-		thatsemi, thatup,
-		thiscertsemi,
-		thatcertsemi);
+		OPT_HOST(&c->spd.this.host_srcip, thisipb),
+		OPT_HOST(&c->spd.that.host_srcip, thatipb),
+		OPT_PREFIX_STR("; myup=", sr->this.updown),
+		OPT_PREFIX_STR("; theirup=", sr->that.updown),
+		OPT_PREFIX_STR("; mycert=", sr->this.cert_filename),
+		OPT_PREFIX_STR("; hiscert=", sr->that.cert_filename));
 
-	{
-		char thisxauthsemi[XAUTH_USERNAME_LEN +
-				sizeof("my_xauthuser=")];
-		char thatxauthsemi[XAUTH_USERNAME_LEN +
-				sizeof("their_xauthuser=")];
-		char dns1[ADDRTOT_BUF], dns2[ADDRTOT_BUF];
+#undef OPT_HOST
+#undef OPT_PREFIX_STR
 
-		thisxauthsemi[0] = '\0';
-		snprintf(thisxauthsemi, sizeof(thisxauthsemi) - 1,
-			"my_xauthuser=%s; ",
-			sr->this.xauth_name != NULL ? sr->this.xauth_name : "[any]");
+	/*
+	 * Both should not be set, but if they are, we want
+	 * to know
+	 */
+#define COMBO(END, SERVER, CLIENT) \
+	(END.SERVER ? \
+		(END.CLIENT ? "BOTH??" : "server") : \
+		(END.CLIENT ? "client" : "none"))
 
-		thatxauthsemi[0] = '\0';
-		snprintf(thatxauthsemi, sizeof(thatxauthsemi) - 1,
-			"their_xauthuser=%s; ",
-			sr->that.xauth_name != NULL ? sr->that.xauth_name : "[any]");
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   xauth info: us:%s, them:%s, %s my_xauthuser=%s; their_xauthuser=%s",
+		c->name, instance,
+		/*
+		 * Both should not be set, but if they are, we want to
+		 * know
+		 */
+		COMBO(sr->this, xauth_server, xauth_client),
+		COMBO(sr->that, xauth_server, xauth_client),
+		/* should really be an enum name */
+		sr->this.xauth_server ?
+			c->xauthby == XAUTHBY_FILE ?
+				"method:file;" :
+			c->xauthby == XAUTHBY_PAM ?
+				"method:pam;" :
+				"method:alwaysok;" :
+			"",
+		sr->this.xauth_name != NULL ? sr->this.xauth_name : "[any]",
+		sr->that.xauth_name != NULL ? sr->that.xauth_name : "[any]");
 
-		whack_log(RC_COMMENT,
-			"\"%s\"%s:   xauth info: us:%s, them:%s, %s %s%s;",
-			c->name, instance,
-			/*
-			 * Both should not be set, but if they are, we want to
-			 * know
-			 */
-			sr->this.xauth_server ?
-				sr->this.xauth_client ? "both??" : "server" :
-				sr->this.xauth_client ? "client" : "none",
-			sr->that.xauth_server ?
-				sr->that.xauth_client ? "both??" : "server" :
-				sr->that.xauth_client ? "client" : "none",
-			/* should really be an enum name */
-			sr->this.xauth_server ?
-				c->xauthby == XAUTHBY_FILE ?
-					"method:file;" :
-				c->xauthby == XAUTHBY_PAM ?
-					"method:pam;" :
-					"method:alwaysok;" :
-				"",
-			thisxauthsemi,
-			thatxauthsemi);
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
+		"policy:%s, dns1:%s, dns2:%s, domain:%s%s;",
+		c->name, instance,
+		COMBO(sr->this, modecfg_client, modecfg_server),
+		COMBO(sr->that, modecfg_client, modecfg_server),
 
-		if (isanyaddr(&c->modecfg_dns1))
-			strcpy(dns1, "unset");
-		else
-			addrtot(&c->modecfg_dns1, 0, dns1, sizeof(dns1));
-		if (isanyaddr(&c->modecfg_dns2))
-			strcpy(dns2, "unset");
-		else
-			addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
+		(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
+		isanyaddr(&c->modecfg_dns1) ? "unset" : ipstr(&c->modecfg_dns1, &dns1b),
+		isanyaddr(&c->modecfg_dns2) ? "unset" : ipstr(&c->modecfg_dns2, &dns2b),
+		(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
+		(c->modecfg_banner == NULL) ? ", banner:unset" : "");
 
-		whack_log(RC_COMMENT,
-			"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
-			"policy:%s, dns1:%s, dns2:%s, domain:%s%s;",
-			c->name, instance,
-			/*
-			 * Both should not be set, but if they are, we want
-			 * to know
-			 */
-			(!sr->this.modecfg_server &&
-				!sr->this.modecfg_client) ? "none" :
-			(sr->this.modecfg_server &&
-				sr->this.modecfg_client) ? "both??" :
-			(sr->this.modecfg_server) ? "server" : "client",
-			(!sr->that.modecfg_server &&
-				!sr->that.modecfg_client) ? "none" :
-			(sr->that.modecfg_server &&
-				sr->that.modecfg_client) ? "both??" :
-			(sr->that.modecfg_server) ? "server" : "client",
-			(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
-			dns1,
-			dns2,
-			(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
-			(c->modecfg_banner == NULL) ? ", banner:unset" : "");
-		if (c->modecfg_banner != NULL) {
-			whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
-			c->name, instance, c->modecfg_banner);
-		}
+#undef COMBO
+
+	if (c->modecfg_banner != NULL) {
+		whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
+		c->name, instance, c->modecfg_banner);
 	}
 
 #ifdef HAVE_LABELED_IPSEC
@@ -3557,7 +3488,7 @@ static void show_one_sr(struct connection *c,
 		c->name, instance,
 		(c->policy_label == NULL) ? "unset" : c->policy_label);
 #else
-/* this makes output consistent for testing regardless of support */
+	/* this makes output consistent for testing regardless of support */
 	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no, loopback:no; ",
 		  c->name, instance);
 	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:unset; ",

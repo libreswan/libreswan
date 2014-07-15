@@ -1055,7 +1055,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 				st->st_ts_that.startport, st->st_ts_that.endport,
 				st->st_ts_that.ipprotoid);
 
-			fmt_ipsec_sa_established(st,  sadetails,
+			fmt_ipsec_sa_established(st, sadetails,
 						 sizeof(sadetails));
 			/* log our success */
 			w = RC_SUCCESS;

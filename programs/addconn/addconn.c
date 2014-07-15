@@ -665,15 +665,17 @@ int main(int argc, char *argv[])
 	if (confdir == NULL)
 		confdir = IPSEC_CONFDIR;
 
-	if (!configfile) {
-		configfile = alloc_bytes(strlen(IPSEC_CONF) + 2, "conf file");
+	if (configfile == NULL) {
+		/* ??? see code clone in programs/readwriteconf/readwriteconf.c */
+		configfile = alloc_bytes(strlen(confdir) +
+					 sizeof("/ipsec.conf"),
+					 "conf file");
 
 		/* calculate default value for configfile */
-		configfile[0] = '\0';
-		strcpy(configfile, confdir);
-		if (configfile[strlen(configfile) - 1] != '/')
-			strcat(configfile, "/");
-		strcat(configfile, "ipsec.conf");
+		strcpy(configfile, confdir);	/* safe: see allocation above */
+		if (configfile[0] != '\0' && configfile[strlen(configfile) - 1] != '/')
+			strcat(configfile, "/");	/* safe: see allocation above */
+		strcat(configfile, "ipsec.conf");	/* safe: see allocation above */
 	}
 
 	if (verbose)

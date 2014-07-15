@@ -86,7 +86,7 @@ u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT; /* Pluto's NAT-T port */
 /* humanize_number: make large numbers clearer by expressing them as KB or MB, as appropriate.
  * The prefix is literally copied into the output.
  * Tricky representation: if the prefix starts with !, the number
- * is taken as kilobytes.  This prevents the caller scaling, with the attendant
+ * is taken as kilobytes.  Thus the caller does not scaling, with the attendant
  * risk of overflow.  The ! is not printed.
  */
 static char *humanize_number(unsigned long num,
