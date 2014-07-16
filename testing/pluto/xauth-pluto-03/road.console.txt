@@ -40,7 +40,7 @@ road #
 108 "xauth-road-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "xauth-road-eastnet" #1: received Vendor ID payload [CAN-IKEv2]
 002 "xauth-road-eastnet" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "xauth-road-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 prf=sha group=MODP1536}
+004 "xauth-road-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP1536}
 041 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Username:
 040 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Password:
 002 "xauth-road-eastnet" #1: XAUTH: Answering XAUTH challenge with user='use1'
