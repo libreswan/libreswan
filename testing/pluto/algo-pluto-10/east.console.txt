@@ -22,8 +22,8 @@ east #
 east #
  ipsec auto --status |grep westnet-eastnet-aes256
 000 "westnet-eastnet-aes256": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-aes256":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-aes256":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-aes256":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-aes256":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-aes256":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-aes256":   labeled_ipsec:no, loopback:no; 
 000 "westnet-eastnet-aes256":    policy_label:unset; 

@@ -76,7 +76,7 @@ east #
 000  
 000 "westnet-eastnet-x509": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-x509":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east; hiscert=west;
-000 "westnet-eastnet-x509":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-x509":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-x509":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "westnet-eastnet-x509":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-x509":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
@@ -154,7 +154,7 @@ east #
 000  
 000 "westnet-eastnet-x509": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]===192.0.1.0/24; erouted; eroute owner: #2
 000 "westnet-eastnet-x509":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east; hiscert=west;
-000 "westnet-eastnet-x509":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-x509":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-x509":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "westnet-eastnet-x509":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-x509":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;

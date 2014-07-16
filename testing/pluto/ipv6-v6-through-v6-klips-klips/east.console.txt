@@ -57,8 +57,8 @@ east #
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
 000 "westnet-eastnet-6in6": 2001:db8:0:2::/64===2001:db8:1:2::23<2001:db8:1:2::23>[@east]...2001:db8:1:2::45<2001:db8:1:2::45>[@west]===2001:db8:0:1::/64; unrouted; eroute owner: #0
-000 "westnet-eastnet-6in6":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-6in6":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-6in6":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-6in6":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-6in6":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "westnet-eastnet-6in6":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
 000 "westnet-eastnet-6in6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
