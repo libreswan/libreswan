@@ -229,13 +229,8 @@ static state_transition_fn      /* forward declaration */
 static const struct state_microcode
 	*ike_microcode_index[STATE_IKE_ROOF - STATE_IKE_FLOOR];
 
-#define PHONY_STATE(X) \
-	{ X, X \
-	  , 0 \
-	  , 0, P(VID) | P(CR), PT(NONE) \
-	  , 0, NULL }
-
 static const struct state_microcode v1_state_microcode_table[] = {
+
 #define PT(n) ISAKMP_NEXT_ ## n
 #define P(n) LELEM(PT(n))
 
