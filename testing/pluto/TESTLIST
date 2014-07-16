@@ -393,6 +393,8 @@ ctltest	aggr-unit-02			good
 # a testcase with pfs=yes connecting to pfs=no
 #
 kvmplutotest	basic-pluto-09		good
+kvmplutotest	basic-pluto-10		wip
+kvmplutotest	basic-pluto-01-valgrind	good
 
 #
 # test cases of what happens to X.509 based authorization system
@@ -504,10 +506,10 @@ kvmplutotest    loopback-pluto-06		good
 kvmplutotest    labeled-ipsec-01		good
 
 # compress tests, some use netkey
-umlplutotest    compress-pluto-01		good
-umlplutotest    compress-pluto-02		bad
-umlplutotest    compress-pluto-03		good
-umlplutotest    compress-pluto-04		good
+kvmplutotest    compress-pluto-01		good
+kvmplutotest    compress-pluto-02		good
+kvmplutotest    compress-pluto-netkey-03	good
+umlplutotest    compress-pluto-netkey-klips-04	good
 
 # sourceip tests
 umlplutotest	sourceip-01			good
