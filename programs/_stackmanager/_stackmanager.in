@@ -361,11 +361,12 @@ startklips() {
 	    ipsec tncfg --attach --virtual ${virt} --physical ${phys}
 
 	    # configure all the IPv4/IPv6 addresses (including point-to-point)
-	    ip addr show dev ${phys} | \
+	    ip addr show dev ${phys} label ${phys} | \
 		awk '$1 == "inet" || ($1 == "inet6" && !/ dynamic/) {
 		    cmd = "ip addr add"
 		    if ($1 == "inet")
 			sub(" [^ ]+:[^ ]+"," ")
+		    sub("secondary","","")
 		    sub("/.*","",$2)
 		    sub("dynamic","")
 		    for (i = 2; i < NF; i++) {
