@@ -63,7 +63,7 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "adns.h"	/* needs <resolv.h> */
+#include "adns.h"
 #include "lsw_select.h"
 
 /* shared by all processes */
@@ -149,11 +149,13 @@ static enum helper_exit_status write_pipe(int fd, const unsigned char *stuff)
 
 /**************** worker process ****************/
 
-/* The interface in RHL6.x and BIND distribution 8.2.2 are different,
+/*
+ * The interface in RHL6.x and BIND distribution 8.2.2 are different,
  * so we build some of our own :-(
  */
 
-/* Support deprecated interface to allow for older releases of the resolver.
+/*
+ * Support deprecated interface to allow for older releases of the resolver.
  * Fake new interface!
  * See resolver(3) bind distribution (should be in RHL6.1, but isn't).
  * __RES was 19960801 in RHL6.2, an old resolver.
@@ -530,7 +532,8 @@ static int master(void)
 	}
 }
 
-/* Not to be invoked by strangers -- user hostile.
+/*
+ * Not to be invoked by strangers -- user hostile.
  * Mandatory args: query-fd answer-fd
  * Optional arg: -d, signifying "debug".
  */
