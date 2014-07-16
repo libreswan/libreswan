@@ -32,7 +32,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "adns.h"       /* needs <resolv.h> */
+#include "adns.h"
 #include "defs.h"
 #include "id.h"
 #include "log.h"
