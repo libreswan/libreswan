@@ -12,7 +12,8 @@
 # Can be eliminated if available space is fragmented.
 KVMPREFIX=/home/build/
 
-LIBRESAWNBASE=/home/build/libreswan/
+LIBRESWANDIR=`readlink -f $0 | sed "s/libreswan.*$/libreswan/"`
+
 
 REGRESSRESULTS=$KVMPREFIX/results
 

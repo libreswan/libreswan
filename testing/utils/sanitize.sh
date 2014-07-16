@@ -6,7 +6,7 @@ else
 	. ../../default-testparams.sh
 fi
 . ../setup.sh
-. $LIBRESAWNBASE/testing/utils/functions.sh 
+. $LIBRESWANBASE/testing/utils/functions.sh 
 
 if [ -f eastinit.sh ] ; then
         RESPONDER=east
