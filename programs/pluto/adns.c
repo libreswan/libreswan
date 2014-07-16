@@ -12,11 +12,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- */
-
-#ifndef DNSSEC	/* whole file! */
-
-/*
+ *
  * This program executes as multiple processes.  The Master process
  * receives queries (struct adns_query messages) from Pluto and distributes
  * them amongst Worker processes.  These Worker processes are created
@@ -119,7 +115,8 @@ static enum helper_exit_status read_pipe(int fd, unsigned char *stuff,
 	return HES_CONTINUE;
 }
 
-/* Write a variable-length record to a pipe.
+/*
+ * Write a variable-length record to a pipe.
  * First bytes must be a size_t containing the length.
  * HES_CONTINUE if record written
  * Others are errors.
@@ -567,5 +564,3 @@ int main(int argc UNUSED, char **argv)
 
 	return master();
 }
-
-#endif /* !DNSSEC */
