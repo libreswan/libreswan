@@ -106,8 +106,8 @@ west #
 000 Connection list:
 000  
 000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]:0/1234...192.1.2.23<192.1.2.23>[@east]:0/1234===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-ikev2":   labeled_ipsec:no, loopback:no; 
 000 "westnet-eastnet-ikev2":    policy_label:unset; 
@@ -215,8 +215,8 @@ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUT
 000 Connection list:
 000  
 000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]:0/1234...192.1.2.23<192.1.2.23>[@east]:0/1234===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-ikev2":   labeled_ipsec:no, loopback:no; 
 000 "westnet-eastnet-ikev2":    policy_label:unset; 
@@ -227,8 +227,8 @@ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUT
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-ikev2"[1]: 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]:0/1234...192.1.2.23<192.1.2.23>[@east]:0/1234===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ikev2"[1]:     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-ikev2"[1]:   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-ikev2"[1]:     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-ikev2"[1]:   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2"[1]:   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-ikev2"[1]:   labeled_ipsec:no, loopback:no; 
 000 "westnet-eastnet-ikev2"[1]:    policy_label:unset; 
