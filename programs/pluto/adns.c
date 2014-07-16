@@ -14,7 +14,7 @@
  * for more details.
  */
 
-#ifndef USE_UNBOUND     /* whole file! */
+#ifndef DNSSEC	/* whole file! */
 
 /*
  * This program executes as multiple processes.  The Master process
@@ -565,4 +565,4 @@ int main(int argc UNUSED, char **argv)
 	return master();
 }
 
-#endif /* !USE_UNBOUND */
+#endif /* !DNSSEC */
