@@ -72,7 +72,8 @@ kvmplutotest	ikev2-algo-sha2-01			good
 kvmplutotest	ikev2-algo-sha2-02			good
 kvmplutotest	ikev2-algo-sha2-03			good
 kvmplutotest	ikev2-algo-sha2-04			good
-kvmplutotest	ikev2-algo-sha2-05			bad
+kvmplutotest	ikev2-algo-sha2-05			wip
+kvmplutotest	ike12-algo-sha2-esp-05			wip
 kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-07			good
 
@@ -185,8 +186,8 @@ kvmplutotest	dpd-04	good
 kvmplutotest	dpd-05	good
 kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
-kvmplutotest	dpd-08	good
-kvmplutotest	dpd-08-netkey	good
+kvmplutotest	dpd-08	wip
+kvmplutotest	dpd-08-netkey	wip
 
 # Delete SA test.
 kvmplutotest	delete-sa-01	good

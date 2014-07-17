@@ -30,7 +30,7 @@ west #
  # ensure this test cases has USE_DNSSEC compiled pluto
 west #
  ipsec pluto --version |grep DNSSEC | sed "s/Libreswan v[^ ]* /Libreswan vVERSION /"
-Libreswan vVERSION XFRM(netkey) KLIPS NSS DNSSEC LABELED_IPSEC LIBCAP_NG XAUTH_PAM NETWORKMANAGER KLIPS_MAST CURL(non-NSS)
+Libreswan vVERSION XFRM(netkey) KLIPS NSS DNSSEC FIPS_CHECK LABELED_IPSEC LIBCAP_NG XAUTH_PAM NETWORKMANAGER KLIPS_MAST CURL(non-NSS)
 west #
  echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/hosts
 west #
@@ -111,10 +111,6 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
-west #
- ipsec whack --shutdown
-002 shutting down
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
