@@ -290,10 +290,6 @@ west #
 |    length/value: 128
 west #
 west #
- ipsec whack --shutdown
-002 shutting down
-west #
-west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
