@@ -85,6 +85,7 @@ kvmplutotest	ikev1-algo-ike-sha2-01			good
 kvmplutotest	ikev1-algo-ike-sha2-02			good
 kvmplutotest	ikev1-algo-ike-sha2-03			good
 kvmplutotest	ikev1-algo-05-aes-aes			good
+kvmplutotest	ikev1-algo-04-mismatch			good
 
 kvmplutotest	ikev2-algo-05-aes-default		good
 
