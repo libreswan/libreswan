@@ -648,9 +648,6 @@ bool ikev1_verify_phase2(int ealg, unsigned int key_len, int aalg,
 	if (key_len == 0)
 		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
 
-	libreswan_log("PAUL: ealg=%d, key_len=%d, aalg=%d",
-		ealg, key_len, aalg);
-
 	if (alg_info != NULL) {
 		struct esp_info *esp_info;
 		int i;
