@@ -20,6 +20,7 @@
 kvmplutotest	basic-pluto-01	good
 kvmplutotest	basic-pluto-02	good
 kvmplutotest	basic-pluto-03	good
+kvmplutotest	basic-pluto-07	good
 
 #################################################################
 # IKEv2 tests
