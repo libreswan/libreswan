@@ -470,7 +470,7 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None):
 	f.close
 
 DEFAULTCONFIG =  { 
-	'resultsdir' : '/home/build/testresults',
+	'resultsdir' : '/home/build/results',
 	'sanitizer' : "../../utils/sanitize.sh",
 	'bootwait' : 60, 
 	'swanhosts' : ['east', 'west', 'rooad', 'north'],
@@ -545,7 +545,7 @@ def kvm_error(r_file):
 	for line in f:
 		x = ujson.loads(line)
 		try:
-			re_e = re.search(r'KVMERROR', x['msg'], re.I )
+			re_e = re.search(r'KVMERROR', x['error'], re.I )
 			if re_e:
 				logging.info(line)
 				f.close

@@ -1,0 +1,25 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec whack --debug-all --impair-retransmits
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
+002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
+east #
+ echo "initdone"
+initdone
+east #
+ grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev1" #2: sending encrypted notification NO_PROPOSAL_CHOSEN to 192.1.2.45:500
+|    Notify Message Type: NO_PROPOSAL_CHOSEN
+| state transition function for STATE_QUICK_R0 failed: NO_PROPOSAL_CHOSEN
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

@@ -145,6 +145,7 @@ static sparse_names aalg_list = {
 	{ SADB_X_AALG_SHA2_384HMAC, "hmac(sha384)" },
 	{ SADB_X_AALG_SHA2_512HMAC, "hmac(sha512)" },
 	{ SADB_X_AALG_RIPEMD160HMAC, "ripemd160" },
+	{ SADB_X_AALG_AES_XCBC_MAC, "xcbc(aes)" },
 	{ 0, sparse_end }
 };
 
@@ -157,6 +158,8 @@ static sparse_names ealg_list = {
 	/* { SADB_X_EALG_BLOWFISHCBC, "blowfish" }, obsoleted */
 	{ SADB_X_EALG_AESCBC, "aes" },
 	{ SADB_X_EALG_AESCTR, "ctr(aes)" },
+	/* not implemented in Linux kernel
+	{ SADB_X_EALG_SEEDCBC, "cbc(seed)" }, */
 	{ SADB_X_EALG_CAMELLIACBC, "cbc(camellia)" },
 	/* 252 draft-ietf-ipsec-ciph-aes-cbc-00 */
 	{ SADB_X_EALG_SERPENTCBC, "serpent" },
@@ -881,7 +884,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		name = sparse_name(aalg_list, sa->authalg);
 		if (!name) {
 			loglog(RC_LOG_SERIOUS,
-				"unknown authentication algorithm: %u",
+				"NETKEY/XFRM: unknown authentication algorithm: %u",
 				sa->authalg);
 			return FALSE;
 		}
