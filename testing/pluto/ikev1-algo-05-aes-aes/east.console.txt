@@ -4,7 +4,6 @@ east #
 Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
-[ 00.00] random: nonblocking pool is initialized
 east #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
