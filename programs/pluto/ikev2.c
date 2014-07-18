@@ -1259,6 +1259,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		pexpect(!st->st_calculating);
 		libreswan_log("message in state %s ignored due to cryptographic overload",
 			      from_state_name);
+		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
 		/* FALL THROUGH */
 	case STF_FATAL:
 		/* update the previous packet history */

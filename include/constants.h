@@ -217,4 +217,3 @@ extern void init_constants(void);
 
 #define _CONSTANTS_H_
 #endif /* _CONSTANTS_H_ */
-
