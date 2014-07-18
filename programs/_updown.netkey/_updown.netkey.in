@@ -380,7 +380,9 @@ delsource() {
 doroute() {
     st=0
     # skip routing if it's not enabled or necessary
-    if [ -z "${PLUTO_MY_SOURCEIP}"  -a "${ROUTE}" != yes ]; then
+    if [ -z "${PLUTO_MY_SOURCEIP}" -a \
+	-z "${PLUTO_MTU}" -a \
+	"${ROUTE}" != yes ]; then
 	return 0
     fi
     parms="${PLUTO_PEER_CLIENT}"
