@@ -987,12 +987,12 @@ static void process_secret(struct secret **psecrets,
 	if (tokeqword("psk")) {
 		s->pks.kind = PPK_PSK;
 		/* preshared key: quoted string or ttodata format */
-		ugh = !shift() ? "unexpected end of record in PSK" :
+		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_psk_secret(&s->pks.u.preshared_secret);
 	} else if (tokeqword("xauth")) {
 		/* xauth key: quoted string or ttodata format */
 		s->pks.kind = PPK_XAUTH;
-		ugh = !shift() ? "unexpected end of record in PSK" :
+		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_xauth_secret(&s->pks.u.preshared_secret);
 	} else if (tokeqword("rsa")) {
 		/*
@@ -1001,7 +1001,7 @@ static void process_secret(struct secret **psecrets,
 		 */
 		s->pks.kind = PPK_RSA;
 		if (!shift()) {
-			ugh = "bad RSA key syntax";
+			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) { /* raw RSA key in NSS */
 			ugh = lsw_process_rsa_secret(
 					&s->pks.u.RSA_private_key);
@@ -1015,9 +1015,9 @@ static void process_secret(struct secret **psecrets,
 				s->pks.u.RSA_private_key.pub.keyid);
 		}
 	} else if (tokeqword("pin")) {
-		ugh = "Please use NSS for smartcard support";
+		ugh = "ERROR: keyword 'pin' obsoleted, please use NSS for smartcard support";
 	} else {
-		ugh = builddiag("unrecognized key format: %s", flp->tok);
+		ugh = builddiag("ERROR: unrecognized key format: %s", flp->tok);
 	}
 
 	if (ugh != NULL) {
