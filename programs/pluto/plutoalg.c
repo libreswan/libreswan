@@ -642,6 +642,38 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	return ctx_new;
 }
 
+bool ikev1_verify_phase2(int ealg, unsigned int key_len, int aalg,
+			     struct alg_info_esp *alg_info)
+{
+	if (key_len == 0)
+		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
+
+	libreswan_log("PAUL: ealg=%d, key_len=%d, aalg=%d",
+		ealg, key_len, aalg);
+
+	if (alg_info != NULL) {
+		struct esp_info *esp_info;
+		int i;
+
+		ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+			if (esp_info->esp_ealg_id == ealg &&
+			    (esp_info->esp_ealg_keylen == 0 ||
+			     key_len == 0 ||
+			     esp_info->esp_ealg_keylen == key_len) &&
+			    esp_info->esp_aalg_id == aalg) {
+				return TRUE;
+			}
+		}
+		libreswan_log(
+			"IPsec Transform [%s (%d), %s] refused",
+			enum_name(&esp_transformid_names, ealg),
+			key_len,
+			enum_name(&auth_alg_names, aalg));
+		return FALSE;
+	}
+	return TRUE;
+}
+
 void kernel_alg_show_status(void)
 {
 	unsigned sadb_id, id;
