@@ -94,3 +94,5 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*PCLMULQDQ-NI instructions are not detected.*$/d
 /^Warning: found NETKEY\/XFRM stack loaded.*$/d
 /.*IPv4 over IPSec tunneling driver$/d
+/^.* random: nonblocking pool is initialized$/d
+

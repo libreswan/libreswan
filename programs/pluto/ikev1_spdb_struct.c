@@ -2365,9 +2365,46 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					break;
 
 				case AUTH_ALGORITHM_DES_MAC:
-					ok_transid = AH_DES;
+					loglog(RC_LOG_SERIOUS,
+					       "AH_DES no longer supported");
+					return BAD_PROPOSAL_SYNTAX;
+
+				case AUTH_ALGORITHM_HMAC_SHA2_256:
+					ok_transid = AH_SHA2_256;
 					break;
+				case AUTH_ALGORITHM_HMAC_SHA2_384:
+					ok_transid = AH_SHA2_384;
+					break;
+				case AUTH_ALGORITHM_HMAC_SHA2_512:
+					ok_transid = AH_SHA2_512;
+					break;
+
+				case AUTH_ALGORITHM_AES_CBC:
+					ok_transid = AH_AES_XCBC_MAC;
+					break;
+
+				case AUTH_ALGORITHM_SIG_RSA:
+					loglog(RC_LOG_SERIOUS,
+					       "AH_RSA (RFC4359) not implemented");
+					return BAD_PROPOSAL_SYNTAX;
+
+				case AUTH_ALGORITHM_AES_128_GMAC:
+					ok_transid = AH_AES_128_GMAC;
+					break;
+				case AUTH_ALGORITHM_AES_192_GMAC:
+					ok_transid = AH_AES_192_GMAC;
+					break;
+				case AUTH_ALGORITHM_AES_256_GMAC:
+					ok_transid = AH_AES_256_GMAC;
+					break;
+
+				default:
+					loglog(RC_LOG_SERIOUS,
+					       "Unknown integ algorithm %d not supported", 
+							ah_attrs.transattrs.integ_hash);
+					return BAD_PROPOSAL_SYNTAX;
 				}
+
 				if (ah_attrs.transattrs.encrypt !=
 				    ok_transid) {
 					char esb[ENUM_SHOW_BUF_LEN];
@@ -2545,7 +2582,19 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
-
+			/*
+			 * ML: at last check for allowed transforms in alg_info_esp
+			 *
+			 */
+			if (c->alg_info_esp != NULL &&
+			    !ikev1_verify_phase2(esp_attrs.transattrs.
+						     encrypt,
+						     esp_attrs.transattrs.
+						     enckeylen,
+						     esp_attrs.transattrs.
+						     integ_hash,
+						     c->alg_info_esp))
+				continue;
 			esp_attrs.spi = esp_spi;
 			inner_proto = IPPROTO_ESP;
 			if (esp_attrs.encapsulation ==
