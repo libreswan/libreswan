@@ -1,4 +1,4 @@
-ipsec look
+egrep -i fragment /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
