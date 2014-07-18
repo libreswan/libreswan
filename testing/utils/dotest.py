@@ -411,12 +411,12 @@ def read_exec_shell_cmd(ex, filename, prompt, timer, hostname = ""):
 			logging.debug("%s %s", hostname, err)
 			return	err
 # kill any lingering tcpdumps
-def kill_zombie_tcpdump():
+def kill_zombie_tcpdump(signal=1):
 	pids = commands.getoutput("pidof tcpdump")
 	for pid in (pids.split()):
-		logging.info("killing tcpdump process %s", pid)
+		logging.info("killing tcpdump process %s signal = %s", pid, signal)
 		try:
-			os.kill(int(pid),9)
+			os.kill(int(pid),signal)
 		except OSError as e:
 			logging.ERROR("killing tcpdump process %s %s", pid, e)
 
@@ -428,7 +428,7 @@ def kill_zombies(proctitle):
 		if int(pid) != int(me):
 			logging.info ("killing %s pid %s from [%s] my pid %s", proctitle, pid, zombie_pids, me)
 			os.kill(int(pid),9)
-	kill_zombie_tcpdump()
+	kill_zombie_tcpdump(signal=9)
 
 def init_output_dir():
 	output_dir="%s/OUTPUT"%os.getcwd()
