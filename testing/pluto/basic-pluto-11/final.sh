@@ -1,4 +1,4 @@
-egrep -i fragment /tmp/pluto.log
+grep BAD_PROPOSAL_SYNTAX /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

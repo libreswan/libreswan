@@ -688,15 +688,24 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	actlen = read(w->pcw_master_fd, (void *)&rr, sizeof(rr));
 
 	if (actlen != sizeof(rr)) {
-		if (actlen != 0) {
-			/* errno might not be set by the read */
+		if (actlen == -1) {
 			loglog(RC_LOG_SERIOUS,
-			       "read failed with short length %zd of %zu: %s",
-			       actlen, sizeof(rr), strerror(errno));
+			       "read from crypto helper %d failed: %s.  Killing helper.",
+			       w->pcw_helpernum, strerror(errno));
 			kill_helper(w);
-		} else {
+		} else if (actlen == 0) {
 			/* EOF: mark worker as dead. */
 			w->pcw_dead = TRUE;
+		} else if (errno == 0) {
+			loglog(RC_LOG_SERIOUS,
+			       "read from crypto helper %d failed with short length %zd of %zu.  Killing helper.",
+			       w->pcw_helpernum, actlen, sizeof(rr));
+			kill_helper(w);
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "read from crypto helper %d failed with short length %zd of %zu (errno=%s).  Killing helper.",
+			       w->pcw_helpernum, actlen, sizeof(rr), strerror(errno));
+			kill_helper(w);
 		}
 		return;
 	}
