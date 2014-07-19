@@ -658,6 +658,27 @@ static void kill_helper(struct pluto_crypto_worker *w)
 	w->pcw_dead = TRUE;
 }
 
+void log_crypto_workers(void) {
+	bool first_time = TRUE;
+	int i;
+
+	if (!first_time)
+		return;
+
+	first_time = FALSE;
+
+	for (i = 0; i < pc_workers_cnt; i++) {
+		struct pluto_crypto_worker *w = &pc_workers[i];
+		struct pluto_crypto_req_cont *cn;
+
+		for (cn = w->pcw_active.tqh_first; cn != NULL; cn = cn->pcrc_list.tqe_next) {
+			libreswan_log("crypto queue: request ID%u for #%lu assigned to %scrypto helper %d",
+					cn->pcrc_id, cn->pcrc_serialno,
+					w->pcw_dead ? "dead " : "", i);
+		}
+	}
+}
+
 /*
  * This function is called when there is socketpair input from a helper.
  * This is the answer from the helper.

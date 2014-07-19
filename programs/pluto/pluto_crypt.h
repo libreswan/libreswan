@@ -317,6 +317,8 @@ extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
 
 extern int pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 
+extern void log_crypto_workers(void);
+
 /* actual helper functions */
 extern stf_status build_ke(struct pluto_crypto_req_cont *cn,
 			   struct state *st,

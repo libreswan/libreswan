@@ -65,6 +65,8 @@
 #include "nat_traversal.h"
 #include "vendor.h"
 
+#include "pluto_crypt.h"	/* just for log_crypto_workers() */
+
 #define SEND_NOTIFICATION(t) { \
 		if (st != NULL) \
 			send_v2_notification_from_state(st, t, \
@@ -1259,6 +1261,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		pexpect(!st->st_calculating);
 		libreswan_log("message in state %s ignored due to cryptographic overload",
 			      from_state_name);
+		log_crypto_workers();
 		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
 		/* FALL THROUGH */
 	case STF_FATAL:

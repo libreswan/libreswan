@@ -156,6 +156,7 @@
 #include "vendor.h"
 #include "ikev1_dpd.h"
 #include "hostpair.h"
+#include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -2603,6 +2604,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		libreswan_log(
 			"message in state %s ignored due to cryptographic overload",
 			enum_name(&state_names, from_state));
+		log_crypto_workers();
 		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
 		break;
 
