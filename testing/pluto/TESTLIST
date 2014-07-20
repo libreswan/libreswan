@@ -69,6 +69,7 @@ kvmplutotest	ikev2-algo-06-aes-aes_cbc		good
 kvmplutotest	ikev2-algo-07-aes_ctr			good
 kvmplutotest	ikev2-algo-08-cast			good
 kvmplutotest	ikev2-algo-09-camellia			good
+kvmplutotest	ikev2-algo-10-camellia_ctr		good
 kvmplutotest	netkey-algo-aes_gcm-01			good
 kvmplutotest	netkey-algo-aes_ccm-01			good
 
