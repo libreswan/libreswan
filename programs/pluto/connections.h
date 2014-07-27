@@ -455,9 +455,6 @@ extern void show_one_connection(struct connection *c);
 extern void show_connections_status(void);
 extern int  connection_compare(const struct connection *ca,
 			       const struct connection *cb);
-extern void update_host_pair(const char *why, struct connection *c,
-			     const ip_address *myaddr, u_int16_t myport,
-			     const ip_address *hisaddr, u_int16_t hisport);
 
 /* export to pending.c */
 extern void host_pair_enqueue_pending(const struct connection *c,
