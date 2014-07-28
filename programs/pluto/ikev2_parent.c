@@ -3080,9 +3080,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 								    &protocol_names,
 								    v2del->isad_protoid),
 							    (unsigned long)
-							    ntohl((unsigned long)
-								  *(ipsec_spi_t *)
-								  spi)));
+							    ntohl((unsigned long) *(ipsec_spi_t *)spi)));
 
 						struct state *dst =
 							find_state_ikev2_child_to_delete(
