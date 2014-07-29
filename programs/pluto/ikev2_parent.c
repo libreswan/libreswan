@@ -160,13 +160,12 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * number needs to be initialized.
 	 */
 	{
-		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		oakley_group_t groupnum = OAKLEY_GROUP_invalid;
 		struct db_sa *sadb;
 		unsigned int pc_cnt;
 
 		/* inscrutable dance of the sadbs */
-		sadb = &oakley_sadb[policy_index];
+		sadb = &oakley_sadb[sadb_index(policy, c)];
 		{
 			struct db_sa *sadb_plus =
 				oakley_alg_makedb(st->st_connection->alg_info_ike,
@@ -3080,9 +3079,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 								    &protocol_names,
 								    v2del->isad_protoid),
 							    (unsigned long)
-							    ntohl((unsigned long)
-								  *(ipsec_spi_t *)
-								  spi)));
+							    ntohl((unsigned long) *(ipsec_spi_t *)spi)));
 
 						struct state *dst =
 							find_state_ikev2_child_to_delete(
