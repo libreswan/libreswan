@@ -340,7 +340,7 @@ def orient (t):
 	if not os.path.exists("eastrun.sh"):
 		t["responder"] = "east"
 	else:
-		sys.exit ("ABORT can't identify RESPONDER no %s/eastinit.sh"%os.getcwd())
+		logging.error ("ABORT can't identify RESPONDER no %s/eastinit.sh"%os.getcwd())
 
 	if os.path.exists("nicinit.sh"):
 		t["nic"] = "nic"
@@ -358,7 +358,7 @@ def orient (t):
 		t["initiator"] = "north"
 		tcpdump_devs.append("swan13")
 	else:
-		sys.exit("ABORT can't identify INITIATOR in directory %s"%os.getcwd())
+		logging.error("ABORT can't identify INITIATOR in directory %s"%os.getcwd())
 
 	test_hosts.append(t["initiator"])
 	test_hosts.append(t["responder"])

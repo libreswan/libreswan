@@ -1,0 +1,10 @@
+
+Unmaintained contrib files - mostly outdated and unwise to use
+
+cisco-decrypt - decrypt cisco obfuscation secrets in cisco *.pcf files
+cisco-pcf - convert cisco PCF configuration files to libreswan config files
+ldsaref - SAref example implementation
+lucent - interop hacking with some proprietary lucent gateway
+patching - klips patching scripts from/between klips trees (unused)
+sarefnc - SAref native support for netcat
+scripts - perl scripts for emulating ipsec eroute output when using NETKEY

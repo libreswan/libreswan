@@ -180,12 +180,12 @@ stf_status main_outI1(int whack_sock,
 	/* SA out */
 	{
 		u_char *sa_start = md.rbody.cur;
-		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		enum next_payload_types_ikev1 np =
 			numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!ikev1_out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,
-				FALSE, np)) {
+		if (!ikev1_out_sa(&md.rbody,
+				&oakley_sadb[sadb_index(policy, c)],
+				st, TRUE, FALSE, np)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;

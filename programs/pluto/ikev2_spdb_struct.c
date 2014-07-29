@@ -1294,16 +1294,15 @@ stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,			/* body of input SA P
 	struct db_sa *sadb;
 	struct trans_attrs ta;
 	struct connection *c = st->st_connection;
-	unsigned policy_index = POLICY_ISAKMP(c->policy, c);
 	struct ikev2_transform_list itl0, *itl;
 
 	zero(&itl0);
 	itl = &itl0;
 
-	/* find the policy structures */
+	/* find the policy structures: quite a dance */
 	sadb = st->st_sadb;
 	if (sadb == NULL) {
-		st->st_sadb = &oakley_sadb[policy_index];
+		st->st_sadb = &oakley_sadb[sadb_index(c->policy, c)];
 		sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
 					 st->st_sadb, FALSE);
 		if (sadb != NULL)

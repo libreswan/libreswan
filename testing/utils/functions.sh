@@ -61,7 +61,8 @@ consolediff() {
     then
 	echo "${prefix} Consoleoutput matched"
     else
-	echo "${prefix} Consoleoutput differed"
+	diffstat=`diff -N -u -w -b -B $ref $fixedoutput | diffstat -f 0`
+	echo "${prefix} Consoleoutput differed '$diffstat'"
 
 	case "$success" in
 	true)	failnum=2 ;;
