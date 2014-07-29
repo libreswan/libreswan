@@ -418,7 +418,7 @@ def kill_zombie_tcpdump(signal=1):
 		try:
 			os.kill(int(pid),signal)
 		except OSError as e:
-			logging.ERROR("killing tcpdump process %s %s", pid, e)
+			logging.error("Error killing tcpdump process %s: %s", pid, str(e))
 
 # kill all hanging previous of instance of this script.
 def kill_zombies(proctitle):
