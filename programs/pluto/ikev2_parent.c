@@ -160,13 +160,12 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * number needs to be initialized.
 	 */
 	{
-		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		oakley_group_t groupnum = OAKLEY_GROUP_invalid;
 		struct db_sa *sadb;
 		unsigned int pc_cnt;
 
 		/* inscrutable dance of the sadbs */
-		sadb = &oakley_sadb[policy_index];
+		sadb = &oakley_sadb[sadb_index(policy, c)];
 		{
 			struct db_sa *sadb_plus =
 				oakley_alg_makedb(st->st_connection->alg_info_ike,

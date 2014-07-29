@@ -574,16 +574,6 @@ enum sa_policy_bits {
 	*/
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_RSASIG_IX)
 
-	/* Policies that affect choices of proposal.
-	 * Includes xauth policy from this end of connection c
-	 * in an idiosyncratic way.
-	 * The result is a small set and it will fit in "unsigned".
-	 */
-#define POLICY_ISAKMP(x, c) \
-	(((x) & LRANGES(POLICY_PSK, POLICY_RSASIG)) | \
-	(((c)->spd.this.xauth_server) << (POLICY_RSASIG_IX+1)) | \
-	(((c)->spd.this.xauth_client) << (POLICY_RSASIG_IX+2)))
-
 	/* Quick Mode (IPSEC) attributes */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */

@@ -903,7 +903,7 @@ static struct db_prop_conj oakley_props_rsasig_xauths[] =
 static struct db_prop_conj oakley_props_pskrsasig_xauths[] =
 	{ { AD_PC(oakley_pc_pskrsasig_xauths) } };
 
-/* the sadb entry, subscripted by POLICY_ISAKMP() */
+/* the sadb entry, subscripted by sadb_index() */
 struct db_sa oakley_sadb[] = {
 	{ AD_NULL },                                    /* none */
 	{ AD_SAp(oakley_props_psk) },                   /* PSK */
@@ -994,7 +994,7 @@ static struct db_prop_conj oakley_am_props_psk_xauths[] =
 static struct db_prop_conj oakley_am_props_rsasig_xauths[] =
 	{ { AD_PC(oakley_am_pc_rsasig_xauths) } };
 
-/* the sadb entry, subscripted by POLICY_ISAKMP() */
+/* the sadb entry, subscripted by sadb_index() */
 struct db_sa oakley_am_sadb[] = {
 	{ AD_NULL },                                    /* none */
 	{ AD_SAp(oakley_am_props_psk) },                /* PSK */

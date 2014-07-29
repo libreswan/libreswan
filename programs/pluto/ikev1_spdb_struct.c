@@ -1529,7 +1529,6 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	struct db_prop_conj *cprop;
 	struct db_sa    *revised_sadb;
 	struct connection *c = st->st_connection;
-	unsigned policy_index = POLICY_ISAKMP(policy, c);
 
 	zero(&ta);
 
@@ -1538,9 +1537,8 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	ta.life_kilobytes = 1000000;
 
 	/* Max transforms == 2 - Multiple transforms, 1 DH group */
-	passert(policy_index < elemsof(oakley_am_sadb));
 	revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-		&oakley_am_sadb[policy_index], TRUE);
+		&oakley_am_sadb[sadb_index(policy, c)], TRUE);
 
 	if (revised_sadb == NULL)
 		return FALSE;
