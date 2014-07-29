@@ -271,7 +271,9 @@ void ipsecdoi_initiate(int whack_sock,
 					 , uctx
 #endif
 					 );
-			return;
+		} else {
+			/* fizzle: whack_sock will be unused */
+			close_any(whack_sock);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
 
@@ -287,7 +289,6 @@ void ipsecdoi_initiate(int whack_sock,
 				    , uctx
 #endif
 				    );
-			return;
 		} else {
 			/* ??? we assume that peer_nexthop_sin isn't important:
 			 * we already have it from when we negotiated the ISAKMP SA!
@@ -299,12 +300,8 @@ void ipsecdoi_initiate(int whack_sock,
 					   , uctx
 #endif
 					   );
-			return;
 		}
 	}
-
-	/* fall through in the case of error */
-	close_any(whack_sock);
 }
 
 /* Replace SA with a fresh one that is similar
@@ -336,7 +333,7 @@ void ipsecdoi_replace(struct state *st,
 
 		initiator = pick_initiator(c, policy);
 		passert(!HAS_IPSEC_POLICY(policy));
-		if (initiator) {
+		if (initiator != NULL) {
 			(void) initiator(whack_sock, st->st_connection, st,
 					 policy,
 					 try, st->st_import
@@ -344,6 +341,9 @@ void ipsecdoi_replace(struct state *st,
 					 , st->sec_ctx
 #endif
 					 );
+		} else {
+			/* fizzle: whack_sock will be unused */
+			close_any(whack_sock);
 		}
 	} else {
 		/* Add features of actual old state to policy.  This ensures
@@ -380,7 +380,6 @@ void ipsecdoi_replace(struct state *st,
 #endif
 				  );
 	}
-	/* don't close whack_sock here as some caller above might have placed it in the state object */
 }
 
 /*

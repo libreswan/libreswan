@@ -235,6 +235,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		pb_stream pre_sa_pbs = sa_pd->pbs;
 		lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs) |
 				POLICY_AGGRESSIVE;
+
 		c = find_host_connection(&md->iface->ip_addr, pluto_port,
 					 (ip_address*)NULL, md->sender_port,
 					 policy);
