@@ -993,8 +993,7 @@ static bool check_connection_end(const struct whack_end *this,
 		if (this->host_type != KH_IPHOSTNAME &&
 			isanyaddr(&this->host_addr)) {
 			loglog(RC_ORIENT,
-				"connection %s must specify host IP address "
-				"for our side",
+				"connection %s must specify host IP address for our side",
 				wm->name);
 			return FALSE;
 		} else if (!NEVER_NEGOTIATE(wm->policy)) {
@@ -1022,7 +1021,7 @@ static bool check_connection_end(const struct whack_end *this,
 			for (; c != NULL; c = c->hp_next) {
 				if (c->policy & POLICY_AGGRESSIVE)
 					continue;
-#if 0
+#if 0	/* ??? suppressing this code makes this whole leg pointless */
 				if (!NEVER_NEGOTIATE(c->policy) &&
 					((c->policy ^ wm->policy) &
 						(POLICY_PSK | POLICY_RSASIG))) {
@@ -2399,35 +2398,35 @@ struct connection *find_host_connection(const ip_address *me,
 	c = find_host_pair_connections(__FUNCTION__, me, my_port, him,
 				his_port);
 
-	if (policy != LEMPTY) {
-		/*
-		 * If we have requirements for the policy, choose the first
-		 * matching connection.
-		 */
+	/*
+	 * If we have requirements for the policy, choose the first
+	 * matching connection.
+	 */
+	DBG(DBG_CONTROLMORE,
+		DBG_log("searching for connection with policy = %s",
+			bitnamesof(sa_policy_bit_names, policy)));
+	for (; c != NULL; c = c->hp_next) {
 		DBG(DBG_CONTROLMORE,
-			DBG_log("searching for connection with policy = %s",
-				bitnamesof(sa_policy_bit_names, policy)));
-		for (; c != NULL; c = c->hp_next) {
-			DBG(DBG_CONTROLMORE,
-				DBG_log("found policy = %s (%s)",
-					bitnamesof(sa_policy_bit_names,
-						c->policy),
-					c->name));
-			if (NEVER_NEGOTIATE(c->policy))
-				continue;
+			DBG_log("found policy = %s (%s)",
+				bitnamesof(sa_policy_bit_names,
+					c->policy),
+				c->name));
 
-			if ((policy & POLICY_XAUTH) !=
-				(c->policy & POLICY_XAUTH))
-				continue;
+		if (NEVER_NEGOTIATE(c->policy))
+			continue;
 
-			if ((c->policy & policy) == policy)
-				break;
-		}
+		/* if any policy is specified, make sure XAUTH matches */
+		if (policy != LEMPTY &&
+		    (policy & POLICY_XAUTH) != (c->policy & POLICY_XAUTH))
+			continue;
 
+		/*
+		 * Success if all specified policy bits are in candidate.
+		 * This will always be the case if policy is LEMPTY.
+		 */
+		if (LIN(policy, c->policy))
+			break;
 	}
-
-	for (; c != NULL && NEVER_NEGOTIATE(c->policy); c = c->hp_next)
-		continue;
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("find_host_connection returns %s",
