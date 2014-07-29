@@ -990,7 +990,7 @@ static bool check_connection_end(const struct whack_end *this,
 		 * Other side is wildcard: we must check if other conditions
 		 * met.
 		 */
-		if (that->host_type != KH_IPHOSTNAME &&
+		if (this->host_type != KH_IPHOSTNAME &&
 			isanyaddr(&this->host_addr)) {
 			loglog(RC_ORIENT,
 				"connection %s must specify host IP address "
