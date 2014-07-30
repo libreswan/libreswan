@@ -407,6 +407,10 @@ kvmplutotest	basic-pluto-01-valgrind	good
 
 kvmplutotest	basic-pluto-11		good
 
+# passthrough protoport tests
+kvmplutotest	basic-pluto-12		wip
+kvmplutotest	basic-pluto-12-netkey	wip
+
 #
 # test cases of what happens to X.509 based authorization system
 # when certain error conditions are met or parts of the CA are
