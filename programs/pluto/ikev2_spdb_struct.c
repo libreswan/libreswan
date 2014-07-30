@@ -1858,17 +1858,12 @@ stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,		/* body of input SA Pay
 	ta.enckeylen = itl->encr_keylens[itl->encr_i] > 0 ?
 		       itl->encr_keylens[itl->encr_i] : 0;
 
-	/* this is REALLY not correct, because this is not an IKE algorithm */
-	/* XXX maybe we can leave this to ikev2 child key derivation */
 	if (proposal.isap_protoid == PROTO_v2_ESP) {
-		ta.encrypter = (struct encrypt_desc *)ikev2_alg_find(
-			IKE_ALG_ENCRYPT,
-			ta.encrypt);
-		if (ta.encrypter != NULL) {
-			if (!ta.enckeylen)
-				ta.enckeylen = ta.encrypter->keydeflen;
-		} else {
-			passert(ta.encrypt == IKEv2_ENCR_NULL);
+		err_t ugh = kernel_alg_esp_enc_ok(ta.encrypt, ta.enckeylen);
+
+		if (ugh != NULL) {
+			libreswan_log("ESP algo %d with key_len %d is not valid (%s)", ta.encrypt, ta.enckeylen, ugh);
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 	}
 
