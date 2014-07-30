@@ -52,6 +52,8 @@ kvmplutotest	ikev2-19-x509-auto-start		good
 kvmplutotest	ikev2-17-rekey				good
 kvmplutotest	ikev2-16-rekey-child			good
 
+kvmplutotest	ikev2-24-cryptoload			wip
+
 kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
 kvmplutotest	ikev2-04-basic-x509-nhelpers0		good
 kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
