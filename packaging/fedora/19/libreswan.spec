@@ -189,7 +189,8 @@ rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
 %post 
 %systemd_post ipsec.service
-if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
+     ! -f %{_sysconfdir}/ipsec.d/cert9.db ] ; then
     TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
     [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
     echo > ${TEMPFILE}

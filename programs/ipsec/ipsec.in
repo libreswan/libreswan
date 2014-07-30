@@ -171,7 +171,9 @@ case "${1}" in
 	   mkdir -p "${IPSEC_CONFDDIR}"
 	fi
 	if [ -f "${IPSEC_CONFDDIR}/cert8.db" -o \
+	    -f "${IPSEC_CONFDDIR}/cert9.db" -o \
 	    -f "${IPSEC_CONFDDIR}/key3.db" -o \
+	    -f "${IPSEC_CONFDDIR}/key4.db" -o \
 	    -f "${IPSEC_CONFDDIR}/secmod.db" ]; then
 	    # if just checking, silently quit
 	    [ "${1}" = "checknss" -o "${1}" = "--checknss" ] && exit 0
