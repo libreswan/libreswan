@@ -473,7 +473,7 @@ DEFAULTCONFIG =  {
 	'resultsdir' : '/home/build/results',
 	'sanitizer' : "../../utils/sanitize.sh",
 	'bootwait' : 60, 
-	'swanhosts' : ['east', 'west', 'rooad', 'north'],
+	'swanhosts' : ['east', 'west', 'road', 'north'],
 	'regualrhosts' : ['nic'],
 	'shutdownwait': 21,
 	'newrun' : None,
