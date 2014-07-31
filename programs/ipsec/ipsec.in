@@ -178,7 +178,7 @@ case "${1}" in
 	    # if just checking, silently quit
 	    [ "${1}" = "checknss" -o "${1}" = "--checknss" ] && exit 0
 	    echo "NSS database already initialised - aborted"
-	    echo "To wipe the old NSS database, issue: rm \"${IPSEC_CONFDDIR}/\"*.db"
+	    echo "To wipe the old NSS database, issue: rm ${IPSEC_CONFDDIR}/*.db"
 	    exit 42
 	fi
 
