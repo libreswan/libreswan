@@ -810,16 +810,14 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	dbnew = kernel_alg_db_new(ei, policy, logit);
 
 	if (!dbnew) {
-		DBG(DBG_CONTROL,
-		    DBG_log("failed to translate esp_info to proposal, returning empty"));
+		libreswan_log("failed to translate esp_info to proposal, returning empty");
 		return NULL;
 	}
 
 	p = db_prop_get(dbnew);
 
 	if (!p) {
-		DBG(DBG_CONTROL,
-		    DBG_log("failed to get proposal from context, returning empty"));
+		libreswan_log("failed to get proposal from context, returning empty");
 		db_destroy(dbnew);
 		return NULL;
 	}
