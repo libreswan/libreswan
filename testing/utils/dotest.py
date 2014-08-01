@@ -497,7 +497,7 @@ def cmdline():
 			default=DEFAULTCONFIG['newrun'], action="store_true",
 			help="overwrite the results in %s. Default %s" % (DEFAULTCONFIG['resultsdir'], DEFAULTCONFIG['newrun']))
 
-	parser.add_argument("--resultdir",
+	parser.add_argument("--resultsdir",
 						default=DEFAULTCONFIG['resultsdir'],
 						help="test results directory %s"%DEFAULTCONFIG['resultsdir'])
 	parser.add_argument("--sanitizer",
@@ -615,22 +615,20 @@ def do_test(args, start=''):
 	s = sanitize(args.sanitizer)
 	write_result(args, start, testname, s)
 
-def do_test_list(args, start, tried):
+def do_test_list(args, start, tried, output_dir):
 	r = "./TESTLIST"
 	if not os.path.exists(r):
 		return None 
 
 	logging.info("** found file %s **" , r)
 
-	date_dir = time.strftime("%Y-%m-%d", time.localtime())
-	output_dir = args.resultdir + '/' + date_dir 
-	if not os.path.exists(args.resultdir):
+	if not os.path.exists(args.resultsdir):
 		try:
-			os.mkdir(args.resultdir, 0o755)
+			os.mkdir(args.resultsdir, 0o755)
 		except:
-			logging.error("failed to create directory %s", args.resultdir)
+			logging.error("failed to create directory %s", args.resultsdir)
 	else:
-		logging.info("testresult directory %s exist", args.resultdir)
+		logging.info("testresult directory %s exist", args.resultsdir)
 
 	if not os.path.exists(output_dir):
 		try:
@@ -718,11 +716,14 @@ def main():
 	args = cmdline() 
 	tried = 0
 
-	if do_test_list(args, start, tried): #try if there is a TESTLIST
+	date_dir = time.strftime("%Y-%m-%d", time.localtime())
+	output_dir = args.resultsdir + '/' + date_dir 
+
+	if do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):
 			tried = 1 + tried
 			logging.info("retry TESTLIST %s/%s ", tried, args.retry)
-			do_test_list(args, start, tried)
+			do_test_list(args, start, tried, output_dir)
 	else:
 		do_test(args,start)  # no TESTLIST. Lets try single test
 

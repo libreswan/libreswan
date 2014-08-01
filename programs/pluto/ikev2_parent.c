@@ -1154,7 +1154,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
 		stf_status ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						NULL, st, FALSE);
+						NULL, st, TRUE);
 
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE,DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
@@ -2469,7 +2469,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
 		stf_status ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
-					       NULL, st, FALSE);
+					       NULL, st, TRUE);
 
 		if (ret != STF_OK)
 			return ret;
