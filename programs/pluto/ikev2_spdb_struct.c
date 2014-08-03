@@ -1865,7 +1865,7 @@ stf_status ikev2_parse_child_sa_body(pb_stream *sa_pbs,		/* body of input SA Pay
 		if (ta.encrypter != NULL) {
 			err_t ugh;
 
-			if (ta.enckeylen != 0)
+			if (ta.enckeylen == 0)
 				ta.enckeylen = ta.encrypter->keydeflen;
 			ugh = kernel_alg_esp_enc_ok(ta.encrypt, ta.enckeylen);
 			if (ugh != NULL) {
