@@ -1063,7 +1063,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		/* SA body in and out */
 		ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
-					       &sa_pd->payload.v2sa,
 					       &r_sa_pbs, st1, FALSE);
 
 		if (ret != STF_OK)

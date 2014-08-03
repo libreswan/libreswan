@@ -901,7 +901,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 		/* SA body in and out */
 		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						&sa_pd->payload.v2sa,
 						&r_sa_pbs, st, FALSE);
 
 		if (ret != STF_OK) {
@@ -1155,7 +1154,6 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
 		stf_status ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						&sa_pd->payload.v2sa,
 						NULL, st, FALSE);
 
 		if (ret != STF_OK) {
@@ -2471,7 +2469,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
 		stf_status ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
-					       &sa_pd->payload.v2sa,
 					       NULL, st, FALSE);
 
 		if (ret != STF_OK)
