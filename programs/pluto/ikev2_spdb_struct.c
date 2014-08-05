@@ -1385,11 +1385,12 @@ stf_status ikev2_parse_parent_sa_body(
 			}
 		}
 
-		if (ikev2_match_transform_list_parent(sadb,
-						      proposal.isap_propnum, proposal.isap_protoid,
-						      itl) &&
-		    !gotmatch) {
-			/* winner: first match (but perhaps not last) */
+		/* Note: only try to match if we haven't had one */
+		if (!gotmatch &&
+		    ikev2_match_transform_list_parent(sadb,
+						      proposal.isap_propnum,
+						      proposal.isap_protoid,
+						      itl)) {
 			winning_prop = proposal;
 			gotmatch = TRUE;
 
@@ -1823,11 +1824,12 @@ stf_status ikev2_parse_child_sa_body(
 			}
 		}
 
-		if (ikev2_match_transform_list_child(p2alg,
-						     proposal.isap_propnum, proposal.isap_protoid,
-						     itl) &&
-		    !gotmatch) {
-			/* winner: first match (but perhaps not last) */
+		/* Note: only try to match if we haven't had one */
+		if (!gotmatch &&
+		    ikev2_match_transform_list_child(p2alg,
+						     proposal.isap_propnum,
+						     proposal.isap_protoid,
+						     itl)) {
 			winning_prop = proposal;
 			gotmatch = TRUE;
 
