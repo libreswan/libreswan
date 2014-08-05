@@ -1801,18 +1801,6 @@ stf_status ikev2_parse_child_sa_body(
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
 
-		DBG(DBG_PARSING,
-		    DBG_log("SPI received: %08x",
-			    ntohl(spival)));
-		/* if this is a confirming SA, the SPI must match */
-		if (selection && spival != proto_info->attrs.spi) {
-			loglog(RC_LOG_SERIOUS,
-				"expected SPI %08x but received %08x",
-				ntohl(proto_info->attrs.spi),
-				ntohl(spival));
-			return STF_FAIL + v2N_INVALID_SPI;
-		}
-
 		{
 			stf_status ret = ikev2_process_transforms(&proposal,
 								  &proposal_pbs,
@@ -1842,9 +1830,8 @@ stf_status ikev2_parse_child_sa_body(
 				       itl->encr_keylens[itl->encr_i] : 0;
 			ta.integ_hash = itl->integ_transforms[itl->integ_i];
 
-			/* if not just confirming, record the SPI value */
-			if (!selection)
-				proto_info->attrs.spi = spival;
+			/* record peer's SPI value */
+			proto_info->attrs.spi = spival;
 		}
 	}
 
