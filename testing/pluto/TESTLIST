@@ -625,3 +625,13 @@ kvmplutotest	l2tp-02					good
 kvmplutotest	l2tp-02-netkey				good
 
 kvmplutotest	ikeport-01				wip
+
+#################################################################
+# passthrough tests
+#################################################################
+kvmplutotest	netkey-passthrough-00			wip
+kvmplutotest	netkey-passthrough-01			wip
+kvmplutotest	netkey-passthrough-02			wip
+kvmplutotest	netkey-passthrough-03			wip
+kvmplutotest	klips-passthrough-00			wip
+
