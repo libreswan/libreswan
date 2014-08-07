@@ -63,17 +63,16 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 	} \
 }
 
-extern stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,				/* body of input SA Payload */
-					     const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
-					     pb_stream *r_sa_pbs,			/* if non-NULL, where to emit winning SA */
-					     struct state *st,				/* current state object */
-					     bool selection				/* if this SA is a selection, only one
-											 * tranform can appear. */
-					     );
+extern stf_status ikev2_parse_parent_sa_body(
+	pb_stream *sa_pbs,	/* body of input SA Payload */
+	pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
+	struct state *st,	/* current state object */
+	bool selection);	/* if this SA is a selection, only one
+				 * tranform can appear.
+				 */
 
 extern stf_status ikev2_parse_child_sa_body(
 	pb_stream *sa_pbs,	/* body of input SA Payload */
-	const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
 	pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
 	struct state *st,	/* current state object */
 	bool selection);	/* if this SA is a selection, only one

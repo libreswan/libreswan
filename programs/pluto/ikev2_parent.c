@@ -160,13 +160,12 @@ stf_status ikev2parent_outI1(int whack_sock,
 	 * number needs to be initialized.
 	 */
 	{
-		unsigned policy_index = POLICY_ISAKMP(policy, c);
 		oakley_group_t groupnum = OAKLEY_GROUP_invalid;
 		struct db_sa *sadb;
 		unsigned int pc_cnt;
 
 		/* inscrutable dance of the sadbs */
-		sadb = &oakley_sadb[policy_index];
+		sadb = &oakley_sadb[sadb_index(policy, c)];
 		{
 			struct db_sa *sadb_plus =
 				oakley_alg_makedb(st->st_connection->alg_info_ike,
@@ -902,7 +901,6 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 		/* SA body in and out */
 		ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						&sa_pd->payload.v2sa,
 						&r_sa_pbs, st, FALSE);
 
 		if (ret != STF_OK) {
@@ -1156,8 +1154,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
 		stf_status ret = ikev2_parse_parent_sa_body(&sa_pd->pbs,
-						&sa_pd->payload.v2sa,
-						NULL, st, FALSE);
+						NULL, st, TRUE);
 
 		if (ret != STF_OK) {
 			DBG(DBG_CONTROLMORE,DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
@@ -2472,8 +2469,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		struct payload_digest *const sa_pd =
 			md->chain[ISAKMP_NEXT_v2SA];
 		stf_status ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
-					       &sa_pd->payload.v2sa,
-					       NULL, st, FALSE);
+					       NULL, st, TRUE);
 
 		if (ret != STF_OK)
 			return ret;
@@ -3080,9 +3076,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 								    &protocol_names,
 								    v2del->isad_protoid),
 							    (unsigned long)
-							    ntohl((unsigned long)
-								  *(ipsec_spi_t *)
-								  spi)));
+							    ntohl((unsigned long) *(ipsec_spi_t *)spi)));
 
 						struct state *dst =
 							find_state_ikev2_child_to_delete(

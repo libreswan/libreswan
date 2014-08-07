@@ -977,8 +977,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 						if (bfit_p > bestfit_p) {
 							DBG(DBG_CONTROLMORE, DBG_log(
 								    "ikev2_evaluate_connection_port_fit found better fit d %s, tsi[%d],tsr[%d]",
-								    d
-								    ->name,
+								    d->name,
 								    best_tsi_i,
 								    best_tsr_i));
 							int bfit_pr =
@@ -991,8 +990,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 									tsr_n,
 									&best_tsi_i,
 									&best_tsr_i);
-							if (bfit_pr >
-							    bestfit_pr ) {
+							if (bfit_pr > bestfit_pr) {
 								DBG(DBG_CONTROLMORE,
 								    DBG_log("ikev2_evaluate_connection_protocol_fit found better fit d %s, tsi[%d],tsr[%d]",
 									    d->name, best_tsi_i, best_tsr_i));
@@ -1065,7 +1063,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 		/* SA body in and out */
 		ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
-					       &sa_pd->payload.v2sa,
 					       &r_sa_pbs, st1, FALSE);
 
 		if (ret != STF_OK)

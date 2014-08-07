@@ -144,7 +144,7 @@ static sparse_names aalg_list = {
 	{ SADB_X_AALG_SHA2_256HMAC_TRUNCBUG, "hmac(sha256)" },
 	{ SADB_X_AALG_SHA2_384HMAC, "hmac(sha384)" },
 	{ SADB_X_AALG_SHA2_512HMAC, "hmac(sha512)" },
-	{ SADB_X_AALG_RIPEMD160HMAC, "ripemd160" },
+	{ SADB_X_AALG_RIPEMD160HMAC, "hmac(rmd160)" },
 	{ SADB_X_AALG_AES_XCBC_MAC, "xcbc(aes)" },
 	{ 0, sparse_end }
 };
@@ -157,9 +157,11 @@ static sparse_names ealg_list = {
 	{ SADB_X_EALG_CASTCBC, "cast5" },
 	/* { SADB_X_EALG_BLOWFISHCBC, "blowfish" }, obsoleted */
 	{ SADB_X_EALG_AESCBC, "aes" },
-	{ SADB_X_EALG_AESCTR, "ctr(aes)" },
-	/* not implemented in Linux kernel
-	{ SADB_X_EALG_SEEDCBC, "cbc(seed)" }, */
+	{ SADB_X_EALG_AESCTR, "rfc3686(ctr(aes))" },
+	/*
+	 * Not yet implemented in Linux kernel xfrm_algo.c
+	{ SADB_X_EALG_SEEDCBC, "cbc(seed)" },
+	 */
 	{ SADB_X_EALG_CAMELLIACBC, "cbc(camellia)" },
 	/* 252 draft-ietf-ipsec-ciph-aes-cbc-00 */
 	{ SADB_X_EALG_SERPENTCBC, "serpent" },
@@ -190,6 +192,13 @@ static const struct aead_alg aead_algs[] =
 		.name = "rfc4106(gcm(aes))" },
 	{ .id = SADB_X_EALG_AES_GCM_ICV16, .icvlen = 16,
 		.name = "rfc4106(gcm(aes))" },
+	/*
+	 * The Linux kernel has rfc4494 "cmac(aes)", except there is
+	 * no such AH/ESP transform, only an IKEv2 transform.
+	 * Presumably for AF_KEY use of userland
+	{ .id = SADB_X_EALG_NULL_AUTH_AES_GMAC, .icvlen = 16,
+		.name = "rfc4543(gcm(aes))" },
+	*/
 };
 
 static const struct aead_alg *get_aead_alg(int algid)

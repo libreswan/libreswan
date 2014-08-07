@@ -122,9 +122,15 @@ struct db_sa {
 	unsigned int prop_disj_cnt;             /* v2: number of elements... OR */
 };
 
-/* The oakley sadb is subscripted by a bitset with members
- * from POLICY_PSK and POLICY_RSASIG.
+/* The oakley sadb is subscripted by a bitset computed by sadb_index().
+ *
+ * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (ideosyncratic).
  */
+#define sadb_index(x, c) \
+	(((x) & LRANGES(POLICY_PSK, POLICY_RSASIG)) | \
+	(((c)->spd.this.xauth_server) << (POLICY_RSASIG_IX+1)) | \
+	(((c)->spd.this.xauth_client) << (POLICY_RSASIG_IX+2)))
+
 extern struct db_sa oakley_sadb[1 << 4];
 extern struct db_sa oakley_am_sadb[1 << 4];
 

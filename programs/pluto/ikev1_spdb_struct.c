@@ -1529,7 +1529,6 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	struct db_prop_conj *cprop;
 	struct db_sa    *revised_sadb;
 	struct connection *c = st->st_connection;
-	unsigned policy_index = POLICY_ISAKMP(policy, c);
 
 	zero(&ta);
 
@@ -1538,9 +1537,8 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	ta.life_kilobytes = 1000000;
 
 	/* Max transforms == 2 - Multiple transforms, 1 DH group */
-	passert(policy_index < elemsof(oakley_am_sadb));
 	revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-		&oakley_am_sadb[policy_index], TRUE);
+		&oakley_am_sadb[sadb_index(policy, c)], TRUE);
 
 	if (revised_sadb == NULL)
 		return FALSE;
@@ -2318,7 +2316,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			for (tn = 0; tn != ah_proposal.isap_notrans; tn++) {
 				int ok_transid = 0;
-				bool ok_auth = FALSE;
+				bool ok_auth = TRUE;
 
 				if (!parse_ipsec_transform(&ah_trans,
 							   &ah_attrs,
@@ -2353,28 +2351,29 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					return BAD_PROPOSAL_SYNTAX;
 
 				case AUTH_ALGORITHM_HMAC_MD5:
-					ok_auth = TRUE;
 				/* fall through */
 				case AUTH_ALGORITHM_KPDK:
 					ok_transid = AH_MD5;
 					break;
 
 				case AUTH_ALGORITHM_HMAC_SHA1:
-					ok_auth = TRUE;
 					ok_transid = AH_SHA;
 					break;
 
 				case AUTH_ALGORITHM_DES_MAC:
 					loglog(RC_LOG_SERIOUS,
 					       "AH_DES no longer supported");
-					return BAD_PROPOSAL_SYNTAX;
+					ok_auth = FALSE;
+					break;
 
 				case AUTH_ALGORITHM_HMAC_SHA2_256:
 					ok_transid = AH_SHA2_256;
 					break;
+
 				case AUTH_ALGORITHM_HMAC_SHA2_384:
 					ok_transid = AH_SHA2_384;
 					break;
+
 				case AUTH_ALGORITHM_HMAC_SHA2_512:
 					ok_transid = AH_SHA2_512;
 					break;
@@ -2386,14 +2385,17 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				case AUTH_ALGORITHM_SIG_RSA:
 					loglog(RC_LOG_SERIOUS,
 					       "AH_RSA (RFC4359) not implemented");
-					return BAD_PROPOSAL_SYNTAX;
+					ok_auth = FALSE;
+					break;
 
 				case AUTH_ALGORITHM_AES_128_GMAC:
 					ok_transid = AH_AES_128_GMAC;
 					break;
+
 				case AUTH_ALGORITHM_AES_192_GMAC:
 					ok_transid = AH_AES_192_GMAC;
 					break;
+
 				case AUTH_ALGORITHM_AES_256_GMAC:
 					ok_transid = AH_AES_256_GMAC;
 					break;
@@ -2402,7 +2404,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					loglog(RC_LOG_SERIOUS,
 					       "Unknown integ algorithm %d not supported", 
 							ah_attrs.transattrs.integ_hash);
-					return BAD_PROPOSAL_SYNTAX;
+					ok_auth = FALSE;
+					break;
 				}
 
 				if (ah_attrs.transattrs.encrypt !=

@@ -522,26 +522,25 @@ void delete_state(struct state *st)
 	free_any_nss_symkey(st->st_enc_key_nss);
 #   undef free_any_nss_symkey
 
-	if (st->st_ah.our_keymat != NULL)
-		memset(st->st_ah.our_keymat, 0, st->st_ah.keymat_len);
+#   define wipe_any(p, l) { \
+		if ((p) != NULL) { \
+			memset((p), 0x00, (l)); \
+			pfree(p); \
+			(p) = NULL; \
+		} \
+	}
+	wipe_any(st->st_ah.our_keymat, st->st_ah.keymat_len);
+	wipe_any(st->st_ah.peer_keymat, st->st_ah.keymat_len);
+	wipe_any(st->st_esp.our_keymat, st->st_esp.keymat_len);
+	wipe_any(st->st_esp.peer_keymat, st->st_esp.keymat_len);
 
-	if (st->st_ah.peer_keymat != NULL)
-		memset(st->st_ah.peer_keymat, 0, st->st_ah.keymat_len);
+	wipe_any(st->st_xauth_password.ptr, st->st_xauth_password.len);
+#   undef wipe_any
 
-	if (st->st_esp.our_keymat != NULL)
-		memset(st->st_esp.our_keymat, 0, st->st_esp.keymat_len);
-
-	if (st->st_esp.peer_keymat != NULL)
-		memset(st->st_esp.peer_keymat, 0, st->st_esp.keymat_len);
-
-	pfreeany(st->st_ah.our_keymat);
-	pfreeany(st->st_ah.peer_keymat);
-	pfreeany(st->st_esp.our_keymat);
-	pfreeany(st->st_esp.peer_keymat);
-	freeanychunk(st->st_xauth_password);
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(st->sec_ctx);
 #endif
+	zero(st);
 	pfree(st);
 }
 

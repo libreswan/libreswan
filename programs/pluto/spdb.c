@@ -903,20 +903,23 @@ static struct db_prop_conj oakley_props_rsasig_xauths[] =
 static struct db_prop_conj oakley_props_pskrsasig_xauths[] =
 	{ { AD_PC(oakley_pc_pskrsasig_xauths) } };
 
-/* the sadb entry, subscripted by POLICY_PSK and POLICY_RSASIG bits */
+/* the sadb entry, subscripted by sadb_index() */
 struct db_sa oakley_sadb[] = {
 	{ AD_NULL },                                    /* none */
-	{ AD_SAp(oakley_props_psk) },                   /* POLICY_PSK */
-	{ AD_SAp(oakley_props_rsasig) },                /* POLICY_RSASIG */
-	{ AD_SAp(oakley_props_pskrsasig) },             /* POLICY_PSK + POLICY_RSASIG */
-	{ AD_NULL },                                    /* POLICY_XAUTHSERVER + none */
-	{ AD_SAp(oakley_props_psk_xauths) },            /* POLICY_XAUTHSERVER + PSK */
-	{ AD_SAp(oakley_props_rsasig_xauths) },         /* POLICY_XAUTHSERVER + RSA */
-	{ AD_SAp(oakley_props_pskrsasig_xauths) },      /* POLICY_XAUTHSERVER + RSA+PSK */
-	{ AD_NULL },                                    /* POLICY_XAUTHCLIENT + none */
-	{ AD_SAp(oakley_props_psk_xauthc) },            /* POLICY_XAUTHCLIENT + PSK */
-	{ AD_SAp(oakley_props_rsasig_xauthc) },         /* POLICY_XAUTHCLIENT + RSA */
-	{ AD_SAp(oakley_props_pskrsasig_xauthc) },      /* POLICY_XAUTHCLIENT + RSA+PSK */
+	{ AD_SAp(oakley_props_psk) },                   /* PSK */
+	{ AD_SAp(oakley_props_rsasig) },                /* RSASIG */
+	{ AD_SAp(oakley_props_pskrsasig) },             /* PSK + RSASIG */
+
+	{ AD_NULL },                                    /* XAUTHSERVER + none */
+	{ AD_SAp(oakley_props_psk_xauths) },            /* XAUTHSERVER + PSK */
+	{ AD_SAp(oakley_props_rsasig_xauths) },         /* XAUTHSERVER + RSA */
+	{ AD_SAp(oakley_props_pskrsasig_xauths) },      /* XAUTHSERVER + RSA+PSK */
+
+	{ AD_NULL },                                    /* XAUTHCLIENT + none */
+	{ AD_SAp(oakley_props_psk_xauthc) },            /* XAUTHCLIENT + PSK */
+	{ AD_SAp(oakley_props_rsasig_xauthc) },         /* XAUTHCLIENT + RSA */
+	{ AD_SAp(oakley_props_pskrsasig_xauthc) },      /* XAUTHCLIENT + RSA+PSK */
+
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + none */
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + PSK */
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA */
@@ -991,47 +994,27 @@ static struct db_prop_conj oakley_am_props_psk_xauths[] =
 static struct db_prop_conj oakley_am_props_rsasig_xauths[] =
 	{ { AD_PC(oakley_am_pc_rsasig_xauths) } };
 
-/*
- * the sadb entry, subscripted
- *   by [ WEAK, XAUTHSERVER, XAUTHCLIENT, POLICY_RSASIG, POLICY_PSK ] bits
- */
+/* the sadb entry, subscripted by sadb_index() */
 struct db_sa oakley_am_sadb[] = {
-	/* STRONG ALGORITHMS */
 	{ AD_NULL },                                    /* none */
-	{ AD_SAp(oakley_am_props_psk) },                /* POLICY_PSK */
-	{ AD_SAp(oakley_am_props_rsasig) },             /* POLICY_RSASIG */
-	{ AD_NULL },                                    /* PSK + RSASIG => invalid in AM */
-	{ AD_NULL },                                    /* POLICY_XAUTHSERVER + none */
-	{ AD_SAp(oakley_am_props_psk_xauths) },         /* POLICY_XAUTHSERVER + PSK */
-	{ AD_SAp(oakley_am_props_rsasig_xauths) },      /* POLICY_XAUTHSERVER + RSA */
-	{ AD_NULL },                                    /* XAUTHSERVER + RSA+PSK=>invalid */
-	{ AD_NULL },                                    /* POLICY_XAUTHCLIENT + none */
-	{ AD_SAp(oakley_am_props_psk_xauthc) },         /* POLICY_XAUTHCLIENT + PSK */
-	{ AD_SAp(oakley_am_props_rsasig_xauthc) },      /* POLICY_XAUTHCLIENT + RSA */
-	{ AD_NULL },                                    /* XAUTHCLIENT + RSA+PSK=>invalid */
+	{ AD_SAp(oakley_am_props_psk) },                /* PSK */
+	{ AD_SAp(oakley_am_props_rsasig) },             /* RSASIG */
+	{ AD_NULL },                                    /* PSK+RSASIG => invalid in AM */
+
+	{ AD_NULL },                                    /* XAUTHSERVER + none */
+	{ AD_SAp(oakley_am_props_psk_xauths) },         /* XAUTHSERVER + PSK */
+	{ AD_SAp(oakley_am_props_rsasig_xauths) },      /* XAUTHSERVER + RSA */
+	{ AD_NULL },                                    /* XAUTHSERVER + RSA+PSK => invalid */
+
+	{ AD_NULL },                                    /* XAUTHCLIENT + none */
+	{ AD_SAp(oakley_am_props_psk_xauthc) },         /* XAUTHCLIENT + PSK */
+	{ AD_SAp(oakley_am_props_rsasig_xauthc) },      /* XAUTHCLIENT + RSA */
+	{ AD_NULL },                                    /* XAUTHCLIENT + RSA+PSK => invalid */
+
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + none */
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + PSK */
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA */
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
-#if 0
-	/* weaker ALGORITHMS */
-	{ AD_NULL },                                    /* none */
-	{ AD_SAp(oakley_am_props_psk) },                /* POLICY_PSK */
-	{ AD_SAp(oakley_am_props_rsasig) },             /* POLICY_RSASIG */
-	{ AD_SAp(oakley_am_props_pskrsasig) },          /* POLICY_PSK + POLICY_RSASIG */
-	{ AD_NULL },                                    /* POLICY_XAUTHSERVER + none */
-	{ AD_SAp(oakley_am_props_psk_xauths) },         /* POLICY_XAUTHSERVER + PSK */
-	{ AD_SAp(oakley_am_props_rsasig_xauths) },      /* POLICY_XAUTHSERVER + RSA */
-	{ AD_SAp(oakley_am_props_pskrsasig_xauths) },   /* POLICY_XAUTHSERVER + RSA+PSK */
-	{ AD_NULL },                                    /* POLICY_XAUTHCLIENT + none */
-	{ AD_SAp(oakley_am_props_psk_xauthc) },         /* POLICY_XAUTHCLIENT + PSK */
-	{ AD_SAp(oakley_am_props_rsasig_xauthc) },      /* POLICY_XAUTHCLIENT + RSA */
-	{ AD_SAp(oakley_am_props_pskrsasig_xauthc) },   /* POLICY_XAUTHCLIENT + RSA+PSK */
-	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + none */
-	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + PSK */
-	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA */
-	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
-#endif
 };
 
 /**************** IPsec (quick mode) SA database ****************/
