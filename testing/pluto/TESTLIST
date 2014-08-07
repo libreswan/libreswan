@@ -334,7 +334,9 @@ umlXhost	nat-aggr-01		good
 #
 kvmplutotest	basic-pluto-04		good
 
-#
+# CAP_DAC_OVERRIDE
+kvmplutotest	basic-pluto-06		wip
+
 # a test of sending and validating an X.509 cert
 # when the responder has leftca=%any
 #
