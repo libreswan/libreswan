@@ -23,9 +23,9 @@ road #
 road #
  rm -fr /var/run/pluto/pluto.pid
 road #
- /usr/local/libexec/ipsec/_stackmanager stop
+ PATH/libexec/ipsec/_stackmanager stop
 road #
- /usr/local/libexec/ipsec/_stackmanager start
+ PATH/libexec/ipsec/_stackmanager start
 [ 00.00] AVX instructions are not detected.
 [ 00.00] AVX instructions are not detected.
 [ 00.00] registered KLIPS /proc/sys/net
