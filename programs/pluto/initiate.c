@@ -251,7 +251,7 @@ static int initiate_a_connection(struct connection *c,
 
 				if (alg != NULL && phase2_sa == NULL) {
 					whack_log(RC_LOG_SERIOUS,
-						  "can not initiate: no acceptable kernel algorithms loaded");
+						  "cannot initiate: no acceptable kernel algorithms loaded");
 					reset_cur_connection();
 					close_any(is->whackfd);
 					return 0;
@@ -835,12 +835,12 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			if (ugh != NULL) {
 				/* cannot use our IP as OE identitiy for initiation */
 				DBG(DBG_OPPO,
-				    DBG_log("can not use our IP (%s:IPSECKEY) as identity: %s",
+				    DBG_log("cannot use our IP (%s:IPSECKEY) as identity: %s",
 					    myid_str[MYID_IP],
 					    ugh));
 				if (!logged_myid_ip_txt_warning) {
 					loglog(RC_LOG_SERIOUS,
-					       "can not use our IP (%s:IPSECKEY) as identity: %s",
+					       "cannot use our IP (%s:IPSECKEY) as identity: %s",
 					       myid_str[MYID_IP],
 					       ugh);
 					logged_myid_ip_txt_warning = TRUE;
@@ -866,12 +866,12 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			if (ugh != NULL) {
 				/* cannot use our hostname as OE identitiy for initiation */
 				DBG(DBG_OPPO,
-				    DBG_log("can not use our hostname (%s:IPSECKEY) as identity: %s",
+				    DBG_log("cannot use our hostname (%s:IPSECKEY) as identity: %s",
 					    myid_str[MYID_HOSTNAME],
 					    ugh));
 				if (!logged_myid_fqdn_txt_warning) {
 					loglog(RC_LOG_SERIOUS,
-					       "can not use our hostname (%s:IPSECKEY) as identity: %s",
+					       "cannot use our hostname (%s:IPSECKEY) as identity: %s",
 					       myid_str[MYID_HOSTNAME],
 					       ugh);
 					logged_myid_fqdn_txt_warning = TRUE;

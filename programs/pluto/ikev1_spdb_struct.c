@@ -164,7 +164,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 		/* lets verify if the received security label is within range of this connection's policy's security label*/
 		if (!st->st_connection->labeled_ipsec) {
-			DBG_log("This state (connection) is not labeled ipsec enabled, so can not proceed");
+			DBG_log("This state (connection) is not labeled ipsec enabled, so cannot proceed");
 			return FALSE;
 		} else if ( st->st_connection->policy_label != NULL &&
 			    within_range(st->sec_ctx->sec_ctx_value,

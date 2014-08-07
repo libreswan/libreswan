@@ -334,12 +334,6 @@ extern void calc_nonce(struct pluto_crypto_req *r);
 extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);
 
-/* no longer exists?
- *  extern stf_status perform_dh(struct pluto_crypto_req_cont *cn, struct state *st);
- *  extern bool generate_skeyids_iv(struct state *st);
- */
-
-
 extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 				    struct state *st,
 				    enum crypto_importance importance,
