@@ -425,7 +425,7 @@ void delete_state(struct state *st)
 		    state_with_serialno(st->st_clonedfrom) == NULL) {
 			/* ??? in v2, there must be a parent */
 			DBG(DBG_CONTROL, DBG_log("IKE SA does not exist for this child SA"));
-			DBG(DBG_CONTROL, DBG_log("INFORMATIONAL exchange can not be sent, deleting state"));
+			DBG(DBG_CONTROL, DBG_log("INFORMATIONAL exchange cannot be sent, deleting state"));
 			change_state(st, STATE_CHILDSA_DEL);
 		} else  {
 			send_delete(st);

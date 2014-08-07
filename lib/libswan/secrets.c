@@ -566,7 +566,7 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key
 	pubk = CERT_ExtractPublicKey(nssCert);
 	if (pubk == NULL) {
 		loglog(RC_LOG_SERIOUS,
-			"extract_and_add_secret_from_nsscert: can not find cert's public key (err %d)",
+			"extract_and_add_secret_from_nsscert: cannot find cert's public key (err %d)",
 			PR_GetError());
 		ugh = "NSS cert found, pub key not found";
 		goto error;
@@ -585,7 +585,7 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key
 					lsw_return_nss_password_file_info());
 	if (certCKAID == NULL) {
 		loglog(RC_LOG_SERIOUS,
-			"extract_and_add_secret_from_nsscert: can not find cert's low level CKA ID (err %d)",
+			"extract_and_add_secret_from_nsscert: cannot find cert's low level CKA ID (err %d)",
 			PR_GetError());
 		ugh = "cert cka id not found";
 		goto error2;

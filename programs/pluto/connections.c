@@ -777,7 +777,7 @@ static void load_end_certificate(const char *name, struct end *dst)
 		bool valid_cert = load_cert_from_nss(name,
 						"host cert", &cert);
 		if (!valid_cert) {
-			whack_log(RC_FATAL, "can not load certificate %s\n",
+			whack_log(RC_FATAL, "cannot load certificate %s\n",
 				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;

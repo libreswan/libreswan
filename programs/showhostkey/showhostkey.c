@@ -201,7 +201,7 @@ static struct secret *pick_key(struct secret *host_secrets,
 	if (s == NULL) {
 		char abuf[IDTOA_BUF];
 		idtoa(&id, abuf, IDTOA_BUF);
-		printf("%s: can not find key: %s (%s)\n", progname, idname,
+		printf("%s: cannot find key: %s (%s)\n", progname, idname,
 		       abuf);
 		exit(5);
 	}

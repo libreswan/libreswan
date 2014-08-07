@@ -1913,7 +1913,7 @@ int main(int argc, char **argv)
 
 	if (msg.policy & POLICY_AGGRESSIVE) {
 		if (msg.ike == NULL)
-			diag("can not specify aggressive mode without ike= to set algorithm");
+			diag("cannot specify aggressive mode without ike= to set algorithm");
 	}
 
 	update_ports(&msg);
