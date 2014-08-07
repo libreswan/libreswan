@@ -49,7 +49,6 @@ kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey				good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
-kvmplutotest	ikev2-17-rekey				good
 kvmplutotest	ikev2-16-rekey-child			good
 
 kvmplutotest	ikev2-24-cryptoload			wip
@@ -96,7 +95,6 @@ kvmplutotest	ikev1-algo-05-aes-aes			good
 kvmplutotest	ikev1-algo-04-mismatch			good
 kvmplutotest	ikev1-algo-05-3des-sha2			good
 
-kvmplutotest	ikev2-algo-05-aes-default		good
 
 # Various corner case tests for IKEv2
 kvmplutotest	ikev2-major-version-initiator		good
@@ -474,7 +472,6 @@ kvmplutotest    algo-pluto-03          good
 kvmplutotest    algo-pluto-04          good
 umlplutotest    algo-pluto-05          good
 umlplutotest    algo-pluto-06          good
-umlplutotest    algo-pluto-07          good
 kvmplutotest    algo-pluto-08          good
 kvmplutotest    algo-pluto-09          good
 kvmplutotest    algo-pluto-10          good
@@ -512,7 +509,6 @@ umlplutotest	protoport-02		good
 # Tests below require testing infrastructure with netkey support
 kvmplutotest    algo-pluto-07			good
 kvmplutotest    netkey-pluto-01			good
-kvmplutotest    netkey-pluto-02			good
 kvmplutotest    netkey-pluto-02			good
 umlplutotest    netkey-pluto-04			good
 umlplutotest    netkey-pluto-05			good
