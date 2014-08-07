@@ -1162,7 +1162,7 @@ void add_connection(const struct whack_message *wm)
 				err_buf);
 			return;
 		}
-		if (alg_info_ike->alg_info_cnt == 0) {
+		if (alg_info_ike->ai.alg_info_cnt == 0) {
 			loglog(RC_LOG_SERIOUS,
 				"got 0 transforms for ike=\"%s\"", wm->ike);
 			return;
@@ -1221,7 +1221,7 @@ void add_connection(const struct whack_message *wm)
 				DBG_log("esp string values: %s", buf);
 			});
 			if (c->alg_info_esp != NULL) {
-				if (c->alg_info_esp->alg_info_cnt == 0) {
+				if (c->alg_info_esp->ai.alg_info_cnt == 0) {
 					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"esp=\"%s\"",
@@ -1251,7 +1251,7 @@ void add_connection(const struct whack_message *wm)
 					buf);
 			});
 			if (c->alg_info_ike != NULL) {
-				if (c->alg_info_ike->alg_info_cnt == 0) {
+				if (c->alg_info_ike->ai.alg_info_cnt == 0) {
 					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"ike=\"%s\"",
