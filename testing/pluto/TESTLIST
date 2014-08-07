@@ -1,6 +1,6 @@
 #
 # This isn't actually a shell script. It just looks like one.
-# Some tools other than /bin/sh process it. 
+# Some tools other than /bin/sh process it.
 #
 
 # test-kind	directory-containing-test	expectation	[PR#]
@@ -14,7 +14,7 @@
 # expectation:
 #  good - output matches known output
 #  bad  - output should NOT match [only for unit tests, not pluto test]
-#  wip  - this test still need work. 
+#  wip  - this test still need work.
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01	good
@@ -133,7 +133,7 @@ ctltest	pluto-dontreky-expiry-01 good
 # OE TEMP DISABLED umlplutotest	food-groups-clear-01	good
 # oe peer
 #
-# this test is disabled because the OE peer (west) is not 
+# this test is disabled because the OE peer (west) is not
 # properly configured yet.
 #umlplutotest	food-groups-clear-02	bad
 
@@ -142,7 +142,7 @@ ctltest	pluto-dontreky-expiry-01 good
 
 # oe peer
 #
-# this test is disabled because the OE peer (west) is not 
+# this test is disabled because the OE peer (west) is not
 # properly configured yet.
 #umlplutotest	food-groups-clear-or-oe-02	bad
 
@@ -152,7 +152,7 @@ ctltest	pluto-dontreky-expiry-01 good
 # oe peer
 # This test is disabled, since no packets should ever arrive at west, so
 # it could never reply. A test of replies needs to be done instead.
-# 
+#
 #umlplutotest	food-groups-never-02	bad
 
 # oe peer
@@ -160,7 +160,7 @@ ctltest	pluto-dontreky-expiry-01 good
 
 # clear peer
 #
-# this test is disabled because the OE peer (west) is not 
+# this test is disabled because the OE peer (west) is not
 # properly configured yet.
 #umlplutotest	food-groups-oe-or-clear-02	bad
 
@@ -169,7 +169,7 @@ ctltest	pluto-dontreky-expiry-01 good
 
 # clear peer
 #
-# this test is disabled because the OE peer (west) is not 
+# this test is disabled because the OE peer (west) is not
 # properly configured yet.
 #umlplutotest	food-groups-oe-or-die-02	bad
 
@@ -209,9 +209,9 @@ kvmplutotest	delete-sa-01	good
 # OE TEMP DISABLED umlplutotest	oe-snat-01	good
 
 #
-# oe-fail-without-resp-client-txt-01 - when responding using an OE 
-# connection, checks that there is a TXT (and possibly KEY) record 
-# that delegates this security gateway to act for the client on our 
+# oe-fail-without-resp-client-txt-01 - when responding using an OE
+# connection, checks that there is a TXT (and possibly KEY) record
+# that delegates this security gateway to act for the client on our
 # side.
 # OE TEMP DISABLED umlplutotest	oe-fail-without-resp-client-txt-01	good
 
@@ -304,7 +304,7 @@ kvmplutotest	x509-pluto-01		good
 # incomplete test - disabled
 #umlplutotest	x509-pluto-03		good
 
-# NSS tests 
+# NSS tests
 # a test for using nss with X.509 cert
 #
 # incomplete test - disabled
@@ -336,20 +336,20 @@ umlXhost	nat-aggr-01		good
 #
 kvmplutotest	basic-pluto-04		good
 
-# 
+#
 # a test of sending and validating an X.509 cert
 # when the responder has leftca=%any
 #
 umlplutotest	x509-pluto-04		good
 
-# 
+#
 # a test of sending and validating an X.509 cert
 # when the responder only a leftca="" value, and
 # no leftid=
 #
 umlplutotest	x509-pluto-05		good
 
-# 
+#
 # a test of sending and validating an X.509 cert
 # when the responder has the wrong DN.
 #
@@ -400,7 +400,7 @@ ctltest	aggr-unit-02			good
 
 
 
-# 
+#
 # a testcase with pfs=yes connecting to pfs=no
 #
 kvmplutotest	basic-pluto-09		good
@@ -417,7 +417,7 @@ kvmplutotest	basic-pluto-12-netkey	wip
 # test cases of what happens to X.509 based authorization system
 # when certain error conditions are met or parts of the CA are
 # missing or CRL's expired, etc.
-# 
+#
 #
 umlplutotest	fail-x509-01		good
 umlplutotest	fail-x509-02		good
@@ -465,7 +465,7 @@ kvmplutotest	netkey-algo-null-02	good
 #
 umlplutotest	basic-pluto-08		bad
 
-# 
+#
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
 kvmplutotest    algo-pluto-01          good
@@ -543,7 +543,7 @@ umlplutotest	sourceip-02			good
 #################################################################
 # IPv6 tests
 #################################################################
-kvmplutotest	ipv6-v6-through-v6-klips-klips		incomplete	
+kvmplutotest	ipv6-v6-through-v6-klips-klips		incomplete
 umlplutotest	ipv6-v6-through-v6-netkey-netkey	good
 umlplutotest	ipv6-v6-through-v6-klips-netkey		good
 umlplutotest	ipv6-v4-through-v6-klips-klips		good
