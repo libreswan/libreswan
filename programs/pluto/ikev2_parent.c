@@ -3209,7 +3209,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			send_ike_msg(st, __FUNCTION__);
 		}
 
-		/* Now carry out the actualy task, we can not carry the actual task since
+		/* Now carry out the actualy task, we cannot carry the actual task since
 		 * we need to send informational responde using existig SAs
 		 */
 
@@ -3326,7 +3326,7 @@ stf_status ikev2_send_informational(struct state *st)
 			DBG(DBG_CONTROL,
 			    DBG_log("IKE SA does not exist for this child SA - should not happen"));
 			DBG(DBG_CONTROL,
-			    DBG_log("INFORMATIONAL exchange can not be sent"));
+			    DBG_log("INFORMATIONAL exchange cannot be sent"));
 			return STF_IGNORE;
 		}
 	}
@@ -3459,7 +3459,7 @@ void ikev2_delete_out(struct state *st)
 			DBG(DBG_CONTROL,
 			    DBG_log("IKE SA does not exist for this child SA"));
 			DBG(DBG_CONTROL,
-			    DBG_log("INFORMATIONAL exchange can not be sent, deleting state"));
+			    DBG_log("INFORMATIONAL exchange cannot be sent, deleting state"));
 			goto unhappy_ending;
 		}
 	} else {

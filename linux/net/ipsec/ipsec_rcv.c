@@ -1338,7 +1338,7 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 				 irs->ipsp) == ipsec_life_harddied) {
 
 		/*
-		 * disconnect SA from the hash table, so it can not be
+		 * disconnect SA from the hash table, so it cannot be
 		 * found again.
 		 */
 		ipsec_sa_rm(irs->ipsp);
