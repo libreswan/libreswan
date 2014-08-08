@@ -693,7 +693,7 @@ int main(int argc, char *argv[])
 	cfg = confread_load(configfile, &err, resolvip, ctlbase, configsetup);
 
 	if (cfg == NULL) {
-		fprintf(stderr, "can not load config '%s': %s\n",
+		fprintf(stderr, "cannot load config '%s': %s\n",
 			configfile, err);
 		exit(3);
 	} else if (checkconfig) {

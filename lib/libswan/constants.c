@@ -1729,10 +1729,11 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_SHA2-256",
 	"PRF_HMAC_SHA2-384",
 	"PRF_HMAC_SHA2-512",
+	"IKEv2_PRF_AES128_CMAC"
 };
 enum_names ikev2_trans_type_prf_names = {
 	IKEv2_PRF_HMAC_MD5,
-	IKEv2_PRF_HMAC_SHA2_512,
+	IKEv2_PRF_AES128_CMAC,
 	ikev2_trans_type_prf_name,
 	NULL
 };

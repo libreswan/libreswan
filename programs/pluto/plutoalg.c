@@ -138,7 +138,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 			       unsigned int modp_id)
 {
 	struct ike_info *ike_info = alg_info->ike;
-	unsigned cnt = alg_info->alg_info_cnt, i;
+	unsigned cnt = alg_info->ai.alg_info_cnt, i;
 
 	/* don't add duplicates */
 	for (i = 0; i < cnt; i++) {
@@ -159,11 +159,11 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	ike_info[cnt].ike_halg = aalg_id;
 	ike_info[cnt].ike_hklen = ak_bits;
 	ike_info[cnt].ike_modp = modp_id;
-	alg_info->alg_info_cnt++;
+	alg_info->ai.alg_info_cnt++;
 	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() "
 			       "ealg=%d aalg=%d modp_id=%d, cnt=%d",
 			       ealg_id, aalg_id, modp_id,
-			       alg_info->alg_info_cnt));
+			       alg_info->ai.alg_info_cnt));
 }
 
 /*
@@ -344,7 +344,7 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 void alg_info_snprint_phase2(char *buf, size_t buflen,
 			     struct alg_info_esp *alg_info)
 {
-	switch (alg_info->alg_info_protoid) {
+	switch (alg_info->ai.alg_info_protoid) {
 	case PROTO_IPSEC_ESP:
 		alg_info_snprint_esp(buf, buflen, alg_info);
 		return;
@@ -354,7 +354,7 @@ void alg_info_snprint_phase2(char *buf, size_t buflen,
 		return;
 
 	default:
-		bad_case(alg_info->alg_info_protoid);
+		bad_case(alg_info->ai.alg_info_protoid);
 	}
 }
 
@@ -444,17 +444,15 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 	 */
 	struct alg_info_ike *alg_info_ike = alloc_thing(struct alg_info_ike, "alg_info_ike");
 
-	alg_info_ike->alg_info_protoid = PROTO_ISAKMP;
-	if (alg_info_parse_str((struct alg_info *)alg_info_ike,
-			       alg_str,
-			       err_buf, err_buf_len,
-			       parser_init_ike,
-			       alg_info_ike_add,
-			       lookup_group) < 0) {
-		pfreeany(alg_info_ike);
-		alg_info_ike = NULL;
-	}
-	return alg_info_ike;
+	return (struct alg_info_ike *)
+		alg_info_parse_str(
+			PROTO_ISAKMP,
+			&alg_info_ike->ai,
+			alg_str,
+			err_buf, err_buf_len,
+			parser_init_ike,
+			alg_info_ike_add,
+			lookup_group);
 }
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
@@ -707,7 +705,6 @@ void kernel_alg_show_status(void)
 }
 void kernel_alg_show_connection(struct connection *c, const char *instance)
 {
-	char buf[1024];
 	struct state *st;
 	const char *satype;
 	const char *pfsbuf;
@@ -732,6 +729,7 @@ void kernel_alg_show_connection(struct connection *c, const char *instance)
 	}
 
 	if (c->alg_info_esp != NULL) {
+		char buf[1024];
 
 		alg_info_snprint(buf, sizeof(buf),
 				 (struct alg_info *)c->alg_info_esp);
@@ -750,7 +748,8 @@ void kernel_alg_show_connection(struct connection *c, const char *instance)
 	}
 
 	st = state_with_serialno(c->newest_ipsec_sa);
-	if (st && st->st_esp.present) {
+
+	if (st != NULL && st->st_esp.present) {
 		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   %s algorithm newest: %s_%03d-%s; pfsgroup=%s",
 			  c->name,
@@ -765,7 +764,7 @@ void kernel_alg_show_connection(struct connection *c, const char *instance)
 			  pfsbuf);
 	}
 
-	if (st && st->st_ah.present) {
+	if (st != NULL && st->st_ah.present) {
 		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   %s algorithm newest: %s; pfsgroup=%s",
 			  c->name,

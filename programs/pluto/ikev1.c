@@ -1250,7 +1250,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 *
 			 * or if we are getting a MODECFG request.
 			 *
-			 * we distinguish these states because we can not both be an
+			 * we distinguish these states because we cannot both be an
 			 * XAUTH server and client, and our policy tells us which
 			 * one we are.
 			 *
@@ -1617,7 +1617,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	md->new_iv_set = new_iv_set;
 
 	/*
-	 * look for encrypt packets. We can not handle them if we have not
+	 * look for encrypt packets. We cannot handle them if we have not
 	 * yet calculated the skeyids. We will just store the packet in
 	 * the suspended state, since the calculation is likely underway.
 	 *

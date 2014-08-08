@@ -777,7 +777,7 @@ static void load_end_certificate(const char *name, struct end *dst)
 		bool valid_cert = load_cert_from_nss(name,
 						"host cert", &cert);
 		if (!valid_cert) {
-			whack_log(RC_FATAL, "can not load certificate %s\n",
+			whack_log(RC_FATAL, "cannot load certificate %s\n",
 				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;
@@ -1162,7 +1162,7 @@ void add_connection(const struct whack_message *wm)
 				err_buf);
 			return;
 		}
-		if (alg_info_ike->alg_info_cnt == 0) {
+		if (alg_info_ike->ai.alg_info_cnt == 0) {
 			loglog(RC_LOG_SERIOUS,
 				"got 0 transforms for ike=\"%s\"", wm->ike);
 			return;
@@ -1221,7 +1221,7 @@ void add_connection(const struct whack_message *wm)
 				DBG_log("esp string values: %s", buf);
 			});
 			if (c->alg_info_esp != NULL) {
-				if (c->alg_info_esp->alg_info_cnt == 0) {
+				if (c->alg_info_esp->ai.alg_info_cnt == 0) {
 					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"esp=\"%s\"",
@@ -1251,7 +1251,7 @@ void add_connection(const struct whack_message *wm)
 					buf);
 			});
 			if (c->alg_info_ike != NULL) {
-				if (c->alg_info_ike->alg_info_cnt == 0) {
+				if (c->alg_info_ike->ai.alg_info_cnt == 0) {
 					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"ike=\"%s\"",

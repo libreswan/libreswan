@@ -511,7 +511,7 @@ stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
 			    enum_name(&pluto_cryptoimportance_names,
 				      r->pcr_pcim)));
 
-		loglog(RC_LOG_SERIOUS, "can not start crypto helper: failed to find any available worker");
+		loglog(RC_LOG_SERIOUS, "cannot start crypto helper: failed to find any available worker");
 
 		pfree(cn);	/* ownership transferred from caller */
 		return STF_TOOMUCHCRYPTO;

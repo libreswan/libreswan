@@ -368,12 +368,12 @@ static int decode_esp(char *algname)
 		int esp_ealg_id, esp_aalg_id;
 
 		esp_alg = XF_OTHER_ALG;
-		if (alg_info->alg_info_cnt > 1) {
+		if (alg_info->ai.alg_info_cnt > 1) {
 			fprintf(stderr, "%s: Invalid encryption algorithm '%s' "
 				"follows '--esp' option: lead too many(%d) "
 				"transforms\n",
 				progname, algname,
-				alg_info->alg_info_cnt);
+				alg_info->ai.alg_info_cnt);
 			exit(1);
 		}
 		alg_string = algname;
@@ -382,7 +382,7 @@ static int decode_esp(char *algname)
 			fprintf(stdout,
 				"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
 				progname,
-				alg_info->alg_info_cnt,
+				alg_info->ai.alg_info_cnt,
 				esp_info->encryptalg,
 				esp_info->authalg);
 		}
