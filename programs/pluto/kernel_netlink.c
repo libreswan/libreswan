@@ -1947,10 +1947,10 @@ static bool netlink_shunt_eroute(struct connection *c,
 		snprintf(buf2, sizeof(buf2), "eroute_connection %s inbound",
 			opname);
 
-		return netlink_raw_eroute(&sr->this.host_addr,
-					&sr->this.client,
-					&sr->that.host_addr,
+		return netlink_raw_eroute(&sr->that.host_addr,
 					&sr->that.client,
+					&sr->this.host_addr,
+					&sr->this.client,
 					htonl(spi),
 					c->encapsulation ==
 					ENCAPSULATION_MODE_TRANSPORT ?
