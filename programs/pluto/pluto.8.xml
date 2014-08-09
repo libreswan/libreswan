@@ -517,6 +517,19 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
+      <arg choice="plain">--deleteuser</arg>
+      <arg choice="plain">--name
+      <replaceable>xauth-username</replaceable></arg>
+
+      <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
+
+      <arg choice="opt">--label <replaceable>string</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
       <arg choice="opt">--name
       <replaceable>connection-name</replaceable></arg>
 
@@ -624,6 +637,17 @@
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
 
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
+      <arg choice="plain">--trafficstatus</arg>
+
+      <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
+
+      <arg choice="opt">--label <replaceable>string</replaceable></arg>
+    </cmdsynopsis>
     <cmdsynopsis>
       <command>ipsec</command>
 
@@ -2396,6 +2420,21 @@
       <variablelist remap="TP">
         <varlistentry>
           <term><option>--status</option></term>
+
+          <listitem>
+            <para></para>
+
+            <!-- FIXME: blank list item -->
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>The trafficstatus form will display the xauth username, add_time and the total in and
+      out bytes of the IPsec SA's.</para>
+
+      <variablelist remap="TP">
+        <varlistentry>
+          <term><option>--trafficstatus</option></term>
 
           <listitem>
             <para></para>

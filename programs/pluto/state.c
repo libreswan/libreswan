@@ -199,6 +199,15 @@ void init_states(void)
 		statetable[i] = (struct state *) NULL;
 }
 
+void v1_delete_state_by_xauth_name(struct state *st, void *name)
+{
+	/* only support deleting ikev1 with xauth user name */
+	if (st->st_ikev2)
+		return;
+	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name))
+			delete_my_family(st, FALSE);
+}
+
 /* Find the state object with this serial number.
  * This allows state object references that don't turn into dangerous
  * dangling pointers: reference a state by its serial number.
@@ -873,7 +882,6 @@ struct state *duplicate_state(struct state *st)
 	return nst;
 }
 
-#if 1
 void for_each_state(void (*f)(struct state *, void *data), void *data)
 {
 	struct state *ocs = cur_state;
@@ -890,7 +898,6 @@ void for_each_state(void (*f)(struct state *, void *data), void *data)
 	}
 	cur_state = ocs;
 }
-#endif
 
 /*
  * Find a state object for an IKEv1 state
@@ -1280,6 +1287,49 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 	    });
 }
 
+void fmt_list_traffic(struct state *st, char *state_buf,
+		      const size_t state_buf_len)
+{
+	const struct connection *c = st->st_connection;
+	char inst[CONN_INST_BUF];
+	char traffic_buf[512];
+	char *mbcp = traffic_buf;
+
+	state_buf[0] = '\0';   /* default to empty */
+	traffic_buf[0] = '\0';
+
+	if (!IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+		return; /* ignore non established states */
+	}
+	// if state is incomplete xauth state, also ignore
+	fmt_conn_instance(c, inst);
+	{
+		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : "IPCOMP";
+
+		mbcp = traffic_buf + snprintf(traffic_buf,
+				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%lu", mode,  st->st_esp.add_time);
+
+		if (get_sa_info(st, FALSE, NULL)) {
+			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
+			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u",
+					st->st_esp.peer_bytes);
+		}
+		if (get_sa_info(st, TRUE, NULL)) {
+			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
+			snprintf(mbcp, buf_len - 1, ", outBytes=%u",
+					st->st_esp.our_bytes);
+		}
+	}
+	snprintf(state_buf, state_buf_len,
+		"#%lu: \"%s\"%s%s%s%s",
+		st->st_serialno,
+		c->name, inst,
+		(st->st_xauth_username[0] != '\0') ? ", XAUTHuser=" : "",
+		(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "",
+		(traffic_buf[0] != '\0') ? traffic_buf : ""
+		);
+}
+
 void fmt_state(struct state *st, const monotime_t n,
 	       char *state_buf, const size_t state_buf_len,
 	       char *state_buf2, const size_t state_buf2_len)
@@ -1545,14 +1595,18 @@ static int state_compare(const void *a, const void *b)
 	return connection_compare(ca, cb);
 }
 
-void show_states_status(void)
+void show_states_status(bool list_traffic)
 {
 	int i;
 	int count;
 
-	whack_log(RC_COMMENT, " ");             /* spacer */
-	whack_log(RC_COMMENT, "State list:");   /* spacer */
-	whack_log(RC_COMMENT, " ");             /* spacer */
+	if (list_traffic) {
+		whack_log(RC_COMMENT, " ");             /* spacer */
+	}	else {
+		whack_log(RC_COMMENT, " ");             /* spacer */
+		whack_log(RC_COMMENT, "State list:");   /* spacer */
+		whack_log(RC_COMMENT, " ");             /* spacer */
+	}
 
 	/* make count of states */
 	count = 0;
@@ -1593,15 +1647,23 @@ void show_states_status(void)
 			char state_buf2[LOG_WIDTH];
 			struct state *st = array[i];
 
-			fmt_state(st, n, state_buf, sizeof(state_buf),
-				  state_buf2, sizeof(state_buf2));
-			whack_log(RC_COMMENT, "%s", state_buf);
-			if (state_buf2[0] != '\0')
-				whack_log(RC_COMMENT, "%s", state_buf2);
+			if (list_traffic) {
+				fmt_list_traffic(st, state_buf,
+						sizeof(state_buf));
+				if (state_buf[0] != '\0')
+					whack_log(RC_INFORMATIONAL_TRAFFIC, "%s", state_buf);
+			} else {
 
-			/* show any associated pending Phase 2s */
-			if (IS_IKE_SA(st))
-				show_pending_phase2(st->st_connection, st);
+				fmt_state(st, n, state_buf, sizeof(state_buf),
+						state_buf2, sizeof(state_buf2));
+				whack_log(RC_COMMENT, "%s", state_buf);
+				if (state_buf2[0] != '\0')
+					whack_log(RC_COMMENT, "%s", state_buf2);
+
+				/* show any associated pending Phase 2s */
+				if (IS_IKE_SA(st))
+					show_pending_phase2(st->st_connection, st);
+			}
 		}
 
 		whack_log(RC_COMMENT, " "); /* spacer */
@@ -1729,4 +1791,40 @@ bool dpd_active_locally(const struct state *st)
 {
 	return deltasecs(st->st_connection->dpd_delay) != 0 &&
 		deltasecs(st->st_connection->dpd_timeout) != 0;
+}
+
+void delete_my_family(struct state *pst, bool v2_responder_state)
+{
+	/* We are a parent: delete our children and
+	 * then prepare to delete ourself.
+	 * Our children will be on the same hash chain
+	 * because we share IKE SPIs.
+	 */
+	struct state *st;
+
+	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
+
+	/* find first in chain */
+	for (st = pst; st->st_hashchain_prev != NULL; )
+		st = st->st_hashchain_prev;
+
+	/* delete each of our children */
+	while (st != NULL) {
+		/* since we might be deleting st, we need to
+		 * grab onto its successor first
+		 */
+		struct state *next_st = st->st_hashchain_next;
+
+		if (st->st_clonedfrom == pst->st_serialno) {
+			if (v2_responder_state)
+				change_state(st, STATE_CHILDSA_DEL);
+			delete_state(st);
+		}
+		st = next_st;
+	}
+
+	/* delete self */
+	if (v2_responder_state)
+		change_state(pst, STATE_IKESA_DEL);
+	delete_state(pst);
 }

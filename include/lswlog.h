@@ -101,6 +101,7 @@ enum rc_type {
 	RC_LOG_SERIOUS,		/* serious message aimed at log (does not affect exit status) */
 	RC_SUCCESS,		/* success (exit status 0) */
 	RC_INFORMATIONAL,	/* should get relayed to user - if there is one */
+	RC_INFORMATIONAL_TRAFFIC, /* status of an established IPSEC (aka Phase 2) state */
 
 	/* failure, but not definitive */
 

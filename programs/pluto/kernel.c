@@ -432,6 +432,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "PLUTO_STACK='%s' "
 			  "%s "         /* optional metric */
 			  "%s "         /* optional mtu */
+			  "PLUTO_ADDTIME='%lu' "
 			  "PLUTO_CONN_POLICY='%s' "
 			  "PLUTO_CONN_ADDRFAMILY='ipv%d' "
 			  "XAUTH_FAILED=%d "
@@ -467,6 +468,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  kernel_ops->kern_name,
 			  metric_str,
 			  connmtu_str,
+			  st->st_esp.add_time,
 			  prettypolicy(c->policy),
 			  (c->addr_family == AF_INET) ? 4 : 6
 			  , (st && st->st_xauth_soft) ? 1 : 0,
@@ -3063,6 +3065,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	char text_said[SATOT_BUF];
 	u_int proto;
 	u_int bytes;
+	uint64_t add_time;
 	ipsec_spi_t spi;
 	const ip_address *src, *dst;
 	struct kernel_sa sa;
@@ -3094,9 +3097,10 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	DBG(DBG_KERNEL,
 	    DBG_log("get %s", text_said));
-	if (!kernel_ops->get_sa(&sa, &bytes))
+	if (!kernel_ops->get_sa(&sa, &bytes, &add_time))
 		return FALSE;
 
+	st->st_esp.add_time = add_time;
 	if (inbound) {
 		if (bytes > st->st_esp.our_bytes) {
 			st->st_esp.our_bytes = bytes;

@@ -2239,7 +2239,8 @@ add_entry:
  * @param sa Kernel SA to be queried
  * @return bool True if successful
  */
-static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes)
+static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
+		uint64_t *add_time)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2270,6 +2271,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes)
 		return FALSE;
 
 	*bytes = (u_int) rsp.info.curlft.bytes;
+	*add_time = rsp.info.curlft.add_time;
 	return TRUE;
 }
 

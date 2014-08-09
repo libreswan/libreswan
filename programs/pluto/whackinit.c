@@ -139,6 +139,7 @@ enum option_enums {
 	OPT_INITIATE,
 	OPT_TERMINATE,
 	OPT_STATUS,
+	OPT_TRAFFIC_STATUS,
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
@@ -174,6 +175,7 @@ static const struct option long_opts[] = {
 	{ "terminate", no_argument, NULL, OPT_TERMINATE + OO },
 
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
+	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthpass", required_argument, NULL, OPT_XAUTHPASS + OO },
@@ -501,6 +503,10 @@ int main(int argc, char **argv)
 			msg.whack_status = TRUE;
 			continue;
 
+		case OPT_STATUS: /* --trafficstatus */
+			msg.whack_traffic_status = TRUE;
+			continue;
+
 #if 0
 		/* hmm */
 		case OPT_OPPO_HERE: /* --oppohere <ip-address> */
@@ -590,7 +596,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!(msg.whack_initiate || msg.whack_terminate ||
-	      msg.whack_status))
+	      msg.whack_status|msg.whack_traffic_status))
 		diag("no action specified; try --help for hints");
 
 	/* pack strings for inclusion in message */
