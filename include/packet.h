@@ -80,7 +80,7 @@ struct packet_byte_stream {
 	u_int8_t
 	*start,
 	*cur,		/* current position in stream */
-	*roof;		/* byte after last in PBS (actually just a limit on output) */
+	*roof;		/* byte after last in PBS (on output: just a limit) */
 	/* For an output PBS, the length field will be filled in later so
 	 * we need to record its particulars.  Note: it may not be aligned.
 	 */
