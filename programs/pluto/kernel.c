@@ -360,12 +360,12 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 
 	metric_str[0] = '\0';
 	if (c->metric)
-		snprintf(metric_str, sizeof(metric_str), "PLUTO_METRIC=%d",
+		snprintf(metric_str, sizeof(metric_str), "PLUTO_METRIC=%d ",
 			c->metric);
 
 	connmtu_str[0] = '\0';
 	if (c->connmtu)
-		snprintf(connmtu_str, sizeof(connmtu_str), "PLUTO_MTU=%d",
+		snprintf(connmtu_str, sizeof(connmtu_str), "PLUTO_MTU=%d ",
 			c->connmtu);
 
 	secure_xauth_username_str[0] = '\0';
@@ -376,7 +376,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		remove_metachar(st->st_xauth_username,
 				p,
 				sizeof(secure_xauth_username_str) - (p - secure_xauth_username_str) - 2);
-		add_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), p, "'");
+		add_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), p, "' ");
 	}
 
 	srcip_str[0] = '\0';
@@ -385,7 +385,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		char *p = jam_str(srcip_str, sizeof(srcip_str), "PLUTO_MY_SOURCEIP='");
 
 		addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str) - (p - srcip_str));
-		add_str(srcip_str, sizeof(srcip_str), p, "'");
+		add_str(srcip_str, sizeof(srcip_str), p, "' ");
 	}
 
 	{
@@ -430,14 +430,14 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			"PLUTO_PEER_PROTOCOL='%u' "
 			"PLUTO_PEER_CA='%s' "
 			"PLUTO_STACK='%s' "
-			"%s "         /* optional metric */
-			"%s "         /* optional mtu */
+			"%s"		/* optional metric */
+			"%s"		/* optional mtu */
 			"PLUTO_ADDTIME='%lu' "
 			"PLUTO_CONN_POLICY='%s' "
 			"PLUTO_CONN_ADDRFAMILY='ipv%d' "
 			"XAUTH_FAILED=%d "
-			"%s "         /* XAUTH username - if any */
-			"%s "         /* PLUTO_MY_SRCIP - if any */
+			"%s"		/* XAUTH username - if any */
+			"%s"		/* PLUTO_MY_SRCIP - if any */
 			"PLUTO_IS_PEER_CISCO='%u' "
 			"PLUTO_PEER_DNS_INFO='%s' "
 			"PLUTO_PEER_DOMAIN_INFO='%s' "
