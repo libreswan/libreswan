@@ -1780,7 +1780,7 @@ void process_packet_tail(struct msg_digest **mdp)
 						 */
 						DBG(DBG_NATT,
 						    DBG_log("st_nat_traversal was: %s",
-							    bitnamesof(natt_bit_names, 
+							    bitnamesof(natt_bit_names,
 								       st->hidden_variables.st_nat_traversal)));
 						sd = NULL;
 					}
