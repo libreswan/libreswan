@@ -807,7 +807,7 @@ void show_status(void)
 	db_ops_show_status();
 #endif
 	show_connections_status();
-	show_states_status();
+	show_states_status(FALSE);
 #ifdef KLIPS
 	show_shunt_status();
 #endif

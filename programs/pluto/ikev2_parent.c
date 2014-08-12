@@ -275,10 +275,11 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = ikev2_parent_outI1_tail(pcrc, r);
@@ -827,10 +828,11 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = ikev2_parent_inI1outR1_tail(pcrc, r);
@@ -1205,10 +1207,11 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->dh_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = ikev2_parent_inR1outI2_tail(pcrc, r);
@@ -1833,10 +1836,11 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->dh_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = ikev2_parent_inI2outR2_tail(pcrc, r);
@@ -2735,42 +2739,6 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
-void v2_delete_my_family(struct state *pst, enum phase1_role role)
-{
-	/* We are a parent: delete our children and
-	 * then prepare to delete ourself.
-	 * Our children will be on the same hash chain
-	 * because we share IKE SPIs.
-	 */
-	struct state *st;
-
-	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
-
-	/* find first in chain */
-	for (st = pst; st->st_hashchain_prev != NULL; )
-		st = st->st_hashchain_prev;
-
-	/* delete each of our children */
-	while (st != NULL) {
-		/* since we might be deleting st, we need to
-		 * grab onto its successor first
-		 */
-		struct state *next_st = st->st_hashchain_next;
-
-		if (st->st_clonedfrom == pst->st_serialno) {
-			if (role == RESPONDER)
-				change_state(st, STATE_CHILDSA_DEL);
-			delete_state(st);
-		}
-		st = next_st;
-	}
-
-	/* delete self */
-	if (role == RESPONDER)
-		change_state(pst, STATE_IKESA_DEL);
-	delete_state(pst);
-}
-
 static stf_status ikev2_in_create_child_sa_refuse(struct msg_digest *md)
 {
 	struct state *st = md->st;
@@ -3222,7 +3190,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 				switch (v2del->isad_protoid) {
 				case PROTO_ISAKMP: /* Parent SA */
-					v2_delete_my_family(st, RESPONDER);
+					delete_my_family(st, TRUE);
 					break;
 
 				case PROTO_IPSEC_AH: /* Child SAs */
@@ -3299,7 +3267,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					 * should be the only payload in the informational.
 					 * Now delete the IKE SA state and all its child states
 					 */
-					v2_delete_my_family(st, RESPONDER);
+					delete_my_family(st, TRUE);
 				} else {
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("Received an INFORMATIONAL response, "
@@ -3644,7 +3612,7 @@ unhappy_ending:
 		 * Our children will be on the same hash chain
 		 * because we share IKE SPIs.
 		 */
-		v2_delete_my_family(st, RESPONDER);
+		delete_my_family(st, TRUE);
 	}
 }
 

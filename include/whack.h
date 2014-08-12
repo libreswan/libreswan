@@ -36,12 +36,15 @@
  * it is likely that the relevant part of the message changes less frequently.
  * Whack uses WHACK_BASIC_MAGIC in those cases.
  *
+ * When you increment WHACK_BASIC_MAGIC, reset WHACH_MAGIC's last number to 0.
+ * This allows for more WHACK_BASIC_MAGIC values.
+ *
  * NOTE: no value of WHACK_BASIC_MAGIC may equal any value of WHACK_MAGIC.
  * Otherwise certain version mismatches will not be detected.
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 40)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 41)
 
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
@@ -96,6 +99,8 @@ struct whack_message {
 
 	/* for WHACK_STATUS: */
 	bool whack_status;
+
+	bool whack_traffic_status;
 
 	/* for WHACK_SHUTDOWN */
 	bool whack_shutdown;
@@ -224,6 +229,10 @@ struct whack_message {
 	bool whack_deletestate;
 	long unsigned int whack_deletestateno;
 
+	/* for WHACK_DELETEUSER: */
+	bool whack_deleteuser;
+	bool whack_deleteuser_name;
+
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
 
@@ -302,10 +311,11 @@ struct whack_message {
 #define LIST_CACERTS	0x0004	/* list all ca certs */
 #define LIST_CRLS	0x0008	/* list all crls */
 #define LIST_PSKS	0x0010	/* list all preshared keys (by name) */
+#define LIST_TRAFFIC	0x0011	/* list traffic of phase 2 */
 #define LIST_EVENTS	0x0020	/* list all queued events */
 
 /* omit events from listing options */
-#define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */
+#define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_TRAFFIC)  /* all list options */
 
 /* options of whack --reread*** command */
 

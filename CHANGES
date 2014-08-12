@@ -1,6 +1,42 @@
 
 See also https://libreswan.org/
 
+v3.10 (unreleased)
+* XAUTH: New option: ipsec whack --traficstatus [Antony]
+* XAUTH: New option: ipsec --deleteuser --name xauth-username [Antony]
+* XAUTH: Do not strip "-" from XAUTH usernames [Paul]
+* _updown.netkey: New environment variable PLUTO_ADDTIME for IPsec SA's [Paul]
+* _updown.netkey: Don't skip routing if mtu= option is used [Tuomo]
+* NETKEY: protoport= installed broken swapped src/dst passthrough SA's [Antony]
+* NETKEY: fix names for RIPEMD160 and AES_CTR [Paul]
+* _stackmanager: KLIPS support for alias devices [Marc-Christian Petersen]
+* pluto: Simplfy/tidy alg_info [Hugh]
+* pluto: Simplify find_host_connection() and terminate_connection() [Hugh]
+* pluto: Fix a leaking socket in whack [Hugh]
+* pluto: Combine same_dn() and match_dn() to avoid deduplicate logic [Hugh]
+* pluto: Add strneq(); get rid of most remaining strncmp calls [Hugh]
+* pluto: Get rid of or document strcat, strncat, strcpy, etc [Hugh]
+* pluto: malloc/calloc/realloc/free tidying, including a few bug fixes [Hugh]
+* pluto: Fix memory allocation/free errors (especially in ike_frag) [Hugh/Paul]
+         (triggered as of 3.9 when --leak-detective was used)
+* pluto: Various warning fixes from LLVM/Coverity [Hugh]
+* cryptohelpers: cleanup and improved error logging [Hugh]
+* IKEv2: esp=/phase2alg= should be strict (bug introduced in 3.9) [Paul]
+* IKEv2: Don't abort all proposals when encountering unknown PRF [Hugh]
+* IKEv2: ikev2_parse_*_sa_body: stop matching after first success [Hugh]
+* IKEv2: Reject responder SA with multiple proposals [Hugh]
+* IKEv2: Enforce proposal numbering rules [Hugh]
+* IKEv1: parse_ipsec_sa_body() did not allow newer AH transforms [Paul]
+* IKEv1: Add sha2 and aes_cbc support for ESP algo
+* whack: Don't change exit status for RC_INFORMATIONAL* [Mike Gilbert]
+* rsasigkey: a logic error limited the randomness of the key size [Paul]
+* ipsec: create NSS DB on startup when missing [Paul]
+* ipsec: Added "ipsec --checknss" that creates-when-missing NSS DB [Paul]
+* verify: Make verify python3 compatbile [Slavek Kabrda]
+* testing: Obsoleted dotest.sh with dotest.py, speed increase [Antony]
+* testing: Added more test cases and general cleanup [Antony/Paul]
+* compiling: Fix ADNS without USE_DNSSEC compile [Tuomo]
+
 v3.9 (July 9, 2014)
 * Documentation: cleanup of README.* and docs/* [Paul]
 * libswan: Cleanup allocation and  certificate handling functions [Hugh]

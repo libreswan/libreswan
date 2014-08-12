@@ -123,7 +123,7 @@ main(int argc, char *argv[]){
 	pcap_dispatch(pt, 1, recv_pcap_packet, NULL);
 	pcap_close(pt);
 
-	show_states_status();
+	show_states_status(TRUE);
 
 	{
 		struct state *st;

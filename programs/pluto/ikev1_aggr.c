@@ -122,9 +122,10 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->dh_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = aggr_inI1_outR1_tail(pcrc, r);
@@ -168,9 +169,10 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	/* unpack first calculation */
@@ -737,9 +739,10 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->dh_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	finish_dh_secretiv(st, r);
@@ -1054,10 +1057,11 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = aggr_outI1_tail(pcrc, r);

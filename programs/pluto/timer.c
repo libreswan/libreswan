@@ -716,12 +716,12 @@ void handle_next_timer_event(void)
 #if 0           /* delete_state will take care of this better ? */
 		if (st->st_suspended_md != NULL) {
 			release_any_md(&st->st_suspended_md);
-			set_suspended(st, NULL);
+			unset_suspended(st);
 		}
 #endif
 		if (st->st_ikev2 && IS_IKE_SA(st)) {
 			/* IKEv2 parent, delete children too */
-			v2_delete_my_family(st, INITIATOR);
+			delete_my_family(st, FALSE);
 		} else {
 			delete_state(st);
 		}

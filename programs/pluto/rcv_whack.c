@@ -390,6 +390,12 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_delete)
 		delete_connections_by_name(msg.name, !msg.whack_connection);
 
+	if (msg.whack_deleteuser) {
+		DBG_log("received whack to delete connection by user %s",
+				msg.name);
+		for_each_state(v1_delete_state_by_xauth_name, msg.name);
+	}
+
 	if (msg.whack_deletestate) {
 		struct state *st =
 			state_with_serialno(msg.whack_deletestateno);
@@ -405,7 +411,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
 				DBG_log("Also deleting any corresponding CHILD_SAs");
-				v2_delete_my_family(st, INITIATOR);
+				delete_my_family(st, FALSE);
 			} else {
 				delete_state(st);
 			}
@@ -442,6 +448,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_list & LIST_PSKS)
 		list_psks();
+
+	if (msg.whack_list & LIST_TRAFFIC)
+		show_states_status(TRUE);
 
 	if (msg.whack_list & LIST_CERTS)
 		list_certs(msg.whack_utc);
@@ -548,6 +557,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_status)
 		show_status();
+
+	if (msg.whack_traffic_status)
+		show_states_status(TRUE);
 
 	if (msg.whack_shutdown) {
 		libreswan_log("shutting down");

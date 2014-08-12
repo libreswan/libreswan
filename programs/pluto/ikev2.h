@@ -21,7 +21,6 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 				    );
 
 extern void ikev2_delete_out(struct state *st);
-extern void v2_delete_my_family(struct state *pst, enum phase1_role role);
 
 extern bool ikev2_out_sa(pb_stream *outs,
 			 enum ikev2_sec_proto_id protoid,
