@@ -333,7 +333,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	nexthop_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_nexthop, NULL) &&
 	    !isanyaddr(&sr->this.host_nexthop)) {
-		char *n = jam_str(nexthop_str, sizeof(nexthop_str), "PLUTO_NEXT_HOP='");
+		char *n = jam_str(nexthop_str, sizeof(nexthop_str),
+				"PLUTO_NEXT_HOP='");
 
 		addrtot(&sr->this.host_nexthop, 0,
 			n, sizeof(nexthop_str) - (n - nexthop_str));
@@ -371,20 +372,26 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	secure_xauth_username_str[0] = '\0';
 
 	if (st != NULL && st->st_xauth_username[0] != '\0') {
-		char *p = jam_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), "PLUTO_XAUTH_USERNAME='");
+		char *p = jam_str(secure_xauth_username_str,
+				sizeof(secure_xauth_username_str),
+				"PLUTO_XAUTH_USERNAME='");
 
 		remove_metachar(st->st_xauth_username,
 				p,
-				sizeof(secure_xauth_username_str) - (p - secure_xauth_username_str) - 2);
-		add_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), p, "' ");
+				sizeof(secure_xauth_username_str) -
+				(p - secure_xauth_username_str) - 2);
+		add_str(secure_xauth_username_str,
+			sizeof(secure_xauth_username_str), p, "' ");
 	}
 
 	srcip_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
 	    !isanyaddr(&sr->this.host_srcip)) {
-		char *p = jam_str(srcip_str, sizeof(srcip_str), "PLUTO_MY_SOURCEIP='");
+		char *p = jam_str(srcip_str, sizeof(srcip_str),
+				"PLUTO_MY_SOURCEIP='");
 
-		addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str) - (p - srcip_str));
+		addrtot(&sr->this.host_srcip, 0, p,
+			sizeof(srcip_str) - (p - srcip_str));
 		add_str(srcip_str, sizeof(srcip_str), p, "' ");
 	}
 
@@ -409,7 +416,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	}
 
 	result = snprintf(buf, blen,
-			"PLUTO_VERSION='2.0' " /* change VERSION when interface spec changes */
+			/* change VERSION when interface spec changes */
+			"PLUTO_VERSION='2.0' "
 			"PLUTO_CONNECTION='%s' "
 			"PLUTO_INTERFACE='%s' "
 			"%s" /* possible PLUTO_NEXT_HOP */
