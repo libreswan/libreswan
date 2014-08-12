@@ -1210,8 +1210,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		from_state_name = "no-state";
 	}
 
-	md->result = result;
-
 	/* advance the state */
 	DBG(DBG_CONTROL,
 	    DBG_log("complete v2 state transition with %s",

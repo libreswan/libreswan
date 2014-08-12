@@ -2126,9 +2126,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	cur_state = st = md->st; /* might have changed */
 
-	md->result = result;
-	result = md->result;
-
 	/* If state has FRAGMENTATION support, import it */
 	if ( st && md->fragvid) {
 		DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
