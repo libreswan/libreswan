@@ -519,6 +519,7 @@ stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
 
 	/* cn ownership transferred on to backlog */
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = TRUE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = TRUE;
 	delete_event(st);
 	event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY, st);

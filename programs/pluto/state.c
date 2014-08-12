@@ -1393,6 +1393,7 @@ void fmt_state(struct state *st, const monotime_t n,
 		}
 	}
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
 	if (st->st_calculating)
 		idlestr = "crypto_calculating";
 	else if (st->st_suspended_md)
@@ -1827,4 +1828,33 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	if (v2_responder_state)
 		change_state(pst, STATE_IKESA_DEL);
 	delete_state(pst);
+}
+
+/* if the state is too busy to process a packet, say so */
+bool state_busy(const struct state *st) {
+	if (st != NULL) {
+		/* Ignore a packet if the state has a suspended state transition
+		 * Probably a duplicated packet but the original packet is not yet
+		 * recorded in st->st_rpacket, so duplicate checking won't catch.
+		 * ??? Should the packet be recorded earlier to improve diagnosis?
+		 */
+		if (st->st_suspended_md != NULL) {
+			loglog(RC_LOG,
+			       "discarding packet received during asynchronous work (DNS or crypto) in %s",
+			       enum_name(&state_names, st->st_state));
+			return TRUE;
+		}
+
+		/*
+		 * if this state is busy calculating in between state transitions,
+		 * (there will be no suspended state), then we silently ignore the
+		 * packet, as there is nothing we can do right now.
+		 */
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st != NULL && st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st != NULL && st->st_calculating ? "TRUE" : "FALSE"));
+		if (st->st_calculating) {
+			libreswan_log("message received while calculating. Ignored.");
+			return TRUE;
+		}
+	}
+	return FALSE;
 }

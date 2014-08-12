@@ -1550,27 +1550,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 	}
 
-	/* Ignore a packet if the state has a suspended state transition
-	 * Probably a duplicated packet but the original packet is not yet
-	 * recorded in st->st_rpacket, so duplicate checking won't catch.
-	 * ??? Should the packet be recorded earlier to improve diagnosis?
-	 */
-	if (st != NULL && st->st_suspended_md != NULL) {
-		loglog(RC_LOG,
-		       "discarding packet received during asynchronous work (DNS or crypto) in %s",
-		       enum_name(&state_names, st->st_state));
+	if (state_busy(st))
 		return;
-	}
-
-	/*
-	 * if this state is busy calculating in between state transitions,
-	 * (there will be no suspended state), then we silently ignore the
-	 * packet, as there is nothing we can do right now.
-	 */
-	if (st != NULL && st->st_calculating) {
-		libreswan_log("message received while calculating. Ignored.");
-		return;
-	}
 
 	/* Detect and handle duplicated packets.
 	 * This won't work for the initial packet of an exchange
@@ -2179,6 +2160,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	 * or suspended.
 	 * ??? this code says inline is OK too.  Which is it?
 	 */
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u result == %d; st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, result, st->st_calculating ? "TRUE" : "FALSE"));
 	passert(result == STF_INLINE || result == STF_IGNORE ||
 		result == STF_SUSPEND || !st->st_calculating);
 
@@ -2599,7 +2581,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
-		set_suspended(st, NULL);
+		unset_suspended(st);
 		pexpect(!st->st_calculating);
 		libreswan_log(
 			"message in state %s ignored due to cryptographic overload",

@@ -940,10 +940,11 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = main_inR1_outI2_tail(pcrc, r);
@@ -1132,10 +1133,11 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 	e = main_inI2_outR2_tail(pcrc, r);
 
@@ -1215,7 +1217,7 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 	if (st->st_suspended_md != NULL) {
 		struct msg_digest *md = st->st_suspended_md;
 
-		set_suspended(st, NULL);
+		unset_suspended(st);
 		process_packet_tail(&md);
 		release_any_md(&md);
 	}
@@ -1380,6 +1382,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		}
 
 		/* we are calculating in the background, so it doesn't count */
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 		if (e == STF_SUSPEND)
 			st->st_calculating = FALSE;
 	}
@@ -1683,9 +1686,10 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->dh_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	if (ugh) {
@@ -1863,7 +1867,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 			if (ugh != NULL) {
 				report_key_dns_failure(
 					&st->st_connection->spd.that.id, ugh);
-				set_suspended(st, NULL);
+				unset_suspended(st);
 				r = STF_FAIL + INVALID_KEY_INFORMATION;
 			} else {
 				/*
@@ -1925,7 +1929,7 @@ void key_continue(struct adns_continuation *cr,
 		stf_status r;
 
 		passert(st->st_suspended_md == kc->md);
-		set_suspended(st, NULL); /* no longer connected or suspended */
+		unset_suspended(st); /* no longer connected or suspended */
 		cur_state = st;
 
 		/* cancel any DNS event, since we got an anwer */
