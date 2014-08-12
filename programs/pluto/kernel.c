@@ -333,7 +333,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	nexthop_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_nexthop, NULL) &&
 	    !isanyaddr(&sr->this.host_nexthop)) {
-		char *n = jam_str(nexthop_str, sizeof(nexthop_str), "PLUTO_NEXT_HOP='");
+		char *n = jam_str(nexthop_str, sizeof(nexthop_str),
+				"PLUTO_NEXT_HOP='");
 
 		addrtot(&sr->this.host_nexthop, 0,
 			n, sizeof(nexthop_str) - (n - nexthop_str));
@@ -352,7 +353,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	escape_metachar(peerid_str, secure_peerid_str,
 			sizeof(secure_peerid_str));
 	subnettot(&sr->that.client, 0, peerclient_str,
-		  sizeof(peerclientnet_str));
+		sizeof(peerclientnet_str));
 	networkof(&sr->that.client, &ta);
 	addrtot(&ta, 0, peerclientnet_str, sizeof(peerclientnet_str));
 	maskof(&sr->that.client, &ta);
@@ -360,32 +361,38 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 
 	metric_str[0] = '\0';
 	if (c->metric)
-		snprintf(metric_str, sizeof(metric_str), "PLUTO_METRIC=%d",
-			 c->metric);
+		snprintf(metric_str, sizeof(metric_str), "PLUTO_METRIC=%d ",
+			c->metric);
 
 	connmtu_str[0] = '\0';
 	if (c->connmtu)
-		snprintf(connmtu_str, sizeof(connmtu_str), "PLUTO_MTU=%d",
-			 c->connmtu);
+		snprintf(connmtu_str, sizeof(connmtu_str), "PLUTO_MTU=%d ",
+			c->connmtu);
 
 	secure_xauth_username_str[0] = '\0';
 
 	if (st != NULL && st->st_xauth_username[0] != '\0') {
-		char *p = jam_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), "PLUTO_XAUTH_USERNAME='");
+		char *p = jam_str(secure_xauth_username_str,
+				sizeof(secure_xauth_username_str),
+				"PLUTO_XAUTH_USERNAME='");
 
 		remove_metachar(st->st_xauth_username,
 				p,
-				sizeof(secure_xauth_username_str) - (p - secure_xauth_username_str) - 2);
-		add_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), p, "'");
+				sizeof(secure_xauth_username_str) -
+				(p - secure_xauth_username_str) - 2);
+		add_str(secure_xauth_username_str,
+			sizeof(secure_xauth_username_str), p, "' ");
 	}
 
 	srcip_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
 	    !isanyaddr(&sr->this.host_srcip)) {
-		char *p = jam_str(srcip_str, sizeof(srcip_str), "PLUTO_MY_SOURCEIP='");
+		char *p = jam_str(srcip_str, sizeof(srcip_str),
+				"PLUTO_MY_SOURCEIP='");
 
-		addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str) - (p - srcip_str));
-		add_str(srcip_str, sizeof(srcip_str), p, "'");
+		addrtot(&sr->this.host_srcip, 0, p,
+			sizeof(srcip_str) - (p - srcip_str));
+		add_str(srcip_str, sizeof(srcip_str), p, "' ");
 	}
 
 	{
@@ -400,7 +407,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			    same_id(&sr->that.id, &key->id) &&
 			    trusted_ca(key->issuer, sr->that.ca, &pathlen)) {
 				dntoa_or_null(peerca_str, IDTOA_BUF,
-					      key->issuer, "");
+					key->issuer, "");
 				escape_metachar(peerca_str, secure_peerca_str,
 						sizeof(secure_peerca_str));
 				break;
@@ -409,79 +416,80 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	}
 
 	result = snprintf(buf, blen,
-			  "PLUTO_VERSION='2.0' " /* change VERSION when interface spec changes */
-			  "PLUTO_CONNECTION='%s' "
-			  "PLUTO_INTERFACE='%s' "
-			  "%s" /* possible PLUTO_NEXT_HOP */
-			  "PLUTO_ME='%s' "
-			  "PLUTO_MY_ID='%s' "
-			  "PLUTO_MY_CLIENT='%s' "
-			  "PLUTO_MY_CLIENT_NET='%s' "
-			  "PLUTO_MY_CLIENT_MASK='%s' "
-			  "PLUTO_MY_PORT='%u' "
-			  "PLUTO_MY_PROTOCOL='%u' "
-			  "PLUTO_SA_REQID='%u' "
-			  "PLUTO_PEER='%s' "
-			  "PLUTO_PEER_ID='%s' "
-			  "PLUTO_PEER_CLIENT='%s' "
-			  "PLUTO_PEER_CLIENT_NET='%s' "
-			  "PLUTO_PEER_CLIENT_MASK='%s' "
-			  "PLUTO_PEER_PORT='%u' "
-			  "PLUTO_PEER_PROTOCOL='%u' "
-			  "PLUTO_PEER_CA='%s' "
-			  "PLUTO_STACK='%s' "
-			  "%s "         /* optional metric */
-			  "%s "         /* optional mtu */
-			  "PLUTO_ADDTIME='%lu' "
-			  "PLUTO_CONN_POLICY='%s' "
-			  "PLUTO_CONN_ADDRFAMILY='ipv%d' "
-			  "XAUTH_FAILED=%d "
-			  "%s "         /* XAUTH username - if any */
-			  "%s "         /* PLUTO_MY_SRCIP - if any */
-			  "PLUTO_IS_PEER_CISCO='%u' "
-			  "PLUTO_PEER_DNS_INFO='%s' "
-			  "PLUTO_PEER_DOMAIN_INFO='%s' "
-			  "PLUTO_PEER_BANNER='%s' "
+			/* change VERSION when interface spec changes */
+			"PLUTO_VERSION='2.0' "
+			"PLUTO_CONNECTION='%s' "
+			"PLUTO_INTERFACE='%s' "
+			"%s" /* possible PLUTO_NEXT_HOP */
+			"PLUTO_ME='%s' "
+			"PLUTO_MY_ID='%s' "
+			"PLUTO_MY_CLIENT='%s' "
+			"PLUTO_MY_CLIENT_NET='%s' "
+			"PLUTO_MY_CLIENT_MASK='%s' "
+			"PLUTO_MY_PORT='%u' "
+			"PLUTO_MY_PROTOCOL='%u' "
+			"PLUTO_SA_REQID='%u' "
+			"PLUTO_PEER='%s' "
+			"PLUTO_PEER_ID='%s' "
+			"PLUTO_PEER_CLIENT='%s' "
+			"PLUTO_PEER_CLIENT_NET='%s' "
+			"PLUTO_PEER_CLIENT_MASK='%s' "
+			"PLUTO_PEER_PORT='%u' "
+			"PLUTO_PEER_PROTOCOL='%u' "
+			"PLUTO_PEER_CA='%s' "
+			"PLUTO_STACK='%s' "
+			"%s"		/* optional metric */
+			"%s"		/* optional mtu */
+			"PLUTO_ADDTIME='%lu' "
+			"PLUTO_CONN_POLICY='%s' "
+			"PLUTO_CONN_ADDRFAMILY='ipv%d' "
+			"XAUTH_FAILED=%d "
+			"%s"		/* XAUTH username - if any */
+			"%s"		/* PLUTO_MY_SRCIP - if any */
+			"PLUTO_IS_PEER_CISCO='%u' "
+			"PLUTO_PEER_DNS_INFO='%s' "
+			"PLUTO_PEER_DOMAIN_INFO='%s' "
+			"PLUTO_PEER_BANNER='%s' "
 #ifdef HAVE_NM
-			  "PLUTO_NM_CONFIGURED='%u' "
+			"PLUTO_NM_CONFIGURED='%u' "
 #endif
 
-			  , c->name,
-			  c->interface->ip_dev->id_vname,
-			  nexthop_str,
-			  ipstr(&sr->this.host_addr, &bme),
-			  secure_myid_str,
-			  myclient_str,
-			  myclientnet_str,
-			  myclientmask_str,
-			  sr->this.port,
-			  sr->this.protocol,
-			  sr->reqid,
-			  ipstr(&sr->that.host_addr, &bpeer),
-			  secure_peerid_str,
-			  peerclient_str,
-			  peerclientnet_str,
-			  peerclientmask_str,
-			  sr->that.port,
-			  sr->that.protocol,
-			  secure_peerca_str,
-			  kernel_ops->kern_name,
-			  metric_str,
-			  connmtu_str,
-			  st->st_esp.add_time,
-			  prettypolicy(c->policy),
-			  (c->addr_family == AF_INET) ? 4 : 6
-			  , (st && st->st_xauth_soft) ? 1 : 0,
-			  secure_xauth_username_str
-			  , srcip_str
-			  , c->remotepeertype,
-			  c->cisco_dns_info ? c->cisco_dns_info : "",
-			  c->modecfg_domain ? c->modecfg_domain : "",
-			  c->modecfg_banner ? c->modecfg_banner : ""
+			, c->name,
+			c->interface->ip_dev->id_vname,
+			nexthop_str,
+			ipstr(&sr->this.host_addr, &bme),
+			secure_myid_str,
+			myclient_str,
+			myclientnet_str,
+			myclientmask_str,
+			sr->this.port,
+			sr->this.protocol,
+			sr->reqid,
+			ipstr(&sr->that.host_addr, &bpeer),
+			secure_peerid_str,
+			peerclient_str,
+			peerclientnet_str,
+			peerclientmask_str,
+			sr->that.port,
+			sr->that.protocol,
+			secure_peerca_str,
+			kernel_ops->kern_name,
+			metric_str,
+			connmtu_str,
+			st ? st->st_esp.add_time : 0,
+			prettypolicy(c->policy),
+			(c->addr_family == AF_INET) ? 4 : 6,
+			(st && st->st_xauth_soft) ? 1 : 0,
+			secure_xauth_username_str,
+			srcip_str,
+			c->remotepeertype,
+			c->cisco_dns_info ? c->cisco_dns_info : "",
+			c->modecfg_domain ? c->modecfg_domain : "",
+			c->modecfg_banner ? c->modecfg_banner : ""
 #ifdef HAVE_NM
-			  , c->nmconfigured
+			, c->nmconfigured
 #endif
-			  );
+		);
 	/*
 	 * works for both old and new way of snprintf() returning
 	 * eiter -1 or the output length  -- by Carsten Schlote

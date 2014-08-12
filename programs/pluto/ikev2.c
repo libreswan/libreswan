@@ -1210,8 +1210,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		from_state_name = "no-state";
 	}
 
-	md->result = result;
-
 	/* advance the state */
 	DBG(DBG_CONTROL,
 	    DBG_log("complete v2 state transition with %s",
@@ -1307,7 +1305,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		    DBG_log("state transition function for %s failed: %s",
 			    from_state_name,
 			    md->note == NOTHING_WRONG ?
-				"<no reason given>" : 
+				"<no reason given>" :
 				enum_name(&ikev2_notify_names, md->note)));
 		break;
 	}

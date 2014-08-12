@@ -1780,7 +1780,7 @@ void process_packet_tail(struct msg_digest **mdp)
 						 */
 						DBG(DBG_NATT,
 						    DBG_log("st_nat_traversal was: %s",
-							    bitnamesof(natt_bit_names, 
+							    bitnamesof(natt_bit_names,
 								       st->hidden_variables.st_nat_traversal)));
 						sd = NULL;
 					}
@@ -2126,9 +2126,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	cur_state = st = md->st; /* might have changed */
 
-	md->result = result;
-	result = md->result;
-
 	/* If state has FRAGMENTATION support, import it */
 	if ( st && md->fragvid) {
 		DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
@@ -2160,7 +2157,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	 * or suspended.
 	 * ??? this code says inline is OK too.  Which is it?
 	 */
-	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u result == %d; st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, result, st->st_calculating ? "TRUE" : "FALSE"));
+	DBG(DBG_CONTROLMORE,
+		DBG_log("#%lu %s:%u result == %d; st->st_calculating == %s;",
+			st ? st->st_serialno : 0, __FUNCTION__, __LINE__,
+			result, st == NULL ? "undef" : st->st_calculating ?
+			"TRUE" : "FALSE"));
 	passert(result == STF_INLINE || result == STF_IGNORE ||
 		result == STF_SUSPEND || !st->st_calculating);
 
