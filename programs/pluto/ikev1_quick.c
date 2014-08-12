@@ -798,6 +798,7 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(qke->qke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	/* XXX should check out ugh */
@@ -806,7 +807,7 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	set_cur_state(st); /* we must reset before exit */
-	set_suspended(st, NULL);
+	unset_suspended(st);
 	e = quick_outI1_tail(pcrc, r, st);
 	if (e == STF_INTERNAL_ERROR) {
 		loglog(RC_LOG_SERIOUS,
@@ -835,6 +836,7 @@ stf_status quick_outI1(int whack_sock,
 	st->st_connection = c;
 	passert(c != NULL);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
 	if (st->st_calculating)
 		return STF_IGNORE;
 
@@ -1410,7 +1412,7 @@ static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
 	/* if st == NULL, our state has been deleted -- just clean up */
 	if (st != NULL) {
 		passert(st->st_suspended_md == b->md);
-		set_suspended(st, NULL); /* no longer connected or suspended */
+		unset_suspended(st); /* no longer connected or suspended */
 		cur_state = st;
 		if (!b->failure_ok && ugh != NULL) {
 			report_verify_failure(b, ugh);
@@ -1532,7 +1534,7 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		 * into b, not just vc->b.
 		 */
 		report_verify_failure(b, ugh);
-		set_suspended(p1st,  NULL);
+		unset_suspended(p1st);
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	} else {
 		return STF_SUSPEND;
@@ -2123,8 +2125,9 @@ static void quick_inI1_outR1_cryptocontinue1(
 	passert(st->st_connection != NULL);
 
 	set_cur_state(st); /* we must reset before exit */
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
-	set_suspended(st, NULL);
+	unset_suspended(st);
 
 	/* we always calculate a nonce */
 	unpack_nonce(&st->st_nr, r);
@@ -2207,8 +2210,9 @@ static void quick_inI1_outR1_cryptocontinue2(
 	passert(st->st_connection != NULL);
 
 	set_cur_state(st); /* we must reset before exit */
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
-	set_suspended(st, NULL);
+	unset_suspended(st);
 
 	e = quick_inI1_outR1_cryptotail(dh->dh_md, r);
 	if (e == STF_OK) {
@@ -2492,8 +2496,9 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st->st_connection != NULL);
 
 	set_cur_state(st); /* we must reset before exit */
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
-	set_suspended(st, NULL);
+	unset_suspended(st);
 
 	e = quick_inR1_outI2_cryptotail(dh->dh_md, r);
 

@@ -171,7 +171,14 @@ struct hidden_variables {
 	ip_address st_natd;
 };
 
+#define unset_suspended(st) { \
+	st->st_suspended_md = NULL; \
+	st->st_suspended_md_func = __FUNCTION__; \
+	st->st_suspended_md_line = __LINE__; \
+    }
+
 #define set_suspended(st, md) { \
+	passert(st->st_suspended_md == NULL); \
 	st->st_suspended_md = md; \
 	st->st_suspended_md_func = __FUNCTION__; \
 	st->st_suspended_md_line = __LINE__; \
@@ -527,5 +534,7 @@ extern bool dpd_active_locally(const struct state *st);
 			(st)->st_state = (new_state); \
 		} \
 	} while (0)
+
+extern bool state_busy(const struct state *st);
 
 #endif /* _STATE_H */

@@ -275,10 +275,11 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = ikev2_parent_outI1_tail(pcrc, r);
@@ -827,10 +828,11 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = ikev2_parent_inI1outR1_tail(pcrc, r);
@@ -1205,10 +1207,11 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->dh_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = ikev2_parent_inR1outI2_tail(pcrc, r);
@@ -1833,10 +1836,11 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->dh_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	e = ikev2_parent_inI2outR2_tail(pcrc, r);
