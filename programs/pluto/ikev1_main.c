@@ -1366,7 +1366,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 
 		e = start_dh_secretiv(&dh->dh_pcrc, st,
 				st->st_import,
-				RESPONDER,
+				O_RESPONDER,
 				st->st_oakley.group->group);
 
 		DBG(DBG_CONTROLMORE,
@@ -1727,7 +1727,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);
 	return start_dh_secretiv(&dh->dh_pcrc, st,
 				st->st_import,
-				INITIATOR,
+				O_INITIATOR,
 				st->st_oakley.group->group);
 }
 

@@ -447,9 +447,9 @@ const char *const flag_bit_names[] = {
 	"ISAKMP_FLAG_ENCRYPTION",	/* bit 0 */
 	"ISAKMP_FLAG_COMMIT",	/* bit 1 */
 	"bit 2",	/* bit 2 */
-	"ISAKMP_FLAG_INIT",	/* bit 3 */
+	"ISAKMP_FLAG_IKE_INIT",	/* bit 3 */
 	"ISAKMP_FLAG_VERSION",	/* bit 4 */
-	"ISAKMP_FLAG_RESPONSE",	/* bit 5 */
+	"ISAKMP_FLAG_MSG_RESPONSE",	/* bit 5 */
 	NULL	/* termination for bitnamesof() */
 };
 

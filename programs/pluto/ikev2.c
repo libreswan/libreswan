@@ -600,12 +600,14 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_I) {
-		/* then I am the responder */
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)
+		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Response"));
+	else
+		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Request"));
 
-		md->role = RESPONDER;
-
-		DBG(DBG_CONTROL, DBG_log("I am IKE SA Responder"));
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_IKE_I) {
+		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
+		md->role = O_RESPONDER;
 
 		st = find_state_ikev2_parent(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie);
@@ -621,7 +623,8 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * initial exchange) are interleaved, we ignore the first
 			 * This is https://bugs.libreswan.org/show_bug.cgi?id=185
 			 */
-			if (st->st_msgid_lastrecv > md->msgid_received) {
+			if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
+			    st->st_msgid_lastrecv > md->msgid_received) {
 				/* this is an OLD retransmit. we can't do anything */
 				libreswan_log(
 					"received too old retransmit: %u < %u",
@@ -637,11 +640,8 @@ void process_v2_packet(struct msg_digest **mdp)
 			/* update lastrecv later on */
 		}
 	} else {
-		/* then I am the initiator, and this is a reply */
-
-		md->role = INITIATOR;
-
-		DBG(DBG_CONTROL, DBG_log("I am IKE SA Initiator"));
+		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Initiator"));
+		md->role = O_INITIATOR;
 
 		if (md->msgid_received == v2_INITIAL_MSGID) {
 			st = find_state_ikev2_parent(md->hdr.isa_icookie,
@@ -686,6 +686,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * NOTE: in_struct() changed the byte order.
 			 */
 			if (st->st_msgid_lastack != v2_INVALID_MSGID &&
+			    st->st_msgid_lastrecv != v2_INVALID_MSGID &&
 			    md->msgid_received <= st->st_msgid_lastack) {
 				/* it's fine, it's just a retransmit */
 				DBG(DBG_CONTROL,
@@ -731,7 +732,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * can be initiated by the initial responder.
 		 */
 		if (ix != ISAKMP_v2_INFORMATIONAL &&
-		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0)))
+		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) != 0)))
 			continue;
 
 		/* must be the right state machine entry */
@@ -744,10 +745,8 @@ void process_v2_packet(struct msg_digest **mdp)
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
 
 		/* no useful state microcode entry */
-		if (md->hdr.isa_flags & ISAKMP_FLAGS_I) {
-			/* must be an initiator message, so we are the responder */
-
-			/* XXX need to be more specific */
+		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)) {
+			/* We are responder for this message exchange */
 			SEND_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
 		return;
@@ -792,7 +791,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
 {
-	unsigned int hisID = role == INITIATOR ?
+	unsigned int hisID = role == O_INITIATOR ?
 			     ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
 	struct payload_digest *const id_him = md->chain[hisID];
 	const pb_stream * id_pbs;
@@ -933,21 +932,15 @@ void ikev2_update_counters(struct msg_digest *md)
 			pst = st;
 	}
 
-	switch (md->role) {
-	case INITIATOR:
-		/* update lastuse values */
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) {
+		/* we were initiator for this message exchange */
 		pst->st_msgid_lastack = md->msgid_received;
 		if(pst->st_msgid_lastack <= pst->st_msgid_nextuse)
 			pst->st_msgid_nextuse = pst->st_msgid_lastack + 1;
-		break;
-
-	case RESPONDER:
-		pst->st_msgid_lastrecv = md->msgid_received;
-		/* the responder requires msgid_nextuse if it ever needs to
-		 * initiate an informational exchange
-		 */
-		pst->st_msgid_nextuse = md->msgid_received + 1;
-		break;
+	} else {
+		/* we were responder for this message exchange */
+		if (md->msgid_received > pst->st_msgid_lastrecv)
+			pst->st_msgid_lastrecv = md->msgid_received;
 	}
 }
 
@@ -999,7 +992,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		/* unwrapped deltatime_t */
 		time_t marg = deltasecs(c->sa_rekey_margin);
 
-		if (role == INITIATOR) {
+		if (role == O_INITIATOR) {
 			marg += marg *
 				c->sa_rekey_fuzz / 100.E0 *
 				(rand() / (RAND_MAX + 1.E0));
@@ -1136,7 +1129,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		case EVENT_SA_REPLACE: /* SA replacement event */
 			delay = ikev2_replace_delay(st, &kind,
 					(svm->flags & SMF2_INITIATOR) ?
-					INITIATOR : RESPONDER);
+					O_INITIATOR : O_RESPONDER);
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;
@@ -1296,8 +1289,11 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			  enum_name(&ikev2_notify_names, md->note));
 
 		if (md->note != NOTHING_WRONG) {
-			/* only send a notify is this packet was a question, not if it was an answer */
-			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_R))
+			/*
+			 * only send a notify is this packet was a request,
+			 * not if it was a reply
+			 */
+			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R))
 				SEND_NOTIFICATION(md->note);
 		}
 

@@ -78,7 +78,7 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 		 */
 		send_certreq = (c->policy & POLICY_RSASIG) &&
 			       !has_preloaded_public_key(st) &&
-			       (role == INITIATOR) &&
+			       (role == O_INITIATOR) &&
 			       (st->st_connection->spd.that.ca.ptr != NULL);
 	}
 
@@ -96,9 +96,9 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 		} else if (has_preloaded_public_key(st)) {
 			DBG(DBG_CONTROL,
 			    DBG_log(" has a preloaded a public for that end in st"));
-		} else if (!(role == INITIATOR)) {
+		} else if (!(role == O_INITIATOR)) {
 			DBG(DBG_CONTROL,
-			    DBG_log("  my role is not INITIATORi"));
+			    DBG_log("  my role is not O_INITIATOR"));
 		} else if (!(st->st_connection->spd.that.ca.ptr != NULL)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("  no known CA for the other end"));

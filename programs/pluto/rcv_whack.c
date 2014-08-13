@@ -449,9 +449,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_list & LIST_PSKS)
 		list_psks();
 
-	if (msg.whack_list & LIST_TRAFFIC)
-		show_states_status(TRUE);
-
 	if (msg.whack_list & LIST_CERTS)
 		list_certs(msg.whack_utc);
 

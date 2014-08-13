@@ -2147,7 +2147,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 		pcrc_init(&dh->dh_pcrc, quick_inI1_outR1_cryptocontinue2);
 		e = start_dh_secret(&dh->dh_pcrc, st,
 				    st->st_import,
-				    RESPONDER,
+				    O_RESPONDER,
 				    st->st_pfs_group->group);
 
 		/* In the STF_INLINE, quick_inI1_outR1_cryptocontinue1 has already
@@ -2457,7 +2457,7 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 		pcrc_init(&dh->dh_pcrc, quick_inR1_outI2_continue);
 		return start_dh_secret(&dh->dh_pcrc, st,
 				       st->st_import,
-				       INITIATOR,
+				       O_INITIATOR,
 				       st->st_pfs_group->group);
 	} else {
 		/* just call the tail function */

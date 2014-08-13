@@ -1253,7 +1253,8 @@ static bool send_frags(struct state *st, const char *where)
 
 			memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
 			ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION; /* one octet */
-			/* Do we need to set any of ISAKMP_FLAG_ENCRYPTION, ISAKMP_FLAGS_R or ISAKMP_FLAGS_I ?
+			/* Do we need to set any of ISAKMP_FLAG_ENCRYPTION,
+			 * ISAKMP_FLAGS_MSG_R or ISAKMP_FLAGS_IKE_I ?
 			 * seems there might be disagreement between Cisco and Microsoft.
 			 * st->st_suspended_md->hdr.isa_flags; TODO must this be set?
 			 */

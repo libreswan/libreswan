@@ -373,9 +373,19 @@ enum state_kind {
 	STATE_IKEv2_ROOF,
 };
 
+/* This is the IKE role, in RFC terms the Original Initiator or
+ * Original Responder. It is used for SPI lookup.
+ * This does NOT refer to whether we are sending an IKE request or
+ * an IKE response. This role sets ISAKMP_FLAGS_IKE_I, * but NOT
+ * ISAKMP_FLAGS_MSG_R. These are two different bits!
+ * In other words: ISAKMP_FLAGS_IKE_I != !ISAKMP_FLAGS_MSG_R
+ *
+ * The ISAKMP_FLAGS_IKE_I flag is present in IKEv1, but the
+ * ISAKMP_FLAGS_MSG_R is only present in IKEv2.
+ */
 enum phase1_role {
-	INITIATOR=1,
-	RESPONDER=2
+	O_INITIATOR=1,
+	O_RESPONDER=2
 };
 
 #define STATE_IKE_FLOOR STATE_MAIN_R0
