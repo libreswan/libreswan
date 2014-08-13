@@ -476,7 +476,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			kernel_ops->kern_name,
 			metric_str,
 			connmtu_str,
-			st ? st->st_esp.add_time : 0,
+			st == NULL ? 0 : st->st_esp.add_time,
 			prettypolicy(c->policy),
 			(c->addr_family == AF_INET) ? 4 : 6,
 			(st && st->st_xauth_soft) ? 1 : 0,
@@ -2484,11 +2484,11 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 	    DBG_log("route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: %lu",
 		    c->name,
 		    (c->policy_next ? c->policy_next->name : "none"),
-		    ero ? ero->name : "null",
+		    ero == NULL ? "null" : ero->name,
 		    esr,
-		    ro ? ro->name : "null",
+		    ro == NULL ? "null" : ro->name,
 		    rosr,
-		    st ? st->st_serialno : 0));
+		    st == NULL ? 0 : st->st_serialno));
 
 	/* look along the chain of policies for one with the same name */
 

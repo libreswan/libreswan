@@ -2158,10 +2158,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	 * ??? this code says inline is OK too.  Which is it?
 	 */
 	DBG(DBG_CONTROLMORE,
-		DBG_log("#%lu %s:%u result == %d; st->st_calculating == %s;",
-			st ? st->st_serialno : 0, __FUNCTION__, __LINE__,
-			result, st == NULL ? "undef" : st->st_calculating ?
-			"TRUE" : "FALSE"));
+		if (st != NULL) {
+			DBG_log("#%lu %s:%u st->st_calculating == %s;",
+				st->st_serialno, __FUNCTION__, __LINE__,
+				st->st_calculating ? "TRUE" : "FALSE");
+		});
 	passert(result == STF_INLINE || result == STF_IGNORE ||
 		result == STF_SUSPEND || !st->st_calculating);
 
