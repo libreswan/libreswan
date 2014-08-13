@@ -695,9 +695,9 @@ enum isakmp_xchg_types {
 /* Flag bits */
 #define ISAKMP_FLAGS_E (1 << 0) /* bit 0 of flags --- encrypt */
 #define ISAKMP_FLAGS_C (1 << 1) /* bit 1 of flags --- commit */
-#define ISAKMP_FLAGS_I (1 << 3) /* bit 3 of flags --- initiator */
+#define ISAKMP_FLAGS_I (1 << 3) /* bit 3 of flags --- IKE initiator */
 #define ISAKMP_FLAGS_V (1 << 4) /* bit 4 of flags --- version */
-#define ISAKMP_FLAGS_R (1 << 5) /* bit 5 of flags --- response */
+#define ISAKMP_FLAGS_R (1 << 5) /* bit 5 of flags --- Message response */
 extern const char *const flag_bit_names[];
 
 #define ISAKMP_FLAG_ENCRYPTION 0x1 /* repeat of above */
