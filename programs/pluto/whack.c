@@ -265,7 +265,6 @@ static void help(void)
 		" [--listcrls]"
 
 		" [--listpsks]"
-		" [--listtraffic]"
 		" [--listall]"
 		"\n\n"
 
@@ -420,7 +419,6 @@ enum option_enums {
 	LST_CRLS,
 	LST_CARDS,
 	LST_PSKS,
-	LST_TRAFFIC,
 	LST_EVENTS,
 	LST_ALL,
 
@@ -604,7 +602,6 @@ static const struct option long_opts[] = {
 	{ "listgroups", no_argument, NULL, LST_GROUPS + OO },
 	{ "listcrls", no_argument, NULL, LST_CRLS + OO },
 	{ "listpsks", no_argument, NULL, LST_PSKS + OO },
-	{ "listtraffic", no_argument, NULL, LST_TRAFFIC + OO },
 	{ "listevents", no_argument, NULL, LST_EVENTS + OO },
 	{ "listall", no_argument, NULL, LST_ALL + OO },
 
@@ -1267,7 +1264,6 @@ int main(int argc, char **argv)
 		case LST_CRLS:          /* --listcrls */
 		case LST_PSKS:          /* --listpsks */
 		case LST_EVENTS:        /* --listevents */
-		case LST_TRAFFIC:       /* --listtraffic */
 			msg.whack_list |= LELEM(c - LST_PUBKEYS);
 			continue;
 

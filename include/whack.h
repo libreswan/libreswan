@@ -311,11 +311,10 @@ struct whack_message {
 #define LIST_CACERTS	0x0004	/* list all ca certs */
 #define LIST_CRLS	0x0008	/* list all crls */
 #define LIST_PSKS	0x0010	/* list all preshared keys (by name) */
-#define LIST_TRAFFIC	0x0011	/* list traffic of phase 2 */
 #define LIST_EVENTS	0x0020	/* list all queued events */
 
 /* omit events from listing options */
-#define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_TRAFFIC)  /* all list options */
+#define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */
 
 /* options of whack --reread*** command */
 
