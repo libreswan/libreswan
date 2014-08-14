@@ -3275,8 +3275,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 						    "updating liveness, no longer pending."));
 					st->st_last_liveness = mononow();
 					st->st_pend_liveness = FALSE;
-					st->st_msgid_lastrecv =
-						md->msgid_received;
+					ikev2_update_counters(md);
 				}
 			}
 		}

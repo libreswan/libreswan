@@ -932,21 +932,15 @@ void ikev2_update_counters(struct msg_digest *md)
 			pst = st;
 	}
 
-	switch (md->role) {
-	case INITIATOR:
-		/* update lastuse values */
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) {
+		/* we were initiator for this message exchange */
 		pst->st_msgid_lastack = md->msgid_received;
 		if(pst->st_msgid_lastack <= pst->st_msgid_nextuse)
 			pst->st_msgid_nextuse = pst->st_msgid_lastack + 1;
-		break;
-
-	case RESPONDER:
-		pst->st_msgid_lastrecv = md->msgid_received;
-		/* the responder requires msgid_nextuse if it ever needs to
-		 * initiate an informational exchange
-		 */
-		pst->st_msgid_nextuse = md->msgid_received + 1;
-		break;
+	} else {
+		/* we were responder for this message exchange */
+		if (md->msgid_received > pst->st_msgid_lastrecv)
+			pst->st_msgid_lastrecv = md->msgid_received;
 	}
 }
 
