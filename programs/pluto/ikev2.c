@@ -621,7 +621,8 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * initial exchange) are interleaved, we ignore the first
 			 * This is https://bugs.libreswan.org/show_bug.cgi?id=185
 			 */
-			if (st->st_msgid_lastrecv > md->msgid_received) {
+			if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
+			    st->st_msgid_lastrecv > md->msgid_received) {
 				/* this is an OLD retransmit. we can't do anything */
 				libreswan_log(
 					"received too old retransmit: %u < %u",
@@ -686,6 +687,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * NOTE: in_struct() changed the byte order.
 			 */
 			if (st->st_msgid_lastack != v2_INVALID_MSGID &&
+			    st->st_msgid_lastrecv != v2_INVALID_MSGID &&
 			    md->msgid_received <= st->st_msgid_lastack) {
 				/* it's fine, it's just a retransmit */
 				DBG(DBG_CONTROL,

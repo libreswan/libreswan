@@ -122,6 +122,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_I1);
 	st->st_msgid_lastack = v2_INVALID_MSGID;
+	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
 	st->st_try = try;
 
