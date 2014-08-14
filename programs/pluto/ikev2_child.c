@@ -223,7 +223,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 
 	st->st_childsa = c0;
 
-	if (role == INITIATOR) {
+	if (role == O_INITIATOR) {
 		ts_i = &st->st_ts_this;
 		ts_r = &st->st_ts_that;
 	} else {
@@ -233,14 +233,14 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 
 	for (sr = &c0->spd; sr != NULL; sr = sr->next) {
 		ret = ikev2_emit_ts(md, outpbs, ISAKMP_NEXT_v2TSr,
-				    ts_i, INITIATOR);
+				    ts_i, O_INITIATOR);
 		if (ret != STF_OK)
 			return ret;
 
-		if (role == INITIATOR) {
+		if (role == O_INITIATOR) {
 			ret = ikev2_emit_ts(md, outpbs,
 					    st->st_connection->policy & POLICY_TUNNEL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N,
-					    ts_r, RESPONDER);
+					    ts_r, O_RESPONDER);
 		} else {
 			struct payload_digest *p;
 			for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL;
@@ -250,14 +250,14 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 					DBG_log("Received v2N_USE_TRANSPORT_MODE from the other end, next payload is v2N_USE_TRANSPORT_MODE notification");
 					ret = ikev2_emit_ts(md, outpbs,
 							    ISAKMP_NEXT_v2N,
-							    ts_r, RESPONDER);
+							    ts_r, O_RESPONDER);
 					break;
 				}
 			}
 			if (!p) {
 				ret = ikev2_emit_ts(md, outpbs,
 						    ISAKMP_NEXT_v2NONE,
-						    ts_r, RESPONDER);
+						    ts_r, O_RESPONDER);
 			}
 		}
 
@@ -360,7 +360,7 @@ int ikev2_evaluate_connection_protocol_fit(struct connection *d,
 	struct end *ei, *er;
 	int narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
 
-	if (role == INITIATOR) {
+	if (role == O_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
 	} else {
@@ -386,10 +386,10 @@ int ikev2_evaluate_connection_protocol_fit(struct connection *d,
 					    ei->protocol,
 					    fitrange1));
 
-			} else if ( (role == INITIATOR) && narrowing &&
+			} else if ( (role == O_INITIATOR) && narrowing &&
 				    (!ei->protocol)) {
 				DBG(DBG_CONTROL,
-				    DBG_log("  INITIATOR narrowing=yes, want to narrow ei->protocol 0(all) to tsi[%d] protocol %d",
+				    DBG_log("  O_INITIATOR narrowing=yes, want to narrow ei->protocol 0(all) to tsi[%d] protocol %d",
 					    tsi_ni,
 					    tsi[tsi_ni].ipprotoid));
 				fitrange1 = 1;
@@ -397,10 +397,10 @@ int ikev2_evaluate_connection_protocol_fit(struct connection *d,
 				    DBG_log("  tsi[%d] protocol %d >= ei->protocol 0(all) can be narrowed  fitrange1 %d",
 					    tsi_ni,
 					    tsi[tsi_ni].ipprotoid, fitrange1));
-			} else if ( (role == RESPONDER) && narrowing &&
+			} else if ( (role == O_RESPONDER) && narrowing &&
 				    (ei->protocol)) {
 				DBG(DBG_CONTROL,
-				    DBG_log("  RESPONDER narrowing=yes, want to narrow ei->protocol %d to tsi[%d] protocol %d",
+				    DBG_log("  O_RESPONDER narrowing=yes, want to narrow ei->protocol %d to tsi[%d] protocol %d",
 					    ei->protocol, tsi_ni,
 					    tsi[tsi_ni].ipprotoid));
 				fitrange1 = 1;
@@ -421,10 +421,10 @@ int ikev2_evaluate_connection_protocol_fit(struct connection *d,
 					    er->protocol,
 					    fitrange2));
 
-			} else if ( (role == INITIATOR) && narrowing &&
+			} else if ( (role == O_INITIATOR) && narrowing &&
 				    (!er->protocol)) {
 				DBG(DBG_CONTROL,
-				    DBG_log("  INITIATOR narrowing=yes, want to narrow er->protocol 0(all) to tsr[%d] protocol %d",
+				    DBG_log("  O_INITIATOR narrowing=yes, want to narrow er->protocol 0(all) to tsr[%d] protocol %d",
 					    tsr_ni,
 					    tsr[tsr_ni].ipprotoid));
 				fitrange2 = 1;
@@ -432,10 +432,10 @@ int ikev2_evaluate_connection_protocol_fit(struct connection *d,
 				    DBG_log("  tsr[%d] protocol %d >= er->protocol 0(all) can be narrowed  fitrange1 %d",
 					    tsr_ni,
 					    tsr[tsr_ni].ipprotoid, fitrange1));
-			} else if ( (role == RESPONDER) && narrowing &&
+			} else if ( (role == O_RESPONDER) && narrowing &&
 				    (er->protocol)) {
 				DBG(DBG_CONTROL,
-				    DBG_log("  RESPONDER narrowing=yes, want to narrow er->protocol %d to tsr[%d] protocol %d",
+				    DBG_log("  O_RESPONDER narrowing=yes, want to narrow er->protocol %d to tsr[%d] protocol %d",
 					    er->protocol, tsr_ni,
 					    tsr[tsr_ni].ipprotoid));
 				fitrange2 = 1;
@@ -495,7 +495,7 @@ int ikev2_evaluate_connection_port_fit(struct connection *d,
 	struct end *ei, *er;
 	int narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
 
-	if (role == INITIATOR) {
+	if (role == O_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
 	} else {
@@ -535,7 +535,7 @@ int ikev2_evaluate_connection_port_fit(struct connection *d,
 					    tsi[tsi_ni].startport,
 					    tsi[tsi_ni].endport,
 					    fitrange1));
-			} else if ( (role == INITIATOR) && narrowing &&
+			} else if ( (role == O_INITIATOR) && narrowing &&
 				    (!ei->port)) {
 				DBG(DBG_CONTROL,
 				    DBG_log("   narrowing=yes want to narrow ei->port 0-65355 to tsi[%d] %d-%d",
@@ -561,7 +561,7 @@ int ikev2_evaluate_connection_port_fit(struct connection *d,
 						    ei->port));
 				}
 
-			} else if ((role == RESPONDER) &&
+			} else if ((role == O_RESPONDER) &&
 				   ( narrowing  && ei->port) ) {
 				DBG(DBG_CONTROL,
 				    DBG_log(
@@ -617,7 +617,7 @@ int ikev2_evaluate_connection_port_fit(struct connection *d,
 					    tsr[tsr_ni].startport,
 					    tsr[tsr_ni].endport,
 					    fitrange2));
-			} else if ( (role == INITIATOR) && narrowing &&
+			} else if ( (role == O_INITIATOR) && narrowing &&
 				    (!er->port)) {
 				DBG(DBG_CONTROL,
 				    DBG_log("   narrowing=yes want to narrow ei->port 0-65355 to tsi[%d] %d-%d",
@@ -642,7 +642,7 @@ int ikev2_evaluate_connection_port_fit(struct connection *d,
 						    tsr[tsr_ni].endport));
 				}
 
-			} else if ((role == RESPONDER) &&  narrowing  &&
+			} else if ((role == O_RESPONDER) &&  narrowing  &&
 				   (er->port)) {
 				DBG(DBG_CONTROL,
 				    DBG_log("   narrowing=yes want to narrow ei->port 0-65535 to tsi[%d] %d-%d",
@@ -725,7 +725,7 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 	int bestfit = -1;
 	struct end *ei, *er;
 
-	if (role == INITIATOR) {
+	if (role == O_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
 	} else {
@@ -1028,7 +1028,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			st1 = duplicate_state(st);
 			insert_state(st1); /* needed for delete - we should never have duplicated before we were sure */
 
-			if (role == INITIATOR) {
+			if (role == O_INITIATOR) {
 				memcpy(&st1->st_ts_this, &tsi[best_tsi_i],
 				       sizeof(struct traffic_selector));
 				memcpy(&st1->st_ts_that, &tsr[best_tsr_i],
@@ -1040,7 +1040,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			ikev2_print_ts(&st1->st_ts_this);
 			ikev2_print_ts(&st1->st_ts_that);
 		} else {
-			if (role == INITIATOR)
+			if (role == O_INITIATOR)
 				return STF_FAIL;
 			else
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
@@ -1074,7 +1074,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	if (ret != STF_OK)
 		return ret;           /* should we delete_state st1? */
 
-	if (role == RESPONDER) {
+	if (role == O_RESPONDER) {
 		struct payload_digest *p;
 
 		for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {

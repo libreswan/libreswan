@@ -600,12 +600,14 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_I) {
-		/* then I am the responder */
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)
+		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Response"));
+	else
+		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Request"));
 
-		md->role = RESPONDER;
-
-		DBG(DBG_CONTROL, DBG_log("I am IKE SA Responder"));
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_IKE_I) {
+		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
+		md->role = O_RESPONDER;
 
 		st = find_state_ikev2_parent(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie);
@@ -638,11 +640,8 @@ void process_v2_packet(struct msg_digest **mdp)
 			/* update lastrecv later on */
 		}
 	} else {
-		/* then I am the initiator, and this is a reply */
-
-		md->role = INITIATOR;
-
-		DBG(DBG_CONTROL, DBG_log("I am IKE SA Initiator"));
+		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Initiator"));
+		md->role = O_INITIATOR;
 
 		if (md->msgid_received == v2_INITIAL_MSGID) {
 			st = find_state_ikev2_parent(md->hdr.isa_icookie,
@@ -733,7 +732,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * can be initiated by the initial responder.
 		 */
 		if (ix != ISAKMP_v2_INFORMATIONAL &&
-		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0)))
+		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) != 0)))
 			continue;
 
 		/* must be the right state machine entry */
@@ -746,7 +745,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
 
 		/* no useful state microcode entry */
-		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_R)) {
+		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)) {
 			/* We are responder for this message exchange */
 			SEND_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
@@ -792,7 +791,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
 {
-	unsigned int hisID = role == INITIATOR ?
+	unsigned int hisID = role == O_INITIATOR ?
 			     ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
 	struct payload_digest *const id_him = md->chain[hisID];
 	const pb_stream * id_pbs;
@@ -999,7 +998,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		/* unwrapped deltatime_t */
 		time_t marg = deltasecs(c->sa_rekey_margin);
 
-		if (role == INITIATOR) {
+		if (role == O_INITIATOR) {
 			marg += marg *
 				c->sa_rekey_fuzz / 100.E0 *
 				(rand() / (RAND_MAX + 1.E0));
@@ -1136,7 +1135,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 		case EVENT_SA_REPLACE: /* SA replacement event */
 			delay = ikev2_replace_delay(st, &kind,
 					(svm->flags & SMF2_INITIATOR) ?
-					INITIATOR : RESPONDER);
+					O_INITIATOR : O_RESPONDER);
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;
@@ -1296,8 +1295,11 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			  enum_name(&ikev2_notify_names, md->note));
 
 		if (md->note != NOTHING_WRONG) {
-			/* only send a notify is this packet was a question, not if it was an answer */
-			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_R))
+			/*
+			 * only send a notify is this packet was a request,
+			 * not if it was a reply
+			 */
+			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R))
 				SEND_NOTIFICATION(md->note);
 		}
 
