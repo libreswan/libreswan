@@ -26,6 +26,10 @@ v3.10 (unreleased)
 * IKEv2: ikev2_parse_*_sa_body: stop matching after first success [Hugh]
 * IKEv2: Reject responder SA with multiple proposals [Hugh]
 * IKEv2: Enforce proposal numbering rules [Hugh]
+* IKEv2: first initiating XCHG of Original Responder is not a retransmit [Paul]
+* IKEv2: Don't respond to reply messages when parent SA was not found [Paul]
+* IKEv2: clarify O_responder/O_initiator and Request/Reply code [Paul]
+* IKEv2: Check received msgid is larger then previous before storing [Paul]
 * IKEv1: parse_ipsec_sa_body() did not allow newer AH transforms [Paul]
 * IKEv1: Add sha2 and aes_cbc support for ESP algo
 * whack: Don't change exit status for RC_INFORMATIONAL* [Mike Gilbert]
