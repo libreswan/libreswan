@@ -746,10 +746,8 @@ void process_v2_packet(struct msg_digest **mdp)
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
 
 		/* no useful state microcode entry */
-		if (md->hdr.isa_flags & ISAKMP_FLAGS_I) {
-			/* must be an initiator message, so we are the responder */
-
-			/* XXX need to be more specific */
+		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_R)) {
+			/* We are responder for this message exchange */
 			SEND_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
 		return;
