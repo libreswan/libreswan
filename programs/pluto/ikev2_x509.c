@@ -145,7 +145,7 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 				outpbs, &cert_pbs))
 			return STF_INTERNAL_ERROR;
 
-		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
+		if (!out_chunk(get_cert_chunk(mycert), &cert_pbs, "CERT"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&cert_pbs);

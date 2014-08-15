@@ -70,6 +70,10 @@ extern void ikev1_delete_out(struct state *st);
 extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			   bool aggrmode);
 
+extern bool ikev1_ship_ca_chain(cert_t chain, cert_t ee,
+					      pb_stream *outs,
+					      u_int8_t setnp,
+					      bool send_full_chain);
 extern size_t RSA_sign_hash(struct connection *c,
 			    u_char sig_val[RSA_MAX_OCTETS],
 			    const u_char *hash_val, size_t hash_len);

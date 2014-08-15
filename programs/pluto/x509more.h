@@ -53,6 +53,8 @@ extern bool match_requested_ca(generalName_t *requested_ca,
 			       chunk_t our_ca, int *our_pathlen);
 
 extern void select_x509cert_id(x509cert_t *cert, struct id *end_id);
+extern bool ikev1_ship_CERT(u_int8_t type, chunk_t cert, pb_stream *outs,
+						         u_int8_t np);
 
 extern int filter_dotfiles(
 #ifdef SCANDIR_HAS_CONST

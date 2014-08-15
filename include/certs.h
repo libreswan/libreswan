@@ -55,7 +55,7 @@ typedef struct {
 } cert_t;
 
 
-extern chunk_t get_mycert(cert_t cert);
+extern chunk_t get_cert_chunk(cert_t cert);
 extern bool load_cert(const char *filename,
 		      const char *label, cert_t *cert);
 

@@ -1397,7 +1397,8 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 				enum ike_cert_type certtype,
 				enum certpolicy policy,
 				bool gotcertrequest,
-				bool send_cert)
+				bool send_cert,
+				bool send_chain)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("thinking about whether to send my certificate:"));
@@ -1434,6 +1435,9 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 					"because I was not asked to."));
 		}
 	}
+	if (send_chain)
+		DBG(DBG_CONTROL, DBG_log("Sending one or more authcerts"));
+
 }
 
 /*
@@ -1456,6 +1460,8 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	pb_stream id_pbs; /* ID Payload; also used for hash calculation */
 	bool send_cert = FALSE;
 	bool send_cr = FALSE;
+	bool send_authcerts = FALSE;
+	bool send_full_chain = FALSE;
 	bool initial_contact = FALSE;
 	generalName_t *requested_ca = NULL;
 	cert_t mycert = st->st_connection->spd.this.cert;
@@ -1479,12 +1485,21 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		  st->hidden_variables.st_got_certrequest) ||
 		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
+	send_authcerts = (send_cert &&
+			  st->st_connection->spd.this.ca_path.ty != CERT_NONE &&
+			  st->st_connection->spd.this.ca_path.u.x509 != NULL &&
+			  st->st_connection->send_ca != CA_SEND_NONE);
+
+	send_full_chain = (send_authcerts &&
+			   st->st_connection->send_ca == CA_SEND_ALL);
+
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
 			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
-			send_cert);
+			send_cert,
+			send_authcerts);
 
 	/*
 	 * send certificate request, if we don't have a preloaded RSA
@@ -1497,8 +1512,9 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 			send_cr ? "" : "not "));
 
 	/*
-	 * free collected certificate requests since as initiator
-	 * we don't heed them anyway
+	 * free collected certificate requests
+	 * note: when we are able to ship based on the request
+	 * contents, we'll need them then.
 	 */
 	free_generalNames(requested_ca, TRUE);
 
@@ -1555,25 +1571,29 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 	/* CERT out */
 	if (send_cert) {
-		pb_stream cert_pbs;
+		u_int8_t np;
 
-		struct isakmp_cert cert_hd;
-		cert_hd.isacert_np =
-			(send_cr) ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.ty;
+		if (!send_cr && !send_authcerts)
+			np = ISAKMP_NEXT_SIG;
+		else
+			np = send_authcerts ? ISAKMP_NEXT_CERT : ISAKMP_NEXT_CR;
 
 		libreswan_log("I am sending my cert");
 
-		if (!out_struct(&cert_hd,
-					&isakmp_ipsec_certificate_desc,
-					&md->rbody,
-					&cert_pbs))
+		if (!ikev1_ship_CERT(mycert.ty, get_cert_chunk(mycert),
+					&md->rbody, np))
 			return STF_INTERNAL_ERROR;
 
-		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&cert_pbs);
+		if (np == ISAKMP_NEXT_CERT) {
+			/* we've got CA certificates to send */
+			libreswan_log("I am sending a CA cert chain");
+			if (!ikev1_ship_ca_chain(st->st_connection->spd.this.ca_path,
+						 mycert,
+						 &md->rbody,
+						 send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG,
+						 send_full_chain))
+				return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* CR out */
@@ -2003,8 +2023,10 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	u_int8_t auth_payload;
 	pb_stream r_id_pbs; /* ID Payload; also used for hash calculation */
 	cert_t mycert;
-	bool send_cert;
-	unsigned int np;
+	bool send_cert = FALSE;
+	bool send_authcerts = FALSE;
+	bool send_full_chain = FALSE;
+	u_int8_t np;
 
 	/*
 	 * ID and HASH_I or SIG_I in
@@ -2028,12 +2050,21 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 		  st->hidden_variables.st_got_certrequest) ||
 		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
+	send_authcerts = (send_cert &&
+			  st->st_connection->spd.this.ca_path.ty != CERT_NONE &&
+			  st->st_connection->spd.this.ca_path.u.x509 != NULL &&
+			  st->st_connection->send_ca != CA_SEND_NONE);
+
+	send_full_chain = (send_authcerts &&
+			   st->st_connection->send_ca == CA_SEND_ALL);
+
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
 			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
-			send_cert);
+			send_cert,
+			send_authcerts);
 
 	/*
 	 * Build output packet HDR*;IDir;HASH/SIG_R
@@ -2078,24 +2109,23 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 	/* CERT out, if we have one */
 	if (send_cert) {
-		pb_stream cert_pbs;
-
-		struct isakmp_cert cert_hd;
-		cert_hd.isacert_np = ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.ty;
+		u_int8_t npp = send_authcerts ? ISAKMP_NEXT_CERT : ISAKMP_NEXT_SIG;
 
 		libreswan_log("I am sending my cert");
-
-		if (!out_struct(&cert_hd, &isakmp_ipsec_certificate_desc,
-					&md->rbody, &cert_pbs))
+		if (!ikev1_ship_CERT(mycert.ty, get_cert_chunk(mycert),
+					        &md->rbody, npp))
 			return STF_INTERNAL_ERROR;
 
-		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&cert_pbs);
+		if (npp == ISAKMP_NEXT_CERT) {
+			libreswan_log("I am sending a CA cert chain");
+			if (!ikev1_ship_ca_chain(st->st_connection->spd.this.ca_path,
+						 mycert,
+						 &md->rbody,
+						 ISAKMP_NEXT_SIG,
+						 send_full_chain))
+				return STF_INTERNAL_ERROR;
+		}
 	}
-
 
 	/* IKEv2 NOTIFY payload */
 	np = ISAKMP_NEXT_NONE;

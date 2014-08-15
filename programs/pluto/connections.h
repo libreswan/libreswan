@@ -171,8 +171,8 @@ struct end {
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	char   *cert_filename;		/* where we got the certificate */
 	cert_t cert;			/* end certificate */
-
-	chunk_t ca;			/* CA distinguished name */
+	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
+	cert_t ca_path;			/* chain of CA certs */
 
 	struct virtual_t *virt;
 
@@ -280,6 +280,7 @@ struct connection {
 	struct connection *ac_next;	/* all connections list link */
 
 	generalName_t *requested_ca;	/* collected certificate requests */
+	enum send_ca_policy send_ca;
 #ifdef XAUTH_HAVE_PAM
 	pam_handle_t  *pamh;		/*  PAM handle for that connection  */
 #endif

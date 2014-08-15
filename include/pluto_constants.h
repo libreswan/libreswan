@@ -51,6 +51,12 @@ enum dpd_action {
 	DPD_ACTION_RESTART
 };
 
+enum send_ca_policy {
+	CA_SEND_NONE = 0,
+	CA_SEND_ISSUER = 1,
+	CA_SEND_ALL = 2,
+};
+
 /* Cisco interop: values remote_peer_type= */
 enum keyword_remotepeertype {
 	NON_CISCO = 0,

@@ -61,7 +61,8 @@
 #include "pkcs.h"
 #include "x509more.h"
 
-/* chained lists of X.509 host/user and ca certificates and crls */
+/* chained lists of X.509 host/user certificates and crls
+ * CA certificates go in the x509authcerts chain */
 
 static x509cert_t *x509certs   = NULL;
 static x509crl_t  *x509crls    = NULL;
@@ -189,8 +190,12 @@ void free_crls(void)
 
 /*
  * stores a chained list of end certs and CA certs
+ *
+ * @verified_ca is a copied list of the verified authcerts that have
+ * been placed in the global authcert chain
  */
-void store_x509certs(x509cert_t **firstcert, bool strict)
+void store_x509certs(x509cert_t **firstcert, x509cert_t **verified_ca,
+					     bool strict)
 {
 	x509cert_t *cacerts = NULL;
 	x509cert_t **pp = firstcert;
@@ -218,14 +223,25 @@ void store_x509certs(x509cert_t **firstcert, bool strict)
 	}
 
 	/* now verify the candidate CA certs */
+	x509cert_t *ver = NULL;
 
 	while (cacerts != NULL) {
+		realtime_t valid_until;
 		x509cert_t *cert = cacerts;
 
 		cacerts = cacerts->next;
 
-		if (trust_authcert_candidate(cert, cacerts)) {
+		if (trust_authcert_candidate(cert, cacerts) &&
+		    verify_x509cert(cert, strict, &valid_until, cacerts)) {
 			add_authcert(cert, AUTH_CA);
+			if (ver == NULL) {
+				ver = clone_thing(*cert, "x509cert_t");
+				*verified_ca = ver;
+			} else {
+				ver->next = clone_thing(*cert, "x509cert_t");
+				ver = ver->next;
+			}
+			ver->next = NULL;
 		} else {
 			libreswan_log("intermediate cacert rejected");
 			free_x509cert(cert);
@@ -240,7 +256,7 @@ void store_x509certs(x509cert_t **firstcert, bool strict)
 		realtime_t valid_until;
 		x509cert_t *cert = *pp;
 
-		if (verify_x509cert(cert, strict, &valid_until /* OUT */)) {
+		if (verify_x509cert(cert, strict, &valid_until, NULL)) {
 			DBG(DBG_X509 | DBG_PARSING,
 			    DBG_log("public key validated"));
 			add_x509_public_key(NULL, cert, valid_until,
@@ -562,7 +578,8 @@ void check_crls(void)
 /*
  *  verifies a X.509 certificate
  */
-bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, realtime_t *until /* OUT */)
+bool verify_x509cert(const x509cert_t *cert, bool strict, realtime_t *until,
+						          x509cert_t *alt)
 {
 	int pathlen;
 
@@ -608,15 +625,35 @@ bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, realtime_t *until 
 		    DBG_log("valid certificate for \"%s\"", sbuf));
 
 		lock_authcert_list("verify_x509cert");
-		issuer_cert = get_authcert(cert->issuer,
-					   cert->authKeySerialNumber,
-					   cert->authKeyID, AUTH_CA);
+
+		if (alt != NULL) {
+			DBG(DBG_X509,DBG_log("looking for issuer in an alternate list"));
+			issuer_cert = get_alt_cacert(cert->issuer,
+						     cert->authKeySerialNumber,
+						     cert->authKeyID,
+						     alt);
+		} else {
+			issuer_cert = get_authcert(cert->issuer,
+						   cert->authKeySerialNumber,
+						   cert->authKeyID, AUTH_CA);
+		}
 
 		if (issuer_cert == NULL) {
-			libreswan_log("issuer cacert not found");
-			unlock_authcert_list("verify_x509cert");
-			return FALSE;
+			if (alt != NULL) {
+				DBG(DBG_X509,
+				    DBG_log("not found in alternate list, falling back "
+					    "to authcert list"));
+				issuer_cert = get_authcert(cert->issuer,
+						      cert->authKeySerialNumber,
+						      cert->authKeyID, AUTH_CA);
+			}
+			if (issuer_cert == NULL) {
+				libreswan_log("issuer cacert not found");
+				unlock_authcert_list("verify_x509cert");
+				return FALSE;
+			}
 		}
+
 		DBG(DBG_X509,
 		    DBG_log("issuer cacert \"%s\" found", ibuf));
 
@@ -820,4 +857,10 @@ void list_crls(bool utc, bool strict)
 void list_certs(bool utc)
 {
 	list_x509_end_certs(utc);
+}
+
+bool match_subj_to_gn(x509cert_t *cert, generalName_t *gn)
+{
+        return ((cert != NULL && gn != NULL) &&
+                        same_dn(cert->subject, gn->name));
 }
