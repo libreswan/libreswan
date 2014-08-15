@@ -518,9 +518,6 @@ bool ikev1_out_sa(pb_stream *outs,
 				trans.isat_transnum = tn;
 				trans.isat_transid = t->transid;
 
-				if (!oakley_mode && t->transid == ESP_AES)
-					DBG(DBG_CONTROLMORE,DBG_log("PAUL: GOT ESP_AES should go here!"));
-
 				if (!out_struct(&trans, trans_desc,
 						&proposal_pbs, &trans_pbs))
 					return_on(ret, FALSE);
