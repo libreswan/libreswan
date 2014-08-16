@@ -9,6 +9,7 @@ v3.10 (unreleased)
 * _updown.netkey: Don't skip routing if mtu= option is used [Tuomo]
 * NETKEY: protoport= installed broken swapped src/dst passthrough SA's [Antony]
 * NETKEY: fix names for RIPEMD160 and AES_CTR [Paul]
+* KLIPS: support 3.16+ kernels with update __ip_select_ident() [Thomas Geulig]
 * _stackmanager: KLIPS support for alias devices [Marc-Christian Petersen]
 * pluto: Simplfy/tidy alg_info [Hugh]
 * pluto: Simplify find_host_connection() and terminate_connection() [Hugh]
