@@ -731,6 +731,10 @@ int main(int argc, char *argv[])
 			if (conn->desired_state == STARTUP_ONDEMAND)
 				starter_whack_route_conn(cfg, conn);
 		}
+
+		/* We added all connections, let pluto listen, then startup our conns */
+		starter_whack_listen(cfg);
+
 		if (verbose)
 			printf("  Pass #2: Initiating auto=start connections\n");
 
