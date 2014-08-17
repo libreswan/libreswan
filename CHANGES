@@ -38,6 +38,7 @@ v3.10 (unreleased)
 * ipsec: create NSS DB on startup when missing [Paul]
 * ipsec: Added "ipsec --checknss" that creates-when-missing NSS DB [Paul]
 * verify: Make verify python3 compatbile [Slavek Kabrda]
+* readwriteconf: Fix writing kt_invertbool's (like aggrmode=) [Paul]
 * testing: Obsoleted dotest.sh with dotest.py, speed increase [Antony]
 * testing: Added more test cases and general cleanup [Antony/Paul]
 * compiling: Fix ADNS without USE_DNSSEC compile [Tuomo]
