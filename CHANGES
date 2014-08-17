@@ -21,6 +21,8 @@ v3.10 (unreleased)
 * pluto: Fix memory allocation/free errors (especially in ike_frag) [Hugh/Paul]
          (triggered as of 3.9 when --leak-detective was used)
 * pluto: Various warning fixes from LLVM/Coverity [Hugh]
+* pluto: Don't listen before all connections are loaded [Paul]
+         (this sub-optimal behaviour was introduced in 3.1)
 * cryptohelpers: cleanup and improved error logging [Hugh]
 * IKEv2: esp=/phase2alg= should be strict (bug introduced in 3.9) [Paul]
 * IKEv2: Don't abort all proposals when encountering unknown PRF [Hugh]
