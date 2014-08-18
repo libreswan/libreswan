@@ -3025,7 +3025,6 @@ static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
 #endif
 
 	return kernel_ops->add_sa(&sa, TRUE);
-
 }
 
 bool update_ipsec_sa(struct state *st USED_BY_KLIPS)

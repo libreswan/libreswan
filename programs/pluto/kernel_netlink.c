@@ -1065,7 +1065,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		loglog(RC_LOG_SERIOUS,
 			"Warning: expected to find an existing IPsec SA - continuing as Add SA");
-		return netlink_add_sa(sa, 0);
+		return netlink_add_sa(sa, FALSE);
 	}
 	return ret;
 }
