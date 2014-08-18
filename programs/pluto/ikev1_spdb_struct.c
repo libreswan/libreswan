@@ -1317,10 +1317,10 @@ rsasig_common:
 					if (val >
 					    OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM)
 					{
-						ugh = builddiag("peer requested %lu seconds"
-								" which exceeds our limit %d seconds",
+						libreswan_log("warning: peer requested IKE lifetime of %lu seconds which we capped at our limit of %d seconds",
 								(long) val,
 								OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM);
+						val = OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM;
 					}
 					ta.life_seconds = deltatime(val);
 					break;
