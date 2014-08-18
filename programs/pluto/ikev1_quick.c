@@ -784,8 +784,9 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		qke->qke_pcrc.pcrc_serialno);
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick outI1: calculated ke+nonce, sending I1"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+	    DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+		qke->qke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -2079,11 +2080,14 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			qke->qke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			pcrc_init(&qke->qke_pcrc, quick_inI1_outR1_cryptocontinue1);
 
-			if (st->st_pfs_group != NULL)
+			if (st->st_pfs_group != NULL) {
+				/* need to calculate KE and Nonce */
 				e = build_ke(&qke->qke_pcrc, st,
 					     st->st_pfs_group, ci);
-			else
+			} else {
+				/* KE and Nonce calculated */
 				e = build_nonce(&qke->qke_pcrc, st, ci);
+			}
 
 			passert(st->st_connection != NULL);
 
@@ -2103,8 +2107,9 @@ static void quick_inI1_outR1_cryptocontinue1(
 		qke->qke_pcrc.pcrc_serialno);
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick inI1_outR1: calculated ke+nonce, calculating DH"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+	    DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
+		qke->qke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -2188,8 +2193,9 @@ static void quick_inI1_outR1_cryptocontinue2(
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick inI1_outR1: calculated DH, sending R1"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+	    DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
+		dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -2474,8 +2480,9 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick inI1_outR1: calculated ke+nonce, calculating DH"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+	    DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
+		dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,

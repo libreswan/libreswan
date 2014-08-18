@@ -852,7 +852,7 @@ static stf_status informational(struct msg_digest *md)
 				return STF_FATAL;
 			}
 			loglog(RC_LOG_SERIOUS,
-			       "received and ignored informational message for unknown state");
+			       "received and ignored informational message");
 			return STF_IGNORE;
 		}
 	}

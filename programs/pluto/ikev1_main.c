@@ -920,8 +920,9 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("main inR1_outI2: calculated ke+nonce, sending I2"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
+			ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1113,8 +1114,9 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("main inI2_outR2: calculated ke+nonce, sending R2"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
+			ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1189,19 +1191,20 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct state *st;
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("main inI2_outR2: calculated DH finished"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+		DBG_log("main_inI2_outR2_calcdone: calculate DH finished for #%lu",
+			dh->dh_pcrc.pcrc_serialno));
 
 	st = state_with_serialno(dh->dh_pcrc.pcrc_serialno);
 	if (st == NULL) {
-		libreswan_log("state %ld disappeared during crypto\n",
+		libreswan_log("state #%lu disappeared during crypto",
 			dh->dh_pcrc.pcrc_serialno);
 		return;
 	}
 
 	set_cur_state(st);
-	if (ugh) {
-		loglog(RC_LOG_SERIOUS, "DH crypto failed: %s\n", ugh);
+	if (ugh != NULL) {
+		loglog(RC_LOG_SERIOUS, "DH crypto failed: %s", ugh);
 		return;
 	}
 
@@ -1668,8 +1671,9 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("main inR2_outI3: calculated DH, sending R1"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,

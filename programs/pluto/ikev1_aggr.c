@@ -102,8 +102,9 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("aggr inI1_outR1: calculated ke+nonce+DH, sending R1"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+	    DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
+		dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -352,10 +353,12 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		set_suspended(st, md);
 
 		if (!st->st_sec_in_use) {
+			/* need to calculate KE and Nonce */
 			pcrc_init(&ke->ke_pcrc, aggr_inI1_outR1_continue1);
 			return build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 					st->st_import);
 		} else {
+			/* KE and Nonce calculated */
 			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			return aggr_inI1_outR1_tail(&ke->ke_pcrc, NULL);
 		}
@@ -1037,8 +1040,9 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("aggr outI1: calculated ke+nonce, sending I1"));
+	DBG(DBG_CRYPT | DBG_CONTROL,
+	    DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+		ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1164,10 +1168,12 @@ stf_status aggr_outI1(int whack_sock,
 		set_suspended(st, ke->ke_md);
 
 		if (!st->st_sec_in_use) {
+			/* need to calculate KE and Nonce */
 			pcrc_init(&ke->ke_pcrc, aggr_outI1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     importance);
 		} else {
+			/* KE and Nonce already calculated */
 			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			e = aggr_outI1_tail(&ke->ke_pcrc, NULL);
 		}
@@ -1187,6 +1193,10 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	struct connection *c = st->st_connection;
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+
+	DBG(DBG_CRYPT | DBG_CONTROL,
+	    DBG_log("aggr_outI1_tail for #%lu",
+		ke->ke_pcrc.pcrc_serialno));
 
 	/* the MD is already set up by alloc_md() */
 

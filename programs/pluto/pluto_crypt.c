@@ -169,9 +169,13 @@ void pcr_dh_init(struct pluto_crypto_req *r,
 	INIT_WIRE_ARENA(r->pcr_d.dhq);
 }
 
-/* If there are any helper threads, this code is always executed IN A HELPER THREAD.
- * Otherwise it is executed in the main (only) thread.
+/*
+ * If there are any helper threads, this code is always executed IN A HELPER
+ * THREAD. Otherwise it is executed in the main (only) thread.
  */
+
+static int crypto_helper_delay;
+
 static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 {
 	DBG(DBG_CONTROL,
@@ -179,20 +183,10 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		    helpernum,
 		    enum_show(&pluto_cryptoop_names, r->pcr_type),
 		    r->pcr_id));
-	{
-		const char *d = getenv("PLUTO_CRYPTO_HELPER_DELAY");
-
-		if (d != NULL) {
-			unsigned long delay;
-			err_t ugh = ttoulb(d, 0, 0, secs_per_hour, &delay);
-
-			if (ugh != NULL) {
-				libreswan_log("$PLUTO_CRYPTO_HELPER_DELAY malformed: %s", ugh);
-			} else {
-				DBG_log("crypto helper is pausing for %lu seconds", delay);
-				sleep(delay);
-			}
-		}
+	if (crypto_helper_delay > 0) {
+		DBG_log("crypto helper is pausing for %u seconds",
+			crypto_helper_delay);
+		sleep(crypto_helper_delay);
 	}
 
 	/* now we have the entire request in the buffer, process it */
@@ -398,13 +392,16 @@ stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
 	struct pluto_crypto_worker *c;	/* candidate worker */
 	struct state *st = cur_state;	/* TRANSITIONAL */
 
-	/* Transitional: caller may have set pcrc_serialno.
-	 * If so, it ought to be right.
+	/*
+	 * transitional: caller must have set pcrc_serialno.
+	 * It ought to match cur_state->st_serialno.
 	 */
 	passert(cn->pcrc_serialno == st->st_serialno);
 
-	passert(st->st_serialno != SOS_NOBODY && st != NULL);
+	passert(st->st_serialno != SOS_NOBODY);
 	cn->pcrc_serialno = st->st_serialno;
+
+	passert(cn->pcrc_func != NULL);
 
 	/* do it all ourselves? */
 	if (pc_workers == NULL) {
@@ -773,7 +770,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 
 	passert(cn->pcrc_func != NULL);
 
-	DBG(DBG_CRYPT, DBG_log("calling continuation function %p",
+	DBG(DBG_CRYPT | DBG_CONTROL, DBG_log("calling continuation function %p",
 			       cn->pcrc_func));
 
 	reply_stream = cn->pcrc_reply_stream;
@@ -869,6 +866,28 @@ static void *pluto_helper_thread(void *w)
 }
 
 /*
+ * Initialize crypto helper debug delay value from environment variable.
+ * This function is NOT thread safe (getenv).
+ */
+static void init_crypto_helper_delay(void)
+{
+	const char *envdelay;
+	unsigned long delay;
+	err_t error;
+
+	envdelay = getenv("PLUTO_CRYPTO_HELPER_DELAY");
+	if (envdelay == NULL)
+		return;
+
+	error = ttoulb(envdelay, 0, 0, secs_per_hour, &delay);
+	if (error != NULL)
+		libreswan_log("$PLUTO_CRYPTO_HELPER_DELAY malformed: %s",
+			error);
+	else
+		crypto_helper_delay = (int)delay;
+}
+
+/*
  * initialize the helpers.
  *
  * Later we will have to make provisions for helpers that have hardware
@@ -885,6 +904,8 @@ void init_crypto_helpers(int nhelpers)
 	pcw_id = 1;
 
 	TAILQ_INIT(&backlog);
+
+	init_crypto_helper_delay();
 
 	/* find out how many CPUs there are, if nhelpers is -1 */
 	/* if nhelpers == 0, then we do all the work ourselves */
