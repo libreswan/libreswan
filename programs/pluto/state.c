@@ -1298,13 +1298,15 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	state_buf[0] = '\0';   /* default to empty */
 	traffic_buf[0] = '\0';
 
+	if (IS_IKE_SA(st))
+		return; /* ignore non-IPsec states */
 	if (!IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 		return; /* ignore non established states */
 	}
-	// if state is incomplete xauth state, also ignore
+
 	fmt_conn_instance(c, inst);
 	{
-		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : "IPCOMP";
+		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN";
 
 		mbcp = traffic_buf + snprintf(traffic_buf,
 				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%lu", mode,  st->st_esp.add_time);

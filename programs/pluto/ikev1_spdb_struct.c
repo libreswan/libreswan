@@ -518,9 +518,6 @@ bool ikev1_out_sa(pb_stream *outs,
 				trans.isat_transnum = tn;
 				trans.isat_transid = t->transid;
 
-				if (!oakley_mode && t->transid == ESP_AES)
-					DBG(DBG_CONTROLMORE,DBG_log("PAUL: GOT ESP_AES should go here!"));
-
 				if (!out_struct(&trans, trans_desc,
 						&proposal_pbs, &trans_pbs))
 					return_on(ret, FALSE);
@@ -1320,10 +1317,10 @@ rsasig_common:
 					if (val >
 					    OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM)
 					{
-						ugh = builddiag("peer requested %lu seconds"
-								" which exceeds our limit %d seconds",
+						libreswan_log("warning: peer requested IKE lifetime of %lu seconds which we capped at our limit of %d seconds",
 								(long) val,
 								OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM);
+						val = OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM;
 					}
 					ta.life_seconds = deltatime(val);
 					break;

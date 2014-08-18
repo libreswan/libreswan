@@ -429,6 +429,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			"PLUTO_MY_PORT='%u' "
 			"PLUTO_MY_PROTOCOL='%u' "
 			"PLUTO_SA_REQID='%u' "
+			"PLUTO_SA_TYPE='%s' "
 			"PLUTO_PEER='%s' "
 			"PLUTO_PEER_ID='%s' "
 			"PLUTO_PEER_CLIENT='%s' "
@@ -465,6 +466,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			sr->this.port,
 			sr->this.protocol,
 			sr->reqid,
+			!st ? "none" : st->st_esp.present ? "ESP" :
+				st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "unknown?",
 			ipstr(&sr->that.host_addr, &bpeer),
 			secure_peerid_str,
 			peerclient_str,
@@ -3077,22 +3080,34 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	ipsec_spi_t spi;
 	const ip_address *src, *dst;
 	struct kernel_sa sa;
+	struct ipsec_proto_info *p2;
 
 	struct connection *c = st->st_connection;
 
-	if (kernel_ops->get_sa == NULL || !st->st_esp.present)
+	if (kernel_ops->get_sa == NULL || (!st->st_esp.present && !st->st_ah.present)) {
 		return FALSE;
+	}
 
-	proto = SA_ESP;
+	if (st->st_esp.present) {
+		proto = SA_ESP;
+		p2 = &st->st_esp;
+	} else {
+		if (st->st_ah.present) {
+			proto = SA_AH;
+			p2 = &st->st_ah;
+		} else {
+			return FALSE;
+		}
+	}
 
 	if (inbound) {
 		src = &c->spd.that.host_addr;
 		dst = &c->spd.this.host_addr;
-		spi = st->st_esp.our_spi;
+		spi = p2->our_spi;
 	} else {
 		src = &c->spd.this.host_addr;
 		dst = &c->spd.that.host_addr;
-		spi = st->st_esp.attrs.spi;
+		spi = p2->attrs.spi;
 	}
 	set_text_said(text_said, dst, spi, proto);
 
@@ -3108,21 +3123,22 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	if (!kernel_ops->get_sa(&sa, &bytes, &add_time))
 		return FALSE;
 
-	st->st_esp.add_time = add_time;
+	p2->add_time = add_time;
+
 	if (inbound) {
-		if (bytes > st->st_esp.our_bytes) {
-			st->st_esp.our_bytes = bytes;
-			st->st_esp.our_lastused = mononow();
+		if (bytes > p2->our_bytes) {
+			p2->our_bytes = bytes;
+			p2->our_lastused = mononow();
 		}
 		if (ago != NULL)
-			*ago = monotimediff(mononow(), st->st_esp.our_lastused);
+			*ago = monotimediff(mononow(), p2->our_lastused);
 	} else {
-		if (bytes > st->st_esp.peer_bytes) {
-			st->st_esp.peer_bytes = bytes;
-			st->st_esp.peer_lastused = mononow();
+		if (bytes > p2->peer_bytes) {
+			p2->peer_bytes = bytes;
+			p2->peer_lastused = mononow();
 		}
 		if (ago != NULL)
-			*ago = monotimediff(mononow(), st->st_esp.peer_lastused);
+			*ago = monotimediff(mononow(), p2->peer_lastused);
 	}
 	return TRUE;
 }

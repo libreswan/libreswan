@@ -674,8 +674,6 @@ def do_test_list(args, start, tried, output_dir):
 			continue 
 
 		r_file = output_dir + '/' + testdir  + '/OUTPUT/RESULT'
-		if args.newrun and os.path.exists(r_file) and (tried == 0):
-			logging.info("result [%s] exist and newrun. run this test", r_file)
 		if os.path.exists(r_file) and tried and (tried < args.retry):
 			if kvm_error(r_file):
 				logging.info("result [%s] KVMERROR. delete previous run, retry %s/%s rutn this", r_file, tried, args.retry)
@@ -722,6 +720,14 @@ def main():
 
 	date_dir = time.strftime("%Y-%m-%d", time.localtime())
 	output_dir = args.resultsdir + '/' + date_dir 
+	if args.newrun and os.path.exists(output_dir):
+			logging.info("newrun, remove results [%s]", output_dir)
+			if os.path.islink(output_dir):
+				os.unlink(output_dir)
+			elif os.path.isdir(output_dir):
+				shutil.rmtree(output_dir) 
+			else:
+				os.unlink(output_dir)
 
 	if do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):

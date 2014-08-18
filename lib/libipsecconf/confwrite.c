@@ -107,12 +107,8 @@ static void confwrite_int(FILE *out,
 		case kt_invertbool:
 			/* special enumeration */
 			if (options_set[k->field]) {
-				int val = options[k->field];
-				if (k->type == kt_invertbool)
-					val = !val;
-
 				fprintf(out, "\t%s%s=%s\n", side,
-					k->keyname, val ? "yes" : "no");
+					k->keyname, options[k->field] ? "yes" : "no");
 			}
 			continue;
 

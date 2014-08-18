@@ -21,7 +21,7 @@
  *
  */
 
-#include "pthread.h"    /* Must be the first include file */
+#include <pthread.h>    /* Must be the first include file */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -310,7 +310,7 @@ static void open_peerlog(struct connection *c)
 			sizeof(peername)) - 1;
 		int lf_len;
 
-		
+
 		/* copy IP address, turning : and . into / */
 		{
 			char ch, *p, *q;
