@@ -34,7 +34,8 @@ v3.10 (unreleased)
 * IKEv2: clarify O_responder/O_initiator and Request/Reply code [Paul]
 * IKEv2: Check received msgid is larger then previous before storing [Paul]
 * IKEv1: parse_ipsec_sa_body() did not allow newer AH transforms [Paul]
-* IKEv1: Add sha2 and aes_cbc support for ESP algo
+* IKEv1: Add sha2 and aes_cbc support for ESP algo [Paul]
+* IKEv1: cap IKE lifetimes > 1d to 1d, instead of rejecting SA [Paul]
 * whack: Don't change exit status for RC_INFORMATIONAL* [Mike Gilbert]
 * rsasigkey: a logic error limited the randomness of the key size [Paul]
 * ipsec: create NSS DB on startup when missing [Paul]
