@@ -102,9 +102,9 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
-		dh->dh_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1040,9 +1040,9 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-		ke->ke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+			ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1194,9 +1194,9 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("aggr_outI1_tail for #%lu",
-		ke->ke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("aggr_outI1_tail for #%lu",
+			ke->ke_pcrc.pcrc_serialno));
 
 	/* the MD is already set up by alloc_md() */
 

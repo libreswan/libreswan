@@ -256,9 +256,9 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-		ke->ke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+			ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -349,9 +349,9 @@ static stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_outI1_tail for #%lu",
-		ke->ke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_outI1_tail for #%lu",
+			ke->ke_pcrc.pcrc_serialno));
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
@@ -819,9 +819,9 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
-		ke->ke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
+			ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1206,9 +1206,9 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
-		dh->dh_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1836,9 +1836,9 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
-		dh->dh_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,

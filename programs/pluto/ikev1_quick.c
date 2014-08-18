@@ -784,9 +784,9 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		qke->qke_pcrc.pcrc_serialno);
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-		qke->qke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+			qke->qke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -2107,9 +2107,9 @@ static void quick_inI1_outR1_cryptocontinue1(
 		qke->qke_pcrc.pcrc_serialno);
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
-		qke->qke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
+			qke->qke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -2193,9 +2193,9 @@ static void quick_inI1_outR1_cryptocontinue2(
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
-		dh->dh_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -2480,9 +2480,9 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
-		dh->dh_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
