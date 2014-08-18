@@ -59,7 +59,6 @@ west #
 106 "westnet-eastnet-sha2" #1: STATE_MAIN_I2: sent MI2, expecting MR2
 003 "westnet-eastnet-sha2" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 108 "westnet-eastnet-sha2" #1: STATE_MAIN_I3: sent MI3, expecting MR3
-003 "westnet-eastnet-sha2" #1: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-eastnet-sha2" #1: Main mode peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-sha2" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 integ=OAKLEY_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-sha2" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+SAREF_TRACK+IKE_FRAG_ALLOW
