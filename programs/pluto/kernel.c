@@ -466,7 +466,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			sr->this.port,
 			sr->this.protocol,
 			sr->reqid,
-			!st ? "none" : st->st_esp.present ? "ESP" :
+			st == NULL ? "none" : st->st_esp.present ? "ESP" :
 				st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "unknown?",
 			ipstr(&sr->that.host_addr, &bpeer),
 			secure_peerid_str,

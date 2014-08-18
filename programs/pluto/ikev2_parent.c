@@ -69,7 +69,7 @@
 		send_v2_notification_from_md(md, (t), (d));
 
 #define SEND_NOTIFICATION(t) { \
-		if (st) \
+		if (st != NULL) \
 			send_v2_notification_from_state(st, t, NULL); \
 		else \
 			send_v2_notification_from_md(md, t, NULL); \
@@ -3443,7 +3443,7 @@ void ikev2_delete_out(struct state *st)
 		/* child SA */
 		pst = state_with_serialno(st->st_clonedfrom);
 
-		if (!pst) {
+		if (pst == NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("IKE SA does not exist for this child SA"));
 			DBG(DBG_CONTROL,

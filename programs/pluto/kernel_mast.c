@@ -412,7 +412,7 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 	}
 
 	ref = refhim = IPSEC_SAREF_NULL;
-	if (st) {
+	if (st != NULL) {
 		ref   = st->st_ref;
 		refhim = st->st_refhim;
 		DBG(DBG_KERNEL,
