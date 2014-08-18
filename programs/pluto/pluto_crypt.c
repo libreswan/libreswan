@@ -392,13 +392,16 @@ stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
 	struct pluto_crypto_worker *c;	/* candidate worker */
 	struct state *st = cur_state;	/* TRANSITIONAL */
 
-	/* Transitional: caller may have set pcrc_serialno.
-	 * If so, it ought to be right.
+	/*
+	 * transitional: caller must have set pcrc_serialno.
+	 * It ought to match cur_state->st_serialno.
 	 */
 	passert(cn->pcrc_serialno == st->st_serialno);
 
-	passert(st->st_serialno != SOS_NOBODY && st != NULL);
+	passert(st->st_serialno != SOS_NOBODY);
 	cn->pcrc_serialno = st->st_serialno;
+
+	passert(cn->pcrc_func != NULL);
 
 	/* do it all ourselves? */
 	if (pc_workers == NULL) {
@@ -767,7 +770,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 
 	passert(cn->pcrc_func != NULL);
 
-	DBG(DBG_CRYPT, DBG_log("calling continuation function %p",
+	DBG(DBG_CRYPT | DBG_CONTROL, DBG_log("calling continuation function %p",
 			       cn->pcrc_func));
 
 	reply_stream = cn->pcrc_reply_stream;
