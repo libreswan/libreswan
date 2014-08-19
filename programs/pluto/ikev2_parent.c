@@ -2636,14 +2636,15 @@ void send_v2_notification(struct state *p1st,
 	 * do we need to support more Protocol ID? more than PROTO_ISAKMP
 	 */
 
-	DBG(DBG_CONTROL, {
+	{
 		ipstr_buf b;
-		DBG_log("sending %s notification %s to %s:%u",
-			encst ? "encrypted " : "",
+
+		libreswan_log("sending %sencrypted notification %s to %s:%u",
+			encst ? "" : "un",
 			enum_name(&ikev2_notify_names, type),
 			ipstr(&p1st->st_remoteaddr, &b),
 			p1st->st_remoteport);
-	});
+	}
 
 	zero(&buffer);
 	init_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");
