@@ -38,6 +38,14 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
+ if [ -f /var/run/pluto/pluto.pid ]; then grep "message ID:" /tmp/pluto.log  ; fi
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 01
+|    message ID:  00 00 00 01
+|    message ID:  00 00 00 02
+|    message ID:  00 00 00 02
+east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #
 east #
