@@ -443,7 +443,7 @@ def sanitize(cmd):
 	logging.info ("sanitizer output %s", sanity)
 	return sanity
 
-def write_result(args, start, testname, sanity, result = 'FAILED', e = None):
+def write_result(args, start, testname, sanity, result = 'FAILED', e = None, testexpect = ''):
 
 	if sanity:
 		for line in sanity.split("\n")[2:]:
@@ -463,6 +463,9 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None):
 	logline ["time"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
 	logline ["runtime"] = time.time() - start
 	logline ["node"] = platform.node()
+	if testexpect:
+		logline ["expect"] = testexpect
+
 	if e:
 		logline ["error"] = e 
 	f.write(ujson.dumps(logline, ensure_ascii=True, double_precision=2))
@@ -556,7 +559,8 @@ def kvm_error(r_file):
 	return False
 
 
-def do_test(args, start=''):
+def do_test(args, start='', testexpect=''):
+
 	if not start:
 		start = time.time() 
 
@@ -613,7 +617,7 @@ def do_test(args, start=''):
 	kill_zombie_tcpdump()
 
 	s = sanitize(args.sanitizer)
-	write_result(args, start, testname, s)
+	write_result(args, start, testname, s, testexpect = testexpect)
 
 def do_test_list(args, start, tried, output_dir):
 	r = "./TESTLIST"
@@ -670,8 +674,6 @@ def do_test_list(args, start, tried, output_dir):
 			continue 
 
 		r_file = output_dir + '/' + testdir  + '/OUTPUT/RESULT'
-		if args.newrun and os.path.exists(r_file) and (tried == 0):
-			logging.info("result [%s] exist and newrun. run this test", r_file)
 		if os.path.exists(r_file) and tried and (tried < args.retry):
 			if kvm_error(r_file):
 				logging.info("result [%s] KVMERROR. delete previous run, retry %s/%s rutn this", r_file, tried, args.retry)
@@ -696,7 +698,7 @@ def do_test_list(args, start, tried, output_dir):
 			continue
 
 		logging.debug("****** next test %s *****", testdir) 
-		do_test(args)
+		do_test(args, testexpect = testexpect )
 		os.chdir("../")
 		if os.path.exists(output_dir):
 			try:
@@ -718,6 +720,14 @@ def main():
 
 	date_dir = time.strftime("%Y-%m-%d", time.localtime())
 	output_dir = args.resultsdir + '/' + date_dir 
+	if args.newrun and os.path.exists(output_dir):
+			logging.info("newrun, remove results [%s]", output_dir)
+			if os.path.islink(output_dir):
+				os.unlink(output_dir)
+			elif os.path.isdir(output_dir):
+				shutil.rmtree(output_dir) 
+			else:
+				os.unlink(output_dir)
 
 	if do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):
@@ -725,7 +735,7 @@ def main():
 			logging.info("retry TESTLIST %s/%s ", tried, args.retry)
 			do_test_list(args, start, tried, output_dir)
 	else:
-		do_test(args,start)  # no TESTLIST. Lets try single test
+		do_test(args, start = start)  # no TESTLIST. Lets try single test
 
 if __name__ == "__main__":
 	main()

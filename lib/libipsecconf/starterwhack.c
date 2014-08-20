@@ -879,3 +879,12 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 	msg.name = connection_name(conn);
 	return send_whack_msg(&msg, cfg->ctlbase);
 }
+
+int starter_whack_listen(struct starter_config *cfg)
+{
+	struct whack_message msg;
+
+	init_whack_msg(&msg);
+	msg.whack_listen = TRUE;
+	return send_whack_msg(&msg, cfg->ctlbase);
+}

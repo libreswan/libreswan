@@ -69,7 +69,7 @@
 		send_v2_notification_from_md(md, (t), (d));
 
 #define SEND_NOTIFICATION(t) { \
-		if (st) \
+		if (st != NULL) \
 			send_v2_notification_from_state(st, t, NULL); \
 		else \
 			send_v2_notification_from_md(md, t, NULL); \
@@ -256,8 +256,9 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("ikev2 parent outI1: calculated ke+nonce, sending I1"));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+			ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -347,6 +348,10 @@ static stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
+
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_outI1_tail for #%lu",
+			ke->ke_pcrc.pcrc_serialno));
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
@@ -549,7 +554,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		 * (We can check for minimum 128bit length)
 		 */
 		if (ni.len < BYTES_FOR_BITS(128)) {
-			/* only debug log to prevent DDOS */
+			/*
+			 * If this were a DDOS, we cannot afford to log.
+			 * We do log if we are debugging.
+			 */
 			DBG(DBG_CONTROL, DBG_log("Dropping message with insufficient length Nonce"));
 			return STF_IGNORE;
 		}
@@ -784,10 +792,12 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		set_suspended(st, ke->ke_md);
 
 		if (!st->st_sec_in_use) {
+			/* need to calculate KE and Nonce */
 			pcrc_init(&ke->ke_pcrc, ikev2_parent_inI1outR1_continue);
 			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
 				     pcim_stranger_crypto);
 		} else {
+			/* KE and Nonce already calculated */
 			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			e = ikev2_parent_inI1outR1_tail(
 				(struct pluto_crypto_req_cont *)ke,
@@ -809,8 +819,9 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("ikev2 parent inI1outR1: calculated ke+nonce, sending R1"));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
+			ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -845,6 +856,13 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 	reset_globals();
 }
 
+/*
+ * ikev2_parent_inI1outR1_tail: do what's left after all the crypto
+ *
+ * Called from:
+ *	ikev2parent_inI1outR1: if KE and Nonce were already calculated
+ *	ikev2_parent_inI1outR1_continue: if they needed to be calculated
+ */
 static stf_status ikev2_parent_inI1outR1_tail(
 	struct pluto_crypto_req_cont *pcrc,
 	struct pluto_crypto_req *r)
@@ -1188,8 +1206,9 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("ikev2 parent inR1outI2: calculating g^{xy}, sending I2"));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1817,8 +1836,9 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("ikev2 parent inI2outR2: calculating g^{xy}, sending R2"));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -2616,14 +2636,15 @@ void send_v2_notification(struct state *p1st,
 	 * do we need to support more Protocol ID? more than PROTO_ISAKMP
 	 */
 
-	DBG(DBG_CONTROL, {
+	{
 		ipstr_buf b;
-		DBG_log("sending %s notification %s to %s:%u",
-			encst ? "encrypted " : "",
+
+		libreswan_log("sending %sencrypted notification %s to %s:%u",
+			encst ? "" : "un",
 			enum_name(&ikev2_notify_names, type),
 			ipstr(&p1st->st_remoteaddr, &b),
 			p1st->st_remoteport);
-	});
+	}
 
 	zero(&buffer);
 	init_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");
@@ -3423,7 +3444,7 @@ void ikev2_delete_out(struct state *st)
 		/* child SA */
 		pst = state_with_serialno(st->st_clonedfrom);
 
-		if (!pst) {
+		if (pst == NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("IKE SA does not exist for this child SA"));
 			DBG(DBG_CONTROL,

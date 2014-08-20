@@ -521,8 +521,7 @@ void call_server(void)
 		passert(r == 0);
 	}
 
-	/* do equivalent of ipsec whack --listen */
-	do_whacklisten();
+	/* do_whacklisten() is now done by the addconn fork */
 
 	/*
 	 * fork to issue the command "ipsec addconn --autoall"

@@ -852,7 +852,7 @@ static stf_status informational(struct msg_digest *md)
 				return STF_FATAL;
 			}
 			loglog(RC_LOG_SERIOUS,
-			       "received and ignored informational message for unknown state");
+			       "received and ignored informational message");
 			return STF_IGNORE;
 		}
 	}
@@ -876,7 +876,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
 #define SEND_NOTIFICATION(t) { \
-		if (st) \
+		if (st != NULL) \
 			send_notification_from_state(st, from_state, t); \
 		else \
 			send_notification_from_md(md, t); }
