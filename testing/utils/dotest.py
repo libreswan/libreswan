@@ -713,21 +713,52 @@ def do_test_list(args, start, tried, output_dir):
 	f.close
 	return True
 
+def setup_result_dir(args):
+	date_dir = time.strftime("%Y-%m-%d", time.localtime())
+	node = platform.node()
+	output_dir = args.resultsdir + '/' + node
+
+	if not os.path.isdir(output_dir):
+		try :
+			logging.debug("create directory %s", output_dir)
+			os.mkdir(output_dir, 0o777)
+		except:
+			logging.error("failed to create directory %s", output_dir)
+	else:
+			logging.debug("directory %s exists", output_dir)
+
+	output_dir = output_dir + '/' + date_dir + '-' + node
+
+	ipsecversion = ''
+	try:
+		ipsecversion =  os.environ["IPSECVERSION"]
+		if ipsecversion:
+			output_dir = output_dir + '-' + ipsecversion
+	except:
+		pass
+
+	if args.newrun and os.path.exists(output_dir):
+		logging.info("newrun, remove results [%s]", output_dir)
+		if os.path.islink(output_dir):
+			os.unlink(output_dir)
+		elif os.path.isdir(output_dir):
+			shutil.rmtree(output_dir)
+		else:
+			os.unlink(output_dir)
+	try :
+		os.mkdir(output_dir, 0o777)
+	except:
+		logging.error("failed to create directory %s", output_dir)
+
+
+	logging.info("results will be in %s", output_dir)
+	return output_dir
+
 def main():
 	start = time.time() 
 	args = cmdline() 
 	tried = 0
-
-	date_dir = time.strftime("%Y-%m-%d", time.localtime())
-	output_dir = args.resultsdir + '/' + date_dir 
-	if args.newrun and os.path.exists(output_dir):
-			logging.info("newrun, remove results [%s]", output_dir)
-			if os.path.islink(output_dir):
-				os.unlink(output_dir)
-			elif os.path.isdir(output_dir):
-				shutil.rmtree(output_dir) 
-			else:
-				os.unlink(output_dir)
+	output_dir = setup_result_dir(args)
 
 	if do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):
