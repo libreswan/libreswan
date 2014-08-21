@@ -897,6 +897,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	if (sa->authkeylen) {
 		const char *name;
+		struct xfrm_algo_auth algo;
+		struct xfrm_algo algo_old;
 
 		name = sparse_name(aalg_list, sa->authalg);
 		if (!name) {
@@ -915,9 +917,12 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * this.
 		 */
 
-		if (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 ||
-			sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) {
-			struct xfrm_algo_auth algo;
+		switch (sa->authalg)
+		{
+		case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
+		case AUTH_ALGORITHM_HMAC_SHA2_256:
+		case AUTH_ALGORITHM_HMAC_SHA2_384:
+		case AUTH_ALGORITHM_HMAC_SHA2_512:
 
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			switch(sa->authalg) {
@@ -929,6 +934,14 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 				algo.alg_trunc_len = 96;
 				/* fixup to the real number, not our private number */
 				sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
+				break;
+
+			case AUTH_ALGORITHM_HMAC_SHA2_384:
+				algo.alg_trunc_len = 192;
+				break;
+
+			case AUTH_ALGORITHM_HMAC_SHA2_512:
+				algo.alg_trunc_len = 256;
 				break;
 			}
 
@@ -944,21 +957,22 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
+			break;
 
-		} else {
-			struct xfrm_algo algo;
-			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
+		default:
+			algo_old.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			attr->rta_type = XFRMA_ALG_AUTH;
 			attr->rta_len = RTA_LENGTH(
-				sizeof(algo) + sa->authkeylen);
-			strcpy(algo.alg_name, name);
-			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
+				sizeof(algo_old) + sa->authkeylen);
+			strcpy(algo_old.alg_name, name);
+			memcpy(RTA_DATA(attr), &algo_old, sizeof(algo_old));
 			memcpy((char *)RTA_DATA(
-					attr) + sizeof(algo), sa->authkey,
+					attr) + sizeof(algo_old), sa->authkey,
 				sa->authkeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
+			break;
 		}
 	}
 
