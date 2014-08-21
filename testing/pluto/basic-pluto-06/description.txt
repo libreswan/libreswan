@@ -1,7 +1,8 @@
-as basic-pluto-05 but now we manually start pluto and give it
+basic psk connection but now we manually start pluto and give it
 configuration files in directories not owned by root. 
 
 This tests that we can properly read the configuration files
 before we drop the CAP_DAC_OVERRIDE capability
 
-
+This still uses the regular NSS (although it is not used because the
+test uses PSK)
