@@ -2419,8 +2419,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("bfit_n=ikev2_evaluate_connection_fit found better fit c %s",
 					    c->name));
-				int bfit_p =
-					ikev2_evaluate_connection_port_fit(
+				int bfit_p = ikev2_evaluate_connection_port_fit(
 						c, sra, O_INITIATOR,
 						tsi, tsr,
 						tsi_n, tsr_n,
@@ -2430,11 +2429,9 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_evaluate_connection_port_fit found better fit c %s, tsi[%d],tsr[%d]",
 						    c->name, best_tsi_i, best_tsr_i));
-					int bfit_pr =
-						ikev2_evaluate_connection_protocol_fit(
+					int bfit_pr = ikev2_evaluate_connection_protocol_fit(
 							c, sra, O_INITIATOR, tsi,
-							tsr,
-							tsi_n, tsr_n,
+							tsr, tsi_n, tsr_n,
 							&best_tsi_i,
 							&best_tsr_i);
 					if (bfit_pr > bestfit_pr ) {
@@ -2452,8 +2449,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				}
 			} else {
 				DBG(DBG_CONTROLMORE,
-				    DBG_log("prefix range fit c %s c->name was rejected by port matching",
-					    c->name));
+				    DBG_log("prefix range fitness c %s is not a match",
+					   c->name));
 			}
 		}
 
