@@ -502,7 +502,8 @@ kvmplutotest	ah-pluto-06		wip
 kvmplutotest	ah-pluto-07		wip
 kvmplutotest	ah-pluto-08		wip
 kvmplutotest	ah-pluto-09		wip
-kvmplutotest	interop-ikev1-strongswan-10-ah-initiator	wip
+kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	wip
+kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	wip
 
 umlplutotest	protoport-01		good
 umlplutotest	protoport-02		good
