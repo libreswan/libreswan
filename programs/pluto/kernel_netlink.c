@@ -146,6 +146,14 @@ static sparse_names aalg_list = {
 	{ SADB_X_AALG_SHA2_512HMAC, "hmac(sha512)" },
 	{ SADB_X_AALG_RIPEMD160HMAC, "hmac(rmd160)" },
 	{ SADB_X_AALG_AES_XCBC_MAC, "xcbc(aes)" },
+	/* { SADB_X_AALG_RSA - not supported by us */
+	/*
+	 * GMAC's not supported by Linux kernel yet
+	 *
+	{ SADB_X_AALG_AH_AES_128_GMAC, "" },
+	{ SADB_X_AALG_AH_AES_192_GMAC, "" },
+	{ SADB_X_AALG_AH_AES_256_GMAC, "" },
+	 */
 	{ 0, sparse_end }
 };
 
