@@ -2384,9 +2384,11 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		ip_subnet tsi_subnet, tsr_subnet;
 		const char *oops;
 #endif
-		unsigned int tsi_n, tsr_n;
+		int tsi_n, tsr_n;
 		tsi_n = ikev2_parse_ts(tsi_pd, tsi, 16);
 		tsr_n = ikev2_parse_ts(tsr_pd, tsr, 16);
+		if (tsi_n < 0 || tsr_n < 0)
+			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 
 		DBG(DBG_CONTROLMORE, DBG_log("Checking TSi(%d)/TSr(%d) selectors, looking for exact match",
 			tsi_n, tsr_n));
