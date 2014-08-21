@@ -595,8 +595,8 @@ static void scrap_crypto_cont(/*TAILQ_HEAD*/ struct req_queue *qh,
 			      const char *what)
 {
 	DBG(DBG_CONTROL,
-	    DBG_log("scrapping crypto request ID%u for #%lu from %s",
-		    cn->pcrc_id, cn->pcrc_serialno, what));
+		DBG_log("scrapping crypto request ID%u for #%lu from %s",
+			cn->pcrc_id, cn->pcrc_serialno, what));
 	TAILQ_REMOVE(qh, cn, pcrc_list);
 	if (pbs_offset(&cn->pcrc_reply_stream) != 0) {
 		pfree(cn->pcrc_reply_buffer);
@@ -694,7 +694,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	ssize_t actlen;
 	struct pluto_crypto_req_cont *cn;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
+	DBG(DBG_CONTROL,
 	    DBG_log("crypto helper %d has finished work (pcw_work now %d)",
 		    w->pcw_helpernum,
 		    w->pcw_work));
@@ -738,9 +738,9 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 		return;
 	}
 
-	DBG(DBG_CRYPT | DBG_CONTROL, DBG_log("crypto helper %d replies to request ID %u",
-					     w->pcw_helpernum,
-					     rr.pcr_id));
+	DBG(DBG_CONTROL,
+		DBG_log("crypto helper %d replies to request ID %u",
+			w->pcw_helpernum, rr.pcr_id));
 
 	/* worker w can accept more work now that we have read from its socketpair */
 	w->pcw_work--;
@@ -770,8 +770,9 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 
 	passert(cn->pcrc_func != NULL);
 
-	DBG(DBG_CRYPT | DBG_CONTROL, DBG_log("calling continuation function %p",
-			       cn->pcrc_func));
+	DBG(DBG_CONTROL,
+		DBG_log("calling continuation function %p",
+			cn->pcrc_func));
 
 	reply_stream = cn->pcrc_reply_stream;
 	if (pbs_offset(&reply_stream) != 0) {

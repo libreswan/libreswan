@@ -920,7 +920,7 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
+	DBG(DBG_CONTROL,
 		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
 			ke->ke_pcrc.pcrc_serialno));
 
@@ -1114,7 +1114,7 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
+	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
 			ke->ke_pcrc.pcrc_serialno));
 
@@ -1191,8 +1191,8 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct state *st;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-		DBG_log("main_inI2_outR2_calcdone: calculate DH finished for #%lu",
+	DBG(DBG_CONTROL,
+		DBG_log("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
 			dh->dh_pcrc.pcrc_serialno));
 
 	st = state_with_serialno(dh->dh_pcrc.pcrc_serialno);
@@ -1671,7 +1671,7 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
+	DBG(DBG_CONTROL,
 		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
 			dh->dh_pcrc.pcrc_serialno));
 

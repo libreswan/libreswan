@@ -49,7 +49,6 @@ kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey				good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
-kvmplutotest	ikev2-16-rekey-child			good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev1-cryptoload-01			wip

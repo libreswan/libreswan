@@ -466,7 +466,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			sr->this.port,
 			sr->this.protocol,
 			sr->reqid,
-			!st ? "none" : st->st_esp.present ? "ESP" :
+			st == NULL ? "none" : st->st_esp.present ? "ESP" :
 				st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "unknown?",
 			ipstr(&sr->that.host_addr, &bpeer),
 			secure_peerid_str,
@@ -1888,10 +1888,44 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			key_len = HMAC_SHA1_KEY_LEN;
 			break;
 
+		case AUTH_ALGORITHM_HMAC_SHA2_256:
+			authalg = SADB_X_AALG_SHA2_256HMAC;
+			break;
+
+		case AUTH_ALGORITHM_HMAC_SHA2_384:
+			authalg = SADB_X_AALG_SHA2_384HMAC;
+			break;
+
+		case AUTH_ALGORITHM_HMAC_SHA2_512:
+			authalg = SADB_X_AALG_SHA2_512HMAC;
+			break;
+
+		case AUTH_ALGORITHM_HMAC_RIPEMD:
+			authalg = SADB_X_AALG_RIPEMD160HMAC;
+			break;
+
+		case AUTH_ALGORITHM_AES_CBC:
+			authalg = SADB_X_AALG_AES_XCBC_MAC;
+			break;
+
+		case AUTH_ALGORITHM_AES_128_GMAC:
+			authalg = SADB_X_AALG_AH_AES_128_GMAC;
+			break;
+
+		case AUTH_ALGORITHM_AES_192_GMAC:
+			authalg = SADB_X_AALG_AH_AES_192_GMAC;
+			break;
+
+		case AUTH_ALGORITHM_AES_256_GMAC:
+			authalg = SADB_X_AALG_AH_AES_256_GMAC;
+			break;
+
+		case AUTH_ALGORITHM_NULL_KAME:
+		case AUTH_ALGORITHM_SIG_RSA:
 		case AUTH_ALGORITHM_KPDK:
 		case AUTH_ALGORITHM_DES_MAC:
 		default:
-			loglog(RC_LOG_SERIOUS, "%s not implemented yet",
+			loglog(RC_LOG_SERIOUS, "%s not implemented",
 			       enum_show(&auth_alg_names,
 					 st->st_ah.attrs.transattrs.integ_hash));
 			goto fail;
@@ -3025,7 +3059,6 @@ static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
 #endif
 
 	return kernel_ops->add_sa(&sa, TRUE);
-
 }
 
 bool update_ipsec_sa(struct state *st USED_BY_KLIPS)

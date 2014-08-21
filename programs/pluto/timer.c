@@ -852,16 +852,15 @@ void delete_liveness_event(struct state *st)
 /*
  * Delete a DPD event.
  */
-void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
+void delete_dpd_event(struct state *st)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
-		DBG_log("state: %ld requesting DPD event %s to be deleted by %s:%d",
+		DBG_log("state: %ld requesting DPD event %s to be deleted",
 			st->st_serialno,
 			(st->st_dpd_event != NULL ?
 				enum_show(&timer_event_names,
 					st->st_dpd_event->ev_type) :
-				"none"),
-			file, lineno));
+				"none")));
 
 	if (st->st_dpd_event != (struct event *) NULL) {
 		struct event **ev;

@@ -69,7 +69,7 @@
 		send_v2_notification_from_md(md, (t), (d));
 
 #define SEND_NOTIFICATION(t) { \
-		if (st) \
+		if (st != NULL) \
 			send_v2_notification_from_state(st, t, NULL); \
 		else \
 			send_v2_notification_from_md(md, t, NULL); \
@@ -256,9 +256,9 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-		ke->ke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+			ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -349,9 +349,9 @@ static stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_outI1_tail for #%lu",
-		ke->ke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_outI1_tail for #%lu",
+			ke->ke_pcrc.pcrc_serialno));
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
@@ -819,9 +819,9 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
-		ke->ke_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
+			ke->ke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1206,9 +1206,9 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
-		dh->dh_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -1836,9 +1836,9 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
-	    DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
-		dh->dh_pcrc.pcrc_serialno));
+	DBG(DBG_CONTROL,
+		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -2384,9 +2384,11 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		ip_subnet tsi_subnet, tsr_subnet;
 		const char *oops;
 #endif
-		unsigned int tsi_n, tsr_n;
+		int tsi_n, tsr_n;
 		tsi_n = ikev2_parse_ts(tsi_pd, tsi, 16);
 		tsr_n = ikev2_parse_ts(tsr_pd, tsr, 16);
+		if (tsi_n < 0 || tsr_n < 0)
+			return STF_FAIL + v2N_TS_UNACCEPTABLE;
 
 		DBG(DBG_CONTROLMORE, DBG_log("Checking TSi(%d)/TSr(%d) selectors, looking for exact match",
 			tsi_n, tsr_n));
@@ -2636,14 +2638,15 @@ void send_v2_notification(struct state *p1st,
 	 * do we need to support more Protocol ID? more than PROTO_ISAKMP
 	 */
 
-	DBG(DBG_CONTROL, {
+	{
 		ipstr_buf b;
-		DBG_log("sending %s notification %s to %s:%u",
-			encst ? "encrypted " : "",
+
+		libreswan_log("sending %sencrypted notification %s to %s:%u",
+			encst ? "" : "un",
 			enum_name(&ikev2_notify_names, type),
 			ipstr(&p1st->st_remoteaddr, &b),
 			p1st->st_remoteport);
-	});
+	}
 
 	zero(&buffer);
 	init_pbs(&reply_stream, buffer, sizeof(buffer), "notification msg");
@@ -3443,7 +3446,7 @@ void ikev2_delete_out(struct state *st)
 		/* child SA */
 		pst = state_with_serialno(st->st_clonedfrom);
 
-		if (!pst) {
+		if (pst == NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("IKE SA does not exist for this child SA"));
 			DBG(DBG_CONTROL,
