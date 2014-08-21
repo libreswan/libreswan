@@ -135,6 +135,16 @@ export LC_ALL
 #
 #       PLUTO_SA_REQID
 #               When using KAME or XFRM/NETKEY, the IPsec SA reqid value
+#
+#	PLUTO_SA_TYPE
+#		The type of IPsec SA (ESP or AH)
+#
+#	PLUTO_XAUTH_USERNAME
+#		The XAUTH username that was authenticated (if any) for this SA
+#
+#	XAUTH_FAILED
+#		If xauthfail=soft this will be set to 1 if XAUTH authentication
+#		failed. If xauthfail=hard, the updown scripts never run.
 
 # rpm based systems
 if [ -f @FINALSYSCONFDIR@/sysconfig/pluto_updown ]; then
