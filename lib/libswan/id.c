@@ -455,7 +455,6 @@ bool same_id(const struct id *a, const struct id *b)
 /* compare two struct id values, DNs can contain wildcards */
 bool match_id(const struct id *a, const struct id *b, int *wildcards)
 {
-
 	bool match;
 
 	if (b->kind == ID_NONE) {

@@ -957,7 +957,7 @@ bool same_dn(chunk_t a, chunk_t b)
 
 /*
  * compare two distinguished names by comparing the individual RDNs.
- * A single'*' character designates a wildcard RDN in DN b.
+ * A single '*' character designates a wildcard RDN in DN b.
  * If wildcards is NULL, exact match is required.
  */
 bool match_dn(chunk_t a, chunk_t b, int *wildcards)

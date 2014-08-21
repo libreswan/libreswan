@@ -44,13 +44,12 @@
  * cryptographic helper operations.
  */
 enum pluto_crypto_requests {
-	pcr_build_kenonce,	/* calculate g^i and nonce */
-	pcr_build_nonce,	/* just fetch a new nonce */
-	pcr_compute_dh_iv,	/* (g^x)(g^y) and skeyids for Phase 1 DH + prf */
-	pcr_compute_dh,	/* perform (g^x)(g^y) for Phase 2 PFS */
+	pcr_build_ke_and_nonce,	/* calculate g^i and generate a nonce */
+	pcr_build_nonce,	/* generate a nonce */
+	pcr_compute_dh_iv,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
+	pcr_compute_dh,		/* calculate (g^x)(g^y) for Phase 2 PFS */
 	pcr_compute_dh_v2,	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
 };
-
 
 typedef unsigned int pcr_req_id;
 
@@ -320,7 +319,7 @@ extern int pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 extern void log_crypto_workers(void);
 
 /* actual helper functions */
-extern stf_status build_ke(struct pluto_crypto_req_cont *cn,
+extern stf_status build_ke_and_nonce(struct pluto_crypto_req_cont *cn,
 			   struct state *st,
 			   const struct oakley_group_desc *group,
 			   enum crypto_importance importance);
@@ -364,9 +363,10 @@ extern void calc_dh_iv(struct pluto_crypto_req *r);
 extern void calc_dh(struct pluto_crypto_req *r);
 extern void calc_dh_v2(struct pluto_crypto_req *r);
 
-extern void unpack_KE(struct state *st,
-		      const struct pluto_crypto_req *r,
-		      chunk_t *g);
+extern void unpack_KE_from_helper(
+	struct state *st,
+	const struct pluto_crypto_req *r,
+	chunk_t *g);
 
 extern void pcr_nonce_init(struct pluto_crypto_req *r,
 			    enum pluto_crypto_requests pcr_type,

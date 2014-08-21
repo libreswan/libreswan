@@ -922,25 +922,19 @@ void send_v2_notification_from_md(struct msg_digest *md,
 
 void ikev2_update_counters(struct msg_digest *md)
 {
-	struct state *pst = md->pst;
 	struct state *st = md->st;
-
-	if (pst == NULL) {
-		if (IS_CHILD_SA(st))
-			pst = state_with_serialno(st->st_clonedfrom);
-		if (pst == NULL)
-			pst = st;
-	}
+	struct state *ikesa = IS_CHILD_SA(st) ?
+		state_with_serialno(st->st_clonedfrom) : st;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) {
 		/* we were initiator for this message exchange */
-		pst->st_msgid_lastack = md->msgid_received;
-		if(pst->st_msgid_lastack <= pst->st_msgid_nextuse)
-			pst->st_msgid_nextuse = pst->st_msgid_lastack + 1;
+		ikesa->st_msgid_lastack = md->msgid_received;
+		if (ikesa->st_msgid_lastack <= ikesa->st_msgid_nextuse)
+			ikesa->st_msgid_nextuse = ikesa->st_msgid_lastack + 1;
 	} else {
 		/* we were responder for this message exchange */
-		if (md->msgid_received > pst->st_msgid_lastrecv)
-			pst->st_msgid_lastrecv = md->msgid_received;
+		if (md->msgid_received > ikesa->st_msgid_lastrecv)
+			ikesa->st_msgid_lastrecv = md->msgid_received;
 	}
 }
 
@@ -1293,6 +1287,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			 * only send a notify is this packet was a request,
 			 * not if it was a reply
 			 */
+			/* ??? is this a reasonable choice? */
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R))
 				SEND_NOTIFICATION(md->note);
 		}

@@ -317,7 +317,7 @@ struct state {
 
 	/* his stuff */
 
-	chunk_t st_rpacket;                    /* Received packet */
+	chunk_t st_rpacket;			/* Received packet - v1 only */
 
 	/* Phase 2 ID payload info about peer's user */
 	u_int8_t st_peeruserprotoid;           /* IDcx.protoid */

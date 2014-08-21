@@ -2126,13 +2126,15 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	cur_state = st = md->st; /* might have changed */
 
+	pexpect(st != NULL);	/* ??? when does this fail? */
+
 	/* If state has FRAGMENTATION support, import it */
-	if ( st && md->fragvid) {
+	if (st != NULL && md->fragvid) {
 		DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
 		st->st_seen_fragvid = TRUE;
 	}
 	/* If state has DPD support, import it */
-	if ( st && md->dpd &&
+	if (st != NULL && md->dpd &&
 		   st->hidden_variables.st_peer_supports_dpd != md->dpd) {
 		DBG(DBG_DPD, DBG_log("peer supports dpd"));
 		st->hidden_variables.st_peer_supports_dpd = md->dpd;
@@ -2142,7 +2144,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		}
 	}
 	/* If state has VID_NORTEL, import it to activate workaround */
-	if (st && md->nortel) {
+	if (st != NULL && md->nortel) {
 		DBG(DBG_CONTROLMORE, DBG_log("peer requires nortel contivity workaround"));
 		st->st_seen_nortel_vid = TRUE;
 	}
@@ -2204,7 +2206,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			struct state *p1st = state_with_serialno(
 				st->st_clonedfrom);
 
-			if (p1st) {
+			if (p1st != NULL) {
 				/* do message ID reservation */
 				reserve_msgid(p1st, st->st_msgid);
 			}

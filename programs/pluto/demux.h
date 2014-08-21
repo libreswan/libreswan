@@ -70,7 +70,6 @@ struct msg_digest {
 	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */
-	struct state *pst;			/* (v2) parent state object (if any) */
 
 	enum phase1_role role;			/* (v2) */
 	msgid_t msgid_received;			/* (v2) - Host order! */

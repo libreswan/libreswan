@@ -921,7 +921,7 @@ stf_status quick_outI1(int whack_sock,
 		pcrc_init(&qke->qke_pcrc, quick_outI1_continue);
 
 		if (policy & POLICY_PFS)
-			e = build_ke(&qke->qke_pcrc, st, st->st_pfs_group,
+			e = build_ke_and_nonce(&qke->qke_pcrc, st, st->st_pfs_group,
 				     st->st_import);
 		else
 			e = build_nonce(&qke->qke_pcrc, st, st->st_import);
@@ -2082,8 +2082,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 
 			if (st->st_pfs_group != NULL) {
 				/* need to calculate KE and Nonce */
-				e = build_ke(&qke->qke_pcrc, st,
-					     st->st_pfs_group, ci);
+				e = build_ke_and_nonce(&qke->qke_pcrc, st,
+					st->st_pfs_group, ci);
 			} else {
 				/* KE and Nonce calculated */
 				e = build_nonce(&qke->qke_pcrc, st, ci);
@@ -2120,6 +2120,8 @@ static void quick_inI1_outR1_cryptocontinue1(
 		return;
 	}
 
+	pexpect(st == md->st);	/* ??? why not? */
+
 	passert(qke->qke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
@@ -2143,7 +2145,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 			struct dh_continuation,
 			"quick outR1 DH");
 
-		unpack_KE(st, r, &st->st_gr);
+		unpack_KE_from_helper(st, r, &st->st_gr);
 
 		/* set up second calculation */
 		dh->dh_md = md;
@@ -2155,12 +2157,13 @@ static void quick_inI1_outR1_cryptocontinue1(
 				    O_RESPONDER,
 				    st->st_pfs_group->group);
 
-		/* In the STF_INLINE, quick_inI1_outR1_cryptocontinue1 has already
-		 * called complete_v1_state_transition and it has freed *dh. It
-		 * called quick_inI1_outR1_cryptocontinue2 which did the release_md too.
+		/* In the STF_INLINE case, quick_inI1_outR1_cryptocontinue1 has already
+		 * called complete_v1_state_transition and it has freed *dh.
+		 * It called quick_inI1_outR1_cryptocontinue2 which did the release_md too.
 		 */
 		/* ??? it seems wrong that these lines bop between dh->dh_md and qke->qke_md */
 		if (e != STF_SUSPEND && e != STF_INLINE) {
+			pexpect(md != NULL);	/* ??? when would this fail? */
 			if (dh->dh_md != NULL) {
 				complete_v1_state_transition(&qke->qke_md, e);
 				release_any_md(&qke->qke_md);
@@ -2173,6 +2176,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 		 */
 		e = quick_inI1_outR1_cryptotail(md, NULL);
 		if (e == STF_OK) {
+			pexpect(md != NULL);	/* ??? when would this fail? */
 			if (md != NULL) {
 				/* note: use qke-> pointer */
 				complete_v1_state_transition(&qke->qke_md, e);

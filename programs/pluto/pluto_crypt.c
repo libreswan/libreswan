@@ -128,15 +128,15 @@ static pcr_req_id pcw_id;	/* counter for generating unique request IDs */
 
 /* pluto crypto operations */
 static const char *const pluto_cryptoop_strings[] = {
-	"build_kenonce",	/* calculate g^i and nonce */
-	"build_nonce",	/* just fetch a new nonce */
-	"compute dh+iv (V1 Phase 1)",	/* (g^x)(g^y) and skeyids for Phase 1 DH + prf */
-	"compute dh (V1 Phase 2 PFS)",	/* perform (g^x)(g^y) for Phase 2 PFS */
+	"build KE and nonce",	/* calculate g^i and generate a nonce */
+	"build nonce",	/* generate a nonce */
+	"compute dh+iv (V1 Phase 1)",	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
+	"compute dh (V1 Phase 2 PFS)",	/* calculate (g^x)(g^y) for Phase 2 PFS */
 	"compute dh (V2)",	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
 };
 
 static enum_names pluto_cryptoop_names =
-	{ pcr_build_kenonce, pcr_compute_dh_v2, pluto_cryptoop_strings, NULL };
+	{ pcr_build_ke_and_nonce, pcr_compute_dh_v2, pluto_cryptoop_strings, NULL };
 
 /* initializers for pluto_crypto_request continuations */
 
@@ -191,11 +191,9 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 
 	/* now we have the entire request in the buffer, process it */
 	switch (r->pcr_type) {
-	case pcr_build_kenonce:
+	case pcr_build_ke_and_nonce:
 		calc_ke(r);
-		calc_nonce(r);
-		break;
-
+		/* FALL THROUGH */
 	case pcr_build_nonce:
 		calc_nonce(r);
 		break;
@@ -670,7 +668,7 @@ void log_crypto_workers(void) {
 		struct pluto_crypto_req_cont *cn;
 
 		for (cn = w->pcw_active.tqh_first; cn != NULL; cn = cn->pcrc_list.tqe_next) {
-			libreswan_log("crypto queue: request ID%u for #%lu assigned to %scrypto helper %d",
+			libreswan_log("crypto queue: request ID %u for #%lu assigned to %scrypto helper %d",
 					cn->pcrc_id, cn->pcrc_serialno,
 					w->pcw_dead ? "dead " : "", i);
 		}

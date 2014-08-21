@@ -117,14 +117,17 @@ void echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
 }
 
 /*
- * Processing FOR KE values.
+ * Process KE values.
  */
-void unpack_KE(struct state *st,
-	       const struct pluto_crypto_req *r,
-	       chunk_t *g)
+void unpack_KE_from_helper(
+	struct state *st,
+	const struct pluto_crypto_req *r,
+	chunk_t *g)
 {
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
+	/* ??? if st->st_sec_in_use how could we do our job? */
+	pexpect(!st->st_sec_in_use);
 	if (!st->st_sec_in_use) {
 		st->st_sec_in_use = TRUE;
 		freeanychunk(*g); /* happens in odd error cases */
@@ -138,7 +141,7 @@ void unpack_KE(struct state *st,
 	}
 }
 
-/* accept_ke
+/* accept_KE
  *
  * Check and accept DH public value (Gi or Gr) from peer's message.
  * According to RFC2409 "The Internet key exchange (IKE)" 5:
@@ -151,9 +154,6 @@ notification_t accept_KE(chunk_t *dest, const char *val_name,
 			 const struct oakley_group_desc *gr,
 			 pb_stream *pbs)
 {
-	/* To figure out which function calls us without a pbs */
-	passert(pbs != NULL);
-
 	if (pbs_left(pbs) != gr->bytes) {
 		loglog(RC_LOG_SERIOUS,
 		       "KE has %u byte DH public value; %u required",

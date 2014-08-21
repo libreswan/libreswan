@@ -82,6 +82,19 @@
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
  */
+
+/*
+ * Control flow is very confusing.
+ *
+ * Called by:
+ *	aggr_inI1_outR1_common: aggr_inI1_outR1_psk aggr_inI1_outR1_rsasig
+ *		auth method is a param
+ *	aggr_inI1_outR1_continue1: ke(aggr_inI1_outR1_common)
+ *	aggr_inI1_outR1_continue2: dh(aggr_inI1_outR1_continue1)
+ *	aggr_inI1_outR1_tail: aggr_inI1_outR1_continue2 aggr_inI1_outR1_common
+ *		??? the call from aggr_inI1_outR1_common might never happen
+ */
+
 static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 				       struct pluto_crypto_req *r);
 
@@ -177,7 +190,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 	st->st_calculating = FALSE;
 
 	/* unpack first calculation */
-	unpack_KE(st, r, &st->st_gr);
+	unpack_KE_from_helper(st, r, &st->st_gr);
 
 	/* unpack nonce too */
 	unpack_nonce(&st->st_nr, r);
@@ -293,6 +306,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
+	pexpect(c == st->st_connection);	/* ??? how would this have changed? */
 	c = st->st_connection;
 
 	extra_debugging(c);
@@ -320,6 +334,14 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 	set_nat_traversal(st, md);
 
 	/* save initiator SA for HASH */
+
+	/*
+	 * ??? how would st->st_p1isa.ptr != NULL?
+	 * This routine creates *st itself so how would this field
+	 * be already filled-in.
+	 */
+	pexpect(st->st_p1isa.ptr == NULL);
+
 	clonereplacechunk(st->st_p1isa, sa_pd->pbs.start,
 		pbs_room(&sa_pd->pbs), "sa in aggr_inI1_outR1()");
 
@@ -352,10 +374,16 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		ke->ke_md = md;
 		set_suspended(st, md);
 
+		/*
+		 * ??? how would st->st_sec_in_use?
+		 * This routine creates *st itself so how would this field
+		 * be already filled-in.
+		 */
+		pexpect(!st->st_sec_in_use);
 		if (!st->st_sec_in_use) {
 			/* need to calculate KE and Nonce */
 			pcrc_init(&ke->ke_pcrc, aggr_inI1_outR1_continue1);
-			return build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
+			return build_ke_and_nonce(&ke->ke_pcrc, st, st->st_oakley.group,
 					st->st_import);
 		} else {
 			/* KE and Nonce calculated */
@@ -1167,10 +1195,16 @@ stf_status aggr_outI1(int whack_sock,
 		ke->ke_md->st = st;
 		set_suspended(st, ke->ke_md);
 
+		/*
+		 * ??? how would st->st_sec_in_use?
+		 * This routine creates *st itself so how would this field
+		 * be already filled-in.
+		 */
+		pexpect(!st->st_sec_in_use);
 		if (!st->st_sec_in_use) {
 			/* need to calculate KE and Nonce */
 			pcrc_init(&ke->ke_pcrc, aggr_outI1_continue);
-			e = build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
+			e = build_ke_and_nonce(&ke->ke_pcrc, st, st->st_oakley.group,
 				     importance);
 		} else {
 			/* KE and Nonce already calculated */

@@ -984,7 +984,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 		passert(!st->st_sec_in_use);
 		pcrc_init(&ke->ke_pcrc, main_inR1_outI2_continue);
 		set_suspended(st, md);
-		return build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
+		return build_ke_and_nonce(&ke->ke_pcrc, st, st->st_oakley.group,
 				st->st_import);
 	}
 }
@@ -1005,7 +1005,7 @@ bool ship_KE(struct state *st,
 	chunk_t *g,
 	pb_stream *outs, u_int8_t np)
 {
-	unpack_KE(st, r, g);
+	unpack_KE_from_helper(st, r, g);
 	return justship_KE(g, outs, np);
 }
 
@@ -1179,7 +1179,7 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 
 		passert(!st->st_sec_in_use);
 		pcrc_init(&ke->ke_pcrc, main_inI2_outR2_continue);
-		return build_ke(&ke->ke_pcrc, st,
+		return build_ke_and_nonce(&ke->ke_pcrc, st,
 				st->st_oakley.group, st->st_import);
 	}
 }
