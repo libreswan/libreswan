@@ -170,7 +170,8 @@ extern int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 
 extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					 enum phase1_role role,
-					 pb_stream *outpbs);
+					 pb_stream *outpbs,
+					 enum isakmp_xchg_types isa_xchg);
 
 extern void ikev2_update_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);
