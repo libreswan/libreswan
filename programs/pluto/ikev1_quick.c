@@ -343,7 +343,7 @@ static void compute_proto_keymat(struct state *st,
 			break;
 		default:
 			if (kernel_alg_ah_auth_ok(pi->attrs.transattrs.
-						  integ_hash, NULL)) {
+						  integ_hash, NULL) == NULL) {
 				needed_len += kernel_alg_ah_auth_keylen(
 					pi->attrs.transattrs.integ_hash);
 				break;

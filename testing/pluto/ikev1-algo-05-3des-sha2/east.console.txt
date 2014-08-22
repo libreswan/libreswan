@@ -12,7 +12,6 @@ east #
 initdone
 east #
  ipsec look
-[ 00.00] alg: No test for authenc(hmac(sha256),cbc(des3_ede)) (authenc(hmac(sha256-generic),cbc(des3_ede-generic)))
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23

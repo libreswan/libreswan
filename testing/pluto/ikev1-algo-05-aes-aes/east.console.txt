@@ -12,7 +12,6 @@ east #
 initdone
 east #
  ipsec look
-[ 00.00] alg: No test for authenc(xcbc(aes),cbc(aes)) (authenc(xcbc(aes-asm),cbc(aes-asm)))
 east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
