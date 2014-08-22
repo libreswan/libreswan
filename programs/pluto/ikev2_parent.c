@@ -1093,7 +1093,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 
 			change_state(st, STATE_PARENT_I1);
 			st->st_msgid_lastack = v2_INVALID_MSGID;
-			md->msgid_received = v2_INVALID_MSGID; /* AAA hack  */
+			md->msgid_received = v2_INVALID_MSGID;
 			st->st_msgid_nextuse = 0;
 
 			return ikev2_parent_outI1_common(md, st);
@@ -2676,7 +2676,7 @@ void send_v2_notification(struct state *p1st,
 	{
 		struct isakmp_hdr n_hdr;
 
-		zero(&n_hdr);                           /* default to 0 */  /* AAA should we copy from MD? */
+		zero(&n_hdr);                           /* default to 0 */
 		/* Impair function will raise major/minor by 1 for testing */
 		n_hdr.isa_version = build_ike_version();
 		memcpy(n_hdr.isa_rcookie, rcookie, COOKIE_SIZE);
@@ -3209,7 +3209,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			/* HDR out */
 			{
 				struct isakmp_hdr r_hdr;
-				zero(&r_hdr); /* default to 0 */  /* AAA should we copy from MD? */
+				zero(&r_hdr); /* default to 0 */
 				r_hdr.isa_version = build_ike_version();
 				memcpy(r_hdr.isa_rcookie, st->st_rcookie,
 				       COOKIE_SIZE);
@@ -3738,7 +3738,7 @@ void ikev2_delete_out(struct state *st)
 		/* HDR out */
 		{
 			struct isakmp_hdr r_hdr;
-			zero(&r_hdr); /* default to 0 */  /* AAA should we copy from MD? */
+			zero(&r_hdr); /* default to 0 */
 			r_hdr.isa_version = build_ike_version();
 			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
 			       COOKIE_SIZE);
