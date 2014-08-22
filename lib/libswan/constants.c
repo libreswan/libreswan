@@ -1085,7 +1085,7 @@ enum_names modecfg_attr_names = {
 	INTERNAL_IP4_ADDRESS,
 	HOME_AGENT_ADDRESS,
 	modecfg_attr_name_draft,
-	&modecfg_microsoft_attr_names
+	&xauth_attr_names
 };
 
 static const char *const xauth_attr_name[] = {
@@ -1109,7 +1109,7 @@ enum_names xauth_attr_names = {
 	XAUTH_TYPE,
 	XAUTH_ANSWER,
 	xauth_attr_name,
-	NULL
+	&modecfg_microsoft_attr_names
 };
 
 /* Oakley Lifetime Type attribute */
