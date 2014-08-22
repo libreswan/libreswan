@@ -134,23 +134,24 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 	 */
 	bool ealg_insecure = (key_len < 128);
 
-	if (ealg_insecure || alg_info_ike) {
-		int i;
-		struct ike_info *ike_info;
-		if (alg_info_ike) {
+	if (ealg_insecure || alg_info_ike != NULL) {
+		if (alg_info_ike != NULL) {
+			struct ike_info *ike_info;
+			int i;
+
 			ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, i) {
-				if ((ike_info->ike_ealg == ealg) &&
-				    ((ike_info->ike_eklen == 0) ||
-				     (key_len == 0) ||
-				     (ike_info->ike_eklen == key_len)) &&
-				    (ike_info->ike_halg == aalg) &&
-				    (ike_info->ike_modp == group)) {
+				if (ike_info->ike_ealg == ealg &&
+				    (ike_info->ike_eklen == 0 ||
+				     key_len == 0 ||
+				     ike_info->ike_eklen == key_len) &&
+				    ike_info->ike_halg == aalg &&
+				    ike_info->ike_modp == group) {
 					if (ealg_insecure) {
 						loglog(RC_LOG_SERIOUS,
 						       "You should NOT use insecure/broken IKE algorithms (%s)!",
-						       enum_name(&
-								 oakley_enc_names,
-								 ealg));
+						       enum_name(
+								&oakley_enc_names,
+								ealg));
 					}
 					return TRUE;
 				}

@@ -31,25 +31,30 @@ struct alg_info_esp;
 /* ESP interface */
 extern struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id);
 extern int kernel_alg_esp_ivlen(int alg_id);
-/* returns bool success if esp encrypt alg is present  */
+
+/* returns success (NULL) if esp encrypt alg is present  */
 extern err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len);
+
 extern bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 				    struct alg_info_esp *alg_info);
 /* returns encrypt keylen in BYTES for esp enc alg passed */
 extern int kernel_alg_esp_enc_max_keylen(int alg_id);
+
 /* returns bool success if esp auth alg is present  */
-extern err_t kernel_alg_esp_auth_ok(int auth, struct alg_info_esp *nfo);
+extern bool kernel_alg_esp_auth_ok(int auth, struct alg_info_esp *nfo);
 
 extern int kernel_alg_ah_auth_keylen(int auth);
-extern err_t kernel_alg_ah_auth_ok(int auth, struct alg_info_esp *alg_info);
+
+extern bool kernel_alg_ah_auth_ok(int auth, struct alg_info_esp *alg_info);
 
 /* returns auth keylen in BYTES for esp auth alg passed */
 extern int kernel_alg_esp_auth_keylen(int auth);
-/* returns 0 if read ok from /proc/net/pf_key_supported */
-extern int kernel_alg_proc_read(void);
+
+/* returns TRUE if read ok from /proc/net/pf_key_supported */
+extern bool kernel_alg_proc_read(void);
 
 /* get sadb_alg for passed args */
-extern const struct sadb_alg * kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
+extern const struct sadb_alg *kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
 						       unsigned alg_id);
 
 /* returns pointer to static buffer -- NOT RE-ENTRANT */
@@ -62,22 +67,22 @@ extern struct sadb_alg esp_ealg[];
 extern int esp_ealg_num;
 extern int esp_aalg_num;
 
-#define ESP_EALG_PRESENT(algo) (((algo) <= K_SADB_EALG_MAX) && \
-				(esp_ealg[(algo)].sadb_alg_id == (algo)))
+#define ESP_EALG_PRESENT(algo) ((algo) <= K_SADB_EALG_MAX && \
+				esp_ealg[algo].sadb_alg_id == (algo))
+
 #define ESP_EALG_FOR_EACH(algo) \
-	for (algo = 1; algo <= K_SADB_EALG_MAX; algo++) \
-		if (ESP_EALG_PRESENT(algo))
-#define ESP_EALG_FOR_EACH_UPDOWN(algo) \
-	for (algo = K_SADB_EALG_MAX; algo > 0; algo--) \
+	for ((algo) = 1; (algo) <= K_SADB_EALG_MAX; (algo)++) \
 		if (ESP_EALG_PRESENT(algo))
 
-#define ESP_AALG_PRESENT(algo) ((algo <= SADB_AALG_MAX) && \
-				(esp_aalg[(algo)].sadb_alg_id == (algo)))
+#define ESP_EALG_FOR_EACH_DOWN(algo) \
+	for ((algo) = K_SADB_EALG_MAX; (algo) > 0; (algo)--) \
+		if (ESP_EALG_PRESENT(algo))
+
+#define ESP_AALG_PRESENT(algo) ((algo) <= SADB_AALG_MAX && \
+				esp_aalg[algo].sadb_alg_id == (algo))
+
 #define ESP_AALG_FOR_EACH(algo) \
-	for (algo = 1; algo <= SADB_AALG_MAX; algo++) \
-		if (ESP_AALG_PRESENT(algo))
-#define ESP_AALG_FOR_EACH_UPDOWN(algo) \
-	for (algo = SADB_AALG_MAX; algo > 0; algo--) \
+	for ((algo) = 1; (algo) <= SADB_AALG_MAX; (algo)++) \
 		if (ESP_AALG_PRESENT(algo))
 
 /* used by test skaffold */

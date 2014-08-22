@@ -974,16 +974,16 @@ void alg_info_snprint(char *buf, size_t buflen,
 {
 	char *ptr = buf;
 	char *be = buf + buflen;
-	int cnt;
 
 	passert(buflen > 0);
 
 	switch (alg_info->alg_info_protoid) {
 	case PROTO_IPSEC_ESP:
 	{
-		struct esp_info *esp_info;
 		struct alg_info_esp *alg_info_esp =
 			(struct alg_info_esp *)alg_info;
+		struct esp_info *esp_info;
+		int cnt;
 
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
 			snprintf(ptr, be - ptr, "%s(%d)_%03d-%s(%d)_%03d",
@@ -1015,9 +1015,10 @@ void alg_info_snprint(char *buf, size_t buflen,
 
 	case PROTO_IPSEC_AH:
 	{
-		struct esp_info *esp_info;
 		struct alg_info_esp *alg_info_esp =
 			(struct alg_info_esp *)alg_info;
+		struct esp_info *esp_info;
+		int cnt;
 
 		ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
 			snprintf(ptr, be - ptr, "%s(%d)_%03d",
@@ -1044,10 +1045,12 @@ void alg_info_snprint(char *buf, size_t buflen,
 
 	case PROTO_ISAKMP:
 	{
+		struct alg_info_ike *alg_info_ike =
+			(struct alg_info_ike *)alg_info;
 		struct ike_info *ike_info;
+		int cnt;
 
-		ALG_INFO_IKE_FOREACH((struct alg_info_ike *)alg_info,
-				ike_info, cnt) {
+		ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, cnt) {
 			snprintf(ptr, be - ptr,
 				"%s(%d)_%03d-%s(%d)_%03d-%s(%d)",
 				enum_name(&oakley_enc_names, ike_info->ike_ealg) +

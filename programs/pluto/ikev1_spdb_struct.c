@@ -2298,7 +2298,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 		} while (next_proposal.isap_proposal == propno);
 
 		/* Now that we have all conjuncts, we should try
-		 * the Cartesian product of eachs tranforms!
+		 * the Cartesian product of each's tranforms!
 		 * At the moment, we take short-cuts on account of
 		 * our rudimentary hard-wired policy.
 		 * For now, we find an acceptable AH (if any)
@@ -2474,7 +2474,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				ugh = "no alg";
 
-				if (c->alg_info_esp) {
+				if (c->alg_info_esp != NULL) {
 					ugh = kernel_alg_esp_enc_ok(
 						esp_attrs.transattrs.encrypt,
 						esp_attrs.transattrs.enckeylen);
@@ -2530,11 +2530,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					}
 				}
 
-				ugh = kernel_alg_esp_auth_ok(
-					esp_attrs.transattrs.integ_hash,
-					c->alg_info_esp);
-
-				if (ugh != NULL) {
+				if (!kernel_alg_esp_auth_ok(
+						esp_attrs.transattrs.integ_hash,
+						c->alg_info_esp)) {
 					switch (esp_attrs.transattrs.integ_hash)
 					{
 					case AUTH_ALGORITHM_NONE:

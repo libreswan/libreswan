@@ -320,7 +320,7 @@ static void compute_proto_keymat(struct state *st,
 			break;
 		default:
 			if (kernel_alg_esp_auth_ok(pi->attrs.transattrs.
-						   integ_hash, NULL) == NULL) {
+						   integ_hash, NULL)) {
 				needed_len += kernel_alg_esp_auth_keylen(
 					pi->attrs.transattrs.integ_hash);
 				break;
@@ -342,8 +342,8 @@ static void compute_proto_keymat(struct state *st,
 			needed_len = HMAC_SHA1_KEY_LEN;
 			break;
 		default:
-			if (kernel_alg_ah_auth_ok(pi->attrs.transattrs.
-						  integ_hash, NULL)) {
+			if (kernel_alg_ah_auth_ok(
+				    pi->attrs.transattrs.integ_hash, NULL)) {
 				needed_len += kernel_alg_ah_auth_keylen(
 					pi->attrs.transattrs.integ_hash);
 				break;

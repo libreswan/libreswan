@@ -133,10 +133,10 @@ extern void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info);
 
 #define ALG_INFO_ESP_FOREACH(aie, ai_esp, i) \
-	for (i = (aie)->ai.alg_info_cnt, ai_esp = (aie)->esp; i--; ai_esp++)
+	for ((i) = (aie)->ai.alg_info_cnt, (ai_esp) = (aie)->esp; (i)--; (ai_esp)++)
 
 #define ALG_INFO_IKE_FOREACH(aii, ai_ike, i) \
-	for (i = (aii)->ai.alg_info_cnt, ai_ike = (aii)->ike; i--; ai_ike++)
+	for ((i) = (aii)->ai.alg_info_cnt, (ai_ike) = (aii)->ike; (i)--; (ai_ike)++)
 
 extern int alg_enum_search(enum_names *ed, const char *prefix,
 			   const char *postfix, const char *name,

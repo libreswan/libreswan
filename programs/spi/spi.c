@@ -388,7 +388,7 @@ static int decode_esp(char *algname)
 		}
 		esp_ealg_id = esp_info->esp_ealg_id;
 		esp_aalg_id = esp_info->esp_aalg_id;
-		if (kernel_alg_proc_read() == 0) {
+		if (kernel_alg_proc_read()) {
 			err_t ugh;
 
 			proc_read_ok++;
@@ -405,13 +405,12 @@ static int decode_esp(char *algname)
 				exit(1);
 			}
 
-			ugh = kernel_alg_esp_auth_ok(esp_aalg_id, 0);
-			if (ugh != NULL) {
-				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - %s "
-					"not present\n",
+			if (!kernel_alg_esp_auth_ok(esp_aalg_id, 0)) {
+				/* ??? this message looks badly worded */
+				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
 					progname, esp_aalg_id,
 					enum_name(&auth_alg_names,
-						  esp_aalg_id), ugh);
+						  esp_aalg_id));
 				exit(1);
 			}
 		}

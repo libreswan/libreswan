@@ -225,7 +225,7 @@ err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len)
  * Load kernel_alg arrays from /proc
  * used in manual mode from klips/utils/spi.c
  */
-int kernel_alg_proc_read(void)
+bool kernel_alg_proc_read(void)
 {
 	int satype;
 	int supp_exttype;
@@ -236,8 +236,8 @@ int kernel_alg_proc_read(void)
 	char buf[128];
 	FILE *fp = fopen("/proc/net/pf_key_supported", "r");
 
-	if (!fp)
-		return -1;
+	if (fp == NULL)
+		return FALSE;
 
 	kernel_alg_init();
 	while (fgets(buf, sizeof(buf), fp)) {
@@ -267,13 +267,15 @@ int kernel_alg_proc_read(void)
 						sadb_alg.sadb_alg_maxbits,
 						ret);
 					);
+				break;
 			}
+			break;
 		default:
-			continue;
+			break;
 		}
 	}
 	fclose(fp);
-	return 0;
+	return TRUE;
 }
 
 /*
@@ -375,15 +377,10 @@ struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id)
 	return sadb_alg;
 }
 
-err_t kernel_alg_esp_auth_ok(int auth,
+bool kernel_alg_esp_auth_ok(int auth,
 			struct alg_info_esp *alg_info __attribute__((unused)))
 {
-	int ret = (ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth)));
-
-	if (ret)
-		return NULL;
-	else
-		return "bad auth alg";
+	return ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth));
 }
 
 int kernel_alg_esp_auth_keylen(int auth)
@@ -402,15 +399,10 @@ int kernel_alg_esp_auth_keylen(int auth)
 	return a_keylen;
 }
 
-err_t kernel_alg_ah_auth_ok(int auth,
+bool kernel_alg_ah_auth_ok(int auth,
 			struct alg_info_esp *alg_info __attribute__((unused)))
 {
-	int ret = (ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth)));
-
-	if (ret)
-		return NULL;
-	else
-		return "bad auth alg";
+	return ESP_AALG_PRESENT(alg_info_esp_aa2sadb(auth));
 }
 
 int kernel_alg_ah_auth_keylen(int auth)

@@ -255,13 +255,15 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0) != NULL) {
-			DBG_log("esp algid=%d not available",
-				esp_info->esp_ealg_id);
+		err_t ugh = kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0);
+
+		if (ugh != NULL) {
+			DBG_log("esp algid=%d not available: %s",
+				esp_info->esp_ealg_id, ugh);
 			continue;
 		}
 
-		if (kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL) != NULL) {
+		if (!kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL)) {
 			DBG_log("auth algid=%d not available",
 				esp_info->esp_aalg_id);
 			continue;
@@ -312,8 +314,7 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-
-		if (kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL) != NULL) {
+		if (!kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL)) {
 			DBG_log("auth algid=%d not available",
 				esp_info->esp_aalg_id);
 			continue;
@@ -456,7 +457,7 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 }
 
 static bool kernel_alg_db_add(struct db_context *db_ctx,
-			      struct esp_info *esp_info,
+			      const struct esp_info *esp_info,
 			      lset_t policy,
 			      bool logit)
 {
@@ -549,17 +550,13 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 				     lset_t policy, bool logit)
 {
-	int ealg_i, aalg_i;
 	unsigned int tn = 0;
-	int i;
-	const struct esp_info *esp_info;
-	struct esp_info tmp_esp_info;
 	struct db_context *ctx_new = NULL;
 	struct db_trans *t;
 	struct db_prop  *prop;
 	unsigned int trans_cnt = 0;
 	bool success = TRUE;
-	int protoid = 0;
+	int protoid = PROTO_RESERVED;
 
 	if (policy & POLICY_ENCRYPT) {
 		trans_cnt = (esp_ealg_num * esp_aalg_num);
@@ -585,18 +582,22 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	 */
 
 	if (alg_info != NULL) {
-		ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
-			bool thistime;
+		const struct esp_info *esp_info;
+		int i;
 
-			tmp_esp_info = *esp_info;
-			thistime = kernel_alg_db_add(ctx_new,
-						     &tmp_esp_info,
-						     policy, logit);
-			if (!thistime)
+		ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+			if (!kernel_alg_db_add(ctx_new,
+					esp_info,
+					policy, logit))
 				success = FALSE;
 		}
 	} else {
-		ESP_EALG_FOR_EACH_UPDOWN(ealg_i) {
+		int ealg_i;
+
+		ESP_EALG_FOR_EACH_DOWN(ealg_i) {
+			struct esp_info tmp_esp_info;
+			int aalg_i;
+
 			tmp_esp_info.esp_ealg_id = ealg_i;
 			tmp_esp_info.esp_ealg_keylen = 0;
 			ESP_AALG_FOR_EACH(aalg_i) {
@@ -671,32 +672,31 @@ bool ikev1_verify_phase2(int ealg, unsigned int key_len, int aalg,
 
 void kernel_alg_show_status(void)
 {
-	unsigned sadb_id, id;
-	struct sadb_alg *alg_p;
+	unsigned sadb_id;
 
 	whack_log(RC_COMMENT, "ESP algorithms supported:");
 	whack_log(RC_COMMENT, " "); /* spacer */
 
 	ESP_EALG_FOR_EACH(sadb_id) {
-		id = sadb_id;
-		alg_p = &esp_ealg[sadb_id];
+		struct sadb_alg *alg_p = &esp_ealg[sadb_id];
+
 		whack_log(RC_COMMENT, "algorithm ESP encrypt: id=%d, name=%s, "
 			  "ivlen=%d, keysizemin=%d, keysizemax=%d",
-			  id,
-			  enum_name(&esp_transformid_names, id),
+			  sadb_id,
+			  enum_name(&esp_transformid_names, sadb_id),
 			  alg_p->sadb_alg_ivlen,
 			  alg_p->sadb_alg_minbits,
 			  alg_p->sadb_alg_maxbits);
 
 	}
 	ESP_AALG_FOR_EACH(sadb_id) {
-		id = alg_info_esp_sadb2aa(sadb_id);
-		alg_p = &esp_aalg[sadb_id];
+		unsigned id = alg_info_esp_sadb2aa(sadb_id);
+		struct sadb_alg *alg_p = &esp_aalg[sadb_id];
+
 		whack_log(RC_COMMENT, "algorithm ESP auth attr: id=%d, name=%s, "
 			  "keysizemin=%d, keysizemax=%d",
 			  id,
-			  enum_name(&auth_alg_names,
-				    id),
+			  enum_name(&auth_alg_names, id),
 			  alg_p->sadb_alg_minbits,
 			  alg_p->sadb_alg_maxbits);
 	}
