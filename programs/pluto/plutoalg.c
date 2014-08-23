@@ -275,9 +275,10 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 			       strip_prefix(enum_name(&esp_transformid_names,
 					 esp_info->esp_ealg_id), "ESP_"),
 			       esp_info->esp_ealg_id, eklen,
-			       strip_prefix(enum_name(&auth_alg_names,
-					 esp_info->esp_aalg_id),
-					esp_info->esp_aalg_id ? "AUTH_ALGORITHM_HMAC_" : "AUTH_ALGORITHM_"),
+			       strip_prefix( strip_prefix(enum_name(&auth_alg_names,
+					 	esp_info->esp_aalg_id),
+						"AUTH_ALGORITHM_HMAC_"),
+					    "AUTH_ALGORITHM_"),
 			       esp_info->esp_aalg_id,
 			       aklen);
 
@@ -326,9 +327,10 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 
 		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d",
 			       sep,
-			       strip_prefix(enum_name(&auth_alg_names,
-					 esp_info->esp_aalg_id),
-					"AUTH_ALGORITHM_HMAC_"),
+			       strip_prefix( strip_prefix(enum_name(&auth_alg_names,
+					 	esp_info->esp_aalg_id),
+						"AUTH_ALGORITHM_HMAC_"),
+					    "AUTH_ALGORITHM_"),
 			       esp_info->esp_aalg_id, aklen);
 
 		if (ret < 0 || (size_t)ret >= buflen) {
