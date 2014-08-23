@@ -1888,40 +1888,56 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			key_len = HMAC_SHA1_KEY_LEN;
 			break;
 
+		/* RFC 4868 */
 		case AUTH_ALGORITHM_HMAC_SHA2_256:
 			authalg = SADB_X_AALG_SHA2_256HMAC;
+			key_len = BYTES_FOR_BITS(256);
 			break;
 
+		/* RFC 4868 */
 		case AUTH_ALGORITHM_HMAC_SHA2_384:
 			authalg = SADB_X_AALG_SHA2_384HMAC;
+			key_len = BYTES_FOR_BITS(384);
 			break;
 
+		/* RFC 4868 */
 		case AUTH_ALGORITHM_HMAC_SHA2_512:
 			authalg = SADB_X_AALG_SHA2_512HMAC;
+			key_len = BYTES_FOR_BITS(512);
 			break;
 
+		/* RFC 2857 Section 3 */
 		case AUTH_ALGORITHM_HMAC_RIPEMD:
 			authalg = SADB_X_AALG_RIPEMD160HMAC;
+			key_len = BYTES_FOR_BITS(160);
 			break;
 
+		/* RFC 3566 Section 4.1 */
 		case AUTH_ALGORITHM_AES_CBC:
 			authalg = SADB_X_AALG_AES_XCBC_MAC;
+			key_len = BYTES_FOR_BITS(128);
 			break;
 
+		/* RFC 4543 Section 5.3 */
 		case AUTH_ALGORITHM_AES_128_GMAC:
 			authalg = SADB_X_AALG_AH_AES_128_GMAC;
+			key_len = BYTES_FOR_BITS(128);
 			break;
 
+		/* RFC 4543 Section 5.3 */
 		case AUTH_ALGORITHM_AES_192_GMAC:
 			authalg = SADB_X_AALG_AH_AES_192_GMAC;
+			key_len = BYTES_FOR_BITS(192);
 			break;
 
+		/* RFC 4543 Section 5.3 */
 		case AUTH_ALGORITHM_AES_256_GMAC:
 			authalg = SADB_X_AALG_AH_AES_256_GMAC;
+			key_len = BYTES_FOR_BITS(256);
 			break;
 
-		case AUTH_ALGORITHM_NULL_KAME:
-		case AUTH_ALGORITHM_SIG_RSA:
+		case AUTH_ALGORITHM_NULL_KAME: /* Should we support this? */
+		case AUTH_ALGORITHM_SIG_RSA: /* RFC 4359 */
 		case AUTH_ALGORITHM_KPDK:
 		case AUTH_ALGORITHM_DES_MAC:
 		default:
