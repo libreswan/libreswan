@@ -598,6 +598,8 @@ kvmplutotest	interop-ikev2-strongswan-12-nat-responder	wip
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	wip
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		wip
 kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
+# strongswan still broken in v5.1.1
+kvmplutotest	interop-ikev2-strongswan-18-psk-cast		wip
 
 
 skiptest	interop-racoon-iphone4s-nonat		incomplete
