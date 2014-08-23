@@ -363,13 +363,6 @@ void db_print(struct db_context *ctx)
 	db_prop_print(&ctx->prop);
 }
 
-void passert_fail(const char *pred_str, const char *file_str,
-		  unsigned long line_no)
-{
-	fprintf(stderr, "ASSERTION FAILED at %s:%lu: %s", file_str, line_no,
-		pred_str);
-	abort(); /* exiting correctly doesn't always work */
-}
 int main(void)
 {
 	struct db_context *ctx = db_prop_new(PROTO_ISAKMP, 0, 0);
