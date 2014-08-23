@@ -692,7 +692,7 @@ void kernel_alg_show_status(void)
 	ESP_AALG_FOR_EACH(sadb_id) {
 		id = alg_info_esp_sadb2aa(sadb_id);
 		alg_p = &esp_aalg[sadb_id];
-		whack_log(RC_COMMENT, "algorithm ESP auth attr: id=%d, name=%s, "
+		whack_log(RC_COMMENT, "algorithm AH/ESP auth: id=%d, name=%s, "
 			  "keysizemin=%d, keysizemax=%d",
 			  id,
 			  enum_name(&auth_alg_names,
