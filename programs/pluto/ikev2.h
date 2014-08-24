@@ -35,7 +35,7 @@ extern void complete_v2_state_transition(struct msg_digest **mdp,
 extern stf_status ikev2_send_informational(struct state *st);
 
 extern stf_status process_encrypted_informational_ikev2(struct msg_digest *md);
-extern stf_status ikev2_in_create_child_sa(struct msg_digest *md);
+extern stf_status ikev2_create_child_sa_in(struct msg_digest *md);
 
 extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1(struct msg_digest *md);

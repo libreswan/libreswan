@@ -2784,7 +2784,7 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
-static stf_status ikev2_in_create_child_sa_refuse(struct msg_digest *md)
+static stf_status ikev2_create_child_sa_in_refuse(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct state *pst = st;
@@ -2894,7 +2894,7 @@ static stf_status ikev2_in_create_child_sa_refuse(struct msg_digest *md)
 }
 
 
-static stf_status ikev2_child_sa_inIoutR(struct msg_digest *md)
+static stf_status ikev2_child_inIoutR(struct msg_digest *md)
 {
 	struct state *pst = md->st;
 	struct state *st  =  NULL; /* child state */ 
@@ -2986,7 +2986,7 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 	stf_status e;
 
 	DBG(DBG_CRYPT | DBG_CONTROL,
-			DBG_log("ikev2_in_create_child_sa_response_continue for #%lu: calculated ke+nonce"
+			DBG_log("ikev2_child_inIoutR_continue for #%lu: calculated ke+nonce"
 				" sending CREATE_CHILD_SA respone", qke->qke_pcrc.pcrc_serialno));
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
@@ -3128,11 +3128,10 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 	return STF_OK;
 }
 
-stf_status ikev2_in_create_child_sa(struct msg_digest *md)
+stf_status ikev2_create_child_sa_in(struct msg_digest *md)
 {
-	/* return ikev2_in_create_child_sa_refuse(md); */  /* if we want to
-							      refuse child_sa */
-	return ikev2_child_sa_inIoutR(md);
+	/* return ikev2_create_child_sa_in_refuse(md); */ /* if we want to refuse child_sa */
+	return ikev2_child_inIoutR(md);
 }
 
 stf_status process_encrypted_informational_ikev2(struct msg_digest *md)

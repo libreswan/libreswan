@@ -371,7 +371,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
-	  .processor  = ikev2_in_create_child_sa,
+	  .processor  = ikev2_create_child_sa_in,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -383,7 +383,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
-	  .processor  = ikev2_in_create_child_sa,
+	  .processor  = ikev2_create_child_sa_in,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
