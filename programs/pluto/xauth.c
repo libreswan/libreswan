@@ -1241,7 +1241,7 @@ static bool do_file_authentication(void *varg)
 			    userid, arg->name,
 			    passwdhash,
 			    connectionname == NULL? "<any>" : connectionname, arg->connname));
-		}
+
 		if (streq(userid, arg->name) &&
 		    (connectionname == NULL || streq(connectionname, arg->connname)))
 		{
