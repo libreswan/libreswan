@@ -150,41 +150,93 @@ enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti)
 	case IKEv2_AUTH_HMAC_SHA2_512_256:
 		return AUTH_ALGORITHM_HMAC_SHA2_512;
 
+	/* IKEv2 does not do RIPEMD */
+
+	case IKEv2_AUTH_AES_XCBC_96:
+		return AUTH_ALGORITHM_AES_CBC;
+
+	/* AH_RSA */
+
+	case IKEv2_AUTH_AES_128_GMAC:
+		return AUTH_ALGORITHM_AES_128_GMAC;
+
+	case IKEv2_AUTH_AES_192_GMAC:
+		return AUTH_ALGORITHM_AES_192_GMAC;
+
+	case IKEv2_AUTH_AES_256_GMAC:
+		return AUTH_ALGORITHM_AES_256_GMAC;
+
 	/* invalid or not yet supported */
 	case IKEv2_AUTH_DES_MAC:
 	case IKEv2_AUTH_KPDK_MD5:
-	case IKEv2_AUTH_AES_XCBC_96:
 	case IKEv2_AUTH_INVALID:
+
+	/* not available as IPSEC AH / ESP auth - IKEv2 only */
 	case IKEv2_AUTH_HMAC_MD5_128:
 	case IKEv2_AUTH_HMAC_SHA1_160:
 	case IKEv2_AUTH_AES_CMAC_96:
-	case IKEv2_AUTH_AES_128_GMAC:
-	case IKEv2_AUTH_AES_192_GMAC:
-	case IKEv2_AUTH_AES_256_GMAC:
 	default:
 		bad_case(ti);
 	}
 }
 
+/* 
+ * XXX This maps IPSEC AH Transform Identifiers to IKE Integrity Algorithm
+ * Transform IDs. But IKEv1 and IKEv2 tables don't match fully! See:
+ *
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-7
+ * http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
+ * http://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
+ *
+ * Callers of this function should get fixed
+ */
 int alg_info_esp_sadb2aa(int sadb_aalg)
 {
 	int auth = 0;
 
+	/* md5 and sha1 entries are "off by one" */
 	switch (sadb_aalg) {
-	/* Paul: why is this using a mix of SADB_AALG_* and AUTH_ALGORITHM_* */
-	case SADB_AALG_MD5HMAC:
-	case SADB_AALG_SHA1HMAC:
-		auth = sadb_aalg - 1;
+	/* 0-1 RESERVED */
+	case SADB_AALG_MD5HMAC: /* 2 */
+		auth = AUTH_ALGORITHM_HMAC_MD5; /* 1 */
 		break;
-	/* since they are the same ...  :) */
-	case AUTH_ALGORITHM_HMAC_SHA2_256:
-	case AUTH_ALGORITHM_HMAC_SHA2_384:
-	case AUTH_ALGORITHM_HMAC_SHA2_512:
-	case AUTH_ALGORITHM_HMAC_RIPEMD:
-		auth = sadb_aalg;
+	case SADB_AALG_SHA1HMAC: /* 3 */
+		auth = AUTH_ALGORITHM_HMAC_SHA1; /* 2 */
+		break;
+	/* 4 - SADB_AALG_DES */
+	case SADB_X_AALG_SHA2_256HMAC:
+		auth = AUTH_ALGORITHM_HMAC_SHA2_256;
+		break;
+	case SADB_X_AALG_SHA2_384HMAC:
+		auth = AUTH_ALGORITHM_HMAC_SHA2_384;
+		break;
+	case SADB_X_AALG_SHA2_512HMAC:
+		auth = AUTH_ALGORITHM_HMAC_SHA2_512;
+		break;
+	case SADB_X_AALG_RIPEMD160HMAC:
+		auth = AUTH_ALGORITHM_HMAC_RIPEMD;
+		break;
+	case SADB_X_AALG_AES_XCBC_MAC:
+		auth = AUTH_ALGORITHM_AES_CBC;
+		break;
+	case SADB_X_AALG_RSA: /* unsupported by us */
+		auth = AUTH_ALGORITHM_SIG_RSA;
+		break;
+	case SADB_X_AALG_AH_AES_128_GMAC:
+		auth = AUTH_ALGORITHM_AES_128_GMAC;
+		break;
+	case SADB_X_AALG_AH_AES_192_GMAC:
+		auth = AUTH_ALGORITHM_AES_192_GMAC;
+		break;
+	case SADB_X_AALG_AH_AES_256_GMAC:
+		auth = AUTH_ALGORITHM_AES_256_GMAC;
+		break;
+	/* private use numbers */
+	case SADB_X_AALG_NULL:
+		auth = AUTH_ALGORITHM_NULL_KAME;
 		break;
 	default:
-		/* loose ... */
+		/* which would hopefully be true  */
 		auth = sadb_aalg;
 	}
 	return auth;
