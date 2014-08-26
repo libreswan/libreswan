@@ -12,7 +12,7 @@ results = dict()
 testlist = dict()
 
 def read_testlist(resultsdir, node):
-	r = resultsdir + "./TESTLIST"
+	r = resultsdir + "/TESTLIST"
 	if not os.path.exists(r):
 		return None
 	f = open(r, 'r')
