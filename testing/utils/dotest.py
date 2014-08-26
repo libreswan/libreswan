@@ -9,6 +9,7 @@ import ujson
 import os,sys,socket,shutil
 import logging
 import platform
+import testsum
 
 try:
 	import argparse
@@ -462,7 +463,7 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None, tes
 	logline ["result"] = result 
 	logline ["time"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
 	logline ["runtime"] = time.time() - start
-	logline ["node"] = platform.node()
+	logline ["node"] = args.node
 	if testexpect:
 		logline ["expect"] = testexpect
 
@@ -481,7 +482,8 @@ DEFAULTCONFIG =  {
 	'shutdownwait': 63,
 	'newrun' : None,
 	'stoponerror' : None,
-	'retry' : 5
+	'retry' : 5,
+	'node' : platform.node()
 
 }
 
@@ -491,6 +493,11 @@ def cmdline():
 	parser.add_argument("--retry",
 			default=DEFAULTCONFIG['retry'], type=int,
 			help="retry when there is console error.")
+
+	parser.add_argument("--node", default=DEFAULTCONFIG['node'], action="store_true",
+			help="Default node name.")
+	parser.add_argument("--graphs", default=False, action="store_true",
+			help="generate graphs and JSON tables.")
 
 	parser.add_argument("--stoponerror",
 			default=DEFAULTCONFIG['stoponerror'], action="store_true",
@@ -715,8 +722,11 @@ def do_test_list(args, start, tried, output_dir):
 
 def setup_result_dir(args):
 	date_dir = time.strftime("%Y-%m-%d", time.localtime())
-	node = platform.node()
-	output_dir = args.resultsdir + '/' + node
+	output_dir = args.resultsdir 
+
+	if (args.node):
+		output_dir = args.resultsdir + '/' + args.node
+
 
 	if not os.path.isdir(output_dir):
 		try :
@@ -727,7 +737,10 @@ def setup_result_dir(args):
 	else:
 			logging.debug("directory %s exists", output_dir)
 
-	output_dir = output_dir + '/' + date_dir + '-' + node
+	if args.node:
+		output_dir = output_dir + '/' + date_dir + '-' + args.node
+	else:
+		output_dir = output_dir + '/' + date_dir 
 
 	ipsecversion = ''
 	try:
@@ -754,17 +767,25 @@ def setup_result_dir(args):
 	logging.info("results will be in %s", output_dir)
 	return output_dir
 
+def gen_graphs_tables(args):
+	testsum.read_testlist(resultsdir = args.resultsdir, node = args.node)
+	testsum.read_dirs(resultsdir = args.resultsdir, node=args.node)
+
 def main():
 	start = time.time() 
 	args = cmdline() 
 	tried = 0
 	output_dir = setup_result_dir(args)
 
-	if do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
+	if args.graphs:
+		gen_graphs_tables(args)
+	elif do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):
+			gen_graphs_tables(args)
 			tried = 1 + tried
 			logging.info("retry TESTLIST %s/%s ", tried, args.retry)
 			do_test_list(args, start, tried, output_dir)
+
 	else:
 		do_test(args, start = start)  # no TESTLIST. Lets try single test
 
