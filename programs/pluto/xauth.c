@@ -1240,8 +1240,8 @@ static bool do_file_authentication(void *varg)
 		    DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s)",
 			    userid, arg->name,
 			    passwdhash,
-			    connectionname == NULL? "" : connectionname, arg->connname));
-
+			    connectionname == NULL? "<any>" : connectionname, arg->connname));
+		}
 		if (streq(userid, arg->name) &&
 		    (connectionname == NULL || streq(connectionname, arg->connname)))
 		{
