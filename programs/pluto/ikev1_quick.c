@@ -315,9 +315,38 @@ static void compute_proto_keymat(struct state *st,
 		case AUTH_ALGORITHM_HMAC_SHA1:
 			needed_len += HMAC_SHA1_KEY_LEN;
 			break;
-		case AUTH_ALGORITHM_DES_MAC:
-			bad_case(pi->attrs.transattrs.integ_hash);
-			break;
+           /* kernel_alg_ah_auth_ok / kernel_alg_ah_auth_keylen are incomplete */
+           case AH_SHA2_256:
+               needed_len = BYTES_FOR_BITS(256);
+               break;
+           case AH_SHA2_384:
+               needed_len = BYTES_FOR_BITS(384);
+               break;
+           case AH_SHA2_512:
+               needed_len = BYTES_FOR_BITS(512);
+               break;
+           case AH_RIPEMD:
+               needed_len = BYTES_FOR_BITS(160);
+               break;
+           case AH_AES_XCBC_MAC:
+               needed_len = BYTES_FOR_BITS(128);
+               break;
+           case AH_RSA:
+               /* ? */
+               break;
+           case AH_AES_128_GMAC:
+               needed_len = BYTES_FOR_BITS(128);
+               break;
+           case AH_AES_192_GMAC:
+               needed_len = BYTES_FOR_BITS(192);
+               break;
+           case AH_AES_256_GMAC:
+               needed_len = BYTES_FOR_BITS(256);
+               break;
+           case AH_NULL:
+               needed_len = 0; /* presumably? */
+               break;
+
 		default:
 			if (kernel_alg_esp_auth_ok(pi->attrs.transattrs.
 						   integ_hash, NULL) == NULL) {
