@@ -81,6 +81,7 @@ def diffstat(d, host):
 		if not os.path.exists(initsh):
 			return
 
+		hostr = ''
 		goodk =  d + '/' +  host + ".console.txt"
 		new  = d + '/OUTPUT/' + host + '.console.txt' 
 		if os.path.exists(new):
@@ -88,12 +89,11 @@ def diffstat(d, host):
 				cmd = diffcmd + ' ' + goodk + ' ' + new + ' | diffstat -f 0'
 				ds = commands.getoutput(cmd)
 				for line in ds.split("\n")[1:]:
-					change = re.sub(r'\d+ file changed,', '', line)
-					change = re.sub(r'\d+ file changed,', '', line)
-					change = host + " " +  change
+					c = re.sub(r'\d+ file changed,', '', line)
+					hostr = host + " " +  c
 					#print change
-					return  change
-				return (host + ' ' + "passed")
+				if not hostr:
+					hostr =  host + ' ' + "passed"
 			else: 
 				hostr =  host + ' missing-baseline'
 		else:
