@@ -599,7 +599,7 @@ const struct kernel_ops mast_kernel_ops = {
 	.replay_window = 64,
 
 	.pfkey_register = klips_pfkey_register,
-	.pfkey_register_response = klips_pfkey_register_response,
+	.pfkey_register_response = pfkey_register_response,
 	.process_queue = pfkey_dequeue,
 	.process_msg = pfkey_event,
 	.raw_eroute = mast_raw_eroute,

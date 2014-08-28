@@ -386,14 +386,14 @@ static int decode_esp(char *algname)
 				esp_info->encryptalg,
 				esp_info->authalg);
 		}
-		esp_ealg_id = esp_info->esp_ealg_id;
-		esp_aalg_id = esp_info->esp_aalg_id;
+		esp_ealg_id = esp_info->transid;
+		esp_aalg_id = esp_info->auth;
 		if (kernel_alg_proc_read()) {
 			err_t ugh;
 
 			proc_read_ok++;
 
-			ugh = kernel_alg_esp_enc_ok(esp_ealg_id, 0);
+			ugh = check_kernel_encrypt_alg(esp_ealg_id, 0);
 			if (ugh != NULL) {
 				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
 					"not present - %s\n",
@@ -1114,13 +1114,13 @@ int main(int argc, char *argv[])
 			 * if explicit keylen told in encrypt algo, eg "aes128"
 			 * check actual keylen "equality"
 			 */
-			if (esp_info->esp_ealg_keylen &&
-			    esp_info->esp_ealg_keylen != keylen) {
+			if (esp_info->enckeylen &&
+			    esp_info->enckeylen != keylen) {
 				fprintf(stderr, "%s: invalid encryption keylen=%d, "
 					"required %d by encrypt algo string=\"%s\"\n",
 					progname,
 					(int)keylen,
-					(int)esp_info->esp_ealg_keylen,
+					(int)esp_info->enckeylen,
 					alg_string);
 				exit(1);
 

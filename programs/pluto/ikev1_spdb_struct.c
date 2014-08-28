@@ -1873,8 +1873,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 							       ENCAPSULATION_MODE_UDP_TUNNEL_RFC
 							       +
 							       ENCAPSULATION_MODE_TUNNEL;
-				} else if (st->hidden_variables.
-					   st_nat_traversal & NAT_T_DETECTED) {
+				} else if (st->hidden_variables.st_nat_traversal &
+						NAT_T_DETECTED) {
 					loglog(RC_LOG_SERIOUS,
 					       "%s must only be used with NAT-T RFC",
 					       enum_name(&enc_mode_names,
@@ -1984,7 +1984,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 		}
 
-		err_t ugh = kernel_alg_esp_enc_ok(
+		err_t ugh = check_kernel_encrypt_alg(
 				attrs->transattrs.encrypt,
 				attrs->transattrs.enckeylen);
 		if (ugh != NULL) {
@@ -2341,6 +2341,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * AH_SHA, AUTH_ALGORITHM_HMAC_SHA1
 				 * AH_DES, AUTH_ALGORITHM_DES_MAC (unimplemented)
 				 */
+				/* ??? this switch looks a lot like alg_info_esp_aa2sadb */
 				switch (ah_attrs.transattrs.integ_hash) {
 				case AUTH_ALGORITHM_NONE:
 					loglog(RC_LOG_SERIOUS,
@@ -2412,14 +2413,14 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
 					       enum_showb(&auth_alg_names,
-							 ah_attrs.transattrs.
-							 integ_hash,
+							 ah_attrs.transattrs.integ_hash,
 							 esb, sizeof(esb)),
 					       enum_show(&ah_transformid_names,
-							 ah_attrs.transattrs.
-							 encrypt));
+							 ah_attrs.transattrs.encrypt));
 					return BAD_PROPOSAL_SYNTAX;
 				}
+				/* ??? should test be !ok_auth || !ESP_AALG_PRESENT(ok_transid) */
+				/* ??? why is this called ESP_AALG_PRESENT when we're doing AH? */
 				if (!ok_auth) {
 					char esb[ENUM_SHOW_BUF_LEN];
 
@@ -2427,16 +2428,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						ipstr_buf b;
 						DBG_log("%s attribute unsupported in %s Transform from %s",
 							enum_showb(&auth_alg_names,
-								  ah_attrs.
-								  transattrs.
-								  integ_hash,
+								  ah_attrs.transattrs.integ_hash,
 								  esb, sizeof(esb)),
 							enum_show(&ah_transformid_names,
-								  ah_attrs.
-								  transattrs.
-								  encrypt),
-							ipstr(&c->spd.that.
-							       host_addr, &b));
+								  ah_attrs.transattrs.encrypt),
+							ipstr(&c->spd.that.host_addr, &b));
 					});
 					continue;       /* try another */
 				}
@@ -2475,7 +2471,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				ugh = "no alg";
 
 				if (c->alg_info_esp != NULL) {
-					ugh = kernel_alg_esp_enc_ok(
+					ugh = check_kernel_encrypt_alg(
 						esp_attrs.transattrs.encrypt,
 						esp_attrs.transattrs.enckeylen);
 				}
@@ -2486,8 +2482,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case ESP_3DES:
 						break;
 					case ESP_NULL:
-						if (esp_attrs.transattrs.
-							integ_hash ==
+						if (esp_attrs.transattrs.integ_hash ==
 						    AUTH_ALGORITHM_NONE) {
 							loglog(RC_LOG_SERIOUS,
 							       "ESP_NULL requires auth algorithm");
@@ -2520,11 +2515,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP Transform %s from %s",
 						       enum_show(&esp_transformid_names,
-								 esp_attrs.
-								 transattrs.
-								 encrypt),
-						       ipstr(&c->spd.that.
-							      host_addr, &b));
+								 esp_attrs.transattrs.encrypt),
+						       ipstr(&c->spd.that.host_addr, &b));
 						continue; /* try another */
 						}
 					}
@@ -2545,24 +2537,26 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							continue; /* try another */
 						}
 						break;
+
+					/* ??? why do we accept these when kernel_alg_esp_auth_ok says not to? */
 					case AUTH_ALGORITHM_HMAC_MD5:
 					case AUTH_ALGORITHM_HMAC_SHA1:
 					case AUTH_ALGORITHM_HMAC_SHA2_256:
 					case AUTH_ALGORITHM_HMAC_SHA2_384:
 					case AUTH_ALGORITHM_HMAC_SHA2_512:
 						break;
+
 					default:
+						/* ??? why do we log this?  Surely this is a common and normal state of affairs? */
 						{
 						ipstr_buf b;
 
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP auth alg %s from %s",
 						       enum_show(&auth_alg_names,
-								 esp_attrs.
-								 transattrs.
-								 integ_hash),
-						       ipstr(&c->spd.that.
-							      host_addr, &b));
+								 esp_attrs.transattrs.integ_hash),
+						       ipstr(&c->spd.that.host_addr,
+								&b));
 						continue; /* try another */
 						}
 					}
@@ -2580,17 +2574,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
-			/*
-			 * ML: at last check for allowed transforms in alg_info_esp
-			 *
-			 */
+
+			/* ML: at last check for allowed transforms in alg_info_esp */
+			/* ??? what's ML? */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_phase2(esp_attrs.transattrs.
-						     encrypt,
-						     esp_attrs.transattrs.
-						     enckeylen,
-						     esp_attrs.transattrs.
-						     integ_hash,
+			    !ikev1_verify_phase2(esp_attrs.transattrs.encrypt,
+						     esp_attrs.transattrs.enckeylen,
+						     esp_attrs.transattrs.integ_hash,
 						     c->alg_info_esp))
 				continue;
 			esp_attrs.spi = esp_spi;
@@ -2677,11 +2667,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						ipstr_buf b;
 						DBG_log("unsupported IPCOMP Transform %s from %s",
 							enum_show(&ipcomp_transformid_names,
-								  ipcomp_attrs.
-								  transattrs.
-								  encrypt),
-							ipstr(&c->spd.that.
-							       host_addr, &b));
+								  ipcomp_attrs.transattrs.encrypt),
+							ipstr(&c->spd.that.host_addr,
+								&b));
 					});
 					continue; /* try another */
 				}

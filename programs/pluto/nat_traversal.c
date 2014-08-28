@@ -99,9 +99,10 @@ static struct hash_desc ikev2_natd_hasher =
 	.hash_ctx_size = sizeof(SHA1_CTX),
 	.hash_key_size =   SHA1_DIGEST_SIZE,
 	.hash_digest_len = SHA1_DIGEST_SIZE,
-	.hash_integ_len = 0,    /*Not applicable*/
+	.hash_integ_len = 0,    /* Not applicable */
 	.hash_block_size = HMAC_BUFSIZE,
 	.hash_init = (void (*)(void *))SHA1Init,
+	/* ??? last arg is __u32!!! */
 	.hash_update = (void (*)(void *, const u_int8_t *, size_t))SHA1Update,
 	.hash_final = (void (*)(u_char *, void *))SHA1Final,
 };

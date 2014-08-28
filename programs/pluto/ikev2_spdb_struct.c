@@ -1856,7 +1856,7 @@ stf_status ikev2_parse_child_sa_body(
 
 			if (ta.enckeylen == 0)
 				ta.enckeylen = ta.encrypter->keydeflen;
-			ugh = kernel_alg_esp_enc_ok(ta.encrypt, ta.enckeylen);
+			ugh = check_kernel_encrypt_alg(ta.encrypt, ta.enckeylen);
 			if (ugh != NULL) {
 				libreswan_log("ESP algo %d with key_len %d is not valid (%s)", ta.encrypt, ta.enckeylen, ugh);
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;

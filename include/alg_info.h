@@ -67,17 +67,18 @@ struct esp_info {
 	bool esp_default;
 	u_int8_t transid;       /* ESP transform (AES, 3DES, etc.)*/
 	u_int16_t auth;         /* AUTH */
-	u_int32_t enckeylen;    /* keylength for ESP transform (bytes)*/
-	u_int32_t authkeylen;   /* keylength for AUTH (bytes)*/
+	u_int32_t enckeylen;    /* keylength for ESP transform (bytes) */
+	u_int32_t authkeylen;   /* keylength for AUTH (bytes) */
 	u_int8_t encryptalg;    /* normally  encryptalg=transid */
-	u_int16_t authalg;      /* normally  authalg=auth+1
-	                         * Paul: apparently related to magic at
-	                         * lib/libswan/alg_info.c alg_info_esp_aa2sadb() */
+	u_int16_t authalg;	/* normally  authalg=auth+1
+				 * Paul: apparently related to magic at
+				 * lib/libswan/alg_info.c alg_info_esp_aa2sadb()
+				 */
 };
 
 struct ike_info {
 	bool ike_default;
-	u_int16_t ike_ealg;             /* encrytion algorithm - bit 15set for reserved*/
+	u_int16_t ike_ealg;             /* encryption algorithm - bit 15 set for reserved */
 	u_int8_t ike_halg;              /* hash algorithm */
 	size_t ike_eklen;               /* how many bits required by encryption algo */
 	size_t ike_hklen;               /* how many bits required by hash algo */
@@ -101,14 +102,6 @@ struct alg_info_ike {
 	struct alg_info ai;	/* common prefix */
 	struct ike_info ike[128];
 };
-
-#define ESPTOINFO(X) (struct alg_info *)X
-#define IKETOINFO(X) (struct alg_info *)X
-
-#define esp_ealg_id transid
-#define esp_aalg_id auth
-#define esp_ealg_keylen enckeylen       /* bits */
-#define esp_aalg_keylen authkeylen      /* bits */
 
 extern enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	enum ikev1_auth_attribute auth);

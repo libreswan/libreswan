@@ -745,11 +745,11 @@ static void unshare_connection_strings(struct connection *c)
 
 	/* increment references to algo's, if any */
 	if (c->alg_info_ike) {
-		alg_info_addref(IKETOINFO(c->alg_info_ike));
+		alg_info_addref(&c->alg_info_ike->ai);
 	}
 
 	if (c->alg_info_esp) {
-		alg_info_addref(ESPTOINFO(c->alg_info_esp));
+		alg_info_addref(&c->alg_info_esp->ai);
 	}
 	if (c->pool !=  NULL)
 		reference_addresspool(c->pool);
@@ -3066,7 +3066,7 @@ static struct connection *fc_try(const struct connection *c,
 						continue;
 					}
 
-					virtualwhy = is_virtual_net_allowed(
+					virtualwhy = check_virtual_net_allowed(
 							d,
 							peer_net,
 							&sr->that.host_addr);
@@ -3122,9 +3122,8 @@ static struct connection *fc_try(const struct connection *c,
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
 			libreswan_log(
-				"peer proposal was reject in a virtual "
-				"connection policy because:");
-			libreswan_log("  %s", virtualwhy);
+				"peer proposal was reject in a virtual connection policy: %s",
+				virtualwhy);
 		}
 	}
 

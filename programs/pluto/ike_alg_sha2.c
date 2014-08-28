@@ -162,20 +162,14 @@ static struct hash_desc integ_desc_sha2_512 = {
 /*
  * IKE_ALG_INIT_NAME: ike_alg_sha2_init
  */
-int ike_alg_sha2_init(void)
+void ike_alg_sha2_init(void)
 {
-	int ret;
+	if (ike_alg_register_hash(&hash_desc_sha2_512))
+		ike_alg_add(&integ_desc_sha2_256.common);
 
-	ret = ike_alg_register_hash(&hash_desc_sha2_512);
-	if (ret == 0) {
-		ret = ike_alg_register_hash(&hash_desc_sha2_384);
-		if (ret == 0) {
-			ret = ike_alg_register_hash(&hash_desc_sha2_256);
+	if (ike_alg_register_hash(&hash_desc_sha2_384))
+		ike_alg_add(&integ_desc_sha2_384.common);
 
-			ike_alg_add((struct ike_alg *) &integ_desc_sha2_256);
-			ike_alg_add((struct ike_alg *) &integ_desc_sha2_384);
-			ike_alg_add((struct ike_alg *) &integ_desc_sha2_512);
-		}
-	}
-	return ret;
+	if (ike_alg_register_hash(&hash_desc_sha2_256))
+		ike_alg_add(&integ_desc_sha2_512.common);
 }

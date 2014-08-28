@@ -96,9 +96,10 @@ static struct hash_desc crypto_hasher_md5 =
 	.hash_ctx_size = sizeof(MD5_CTX),
 	.hash_key_size =   MD5_DIGEST_SIZE,
 	.hash_digest_len = MD5_DIGEST_SIZE,
-	.hash_integ_len = 0,    /*Not applicable*/
+	.hash_integ_len = 0,    /* Not applicable */
 	.hash_block_size = HMAC_BUFSIZE,
 	.hash_init = (void (*)(void *))osMD5Init,
+	/* ??? last arg is __u32!!! */
 	.hash_update = (void (*)(void *, const u_int8_t *, size_t))osMD5Update,
 	.hash_final = (void (*)(u_char *, void *))osMD5Final,
 };
@@ -196,7 +197,7 @@ void init_crypto(void)
 #endif
 
 #ifdef USE_3DES
-	ike_alg_add((struct ike_alg *) &crypto_encrypter_3des);
+	ike_alg_add(&crypto_encrypter_3des.common);
 #endif
 
 #ifdef USE_SHA2
@@ -204,13 +205,13 @@ void init_crypto(void)
 #endif
 
 #ifdef USE_SHA1
-	ike_alg_add((struct ike_alg *) &crypto_hasher_sha1);
-	ike_alg_add((struct ike_alg *) &crypto_integ_sha1);
+	ike_alg_add(&crypto_hasher_sha1.common);
+	ike_alg_add(&crypto_integ_sha1.common);
 #endif
 
 #ifdef USE_MD5
-	ike_alg_add((struct ike_alg *) &crypto_hasher_md5);
-	ike_alg_add((struct ike_alg *) &crypto_integ_md5);
+	ike_alg_add(&crypto_hasher_md5.common);
+	ike_alg_add(&crypto_integ_md5.common);
 #endif
 }
 

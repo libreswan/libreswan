@@ -90,12 +90,8 @@ static struct encrypt_desc encrypt_desc_serpent =
 	.do_crypt = do_serpent,
 };
 
-int ike_alg_serpent_init(void)
+void ike_alg_serpent_init(void)
 {
-	int ret = ike_alg_register_enc(&encrypt_desc_serpent);
-
-	return ret;
+	/* ??? nobody notices failure */
+	ike_alg_register_enc(&encrypt_desc_serpent);
 }
-/*
-   IKE_ALG_INIT_NAME: ike_alg_serpent_init
- */

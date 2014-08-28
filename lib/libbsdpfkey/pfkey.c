@@ -784,7 +784,7 @@ int so;
  * sadb_supported returned into ipsec_supported.
  * NOTE: sadb_msg_len must be host order.
  * IN:
- *	tlen: msg length, it's to makeing sure.
+ *	tlen: msg length (for checking)
  * OUT:
  *	 0: success and return length sent.
  *	-1: error occured, and set errno.

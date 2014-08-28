@@ -1362,7 +1362,7 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 				     authstart);
 			    DBG_dump("out calculated auth:", authloc,
 				     pst->st_oakley.integ_hasher->
-				     hash_integ_len);
+					hash_integ_len);
 		    });
 	}
 
@@ -1415,10 +1415,10 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 				     authstart);
 			    DBG_dump("R2 calculated auth:", b12,
 				     pst->st_oakley.integ_hasher->
-				     hash_integ_len);
+					hash_integ_len);
 			    DBG_dump("R2  provided  auth:", encend,
 				     pst->st_oakley.integ_hasher->
-				     hash_integ_len);
+					hash_integ_len);
 		    });
 
 		/* compare first 96 bits == 12 bytes */

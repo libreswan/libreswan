@@ -65,23 +65,25 @@ void ike_alg_show_status(void)
 	IKE_EALG_FOR_EACH(algo) {
 		static char v1namebuf[ENUM_SHOW_BUF_LEN];
 		static char v2namebuf[ENUM_SHOW_BUF_LEN];
+
 		passert(algo != NULL);
 		passert(algo->algo_id != 0 || algo->algo_v2id != 0);
 		whack_log(RC_COMMENT,
-			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%d, keydeflen=%d",
+			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
 			  algo->algo_id,
 			  enum_showb(&oakley_enc_names, algo->algo_id, v1namebuf, sizeof(v1namebuf)),
 			  algo->algo_v2id,
 			  enum_showb(&ikev2_trans_type_encr_names, algo->algo_v2id, v2namebuf, sizeof(v2namebuf)),
-			  (int)((struct encrypt_desc *)algo)->enc_blocksize,
+			  ((struct encrypt_desc *)algo)->enc_blocksize,
 			  ((struct encrypt_desc *)algo)->keydeflen);
 	}
 	IKE_HALG_FOR_EACH(algo) {
 		whack_log(RC_COMMENT,
-			  "algorithm IKE hash: id=%d, name=%s, hashsize=%d",
+			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu, trunclen=%zu",
 			  algo->algo_id,
 			  enum_name(&oakley_hash_names, algo->algo_id),
-			  (int)((struct hash_desc *)algo)->hash_digest_len);
+			  ((struct hash_desc *)algo)->hash_digest_len,
+			  ((struct hash_desc *)algo)->hash_integ_len);
 	}
 #define IKE_DH_ALG_FOR_EACH(idx) for (idx = 0; idx != oakley_group_size; idx++)
 	IKE_DH_ALG_FOR_EACH(i) {

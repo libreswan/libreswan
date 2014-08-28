@@ -133,26 +133,33 @@ static int modp_getbyname_ike(const char *const str, size_t len)
 				    " (extension)", str, len);
 }
 
+/*
+ * Raw add routine: only checks for no duplicates
+ */
+/* ??? much of this code is the same as raw_alg_info_esp_add (same bugs!) */
 static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 			       unsigned ek_bits, int aalg_id, unsigned ak_bits,
 			       unsigned int modp_id)
 {
 	struct ike_info *ike_info = alg_info->ike;
-	unsigned cnt = alg_info->ai.alg_info_cnt, i;
+	int cnt = alg_info->ai.alg_info_cnt;
+	int i;
 
 	/* don't add duplicates */
+	/* ??? why is 0 wildcard for ek_bits and ak_bits? */
 	for (i = 0; i < cnt; i++) {
 		if (ike_info[i].ike_ealg == ealg_id &&
-			(!ek_bits || ike_info[i].ike_eklen == ek_bits) &&
-			ike_info[i].ike_halg == aalg_id &&
-			(!ak_bits || ike_info[i].ike_hklen == ak_bits) &&
-			ike_info[i].ike_modp == modp_id) {
+		    (ek_bits == 0 || ike_info[i].ike_eklen == ek_bits) &&
+		    ike_info[i].ike_halg == aalg_id &&
+		    (ak_bits == 0 || ike_info[i].ike_hklen == ak_bits) &&
+		    ike_info[i].ike_modp == modp_id) {
 			return;
 		}
 	}
 
 	/* check for overflows */
-	passert(cnt < elemsof(alg_info->ike));
+	/* ??? passert seems dangerous */
+	passert(cnt < (int)elemsof(alg_info->ike));
 
 	ike_info[cnt].ike_ealg = ealg_id;
 	ike_info[cnt].ike_eklen = ek_bits;
@@ -255,32 +262,32 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-		err_t ugh = kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0);
+		err_t ugh = check_kernel_encrypt_alg(esp_info->transid, 0);
 
 		if (ugh != NULL) {
 			DBG_log("esp algid=%d not available: %s",
-				esp_info->esp_ealg_id, ugh);
+				esp_info->transid, ugh);
 			continue;
 		}
 
-		if (!kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL)) {
+		if (!kernel_alg_esp_auth_ok(esp_info->auth, NULL)) {
 			DBG_log("auth algid=%d not available",
-				esp_info->esp_aalg_id);
+				esp_info->auth);
 			continue;
 		}
 
-		eklen = esp_info->esp_ealg_keylen;
-		aklen = esp_info->esp_aalg_keylen;
+		eklen = esp_info->enckeylen;
+		aklen = esp_info->authkeylen;
 
 		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d-%s(%d)_%03d",
 			       sep,
 			       strip_prefix(enum_name(&esp_transformid_names,
-					 esp_info->esp_ealg_id), "ESP_"),
-			       esp_info->esp_ealg_id, eklen,
+					 esp_info->transid), "ESP_"),
+			       esp_info->transid, eklen,
 			       strip_prefix(enum_name(&auth_alg_names,
-					 esp_info->esp_aalg_id),
-					esp_info->esp_aalg_id ? "AUTH_ALGORITHM_HMAC_" : "AUTH_ALGORITHM_"),
-			       esp_info->esp_aalg_id,
+					 esp_info->auth),
+					esp_info->auth ? "AUTH_ALGORITHM_HMAC_" : "AUTH_ALGORITHM_"),
+			       esp_info->auth,
 			       aklen);
 
 		if (ret < 0 || (size_t)ret >= buflen) {
@@ -314,23 +321,23 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 	jam_str(buf, buflen, "none");
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-		if (!kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL)) {
+		if (!kernel_alg_esp_auth_ok(esp_info->auth, NULL)) {
 			DBG_log("auth algid=%d not available",
-				esp_info->esp_aalg_id);
+				esp_info->auth);
 			continue;
 		}
 
-		aklen = esp_info->esp_aalg_keylen;
+		aklen = esp_info->authkeylen;
 		if (!aklen)
 			aklen = kernel_alg_esp_auth_keylen(
-				esp_info->esp_aalg_id) * BITS_PER_BYTE;
+				esp_info->auth) * BITS_PER_BYTE;
 
 		ret = snprintf(ptr, buflen, "%s%s(%d)_%03d",
 			       sep,
 			       strip_prefix(enum_name(&auth_alg_names,
-					 esp_info->esp_aalg_id),
+					 esp_info->auth),
 					"AUTH_ALGORITHM_HMAC_"),
-			       esp_info->esp_aalg_id, aklen);
+			       esp_info->auth, aklen);
 
 		if (ret < 0 || (size_t)ret >= buflen) {
 			DBG_log("alg_info_snprint_ah: buffer too short for snprintf");
@@ -464,7 +471,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 	int ealg_i = 0, aalg_i;
 
 	if (policy & POLICY_ENCRYPT) {
-		ealg_i = esp_info->esp_ealg_id;
+		ealg_i = esp_info->transid;
 		if (!ESP_EALG_PRESENT(ealg_i)) {
 			if (logit) {
 				loglog(RC_LOG_SERIOUS,
@@ -478,7 +485,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		}
 	}
 
-	aalg_i = alg_info_esp_aa2sadb(esp_info->esp_aalg_id);
+	aalg_i = alg_info_esp_aa2sadb(esp_info->auth);
 	if (!ESP_AALG_PRESENT(aalg_i)) {
 		DBG_log("kernel_alg_db_add() kernel auth "
 			"aalg_id=%d not present",
@@ -491,17 +498,17 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 		db_trans_add(db_ctx, ealg_i);
 
 		/* add ESP auth attr (if present) */
-		if (esp_info->esp_aalg_id != AUTH_ALGORITHM_NONE) {
+		if (esp_info->auth != AUTH_ALGORITHM_NONE) {
 			db_attr_add_values(db_ctx,
 					   AUTH_ALGORITHM,
-					   esp_info->esp_aalg_id);
+					   esp_info->auth);
 		}
 
 		/*	add keylegth if specified in esp= string */
-		if (esp_info->esp_ealg_keylen != 0) {
+		if (esp_info->enckeylen != 0) {
 				db_attr_add_values(db_ctx,
 						   KEY_LENGTH,
-						   esp_info->esp_ealg_keylen);
+						   esp_info->enckeylen);
 		} else {
 			/* no key length - if required add default here and add another max entry */
 			int def_ks = crypto_req_keysize(CRK_ESPorAH, ealg_i);
@@ -516,10 +523,10 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 				/* add this trans again with max key size */
 				if (def_ks != max_ks) {
 					db_trans_add(db_ctx, ealg_i);
-					if (esp_info->esp_aalg_id != AUTH_ALGORITHM_NONE) {
+					if (esp_info->auth != AUTH_ALGORITHM_NONE) {
 						db_attr_add_values(db_ctx,
 							AUTH_ALGORITHM,
-							esp_info->esp_aalg_id);
+							esp_info->auth);
 					}
 					db_attr_add_values(db_ctx,
 						KEY_LENGTH,
@@ -533,7 +540,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 
 		/* add ESP auth attr */
 		db_attr_add_values(db_ctx,
-				   AUTH_ALGORITHM, esp_info->esp_aalg_id);
+				   AUTH_ALGORITHM, esp_info->auth);
 	}
 
 	return TRUE;
@@ -598,12 +605,12 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 			struct esp_info tmp_esp_info;
 			int aalg_i;
 
-			tmp_esp_info.esp_ealg_id = ealg_i;
-			tmp_esp_info.esp_ealg_keylen = 0;
+			tmp_esp_info.transid = ealg_i;
+			tmp_esp_info.enckeylen = 0;
 			ESP_AALG_FOR_EACH(aalg_i) {
-				tmp_esp_info.esp_aalg_id =
+				tmp_esp_info.auth =
 					alg_info_esp_sadb2aa(aalg_i);
-				tmp_esp_info.esp_aalg_keylen = 0;
+				tmp_esp_info.authkeylen = 0;
 				kernel_alg_db_add(ctx_new, &tmp_esp_info,
 						  policy, FALSE);
 			}
@@ -652,11 +659,11 @@ bool ikev1_verify_phase2(int ealg, unsigned int key_len, int aalg,
 		int i;
 
 		ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
-			if (esp_info->esp_ealg_id == ealg &&
-			    (esp_info->esp_ealg_keylen == 0 ||
+			if (esp_info->transid == ealg &&
+			    (esp_info->enckeylen == 0 ||
 			     key_len == 0 ||
-			     esp_info->esp_ealg_keylen == key_len) &&
-			    esp_info->esp_aalg_id == aalg) {
+			     esp_info->enckeylen == key_len) &&
+			    esp_info->auth == aalg) {
 				return TRUE;
 			}
 		}
@@ -693,7 +700,7 @@ void kernel_alg_show_status(void)
 		unsigned id = alg_info_esp_sadb2aa(sadb_id);
 		struct sadb_alg *alg_p = &esp_aalg[sadb_id];
 
-		whack_log(RC_COMMENT, "algorithm ESP auth attr: id=%d, name=%s, "
+		whack_log(RC_COMMENT, "algorithm AH/ESP auth attr: id=%d, name=%s, "
 			  "keysizemin=%d, keysizemax=%d",
 			  id,
 			  enum_name(&auth_alg_names, id),

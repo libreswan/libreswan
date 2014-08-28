@@ -22,18 +22,19 @@
 struct sadb_msg; /* forward definition */
 
 /* Registration messages from pluto */
-extern void kernel_alg_register_pfkey(const struct sadb_msg *msg, int buflen);
+extern void kernel_alg_register_pfkey(const struct sadb_msg *msg);
 
-struct alg_info;
-struct esp_info;
-struct alg_info_ike;
-struct alg_info_esp;
+struct alg_info;	/* forward declaration */
+struct esp_info;	/* forward declaration */
+struct alg_info_ike;	/* forward declaration */
+struct alg_info_esp;	/* forward declaration */
+
 /* ESP interface */
 extern struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id);
 extern int kernel_alg_esp_ivlen(int alg_id);
 
-/* returns success (NULL) if esp encrypt alg is present  */
-extern err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len);
+/* returns success (NULL) if encrypt alg is present in kernel */
+extern err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len);
 
 extern bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 				    struct alg_info_esp *alg_info);
@@ -85,7 +86,8 @@ extern int esp_aalg_num;
 	for ((algo) = 1; (algo) <= SADB_AALG_MAX; (algo)++) \
 		if (ESP_AALG_PRESENT(algo))
 
-/* used by test skaffold */
+extern void kernel_alg_init(void);
+
 extern int kernel_alg_add(int satype, int exttype,
 			  const struct sadb_alg *sadb_alg);
 
