@@ -1,10 +1,28 @@
 #!/bin/bash
+
+# re-sanitize.sh: re-run the console log sanitizer scripts for one test
+#
+# The current directory should be a specific test's directory.
+# Synopsis: cd TEST ; ../../utils/re-sanitize.sh
+#
+# Each OUTPUT/${host}.console.verbose.txt will be used to create a new
+# OUTPUT/${host}.console.txt and OUTPUT/${host}.console.diff
+# If the resulting OUTPUT/${host}.console.diff is empty, it is removed.
+
+set -ui
+
+if [ ! -d OUTPUT ] ; then
+	echo "$0: no OUTPUT subdirectory.  Is `pwd` a test directory?" >&2
+	exit 1
+fi
+
 . ../../../kvmsetup.sh
 if [ -f ./testparams.sh ] ; then
 	. ./testparams.sh
 else
 	. ../../default-testparams.sh
 fi
+
 . ../setup.sh
 . ../../utils/functions.sh
 
