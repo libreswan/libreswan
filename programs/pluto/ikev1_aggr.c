@@ -612,6 +612,11 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	 * NOW SEND VENDOR ID payloads
 	 */
 
+	if (c->cisco_unity) {
+		if (!out_vid(ISAKMP_NEXT_VID, &md->rbody, VID_CISCO_UNITY))
+			return STF_INTERNAL_ERROR;
+	}
+
 	if (st->hidden_variables.st_nat_traversal == LEMPTY) {
 		/* Always announce our ability to do RFC 3706 Dead Peer Detection to the peer */
 		if (!out_vid(ISAKMP_NEXT_NONE, &md->rbody, VID_MISC_DPD))
