@@ -290,7 +290,7 @@ enum {
  * or end of an exchange.  To fix this, we pretend that there are
  * MR0 and QR0 messages before the MI1 and QR1 messages.
  *
- * STATE_MAIN_R0 and STATE_QUICK_R0 are intermediate states (not
+ * STATE_MAIN_R0 and STATE_QUICK_R0 are ephemeral states (not
  * retained between messages) representing the state that accepts the
  * first message of an exchange that has been read but not yet processed
  * and accepted.
