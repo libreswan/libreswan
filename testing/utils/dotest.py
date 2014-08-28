@@ -475,10 +475,10 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None, tes
 DEFAULTCONFIG =  { 
 	'resultsdir' : '/home/build/results',
 	'sanitizer' : "../../utils/sanitize.sh",
-	'bootwait' : 60, 
+	'bootwait' : 109, 
 	'swanhosts' : ['east', 'west', 'road', 'north'],
 	'regualrhosts' : ['nic'],
-	'shutdownwait': 21,
+	'shutdownwait': 63,
 	'newrun' : None,
 	'stoponerror' : None,
 	'retry' : 5

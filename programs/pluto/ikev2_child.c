@@ -686,14 +686,19 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 	return bestfit;
 }
 /*
- * find the best connection and create the child state
+ * find the best connection and if it is AUTH exchange create the child state
  */
 static stf_status ikev2_create_responder_child_state(
 	struct msg_digest *md,
 	struct state **ret_cst,	/* where to return child state */
-	enum phase1_role role)
+	enum phase1_role role, enum isakmp_xchg_types isa_xchg)
 {
-	struct state *pst = md->st;	/* parent state */
+	/*
+	 * parent state. only for AUTH exchange. for CREATE_CHILD_SA exchange
+	 * this is the child state
+	 */
+	struct state *pst = md->st;
+
 	struct state *cst;	/* child state */
 	struct connection *c = pst->st_connection;
 
@@ -721,24 +726,21 @@ static stf_status ikev2_create_responder_child_state(
 		return STF_FAIL + v2N_TS_UNACCEPTABLE;
 
 	for (sra = &c->spd; sra != NULL; sra = sra->next) {
-		int bfit_n = ikev2_evaluate_connection_fit(
-			c, sra, role,
-			tsi, tsr, tsi_n, tsr_n);
+		int bfit_n = ikev2_evaluate_connection_fit(c, sra, role, tsi,
+				tsr, tsi_n, tsr_n);
 
 		if (bfit_n > bestfit_n) {
 			DBG(DBG_CONTROLMORE,
-			    DBG_log("bfit_n=ikev2_evaluate_connection_fit found better fit c %s",
+			    DBG_log("prefix fitness found a better match c %s",
 				    c->name));
 			int bfit_p = ikev2_evaluate_connection_port_fit(
-				    c, sra, role,
-				    tsi, tsr, tsi_n, tsr_n,
+				    c, sra, role, tsi, tsr, tsi_n, tsr_n,
 				    &best_tsi_i, &best_tsr_i);
 
 			if (bfit_p > bestfit_p) {
 				DBG(DBG_CONTROLMORE,
-				    DBG_log("ikev2_evaluate_connection_port_fit found better fit c %s, tsi[%d],tsr[%d]",
-					    c->name,
-					    best_tsi_i, best_tsr_i));
+				    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
+					    c->name, best_tsi_i, best_tsr_i));
 				int bfit_pr =
 					ikev2_evaluate_connection_protocol_fit(
 						c, sra, role,
@@ -747,7 +749,7 @@ static stf_status ikev2_create_responder_child_state(
 
 				if (bfit_pr > bestfit_pr) {
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("ikev2_evaluate_connection_protocol_fit found better fit c %s, tsi[%d],tsr[%d]",
+					    DBG_log("protocol fitness found better match c %s, tsi[%d],tsr[%d]",
 						    c->name,
 						    best_tsi_i,
 						    best_tsr_i));
@@ -759,14 +761,16 @@ static stf_status ikev2_create_responder_child_state(
 					bsr = sra;
 				} else {
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("protocol fit c %s c->name was rejected by protocol matching",
+					    DBG_log("protocol fitness rejected c %s c->name",
 						    c->name));
 				}
+			} else {
+				DBG(DBG_CONTROLMORE,
+						DBG_log("port fitness rejected c %s c->name", c->name));
 			}
 		} else {
 			DBG(DBG_CONTROLMORE,
-			    DBG_log("prefix range fit c %s c->name was rejected by port matching",
-				    c->name));
+			    DBG_log("prefix fitness rejected c %s c->name", c->name));
 		}
 	}
 
@@ -834,14 +838,13 @@ static stf_status ikev2_create_responder_child_state(
 
 			for (sr = &d->spd; sr != NULL; sr = sr->next) {
 				int newfit = ikev2_evaluate_connection_fit(
-					d, sr, role,
-					tsi, tsr, tsi_n, tsr_n);
+					d, sr, role, tsi, tsr, tsi_n, tsr_n);
 
 				if (newfit > bestfit_n) {
 					/* ??? what does this comment mean? */
 					/* will complicated this with narrowing */
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("bfit=ikev2_evaluate_connection_fit found better fit d %s",
+					    DBG_log("prefix fitness found a better match d %s",
 						    d->name));
 					int bfit_p =
 						ikev2_evaluate_connection_port_fit(
@@ -853,25 +856,24 @@ static stf_status ikev2_create_responder_child_state(
 
 					if (bfit_p > bestfit_p) {
 						DBG(DBG_CONTROLMORE, DBG_log(
-							    "ikev2_evaluate_connection_port_fit found better fit d %s, tsi[%d],tsr[%d]",
+							    "port fitness found better match d %s, tsi[%d],tsr[%d]",
 							    d->name,
 							    best_tsi_i,
 							    best_tsr_i));
 						int bfit_pr =
 							ikev2_evaluate_connection_protocol_fit(
-								d, sra,
-								role,
-								tsi,
-								tsr,
-								tsi_n,
+								d, sra, role,
+								tsi, tsr, tsi_n,
 								tsr_n,
 								&best_tsi_i,
 								&best_tsr_i);
 
 						if (bfit_pr > bestfit_pr) {
 							DBG(DBG_CONTROLMORE,
-							    DBG_log("ikev2_evaluate_connection_protocol_fit found better fit d %s, tsi[%d],tsr[%d]",
-								    d->name, best_tsi_i, best_tsr_i));
+							    DBG_log("protocol fitness found better match d %s, tsi[%d],tsr[%d]",
+								    d->name,
+								    best_tsi_i,
+								    best_tsr_i));
 
 							bestfit_p = bfit_p;
 							bestfit_n = newfit;
@@ -879,13 +881,18 @@ static stf_status ikev2_create_responder_child_state(
 							bsr = sr;
 						} else {
 							DBG(DBG_CONTROLMORE,
-							    DBG_log("protocol fit d %s c->name was rejected by protocol matching",
+							    DBG_log("protocol fitness rejected d %s c->name",
 								    d->name));
 						}
+					} else {
+						DBG(DBG_CONTROLMORE,
+								DBG_log("port fitness rejected d %s c->name",
+									c->name));
 					}
+
 				} else {
 					DBG(DBG_CONTROLMORE,
-					    DBG_log("prefix range fit d %s d->name was rejected by port matching",
+					    DBG_log("prefix fitness rejected d %s",
 						    d->name));
 				}
 			}
@@ -909,9 +916,14 @@ static stf_status ikev2_create_responder_child_state(
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-	cst = duplicate_state(pst);
+
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		cst = md->st;
+	} else {
+		cst = duplicate_state(pst);
+		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
+	}
 	cst->st_connection = c;
-	insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
 
 	if (role == O_INITIATOR) {
 		memcpy(&cst->st_ts_this, &tsi[best_tsi_i],
@@ -931,14 +943,16 @@ static stf_status ikev2_create_responder_child_state(
 
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  enum phase1_role role,
-				  pb_stream *outpbs)
+				  pb_stream *outpbs,
+				  enum isakmp_xchg_types isa_xchg)
 {
 	struct state *cst;	/* child state */
 	struct connection *c;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 
 	{
-		stf_status ret = ikev2_create_responder_child_state(md, &cst, role);
+		stf_status ret = ikev2_create_responder_child_state(md, &cst,
+				role, isa_xchg);
 
 		if (cst == NULL)
 			return ret;	/* things went badly */
@@ -954,7 +968,9 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		stf_status ret;
 		pb_stream r_sa_pbs;
 
-		r_sa.isasa_np = ISAKMP_NEXT_v2TSi;
+		r_sa.isasa_np = isa_xchg == ISAKMP_v2_CREATE_CHILD_SA ?
+			ISAKMP_NEXT_v2Nr : ISAKMP_NEXT_v2TSi;
+
 		if (!out_struct(&r_sa, &ikev2_sa_desc, outpbs, &r_sa_pbs))
 			return STF_INTERNAL_ERROR;
 
@@ -966,10 +982,26 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return ret;
 	}
 
-	{
-		stf_status ret = ikev2_calc_emit_ts(md, outpbs, role,
-				 c, c->policy);
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		/* send NONCE */
+		struct ikev2_generic in;
+		pb_stream pb_nr;
+		zero(&in);
+		in.isag_np = ISAKMP_NEXT_v2TSi;
+		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
+			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
+		}
+		if (!out_struct(&in, &ikev2_nonce_desc, outpbs, &pb_nr) ||
+				!out_chunk(cst->st_nr, &pb_nr, "IKEv2 nonce"))
+			return STF_INTERNAL_ERROR;
 
+		close_output_pbs(&pb_nr);
+	}
+
+	{
+		stf_status ret = ikev2_calc_emit_ts(md, outpbs, role, c, c->policy);
 		if (ret != STF_OK)
 			return ret;	/* should we delete_state cst? */
 	}

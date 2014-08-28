@@ -486,6 +486,11 @@ lookforcore() {
 		. ../../default-testparams.sh
 	fi
 
+	if [ -f ./add-testparams.sh ]
+	then
+	    . ./add-testparams.sh
+	fi
+
 	# get rid of any pluto core files.
 	if [ -z "${XHOST_LIST-}" ]
 	then

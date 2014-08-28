@@ -35,7 +35,7 @@ extern void complete_v2_state_transition(struct msg_digest **mdp,
 extern stf_status ikev2_send_informational(struct state *st);
 
 extern stf_status process_encrypted_informational_ikev2(struct msg_digest *md);
-extern stf_status ikev2_in_create_child_sa(struct msg_digest *md);
+extern stf_status ikev2_create_child_sa_in(struct msg_digest *md);
 
 extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1(struct msg_digest *md);
@@ -170,7 +170,8 @@ extern int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 
 extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					 enum phase1_role role,
-					 pb_stream *outpbs);
+					 pb_stream *outpbs,
+					 enum isakmp_xchg_types isa_xchg);
 
 extern void ikev2_update_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);

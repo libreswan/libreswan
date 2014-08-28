@@ -371,9 +371,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
-	  .processor  = ikev2_in_create_child_sa,
+	  .processor  = ikev2_create_child_sa_in,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/* Create Child SA Exchange*/
 	{ .story      = "R2: CREATE_CHILD_SA",
@@ -383,9 +383,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
-	  .processor  = ikev2_in_create_child_sa,
+	  .processor  = ikev2_create_child_sa_in,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/* Informational Exchange*/
 	{ .story      = "R2: process INFORMATIONAL",
@@ -1189,6 +1189,9 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 * this function is called, we should be graceful here.  And for this
 	 * particular case, and similar failure cases, we want SEND_NOTIFICATION
 	 * (below) to let the peer know why we've rejected the request.
+	 *
+	 * Another case of null state is retrun from ikev2parent_inR1BoutI1B
+	 * Which returns STF_IGNORE.
 	 */
 	if (st != NULL) {
 		from_state = st->st_state;
