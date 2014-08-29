@@ -612,7 +612,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	 * NOW SEND VENDOR ID payloads
 	 */
 
-	if (c->cisco_unity) {
+	if (st->st_connection->cisco_unity) {
 		if (!out_vid(ISAKMP_NEXT_VID, &md->rbody, VID_CISCO_UNITY))
 			return STF_INTERNAL_ERROR;
 	}
