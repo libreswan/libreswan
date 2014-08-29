@@ -332,7 +332,7 @@ struct state {
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
 
-	u_int8_t st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
+	bool st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
 
 	SECKEYPrivateKey *st_sec_nss;	/* secret (owned by NSS) */
 
