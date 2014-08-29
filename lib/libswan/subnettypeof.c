@@ -71,8 +71,8 @@ const ip_address * src;
 	int b;
 	unsigned char *bp;
 	size_t n;
-	unsigned const char *p;
-	unsigned const char *stop;
+	const unsigned char *p;
+	const unsigned char *stop;
 
 	n = addrbytesptr(src, &bp);
 	if (n == 0)

@@ -507,7 +507,7 @@ static void usage(void)
 	exit(10);
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "config", required_argument, NULL, 'C' },
 	{ "debug", no_argument, NULL, 'D' },

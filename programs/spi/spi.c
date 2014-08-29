@@ -301,7 +301,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 	return 0;
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "ah", 1, 0, 'H' },
 	{ "esp", 1, 0, 'P' },

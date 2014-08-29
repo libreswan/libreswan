@@ -500,7 +500,7 @@ void init_vendorid(void)
 			/** VendorID is a string to hash with MD5 **/
 			unsigned char *vidm = alloc_bytes(MD5_DIGEST_SIZE,
 							 "VendorID MD5 (ignore)");
-			unsigned const char *d = (const unsigned char *)vid->data;
+			const unsigned char *d = (const unsigned char *)vid->data;
 			lsMD5_CTX ctx;
 
 			vid->vid = (char *)vidm;
