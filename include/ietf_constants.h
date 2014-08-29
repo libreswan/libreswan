@@ -1454,7 +1454,7 @@ enum ipsec_cipher_algo {
 	ESP_BLOWFISH = 7,	/* obsoleyed */
 	ESP_3IDEA = 8,
 	ESP_DES_IV32 = 9,
-	ESP_RC4 = 10,
+	ESP_RC4 = 10, /* reserved in IKEv2 */
 	ESP_NULL = 11,
 	ESP_AES = 12,	/* CBC 128 bit AES */
 	ESP_AES_CTR = 13,
@@ -1466,8 +1466,9 @@ enum ipsec_cipher_algo {
 	ESP_AES_GCM_12 = 19,
 	ESP_AES_GCM_16 = 20,
 	ESP_SEED_CBC = 21,
-	ESP_CAMELLIA = 22,
-	ESP_NULL_AUTH_AES_GMAC = 23,	/* [RFC4543][Errata1821] */
+	ESP_RESERVED_IEEE_P1619_XTS_AES = 22, /* not for IKE! */
+	ESP_CAMELLIA = 23,
+	ESP_NULL_AUTH_AES_GMAC = 24,	/* [RFC4543][Errata1821] */
 	/* 24-248 Unassigned */
 	/* 249-255 reserved for private use */
 	ESP_MARS = 249,
