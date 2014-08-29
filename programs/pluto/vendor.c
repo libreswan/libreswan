@@ -500,31 +500,29 @@ void init_vendorid(void)
 			/** VendorID is a string to hash with MD5 **/
 			unsigned char *vidm = alloc_bytes(MD5_DIGEST_SIZE,
 							 "VendorID MD5 (ignore)");
-			unsigned const char *d =
-				(unsigned const char *)vid->data;
-			MD5_CTX ctx;
+			unsigned const char *d = (const unsigned char *)vid->data;
+			lsMD5_CTX ctx;
 
 			vid->vid = (char *)vidm;
 
-			osMD5Init(&ctx);
-			osMD5Update(&ctx, d, strlen(vid->data));
-			osMD5Final(vidm, &ctx);
+			lsMD5Init(&ctx);
+			lsMD5Update(&ctx, d, strlen(vid->data));
+			lsMD5Final(vidm, &ctx);
 			vid->vid_len = MD5_DIGEST_SIZE;
 		} else if (vid->flags & VID_FSWAN_HASH) {
 			/** FreeS/WAN 2.00+ specific hash **/
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
 			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID (ignore)");
-			MD5_CTX ctx;
+			lsMD5_CTX ctx;
 			int i;
 
 			vid->vid = vidm;
 
-			osMD5Init(&ctx);
-			osMD5Update(&ctx,
-				    (const unsigned char *)vid->data, strlen(
-					    vid->data));
-			osMD5Final(hash, &ctx);
+			lsMD5Init(&ctx);
+			lsMD5Update(&ctx, (const unsigned char *)vid->data,
+				strlen(vid->data));
+			lsMD5Final(hash, &ctx);
 			vidm[0] = 'O';
 			vidm[1] = 'E';
 #if FSWAN_VID_SIZE <= 2 + MD5_DIGEST_SIZE

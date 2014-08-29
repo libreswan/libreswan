@@ -1154,10 +1154,11 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_MD5:
 	case OID_MD5_WITH_RSA:
 	{
-		MD5_CTX context;
-		osMD5Init(&context);
-		osMD5Update(&context, tbs.ptr, tbs.len);
-		osMD5Final(digest->ptr, &context);
+		lsMD5_CTX context;
+
+		lsMD5Init(&context);
+		lsMD5Update(&context, tbs.ptr, tbs.len);
+		lsMD5Final(digest->ptr, &context);
 		digest->len = MD5_DIGEST_SIZE;
 		return TRUE;
 	}
@@ -1168,6 +1169,7 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA1_WITH_RSA_OIW:
 	{
 		SHA1_CTX context;
+
 		SHA1Init(&context);
 		SHA1Update(&context, tbs.ptr, tbs.len);
 		SHA1Final(digest->ptr, &context);

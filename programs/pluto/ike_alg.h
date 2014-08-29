@@ -32,7 +32,9 @@ struct encrypt_desc {
 			 bool enc);
 };
 
-typedef void (*hash_update_t)(void *, const u_char *, size_t);
+union hash_ctx;	/* forward declaration */
+
+typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t);
 
 struct hash_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
@@ -41,9 +43,9 @@ struct hash_desc {
 	size_t hash_digest_len;
 	size_t hash_integ_len;	/* truncated output len when used as an integrity algorithm in IKEV2 */
 	size_t hash_block_size;
-	void (*hash_init)(void *ctx);
+	void (*hash_init)(union hash_ctx *ctx);
 	hash_update_t hash_update;
-	void (*hash_final)(u_int8_t *out, void *ctx);
+	void (*hash_final)(u_int8_t *out, union hash_ctx *ctx);
 };
 
 struct alg_info_ike; /* forward reference */

@@ -83,30 +83,6 @@ bool nat_traversal_enabled = TRUE; /* can get disabled if kernel lacks support *
 static time_t nat_kap = 0;	/* keep-alive period */
 static bool nat_kap_event = FALSE;
 
-/* Copied hash_desc from crypto.c I don't know how to call SHA1 by name
- * RFC 5996 2.23 only allow "SHA-1 digest of the SPIs (in the order they appear
- * in the header), IP address, and port from which this packet was sent. "
- */
-
-static struct hash_desc ikev2_natd_hasher =
-{
-	.common = { .name = "oakley_sha",
-		.officname = "sha1",
-		.algo_type = IKE_ALG_HASH,
-		.algo_id =   OAKLEY_SHA1,
-		.algo_v2id = IKEv2_PRF_HMAC_SHA1,
-		.algo_next = NULL, },
-	.hash_ctx_size = sizeof(SHA1_CTX),
-	.hash_key_size =   SHA1_DIGEST_SIZE,
-	.hash_digest_len = SHA1_DIGEST_SIZE,
-	.hash_integ_len = 0,    /* Not applicable */
-	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))SHA1Init,
-	/* ??? last arg is __u32!!! */
-	.hash_update = (void (*)(void *, const u_int8_t *, size_t))SHA1Update,
-	.hash_final = (void (*)(u_char *, void *))SHA1Final,
-};
-
 #define IKEV2_NATD_HASH_SIZE	SHA1_DIGEST_SIZE
 
 void init_nat_traversal(unsigned int keep_alive_period)
@@ -207,7 +183,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 *  First: one with local (source) IP & port
 	 */
-	natd_hash(&ikev2_natd_hasher, hb, st->st_icookie,
+	natd_hash(&crypto_hasher_sha1, hb, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ?
 			md->hdr.isa_rcookie : st->st_rcookie,
 		&st->st_localaddr, st->st_localport);
@@ -220,7 +196,7 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md)
 	/*
 	 * Second: one with remote (destination) IP & port
 	 */
-	natd_hash(&ikev2_natd_hasher, hb, st->st_icookie,
+	natd_hash(&crypto_hasher_sha1, hb, st->st_icookie,
 		is_zero_cookie(st->st_rcookie) ? md->hdr.isa_rcookie :
 		st->st_rcookie, &st->st_remoteaddr, st->st_remoteport);
 
@@ -1177,13 +1153,13 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	/*
 	 * First one with my IP & port
 	 */
-	natd_hash(&ikev2_natd_hasher, hash_me, st->st_icookie, rcookie,
+	natd_hash(&crypto_hasher_sha1, hash_me, st->st_icookie, rcookie,
 		&(md->iface->ip_addr), md->iface->port);
 
 	/*
 	 * The others with sender IP & port
 	 */
-	natd_hash(&ikev2_natd_hasher, hash_him, st->st_icookie, rcookie,
+	natd_hash(&crypto_hasher_sha1, hash_him, st->st_icookie, rcookie,
 		&(md->sender), md->sender_port);
 
 	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {

@@ -23,11 +23,11 @@
 
 typedef struct {
 	PK11Context* ctx_nss;
-} MD5_CTX;
+} lsMD5_CTX;
 
-void osMD5Init(MD5_CTX *);
-void osMD5Update(MD5_CTX *, const unsigned char *, u_int32_t);
-void osMD5Final(unsigned char [16], MD5_CTX *);
+void lsMD5Init(lsMD5_CTX *);
+void lsMD5Update(lsMD5_CTX *, const unsigned char *, size_t);
+void lsMD5Final(unsigned char [MD5_DIGEST_SIZE], lsMD5_CTX *);
 
 #define _MD5_H_
 #endif /* _MD5_H_ */
