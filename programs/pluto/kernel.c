@@ -1727,6 +1727,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			key_len = ei->enckeylen;
 		}
 
+		/* Fixup key lengths for special cases */
 		switch (ei->transid) {
 		case ESP_3DES:
 			/* Grrrrr.... f*cking 7 bits jurassic algos  */
