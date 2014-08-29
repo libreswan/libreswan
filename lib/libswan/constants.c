@@ -985,7 +985,7 @@ static const char *const auth_alg_name[] = {
 	"AUTH_ALGORITHM_HMAC_SHA2_384",
 	"AUTH_ALGORITHM_HMAC_SHA2_512",
 	"AUTH_ALGORITHM_HMAC_RIPEMD",
-	"AUTH_ALGORITHM_AES_CBC",
+	"AUTH_ALGORITHM_AES_XCBC",
 	"AUTH_ALGORITHM_SIG_RSA",	/* RFC4359 */
 	"AUTH_ALGORITHM_AES_128_GMAC",	/* RFC4543 [Errata1821] */
 	"AUTH_ALGORITHM_AES_192_GMAC",	/* RFC4543 [Errata1821] */
@@ -1085,7 +1085,7 @@ enum_names modecfg_attr_names = {
 	INTERNAL_IP4_ADDRESS,
 	HOME_AGENT_ADDRESS,
 	modecfg_attr_name_draft,
-	&modecfg_microsoft_attr_names
+	&xauth_attr_names
 };
 
 static const char *const xauth_attr_name[] = {
@@ -1109,7 +1109,7 @@ enum_names xauth_attr_names = {
 	XAUTH_TYPE,
 	XAUTH_ANSWER,
 	xauth_attr_name,
-	NULL
+	&modecfg_microsoft_attr_names
 };
 
 /* Oakley Lifetime Type attribute */

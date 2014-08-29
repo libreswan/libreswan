@@ -102,7 +102,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 	if (ai == NULL) {
 		DBG(DBG_CONTROL, DBG_log(
-			    "no IKE algorithms for this connection "));
+			    "no specific IKE algorithms specified - using defaults"));
 		return NULL;
 	}
 

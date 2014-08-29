@@ -2376,6 +2376,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					ok_transid = AH_SHA2_512;
 					break;
 
+				case AUTH_ALGORITHM_HMAC_RIPEMD:
+					ok_transid = AH_RIPEMD;
+					break;
+
 				case AUTH_ALGORITHM_AES_CBC:
 					ok_transid = AH_AES_XCBC_MAC;
 					break;
@@ -2544,6 +2548,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case AUTH_ALGORITHM_HMAC_SHA2_256:
 					case AUTH_ALGORITHM_HMAC_SHA2_384:
 					case AUTH_ALGORITHM_HMAC_SHA2_512:
+					case AUTH_ALGORITHM_HMAC_RIPEMD:
+					case AUTH_ALGORITHM_AES_CBC:
 						break;
 
 					default:

@@ -15,3 +15,9 @@ s/\(INSTALLED, TUNNEL, .* in UDP SPIs: \)[a-z0-9]*_i [a-z0-9]*_o/\1SPISPI_i SPIS
 /^  loaded plugins: .*$/d
 s/QUICK_MODE request [0-9]* /QUICK_MODE request 0123456789/g
 s/QUICK_MODE response [0-9]* /QUICK_MODE response 0123456789/g
+# for ip xfrm commands, as we cannot use ipsec look which normally does this part
+s/ah spi 0x[a-z0-9]* /ah spi 0xSPISPI /g
+s/esp spi 0x[a-z0-9]* /esp spi 0xSPISPI /g
+s/auth-trunc \([^ ]*\) 0x[a-z0-9]* \(.*\)$/auth-trunc \1 0xKEY \2/g
+# strip out our own changing vendor id
+s/received unknown vendor ID: 40:48.*/received unknown vendor ID: LIBRESWAN/g

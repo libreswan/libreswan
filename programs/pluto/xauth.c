@@ -1162,6 +1162,10 @@ static bool do_pam_authentication(void *varg)
  *	htpasswd -c -b /etc/ipsec.d/passwd road roadpass
  *	htpasswd -b /etc/ipsec.d/passwd home homepass
  *
+ * NOTE: htpasswd on your system may create a crypt() incompatible hash
+ * by default (i.e. a type id of $apr1$). To create a crypt() compatible
+ * hash with htpasswd use the -d option.
+ *
  * @return bool success
  */
 /* IN AN AUTH THREAD */
@@ -1236,7 +1240,7 @@ static bool do_file_authentication(void *varg)
 		    DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s)",
 			    userid, arg->name,
 			    passwdhash,
-			    connectionname == NULL? "" : connectionname, arg->connname));
+			    connectionname == NULL? "<any>" : connectionname, arg->connname));
 
 		if (streq(userid, arg->name) &&
 		    (connectionname == NULL || streq(connectionname, arg->connname)))

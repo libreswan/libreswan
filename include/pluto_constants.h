@@ -276,22 +276,24 @@ enum {
  * All routines are about transitioning to the next state
  * (which might actually be the same state).
  *
- * Messages are named [MQ][IR]n where
+ * IKE V1 messages are sometimes called [MAQ][IR]n where
  * - M stands for Main Mode (Phase 1);
+ *   A stands for Aggressive Mode (Phase 1);
  *   Q stands for Quick Mode (Phase 2)
  * - I stands for Initiator;
  *   R stands for Responder
- * - n, a digit, stands for the number of the message
+ * - n, a digit, stands for the number of the message from this role
+ *   within this exchange
  *
  * It would be more convenient if each state accepted a message
- * and produced one.  This is the case for states at the start
+ * and produced one.  This is not the case for states at the start
  * or end of an exchange.  To fix this, we pretend that there are
- * MR0 and QR0 messages before the MI1 and QR1 messages.  Similarly,
- * we pretend that there are MR4 and QR2 messages.
+ * MR0 and QR0 messages before the MI1 and QR1 messages.
  *
- * STATE_MAIN_R0 and STATE_QUICK_R0 are intermediate states (not
+ * STATE_MAIN_R0 and STATE_QUICK_R0 are ephemeral states (not
  * retained between messages) representing the state that accepts the
- * first message of an exchange has been read but not processed.
+ * first message of an exchange that has been read but not yet processed
+ * and accepted.
  *
  * v1_state_microcode_table in ikev1.c and
  * v2_state_microcode_table in ikev2.c describe

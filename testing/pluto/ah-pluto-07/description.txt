@@ -1,1 +1,4 @@
 Testing AH with aes192_gmac with NETKEY
+
+The linux kernel seems to not yet support this
+

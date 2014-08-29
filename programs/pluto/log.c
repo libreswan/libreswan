@@ -627,7 +627,6 @@ void passert_fail(const char *pred_str, const char *file_str,
 	       line_no, pred_str);
 	if (!dying_breath) {
 		dying_breath = TRUE;
-		show_status();
 	}
 	/* exiting correctly doesn't always work */
 	libreswan_log_abort(file_str, line_no);

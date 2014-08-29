@@ -3748,7 +3748,7 @@ void ikev2_delete_out(struct state *st)
 			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
 
-			/* set Initiator flag if we are the IKE initiator */
+			/* set Initiator flag if we are the IKE Original Initiator */
 			if (pst->st_state == STATE_PARENT_I2 ||
 			    pst->st_state == STATE_PARENT_I3) {
 				r_hdr.isa_flags |= ISAKMP_FLAGS_IKE_I;

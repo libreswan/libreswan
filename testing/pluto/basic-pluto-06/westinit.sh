@@ -10,7 +10,8 @@ mkdir /tmp/nonroot
 cp -a /etc/ipsec.* /tmp/nonroot/
 chown -R bin:bin /tmp/nonroot
 ipsec _stackmanager start
-ipsec pluto --config /tmp/nonroot/ipsec.conf --secretsfile /tmp/nonroot/ipsec.secrets --plutostderrlogtime --logfile /tmp/pluto.log 
+# secrets must be owned by root - we need per-conn secret whack support
+ipsec pluto --config /tmp/nonroot/ipsec.conf --secretsfile /etc/ipsec.secrets --plutostderrlogtime --logfile /tmp/pluto.log 
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ipv4-psk
 echo "initdone"

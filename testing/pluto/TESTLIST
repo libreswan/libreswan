@@ -494,14 +494,21 @@ umlplutotest	transport-03		bad
 kvmplutotest	nat-transport-02	wip
 
 kvmplutotest	ah-pluto-01		good
-kvmplutotest	ah-pluto-02		wip
-kvmplutotest	ah-pluto-03		wip
-kvmplutotest	ah-pluto-04		wip
-kvmplutotest	ah-pluto-05		wip
+kvmplutotest	ah-pluto-02		good
+kvmplutotest	ah-pluto-03		good
+kvmplutotest	ah-pluto-04		good
+kvmplutotest	ah-pluto-05		good
+kvmplutotest	ah-pluto-09		good
+kvmplutotest	ah-pluto-10		good
+kvmplutotest	ah-pluto-11		good
+kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	good
+kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	good
+kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512	good
+kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256	good
+# kernel does not yet support these algo's
 kvmplutotest	ah-pluto-06		wip
 kvmplutotest	ah-pluto-07		wip
 kvmplutotest	ah-pluto-08		wip
-kvmplutotest	ah-pluto-09		wip
 
 umlplutotest	protoport-01		good
 umlplutotest	protoport-02		good
@@ -592,6 +599,8 @@ kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	wip
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		wip
 kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
 kvmplutotest	interop-ikev2-strongswan-15-create_child_sa-01	wip
+# strongswan still broken in v5.1.1
+kvmplutotest	interop-ikev2-strongswan-18-psk-cast		wip
 
 
 skiptest	interop-racoon-iphone4s-nonat		incomplete

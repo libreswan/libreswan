@@ -1064,8 +1064,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	if (sa->authkeylen) {
 		const char *name;
-		struct xfrm_algo_auth algo;
-		struct xfrm_algo algo_old;
 
 		name = sparse_name(aalg_list, sa->authalg);
 		if (!name) {
@@ -1090,6 +1088,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		case AUTH_ALGORITHM_HMAC_SHA2_256:
 		case AUTH_ALGORITHM_HMAC_SHA2_384:
 		case AUTH_ALGORITHM_HMAC_SHA2_512:
+		{
+			struct xfrm_algo_auth algo;
 
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			switch(sa->authalg) {
@@ -1125,8 +1125,11 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 			break;
-
+		}
 		default:
+		{
+			struct xfrm_algo algo_old;
+
 			algo_old.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			attr->rta_type = XFRMA_ALG_AUTH;
 			attr->rta_len = RTA_LENGTH(
@@ -1140,6 +1143,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 			break;
+		}
 		}
 	}
 
