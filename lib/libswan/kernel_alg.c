@@ -179,7 +179,9 @@ err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len)
 						alg_p->sadb_alg_maxbits);
 			}
 			break;
+#if 0
 		case ESP_SEED_CBC:
+#endif
 		case ESP_CAST:
 			if (key_len != 128) {
 				ugh = builddiag("kernel_alg_db_add() key_len is incorrect: alg_id=%d, key_len=%d, alg_minbits=%d, alg_maxbits=%d",

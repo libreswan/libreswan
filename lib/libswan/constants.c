@@ -574,6 +574,7 @@ static enum_names esp_transformid_names_private_use = {
 	NULL
 };
 
+/* This tracks the IKEv2 registry now! see ietf_constants.h */
 static const char *const esp_transform_name[] = {
 	"ESP_DES_IV64",	/* old DES */
 	"ESP_DES",	/* obsoleted */
@@ -595,16 +596,22 @@ static const char *const esp_transform_name[] = {
 	"ESP_AES_GCM_A",
 	"ESP_AES_GCM_B",
 	"ESP_AES_GCM_C",
-	"ESP_SEED_CBC",
-	"ESP_CAMELLIA",
-	"ESP_NULL_AUTH_AES_GMAC",	/* RFC4543 [Errata1821] */
-	/* 24-248 Unassigned */
-	/* 249-255 Reserved for private use */
+	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
+	"ESP_RESERVED_FOR_IEEE_P1619_XTS_AES", /* IKEv1 ESP_CAMELLIA */
+	"ESP_CAMELLIA", /* IKEv1 is ESP_NULL_AUTH_AES-GMAC */
+	"ESP_CAMELLIA_CTR", /* not assigned in/for IKEv1 */
+	"ESP_CAMELLIA_CCM_A", /* not assigned in/for IKEv1 */
+	"ESP_CAMELLIA_CCM_B", /* not assigned in/for IKEv1 */
+	"ESP_CAMELLIA_CCM_C", /* not assigned in/for IKEv1 */
+	/* IKEv1: 24-248 Unassigned */
+	/* IKEv1: 249-255 reserved for private use */
+	/* IKEv2: 28-1023 Unassigned */
+	/* IKEv2: 1024-65535 reserved for private use */
 };
 
 enum_names esp_transformid_names = {
 	ESP_DES_IV64,
-	ESP_NULL_AUTH_AES_GMAC,
+	ESP_CAMELLIA_CCM_16,
 	esp_transform_name,
 	&esp_transformid_names_private_use
 };
