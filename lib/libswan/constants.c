@@ -2143,6 +2143,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 const char *bitnamesof(const char *const table[], lset_t val)
 {
 	static char bitnamesbuf[200]; /* I hope that it is big enough! */
+
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
 }
 
@@ -2187,9 +2188,9 @@ const char *sparse_val_show(sparse_names sd, unsigned long val)
 	const char *p = sparse_name(sd, val);
 
 	if (p == NULL) {
-		static char buf[12]; /*
-				      * only one!  I hope that it is big enough
-				      */
+		/* only one!  I hope that it is big enough */
+		static char buf[12];
+
 		snprintf(buf, sizeof(buf), "%lu??", val);
 		p = buf;
 	}

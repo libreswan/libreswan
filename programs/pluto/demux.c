@@ -193,7 +193,7 @@ void process_packet(struct msg_digest **mdp)
  */
 void comm_handle(const struct iface_port *ifp)
 {
-	static struct msg_digest *md;
+	struct msg_digest *md;
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	/* Even though select(2) says that there is a message,

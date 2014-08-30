@@ -1212,7 +1212,7 @@ void add_connection(const struct whack_message *wm)
 					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
-				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
+				char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),

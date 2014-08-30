@@ -832,7 +832,7 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 	}
 }
 
-static void update_ports(struct whack_message * m)
+static void update_ports(struct whack_message *m)
 {
 	int port;
 
@@ -912,6 +912,7 @@ int main(int argc, char **argv)
 	const char
 	*af_used_by = NULL,
 	*tunnel_af_used_by = NULL;
+	char keyspace[RSA_MAX_ENCODING_BYTES];	/* space for at most one RSA key */
 
 	char xauthname[XAUTH_MAX_NAME_LENGTH];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
@@ -1132,8 +1133,11 @@ int main(int argc, char **argv)
 
 		case OPT_PUBKEYRSA: /* --pubkeyrsa <key> */
 		{
-			static char keyspace[RSA_MAX_ENCODING_BYTES];
 			char mydiag_space[TTODATAV_BUF];
+
+			if (msg.keyval.ptr != NULL)
+				diagq("only one RSA public-key allowed", optarg);
+
 			ugh = ttodatav(optarg, 0, 0,
 				       keyspace, sizeof(keyspace),
 				       &msg.keyval.len, mydiag_space,

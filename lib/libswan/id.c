@@ -46,7 +46,7 @@
  */
 #define MAX_BUF 6
 
-unsigned char*temporary_cyclic_buffer(void)
+unsigned char *temporary_cyclic_buffer(void)
 {
 	/* MAX_BUF internal buffers */
 	static unsigned char buf[MAX_BUF][IDTOA_BUF];

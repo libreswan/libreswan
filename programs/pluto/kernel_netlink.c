@@ -1685,7 +1685,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 		} u;
 		char data[1024];
 	} rsp;
-	static int get_cpi_bug;
+	static bool get_cpi_bug = FALSE;	/* sticky after failure */
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -1712,7 +1712,7 @@ retry:
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		if (rsp.u.e.error == -EINVAL && proto == IPPROTO_COMP &&
 			!get_cpi_bug) {
-			get_cpi_bug = 1;
+			get_cpi_bug = TRUE;
 			libreswan_log("netlink_get_spi: Enabling workaround for kernel CPI allocation bug");
 			goto retry;
 		}

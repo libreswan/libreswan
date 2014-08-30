@@ -1513,7 +1513,7 @@ stf_status xauth_inR0(struct msg_digest *md)
 	 * We manage this by making these chunks just
 	 * references to parts of the input packet.
 	 */
-	static unsigned char unknown[] = "<unknown>";
+	static unsigned char unknown[] = "<unknown>";	/* never written to */
 	chunk_t name,
 		password = empty_chunk;
 	bool gotname = FALSE,

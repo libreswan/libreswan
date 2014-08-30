@@ -287,6 +287,7 @@ static void init_whack_msg(struct whack_message *msg)
 	msg->magic = WHACK_MAGIC;
 }
 
+/* NOT RE-ENTRANT: uses a static buffer */
 static char *connection_name(struct starter_conn *conn)
 {
 	/* If connection name is '%auto', create a new name like conn_xxxxx */

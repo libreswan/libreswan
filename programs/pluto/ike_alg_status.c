@@ -63,8 +63,8 @@ void ike_alg_show_status(void)
 	whack_log(RC_COMMENT, " "); /* spacer */
 
 	IKE_EALG_FOR_EACH(algo) {
-		static char v1namebuf[ENUM_SHOW_BUF_LEN];
-		static char v2namebuf[ENUM_SHOW_BUF_LEN];
+		char v1namebuf[ENUM_SHOW_BUF_LEN];
+		char v2namebuf[ENUM_SHOW_BUF_LEN];
 
 		passert(algo != NULL);
 		passert(algo->algo_id != 0 || algo->algo_v2id != 0);
@@ -128,10 +128,10 @@ void ike_alg_show_connection(struct connection *c, const char *instance)
 	}
 	st = state_with_serialno(c->newest_isakmp_sa);
 	if (st != NULL) {
-		static char encbuf[ENUM_SHOW_BUF_LEN];
-		static char prfbuf[ENUM_SHOW_BUF_LEN];
-		static char integbuf[ENUM_SHOW_BUF_LEN];
-		static char groupbuf[ENUM_SHOW_BUF_LEN];
+		char encbuf[ENUM_SHOW_BUF_LEN];
+		char prfbuf[ENUM_SHOW_BUF_LEN];
+		char integbuf[ENUM_SHOW_BUF_LEN];
+		char groupbuf[ENUM_SHOW_BUF_LEN];
 
 		if (!st->st_ikev2) { /* IKEv1 */
 			whack_log(RC_COMMENT,
