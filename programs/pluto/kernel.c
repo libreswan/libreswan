@@ -189,18 +189,20 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 						     his);
 }
 
-static unsigned get_proto_reqid(unsigned base, int proto)
+static reqid_t get_proto_reqid(reqid_t base, int proto)
 {
 	switch (proto) {
-	default:
 	case IPPROTO_COMP:
-		base++;
-	/* fall through */
+		return reqid_ipcomp(base);
+
 	case IPPROTO_ESP:
-		base++;
-	/* fall through */
+		return reqid_esp(base);
+
 	case IPPROTO_AH:
-		break;
+		return reqid_ah(base);
+
+	default:
+		bad_case(proto);
 	}
 
 	return base;
@@ -286,8 +288,8 @@ ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel)
 					   text_said);
 	}
 
-	while (!(IPCOMP_FIRST_NEGOTIATED <= first_busy_cpi && first_busy_cpi <
-		 IPCOMP_LAST_NEGOTIATED)) {
+	while (!(IPCOMP_FIRST_NEGOTIATED <= first_busy_cpi &&
+		 first_busy_cpi < IPCOMP_LAST_NEGOTIATED)) {
 		get_rnd_bytes((u_char *)&first_busy_cpi,
 			      sizeof(first_busy_cpi));
 		latest_cpi = first_busy_cpi;
@@ -1322,8 +1324,7 @@ static bool del_spi(ipsec_spi_t spi, int proto,
 }
 
 /*
- * Setup a pair of SAs.
- *
+ * Setup one direction of the SA bundle
  */
 static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 {
@@ -1344,7 +1345,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* SPIs, saved for spigrouping or undoing, if necessary */
 	struct kernel_sa
 		said[EM_MAXRELSPIS],
-	*said_next = said;
+		*said_next = said;
 
 	char text_said[SATOT_BUF];
 	int encapsulation;
@@ -1371,13 +1372,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL ||
 	    st->st_ipcomp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL) {
 		encapsulation = ENCAPSULATION_MODE_TUNNEL;
-		add_selector = 0; /* Don't add selectors for tunnel mode */
+		add_selector = FALSE; /* Don't add selectors for tunnel mode */
 	} else {
 		encapsulation = ENCAPSULATION_MODE_TRANSPORT;
 		/* RFC 4301, Section 5.2 Requires traffic selectors to be set on
 		 * transport mode
 		 */
-		add_selector = 1;
+		add_selector = TRUE;
 	}
 	c->encapsulation = encapsulation;
 
@@ -1523,7 +1524,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->esatype = ET_IPCOMP;
 		said_next->encalg = compalg;
 		said_next->encapsulation = encapsulation;
-		said_next->reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid  :  c->spd.reqid + 2 ;
+		said_next->reqid = reqid_ipcomp(c->spd.reqid);
 		said_next->text_said = text_said;
 		said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
@@ -1577,6 +1578,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		u_char *esp_dst_keymat =
 			inbound ? st->st_esp.our_keymat : st->st_esp.
 			peer_keymat;
+		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 		const struct esp_info *ei;
 		u_int16_t key_len;
 
@@ -1650,9 +1652,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		DBG(DBG_CRYPT,
 		    DBG_log("looking for alg with transid: %d keylen: %d auth: %d\n",
-			    st->st_esp.attrs.transattrs.encrypt,
-			    st->st_esp.attrs.transattrs.enckeylen,
-			    st->st_esp.attrs.transattrs.integ_hash));
+			    ta->encrypt, ta->enckeylen, ta->integ_hash));
 
 		for (ei = esp_info; ; ei++) {
 
@@ -1664,21 +1664,20 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				 */
 				struct esb_buf buftn, bufan;
 
-				ei = kernel_alg_esp_info(st->st_esp.
-							attrs.transattrs.encrypt,
-							st->st_esp.attrs.transattrs.enckeylen,
-							st->st_esp.attrs.transattrs.integ_hash);
+				ei = kernel_alg_esp_info(ta->encrypt,
+							ta->enckeylen,
+							ta->integ_hash);
 				if (ei != NULL)
 					break;
 
 				loglog(RC_LOG_SERIOUS,
 				       "ESP transform %s(%d) / auth %s not implemented yet",
 				       enum_showb(&esp_transformid_names,
-						st->st_esp.attrs.transattrs.encrypt,
+						ta->encrypt,
 						&buftn),
-				       st->st_esp.attrs.transattrs.enckeylen,
+				       ta->enckeylen,
 				       enum_showb(&auth_alg_names,
-						st->st_esp.attrs.transattrs.integ_hash,
+						ta->integ_hash,
 						&bufan));
 				goto fail;
 			}
@@ -1687,12 +1686,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			    DBG_log("checking transid: %d keylen: %d auth: %d\n",
 				    ei->transid, ei->enckeylen, ei->auth));
 
-			if (st->st_esp.attrs.transattrs.encrypt ==
-			      ei->transid &&
-			    (st->st_esp.attrs.transattrs.enckeylen == 0 ||
-			     st->st_esp.attrs.transattrs.enckeylen ==
-			       ei->enckeylen * BITS_PER_BYTE) &&
-			    st->st_esp.attrs.transattrs.integ_hash == ei->auth)
+			if (ta->encrypt == ei->transid &&
+			    (ta->enckeylen == 0 ||
+			     ta->enckeylen == ei->enckeylen * BITS_PER_BYTE) &&
+			    ta->integ_hash == ei->auth)
 				break;
 		}
 
@@ -1703,33 +1700,30 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * - the test should always fail since it is the
 		 *   negative of how we get here via break from the for.
 		 */
-		if (st->st_esp.attrs.transattrs.encrypt != ei->transid &&
-		    st->st_esp.attrs.transattrs.enckeylen != ei->enckeylen  *
-		    BITS_PER_BYTE &&
-		    st->st_esp.attrs.transattrs.integ_hash != ei->auth) {
+		if (ta->encrypt != ei->transid &&
+		    ta->enckeylen != ei->enckeylen * BITS_PER_BYTE &&
+		    ta->integ_hash != ei->auth) {
 			struct esb_buf buftn, bufan;
 
 			loglog(RC_LOG_SERIOUS,
 			       "failed to find key info for %s/%s",
 			       enum_showb(&esp_transformid_names,
-					 st->st_esp.attrs.transattrs.encrypt,
+					 ta->encrypt,
 					 &buftn),
 			       enum_showb(&auth_alg_names,
-					 st->st_esp.attrs.transattrs.integ_hash,
+					 ta->integ_hash,
 					 &bufan));
 			goto fail;
 		}
 
-		key_len = st->st_esp.attrs.transattrs.enckeylen /
-			  BITS_PER_BYTE;
+		key_len = ta->enckeylen / BITS_PER_BYTE;
 		if (key_len != 0) {
 			/* XXX: must change to check valid _range_ key_len */
 			if (key_len > ei->enckeylen) {
 				loglog(RC_LOG_SERIOUS,
 				       "ESP transform %s passed key_len=%d > %d",
 				       enum_name(&esp_transformid_names,
-						 st->st_esp.attrs.transattrs.
-						 encrypt),
+						 ta->encrypt),
 				       (int)key_len, (int)ei->enckeylen);
 				goto fail;
 			}
@@ -1807,8 +1801,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* said_next->enckeylen = ei->enckeylen; */
 
 		said_next->encapsulation = encapsulation;
-		said_next->reqid = c->spd.reqid + 1;
-		said_next->reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid  :  c->spd.reqid + 1 ;
+		said_next->reqid = reqid_esp(c->spd.reqid);
 
 #ifdef HAVE_LABELED_IPSEC
 		said_next->sec_ctx = st->sec_ctx;
@@ -1816,7 +1809,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		said_next->natt_sport = natt_sport;
 		said_next->natt_dport = natt_dport;
-		said_next->transid = st->st_esp.attrs.transattrs.encrypt;
+		said_next->transid = ta->encrypt;
 		said_next->natt_type = natt_type;
 		said_next->natt_oa = &natt_oa;
 		said_next->outif   = -1;
@@ -1976,7 +1969,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authkeylen = st->st_ah.keymat_len;
 		said_next->authkey = ah_dst_keymat;
 		said_next->encapsulation = encapsulation;
-		said_next->reqid = c->spd.reqid;
+		said_next->reqid = reqid_ah(c->spd.reqid);
 		said_next->text_said = text_said;
 		said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 		said_next->outif   = -1;
@@ -2047,7 +2040,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].proto = IPPROTO_COMP;
 				proto_info[i].encapsulation =
 					st->st_ipcomp.attrs.encapsulation;
-				proto_info[i].reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid : c->spd.reqid + 2;
+				proto_info[i].reqid = reqid_ipcomp(c->spd.reqid);
 				i++;
 			}
 
@@ -2055,7 +2048,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].proto = IPPROTO_ESP;
 				proto_info[i].encapsulation =
 					st->st_esp.attrs.encapsulation;
-				proto_info[i].reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid : c->spd.reqid + 1;
+				proto_info[i].reqid = reqid_esp(c->spd.reqid);
 				i++;
 			}
 
@@ -2063,7 +2056,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].proto = IPPROTO_AH;
 				proto_info[i].encapsulation =
 					st->st_ah.attrs.encapsulation;
-				proto_info[i].reqid = c->spd.reqid;
+				proto_info[i].reqid = reqid_ah(c->spd.reqid);
 				i++;
 			}
 

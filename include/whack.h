@@ -175,7 +175,7 @@ struct whack_message {
 	int connmtu;
 
 	int sa_priority;
-	int sa_reqid;
+	reqid_t sa_reqid;
 
 	bool loopback;
 	bool labeled_ipsec;

@@ -971,7 +971,7 @@ int main(int argc, char **argv)
 	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
 
-	for (;; ) {
+	for (;;) {
 		int long_index;
 		unsigned long opt_whole = 0; /* numeric argument for some flags */
 
@@ -1553,11 +1553,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKEV1_NATT: /* --ikev1_natt */
-			if ( streq(optarg, "both"))
+			if (streq(optarg, "both"))
 				msg.ikev1_natt = natt_both;
-			else if ( streq(optarg, "rfc"))
+			else if (streq(optarg, "rfc"))
 				msg.ikev1_natt = natt_rfc;
-			else if ( streq(optarg, "drafts"))
+			else if (streq(optarg, "drafts"))
 				msg.ikev1_natt = natt_drafts;
 			else
 				diag("--ikev1-natt options are 'both', 'rfc' or 'drafts'");
@@ -1581,13 +1581,13 @@ int main(int argc, char **argv)
 
 		case CD_DPDACTION:
 			msg.dpd_action = 255;
-			if ( streq(optarg, "clear"))
+			if (streq(optarg, "clear"))
 				msg.dpd_action = DPD_ACTION_CLEAR;
-			else if ( streq(optarg, "hold"))
+			else if (streq(optarg, "hold"))
 				msg.dpd_action = DPD_ACTION_HOLD;
-			else if ( streq(optarg, "restart"))
+			else if (streq(optarg, "restart"))
 				msg.dpd_action = DPD_ACTION_RESTART;
-			else if ( streq(optarg, "restart_by_peer"))
+			else if (streq(optarg, "restart_by_peer"))
 				/* obsolete (not advertised) option for compatibility */
 				msg.dpd_action = DPD_ACTION_RESTART;
 			continue;
@@ -1750,32 +1750,32 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHBY:
-			if ( streq(optarg, "pam" )) {
+			if (streq(optarg, "pam")) {
 				msg.xauthby = XAUTHBY_PAM;
 				continue;
-			} else if ( streq(optarg, "file" )) {
+			} else if (streq(optarg, "file")) {
 				msg.xauthby = XAUTHBY_FILE;
 				continue;
-			} else if ( streq(optarg, "alwaysok" )) {
+			} else if (streq(optarg, "alwaysok")) {
 				msg.xauthby = XAUTHBY_ALWAYSOK;
 				continue;
 			} else {
 				fprintf(stderr,
-					"whack: unknown xauthby method '%s' ignored",
+					"whack: unknown xauthby method '%s' ignored\n",
 					optarg);
 			}
 			continue;
 
 		case CD_XAUTHFAIL:
-			if ( streq(optarg, "hard" )) {
+			if (streq(optarg, "hard")) {
 				msg.xauthfail = XAUTHFAIL_HARD;
 				continue;
-			} else if ( streq(optarg, "soft" )) {
+			} else if (streq(optarg, "soft")) {
 				msg.xauthfail = XAUTHFAIL_SOFT;
 				continue;
 			} else {
 				fprintf(stderr,
-					"whack: unknown xauthfail method '%s' ignored",
+					"whack: unknown xauthfail method '%s' ignored\n",
 					optarg);
 			}
 			continue;
@@ -1793,6 +1793,17 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REQID:
+			if (opt_whole <= 0  ||
+			    opt_whole > IPSEC_MANUAL_REQID_MAX) {
+				char buf[120];
+
+				snprintf(buf, sizeof(buf),
+					"invalid reqid value - range must be 1-%u \"%s\"",
+					IPSEC_MANUAL_REQID_MAX,
+					optarg);
+				diag(buf);
+			}
+
 			msg.sa_reqid = opt_whole;
 			continue;
 
@@ -2066,7 +2077,7 @@ int main(int argc, char **argv)
 			char buf[4097]; /* arbitrary limit on log line length */
 			char *be = buf;
 
-			for (;; ) {
+			for (;;) {
 				char *ls = buf;
 				ssize_t rl =
 					read(sock, be,
@@ -2092,7 +2103,7 @@ int main(int argc, char **argv)
 				be += rl;
 				*be = '\0';
 
-				for (;; ) {
+				for (;;) {
 					char *le = strchr(ls, '\n');
 
 					if (le == NULL) {

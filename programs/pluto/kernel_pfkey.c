@@ -1389,7 +1389,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 		proto_info[i].encapsulation = st->st_ah.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid;
+		proto_info[i].reqid = reqid_ah(sr->reqid);
 	}
 
 	if (st->st_esp.present) {
@@ -1402,7 +1402,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 		proto_info[i].encapsulation = st->st_esp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 1;
+		proto_info[i].reqid = reqid_esp(sr->reqid);
 	}
 
 	if (st->st_ipcomp.present) {
@@ -1416,7 +1416,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 			st->st_ipcomp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 2;
+		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
 	}
 
 	if (i == sizeof(proto_info) / sizeof(proto_info[0]) - 1)
