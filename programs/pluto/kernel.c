@@ -1662,8 +1662,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				 * Check for additional kernel alg
 				 * Note: result will be in a static buffer!
 				 */
-				char buftn[ENUM_SHOW_BUF_LEN];
-				char bufan[ENUM_SHOW_BUF_LEN];
+				struct esb_buf buftn, bufan;
 
 				ei = kernel_alg_esp_info(st->st_esp.
 							attrs.transattrs.encrypt,
@@ -1676,11 +1675,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				       "ESP transform %s(%d) / auth %s not implemented yet",
 				       enum_showb(&esp_transformid_names,
 						st->st_esp.attrs.transattrs.encrypt,
-						buftn, sizeof(buftn)),
+						&buftn),
 				       st->st_esp.attrs.transattrs.enckeylen,
 				       enum_showb(&auth_alg_names,
 						st->st_esp.attrs.transattrs.integ_hash,
-						bufan, sizeof(bufan)));
+						&bufan));
 				goto fail;
 			}
 
@@ -1708,17 +1707,16 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		    st->st_esp.attrs.transattrs.enckeylen != ei->enckeylen  *
 		    BITS_PER_BYTE &&
 		    st->st_esp.attrs.transattrs.integ_hash != ei->auth) {
-			char buftn[ENUM_SHOW_BUF_LEN];
-			char bufan[ENUM_SHOW_BUF_LEN];
+			struct esb_buf buftn, bufan;
 
 			loglog(RC_LOG_SERIOUS,
 			       "failed to find key info for %s/%s",
 			       enum_showb(&esp_transformid_names,
 					 st->st_esp.attrs.transattrs.encrypt,
-					 buftn, sizeof(buftn)),
+					 &buftn),
 			       enum_showb(&auth_alg_names,
 					 st->st_esp.attrs.transattrs.integ_hash,
-					 bufan, sizeof(bufan)));
+					 &bufan));
 			goto fail;
 		}
 

@@ -766,11 +766,11 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 					encrwin = keylen == -1 || keylen == 0 ? encr_keylen : keylen;
 				}
 				DBG(DBG_CONTROLMORE, {
-					char esb[ENUM_SHOW_BUF_LEN];
+					struct esb_buf esb;
 					DBG_log("proposal %u %s encr= (policy:%s(%d) vs offered:%s(%d))",
 						propnum,
 						encr_matched ? "succeeded" : "failed",
-						enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
+						enum_showb(&ikev2_trans_type_encr_names, encrid, &esb),
 						encrwin,
 						enum_show(&ikev2_trans_type_encr_names, encr_transform),
 						encr_keylen);
@@ -785,10 +785,10 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 					integwin = keylen;
 				}
 				DBG(DBG_CONTROLMORE, {
-					char esb[ENUM_SHOW_BUF_LEN];
+					struct esb_buf esb;
 					DBG_log("            %s integ=(policy:%s(%d) vs offered:%s(%d))",
 						integ_matched ? "succeeded" : "failed",
-						enum_showb(&ikev2_trans_type_integ_names, integid, esb, sizeof(esb)),
+						enum_showb(&ikev2_trans_type_integ_names, integid, &esb),
 						integwin,
 						enum_show(&ikev2_trans_type_integ_names,
 							  integ_transform),
@@ -804,10 +804,10 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 					prfwin = keylen;
 				}
 				DBG(DBG_CONTROLMORE, {
-					char esb[ENUM_SHOW_BUF_LEN];
+					struct esb_buf esb;
 					DBG_log("            %s prf=  (policy:%s(%d) vs offered:%s(%d))",
 						prf_matched ? "succeeded" : "failed",
-						enum_showb(&ikev2_trans_type_prf_names, prfid, esb, sizeof(esb)),
+						enum_showb(&ikev2_trans_type_prf_names, prfid, &esb),
 						prfwin,
 						enum_show(&ikev2_trans_type_prf_names,
 							  prf_transform),
@@ -821,10 +821,10 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				if (tr->transid == dh_transform)
 					dh_matched = TRUE;
 				DBG(DBG_CONTROLMORE, {
-					char esb[ENUM_SHOW_BUF_LEN];
+					struct esb_buf esb;
 					DBG_log("            %s dh=   (policy:%s vs offered:%s)",
 						dh_matched ? "succeeded" : "failed",
-						enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
+						enum_showb(&oakley_group_names, dhid, &esb),
 						enum_show(&oakley_group_names, dh_transform));
 				});
 				break;
@@ -843,12 +843,12 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 		DBG(DBG_CONTROLMORE, {
 			/* note: enum_show uses a static buffer so more than one call per
 			   statement is dangerous */
-			char esb[ENUM_SHOW_BUF_LEN];
+			struct esb_buf esb;
 
 			DBG_log("proposal %u %s encr= (policy:%s(%d) vs offered:%s(%d))",
 				propnum,
 				encr_matched ? "succeeded" : "failed",
-				enum_showb(&ikev2_trans_type_encr_names, encrid, esb, sizeof(esb)),
+				enum_showb(&ikev2_trans_type_encr_names, encrid, &esb),
 				encrwin,
 				enum_show(&ikev2_trans_type_encr_names,
 					  encr_transform),
@@ -856,17 +856,17 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 			/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
 			DBG_log("            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "succeeded" : "failed",
-				enum_showb(&ikev2_trans_type_integ_names, integid, esb, sizeof(esb)),
+				enum_showb(&ikev2_trans_type_integ_names, integid, &esb),
 				enum_show(&ikev2_trans_type_integ_names,
 					  integ_transform));
 			DBG_log("            %s prf=  (policy:%s vs offered:%s)",
 				prf_matched ? "succeeded" : "failed",
-				enum_showb(&ikev2_trans_type_prf_names, prfid, esb, sizeof(esb)),
+				enum_showb(&ikev2_trans_type_prf_names, prfid, &esb),
 				enum_show(&ikev2_trans_type_prf_names,
 					  prf_transform));
 			DBG_log("            %s dh=   (policy:%s vs offered:%s)",
 				dh_matched ? "succeeded" : "failed",
-				enum_showb(&oakley_group_names, dhid, esb, sizeof(esb)),
+				enum_showb(&oakley_group_names, dhid, &esb),
 				enum_show(&oakley_group_names, dh_transform));
 		});
 	}

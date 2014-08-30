@@ -2412,13 +2412,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				if (ah_attrs.transattrs.encrypt !=
 				    ok_transid) {
-					char esb[ENUM_SHOW_BUF_LEN];
+					struct esb_buf esb;
 
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
 					       enum_showb(&auth_alg_names,
 							 ah_attrs.transattrs.integ_hash,
-							 esb, sizeof(esb)),
+							 &esb),
 					       enum_show(&ah_transformid_names,
 							 ah_attrs.transattrs.encrypt));
 					return BAD_PROPOSAL_SYNTAX;
@@ -2426,14 +2426,14 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				/* ??? should test be !ok_auth || !ESP_AALG_PRESENT(ok_transid) */
 				/* ??? why is this called ESP_AALG_PRESENT when we're doing AH? */
 				if (!ok_auth) {
-					char esb[ENUM_SHOW_BUF_LEN];
+					struct esb_buf esb;
 
 					DBG(DBG_CONTROL | DBG_CRYPT, {
 						ipstr_buf b;
 						DBG_log("%s attribute unsupported in %s Transform from %s",
 							enum_showb(&auth_alg_names,
 								  ah_attrs.transattrs.integ_hash,
-								  esb, sizeof(esb)),
+								  &esb),
 							enum_show(&ah_transformid_names,
 								  ah_attrs.transattrs.encrypt),
 							ipstr(&c->spd.that.host_addr, &b));

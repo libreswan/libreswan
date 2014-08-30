@@ -538,9 +538,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		" tunnel mode" : " transport mode");
 
 	if (st->st_esp.present) {
-		char esb[ENUM_SHOW_BUF_LEN];
+		struct esb_buf esb;
 
-		if ( (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ||
+		if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ||
 			c->forceencaps) {
 			DBG(DBG_NATT, DBG_log("NAT-T: their IKE port is '%d'",
 				    c->spd.that.host_port));
@@ -555,7 +555,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 strip_prefix(enum_showb(&esp_transformid_names,
-				   st->st_esp.attrs.transattrs.encrypt, esb, sizeof(esb)), "ESP_"),
+				   st->st_esp.attrs.transattrs.encrypt, &esb), "ESP_"),
 			 st->st_esp.attrs.transattrs.enckeylen,
 			 strip_prefix(enum_show(&auth_alg_names,
 				   st->st_esp.attrs.transattrs.integ_hash), "AUTH_ALGORITHM_"));

@@ -2021,6 +2021,18 @@ const char *enum_name(enum_names *ed, unsigned long val)
 	return NULL;
 }
 
+/* find or construct a string to describe an enum value */
+const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
+{
+	const char *p = enum_name(ed, val);
+
+	if (p == NULL) {
+		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		p = b->buf;
+	}
+	return p;
+}
+
 /*
  * find or construct a string to describe an enum value
  * Result may be in STATIC buffer -- NOT RE-ENTRANT!
@@ -2030,23 +2042,11 @@ const char *enum_name(enum_names *ed, unsigned long val)
  * (Of course that means that unnamed values will be shown
  * badly.)
  */
-const char *enum_showb(enum_names *ed, unsigned long val, char *buf,
-		size_t blen)
-{
-	const char *p = enum_name(ed, val);
-
-	if (p == NULL) {
-		snprintf(buf, blen, "%lu??", val);
-		p = buf;
-	}
-	return p;
-}
-
 const char *enum_show(enum_names *ed, unsigned long val)
 {
-	static char buf[ENUM_SHOW_BUF_LEN];	/* only one! NON-RE-ENTRANT */
+	static struct esb_buf buf;	/* only one! NON-RE-ENTRANT */
 
-	return enum_showb(ed, val, buf, sizeof(buf));
+	return enum_showb(ed, val, &buf);
 }
 
 /* sometimes the prefix gets annoying */

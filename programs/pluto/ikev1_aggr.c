@@ -404,10 +404,10 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 	    DBG_log("thinking about whether to send my certificate:"));
 
 	DBG(DBG_CONTROL, {
-		char esb[ENUM_SHOW_BUF_LEN];
+		struct esb_buf esb;
 
 		DBG_log("  I have RSA key: %s cert.type: %s ",
-		    enum_showb(&oakley_auth_names, auth, esb, sizeof(esb)),
+		    enum_showb(&oakley_auth_names, auth, &esb),
 		    enum_show(&ike_cert_type_names, certtype));
 	});
 
