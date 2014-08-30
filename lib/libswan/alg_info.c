@@ -113,6 +113,7 @@ enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	case AUTH_ALGORITHM_AES_256_GMAC:
 		return AH_AES_256_GMAC;
 
+	case AUTH_ALGORITHM_NULL_KAME:
 	case AUTH_ALGORITHM_NONE: /* private use 251 */
 		return AH_NONE;
 
@@ -729,6 +730,20 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		if (ealg_id < 0) {
 			return "enc_alg not found";
 		}
+		switch(ealg_id) {
+		case ESP_reserved:
+		case ESP_DES_IV64:
+		case ESP_DES:
+		case ESP_RC5:
+		case ESP_IDEA:
+		case ESP_BLOWFISH:
+		case ESP_3IDEA:
+		case ESP_DES_IV32:
+		case ESP_RC4:
+		case ESP_ID17:
+		case ESP_RESERVED_FOR_IEEE_P1619_XTS_AES:
+			return "cipher too weak or not implemented";
+		}
 
 		/*
 		 * Enforce RFC restrictions in key size, documented in
@@ -762,6 +777,8 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				switch(ealg_id) {
 				case ESP_3DES:
 					return "3DES does not take variable key lengths";
+				case ESP_NULL:
+					return "NULL does not take variable key lengths";
 				case ESP_CAST:
 					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
 						return "CAST is only supported for 128 bits (to avoid padding)";
@@ -800,6 +817,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		if (aalg_id < 0) {
 			return "hash_alg not found";
 		}
+
 		/* XXX these checks should not be done in the parser code */
 		if (p_ctx->aklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
 			switch(aalg_id) {
