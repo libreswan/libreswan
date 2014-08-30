@@ -275,6 +275,7 @@ static void compute_proto_keymat(struct state *st,
 			}
 			break;
 
+#if 0
 		case ESP_SEED_CBC:
 			if (st->st_esp.attrs.transattrs.enckeylen) {
 				/* SEED-CBC is always 128bit */
@@ -282,6 +283,7 @@ static void compute_proto_keymat(struct state *st,
 				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
 			}
 			break;
+#endif
 
 		default:
 			needed_len = kernel_alg_esp_enc_max_keylen(

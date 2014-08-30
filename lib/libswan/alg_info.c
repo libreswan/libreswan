@@ -73,9 +73,7 @@ static const alg_alias esp_trans_aliases[] = {
 };
 
 /*
- * sadb/ESP aa attrib converters
- * Paul: but aa is two octets, is sadb?
- * ??? Used even for v2, but a little dicey.
+ * sadb/ESP aa attrib converters - conflicting for v1 and v2
  */
 enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	enum ikev1_auth_attribute auth)
@@ -116,6 +114,7 @@ enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	case AUTH_ALGORITHM_AES_256_GMAC:
 		return AH_AES_256_GMAC;
 
+	case AUTH_ALGORITHM_NULL_KAME:
 	case AUTH_ALGORITHM_NONE: /* private use 251 */
 		return AH_NONE;
 
@@ -738,6 +737,20 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		if (ealg_id < 0) {
 			return "enc_alg not found";
 		}
+		switch(ealg_id) {
+		case ESP_reserved:
+		case ESP_DES_IV64:
+		case ESP_DES:
+		case ESP_RC5:
+		case ESP_IDEA:
+		case ESP_BLOWFISH:
+		case ESP_3IDEA:
+		case ESP_DES_IV32:
+		case ESP_RC4:
+		case ESP_ID17:
+		case ESP_RESERVED_FOR_IEEE_P1619_XTS_AES:
+			return "cipher too weak or not implemented";
+		}
 
 		/*
 		 * Enforce RFC restrictions in key size, documented in
@@ -771,6 +784,8 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				switch(ealg_id) {
 				case ESP_3DES:
 					return "3DES does not take variable key lengths";
+				case ESP_NULL:
+					return "NULL does not take variable key lengths";
 				case ESP_CAST:
 					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
 						return "CAST is only supported for 128 bits (to avoid padding)";
@@ -791,11 +806,13 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
 					}
 					break;
+#if 0
 				case ESP_SEED_CBC:
 					if (p_ctx->eklen != 128) {
 						return "wrong encryption key length - SEED-CBC key size must be 128";
 					}
 					break;
+#endif
 				}
 			}
 		}
@@ -808,7 +825,42 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			return "hash_alg not found";
 		}
 
+		/* XXX these checks should not be done in the parser code */
+		if (p_ctx->aklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
+			switch(aalg_id) {
+			case AH_MD5:
+				if (p_ctx->aklen != HMAC_MD5_KEY_LEN * BITS_PER_BYTE)
+					return "wrong authenticaion key length - key size must be 160";
+				break;
+			case AH_SHA:
+			case AH_AES_XCBC_MAC:
+			case AH_RIPEMD:
+			case AH_AES_128_GMAC:
+				if (p_ctx->aklen != 128)
+					return "wrong authenticaion key length - key size must be 128";
+				break;
+			case AH_AES_192_GMAC:
+				if (p_ctx->aklen != 192)
+					return "wrong authenticaion key length - key size must be 192";
+				break;
+			case AH_SHA2_256:
+			case AH_AES_256_GMAC:
+				if (p_ctx->aklen != 256)
+					return "wrong authenticaion key length - key size must be 256";
+				break;
+			case AH_SHA2_384:
+				if (p_ctx->aklen != 384)
+					return "wrong authenticaion key length - key size must be 384";
+				break;
+			case AH_SHA2_512:
+				if (p_ctx->aklen != 512)
+					return "wrong authenticaion key length - key size must be 512";
+				break;
+			}
+		}
+
 	}
+
 	if (p_ctx->modp_getbyname != NULL && *p_ctx->modp_buf != '\0') {
 		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf,
 					strlen(p_ctx->modp_buf));
