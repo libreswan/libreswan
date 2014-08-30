@@ -833,7 +833,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 					return "wrong authenticaion key length - key size must be 128";
 				break;
 			case AH_AES_192_GMAC:
-				if (p_ctx->aklen != 128)
+				if (p_ctx->aklen != 192)
 					return "wrong authenticaion key length - key size must be 192";
 				break;
 			case AH_SHA2_256:
