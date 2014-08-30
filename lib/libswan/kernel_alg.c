@@ -433,6 +433,7 @@ int kernel_alg_ah_auth_keylen(int auth)
 	return a_keylen;
 }
 
+/* returns pointer to static buffer -- NOT RE-ENTRANT */
 struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 				u_int16_t auth)
 {

@@ -1654,11 +1654,17 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			    st->st_esp.attrs.transattrs.enckeylen,
 			    st->st_esp.attrs.transattrs.integ_hash));
 
-		for (ei = esp_info;; ei++) {
+		for (ei = esp_info; ; ei++) {
 
 			/* if it is the last key entry, then ask algo */
 			if (ei == &esp_info[elemsof(esp_info)]) {
-				/* Check for additional kernel alg */
+				/*
+				 * Check for additional kernel alg
+				 * Note: result will be in a static buffer!
+				 */
+				char buftn[ENUM_SHOW_BUF_LEN];
+				char bufan[ENUM_SHOW_BUF_LEN];
+
 				ei = kernel_alg_esp_info(st->st_esp.
 							attrs.transattrs.encrypt,
 							st->st_esp.attrs.transattrs.enckeylen,
@@ -1666,21 +1672,15 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				if (ei != NULL)
 					break;
 
-				/* Note: enum_show may use a static buffer, so two
-				 * calls in one printf would be a mistake.
-				 * enum_name does the same job, without a static buffer,
-				 * assuming the name will be found.
-				 * Also consider enum_showb.
-				 */
 				loglog(RC_LOG_SERIOUS,
 				       "ESP transform %s(%d) / auth %s not implemented yet",
-				       enum_name(&esp_transformid_names,
-						 st->st_esp.attrs.transattrs.
-						 encrypt),
+				       enum_showb(&esp_transformid_names,
+						st->st_esp.attrs.transattrs.encrypt,
+						buftn, sizeof(buftn)),
 				       st->st_esp.attrs.transattrs.enckeylen,
-				       enum_name(&auth_alg_names,
-						 st->st_esp.attrs.transattrs.
-						 integ_hash));
+				       enum_showb(&auth_alg_names,
+						st->st_esp.attrs.transattrs.integ_hash,
+						bufan, sizeof(bufan)));
 				goto fail;
 			}
 
@@ -1697,16 +1697,28 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				break;
 		}
 
+		/*
+		 * ??? problems with this test:
+		 * - should be a || not &&
+		 * - takes no account of 0 as a wildcard enckeylen
+		 * - the test should always fail since it is the
+		 *   negative of how we get here via break from the for.
+		 */
 		if (st->st_esp.attrs.transattrs.encrypt != ei->transid &&
 		    st->st_esp.attrs.transattrs.enckeylen != ei->enckeylen  *
 		    BITS_PER_BYTE &&
 		    st->st_esp.attrs.transattrs.integ_hash != ei->auth) {
+			char buftn[ENUM_SHOW_BUF_LEN];
+			char bufan[ENUM_SHOW_BUF_LEN];
+
 			loglog(RC_LOG_SERIOUS,
 			       "failed to find key info for %s/%s",
-			       enum_name(&esp_transformid_names,
-					 st->st_esp.attrs.transattrs.encrypt),
-			       enum_name(&auth_alg_names,
-					 st->st_esp.attrs.transattrs.integ_hash));
+			       enum_showb(&esp_transformid_names,
+					 st->st_esp.attrs.transattrs.encrypt,
+					 buftn, sizeof(buftn)),
+			       enum_showb(&auth_alg_names,
+					 st->st_esp.attrs.transattrs.integ_hash,
+					 bufan, sizeof(bufan)));
 			goto fail;
 		}
 
