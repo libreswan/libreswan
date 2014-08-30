@@ -12,7 +12,7 @@ For more information about the alternative Libreswan kernel IPsec stack,
 see README.KLIPS.
 
 Libreswan was forked from Openswan 2.6.38, which was forked from
-FreeS/WAN 1.99. See the CREDITS files for contributor acknowledgments.
+FreeS/WAN 2.04. See the CREDITS files for contributor acknowledgments.
 
 It can be downloaded from various locations:
 

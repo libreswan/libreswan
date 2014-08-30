@@ -201,7 +201,7 @@ bool close_message(pb_stream *pbs, struct state *st)
 	size_t padding =  pad_up(pbs_offset(pbs), 4);
 
 	/* Workaround for overzealous Checkpoint firewall */
-	if (padding != 0 && st && st->st_connection != NULL &&
+	if (padding != 0 && st != NULL && st->st_connection != NULL &&
 	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
 		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %zu bytes skipped by policy",
 			padding));
