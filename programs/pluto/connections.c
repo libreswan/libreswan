@@ -1090,7 +1090,7 @@ static reqid_t gen_reqid(void)
 	for (;;) {
 		r += 4;	/* may wrap */
 		/* don't use range 0 to IPSEC_MANUAL_REQID_MAX */
-		if (r == 0)
+		if (r <= IPSEC_MANUAL_REQID_MAX)
 			r = IPSEC_MANUAL_REQID_MAX + 1;
 
 		if (r == last_reqid) {
