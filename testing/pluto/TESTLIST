@@ -66,7 +66,7 @@ kvmplutotest	ikev2-algo-02-modp2048-responder	good
 kvmplutotest	ikev2-algo-03-aes-ccm			good
 kvmplutotest	ikev2-algo-04-aes-gcm			good
 kvmplutotest	ikev2-algo-05-aes-default		good
-kvmplutotest	ikev2-algo-06-aes-aes_cbc		good
+kvmplutotest	ikev2-algo-06-aes-aes_xcbc		wip
 kvmplutotest	ikev2-algo-07-aes_ctr			good
 kvmplutotest	ikev2-algo-08-cast			good
 kvmplutotest	ikev2-algo-09-camellia			good
