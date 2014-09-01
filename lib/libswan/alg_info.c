@@ -718,7 +718,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 	int modp_id = 0;
 
 	ealg_id = aalg_id = -1;
-	if (p_ctx->ealg_permit && *p_ctx->ealg_buf) {
+	if (p_ctx->ealg_permit && p_ctx->ealg_buf[0] != '\0') {
 		ealg_id = p_ctx->ealg_getbyname(p_ctx->ealg_buf,
 					strlen(p_ctx->ealg_buf));
 #if 0

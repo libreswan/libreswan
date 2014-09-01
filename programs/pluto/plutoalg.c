@@ -61,6 +61,7 @@ static int ealg_getbyname_ike(const char *const str, size_t len)
 	return alg_enum_search(&oakley_enc_names, "OAKLEY_", "_CBC", str,
 				    len);
 }
+
 /**
  *      Search  oakley_hash_names for a match, eg:
  *              "md5" <=> "OAKLEY_MD5"
