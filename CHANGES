@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.10 (unreleased)
+v3.10 (September 1, 2014)
 * XAUTH: New option: ipsec whack --traficstatus [Antony]
 * XAUTH: New option: ipsec --deleteuser --name xauth-username [Antony]
 * XAUTH: Do not strip "-" from XAUTH usernames [Paul]
