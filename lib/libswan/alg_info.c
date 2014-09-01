@@ -56,6 +56,7 @@ static const alg_alias auth_alg_aliases[] = {
 	/* alg */	/* aliases */
 	{ "sha2_256",	{ "sha2", NULL } },
 	{ "sha1",	{ "sha", NULL } },
+	{ "sha1",	{ "sha1_96", NULL } },
 	{ NULL, { NULL } }
 };
 
