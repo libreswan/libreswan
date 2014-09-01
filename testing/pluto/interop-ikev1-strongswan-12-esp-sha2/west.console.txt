@@ -32,38 +32,47 @@ west #
  strongswan starter --debug-all
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
-Loading conn 'westnet-eastnet-ikev2'
+Loading conn 'westnet-eastnet-ikev1'
+  authby=secret
+  auto=add
+  esp=aes128-sha2_512-modp1536
+  keyexchange=ikev1
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.1.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.0.1.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
 found netkey IPsec stack
 west #
  echo "initdone"
 initdone
 west #
- strongswan up westnet-eastnet-ikev2
-initiating IKE_SA westnet-eastnet-ikev2[1] to 192.1.2.23
-generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
+ strongswan up westnet-eastnet-ikev1
+initiating Main Mode IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
+generating ID_PROT request 0 [ SA V V V V ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
-authentication of 'west' (myself) with pre-shared key
-establishing CHILD_SA westnet-eastnet-ikev2
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
-authentication of 'east' with pre-shared key successful
-IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[west]...192.1.2.23[east]
+parsed ID_PROT response 0 [ SA V V V ]
+received DPD vendor ID
+received unknown vendor ID: LIBRESWAN
+received NAT-T (RFC 3947) vendor ID
+generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed ID_PROT response 0 [ KE No NAT-D NAT-D ]
+generating ID_PROT request 0 [ ID HASH ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed ID_PROT response 0 [ ID HASH ]
+IKE_SA westnet-eastnet-ikev1[1] established between 192.1.2.45[west]...192.1.2.23[east]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
-connection 'westnet-eastnet-ikev2' established successfully
+generating QUICK_MODE request 0123456789[ HASH SA No KE ID ID ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed QUICK_MODE response 0123456789[ HASH SA No KE ID ID ]
+connection 'westnet-eastnet-ikev1' established successfully
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -75,28 +84,31 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- strongswan down westnet-eastnet-ikev2
-deleting IKE_SA westnet-eastnet-ikev2[1] between 192.1.2.45[west]...192.1.2.23[east]
-sending DELETE for IKE_SA westnet-eastnet-ikev2[1]
-generating INFORMATIONAL request 2 [ D ]
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed INFORMATIONAL response 2 [ ]
-IKE_SA deleted
-IKE_SA [1] closed successfully
-west #
- sleep 3
-west #
  echo done
 done
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
 west #
- if [ -f /var/run/pluto/pluto.pid ]; then grep "message ID:" /tmp/pluto.log  ; fi
-west #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
-Security Associations (0 up, 0 connecting):
-  none
+ if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
+Status of IKE charon daemon (strongSwan VERSION):
+  uptime: XXX seconds, since YYY
+  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
+Listening IP addresses:
+  192.0.1.254
+  192.1.2.45
+  192.9.4.45
+Connections:
+westnet-eastnet-ikev1:  192.1.2.45...192.1.2.23  IKEv1
+westnet-eastnet-ikev1:   local:  [west] uses pre-shared key authentication
+westnet-eastnet-ikev1:   remote: [east] uses pre-shared key authentication
+westnet-eastnet-ikev1:   child:  192.0.1.0/24 === 192.0.2.0/24 TUNNEL
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev1[1]: ESTABLISHED XXX seconds ago, 192.1.2.45[west]...192.1.2.23[east]
+westnet-eastnet-ikev1[1]: IKEv1 SPIs: SPISPI_i* SPISPI_r, pre-shared key reauthentication in 2 hours
+westnet-eastnet-ikev1[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
+westnet-eastnet-ikev1{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev1{1}:  AES_CBC_128/HMAC_SHA2_512_256, XXX bytes_i (4 pkts, XXs ago), XXX bytes_o (4 pkts, XXs ago), rekeying in XX minutes
+westnet-eastnet-ikev1{1}:   192.0.1.0/24 === 192.0.2.0/24 
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

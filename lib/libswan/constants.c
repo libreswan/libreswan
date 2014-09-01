@@ -576,7 +576,7 @@ static enum_names esp_transformid_names_private_use = {
 
 /* This tracks the IKEv2 registry now! see ietf_constants.h */
 static const char *const esp_transform_name[] = {
-	"ESP_DES_IV64",	/* old DES */
+	"ESP_DES_IV64",	/* 1 - old DES */
 	"ESP_DES",	/* obsoleted */
 	"ESP_3DES",
 	"ESP_RC5",
@@ -597,8 +597,14 @@ static const char *const esp_transform_name[] = {
 	"ESP_AES_GCM_B",
 	"ESP_AES_GCM_C",
 	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
-	"ESP_RESERVED_FOR_IEEE_P1619_XTS_AES", /* IKEv1 ESP_CAMELLIA */
-	"ESP_CAMELLIA", /* IKEv1 is ESP_NULL_AUTH_AES-GMAC */
+	/*
+	 * From here, IKEv1 and IKEv2 registries for ESP_ algorithms become
+	 * inconsistant. The linux PF_KEY API returns 22 in the IKEv1 registry
+	 * meaning (camellia), so we need to lie here.
+	 */
+	/* "ESP_RESERVED_FOR_IEEE_P1619_XTS_AES" */
+	"ESP_CAMELLIA", /* IKEv1, but kernel tells us this */
+	"ESP_CAMELLIA", /* IKEv2, IKEv1 entry is ESP_NULL_AUTH_AES-GMAC */
 	"ESP_CAMELLIA_CTR", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_A", /* not assigned in/for IKEv1 */
 	"ESP_CAMELLIA_CCM_B", /* not assigned in/for IKEv1 */

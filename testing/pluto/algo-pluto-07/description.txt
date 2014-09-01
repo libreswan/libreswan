@@ -3,7 +3,6 @@ Unsupported alg pluto test:
 The policy has been adjusted to request SHA2 for phase 2, which is supported
 by NETKEY, but not by KLIPS. [PAUL: not true with cryptoapi?]
 
-When using NETKEY, this apparently crashes pluto. This is bug #496
+When using NETKEY, this crashed pluto. This is openswan bug #496 (of old mantis tracker)
 
-PAUL: The "4096" seems bogus and we ignore it (should we even load it?)
-      However, connection 'works' and no crash ???
+The "4096" is bogus and we should fail to load this conn. 
