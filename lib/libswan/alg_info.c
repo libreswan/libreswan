@@ -730,19 +730,34 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		if (ealg_id < 0) {
 			return "enc_alg not found";
 		}
-		switch(ealg_id) {
-		case ESP_reserved:
-		case ESP_DES_IV64:
-		case ESP_DES:
-		case ESP_RC5:
-		case ESP_IDEA:
-		case ESP_BLOWFISH:
-		case ESP_3IDEA:
-		case ESP_DES_IV32:
-		case ESP_RC4:
-		case ESP_ID17:
-		case ESP_RESERVED_FOR_IEEE_P1619_XTS_AES:
-			return "cipher too weak or not implemented";
+
+		/* reject things we know but don't like */
+		switch(alg_info->alg_info_protoid) {
+		case PROTO_ISAKMP:
+			switch(ealg_id) {
+			case OAKLEY_DES_CBC:
+			case OAKLEY_IDEA_CBC:
+			case OAKLEY_BLOWFISH_CBC:
+			case OAKLEY_RC5_R16_B64_CBC:
+				return "cipher not implemented";
+			}
+			break;
+		case PROTO_IPSEC_ESP:
+			switch(ealg_id) {
+			case ESP_reserved:
+			case ESP_DES_IV64:
+			case ESP_DES:
+			case ESP_RC5:
+			case ESP_IDEA:
+			case ESP_BLOWFISH:
+			case ESP_3IDEA:
+			case ESP_DES_IV32:
+			case ESP_RC4:
+			case ESP_ID17:
+			case ESP_RESERVED_FOR_IEEE_P1619_XTS_AES:
+				return "cipher not implemented";
+			}
+			break;
 		}
 
 		/*
