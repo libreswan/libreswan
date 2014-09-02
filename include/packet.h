@@ -45,7 +45,7 @@ enum field_type {
 	ft_lv,			/* length/value field of attribute */
 	ft_enum,		/* value from an enumeration */
 	ft_loose_enum,		/* value from an enumeration with only some names known */
-	ft_enum_enum,		/* value from an enumeration with name table based on previous enum */
+	ft_loose_enum_enum,	/* value from an enumeration with partial name table based on previous enum */
 	ft_af_enum,		/* Attribute Format + value from an enumeration */
 	ft_af_loose_enum,	/* Attribute Format + enumeration, some names known */
 	ft_set,			/* bits representing set */
@@ -60,8 +60,8 @@ typedef const struct field_desc {
 	const char *name;
 	/*
 	 * cheap union:
-	 *   enum_names * for ft_enum,
-	 *   enum_enum_names * for ft_enum_enum,
+	 *   enum_names * for ft_enum, ft_loose_enum, ft_af_enum, ft_af_loose_enum
+	 *   enum_enum_names * for ft_loose_enum_enum
 	 *   char *[] for ft_set
 	 */
 	const void *desc;
@@ -80,7 +80,7 @@ struct packet_byte_stream {
 	u_int8_t
 	*start,
 	*cur,		/* current position in stream */
-	*roof;		/* byte after last in PBS (actually just a limit on output) */
+	*roof;		/* byte after last in PBS (on output: just a limit) */
 	/* For an output PBS, the length field will be filled in later so
 	 * we need to record its particulars.  Note: it may not be aligned.
 	 */

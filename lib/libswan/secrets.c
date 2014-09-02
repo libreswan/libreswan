@@ -116,7 +116,7 @@ static void RSA_show_public_key(struct RSA_public_key *k)
 	RSA_show_key_fields((struct RSA_private_key *)k, 2);
 }
 
-static const char *RSA_public_key_sanity(struct RSA_private_key *k)
+static err_t RSA_public_key_sanity(struct RSA_private_key *k)
 {
 	/* note that the *last* error found is reported */
 	err_t ugh = NULL;
@@ -159,7 +159,7 @@ struct id_list *lsw_get_idlist(const struct secret *s)
 }
 
 /*
- * This is a bad assumption, and failes when people put PSK
+ * This is a bad assumption, and fails when people put PSK
  * entries before the default RSA case, which most people do
  */
 struct secret *lsw_get_defaultsecret(struct secret *secrets)
@@ -169,8 +169,10 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 	/* Search for PPK_RSA pks */
 	s2 = secrets;
 	while (s2) {
-		for (; s2 && s2->pks.kind == PPK_RSA; s2 = s2->next) ;
-		for (s = s2; s && s->pks.kind != PPK_RSA; s = s->next) ;
+		for (; s2 && s2->pks.kind == PPK_RSA; s2 = s2->next)
+			continue;
+		for (s = s2; s && s->pks.kind != PPK_RSA; s = s->next)
+			continue;
 		if (s) {
 			struct secret *tmp = s->next;
 			struct secret curr = *s;
@@ -564,7 +566,7 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key
 	pubk = CERT_ExtractPublicKey(nssCert);
 	if (pubk == NULL) {
 		loglog(RC_LOG_SERIOUS,
-			"extract_and_add_secret_from_nsscert: can not find cert's public key (err %d)",
+			"extract_and_add_secret_from_nsscert: cannot find cert's public key (err %d)",
 			PR_GetError());
 		ugh = "NSS cert found, pub key not found";
 		goto error;
@@ -583,7 +585,7 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key
 					lsw_return_nss_password_file_info());
 	if (certCKAID == NULL) {
 		loglog(RC_LOG_SERIOUS,
-			"extract_and_add_secret_from_nsscert: can not find cert's low level CKA ID (err %d)",
+			"extract_and_add_secret_from_nsscert: cannot find cert's low level CKA ID (err %d)",
 			PR_GetError());
 		ugh = "cert cka id not found";
 		goto error2;
@@ -710,11 +712,11 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 
 	if (shift()) {
 		ugh = "RSA private key file -- unexpected token after friendly_name";
+	} else {
+		ugh = extract_and_add_secret_from_nss_cert_file(rsak, friendly_name);
+		if (ugh == NULL)
+			ugh = RSA_public_key_sanity(rsak);
 	}
-
-	ugh = extract_and_add_secret_from_nss_cert_file(rsak, friendly_name);
-	if (ugh == NULL)
-		return RSA_public_key_sanity(rsak);
 
 	return ugh;
 }
@@ -985,12 +987,12 @@ static void process_secret(struct secret **psecrets,
 	if (tokeqword("psk")) {
 		s->pks.kind = PPK_PSK;
 		/* preshared key: quoted string or ttodata format */
-		ugh = !shift() ? "unexpected end of record in PSK" :
+		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_psk_secret(&s->pks.u.preshared_secret);
 	} else if (tokeqword("xauth")) {
 		/* xauth key: quoted string or ttodata format */
 		s->pks.kind = PPK_XAUTH;
-		ugh = !shift() ? "unexpected end of record in PSK" :
+		ugh = !shift() ? "ERROR: unexpected end of record in PSK" :
 			lsw_process_xauth_secret(&s->pks.u.preshared_secret);
 	} else if (tokeqword("rsa")) {
 		/*
@@ -999,7 +1001,7 @@ static void process_secret(struct secret **psecrets,
 		 */
 		s->pks.kind = PPK_RSA;
 		if (!shift()) {
-			ugh = "bad RSA key syntax";
+			ugh = "ERROR: bad RSA key syntax";
 		} else if (tokeq("{")) { /* raw RSA key in NSS */
 			ugh = lsw_process_rsa_secret(
 					&s->pks.u.RSA_private_key);
@@ -1013,9 +1015,9 @@ static void process_secret(struct secret **psecrets,
 				s->pks.u.RSA_private_key.pub.keyid);
 		}
 	} else if (tokeqword("pin")) {
-		ugh = "Please use NSS for smartcard support";
+		ugh = "ERROR: keyword 'pin' obsoleted, please use NSS for smartcard support";
 	} else {
-		ugh = builddiag("unrecognized key format: %s", flp->tok);
+		ugh = builddiag("ERROR: unrecognized key format: %s", flp->tok);
 	}
 
 	if (ugh != NULL) {

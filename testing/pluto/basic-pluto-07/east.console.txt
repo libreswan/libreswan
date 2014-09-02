@@ -1,0 +1,52 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec setup start
+[ 00.00] registered KLIPS /proc/sys/net
+[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] 
+ipsec_setup: ipsec0 -> NULL mtu=0(0) -> 0
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-3des
+east #
+ ipsec auto --status |grep westnet-eastnet-3des
+000 "westnet-eastnet-3des": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east,+S=C]...192.1.2.45<192.1.2.45>[@west,+S=C]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-3des":     myip=unset; hisip=unset;
+000 "westnet-eastnet-3des":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; nat_keepalive: yes 
+000 "westnet-eastnet-3des":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEv2ALLOW+SAREFTRACK; prio: 24,24; interface: eth1; 
+000 "westnet-eastnet-3des":   dpd: action:clear; delay:0; timeout:0;
+000 "westnet-eastnet-3des":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-3des":   IKE algorithms wanted: AES_CBC(7)_256-MD5(1)_000-MODP1536(5), AES_CBC(7)_256-SHA1(2)_000-MODP1536(5), AES_CBC(7)_256-MD5(1)_000-MODP1024(2), AES_CBC(7)_256-SHA1(2)_000-MODP1024(2)
+000 "westnet-eastnet-3des":   IKE algorithms found:  AES_CBC(7)_256-MD5(1)_128-MODP1536(5), AES_CBC(7)_256-SHA1(2)_160-MODP1536(5), AES_CBC(7)_256-MD5(1)_128-MODP1024(2), AES_CBC(7)_256-SHA1(2)_160-MODP1024(2)
+000 "westnet-eastnet-3des":   ESP algorithms wanted: 3DES(3)_000-MD5(1)_000
+000 "westnet-eastnet-3des":   ESP algorithms loaded: 3DES(3)_192-MD5(1)_128
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec look
+east NOW
+192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
+ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_3DES_HMAC_MD5: dir=out src=192.1.2.23 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64  alen=128 aklen=128 eklen=192 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_3DES_HMAC_MD5: dir=in  src=192.1.2.45 iv_bits=64bits iv=0xIVISFORRANDOM000 ooowin=64   alen=128 aklen=128 eklen=192 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+ROUTING TABLE
+default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+192.0.1.0/24 dev ipsec0  scope link 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

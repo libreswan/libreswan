@@ -66,7 +66,36 @@
 
 TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 
-/* Note: this per-helper struct is never modified in a helper thread */
+/*
+ * Note: this per-helper struct is never modified in a helper thread
+ *
+ * Life cycle:
+ * - array of nhelpers pointers to this struct created by init_crypto_helpers
+ *   Each is initialized by init_crypto_helper (and thread is created):
+ *	pcw_work = 0
+ *	pcw_dead = FALSE (TRUE if thread creation failed)
+ *	pcw_active some kind of queue
+ *
+ * - cleanup_crypto_helper.
+ *   Called by send_crypto_helper_request (if worker is dead and reaped)
+ *   Called by handle_helper_answer on EOF if reaped (set dead)
+ *	pcw_work = 0
+ *	pcw_dead = FALSE (marking as not dead -- lets it live again)
+ *
+ * - kill_helper does a pthread_cancel.
+ *   It is called if the main program's handle_helper_answer cannot
+ *   read correctly from helper.
+ *	pcw_dead = TRUE
+ *
+ * - handle_helper_answer reads from helper
+ *   + calls kill_helper on read error
+ *	pcw_dead = TRUE on EOF
+ *
+ * pcw_work:
+ * - send_crypto_helper_request increments it at end
+ * - crypto_send_backlog increments it at end
+ * - handle_helper_answer decrements it after reading
+ */
 struct pluto_crypto_worker {
 	int pcw_helpernum;
 	pthread_t pcw_pid;
@@ -140,9 +169,13 @@ void pcr_dh_init(struct pluto_crypto_req *r,
 	INIT_WIRE_ARENA(r->pcr_d.dhq);
 }
 
-/* If there are any helper threads, this code is always executed IN A HELPER THREAD.
- * Otherwise it is executed in the main (only) thread.
+/*
+ * If there are any helper threads, this code is always executed IN A HELPER
+ * THREAD. Otherwise it is executed in the main (only) thread.
  */
+
+static int crypto_helper_delay;
+
 static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 {
 	DBG(DBG_CONTROL,
@@ -150,20 +183,10 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		    helpernum,
 		    enum_show(&pluto_cryptoop_names, r->pcr_type),
 		    r->pcr_id));
-	{
-		const char *d = getenv("PLUTO_CRYPTO_HELPER_DELAY");
-
-		if (d != NULL) {
-			unsigned long delay;
-			err_t ugh = ttoulb(d, 0, 0, secs_per_hour, &delay);
-
-			if (ugh != NULL) {
-				libreswan_log("$PLUTO_CRYPTO_HELPER_DELAY malformed: %s", ugh);
-			} else {
-				DBG_log("crypto helper is pausing for %lu seconds", delay);
-				sleep(delay);
-			}
-		}
+	if (crypto_helper_delay > 0) {
+		DBG_log("crypto helper is pausing for %u seconds",
+			crypto_helper_delay);
+		sleep(crypto_helper_delay);
 	}
 
 	/* now we have the entire request in the buffer, process it */
@@ -346,10 +369,18 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
  * This function may fail if there is no worker that can take
  * more work items.
  *
+ * Return values:
+ *	STF_INLINE: computation and continuation done.
+ *	STF_FAIL: failure; message logged
+ *	STF_SUSPEND: computation queued for later completion
+ *	STF_TOOMUCHCRYPTO: queue overloaded: we won't do this; message logged
+ *
  * ??? note that the struct pluto_crypto_req in the request is not
  * the same as in the response.  That makes using the continuation
  * to handle failure cases a little dodgy.  Besides, none of the
  * continuation functions handles a non-NULL ugh parameter.
+ * On the other hand, the continuation is in a better position to
+ * provide context in a diagnostic message.
  * The parameter ought to be removed or used.
  */
 
@@ -361,13 +392,16 @@ stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
 	struct pluto_crypto_worker *c;	/* candidate worker */
 	struct state *st = cur_state;	/* TRANSITIONAL */
 
-	/* Transitional: caller may have set pcrc_serialno.
-	 * If so, it ought to be right.
+	/*
+	 * transitional: caller must have set pcrc_serialno.
+	 * It ought to match cur_state->st_serialno.
 	 */
 	passert(cn->pcrc_serialno == st->st_serialno);
 
-	passert(st->st_serialno != SOS_NOBODY && st != NULL);
+	passert(st->st_serialno != SOS_NOBODY);
 	cn->pcrc_serialno = st->st_serialno;
+
+	passert(cn->pcrc_func != NULL);
 
 	/* do it all ourselves? */
 	if (pc_workers == NULL) {
@@ -474,7 +508,7 @@ stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
 			    enum_name(&pluto_cryptoimportance_names,
 				      r->pcr_pcim)));
 
-		loglog(RC_LOG_SERIOUS, "can not start crypto helper: failed to find any available worker");
+		loglog(RC_LOG_SERIOUS, "cannot start crypto helper: failed to find any available worker");
 
 		pfree(cn);	/* ownership transferred from caller */
 		return STF_TOOMUCHCRYPTO;
@@ -482,6 +516,7 @@ stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
 
 	/* cn ownership transferred on to backlog */
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = TRUE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = TRUE;
 	delete_event(st);
 	event_schedule(EVENT_CRYPTO_FAILED, EVENT_CRYPTO_FAILED_DELAY, st);
@@ -518,7 +553,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 					w->pcw_helpernum));
 				/* discard request ??? is this the best action? */
 				/* XXX invoke callback with failure */
-				passert(0);
+				passert(FALSE);
 				if (pbs_offset(&cn->pcrc_reply_stream) != 0) {
 					pfree(cn->pcrc_reply_buffer);
 					cn->pcrc_reply_buffer = NULL;
@@ -536,7 +571,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 		/* send the request, and then mark the worker as having more work */
 		if (!crypto_write_request(w, r)) {
 			/* XXX invoke callback with failure */
-			passert(0);
+			passert(FALSE);
 			if (pbs_offset(&cn->pcrc_reply_stream) != 0)
 				pfree(cn->pcrc_reply_buffer);
 			cn->pcrc_reply_buffer = NULL;
@@ -560,8 +595,8 @@ static void scrap_crypto_cont(/*TAILQ_HEAD*/ struct req_queue *qh,
 			      const char *what)
 {
 	DBG(DBG_CONTROL,
-	    DBG_log("scrapping crypto request ID%u for #%lu from %s",
-		    cn->pcrc_id, cn->pcrc_serialno, what));
+		DBG_log("scrapping crypto request ID%u for #%lu from %s",
+			cn->pcrc_id, cn->pcrc_serialno, what));
 	TAILQ_REMOVE(qh, cn, pcrc_list);
 	if (pbs_offset(&cn->pcrc_reply_stream) != 0) {
 		pfree(cn->pcrc_reply_buffer);
@@ -621,6 +656,27 @@ static void kill_helper(struct pluto_crypto_worker *w)
 	w->pcw_dead = TRUE;
 }
 
+void log_crypto_workers(void) {
+	bool first_time = TRUE;
+	int i;
+
+	if (!first_time)
+		return;
+
+	first_time = FALSE;
+
+	for (i = 0; i < pc_workers_cnt; i++) {
+		struct pluto_crypto_worker *w = &pc_workers[i];
+		struct pluto_crypto_req_cont *cn;
+
+		for (cn = w->pcw_active.tqh_first; cn != NULL; cn = cn->pcrc_list.tqe_next) {
+			libreswan_log("crypto queue: request ID%u for #%lu assigned to %scrypto helper %d",
+					cn->pcrc_id, cn->pcrc_serialno,
+					w->pcw_dead ? "dead " : "", i);
+		}
+	}
+}
+
 /*
  * This function is called when there is socketpair input from a helper.
  * This is the answer from the helper.
@@ -638,7 +694,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	ssize_t actlen;
 	struct pluto_crypto_req_cont *cn;
 
-	DBG(DBG_CRYPT | DBG_CONTROL,
+	DBG(DBG_CONTROL,
 	    DBG_log("crypto helper %d has finished work (pcw_work now %d)",
 		    w->pcw_helpernum,
 		    w->pcw_work));
@@ -651,15 +707,24 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	actlen = read(w->pcw_master_fd, (void *)&rr, sizeof(rr));
 
 	if (actlen != sizeof(rr)) {
-		if (actlen != 0) {
-			/* errno might not be set by the read */
+		if (actlen == -1) {
 			loglog(RC_LOG_SERIOUS,
-			       "read failed with short length %zd of %zu: %s",
-			       actlen, sizeof(rr), strerror(errno));
+			       "read from crypto helper %d failed: %s.  Killing helper.",
+			       w->pcw_helpernum, strerror(errno));
 			kill_helper(w);
-		} else {
+		} else if (actlen == 0) {
 			/* EOF: mark worker as dead. */
 			w->pcw_dead = TRUE;
+		} else if (errno == 0) {
+			loglog(RC_LOG_SERIOUS,
+			       "read from crypto helper %d failed with short length %zd of %zu.  Killing helper.",
+			       w->pcw_helpernum, actlen, sizeof(rr));
+			kill_helper(w);
+		} else {
+			loglog(RC_LOG_SERIOUS,
+			       "read from crypto helper %d failed with short length %zd of %zu (errno=%s).  Killing helper.",
+			       w->pcw_helpernum, actlen, sizeof(rr), strerror(errno));
+			kill_helper(w);
 		}
 		return;
 	}
@@ -673,9 +738,9 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 		return;
 	}
 
-	DBG(DBG_CRYPT | DBG_CONTROL, DBG_log("crypto helper %d replies to request ID %u",
-					     w->pcw_helpernum,
-					     rr.pcr_id));
+	DBG(DBG_CONTROL,
+		DBG_log("crypto helper %d replies to request ID %u",
+			w->pcw_helpernum, rr.pcr_id));
 
 	/* worker w can accept more work now that we have read from its socketpair */
 	w->pcw_work--;
@@ -705,8 +770,9 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 
 	passert(cn->pcrc_func != NULL);
 
-	DBG(DBG_CRYPT, DBG_log("calling continuation function %p",
-			       cn->pcrc_func));
+	DBG(DBG_CONTROL,
+		DBG_log("calling continuation function %p",
+			cn->pcrc_func));
 
 	reply_stream = cn->pcrc_reply_stream;
 	if (pbs_offset(&reply_stream) != 0) {
@@ -801,6 +867,28 @@ static void *pluto_helper_thread(void *w)
 }
 
 /*
+ * Initialize crypto helper debug delay value from environment variable.
+ * This function is NOT thread safe (getenv).
+ */
+static void init_crypto_helper_delay(void)
+{
+	const char *envdelay;
+	unsigned long delay;
+	err_t error;
+
+	envdelay = getenv("PLUTO_CRYPTO_HELPER_DELAY");
+	if (envdelay == NULL)
+		return;
+
+	error = ttoulb(envdelay, 0, 0, secs_per_hour, &delay);
+	if (error != NULL)
+		libreswan_log("$PLUTO_CRYPTO_HELPER_DELAY malformed: %s",
+			error);
+	else
+		crypto_helper_delay = (int)delay;
+}
+
+/*
  * initialize the helpers.
  *
  * Later we will have to make provisions for helpers that have hardware
@@ -817,6 +905,8 @@ void init_crypto_helpers(int nhelpers)
 	pcw_id = 1;
 
 	TAILQ_INIT(&backlog);
+
+	init_crypto_helper_delay();
 
 	/* find out how many CPUs there are, if nhelpers is -1 */
 	/* if nhelpers == 0, then we do all the work ourselves */

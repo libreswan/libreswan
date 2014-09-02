@@ -6,7 +6,10 @@ then
 	echo >&2 "error: make release should be run from the top directory"
 	exit 1
 fi
-version=`git tag | tail -1| sed -e "s/v//"`
+if [ -z "$VERSION" ]
+then
+	VERSION=`git tag | tail -1| sed -e "s/v//"`
+fi
 
 if [ -z "$FORCE" ]
 then
@@ -26,7 +29,7 @@ then
 	fi
 fi
 
-if [ -f release/libreswan-$version.tar.gz  ]
+if [ -f release/libreswan-$VERSION.tar.gz  ]
 then
 	echo >&2 "ERROR: release already exists. Aborted"
 	exit 1
@@ -34,22 +37,22 @@ else
 	mkdir -p release
 fi
 
-git archive --format=tar --prefix=libreswan-$version/ HEAD | gzip > release/libreswan-$version.tar.gz
+git archive --format=tar --prefix=libreswan-$VERSION/ HEAD | gzip > release/libreswan-$VERSION.tar.gz
 
 # subshell for easier path
 (
 	cd release 
-	tar zxf libreswan-$version.tar.gz
-	cd libreswan-$version
-	echo "IPSECBASEVERSION?=$version" > Makefile.ver
+	tar zxf libreswan-$VERSION.tar.gz
+	cd libreswan-$VERSION
+	echo "IPSECBASEVERSION?=$VERSION" > Makefile.ver
 	sed -i "s/(unreleased)/(`C= LOCALE= LANG= date +"%B %d, %Y"`)/" CHANGES
 	for file in debian/NEWS debian/changelog `find packaging -type f | xargs grep IPSECBASEVERSION |sed "s/:.*$//"`
 	do
-		sed -i "s/IPSECBASEVERSION/$version/" $file
+		sed -i "s/IPSECBASEVERSION/$VERSION/" $file
 	done
 	cd .. 
-	tar zcf libreswan-$version.tar.gz libreswan-$version
+	tar zcf libreswan-$VERSION.tar.gz libreswan-$VERSION
 )
-ls -l release/libreswan-$version.tar.gz
+ls -l release/libreswan-$VERSION.tar.gz
 echo please sign the release now with GPG and upload it
 

@@ -16,6 +16,7 @@
 [            aes-sha1]    OK: alg=AES(12)_000-SHA1(2)_000
 [            aes-sha2]    OK: alg=AES(12)_000-SHA2_256(5)_000
 [         aes128-sha1]    OK: alg=AES(12)_128-SHA1(2)_000
+[     aes128-aes_xcbc]    OK: alg=AES(12)_128-AES_XCBC(9)_000
 [         aes192-sha1]    OK: alg=AES(12)_192-SHA1(2)_000
 [         aes256-sha1]    OK: alg=AES(12)_256-SHA1(2)_000
 [          aes256-sha]    OK: alg=AES(12)_256-SHA1(2)_000
@@ -23,10 +24,10 @@
 [     aes256-sha2_256]    OK: alg=AES(12)_256-SHA2_256(5)_000
 [     aes256-sha2_384]    OK: alg=AES(12)_256-SHA2_384(6)_000
 [     aes256-sha2_512]    OK: alg=AES(12)_256-SHA2_512(7)_000
-[            camellia]    OK: alg=CAMELLIA(22)_000-MD5(1)_000, CAMELLIA(22)_000-SHA1(2)_000
-[         camellia128]    OK: alg=CAMELLIA(22)_128-MD5(1)_000, CAMELLIA(22)_128-SHA1(2)_000
-[         camellia192]    OK: alg=CAMELLIA(22)_192-MD5(1)_000, CAMELLIA(22)_192-SHA1(2)_000
-[         camellia256]    OK: alg=CAMELLIA(22)_256-MD5(1)_000, CAMELLIA(22)_256-SHA1(2)_000
+[            camellia]    OK: alg=CAMELLIA(23)_000-MD5(1)_000, CAMELLIA(23)_000-SHA1(2)_000
+[         camellia128]    OK: alg=CAMELLIA(23)_128-MD5(1)_000, CAMELLIA(23)_128-SHA1(2)_000
+[         camellia192]    OK: alg=CAMELLIA(23)_192-MD5(1)_000, CAMELLIA(23)_192-SHA1(2)_000
+[         camellia256]    OK: alg=CAMELLIA(23)_256-MD5(1)_000, CAMELLIA(23)_256-SHA1(2)_000
 [  aes_ccm_a-128-null]    OK: alg=AES_CCM_A(14)_128-NONE(0)_000
 [  aes_ccm_a-192-null]    OK: alg=AES_CCM_A(14)_192-NONE(0)_000
 [  aes_ccm_a-256-null]    OK: alg=AES_CCM_A(14)_256-NONE(0)_000
@@ -49,39 +50,26 @@
 [        aes_gcm-null]    OK: alg=AES_GCM_C(20)_000-NONE(0)_000
 [    aes_ccm-256-null]    OK: alg=AES_CCM_C(16)_256-NONE(0)_000
 [    aes_gcm-192-null]    OK: alg=AES_GCM_C(20)_192-NONE(0)_000
-[  aes_ccm_8-128-null]    OK
-[  aes_ccm_8-192-null]    OK
-[  aes_ccm_8-256-null]    OK
-[ aes_ccm_12-128-null]    OK
-[ aes_ccm_12-192-null]    OK
-[ aes_ccm_12-256-null]    OK
-[ aes_ccm_16-128-null]    OK
-[ aes_ccm_16-192-null]    OK
-[ aes_ccm_16-256-null]    OK
-[  aes_gcm_8-128-null]    OK
-[  aes_gcm_8-192-null]    OK
-[  aes_gcm_8-256-null]    OK
-[ aes_gcm_12-128-null]    OK
-[ aes_gcm_12-192-null]    OK
-[ aes_gcm_12-256-null]    OK
-[ aes_gcm_16-128-null]    OK
-[ aes_gcm_16-192-null]    OK
-[ aes_gcm_16-256-null]    OK
 [             aes_ctr]    OK: alg=AES_CTR(13)_000-MD5(1)_000, AES_CTR(13)_000-SHA1(2)_000
 [              aesctr]    OK: alg=AES_CTR(13)_000-MD5(1)_000, AES_CTR(13)_000-SHA1(2)_000
-[          aes128_ctr]    OK:
+[          aes_ctr128]    OK: alg=AES_CTR(13)_128-MD5(1)_000, AES_CTR(13)_128-SHA1(2)_000
+[          aes_ctr192]    OK: alg=AES_CTR(13)_192-MD5(1)_000, AES_CTR(13)_192-SHA1(2)_000
+[          aes_ctr256]    OK: alg=AES_CTR(13)_256-MD5(1)_000, AES_CTR(13)_256-SHA1(2)_000
 [             serpent]    OK: alg=SERPENT(252)_000-MD5(1)_000, SERPENT(252)_000-SHA1(2)_000
 [             twofish]    OK: alg=TWOFISH(253)_000-MD5(1)_000, TWOFISH(253)_000-SHA1(2)_000
 [                mars]    OK: alg=MARS(249)_000-MD5(1)_000, MARS(249)_000-SHA1(2)_000
-[            modp1536]    OK:
+[            modp1536]    OK: <should not fail>
+h_alg="", modp=""
 
 ---- ESP tests that should fail----
 [        3des168-sha1] ERROR: alg=  error=3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
 [         aes224-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
 [         aes512-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(512), auth_alg="sha1", modp=""
 [         aes-sha1555] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(0), auth_alg="sha1555", modp=""
-[            blowfish] ERROR:
-[            des-sha1] ERROR:
+[            blowfish] ERROR: alg=  error=cipher too weak or not implemented, enc_alg="blowfish"(0), auth_alg="", modp=""
+[            des-sha1] ERROR: alg=  error=cipher too weak or not implemented, enc_alg="des"(0), auth_alg="sha1", modp=""
+[          aes_ctr666] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ctr"(666), auth_alg="", modp=""
+[     aes128-sha2_128] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(128), auth_alg="sha2_128", modp=""
 [        vanitycipher] ERROR: alg=  error=enc_alg not found, enc_alg="vanitycipher"(0), auth_alg="", modp=""
 [             ase-sah] ERROR: alg=  error=enc_alg not found, enc_alg="ase"(0), auth_alg="sah", modp=""
 [            aes-sah1] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(0), auth_alg="sah1", modp=""
@@ -93,9 +81,16 @@
 [                 sha]    OK: alg=SHA1(2)_000
 [                sha1]    OK: alg=SHA1(2)_000
 [                sha2]    OK: alg=SHA2_256(5)_000
+[            sha2_256]    OK: alg=SHA2_256(5)_000
+[            sha2_384]    OK: alg=SHA2_384(6)_000
+[            sha2_512]    OK: alg=SHA2_512(7)_000
+[            aes_xcbc]    OK: alg=AES_XCBC(9)_000
+[              ripemd]    OK: alg=RIPEMD(8)_000
 
 ---- AH tests that should fail ----
-[                null] ERROR:
-[         vanityhash1] ERROR:
-[       aes_gcm_c-256] ERROR:
-[                 id3] ERROR:
+[            aes-sha1] ERROR: alg=  error=Non initial digit found for auth keylen, just after "aes-" (old_state=ST_AA_END)
+[         vanityhash1] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="vanityhash1", modp=""
+[       aes_gcm_c-256] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="aes_gcm_c", modp=""
+[                 id3] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="id3", modp=""
+[                3des] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="3des", modp=""
+[                null] ERROR: <should not crash>

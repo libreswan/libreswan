@@ -154,7 +154,7 @@ static inline void list_del(struct list_head *entry)
  * the entry is in an undefined state. It is useful for RCU based
  * lockfree traversal.
  *
- * In particular, it means that we can not poison the forward
+ * In particular, it means that we cannot poison the forward
  * pointers that may still be used for walking the list.
  */
 static inline void list_del_rcu(struct list_head *entry)
@@ -371,7 +371,7 @@ static __inline__ void hlist_del(struct hlist_node *n)
  * the entry is in an undefined state. It is useful for RCU based
  * lockfree traversal.
  *
- * In particular, it means that we can not poison the forward
+ * In particular, it means that we cannot poison the forward
  * pointers that may still be used for walking the hash list.
  */
 static inline void hlist_del_rcu(struct hlist_node *n)

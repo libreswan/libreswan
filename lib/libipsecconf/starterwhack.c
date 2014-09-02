@@ -136,6 +136,11 @@ static int starter_whack_read_reply(int sock,
 			 * our exit status
 			 */
 			{
+				/*
+				 * we don't generally use strtoul but
+				 * in this case, its failure mode
+				 * (0 for nonsense) is probably OK.
+				 */
 				unsigned long s = strtoul(ls, NULL, 10);
 
 				switch (s) {
@@ -143,6 +148,7 @@ static int starter_whack_read_reply(int sock,
 				case RC_LOG:
 					/* ignore */
 					break;
+
 				case RC_SUCCESS:
 					/* be happy */
 					ret = 0;
@@ -199,7 +205,6 @@ static int starter_whack_read_reply(int sock,
 
 					break;
 
-				/* case RC_LOG_SERIOUS: */
 				default:
 					/* pass through */
 					ret = s;
@@ -537,8 +542,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		if (conn->options_set[KBF_DPDACTION])
 			msg.dpd_action = conn->options[KBF_DPDACTION];
 
-		if (conn->options_set[KBF_REKEY] &&
-			!conn->options[KBF_REKEY]) {
+		if (conn->options_set[KBF_REKEY] && !conn->options[KBF_REKEY]) {
 			if (conn->options[KBF_DPDACTION] ==
 				DPD_ACTION_RESTART) {
 				starter_log(LOG_LEVEL_ERR,
@@ -873,5 +877,14 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 	msg.whack_initiate = TRUE;
 	msg.whack_async = TRUE;
 	msg.name = connection_name(conn);
+	return send_whack_msg(&msg, cfg->ctlbase);
+}
+
+int starter_whack_listen(struct starter_config *cfg)
+{
+	struct whack_message msg;
+
+	init_whack_msg(&msg);
+	msg.whack_listen = TRUE;
 	return send_whack_msg(&msg, cfg->ctlbase);
 }

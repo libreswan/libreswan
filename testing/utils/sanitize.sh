@@ -5,8 +5,13 @@ if [ -f ./testparams.sh ] ; then
 else
 	. ../../default-testparams.sh
 fi
+
+if [ -f ./add-testparams.sh ]
+then
+    . ./add-testparams.sh
+fi
 . ../setup.sh
-. $LIBRESAWNBASE/testing/utils/functions.sh 
+. $LIBRESWANDIR/testing/utils/functions.sh
 
 if [ -f eastinit.sh ] ; then
         RESPONDER=east

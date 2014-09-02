@@ -87,17 +87,22 @@ void add_pending(int whack_sock,
 
 	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->isakmp_sa == isakmp_sa) {
-			DBG(DBG_CONTROL,
-			    DBG_log("Ignored already queued up pending Quick Mode with %s \"%s\"",
-				    ip_str(&c->spd.that.host_addr),
-				    c->name));
+			DBG(DBG_CONTROL, {
+				ipstr_buf b;
+				DBG_log("Ignored already queued up pending Quick Mode with %s \"%s\"",
+					ipstr(&c->spd.that.host_addr, &b),
+					c->name);
+			});
 			return;
 		}
 	}
 
-	DBG(DBG_CONTROL, DBG_log("Queuing pending Quick Mode with %s \"%s\"",
-				 ip_str(&c->spd.that.host_addr),
-				 c->name));
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
+		DBG_log("Queuing pending Quick Mode with %s \"%s\"",
+			ipstr(&c->spd.that.host_addr, &b),
+			c->name);
+	});
 
 	p = alloc_thing(struct pending, "struct pending");
 	p->whack_sock = whack_sock;
@@ -203,13 +208,15 @@ void unpend(struct state *st)
 	     (p = *pp) != NULL;
 	     ) {
 		if (p->isakmp_sa == st) {
-			DBG(DBG_CONTROL,
-			    DBG_log("unqueuing pending %s with %s \"%s\" %s",
-				    st->st_ikev2 ? "Child SA" : "Quick Mode",
-				    ip_str(&p->connection->spd.that.host_addr),
-				    p->connection->name,
-				    enum_name(&pluto_cryptoimportance_names,
-					      st->st_import)));
+			DBG(DBG_CONTROL, {
+				ipstr_buf b;
+				DBG_log("unqueuing pending %s with %s \"%s\" %s",
+					st->st_ikev2 ? "Child SA" : "Quick Mode",
+					ipstr(&p->connection->spd.that.host_addr, &b),
+					p->connection->name,
+					enum_name(&pluto_cryptoimportance_names,
+						  st->st_import));
+			});
 
 			p->pend_time = mononow();
 			if (!st->st_ikev2) {

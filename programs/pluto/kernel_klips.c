@@ -82,13 +82,11 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 		}
 
 		/* ignore if virtual (ipsec*) interface */
-		if (strncmp(ifp->name, IPSECDEVPREFIX, sizeof(IPSECDEVPREFIX) -
-			    1) == 0)
+		if (startswith(ifp->name, IPSECDEVPREFIX))
 			continue;
 
 		/* ignore if virtual (mast*) interface */
-		if (strncmp(ifp->name, MASTDEVPREFIX, sizeof(MASTDEVPREFIX) -
-			    1) == 0)
+		if (startswith(ifp->name, MASTDEVPREFIX))
 			continue;
 
 		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
@@ -98,13 +96,14 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 				/* Different entries with matching IP addresses.
 				 * Many interesting cases.
 				 */
-				if (strncmp(vfp->name, IPSECDEVPREFIX,
-					    sizeof(IPSECDEVPREFIX) - 1) == 0) {
+				if (startswith(vfp->name, IPSECDEVPREFIX)) {
 					if (v != NULL) {
+						ipstr_buf b;
+
 						loglog(RC_LOG_SERIOUS,
 						       "ipsec interfaces %s and %s share same address %s",
 						       v->name, vfp->name,
-						       ip_str(&ifp->addr));
+						       ipstr(&ifp->addr, &b));
 						bad = TRUE;
 					} else {
 						v = vfp; /* current winner */
@@ -123,10 +122,12 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 					}
 #endif
 					if (after) {
+						ipstr_buf b;
+
 						loglog(RC_LOG_SERIOUS,
 						       "IP interfaces %s and %s share address %s!",
 						       ifp->name, vfp->name,
-						       ip_str(&ifp->addr));
+						       ipstr(&ifp->addr, &b));
 					}
 					bad = TRUE;
 				}
@@ -157,20 +158,23 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 					(sizeof(fvp) - 1));
 				v = &fake_v;
 			} else {
-				DBG(DBG_CONTROL,
-				    DBG_log("IP interface %s %s has no matching ipsec* interface -- ignored",
-					    ifp->name, ip_str(&ifp->addr)));
+				DBG(DBG_CONTROL, {
+					ipstr_buf b;
+
+					DBG_log("IP interface %s %s has no matching ipsec* interface -- ignored",
+						ifp->name, ipstr(&ifp->addr, &b));
+				});
 				continue;
 			}
 		}
 
 		/* ignore if --listen is specified and we do not match */
-		if (pluto_listen != NULL) {
-			if (!sameaddr(&lip, &ifp->addr)) {
-				libreswan_log("skipping interface %s with %s",
-					      ifp->name, ip_str(&ifp->addr));
-				continue;
-			}
+		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
+			ipstr_buf b;
+
+			libreswan_log("skipping interface %s with %s",
+				      ifp->name, ipstr(&ifp->addr, &b));
+			continue;
 		}
 
 		/* We've got all we need; see if this is a new thing:
@@ -191,6 +195,7 @@ add_entry:
 					/* matches nothing -- create a new entry */
 					int fd = create_socket(ifp, v->name,
 							       pluto_port);
+					ipstr_buf b;
 
 					if (fd < 0)
 						break;
@@ -223,7 +228,7 @@ add_entry:
 						"adding interface %s/%s %s:%d",
 						q->ip_dev->id_vname,
 						q->ip_dev->id_rname,
-						ip_str(&q->ip_addr),
+						ipstr(&q->ip_addr, &b),
 						q->port);
 
 					/*
@@ -259,8 +264,8 @@ add_entry:
 						libreswan_log(
 							"adding interface %s/%s %s:%d",
 							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							ip_str(&q->
-							       ip_addr),
+							ipstr(&q->
+							       ip_addr, &b),
 							q->port);
 					}
 					break;

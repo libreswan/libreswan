@@ -177,8 +177,6 @@ ip_address *dst;
 			p = (char *) MALLOC(srclen + 1);
 			if (p == NULL)
 				return "unable to get temporary space for name";
-
-
 		}
 		p[0] = '\0';	/* strncpy semantics are wrong */
 		strncat(p, src, srclen);

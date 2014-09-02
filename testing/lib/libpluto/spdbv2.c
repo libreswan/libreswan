@@ -52,14 +52,6 @@ ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st)
 	return 12;
 }
 
-const char *ip_str(const ip_address *src)
-{
-	static char buf[ADDRTOT_BUF];
-
-	addrtot(src, 0, buf, sizeof(buf));
-	return buf;
-}
-
 main(int argc, char *argv[]){
 	int i;
 	struct db_sa *gsp = NULL;

@@ -186,7 +186,8 @@ struct kernel_ops {
 	bool (*grp_sa)(const struct kernel_sa *sa_outer,
 		       const struct kernel_sa *sa_inner);
 	bool (*del_sa)(const struct kernel_sa *sa);
-	bool (*get_sa)(const struct kernel_sa *sa, u_int *bytes);
+	bool (*get_sa)(const struct kernel_sa *sa, u_int *bytes,
+		       uint64_t *add_time);
 	ipsec_spi_t (*get_spi)(const ip_address *src,
 			       const ip_address *dst,
 			       int proto,

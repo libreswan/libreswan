@@ -665,15 +665,17 @@ int main(int argc, char *argv[])
 	if (confdir == NULL)
 		confdir = IPSEC_CONFDIR;
 
-	if (!configfile) {
-		configfile = alloc_bytes(strlen(IPSEC_CONF) + 2, "conf file");
+	if (configfile == NULL) {
+		/* ??? see code clone in programs/readwriteconf/readwriteconf.c */
+		configfile = alloc_bytes(strlen(confdir) +
+					 sizeof("/ipsec.conf"),
+					 "conf file");
 
 		/* calculate default value for configfile */
-		configfile[0] = '\0';
-		strcpy(configfile, confdir);
-		if (configfile[strlen(configfile) - 1] != '/')
-			strcat(configfile, "/");
-		strcat(configfile, "ipsec.conf");
+		strcpy(configfile, confdir);	/* safe: see allocation above */
+		if (configfile[0] != '\0' && configfile[strlen(configfile) - 1] != '/')
+			strcat(configfile, "/");	/* safe: see allocation above */
+		strcat(configfile, "ipsec.conf");	/* safe: see allocation above */
 	}
 
 	if (verbose)
@@ -691,7 +693,7 @@ int main(int argc, char *argv[])
 	cfg = confread_load(configfile, &err, resolvip, ctlbase, configsetup);
 
 	if (cfg == NULL) {
-		fprintf(stderr, "can not load config '%s': %s\n",
+		fprintf(stderr, "cannot load config '%s': %s\n",
 			configfile, err);
 		exit(3);
 	} else if (checkconfig) {
@@ -729,6 +731,10 @@ int main(int argc, char *argv[])
 			if (conn->desired_state == STARTUP_ONDEMAND)
 				starter_whack_route_conn(cfg, conn);
 		}
+
+		/* We added all connections, let pluto listen, then startup our conns */
+		starter_whack_listen(cfg);
+
 		if (verbose)
 			printf("  Pass #2: Initiating auto=start connections\n");
 

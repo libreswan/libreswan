@@ -30,7 +30,7 @@ extern void db_destroy(struct db_context *ctx);
 extern void db_trans_add(struct db_context *ctx, u_int8_t transid);
 
 /*	Add a new attribute by value */
-extern void db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val);
+extern void db_attr_add_values(struct db_context *ctx, enum ikev1_oakley_attr type, u_int16_t val);
 
 /*	Get proposal from db object */
 static __inline__ struct db_prop *db_prop_get(struct db_context *ctx)

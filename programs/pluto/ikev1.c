@@ -156,6 +156,7 @@
 #include "vendor.h"
 #include "ikev1_dpd.h"
 #include "hostpair.h"
+#include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -229,13 +230,8 @@ static state_transition_fn      /* forward declaration */
 static const struct state_microcode
 	*ike_microcode_index[STATE_IKE_ROOF - STATE_IKE_FLOOR];
 
-#define PHONY_STATE(X) \
-	{ X, X \
-	  , 0 \
-	  , 0, P(VID) | P(CR), PT(NONE) \
-	  , 0, NULL }
-
 static const struct state_microcode v1_state_microcode_table[] = {
+
 #define PT(n) ISAKMP_NEXT_ ## n
 #define P(n) LELEM(PT(n))
 
@@ -687,24 +683,24 @@ static stf_status informational(struct msg_digest *md)
 				struct connection *tmp_c;
 				ip_address old_addr;
 
-				/* Saving connection name and whack sock id*/
+				/* Saving connection name and whack sock id */
 				tmp_name = st->st_connection->name;
 				tmp_whack_sock = dup_any(st->st_whack_sock);
 
-				/* deleting ISAKMP SA with the current remote peer*/
+				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);
 
-				/* to find and store the connection associated with tmp_name*/
+				/* to find and store the connection associated with tmp_name */
 				tmp_c = con_by_name(tmp_name, FALSE);
 
 				DBG_cond_dump(DBG_PARSING,
 					      "redirected remote end info:", n_pbs->cur + pbs_left(
 						      n_pbs) - 4, 4);
 
-				/*Current remote peer info*/
+				/* Current remote peer info */
 				{
 
-					char buftest[ADDRTOT_BUF];
+					ipstr_buf b;
 					struct spd_route *tmp_spd =
 						&tmp_c->spd;
 					int count_spd = 0;
@@ -718,17 +714,10 @@ static stf_status informational(struct msg_digest *md)
 						/**that info**/
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that id kind: %d",
-							    tmp_spd->that.id.
-							    kind));
+							    tmp_spd->that.id.kind));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that id ipaddr: %s",
-							    (addrtot(&tmp_spd->
-								     that.id.
-								     ip_addr,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_spd->that.id.ip_addr, &b)));
 						if (tmp_spd->that.id.name.ptr
 						    != NULL)
 							DBG(DBG_CONTROLMORE,
@@ -739,38 +728,16 @@ static stf_status informational(struct msg_digest *md)
 								    name));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that host_addr: %s",
-							    (addrtot(&tmp_spd->
-								     that.
-								     host_addr,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_spd->that.host_addr, &b)));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that nexthop: %s",
-							    (addrtot(&tmp_spd->
-								     that.
-								     host_nexthop,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_spd->that.host_nexthop, &b)));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that srcip: %s",
-							    (addrtot(&tmp_spd->
-								     that.
-								     host_srcip,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_spd->that.host_srcip, &b)));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that client_addr: %s, maskbits:%d",
-							    (addrtot(&tmp_spd->that.client.addr,
-									    0,
-									    buftest,
-									    sizeof(buftest)),
-								    buftest),
+							    ipstr(&tmp_spd->that.client.addr, &b),
 							    tmp_spd->that.
 							    client.maskbits));
 						DBG(DBG_CONTROLMORE,
@@ -796,53 +763,24 @@ static stf_status informational(struct msg_digest *md)
 					if (tmp_c->interface != NULL) {
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("Current interface_addr: %s",
-							    (addrtot(&tmp_c->
-								     interface
-								     ->
-								     ip_addr,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_c->interface->ip_addr, &b)));
 					}
 
 					if (tmp_c->gw_info != NULL) {
 						DBG(DBG_CONTROLMORE, {
 							    DBG_log("Current gw_client_addr: %s",
-								    (addrtot(&
-									     tmp_c
-									     ->
-									     gw_info
-									     ->
-									     client_id
-									     .
-									     ip_addr,
-									     0,
-									     buftest,
-									     sizeof(buftest)),
-								     buftest));
+								    ipstr(&tmp_c->gw_info->client_id.ip_addr, &b));
 							    DBG_log("Current gw_gw_addr: %s",
-								    (addrtot(&
-									     tmp_c
-									     ->
-									     gw_info
-									     ->
-									     gw_id
-									     .
-									     ip_addr,
-									     0,
-									     buftest,
-									     sizeof(buftest)),
-								     buftest));
+								    ipstr(&tmp_c->gw_info->gw_id.ip_addr, &b));
 						    });
 					}
 
 				}
 
-				/*storing old address for comparison purposes*/
+				/* storing old address for comparison purposes */
 				old_addr = tmp_c->spd.that.host_addr;
 
-				/*Decoding remote peer address info where connection has to be redirected to*/
+				/* Decoding remote peer address info where connection has to be redirected to */
 				memcpy(&tmp_c->spd.that.host_addr.u.v4.sin_addr.s_addr,
 					(u_int32_t *)(n_pbs->cur +
 						      pbs_left(n_pbs) - 4),
@@ -850,7 +788,7 @@ static stf_status informational(struct msg_digest *md)
 					       sin_addr.
 					       s_addr));
 
-				/*Modifying connection info to store the redirected remote peer info*/
+				/* Modifying connection info to store the redirected remote peer info */
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("Old host_addr_name : %s",
 					    tmp_c->spd.that.host_addr_name));
@@ -859,84 +797,44 @@ static stf_status informational(struct msg_digest *md)
 					tmp_c->spd.that.host_addr;
 
 				DBG(DBG_CONTROLMORE, {
-					    char buftest[ADDRTOT_BUF];
-					    if (sameaddr(&tmp_c->spd.this.
-							 host_nexthop,
-							 &old_addr)) {
-						    DBG_log("Old remote addr %s",
-							    (addrtot(&old_addr,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-						    DBG_log("Old this host next hop %s",
-							    (addrtot(&tmp_c->
-								     spd.this.
-								     host_nexthop,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-						    tmp_c->spd.this.host_nexthop = tmp_c->spd.that.host_addr;
-						    DBG_log("New this host next hop %s",
-							    (addrtot(&tmp_c->
-								     spd.this.
-								     host_nexthop,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-					    }
+					ipstr_buf b;
+					if (sameaddr(&tmp_c->spd.this.
+						     host_nexthop,
+						     &old_addr)) {
+						DBG_log("Old remote addr %s",
+							ipstr(&old_addr, &b));
+						DBG_log("Old this host next hop %s",
+							ipstr(&tmp_c->spd.this.host_nexthop, &b));
+						tmp_c->spd.this.host_nexthop = tmp_c->spd.that.host_addr;
+						DBG_log("New this host next hop %s",
+							ipstr(&tmp_c->spd.this.host_nexthop, &b));
+					}
 
-					    if (sameaddr(&tmp_c->spd.that.
-							 host_srcip,
-							 &old_addr)) {
-						    DBG_log("Old that host srcip %s",
-							    (addrtot(&tmp_c->
-								     spd.that.
-								     host_srcip,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-						    tmp_c->spd.that.host_srcip = tmp_c->spd.that.host_addr;
-						    DBG_log("New that host srcip %s",
-							    (addrtot(&tmp_c->
-								     spd.that.
-								     host_srcip,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-					    }
+					if (sameaddr(&tmp_c->spd.that.
+						     host_srcip,
+						     &old_addr)) {
+						DBG_log("Old that host srcip %s",
+							ipstr(&tmp_c->spd.that.host_srcip, &b));
+						tmp_c->spd.that.host_srcip = tmp_c->spd.that.host_addr;
+						DBG_log("New that host srcip %s",
+							ipstr(&tmp_c->spd.that.host_srcip, &b));
+					}
 
-					    if (sameaddr(&tmp_c->spd.that.
-							 client.addr,
-							 &old_addr)) {
-						    DBG_log("Old that client ip %s",
-							    (addrtot(&tmp_c->
-								     spd.that.
-								     client.
-								     addr, 0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-						    tmp_c->spd.that.client.addr = tmp_c->spd.that.host_addr;
-						    DBG_log("New that client ip %s",
-							    (addrtot(&tmp_c->
-								     spd.that.
-								     client.
-								     addr, 0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-					    }
-				    });
+					if (sameaddr(&tmp_c->spd.that.
+						     client.addr,
+						     &old_addr)) {
+						DBG_log("Old that client ip %s",
+							ipstr(&tmp_c->spd.that.client.addr, &b));
+						tmp_c->spd.that.client.addr = tmp_c->spd.that.host_addr;
+						DBG_log("New that client ip %s",
+							ipstr(&tmp_c->spd.that.client.addr, &b));
+					}
+				});
 
 				tmp_c->host_pair->him.addr =
 					tmp_c->spd.that.host_addr;
 
-				/*Initiating connection to the redirected peer*/
+				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
 						    0, pcim_demand_crypto);
 				return STF_IGNORE;
@@ -954,7 +852,7 @@ static stf_status informational(struct msg_digest *md)
 				return STF_FATAL;
 			}
 			loglog(RC_LOG_SERIOUS,
-			       "received and ignored informational message for unknown state");
+			       "received and ignored informational message");
 			return STF_IGNORE;
 		}
 	}
@@ -978,7 +876,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
 #define SEND_NOTIFICATION(t) { \
-		if (st) \
+		if (st != NULL) \
 			send_notification_from_state(st, from_state, t); \
 		else \
 			send_notification_from_md(md, t); }
@@ -1352,7 +1250,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 *
 			 * or if we are getting a MODECFG request.
 			 *
-			 * we distinguish these states because we can not both be an
+			 * we distinguish these states because we cannot both be an
 			 * XAUTH server and client, and our policy tells us which
 			 * one we are.
 			 *
@@ -1552,10 +1450,10 @@ void process_v1_packet(struct msg_digest **mdp)
 		/* Add the fragment to the state */
 		i = &st->ike_frags;
 		for (;;) {
-			if (ike_frag) {
+			if (ike_frag != NULL) {
 				/* Still looking for a place to insert ike_frag */
-				if (*i == NULL || (*i)->index >
-				    ike_frag->index) {
+				if (*i == NULL ||
+				    (*i)->index > ike_frag->index) {
 					ike_frag->next = *i;
 					*i = ike_frag;
 					ike_frag = NULL;
@@ -1566,7 +1464,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					ike_frag->next = old->next;
 					*i = ike_frag;
 					release_md(old->md);
-					free(old);
+					pfree(old);
 					ike_frag = NULL;
 				}
 			}
@@ -1603,7 +1501,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					/* Reassemble fragments in buffer */
 					frag = st->ike_frags;
-					while (frag &&
+					while (frag != NULL &&
 					       frag->index <= last_frag_index)
 					{
 						passert(offset + frag->size <=
@@ -1652,27 +1550,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 	}
 
-	/* Ignore a packet if the state has a suspended state transition
-	 * Probably a duplicated packet but the original packet is not yet
-	 * recorded in st->st_rpacket, so duplicate checking won't catch.
-	 * ??? Should the packet be recorded earlier to improve diagnosis?
-	 */
-	if (st != NULL && st->st_suspended_md != NULL) {
-		loglog(RC_LOG,
-		       "discarding packet received during asynchronous work (DNS or crypto) in %s",
-		       enum_name(&state_names, st->st_state));
+	if (state_busy(st))
 		return;
-	}
-
-	/*
-	 * if this state is busy calculating in between state transitions,
-	 * (there will be no suspended state), then we silently ignore the
-	 * packet, as there is nothing we can do right now.
-	 */
-	if (st != NULL && st->st_calculating) {
-		libreswan_log("message received while calculating. Ignored.");
-		return;
-	}
 
 	/* Detect and handle duplicated packets.
 	 * This won't work for the initial packet of an exchange
@@ -1719,7 +1598,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	md->new_iv_set = new_iv_set;
 
 	/*
-	 * look for encrypt packets. We can not handle them if we have not
+	 * look for encrypt packets. We cannot handle them if we have not
 	 * yet calculated the skeyids. We will just store the packet in
 	 * the suspended state, since the calculation is likely underway.
 	 *
@@ -1729,9 +1608,12 @@ void process_v1_packet(struct msg_digest **mdp)
 	 */
 	if ((md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION) &&
 	    st != NULL && !st->hidden_variables.st_skeyid_calculated ) {
-		DBG(DBG_CRYPT | DBG_CONTROL,
-		    DBG_log("received encrypted packet from %s:%u but exponentiation still in progress",
-			    ip_str(&md->sender), (unsigned)md->sender_port));
+		DBG(DBG_CRYPT | DBG_CONTROL, {
+			ipstr_buf b;
+			DBG_log("received encrypted packet from %s:%u but exponentiation still in progress",
+				ipstr(&md->sender, &b),
+				(unsigned)md->sender_port);
+		});
 
 		/* if there was a previous packet, let it go, and go with most
 		 * recent one.
@@ -1760,9 +1642,12 @@ void process_packet_tail(struct msg_digest **mdp)
 	bool new_iv_set = md->new_iv_set;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION) {
-		DBG(DBG_CRYPT, DBG_log("received encrypted packet from %s:%u",
-				       ip_str(&md->sender),
-				       (unsigned)md->sender_port));
+		DBG(DBG_CRYPT, {
+			ipstr_buf b;
+			DBG_log("received encrypted packet from %s:%u",
+				ipstr(&md->sender, &b),
+				(unsigned)md->sender_port);
+		});
 
 		if (st == NULL) {
 			libreswan_log(
@@ -1895,7 +1780,7 @@ void process_packet_tail(struct msg_digest **mdp)
 						 */
 						DBG(DBG_NATT,
 						    DBG_log("st_nat_traversal was: %s",
-							    bitnamesof(natt_bit_names, 
+							    bitnamesof(natt_bit_names,
 								       st->hidden_variables.st_nat_traversal)));
 						sd = NULL;
 					}
@@ -2241,9 +2126,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	cur_state = st = md->st; /* might have changed */
 
-	md->result = result;
-	result = md->result;
-
 	/* If state has FRAGMENTATION support, import it */
 	if ( st && md->fragvid) {
 		DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
@@ -2275,6 +2157,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	 * or suspended.
 	 * ??? this code says inline is OK too.  Which is it?
 	 */
+	DBG(DBG_CONTROLMORE,
+		if (st != NULL) {
+			DBG_log("#%lu %s:%u st->st_calculating == %s;",
+				st->st_serialno, __FUNCTION__, __LINE__,
+				st->st_calculating ? "TRUE" : "FALSE");
+		});
 	passert(result == STF_INLINE || result == STF_IGNORE ||
 		result == STF_SUSPEND || !st->st_calculating);
 
@@ -2333,14 +2221,16 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * actual end of phase 1. With modecfg, negotiation ends with
 		 * STATE_MAIN_I4 already.
 		 */
-		/*if(st->st_connection->spd.this.xauth_client
+#if 0	/* ??? what's this code for? */
+		if (st->st_connection->spd.this.xauth_client
 		    && st->hidden_variables.st_xauth_client_done
 		    && !st->st_connection->spd.this.modecfg_client
 		    && st->st_state == STATE_XAUTH_I1) {
-		    DBG(DBG_CONTROL, DBG_log("As XAUTH is done and modecfg is not configured,
-		                                    so Phase 1 neogtiation finishes successfully"));
-		    change_state(st, STATE_MAIN_I4);
-		   }*/
+			DBG(DBG_CONTROL,
+				DBG_log("As XAUTH is done and modecfg is not configured, so Phase 1 neogtiation finishes successfully"));
+			change_state(st, STATE_MAIN_I4);
+		}
+#endif
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
@@ -2371,14 +2261,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (smc->flags & SMF_REPLY) {
 
 			DBG(DBG_CONTROL, {
-				    char buf[ADDRTOT_BUF];
-				    DBG_log("sending reply packet to %s:%u (from port %u)",
-					    (addrtot(&st->st_remoteaddr,
-						     0, buf,
-						     sizeof(buf)), buf),
-					    st->st_remoteport,
-					    st->st_interface->port);
-			    });
+				ipstr_buf b;
+				DBG_log("sending reply packet to %s:%u (from port %u)",
+					ipstr(&st->st_remoteaddr, &b),
+					st->st_remoteport,
+					st->st_interface->port);
+			});
 
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
@@ -2544,6 +2432,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (deltasecs(st->st_connection->dpd_delay) > 0 &&
 			    deltasecs(st->st_connection->dpd_timeout) > 0) {
 				/* don't ignore failure */
+				/* ??? in fact, we do ignore this:
+				 * result is NEVER used
+				 */
 				if (dpd_init(st) == STF_FAIL)
 					result = STF_FAIL; /* fall through */
 			}
@@ -2692,11 +2583,13 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
-		set_suspended(st, NULL);
+		unset_suspended(st);
 		pexpect(!st->st_calculating);
 		libreswan_log(
 			"message in state %s ignored due to cryptographic overload",
 			enum_name(&state_names, from_state));
+		log_crypto_workers();
+		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
 		break;
 
 	case STF_FATAL:
@@ -2727,8 +2620,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		passert(result > STF_FAIL);
 		md->note = result - STF_FAIL;
 		result = STF_FAIL;
-	/* FALL THROUGH ... */
-
+		/* FALL THROUGH ... */
 	case STF_FAIL:
 		/* As it is, we act as if this message never happened:
 		 * whatever retrying was in place, remains in place.

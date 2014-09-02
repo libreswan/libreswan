@@ -3,6 +3,7 @@ OBJ.*
 *.rej
 *.orig
 *.bak
+*.pyc
 TAGS
 tags
 modobj

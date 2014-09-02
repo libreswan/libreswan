@@ -71,13 +71,6 @@ struct isakmp_ipsec_id;	/* forward declaration of tag (defined in packet.h) */
 extern void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl,
 			     struct end *end);
 
-/* ip_str: a simple to use variant of addrtot.
- * It stores its result in a static buffer -- NOT RE-ENTRANT.
- * This means that newer calls overwrite the storage of older calls.
- * Note: this is not used in any of the logging functions, so their
- * callers may use it.
- */
-extern const char *pluto_ip_str(const ip_address *src);
 extern void duplicate_id(struct id *dst, const struct id *src);
 
 #endif /* _ID_H */

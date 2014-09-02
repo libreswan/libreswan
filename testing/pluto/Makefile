@@ -32,7 +32,7 @@ ifneq ($(UPDATE)$(UPDATEONLY),)
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname north
 endif
 ifeq ($(UPDATEONLY),)
-	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ./setup.sh; . ${UTILS}/functions.sh; . ./TESTLIST
+	../utils/dotest.py
 endif
 
 install install_file_list checkprograms programs:

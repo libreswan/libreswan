@@ -61,7 +61,8 @@ consolediff() {
     then
 	echo "${prefix} Consoleoutput matched"
     else
-	echo "${prefix} Consoleoutput differed"
+	diffstat=`diff -N -u -w -b -B $ref $fixedoutput | diffstat -f 0`
+	echo "${prefix} Consoleoutput differed '$diffstat'"
 
 	case "$success" in
 	true)	failnum=2 ;;
@@ -483,6 +484,11 @@ lookforcore() {
 	elif [ -f ../../default-testparams.sh ]
 	then
 		. ../../default-testparams.sh
+	fi
+
+	if [ -f ./add-testparams.sh ]
+	then
+	    . ./add-testparams.sh
 	fi
 
 	# get rid of any pluto core files.

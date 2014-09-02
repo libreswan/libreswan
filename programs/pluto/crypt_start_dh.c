@@ -58,8 +58,8 @@
 stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 			     struct state *st,
 			     enum crypto_importance importance,
-			     enum phase1_role init,	/* TRUE=g_init,FALSE=g_r */
-			     u_int16_t oakley_group2)
+			     enum phase1_role role,
+			     oakley_group_t oakley_group2)
 {
 	struct pluto_crypto_req r;
 	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
@@ -73,10 +73,10 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	dhq->auth = st->st_oakley.auth;
 	dhq->prf_hash = st->st_oakley.prf_hash;
 	dhq->oakley_group = oakley_group2;
-	dhq->init = init;
+	dhq->role = role;
 	dhq->keysize = st->st_oakley.enckeylen / BITS_PER_BYTE;
 
-	passert(r.pcr_d.dhq.oakley_group != 0);
+	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 	DBG(DBG_CONTROL | DBG_CRYPT,
 	    DBG_log("parent1 type: %d group: %d len: %d\n", r.pcr_type,
 		    r.pcr_d.dhq.oakley_group, (int)r.pcr_len));
@@ -90,8 +90,6 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 
 	dhq->secret = st->st_sec_nss;
 
-	/*copying required encryption algo*/
-	/*dhq->encrypt_algo = st->st_oakley.encrypt;*/
 	dhq->encrypter = st->st_oakley.encrypter;
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
@@ -105,7 +103,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
-	passert(dhq->oakley_group != 0);
+	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
 	return send_crypto_helper_request(&r, cn);
 }
 
@@ -132,8 +130,8 @@ void finish_dh_secretiv(struct state *st,
 stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 			   struct state *st,
 			   enum crypto_importance importance,
-			   enum phase1_role init,
-			   u_int16_t oakley_group2)
+			   enum phase1_role role,
+			   oakley_group_t oakley_group2)
 {
 	struct pluto_crypto_req r;
 	struct pcr_skeyid_q *const dhq= &r.pcr_d.dhq;
@@ -147,7 +145,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 	dhq->auth = st->st_oakley.auth;
 	dhq->prf_hash = st->st_oakley.prf_hash;
 	dhq->oakley_group = oakley_group2;
-	dhq->init = init;
+	dhq->role = role;
 	dhq->keysize = st->st_oakley.enckeylen / BITS_PER_BYTE;
 
 	if (pss != NULL)
@@ -188,16 +186,23 @@ void finish_dh_secret(struct state *st,
 /*
  * invoke helper to do DH work.
  */
-stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
-		       struct state *st,
-		       enum crypto_importance importance,
-		       enum phase1_role init,	/* TRUE=g_init,FALSE=g_r */
-		       u_int16_t oakley_group2)
+stf_status start_dh_v2(struct msg_digest *md,
+		       const char *name,
+		       enum phase1_role role,
+		       crypto_req_func pcrc_func)
 {
+	struct state *st = md->st;
+	struct dh_continuation *dh = alloc_thing(struct dh_continuation, name);
 	struct pluto_crypto_req r;
 	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
 
-	pcr_dh_init(&r, pcr_compute_dh_v2, importance);
+	dh->dh_md = md;
+	set_suspended(st, dh->dh_md);
+	dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
+
+	pcrc_init(&dh->dh_pcrc, pcrc_func);
+
+	pcr_dh_init(&r, pcr_compute_dh_v2, st->st_import);
 
 	passert(st->st_sec_in_use);
 
@@ -213,11 +218,11 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 	dhq->auth = st->st_oakley.auth;
 	dhq->prf_hash = st->st_oakley.prf_hash;
 	dhq->integ_hash = st->st_oakley.integ_hash;
-	dhq->oakley_group = oakley_group2;
-	dhq->init = init;
+	dhq->oakley_group = st->st_oakley.groupnum;
+	dhq->role = role;
 	dhq->keysize = st->st_oakley.enckeylen / BITS_PER_BYTE;
 
-	passert(r.pcr_d.dhq.oakley_group != 0);
+	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 
 	WIRE_CLONE_CHUNK(*dhq, ni, st->st_ni);
 	WIRE_CLONE_CHUNK(*dhq, nr, st->st_nr);
@@ -226,8 +231,6 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 
 	dhq->secret = st->st_sec_nss;
 
-	/*copying required encryption algo*/
-	/*dhq->encrypt_algo = st->st_oakley.encrypter->common.algo_v2id;*/
 	dhq->encrypter = st->st_oakley.encrypter;
 	DBG(DBG_CRYPT,
 	    DBG_log("Copying DH pub key pointer to be sent to a thread helper"));
@@ -241,8 +244,15 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 	memcpy(WIRE_CHUNK_PTR(*dhq, rcookie),
 	       st->st_rcookie, COOKIE_SIZE);
 
-	passert(dhq->oakley_group != 0);
-	return send_crypto_helper_request(&r, cn);
+	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
+
+	{
+		stf_status e = send_crypto_helper_request(&r, &dh->dh_pcrc);
+
+		reset_globals(); /* XXX suspicious - why was this deemed neccessary? */
+
+		return e;
+	}
 }
 
 void finish_dh_v2(struct state *st,

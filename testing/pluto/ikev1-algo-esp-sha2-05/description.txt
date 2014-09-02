@@ -1,0 +1,4 @@
+Basic pluto with IKEv1 using PSK on the initiator (west), and on the responder.
+
+This is to verify we don't setup an ESP with with incompatible algo/ hash sizes
+

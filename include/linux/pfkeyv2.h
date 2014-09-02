@@ -220,133 +220,138 @@ struct sadb_x_nat_t_port {
 /* sizeof(struct sadb_x_nat_t_port) == 8 */
 
 /* Message types */
-#define SADB_RESERVED           0
-#define SADB_GETSPI             1
-#define SADB_UPDATE             2
-#define SADB_ADD                3
-#define SADB_DELETE             4
-#define SADB_GET                5
-#define SADB_ACQUIRE            6
-#define SADB_REGISTER           7
-#define SADB_EXPIRE             8
-#define SADB_FLUSH              9
-#define SADB_DUMP               10
-#define SADB_X_PROMISC          11
-#define SADB_X_PCHANGE          12
-#define SADB_X_SPDUPDATE        13
-#define SADB_X_SPDADD           14
-#define SADB_X_SPDDELETE        15
-#define SADB_X_SPDGET           16
-#define SADB_X_SPDACQUIRE       17
-#define SADB_X_SPDDUMP          18
-#define SADB_X_SPDFLUSH         19
-#define SADB_X_SPDSETIDX        20
-#define SADB_X_SPDEXPIRE        21
-#define SADB_X_SPDDELETE2       22
-#define SADB_X_NAT_T_NEW_MAPPING        23
-#define SADB_MAX                23
+#define SADB_RESERVED		0
+#define SADB_GETSPI		1
+#define SADB_UPDATE		2
+#define SADB_ADD		3
+#define SADB_DELETE		4
+#define SADB_GET		5
+#define SADB_ACQUIRE		6
+#define SADB_REGISTER		7
+#define SADB_EXPIRE		8
+#define SADB_FLUSH		9
+#define SADB_DUMP		10
+#define SADB_X_PROMISC		11
+#define SADB_X_PCHANGE		12
+#define SADB_X_SPDUPDATE	13
+#define SADB_X_SPDADD		14
+#define SADB_X_SPDDELETE	15
+#define SADB_X_SPDGET		16
+#define SADB_X_SPDACQUIRE	17
+#define SADB_X_SPDDUMP		18
+#define SADB_X_SPDFLUSH		19
+#define SADB_X_SPDSETIDX	20
+#define SADB_X_SPDEXPIRE	21
+#define SADB_X_SPDDELETE2	22
+#define SADB_X_NAT_T_NEW_MAPPING	23
+#define SADB_MAX		23
 
 /* Security Association flags */
-#define SADB_SAFLAGS_PFS        1
+#define SADB_SAFLAGS_PFS	1
 #define SADB_SAFLAGS_DECAP_DSCP 0x40000000
-#define SADB_SAFLAGS_NOECN      0x80000000
+#define SADB_SAFLAGS_NOECN	0x80000000
 
 /* Security Association states */
-#define SADB_SASTATE_LARVAL     0
-#define SADB_SASTATE_MATURE     1
-#define SADB_SASTATE_DYING      2
-#define SADB_SASTATE_DEAD       3
-#define SADB_SASTATE_MAX        3
+#define SADB_SASTATE_LARVAL	0
+#define SADB_SASTATE_MATURE	1
+#define SADB_SASTATE_DYING	2
+#define SADB_SASTATE_DEAD	3
+#define SADB_SASTATE_MAX	3
 
 /* Security Association types */
 #define SADB_SATYPE_UNSPEC      0
-#define SADB_SATYPE_AH          2
-#define SADB_SATYPE_ESP         3
-#define SADB_SATYPE_RSVP        5
-#define SADB_SATYPE_OSPFV2      6
-#define SADB_SATYPE_RIPV2       7
-#define SADB_SATYPE_MIP         8
-#define SADB_X_SATYPE_IPCOMP    9
-#define SADB_SATYPE_MAX         9
+#define SADB_SATYPE_AH		2
+#define SADB_SATYPE_ESP		3
+#define SADB_SATYPE_RSVP	5
+#define SADB_SATYPE_OSPFV2	6
+#define SADB_SATYPE_RIPV2	7
+#define SADB_SATYPE_MIP		8
+#define SADB_X_SATYPE_IPCOMP	9
+#define SADB_SATYPE_MAX		9
 
 /* Authentication algorithms */
-#define SADB_AALG_NONE                  0
-#define SADB_AALG_MD5HMAC               2
-#define SADB_AALG_SHA1HMAC              3
-#define SADB_X_AALG_SHA2_256HMAC        5
-#define SADB_X_AALG_SHA2_384HMAC        6
-#define SADB_X_AALG_SHA2_512HMAC        7
-#define SADB_X_AALG_RIPEMD160HMAC       8
-#define SADB_X_AALG_NULL                251     /* kame */
-#define SADB_X_AALG_SHA2_256HMAC_TRUNCBUG       252
-#define SADB_AALG_MAX                   255     /* while the AUTH_ALGORITHM is two octets, what is the SADB_AALG? */
+#define SADB_AALG_NONE			0
+#define SADB_AALG_MD5HMAC		2
+#define SADB_AALG_SHA1HMAC		3
+#define SADB_X_AALG_SHA2_256HMAC	5
+#define SADB_X_AALG_SHA2_384HMAC	6
+#define SADB_X_AALG_SHA2_512HMAC	7
+#define SADB_X_AALG_RIPEMD160HMAC	8
+#define SADB_X_AALG_AES_XCBC_MAC        9
+#define SADB_X_AALG_RSA                 10
+#define SADB_X_AALG_AH_AES_128_GMAC     11
+#define SADB_X_AALG_AH_AES_192_GMAC     12
+#define SADB_X_AALG_AH_AES_256_GMAC     13
+#define SADB_X_AALG_NULL		251	/* kame */
+#define SADB_X_AALG_SHA2_256HMAC_TRUNCBUG	252
+#define SADB_AALG_MAX			255	/* while the AUTH_ALGORITHM is two octets, what is the SADB_AALG? */
 
 /* Encryption algorithms */
-#define SADB_EALG_NONE                  0
-/* #define SADB_EALG_DESCBC                2 obsoleted */
-#define SADB_EALG_3DESCBC               3
-#define SADB_X_EALG_CASTCBC             6
-/* #define SADB_X_EALG_BLOWFISHCBC         7 obsoleted */
-#define SADB_EALG_NULL                  11
-#define SADB_X_EALG_AESCBC              12
-#define SADB_X_EALG_AESCTR              13
-#define SADB_X_EALG_AES_CCM_ICV8        14
-#define SADB_X_EALG_AES_CCM_ICV12       15
-#define SADB_X_EALG_AES_CCM_ICV16       16
-#define SADB_UNASSIGNED_EALG            17
-#define SADB_X_EALG_AES_GCM_ICV8        18
-#define SADB_X_EALG_AES_GCM_ICV12       19
-#define SADB_X_EALG_AES_GCM_ICV16       20
-#define SADB_X_EALG_NULL_AUTH_AES_GMAC  21
-#define SADB_X_EALG_CAMELLIACBC         22
+#define SADB_EALG_NONE			0
+/* #define SADB_EALG_DESCBC		2 obsoleted */
+#define SADB_EALG_3DESCBC		3
+#define SADB_X_EALG_CASTCBC		6
+/* #define SADB_X_EALG_BLOWFISHCBC	7 obsoleted */
+#define SADB_EALG_NULL			11
+#define SADB_X_EALG_AESCBC		12
+#define SADB_X_EALG_AESCTR		13
+#define SADB_X_EALG_AES_CCM_ICV8	14
+#define SADB_X_EALG_AES_CCM_ICV12	15
+#define SADB_X_EALG_AES_CCM_ICV16	16
+#define SADB_UNASSIGNED_EALG		17
+#define SADB_X_EALG_AES_GCM_ICV8	18
+#define SADB_X_EALG_AES_GCM_ICV12	19
+#define SADB_X_EALG_AES_GCM_ICV16	20
+#define SADB_X_EALG_NULL_AUTH_AES_GMAC	21
+#define SADB_X_EALG_CAMELLIACBC		22
 
-#define SADB_EALG_MAX                   255 /* last EALG */
+#define SADB_EALG_MAX			255 /* last EALG */
 /* private allocations should use 249-255 (RFC2407) */
 /* but private allocations should use 1024-65535 (RFC4306) */
-#define SADB_X_EALG_SERPENTCBC  252     /* draft-ietf-ipsec-ciph-aes-cbc-00 */
-#define SADB_X_EALG_TWOFISHCBC  253     /* draft-ietf-ipsec-ciph-aes-cbc-00 */
+#define SADB_X_EALG_SERPENTCBC	252	/* draft-ietf-ipsec-ciph-aes-cbc-00 */
+#define SADB_X_EALG_TWOFISHCBC	253	/* draft-ietf-ipsec-ciph-aes-cbc-00 */
 
 /* Compression algorithms */
-#define SADB_X_CALG_NONE                0
-#define SADB_X_CALG_OUI                 1
-#define SADB_X_CALG_DEFLATE             2
-#define SADB_X_CALG_LZS                 3
-#define SADB_X_CALG_LZJH                4
-#define SADB_X_CALG_MAX                 4
+#define SADB_X_CALG_NONE		0
+#define SADB_X_CALG_OUI			1
+#define SADB_X_CALG_DEFLATE		2
+#define SADB_X_CALG_LZS			3
+#define SADB_X_CALG_LZJH		4
+#define SADB_X_CALG_MAX			4
 
 /* Extension Header values */
-#define SADB_EXT_RESERVED               0
-#define SADB_EXT_SA                     1
-#define SADB_EXT_LIFETIME_CURRENT       2
-#define SADB_EXT_LIFETIME_HARD          3
-#define SADB_EXT_LIFETIME_SOFT          4
-#define SADB_EXT_ADDRESS_SRC            5
-#define SADB_EXT_ADDRESS_DST            6
-#define SADB_EXT_ADDRESS_PROXY          7
-#define SADB_EXT_KEY_AUTH               8
-#define SADB_EXT_KEY_ENCRYPT            9
-#define SADB_EXT_IDENTITY_SRC           10
-#define SADB_EXT_IDENTITY_DST           11
-#define SADB_EXT_SENSITIVITY            12
-#define SADB_EXT_PROPOSAL               13
-#define SADB_EXT_SUPPORTED_AUTH         14
-#define SADB_EXT_SUPPORTED_ENCRYPT      15
-#define SADB_EXT_SPIRANGE               16
-#define SADB_X_EXT_KMPRIVATE            17
-#define SADB_X_EXT_POLICY               18
-#define SADB_X_EXT_SA2                  19
+#define SADB_EXT_RESERVED		0
+#define SADB_EXT_SA			1
+#define SADB_EXT_LIFETIME_CURRENT	2
+#define SADB_EXT_LIFETIME_HARD		3
+#define SADB_EXT_LIFETIME_SOFT		4
+#define SADB_EXT_ADDRESS_SRC		5
+#define SADB_EXT_ADDRESS_DST		6
+#define SADB_EXT_ADDRESS_PROXY		7
+#define SADB_EXT_KEY_AUTH		8
+#define SADB_EXT_KEY_ENCRYPT		9
+#define SADB_EXT_IDENTITY_SRC		10
+#define SADB_EXT_IDENTITY_DST		11
+#define SADB_EXT_SENSITIVITY		12
+#define SADB_EXT_PROPOSAL		13
+#define SADB_EXT_SUPPORTED_AUTH		14
+#define SADB_EXT_SUPPORTED_ENCRYPT	15
+#define SADB_EXT_SPIRANGE		16
+#define SADB_X_EXT_KMPRIVATE		17
+#define SADB_X_EXT_POLICY		18
+#define SADB_X_EXT_SA2			19
 /* The next four entries are for setting up NAT Traversal */
-#define SADB_X_EXT_NAT_T_TYPE           20
-#define SADB_X_EXT_NAT_T_SPORT          21
-#define SADB_X_EXT_NAT_T_DPORT          22
-#define SADB_X_EXT_NAT_T_OA             23
-#define SADB_EXT_MAX                    23
+#define SADB_X_EXT_NAT_T_TYPE		20
+#define SADB_X_EXT_NAT_T_SPORT		21
+#define SADB_X_EXT_NAT_T_DPORT		22
+#define SADB_X_EXT_NAT_T_OA		23
+#define SADB_EXT_MAX			23
 
 /* Identity Extension values */
-#define SADB_IDENTTYPE_RESERVED 0
-#define SADB_IDENTTYPE_PREFIX   1
-#define SADB_IDENTTYPE_FQDN     2
-#define SADB_IDENTTYPE_USERFQDN 3
-#define SADB_IDENTTYPE_MAX      3
+#define SADB_IDENTTYPE_RESERVED	0
+#define SADB_IDENTTYPE_PREFIX	1
+#define SADB_IDENTTYPE_FQDN	2
+#define SADB_IDENTTYPE_USERFQDN	3
+#define SADB_IDENTTYPE_MAX	3
 
 #endif /* !(_LINUX_PFKEY2_H) */
