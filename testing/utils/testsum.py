@@ -196,7 +196,11 @@ def print_table_json(d, table, result):
 	o.write(ujson.dumps(table, ensure_ascii=True, double_precision=2)) 
 	o.close
 
-	if not os.path.exists(d + '/' + "index.html"):
-		os.symlink("../../i3.html", d + '/' + "index.html")
+	i3html = "../../i3.html"
+	if not os.path.exists(d + '/' + "index.html") :
+		try :
+			os.symlink(i3html, + '/' + "index.html")
+		except :
+			pass
 
 	return table["summary"]

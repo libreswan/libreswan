@@ -503,7 +503,8 @@ kvmplutotest	ah-pluto-10		good
 kvmplutotest	ah-pluto-11		good
 kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	good
 kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	good
-kvmplutotest	interop-ikev1-strongswan-12-esp-sha2 good
+kvmplutotest	interop-ikev1-strongswan-12-esp-sha2_256 good
+kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 good
 kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512	good
 kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256	good
 # kernel does not yet support these algo's
@@ -603,9 +604,6 @@ kvmplutotest	interop-ikev2-strongswan-15-create_child_sa-01	wip
 # strongswan still broken in v5.1.1
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		wip
 
-
-skiptest	interop-racoon-iphone4s-nonat		incomplete
-skiptest	interop-racoon-iphone5-nonat		incomplete
 
 #################################################################
 # DNSSEC tests
