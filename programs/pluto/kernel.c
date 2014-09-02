@@ -483,7 +483,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		kernel_ops->kern_name,
 		metric_str,
 		connmtu_str,
-		st == NULL ? 0L : st->st_esp.add_time,
+		st == NULL ? 0L : (unsigned long)st->st_esp.add_time,
 		prettypolicy(c->policy),	/* 25 */
 		(c->addr_family == AF_INET) ? 4 : 6,
 		(st && st->st_xauth_soft) ? 1 : 0,
