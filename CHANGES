@@ -1,5 +1,8 @@
 
 See also https://libreswan.org/
+v3.11 (unreleased)
+* Bugtracker bugs fixed:
+  #206: Libreswan v3.10 on 32-bit does not work [Kim]
 
 v3.10 (September 1, 2014)
 * XAUTH: New option: ipsec whack --traficstatus [Antony]
