@@ -415,82 +415,86 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		}
 	}
 
-	result = snprintf(buf, blen,
-			/* change VERSION when interface spec changes */
-			"PLUTO_VERSION='2.0' "
-			"PLUTO_CONNECTION='%s' "
-			"PLUTO_INTERFACE='%s' "
-			"%s" /* possible PLUTO_NEXT_HOP */
-			"PLUTO_ME='%s' "
-			"PLUTO_MY_ID='%s' "
-			"PLUTO_MY_CLIENT='%s' "
-			"PLUTO_MY_CLIENT_NET='%s' "
-			"PLUTO_MY_CLIENT_MASK='%s' "
-			"PLUTO_MY_PORT='%u' "
-			"PLUTO_MY_PROTOCOL='%u' "
-			"PLUTO_SA_REQID='%u' "
-			"PLUTO_SA_TYPE='%s' "
-			"PLUTO_PEER='%s' "
-			"PLUTO_PEER_ID='%s' "
-			"PLUTO_PEER_CLIENT='%s' "
-			"PLUTO_PEER_CLIENT_NET='%s' "
-			"PLUTO_PEER_CLIENT_MASK='%s' "
-			"PLUTO_PEER_PORT='%u' "
-			"PLUTO_PEER_PROTOCOL='%u' "
-			"PLUTO_PEER_CA='%s' "
-			"PLUTO_STACK='%s' "
-			"%s"		/* optional metric */
-			"%s"		/* optional mtu */
-			"PLUTO_ADDTIME='%lu' "
-			"PLUTO_CONN_POLICY='%s' "
-			"PLUTO_CONN_ADDRFAMILY='ipv%d' "
-			"XAUTH_FAILED=%d "
-			"%s"		/* XAUTH username - if any */
-			"%s"		/* PLUTO_MY_SRCIP - if any */
-			"PLUTO_IS_PEER_CISCO='%u' "
-			"PLUTO_PEER_DNS_INFO='%s' "
-			"PLUTO_PEER_DOMAIN_INFO='%s' "
-			"PLUTO_PEER_BANNER='%s' "
+	result = snprintf(
+		buf, blen,
+		/* change VERSION when interface spec changes */
+		"PLUTO_VERSION='2.0' "
+		"PLUTO_CONNECTION='%s' "
+		"PLUTO_INTERFACE='%s' "
+		"%s" /* possible PLUTO_NEXT_HOP */
+		"PLUTO_ME='%s' "
+		"PLUTO_MY_ID='%s' "
+		"PLUTO_MY_CLIENT='%s' "
+		"PLUTO_MY_CLIENT_NET='%s' "
+		"PLUTO_MY_CLIENT_MASK='%s' "
+		"PLUTO_MY_PORT='%u' "
+		"PLUTO_MY_PROTOCOL='%u' "
+		"PLUTO_SA_REQID='%u' "
+		"PLUTO_SA_TYPE='%s' "
+		"PLUTO_PEER='%s' "
+		"PLUTO_PEER_ID='%s' "
+		"PLUTO_PEER_CLIENT='%s' "
+		"PLUTO_PEER_CLIENT_NET='%s' "
+		"PLUTO_PEER_CLIENT_MASK='%s' "
+		"PLUTO_PEER_PORT='%u' "
+		"PLUTO_PEER_PROTOCOL='%u' "
+		"PLUTO_PEER_CA='%s' "
+		"PLUTO_STACK='%s' "
+		"%s"		/* optional metric */
+		"%s"		/* optional mtu */
+		"PLUTO_ADDTIME='%lu' "
+		"PLUTO_CONN_POLICY='%s' "
+		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
+		"XAUTH_FAILED=%d "
+		"%s"		/* XAUTH username - if any */
+		"%s"		/* PLUTO_MY_SRCIP - if any */
+		"PLUTO_IS_PEER_CISCO='%u' "
+		"PLUTO_PEER_DNS_INFO='%s' "
+		"PLUTO_PEER_DOMAIN_INFO='%s' "
+		"PLUTO_PEER_BANNER='%s' "
 #ifdef HAVE_NM
-			"PLUTO_NM_CONFIGURED='%u' "
+		"PLUTO_NM_CONFIGURED='%u' "
 #endif
 
-			, c->name,
-			c->interface->ip_dev->id_vname,
-			nexthop_str,
-			ipstr(&sr->this.host_addr, &bme),
-			secure_myid_str,
-			myclient_str,
-			myclientnet_str,
-			myclientmask_str,
-			sr->this.port,
-			sr->this.protocol,
-			sr->reqid,
-			st == NULL ? "none" : st->st_esp.present ? "ESP" :
-				st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "unknown?",
-			ipstr(&sr->that.host_addr, &bpeer),
-			secure_peerid_str,
-			peerclient_str,
-			peerclientnet_str,
-			peerclientmask_str,
-			sr->that.port,
-			sr->that.protocol,
-			secure_peerca_str,
-			kernel_ops->kern_name,
-			metric_str,
-			connmtu_str,
-			st == NULL ? 0 : st->st_esp.add_time,
-			prettypolicy(c->policy),
-			(c->addr_family == AF_INET) ? 4 : 6,
-			(st && st->st_xauth_soft) ? 1 : 0,
-			secure_xauth_username_str,
-			srcip_str,
-			c->remotepeertype,
-			c->cisco_dns_info ? c->cisco_dns_info : "",
-			c->modecfg_domain ? c->modecfg_domain : "",
-			c->modecfg_banner ? c->modecfg_banner : ""
+		, c->name,
+		c->interface->ip_dev->id_vname,
+		nexthop_str,
+		ipstr(&sr->this.host_addr, &bme),
+		secure_myid_str,
+		myclient_str,
+		myclientnet_str,
+		myclientmask_str,
+		sr->this.port,
+		sr->this.protocol,
+		sr->reqid,
+		(st == NULL ? "none" :
+			st->st_esp.present ? "ESP" :
+			st->st_ah.present ? "AH" :
+			st->st_ipcomp.present ? "IPCOMP" :
+			"unknown?"),
+		ipstr(&sr->that.host_addr, &bpeer),
+		secure_peerid_str,
+		peerclient_str,
+		peerclientnet_str,
+		peerclientmask_str,
+		sr->that.port,
+		sr->that.protocol,
+		secure_peerca_str,
+		kernel_ops->kern_name,
+		metric_str,
+		connmtu_str,
+		st == NULL ? 0 : st->st_esp.add_time,
+		prettypolicy(c->policy),
+		(c->addr_family == AF_INET) ? 4 : 6,
+		(st && st->st_xauth_soft) ? 1 : 0,
+		secure_xauth_username_str,
+		srcip_str,
+		c->remotepeertype,
+		c->cisco_dns_info ? c->cisco_dns_info : "",
+		c->modecfg_domain ? c->modecfg_domain : "",
+		c->modecfg_banner ? c->modecfg_banner : ""
 #ifdef HAVE_NM
-			, c->nmconfigured
+		, c->nmconfigured
 #endif
 		);
 	/*
