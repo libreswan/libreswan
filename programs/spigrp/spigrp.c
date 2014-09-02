@@ -91,11 +91,9 @@ int debug = 0;
 int main(int argc, char **argv)
 {
 	int i, nspis;
-	char *endptr;
 	int said_opt = 0;
 
 	const char* error_s = NULL;
-	char ipaddr_txt[ADDRTOT_BUF];
 	int j;
 	struct said_af said_af_array[4];
 
@@ -113,7 +111,7 @@ int main(int argc, char **argv)
 	for (i = 0; i < 4; i++)
 		zero(&said_af_array[i]);
 
-	if (argc > 1 && strcmp(argv[1], "--debug") == 0) {
+	if (argc > 1 && streq(argv[1], "--debug")) {
 		debug = 1;
 		if (debug)
 			fprintf(stdout, "\"--debug\" option requested.\n");
@@ -128,7 +126,7 @@ int main(int argc, char **argv)
 			argc + 1);
 	}
 
-	if (argc > 1 && strcmp(argv[1], "--label") == 0) {
+	if (argc > 1 && streq(argv[1], "--label")) {
 		if (argc > 2) {
 			static const char combine_fmt[] = "%s --label %s";
 			size_t room = strlen(argv[0]) +
@@ -181,7 +179,7 @@ int main(int argc, char **argv)
 			"...After check for no option to print /proc/net/ipsec_spigrp.\n");
 
 
-	if (strcmp(argv[1], "--help") == 0) {
+	if (streq(argv[1], "--help")) {
 		if (debug)
 			fprintf(stdout, "\"--help\" option requested.\n");
 		usage(progname);
@@ -191,7 +189,7 @@ int main(int argc, char **argv)
 	if (debug)
 		fprintf(stdout, "...After check for --help option.\n");
 
-	if (strcmp(argv[1], "--version") == 0) {
+	if (streq(argv[1], "--version")) {
 		if (debug)
 			fprintf(stdout, "\"--version\" option requested.\n");
 		fprintf(stderr, "%s, %s\n", progname, ipsec_version_code());
@@ -201,7 +199,7 @@ int main(int argc, char **argv)
 	if (debug)
 		fprintf(stdout, "...After check for --version option.\n");
 
-	if (strcmp(argv[1], "--said") == 0) {
+	if (streq(argv[1], "--said")) {
 		if (debug) {
 			fprintf(stdout,
 				"processing %d args with --said flag.\n",
@@ -252,64 +250,85 @@ int main(int argc, char **argv)
 			said_af_array[i].af =
 				addrtypeof(&(said_af_array[i].said.dst));
 			if (debug) {
-				addrtot(&said_af_array[i].said.dst, 0,
-					ipaddr_txt, sizeof(ipaddr_txt));
+				ipstr_buf b;
+
 				fprintf(stdout, "said[%d].dst=%s.\n", i,
-					ipaddr_txt);
+					ipstr(&said_af_array[i].said.dst, &b));
 			}
 		} else {
-			if (!strcmp(argv[i * 4 + 4], "ah"))
-				said_af_array[i].said.proto = SA_AH;
-			if (!strcmp(argv[i * 4 + 4], "esp"))
-				said_af_array[i].said.proto = SA_ESP;
-			if (!strcmp(argv[i * 4 + 4], "tun"))
-				said_af_array[i].said.proto = SA_IPIP;
-			if (!strcmp(argv[i * 4 + 4], "comp"))
-				said_af_array[i].said.proto = SA_COMP;
-			if (said_af_array[i].said.proto == 0) {
-				fprintf(stderr, "%s: Badly formed proto: %s\n",
-					progname, argv[i * 4 + 4]);
-				exit(1);
-			}
-			said_af_array[i].said.spi =
-				htonl(strtoul(argv[i * 4 + 3], &endptr, 0));
-			if (!(endptr ==
-			      argv[i * 4 + 3] + strlen(argv[i * 4 + 3]))) {
-				fprintf(stderr, "%s: Badly formed spi: %s\n",
-					progname, argv[i * 4 + 3]);
-				exit(1);
-			}
-			if (!strcmp(argv[i * 4 + 1], "inet"))
+			/*
+			 * decode four args from i * 4 + 1
+			 * +0: address family
+			 * +1: IP address
+			 * +2: SPI
+			 * +3: proto
+			 */
+			char **p = &argv[i * 4 + 1];
+
+			/* address family */
+			if (streq(p[0], "inet")) {
 				said_af_array[i].af = AF_INET;
-			if (!strcmp(argv[i * 4 + 1], "inet6"))
+			} else if (streq(p[0], "inet6")) {
 				said_af_array[i].af = AF_INET6;
-			if ((said_af_array[i].af != AF_INET) &&
-			    (said_af_array[i].af != AF_INET6)) {
+			} else {
 				fprintf(stderr,
 					"%s: Address family %s not supported\n",
-					progname, argv[i * 4 + 1]);
+					progname, p[0]);
 				exit(1);
 			}
-			error_s = ttoaddr(argv[i * 4 + 2], 0,
-					  said_af_array[i].af,
-					  &(said_af_array[i].said.dst));
-			if (error_s != NULL) {
-				fprintf(stderr,
-					"%s: Error, %s converting %dth address argument:%s\n",
-					progname, error_s, i, argv[i * 4 + 2]);
+
+			/* IP address */
+			{
+				err_t error_s = ttoaddr(p[1], 0,
+						  said_af_array[i].af,
+						  &(said_af_array[i].said.dst));
+
+				if (error_s != NULL) {
+					fprintf(stderr,
+						"%s: Error, %s converting %dth address argument:%s\n",
+						progname, error_s, i, p[1]);
+					exit(1);
+				}
+			}
+
+			/* SPI */
+			{
+				unsigned long spi;
+				err_t ugh = ttoulb(p[2], 0, 0, 0xFFFFFFFF, &spi);
+
+				if (ugh != NULL) {
+					fprintf(stderr, "%s: Badly formed spi: %s \"%s\"\n",
+						progname, ugh, p[2]);
+					exit(1);
+				}
+				said_af_array[i].said.spi = htonl(spi);
+			}
+
+			/* proto */
+			if (streq(p[3], "ah")) {
+				said_af_array[i].said.proto = SA_AH;
+			} else if (streq(p[3], "esp")) {
+				said_af_array[i].said.proto = SA_ESP;
+			} else if (streq(p[3], "tun")) {
+				said_af_array[i].said.proto = SA_IPIP;
+			} else if (streq(p[3], "comp")) {
+				said_af_array[i].said.proto = SA_COMP;
+			} else {
+				fprintf(stderr, "%s: Badly formed proto: %s\n",
+					progname, p[3]);
 				exit(1);
 			}
 		}
 		if (debug) {
+			ipstr_buf b;
+
 			fprintf(stdout, "SA %d contains: ", i + 1);
 			fprintf(stdout, "\n");
 			fprintf(stdout, "proto = %d\n",
 				said_af_array[i].said.proto);
 			fprintf(stdout, "spi = %08x\n",
 				said_af_array[i].said.spi);
-			addrtot(&said_af_array[i].said.dst, 0, ipaddr_txt,
-				sizeof(ipaddr_txt));
-			fprintf(stdout, "edst = %s\n", ipaddr_txt);
+			fprintf(stdout, "edst = %s\n", ipstr(&said_af_array[i].said.dst, &b));
 		}
 	}
 
@@ -402,7 +421,7 @@ int main(int argc, char **argv)
 			}
 
 #if 0
-			if (!j) {
+			if (j == 0) {
 				anyaddr(said_af_array[i].af,
 					&pfkey_address_s_ska);                      /* Is the address family correct ?? */
 				if ((error = pfkey_address_build(&extensions[
@@ -414,37 +433,33 @@ int main(int argc, char **argv)
 								 sockaddrof(&
 									    pfkey_address_s_ska))))
 				{
-					addrtot(&pfkey_address_s_ska, 0,
-						ipaddr_txt,
-						sizeof(ipaddr_txt));
+					ipstr_buf b;
+
 					fprintf(stderr,
 						"%s: Trouble building address_s extension (%s), error=%d.\n",
-						progname, ipaddr_txt, error);
+						progname, ipstr(&pfkey_address_s_ska, &b), error);
 					pfkey_extensions_free(extensions);
 					exit(1);
 				}
 			}
 #endif
-			if ((error = pfkey_address_build(&extensions[!j ?
-								     SADB_EXT_ADDRESS_DST
-								     :
-								     SADB_X_EXT_ADDRESS_DST2
-							 ],
-							 !j ?
-							 SADB_EXT_ADDRESS_DST :
-							 SADB_X_EXT_ADDRESS_DST2,
-							 0,
-							 0,
-							 sockaddrof(&
-								    said_af_array
-								    [i +
-								     j].said.
-								    dst)))) {
-				addrtot(&said_af_array[i + j].said.dst,
-					0, ipaddr_txt, sizeof(ipaddr_txt));
+
+			{
+				uint16_t x = j == 0 ? SADB_EXT_ADDRESS_DST : SADB_X_EXT_ADDRESS_DST2;
+
+				error = pfkey_address_build(
+					&extensions[x], x, 0, 0,
+					sockaddrof(&said_af_array[i + j].said.dst));
+			}
+
+			if (error) {
+				ipstr_buf b;
+
 				fprintf(stderr,
 					"%s: Trouble building address_d extension (%s), error=%d.\n",
-					progname, ipaddr_txt, error);
+					progname,
+					ipstr(&said_af_array[i + j].said.dst, &b),
+					error);
 				pfkey_extensions_free(extensions);
 				exit(1);
 			}

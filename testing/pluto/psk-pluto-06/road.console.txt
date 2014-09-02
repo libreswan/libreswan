@@ -44,6 +44,9 @@ road #
 002 "road-eastnet-psk" #1: received 3 malformed payload notifies
 031 "road-eastnet-psk" #1: max number of retransmissions (2) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
 000 "road-eastnet-psk" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+
+PAUL: I dont think this should fail!
+
 road #
  echo done.
 done.
@@ -59,7 +62,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
 road #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

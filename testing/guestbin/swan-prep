@@ -111,7 +111,8 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 	if "Restart=always" in service:
 		fp = open("/lib/systemd/system/ipsec.service","w")
 		fp.write("".join(service).replace("Restart=always","Restart=no"))
-		commands.getoutput("/usr/bin/systemctl daemon-reload")
+	# always reload to avoid "service is masked" errors
+	commands.getoutput("/usr/bin/systemctl daemon-reload")
 
 # easy way to ensure we have the LOGDROP table for those OSes where we don't start a firewall with config
 commands.getoutput("iptables-restore /etc/sysconfig/iptables")
@@ -123,7 +124,7 @@ commands.getoutput("ip6tables-restore /etc/sysconfig/ip6tables")
 # we can core directly in testcase dir but that requires fixing all final.sh and console output
 #commands.getoutput("sysctl -w kernel.core_pattern=/testing/pluto/%s/OUTPUT/core.%%h.%%e.%%p"%testname)
 #
-commands.getoutput("sysctl -w kernel.core_pattern=/tmp/core.%%h.%%e.%%p")
+commands.getoutput("sysctl -w kernel.core_pattern=/tmp/core.%h.%e.%p")
 if not os.path.isfile("/etc/sysctl.d/coredump.conf") and not os.path.islink("/etc/sysctl.d/coredump.conf"):
 	os.symlink("/dev/null", "/etc/sysctl.d/coredump.conf")
 	commands.getoutput("/lib/systemd/systemd-sysctl")
@@ -256,19 +257,29 @@ if args.ipv6:
 
 # final prep - this kills any running userland
 output = commands.getoutput("ipsec stop")
-# python has no pidof :/
-pluto = commands.getoutput("pidof pluto")
-charon = commands.getoutput("pidof charon")
-shrew = commands.getoutput("pidof iked")
-racoon1 = commands.getoutput("pidof racoon2-spmd")
-racoon2 = commands.getoutput("pidof racoon2-iked")
+# python has no pidof :/. getoutput return a string not a list. 
+# split the string to make a list. Empty strings will discarded
 
-for pid in ( pluto, charon, shrew, racoon1, racoon2 ):
+pids = []
+pluto = commands.getoutput("pidof pluto")
+pids.extend(pluto.split())
+charon = commands.getoutput("pidof starter")
+pids.extend(charon.split())
+charonstarter = commands.getoutput("pidof charon")
+pids.extend(charonstarter.split())
+shrew = commands.getoutput("pidof iked")
+pids.extend(shrew.split())
+racoon1 = commands.getoutput("pidof racoon2-spmd")
+pids.extend(racoon1.split())
+racoon2 = commands.getoutput("pidof racoon2-iked")
+pids.extend(racoon2.split())
+
+for pid in pids:
 	if pid:
 		os.kill(int(pid),9)
 
 # note shrew and racoon2 share a pid file name
-for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/spmd.pid"):
+for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/spmd.pid", "/var/run/starter.charon.pid"):
 	if os.path.isfile(pidfile):
 		os.unlink(pidfile)
 

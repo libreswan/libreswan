@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 		exit(2);
 	}
 
-	if (strcmp(argv[1], "-r") == 0) {
+	if (streq(argv[1], "-r")) {
 		regress();
 		fprintf(stderr, "regress() returned?!?\n");
 		exit(1);
@@ -162,7 +162,7 @@ void regress()
 
 		sanitize(in, sizeof(in));
 
-		if (strcmp(in, r->output) != 0) {
+		if (!streq(in, r->output)) {
 			printf("Item %d failed; %s vs %s\n",
 				count, in, r->output);
 			status = 1;

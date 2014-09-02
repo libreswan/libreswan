@@ -27,12 +27,12 @@
 
 /* advance warning of imminent expiry of
  * cacerts, public keys, and crls
+ * unused: OCSP_CERT_WARNING_INTERVAL	(30 * secs_per_day)
+ * unused: ACERT_WARNING_INTERVAL	(1 * secs_per_day)
  */
-#define CA_CERT_WARNING_INTERVAL	30	/* days */
-#define OCSP_CERT_WARNING_INTERVAL	30	/* days */
-#define PUBKEY_WARNING_INTERVAL		14	/* days */
-#define CRL_WARNING_INTERVAL		7	/* days */
-#define ACERT_WARNING_INTERVAL		1	/* day */
+#define CA_CERT_WARNING_INTERVAL	(30 * secs_per_day)
+#define PUBKEY_WARNING_INTERVAL		(14 * secs_per_day)
+#define CRL_WARNING_INTERVAL		(7 * secs_per_day)
 
 /* access structure for RSA private keys */
 

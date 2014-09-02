@@ -55,7 +55,7 @@ static void print_sa_attr_oakley(struct db_attr *at)
 {
 	const struct enum_names *en = NULL;
 
-	if (at->type.oakley == 0)
+	if (at->type.oakley == OAKLEY_ATTR_undefined)
 		return;
 
 	if (at->type.oakley < oakley_attr_val_descs_roof)
@@ -131,12 +131,12 @@ void sa_print(struct db_sa *f)
 
 static void print_sa_v2_attr(struct db_attr *at)
 {
-	if (at->type.ikev2 == 0)
+	if (at->type.v2 == 0)
 		return;
 
 	printf("        type: %u(%s) val: %u(%s)\n",
-	       at->type.ikev2,
-	       enum_name(&ikev2_trans_attr_descs, at->type.ikev2),
+	       at->type.v2,
+	       enum_name(&ikev2_trans_attr_descs, at->type.v2),
 	       at->val,  "unknown (fixme in print_sa_v2_attr()");
 }
 

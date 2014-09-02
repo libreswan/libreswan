@@ -42,7 +42,7 @@ bool lsw_alias_cmp(const char *needle, const char *haystack)
 		/* does it match, and does it end with a space?
 		 * check if things end at same place
 		 */
-		if (strncmp(s, needle, nlen) == 0 &&
+		if (strneq(s, needle, nlen) &&
 		    (s[nlen] == ' ' || s[nlen] == '\t' || s[nlen] == '\0'))
 			return TRUE;
 

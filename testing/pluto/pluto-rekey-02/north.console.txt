@@ -45,7 +45,7 @@ north #
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
-000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
+000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx-attr-value=XXXX
@@ -62,9 +62,9 @@ north #
 000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
 000  
 000 IKE algorithms supported:
 000  
@@ -93,9 +93,9 @@ north #
 000  
 000 Connection list:
 000  
-000 "northnet-eastnet-nat": 192.0.3.0/24===192.1.3.32[@north]...192.1.2.254---192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "northnet-eastnet-nat":     oriented; my_ip=unset; their_ip=unset;
-000 "northnet-eastnet-nat":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "northnet-eastnet-nat": 192.0.3.0/24===192.1.3.32[@north]---192.1.3.254...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "northnet-eastnet-nat":     oriented; my_ip=unset; their_ip=unset
+000 "northnet-eastnet-nat":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "northnet-eastnet-nat":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "northnet-eastnet-nat":   labeled_ipsec:no, loopback:no; 
 000 "northnet-eastnet-nat":    policy_label:unset; 
@@ -124,14 +124,14 @@ north #
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [RFC 3947]
 002 "northnet-eastnet-nat" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "northnet-eastnet-nat" #1: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
+003 "northnet-eastnet-nat" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: I am behind NAT
 108 "northnet-eastnet-nat" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [CAN-IKEv2]
 002 "northnet-eastnet-nat" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "northnet-eastnet-nat" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
+004 "northnet-eastnet-nat" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "northnet-eastnet-nat" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "northnet-eastnet-nat" #2: STATE_QUICK_I1: initiate
-004 "northnet-eastnet-nat" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "northnet-eastnet-nat" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 north #
  echo one
 one
@@ -139,7 +139,7 @@ north #
  ipsec auto --replace northnet-eastnet-nat
 002 "northnet-eastnet-nat": deleting connection
 002 "northnet-eastnet-nat" #2: deleting state (STATE_QUICK_I2)
-002 "northnet-eastnet-nat" #2: ESP traffic information: in=0B out=0B
+005 "northnet-eastnet-nat" #2: ESP traffic information: in=0B out=0B
 002 "northnet-eastnet-nat" #1: deleting state (STATE_MAIN_I4)
 002 added connection description "northnet-eastnet-nat"
 north #
@@ -151,14 +151,14 @@ north #
 003 "northnet-eastnet-nat" #3: received Vendor ID payload [RFC 3947]
 002 "northnet-eastnet-nat" #3: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "northnet-eastnet-nat" #3: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #3: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
+003 "northnet-eastnet-nat" #3: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: I am behind NAT
 108 "northnet-eastnet-nat" #3: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #3: received Vendor ID payload [CAN-IKEv2]
 002 "northnet-eastnet-nat" #3: Main mode peer ID is ID_FQDN: '@east'
-004 "northnet-eastnet-nat" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
+004 "northnet-eastnet-nat" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "northnet-eastnet-nat" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "northnet-eastnet-nat" #4: STATE_QUICK_I1: initiate
-004 "northnet-eastnet-nat" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "northnet-eastnet-nat" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 north #
  echo two
 two
@@ -166,7 +166,7 @@ north #
  ipsec auto --down northnet-eastnet-nat
 002 "northnet-eastnet-nat": terminating SAs using this connection
 002 "northnet-eastnet-nat" #4: deleting state (STATE_QUICK_I2)
-002 "northnet-eastnet-nat" #4: ESP traffic information: in=0B out=0B
+005 "northnet-eastnet-nat" #4: ESP traffic information: in=0B out=0B
 002 "northnet-eastnet-nat" #3: deleting state (STATE_MAIN_I4)
 north #
  sleep 2
@@ -179,14 +179,14 @@ north #
 003 "northnet-eastnet-nat" #5: received Vendor ID payload [RFC 3947]
 002 "northnet-eastnet-nat" #5: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "northnet-eastnet-nat" #5: STATE_MAIN_I2: sent MI2, expecting MR2
-003 "northnet-eastnet-nat" #5: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: i am NATed
+003 "northnet-eastnet-nat" #5: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: I am behind NAT
 108 "northnet-eastnet-nat" #5: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #5: received Vendor ID payload [CAN-IKEv2]
 002 "northnet-eastnet-nat" #5: Main mode peer ID is ID_FQDN: '@east'
-004 "northnet-eastnet-nat" #5: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
+004 "northnet-eastnet-nat" #5: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "northnet-eastnet-nat" #6: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "northnet-eastnet-nat" #6: STATE_QUICK_I1: initiate
-004 "northnet-eastnet-nat" #6: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+004 "northnet-eastnet-nat" #6: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 north #
  echo three
 three
@@ -213,7 +213,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 north #
 north #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 north #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

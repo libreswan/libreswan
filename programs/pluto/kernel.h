@@ -115,7 +115,7 @@ struct kernel_sa {
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
 #endif
 
-	unsigned long sa_lifetime; /* number of seconds until SA expires */
+	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 	unsigned long sa_priority;
 };
 
@@ -163,7 +163,7 @@ struct kernel_ops {
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
 			   const struct pfkey_proto_info *proto_info,
-			   time_t use_lifetime,
+			   deltatime_t use_lifetime,
 			   unsigned long sa_priority,
 			   enum pluto_sadb_operations op,
 			   const char *text_said
@@ -178,7 +178,7 @@ struct kernel_ops {
 			     const char *opname);
 	bool (*sag_eroute)(struct state *st, struct spd_route *sr,
 			   enum pluto_sadb_operations op, const char *opname);
-	bool (*eroute_idle)(struct state *st, time_t idle_max);
+	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);
 	void (*remove_orphaned_holds)(int transportproto,
 				      const ip_subnet *ours,
 				      const ip_subnet *his);
@@ -186,7 +186,8 @@ struct kernel_ops {
 	bool (*grp_sa)(const struct kernel_sa *sa_outer,
 		       const struct kernel_sa *sa_inner);
 	bool (*del_sa)(const struct kernel_sa *sa);
-	bool (*get_sa)(const struct kernel_sa *sa, u_int *bytes);
+	bool (*get_sa)(const struct kernel_sa *sa, u_int *bytes,
+		       uint64_t *add_time);
 	ipsec_spi_t (*get_spi)(const ip_address *src,
 			       const ip_address *dst,
 			       int proto,
@@ -281,7 +282,7 @@ struct eroute_info {
  * which %holds are news and which others should expire.
  */
 
-#define SHUNT_SCAN_INTERVAL     (60 * 2)   /* time between scans of eroutes */
+#define SHUNT_SCAN_INTERVAL     (2 * secs_per_minute)   /* time between scans of eroutes */
 
 /* SHUNT_PATIENCE only has resolution down to a multiple of the sample rate,
  * SHUNT_SCAN_INTERVAL.
@@ -297,7 +298,7 @@ struct bare_shunt {
 	ip_said said;
 	int transport_proto;
 	unsigned long count;
-	time_t last_activity;
+	monotime_t last_activity;
 	char *why;
 	struct bare_shunt *next;
 };
@@ -363,8 +364,8 @@ extern bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
 			     struct state *st);
 
-extern bool was_eroute_idle(struct state *st, time_t idle_max);
-extern bool get_sa_info(struct state *st, bool inbound, time_t *ago);
+extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
+extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 
 extern bool update_ipsec_sa(struct state *st);
 
@@ -382,10 +383,9 @@ static inline bool compatible_overlapping_connections(struct connection *a,
 						      struct connection *b)
 {
 	return kernel_ops->overlap_supported &&
-	       a && b &&
+	       a != NULL && b != NULL &&
 	       a != b &&
-	       LIN(POLICY_OVERLAPIP, a->policy) &&
-	       LIN(POLICY_OVERLAPIP, a->policy);
+	       LIN(POLICY_OVERLAPIP, a->policy & b->policy);
 }
 
 #ifdef KLIPS

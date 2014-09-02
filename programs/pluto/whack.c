@@ -45,7 +45,6 @@
 #include "socketwrapper.h"
 #include "constants.h"
 #include "lswlog.h"
-
 #include "defs.h"
 #include "whack.h"
 
@@ -115,6 +114,8 @@ static void help(void)
 		" [--pfs]"
 		" \\\n   "
 		" [--pfsgroup [modp1024] | [modp1536] | [modp2048] | [modp3072] | [modp4096] | [modp6144] | [modp8192]]"
+		" \\\n   "
+		"             [dh22] | [dh23] | [dh24]"
 		" \\\n   "
 		" [--ikelifetime <seconds>]"
 		" [--ipseclifetime <seconds>]"
@@ -210,6 +211,10 @@ static void help(void)
 		"\n\n"
 		"deletestate: whack"
 		" --deletestate <state_object_number>"
+		"\n\n"
+		"delete xauth user: whack"
+		" --deleteuser --name <xauth_user_name>"
+		"\n\n"
 		" --crash <ip-address>"
 		"\n\n"
 		"pubkey: whack"
@@ -280,6 +285,9 @@ static void help(void)
 		"status: whack"
 		" --status"
 		"\n\n"
+		"trafficstatus: whack"
+		" --trafficstatus"
+		"\n\n"
 		"shutdown: whack"
 		" --shutdown"
 		"\n\n"
@@ -294,8 +302,10 @@ static const char *name = NULL;         /* --name operand, saved for diagnostics
 /** Print a string as a diagnostic, then exit whack unhappily
  *
  * @param mess The error message to print when exiting
- * @return void
+ * @return NEVER
  */
+static void diag(const char *mess) NEVER_RETURNS;
+
 static void diag(const char *mess)
 {
 	if (mess != NULL) {
@@ -363,6 +373,7 @@ enum option_enums {
 	OPT_TERMINATE,
 	OPT_DELETE,
 	OPT_DELETESTATE,
+	OPT_DELETEUSER,
 	OPT_LISTEN,
 	OPT_UNLISTEN,
 
@@ -375,6 +386,7 @@ enum option_enums {
 
 	OPT_STATUS,
 	OPT_SHUTDOWN,
+	OPT_TRAFFIC_STATUS,
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
@@ -554,6 +566,7 @@ static const struct option long_opts[] = {
 	{ "delete", no_argument, NULL, OPT_DELETE + OO },
 	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + OO +
 	  NUMERIC_ARG },
+	{ "deleteuser", no_argument, NULL, OPT_DELETEUSER + OO },
 	{ "crash", required_argument, NULL, OPT_DELETECRASH + OO },
 	{ "listen", no_argument, NULL, OPT_LISTEN + OO },
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
@@ -566,6 +579,7 @@ static const struct option long_opts[] = {
 	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO },
 	{ "rereadall", no_argument, NULL, OPT_REREADALL + OO },
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
+	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
 	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
@@ -766,10 +780,11 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
 	{ "impair-send-ikev2-ke", no_argument, NULL,
 		IMPAIR_SEND_IKEv2_KE_IX + DO },
+	{ "impair-send-key-size-check", no_argument, NULL,
+		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
 #    undef DO
 	{ "whackrecord",     required_argument, NULL, OPT_WHACKRECORD + OO },
-	{ "whackstoprecord", required_argument, NULL, OPT_WHACKSTOPRECORD +
-	  OO },
+	{ "whackstoprecord", no_argument, NULL, OPT_WHACKSTOPRECORD + OO },
 #   undef OO
 	{ 0, 0, 0, 0 }
 };
@@ -784,30 +799,35 @@ struct sockaddr_un ctl_addr = {
 #endif
 };
 
-static void check_life_time(time_t life, time_t limit, const char *which,
+/* ??? there seems to be no consequence for invalid life_time. */
+static void check_life_time(deltatime_t life, time_t raw_limit,
+			    const char *which,
 			    const struct whack_message *msg)
 {
-	time_t mint = msg->sa_rekey_margin * (100 + msg->sa_rekey_fuzz) / 100;
+	deltatime_t limit = deltatime(raw_limit);
+	deltatime_t mint = deltatimescale(100 + msg->sa_rekey_fuzz, 100, msg->sa_rekey_margin);
 
-	if (life > limit) {
+	if (deltaless(limit, life)) {
 		char buf[200]; /* arbitrary limit */
 
 		snprintf(buf, sizeof(buf),
-			 "%s [%lu seconds] must be less than %lu seconds",
-			 which, (unsigned long)life, (unsigned long)limit);
+			 "%s [%ld seconds] must be less than %ld seconds",
+			 which,
+			 (long)deltasecs(life),
+			 (long)deltasecs(limit));
 		diag(buf);
 	}
-	if ((msg->policy & POLICY_DONT_REKEY) == LEMPTY && life <= mint) {
+	if ((msg->policy & POLICY_DONT_REKEY) == LEMPTY && !deltaless(mint, life)) {
 		char buf[200]; /* arbitrary limit */
 
 		snprintf(buf, sizeof(buf),
-			 "%s [%lu] must be greater than"
-			 " rekeymargin*(100+rekeyfuzz)/100 [%lu*(100+%lu)/100 = %lu]",
+			 "%s [%ld] must be greater than"
+			 " rekeymargin*(100+rekeyfuzz)/100 [%ld*(100+%lu)/100 = %ld]",
 			 which,
-			 (unsigned long)life,
-			 (unsigned long)msg->sa_rekey_margin,
-			 (unsigned long)msg->sa_rekey_fuzz,
-			 (unsigned long)mint);
+			 (long)deltasecs(life),
+			 (long)deltasecs(msg->sa_rekey_margin),
+			 msg->sa_rekey_fuzz,
+			 (long)deltasecs(mint));
 		diag(buf);
 	}
 }
@@ -837,7 +857,6 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 	if (default_nexthop) {
 		if (isanyaddr(&that->host_addr))
 			diag("our nexthop must be specified when other host is a %any or %opportunistic");
-
 
 		this->host_nexthop = that->host_addr;
 	}
@@ -942,9 +961,9 @@ int main(int argc, char **argv)
 	msg.modecfg_domain = NULL;
 	msg.modecfg_banner = NULL;
 
-	msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
-	msg.sa_ipsec_life_seconds = PLUTO_SA_LIFE_DURATION_DEFAULT;
-	msg.sa_rekey_margin = SA_REPLACEMENT_MARGIN_DEFAULT;
+	msg.sa_ike_life_seconds = deltatime(OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT);
+	msg.sa_ipsec_life_seconds = deltatime(PLUTO_SA_LIFE_DURATION_DEFAULT);
+	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
 
@@ -966,12 +985,8 @@ int main(int argc, char **argv)
 		/* decode a numeric argument, if expected */
 		if (0 <= c) {
 			if (c & NUMERIC_ARG) {
-				char *endptr;
-
 				c -= NUMERIC_ARG;
-				opt_whole = strtoul(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg)
+				if (ttoul(optarg, 0, 0, &opt_whole) != NULL)
 					diagq("badly formed numeric argument",
 					      optarg);
 			}
@@ -1094,7 +1109,6 @@ int main(int argc, char **argv)
 				     "%s%s", optarg, CTL_SUFFIX) == -1)
 				diag("<ctlbase>" CTL_SUFFIX " must be fit in a sun_addr");
 
-
 			continue;
 
 		case OPT_NAME: /* --name <connection-name> */
@@ -1174,6 +1188,11 @@ int main(int argc, char **argv)
 			}
 			continue;
 
+		case OPT_DELETEUSER: /* --deleteuser  --name <xauth username> */
+			msg.whack_deleteuser = TRUE;
+			continue;
+
+
 		case OPT_LISTEN: /* --listen */
 			msg.whack_listen = TRUE;
 			continue;
@@ -1196,6 +1215,10 @@ int main(int argc, char **argv)
 
 		case OPT_STATUS: /* --status */
 			msg.whack_status = TRUE;
+			continue;
+
+		case OPT_TRAFFIC_STATUS: /* --trafficstatus */
+			msg.whack_traffic_status = TRUE;
 			continue;
 
 		case OPT_SHUTDOWN: /* --shutdown */
@@ -1324,7 +1347,6 @@ int main(int argc, char **argv)
 				if (LHAS(end_seen, END_CLIENT - END_FIRST))
 					diag("--host %group clashes with --client");
 
-
 				end_seen |= LELEM(END_CLIENT - END_FIRST);
 			}
 			if (new_policy & POLICY_OPPORTUNISTIC)
@@ -1394,12 +1416,9 @@ int main(int argc, char **argv)
 			if (end_seen & LELEM(END_CLIENTWITHIN - END_FIRST))
 				diag("--client conflicts with --clientwithin");
 
-
 			tunnel_af_used_by = long_opts[long_index].name;
-			if ( ((strlen(optarg) >= 6) &&
-			      (strncmp(optarg, "vhost:", 6) == 0)) ||
-			     ((strlen(optarg) >= 5) &&
-			      (strncmp(optarg, "vnet:", 5) == 0)) ) {
+			if (startswith(optarg, "vhost:") ||
+			    startswith(optarg, "vnet:")) {
 				msg.right.virt = optarg;
 			} else {
 				diagq(ttosubnet(optarg, 0,
@@ -1413,7 +1432,6 @@ int main(int argc, char **argv)
 		case END_CLIENTWITHIN: /* --clienwithin <address range> */
 			if (end_seen & LELEM(END_CLIENT - END_FIRST))
 				diag("--clientwithin conflicts with --client");
-
 
 			tunnel_af_used_by = long_opts[long_index].name;
 			diagq(ttosubnet(optarg, 0, msg.tunnel_addr_family,
@@ -1445,6 +1463,7 @@ int main(int argc, char **argv)
 			/* process right end, move it to left, reset it */
 			if (!LHAS(end_seen, END_HOST - END_FIRST))
 				diag("connection missing --host before --to");
+
 			msg.left = msg.right;
 			clear_end(&msg.right);
 			end_seen_before_to = end_seen;
@@ -1502,15 +1521,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKELIFETIME: /* --ikelifetime <seconds> */
-			msg.sa_ike_life_seconds = opt_whole;
+			msg.sa_ike_life_seconds = deltatime(opt_whole);
 			continue;
 
 		case CD_IPSECLIFETIME: /* --ipseclifetime <seconds> */
-			msg.sa_ipsec_life_seconds = opt_whole;
+			msg.sa_ipsec_life_seconds = deltatime(opt_whole);
 			continue;
 
 		case CD_RKMARGIN: /* --rekeymargin <seconds> */
-			msg.sa_rekey_margin = opt_whole;
+			msg.sa_rekey_margin = deltatime(opt_whole);
 			continue;
 
 		case CD_RKFUZZ: /* --rekeyfuzz <percentage> */
@@ -1549,11 +1568,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_DPDDELAY:
-			msg.dpd_delay = opt_whole;
+			msg.dpd_delay = deltatime(opt_whole);
 			continue;
 
 		case CD_DPDTIMEOUT:
-			msg.dpd_timeout = opt_whole;
+			msg.dpd_timeout = deltatime(opt_whole);
 			continue;
 
 		case CD_DPDACTION:
@@ -1648,10 +1667,8 @@ int main(int argc, char **argv)
 			if (LHAS(cd_seen, CD_TUNNELIPV6 - CD_FIRST))
 				diag("--tunnelipv4 conflicts with --tunnelipv6");
 
-
 			if (tunnel_af_used_by != NULL)
 				diagq("--tunnelipv4 must precede", af_used_by);
-
 
 			msg.tunnel_addr_family = AF_INET;
 			continue;
@@ -1660,10 +1677,8 @@ int main(int argc, char **argv)
 			if (LHAS(cd_seen, CD_TUNNELIPV4 - CD_FIRST))
 				diag("--tunnelipv6 conflicts with --tunnelipv4");
 
-
 			if (tunnel_af_used_by != NULL)
 				diagq("--tunnelipv6 must precede", af_used_by);
-
 
 			msg.tunnel_addr_family = AF_INET6;
 			continue;
@@ -1850,7 +1865,6 @@ int main(int argc, char **argv)
 			    POLICY_RSASIG)
 				diag("only RSASIG is supported for opportunism");
 
-
 			if ((msg.policy & POLICY_PFS) == 0)
 				diag("PFS required for opportunism");
 			if ((msg.policy & POLICY_ENCRYPT) == 0)
@@ -1869,7 +1883,6 @@ int main(int argc, char **argv)
 		    subnettypeof(&msg.right.client))
 			diag("endpoints clash: one is IPv4 and the other is IPv6");
 
-
 		if (NEVER_NEGOTIATE(msg.policy)) {
 			/* we think this is just a shunt (because he didn't specify
 			 * a host authentication method).  If he didn't specify a
@@ -1883,12 +1896,9 @@ int main(int argc, char **argv)
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY)
 				diag("must specify --rsasig or --psk for a connection");
 
-
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
 			    (msg.left.has_client || msg.right.has_client))
 				diag("must not specify clients for ISAKMP-only connection");
-
-
 		}
 
 		msg.whack_connection = TRUE;
@@ -1898,7 +1908,7 @@ int main(int argc, char **argv)
 	if (!LDISJOINT(opts1_seen,
 		       LELEM(OPT_ROUTE) | LELEM(OPT_UNROUTE) |
 		       LELEM(OPT_INITIATE) | LELEM(OPT_TERMINATE) |
-		       LELEM(OPT_DELETE) | LELEM(OPT_CD))) {
+		       LELEM(OPT_DELETE) | LELEM(OPT_DELETEUSER) | LELEM(OPT_CD))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
 	} else if (!msg.whack_options) {
@@ -1913,31 +1923,32 @@ int main(int argc, char **argv)
 
 	if (!(msg.whack_connection || msg.whack_key || msg.whack_myid ||
 	      msg.whack_delete || msg.whack_deletestate ||
+	      msg.whack_deleteuser ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
 	      msg.whack_unlisten || msg.whack_list ||
 	      msg.whack_reread || msg.whack_crash ||
-	      msg.whack_status || msg.whack_options || msg.whack_shutdown))
+	      msg.whack_status || msg.whack_traffic_status || msg.whack_options ||
+	      msg.whack_shutdown))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {
 		if (msg.ike == NULL)
-			diag("can not specify aggressive mode without ike= to set algorithm");
-
-
+			diag("cannot specify aggressive mode without ike= to set algorithm");
 	}
 
 	update_ports(&msg);
 
-	/* tricky quick and dirty check for wild values */
-	/* ??? This is horrible. */
-	if (msg.sa_rekey_margin != 0 &&
-	    msg.sa_rekey_fuzz * msg.sa_rekey_margin * 4 / msg.sa_rekey_margin /
-	    4 !=
-	    msg.sa_rekey_fuzz)
+	/*
+	 * Check for wild values
+	 * Must never overflow: rekeymargin*(100+rekeyfuzz)/100
+	 * We don't know the maximum value for a time_t, so we use INT_MAX
+	 * ??? this should be checked wherever any of these is set in Pluto too.
+	 */
+	if (msg.sa_rekey_fuzz > INT_MAX - 100 ||
+	    deltasecs(msg.sa_rekey_margin) > (time_t)(INT_MAX / (100 + msg.sa_rekey_fuzz)))
 		diag("rekeymargin or rekeyfuzz values are so large that they cause oveflow");
-
 
 	check_life_time(msg.sa_ike_life_seconds,
 			OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM,
@@ -1946,19 +1957,22 @@ int main(int argc, char **argv)
 	check_life_time(msg.sa_ipsec_life_seconds, SA_LIFE_DURATION_MAXIMUM,
 			"ipseclifetime", &msg);
 
-	if (msg.dpd_delay && !msg.dpd_timeout)
+	if (deltasecs(msg.dpd_delay) != 0 &&
+	    deltasecs(msg.dpd_timeout) == 0)
 		diag("dpddelay specified, but dpdtimeout is zero, both should be specified");
 
-
-	if (!msg.dpd_delay && msg.dpd_timeout)
+	if (deltasecs(msg.dpd_delay) == 0 &&
+	    deltasecs(msg.dpd_timeout) != 0)
 		diag("dpdtimeout specified, but dpddelay is zero, both should be specified");
 
-
-	if (msg.dpd_action != DPD_ACTION_CLEAR &&
-	    msg.dpd_action != DPD_ACTION_HOLD &&
-	    msg.dpd_action != DPD_ACTION_RESTART) {
-		diag("dpdaction can only be \"clear\", \"hold\" or \"restart\", defaulting to \"hold\"");
-		msg.dpd_action = DPD_ACTION_HOLD;
+	switch (msg.dpd_action) {
+	case DPD_ACTION_uninitialized:
+	case DPD_ACTION_CLEAR:
+	case DPD_ACTION_HOLD:
+	case DPD_ACTION_RESTART:
+		break;
+	default:
+		diag("dpdaction can only be \"clear\", \"hold\" or \"restart\"");
 	}
 
 	if (msg.remotepeertype != CISCO &&
@@ -2096,13 +2110,19 @@ int main(int argc, char **argv)
 					/* figure out prefix number
 					 * and how it should affect our exit status
 					 */
+					/*
+					 * we don't generally use strtoul but
+					 * in this case, its failure mode
+					 * (0 for nonsense) is probably OK.
+					 */
 					{
-						unsigned long s = strtoul(ls,
-									  NULL,
-									  10);
+						unsigned long s =
+							strtoul(ls, NULL, 10);
 
 						switch (s) {
 						case RC_COMMENT:
+						case RC_INFORMATIONAL:
+						case RC_INFORMATIONAL_TRAFFIC:
 						case RC_LOG:
 							/* ignore */
 							break;

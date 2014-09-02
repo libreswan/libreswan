@@ -32,8 +32,7 @@ struct alg_info_esp;
 extern struct sadb_alg *kernel_alg_esp_sadb_alg(int alg_id);
 extern int kernel_alg_esp_ivlen(int alg_id);
 /* returns bool success if esp encrypt alg is present  */
-extern err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len,
-				   struct alg_info_esp *nfo);
+extern err_t kernel_alg_esp_enc_ok(int alg_id, unsigned int key_len);
 extern bool kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg,
 				    struct alg_info_esp *alg_info);
 /* returns encrypt keylen in BYTES for esp enc alg passed */

@@ -128,8 +128,6 @@ extern void whack_log(int mess_no, const char *message, ...) PRINTF_LIKE(2);
 /* show status, usually on whack log */
 extern void show_status(void);
 
-#define ip_str pluto_ip_str
-
 /*
  * call this routine to reset daily items.
  */

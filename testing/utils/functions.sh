@@ -59,9 +59,10 @@ consolediff() {
 
     if diff -N -u -w -b -B $ref $fixedoutput >OUTPUT/${prefix}.console.diff
     then
-	echo "${prefix}Console output matched"
+	echo "${prefix} Consoleoutput matched"
     else
-	echo "${prefix}Console output differed"
+	diffstat=`diff -N -u -w -b -B $ref $fixedoutput | diffstat -f 0`
+	echo "${prefix} Consoleoutput differed '$diffstat'"
 
 	case "$success" in
 	true)	failnum=2 ;;
@@ -79,9 +80,13 @@ kvmplutotest () {
 		echo "****** skip test $testdir found stop-tests-now *****"
 	else
 		echo '***** KVM PLUTO RUNNING' $testdir${KLIPS_MODULE} '*******'
-		cd $testdir 
-		${UTILS}/dotest.sh 
-		cd ../
+		if [ -d $testdir ] ; then
+			cd $testdir 
+			${UTILS}/dotest.sh
+			cd ../
+		else
+			echo '**** Skipping non-existing test $testdir *****'
+		fi
 	fi
 }
 
@@ -479,6 +484,11 @@ lookforcore() {
 	elif [ -f ../../default-testparams.sh ]
 	then
 		. ../../default-testparams.sh
+	fi
+
+	if [ -f ./add-testparams.sh ]
+	then
+	    . ./add-testparams.sh
 	fi
 
 	# get rid of any pluto core files.

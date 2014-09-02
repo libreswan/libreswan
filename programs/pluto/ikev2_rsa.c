@@ -71,7 +71,7 @@ static void ikev2_calculate_sighash(struct state *st,
 	const chunk_t *nonce;
 	const char    *nonce_name;
 
-	if (role == INITIATOR) {
+	if (role == O_INITIATOR) {
 		/* on initiator, we need to hash responders nonce */
 		nonce = &st->st_nr;
 		nonce_name = "inputs to hash2 (responder nonce)";
@@ -182,7 +182,7 @@ stf_status ikev2_verify_rsa_sha1(struct state *st,
 	unsigned int hash_len = SHA1_DIGEST_SIZE;
 	enum phase1_role invertrole;
 
-	invertrole = (role == INITIATOR ? RESPONDER : INITIATOR);
+	invertrole = (role == O_INITIATOR ? O_RESPONDER : O_INITIATOR);
 
 	ikev2_calculate_sighash(st, invertrole, idhash, st->st_firstpacket_him,
 				calc_hash);

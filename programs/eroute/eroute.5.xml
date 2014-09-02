@@ -332,7 +332,7 @@ IPPROTO_AH) with no identies defined for either end.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para>ipsec(8), ipsec_manual(8), ipsec_tncfg(5), ipsec_spi(5),
+<para>ipsec(8), ipsec_tncfg(5), ipsec_spi(5),
 ipsec_spigrp(5), ipsec_klipsdebug(5), ipsec_eroute(8), ipsec_version(5),
 ipsec_pf_key(5)</para>
 </refsect1>

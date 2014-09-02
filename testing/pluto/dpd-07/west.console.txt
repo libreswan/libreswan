@@ -33,16 +33,19 @@ west #
 west #
  ipsec auto --up west-east
 003 "west-east" #1: multiple DH groups were set in aggressive mode. Only first one used.
+003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1536 keylen 0) ignored.
 003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 002 "west-east" #1: initiating Aggressive Mode #1, connection "west-east"
 003 "west-east" #1: multiple DH groups were set in aggressive mode. Only first one used.
+003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1536 keylen 0) ignored.
 003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "west-east" #1: STATE_AGGR_I1: initiate
 003 "west-east" #1: received Vendor ID payload [Dead Peer Detection]
 003 "west-east" #1: received Vendor ID payload [RFC 3947]
 002 "west-east" #1: Aggressive mode peer ID is ID_FQDN: '@east'
+002 "west-east" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 003 "west-east" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
-004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP1536}
+004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=aes_128 integ=sha group=MODP2048}
 002 "west-east" #1: Dead Peer Detection (RFC 3706): enabled
 002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "west-east" #2: STATE_QUICK_I1: initiate
@@ -100,8 +103,7 @@ west #
  ping -q -c 4 -n 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms, pipe 2
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
  # Tunnel should be back up now
 west #
@@ -109,7 +111,7 @@ west #
 Tunnel should be up
 west #
  ipsec eroute
-8          192.1.2.45/32      -> 192.1.2.23/32      => tun0x1003@192.1.2.23
+3          192.1.2.45/32      -> 192.1.2.23/32      => %hold
 west #
  echo end
 end
@@ -117,7 +119,7 @@ west #
  # no tunnels left, Ma!
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

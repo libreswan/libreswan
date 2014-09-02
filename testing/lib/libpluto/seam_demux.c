@@ -17,6 +17,7 @@ bool send_packet(struct state *st, const char *where, bool verbose)
 {
 	u_int8_t *ptr;
 	unsigned long len;
+	ipstr_buf b;
 
 	ptr = st->st_tpacket.ptr;
 	len = (unsigned long) st->st_tpacket.len;
@@ -27,7 +28,7 @@ bool send_packet(struct state *st, const char *where, bool verbose)
 		where,
 		st->st_interface->ip_dev->id_rname,
 		st->st_interface->port,
-		ip_str(&st->st_remoteaddr),
+		ipstr(&st->st_remoteaddr, &b),
 		st->st_remoteport,
 		st->st_serialno);
 

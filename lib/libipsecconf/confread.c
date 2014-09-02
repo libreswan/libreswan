@@ -184,15 +184,14 @@ static bool error_append(char **perr, const char *fmt, ...)
 	vsnprintf(tmp_err, sizeof(tmp_err) - 1, fmt, args);
 	va_end(args);
 
-	len = 1 + strlen(tmp_err) + (*perr ? strlen(*perr) : 0);
-	nerr = alloc_bytes(len,"error_append len");
+	len = 1 + strlen(tmp_err) + (*perr != NULL ? strlen(*perr) : 0);
+	nerr = alloc_bytes(len, "error_append len");
 	nerr[0] = '\0';
-	if (*perr)
-		strcpy(nerr, *perr);
-	strcat(nerr, tmp_err);
-
-	if (*perr)
+	if (*perr != NULL) {
+		strcpy(nerr, *perr);	/* safe: see allocation above */
 		pfree(*perr);
+	}
+	strcat(nerr, tmp_err);	/* safe: see allocation above */
 	*perr = nerr;
 
 	return TRUE;
@@ -375,20 +374,19 @@ static bool load_setup(struct starter_config *cfg,
  *
  * @param conn_st a connection definition
  * @param end a connection end
- * @param left boolean (are we 'left'? 1 = yes, 0 = no)
+ * @param leftright const char * "left" or "right"
  * @param perr pointer to char containing error value
  * @return bool TRUE if failed
  */
 static bool validate_end(struct ub_ctx *dnsctx,
 			struct starter_conn *conn_st,
 			struct starter_end *end,
-			bool left,
+			const char *leftright,
 			bool resolvip UNUSED,
 			err_t *perr)
 {
 	err_t er = NULL;
 	char *err_str = NULL;
-	const char *leftright = (left ? "left" : "right");
 	int family = conn_st->options[KBF_CONNADDRFAMILY];
 	bool err = FALSE;
 #  define ERR_FOUND(args ...) do err |= error_append(&err_str, ## args); while (0)
@@ -434,10 +432,9 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		}
 
 		if (end->id == NULL) {
-			char idbuf[ADDRTOT_BUF];
-			addrtot(&end->addr, 0, idbuf, sizeof(idbuf));
+			ipstr_buf b;
 
-			end->id = clone_str(idbuf, "end if");
+			end->id = clone_str(ipstr(&end->addr, &b), "end if");
 		}
 		break;
 
@@ -478,17 +475,14 @@ static bool validate_end(struct ub_ctx *dnsctx,
 				leftright);
 		}
 
-		if ( ((strlen(value) >= 6) &&
-		      (strncmp(value, "vhost:", 6) == 0)) ||
-		     ((strlen(value) >= 5) &&
-		      (strncmp(value, "vnet:", 5) == 0)) ) {
+		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
 			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
 			er = ttosubnet(value, 0, family, &(end->subnet));
 		}
-		if (er)
+		if (er != NULL)
 			ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright,
 				  value, er);
 	}
@@ -501,7 +495,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	if (end->strings_set[KSCF_NEXTHOP]) {
 		char *value = end->strings[KSCF_NEXTHOP];
 
-		if (strcasecmp(value, "%defaultroute") == 0) {
+		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
 			if (tnatoaddr(value, strlen(value), AF_INET,
@@ -539,6 +533,10 @@ static bool validate_end(struct ub_ctx *dnsctx,
 
 #endif
 		anyaddr(family, &end->nexthop);
+
+		if (end->addrtype == KH_DEFAULTROUTE) {
+			end->nexttype = KH_DEFAULTROUTE;
+		}
 	}
 
 	/* validate the KSCF_ID */
@@ -765,8 +763,8 @@ static bool translate_conn(struct starter_conn *conn,
 				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
 				if (kw->keyword.string == NULL ||
 				    (*the_strings)[field] == NULL ||
-				    strcmp(kw->keyword.string,
-					   (*the_strings)[field]) != 0) {
+				    !streq(kw->keyword.string,
+					   (*the_strings)[field])) {
 					err = TRUE;
 					break;
 				}
@@ -831,8 +829,8 @@ static bool translate_conn(struct starter_conn *conn,
 				      kw->number == LOOSE_ENUM_OTHER &&
 				      kw->keyword.string != NULL &&
 				      (*the_strings)[field] != NULL &&
-				      strcmp(kw->keyword.string,
-					     (*the_strings)[field]) == 0)) {
+				      streq(kw->keyword.string,
+					     (*the_strings)[field]))) {
 					err = TRUE;
 					break;
 				}
@@ -986,7 +984,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 			 */
 			for (sl1 = cfgp->sections.tqh_first;
 			     sl1 != NULL &&
-			     strcmp(alsos[alsoplace], sl1->name) != 0;
+			     !streq(alsos[alsoplace], sl1->name);
 			     sl1 = sl1->link.tqe_next)
 				;
 
@@ -1256,8 +1254,8 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		}
 	}
 
-	err |= validate_end(dnsctx, conn, &conn->left,  TRUE,  resolvip, perr);
-	err |= validate_end(dnsctx, conn, &conn->right, FALSE, resolvip, perr);
+	err |= validate_end(dnsctx, conn, &conn->left,  "left",  resolvip, perr);
+	err |= validate_end(dnsctx, conn, &conn->right, "right", resolvip, perr);
 	/*
 	 * TODO:
 	 * verify both ends are using the same inet family, if one end
@@ -1423,7 +1421,7 @@ struct starter_config *confread_load(const char *file,
 		 */
 		for (sconn = cfgp->sections.tqh_first; (!err) && sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
-			if (strcmp(sconn->name, "%default") == 0) {
+			if (streq(sconn->name, "%default")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading default conn");
 				err |= load_conn(dnsctx,
@@ -1433,7 +1431,7 @@ struct starter_config *confread_load(const char *file,
 						 resolvip, perr);
 			}
 
-			if (strcmp(sconn->name, "%oedefault") == 0) {
+			if (streq(sconn->name, "%oedefault")) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Loading oedefault conn");
 				err |= load_conn(dnsctx,
@@ -1451,9 +1449,9 @@ struct starter_config *confread_load(const char *file,
 		 */
 		for (sconn = cfgp->sections.tqh_first; sconn != NULL;
 		     sconn = sconn->link.tqe_next) {
-			if (strcmp(sconn->name, "%default") == 0)
+			if (streq(sconn->name, "%default"))
 				continue;
-			if (strcmp(sconn->name, "%oedefault") == 0)
+			if (streq(sconn->name, "%oedefault"))
 				continue;
 
 			connerr = init_load_conn(dnsctx, cfg, cfgp, sconn,
@@ -1520,8 +1518,6 @@ void confread_free(struct starter_config *cfg)
 	struct starter_conn *conn, *c;
 
 	FREE_LIST(cfg->setup.interfaces);
-	pfreeany(cfg->setup.virtual_private);
-	pfreeany(cfg->setup.listen);
 	pfree(cfg->ctlbase);
 
 	for (i = 0; i < KSF_MAX; i++)

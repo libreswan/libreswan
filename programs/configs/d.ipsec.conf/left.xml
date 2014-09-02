@@ -9,12 +9,11 @@ There are several magic values.  If it is
 <emphasis remap='B'>%defaultroute</emphasis>,
 and
 the
-<emphasis remap='B'>config</emphasis>
-<emphasis remap='B'>setup</emphasis>
+<emphasis remap='B'>config setup</emphasis>
 section's,
 <emphasis remap='B'>interfaces</emphasis>
 specification contains
-<emphasis remap='B'>%defaultroute,</emphasis>
+<emphasis remap='B'>%defaultroute</emphasis>,
 <emphasis remap='B'>left</emphasis>
 will be filled in automatically with the local address
 of the default-route interface (as determined at IPsec startup time);

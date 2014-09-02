@@ -23,16 +23,19 @@ initdone
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --name modecfg-road-eastnet-psk --initiate
 003 "modecfg-road-eastnet-psk" #1: multiple DH groups were set in aggressive mode. Only first one used.
+003 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1536 keylen 0) ignored.
 003 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 002 "modecfg-road-eastnet-psk" #1: initiating Aggressive Mode #1, connection "modecfg-road-eastnet-psk"
 003 "modecfg-road-eastnet-psk" #1: multiple DH groups were set in aggressive mode. Only first one used.
+003 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1536 keylen 0) ignored.
 003 "modecfg-road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "modecfg-road-eastnet-psk" #1: STATE_AGGR_I1: initiate
 003 "modecfg-road-eastnet-psk" #1: received Vendor ID payload [Dead Peer Detection]
 003 "modecfg-road-eastnet-psk" #1: received Vendor ID payload [RFC 3947]
 002 "modecfg-road-eastnet-psk" #1: Aggressive mode peer ID is ID_FQDN: '@east'
+002 "modecfg-road-eastnet-psk" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 003 "modecfg-road-eastnet-psk" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
-004 "modecfg-road-eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=oakley_3des_cbc_192 prf=sha group=MODP1536}
+004 "modecfg-road-eastnet-psk" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=PRESHARED_KEY cipher=oakley_3des_cbc_192 integ=sha group=MODP2048}
 002 "modecfg-road-eastnet-psk" #1: Dead Peer Detection (RFC 3706): enabled
 041 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Username:
 040 "modecfg-road-eastnet-psk" #1: modecfg-road-eastnet-psk prompt for Password:
@@ -43,10 +46,8 @@ road #
 004 "modecfg-road-eastnet-psk" #1: STATE_XAUTH_I1: XAUTH client - awaiting CFG_set
 002 "modecfg-road-eastnet-psk" #1: Dead Peer Detection (RFC 3706): enabled
 002 "modecfg-road-eastnet-psk" #1: modecfg: Sending IP request (MODECFG_I1)
-002 "modecfg-road-eastnet-psk" #1: received mode cfg reply
-002 "modecfg-road-eastnet-psk" #1: Received IPv4 address: 192.0.2.209/32
-002 "modecfg-road-eastnet-psk" #1: setting ip source address to 192.0.2.209/32
-002 "modecfg-road-eastnet-psk" #1: Received IP4 NETMASK 255.255.255.0
+005 "modecfg-road-eastnet-psk" #1: Received IPv4 address: 192.0.2.209/32
+005 "modecfg-road-eastnet-psk" #1: Received IP4 NETMASK 255.255.255.0
 004 "modecfg-road-eastnet-psk" #1: STATE_MAIN_I4: ISAKMP SA established
 002 "modecfg-road-eastnet-psk" #1: Dead Peer Detection (RFC 3706): enabled
 002 "modecfg-road-eastnet-psk" #2: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+AGGRESSIVE+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
@@ -91,7 +92,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
 road #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

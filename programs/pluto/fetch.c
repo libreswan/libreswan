@@ -43,7 +43,6 @@
 #include "x509.h"
 #include "whack.h"
 #include "fetch.h"
-#include "lswtime.h"
 
 #ifdef LIBCURL
 #define LIBCURL_UNUSED
@@ -57,7 +56,7 @@ typedef struct fetch_req fetch_req_t;
 
 struct fetch_req {
 	fetch_req_t *next;
-	time_t installed;
+	realtime_t installed;
 	int trials;
 	chunk_t issuer;
 	generalName_t *distributionPoints;
@@ -65,7 +64,7 @@ struct fetch_req {
 
 static fetch_req_t empty_fetch_req = {
 	NULL,           /* next */
-	0,              /* installed */
+	{ 0 },		/* installed */
 	0,              /* trials */
 	{ NULL, 0 },    /* issuer */
 	NULL            /* distributionPoints */
@@ -125,7 +124,7 @@ static void unlock_crl_fetch_list(const char *who)
  */
 void wake_fetch_thread(const char *who)
 {
-	if (crl_check_interval > 0) {
+	if (deltasecs(crl_check_interval) > 0) {
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("fetch thread wake call by '%s'", who));
 		pthread_mutex_lock(&fetch_wake_mutex);
@@ -146,16 +145,17 @@ static void free_fetch_request(fetch_req_t *req)
 
 #ifdef LIBCURL
 /*
- * writes data into a buffer
- * needed for libcurl
+ * Appends *ptr into (chunk_t *)data.
+ * A call-back used with libcurl.
  */
 static size_t write_buffer(void *ptr, size_t size, size_t nmemb, void *data)
 {
 	size_t realsize = size * nmemb;
-	chunk_t *mem = (chunk_t*)data;
+	chunk_t *mem = (chunk_t *)data;
 
-	mem->ptr = (u_char *)realloc(mem->ptr, mem->len + realsize);
-	if (mem->ptr) {
+	/* note: memory allocated by realloc(3) */
+	mem->ptr = realloc(mem->ptr, mem->len + realsize);
+	if (mem->ptr != NULL) {
 		memcpy(&(mem->ptr[mem->len]), ptr, realsize);
 		mem->len += realsize;
 	}
@@ -172,7 +172,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 #ifdef LIBCURL
 	char errorbuffer[CURL_ERROR_SIZE] = "";
 	char *uri;
-	chunk_t response = empty_chunk;
+	chunk_t response = empty_chunk;	/* managed by realloc/free */
 	CURLcode res;
 
 	/* get it with libcurl */
@@ -199,23 +199,21 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 		res = curl_easy_perform(curl);
 
 		if (res == CURLE_OK) {
-			blob->len = response.len;
-			blob->ptr = alloc_bytes(response.len, "curl blob");
-			memcpy(blob->ptr, response.ptr, response.len);
+			/* clone from realloc(3)ed memory to pluto-allocated memory */
+			clonetochunk(*blob, response.ptr, response.len, "curl blob");
 		} else {
 			libreswan_log("fetching uri (%s) with libcurl failed: %s", uri,
 			     errorbuffer);
 		}
 		curl_easy_cleanup(curl);
 		pfree(uri);
-		/* not using freeanychunk because of realloc (no leak detective) */
-		curl_free(response.ptr);
+
+		if (response.ptr != NULL)
+			free(response.ptr);	/* allocated via realloc(3) */
 	}
 	return strlen(errorbuffer) > 0 ? "libcurl error" : NULL;
-
 #else
 	return "not compiled with libcurl support";
-
 #endif
 }
 
@@ -371,7 +369,7 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 {
 	err_t ugh = NULL;
 
-	if (url.len >= 4 && strncasecmp((const char *)url.ptr, "ldap", 4) == 0)
+	if (url.len >= 4 && strncaseeq((const char *)url.ptr, "ldap", 4))
 		ugh = fetch_ldap_url(url, blob);
 	else
 		ugh = fetch_curl(url, blob);
@@ -453,24 +451,23 @@ static void fetch_crls(void)
 
 static void *fetch_thread(void *arg UNUSED)
 {
-	struct timespec wait_interval;
-
 	DBG(DBG_CONTROL,
 	    DBG_log("fetch thread started"));
 
 	pthread_mutex_lock(&fetch_wake_mutex);
-	while (1) {
+	for (;;) {
+		struct timespec wakeup_time;
 		int status;
 
-		wait_interval.tv_nsec = 0;
-		wait_interval.tv_sec = now() + crl_check_interval;
+		clock_gettime(CLOCK_REALTIME, &wakeup_time);
+		wakeup_time.tv_sec += deltasecs(crl_check_interval);
 
 		DBG(DBG_CONTROL,
 		    DBG_log("next regular crl check in %ld seconds",
-			    crl_check_interval));
+			    (long)deltasecs(crl_check_interval)));
 		status = pthread_cond_timedwait(&fetch_wake_cond,
 						&fetch_wake_mutex,
-						&wait_interval);
+						&wakeup_time);
 
 		if (status == ETIMEDOUT) {
 			DBG(DBG_CONTROL, {
@@ -494,7 +491,7 @@ void init_fetch(void)
 {
 	int status;
 
-	if (crl_check_interval > 0) {
+	if (deltasecs(crl_check_interval) > 0) {
 #ifdef LIBCURL
 		/* init curl */
 		status = curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -523,7 +520,7 @@ void free_crl_fetch(void)
 	unlock_crl_fetch_list("free_crl_fetch");
 
 #ifdef LIBCURL
-	if (crl_check_interval > 0) {
+	if (deltasecs(crl_check_interval) > 0) {
 		/* cleanup curl */
 		curl_global_cleanup();
 	}
@@ -596,7 +593,7 @@ void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 	*req = empty_fetch_req;
 
 	/* note current time */
-	req->installed = now();
+	req->installed = realnow();
 
 	/* clone issuer */
 	clonetochunk(req->issuer, issuer.ptr, issuer.len, "issuer dn");
@@ -647,10 +644,10 @@ void list_crl_fetch_requests(bool utc)
 
 	while (req != NULL) {
 		char buf[ASN1_BUF_LEN];
-		char tbuf2[TIMETOA_BUF];
+		char tbuf[REALTIMETOA_BUF];
 
 		whack_log(RC_COMMENT, "%s, trials: %d",
-			  timetoa(&req->installed, utc, tbuf2, sizeof(tbuf2)),
+			  realtimetoa(req->installed, utc, tbuf, sizeof(tbuf)),
 			  req->trials);
 		dntoa(buf, ASN1_BUF_LEN, req->issuer);
 		whack_log(RC_COMMENT, "       issuer:  '%s'", buf);

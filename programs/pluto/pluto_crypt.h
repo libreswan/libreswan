@@ -167,11 +167,11 @@ struct pcr_kenonce {
 struct pcr_skeyid_q {
 	DECLARE_WIRE_ARENA(DHCALC_SIZE);
 
-	u_int16_t oakley_group;
+	oakley_group_t oakley_group;
 	oakley_auth_t auth;
 	oakley_hash_t integ_hash;
 	oakley_hash_t prf_hash;
-	enum phase1_role init;
+	enum phase1_role role;
 	size_t keysize;	/* of encryptor */
 	wire_chunk_t gi;
 	wire_chunk_t gr;
@@ -181,7 +181,6 @@ struct pcr_skeyid_q {
 	wire_chunk_t icookie;
 	wire_chunk_t rcookie;
 	SECKEYPrivateKey *secret;
-	/* u_int16_t encrypt_algo; */
 	const struct encrypt_desc *encrypter;
 	SECKEYPublicKey *pubk;
 };
@@ -267,7 +266,6 @@ typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
  * when the work is complete.
  */
 struct pluto_crypto_req_cont {
-
 	crypto_req_func pcrc_func;	/* function to continue with */
 	/*
 	 * Sponsoring state's serial number and state pointer.
@@ -319,6 +317,8 @@ extern void enumerate_crypto_helper_response_sockets(lsw_fd_set *readfds);
 
 extern int pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 
+extern void log_crypto_workers(void);
+
 /* actual helper functions */
 extern stf_status build_ke(struct pluto_crypto_req_cont *cn,
 			   struct state *st,
@@ -334,17 +334,11 @@ extern void calc_nonce(struct pluto_crypto_req *r);
 extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);
 
-/* no longer exists?
- *  extern stf_status perform_dh(struct pluto_crypto_req_cont *cn, struct state *st);
- *  extern bool generate_skeyids_iv(struct state *st);
- */
-
-
 extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 				    struct state *st,
 				    enum crypto_importance importance,
-				    enum phase1_role init,  /* TRUE=g_init,FALSE=g_r */
-				    u_int16_t oakley_group_p);
+				    enum phase1_role role,
+				    oakley_group_t oakley_group2);
 
 extern void finish_dh_secretiv(struct state *st,
 			       struct pluto_crypto_req *r);
@@ -352,17 +346,16 @@ extern void finish_dh_secretiv(struct state *st,
 extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 				  struct state *st,
 				  enum crypto_importance importance,
-				  enum phase1_role init,
-				  u_int16_t oakley_group_p);
+				  enum phase1_role role,
+				  oakley_group_t oakley_group2);
 
 extern void finish_dh_secret(struct state *st,
 			     struct pluto_crypto_req *r);
 
-extern stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
-			      struct state *st,
-			      enum crypto_importance importance,
-			      enum phase1_role init,	/* TRUE=g_init,FALSE=g_r */
-			      u_int16_t oakley_group2);
+extern stf_status start_dh_v2(struct msg_digest *md,
+			      const char *name,
+			      enum phase1_role role,
+			      crypto_req_func pcrc_func);
 
 extern void finish_dh_v2(struct state *st,
 			 const struct pluto_crypto_req *r);

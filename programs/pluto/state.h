@@ -58,14 +58,14 @@
  */
 
 /* msgid_t defined in defs.h */
-#define MAINMODE_MSGID    ((msgid_t) 0)
-#define INVALID_MSGID     0xffffffff
+
+#define v1_MAINMODE_MSGID  ((msgid_t) 0)	/* network and host order */
+
+#define v2_INITIAL_MSGID  ((msgid_t) 0)	/* network and host order */
+
+#define v2_INVALID_MSGID  ((msgid_t) 0xffffffff)	/* network and host order */
 
 struct state;   /* forward declaration of tag */
-extern void reserve_msgid(struct state *isakmp_sa, msgid_t msgid);
-extern bool unique_msgid(struct state *isakmp_sa, msgid_t msgid);
-
-extern msgid_t generate_msgid(struct state *isakmp_sa);
 
 #define XAUTH_USERNAME_LEN 64
 
@@ -84,10 +84,10 @@ struct trans_attrs {
 
 	bool doing_xauth;		/* did we negotiate Extended Authentication and still doing it? */
 
-	u_int16_t groupnum;		/* for IKEv2 */
+	oakley_group_t groupnum;		/* for IKEv2 */
 
-	time_t life_seconds;		/* When this SA expires (seconds) */
-	u_int32_t life_kilobytes;	/* When this SA is exhausted (kilobytes) */
+	deltatime_t life_seconds;	/* max life of this SA in seconds */
+	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 
 	/* used in phase1/PARENT SA */
 	const struct encrypt_desc *encrypter;	/* package of encryption routines */
@@ -110,8 +110,8 @@ struct trans_attrs {
 struct ipsec_trans_attrs {
 	struct trans_attrs transattrs;
 	ipsec_spi_t spi;                /* his SPI */
-	time_t life_seconds;            /* When this SA expires */
-	u_int32_t life_kilobytes;       /* When this SA expires */
+	deltatime_t life_seconds;	/* max life of this SA in seconds */
+	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
 	u_int16_t encapsulation;
 #if 0                                   /* not implemented yet */
 	u_int16_t cmprs_dict_sz;
@@ -129,8 +129,9 @@ struct ipsec_proto_info {
 	u_char *peer_keymat;
 	u_int our_bytes;
 	u_int peer_bytes;
-	time_t our_lastused;
-	time_t peer_lastused;
+	monotime_t our_lastused;
+	monotime_t peer_lastused;
+	uint64_t add_time;
 };
 
 struct ike_frag {
@@ -162,7 +163,7 @@ struct hidden_variables {
 						 * NOTE: dpd_active_locally() tracks
 						 * the local enablement of DPD */
 	bool st_logged_p1algos;                 /* if we have logged algos */
-	u_int32_t st_nat_traversal;             /* bit field of permitted
+	lset_t st_nat_traversal;                /* bit field of permitted
 	                                         * methods. If non-zero, then
 	                                         * NAT-T has been detected, and
 	                                         * should be used. */
@@ -170,7 +171,14 @@ struct hidden_variables {
 	ip_address st_natd;
 };
 
+#define unset_suspended(st) { \
+	st->st_suspended_md = NULL; \
+	st->st_suspended_md_func = __FUNCTION__; \
+	st->st_suspended_md_line = __LINE__; \
+    }
+
 #define set_suspended(st, md) { \
+	passert(st->st_suspended_md == NULL); \
 	st->st_suspended_md = md; \
 	st->st_suspended_md_func = __FUNCTION__; \
 	st->st_suspended_md_line = __LINE__; \
@@ -267,18 +275,19 @@ struct state {
 	bool st_reserve_msgid;                  /* if TRUE, then message id
 	                                           has been reserved already */
 
-	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 */
-	msgid_t st_msgid_phase15b;              /* msgid for phase 1.5 */
+	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 - Network Order! */
+	msgid_t st_msgid_phase15b;              /* msgid for phase 1.5 - Network Order! */
+
 	/* only for a state representing an ISAKMP SA */
 	struct msgid_list  *st_used_msgids;     /* used-up msgids */
 
-	/* IKEv2 things */
+	/** IKEv2 only things **/
 	/* message ID sequence for things we send (as initiator) */
-	msgid_t st_msgid_lastack;               /* last one peer acknowledged */
-	msgid_t st_msgid_nextuse;               /* next one to use */
-
+	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
+	msgid_t st_msgid_nextuse;               /* next one to use - host order */
 	/* message ID sequence for things we receive (as responder) */
-	msgid_t st_msgid_lastrecv;             /* last one peer sent */
+	msgid_t st_msgid_lastrecv;             /* last one peer sent - Host order v2 only */
+
 
 	/* symmetric stuff */
 
@@ -291,7 +300,7 @@ struct state {
 	chunk_t st_gr;                          /* Responder public value */
 	u_int8_t st_rcookie[COOKIE_SIZE];       /* Responder Cookie */
 	chunk_t st_nr;                          /* Nr nonce */
-	chunk_t st_dcookie;                     /* DOS cookie of responder */
+	chunk_t st_dcookie;                     /* DOS cookie of responder - v2 only */
 
 	/* my stuff */
 	chunk_t st_tpacket;                     /* Transmitted packet */
@@ -323,7 +332,7 @@ struct state {
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
 
-	u_int8_t st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
+	bool st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
 
 	SECKEYPrivateKey *st_sec_nss;	/* secret (owned by NSS) */
 
@@ -346,10 +355,11 @@ struct state {
 	unsigned long st_try;                   /* number of times rekeying
 	                                           attempted */
 	                                        /* 0 means the only time */
-	time_t st_margin;                       /* life after EVENT_SA_REPLACE*/
+	deltatime_t st_margin;			/* life after EVENT_SA_REPLACE*/
 	unsigned long st_outbound_count;        /* traffic through eroute */
-	time_t st_outbound_time;                /* time of last change to
-	                                         * st_outbound_count */
+	monotime_t st_outbound_time;		/* time of last change to
+	                                         * st_outbound_count
+						 */
 
 	bool st_calculating;                    /* set to TRUE, if we are
 	                                         * performing cryptographic
@@ -389,22 +399,21 @@ struct state {
 
 	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
-	struct event      *st_event;            /* backpointer for certain
-	                                           events */
-	struct state      *st_hashchain_next;   /* Next in list */
-	struct state      *st_hashchain_prev;   /* Previous in list */
+	struct event *st_event;		/* backpointer for certain events */
+	struct state *st_hashchain_next;	/* Next in list */
+	struct state *st_hashchain_prev;	/* Previous in list */
 
 	struct hidden_variables hidden_variables;
 
 	char st_xauth_username[XAUTH_USERNAME_LEN];
 	chunk_t st_xauth_password;
 
-	time_t st_last_liveness;		/* Time of last v2 informational */
+	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
 	bool st_pend_liveness;			/* Waiting on an informational response */
 	struct event *st_liveness_event;
 
 	/* RFC 3706 Dead Peer Detection */
-	time_t st_last_dpd;                     /* Time of last DPD transmit */
+	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
 	u_int32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
 	u_int32_t st_dpd_expectseqno;           /* Next R_U_THERE_ACK
 	                                           to receive */
@@ -424,7 +433,7 @@ struct state {
 extern u_int16_t pluto_port;            /* Pluto's port */
 extern u_int16_t pluto_nat_port; /* Pluto's NATT floating port */
 
-extern bool states_use_connection(struct connection *c);
+extern bool states_use_connection(const struct connection *c);
 
 /* state functions */
 
@@ -434,30 +443,31 @@ extern void insert_state(struct state *st);
 extern void unhash_state(struct state *st);
 extern void rehash_state(struct state *st);
 extern void release_whack(struct state *st);
-extern void state_eroute_usage(ip_subnet *ours, ip_subnet *his,
-			       unsigned long count, time_t nw);
+extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
+			       unsigned long count, monotime_t nw);
 extern void delete_state(struct state *st);
 struct connection;      /* forward declaration of tag */
 extern void delete_states_by_connection(struct connection *c, bool relations);
 extern void delete_p2states_by_connection(struct connection *c);
 extern void rekey_p2states_by_connection(struct connection *c);
+extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 extern struct state
-*duplicate_state(struct state *st),
-*find_state_ikev1(const u_char * icookie,
-		  const u_char * rcookie,
-		  msgid_t msgid),
-*state_with_serialno(so_serial_t sn),
-*find_phase2_state_to_delete(const struct state *p1st, u_int8_t protoid,
+	*duplicate_state(struct state *st),
+	*find_state_ikev1(const u_char *icookie,
+			  const u_char *rcookie,
+			  msgid_t msgid),
+	*state_with_serialno(so_serial_t sn),
+	*find_phase2_state_to_delete(const struct state *p1st, u_int8_t protoid,
 			     ipsec_spi_t spi, bool *bogus),
-*find_phase1_state(const struct connection *c, lset_t ok_states),
-*find_sender(size_t packet_len, u_char * packet);
+	*find_phase1_state(const struct connection *c, lset_t ok_states),
+	*find_sender(size_t packet_len, u_char * packet);
 
 #ifdef HAVE_LABELED_IPSEC
 extern struct state *find_state_ikev1_loopback(const u_char *icookie,
 					       const u_char *rcookie,
 					       msgid_t msgid,
-					       struct msg_digest *md);
+					       const struct msg_digest *md);
 #endif
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
@@ -473,7 +483,7 @@ extern struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 						      u_int8_t protoid,
 						      ipsec_spi_t spi);
 
-extern struct state *find_info_state(const u_char *icookie,
+extern struct state *ikev1_find_info_state(const u_char *icookie,
 				     const u_char *rcookie,
 				     const ip_address *peer,
 				     msgid_t msgid);
@@ -485,27 +495,31 @@ extern void initialize_new_state(struct state *st,
 				 int whack_sock,
 				 enum crypto_importance importance);
 
-extern void show_states_status(void);
+extern void show_states_status(bool list_traffic);
 
-#if 1
 void for_each_state(void (*f)(struct state *, void *data), void *data);
-#endif
 
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
-extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st);
-extern void fmt_state(struct state *st, const time_t n,
+extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st);
+
+extern void fmt_list_traffic(struct state *st, char *state_buf,
+			     const size_t state_buf_len);
+
+extern void fmt_state(struct state *st, const monotime_t n,
 		      char *state_buf, const size_t state_buf_len,
 		      char *state_buf2, const size_t state_buf_len2);
+
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
+extern void v1_delete_state_by_xauth_name(struct state *st, void *name);
 
 extern void set_state_ike_endpoints(struct state *st,
 				    struct connection *c);
 
 extern void delete_cryptographic_continuation(struct state *st);
 extern void delete_states_dead_interfaces(void);
-extern bool dpd_active_locally(struct state *st);
+extern bool dpd_active_locally(const struct state *st);
 
 /*
  * use these to change state, this gives us a handle on all state changes
@@ -520,5 +534,7 @@ extern bool dpd_active_locally(struct state *st);
 			(st)->st_state = (new_state); \
 		} \
 	} while (0)
+
+extern bool state_busy(const struct state *st);
 
 #endif /* _STATE_H */

@@ -161,7 +161,7 @@ static int pickbyid(struct secret *secret UNUSED,
 {
 	char *rsakeyid = (char *)uservoid;
 
-	if (strcmp(pks->u.RSA_private_key.pub.keyid, rsakeyid) == 0)
+	if (streq(pks->u.RSA_private_key.pub.keyid, rsakeyid))
 		return 0;
 
 	return 1;
@@ -201,7 +201,7 @@ static struct secret *pick_key(struct secret *host_secrets,
 	if (s == NULL) {
 		char abuf[IDTOA_BUF];
 		idtoa(&id, abuf, IDTOA_BUF);
-		printf("%s: can not find key: %s (%s)\n", progname, idname,
+		printf("%s: cannot find key: %s (%s)\n", progname, idname,
 		       abuf);
 		exit(5);
 	}
@@ -372,11 +372,16 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'p':
-			precedence = atoi(optarg);
-			if ( (precedence < 0) || (precedence > 255)) {
-				fprintf(stderr,
-					"precedence must be between 0 and 255\n");
-				exit(5);
+			{
+				unsigned long u;
+				err_t ugh = ttoulb(optarg, 0, 10, 255, &u);
+
+				if (ugh != NULL) {
+					fprintf(stderr,
+						"precedence malformed: %s\n", ugh);
+					exit(5);
+				}
+				precedence = u;
 			}
 			break;
 		case 'L':
@@ -477,12 +482,11 @@ usage:
 		exit(0);
 	}
 
-	if (rsakeyid) {
+	if (rsakeyid != NULL) {
 		if (verbose)
 			printf("; picking by rsakeyid=%s\n", rsakeyid);
 		s = get_key_byid(host_secrets, rsakeyid);
-		keyid = rsakeyid;
-	} else if (keyid) {
+	} else if (keyid != NULL) {
 		if (verbose)
 			printf("; picking by keyid=%s\n", keyid);
 		s = pick_key(host_secrets, keyid);
@@ -493,7 +497,6 @@ usage:
 		 */
 		/* default key is the *LAST* key, because it is first in the file.*/
 		s = lsw_get_defaultsecret(host_secrets);
-		keyid = "default";
 	}
 
 	if (s == NULL) {

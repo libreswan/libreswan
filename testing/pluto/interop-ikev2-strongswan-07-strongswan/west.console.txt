@@ -13,6 +13,8 @@ Loading conn 'westnet-eastnet-ikev2'
   authby=secret
   keyexchange=ikev2
   auto=add
+  esp=aes128-sha2_512
+  ike=3des-md5-modp2048
 found netkey IPsec stack
 west #
  echo "initdone"
@@ -59,7 +61,7 @@ westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24 
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -38,7 +38,7 @@
  * Any changes here should be reflected there.
  */
 
-#define elemsof(array) (sizeof(array) / sizeof(*(array)))       /* number of elements in an array */
+#define elemsof(array) (sizeof(array) / sizeof(*(array)))	/* number of elements in an array */
 
 /* Many routines return only success or failure, but wish to describe
  * the failure in a message.  We use the convention that they return
@@ -61,7 +61,7 @@ typedef int bool;
 #  define FALSE 0
 #endif
 
-#define NULL_FD (-1)    /* NULL file descriptor */
+#define NULL_FD (-1)	/* NULL file descriptor */
 #define dup_any(fd)  ((fd) == NULL_FD ? NULL_FD : dup((fd)))
 #define close_any(fd)  { if ((fd) != NULL_FD) { close(fd); (fd) = NULL_FD; } }
 
@@ -74,9 +74,15 @@ typedef int bool;
 #endif
 #define BYTES_FOR_BITS(b)   (((b) + BITS_PER_BYTE - 1) / BITS_PER_BYTE)
 
-#define streq(a, b) (strcmp((a), (b)) == 0)             /* clearer shorthand */
-#define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)     /* clearer shorthand */
-#define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)	/* clearer shorthand */
+/* clearer shorthand for *cmp functions */
+#define streq(a, b) (strcmp((a), (b)) == 0)
+#define strneq(a, b, c) (strncmp((a), (b), (c)) == 0)
+#define startswith(a, b) strneq((a), (b), sizeof(b)-1)	/* b must be literal! */
+#define eat(a, b) (startswith((a), (b))? ((a) += sizeof(b) - 1), TRUE : FALSE)
+#define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)
+#define strncaseeq(a, b, n) (strncasecmp((a), (b), (n)) == 0)
+#define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
+
 
 /* zero an object given a pointer to it.
  * Note: this won't work on an array without an explicit &
@@ -141,7 +147,7 @@ extern const char *enum_showb(enum_names *ed, unsigned long val, char *buf, size
 /* sometimes the prefix gets annoying */
 extern const char *strip_prefix(const char *s, const char *prefix);
 
-extern const char *enum_show(enum_names *ed, unsigned long val);        /* NOT RE-ENTRANT */
+extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 
 extern int enum_search(enum_names *ed, const char *string);
 
@@ -155,7 +161,7 @@ extern int enum_search(enum_names *ed, const char *string);
  * bitnamesofb() formats into a caller-supplied buffer (re-entrant)
  */
 extern bool testset(const char *const table[], lset_t val);
-extern const char *bitnamesof(const char *const table[], lset_t val);   /* NOT RE-ENTRANT */
+extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
 extern const char *bitnamesofb(const char *const table[],
 			       lset_t val,
 			       char *buf, size_t blen);
@@ -211,4 +217,3 @@ extern void init_constants(void);
 
 #define _CONSTANTS_H_
 #endif /* _CONSTANTS_H_ */
-

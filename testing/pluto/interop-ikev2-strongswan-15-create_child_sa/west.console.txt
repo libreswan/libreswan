@@ -83,6 +83,9 @@ received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed CREATE_CHILD_SA response 2 [ N(NO_ADD_SAS) ]
 received NO_ADDITIONAL_SAS notify, no CHILD_SA built
 failed to establish CHILD_SA, keeping IKE_SA
+received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
+parsed CREATE_CHILD_SA response 2 [ N(NO_ADD_SAS) ]
+received message ID 2, expected 3. Ignored
 establishing connection 'westnet-eastnet-ikev2b' failed
 west #
  # give failure time to happen
@@ -101,7 +104,7 @@ westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24 
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

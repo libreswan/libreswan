@@ -55,34 +55,33 @@ struct payload_digest {
  */
 
 struct msg_digest {
-	struct msg_digest *next;                /* for free list */
-	chunk_t raw_packet;                     /* if encrypted, received packet before decryption */
-	const struct iface_port *iface;         /* interface on which message arrived */
-	ip_address sender;                      /* where message came from (network order) */
-	u_int16_t sender_port;                  /* host order */
-	pb_stream packet_pbs;                   /* whole packet */
-	pb_stream message_pbs;                  /* message to be processed */
-	pb_stream clr_pbs;                      /* place to store decrypted packet */
-	struct isakmp_hdr hdr;                  /* message's header */
-	bool encrypted;                         /* was it encrypted? */
-	enum state_kind from_state;             /* state we started in */
-	const struct state_microcode *smc;      /* microcode for initial state (v1)*/
-	const struct state_v2_microcode *svm;   /* microcode for initial state (v2)*/
-	bool new_iv_set;
-	struct state *st;                       /* current state object */
-	struct state *pst;                      /* parent state object (if any) */
+	struct msg_digest *next;		/* for free list */
+	chunk_t raw_packet;			/* (v1) if encrypted, received packet before decryption */
+	const struct iface_port *iface;		/* interface on which message arrived */
+	ip_address sender;			/* where message came from (network order) */
+	u_int16_t sender_port;			/* host order */
+	pb_stream packet_pbs;			/* whole packet */
+	pb_stream message_pbs;			/* message to be processed */
+	pb_stream clr_pbs;			/* (v2) place to store decrypted packet */
+	struct isakmp_hdr hdr;			/* message's header */
+	bool encrypted;				/* (v1) was it encrypted? */
+	enum state_kind from_state;		/* state we started in */
+	const struct state_microcode *smc;	/* (v1) microcode for initial state */
+	const struct state_v2_microcode *svm;	/* (v2) microcode for initial state */
+	bool new_iv_set;			/* (v1) */
+	struct state *st;			/* current state object */
+	struct state *pst;			/* (v2) parent state object (if any) */
 
-	enum phase1_role role;                  /* (ikev2 only) */
-	msgid_t msgid_received;                 /* (ikev2 only) */
+	enum phase1_role role;			/* (v2) */
+	msgid_t msgid_received;			/* (v2) - Host order! */
 
-	pb_stream rbody;                        /* room for reply body (after header) */
-	notification_t note;                    /* reason for failure */
-	bool dpd;                               /* Peer supports RFC 3706 DPD */
-	bool ikev2;                             /* Peer supports IKEv2 */
-	bool fragvid;                           /* Peer supports FRAGMENTATION */
-	bool nortel;                            /* Peer requires Nortel specific workaround */
-	bool event_already_set;                 /* (ikev1 only) */
-	stf_status result;                      /* temporary stored here for access by Tcl */
+	pb_stream rbody;			/* room for reply body (after header) */
+	notification_t note;			/* reason for failure */
+	bool dpd;				/* (v1) Peer supports RFC 3706 DPD */
+	bool ikev2;				/* Peer supports IKEv2 */
+	bool fragvid;				/* (v1) Peer supports FRAGMENTATION */
+	bool nortel;				/* (v1) Peer requires Nortel specific workaround */
+	bool event_already_set;			/* (v1) */
 
 #   define PAYLIMIT 30
 	struct payload_digest
@@ -101,13 +100,14 @@ struct msg_digest {
 
 extern struct msg_digest *alloc_md(void);
 extern void release_md(struct msg_digest *md);
+extern void release_any_md(struct msg_digest **mdp);
 
 typedef stf_status state_transition_fn (struct msg_digest *md);
 
 extern void fmt_ipsec_sa_established(struct state *st,
-				     char *sadetails, int sad_len);
+				     char *sadetails, size_t sad_len);
 extern void fmt_isakmp_sa_established(struct state *st,
-				      char *sadetails, int sad_len);
+				      char *sadetails, size_t sad_len);
 
 extern void free_md_pool(void);
 

@@ -67,7 +67,7 @@ void recv_pcap_packet2(u_char *user,
 
 }
 
-long crl_check_interval = 0;
+deltatime_t crl_check_interval = { 0 };
 
 main(int argc, char *argv[]){
 	int len;

@@ -33,7 +33,7 @@ extern bool lexopen(struct file_lex_position *new_flp, const char *name,
 extern void lexclose(void);
 
 #define tokeq(s) (streq(flp->tok, (s)))
-#define tokeqword(s) (strcasecmp(flp->tok, (s)) == 0)
+#define tokeqword(s) strcaseeq(flp->tok, (s))
 
 extern bool shift(void);
 extern bool flushline(const char *m);

@@ -28,6 +28,12 @@
 #define LOCK_SUFFIX ".pid"      /* for pluto's lock */
 #define INFO_SUFFIX ".info"     /* for UNIX domain socket for apps */
 
+/* default proposal values and preferences */
+/* kept small because in IKEv1 it explodes in transforms of all possible combinations */
+#define DEFAULT_OAKLEY_GROUPS    OAKLEY_GROUP_MODP2048, OAKLEY_GROUP_MODP1536, OAKLEY_GROUP_MODP1024
+#define DEFAULT_OAKLEY_EALGS	OAKLEY_AES_CBC, OAKLEY_3DES_CBC
+#define DEFAULT_OAKLEY_AALGS	OAKLEY_SHA1, OAKLEY_MD5
+
 enum kernel_interface {
 	NO_KERNEL = 1,
 	USE_KLIPS = 2,
@@ -39,15 +45,16 @@ enum kernel_interface {
 
 /* RFC 3706 Dead Peer Detection */
 enum dpd_action {
-	DPD_ACTION_CLEAR = 0,
-	DPD_ACTION_HOLD  = 1,
-	DPD_ACTION_RESTART = 2
+	DPD_ACTION_uninitialized,	/* should not happen */
+	DPD_ACTION_CLEAR,
+	DPD_ACTION_HOLD,
+	DPD_ACTION_RESTART
 };
 
 /* Cisco interop: values remote_peer_type= */
 enum keyword_remotepeertype {
 	NON_CISCO = 0,
-	CISCO  = 1,
+	CISCO = 1,
 };
 
 enum keyword_xauthby {
@@ -62,46 +69,58 @@ enum keyword_xauthfail {
 };
 
 /*
- *  * NAT-Traversal defines for nat_traveral type from nat_traversal.h
- *   *
- *    */
+ * NAT-Traversal defines for nat_traveral type from nat_traversal.h
+ *
+ * Elements for a set.
+ * The first members are used to specify the type of NAT Traversal.
+ * The second part says which ends are doing NAT.
+ * ??? perhaps these ought to be partitioned into separate sets.
+ */
 enum natt_method {
-	NAT_TRAVERSAL_METHOD_IETF_00_01     =1, /* no longer supported */
-	NAT_TRAVERSAL_METHOD_IETF_02_03     =2,
-	NAT_TRAVERSAL_METHOD_IETF_05        =3, /* same as RFC */
-	NAT_TRAVERSAL_METHOD_IETF_RFC       =4,
+	NAT_TRAVERSAL_METHOD_none,	/* unknown or unspecified */
+	NAT_TRAVERSAL_METHOD_IETF_02_03,
+	NAT_TRAVERSAL_METHOD_IETF_05,	/* same as RFC */
+	NAT_TRAVERSAL_METHOD_IETF_RFC,
 
-	NAT_TRAVERSAL_NAT_BHND_ME           =30,
-	NAT_TRAVERSAL_NAT_BHND_PEER         =31
+	NATED_HOST,	/* we are behind NAT */
+	NATED_PEER	/* peer is behind NAT */
 };
 
 /* Timer events */
 
 enum event_type {
-	EVENT_NULL,                     /* non-event */
-	EVENT_REINIT_SECRET,            /* Refresh cookie secret */
-	EVENT_SHUNT_SCAN,               /* scan shunt eroutes known to kernel */
-	EVENT_SO_DISCARD,               /* discard unfinished state object */
-	EVENT_RETRANSMIT,               /* Retransmit packet */
-	EVENT_SA_REPLACE,               /* SA replacement event */
-	EVENT_SA_REPLACE_IF_USED,       /* SA replacement event */
-	EVENT_SA_EXPIRE,                /* SA expiration event */
-	EVENT_NAT_T_KEEPALIVE,          /* NAT Traversal Keepalive */
-	EVENT_DPD,                      /* dead peer detection */
-	EVENT_DPD_TIMEOUT,              /* dead peer detection timeout */
+	EVENT_NULL,			/* non-event */
 
-	EVENT_LOG_DAILY,                /* reset certain log events/stats */
-	EVENT_CRYPTO_FAILED,            /* after some time, give up on crypto helper */
-	EVENT_PENDING_PHASE2,           /* do not make pending phase2 wait forever */
-	EVENT_v2_RETRANSMIT,            /* Retransmit v2 packet */
-	EVENT_v2_LIVENESS,
-	EVENT_PENDING_DDNS,             /* try to start connections where DNS failed at init */
+	/* events not associated with states */
+
+	EVENT_REINIT_SECRET,		/* Refresh cookie secret */
+	EVENT_SHUNT_SCAN,		/* scan shunt eroutes known to kernel */
+	EVENT_LOG_DAILY,		/* reset certain log events/stats */
+	EVENT_PENDING_DDNS,		/* try to start connections where DNS failed at init */
+	EVENT_PENDING_PHASE2,		/* do not make pending phase2 wait forever */
+
+	/* events associated with states */
+
+	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
+	EVENT_v1_RETRANSMIT,		/* v1 Retransmit IKE packet */
+	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
+	EVENT_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
+	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
+	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
+	EVENT_DPD,			/* v1 dead peer detection */
+	EVENT_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
+	EVENT_CRYPTO_FAILED,		/* v1/v2 after some time, give up on crypto helper */
+
+	EVENT_v2_RETRANSMIT,		/* v2 Initiator: Retransmit IKE packet */
+	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
+	EVENT_v2_LIVENESS,		/* for dead peer detection */
 };
 
-#define EVENT_REINIT_SECRET_DELAY               secs_per_hour
-#define EVENT_CRYPTO_FAILED_DELAY               (5 * secs_per_minute)
-#define EVENT_RETRANSMIT_DELAY_0                10      /* 10 seconds */
-#define EVENT_GIVEUP_ON_DNS_DELAY               (5 * secs_per_minute)
+#define EVENT_REINIT_SECRET_DELAY	secs_per_hour
+#define EVENT_CRYPTO_FAILED_DELAY	(5 * secs_per_minute)
+#define EVENT_RETRANSMIT_DELAY_0	10	/* 10 seconds */
+#define EVENT_RETRANSMIT_DELAY_CAP	60	/* 10 seconds */
+#define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
 
 /*
  * operational importance of this cryptographic operation.
@@ -205,6 +224,7 @@ enum {
 	IMPAIR_RETRANSMITS_IX,			/* cause pluto to never retransmit */
 	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,	/* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
 	IMPAIR_SEND_IKEv2_KE_IX,		/* causes pluto to omit sending the KE payload in IKEv2 */
+	IMPAIR_SEND_KEY_SIZE_CHECK_IX,		/* causes pluto to omit checking configured ESP key sizes for testing */
 	IMPAIR_roof_IX	/* first unasigned IMPAIR */
 };
 
@@ -246,29 +266,34 @@ enum {
 #define IMPAIR_RETRANSMITS	LELEM(IMPAIR_RETRANSMITS_IX)
 #define IMPAIR_SEND_BOGUS_ISAKMP_FLAG	LELEM(IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX)
 #define IMPAIR_SEND_IKEv2_KE	LELEM(IMPAIR_SEND_IKEv2_KE_IX)
+#define IMPAIR_SEND_KEY_SIZE_CHECK	LELEM(IMPAIR_SEND_KEY_SIZE_CHECK_IX)
 
 /* State of exchanges
  *
  * The name of the state describes the last message sent, not the
  * message currently being input or output (except during retry).
  * In effect, the state represents the last completed action.
+ * All routines are about transitioning to the next state
+ * (which might actually be the same state).
  *
- * Messages are named [MQ][IR]n where
+ * IKE V1 messages are sometimes called [MAQ][IR]n where
  * - M stands for Main Mode (Phase 1);
+ *   A stands for Aggressive Mode (Phase 1);
  *   Q stands for Quick Mode (Phase 2)
  * - I stands for Initiator;
  *   R stands for Responder
- * - n, a digit, stands for the number of the message
+ * - n, a digit, stands for the number of the message from this role
+ *   within this exchange
  *
  * It would be more convenient if each state accepted a message
- * and produced one.  This is the case for states at the start
+ * and produced one.  This is not the case for states at the start
  * or end of an exchange.  To fix this, we pretend that there are
- * MR0 and QR0 messages before the MI1 and QR1 messages.  Similarly,
- * we pretend that there are MR4 and QR2 messages.
+ * MR0 and QR0 messages before the MI1 and QR1 messages.
  *
- * STATE_MAIN_R0 and STATE_QUICK_R0 are intermediate states (not
+ * STATE_MAIN_R0 and STATE_QUICK_R0 are ephemeral states (not
  * retained between messages) representing the state that accepts the
- * first message of an exchange has been read but not processed.
+ * first message of an exchange that has been read but not yet processed
+ * and accepted.
  *
  * v1_state_microcode_table in ikev1.c and
  * v2_state_microcode_table in ikev2.c describe
@@ -322,20 +347,26 @@ enum state_kind {
 	STATE_XAUTH_I1,                 /* client state is awaiting result code */
 	STATE_IKE_ROOF,
 
-	/* IKEv2 states.
+	/*
+	 * IKEv2 states.
 	 * Note that message reliably sending is done by initiator only,
 	 * unlike with IKEv1.
 	 */
-	STATE_IKEv2_BASE,
-	/* INITIATOR states */
-	STATE_PARENT_I1,        /* sent initial message, waiting for reply */
-	STATE_PARENT_I2,        /* sent auth message, waiting for reply */
-	STATE_PARENT_I3,        /* received auth message, done. */
+	STATE_IKEv2_BASE,	/* state when faking a state */
 
-	/* RESPONDER states  --- no real actions, initiator is responsible
-	 * for all work states. */
-	STATE_PARENT_R1,
-	STATE_PARENT_R2,
+	/* INITIATOR states */
+	STATE_PARENT_I1,        /* IKE_SA_INIT: sent initial message, waiting for reply */
+	STATE_PARENT_I2,        /* IKE_AUTH: sent auth message, waiting for reply */
+	STATE_PARENT_I3,        /* IKE_AUTH done: received auth response */
+
+	/*
+	 * RESPONDER states
+	 * No real actions, initiator is responsible
+	 * for all work states.
+	 * ??? what does that mean?
+	 */
+	STATE_PARENT_R1,	/* IKE_SA_INIT: sent response */
+	STATE_PARENT_R2,	/* IKE_AUTH: sent response */
 
 	/* IKEv2 Delete States */
 	STATE_IKESA_DEL,
@@ -344,9 +375,19 @@ enum state_kind {
 	STATE_IKEv2_ROOF,
 };
 
+/* This is the IKE role, in RFC terms the Original Initiator or
+ * Original Responder. It is used for SPI lookup.
+ * This does NOT refer to whether we are sending an IKE request or
+ * an IKE response. This role sets ISAKMP_FLAGS_IKE_I, * but NOT
+ * ISAKMP_FLAGS_MSG_R. These are two different bits!
+ * In other words: ISAKMP_FLAGS_IKE_I != !ISAKMP_FLAGS_MSG_R
+ *
+ * The ISAKMP_FLAGS_IKE_I flag is present in IKEv1, but the
+ * ISAKMP_FLAGS_MSG_R is only present in IKEv2.
+ */
 enum phase1_role {
-	INITIATOR=1,
-	RESPONDER=2
+	O_INITIATOR=1,
+	O_RESPONDER=2
 };
 
 #define STATE_IKE_FLOOR STATE_MAIN_R0
@@ -423,6 +464,8 @@ enum phase1_role {
 
 #define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 
+#define IS_IKE_SA_ESTABLISHED(s) (IS_ISAKMP_SA_ESTABLISHED(s) || IS_PARENT_SA_ESTABLISHED(s))
+
 /*
  * ??? Issue here is that our child SA appears as a
  * STATE_PARENT_I3/STATE_PARENT_R2 state which it should not.
@@ -430,12 +473,15 @@ enum phase1_role {
  */
 #define IS_CHILD_SA_ESTABLISHED(st) \
     (((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) && \
-      st->st_clonedfrom != SOS_NOBODY) || \
+      IS_CHILD_SA(st)) || \
      st->st_state == STATE_CHILDSA_DEL)
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 
 #define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
+
+#define IS_IKE_SA(st) (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) ||\
+		IS_PARENT_SA(st))
 
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.
@@ -539,14 +585,6 @@ enum sa_policy_bits {
 	* ??? This set constant certainly doesn't include XAUTH.
 	*/
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_RSASIG_IX)
-
-	/* Policies that affect choices of proposal.
-	 * Includes xauth policy from connection c.
-	 * The result is a small set and it will fit in "unsigned".
-	 */
-#define POLICY_ISAKMP(x, c)	(((x) & LRANGES(POLICY_PSK, POLICY_RSASIG)) | \
-					(((c)->spd.this.xauth_server) << 2) | \
-					(((c)->spd.this.xauth_client) << 3))
 
 	/* Quick Mode (IPSEC) attributes */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
@@ -658,93 +696,6 @@ enum sa_policy_bits {
 
 /* Don't allow negotiation? */
 #define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
-
-/* Oakley transform attributes
- * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
- */
-
-#define OAKLEY_ENCRYPTION_ALGORITHM    1
-#define OAKLEY_HASH_ALGORITHM          2
-#define OAKLEY_AUTHENTICATION_METHOD   3
-#define OAKLEY_GROUP_DESCRIPTION       4
-#define OAKLEY_GROUP_TYPE              5
-#define OAKLEY_GROUP_PRIME             6        /* B/V */
-#define OAKLEY_GROUP_GENERATOR_ONE     7        /* B/V */
-#define OAKLEY_GROUP_GENERATOR_TWO     8        /* B/V */
-#define OAKLEY_GROUP_CURVE_A           9        /* B/V */
-#define OAKLEY_GROUP_CURVE_B          10        /* B/V */
-#define OAKLEY_LIFE_TYPE              11
-#define OAKLEY_LIFE_DURATION          12        /* B/V */
-#define OAKLEY_PRF                    13
-#define OAKLEY_KEY_LENGTH             14
-#define OAKLEY_FIELD_SIZE             15
-#define OAKLEY_GROUP_ORDER            16        /* B/V */
-/* 17-16383 Unassigned */
-/* 16384-32767 Reserved for private use */
-
-/* IPsec DOI attributes
- * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
- */
-
-#define SA_LIFE_TYPE             1
-#define SA_LIFE_DURATION         2      /* B/V */
-#define GROUP_DESCRIPTION        3
-#define ENCAPSULATION_MODE       4
-#define AUTH_ALGORITHM           5
-#define KEY_LENGTH               6
-#define KEY_ROUNDS               7
-#define COMPRESS_DICT_SIZE       8
-#define COMPRESS_PRIVATE_ALG     9      /* B/V */
-#define SECCTX                   32001  /* B/V */
-
-/* for each IPsec attribute, which enum_names describes its values? */
-
-#if 0	/*???? THIS IS DUPLICATED FROM include/ieft_constants.h.  WHY? */
-/* SA Lifetime Type attribute
- * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
- * Default time specified in 4.5
- *
- * There are two defaults for IPSEC SA lifetime, SA_LIFE_DURATION_DEFAULT,
- * and PLUTO_SA_LIFE_DURATION_DEFAULT.
- * SA_LIFE_DURATION_DEFAULT is specified in RFC2407 "The Internet IP
- * Security Domain of Interpretation for ISAKMP" 4.5.  It applies when
- * an ISAKMP negotiation does not explicitly specify a life duration.
- * PLUTO_SA_LIFE_DURATION_DEFAULT is specified in pluto(8).  It applies
- * when a connection description does not specify --ipseclifetime.
- * The value of SA_LIFE_DURATION_MAXIMUM is our local policy.
- */
-
-#define SA_LIFE_TYPE_SECONDS   1
-#define SA_LIFE_TYPE_KBYTES    2
-
-#define SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* RFC2407 4.5 */
-#define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* pluto(8) */
-#define SA_LIFE_DURATION_MAXIMUM secs_per_day
-
-#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
-#define SA_REPLACEMENT_FUZZ_DEFAULT         100 /* (IPSEC & IKE) 100% of MARGIN */
-#define SA_REPLACEMENT_RETRIES_DEFAULT      0   /*  (IPSEC & IKE) */
-
-#define SA_LIFE_DURATION_K_DEFAULT  0xFFFFFFFFlu
-
-#endif
-
-#if 0	/*???? THIS IS DUPLICATED FROM include/ieft_constants.h.  WHY? */
-/* Oakley Lifetime Type attribute
- * draft-ietf-ipsec-ike-01.txt appendix A
- * As far as I can see, there is no specification for
- * OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT.  This could lead to interop problems!
- * For no particular reason, we chose one hour.
- * The value of OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM is our local policy.
- */
-
-#define OAKLEY_LIFE_SECONDS   1
-#define OAKLEY_LIFE_KILOBYTES 2
-
-#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT secs_per_hour
-#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM secs_per_day
-
-#endif
 
 enum pubkey_source {
 	PUBKEY_NOTSET       = 0,

@@ -29,15 +29,135 @@ typedef int bool;
 # define FALSE 0
 #endif
 
-#define UNDEFINED_TIME  ((time_t)0)
+#include <stddef.h>
+
+/* ================ time-related declarations ================ */
 
 enum {
-	secs_per_minute = 60 /* seconds */,
+	secs_per_minute = 60,
 	secs_per_hour = 60 * secs_per_minute,
 	secs_per_day = 24 * secs_per_hour
 };
 
-#include <stddef.h>
+#if !defined(__KERNEL__)
+
+
+#include <time.h>
+
+/*
+ * UNDEFINED_TIME is meant to be an impossible exceptional time_t value.
+ *
+ * ??? On UNIX, 0 is a value that means 1970-01-01 00:00:00 +0000 (UTC).
+ *
+ * UNDEFINED_TIME is used as a real time_t value in certificate handling.
+ * Perhaps this is sancioned by X.509.
+ *
+ * UNDEFINED_TIME is used as a mono time_t value in liveness_check().
+ * 0 is PROBABLY safely distinct in this application.
+ */
+#define UNDEFINED_TIME  ((time_t)0)	/* ??? what a kludge! */
+
+#define TIME_T_MAX  ((time_t) ((1ull << (sizeof(time_t) * BITS_PER_BYTE - 1)) - 1))
+
+/*
+ * Wrap time_t so that dimensional analysis will be enforced by the compiler.
+ *
+ * realtime_t: absolute UTC time.  Might be discontinuous due to clock adjustment.
+ * monotime_t: absolute monotonic time.  No discontinuities (except for machine sleep?)
+ * deltatime_t: relative time between events.  Presumed continuous.
+ *
+ * Try to stick to the operations implemented here.
+ * A good compiler should produce identical code for these or for time_t values
+ * but will catch nonsense operations through type enforcement.
+ */
+
+typedef struct { time_t delta_secs; } deltatime_t;
+typedef struct { time_t real_secs; } realtime_t;
+typedef struct { time_t mono_secs; } monotime_t;
+
+/* delta time (interval) operations */
+
+static inline deltatime_t deltatime(time_t secs) {
+	deltatime_t d = { secs };
+	return d;
+}
+
+static inline time_t deltasecs(deltatime_t d) {
+	return d.delta_secs;
+}
+
+static inline deltatime_t deltatimescale(int num, int denom, deltatime_t d) {
+	/* ??? should check for overflow */
+	return deltatime(deltasecs(d) * num / denom);
+}
+
+static inline bool deltaless(deltatime_t a, deltatime_t b)
+{
+	return deltasecs(a) < deltasecs(b);
+}
+
+/* real time operations */
+
+static inline realtime_t realtimesum(realtime_t t, deltatime_t d) {
+	realtime_t s = { t.real_secs + d.delta_secs };
+	return s;
+}
+
+static inline realtime_t undefinedrealtime(void)
+{
+	realtime_t u = { UNDEFINED_TIME };
+
+	return u;
+}
+
+static inline bool isundefinedrealtime(realtime_t t)
+{
+	return t.real_secs == UNDEFINED_TIME;
+}
+
+static inline bool realbefore(realtime_t a, realtime_t b)
+{
+	return a.real_secs < b.real_secs;
+}
+
+static inline deltatime_t realtimediff(realtime_t a, realtime_t b) {
+	deltatime_t d = { a.real_secs - b.real_secs };
+	return d;
+}
+
+static inline realtime_t realnow(void)
+{
+	realtime_t t;
+
+	time(&t.real_secs);
+	return t;
+}
+
+#define REALTIMETOA_BUF     30	/* size of realtimetoa string buffer */
+extern char *realtimetoa(const realtime_t rtm, bool utc, char *buf, size_t blen);
+
+/* monotonic time operations */
+
+static inline monotime_t monotimesum(monotime_t t, deltatime_t d) {
+	monotime_t s = { t.mono_secs + d.delta_secs };
+	return s;
+}
+
+static inline bool monobefore(monotime_t a, monotime_t b)
+{
+	return a.mono_secs < b.mono_secs;
+}
+
+static inline deltatime_t monotimediff(monotime_t a, monotime_t b) {
+	deltatime_t d = { a.mono_secs - b.mono_secs };
+	return d;
+}
+
+/* defs.h declares extern monotime_t mononow(void) */
+
+#endif	/* !defined(__KERNEL__) */
+
+/* ================ end of time-related declarations ================ */
 
 /*
  * When using uclibc, malloc(0) returns NULL instead of success. This is
@@ -310,6 +430,8 @@ typedef int (*libreswan_keying_debug_func_t)(const char *message, ...);
 
 /* text conversions */
 extern err_t ttoul(const char *src, size_t srclen, int format, unsigned long *dst);
+extern err_t ttoulb(const char *src, size_t srclen, int format,
+	unsigned long upb, unsigned long *dst);
 extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
 #define ULTOT_BUF       (22 + 1)  /* holds 64 bits in octal */
 
@@ -326,6 +448,10 @@ extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
+typedef struct {
+	char buf[ADDRTOT_BUF];
+} ipstr_buf;
+extern const char *ipstr(const ip_address *src, ipstr_buf *b);
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
 extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
@@ -338,7 +464,7 @@ extern size_t subnetporttot(const ip_subnet *src, int format, char *buf,
 #define SUBNETPROTOTOT_BUF      (SUBNETTOTO_BUF + ULTOT_BUF)
 extern err_t ttosa(const char *src, size_t srclen, ip_said *dst);
 extern size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen);
-#define SATOT_BUF       (5 + ULTOA_BUF + 1 + ADDRTOT_BUF)
+#define SATOT_BUF       (5 + ULTOT_BUF + 1 + ADDRTOT_BUF)
 extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
 	      size_t buflen, size_t *needed);
 extern err_t ttodatav(const char *src, size_t srclen, int base,
@@ -358,9 +484,6 @@ extern size_t splitkeytoid(const unsigned char *e, size_t elen,
 #define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 extern err_t ttoprotoport(char *src, size_t src_len, u_int8_t *proto, u_int16_t *port,
 		   int *has_port_wildcard);
-
-#define TIMETOA_BUF     30	/* size of timetoa string buffer */
-extern char *timetoa(const time_t *timep, bool utc, char *buf, size_t blen);
 
 /* initializations */
 extern void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,
@@ -422,37 +545,12 @@ extern const char *ipsec_version_string(void);
 extern const char libreswan_vendorid[];
 #endif
 
-extern const char *dns_string_rr(int rr, char *buf, int bufsize);
-extern const char *dns_string_datetime(time_t seconds,
-				char *buf,
-				int bufsize);
-
 /*
- * old functions, to be deleted eventually
+ * obsolete functions, to be deleted eventually
  */
 
-/* unsigned long */
-extern const char *                    /* NULL for success, else string literal */
-atoul(  const char *src,
-	size_t srclen,          /* 0 means strlen(src) */
-	int base,               /* 0 means figure it out */
-	unsigned long *resultp
-	);
-extern size_t                   /* space needed for full conversion */
-ultoa(  unsigned long n,
-	int base,
-	char *dst,
-	size_t dstlen
-	);
-#define ULTOA_BUF       21      /* just large enough for largest result, */
-                                /* assuming 64-bit unsigned long! */
-
 /* Internet addresses */
-extern const char *             /* NULL for success, else string literal */
-atoaddr(const char *src,
-	size_t srclen,          /* 0 means strlen(src) */
-	struct in_addr *addr
-	);
+/* obsolete (replaced by addrtot) but still in use */
 extern size_t                   /* space needed for full conversion */
 addrtoa(struct in_addr addr,
 	int format,             /* character; 0 means default */
@@ -462,12 +560,7 @@ addrtoa(struct in_addr addr,
 #define ADDRTOA_BUF     ADDRTOT_BUF
 
 /* subnets */
-extern const char *                    /* NULL for success, else string literal */
-atosubnet(const char *src,
-	  size_t srclen,        /* 0 means strlen(src) */
-	  struct in_addr *addr,
-	  struct in_addr *mask
-	  );
+/* obsolete (replaced by subnettot) but still in use */
 extern size_t                          /* space needed for full conversion */
 subnettoa(struct in_addr addr,
 	  struct in_addr mask,
@@ -475,6 +568,7 @@ subnettoa(struct in_addr addr,
 	  char *dst,
 	  size_t dstlen
 	  );
+/* obsolete (replaced by subnettot) but still in use; no manpage */
 extern size_t                          /* space needed for full conversion */
 subnet6toa(struct in6_addr *addr,
 	   struct in6_addr *mask,
@@ -484,53 +578,9 @@ subnet6toa(struct in6_addr *addr,
 	   );
 #define SUBNETTOA_BUF SUBNETTOT_BUF     /* large enough for worst case result */
 
-/* ranges */
-extern const char *                    /* NULL for success, else string literal */
-atoasr( const char *src,
-	size_t srclen,          /* 0 means strlen(src) */
-	char *type,             /* 'a', 's', 'r' */
-	struct in_addr *addrs   /* two-element array */
-	);
-extern size_t                          /* space needed for full conversion */
-rangetoa(struct in_addr *addrs, /* two-element array */
-	 int format,            /* character; 0 means default */
-	 char *dst,
-	 size_t dstlen
-	 );
-#define RANGETOA_BUF    34      /* large enough for worst case result */
+/* end of obsolete functions */
 
 /* data types for SA conversion functions */
-
-/* generic data, e.g. keys */
-extern const char *                    /* NULL for success, else string literal */
-atobytes(const char *src,
-	 size_t srclen,         /* 0 means strlen(src) */
-	 char *dst,
-	 size_t dstlen,
-	 size_t *lenp           /* NULL means don't bother telling me */
-	 );
-extern size_t                          /* 0 failure, else true size */
-bytestoa(const unsigned char *src,
-	 size_t srclen,
-	 int format,            /* character; 0 means default */
-	 char *dst,
-	 size_t dstlen
-	 );
-
-/* old versions of generic-data functions; deprecated */
-extern size_t                          /* 0 failure, else true size */
-atodata(const char *src,
-	size_t srclen,          /* 0 means strlen(src) */
-	char *dst,
-	size_t dstlen
-	);
-extern size_t                          /* 0 failure, else true size */
-datatoa(const unsigned char *src,
-	size_t srclen,
-	int format,             /* character; 0 means default */
-	char *dst,
-	size_t dstlen
-	);
 
 /* part extraction and special addresses */
 extern struct in_addr subnetof(struct in_addr addr,

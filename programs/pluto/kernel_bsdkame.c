@@ -108,10 +108,12 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 				after = TRUE;
 			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
 				if (after) {
+					ipstr_buf b;
+
 					loglog(RC_LOG_SERIOUS,
 					       "IP interfaces %s and %s share address %s!",
 					       ifp->name, vfp->name,
-					       ip_str(&ifp->addr));
+					       ipstr(&ifp->addr, &b));
 				}
 				bad = TRUE;
 			}
@@ -135,6 +137,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					/* matches nothing -- create a new entry */
 					int fd = create_socket(ifp, ifp->name,
 							       pluto_port);
+					ipstr_buf b;
 
 					if (fd < 0)
 						break;
@@ -167,7 +170,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						"adding interface %s/%s %s:%d",
 						q->ip_dev->id_vname,
 						q->ip_dev->id_rname,
-						ip_str(&q->ip_addr),
+						ipstr(&q->ip_addr, &b),
 						q->port);
 
 					/*
@@ -204,8 +207,7 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						libreswan_log(
 							"adding interface %s/%s %s:%d",
 							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							ip_str(&q->
-							       ip_addr),
+							ipstr(&q->ip_addr, &b),
 							q->port);
 					}
 					break;
@@ -409,7 +411,7 @@ static void bsdkame_dequeue(void)
 		TAILQ_REMOVE(&pfkey_iq, pi, list);
 
 		bsdkame_pfkey_async(pi->msg);
-		free(pi->msg);
+		free(pi->msg);	/* was malloced by pfkey_recv() */
 		pfree(pi);
 
 	}
@@ -421,7 +423,7 @@ static void bsdkame_event(void)
 	struct sadb_msg *reply = pfkey_recv(pfkeyfd);
 
 	bsdkame_pfkey_async(reply);
-	free(reply);
+	free(reply);	/* was malloced by pfkey_recv() */
 }
 
 static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq)
@@ -456,7 +458,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
 			       const struct pfkey_proto_info *proto_info UNUSED,
-			       time_t use_lifetime UNUSED,
+			       deltatime_t use_lifetime UNUSED,
 			       unsigned long sa_priority UNUSED,
 			       enum pluto_sadb_operations op,
 			       const char *text_said UNUSED
@@ -1016,9 +1018,9 @@ static bool bsdkame_del_sa(const struct kernel_sa *sa UNUSED)
  * could mean that the SA is broken and needs to be replace anyway.
  */
 static bool bsdkame_was_eroute_idle(struct state *st UNUSED,
-				    time_t idle_max UNUSED)
+				    deltatime_t idle_max UNUSED)
 {
-	passert(0);
+	passert(FALSE);
 	return FALSE;
 }
 
@@ -1034,7 +1036,7 @@ static void bsdkame_remove_orphaned_holds(int transport_proto UNUSED,
 					  const ip_subnet *ours UNUSED,
 					  const ip_subnet *his UNUSED)
 {
-	passert(0);
+	passert(FALSE);
 }
 
 static bool bsdkame_except_socket(int socketfd, int family)

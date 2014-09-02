@@ -70,31 +70,35 @@ static const char *const dpd_action_name[] = {
 };
 
 enum_names dpd_action_names =
-	{ EVENT_NULL, DPD_ACTION_RESTART, dpd_action_name, NULL };
+	{ DPD_ACTION_CLEAR, DPD_ACTION_RESTART, dpd_action_name, NULL };
 
 /* Timer events */
 static const char *const timer_event_name[] = {
 	"EVENT_NULL",
+
 	"EVENT_REINIT_SECRET",
 	"EVENT_SHUNT_SCAN",
+	"EVENT_LOG_DAILY",
+	"EVENT_PENDING_DDNS",
+	"EVENT_PENDING_PHASE2",
+
 	"EVENT_SO_DISCARD",
-	"EVENT_RETRANSMIT",
+	"EVENT_v1_RETRANSMIT",
 	"EVENT_SA_REPLACE",
 	"EVENT_SA_REPLACE_IF_USED",
 	"EVENT_SA_EXPIRE",
 	"EVENT_NAT_T_KEEPALIVE",
 	"EVENT_DPD",
 	"EVENT_DPD_TIMEOUT",
-	"EVENT_LOG_DAILY",
 	"EVENT_CRYPTO_FAILED",
-	"EVENT_PENDING_PHASE2",
+
 	"EVENT_v2_RETRANSMIT",
+	"EVENT_v2_RESPONDER_TIMEOUT",
 	"EVENT_v2_LIVENESS",
-	"EVENT_PENDING_DDNS"
 };
 
 enum_names timer_event_names =
-	{ EVENT_NULL, EVENT_PENDING_DDNS, timer_event_name, NULL };
+	{ EVENT_NULL, EVENT_v2_LIVENESS, timer_event_name, NULL };
 
 /* State of exchanges */
 static const char *const state_name[] = {
@@ -143,7 +147,6 @@ static const char *const state_name[] = {
 	"STATE_PARENT_R1",
 	"STATE_PARENT_R2",
 	"STATE_IKEv2_ROOF"
-
 };
 
 enum_names state_names =
@@ -200,22 +203,27 @@ enum_names state_stories =
 	{ STATE_MAIN_R0, STATE_IKEv2_ROOF - 1, state_story, NULL };
 
 static const char *const natt_method_result_name[] = {
-	"NAT behind me",        /* 30 */
-	"NAT behind peer"       /* 31 */
 };
-static enum_names natt_method_result_names =
-	{ NAT_TRAVERSAL_NAT_BHND_ME, NAT_TRAVERSAL_NAT_BHND_PEER,
-	  natt_method_result_name, NULL };
 
-static const char *const natt_method_name[] = {
-	"draft-ietf-ipsec-nat-t-ike-00/01", /* 1 */
+/*
+ * natt_bit_names is dual purpose:
+ * - for bitnamesof(natt_bit_names, lset_t of enum natt_method)
+ * - for enum_name(&natt_method_names, enum natt_method)
+ */
+const char *const natt_bit_names[] = {
+	"none",
 	"draft-ietf-ipsec-nat-t-ike-02/03",
 	"draft-ietf-ipsec-nat-t-ike-05",
-	"RFC 3947 (NAT-Traversal)" /* 4*/
+	"RFC 3947 (NAT-Traversal)",
+
+	"I am behind NAT",
+	"peer behind NAT",
+	NULL	/* end for bitnamesof() */
 };
+
 enum_names natt_method_names =
-	{ NAT_TRAVERSAL_METHOD_IETF_00_01, NAT_TRAVERSAL_METHOD_IETF_RFC,
-	  natt_method_name, &natt_method_result_names };
+	{ NAT_TRAVERSAL_METHOD_none, NATED_PEER,
+	  natt_bit_names, NULL };
 
 /* pluto crypto importance */
 static const char *const pluto_cryptoimportance_strings[] = {
@@ -258,6 +266,7 @@ static const char *const stfstatus_names[] = {
 	"STF_STOLEN",
 	"STF_FAIL"
 };
+
 enum_names stfstatus_name =
 	{ STF_IGNORE, STF_FAIL, stfstatus_names, NULL };
 
@@ -295,7 +304,7 @@ const char *const sa_policy_bit_names[] = {
 	"IKE_FRAG_ALLOW",
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",
-	NULL
+	NULL	/* end for bitnamesof() */
 };
 
 static const char *const policy_shunt_names[4] = {

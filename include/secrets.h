@@ -99,10 +99,8 @@ struct pubkey {
 	unsigned refcnt; /* reference counted! */
 	enum dns_auth_level dns_auth_level;
 	char *dns_sig;
-	time_t installed_time,
-		last_tried_time,
-		last_worked_time,
-		until_time;
+	realtime_t installed_time;
+	realtime_t until_time;
 	chunk_t issuer;
 	enum pubkey_alg alg;
 	union {

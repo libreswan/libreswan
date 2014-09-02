@@ -361,13 +361,14 @@ startklips() {
 	    ipsec tncfg --attach --virtual ${virt} --physical ${phys}
 
 	    # configure all the IPv4/IPv6 addresses (including point-to-point)
-	    ip addr show dev ${phys} | \
+	    ip addr show dev ${phys} label ${phys} | \
 		awk '$1 == "inet" || ($1 == "inet6" && !/ dynamic/) {
-		cmd = "ip addr add"
-		if ($1 == "inet")
-		    sub(" [^ ]+:[^ ]+"," ",$0)
+		    cmd = "ip addr add"
+		    if ($1 == "inet")
+			sub(" [^ ]+:[^ ]+"," ")
+		    sub("secondary","","")
 		    sub("/.*","",$2)
-		    sub("dynamic","",$7)
+		    sub("dynamic","")
 		    for (i = 2; i < NF; i++) {
 			if ($i == "brd" || $i == "peer" || $i == "secondary")
 			    i++
@@ -376,9 +377,9 @@ startklips() {
 		    }
 		    if ($NF != phys)
 			cmd = cmd " " $NF
-			cmd = cmd " dev " virt ">/dev/null 2>/dev/null"
-			system(cmd)
-			}' phys=${phys} virt=${virt}
+		    cmd = cmd " dev " virt ">/dev/null 2>/dev/null"
+		    system(cmd)
+		}' phys=${phys} virt=${virt}
 	    ip link set up dev ${virt}
 
 	    if [ "${overridemtu}" != "" ]; then

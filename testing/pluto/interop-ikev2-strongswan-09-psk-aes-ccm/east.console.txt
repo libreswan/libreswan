@@ -38,13 +38,13 @@ westnet-eastnet-ikev2:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.2.45[west]
 westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r, pre-shared key reauthentication in 2 hours
-westnet-eastnet-ikev2[1]: IKE proposal: 3DES_CBC/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_1536
+westnet-eastnet-ikev2[1]: IKE proposal: 3DES_CBC/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:  AES_CCM_16_128, XXX bytes_i (4 pkts, XXs ago), XXX bytes_o (4 pkts, XXs ago), rekeying in XX minutes
 westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24 
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

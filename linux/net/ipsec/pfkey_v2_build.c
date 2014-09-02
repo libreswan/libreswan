@@ -306,7 +306,7 @@ errlab:
 	return error;
 }
 
-int pfkey_sa_build(struct sadb_ext **       pfkey_ext,
+int pfkey_sa_build(struct sadb_ext **pfkey_ext,
 		   uint16_t exttype,
 		   uint32_t spi,
 		   uint8_t replay_window,
@@ -672,14 +672,15 @@ errlab:
 	return error;
 }
 
-int pfkey_sens_build(struct sadb_ext**      pfkey_ext,
+#if 0	/* ??? not yet used or working */
+int pfkey_sens_build(struct sadb_ext **pfkey_ext,
 		     uint32_t dpd,
 		     uint8_t sens_level,
 		     uint8_t sens_len,
-		     uint64_t*              sens_bitmap,
+		     uint64_t *sens_bitmap,
 		     uint8_t integ_level,
 		     uint8_t integ_len,
-		     uint64_t*              integ_bitmap)
+		     uint64_t *integ_bitmap)
 {
 	int error = 0;
 	struct sadb_sens *pfkey_sens = (struct sadb_sens *)*pfkey_ext;
@@ -689,12 +690,16 @@ int pfkey_sens_build(struct sadb_ext**      pfkey_ext,
 	DEBUGGING(PF_KEY_DEBUG_BUILD,
 		  "pfkey_sens_build:\n");
 	/* sanity checks... */
-	if (pfkey_sens) {
+	if (pfkey_sens != NULL) {
 		ERROR("pfkey_sens_build: "
 		      "why is pfkey_sens already pointing to something?\n");
 		SENDERR(EINVAL);
 	}
 
+	/*
+	 * ??? we've just determined that *pfkey_ext == NULL, why are we dereferencing it?
+	 * I guess that this is an insanity check.
+	 */
 	DEBUGGING(PF_KEY_DEBUG_BUILD,
 		  "pfkey_sens_build: "
 		  "Sorry, I can't build exttype=%d yet.\n",
@@ -742,6 +747,7 @@ int pfkey_sens_build(struct sadb_ext**      pfkey_ext,
 errlab:
 	return error;
 }
+#endif
 
 int pfkey_prop_build(struct sadb_ext**      pfkey_ext,
 		     uint8_t replay,
@@ -1268,7 +1274,7 @@ int pfkey_outif_build(struct sadb_ext **pfkey_ext,
 		      uint16_t outif)
 {
 	int error = 0;
-	struct sadb_x_plumbif * p = (struct sadb_x_plumbif *)*pfkey_ext;
+	struct sadb_x_plumbif *p;
 
 	if ((p = (struct sadb_x_plumbif*)MALLOC(sizeof(*p))) == 0) {
 		ERROR("pfkey_build: memory allocation failed\n");

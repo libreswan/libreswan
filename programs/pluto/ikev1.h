@@ -1,5 +1,5 @@
 #ifndef _IKEV1_H
-#define _IKEv1_H
+#define _IKEV1_H
 
 #include "pluto_crypt.h"
 #include "ikev1_continuations.h"
@@ -124,7 +124,7 @@ extern bool ikev1_out_sa(pb_stream *outs,
 		struct state *st,
 		bool oakley_mode,
 		bool aggressive_mode,
-		u_int8_t np);
+		enum next_payload_types_ikev1 np);
 #endif
 
 #endif

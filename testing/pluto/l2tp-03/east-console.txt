@@ -36,7 +36,7 @@ east:~#
 east:~#
 east:~#
  grep 'Result using RFC 3947' /tmp/pluto.log
-"client1--east-l2tp"[1] 192.1.2.254 #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): peer is NATed
-"client1--east-l2tp"[1] 192.1.2.254 #3: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): peer is NATed
+"client1--east-l2tp"[1] 192.1.2.254 #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): peer behind NAT
+"client1--east-l2tp"[1] 192.1.2.254 #3: NAT-Traversal: Result using RFC 3947 (NAT-Traversal): peer behind NAT
 east:~#
 

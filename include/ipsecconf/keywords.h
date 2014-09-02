@@ -302,7 +302,6 @@ struct config_parsed {
 	struct starter_comments_list comments;
 
 	struct section_list conn_default;
-	bool got_default;
 };
 
 extern const struct keyword_def ipsec_conf_keywords_v2[];

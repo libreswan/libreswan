@@ -135,6 +135,7 @@
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
+#include "ikev1_msgid.h"
 #include "packet.h"
 #include "md5.h"
 #include "sha1.h"
@@ -155,6 +156,7 @@
 #include "vendor.h"
 #include "ikev1_dpd.h"
 #include "hostpair.h"
+#include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -192,8 +194,8 @@ struct state_microcode {
 #define SMF_DS_AUTH     (LELEM(OAKLEY_DSS_SIG) | LELEM(OAKLEY_RSA_SIG))
 #define SMF_PKE_AUTH    LELEM(OAKLEY_RSA_ENC)
 #define SMF_RPKE_AUTH   LELEM(OAKLEY_RSA_REVISED_MODE)
-/* misc flags */
 
+/* misc flags */
 #define SMF_INITIATOR   LELEM(OAKLEY_AUTH_ROOF + 0)
 #define SMF_FIRST_ENCRYPTED_INPUT       LELEM(OAKLEY_AUTH_ROOF + 1)
 #define SMF_INPUT_ENCRYPTED     LELEM(OAKLEY_AUTH_ROOF + 2)
@@ -228,13 +230,8 @@ static state_transition_fn      /* forward declaration */
 static const struct state_microcode
 	*ike_microcode_index[STATE_IKE_ROOF - STATE_IKE_FLOOR];
 
-#define PHONY_STATE(X) \
-	{ X, X \
-	  , 0 \
-	  , 0, P(VID) | P(CR), PT(NONE) \
-	  , 0, NULL }
-
 static const struct state_microcode v1_state_microcode_table[] = {
+
 #define PT(n) ISAKMP_NEXT_ ## n
 #define P(n) LELEM(PT(n))
 
@@ -248,7 +245,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE),
-	  EVENT_RETRANSMIT, main_inI1_outR1 },
+	  EVENT_v1_RETRANSMIT, main_inI1_outR1 },
 
 	/* STATE_MAIN_I1: R1 --> I2
 	 * HDR, SA --> auth dependent
@@ -263,7 +260,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_I1, STATE_MAIN_I2,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE), /* don't know yet */
-	  EVENT_RETRANSMIT, main_inR1_outI2 },
+	  EVENT_v1_RETRANSMIT, main_inR1_outI2 },
 
 	/* STATE_MAIN_R1: I2 --> R2
 	 * SMF_PSK_AUTH, SMF_DS_AUTH: HDR, KE, Ni --> HDR, KE, Nr
@@ -276,18 +273,18 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R1, STATE_MAIN_R2,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(NONE)
-	  , EVENT_RETRANSMIT, main_inI2_outR2 },
+	  , EVENT_v1_RETRANSMIT, main_inI2_outR2 },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_REPLY,
 	  P(KE) | P(ID) | P(NONCE), P(VID) | P(CR) | P(HASH), PT(KE),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
 	  SMF_RPKE_AUTH | SMF_REPLY,
 	  P(NONCE) | P(KE) | P(ID), P(VID) | P(CR) | P(HASH) | P(CERT), PT(
 		  NONCE),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	/* for states from here on, output message must be encrypted */
 
@@ -303,17 +300,17 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED |
 	  SMF_REPLY
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(ID)
-	  , EVENT_RETRANSMIT, main_inR2_outI3 },
+	  , EVENT_v1_RETRANSMIT, main_inR2_outI3 },
 
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
 	  P(KE) | P(ID) | P(NONCE), P(VID) | P(CR), PT(HASH),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
 	  P(NONCE) | P(KE) | P(ID), P(VID) | P(CR), PT(HASH),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	/* for states from here on, input message must be encrypted */
 
@@ -389,12 +386,12 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_RETRANSMIT, aggr_inI1_outR1_psk },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_psk },
 
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_RETRANSMIT, aggr_inI1_outR1_rsasig },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_rsasig },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
@@ -461,7 +458,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY
 	  , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(
 		  NATOA_RFC), PT(NONE)
-	  , EVENT_RETRANSMIT, quick_inI1_outR1 },
+	  , EVENT_v1_RETRANSMIT, quick_inI1_outR1 },
 
 	/* STATE_QUICK_I1:
 	 * HDR*, HASH(2), SA, Nr [, KE ] [, IDci, IDcr ] -->
@@ -657,7 +654,7 @@ static stf_status informational(struct msg_digest *md)
 			return dpd_inR(st, n, n_pbs);
 
 		case PAYLOAD_MALFORMED:
-			if (st) {
+			if (st != NULL) {
 				st->hidden_variables.st_malformed_received++;
 
 				libreswan_log(
@@ -680,30 +677,30 @@ static stf_status informational(struct msg_digest *md)
 			return STF_IGNORE;
 
 		case ISAKMP_N_CISCO_LOAD_BALANCE:
-			if (st && IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			if (st != NULL && IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				char *tmp_name;
 				int tmp_whack_sock;
 				struct connection *tmp_c;
 				ip_address old_addr;
 
-				/* Saving connection name and whack sock id*/
+				/* Saving connection name and whack sock id */
 				tmp_name = st->st_connection->name;
 				tmp_whack_sock = dup_any(st->st_whack_sock);
 
-				/* deleting ISAKMP SA with the current remote peer*/
+				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);
 
-				/* to find and store the connection associated with tmp_name*/
+				/* to find and store the connection associated with tmp_name */
 				tmp_c = con_by_name(tmp_name, FALSE);
 
 				DBG_cond_dump(DBG_PARSING,
 					      "redirected remote end info:", n_pbs->cur + pbs_left(
 						      n_pbs) - 4, 4);
 
-				/*Current remote peer info*/
+				/* Current remote peer info */
 				{
 
-					char buftest[ADDRTOT_BUF];
+					ipstr_buf b;
 					struct spd_route *tmp_spd =
 						&tmp_c->spd;
 					int count_spd = 0;
@@ -717,17 +714,10 @@ static stf_status informational(struct msg_digest *md)
 						/**that info**/
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that id kind: %d",
-							    tmp_spd->that.id.
-							    kind));
+							    tmp_spd->that.id.kind));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that id ipaddr: %s",
-							    (addrtot(&tmp_spd->
-								     that.id.
-								     ip_addr,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_spd->that.id.ip_addr, &b)));
 						if (tmp_spd->that.id.name.ptr
 						    != NULL)
 							DBG(DBG_CONTROLMORE,
@@ -738,38 +728,16 @@ static stf_status informational(struct msg_digest *md)
 								    name));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that host_addr: %s",
-							    (addrtot(&tmp_spd->
-								     that.
-								     host_addr,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_spd->that.host_addr, &b)));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that nexthop: %s",
-							    (addrtot(&tmp_spd->
-								     that.
-								     host_nexthop,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_spd->that.host_nexthop, &b)));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that srcip: %s",
-							    (addrtot(&tmp_spd->
-								     that.
-								     host_srcip,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_spd->that.host_srcip, &b)));
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("that client_addr: %s, maskbits:%d",
-							    (addrtot(&tmp_spd->that.client.addr,
-									    0,
-									    buftest,
-									    sizeof(buftest)),
-								    buftest),
+							    ipstr(&tmp_spd->that.client.addr, &b),
 							    tmp_spd->that.
 							    client.maskbits));
 						DBG(DBG_CONTROLMORE,
@@ -795,53 +763,24 @@ static stf_status informational(struct msg_digest *md)
 					if (tmp_c->interface != NULL) {
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("Current interface_addr: %s",
-							    (addrtot(&tmp_c->
-								     interface
-								     ->
-								     ip_addr,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest)));
+							    ipstr(&tmp_c->interface->ip_addr, &b)));
 					}
 
 					if (tmp_c->gw_info != NULL) {
 						DBG(DBG_CONTROLMORE, {
 							    DBG_log("Current gw_client_addr: %s",
-								    (addrtot(&
-									     tmp_c
-									     ->
-									     gw_info
-									     ->
-									     client_id
-									     .
-									     ip_addr,
-									     0,
-									     buftest,
-									     sizeof(buftest)),
-								     buftest));
+								    ipstr(&tmp_c->gw_info->client_id.ip_addr, &b));
 							    DBG_log("Current gw_gw_addr: %s",
-								    (addrtot(&
-									     tmp_c
-									     ->
-									     gw_info
-									     ->
-									     gw_id
-									     .
-									     ip_addr,
-									     0,
-									     buftest,
-									     sizeof(buftest)),
-								     buftest));
+								    ipstr(&tmp_c->gw_info->gw_id.ip_addr, &b));
 						    });
 					}
 
 				}
 
-				/*storing old address for comparison purposes*/
+				/* storing old address for comparison purposes */
 				old_addr = tmp_c->spd.that.host_addr;
 
-				/*Decoding remote peer address info where connection has to be redirected to*/
+				/* Decoding remote peer address info where connection has to be redirected to */
 				memcpy(&tmp_c->spd.that.host_addr.u.v4.sin_addr.s_addr,
 					(u_int32_t *)(n_pbs->cur +
 						      pbs_left(n_pbs) - 4),
@@ -849,7 +788,7 @@ static stf_status informational(struct msg_digest *md)
 					       sin_addr.
 					       s_addr));
 
-				/*Modifying connection info to store the redirected remote peer info*/
+				/* Modifying connection info to store the redirected remote peer info */
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("Old host_addr_name : %s",
 					    tmp_c->spd.that.host_addr_name));
@@ -858,84 +797,44 @@ static stf_status informational(struct msg_digest *md)
 					tmp_c->spd.that.host_addr;
 
 				DBG(DBG_CONTROLMORE, {
-					    char buftest[ADDRTOT_BUF];
-					    if (sameaddr(&tmp_c->spd.this.
-							 host_nexthop,
-							 &old_addr)) {
-						    DBG_log("Old remote addr %s",
-							    (addrtot(&old_addr,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-						    DBG_log("Old this host next hop %s",
-							    (addrtot(&tmp_c->
-								     spd.this.
-								     host_nexthop,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-						    tmp_c->spd.this.host_nexthop = tmp_c->spd.that.host_addr;
-						    DBG_log("New this host next hop %s",
-							    (addrtot(&tmp_c->
-								     spd.this.
-								     host_nexthop,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-					    }
+					ipstr_buf b;
+					if (sameaddr(&tmp_c->spd.this.
+						     host_nexthop,
+						     &old_addr)) {
+						DBG_log("Old remote addr %s",
+							ipstr(&old_addr, &b));
+						DBG_log("Old this host next hop %s",
+							ipstr(&tmp_c->spd.this.host_nexthop, &b));
+						tmp_c->spd.this.host_nexthop = tmp_c->spd.that.host_addr;
+						DBG_log("New this host next hop %s",
+							ipstr(&tmp_c->spd.this.host_nexthop, &b));
+					}
 
-					    if (sameaddr(&tmp_c->spd.that.
-							 host_srcip,
-							 &old_addr)) {
-						    DBG_log("Old that host srcip %s",
-							    (addrtot(&tmp_c->
-								     spd.that.
-								     host_srcip,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-						    tmp_c->spd.that.host_srcip = tmp_c->spd.that.host_addr;
-						    DBG_log("New that host srcip %s",
-							    (addrtot(&tmp_c->
-								     spd.that.
-								     host_srcip,
-								     0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-					    }
+					if (sameaddr(&tmp_c->spd.that.
+						     host_srcip,
+						     &old_addr)) {
+						DBG_log("Old that host srcip %s",
+							ipstr(&tmp_c->spd.that.host_srcip, &b));
+						tmp_c->spd.that.host_srcip = tmp_c->spd.that.host_addr;
+						DBG_log("New that host srcip %s",
+							ipstr(&tmp_c->spd.that.host_srcip, &b));
+					}
 
-					    if (sameaddr(&tmp_c->spd.that.
-							 client.addr,
-							 &old_addr)) {
-						    DBG_log("Old that client ip %s",
-							    (addrtot(&tmp_c->
-								     spd.that.
-								     client.
-								     addr, 0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-						    tmp_c->spd.that.client.addr = tmp_c->spd.that.host_addr;
-						    DBG_log("New that client ip %s",
-							    (addrtot(&tmp_c->
-								     spd.that.
-								     client.
-								     addr, 0,
-								     buftest,
-								     sizeof(buftest)),
-							     buftest));
-					    }
-				    });
+					if (sameaddr(&tmp_c->spd.that.
+						     client.addr,
+						     &old_addr)) {
+						DBG_log("Old that client ip %s",
+							ipstr(&tmp_c->spd.that.client.addr, &b));
+						tmp_c->spd.that.client.addr = tmp_c->spd.that.host_addr;
+						DBG_log("New that client ip %s",
+							ipstr(&tmp_c->spd.that.client.addr, &b));
+					}
+				});
 
 				tmp_c->host_pair->him.addr =
 					tmp_c->spd.that.host_addr;
 
-				/*Initiating connection to the redirected peer*/
+				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
 						    0, pcim_demand_crypto);
 				return STF_IGNORE;
@@ -953,7 +852,7 @@ static stf_status informational(struct msg_digest *md)
 				return STF_FATAL;
 			}
 			loglog(RC_LOG_SERIOUS,
-			       "received and ignored informational message for unknown state");
+			       "received and ignored informational message");
 			return STF_IGNORE;
 		}
 	}
@@ -977,7 +876,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
 #define SEND_NOTIFICATION(t) { \
-		if (st) \
+		if (st != NULL) \
 			send_notification_from_state(st, from_state, t); \
 		else \
 			send_notification_from_md(md, t); }
@@ -991,7 +890,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 	case ISAKMP_XCHG_AGGR:
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
-		if (md->hdr.isa_msgid != MAINMODE_MSGID) {
+		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
 			libreswan_log(
 				"Message ID was 0x%08lx but should be zero in phase 1",
 				(unsigned long) md->hdr.isa_msgid);
@@ -1070,8 +969,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		break;
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
-		st = find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
-				     &md->sender, MAINMODE_MSGID);
+		st = ikev1_find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
+				     &md->sender, v1_MAINMODE_MSGID);
 
 		if (st == NULL) {
 			/*
@@ -1079,7 +978,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * message, in which case, we don't know the rcookie yet.
 			 */
 			st = find_state_ikev1(md->hdr.isa_icookie, zero_cookie,
-					      MAINMODE_MSGID);
+					      v1_MAINMODE_MSGID);
 		}
 
 		if (st != NULL)
@@ -1111,7 +1010,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-			if (md->hdr.isa_msgid == MAINMODE_MSGID) {
+			if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
 				loglog(RC_LOG_SERIOUS, "Informational Exchange message is invalid because"
 				       " it has a Message ID of 0");
 				/* XXX Could send notification back */
@@ -1158,7 +1057,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		if (md->hdr.isa_msgid == MAINMODE_MSGID) {
+		if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
 			libreswan_log("Quick Mode message is invalid because"
 				      " it has a Message ID of 0");
 			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
@@ -1196,7 +1095,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 */
 			st = find_state_ikev1(md->hdr.isa_icookie,
 					      md->hdr.isa_rcookie,
-					      MAINMODE_MSGID);
+					      v1_MAINMODE_MSGID);
 
 			if (st == NULL) {
 				libreswan_log("Quick Mode message is for a non-existent (expired?)"
@@ -1286,7 +1185,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		st = find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
+		st = ikev1_find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
 				     &md->sender, md->hdr.isa_msgid);
 
 		if (st == NULL) {
@@ -1298,7 +1197,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * See if we have a Main Mode state.
 			 * ??? what if this is a duplicate of another message?
 			 */
-			st = find_info_state(md->hdr.isa_icookie,
+			st = ikev1_find_info_state(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie,
 					     &md->sender, 0);
 
@@ -1351,7 +1250,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 *
 			 * or if we are getting a MODECFG request.
 			 *
-			 * we distinguish these states because we can not both be an
+			 * we distinguish these states because we cannot both be an
 			 * XAUTH server and client, and our policy tells us which
 			 * one we are.
 			 *
@@ -1550,35 +1449,37 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		/* Add the fragment to the state */
 		i = &st->ike_frags;
-		while (1) {
-			if (ike_frag) {
+		for (;;) {
+			if (ike_frag != NULL) {
 				/* Still looking for a place to insert ike_frag */
-				if (*i == NULL || (*i)->index >
-				    ike_frag->index) {
+				if (*i == NULL ||
+				    (*i)->index > ike_frag->index) {
 					ike_frag->next = *i;
 					*i = ike_frag;
 					ike_frag = NULL;
 				} else if ((*i)->index == ike_frag->index) {
 					/* Replace fragment with same index */
 					struct ike_frag *old = *i;
+
 					ike_frag->next = old->next;
 					*i = ike_frag;
 					release_md(old->md);
-					free(old);
+					pfree(old);
 					ike_frag = NULL;
 				}
 			}
 
 			if (*i == NULL)
 				break;
-			else if ((*i)->last)
+
+			if ((*i)->last)
 				last_frag_index = (*i)->index;
 
 			i = &(*i)->next;
 		}
 
 		/* We have the last fragment, reassemble if complete */
-		if (last_frag_index) {
+		if (last_frag_index != 0) {
 			size_t size = 0;
 			int prev_index = 0;
 			struct ike_frag *frag;
@@ -1600,7 +1501,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					/* Reassemble fragments in buffer */
 					frag = st->ike_frags;
-					while (frag &&
+					while (frag != NULL &&
 					       frag->index <= last_frag_index)
 					{
 						passert(offset + frag->size <=
@@ -1615,8 +1516,7 @@ void process_v1_packet(struct msg_digest **mdp)
 						 "packet");
 
 					process_packet(&whole_md);
-					if (whole_md != NULL)
-						release_md(whole_md);
+					release_any_md(&whole_md);
 					release_fragments(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_seen_fragments = TRUE;
@@ -1650,27 +1550,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 	}
 
-	/* Ignore a packet if the state has a suspended state transition
-	 * Probably a duplicated packet but the original packet is not yet
-	 * recorded in st->st_rpacket, so duplicate checking won't catch.
-	 * ??? Should the packet be recorded earlier to improve diagnosis?
-	 */
-	if (st != NULL && st->st_suspended_md != NULL) {
-		loglog(RC_LOG,
-		       "discarding packet received during asynchronous work (DNS or crypto) in %s",
-		       enum_name(&state_names, st->st_state));
+	if (state_busy(st))
 		return;
-	}
-
-	/*
-	 * if this state is busy calculating in between state transitions,
-	 * (there will be no suspended state), then we silently ignore the
-	 * packet, as there is nothing we can do right now.
-	 */
-	if (st != NULL && st->st_calculating) {
-		libreswan_log("message received while calculating. Ignored.");
-		return;
-	}
 
 	/* Detect and handle duplicated packets.
 	 * This won't work for the initial packet of an exchange
@@ -1717,7 +1598,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	md->new_iv_set = new_iv_set;
 
 	/*
-	 * look for encrypt packets. We can not handle them if we have not
+	 * look for encrypt packets. We cannot handle them if we have not
 	 * yet calculated the skeyids. We will just store the packet in
 	 * the suspended state, since the calculation is likely underway.
 	 *
@@ -1727,18 +1608,21 @@ void process_v1_packet(struct msg_digest **mdp)
 	 */
 	if ((md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION) &&
 	    st != NULL && !st->hidden_variables.st_skeyid_calculated ) {
-		DBG(DBG_CRYPT | DBG_CONTROL,
-		    DBG_log("received encrypted packet from %s:%u but exponentiation still in progress",
-			    ip_str(&md->sender), (unsigned)md->sender_port));
+		DBG(DBG_CRYPT | DBG_CONTROL, {
+			ipstr_buf b;
+			DBG_log("received encrypted packet from %s:%u but exponentiation still in progress",
+				ipstr(&md->sender, &b),
+				(unsigned)md->sender_port);
+		});
 
 		/* if there was a previous packet, let it go, and go with most
 		 * recent one.
 		 */
-		if (st->st_suspended_md) {
+		if (st->st_suspended_md != NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("releasing suspended operation before completion: %p",
 				    st->st_suspended_md));
-			release_md(st->st_suspended_md);
+			release_any_md(&st->st_suspended_md);
 		}
 
 		set_suspended(st, md);
@@ -1758,9 +1642,12 @@ void process_packet_tail(struct msg_digest **mdp)
 	bool new_iv_set = md->new_iv_set;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION) {
-		DBG(DBG_CRYPT, DBG_log("received encrypted packet from %s:%u",
-				       ip_str(&md->sender),
-				       (unsigned)md->sender_port));
+		DBG(DBG_CRYPT, {
+			ipstr_buf b;
+			DBG_log("received encrypted packet from %s:%u",
+				ipstr(&md->sender, &b),
+				(unsigned)md->sender_port);
+		});
 
 		if (st == NULL) {
 			libreswan_log(
@@ -1880,19 +1767,21 @@ void process_packet_tail(struct msg_digest **mdp)
 			 * is no negotiation of NAT-T method. Get it right.
 			 */
 			if (st != NULL && st->st_connection != NULL &&
-			    (st->st_connection->policy & POLICY_AGGRESSIVE) == 0)
+			    (st->st_connection->policy & POLICY_AGGRESSIVE) == LEMPTY)
 			{
 				switch (np) {
 				case ISAKMP_NEXT_NATD_RFC:
 				case ISAKMP_NEXT_NATOA_RFC:
 					if (st == NULL ||
-					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
+					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
 						/*
 						 * don't accept NAT-D/NAT-OA reloc directly in message,
 						 * unless we're using NAT-T RFC
 						 */
-						DBG_log("st_nat_traversal was: %u\n",
-							st->hidden_variables.st_nat_traversal);
+						DBG(DBG_NATT,
+						    DBG_log("st_nat_traversal was: %s",
+							    bitnamesof(natt_bit_names,
+								       st->hidden_variables.st_nat_traversal)));
 						sd = NULL;
 					}
 					break;
@@ -1921,9 +1810,15 @@ void process_packet_tail(struct msg_digest **mdp)
 					sd = payload_desc(np);
 					break;
 
+				case ISAKMP_NEXT_SAK: /* AKA ISAKMP_NEXT_NATD_BADDRAFTS */
+					loglog(RC_LOG_SERIOUS,
+						"%smessage with unsupported payload ISAKMP_NEXT_SAK (as ISAKMP_NEXT_NATD_BADDRAFTS) ignored",
+						excuse);
+					break;
+
 				default:
-					loglog(RC_LOG_SERIOUS, "%smessage ignored because it contains an unknown or"
-					       " unexpected payload type (%s) at the outermost level",
+					loglog(RC_LOG_SERIOUS,
+						"%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 					       excuse,
 					       enum_show(&ikev1_payload_names, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
@@ -2181,7 +2076,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	/* VERIFY that we only accept NAT-D/NAT-OE when they sent us the VID */
 	if ((md->chain[ISAKMP_NEXT_NATD_RFC] != NULL ||
 	     md->chain[ISAKMP_NEXT_NATOA_RFC] != NULL) &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
+	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
 		/*
 		 * don't accept NAT-D/NAT-OA reloc directly in message,
 		 * unless we're using NAT-T RFC
@@ -2231,9 +2126,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	cur_state = st = md->st; /* might have changed */
 
-	md->result = result;
-	result = md->result;
-
 	/* If state has FRAGMENTATION support, import it */
 	if ( st && md->fragvid) {
 		DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
@@ -2265,6 +2157,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	 * or suspended.
 	 * ??? this code says inline is OK too.  Which is it?
 	 */
+	DBG(DBG_CONTROLMORE,
+		if (st != NULL) {
+			DBG_log("#%lu %s:%u st->st_calculating == %s;",
+				st->st_serialno, __FUNCTION__, __LINE__,
+				st->st_calculating ? "TRUE" : "FALSE");
+		});
 	passert(result == STF_INLINE || result == STF_IGNORE ||
 		result == STF_SUSPEND || !st->st_calculating);
 
@@ -2272,10 +2170,13 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	case STF_IGNORE:
 		break;
 
-	case STF_INLINE:         /* this is second time through complete
-		                  * state transition, so the MD has already
-		                  * been freed.
-		                  */
+	case STF_INLINE:
+		/*
+		 * this is second time through complete state transition,
+		 * so the MD has already been freed.
+		 * ??? This comment is not true.
+		 * This has been proven by passert(md == NULL) failing.
+		 */
 		*mdp = NULL;
 		break;
 
@@ -2283,7 +2184,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* update the previous packet history */
 		update_retransmit_history(st, md);
 
-		/* the stf didn't complete its job: don't relase md */
+		/*
+		 * the stf didn't complete its job:
+		 * detach from *mdp so *md won't be released by our caller.
+		 */
 		*mdp = NULL;
 		break;
 
@@ -2296,7 +2200,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		if (!st->st_reserve_msgid &&
 		    IS_CHILD_SA(st) &&
-		    st->st_msgid != MAINMODE_MSGID) {
+		    st->st_msgid != v1_MAINMODE_MSGID) {
 			struct state *p1st = state_with_serialno(
 				st->st_clonedfrom);
 
@@ -2317,14 +2221,16 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * actual end of phase 1. With modecfg, negotiation ends with
 		 * STATE_MAIN_I4 already.
 		 */
-		/*if(st->st_connection->spd.this.xauth_client
+#if 0	/* ??? what's this code for? */
+		if (st->st_connection->spd.this.xauth_client
 		    && st->hidden_variables.st_xauth_client_done
 		    && !st->st_connection->spd.this.modecfg_client
 		    && st->st_state == STATE_XAUTH_I1) {
-		    DBG(DBG_CONTROL, DBG_log("As XAUTH is done and modecfg is not configured,
-		                                    so Phase 1 neogtiation finishes successfully"));
-		    change_state(st, STATE_MAIN_I4);
-		   }*/
+			DBG(DBG_CONTROL,
+				DBG_log("As XAUTH is done and modecfg is not configured, so Phase 1 neogtiation finishes successfully"));
+			change_state(st, STATE_MAIN_I4);
+		}
+#endif
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
@@ -2355,14 +2261,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (smc->flags & SMF_REPLY) {
 
 			DBG(DBG_CONTROL, {
-				    char buf[ADDRTOT_BUF];
-				    DBG_log("sending reply packet to %s:%u (from port %u)",
-					    (addrtot(&st->st_remoteaddr,
-						     0, buf,
-						     sizeof(buf)), buf),
-					    st->st_remoteport,
-					    st->st_interface->port);
-			    });
+				ipstr_buf b;
+				DBG_log("sending reply packet to %s:%u (from port %u)",
+					ipstr(&st->st_remoteaddr, &b),
+					st->st_remoteport,
+					st->st_interface->port);
+			});
 
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
@@ -2387,7 +2291,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			struct connection *c = st->st_connection;
 
 			switch (kind) {
-			case EVENT_RETRANSMIT: /* Retransmit packet */
+			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
 				delay = EVENT_RETRANSMIT_DELAY_0;
 				break;
 
@@ -2402,42 +2306,30 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					 * rekeying.  The negative consequences seem
 					 * minor.
 					 */
-					delay = c->sa_ike_life_seconds;
+					delay = deltasecs(c->sa_ike_life_seconds);
 					if ((c->policy & POLICY_DONT_REKEY) ||
-					    delay >= st->st_oakley.life_seconds)
+					    delay >= deltasecs(st->st_oakley.life_seconds))
 					{
 						agreed_time = TRUE;
 						delay =
-						    st->st_oakley.life_seconds;
+						    deltasecs(st->st_oakley.life_seconds);
 					}
 				} else {
 					/* Delay is min of up to four things:
 					 * each can limit the lifetime.
 					 */
-					delay = c->sa_ipsec_life_seconds;
-					if (st->st_ah.present &&
-					    delay >=
-					      st->st_ah.attrs.life_seconds) {
-						agreed_time = TRUE;
-						delay =
-						   st->st_ah.attrs.life_seconds;
-					}
-					if (st->st_esp.present &&
-					    delay >=
-					        st->st_esp.attrs.life_seconds)
-					{
-						agreed_time = TRUE;
-						delay =
-						  st->st_esp.attrs.life_seconds;
-					}
-					if (st->st_ipcomp.present &&
-					    delay >=
-					      st->st_ipcomp.attrs.life_seconds)
-					{
-						agreed_time = TRUE;
-						delay =
-						  st->st_ipcomp.attrs.life_seconds;
-					}
+					delay = deltasecs(c->sa_ipsec_life_seconds);
+#define clamp_delay(trans) { \
+		if (st->trans.present && \
+		    delay >= deltasecs(st->trans.attrs.life_seconds)) { \
+			agreed_time = TRUE; \
+			delay = deltasecs(st->trans.attrs.life_seconds); \
+		} \
+	}
+					clamp_delay(st_ah);
+					clamp_delay(st_esp);
+					clamp_delay(st_ipcomp);
+#undef clamp_delay
 				}
 
 				/* By default, we plan to rekey.
@@ -2469,8 +2361,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					       EVENT_SA_EXPIRE;
 				}
 				if (kind != EVENT_SA_EXPIRE) {
-					unsigned long marg =
-						c->sa_rekey_margin;
+					time_t marg = deltasecs(
+						c->sa_rekey_margin);
 
 					if (smc->flags & SMF_INITIATOR) {
 						marg += marg *
@@ -2482,17 +2374,15 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						marg /= 2;
 					}
 
-					if ((unsigned long)delay > marg) {
+					if (delay > marg) {
 						delay -= marg;
-						st->st_margin = marg;
+						st->st_margin = deltatime(marg);
 					} else {
 						kind = EVENT_SA_EXPIRE;
 					}
 				}
 				break;
 
-			case EVENT_NULL:                /* non-event */
-			case EVENT_REINIT_SECRET:       /* Refresh cookie secret */
 			default:
 				bad_case(kind);
 			}
@@ -2514,7 +2404,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 				fmt_ipsec_sa_established(st, sadetails,
 							 sizeof(sadetails));
-
 			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 				   !st->hidden_variables.st_logged_p1algos) {
 				fmt_isakmp_sa_established(st, sadetails,
@@ -2540,9 +2429,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * SA.
 		 */
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-			if (st->st_connection->dpd_delay > 0 &&
-			    st->st_connection->dpd_timeout > 0) {
+			if (deltasecs(st->st_connection->dpd_delay) > 0 &&
+			    deltasecs(st->st_connection->dpd_timeout) > 0) {
 				/* don't ignore failure */
+				/* ??? in fact, we do ignore this:
+				 * result is NEVER used
+				 */
 				if (dpd_init(st) == STF_FAIL)
 					result = STF_FAIL; /* fall through */
 			}
@@ -2691,11 +2583,13 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
-		set_suspended(st, NULL);
+		unset_suspended(st);
 		pexpect(!st->st_calculating);
 		libreswan_log(
 			"message in state %s ignored due to cryptographic overload",
 			enum_name(&state_names, from_state));
+		log_crypto_workers();
+		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
 		break;
 
 	case STF_FATAL:
@@ -2726,8 +2620,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		passert(result > STF_FAIL);
 		md->note = result - STF_FAIL;
 		result = STF_FAIL;
-	/* FALL THROUGH ... */
-
+		/* FALL THROUGH ... */
 	case STF_FAIL:
 		/* As it is, we act as if this message never happened:
 		 * whatever retrying was in place, remains in place.
@@ -2736,7 +2629,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			  "%s: %s", enum_name(&state_names, st->st_state),
 			  enum_name(&ikev1_notify_names, md->note));
 
-		if (md->note > 0)
+		if (md->note != NOTHING_WRONG)
 			SEND_NOTIFICATION(md->note);
 
 		DBG(DBG_CONTROL,
@@ -2763,7 +2656,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			delete_state(st);
 		break;
 	}
-
 }
 
 bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
@@ -2783,10 +2675,10 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-        if (st->hidden_variables.st_nat_traversal &&
-	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
-	    ((id->isaid_doi_specific_b == 0) ||
-	     (id->isaid_doi_specific_b == pluto_nat_port))) {
+        if (st->hidden_variables.st_nat_traversal != LEMPTY &&
+	    id->isaid_doi_specific_a == IPPROTO_UDP &&
+	    (id->isaid_doi_specific_b == 0 ||
+	     id->isaid_doi_specific_b == pluto_nat_port)) {
 		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);

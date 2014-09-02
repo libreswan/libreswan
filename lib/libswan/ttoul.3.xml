@@ -15,6 +15,7 @@
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec ttoul</refname>
+<refname>ipsec ttoulb</refname>
 <refname>ipsec ultot</refname>
 <refpurpose>convert unsigned-long numbers to and from text</refpurpose>
 </refnamediv>
@@ -26,10 +27,21 @@
 
 </funcsynopsisinfo>
 <funcprototype>
-<funcdef>const char *<function>ttoul</function></funcdef>
+<funcdef>err_t <function>ttoul</function></funcdef>
     <paramdef>const char * <parameter>src</parameter></paramdef>
     <paramdef>size_t <parameter>srclen</parameter></paramdef>
     <paramdef>int <parameter>base</parameter></paramdef>
+    <paramdef>unsigned long * <parameter>n</parameter></paramdef>
+</funcprototype>
+<funcsynopsisinfo>
+
+</funcsynopsisinfo>
+<funcprototype>
+<funcdef>err_t <function>ttoulb</function></funcdef>
+    <paramdef>const char * <parameter>src</parameter></paramdef>
+    <paramdef>size_t <parameter>srclen</parameter></paramdef>
+    <paramdef>int <parameter>base</parameter></paramdef>
+    <paramdef>unsigned long <parameter>upb</parameter></paramdef>
     <paramdef>unsigned long * <parameter>n</parameter></paramdef>
 </funcprototype>
 <funcsynopsisinfo>
@@ -48,6 +60,11 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>Ttoul</emphasis>
+converts a text-string number into a binary
+<emphasis remap='B'>unsigned long</emphasis>
+value.
+<emphasis remap='I'>Ttoulb</emphasis>
+deoes the same as <emphasis remap='I'>Ttoul</emphasis> with the addition of a bounds check.
 converts a text-string number into a binary
 <emphasis remap='B'>unsigned long</emphasis>
 value.
@@ -221,6 +238,8 @@ non-digit character found;
 number too large for an
 <emphasis remap='B'>unsigned long</emphasis>.</para>
 
+<para><function>Ttoulb</function> adds an error for exceeding the upper bound.</para>
+
 <para>Fatal errors in
 <function>ultot</function>
 are:
@@ -263,4 +282,3 @@ A good way to make it clearer is to write something like:</para>
 </literallayout> <!-- .fi -->
 </refsect1>
 </refentry>
-

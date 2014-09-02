@@ -21,7 +21,7 @@
  *
  */
 
-#include "pthread.h"    /* Must be the first include file */
+#include <pthread.h>    /* Must be the first include file */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -181,12 +181,11 @@ static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 		snprintf(bp, be - bp, ": ");
 	} else if (cur_from != NULL) {
 		/* peer's IP address */
-		/* Note: must not use ip_str() because our caller might! */
-		char ab[ADDRTOT_BUF];
+		ipstr_buf b;
 
-		(void) addrtot(cur_from, 0, ab, sizeof(ab));
 		snprintf(buf, buf_len, "packet from %s:%u: ",
-			 ab, (unsigned)cur_from_port);
+			 ipstr(cur_from, &b),
+			 (unsigned)cur_from_port);
 	}
 
 	ps = strlen(buf);
@@ -274,7 +273,7 @@ static bool ensure_writeable_parent_directory(char *path)
 			/* cannot write to this directory for some reason
 			 * other than a missing directory
 			 */
-			syslog(LOG_CRIT, "can not write to %s: %s", path, strerror(
+			syslog(LOG_CRIT, "cannot write to %s: %s", path, strerror(
 				       errno));
 			happy = FALSE;
 		} else {
@@ -283,7 +282,7 @@ static bool ensure_writeable_parent_directory(char *path)
 			if (happy) {
 				if (mkdir(path, 0750) != 0) {
 					syslog(LOG_CRIT,
-					       "can not create dir %s: %s",
+					       "cannot create dir %s: %s",
 					       path, strerror(errno));
 					happy = FALSE;
 				}
@@ -307,11 +306,10 @@ static void open_peerlog(struct connection *c)
 
 	if (c->log_file_name == NULL) {
 		char peername[ADDRTOT_BUF], dname[ADDRTOT_BUF];
-		int peernamelen, lf_len;
+		size_t peernamelen = addrtot(&c->spd.that.host_addr, 'Q', peername,
+			sizeof(peername)) - 1;
+		int lf_len;
 
-		addrtot(&c->spd.that.host_addr, 'Q', peername,
-			sizeof(peername));
-		peernamelen = strlen(peername);
 
 		/* copy IP address, turning : and . into / */
 		{
@@ -353,7 +351,7 @@ static void open_peerlog(struct connection *c)
 	c->log_file = fopen(c->log_file_name, "w");
 	if (c->log_file == NULL) {
 		if (c->log_file_err) {
-			syslog(LOG_CRIT, "logging system can not open %s: %s",
+			syslog(LOG_CRIT, "logging system cannot open %s: %s",
 			       c->log_file_name, strerror(errno));
 			c->log_file_err = TRUE;
 		}
@@ -362,7 +360,7 @@ static void open_peerlog(struct connection *c)
 
 	/* look for a connection to close! */
 	while (perpeer_count >= MAX_PEERLOG_COUNT) {
-		/* can not be NULL because perpeer_count > 0 */
+		/* cannot be NULL because perpeer_count > 0 */
 		passert(perpeer_list.cqh_last != (void *)&perpeer_list);
 
 		perpeer_logclose(perpeer_list.cqh_last);
@@ -374,11 +372,24 @@ static void open_peerlog(struct connection *c)
 	perpeer_count++;
 }
 
+#ifdef GCC_LINT
+static void prettynow(char *buf, size_t buflen, const char *fmt) __attribute__ ((format (__strftime__, 3, 0)));
+#endif
+static void prettynow(char *buf, size_t buflen, const char *fmt)
+{
+	realtime_t n = realnow();
+	struct tm tm1;
+	struct tm *t = localtime_r(&n.real_secs, &tm1);
+
+	/* the cast suppresses a warning: <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=39438> */
+	((size_t (*)(char *, size_t, const char *, const struct tm *))strftime)(buf, buflen, fmt, t);
+}
+
 /* log a line to cur_connection's log */
 static void peerlog(const char *prefix, const char *m)
 {
 	if (cur_connection == NULL) {
-		/* we can not log it in this case. Oh well. */
+		/* we cannot log it in this case. Oh well. */
 		return;
 	}
 
@@ -388,14 +399,10 @@ static void peerlog(const char *prefix, const char *m)
 	/* despite our attempts above, we may not be able to open the file. */
 	if (cur_connection->log_file != NULL) {
 		char datebuf[32];
-		struct tm tm1, *t;
-		time_t n = now();
 
-		t = localtime_r(&n, &tm1);
-
-		strftime(datebuf, sizeof(datebuf), "%Y-%m-%d %T", t);
-		fprintf(cur_connection->log_file, "%s %s%s\n", datebuf, prefix,
-			m);
+		prettynow(datebuf, sizeof(datebuf), "%Y-%m-%d %T");
+		fprintf(cur_connection->log_file, "%s %s%s\n",
+			datebuf, prefix, m);
 
 		/* now move it to the front of the list */
 		CIRCLEQ_REMOVE(&perpeer_list, cur_connection, log_link);
@@ -415,19 +422,12 @@ int libreswan_log(const char *message, ...)
 	va_end(args);
 
 	if (log_to_stderr || pluto_log_fp != NULL) {
-		if (log_with_timestamp) {
-			struct tm tm1, *timeinfo;
-			char fmt[32];
-			time_t rtime = now();
+		char buf[34] = "";
 
-			timeinfo = localtime_r(&rtime, &tm1);
-			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%s: %s\n", fmt, m);
-		} else {
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%s\n", m);
-		}
+		if (log_with_timestamp)
+			prettynow(buf, sizeof(buf), "%b %e %T: ");
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
+			"%s%s\n", buf, m);
 	}
 	if (log_to_syslog)
 		syslog(LOG_WARNING, "%s", m);
@@ -451,19 +451,12 @@ void loglog(int mess_no, const char *message, ...)
 	va_end(args);
 
 	if (log_to_stderr || pluto_log_fp != NULL) {
-		if (log_with_timestamp) {
-			struct tm tm1, *timeinfo;
-			char fmt[32];
-			time_t rtime = now();
+		char buf[34] = "";
 
-			timeinfo = localtime_r(&rtime, &tm1);
-			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%s: %s\n", fmt, m);
-		} else {
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%s\n", m);
-		}
+		if (log_with_timestamp)
+			prettynow(buf, sizeof(buf), "%b %e %T: ");
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
+			"%s%s\n", buf, m);
 	}
 	if (log_to_syslog)
 		syslog(LOG_WARNING, "%s", m);
@@ -634,7 +627,6 @@ void passert_fail(const char *pred_str, const char *file_str,
 	       line_no, pred_str);
 	if (!dying_breath) {
 		dying_breath = TRUE;
-		show_status();
 	}
 	/* exiting correctly doesn't always work */
 	libreswan_log_abort(file_str, line_no);
@@ -704,19 +696,12 @@ int DBG_log(const char *message, ...)
 	sanitize_string(m, sizeof(m));
 
 	if (log_to_stderr || pluto_log_fp != NULL) {
-		if (log_with_timestamp) {
-			struct tm tm1, *timeinfo;
-			char fmt[32];
-			time_t rtime = now();
+		char buf[34] = "";
 
-			timeinfo = localtime_r(&rtime, &tm1);
-			strftime(fmt, sizeof(fmt), "%b %e %T", timeinfo);
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%c %s: %s\n", debug_prefix, fmt, m);
-		} else {
-			fprintf(log_to_stderr ? stderr : pluto_log_fp,
-				"%c %s\n", debug_prefix, m);
-		}
+		if (log_with_timestamp)
+			prettynow(buf, sizeof(buf), "%b %e %T: ");
+		fprintf(log_to_stderr ? stderr : pluto_log_fp,
+			"%c %s%s\n", debug_prefix, buf, m);
 	}
 	if (log_to_syslog)
 		syslog(LOG_DEBUG, "%c %s", debug_prefix, m);
@@ -821,7 +806,7 @@ void show_status(void)
 	db_ops_show_status();
 #endif
 	show_connections_status();
-	show_states_status();
+	show_states_status(FALSE);
 #ifdef KLIPS
 	show_shunt_status();
 #endif
@@ -845,17 +830,19 @@ void daily_log_event(void)
 {
 	struct tm tm1, *ltime;
 	time_t interval;
-	time_t n = now();
+	realtime_t n = realnow();
 
-	/* attempt to schedule oneself to midnight, local time
-	 * do this by getting seconds in the day, and delaying
-	 * by secs_per_day - hour*3600+minutes*60+seconds.
-	 */
-	ltime = localtime_r(&n, &tm1);
+	/* schedule event for midnight, local time */
+	tzset();
+	ltime = localtime_r(&n.real_secs, &tm1);
 	interval = secs_per_day -
 		   (ltime->tm_sec +
-		    ltime->tm_min  * secs_per_minute +
+		    ltime->tm_min * secs_per_minute +
 		    ltime->tm_hour * secs_per_hour);
+
+	/* this might happen during a leap second */
+	if (interval <= 0)
+		interval = secs_per_day;
 
 	event_schedule(EVENT_LOG_DAILY, interval, NULL);
 
@@ -926,10 +913,10 @@ static void connection_state(struct state *st, void *data)
 	if (st->st_state == STATE_UNDEFINED)
 		return;
 
-	if (IS_PHASE1(st->st_state)) {
+	if (IS_IKE_SA(st)) {
 		if (lc->tunnel < tun_phase1)
 			lc->tunnel = tun_phase1;
-		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+		if (IS_IKE_SA_ESTABLISHED(st->st_state)) {
 			if (lc->tunnel < tun_phase1up)
 				lc->tunnel = tun_phase1up;
 			lc->phase1 = p1_up;

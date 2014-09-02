@@ -52,7 +52,7 @@ int add_debugging = DBG_EMITTING | DBG_CONTROL | DBG_CONTROLMORE |
 
 #include "seam_recv1i.c"
 
-long crl_check_interval = 0;
+deltatime_t crl_check_interval = { 0 };
 
 main(int argc, char *argv[]){
 	int len;
@@ -128,7 +128,7 @@ main(int argc, char *argv[]){
 
 		/* find st involved */
 		st = state_with_serialno(2);
-		if (st)
+		if (st != NULL)
 			delete_state(st);
 	}
 

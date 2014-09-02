@@ -217,10 +217,7 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		if (isanyaddr(&id->ip_addr)) {
-			passert(dstlen > sizeof("%any"));
-			dst[0] = '\0';
-			strncat(dst, "%any", dstlen - 1);
-			n = strlen(dst);
+			n = snprintf(dst, dstlen, "%s", "%any");
 		} else {
 			n = (int)addrtot(&id->ip_addr, 0, dst, dstlen) - 1;
 		}
@@ -307,7 +304,7 @@ void remove_metachar(const char *src, char *dst, size_t dstlen)
 		if ((*src >= '0' && *src <= '9') ||
 			(*src >= 'a' && *src <= 'z') ||
 			(*src >= 'A' && *src <= 'Z') ||
-			*src == '_') {
+			*src == '_' || *src == '-') {
 			*dst++ = *src;
 			dstlen--;
 		} else {
@@ -437,8 +434,8 @@ bool same_id(const struct id *a, const struct id *b)
 		while (bl > 0 && b->name.ptr[bl - 1] == '.')
 			bl--;
 		return al == bl &&
-			strncasecmp((char *)a->name.ptr,
-				(char *)b->name.ptr, al) == 0;
+			strncaseeq((char *)a->name.ptr,
+				(char *)b->name.ptr, al);
 	}
 
 	case ID_DER_ASN1_DN:
@@ -486,13 +483,11 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 	return match;
 }
 
-/* count the numer of wildcards in an id */
+/* count the number of wildcards in an id */
 int id_count_wildcards(const struct id *id)
 {
-	int count;
+	int count = 0;
 	char idbuf[IDTOA_BUF];
-
-	count = 0;
 
 	switch (id->kind) {
 	case ID_NONE:
@@ -502,7 +497,6 @@ int id_count_wildcards(const struct id *id)
 		count = dn_count_wildcards(id->name);
 		break;
 	default:
-		count = 0;
 		break;
 	}
 
@@ -514,22 +508,6 @@ int id_count_wildcards(const struct id *id)
 		);
 
 	return count;
-}
-
-/*
- * ip_str: a simple to use variant of addrtot.
- *
- * It stores its result in a static buffer -- NOT RE-ENTRANT.
- * This means that newer calls overwrite the storage of older calls.
- * Note: this is not used in any of the logging functions, so their
- * callers may use it. (this is here for unit testing)
- */
-const char *pluto_ip_str(const ip_address *src)
-{
-	static char buf[ADDRTOT_BUF];
-
-	addrtot(src, 0, buf, sizeof(buf));
-	return buf;
 }
 
 void duplicate_id(struct id *dst, const struct id *src)

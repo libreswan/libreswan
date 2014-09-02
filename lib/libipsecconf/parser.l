@@ -6,7 +6,7 @@
 /* Libreswan config file parser (parser.l)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2008,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2008,2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
@@ -194,26 +194,35 @@ int parser_y_include (const char *filename)
 	 *
 	 * glob() returns a match if that file exists, even without
 	 * having to do any globbing.
+	 *
+	 * Use GNU GLOB_BRACE extension to glob(3) if available.
 	 */
+
+#ifdef GLOB_BRACE
+# define GB GLOB_BRACE
+#else
+# define GB 0
+#endif
 
 	if(rootdir[0]!='\0' && filename[0]=='/')
         {
 	    snprintf(newname, PATH_MAX, "%s%s", rootdir, filename);
 	    try = newname;
 
-	    globresult = glob(try, GLOB_BRACE, NULL, &globbuf);
+	    globresult = glob(try, GB, NULL, &globbuf);
 	    if(globresult == GLOB_NOMATCH && rootdir2[0]!='\0') {
 		    /* now try with rootdir2 */
 		    snprintf(newname2, PATH_MAX,
 			     "%s%s", rootdir2, filename);
 		    try = newname2;
-
-		    globresult = glob(try, GLOB_BRACE|GLOB_NOMAGIC, NULL, &globbuf);
+		    globresult = glob(try, GB, NULL, &globbuf);
 	    }
 	} else {
 		/* try globbing plain name now.. */
-		globresult = glob(try, GLOB_BRACE|GLOB_NOMAGIC, NULL, &globbuf);
+		globresult = glob(try, GB, NULL, &globbuf);
 	}
+
+#undef GB
 
 	if(globresult == GLOB_NOMATCH)
 	{

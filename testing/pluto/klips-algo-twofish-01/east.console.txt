@@ -30,7 +30,7 @@ east #
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
-000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
+000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx-attr-value=XXXX
@@ -47,9 +47,9 @@ east #
 000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
 000  
 000 IKE algorithms supported:
 000  
@@ -79,8 +79,8 @@ east #
 000 Connection list:
 000  
 000 "westnet-eastnet-twofish": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-twofish":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-twofish":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-twofish":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-twofish":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-twofish":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-twofish":   labeled_ipsec:no, loopback:no; 
 000 "westnet-eastnet-twofish":    policy_label:unset; 
@@ -90,10 +90,10 @@ east #
 000 "westnet-eastnet-twofish":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-twofish":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-twofish":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-twofish":   IKE algorithms wanted: AES_CBC(7)_256-MD5(1)_000-MODP1536(5), AES_CBC(7)_256-SHA1(2)_000-MODP1536(5), AES_CBC(7)_256-MD5(1)_000-MODP1024(2), AES_CBC(7)_256-SHA1(2)_000-MODP1024(2)
-000 "westnet-eastnet-twofish":   IKE algorithms found:  AES_CBC(7)_256-MD5(1)_128-MODP1536(5)AES_CBC(7)_256-SHA1(2)_160-MODP1536(5)AES_CBC(7)_256-MD5(1)_128-MODP1024(2)AES_CBC(7)_256-SHA1(2)_160-MODP1024(2)
+000 "westnet-eastnet-twofish":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)_000-MODP2048(14), AES_CBC(7)_256-MD5(1)_000-MODP2048(14), AES_CBC(7)_256-SHA1(2)_000-MODP1536(5), AES_CBC(7)_256-MD5(1)_000-MODP1536(5), AES_CBC(7)_256-SHA1(2)_000-MODP1024(2), AES_CBC(7)_256-MD5(1)_000-MODP1024(2)
+000 "westnet-eastnet-twofish":   IKE algorithms found:  AES_CBC(7)_256-SHA1(2)_160-MODP2048(14), AES_CBC(7)_256-MD5(1)_128-MODP2048(14), AES_CBC(7)_256-SHA1(2)_160-MODP1536(5), AES_CBC(7)_256-MD5(1)_128-MODP1536(5), AES_CBC(7)_256-SHA1(2)_160-MODP1024(2), AES_CBC(7)_256-MD5(1)_128-MODP1024(2)
 000 "westnet-eastnet-twofish":   ESP algorithms wanted: TWOFISH(253)_000-SHA1(2)_000
-000 "westnet-eastnet-twofish":   ESP algorithms loaded: TWOFISH(253)_256-SHA1(2)_160
+000 "westnet-eastnet-twofish":   ESP algorithms loaded: TWOFISH(253)_000-SHA1(2)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -110,8 +110,8 @@ east NOW
 192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.45 ESP_TWOFISH_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=256 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_TWOFISH_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=256 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+esp0xSPISPI@192.1.2.45 ESP_TWOFISH_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_TWOFISH_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
@@ -127,7 +127,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

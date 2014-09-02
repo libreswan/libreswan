@@ -17,19 +17,18 @@
 
 #ifndef _TIMER_H
 #define _TIMER_H
-#include "lswtime.h"
 
 struct state;   /* forward declaration */
 
 struct event {
-	time_t ev_time;
+	monotime_t ev_time;
 	enum event_type ev_type;        /* Event type */
 	struct state   *ev_state;       /* Pointer to relevant state (if any) */
 	struct event   *ev_next;        /* Pointer to next event */
 };
 
 
-extern void event_schedule(enum event_type type, time_t tm, struct state *st);
+extern void event_schedule(enum event_type type, time_t delay, struct state *st);
 extern void handle_timer_event(void);
 extern long next_event(void);
 extern void delete_event(struct state *st);
@@ -38,9 +37,7 @@ extern void init_timer(void);
 
 extern void delete_liveness_event(struct state *st);
 /* extra debugging of dpd event removal */
-extern void attributed_delete_dpd_event(struct state *st, const char *file, int lineno);
-#define delete_dpd_event(st) attributed_delete_dpd_event(st, __FILE__, __LINE__)
-
+extern void delete_dpd_event(struct state *st);
 extern void timer_list(void);
 
 #endif /* _TIMER_H */

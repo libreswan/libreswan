@@ -359,9 +359,18 @@ int main(int argc, char *argv[])
 
 	if (argv[optind] == NULL) {
 		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
-		nbits = 3072 + 16 * rand() % 64;
+		srand(time(NULL));
+		nbits = 3072 + 16 * (rand() % 64);
 	} else {
-		nbits = atoi(argv[optind]);
+		unsigned long u;
+		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);
+
+		if (ugh != NULL) {
+			fprintf(stderr, "%s: keysize specification is malformed: %s\n",
+				me, ugh);
+			exit(1);
+		}
+		nbits = u;
 	}
 
 	if (nbits < MIN_KEYBIT ) {
@@ -403,7 +412,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	mpz_t e;
 	size_t bs;
 	char n_str[3 + MAXBITS / 4 + 1];
-	time_t now = time((time_t *)NULL);
+	realtime_t now = realnow();
 
 	mpz_init(n);
 	mpz_init(e);
@@ -503,8 +512,8 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
-	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(
-			&now));
+	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
+		ctime(&now.real_secs));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 	bundp = bundle(E, n, &bs);

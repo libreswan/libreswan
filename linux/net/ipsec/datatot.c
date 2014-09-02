@@ -57,7 +57,6 @@ size_t dstlen;
 		prefix = "0x";
 		break;
 	case ':':
-		format = 'x';
 		breakevery = 2;
 		breakchar = ':';
 	/* FALLTHROUGH */
@@ -203,34 +202,4 @@ char *out;
 		user_assert(nreal == 0);        /* unknown format */
 		break;
 	}
-}
-
-/*
-   - datatoa - convert data to ASCII
- * backward-compatibility synonym for datatot
- */
-size_t                          /* true length (with NUL) for success */
-datatoa(src, srclen, format, dst, dstlen)
-const unsigned char *src;
-size_t srclen;
-int format;                     /* character indicating what format */
-char *dst;                      /* need not be valid if dstlen is 0 */
-size_t dstlen;
-{
-	return datatot(src, srclen, format, dst, dstlen);
-}
-
-/*
-   - bytestoa - convert data bytes to ASCII
- * backward-compatibility synonym for datatot
- */
-size_t                          /* true length (with NUL) for success */
-bytestoa(src, srclen, format, dst, dstlen)
-const unsigned char *src;
-size_t srclen;
-int format;                     /* character indicating what format */
-char *dst;                      /* need not be valid if dstlen is 0 */
-size_t dstlen;
-{
-	return datatot(src, srclen, format, dst, dstlen);
 }

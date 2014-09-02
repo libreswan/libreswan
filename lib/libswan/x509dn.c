@@ -318,7 +318,7 @@ static const asn1Object_t crlObjects[] = {
 
 const x509cert_t empty_x509cert = {
 	NULL,	/* *next */
-	UNDEFINED_TIME,	/* installed */
+	{ UNDEFINED_TIME },	/* installed */
 	0,	/* count */
 	AUTH_NONE,	/* authority_flags */
 	{ NULL, 0 },	/* certificate */
@@ -328,8 +328,8 @@ const x509cert_t empty_x509cert = {
 	OID_UNKNOWN,	/* sigAlg */
 	{ NULL, 0 },	/* issuer */
 		/* validity */
-	0,	/* notBefore */
-	0,	/* notAfter */
+	{ UNDEFINED_TIME },	/* notBefore */
+	{ UNDEFINED_TIME },	/* notAfter */
 	{ NULL, 0 },	/* subject */
 		/* subjectPublicKeyInfo */
 	OID_UNKNOWN,	/* subjectPublicKeyAlgorithm */
@@ -357,15 +357,15 @@ const x509cert_t empty_x509cert = {
 
 const x509crl_t empty_x509crl = {
 	NULL,	/* *next */
-	UNDEFINED_TIME,	/* installed */
+	{ UNDEFINED_TIME },	/* installed */
 	NULL,	/* distributionPoints */
 	{ NULL, 0 },	/* certificateList */
 	{ NULL, 0 },	/* tbsCertList */
 	1,	/* version */
 	OID_UNKNOWN,	/* sigAlg */
 	{ NULL, 0 },	/* issuer */
-	UNDEFINED_TIME,	/* thisUpdate */
-	UNDEFINED_TIME,	/* nextUpdate */
+	{ UNDEFINED_TIME },	/* thisUpdate */
+	{ UNDEFINED_TIME },	/* nextUpdate */
 	NULL,	/* revokedCertificates */
 		/* crlExtensions */
 		/* extension */
@@ -794,9 +794,9 @@ err_t atodn(char *src, chunk_t *dn)
 					pos++) {
 					if (strlen(x501rdns[pos].name) ==
 						oid.len &&
-						strncasecmp(x501rdns[pos].name,
+						strncaseeq(x501rdns[pos].name,
 							(char *)oid.ptr,
-							oid.len) == 0)
+							oid.len))
 						break;	/* found a valid OID */
 				}
 				if (pos == X501_RDN_ROOF) {
@@ -952,71 +952,13 @@ err_t atodn(char *src, chunk_t *dn)
  */
 bool same_dn(chunk_t a, chunk_t b)
 {
-	chunk_t rdn_a, rdn_b, attribute_a, attribute_b;
-	chunk_t oid_a, oid_b, value_a, value_b;
-	asn1_t type_a, type_b;
-	bool next_a, next_b;
-
-	/* same lengths for the DNs */
-	if (a.len != b.len)
-		return FALSE;
-
-	/* try a binary comparison first */
-	if (memeq(a.ptr, b.ptr, b.len))
-		return TRUE;
-
-	/* initialize DN parsing */
-	if (init_rdn(a, &rdn_a, &attribute_a, &next_a) != NULL ||
-		init_rdn(b, &rdn_b, &attribute_b, &next_b) != NULL)
-		return FALSE;
-
-	/* fetch next RDN pair */
-	while (next_a && next_b) {
-		/* parse next RDNs and check for errors */
-		if (get_next_rdn(&rdn_a, &attribute_a, &oid_a, &value_a,
-					&type_a, &next_a) != NULL ||
-			get_next_rdn(&rdn_b, &attribute_b, &oid_b, &value_b,
-				&type_b, &next_b) != NULL)
-			return FALSE;
-
-		/* OIDs must agree */
-		if (oid_a.len != oid_b.len ||
-			!memeq(oid_a.ptr, oid_b.ptr, oid_b.len))
-			return FALSE;
-
-		/* same lengths for values */
-		if (value_a.len != value_b.len)
-			return FALSE;
-
-		/*
-		 * printableStrings and email RDNs require uppercase
-		 * comparison
-		 */
-		if (type_a == type_b &&
-		    (type_a == ASN1_PRINTABLESTRING ||
-		     (type_a == ASN1_IA5STRING &&
-		      known_oid(oid_a) == OID_PKCS9_EMAIL))) {
-			if (strncasecmp((char *)value_a.ptr,
-					(char *)value_b.ptr,
-					value_b.len) != 0)
-				return FALSE;
-		} else {
-			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
-				    value_b.len) != 0)
-				return FALSE;
-		}
-	}
-	/* both DNs must have same number of RDNs */
-	if (next_a || next_b)
-		return FALSE;
-
-	/* the two DNs are equal! */
-	return TRUE;
+	return match_dn(a, b, NULL);	/* degenerate case of match_dn() */
 }
 
 /*
  * compare two distinguished names by comparing the individual RDNs.
  * A single'*' character designates a wildcard RDN in DN b.
+ * If wildcards is NULL, exact match is required.
  */
 bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 {
@@ -1025,8 +967,19 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	asn1_t type_a, type_b;
 	bool next_a, next_b;
 
-	/* initialize wildcard counter */
-	*wildcards = 0;
+	if (wildcards != NULL) {
+		/* initialize wildcard counter */
+		*wildcards = 0;
+	} else {
+		/* fast checks possible without wildcards */
+		/* same lengths for the DNs */
+		if (a.len != b.len)
+			return FALSE;
+
+		/* try a binary comparison first */
+		if (memeq(a.ptr, b.ptr, b.len))
+			return TRUE;
+	}
 
 	/* initialize DN parsing */
 	if (init_rdn(a, &rdn_a, &attribute_a, &next_a) != NULL ||
@@ -1048,7 +1001,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			return FALSE;
 
 		/* does rdn_b contain a wildcard? */
-		if (value_b.len == 1 && *value_b.ptr == '*') {
+		if (wildcards != NULL && value_b.len == 1 && *value_b.ptr == '*') {
 			(*wildcards)++;
 			continue;
 		}
@@ -1065,19 +1018,20 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		    (type_a == ASN1_PRINTABLESTRING ||
 		     (type_a == ASN1_IA5STRING &&
 		      known_oid(oid_a) == OID_PKCS9_EMAIL))) {
-			if (strncasecmp((char *)value_a.ptr,
+			if (!strncaseeq((char *)value_a.ptr,
 					(char *)value_b.ptr,
-					value_b.len) != 0)
+					value_b.len))
 				return FALSE;
 		} else {
-			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
-				    value_b.len) != 0)
+			if (!strneq((char *)value_a.ptr, (char *)value_b.ptr,
+				    value_b.len))
 				return FALSE;
 		}
 	}
 	/* both DNs must have same number of RDNs */
 	if (next_a || next_b) {
-		if (*wildcards) {
+		if (wildcards != NULL && *wildcards != 0) {
+			/* ??? for some reason we think a failure with wildcards is worth logging */
 			char abuf[ASN1_BUF_LEN];
 			char bbuf[ASN1_BUF_LEN];
 
@@ -1172,9 +1126,10 @@ void free_x509cert(x509cert_t *cert)
 static void free_revoked_certs(revokedCert_t *revokedCerts)
 {
 	while (revokedCerts != NULL) {
-		revokedCert_t * revokedCert = revokedCerts;
-		revokedCerts = revokedCert->next;
-		pfree(revokedCert);
+		revokedCert_t *n = revokedCerts->next;
+
+		pfree(revokedCerts);
+		revokedCerts = n;
 	}
 }
 
@@ -1632,8 +1587,9 @@ chunk_t get_directoryName(chunk_t blob, int level, bool implicit)
 
 /*
  * extracts and converts a UTCTIME or GENERALIZEDTIME object
+ * ??? Returns UNDEFINED_TIME for many problems and TIME_MAX for others.  Is this reasonable?
  */
-static time_t parse_time(chunk_t blob, int level0)
+static realtime_t parse_time(chunk_t blob, int level0)
 {
 	asn1_ctx_t ctx;
 	chunk_t object;
@@ -1645,7 +1601,7 @@ static time_t parse_time(chunk_t blob, int level0)
 	while (objectID < TIME_ROOF) {
 		if (!extract_object(timeObjects, &objectID, &object, &level,
 					&ctx))
-			return UNDEFINED_TIME;
+			return undefinedrealtime();
 
 		if (objectID == TIME_UTC || objectID == TIME_GENERALIZED) {
 			return asn1totime(&object, (objectID == TIME_UTC) ?
@@ -1653,7 +1609,7 @@ static time_t parse_time(chunk_t blob, int level0)
 		}
 		objectID++;
 	}
-	return UNDEFINED_TIME;
+	return undefinedrealtime();
 }
 
 /*
@@ -1779,8 +1735,8 @@ static void parse_authorityInfoAccess(chunk_t blob, int level0,
 							object.ptr));
 
 					/* only HTTP(S) URIs accepted */
-					if (strncasecmp((char *)object.ptr,
-							"http", 4) == 0) {
+					if (strncaseeq((char *)object.ptr,
+							"http", 4)) {
 						*accessLocation = object;
 						return;
 					}
@@ -2042,7 +1998,7 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 		}
 		objectID++;
 	}
-	time(&cert->installed);
+	cert->installed = realnow();
 	return TRUE;
 }
 
@@ -2052,19 +2008,16 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 {
 	asn1_ctx_t ctx;
-	bool critical;
-	chunk_t extnID;
-	chunk_t userCertificate;
-	chunk_t object;
-	u_int level;
+	chunk_t extnID = empty_chunk;
+	chunk_t userCertificate = empty_chunk;
 	u_int objectID = 0;
-
-	userCertificate.len = 0;
-	userCertificate.ptr = NULL;
 
 	asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
 	while (objectID < CRL_OBJ_ROOF) {
+		chunk_t object;
+		u_int level;
+
 		if (!extract_object(crlObjects, &objectID, &object, &level,
 					&ctx))
 			return FALSE;
@@ -2084,7 +2037,7 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 			break;
 		case CRL_OBJ_VERSION:
 			crl->version =
-				(object.len) ? (1 + (u_int) * object.ptr) : 1;
+				object.len == 0 ? 1 : 1 + *object.ptr;
 			DBG(DBG_PARSING,
 				DBG_log("  v%d", crl->version));
 			break;
@@ -2134,10 +2087,15 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 			break;
 		case CRL_OBJ_CRL_ENTRY_CRITICAL:
 		case CRL_OBJ_CRITICAL:
-			critical = object.len && *object.ptr;
+		{
+			/* ??? no consequence */
+			bool critical;
+
+			critical = object.len != 0 && *object.ptr != 0;
 			DBG(DBG_PARSING,
 				DBG_log("  %s", critical ? "TRUE" : "FALSE"));
-			break;
+		}
+		break;
 		case CRL_OBJ_EXTN_VALUE:
 		{
 			u_int extn_oid = known_oid(extnID);
@@ -2162,6 +2120,6 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 		}
 		objectID++;
 	}
-	time(&crl->installed);
+	crl->installed = realnow();
 	return TRUE;
 }

@@ -22,9 +22,9 @@ The options must be suitable as a value of
 <citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s
 <option>--ike</option> option. The default is to use IKE, and to allow all combinations of:
 <literallayout remap='.nf'><emphasis remap='B'>
-                cipher:                 3des or aes
+                cipher:                 3des or aes128 or aes256
                 hash:                   sha1 or md5
-                pfsgroup (DHgroup):     modp1024 or modp1536
+                pfsgroup (DHgroup):     modp1024 or modp1536 or modp2048
 </emphasis></literallayout></para>
 <para>
 Weak algorithms are regularly removed from libreswan. Currently, 1DES and modp768 have been removed and modp1024

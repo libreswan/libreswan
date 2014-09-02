@@ -38,6 +38,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
+#include "ikev1_msgid.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
@@ -98,6 +99,7 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
 			       "missing KE payload in %s message", msg_name);
 			return INVALID_KEY_INFORMATION;
 		}
+		return NOTHING_WRONG;
 	} else {
 		if (st->st_pfs_group == NULL) {
 			loglog(RC_LOG_SERIOUS,
@@ -114,7 +116,6 @@ static notification_t accept_PFS_KE(struct msg_digest *md, chunk_t *dest,
 		return accept_KE(dest, val_name, st->st_pfs_group,
 				 &ke_pd->pbs);
 	}
-	return NOTHING_WRONG;
 }
 
 /* Initiate quick mode.
@@ -274,6 +275,7 @@ static void compute_proto_keymat(struct state *st,
 			}
 			break;
 
+#if 0
 		case ESP_SEED_CBC:
 			if (st->st_esp.attrs.transattrs.enckeylen) {
 				/* SEED-CBC is always 128bit */
@@ -281,6 +283,7 @@ static void compute_proto_keymat(struct state *st,
 				needed_len = st->st_esp.attrs.transattrs.enckeylen / BITS_PER_BYTE;
 			}
 			break;
+#endif
 
 		default:
 			needed_len = kernel_alg_esp_enc_max_keylen(
@@ -314,8 +317,36 @@ static void compute_proto_keymat(struct state *st,
 		case AUTH_ALGORITHM_HMAC_SHA1:
 			needed_len += HMAC_SHA1_KEY_LEN;
 			break;
-		case AUTH_ALGORITHM_DES_MAC:
-			bad_case(pi->attrs.transattrs.integ_hash);
+		/* kernel_alg_ah_auth_ok / kernel_alg_ah_auth_keylen are incomplete */
+		case AUTH_ALGORITHM_HMAC_SHA2_256:
+			needed_len += BYTES_FOR_BITS(256);
+			break;
+		case AUTH_ALGORITHM_HMAC_SHA2_384:
+			needed_len += BYTES_FOR_BITS(384);
+			break;
+		case AUTH_ALGORITHM_HMAC_SHA2_512:
+			needed_len += BYTES_FOR_BITS(512);
+			break;
+		case AUTH_ALGORITHM_HMAC_RIPEMD:
+			needed_len += BYTES_FOR_BITS(160);
+			break;
+		case AUTH_ALGORITHM_AES_CBC:
+			needed_len += BYTES_FOR_BITS(128);
+			break;
+		case AUTH_ALGORITHM_SIG_RSA:
+			/* ? */
+			break;
+		case AUTH_ALGORITHM_AES_128_GMAC:
+			needed_len += BYTES_FOR_BITS(128);
+			break;
+		case AUTH_ALGORITHM_AES_192_GMAC:
+			needed_len += BYTES_FOR_BITS(192);
+			break;
+		case AUTH_ALGORITHM_AES_256_GMAC:
+			needed_len += BYTES_FOR_BITS(256);
+			break;
+		case AH_NULL:
+			needed_len += 0; /* presumably? */
 			break;
 		default:
 			if (kernel_alg_esp_auth_ok(pi->attrs.transattrs.
@@ -340,9 +371,41 @@ static void compute_proto_keymat(struct state *st,
 		case AH_SHA:
 			needed_len = HMAC_SHA1_KEY_LEN;
 			break;
+           /* kernel_alg_ah_auth_ok / kernel_alg_ah_auth_keylen are incomplete */
+           case AH_SHA2_256:
+               needed_len = BYTES_FOR_BITS(256);
+               break;
+           case AH_SHA2_384:
+               needed_len = BYTES_FOR_BITS(384);
+               break;
+           case AH_SHA2_512:
+               needed_len = BYTES_FOR_BITS(512);
+               break;
+           case AH_RIPEMD:
+               needed_len = BYTES_FOR_BITS(160);
+               break;
+           case AH_AES_XCBC_MAC:
+               needed_len = BYTES_FOR_BITS(128);
+               break;
+           case AH_RSA:
+               /* ? */
+               break;
+           case AH_AES_128_GMAC:
+               needed_len = BYTES_FOR_BITS(128);
+               break;
+           case AH_AES_192_GMAC:
+               needed_len = BYTES_FOR_BITS(192);
+               break;
+           case AH_AES_256_GMAC:
+               needed_len = BYTES_FOR_BITS(256);
+               break;
+           case AH_NULL:
+               needed_len = 0; /* presumably? */
+               break;
+
 		default:
 			if (kernel_alg_ah_auth_ok(pi->attrs.transattrs.
-						  integ_hash, NULL)) {
+						  integ_hash, NULL) == NULL) {
 				needed_len += kernel_alg_ah_auth_keylen(
 					pi->attrs.transattrs.integ_hash);
 				break;
@@ -503,15 +566,19 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return FALSE;
 		}
 		if (isanyaddr(&temp_address)) {
+			ipstr_buf b;
+
 			loglog(RC_LOG_SERIOUS,
 			       "%s ID payload %s is invalid (%s) in Quick I1",
-			       which, idtypename, ip_str(&temp_address));
+			       which, idtypename, ipstr(&temp_address, &b));
 			/* XXX Could send notification back */
 			return FALSE;
 		}
 		happy(addrtosubnet(&temp_address, net));
-		DBG(DBG_PARSING | DBG_CONTROL,
-		    DBG_log("%s is %s", which, ip_str(&temp_address)));
+		DBG(DBG_PARSING | DBG_CONTROL, {
+			ipstr_buf b;
+			DBG_log("%s is %s", which, ipstr(&temp_address, &b));
+		});
 		break;
 	}
 
@@ -590,26 +657,22 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		if (ughmsg == NULL && subnetisnone(net))
 			ughmsg = "contains only anyaddr";
 		if (ughmsg != NULL) {
-			char temp_buff1[ADDRTOT_BUF], temp_buff2[ADDRTOT_BUF];
+			ipstr_buf a, b;
 
-			addrtot(&temp_address_from, 0, temp_buff1,
-				sizeof(temp_buff1));
-			addrtot(&temp_address_to, 0, temp_buff2,
-				sizeof(temp_buff2));
-			loglog(RC_LOG_SERIOUS, "%s ID payload in Quick I1, %s"
-			       " %s - %s unacceptable: %s",
-			       which, idtypename, temp_buff1, temp_buff2,
+			loglog(RC_LOG_SERIOUS, "%s ID payload in Quick I1, %s %s - %s unacceptable: %s",
+			       which, idtypename,
+			       ipstr(&temp_address_from, &a),
+			       ipstr(&temp_address_to, &b),
 			       ughmsg);
 			return FALSE;
 		}
-		DBG(DBG_PARSING | DBG_CONTROL,
-		    {
-			    char temp_buff[SUBNETTOT_BUF];
+		DBG(DBG_PARSING | DBG_CONTROL, {
+			char temp_buff[SUBNETTOT_BUF];
 
-			    subnettot(net, 0, temp_buff, sizeof(temp_buff));
-			    DBG_log("%s is subnet %s (received as range)",
-				    which, temp_buff);
-		    });
+			subnettot(net, 0, temp_buff, sizeof(temp_buff));
+			DBG_log("%s is subnet %s (received as range)",
+				which, temp_buff);
+		});
 		break;
 	}
 	}
@@ -783,21 +846,22 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		qke->qke_pcrc.pcrc_serialno);
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick outI1: calculated ke+nonce, sending I1"));
+	DBG(DBG_CONTROL,
+		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
+			qke->qke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(qke->qke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (qke->qke_md != NULL)
-			release_md(qke->qke_md);
+		release_any_md(&qke->qke_md);
 		return;
 	}
 
 	passert(qke->qke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
 	/* XXX should check out ugh */
@@ -806,7 +870,7 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	set_cur_state(st); /* we must reset before exit */
-	set_suspended(st, NULL);
+	unset_suspended(st);
 	e = quick_outI1_tail(pcrc, r, st);
 	if (e == STF_INTERNAL_ERROR) {
 		loglog(RC_LOG_SERIOUS,
@@ -835,6 +899,7 @@ stf_status quick_outI1(int whack_sock,
 	st->st_connection = c;
 	passert(c != NULL);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
 	if (st->st_calculating)
 		return STF_IGNORE;
 
@@ -956,12 +1021,12 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		/* Duplicate nat_traversal status in new state */
 		st->hidden_variables.st_nat_traversal =
 			isakmp_sa->hidden_variables.st_nat_traversal;
-		if (isakmp_sa->hidden_variables.st_nat_traversal &
-		    LELEM(NAT_TRAVERSAL_NAT_BHND_ME))
+		if (LHAS(isakmp_sa->hidden_variables.st_nat_traversal,
+			 NATED_HOST))
 			has_client = TRUE;
 		nat_traversal_change_port_lookup(NULL, st);
 	} else {
-		st->hidden_variables.st_nat_traversal = 0;
+		st->hidden_variables.st_nat_traversal = LEMPTY;
 	}
 
 	/* set up reply */
@@ -1058,9 +1123,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
-	    (!(st->st_policy & POLICY_TUNNEL)) &&
-	    (st->hidden_variables.st_nat_traversal &
-	     LELEM(NAT_TRAVERSAL_NAT_BHND_ME))) {
+	    !(st->st_policy & POLICY_TUNNEL) &&
+	    LHAS(st->hidden_variables.st_nat_traversal, NATED_HOST)) {
 		/** Send NAT-OA if our address is NATed */
 		if (!nat_traversal_add_natoa(ISAKMP_NEXT_NONE, &rbody, st,
 					     TRUE /* initiator */)) {
@@ -1093,7 +1157,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	send_ike_msg(st, "quick_outI1");
 
 	delete_event(st);
-	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
 	if (qke->qke_replacing == SOS_NOBODY) {
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
@@ -1263,7 +1327,16 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 				   &b.his.net, "peer client"))
 			return STF_FAIL + INVALID_ID_INFORMATION;
 
-		/* Hack for MS 818043 NAT-T Update */
+		/* Hack for MS 818043 NAT-T Update.
+		 *
+		 * <http://support.microsoft.com/kb/818043>
+		 * "L2TP/IPsec NAT-T update for Windows XP and Windows 2000"
+		 * This update is has a bug.  We choose to work around that
+		 * bug rather than failing to interoperate.
+		 * As to what the bug is, Paul says:
+		 * "I believe on rekey, it sent a bogus subnet or wrong type of ID."
+		 * ??? needs more complete description.
+		 */
 		if (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			loglog(RC_LOG_SERIOUS,
 			       "Applying workaround for MS-818043 NAT-T bug");
@@ -1302,11 +1375,15 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 		     NAT_T_WITH_NATOA) &&
 		    (id_pd->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
-			char idfqdn[32], subnet_buf[SUBNETTOT_BUF];
-			int idlen = pbs_room(&IDci->pbs);
+			char idfqdn[IDTOA_BUF];
+			char subnet_buf[SUBNETTOT_BUF];
+			size_t idlen = pbs_room(&IDci->pbs);
 
-			if (idlen > 31)
-				idlen = 31;
+			if (idlen >= sizeof(idfqdn)) {
+				/* ??? truncation seems rude and dangerous */
+				idlen = sizeof(idfqdn) - 1;
+			}
+			/* ??? what should happen if fqdn contains '\0'? */
 			memcpy(idfqdn, IDci->pbs.cur, idlen);
 			idfqdn[idlen] = '\0';
 
@@ -1351,8 +1428,7 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 static void report_verify_failure(struct verify_oppo_bundle *b, err_t ugh)
 {
 	struct state *st = b->md->st;
-	char fgwb[ADDRTOT_BUF],
-	     cb[ADDRTOT_BUF];
+	ipstr_buf ib1, ib2;
 	ip_address client;
 	err_t which;
 
@@ -1378,11 +1454,11 @@ static void report_verify_failure(struct verify_oppo_bundle *b, err_t ugh)
 		bad_case(b->step);
 	}
 
-	addrtot(&st->st_connection->spd.that.host_addr, 0, fgwb, sizeof(fgwb));
-	addrtot(&client, 0, cb, sizeof(cb));
 	loglog(RC_OPPOFAILURE,
 	       "gateway %s wants connection with %s as %s client, but DNS fails to confirm delegation: %s {msgid:%08x}",
-	       fgwb, cb, which, ugh, st->st_msgid);
+	       ipstr(&st->st_connection->spd.that.host_addr, &ib1),
+	       ipstr(&client, &ib2),
+	       which, ugh, st->st_msgid);
 }
 
 static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
@@ -1399,7 +1475,7 @@ static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
 	/* if st == NULL, our state has been deleted -- just clean up */
 	if (st != NULL) {
 		passert(st->st_suspended_md == b->md);
-		set_suspended(st, NULL); /* no longer connected or suspended */
+		unset_suspended(st); /* no longer connected or suspended */
 		cur_state = st;
 		if (!b->failure_ok && ugh != NULL) {
 			report_verify_failure(b, ugh);
@@ -1409,8 +1485,7 @@ static void quick_inI1_outR1_continue(struct adns_continuation *cr, err_t ugh)
 		}
 		complete_v1_state_transition(&b->md, r);
 	}
-	if (b->md != NULL)
-		release_md(b->md);
+	release_any_md(&b->md);
 	cur_state = NULL;
 }
 
@@ -1522,7 +1597,7 @@ static stf_status quick_inI1_outR1_start_query(struct verify_oppo_bundle *b,
 		 * into b, not just vc->b.
 		 */
 		report_verify_failure(b, ugh);
-		set_suspended(p1st,  NULL);
+		unset_suspended(p1st);
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	} else {
 		return STF_SUSPEND;
@@ -1759,9 +1834,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		if ((p1st->hidden_variables.st_nat_traversal &
 		      NAT_T_DETECTED) &&
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
-		     (p1st->hidden_variables.st_nat_traversal &
-		      (LELEM(NAT_TRAVERSAL_NAT_BHND_ME) |
-		       LELEM(NAT_TRAVERSAL_NAT_BHND_PEER))) &&
 		     p == NULL) {
 			p = c;
 			DBG(DBG_CONTROL,
@@ -1792,11 +1864,11 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			he.port = b->his.port;
 
 			l = format_end(buf, sizeof(buf), &me, NULL, TRUE,
-				       LEMPTY);
+				       LEMPTY, oriented(*c));
 			snprintf(buf + l, sizeof(buf) - l, "...");
 			l += strlen(buf + l);
 			(void)format_end(buf + l, sizeof(buf) - l, &he, NULL,
-					 FALSE, LEMPTY);
+					 FALSE, LEMPTY, oriented(*c));
 			libreswan_log("cannot respond to IPsec SA request"
 				      " because no connection is known for %s",
 				      buf);
@@ -1944,7 +2016,7 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			}
 
 			format_end(cthat, sizeof(cthat), &c->spd.that, NULL,
-				   TRUE, LEMPTY);
+				   TRUE, LEMPTY, oriented(*c));
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("setting phase 2 virtual values to %s",
 				    cthat));
@@ -1960,8 +2032,8 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 	 */
 
 	hv = p1st->hidden_variables;
-	if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
-	    (p1st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
+	if ((hv.st_nat_traversal & NAT_T_DETECTED) &&
+	    (hv.st_nat_traversal & NAT_T_WITH_NATOA))
 		nat_traversal_natoa_lookup(md, &hv);
 
 	/* now that we are sure of our connection, create our new state */
@@ -2011,11 +2083,13 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				(c->policy & ~POLICY_ID_AUTH_MASK);
 
 		if (p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
+			/* ??? this partially overwrites what was done via hv */
 			st->hidden_variables.st_nat_traversal =
 				p1st->hidden_variables.st_nat_traversal;
 			nat_traversal_change_port_lookup(md, md->st);
 		} else {
-			st->hidden_variables.st_nat_traversal = 0;
+			/* ??? this partially overwrites what was done via hv */
+			st->hidden_variables.st_nat_traversal = LEMPTY;
 		}
 
 		passert(st->st_connection != NULL);
@@ -2068,11 +2142,14 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 			qke->qke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			pcrc_init(&qke->qke_pcrc, quick_inI1_outR1_cryptocontinue1);
 
-			if (st->st_pfs_group != NULL)
+			if (st->st_pfs_group != NULL) {
+				/* need to calculate KE and Nonce */
 				e = build_ke(&qke->qke_pcrc, st,
 					     st->st_pfs_group, ci);
-			else
+			} else {
+				/* KE and Nonce calculated */
 				e = build_nonce(&qke->qke_pcrc, st, ci);
+			}
 
 			passert(st->st_connection != NULL);
 
@@ -2092,16 +2169,16 @@ static void quick_inI1_outR1_cryptocontinue1(
 		qke->qke_pcrc.pcrc_serialno);
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick inI1_outR1: calculated ke+nonce, calculating DH"));
+	DBG(DBG_CONTROL,
+		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
+			qke->qke_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(qke->qke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (qke->qke_md != NULL)
-			release_md(qke->qke_md);
+		release_any_md(&qke->qke_md);
 		return;
 	}
 
@@ -2115,8 +2192,9 @@ static void quick_inI1_outR1_cryptocontinue1(
 	passert(st->st_connection != NULL);
 
 	set_cur_state(st); /* we must reset before exit */
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
-	set_suspended(st, NULL);
+	unset_suspended(st);
 
 	/* we always calculate a nonce */
 	unpack_nonce(&st->st_nr, r);
@@ -2136,7 +2214,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 		pcrc_init(&dh->dh_pcrc, quick_inI1_outR1_cryptocontinue2);
 		e = start_dh_secret(&dh->dh_pcrc, st,
 				    st->st_import,
-				    RESPONDER,
+				    O_RESPONDER,
 				    st->st_pfs_group->group);
 
 		/* In the STF_INLINE, quick_inI1_outR1_cryptocontinue1 has already
@@ -2147,8 +2225,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 		if (e != STF_SUSPEND && e != STF_INLINE) {
 			if (dh->dh_md != NULL) {
 				complete_v1_state_transition(&qke->qke_md, e);
-				if (dh->dh_md != NULL)
-					release_md(qke->qke_md);
+				release_any_md(&qke->qke_md);
 			}
 		}
 
@@ -2161,8 +2238,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 			if (md != NULL) {
 				/* note: use qke-> pointer */
 				complete_v1_state_transition(&qke->qke_md, e);
-				if (qke->qke_md != NULL)
-					release_md(qke->qke_md);
+				release_any_md(&qke->qke_md);
 			}
 		}
 	}
@@ -2179,16 +2255,16 @@ static void quick_inI1_outR1_cryptocontinue2(
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick inI1_outR1: calculated DH, sending R1"));
+	DBG(DBG_CONTROL,
+		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -2202,15 +2278,15 @@ static void quick_inI1_outR1_cryptocontinue2(
 	passert(st->st_connection != NULL);
 
 	set_cur_state(st); /* we must reset before exit */
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
-	set_suspended(st, NULL);
+	unset_suspended(st);
 
 	e = quick_inI1_outR1_cryptotail(dh->dh_md, r);
 	if (e == STF_OK) {
 		if (dh->dh_md != NULL) {
 			complete_v1_state_transition(&dh->dh_md, e);
-			if (dh->dh_md != NULL)
-				release_md(dh->dh_md);
+			release_any_md(&dh->dh_md);
 		}
 	}
 
@@ -2275,11 +2351,11 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 		struct spd_route *sr = &c->spd;
 
 		format_end(instbuf, sizeof(instbuf), &sr->this, &sr->that,
-			   TRUE, LEMPTY);
+			   TRUE, LEMPTY, oriented(*c));
 		libreswan_log("    us: %s", instbuf);
 
 		format_end(instbuf, sizeof(instbuf), &sr->that, &sr->this,
-			   FALSE, LEMPTY);
+			   FALSE, LEMPTY, oriented(*c));
 		libreswan_log("  them: %s", instbuf);
 	}
 
@@ -2288,9 +2364,9 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	{
 		int np;
 #ifdef IMPAIR_UNALIGNED_R1_MSG
-		char *padstr = getenv("PLUTO_UNALIGNED_R1_MSG");
+		const char *padstr = getenv("PLUTO_UNALIGNED_R1_MSG");
 
-		if (padstr)
+		if (padstr != NULL)
 			np = ISAKMP_NEXT_VID;
 		else
 #endif
@@ -2306,12 +2382,17 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 #ifdef IMPAIR_UNALIGNED_R1_MSG
-		if (padstr) {
+		if (padstr != NULL) {
+			unsigned long padsize;
+			err_t ugh = ttoulb(padstr, 0, 10, 100, &padsize);
 			pb_stream vid_pbs;
-			int padsize;
-			padsize = strtoul(padstr, NULL, 0);
 
-			libreswan_log("inserting fake VID payload of %u size",
+			if (ugh != NULL) {
+				libreswan_log("$PLUTO_UNALIGNED_R1_MSG malformed: %s; pretending it is 3", ugh);
+				padsize = 3;
+			}
+
+			libreswan_log("inserting fake VID payload of %lu size",
 				      padsize);
 
 			if (st->st_pfs_group != NULL)
@@ -2444,7 +2525,7 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 		pcrc_init(&dh->dh_pcrc, quick_inR1_outI2_continue);
 		return start_dh_secret(&dh->dh_pcrc, st,
 				       st->st_import,
-				       INITIATOR,
+				       O_INITIATOR,
 				       st->st_pfs_group->group);
 	} else {
 		/* just call the tail function */
@@ -2461,16 +2542,16 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("quick inI1_outR1: calculated ke+nonce, calculating DH"));
+	DBG(DBG_CONTROL,
+		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
+			dh->dh_pcrc.pcrc_serialno));
 
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
 		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -2484,15 +2565,15 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(st->st_connection != NULL);
 
 	set_cur_state(st); /* we must reset before exit */
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
-	set_suspended(st, NULL);
+	unset_suspended(st);
 
 	e = quick_inR1_outI2_cryptotail(dh->dh_md, r);
 
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 	}
 	reset_cur_state();
 }
@@ -2549,13 +2630,16 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 			     NAT_T_DETECTED) &&
 			    (st->hidden_variables.st_nat_traversal &
 			     NAT_T_WITH_NATOA) &&
-			    (IDcr->payload.ipsec_id.isaiid_idtype ==
-			     ID_FQDN)) {
+			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
+				char idfqdn[IDTOA_BUF];
+				char subnet_buf[SUBNETTOT_BUF];
+				size_t idlen = pbs_room(&IDcr->pbs);
 
-				char idfqdn[32], subnet_buf[SUBNETTOT_BUF];
-				int idlen = pbs_room(&IDcr->pbs);
-				if (idlen > 31)
-					idlen = 31;
+				if (idlen >= sizeof(idfqdn)) {
+					/* ??? truncation seems rude and dangerous */
+					idlen = sizeof(idfqdn) - 1;
+				}
+				/* ??? what should happen if fqdn contains '\0'? */
 				memcpy(idfqdn, IDcr->pbs.cur, idlen);
 				idfqdn[idlen] = '\0';
 
@@ -2568,7 +2652,6 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 				       "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
 				       idfqdn, subnet_buf);
 			}
-
 		} else {
 			/* no IDci, IDcr: we must check that the defaults match our proposal */
 			if (!subnetisaddr(&c->spd.this.client,
@@ -2592,17 +2675,22 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 	/* HASH(3) out -- sometimes, we add more content */
 	{
-		u_char /* set by START_HASH_PAYLOAD: */
-		*r_hashval;
+		u_char *r_hashval;	/* set by START_HASH_PAYLOAD */
 
 #ifdef IMPAIR_UNALIGNED_I2_MSG
 		{
-			char *padstr = getenv("PLUTO_UNALIGNED_I2_MSG");
+			const char *padstr = getenv("PLUTO_UNALIGNED_I2_MSG");
 
-			if (padstr) {
+			if (padstr != NULL) {
+				unsigned long padsize;
+				err_t ugh = ttoulb(padstr, 0, 10, 100, &padsize)
 				pb_stream vid_pbs;
-				int padsize;
-				padsize = strtoul(padstr, NULL, 0);
+
+				if (ugh != NULL) {
+					libreswan_log("$PLUTO_UNALIGNED_I2_MSG malformed: %s; pretending it is 3",
+						ugh);
+					padsize = 3;
+				}
 
 				libreswan_log(
 					"inserting fake VID payload of %u size",
@@ -2664,13 +2752,10 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 
 	st->st_connection->newest_ipsec_sa = st->st_serialno;
 
-	/* note (presumed) success */
-	if (c->gw_info != NULL)
-		c->gw_info->key->last_worked_time = now();
-
 	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
 	    on this conn, so initialize it */
-	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
+	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
+	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
 			delete_ipsec_sa(st, FALSE);
 			return STF_FAIL;
@@ -2717,17 +2802,12 @@ stf_status quick_inI2(struct msg_digest *md)
 
 	update_iv(st);  /* not actually used, but tidy */
 
-	/* note (presumed) success */
-	{
-		struct gw_info *gw = st->st_connection->gw_info;
-
-		if (gw != NULL)
-			gw->key->last_worked_time = now();
-	}
-
-	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
-	    on this conn, so initialize it */
-	if (st->st_connection->dpd_delay && st->st_connection->dpd_timeout) {
+	/*
+	 * If we have dpd delay and dpdtimeout set, then we are doing DPD
+	 * on this conn, so initialize it
+	 */
+	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
+	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
 			delete_ipsec_sa(st, FALSE);
 			return STF_FAIL;

@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: IPSEC_KLIPSDEBUG
-.\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: 10/06/2010
-.\"    Manual: [FIXME: manual]
-.\"    Source: [FIXME: source]
+.\"    Author: Paul Wouters
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 07/03/2014
+.\"    Manual: Executable programs
+.\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_KLIPSDEBUG" "5" "10/06/2010" "[FIXME: source]" "[FIXME: manual]"
+.TH "IPSEC_KLIPSDEBUG" "5" "07/03/2014" "libreswan" "Executable programs"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -39,12 +48,12 @@ a KLIPS debug variable
 .PP
 +
 .RS 4
-a \'=\' separator for visual and automated parsing between the variable name and its current value
+a \*(Aq=\*(Aq separator for visual and automated parsing between the variable name and its current value
 .RE
 .PP
 +
 .RS 4
-hexadecimal bitmap of variable\'s flags\&.
+hexadecimal bitmap of variable\*(Aqs flags\&.
 .RE
 .PP
 The variable names roughly describe the scope of the debugging variable\&. Currently, no flags are documented or individually accessible yet except tunnel\-xmit\&.
@@ -113,25 +122,7 @@ messages to
 /var/log/messages\&.
 .SH "EXAMPLES"
 .PP
-\fBdebug_tunnel=00000010\&.\fR
-
-\fBdebug_netlink=00000000\&.\fR
-
-\fBdebug_xform=00000000\&.\fR
-
-\fBdebug_eroute=00000000\&.\fR
-
-\fBdebug_spi=00000000\&.\fR
-
-\fBdebug_radij=00000000\&.\fR
-
-\fBdebug_esp=00000000\&.\fR
-
-\fBdebug_ah=00000000\&.\fR
-
-\fBdebug_rcv=00000000\&.\fR
-
-\fBdebug_pfkey=ffffffff\&.\fR
+\fBdebug_tunnel=00000010\&.\fR\fBdebug_netlink=00000000\&.\fR\fBdebug_xform=00000000\&.\fR\fBdebug_eroute=00000000\&.\fR\fBdebug_spi=00000000\&.\fR\fBdebug_radij=00000000\&.\fR\fBdebug_esp=00000000\&.\fR\fBdebug_ah=00000000\&.\fR\fBdebug_rcv=00000000\&.\fR\fBdebug_pfkey=ffffffff\&.\fR
 .PP
 means that one
 \fBtunnel\fR
@@ -143,7 +134,13 @@ sockets debugging has been set and everything else is not set\&.
 /proc/net/ipsec_klipsdebug, /usr/local/bin/ipsec
 .SH "SEE ALSO"
 .PP
-ipsec(8), ipsec_manual(8), ipsec_tncfg(8), ipsec_eroute(8), ipsec_spi(8), ipsec_spigrp(8), ipsec_klipsdebug(5), ipsec_version(5), ipsec_pf_key(5)
+ipsec(8), ipsec_tncfg(8), ipsec_eroute(8), ipsec_spi(8), ipsec_spigrp(8), ipsec_klipsdebug(5), ipsec_version(5), ipsec_pf_key(5)
 .SH "HISTORY"
 .PP
 Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org/\fR\m[]> by Richard Guy Briggs\&.
+.SH "AUTHOR"
+.PP
+\fBPaul Wouters\fR
+.RS 4
+placeholder to suppress warning
+.RE

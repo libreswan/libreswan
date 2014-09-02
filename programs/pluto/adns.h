@@ -17,8 +17,6 @@
 #ifndef _ADNS_H
 #define _ADNS_H
 
-#ifndef UNBOUND	/* whole file! */
-
 #include <resolv.h>
 
 /*
@@ -78,7 +76,5 @@ enum helper_exit_status {
 	HES_BAD_LEN,		/* implausible .len field */
 	HES_BAD_MAGIC,		/* .magic field wrong */
 };
-
-#endif	/* UNBOUND */
 
 #endif	/* _ADNS_H */

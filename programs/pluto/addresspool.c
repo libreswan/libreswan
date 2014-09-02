@@ -29,7 +29,6 @@
 #include "libreswan.h"
 #include "lswalloc.h"
 #include "lswlog.h"
-#include "lswtime.h"	/* for now() */
 #include "connections.h"
 #include "defs.h"
 #include "constants.h"
@@ -90,7 +89,7 @@ struct lease_addr {
 	u_int32_t index;	/* range start + index == IP address */
 	struct id thatid;	/* from connection */
 	unsigned refcnt;	/* reference counted */
-	time_t lingering_since;	/* when did this begin to linger */
+	monotime_t lingering_since;	/* when did this begin to linger */
 
 	struct lease_addr *next;	/* next in pool's list of leases */
 };
@@ -199,7 +198,7 @@ void rel_lease_addr(struct connection *c)
 			if (p->refcnt == 0) {
 				story = "left (to linger)";
 				pool->lingering++;
-				p->lingering_since = now();
+				p->lingering_since = mononow();
 			}
 			refcnt = p->refcnt;
 		} else {
@@ -217,14 +216,14 @@ void rel_lease_addr(struct connection *c)
 
 	DBG(DBG_CONTROLMORE, {
 		/* text of addresses */
-		char ta_client[ADDRTOT_BUF];
 		char ta_range[RANGETOT_BUF];
-
-		addrtot(&c->spd.that.client.addr, 0, ta_client, sizeof(ta_client));
+		ipstr_buf b;
 		rangetot(&pool->r, 0, ta_range, sizeof(ta_range));
 		DBG_log("%s lease refcnt %u %s from addresspool %s index=%u. pool size %u used %u lingering=%u address",
 				story,
-				refcnt, ta_client, ta_range, i,
+				refcnt,
+				ipstr(&c->spd.that.client.addr, &b),
+				ta_range, i,
 				pool->size, pool->used,
 				pool->lingering);
 	});
@@ -257,30 +256,29 @@ static bool share_lease(const struct connection *c,
 	}
 
 	DBG(DBG_CONTROLMORE, {
-			char thatid[IDTOA_BUF];
+		char thatid[IDTOA_BUF];
 
-			idtoa(&c->spd.that.id, thatid, sizeof(thatid));
-			if (r) {
-				char abuf[ADDRTOT_BUF];
-				ip_address ipaddr;
-				uint32_t addr = ntohl(c->pool->r.start.u.v4.sin_addr.s_addr) + *index;
-				uint32_t addr_nw = htonl(addr);
+		idtoa(&c->spd.that.id, thatid, sizeof(thatid));
+		if (r) {
+			ipstr_buf b;
+			ip_address ipaddr;
+			uint32_t addr = ntohl(c->pool->r.start.u.v4.sin_addr.s_addr) + *index;
+			uint32_t addr_nw = htonl(addr);
 
-				initaddr((unsigned char *)&addr_nw,
-					sizeof(addr_nw), AF_INET, &ipaddr);
-				addrtot(&ipaddr, 0, abuf, sizeof(abuf));
+			initaddr((unsigned char *)&addr_nw,
+				sizeof(addr_nw), AF_INET, &ipaddr);
 
-				DBG_log("in %s: found a lingering addresspool lease %s refcnt %d for '%s'",
-					__func__,
-					abuf,
-					p->refcnt,
-					thatid);
-			} else {
-				DBG_log("in %s: no lingering addresspool lease for '%s'",
-					__func__,
-					thatid);
-			}
-		});
+			DBG_log("in %s: found a lingering addresspool lease %s refcnt %d for '%s'",
+				__func__,
+				ipstr(&ipaddr, &b),
+				p->refcnt,
+				thatid);
+		} else {
+			DBG_log("in %s: no lingering addresspool lease for '%s'",
+				__func__,
+				thatid);
+		}
+	});
 
 	return r;
 }
@@ -298,15 +296,15 @@ err_t lease_an_address(const struct connection *c,
 	DBG(DBG_CONTROL, {
 		char rbuf[RANGETOT_BUF];
 		char thatidbuf[IDTOA_BUF];
-		char abuf[ADDRTOT_BUF];
+		ipstr_buf b;
 
 		rangetot(&c->pool->r, 0, rbuf, sizeof(rbuf));
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
-		addrtot(&c->spd.that.client.addr, 0, abuf, sizeof(abuf));
 
 		/* ??? what is that.client.addr and why do we care? */
 		DBG_log("request lease from addresspool %s reference count %u thatid '%s' that.client.addr %s",
-			rbuf, c->pool->pool_refcount, thatidbuf, abuf);
+			rbuf, c->pool->pool_refcount, thatidbuf,
+			ipstr(&c->spd.that.client.addr, &b));
 	});
 
 	s = share_lease(c, &i);
@@ -330,7 +328,7 @@ err_t lease_an_address(const struct connection *c,
 			/* remember the longest lingering lease found */
 			if (p->refcnt == 0 &&
 			    (ll == NULL ||
-			     p->lingering_since <= ll->lingering_since))
+			     monobefore(ll->lingering_since, p->lingering_since)))
 				ll = p;
 			/* Subtle point: this addition won't overflow.
 			 * 0.0.0.0 cannot be in a range
@@ -392,17 +390,18 @@ err_t lease_an_address(const struct connection *c,
 	DBG(DBG_CONTROL, {
 		char rbuf[RANGETOT_BUF];
 		char thatidbuf[IDTOA_BUF];
-		char abuf[ADDRTOT_BUF];
-		char lbuf[ADDRTOT_BUF];
+		ipstr_buf a;
+		ipstr_buf l;
 
 		rangetot(&c->pool->r, 0, rbuf, sizeof(rbuf));
 		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
-		addrtot(&c->spd.that.client.addr, 0, abuf, sizeof(abuf));
-		addrtot(ipa, 0, lbuf, sizeof(lbuf));
 
 		DBG_log("%s lease %s from addresspool %s to that.client.addr %s thatid '%s'",
 			s ? "re-use" : "new",
-			lbuf, rbuf, abuf, thatidbuf);
+			ipstr(ipa, &l),
+			rbuf,
+			ipstr(&c->spd.that.client.addr, &a),
+			thatidbuf);
 	});
 
 	return NULL;

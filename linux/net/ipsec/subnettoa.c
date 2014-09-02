@@ -52,7 +52,7 @@ size_t dstlen;
 
 	n = masktobits(mask);
 	if (n >= 0)
-		len += ultoa((unsigned long)n, 10, p, rest);
+		len += ultot((unsigned long)n, 10, p, rest);
 	else
 		len += addrtoa(mask, 0, p, rest);
 
@@ -97,7 +97,7 @@ size_t dstlen;
 
 	n = mask6tobits(mask);
 	if (n >= 0)
-		len += ultoa((unsigned long)n, 10, p, rest);
+		len += ultot((unsigned long)n, 10, p, rest);
 	else
 		len += inet_addrtot(AF_INET6, mask, 0, p, rest);
 

@@ -691,8 +691,18 @@ DEBUG_NO_STATIC int ipsec_mast_neigh_setup_dev(struct net_device *dev,
 
 	if (p->tbl->family == AF_INET) {
 		p->neigh_setup = ipsec_mast_neigh_setup;
+#ifdef NEIGH_VAR_SET
+		/*
+		 * see kernel's include/net/neighbour.h
+		 * ??? Not sure which to use:
+		 * NEIGH_VAR_INIT or NEIGH_VAR_INIT
+		 */
+		NEIGH_VAR_SET(p, UCAST_PROBES, 0);
+		NEIGH_VAR_SET(p, MCAST_PROBES, 0);
+#else
 		p->ucast_probes = 0;
 		p->mcast_probes = 0;
+#endif
 	}
 	return 0;
 }

@@ -661,7 +661,6 @@ static bool finish_pfkey_msg(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
 					case ENOENT:
 						loglog(RC_LOG_SERIOUS,
 						       "requested algorithm is not available in the kernel");
-						success = FALSE;
 					/* fall through to get error message */
 
 					default:
@@ -853,7 +852,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      unsigned int transport_proto,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
-		      time_t use_lifetime UNUSED,
+		      deltatime_t use_lifetime UNUSED,
 		      unsigned long sa_priority UNUSED,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
@@ -1091,9 +1090,11 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 						   sa->natt_oa,
 						   "pfkey_nat_t_oa Add ESP SA",
 						   sa->text_said, extensions);
-			DBG(DBG_KERNEL,
-			    DBG_log("setting nat_oa to %s\n",
-				    ip_str(sa->natt_oa)));
+			DBG(DBG_KERNEL, {
+				ipstr_buf b;
+				DBG_log("setting nat_oa to %s\n",
+					ipstr(sa->natt_oa, &b));
+			});
 			if (!success)
 				return FALSE;
 		}
@@ -1342,7 +1343,8 @@ bool pfkey_shunt_eroute(struct connection *c,
 					SA_INT,
 					sr->this.protocol,
 					ET_INT,
-					null_proto_info, 0,
+					null_proto_info,
+					deltatime(0),
 					c->sa_priority, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label
@@ -1473,12 +1475,9 @@ static const char *read_proto(const char * s, size_t * len,
 		*transport_proto = 0;
 		return 0;
 	}
-	ugh = ttoul(p + 1, l - ((p - s) + 1), 10, &proto);
-	if (ugh != 0)
+	ugh = ttoulb(p + 1, l - ((p - s) + 1), 10, 0xFFFF, &proto);
+	if (ugh != NULL)
 		return ugh;
-
-	if (proto > 65535)
-		return "protocol number is too large, legal range is 0-65535";
 
 	*len = p - s;
 	*transport_proto = proto;
@@ -1514,7 +1513,7 @@ void scan_proc_shunts(void)
 {
 	static const char procname[] = "/proc/net/ipsec_eroute";
 	FILE *f;
-	time_t nw = now();
+	monotime_t nw = mononow();
 	int lino;
 	struct eroute_info *expired = NULL;
 
@@ -1591,9 +1590,9 @@ void scan_proc_shunts(void)
 			}
 
 			if (ff[1].len != 2 ||
-			    strncmp((char *)ff[1].ptr, "->", 2) != 0 ||
+			    !startswith((char *)ff[1].ptr, "->") ||
 			    ff[3].len != 2 ||
-			    strncmp((char *)ff[3].ptr, "=>", 2) != 0) {
+			    !startswith((char *)ff[3].ptr, "=>")) {
 				ugh = "is missing -> or =>";
 				break;
 			}
@@ -1712,9 +1711,7 @@ void scan_proc_shunts(void)
 						if (eri.count != bs->count) {
 							bs->count = eri.count;
 							bs->last_activity = nw;
-						} else if (nw -
-							   bs->last_activity >
-							   SHUNT_PATIENCE) {
+						} else if (monobefore(monotimesum(bs->last_activity, deltatime(SHUNT_PATIENCE)), nw)) {
 							eri.next = expired;
 							expired = clone_thing(
 								eri,
@@ -1761,12 +1758,11 @@ void scan_proc_shunts(void)
  * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
  * could mean that the SA is broken and needs to be replace anyway.
  */
-bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
+bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 {
 	static const char procname[] = "/proc/net/ipsec_spi";
 	FILE *f;
-	char buf[1024];
-	int ret = TRUE;
+	int ret;
 
 	passert(st != NULL);
 
@@ -1775,6 +1771,7 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 		ret = TRUE;
 	} else {
 		for (;;) {
+			char buf[1024];
 			char *line;
 			char text_said[SATOT_BUF];
 			u_int8_t proto = 0;
@@ -1782,7 +1779,7 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 			ip_said said;
 			ipsec_spi_t spi = 0;
 			static const char idle[] = "idle=";
-			time_t idle_time;                               /* idle time we read from /proc */
+			deltatime_t idle_time;                               /* idle time we read from /proc */
 
 			dst = st->st_connection->spd.this.host_addr;    /* inbound SA */
 			if (st->st_ah.present) {
@@ -1809,9 +1806,10 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 				break;
 			}
 
-			if (strncmp(line, text_said, strlen(text_said)) == 0) {
+			if (strneq(line, text_said, strlen(text_said))) {
 				/* we found a match, now try to find idle= */
 				char *p = strstr(line, idle);
+
 				if (p == NULL) {        /* SAs which haven't been used yet
 					                   don't have it */
 					ret = TRUE;     /* it didn't have traffic */
@@ -1830,12 +1828,12 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 						ret = TRUE;
 						break;
 					}
-					idle_time = idle_time_int;
+					idle_time = deltatime(idle_time_int);
 				}
-				if (idle_time > idle_max) {
+				if (deltaless(idle_max, idle_time)) {
 					DBG(DBG_KERNEL,
 					    DBG_log("SA %s found idle for more than %ld sec",
-						    text_said, idle_max));
+						    text_said, (long)deltasecs(idle_max)));
 					ret = TRUE;
 					break;
 				} else {

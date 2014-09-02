@@ -50,7 +50,7 @@ size_t dstlen;
 		rest = 0;
 	}
 
-	len += ultoa((unsigned long)sub->maskbits, 10, p, rest);
+	len += ultot((unsigned long)sub->maskbits, 10, p, rest);
 
 	return len;
 }
@@ -80,7 +80,7 @@ size_t dstlen;
 
 	/* base = 10 */
 	*end++ = ':';
-	len += ultoa(ntohs(portof(&sub->addr)), 10, end, dstlen - (alen + 1));
+	len += ultot(ntohs(portof(&sub->addr)), 10, end, dstlen - (alen + 1));
 
 	return len;
 }

@@ -60,7 +60,7 @@ struct pending {
 	lset_t policy;
 	unsigned long try;
 	so_serial_t replacing;
-	time_t pend_time;
+	monotime_t pend_time;
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike * uctx;
 #endif
@@ -87,17 +87,22 @@ void add_pending(int whack_sock,
 
 	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->isakmp_sa == isakmp_sa) {
-			DBG(DBG_CONTROL,
-			    DBG_log("Ignored already queued up pending Quick Mode with %s \"%s\"",
-				    ip_str(&c->spd.that.host_addr),
-				    c->name));
+			DBG(DBG_CONTROL, {
+				ipstr_buf b;
+				DBG_log("Ignored already queued up pending Quick Mode with %s \"%s\"",
+					ipstr(&c->spd.that.host_addr, &b),
+					c->name);
+			});
 			return;
 		}
 	}
 
-	DBG(DBG_CONTROL, DBG_log("Queuing pending Quick Mode with %s \"%s\"",
-				 ip_str(&c->spd.that.host_addr),
-				 c->name));
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
+		DBG_log("Queuing pending Quick Mode with %s \"%s\"",
+			ipstr(&c->spd.that.host_addr, &b),
+			c->name);
+	});
 
 	p = alloc_thing(struct pending, "struct pending");
 	p->whack_sock = whack_sock;
@@ -106,7 +111,7 @@ void add_pending(int whack_sock,
 	p->policy = policy;
 	p->try = try;
 	p->replacing = replacing;
-	p->pend_time = now();
+	p->pend_time = mononow();
 #ifdef HAVE_LABELED_IPSEC
 	p->uctx = NULL;
 	if (uctx != NULL) {
@@ -203,15 +208,17 @@ void unpend(struct state *st)
 	     (p = *pp) != NULL;
 	     ) {
 		if (p->isakmp_sa == st) {
-			DBG(DBG_CONTROL,
-			    DBG_log("unqueuing pending %s with %s \"%s\" %s",
-				    st->st_ikev2 ? "Child SA" : "Quick Mode",
-				    ip_str(&p->connection->spd.that.host_addr),
-				    p->connection->name,
-				    enum_name(&pluto_cryptoimportance_names,
-					      st->st_import)));
+			DBG(DBG_CONTROL, {
+				ipstr_buf b;
+				DBG_log("unqueuing pending %s with %s \"%s\" %s",
+					st->st_ikev2 ? "Child SA" : "Quick Mode",
+					ipstr(&p->connection->spd.that.host_addr, &b),
+					p->connection->name,
+					enum_name(&pluto_cryptoimportance_names,
+						  st->st_import));
+			});
 
-			p->pend_time = now();
+			p->pend_time = mononow();
 			if (!st->st_ikev2) {
 				(void) quick_outI1(p->whack_sock, st, p->connection,
 						   p->policy,
@@ -264,15 +271,18 @@ bool pending_check_timeout(struct connection *c)
 	struct pending **pp, *p;
 
 	for (pp = host_pair_first_pending(c); (p = *pp) != NULL; ) {
-		DBG(DBG_DPD,
-		    DBG_log("checking connection \"%s\" for stuck phase 2s (%lu+ 3*%lu) <= %lu",
-			    c->name,
-			    (unsigned long)p->pend_time,
-			    (unsigned long)c->dpd_timeout,
-			    (unsigned long)now()));
+		DBG(DBG_DPD, {
+			deltatime_t waited = monotimediff(mononow(), p->pend_time);
+			DBG_log("checking connection \"%s\" for stuck phase 2s (waited %lds, patience 3*%lds)",
+				c->name,
+				(long) deltasecs(waited),
+				(long) deltasecs(c->dpd_timeout));
+			});
 
-		if (c->dpd_timeout > 0) {
-			if ((p->pend_time + c->dpd_timeout * 3) <= now()) {
+		if (deltasecs(c->dpd_timeout) > 0) {
+			if (!monobefore(mononow(),
+				monotimesum(p->pend_time,
+					deltatimescale(3, 1, c->dpd_timeout)))) {
 				DBG(DBG_DPD,
 				    DBG_log("connection \"%s\" stuck, restarting",
 					    c->name));

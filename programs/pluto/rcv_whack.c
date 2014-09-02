@@ -42,7 +42,6 @@
 
 #include "sysdep.h"
 #include "lswconf.h"
-#include "lswtime.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -147,24 +146,24 @@ static FILE *whackrecordfile = NULL;
  * being first.
  *
  */
-static bool writewhackrecord(char *buf, int buflen)
+static bool writewhackrecord(char *buf, size_t buflen)
 {
 	u_int32_t header[3];
 
 	/* round up buffer length */
-	int abuflen = (buflen + 3) & ~0x3;
+	size_t abuflen = (buflen + sizeof(header[0]) - 1) & ~(sizeof(header[0]) - 1);
 
 	/* bail if we aren't writing anything */
 	if (whackrecordfile == NULL)
 		return TRUE;
 
-	header[0] = buflen + sizeof(u_int32_t) * 3;
+	header[0] = buflen + sizeof(header);
 	header[1] = 0;
-	header[2] = now();
+	header[2] = time(NULL);	/* ??? is this reasonable? 2038 */
 
 	/* DBG_log("buflen: %u abuflen: %u\n", header[0], abuflen); */
 
-	if (fwrite(header, sizeof(u_int32_t) * 3, 1, whackrecordfile) < 1)
+	if (fwrite(header, sizeof(header), 1, whackrecordfile) < 1)
 		DBG_log("writewhackrecord: fwrite error when writing header");
 
 	if (fwrite(buf, abuflen, 1, whackrecordfile) < 1)
@@ -185,7 +184,7 @@ static bool openwhackrecordfile(char *file)
 	char FQDN[HOST_NAME_MAX + 1];
 	u_int32_t magic;
 	struct tm tm1, *tm;
-	time_t n = now();
+	realtime_t n = realnow();
 
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));
@@ -199,14 +198,14 @@ static bool openwhackrecordfile(char *file)
 		return FALSE;
 	}
 
-	tm = localtime_r(&n, &tm1);
+	tm = localtime_r(&n.real_secs, &tm1);
 	strftime(when, sizeof(when), "%F %T", tm);
 
 	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s\n",
 		FQDN, when);
 
 	magic = WHACK_BASIC_MAGIC;
-	writewhackrecord((char *)&magic, 4);
+	writewhackrecord((char *)&magic, sizeof(magic));
 
 	DBG(DBG_CONTROL,
 	    DBG_log("started recording whack messages to %s\n",
@@ -391,6 +390,12 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_delete)
 		delete_connections_by_name(msg.name, !msg.whack_connection);
 
+	if (msg.whack_deleteuser) {
+		DBG_log("received whack to delete connection by user %s",
+				msg.name);
+		for_each_state(v1_delete_state_by_xauth_name, msg.name);
+	}
+
 	if (msg.whack_deletestate) {
 		struct state *st =
 			state_with_serialno(msg.whack_deletestateno);
@@ -398,19 +403,15 @@ void whack_process(int whackfd, const struct whack_message msg)
 		if (st == NULL) {
 			loglog(RC_UNKNOWN_NAME, "no state #%lu to delete",
 					msg.whack_deletestateno);
-
 		} else {
-			DBG_log("received whack to delete state %s #%lu %s ",
+			DBG_log("received whack to delete %s state #%lu %s",
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
 				enum_name(&state_names, st->st_state));
 
-			if ( st->st_ikev2 && !IS_CHILD_SA(st)) {
-				DBG_log("state #%lu in %s is not a CHILD_SA. "
-					"Could be an ISKAMP SA, also delete "
-					"its IPSEC/Child SAs", st->st_serialno,
-					enum_name(&state_names, st->st_state));
-				v2_delete_my_family(st, INITIATOR);
+			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
+				DBG_log("Also deleting any corresponding CHILD_SAs");
+				delete_my_family(st, FALSE);
 			} else {
 				delete_state(st);
 			}
@@ -553,6 +554,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_status)
 		show_status();
+
+	if (msg.whack_traffic_status)
+		show_states_status(TRUE);
 
 	if (msg.whack_shutdown) {
 		libreswan_log("shutting down");

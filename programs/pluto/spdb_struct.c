@@ -78,28 +78,20 @@ static struct db_prop_conj oakley_props_empty[] =
 static struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
 
 /*
- *      Create an OAKLEY proposal based on alg_info and policy
+ * Create an OAKLEY proposal based on alg_info and policy
  *
- * Note: maxtrans is an enum, not a count
- *      Should probably be declared an enum at some point.
- *      -1 - ???
- *       0 - No limit
- *       1 - One proposal - period
- *       2 - One DH group, take first DH group and ignore any that don't match
- *
+ * single_dh is for Aggressive Mode where we must have exactly
+ * one DH group.
  */
 struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				struct db_sa *base,
-				int maxtrans)
+				bool single_dh)
 {
-	/* struct db_context inprog UNUSED; */
 	struct db_sa *gsp = NULL;
-	struct db_sa *emp_sp = NULL;
 	struct ike_info *ike_info;
-	unsigned ealg, halg, modp, eklen = 0;
+
 	/* Next two are for multiple proposals in agressive mode... */
 	unsigned last_modp = 0, wrong_modp = 0;
-	struct encrypt_desc *enc_desc;
 	int transcnt = 0;
 	int i;
 
@@ -110,7 +102,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 	if (ai == NULL) {
 		DBG(DBG_CONTROL, DBG_log(
-			    "no IKE algorithms for this connection "));
+			    "no specific IKE algorithms specified - using defaults"));
 		return NULL;
 	}
 
@@ -122,18 +114,16 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	 * from the base item as the template.
 	 */
 	ALG_INFO_IKE_FOREACH(ai, ike_info, i) {
+		struct db_sa *emp_sp;
 
 		if (!ike_info->ike_default) {
-			struct db_attr  *enc, *hash, *auth, *grp, *enc_keylen,
-				*new_auth;
-			struct db_trans *trans;
-			struct db_prop  *prop;
-			struct db_prop_conj *cprop;
+			struct encrypt_desc *enc_desc;
+			struct db_attr  *enc, *hash, *auth, *grp, *enc_keylen;
 
-			ealg = ike_info->ike_ealg;
-			halg = ike_info->ike_halg;
-			modp = ike_info->ike_modp;
-			eklen = ike_info->ike_eklen;
+			unsigned ealg = ike_info->ike_ealg;
+			unsigned halg = ike_info->ike_halg;
+			unsigned modp = ike_info->ike_modp;
+			unsigned eklen = ike_info->ike_eklen;
 
 			if (!ike_alg_enc_present(ealg)) {
 				DBG_log("oakley_alg_makedb() "
@@ -150,13 +140,11 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			enc_desc = ike_alg_get_encrypter(ealg);
 
 			passert(enc_desc != NULL);
-			if (eklen &&
+
+			if (eklen != 0 &&
 			    (eklen < enc_desc->keyminlen ||
 			     eklen >  enc_desc->keymaxlen)) {
-				DBG_log("ike_alg_db_new() "
-					"ealg=%d (specified) keylen:%d, "
-					"not valid "
-					"min=%d, max=%d",
+				DBG_log("ike_alg_db_new() ealg=%d (specified) keylen:%d, not valid min=%d, max=%d",
 					ealg,
 					eklen,
 					enc_desc->keyminlen,
@@ -164,43 +152,43 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				continue;
 			}
 
-			/* okay copy the basic item, and modify it. */
+			/*
+			 * copy the basic item, and modify it.
+			 *
+			 * ??? what are these two cases and why does
+			 * eklen select between them?
+			 */
 			if (eklen > 0) {
+				/* duplicate, but change auth to match template */
 				emp_sp = sa_copy_sa(&oakley_empty, 0);
-				cprop = &base->prop_conjs[0];
-				prop = &cprop->props[0];
-				trans = &prop->trans[0];
-				new_auth = &trans->attrs[2];
 
-				cprop = &emp_sp->prop_conjs[0];
-				prop = &cprop->props[0];
-				trans = &prop->trans[0];
-				auth = &trans->attrs[2];
-				*auth = *new_auth;
+				passert(emp_sp->dynamic);
+				emp_sp->prop_conjs[0].props[0].trans[0].attrs[2] =
+				  base->prop_conjs[0].props[0].trans[0].attrs[2];
 			} else {
 				emp_sp = sa_copy_sa_first(base);
 			}
 
 			passert(emp_sp->prop_conj_cnt == 1);
-			cprop = &emp_sp->prop_conjs[0];
+			passert(emp_sp->prop_conjs[0].prop_cnt == 1);
+			passert(emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
 
-			passert(cprop->prop_cnt == 1);
-			prop = &cprop->props[0];
+			{
+				struct db_trans *trans = &emp_sp->prop_conjs[0].props[0].trans[0];
 
-			passert(prop->trans_cnt == 1);
-			trans = &prop->trans[0];
+				passert(emp_sp->dynamic);
+				passert(trans->attr_cnt == 4 || trans->attr_cnt == 5);
+				enc  = &trans->attrs[0];
+				hash = &trans->attrs[1];
+				auth = &trans->attrs[2];
+				grp  = &trans->attrs[3];
 
-			passert(trans->attr_cnt == 4 || trans->attr_cnt == 5);
-			enc  = &trans->attrs[0];
-			hash = &trans->attrs[1];
-			auth = &trans->attrs[2];
-			grp  = &trans->attrs[3];
-
-			if (eklen > 0) {
-				enc_keylen = &trans->attrs[4];
-				enc_keylen->val = eklen;
-			} else {
-				trans->attr_cnt = 4;
+				if (eklen > 0) {
+					enc_keylen = &trans->attrs[4];
+					enc_keylen->val = eklen;
+				} else {
+					trans->attr_cnt = 4;
+				}
 			}
 
 			passert(enc->type.oakley ==
@@ -208,99 +196,112 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			if (ealg > 0)
 				enc->val = ealg;
 
-			modp = ike_info->ike_modp;
-			eklen = ike_info->ike_eklen;
-
 			passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
 			if (halg > 0)
 				hash->val = halg;
 
+			/*
+			 * auth type for IKE must be set
+			 * (??? until we support AES-GCM in IKE)
+			 */
 			passert(auth->type.oakley ==
 				OAKLEY_AUTHENTICATION_METHOD);
-			/* no setting for auth type for IKE */
 
-			passert(grp->type.oakley  == OAKLEY_GROUP_DESCRIPTION);
+			passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
+
 			if (modp > 0)
 				grp->val = modp;
 		} else {
 			emp_sp = sa_copy_sa(base, 0);
 		}
 
-		if (maxtrans == 1) {
-			/*
-			 *  We're going to leave maxtrans == 1 alone in case there
-			 * really really is a case where we only want 1.
+		/* Are we allowing multiple DH groups? */
+
+		if (single_dh && transcnt > 0 &&
+		    ike_info->ike_modp != last_modp) {
+			/* Not good.
+			 * Already got a DH group and this one doesn't match
 			 */
-
-			if (transcnt == 0) {
-				DBG(DBG_CONTROL,
-				    DBG_log("using transform (%d,%d,%d,%ld)",
-					    ike_info->ike_ealg,
-					    ike_info->ike_halg,
-					    ike_info->ike_modp,
-					    (long)ike_info->
-					    ike_eklen));
-				gsp = emp_sp;
-			} else {
-				free_sa(emp_sp);
-			}
-
-			if (transcnt > 0) {
-				if (transcnt == 1) {
-					loglog(RC_LOG_SERIOUS,
-					       "multiple transforms were set in aggressive mode (no modp set?). Only first one used.");
-				}
-
+			if (wrong_modp == 0) {
 				loglog(RC_LOG_SERIOUS,
-				       "transform (%s,%s,%s, key size %ld) ignored.",
-				       enum_name(&oakley_enc_names, ike_info->ike_ealg),
-				       enum_name(&oakley_hash_names, ike_info->ike_halg),
-				       enum_name(&oakley_group_names, ike_info->ike_modp),
-				       (long)ike_info->ike_eklen);
+				       "multiple DH groups were set in aggressive mode. Only first one used.");
 			}
 
+			loglog(RC_LOG_SERIOUS,
+			       "transform (%s,%s,%s keylen %ld) ignored.",
+			       enum_name(&oakley_enc_names, ike_info->ike_ealg),
+			       enum_name(&oakley_hash_names, ike_info->ike_halg),
+			       enum_name(&oakley_group_names, ike_info->ike_modp),
+			       (long)ike_info->ike_eklen);
+
+			wrong_modp++;
+
+			free_sa(emp_sp);
+			emp_sp = NULL;
 		} else {
-			/*
-			 * Now...  We're allowing multiple proposals...  Are we allowing
-			 * multiple DH groups?
-			 */
+			int def_ks = 0;
 
-			struct db_sa *new;
+			if (!ike_info->ike_default && ike_info->ike_eklen == 0)
+				def_ks = crypto_req_keysize(CRK_IKEv1, ike_info->ike_ealg);
 
-			if (maxtrans == 2 && transcnt > 0 &&
-			    ike_info->ike_modp != last_modp ) {
-				/* Not good.
-				 * Already got a DH group and this one doesn't match
-				 */
-				if (wrong_modp == 0) {
-					loglog(RC_LOG_SERIOUS,
-					       "multiple DH groups were set in aggressive mode. Only first one used.");
+			if (def_ks != 0) {
+				struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);
+				int max_ks = enc_desc->keymaxlen;
+				int ks;
+
+				passert(emp_sp->dynamic);
+				passert(emp_sp->prop_conj_cnt == 1);
+				passert(emp_sp->prop_conjs[0].prop_cnt == 1);
+				passert(emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
+
+				if (emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 4) {
+					/* copy and add a slot */
+					struct db_trans *tr = &emp_sp->prop_conjs[0].props[0].trans[0];
+					struct db_attr *old_attrs = tr->attrs;
+
+					clone_trans(tr, 1);
+					pfree(old_attrs);
+					tr->attrs[4].type.oakley = OAKLEY_KEY_LENGTH;
 				}
+				passert(emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 5);
+				passert(emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].type.oakley == OAKLEY_KEY_LENGTH);
 
-				loglog(RC_LOG_SERIOUS,
-				       "transform (%s,%s,%s keylen %ld) ignored.",
-				       enum_name(&oakley_enc_names, ike_info->ike_ealg),
-				       enum_name(&oakley_hash_names, ike_info->ike_halg),
-				       enum_name(&oakley_group_names, ike_info->ike_modp),
-				       (long)ike_info->ike_eklen);
+				for (ks = def_ks; ; ks = max_ks) {
+					emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].val = ks;
 
-				wrong_modp++;
+					if (gsp == NULL) {
+						gsp = sa_copy_sa(emp_sp, 0);
+					} else {
+						struct db_sa *new = sa_merge_proposals(gsp, emp_sp);
 
+						free_sa(gsp);
+						gsp = new;
+					}
+					if (ks == max_ks)
+						break;
+				}
 				free_sa(emp_sp);
-			} else if (gsp) {
-				/* now merge emp_sa and gsp */
-				new = sa_merge_proposals(gsp, emp_sp);
-				free_sa(gsp);
-				free_sa(emp_sp);
-				emp_sp = NULL;
-				gsp = new;
 			} else {
-				gsp = emp_sp;
+				if (gsp != NULL) {
+					/* now merge emp_sa and gsp */
+					struct db_sa *new = sa_merge_proposals(gsp, emp_sp);
+
+					free_sa(gsp);
+					free_sa(emp_sp);
+					emp_sp = NULL;
+					gsp = new;
+					
+				} else {
+					gsp = emp_sp;
+					emp_sp = NULL;
+				}
 			}
 			last_modp = ike_info->ike_modp;
 		}
+
 		transcnt++;
 	}
+
 	if (gsp != NULL)
 		gsp->parentSA = TRUE;
 

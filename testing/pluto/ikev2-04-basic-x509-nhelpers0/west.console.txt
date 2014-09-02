@@ -38,17 +38,19 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
-west #
- ipsec setup start
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-ikev2
+002 added connection description "westnet-eastnet-ikev2"
 west #
  ipsec auto --status
 000 using kernel interface: klips
-000 interface ipsec0/eth1 192.1.2.45
-000 interface ipsec0/eth1 192.1.2.45
+000 interface ipsec0/eth1 192.1.2.45@4500
+000 interface ipsec0/eth1 192.1.2.45@500
+000  
 000  
 000 fips mode=disabled;
 000 SElinux=XXXXX
@@ -56,17 +58,17 @@ west #
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
-000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
+000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
+000 nhelpers=0, uniqueids=yes, retransmits=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx-attr-value=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
 000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
-000 virtual_private (%priv):
-000 - allowed 3 subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
-000 - disallowed 2 subnets: 192.0.1.0/24, 2001:db8:0:1::/64
+000 virtual-private (%priv):
+000 - allowed subnets: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12
+000 - excluded subnets: 192.0.1.0/24, 2001:db8:0:1::/64
 000  
 000 ESP algorithms supported:
 000  
@@ -75,9 +77,9 @@ west #
 000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
 000  
 000 IKE algorithms supported:
 000  
@@ -107,15 +109,15 @@ west #
 000 Connection list:
 000  
 000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=west; hiscert=east;
-000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=west; hiscert=east
+000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-ikev2":   labeled_ipsec:no, loopback:no; 
 000 "westnet-eastnet-ikev2":    policy_label:unset; 
 000 "westnet-eastnet-ikev2":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
+000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-ikev2":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -131,10 +133,14 @@ west #
 initdone
 west #
  ipsec auto --up  westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2" #1: initiating v2 parent SA
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=sha group=MODP2048}
-004 "westnet-eastnet-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
+134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_256 integ=sha1_96 prf=sha group=MODP2048}
+002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+002 "westnet-eastnet-ikev2" #2: no crl from issuer "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org" found (strict=no)
+002 "westnet-eastnet-ikev2" #2: negotiated tunnel [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -144,46 +150,17 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ipsec look
-west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
-ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
-esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=1
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=1
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
-192.0.2.0/24 dev ipsec0  scope link 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-east                                                         P,,  
-north                                                        P,,  
-mainca                                                       ,,   
-west                                                         Pu,u,u
-road                                                         P,,  
-hashsha2                                                     P,,  
-west #
  echo done
 done
 west #
  ipsec look
 west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0x4ac1306a@192.1.2.23  (2)
-ipsec0->eth1 mtu=16260(1500)->1500
-esp0x4ac1306a@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xa820a26ad55ad02287513efb88ca7131 ooowin=64 seq=2 alen=160 aklen=160 eklen=128 jiffies=4294725643 life(c,s,h)=bytes(304,0,0) idle=2 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=2 refhim=0
-esp0x744ad43a@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xc342d40e339a6c14c5528fd533b078b1 ooowin=64 seq=2 bit=0x3 alen=160 aklen=160 eklen=128 jiffies=4294725643 life(c,s,h)=bytes(168,0,0) idle=2 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=4 refhim=1
-tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294725643 life(c,s,h)=bytes(208,0,0) idle=2 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294725643 life(c,s,h)=bytes(168,0,0) idle=2 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=3 refhim=1
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
+192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
+ipsec0->eth1 mtu=16260(9999)->1500
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -196,15 +173,16 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-east                                                         P,,  
-north                                                        P,,  
 mainca                                                       ,,   
-west                                                         Pu,u,u
+east                                                         P,,  
 road                                                         P,,  
+north                                                        P,,  
 hashsha2                                                     P,,  
+east-ec                                                      P,,  
+west                                                         u,u,u
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 
