@@ -604,9 +604,6 @@ kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		wip
 
 
-skiptest	interop-racoon-iphone4s-nonat		incomplete
-skiptest	interop-racoon-iphone5-nonat		incomplete
-
 #################################################################
 # DNSSEC tests
 #################################################################
