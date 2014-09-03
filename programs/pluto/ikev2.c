@@ -1240,7 +1240,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 		whack_log(RC_INTERNALERR + md->note,
 			  "%s: internal error",
-			  enum_name(&state_names, st->st_state));
+			  enum_name(&state_names, from_state));
 
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s had internal error",
