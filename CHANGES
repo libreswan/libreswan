@@ -1,8 +1,11 @@
 
 See also https://libreswan.org/
+v3.11 (unreleased)
+* Bugtracker bugs fixed:
+  #206: Libreswan v3.10 on 32-bit does not work [Kim]
 
 v3.10 (September 1, 2014)
-* XAUTH: New option: ipsec whack --traficstatus [Antony]
+* XAUTH: New option: ipsec whack --trafficstatus [Antony]
 * XAUTH: New option: ipsec --deleteuser --name xauth-username [Antony]
 * XAUTH: Do not strip "-" from XAUTH usernames [Paul]
 * _updown.netkey: New environment variable PLUTO_ADDTIME for IPsec SA's [Paul]
@@ -34,7 +37,7 @@ v3.10 (September 1, 2014)
 * IKEv2: clarify O_responder/O_initiator and Request/Reply code [Paul]
 * IKEv2: Check received msgid is larger then previous before storing [Paul]
 * IKEv1: parse_ipsec_sa_body() did not allow newer AH transforms [Paul]
-* IKEv1: Add sha2 and aes_cbc support for ESP algo [Paul]
+* IKEv1: Add sha2 and aes_xcbc support for AH/ESP auth algorithm [Paul]
 * IKEv1: cap IKE lifetimes > 1d to 1d, instead of rejecting SA [Paul]
 * IKEv1: cisco-unity=yes now also sends VID when acting as VPN server
 * whack: Don't change exit status for RC_INFORMATIONAL* [Mike Gilbert]

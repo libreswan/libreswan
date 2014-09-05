@@ -392,8 +392,8 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 #endif
 
 	/* poke a hole for IKE messages in the IPsec layer */
-	if (kernel_ops->exceptsocket) {
-		if (!(*kernel_ops->exceptsocket)(fd, AF_INET)) {
+	if (kernel_ops->exceptsocket != NULL) {
+		if (!kernel_ops->exceptsocket(fd, AF_INET)) {
 			close(fd);
 			return -1;
 		}
@@ -406,7 +406,7 @@ void find_ifaces(void)
 {
 	mark_ifaces_dead();
 
-	if (kernel_ops->process_ifaces) {
+	if (kernel_ops->process_ifaces != NULL) {
 #if !defined(__CYGWIN32__)
 		kernel_ops->process_ifaces(find_raw_ifaces4());
 		kernel_ops->process_ifaces(find_raw_ifaces6());
@@ -641,7 +641,7 @@ void call_server(void)
 			if (kern_interface != NO_KERNEL) {
 				int fd = *kernel_ops->async_fdp;
 
-				if (kernel_ops->process_queue)
+				if (kernel_ops->process_queue != NULL)
 					kernel_ops->process_queue();
 				if (maxfd < fd)
 					maxfd = fd;

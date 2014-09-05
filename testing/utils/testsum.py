@@ -199,7 +199,7 @@ def print_table_json(d, table, result):
 	i3html = "../../i3.html"
 	if not os.path.exists(d + '/' + "index.html") :
 		try :
-			os.symlink(i3html, + '/' + "index.html")
+			os.symlink(i3html, d + '/' + "index.html")
 		except :
 			pass
 
