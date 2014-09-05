@@ -82,6 +82,7 @@ kvmplutotest	ikev2-algo-sha2-05			wip
 kvmplutotest	ikev1-algo-esp-sha2-05			wip
 kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-07			good
+kvmplutotest	ikev2-algo-sha2-08			good
 
 # various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-ike-sha2-01			good
