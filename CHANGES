@@ -1,6 +1,7 @@
 
 See also https://libreswan.org/
 v3.11 (unreleased)
+* _stackmanager: fixed to work again with mawk [Marc-Christian Petersen/Tuomo]
 * Bugtracker bugs fixed:
   #206: Libreswan v3.10 on 32-bit does not work [Kim]
 

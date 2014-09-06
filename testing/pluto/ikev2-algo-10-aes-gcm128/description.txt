@@ -1,0 +1,8 @@
+
+As ikev2-algo-04-aes-gcm but now using 128bit keys
+
+This test uses AES-GCM, using esp=aes_gcm_c-128-null, where a/b/c means
+ICV lengths 8, 12 and 16, and 128 is the AES key length (and the null
+needs to be there to prevent Libreswan from sticking in an additional
+auth algorithm).
+
