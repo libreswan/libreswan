@@ -413,6 +413,8 @@ kvmplutotest	basic-pluto-11		good
 # passthrough protoport tests
 kvmplutotest	basic-pluto-12		wip
 kvmplutotest	basic-pluto-12-netkey	wip
+kvmplutotest	basic-pluto-13-netkey-route wip
+kvmplutotest	basic-pluto-14-klips-route good
 
 #
 # test cases of what happens to X.509 based authorization system
