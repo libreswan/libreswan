@@ -2784,116 +2784,6 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
-static stf_status ikev2_create_child_sa_in_refuse(struct msg_digest *md)
-{
-	struct state *st = md->st;
-	struct state *pst = st;
-	unsigned char *authstart;
-	unsigned char *encstart;
-	unsigned char *iv;
-	int ivsize;
-	struct ikev2_generic e;
-	pb_stream e_pbs, e_pbs_cipher;
-
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "create child SA exchange request response");
-	authstart = reply_stream.cur;
-
-	/* HDR out */
-	{
-		struct isakmp_hdr r_hdr;
-
-		zero(&r_hdr);
-		r_hdr.isa_version = build_ike_version();
-		memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
-		       COOKIE_SIZE);
-		memcpy(r_hdr.isa_icookie, pst->st_icookie,
-		       COOKIE_SIZE);
-		r_hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
-		r_hdr.isa_np = ISAKMP_NEXT_v2E;
-		r_hdr.isa_flags |= ISAKMP_FLAGS_MSG_R;
-		r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
-
-		/* encryption role based on original state not md state */
-		if (IS_V2_INITIATOR(pst->st_state))
-			md->role = O_INITIATOR;
-		else
-			md->role = O_RESPONDER;
-
-		if (!out_struct(&r_hdr, &isakmp_hdr_desc,
-				&reply_stream, &md->rbody)) {
-			libreswan_log("error initializing hdr for "
-					"CREATE_CHILD_SA  message");
-			return STF_FATAL;
-		}
-	} /* HDR done*/
-
-	/* insert an Encryption payload header */
-	e.isag_np = ISAKMP_NEXT_v2N;
-	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
-		return STF_FATAL;
-
-	/* IV */
-	iv = e_pbs.cur;
-	ivsize = pst->st_oakley.encrypter->iv_size;
-	if (!out_zero(ivsize, &e_pbs, "iv"))
-		return STF_FATAL;
-
-	get_rnd_bytes(iv, ivsize);
-
-	/* note where cleartext starts */
-	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
-		 "cleartext");
-	e_pbs_cipher.container = &e_pbs;
-	e_pbs_cipher.desc = NULL;
-	e_pbs_cipher.cur = e_pbs.cur;
-	encstart = e_pbs_cipher.cur;
-
-	if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-			ISAKMP_PAYLOAD_NONCRITICAL,
-			PROTO_v2_RESERVED,
-			&empty_chunk,
-			v2N_NO_ADDITIONAL_SAS, NULL,
-			&e_pbs_cipher))
-		return STF_INTERNAL_ERROR;
-
-	if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
-		return STF_INTERNAL_ERROR;
-
-	close_output_pbs(&e_pbs_cipher);
-
-	{
-		stf_status ret;
-		unsigned char *authloc = ikev2_authloc(md, &e_pbs);
-
-		if (!authloc)
-			return STF_FATAL;
-
-		close_output_pbs(&e_pbs);
-		close_output_pbs(&md->rbody);
-		close_output_pbs(&reply_stream);
-
-		ret = ikev2_encrypt_msg(md, md->role,
-					authstart,
-					iv, encstart, authloc,
-					&e_pbs, &e_pbs_cipher);
-		if (ret != STF_OK)
-			return ret;
-	}
-
-	/* keep it for a retransmit if necessary */
-	freeanychunk(pst->st_tpacket);
-	clonetochunk(pst->st_tpacket, reply_stream.start,
-		     pbs_offset(&reply_stream),
-		     "reply packet for CREATE_CHILD_SA exchange");
-	send_ike_msg(pst, __FUNCTION__);
-
-	return STF_OK;
-}
-
-
 static stf_status ikev2_child_inIoutR(struct msg_digest *md)
 {
 	struct state *pst = md->st;
@@ -2908,7 +2798,7 @@ static stf_status ikev2_child_inIoutR(struct msg_digest *md)
 		return STF_FATAL;
 	}
 	DBG(DBG_CONTROLMORE,
-			DBG_log("ikev2 parent inChildR1 calculating g^{xy} in order to decrypt I1"));
+			DBG_log("ikev2 decrypt CREATE_CHILD_SA request"));
 	/* decrypt things. */
 	{
 		stf_status ret = ikev2_decrypt_msg(md, O_RESPONDER);
@@ -2959,11 +2849,11 @@ static stf_status ikev2_child_inIoutR(struct msg_digest *md)
 		if (!st->st_sec_in_use) {
 			pcrc_init(&qke->qke_pcrc, ikev2_child_inIoutR_continue);
 			if (st->st_pfs_group != NULL) {
-				DBG(DBG_CONTROLMORE, DBG_log("Generating new KE for CREATE_CHILD_SA exchange. AA not tested this path. Only the other pather build_nonce is tested"));
+				DBG(DBG_CONTROLMORE, DBG_log("Generate new KE for CREATE_CHILD_SA exchange. AA not tested this path. The other path build_nonce is tested"));
 				e = build_ke_and_nonce(&qke->qke_pcrc, st,
 						st->st_pfs_group, ci);
 			} else {
-				DBG(DBG_CONTROLMORE, DBG_log("Generating new nonce for CREATE_CHILD_SA exchange."));
+				DBG(DBG_CONTROLMORE, DBG_log("Generate new nonce for CREATE_CHILD_SA exchange."));
 				e = build_nonce(&qke->qke_pcrc, st, ci);
 			}
 		} else {
@@ -2990,8 +2880,7 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 				" sending CREATE_CHILD_SA respone", qke->qke_pcrc.pcrc_serialno));
 	if (st == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "%s: Request was disconnected from state",
-		       __FUNCTION__);
+		       "%s: Request was disconnected from state", __FUNCTION__);
 		passert(qke->qke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
 		release_any_md(&qke->qke_md);
 		return;
@@ -3063,7 +2952,8 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 			libreswan_log("error initializing hdr for CREATE_CHILD_SA reply");
 			return STF_INTERNAL_ERROR;
 		}
-	} /* HDR done*/
+	} /* HDR done*/ 
+
 	/* insert an Encryption payload header */
 	e.isag_np = ISAKMP_NEXT_v2SA;
 	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -3130,7 +3020,6 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 
 stf_status ikev2_create_child_sa_in(struct msg_digest *md)
 {
-	/* return ikev2_create_child_sa_in_refuse(md); */ /* if we want to refuse child_sa */
 	return ikev2_child_inIoutR(md);
 }
 

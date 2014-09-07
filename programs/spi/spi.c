@@ -168,25 +168,18 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 			life_severity = life_hard;
 		} else {
 			fprintf(stderr,
-				"%s: missing lifetime severity in %s, optargt=0p%p, optargp=0p%p, sizeof(\"soft\")=%d\n",
+				"%s: missing lifetime severity in %s\n",
 				progname,
-				optargt,
-				optargt,
-				optargp,
-				(int)sizeof("soft"));
+				optargt);
 			usage(progname, stderr);
 			return 1;
 		}
 		if (debug) {
 			fprintf(stdout,
-				"%s: debug: life_severity=%d, optargt=0p%p=\"%s\", optargp=0p%p=\"%s\", sizeof(\"soft\")=%d\n",
+				"%s: debug: life_severity=%d (%s)\n",
 				progname,
 				life_severity,
-				optargt,
-				optargt,
-				optargp,
-				optargp,
-				(int)sizeof("soft"));
+				optargt);
 		}
 		if (*optargp++ != '-') {
 			fprintf(stderr,

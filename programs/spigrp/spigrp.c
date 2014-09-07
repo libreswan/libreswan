@@ -57,14 +57,16 @@ char *progname;
 int pfkey_sock;
 uint32_t pfkey_seq = 0;
 
+/* to store the given saids and their address families in an array */
+/* XXX: Note that we do *not* check if the address families of all SAID?s are the same.
+ *      This can make it possible to group SAs for IPv4 addresses with SAs for
+ *      IPv6 addresses (perhaps some kind of IPv4-over-secIPv6 or vice versa).
+ *      Do not know, if this is a bug or feature
+ */
 struct said_af {
 	int af;
 	ip_said said;
-}; /* to store the given saids and their address families in an array */
-   /* XXX: Note that we do *not* check if the address families of all SAID?s are the same.
-    *      This can make it possible to group SAs for IPv4 addresses with SAs for
-    *      IPv6 addresses (perhaps some kind of IPv4-over-secIPv6 or vice versa).
-    *      Do not know, if this is a bug or feature */
+};
 
 static void usage(char *s)
 {
