@@ -87,11 +87,11 @@ west #
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
-000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16, trunclen=0
-000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20, trunclen=0
-000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32, trunclen=0
-000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48, trunclen=0
-000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64, trunclen=0
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20
+000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
+000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
+000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -150,7 +150,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec eroute
-4          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23
+4          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1000@192.1.2.23
 west #
  echo done
 done

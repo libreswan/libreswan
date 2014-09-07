@@ -1117,13 +1117,13 @@ void alg_info_snprint(char *buf, size_t buflen,
 			snprintf(ptr, be - ptr, "%s(%d)_%03d-%s(%d)_%03u",
 				strip_prefix(enum_name(&esp_transformid_names,
 						esp_info->transid),
-					"ESP"),
+					"ESP_"),
 				esp_info->transid,
 				(int)esp_info->enckeylen,
 				strip_prefix(strip_prefix(enum_name(&auth_alg_names,
 								esp_info->auth),
-							"AUTH_ALGORITHM_HMAC"),
-						"AUTH_ALGORITHM"),
+							"AUTH_ALGORITHM_HMAC_"),
+						"AUTH_ALGORITHM_"),
 				esp_info->auth,
 				(unsigned)esp_info->authkeylen);
 			ptr += strlen(ptr);
@@ -1154,8 +1154,8 @@ void alg_info_snprint(char *buf, size_t buflen,
 			snprintf(ptr, be - ptr, "%s(%d)_%03u",
 				strip_prefix(strip_prefix(enum_name(&auth_alg_names,
 								esp_info->auth),
-						"AUTH_ALGORITHM_HMAC"),
-					"AUTH_ALGORITHM"),
+						"AUTH_ALGORITHM_HMAC_"),
+					"AUTH_ALGORITHM_"),
 				esp_info->auth,
 				(unsigned)esp_info->authkeylen);
 			ptr += strlen(ptr);
@@ -1168,8 +1168,7 @@ void alg_info_snprint(char *buf, size_t buflen,
 			snprintf(ptr, be - ptr, "; pfsgroup=%s(%d)",
 				strip_prefix(enum_name(&oakley_group_names, alg_info_esp->esp_pfsgroup),
 				   "OAKLEY_GROUP_"),
-				alg_info_esp->esp_pfsgroup
-				);
+				alg_info_esp->esp_pfsgroup);
 			ptr += strlen(ptr);
 		}
 		break;

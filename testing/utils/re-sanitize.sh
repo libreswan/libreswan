@@ -9,7 +9,7 @@
 # OUTPUT/${host}.console.txt and OUTPUT/${host}.console.diff
 # If the resulting OUTPUT/${host}.console.diff is empty, it is removed.
 
-set -ui
+set -ue
 
 if [ ! -d OUTPUT ] ; then
 	echo "$0: no OUTPUT subdirectory.  Is `pwd` a test directory?" >&2

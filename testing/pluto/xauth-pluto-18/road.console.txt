@@ -62,7 +62,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.2.209 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec eroute
-4          192.0.2.209/32     -> 192.0.2.0/24       => tun0x1001@192.1.2.23
+4          192.0.2.209/32     -> 192.0.2.0/24       => tun0x1000@192.1.2.23
 road #
  ipsec auto --up modecfg-road-eastnet-psk
 002 "modecfg-road-eastnet-psk" #3: initiating Quick Mode PSK+ENCRYPT+TUNNEL+PFS+UP+XAUTH+MODECFG_PULL+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
@@ -80,7 +80,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.2.209 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec eroute
-4          192.0.2.209/32     -> 192.0.2.0/24       => tun0x1003@192.1.2.23
+4          192.0.2.209/32     -> 192.0.2.0/24       => tun0x1002@192.1.2.23
 road #
  echo done
 done

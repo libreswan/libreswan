@@ -227,7 +227,7 @@ west #
 000 State list:
 000  
 000 #2: "west-east-delete1":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #2: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1001@192.1.2.23 tun.1002@192.1.2.45 ref=3 refhim=1 Traffic:! ESPmax=0B 
+000 #2: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=1 Traffic:! ESPmax=0B 
 000 #1: "west-east-delete1":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; isakmp#0; idle; import:admin initiate
 000 #1: "west-east-delete1" ref=0 refhim=0 Traffic: 
 000  

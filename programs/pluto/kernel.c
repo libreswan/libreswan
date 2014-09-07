@@ -1732,10 +1732,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		case IKEv2_ENCR_AES_GCM_8:
 		case IKEv2_ENCR_AES_GCM_12:
 		case IKEv2_ENCR_AES_GCM_16:
+			/* keymat contains 4 bytes of salt */
+			enc_key_len += AES_GCM_SALT_BYTES;
+			break;
 		case IKEv2_ENCR_AES_CCM_8:
 		case IKEv2_ENCR_AES_CCM_12:
 		case IKEv2_ENCR_AES_CCM_16:
-			/* keymat contains 4 bytes of salt */
+			/* keymat contains 3 bytes of salt */
 			enc_key_len += AES_CCM_SALT_BYTES;
 			break;
 		}

@@ -77,12 +77,16 @@ void ike_alg_show_status(void)
 			  ((struct encrypt_desc *)algo)->keydeflen);
 	}
 	IKE_HALG_FOR_EACH(algo) {
+		/*
+		 * ??? we think that hash_integ_len is meaningless
+		 * (and 0) for IKE hashes
+		 */
+		pexpect(((struct hash_desc *)algo)->hash_integ_len == 0);
 		whack_log(RC_COMMENT,
-			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu, trunclen=%zu",
+			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
 			  algo->algo_id,
 			  enum_name(&oakley_hash_names, algo->algo_id),
-			  ((struct hash_desc *)algo)->hash_digest_len,
-			  ((struct hash_desc *)algo)->hash_integ_len);
+			  ((struct hash_desc *)algo)->hash_digest_len);
 	}
 #define IKE_DH_ALG_FOR_EACH(idx) for (idx = 0; idx != oakley_group_size; idx++)
 	IKE_DH_ALG_FOR_EACH(i) {
