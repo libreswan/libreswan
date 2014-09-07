@@ -366,7 +366,7 @@ startklips() {
 		    cmd = "ip addr add"
 		    if ($1 == "inet")
 			sub(" [^ ]+:[^ ]+"," ")
-		    sub("secondary","","")
+		    sub("secondary","")
 		    sub("/.*","",$2)
 		    sub("dynamic","")
 		    for (i = 2; i < NF; i++) {
