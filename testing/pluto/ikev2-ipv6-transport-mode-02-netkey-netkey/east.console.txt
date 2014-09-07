@@ -75,7 +75,7 @@ initdone
 east #
  ipsec look
 v6-v6-through-v6-klips-klips]# east NOW
-2001:db8:0:2::/64  -> 2001:db8:0:1::/64  => tun0x1001@2001:db8:1:2::45 esp0xafaae4b1@2001:db8:1:2::45  (4)   PAUL: sanitizer missed this line
+2001:db8:0:2::/64  -> 2001:db8:0:1::/64  => tun0x1000@2001:db8:1:2::45 esp0xafaae4b1@2001:db8:1:2::45  (4)   PAUL: sanitizer missed this line
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 

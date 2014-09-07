@@ -125,7 +125,7 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec eroute
-4          192.0.2.219/32     -> 192.0.2.0/24       => tun0x1001@192.1.2.23
+4          192.0.2.219/32     -> 192.0.2.0/24       => tun0x1000@192.1.2.23
 road #
  echo done
 done

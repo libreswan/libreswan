@@ -66,7 +66,7 @@ west #
 Tunnel should be up
 west #
  ipsec eroute
-16         192.1.2.45/32      -> 192.1.2.23/32      => tun0x1001@192.1.2.23
+16         192.1.2.45/32      -> 192.1.2.23/32      => tun0x1000@192.1.2.23
 west #
  # Let R_U_THERE packets flow
 west #
@@ -114,7 +114,7 @@ west #
 Tunnel should be up
 west #
  ipsec eroute
-16         192.1.2.45/32      -> 192.1.2.23/32      => tun0x1003@192.1.2.23
+16         192.1.2.45/32      -> 192.1.2.23/32      => tun0x1002@192.1.2.23
 west #
  echo end
 end

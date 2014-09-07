@@ -143,7 +143,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
  ipsec eroute
-0          192.0.1.0/24:1234  -> 192.0.2.0/24:1234  => tun0x1001@192.1.2.23:6
+0          192.0.1.0/24:1234  -> 192.0.2.0/24:1234  => tun0x1000@192.1.2.23:6
 west #
  echo done
 done

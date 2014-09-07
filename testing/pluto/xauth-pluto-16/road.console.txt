@@ -56,7 +56,7 @@ road #
 004 "modecfg-road-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP/NAT=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=192.1.2.23:4500 DPD=passive XAUTHuser=use3}
 road #
  ipsec eroute
-0          192.0.2.1/32       -> 0.0.0.0/0          => tun0x1001@192.1.2.23
+0          192.0.2.1/32       -> 0.0.0.0/0          => tun0x1000@192.1.2.23
 road #
  ping -n -c 4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
