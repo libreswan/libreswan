@@ -65,8 +65,8 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 		st->st_ah.present? &st->st_ah :
 		NULL;
 
-	assert(ipi != NULL);	/* ESP or AH must be present */
-	assert(st->st_esp.present != st->st_ah.present);	/* only one */
+	passert(ipi != NULL);	/* ESP or AH must be present */
+	passert(st->st_esp.present != st->st_ah.present);	/* only one */
 
 	/* ??? there is no kernel_alg_ah_info */
 	ipi->attrs.transattrs.ei = kernel_alg_esp_info(
