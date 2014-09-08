@@ -690,7 +690,7 @@ bool whack_prompt_for(int whackfd,
 		return FALSE;
 	}
 
-	if (strlen(ansbuf) == 0) {
+	if (n == 0) {
 		whack_log(RC_LOG_SERIOUS, "no %s entered, aborted", prompt2);
 		return FALSE;
 	}
