@@ -51,6 +51,7 @@ kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
 
 kvmplutotest	ikev2-24-cryptoload			wip
+kvmplutotest	ikev2-25-rw-nat				wip
 kvmplutotest	ikev1-cryptoload-01			wip
 
 kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
