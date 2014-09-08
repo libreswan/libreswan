@@ -78,7 +78,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 
 	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 	DBG(DBG_CONTROL | DBG_CRYPT,
-	    DBG_log("parent1 type: %d group: %d len: %d\n", r.pcr_type,
+	    DBG_log("parent1 type: %d group: %d len: %d", r.pcr_type,
 		    r.pcr_d.dhq.oakley_group, (int)r.pcr_len));
 
 	if (pss != NULL)

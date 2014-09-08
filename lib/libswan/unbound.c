@@ -46,23 +46,23 @@ bool unbound_init(struct ub_ctx *dnsctx)
 	/* create unbound resolver context */
 	dnsctx = ub_ctx_create();
 	if (!dnsctx) {
-		libreswan_log("error: could not create unbound context\n");
+		libreswan_log("error: could not create unbound context");
 		return FALSE;
 	}
 	DBG(DBG_DNS,
 		ub_ctx_debuglevel(dnsctx, 5);
-		DBG_log("unbound context created - setting debug level to 5\n");
+		DBG_log("unbound context created - setting debug level to 5");
 		);
 
 	/* lookup from /etc/hosts before DNS lookups as people expect that */
 	ugh = ub_ctx_hosts(dnsctx, "/etc/hosts");
 	if (ugh != 0) {
-		libreswan_log("error reading hosts: %s: %s\n",
+		libreswan_log("error reading hosts: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 		return FALSE;
 	}
 	DBG(DBG_DNS,
-		DBG_log("/etc/hosts lookups activated\n");
+		DBG_log("/etc/hosts lookups activated");
 		);
 
 	/*
@@ -72,12 +72,12 @@ bool unbound_init(struct ub_ctx *dnsctx)
 	 */
 	ugh = ub_ctx_resolvconf(dnsctx, "/etc/resolv.conf");
 	if (ugh != 0) {
-		libreswan_log("error reading resolv.conf: %s: %s\n",
+		libreswan_log("error reading resolv.conf: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 		return FALSE;
 	}
 	DBG(DBG_DNS,
-		DBG_log("/etc/resolv.conf usage activated\n");
+		DBG_log("/etc/resolv.conf usage activated");
 		);
 
 	/*
@@ -85,22 +85,22 @@ bool unbound_init(struct ub_ctx *dnsctx)
 	 * later
 	 */
 	DBG(DBG_DNS,
-		DBG_log("Loading root key:%s\n", rootanchor);
+		DBG_log("Loading root key:%s", rootanchor);
 		);
 	ugh = ub_ctx_add_ta(dnsctx, rootanchor);
 	if (ugh != 0) {
-		libreswan_log("error adding the DNSSEC root key: %s: %s\n",
+		libreswan_log("error adding the DNSSEC root key: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 		return FALSE;
 	}
 
 	/* Enable DLV */
 	DBG(DBG_DNS,
-		DBG_log("Loading dlv key:%s\n", dlvanchor);
+		DBG_log("Loading dlv key:%s", dlvanchor);
 		);
 	ugh = ub_ctx_set_option(dnsctx, "dlv-anchor:", dlvanchor);
 	if (ugh != 0) {
-		libreswan_log("error adding the DLV key: %s: %s\n",
+		libreswan_log("error adding the DLV key: %s: %s",
 			ub_strerror(ugh), strerror(errno));
 		return FALSE;
 	}
@@ -125,7 +125,7 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	if (srclen == 0) {
 		srclen = strlen(src);
 		if (srclen == 0) {
-			libreswan_log("empty hostname in host lookup\n");
+			libreswan_log("empty hostname in host lookup");
 			return FALSE;
 		}
 	}
@@ -141,7 +141,7 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	}
 
 	if (result->bogus) {
-		libreswan_log("ERROR: %s failed DNSSEC valdation!\n",
+		libreswan_log("ERROR: %s failed DNSSEC valdation!",
 			result->qname);
 		ub_resolve_free(result);
 		return FALSE;
@@ -149,12 +149,12 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	if (!result->havedata) {
 		if (result->secure) {
 			DBG(DBG_DNS,
-				DBG_log("Validated reply proves '%s' does not exist\n",
+				DBG_log("Validated reply proves '%s' does not exist",
 					src);
 				);
 		} else {
 			DBG(DBG_DNS,
-				DBG_log("Failed to resolve '%s' (%s)\n", src,
+				DBG_log("Failed to resolve '%s' (%s)", src,
 					result->bogus ? "BOGUS" : "insecure");
 				);
 		}
@@ -164,7 +164,7 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 	} else if (!result->bogus) {
 		if (!result->secure) {
 			DBG(DBG_DNS,
-				DBG_log("warning: %s lookup was not protected by DNSSEC!\n",
+				DBG_log("warning: %s lookup was not protected by DNSSEC!",
 					result->qname);
 				);
 		}
@@ -173,19 +173,19 @@ bool unbound_resolve(struct ub_ctx *dnsctx, char *src, size_t srclen, int af,
 #if 0
 	{
 		int i = 0;
-		DBG_log("The result has:\n");
-		DBG_log("qname: %s\n", result->qname);
-		DBG_log("qtype: %d\n", result->qtype);
-		DBG_log("qclass: %d\n", result->qclass);
+		DBG_log("The result has:");
+		DBG_log("qname: %s", result->qname);
+		DBG_log("qtype: %d", result->qtype);
+		DBG_log("qclass: %d", result->qclass);
 		if (result->canonname)
-			DBG_log("canonical name: %s\n", result->canonname);
-		DBG_log("DNS rcode: %d\n", result->rcode);
+			DBG_log("canonical name: %s", result->canonname);
+		DBG_log("DNS rcode: %d", result->rcode);
 
 		for (i = 0; result->data[i] != NULL; i++) {
-			DBG_log("result data element %d has length %d\n",
+			DBG_log("result data element %d has length %d",
 				i, result->len[i]);
 		}
-		DBG_log("result has %d data element(s)\n", i);
+		DBG_log("result has %d data element(s)", i);
 	}
 #endif
 

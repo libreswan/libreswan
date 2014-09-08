@@ -491,10 +491,10 @@ static void compute_proto_keymat(struct state *st,
 	}
 
 	DBG(DBG_CRYPT, {
-		    DBG_log("%s KEYMAT\n", satypename);
-		    DBG_dump("  KEYMAT computed:\n", pi->our_keymat,
+		    DBG_log("%s KEYMAT", satypename);
+		    DBG_dump("  KEYMAT computed:", pi->our_keymat,
 			     pi->keymat_len);
-		    DBG_dump("  Peer KEYMAT computed:\n", pi->peer_keymat,
+		    DBG_dump("  Peer KEYMAT computed:", pi->peer_keymat,
 			     pi->keymat_len);
 	    });
 }

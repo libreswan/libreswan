@@ -935,7 +935,7 @@ static bool raw_eroute(const ip_address *this_host,
 
 	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (!result || DBGP(DBG_CONTROL | DBG_KERNEL))
-		DBG_log("raw_eroute result=%u\n", result);
+		DBG_log("raw_eroute result=%u", result);
 
 	return result;
 }
@@ -1653,7 +1653,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		DBG(DBG_CRYPT,
-		    DBG_log("looking for alg with transid: %d keylen: %d auth: %d\n",
+		    DBG_log("looking for alg with transid: %d keylen: %d auth: %d",
 			    st->st_esp.attrs.transattrs.encrypt,
 			    st->st_esp.attrs.transattrs.enckeylen,
 			    st->st_esp.attrs.transattrs.integ_hash));
@@ -1689,7 +1689,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			}
 
 			DBG(DBG_CRYPT,
-			    DBG_log("checking transid: %d keylen: %d auth: %d\n",
+			    DBG_log("checking transid: %d keylen: %d auth: %d",
 				    ei->transid, ei->enckeylen, ei->auth));
 
 			if (st->st_esp.attrs.transattrs.encrypt ==

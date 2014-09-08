@@ -161,7 +161,7 @@ static bool writewhackrecord(char *buf, size_t buflen)
 	header[1] = 0;
 	header[2] = time(NULL);	/* ??? is this reasonable? 2038 */
 
-	/* DBG_log("buflen: %u abuflen: %u\n", header[0], abuflen); */
+	/* DBG_log("buflen: %u abuflen: %u", header[0], abuflen); */
 
 	if (fwrite(header, sizeof(header), 1, whackrecordfile) < 1)
 		DBG_log("writewhackrecord: fwrite error when writing header");
@@ -193,7 +193,7 @@ static bool openwhackrecordfile(char *file)
 	whackrecordname[sizeof(whackrecordname)-1] = '\0';	/* ensure NUL termination */
 	whackrecordfile = fopen(whackrecordname, "w");
 	if (whackrecordfile == NULL) {
-		libreswan_log("Failed to open whack record file: '%s'\n",
+		libreswan_log("Failed to open whack record file: '%s'",
 			      whackrecordname);
 		return FALSE;
 	}
@@ -201,14 +201,14 @@ static bool openwhackrecordfile(char *file)
 	tm = localtime_r(&n.real_secs, &tm1);
 	strftime(when, sizeof(when), "%F %T", tm);
 
-	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s\n",
+	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s",
 		FQDN, when);
 
 	magic = WHACK_BASIC_MAGIC;
 	writewhackrecord((char *)&magic, sizeof(magic));
 
 	DBG(DBG_CONTROL,
-	    DBG_log("started recording whack messages to %s\n",
+	    DBG_log("started recording whack messages to %s",
 		    whackrecordname));
 	return TRUE;
 }
@@ -356,7 +356,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			/* close old filename */
 			if (whackrecordfile) {
 				DBG(DBG_CONTROL,
-				    DBG_log("stopped recording whack messages to %s\n",
+				    DBG_log("stopped recording whack messages to %s",
 					    whackrecordname));
 				fclose(whackrecordfile);
 			}
@@ -370,7 +370,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 		case WHACK_STOPWHACKRECORD:
 			if (whackrecordfile) {
 				DBG(DBG_CONTROL,
-				    DBG_log("stopped recording whack messages to %s\n",
+				    DBG_log("stopped recording whack messages to %s",
 					    whackrecordname));
 				fclose(whackrecordfile);
 			}
@@ -604,7 +604,7 @@ void whack_handle(int whackctlfd)
 
 	msg_saved = msg;
 
-	/* DBG_log("msg %d size=%u\n", ++msgnum, n); */
+	/* DBG_log("msg %d size=%u", ++msgnum, n); */
 
 	/* sanity check message */
 	{

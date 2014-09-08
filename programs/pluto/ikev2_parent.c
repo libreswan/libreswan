@@ -716,7 +716,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	}
 
-	DBG_log("found connection: %s\n", c ? c->name : "<none>");
+	DBG_log("found connection: %s", c ? c->name : "<none>");
 
 	if (st == NULL) {
 		st = new_state();

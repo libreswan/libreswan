@@ -164,7 +164,7 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 			ipstr_buf b1;
 			ipstr_buf b2;
 
-			DBG_log("find_host_pair: comparing to %s:%d %s:%d\n",
+			DBG_log("find_host_pair: comparing to %s:%d %s:%d",
 				ipstr(&p->me.addr, &b1), p->me.host_port,
 				ipstr(&p->him.addr, &b2), p->him.host_port);
 		    });
@@ -204,7 +204,7 @@ struct connection *find_host_pair_connections(const char *func,
 		ipstr_buf bm;
 		ipstr_buf bh;
 
-		DBG_log("find_host_pair_conn (%s): %s:%d %s:%d -> hp:%s\n",
+		DBG_log("find_host_pair_conn (%s): %s:%d %s:%d -> hp:%s",
 			func,
 			ipstr(myaddr, &bm), myport,
 			hisaddr != NULL ? ipstr(hisaddr, &bh) : "%any",
@@ -227,7 +227,7 @@ void connect_to_host_pair(struct connection *c)
 		DBG(DBG_CONTROLMORE, {
 			ipstr_buf b1;
 			ipstr_buf b2;
-			DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp:%s\n",
+			DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp:%s",
 				ipstr(&c->spd.this.host_addr, &b1),
 				c->spd.this.host_port,
 				ipstr(&c->spd.that.host_addr, &b2),

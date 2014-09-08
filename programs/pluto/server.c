@@ -761,7 +761,7 @@ void call_server(void)
 				int helpers = pluto_crypto_helper_response_ready(
 					&readfds);
 				DBG(DBG_CONTROL,
-				    DBG_log("* processed %d messages from cryptographic helpers\n",
+				    DBG_log("* processed %d messages from cryptographic helpers",
 					    helpers));
 
 				ndes -= helpers;
