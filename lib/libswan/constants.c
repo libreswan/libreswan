@@ -44,7 +44,7 @@
  * That allows a guarantee that the result is NUL-terminated.
  *
  * The result is a pointer:
- *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
  * Warning: Is it really wise to silently truncate?  Only the caller knows.
@@ -68,7 +68,7 @@ char *jam_str(char *dest, size_t size, const char *src)
 /*
  * Add a string to a partially filled buffer of limited size
  *
- * This is similar to what people mistakenly thing strncat does
+ * This is similar to what people mistakenly think strncat does
  * but add_str matches jam_str so the arguments are quite different.
  * OpenBSD's strlcat serves the same purpose.
  *
@@ -81,7 +81,7 @@ char *jam_str(char *dest, size_t size, const char *src)
  * the first one.
  *
  * The result is a pointer:
- *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
  * The results of jam_str and add_str provide suitable values for hint
