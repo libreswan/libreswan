@@ -45,11 +45,11 @@
 000 algorithm IKE encrypt: id=0, name=(null), blocksize=16, keydeflen=131
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
-000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
-000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
-000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashsize=48
-000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashsize=64
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20
+000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
+000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
+000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
