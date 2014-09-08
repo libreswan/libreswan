@@ -3046,62 +3046,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 	} /* switch kern_interface */
 }
 
-static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
-{
-	struct connection *c = st->st_connection;
-	char text_said[SATOT_BUF];
-	struct kernel_sa sa;
-	ip_address
-		src = inbound ? c->spd.that.host_addr : c->spd.this.host_addr,
-		dst = inbound ? c->spd.this.host_addr : c->spd.that.host_addr;
-
-	ipsec_spi_t esp_spi =
-		inbound ? st->st_esp.our_spi : st->st_esp.attrs.spi;
-
-	u_int16_t
-		natt_sport =
-		    inbound ? c->spd.that.host_port : c->spd.this.host_port,
-		natt_dport =
-		    inbound ? c->spd.this.host_port : c->spd.that.host_port;
-
-	set_text_said(text_said, &dst, esp_spi, SA_ESP);
-
-	zero(&sa);
-	sa.spi = esp_spi;
-	sa.src = &src;
-	sa.dst = &dst;
-	sa.text_said = text_said;
-	sa.authalg = st->st_esp.attrs.transattrs.integ_hash;
-	sa.natt_sport = natt_sport;
-	sa.natt_dport = natt_dport;
-	sa.transid = st->st_esp.attrs.transattrs.encrypt;
-#ifdef HAVE_LABELED_IPSEC
-	sa.sec_ctx = st->sec_ctx;
-#endif
-
-	return kernel_ops->add_sa(&sa, TRUE);
-}
-
-bool update_ipsec_sa(struct state *st USED_BY_KLIPS)
-{
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
-		if ((st->st_esp.present) && (
-			    (!update_nat_t_ipsec_esp_sa(st, TRUE)) ||
-			    (!update_nat_t_ipsec_esp_sa(st, FALSE))))
-			return FALSE;
-	} else if (IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(st->st_state)) {
-		if ((st->st_esp.present) &&
-		    (!update_nat_t_ipsec_esp_sa(st, FALSE)))
-			return FALSE;
-	} else {
-		DBG_log("assert failed at %s:%d st_state=%d", __FILE__,
-			__LINE__,
-			st->st_state);
-		return FALSE;
-	}
-	return TRUE;
-}
-
 bool was_eroute_idle(struct state *st, deltatime_t since_when)
 {
 	if (kernel_ops->eroute_idle != NULL)
