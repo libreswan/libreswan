@@ -657,7 +657,7 @@ static void kill_helper(struct pluto_crypto_worker *w)
 }
 
 void log_crypto_workers(void) {
-	bool first_time = TRUE;
+	static bool first_time = TRUE;
 	int i;
 
 	if (!first_time)
