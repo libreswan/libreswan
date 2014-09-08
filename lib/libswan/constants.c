@@ -44,7 +44,7 @@
  * That allows a guarantee that the result is NUL-terminated.
  *
  * The result is a pointer:
- *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
  * Warning: Is it really wise to silently truncate?  Only the caller knows.
