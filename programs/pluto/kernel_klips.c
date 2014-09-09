@@ -75,7 +75,7 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 			err_t e;
 			e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 			if (e) {
-				DBG_log("invalid listen= option ignored: %s\n",
+				DBG_log("invalid listen= option ignored: %s",
 					e);
 				pluto_listen = NULL;
 			}

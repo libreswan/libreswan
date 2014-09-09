@@ -90,7 +90,7 @@ bool load_coded_file(const char *filename,
 		sz_fread = fread(blob->ptr, 1, blob->len, fd);
 		fclose(fd);
 		if (sz_fread != blob->len) {
-			libreswan_log("  could not read complete certificate-blob from %s file '%s'\n",
+			libreswan_log("  could not read complete certificate-blob from %s file '%s'",
 				type, filename);
 			freeanychunk(*blob);
 			return FALSE;

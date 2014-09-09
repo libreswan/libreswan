@@ -206,7 +206,7 @@ static int setsupportedmap(const struct sadb_supported *sup, int properlen)
 
 	*ipsup = malloc(properlen);
 
-	DBG_log("recv_register 4 %d = %p \n",
+	DBG_log("recv_register 4 %d = %p ",
 		sup->sadb_supported_exttype, *ipsup);
 
 	if (!*ipsup) {
@@ -776,7 +776,7 @@ int so;
 	struct sadb_msg *newmsg;
 	int error = -1;
 
-	DBG_log("recv_register\n");
+	DBG_log("recv_register");
 
 	/* receive message */
 	for (;; ) {
@@ -817,7 +817,7 @@ int pfkey_set_supported(const struct sadb_msg *msg, int tlen)
 	const unsigned char *p, *ep;
 	int properlen;
 
-	DBG_log("recv_register 2\n");
+	DBG_log("recv_register 2");
 
 	/* validity */
 	if (msg->sadb_msg_len != tlen) {
@@ -830,7 +830,7 @@ int pfkey_set_supported(const struct sadb_msg *msg, int tlen)
 
 	p += sizeof(struct sadb_msg);
 
-	DBG_log("recv_register 2c\n");
+	DBG_log("recv_register 2c");
 	while (p < ep) {
 		sup = (const struct sadb_supported *)p;
 		if (ep < p + sizeof(*sup) ||
@@ -840,7 +840,7 @@ int pfkey_set_supported(const struct sadb_msg *msg, int tlen)
 			break;
 		}
 
-		DBG_log("recv_register 2b\n");
+		DBG_log("recv_register 2b");
 
 		switch (sup->sadb_supported_exttype) {
 		case SADB_EXT_SUPPORTED_AUTH:

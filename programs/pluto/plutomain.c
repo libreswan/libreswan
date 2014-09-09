@@ -322,7 +322,7 @@ static void pluto_init_nss(char *confddir)
 	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", confddir);
 	nss_init_status = NSS_Init(confddir);
 	if (nss_init_status != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "FATAL: NSS readonly initialization (\"%s\") failed (err %d)\n",
+		loglog(RC_LOG_SERIOUS, "FATAL: NSS readonly initialization (\"%s\") failed (err %d)",
 			confddir, PR_GetError());
 		exit_pluto(10);
 	} else {
@@ -1032,7 +1032,7 @@ int main(int argc, char **argv)
 	if (chdir(coredir) == -1) {
 		int e = errno;
 
-		libreswan_log("pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)\n",
+		libreswan_log("pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
 			coredir, e, strerror(e));
 	}
 

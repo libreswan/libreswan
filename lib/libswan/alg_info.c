@@ -846,31 +846,31 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			switch(aalg_id) {
 			case AH_MD5:
 				if (p_ctx->aklen != HMAC_MD5_KEY_LEN * BITS_PER_BYTE)
-					return "wrong authenticaion key length - key size must be 160";
+					return "wrong authentication key length - key size must be 160";
 				break;
 			case AH_SHA:
 			case AH_AES_XCBC_MAC:
 			case AH_RIPEMD:
 			case AH_AES_128_GMAC:
 				if (p_ctx->aklen != 128)
-					return "wrong authenticaion key length - key size must be 128";
+					return "wrong authentication key length - key size must be 128";
 				break;
 			case AH_AES_192_GMAC:
 				if (p_ctx->aklen != 192)
-					return "wrong authenticaion key length - key size must be 192";
+					return "wrong authentication key length - key size must be 192";
 				break;
 			case AH_SHA2_256:
 			case AH_AES_256_GMAC:
 				if (p_ctx->aklen != 256)
-					return "wrong authenticaion key length - key size must be 256";
+					return "wrong authentication key length - key size must be 256";
 				break;
 			case AH_SHA2_384:
 				if (p_ctx->aklen != 384)
-					return "wrong authenticaion key length - key size must be 384";
+					return "wrong authentication key length - key size must be 384";
 				break;
 			case AH_SHA2_512:
 				if (p_ctx->aklen != 512)
-					return "wrong authenticaion key length - key size must be 512";
+					return "wrong authentication key length - key size must be 512";
 				break;
 			}
 		}

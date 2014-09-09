@@ -937,7 +937,7 @@ static bool raw_eroute(const ip_address *this_host,
 
 	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (!result || DBGP(DBG_CONTROL | DBG_KERNEL))
-		DBG_log("raw_eroute result=%u\n", result);
+		DBG_log("raw_eroute result=%u", result);
 
 	return result;
 }
@@ -1655,7 +1655,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		DBG(DBG_CRYPT,
-		    DBG_log("looking for alg with transid: %d keylen: %d auth: %d\n",
+		    DBG_log("looking for alg with transid: %d keylen: %d auth: %d",
 			    ta->encrypt, ta->enckeylen, ta->integ_hash));
 
 		for (ei = esp_info; ; ei++) {
@@ -1687,7 +1687,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			}
 
 			DBG(DBG_CRYPT,
-			    DBG_log("checking transid: %d keylen: %d auth: %d\n",
+			    DBG_log("checking transid: %d keylen: %d auth: %d",
 				    ei->transid, ei->enckeylen, ei->auth));
 
 			if (ta->encrypt == ei->transid &&
@@ -3002,62 +3002,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 		    DBG_log("Unknown kernel stack in delete_ipsec_sa"));
 		break;
 	} /* switch kern_interface */
-}
-
-static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
-{
-	struct connection *c = st->st_connection;
-	char text_said[SATOT_BUF];
-	struct kernel_sa sa;
-	ip_address
-		src = inbound ? c->spd.that.host_addr : c->spd.this.host_addr,
-		dst = inbound ? c->spd.this.host_addr : c->spd.that.host_addr;
-
-	ipsec_spi_t esp_spi =
-		inbound ? st->st_esp.our_spi : st->st_esp.attrs.spi;
-
-	u_int16_t
-		natt_sport =
-		    inbound ? c->spd.that.host_port : c->spd.this.host_port,
-		natt_dport =
-		    inbound ? c->spd.this.host_port : c->spd.that.host_port;
-
-	set_text_said(text_said, &dst, esp_spi, SA_ESP);
-
-	zero(&sa);
-	sa.spi = esp_spi;
-	sa.src = &src;
-	sa.dst = &dst;
-	sa.text_said = text_said;
-	sa.authalg = st->st_esp.attrs.transattrs.integ_hash;
-	sa.natt_sport = natt_sport;
-	sa.natt_dport = natt_dport;
-	sa.transid = st->st_esp.attrs.transattrs.encrypt;
-#ifdef HAVE_LABELED_IPSEC
-	sa.sec_ctx = st->sec_ctx;
-#endif
-
-	return kernel_ops->add_sa(&sa, TRUE);
-}
-
-bool update_ipsec_sa(struct state *st USED_BY_KLIPS)
-{
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
-		if ((st->st_esp.present) && (
-			    (!update_nat_t_ipsec_esp_sa(st, TRUE)) ||
-			    (!update_nat_t_ipsec_esp_sa(st, FALSE))))
-			return FALSE;
-	} else if (IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(st->st_state)) {
-		if ((st->st_esp.present) &&
-		    (!update_nat_t_ipsec_esp_sa(st, FALSE)))
-			return FALSE;
-	} else {
-		DBG_log("assert failed at %s:%d st_state=%d", __FILE__,
-			__LINE__,
-			st->st_state);
-		return FALSE;
-	}
-	return TRUE;
 }
 
 bool was_eroute_idle(struct state *st, deltatime_t since_when)

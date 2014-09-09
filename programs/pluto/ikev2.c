@@ -493,7 +493,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		}
 
 		DBG(DBG_PARSING,
-		    DBG_log("processing payload: %s (len=%u)\n",
+		    DBG_log("processing payload: %s (len=%u)",
 			    enum_show(&ikev2_payload_names, np),
 			    pd->payload.generic.isag_length));
 
