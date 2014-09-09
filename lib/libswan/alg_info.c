@@ -762,7 +762,10 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			case ESP_DES_IV32:
 			case ESP_RC4:
 			case ESP_ID17:
-			// kernel uses IKEv1, where it is camellia - case ESP_RESERVED_FOR_IEEE_P1619_XTS_AES:
+				/*
+				 * kernel uses IKEv1, where it is camellia
+				 * - case ESP_RESERVED_FOR_IEEE_P1619_XTS_AES:
+				 */
 				return "cipher not implemented";
 			}
 			break;
