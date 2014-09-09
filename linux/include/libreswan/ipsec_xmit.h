@@ -100,13 +100,11 @@ struct ipsec_xmit_state {
 	struct sockaddr_encap matcher;  /* eroute search key */
 	struct eroute *eroute;
 	struct ipsec_sa *ipsp;          /* ipsec_sa pointers */
-	//struct ipsec_sa *ipsp_outer;    /* last SA applied by encap_bundle */
 	char sa_txt[SATOT_BUF];
 	size_t sa_len;
 	int hard_header_stripped;       /* has the hard header been removed yet? */
 	int hard_header_len;
 	struct net_device *physdev;
-/*	struct device *virtdev; */
 	short physmtu;
 	short cur_mtu;          /* copy of prv->mtu, cause prv may == NULL */
 	short mtudiff;
