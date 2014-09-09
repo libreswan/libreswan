@@ -55,7 +55,7 @@ sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed ID_PROT response 0 [ SA V V V ]
 received DPD vendor ID
-received unknown vendor ID: 40:48:b7:d5:6e:bc:e8:85:25:e7:de:7f:00:d6:c2:d3
+received unknown vendor ID: LIBRESWAN
 received NAT-T (RFC 3947) vendor ID
 generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
