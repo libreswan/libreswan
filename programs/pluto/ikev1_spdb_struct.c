@@ -2490,8 +2490,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						    AUTH_ALGORITHM_NONE) {
 							loglog(RC_LOG_SERIOUS,
 							       "ESP_NULL requires auth algorithm");
-							return
-								BAD_PROPOSAL_SYNTAX;
+							return BAD_PROPOSAL_SYNTAX;
 						}
 
 						if (st->st_policy &
