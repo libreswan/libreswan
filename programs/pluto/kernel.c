@@ -1654,7 +1654,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			natt_oa = st->hidden_variables.st_nat_oa;
 		}
 
-		DBG(DBG_CRYPT,
+		DBG(DBG_CONTROL,
 		    DBG_log("looking for alg with transid: %d keylen: %d auth: %d",
 			    ta->encrypt, ta->enckeylen, ta->integ_hash));
 
