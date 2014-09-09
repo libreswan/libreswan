@@ -315,11 +315,11 @@ umlplutotest	nss-leftrsasigkey2-01	good
 kvmplutotest	nat-pluto-01		good
 kvmplutotest	nat-pluto-02		good
 kvmplutotest	nat-pluto-03		good
-kvmplutotest	nat-pluto-04		good
-kvmplutotest	nat-pluto-06		good
-kvmplutotest	nat-pluto-07		good
+kvmplutotest	nat-pluto-04		wip
+kvmplutotest	nat-pluto-06		wip
+kvmplutotest	nat-pluto-07		wip
 kvmplutotest	nat-pluto-08		good
-kvmplutotest	nat-pluto-09		good
+kvmplutotest	nat-pluto-09		wip
 kvmplutotest	nat-pluto-10		good
 
 #
@@ -336,7 +336,7 @@ umlXhost	nat-aggr-01		good
 kvmplutotest	basic-pluto-04		good
 
 # CAP_DAC_OVERRIDE
-kvmplutotest	basic-pluto-06		wip
+kvmplutotest	basic-pluto-06		good
 
 # a test of sending and validating an X.509 cert
 # when the responder has leftca=%any
