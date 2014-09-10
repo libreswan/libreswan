@@ -2067,7 +2067,7 @@ const char *strip_prefix(const char *s, const char *prefix)
 {
 	size_t pl = strlen(prefix);
 
-	return (s != NULL && strncmp(s, prefix, pl) == 0) ? s + pl : s;
+	return (s != NULL && strneq(s, prefix, pl)) ? s + pl : s;
 }
 
 /*
