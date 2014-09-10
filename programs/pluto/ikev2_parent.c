@@ -95,6 +95,16 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 					   struct pluto_crypto_req *r);
 
 static int build_ike_version();
+
+static bool emit_iv(const struct state *st, pb_stream *pbs)
+{
+	size_t ivsize = st->st_oakley.encrypter->iv_size;
+	unsigned char ivbuf[128];	/* room for any IV */
+
+	passert(ivsize <= sizeof(ivbuf));
+	get_rnd_bytes(ivbuf, ivsize);
+	return out_raw(ivbuf, ivsize, pbs, "IV");
+}
 /*
  *
  ***************************************************************
@@ -1394,10 +1404,10 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	}
 
 	e_pbs = &md->chain[ISAKMP_NEXT_v2E]->pbs;
-	np    = md->chain[ISAKMP_NEXT_v2E]->payload.generic.isag_np;
+	np = md->chain[ISAKMP_NEXT_v2E]->payload.generic.isag_np;
 
 	authstart = md->packet_pbs.start;
-	iv     = e_pbs->cur;
+	iv = e_pbs->cur;
 	encend = e_pbs->roof - pst->st_oakley.integ_hasher->hash_integ_len;
 
 	/* start by checking authenticator */
@@ -1422,7 +1432,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		    });
 
 		/* compare first 96 bits == 12 bytes */
-		/* It is not always 96 bytes, it depends upon which integ algo is used*/
+		/* It is not always 96 bytes, it depends upon which integ algo is used */
 		if (!memeq(b12, encend,
 			   pst->st_oakley.integ_hasher->hash_integ_len)) {
 			libreswan_log("R2 failed to match authenticator");
@@ -1435,8 +1445,8 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	/* decrypt */
 	{
 		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
-		unsigned char *encstart  = iv + blocksize;
-		unsigned int enclen    = encend - encstart;
+		unsigned char *encstart = iv + blocksize;
+		unsigned int enclen = encend - encstart;
 		unsigned int padlen;
 
 		DBG(DBG_CRYPT,
@@ -1535,7 +1545,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	unsigned char *encstart;
 	pb_stream e_pbs, e_pbs_cipher;
 	unsigned char *iv;
-	int ivsize;
 	stf_status ret;
 	unsigned char *idhash;
 	unsigned char *authstart;
@@ -1583,8 +1592,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	{
 		struct isakmp_hdr r_hdr = md->hdr;
 
-		r_hdr.isa_np    = ISAKMP_NEXT_v2E;
-		r_hdr.isa_xchg  = ISAKMP_v2_AUTH;
+		r_hdr.isa_np = ISAKMP_NEXT_v2E;
+		r_hdr.isa_xchg = ISAKMP_v2_AUTH;
 		r_hdr.isa_flags = ISAKMP_FLAGS_IKE_I;
 		r_hdr.isa_msgid = st->st_msgid;
 		memcpy(r_hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
@@ -1607,12 +1616,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		return STF_INTERNAL_ERROR;
 
 	/* insert IV */
-	iv     = e_pbs.cur;
-	ivsize = st->st_oakley.encrypter->iv_size;
-	if (!out_zero(ivsize, &e_pbs, "iv"))
+	iv = e_pbs.cur;
+	if (!emit_iv(st, &e_pbs))
 		return STF_INTERNAL_ERROR;
-
-	get_rnd_bytes(iv, ivsize);
 
 	/* note where cleartext starts */
 	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
@@ -1884,7 +1890,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md  = dh->dh_md;
+	struct msg_digest *md = dh->dh_md;
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 	unsigned char *idhash_in, *idhash_out;
@@ -2029,7 +2035,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	{
 		unsigned char *encstart;
 		unsigned char *iv;
-		unsigned int ivsize;
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
 		stf_status ret;
@@ -2044,8 +2049,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		{
 			struct isakmp_hdr r_hdr = md->hdr;
 
-			r_hdr.isa_np    = ISAKMP_NEXT_v2E;
-			r_hdr.isa_xchg  = ISAKMP_v2_AUTH;
+			r_hdr.isa_np = ISAKMP_NEXT_v2E;
+			r_hdr.isa_xchg = ISAKMP_v2_AUTH;
 			r_hdr.isa_flags = ISAKMP_FLAGS_MSG_R;
 			memcpy(r_hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 			memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
@@ -2062,12 +2067,9 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			return STF_INTERNAL_ERROR;
 
 		/* insert IV */
-		iv     = e_pbs.cur;
-		ivsize = st->st_oakley.encrypter->iv_size;
-		if (!out_zero(ivsize, &e_pbs, "iv"))
+		iv = e_pbs.cur;
+		if (!emit_iv(st, &e_pbs))
 			return STF_INTERNAL_ERROR;
-
-		get_rnd_bytes(iv, ivsize);
 
 		/* note where cleartext starts */
 		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
@@ -2482,8 +2484,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				      &st->st_ts_that.high, &tmp_subnet_r);
 
 			c->spd.this.client = tmp_subnet_i;
-			c->spd.this.port  = st->st_ts_this.startport;
-			c->spd.this.protocol  = st->st_ts_this.ipprotoid;
+			c->spd.this.port = st->st_ts_this.startport;
+			c->spd.this.protocol = st->st_ts_this.ipprotoid;
 			setportof(htons(c->spd.this.port),
 				  &c->spd.this.host_addr);
 			setportof(htons(c->spd.this.port),
@@ -2784,43 +2786,37 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
  *   <--  HDR, SK {[N,] [D,] [CP], ...}
  */
 
-static stf_status ikev2_child_inIoutR(struct msg_digest *md)
+stf_status ikev2_child_inIoutR(struct msg_digest *md)
 {
 	struct state *pst = md->st;
-	struct state *st  =  NULL; /* child state */ 
+	struct state *st = NULL; /* child state */ 
 
 	if (IS_CHILD_SA(pst))
 		pst = state_with_serialno(st->st_clonedfrom);
 
-	/* verify that there is in fact an encrypted payload */
-	if (md->chain[ISAKMP_NEXT_v2E] == NULL) {
-		libreswan_log("R2 state should receive an encrypted payload");
-		return STF_FATAL;
-	}
 	DBG(DBG_CONTROLMORE,
-			DBG_log("ikev2 decrypt CREATE_CHILD_SA request"));
-	/* decrypt things. */
+		DBG_log("ikev2 decrypt CREATE_CHILD_SA request"));
+
+	/* decrypt message */
 	{
 		stf_status ret = ikev2_decrypt_msg(md, O_RESPONDER);
+
 		if (ret != STF_OK)
 			return ret;
 	} 
-
 
 	st = duplicate_state(pst); /* create child state */
 	set_cur_state(st);      /* (caller will reset) */
 	md->st = st;            /* feed back new state. ??? better way to do */
 	insert_state(st); /* needed for delete - we are duplicating early */
 
-
-	if (md->chain[ISAKMP_NEXT_v2KE]) {
-		struct ikev2_ke *ke;
-
-		ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
+	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
+		struct ikev2_ke *ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
 
 		st->st_oakley.group = lookup_group(ke->isak_group);
 		if (st->st_oakley.group == NULL) {
 			ipstr_buf b;
+
 			libreswan_log(
 				"rejecting create child SA from %s:%u, invalid DH group=%u",
 				ipstr(&md->sender, &b), md->sender_port,
@@ -2835,8 +2831,9 @@ static stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 	/* calculate new nonce and the KE */
 	{
-		struct qke_continuation *qke = alloc_thing(struct
-				qke_continuation, "IKEv2 CHILD KE AND NONCE");
+		struct qke_continuation *qke = alloc_thing(
+				struct qke_continuation,
+				"IKEv2 CHILD KE AND NONCE");
 		stf_status e;
 		enum crypto_importance ci;
 
@@ -2858,8 +2855,7 @@ static stf_status ikev2_child_inIoutR(struct msg_digest *md)
 			}
 		} else {
 			qke->qke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-			e = ikev2_child_inIoutR_tail((struct pluto_crypto_req_cont *)qke,
-				NULL);
+			e = ikev2_child_inIoutR_tail(&qke->qke_pcrc, NULL);
 		}
 		reset_globals();
 		return e;
@@ -2922,7 +2918,6 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 	unsigned char *authstart;
 	unsigned char *encstart;
 	unsigned char *iv;
-	int ivsize;
 	struct ikev2_generic e;
 	pb_stream e_pbs, e_pbs_cipher;
 	stf_status ret;
@@ -2934,8 +2929,9 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 	/* HDR out */
 	{
 		struct isakmp_hdr r_hdr = md->hdr;
-		r_hdr.isa_np    = ISAKMP_NEXT_v2E;
-		r_hdr.isa_xchg  = ISAKMP_v2_CREATE_CHILD_SA;
+
+		r_hdr.isa_np = ISAKMP_NEXT_v2E;
+		r_hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
 		r_hdr.isa_flags = ISAKMP_FLAGS_MSG_R;
 		memcpy(r_hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 		memcpy(r_hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
@@ -2952,7 +2948,7 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 			libreswan_log("error initializing hdr for CREATE_CHILD_SA reply");
 			return STF_INTERNAL_ERROR;
 		}
-	} /* HDR done*/ 
+	} /* HDR done */ 
 
 	/* insert an Encryption payload header */
 	e.isag_np = ISAKMP_NEXT_v2SA;
@@ -2961,12 +2957,9 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 		return STF_INTERNAL_ERROR;
 
 	/* IV */
-	iv     = e_pbs.cur;
-	ivsize = st->st_oakley.encrypter->iv_size;
-	if (!out_zero(ivsize, &e_pbs, "iv"))
+	iv = e_pbs.cur;
+	if (!emit_iv(st, &e_pbs))
 		return STF_INTERNAL_ERROR;
-
-	get_rnd_bytes(iv, ivsize);
 
 	/* note where cleartext starts */
 	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
@@ -2983,21 +2976,22 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 			ISAKMP_v2_CREATE_CHILD_SA);
 
 	if (ret > STF_FAIL) {
-
 		int v2_notify_num = ret - STF_FAIL;
 
 		DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s",
 				enum_name(&ikev2_notify_names, v2_notify_num));
-
 	} else if (ret != STF_OK) {
 		DBG_log("ikev2_child_sa_respond returned %s",
 				enum_name(&stfstatus_name, ret));
 	}
 	if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
+
 	close_output_pbs(&e_pbs_cipher);
+
 	{
 		unsigned char *authloc = ikev2_authloc(md, &e_pbs);
+
 		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&e_pbs);
@@ -3018,69 +3012,70 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 	return STF_OK;
 }
 
-stf_status ikev2_create_child_sa_in(struct msg_digest *md)
-{
-	return ikev2_child_inIoutR(md);
-}
-
 stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 {
-	enum phase1_role prole;
+	struct state *st = md->st;
+	enum phase1_role prole;	/* parent SA's role */
 
-	/* decrypt things. */
+
+	/* Since an informational exchange can be started by the original responder,
+	 * things such as encryption, decryption should be done based on the original
+	 * role and not the md->role
+	 */
+	if (IS_V2_INITIATOR(st->st_state)) {
+		prole = O_INITIATOR;
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("received informational exchange request from the original responder"));
+	} else {
+		prole = O_RESPONDER;
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("received informational exchange request from the original initiator"));
+	}
+
+	/* decrypt message */
 	{
-		stf_status ret;
-		struct state *ost = md->st;
-
-		/* Since an informational exchange can be started by the original responder,
-		 * things such as encryption, decryption should be done based on the original
-		 * role and not the md->role
-		 */
-		if (IS_V2_INITIATOR(ost->st_state)) {
-			prole = O_INITIATOR;
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("received informational exchange request from the original responder"));
-		} else {
-			prole = O_RESPONDER;
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("received informational exchange request from the original initiator"));
-		}
-		ret = ikev2_decrypt_msg(md, prole);
+		stf_status ret = ikev2_decrypt_msg(md, prole);
 
 		if (ret != STF_OK)
 			return ret;
 	}
 
+	/*
+	 * get parent
+	 *
+	 * ??? shouldn't st always be the parent?
+	 * ??? if not, why not get parent at the start?
+	 */
+
+	pexpect(!IS_CHILD_SA(st));	/* ??? why would st be a child? */
+
+	if (IS_CHILD_SA(st)) {
+		/* we picked incomplete child, change to parent */
+		so_serial_t c_serialno = st->st_serialno;
+
+		st = state_with_serialno(st->st_clonedfrom);
+		if (st == NULL)
+			return STF_INTERNAL_ERROR;
+		md->st = st;
+		set_cur_state(st);
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("Informational exchange matched Child SA #%lu - switched to its Parent SA #%lu",
+			c_serialno, st->st_serialno));
+	}
+
 	{
 		struct payload_digest *p;
-		stf_status ret;
-		struct state *st = md->st;
 
-		if (IS_CHILD_SA(st)) {
-			/* we picked incomplete child, change to parent */
-			so_serial_t c_serialno = st->st_serialno;
-
-			st = state_with_serialno(st->st_clonedfrom);
-			if (st == NULL)
-				return STF_INTERNAL_ERROR;
-			md->st = st;
-			set_cur_state(st);
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("Informational exchange matched Child SA #%lu - switched to its Parent SA #%lu",
-				c_serialno, st->st_serialno));
-		}
-
-		/* Only send response if it is request*/
-		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)) {
-			unsigned char *authstart;
+		/*
+		 * Generate response message,
+		 * but only if we are the Responder in this exchange.
+		 */
+		if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) == 0) {
 			pb_stream e_pbs, e_pbs_cipher;
 			struct ikev2_generic e;
 			unsigned char *iv;
-			int ivsize;
 			unsigned char *encstart;
-
-			/* beginning of data going out */
-			authstart = reply_stream.cur;
+			unsigned char *authstart = reply_stream.cur;
 
 			/* make sure HDR is at start of a clean buffer */
 			zero(&reply_buffer);
@@ -3097,6 +3092,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			/* HDR out */
 			{
 				struct isakmp_hdr r_hdr;
+
 				zero(&r_hdr); /* default to 0 */
 				r_hdr.isa_version = build_ike_version();
 				memcpy(r_hdr.isa_rcookie, st->st_rcookie,
@@ -3106,7 +3102,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
 				r_hdr.isa_np = ISAKMP_NEXT_v2E;
 				r_hdr.isa_msgid = htonl(md->msgid_received);
-				r_hdr.isa_flags  |=  ISAKMP_FLAGS_MSG_R;
+				r_hdr.isa_flags |= ISAKMP_FLAGS_MSG_R;
 
 				if (!out_struct(&r_hdr, &isakmp_hdr_desc,
 						&reply_stream, &md->rbody)) {
@@ -3115,7 +3111,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					return STF_INTERNAL_ERROR;
 				}
 
-			} /*HDR Done*/
+			} /* HDR Done */
 
 			/* insert an Encryption payload header */
 
@@ -3162,12 +3158,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				return STF_INTERNAL_ERROR;
 
 			/* insert IV */
-			iv     = e_pbs.cur;
-			ivsize = st->st_oakley.encrypter->iv_size;
-			if (!out_zero(ivsize, &e_pbs, "iv"))
+			iv = e_pbs.cur;
+			if (!emit_iv(st, &e_pbs))
 				return STF_INTERNAL_ERROR;
-
-			get_rnd_bytes(iv, ivsize);
 
 			/* note where cleartext starts */
 			init_pbs(&e_pbs_cipher, e_pbs.cur,
@@ -3277,7 +3270,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 						v2del->isad_spisize;
 					v2del_tmp.isad_nrspi = j;
 
-					/* Emit delete payload header out*/
+					/* Emit delete payload header out */
 					if (!out_struct(&v2del_tmp,
 							&ikev2_delete_desc,
 							&e_pbs_cipher,
@@ -3285,8 +3278,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					{
 						libreswan_log(
 							"error initializing hdr for delete payload");
-						return
-							STF_INTERNAL_ERROR;
+						return STF_INTERNAL_ERROR;
 					}
 
 					/* Emit values of spi to be sent to the peer */
@@ -3309,9 +3301,10 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				}
 			}
 
-			/* If there are no payloads or in other words empty payload in request
-			 * that means it is check for liveliness, so send an empty payload message
-			 * this will end up sending an empty payload
+			/*
+			 * If there is no payload (in other words empty payload in request)
+			 * that means it is check for liveliness, so send an empty payload message.
+			 * This will end up sending an empty payload.
 			 */
 
 			if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
@@ -3320,6 +3313,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			close_output_pbs(&e_pbs_cipher);
 
 			{
+				stf_status ret;
 				unsigned char *authloc = ikev2_authloc(md,
 								       &e_pbs);
 				if (authloc == NULL)
@@ -3347,8 +3341,10 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			send_ike_msg(st, __FUNCTION__);
 		}
 
-		/* Now carry out the actualy task, we cannot carry the actual task since
-		 * we need to send informational responde using existig SAs
+		/*
+		 * Now carry out the actualy task.
+		 * But we cannot carry out the actual task since
+		 * we need to send informational responses using existing SAs
 		 */
 
 		if (md->chain[ISAKMP_NEXT_v2D] &&
@@ -3366,26 +3362,32 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				case PROTO_IPSEC_AH: /* Child SAs */
 				case PROTO_IPSEC_ESP: /* Child SAs */
 				{
-					struct ikev2_delete;
 					u_int16_t i;
-					u_char *spi;
 
 					if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
-						libreswan_log("IPsec Delete SPI size should be 4 but is %d",
+						libreswan_log("IPsec Delete SPI size should be 4 but is %u",
 							v2del->isad_spisize);
+						return STF_FAIL + v2N_INVALID_SYNTAX;
+					}
+					if (v2del->isad_nrspi * sizeof(ipsec_spi_t) !=
+					    pbs_left(&p->pbs)) {
+						libreswan_log("IPsec Delete SPI payload wrong size (expected %u; got %u)",
+							(unsigned) (v2del->isad_nrspi * sizeof(ipsec_spi_t)),
+							(unsigned) pbs_left(&p->pbs));
 						return STF_FAIL + v2N_INVALID_SYNTAX;
 					}
 
 					for (i = 0; i < v2del->isad_nrspi; i++ ) {
-						spi = p->pbs.cur +
-						      (i * v2del->isad_spisize);
+						ipsec_spi_t spi;
+
+						if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+							return STF_INTERNAL_ERROR;	/* cannot happen */
+
 						DBG(DBG_CONTROLMORE, DBG_log(
-							    "Now doing actual deletion for request: %s SA(0x%08lx)",
+							    "delete %s SA(0x%08" PRIx32 ")",
 							    enum_show(&protocol_names,
 								    v2del->isad_protoid),
-							    (unsigned long)
-							    ntohl((unsigned long)
-								  *(ipsec_spi_t *)
+							    ntohl((uint32_t)
 								  spi)));
 
 						struct state *dst =
@@ -3393,24 +3395,24 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 								st->st_icookie,
 								st->st_rcookie,
 								v2del->isad_protoid,
-								*(ipsec_spi_t *)spi);
+								spi);
 
 						if (dst != NULL) {
 							DBG(DBG_CONTROLMORE,
-								DBG_log("our side spi that needs to be deleted: %s SA(0x%08lx)",
+								DBG_log("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
 									enum_show(&protocol_names,
 										v2del->isad_protoid),
-									(unsigned long)ntohl(*(ipsec_spi_t *)spi)));
+									ntohl((uint32_t)spi)));
 
-							/* now delete the state*/
+							/* now delete the state */
 							change_state(dst,
 								STATE_CHILDSA_DEL);
 							delete_state(dst);
 						} else {
 							libreswan_log(
-							    "received delete request for %s SA(0x%08lx) but corresponding state not found",
+							    "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
 								    enum_show(&protocol_names, v2del->isad_protoid),
-									(unsigned long)ntohl((unsigned long)*(ipsec_spi_t *)spi));
+									ntohl((uint32_t)spi));
 						}
 					}
 				}
@@ -3418,6 +3420,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 				default:
 					/* Unrecongnized protocol */
+					/* ??? diagnostic?  Failure? */
 					return STF_IGNORE;
 				}
 
@@ -3430,7 +3433,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 			}       /* for */
 		} else {
-			/* empty response to our IKESA delete request*/
+			/* empty response to our IKESA delete request */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) {
 				if (st->st_state == STATE_IKESA_DEL) {
 					/*
@@ -3476,7 +3479,6 @@ stf_status ikev2_send_informational(struct state *st)
 		unsigned char *authstart;
 		unsigned char *encstart;
 		unsigned char *iv;
-		int ivsize;
 		struct msg_digest md;
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
@@ -3515,7 +3517,7 @@ stf_status ikev2_send_informational(struct state *st)
 					"error initializing hdr for informational message");
 				return STF_FATAL;
 			}
-		} /* HDR done*/
+		} /* HDR done */
 
 		/* insert an Encryption payload header */
 		e.isag_np = ISAKMP_NEXT_v2NONE;
@@ -3525,11 +3527,8 @@ stf_status ikev2_send_informational(struct state *st)
 
 		/* IV */
 		iv = e_pbs.cur;
-		ivsize = pst->st_oakley.encrypter->iv_size;
-		if (!out_zero(ivsize, &e_pbs, "iv"))
-			return STF_FATAL;
-
-		get_rnd_bytes(iv, ivsize);
+		if (!emit_iv(st, &e_pbs))
+			return STF_INTERNAL_ERROR;
 
 		/* note where cleartext starts */
 		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
@@ -3609,7 +3608,6 @@ void ikev2_delete_out(struct state *st)
 		pb_stream rbody;
 		struct ikev2_generic e;
 		unsigned char *iv;
-		int ivsize;
 		unsigned char *encstart;
 		struct msg_digest md;
 		enum phase1_role role;
@@ -3653,7 +3651,7 @@ void ikev2_delete_out(struct state *st)
 				goto unhappy_ending;
 			}
 
-		} /*HDR Done*/
+		} /* HDR Done */
 
 		/* insert an Encryption payload header */
 		e.isag_np = ISAKMP_NEXT_v2D;
@@ -3663,11 +3661,9 @@ void ikev2_delete_out(struct state *st)
 			goto unhappy_ending;
 
 		/* insert IV */
-		iv     = e_pbs.cur;
-		ivsize = pst->st_oakley.encrypter->iv_size;
-		if (!out_zero(ivsize, &e_pbs, "iv"))
+		iv = e_pbs.cur;
+		if (!emit_iv(st, &e_pbs))
 			goto unhappy_ending;
-		get_rnd_bytes(iv, ivsize);
 
 		/* note where cleartext starts */
 		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
@@ -3699,7 +3695,7 @@ void ikev2_delete_out(struct state *st)
 				v2del_tmp.isad_nrspi = 0;
 			}
 
-			/* Emit delete payload header out*/
+			/* Emit delete payload header out */
 			if (!out_struct(&v2del_tmp, &ikev2_delete_desc,
 					&e_pbs_cipher, &del_pbs)) {
 				libreswan_log(
@@ -3707,7 +3703,7 @@ void ikev2_delete_out(struct state *st)
 				goto unhappy_ending;
 			}
 
-			/* Emit values of spi to be sent to the peer*/
+			/* Emit values of spi to be sent to the peer */
 			if (IS_CHILD_SA(st)) {
 				if (!out_raw((u_char *)&st->st_esp.our_spi,
 					     sizeof(ipsec_spi_t), &del_pbs,
