@@ -1277,7 +1277,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	default: /* a shortcut to STF_FAIL, setting md->note */
 		passert(result > STF_FAIL);
 		md->note = result - STF_FAIL;
-		result = STF_FAIL;	/* not actually used */
 		/* FALL THROUGH ... */
 	case STF_FAIL:
 		whack_log(RC_NOTIFICATION + md->note,

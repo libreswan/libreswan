@@ -1954,7 +1954,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		} else if (!outgoing_ref_set) {
 			/* on outbound, pick up the SAref if not already done */
 			said_next->ref = refhim;
-			outgoing_ref_set = TRUE;
+			outgoing_ref_set = TRUE;	/* not currently used */
 		}
 
 		if (!kernel_ops->add_sa(said_next, replace)) {
@@ -1977,11 +1977,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 		if (!incoming_ref_set && inbound) {
 			st->st_ref = said_next->ref;
-			incoming_ref_set = TRUE;
+			incoming_ref_set = TRUE;	/* not currently used */
 		}
 		said_next++;
 
-		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;
+		encap_oneshot = ENCAPSULATION_MODE_TRANSPORT;	/* not currently used */
 	}
 
 	/*

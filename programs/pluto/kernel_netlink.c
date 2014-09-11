@@ -1226,7 +1226,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &natt, sizeof(natt));
 
 		req.n.nlmsg_len += attr->rta_len;
-		attr = (struct rtattr *)((char *)attr + attr->rta_len);
+		attr = (struct rtattr *)((char *)attr + attr->rta_len);	/* ??? why is this not used? */
 	}
 
 #ifdef HAVE_LABELED_IPSEC

@@ -2496,7 +2496,7 @@ static stf_status xauth_client_resp(struct state *st,
 							st->st_xauth_password);
 						st->st_xauth_password.len = 0;
 						password_read_from_prompt =
-							FALSE;
+							FALSE;	/* ??? never used? */
 					}
 					close_output_pbs(&attrval);
 					break;
