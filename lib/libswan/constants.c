@@ -1055,6 +1055,7 @@ static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP6_PREFIX",
 	"HOME_AGENT_ADDRESS",	/* 19 */
 };
+
 static enum_names modecfg_attr_names_draft = {
 	INTERNAL_IP4_ADDRESS,
 	HOME_AGENT_ADDRESS,
@@ -1852,15 +1853,6 @@ enum_names *const ikev2_trans_attr_val_descs[] = {
 	NULL,	/* 12 */
 	NULL,	/* 13 */
 	&ikev2_trans_attr_descs,	/* KEY_LENGTH */
-};
-
-/* socket address family info */
-static const char *const af_inet_name[] = {
-	"AF_INET",
-};
-
-static const char *const af_inet6_name[] = {
-	"AF_INET6",
 };
 
 
