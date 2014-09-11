@@ -27,11 +27,10 @@ east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status && grep "invalid X509 hash length" /tmp/charon.log ; fi
-Security Associations (0 up, 0 connecting):
-  none
-Sep 10 14:19:05 15[ENC] invalid X509 hash length (175) in certreq
-Sep 10 14:19:15 16[ENC] invalid X509 hash length (175) in certreq
-Sep 10 14:19:25 05[ENC] invalid X509 hash length (175) in certreq
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.45[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24 
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
