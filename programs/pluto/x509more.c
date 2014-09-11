@@ -351,6 +351,9 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 
 /*
  * Decode the IKEv2 CR payload of Phase 1.
+ *
+ * This needs to handle the SHA-1 hashes instead. However, receiving CRs
+ * does nothing ATM.
  */
 void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 {
