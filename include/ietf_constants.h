@@ -383,20 +383,25 @@
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 #define CAST_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
+/* TWOFISH_CBC_BLOCK_SIZE: (128 / BITS_PER_BYTE) */
+/* SERPENT_CBC_BLOCK_SIZE: (128 / BITS_PER_BYTE) */
+
+/*
+ * hand-computed max of *_CBC_BLOCK_SIZE
+ * Needs to be a compile-time constant for array allocation.
+ */
+#define MAX_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 
 #define DSS_QBITS 160 /* bits in DSS's "q" (FIPS 186-1) */
 
 /*
- * to statically allocate IV, we need max of
- * MD5_DIGEST_SIZE, SHA1_DIGEST_SIZE, and DES_CBC_BLOCK_SIZE.
- * To avoid combinatorial explosion, we leave out DES_CBC_BLOCK_SIZE.
+ * hand-computed max of
+ * MD5_DIGEST_SIZE, SHA1_DIGEST_SIZE, DES_CBC_BLOCK_SIZE, and
+ * SHA2_*_DIGEST_SIZE.
+ * Needs to be a compile-time constant for array allocation.
+ * To avoid combinatorial explosion, we cheat.
  */
-#define MAX_DIGEST_LEN_OLD \
-	(MD5_DIGEST_SIZE > SHA1_DIGEST_SIZE ? MD5_DIGEST_SIZE :	\
-	SHA1_DIGEST_SIZE)
-
-/* for max: SHA2_512 */
-#define MAX_DIGEST_LEN (512 / BITS_PER_BYTE)
+#define MAX_DIGEST_LEN SHA2_512_DIGEST_SIZE
 
 /* RFC 2404 "HMAC-SHA-1-96" section 3 */
 #define HMAC_SHA1_KEY_LEN SHA1_DIGEST_SIZE

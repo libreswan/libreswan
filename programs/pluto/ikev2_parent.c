@@ -99,7 +99,7 @@ static int build_ike_version();
 static bool emit_iv(const struct state *st, pb_stream *pbs)
 {
 	size_t ivsize = st->st_oakley.encrypter->enc_blocksize;
-	unsigned char ivbuf[128];	/* room for any IV */
+	unsigned char ivbuf[MAX_CBC_BLOCK_SIZE];
 
 	passert(ivsize <= sizeof(ivbuf));
 	get_rnd_bytes(ivbuf, ivsize);
@@ -1259,6 +1259,13 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	reset_globals();
 }
 
+/*
+ * Pad message for encryption.
+ * Octets are added to make the message a multiple of the cipher block size.
+ * At least one octet is added and at most blocksize are added.
+ * The first is 0, and each subsequent octet is one larger.
+ * Thus the last octet contains one less than the number of octets added.
+ */
 static bool ikev2_padup_pre_encrypt(struct msg_digest *md,
 				    pb_stream *e_pbs_cipher) MUST_USE_RESULT;
 static bool ikev2_padup_pre_encrypt(struct msg_digest *md,
@@ -1273,9 +1280,9 @@ static bool ikev2_padup_pre_encrypt(struct msg_digest *md,
 	/* pads things up to message size boundary */
 	{
 		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
-		char  *b = alloca(blocksize);
+		char  b[MAX_CBC_BLOCK_SIZE];
 		unsigned int i;
-		size_t padding =  pad_up(pbs_offset(e_pbs_cipher), blocksize);
+		size_t padding = pad_up(pbs_offset(e_pbs_cipher), blocksize);
 
 		if (padding == 0)
 			padding = blocksize;
@@ -1336,7 +1343,7 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 	/* encrypt the block */
 	{
 		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
-		unsigned char *savediv = alloca(blocksize);
+		unsigned char savediv[MAX_CBC_BLOCK_SIZE];
 		unsigned int cipherlen = e_pbs_cipher->cur - encstart;
 
 		DBG(DBG_CRYPT,
@@ -1379,21 +1386,40 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 	return STF_OK;
 }
 
+/*
+ * ikev2_decrypt_msg: decode the v2E payload.
+ * The result is stored in-place.
+ * Calls ikev2_process_payloads to decode the payloads within.
+ */
 static
 stf_status ikev2_decrypt_msg(struct msg_digest *md,
 			     enum phase1_role role)
 {
 	struct state *st = md->st;
-	unsigned char *encend;
-	pb_stream     *e_pbs;
-	unsigned int np;
-	unsigned char *iv;
+	struct state *pst = IS_CHILD_SA(st) ?
+		state_with_serialno(st->st_clonedfrom) : st;
+	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2E]->pbs;
+	pb_stream clr_pbs;
+	unsigned char *authstart = md->packet_pbs.start;
+	unsigned char *iv = e_pbs->cur;	/* start of IV, right after header */
+	size_t integ_len = pst->st_oakley.integ_hasher->hash_integ_len;
+	size_t enc_blocksize = pst->st_oakley.encrypter->enc_blocksize;
+	unsigned char *roof= e_pbs->roof;
 	PK11SymKey *cipherkey, *authkey;
-	unsigned char *authstart;
-	struct state *pst = st;
 
-	if (IS_CHILD_SA(st))
-		pst = state_with_serialno(st->st_clonedfrom);
+	/*
+	 * check to see if length is plausible.  Need room for:
+	 * - IV (at start)
+	 * - at least one byte for padding (just before integrity digest)
+	 * - truncated integrity digest (at end)
+	 */
+	if (roof - iv < (ptrdiff_t)(enc_blocksize + 1 + integ_len)) {
+		libreswan_log("encrypted payload impossibly short (%td)",
+			roof - iv);
+		return STF_FAIL;
+	}
+
+	roof -= integ_len;	/* strip truncated digest */
 
 	if (role == O_INITIATOR) {
 		cipherkey = pst->st_skey_er_nss;
@@ -1403,37 +1429,31 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		authkey = pst->st_skey_ai_nss;
 	}
 
-	e_pbs = &md->chain[ISAKMP_NEXT_v2E]->pbs;
-	np = md->chain[ISAKMP_NEXT_v2E]->payload.generic.isag_np;
-
-	authstart = md->packet_pbs.start;
-	iv = e_pbs->cur;
-	encend = e_pbs->roof - pst->st_oakley.integ_hasher->hash_integ_len;
-
-	/* start by checking authenticator */
+	/*
+	 * check authenticator
+	 * The last [integ_len] bytes are the truncated digest.
+	 */
 	{
-		unsigned char  *b12 = alloca(
-			pst->st_oakley.integ_hasher->hash_digest_len);
+		unsigned char td[MAX_DIGEST_LEN];
 		struct hmac_ctx ctx;
 
 		hmac_init(&ctx, pst->st_oakley.integ_hasher, authkey);
-		hmac_update(&ctx, authstart, encend - authstart);
-		hmac_final(b12, &ctx);
+		hmac_update(&ctx, authstart, roof - authstart);
+		hmac_final(td, &ctx);
 
 		DBG(DBG_PARSING, {
-			    DBG_dump("data being hmac:", authstart, encend -
-				     authstart);
-			    DBG_dump("R2 calculated auth:", b12,
-				     pst->st_oakley.integ_hasher->
-					hash_integ_len);
-			    DBG_dump("R2  provided  auth:", encend,
-				     pst->st_oakley.integ_hasher->
-					hash_integ_len);
+			DBG_dump("data for hmac:",
+				authstart, roof - authstart);
+			DBG_dump("calculated auth:",
+				td,
+				pst->st_oakley.integ_hasher-> hash_integ_len);
+			DBG_dump("  provided auth:",
+				roof,
+				pst->st_oakley.integ_hasher->hash_integ_len);
 		    });
 
-		if (!memeq(b12, encend,
-			   pst->st_oakley.integ_hasher->hash_integ_len)) {
-			libreswan_log("R2 failed to match authenticator");
+		if (!memeq(td, roof, integ_len)) {
+			libreswan_log("failed to match authenticator");
 			return STF_FAIL;
 		}
 	}
@@ -1443,19 +1463,23 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	/* decrypt */
 	{
 		/*
-		 * The first [blocksize] octets is the IV.
+		 * The first [enc_blocksize] octet chunk is the IV.
 		 * The encrypted data follows.
-		 * The last byte of encrypted data is the number of
-		 * padding octets.
+		 * The last byte of encrypted data is one less than
+		 * the number of padding octets.
 		 */
-		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
-		/* IV is the first blocksize octets; followed by encrypted data */
-		unsigned char *encstart = iv + blocksize;
-		unsigned int enclen = encend - encstart;
-		unsigned int padlen;
+		unsigned char *encstart = iv + enc_blocksize;
+		size_t enclen = roof - encstart;
+		unsigned char padlen;
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("data before decryption:", encstart, enclen));
+
+		if (enclen % enc_blocksize != 0) {
+			libreswan_log("cyphertext length (%zu) not a multiple of blocksize (%zu)",
+				enclen, enc_blocksize);
+			return STF_FAIL;
+		}
 
 		/* now, decrypt */
 		(pst->st_oakley.encrypter->do_crypt)(encstart,
@@ -1463,24 +1487,26 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 						     cipherkey,
 						     iv, FALSE);
 
-		padlen = encstart[enclen - 1];
-		encend = encend - padlen + 1;
+		padlen = encstart[enclen - 1] + 1;
 
-		if (encend < encstart) {
-			libreswan_log("invalid pad length: %u", padlen);
+		if (padlen > enc_blocksize || padlen > enclen) {
+			libreswan_log("invalid last pad octet: 0x%2x", padlen - 1);
 			return STF_FAIL;
 		}
 
+		/* don't bother to check any other pad octets */
+
 		DBG(DBG_CRYPT, {
 			    DBG_dump("decrypted payload:", encstart, enclen);
-			    DBG_log("striping %u bytes as pad", padlen + 1);
+			    DBG_log("striping %u bytes as pad", padlen);
 		    });
 
-		init_pbs(&md->clr_pbs, encstart, enclen - (padlen + 1),
-			 "cleartext");
+		init_pbs(&clr_pbs, encstart, enclen - padlen, "cleartext");
 	}
 
-	return ikev2_process_payloads(md, &md->clr_pbs, np, TRUE);
+	return ikev2_process_payloads(md, &clr_pbs,
+		md->chain[ISAKMP_NEXT_v2E]->payload.generic.isag_np,
+		TRUE);
 }
 
 static stf_status ikev2_send_auth(struct connection *c,
@@ -1551,7 +1577,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	pb_stream e_pbs, e_pbs_cipher;
 	unsigned char *iv;
 	stf_status ret;
-	unsigned char *idhash;
+	unsigned char idhash[MAX_DIGEST_LEN];
 	unsigned char *authstart;
 	struct state *pst = st;
 	bool send_cert = FALSE;
@@ -1679,7 +1705,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		id_len = e_pbs_cipher.cur - id_start;
 		DBG(DBG_CRYPT, DBG_dump("idhash calc I2", id_start, id_len));
 		hmac_update(&id_ctx, id_start, id_len);
-		idhash = alloca(pst->st_oakley.prf_hasher->hash_digest_len);
 		hmac_final(idhash, &id_ctx);
 	}
 
@@ -1898,7 +1923,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct msg_digest *md = dh->dh_md;
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
-	unsigned char *idhash_in, *idhash_out;
+	unsigned char idhash_in[MAX_DIGEST_LEN], idhash_out[MAX_DIGEST_LEN];
 	unsigned char *authstart;
 	unsigned int np;
 	int v2_notify_num = 0;
@@ -1933,7 +1958,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		/* calculate hash of IDi for AUTH below */
 		DBG(DBG_CRYPT, DBG_dump("idhash verify I2", idstart, idlen));
 		hmac_update(&id_ctx, idstart, idlen);
-		idhash_in = alloca(st->st_oakley.prf_hasher->hash_digest_len);
 		hmac_final(idhash_in, &id_ctx);
 	}
 
@@ -2126,8 +2150,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			DBG(DBG_CRYPT,
 			    DBG_dump("idhash calc R2", id_start, id_len));
 			hmac_update(&id_ctx, id_start, id_len);
-			idhash_out = alloca(
-				st->st_oakley.prf_hasher->hash_digest_len);
 			hmac_final(idhash_out, &id_ctx);
 		}
 
@@ -2253,7 +2275,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
-	unsigned char *idhash_in;
+	unsigned char idhash_in[MAX_DIGEST_LEN];
 	struct state *pst = st;
 
 	if (IS_CHILD_SA(st))
@@ -2290,7 +2312,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		/* calculate hash of IDr for AUTH below */
 		DBG(DBG_CRYPT, DBG_dump("idhash auth R2", idstart, idlen));
 		hmac_update(&id_ctx, idstart, idlen);
-		idhash_in = alloca(pst->st_oakley.prf_hasher->hash_digest_len);
 		hmac_final(idhash_in, &id_ctx);
 	}
 
