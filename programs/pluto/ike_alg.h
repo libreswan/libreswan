@@ -19,9 +19,7 @@ struct ike_alg {
 struct encrypt_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	size_t enc_ctxsize;
-	size_t enc_blocksize;
-/* Is this always true?  usually with CBC methods. Maybe not with others */
-#define iv_size enc_blocksize
+	size_t enc_blocksize;	/* also IV length */
 	unsigned keydeflen;
 	unsigned keymaxlen;
 	unsigned keyminlen;

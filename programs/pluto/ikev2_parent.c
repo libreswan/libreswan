@@ -98,7 +98,7 @@ static int build_ike_version();
 
 static bool emit_iv(const struct state *st, pb_stream *pbs)
 {
-	size_t ivsize = st->st_oakley.encrypter->iv_size;
+	size_t ivsize = st->st_oakley.encrypter->enc_blocksize;
 	unsigned char ivbuf[128];	/* room for any IV */
 
 	passert(ivsize <= sizeof(ivbuf));
@@ -1431,8 +1431,6 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 					hash_integ_len);
 		    });
 
-		/* compare first 96 bits == 12 bytes */
-		/* It is not always 96 bytes, it depends upon which integ algo is used */
 		if (!memeq(b12, encend,
 			   pst->st_oakley.integ_hasher->hash_integ_len)) {
 			libreswan_log("R2 failed to match authenticator");
@@ -1444,7 +1442,14 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 
 	/* decrypt */
 	{
+		/*
+		 * The first [blocksize] octets is the IV.
+		 * The encrypted data follows.
+		 * The last byte of encrypted data is the number of
+		 * padding octets.
+		 */
 		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
+		/* IV is the first blocksize octets; followed by encrypted data */
 		unsigned char *encstart = iv + blocksize;
 		unsigned int enclen = encend - encstart;
 		unsigned int padlen;
