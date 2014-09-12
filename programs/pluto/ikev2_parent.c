@@ -1399,7 +1399,6 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2E]->pbs;
-	pb_stream clr_pbs;
 	unsigned char *authstart = md->packet_pbs.start;
 	unsigned char *iv = e_pbs->cur;	/* start of IV, right after header */
 	size_t integ_len = pst->st_oakley.integ_hasher->hash_integ_len;
@@ -1501,10 +1500,10 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 			    DBG_log("striping %u bytes as pad", padlen);
 		    });
 
-		init_pbs(&clr_pbs, encstart, enclen - padlen, "cleartext");
+		init_pbs(&md->clr_pbs, encstart, enclen - padlen, "cleartext");
 	}
 
-	return ikev2_process_payloads(md, &clr_pbs,
+	return ikev2_process_payloads(md, &md->clr_pbs,
 		md->chain[ISAKMP_NEXT_v2E]->payload.generic.isag_np,
 		TRUE);
 }

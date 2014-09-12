@@ -62,6 +62,7 @@ struct msg_digest {
 	u_int16_t sender_port;			/* host order */
 	pb_stream packet_pbs;			/* whole packet */
 	pb_stream message_pbs;			/* message to be processed */
+	pb_stream clr_pbs;			/* (v2) decrypted packet (within v2E payload) */
 	struct isakmp_hdr hdr;			/* message's header */
 	bool encrypted;				/* (v1) was it encrypted? */
 	enum state_kind from_state;		/* state we started in */
