@@ -3,11 +3,11 @@ Basic pluto X.509 test, with send_cr.
 East does *NOT* have West's X.509 Cert locally.
 west is FORCED to send it. And visa versa.
 
-Configuration has been tuned to work around the refine_connection
-bug, or another bug with CA's. These bugs require us to specify
-the leftid and rightid (otherwise RSA key for IPv4 address is not found).
+Note: ATM receiving a IKEv2 CERTREQ will be ignored:
 
-We also need to set leftsendcert=/rightsendcert.
-
-We also need to set rightca="%any" and leftca="%any" or else the CA is
-not found
+--
+| has a v2CERTREQ payload going to decode it
+| CR  70 19 0f 7c  ad 44 d7 59  29 6b aa 24  b6 82 03 d1
+| CR  19 87 de 5b
+|   cert blob content is not binary ASN.1
+--

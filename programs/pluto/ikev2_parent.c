@@ -1185,6 +1185,8 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Ni"));
 
+	/* We're missing processing a CERTREQ in here */
+
 	/* process and confirm the SA selected */
 	{
 		/* SA body in and out */
@@ -2155,7 +2157,11 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("assembled IDr payload -- CERT next"));
 
-		/* send CERT payload RFC 4306 3.6, 1.2:([CERT,] ) */
+		/*
+		 * send CERT payload RFC 4306 3.6, 1.2:([CERT,] )
+		 * upon which our received I2 CERTREQ is ignored,
+		 * but ultimately should go into the CERT decision 
+		 */
 		if (send_cert) {
 			stf_status certstat = ikev2_send_cert(st, md,
 							      O_RESPONDER,
