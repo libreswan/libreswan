@@ -1465,7 +1465,7 @@ static void release_all_continuations()
 		num_released++;
 	}
 
-	DBG_log("release_all_cnt: released %d, %d in flight => %d\n",
+	DBG_log("release_all_cnt: released %d, %d in flight => %d",
 		num_released, adns_in_flight,  adns_in_flight - num_released);
 
 	adns_in_flight -= num_released;

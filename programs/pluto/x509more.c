@@ -351,6 +351,9 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 
 /*
  * Decode the IKEv2 CR payload of Phase 1.
+ *
+ * This needs to handle the SHA-1 hashes instead. However, receiving CRs
+ * does nothing ATM.
  */
 void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 {
@@ -421,6 +424,39 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 	return TRUE;
 }
 
+/*
+ * returns the concatenated SHA-1 hashes of each public key in the chain
+ * */
+static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
+{
+	unsigned char combined_hash[SHA1_DIGEST_SIZE * 8 /*max path len*/];
+	x509cert_t *ca = NULL;
+	chunk_t result = empty_chunk;
+	size_t sz = 0;
+
+	zero(&combined_hash);
+
+	for (ca = ca_chain; ca != NULL; ca = ca->next) {
+		unsigned char sighash[SHA1_DIGEST_SIZE];
+		SHA1_CTX ctx_sha1;
+
+		SHA1Init(&ctx_sha1);
+		SHA1Update(&ctx_sha1, ca->signature.ptr, ca->signature.len);
+		SHA1Final(sighash, &ctx_sha1);
+
+		DBG(DBG_CRYPT, DBG_dump("SHA-1 of CA signature",
+							sighash,
+							SHA1_DIGEST_SIZE));
+
+		memcpy(combined_hash + sz, sighash, SHA1_DIGEST_SIZE);
+		sz += SHA1_DIGEST_SIZE;
+	}
+	passert(sz <= sizeof(combined_hash));
+	clonetochunk(result, combined_hash, sz, "combined CERTREQ hash");
+	DBG(DBG_CRYPT, DBG_dump_chunk("Combined CERTREQ hashes", result));
+	return result;
+}
+
 bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			     chunk_t ca,
 			     pb_stream *outs,
@@ -436,12 +472,49 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	/* build CR header */
 	if (!out_struct(&cr_hd, &ikev2_certificate_req_desc, outs, &cr_pbs))
 		return FALSE;
+	/*
+	 * The Certificate Encoding field has the same values as those defined
+	 * in Section 3.6.  The Certification Authority field contains an
+	 * indicator of trusted authorities for this certificate type.  The
+	 * Certification Authority value is a concatenated list of SHA-1 hashes
+	 * of the public keys of trusted Certification Authorities (CAs).  Each
+	 * is encoded as the SHA-1 hash of the Subject Public Key Info element
+	 * (see section 4.1.2.7 of [PKIX]) from each Trust Anchor certificate.
+	 * The 20-octet hashes are concatenated and included with no other
+	 * formatting.
+	 *
+	 * How are multiple trusted CAs chosen?
+	 */
 
 	if (ca.ptr != NULL) {
-		/* build CR body containing the distinguished name of the CA */
-		if (!out_chunk(ca, &cr_pbs, "CA"))
-			return FALSE;
+		char cbuf[ASN1_BUF_LEN];
+
+		dntoa(cbuf, ASN1_BUF_LEN, ca);
+		x509cert_t *authcert = get_authcert(ca, empty_chunk,
+							empty_chunk,
+							AUTH_CA);
+		if (authcert != NULL) {
+			DBG(DBG_X509, DBG_log("located authcert %s for CERTREQ",
+									 cbuf));
+			/*
+			 * build CR body containing the concatenated SHA-1 hashes of the
+			 * CA's public key. This function currently only uses a single CA
+			 * and should support more in the future
+			 * */
+			chunk_t cr_full_hash = ikev2_hash_ca_keys(authcert);
+			if (!out_chunk(cr_full_hash, &cr_pbs, "CA cert public key hashes")) {
+				freeanychunk(cr_full_hash);
+				return FALSE;
+			}
+			freeanychunk(cr_full_hash);
+		} else {
+			DBG(DBG_X509, DBG_log("could not locate authcert %s for CERTREQ", cbuf));
+		}
 	}
+	/*
+	 * can it be empty?
+	 * this function's returns need fixing
+	 * */
 	close_output_pbs(&cr_pbs);
 	return TRUE;
 }

@@ -173,7 +173,8 @@ def rpfiltercheck():
 def cmdchecks():
 	global retcode
 	printfun("Checking 'ip' command")
-	if not os.path.isfile("/sbin/ip") and not os.path.isfile("/usr/sbin/ip"):
+	if not os.path.isfile("/sbin/ip") and not os.path.isfile("/usr/sbin/ip") \
+	   and not os.path.isfile("/bin/ip"):
 		print_result("FAIL","FAILED")
 		retcode += 1
 	p = subprocess.Popen(["ip", "xfrm"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 

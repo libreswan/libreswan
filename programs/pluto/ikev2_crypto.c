@@ -3,7 +3,7 @@
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -65,8 +65,8 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 		st->st_ah.present? &st->st_ah :
 		NULL;
 
-	assert(ipi != NULL);	/* ESP or AH must be present */
-	assert(st->st_esp.present != st->st_ah.present);	/* only one */
+	passert(ipi != NULL);	/* ESP or AH must be present */
+	passert(st->st_esp.present != st->st_ah.present);	/* only one */
 
 	/* ??? there is no kernel_alg_ah_info */
 	ipi->attrs.transattrs.ei = kernel_alg_esp_info(
@@ -142,14 +142,6 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	v2genbytes(&rkeymat, ipi->keymat_len,
 		   "responder keys", &childsacalc);
 
-	/* This should really be role == O_INITIATOR, but then our keys are
-	 * installed reversed. This is a workaround until we locate the
-	 * real problem. It's better not to release copies of our code
-	 * that will be incompatible with everything else, including our
-	 * own updated version
-	 * Found by Herbert Xu
-	 * if(role == O_INITIATOR) {
-	 */
 	if (role != O_INITIATOR) {
 		DBG(DBG_CRYPT, {
 			    DBG_dump_chunk("our  keymat", ikeymat);
@@ -167,4 +159,3 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	}
 
 }
-

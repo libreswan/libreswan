@@ -503,9 +503,9 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 	u_int8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
 	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
 
-	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "encrypting:\n", enc_start,
+	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "encrypting:", enc_start,
 		enc_len);
-	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "IV:\n",
+	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "IV:",
 		st->st_new_iv,
 		st->st_new_iv_len);
 	DBG(DBG_CRYPT, DBG_log("unpadded size is: %u", (unsigned int)enc_len));
@@ -1373,7 +1373,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 				st->st_oakley.group->group);
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log("started dh_secretiv, returned: stf=%s\n",
+			DBG_log("started dh_secretiv, returned: stf=%s",
 				enum_name(&stfstatus_name, e)));
 
 		if (e == STF_FAIL) {

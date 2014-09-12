@@ -150,6 +150,8 @@ main(int argc, char *argv[]) {
 	do_test("des-sha1", PROTO_IPSEC_ESP); /* obsoleted */
 	do_test("aes_ctr666", PROTO_IPSEC_ESP); /* bad key size */
 	do_test("aes128-sha2_128", PROTO_IPSEC_ESP); /* _128 does not exist */
+	do_test("aes256-sha2_256-4096", PROTO_IPSEC_ESP); /* double keysize */
+	do_test("aes256-sha2_256-128", PROTO_IPSEC_ESP); /* now what?? */
 	do_test("vanitycipher", PROTO_IPSEC_ESP);
 	do_test("ase-sah", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes-sah1", PROTO_IPSEC_ESP); /* should get rejected */

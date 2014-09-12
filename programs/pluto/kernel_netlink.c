@@ -2003,12 +2003,12 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 		err_t e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 
 		if (e != NULL) {
-			DBG_log("invalid listen= option ignored: %s\n", e);
+			DBG_log("invalid listen= option ignored: %s", e);
 			pluto_listen = NULL;
 		}
 		DBG(DBG_CONTROL, {
 			ipstr_buf b;
-			DBG_log("Only looking to listen on %s\n",
+			DBG_log("Only looking to listen on %s",
 				ipstr(&lip, &b));
 		});
 	}

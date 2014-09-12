@@ -366,7 +366,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 	for (s = secrets; s != NULL; s = s->next) {
 		DBG(DBG_CONTROLMORE,
-			DBG_log("line %d: key type %s(%s) to type %s\n",
+			DBG_log("line %d: key type %s(%s) to type %s",
 				s->secretlineno,
 				enum_name(&ppk_names, kind),
 				idme,
@@ -430,7 +430,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			}
 
 			DBG(DBG_CONTROL,
-				DBG_log("line %d: match=%d\n", s->secretlineno,
+				DBG_log("line %d: match=%d", s->secretlineno,
 					match);
 				);
 

@@ -321,7 +321,14 @@ int main(int argc, char *argv[])
 			device = optarg;
 			break;
 		case 'H':       /* set hostname for output */
-			strcpy(outputhostname, optarg);
+			{
+				size_t full_len = strlen(optarg);
+				bool oflow = sizeof(outputhostname) - 1 < full_len;
+				size_t copy_len = oflow ? sizeof(outputhostname) - 1 : full_len;
+
+				memcpy(outputhostname, optarg, copy_len);
+				outputhostname[copy_len] = '\0';
+			}
 			break;
 		case 'h':       /* help */
 			printf("Usage:\t%s\n", usage);

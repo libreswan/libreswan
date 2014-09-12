@@ -65,8 +65,8 @@ void calc_ke(struct pluto_crypto_req *r)
 	chunk_t base  = mpz_to_n_autosize(group->generator);
 	chunk_t prime = mpz_to_n_autosize(group->modulus);
 
-	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of Prime:\n", prime));
-	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of base:\n", base));
+	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of Prime:", prime));
+	DBG(DBG_CRYPT, DBG_dump_chunk("NSS: Value of base:", base));
 
 	dhp.prime.data = prime.ptr;
 	dhp.prime.len = prime.len;
@@ -92,7 +92,7 @@ void calc_ke(struct pluto_crypto_req *r)
 
 		if (group->bytes == pubk->u.dh.publicValue.len) {
 			DBG(DBG_CRYPT,
-			    DBG_log("NSS: generated dh priv and pub keys: %d\n",
+			    DBG_log("NSS: generated dh priv and pub keys: %d",
 				    pubk->u.dh.publicValue.len));
 			break;
 		} else {
@@ -123,15 +123,15 @@ void calc_ke(struct pluto_crypto_req *r)
 	}
 
 	DBG(DBG_CRYPT, {
-		    DBG_log("NSS: Local DH secret (pointer): %p\n",
+		    DBG_log("NSS: Local DH secret (pointer): %p",
 			     kn->secret);
-		    DBG_dump("NSS: Public DH value sent(computed in NSS):\n",
+		    DBG_dump("NSS: Public DH value sent(computed in NSS):",
 			     WIRE_CHUNK_PTR(*kn, gi),
 			     pubk->u.dh.publicValue.len);
 	    });
 
 	DBG(DBG_CRYPT,
-	    DBG_log("NSS: Local DH public value (pointer): %p\n",
+	    DBG_log("NSS: Local DH public value (pointer): %p",
 		    kn->pubk));
 
 	/* clean up after ourselves */
@@ -152,7 +152,7 @@ void calc_nonce(struct pluto_crypto_req *r)
 	get_rnd_bytes(WIRE_CHUNK_PTR(*kn, n), DEFAULT_NONCE_SIZE);
 
 	DBG(DBG_CRYPT,
-	    DBG_dump("Generated nonce:\n",
+	    DBG_dump("Generated nonce:",
 		     WIRE_CHUNK_PTR(*kn, n),
 		     DEFAULT_NONCE_SIZE));
 }

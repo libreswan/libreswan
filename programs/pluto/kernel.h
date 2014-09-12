@@ -367,8 +367,6 @@ extern bool route_and_eroute(struct connection *c,
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 
-extern bool update_ipsec_sa(struct state *st);
-
 extern bool eroute_connection(struct spd_route *sr,
 			      ipsec_spi_t spi, unsigned int proto,
 			      enum eroute_type esatype,
