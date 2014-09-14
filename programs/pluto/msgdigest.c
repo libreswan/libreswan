@@ -110,6 +110,13 @@ void release_md(struct msg_digest *md)
 	/* check that we are not creating a loop */
 	passert(md != md_pool);
 
+#ifdef MSG_DIGEST_ALLOC_DEBUG
+	/*
+	 * This version does not maintain a pool.
+	 * Thus leak-detective, Electric Fence, and valgrind are more effective.
+	 */
+	pfree(md);
+#else
 	/*
 	 * Shred to useless value.
 	 * Redundant but might catch dangling references.
@@ -118,6 +125,7 @@ void release_md(struct msg_digest *md)
 
 	md->next = md_pool;
 	md_pool = md;
+#endif
 }
 
 void release_any_md(struct msg_digest **mdp)
