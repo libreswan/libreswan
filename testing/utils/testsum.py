@@ -202,7 +202,7 @@ def print_table_json(d, table, result):
 	if match:
 		table["summary"]["date"] = match.group(1)
 	else:
-		print("warning missing date in %s. It does not start wity date <d+-d+-d+>"%d)
+		print("warning missing date in %s. It does not start with date <d+-d+-d+>"%d)
 
 	o = open(d + '/' + 'table.json', 'w')
 	o.write(ujson.dumps(table, ensure_ascii=True, double_precision=2)) 

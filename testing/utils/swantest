@@ -629,6 +629,7 @@ def do_test_list(args, start, tried, output_dir):
 	r = "./TESTLIST"
 	if not os.path.exists(r):
 		return None 
+	ran =  1;
 
 	logging.info("** found file %s **" , r)
 
@@ -658,7 +659,7 @@ def do_test_list(args, start, tried, output_dir):
 		logging.debug("%s", line)
 		if os.path.exists('./stop-tests-now'):
 			logging.error("* stop all tests now. Found ./stop-tests-now *")
-			return True 
+			return 1
 
 		try:
 			testtype, testdir, testexpect = line.split() 
@@ -705,6 +706,7 @@ def do_test_list(args, start, tried, output_dir):
 
 		logging.debug("****** next test %s *****", testdir) 
 		do_test(args, testexpect = testexpect )
+		ran =  ran + 1
 		os.chdir("../")
 		if os.path.exists(output_dir):
 			try:
@@ -717,7 +719,7 @@ def do_test_list(args, start, tried, output_dir):
 			logging.info("missing output dir %s. don't copy results",output_dir)
 
 	f.close
-	return True
+	return ran
 
 def setup_result_dir(args):
 	date_dir = time.strftime("%Y-%m-%d", time.localtime())
@@ -775,15 +777,16 @@ def main():
 	args = cmdline() 
 	tried = 0
 	output_dir = setup_result_dir(args)
-
+	ran = 2 # used for summery generation.
 	if args.graphs:
 		gen_graphs_tables(args)
 	elif do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):
-			gen_graphs_tables(args)
+			if ran > 1:
+				gen_graphs_tables(args)
 			tried = 1 + tried
 			logging.info("retry TESTLIST %s/%s ", tried, args.retry)
-			do_test_list(args, start, tried, output_dir)
+			ran = do_test_list(args, start, tried, output_dir)
 
 	else:
 		do_test(args, start = start)  # no TESTLIST. Lets try single test
