@@ -488,7 +488,7 @@ DEFAULTCONFIG =  {
 }
 
 def cmdline():
-	parser = argparse.ArgumentParser(description='dotest arguments.')
+	parser = argparse.ArgumentParser(description='swantest arguments.')
 
 	parser.add_argument("--retry",
 			default=DEFAULTCONFIG['retry'], type=int,

@@ -640,9 +640,9 @@ kvmplutotest	ikeport-01				wip
 #################################################################
 # passthrough tests
 #################################################################
-kvmplutotest	netkey-passthrough-ipxfrm		wip
-kvmplutotest	netkey-passthrough-00			wip
-kvmplutotest	netkey-passthrough-01			wip
+kvmplutotest	netkey-passthrough-ipxfrm		good
+kvmplutotest	netkey-passthrough-00			good
+kvmplutotest	netkey-passthrough-01			good
 kvmplutotest	netkey-passthrough-02			wip
 kvmplutotest	netkey-passthrough-03			wip
 kvmplutotest	klips-passthrough-00			wip
