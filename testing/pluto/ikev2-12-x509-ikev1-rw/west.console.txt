@@ -34,6 +34,8 @@ west #
 west #
  PATH/libexec/ipsec/pluto --config /etc/ipsec.conf
 west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
  ipsec auto --add westnet-eastnet-ikev2
 002 added connection description "westnet-eastnet-ikev2"
 west #
@@ -154,13 +156,13 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-mainca                                                       ,,   
 east                                                         P,,  
 road                                                         P,,  
 north                                                        P,,  
 hashsha2                                                     P,,  
 east-ec                                                      P,,  
 west                                                         u,u,u
+mainca                                                       ,,   
 west #
  echo done
 done
@@ -180,13 +182,13 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-mainca                                                       ,,   
 east                                                         P,,  
 road                                                         P,,  
 north                                                        P,,  
 hashsha2                                                     P,,  
 east-ec                                                      P,,  
 west                                                         u,u,u
+mainca                                                       ,,   
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

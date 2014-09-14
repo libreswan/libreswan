@@ -208,9 +208,11 @@ status() {
 	fi
     fi
     if [ -z "${RC}" ]; then
-	[ -f ${lockfile} ] && RC=2
-    else
-	RC=3
+	if [ -f ${lockfile} ]; then
+	    RC=2
+	else
+	    RC=3
+	fi
     fi
     case "${RC}" in
 	0)
