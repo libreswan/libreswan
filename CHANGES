@@ -1,6 +1,12 @@
 
 See also https://libreswan.org/
 v3.11 (unreleased)
+* pluto: don't register ESP_BLOWFISH [Paul]
+* pluto: Force ESP_CAST to only allow 128 bit key sizes [Paul]
+* pluto: log_crypto_workers threads did not use static bool first_time [Coverity]
+* addconn: route after listen, not before (bug introduced in 3.10) [Paul/Hugh]
+* rsasigkey: use a version of jam_str instead of strcpy() for hostname [Paul]
+* IKEv2: CERTREQ payload should use SHA1 hash of DN instead of IKEv1 DN [Matt]
 * _stackmanager: fixed to work again with mawk [Marc-Christian Petersen/Tuomo]
 * Bugtracker bugs fixed:
   #206: Libreswan v3.10 on 32-bit does not work [Kim]
