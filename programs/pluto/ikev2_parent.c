@@ -96,6 +96,12 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 
 static int build_ike_version();
 
+/*
+ * This code assumes that the encrypted part of an IKE message starts
+ * with an Initialization Vector (IV) of enc_blocksize of random octets.
+ * The IV will subsequently be discarded after decryption.
+ * This is true of Cipher Block Chaining mode (CBC).
+ */
 static bool emit_iv(const struct state *st, pb_stream *pbs)
 {
 	size_t ivsize = st->st_oakley.encrypter->enc_blocksize;
@@ -105,6 +111,7 @@ static bool emit_iv(const struct state *st, pb_stream *pbs)
 	get_rnd_bytes(ivbuf, ivsize);
 	return out_raw(ivbuf, ivsize, pbs, "IV");
 }
+
 /*
  *
  ***************************************************************
@@ -1392,6 +1399,11 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
  * ikev2_decrypt_msg: decode the v2E payload.
  * The result is stored in-place.
  * Calls ikev2_process_payloads to decode the payloads within.
+ *
+ * This code assumes that the encrypted part of an IKE message starts
+ * with an Initialization Vector (IV) of enc_blocksize of random octets.
+ * We will discard the IV after decryption.
+ * This is true of Cipher Block Chaining mode (CBC).
  */
 static
 stf_status ikev2_decrypt_msg(struct msg_digest *md,

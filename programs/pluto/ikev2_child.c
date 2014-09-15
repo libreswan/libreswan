@@ -986,6 +986,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 		/* send NONCE */
 		struct ikev2_generic in;
 		pb_stream pb_nr;
+
 		zero(&in);
 		in.isag_np = ISAKMP_NEXT_v2TSi;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -1002,6 +1003,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	{
 		stf_status ret = ikev2_calc_emit_ts(md, outpbs, role, c, c->policy);
+
 		if (ret != STF_OK)
 			return ret;	/* should we delete_state cst? */
 	}
