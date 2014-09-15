@@ -2854,18 +2854,12 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 	insert_state(st); /* needed for delete - we are duplicating early */
 
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-		struct ikev2_ke *ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
-
-		st->st_oakley.group = lookup_group(ke->isak_group);
-		if (st->st_oakley.group == NULL) {
-			ipstr_buf b;
-
-			libreswan_log(
-				"rejecting create child SA from %s:%u, invalid DH group=%u",
-				ipstr(&md->sender, &b), md->sender_port,
-				ke->isak_group);
-			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
-		}
+		 ipstr_buf b;
+		/* in CREATE_CHILD_SA exchange we don't support new KE */
+		libreswan_log( "rejecting create child SA from %s:%u,"
+				"new KE in DH is not supoorted",
+				ipstr(&md->sender, &b), md->sender_port);
+		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 	}
 
 	freeanychunk(st->st_ni); /* this is from the parent. */
@@ -2888,14 +2882,8 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 		if (!st->st_sec_in_use) {
 			pcrc_init(&qke->qke_pcrc, ikev2_child_inIoutR_continue);
-			if (st->st_pfs_group != NULL) {
-				DBG(DBG_CONTROLMORE, DBG_log("Generate new KE for CREATE_CHILD_SA exchange. AA not tested this path. The other path build_nonce is tested"));
-				e = build_ke_and_nonce(&qke->qke_pcrc, st,
-						st->st_pfs_group, ci);
-			} else {
-				DBG(DBG_CONTROLMORE, DBG_log("Generate new nonce for CREATE_CHILD_SA exchange."));
-				e = build_nonce(&qke->qke_pcrc, st, ci);
-			}
+			DBG(DBG_CONTROLMORE, DBG_log("Generate new nonce for CREATE_CHILD_SA exchange."));
+			e = build_nonce(&qke->qke_pcrc, st, ci);
 		} else {
 			qke->qke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 			e = ikev2_child_inIoutR_tail(&qke->qke_pcrc, NULL);
