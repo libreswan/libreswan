@@ -20,8 +20,6 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 srcdir?=./
 
-INSTMANFLAGS?=--mode=0644
-
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${srcdir}Makefile.options
 -include ${srcdir}Makefile.extra
