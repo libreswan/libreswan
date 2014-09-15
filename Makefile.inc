@@ -199,7 +199,7 @@ INSTSUIDFLAGS=-m 0755 -g root -o root
 endif
 
 
-#INSTMANFLAGS?=--mode=0644
+INSTMANFLAGS?=--mode=0644
 INSTCONFFLAGS?=--mode=0644
 # For OSX use
 #INSTBINFLAGS?=-b -B .old
