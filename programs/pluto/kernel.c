@@ -1759,8 +1759,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 		}
 
+		DBG(DBG_KERNEL, DBG_log("st->st_esp.keymat_len=%d is key_len=%d + ei->authkeylen=%d",
+			st->st_esp.keymat_len, key_len, ei->authkeylen));
 		passert(st->st_esp.keymat_len == key_len + ei->authkeylen);
-
 
 		set_text_said(text_said, &dst.addr, esp_spi, SA_ESP);
 
