@@ -1862,9 +1862,25 @@ stf_status ikev2_parse_child_sa_body(
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
 		} else {
-			pexpect(ta.encrypt == IKEv2_ENCR_NULL);
-			if (ta.encrypt != IKEv2_ENCR_NULL) {
-				/* This can only happen on incomplete algo implemention */
+			/*
+			 * We did not find a userspace encrypter, so we should
+			 * be esp=null or a kernel-only algorithm without
+			 * userland struct.
+			 */
+			switch(ta.encrypt) {
+			case IKEv2_ENCR_NULL:
+				break; /* ok */
+			case IKEv2_ENCR_CAST:
+				break; /* CAST is ESP only, not IKE */
+			case IKEv2_ENCR_CAMELLIA_CBC:
+			case IKEv2_ENCR_CAMELLIA_CTR:
+			case IKEv2_ENCR_CAMELLIA_CCM_A:
+			case IKEv2_ENCR_CAMELLIA_CCM_B:
+			case IKEv2_ENCR_CAMELLIA_CCM_C:
+				break; /* no IKE struct encrypt_desc yet */
+			default:
+				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter - refusing proposal");
+				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
 		}

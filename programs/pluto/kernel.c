@@ -1743,8 +1743,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 		}
 
-		passert(st->st_esp.keymat_len == enc_key_len + ei->authkeylen);
+		DBG(DBG_KERNEL, DBG_log(
+			"st->st_esp.keymat_len=%" PRIu16 " is key_len=%" PRIu16 " + ei->authkeylen=%" PRIu32,
+			st->st_esp.keymat_len, enc_key_len, ei->authkeylen));
 
+		passert(st->st_esp.keymat_len == enc_key_len + ei->authkeylen);
 
 		set_text_said(text_esp, &dst.addr, esp_spi, SA_ESP);
 
@@ -1891,7 +1894,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 
 		/* RFC 3566 Section 4.1 */
-		case AUTH_ALGORITHM_AES_CBC:
+		case AUTH_ALGORITHM_AES_XCBC:
 			authalg = SADB_X_AALG_AES_XCBC_MAC;
 			key_len = BYTES_FOR_BITS(128);
 			break;

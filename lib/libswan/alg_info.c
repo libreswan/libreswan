@@ -99,7 +99,7 @@ enum ipsec_authentication_algo alg_info_esp_aa2sadb(
 	case AUTH_ALGORITHM_HMAC_RIPEMD:
 		return AH_RIPEMD;
 
-	case AUTH_ALGORITHM_AES_CBC: /* 9 */
+	case AUTH_ALGORITHM_AES_XCBC: /* 9 */
 		return AH_AES_XCBC_MAC;
 
 	/* AH_RSA not supported */
@@ -155,7 +155,7 @@ enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti)
 	/* IKEv2 does not do RIPEMD */
 
 	case IKEv2_AUTH_AES_XCBC_96:
-		return AUTH_ALGORITHM_AES_CBC;
+		return AUTH_ALGORITHM_AES_XCBC;
 
 	/* AH_RSA */
 
@@ -219,7 +219,7 @@ int alg_info_esp_sadb2aa(int sadb_aalg)
 		auth = AUTH_ALGORITHM_HMAC_RIPEMD;
 		break;
 	case SADB_X_AALG_AES_XCBC_MAC:
-		auth = AUTH_ALGORITHM_AES_CBC;
+		auth = AUTH_ALGORITHM_AES_XCBC;
 		break;
 	case SADB_X_AALG_RSA: /* unsupported by us */
 		auth = AUTH_ALGORITHM_SIG_RSA;
