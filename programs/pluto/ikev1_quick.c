@@ -330,7 +330,7 @@ static void compute_proto_keymat(struct state *st,
 		case AUTH_ALGORITHM_HMAC_RIPEMD:
 			needed_len += BYTES_FOR_BITS(160);
 			break;
-		case AUTH_ALGORITHM_AES_CBC:
+		case AUTH_ALGORITHM_AES_XCBC:
 			needed_len += BYTES_FOR_BITS(128);
 			break;
 		case AUTH_ALGORITHM_SIG_RSA:

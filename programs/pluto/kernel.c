@@ -1918,7 +1918,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 
 		/* RFC 3566 Section 4.1 */
-		case AUTH_ALGORITHM_AES_CBC:
+		case AUTH_ALGORITHM_AES_XCBC:
 			authalg = SADB_X_AALG_AES_XCBC_MAC;
 			key_len = BYTES_FOR_BITS(128);
 			break;
