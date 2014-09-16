@@ -94,7 +94,6 @@
 
 static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
-bool no_retransmits = FALSE;
 char *pluto_vendorid;
 
 static pid_t addconn_child_pid = 0;
@@ -664,7 +663,7 @@ void call_server(void)
 			/* see if helpers need attention */
 			enumerate_crypto_helper_response_sockets(&readfds);
 
-			if (no_retransmits || next_time < 0) {
+			if (next_time < 0) {
 				/* select without timer */
 
 				ndes = lsw_select(maxfd + 1, &readfds,
@@ -769,7 +768,7 @@ void call_server(void)
 
 			passert(ndes == 0);
 		}
-		if (next_event() == 0 && !no_retransmits) {
+		if (next_event() == 0) {
 			/* timer event ready */
 			DBG(DBG_CONTROL, DBG_log("*time to handle event"));
 			handle_timer_event();
