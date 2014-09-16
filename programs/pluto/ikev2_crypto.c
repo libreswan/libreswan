@@ -115,6 +115,9 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 			ipi->attrs.transattrs.ei->authkeylen;
 		break;
 	}
+	DBG(DBG_CONTROL, DBG_log("enckeylen=%d, authkeylen=%d", ipi->attrs.transattrs.ei->enckeylen,
+		ipi->attrs.transattrs.ei->authkeylen));
+	DBG(DBG_CONTROL, DBG_log("keymat_len set to %d",ipi->keymat_len));
 
 	/*
 	 *
