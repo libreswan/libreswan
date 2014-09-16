@@ -2854,10 +2854,10 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 	insert_state(st); /* needed for delete - we are duplicating early */
 
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
-		 ipstr_buf b;
 		/* in CREATE_CHILD_SA exchange we don't support new KE */
-		libreswan_log( "rejecting create child SA from %s:%u,"
-				"new KE in DH is not supoorted",
+		ipstr_buf b;
+
+		libreswan_log( "rejecting create child SA from %s:%u,new KE in DH is not supported",
 				ipstr(&md->sender, &b), md->sender_port);
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 	}
