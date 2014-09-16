@@ -37,6 +37,10 @@ def read_dirs(resultsdir, node):
 
 	dirs = listdir(newrunpath)
 	for d in sorted(dirs): 
+		# match = re.search(r'(2014-09-16)',d)
+		# if not match:
+		# 	continue
+
 		td = newrunpath  + '/' + d
 		table = { "columns" : [ "Test", "Expected", "Result", "Run time", "east" , "other console"] , "runDir" : '/results/' + os.path.basename(newrunpath) + '/' + d, "suffix" : "/OUTPUT",
 				"rows" : list()
@@ -70,6 +74,7 @@ def  fgrepfor(file, pattern, note):
 
 	cmd =  "fgrep  '" + pattern  + "'  " + file 
 	match = commands.getoutput(cmd)
+	# print("%s"%(cmd))
 	if match:
 		print("%s"%(cmd))
 		return note
@@ -100,6 +105,7 @@ def diffstat(d, host):
 			hostr = "missing  OUTPUT/" + host + '.console.txt' 
 	
 		plutolog = d + '/OUTPUT/' + host + '.pluto.log'
+		conslelog = d + '/OUTPUT/' + host + '.console.verbose.txt'
 		assertion = fgrepfor(plutolog, 'ASSERTION FAILED', "ASSERT")
 		if assertion:
 			hostr  = hostr + " " + assertion
@@ -107,6 +113,12 @@ def diffstat(d, host):
 		exception = fgrepfor(plutolog, 'EXPECTATION FAILED', "EXPECT")
 		if exception:
 			hostr  = hostr + " " + exception
+
+		segfault = fgrepfor(conslelog, 'segfault', "SEGFAULT")
+		if segfault:
+			hostr  = hostr + " " + "SEGFAULT"
+			print hostr
+
 		return hostr
 
 	
