@@ -284,12 +284,12 @@ default via 192.1.3.254 dev eth0
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-road                                                         u,u,u
-mainca                                                       ,,   
 east                                                         P,,  
-north                                                        P,,  
-hashsha2                                                     P,,  
 east-ec                                                      P,,  
+hashsha2                                                     P,,  
+mainca                                                       ,,   
+north                                                        P,,  
+road                                                         u,u,u
 west                                                         P,,  
 west-ec                                                      P,,  
 road #
