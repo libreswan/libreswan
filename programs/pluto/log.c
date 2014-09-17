@@ -137,7 +137,7 @@ void pluto_init_log(void)
 			/*
 			 * buffer by line:
 			 * should be faster that no buffering
-			 * and yet not each message is probably a line.
+			 * and yet safe since each message is probably a line.
 			 */
 			setvbuf(pluto_log_fp, NULL, _IOLBF, 0);
 		}
