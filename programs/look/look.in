@@ -94,5 +94,5 @@ ip -6 route
 if test -f @IPSEC_CONFDDIR@/cert8.db ; then
 	echo NSS_CERTIFICATES
 	certutil -L -d @IPSEC_CONFDDIR@ | head -4
-	certutil -L -d @IPSEC_CONFDDIR@ | grep -v "Trust Attributes" | grep -v "MIME," | sed "/^$/d" | sort
+	certutil -L -d @IPSEC_CONFDDIR@ | egrep -v '^NSS_CERTIFICATES|^$|Trust Attributes|MIME,' | LC_ALL=C sort
 fi
