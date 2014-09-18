@@ -1222,9 +1222,10 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_OK:
-		/* advance the state */
-		passert(st != NULL);
-		success_v2_state_transition(mdp);
+		if (st != NULL) {
+			/* advance the state */
+			success_v2_state_transition(mdp);
+		}
 		break;
 
 	case STF_INTERNAL_ERROR:
