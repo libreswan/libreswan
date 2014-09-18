@@ -102,7 +102,9 @@ enum_names timer_event_names =
 
 /* State of exchanges */
 static const char *const state_name[] = {
-	"no-state",
+	"STATE_UNDEFINED",
+	"OPPO_ACQUIRE",
+	"OPPO_GW_DISCOVERED",
 	"STATE_MAIN_R0",
 	"STATE_MAIN_I1",
 	"STATE_MAIN_R1",
