@@ -67,7 +67,7 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 sysctl -w net.ipv4.tcp_mtu_probing=1
 
 # TODO: if rhel/centos, we should install epel-release too
-yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools pexpect racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace unbound pexpect strongswan net-tools bind-utils rpm-build nc psmisc lsof valgrind
+yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools pexpect racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace unbound pexpect strongswan net-tools bind-utils rpm-build nc psmisc lsof valgrind ElectricFence
 
 mkdir /testing /source
 
@@ -142,7 +142,7 @@ systemctl enable sshd-shutdown.service
 # Needed for newer nss
 yum update -y 
 
-# Instal openswan
+# Instal libreswan
 mount /source
 cd /source
 make programs module install module_install
