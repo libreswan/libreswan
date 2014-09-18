@@ -102,6 +102,7 @@ enum_names timer_event_names =
 
 /* State of exchanges */
 static const char *const state_name[] = {
+	"no-state",
 	"STATE_MAIN_R0",
 	"STATE_MAIN_I1",
 	"STATE_MAIN_R1",
@@ -150,7 +151,7 @@ static const char *const state_name[] = {
 };
 
 enum_names state_names =
-	{ STATE_MAIN_R0, STATE_IKEv2_ROOF - 1, state_name, NULL };
+	{ STATE_UNDEFINED, STATE_IKEv2_ROOF - 1, state_name, NULL };
 
 /* story for state */
 

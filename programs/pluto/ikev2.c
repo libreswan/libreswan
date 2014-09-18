@@ -1169,15 +1169,14 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 {
 	struct msg_digest *md = *mdp;
 	/* const struct state_v2_microcode *svm=md->svm; */
-	struct state *st;
-	enum state_kind from_state = STATE_UNDEFINED;
-	const char *from_state_name;
+	struct state *st = md->st;
+	enum state_kind from_state = st == NULL? STATE_UNDEFINED : st->st_state;
+	const char *from_state_name = enum_name(&state_names, from_state);
 
-	cur_state = st = md->st; /* might have changed */
+	cur_state = st; /* might have changed */
 
-	pexpect(st != NULL);   /*  STF_TOOMUCH_CRYPTO used to call delete_state(st); hitting this*/
 	/*
-	 * XXX/SML:  There is no need to abort here in all cases if state is
+	 * XXX/SML:  There is no need to abort here in all cases where st is
 	 * null, so moved this precondition to where it's needed.  Some previous
 	 * logic appears to have been tooled to handle null state, and state might
 	 * be null legitimately in certain failure cases (STF_FAIL + xxx).
@@ -1193,12 +1192,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 * Another case of null state is retrun from ikev2parent_inR1BoutI1B
 	 * Which returns STF_IGNORE.
 	 */
-	if (st != NULL) {
-		from_state = st->st_state;
-		from_state_name = enum_name(&state_names, from_state);
-	} else {
-		from_state_name = "no-state";
-	}
 
 	/* advance the state */
 	DBG(DBG_CONTROL,
@@ -1215,8 +1208,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		 * this is second time through complete state transition,
 		 * so the MD has already been freed.
 		 * ??? This comment is not true.
-		* This has been proven by passert(md == NULL) failing.
-		*/
+		 * This has been proven by passert(md == NULL) failing.
+		 */
 		*mdp = NULL;
 		break;
 
@@ -1238,13 +1231,12 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		/* update the previous packet history */
 		/* TODO: fix: update_retransmit_history(st, md); */
 
-		whack_log(RC_INTERNALERR + md->note,
-			  "%s: internal error",
-			  enum_name(&state_names, from_state));
+		whack_log(RC_INTERNALERR + md->note, "%s: internal error",
+			  from_state_name);
 
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s had internal error",
-			    enum_name(&state_names, from_state)));
+			    from_state_name));
 		break;
 
 	case STF_TOOMUCHCRYPTO:
