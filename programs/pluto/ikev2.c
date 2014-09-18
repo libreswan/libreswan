@@ -1272,6 +1272,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		}
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
+		md->st = st = NULL;
 		break;
 
 	default: /* a shortcut to STF_FAIL, setting md->note */

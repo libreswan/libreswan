@@ -976,6 +976,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			send_v2_notification_from_state(st,
 				v2N_INVALID_KE_PAYLOAD, &dc);
 			delete_state(st);
+			md->st = NULL;
 			return STF_FAIL;	/* don't send second notification */
 		}
 		default:
@@ -3388,6 +3389,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				switch (v2del->isad_protoid) {
 				case PROTO_ISAKMP: /* Parent SA */
 					delete_my_family(st, TRUE);
+					md->st = st =  NULL;
 					break;
 
 				case PROTO_IPSEC_AH: /* Child SAs */
@@ -3473,6 +3475,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					 * Now delete the IKE SA state and all its child states
 					 */
 					delete_my_family(st, TRUE);
+					md->st = st =  NULL;
 				} else {
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
