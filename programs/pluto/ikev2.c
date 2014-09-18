@@ -1222,7 +1222,12 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_OK:
-		if (st != NULL) {
+		if (st == NULL) {
+			DBG(DBG_CONTROL,
+					DBG_log("complete v2 state transition with %s state %s",
+						enum_name(&stfstatus_name, result),
+						from_state_name));
+		} else {
 			/* advance the state */
 			success_v2_state_transition(mdp);
 		}
