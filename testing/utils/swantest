@@ -494,8 +494,7 @@ def cmdline():
 			default=DEFAULTCONFIG['retry'], type=int,
 			help="retry when there is console error.")
 
-	parser.add_argument("--node", default=DEFAULTCONFIG['node'], action="store_true",
-			help="Default node name.")
+	parser.add_argument("--node", default=DEFAULTCONFIG['node'], help="Default node name.")
 	parser.add_argument("--graphs", default=False, action="store_true",
 			help="generate graphs and JSON tables.")
 
