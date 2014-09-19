@@ -691,6 +691,7 @@ static stf_status informational(struct msg_digest *md)
 				delete_state(st);
 
 				/* to find and store the connection associated with tmp_name */
+				/* ??? how do we know that tmp_name hasn't been freed? */
 				tmp_c = con_by_name(tmp_name, FALSE);
 
 				DBG_cond_dump(DBG_PARSING,
@@ -2609,11 +2610,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					"disconnectNM", st))
 				DBG(DBG_CONTROL,
 				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
-
-
 		}
 #endif
-		delete_event(st);
+		delete_event(st);	/* ??? but delete_state does this too */
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
 		break;
@@ -2637,24 +2636,25 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		    DBG_log("state transition function for %s failed: %s",
 			    enum_name(&state_names, from_state),
 			    enum_name(&ikev1_notify_names, md->note)));
+
+		if (st != NULL) {
 #ifdef HAVE_NM
-		if (st->st_connection->remotepeertype == CISCO &&
-		    st->st_connection->nmconfigured) {
-			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
-					"disconnectNM", st))
-				DBG(DBG_CONTROL,
-				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
-
-
-		}
+			if (st->st_connection->remotepeertype == CISCO &&
+			    st->st_connection->nmconfigured) {
+				if (!do_command(st->st_connection,
+						&st->st_connection->spd,
+						"disconnectNM", st))
+					DBG(DBG_CONTROL,
+					    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
+			}
 #endif
-		if (st != NULL && IS_PHASE1_INIT(st->st_state)) {
-			delete_event(st);
-			release_whack(st);
+			if (IS_PHASE1_INIT(st->st_state)) {
+				delete_event(st);
+				release_whack(st);
+			}
+			if (IS_QUICK(st->st_state))
+				delete_state(st);
 		}
-		if (st != NULL && IS_QUICK(st->st_state))
-			delete_state(st);
 		break;
 	}
 }
