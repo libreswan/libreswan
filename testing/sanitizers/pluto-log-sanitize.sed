@@ -12,4 +12,3 @@ s/\(received Delete SA\)(0x.*)\( payload: deleting IPSEC State #\).*/\1(0xSPI1SP
 /extra debugging enabled for connection:/d
 #
 s/^000 SElinux=.*/000 SElinux=XXXXX/
-/^Electric Fence 2.*$/d
