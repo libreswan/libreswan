@@ -1276,12 +1276,11 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
  * The first is 0, and each subsequent octet is one larger.
  * Thus the last octet contains one less than the number of octets added.
  */
-static bool ikev2_padup_pre_encrypt(struct msg_digest *md,
+static bool ikev2_padup_pre_encrypt(struct state *st,
 				    pb_stream *e_pbs_cipher) MUST_USE_RESULT;
-static bool ikev2_padup_pre_encrypt(struct msg_digest *md,
+static bool ikev2_padup_pre_encrypt(struct state *st,
 				    pb_stream *e_pbs_cipher)
 {
-	struct state *st = md->st;
 	struct state *pst = st;
 
 	if (IS_CHILD_SA(st))
@@ -1305,11 +1304,10 @@ static bool ikev2_padup_pre_encrypt(struct msg_digest *md,
 	return TRUE;
 }
 
-static unsigned char *ikev2_authloc(struct msg_digest *md,
+static unsigned char *ikev2_authloc(struct state *st,
 				    pb_stream *e_pbs)
 {
 	unsigned char *b12;
-	struct state *st = md->st;
 	struct state *pst = st;
 
 	if (IS_CHILD_SA(st)) {
@@ -1326,7 +1324,7 @@ static unsigned char *ikev2_authloc(struct msg_digest *md,
 	return b12;
 }
 
-static stf_status ikev2_encrypt_msg(struct msg_digest *md,
+static stf_status ikev2_encrypt_msg(struct state *st,
 				    enum phase1_role role,
 				    unsigned char *authstart,
 				    unsigned char *iv,
@@ -1335,7 +1333,6 @@ static stf_status ikev2_encrypt_msg(struct msg_digest *md,
 				    pb_stream *e_pbs UNUSED,
 				    pb_stream *e_pbs_cipher)
 {
-	struct state *st = md->st;
 	struct state *pst = st;
 	PK11SymKey *cipherkey, *authkey;
 
@@ -1787,13 +1784,13 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	 * need to extend the packet so that we will know how big it is
 	 * since the length is under the integrity check
 	 */
-	if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
+	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&e_pbs_cipher);
 
 	{
-		unsigned char *authloc = ikev2_authloc(md, &e_pbs);
+		unsigned char *authloc = ikev2_authloc(st, &e_pbs);
 
 		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
@@ -1802,7 +1799,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		close_output_pbs(&md->rbody);
 		close_output_pbs(&reply_stream);
 
-		ret = ikev2_encrypt_msg(md, O_INITIATOR,
+		ret = ikev2_encrypt_msg(st, O_INITIATOR,
 					authstart,
 					iv, encstart, authloc,
 					&e_pbs, &e_pbs_cipher);
@@ -2180,6 +2177,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 							      O_RESPONDER,
 							      ISAKMP_NEXT_v2AUTH,
 							      &e_pbs_cipher);
+
 			if (certstat != STF_OK)
 				return certstat;
 		}
@@ -2188,7 +2186,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
 		    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
 		    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
-
 			/* initiator didn't propose anything. Weird. Try unpending our end. */
 			/* UNPEND XXX */
 			libreswan_log("No CHILD SA proposals received.");
@@ -2233,13 +2230,13 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			}
 		}
 
-		if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
+		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&e_pbs_cipher);
 
 		{
-			unsigned char *authloc = ikev2_authloc(md, &e_pbs);
+			unsigned char *authloc = ikev2_authloc(st, &e_pbs);
 
 			if (authloc == NULL)
 				return STF_INTERNAL_ERROR;
@@ -2249,7 +2246,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			close_output_pbs(&md->rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(md, O_RESPONDER,
+			ret = ikev2_encrypt_msg(st, O_RESPONDER,
 						authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
@@ -3016,20 +3013,20 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 		DBG_log("ikev2_child_sa_respond returned %s",
 				enum_name(&stfstatus_name, ret));
 	}
-	if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
+	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&e_pbs_cipher);
 
 	{
-		unsigned char *authloc = ikev2_authloc(md, &e_pbs);
+		unsigned char *authloc = ikev2_authloc(st, &e_pbs);
 
 		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&md->rbody);
 		close_output_pbs(&reply_stream);
-		ret = ikev2_encrypt_msg(md, O_RESPONDER, authstart, iv, encstart,
+		ret = ikev2_encrypt_msg(st, O_RESPONDER, authstart, iv, encstart,
 				authloc, &e_pbs, &e_pbs_cipher);
 
 		if (ret != STF_OK)
@@ -3088,6 +3085,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		st = state_with_serialno(st->st_clonedfrom);
 		if (st == NULL)
 			return STF_INTERNAL_ERROR;
+
 		md->st = st;
 		set_cur_state(st);
 		DBG(DBG_CONTROLMORE,
@@ -3339,14 +3337,14 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			 * This will end up sending an empty payload.
 			 */
 
-			if (!ikev2_padup_pre_encrypt(md, &e_pbs_cipher))
+			if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
 				return STF_INTERNAL_ERROR;
 
 			close_output_pbs(&e_pbs_cipher);
 
 			{
 				stf_status ret;
-				unsigned char *authloc = ikev2_authloc(md,
+				unsigned char *authloc = ikev2_authloc(st,
 								       &e_pbs);
 				if (authloc == NULL)
 					return STF_INTERNAL_ERROR;
@@ -3355,7 +3353,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				close_output_pbs(&md->rbody);
 				close_output_pbs(&reply_stream);
 
-				ret = ikev2_encrypt_msg(md, prole,
+				ret = ikev2_encrypt_msg(st, prole,
 							authstart,
 							iv, encstart, authloc,
 							&e_pbs, &e_pbs_cipher);
@@ -3437,6 +3435,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 										v2del->isad_protoid),
 									ntohl((uint32_t)spi)));
 
+							passert(dst != st);	/* st is a parent */
 							/* now delete the state */
 							change_state(dst,
 								STATE_CHILDSA_DEL);
@@ -3513,13 +3512,16 @@ stf_status ikev2_send_informational(struct state *st)
 		unsigned char *authstart;
 		unsigned char *encstart;
 		unsigned char *iv;
-		struct msg_digest md;
+
+		/* encryption role based on role in INIT, not role in this exchange */
+		enum phase1_role role = IS_V2_INITIATOR(pst->st_state) ?
+			O_INITIATOR : O_RESPONDER;
+
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
 		pb_stream rbody;
 		pb_stream reply_stream;
 
-		md.st = st;
 		zero(&buffer);
 		init_pbs(&reply_stream, buffer, sizeof(buffer),
 			 "informational exchange request packet");
@@ -3528,6 +3530,7 @@ stf_status ikev2_send_informational(struct state *st)
 		/* HDR out */
 		{
 			struct isakmp_hdr r_hdr;
+
 			zero(&r_hdr);
 			r_hdr.isa_version = build_ike_version();
 			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
@@ -3539,19 +3542,13 @@ stf_status ikev2_send_informational(struct state *st)
 			r_hdr.isa_flags |= ISAKMP_FLAGS_IKE_I;
 			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
-			/* encryption role based on original state not md state */
-			if (IS_V2_INITIATOR(pst->st_state))
-				md.role = O_INITIATOR;
-			else
-				md.role = O_RESPONDER;
-
 			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
 					&reply_stream, &rbody)) {
 				libreswan_log(
 					"error initializing hdr for informational message");
 				return STF_FATAL;
 			}
-		} /* HDR done */
+		}
 
 		/* insert an Encryption payload header */
 		e.isag_np = ISAKMP_NEXT_v2NONE;
@@ -3574,23 +3571,23 @@ stf_status ikev2_send_informational(struct state *st)
 
 		/* This is an empty informational exchange (A.K.A liveness check) */
 
-		if (!ikev2_padup_pre_encrypt(&md, &e_pbs_cipher))
+		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&e_pbs_cipher);
 
 		{
 			stf_status ret;
-			unsigned char *authloc = ikev2_authloc(&md, &e_pbs);
+			unsigned char *authloc = ikev2_authloc(st, &e_pbs);
 
-			if (!authloc)
+			if (authloc == NULL)
 				return STF_FATAL;
 
 			close_output_pbs(&e_pbs);
 			close_output_pbs(&rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(&md, md.role,
+			ret = ikev2_encrypt_msg(st, role,
 						authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
@@ -3626,7 +3623,7 @@ void ikev2_delete_out(struct state *st)
 
 		if (pst == NULL) {
 			DBG(DBG_CONTROL,
-			    DBG_log("IKE SA does not exist for this child SA"));
+			    DBG_log("IKE SA does not exist for the child SA that we are deleting"));
 			DBG(DBG_CONTROL,
 			    DBG_log("INFORMATIONAL exchange cannot be sent, deleting state"));
 			goto unhappy_ending;
@@ -3643,10 +3640,7 @@ void ikev2_delete_out(struct state *st)
 		struct ikev2_generic e;
 		unsigned char *iv;
 		unsigned char *encstart;
-		struct msg_digest md;
 		enum phase1_role role;
-
-		md.st = st;
 
 		/* make sure HDR is at start of a clean buffer */
 		zero(&reply_buffer);
@@ -3658,6 +3652,7 @@ void ikev2_delete_out(struct state *st)
 		/* HDR out */
 		{
 			struct isakmp_hdr r_hdr;
+
 			zero(&r_hdr); /* default to 0 */
 			r_hdr.isa_version = build_ike_version();
 			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
@@ -3668,10 +3663,13 @@ void ikev2_delete_out(struct state *st)
 			r_hdr.isa_np = ISAKMP_NEXT_v2E;
 			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
-
 			/* set Initiator flag if we are the IKE Original Initiator */
 			if (pst->st_state == STATE_PARENT_I2 ||
 			    pst->st_state == STATE_PARENT_I3) {
+				/*
+				 * ??? is this isa_flag setting correct?
+				 * Should it not reflect *this* exchange?
+				 */
 				r_hdr.isa_flags |= ISAKMP_FLAGS_IKE_I;
 				role = O_INITIATOR;
 			} else {
@@ -3685,7 +3683,7 @@ void ikev2_delete_out(struct state *st)
 				goto unhappy_ending;
 			}
 
-		} /* HDR Done */
+		}
 
 		/* insert an Encryption payload header */
 		e.isag_np = ISAKMP_NEXT_v2D;
@@ -3751,7 +3749,7 @@ void ikev2_delete_out(struct state *st)
 			close_output_pbs(&del_pbs);
 		}
 
-		if (!ikev2_padup_pre_encrypt(&md, &e_pbs_cipher)) {
+		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher)) {
 			libreswan_log("error padding before encryption in delete payload");
 			goto unhappy_ending;
 		}
@@ -3760,14 +3758,16 @@ void ikev2_delete_out(struct state *st)
 
 		{
 			stf_status ret;
-			unsigned char *authloc = ikev2_authloc(&md, &e_pbs);
+			unsigned char *authloc = ikev2_authloc(st, &e_pbs);
+
 			if (authloc == NULL)
 				goto unhappy_ending;
+
 			close_output_pbs(&e_pbs);
 			close_output_pbs(&rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(&md, role,
+			ret = ikev2_encrypt_msg(st, role,
 						authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
@@ -3788,8 +3788,13 @@ void ikev2_delete_out(struct state *st)
 		 * increase message ID for next delete message
 		 */
 		pst->st_msgid_nextuse++;
-		/* update state */
-		ikev2_update_counters(&md);
+
+		/*
+		 * We should update state to relect msgid's:
+		 *   ikev2_update_counters(&md);
+		 * But we have no idea!
+		 * This was a fake exchange.
+		 */
 	}
 
 	/* If everything is fine, and we sent packet, return */
