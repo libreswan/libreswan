@@ -59,6 +59,9 @@ commontest() {
 			if fgrep 'EXPECTATION FAILED' "$i" >/dev/null ; then
 				notes="$notes,EXPECT:`basename $i`"
 			fi
+			if fgrep 'SEGFAULT' "$i" >/dev/null ; then
+				notes="$notes,SEGFAULT:`basename $i`"
+			fi
 		fi
 	done
 
