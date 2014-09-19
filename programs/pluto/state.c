@@ -621,7 +621,7 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 						      enum_show(&state_names, this->st_state));
 
 					if (this->st_event != NULL)
-						delete_event(this);
+						delete_event(this);	/* ??? but delete_state does this too */
 					delete_state(this);
 
 					cur_state = old_cur_state;
@@ -660,6 +660,7 @@ void delete_states_dead_interfaces(void)
 	for (i = 0; st == NULL && i < STATE_TABLE_SIZE; i++)
 		for (st = statetable[i]; st != NULL; ) {
 			struct state *this = st;
+
 			st = st->st_hashchain_next; /* before this is deleted */
 			if (this->st_interface &&
 			    this->st_interface->change == IFN_DELETE) {
