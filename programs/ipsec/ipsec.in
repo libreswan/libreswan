@@ -2,6 +2,7 @@
 # prefix command to run stuff from our programs directory
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2013       Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2014  Paul Wouters <pwouters@redhat.com>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -28,6 +29,9 @@ export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
 # standardize PATH, and export it for everything else's benefit
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
 export PATH
+
+# supress ElectricFence banner changing our reference testing output
+export EF_DISABLE_BANNER=1
 
 # things not to be listed in --help command list
 DONTMENTION='^(ipsec|_.*|.*\.old|.*\.orig|.*~)$'
