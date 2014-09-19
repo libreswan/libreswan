@@ -1214,6 +1214,9 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 						libreswan_log("ikev2_out_attr() failed");
 						return STF_INTERNAL_ERROR;
 				}
+			} else {
+				DBG(DBG_CONTROL,DBG_log(
+					"keysize is NOT required - NOT sent key length attribute"));
 			}
 		}
 
@@ -1872,6 +1875,7 @@ stf_status ikev2_parse_child_sa_body(
 				break; /* ok */
 			case IKEv2_ENCR_CAST:
 				break; /* CAST is ESP only, not IKE */
+			case IKEv2_ENCR_AES_CTR:
 			case IKEv2_ENCR_CAMELLIA_CBC:
 			case IKEv2_ENCR_CAMELLIA_CTR:
 			case IKEv2_ENCR_CAMELLIA_CCM_A:
