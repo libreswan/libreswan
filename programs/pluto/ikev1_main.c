@@ -2433,8 +2433,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		if (sndst->hidden_variables.st_malformed_sent >
 			MAXIMUM_MALFORMED_NOTIFY) {
 			libreswan_log(
-				"too many (%d) malformed payloads. Deleting "
-				"state",
+				"too many (%d) malformed payloads. Deleting state",
 				sndst->hidden_variables.st_malformed_sent);
 			delete_state(sndst);
 			return;
@@ -2864,10 +2863,12 @@ void accept_delete(struct state *st, struct msg_digest *md,
 	case PROTO_ISAKMP:
 		sizespi = 2 * COOKIE_SIZE;
 		break;
+
 	case PROTO_IPSEC_AH:
 	case PROTO_IPSEC_ESP:
 		sizespi = sizeof(ipsec_spi_t);
 		break;
+
 	case PROTO_IPCOMP:
 		/* nothing interesting to delete */
 		return;
@@ -2894,21 +2895,25 @@ void accept_delete(struct state *st, struct msg_digest *md,
 	}
 
 	for (i = 0; i < d->isad_nospi; i++) {
-		u_char *spi = p->pbs.cur + (i * sizespi);
-
 		if (d->isad_protoid == PROTO_ISAKMP) {
 			/*
 			 * ISAKMP
 			 */
-			struct state *dst = find_state_ikev1(spi, /* iCookie */
-							/* rCookie */
-							spi + COOKIE_SIZE,
-							v1_MAINMODE_MSGID);
+			u_int8_t icookie[COOKIE_SIZE];
+			u_int8_t rcookie[COOKIE_SIZE];
+			struct state *dst;
+
+			if (!in_raw(icookie, COOKIE_SIZE, &p->pbs, "iCookie"))
+				return;
+
+			if (!in_raw(rcookie, COOKIE_SIZE, &p->pbs, "rCookie"))
+				return;
+
+			dst = find_state_ikev1(icookie, rcookie,
+					v1_MAINMODE_MSGID);
 
 			if (dst == NULL) {
-				loglog(RC_LOG_SERIOUS, "ignoring Delete SA "
-					"payload: ISAKMP SA not found (maybe "
-					"expired)");
+				loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
 			} else if (!same_peer_ids(st->st_connection,
 							dst->st_connection,
 							NULL)) {
@@ -2940,22 +2945,27 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			/*
 			 * IPSEC (ESP/AH)
 			 */
+			ipsec_spi_t spi;	/* network order */
 			bool bogus;
-			struct state *dst = find_phase2_state_to_delete(st,
+			struct state *dst;
+
+			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+				return;
+
+			dst = find_phase2_state_to_delete(st,
 							d->isad_protoid,
-							*(ipsec_spi_t*)
-							spi, /* network order */
+							spi,
 							&bogus);
 
 			if (dst == NULL) {
 				loglog(RC_LOG_SERIOUS,
-					"ignoring Delete SA payload: %s "
-					"SA(0x%08lx) not found (%s)",
+					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (%s)",
 					enum_show(&protocol_names,
 						d->isad_protoid),
-					(unsigned long)ntohl((unsigned long)
-						*(ipsec_spi_t *)spi),
-					bogus ? "our SPI - bogus implementation" : "maybe expired");
+					ntohl(spi),
+					bogus ?
+						"our SPI - bogus implementation" :
+						"maybe expired");
 			} else {
 				struct connection *rc = dst->st_connection;
 				struct connection *oldc;
@@ -2990,21 +3000,14 @@ void accept_delete(struct state *st, struct msg_digest *md,
 						 * Delete SA.
 						 */
 						loglog(RC_LOG_SERIOUS,
-							"received Delete SA "
-							"payload: already "
-							"replacing IPSEC "
-							"State #%lu in %ld "
-							"seconds",
+							"received Delete SA payload: already replacing IPSEC State #%lu in %ld seconds",
 							dst->st_serialno,
-							(long)deltasecs(monotimediff(dst->st_event->
-								ev_time,
+							(long)deltasecs(monotimediff(
+								dst->st_event->ev_time,
 								mononow())));
 					} else {
 						loglog(RC_LOG_SERIOUS,
-							"received Delete SA "
-							"payload: replace "
-							"IPSEC State #%lu "
-							"in %d seconds",
+							"received Delete SA payload: replace IPSEC State #%lu in %d seconds",
 							dst->st_serialno,
 							DELETE_SA_DELAY);
 						dst->st_margin = deltatime(
@@ -3016,13 +3019,8 @@ void accept_delete(struct state *st, struct msg_digest *md,
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS,
-						"received Delete SA(0x%08lx) "
-						"payload: deleting IPSEC "
-						"State #%lu",
-						(unsigned long)ntohl(
-							(unsigned long)*(
-								ipsec_spi_t *)
-							spi),
+						"received Delete SA(0x%08" PRIx32 ") payload: deleting IPSEC State #%lu",
+						ntohl(spi),
 						dst->st_serialno);
 					delete_state(dst);
 				}
