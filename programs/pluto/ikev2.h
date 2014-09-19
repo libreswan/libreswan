@@ -173,7 +173,7 @@ extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					 pb_stream *outpbs,
 					 enum isakmp_xchg_types isa_xchg);
 
-extern void ikev2_update_counters(struct msg_digest *md);
+extern void ikev2_update_msgid_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);
 
 extern void send_v2_notification(struct state *p1st,

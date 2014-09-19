@@ -920,7 +920,7 @@ void send_v2_notification_from_md(struct msg_digest *md,
 			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
 }
 
-void ikev2_update_counters(struct msg_digest *md)
+void ikev2_update_msgid_counters(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct state *ikesa = IS_CHILD_SA(st) ?
@@ -1021,7 +1021,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	change_state(st, svm->next_state);
 	w = RC_NEW_STATE + st->st_state;
 
-	ikev2_update_counters(md);
+	ikev2_update_msgid_counters(md);
 
 	/* tell whack and log of progress, if we are actually advancing */
 	if (from_state != svm->next_state) {

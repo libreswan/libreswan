@@ -62,12 +62,6 @@
 #include "kernel.h"
 #include "nat_traversal.h"
 
-#define SEND_NOTIFICATION_AA(t, d) \
-	if (st != NULL) \
-		send_v2_notification_from_state(st, (t), (d)); \
-	else \
-		send_v2_notification_from_md(md, (t), (d));
-
 #define SEND_NOTIFICATION(t) { \
 		if (st != NULL) \
 			send_v2_notification_from_state(st, t, NULL); \
@@ -1210,7 +1204,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	}
 
 	/* update state */
-	ikev2_update_counters(md);
+	ikev2_update_msgid_counters(md);
 
 	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and
 	 * v2N_NAT_DETECTION_SOURCE_IP
@@ -1270,7 +1264,7 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 }
 
 /*
- * Pad message for encryption.
+ * Pad message for CBC-mode encryption.
  * Octets are added to make the message a multiple of the cipher block size.
  * At least one octet is added and at most blocksize are added.
  * The first is 0, and each subsequent octet is one larger.
@@ -3480,7 +3474,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
 					st->st_last_liveness = mononow();
 					st->st_pend_liveness = FALSE;
-					ikev2_update_counters(md);
+					ikev2_update_msgid_counters(md);
 				}
 			}
 		}
@@ -3791,7 +3785,7 @@ void ikev2_delete_out(struct state *st)
 
 		/*
 		 * We should update state to relect msgid's:
-		 *   ikev2_update_counters(&md);
+		 *   ikev2_update_msgid_counters(&md);
 		 * But we have no idea!
 		 * This was a fake exchange.
 		 */
