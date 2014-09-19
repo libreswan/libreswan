@@ -118,17 +118,13 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 commands.getoutput("iptables-restore /etc/sysconfig/iptables")
 commands.getoutput("ip6tables-restore /etc/sysconfig/ip6tables")
 
-# ensure cores are just dropped, not sent to aobrt-hook-ccpp. Although we could try and use that,
-# and depend on systemd-coredumpctl output and copying
-#
-# we can core directly in testcase dir but that requires fixing all final.sh and console output
-#commands.getoutput("sysctl -w kernel.core_pattern=/testing/pluto/%s/OUTPUT/core.%%h.%%e.%%p"%testname)
-#
-commands.getoutput("sysctl -w kernel.core_pattern=/tmp/core.%h.%e.%p")
-if not os.path.isfile("/etc/sysctl.d/coredump.conf") and not os.path.islink("/etc/sysctl.d/coredump.conf"):
-	os.symlink("/dev/null", "/etc/sysctl.d/coredump.conf")
-	commands.getoutput("/lib/systemd/systemd-sysctl")
-
+# ensure cores are just dropped, not sent to aobrt-hook-ccpp or systemd.
+# setting /proc/sys/kernel/core_pattern to "core" or a pattern does not
+# work. And you cannot use shell redirection ">". So we hack it with "tee"
+pattern = "|/usr/bin/tee /tmp/core.%h.%e.%p"
+fp = open("/proc/sys/kernel/core_pattern","w")
+fp.write(pattern)
+fp.close()
 
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
