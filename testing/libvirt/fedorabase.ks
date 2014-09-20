@@ -67,7 +67,8 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 sysctl -w net.ipv4.tcp_mtu_probing=1
 
 # TODO: if rhel/centos, we should install epel-release too
-yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools pexpect racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace unbound pexpect strongswan net-tools bind-utils rpm-build nc psmisc lsof valgrind ElectricFence
+yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools pexpect racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace unbound pexpect strongswan net-tools bind-utils rpm-build nc psmisc lsof valgrind ElectricFence yum-utils screen
+debuginfo-install -y ElectricFence audit-libs cyrus-sasl glibc keyutils krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap openssl-libs pam pcre python-libs sqlite unbound-libs xz-libs zlib gmp nspr nss 
 
 mkdir /testing /source
 
