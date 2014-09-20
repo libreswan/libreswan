@@ -58,7 +58,7 @@ static struct sadb_alg *sadb_alg_ptr(unsigned satype, unsigned exttype,
 		switch (satype) {
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
-			/* ??? even thoughh this might be AH, we only talk of ESP */
+			/* ??? even though this might be AH, we only talk of ESP */
 			alg_p = &esp_aalg[alg_id];
 
 			/* get for write: increment elem count */
