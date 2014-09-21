@@ -1096,12 +1096,11 @@ static bool send_packet(struct state *st, const char *where,
 				  NON_ESP_MARKER_SIZE : 0;
 
 	const u_int8_t *ptr;
-	unsigned long len = natt_bonus + alen + blen;
+	size_t len = natt_bonus + alen + blen;
 	ssize_t wlen;
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
-		DBG_log("send_ike_msg(): really too big %lu bytes",
-			(unsigned long) len);
+		DBG_log("send_ike_msg(): really too big %zu bytes", len);
 		return FALSE;
 	}
 
@@ -1124,8 +1123,8 @@ static bool send_packet(struct state *st, const char *where,
 
 	DBG(DBG_CONTROL | DBG_RAW, {
 		ipstr_buf b;
-		DBG_log("sending %lu bytes for %s through %s:%d to %s:%u (using #%lu)",
-			(unsigned long) len,
+		DBG_log("sending %zu bytes for %s through %s:%d to %s:%u (using #%lu)",
+			len,
 			where,
 			st->st_interface->ip_dev->id_rname,
 			st->st_interface->port,
@@ -1166,8 +1165,8 @@ static bool send_packet(struct state *st, const char *where,
 		usleep(500000);
 		ipstr_buf b;
 
-		DBG_log("JACOB 2-2: resending %lu bytes for %s through %s:%d to %s:%u:",
-			(unsigned long) len,
+		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s:%d to %s:%u:",
+			len,
 			where,
 			st->st_interface->ip_dev->id_rname,
 			st->st_interface->port,
@@ -1312,11 +1311,12 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 	      (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
 	      st->st_seen_fragvid) ||
 	     ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-	      st->st_seen_fragments)))
+	      st->st_seen_fragments))) {
 		return send_frags(st, where);
-	else
+	} else {
 		return send_packet(st, where, FALSE, st->st_tpacket.ptr,
-				   st->st_tpacket.len, NULL, (size_t) 0);
+				   st->st_tpacket.len, NULL, 0);
+	}
 }
 
 bool send_ike_msg(struct state *st, const char *where)
@@ -1338,5 +1338,5 @@ bool send_keepalive(struct state *st, const char *where)
 	static const unsigned char ka_payload = 0xff;
 
 	return send_packet(st, where, TRUE, &ka_payload, sizeof(ka_payload),
-			   NULL, (size_t) 0);
+			   NULL, 0);
 }
