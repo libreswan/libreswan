@@ -89,10 +89,16 @@ struct packet_byte_stream {
 };
 typedef struct packet_byte_stream pb_stream;
 
-/* For an input PBS, pbs_offset is amount of stream processed.
- * For an output PBS, pbs_offset is current size of stream.
- * For an input PBS, pbs_room is size of stream.
- * For an output PBS, pbs_room is maximum size allowed.
+/*
+ * For an input PBS:
+ *	pbs_offset is amount of stream processed.
+ *	pbs_room is size of stream.
+ *	pbs_left is amount of stream remaining
+ *
+ * For an output PBS:
+ *	pbs_offset is current size of stream.
+ *	pbs_room is maximum size allowed.
+ *	pbs_left is amount of space remaining
  */
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
