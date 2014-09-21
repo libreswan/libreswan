@@ -107,9 +107,15 @@ void release_md(struct msg_digest *md)
 	freeanychunk(md->raw_packet);
 	pfreeany(md->packet_pbs.start);
 
-	/* make sure we are not creating a loop */
+	/* check that we are not creating a loop */
 	passert(md != md_pool);
-	md->packet_pbs.start = NULL;
+
+	/*
+	 * Shred to useless value.
+	 * Redundant but might catch dangling references.
+	 */
+	memset(md, 0xED, sizeof(struct msg_digest));
+
 	md->next = md_pool;
 	md_pool = md;
 }
