@@ -3085,439 +3085,437 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			return ret;
 	}
 
-	{	/* ??? USELESS INDENTATION */
-		/*
-		 * Generate response message,
-		 * but only if we are the Responder in this exchange.
-		 * (If we're the Initiator, we've already had our turn.)
-		 */
-		if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) == 0) {
-			pb_stream e_pbs, e_pbs_cipher;
-			struct ikev2_generic e;
-			unsigned char *iv;
-			unsigned char *encstart;
-			unsigned char *authstart = reply_stream.cur;
-			struct payload_digest *p;
+	/*
+	 * Generate response message,
+	 * but only if we are the Responder in this exchange.
+	 * (If we're the Initiator, we've already had our turn.)
+	 */
+	if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) == 0) {
+		pb_stream e_pbs, e_pbs_cipher;
+		struct ikev2_generic e;
+		unsigned char *iv;
+		unsigned char *encstart;
+		unsigned char *authstart = reply_stream.cur;
+		struct payload_digest *p;
 
-			/* make sure HDR is at start of a clean buffer */
-			zero(&reply_buffer);
-			init_pbs(&reply_stream, reply_buffer,
-				 sizeof(reply_buffer),
-				 "information exchange reply packet");
+		/* make sure HDR is at start of a clean buffer */
+		zero(&reply_buffer);
+		init_pbs(&reply_stream, reply_buffer,
+			 sizeof(reply_buffer),
+			 "information exchange reply packet");
 
-			DBG(DBG_CONTROLMORE | DBG_DPD,
-			    DBG_log("updating st_last_liveness, no pending_liveness"));
+		DBG(DBG_CONTROLMORE | DBG_DPD,
+		    DBG_log("updating st_last_liveness, no pending_liveness"));
 
-			st->st_last_liveness = mononow();
-			st->st_pend_liveness = FALSE;
+		st->st_last_liveness = mononow();
+		st->st_pend_liveness = FALSE;
 
-			/* HDR out */
-			{
-				struct isakmp_hdr r_hdr;
+		/* HDR out */
+		{
+			struct isakmp_hdr r_hdr;
 
-				zero(&r_hdr); /* default to 0 */
-				r_hdr.isa_version = build_ike_version();
-				memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-				memcpy(r_hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-				r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-				r_hdr.isa_np = ISAKMP_NEXT_v2E;
-				r_hdr.isa_msgid = htonl(md->msgid_received);
-				r_hdr.isa_flags |= ISAKMP_FLAGS_MSG_R;
+			zero(&r_hdr); /* default to 0 */
+			r_hdr.isa_version = build_ike_version();
+			memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+			memcpy(r_hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
+			r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
+			r_hdr.isa_np = ISAKMP_NEXT_v2E;
+			r_hdr.isa_msgid = htonl(md->msgid_received);
+			r_hdr.isa_flags |= ISAKMP_FLAGS_MSG_R;
 
-				if (!out_struct(&r_hdr, &isakmp_hdr_desc,
-						&reply_stream, &md->rbody)) {
-					libreswan_log(
-						"error initializing hdr for informational message");
-					return STF_INTERNAL_ERROR;
-				}
-
-			} /* HDR Done */
-
-			/* insert an Encryption payload header */
-
-			/*
-			 * We only process Delete Payloads. The rest are
-			 * ignored.
-			 *
-			 * If no delete payloads were received, the Next 
-			 * Payload type to send will be NONE.
-			 *
-			 * IKE SA Delete cannot be combined with anything
-			 * else (including IPsec SA Delete) and its confirmation
-			 * is an empty message so Next Payload type would be
-			 * NONE.
-			 *
-			 * There can be any number of IPsec SA Delete payloads
-			 * and the next payload type will be v2D or NONE.
-			 *
-			 * The next code chunk looks at the delete payload(s)
-			 * to see if message is deleting an IKE SA or and IPSec SA
-			 * or neither.
-			 */
-			e.isag_np = ISAKMP_NEXT_v2NONE;
-			if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
-				/* IKE SA delete payloads are always by themselves */
-				struct ikev2_delete *v2del =
-					&md->chain[ISAKMP_NEXT_v2D]->payload.v2delete;
-
-				if (v2del->isad_protoid == PROTO_ISAKMP) {
-					if (md->chain[ISAKMP_NEXT_v2D]->next != NULL) {
-						libreswan_log(
-							"IKE SA Delete must be the only payload");
-						return STF_FAIL + v2N_INVALID_SYNTAX;
-					}
-					if (v2del->isad_nrspi != 0 ||
-						v2del->isad_spisize != 0) {
-						libreswan_log("IKE SA Delete has non-zero SPI size or number of SPIs");
-						return STF_FAIL + v2N_INVALID_SYNTAX;
-					}
-				} else {
-					e.isag_np = ISAKMP_NEXT_v2D;
-				}
+			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+					&reply_stream, &md->rbody)) {
+				libreswan_log(
+					"error initializing hdr for informational message");
+				return STF_INTERNAL_ERROR;
 			}
 
-			e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+		} /* HDR Done */
 
-			if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
-				return STF_INTERNAL_ERROR;
+		/* insert an Encryption payload header */
 
-			/* insert IV */
-			iv = e_pbs.cur;
-			if (!emit_iv(st, &e_pbs))
-				return STF_INTERNAL_ERROR;
+		/*
+		 * We only process Delete Payloads. The rest are
+		 * ignored.
+		 *
+		 * If no delete payloads were received, the Next 
+		 * Payload type to send will be NONE.
+		 *
+		 * IKE SA Delete cannot be combined with anything
+		 * else (including IPsec SA Delete) and its confirmation
+		 * is an empty message so Next Payload type would be
+		 * NONE.
+		 *
+		 * There can be any number of IPsec SA Delete payloads
+		 * and the next payload type will be v2D or NONE.
+		 *
+		 * The next code chunk looks at the delete payload(s)
+		 * to see if message is deleting an IKE SA or and IPSec SA
+		 * or neither.
+		 */
+		e.isag_np = ISAKMP_NEXT_v2NONE;
+		if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
+			/* IKE SA delete payloads are always by themselves */
+			struct ikev2_delete *v2del =
+				&md->chain[ISAKMP_NEXT_v2D]->payload.v2delete;
 
-			/* note where cleartext starts in output */
-			init_pbs(&e_pbs_cipher, e_pbs.cur,
-				 e_pbs.roof - e_pbs.cur, "cleartext");
-			e_pbs_cipher.container = &e_pbs;
-			e_pbs_cipher.desc = NULL;
-			e_pbs_cipher.cur = e_pbs.cur;
-			encstart = e_pbs_cipher.cur;
+			if (v2del->isad_protoid == PROTO_ISAKMP) {
+				if (md->chain[ISAKMP_NEXT_v2D]->next != NULL) {
+					libreswan_log(
+						"IKE SA Delete must be the only payload");
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
+				if (v2del->isad_nrspi != 0 ||
+					v2del->isad_spisize != 0) {
+					libreswan_log("IKE SA Delete has non-zero SPI size or number of SPIs");
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
+			} else {
+				e.isag_np = ISAKMP_NEXT_v2D;
+			}
+		}
 
-			/*
-			 * Pass 1: scan incoming Delete Payloads,
-			 * generating the contents of the Response packet
-			 */
-			for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
-				/* Gather all the IPSec SPIs corresponding to SPIs in this message */
-				struct ikev2_delete *v2del = &p->payload.v2delete;
+		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
-				switch (v2del->isad_protoid) {
-				case PROTO_ISAKMP:
-					/*
-					 * There can be only one Delete Payload
-					 * if it is ISAKMP
-					 */
-					passert(p == md->chain[ISAKMP_NEXT_v2D]);
-					break;
+		if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
+			return STF_INTERNAL_ERROR;
 
-				case PROTO_IPSEC_AH:
-				case PROTO_IPSEC_ESP:
+		/* insert IV */
+		iv = e_pbs.cur;
+		if (!emit_iv(st, &e_pbs))
+			return STF_INTERNAL_ERROR;
+
+		/* note where cleartext starts in output */
+		init_pbs(&e_pbs_cipher, e_pbs.cur,
+			 e_pbs.roof - e_pbs.cur, "cleartext");
+		e_pbs_cipher.container = &e_pbs;
+		e_pbs_cipher.desc = NULL;
+		e_pbs_cipher.cur = e_pbs.cur;
+		encstart = e_pbs_cipher.cur;
+
+		/*
+		 * Pass 1: scan incoming Delete Payloads,
+		 * generating the contents of the Response packet
+		 */
+		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
+			/* Gather all the IPSec SPIs corresponding to SPIs in this message */
+			struct ikev2_delete *v2del = &p->payload.v2delete;
+
+			switch (v2del->isad_protoid) {
+			case PROTO_ISAKMP:
+				/*
+				 * There can be only one Delete Payload
+				 * if it is ISAKMP
+				 */
+				passert(p == md->chain[ISAKMP_NEXT_v2D]);
+				break;
+
+			case PROTO_IPSEC_AH:
+			case PROTO_IPSEC_ESP:
+			{
+				ipsec_spi_t spi_buf[128];
+				u_int16_t j = 0;	/* number of SPIs in spi_buf */
+				u_int8_t *spi_start = p->pbs.cur;	/* save for next pass */
+				pb_stream del_pbs;	/* output stream */
+				struct ikev2_delete v2del_tmp;
+				u_int16_t i;
+
+				if (v2del->isad_spisize != sizeof(ipsec_spi_t)){
+					libreswan_log("IPSec Delete Notification has invalid SPI size %u",
+						v2del->isad_spisize);
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
+				
+				if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
+					libreswan_log("IPSec Delete Notification payload size is %tu but %u is required",
+						pbs_left(&p->pbs),
+						v2del->isad_nrspi * v2del->isad_spisize);
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
+
+				for (i = 0; i < v2del->isad_nrspi; i++)
 				{
-					ipsec_spi_t spi_buf[128];
-					u_int16_t j = 0;	/* number of SPIs in spi_buf */
-					u_int8_t *spi_start = p->pbs.cur;	/* save for next pass */
-					pb_stream del_pbs;	/* output stream */
-					struct ikev2_delete v2del_tmp;
-					u_int16_t i;
+					ipsec_spi_t spi;
 
-					if (v2del->isad_spisize != sizeof(ipsec_spi_t)){
-						libreswan_log("IPSec Delete Notification has invalid SPI size %u",
-							v2del->isad_spisize);
-						return STF_FAIL + v2N_INVALID_SYNTAX;
-					}
-					
-					if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
-						libreswan_log("IPSec Delete Notification payload size is %tu but %u is required",
-							pbs_left(&p->pbs),
-							v2del->isad_nrspi * v2del->isad_spisize);
-						return STF_FAIL + v2N_INVALID_SYNTAX;
-					}
+					if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+						return STF_INTERNAL_ERROR;
 
-					for (i = 0; i < v2del->isad_nrspi; i++)
-					{
-						ipsec_spi_t spi;
+					DBG(DBG_CONTROLMORE,
+						DBG_log("received delete request for %s SA(0x%08"  PRIx32 ")",
+							enum_show(&protocol_names,
+								v2del->isad_protoid),
+							ntohl(spi)));
 
-						if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-							return STF_INTERNAL_ERROR;
+					struct state *dst =
+						find_state_ikev2_child_to_delete(
+							st->st_icookie,
+							st->st_rcookie,
+							v2del->isad_protoid,
+							spi);
+
+					if (dst != NULL) {
+						struct ipsec_proto_info *pr =
+							v2del->isad_protoid == PROTO_IPSEC_AH ?
+								&dst->st_ah :
+								&dst->st_esp;
 
 						DBG(DBG_CONTROLMORE,
-							DBG_log("received delete request for %s SA(0x%08"  PRIx32 ")",
+							DBG_log("our side SPI that needs to be sent: %s SA(0x%08" PRIx32 ")",
+								enum_show(&protocol_names,
+									v2del->isad_protoid),
+								ntohl(pr->our_spi)));
+						if (j < elemsof(spi_buf)) {
+							spi_buf[j] = pr->our_spi;
+							j++;
+						} else {
+							libreswan_log("too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
+								ntohl(spi));
+						}
+					} else {
+						/* ??? should this diagnostic go to the real log? */
+						DBG(DBG_CONTROLMORE,
+							DBG_log("received delete request for %s SA(0x%08" PRIx32 ") but local state is not found",
 								enum_show(&protocol_names,
 									v2del->isad_protoid),
 								ntohl(spi)));
-
-						struct state *dst =
-							find_state_ikev2_child_to_delete(
-								st->st_icookie,
-								st->st_rcookie,
-								v2del->isad_protoid,
-								spi);
-
-						if (dst != NULL) {
-							struct ipsec_proto_info *pr =
-								v2del->isad_protoid == PROTO_IPSEC_AH ?
-									&dst->st_ah :
-									&dst->st_esp;
-
-							DBG(DBG_CONTROLMORE,
-								DBG_log("our side SPI that needs to be sent: %s SA(0x%08" PRIx32 ")",
-									enum_show(&protocol_names,
-										v2del->isad_protoid),
-									ntohl(pr->our_spi)));
-							if (j < elemsof(spi_buf)) {
-								spi_buf[j] = pr->our_spi;
-								j++;
-							} else {
-								libreswan_log("too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
-									ntohl(spi));
-							}
-						} else {
-							/* ??? should this diagnostic go to the real log? */
-							DBG(DBG_CONTROLMORE,
-								DBG_log("received delete request for %s SA(0x%08" PRIx32 ") but local state is not found",
-									enum_show(&protocol_names,
-										v2del->isad_protoid),
-									ntohl(spi)));
-						}
 					}
-
-					p->pbs.cur = spi_start;	/* restore for next pass */
-
-					if (j == 0) {
-						DBG(DBG_CONTROLMORE, DBG_log(
-							    "This IPSec delete payload does not contain a single SPI that has any local state; ignoring"));
-						return STF_IGNORE;
-					} else {
-						DBG(DBG_CONTROLMORE, {
-							DBG_log(
-								"Number of SPIs to be sent %d",
-								j);
-							DBG_dump(" Emit SPIs",
-								spi_buf,
-								j * sizeof(spi_buf[0]));
-						});
-					}
-
-					/* build output Delete Payload */
-					zero(&v2del_tmp);
-
-					v2del_tmp.isad_np = p->next == NULL ?
-						ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2D;
-
-					v2del_tmp.isad_protoid =
-						v2del->isad_protoid;
-					v2del_tmp.isad_spisize =
-						v2del->isad_spisize;
-					v2del_tmp.isad_nrspi = j;
-
-					/* Emit delete payload header out */
-					if (!out_struct(&v2del_tmp,
-							&ikev2_delete_desc,
-							&e_pbs_cipher,
-							&del_pbs))
-					{
-						libreswan_log(
-							"error initializing hdr for delete payload");
-						return STF_INTERNAL_ERROR;
-					}
-
-					/* Emit values of SPI to be sent to the peer */
-					if (!out_raw(spi_buf,
-							j * sizeof(spi_buf[0]),
-							&del_pbs,
-							"local SPIs"))
-					{
-						libreswan_log(
-							"error sending SPI values in delete payload");
-						return STF_INTERNAL_ERROR;
-					}
-
-					close_output_pbs(&del_pbs);
 				}
-				break;
 
-				default:
-					bad_case(v2del->isad_protoid);
+				p->pbs.cur = spi_start;	/* restore for next pass */
+
+				if (j == 0) {
+					DBG(DBG_CONTROLMORE, DBG_log(
+						    "This IPSec delete payload does not contain a single SPI that has any local state; ignoring"));
+					return STF_IGNORE;
+				} else {
+					DBG(DBG_CONTROLMORE, {
+						DBG_log(
+							"Number of SPIs to be sent %d",
+							j);
+						DBG_dump(" Emit SPIs",
+							spi_buf,
+							j * sizeof(spi_buf[0]));
+					});
 				}
-			}
 
-			/*
-			 * We've now build up the content (if any) of the Response:
-			 *
-			 * - empty, if there were no Delete Payloads.  Treat as a check
-			 *   for liveness.  Correct response is this empty Response.
-			 *
-			 * - if a (solitary) ISAKMP SA is mentioned in input message,
-			 *   we are sending that back.
-			 *
-			 * - if IPSec SAs were mentioned, we are sending that back too.
-			 *
-			 * Now's the time to close up the packet.
-			 */
+				/* build output Delete Payload */
+				zero(&v2del_tmp);
 
-			if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
-				return STF_INTERNAL_ERROR;
+				v2del_tmp.isad_np = p->next == NULL ?
+					ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2D;
 
-			close_output_pbs(&e_pbs_cipher);
+				v2del_tmp.isad_protoid =
+					v2del->isad_protoid;
+				v2del_tmp.isad_spisize =
+					v2del->isad_spisize;
+				v2del_tmp.isad_nrspi = j;
 
-			{
-				stf_status ret;
-				unsigned char *authloc = ikev2_authloc(st,
-								       &e_pbs);
-				if (authloc == NULL)
+				/* Emit delete payload header out */
+				if (!out_struct(&v2del_tmp,
+						&ikev2_delete_desc,
+						&e_pbs_cipher,
+						&del_pbs))
+				{
+					libreswan_log(
+						"error initializing hdr for delete payload");
 					return STF_INTERNAL_ERROR;
+				}
 
-				close_output_pbs(&e_pbs);
-				close_output_pbs(&md->rbody);
-				close_output_pbs(&reply_stream);
+				/* Emit values of SPI to be sent to the peer */
+				if (!out_raw(spi_buf,
+						j * sizeof(spi_buf[0]),
+						&del_pbs,
+						"local SPIs"))
+				{
+					libreswan_log(
+						"error sending SPI values in delete payload");
+					return STF_INTERNAL_ERROR;
+				}
 
-				ret = ikev2_encrypt_msg(st, prole,
-							authstart,
-							iv, encstart, authloc,
-							&e_pbs, &e_pbs_cipher);
-				if (ret != STF_OK)
-					return ret;
+				close_output_pbs(&del_pbs);
 			}
+			break;
 
-
-			/* keep it for a retransmit if necessary */
-			freeanychunk(st->st_tpacket);
-			clonetochunk(st->st_tpacket, reply_stream.start,
-				     pbs_offset(&reply_stream),
-				     "reply packet for informational exchange");
-
-			send_ike_msg(st, __FUNCTION__);
+			default:
+				bad_case(v2del->isad_protoid);
+			}
 		}
-
-		/* end of Responder-only code */
 
 		/*
-		 * Pass over the Notification Payloads.
+		 * We've now build up the content (if any) of the Response:
 		 *
-		 * This is the first pass if we are the Initiator,
-		 * Looking at the Responder's response.
+		 * - empty, if there were no Delete Payloads.  Treat as a check
+		 *   for liveness.  Correct response is this empty Response.
 		 *
-		 * This is the second pass if we are the Responder.
+		 * - if a (solitary) ISAKMP SA is mentioned in input message,
+		 *   we are sending that back.
 		 *
-		 * In either case, we carry out the actual deletion task.
-		 * ??? Unless st->st_state == STATE_IKESA_DEL.
+		 * - if IPSec SAs were mentioned, we are sending that back too.
+		 *
+		 * Now's the time to close up the packet.
 		 */
 
-		if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) &&
-		    st->st_state == STATE_IKESA_DEL) {
-			/*
-			 * this must be a response to our IKE SA delete request
-			 * Even if there are are other Delete Payloads,
-			 * the cannot matter: we delete the family.
-			 */
-			delete_my_family(st, TRUE);
-			md->st = st = NULL;
-		} else if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) &&
-			   md->chain[ISAKMP_NEXT_v2D] == NULL) {
-			/* A liveness update response */
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
-			st->st_last_liveness = mononow();
-			st->st_pend_liveness = FALSE;
-			ikev2_update_msgid_counters(md);
-		} else {
-			/*
-			 * IPSec SA deletion
-			 * Unless there are no payloads, in which case this is a no-op.
-			 */
-			struct payload_digest *p;
+		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
+			return STF_INTERNAL_ERROR;
 
-			for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL;
-			     p = p->next) {
-				struct ikev2_delete *v2del =
-					&p->payload.v2delete;
+		close_output_pbs(&e_pbs_cipher);
 
-				switch (v2del->isad_protoid) {
-				case PROTO_ISAKMP: /* Parent SA */
-					/* ??? I don't think that this should happen */
-					delete_my_family(st, TRUE);
-					md->st = st = NULL;
-					break;
+		{
+			stf_status ret;
+			unsigned char *authloc = ikev2_authloc(st,
+							       &e_pbs);
+			if (authloc == NULL)
+				return STF_INTERNAL_ERROR;
 
-				case PROTO_IPSEC_AH: /* Child SAs */
-				case PROTO_IPSEC_ESP: /* Child SAs */
-				{
-					u_int16_t i;
+			close_output_pbs(&e_pbs);
+			close_output_pbs(&md->rbody);
+			close_output_pbs(&reply_stream);
 
-					if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
-						libreswan_log("IPsec Delete SPI size should be 4 but is %u",
-							v2del->isad_spisize);
-						return STF_FAIL + v2N_INVALID_SYNTAX;
-					}
+			ret = ikev2_encrypt_msg(st, prole,
+						authstart,
+						iv, encstart, authloc,
+						&e_pbs, &e_pbs_cipher);
+			if (ret != STF_OK)
+				return ret;
+		}
 
-					if (v2del->isad_nrspi * sizeof(ipsec_spi_t) != pbs_left(&p->pbs)) {
-						libreswan_log("IPsec Delete SPI payload wrong size (expected %u; got %u)",
-							(unsigned) (v2del->isad_nrspi * sizeof(ipsec_spi_t)),
-							(unsigned) pbs_left(&p->pbs));
-						return STF_FAIL + v2N_INVALID_SYNTAX;
-					}
 
-					for (i = 0; i < v2del->isad_nrspi; i++ ) {
-						ipsec_spi_t spi;
+		/* keep it for a retransmit if necessary */
+		freeanychunk(st->st_tpacket);
+		clonetochunk(st->st_tpacket, reply_stream.start,
+			     pbs_offset(&reply_stream),
+			     "reply packet for informational exchange");
 
-						if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-							return STF_INTERNAL_ERROR;	/* cannot happen */
+		send_ike_msg(st, __FUNCTION__);
+	}
 
-						DBG(DBG_CONTROLMORE, DBG_log(
-							    "delete %s SA(0x%08" PRIx32 ")",
-							    enum_show(&protocol_names,
-								    v2del->isad_protoid),
-							    ntohl((uint32_t)
-								  spi)));
+	/* end of Responder-only code */
 
-						struct state *dst =
-							find_state_ikev2_child_to_delete(
-								st->st_icookie,
-								st->st_rcookie,
-								v2del->isad_protoid,
-								spi);
+	/*
+	 * Pass over the Notification Payloads.
+	 *
+	 * This is the first pass if we are the Initiator,
+	 * Looking at the Responder's response.
+	 *
+	 * This is the second pass if we are the Responder.
+	 *
+	 * In either case, we carry out the actual deletion task.
+	 * ??? Unless st->st_state == STATE_IKESA_DEL.
+	 */
 
-						passert(dst != st);	/* st is an IKE SA */
-						if (dst != NULL) {
-							DBG(DBG_CONTROLMORE,
-								DBG_log("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
-									enum_show(&protocol_names,
-										v2del->isad_protoid),
-									ntohl((uint32_t)spi)));
+	if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) &&
+	    st->st_state == STATE_IKESA_DEL) {
+		/*
+		 * this must be a response to our IKE SA delete request
+		 * Even if there are are other Delete Payloads,
+		 * the cannot matter: we delete the family.
+		 */
+		delete_my_family(st, TRUE);
+		md->st = st = NULL;
+	} else if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) &&
+		   md->chain[ISAKMP_NEXT_v2D] == NULL) {
+		/* A liveness update response */
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
+		st->st_last_liveness = mononow();
+		st->st_pend_liveness = FALSE;
+		ikev2_update_msgid_counters(md);
+	} else {
+		/*
+		 * IPSec SA deletion
+		 * Unless there are no payloads, in which case this is a no-op.
+		 */
+		struct payload_digest *p;
 
-							passert(dst != st);	/* st is a parent */
-							/* now delete the state */
-							change_state(dst,
-								STATE_CHILDSA_DEL);
-							delete_state(dst);
-							/* note: md->st != dst */
-						} else {
-							libreswan_log(
-							    "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
-								    enum_show(&protocol_names, v2del->isad_protoid),
-									ntohl((uint32_t)spi));
-						}
-					}
-				}
+		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL;
+		     p = p->next) {
+			struct ikev2_delete *v2del =
+				&p->payload.v2delete;
+
+			switch (v2del->isad_protoid) {
+			case PROTO_ISAKMP: /* Parent SA */
+				/* ??? I don't think that this should happen */
+				delete_my_family(st, TRUE);
+				md->st = st = NULL;
 				break;
 
-				default:
-					/* Unrecognized protocol */
-					/* ??? diagnostic?  Failure? */
-					return STF_IGNORE;
+			case PROTO_IPSEC_AH: /* Child SAs */
+			case PROTO_IPSEC_ESP: /* Child SAs */
+			{
+				u_int16_t i;
+
+				if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
+					libreswan_log("IPsec Delete SPI size should be 4 but is %u",
+						v2del->isad_spisize);
+					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 
-				/*
-				 * If we just deleted the Parent SA, the Child SAs are being torn down as well,
-				 * so no point checking the other delete SA payloads here
-				 */
-				if (v2del->isad_protoid == PROTO_ISAKMP)
-					break;
+				if (v2del->isad_nrspi * sizeof(ipsec_spi_t) != pbs_left(&p->pbs)) {
+					libreswan_log("IPsec Delete SPI payload wrong size (expected %u; got %u)",
+						(unsigned) (v2del->isad_nrspi * sizeof(ipsec_spi_t)),
+						(unsigned) pbs_left(&p->pbs));
+					return STF_FAIL + v2N_INVALID_SYNTAX;
+				}
 
-			}       /* for */
-		}
-	}	/* ??? USELESS INDENTATION */
+				for (i = 0; i < v2del->isad_nrspi; i++ ) {
+					ipsec_spi_t spi;
+
+					if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+						return STF_INTERNAL_ERROR;	/* cannot happen */
+
+					DBG(DBG_CONTROLMORE, DBG_log(
+						    "delete %s SA(0x%08" PRIx32 ")",
+						    enum_show(&protocol_names,
+							    v2del->isad_protoid),
+						    ntohl((uint32_t)
+							  spi)));
+
+					struct state *dst =
+						find_state_ikev2_child_to_delete(
+							st->st_icookie,
+							st->st_rcookie,
+							v2del->isad_protoid,
+							spi);
+
+					passert(dst != st);	/* st is an IKE SA */
+					if (dst != NULL) {
+						DBG(DBG_CONTROLMORE,
+							DBG_log("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
+								enum_show(&protocol_names,
+									v2del->isad_protoid),
+								ntohl((uint32_t)spi)));
+
+						passert(dst != st);	/* st is a parent */
+						/* now delete the state */
+						change_state(dst,
+							STATE_CHILDSA_DEL);
+						delete_state(dst);
+						/* note: md->st != dst */
+					} else {
+						libreswan_log(
+						    "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
+							    enum_show(&protocol_names, v2del->isad_protoid),
+								ntohl((uint32_t)spi));
+					}
+				}
+			}
+			break;
+
+			default:
+				/* Unrecognized protocol */
+				/* ??? diagnostic?  Failure? */
+				return STF_IGNORE;
+			}
+
+			/*
+			 * If we just deleted the Parent SA, the Child SAs are being torn down as well,
+			 * so no point checking the other delete SA payloads here
+			 */
+			if (v2del->isad_protoid == PROTO_ISAKMP)
+				break;
+
+		}       /* for */
+	}
 
 	return STF_OK;
 }
@@ -3652,169 +3650,167 @@ stf_status ikev2_send_informational(struct state *st)
 
 static bool ikev2_delete_out_guts(struct state *const st, struct state *const pst)
 {
-	{	/* ??? USELESS INDENTATION */
-		unsigned char *authstart;
-		pb_stream e_pbs, e_pbs_cipher;
-		pb_stream rbody;
-		struct ikev2_generic e;
-		unsigned char *iv;
-		unsigned char *encstart;
-		enum phase1_role role;
+	unsigned char *authstart;
+	pb_stream e_pbs, e_pbs_cipher;
+	pb_stream rbody;
+	struct ikev2_generic e;
+	unsigned char *iv;
+	unsigned char *encstart;
+	enum phase1_role role;
 
-		/* make sure HDR is at start of a clean buffer */
-		zero(&reply_buffer);
-		init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-			 "information exchange request packet");
-		/* beginning of data going out */
-		authstart = reply_stream.cur;
+	/* make sure HDR is at start of a clean buffer */
+	zero(&reply_buffer);
+	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+		 "information exchange request packet");
+	/* beginning of data going out */
+	authstart = reply_stream.cur;
 
-		/* HDR out */
-		{
-			struct isakmp_hdr r_hdr;
+	/* HDR out */
+	{
+		struct isakmp_hdr r_hdr;
 
-			zero(&r_hdr); /* default to 0 */
-			r_hdr.isa_version = build_ike_version();
-			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
-			       COOKIE_SIZE);
-			memcpy(r_hdr.isa_icookie, pst->st_icookie,
-			       COOKIE_SIZE);
-			r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-			r_hdr.isa_np = ISAKMP_NEXT_v2E;
-			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
+		zero(&r_hdr); /* default to 0 */
+		r_hdr.isa_version = build_ike_version();
+		memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
+		       COOKIE_SIZE);
+		memcpy(r_hdr.isa_icookie, pst->st_icookie,
+		       COOKIE_SIZE);
+		r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
+		r_hdr.isa_np = ISAKMP_NEXT_v2E;
+		r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
-			/* set Initiator flag if we are the IKE Original Initiator */
-			if (pst->st_state == STATE_PARENT_I2 ||
-			    pst->st_state == STATE_PARENT_I3) {
-				/*
-				 * ??? is this isa_flag setting correct?
-				 * Should it not reflect *this* exchange?
-				 */
-				r_hdr.isa_flags |= ISAKMP_FLAGS_IKE_I;
-				role = O_INITIATOR;
-			} else {
-				role = O_RESPONDER;
-			}
-
-			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
-					&reply_stream, &rbody)) {
-				libreswan_log(
-					"error initializing hdr for informational message");
-				return FALSE;
-			}
-
-		}
-
-		/* insert an Encryption payload header */
-		e.isag_np = ISAKMP_NEXT_v2D;
-		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-
-		if (!out_struct(&e, &ikev2_e_desc, &rbody, &e_pbs))
-			return FALSE;
-
-		/* insert IV */
-		iv = e_pbs.cur;
-		if (!emit_iv(st, &e_pbs))
-			return FALSE;
-
-		/* note where cleartext starts */
-		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
-			 "cleartext");
-		e_pbs_cipher.container = &e_pbs;
-		e_pbs_cipher.desc = NULL;
-		e_pbs_cipher.cur = e_pbs.cur;
-		encstart = e_pbs_cipher.cur;
-
-		{
-			pb_stream del_pbs;
-			struct ikev2_delete v2del_tmp;
+		/* set Initiator flag if we are the IKE Original Initiator */
+		if (pst->st_state == STATE_PARENT_I2 ||
+		    pst->st_state == STATE_PARENT_I3) {
 			/*
-			 * u_int16_t i, j=0;
-			 * u_char *spi;
-			 * char spi_buf[1024];
+			 * ??? is this isa_flag setting correct?
+			 * Should it not reflect *this* exchange?
 			 */
-
-			zero(&v2del_tmp);
-			v2del_tmp.isad_np = ISAKMP_NEXT_v2NONE;
-
-			if (IS_CHILD_SA(st)) {
-				v2del_tmp.isad_protoid = PROTO_IPSEC_ESP;
-				v2del_tmp.isad_spisize = sizeof(ipsec_spi_t);
-				v2del_tmp.isad_nrspi = 1;
-			} else {
-				v2del_tmp.isad_protoid = PROTO_ISAKMP;
-				v2del_tmp.isad_spisize = 0;
-				v2del_tmp.isad_nrspi = 0;
-			}
-
-			/* Emit delete payload header out */
-			if (!out_struct(&v2del_tmp, &ikev2_delete_desc,
-					&e_pbs_cipher, &del_pbs)) {
-				libreswan_log(
-					"error initializing hdr for delete payload");
-				return FALSE;
-			}
-
-			/* Emit values of spi to be sent to the peer */
-			if (IS_CHILD_SA(st)) {
-				if (!out_raw((u_char *)&st->st_esp.our_spi,
-					     sizeof(ipsec_spi_t), &del_pbs,
-					     "local spis")) {
-					libreswan_log(
-						"error sending spi values in delete payload");
-					return FALSE;
-				}
-			}
-
-			close_output_pbs(&del_pbs);
+			r_hdr.isa_flags |= ISAKMP_FLAGS_IKE_I;
+			role = O_INITIATOR;
+		} else {
+			role = O_RESPONDER;
 		}
 
-		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher)) {
-			libreswan_log("error padding before encryption in delete payload");
+		if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+				&reply_stream, &rbody)) {
+			libreswan_log(
+				"error initializing hdr for informational message");
 			return FALSE;
 		}
 
-		close_output_pbs(&e_pbs_cipher);
+	}
 
-		{
-			stf_status ret;
-			unsigned char *authloc = ikev2_authloc(st, &e_pbs);
+	/* insert an Encryption payload header */
+	e.isag_np = ISAKMP_NEXT_v2D;
+	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
-			if (authloc == NULL)
-				return FALSE;
+	if (!out_struct(&e, &ikev2_e_desc, &rbody, &e_pbs))
+		return FALSE;
 
-			close_output_pbs(&e_pbs);
-			close_output_pbs(&rbody);
-			close_output_pbs(&reply_stream);
+	/* insert IV */
+	iv = e_pbs.cur;
+	if (!emit_iv(st, &e_pbs))
+		return FALSE;
 
-			ret = ikev2_encrypt_msg(st, role,
-						authstart,
-						iv, encstart, authloc,
-						&e_pbs, &e_pbs_cipher);
-			if (ret != STF_OK)
-				return FALSE;
+	/* note where cleartext starts */
+	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
+		 "cleartext");
+	e_pbs_cipher.container = &e_pbs;
+	e_pbs_cipher.desc = NULL;
+	e_pbs_cipher.cur = e_pbs.cur;
+	encstart = e_pbs_cipher.cur;
+
+	{
+		pb_stream del_pbs;
+		struct ikev2_delete v2del_tmp;
+		/*
+		 * u_int16_t i, j=0;
+		 * u_char *spi;
+		 * char spi_buf[1024];
+		 */
+
+		zero(&v2del_tmp);
+		v2del_tmp.isad_np = ISAKMP_NEXT_v2NONE;
+
+		if (IS_CHILD_SA(st)) {
+			v2del_tmp.isad_protoid = PROTO_IPSEC_ESP;
+			v2del_tmp.isad_spisize = sizeof(ipsec_spi_t);
+			v2del_tmp.isad_nrspi = 1;
+		} else {
+			v2del_tmp.isad_protoid = PROTO_ISAKMP;
+			v2del_tmp.isad_spisize = 0;
+			v2del_tmp.isad_nrspi = 0;
 		}
 
-		/* keep it for a retransmit if necessary */
-		freeanychunk(pst->st_tpacket);
-		clonetochunk(pst->st_tpacket, reply_stream.start,
-			     pbs_offset(&reply_stream),
-			     "request packet for informational exchange");
+		/* Emit delete payload header out */
+		if (!out_struct(&v2del_tmp, &ikev2_delete_desc,
+				&e_pbs_cipher, &del_pbs)) {
+			libreswan_log(
+				"error initializing hdr for delete payload");
+			return FALSE;
+		}
 
-		send_ike_msg(pst, __FUNCTION__);
+		/* Emit values of spi to be sent to the peer */
+		if (IS_CHILD_SA(st)) {
+			if (!out_raw((u_char *)&st->st_esp.our_spi,
+				     sizeof(ipsec_spi_t), &del_pbs,
+				     "local spis")) {
+				libreswan_log(
+					"error sending spi values in delete payload");
+				return FALSE;
+			}
+		}
 
-		/*
-		 * delete messages may not be acknowledged.
-		 * increase message ID for next delete message
-		 */
-		pst->st_msgid_nextuse++;
+		close_output_pbs(&del_pbs);
+	}
 
-		/*
-		 * We should update state to relect msgid's:
-		 *   ikev2_update_msgid_counters(&md);
-		 * But we have no idea!
-		 * This was a fake exchange.
-		 */
-	}	/* ??? USELESS INDENTATION */
+	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher)) {
+		libreswan_log("error padding before encryption in delete payload");
+		return FALSE;
+	}
+
+	close_output_pbs(&e_pbs_cipher);
+
+	{
+		stf_status ret;
+		unsigned char *authloc = ikev2_authloc(st, &e_pbs);
+
+		if (authloc == NULL)
+			return FALSE;
+
+		close_output_pbs(&e_pbs);
+		close_output_pbs(&rbody);
+		close_output_pbs(&reply_stream);
+
+		ret = ikev2_encrypt_msg(st, role,
+					authstart,
+					iv, encstart, authloc,
+					&e_pbs, &e_pbs_cipher);
+		if (ret != STF_OK)
+			return FALSE;
+	}
+
+	/* keep it for a retransmit if necessary */
+	freeanychunk(pst->st_tpacket);
+	clonetochunk(pst->st_tpacket, reply_stream.start,
+		     pbs_offset(&reply_stream),
+		     "request packet for informational exchange");
+
+	send_ike_msg(pst, __FUNCTION__);
+
+	/*
+	 * delete messages may not be acknowledged.
+	 * increase message ID for next delete message
+	 */
+	pst->st_msgid_nextuse++;
+
+	/*
+	 * We should update state to relect msgid's:
+	 *   ikev2_update_msgid_counters(&md);
+	 * But we have no idea!
+	 * This was a fake exchange.
+	 */
 	return TRUE;
 }
 
