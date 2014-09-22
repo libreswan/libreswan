@@ -493,15 +493,15 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 	if (keylen == 0) {
 		ei_buf.enckeylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
 			BITS_PER_BYTE;
-	} else if (keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits &&
-		keylen >= esp_ealg[sadb_ealg].sadb_alg_minbits) {
+	} else if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
+		keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
 		ei_buf.enckeylen = keylen / BITS_PER_BYTE;
 	} else {
 		DBG(DBG_PARSING,
-			DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<X<%u",
+			DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
 				transid, keylen,
-				esp_ealg[sadb_ealg].sadb_alg_maxbits,
-				esp_ealg[sadb_ealg].sadb_alg_minbits);
+				esp_ealg[sadb_ealg].sadb_alg_minbits,
+				esp_ealg[sadb_ealg].sadb_alg_maxbits);
 			);
 		/* proposed key length is invalid! */
 		return NULL;
