@@ -189,7 +189,7 @@ struct state *new_state(void)
 }
 
 /*
- * Initialize the state table (and mask*).
+ * Initialize the state table
  */
 void init_states(void)
 {
@@ -204,8 +204,11 @@ void v1_delete_state_by_xauth_name(struct state *st, void *name)
 	/* only support deleting ikev1 with xauth user name */
 	if (st->st_ikev2)
 		return;
-	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name))
-			delete_my_family(st, FALSE);
+
+	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
+		delete_my_family(st, FALSE);
+		/* note: no md->st to clear */
+	}
 }
 
 /* Find the state object with this serial number.
@@ -433,10 +436,14 @@ void delete_state(struct state *st)
 		if (IS_CHILD_SA(st) &&
 		    state_with_serialno(st->st_clonedfrom) == NULL) {
 			/* ??? in v2, there must be a parent */
-			DBG(DBG_CONTROL, DBG_log("IKE SA does not exist for this child SA"));
-			DBG(DBG_CONTROL, DBG_log("INFORMATIONAL exchange cannot be sent, deleting state"));
+			DBG(DBG_CONTROL, DBG_log("deleting state but IKE SA does not exist for this child SA so Informational Exchange cannot be sent"));
 			change_state(st, STATE_CHILDSA_DEL);
 		} else  {
+			/*
+			 * ??? in IKE v2, we should not immediately delete:
+			 * we should use an Informational Exchange to co-ordinate deletion.
+			 * ikev2_delete_out doesn't really accomplish this.
+			 */
 			send_delete(st);
 		}
 	}
@@ -450,7 +457,8 @@ void delete_state(struct state *st)
 	 */
 	flush_pending_by_state(st);
 
-	/* if there is anything in the cryptographic queue, then remove this
+	/*
+	 * if there is anything in the cryptographic queue, then remove this
 	 * state from it.
 	 */
 	delete_cryptographic_continuation(st);
@@ -458,7 +466,8 @@ void delete_state(struct state *st)
 	/* effectively, this deletes any ISAKMP SA that this state represents */
 	unhash_state(st);
 
-	/* tell kernel to delete any IPSEC SA
+	/*
+	 * tell kernel to delete any IPSEC SA
 	 * ??? we ought to tell peer to delete IPSEC SAs
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
@@ -623,6 +632,7 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 					if (this->st_event != NULL)
 						delete_event(this);	/* ??? but delete_state does this too */
 					delete_state(this);
+					/* note: no md->st to clear */
 
 					cur_state = old_cur_state;
 					set_debugging(old_cur_debugging);
@@ -669,6 +679,7 @@ void delete_states_dead_interfaces(void)
 					this->st_serialno,
 					this->st_interface->ip_dev->id_vname);
 				delete_state(this);
+				/* note: no md->st to clear */
 			}
 		}
 }
@@ -1825,12 +1836,14 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 			delete_state(st);
 		}
 		st = next_st;
+		/* note: no md->st to clear */
 	}
 
 	/* delete self */
 	if (v2_responder_state)
 		change_state(pst, STATE_IKESA_DEL);
 	delete_state(pst);
+	/* note: no md->st to clear */
 }
 
 /* if the state is too busy to process a packet, say so */

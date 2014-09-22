@@ -518,12 +518,9 @@ void initialize_new_state(struct state *st,
 	extra_debugging(c);
 }
 
-void send_delete(struct state *st)
+bool send_delete(struct state *st)
 {
-	if (st->st_ikev2)
-		ikev2_delete_out(st);
-	else
-		ikev1_delete_out(st);
+	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 
 void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)

@@ -672,6 +672,7 @@ static stf_status informational(struct msg_digest *md)
 						st->hidden_variables.st_malformed_sent,
 						st->hidden_variables.st_malformed_received);
 					delete_state(st);
+					md->st = st = NULL;
 				}
 			}
 			return STF_IGNORE;
@@ -689,6 +690,7 @@ static stf_status informational(struct msg_digest *md)
 
 				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);
+				md->st = st = NULL;
 
 				/* to find and store the connection associated with tmp_name */
 				/* ??? how do we know that tmp_name hasn't been freed? */
@@ -843,8 +845,8 @@ static stf_status informational(struct msg_digest *md)
 
 		default:
 			if (st != NULL &&
-			    st->st_connection->extra_debugging &
-			    IMPAIR_DIE_ONINFO) {
+			    (st->st_connection->extra_debugging &
+			     IMPAIR_DIE_ONINFO)) {
 				loglog(RC_LOG_SERIOUS,
 				       "received unhandled informational notification payload %d: '%s'",
 				       n->isan_type,
@@ -856,11 +858,11 @@ static stf_status informational(struct msg_digest *md)
 			       "received and ignored informational message");
 			return STF_IGNORE;
 		}
+	} else {
+		loglog(RC_LOG_SERIOUS,
+		       "received and ignored empty informational notification payload");
+		return STF_IGNORE;
 	}
-
-	loglog(RC_LOG_SERIOUS,
-	       "received and ignored empty informational notification payload");
-	return STF_IGNORE;
 }
 
 /* process an input packet, possibly generating a reply.
@@ -2615,6 +2617,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		delete_event(st);	/* ??? but delete_state does this too */
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
+		md->st = st = NULL;
 		break;
 
 	default:        /* a shortcut to STF_FAIL, setting md->note */
@@ -2652,8 +2655,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				delete_event(st);
 				release_whack(st);
 			}
-			if (IS_QUICK(st->st_state))
+			if (IS_QUICK(st->st_state)) {
 				delete_state(st);
+				if (md != NULL && st == md->st)
+					md->st = NULL;
+			}
 		}
 		break;
 	}

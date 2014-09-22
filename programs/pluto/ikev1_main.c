@@ -2436,6 +2436,7 @@ static void send_notification(struct state *sndst, notification_t type,
 				"too many (%d) malformed payloads. Deleting state",
 				sndst->hidden_variables.st_malformed_sent);
 			delete_state(sndst);
+			/* note: no md->st to clear */
 			return;
 		}
 
@@ -2647,7 +2648,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
  *
  * @param st State struct (hopefully has some SA's related to it)
  */
-void ikev1_delete_out(struct state *st)
+bool ikev1_delete_out(struct state *st)
 {
 	/* buffer in which to marshal our deletion notification.
 	 * We don't use reply_buffer/reply_stream because they might be in use.
@@ -2674,7 +2675,7 @@ void ikev1_delete_out(struct state *st)
 		if (p1st == NULL) {
 			DBG(DBG_CONTROL,
 				DBG_log("no Phase 1 state for Delete"));
-			return;
+			return FALSE;
 		}
 
 		if (st->st_ah.present) {
@@ -2697,7 +2698,7 @@ void ikev1_delete_out(struct state *st)
 		p1st = st;
 		isakmp_sa = TRUE;
 	} else {
-		return; /* nothing to do */
+		return TRUE; /* nothing to do */
 	}
 
 	msgid = generate_msgid(p1st);
@@ -2823,6 +2824,7 @@ void ikev1_delete_out(struct state *st)
 		/* get back old IV for this state */
 		restore_iv(p1st, old_iv, old_iv_len);
 	}
+	return TRUE;
 }
 
 /*
@@ -2921,25 +2923,16 @@ void accept_delete(struct state *st, struct msg_digest *md,
 				 * we've not authenticated the relevant
 				 * identities
 				 */
-				loglog(RC_LOG_SERIOUS, "ignoring Delete SA "
-					"payload: ISAKMP SA used to convey "
-					"Delete has different IDs from ISAKMP "
-					"SA it deletes");
+				loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
 			} else {
-				struct connection *oldc;
-
-				oldc = cur_connection;
-				set_cur_connection(dst->st_connection);
-
+				loglog(RC_LOG_SERIOUS, "received Delete SA payload: deleting ISAKMP State #%lu",
+					dst->st_serialno);
 				if (nat_traversal_enabled)
 					nat_traversal_change_port_lookup(md,
 									dst);
-
-				loglog(RC_LOG_SERIOUS, "received Delete SA "
-					"payload: deleting ISAKMP State #%lu",
-					dst->st_serialno);
 				delete_state(dst);
-				set_cur_connection(oldc);
+				if (dst == st)
+					md->st = st = NULL;
 			}
 		} else {
 			/*
@@ -2957,6 +2950,7 @@ void accept_delete(struct state *st, struct msg_digest *md,
 							spi,
 							&bogus);
 
+			passert(dst != st);	/* st is an IKE SA */
 			if (dst == NULL) {
 				loglog(RC_LOG_SERIOUS,
 					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (%s)",
@@ -2968,9 +2962,8 @@ void accept_delete(struct state *st, struct msg_digest *md,
 						"maybe expired");
 			} else {
 				struct connection *rc = dst->st_connection;
-				struct connection *oldc;
+				struct connection *oldc = cur_connection;
 
-				oldc = cur_connection;
 				set_cur_connection(rc);
 
 				if (nat_traversal_enabled)
@@ -2996,7 +2989,7 @@ void accept_delete(struct state *st, struct msg_digest *md,
 						dst->st_event->ev_time)) {
 						/*
 						 * Patch from Angus Lees to
-						 * ignore retransmited
+						 * ignore retransmitted
 						 * Delete SA.
 						 */
 						loglog(RC_LOG_SERIOUS,
@@ -3023,6 +3016,8 @@ void accept_delete(struct state *st, struct msg_digest *md,
 						ntohl(spi),
 						dst->st_serialno);
 					delete_state(dst);
+					if (md->st == dst)
+						md->st = NULL;
 				}
 
 				/* reset connection */

@@ -3017,6 +3017,7 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
 
 		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
+
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&md->rbody);
 		close_output_pbs(&reply_stream);
@@ -3040,6 +3041,27 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 	struct state *st = md->st;
 	enum phase1_role prole;	/* parent SA's role */
 
+	/*
+	 * get parent
+	 *
+	 * ??? shouldn't st always be the parent?
+	 */
+	pexpect(!IS_CHILD_SA(st));	/* ??? why would st be a child? */
+
+	if (IS_CHILD_SA(st)) {
+		/* we picked incomplete child, change to parent */
+		so_serial_t c_serialno = st->st_serialno;
+
+		st = state_with_serialno(st->st_clonedfrom);
+		if (st == NULL)
+			return STF_INTERNAL_ERROR;
+
+		md->st = st;
+		set_cur_state(st);
+		DBG(DBG_CONTROLMORE,
+		    DBG_log("Informational exchange matched Child SA #%lu - switched to its Parent SA #%lu",
+			c_serialno, st->st_serialno));
+	}
 
 	/* Since an informational exchange can be started by the original responder,
 	 * things such as encryption, decryption should be done based on the original
@@ -3063,36 +3085,11 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			return ret;
 	}
 
-	/*
-	 * get parent
-	 *
-	 * ??? shouldn't st always be the parent?
-	 * ??? if not, why not get parent at the start?
-	 */
-
-	pexpect(!IS_CHILD_SA(st));	/* ??? why would st be a child? */
-
-	if (IS_CHILD_SA(st)) {
-		/* we picked incomplete child, change to parent */
-		so_serial_t c_serialno = st->st_serialno;
-
-		st = state_with_serialno(st->st_clonedfrom);
-		if (st == NULL)
-			return STF_INTERNAL_ERROR;
-
-		md->st = st;
-		set_cur_state(st);
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("Informational exchange matched Child SA #%lu - switched to its Parent SA #%lu",
-			c_serialno, st->st_serialno));
-	}
-
-	{
-		struct payload_digest *p;
-
+	{	/* ??? USELESS INDENTATION */
 		/*
 		 * Generate response message,
 		 * but only if we are the Responder in this exchange.
+		 * (If we're the Initiator, we've already had our turn.)
 		 */
 		if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) == 0) {
 			pb_stream e_pbs, e_pbs_cipher;
@@ -3100,6 +3097,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			unsigned char *iv;
 			unsigned char *encstart;
 			unsigned char *authstart = reply_stream.cur;
+			struct payload_digest *p;
 
 			/* make sure HDR is at start of a clean buffer */
 			zero(&reply_buffer);
@@ -3119,10 +3117,8 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 				zero(&r_hdr); /* default to 0 */
 				r_hdr.isa_version = build_ike_version();
-				memcpy(r_hdr.isa_rcookie, st->st_rcookie,
-				       COOKIE_SIZE);
-				memcpy(r_hdr.isa_icookie, st->st_icookie,
-				       COOKIE_SIZE);
+				memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+				memcpy(r_hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 				r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
 				r_hdr.isa_np = ISAKMP_NEXT_v2E;
 				r_hdr.isa_msgid = htonl(md->msgid_received);
@@ -3153,6 +3149,10 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			 *
 			 * There can be any number of IPsec SA Delete payloads
 			 * and the next payload type will be v2D or NONE.
+			 *
+			 * The next code chunk looks at the delete payload(s)
+			 * to see if message is deleting an IKE SA or and IPSec SA
+			 * or neither.
 			 */
 			e.isag_np = ISAKMP_NEXT_v2NONE;
 			if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
@@ -3186,7 +3186,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			if (!emit_iv(st, &e_pbs))
 				return STF_INTERNAL_ERROR;
 
-			/* note where cleartext starts */
+			/* note where cleartext starts in output */
 			init_pbs(&e_pbs_cipher, e_pbs.cur,
 				 e_pbs.roof - e_pbs.cur, "cleartext");
 			e_pbs_cipher.container = &e_pbs;
@@ -3194,10 +3194,13 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			e_pbs_cipher.cur = e_pbs.cur;
 			encstart = e_pbs_cipher.cur;
 
-			for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL;
-			     p = p->next) {
-				struct ikev2_delete *v2del =
-					&p->payload.v2delete;
+			/*
+			 * Pass 1: scan incoming Delete Payloads,
+			 * generating the contents of the Response packet
+			 */
+			for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
+				/* Gather all the IPSec SPIs corresponding to SPIs in this message */
+				struct ikev2_delete *v2del = &p->payload.v2delete;
 
 				switch (v2del->isad_protoid) {
 				case PROTO_ISAKMP:
@@ -3205,84 +3208,98 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					 * There can be only one Delete Payload
 					 * if it is ISAKMP
 					 */
-					if (p != md->chain[ISAKMP_NEXT_v2D]) {
-						libreswan_log(
-							"IKE SA delete cannot be mixed with IPsec SA Deletes.");
-						return STF_FAIL + v2N_INVALID_SYNTAX;
-					}
+					passert(p == md->chain[ISAKMP_NEXT_v2D]);
 					break;
 
 				case PROTO_IPSEC_AH:
 				case PROTO_IPSEC_ESP:
 				{
-					unsigned char spi_buf[1024];	/* ??? no check for overflow! */
-					pb_stream del_pbs;
+					ipsec_spi_t spi_buf[128];
+					u_int16_t j = 0;	/* number of SPIs in spi_buf */
+					u_int8_t *spi_start = p->pbs.cur;	/* save for next pass */
+					pb_stream del_pbs;	/* output stream */
 					struct ikev2_delete v2del_tmp;
-					u_int16_t i, j = 0;
-					u_char *spi;
+					u_int16_t i;
+
+					if (v2del->isad_spisize != sizeof(ipsec_spi_t)){
+						libreswan_log("IPSec Delete Notification has invalid SPI size %u",
+							v2del->isad_spisize);
+						return STF_FAIL + v2N_INVALID_SYNTAX;
+					}
+					
+					if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
+						libreswan_log("IPSec Delete Notification payload size is %tu but %u is required",
+							pbs_left(&p->pbs),
+							v2del->isad_nrspi * v2del->isad_spisize);
+						return STF_FAIL + v2N_INVALID_SYNTAX;
+					}
 
 					for (i = 0; i < v2del->isad_nrspi; i++)
 					{
-						spi = p->pbs.cur +
-						      (i * v2del->isad_spisize);
-						DBG(DBG_CONTROLMORE, DBG_log(
-							    "received delete request for %s SA(0x%08lx)",
-							    enum_show(
-								    &protocol_names,
-								    v2del->isad_protoid),
-							    (unsigned long)
-							    ntohl((unsigned long) *(ipsec_spi_t *)spi)));
+						ipsec_spi_t spi;
+
+						if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+							return STF_INTERNAL_ERROR;
+
+						DBG(DBG_CONTROLMORE,
+							DBG_log("received delete request for %s SA(0x%08"  PRIx32 ")",
+								enum_show(&protocol_names,
+									v2del->isad_protoid),
+								ntohl(spi)));
 
 						struct state *dst =
 							find_state_ikev2_child_to_delete(
 								st->st_icookie,
 								st->st_rcookie,
 								v2del->isad_protoid,
-								*(ipsec_spi_t *)spi);
+								spi);
 
 						if (dst != NULL) {
 							struct ipsec_proto_info *pr =
 								v2del->isad_protoid == PROTO_IPSEC_AH ?
-								&dst->st_ah :
-								&dst->st_esp;
+									&dst->st_ah :
+									&dst->st_esp;
 
 							DBG(DBG_CONTROLMORE,
-								DBG_log("our side spi that needs to be sent: %s SA(0x%08lx)",
+								DBG_log("our side SPI that needs to be sent: %s SA(0x%08" PRIx32 ")",
 									enum_show(&protocol_names,
 										v2del->isad_protoid),
-									(unsigned long)
 									ntohl(pr->our_spi)));
-
-							memcpy(spi_buf +
-								(j * v2del->isad_spisize),
-								(u_char *)&pr->our_spi,
-								v2del->isad_spisize);
-							j++;
+							if (j < elemsof(spi_buf)) {
+								spi_buf[j] = pr->our_spi;
+								j++;
+							} else {
+								libreswan_log("too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
+									ntohl(spi));
+							}
 						} else {
+							/* ??? should this diagnostic go to the real log? */
 							DBG(DBG_CONTROLMORE,
-								DBG_log("received delete request for %s SA(0x%08lx) but local state is not found",
+								DBG_log("received delete request for %s SA(0x%08" PRIx32 ") but local state is not found",
 									enum_show(&protocol_names,
 										v2del->isad_protoid),
-									(unsigned long)
-									ntohl((unsigned long)
-									      *(ipsec_spi_t *)
-									      spi)));
+									ntohl(spi)));
 						}
 					}
 
+					p->pbs.cur = spi_start;	/* restore for next pass */
+
 					if (j == 0) {
 						DBG(DBG_CONTROLMORE, DBG_log(
-							    "This delete payload does not contain a single SPI that has any local state; ignoring"));
+							    "This IPSec delete payload does not contain a single SPI that has any local state; ignoring"));
 						return STF_IGNORE;
 					} else {
-						DBG(DBG_CONTROLMORE, DBG_log(
-							    "No. of SPIs to be sent %d",
-							    j);
-						    DBG_dump(" Emit SPIs",
-							    spi_buf,
-							    j * v2del->isad_spisize));
+						DBG(DBG_CONTROLMORE, {
+							DBG_log(
+								"Number of SPIs to be sent %d",
+								j);
+							DBG_dump(" Emit SPIs",
+								spi_buf,
+								j * sizeof(spi_buf[0]));
+						});
 					}
 
+					/* build output Delete Payload */
 					zero(&v2del_tmp);
 
 					v2del_tmp.isad_np = p->next == NULL ?
@@ -3305,14 +3322,14 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 						return STF_INTERNAL_ERROR;
 					}
 
-					/* Emit values of spi to be sent to the peer */
+					/* Emit values of SPI to be sent to the peer */
 					if (!out_raw(spi_buf,
-							j * v2del->isad_spisize,
+							j * sizeof(spi_buf[0]),
 							&del_pbs,
-							"local spis"))
+							"local SPIs"))
 					{
 						libreswan_log(
-							"error sending spi values in delete payload");
+							"error sending SPI values in delete payload");
 						return STF_INTERNAL_ERROR;
 					}
 
@@ -3326,9 +3343,17 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			}
 
 			/*
-			 * If there is no payload (in other words empty payload in request)
-			 * that means it is check for liveliness, so send an empty payload message.
-			 * This will end up sending an empty payload.
+			 * We've now build up the content (if any) of the Response:
+			 *
+			 * - empty, if there were no Delete Payloads.  Treat as a check
+			 *   for liveness.  Correct response is this empty Response.
+			 *
+			 * - if a (solitary) ISAKMP SA is mentioned in input message,
+			 *   we are sending that back.
+			 *
+			 * - if IPSec SAs were mentioned, we are sending that back too.
+			 *
+			 * Now's the time to close up the packet.
 			 */
 
 			if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
@@ -3365,14 +3390,44 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			send_ike_msg(st, __FUNCTION__);
 		}
 
+		/* end of Responder-only code */
+
 		/*
-		 * Now carry out the actualy task.
-		 * But we cannot carry out the actual task since
-		 * we need to send informational responses using existing SAs
+		 * Pass over the Notification Payloads.
+		 *
+		 * This is the first pass if we are the Initiator,
+		 * Looking at the Responder's response.
+		 *
+		 * This is the second pass if we are the Responder.
+		 *
+		 * In either case, we carry out the actual deletion task.
+		 * ??? Unless st->st_state == STATE_IKESA_DEL.
 		 */
 
-		if (md->chain[ISAKMP_NEXT_v2D] &&
-		    st->st_state != STATE_IKESA_DEL) {
+		if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) &&
+		    st->st_state == STATE_IKESA_DEL) {
+			/*
+			 * this must be a response to our IKE SA delete request
+			 * Even if there are are other Delete Payloads,
+			 * the cannot matter: we delete the family.
+			 */
+			delete_my_family(st, TRUE);
+			md->st = st = NULL;
+		} else if ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) &&
+			   md->chain[ISAKMP_NEXT_v2D] == NULL) {
+			/* A liveness update response */
+			DBG(DBG_CONTROLMORE,
+			    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
+			st->st_last_liveness = mononow();
+			st->st_pend_liveness = FALSE;
+			ikev2_update_msgid_counters(md);
+		} else {
+			/*
+			 * IPSec SA deletion
+			 * Unless there are no payloads, in which case this is a no-op.
+			 */
+			struct payload_digest *p;
+
 			for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL;
 			     p = p->next) {
 				struct ikev2_delete *v2del =
@@ -3380,8 +3435,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 				switch (v2del->isad_protoid) {
 				case PROTO_ISAKMP: /* Parent SA */
+					/* ??? I don't think that this should happen */
 					delete_my_family(st, TRUE);
-					md->st = st =  NULL;
+					md->st = st = NULL;
 					break;
 
 				case PROTO_IPSEC_AH: /* Child SAs */
@@ -3394,8 +3450,8 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 							v2del->isad_spisize);
 						return STF_FAIL + v2N_INVALID_SYNTAX;
 					}
-					if (v2del->isad_nrspi * sizeof(ipsec_spi_t) !=
-					    pbs_left(&p->pbs)) {
+
+					if (v2del->isad_nrspi * sizeof(ipsec_spi_t) != pbs_left(&p->pbs)) {
 						libreswan_log("IPsec Delete SPI payload wrong size (expected %u; got %u)",
 							(unsigned) (v2del->isad_nrspi * sizeof(ipsec_spi_t)),
 							(unsigned) pbs_left(&p->pbs));
@@ -3422,6 +3478,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 								v2del->isad_protoid,
 								spi);
 
+						passert(dst != st);	/* st is an IKE SA */
 						if (dst != NULL) {
 							DBG(DBG_CONTROLMORE,
 								DBG_log("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
@@ -3434,6 +3491,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 							change_state(dst,
 								STATE_CHILDSA_DEL);
 							delete_state(dst);
+							/* note: md->st != dst */
 						} else {
 							libreswan_log(
 							    "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
@@ -3445,7 +3503,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				break;
 
 				default:
-					/* Unrecongnized protocol */
+					/* Unrecognized protocol */
 					/* ??? diagnostic?  Failure? */
 					return STF_IGNORE;
 				}
@@ -3458,27 +3516,8 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					break;
 
 			}       /* for */
-		} else {
-			/* empty response to our IKESA delete request */
-			if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) {
-				if (st->st_state == STATE_IKESA_DEL) {
-					/*
-					 * My understanding is that delete payload for IKE SA
-					 * should be the only payload in the informational.
-					 * Now delete the IKE SA state and all its child states
-					 */
-					delete_my_family(st, TRUE);
-					md->st = st =  NULL;
-				} else {
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
-					st->st_last_liveness = mononow();
-					st->st_pend_liveness = FALSE;
-					ikev2_update_msgid_counters(md);
-				}
-			}
 		}
-	}
+	}	/* ??? USELESS INDENTATION */
 
 	return STF_OK;
 }
@@ -3600,34 +3639,20 @@ stf_status ikev2_send_informational(struct state *st)
 
 	return STF_OK;
 }
+
 /*
+ * ikev2_delete_out: initiate an Informational Exchange announcing a deletion.
  *
- ***************************************************************
- *                       DELETE_OUT                        *****
- ***************************************************************
+ * CURRENTLY SUPPRESSED:
+ * If we fail to send the deletion, we just go ahead with deleting the state.
+ * The code in delete_state would break if we actually did this.
  *
+ * Deleting an IKE SA is a bigger deal than deleting an IPSec SA.
  */
-void ikev2_delete_out(struct state *st)
+
+static bool ikev2_delete_out_guts(struct state *const st, struct state *const pst)
 {
-	struct state *pst = NULL;
-
-	if (IS_CHILD_SA(st)) {
-		/* child SA */
-		pst = state_with_serialno(st->st_clonedfrom);
-
-		if (pst == NULL) {
-			DBG(DBG_CONTROL,
-			    DBG_log("IKE SA does not exist for the child SA that we are deleting"));
-			DBG(DBG_CONTROL,
-			    DBG_log("INFORMATIONAL exchange cannot be sent, deleting state"));
-			goto unhappy_ending;
-		}
-	} else {
-		/* Parent SA */
-		pst = st;
-	}
-
-	{
+	{	/* ??? USELESS INDENTATION */
 		unsigned char *authstart;
 		pb_stream e_pbs, e_pbs_cipher;
 		pb_stream rbody;
@@ -3674,7 +3699,7 @@ void ikev2_delete_out(struct state *st)
 					&reply_stream, &rbody)) {
 				libreswan_log(
 					"error initializing hdr for informational message");
-				goto unhappy_ending;
+				return FALSE;
 			}
 
 		}
@@ -3684,12 +3709,12 @@ void ikev2_delete_out(struct state *st)
 		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
 		if (!out_struct(&e, &ikev2_e_desc, &rbody, &e_pbs))
-			goto unhappy_ending;
+			return FALSE;
 
 		/* insert IV */
 		iv = e_pbs.cur;
 		if (!emit_iv(st, &e_pbs))
-			goto unhappy_ending;
+			return FALSE;
 
 		/* note where cleartext starts */
 		init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
@@ -3726,7 +3751,7 @@ void ikev2_delete_out(struct state *st)
 					&e_pbs_cipher, &del_pbs)) {
 				libreswan_log(
 					"error initializing hdr for delete payload");
-				goto unhappy_ending;
+				return FALSE;
 			}
 
 			/* Emit values of spi to be sent to the peer */
@@ -3736,7 +3761,7 @@ void ikev2_delete_out(struct state *st)
 					     "local spis")) {
 					libreswan_log(
 						"error sending spi values in delete payload");
-					goto unhappy_ending;
+					return FALSE;
 				}
 			}
 
@@ -3745,7 +3770,7 @@ void ikev2_delete_out(struct state *st)
 
 		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher)) {
 			libreswan_log("error padding before encryption in delete payload");
-			goto unhappy_ending;
+			return FALSE;
 		}
 
 		close_output_pbs(&e_pbs_cipher);
@@ -3755,7 +3780,7 @@ void ikev2_delete_out(struct state *st)
 			unsigned char *authloc = ikev2_authloc(st, &e_pbs);
 
 			if (authloc == NULL)
-				goto unhappy_ending;
+				return FALSE;
 
 			close_output_pbs(&e_pbs);
 			close_output_pbs(&rbody);
@@ -3766,7 +3791,7 @@ void ikev2_delete_out(struct state *st)
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
 			if (ret != STF_OK)
-				goto unhappy_ending;
+				return FALSE;
 		}
 
 		/* keep it for a retransmit if necessary */
@@ -3789,29 +3814,57 @@ void ikev2_delete_out(struct state *st)
 		 * But we have no idea!
 		 * This was a fake exchange.
 		 */
-	}
-
-	/* If everything is fine, and we sent packet, return */
-	return;
-
-unhappy_ending:
-	/*
-	 * If some error occurs above that prevents us sending a request packet
-	 * delete the states right now
-	 */
-	if (IS_CHILD_SA(st)) {
-		/* we are a child: prepare to delete ourself */
-		change_state(st, STATE_CHILDSA_DEL);
-		delete_state(st);
-	} else {
-		/* We are a parent: delete our children and
-		 * then prepare to delete ourself.
-		 * Our children will be on the same hash chain
-		 * because we share IKE SPIs.
-		 */
-		delete_my_family(st, TRUE);
-	}
+	}	/* ??? USELESS INDENTATION */
+	return TRUE;
 }
+
+bool ikev2_delete_out(struct state *st)
+{
+	bool res;
+
+	if (IS_CHILD_SA(st)) {
+		/* child SA */
+		struct state *pst = state_with_serialno(st->st_clonedfrom);
+
+		pexpect(pst != NULL);
+		if (pst == NULL) {
+			/* ??? surely this can only happen if there is a bug in our code */
+			DBG(DBG_CONTROL,
+			    DBG_log("IKE SA does not exist for the child SA that we are deleting"));
+			DBG(DBG_CONTROL,
+			    DBG_log("INFORMATIONAL exchange cannot be sent, deleting state"));
+			res = FALSE;
+		} else {
+			res = ikev2_delete_out_guts(st, pst);
+		}
+#if 0	/* ??? deleting is done by delete_state (caller's caller), unconditionally; we must not */
+		if (!res) {
+			/* prepare to delete ourself */
+			change_state(st, STATE_CHILDSA_DEL);
+			delete_state(st);
+			if (md->st == st)
+				md->st = st = NULL;	/* but we don't have an md! */
+		}
+#endif
+	} else {
+		/* Parent SA */
+		res = ikev2_delete_out_guts(st, st);
+#if 0	/* ??? deleting is done by delete_state (caller's caller), unconditionally; we must not */
+		if (!res) {
+			/* delete our children and
+			 * then prepare to delete ourself.
+			 * Our children will be on the same hash chain
+			 * because we share IKE SPIs.
+			 */
+			delete_my_family(st, TRUE);
+			md->st = st = NULL;	/* but we don't have an md! */
+		}
+#endif
+	}
+
+	return res;
+}
+
 
 /*
  * Determine the IKE version we will use for the IKE packet

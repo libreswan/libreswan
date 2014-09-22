@@ -20,7 +20,7 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 #endif
 				    );
 
-extern void ikev2_delete_out(struct state *st);
+extern bool ikev2_delete_out(struct state *st);
 
 extern bool ikev2_out_sa(pb_stream *outs,
 			 enum ikev2_sec_proto_id protoid,
