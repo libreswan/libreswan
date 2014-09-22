@@ -78,9 +78,9 @@ struct packet_byte_stream {
 	struct_desc *desc;
 	const char *name;			/* what does this PBS represent? */
 	u_int8_t
-	*start,
-	*cur,		/* current position in stream */
-	*roof;		/* byte after last in PBS (on output: just a limit) */
+		*start,
+		*cur,		/* current position in stream */
+		*roof;		/* byte after last in PBS (on output: just a limit) */
 	/* For an output PBS, the length field will be filled in later so
 	 * we need to record its particulars.  Note: it may not be aligned.
 	 */
