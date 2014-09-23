@@ -5,7 +5,7 @@ import os, commands
 import getopt, sys
 import sys
 import re
-import ujson
+import json
 import os,sys,socket,shutil
 import logging
 import platform
@@ -157,7 +157,7 @@ class guest (threading.Thread):
 
 		result_file_lock.acquire()
 		f = open(filename, 'a')
-		f.write(ujson.dumps(logline, ensure_ascii=True,  double_precision=2))
+		f.write(json.dumps(logline, ensure_ascii=True,  indent=2))
 		f.write("\n")
 		f.close
 		result_file_lock.release()
@@ -469,7 +469,7 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None, tes
 
 	if e:
 		logline ["error"] = e 
-	f.write(ujson.dumps(logline, ensure_ascii=True, double_precision=2))
+	f.write(json.dumps(logline, ensure_ascii=True, indent=2))
 	f.write("\n")
 	f.close
 
@@ -552,7 +552,7 @@ def kvm_error(r_file):
 		return  False
 	f = open(r_file, 'r')
 	for line in f:
-		x = ujson.loads(line)
+		x = json.loads(line)
 		try:
 			re_e = re.search(r'KVMERROR', x['error'], re.I )
 			if re_e:

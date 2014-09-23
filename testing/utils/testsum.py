@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import ujson
+import json
 import os, commands
 import re
 from os import listdir
@@ -58,13 +58,13 @@ def read_dirs(resultsdir, node):
 		dirtable["rows"].append(list(row))
 
 	o = open( resultsdir + '/' + 'graph.json', 'w')
-	o.write(ujson.dumps(summary, ensure_ascii=True, double_precision=2)) 
-	##print(ujson.dumps(summary, ensure_ascii=True, double_precision=2)) 
+	o.write(json.dumps(summary, ensure_ascii=True, indent=2))
+	##print(json.dumps(summary, ensure_ascii=True, indent=2))
 	o.close
 
 	t = open(resultsdir + '/' + 'table.json', 'w')
-	t.write(ujson.dumps(dirtable, ensure_ascii=True, double_precision=2)) 
-	##print(ujson.dumps(summary, ensure_ascii=True, double_precision=2)) 
+	t.write(json.dumps(dirtable, ensure_ascii=True, indent=2))
+	##print(json.dumps(summary, ensure_ascii=True, indent=2))
 	t.close 
 
 
@@ -158,7 +158,7 @@ def print_table_json(d, table, result):
 		i =  i + 1
 		f = open(path, 'r')
 		for line in f:
-			x = ujson.loads(line)
+			x = json.loads(line)
 			if "result" in x and "testname"  in x:
 				x["result"] = x["result"].lower()
 				r = []
@@ -205,7 +205,7 @@ def print_table_json(d, table, result):
 		print("warning missing date in %s. It does not start with date <d+-d+-d+>"%d)
 
 	o = open(d + '/' + 'table.json', 'w')
-	o.write(ujson.dumps(table, ensure_ascii=True, double_precision=2)) 
+	o.write(json.dumps(table, ensure_ascii=True, indent=2))
 	o.close
 
 	i3html = "../../i3.html"
