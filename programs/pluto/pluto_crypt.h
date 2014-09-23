@@ -29,7 +29,7 @@
  * for pluto. It does this to avoid head-of-queue problems with aggressive
  * mode, to deal with the asynchronous nature of hardware offload.
  *
- * (Unrelated code compartamentalize lookups to LDAP/HTTP/FTP for CRL fetching
+ * (Unrelated to code to compartmentalize lookups to LDAP/HTTP/FTP for CRL fetching
  * and checking.)
  */
 
@@ -230,9 +230,15 @@ struct pluto_crypto_req {
 
 struct pluto_crypto_req_cont;	/* forward reference */
 
-typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
-				struct pluto_crypto_req *,
-				err_t ugh);
+
+/*
+ * pluto_crypto_req_cont_func:
+ *
+ * A function that continues a state transition after
+ * an asynchronous cryptographic calculateion completes.
+ */
+typedef void (*crypto_req_cont_func)(struct pluto_crypto_req_cont *,
+				struct pluto_crypto_req *);
 
 /* The crypto continuation structure
  *
@@ -265,7 +271,7 @@ typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
  * when the work is complete.
  */
 struct pluto_crypto_req_cont {
-	crypto_req_func pcrc_func;	/* function to continue with */
+	crypto_req_cont_func pcrc_func;	/* function to continue with */
 	/*
 	 * Sponsoring state's serial number and state pointer.
 	 * Currently a mish-mash but will transition
@@ -333,7 +339,7 @@ extern void calc_nonce(struct pluto_crypto_req *r);
 extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);
 
-extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
+extern stf_status start_dh_secretiv(struct dh_continuation *dh,
 				    struct state *st,
 				    enum crypto_importance importance,
 				    enum phase1_role role,
@@ -354,7 +360,7 @@ extern void finish_dh_secret(struct state *st,
 extern stf_status start_dh_v2(struct msg_digest *md,
 			      const char *name,
 			      enum phase1_role role,
-			      crypto_req_func pcrc_func);
+			      crypto_req_cont_func pcrc_func);
 
 extern void finish_dh_v2(struct state *st,
 			 const struct pluto_crypto_req *r);

@@ -86,29 +86,34 @@
 /*
  * Control flow is very confusing.
  *
+ * Entry points:
+ *	aggr_outI1:	called to initiate
+ *	aggr_inI1_outR1_psk
+ *	aggr_inI1_outR1_rsasig
+ *	aggr_inR1_outI2
+ *	aggr_inI2
+ *
  * Called by:
  *	aggr_inI1_outR1_common: aggr_inI1_outR1_psk aggr_inI1_outR1_rsasig
  *		auth method is a param
  *	aggr_inI1_outR1_continue1: ke(aggr_inI1_outR1_common)
  *	aggr_inI1_outR1_continue2: dh(aggr_inI1_outR1_continue1)
- *	aggr_inI1_outR1_tail: aggr_inI1_outR1_continue2 aggr_inI1_outR1_common
- *		??? the call from aggr_inI1_outR1_common might never happen
+ *	aggr_inI1_outR1_tail: aggr_inI1_outR1_continue2
  */
 
-static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 				       struct pluto_crypto_req *r);
 
+/* this is a crypto_req_cont_func */
 static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
-					    struct pluto_crypto_req *r,
-					    err_t ugh);
+					    struct pluto_crypto_req *r);
 
 /*
  * continuation from second calculation (the DH one)
- *
  */
+/* this is a crypto_req_cont_func */
 static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
-				      struct pluto_crypto_req *r,
-				      err_t ugh)
+				      struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
@@ -130,8 +135,6 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 
 	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -142,8 +145,9 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = aggr_inI1_outR1_tail(pcrc, r);
+	e = aggr_inI1_outR1_tail(dh->dh_md, r);
 
+	passert(dh->dh_md != NULL);	/* ??? why could next test fail? */
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
 		release_any_md(&dh->dh_md);
@@ -155,11 +159,10 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
  * for aggressive mode, this is sub-optimal, since we should have
  * had the crypto helper actually do everything, but we need to do
  * some additional work to set that all up, so this is fine for now.
- *
  */
+/* this is a crypto_req_cont_func */
 static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
-				      struct pluto_crypto_req *r,
-				      err_t ugh)
+				      struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
@@ -177,8 +180,6 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 		return;
 	}
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -207,12 +208,13 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 		set_suspended(st, md);
 		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 		pcrc_init(&dh->dh_pcrc, aggr_inI1_outR1_continue2);
-		e = start_dh_secretiv(&dh->dh_pcrc, st,
+		e = start_dh_secretiv(dh, st,
 				      st->st_import,
 				      O_RESPONDER,
 				      st->st_oakley.group->group);
 
 		if (e != STF_SUSPEND) {
+			passert(dh->dh_md != NULL);	/* ??? why could next test fail? */
 			if (dh->dh_md != NULL) {
 				complete_v1_state_transition(&dh->dh_md, e);
 				release_any_md(&dh->dh_md);
@@ -278,9 +280,9 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 	st->st_connection = c;
 	st->st_remoteaddr = md->sender;
 	st->st_remoteport = md->sender_port;
-	st->st_localaddr  = md->iface->ip_addr;
-	st->st_localport  = md->iface->port;
-	st->st_interface  = md->iface;
+	st->st_localaddr = md->iface->ip_addr;
+	st->st_localport = md->iface->port;
+	st->st_interface = md->iface;
 	change_state(st, STATE_AGGR_R1);
 
 	/* until we have clue who this is, then be conservative about allocating
@@ -374,22 +376,11 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		ke->ke_md = md;
 		set_suspended(st, md);
 
-		/*
-		 * ??? how would st->st_sec_in_use?
-		 * This routine creates *st itself so how would this field
-		 * be already filled-in.
-		 */
-		pexpect(!st->st_sec_in_use);
-		if (!st->st_sec_in_use) {
-			/* need to calculate KE and Nonce */
-			pcrc_init(&ke->ke_pcrc, aggr_inI1_outR1_continue1);
-			return build_ke_and_nonce(&ke->ke_pcrc, st, st->st_oakley.group,
-					st->st_import);
-		} else {
-			/* KE and Nonce calculated */
-			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-			return aggr_inI1_outR1_tail(&ke->ke_pcrc, NULL);
-		}
+		passert(!st->st_sec_in_use);	/* remnant of insanity */
+		/* need to calculate KE and Nonce */
+		pcrc_init(&ke->ke_pcrc, aggr_inI1_outR1_continue1);
+		return build_ke_and_nonce(&ke->ke_pcrc, st, st->st_oakley.group,
+				st->st_import);
 	}
 }
 
@@ -442,11 +433,9 @@ stf_status aggr_inI1_outR1_rsasig(struct msg_digest *md)
 	return aggr_inI1_outR1_common(md, OAKLEY_RSA_SIG);
 }
 
-static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 				       struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->ke_md;
 	struct state *st = md->st;
 	bool send_cert = FALSE;
 	bool send_cr = FALSE;
@@ -742,16 +731,16 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 
 		pcrc_init(&dh->dh_pcrc, aggr_inR1_outI2_crypto_continue);
-		return start_dh_secretiv(&dh->dh_pcrc, st,
+		return start_dh_secretiv(dh, st,
 					 st->st_import,
 					 O_INITIATOR,
 					 st->st_oakley.group->group);
 	}
 }
 
+/* this is a crypto_req_cont_func */
 static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
-					    struct pluto_crypto_req *r,
-					    err_t ugh)
+					    struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
@@ -769,8 +758,6 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 		return;
 	}
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -785,6 +772,7 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = aggr_inR1_outI2_tail(md, NULL);
 
+	passert(dh->dh_md != NULL);	/* ??? why could next test fail? */
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
 		release_any_md(&dh->dh_md);
@@ -1061,12 +1049,12 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
  * Initiate an Oakley Aggressive Mode exchange.
  * --> HDR, SA, KE, Ni, IDii
  */
-static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status aggr_outI1_tail(struct ke_continuation *ke,
 				  struct pluto_crypto_req *r);	/* forward */
 
+/* this is a crypto_req_cont_func */
 static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
-				struct pluto_crypto_req *r,
-				err_t ugh)
+				struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
@@ -1088,8 +1076,6 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -1101,8 +1087,9 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = aggr_outI1_tail(pcrc, r);
+	e = aggr_outI1_tail(ke, r);
 
+	passert(ke->ke_md != NULL);	/* ??? why could next test fail? */
 	if (ke->ke_md != NULL) {
 		complete_v1_state_transition(&ke->ke_md, e);
 		release_any_md(&ke->ke_md);
@@ -1214,7 +1201,7 @@ stf_status aggr_outI1(int whack_sock,
 		} else {
 			/* KE and Nonce already calculated */
 			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-			e = aggr_outI1_tail(&ke->ke_pcrc, NULL);
+			e = aggr_outI1_tail(ke, NULL);
 		}
 
 		reset_globals();
@@ -1223,10 +1210,9 @@ stf_status aggr_outI1(int whack_sock,
 	}
 }
 
-static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status aggr_outI1_tail(struct ke_continuation *ke,
 				  struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;

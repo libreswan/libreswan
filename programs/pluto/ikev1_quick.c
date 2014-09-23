@@ -833,13 +833,13 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 		      st->st_new_iv, st->st_new_iv_len);
 }
 
-static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status quick_outI1_tail(struct qke_continuation *qke,
 				   struct pluto_crypto_req *r,
 				   struct state *st);
 
+/* this is a crypto_req_cont_func */
 static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
-				 struct pluto_crypto_req *r,
-				 err_t ugh)
+				 struct pluto_crypto_req *r)
 {
 	struct qke_continuation *qke = (struct qke_continuation *)pcrc;
 	struct state *const st = state_with_serialno(
@@ -864,14 +864,17 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
 	set_cur_state(st); /* we must reset before exit */
 	unset_suspended(st);
-	e = quick_outI1_tail(pcrc, r, st);
+	e = quick_outI1_tail(qke, r, st);
+
+	/*
+	 * ??? this boilerplate code looks different from others.
+	 * Who frees md?
+	 */
 	if (e == STF_INTERNAL_ERROR) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: quick_outI1_tail() failed with STF_INTERNAL_ERROR",
@@ -994,11 +997,10 @@ stf_status quick_outI1(int whack_sock,
 	}
 }
 
-static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status quick_outI1_tail(struct qke_continuation *qke,
 				   struct pluto_crypto_req *r,
 				   struct state *st)
 {
-	struct qke_continuation *qke = (struct qke_continuation *)pcrc;
 	struct state *isakmp_sa = state_with_serialno(st->st_clonedfrom);
 	struct connection *c = st->st_connection;
 	pb_stream rbody;
@@ -1789,15 +1791,15 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 					      struct pluto_crypto_req *r);
 
+/* this is a crypto_req_cont_func */
 static void quick_inI1_outR1_cryptocontinue2(
 	struct pluto_crypto_req_cont *pcrc,
-	struct pluto_crypto_req *r,
-	err_t ugh);
+	struct pluto_crypto_req *r);
 
+/* this is a crypto_req_cont_func */
 static void quick_inI1_outR1_cryptocontinue1(
 	struct pluto_crypto_req_cont *pcrc,
-	struct pluto_crypto_req *r,
-	err_t ugh);
+	struct pluto_crypto_req *r);
 
 static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 					    struct adns_continuation *ac)
@@ -2158,10 +2160,10 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 	}
 }
 
+/* this is a crypto_req_cont_func */
 static void quick_inI1_outR1_cryptocontinue1(
 	struct pluto_crypto_req_cont *pcrc,
-	struct pluto_crypto_req *r,
-	err_t ugh)
+	struct pluto_crypto_req *r)
 {
 	struct qke_continuation *qke = (struct qke_continuation *)pcrc;
 	struct msg_digest *md = qke->qke_md;
@@ -2187,7 +2189,6 @@ static void quick_inI1_outR1_cryptocontinue1(
 	passert(qke->qke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
 	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -2225,7 +2226,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 		 */
 		/* ??? it seems wrong that these lines bop between dh->dh_md and qke->qke_md */
 		if (e != STF_SUSPEND && e != STF_INLINE) {
-			pexpect(md != NULL);	/* ??? when would this fail? */
+			passert(md != NULL);	/* ??? when would this fail? */
 			if (dh->dh_md != NULL) {
 				complete_v1_state_transition(&qke->qke_md, e);
 				release_any_md(&qke->qke_md);
@@ -2238,7 +2239,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 		 */
 		e = quick_inI1_outR1_cryptotail(md, NULL);
 		if (e == STF_OK) {
-			pexpect(md != NULL);	/* ??? when would this fail? */
+			passert(md != NULL);	/* ??? when would this fail? */
 			if (md != NULL) {
 				/* note: use qke-> pointer */
 				complete_v1_state_transition(&qke->qke_md, e);
@@ -2249,10 +2250,10 @@ static void quick_inI1_outR1_cryptocontinue1(
 	reset_cur_state();
 }
 
+/* this is a crypto_req_cont_func */
 static void quick_inI1_outR1_cryptocontinue2(
 	struct pluto_crypto_req_cont *pcrc,
-	struct pluto_crypto_req *r,
-	err_t ugh)
+	struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
@@ -2274,8 +2275,6 @@ static void quick_inI1_outR1_cryptocontinue2(
 
 	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -2288,6 +2287,7 @@ static void quick_inI1_outR1_cryptocontinue2(
 
 	e = quick_inI1_outR1_cryptotail(dh->dh_md, r);
 	if (e == STF_OK) {
+		passert(dh->dh_md != NULL);	/* ??? how could this fail? */
 		if (dh->dh_md != NULL) {
 			complete_v1_state_transition(&dh->dh_md, e);
 			release_any_md(&dh->dh_md);
@@ -2485,9 +2485,9 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 static stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 					      struct pluto_crypto_req *r);
 
+/* this is a crypto_req_cont_func */
 static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
-				      struct pluto_crypto_req *r,
-				      err_t ugh);
+				      struct pluto_crypto_req *r);
 
 stf_status quick_inR1_outI2(struct msg_digest *md)
 {
@@ -2537,9 +2537,9 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 	}
 }
 
+/* this is a crypto_req_cont_func */
 static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
-				      struct pluto_crypto_req *r,
-				      err_t ugh)
+				      struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
@@ -2561,8 +2561,6 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -2575,6 +2573,7 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = quick_inR1_outI2_cryptotail(dh->dh_md, r);
 
+	passert(dh->dh_md != NULL);	/* ??? how could this fail? */
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
 		release_any_md(&dh->dh_md);

@@ -51,7 +51,7 @@ void run_continuation(struct pluto_crypto_req *r)
 		struct pluto_crypto_req_cont *cn = continuation;
 		continuation = NULL;
 		passert(cn->pcrc_func != NULL);
-		(*cn->pcrc_func)(cn, r, NULL);
+		(*cn->pcrc_func)(cn, r);
 	}
 }
 

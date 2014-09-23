@@ -157,6 +157,7 @@ void calc_nonce(struct pluto_crypto_req *r)
 		     DEFAULT_NONCE_SIZE));
 }
 
+/* Note: not all cn's are the same subtype */
 stf_status build_ke_and_nonce(
 	struct pluto_crypto_req_cont *cn,
 	struct state *st,

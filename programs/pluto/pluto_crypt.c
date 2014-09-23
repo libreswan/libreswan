@@ -406,8 +406,9 @@ stf_status send_crypto_helper_request(struct pluto_crypto_req *r,
 		reset_cur_state();
 
 		pluto_do_crypto_op(r, -1);
+
 		/* call the continuation */
-		(*cn->pcrc_func)(cn, r, NULL);
+		(*cn->pcrc_func)(cn, r);
 
 		pfree(cn);	/* ownership transferred from caller */
 
@@ -784,7 +785,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	cn->pcrc_pcr = &rr;
 	reset_cur_state();
 	if (cn->pcrc_serialno != SOS_NOBODY)
-		(*cn->pcrc_func)(cn, &rr, NULL);
+		(*cn->pcrc_func)(cn, &rr);
 
 	/* now free up the continuation */
 	pfree(cn);

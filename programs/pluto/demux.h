@@ -39,9 +39,21 @@ extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
  * These declarations define the interface to these functions.
  *
  * Each STF must be able to be restarted up to any failure point:
- * a later message will cause the state to be re-entered.  This
+ * since an error will not advance the state,
+ * a later message will cause the STF to be re-entered.  This
  * explains the use of the replace macro and the care in handling
  * MP_INT members of struct state.
+ *
+ * A state object (struct state) records what is known about
+ * a state between transitions.  Between transitions is roughly:
+ * at rest, waiting for an external event.
+ *
+ * A message digest (struct msg_digest) holds the dissected
+ * packet (and more) during a state transition.  This gets
+ * a bit muddied by the way packet fragments are re-assembled
+ * and the way asyncronous processing cause state transitions
+ * to be suspended (eg. crypto helper work).  Think of those
+ * things as being within a single state transition.
  */
 
 struct payload_digest {

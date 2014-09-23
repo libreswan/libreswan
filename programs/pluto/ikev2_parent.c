@@ -69,11 +69,11 @@
 			send_v2_notification_from_md(md, t, NULL); \
 	}
 
+/* this is a crypto_req_cont_func */
 static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
-					struct pluto_crypto_req *r,
-					err_t ugh);
+					struct pluto_crypto_req *r);
 
-static stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status ikev2_parent_outI1_tail(struct ke_continuation *ke,
 					  struct pluto_crypto_req *r);
 
 static bool ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
@@ -82,10 +82,11 @@ static bool ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
+/* this is a crypto_req_cont_func */
 static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc, 
-					 struct pluto_crypto_req *r, err_t ugh);
+					 struct pluto_crypto_req *r);
 
-static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status ikev2_child_inIoutR_tail(struct qke_continuation *qke,
 					   struct pluto_crypto_req *r);
 
 static int build_ike_version();
@@ -260,7 +261,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 				     importance);
 		} else {
 			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-			e = ikev2_parent_outI1_tail(&ke->ke_pcrc, NULL);
+			e = ikev2_parent_outI1_tail(ke, NULL);
 		}
 
 		reset_globals();
@@ -269,9 +270,9 @@ stf_status ikev2parent_outI1(int whack_sock,
 	}
 }
 
+/* this is a crypto_req_cont_func */
 static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
-					struct pluto_crypto_req *r,
-					err_t ugh)
+					struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
@@ -293,8 +294,6 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -306,8 +305,9 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = ikev2_parent_outI1_tail(pcrc, r);
+	e = ikev2_parent_outI1_tail(ke, r);
 
+	passert(ke->ke_md != NULL);	/* ??? why could next test fail? */
 	if (ke->ke_md != NULL) {
 		complete_v2_state_transition(&ke->ke_md, e);
 		release_any_md(&ke->ke_md);
@@ -366,10 +366,9 @@ static bool ship_v2KE(struct state *st,
 	return justship_v2KE(st, g, oakley_group, outs, np);
 }
 
-static stf_status ikev2_parent_outI1_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status ikev2_parent_outI1_tail(struct ke_continuation *ke,
 					  struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 
@@ -548,12 +547,12 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
  * HDR, SAr1, KEr, Nr, [CERTREQ] -->
  */
 
+/* this is a crypto_req_cont_func */
 static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
-					    struct pluto_crypto_req *r,
-					    err_t ugh);
+					    struct pluto_crypto_req *r);
 
 static stf_status ikev2_parent_inI1outR1_tail(
-	struct pluto_crypto_req_cont *pcrc,
+	struct ke_continuation *ke,
 	struct pluto_crypto_req *r);
 
 stf_status ikev2parent_inI1outR1(struct msg_digest *md)
@@ -816,9 +815,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		} else {
 			/* KE and Nonce already calculated */
 			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-			e = ikev2_parent_inI1outR1_tail(
-				(struct pluto_crypto_req_cont *)ke,
-				NULL);
+			e = ikev2_parent_inI1outR1_tail(ke, NULL);
 		}
 
 		reset_globals();
@@ -827,9 +824,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 }
 
+/* this is a crypto_req_cont_func */
 static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
-					    struct pluto_crypto_req *r,
-					    err_t ugh)
+					    struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
@@ -851,8 +848,6 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -864,8 +859,9 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = ikev2_parent_inI1outR1_tail(pcrc, r);
+	e = ikev2_parent_inI1outR1_tail(ke, r);
 
+	passert(ke->ke_md != NULL);	/* ??? why could next test fail? */
 	if (ke->ke_md != NULL) {
 		complete_v2_state_transition(&ke->ke_md, e);
 		release_any_md(&ke->ke_md);
@@ -881,10 +877,9 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
  *	ikev2_parent_inI1outR1_continue: if they needed to be calculated
  */
 static stf_status ikev2_parent_inI1outR1_tail(
-	struct pluto_crypto_req_cont *pcrc,
+	struct ke_continuation *ke,
 	struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	struct state *const st = md->st;
@@ -1135,12 +1130,12 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
  *      TSi, TSr}      -->
  */
 
+/* this is a crypto_req_cont_func */
 static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
-					    struct pluto_crypto_req *r,
-					    err_t ugh);
+					    struct pluto_crypto_req *r);
 
 static stf_status ikev2_parent_inR1outI2_tail(
-	struct pluto_crypto_req_cont *pcrc,
+	struct dh_continuation *dh,
 	struct pluto_crypto_req *r);
 
 stf_status ikev2parent_inR1outI2(struct msg_digest *md)
@@ -1217,9 +1212,9 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		ikev2_parent_inR1outI2_continue);
 }
 
+/* this is a crypto_req_cont_func */
 static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
-					    struct pluto_crypto_req *r,
-					    err_t ugh)
+					    struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
@@ -1241,8 +1236,6 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -1254,8 +1247,9 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = ikev2_parent_inR1outI2_tail(pcrc, r);
+	e = ikev2_parent_inR1outI2_tail(dh, r);
 
+	passert(dh->dh_md != NULL);	/* ??? how could this fail? */
 	if (dh->dh_md != NULL) {
 		complete_v2_state_transition(&dh->dh_md, e);
 		release_any_md(&dh->dh_md);
@@ -1570,10 +1564,9 @@ static stf_status ikev2_send_auth(struct connection *c,
 }
 
 static stf_status ikev2_parent_inR1outI2_tail(
-	struct pluto_crypto_req_cont *pcrc,
+	struct dh_continuation *dh,
 	struct pluto_crypto_req *r)
 {
-	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
 	struct state *st = md->st;
 	struct connection *c = st->st_connection;
@@ -1838,12 +1831,12 @@ static stf_status ikev2_parent_inR1outI2_tail(
  * [Parent SA established]
  */
 
+/* this is a crypto_req_cont_func */
 static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
-					    struct pluto_crypto_req *r,
-					    err_t ugh);
+					    struct pluto_crypto_req *r);
 
 static stf_status ikev2_parent_inI2outR2_tail(
-	struct pluto_crypto_req_cont *pcrc,
+	struct dh_continuation *dh,
 	struct pluto_crypto_req *r);
 
 stf_status ikev2parent_inI2outR2(struct msg_digest *md)
@@ -1865,9 +1858,9 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 		ikev2_parent_inI2outR2_continue);
 }
 
+/* this is a crypto_req_cont_func */
 static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
-					    struct pluto_crypto_req *r,
-					    err_t ugh)
+					    struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
@@ -1889,8 +1882,6 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -1902,17 +1893,20 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = ikev2_parent_inI2outR2_tail(pcrc, r);
-	if ( e > STF_FAIL) {
+	e = ikev2_parent_inI2outR2_tail(dh, r);
+
+	if (e > STF_FAIL) {
 		/* we do not send a notify because we are the initiator that could be responding to an error notification */
 		int v2_notify_num = e - STF_FAIL;
+
 		DBG_log("ikev2_parent_inI2outR2_tail returned STF_FAIL with %s",
 			enum_name(&ikev2_notify_names, v2_notify_num));
-	} else if ( e != STF_OK) {
+	} else if (e != STF_OK) {
 		DBG_log("ikev2_parent_inI2outR2_tail returned %s",
 			enum_name(&stfstatus_name, e));
 	}
 
+	passert(dh->dh_md != NULL);	/* ??? why could next test fail? */
 	if (dh->dh_md != NULL) {
 		complete_v2_state_transition(&dh->dh_md, e);
 		release_any_md(&dh->dh_md);
@@ -1921,10 +1915,9 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 }
 
 static stf_status ikev2_parent_inI2outR2_tail(
-	struct pluto_crypto_req_cont *pcrc,
+	struct dh_continuation *dh,
 	struct pluto_crypto_req *r)
 {
-	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
@@ -2878,15 +2871,16 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 			e = build_nonce(&qke->qke_pcrc, st, ci);
 		} else {
 			qke->qke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-			e = ikev2_child_inIoutR_tail(&qke->qke_pcrc, NULL);
+			e = ikev2_child_inIoutR_tail(qke, NULL);
 		}
 		reset_globals();
 		return e;
 	}
 }
 
+/* this is a crypto_req_cont_func */
 static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
-		struct pluto_crypto_req *r, err_t ugh)
+		struct pluto_crypto_req *r)
 {
 
 	struct qke_continuation *qke = (struct qke_continuation *)pcrc;
@@ -2907,8 +2901,6 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(qke->qke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -2920,8 +2912,9 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = ikev2_child_inIoutR_tail(pcrc, r);
+	e = ikev2_child_inIoutR_tail(qke, r);
 
+	passert(qke->qke_md != NULL);	/* ??? why could next test fail? */
 	if (qke->qke_md != NULL) {
 		complete_v2_state_transition(&qke->qke_md, e);
 		release_any_md(&qke->qke_md);
@@ -2930,11 +2923,9 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 	reset_globals();
 }
 
-static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status ikev2_child_inIoutR_tail(struct qke_continuation *qke,
 				        struct pluto_crypto_req *r)
 {
-
-	struct qke_continuation *qke = (struct qke_continuation *)pcrc;
 	struct msg_digest *md = qke->qke_md;
 	struct state *st = md->st;
         struct state *pst = st;

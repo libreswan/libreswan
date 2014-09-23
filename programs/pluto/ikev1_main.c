@@ -908,12 +908,12 @@ stf_status main_inI1_outR1(struct msg_digest *md)
  *
  */
 
-static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status main_inR1_outI2_tail(struct ke_continuation *ke,
 				struct pluto_crypto_req *r);
 
+/* this is a crypto_req_cont_func */
 static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
-				struct pluto_crypto_req *r,
-				err_t ugh)
+				struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
@@ -935,8 +935,6 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -948,8 +946,9 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = main_inR1_outI2_tail(pcrc, r);
+	e = main_inR1_outI2_tail(ke, r);
 
+	passert(ke->ke_md != NULL);	/* ??? how could this fail? */
 	if (ke->ke_md != NULL) {
 		complete_v1_state_transition(&ke->ke_md, e);
 		release_any_md(&ke->ke_md);
@@ -1020,10 +1019,9 @@ bool ship_KE(struct state *st,
  *
  * We must verify that the proposal received matches one we sent.
  */
-static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status main_inR1_outI2_tail(struct ke_continuation *ke,
 				struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 
@@ -1102,12 +1100,12 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
  *	    [,<<Cert-I_b>Ke_i]
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
-static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
 				struct pluto_crypto_req *r);
 
+/* this is a crypto_req_cont_func */
 static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
-				struct pluto_crypto_req *r,
-				err_t ugh)
+				struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
@@ -1129,8 +1127,6 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -1141,8 +1137,9 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
-	e = main_inI2_outR2_tail(pcrc, r);
+	e = main_inI2_outR2_tail(ke, r);
 
+	passert(ke->ke_md != NULL);	/* ??? how could this fail? */
 	if (ke->ke_md != NULL) {
 		complete_v1_state_transition(&ke->ke_md, e);
 		release_any_md(&ke->ke_md);
@@ -1184,9 +1181,14 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	}
 }
 
+/*
+ * main_inI2_outR2_calcdone is unlike every other crypto_req_cont_func:
+ * the state that it is working for may not yet care about the result.
+ * We are precomputing the DH.
+ */
+/* this is a crypto_req_cont_func */
 static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
-				struct pluto_crypto_req *r,
-				err_t ugh)
+				struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct state *st;
@@ -1203,10 +1205,6 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 	}
 
 	set_cur_state(st);
-	if (ugh != NULL) {
-		loglog(RC_LOG_SERIOUS, "DH crypto failed: %s", ugh);
-		return;
-	}
 
 	finish_dh_secretiv(st, r);
 
@@ -1214,8 +1212,9 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 	update_iv(st);
 
 	/*
-	 * if there was a packet received while we were calculating, then
+	 * If there was a packet received while we were calculating, then
 	 * process it now.
+	 * Otherwise, the result awaits the packet.
 	 */
 	if (st->st_suspended_md != NULL) {
 		struct msg_digest *md = st->st_suspended_md;
@@ -1227,10 +1226,9 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 	reset_cur_state();
 }
 
-stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
+stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
 				struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct state *st = md->st;
 
@@ -1367,7 +1365,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 				"calculation (group=%d)",
 				st->st_oakley.group->group));
 
-		e = start_dh_secretiv(&dh->dh_pcrc, st,
+		e = start_dh_secretiv(dh, st,
 				st->st_import,
 				O_RESPONDER,
 				st->st_oakley.group->group);
@@ -1662,9 +1660,9 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	return STF_OK;
 }
 
+/* this is a crypto_req_cont_func */
 static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
-				struct pluto_crypto_req *r,
-				err_t ugh)
+				struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
@@ -1696,13 +1694,9 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	if (ugh) {
-		loglog(RC_LOG_SERIOUS, "failed in DH exponentiation: %s", ugh);
-		e = STF_FATAL;
-	} else {
-		e = main_inR2_outI3_continue(md, r);
-	}
+	e = main_inR2_outI3_continue(md, r);
 
+	passert(dh->dh_md != NULL);	/* ??? how would this fail? */
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
 		release_any_md(&dh->dh_md);
@@ -1729,7 +1723,7 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 	dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 
 	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);
-	return start_dh_secretiv(&dh->dh_pcrc, st,
+	return start_dh_secretiv(dh, st,
 				st->st_import,
 				O_INITIATOR,
 				st->st_oakley.group->group);
