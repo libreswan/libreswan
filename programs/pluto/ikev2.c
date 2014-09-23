@@ -1189,8 +1189,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 * particular case, and similar failure cases, we want SEND_NOTIFICATION
 	 * (below) to let the peer know why we've rejected the request.
 	 *
-	 * Another case of null state is retrun from ikev2parent_inR1BoutI1B
-	 * Which returns STF_IGNORE.
+	 * Another case of null state is return from ikev2parent_inR1BoutI1B
+	 * which returns STF_IGNORE.
 	 */
 
 	/* advance the state */
