@@ -157,7 +157,7 @@ class guest (threading.Thread):
 
 		result_file_lock.acquire()
 		f = open(filename, 'a')
-		f.write(json.dumps(logline, ensure_ascii=True,  indent=2))
+		f.write(json.dumps(logline, ensure_ascii=True))
 		f.write("\n")
 		f.close
 		result_file_lock.release()
@@ -469,7 +469,7 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None, tes
 
 	if e:
 		logline ["error"] = e 
-	f.write(json.dumps(logline, ensure_ascii=True, indent=2))
+	f.write(json.dumps(logline, ensure_ascii=True))
 	f.write("\n")
 	f.close
 
@@ -497,6 +497,9 @@ def cmdline():
 	parser.add_argument("--node", default=DEFAULTCONFIG['node'], help="Default node name.")
 	parser.add_argument("--graphs", default=False, action="store_true",
 			help="generate graphs and JSON tables.")
+
+	parser.add_argument("--stop", default=False, action="store_true",
+			help="stop tests now. call from testing/pluto directory")
 
 	parser.add_argument("--stoponerror",
 			default=DEFAULTCONFIG['stoponerror'], action="store_true",
@@ -772,6 +775,16 @@ def gen_graphs_tables(args):
 	testsum.read_testlist(resultsdir = args.resultsdir, node = args.node)
 	testsum.read_dirs(resultsdir = args.resultsdir, node=args.node)
 
+def gen_stop_tests_now(args):
+	r = "./TESTLIST"
+	if not os.path.exists(r):
+		return None 
+
+	s = "./stop-tests-now"
+	f = open(s, 'w')
+	f.write("stop\n")
+	f.close
+
 def main():
 	start = time.time() 
 	args = cmdline() 
@@ -780,6 +793,8 @@ def main():
 	ran = 2 # used for summery generation.
 	if args.graphs:
 		gen_graphs_tables(args)
+	if args.stop:
+		gen_stop_tests_now(args)
 	elif do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):
 			if ran > 1:
