@@ -298,7 +298,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_MAIN_I2, STATE_MAIN_I3,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED |
-	  SMF_REPLY
+		SMF_REPLY
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(ID)
 	  , EVENT_v1_RETRANSMIT, main_inR2_outI3 },
 
@@ -321,20 +321,20 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_MAIN_R2, STATE_MAIN_R3,
 	  SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED |
-	  SMF_REPLY | SMF_RELEASE_PENDING_P2,
+		SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(ID) | P(HASH), P(VID) | P(CR), PT(NONE),
 	  EVENT_SA_REPLACE, main_inI3_outR3 },
 
 	{ STATE_MAIN_R2, STATE_MAIN_R3,
 	  SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED |
-	  SMF_REPLY | SMF_RELEASE_PENDING_P2,
+		SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(ID) | P(SIG), P(VID) | P(CR) | P(CERT), PT(NONE),
 	  EVENT_SA_REPLACE, main_inI3_outR3 },
 
 	{ STATE_MAIN_R2, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_RPKE_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-	  SMF_ENCRYPTED |
-	  SMF_REPLY | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED |
+		SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(HASH), P(VID) | P(CR), PT(NONE),
 	  EVENT_SA_REPLACE, unexpected /* ??? not yet implemented */ },
 
@@ -346,19 +346,19 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_MAIN_I3, STATE_MAIN_I4,
 	  SMF_PSK_AUTH | SMF_INITIATOR |
-	  SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(ID) | P(HASH), P(VID) | P(CR), PT(NONE),
 	  EVENT_SA_REPLACE, main_inR3 },
 
 	{ STATE_MAIN_I3, STATE_MAIN_I4,
 	  SMF_DS_AUTH | SMF_INITIATOR |
-	  SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(ID) | P(SIG), P(VID) | P(CR) | P(CERT), PT(NONE),
 	  EVENT_SA_REPLACE, main_inR3 },
 
 	{ STATE_MAIN_I3, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_RPKE_AUTH | SMF_INITIATOR |
-	  SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(HASH), P(VID) | P(CR), PT(NONE),
 	  EVENT_SA_REPLACE, unexpected /* ??? not yet implemented */ },
 
@@ -401,16 +401,16 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_AGGR_I1, STATE_AGGR_I2,
 	  SMF_PSK_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY |
-	  SMF_RELEASE_PENDING_P2,
-	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(HASH), P(VID) | P(NATD_RFC), PT(
-		  NONE),
+		SMF_RELEASE_PENDING_P2,
+	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(HASH), P(VID) | P(NATD_RFC),
+	  PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inR1_outI2 },
 
 	{ STATE_AGGR_I1, STATE_AGGR_I2,
 	  SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY |
-	  SMF_RELEASE_PENDING_P2,
-	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(SIG), P(VID) | P(NATD_RFC), PT(
-		  NONE),
+		SMF_RELEASE_PENDING_P2,
+	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(SIG), P(VID) | P(NATD_RFC),
+	  PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inR1_outI2 },
 
 	/* STATE_AGGR_R1:
@@ -419,14 +419,14 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-	  SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(HASH), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
 	/* STATE_AGGR_R1: HDR*, HASH_I --> done */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-	  SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(SIG), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
@@ -483,7 +483,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	/* STATE_QUICK_I2: can only happen due to lost packet */
 	{ STATE_QUICK_I2, STATE_UNDEFINED,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED |
-	  SMF_RETRANSMIT_ON_DUPLICATE,
+		SMF_RETRANSMIT_ON_DUPLICATE,
 	  LEMPTY, LEMPTY, PT(NONE),
 	  EVENT_NULL, unexpected },
 
@@ -2129,7 +2129,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	cur_state = st = md->st; /* might have changed */
 
-	pexpect(st != NULL);	/* ??? when does this fail? */
+	pexpect(st != NULL);	/* ??? when does this fail? (frequently) */
 
 	/* If state has FRAGMENTATION support, import it */
 	if (st != NULL && md->fragvid) {
