@@ -6,6 +6,7 @@ import getopt, sys
 import sys
 import re
 import json
+import ujson
 import os,sys,socket,shutil
 import logging
 import platform
@@ -157,7 +158,7 @@ class guest (threading.Thread):
 
 		result_file_lock.acquire()
 		f = open(filename, 'a')
-		f.write(json.dumps(logline, ensure_ascii=True))
+		f.write(ujson.dumps(logline, ensure_ascii=True,  double_precision=2))
 		f.write("\n")
 		f.close
 		result_file_lock.release()
@@ -469,7 +470,7 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None, tes
 
 	if e:
 		logline ["error"] = e 
-	f.write(json.dumps(logline, ensure_ascii=True))
+	f.write(ujson.dumps(logline, ensure_ascii=True,  double_precision=2))
 	f.write("\n")
 	f.close
 
