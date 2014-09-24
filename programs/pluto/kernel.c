@@ -440,14 +440,14 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		"PLUTO_PEER_PROTOCOL='%u' "
 		"PLUTO_PEER_CA='%s' "		/* 20 */
 		"PLUTO_STACK='%s' "
-		"%s"		/* optional metric */
-		"%s"		/* optional mtu */
+		"%s "		/* optional metric */
+		"%s "		/* optional mtu */
 		"PLUTO_ADDTIME='%" PRIu64 "' "
 		"PLUTO_CONN_POLICY='%s' "	/* 25 */
 		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
 		"XAUTH_FAILED=%d "
-		"%s"		/* XAUTH username - if any */
-		"%s"		/* PLUTO_MY_SRCIP - if any */
+		"%s "		/* XAUTH username - if any */
+		"%s "		/* PLUTO_MY_SRCIP - if any */
 		"PLUTO_IS_PEER_CISCO='%u' "	/* 30 */
 		"PLUTO_PEER_DNS_INFO='%s' "
 		"PLUTO_PEER_DOMAIN_INFO='%s' "
