@@ -726,6 +726,7 @@ int main(int argc, char *argv[])
 				conn->desired_state == STARTUP_START) {
 				if (verbose)
 					printf(" %s", conn->name);
+				resolve_defaultroute(conn);
 				starter_whack_add_conn(cfg, conn);
 			}
 		}
