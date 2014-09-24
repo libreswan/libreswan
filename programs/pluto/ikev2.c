@@ -583,6 +583,11 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
  *
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
  */
 void process_v2_packet(struct msg_digest **mdp)
 {
@@ -769,6 +774,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 		if (stf != STF_OK) {
 			complete_v2_state_transition(mdp, stf);
+			/* our caller with release_any_md(mdp) */
 			return;
 		}
 	}
@@ -787,6 +793,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
 	complete_v2_state_transition(mdp, (svm->processor)(md));
+	/* our caller with release_any_md(mdp) */
 }
 
 bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
@@ -1164,6 +1171,13 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	}
 }
 
+/* complete job started by the state-specific state transition function
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
+ */
 void complete_v2_state_transition(struct msg_digest **mdp,
 				  stf_status result)
 {

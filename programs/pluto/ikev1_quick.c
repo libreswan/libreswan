@@ -850,11 +850,10 @@ static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			qke->qke_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (qke->qke_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		passert(qke->qke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
 		release_any_md(&qke->qke_md);
 		return;
 	}
@@ -2175,11 +2174,10 @@ static void quick_inI1_outR1_cryptocontinue1(
 		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
 			qke->qke_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (qke->qke_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		passert(qke->qke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
 		release_any_md(&qke->qke_md);
 		return;
 	}
@@ -2188,7 +2186,6 @@ static void quick_inI1_outR1_cryptocontinue1(
 
 	passert(qke->qke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
@@ -2210,6 +2207,8 @@ static void quick_inI1_outR1_cryptocontinue1(
 
 		unpack_KE_from_helper(st, r, &st->st_gr);
 
+		qke->qke_md = NULL;	/* for neatness */
+
 		/* set up second calculation */
 		dh->dh_md = md;
 		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
@@ -2224,12 +2223,11 @@ static void quick_inI1_outR1_cryptocontinue1(
 		 * called complete_v1_state_transition and it has freed *dh.
 		 * It called quick_inI1_outR1_cryptocontinue2 which did the release_md too.
 		 */
-		/* ??? it seems wrong that these lines bop between dh->dh_md and qke->qke_md */
 		if (e != STF_SUSPEND && e != STF_INLINE) {
 			passert(md != NULL);	/* ??? when would this fail? */
 			if (dh->dh_md != NULL) {
-				complete_v1_state_transition(&qke->qke_md, e);
-				release_any_md(&qke->qke_md);
+				complete_v1_state_transition(&dh->dh_md, e);
+				release_any_md(&dh->dh_md);
 			}
 		}
 
@@ -2264,11 +2262,10 @@ static void quick_inI1_outR1_cryptocontinue2(
 		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
 			dh->dh_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);
 		release_any_md(&dh->dh_md);
 		return;
 	}
@@ -2550,11 +2547,10 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
 			dh->dh_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);
 		release_any_md(&dh->dh_md);
 		return;
 	}

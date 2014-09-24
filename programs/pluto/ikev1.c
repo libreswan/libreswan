@@ -1636,6 +1636,12 @@ void process_v1_packet(struct msg_digest **mdp)
 	process_packet_tail(mdp);
 }
 
+/*
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
+ */
 void process_packet_tail(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
@@ -2047,6 +2053,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					       "received and failed on unknown informational message");
 					complete_v1_state_transition(mdp,
 								     STF_FATAL);
+					/* our caller will release_md(mdp); */
 					return;
 				}
 			}
@@ -2096,6 +2103,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			 smc->first_out_payload);
 
 	complete_v1_state_transition(mdp, smc->processor(md));
+	/* our caller will release_md(mdp); */
 }
 
 static void update_retransmit_history(struct state *st, struct msg_digest *md)
@@ -2119,7 +2127,13 @@ static void update_retransmit_history(struct state *st, struct msg_digest *md)
 	}
 }
 
-/* complete job started by the state-specific state transition function */
+/* complete job started by the state-specific state transition function
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
+ */
 void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 {
 	struct msg_digest *md = *mdp;

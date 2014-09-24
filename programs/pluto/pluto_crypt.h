@@ -27,7 +27,7 @@
  *
  * The helper performs the heavy lifting of cryptographic functions
  * for pluto. It does this to avoid head-of-queue problems with aggressive
- * mode, to deal with the asynchronous nature of hardware offload.
+ * mode, and to deal with the asynchronous nature of hardware offload.
  *
  * (Unrelated to code to compartmentalize lookups to LDAP/HTTP/FTP for CRL fetching
  * and checking.)
@@ -235,7 +235,21 @@ struct pluto_crypto_req_cont;	/* forward reference */
  * pluto_crypto_req_cont_func:
  *
  * A function that continues a state transition after
- * an asynchronous cryptographic calculateion completes.
+ * an asynchronous cryptographic calculation completes.
+ *
+ * See also comments prefixing send_crypto_helper_request.
+ *
+ * It is passed a pointer to each of the two structures.
+ *
+ * struct pluto_crypto_req_cont:
+ *	Information back from helper process.
+ *	Notionally sent across the wire.
+ *
+ * struct pluto_crypto_req:
+ *	Bookkeeping information to resume the computation.
+ *	Never sent across wire but perhaps copied.
+ *	For example, it includes a struct msg_digest *
+ *	in the cases where that is appropriate
  */
 typedef void (*crypto_req_cont_func)(struct pluto_crypto_req_cont *,
 				struct pluto_crypto_req *);

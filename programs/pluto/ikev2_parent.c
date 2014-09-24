@@ -283,11 +283,10 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 		DBG_log("ikev2_parent_outI1_continue for #%lu: calculated ke+nonce, sending I1",
 			ke->ke_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (ke->ke_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
 		release_any_md(&ke->ke_md);
 		return;
 	}
@@ -837,11 +836,10 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 		DBG_log("ikev2_parent_inI1outR1_continue for #%lu: calculated ke+nonce, sending R1",
 			ke->ke_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (ke->ke_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
 		release_any_md(&ke->ke_md);
 		return;
 	}
@@ -891,8 +889,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* record first packet for later checking of signature */
 	clonetochunk(st->st_firstpacket_him, md->message_pbs.start,
-		     pbs_offset(
-			     &md->message_pbs), "saved first received packet");
+		     pbs_offset(&md->message_pbs),
+		     "saved first received packet");
 
 	/* make sure HDR is at start of a clean buffer */
 	zero(&reply_buffer);
@@ -1225,11 +1223,10 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 		DBG_log("ikev2_parent_inR1outI2_continue for #%lu: calculating g^{xy}, sending I2",
 			dh->dh_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
 		release_any_md(&dh->dh_md);
 		return;
 	}
@@ -1871,11 +1868,10 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 		DBG_log("ikev2_parent_inI2outR2_continue for #%lu: calculating g^{xy}, sending R2",
 			dh->dh_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
 		release_any_md(&dh->dh_md);
 		return;
 	}
@@ -2891,10 +2887,9 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 	DBG(DBG_CRYPT | DBG_CONTROL,
 			DBG_log("ikev2_child_inIoutR_continue for #%lu: calculated ke+nonce"
 				" sending CREATE_CHILD_SA respone", qke->qke_pcrc.pcrc_serialno));
-	if (st == NULL) {
+	if (qke->qke_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state", __FUNCTION__);
-		passert(qke->qke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
 		release_any_md(&qke->qke_md);
 		return;
 	}
