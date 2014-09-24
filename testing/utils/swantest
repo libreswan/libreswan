@@ -792,9 +792,10 @@ def main():
 	tried = 0
 	output_dir = setup_result_dir(args)
 	ran = 2 # used for summery generation.
+
 	if args.graphs:
 		gen_graphs_tables(args)
-	if args.stop:
+	elif args.stop:
 		gen_stop_tests_now(args)
 	elif do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):

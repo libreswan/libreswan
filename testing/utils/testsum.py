@@ -36,6 +36,9 @@ def read_dirs(resultsdir, node):
 		newrunpath =  resultsdir + '/' + node
 
 	dirs = listdir(newrunpath)
+	# dirs = [ '2014-09-24-blackswan-v3.10-233-g8602595-hugh-2014aug']
+	# print dirs
+
 	for d in sorted(dirs): 
 		# match = re.search(r'(2014-09-16)',d)
 		# if not match:
@@ -68,16 +71,24 @@ def read_dirs(resultsdir, node):
 	t.close 
 
 
-def  fgrepfor(file, pattern, note):
+def  grepfor(file, pattern, note, result, fixed=True):
 	if not os.path.exists(file):
-		return None
+		return result
+        if fixed:
+		fixed = '-F '
+	else:
+		fixed = ''
 
-	cmd =  "fgrep  '" + pattern  + "'  " + file 
+	cmd =  "grep " + fixed + "'" + pattern  + "'  " + file 
 	match = commands.getoutput(cmd)
-	# print("%s"%(cmd))
+	#print("%s"%(cmd))
 	if match:
-		print("%s"%(cmd))
-		return note
+		print("%s %s"%(cmd, result))
+		if result:
+			result = result + " " + note
+		else:
+			restult = note
+	return result
 
 
 def diffstat(d, host):
@@ -106,21 +117,14 @@ def diffstat(d, host):
 	
 		plutolog = d + '/OUTPUT/' + host + '.pluto.log'
 		conslelog = d + '/OUTPUT/' + host + '.console.verbose.txt'
-		assertion = fgrepfor(plutolog, 'ASSERTION FAILED', "ASSERT")
-		if assertion:
-			hostr  = hostr + " " + assertion
 
-		exception = fgrepfor(plutolog, 'EXPECTATION FAILED', "EXPECT")
-		if exception:
-			hostr  = hostr + " " + exception
-
-		segfault = fgrepfor(conslelog, 'segfault', "SEGFAULT")
-		if segfault:
-			hostr  = hostr + " " + "SEGFAULT"
-			print hostr
+		hostr = grepfor(plutolog, 'ASSERTION FAILED', "ASSERT", result = hostr)
+		hostr = grepfor(plutolog, 'EXPECTATION FAILED', "EXPECT", result = hostr)
+		hostr = grepfor(conslelog, 'segfault', "SEGFAULT", result = hostr)
+		hostr = grepfor(conslelog, 'general protection', "GPFAULT", result = hostr) 
+		hostr = grepfor(conslelog, "^CORE FOUND$", "CORE", result = hostr, fixed = False)
 
 		return hostr
-
 	
 def diffstat_sum(r,d):
 		eastr =  diffstat(d, 'east');
