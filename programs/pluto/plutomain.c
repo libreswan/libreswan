@@ -1142,7 +1142,7 @@ int main(int argc, char **argv)
 	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
 	 *
 	 * We drop these after creating the pluto socket or else we can't
-	 * create a socket if the parent dir is non-root
+	 * create a socket if the parent dir is non-root (eg openstack)
 	 */
 	capng_clear(CAPNG_SELECT_BOTH);
 
@@ -1152,8 +1152,14 @@ int main(int argc, char **argv)
 		/* for google authenticator pam */
 		CAP_SETGID, CAP_SETUID,
 		-1);
-	/* our children must be able to CAP_NET_ADMIN to change routes. */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1);	/* DAC needed for google authenticator pam */
+	/*
+	 * We need to retain some capabilities for our children (updown):
+	 * CAP_NET_ADMIN to change routes
+	 * CAP_NET_RAW for iptables -t mangle
+	 * CAP_DAC_READ_SEARCH for pam / google authenticator
+	 */
+	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
+			CAP_DAC_READ_SEARCH, -1);
 	capng_apply(CAPNG_SELECT_BOTH);
 	libreswan_log("libcap-ng support [enabled]");
 #else
