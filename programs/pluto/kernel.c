@@ -311,13 +311,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	int result;
 	char
 		myid_str2[IDTOA_BUF],
-		srcip_str[ADDRTOT_BUF + sizeof("PLUTO_MY_SOURCEIP=") + 4],
+		srcip_str[sizeof("PLUTO_MY_SOURCEIP='' ") + ADDRTOT_BUF],
 		myclient_str[SUBNETTOT_BUF],
 		myclientnet_str[ADDRTOT_BUF],
 		myclientmask_str[ADDRTOT_BUF],
 		peerid_str[IDTOA_BUF],
-		metric_str[sizeof("PLUTO_METRIC") + 5],
-		connmtu_str[sizeof("PLUTO_MTU") + 5],
+		metric_str[sizeof("PLUTO_METRIC= ") + 4],
+		connmtu_str[sizeof("PLUTO_MTU= ") + 4],
 		peerclient_str[SUBNETTOT_BUF],
 		peerclientnet_str[ADDRTOT_BUF],
 		peerclientmask_str[ADDRTOT_BUF],
@@ -440,14 +440,14 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		"PLUTO_PEER_PROTOCOL='%u' "
 		"PLUTO_PEER_CA='%s' "		/* 20 */
 		"PLUTO_STACK='%s' "
-		"%s "		/* optional metric */
-		"%s "		/* optional mtu */
+		"%s"		/* optional metric */
+		"%s"		/* optional mtu */
 		"PLUTO_ADDTIME='%" PRIu64 "' "
 		"PLUTO_CONN_POLICY='%s' "	/* 25 */
 		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
 		"XAUTH_FAILED=%d "
-		"%s "		/* XAUTH username - if any */
-		"%s "		/* PLUTO_MY_SRCIP - if any */
+		"%s"		/* XAUTH username - if any */
+		"%s"		/* PLUTO_MY_SRCIP - if any */
 		"PLUTO_IS_PEER_CISCO='%u' "	/* 30 */
 		"PLUTO_PEER_DNS_INFO='%s' "
 		"PLUTO_PEER_DOMAIN_INFO='%s' "
