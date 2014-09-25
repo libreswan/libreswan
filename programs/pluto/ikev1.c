@@ -2053,7 +2053,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					       "received and failed on unknown informational message");
 					complete_v1_state_transition(mdp,
 								     STF_FATAL);
-					/* our caller will release_md(mdp); */
+					/* our caller will release_any_md(mdp); */
 					return;
 				}
 			}
@@ -2103,7 +2103,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			 smc->first_out_payload);
 
 	complete_v1_state_transition(mdp, smc->processor(md));
-	/* our caller will release_md(mdp); */
+	/* our caller will release_any_md(mdp); */
 }
 
 static void update_retransmit_history(struct state *st, struct msg_digest *md)

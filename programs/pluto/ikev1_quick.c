@@ -2219,9 +2219,9 @@ static void quick_inI1_outR1_cryptocontinue1(
 				    O_RESPONDER,
 				    st->st_pfs_group->group);
 
-		/* In the STF_INLINE case, quick_inI1_outR1_cryptocontinue1 has already
+		/* In the STF_INLINE case, quick_inI1_outR1_cryptocontinue2 has already
 		 * called complete_v1_state_transition and it has freed *dh.
-		 * It called quick_inI1_outR1_cryptocontinue2 which did the release_md too.
+		 * It called quick_inI1_outR1_cryptocontinue2 which did the release_any_md too.
 		 */
 		if (e != STF_SUSPEND && e != STF_INLINE) {
 			passert(md != NULL);	/* ??? when would this fail? */
@@ -2230,7 +2230,6 @@ static void quick_inI1_outR1_cryptocontinue1(
 				release_any_md(&dh->dh_md);
 			}
 		}
-
 	} else {
 		/* but if PFS is off, we don't do a second DH, so just
 		 * call the continuation with NULL struct pluto_crypto_req *
