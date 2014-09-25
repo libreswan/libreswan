@@ -659,3 +659,5 @@ kvmplutotest	netkey-passthrough-02			wip
 kvmplutotest	netkey-passthrough-03			wip
 kvmplutotest	klips-passthrough-00			wip
 
+kvmplutotest	ikev1-isakmp-reserved-flags-01		good
+kvmplutotest	ikev1-isakmp-reserved-flags-02		good
