@@ -600,12 +600,12 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)
 		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Response"));
 	else
 		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Request"));
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_IKE_I) {
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
 		md->role = O_RESPONDER;
 
@@ -732,7 +732,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * can be initiated by the initial responder.
 		 */
 		if (ix != ISAKMP_v2_INFORMATIONAL &&
-		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) != 0)))
+		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0)))
 			continue;
 
 		/* must be the right state machine entry */
@@ -745,7 +745,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
 
 		/* no useful state microcode entry */
-		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)) {
+		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/* We are responder for this message exchange */
 			SEND_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
@@ -932,7 +932,7 @@ void ikev2_update_counters(struct msg_digest *md)
 			pst = st;
 	}
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) {
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
 		/* we were initiator for this message exchange */
 		pst->st_msgid_lastack = md->msgid_received;
 		if(pst->st_msgid_lastack <= pst->st_msgid_nextuse)
@@ -1293,7 +1293,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			 * only send a notify is this packet was a request,
 			 * not if it was a reply
 			 */
-			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R))
+			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R))
 				SEND_NOTIFICATION(md->note);
 		}
 

@@ -482,11 +482,17 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 
 	/* HDR out */
 	{
-		struct isakmp_hdr r_hdr = md->hdr;
+		struct isakmp_hdr hdr = md->hdr;
 
-		memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		r_hdr.isa_np = ISAKMP_NEXT_SA;
-		if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream,
+		hdr.isa_flags = 0; /* clear reserved fields */
+		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_np = ISAKMP_NEXT_SA;
+
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&md->rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -797,13 +803,18 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 
 	/* HDR out */
 	{
-		struct isakmp_hdr r_hdr = md->hdr;
+		struct isakmp_hdr hdr = md->hdr;
 
-		memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		/* outputting should back-patch previous struct/hdr with payload type */
-		r_hdr.isa_np = auth_payload;
-		r_hdr.isa_flags |= ISAKMP_FLAG_ENCRYPTION; /* KLUDGE */
-		if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream,
+		hdr.isa_flags = 0; /* clear reserved fields */
+		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_np = auth_payload;
+		hdr.isa_flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
+
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&md->rbody))
 			return STF_INTERNAL_ERROR;
 	}

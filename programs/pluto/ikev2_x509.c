@@ -109,7 +109,7 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 
 	}
 	cert.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 		libreswan_log(
 			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 		cert.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
@@ -119,7 +119,7 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 
 	if (send_certreq) {
 		cert.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			cert.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}

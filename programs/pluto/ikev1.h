@@ -9,6 +9,8 @@
 
 extern void init_ikev1(void);
 
+extern void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np);
+
 extern void complete_v1_state_transition(struct msg_digest **mdp,
 					 stf_status result);
 extern void process_v1_packet(struct msg_digest **mdp);

@@ -170,6 +170,10 @@ stf_status main_outI1(int whack_sock,
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		/* R-cookie, flags and MessageID are left zero */
 
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&md.rbody)) {
 			reset_cur_state();
@@ -790,13 +794,17 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 	{
-		struct isakmp_hdr r_hdr = md->hdr;
+		struct isakmp_hdr hdr = md->hdr;
 
-		/* we won't ever turn on this bit */
-		r_hdr.isa_flags &= ~ISAKMP_FLAG_COMMIT;
-		memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		r_hdr.isa_np = ISAKMP_NEXT_SA;
-		if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream,
+		hdr.isa_flags = 0; /* clear all flags */
+		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_np = ISAKMP_NEXT_SA;
+
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 					&md->rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1037,7 +1045,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 	 * We can't leave this to comm_handle() because the isa_np
 	 * depends on the type of Auth (eventually).
 	 */
-	echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
+	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
 
 	/* KE out */
 	if (!ship_KE(st, r, &st->st_gi,
@@ -1244,7 +1252,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		st->st_connection->spd.that.ca.ptr != NULL;
 
 	/* HDR out */
-	echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
+	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
 
 	/* KE out */
 	if (!ship_KE(st, r, &st->st_gr,
@@ -2082,7 +2090,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	 * If auth were PKE_AUTH or RPKE_AUTH, ISAKMP_NEXT_HASH would
 	 * be first payload.
 	 */
-	echo_hdr(md, TRUE, ISAKMP_NEXT_ID);
+	ikev1_echo_hdr(md, TRUE, ISAKMP_NEXT_ID);
 
 	auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
 		ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
@@ -2337,7 +2345,7 @@ stf_status send_isakmp_notification(struct state *st,
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_INFO;
 		hdr.isa_msgid = msgid;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
@@ -2515,7 +2523,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		hdr.isa_np = encst ? ISAKMP_NEXT_HASH : ISAKMP_NEXT_N;
 		hdr.isa_xchg = ISAKMP_XCHG_INFO;
 		hdr.isa_msgid = msgid;
-		hdr.isa_flags = encst ? ISAKMP_FLAG_ENCRYPTION : 0;
+		hdr.isa_flags = encst ? ISAKMP_FLAGS_v1_ENCRYPTION : 0;
 		if (icookie)
 			memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
 		if (rcookie)
@@ -2743,7 +2751,7 @@ void ikev1_delete_out(struct state *st)
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_INFO;
 		hdr.isa_msgid = msgid;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, p1st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, p1st->st_rcookie, COOKIE_SIZE);
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_pbs,

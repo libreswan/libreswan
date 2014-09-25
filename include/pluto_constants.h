@@ -228,6 +228,7 @@ enum {
 	IMPAIR_MAJOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE major version that's higher then we support. */
 	IMPAIR_MINOR_VERSION_BUMP_IX,		/* cause pluto to send an IKE minor version that's higher then we support. */
 	IMPAIR_RETRANSMITS_IX,			/* cause pluto to never retransmit */
+	IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX,	/* causes pluto to set a RESERVED PAYLOAD flag to test ignoring/zeroing it */
 	IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX,	/* causes pluto to set a RESERVED ISAKMP flag to test ignoring/zeroing it */
 	IMPAIR_SEND_IKEv2_KE_IX,		/* causes pluto to omit sending the KE payload in IKEv2 */
 	IMPAIR_SEND_KEY_SIZE_CHECK_IX,		/* causes pluto to omit checking configured ESP key sizes for testing */
@@ -270,6 +271,7 @@ enum {
 #define IMPAIR_MAJOR_VERSION_BUMP	LELEM(IMPAIR_MAJOR_VERSION_BUMP_IX)
 #define IMPAIR_MINOR_VERSION_BUMP	LELEM(IMPAIR_MINOR_VERSION_BUMP_IX)
 #define IMPAIR_RETRANSMITS	LELEM(IMPAIR_RETRANSMITS_IX)
+#define IMPAIR_SEND_BOGUS_PAYLOAD_FLAG	LELEM(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX)
 #define IMPAIR_SEND_BOGUS_ISAKMP_FLAG	LELEM(IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX)
 #define IMPAIR_SEND_IKEv2_KE	LELEM(IMPAIR_SEND_IKEv2_KE_IX)
 #define IMPAIR_SEND_KEY_SIZE_CHECK	LELEM(IMPAIR_SEND_KEY_SIZE_CHECK_IX)

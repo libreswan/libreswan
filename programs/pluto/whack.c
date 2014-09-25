@@ -781,6 +781,8 @@ static const struct option long_opts[] = {
 	{ "impair-retransmits", no_argument, NULL, IMPAIR_RETRANSMITS_IX + DO },
 	{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
 		IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
+	{ "impair-send-bogus-payload-flag", no_argument, NULL,
+		IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX + DO },
 	{ "impair-send-ikev2-ke", no_argument, NULL,
 		IMPAIR_SEND_IKEv2_KE_IX + DO },
 	{ "impair-send-key-size-check", no_argument, NULL,

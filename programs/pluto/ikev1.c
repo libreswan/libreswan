@@ -862,6 +862,30 @@ static stf_status informational(struct msg_digest *md)
 	return STF_IGNORE;
 }
 
+/* create output HDR as replica of input HDR - IKEv1 only */
+void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
+{
+	struct isakmp_hdr hdr = md->hdr; /* mostly same as incoming header */
+
+	/* make sure we start with a clean buffer */
+	zero(&reply_buffer);
+	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+		 "reply packet");
+
+	hdr.isa_flags = 0; /* zero all flags */
+	if (enc)
+		hdr.isa_flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
+
+	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+	}
+
+	/* there is only one IKEv1 version, and no new one will ever come - no need to set version */
+	hdr.isa_np = np;
+	if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody))
+		impossible(); /* surely must have room and be well-formed */
+}
+
 /* process an input packet, possibly generating a reply.
  *
  * If all goes well, this routine eventually calls a state-specific
@@ -909,7 +933,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			/* initial message from initiator
 			 * ??? what if this is a duplicate of another message?
 			 */
-			if (md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION) {
+			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 				libreswan_log("initial phase 1 message is invalid:"
 					      " its Encrypted Flag is on");
 				SEND_NOTIFICATION(INVALID_FLAGS);
@@ -984,7 +1008,7 @@ void process_v1_packet(struct msg_digest **mdp)
 		if (st != NULL)
 			set_cur_state(st);
 
-		if (md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION) {
+		if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 			if (st == NULL) {
 				libreswan_log(
 					"Informational Exchange is for an unknown (expired?) SA with MSGID:0x%08lx",
@@ -1388,7 +1412,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * to a connection to suppress the warning.  This might be useful
 	 * because the Commit Flag is expected from some peers.
 	 */
-	if (md->hdr.isa_flags & ISAKMP_FLAG_COMMIT)
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_COMMIT)
 		libreswan_log(
 			"IKE message has the Commit Flag set but Pluto doesn't implement this feature due to security concerns; ignoring flag");
 
@@ -1606,7 +1630,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	 * in between states. (or will be, once DH is async)
 	 *
 	 */
-	if ((md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION) &&
+	if ((md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) &&
 	    st != NULL && !st->hidden_variables.st_skeyid_calculated ) {
 		DBG(DBG_CRYPT | DBG_CONTROL, {
 			ipstr_buf b;
@@ -1641,7 +1665,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	const struct state_microcode *smc = md->smc;
 	bool new_iv_set = md->new_iv_set;
 
-	if (md->hdr.isa_flags & ISAKMP_FLAG_ENCRYPTION) {
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 		DBG(DBG_CRYPT, {
 			ipstr_buf b;
 			DBG_log("received encrypted packet from %s:%u",
@@ -2089,7 +2113,7 @@ void process_packet_tail(struct msg_digest **mdp)
 
 	/* possibly fill in hdr */
 	if (smc->first_out_payload != ISAKMP_NEXT_NONE)
-		echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
+		ikev1_echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
 			 smc->first_out_payload);
 
 	complete_v1_state_transition(mdp, smc->processor(md));
