@@ -2136,6 +2136,12 @@ static void update_retransmit_history(struct state *st, struct msg_digest *md)
  */
 void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 {
+	if (result == STF_INLINE) {
+		/* all work is already, including release_any_md */
+		*mdp = NULL;
+		return;
+	}
+
 	struct msg_digest *md = *mdp;
 	const struct state_microcode *smc = md->smc;
 	enum state_kind from_state = md->from_state;

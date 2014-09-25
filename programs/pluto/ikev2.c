@@ -1181,6 +1181,12 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 void complete_v2_state_transition(struct msg_digest **mdp,
 				  stf_status result)
 {
+	if (result == STF_INLINE) {
+		/* all work is already, including release_any_md */
+		*mdp = NULL;
+		return;
+	}
+
 	struct msg_digest *md = *mdp;
 	/* const struct state_v2_microcode *svm=md->svm; */
 	struct state *st = md->st;
