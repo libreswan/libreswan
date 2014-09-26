@@ -29,8 +29,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 west #
  # ensure this test cases has USE_DNSSEC compiled pluto
 west #
- ipsec pluto --version |grep DNSSEC | sed "s/Libreswan v[^ ]* /Libreswan vVERSION /"
-Libreswan vVERSION XFRM(netkey) KLIPS NSS DNSSEC FIPS_CHECK LABELED_IPSEC LIBCAP_NG XAUTH_PAM NETWORKMANAGER KLIPS_MAST CURL(non-NSS)
+ ipsec pluto --version |sed "s/^.*DNSSEC.*//"
 west #
  echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/hosts
 west #
