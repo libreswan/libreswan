@@ -329,7 +329,7 @@ kvmplutotest	nat-pluto-10		good
 
 #
 # Test of NAT traversal w/DPD
-umlXhost	nat-dpd-pluto-01	good
+kvmplutotest	nat-dpd-pluto-01	wip
 
 # Test of NAT traversal, with Aggressive Mode client
 umlXhost	nat-aggr-01		good
