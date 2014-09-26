@@ -443,13 +443,15 @@ enum_names exchange_names_ikev1orv2 = {
 };
 
 /* Flag BITS */
-const char *const flag_bit_names[] = {
-	"ISAKMP_FLAG_ENCRYPTION",	/* bit 0 */
-	"ISAKMP_FLAG_COMMIT",	/* bit 1 */
-	"bit 2",	/* bit 2 */
-	"ISAKMP_FLAG_IKE_INIT",	/* bit 3 */
-	"ISAKMP_FLAG_VERSION",	/* bit 4 */
-	"ISAKMP_FLAG_MSG_RESPONSE",	/* bit 5 */
+const char *const isakmp_flag_names[] = {
+	"ISAKMP_FLAG_v1_ENCRYPTION", /* IKEv1 only bit 0 */
+	"ISAKMP_FLAG_v1_COMMIT", /* IKEv1 only bit 1 */
+	"ISAKMP_FLAG_v1_AUTHONLY", /* IKEv1 only bit 2 */
+	"ISAKMP_FLAG_v2_IKE_INIT", /* IKEv2 only bit 3 */
+	"ISAKMP_FLAG_v2_VERSION", /* IKEv2 only bit 4 */
+	"ISAKMP_FLAG_v2_MSG_RESPONSE", /* IKEv2 only bit 5 */
+	"ISAKMP_FLAG_MSG_RESERVED_BIT6",
+	"ISAKMP_FLAG_MSG_RESERVED_BIT7",
 	NULL	/* termination for bitnamesof() */
 };
 

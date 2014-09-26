@@ -1,11 +1,14 @@
 
 See also https://libreswan.org/
 v3.11 (unreleased)
+* x509: IKEv1 CA cert chain support with sendca option [Matt]
 * pluto: don't register ESP_BLOWFISH [Paul]
 * pluto: Force ESP_CAST to only allow 128 bit key sizes [Paul]
 * pluto: log_crypto_workers threads did not use static bool first_time [Coverity]
 * pluto: warn (not fail) on empty NSS private key passwords [Oskari Saarenmaa]
   - rhbz#1145231 (rhel7) and rhbz#1144941 (fedora)
+* IKEv2: don't copy reserved ISAKMP flags in reply msg (rhbz#1052811) [Paul]
+* IKEv2: ISAKMP_FLAGS_v2_IKE_I was not always set on Original Initiator [Paul]
 * systemd: use After=network-online.target instead of network.target [Kim]
   - rhbz#1145245 (rhel7) and rhbz#1144832 (fedora)
 * addconn: route after listen, not before (bug introduced in 3.10) [Paul/Hugh]

@@ -1043,7 +1043,7 @@ static stf_status quick_outI1_tail(struct qke_continuation *qke,
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_QUICK;
 		hdr.isa_msgid = st->st_msgid;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
@@ -2317,7 +2317,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	 */
 
 	/* HDR* out */
-	echo_hdr(md, TRUE, ISAKMP_NEXT_HASH);
+	ikev1_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH);
 
 	/* HASH(2) out -- first pass */
 	START_HASH_PAYLOAD(md->rbody, ISAKMP_NEXT_SA);

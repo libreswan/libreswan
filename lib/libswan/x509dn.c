@@ -1114,7 +1114,7 @@ void free_x509cert(x509cert_t *cert)
 	if (cert != NULL) {
 		free_generalNames(cert->subjectAltName, FALSE);
 		free_generalNames(cert->crlDistributionPoints, FALSE);
-		pfreeany(cert->certificate.ptr);
+		freeanychunk(cert->certificate);
 		pfree(cert);
 		cert = NULL;
 	}

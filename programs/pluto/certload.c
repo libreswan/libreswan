@@ -40,9 +40,9 @@
 
 
 /*
- * extracts the certificate to be sent to the peer
+ * extracts the chunk_t of the given cert_t
  */
-chunk_t get_mycert(cert_t cert)
+chunk_t get_cert_chunk(cert_t cert)
 {
 	switch (cert.ty) {
 	case CERT_NONE:

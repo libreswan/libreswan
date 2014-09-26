@@ -121,7 +121,7 @@ bool ikev2_out_sa(pb_stream *outs,
 		zero(&sa);
 		sa.isasa_np = np;
 		sa.isasa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(
 				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			sa.isasa_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;

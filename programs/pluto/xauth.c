@@ -631,7 +631,11 @@ static stf_status modecfg_send_set(struct state *st)
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_MODE_CFG;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		hdr.isa_msgid = st->st_msgid_phase15;
@@ -722,7 +726,10 @@ stf_status xauth_send_request(struct state *st)
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_MODE_CFG;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		hdr.isa_msgid = st->st_msgid_phase15;
@@ -821,7 +828,11 @@ stf_status modecfg_send_request(struct state *st)
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_MODE_CFG;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		hdr.isa_msgid = st->st_msgid_phase15;
@@ -949,7 +960,10 @@ static stf_status xauth_send_status(struct state *st, int status)
 				  ISAKMP_MINOR_VERSION;
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_MODE_CFG;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		hdr.isa_msgid = st->st_msgid_phase15;

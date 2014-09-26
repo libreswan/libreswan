@@ -79,6 +79,7 @@ struct whack_end {
 	bool modecfg_client;
 	unsigned int tundev;
 	enum certpolicy sendcert;
+	bool send_ca;
 	enum ike_cert_type certtype;
 
 	char *host_addr_name;	/* DNS name for host, of hosttype==IPHOSTNAME*/
@@ -170,6 +171,7 @@ struct whack_message {
 
 	/* XAUTH failure mode can be hard (default) or soft */
 	enum keyword_xauthfail xauthfail;
+	enum send_ca_policy send_ca;
 
 	/* Force the MTU for this connection */
 	int connmtu;

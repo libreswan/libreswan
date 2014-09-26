@@ -445,6 +445,12 @@ umlplutotest	fail-x509-11		good
 umlplutotest	fail-x509-12		good
 
 #
+# CA chaining tests
+kvmplutotest	x509-chain-01		good
+kvmplutotest	x509-chain-02		good
+kvmplutotest	x509-chain-03		good
+
+#
 # this tests rekeys (--down/--up) when behind a NAT. a --replace
 # may cancel things that the --down/--up may not. This also
 # tests that the responder is happy with us doing that.
@@ -654,3 +660,5 @@ kvmplutotest	netkey-passthrough-02			wip
 kvmplutotest	netkey-passthrough-03			wip
 kvmplutotest	klips-passthrough-00			wip
 
+kvmplutotest	ikev1-isakmp-reserved-flags-01		good
+kvmplutotest	ikev1-isakmp-reserved-flags-02		good
