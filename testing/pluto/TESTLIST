@@ -52,7 +52,7 @@ kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
 
 kvmplutotest	ikev2-24-cryptoload			wip
-kvmplutotest	ikev2-25-rw-nat				wip
+kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev1-cryptoload-01			wip
 kvmplutotest	ikev1-cryptoload-00			wip
 
@@ -612,10 +612,10 @@ kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-ccm		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-gcm		good
 kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	wip
-kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	wip
-kvmplutotest	interop-ikev2-strongswan-12-nat-responder	wip
-kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	wip
-kvmplutotest	interop-ikev2-strongswan-14-delete-sa		wip
+kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
+kvmplutotest	interop-ikev2-strongswan-12-nat-responder	good
+kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
+kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
 kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
 kvmplutotest	interop-ikev2-strongswan-15-create_child_sa-01	wip
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
