@@ -297,7 +297,7 @@ struct pluto_crypto_req_cont {
 	/* the rest of these fields are private to pluto_crypt.c */
 
 	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
-	struct pluto_crypto_req *pcrc_pcr;	/* owner iff on backlogqueue */
+	struct pluto_crypto_req *pcrc_pcr;	/* owner iff on backlog queue */
 	pcr_req_id pcrc_id;
 	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
 	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */

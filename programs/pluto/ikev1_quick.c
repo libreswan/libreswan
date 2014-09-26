@@ -1004,8 +1004,8 @@ static stf_status quick_outI1_tail(struct qke_continuation *qke,
 	struct connection *c = st->st_connection;
 	pb_stream rbody;
 	u_char          /* set by START_HASH_PAYLOAD: */
-	*r_hashval,     /* where in reply to jam hash value */
-	*r_hash_start;  /* start of what is to be hashed */
+		*r_hashval,     /* where in reply to jam hash value */
+		*r_hash_start;  /* start of what is to be hashed */
 	bool has_client = c->spd.this.has_client || c->spd.that.has_client ||
 			  c->spd.this.protocol || c->spd.that.protocol ||
 			  c->spd.this.port || c->spd.that.port;
@@ -2219,9 +2219,15 @@ static void quick_inI1_outR1_cryptocontinue1(
 				    O_RESPONDER,
 				    st->st_pfs_group->group);
 
-		/* In the STF_INLINE case, quick_inI1_outR1_cryptocontinue2 has already
-		 * called complete_v1_state_transition and it has freed *dh.
-		 * It called quick_inI1_outR1_cryptocontinue2 which did the release_any_md too.
+		/* In the STF_INLINE case, quick_inI1_outR1_cryptocontinue2 has
+		 * already called complete_v1_state_transition and it has freed
+		 * *dh.
+		 * It called quick_inI1_outR1_cryptocontinue2 which did the
+		 * release_any_md too.
+		 *
+		 * In the STF_SUSPEND case, we are done for now and must
+		 * wait for the computation to finish.  *dh and md ownership
+		 * has been transferred.
 		 */
 		if (e != STF_SUSPEND && e != STF_INLINE) {
 			passert(md != NULL);	/* ??? when would this fail? */
@@ -2282,6 +2288,7 @@ static void quick_inI1_outR1_cryptocontinue2(
 	unset_suspended(st);
 
 	e = quick_inI1_outR1_cryptotail(dh->dh_md, r);
+	passert(e != STF_INLINE);
 	if (e == STF_OK) {
 		passert(dh->dh_md != NULL);	/* ??? how could this fail? */
 		if (dh->dh_md != NULL) {
@@ -2302,8 +2309,8 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	struct isakmp_sa sa = sapd->payload.sa;
 	pb_stream r_sa_pbs;
 	u_char          /* set by START_HASH_PAYLOAD: */
-	*r_hashval,     /* where in reply to jam hash value */
-	*r_hash_start;  /* from where to start hashing */
+		*r_hashval,     /* where in reply to jam hash value */
+		*r_hash_start;  /* from where to start hashing */
 
 	/* Start the output packet.
 	 *

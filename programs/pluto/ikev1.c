@@ -893,6 +893,11 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
  *
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
  */
 void process_v1_packet(struct msg_digest **mdp)
 {
@@ -1658,6 +1663,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	}
 
 	process_packet_tail(mdp);
+	/* our caller will release_any_md(mdp); */
 }
 
 /*
@@ -2130,14 +2136,14 @@ void process_packet_tail(struct msg_digest **mdp)
 	/* our caller will release_any_md(mdp); */
 }
 
+/*
+ * replace previous receive packet with latest, to update
+ * our notion of a retransmitted packet. This is important
+ * to do, even for failing transitions, and suspended transitions
+ * because the sender may well retransmit their request.
+ */
 static void update_retransmit_history(struct state *st, struct msg_digest *md)
 {
-	/*
-	 * replace previous receive packet with latest, to update
-	 * our notion of a retransmitted packet. This is important
-	 * to do, even for failing transitions, and suspended transitions
-	 * because the sender may well retransmit their request.
-	 */
 	pfreeany(st->st_rpacket.ptr);
 
 	if (md->encrypted) {
@@ -2161,7 +2167,7 @@ static void update_retransmit_history(struct state *st, struct msg_digest *md)
 void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 {
 	if (result == STF_INLINE) {
-		/* all work is already, including release_any_md */
+		/* all work is already done, including release_any_md */
 		*mdp = NULL;
 		return;
 	}
@@ -2202,9 +2208,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		    enum_name(&stfstatus_name, result)));
 
 	/*
-	 * we can only be in calculating state if state is ignore,
-	 * or suspended.
-	 * ??? this code says inline is OK too.  Which is it?
+	 * we can only be in calculating state if state is STF_IGNORE,
+	 * STF_SUSPENDED.  STF_INLINE should already be excluded.
 	 */
 	DBG(DBG_CONTROLMORE,
 		if (st != NULL) {
@@ -2212,21 +2217,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				st->st_serialno, __FUNCTION__, __LINE__,
 				st->st_calculating ? "TRUE" : "FALSE");
 		});
-	passert(result == STF_INLINE || result == STF_IGNORE ||
-		result == STF_SUSPEND || !st->st_calculating);
+	passert((result == STF_IGNORE || result == STF_SUSPEND) ||
+		!st->st_calculating);
 
 	switch (result) {
 	case STF_IGNORE:
-		break;
-
-	case STF_INLINE:
-		/*
-		 * this is second time through complete state transition,
-		 * so the MD has already been freed.
-		 * ??? This comment is not true.
-		 * This has been proven by passert(md == NULL) failing.
-		 */
-		*mdp = NULL;
 		break;
 
 	case STF_SUSPEND:
@@ -2594,11 +2589,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 * if we are the responder: the initial Phase 2
 			 * message might outrun the final Phase 1 message.
 			 *
-			 * so, instead of actualling sending the traffic now,
+			 * so, instead of actually sending the traffic now,
 			 * we schedule an event to do so.
 			 *
 			 * but, in fact, quick_mode will enqueue a cryptographic operation
-			 * anyway, which will get done "later" anyway, so make it is just fine
+			 * anyway, which will get done "later" anyway, so maybe it is just fine
 			 * as it is.
 			 *
 			 */

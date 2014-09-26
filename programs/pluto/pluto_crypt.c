@@ -384,7 +384,11 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
  * Return values:
  *
  *	STF_INLINE: computation and continuation done.
- *		STF called by continuation.
+ *		STF already called by continuation.
+ *		That means that everything is done,
+ *		including freeing resources!
+ *		When you see one of these, don't do
+ *		anything more!
  *
  *	STF_FAIL: failure; message already logged.
  *		STF not called.

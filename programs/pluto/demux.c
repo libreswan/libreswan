@@ -92,6 +92,11 @@ u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
  *
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
  */
 void process_packet(struct msg_digest **mdp)
 {
@@ -154,6 +159,7 @@ void process_packet(struct msg_digest **mdp)
 			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
 			    md->hdr.isa_xchg));
 		process_v1_packet(mdp);
+		/* our caller will release_any_md(mdp) */
 		break;
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
@@ -169,6 +175,7 @@ void process_packet(struct msg_digest **mdp)
 			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
 			    md->hdr.isa_xchg));
 		process_v2_packet(mdp);
+		/* our caller will release_any_md(mdp) */
 		break;
 
 	default:

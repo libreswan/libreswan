@@ -1182,7 +1182,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				  stf_status result)
 {
 	if (result == STF_INLINE) {
-		/* all work is already, including release_any_md */
+		/* all work is already done, including release_any_md */
 		*mdp = NULL;
 		return;
 	}
@@ -1221,16 +1221,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	switch (result) {
 	case STF_IGNORE:
-		break;
-
-	case STF_INLINE:
-		/*
-		 * this is second time through complete_v2_state_transition
-		 * so the MD has already been freed.
-		 * ??? This comment is not true.
-		 * This has been proven by passert(md == NULL) failing.
-		 */
-		*mdp = NULL;
 		break;
 
 	case STF_SUSPEND:
