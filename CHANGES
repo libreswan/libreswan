@@ -12,7 +12,7 @@ v3.11 (unreleased)
 * IKEv2: ISAKMP_FLAGS_v2_IKE_I was not always set on Original Initiator [Paul]
 * systemd: use After=network-online.target instead of network.target [Kim]
   - rhbz#1145245 (rhel7) and rhbz#1144832 (fedora)
-* addconn: route after listen, not before (bug introduced in 3.10) [Paul/Hugh]
+* addconn: route before and after listen (bug introduced in 3.10) [Paul/Hugh]
 * rsasigkey: use a version of jam_str instead of strcpy() for hostname [Paul]
 * IKEv2: CERTREQ payload should use SHA1 hash of DN instead of IKEv1 DN [Matt]
 * updown: pluto should give CAP_NET_RAW to updown for iptables -t mangle [Paul]
