@@ -629,8 +629,6 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 					libreswan_log("deleting state (%s)",
 						      enum_show(&state_names, this->st_state));
 
-					if (this->st_event != NULL)
-						delete_event(this);	/* ??? but delete_state does this too */
 					delete_state(this);
 					/* note: no md->st to clear */
 

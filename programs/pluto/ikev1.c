@@ -2653,7 +2653,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
 		}
 #endif
-		delete_event(st);	/* ??? but delete_state does this too */
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
 		md->st = st = NULL;
