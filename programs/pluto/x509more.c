@@ -204,6 +204,7 @@ void ikev1_decode_cert(struct msg_digest *md)
 
 			if (parse_x509cert(blob, 0, &cert2)) {
 				x509cert_t *new = clone_thing(cert2, "x509cert_t");
+
 				new->next = chain;
 				chain = new;
 			} else {
@@ -231,14 +232,24 @@ void ikev1_decode_cert(struct msg_digest *md)
 		case CERT_PKCS7_WRAPPED_X509:
 		{
 			chunk_t blob;
-			x509cert_t cert2 = empty_x509cert;
+			x509cert_t *cert2 = NULL;
 
 			clonetochunk(blob, p->pbs.cur, pbs_left(&p->pbs), "cert chain blob");
 
 			if (parse_pkcs7_cert(blob, &cert2)) {
-				x509cert_t *new = clone_thing(cert2, "x509cert_t");
-				new->next = chain;
-				chain = new;
+				/* stick new certs at front of chain */
+				/*
+				 * ??? how is memory managed for the actual cert blobs?
+				 * Is not freeing "blob" good enough?  Leaky?
+				 */
+				if (cert2 != NULL) {
+					x509cert_t *p;
+
+					for (p = cert2; p->next != NULL; p = p->next)
+						;
+					p->next = chain;
+					chain = cert2;
+				}
 			} else {
 				libreswan_log(
 					"Syntax error in PKCS#7 wrapped X.509 certificates");
