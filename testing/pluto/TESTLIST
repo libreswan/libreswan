@@ -618,6 +618,7 @@ kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
 kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
 kvmplutotest	interop-ikev2-strongswan-15-create_child_sa-01	wip
+kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder	wip
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
 # strongswan still broken in v5.1.1
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		wip
