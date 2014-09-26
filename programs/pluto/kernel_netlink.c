@@ -1301,6 +1301,14 @@ static void linux_pfkey_register(void)
 	netlink_register_proto(SADB_SATYPE_AH, "AH");
 	netlink_register_proto(SADB_SATYPE_ESP, "ESP");
 	netlink_register_proto(SADB_X_SATYPE_IPCOMP, "IPCOMP");
+	/*
+	 * pfkey_register_response() does not register an entry
+	 * for msg->sadb_msg_satype=10 to indicate IPCOMP, so
+	 * we override detection here. Seems the PF_KEY API in
+	 * Linux with netkey is a joke that should be abandoned
+	 * for a "linux children" native netlink query/response
+	 */
+	can_do_IPcomp = TRUE;
 	pfkey_close();
 	DBG(DBG_CONTROLMORE, DBG_log("Registered AH, ESP and IPCOMP"));
 }
