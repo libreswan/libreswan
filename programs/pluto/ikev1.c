@@ -2141,16 +2141,21 @@ void process_packet_tail(struct msg_digest **mdp)
  * our notion of a retransmitted packet. This is important
  * to do, even for failing transitions, and suspended transitions
  * because the sender may well retransmit their request.
+ * We had better be idempotent since we can be called
+ * multiple times in handling a packet due to crypto helper logic.
  */
-static void update_retransmit_history(struct state *st, struct msg_digest *md)
+static void remember_received_packet(struct state *st, struct msg_digest *md)
 {
-	pfreeany(st->st_rpacket.ptr);
-
 	if (md->encrypted) {
 		/* if encrypted, duplication already done */
-		st->st_rpacket = md->raw_packet;
-		md->raw_packet.ptr = NULL;
+		if (md->raw_packet.ptr != NULL) {
+			pfreeany(st->st_rpacket.ptr);
+			st->st_rpacket = md->raw_packet;
+			md->raw_packet.ptr = NULL;
+		}
 	} else {
+		/* this may be a repeat, but it will work */
+		pfreeany(st->st_rpacket.ptr);
 		clonetochunk(st->st_rpacket,
 			     md->packet_pbs.start,
 			     pbs_room(&md->packet_pbs), "raw packet");
@@ -2226,7 +2231,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	case STF_SUSPEND:
 		/* update the previous packet history */
-		update_retransmit_history(st, md);
+		remember_received_packet(st, md);
 
 		/*
 		 * the stf didn't complete its job:
@@ -2288,7 +2293,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		release_fragments(st);
 
 		/* update the previous packet history */
-		update_retransmit_history(st, md);
+		remember_received_packet(st, md);
 
 		/* free previous transmit packet */
 		freeanychunk(st->st_tpacket);
@@ -2611,7 +2616,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	case STF_INTERNAL_ERROR:
 		/* update the previous packet history */
-		update_retransmit_history(st, md);
+		remember_received_packet(st, md);
 
 		whack_log(RC_INTERNALERR + md->note,
 			  "%s: internal error",
@@ -2627,6 +2632,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
+		/* ??? why no call of remember_received_packet? */
 		unset_suspended(st);
 		pexpect(!st->st_calculating);
 		libreswan_log(
@@ -2638,7 +2644,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 	case STF_FATAL:
 		/* update the previous packet history */
-		update_retransmit_history(st, md);
+		remember_received_packet(st, md);
 
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
@@ -2665,6 +2671,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	case STF_FAIL:
 		/* As it is, we act as if this message never happened:
 		 * whatever retrying was in place, remains in place.
+		 */
+		/*
+		 * ??? why no call of remember_received_packet?
+		 * Perhaps because the message hasn't been authenticated?
+		 * But then then any duplicate would lose too, I would think.
 		 */
 		whack_log(RC_NOTIFICATION + md->note,
 			  "%s: %s", enum_name(&state_names, st->st_state),

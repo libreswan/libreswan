@@ -1224,9 +1224,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_SUSPEND:
-		/* update the previous packet history */
-		/* IKEv2 XXX */ /* update_retransmit_history(st, md); */
-
 		/* the stf didn't complete its job: don't relase md */
 		*mdp = NULL;
 		break;
@@ -1244,9 +1241,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_INTERNAL_ERROR:
-		/* update the previous packet history */
-		/* TODO: fix: update_retransmit_history(st, md); */
-
 		whack_log(RC_INTERNALERR + md->note, "%s: internal error",
 			  from_state_name);
 
@@ -1264,9 +1258,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
 		/* FALL THROUGH */
 	case STF_FATAL:
-		/* update the previous packet history */
-		/* update_retransmit_history(st, md); */
-
 		passert(st != NULL);
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
