@@ -557,7 +557,7 @@ kvmplutotest    labeled-ipsec-01		good
 kvmplutotest    compress-pluto-01		good
 kvmplutotest    compress-pluto-02		good
 kvmplutotest    compress-pluto-netkey-03	good
-umlplutotest    compress-pluto-netkey-klips-04	good
+kvmplutotest    compress-pluto-netkey-klips-04	good
 
 # sourceip tests
 umlplutotest	sourceip-01			good
