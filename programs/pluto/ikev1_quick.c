@@ -2290,11 +2290,9 @@ static void quick_inI1_outR1_cryptocontinue2(
 	e = quick_inI1_outR1_cryptotail(dh->dh_md, r);
 	passert(e != STF_INLINE);
 	if (e == STF_OK) {
-		passert(dh->dh_md != NULL);	/* ??? how could this fail? */
-		if (dh->dh_md != NULL) {
-			complete_v1_state_transition(&dh->dh_md, e);
-			release_any_md(&dh->dh_md);
-		}
+		passert(dh->dh_md != NULL);
+		complete_v1_state_transition(&dh->dh_md, e);
+		release_any_md(&dh->dh_md);
 	}
 
 	reset_cur_state();
@@ -2575,11 +2573,9 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = quick_inR1_outI2_cryptotail(dh->dh_md, r);
 
-	passert(dh->dh_md != NULL);	/* ??? how could this fail? */
-	if (dh->dh_md != NULL) {
-		complete_v1_state_transition(&dh->dh_md, e);
-		release_any_md(&dh->dh_md);
-	}
+	passert(dh->dh_md != NULL);
+	complete_v1_state_transition(&dh->dh_md, e);
+	release_any_md(&dh->dh_md);
 	reset_cur_state();
 }
 

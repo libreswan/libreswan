@@ -146,11 +146,9 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
 
 	e = aggr_inI1_outR1_tail(dh->dh_md, r);
 
-	passert(dh->dh_md != NULL);	/* ??? why could next test fail? */
-	if (dh->dh_md != NULL) {
-		complete_v1_state_transition(&dh->dh_md, e);
-		release_any_md(&dh->dh_md);
-	}
+	passert(dh->dh_md != NULL);
+	complete_v1_state_transition(&dh->dh_md, e);
+	release_any_md(&dh->dh_md);
 	reset_cur_state();
 }
 
@@ -213,11 +211,9 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 				      st->st_oakley.group->group);
 
 		if (e != STF_SUSPEND) {
-			passert(dh->dh_md != NULL);	/* ??? why could next test fail? */
-			if (dh->dh_md != NULL) {
-				complete_v1_state_transition(&dh->dh_md, e);
-				release_any_md(&dh->dh_md);
-			}
+			passert(dh->dh_md != NULL);
+			complete_v1_state_transition(&dh->dh_md, e);
+			release_any_md(&dh->dh_md);
 		}
 
 		reset_cur_state();
@@ -777,11 +773,9 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = aggr_inR1_outI2_tail(md, NULL);
 
-	passert(dh->dh_md != NULL);	/* ??? why could next test fail? */
-	if (dh->dh_md != NULL) {
-		complete_v1_state_transition(&dh->dh_md, e);
-		release_any_md(&dh->dh_md);
-	}
+	passert(dh->dh_md != NULL);
+	complete_v1_state_transition(&dh->dh_md, e);
+	release_any_md(&dh->dh_md);
 	reset_cur_state();
 }
 
@@ -1098,11 +1092,9 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = aggr_outI1_tail(ke, r);
 
-	passert(ke->ke_md != NULL);	/* ??? why could next test fail? */
-	if (ke->ke_md != NULL) {
-		complete_v1_state_transition(&ke->ke_md, e);
-		release_any_md(&ke->ke_md);
-	}
+	passert(ke->ke_md != NULL);
+	complete_v1_state_transition(&ke->ke_md, e);
+	release_any_md(&ke->ke_md);
 	reset_globals();
 
 	passert(GLOBALS_ARE_RESET());

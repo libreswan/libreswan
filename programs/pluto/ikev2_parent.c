@@ -306,11 +306,9 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = ikev2_parent_outI1_tail(ke, r);
 
-	passert(ke->ke_md != NULL);	/* ??? why could next test fail? */
-	if (ke->ke_md != NULL) {
-		complete_v2_state_transition(&ke->ke_md, e);
-		release_any_md(&ke->ke_md);
-	}
+	passert(ke->ke_md != NULL);
+	complete_v2_state_transition(&ke->ke_md, e);
+	release_any_md(&ke->ke_md);
 	reset_cur_state();
 	reset_globals();
 }
@@ -864,11 +862,9 @@ static void ikev2_parent_inI1outR1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = ikev2_parent_inI1outR1_tail(ke, r);
 
-	passert(ke->ke_md != NULL);	/* ??? why could next test fail? */
-	if (ke->ke_md != NULL) {
-		complete_v2_state_transition(&ke->ke_md, e);
-		release_any_md(&ke->ke_md);
-	}
+	passert(ke->ke_md != NULL);
+	complete_v2_state_transition(&ke->ke_md, e);
+	release_any_md(&ke->ke_md);
 	reset_globals();
 }
 
@@ -1254,11 +1250,9 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = ikev2_parent_inR1outI2_tail(dh, r);
 
-	passert(dh->dh_md != NULL);	/* ??? how could this fail? */
-	if (dh->dh_md != NULL) {
-		complete_v2_state_transition(&dh->dh_md, e);
-		release_any_md(&dh->dh_md);
-	}
+	passert(dh->dh_md != NULL);
+	complete_v2_state_transition(&dh->dh_md, e);
+	release_any_md(&dh->dh_md);
 	reset_globals();
 }
 
@@ -1917,11 +1911,9 @@ static void ikev2_parent_inI2outR2_continue(struct pluto_crypto_req_cont *pcrc,
 			enum_name(&stfstatus_name, e));
 	}
 
-	passert(dh->dh_md != NULL);	/* ??? why could next test fail? */
-	if (dh->dh_md != NULL) {
-		complete_v2_state_transition(&dh->dh_md, e);
-		release_any_md(&dh->dh_md);
-	}
+	passert(dh->dh_md != NULL);
+	complete_v2_state_transition(&dh->dh_md, e);
+	release_any_md(&dh->dh_md);
 	reset_globals();
 }
 
@@ -2942,11 +2934,9 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = ikev2_child_inIoutR_tail(qke, r);
 
-	passert(qke->qke_md != NULL);	/* ??? why could next test fail? */
-	if (qke->qke_md != NULL) {
-		complete_v2_state_transition(&qke->qke_md, e);
-		release_any_md(&qke->qke_md);
-	}
+	passert(qke->qke_md != NULL);
+	complete_v2_state_transition(&qke->qke_md, e);
+	release_any_md(&qke->qke_md);
 	reset_cur_state();
 	reset_globals();
 }

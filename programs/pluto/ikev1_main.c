@@ -955,11 +955,9 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = main_inR1_outI2_tail(ke, r);
 
-	passert(ke->ke_md != NULL);	/* ??? how could this fail? */
-	if (ke->ke_md != NULL) {
-		complete_v1_state_transition(&ke->ke_md, e);
-		release_any_md(&ke->ke_md);
-	}
+	passert(ke->ke_md != NULL);
+	complete_v1_state_transition(&ke->ke_md, e);
+	release_any_md(&ke->ke_md);
 
 	reset_cur_state();
 }
@@ -1145,11 +1143,9 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	st->st_calculating = FALSE;
 	e = main_inI2_outR2_tail(ke, r);
 
-	passert(ke->ke_md != NULL);	/* ??? how could this fail? */
-	if (ke->ke_md != NULL) {
-		complete_v1_state_transition(&ke->ke_md, e);
-		release_any_md(&ke->ke_md);
-	}
+	passert(ke->ke_md != NULL);
+	complete_v1_state_transition(&ke->ke_md, e);
+	release_any_md(&ke->ke_md);
 	reset_cur_state();
 }
 
