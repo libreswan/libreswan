@@ -915,8 +915,8 @@ int main(int argc, char **argv)
 		end_seen = LEMPTY,
 		end_seen_before_to = LEMPTY;
 	const char
-	*af_used_by = NULL,
-	*tunnel_af_used_by = NULL;
+		*af_used_by = NULL,
+		*tunnel_af_used_by = NULL;
 	char keyspace[RSA_MAX_ENCODING_BYTES];	/* space for at most one RSA key */
 
 	char xauthname[XAUTH_MAX_NAME_LENGTH];

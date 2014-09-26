@@ -2346,8 +2346,8 @@ struct connection *route_owner(struct connection *c,
 			struct spd_route **esrp)
 {
 	struct connection *d,
-	*best_ro = c,
-	*best_ero = c;
+		*best_ro = c,
+		*best_ero = c;
 	struct spd_route *srd, *src;
 	struct spd_route *best_sr, *best_esr;
 	enum routing_t best_routing, best_erouting;

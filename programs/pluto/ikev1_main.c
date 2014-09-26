@@ -2320,8 +2320,8 @@ stf_status send_isakmp_notification(struct state *st,
 	msgid_t msgid;
 	pb_stream rbody;
 	u_char
-	*r_hashval, /* where in reply to jam hash value */
-	*r_hash_start; /* start of what is to be hashed */
+		*r_hashval, /* where in reply to jam hash value */
+		*r_hash_start; /* start of what is to be hashed */
 
 	msgid = generate_msgid(st);
 
@@ -2692,8 +2692,8 @@ bool ikev1_delete_out(struct state *st)
 	ip_said said[EM_MAXRELSPIS];
 	ip_said *ns = said;
 	u_char
-	*r_hashval, /* where in reply to jam hash value */
-	*r_hash_start; /* start of what is to be hashed */
+		*r_hashval, /* where in reply to jam hash value */
+		*r_hash_start; /* start of what is to be hashed */
 	bool isakmp_sa = FALSE;
 	struct isakmp_hdr hdr;
 

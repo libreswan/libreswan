@@ -1243,8 +1243,8 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
 	struct state
-	*st,
-	*best = NULL;
+		*st,
+		*best = NULL;
 	int i;
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
