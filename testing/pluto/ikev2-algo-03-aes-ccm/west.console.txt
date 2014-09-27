@@ -39,7 +39,7 @@ west #
  # first should fail to load
 west #
  ipsec auto --add badkeysize-shouldnotload
-003 esp string error: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ccm_a"(152), auth_alg="null", modp=""
+003 phase2alg string error: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ccm_a"(152), auth_alg="null", modp=""
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-ccm-a
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2-ccm-a"
