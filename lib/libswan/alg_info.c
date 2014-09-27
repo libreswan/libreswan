@@ -442,7 +442,8 @@ static void alg_info_ah_add(struct alg_info *alg_info,
 			int aalg_id, int ak_bits,
 			int modp_id UNUSED)
 {
-	if (aalg_id > 0) {
+	/* ah=null is invalid */
+	if (aalg_id > 0 && ak_bits != 0) {
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				ealg_id, ek_bits,
 				aalg_id, ak_bits);
@@ -842,6 +843,9 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 					strlen(p_ctx->aalg_buf));
 		if (aalg_id < 0) {
 			return "hash_alg not found";
+		}
+		if (p_ctx->aklen == 0) {
+			return "hash_alg cannot be null or have a key length of 0";
 		}
 
 		/* XXX these checks should not be done in the parser code */
