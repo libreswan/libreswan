@@ -507,7 +507,7 @@ umlXhost	multinet-04		good
 umlplutotest	transport-01		good
 umlplutotest	transport-02		good
 umlplutotest	transport-03		bad
-kvmplutotest	nat-transport-02	wip
+kvmplutotest	nat-transport-02	good
 
 kvmplutotest	ah-pluto-01		good
 kvmplutotest	ah-pluto-02		good
