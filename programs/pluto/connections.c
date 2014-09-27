@@ -1308,7 +1308,7 @@ void add_connection(const struct whack_message *wm)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf);
+				DBG_log("phase2alg string values: %s", buf);
 			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->ai.alg_info_cnt == 0) {
@@ -1321,7 +1321,7 @@ void add_connection(const struct whack_message *wm)
 				}
 			} else {
 				loglog(RC_LOG_SERIOUS,
-					"esp string error: %s",
+					"phase2alg string error: %s",
 					err_buf);
 				pfree(c);
 				return;
