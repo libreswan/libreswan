@@ -224,7 +224,7 @@ bool x509_check_revocation(const x509crl_t *crl, chunk_t serial)
  */
 x509cert_t *get_alt_cacert(chunk_t subject, chunk_t serial,
 					chunk_t keyid,
-					const x509cert_t *cert)
+					x509cert_t *cert)
 {
 	while (cert != NULL) {
 		if ((keyid.ptr != NULL) ? same_keyid(keyid,
@@ -243,7 +243,7 @@ x509cert_t *get_alt_cacert(chunk_t subject, chunk_t serial,
  * validity and revocation status are not checked.
  */
 bool trust_authcert_candidate(const x509cert_t *cert,
-			const x509cert_t *alt_chain)
+			x509cert_t *alt_chain)
 {
 	int pathlen;
 
