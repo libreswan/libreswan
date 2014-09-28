@@ -1182,7 +1182,6 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 {
 	struct msg_digest *md = *mdp;
 	struct state *st;
-	enum state_kind from_state;
 	const char *from_state_name;
 
 	/* handle oddball/meta results now */
@@ -1207,8 +1206,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	/* safe to refer to *md */
 
 	st = md->st;
-	from_state = st == NULL? STATE_UNDEFINED : st->st_state;
-	from_state_name = enum_name(&state_names, from_state);
+	from_state_name = enum_name(&state_names,
+		st == NULL ? STATE_UNDEFINED : st->st_state);
 
 	cur_state = st; /* might have changed */
 
@@ -1228,19 +1227,27 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 *
 	 * Another case of null state is return from ikev2parent_inR1BoutI1B
 	 * which returns STF_IGNORE.
+	 *
+	 * Another case occurs when we finish an Informational Exchange message
+	 * that causes us to delete the IKE state.  In fact, that can be an
+	 * STF_OK and yet have no remaining state object at this point.
 	 */
 
 	DBG(DBG_CONTROL,
-	    DBG_log("complete v2 state transition with %s",
+	    DBG_log("complete v2 state transition from %s with %s",
+		from_state_name,
 		result > STF_FAIL ?
 		    enum_name(&ikev2_notify_names, result - STF_FAIL) :
 		    enum_name(&stfstatus_name, result)));
 
 	switch (result) {
 	case STF_OK:
-		/* advance the state */
-		passert(st != NULL);
-		success_v2_state_transition(md);
+		if (st == NULL) {
+			DBG(DBG_CONTROL, DBG_log("STF_OK but no state object remains"));
+		} else {
+			/* advance the state */
+			success_v2_state_transition(md);
+		}
 		break;
 
 	case STF_INTERNAL_ERROR:
