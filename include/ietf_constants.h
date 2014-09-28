@@ -1340,8 +1340,8 @@ typedef enum {
 } v2_notification_t;
 
 /* Public key algorithm number
- * Same numbering as used in DNSsec
- * See RFC 2535 DNSsec 3.2 The KEY Algorithm Number Specification.
+ * Same numbering as used in DNSSEC
+ * See RFC 2535 DNSSEC 3.2 The KEY Algorithm Number Specification.
  * Also found in BIND 8.2.2 include/isc/dst.h as DST algorithm codes.
  */
 
@@ -1537,7 +1537,7 @@ struct ipsec_identity {
 };
 
 /* Limits on size of RSA moduli.
- * The upper bound matches that of DNSsec (see RFC 2537).
+ * The upper bound matches that of DNSSEC (see RFC 2537).
  * The lower bound must be more than 11 octets for certain
  * the encoding to work, but it must be much larger for any
  * real security. For now, we require 512 bits.

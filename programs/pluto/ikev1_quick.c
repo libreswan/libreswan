@@ -1221,7 +1221,7 @@ static stf_status quick_outI1_tail(struct qke_continuation *qke,
  *    our client.  We look for the TXT record that
  *    delegates us.  We also check that the public
  *    key (if present) matches the private key we used.
- *    Eventually, we should probably require DNSsec
+ *    Eventually, we should probably require DNSSEC
  *    authentication for our side.
  *
  * 2. If our client TXT record did not include a
