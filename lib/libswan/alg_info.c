@@ -705,6 +705,7 @@ static void parser_init_ah(struct parser_context *p_ctx)
 
 	p_ctx->protoid = PROTO_IPSEC_AH;
 	p_ctx->aalg_str = p_ctx->aalg_buf;
+	p_ctx->ealg_permit = FALSE;
 	p_ctx->aalg_permit = TRUE;
 	p_ctx->modp_str = p_ctx->modp_buf;
 	p_ctx->state = ST_INI_AA;
@@ -730,25 +731,19 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 	if (p_ctx->ealg_permit && p_ctx->ealg_buf[0] != '\0') {
 		ealg_id = p_ctx->ealg_getbyname(p_ctx->ealg_buf,
 					strlen(p_ctx->ealg_buf));
-#if 0
-		if (ealg_id == ESP_MAGIC_ID) {
-			ealg_id = p_ctx->eklen;
-			p_ctx->eklen = 0;
-		}
-#endif
 		if (ealg_id < 0) {
 			return "enc_alg not found";
 		}
 
 		/* reject things we know but don't like */
-		switch(alg_info->alg_info_protoid) {
+		switch(p_ctx->protoid) {
 		case PROTO_ISAKMP:
 			switch(ealg_id) {
 			case OAKLEY_DES_CBC:
 			case OAKLEY_IDEA_CBC:
 			case OAKLEY_BLOWFISH_CBC:
 			case OAKLEY_RC5_R16_B64_CBC:
-				return "cipher not implemented";
+				return "IKE cipher not implemented";
 			}
 			break;
 		case PROTO_IPSEC_ESP:
@@ -767,7 +762,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				 * kernel uses IKEv1, where it is camellia
 				 * - case ESP_RESERVED_FOR_IEEE_P1619_XTS_AES:
 				 */
-				return "cipher not implemented";
+				return "ESP cipher not implemented";
 			}
 			break;
 		}
@@ -779,7 +774,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		 * for testing purposes.
 		 */
 		if (p_ctx->eklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
-			switch(alg_info->alg_info_protoid) {
+			switch(p_ctx->protoid) {
 			case PROTO_ISAKMP:
 				switch(ealg_id) {
 				case OAKLEY_3DES_CBC:
@@ -844,40 +839,80 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 		if (aalg_id < 0) {
 			return "hash_alg not found";
 		}
-		if (p_ctx->aklen == 0) {
-			return "hash_alg cannot be null or have a key length of 0";
+
+		/* some code stupidly uses INT_MAX for "null" */
+		if (aalg_id == AH_NONE || aalg_id == AH_NULL || aalg_id == INT_MAX) {
+			if (!p_ctx->ealg_permit)
+				return "AH cannot have null authentication";
+			/* aalg can and must be only be null for AEAD ciphers */
+			switch (p_ctx->protoid) {
+			case PROTO_IPSEC_ESP:
+				switch(ealg_id) {
+				case ESP_AES_GCM_8:
+				case ESP_AES_GCM_12:
+				case ESP_AES_GCM_16:
+				case ESP_AES_CCM_8:
+				case ESP_AES_CCM_12:
+				case ESP_AES_CCM_16:
+					break; /* ok */
+				default:
+					return "non-AEAD ESP cipher cannot have null authentication";
+				}
+			case PROTO_ISAKMP:
+				switch(ealg_id) {
+				case IKEv2_ENCR_AES_CCM_8:
+				case IKEv2_ENCR_AES_CCM_12:
+				case IKEv2_ENCR_AES_CCM_16:
+				case IKEv2_ENCR_AES_GCM_8:
+				case IKEv2_ENCR_AES_GCM_12:
+				case IKEv2_ENCR_AES_GCM_16:
+					break; /* ok */
+				default:
+					return "non-AEAD IKE cipher cannot have null authentication";
+				}
+			case PROTO_IPSEC_AH:
+				return "AH cannot have null authentication";
+			}
+		} else {
+			/* auth is non-null, so we cannot have AEAD ciphers */
+			switch (p_ctx->protoid) {
+			case PROTO_IPSEC_ESP:
+				switch(ealg_id) {
+				case ESP_AES_GCM_8:
+				case ESP_AES_GCM_12:
+				case ESP_AES_GCM_16:
+				case ESP_AES_CCM_8:
+				case ESP_AES_CCM_12:
+				case ESP_AES_CCM_16:
+					return "AEAD ESP cipher must have null authentication";
+				default:
+					break; /* ok */
+				}
+			case PROTO_ISAKMP:
+				switch(ealg_id) {
+				case IKEv2_ENCR_AES_CCM_8:
+				case IKEv2_ENCR_AES_CCM_12:
+				case IKEv2_ENCR_AES_CCM_16:
+				case IKEv2_ENCR_AES_GCM_8:
+				case IKEv2_ENCR_AES_GCM_12:
+				case IKEv2_ENCR_AES_GCM_16:
+					return "AEAD IKE cipher must have null authentication";
+				default:
+					break; /* ok */
+				}
+			}
 		}
 
-		/* XXX these checks should not be done in the parser code */
-		if (p_ctx->aklen != 0 && !DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
+		
+		if (! DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
 			switch(aalg_id) {
-			case AH_MD5:
-				if (p_ctx->aklen != HMAC_MD5_KEY_LEN * BITS_PER_BYTE)
-					return "wrong authentication key length - key size must be 160";
+			case AH_NULL:
+				if (ealg_id == -1)
+					return "Encryption and authentication cannot both be null";
 				break;
-			case AH_SHA:
-			case AH_AES_XCBC_MAC:
-			case AH_RIPEMD:
-			case AH_AES_128_GMAC:
-				if (p_ctx->aklen != 128)
-					return "wrong authentication key length - key size must be 128";
-				break;
-			case AH_AES_192_GMAC:
-				if (p_ctx->aklen != 192)
-					return "wrong authentication key length - key size must be 192";
-				break;
-			case AH_SHA2_256:
-			case AH_AES_256_GMAC:
-				if (p_ctx->aklen != 256)
-					return "wrong authentication key length - key size must be 256";
-				break;
-			case AH_SHA2_384:
-				if (p_ctx->aklen != 384)
-					return "wrong authentication key length - key size must be 384";
-				break;
-			case AH_SHA2_512:
-				if (p_ctx->aklen != 512)
-					return "wrong authentication key length - key size must be 512";
+			default:
+				if (p_ctx->aklen != 0)
+					return "authentication algorithm does not take a variable key size";
 				break;
 			}
 		}
