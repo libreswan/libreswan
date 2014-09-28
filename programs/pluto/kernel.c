@@ -2569,7 +2569,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 #ifdef IPSEC_CONNECTION_LIMIT
 		if (num_ipsec_eroute == IPSEC_CONNECTION_LIMIT) {
 			loglog(RC_LOG_SERIOUS,
-			       "Maximum number of IPSec connections reached (%d)",
+			       "Maximum number of IPsec connections reached (%d)",
 			       IPSEC_CONNECTION_LIMIT);
 			return FALSE;
 		}
@@ -2717,7 +2717,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 		if (new_eroute) {
 			num_ipsec_eroute++;
 			loglog(RC_COMMENT,
-			       "%d IPSec connections are currently being managed",
+			       "%d IPsec connections are currently being managed",
 			       num_ipsec_eroute);
 		}
 #endif

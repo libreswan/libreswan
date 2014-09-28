@@ -3175,7 +3175,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		 * and the next payload type will be v2D or NONE.
 		 *
 		 * The next code chunk looks at the delete payload(s)
-		 * to see if message is deleting an IKE SA or and IPSec SA
+		 * to see if message is deleting an IKE SA or and IPsec SA
 		 * or neither.
 		 */
 		e.isag_np = ISAKMP_NEXT_v2NONE;
@@ -3223,7 +3223,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		 * generating the contents of the Response packet
 		 */
 		for (p = md->chain[ISAKMP_NEXT_v2D]; p != NULL; p = p->next) {
-			/* Gather all the IPSec SPIs corresponding to SPIs in this message */
+			/* Gather all the IPsec SPIs corresponding to SPIs in this message */
 			struct ikev2_delete *v2del = &p->payload.v2delete;
 
 			switch (v2del->isad_protoid) {
@@ -3246,13 +3246,13 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				u_int16_t i;
 
 				if (v2del->isad_spisize != sizeof(ipsec_spi_t)){
-					libreswan_log("IPSec Delete Notification has invalid SPI size %u",
+					libreswan_log("IPsec Delete Notification has invalid SPI size %u",
 						v2del->isad_spisize);
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 				
 				if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
-					libreswan_log("IPSec Delete Notification payload size is %tu but %u is required",
+					libreswan_log("IPsec Delete Notification payload size is %tu but %u is required",
 						pbs_left(&p->pbs),
 						v2del->isad_nrspi * v2del->isad_spisize);
 					return STF_FAIL + v2N_INVALID_SYNTAX;
@@ -3310,7 +3310,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 				if (j == 0) {
 					DBG(DBG_CONTROLMORE, DBG_log(
-						    "This IPSec delete payload does not contain a single SPI that has any local state; ignoring"));
+						    "This IPsec delete payload does not contain a single SPI that has any local state; ignoring"));
 					return STF_IGNORE;
 				} else {
 					DBG(DBG_CONTROLMORE, {
@@ -3375,7 +3375,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		 * - if a (solitary) ISAKMP SA is mentioned in input message,
 		 *   we are sending that back.
 		 *
-		 * - if IPSec SAs were mentioned, we are sending that back too.
+		 * - if IPsec SAs were mentioned, we are sending that back too.
 		 *
 		 * Now's the time to close up the packet.
 		 */
@@ -3447,7 +3447,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		ikev2_update_msgid_counters(md);
 	} else {
 		/*
-		 * IPSec SA deletion
+		 * IPsec SA deletion
 		 * Unless there are no payloads, in which case this is a no-op.
 		 */
 		struct payload_digest *p;
@@ -3678,7 +3678,7 @@ stf_status ikev2_send_informational(struct state *st)
  * If we fail to send the deletion, we just go ahead with deleting the state.
  * The code in delete_state would break if we actually did this.
  *
- * Deleting an IKE SA is a bigger deal than deleting an IPSec SA.
+ * Deleting an IKE SA is a bigger deal than deleting an IPsec SA.
  */
 
 static bool ikev2_delete_out_guts(struct state *const st, struct state *const pst)

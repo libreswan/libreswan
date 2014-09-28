@@ -1894,7 +1894,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 			default:
 				loglog(RC_LOG_SERIOUS,
-				       "unknown ENCAPSULATION_MODE %d in IPSec SA",
+				       "unknown ENCAPSULATION_MODE %d in IPsec SA",
 				       val);
 				return FALSE;
 

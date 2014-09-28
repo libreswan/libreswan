@@ -2995,7 +2995,7 @@ void accept_delete(struct state *st, struct msg_digest *md,
 				if (rc->newest_ipsec_sa == dst->st_serialno &&
 					(rc->policy & POLICY_UP)) {
 					/*
-					 * Last IPSec SA for a permanent
+					 * Last IPsec SA for a permanent
 					 * connection that we have initiated.
 					 * Replace it in a few seconds.
 					 *

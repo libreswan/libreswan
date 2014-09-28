@@ -343,7 +343,7 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_reserved = 0;
 
 
-	/* IPSec algos (encryption and authentication combined) */
+	/* IPsec algos (encryption and authentication combined) */
 	alg.sadb_alg_ivlen = 8;
 	alg.sadb_alg_minbits = 128;
 	alg.sadb_alg_maxbits = 256;
