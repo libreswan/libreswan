@@ -443,7 +443,7 @@ static void alg_info_ah_add(struct alg_info *alg_info,
 			int modp_id UNUSED)
 {
 	/* ah=null is invalid */
-	if (aalg_id > 0 && ak_bits != 0) {
+	if (aalg_id > 0) {
 		raw_alg_info_esp_add((struct alg_info_esp *)alg_info,
 				ealg_id, ek_bits,
 				aalg_id, ak_bits);
@@ -829,6 +829,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 					break;
 #endif
 				}
+				break;
 			}
 		}
 
@@ -842,7 +843,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 
 		/* some code stupidly uses INT_MAX for "null" */
 		if (aalg_id == AH_NONE || aalg_id == AH_NULL || aalg_id == INT_MAX) {
-			if (!p_ctx->ealg_permit)
+			if (p_ctx->protoid == PROTO_IPSEC_AH)
 				return "AH cannot have null authentication";
 			/* aalg can and must be only be null for AEAD ciphers */
 			switch (p_ctx->protoid) {
@@ -858,6 +859,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				default:
 					return "non-AEAD ESP cipher cannot have null authentication";
 				}
+				break;
 			case PROTO_ISAKMP:
 				switch(ealg_id) {
 				case IKEv2_ENCR_AES_CCM_8:
@@ -870,6 +872,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				default:
 					return "non-AEAD IKE cipher cannot have null authentication";
 				}
+				break;
 			case PROTO_IPSEC_AH:
 				return "AH cannot have null authentication";
 			}
@@ -888,6 +891,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				default:
 					break; /* ok */
 				}
+				break;
 			case PROTO_ISAKMP:
 				switch(ealg_id) {
 				case IKEv2_ENCR_AES_CCM_8:
@@ -900,6 +904,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				default:
 					break; /* ok */
 				}
+				break;
 			}
 		}
 
