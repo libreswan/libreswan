@@ -688,7 +688,7 @@ static stf_status modecfg_send_set(struct state *st)
  */
 stf_status modecfg_start_set(struct state *st)
 {
-	if (st->st_msgid_phase15 == 0) {
+	if (st->st_msgid_phase15 == v1_MAINMODE_MSGID) {
 		/* pick a new message id */
 		st->st_msgid_phase15 = generate_msgid(st);
 	}
@@ -1413,7 +1413,7 @@ static void *do_authentication(void *varg)
 		xauth_send_status(st, XAUTH_STATUS_OK);
 
 		if (st->quirks.xauth_ack_msgid)
-			st->st_msgid_phase15 = 0;
+			st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 
 		jam_str(st->st_xauth_username, sizeof(st->st_xauth_username), arg->name);
 	} else {
@@ -1676,21 +1676,21 @@ stf_status xauth_inR1(struct msg_digest *md)
 	if (!st->st_connection->spd.this.modecfg_server) {
 		DBG(DBG_CONTROL,
 		    DBG_log("Not server, starting new exchange"));
-		st->st_msgid_phase15 = 0;
+		st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 	}
 
 	if (st->st_connection->spd.this.modecfg_server &&
 	    st->hidden_variables.st_modecfg_vars_set) {
 		DBG(DBG_CONTROL,
 		    DBG_log("modecfg server, vars are set. Starting new exchange."));
-		st->st_msgid_phase15 = 0;
+		st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 	}
 
 	if (st->st_connection->spd.this.modecfg_server &&
 	    st->st_connection->policy & POLICY_MODECFG_PULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("modecfg server, pull mode. Starting new exchange."));
-		st->st_msgid_phase15 = 0;
+		st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 	}
 	return STF_OK;
 }
@@ -1783,7 +1783,7 @@ stf_status modecfg_inR0(struct msg_digest *md)
 		}
 
 		/* they asked us, we reponded, msgid is done */
-		st->st_msgid_phase15 = 0;
+		st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 	}
 
 	libreswan_log("modecfg_inR0(STF_OK)");
@@ -1904,7 +1904,7 @@ static stf_status modecfg_inI2(struct msg_digest *md)
 	 * we are done with this exchange, clear things so
 	 * that we can start phase 2 properly
 	 */
-	st->st_msgid_phase15 = 0;
+	st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 	if (resp != LEMPTY)
 		st->hidden_variables.st_modecfg_vars_set = TRUE;
 
@@ -2283,7 +2283,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 	}
 
 	/* we are done with this exchange, clear things so that we can start phase 2 properly */
-	st->st_msgid_phase15 = 0;
+	st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 	if (resp != LEMPTY)
 		st->hidden_variables.st_modecfg_vars_set = TRUE;
 
@@ -2750,8 +2750,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 	}
 
 	/* reset the message ID */
-	st->st_msgid_phase15b = st->st_msgid_phase15;
-	st->st_msgid_phase15 = 0;
+	st->st_msgid_phase15 = v1_MAINMODE_MSGID;
 
 	DBG(DBG_CONTROLMORE, DBG_log("xauth_inI0(STF_OK)"));
 	return STF_OK;

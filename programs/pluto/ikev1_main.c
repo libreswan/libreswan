@@ -757,9 +757,6 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-	st->st_doi = ISAKMP_DOI_IPSEC;
-	st->st_situation = SIT_IDENTITY_ONLY; /* We only support this */
-
 	merge_quirks(st, md);
 
 	set_nat_traversal(st, md);
@@ -2294,8 +2291,7 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 		 */
 		if (st->st_connection->policy & POLICY_IKEV2_PROPOSE) {
 			libreswan_log(
-				"Bid-down to IKEv1 attack detected, "
-				"attempting to rekey connection with IKEv2");
+				"Bid-down to IKEv1 attack detected, attempting to rekey connection with IKEv2");
 			st->st_connection->failed_ikev2 = FALSE;
 
 			/* schedule an event to do this as soon as possible */

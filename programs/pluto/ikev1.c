@@ -1056,7 +1056,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				/* XXX Could send notification back */
 				return;
 			}
-			st->st_reserve_msgid = FALSE;
+			st->st_msgid_reserved = FALSE;
 
 			init_phase2_iv(st, &md->hdr.isa_msgid);
 			new_iv_set = TRUE;
@@ -1174,9 +1174,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 				return;
 			}
-
-			/* note that we need to reserve this message ID */
-			st->st_reserve_msgid = FALSE;
+			st->st_msgid_reserved = FALSE;
 
 			/* Quick Mode Initial IV */
 			init_phase2_iv(st, &md->hdr.isa_msgid);
@@ -2058,7 +2056,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					/* these are handled later on in informational() */
 					break;
 				}
-				/* fall through */
+				/* FALL THROUGH */
 			default:
 				if (st == NULL) {
 					loglog(RC_LOG_SERIOUS,
@@ -2171,83 +2169,81 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
  */
 void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 {
-	if (result == STF_INLINE) {
-		/* all work is already done, including release_any_md */
-		*mdp = NULL;
+	struct msg_digest *md = *mdp;
+	enum state_kind from_state;
+	struct state *st;
+
+	/* handle oddball/meta results now */
+
+	switch (result) {
+	case STF_SUSPEND:
+		cur_state = md->st;	/* might have changed */
+		/* FALL THROUGH */
+	case STF_INLINE:	/* all done, including release_any_md */
+		*mdp = NULL;	/* take md away from parent */
+		/* FALL THROUGH */
+	case STF_IGNORE:
+		DBG(DBG_CONTROL,
+		    DBG_log("complete v1 state transition with %s",
+			    enum_show(&stfstatus_name, result)));
 		return;
+
+	default:
+		break;
 	}
 
-	struct msg_digest *md = *mdp;
-	const struct state_microcode *smc = md->smc;
-	enum state_kind from_state = md->from_state;
-	struct state *st;
+	DBG(DBG_CONTROL,
+	    DBG_log("complete v1 state transition with %s",
+		result > STF_FAIL ?
+		    enum_name(&ikev1_notify_names, result - STF_FAIL) :
+		    enum_name(&stfstatus_name, result)));
+
+	/* safe to refer to *md */
+
+	from_state = md->from_state;
 
 	cur_state = st = md->st; /* might have changed */
 
-	pexpect(st != NULL);	/* ??? when does this fail? (frequently) */
+	passert(st != NULL);
 
-	/* If state has FRAGMENTATION support, import it */
-	if (st != NULL && md->fragvid) {
-		DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
-		st->st_seen_fragvid = TRUE;
-	}
-	/* If state has DPD support, import it */
-	if (st != NULL && md->dpd &&
-		   st->hidden_variables.st_peer_supports_dpd != md->dpd) {
-		DBG(DBG_DPD, DBG_log("peer supports dpd"));
-		st->hidden_variables.st_peer_supports_dpd = md->dpd;
-
-		if (dpd_active_locally(st)) {
-			DBG(DBG_DPD, DBG_log("dpd is active locally"));
-		}
-	}
-	/* If state has VID_NORTEL, import it to activate workaround */
-	if (st != NULL && md->nortel) {
-		DBG(DBG_CONTROLMORE, DBG_log("peer requires nortel contivity workaround"));
-		st->st_seen_nortel_vid = TRUE;
-	}
-
-	/* advance the state */
-	DBG(DBG_CONTROL,
-	    DBG_log("complete state transition with %s",
-		    enum_name(&stfstatus_name, result)));
-
-	/*
-	 * we can only be in calculating state if state is STF_IGNORE,
-	 * STF_SUSPENDED.  STF_INLINE should already be excluded.
-	 */
-	DBG(DBG_CONTROLMORE,
-		if (st != NULL) {
-			DBG_log("#%lu %s:%u st->st_calculating == %s;",
-				st->st_serialno, __FUNCTION__, __LINE__,
-				st->st_calculating ? "TRUE" : "FALSE");
-		});
-	passert((result == STF_IGNORE || result == STF_SUSPEND) ||
-		!st->st_calculating);
+	passert(!st->st_calculating);
 
 	switch (result) {
-	case STF_IGNORE:
-		break;
-
-	case STF_SUSPEND:
-		/* update the previous packet history */
-		remember_received_packet(st, md);
-
-		/*
-		 * the stf didn't complete its job:
-		 * detach from *mdp so *md won't be released by our caller.
-		 */
-		*mdp = NULL;
-		break;
-
 	case STF_OK:
+	{
 		/* advance the state */
+		const struct state_microcode *smc = md->smc;
 
 		libreswan_log("transition from state %s to state %s",
 			      enum_name(&state_names, from_state),
 			      enum_name(&state_names, smc->next_state));
 
-		if (!st->st_reserve_msgid &&
+		/* accept info from VID because we accept this message */
+
+		/* If state has FRAGMENTATION support, import it */
+		if (md->fragvid) {
+			DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
+			st->st_seen_fragvid = TRUE;
+		}
+
+		/* If state has DPD support, import it */
+		if (md->dpd &&
+		    st->hidden_variables.st_peer_supports_dpd != md->dpd) {
+			DBG(DBG_DPD, DBG_log("peer supports dpd"));
+			st->hidden_variables.st_peer_supports_dpd = md->dpd;
+
+			if (dpd_active_locally(st)) {
+				DBG(DBG_DPD, DBG_log("dpd is active locally"));
+			}
+		}
+
+		/* If state has VID_NORTEL, import it to activate workaround */
+		if (md->nortel) {
+			DBG(DBG_CONTROLMORE, DBG_log("peer requires Nortel Contivity workaround"));
+			st->st_seen_nortel_vid = TRUE;
+		}
+
+		if (!st->st_msgid_reserved &&
 		    IS_CHILD_SA(st) &&
 		    st->st_msgid != v1_MAINMODE_MSGID) {
 			struct state *p1st = state_with_serialno(
@@ -2258,7 +2254,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				reserve_msgid(p1st, st->st_msgid);
 			}
 
-			st->st_reserve_msgid = TRUE;
+			st->st_msgid_reserved = TRUE;
 		}
 
 		change_state(st, smc->next_state);
@@ -2613,6 +2609,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			break;
 
 		break;
+	}
 
 	case STF_INTERNAL_ERROR:
 		/* update the previous packet history */
@@ -2634,12 +2631,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 */
 		/* ??? why no call of remember_received_packet? */
 		unset_suspended(st);
-		pexpect(!st->st_calculating);
 		libreswan_log(
 			"message in state %s ignored due to cryptographic overload",
 			enum_name(&state_names, from_state));
 		log_crypto_workers();
-		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
+		/* ??? the ikev2.c version used to FALL THROUGH to STF_FATAL */
 		break;
 
 	case STF_FATAL:

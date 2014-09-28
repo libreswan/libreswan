@@ -221,8 +221,6 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 	struct spd_route *sr;
 	stf_status ret;
 
-	st->st_childsa = c0;
-
 	if (role == O_INITIATOR) {
 		ts_i = &st->st_ts_this;
 		ts_r = &st->st_ts_that;

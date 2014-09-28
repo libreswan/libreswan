@@ -1011,9 +1011,8 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 	return delay;
 }
 
-static void success_v2_state_transition(struct msg_digest **mdp)
+static void success_v2_state_transition(struct msg_digest *md)
 {
-	struct msg_digest *md = *mdp;
 	const struct state_v2_microcode *svm = md->svm;
 	enum state_kind from_state = md->from_state;
 	struct state *st = md->st;
@@ -1181,17 +1180,35 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 void complete_v2_state_transition(struct msg_digest **mdp,
 				  stf_status result)
 {
-	if (result == STF_INLINE) {
-		/* all work is already done, including release_any_md */
-		*mdp = NULL;
+	struct msg_digest *md = *mdp;
+	struct state *st;
+	enum state_kind from_state;
+	const char *from_state_name;
+
+	/* handle oddball/meta results now */
+
+	switch (result) {
+	case STF_SUSPEND:
+		cur_state = md->st;	/* might have changed */
+		/* FALL THROUGH */
+	case STF_INLINE:	/* all done, including release_any_md */
+		*mdp = NULL;	/* take md away from parent */
+		/* FALL THROUGH */
+	case STF_IGNORE:
+		DBG(DBG_CONTROL,
+		    DBG_log("complete v2 state transition with %s",
+			    enum_show(&stfstatus_name, result)));
 		return;
+
+	default:
+		break;
 	}
 
-	struct msg_digest *md = *mdp;
-	/* const struct state_v2_microcode *svm=md->svm; */
-	struct state *st = md->st;
-	enum state_kind from_state = st == NULL? STATE_UNDEFINED : st->st_state;
-	const char *from_state_name = enum_name(&state_names, from_state);
+	/* safe to refer to *md */
+
+	st = md->st;
+	from_state = st == NULL? STATE_UNDEFINED : st->st_state;
+	from_state_name = enum_name(&state_names, from_state);
 
 	cur_state = st; /* might have changed */
 
@@ -1213,31 +1230,17 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 * which returns STF_IGNORE.
 	 */
 
-	/* advance the state */
 	DBG(DBG_CONTROL,
 	    DBG_log("complete v2 state transition with %s",
-		    enum_name(&stfstatus_name,
-			      result > STF_FAIL ? STF_FAIL : result)));
+		result > STF_FAIL ?
+		    enum_name(&ikev2_notify_names, result - STF_FAIL) :
+		    enum_name(&stfstatus_name, result)));
 
 	switch (result) {
-	case STF_IGNORE:
-		break;
-
-	case STF_SUSPEND:
-		/* the stf didn't complete its job: don't relase md */
-		*mdp = NULL;
-		break;
-
 	case STF_OK:
-		if (st == NULL) {
-			DBG(DBG_CONTROL,
-					DBG_log("complete v2 state transition with %s state %s",
-						enum_name(&stfstatus_name, result),
-						from_state_name));
-		} else {
-			/* advance the state */
-			success_v2_state_transition(mdp);
-		}
+		/* advance the state */
+		passert(st != NULL);
+		success_v2_state_transition(md);
 		break;
 
 	case STF_INTERNAL_ERROR:
@@ -1255,8 +1258,17 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		libreswan_log("message in state %s ignored due to cryptographic overload",
 			      from_state_name);
 		log_crypto_workers();
-		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
-		/* FALL THROUGH */
+		/*
+		 * ??? this used to FALL THROUGH to case STF_FATAL.
+		 *
+		 * Effectively we ignore this state transition
+		 * but keep the original state.
+		 *
+		 * ??? Perhaps we have half-computed crypto and perhaps
+		 * that is a problem if we try to advance the state later.
+		 */
+		break;
+
 	case STF_FATAL:
 		passert(st != NULL);
 		whack_log(RC_FATAL,

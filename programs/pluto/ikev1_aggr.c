@@ -315,9 +315,6 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-	st->st_doi = ISAKMP_DOI_IPSEC;
-	st->st_situation = SIT_IDENTITY_ONLY; /* We only support this */
-
 	{
 		ipstr_buf b;
 

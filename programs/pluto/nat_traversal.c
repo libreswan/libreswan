@@ -233,7 +233,7 @@ bool nat_traversal_insert_vid(u_int8_t np, pb_stream *outs, const struct state *
 		DBG(DBG_NATT, DBG_log("sending draft and RFC NATT VIDs"));
 		if (!out_vid(ISAKMP_NEXT_VID, outs, VID_NATT_RFC))
 			return FALSE;
-		/* Fall through */
+		/* FALL THROUGH */
 	case natt_drafts:
 		if (st->st_connection->ikev1_natt == natt_drafts) {
 			DBG(DBG_NATT, DBG_log("skipping VID_NATT_RFC"));
@@ -272,11 +272,12 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 		DBG(DBG_NATT,
 			DBG_log("NAT-T VID draft-ietf-ipsc-nat-t-ike-04 to 08 assumed to function as RFC 3947 "));
-		/* fall through */
+		/* FALL THROUGH */
 	case VID_NATT_RFC:
 		DBG(DBG_NATT,
 			DBG_log("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_RFC"));
 		return NAT_TRAVERSAL_METHOD_IETF_RFC;
+
 	default:
 		return 0;
 	}

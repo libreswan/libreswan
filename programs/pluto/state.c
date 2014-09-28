@@ -844,8 +844,6 @@ struct state *duplicate_state(struct state *st)
 	memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
 	nst->st_connection = st->st_connection;
 
-	nst->st_doi = st->st_doi;
-	nst->st_situation = st->st_situation;
 	nst->quirks = st->quirks;
 	nst->hidden_variables = st->hidden_variables;
 	nst->st_remoteaddr = st->st_remoteaddr;
@@ -1159,7 +1157,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 				    (long unsigned)ntohl(msgid),
 				    (long unsigned)ntohl(st->st_msgid),
 				    (long unsigned)ntohl(st->st_msgid_phase15)));
-			if ((st->st_msgid_phase15 != 0 &&
+			if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
 			     msgid == st->st_msgid_phase15) ||
 			    msgid == st->st_msgid)
 				break;

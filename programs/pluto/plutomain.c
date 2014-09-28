@@ -499,7 +499,7 @@ static void usage(void)
 		case '^':
 			force_nl = TRUE;
 			meta++;	/* eat ^ */
-			/* fall through */
+			/* FALL THROUGH */
 		default:
 			if (*meta == '\0')
 				snprintf(chunk, sizeof(chunk),  "[--%s]", nm);

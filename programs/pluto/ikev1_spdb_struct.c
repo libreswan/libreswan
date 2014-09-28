@@ -320,15 +320,18 @@ bool ikev1_out_sa(pb_stream *outs,
 		struct isakmp_sa sa;
 
 		sa.isasa_np = np;
-		st->st_doi = sa.isasa_doi = ISAKMP_DOI_IPSEC; /* all we know */
+		sa.isasa_doi = ISAKMP_DOI_IPSEC; /* all we know */
 		if (!out_struct(&sa, &isakmp_sa_desc, outs, &sa_pbs))
 			return_on(ret, FALSE);
 	}
 
 	/* within SA: situation out */
-	st->st_situation = SIT_IDENTITY_ONLY;
-	if (!out_struct(&st->st_situation, &ipsec_sit_desc, &sa_pbs, NULL))
-		return_on(ret, FALSE);
+	{
+		static const u_int32_t situation = SIT_IDENTITY_ONLY;
+
+		if (!out_struct(&situation, &ipsec_sit_desc, &sa_pbs, NULL))
+			return_on(ret, FALSE);
+	}
 
 	/* within SA: Proposal Payloads
 	 *
@@ -1302,7 +1305,7 @@ rsasig_common:
 
 			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
 				val = decode_long_duration(&attr_pbs);
-				/* fall through */
+				/* FALL THROUGH */
 			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 				if (!LHAS(seen_attrs, OAKLEY_LIFE_TYPE)) {
 					ugh = "OAKLEY_LIFE_DURATION attribute not preceded by OAKLEY_LIFE_TYPE attribute";
@@ -1755,7 +1758,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
 			val = decode_long_duration(&attr_pbs);
-			/* fall through */
+			/* FALL THROUGH */
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
 			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
@@ -2349,7 +2352,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					return BAD_PROPOSAL_SYNTAX;
 
 				case AUTH_ALGORITHM_HMAC_MD5:
-				/* fall through */
 				case AUTH_ALGORITHM_KPDK:
 					ok_transid = AH_MD5;
 					break;
@@ -2507,7 +2509,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case ESP_DES: /* NOT safe */
 						loglog(RC_LOG_SERIOUS,
 						       "1DES was proposed, it is insecure and was rejected");
-						/* Fall through */
+						/* FALL THROUGH */
 					default:
 						{
 						ipstr_buf b;
