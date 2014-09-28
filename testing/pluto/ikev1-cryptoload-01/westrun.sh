@@ -1,4 +1,5 @@
 export PLUTO_CRYPTO_HELPER_DELAY=1
+export EF_DISABLE_BANNER=1
 /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
 sleep 10
 ipsec status | grep Total
