@@ -578,7 +578,7 @@ void check_crls(void)
 /*
  *  verifies a X.509 certificate
  */
-bool verify_x509cert(const x509cert_t *cert, bool strict, realtime_t *until,
+bool verify_x509cert(x509cert_t *cert, bool strict, realtime_t *until,
 						          x509cert_t *alt)
 {
 	int pathlen;
