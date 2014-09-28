@@ -59,6 +59,7 @@ main(int argc, char *argv[]) {
 	/* esp= */
 	fprintf(stdout, "\n---- ESP tests that should succeed ----\n");
 
+	do_test("aes_gcm_a-128-null", PROTO_IPSEC_ESP);
 	do_test("3des-sha1;modp1024", PROTO_IPSEC_ESP);
 	do_test("3des-sha1;modp1536", PROTO_IPSEC_ESP);
 	do_test("3des-sha1;modp2048", PROTO_IPSEC_ESP);
@@ -189,7 +190,6 @@ main(int argc, char *argv[]) {
 	fprintf(stdout, "\n---- IKE tests ----\n");
 	do_test("3des-sha1", PROTO_ISAKMP);
 #endif
-
 	report_leaks();
 	tool_close_log();
 	exit(0);
