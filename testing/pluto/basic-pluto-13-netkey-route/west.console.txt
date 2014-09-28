@@ -34,7 +34,7 @@ west #
 000  
 000 config setup options:
 000  
-000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
+000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/run/pluto, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
@@ -116,10 +116,9 @@ west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
-4 packets transmitted, 3 received, 25% packet loss, time XXXX
+4 packets transmitted, 2 received, 50% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  echo done
