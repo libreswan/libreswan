@@ -32,6 +32,8 @@ west #
 west #
  export PLUTO_MAXIMUM_RETRANSMISSIONS_INITIAL=3
 west #
+ export EF_DISABLE_BANNER=1
+west #
  ipsec pluto --config /etc/ipsec.conf
 west #
  /testing/pluto/bin/wait-until-pluto-started
