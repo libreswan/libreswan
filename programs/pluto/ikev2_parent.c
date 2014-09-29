@@ -62,7 +62,8 @@
 #include "kernel.h"
 #include "nat_traversal.h"
 
-#define SEND_NOTIFICATION(t) { \
+/* Note: same definition appears in programs/pluto/ikev2.c */
+#define SEND_V2_NOTIFICATION(t) { \
 		if (st != NULL) \
 			send_v2_notification_from_state(st, t, NULL); \
 		else \
@@ -2003,7 +2004,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			 * complete_v2_state_transition()
 			 * that says "only send a notify is this packet was a question, not if it was an answer"
 			 */
-			SEND_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 			return STF_FATAL;
 		}
 		break;
@@ -2026,7 +2027,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			 * complete_v2_state_transition()
 			 * that says "only send a notify is this packet was a question, not if it was an answer"
 			 */
-			SEND_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 			return STF_FATAL;
 		}
 		break;
@@ -2358,7 +2359,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			 * complete_v2_state_transition()
 			 * that says "only send a notify is this packet was a question, not if it was an answer"
 			 */
-			SEND_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 			return STF_FAIL;
 		}
 		break;
@@ -2380,7 +2381,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			 * complete_v2_state_transition()
 			 * that says "only send a notify is this packet was a question, not if it was an answer"
 			 */
-			SEND_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
+			SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 			return STF_FAIL;
 		}
 		break;

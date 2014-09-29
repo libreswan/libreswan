@@ -67,10 +67,10 @@
 
 #include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
-#define SEND_NOTIFICATION(t) { \
+/* Note: same definition appears in programs/pluto/ikev2_parent.c */
+#define SEND_V2_NOTIFICATION(t) { \
 		if (st != NULL) \
-			send_v2_notification_from_state(st, t, \
-							NULL); \
+			send_v2_notification_from_state(st, t, NULL); \
 		else \
 			send_v2_notification_from_md(md, t, NULL); }
 
@@ -752,7 +752,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		/* no useful state microcode entry */
 		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/* We are responder for this message exchange */
-			SEND_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
+			SEND_V2_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
 		return;
 	}
@@ -1304,12 +1304,17 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 		if (md->note != NOTHING_WRONG) {
 			/*
-			 * only send a notify is this packet was a request,
-			 * not if it was a reply
+			 * Only send a notify is this packet was a request,
+			 * not if it was a reply.
+			 * ??? is this a reasonable choice?
 			 */
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R))
-			/* ??? is this a reasonable choice? */
-				SEND_NOTIFICATION(md->note);
+				/*
+				 * ??? if this can be sent as part of an
+				 * existing exchange, rather than a new
+				 * Informational Exchange, should it not be?
+				 */
+				SEND_V2_NOTIFICATION(md->note);
 		}
 
 		DBG(DBG_CONTROL,
