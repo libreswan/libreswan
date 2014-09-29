@@ -13,7 +13,6 @@ east #
 002 added connection description "road-east-ipv4-psk-ikev2/2x0"
 east #
  ipsec auto --add road-east-ipv6-psk-ikev2
-002 "road-east-ipv6-psk-ikev2": deleting connection
 002 conn: road-east-ipv6-psk-ikev2, rekeymargin (540s) >= salifetime (120s); reducing rekeymargin to 60 seconds
 002 added connection description "road-east-ipv6-psk-ikev2"
 east #
@@ -192,33 +191,9 @@ src 192.1.2.23 dst 192.1.3.209
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 2001:db8:1:2::/64 dst 2001:db8:1:3::/64 
 	dir out priority 25792 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.11.0/24 
-	dir out priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 2001:db8:1:3::/64 dst 2001:db8:1:2::/64 
@@ -240,6 +215,10 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.11.0/24 
+	dir out priority 2344 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 192.0.11.0/24 dst 192.0.2.0/24 
 	dir fwd priority 2344 ptype main 
