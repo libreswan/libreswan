@@ -761,7 +761,7 @@ void call_server(void)
 				int helpers = pluto_crypto_helper_response_ready(
 					&readfds);
 				DBG(DBG_CONTROL,
-				    DBG_log("* processed %d messages from cryptographic helpers\n",
+				    DBG_log("* processed %d messages from cryptographic helpers",
 					    helpers));
 
 				ndes -= helpers;
@@ -1252,12 +1252,11 @@ static bool send_frags(struct state *st, const char *where)
 
 			memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
 			ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION; /* one octet */
-			/* Do we need to set any of ISAKMP_FLAG_ENCRYPTION,
-			 * ISAKMP_FLAGS_MSG_R or ISAKMP_FLAGS_IKE_I ?
-			 * seems there might be disagreement between Cisco and Microsoft.
+			/* Do we need to set any of ISAKMP_FLAGS_v1_ENCRYPTION?
+			 * Seems there might be disagreement between Cisco and Microsoft.
 			 * st->st_suspended_md->hdr.isa_flags; TODO must this be set?
 			 */
-			ih->isa_flags &= ~ISAKMP_FLAG_ENCRYPTION;
+			ih->isa_flags &= ~ISAKMP_FLAGS_v1_ENCRYPTION;
 			ih->isa_length = htonl(isakmppl_len);
 		}
 

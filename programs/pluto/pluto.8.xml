@@ -149,6 +149,14 @@
           <arg choice="plain">never</arg>
         </group></arg>
 
+      <arg choice="opt">--sendca <group choice="plain">
+          <arg choice="plain">none</arg>
+
+          <arg choice="plain">issuer</arg>
+
+          <arg choice="plain">all</arg>
+        </group></arg>
+
       <arg choice="opt">--certtype <replaceable>number</replaceable></arg>
 
       <arg choice="opt">--ikeport <replaceable>portnumber</replaceable></arg>
@@ -1353,6 +1361,21 @@
             <emphasis remap="B">no</emphasis> and <emphasis
             remap="B">never</emphasis> are equivalent. NOTE: "forced" does not
             seem to be actually implemented - do not use it.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--sendca</option>&nbsp;<emphasis
+          remap="I">none|issuer|all</emphasis></term>
+
+          <listitem>
+	  <para>How much of our available X.509 trust chain to send with the
+	  end certificate, excluding any root CAs. Specifying <emphasis remap="B"
+	  >issuer</emphasis> sends just the issuing intermediate CA, while
+	  <emphasis remap="B"> all</emphasis> will send the entire chain of
+	  intermediate CAs.<emphasis remap="B">none</emphasis> will not send
+	  any CA certs. The default is <emphasis remap="B">none</emphasis> which
+	  maintains the current libreswan behavior.</para>
           </listitem>
         </varlistentry>
 

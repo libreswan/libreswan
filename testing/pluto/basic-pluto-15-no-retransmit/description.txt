@@ -1,0 +1,1 @@
+A varient of basic-pluto-01 to test retransmit=no. east has no connection loaded.

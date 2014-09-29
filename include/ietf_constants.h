@@ -692,16 +692,16 @@ enum isakmp_xchg_types {
 	ISAKMP_XCHG_ECHOREPLY_PRIVATE = 245, /* Private Echo Reply */
 };
 
-/* Flag bits */
-#define ISAKMP_FLAGS_E (1 << 0) /* bit 0 of flags --- encrypt */
-#define ISAKMP_FLAGS_C (1 << 1) /* bit 1 of flags --- commit */
-#define ISAKMP_FLAGS_IKE_I (1 << 3) /* bit 3 of flags --- IKE initiator */
-#define ISAKMP_FLAGS_V (1 << 4) /* bit 4 of flags --- version */
-#define ISAKMP_FLAGS_MSG_R (1 << 5) /* bit 5 of flags --- Message response */
-extern const char *const flag_bit_names[];
-
-#define ISAKMP_FLAG_ENCRYPTION 0x1 /* repeat of above */
-#define ISAKMP_FLAG_COMMIT 0x2
+/* ISAKMP header flag bits */
+#define ISAKMP_FLAGS_v1_ENCRYPTION (1 << 0) /* bit 0 of flags - IKEv1 encrypt */
+#define ISAKMP_FLAGS_v1_COMMIT (1 << 1) /* bit 1 of flags - IKEv1 commit - unused */
+#define ISAKMP_FLAGS_v1_AUTH (1 << 2) /* bit 2 of flags - IKEv1 authonly - unused */
+#define ISAKMP_FLAGS_v2_IKE_I (1 << 3) /* bit 3 of flags - IKEv2 Original Initiator */
+#define ISAKMP_FLAGS_v2_VER (1 << 4) /* bit 4 of flags - IKEv2 Version flag */
+#define ISAKMP_FLAGS_v2_MSG_R (1 << 5) /* bit 5 of flags - IKEv2 Message response */
+#define ISAKMP_FLAGS_RESERVED_BIT6 (1 << 6) /* RESERVED */
+#define ISAKMP_FLAGS_RESERVED_BIT7 (1 << 7) /* RESERVED */
+extern const char *const isakmp_flag_names[];
 
 /* Situation definition for IPsec DOI */
 extern const char *const sit_bit_names[];
@@ -975,7 +975,7 @@ enum ikev1_auth_attribute {
 	AUTH_ALGORITHM_HMAC_SHA2_384 = 6,	/* not in an rfc? */
 	AUTH_ALGORITHM_HMAC_SHA2_512 = 7,	/* not in an rfc? */
 	AUTH_ALGORITHM_HMAC_RIPEMD = 8,	/* RFC 2857 */
-	AUTH_ALGORITHM_AES_CBC = 9,	/* RFC 3566 */
+	AUTH_ALGORITHM_AES_XCBC = 9,	/* RFC 3566 */
 	AUTH_ALGORITHM_SIG_RSA = 10,	/* RFC 4359 */
 	AUTH_ALGORITHM_AES_128_GMAC = 11,	/* RFC 4542 */
 	AUTH_ALGORITHM_AES_192_GMAC = 12,	/* RFC 4542 */

@@ -121,7 +121,7 @@ bool ikev2_out_sa(pb_stream *outs,
 		zero(&sa);
 		sa.isasa_np = np;
 		sa.isasa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(
 				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			sa.isasa_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
@@ -1214,6 +1214,9 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 						libreswan_log("ikev2_out_attr() failed");
 						return STF_INTERNAL_ERROR;
 				}
+			} else {
+				DBG(DBG_CONTROL,DBG_log(
+					"keysize is NOT required - NOT sent key length attribute"));
 			}
 		}
 
@@ -1862,9 +1865,26 @@ stf_status ikev2_parse_child_sa_body(
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
 		} else {
-			pexpect(ta.encrypt == IKEv2_ENCR_NULL);
-			if (ta.encrypt != IKEv2_ENCR_NULL) {
-				/* This can only happen on incomplete algo implemention */
+			/*
+			 * We did not find a userspace encrypter, so we should
+			 * be esp=null or a kernel-only algorithm without
+			 * userland struct.
+			 */
+			switch(ta.encrypt) {
+			case IKEv2_ENCR_NULL:
+				break; /* ok */
+			case IKEv2_ENCR_CAST:
+				break; /* CAST is ESP only, not IKE */
+			case IKEv2_ENCR_AES_CTR:
+			case IKEv2_ENCR_CAMELLIA_CBC:
+			case IKEv2_ENCR_CAMELLIA_CTR:
+			case IKEv2_ENCR_CAMELLIA_CCM_A:
+			case IKEv2_ENCR_CAMELLIA_CCM_B:
+			case IKEv2_ENCR_CAMELLIA_CCM_C:
+				break; /* no IKE struct encrypt_desc yet */
+			default:
+				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter - refusing proposal");
+				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
 		}

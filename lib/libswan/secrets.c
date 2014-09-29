@@ -366,7 +366,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 	for (s = secrets; s != NULL; s = s->next) {
 		DBG(DBG_CONTROLMORE,
-			DBG_log("line %d: key type %s(%s) to type %s\n",
+			DBG_log("line %d: key type %s(%s) to type %s",
 				s->secretlineno,
 				enum_name(&ppk_names, kind),
 				idme,
@@ -430,7 +430,7 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			}
 
 			DBG(DBG_CONTROL,
-				DBG_log("line %d: match=%d\n", s->secretlineno,
+				DBG_log("line %d: match=%d", s->secretlineno,
 					match);
 				);
 
@@ -700,6 +700,7 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 {
 	char friendly_name[PATH_MAX]; /* XXX: is there an NSS limit < PATH_MAX ? */
 	err_t ugh = NULL;
+	bool unexpected;
 
 	zero(&friendly_name);
 
@@ -710,7 +711,15 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 	else
 		memcpy(friendly_name, flp->tok, flp->cur - flp->tok);
 
-	if (shift()) {
+	unexpected = shift();
+	/* we used to recommend people to provide an empty passphrase for NSS keys */
+	if (unexpected && (strcmp(flp->tok, "\"\"") == 0 || strcmp(flp->tok, "''") == 0)) {
+		libreswan_log("RSA private key file "
+				"-- ignoring empty token after friendly_name "
+				"-- this will be an error in a future release");
+		unexpected = shift();
+	}
+	if (unexpected) {
 		ugh = "RSA private key file -- unexpected token after friendly_name";
 	} else {
 		ugh = extract_and_add_secret_from_nss_cert_file(rsak, friendly_name);

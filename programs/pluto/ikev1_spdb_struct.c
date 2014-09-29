@@ -571,9 +571,8 @@ bool ikev1_out_sa(pb_stream *outs,
 							    ENCAPSULATION_MODE,
 							    NAT_T_ENCAPSULATION_MODE(
 								    st,
-								    st
-								    ->st_policy)
-							    , attr_desc,
+								    st->st_policy),
+							    attr_desc,
 							    attr_val_descs,
 							    &trans_pbs))
 							return_on(ret, FALSE);
@@ -585,8 +584,7 @@ bool ikev1_out_sa(pb_stream *outs,
 						      &trans_pbs))
 						return_on(ret, FALSE);
 					if (!out_attr(SA_LIFE_DURATION,
-						      deltasecs(st->st_connection->
-						        sa_ipsec_life_seconds),
+						      deltasecs(st->st_connection->sa_ipsec_life_seconds),
 						      attr_desc,
 						      attr_val_descs,
 						      &trans_pbs))
@@ -822,11 +820,13 @@ lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
 				switch (a.isaat_lv) {
 				case XAUTHInitPreShared:
 					policy |= POLICY_XAUTH;
+					/* fallthrough */
 				case OAKLEY_PRESHARED_KEY:
 					policy |= POLICY_PSK;
 					break;
 				case XAUTHInitRSA:
 					policy |= POLICY_XAUTH;
+					/* fallthrough */
 				case OAKLEY_RSA_SIG:
 					policy |= POLICY_RSASIG;
 					break;
@@ -2379,7 +2379,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					ok_transid = AH_RIPEMD;
 					break;
 
-				case AUTH_ALGORITHM_AES_CBC:
+				case AUTH_ALGORITHM_AES_XCBC:
 					ok_transid = AH_AES_XCBC_MAC;
 					break;
 
@@ -2557,7 +2557,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case AUTH_ALGORITHM_HMAC_SHA2_384:
 					case AUTH_ALGORITHM_HMAC_SHA2_512:
 					case AUTH_ALGORITHM_HMAC_RIPEMD:
-					case AUTH_ALGORITHM_AES_CBC:
+					case AUTH_ALGORITHM_AES_XCBC:
 						break;
 					default:
 						{

@@ -784,7 +784,7 @@ void delete_states_by_peer(const ip_address *peer)
 
 				DBG(DBG_CONTROL, {
 					ipstr_buf b;
-					DBG_log("comparing %s to %s\n",
+					DBG_log("comparing %s to %s",
 						ipstr(&this->st_remoteaddr, &b),
 						peerstr);
 				});

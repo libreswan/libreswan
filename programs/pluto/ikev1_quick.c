@@ -330,7 +330,7 @@ static void compute_proto_keymat(struct state *st,
 		case AUTH_ALGORITHM_HMAC_RIPEMD:
 			needed_len += BYTES_FOR_BITS(160);
 			break;
-		case AUTH_ALGORITHM_AES_CBC:
+		case AUTH_ALGORITHM_AES_XCBC:
 			needed_len += BYTES_FOR_BITS(128);
 			break;
 		case AUTH_ALGORITHM_SIG_RSA:
@@ -491,10 +491,10 @@ static void compute_proto_keymat(struct state *st,
 	}
 
 	DBG(DBG_CRYPT, {
-		    DBG_log("%s KEYMAT\n", satypename);
-		    DBG_dump("  KEYMAT computed:\n", pi->our_keymat,
+		    DBG_log("%s KEYMAT", satypename);
+		    DBG_dump("  KEYMAT computed:", pi->our_keymat,
 			     pi->keymat_len);
-		    DBG_dump("  Peer KEYMAT computed:\n", pi->peer_keymat,
+		    DBG_dump("  Peer KEYMAT computed:", pi->peer_keymat,
 			     pi->keymat_len);
 	    });
 }
@@ -1042,7 +1042,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_QUICK;
 		hdr.isa_msgid = st->st_msgid;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
@@ -2317,7 +2317,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	 */
 
 	/* HDR* out */
-	echo_hdr(md, TRUE, ISAKMP_NEXT_HASH);
+	ikev1_echo_hdr(md, TRUE, ISAKMP_NEXT_HASH);
 
 	/* HASH(2) out -- first pass */
 	START_HASH_PAYLOAD(md->rbody, ISAKMP_NEXT_SA);

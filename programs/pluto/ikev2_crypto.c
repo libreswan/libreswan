@@ -3,7 +3,7 @@
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013-2014 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -64,17 +64,20 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 		st->st_esp.present? &st->st_esp :
 		st->st_ah.present? &st->st_ah :
 		NULL;
+	struct esp_info *ei;
 
-	assert(ipi != NULL);	/* ESP or AH must be present */
-	assert(st->st_esp.present != st->st_ah.present);	/* only one */
+	passert(ipi != NULL);	/* ESP or AH must be present */
+	passert(st->st_esp.present != st->st_ah.present);	/* only one */
 
 	/* ??? there is no kernel_alg_ah_info */
-	ipi->attrs.transattrs.ei = kernel_alg_esp_info(
+	ei = kernel_alg_esp_info(
 		ipi->attrs.transattrs.encrypt,
 		ipi->attrs.transattrs.enckeylen,
 		ipi->attrs.transattrs.integ_hash);
 
-	passert(ipi->attrs.transattrs.ei != NULL);
+	passert(ei != NULL);
+	ipi->attrs.transattrs.ei = ei;
+
 	zero(&childsacalc);
 	childsacalc.prf_hasher = st->st_oakley.prf_hasher;
 
@@ -87,34 +90,38 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	childsacalc.skeyseed = st->st_skey_d_nss;
 
 	/* ??? no account is taken of AH */
-	switch (ipi->attrs.transattrs.ei->transid) { /* transid is same as encryptalg */
+	/* transid is same as esp_ealg_id */
+	switch (ei->transid) {
 	case IKEv2_ENCR_reserved:
 		/* AH */
-		ipi->keymat_len = ipi->attrs.transattrs.ei->authkeylen;
+		ipi->keymat_len = ei->authkeylen;
 		break;
 
 	case IKEv2_ENCR_AES_GCM_8:
 	case IKEv2_ENCR_AES_GCM_12:
 	case IKEv2_ENCR_AES_GCM_16:
 		/* aes_gcm does not use an integ (auth) algo - see RFC 4106 */
-		ipi->keymat_len = ipi->attrs.transattrs.ei->enckeylen +
-			AES_GCM_SALT_BYTES;
+		ipi->keymat_len = ei->enckeylen + AES_GCM_SALT_BYTES;
 		break;
 
 	case IKEv2_ENCR_AES_CCM_8:
 	case IKEv2_ENCR_AES_CCM_12:
 	case IKEv2_ENCR_AES_CCM_16:
 		/* aes_ccm does not use an integ (auth) algo - see RFC 4309 */
-		ipi->keymat_len = ipi->attrs.transattrs.ei->enckeylen +
-			AES_CCM_SALT_BYTES;
+		ipi->keymat_len = ei->enckeylen + AES_CCM_SALT_BYTES;
 		break;
 
 	default:
 		/* ordinary ESP */
-		ipi->keymat_len = ipi->attrs.transattrs.ei->enckeylen +
-			ipi->attrs.transattrs.ei->authkeylen;
+		ipi->keymat_len = ei->enckeylen + ei->authkeylen;
 		break;
 	}
+
+	DBG(DBG_CONTROL,
+		DBG_log("enckeylen=%" PRIu32 ", authkeylen=%" PRIu32 ", keymat_len=%" PRIu16,
+			ei->enckeylen,
+			ei->authkeylen,
+			ipi->keymat_len));
 
 	/*
 	 *
@@ -142,14 +149,6 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	v2genbytes(&rkeymat, ipi->keymat_len,
 		   "responder keys", &childsacalc);
 
-	/* This should really be role == O_INITIATOR, but then our keys are
-	 * installed reversed. This is a workaround until we locate the
-	 * real problem. It's better not to release copies of our code
-	 * that will be incompatible with everything else, including our
-	 * own updated version
-	 * Found by Herbert Xu
-	 * if(role == O_INITIATOR) {
-	 */
 	if (role != O_INITIATOR) {
 		DBG(DBG_CRYPT, {
 			    DBG_dump_chunk("our  keymat", ikeymat);
@@ -167,4 +166,3 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	}
 
 }
-

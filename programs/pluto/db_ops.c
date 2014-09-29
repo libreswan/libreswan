@@ -309,7 +309,7 @@ static void db_prop_print(struct db_prop *p)
 	unsigned ti, ai;
 	enum_names *n, *n_at, *n_av;
 
-	DBG_log("protoid=\"%s\"\n", enum_name(&protocol_names, p->protoid));
+	DBG_log("protoid=\"%s\"", enum_name(&protocol_names, p->protoid));
 	for (ti = 0, t = p->trans; ti < p->trans_cnt; ti++, t++) {
 		switch ( p->protoid) {
 		case PROTO_ISAKMP:
@@ -324,7 +324,7 @@ static void db_prop_print(struct db_prop *p)
 		default:
 			continue;
 		}
-		DBG_log("  transid=\"%s\"\n", enum_name(n, t->transid));
+		DBG_log("  transid=\"%s\"", enum_name(n, t->transid));
 
 		for (ai = 0, a = t->attrs; ai < t->attr_cnt; ai++, a++) {
 			int i;
@@ -347,7 +347,7 @@ static void db_prop_print(struct db_prop *p)
 			default:
 				continue;
 			}
-			DBG_log("    type=\"%s\" value=\"%s\"\n",
+			DBG_log("    type=\"%s\" value=\"%s\"",
 				enum_name(n_at, i),
 				enum_name(n_av, a->val));
 		}
@@ -357,7 +357,7 @@ static void db_prop_print(struct db_prop *p)
 
 void db_print(struct db_context *ctx)
 {
-	DBG_log("trans_cur diff=%td, attrs_cur diff=%td\n",
+	DBG_log("trans_cur diff=%td, attrs_cur diff=%td",
 		ctx->trans_cur - ctx->trans0,
 		ctx->attrs_cur - ctx->attrs0);
 	db_prop_print(&ctx->prop);

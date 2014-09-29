@@ -322,7 +322,7 @@ static void pluto_init_nss(char *confddir)
 	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", confddir);
 	nss_init_status = NSS_Init(confddir);
 	if (nss_init_status != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "FATAL: NSS readonly initialization (\"%s\") failed (err %d)\n",
+		loglog(RC_LOG_SERIOUS, "FATAL: NSS readonly initialization (\"%s\") failed (err %d)",
 			confddir, PR_GetError());
 		exit_pluto(10);
 	} else {
@@ -467,6 +467,7 @@ static const struct option long_opts[] = {
 	I("minor-version-bump\0", IMPAIR_MINOR_VERSION_BUMP_IX),
 	I("retransmits\0", IMPAIR_RETRANSMITS_IX),
 	I("send-bogus-isakmp-flag\0", IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX),
+	I("send-bogus-payload-flag\0", IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX),
 	I("send-ikev2-ke\0", IMPAIR_SEND_IKEv2_KE_IX),
 	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK_IX),
 #undef I
@@ -1032,7 +1033,7 @@ int main(int argc, char **argv)
 	if (chdir(coredir) == -1) {
 		int e = errno;
 
-		libreswan_log("pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)\n",
+		libreswan_log("pluto: warning: chdir(\"%s\") to dumpdir failed (%d: %s)",
 			coredir, e, strerror(e));
 	}
 
@@ -1142,7 +1143,7 @@ int main(int argc, char **argv)
 	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
 	 *
 	 * We drop these after creating the pluto socket or else we can't
-	 * create a socket if the parent dir is non-root
+	 * create a socket if the parent dir is non-root (eg openstack)
 	 */
 	capng_clear(CAPNG_SELECT_BOTH);
 
@@ -1152,8 +1153,14 @@ int main(int argc, char **argv)
 		/* for google authenticator pam */
 		CAP_SETGID, CAP_SETUID,
 		-1);
-	/* our children must be able to CAP_NET_ADMIN to change routes. */
-	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_DAC_READ_SEARCH, -1);	/* DAC needed for google authenticator pam */
+	/*
+	 * We need to retain some capabilities for our children (updown):
+	 * CAP_NET_ADMIN to change routes
+	 * CAP_NET_RAW for iptables -t mangle
+	 * CAP_DAC_READ_SEARCH for pam / google authenticator
+	 */
+	capng_updatev(CAPNG_ADD, CAPNG_BOUNDING_SET, CAP_NET_ADMIN, CAP_NET_RAW,
+			CAP_DAC_READ_SEARCH, -1);
 	capng_apply(CAPNG_SELECT_BOTH);
 	libreswan_log("libcap-ng support [enabled]");
 #else
@@ -1331,14 +1338,13 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_RETRANSMITS enabled");
 	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
 		libreswan_log("Warning: IMPAIR_SEND_BOGUS_ISAKMP_FLAG enabled");
+	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG))
+		libreswan_log("Warning: IMPAIR_SEND_BOGUS_PAYLOAD_FLAG enabled");
 	if (DBGP(IMPAIR_SEND_IKEv2_KE))
 		libreswan_log("Warning: IMPAIR_SEND_IKEv2_KE enabled");
 
-
 	if (DBGP(IMPAIR_DELAY_ADNS_KEY_ANSWER))
 		libreswan_log("Warning: IMPAIR_DELAY_ADNS_KEY_ANSWER enabled");
-
-
 	if (DBGP(IMPAIR_DELAY_ADNS_TXT_ANSWER))
 		libreswan_log("Warning: IMPAIR_DELAY_ADNS_TXT_ANSWER enabled");
 

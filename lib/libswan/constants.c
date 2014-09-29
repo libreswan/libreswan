@@ -44,7 +44,7 @@
  * That allows a guarantee that the result is NUL-terminated.
  *
  * The result is a pointer:
- *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
  * Warning: Is it really wise to silently truncate?  Only the caller knows.
@@ -68,7 +68,7 @@ char *jam_str(char *dest, size_t size, const char *src)
 /*
  * Add a string to a partially filled buffer of limited size
  *
- * This is similar to what people mistakenly thing strncat does
+ * This is similar to what people mistakenly think strncat does
  * but add_str matches jam_str so the arguments are quite different.
  * OpenBSD's strlcat serves the same purpose.
  *
@@ -81,7 +81,7 @@ char *jam_str(char *dest, size_t size, const char *src)
  * the first one.
  *
  * The result is a pointer:
- *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
  * The results of jam_str and add_str provide suitable values for hint
@@ -443,13 +443,15 @@ enum_names exchange_names_ikev1orv2 = {
 };
 
 /* Flag BITS */
-const char *const flag_bit_names[] = {
-	"ISAKMP_FLAG_ENCRYPTION",	/* bit 0 */
-	"ISAKMP_FLAG_COMMIT",	/* bit 1 */
-	"bit 2",	/* bit 2 */
-	"ISAKMP_FLAG_IKE_INIT",	/* bit 3 */
-	"ISAKMP_FLAG_VERSION",	/* bit 4 */
-	"ISAKMP_FLAG_MSG_RESPONSE",	/* bit 5 */
+const char *const isakmp_flag_names[] = {
+	"ISAKMP_FLAG_v1_ENCRYPTION", /* IKEv1 only bit 0 */
+	"ISAKMP_FLAG_v1_COMMIT", /* IKEv1 only bit 1 */
+	"ISAKMP_FLAG_v1_AUTHONLY", /* IKEv1 only bit 2 */
+	"ISAKMP_FLAG_v2_IKE_INIT", /* IKEv2 only bit 3 */
+	"ISAKMP_FLAG_v2_VERSION", /* IKEv2 only bit 4 */
+	"ISAKMP_FLAG_v2_MSG_RESPONSE", /* IKEv2 only bit 5 */
+	"ISAKMP_FLAG_MSG_RESERVED_BIT6",
+	"ISAKMP_FLAG_MSG_RESERVED_BIT7",
 	NULL	/* termination for bitnamesof() */
 };
 

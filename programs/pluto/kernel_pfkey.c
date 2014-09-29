@@ -1049,7 +1049,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 				      "pfkey_nat_t_type Add ESP SA",
 				      sa->text_said, extensions);
 		DBG(DBG_KERNEL,
-		    DBG_log("setting natt_type to %d\n", sa->natt_type));
+		    DBG_log("setting natt_type to %d", sa->natt_type));
 		if (!success)
 			return FALSE;
 
@@ -1063,7 +1063,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 					      "pfkey_nat_t_sport Add ESP SA",
 					      sa->text_said, extensions);
 			DBG(DBG_KERNEL,
-			    DBG_log("setting natt_sport to %d\n",
+			    DBG_log("setting natt_sport to %d",
 				    sa->natt_sport));
 			if (!success)
 				return FALSE;
@@ -1079,7 +1079,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 					      "pfkey_nat_t_dport Add ESP SA",
 					      sa->text_said, extensions);
 			DBG(DBG_KERNEL,
-			    DBG_log("setting natt_dport to %d\n",
+			    DBG_log("setting natt_dport to %d",
 				    sa->natt_dport));
 			if (!success)
 				return FALSE;
@@ -1092,7 +1092,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 						   sa->text_said, extensions);
 			DBG(DBG_KERNEL, {
 				ipstr_buf b;
-				DBG_log("setting nat_oa to %s\n",
+				DBG_log("setting nat_oa to %s",
 					ipstr(sa->natt_oa, &b));
 			});
 			if (!success)

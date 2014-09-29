@@ -91,8 +91,9 @@ static void help(void)
 		" [--groups <access control groups>]"
 		" [--cert <path>]"
 		" [--ca <distinguished name>]"
+		" [--sendca no|issuer|all]"
 		" [--sendcert]"
-		" [--sendcerttype number]"
+		" [--sendcerttype number]" /* deprecated? */
 		" \\\n   "
 		" [--nexthop <ip-address>]"
 		" \\\n   "
@@ -483,6 +484,7 @@ enum option_enums {
 	CD_INITIAL_CONTACT,
 	CD_CISCO_UNITY,
 	CD_IKE,
+	CD_SEND_CA,
 	CD_PFSGROUP,
 	CD_REMOTEPEERTYPE,
 	CD_SHA2_TRUNCBUG,
@@ -695,6 +697,7 @@ static const struct option long_opts[] = {
 	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
 	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
+	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
 
@@ -778,6 +781,8 @@ static const struct option long_opts[] = {
 	{ "impair-retransmits", no_argument, NULL, IMPAIR_RETRANSMITS_IX + DO },
 	{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
 		IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
+	{ "impair-send-bogus-payload-flag", no_argument, NULL,
+		IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX + DO },
 	{ "impair-send-ikev2-ke", no_argument, NULL,
 		IMPAIR_SEND_IKEv2_KE_IX + DO },
 	{ "impair-send-key-size-check", no_argument, NULL,
@@ -1538,6 +1543,15 @@ int main(int argc, char **argv)
 
 		case CD_KTRIES: /* --keyingtries <count> */
 			msg.sa_keying_tries = opt_whole;
+			continue;
+
+		case CD_SEND_CA:
+			if (streq(optarg, "issuer"))
+				msg.send_ca = CA_SEND_ISSUER;
+			else if (streq(optarg, "all"))
+				msg.send_ca = CA_SEND_ALL;
+			else
+				msg.send_ca = CA_SEND_NONE;
 			continue;
 
 		case CD_FORCEENCAPS:

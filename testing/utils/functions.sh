@@ -82,7 +82,7 @@ kvmplutotest () {
 		echo '***** KVM PLUTO RUNNING' $testdir${KLIPS_MODULE} '*******'
 		if [ -d $testdir ] ; then
 			cd $testdir 
-			${UTILS}/dotest.sh
+			${UTILS}/swantest
 			cd ../
 		else
 			echo '**** Skipping non-existing test $testdir *****'

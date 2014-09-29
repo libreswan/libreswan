@@ -25,7 +25,7 @@ then
 fi
 
 # Clean
-rm -f reqs/* certs/* keys/* newcerts/* cacerts/* crls/* pkcs12/mainca/* pkcs12/otherca/* pkcs12/curveca/* index.txt* serial* nss-pw crlnumber
+rm -f reqs/* certs/* keys/* newcerts/* cacerts/* crls/* pkcs12/mainca/* pkcs12/otherca/* pkcs12/* pkcs12/west_root_ca/* index.txt* serial* nss-pw crlnumber
 
 echo -n "foobar" > nss-pw
 # Prep
@@ -86,7 +86,7 @@ echo "------------------------------------------"
 echo ""
 
 # Generate CA's
-for cauth in mainca otherca
+for cauth in mainca otherca east_chain_root west_chain_root
 do
 openssl genrsa -passout pass:foobar -des3 -out keys/$cauth.key 1024
 openssl rsa -in keys/$cauth.key -out keys/$cauth.key -passin pass:foobar
@@ -111,6 +111,7 @@ send "testing@libreswan.org\n"
 wait
 EOF
 done
+
 
 #Generate EC CA
 openssl ecparam -out keys/curveca.key -name secp384r1 -genkey -noout
@@ -417,6 +418,237 @@ do
                 days=$((days+1))
         fi;
 done
+
+# Make ROOT->I1->I2->I3->EE chains
+# copy and paste warning!
+
+machine=east_chain_intermediate_1
+signer=east_chain_root
+$EXPECT  <<EOF
+spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/$machine.key -out reqs/$machine.req
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "$machine.testing.libreswan.org\n"
+expect "Email"
+send "testing@libreswan.org\n"
+expect "challenge"
+send "\n"
+expect "optional"
+send "\n"
+wait
+EOF
+
+# sign machine cert
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out cacerts/$machine.crt -notext -cert cacerts/$signer.crt -keyfile keys/$signer.key -passin pass:foobar -extensions v3_ca
+
+machine=east_chain_intermediate_2
+signer=east_chain_intermediate_1
+$EXPECT  <<EOF
+spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/$machine.key -out reqs/$machine.req
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "$machine.testing.libreswan.org\n"
+expect "Email"
+send "testing@libreswan.org\n"
+expect "challenge"
+send "\n"
+expect "optional"
+send "\n"
+wait
+EOF
+
+# sign machine cert
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out cacerts/$machine.crt -notext -cert cacerts/$signer.crt -keyfile keys/$signer.key -passin pass:foobar -extensions v3_ca
+
+machine=east_chain_intermediate_3
+signer=east_chain_intermediate_2
+$EXPECT  <<EOF
+spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/$machine.key -out reqs/$machine.req
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "$machine.testing.libreswan.org\n"
+expect "Email"
+send "testing@libreswan.org\n"
+expect "challenge"
+send "\n"
+expect "optional"
+send "\n"
+wait
+EOF
+
+# sign machine cert
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out cacerts/$machine.crt -notext -cert cacerts/$signer.crt -keyfile keys/$signer.key -passin pass:foobar -extensions v3_ca
+
+
+machine=east_chain_endcert
+signer=east_chain_intermediate_3
+$EXPECT  <<EOF
+spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/$machine.key -out reqs/$machine.req
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "$machine.testing.libreswan.org\n"
+expect "Email"
+send "testing@libreswan.org\n"
+expect "challenge"
+send "\n"
+expect "optional"
+send "\n"
+wait
+EOF
+
+# sign machine cert
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/$signer.crt -keyfile keys/$signer.key -passin pass:foobar
+openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/east_chain_root.crt -caname "east_chain_root" -out pkcs12/$machine.p12 -passin pass:foobar -passout pass:foobar
+
+machine=west_chain_intermediate_1
+signer=west_chain_root
+$EXPECT  <<EOF
+spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/$machine.key -out reqs/$machine.req
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "$machine.testing.libreswan.org\n"
+expect "Email"
+send "testing@libreswan.org\n"
+expect "challenge"
+send "\n"
+expect "optional"
+send "\n"
+wait
+EOF
+
+# sign machine cert
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out cacerts/$machine.crt -notext -cert cacerts/$signer.crt -keyfile keys/$signer.key -passin pass:foobar -extensions v3_ca
+
+machine=west_chain_intermediate_2
+signer=west_chain_intermediate_1
+$EXPECT  <<EOF
+spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/$machine.key -out reqs/$machine.req
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "$machine.testing.libreswan.org\n"
+expect "Email"
+send "testing@libreswan.org\n"
+expect "challenge"
+send "\n"
+expect "optional"
+send "\n"
+wait
+EOF
+
+# sign machine cert
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out cacerts/$machine.crt -notext -cert cacerts/$signer.crt -keyfile keys/$signer.key -passin pass:foobar -extensions v3_ca
+
+machine=west_chain_intermediate_3
+signer=west_chain_intermediate_2
+$EXPECT  <<EOF
+spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/$machine.key -out reqs/$machine.req
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "$machine.testing.libreswan.org\n"
+expect "Email"
+send "testing@libreswan.org\n"
+expect "challenge"
+send "\n"
+expect "optional"
+send "\n"
+wait
+EOF
+
+# sign machine cert
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out cacerts/$machine.crt -notext -cert cacerts/$signer.crt -keyfile keys/$signer.key -passin pass:foobar -extensions v3_ca
+
+
+machine=west_chain_endcert
+signer=west_chain_intermediate_3
+$EXPECT  <<EOF
+spawn openssl req -newkey rsa:1024 -passin pass:foobar -passout pass:foobar -keyout keys/$machine.key -out reqs/$machine.req
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "$machine.testing.libreswan.org\n"
+expect "Email"
+send "testing@libreswan.org\n"
+expect "challenge"
+send "\n"
+expect "optional"
+send "\n"
+wait
+EOF
+
+# sign machine cert
+openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/$signer.crt -keyfile keys/$signer.key -passin pass:foobar
+openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/west_chain_root.crt -caname "west_chain_root" -out pkcs12/$machine.p12 -passin pass:foobar -passout pass:foobar
 
 echo "X509 test material generation complete"
 popd

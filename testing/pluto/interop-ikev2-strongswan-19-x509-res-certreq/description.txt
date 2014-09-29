@@ -1,0 +1,5 @@
+Basic pluto with IKEv2 using X.509 on the initiator (west), and Strongswan on
+the responder (east)
+
+This test is to ensure that the certreq that is sent to east is the RFC SHA-1 hash
+type that strongswan expects.

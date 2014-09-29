@@ -1,0 +1,1 @@
+Basic pluto test with west has auto=route and netkey stack.

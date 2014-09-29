@@ -311,13 +311,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	int result;
 	char
 		myid_str2[IDTOA_BUF],
-		srcip_str[ADDRTOT_BUF + sizeof("PLUTO_MY_SOURCEIP=") + 4],
+		srcip_str[sizeof("PLUTO_MY_SOURCEIP='' ") + ADDRTOT_BUF],
 		myclient_str[SUBNETTOT_BUF],
 		myclientnet_str[ADDRTOT_BUF],
 		myclientmask_str[ADDRTOT_BUF],
 		peerid_str[IDTOA_BUF],
-		metric_str[sizeof("PLUTO_METRIC") + 5],
-		connmtu_str[sizeof("PLUTO_MTU") + 5],
+		metric_str[sizeof("PLUTO_METRIC= ") + 4],
+		connmtu_str[sizeof("PLUTO_MTU= ") + 4],
 		peerclient_str[SUBNETTOT_BUF],
 		peerclientnet_str[ADDRTOT_BUF],
 		peerclientmask_str[ADDRTOT_BUF],
@@ -442,7 +442,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		"PLUTO_STACK='%s' "
 		"%s"		/* optional metric */
 		"%s"		/* optional mtu */
-		"PLUTO_ADDTIME='%lu' "
+		"PLUTO_ADDTIME='%" PRIu64 "' "
 		"PLUTO_CONN_POLICY='%s' "	/* 25 */
 		"PLUTO_CONN_ADDRFAMILY='ipv%d' "
 		"XAUTH_FAILED=%d "
@@ -483,7 +483,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		kernel_ops->kern_name,
 		metric_str,
 		connmtu_str,
-		st == NULL ? 0L : (unsigned long)st->st_esp.add_time,
+		(u_int64_t)(st == NULL ? 0U : st->st_esp.add_time),
 		prettypolicy(c->policy),	/* 25 */
 		(c->addr_family == AF_INET) ? 4 : 6,
 		(st && st->st_xauth_soft) ? 1 : 0,
@@ -935,7 +935,7 @@ static bool raw_eroute(const ip_address *this_host,
 
 	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (!result || DBGP(DBG_CONTROL | DBG_KERNEL))
-		DBG_log("raw_eroute result=%u\n", result);
+		DBG_log("raw_eroute result=%u", result);
 
 	return result;
 }
@@ -1653,7 +1653,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		DBG(DBG_CRYPT,
-		    DBG_log("looking for alg with transid: %d keylen: %d auth: %d\n",
+		    DBG_log("looking for alg with transid: %d keylen: %d auth: %d",
 			    st->st_esp.attrs.transattrs.encrypt,
 			    st->st_esp.attrs.transattrs.enckeylen,
 			    st->st_esp.attrs.transattrs.integ_hash));
@@ -1689,7 +1689,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			}
 
 			DBG(DBG_CRYPT,
-			    DBG_log("checking transid: %d keylen: %d auth: %d\n",
+			    DBG_log("checking transid: %d keylen: %d auth: %d",
 				    ei->transid, ei->enckeylen, ei->auth));
 
 			if (st->st_esp.attrs.transattrs.encrypt ==
@@ -1759,8 +1759,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 		}
 
+		DBG(DBG_KERNEL, DBG_log("st->st_esp.keymat_len=%d is key_len=%d + ei->authkeylen=%d",
+			st->st_esp.keymat_len, key_len, ei->authkeylen));
 		passert(st->st_esp.keymat_len == key_len + ei->authkeylen);
-
 
 		set_text_said(text_said, &dst.addr, esp_spi, SA_ESP);
 
@@ -1918,7 +1919,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			break;
 
 		/* RFC 3566 Section 4.1 */
-		case AUTH_ALGORITHM_AES_CBC:
+		case AUTH_ALGORITHM_AES_XCBC:
 			authalg = SADB_X_AALG_AES_XCBC_MAC;
 			key_len = BYTES_FOR_BITS(128);
 			break;
@@ -3044,62 +3045,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 		    DBG_log("Unknown kernel stack in delete_ipsec_sa"));
 		break;
 	} /* switch kern_interface */
-}
-
-static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
-{
-	struct connection *c = st->st_connection;
-	char text_said[SATOT_BUF];
-	struct kernel_sa sa;
-	ip_address
-		src = inbound ? c->spd.that.host_addr : c->spd.this.host_addr,
-		dst = inbound ? c->spd.this.host_addr : c->spd.that.host_addr;
-
-	ipsec_spi_t esp_spi =
-		inbound ? st->st_esp.our_spi : st->st_esp.attrs.spi;
-
-	u_int16_t
-		natt_sport =
-		    inbound ? c->spd.that.host_port : c->spd.this.host_port,
-		natt_dport =
-		    inbound ? c->spd.this.host_port : c->spd.that.host_port;
-
-	set_text_said(text_said, &dst, esp_spi, SA_ESP);
-
-	zero(&sa);
-	sa.spi = esp_spi;
-	sa.src = &src;
-	sa.dst = &dst;
-	sa.text_said = text_said;
-	sa.authalg = st->st_esp.attrs.transattrs.integ_hash;
-	sa.natt_sport = natt_sport;
-	sa.natt_dport = natt_dport;
-	sa.transid = st->st_esp.attrs.transattrs.encrypt;
-#ifdef HAVE_LABELED_IPSEC
-	sa.sec_ctx = st->sec_ctx;
-#endif
-
-	return kernel_ops->add_sa(&sa, TRUE);
-}
-
-bool update_ipsec_sa(struct state *st USED_BY_KLIPS)
-{
-	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
-		if ((st->st_esp.present) && (
-			    (!update_nat_t_ipsec_esp_sa(st, TRUE)) ||
-			    (!update_nat_t_ipsec_esp_sa(st, FALSE))))
-			return FALSE;
-	} else if (IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(st->st_state)) {
-		if ((st->st_esp.present) &&
-		    (!update_nat_t_ipsec_esp_sa(st, FALSE)))
-			return FALSE;
-	} else {
-		DBG_log("assert failed at %s:%d st_state=%d", __FILE__,
-			__LINE__,
-			st->st_state);
-		return FALSE;
-	}
-	return TRUE;
 }
 
 bool was_eroute_idle(struct state *st, deltatime_t since_when)

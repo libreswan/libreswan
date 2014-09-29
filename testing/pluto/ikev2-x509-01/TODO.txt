@@ -1,4 +1,0 @@
-issue Notification about:
-      1) can not find X.509 key
-      2) issuer CA not valid
-      3) 

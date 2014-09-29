@@ -192,10 +192,28 @@ void update_host_pairs(struct connection *c)
 }
 
 /* Delete a connection */
+#define DELETE_THIS_END(end)	delete_end(end, FALSE)
+#define DELETE_THAT_END(end)	delete_end(end, TRUE)
 
-static void delete_end(struct end *e)
+static void delete_end(struct end *e, bool that)
 {
 	free_id_content(&e->id);
+
+	/* the "that" end's ca_path contains certs that
+	 * were collected during the exchange, so they
+	 * need to be removed along with the reference chain
+	 */
+	if (that && e->ca_path.u.x509 != NULL) {
+		x509cert_t *tmp = e->ca_path.u.x509;
+		free_authcert_chain(&tmp);
+
+		while (tmp != NULL) {
+			x509cert_t *nc = tmp->next;
+			pfreeany(tmp);
+			tmp = nc;
+		}
+	}
+
 	freeanychunk(e->ca);
 	release_cert(e->cert);
 	pfreeany(e->updown);
@@ -207,8 +225,8 @@ static void delete_end(struct end *e)
 
 static void delete_sr(struct spd_route *sr)
 {
-	delete_end(&sr->this);
-	delete_end(&sr->that);
+	DELETE_THIS_END(&sr->this);
+	DELETE_THAT_END(&sr->that);
 }
 
 /*
@@ -755,7 +773,7 @@ static void unshare_connection_strings(struct connection *c)
 		reference_addresspool(c->pool);
 }
 
-static void load_end_certificate(const char *name, struct end *dst)
+static bool load_end_certificate(const char *name, struct end *dst)
 {
 	realtime_t valid_until;
 	cert_t cert;
@@ -767,9 +785,9 @@ static void load_end_certificate(const char *name, struct end *dst)
 	dst->cert.ty = CERT_NONE;
 
 	if (name == NULL)
-		return;
+		return FALSE;
 
-	DBG(DBG_CONTROL, DBG_log("loading certificate %s\n", name));
+	DBG(DBG_CONTROL, DBG_log("loading certificate %s", name));
 	dst->cert_filename = clone_str(name, "certificate name");
 
 	{
@@ -777,11 +795,11 @@ static void load_end_certificate(const char *name, struct end *dst)
 		bool valid_cert = load_cert_from_nss(name,
 						"host cert", &cert);
 		if (!valid_cert) {
-			whack_log(RC_FATAL, "cannot load certificate %s\n",
+			whack_log(RC_FATAL, "cannot load certificate %s",
 				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;
-			return;
+			return FALSE;
 		}
 	}
 
@@ -814,6 +832,61 @@ static void load_end_certificate(const char *name, struct end *dst)
 		bad_case(cert.ty);
 	}
 
+	return TRUE;
+}
+
+static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
+{
+	x509cert_t *ac = x509_get_authcerts_chain();
+	x509cert_t *new = NULL, *iac = NULL;
+	char ibuf[ASN1_BUF_LEN], tbuf[ASN1_BUF_LEN];
+
+	zero(&dst->ca_path);
+	dst->ca_path.ty = CERT_NONE;
+
+	/* don't load a ca_path */
+	if (issuer_dn.ptr == NULL || issuer_dn.len < 1)
+		return;
+
+	/* find the issuing cert */
+	while (ac != NULL) {
+		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags) {
+			new = clone_thing(*ac, "x509cert_t");
+			new->next = NULL;
+			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
+			DBG(DBG_X509, DBG_log("load_end_ca_path : end cert issuer is %s",
+									ibuf));
+			break;
+		}
+		ac = ac->next;
+	}
+	/* starting with the issuer's CA copy the path down */
+	if (new != NULL) {
+		dst->ca_path.ty = CERT_X509_SIGNATURE;
+		dst->ca_path.u.x509 = new;
+
+		while ((iac = get_authcert(new->issuer,
+					   new->authKeySerialNumber,
+					   new->authKeyID, AUTH_CA)) != NULL) {
+			x509cert_t *rootcheck = NULL;
+
+			rootcheck = get_authcert(iac->issuer,
+					         iac->authKeySerialNumber,
+						 iac->authKeyID, AUTH_CA);
+
+			/* root cert is next, but we don't want it in the chain */
+			if (rootcheck != NULL && (same_dn(iac->subject,
+							  rootcheck->subject)))
+				break;
+
+			dntoa(tbuf, ASN1_BUF_LEN, iac->subject);
+			DBG(DBG_X509, DBG_log("load_end_ca_path : adding %s to chain",
+						tbuf));
+			new->next = clone_thing(*iac, "x509cert_t");
+			new = new->next;
+			new->next = NULL;
+		}
+	}
 }
 
 static bool extract_end(struct end *dst, const struct whack_end *src,
@@ -855,7 +928,9 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	}
 
 	/* load local end certificate and extract ID, if any */
-	load_end_certificate(src->cert, dst);
+	if (load_end_certificate(src->cert, dst))
+		load_end_ca_path(dst->cert.u.x509->issuer, dst);
+
 	/* ??? what should we do on load_end_certificate failure? */
 
 	/* does id has wildcards? */
@@ -1330,13 +1405,19 @@ void add_connection(const struct whack_message *wm)
 		c->spd.this.left = TRUE;
 		c->spd.that.left = FALSE;
 
+		c->send_ca = wm->send_ca;
+		same_rightca = same_leftca = FALSE;
+
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
-		if (same_rightca)
+		if (same_rightca) {
 			c->spd.that.ca = c->spd.this.ca;
-		else if (same_leftca)
+			c->spd.that.ca_path = c->spd.this.ca_path;
+		} else if (same_leftca) {
 			c->spd.this.ca = c->spd.that.ca;
+			c->spd.this.ca_path = c->spd.that.ca_path;
+		}
 
 		/*
 		 * How to add addresspool only for responder?

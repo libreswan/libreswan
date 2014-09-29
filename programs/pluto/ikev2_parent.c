@@ -88,7 +88,7 @@ static bool ikev2_get_dcookie(u_char *dcookie, chunk_t st_ni,
 static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 					    struct state *st);
 
-static int build_ike_version();
+static int build_ikev2_version();
 
 /*
  *
@@ -373,17 +373,22 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
 		struct isakmp_hdr hdr;
 
-		zero(&hdr);	/* default to 0 */
+		zero(&hdr);
 		/* Impair function will raise major/minor by 1 for testing */
-		hdr.isa_version = build_ike_version();
+		hdr.isa_version = build_ikev2_version();
 
 		hdr.isa_np = st->st_dcookie.ptr != NULL?
 			ISAKMP_NEXT_v2N : ISAKMP_NEXT_v2SA;
 		hdr.isa_xchg = ISAKMP_v2_SA_INIT;
-		hdr.isa_flags = ISAKMP_FLAGS_IKE_I;
+		/* add original initiator flag - version flag could be set */
+		hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 		hdr.isa_msgid = v2_INITIAL_MSGID;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		/* R-cookie, are left zero */
+
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
 
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&md->rbody)) {
@@ -450,7 +455,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		zero(&in);
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(
 				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
@@ -716,7 +721,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	}
 
-	DBG_log("found connection: %s\n", c ? c->name : "<none>");
+	DBG_log("found connection: %s", c ? c->name : "<none>");
 
 	if (st == NULL) {
 		st = new_state();
@@ -889,16 +894,19 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* HDR out */
 	{
-		struct isakmp_hdr r_hdr = md->hdr;
+		struct isakmp_hdr hdr = md->hdr;
 
-		memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		r_hdr.isa_np = ISAKMP_NEXT_v2SA;
-		/* major will be same, but their minor might be higher */
-		r_hdr.isa_version = build_ike_version();
-		r_hdr.isa_flags &= ~ISAKMP_FLAGS_IKE_I;
-		r_hdr.isa_flags |=  ISAKMP_FLAGS_MSG_R;
-		/* PAUL shouldn't we set r_hdr.isa_msgid = [htonl](st->st_msgid);  here? */
-		if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream,
+		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_np = ISAKMP_NEXT_v2SA;
+		/* set msg responder flag - clear other flags */
+		hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
+		hdr.isa_version = build_ikev2_version();
+
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&md->rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -980,7 +988,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		zero(&in);
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(
 				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			in.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
@@ -1168,6 +1176,8 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_nr, "Ni"));
+
+	/* We're missing processing a CERTREQ in here */
 
 	/* process and confirm the SA selected */
 	{
@@ -1477,7 +1487,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	a.isaa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 		libreswan_log(
 			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 		a.isaa_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
@@ -1577,15 +1587,22 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* HDR out */
 	{
-		struct isakmp_hdr r_hdr = md->hdr;
+		struct isakmp_hdr hdr = md->hdr;
 
-		r_hdr.isa_np    = ISAKMP_NEXT_v2E;
-		r_hdr.isa_xchg  = ISAKMP_v2_AUTH;
-		r_hdr.isa_flags = ISAKMP_FLAGS_IKE_I;
-		r_hdr.isa_msgid = st->st_msgid;
-		memcpy(r_hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream,
+		/* clear all flags, set original initiator */
+		hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
+		hdr.isa_version = build_ikev2_version();
+		hdr.isa_np    = ISAKMP_NEXT_v2E;
+		hdr.isa_xchg  = ISAKMP_v2_AUTH;
+		hdr.isa_msgid = st->st_msgid;
+		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
+		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&md->rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1593,7 +1610,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	/* insert an Encryption payload header */
 	e.isag_np = ISAKMP_NEXT_v2IDi;
 	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 		libreswan_log(
 			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 		e.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
@@ -1632,7 +1649,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		build_id_payload((struct isakmp_ipsec_id *)&r_id, &id_b,
 				 &c->spd.this);
 		r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(
 				" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			r_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
@@ -2036,14 +2053,21 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 		/* HDR out */
 		{
-			struct isakmp_hdr r_hdr = md->hdr;
+			struct isakmp_hdr hdr = md->hdr; /* grab cookies */
 
-			r_hdr.isa_np    = ISAKMP_NEXT_v2E;
-			r_hdr.isa_xchg  = ISAKMP_v2_AUTH;
-			r_hdr.isa_flags = ISAKMP_FLAGS_MSG_R;
-			memcpy(r_hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-			memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+			/* set msg responder flag - clear others*/
+			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
+			hdr.isa_version = build_ikev2_version();
+			hdr.isa_np    = ISAKMP_NEXT_v2E;
+			hdr.isa_xchg  = ISAKMP_v2_AUTH;
+			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
+			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+
+			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+			}
+
+			if (!out_struct(&hdr, &isakmp_hdr_desc,
 					&reply_stream, &md->rbody))
 				return STF_INTERNAL_ERROR;
 		}
@@ -2121,7 +2145,11 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("assembled IDr payload -- CERT next"));
 
-		/* send CERT payload RFC 4306 3.6, 1.2:([CERT,] ) */
+		/*
+		 * send CERT payload RFC 4306 3.6, 1.2:([CERT,] )
+		 * upon which our received I2 CERTREQ is ignored,
+		 * but ultimately should go into the CERT decision 
+		 */
 		if (send_cert) {
 			stf_status certstat = ikev2_send_cert(st, md,
 							      O_RESPONDER,
@@ -2629,7 +2657,13 @@ void send_v2_notification(struct state *p1st,
 
 	/*
 	 * TBD check which of these comments below is still true :)
-	 * TBD accept HDR FLAGS as arg. default ISAKMP_FLAGS_MSG_R
+	 *
+	 * TBD accept HDR FLAGS as arg. default ISAKMP_FLAGS_v2_MSG_R
+	 * ^--- Is this notify in response to request packet? If so yes.
+	 *
+	 * TBD if we are the original initiator we must set the
+	 *     ISAKMP_FLAGS_v2_IKE_I flag. This is currently not done!
+	 *
 	 * TBD when there is a child SA use that SPI in the notify paylod.
 	 * TBD support encrypted notifications payloads.
 	 * TBD accept Critical bit as an argument. default is set.
@@ -2653,18 +2687,23 @@ void send_v2_notification(struct state *p1st,
 
 	/* HDR out */
 	{
-		struct isakmp_hdr n_hdr;
+		struct isakmp_hdr hdr;
 
-		zero(&n_hdr);                           /* default to 0 */  /* AAA should we copy from MD? */
-		/* Impair function will raise major/minor by 1 for testing */
-		n_hdr.isa_version = build_ike_version();
-		memcpy(n_hdr.isa_rcookie, rcookie, COOKIE_SIZE);
-		memcpy(n_hdr.isa_icookie, icookie, COOKIE_SIZE);
-		n_hdr.isa_xchg = ISAKMP_v2_SA_INIT;
-		n_hdr.isa_np = ISAKMP_NEXT_v2N;
-		n_hdr.isa_flags &= ~ISAKMP_FLAGS_IKE_I;
-		n_hdr.isa_flags  |=  ISAKMP_FLAGS_MSG_R;
-		if (!out_struct(&n_hdr, &isakmp_hdr_desc, &reply_stream, &rbody)) {
+		zero(&hdr);
+		hdr.isa_version = build_ikev2_version();
+		memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
+		memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
+		hdr.isa_xchg = ISAKMP_v2_SA_INIT;
+		hdr.isa_np = ISAKMP_NEXT_v2N;
+		/* XXX unconditionally clearing original initiator flag is wrong */
+		hdr.isa_flags &= ~ISAKMP_FLAGS_v2_IKE_I;
+		/* add msg responder flag*/
+		hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody)) {
 			libreswan_log(
 				"error initializing hdr for notify message");
 			return;
@@ -2674,7 +2713,7 @@ void send_v2_notification(struct state *p1st,
 	/* build and add v2N payload to the packet */
 	/* In v2, for parent, protoid must be 0 and SPI must be empty */
 	if (!ship_v2N(ISAKMP_NEXT_v2NONE,
-		 DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG) ?
+		 DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG) ?
 		   (ISAKMP_PAYLOAD_NONCRITICAL | ISAKMP_PAYLOAD_LIBRESWAN_BOGUS) :
 		   ISAKMP_PAYLOAD_NONCRITICAL,
 		 PROTO_v2_RESERVED,
@@ -2713,7 +2752,7 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 	    DBG_log("Adding a v2N Payload"));
 	n.isan_np =  np;
 	n.isan_critical = critical;
-	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 		libreswan_log(
 			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 		n.isan_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
@@ -2781,26 +2820,33 @@ static stf_status ikev2_in_create_child_sa_refuse(struct msg_digest *md)
 
 	/* HDR out */
 	{
-		struct isakmp_hdr r_hdr;
+		struct isakmp_hdr hdr;
 
-		zero(&r_hdr);
-		r_hdr.isa_version = build_ike_version();
-		memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
-		       COOKIE_SIZE);
-		memcpy(r_hdr.isa_icookie, pst->st_icookie,
-		       COOKIE_SIZE);
-		r_hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
-		r_hdr.isa_np = ISAKMP_NEXT_v2E;
-		r_hdr.isa_flags |= ISAKMP_FLAGS_MSG_R;
-		r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
+		zero(&hdr);
+		hdr.isa_version = build_ikev2_version();
+		/* add message responder flag */
+		hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
+		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
+		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
+		hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
+		hdr.isa_np = ISAKMP_NEXT_v2E;
+		hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
-		/* encryption role based on original state not md state */
-		if (IS_V2_INITIATOR(pst->st_state))
+		/* encryption role based on original originator */
+		if (IS_V2_INITIATOR(pst->st_state)) {
 			md->role = O_INITIATOR;
-		else
+			/* add original initiator flag */
+			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
+		} else {
 			md->role = O_RESPONDER;
+			/* not adding original initiator flag */
+		}
 
-		if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc,
 				&reply_stream, &md->rbody)) {
 			libreswan_log("error initializing hdr for "
 					"CREATE_CHILD_SA  message");
@@ -2924,8 +2970,8 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 				c_serialno, st->st_serialno));
 		}
 
-		/* Only send response if it is request*/
-		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)) {
+		/* Only send response if incoming packet is a message request */
+		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			unsigned char *authstart;
 			pb_stream e_pbs, e_pbs_cipher;
 			struct ikev2_generic e;
@@ -2950,19 +2996,28 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 			/* HDR out */
 			{
-				struct isakmp_hdr r_hdr;
-				zero(&r_hdr); /* default to 0 */  /* AAA should we copy from MD? */
-				r_hdr.isa_version = build_ike_version();
-				memcpy(r_hdr.isa_rcookie, st->st_rcookie,
+				struct isakmp_hdr hdr;
+				zero(&hdr);
+				hdr.isa_version = build_ikev2_version();
+				memcpy(hdr.isa_rcookie, st->st_rcookie,
 				       COOKIE_SIZE);
-				memcpy(r_hdr.isa_icookie, st->st_icookie,
+				memcpy(hdr.isa_icookie, st->st_icookie,
 				       COOKIE_SIZE);
-				r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-				r_hdr.isa_np = ISAKMP_NEXT_v2E;
-				r_hdr.isa_msgid = htonl(md->msgid_received);
-				r_hdr.isa_flags  |=  ISAKMP_FLAGS_MSG_R;
+				hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
+				hdr.isa_np = ISAKMP_NEXT_v2E;
+				hdr.isa_msgid = htonl(md->msgid_received);
+				/* add message responder flag */
+				hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
+				/* add original initiator flag if needed */
+				if (prole == O_INITIATOR) {
+					hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
+				}
 
-				if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+				if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+					hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+				}
+
+				if (!out_struct(&hdr, &isakmp_hdr_desc,
 						&reply_stream, &md->rbody)) {
 					libreswan_log(
 						"error initializing hdr for informational message");
@@ -3285,7 +3340,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			}       /* for */
 		} else {
 			/* empty response to our IKESA delete request*/
-			if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) {
+			if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
 				if (st->st_state == STATE_IKESA_DEL) {
 					/* My understanding is that delete payload for IKE SA
 					 * should be the only payload in the informational.
@@ -3346,25 +3401,30 @@ stf_status ikev2_send_informational(struct state *st)
 
 		/* HDR out */
 		{
-			struct isakmp_hdr r_hdr;
-			zero(&r_hdr);
-			r_hdr.isa_version = build_ike_version();
-			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
-			       COOKIE_SIZE);
-			memcpy(r_hdr.isa_icookie, pst->st_icookie,
-			       COOKIE_SIZE);
-			r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-			r_hdr.isa_np = ISAKMP_NEXT_v2E;
-			r_hdr.isa_flags |= ISAKMP_FLAGS_IKE_I;
-			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
+			struct isakmp_hdr hdr;
+			zero(&hdr);
+			hdr.isa_version = build_ikev2_version();
+			memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
+			memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
+			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
+			hdr.isa_np = ISAKMP_NEXT_v2E;
+			hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
 			/* encryption role based on original state not md state */
-			if (IS_V2_INITIATOR(pst->st_state))
+			if (IS_V2_INITIATOR(pst->st_state)) {
 				md.role = O_INITIATOR;
-			else
+				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
+			} else {
 				md.role = O_RESPONDER;
+				/* not setting original initiator flag */
+			}
+			/* not setting message responder flag */
 
-			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+			}
+
+			if (!out_struct(&hdr, &isakmp_hdr_desc,
 					&reply_stream, &rbody)) {
 				libreswan_log(
 					"error initializing hdr for informational message");
@@ -3481,28 +3541,30 @@ void ikev2_delete_out(struct state *st)
 
 		/* HDR out */
 		{
-			struct isakmp_hdr r_hdr;
-			zero(&r_hdr); /* default to 0 */  /* AAA should we copy from MD? */
-			r_hdr.isa_version = build_ike_version();
-			memcpy(r_hdr.isa_rcookie, pst->st_rcookie,
-			       COOKIE_SIZE);
-			memcpy(r_hdr.isa_icookie, pst->st_icookie,
-			       COOKIE_SIZE);
-			r_hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-			r_hdr.isa_np = ISAKMP_NEXT_v2E;
-			r_hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
-
+			struct isakmp_hdr hdr;
+			zero(&hdr);
+			hdr.isa_version = build_ikev2_version();
+			memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
+			memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
+			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
+			hdr.isa_np = ISAKMP_NEXT_v2E;
+			hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
 			/* set Initiator flag if we are the IKE Original Initiator */
 			if (pst->st_state == STATE_PARENT_I2 ||
 			    pst->st_state == STATE_PARENT_I3) {
-				r_hdr.isa_flags |= ISAKMP_FLAGS_IKE_I;
 				role = O_INITIATOR;
+				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 			} else {
 				role = O_RESPONDER;
 			}
+			/* we are sending a request, so ISAKMP_FLAGS_v2_MSG_R is unset */
 
-			if (!out_struct(&r_hdr, &isakmp_hdr_desc,
+			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+			}
+
+			if (!out_struct(&hdr, &isakmp_hdr_desc,
 					&reply_stream, &rbody)) {
 				libreswan_log(
 					"error initializing hdr for informational message");
@@ -3650,8 +3712,9 @@ unhappy_ending:
  *
  * top 4 bits are major version, lower 4 bits are minor version
  */
-static int build_ike_version()
+static int build_ikev2_version()
 {
+/* TODO: if bumping, we should also set the Version flag in the ISAKMP haeder */
 return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))
 	<< ISA_MAJ_SHIFT) | (IKEv2_MINOR_VERSION +
 	(DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));

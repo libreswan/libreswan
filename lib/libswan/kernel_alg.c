@@ -109,7 +109,7 @@ static void kernel_alg_init(void)
 /* used by kernel_netlink.c and kernel_bsdkame.c */
 int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 {
-	struct sadb_alg *alg_p;
+	struct sadb_alg *alg_p, tmp_alg;
 	uint8_t alg_id = sadb_alg->sadb_alg_id;
 
 	DBG(DBG_KERNEL,
@@ -125,13 +125,6 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 		return -1;
 	}
 
-	/*
-	 * DBG(DBG_KERNEL,
-	 *	DBG_log("kernel_alg_add(): assign *%p=*%p",
-	 *		alg_p, sadb_alg);
-	 *	);
-	 */
-
 	/* This logic "mimics" KLIPS: first algo implementation will be used */
 	if (alg_p->sadb_alg_id != 0) {
 		DBG(DBG_KERNEL,
@@ -141,7 +134,40 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 			);
 		return 0;
 	}
-	*alg_p = *sadb_alg;
+	/*
+	 * The kernel PFKEY interface gives us options we do not want to
+	 * support. The kernel allows ESP_CAST with variable keysizes, and
+	 * we only want to support 128bit. The kernel also allows ESP_BLOWFISH,
+	 * but its inventor Bruce Schneier has said to stop using blowfish
+	 * and use twofish instead. Finally, the kernel allows ESP_DES, which
+	 * is simply too weak to be allowed.
+	 */
+	tmp_alg = *sadb_alg;
+	switch (exttype) {
+	case SADB_EXT_SUPPORTED_ENCRYPT:
+		switch (satype) {
+		case SADB_SATYPE_ESP:
+			switch (alg_id) {
+			case ESP_CAST:
+				/* Overruling kernel - we only want to support 128 */
+				tmp_alg.sadb_alg_minbits = 128;
+				tmp_alg.sadb_alg_maxbits = 128;
+				break;
+			case ESP_BLOWFISH:
+			case ESP_DES:
+				DBG(DBG_KERNEL,
+					DBG_log("kernel_alg_add(): Ignoring alg_id=%d(%s) - too weak",
+						alg_id,
+						enum_name(&esp_transformid_names,
+							alg_id)));
+				return 0;
+			}
+			break;
+		}
+		break;
+	}
+
+	*alg_p = tmp_alg;
 	return 1;
 }
 
@@ -462,15 +488,15 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 	if (keylen == 0) {
 		ei_buf.enckeylen = esp_ealg[sadb_ealg].sadb_alg_minbits /
 			BITS_PER_BYTE;
-	} else if (keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits &&
-		keylen >= esp_ealg[sadb_ealg].sadb_alg_minbits) {
+	} else if (esp_ealg[sadb_ealg].sadb_alg_minbits <= keylen &&
+		keylen <= esp_ealg[sadb_ealg].sadb_alg_maxbits) {
 		ei_buf.enckeylen = keylen / BITS_PER_BYTE;
 	} else {
 		DBG(DBG_PARSING,
-			DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<X<%u",
+			DBG_log("kernel_alg_esp_info(): transid=%d, proposed keylen=%u is invalid, not %u<=X<=%u",
 				transid, keylen,
-				esp_ealg[sadb_ealg].sadb_alg_maxbits,
-				esp_ealg[sadb_ealg].sadb_alg_minbits);
+				esp_ealg[sadb_ealg].sadb_alg_minbits,
+				esp_ealg[sadb_ealg].sadb_alg_maxbits);
 			);
 		/* proposed key length is invalid! */
 		return NULL;

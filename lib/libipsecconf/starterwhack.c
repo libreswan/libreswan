@@ -561,6 +561,12 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		}
 	}
 
+	if (conn->options_set[KBF_SEND_CA])
+		msg.send_ca = conn->options[KBF_SEND_CA];
+	else
+		msg.send_ca = CA_SEND_NONE;
+
+
 	if (conn->options_set[KBF_FORCEENCAP])
 		msg.forceencaps = conn->options[KBF_FORCEENCAP];
 	if (conn->options_set[KBF_NAT_KEEPALIVE])
