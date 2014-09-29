@@ -1,15 +1,6 @@
-: ==== start ====
-#ipsec setup stop
-#umount /var/tmp; mount /var/tmp
-#umount /usr/local; mount /usr/local
-
-TESTNAME=aggr-pluto-01
-source /testing/pluto/bin/eastlocal.sh
-
+/testing/guestbin/swan-prep
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec whack --whackrecord /var/tmp/aggr.record 
-
 ipsec auto --add westnet-eastnet-aggr
-echo done
+ipsec auto --status |grep westnet-eastnet-aggr
+echo "initdone"

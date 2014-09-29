@@ -1,22 +1,12 @@
-: ==== start ====
-#ipsec setup stop
-#umount /var/tmp; mount /var/tmp
-#umount /usr/local && mount /usr/local
-
+/testing/guestbin/swan-prep
 # confirm that the network is alive
-ping -n -c 4 192.0.2.254
+ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through
-iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 # confirm with a ping
-ping -n -c 4 192.0.2.254
-
-TESTNAME=aggr-pluto-01
-source /testing/pluto/bin/westlocal.sh
-
+ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-
 ipsec auto --add westnet-eastnet-aggr
-
-echo done
-
+ipsec auto --status |grep westnet-eastnet-aggr
+echo "initdone"
