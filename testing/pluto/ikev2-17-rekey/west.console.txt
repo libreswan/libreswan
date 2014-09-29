@@ -164,7 +164,7 @@ west #
  sleep 20
 west #
  ipsec eroute
-0          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1014@192.1.2.23
+0          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1010@192.1.2.23
 west #
  echo done
 done
@@ -175,8 +175,8 @@ west NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
 esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=41
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=41
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64 alen=160 aklen=160 eklen=128 jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=33
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789 natencap=none natsport=0 natdport=0   refhim=33
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
