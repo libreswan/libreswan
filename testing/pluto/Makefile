@@ -30,6 +30,7 @@ ifneq ($(UPDATE)$(UPDATEONLY),)
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname west
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname road
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname north
+        ${LIBRESWANSRCDIR}/testing/x509/dist_certs
 endif
 ifeq ($(UPDATEONLY),)
 	../utils/swantest
