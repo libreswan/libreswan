@@ -76,7 +76,7 @@ road #
  ipsec eroute
 0          192.9.2.209/32     -> 192.0.2.0/24       => tun0x1000@192.1.2.23
 road #
- ping -c4 192.0.2.254
+ ping -n -c4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
