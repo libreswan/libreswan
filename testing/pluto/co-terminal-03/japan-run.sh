@@ -31,16 +31,16 @@ ipsec eroute | sed -e 's/^[0-9]* /n /' -e 's/tun0x..../tun0xABCD/'
 ipsec auto $CFG --up japan--wavesec
 ipsec eroute | sed -e 's/^[0-9]* /n /' -e 's/tun0x..../tun0xABCD/'
 
-ping -c 1 1.2.3.4
+ping -n -c 1 1.2.3.4
 /testing/pluto/co-terminal-02/eroutewait.sh tun0
 ipsec eroute | sed -e 's/^[0-9]* /n /' -e 's/tun0x..../tun0xABCD/'
-ping -c 1 1.2.3.4
+ping -n -c 1 1.2.3.4
 
 sleep 1
 
-ping -c 1 192.0.2.2
+ping -n -c 1 192.0.2.2
 /testing/pluto/co-terminal-02/eroutewait.sh 192.1.2.23
-ping -c 1 192.0.2.2
+ping -n -c 1 192.0.2.2
 ipsec eroute | sed -e 's/^[0-9]* /n /' -e 's/tun0x..../tun0xABCD/'
 
 echo done
