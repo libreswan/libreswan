@@ -300,8 +300,7 @@ kvmplutotest	x509-pluto-01		good
 #
 # a test of sending and validating an X.509 cert
 #
-# incomplete test - disabled
-#umlXhost	x509-pluto-02		good
+kvmplutotest	x509-pluto-02		good
 
 # a test of sending and validating an X.509 cert
 #
