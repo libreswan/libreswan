@@ -22,10 +22,10 @@ east #
 002 added connection description "north-east-pass"
 east #
  nc -4 -l 192.1.2.23 2 &
-[X] XXXX
+[B] PID
 east #
  nc -4 -l 192.1.2.23 3 &
-[X] XXXX
+[B] PID
 east #
  echo "initdone"
 initdone

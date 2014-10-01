@@ -24,7 +24,7 @@ east #
 002 added connection description "west-east"
 east #
  nc -4 -l 192.1.2.23 222 &
-[X] XXXX
+ [B] PID
 east #
  echo "initdone"
 initdone
