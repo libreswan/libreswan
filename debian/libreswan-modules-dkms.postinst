@@ -2,7 +2,7 @@
 set -e
 test $DEBIAN_SCRIPT_DEBUG && set -v -x
 
-VERSION=$(dpkg-query -W -f='${Version}' libreswan-modules-dkms | sed -e 's/.*:\(.*\)/\1/' -e 's/\(.*\)-.*/\1/')
+VERSION=$(dpkg-query -W -f='${Version}' libreswan-modules-dkms | sed -e 's/.*:\(.*\)/\1/' -e 's/-.*//')
 ARCH=`dpkg --print-architecture`
 
 . /usr/share/debconf/confmodule
