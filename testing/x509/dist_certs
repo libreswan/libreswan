@@ -5,6 +5,17 @@
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 #
 # Setup a variety of X509 certificates for testcases
+#
+# ??? The following commonNames have two certificates generated.
+# This is surely a bug.
+#	bigkey.testing.libreswan.org
+#	notvalidanymore.testing.libreswan.org
+#	notyetvalid.testing.libreswan.org
+#	signedbyotherca.testing.libreswan.org
+#	wrongdnnum.testing.libreswan.org
+#
+# The problem was discovered through "set -ue"
+# To mask the problem, we committed b0511b9817f8262ef1f5715066caa96c60e12e52
 
 # u: reference to undefined variable is an error
 # e: command returning error (outside of test) stops script
