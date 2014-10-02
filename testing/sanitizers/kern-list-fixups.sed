@@ -97,3 +97,4 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /.*IPv4 over IPSec tunneling driver$/d
 /^.* random: nonblocking pool is initialized$/d
 /^.* alg: No test for .*$/d
+/^.*bytes leftover after parsing attributes in process.*$/d
