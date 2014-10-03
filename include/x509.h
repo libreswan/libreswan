@@ -203,7 +203,7 @@ extern void free_authcerts(void);
 extern void free_crls(void);
 extern void free_crl(x509crl_t *crl);
 extern void free_generalNames(generalName_t* gn, bool free_name);
-extern void free_authcert_chain(x509cert_t **chain);
+extern void free_authcert_chain(x509cert_t *chain);
 
 extern x509cert_t *get_alt_cacert(chunk_t subject, chunk_t serial,
 					chunk_t keyid,

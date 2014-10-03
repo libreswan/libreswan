@@ -101,18 +101,17 @@ static void free_first_authcert(void)
  * get_authcert() moves the found cert to the front of the list,
  * so we can just do free_first_authcert().
  */
-void free_authcert_chain(x509cert_t **chain)
+void free_authcert_chain(x509cert_t *chain)
 {
-	x509cert_t *c = *chain;
 
-	while (c != NULL) {
+	while (chain != NULL) {
 		x509cert_t *ac = NULL;
 
 		lock_authcert_list("free_authcert_chain");
-		ac = get_authcert(c->subject, c->serialNumber,
-					      c->subjectKeyID, AUTH_CA);
+		ac = get_authcert(chain->subject, chain->serialNumber,
+					      chain->subjectKeyID, AUTH_CA);
 
-		c = c->next;
+		chain = chain->next;
 
 		if (ac != NULL)
 			free_first_authcert();

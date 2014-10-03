@@ -203,16 +203,8 @@ static void delete_end(struct end *e, bool that)
 	 * were collected during the exchange, so they
 	 * need to be removed along with the reference chain
 	 */
-	if (that && e->ca_path.u.x509 != NULL) {
-		x509cert_t *tmp = e->ca_path.u.x509;
-		free_authcert_chain(&tmp);
-
-		while (tmp != NULL) {
-			x509cert_t *nc = tmp->next;
-			pfreeany(tmp);
-			tmp = nc;
-		}
-	}
+	if (that && e->ca_path.ty != CERT_NONE && e->ca_path.u.x509 != NULL)
+		free_authcert_chain(e->ca_path.u.x509);
 
 	freeanychunk(e->ca);
 	release_cert(e->cert);
