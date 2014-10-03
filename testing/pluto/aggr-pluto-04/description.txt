@@ -3,5 +3,4 @@ allows MODP1024 and MODP1536. West uses an ike= line without modp
 group so it gets the default list that contains MODP2048.
 
 In libreswan-3.10 it caused the connection to fail. In libreswan-3.11,
-the order in IKEv1 is changed so MODP1536 is tried first. The test
-than passes
+the for IKEv1 with multiple modp groups it wil prefer DH 2 or DH 5.

@@ -397,15 +397,6 @@ kvmplutotest	aggr-pluto-03		wip
 kvmplutotest	aggr-pluto-04		wip
 
 #
-# Aggressive Mode Unit Tests
-ctltest	aggr-unit-01			good
-ctltest	aggr-unit-02			good
-
-
-
-
-
-#
 # a testcase with pfs=yes connecting to pfs=no
 #
 kvmplutotest	basic-pluto-09		good
