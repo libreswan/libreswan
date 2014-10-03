@@ -215,30 +215,46 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			emp_sp = sa_copy_sa(base, 0);
 		}
 
-		/* Are we allowing multiple DH groups? */
+		/* Are we allowing multiple DH groups for IKEv1 Aggressive Mode? */
 
 		if (single_dh && transcnt > 0 &&
 		    ike_info->ike_modp != last_modp) {
-			/* Not good.
+			/*
 			 * Already got a DH group and this one doesn't match
 			 */
-			if (wrong_modp == 0) {
+
+			if (last_modp != OAKLEY_GROUP_MODP1024 && last_modp != OAKLEY_GROUP_MODP1536) {
 				loglog(RC_LOG_SERIOUS,
-				       "multiple DH groups were set in aggressive mode. Only first one used.");
+				       "multiple DH groups in aggressive mode can cause interop failure");
+				loglog(RC_LOG_SERIOUS,
+					"Deleting previous proposal in the hopes of selecting DH 2 or DH 5 for");
+				wrong_modp++;
+
+				free_sa(gsp);
+				gsp = NULL;
 			}
+			if (last_modp == OAKLEY_GROUP_MODP1024 ||  last_modp == OAKLEY_GROUP_MODP1536) {
+				/* the previous one will work on old cisco gear, so we can ignore this one */
 
-			loglog(RC_LOG_SERIOUS,
-			       "transform (%s,%s,%s keylen %ld) ignored.",
-			       enum_name(&oakley_enc_names, ike_info->ike_ealg),
-			       enum_name(&oakley_hash_names, ike_info->ike_halg),
-			       enum_name(&oakley_group_names, ike_info->ike_modp),
-			       (long)ike_info->ike_eklen);
+				if (wrong_modp == 0) { /* complain only once */
+					loglog(RC_LOG_SERIOUS,
+					"multiple DH groups were set in aggressive mode. Only first one used.");
+					wrong_modp++;
+				}
 
-			wrong_modp++;
+				loglog(RC_LOG_SERIOUS,
+				"transform (%s,%s,%s keylen %ld) ignored.",
+				enum_name(&oakley_enc_names, ike_info->ike_ealg),
+				enum_name(&oakley_hash_names, ike_info->ike_halg),
+				enum_name(&oakley_group_names, ike_info->ike_modp),
+				(long)ike_info->ike_eklen);
 
-			free_sa(emp_sp);
-			emp_sp = NULL;
-		} else {
+				free_sa(emp_sp);
+				emp_sp = NULL;
+			}
+		}
+
+		 if (emp_sp != NULL) {
 			int def_ks = 0;
 
 			if (!ike_info->ike_default && ike_info->ike_eklen == 0)
