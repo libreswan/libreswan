@@ -1998,6 +1998,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 	}
 
+	if (proto == PROTO_IPSEC_AH) {
+		DBG(DBG_CONTROL, DBG_log("PROTO AH: we should check registration of attrs->transattrs.integ_hash=%d",
+			attrs->transattrs.integ_hash));
+		/* if not registered, abort early */
+	}
+
 	return TRUE;
 }
 
@@ -2446,6 +2452,15 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			if (tn == ah_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
+
+			/* Check AH proposal with configuration */
+			if (c->alg_info_esp != NULL &&
+			    !ikev1_verify_phase2(PROTO_IPSEC_AH, 0,0, /* ealg and ekey_len */
+						     ah_attrs.transattrs.integ_hash,
+						     c->alg_info_esp)) {
+				DBG(DBG_CONTROL, DBG_log("ikev1_verify_phase2() failed for AH"));
+				continue;
+			}
 			ah_attrs.spi = ah_spi;
 			inner_proto = IPPROTO_AH;
 			if (ah_attrs.encapsulation ==
@@ -2534,7 +2549,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					{
 					case AUTH_ALGORITHM_NONE:
 						if (!ah_seen) {
-							DBG(DBG_CONTROL | DBG_CRYPT, {
+							DBG(DBG_CONTROL, {
 								ipstr_buf b;
 								DBG_log("ESP from %s must either have AUTH or be combined with AH",
 								    ipstr(&c->spd.that.host_addr, &b));
@@ -2554,16 +2569,15 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						break;
 
 					default:
-						/* ??? why do we log this?  Surely this is a common and normal state of affairs? */
 						{
 						ipstr_buf b;
 
-						loglog(RC_LOG_SERIOUS,
+						DBG(DBG_CONTROL, DBG_log(
 						       "unsupported ESP auth alg %s from %s",
 						       enum_show(&auth_alg_names,
 								 esp_attrs.transattrs.integ_hash),
 						       ipstr(&c->spd.that.host_addr,
-								&b));
+								&b)));
 						continue; /* try another */
 						}
 					}
@@ -2572,9 +2586,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (ah_seen &&
 				    ah_attrs.encapsulation !=
 				      esp_attrs.encapsulation) {
-					/* ??? This should be an error, but is it? */
 					loglog(RC_LOG_SERIOUS,
-					       "AH and ESP transforms disagree about encapsulation; TUNNEL presumed");
+					       "Skipped bogus proposal where AH and ESP transforms disagree about encapsulation");
+					continue; /* try another */
 				}
 
 				break; /* we seem to be happy */
@@ -2582,10 +2596,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
 
-			/* ML: at last check for allowed transforms in alg_info_esp */
-			/* ??? what's ML? */
+			/* check for allowed transforms in alg_info_esp */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_phase2(esp_attrs.transattrs.encrypt,
+			    !ikev1_verify_phase2(PROTO_IPSEC_ESP, esp_attrs.transattrs.encrypt,
 						     esp_attrs.transattrs.enckeylen,
 						     esp_attrs.transattrs.integ_hash,
 						     c->alg_info_esp))
