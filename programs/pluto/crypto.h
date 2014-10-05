@@ -116,10 +116,11 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
 /* unification of cryptographic hashing mechanisms */
 
 union hash_ctx {
-	MD5_CTX ctx_md5;
+	lsMD5_CTX ctx_md5;
 	SHA1_CTX ctx_sha1;
 #ifdef USE_SHA2
 	sha256_context ctx_sha256;
+	sha384_context ctx_sha384;
 	sha512_context ctx_sha512;
 #endif
 };
@@ -177,6 +178,14 @@ extern PK11SymKey *PK11_Derive_lsw(PK11SymKey *base,
 				   SECItem *param, CK_MECHANISM_TYPE target,
 				   CK_ATTRIBUTE_TYPE operation, int keySize);
 
-extern int crypto_req_keysize(int ksproto, int algo);
+enum crk_proto {
+	CRK_ESPorAH,
+	CRK_IKEv1,
+	CRK_IKEv2
+};
+
+extern int crypto_req_keysize(enum crk_proto ksproto, int algo);
+
+extern struct hash_desc crypto_hasher_sha1;	/* used by nat_traversal.c */
 
 #endif /* _CRYPTO_H */

@@ -1,0 +1,5 @@
+
+testing overloading the crypto helper subsystem.
+
+this is done by inducing a 1 second delay in the crypto helpers
+using PLUTO_CRYPTO_HELPER_DELAY=1 and starting up with nhelpers=3

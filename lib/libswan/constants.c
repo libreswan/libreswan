@@ -44,7 +44,7 @@
  * That allows a guarantee that the result is NUL-terminated.
  *
  * The result is a pointer:
- *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
  * Warning: Is it really wise to silently truncate?  Only the caller knows.
@@ -68,7 +68,7 @@ char *jam_str(char *dest, size_t size, const char *src)
 /*
  * Add a string to a partially filled buffer of limited size
  *
- * This is similar to what people mistakenly thing strncat does
+ * This is similar to what people mistakenly think strncat does
  * but add_str matches jam_str so the arguments are quite different.
  * OpenBSD's strlcat serves the same purpose.
  *
@@ -81,7 +81,7 @@ char *jam_str(char *dest, size_t size, const char *src)
  * the first one.
  *
  * The result is a pointer:
- *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
  * The results of jam_str and add_str provide suitable values for hint
@@ -99,12 +99,13 @@ char *jam_str(char *dest, size_t size, const char *src)
  *
  * Warning: strncat's bound is NOT on the whole buffer!
  * strncat(dest, src, n) adds at most n+1 bytes after the contents of dest.
- * People think it does strncat(dest, src, n - strlen(dest) - 1).
- * A falacious strncat(dest, src, n) should be written as
- * (void)add_str(dest, n, dest, src).
+ * Many people think that the limit is n bytes.
  *
  * Warning: Is it really wise to silently truncate?  Only the caller knows.
  * The caller SHOULD check by seeing if the result equals dest's roof.
+ * Overflow at any point in a chain of jam_str and add_str calls will
+ * be reflected in the final return result so checking of intermediate
+ * return values is not required.
  */
 char *add_str(char *buf, size_t size, char *hint, const char *src)
 {
@@ -197,6 +198,7 @@ const char *const debug_bit_names[] = {
 	"impair-retransmits",	/* 30 */
 	"impair-send-bogus-isakmp-flag",	/* 31 */
 	"impair-send-ikev2-ke",	/* 32 */
+	"impair-send-key-size-check", /* 33 */
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -441,13 +443,15 @@ enum_names exchange_names_ikev1orv2 = {
 };
 
 /* Flag BITS */
-const char *const flag_bit_names[] = {
-	"ISAKMP_FLAG_ENCRYPTION",	/* bit 0 */
-	"ISAKMP_FLAG_COMMIT",	/* bit 1 */
-	"bit 2",	/* bit 2 */
-	"ISAKMP_FLAG_INIT",	/* bit 3 */
-	"ISAKMP_FLAG_VERSION",	/* bit 4 */
-	"ISAKMP_FLAG_RESPONSE",	/* bit 5 */
+const char *const isakmp_flag_names[] = {
+	"ISAKMP_FLAG_v1_ENCRYPTION", /* IKEv1 only bit 0 */
+	"ISAKMP_FLAG_v1_COMMIT", /* IKEv1 only bit 1 */
+	"ISAKMP_FLAG_v1_AUTHONLY", /* IKEv1 only bit 2 */
+	"ISAKMP_FLAG_v2_IKE_INIT", /* IKEv2 only bit 3 */
+	"ISAKMP_FLAG_v2_VERSION", /* IKEv2 only bit 4 */
+	"ISAKMP_FLAG_v2_MSG_RESPONSE", /* IKEv2 only bit 5 */
+	"ISAKMP_FLAG_MSG_RESERVED_BIT6",
+	"ISAKMP_FLAG_MSG_RESERVED_BIT7",
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -487,6 +491,14 @@ enum_names ikev2_protocol_names = {
 	PROTO_v2_RESERVED,
 	PROTO_v2_ESP,
 	ikev2_protocol_name,
+	NULL
+};
+
+/* subset of protocol names accepted by IKEv2 Delete */
+enum_names ikev2_del_protocol_names = {
+	PROTO_ISAKMP,
+	PROTO_IPSEC_ESP,
+	&protocol_name[PROTO_ISAKMP],
 	NULL
 };
 
@@ -564,8 +576,9 @@ static enum_names esp_transformid_names_private_use = {
 	NULL
 };
 
+/* This tracks the IKEv2 registry now! see ietf_constants.h */
 static const char *const esp_transform_name[] = {
-	"ESP_DES_IV64",	/* old DES */
+	"ESP_DES_IV64",	/* 1 - old DES */
 	"ESP_DES",	/* obsoleted */
 	"ESP_3DES",
 	"ESP_RC5",
@@ -585,16 +598,28 @@ static const char *const esp_transform_name[] = {
 	"ESP_AES_GCM_A",
 	"ESP_AES_GCM_B",
 	"ESP_AES_GCM_C",
-	"ESP_SEED_CBC",
-	"ESP_CAMELLIA",
-	"ESP_NULL_AUTH_AES_GMAC",	/* RFC4543 [Errata1821] */
-	/* 24-248 Unassigned */
-	/* 249-255 Reserved for private use */
+	"ESP_NULL_AUTH_AES_GMAC", /* IKEv1 ESP_SEED_CBC */
+	/*
+	 * From here, IKEv1 and IKEv2 registries for ESP_ algorithms become
+	 * inconsistant. The linux PF_KEY API returns 22 in the IKEv1 registry
+	 * meaning (camellia), so we need to lie here.
+	 */
+	/* "ESP_RESERVED_FOR_IEEE_P1619_XTS_AES" */
+	"ESP_CAMELLIA", /* IKEv1, but kernel tells us this */
+	"ESP_CAMELLIA", /* IKEv2, IKEv1 entry is ESP_NULL_AUTH_AES-GMAC */
+	"ESP_CAMELLIA_CTR", /* not assigned in/for IKEv1 */
+	"ESP_CAMELLIA_CCM_A", /* not assigned in/for IKEv1 */
+	"ESP_CAMELLIA_CCM_B", /* not assigned in/for IKEv1 */
+	"ESP_CAMELLIA_CCM_C", /* not assigned in/for IKEv1 */
+	/* IKEv1: 24-248 Unassigned */
+	/* IKEv1: 249-255 reserved for private use */
+	/* IKEv2: 28-1023 Unassigned */
+	/* IKEv2: 1024-65535 reserved for private use */
 };
 
 enum_names esp_transformid_names = {
 	ESP_DES_IV64,
-	ESP_NULL_AUTH_AES_GMAC,
+	ESP_CAMELLIA_CCM_16,
 	esp_transform_name,
 	&esp_transformid_names_private_use
 };
@@ -622,54 +647,90 @@ static const char *const ike_idtype_name[] = {
 	/* ID_FROMCERT = (-3), taken from certificate - private to Pluto */
 	/* ID_IMPOSSIBLE = (-2), private to Pluto */
 	/* ID_MYID = (-1), private to Pluto */
+
 	"ID_NONE", /* = 0, private to Pluto */
-	"ID_IPV4_ADDR", /* 1 */
+
+	"ID_IPV4_ADDR",	/* 1 */
 	"ID_FQDN",
 	"ID_USER_FQDN",
-	"ID_UNASSIGNED_ID4", /* Only in IKEv1 */
+	"ID_USER_FQDN",	/* v1 only */
 	"ID_IPV6_ADDR",
-	"ID_UNASSIGNED_ID6", /* Only in IKEv1 */
-	"ID_UNASSIGNED_ID7", /* Only in IKEv1 */
-	"ID_UNASSIGNED_ID8", /* Only in IKEv1 */
+	"ID_IPV6_ADDR_SUBNET",	/* v1 only */
+	"ID_IPV4_ADDR_RANGE",	/* v1 only */
+	"ID_IPV6_ADDR_RANGE",	/* v1 only */
 	"ID_DER_ASN1_DN",
 	"ID_DER_ASN1_GN",
 	"ID_KEY_ID",
 	"ID_FC_NAME", /* RFC 3554 */
 };
 
+/* IKEv1 */
 enum_names ike_idtype_names = {
-	ID_NONE,
-	ID_FC_NAME,
-	ike_idtype_name,
+	ID_IPV4_ADDR, ID_FC_NAME,
+	&ike_idtype_name[ID_IPV4_ADDR],
 	NULL
+};
+
+
+static enum_names ikev2_idtype_names_3 = {
+	ID_DER_ASN1_DN, ID_FC_NAME,
+	&ike_idtype_name[ID_DER_ASN1_DN],
+	NULL
+};
+
+static enum_names ikev2_idtype_names_2 = {
+	ID_IPV6_ADDR, ID_IPV6_ADDR,
+	&ike_idtype_name[ID_IPV6_ADDR],
+	&ikev2_idtype_names_3
+};
+
+enum_names ikev2_idtype_names = {
+	ID_IPV4_ADDR, ID_RFC822_ADDR,
+	&ike_idtype_name[ID_IPV4_ADDR],
+	&ikev2_idtype_names_2
 };
 
 /* Certificate type values */
 static const char *const ike_cert_type_name[] = {
-	"CERT_NONE",
+	"CERT_NONE",	/* private to Pluto */
+
 	"CERT_PKCS7_WRAPPED_X509",
-	"CERT_PGP (unsupported)",
+	"CERT_PGP",
 	"CERT_DNS_SIGNED_KEY",
 	"CERT_X509_SIGNATURE",
-	"CERT_RESERVED5", /* was CERT_X509_KEY_EXCHANGE in IKEv1 */
+	"CERT_X509_KEY_EXCHANGE",	/* v1 only */
 	"CERT_KERBEROS_TOKENS",
 	"CERT_CRL",
 	"CERT_ARL",
 	"CERT_SPKI",
 	"CERT_X509_ATTRIBUTE",
+
+	/* IKEv2 only from here */
 	"CERT_RAW_RSA",
 	"CERT_X509_CERT_URL",
-	"CERT_X509_BUNDLE_URL", /* 13 */
+	"CERT_X509_BUNDLE_URL",
 	"CERT_OCSP_CONTENT", /* 14 */
 	/* 15 - 200 Reserved */
 	/* 201 - 255 Private use */
 };
 
 enum_names ike_cert_type_names = {
-	CERT_NONE,
-	CERT_OCSP_CONTENT,
-	ike_cert_type_name,
+	CERT_PKCS7_WRAPPED_X509, CERT_X509_ATTRIBUTE,
+	&ike_cert_type_name[CERT_PKCS7_WRAPPED_X509],
 	NULL
+};
+
+
+static enum_names ikev2_cert_type_names_2 = {
+	CERT_KERBEROS_TOKENS, CERT_OCSP_CONTENT,
+	&ike_cert_type_name[CERT_KERBEROS_TOKENS],
+	NULL
+};
+
+enum_names ikev2_cert_type_names = {
+	CERT_PKCS7_WRAPPED_X509, CERT_X509_SIGNATURE,
+	&ike_cert_type_name[CERT_PKCS7_WRAPPED_X509],
+	&ikev2_cert_type_names_2
 };
 
 /*
@@ -939,7 +1000,7 @@ static const char *const auth_alg_name[] = {
 	"AUTH_ALGORITHM_HMAC_SHA2_384",
 	"AUTH_ALGORITHM_HMAC_SHA2_512",
 	"AUTH_ALGORITHM_HMAC_RIPEMD",
-	"AUTH_ALGORITHM_AES_CBC",
+	"AUTH_ALGORITHM_AES_XCBC",
 	"AUTH_ALGORITHM_SIG_RSA",	/* RFC4359 */
 	"AUTH_ALGORITHM_AES_128_GMAC",	/* RFC4543 [Errata1821] */
 	"AUTH_ALGORITHM_AES_192_GMAC",	/* RFC4543 [Errata1821] */
@@ -996,6 +1057,7 @@ static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP6_PREFIX",
 	"HOME_AGENT_ADDRESS",	/* 19 */
 };
+
 static enum_names modecfg_attr_names_draft = {
 	INTERNAL_IP4_ADDRESS,
 	HOME_AGENT_ADDRESS,
@@ -1039,7 +1101,7 @@ enum_names modecfg_attr_names = {
 	INTERNAL_IP4_ADDRESS,
 	HOME_AGENT_ADDRESS,
 	modecfg_attr_name_draft,
-	&modecfg_microsoft_attr_names
+	&xauth_attr_names
 };
 
 static const char *const xauth_attr_name[] = {
@@ -1063,7 +1125,7 @@ enum_names xauth_attr_names = {
 	XAUTH_TYPE,
 	XAUTH_ANSWER,
 	xauth_attr_name,
-	NULL
+	&modecfg_microsoft_attr_names
 };
 
 /* Oakley Lifetime Type attribute */
@@ -1535,7 +1597,7 @@ static const char *const ikev2_notify_name[] = {
 };
 
 enum_names ikev2_notify_names = {
-	0,
+	v2N_NOTHING_WRONG,
 	v2N_CHILD_SA_NOT_FOUND,
 	ikev2_notify_name,
 	&ikev2_notify_names_16384
@@ -1579,13 +1641,13 @@ enum_names attr_msg_type_names = {
  * IKEv2 Critical bit and RESERVED (7) bits
  */
 const char *const critical_names[] = {
-	"RESERVED",	/* bit 0 */
-	"RESERVED",	/* bit 1 */
-	"RESERVED",	/* bit 2 */
-	"RESERVED",	/* bit 3 */
-	"RESERVED",	/* bit 4 */
-	"RESERVED",	/* bit 5 */
-	"RESERVED",	/* bit 6 */
+	"RESERVED bit 0",	/* bit 0 */
+	"RESERVED bit 1",	/* bit 1 */
+	"RESERVED bit 2",	/* bit 2 */
+	"RESERVED bit 3",	/* bit 3 */
+	"RESERVED bit 4",	/* bit 4 */
+	"RESERVED bit 5",	/* bit 5 */
+	"RESERVED bit 6",	/* bit 6 */
 	"PAYLOAD_CRITICAL",	/* bit 7*/
 };
 
@@ -1683,10 +1745,11 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_SHA2-256",
 	"PRF_HMAC_SHA2-384",
 	"PRF_HMAC_SHA2-512",
+	"IKEv2_PRF_AES128_CMAC"
 };
 enum_names ikev2_trans_type_prf_names = {
 	IKEv2_PRF_HMAC_MD5,
-	IKEv2_PRF_HMAC_SHA2_512,
+	IKEv2_PRF_AES128_CMAC,
 	ikev2_trans_type_prf_name,
 	NULL
 };
@@ -1759,6 +1822,11 @@ enum_names *const ikev2_transid_val_descs[] = {
 const unsigned int ikev2_transid_val_descs_roof =
 	elemsof(ikev2_transid_val_descs);
 
+const struct enum_enum_names v2_transform_ID_enums = {
+	IKEv2_TRANS_TYPE_ENCR,	IKEv2_TRANS_TYPE_ESN,
+	&ikev2_transid_val_descs[IKEv2_TRANS_TYPE_ENCR]
+};
+
 /* Transform Attributes */
 static const char *const ikev2_trans_attr_name[] = {
 	"IKEv2_KEY_LENGTH",
@@ -1787,15 +1855,6 @@ enum_names *const ikev2_trans_attr_val_descs[] = {
 	NULL,	/* 12 */
 	NULL,	/* 13 */
 	&ikev2_trans_attr_descs,	/* KEY_LENGTH */
-};
-
-/* socket address family info */
-static const char *const af_inet_name[] = {
-	"AF_INET",
-};
-
-static const char *const af_inet6_name[] = {
-	"AF_INET6",
 };
 
 
@@ -1969,6 +2028,18 @@ const char *enum_name(enum_names *ed, unsigned long val)
 	return NULL;
 }
 
+/* find or construct a string to describe an enum value */
+const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
+{
+	const char *p = enum_name(ed, val);
+
+	if (p == NULL) {
+		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		p = b->buf;
+	}
+	return p;
+}
+
 /*
  * find or construct a string to describe an enum value
  * Result may be in STATIC buffer -- NOT RE-ENTRANT!
@@ -1978,23 +2049,11 @@ const char *enum_name(enum_names *ed, unsigned long val)
  * (Of course that means that unnamed values will be shown
  * badly.)
  */
-const char *enum_showb(enum_names *ed, unsigned long val, char *buf,
-		size_t blen)
-{
-	const char *p = enum_name(ed, val);
-
-	if (p == NULL) {
-		snprintf(buf, blen, "%lu??", val);
-		p = buf;
-	}
-	return p;
-}
-
 const char *enum_show(enum_names *ed, unsigned long val)
 {
-	static char buf[ENUM_SHOW_BUF_LEN];	/* only one! NON-RE-ENTRANT */
+	static struct esb_buf buf;	/* only one! NON-RE-ENTRANT */
 
-	return enum_showb(ed, val, buf, sizeof(buf));
+	return enum_showb(ed, val, &buf);
 }
 
 /* sometimes the prefix gets annoying */
@@ -2002,7 +2061,7 @@ const char *strip_prefix(const char *s, const char *prefix)
 {
 	size_t pl = strlen(prefix);
 
-	return (s != NULL && strncmp(s, prefix, pl) == 0) ? s + pl : s;
+	return (s != NULL && strneq(s, prefix, pl)) ? s + pl : s;
 }
 
 /*
@@ -2091,6 +2150,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 const char *bitnamesof(const char *const table[], lset_t val)
 {
 	static char bitnamesbuf[200]; /* I hope that it is big enough! */
+
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
 }
 
@@ -2135,9 +2195,9 @@ const char *sparse_val_show(sparse_names sd, unsigned long val)
 	const char *p = sparse_name(sd, val);
 
 	if (p == NULL) {
-		static char buf[12]; /*
-				      * only one!  I hope that it is big enough
-				      */
+		/* only one!  I hope that it is big enough */
+		static char buf[12];
+
 		snprintf(buf, sizeof(buf), "%lu??", val);
 		p = buf;
 	}

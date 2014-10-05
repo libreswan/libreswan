@@ -1,0 +1,7 @@
+x509 test for the delivery of intermediate CA chains.
+sendca=none (default)
+
+on east and west the peer chains are loaded locally, 
+omitting the EE issuer (intermediate 3). Each side
+should send no CA, so the chain is incomplete. This
+is a FAILURE case

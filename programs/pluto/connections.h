@@ -171,8 +171,8 @@ struct end {
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	char   *cert_filename;		/* where we got the certificate */
 	cert_t cert;			/* end certificate */
-
-	chunk_t ca;			/* CA distinguished name */
+	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
+	cert_t ca_path;			/* chain of CA certs */
 
 	struct virtual_t *virt;
 
@@ -192,7 +192,7 @@ struct spd_route {
 	struct end that;
 	so_serial_t eroute_owner;
 	enum routing_t routing; /* level of routing in place */
-	uint32_t reqid;
+	reqid_t reqid;
 };
 
 struct connection {
@@ -205,7 +205,7 @@ struct connection {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	unsigned long sa_priority;
-	unsigned long sa_reqid;
+	reqid_t sa_reqid;
 	int encapsulation;
 
 	/* RFC 3706 DPD */
@@ -271,7 +271,7 @@ struct connection {
 	struct connection *policy_next;
 
 	struct gw_info *gw_info;
-	struct alg_info_esp *alg_info_esp;
+	struct alg_info_esp *alg_info_esp;	/* ??? OK for AH too? */
 	struct alg_info_ike *alg_info_ike;
 
 	struct host_pair *host_pair;	/* opaque type outside of connections.c/hostpair.c */
@@ -280,6 +280,7 @@ struct connection {
 	struct connection *ac_next;	/* all connections list link */
 
 	generalName_t *requested_ca;	/* collected certificate requests */
+	enum send_ca_policy send_ca;
 #ifdef XAUTH_HAVE_PAM
 	pam_handle_t  *pamh;		/*  PAM handle for that connection  */
 #endif
@@ -310,7 +311,7 @@ extern bool same_peer_ids(const struct connection *c,
 #define END_BUF (SUBNETTOT_BUF + ADDRTOT_BUF + IDTOA_BUF + ADDRTOT_BUF + 10)
 extern size_t format_end(char *buf, size_t buf_len,
 			 const struct end *this, const struct end *that,
-			 bool is_left, lset_t policy);
+			 bool is_left, lset_t policy, bool filter_rnh);
 
 struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm);
@@ -324,7 +325,7 @@ extern void restart_connections_by_peer(struct connection *c);
 struct xfrm_user_sec_ctx_ike; /* forward declaration */
 #endif
 
-extern int initiate_ondemand(const ip_address *our_client,
+extern bool initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
 			     int transport_proto,
 			     bool held,
@@ -455,9 +456,6 @@ extern void show_one_connection(struct connection *c);
 extern void show_connections_status(void);
 extern int  connection_compare(const struct connection *ca,
 			       const struct connection *cb);
-extern void update_host_pair(const char *why, struct connection *c,
-			     const ip_address *myaddr, u_int16_t myport,
-			     const ip_address *hisaddr, u_int16_t hisport);
 
 /* export to pending.c */
 extern void host_pair_enqueue_pending(const struct connection *c,

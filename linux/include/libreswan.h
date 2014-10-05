@@ -448,6 +448,10 @@ extern size_t inet_addrtot(int type, const void *src, int format, char *buf,
 extern size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
 #define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
+typedef struct {
+	char buf[ADDRTOT_BUF];
+} ipstr_buf;
+extern const char *ipstr(const ip_address *src, ipstr_buf *b);
 extern err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst,
 		bool non_zero);
 extern size_t rangetot(const ip_range *src, char format, char *dst, size_t dstlen);
@@ -638,5 +642,31 @@ enum klips_debug_flags {
 #define PASSTHROUGHSPI  0
 #define PASSTHROUGHDST  0
 #endif
+
+/*
+ * reqid definitions
+ *
+ * A reqid is a numerical identifier used to match IPsec SAs using
+ * iptables with NETKEY/XFRM. This identifier is normally automatically
+ * allocated.  It is exported to the _updown script as REQID. On Linux,
+ * reqids are supported with IP Connection Tracking and NAT (iptables).
+ * Automatically generated values use the range 16380 and higher.
+ * Manually specified reqid values therefore must be between 1 and 16379.
+ *
+ * Automatically generated reqids are allocated in groups of four, one
+ * for each potential SA and pseudo SA in an SA bundle.  Their number
+ * will be above 16380.  The base number will be a multiple of four.
+ *
+ * Manually assigned reqids are all identical for a particular connection
+ * and its instantiations.
+ */
+
+typedef uint32_t reqid_t;
+
+#define IPSEC_MANUAL_REQID_MAX  0x3fff
+
+#define reqid_ah(r)	(r)
+#define reqid_esp(r)	((r) <= IPSEC_MANUAL_REQID_MAX ? (r) : (r) + 1)
+#define reqid_ipcomp(r)	((r) <= IPSEC_MANUAL_REQID_MAX ? (r) : (r) + 2)
 
 #endif /* _LIBRESWAN_H */

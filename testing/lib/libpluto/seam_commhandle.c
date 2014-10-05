@@ -53,18 +53,18 @@ void recv_pcap_packet_gen(u_char *user,
 			     "message buffer in comm_handle()"),
 		 packet_len, "packet");
 
+	ipstr_buf b;
+
 	DBG_log("*received %d bytes from %s:%u on %s (port=%d)",
 		(int) pbs_room(&md->packet_pbs),
-		ip_str(&md->sender), (unsigned) md->sender_port,
+		ipstr(&md->sender, &b), (unsigned) md->sender_port,
 		ifp->ip_dev->id_rname,
 		ifp->port);
 
 	DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs));
 
 	process_packet(&md);
-
-	if (md != NULL)
-		release_md(md);
+	release_any_md(&md);
 
 	cur_state = NULL;
 	reset_cur_connection();

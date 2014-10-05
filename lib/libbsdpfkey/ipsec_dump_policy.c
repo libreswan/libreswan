@@ -257,14 +257,11 @@ size_t bound;           /* boundary */
 	if (xisr->sadb_x_ipsecrequest_reqid == 0) {
 		snprintf(buf, len, "%s/%s/%s/%s", proto, mode, abuf, level);
 	} else {
-		int ch;
-
-		if (xisr->sadb_x_ipsecrequest_reqid > IPSEC_MANUAL_REQID_MAX)
-			ch = '#';
-		else
-			ch = ':';
-		snprintf(buf, len, "%s/%s/%s/%s%c%u", proto, mode, abuf, level,
-			 ch, xisr->sadb_x_ipsecrequest_reqid);
+		snprintf(buf, len, "%s/%s/%s/%s%c%u",
+			proto, mode, abuf, level,
+			xisr->sadb_x_ipsecrequest_reqid > IPSEC_MANUAL_REQID_MAX ?
+				'#' : ':',
+			xisr->sadb_x_ipsecrequest_reqid);
 	}
 
 	return buf;

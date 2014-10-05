@@ -80,6 +80,7 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*AVX instructions are not detected.*$/d
 /^.*AVX or AES-NI instructions are not detected.*$/d
 /^.*Neither AVX nor SSSE3 is available.*$/d
+/^.*sha1_ssse3: Neither AVX nor AVX2 nor SSSE3 is available\/usable\.$/d
 /^.*ipsec: module verification failed.*$/d
 /^.*ip6_tables: (C) 2000-2006 Netfilter Core Team$/d
 /^.*NET: Registered protocol family 24$/d
@@ -94,3 +95,6 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^.*PCLMULQDQ-NI instructions are not detected.*$/d
 /^Warning: found NETKEY\/XFRM stack loaded.*$/d
 /.*IPv4 over IPSec tunneling driver$/d
+/^.* random: nonblocking pool is initialized$/d
+/^.* alg: No test for .*$/d
+/^.*bytes leftover after parsing attributes in process.*$/d

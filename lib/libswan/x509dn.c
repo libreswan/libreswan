@@ -952,71 +952,13 @@ err_t atodn(char *src, chunk_t *dn)
  */
 bool same_dn(chunk_t a, chunk_t b)
 {
-	chunk_t rdn_a, rdn_b, attribute_a, attribute_b;
-	chunk_t oid_a, oid_b, value_a, value_b;
-	asn1_t type_a, type_b;
-	bool next_a, next_b;
-
-	/* same lengths for the DNs */
-	if (a.len != b.len)
-		return FALSE;
-
-	/* try a binary comparison first */
-	if (memeq(a.ptr, b.ptr, b.len))
-		return TRUE;
-
-	/* initialize DN parsing */
-	if (init_rdn(a, &rdn_a, &attribute_a, &next_a) != NULL ||
-		init_rdn(b, &rdn_b, &attribute_b, &next_b) != NULL)
-		return FALSE;
-
-	/* fetch next RDN pair */
-	while (next_a && next_b) {
-		/* parse next RDNs and check for errors */
-		if (get_next_rdn(&rdn_a, &attribute_a, &oid_a, &value_a,
-					&type_a, &next_a) != NULL ||
-			get_next_rdn(&rdn_b, &attribute_b, &oid_b, &value_b,
-				&type_b, &next_b) != NULL)
-			return FALSE;
-
-		/* OIDs must agree */
-		if (oid_a.len != oid_b.len ||
-			!memeq(oid_a.ptr, oid_b.ptr, oid_b.len))
-			return FALSE;
-
-		/* same lengths for values */
-		if (value_a.len != value_b.len)
-			return FALSE;
-
-		/*
-		 * printableStrings and email RDNs require uppercase
-		 * comparison
-		 */
-		if (type_a == type_b &&
-		    (type_a == ASN1_PRINTABLESTRING ||
-		     (type_a == ASN1_IA5STRING &&
-		      known_oid(oid_a) == OID_PKCS9_EMAIL))) {
-			if (!strncaseeq((char *)value_a.ptr,
-					(char *)value_b.ptr,
-					value_b.len))
-				return FALSE;
-		} else {
-			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
-				    value_b.len) != 0)
-				return FALSE;
-		}
-	}
-	/* both DNs must have same number of RDNs */
-	if (next_a || next_b)
-		return FALSE;
-
-	/* the two DNs are equal! */
-	return TRUE;
+	return match_dn(a, b, NULL);	/* degenerate case of match_dn() */
 }
 
 /*
  * compare two distinguished names by comparing the individual RDNs.
- * A single'*' character designates a wildcard RDN in DN b.
+ * A single '*' character designates a wildcard RDN in DN b.
+ * If wildcards is NULL, exact match is required.
  */
 bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 {
@@ -1025,8 +967,19 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	asn1_t type_a, type_b;
 	bool next_a, next_b;
 
-	/* initialize wildcard counter */
-	*wildcards = 0;
+	if (wildcards != NULL) {
+		/* initialize wildcard counter */
+		*wildcards = 0;
+	} else {
+		/* fast checks possible without wildcards */
+		/* same lengths for the DNs */
+		if (a.len != b.len)
+			return FALSE;
+
+		/* try a binary comparison first */
+		if (memeq(a.ptr, b.ptr, b.len))
+			return TRUE;
+	}
 
 	/* initialize DN parsing */
 	if (init_rdn(a, &rdn_a, &attribute_a, &next_a) != NULL ||
@@ -1048,7 +1001,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			return FALSE;
 
 		/* does rdn_b contain a wildcard? */
-		if (value_b.len == 1 && *value_b.ptr == '*') {
+		if (wildcards != NULL && value_b.len == 1 && *value_b.ptr == '*') {
 			(*wildcards)++;
 			continue;
 		}
@@ -1070,14 +1023,15 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 					value_b.len))
 				return FALSE;
 		} else {
-			if (strncmp((char *)value_a.ptr, (char *)value_b.ptr,
-				    value_b.len) != 0)
+			if (!strneq((char *)value_a.ptr, (char *)value_b.ptr,
+				    value_b.len))
 				return FALSE;
 		}
 	}
 	/* both DNs must have same number of RDNs */
 	if (next_a || next_b) {
-		if (*wildcards) {
+		if (wildcards != NULL && *wildcards != 0) {
+			/* ??? for some reason we think a failure with wildcards is worth logging */
 			char abuf[ASN1_BUF_LEN];
 			char bbuf[ASN1_BUF_LEN];
 
@@ -1160,7 +1114,7 @@ void free_x509cert(x509cert_t *cert)
 	if (cert != NULL) {
 		free_generalNames(cert->subjectAltName, FALSE);
 		free_generalNames(cert->crlDistributionPoints, FALSE);
-		pfreeany(cert->certificate.ptr);
+		freeanychunk(cert->certificate);
 		pfree(cert);
 		cert = NULL;
 	}
@@ -1200,10 +1154,11 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_MD5:
 	case OID_MD5_WITH_RSA:
 	{
-		MD5_CTX context;
-		osMD5Init(&context);
-		osMD5Update(&context, tbs.ptr, tbs.len);
-		osMD5Final(digest->ptr, &context);
+		lsMD5_CTX context;
+
+		lsMD5Init(&context);
+		lsMD5Update(&context, tbs.ptr, tbs.len);
+		lsMD5Final(digest->ptr, &context);
 		digest->len = MD5_DIGEST_SIZE;
 		return TRUE;
 	}
@@ -1214,6 +1169,7 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA1_WITH_RSA_OIW:
 	{
 		SHA1_CTX context;
+
 		SHA1Init(&context);
 		SHA1Update(&context, tbs.ptr, tbs.len);
 		SHA1Final(digest->ptr, &context);
@@ -1225,35 +1181,23 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA256:
 	case OID_SHA256_WITH_RSA:
 	{
-		unsigned int len;
-		SECStatus s;
 		sha256_context context;
 
 		sha256_init(&context);
 		sha256_write(&context, tbs.ptr, tbs.len);
-		s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len,
-				SHA2_256_DIGEST_SIZE);
-		passert(s == SECSuccess);
-		passert(len == SHA2_256_DIGEST_SIZE);
-		PK11_DestroyContext(context.ctx_nss, PR_TRUE);
+		sha256_final(digest->ptr, &context);
 		digest->len = SHA2_256_DIGEST_SIZE;
 		return TRUE;
 	}
+
 	case OID_SHA384:
 	case OID_SHA384_WITH_RSA:
 	{
-		sha512_context context;
-		unsigned int len;
-		SECStatus s;
+		sha384_context context;
 
 		sha384_init(&context);
-		s = PK11_DigestOp(context.ctx_nss, tbs.ptr, tbs.len);
-		passert(s == SECSuccess);
-		s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len,
-				SHA2_384_DIGEST_SIZE);
-		passert(s == SECSuccess);
-		passert(len == SHA2_384_DIGEST_SIZE);
-		PK11_DestroyContext(context.ctx_nss, PR_TRUE);
+		sha384_write(&context, tbs.ptr, tbs.len);
+		sha384_final(digest->ptr, &context);
 		digest->len = SHA2_384_DIGEST_SIZE;
 		return TRUE;
 	}
@@ -1261,17 +1205,10 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA512_WITH_RSA:
 	{
 		sha512_context context;
-		unsigned int len;
-		SECStatus s;
 
 		sha512_init(&context);
 		sha512_write(&context, tbs.ptr, tbs.len);
-
-		s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len,
-				SHA2_512_DIGEST_SIZE);
-		passert(s == SECSuccess);
-		passert(len == SHA2_512_DIGEST_SIZE);
-		PK11_DestroyContext(context.ctx_nss, PR_TRUE);
+		sha512_final(digest->ptr, &context);
 		digest->len = SHA2_512_DIGEST_SIZE;
 		return TRUE;
 	}
@@ -2054,19 +1991,16 @@ bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 {
 	asn1_ctx_t ctx;
-	bool critical;
-	chunk_t extnID;
-	chunk_t userCertificate;
-	chunk_t object;
-	u_int level;
+	chunk_t extnID = empty_chunk;
+	chunk_t userCertificate = empty_chunk;
 	u_int objectID = 0;
-
-	userCertificate.len = 0;
-	userCertificate.ptr = NULL;
 
 	asn1_init(&ctx, blob, level0, FALSE, DBG_RAW);
 
 	while (objectID < CRL_OBJ_ROOF) {
+		chunk_t object;
+		u_int level;
+
 		if (!extract_object(crlObjects, &objectID, &object, &level,
 					&ctx))
 			return FALSE;
@@ -2086,7 +2020,7 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 			break;
 		case CRL_OBJ_VERSION:
 			crl->version =
-				(object.len) ? (1 + (u_int) * object.ptr) : 1;
+				object.len == 0 ? 1 : 1 + *object.ptr;
 			DBG(DBG_PARSING,
 				DBG_log("  v%d", crl->version));
 			break;
@@ -2136,10 +2070,15 @@ bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 			break;
 		case CRL_OBJ_CRL_ENTRY_CRITICAL:
 		case CRL_OBJ_CRITICAL:
-			critical = object.len && *object.ptr;
+		{
+			/* ??? no consequence */
+			bool critical;
+
+			critical = object.len != 0 && *object.ptr != 0;
 			DBG(DBG_PARSING,
 				DBG_log("  %s", critical ? "TRUE" : "FALSE"));
-			break;
+		}
+		break;
 		case CRL_OBJ_EXTN_VALUE:
 		{
 			u_int extn_oid = known_oid(extnID);

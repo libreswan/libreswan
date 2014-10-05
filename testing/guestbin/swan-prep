@@ -33,6 +33,7 @@ parser.add_argument('--hostname', '-H', action='store', default='', help='The na
 parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
 parser.add_argument('--x509', '-x', action='store_true',  help='create X509 NSS file by importing test certs')
 parser.add_argument('--eccert', '-e', action='store_true', help='enable an EC cert for this host')
+parser.add_argument('--certchain', '-c', action='store_true', help='import the ca-chain test certs')
 parser.add_argument('--46', '--64', action='store_true', help='Do not disable IPv6. Default is disable IPv6 ', dest = 'ipv', default = False)
 parser.add_argument('--6', action='store_true', help='Enable IPv6 and run - /etc/init.d/network restart', dest = 'ipv6', default = False)
 args = parser.parse_args()
@@ -111,23 +112,20 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 	if "Restart=always" in service:
 		fp = open("/lib/systemd/system/ipsec.service","w")
 		fp.write("".join(service).replace("Restart=always","Restart=no"))
-		commands.getoutput("/usr/bin/systemctl daemon-reload")
+	# always reload to avoid "service is masked" errors
+	commands.getoutput("/usr/bin/systemctl daemon-reload")
 
 # easy way to ensure we have the LOGDROP table for those OSes where we don't start a firewall with config
 commands.getoutput("iptables-restore /etc/sysconfig/iptables")
 commands.getoutput("ip6tables-restore /etc/sysconfig/ip6tables")
 
-# ensure cores are just dropped, not sent to aobrt-hook-ccpp. Although we could try and use that,
-# and depend on systemd-coredumpctl output and copying
-#
-# we can core directly in testcase dir but that requires fixing all final.sh and console output
-#commands.getoutput("sysctl -w kernel.core_pattern=/testing/pluto/%s/OUTPUT/core.%%h.%%e.%%p"%testname)
-#
-commands.getoutput("sysctl -w kernel.core_pattern=/tmp/core.%%h.%%e.%%p")
-if not os.path.isfile("/etc/sysctl.d/coredump.conf") and not os.path.islink("/etc/sysctl.d/coredump.conf"):
-	os.symlink("/dev/null", "/etc/sysctl.d/coredump.conf")
-	commands.getoutput("/lib/systemd/systemd-sysctl")
-
+# ensure cores are just dropped, not sent to aobrt-hook-ccpp or systemd.
+# setting /proc/sys/kernel/core_pattern to "core" or a pattern does not
+# work. And you cannot use shell redirection ">". So we hack it with "tee"
+pattern = "|/usr/bin/tee /tmp/core.%h.%e.%p"
+fp = open("/proc/sys/kernel/core_pattern","w")
+fp.write(pattern)
+fp.close()
 
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
@@ -205,13 +203,38 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 				ca = "mainca"
 				pw = "-w /testing/x509/nss-pw"
 
-			commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d /etc/ipsec.d %s"%(ca,p12,pw))
-			# install all other public certs
-			# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
+			if args.certchain:
+				icanum = 3
+				pw = "-w /testing/x509/nss-pw"
+				root = hostname + "_chain_root"
+				ica_p = hostname + "_chain_intermediate_"
+				ee = hostname + "_chain_endcert"
 
-			for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec"):
-				if not hostname in certname:
-					commands.getoutput("certutil -A -n %s -t 'P,u' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt"%(certname,certname))
+				# install root
+				commands.getoutput("certutil -A -n %s -t 'c,,' -d /etc/ipsec.d/ \
+									-a -i /testing/x509/cacerts/%s.crt" % (root,root))
+
+				# install intermediates
+				for i in range(1, icanum+1):
+					acrt = ica_p + str(i)
+					commands.getoutput("certutil -A -n %s -t 'c,,' -d /etc/ipsec.d/ \
+										-a -i /testing/x509/cacerts/%s.crt" % (acrt,acrt))
+				# install ee
+				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s.p12 -d /etc/ipsec.d %s" % (ee, pw))
+
+				# install the other side's root CA
+				for side in ( "west", "east"):
+					if not hostname in side:
+						commands.getoutput("certutil -A -n %s_chain_root -t 'c,,' -d /etc/ipsec.d/ \
+											-a -i /testing/x509/cacerts/%s_chain_root.crt" % (side,side))
+			else:
+				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d /etc/ipsec.d %s"%(ca,p12,pw))
+				# install all other public certs
+				# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
+
+				for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec"):
+					if not hostname in certname:
+						commands.getoutput("certutil -A -n %s -t 'P,u' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt"%(certname,certname))
 		elif userland == "strongswan":
 			if args.eccert:
 				ca = "curveca"
@@ -256,19 +279,29 @@ if args.ipv6:
 
 # final prep - this kills any running userland
 output = commands.getoutput("ipsec stop")
-# python has no pidof :/
-pluto = commands.getoutput("pidof pluto")
-charon = commands.getoutput("pidof charon")
-shrew = commands.getoutput("pidof iked")
-racoon1 = commands.getoutput("pidof racoon2-spmd")
-racoon2 = commands.getoutput("pidof racoon2-iked")
+# python has no pidof :/. getoutput return a string not a list. 
+# split the string to make a list. Empty strings will discarded
 
-for pid in ( pluto, charon, shrew, racoon1, racoon2 ):
+pids = []
+pluto = commands.getoutput("pidof pluto")
+pids.extend(pluto.split())
+charon = commands.getoutput("pidof starter")
+pids.extend(charon.split())
+charonstarter = commands.getoutput("pidof charon")
+pids.extend(charonstarter.split())
+shrew = commands.getoutput("pidof iked")
+pids.extend(shrew.split())
+racoon1 = commands.getoutput("pidof racoon2-spmd")
+pids.extend(racoon1.split())
+racoon2 = commands.getoutput("pidof racoon2-iked")
+pids.extend(racoon2.split())
+
+for pid in pids:
 	if pid:
 		os.kill(int(pid),9)
 
 # note shrew and racoon2 share a pid file name
-for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/spmd.pid"):
+for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/spmd.pid", "/var/run/starter.charon.pid"):
 	if os.path.isfile(pidfile):
 		os.unlink(pidfile)
 

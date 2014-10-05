@@ -24,6 +24,7 @@
 #include <libreswan.h>
 
 #include "constants.h"
+#include "enum_names.h"	/* needed for struct enum_enum_names */
 #include "lswlog.h"
 
 #include "packet.h"
@@ -53,7 +54,7 @@ static field_desc isa_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
 	{ ft_loose_enum, 8 / BITS_PER_BYTE, "ISAKMP version", &version_names },
 	{ ft_enum, 8 / BITS_PER_BYTE, "exchange type", &exchange_names_ikev1orv2 },
-	{ ft_set, 8 / BITS_PER_BYTE, "flags", flag_bit_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", isakmp_flag_names },
 	{ ft_raw, 32 / BITS_PER_BYTE, "message ID", NULL },
 	{ ft_len, 32 / BITS_PER_BYTE, "length", NULL },
 	{ ft_end, 0, NULL, NULL }
@@ -676,11 +677,11 @@ struct_desc isakmp_ikefrag_desc =
 
 /*
  * GENERIC IKEv2 header.
- * Note differs from IKEv1, in that it has a critical bit
+ * Note differs from IKEv1, in that it has flags with one bit a critical bit
  */
 static field_desc ikev2generic_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
@@ -759,13 +760,14 @@ struct_desc ikev2_prop_desc = { "IKEv2 Proposal Substructure Payload",
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  */
+
 static field_desc ikev2trans_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "IKEv2 transform ID", NULL }, /* can't enum, depends on value in transform type */
+	{ ft_loose_enum_enum, 16 / BITS_PER_BYTE, "IKEv2 transform ID", &v2_transform_ID_enums }, /* select enum based on transform type */
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -822,7 +824,7 @@ struct_desc ikev2_trans_attr_desc = {
  */
 static field_desc ikev2ke_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 next payload type", &ikev2_payload_names },
-	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 16 / BITS_PER_BYTE, "DH group", &oakley_group_names },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
@@ -865,9 +867,9 @@ struct_desc ikev2_ke_desc = { "IKEv2 Key Exchange Payload",
 
 static field_desc ikev2id_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "id_type", &ike_idtype_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "id_type", &ikev2_idtype_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
@@ -893,10 +895,10 @@ struct_desc ikev2_id_desc = { "IKEv2 Identification Payload",
  */
 static field_desc ikev2_cert_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
-	  &ike_cert_type_names },
+	  &ikev2_cert_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -922,10 +924,10 @@ struct_desc ikev2_certificate_desc =
 
 static field_desc ikev2_cert_req_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
-	  &ike_cert_type_names },
+	  &ikev2_cert_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -953,7 +955,7 @@ struct_desc ikev2_certificate_req_desc =
  */
 static field_desc ikev2a_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "auth method", &ikev2_auth_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
@@ -1010,7 +1012,7 @@ struct_desc ikev2_nonce_desc = { "IKEv2 Nonce Payload",
  */
 static field_desc ikev2_notify_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "Protocol ID", &protocol_names },
 	/* names used are v1 names may be we should use 4306 3.3.1 names */
@@ -1039,9 +1041,9 @@ static field_desc ikev2_notify_fields[] = {
 
 static field_desc ikev2_delete_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "protocol ID", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &ikev2_del_protocol_names },
 	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
 	{ ft_nat, 16 / BITS_PER_BYTE, "number of SPIs", NULL },
 	{ ft_end, 0, NULL, NULL }
@@ -1098,7 +1100,7 @@ static struct_desc ikev2_vendor_id_desc = { "IKEv2 Vendor ID Payload",
  */
 static field_desc ikev2ts_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_nat,  8 / BITS_PER_BYTE, "number of TS", NULL },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
@@ -1240,6 +1242,34 @@ void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
 	pbs->lenfld_desc = NULL;
 }
 
+/* choose table from struct enum_enum_names */
+static enum_names *enum_enum_table(
+	const field_desc *fp,
+	u_int32_t last_enum)
+{
+	const struct enum_enum_names *const een = fp->desc;
+
+	if (een->een_first <= last_enum && last_enum <= een->een_last)
+		return een->een_enum_name[last_enum - een->een_first];
+	return NULL;
+}
+
+static err_t enum_enum_checker(
+	const char *struct_name,
+	const field_desc *fp,
+	u_int32_t last_enum)
+{
+	enum_names *ed = enum_enum_table(fp, last_enum);
+
+	if (ed == NULL) {
+		return builddiag(
+			"%s of %s has an unknown type: %lu",
+			fp->name, struct_name,
+			(unsigned long)last_enum);
+	}
+	return NULL;
+}
+
 /* print a host struct
  *
  * This code assumes that the network and host structure
@@ -1252,6 +1282,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 	bool immediate = FALSE;
 	const u_int8_t *inp = struct_ptr;
 	field_desc *fp;
+	u_int32_t last_enum = 0;
 
 	DBG_log("%s%s:", label, sd->name);
 
@@ -1268,9 +1299,11 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		case ft_lv:             /* length/value field of attribute */
 		case ft_enum:           /* value from an enumeration */
 		case ft_loose_enum:     /* value from an enumeration with only some names known */
+		case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_set:            /* bits representing set */
+			/* grab i bytes */
 			switch (i) {
 			case 8 / BITS_PER_BYTE:
 				n = *(const u_int8_t *)inp;
@@ -1284,6 +1317,8 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			default:
 				bad_case(i);
 			}
+
+			/* display the result */
 			switch (fp->field_type) {
 			case ft_len:    /* length of this struct and any following crud */
 			case ft_lv:     /* length/value field of attribute */
@@ -1303,9 +1338,25 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			/* FALL THROUGH */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
+				last_enum = n;
 				DBG_log("   %s: %s", fp->name,
 					enum_show(fp->desc, n));
 				break;
+
+			case ft_loose_enum_enum:
+			{
+				enum_names *ed = enum_enum_table(fp, last_enum);
+
+				if (ed == NULL) {
+					DBG_log("   %s: %lu", fp->name,
+						(unsigned long)n);
+				} else {
+					DBG_log("   %s: %s", fp->name,
+						enum_show(ed, n));
+				}
+			}
+				break;
+
 			case ft_set: /* bits representing set */
 				DBG_log("   %s: %s", fp->name,
 					bitnamesof(fp->desc, n));
@@ -1375,7 +1426,6 @@ static void DBG_prefix_print_struct(const pb_stream *pbs,
  *
  * This routine returns TRUE iff it succeeds.
  */
-
 bool in_struct(void *struct_ptr, struct_desc *sd,
 	       pb_stream *ins, pb_stream *obj_pbs)
 {
@@ -1392,6 +1442,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 		u_int8_t *roof = cur + sd->size; /* may be changed by a length field */
 		u_int8_t *outp = struct_ptr;
 		bool immediate = FALSE;
+		u_int32_t last_enum = 0;
 		field_desc *fp;
 
 		for (fp = sd->fields; ugh == NULL; fp++) {
@@ -1414,8 +1465,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 						/* We cannot zeroize it, it would break our hash calculation */
 						libreswan_log(
 							"byte %d of %s should have been zero, but was not (ignored)",
-							(int) (cur -
-							       ins->cur),
+							(int) (cur - ins->cur),
 							sd->name);
 					}
 					*outp++ = '\0'; /* probably redundant */
@@ -1427,6 +1477,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 			case ft_lv:             /* length/value field of attribute */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
+			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
@@ -1481,7 +1532,13 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
+					last_enum = n;
 					break;
+
+				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
+					ugh = enum_enum_checker(sd->name, fp, last_enum);
+					break;
+
 				case ft_set:            /* bits representing set */
 					if (!testset(fp->desc, n)) {
 						ugh = builddiag(
@@ -1491,9 +1548,12 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 								   n));
 					}
 					break;
+
 				default:
 					break;
 				}
+
+				/* deposit the value in the struct */
 				i = fp->size;
 				switch (i) {
 				case 8 / BITS_PER_BYTE:
@@ -1606,6 +1666,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 		bool immediate = FALSE;
 		pb_stream obj;
 		field_desc *fp;
+		u_int32_t last_enum = 0;
 
 		obj.lenfld = NULL; /* until a length field is discovered */
 		obj.lenfld_desc = NULL;
@@ -1638,6 +1699,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			case ft_lv:             /* length/value field of attribute */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
+			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
@@ -1672,6 +1734,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					obj.lenfld = cur;
 					obj.lenfld_desc = fp;
 					break;
+
 				case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
 					if ((n & ISAKMP_ATTR_AF_MASK) ==
 					    ISAKMP_ATTR_AF_TV)
@@ -1692,7 +1755,13 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
+					last_enum = n;
 					break;
+
+				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
+					ugh = enum_enum_checker(sd->name, fp, last_enum);
+					break;
+
 				case ft_set:            /* bits representing set */
 					if (!testset(fp->desc, n)) {
 						ugh = builddiag(
@@ -1702,6 +1771,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 								   n));
 					}
 					break;
+
 				default:
 					break;
 				}

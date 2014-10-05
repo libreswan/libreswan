@@ -48,14 +48,6 @@ ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st)
 	return 12;
 }
 
-const char *ip_str(const ip_address *src)
-{
-	static char buf[ADDRTOT_BUF];
-
-	addrtot(src, 0, buf, sizeof(buf));
-	return buf;
-}
-
 main(int argc, char *argv[]){
 	int i;
 	struct db_sa *gsp = NULL;
@@ -75,7 +67,7 @@ main(int argc, char *argv[]){
 	gsp = oakley_alg_makedb(aii,
 				&oakley_sadb[POLICY_RSASIG >>
 					     POLICY_ISAKMP_SHIFT],
-				-1);
+				FALSE);
 
 	sa_print(gsp);
 

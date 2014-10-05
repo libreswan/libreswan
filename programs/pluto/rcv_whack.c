@@ -161,7 +161,7 @@ static bool writewhackrecord(char *buf, size_t buflen)
 	header[1] = 0;
 	header[2] = time(NULL);	/* ??? is this reasonable? 2038 */
 
-	/* DBG_log("buflen: %u abuflen: %u\n", header[0], abuflen); */
+	/* DBG_log("buflen: %u abuflen: %u", header[0], abuflen); */
 
 	if (fwrite(header, sizeof(header), 1, whackrecordfile) < 1)
 		DBG_log("writewhackrecord: fwrite error when writing header");
@@ -193,7 +193,7 @@ static bool openwhackrecordfile(char *file)
 	whackrecordname[sizeof(whackrecordname)-1] = '\0';	/* ensure NUL termination */
 	whackrecordfile = fopen(whackrecordname, "w");
 	if (whackrecordfile == NULL) {
-		libreswan_log("Failed to open whack record file: '%s'\n",
+		libreswan_log("Failed to open whack record file: '%s'",
 			      whackrecordname);
 		return FALSE;
 	}
@@ -201,14 +201,14 @@ static bool openwhackrecordfile(char *file)
 	tm = localtime_r(&n.real_secs, &tm1);
 	strftime(when, sizeof(when), "%F %T", tm);
 
-	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s\n",
+	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s",
 		FQDN, when);
 
 	magic = WHACK_BASIC_MAGIC;
 	writewhackrecord((char *)&magic, sizeof(magic));
 
 	DBG(DBG_CONTROL,
-	    DBG_log("started recording whack messages to %s\n",
+	    DBG_log("started recording whack messages to %s",
 		    whackrecordname));
 	return TRUE;
 }
@@ -356,7 +356,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			/* close old filename */
 			if (whackrecordfile) {
 				DBG(DBG_CONTROL,
-				    DBG_log("stopped recording whack messages to %s\n",
+				    DBG_log("stopped recording whack messages to %s",
 					    whackrecordname));
 				fclose(whackrecordfile);
 			}
@@ -370,7 +370,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 		case WHACK_STOPWHACKRECORD:
 			if (whackrecordfile) {
 				DBG(DBG_CONTROL,
-				    DBG_log("stopped recording whack messages to %s\n",
+				    DBG_log("stopped recording whack messages to %s",
 					    whackrecordname));
 				fclose(whackrecordfile);
 			}
@@ -390,6 +390,12 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_delete)
 		delete_connections_by_name(msg.name, !msg.whack_connection);
 
+	if (msg.whack_deleteuser) {
+		DBG_log("received whack to delete connection by user %s",
+				msg.name);
+		for_each_state(v1_delete_state_by_xauth_name, msg.name);
+	}
+
 	if (msg.whack_deletestate) {
 		struct state *st =
 			state_with_serialno(msg.whack_deletestateno);
@@ -397,21 +403,19 @@ void whack_process(int whackfd, const struct whack_message msg)
 		if (st == NULL) {
 			loglog(RC_UNKNOWN_NAME, "no state #%lu to delete",
 					msg.whack_deletestateno);
-
 		} else {
-			DBG_log("received whack to delete state %s #%lu %s ",
+			DBG_log("received whack to delete %s state #%lu %s",
 				st->st_ikev2 ? "IKEv2" : "IKEv1",
 				st->st_serialno,
 				enum_name(&state_names, st->st_state));
 
-			if ( st->st_ikev2 && !IS_CHILD_SA(st)) {
-				DBG_log("state #%lu in %s is not a CHILD_SA. "
-					"Could be an ISKAMP SA, also delete "
-					"its IPSEC/Child SAs", st->st_serialno,
-					enum_name(&state_names, st->st_state));
-				v2_delete_my_family(st, INITIATOR);
+			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
+				DBG_log("Also deleting any corresponding CHILD_SAs");
+				delete_my_family(st, FALSE);
+				/* note: no md->st to clear */
 			} else {
 				delete_state(st);
+				/* note: no md->st to clear */
 			}
 		}
 	}
@@ -553,6 +557,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_status)
 		show_status();
 
+	if (msg.whack_traffic_status)
+		show_states_status(TRUE);
+
 	if (msg.whack_shutdown) {
 		libreswan_log("shutting down");
 		exit_pluto(0); /* delete lock and leave, with 0 status */
@@ -599,7 +606,7 @@ void whack_handle(int whackctlfd)
 
 	msg_saved = msg;
 
-	/* DBG_log("msg %d size=%u\n", ++msgnum, n); */
+	/* DBG_log("msg %d size=%u", ++msgnum, n); */
 
 	/* sanity check message */
 	{
@@ -685,7 +692,7 @@ bool whack_prompt_for(int whackfd,
 		return FALSE;
 	}
 
-	if (strlen(ansbuf) == 0) {
+	if (n == 0) {
 		whack_log(RC_LOG_SERIOUS, "no %s entered, aborted", prompt2);
 		return FALSE;
 	}

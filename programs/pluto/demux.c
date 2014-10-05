@@ -92,6 +92,11 @@ u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
  *
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
  */
 void process_packet(struct msg_digest **mdp)
 {
@@ -154,6 +159,7 @@ void process_packet(struct msg_digest **mdp)
 			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
 			    md->hdr.isa_xchg));
 		process_v1_packet(mdp);
+		/* our caller will release_any_md(mdp) */
 		break;
 
 	case IKEv2_MAJOR_VERSION: /* IKEv2 */
@@ -169,6 +175,7 @@ void process_packet(struct msg_digest **mdp)
 			    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
 			    md->hdr.isa_xchg));
 		process_v2_packet(mdp);
+		/* our caller will release_any_md(mdp) */
 		break;
 
 	default:
@@ -193,7 +200,7 @@ void process_packet(struct msg_digest **mdp)
  */
 void comm_handle(const struct iface_port *ifp)
 {
-	static struct msg_digest *md;
+	struct msg_digest *md;
 
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	/* Even though select(2) says that there is a message,
@@ -217,8 +224,7 @@ void comm_handle(const struct iface_port *ifp)
 	if (read_packet(md))
 		process_packet(&md);
 
-	if (md != NULL)
-		release_md(md);
+	release_any_md(&md);
 
 	cur_state = NULL;
 	reset_cur_connection();
@@ -327,9 +333,11 @@ static bool read_packet(struct msg_digest *md)
 				   "recvfrom on %s failed; Pluto cannot decode source sockaddr in rejection: %s",
 				   ifp->ip_dev->id_rname, from_ugh));
 		} else {
+			ipstr_buf b;
+
 			log_errno((e, "recvfrom on %s from %s:%u failed",
 				   ifp->ip_dev->id_rname,
-				   ip_str(&md->sender),
+				   ipstr(&md->sender, &b),
 				   (unsigned)md->sender_port));
 		}
 
@@ -345,16 +353,21 @@ static bool read_packet(struct msg_digest *md)
 
 	if (ifp->ike_float) {
 		u_int32_t non_esp;
+
 		if (packet_len < (int)sizeof(u_int32_t)) {
+			ipstr_buf b;
+
 			libreswan_log("recvfrom %s:%u too small packet (%d)",
-				      ip_str(cur_from), (unsigned) cur_from_port,
+				      ipstr(cur_from, &b), (unsigned) cur_from_port,
 				      packet_len);
 			return FALSE;
 		}
 		memcpy(&non_esp, _buffer, sizeof(u_int32_t));
 		if (non_esp != 0) {
+			ipstr_buf b;
+
 			libreswan_log("recvfrom %s:%u has no Non-ESP marker",
-				      ip_str(cur_from),
+				      ipstr(cur_from, &b),
 				      (unsigned) cur_from_port);
 			return FALSE;
 		}
@@ -370,12 +383,14 @@ static bool read_packet(struct msg_digest *md)
 			       "message buffer in comm_handle()")
 		 , packet_len, "packet");
 
-	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL,
-	    DBG_log("*received %d bytes from %s:%u on %s (port=%d)",
-		    (int) pbs_room(&md->packet_pbs),
-		    ip_str(cur_from), (unsigned) cur_from_port,
-		    ifp->ip_dev->id_rname,
-		    ifp->port));
+	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL, {
+		ipstr_buf b;
+		DBG_log("*received %d bytes from %s:%u on %s (port=%d)",
+			(int) pbs_room(&md->packet_pbs),
+			ipstr(cur_from, &b), (unsigned) cur_from_port,
+			ifp->ip_dev->id_rname,
+			ifp->port);
+	});
 
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
@@ -408,10 +423,12 @@ static bool read_packet(struct msg_digest *md)
 		 * layer. But boggus keep-alive packets (sent with a non-esp marker)
 		 * can reach this point. Complain and discard them.
 		 */
-		DBG(DBG_NATT,
-		    DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. "
-			    "Ignored. Sender: %s:%u", ip_str(cur_from),
-			    (unsigned) cur_from_port));
+		DBG(DBG_NATT, {
+			ipstr_buf b;
+			DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. "
+				"Ignored. Sender: %s:%u", ipstr(cur_from, &b),
+				(unsigned) cur_from_port);
+		});
 		return FALSE;
 	}
 

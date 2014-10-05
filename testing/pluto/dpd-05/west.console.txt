@@ -39,8 +39,9 @@ west #
 003 "west-east" #1: received Vendor ID payload [Dead Peer Detection]
 003 "west-east" #1: received Vendor ID payload [RFC 3947]
 002 "west-east" #1: Aggressive mode peer ID is ID_FQDN: '@east'
+002 "west-east" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 003 "west-east" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
-004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=oakley_3des_cbc_192 prf=sha group=MODP1536}
+004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=oakley_3des_cbc_192 integ=sha group=MODP1536}
 002 "west-east" #1: Dead Peer Detection (RFC 3706): enabled
 002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "west-east" #2: STATE_QUICK_I1: initiate
@@ -61,7 +62,7 @@ west #
 Tunnel should be up
 west #
  ipsec eroute
-8          192.1.2.45/32      -> 192.1.2.23/32      => tun0x1001@192.1.2.23
+8          192.1.2.45/32      -> 192.1.2.23/32      => tun0x1000@192.1.2.23
 west #
  # Let R_U_THERE packets flow
 west #
@@ -109,7 +110,7 @@ west #
 Tunnel should be up
 west #
  ipsec eroute
-8          192.1.2.45/32      -> 192.1.2.23/32      => tun0x1003@192.1.2.23
+8          192.1.2.45/32      -> 192.1.2.23/32      => tun0x1002@192.1.2.23
 west #
  echo end
 end
@@ -137,11 +138,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
 west #
- ipsec whack --shutdown
-002 shutting down
-west #
-west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -251,7 +251,7 @@ static int initiate_a_connection(struct connection *c,
 
 				if (alg != NULL && phase2_sa == NULL) {
 					whack_log(RC_LOG_SERIOUS,
-						  "can not initiate: no acceptable kernel algorithms loaded");
+						  "cannot initiate: no acceptable kernel algorithms loaded");
 					reset_cur_connection();
 					close_any(is->whackfd);
 					return 0;
@@ -478,7 +478,7 @@ static void cannot_oppo(struct connection *c,
 				      nc->newest_ipsec_sa,
 				      ocb, pcb));
 
-		if (DBGP(DBG_OPPO | DBG_CONTROLMORE)) {
+		DBG(DBG_OPPO | DBG_CONTROLMORE, {
 			char state_buf[LOG_WIDTH];
 			char state_buf2[LOG_WIDTH];
 
@@ -486,7 +486,7 @@ static void cannot_oppo(struct connection *c,
 				  state_buf2, sizeof(state_buf2));
 			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
 			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
-		}
+		});
 
 		if (!route_and_eroute(c, shunt_spd, st)) {
 			whack_log(RC_OPPOFAILURE,
@@ -517,14 +517,14 @@ static void cannot_oppo(struct connection *c,
 	}
 }
 
-static int initiate_ondemand_body(struct find_oppo_bundle *b,
+static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac, err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
 				  , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				  ); /* forward */
 
-int initiate_ondemand(const ip_address *our_client,
+bool initiate_ondemand(const ip_address *our_client,
 		      const ip_address *peer_client,
 		      int transport_proto,
 		      bool held,
@@ -577,16 +577,15 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 
 	/* if we're going to ignore the error, at least note it in debugging log */
 	if (cr->b.failure_ok && ugh != NULL) {
-		DBG(DBG_CONTROL | DBG_DNS,
-		    {
-			    char ocb[ADDRTOT_BUF];
-			    char pcb[ADDRTOT_BUF];
-
-			    addrtot(&cr->b.our_client, 0, ocb, sizeof(ocb));
-			    addrtot(&cr->b.peer_client, 0, pcb, sizeof(pcb));
-			    DBG_log("continuing from failed DNS lookup for %s, %s to %s: %s",
-				    cr->b.want, ocb, pcb, ugh);
-		    });
+		DBG(DBG_CONTROL | DBG_DNS, {
+			ipstr_buf a;
+			ipstr_buf b;
+			DBG_log("continuing from failed DNS lookup for %s, %s to %s: %s",
+				cr->b.want,
+				ipstr(&cr->b.our_client, &a),
+				ipstr(&cr->b.peer_client, &b),
+				ugh);
+		});
 	}
 
 	if (!cr->b.failure_ok && ugh != NULL) {
@@ -601,15 +600,12 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 		 * Since the %hold has gone, we can assume that somebody else
 		 * has beaten us to the punch.  We can go home.  But lets log it.
 		 */
-		char ocb[ADDRTOT_BUF];
-		char pcb[ADDRTOT_BUF];
-
-		addrtot(&cr->b.our_client, 0, ocb, sizeof(ocb));
-		addrtot(&cr->b.peer_client, 0, pcb, sizeof(pcb));
+		ipstr_buf a, b;
 
 		loglog(RC_COMMENT,
 		       "%%hold otherwise handled during DNS lookup for Opportunistic Initiation for %s to %s",
-		       ocb, pcb);
+		       ipstr(&cr->b.our_client, &a),
+		       ipstr(&cr->b.peer_client, &b));
 	} else {
 		(void)initiate_ondemand_body(&cr->b, &cr->ac, ugh
 #ifdef HAVE_LABELED_IPSEC
@@ -672,7 +668,7 @@ static err_t check_txt_recs(enum myid_state try_state,
 
 /* note: gateways_from_dns must be NULL iff this is the first call */
 /* return true if we did something */
-static int initiate_ondemand_body(struct find_oppo_bundle *b,
+static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac,
 				  err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
@@ -688,7 +684,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 	int hisport;
 	char demandbuf[256];
 	bool loggedit = FALSE;
-	int work = 0;
+	bool work = FALSE;
 
 	/* on klips/mast assume we will do something */
 	work = kern_interface == USE_KLIPS ||
@@ -719,6 +715,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 		 ours, ourport, his, hisport, b->transport_proto,
 		 oppo_step_name[b->step], b->want);
 
+	/* ??? DBG and real-world code mixed */
 	if (DBGP(DBG_OPPOINFO)) {
 		libreswan_log("%s", demandbuf);
 		loggedit = TRUE;
@@ -729,7 +726,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 
 	if (isanyaddr(&b->our_client) || isanyaddr(&b->peer_client)) {
 		cannot_oppo(NULL, b, "impossible IP address");
-		work = 0;
+		work = FALSE;
 	} else if (!(c = find_connection_for_clients(&sr,
 						     &b->our_client,
 						     &b->peer_client,
@@ -743,7 +740,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 			loggedit = TRUE;
 		}
 		cannot_oppo(NULL, b, "no routed template covers this pair");
-		work = 0;
+		work = FALSE;
 	} else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
@@ -752,7 +749,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 		loglog(RC_NOPEERIP,
 		       "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
 		       ours, ourport, his, hisport, b->transport_proto);
-		work = 0;
+		work = FALSE;
 	} else if (c->kind != CK_TEMPLATE) {
 		/* We've found a connection that can serve.
 		 * Do we have to initiate it?
@@ -838,12 +835,12 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 			if (ugh != NULL) {
 				/* cannot use our IP as OE identitiy for initiation */
 				DBG(DBG_OPPO,
-				    DBG_log("can not use our IP (%s:IPSECKEY) as identity: %s",
+				    DBG_log("cannot use our IP (%s:IPSECKEY) as identity: %s",
 					    myid_str[MYID_IP],
 					    ugh));
 				if (!logged_myid_ip_txt_warning) {
 					loglog(RC_LOG_SERIOUS,
-					       "can not use our IP (%s:IPSECKEY) as identity: %s",
+					       "cannot use our IP (%s:IPSECKEY) as identity: %s",
 					       myid_str[MYID_IP],
 					       ugh);
 					logged_myid_ip_txt_warning = TRUE;
@@ -869,12 +866,12 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 			if (ugh != NULL) {
 				/* cannot use our hostname as OE identitiy for initiation */
 				DBG(DBG_OPPO,
-				    DBG_log("can not use our hostname (%s:IPSECKEY) as identity: %s",
+				    DBG_log("cannot use our hostname (%s:IPSECKEY) as identity: %s",
 					    myid_str[MYID_HOSTNAME],
 					    ugh));
 				if (!logged_myid_fqdn_txt_warning) {
 					loglog(RC_LOG_SERIOUS,
-					       "can not use our hostname (%s:IPSECKEY) as identity: %s",
+					       "cannot use our hostname (%s:IPSECKEY) as identity: %s",
 					       myid_str[MYID_HOSTNAME],
 					       ugh);
 					logged_myid_fqdn_txt_warning = TRUE;
@@ -1020,20 +1017,16 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 				/* We cannot seem to instantiate a suitable connection:
 				 * complain clearly.
 				 */
-				char ocb[ADDRTOT_BUF],
-				     pcb[ADDRTOT_BUF],
-				     pb[ADDRTOT_BUF];
+				ipstr_buf b1, b2, b3;
 
-				addrtot(&b->our_client, 0, ocb, sizeof(ocb));
-				addrtot(&b->peer_client, 0, pcb, sizeof(pcb));
 				passert(id_is_ipaddr(&ac->gateways_from_dns->
 						     gw_id));
-				addrtot(&ac->gateways_from_dns->gw_id.ip_addr,
-					0, pb, sizeof(pb));
 				loglog(RC_OPPOFAILURE,
 				       "no suitable connection for opportunism"
 				       " between %s and %s with %s as peer",
-				       ocb, pcb, pb);
+				       ipstr(&b->our_client, &b1),
+				       ipstr(&b->peer_client, &b2),
+				       ipstr(&ac->gateways_from_dns->gw_id.ip_addr, &b3));
 
 				if (b->held) {
 					/* Replace HOLD with PASS.
@@ -1087,17 +1080,15 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 
 		/* the second chunk: initiate the next DNS query (if any) */
-		DBG(DBG_CONTROL,
-		    {
-			    char ours2[ADDRTOT_BUF];
-			    char his2[ADDRTOT_BUF];
-
-			    addrtot(&b->our_client, 0, ours2, sizeof(ours));
-			    addrtot(&b->peer_client, 0, his2, sizeof(his));
-			    DBG_log("initiate on demand from %s to %s new state: %s with ugh: %s",
-				    ours2, his2, oppo_step_name[b->step],
-				    ugh ? ugh : "ok");
-		    });
+		DBG(DBG_CONTROL, {
+			ipstr_buf b1;
+			ipstr_buf b2;
+			DBG_log("initiate on demand from %s to %s new state: %s with ugh: %s",
+				ipstr(&b->our_client, &b1),
+				ipstr(&b->peer_client, &b2),
+				oppo_step_name[b->step],
+				ugh ? ugh : "ok");
+		});
 
 		if (ugh != NULL) {
 			b->policy_prio = c->prio;
@@ -1164,8 +1155,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 					break;
 				}
 				cr->b.step = fos_myid_hostname_txt;
-			/* fall through */
-
+			/* FALL THROUGH */
 			case fos_myid_hostname_txt:
 				if (c->spd.this.id.kind == ID_MYID &&
 				    myid_state != MYID_SPECIFIED) {
@@ -1182,8 +1172,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 				}
 
 				cr->b.step = fos_our_client;
-			/* fall through */
-
+			/* FALL THROUGH */
 			case fos_our_client: /* IPSECKEY for our client */
 				if (!sameaddr(&c->spd.this.host_addr,
 					      &b->our_client)) {
@@ -1201,8 +1190,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 					break;
 				}
 				cr->b.step = fos_our_txt;
-			/* fall through */
-
+			/* FALL THROUGH */
 			case fos_our_txt: /* IPSECKEY for us */
 				cr->b.failure_ok = b->failure_ok = TRUE;
 				cr->b.want = b->want = "our IPSECKEY record";
@@ -1456,10 +1444,11 @@ void connection_check_phase2(void)
 
 		if (pending_check_timeout(c)) {
 			struct state *p1st;
+			ipstr_buf b;
 
 			libreswan_log(
 				"pending Quick Mode with %s \"%s\" took too long -- replacing phase 1",
-				ip_str(&c->spd.that.host_addr),
+				ipstr(&c->spd.that.host_addr, &b),
 				c->name);
 
 			p1st = find_phase1_state(c,

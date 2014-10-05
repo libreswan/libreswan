@@ -1,8 +1,9 @@
 /*
  * A program to read the configuration file and load a single conn
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2013 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -149,7 +150,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		/* Read netlink message, verifying kernel origin. */
 		do {
 			readlen = recvfrom(sock, buf, RTNL_BUFSIZE - msglen, 0,
-					   (struct sockaddr *)&sa, &salen);
+					(struct sockaddr *)&sa, &salen);
 			if (readlen < 0)
 				return -1;
 		} while (sa.nl_pid != 0);
@@ -157,7 +158,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
 		/* Verify it's valid */
 		nlhdr = (struct nlmsghdr *) buf;
 		if (NLMSG_OK(nlhdr, readlen) == 0 ||
-		    nlhdr->nlmsg_type == NLMSG_ERROR)
+			nlhdr->nlmsg_type == NLMSG_ERROR)
 			return -1;
 
 		/* Check if it is the last message */
@@ -180,7 +181,7 @@ ssize_t netlink_read_reply(int sock, char *buf, unsigned int seqnum, __u32 pid)
  * Send netlink query message and read reply.
  */
 static
-int netlink_query(char *msgbuf)
+ssize_t netlink_query(char *msgbuf)
 {
 	struct nlmsghdr *nlmsg;
 	int sock;
@@ -188,7 +189,7 @@ int netlink_query(char *msgbuf)
 	/* Create socket */
 	if ((sock = socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE)) < 0) {
 		int e = errno;
-		printf("create socket: (%d: %s)", e, strerror(e));
+		printf("create netlink socket: (%d: %s)", e, strerror(e));
 		return -1;
 	}
 
@@ -196,15 +197,17 @@ int netlink_query(char *msgbuf)
 	nlmsg = (struct nlmsghdr *)msgbuf;
 	if (send(sock, nlmsg, nlmsg->nlmsg_len, 0) < 0) {
 		int e = errno;
-		printf("write socket: (%d: %s)", e, strerror(e));
+		printf("write netlink socket: (%d: %s)", e, strerror(e));
 		return -1;
 	}
 
 	/* Read response */
-	int len = netlink_read_reply(sock, msgbuf, 1, getpid());
+	ssize_t len = netlink_read_reply(sock, msgbuf, 1, getpid());
+
 	if (len < 0) {
 		int e = errno;
-		printf("read socket: (%d: %s)", e, strerror(e));
+
+		printf("read netlink socket: (%d: %s)", e, strerror(e));
 		return -1;
 	}
 	close(sock);
@@ -217,196 +220,257 @@ int netlink_query(char *msgbuf)
  *         -1 = not found
  */
 static
-int resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
+void resolve_ppp_peer(char *interface, sa_family_t family, char *peer)
 {
 	struct ifaddrs *ifap, *ifa;
-	struct sockaddr *sa;
 
 	/* Get info about all interfaces */
 	if (getifaddrs(&ifap) != 0)
-		return -1;
+		return;
 
 	/* Find the right interface */
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next)
 		if ((ifa->ifa_flags & IFF_POINTOPOINT) != 0 &&
-		    streq(ifa->ifa_name, interface)) {
-			sa = ifa->ifa_ifu.ifu_dstaddr;
+			streq(ifa->ifa_name, interface)) {
+			struct sockaddr *sa = ifa->ifa_ifu.ifu_dstaddr;
+
 			if (sa != NULL && sa->sa_family == family &&
-			    getnameinfo(sa, ((sa->sa_family == AF_INET) ?
-					     sizeof(struct sockaddr_in) :
-					     sizeof(struct sockaddr_in6)),
-					peer, NI_MAXHOST, NULL, 0,
+				getnameinfo(sa,
+					((sa->sa_family == AF_INET) ?
+						sizeof(struct sockaddr_in) :
+						sizeof(struct sockaddr_in6)),
+					peer, NI_MAXHOST,
+					NULL, 0,
 					NI_NUMERICHOST) == 0) {
 				if (verbose) {
-					printf("found peer %s to interface %s\n", peer,
+					printf("found peer %s to interface %s\n",
+						peer,
 						interface);
 				}
 				freeifaddrs(ifap);
-				return 0;
+				return;
 			}
 		}
 	freeifaddrs(ifap);
-	return -1;
 }
 
 /*
  * See if left->addr or left->next is %defaultroute and change it to IP.
+ *
+ * Returns:
+ * -1: failure
+ *  0: done
+ *  1: please call again: more to do
  */
-static
-int resolve_defaultroute_one(struct starter_end *left,
-			     struct starter_end *right)
+static int resolve_defaultroute_one(struct starter_end *host,
+				struct starter_end *peer)
 {
-	/* "left="         == left->addrtype + left->addr
-	 * "leftnexthop="  == left->nexttype + left->nexthop
+	/*
+	 * "left="         == host->addrtype and host->addr
+	 * "leftnexthop="  == host->nexttype and host->nexthop
 	 */
 
-	/* What kind of result we want to parse? */
-	int parse_src = (left->addrtype == KH_DEFAULTROUTE);
-	int parse_gateway = (left->nexttype == KH_DEFAULTROUTE);
+	/* What kind of result are we seeking? */
+	bool seeking_src = (host->addrtype == KH_DEFAULTROUTE);
+	bool seeking_gateway = (host->nexttype == KH_DEFAULTROUTE);
 
-	if (parse_src == 0 && parse_gateway == 0)
-		return 0;
+	char msgbuf[RTNL_BUFSIZE];
+	bool has_dst = FALSE;
+	int query_again = 0;
+
+	if (!seeking_src && !seeking_gateway)
+		return 0;	/* this end already figured out */
 
 	/* Fill netlink request */
-	char msgbuf[RTNL_BUFSIZE];
-	int has_dst = 0, query_again = 0;
-	netlink_query_init(msgbuf, left->addr_family);
-	if (left->nexttype == KH_IPADDR) { /* My nexthop is specified */
-		netlink_query_add(msgbuf, RTA_DST, &left->nexthop);
-		has_dst = 1;
-	} else if (right->addrtype == KH_IPADDR) { /* Peer IP is specified */
-		netlink_query_add(msgbuf, RTA_DST, &right->addr);
-		has_dst = 1;
-		if (parse_src && parse_gateway &&
-		    left->addr_family == AF_INET) {
-			/* If we have only peer IP and no gateway/src we must do two
-			 * queries:
+	netlink_query_init(msgbuf, host->addr_family);
+	if (host->nexttype == KH_IPADDR) {
+		/*
+		 * My nexthop (gateway) is specified.
+		 * We need to figure out our source IP to get there.
+		 */
+		netlink_query_add(msgbuf, RTA_DST, &host->nexthop);
+		has_dst = TRUE;
+	} else if (peer->addrtype == KH_IPADDR) {
+		/*
+		 * Peer IP is specified.
+		 * We may need to figure out source IP
+		 * and gateway IP to get there.
+		 */
+		netlink_query_add(msgbuf, RTA_DST, &peer->addr);
+		has_dst = TRUE;
+		if (seeking_src && seeking_gateway &&
+			host->addr_family == AF_INET) {
+			/*
+			 * If we have only peer IP and no gateway/src we must
+			 * do two queries:
 			 * 1) find out gateway for dst
 			 * 2) find out src for that gateway
 			 * Doing both in one query returns src for dst.
 			 *
-			 * IPv6 returns link-local for gateway so query both in one query.
+			 * (IPv6 returns link-local for gateway so we can and
+			 * do seek both in one query.)
 			 */
-			parse_src = 0;
+			seeking_src = FALSE;
 			query_again = 1;
 		}
 	}
-	if (has_dst && left->addrtype == KH_IPADDR) /* SRC works only with DST */
-		netlink_query_add(msgbuf, RTA_SRC, &left->addr);
+	if (has_dst && host->addrtype == KH_IPADDR) {
+		/* SRC works only with DST */
+		netlink_query_add(msgbuf, RTA_SRC, &host->addr);
+	}
 
-	/* If we have for example left=%defaultroute + right=%any (no destination)
-	 * the netlink reply will be full routing table. We must do two queries:
+	/*
+	 * If we have for example host=%defaultroute + peer=%any
+	 * (no destination) the netlink reply will be full routing table.
+	 * We must do two queries:
 	 * 1) find out default gateway
 	 * 2) find out src for that default gateway
 	 */
-	if (has_dst == 0) {
-		struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
-		nlmsg->nlmsg_flags |= NLM_F_DUMP;
-		if (parse_src && parse_gateway) {
-			parse_src = 0;
+	if (!has_dst) {
+		if (seeking_src && seeking_gateway) {
+			seeking_src = FALSE;
 			query_again = 1;
 		}
 	}
+	if (seeking_gateway) {
+		struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+
+		nlmsg->nlmsg_flags |= NLM_F_DUMP;
+        }
+
 	if (verbose)
-		printf("\nparse_src = %d, parse_gateway = %d, has_dst = %d\n",
-		       parse_src, parse_gateway, has_dst);
+		printf("\nseeking_src = %d, seeking_gateway = %d, has_dst = %d\n",
+			seeking_src, seeking_gateway, has_dst);
 
 	/* Send netlink get_route request */
+
 	ssize_t len = netlink_query(msgbuf);
+
 	if (len < 0)
 		return -1;
 
 	/* Parse reply */
 	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
+
 	for (; NLMSG_OK(nlmsg, len); nlmsg = NLMSG_NEXT(nlmsg, len)) {
 		struct rtmsg *rtmsg;
 		struct rtattr *rtattr;
 		int rtlen;
-		char r_interface[IF_NAMESIZE];
+		char r_interface[IF_NAMESIZE+1];
 		char r_source[ADDRTOT_BUF];
 		char r_gateway[ADDRTOT_BUF];
 		char r_destination[ADDRTOT_BUF];
+		bool ignore;
 
-		/* Check for IPv4 / IPv6 */
+		if (nlmsg->nlmsg_type == NLMSG_DONE)
+			break;
+
+		if (nlmsg->nlmsg_type == NLMSG_ERROR) {
+			printf("netlink error\n");
+			return -1;
+			break;
+		}
+
+		/* ignore all but IPv4 and IPv6 */
 		rtmsg = (struct rtmsg *) NLMSG_DATA(nlmsg);
 		if (rtmsg->rtm_family != AF_INET &&
-		    rtmsg->rtm_family != AF_INET6)
+			rtmsg->rtm_family != AF_INET6)
 			continue;
 
 		/* Parse one route entry */
-		*r_interface = *r_source = *r_gateway = *r_destination = 0;
+		r_interface[0] = r_interface[IF_NAMESIZE] = r_source[0] =
+			r_gateway[0] = r_destination[0] = '\0';
 		rtattr = (struct rtattr *) RTM_RTA(rtmsg);
 		rtlen = RTM_PAYLOAD(nlmsg);
 		for (;
-		     RTA_OK(rtattr, rtlen); rtattr = RTA_NEXT(rtattr, rtlen)) {
+			RTA_OK(rtattr, rtlen);
+			rtattr = RTA_NEXT(rtattr, rtlen)) {
 			switch (rtattr->rta_type) {
 			case RTA_OIF:
 				if_indextoname(*(int *)RTA_DATA(rtattr),
-					       r_interface);
+					r_interface);
 				break;
 
 			case RTA_PREFSRC:
 				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
-					  r_source, sizeof(r_source));
+					r_source, sizeof(r_source));
 				break;
 
 			case RTA_GATEWAY:
 				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
-					  r_gateway, sizeof(r_gateway));
+					r_gateway, sizeof(r_gateway));
 				break;
 
 			case RTA_DST:
 				inet_ntop(rtmsg->rtm_family, RTA_DATA(rtattr),
-					  r_destination,
-					  sizeof(r_destination));
+					r_destination,
+					sizeof(r_destination));
 				break;
 			}
 		}
 
+		/*
+		 * Ignore if not main table.
+		 * Ignore ipsecX or mastX interfaces.
+		 */
+		ignore = rtmsg->rtm_table != RT_TABLE_MAIN ||
+			startswith(r_interface, "ipsec") ||
+			startswith(r_interface, "mast");
+
 		if (verbose) {
-			printf("dst %s via %s dev %s src %s table %d\n",
-			       r_destination, r_gateway, r_interface,
-			       r_source, rtmsg->rtm_table);
+			printf("dst %s via %s dev %s src %s table %d%s\n",
+				r_destination,
+				r_gateway,
+				r_interface,
+				r_source, rtmsg->rtm_table,
+				ignore ? "" : " (ignored)");
 		}
 
-		/* Use only Main table (254) */
-		if (rtmsg->rtm_table != 254 || (has_dst == 0 && parse_gateway && *r_destination != 0))
+		if (ignore)
 			continue;
 
-		err_t err;
-		if (parse_src && *r_source != 0) {
-			err = tnatoaddr(r_source, 0, rtmsg->rtm_family,
-					&left->addr);
+		if (seeking_src && r_source[0] != '\0') {
+			err_t err = tnatoaddr(r_source, 0, rtmsg->rtm_family,
+					&host->addr);
+
 			if (err == NULL) {
-				left->addrtype = KH_IPADDR;
-				parse_src = 0;
+				host->addrtype = KH_IPADDR;
+				seeking_src = FALSE;
 				if (verbose)
 					printf("set addr: %s\n", r_source);
 			} else if (verbose) {
-				printf("unknown source results from kernel: %s\n",
-					err);
+				printf("unknown source results from kernel (%s): %s\n",
+					r_source, err);
 			}
 		}
-		if (parse_gateway && *r_gateway == 0 && *r_interface != 0 &&
-		    (has_dst || *r_source == 0)) {
-			/* Point-to-Point default gw without "via IP" */
-			resolve_ppp_peer(r_interface, left->addr_family,
-					 r_gateway);
-		}
-		if (parse_gateway && *r_gateway != 0 &&
-		    (has_dst || *r_source == 0)) {
-			err = tnatoaddr(r_gateway, 0, rtmsg->rtm_family,
-					&left->nexthop);
-			if (err == NULL) {
-				left->nexttype = KH_IPADDR;
-				parse_gateway = 0; /* Use first if multiple */
-				if (verbose)
-					printf("set nexthop: %s\n", r_gateway);
 
+		if (seeking_gateway && r_destination[0] == '\0' &&
+			(has_dst || r_source[0] == '\0')) {
+			if (r_gateway[0] == '\0' && r_interface[0] != '\0') {
+				/*
+				 * Point-to-Point default gw without "via IP"
+				 * Attempt to find r_gateway as the IP address
+				 * on the interface.
+				 */
+				resolve_ppp_peer(r_interface, host->addr_family,
+						 r_gateway);
+			}
+			if (r_gateway[0] != '\0') {
+				err_t err = tnatoaddr(r_gateway, 0,
+						rtmsg->rtm_family,
+						&host->nexthop);
 
-			} else if (verbose) {
-				printf("unknown gateway results from kernel: %s\n",
-					err);
+				if (err != NULL) {
+					printf("unknown gateway results from kernel: %s\n",
+						err);
+				} else {
+					/* Note: Use first even if multiple */
+					host->nexttype = KH_IPADDR;
+					seeking_gateway = FALSE;
+					if (verbose)
+						printf("set nexthop: %s\n",
+							r_gateway);
+				}
 			}
 		}
 	}
@@ -426,16 +490,16 @@ void resolve_defaultroute(struct starter_conn *conn)
 }
 
 static const char *usage_string = ""
-				  "Usage: addconn [--config file] [--rootdir dir] [--ctlbase socketfile] \n"
-				  "               [--varprefix prefix] [--noexport] \n"
-				  "               [--verbose] \n"
-				  "               [--configsetup] \n"
-				  "               [--liststack] \n"
-				  "               [--checkconfig] \n"
-				  "               [--addall] [--autoall] \n"
-				  "               [--listall] [--listadd] [--listroute] [--liststart] [--listignore] \n"
-				  "               [--listall] [--listadd] [--listroute] [--liststart] [--listignore] \n"
-				  "               names\n";
+	"Usage: addconn [--config file] [--rootdir dir] [--ctlbase socketfile]\n"
+	"               [--varprefix prefix] [--noexport]\n"
+	"               [--verbose]\n"
+	"               [--configsetup]\n"
+	"               [--liststack]\n"
+	"               [--checkconfig]\n"
+	"               [--addall] [--autoall]\n"
+	"               [--listall] [--listadd] [--listroute] [--liststart]\n"
+	"               [--listignore]\n"
+	"               names\n";
 
 static void usage(void)
 {
@@ -444,28 +508,28 @@ static void usage(void)
 	exit(10);
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
-	{ "config",              required_argument, NULL, 'C' },
-	{ "debug",               no_argument, NULL, 'D' },
-	{ "verbose",             no_argument, NULL, 'D' },
-	{ "addall",              no_argument, NULL, 'a' },
-	{ "autoall",             no_argument, NULL, 'a' },
-	{ "listall",             no_argument, NULL, 'A' },
-	{ "listadd",             no_argument, NULL, 'L' },
-	{ "listroute",           no_argument, NULL, 'r' },
-	{ "liststart",           no_argument, NULL, 's' },
-	{ "listignore",          no_argument, NULL, 'i' },
-	{ "varprefix",           required_argument, NULL, 'P' },
-	{ "ctlbase",            required_argument, NULL, 'c' },
-	{ "rootdir",             required_argument, NULL, 'R' },
-	{ "configsetup",         no_argument, NULL, 'T' },
-	{ "liststack",           no_argument, NULL, 'S' },
-	{ "checkconfig",         no_argument, NULL, 'K' },
-	{ "noexport",            no_argument, NULL, 'N' },
-	{ "help",                no_argument, NULL, 'h' },
+	{ "config", required_argument, NULL, 'C' },
+	{ "debug", no_argument, NULL, 'D' },
+	{ "verbose", no_argument, NULL, 'D' },
+	{ "addall", no_argument, NULL, 'a' },
+	{ "autoall", no_argument, NULL, 'a' },
+	{ "listall", no_argument, NULL, 'A' },
+	{ "listadd", no_argument, NULL, 'L' },
+	{ "listroute", no_argument, NULL, 'r' },
+	{ "liststart", no_argument, NULL, 's' },
+	{ "listignore", no_argument, NULL, 'i' },
+	{ "varprefix", required_argument, NULL, 'P' },
+	{ "ctlbase", required_argument, NULL, 'c' },
+	{ "rootdir", required_argument, NULL, 'R' },
+	{ "configsetup", no_argument, NULL, 'T' },
+	{ "liststack", no_argument, NULL, 'S' },
+	{ "checkconfig", no_argument, NULL, 'K' },
+	{ "noexport", no_argument, NULL, 'N' },
+	{ "help", no_argument, NULL, 'h' },
 	/* obsoleted, eat and ignore for compatibility */
-	{"defaultroute",        required_argument, NULL, 'd'},
+	{"defaultroute", required_argument, NULL, 'd'},
 	{"defaultroutenexthop", required_argument, NULL, 'n'},
 
 	{ 0, 0, 0, 0 }
@@ -479,7 +543,7 @@ int main(int argc, char *argv[])
 	int checkconfig = 0;
 	char *export = "export"; /* display export before the foo=bar or not */
 	int listroute = 0, liststart = 0, listignore = 0, listadd = 0,
-	    listall = 0, dolist = 0, liststack = 0;
+		listall = 0, dolist = 0, liststack = 0;
 	struct starter_config *cfg = NULL;
 	err_t err = NULL;
 	char *confdir = NULL;
@@ -591,7 +655,7 @@ int main(int argc, char *argv[])
 
 	/* if nothing to add, then complain */
 	if (optind == argc && !autoall && !dolist && !configsetup &&
-	    !checkconfig)
+		!checkconfig)
 		usage();
 
 	if (verbose > 3) {
@@ -602,15 +666,17 @@ int main(int argc, char *argv[])
 	if (confdir == NULL)
 		confdir = IPSEC_CONFDIR;
 
-	if (!configfile) {
-		configfile = alloc_bytes(strlen(IPSEC_CONF) + 2, "conf file");
+	if (configfile == NULL) {
+		/* ??? see code clone in programs/readwriteconf/readwriteconf.c */
+		configfile = alloc_bytes(strlen(confdir) +
+					 sizeof("/ipsec.conf"),
+					 "conf file");
 
 		/* calculate default value for configfile */
-		configfile[0] = '\0';
-		strcpy(configfile, confdir);
-		if (configfile[strlen(configfile) - 1] != '/')
-			strcat(configfile, "/");
-		strcat(configfile, "ipsec.conf");
+		strcpy(configfile, confdir);	/* safe: see allocation above */
+		if (configfile[0] != '\0' && configfile[strlen(configfile) - 1] != '/')
+			strcat(configfile, "/");	/* safe: see allocation above */
+		strcat(configfile, "ipsec.conf");	/* safe: see allocation above */
 	}
 
 	if (verbose)
@@ -628,7 +694,7 @@ int main(int argc, char *argv[])
 	cfg = confread_load(configfile, &err, resolvip, ctlbase, configsetup);
 
 	if (cfg == NULL) {
-		fprintf(stderr, "can not load config '%s': %s\n",
+		fprintf(stderr, "cannot load config '%s': %s\n",
 			configfile, err);
 		exit(3);
 	} else if (checkconfig) {
@@ -642,46 +708,69 @@ int main(int argc, char *argv[])
 
 
 		/*
-		 * Load all conns marked as auto=add or better
-		 * First, do the auto=route and auto=add conns to quickly get routes in
-		 * place, then do auto=start as these can be slower. This mimics behaviour
-		 * of the old _plutoload
+		 * Load all conns marked as auto=add or better.
+		 * First, do the auto=route and auto=add conns to quickly
+		 * get routes in place, then do auto=start as these can be
+		 * slower.
+		 * This mimics behaviour of the old _plutoload
 		 */
 		if (verbose)
 			printf("  Pass #1: Loading auto=add, auto=route and auto=start connections\n");
 
 
 		for (conn = cfg->conns.tqh_first;
-		     conn != NULL;
-		     conn = conn->link.tqe_next) {
+			conn != NULL;
+			conn = conn->link.tqe_next) {
 			if (conn->desired_state == STARTUP_ADD ||
-			    conn->desired_state == STARTUP_ONDEMAND ||
-			    conn->desired_state == STARTUP_START) {
+				conn->desired_state == STARTUP_ONDEMAND ||
+				conn->desired_state == STARTUP_START) {
 				if (verbose)
 					printf(" %s", conn->name);
 				resolve_defaultroute(conn);
 				starter_whack_add_conn(cfg, conn);
 			}
-			if (conn->desired_state == STARTUP_ONDEMAND)
-				starter_whack_route_conn(cfg, conn);
 		}
-		if (verbose)
-			printf("  Pass #2: Initiating auto=start connections\n");
 
+		/*
+		 * We loaded all connections. Now tell pluto to listen,
+		 * then route the conns and resolve default route.
+		 */
+		starter_whack_listen(cfg);
+
+		if (verbose)
+			printf("  Pass #2: Routing auto=route and auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first;
-		     conn != NULL;
-		     conn = conn->link.tqe_next) {
-			if (conn->desired_state == STARTUP_START) {
+			conn != NULL;
+			conn = conn->link.tqe_next) {
+			if (conn->desired_state == STARTUP_ADD ||
+				conn->desired_state == STARTUP_ONDEMAND ||
+				conn->desired_state == STARTUP_START) {
 				if (verbose)
 					printf(" %s", conn->name);
 				resolve_defaultroute(conn);
+				if (conn->desired_state == STARTUP_ONDEMAND ||
+				    conn->desired_state == STARTUP_START) {
+					starter_whack_route_conn(cfg, conn);
+				}
+			}
+		}
+
+		if (verbose)
+			printf("  Pass #3: Initiating auto=start connections\n");
+
+		for (conn = cfg->conns.tqh_first;
+			conn != NULL;
+			conn = conn->link.tqe_next) {
+			if (conn->desired_state == STARTUP_START) {
+				if (verbose)
+					printf(" %s", conn->name);
 				starter_whack_initiate_conn(cfg, conn);
 			}
 		}
+
 		if (verbose)
 			printf("\n");
-
 	} else {
 		/* load named conns, regardless of their state */
 		int connum;
@@ -694,14 +783,14 @@ int main(int argc, char *argv[])
 			if (verbose)
 				printf(" %s", connname);
 			for (conn = cfg->conns.tqh_first;
-			     conn != NULL;
-			     conn = conn->link.tqe_next) {
+				conn != NULL;
+				conn = conn->link.tqe_next) {
 				if (streq(conn->name, connname)) {
 					if (conn->state == STATE_ADDED) {
 						printf("\nconn %s already added\n",
 							conn->name);
 					} else if (conn->state ==
-						   STATE_FAILED) {
+						STATE_FAILED) {
 						printf("\nconn %s did not load properly\n",
 							conn->name);
 					} else {
@@ -717,27 +806,32 @@ int main(int argc, char *argv[])
 			}
 
 			if (conn == NULL) {
-				/* only if we don't find it, do we now look for aliases */
-
+				/*
+				 * only if we don't find it, do we now look
+				 * for aliases
+				 */
 				for (conn = cfg->conns.tqh_first;
-				     conn != NULL;
-				     conn = conn->link.tqe_next) {
+					conn != NULL;
+					conn = conn->link.tqe_next) {
 					if (conn->strings_set[KSF_CONNALIAS] &&
-					    lsw_alias_cmp(connname,
-							  conn->strings[
-								  KSF_CONNALIAS
-							  ])) {
+						lsw_alias_cmp(connname,
+							conn->
+							strings[KSF_CONNALIAS]
+							)) {
 
 						if (conn->state ==
-						    STATE_ADDED) {
-							printf("\nalias: %s conn %s already added\n", connname,
+							STATE_ADDED) {
+							printf("\nalias: %s conn %s already added\n",
+								connname,
 								conn->name);
 						} else if (conn->state ==
-							   STATE_FAILED) {
-							printf("\nalias: %s conn %s did not load properly\n", connname,
+							STATE_FAILED) {
+							printf("\nalias: %s conn %s did not load properly\n",
+								connname,
 								conn->name);
 						} else {
-							resolve_defaultroute(conn);
+							resolve_defaultroute(
+								conn);
 							exit_status =
 								starter_whack_add_conn(
 									cfg,
@@ -766,8 +860,8 @@ int main(int argc, char *argv[])
 		if (verbose)
 			printf("listing all conns\n");
 		for (conn = cfg->conns.tqh_first;
-		     conn != NULL;
-		     conn = conn->link.tqe_next)
+			conn != NULL;
+			conn = conn->link.tqe_next)
 			printf("%s ", conn->name);
 		printf("\n");
 	} else {
@@ -779,8 +873,8 @@ int main(int argc, char *argv[])
 
 			/* list all conns marked as auto=add */
 			for (conn = cfg->conns.tqh_first;
-			     conn != NULL;
-			     conn = conn->link.tqe_next) {
+				conn != NULL;
+				conn = conn->link.tqe_next) {
 				if (conn->desired_state == STARTUP_ADD)
 					printf("%s ", conn->name);
 			}
@@ -790,12 +884,15 @@ int main(int argc, char *argv[])
 				printf("listing all conns marked as auto=route and auto=start\n");
 
 
-			/* list all conns marked as auto=route or start or better */
+			/*
+			 * list all conns marked as auto=route or start or
+			 * better
+			 */
 			for (conn = cfg->conns.tqh_first;
-			     conn != NULL;
-			     conn = conn->link.tqe_next) {
+				conn != NULL;
+				conn = conn->link.tqe_next) {
 				if (conn->desired_state == STARTUP_START ||
-				    conn->desired_state == STARTUP_ONDEMAND)
+					conn->desired_state == STARTUP_ONDEMAND)
 					printf("%s ", conn->name);
 			}
 		}
@@ -807,8 +904,8 @@ int main(int argc, char *argv[])
 
 			/* list all conns marked as auto=start */
 			for (conn = cfg->conns.tqh_first;
-			     conn != NULL;
-			     conn = conn->link.tqe_next) {
+				conn != NULL;
+				conn = conn->link.tqe_next) {
 				if (conn->desired_state == STARTUP_START)
 					printf("%s ", conn->name);
 			}
@@ -821,8 +918,8 @@ int main(int argc, char *argv[])
 
 			/* list all conns marked as auto=start */
 			for (conn = cfg->conns.tqh_first;
-			     conn != NULL;
-			     conn = conn->link.tqe_next) {
+				conn != NULL;
+				conn = conn->link.tqe_next) {
 				if (conn->desired_state == STARTUP_IGNORE)
 					printf("%s ", conn->name);
 			}
@@ -837,9 +934,10 @@ int main(int argc, char *argv[])
 			if (strstr(kd->keyname, "protostack")) {
 				if (cfg->setup.strings[kd->field])
 					printf("%s\n",
-					       cfg->setup.strings[kd->field]);
+						cfg->setup.strings[kd->field]);
 				else
-					printf("netkey\n"); /* implicit default */
+					/* implicit default */
+					printf("netkey\n");
 			}
 
 		}
@@ -862,37 +960,38 @@ int main(int argc, char *argv[])
 			case kt_loose_enum:
 				if (cfg->setup.strings[kd->field]) {
 					printf("%s %s%s='%s'\n",
-					       export, varprefix, kd->keyname,
-					       cfg->setup.strings[kd->field]);
+						export, varprefix, kd->keyname,
+						cfg->setup.strings[kd->field]);
 				}
 				break;
 
 			case kt_bool:
 				printf("%s %s%s='%s'\n", export, varprefix,
-				       kd->keyname,
-				       cfg->setup.options[kd->field] ? "yes" : "no");
+					kd->keyname,
+					cfg->setup.options[kd->field] ?
+					"yes" : "no");
 				break;
 
 			case kt_list:
 				printf("%s %s%s='",
-				       export, varprefix, kd->keyname);
+					export, varprefix, kd->keyname);
 				confwrite_list(stdout, "",
-					       cfg->setup.options[kd->field],
-					       kd);
+					cfg->setup.options[kd->field],
+					kd);
 				printf("'\n");
 				break;
 
 			case kt_obsolete:
 				printf("# obsolete option '%s%s' ignored\n",
-				       varprefix, kd->keyname);
+					varprefix, kd->keyname);
 				break;
 
 			default:
 				if (cfg->setup.options[kd->field] ||
-				    cfg->setup.options_set[kd->field]) {
+					cfg->setup.options_set[kd->field]) {
 					printf("%s %s%s='%d'\n",
-					       export, varprefix, kd->keyname,
-					       cfg->setup.options[kd->field]);
+						export, varprefix, kd->keyname,
+						cfg->setup.options[kd->field]);
 				}
 				break;
 			}
@@ -906,7 +1005,9 @@ int main(int argc, char *argv[])
 	exit(exit_status);
 }
 
-/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+/*
+ * exit_tool() is needed if the library was compiled with DEBUG,
+ * even if we are not.
  * The odd-looking parens are to prevent macro expansion:
  * lswlog.h without DEBUG define a macro exit_tool().
  */

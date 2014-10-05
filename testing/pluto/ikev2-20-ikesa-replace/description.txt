@@ -1,0 +1,3 @@
+This is an IKEv2, insist test using X509 certs on the initiator (road), and on the responder(east). Road will rekey IKE SA.
+
+The rekey timer on road is short autmatic runs may not wait that long. If you want to see rekeying run the test it manually and login to road.

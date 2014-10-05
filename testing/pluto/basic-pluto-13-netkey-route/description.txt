@@ -1,0 +1,13 @@
+Basic pluto test with west has auto=route and netkey stack.
+
+It shows two packets are dropped while negotiating.
+tcpdump shows they don't leak in the clear
+
+note this shows an unexpected:
+
+src 192.0.1.254 dst 192.0.2.254
+        proto esp spi 0xSPISPIXX reqid REQID mode transport
+        replay-window 0
+        sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1
+
+which was the trigger packet. Unknown if we are supposed to delete this?

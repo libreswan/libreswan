@@ -70,7 +70,7 @@ endif
 LIBSADNS = $(LIBRESWANLIB)
 LIBSADNS += -lresolv # -lefence
 
-LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)
+LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB) -lrt
 ifeq ($(USE_DNSSEC),true)
 LIBSPLUTO += -lunbound
 endif
@@ -105,7 +105,7 @@ RMFLAGS = -f
 # files for a (source) distribution
 
 DISTMISC = CHANGES PLUTO-CONVENTIONS TODO ipsec.secrets Makefile routing.txt \
-	 pluto.8 ipsec.secrets.5 .cvsignore
+	 pluto.8 ipsec_whack.8 ipsec.secrets.5 .cvsignore
 
 DISTSRC = \
         connections.c initiate.c terminate.c connections.h \
@@ -122,6 +122,7 @@ DISTSRC = \
 	spdb.c spdb_struct.c spdb_print.c spdb.h \
 	ikev1.c ikev1_quick.c ikev1_continuations.h \
 	ikev1_dpd.c ikev1_dpd.h ikev1_spdb_struct.c \
+	ikev1_msgid.c \
         ikev2.c ikev2_parent.c ikev2_child.c ikev2_crypto.c \
 	ikev2_prfplus.c ikev2_spdb_struct.c \
 	ikev2_rsa.c ikev2_psk.c ikev2_x509.c \
@@ -162,7 +163,7 @@ OBJSPLUTO += pending.o cookie.o crypto.o defs.o
 OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
-OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o
+OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o 
 OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_x509.o ikev2_crypto.o ikev2_prfplus.o
 OBJSPLUTO += kernel.o
@@ -217,6 +218,7 @@ doinstall: all
 	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
 	g=`if [ -r pluto.8 ]; then echo pluto.8; else echo ${srcdir}/pluto.8; fi`; \
 	$(INSTALL) $(INSTMANFLAGS) $$g $(PMANDIR)/ipsec_pluto.8 || exit 1; \
+	echo '.so man8/ipsec_pluto.8' > $(PMANDIR)/ipsec_whack.8 || exit 1; \
 	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \
 		while read from to ; \
 		do \
@@ -247,9 +249,6 @@ install_file_list:
 			echo $(FMANDIR)/$$to; \
 		done
 
-alg_info_test: alg_info_test.o ike_alg.o constants.o defs.o log.o db_ops.o crypto.o $(LIBRESWANLIB)
-	$(CC) -o $@ $^ $(LDFLAGS) $(LIBSPLUTO)
-
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
 	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
 
@@ -261,9 +260,6 @@ $(BINNAMEWHACK): $(OBJSWHACK)
 
 $(BINNAMEWHACKINIT): $(OBJSWHACKINIT)
 	$(CC) -o $(BINNAMEWHACKINIT) $(LDFLAGS) $(OBJSWHACKINIT) $(USERLINK) $(LIBSWHACK)
-
-distlist:
-	@echo $(DIST)
 
 cleanall:
 	$(RM) $(RMFLAGS) *.core core *~ a.out ktrace.out \

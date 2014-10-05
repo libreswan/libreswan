@@ -82,8 +82,10 @@ static const char *name = NULL;         /* --name operand, saved for diagnostics
 /** Print a string as a diagnostic, then exit whack unhappily
  *
  * @param mess The error message to print when exiting
- * @return void
+ * @return NEVER
  */
+static void diag(const char *mess) NEVER_RETURNS;
+
 static void diag(const char *mess)
 {
 	if (mess != NULL) {
@@ -137,6 +139,7 @@ enum option_enums {
 	OPT_INITIATE,
 	OPT_TERMINATE,
 	OPT_STATUS,
+	OPT_TRAFFIC_STATUS,
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
@@ -172,6 +175,7 @@ static const struct option long_opts[] = {
 	{ "terminate", no_argument, NULL, OPT_TERMINATE + OO },
 
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
+	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthpass", required_argument, NULL, OPT_XAUTHPASS + OO },
@@ -195,8 +199,8 @@ struct sockaddr_un ctl_addr = { AF_UNIX, DEFAULT_CTLBASE CTL_SUFFIX };
 /* helper variables and function to encode strings from whack message */
 
 static char
-*next_str,
-*str_roof;
+	*next_str,
+	*str_roof;
 
 static bool pack_str(char **p)
 {
@@ -217,19 +221,20 @@ static bool pack_str(char **p)
 static size_t get_secret(char *buf, size_t bufsize)
 {
 	const char *secret;
-	int len;
+	size_t len;
 
 	fflush(stdout);
 	usleep(20000); /* give fflush time for flushing */
 	/* ??? the function getpass(3) is obsolete! */
 	secret = getpass("Enter passphrase: ");
-	secret = (secret == NULL) ? "" : secret;
 
-	buf[0] = '\0'
-	strncat(buf, secret, bufsize-1);
-
-	len = strlen(buf) + 1;
-
+	len = (secret == NULL? 0 : strlen(secret)) + 1;
+	if (len > bufsize)
+		len = bufsize;
+	if (len > 0) {
+		memcpy(buf, secret, len - 1);
+		buf[len - 1] = '\0';
+	}
 	return len;
 }
 
@@ -427,12 +432,8 @@ int main(int argc, char **argv)
 		/* decode a numeric argument, if expected */
 		if (0 <= c) {
 			if (c & NUMERIC_ARG) {
-				char *endptr;
-
 				c -= NUMERIC_ARG;
-				opt_whole = strtoul(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg)
+				if (ttoul(optarg, 0, 0, &opt_whole) != NULL)
 					diagq("badly formed numeric argument",
 					      optarg);
 			}
@@ -500,6 +501,10 @@ int main(int argc, char **argv)
 
 		case OPT_STATUS: /* --status */
 			msg.whack_status = TRUE;
+			continue;
+
+		case OPT_STATUS: /* --trafficstatus */
+			msg.whack_traffic_status = TRUE;
 			continue;
 
 #if 0
@@ -591,7 +596,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!(msg.whack_initiate || msg.whack_terminate ||
-	      msg.whack_status))
+	      msg.whack_status|msg.whack_traffic_status))
 		diag("no action specified; try --help for hints");
 
 	/* pack strings for inclusion in message */
@@ -670,6 +675,11 @@ int main(int argc, char **argv)
 					/* figure out prefix number
 					 * and how it should affect our exit status
 					 */
+					/*
+					 * we don't generally use strtoul but
+					 * in this case, its failure mode
+					 * (0 for nonsense) is probably OK.
+					 */
 					{
 						unsigned long s = strtoul(ls,
 									  NULL,
@@ -707,7 +717,6 @@ int main(int argc, char **argv)
 								   xauthnamelen);
 							break;
 
-						/* case RC_LOG_SERIOUS: */
 						default:
 							/* pass through */
 							exit_status = s;

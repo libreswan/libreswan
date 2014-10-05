@@ -9,5 +9,6 @@ ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-esp-sha1-pfs
 ipsec auto --add westnet-eastnet-esp-md5-pfs
-ipsec auto --status
+# as long as test fails, speed up failure
+ipsec whack --debug-all --impair-retransmits
 echo "initdone"

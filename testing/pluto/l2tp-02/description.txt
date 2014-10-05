@@ -1,2 +1,2 @@
-as l2tp-01 but now north is behind NAT.
+as l2tp-01 but north is behind NAT now.
 

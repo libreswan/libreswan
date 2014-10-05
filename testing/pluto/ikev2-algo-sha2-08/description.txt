@@ -1,0 +1,6 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+
+This is activating the sha2-truncbug workaround for older linux/IKE installs that
+use the broken truncation length of sha2_256.
+
+

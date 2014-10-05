@@ -40,9 +40,9 @@
 
 
 /*
- * extracts the certificate to be sent to the peer
+ * extracts the chunk_t of the given cert_t
  */
-chunk_t get_mycert(cert_t cert)
+chunk_t get_cert_chunk(cert_t cert)
 {
 	switch (cert.ty) {
 	case CERT_NONE:
@@ -90,7 +90,7 @@ bool load_coded_file(const char *filename,
 		sz_fread = fread(blob->ptr, 1, blob->len, fd);
 		fclose(fd);
 		if (sz_fread != blob->len) {
-			libreswan_log("  could not read complete certificate-blob from %s file '%s'\n",
+			libreswan_log("  could not read complete certificate-blob from %s file '%s'",
 				type, filename);
 			freeanychunk(*blob);
 			return FALSE;

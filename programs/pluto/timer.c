@@ -176,21 +176,24 @@ static void retransmit_v1_msg(struct state *st)
 	try = st->st_try;
 	try_limit = c->sa_keying_tries;
 
-	DBG(DBG_CONTROL,
-		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
-			ip_str(&c->spd.that.host_addr),
-			c->name, st->st_serialno));
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
+		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
+			ipstr(&c->spd.that.host_addr, &b),
+			c->name, st->st_serialno, try, try_limit);
+	});
 
+	/* first calculate delay as the value BEFORE backoff */
 	if (st->st_retransmit < maximum_retransmissions) {
-		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
+		delay = event_retransmit_delay_0;
 	} else if ((st->st_state == STATE_MAIN_I1 ||
 			st->st_state == STATE_AGGR_I1) &&
 		c->sa_keying_tries == 0 &&
 		st->st_retransmit < maximum_retransmissions_initial) {
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
+		delay = event_retransmit_delay_0;
 	} else if (st->st_state == STATE_QUICK_R1 &&
 		st->st_retransmit < maximum_retransmissions_quick_r1) {
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
+		delay = event_retransmit_delay_0;
 	}
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
@@ -201,13 +204,25 @@ static void retransmit_v1_msg(struct state *st)
 	}
 
 	if (delay != 0) {
-		st->st_retransmit++;
+		/*
+		 * Very carefully calculate capped exponential backoff.
+		 * The test is expressed as a right shift to avoid overflow.
+		 * Even then, we must avoid a right shift of the width of
+		 * the data or more since it is not defined by the C standard.
+		 * Surely a bound of 8 (factor of 256) is safe and more than enough.
+		 */
+		u_int8_t x = st->st_retransmit++;	/* ??? odd type */
+
+		delay = (x > 8 ||
+			EVENT_RETRANSMIT_DELAY_CAP >> x < delay) ?
+			EVENT_RETRANSMIT_DELAY_CAP : delay << x;
+
 		whack_log(RC_RETRANSMISSION,
 			"%s: retransmission; will wait %lus for response",
 			enum_name(&state_names, st->st_state),
 			(unsigned long)delay);
-		resend_ike_v1_msg(st, "EVENT_RETRANSMIT");
-		event_schedule(EVENT_RETRANSMIT, delay, st);
+		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
+		event_schedule(EVENT_v1_RETRANSMIT, delay, st);
 	} else {
 		/* check if we've tried rekeying enough times.
 		 * st->st_try == 0 means that this should be the only try.
@@ -217,10 +232,12 @@ static void retransmit_v1_msg(struct state *st)
 
 		switch (st->st_state) {
 		case STATE_MAIN_I3:
+		case STATE_AGGR_I2:
 			details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
 			break;
 		case STATE_MAIN_I1:
-			details = ".  No response (or no acceptable response) to our first IKE message";
+		case STATE_AGGR_I1:
+			details = ".  No response (or no acceptable response) to our first IKEv1 message";
 			break;
 		case STATE_QUICK_I1:
 			if (c->newest_ipsec_sa == SOS_NOBODY) {
@@ -249,6 +266,7 @@ static void retransmit_v1_msg(struct state *st)
 				"starting keying attempt %ld of at most %ld",
 				try, try_limit);
 
+			/* ??? DBG and real-world code mixed */
 			if (!DBGP(DBG_WHACKWATCH)) {
 				if (st->st_whack_sock != NULL_FD) {
 					/*
@@ -281,6 +299,7 @@ static void retransmit_v1_msg(struct state *st)
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
 		}
 		delete_state(st);
+		/* note: no md->st to clear */
 	}
 }
 
@@ -295,25 +314,27 @@ static void retransmit_v2_msg(struct state *st)
 	passert(st != NULL);
 	c = st->st_connection;
 	try_limit = c->sa_keying_tries;
-	try = st->st_try;
-	try++;
+	try = st->st_try + 1;
 
-	DBG(DBG_CONTROL,
-		DBG_log("handling event EVENT_RETRANSMIT for %s \"%s\" #%lu",
-			ip_str(&c->spd.that.host_addr), c->name,
-			st->st_serialno));
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
+		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
+			ipstr(&c->spd.that.host_addr, &b), c->name,
+			st->st_serialno, try, try_limit);
+	});
 
-	if (st->st_retransmit < maximum_retransmissions)
-		delay = event_retransmit_delay_0 << (st->st_retransmit + 1);
-
-	else if (st->st_state == STATE_PARENT_I1 &&
+	/* first calculate delay as the value BEFORE backoff */
+	if (st->st_retransmit < maximum_retransmissions) {
+		delay = event_retransmit_delay_0;
+	} else if (st->st_state == STATE_PARENT_I1 &&
 		c->sa_keying_tries == 0 &&
-		st->st_retransmit < maximum_retransmissions_initial)
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
-	else if ((st->st_state == STATE_PARENT_I2 ||
+		st->st_retransmit < maximum_retransmissions_initial) {
+		delay = event_retransmit_delay_0;
+	} else if ((st->st_state == STATE_PARENT_I2 ||
 			st->st_state == STATE_PARENT_I3) &&
-		st->st_retransmit < maximum_retransmissions_quick_r1)
-		delay = event_retransmit_delay_0 << maximum_retransmissions;
+		st->st_retransmit < maximum_retransmissions_quick_r1) {
+		delay = event_retransmit_delay_0;
+	}
 
 	if (DBGP(IMPAIR_RETRANSMITS)) {
 		libreswan_log(
@@ -323,7 +344,18 @@ static void retransmit_v2_msg(struct state *st)
 	}
 
 	if (delay != 0) {
-		st->st_retransmit++;
+		/*
+		 * Very carefully calculate capped exponential backoff.
+		 * The test is expressed as a right shift to avoid overflow.
+		 * Even then, we must avoid a right shift of the width of
+		 * the data or more since it is not defined by the C standard.
+		 * Surely a bound of 8 (factor of 256) is safe and more than enough.
+		 */
+		u_int8_t x = st->st_retransmit++;	/* ??? odd type */
+
+		delay = (x > 8 ||
+			EVENT_RETRANSMIT_DELAY_CAP >> x < delay) ?
+			EVENT_RETRANSMIT_DELAY_CAP : delay << x;
 
 		whack_log(RC_RETRANSMISSION,
 			"%s: retransmission; will wait %lus for response",
@@ -344,7 +376,7 @@ static void retransmit_v2_msg(struct state *st)
 		details = ".  Possible authentication failure: no acceptable response to our first encrypted message";
 		break;
 	case STATE_PARENT_I1:
-		details = ".  No response (or no acceptable response) to our first IKE message";
+		details = ".  No response (or no acceptable response) to our first IKEv2 message";
 		break;
 	default:
 		break;
@@ -369,6 +401,7 @@ static void retransmit_v2_msg(struct state *st)
 			"starting keying attempt %ld of at most %ld",
 			try, try_limit);
 
+		/* ??? DBG and real-world code mixed */
 		if (!DBGP(DBG_WHACKWATCH)) {
 			if (st->st_whack_sock != NULL_FD) {
 				/*
@@ -386,8 +419,8 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "%s", story);
 		}
 
-		if ((try % 3) == 0 &&
-			(c->policy & POLICY_IKEV1_DISABLE) == 0) {
+		if (try % 3 == 0 &&
+			(c->policy & POLICY_IKEV1_DISABLE) == LEMPTY) {
 			/*
 			 * so, let's retry with IKEv1, alternating every
 			 * three messages
@@ -399,6 +432,7 @@ static void retransmit_v2_msg(struct state *st)
 	}
 
 	delete_state(st);
+	/* note: no md->st to clear */
 }
 
 /*
@@ -413,20 +447,16 @@ void handle_timer_event(void)
 
 static void liveness_check(struct state *st)
 {
-	monotime_t tm, last_liveness;
-	deltatime_t last_msg_age;
 	struct state *pst;
-	stf_status ret;
-	struct connection *c;
-	time_t timeout;
+	struct connection *c = st->st_connection;
+	deltatime_t last_msg_age;
 
-	passert(st != NULL);
-	c = st->st_connection;
+	passert(st->st_ikev2);
 
 	/* this should be called on a child sa */
 	if (IS_CHILD_SA(st)) {
 		pst = state_with_serialno(st->st_clonedfrom);
-		if (!pst) {
+		if (pst == NULL) {
 			DBG(DBG_CONTROL,
 				DBG_log("liveness_check error, no parent state"));
 			return;
@@ -439,79 +469,82 @@ static void liveness_check(struct state *st)
 	 * don't bother sending the check and reset
 	 * liveness stats if there has been incoming traffic
 	 */
-	if (get_sa_info(st, TRUE, &last_msg_age)) {
-		if (deltaless(last_msg_age, c->dpd_timeout)) {
-			pst->st_pend_liveness = FALSE;
-			pst->st_last_liveness.mono_secs = UNDEFINED_TIME;
-			goto live_ok;
+	if (get_sa_info(st, TRUE, &last_msg_age) &&
+		deltaless(last_msg_age, c->dpd_timeout)) {
+		pst->st_pend_liveness = FALSE;
+		pst->st_last_liveness.mono_secs = UNDEFINED_TIME;
+	} else {
+		monotime_t tm = mononow();
+		monotime_t last_liveness = pst->st_last_liveness;
+		time_t timeout;
+
+		/* ensure that the very first liveness_check works out */
+		if (last_liveness.mono_secs == UNDEFINED_TIME)
+			last_liveness = tm;
+
+		DBG(DBG_CONTROL,
+			DBG_log("liveness_check - last_liveness: %ld, tm: %ld",
+				(long)last_liveness.mono_secs,
+				(long)tm.mono_secs));
+
+		/* ??? MAX the hard way */
+		if (deltaless(c->dpd_timeout, deltatimescale(3, 1, c->dpd_delay)))
+			timeout = deltasecs(c->dpd_delay) * 3;
+		else
+			timeout = deltasecs(c->dpd_timeout);
+
+		if (pst->st_pend_liveness &&
+		    deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
+			DBG(DBG_CONTROL,
+				DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
+					(long)deltasecs(monotimediff(tm, last_liveness)),
+					(long)timeout));
+			switch (c->dpd_action) {
+			case DPD_ACTION_CLEAR:
+				libreswan_log(
+					"IKEv2 peer liveness - clearing connection");
+				delete_states_by_connection(c, TRUE);
+				unroute_connection(c);
+				return;
+
+			case DPD_ACTION_RESTART:
+				libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
+				restart_connections_by_peer(c);
+				return;
+
+			case DPD_ACTION_HOLD:
+				DBG(DBG_CONTROL,
+					DBG_log("liveness_check - handling default by rescheduling"));
+				break;
+
+			default:
+				bad_case(c->dpd_action);
+			}
+
+		} else {
+			stf_status ret = ikev2_send_informational(st);
+
+			if (ret != STF_OK) {
+				DBG(DBG_CONTROL,
+					DBG_log("failed to send informational"));
+				return;
+			}
 		}
 	}
-
-	tm = mononow();
-	last_liveness = pst->st_last_liveness;
-	/* ensure that the very first liveness_check works out */
-	if (last_liveness.mono_secs == UNDEFINED_TIME)
-		last_liveness = tm;
 
 	DBG(DBG_CONTROL,
-		DBG_log("liveness_check - last_liveness: %ld, tm: %ld",
-			(long)last_liveness.mono_secs,
-			(long)tm.mono_secs));
-
-	/* ??? MAX the hard way */
-	if (deltaless(c->dpd_timeout, deltatimescale(3, 1, c->dpd_delay)))
-		timeout = deltasecs(c->dpd_delay) * 3;
-	else
-		timeout = deltasecs(c->dpd_timeout);
-
-	if (pst->st_pend_liveness &&
-	    deltasecs(monotimediff(tm, last_liveness)) >= timeout) {
-		DBG(DBG_CONTROL,
-			DBG_log("liveness_check - peer has not responded in %ld seconds, with a timeout of %ld, taking action",
-				(long)deltasecs(monotimediff(tm, last_liveness)),
-				(long)timeout));
-		switch (c->dpd_action) {
-
-		case DPD_ACTION_CLEAR:
-			libreswan_log(
-				"IKEv2 peer liveness - clearing connection");
-			delete_states_by_connection(c, TRUE);
-			unroute_connection(c);
-			break;
-
-		case DPD_ACTION_RESTART:
-			libreswan_log("IKEv2 peer liveness - restarting all connections that share this peer");
-			restart_connections_by_peer(c);
-			break;
-
-		default:
-			DBG(DBG_CONTROL,
-				DBG_log("liveness_check - handling default by rescheduling"));
-			goto live_ok;
-		}
-
-	} else {
-		ret = ikev2_send_informational(st);
-		if (ret != STF_OK) {
-			DBG(DBG_CONTROL,
-				DBG_log("failed to send informational"));
-			return;
-		}
-live_ok:
-		DBG(DBG_CONTROL,
-			DBG_log("liveness_check - peer is ok"));
-		delete_liveness_event(st);
-		event_schedule(EVENT_v2_LIVENESS,
-			deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
-				deltasecs(c->dpd_delay) : MIN_LIVENESS,
-			st);
-	}
+		DBG_log("liveness_check - peer is ok"));
+	delete_liveness_event(st);
+	event_schedule(EVENT_v2_LIVENESS,
+		deltasecs(c->dpd_delay) >= MIN_LIVENESS ?
+			deltasecs(c->dpd_delay) : MIN_LIVENESS,
+		st);
 }
 
 void handle_next_timer_event(void)
 {
 	struct event *ev = evlist;
-	int type;
+	enum event_type type;
 	struct state *st;
 
 	if (ev == (struct event *) NULL)
@@ -582,7 +615,7 @@ void handle_next_timer_event(void)
 		daily_log_event();
 		break;
 
-	case EVENT_RETRANSMIT:
+	case EVENT_v1_RETRANSMIT:
 		retransmit_v1_msg(st);
 		break;
 
@@ -597,23 +630,16 @@ void handle_next_timer_event(void)
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_REPLACE_IF_USED:
 	{
-		struct connection *c;
-		so_serial_t newest;
-
-		passert(st != NULL);
-		c = st->st_connection;
-		newest = (IS_PHASE1(st->st_state) ||
-			IS_PHASE15(st->st_state )) ?
+		struct connection *c = st->st_connection;
+		so_serial_t newest = IS_IKE_SA(st) ?
 			c->newest_isakmp_sa : c->newest_ipsec_sa;
 
-		if (newest > st->st_serialno &&
-			newest != SOS_NOBODY) {
+		if (newest != SOS_NOBODY && newest > st->st_serialno) {
 			/* not very interesting: no need to replace */
 			DBG(DBG_LIFECYCLE,
 				libreswan_log(
 					"not replacing stale %s SA: #%lu will do",
-					(IS_PHASE1(st->st_state) ||
-						IS_PHASE15(st->st_state )) ?
+					IS_IKE_SA(st) ?
 					"ISAKMP" : "IPsec", newest));
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
 			!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
@@ -631,24 +657,23 @@ void handle_next_timer_event(void)
 			 * be unimportant.
 			 * This is just an optimization: correctness is not
 			 * at stake.
-			 *
-			 * Note: we are abusing the DBG mechanism to control
+			 */
+			/* ??? we are abusing the DBG mechanism to control
 			 * normal log output.
 			 */
 			DBG(DBG_LIFECYCLE,
 				libreswan_log(
 					"not replacing stale %s SA: inactive for %lds",
-					(IS_PHASE1(st->st_state) ||
-						IS_PHASE15(st->st_state )) ?
-						"ISAKMP" : "IPsec",
+					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
 					(long)deltasecs(monotimediff(mononow(),
 						st->st_outbound_time))));
 		} else {
+			/* ??? we are abusing the DBG mechanism to control
+			 * normal log output.
+			 */
 			DBG(DBG_LIFECYCLE,
 				libreswan_log("replacing stale %s SA",
-					(IS_PHASE1(st->st_state) ||
-						IS_PHASE15(st->st_state)) ?
-					"ISAKMP" : "IPsec"));
+					IS_IKE_SA(st) ? "ISAKMP" : "IPsec"));
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
 		delete_liveness_event(st);
@@ -657,6 +682,7 @@ void handle_next_timer_event(void)
 	}
 	break;
 
+	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
 	{
 		const char *satype;
@@ -666,7 +692,7 @@ void handle_next_timer_event(void)
 		passert(st != NULL);
 		c = st->st_connection;
 
-		if (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state)) {
+		if (IS_IKE_SA(st)) {
 			satype = "ISAKMP";
 			latest = c->newest_isakmp_sa;
 		} else {
@@ -674,13 +700,14 @@ void handle_next_timer_event(void)
 			latest = c->newest_ipsec_sa;
 		}
 
-		if (st->st_serialno != latest) {
+		if (st->st_serialno < latest) {
 			/* not very interesting: already superseded */
 			DBG(DBG_LIFECYCLE,
 				libreswan_log("%s SA expired (superseded by #%lu)",
 					satype, latest));
 		} else {
-			libreswan_log("%s SA expired (%s)", satype,
+			libreswan_log("%s %s (%s)", satype,
+				type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
 				(c->policy & POLICY_DONT_REKEY) ?
 					"--dontrekey" : "LATEST!");
 		}
@@ -689,12 +716,19 @@ void handle_next_timer_event(void)
 	case EVENT_SO_DISCARD:
 		/* Delete this state object.  It must be in the hash table. */
 #if 0           /* delete_state will take care of this better ? */
-		if (st->st_suspended_md) {
-			release_md(st->st_suspended_md);
-			set_suspended(st, NULL);
+		if (st->st_suspended_md != NULL) {
+			release_any_md(&st->st_suspended_md);
+			unset_suspended(st);
 		}
 #endif
-		delete_state(st);
+		if (st->st_ikev2 && IS_IKE_SA(st)) {
+			/* IKEv2 parent, delete children too */
+			delete_my_family(st, FALSE);
+			/* note: no md->st to clear */
+		} else {
+			delete_state(st);
+			/* note: no md->st to clear */
+		}
 		break;
 
 	case EVENT_DPD:
@@ -714,6 +748,7 @@ void handle_next_timer_event(void)
 			DBG_log("event crypto_failed on state #%lu, aborting",
 				st->st_serialno));
 		delete_state(st);
+		/* note: no md->st to clear */
 		break;
 
 	default:
@@ -783,7 +818,7 @@ void delete_event(struct state *st)
 			if ((*ev) == st->st_event) {
 				*ev = (*ev)->ev_next;
 
-				if (st->st_event->ev_type == EVENT_RETRANSMIT)
+				if (st->st_event->ev_type == EVENT_v1_RETRANSMIT)
 					st->st_retransmit = 0;
 				pfree(st->st_event);
 				st->st_event = (struct event *) NULL;
@@ -822,16 +857,15 @@ void delete_liveness_event(struct state *st)
 /*
  * Delete a DPD event.
  */
-void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
+void delete_dpd_event(struct state *st)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
-		DBG_log("state: %ld requesting DPD event %s to be deleted by %s:%d",
+		DBG_log("state: %ld requesting DPD event %s to be deleted",
 			st->st_serialno,
 			(st->st_dpd_event != NULL ?
 				enum_show(&timer_event_names,
 					st->st_dpd_event->ev_type) :
-				"none"),
-			file, lineno));
+				"none")));
 
 	if (st->st_dpd_event != (struct event *) NULL) {
 		struct event **ev;

@@ -55,14 +55,16 @@
 #include "keys.h"
 #include "ipsec_doi.h"
 
-static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
-				      enum phase1_role role,
-				      unsigned int np, pb_stream *outpbs);
+static stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
+				     enum phase1_role role,
+				     enum next_payload_types_ikev2 np,
+				     pb_stream *outpbs);
 
 /* Send v2CERT and v2 CERT */
-stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
-			    enum phase1_role role,
-			    unsigned int np, pb_stream *outpbs)
+stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
+			   enum phase1_role role,
+			   enum next_payload_types_ikev2 np,
+			   pb_stream *outpbs)
 {
 	struct ikev2_cert cert;
 	/*  flag : to send a certificate request aka CERTREQ */
@@ -76,7 +78,7 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 		 */
 		send_certreq = (c->policy & POLICY_RSASIG) &&
 			       !has_preloaded_public_key(st) &&
-			       (role == INITIATOR) &&
+			       (role == O_INITIATOR) &&
 			       (st->st_connection->spd.that.ca.ptr != NULL);
 	}
 
@@ -94,9 +96,9 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 		} else if (has_preloaded_public_key(st)) {
 			DBG(DBG_CONTROL,
 			    DBG_log(" has a preloaded a public for that end in st"));
-		} else if (!(role == INITIATOR)) {
+		} else if (!(role == O_INITIATOR)) {
 			DBG(DBG_CONTROL,
-			    DBG_log("  my role is not INITIATORi"));
+			    DBG_log("  my role is not O_INITIATOR"));
 		} else if (!(st->st_connection->spd.that.ca.ptr != NULL)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("  no known CA for the other end"));
@@ -107,7 +109,7 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 
 	}
 	cert.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 		libreswan_log(
 			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 		cert.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
@@ -117,7 +119,7 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 
 	if (send_certreq) {
 		cert.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 			cert.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
@@ -143,7 +145,7 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 				outpbs, &cert_pbs))
 			return STF_INTERNAL_ERROR;
 
-		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
+		if (!out_chunk(get_cert_chunk(mycert), &cert_pbs, "CERT"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&cert_pbs);
@@ -157,9 +159,10 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 	}
 	return STF_OK;
 }
-static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
-				      enum phase1_role role UNUSED,
-				      unsigned int np, pb_stream *outpbs)
+static stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
+				     enum phase1_role role UNUSED,
+				     enum next_payload_types_ikev2 np,
+				     pb_stream *outpbs)
 {
 	if (st->st_connection->kind == CK_PERMANENT) {
 		DBG(DBG_CONTROL,

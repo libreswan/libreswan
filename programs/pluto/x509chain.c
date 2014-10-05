@@ -85,6 +85,7 @@ x509cert_t *get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 	}
 	return NULL;
 }
+
 /*
  * free the first authority certificate in the chain
  */
@@ -94,6 +95,29 @@ static void free_first_authcert(void)
 
 	x509authcerts = first->next;
 	free_x509cert(first);
+}
+
+/* frees a chain of CA certificates from the x509authcert list.
+ * get_authcert() moves the found cert to the front of the list,
+ * so we can just do free_first_authcert().
+ */
+void free_authcert_chain(x509cert_t *chain)
+{
+
+	while (chain != NULL) {
+		x509cert_t *ac = NULL;
+
+		lock_authcert_list("free_authcert_chain");
+		ac = get_authcert(chain->subject, chain->serialNumber,
+					      chain->subjectKeyID, AUTH_CA);
+
+		chain = chain->next;
+
+		if (ac != NULL)
+			free_first_authcert();
+
+		unlock_authcert_list("free_authcert_chain");
+	}
 }
 
 /*
@@ -197,9 +221,9 @@ bool x509_check_revocation(const x509crl_t *crl, chunk_t serial)
 /*
  * get a cacert with a given subject or keyid from an alternative list
  */
-static const x509cert_t *get_alt_cacert(chunk_t subject, chunk_t serial,
+x509cert_t *get_alt_cacert(chunk_t subject, chunk_t serial,
 					chunk_t keyid,
-					const x509cert_t *cert)
+					x509cert_t *cert)
 {
 	while (cert != NULL) {
 		if ((keyid.ptr != NULL) ? same_keyid(keyid,
@@ -218,7 +242,7 @@ static const x509cert_t *get_alt_cacert(chunk_t subject, chunk_t serial,
  * validity and revocation status are not checked.
  */
 bool trust_authcert_candidate(const x509cert_t *cert,
-			const x509cert_t *alt_chain)
+			x509cert_t *alt_chain)
 {
 	int pathlen;
 

@@ -1,6 +1,6 @@
 
 ipsec whack --oppohere 192.1.2.23 --oppothere 192.0.1.3
-ping -c 1 192.0.1.1
+ping -n -c 1 192.0.1.1
 
 ipsec auto --status
 

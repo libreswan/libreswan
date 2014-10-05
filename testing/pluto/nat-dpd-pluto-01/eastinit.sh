@@ -1,15 +1,5 @@
-#!/bin/sh
-: ==== start ====
-TESTNAME=nat-dpd-pluto-01
-source /testing/pluto/bin/eastlocal.sh
-
-arp -s 192.0.2.1 10:00:00:dc:bc:01
-
+/testing/guestbin/swan-prep --x509
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec auto --add northnet--eastnet-nat
-
-echo done
-
-
+ipsec auto --add northnet-eastnet-nat
+echo "initdone"

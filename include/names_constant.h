@@ -49,6 +49,7 @@ extern enum_names ikev2_exchange_names;
 extern enum_names exchange_names_ikev1orv2;
 extern enum_names protocol_names; /* rename to protocol_names_ikev1 */
 extern enum_names ikev2_protocol_names;
+extern enum_names ikev2_del_protocol_names;	/* subset of protocol names accepted by IKEv2 Delete */
 extern enum_names isakmp_transformid_names;
 extern enum_names ah_transformid_names;
 extern enum_names esp_transformid_names;
@@ -73,6 +74,8 @@ extern enum_names ikev2_trans_attr_descs;
 extern enum_names *const ikev2_trans_attr_val_descs[];
 extern enum_names *const ikev2_transid_val_descs[];
 extern const unsigned int ikev2_transid_val_descs_roof;
+extern const struct enum_enum_names v2_transform_ID_enums;
+extern enum_names ikev2_idtype_names;
 extern enum_names ikev2_cert_type_names;
 extern enum_names ikev2_notify_names;
 extern enum_names ikev2_ts_type_names;

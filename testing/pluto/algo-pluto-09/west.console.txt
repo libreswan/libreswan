@@ -57,8 +57,8 @@ west #
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
-000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
+000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
+000 nhelpers=-1, uniqueids=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx-attr-value=XXXX
 000 myid = (none)
@@ -74,9 +74,9 @@ west #
 000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
 000  
 000 IKE algorithms supported:
 000  
@@ -85,11 +85,11 @@ west #
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
-000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
-000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
-000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
-000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashsize=48
-000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashsize=64
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20
+000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
+000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
+000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -106,8 +106,8 @@ west #
 000 Connection list:
 000  
 000 "westnet-eastnet-esp-3des-alg": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-esp-3des-alg":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-esp-3des-alg":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-esp-3des-alg":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-esp-3des-alg":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-esp-3des-alg":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-esp-3des-alg":   labeled_ipsec:no, loopback:no; 
 000 "westnet-eastnet-esp-3des-alg":    policy_label:unset; 
@@ -117,8 +117,8 @@ west #
 000 "westnet-eastnet-esp-3des-alg":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-esp-3des-alg":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-esp-3des-alg":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-esp-3des-alg":   ESP algorithms wanted: 3DES(3)_000-SHA1(2)_096
-000 "westnet-eastnet-esp-3des-alg":   ESP algorithms loaded: 3DES(3)_192-SHA1(2)_096
+000 "westnet-eastnet-esp-3des-alg":   ESP algorithms wanted: 3DES(3)_000-SHA1(2)_000
+000 "westnet-eastnet-esp-3des-alg":   ESP algorithms loaded: 3DES(3)_000-SHA1(2)_000
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
@@ -142,10 +142,13 @@ west #
 108 "westnet-eastnet-esp-3des-alg" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "westnet-eastnet-esp-3des-alg" #1: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-eastnet-esp-3des-alg" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-esp-3des-alg" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP2048}
+004 "westnet-eastnet-esp-3des-alg" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "westnet-eastnet-esp-3des-alg" #2: initiating Quick Mode RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-esp-3des-alg" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-esp-3des-alg" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_0-HMAC_SHA1 IPCOMP=>0xESPESP <0xESPESP NATOA=none NATD=none DPD=passive}
+west #
+ echo done
+done
 west #
  ipsec look
 west NOW
@@ -170,36 +173,8 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- echo done
-done
 west #
- ipsec look
-west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 comp0x674@192.1.2.23 esp0xfbaaaaa9@192.1.2.23  (0)
-ipsec0->eth1 mtu=16260(1500)->1500
-comp0x674@192.1.2.23 COMP_DEFLATE: dir=out src=192.1.2.45 jiffies=4294728049 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=2 refhim=0
-comp0xd967@192.1.2.45 COMP_DEFLATE: dir=in  src=192.1.2.23 jiffies=4294728049 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=5 refhim=1
-esp0xd9b571d3@192.1.2.45 ESP_3DES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=64bits iv=0x3bc5fad4561f755a ooowin=64 alen=160 aklen=160 eklen=192 jiffies=4294728049 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=6 refhim=1
-esp0xfbaaaaa9@192.1.2.23 ESP_3DES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=64bits iv=0x6b951a7370f1c896 ooowin=64 alen=160 aklen=160 eklen=192 jiffies=4294728049 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=3 refhim=0
-tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294728049 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294728049 life(c,s,h)= natencap=none natsport=0 natdport=0 refcount=3 ref=4 refhim=1
-IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
-ROUTING TABLES
-default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
-192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
-192.0.2.0/24 dev ipsec0  scope link 
-192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
-192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-west #
-west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

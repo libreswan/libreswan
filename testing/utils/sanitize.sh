@@ -1,12 +1,17 @@
 #!/bin/bash
 . ../../../kvmsetup.sh
 if [ -f ./testparams.sh ] ; then
-	. ./testparams.sh 
+	. ./testparams.sh
 else
 	. ../../default-testparams.sh
 fi
+
+if [ -f ./add-testparams.sh ]
+then
+    . ./add-testparams.sh
+fi
 . ../setup.sh
-. $LIBRESWANDIR/testing/utils/functions.sh 
+. $LIBRESWANDIR/testing/utils/functions.sh
 
 if [ -f eastinit.sh ] ; then
         RESPONDER=east
@@ -16,24 +21,47 @@ else
         exit 1
 fi
 
-NIC=""
-NIC_PID=""
-if [ -f nicinit.sh ] ; then
-        echo "will start nic nicinit.sh"
-        NIC=nic
-fi
-
-
 if [ -f westinit.sh ] ; then
         INITIATOR=west
 elif [ -f roadinit.sh ] ; then
         INITIATOR=road
 elif [ -f northinit.sh ] ; then
         INITIATOR=north
-else 
+else
         echo "can't identify INITIATOR"
         exit 1
 fi
 
-consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.verbose.txt ${INITIATOR}.console.txt
-consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.verbose.txt ${RESPONDER}.console.txt
+
+ivc="./OUTPUT/${INITIATOR}.console.verbose.txt"
+ic="./${INITIATOR}.console.txt"
+
+rvc="./OUTPUT/${RESPONDER}.console.verbose.txt"
+rc="./${RESPONDER}.console.txt"
+
+result="passed"
+for f in $ivc $ic $rvc $rc ; do
+	if [ ! -f $ivc ] ; then
+		echo "missing required file $f"
+		result="passed"
+	fi
+done
+
+if [ "$result" == "passed" ] ; then
+	cdiff1=`consolediff ${INITIATOR} ${ivc} ${ic}`
+	set  $cdiff1
+	m=$3
+	if [ "$m" != "matched" ] ; then
+		result="failed"
+	fi
+	cdiff2=`consolediff ${RESPONDER} ${rvc} ${rc}`
+	set  $cdiff2
+	m=$3
+	if [ "$m" != "matched" ] ; then
+		result="failed"
+	fi
+fi
+
+echo $cdiff1
+echo $cdiff2
+echo "result $(basename $(pwd)) $result "

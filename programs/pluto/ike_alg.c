@@ -134,23 +134,24 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 	 */
 	bool ealg_insecure = (key_len < 128);
 
-	if (ealg_insecure || alg_info_ike) {
-		int i;
-		struct ike_info *ike_info;
-		if (alg_info_ike) {
+	if (ealg_insecure || alg_info_ike != NULL) {
+		if (alg_info_ike != NULL) {
+			struct ike_info *ike_info;
+			int i;
+
 			ALG_INFO_IKE_FOREACH(alg_info_ike, ike_info, i) {
-				if ((ike_info->ike_ealg == ealg) &&
-				    ((ike_info->ike_eklen == 0) ||
-				     (key_len == 0) ||
-				     (ike_info->ike_eklen == key_len)) &&
-				    (ike_info->ike_halg == aalg) &&
-				    (ike_info->ike_modp == group)) {
+				if (ike_info->ike_ealg == ealg &&
+				    (ike_info->ike_eklen == 0 ||
+				     key_len == 0 ||
+				     ike_info->ike_eklen == key_len) &&
+				    ike_info->ike_halg == aalg &&
+				    ike_info->ike_modp == group) {
 					if (ealg_insecure) {
 						loglog(RC_LOG_SERIOUS,
 						       "You should NOT use insecure/broken IKE algorithms (%s)!",
-						       enum_name(&
-								 oakley_enc_names,
-								 ealg));
+						       enum_name(
+								&oakley_enc_names,
+								ealg));
 					}
 					return TRUE;
 				}
@@ -199,7 +200,7 @@ struct ike_alg *ikev2_alg_find(unsigned algo_type,
 /*
  *      Main "raw" ike_alg list adding function
  */
-void ike_alg_add(struct ike_alg* a)
+void ike_alg_add(struct ike_alg *a)
 {
 	passert(a->algo_type < IKE_ALG_ROOF);
 	passert(a->algo_id != 0 || a->algo_v2id != 0);	/* must be useful for v1 or v2 */
@@ -213,92 +214,90 @@ void ike_alg_add(struct ike_alg* a)
 }
 
 /*
- *      Validate and register IKE hash algorithm object
- *      XXX: BUG: This uses IKEv1 oakley_hash_names, but for
- *           IKEv2 we have more entries, see ikev2_trans_type_integ_names
+ * Validate and register IKE hash algorithm object
+ *
+ * XXX: BUG: This uses IKEv1 oakley_hash_names, but for
+ * IKEv2 we have more entries, see ikev2_trans_type_integ_names
+ * ??? why is this only used by ike_alg_sha2_init?
  */
-int ike_alg_register_hash(struct hash_desc *hash_desc)
+bool ike_alg_register_hash(struct hash_desc *hash_desc)
 {
 	const char *alg_name = "<none>";
-	int ret = 0;
+	bool ret = FALSE;
 
 	if (hash_desc->common.algo_id > OAKLEY_HASH_MAX) {
 		libreswan_log("ike_alg_register_hash(): hash alg=%d < max=%d",
 		     hash_desc->common.algo_id, OAKLEY_HASH_MAX);
-		return_on(ret, -EINVAL);
-	}
-	if (hash_desc->hash_ctx_size > sizeof(union hash_ctx)) {
+	} else if (hash_desc->hash_ctx_size > sizeof(union hash_ctx)) {
 		libreswan_log("ike_alg_register_hash(): hash alg=%d has "
 		     "ctx_size=%d > hash_ctx=%d",
 		     hash_desc->common.algo_id,
 		     (int)hash_desc->hash_ctx_size,
 		     (int)sizeof(union hash_ctx));
-		return_on(ret, -EOVERFLOW);
-	}
-	if (!(hash_desc->hash_init && hash_desc->hash_update &&
-	      hash_desc->hash_final)) {
+	} else if (!(hash_desc->hash_init && hash_desc->hash_update &&
+		     hash_desc->hash_final)) {
 		libreswan_log("ike_alg_register_hash(): hash alg=%d needs  "
 		     "hash_init(), hash_update() and hash_final()",
 		     hash_desc->common.algo_id);
-		return_on(ret, -EINVAL);
+	} else {
+		alg_name = enum_name(&oakley_hash_names, hash_desc->common.algo_id);
+
+		/* Don't add anything we do not know the name for */
+		if (alg_name == NULL) {
+			libreswan_log("ike_alg_register_hash(): ERROR: hash alg=%d not found in "
+			     "constants.c:oakley_hash_names  ",
+			     hash_desc->common.algo_id);
+			alg_name = "<NULL>";
+		} else {
+			/* success! */
+			ret = TRUE;
+			if (hash_desc->common.name == NULL)
+				hash_desc->common.name = clone_str(alg_name, "hasher name (ignore)");
+
+			ike_alg_add(&hash_desc->common);
+		}
 	}
 
-	alg_name = enum_name(&oakley_hash_names, hash_desc->common.algo_id);
-
-	/* Don't add anything we do not know the name for */
-	if (!alg_name) {
-		libreswan_log("ike_alg_register_hash(): ERROR: hash alg=%d not found in "
-		     "constants.c:oakley_hash_names  ",
-		     hash_desc->common.algo_id);
-		alg_name = "<NULL>";
-		return_on(ret, -EINVAL);
-	}
-
-	if (hash_desc->common.name == NULL)
-		hash_desc->common.name = clone_str(alg_name, "hasher name (ignore)");
-
-return_out:
-	if (ret == 0)
-		ike_alg_add((struct ike_alg *)hash_desc);
-	libreswan_log("ike_alg_register_hash(): Activating %s: %s (ret=%d)",
+	libreswan_log("ike_alg_register_hash(): Activating %s: %s",
 		      alg_name,
-		      ret == 0 ? "Ok" : "FAILED",
-		      ret);
+		      ret ? "Ok" : "FAILED");
 	return ret;
 }
 
 /*
  *      Validate and register IKE encryption algorithm object
  */
-int ike_alg_register_enc(struct encrypt_desc *enc_desc)
+bool ike_alg_register_enc(struct encrypt_desc *enc_desc)
 {
 	const char *alg_name;
-	int ret = 0;
+	bool ret = TRUE;
 
 	/* XXX struct algo_aes_ccm_8 up to algo_aes_gcm_16, where
-	 * "common.algo_id" is not defined need this officename fallback.
+	 * "common.algo_id" is not defined need this officname fallback.
 	 * These are defined in kernel_netlink.c and need to move to
 	 * the proper place - even if klips does not support these
 	 */
 	alg_name = enum_name(&oakley_enc_names, enc_desc->common.algo_id);
-	if (!alg_name) {
+	if (alg_name == NULL) {
 		alg_name = enc_desc->common.officname;
-		if (!alg_name) {
-			libreswan_log("ike_alg_register_enc(): ERROR: enc alg=%d not found in "
-			     "constants.c:oakley_enc_names  ",
+		if (alg_name == NULL) {
+			libreswan_log("ike_alg_register_enc(): ERROR: enc alg=%d not found in constants.c:oakley_enc_names",
 			     enc_desc->common.algo_id);
 			alg_name = "<NULL>";
-			return_on(ret, -EINVAL);
+			ret = FALSE;
 		}
 	}
-return_out:
 
-	if (ret == 0)
-		ike_alg_add((struct ike_alg *)enc_desc);
-	libreswan_log("ike_alg_register_enc(): Activating %s: %s (ret=%d)",
-		      alg_name, ret == 0 ? "Ok" : "FAILED", ret);
-	return 0;
+	if (ret)
+		ike_alg_add(&enc_desc->common);
+
+	libreswan_log("ike_alg_register_enc(): Activating %s: %s",
+		      alg_name,
+		      ret? "Ok" : "FAILED");
+
+	return ret;
 }
+
 /* Get pfsgroup for this connection */
 const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 						 lset_t policy)

@@ -16,10 +16,7 @@
  */
 #include "libreswan.h"
 
-err_t add_port(af, addr, port)
-int af;
-ip_address *addr;
-unsigned short port;
+err_t add_port(int af, ip_address *addr, unsigned short port)
 {
 	switch (af) {
 	case AF_INET:

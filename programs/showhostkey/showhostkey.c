@@ -201,7 +201,7 @@ static struct secret *pick_key(struct secret *host_secrets,
 	if (s == NULL) {
 		char abuf[IDTOA_BUF];
 		idtoa(&id, abuf, IDTOA_BUF);
-		printf("%s: can not find key: %s (%s)\n", progname, idname,
+		printf("%s: cannot find key: %s (%s)\n", progname, idname,
 		       abuf);
 		exit(5);
 	}
@@ -482,12 +482,11 @@ usage:
 		exit(0);
 	}
 
-	if (rsakeyid) {
+	if (rsakeyid != NULL) {
 		if (verbose)
 			printf("; picking by rsakeyid=%s\n", rsakeyid);
 		s = get_key_byid(host_secrets, rsakeyid);
-		keyid = rsakeyid;
-	} else if (keyid) {
+	} else if (keyid != NULL) {
 		if (verbose)
 			printf("; picking by keyid=%s\n", keyid);
 		s = pick_key(host_secrets, keyid);
@@ -498,7 +497,6 @@ usage:
 		 */
 		/* default key is the *LAST* key, because it is first in the file.*/
 		s = lsw_get_defaultsecret(host_secrets);
-		keyid = "default";
 	}
 
 	if (s == NULL) {

@@ -43,10 +43,9 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  grep calc_dh_shared /tmp/pluto.log
-XXXXX: SHOULD SHOW HERE
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

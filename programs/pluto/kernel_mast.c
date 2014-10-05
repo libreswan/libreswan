@@ -105,8 +105,7 @@ static int recalculate_mast_device_list(struct raw_iface *rifaces)
 
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		/* look for virtual (mast*) interface */
-		if (strncmp(ifp->name, MASTDEVPREFIX, sizeof(MASTDEVPREFIX) -
-			    1))
+		if (!startswith(ifp->name, MASTDEVPREFIX))
 			continue;
 
 		if (sscanf(ifp->name, "mast%d", &mastno) == 1) {
@@ -174,7 +173,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 		err_t e;
 		e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 		if (e) {
-			DBG_log("invalid listen= option ignored: %s\n", e);
+			DBG_log("invalid listen= option ignored: %s", e);
 			pluto_listen = NULL;
 		}
 	}
@@ -186,7 +185,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 		  useful_mastno = new_useful;
 	}
 
-	DBG_log("useful mast device %d\n", useful_mastno);
+	DBG_log("useful mast device %d", useful_mastno);
 	if (useful_mastno >= 0)
 		snprintf(useful_mast_name, sizeof(useful_mast_name), "mast%d", useful_mastno);
 
@@ -195,28 +194,26 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		/* ignore if virtual (ipsec*) interface */
-		if (strncmp(ifp->name, IPSECDEVPREFIX, sizeof(IPSECDEVPREFIX) -
-			    1) == 0)
+		if (startswith(ifp->name, IPSECDEVPREFIX))
 			continue;
 
 		/* ignore if virtual (mast*) interface */
-		if (strncmp(ifp->name, MASTDEVPREFIX, sizeof(MASTDEVPREFIX) -
-			    1) == 0) {
+		if (startswith(ifp->name, MASTDEVPREFIX)) {
 			found_mast = TRUE;
 			continue;
 		}
 
 		/* ignore if loopback interface */
-		if (strncmp(ifp->name, "lo", 2) == 0)
+		if (startswith(ifp->name, "lo"))
 			continue;
 
 		/* ignore if --listen is specified and we do not match */
-		if (pluto_listen != NULL) {
-			if (!sameaddr(&lip, &ifp->addr)) {
-				libreswan_log("skipping interface %s with %s",
-					      ifp->name, ip_str(&ifp->addr));
-				continue;
-			}
+		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
+			ipstr_buf b;
+
+			libreswan_log("skipping interface %s with %s",
+				      ifp->name, ipstr(&ifp->addr, &b));
+			continue;
 		}
 
 		/*
@@ -272,6 +269,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				/* matches nothing -- create a new entry */
 				char *vname;
 				int fd;
+				ipstr_buf b;
 
 				if (useful_mastno == -1)
 					useful_mastno = init_useful_mast(
@@ -315,7 +313,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 					"adding interface %s/%s %s:%d (fd=%d)",
 					q->ip_dev->id_vname,
 					q->ip_dev->id_rname,
-					ip_str(&q->ip_addr),
+					ipstr(&q->ip_addr, &b),
 					q->port, q->fd);
 
 				/*
@@ -354,7 +352,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 					libreswan_log(
 						"adding interface %s/%s %s:%d (fd=%d)",
 						q->ip_dev->id_vname, q->ip_dev->id_rname,
-						ip_str(&q->ip_addr),
+						ipstr(&q->ip_addr, &b),
 						q->port, q->fd);
 				}
 
@@ -414,11 +412,11 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 	}
 
 	ref = refhim = IPSEC_SAREF_NULL;
-	if (st) {
+	if (st != NULL) {
 		ref   = st->st_ref;
 		refhim = st->st_refhim;
 		DBG(DBG_KERNEL,
-		    DBG_log("Using saref=%u/%u for verb=%s\n", ref, refhim,
+		    DBG_log("Using saref=%u/%u for verb=%s", ref, refhim,
 			    verb));
 	}
 
@@ -601,7 +599,7 @@ const struct kernel_ops mast_kernel_ops = {
 	.replay_window = 64,
 
 	.pfkey_register = klips_pfkey_register,
-	.pfkey_register_response = klips_pfkey_register_response,
+	.pfkey_register_response = pfkey_register_response,
 	.process_queue = pfkey_dequeue,
 	.process_msg = pfkey_event,
 	.raw_eroute = mast_raw_eroute,

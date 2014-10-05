@@ -119,12 +119,13 @@ static int print_secrets(struct secret *secret,
 	strcpy(idb1, "%any");
 	strcpy(idb2, "");
 
-	if (ids != NULL)
+	if (ids != NULL) {
 		idtoa(&ids->id, idb1, sizeof(idb1));
-	if (ids->next != NULL) {
-		idtoa(&ids->next->id, idb2, sizeof(idb2));
-		if (ids->next->next)
-			more = "more";
+		if (ids->next != NULL) {
+			idtoa(&ids->next->id, idb2, sizeof(idb2));
+			if (ids->next->next)
+				more = "more";
+		}
 	}
 
 	whack_log(RC_COMMENT, "    %d: %s %s %s%s", lsw_get_secretlineno(
@@ -163,7 +164,7 @@ int sign_hash(const struct RSA_private_key *k,
 	slot = PK11_GetInternalKeySlot();
 	if (slot == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "RSA_sign_hash: Unable to find (slot security) device (err %d)\n",
+		       "RSA_sign_hash: Unable to find (slot security) device (err %d)",
 		       PR_GetError());
 		return 0;
 	}
@@ -173,23 +174,23 @@ int sign_hash(const struct RSA_private_key *k,
 			       lsw_return_nss_password_file_info()) ==
 	     SECSuccess) {
 		DBG(DBG_CRYPT,
-		    DBG_log("NSS: Authentication to NSS successful\n"));
+		    DBG_log("NSS: Authentication to NSS successful"));
 	} else {
 		DBG(DBG_CRYPT,
-		    DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password\n"));
+		    DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password"));
 	}
 
 	privateKey = PK11_FindKeyByKeyID(slot, &ckaId,
 					 lsw_return_nss_password_file_info());
 	if (privateKey == NULL) {
 		DBG(DBG_CRYPT,
-		    DBG_log("Can't find the private key from the NSS CKA_ID\n"));
+		    DBG_log("Can't find the private key from the NSS CKA_ID"));
 		if (k->pub.nssCert != NULL) {
 			privateKey = PK11_FindKeyByAnyCert(k->pub.nssCert,
 							   lsw_return_nss_password_file_info());
 			if (privateKey == NULL) {
 				loglog(RC_LOG_SERIOUS,
-				       "Can't find the private key from the NSS CERT (err %d)\n",
+				       "Can't find the private key from the NSS CERT (err %d)",
 				       PR_GetError());
 			}
 		}
@@ -212,7 +213,7 @@ int sign_hash(const struct RSA_private_key *k,
 
 		if (s != SECSuccess) {
 			loglog(RC_LOG_SERIOUS,
-			       "RSA_sign_hash: sign function failed (%d)\n",
+			       "RSA_sign_hash: sign function failed (%d)",
 			       PR_GetError());
 			return 0;
 		}
@@ -868,7 +869,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 							TRUE);
 
 			if (!check_pub_keys ||
-			    strncmp(check_expiry_msg, "ok", 2) != 0) {
+			    !startswith(check_expiry_msg, "ok")) {
 				char expires_buf[REALTIMETOA_BUF];
 				char installed_buf[REALTIMETOA_BUF];
 				char id_buf[IDTOA_BUF];

@@ -21,7 +21,7 @@
  *
  */
 
-#include "pthread.h"    /* Must be the first include file */
+#include <pthread.h>    /* Must be the first include file */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -134,7 +134,12 @@ void pluto_init_log(void)
 				"Cannot open logfile '%s': %s\n",
 				pluto_log_file, strerror(errno));
 		} else {
-			setbuf(pluto_log_fp, NULL);
+			/*
+			 * buffer by line:
+			 * should be faster that no buffering
+			 * and yet safe since each message is probably a line.
+			 */
+			setvbuf(pluto_log_fp, NULL, _IOLBF, 0);
 		}
 	}
 
@@ -181,12 +186,11 @@ static void fmt_log(char *buf, size_t buf_len, const char *fmt, va_list ap)
 		snprintf(bp, be - bp, ": ");
 	} else if (cur_from != NULL) {
 		/* peer's IP address */
-		/* Note: must not use ip_str() because our caller might! */
-		char ab[ADDRTOT_BUF];
+		ipstr_buf b;
 
-		(void) addrtot(cur_from, 0, ab, sizeof(ab));
 		snprintf(buf, buf_len, "packet from %s:%u: ",
-			 ab, (unsigned)cur_from_port);
+			 ipstr(cur_from, &b),
+			 (unsigned)cur_from_port);
 	}
 
 	ps = strlen(buf);
@@ -274,7 +278,7 @@ static bool ensure_writeable_parent_directory(char *path)
 			/* cannot write to this directory for some reason
 			 * other than a missing directory
 			 */
-			syslog(LOG_CRIT, "can not write to %s: %s", path, strerror(
+			syslog(LOG_CRIT, "cannot write to %s: %s", path, strerror(
 				       errno));
 			happy = FALSE;
 		} else {
@@ -283,7 +287,7 @@ static bool ensure_writeable_parent_directory(char *path)
 			if (happy) {
 				if (mkdir(path, 0750) != 0) {
 					syslog(LOG_CRIT,
-					       "can not create dir %s: %s",
+					       "cannot create dir %s: %s",
 					       path, strerror(errno));
 					happy = FALSE;
 				}
@@ -307,11 +311,10 @@ static void open_peerlog(struct connection *c)
 
 	if (c->log_file_name == NULL) {
 		char peername[ADDRTOT_BUF], dname[ADDRTOT_BUF];
-		int peernamelen, lf_len;
+		size_t peernamelen = addrtot(&c->spd.that.host_addr, 'Q', peername,
+			sizeof(peername)) - 1;
+		int lf_len;
 
-		addrtot(&c->spd.that.host_addr, 'Q', peername,
-			sizeof(peername));
-		peernamelen = strlen(peername);
 
 		/* copy IP address, turning : and . into / */
 		{
@@ -353,7 +356,7 @@ static void open_peerlog(struct connection *c)
 	c->log_file = fopen(c->log_file_name, "w");
 	if (c->log_file == NULL) {
 		if (c->log_file_err) {
-			syslog(LOG_CRIT, "logging system can not open %s: %s",
+			syslog(LOG_CRIT, "logging system cannot open %s: %s",
 			       c->log_file_name, strerror(errno));
 			c->log_file_err = TRUE;
 		}
@@ -362,7 +365,7 @@ static void open_peerlog(struct connection *c)
 
 	/* look for a connection to close! */
 	while (perpeer_count >= MAX_PEERLOG_COUNT) {
-		/* can not be NULL because perpeer_count > 0 */
+		/* cannot be NULL because perpeer_count > 0 */
 		passert(perpeer_list.cqh_last != (void *)&perpeer_list);
 
 		perpeer_logclose(perpeer_list.cqh_last);
@@ -391,7 +394,7 @@ static void prettynow(char *buf, size_t buflen, const char *fmt)
 static void peerlog(const char *prefix, const char *m)
 {
 	if (cur_connection == NULL) {
-		/* we can not log it in this case. Oh well. */
+		/* we cannot log it in this case. Oh well. */
 		return;
 	}
 
@@ -629,7 +632,6 @@ void passert_fail(const char *pred_str, const char *file_str,
 	       line_no, pred_str);
 	if (!dying_breath) {
 		dying_breath = TRUE;
-		show_status();
 	}
 	/* exiting correctly doesn't always work */
 	libreswan_log_abort(file_str, line_no);
@@ -809,7 +811,7 @@ void show_status(void)
 	db_ops_show_status();
 #endif
 	show_connections_status();
-	show_states_status();
+	show_states_status(FALSE);
 #ifdef KLIPS
 	show_shunt_status();
 #endif
@@ -916,10 +918,10 @@ static void connection_state(struct state *st, void *data)
 	if (st->st_state == STATE_UNDEFINED)
 		return;
 
-	if (IS_PHASE1(st->st_state)) {
+	if (IS_IKE_SA(st)) {
 		if (lc->tunnel < tun_phase1)
 			lc->tunnel = tun_phase1;
-		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+		if (IS_IKE_SA_ESTABLISHED(st->st_state)) {
 			if (lc->tunnel < tun_phase1up)
 				lc->tunnel = tun_phase1up;
 			lc->phase1 = p1_up;

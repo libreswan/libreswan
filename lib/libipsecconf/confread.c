@@ -91,7 +91,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PLUTORESTARTONCRASH]  = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = FALSE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
-	cfg->setup.options[KBF_RETRANSMITS] = TRUE;
 	cfg->setup.options[KBF_PLUTOFORK] = TRUE; /* change in the future */
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
@@ -130,6 +129,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_XAUTHBY] = XAUTHBY_FILE;
 	cfg->conn_default.options[KBF_XAUTHFAIL] = XAUTHFAIL_HARD;
+	//cfg->conn_default.options[KBF_SEND_CA] = CA_SEND_ISSUER;
 
 	cfg->conn_default.policy = POLICY_RSASIG | POLICY_TUNNEL |
 				   POLICY_ENCRYPT | POLICY_PFS;
@@ -184,15 +184,14 @@ static bool error_append(char **perr, const char *fmt, ...)
 	vsnprintf(tmp_err, sizeof(tmp_err) - 1, fmt, args);
 	va_end(args);
 
-	len = 1 + strlen(tmp_err) + (*perr ? strlen(*perr) : 0);
-	nerr = alloc_bytes(len,"error_append len");
+	len = 1 + strlen(tmp_err) + (*perr != NULL ? strlen(*perr) : 0);
+	nerr = alloc_bytes(len, "error_append len");
 	nerr[0] = '\0';
-	if (*perr)
-		strcpy(nerr, *perr);
-	strcat(nerr, tmp_err);
-
-	if (*perr)
+	if (*perr != NULL) {
+		strcpy(nerr, *perr);	/* safe: see allocation above */
 		pfree(*perr);
+	}
+	strcat(nerr, tmp_err);	/* safe: see allocation above */
 	*perr = nerr;
 
 	return TRUE;
@@ -433,10 +432,9 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		}
 
 		if (end->id == NULL) {
-			char idbuf[ADDRTOT_BUF];
-			addrtot(&end->addr, 0, idbuf, sizeof(idbuf));
+			ipstr_buf b;
 
-			end->id = clone_str(idbuf, "end if");
+			end->id = clone_str(ipstr(&end->addr, &b), "end if");
 		}
 		break;
 
@@ -477,17 +475,14 @@ static bool validate_end(struct ub_ctx *dnsctx,
 				leftright);
 		}
 
-		if ( ((strlen(value) >= 6) &&
-		      (strncmp(value, "vhost:", 6) == 0)) ||
-		     ((strlen(value) >= 5) &&
-		      (strncmp(value, "vnet:", 5) == 0)) ) {
+		if (startswith(value, "vhost:") || startswith(value, "vnet:")) {
 			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
 			end->has_client = TRUE;
 			er = ttosubnet(value, 0, family, &(end->subnet));
 		}
-		if (er)
+		if (er != NULL)
 			ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright,
 				  value, er);
 	}

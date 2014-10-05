@@ -178,6 +178,7 @@ static inline unsigned eroute_type_to_pfkey_satype(enum eroute_type esatype)
 	}
 }
 
+/* note: this is also called by init_netlink */
 void init_pfkey(void)
 {
 	pid = getpid();
@@ -199,6 +200,8 @@ void init_pfkey(void)
 	DBG(DBG_KERNEL,
 	    DBG_log("process %u listening for PF_KEY_V2 on file descriptor %d",
 		    (unsigned)pid, pfkeyfd));
+
+	kernel_alg_init();	/* Initialize alg arrays   */
 }
 
 /* Kinds of PF_KEY message from the kernel:
@@ -359,14 +362,15 @@ static bool pfkey_get_response(pfkey_buf *buf, pfkey_seq_t seq)
 
 /* Note ideally, this entire file should not be required for non-klips/mast
  * and this ifdef can go. Or this function should be moved to kernel_klips.c
+ * Note: this is shared with kernel_netlink.c and kernel_mast.c
  */
-#ifdef KLIPS
+#if defined(KLIPS) || (defined(linux) && defined(NETKEY_SUPPORT))
 /* Process a K_SADB_REGISTER message from the kernel.
  * This will be a response to one of ours, but it may be asynchronous
  * (if kernel modules are loaded and unloaded).
  * Some sanity checking has already been performed.
  */
-void klips_pfkey_register_response(const struct sadb_msg *msg)
+void pfkey_register_response(const struct sadb_msg *msg)
 {
 	/* Find out what the kernel can support.
 	 * In fact, the only question at the moment
@@ -376,9 +380,8 @@ void klips_pfkey_register_response(const struct sadb_msg *msg)
 	 */
 	switch (msg->sadb_msg_satype) {
 	case K_SADB_SATYPE_AH:
-		break;
 	case K_SADB_SATYPE_ESP:
-		kernel_alg_register_pfkey(msg, sizeof(pfkey_buf));
+		kernel_alg_register_pfkey(msg);
 		break;
 	case K_SADB_X_SATYPE_COMP:
 		/* ??? There ought to be an extension to list the
@@ -661,7 +664,6 @@ static bool finish_pfkey_msg(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
 					case ENOENT:
 						loglog(RC_LOG_SERIOUS,
 						       "requested algorithm is not available in the kernel");
-						success = FALSE;
 					/* fall through to get error message */
 
 					default:
@@ -1050,7 +1052,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 				      "pfkey_nat_t_type Add ESP SA",
 				      sa->text_said, extensions);
 		DBG(DBG_KERNEL,
-		    DBG_log("setting natt_type to %d\n", sa->natt_type));
+		    DBG_log("setting natt_type to %d", sa->natt_type));
 		if (!success)
 			return FALSE;
 
@@ -1064,7 +1066,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 					      "pfkey_nat_t_sport Add ESP SA",
 					      sa->text_said, extensions);
 			DBG(DBG_KERNEL,
-			    DBG_log("setting natt_sport to %d\n",
+			    DBG_log("setting natt_sport to %d",
 				    sa->natt_sport));
 			if (!success)
 				return FALSE;
@@ -1080,7 +1082,7 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 					      "pfkey_nat_t_dport Add ESP SA",
 					      sa->text_said, extensions);
 			DBG(DBG_KERNEL,
-			    DBG_log("setting natt_dport to %d\n",
+			    DBG_log("setting natt_dport to %d",
 				    sa->natt_dport));
 			if (!success)
 				return FALSE;
@@ -1091,9 +1093,11 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 						   sa->natt_oa,
 						   "pfkey_nat_t_oa Add ESP SA",
 						   sa->text_said, extensions);
-			DBG(DBG_KERNEL,
-			    DBG_log("setting nat_oa to %s\n",
-				    ip_str(sa->natt_oa)));
+			DBG(DBG_KERNEL, {
+				ipstr_buf b;
+				DBG_log("setting nat_oa to %s",
+					ipstr(sa->natt_oa, &b));
+			});
 			if (!success)
 				return FALSE;
 		}
@@ -1385,7 +1389,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 		proto_info[i].encapsulation = st->st_ah.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid;
+		proto_info[i].reqid = reqid_ah(sr->reqid);
 	}
 
 	if (st->st_esp.present) {
@@ -1398,7 +1402,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 		proto_info[i].encapsulation = st->st_esp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 1;
+		proto_info[i].reqid = reqid_esp(sr->reqid);
 	}
 
 	if (st->st_ipcomp.present) {
@@ -1412,7 +1416,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 			st->st_ipcomp.attrs.encapsulation;
 		tunnel |= proto_info[i].encapsulation ==
 			  ENCAPSULATION_MODE_TUNNEL;
-		proto_info[i].reqid = sr->reqid + 2;
+		proto_info[i].reqid = reqid_ipcomp(sr->reqid);
 	}
 
 	if (i == sizeof(proto_info) / sizeof(proto_info[0]) - 1)
@@ -1589,9 +1593,9 @@ void scan_proc_shunts(void)
 			}
 
 			if (ff[1].len != 2 ||
-			    strncmp((char *)ff[1].ptr, "->", 2) != 0 ||
+			    !startswith((char *)ff[1].ptr, "->") ||
 			    ff[3].len != 2 ||
-			    strncmp((char *)ff[3].ptr, "=>", 2) != 0) {
+			    !startswith((char *)ff[3].ptr, "=>")) {
 				ugh = "is missing -> or =>";
 				break;
 			}
@@ -1805,7 +1809,7 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 				break;
 			}
 
-			if (strncmp(line, text_said, strlen(text_said)) == 0) {
+			if (strneq(line, text_said, strlen(text_said))) {
 				/* we found a match, now try to find idle= */
 				char *p = strstr(line, idle);
 

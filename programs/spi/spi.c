@@ -94,7 +94,7 @@ const char *alg_string = NULL;          /* algorithm string */
 struct esp_info *esp_info = NULL;       /* esp info from 1st (only) element */
 int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 
-int replay_window = 0;
+unsigned long replay_window = 0;
 char sa[SATOT_BUF];
 
 int pfkey_sock;
@@ -162,33 +162,24 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		int life_severity, life_type;
 		char *optargt = optargp;
 
-		if (strncmp(optargp, "soft", sizeof("soft") - 1) == 0) {
+		if (eat(optargp, "soft")) {
 			life_severity = life_soft;
-			optargp += sizeof("soft") - 1;
-		} else if (strncmp(optargp, "hard", sizeof("hard") - 1) == 0) {
+		} else if (eat(optargp, "hard")) {
 			life_severity = life_hard;
-			optargp += sizeof("hard") - 1;
 		} else {
 			fprintf(stderr,
-				"%s: missing lifetime severity in %s, optargt=0p%p, optargp=0p%p, sizeof(\"soft\")=%d\n",
+				"%s: missing lifetime severity in %s\n",
 				progname,
-				optargt,
-				optargt,
-				optargp,
-				(int)sizeof("soft"));
+				optargt);
 			usage(progname, stderr);
 			return 1;
 		}
 		if (debug) {
 			fprintf(stdout,
-				"%s: debug: life_severity=%d, optargt=0p%p=\"%s\", optargp=0p%p=\"%s\", sizeof(\"soft\")=%d\n",
+				"%s: debug: life_severity=%d (%s)\n",
 				progname,
 				life_severity,
-				optargt,
-				optargt,
-				optargp,
-				optargp,
-				(int)sizeof("soft"));
+				optargt);
 		}
 		if (*optargp++ != '-') {
 			fprintf(stderr,
@@ -199,37 +190,21 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		}
 		if (debug) {
 			fprintf(stdout,
-				"%s: debug: optargt=0p%p=\"%s\", optargp=0p%p=\"%s\", strlen(optargt)=%d, strlen(optargp)=%d, strncmp(optargp, \"addtime\", sizeof(\"addtime\")-1)=%d\n",
+				"%s: debug: optargt=\"%s\", optargp=\"%s\"\n",
 				progname,
 				optargt,
-				optargt,
-				optargp,
-				optargp,
-				(int)strlen(optargt),
-				(int)strlen(optargp),
-				strncmp(optargp, "addtime", sizeof("addtime") -
-					1));
+				optargp);
 		}
-		if (strncmp(optargp, "allocations", sizeof("allocations") -
-			    1) == 0) {
+		if (eat(optargp, "allocations")) {
 			life_type = life_alloc;
-			optargp += sizeof("allocations") - 1;
-		} else if (strncmp(optargp, "bytes",
-				   sizeof("bytes") - 1) == 0) {
+		} else if (eat(optargp, "bytes")) {
 			life_type = life_bytes;
-			optargp += sizeof("bytes") - 1;
-		} else if (strncmp(optargp, "addtime", sizeof("addtime") -
-				   1) == 0) {
+		} else if (eat(optargp, "addtime")) {
 			life_type = life_addtime;
-			optargp += sizeof("addtime") - 1;
-		} else if (strncmp(optargp, "usetime", sizeof("usetime") -
-				   1) == 0) {
+		} else if (eat(optargp, "usetime")) {
 			life_type = life_usetime;
-			optargp += sizeof("usetime") - 1;
-		} else if (strncmp(optargp, "packets", sizeof("packets") -
-				   1) == 0) {
+		} else if (eat(optargp, "packets")) {
 			life_type = life_packets;
-			optargp += sizeof("packets") - 1;
 		} else {
 			fprintf(stderr,
 				"%s: missing lifetime type after '-' in %s\n",
@@ -279,7 +254,17 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 			return 1;
 		}
 
+		errno = 0;
 		life[life_severity][life_type] = strtoul(optargp, &endptr, 0);
+
+		if (errno != 0 || optargp == endptr) {
+			fprintf(stderr,
+				"%s: Invalid number for lifetime option parameter %s in parameter string \"%s\"\n",
+				progname,
+				myoptarg,
+				optargp);
+			return 1;
+		}
 
 		switch (*endptr) {
 		case '\0':
@@ -309,7 +294,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 	return 0;
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "ah", 1, 0, 'H' },
 	{ "esp", 1, 0, 'P' },
@@ -376,12 +361,12 @@ static int decode_esp(char *algname)
 		int esp_ealg_id, esp_aalg_id;
 
 		esp_alg = XF_OTHER_ALG;
-		if (alg_info->alg_info_cnt > 1) {
+		if (alg_info->ai.alg_info_cnt > 1) {
 			fprintf(stderr, "%s: Invalid encryption algorithm '%s' "
 				"follows '--esp' option: lead too many(%d) "
 				"transforms\n",
 				progname, algname,
-				alg_info->alg_info_cnt);
+				alg_info->ai.alg_info_cnt);
 			exit(1);
 		}
 		alg_string = algname;
@@ -390,18 +375,18 @@ static int decode_esp(char *algname)
 			fprintf(stdout,
 				"%s: alg_info: cnt=%d ealg[0]=%d aalg[0]=%d\n",
 				progname,
-				alg_info->alg_info_cnt,
+				alg_info->ai.alg_info_cnt,
 				esp_info->encryptalg,
 				esp_info->authalg);
 		}
-		esp_ealg_id = esp_info->esp_ealg_id;
-		esp_aalg_id = esp_info->esp_aalg_id;
-		if (kernel_alg_proc_read() == 0) {
+		esp_ealg_id = esp_info->transid;
+		esp_aalg_id = esp_info->auth;
+		if (kernel_alg_proc_read()) {
 			err_t ugh;
 
 			proc_read_ok++;
 
-			ugh = kernel_alg_esp_enc_ok(esp_ealg_id, 0);
+			ugh = check_kernel_encrypt_alg(esp_ealg_id, 0);
 			if (ugh != NULL) {
 				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
 					"not present - %s\n",
@@ -413,13 +398,12 @@ static int decode_esp(char *algname)
 				exit(1);
 			}
 
-			ugh = kernel_alg_esp_auth_ok(esp_aalg_id, 0);
-			if (ugh != NULL) {
-				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - %s "
-					"not present\n",
+			if (!kernel_alg_esp_auth_ok(esp_aalg_id, 0)) {
+				/* ??? this message looks badly worded */
+				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
 					progname, esp_aalg_id,
 					enum_name(&auth_alg_names,
-						  esp_aalg_id), ugh);
+						  esp_aalg_id));
 				exit(1);
 			}
 		}
@@ -457,6 +441,7 @@ static void decode_blob(const char *optarg, const char *name, unsigned char **pp
 		exit(1);
 	}
 	ugh = ttodatav(optarg, 0, 0, (char *)*pp, len, lp, err_buf, sizeof(err_buf), 0);
+	assert(ugh == NULL);
 }
 
 static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
@@ -494,12 +479,10 @@ static void emit_lifetime(const char *extname, uint16_t exttype, struct sadb_ext
 
 int main(int argc, char *argv[])
 {
-	char *endptr;
 	__u32 spi = 0;
 	int c;
 	ip_said said;
 	const char* error_s;
-	char ipaddr_txt[ADDRTOT_BUF];
 	char ipsaid_txt[SATOT_BUF];
 
 	int outif = 0;
@@ -771,11 +754,11 @@ int main(int argc, char *argv[])
 			}
 			edst_opt = optarg;
 			if (debug) {
-				addrtot(&edst, 0, ipaddr_txt,
-					sizeof(ipaddr_txt));
+				ipstr_buf b;
+
 				fprintf(stdout, "%s: edst=%s.\n",
 					progname,
-					ipaddr_txt);
+					ipstr(&edst, &b));
 			}
 			break;
 
@@ -932,19 +915,22 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'w':
-			replay_window = strtoul(optarg, &endptr, 0);
-			if (*endptr != '\0') {
+		{
+			err_t ugh = ttoul(optarg, 0, 0, &replay_window);
+
+			if (ugh != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in replay_window parameter: %s\n",
-					progname, optarg);
+					"%s: Invalid replay_window parameter: %s\n",
+					progname, ugh);
 				exit(1);
 			}
-			if ((replay_window < 0x1) || (replay_window > 64)) {
+			if (!(1 <= replay_window && replay_window <= 64)) {
 				fprintf(stderr,
-					"%s: Failed -- Illegal window size: arg=%s, replay_window=%d, must be 1 <= size <= 64.\n",
+					"%s: Failed -- Illegal window size: arg=%s, replay_window=%lu, must be 1 <= size <= 64.\n",
 					progname, optarg, replay_window);
 				exit(1);
 			}
+		}
 			break;
 
 		case 'i':
@@ -967,11 +953,11 @@ int main(int argc, char *argv[])
 			}
 			dst_opt = optarg;
 			if (debug) {
-				addrtot(&dst, 0, ipaddr_txt,
-					sizeof(ipaddr_txt));
+				ipstr_buf b;
+
 				fprintf(stdout, "%s: dst=%s.\n",
 					progname,
-					ipaddr_txt);
+					ipstr(&dst, &b));
 			}
 			break;
 
@@ -1041,11 +1027,11 @@ int main(int argc, char *argv[])
 			}
 			src_opt = optarg;
 			if (debug) {
-				addrtot(&src, 0, ipaddr_txt,
-					sizeof(ipaddr_txt));
+				ipstr_buf b;
+
 				fprintf(stdout, "%s: src=%s.\n",
 					progname,
-					ipaddr_txt);
+					ipstr(&src, &b));
 			}
 			break;
 
@@ -1121,13 +1107,13 @@ int main(int argc, char *argv[])
 			 * if explicit keylen told in encrypt algo, eg "aes128"
 			 * check actual keylen "equality"
 			 */
-			if (esp_info->esp_ealg_keylen &&
-			    esp_info->esp_ealg_keylen != keylen) {
+			if (esp_info->enckeylen &&
+			    esp_info->enckeylen != keylen) {
 				fprintf(stderr, "%s: invalid encryption keylen=%d, "
 					"required %d by encrypt algo string=\"%s\"\n",
 					progname,
 					(int)keylen,
-					(int)esp_info->esp_ealg_keylen,
+					(int)esp_info->enckeylen,
 					alg_string);
 				exit(1);
 
@@ -1368,10 +1354,11 @@ int main(int argc, char *argv[])
 		emit_lifetime("lifetime_h", SADB_EXT_LIFETIME_HARD, extensions, life_opt[life_hard], life[life_hard]);
 
 		if (debug) {
-			addrtot(&src, 0, ipaddr_txt, sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stdout,
 				"%s: assembling address_s extension (%s).\n",
-				progname, ipaddr_txt);
+				progname, ipstr(&src, &b));
 		}
 
 		error = pfkey_address_build(&extensions[SADB_EXT_ADDRESS_SRC],
@@ -1380,10 +1367,11 @@ int main(int argc, char *argv[])
 					    0,
 					    sockaddrof(&src));
 		if (error != 0) {
-			addrtot(&src, 0, ipaddr_txt, sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_s extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&src, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -1394,10 +1382,11 @@ int main(int argc, char *argv[])
 					    0,
 					    sockaddrof(&edst));
 		if (error != 0) {
-			addrtot(&edst, 0, ipaddr_txt, sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_d extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&edst, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -1503,13 +1492,15 @@ int main(int argc, char *argv[])
 #if 0
 		/* not yet implemented */
 		if (natt != 0 && !isanyaddr(&natt_oa)) {
+			ip_str_buf b;
+
 			success = pfkeyext_address(SADB_X_EXT_NAT_T_OA,
 						   &natt_oa,
 						   "pfkey_nat_t_oa Add ESP SA",
 						   ipsaid_txt, extensions);
 			if (debug)
 				fprintf(stderr, "setting nat_oa to %s\n",
-					ip_str(&natt_oa));
+					ipstr(&natt_oa, &b));
 			if (!success)
 				return FALSE;
 		}

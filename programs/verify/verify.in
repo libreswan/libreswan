@@ -21,13 +21,15 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-import os, sys, subprocess, glob, socket
+import os, sys, subprocess, glob, socket, locale
 
 retcode = 0
 
 conffile = "@FINALCONFFILE@"
 confdir = "@FINALCONFDIR@"
 ipsecbin = "@IPSEC_SBINDIR@/ipsec"
+
+prefencoding = locale.getpreferredencoding(False)
 
 if not os.path.isfile(ipsecbin):
 	# hopefully somewhere in our path then
@@ -50,7 +52,7 @@ colour = 0
 try:
 	p = subprocess.Popen("consoletype", stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 	output, err = p.communicate()
-	output = output.strip()
+	output = output.decode(prefencoding).strip()
 	if output in ("vc","tty","pty"):
 		colour = 1
 except:
@@ -171,12 +173,14 @@ def rpfiltercheck():
 def cmdchecks():
 	global retcode
 	printfun("Checking 'ip' command")
-	if not os.path.isfile("/sbin/ip") and not os.path.isfile("/usr/sbin/ip"):
+	if not os.path.isfile("/sbin/ip") and not os.path.isfile("/usr/sbin/ip") \
+	   and not os.path.isfile("/bin/ip"):
 		print_result("FAIL","FAILED")
 		retcode += 1
 	p = subprocess.Popen(["ip", "xfrm"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 	output, err = p.communicate()
-	if not "XFRM" in "%s"%err:
+	err = err.decode(prefencoding)
+	if not "XFRM" in err:
 		print_result("FAIL","IP XFRM BROKEN")
 		retcode += 1
 	else:
@@ -202,6 +206,7 @@ def udp500check():
 	try:
 		p = subprocess.Popen(["ss", "-n", "-a", "-u", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
+		output = output.decode(prefencoding)
 		if ":500" in output:
 			print_result("OK","OK")
 		else:
@@ -222,6 +227,7 @@ def udp4500check():
 	try:
 		p = subprocess.Popen([sscmd, "-n", "-a", "-u", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
+		output = output.decode(prefencoding)
 		if ":4500" in output:
 			print_result("OK","OK")
 		else:
@@ -237,6 +243,7 @@ def installstartcheck():
 	try:
 		p = subprocess.Popen(["ipsec", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
 		output, err = p.communicate()
+		output = output.decode(prefencoding)
 		if "swan" in output:
 			print_result("OK","OK")
 			print(output.replace("Linux","").strip())
@@ -365,6 +372,7 @@ def ipsecsecretcheck():
 
 	p = subprocess.Popen(["ipsec","secrets"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, err = p.communicate()
+	output = output.decode(prefencoding)
 	if "ERROR" in output:
 		print_result("FAIL","PARSE ERROR")
 		for line in output.split("\n"):
@@ -379,7 +387,8 @@ def ipsecconfcheck():
 	printfun("Pluto ipsec.conf syntax")
 	p = subprocess.Popen(["ipsec","addconn","--checkconfig"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, err = p.communicate()
-	if "syntax error" in "%s"%err:
+	err = err.decode(prefencoding)
+	if "syntax error" in err:
 		print_result("FAIL","PARSE ERROR")
 		print(err)
 	else:
@@ -430,6 +439,7 @@ def configsetupcheck():
 
 	p = subprocess.Popen(["dig","+short","ipseckey", myid ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	ipseckey, err = p.communicate()
+	ipseckey = ipseckey.decode(prefencoding)
 	if not ipseckey:
 		print_result("FAIL","MISSING")
 	try:

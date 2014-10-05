@@ -8,7 +8,7 @@ struct pluto_crypto_req_cont *continuation;
 struct pluto_crypto_req rd;
 struct pluto_crypto_req *r = &rd;
 
-stf_status build_ke(struct pluto_crypto_req_cont *cn,
+stf_status build_ke_and_nonce(struct pluto_crypto_req_cont *cn,
 		    struct state *st,
 		    const struct oakley_group_desc *group,
 		    enum crypto_importance importance)
@@ -17,10 +17,10 @@ stf_status build_ke(struct pluto_crypto_req_cont *cn,
 	zero(&rd);
 
 	r->pcr_len  = sizeof(struct pluto_crypto_req);
-	r->pcr_type = pcr_build_kenonce;
+	r->pcr_type = pcr_build_ke_and_nonce;
 	r->pcr_pcim = importance;
 
-	pcr_nonce_init(r, pcr_build_kenonce, importance);
+	pcr_nonce_init(r, pcr_build_ke_and_nonce, importance);
 	r->pcr_d.kn.oakley_group = group->group;
 
 	return STF_SUSPEND;
@@ -50,7 +50,8 @@ void run_continuation(struct pluto_crypto_req *r)
 	while (continuation != NULL) {
 		struct pluto_crypto_req_cont *cn = continuation;
 		continuation = NULL;
-		(*cn->pcrc_func)(cn, r, NULL);
+		passert(cn->pcrc_func != NULL);
+		(*cn->pcrc_func)(cn, r);
 	}
 }
 

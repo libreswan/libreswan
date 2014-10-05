@@ -32,17 +32,17 @@ east #
 000 algorithm ESP encrypt: id=12, name=ESP_AES, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=252, name=ESP_SERPENT, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
-000 algorithm ESP auth attr: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
-000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
-000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
-000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
-000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
-000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashsize=48
-000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashsize=64
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20
+000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
+000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
+000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -57,8 +57,8 @@ east #
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
 000 "westnet-eastnet-6in6": 2001:db8:0:2::/64===2001:db8:1:2::23<2001:db8:1:2::23>[@east]...2001:db8:1:2::45<2001:db8:1:2::45>[@west]===2001:db8:0:1::/64; unrouted; eroute owner: #0
-000 "westnet-eastnet-6in6":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-6in6":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-6in6":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-6in6":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-6in6":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "westnet-eastnet-6in6":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
 000 "westnet-eastnet-6in6":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW;
@@ -74,7 +74,7 @@ initdone
 east #
  ipsec look
 v6-v6-through-v6-klips-klips]# east NOW
-2001:db8:0:2::/64  -> 2001:db8:0:1::/64  => tun0x1001@2001:db8:1:2::45 esp0xafaae4b1@2001:db8:1:2::45  (4)   PAUL: sanitizer missed this line
+2001:db8:0:2::/64  -> 2001:db8:0:1::/64  => tun0x1000@2001:db8:1:2::45 esp0xafaae4b1@2001:db8:1:2::45  (4)   PAUL: sanitizer missed this line
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
@@ -116,7 +116,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -30,7 +30,7 @@ east #
  iptables -A OUTPUT -o eth1 -s 192.1.2.23 -p udp --sport 1701 -j REJECT
 east #
  (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log 1>&2 ) &
-[1] XXXX
+[X] XXXX
 east #
  echo done
 done
@@ -60,7 +60,7 @@ east #
  grep 'Result using RFC 3947' /tmp/pluto.log
 "any-east-l2tp"[1] 192.1.2.254 #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: peer behind NAT
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

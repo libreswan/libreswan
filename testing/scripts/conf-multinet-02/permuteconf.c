@@ -71,7 +71,7 @@ static void usage(void)
 extern char rootdir[PATH_MAX];          /* when evaluating paths, prefix this to them */
 extern char rootdir2[PATH_MAX];         /* when evaluating paths, prefix this to them */
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "config",              required_argument, NULL, 'C' },
 	{ "debug",               no_argument, NULL, 'D' },
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 	cfg = confread_load(configfile, &err, NULL);
 
 	if (!cfg) {
-		printf("config file: %s can not be loaded: %s\n", configfile,
+		printf("config file: %s cannot be loaded: %s\n", configfile,
 		       err);
 		exit(3);
 	}

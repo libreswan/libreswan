@@ -23,7 +23,7 @@ script
     @FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS
 end script
 
-post-stop script
+pre-stop script
     ipsec whack --shutdown
     ip xfrm policy flush
     ip xfrm state flush

@@ -18,7 +18,7 @@ void SHA1Init(SHA1_CTX* context)
 	passert(status == SECSuccess);
 }
 
-void SHA1Update(SHA1_CTX* context, const unsigned char* data, u_int32_t len)
+void SHA1Update(SHA1_CTX* context, const unsigned char* data, size_t len)
 {
 	SECStatus status = PK11_DigestOp(context->ctx_nss, data, len);
 	passert(status == SECSuccess);

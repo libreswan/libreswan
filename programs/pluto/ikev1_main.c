@@ -46,6 +46,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
+#include "ikev1_msgid.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
@@ -169,6 +170,10 @@ stf_status main_outI1(int whack_sock,
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		/* R-cookie, flags and MessageID are left zero */
 
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 				&md.rbody)) {
 			reset_cur_state();
@@ -179,11 +184,12 @@ stf_status main_outI1(int whack_sock,
 	/* SA out */
 	{
 		u_char *sa_start = md.rbody.cur;
-		unsigned policy_index = POLICY_ISAKMP(policy, c);
-		int np = numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		enum next_payload_types_ikev1 np =
+			numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-		if (!ikev1_out_sa(&md.rbody, &oakley_sadb[policy_index], st, TRUE,
-				FALSE, np)) {
+		if (!ikev1_out_sa(&md.rbody,
+				&oakley_sadb[sadb_index(policy, c)],
+				st, TRUE, FALSE, np)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
@@ -283,7 +289,7 @@ stf_status main_outI1(int whack_sock,
 	send_ike_msg(st, "main_outI1");
 
 	delete_event(st);
-	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);
@@ -501,9 +507,9 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 	u_int8_t *enc_start = pbs->start + sizeof(struct isakmp_hdr);
 	size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
 
-	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "encrypting:\n", enc_start,
+	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "encrypting:", enc_start,
 		enc_len);
-	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "IV:\n",
+	DBG_cond_dump(DBG_CRYPT | DBG_RAW, "IV:",
 		st->st_new_iv,
 		st->st_new_iv_len);
 	DBG(DBG_CRYPT, DBG_log("unpadded size is: %u", (unsigned int)enc_len));
@@ -581,9 +587,11 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 				md->sender_port, LEMPTY);
 
 	if (c != NULL && (c->policy & POLICY_IKEV1_DISABLE)) {
+		ipstr_buf b;
+
 		loglog(RC_LOG_SERIOUS, "discard matching conn %s for I1 from "
 			"%s:%u. has ikev2=insist", c->name,
-			ip_str(&md->iface->ip_addr),
+			ipstr(&md->iface->ip_addr, &b),
 			ntohs(portof(&md->iface->ip_addr)));
 		c = NULL;
 	}
@@ -618,19 +626,21 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d;
-			d = find_host_connection(&md->iface->ip_addr,
+			struct connection *d =
+				find_host_connection(&md->iface->ip_addr,
 						pluto_port,
 						(ip_address*)NULL,
 						md->sender_port, policy);
 
 			for (; d != NULL; d = d->hp_next) {
 				if (d->policy & POLICY_IKEV1_DISABLE) {
+					ipstr_buf b;
+
 					DBG(DBG_CONTROL,DBG_log(
 						"discard matching conn %s for "
-						"I1 from %s:%u. %s %s %s has "
+						"I1 from %s:%u. %s%s %s has "
 						"ikev2=insist ", d->name,
-						ip_str(&md->iface->ip_addr),
+						ipstr(&md->iface->ip_addr, &b),
 						ntohs(portof(&md->iface->ip_addr)),
 						d->name,
 						(policy != LEMPTY) ?
@@ -638,7 +648,6 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 						(policy != LEMPTY) ?
 						bitnamesof(sa_policy_bit_names,
 							policy) : ""));
-					d=NULL;
 					continue;
 				}
 
@@ -671,10 +680,12 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		}
 
 		if (c == NULL) {
+			ipstr_buf b;
+
 			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
 				"received on %s:%u "
 				"but no connection has been authorized%s%s",
-				ip_str(&md->iface->ip_addr),
+				ipstr(&md->iface->ip_addr, &b),
 				ntohs(portof(&md->iface->ip_addr)),
 				(policy != LEMPTY) ? " with policy=" : "",
 				(policy != LEMPTY) ?
@@ -682,10 +693,13 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else if (c->kind != CK_TEMPLATE) {
+			ipstr_buf b;
+
 			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
 				"received on %s:%u "
 				"but \"%s\" forbids connection",
-				ip_str(&md->iface->ip_addr), pluto_port,
+				ipstr(&md->iface->ip_addr, &b),
+				pluto_port,
 				c->name);
 			/* XXX notification is in order! */
 			return STF_IGNORE;
@@ -695,12 +709,14 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 			 * of this one.
 			 * His ID isn't declared yet.
 			 */
-			DBG(DBG_CONTROL,
+			DBG(DBG_CONTROL, {
+				ipstr_buf b;
 				DBG_log("instantiating \"%s\" for initial "
 					"Main Mode message received on %s:%u",
 					c->name,
-					ip_str(&md->iface->ip_addr),
-					pluto_port));
+					ipstr(&md->iface->ip_addr, &b),
+					pluto_port);
+			});
 			c = rw_instantiate(c, &md->sender,
 					NULL, NULL);
 		}
@@ -741,21 +757,22 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-	st->st_doi = ISAKMP_DOI_IPSEC;
-	st->st_situation = SIT_IDENTITY_ONLY; /* We only support this */
-
 	merge_quirks(st, md);
 
 	set_nat_traversal(st, md);
 
 	if ((c->kind == CK_INSTANCE) && (c->spd.that.host_port_specific)) {
+		ipstr_buf b;
+
 		libreswan_log(
 			"responding to Main Mode from unknown peer %s:%u",
-			ip_str(&c->spd.that.host_addr),
+			ipstr(&c->spd.that.host_addr, &b),
 			c->spd.that.host_port);
 	} else if (c->kind == CK_INSTANCE) {
+		ipstr_buf b;
+
 		libreswan_log("responding to Main Mode from unknown peer %s",
-			ip_str(&c->spd.that.host_addr));
+			ipstr(&c->spd.that.host_addr, &b));
 	} else {
 		libreswan_log("responding to Main Mode");
 	}
@@ -774,13 +791,17 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
 		"reply packet");
 	{
-		struct isakmp_hdr r_hdr = md->hdr;
+		struct isakmp_hdr hdr = md->hdr;
 
-		/* we won't ever turn on this bit */
-		r_hdr.isa_flags &= ~ISAKMP_FLAG_COMMIT;
-		memcpy(r_hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
-		r_hdr.isa_np = ISAKMP_NEXT_SA;
-		if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream,
+		hdr.isa_flags = 0; /* clear all flags */
+		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
+		hdr.isa_np = ISAKMP_NEXT_SA;
+
+		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
+		}
+
+		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
 					&md->rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -892,52 +913,48 @@ stf_status main_inI1_outR1(struct msg_digest *md)
  *
  */
 
-static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status main_inR1_outI2_tail(struct ke_continuation *ke,
 				struct pluto_crypto_req *r);
 
+/* this is a crypto_req_cont_func */
 static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
-				struct pluto_crypto_req *r,
-				err_t ugh)
+				struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("main inR1_outI2: calculated ke+nonce, sending I2"));
+	DBG(DBG_CONTROL,
+		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
+			ke->ke_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (ke->ke_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
-		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 		return;
 	}
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = main_inR1_outI2_tail(pcrc, r);
+	e = main_inR1_outI2_tail(ke, r);
 
-	if (ke->ke_md != NULL) {
-		complete_v1_state_transition(&ke->ke_md, e);
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
-	}
+	passert(ke->ke_md != NULL);
+	complete_v1_state_transition(&ke->ke_md, e);
+	release_any_md(&ke->ke_md);
 
 	reset_cur_state();
 }
@@ -968,7 +985,7 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 		passert(!st->st_sec_in_use);
 		pcrc_init(&ke->ke_pcrc, main_inR1_outI2_continue);
 		set_suspended(st, md);
-		return build_ke(&ke->ke_pcrc, st, st->st_oakley.group,
+		return build_ke_and_nonce(&ke->ke_pcrc, st, st->st_oakley.group,
 				st->st_import);
 	}
 }
@@ -989,7 +1006,7 @@ bool ship_KE(struct state *st,
 	chunk_t *g,
 	pb_stream *outs, u_int8_t np)
 {
-	unpack_KE(st, r, g);
+	unpack_KE_from_helper(st, r, g);
 	return justship_KE(g, outs, np);
 }
 
@@ -1004,10 +1021,9 @@ bool ship_KE(struct state *st,
  *
  * We must verify that the proposal received matches one we sent.
  */
-static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status main_inR1_outI2_tail(struct ke_continuation *ke,
 				struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 
@@ -1021,7 +1037,7 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
 	 * We can't leave this to comm_handle() because the isa_np
 	 * depends on the type of Auth (eventually).
 	 */
-	echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
+	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
 
 	/* KE out */
 	if (!ship_KE(st, r, &st->st_gi,
@@ -1086,62 +1102,57 @@ static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *pcrc,
  *	    [,<<Cert-I_b>Ke_i]
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
-static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
+static stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
 				struct pluto_crypto_req *r);
 
+/* this is a crypto_req_cont_func */
 static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
-				struct pluto_crypto_req *r,
-				err_t ugh)
+				struct pluto_crypto_req *r)
 {
 	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("main inI2_outR2: calculated ke+nonce, sending R2"));
+	DBG(DBG_CONTROL,
+		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
+			ke->ke_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (ke->ke_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
-		passert(ke->ke_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (ke->ke_md)
-			release_md(ke->ke_md);
+		release_any_md(&ke->ke_md);
 		return;
 	}
 
 	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
 
-	/* XXX should check out ugh */
-	passert(ugh == NULL);
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == ke->ke_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
-	e = main_inI2_outR2_tail(pcrc, r);
+	e = main_inI2_outR2_tail(ke, r);
 
-	if (ke->ke_md != NULL) {
-		complete_v1_state_transition(&ke->ke_md, e);
-		if (ke->ke_md != NULL)
-			release_md(ke->ke_md);
-	}
+	passert(ke->ke_md != NULL);
+	complete_v1_state_transition(&ke->ke_md, e);
+	release_any_md(&ke->ke_md);
 	reset_cur_state();
 }
 
 stf_status main_inI2_outR2(struct msg_digest *md)
 {
 	struct state *const st = md->st;
-	pb_stream *keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gi, "Gi", st->st_oakley.group,
-						keyex_pbs));
+				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
@@ -1164,33 +1175,36 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 
 		passert(!st->st_sec_in_use);
 		pcrc_init(&ke->ke_pcrc, main_inI2_outR2_continue);
-		return build_ke(&ke->ke_pcrc, st,
+		return build_ke_and_nonce(&ke->ke_pcrc, st,
 				st->st_oakley.group, st->st_import);
 	}
 }
 
+/*
+ * main_inI2_outR2_calcdone is unlike every other crypto_req_cont_func:
+ * the state that it is working for may not yet care about the result.
+ * We are precomputing the DH.
+ */
+/* this is a crypto_req_cont_func */
 static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
-				struct pluto_crypto_req *r,
-				err_t ugh)
+				struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct state *st;
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("main inI2_outR2: calculated DH finished"));
+	DBG(DBG_CONTROL,
+		DBG_log("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
+			dh->dh_pcrc.pcrc_serialno));
 
-	st = state_with_serialno(dh->dh_pcrc.pcrc_serialno);
-	if (st == NULL) {
-		libreswan_log("state %ld disappeared during crypto\n",
+	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
+		libreswan_log("state #%lu disappeared during crypto",
 			dh->dh_pcrc.pcrc_serialno);
+		/* note: no md exists in this odd case */
 		return;
 	}
+	st = state_with_serialno(dh->dh_pcrc.pcrc_serialno);
 
 	set_cur_state(st);
-	if (ugh) {
-		loglog(RC_LOG_SERIOUS, "DH crypto failed: %s\n", ugh);
-		return;
-	}
 
 	finish_dh_secretiv(st, r);
 
@@ -1198,24 +1212,23 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 	update_iv(st);
 
 	/*
-	 * if there was a packet received while we were calculating, then
+	 * If there was a packet received while we were calculating, then
 	 * process it now.
+	 * Otherwise, the result awaits the packet.
 	 */
 	if (st->st_suspended_md != NULL) {
 		struct msg_digest *md = st->st_suspended_md;
 
-		set_suspended(st, NULL);
+		unset_suspended(st);
 		process_packet_tail(&md);
-		if (md != NULL)
-			release_md(md);
+		release_any_md(&md);
 	}
 	reset_cur_state();
 }
 
-stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
+stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
 				struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
 	struct msg_digest *md = ke->ke_md;
 	struct state *st = md->st;
 
@@ -1229,7 +1242,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		st->st_connection->spd.that.ca.ptr != NULL;
 
 	/* HDR out */
-	echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
+	ikev1_echo_hdr(md, FALSE, ISAKMP_NEXT_KE);
 
 	/* KE out */
 	if (!ship_KE(st, r, &st->st_gr,
@@ -1352,13 +1365,13 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 				"calculation (group=%d)",
 				st->st_oakley.group->group));
 
-		e = start_dh_secretiv(&dh->dh_pcrc, st,
+		e = start_dh_secretiv(dh, st,
 				st->st_import,
-				RESPONDER,
+				O_RESPONDER,
 				st->st_oakley.group->group);
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log("started dh_secretiv, returned: stf=%s\n",
+			DBG_log("started dh_secretiv, returned: stf=%s",
 				enum_name(&stfstatus_name, e)));
 
 		if (e == STF_FAIL) {
@@ -1370,6 +1383,7 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *pcrc,
 		}
 
 		/* we are calculating in the background, so it doesn't count */
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 		if (e == STF_SUSPEND)
 			st->st_calculating = FALSE;
 	}
@@ -1381,16 +1395,17 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 				enum ike_cert_type certtype,
 				enum certpolicy policy,
 				bool gotcertrequest,
-				bool send_cert)
+				bool send_cert,
+				bool send_chain)
 {
 	DBG(DBG_CONTROL,
 		DBG_log("thinking about whether to send my certificate:"));
 
 	DBG(DBG_CONTROL, {
-		char esb[ENUM_SHOW_BUF_LEN];
+		struct esb_buf esb;
 
 		DBG_log("  I have RSA key: %s cert.type: %s ",
-			enum_showb(&oakley_auth_names, auth, esb, sizeof(esb)),
+			enum_showb(&oakley_auth_names, auth, &esb),
 			enum_show(&ike_cert_type_names, certtype));
 	});
 
@@ -1418,6 +1433,9 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 					"because I was not asked to."));
 		}
 	}
+	if (send_chain)
+		DBG(DBG_CONTROL, DBG_log("Sending one or more authcerts"));
+
 }
 
 /*
@@ -1440,6 +1458,8 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	pb_stream id_pbs; /* ID Payload; also used for hash calculation */
 	bool send_cert = FALSE;
 	bool send_cr = FALSE;
+	bool send_authcerts = FALSE;
+	bool send_full_chain = FALSE;
 	bool initial_contact = FALSE;
 	generalName_t *requested_ca = NULL;
 	cert_t mycert = st->st_connection->spd.this.cert;
@@ -1463,12 +1483,21 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 		  st->hidden_variables.st_got_certrequest) ||
 		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
+	send_authcerts = (send_cert &&
+			  st->st_connection->spd.this.ca_path.ty != CERT_NONE &&
+			  st->st_connection->spd.this.ca_path.u.x509 != NULL &&
+			  st->st_connection->send_ca != CA_SEND_NONE);
+
+	send_full_chain = (send_authcerts &&
+			   st->st_connection->send_ca == CA_SEND_ALL);
+
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
 			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
-			send_cert);
+			send_cert,
+			send_authcerts);
 
 	/*
 	 * send certificate request, if we don't have a preloaded RSA
@@ -1481,8 +1510,9 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 			send_cr ? "" : "not "));
 
 	/*
-	 * free collected certificate requests since as initiator
-	 * we don't heed them anyway
+	 * free collected certificate requests
+	 * note: when we are able to ship based on the request
+	 * contents, we'll need them then.
 	 */
 	free_generalNames(requested_ca, TRUE);
 
@@ -1539,25 +1569,29 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 	/* CERT out */
 	if (send_cert) {
-		pb_stream cert_pbs;
+		u_int8_t np;
 
-		struct isakmp_cert cert_hd;
-		cert_hd.isacert_np =
-			(send_cr) ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.ty;
+		if (!send_cr && !send_authcerts)
+			np = ISAKMP_NEXT_SIG;
+		else
+			np = send_authcerts ? ISAKMP_NEXT_CERT : ISAKMP_NEXT_CR;
 
 		libreswan_log("I am sending my cert");
 
-		if (!out_struct(&cert_hd,
-					&isakmp_ipsec_certificate_desc,
-					&md->rbody,
-					&cert_pbs))
+		if (!ikev1_ship_CERT(mycert.ty, get_cert_chunk(mycert),
+					&md->rbody, np))
 			return STF_INTERNAL_ERROR;
 
-		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&cert_pbs);
+		if (np == ISAKMP_NEXT_CERT) {
+			/* we've got CA certificates to send */
+			libreswan_log("I am sending a CA cert chain");
+			if (!ikev1_ship_ca_chain(st->st_connection->spd.this.ca_path,
+						 mycert,
+						 &md->rbody,
+						 send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG,
+						 send_full_chain))
+				return STF_INTERNAL_ERROR;
+		}
 	}
 
 	/* CR out */
@@ -1646,25 +1680,24 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	return STF_OK;
 }
 
+/* this is a crypto_req_cont_func */
 static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
-				struct pluto_crypto_req *r,
-				err_t ugh)
+				struct pluto_crypto_req *r)
 {
 	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct msg_digest *md = dh->dh_md;
 	struct state *const st = md->st;
 	stf_status e;
 
-	DBG(DBG_CONTROLMORE,
-		DBG_log("main inR2_outI3: calculated DH, sending R1"));
+	DBG(DBG_CONTROL,
+		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
+			dh->dh_pcrc.pcrc_serialno));
 
-	if (st == NULL) {
+	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
-		passert(dh->dh_pcrc.pcrc_serialno == SOS_NOBODY);	/* transitional */
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 		return;
 	}
 
@@ -1674,22 +1707,18 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 	passert(st != NULL);
 
 	passert(st->st_suspended_md == dh->dh_md);
-	set_suspended(st, NULL); /* no longer connected or suspended */
+	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	if (ugh) {
-		loglog(RC_LOG_SERIOUS, "failed in DH exponentiation: %s", ugh);
-		e = STF_FATAL;
-	} else {
-		e = main_inR2_outI3_continue(md, r);
-	}
+	e = main_inR2_outI3_continue(md, r);
 
+	passert(dh->dh_md != NULL);	/* ??? how would this fail? */
 	if (dh->dh_md != NULL) {
 		complete_v1_state_transition(&dh->dh_md, e);
-		if (dh->dh_md != NULL)
-			release_md(dh->dh_md);
+		release_any_md(&dh->dh_md);
 	}
 	reset_cur_state();
 }
@@ -1697,13 +1726,12 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 stf_status main_inR2_outI3(struct msg_digest *md)
 {
 	struct dh_continuation *dh;
-	pb_stream *const keyex_pbs = &md->chain[ISAKMP_NEXT_KE]->pbs;
 	struct state *const st = md->st;
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr",
-						st->st_oakley.group,
-						keyex_pbs));
+				     st->st_oakley.group,
+				     &md->chain[ISAKMP_NEXT_KE]->pbs));
 
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
@@ -1714,9 +1742,9 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 	dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
 
 	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);
-	return start_dh_secretiv(&dh->dh_pcrc, st,
+	return start_dh_secretiv(dh, st,
 				st->st_import,
-				INITIATOR,
+				O_INITIATOR,
 				st->st_oakley.group->group);
 }
 
@@ -1856,7 +1884,7 @@ stf_status oakley_id_and_auth(struct msg_digest *md,
 			if (ugh != NULL) {
 				report_key_dns_failure(
 					&st->st_connection->spd.that.id, ugh);
-				set_suspended(st, NULL);
+				unset_suspended(st);
 				r = STF_FAIL + INVALID_KEY_INFORMATION;
 			} else {
 				/*
@@ -1918,7 +1946,7 @@ void key_continue(struct adns_continuation *cr,
 		stf_status r;
 
 		passert(st->st_suspended_md == kc->md);
-		set_suspended(st, NULL); /* no longer connected or suspended */
+		unset_suspended(st); /* no longer connected or suspended */
 		cur_state = st;
 
 		/* cancel any DNS event, since we got an anwer */
@@ -1942,8 +1970,7 @@ void key_continue(struct adns_continuation *cr,
 		}
 		complete_v1_state_transition(&kc->md, r);
 	}
-	if (kc->md != NULL)
-		release_md(kc->md);
+	release_any_md(&kc->md);
 	cur_state = NULL;
 }
 
@@ -1989,8 +2016,10 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	u_int8_t auth_payload;
 	pb_stream r_id_pbs; /* ID Payload; also used for hash calculation */
 	cert_t mycert;
-	bool send_cert;
-	unsigned int np;
+	bool send_cert = FALSE;
+	bool send_authcerts = FALSE;
+	bool send_full_chain = FALSE;
+	u_int8_t np;
 
 	/*
 	 * ID and HASH_I or SIG_I in
@@ -2014,12 +2043,21 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 		  st->hidden_variables.st_got_certrequest) ||
 		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
+	send_authcerts = (send_cert &&
+			  st->st_connection->spd.this.ca_path.ty != CERT_NONE &&
+			  st->st_connection->spd.this.ca_path.u.x509 != NULL &&
+			  st->st_connection->send_ca != CA_SEND_NONE);
+
+	send_full_chain = (send_authcerts &&
+			   st->st_connection->send_ca == CA_SEND_ALL);
+
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
 			mycert.ty,
 			st->st_connection->spd.this.sendcert,
 			st->hidden_variables.st_got_certrequest,
-			send_cert);
+			send_cert,
+			send_authcerts);
 
 	/*
 	 * Build output packet HDR*;IDir;HASH/SIG_R
@@ -2037,7 +2075,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	 * If auth were PKE_AUTH or RPKE_AUTH, ISAKMP_NEXT_HASH would
 	 * be first payload.
 	 */
-	echo_hdr(md, TRUE, ISAKMP_NEXT_ID);
+	ikev1_echo_hdr(md, TRUE, ISAKMP_NEXT_ID);
 
 	auth_payload = st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
 		ISAKMP_NEXT_HASH : ISAKMP_NEXT_SIG;
@@ -2064,24 +2102,23 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 	/* CERT out, if we have one */
 	if (send_cert) {
-		pb_stream cert_pbs;
-
-		struct isakmp_cert cert_hd;
-		cert_hd.isacert_np = ISAKMP_NEXT_SIG;
-		cert_hd.isacert_type = mycert.ty;
+		u_int8_t npp = send_authcerts ? ISAKMP_NEXT_CERT : ISAKMP_NEXT_SIG;
 
 		libreswan_log("I am sending my cert");
-
-		if (!out_struct(&cert_hd, &isakmp_ipsec_certificate_desc,
-					&md->rbody, &cert_pbs))
+		if (!ikev1_ship_CERT(mycert.ty, get_cert_chunk(mycert),
+					        &md->rbody, npp))
 			return STF_INTERNAL_ERROR;
 
-		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&cert_pbs);
+		if (npp == ISAKMP_NEXT_CERT) {
+			libreswan_log("I am sending a CA cert chain");
+			if (!ikev1_ship_ca_chain(st->st_connection->spd.this.ca_path,
+						 mycert,
+						 &md->rbody,
+						 ISAKMP_NEXT_SIG,
+						 send_full_chain))
+				return STF_INTERNAL_ERROR;
+		}
 	}
-
 
 	/* IKEv2 NOTIFY payload */
 	np = ISAKMP_NEXT_NONE;
@@ -2254,8 +2291,7 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 		 */
 		if (st->st_connection->policy & POLICY_IKEV2_PROPOSE) {
 			libreswan_log(
-				"Bid-down to IKEv1 attack detected, "
-				"attempting to rekey connection with IKEv2");
+				"Bid-down to IKEv1 attack detected, attempting to rekey connection with IKEv2");
 			st->st_connection->failed_ikev2 = FALSE;
 
 			/* schedule an event to do this as soon as possible */
@@ -2276,8 +2312,8 @@ stf_status send_isakmp_notification(struct state *st,
 	msgid_t msgid;
 	pb_stream rbody;
 	u_char
-	*r_hashval, /* where in reply to jam hash value */
-	*r_hash_start; /* start of what is to be hashed */
+		*r_hashval, /* where in reply to jam hash value */
+		*r_hash_start; /* start of what is to be hashed */
 
 	msgid = generate_msgid(st);
 
@@ -2293,7 +2329,7 @@ stf_status send_isakmp_notification(struct state *st,
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_INFO;
 		hdr.isa_msgid = msgid;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
@@ -2419,10 +2455,10 @@ static void send_notification(struct state *sndst, notification_t type,
 		if (sndst->hidden_variables.st_malformed_sent >
 			MAXIMUM_MALFORMED_NOTIFY) {
 			libreswan_log(
-				"too many (%d) malformed payloads. Deleting "
-				"state",
+				"too many (%d) malformed payloads. Deleting state",
 				sndst->hidden_variables.st_malformed_sent);
 			delete_state(sndst);
+			/* note: no md->st to clear */
 			return;
 		}
 
@@ -2451,11 +2487,15 @@ static void send_notification(struct state *sndst, notification_t type,
 	if (encst != NULL && !IS_ISAKMP_ENCRYPTED(encst->st_state))
 		encst = NULL;
 
-	libreswan_log("sending %snotification %s to %s:%u",
-		encst ? "encrypted " : "",
-		enum_name(&ikev1_notify_names, type),
-		ip_str(&sndst->st_remoteaddr),
-		sndst->st_remoteport);
+	{
+		ipstr_buf b;
+
+		libreswan_log("sending %snotification %s to %s:%u",
+			encst ? "encrypted " : "",
+			enum_name(&ikev1_notify_names, type),
+			ipstr(&sndst->st_remoteaddr, &b),
+			sndst->st_remoteport);
+	}
 
 	zero(&buffer);
 	init_pbs(&pbs, buffer, sizeof(buffer), "notification msg");
@@ -2467,7 +2507,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		hdr.isa_np = encst ? ISAKMP_NEXT_HASH : ISAKMP_NEXT_N;
 		hdr.isa_xchg = ISAKMP_XCHG_INFO;
 		hdr.isa_msgid = msgid;
-		hdr.isa_flags = encst ? ISAKMP_FLAG_ENCRYPTION : 0;
+		hdr.isa_flags = encst ? ISAKMP_FLAGS_v1_ENCRYPTION : 0;
 		if (icookie)
 			memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
 		if (rcookie)
@@ -2586,7 +2626,7 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 				PROTO_ISAKMP);
 	} else {
 		/* no ISAKMP SA established - don't encrypt notification */
-		send_notification(st, type, NULL, MAINMODE_MSGID,
+		send_notification(st, type, NULL, v1_MAINMODE_MSGID,
 				st->st_icookie, st->st_rcookie,
 				PROTO_ISAKMP);
 	}
@@ -2630,7 +2670,7 @@ void send_notification_from_md(struct msg_digest *md, notification_t type)
  *
  * @param st State struct (hopefully has some SA's related to it)
  */
-void ikev1_delete_out(struct state *st)
+bool ikev1_delete_out(struct state *st)
 {
 	/* buffer in which to marshal our deletion notification.
 	 * We don't use reply_buffer/reply_stream because they might be in use.
@@ -2644,8 +2684,8 @@ void ikev1_delete_out(struct state *st)
 	ip_said said[EM_MAXRELSPIS];
 	ip_said *ns = said;
 	u_char
-	*r_hashval, /* where in reply to jam hash value */
-	*r_hash_start; /* start of what is to be hashed */
+		*r_hashval, /* where in reply to jam hash value */
+		*r_hash_start; /* start of what is to be hashed */
 	bool isakmp_sa = FALSE;
 	struct isakmp_hdr hdr;
 
@@ -2657,7 +2697,7 @@ void ikev1_delete_out(struct state *st)
 		if (p1st == NULL) {
 			DBG(DBG_CONTROL,
 				DBG_log("no Phase 1 state for Delete"));
-			return;
+			return FALSE;
 		}
 
 		if (st->st_ah.present) {
@@ -2680,7 +2720,7 @@ void ikev1_delete_out(struct state *st)
 		p1st = st;
 		isakmp_sa = TRUE;
 	} else {
-		return; /* nothing to do */
+		return TRUE; /* nothing to do */
 	}
 
 	msgid = generate_msgid(p1st);
@@ -2695,7 +2735,7 @@ void ikev1_delete_out(struct state *st)
 		hdr.isa_np = ISAKMP_NEXT_HASH;
 		hdr.isa_xchg = ISAKMP_XCHG_INFO;
 		hdr.isa_msgid = msgid;
-		hdr.isa_flags = ISAKMP_FLAG_ENCRYPTION;
+		hdr.isa_flags = ISAKMP_FLAGS_v1_ENCRYPTION;
 		memcpy(hdr.isa_icookie, p1st->st_icookie, COOKIE_SIZE);
 		memcpy(hdr.isa_rcookie, p1st->st_rcookie, COOKIE_SIZE);
 		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_pbs,
@@ -2806,6 +2846,7 @@ void ikev1_delete_out(struct state *st)
 		/* get back old IV for this state */
 		restore_iv(p1st, old_iv, old_iv_len);
 	}
+	return TRUE;
 }
 
 /*
@@ -2846,10 +2887,12 @@ void accept_delete(struct state *st, struct msg_digest *md,
 	case PROTO_ISAKMP:
 		sizespi = 2 * COOKIE_SIZE;
 		break;
+
 	case PROTO_IPSEC_AH:
 	case PROTO_IPSEC_ESP:
 		sizespi = sizeof(ipsec_spi_t);
 		break;
+
 	case PROTO_IPCOMP:
 		/* nothing interesting to delete */
 		return;
@@ -2876,21 +2919,25 @@ void accept_delete(struct state *st, struct msg_digest *md,
 	}
 
 	for (i = 0; i < d->isad_nospi; i++) {
-		u_char *spi = p->pbs.cur + (i * sizespi);
-
 		if (d->isad_protoid == PROTO_ISAKMP) {
 			/*
 			 * ISAKMP
 			 */
-			struct state *dst = find_state_ikev1(spi, /* iCookie */
-							/* rCookie */
-							spi + COOKIE_SIZE,
-							MAINMODE_MSGID);
+			u_int8_t icookie[COOKIE_SIZE];
+			u_int8_t rcookie[COOKIE_SIZE];
+			struct state *dst;
+
+			if (!in_raw(icookie, COOKIE_SIZE, &p->pbs, "iCookie"))
+				return;
+
+			if (!in_raw(rcookie, COOKIE_SIZE, &p->pbs, "rCookie"))
+				return;
+
+			dst = find_state_ikev1(icookie, rcookie,
+					v1_MAINMODE_MSGID);
 
 			if (dst == NULL) {
-				loglog(RC_LOG_SERIOUS, "ignoring Delete SA "
-					"payload: ISAKMP SA not found (maybe "
-					"expired)");
+				loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: ISAKMP SA not found (maybe expired)");
 			} else if (!same_peer_ids(st->st_connection,
 							dst->st_connection,
 							NULL)) {
@@ -2898,51 +2945,47 @@ void accept_delete(struct state *st, struct msg_digest *md,
 				 * we've not authenticated the relevant
 				 * identities
 				 */
-				loglog(RC_LOG_SERIOUS, "ignoring Delete SA "
-					"payload: ISAKMP SA used to convey "
-					"Delete has different IDs from ISAKMP "
-					"SA it deletes");
+				loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
 			} else {
-				struct connection *oldc;
-
-				oldc = cur_connection;
-				set_cur_connection(dst->st_connection);
-
+				loglog(RC_LOG_SERIOUS, "received Delete SA payload: deleting ISAKMP State #%lu",
+					dst->st_serialno);
 				if (nat_traversal_enabled)
 					nat_traversal_change_port_lookup(md,
 									dst);
-
-				loglog(RC_LOG_SERIOUS, "received Delete SA "
-					"payload: deleting ISAKMP State #%lu",
-					dst->st_serialno);
 				delete_state(dst);
-				set_cur_connection(oldc);
+				if (dst == st)
+					md->st = st = NULL;
 			}
 		} else {
 			/*
 			 * IPSEC (ESP/AH)
 			 */
+			ipsec_spi_t spi;	/* network order */
 			bool bogus;
-			struct state *dst = find_phase2_state_to_delete(st,
+			struct state *dst;
+
+			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
+				return;
+
+			dst = find_phase2_state_to_delete(st,
 							d->isad_protoid,
-							*(ipsec_spi_t*)
-							spi, /* network order */
+							spi,
 							&bogus);
 
+			passert(dst != st);	/* st is an IKE SA */
 			if (dst == NULL) {
 				loglog(RC_LOG_SERIOUS,
-					"ignoring Delete SA payload: %s "
-					"SA(0x%08lx) not found (%s)",
+					"ignoring Delete SA payload: %s SA(0x%08" PRIx32 ") not found (%s)",
 					enum_show(&protocol_names,
 						d->isad_protoid),
-					(unsigned long)ntohl((unsigned long)
-						*(ipsec_spi_t *)spi),
-					bogus ? "our SPI - bogus implementation" : "maybe expired");
+					ntohl(spi),
+					bogus ?
+						"our SPI - bogus implementation" :
+						"maybe expired");
 			} else {
 				struct connection *rc = dst->st_connection;
-				struct connection *oldc;
+				struct connection *oldc = cur_connection;
 
-				oldc = cur_connection;
 				set_cur_connection(rc);
 
 				if (nat_traversal_enabled)
@@ -2952,7 +2995,7 @@ void accept_delete(struct state *st, struct msg_digest *md,
 				if (rc->newest_ipsec_sa == dst->st_serialno &&
 					(rc->policy & POLICY_UP)) {
 					/*
-					 * Last IPSec SA for a permanent
+					 * Last IPsec SA for a permanent
 					 * connection that we have initiated.
 					 * Replace it in a few seconds.
 					 *
@@ -2968,25 +3011,18 @@ void accept_delete(struct state *st, struct msg_digest *md,
 						dst->st_event->ev_time)) {
 						/*
 						 * Patch from Angus Lees to
-						 * ignore retransmited
+						 * ignore retransmitted
 						 * Delete SA.
 						 */
 						loglog(RC_LOG_SERIOUS,
-							"received Delete SA "
-							"payload: already "
-							"replacing IPSEC "
-							"State #%lu in %ld "
-							"seconds",
+							"received Delete SA payload: already replacing IPSEC State #%lu in %ld seconds",
 							dst->st_serialno,
-							(long)deltasecs(monotimediff(dst->st_event->
-								ev_time,
+							(long)deltasecs(monotimediff(
+								dst->st_event->ev_time,
 								mononow())));
 					} else {
 						loglog(RC_LOG_SERIOUS,
-							"received Delete SA "
-							"payload: replace "
-							"IPSEC State #%lu "
-							"in %d seconds",
+							"received Delete SA payload: replace IPSEC State #%lu in %d seconds",
 							dst->st_serialno,
 							DELETE_SA_DELAY);
 						dst->st_margin = deltatime(
@@ -2998,15 +3034,12 @@ void accept_delete(struct state *st, struct msg_digest *md,
 					}
 				} else {
 					loglog(RC_LOG_SERIOUS,
-						"received Delete SA(0x%08lx) "
-						"payload: deleting IPSEC "
-						"State #%lu",
-						(unsigned long)ntohl(
-							(unsigned long)*(
-								ipsec_spi_t *)
-							spi),
+						"received Delete SA(0x%08" PRIx32 ") payload: deleting IPSEC State #%lu",
+						ntohl(spi),
 						dst->st_serialno);
 					delete_state(dst);
+					if (md->st == dst)
+						md->st = NULL;
 				}
 
 				/* reset connection */

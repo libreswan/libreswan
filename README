@@ -12,7 +12,7 @@ For more information about the alternative Libreswan kernel IPsec stack,
 see README.KLIPS.
 
 Libreswan was forked from Openswan 2.6.38, which was forked from
-FreeS/WAN 1.99. See the CREDITS files for contributor acknowledgments.
+FreeS/WAN 2.04. See the CREDITS files for contributor acknowledgments.
 
 It can be downloaded from various locations:
 
@@ -174,7 +174,7 @@ receive proper CVE tracking numbers (see http://mitre.org/) and
 will be co-ordinated via the vendor-sec / oss-security lists. A
 complete list of known security vulnerabilities is available at:
 
-https://www.libreswan.org/security/
+https://libreswan.org/security/
 
 #########################################################################
 # DEVELOPMENT
@@ -185,9 +185,9 @@ Libreswan can join the development mailing list "swan-dev" or talk to the
 development team on IRC in #swan on irc.freenode.net
 
 For those who want to track things a bit more closely, the
-commits@lists.libreswan.org mailinglist will mail all the commit messages
-when they happen. This list is quite busy during active development
-periods.
+swan-commits@lists.libreswan.org mailinglist will mail all the commit
+messages when they happen. This list is quite busy during active
+development periods.
 
 #########################################################################
 # DOCUMENTATION

@@ -1,7 +1,8 @@
-Same as ikev2-03-basic-rawrsa, but now pluto is forced to be "busy" using
+Same as ikev2-03-basic-rawrsa, but now pluto on east is forced to be "busy" using
 the force_busy=yes option, simulating a Denial of Service attack. 
 
-Pluto should then use cookies and forget initial state of packets unless
-they have a valid cookie. This is also known as the "6 message Exchange".
+east will return the packet with a request for a dcookie without creating
+a new state. west needs to send a new I1 that includes the dcookie payload
+and east will then create a new state object and continue as normal.
 
-This is similar to <insert testcase here for ikev1 aggressive mode> :)
+This is also known as the "6 message Exchange"

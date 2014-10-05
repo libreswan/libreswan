@@ -4,24 +4,22 @@
 #include <nss.h>
 #include <pk11pub.h>
 
-/* forward reference */
-struct connection;
+struct connection;	/* forward declaration */
 
+/* common prefix for struct encrypt_desc and struct hash_desc */
 struct ike_alg {
 	const char *name;
 	const char *officname;
 	u_int16_t algo_type;
-	u_int16_t algo_id; /* either hash or enc algo id */
-	u_int16_t algo_v2id; /* either hash or enc algo id */
+	u_int16_t algo_id;	/* either hash or enc algo id */
+	u_int16_t algo_v2id;	/* either hash or enc algo id */
 	struct ike_alg *algo_next;
 };
 
 struct encrypt_desc {
-	struct ike_alg common;
+	struct ike_alg common;	/* MUST BE FIRST */
 	size_t enc_ctxsize;
-	size_t enc_blocksize;
-/* Is this always true?  usually with CBC methods. Maybe not with others */
-#define iv_size enc_blocksize
+	size_t enc_blocksize;	/* also IV length */
 	unsigned keydeflen;
 	unsigned keymaxlen;
 	unsigned keyminlen;
@@ -32,18 +30,20 @@ struct encrypt_desc {
 			 bool enc);
 };
 
-typedef void (*hash_update_t)(void *, const u_char *, size_t);
+union hash_ctx;	/* forward declaration */
+
+typedef void (*hash_update_t)(union hash_ctx *, const u_char *, size_t);
 
 struct hash_desc {
-	struct ike_alg common;
-	size_t hash_key_size;      /* in bits */
+	struct ike_alg common;	/* MUST BE FIRST */
+	size_t hash_key_size;	/* in bits */
 	size_t hash_ctx_size;
 	size_t hash_digest_len;
-	size_t hash_integ_len;    /*truncated output len when used as an integrity algorithm in IKEV2*/
+	size_t hash_integ_len;	/* truncated output len when used as an integrity algorithm in IKEV2 */
 	size_t hash_block_size;
-	void (*hash_init)(void *ctx);
+	void (*hash_init)(union hash_ctx *ctx);
 	hash_update_t hash_update;
-	void (*hash_final)(u_int8_t *out, void *ctx);
+	void (*hash_final)(u_int8_t *out, union hash_ctx *ctx);
 };
 
 struct alg_info_ike; /* forward reference */
@@ -54,9 +54,11 @@ extern struct db_context *ike_alg_db_new(struct alg_info_ike *ai, lset_t policy)
 extern void ike_alg_show_status(void);
 extern void ike_alg_show_connection(struct connection *c, const char *instance);
 
+/* ??? a is type struct ike_alg * but should be struct encrypt_desc * */
 #define IKE_EALG_FOR_EACH(a) \
 	for ((a) = ike_alg_base[IKE_ALG_ENCRYPT]; (a) != NULL; (a) = (a)->algo_next)
 
+/* ??? a is type struct ike_alg * but should be struct hash_desc * */
 #define IKE_HALG_FOR_EACH(a) \
 	for ((a) = ike_alg_base[IKE_ALG_HASH]; (a) != NULL; (a) = (a)->algo_next)
 
@@ -79,8 +81,8 @@ extern bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int 
 #define IKE_ALG_ROOF	3
 extern struct ike_alg *ike_alg_base[IKE_ALG_ROOF];
 extern void ike_alg_add(struct ike_alg *);
-extern int ike_alg_register_enc(struct encrypt_desc *e);
-extern int ike_alg_register_hash(struct hash_desc *a);
+extern bool ike_alg_register_enc(struct encrypt_desc *e);
+extern bool ike_alg_register_hash(struct hash_desc *a);
 extern struct ike_alg *ikev1_alg_find(unsigned algo_type,
 			     unsigned algo_id);
 
@@ -102,7 +104,7 @@ extern const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 
 extern struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				       struct db_sa *basic,
-				       int maxtrans);
+				       bool single_dh);
 
 extern struct db_sa *kernel_alg_makedb(lset_t policy,
 				       struct alg_info_esp *ei,
@@ -111,19 +113,19 @@ extern struct db_sa *kernel_alg_makedb(lset_t policy,
 /* exports from ike_alg_*.c */
 
 #ifdef USE_TWOFISH
-extern int ike_alg_twofish_init(void);
+extern void ike_alg_twofish_init(void);
 #endif
 
 #ifdef USE_SERPENT
-extern int ike_alg_serpent_init(void);
+extern void ike_alg_serpent_init(void);
 #endif
 
 #ifdef USE_AES
-extern int ike_alg_aes_init(void);
+extern void ike_alg_aes_init(void);
 #endif
 
 #ifdef USE_SHA2
-extern int ike_alg_sha2_init(void);
+extern void ike_alg_sha2_init(void);
 #endif
 
 

@@ -36,7 +36,7 @@
 
 /*
  * Convert MP_INT to network form (binary octets, big-endian).
- * We do the malloc; caller must eventually do free.
+ * We do the alloc_bytes(); caller must eventually do pfree.
  */
 static chunk_t mpz_to_n(const MP_INT *mp, size_t bytes)
 {

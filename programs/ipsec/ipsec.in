@@ -2,6 +2,7 @@
 # prefix command to run stuff from our programs directory
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2013       Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2014  Paul Wouters <pwouters@redhat.com>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -29,8 +30,11 @@ export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
 export PATH
 
+# supress ElectricFence banner changing our reference testing output
+export EF_DISABLE_BANNER=1
+
 # things not to be listed in --help command list
-DONTMENTION='^(ipsec|_.*|.*\.old|.*~)$'
+DONTMENTION='^(ipsec|_.*|.*\.old|.*\.orig|.*~)$'
 
 # version numbering (details filled in by build)
 # Possibly should call a C program to invoke the version_code() function
@@ -94,8 +98,7 @@ case "${1}" in
 	echo "where <command> is one of:"
 	echo ""
 	GOTTWO=""
-	for f in $(ls "${IPSEC_EXECDIR}" | egrep -v -i "${DONTMENTION}"); do
-	    if [ -x "${IPSEC_EXECDIR}/${f}" ]; then
+	for f in start stop restart status import initnss checknss $(ls "${IPSEC_EXECDIR}" | egrep -v -i "${DONTMENTION}"); do
 		if [ -z "${GOTTWO}" ]; then
 		    # first of two entries
 		    GOTTWO="${f}"
@@ -112,16 +115,13 @@ case "${1}" in
 		    echo "${f}"
 		    GOTTWO=""
 		fi
-	    fi
 	done
 	if [ -n "${GOTTWO}" ]; then
 	    # leftover entry
 	    echo "	${GOTTWO}"
 	fi
 	echo
-	echo "See also: ipsec <command> --help"
-	echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
-	echo "ipsec stop|start|restart is an alias for ipsec setup stop|start|restart"
+	echo "See also: man ipsec <command> or ipsec <command> --help"
 	echo "See <https://libreswan.org/> for more general info."
 	fixversion
 	echo "Linux Libreswan ${version}"
@@ -138,6 +138,10 @@ case "${1}" in
 	exit 0
 	;;
     import|--import)
+	if [ $(id -u) -ne 0 ]; then
+	    echo "permision denied on nss operation (must be superuser)"
+	    exit 4
+	fi
 	if [ -z "${2}" ]; then
 	    echo "usage: ipsec import /path/to/pkcs.12" >&2
 	    exit 1
@@ -154,7 +158,11 @@ case "${1}" in
 	fi
 	exit 0
 	;;
-    initnss|--initnss)
+    initnss|--initnss|checknss|--checknss)
+	if [ $(id -u) -ne 0 ]; then
+	    echo "permision denied on nss operation (must be superuser)"
+	    exit 4
+	fi
 	if [ -n "${2}" ]; then
 	    # A lot of nss commands use -d or --configdir to specify NSS db location
 	    if [ "${2}" = "-d" -o "${2}" = "--configdir" ]; then
@@ -167,19 +175,26 @@ case "${1}" in
 	   mkdir -p "${IPSEC_CONFDDIR}"
 	fi
 	if [ -f "${IPSEC_CONFDDIR}/cert8.db" -o \
+	    -f "${IPSEC_CONFDDIR}/cert9.db" -o \
 	    -f "${IPSEC_CONFDDIR}/key3.db" -o \
+	    -f "${IPSEC_CONFDDIR}/key4.db" -o \
 	    -f "${IPSEC_CONFDDIR}/secmod.db" ]; then
+	    # if just checking, silently quit
+	    [ "${1}" = "checknss" -o "${1}" = "--checknss" ] && exit 0
 	    echo "NSS database already initialised - aborted"
-	    echo "To wipe the old NSS database, issue: rm \"${IPSEC_CONFDDIR}/\"*.db"
+	    echo "To wipe the old NSS database, issue: rm ${IPSEC_CONFDDIR}/*.db"
 	    exit 42
 	fi
 
 	echo "Initializing NSS database"
-	echo "If you want to ensure the IPsec subsystem can start unattended,"
-	echo "   use an empty password"
+	echo "See 'man pluto' if you want to protect the NSS database with a password"
 	echo ""
 
-	certutil -N -d "${IPSEC_CONFDDIR}"
+	TEMPFILE=$(/bin/mktemp "${IPSEC_CONFDDIR}/nsspw.XXXXXXX")
+	[ $? -gt 0 ] && TEMPFILE="${IPSEC_CONFDDIR}/nsspw.$$"
+	echo > ${TEMPFILE}
+	certutil -N -f "${TEMPFILE}" -d "${IPSEC_CONFDDIR}"
+	rm -f ${TEMPFILE}
 	if [ -x /usr/sbin/restorecon ]; then
 	    restorecon -Rv "${IPSEC_CONFDDIR}"
 	fi

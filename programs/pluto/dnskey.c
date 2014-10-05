@@ -32,7 +32,7 @@
 
 #include "sysdep.h"
 #include "constants.h"
-#include "adns.h"       /* needs <resolv.h> */
+#include "adns.h"
 #include "defs.h"
 #include "id.h"
 #include "log.h"
@@ -328,8 +328,9 @@ static err_t process_txt_rr_body(char *str,
 		char *e;
 
 		p++;
+		errno = 0;
 		pref = strtoul(p, &e, 0);
-		if (e == p)
+		if (errno != 0 || e == p)
 			return "malformed X-IPsec-Server priority";
 
 		p = e + strspn(e, " \t");
@@ -511,16 +512,14 @@ static err_t process_lwdnsq_key(char *str,
 		      algorithm;        /* 8 bits */
 
 	char *rest = str,
-	*p,
-	*endofnumber;
+		*p;
 
 	/* flags */
 	p = strsep(&rest, " \t");
 	if (p == NULL)
 		return "lwdnsq KEY: missing flags";
 
-	flags = strtoul(p, &endofnumber, 10);
-	if (*endofnumber != '\0')
+	if (ttoulb(p, 0, 10, 0xFFFFul, &flags) != NULL)
 		return "lwdnsq KEY: malformed flags";
 
 	/* protocol */
@@ -528,8 +527,7 @@ static err_t process_lwdnsq_key(char *str,
 	if (p == NULL)
 		return "lwdnsq KEY: missing protocol";
 
-	protocol = strtoul(p, &endofnumber, 10);
-	if (*endofnumber != '\0')
+	if (ttoulb(p, 0, 10, 0xFFul, &protocol) != NULL)
 		return "lwdnsq KEY: malformed protocol";
 
 	/* algorithm */
@@ -537,8 +535,7 @@ static err_t process_lwdnsq_key(char *str,
 	if (p == NULL)
 		return "lwdnsq KEY: missing algorithm";
 
-	algorithm = strtoul(p, &endofnumber, 10);
-	if (*endofnumber != '\0')
+	if (ttoulb(p, 0, 10, 0xFFul, &algorithm) != NULL)
 		return "lwdnsq KEY: malformed algorithm";
 
 	/* is this key interesting? */
@@ -723,10 +720,7 @@ static err_t eat_name(pb_stream *pbs)
 			unsigned ix;
 
 			if (ip >= pbs->roof)
-				return
-					"ran out of message in middle of compressed domain name";
-
-
+				return "ran out of message in middle of compressed domain name";
 
 			ix = ((b & ~0xC0u) << 8) | *ip++;
 			if (jump_count == 0)
@@ -1032,10 +1026,7 @@ static err_t process_answer_section(pb_stream *pbs,
 		TRY(eat_name_helpfully(pbs, "Answer Section"));
 
 		if (!in_struct(&rrf, &rr_fixed_desc, pbs, NULL))
-			return
-				"failed to get fixed part of Answer Section Resource Record";
-
-
+			return "failed to get fixed part of Answer Section Resource Record";
 
 		if (rrf.rdlength > pbs_left(pbs))
 			return "RD Length extends beyond end of message";
@@ -1214,10 +1205,7 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 		TRY(eat_name_helpfully(&pbs, "Authority Section"));
 
 		if (!in_struct(&rrf, &rr_fixed_desc, &pbs, NULL))
-			return
-				"failed to get fixed part of Authority Section Resource Record";
-
-
+			return "failed to get fixed part of Authority Section Resource Record";
 
 		if (rrf.rdlength > pbs_left(&pbs))
 			return "RD Length extends beyond end of message";
@@ -1330,8 +1318,7 @@ static err_t build_dns_name(char name_buf[NS_MAXDNAME + 2],
 	break;
 
 	default:
-		return
-			"can only query DNS for key for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR";
+		return "can only query DNS for key for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR";
 	}
 
 	DBG(DBG_CONTROL | DBG_DNS,
@@ -1468,7 +1455,7 @@ static void release_all_continuations()
 		num_released++;
 	}
 
-	DBG_log("release_all_cnt: released %d, %d in flight => %d\n",
+	DBG_log("release_all_cnt: released %d, %d in flight => %d",
 		num_released, adns_in_flight,  adns_in_flight - num_released);
 
 	adns_in_flight -= num_released;
@@ -1633,8 +1620,9 @@ static err_t process_lwdnsq_answer(char *ts)
 	char *endofnumber;
 	struct adns_continuation *cr = NULL;
 	unsigned long qtid;
+	unsigned long ignored_time;
 	char *atype;		/* type of answer */
-	long ttl;		/* ttl of answer; int, but long for conversion */
+	unsigned long ttl;	/* ttl of answer; int, but unsigned long for conversion */
 	bool AuthenticatedData = FALSE;
 	static char scratch_null_str[] = "";	/* cannot be const, but isn't written */
 
@@ -1644,8 +1632,7 @@ static err_t process_lwdnsq_answer(char *ts)
 	if (p == NULL)
 		return "lwdnsq: answer missing query transaction ID";
 
-	qtid = strtoul(p, &endofnumber, 10);
-	if (*endofnumber != '\0')
+	if (ttoul(p, 0, 10, &qtid) != NULL)
 		return "lwdnsq: malformed query transaction ID";
 
 	cr = continuation_for_qtid(qtid);
@@ -1657,8 +1644,7 @@ static err_t process_lwdnsq_answer(char *ts)
 	if (p == NULL)
 		return "lwdnsq: missing time";
 
-	(void)strtoul(p, &endofnumber, 10);
-	if (*endofnumber != '\0')
+	if (ttoul(p, 0, 10, &ignored_time) != NULL)
 		return "lwdnsq: malformed time";
 
 	/* TTL */
@@ -1666,8 +1652,7 @@ static err_t process_lwdnsq_answer(char *ts)
 	if (p == NULL)
 		return "lwdnsq: missing TTL";
 
-	ttl = strtol(p, &endofnumber, 10);
-	if (*endofnumber != '\0')
+	if (ttoul(p, 0, 10, &ttl) != NULL)
 		return "lwdnsq: malformed TTL";
 
 	/* type */
@@ -1789,28 +1774,28 @@ static err_t process_lwdnsq_answer(char *ts)
 
 static void recover_adns_die(void)
 {
-	struct adns_continuation *cr = NULL;
-
 	adns_pid = 0;
 	if (adns_restart_count < ADNS_RESTART_MAX) {
+		struct adns_continuation *cr = continuations;
+
 		adns_restart_count++;
 
-		/* next DNS query will restart it */
-
-		/* we have to walk the list of the outstanding requests,
+		/*
+		 * next DNS query will restart it
+		 *
+		 * We have to walk the list of the outstanding requests,
 		 * and redo them!
 		 */
 
-		cr = continuations;
+		if (cr != NULL) {
+			unsent_ADNS_queries = TRUE;
 
-		/* find the head of the list */
-		if (continuations != NULL)
-			for (; cr->previous != NULL; cr = cr->previous) ;
+			/* find the head of the list */
+			for (; cr->previous != NULL; cr = cr->previous)
+				continue;
+		}
 
 		next_query = cr;
-
-		if (next_query != NULL)
-			unsent_ADNS_queries = TRUE;
 	}
 }
 

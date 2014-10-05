@@ -112,20 +112,12 @@ static struct encrypt_desc encrypt_desc_twofish_ssh =
 	.do_crypt = do_twofish,
 };
 
-int ike_alg_twofish_init(void)
+void ike_alg_twofish_init(void)
 {
-	int ret;
-
-	if (ike_alg_register_enc(&encrypt_desc_twofish_ssh) < 0)
+	if (!ike_alg_register_enc(&encrypt_desc_twofish_ssh))
 		libreswan_log(
 			"ike_alg_twofish_init(): Experimental OAKLEY_TWOFISH_CBC_SSH activation failed");
 
-
-	ret = ike_alg_register_enc(&encrypt_desc_twofish);
-
-	return ret;
+	/* ??? nobody cares if this fails */
+	ike_alg_register_enc(&encrypt_desc_twofish);
 }
-
-/*
-   IKE_ALG_INIT_NAME: ike_alg_twofish_init
- */

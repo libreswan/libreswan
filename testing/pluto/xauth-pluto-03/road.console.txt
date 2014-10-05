@@ -40,7 +40,7 @@ road #
 108 "xauth-road-eastnet" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "xauth-road-eastnet" #1: received Vendor ID payload [CAN-IKEv2]
 002 "xauth-road-eastnet" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "xauth-road-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP1536}
+004 "xauth-road-eastnet" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP1536}
 041 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Username:
 040 "xauth-road-eastnet" #1: xauth-road-eastnet prompt for Password:
 002 "xauth-road-eastnet" #1: XAUTH: Answering XAUTH challenge with user='use1'
@@ -51,7 +51,7 @@ road #
 117 "xauth-road-eastnet" #2: STATE_QUICK_I1: initiate
 004 "xauth-road-eastnet" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive XAUTHuser=use1}
 road #
- ping -c4 192.0.2.254
+ ping -n -c4 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
@@ -81,7 +81,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
 road #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

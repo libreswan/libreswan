@@ -85,6 +85,22 @@ static struct encrypt_desc crypto_encrypter_3des =
 #endif
 
 #ifdef USE_MD5
+
+static void lsMD5Init_thunk(union hash_ctx *context)
+{
+	lsMD5Init(&context->ctx_md5);
+}
+
+static void lsMD5Update_thunk(union hash_ctx *context, const unsigned char *input, size_t inputLen)
+{
+	lsMD5Update(&context->ctx_md5, input, inputLen);
+}
+
+static void lsMD5Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_ctx *context)
+{
+	lsMD5Final(digest, &context->ctx_md5);
+}
+
 static struct hash_desc crypto_hasher_md5 =
 {
 	.common = { .name = "oakley_md5",
@@ -93,14 +109,14 @@ static struct hash_desc crypto_hasher_md5 =
 		    .algo_id =   OAKLEY_MD5,
 		    .algo_v2id = IKEv2_PRF_HMAC_MD5,
 		    .algo_next = NULL, },
-	.hash_ctx_size = sizeof(MD5_CTX),
-	.hash_key_size =   MD5_DIGEST_SIZE,
+	.hash_ctx_size = sizeof(lsMD5_CTX),
+	.hash_key_size = MD5_DIGEST_SIZE,
 	.hash_digest_len = MD5_DIGEST_SIZE,
-	.hash_integ_len = 0,    /*Not applicable*/
+	.hash_integ_len = 0,    /* Not applicable */
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))osMD5Init,
-	.hash_update = (void (*)(void *, const u_int8_t *, size_t))osMD5Update,
-	.hash_final = (void (*)(u_char *, void *))osMD5Final,
+	.hash_init = lsMD5Init_thunk,
+	.hash_update = lsMD5Update_thunk,
+	.hash_final = lsMD5Final_thunk,
 };
 
 static struct hash_desc crypto_integ_md5 =
@@ -111,19 +127,40 @@ static struct hash_desc crypto_integ_md5 =
 		    .algo_id =   OAKLEY_MD5,
 		    .algo_v2id = IKEv2_AUTH_HMAC_MD5_96,
 		    .algo_next = NULL, },
-	.hash_ctx_size = sizeof(MD5_CTX),
+	.hash_ctx_size = sizeof(lsMD5_CTX),
 	.hash_key_size =   MD5_DIGEST_SIZE,
 	.hash_digest_len = MD5_DIGEST_SIZE,
 	.hash_integ_len = MD5_DIGEST_SIZE_96,
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))osMD5Init,
-	.hash_update = (void (*)(void *, const u_int8_t *, size_t))osMD5Update,
-	.hash_final = (void (*)(u_char *, void *))osMD5Final,
+	.hash_init = lsMD5Init_thunk,
+	.hash_update = lsMD5Update_thunk,
+	.hash_final = lsMD5Final_thunk,
 };
 #endif
 
 #ifdef USE_SHA1
-static struct hash_desc crypto_hasher_sha1 =
+
+static void SHA1Init_thunk(union hash_ctx *context)
+{
+	SHA1Init(&context->ctx_sha1);
+}
+
+static void SHA1Update_thunk(union hash_ctx *context, const unsigned char *input, size_t inputLen)
+{
+	SHA1Update(&context->ctx_sha1, input, inputLen);
+}
+
+static void SHA1Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_ctx *context)
+{
+	SHA1Final(digest, &context->ctx_sha1);
+}
+
+
+/* Also used in nat_traversal.c.  I don't know how to call SHA1 by name.
+ * RFC 5996 2.23 only allows "SHA-1 digest of the SPIs (in the order they appear
+ * in the header), IP address, and port from which this packet was sent. "
+ */
+struct hash_desc crypto_hasher_sha1 =
 {
 	.common = { .name = "oakley_sha",
 		    .officname = "sha1",
@@ -134,11 +171,11 @@ static struct hash_desc crypto_hasher_sha1 =
 	.hash_ctx_size = sizeof(SHA1_CTX),
 	.hash_key_size =   SHA1_DIGEST_SIZE,
 	.hash_digest_len = SHA1_DIGEST_SIZE,
-	.hash_integ_len = 0,    /*Not applicable*/
+	.hash_integ_len = 0,	/* Not applicable */
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))SHA1Init,
-	.hash_update = (void (*)(void *, const u_int8_t *, size_t))SHA1Update,
-	.hash_final = (void (*)(u_char *, void *))SHA1Final,
+	.hash_init = SHA1Init_thunk,
+	.hash_update = SHA1Update_thunk,
+	.hash_final = SHA1Final_thunk,
 };
 
 static struct hash_desc crypto_integ_sha1 =
@@ -154,10 +191,11 @@ static struct hash_desc crypto_integ_sha1 =
 	.hash_digest_len = SHA1_DIGEST_SIZE,
 	.hash_integ_len = SHA1_DIGEST_SIZE_96,
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))SHA1Init,
-	.hash_update = (void (*)(void *, const u_int8_t *, size_t))SHA1Update,
-	.hash_final = (void (*)(u_char *, void *))SHA1Final,
+	.hash_init = SHA1Init_thunk,
+	.hash_update = SHA1Update_thunk,
+	.hash_final = SHA1Final_thunk,
 };
+
 #endif
 
 void init_crypto(void)
@@ -196,7 +234,7 @@ void init_crypto(void)
 #endif
 
 #ifdef USE_3DES
-	ike_alg_add((struct ike_alg *) &crypto_encrypter_3des);
+	ike_alg_add(&crypto_encrypter_3des.common);
 #endif
 
 #ifdef USE_SHA2
@@ -204,13 +242,13 @@ void init_crypto(void)
 #endif
 
 #ifdef USE_SHA1
-	ike_alg_add((struct ike_alg *) &crypto_hasher_sha1);
-	ike_alg_add((struct ike_alg *) &crypto_integ_sha1);
+	ike_alg_add(&crypto_hasher_sha1.common);
+	ike_alg_add(&crypto_integ_sha1.common);
 #endif
 
 #ifdef USE_MD5
-	ike_alg_add((struct ike_alg *) &crypto_hasher_md5);
-	ike_alg_add((struct ike_alg *) &crypto_integ_md5);
+	ike_alg_add(&crypto_hasher_md5.common);
+	ike_alg_add(&crypto_integ_md5.common);
 #endif
 }
 
@@ -221,7 +259,7 @@ void init_crypto(void)
  * RFC-3526 "More Modular Exponential (MODP) Diffie-Hellman groups"
  */
 
-const struct oakley_group_desc unset_group = { 0, NULL, NULL, 0 };      /* magic signifier */
+const struct oakley_group_desc unset_group = { OAKLEY_GROUP_invalid, NULL, NULL, 0 };      /* magic signifier */
 
 const struct oakley_group_desc oakley_group[] = {
 	/* modp768_modulus no longer supported - too weak */
@@ -318,10 +356,10 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
  * The first parameter uses 0 for ESP, and anything above that for
  * IKE major version
  */
-int crypto_req_keysize(int ksproto, int algo)
+int crypto_req_keysize(enum crk_proto ksproto, int algo)
 {
 	switch(ksproto) {
-	case 2: /* IKEv2 */
+	case CRK_IKEv2:
 		switch(algo) {
 		case IKEv2_ENCR_CAST:
 			return CAST_KEY_DEF_LEN;
@@ -349,7 +387,8 @@ int crypto_req_keysize(int ksproto, int algo)
 		default:
 			return 0;
 		}
-	case 1: /* IKEv1 */
+
+	case CRK_IKEv1:
 		switch(algo) {
 		case OAKLEY_CAST_CBC:
 			return CAST_KEY_DEF_LEN;
@@ -366,7 +405,8 @@ int crypto_req_keysize(int ksproto, int algo)
 		default:
 			return 0;
 		}
-	case 0: /* ESP */
+
+	case CRK_ESPorAH:
 		switch(algo) {
 		case ESP_CAST:
 			return CAST_KEY_DEF_LEN;
@@ -394,6 +434,7 @@ int crypto_req_keysize(int ksproto, int algo)
 		default:
 			return 0;
 		}
+
 	default:
 		bad_case(ksproto);
 	}

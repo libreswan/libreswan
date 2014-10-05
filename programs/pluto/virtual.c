@@ -76,7 +76,7 @@ static bool read_subnet(const char *src, size_t len,
 {
 	bool incl = TRUE;
 	int af = AF_UNSPEC;	/* AF_UNSPEC means "guess from form" */
-	int pl;
+	int pl = 0;
 	err_t ugh;
 
 	/*
@@ -84,10 +84,10 @@ static bool read_subnet(const char *src, size_t len,
 	 * but that's OK because the character in src[len] is either ',' or '\0'
 	 * so the result will be a non-match, safely and correctly.
 	 */
-	if (strncmp(src, "%v4:", 4) == 0) {
+	if (startswith(src, "%v4:")) {
 		pl = 4;
 		af = AF_INET;
-	} else if (strncmp(src, "%v6:", 4) == 0) {
+	} else if (startswith(src, "%v6:")) {
 		pl = 4;
 		af = AF_INET6;
 	}
@@ -224,13 +224,14 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 	if (string == NULL || string[0] == '\0')
 		return NULL;
 
-	if (strlen(string) >= 6 && strncmp(string, "vhost:", 6) == 0) {
+	if (eat(str, "vhost:")) {
 		flags |= F_VIRTUAL_HOST;
-		str += 6;
-	} else if (strlen(string) >= 5 && strncmp(string, "vnet:", 5) == 0) {
-		str += 5;
+	} else if (eat(str, "vnet:")) {
+		/* ??? do nothing? */
 	} else {
-		goto fail;
+		libreswan_log("virtual string \"%s\" missing prefix - virtual selection disabled for connection '%s'",
+			string, c->name);
+		return NULL;
 	}
 
 	/*
@@ -239,23 +240,30 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 	while (str != NULL && *str != '\0') {
 		ip_subnet sub;	/* sink -- value never used */
 		ptrdiff_t len;
-		const char * next = strchr(str, ',');
+		const char *next = strchr(str, ',');
 
 		if (next == NULL)
 			next = str + strlen(str);
 		len = next - str;
-		if (len == 3 && strncmp(str, "%no", 3) == 0) {
+		if (eat(str, "%no")) {
 			flags |= F_VIRTUAL_NO;
-		} else if (len == 5 && strncmp(str, "%priv", 5) == 0) {
+		} else if (eat(str, "%priv")) {
 			flags |= F_VIRTUAL_PRIVATE;
-		} else if (len == 4 && strncmp(str, "%all", 4) == 0) {
+		} else if (eat(str, "%all")) {
 			flags |= F_VIRTUAL_ALL;
 		} else if (read_subnet(str, len, &sub, NULL, NULL)) {
 			n_net++;
 			if (first_net == NULL)
 				first_net = str;
+			str += len;
 		} else {
-			goto fail;
+			/* nothing matched: force failure */
+			str = NULL;
+		}
+		if (str != next) {
+			libreswan_log("invalid virtual string \"%s\" - virtual selection disabled for connection '%s'",
+				string, c->name);
+			return NULL;
 		}
 		str = *next != '\0' ? next + 1 : NULL;
 	}
@@ -285,11 +293,6 @@ struct virtual_t *create_virtual(const struct connection *c, const char *string)
 	}
 
 	return v;
-
-fail:
-	libreswan_log("invalid virtual string [%s] - virtual selection disabled for connection '%s'",
-		string, c->name);
-	return NULL;
 }
 
 /*
@@ -363,7 +366,7 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
 }
 
 /*
- * is_virtual_net_allowed -
+ * check_virtual_net_allowed -
  * Check if the virtual network the client proposes is acceptable to us
  *
  * @param c Connection structure (active)
@@ -371,51 +374,50 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
  * @param his_addr Peers IP Address
  * @return bool True if allowed
  */
-err_t is_virtual_net_allowed(const struct connection *c,
+err_t check_virtual_net_allowed(const struct connection *c,
 			     const ip_subnet *peer_net,
 			     const ip_address *his_addr)
 {
+	const struct virtual_t *virt = c->spd.that.virt;
 	err_t why = NULL;
 
-	if (c->spd.that.virt == NULL)
+	if (virt == NULL)
 		return NULL;
 
-	if (c->spd.that.virt->flags & F_VIRTUAL_HOST) {
+	if (virt->flags & F_VIRTUAL_HOST) {
 		if (!subnetishost(peer_net)) {
-			why = "only virtual host IPs are allowed";
-			return why;
+			return "only virtual host IPs are allowed";
 		}
 	}
 
-	if (c->spd.that.virt->flags & F_VIRTUAL_NO) {
-		if (subnetishost(peer_net) &&
-		    addrinsubnet(his_addr, peer_net))
+	if (virt->flags & F_VIRTUAL_NO) {
+		if (subnetishost(peer_net) && addrinsubnet(his_addr, peer_net))
 			return NULL;
 	}
 
-	if (c->spd.that.virt->flags & F_VIRTUAL_PRIVATE) {
+	if (virt->flags & F_VIRTUAL_PRIVATE) {
 		if (net_in_list(peer_net, private_net_incl,
 				private_net_incl_len) &&
-		    !net_in_list(peer_net, private_net_excl, private_net_excl_len))
+		    !net_in_list(peer_net, private_net_excl,
+				private_net_excl_len))
 			return NULL;
 
 		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=)";
 	}
 
-	if (c->spd.that.virt->n_net) {
-		if (net_in_list(peer_net, c->spd.that.virt->net,
-				c->spd.that.virt->n_net))
+	if (virt->n_net) {
+		/* ??? if why is already set, is this behaviour correct? */
+		if (net_in_list(peer_net, virt->net, virt->n_net))
 			return NULL;
 
 		why = "a specific network IP was required, but the proposed IP did not match our list (subnet=vhost:list)";
 	}
 
-	if (c->spd.that.virt->flags & F_VIRTUAL_ALL) {
+	if (virt->flags & F_VIRTUAL_ALL) {
+		/* ??? if why is already set, is this behaviour correct? */
 		/* %all must only be used for testing - log it */
-		loglog(RC_LOG_SERIOUS, "Warning - "
-			"v%s:%%all must only be used for testing",
-			(c->spd.that.virt->flags & F_VIRTUAL_HOST) ?
-				"host" : "net");
+		loglog(RC_LOG_SERIOUS, "Warning - v%s:%%all must only be used for testing",
+			(virt->flags & F_VIRTUAL_HOST) ? "host" : "net");
 		return NULL;
 	}
 
@@ -438,8 +440,8 @@ static void show_virtual_private_kind(const char *kind,
 			subnettot(&private_net[i], 0, sn, sizeof(sn));
 			if (strlen(all) + strlen(sep) +  strlen(sn) <
 					sizeof(all)) {
-				strcat(all, sep);
-				strcat(all, sn);
+				strcat(all, sep);	/* safe: see allocation above */
+				strcat(all, sn);	/* safe: see allocation above */
 			} else {
 				trunc = TRUE;
 				break;

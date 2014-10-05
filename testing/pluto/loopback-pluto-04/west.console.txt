@@ -17,6 +17,7 @@ west #
 ping: unknown host ::1
 west #
  ipsec setup start
+Redirecting to: systemctl start ipsec.service
 west #
  # Really only needed for openswan - libreswan _stackmanager does this already
 west #
@@ -27,29 +28,131 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add loopback-west
+002 added connection description "loopback-west"
 west #
  echo "initdone"
 initdone
 west #
  ipsec auto --up  loopback-west
+002 "loopback-west" #1: initiating Main Mode
 104 "loopback-west" #1: STATE_MAIN_I1: initiate
-003 "loopback-west" #1: received Vendor ID payload [Openswan (this version)  VERSION
 003 "loopback-west" #1: received Vendor ID payload [Dead Peer Detection]
+003 "loopback-west" #1: received Vendor ID payload [FRAGMENTATION]
+003 "loopback-west" #1: received Vendor ID payload [RFC 3947]
+002 "loopback-west" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "loopback-west" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+003 "loopback-west" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 108 "loopback-west" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "loopback-west" #1: received Vendor ID payload [CAN-IKEv2]
-004 "loopback-west" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=aes_128 prf=sha group=MODP2048}
+002 "loopback-west" #1: Main mode peer ID is ID_IPV6_ADDR: '::1'
+004 "loopback-west" #1: STATE_MAIN_I4: ISAKMP SA established {auth=PRESHARED_KEY cipher=aes_256 integ=sha group=MODP2048}
+002 "loopback-west" #3: initiating Quick Mode PSK+ENCRYPT+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "loopback-west" #3: STATE_QUICK_I1: initiate
-004 "loopback-west" #3: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=none}
+004 "loopback-west" #3: STATE_QUICK_I2: sent QI2, IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ipsec look
 west NOW
-IPSEC TABLE
-ROUTING TABLE
+XFRM state:
+src ::1 dst ::1
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src ::1/128 dst ::1/128 
+src ::1 dst ::1
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	replay-window 0 
+	sel src ::1/128 dst ::1/128 
+XFRM policy:
+src ::1/128 dst ::1/128 
+	dir out priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src ::1/128 dst ::1/128 
+	dir in priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
 default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
+169.254.0.0/16 dev eth2  scope link  metric 1004 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+unreachable ::/96 dev lo  metric 1024  error -101
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
+2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
+2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
+2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
+2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -101
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
+unreachable 2002:e000::/19 dev lo  metric 1024  error -101
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
+fe80::/64 dev eth0  proto kernel  metric 256 
+fe80::/64 dev eth1  proto kernel  metric 256 
+fe80::/64 dev eth2  proto kernel  metric 256 
+default via 2001:db8:1:2::254 dev eth1  metric 1 
+default via 2001:db8:1:2::254 dev eth1  metric 1024 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
 west #
  tcpdump -i lo -n -c 6 2> /dev/null &
 [X] XXXX
@@ -58,14 +161,14 @@ west #
 [ 00.00] device lo entered promiscuous mode
 PING ::1(::1) 56 data bytes
 64 bytes from ::1: icmp_seq=1 ttl=64 time=0.XXX ms
-21:00:05.806646 IP6 ::1 > ::1: ESP(spi=0x1e38ff4f,seq=0x1), length 116
-21:00:05.806674 IP6 ::1 > ::1: ESP(spi=0x1e38ff4f,seq=0x2), length 116
+03:27:03.670874 IP6 ::1 > ::1: ESP(spi=0x620893c7,seq=0x1), length 116
+03:27:03.670921 IP6 ::1 > ::1: ESP(spi=0x620893c7,seq=0x2), length 116
 64 bytes from ::1: icmp_seq=2 ttl=64 time=0.XXX ms
-21:00:06.806645 IP6 ::1 > ::1: ESP(spi=0x1e38ff4f,seq=0x3), length 116
-21:00:06.806673 IP6 ::1 > ::1: ESP(spi=0x1e38ff4f,seq=0x4), length 116
+03:27:04.672991 IP6 ::1 > ::1: ESP(spi=0x620893c7,seq=0x3), length 116
+03:27:04.673021 IP6 ::1 > ::1: ESP(spi=0x620893c7,seq=0x4), length 116
 64 bytes from ::1: icmp_seq=3 ttl=64 time=0.XXX ms
-21:00:07.806726 IP6 ::1 > ::1: ESP(spi=0x1e38ff4f,seq=0x5), length 116
-21:00:07.806752 IP6 ::1 > ::1: ESP(spi=0x1e38ff4f,seq=0x6), length 116
+03:27:05.674567 IP6 ::1 > ::1: ESP(spi=0x620893c7,seq=0x5), length 116
+03:27:05.674609 IP6 ::1 > ::1: ESP(spi=0x620893c7,seq=0x6), length 116
 [ 00.00] device lo left promiscuous mode
 64 bytes from ::1: icmp_seq=4 ttl=64 time=0.XXX ms
 --- ::1 ping statistics ---
@@ -83,15 +186,110 @@ done
 west #
  ipsec look
 west NOW
-IPSEC TABLE
-ROUTING TABLE
+XFRM state:
+src ::1 dst ::1
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src ::1/128 dst ::1/128 
+src ::1 dst ::1
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	replay-window 0 
+	sel src ::1/128 dst ::1/128 
+XFRM policy:
+src ::1/128 dst ::1/128 
+	dir out priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src ::1/128 dst ::1/128 
+	dir in priority 17536 ptype main 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
 default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
 169.254.0.0/16 dev eth1  scope link  metric 1003 
+169.254.0.0/16 dev eth2  scope link  metric 1004 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+unreachable ::/96 dev lo  metric 1024  error -101
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
+2001:db8:0:1::/64 dev eth0  proto kernel  metric 256 
+2001:db8::/48 via 2001:db8:1:2::23 dev eth1  metric 1024 
+2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
+2001:db8:9:4::/64 dev eth2  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -101
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
+unreachable 2002:e000::/19 dev lo  metric 1024  error -101
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
+fe80::/64 dev eth0  proto kernel  metric 256 
+fe80::/64 dev eth1  proto kernel  metric 256 
+fe80::/64 dev eth2  proto kernel  metric 256 
+default via 2001:db8:1:2::254 dev eth1  metric 1 
+default via 2001:db8:1:2::254 dev eth1  metric 1024 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

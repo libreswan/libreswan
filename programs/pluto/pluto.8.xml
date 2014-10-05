@@ -11,7 +11,7 @@
 
     <manvolnum>8</manvolnum>
 
-    <refmiscinfo class="date">19 February 2014</refmiscinfo>
+    <refmiscinfo class="date">29 June 2014</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
@@ -61,7 +61,6 @@
       <arg choice="opt">--perpeerlogbase <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
-      <arg choice="opt">--noretransmits</arg>
       <arg choice="opt">--statsbin <replaceable>filename</replaceable></arg>
       <arg choice="opt">--secctx-attr-value <replaceable>number</replaceable></arg>
     </cmdsynopsis>
@@ -123,8 +122,6 @@
 
       <sbr />
 
-      <sbr />
-
       <arg choice="opt">--id <replaceable>identity</replaceable></arg>
 
       <arg choice="opt">--host <replaceable>ip-address</replaceable></arg>
@@ -149,6 +146,14 @@
           <arg choice="plain">no</arg>
 
           <arg choice="plain">never</arg>
+        </group></arg>
+
+      <arg choice="opt">--sendca <group choice="plain">
+          <arg choice="plain">none</arg>
+
+          <arg choice="plain">issuer</arg>
+
+          <arg choice="plain">all</arg>
         </group></arg>
 
       <arg choice="opt">--certtype <replaceable>number</replaceable></arg>
@@ -190,11 +195,7 @@
 
       <sbr />
 
-      <sbr />
-
       <arg choice="plain">--to</arg>
-
-      <sbr />
 
       <sbr />
 
@@ -287,6 +288,12 @@
           <arg choice="opt">modp6144</arg>
 
           <arg choice="opt">modp8192</arg>
+
+          <arg choice="opt">dh22</arg>
+
+          <arg choice="opt">dh23</arg>
+
+          <arg choice="opt">dh24</arg>
         </group></arg>
 
       <arg choice="opt">--disablearrivalcheck</arg>
@@ -517,58 +524,53 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
+      <arg choice="plain">--deleteuser</arg>
+      <arg choice="plain">--name
+      <replaceable>xauth-username</replaceable></arg>
+
+      <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
+
+      <arg choice="opt">--label <replaceable>string</replaceable></arg>
+    </cmdsynopsis>
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
       <arg choice="opt">--name
       <replaceable>connection-name</replaceable></arg>
 
       <arg choice="opt">--debug-none</arg>
-
       <arg choice="opt">--debug-all</arg>
-
       <arg choice="opt">--debug-raw</arg>
-
       <arg choice="opt">--debug-crypt</arg>
-
       <arg choice="opt">--debug-parsing</arg>
-
       <arg choice="opt">--debug-emitting</arg>
-
       <arg choice="opt">--debug-control</arg>
-
       <arg choice="opt">--debug-controlmore</arg>
-
       <arg choice="opt">--debug-lifecycle</arg>
-
       <arg choice="opt">--debug-klips</arg>
-
       <arg choice="opt">--debug-pfkey</arg>
-
       <arg choice="opt">--debug-dns</arg>
-
       <arg choice="opt">--debug-dpd</arg>
-
       <arg choice="opt">--debug-natt</arg>
-
       <arg choice="opt">--debug-oppo</arg>
-
       <arg choice="opt">--debug-oppoinfo</arg>
-
       <arg choice="opt">--debug-whackwatch</arg>
-
       <arg choice="opt">--debug-private</arg>
-
       <arg choice="opt">--impair-delay-adns-key-answer</arg>
-
       <arg choice="opt">--impair-delay-adns-txt-answer</arg>
-
       <arg choice="opt">--impair-bust-mi2</arg>
-
       <arg choice="opt">--impair-bust-mr2</arg>
-
       <arg choice="opt">--impair-sa-fail</arg>
-
       <arg choice="opt">--impair-die-oninfo</arg>
-
       <arg choice="opt">--impair-jacob-two-two</arg>
+      <arg choice="opt">--impair-major-version-bump</arg>
+      <arg choice="opt">--impair-minor-version-bump</arg>
+      <arg choice="opt">--impair-retransmits</arg>
+      <arg choice="opt">--impair-send-bogus-isakmp-flag</arg>
+      <arg choice="opt">--impair-send-ikev2-ke</arg>
+      <arg choice="opt">--impair-send-key-size-check</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -642,6 +644,17 @@
       <arg choice="opt">--label <replaceable>string</replaceable></arg>
     </cmdsynopsis>
 
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
+      <arg choice="plain">--trafficstatus</arg>
+
+      <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
+
+      <arg choice="opt">--label <replaceable>string</replaceable></arg>
+    </cmdsynopsis>
     <cmdsynopsis>
       <command>ipsec</command>
 
@@ -1028,10 +1041,6 @@
       working directory. You can specify the --coredir option for pluto, or
       specify the dumpdir= option in ipsec.conf.</para>
 
-      <para>At times it may be desirable to turn off all timed events in
-      <emphasis remap="B">pluto</emphasis>, this can be done with
-      <option>--noretransmits</option>.</para>
-
       <para>If you are investigating a potential memory leak in pluto,
       start pluto with the --leak-detective option.  Before the leak
       causes the system or pluto to die, shut down pluto in the regular
@@ -1116,7 +1125,7 @@
     </refsect2>
 
     <refsect2 id="using_whack">
-      <title>Using Whack</title>
+      <title>Using whack</title>
 
       <para><emphasis remap="B">whack</emphasis> is used to command a running
       <emphasis remap="B">pluto</emphasis>. <emphasis
@@ -1347,6 +1356,21 @@
             <emphasis remap="B">no</emphasis> and <emphasis
             remap="B">never</emphasis> are equivalent. NOTE: "forced" does not
             seem to be actually implemented - do not use it.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--sendca</option>&nbsp;<emphasis
+          remap="I">none|issuer|all</emphasis></term>
+
+          <listitem>
+	  <para>How much of our available X.509 trust chain to send with the
+	  end certificate, excluding any root CAs. Specifying <emphasis remap="B"
+	  >issuer</emphasis> sends just the issuing intermediate CA, while
+	  <emphasis remap="B"> all</emphasis> will send the entire chain of
+	  intermediate CAs.<emphasis remap="B">none</emphasis> will not send
+	  any CA certs. The default is <emphasis remap="B">none</emphasis> which
+	  maintains the current libreswan behavior.</para>
           </listitem>
         </varlistentry>
 
@@ -2414,6 +2438,21 @@
       <variablelist remap="TP">
         <varlistentry>
           <term><option>--status</option></term>
+
+          <listitem>
+            <para></para>
+
+            <!-- FIXME: blank list item -->
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>The trafficstatus form will display the xauth username, add_time and the total in and
+      out bytes of the IPsec SA's.</para>
+
+      <variablelist remap="TP">
+        <varlistentry>
+          <term><option>--trafficstatus</option></term>
 
           <listitem>
             <para></para>
@@ -3602,19 +3641,13 @@
     <!-- .nh -->
 
     <para><emphasis remap="I"><ulink
-    url="http://www.ietf.cnri.reston.va.us/html.charters/ipsec-charter.html">http://www.ietf.cnri.reston.va.us/html.charters/ipsec-charter.html</ulink></emphasis></para>
+    url="https://datatracker.ietf.org/wg/ipsecme/charter/">https://datatracker.ietf.org/wg/ipsecme/charter/</ulink></emphasis></para>
 
     <!-- .hy -->
 
     <para>At the time of writing, the most relevant IETF RFCs are:</para>
 
-    <para>RFC2409 The Internet Key Exchange (IKE)</para>
-
-    <para>RFC2408 Internet Security Association and Key Management Protocol
-    (ISAKMP)</para>
-
-    <para>RFC2407 The Internet IP Security Domain of Interpretation for
-    ISAKMP</para>
+    <para>RFC5996 Internet Key Exchange Protocol Version 2 (IKEv2)</para>
 
     <para>The Libreswan web site &lt;https://libreswan.org&gt; and the mailing
     lists described there.</para>
@@ -3624,9 +3657,7 @@
     <title>HISTORY</title>
 
     <para>This code is released under the GPL terms. See the accompanying
-    files COPYING and CREDITS for more details. The GPL does NOT apply to
-    those pieces of code written by others which are included in this
-    distribution, except as noted by the individual authors.</para>
+    files COPYING and CREDITS.* for more details.</para>
 
     <para>This software was originally written for the FreeS/WAN project
     &lt;<ulink
@@ -3635,70 +3666,33 @@
     Keromytis (angelos@dsl.cis.upenn.edu), in May/June 1997, in Athens,
     Greece. Thanks go to John Ioannidis for his help.</para>
 
-    <para>It is currently maintained and extended by the Libreswan Team
-    under the Libreswan name. See CHANGES for details.</para>
-
     <para>FreeS/WAN's Pluto was developed/maintained from 2000-2004 by D. Hugh
     Redelmeier (hugh@mimosa.com), in Canada. The regulations of Greece and
     Canada allow the code to be freely redistributable.</para>
 
-    <para>Kai Martius (admin@imib.med.tu-dresden.de) contributed the initial
-    version of the code supporting PFS.</para>
+    <para>Richard Guy Briggs &lt;rgb@conscoop.ottawa.on.ca&gt; was the main resource
+    on KLIPS development</para>
 
-    <para>Richard Guy Briggs &lt;rgb@conscoop.ottawa.on.ca&gt; and Peter Onion
-    &lt;ponion@srd.bt.co.uk&gt; added the PFKEY2 support.</para>
+    <para>IKE version 2 was initially written by Michael Richardson, Antony Antony and
+    Paul Wouters. It has since been extended by Avesh Agarwal, D. Hugh Redelmeier,
+    Matt Rogers, Antony Antony and Paul Wouters. </para>
 
-    <para>We gratefully acknowledge that we use parts of Eric Young's
-    <emphasis remap="I">libdes</emphasis> package; see <emphasis
-    remap="I">../libdes/COPYRIGHT</emphasis>.</para>
+    <para>From 2003 onwards, the code was developed and maintained by The Openswan
+    Project by developers worldwide and distributed from The Netherland and Finland.
+    Due to a lawsuit by Xelerance over the trademark, the project was forced to rename
+    itself and the code to The Libreswan Project in 2012.</para>
+
+    <para>See further: the CHANGES/CREDITS files in the main directory and the doc/ directory.</para>
   </refsect1>
 
   <refsect1 id="bugs">
     <title>BUGS</title>
 
-    <para><emphasis remap="B">pluto</emphasis> is a work-in-progress. It
-    currently has many limitations. For example, it ignores notification
-    messages that it receives, and it generates only Delete Notifications and
-    those only for IPSEC SAs.</para>
+    <para>Please see 
+    &lt;<ulink url="https://bugs.libreswan.org">https://bugs.libreswan.org</ulink>&gt;
+    for a list of currently known bugs and missing features.</para>
 
-    <para><emphasis remap="B">pluto</emphasis> does not support the Commit
-    Flag. The Commit Flag is a bad feature of the IKE protocol. It isn't
-    protected -- neither encrypted nor authenticated. A man in the middle
-    could turn it on, leading to DoS. We just ignore it, with a warning. This
-    should let us interoperate with implementations that insist on it, with
-    minor damage.</para>
-
-    <para><emphasis remap="B">pluto</emphasis> does not check that the SA
-    returned by the Responder is actually one that was proposed. It only
-    checks that the SA is acceptable. The difference is not large, but can
-    show up in attributes such as SA lifetime.</para>
-
-    <para>There is no good way for a connection to be automatically
-    terminated. This is a problem for Road Warrior and Opportunistic
-    connections. The <option>--dontrekey</option> option does prevent the SAs
-    from being rekeyed on expiry. Additionally, if a Road Warrior connection
-    has a client subnet with a fixed IP address, a negotiation with that
-    subnet will cause any other connection instantiations with that same
-    subnet to be unoriented (deleted, in effect). See also the --uniqueids
-    option for an extension of this.</para>
-
-    <para>When <emphasis remap="B">pluto</emphasis> sends a message to a peer
-    that has disappeared, <emphasis remap="B">pluto</emphasis> receives
-    incomplete information from the kernel, so it logs the unsatisfactory
-    message “some IKE message we sent has been rejected with ECONNREFUSED
-    (kernel supplied no details)”. John Denker suggests that this command is
-    useful for tracking down the source of these problems: <!-- .br -->
-    tcpdump -i eth0 icmp[0] != 8 and icmp[0] != 0 <!-- .br --> Substitute your
-    public interface for eth0 if it is different.</para>
-
-    <para>The word “authenticate” is used for two different features. We must
-    authenticate each IKE peer to the other. This is an important task of
-    Phase 1. Each packet must be authenticated, both in IKE and in IPsec, and
-    the method for IPsec is negotiated as an AH SA or part of an ESP SA.
-    Unfortunately, the protocol has no mechanism for authenticating the Phase
-    2 identities.</para>
-
-    <para>Bugs should be reported to the &lt;users@lists.libreswan.org&gt;
+    <para>Bugs should be reported to the &lt;swan-dev@lists.libreswan.org&gt;
     mailing list.</para>
   </refsect1>
 </refentry>

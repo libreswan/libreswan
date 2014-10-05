@@ -192,10 +192,20 @@ void update_host_pairs(struct connection *c)
 }
 
 /* Delete a connection */
+#define DELETE_THIS_END(end)	delete_end(end, FALSE)
+#define DELETE_THAT_END(end)	delete_end(end, TRUE)
 
-static void delete_end(struct end *e)
+static void delete_end(struct end *e, bool that)
 {
 	free_id_content(&e->id);
+
+	/* the "that" end's ca_path contains certs that
+	 * were collected during the exchange, so they
+	 * need to be removed along with the reference chain
+	 */
+	if (that && e->ca_path.ty != CERT_NONE && e->ca_path.u.x509 != NULL)
+		free_authcert_chain(e->ca_path.u.x509);
+
 	freeanychunk(e->ca);
 	release_cert(e->cert);
 	pfreeany(e->updown);
@@ -207,8 +217,8 @@ static void delete_end(struct end *e)
 
 static void delete_sr(struct spd_route *sr)
 {
-	delete_end(&sr->this);
-	delete_end(&sr->that);
+	DELETE_THIS_END(&sr->this);
+	DELETE_THAT_END(&sr->that);
 }
 
 /*
@@ -240,11 +250,13 @@ void delete_connection(struct connection *c, bool relations)
 	 */
 	passert(c->kind != CK_GOING_AWAY);
 	if (c->kind == CK_INSTANCE) {
+		ipstr_buf b;
+
 		libreswan_log(
 			"deleting connection \"%s\" instance with peer %s "
 			"{isakmp=#%lu/ipsec=#%lu}",
 			c->name,
-			ip_str(&c->spd.that.host_addr),
+			ipstr(&c->spd.that.host_addr, &b),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
 		if (c->pool != NULL)
@@ -480,7 +492,8 @@ size_t format_end(char *buf,
 		const struct end *this,
 		const struct end *that,
 		bool is_left,
-		lset_t policy)
+		lset_t policy,
+		bool filter_rnh)
 {
 	char client[SUBNETTOT_BUF];
 	const char *client_sep = "";
@@ -491,15 +504,13 @@ size_t format_end(char *buf,
 	char host_port[sizeof(":65535")];
 	char host_id[IDTOA_BUF + 2];
 	char hop[ADDRTOT_BUF];
-	char endopts[sizeof("MS+MC+XS+XC+Sxx") + 1];
+	char endopts[sizeof("MS+MC+XS+XC+Sxx") + 1] = "";
 	const char *hop_sep = "";
 	const char *open_brackets  = "";
 	const char *close_brackets = "";
 	const char *id_obrackets = "";
 	const char *id_cbrackets = "";
 	const char *id_comma = "";
-
-	zero(&endopts);
 
 	if (isanyaddr(&this->host_addr)) {
 		if (this->host_type == KH_IPHOSTNAME) {
@@ -575,7 +586,6 @@ size_t format_end(char *buf,
 				loglog(RC_BADID,
 					"format_end: buffer too small for "
 					"dohost_name - should not happen\n");
-
 		}
 	}
 
@@ -615,8 +625,6 @@ size_t format_end(char *buf,
 	    this->sendcert != cert_defaultcertpolicy) {
 		char *p = endopts;
 
-		endopts[0] = '\0';
-
 		if (id_obrackets[0] == '[') {
 			id_comma = ",";
 		} else {
@@ -635,6 +643,7 @@ size_t format_end(char *buf,
 
 		if (this->xauth_client)
 			p = add_str(endopts, sizeof(endopts), p, "+XC");
+
 		{
 			const char *send_cert = "+UNKNOWN";
 
@@ -649,14 +658,14 @@ size_t format_end(char *buf,
 				send_cert = "+S=C";
 				break;
 			}
-			p = add_str(endopts, sizeof(endopts), p, send_cert);
+			add_str(endopts, sizeof(endopts), p, send_cert);
 		}
 	}
 
 	/* [---hop] */
 	hop[0] = '\0';
 	hop_sep = "";
-	if (that != NULL && !sameaddr(&this->host_nexthop, &that->host_addr)) {
+	if (that != NULL && !filter_rnh && !sameaddr(&this->host_nexthop, &that->host_addr)) {
 		addrtot(&this->host_nexthop, 0, hop, sizeof(hop));
 		hop_sep = "---";
 	}
@@ -690,12 +699,12 @@ static size_t format_connection(char *buf, size_t buf_len,
 			struct spd_route *sr)
 {
 	size_t w =
-		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY);
+		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY, FALSE);
 
 	snprintf(buf + w, buf_len - w, "...");
 	w += strlen(buf + w);
 	return w + format_end(buf + w, buf_len - w, &sr->that, &sr->this,
-			FALSE, c->policy);
+			FALSE, c->policy, oriented(*c));
 }
 
 /* spd_route's with end's get copied in xauth.c */
@@ -746,17 +755,17 @@ static void unshare_connection_strings(struct connection *c)
 
 	/* increment references to algo's, if any */
 	if (c->alg_info_ike) {
-		alg_info_addref(IKETOINFO(c->alg_info_ike));
+		alg_info_addref(&c->alg_info_ike->ai);
 	}
 
 	if (c->alg_info_esp) {
-		alg_info_addref(ESPTOINFO(c->alg_info_esp));
+		alg_info_addref(&c->alg_info_esp->ai);
 	}
 	if (c->pool !=  NULL)
 		reference_addresspool(c->pool);
 }
 
-static void load_end_certificate(const char *name, struct end *dst)
+static bool load_end_certificate(const char *name, struct end *dst)
 {
 	realtime_t valid_until;
 	cert_t cert;
@@ -768,9 +777,9 @@ static void load_end_certificate(const char *name, struct end *dst)
 	dst->cert.ty = CERT_NONE;
 
 	if (name == NULL)
-		return;
+		return FALSE;
 
-	DBG(DBG_CONTROL, DBG_log("loading certificate %s\n", name));
+	DBG(DBG_CONTROL, DBG_log("loading certificate %s", name));
 	dst->cert_filename = clone_str(name, "certificate name");
 
 	{
@@ -778,11 +787,11 @@ static void load_end_certificate(const char *name, struct end *dst)
 		bool valid_cert = load_cert_from_nss(name,
 						"host cert", &cert);
 		if (!valid_cert) {
-			whack_log(RC_FATAL, "can not load certificate %s\n",
+			whack_log(RC_FATAL, "cannot load certificate %s",
 				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;
-			return;
+			return FALSE;
 		}
 	}
 
@@ -815,6 +824,61 @@ static void load_end_certificate(const char *name, struct end *dst)
 		bad_case(cert.ty);
 	}
 
+	return TRUE;
+}
+
+static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
+{
+	x509cert_t *ac = x509_get_authcerts_chain();
+	x509cert_t *new = NULL, *iac = NULL;
+	char ibuf[ASN1_BUF_LEN], tbuf[ASN1_BUF_LEN];
+
+	zero(&dst->ca_path);
+	dst->ca_path.ty = CERT_NONE;
+
+	/* don't load a ca_path */
+	if (issuer_dn.ptr == NULL || issuer_dn.len < 1)
+		return;
+
+	/* find the issuing cert */
+	while (ac != NULL) {
+		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags) {
+			new = clone_thing(*ac, "x509cert_t");
+			new->next = NULL;
+			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
+			DBG(DBG_X509, DBG_log("load_end_ca_path : end cert issuer is %s",
+									ibuf));
+			break;
+		}
+		ac = ac->next;
+	}
+	/* starting with the issuer's CA copy the path down */
+	if (new != NULL) {
+		dst->ca_path.ty = CERT_X509_SIGNATURE;
+		dst->ca_path.u.x509 = new;
+
+		while ((iac = get_authcert(new->issuer,
+					   new->authKeySerialNumber,
+					   new->authKeyID, AUTH_CA)) != NULL) {
+			x509cert_t *rootcheck = NULL;
+
+			rootcheck = get_authcert(iac->issuer,
+					         iac->authKeySerialNumber,
+						 iac->authKeyID, AUTH_CA);
+
+			/* root cert is next, but we don't want it in the chain */
+			if (rootcheck != NULL && (same_dn(iac->subject,
+							  rootcheck->subject)))
+				break;
+
+			dntoa(tbuf, ASN1_BUF_LEN, iac->subject);
+			DBG(DBG_X509, DBG_log("load_end_ca_path : adding %s to chain",
+						tbuf));
+			new->next = clone_thing(*iac, "x509cert_t");
+			new = new->next;
+			new->next = NULL;
+		}
+	}
 }
 
 static bool extract_end(struct end *dst, const struct whack_end *src,
@@ -856,7 +920,9 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	}
 
 	/* load local end certificate and extract ID, if any */
-	load_end_certificate(src->cert, dst);
+	if (load_end_certificate(src->cert, dst))
+		load_end_ca_path(dst->cert.u.x509->issuer, dst);
+
 	/* ??? what should we do on load_end_certificate failure? */
 
 	/* does id has wildcards? */
@@ -991,11 +1057,10 @@ static bool check_connection_end(const struct whack_end *this,
 		 * Other side is wildcard: we must check if other conditions
 		 * met.
 		 */
-		if (that->host_type != KH_IPHOSTNAME &&
+		if (this->host_type != KH_IPHOSTNAME &&
 			isanyaddr(&this->host_addr)) {
 			loglog(RC_ORIENT,
-				"connection %s must specify host IP address "
-				"for our side",
+				"connection %s must specify host IP address for our side",
 				wm->name);
 			return FALSE;
 		} else if (!NEVER_NEGOTIATE(wm->policy)) {
@@ -1023,7 +1088,7 @@ static bool check_connection_end(const struct whack_end *this,
 			for (; c != NULL; c = c->hp_next) {
 				if (c->policy & POLICY_AGGRESSIVE)
 					continue;
-#if 0
+#if 0	/* ??? suppressing this code makes this whole leg pointless */
 				if (!NEVER_NEGOTIATE(c->policy) &&
 					((c->policy ^ wm->policy) &
 						(POLICY_PSK | POLICY_RSASIG))) {
@@ -1057,38 +1122,53 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static struct connection *find_connection_by_reqid(uint32_t reqid)
+static struct connection *find_connection_by_reqid(reqid_t reqid)
 {
 	struct connection *c;
 
-	if (reqid >= IPSEC_MANUAL_REQID_MAX -3 ) {
+	/* find base reqid */
+	if (reqid > IPSEC_MANUAL_REQID_MAX) {
 		reqid &= ~3;
 	}
 
-	for (c = connections; c != NULL; c = c->ac_next) {
+	for (c = connections; c != NULL; c = c->ac_next)
 		if (c->spd.reqid == reqid)
-			return c;
-	}
+			break;
 
-	return NULL;
+	return c;
 }
 
-static uint32_t gen_reqid(void)
+/*
+ * generate a base reqid for automatic keying
+ *
+ * We are actually allocating a group of four contiguous
+ * numbers: one is used for each SA in an SA bundle.
+ *
+ * - must not be in range 0 to IPSEC_MANUAL_REQID_MAX
+ * - is a multiple of 4 (not actually a requirement?)
+ * - does not duplicate any currently in use
+ */
+static reqid_t gen_reqid(void)
 {
-	uint32_t start;
-	static uint32_t reqid = IPSEC_MANUAL_REQID_MAX & ~3;
+	static reqid_t	last_reqid = IPSEC_MANUAL_REQID_MAX + 1;
+	reqid_t r = last_reqid;
 
-	start = reqid;
-	do {
-		reqid += 4;
-		if (reqid == 0)
-			reqid = (IPSEC_MANUAL_REQID_MAX & ~3) + 4;
-		if (!find_connection_by_reqid(reqid))
-			return reqid;
-	} while (reqid != start);
+	passert(r % 4 == 0);
+	for (;;) {
+		r += 4;	/* may wrap */
+		/* don't use range 0 to IPSEC_MANUAL_REQID_MAX */
+		if (r <= IPSEC_MANUAL_REQID_MAX)
+			r = IPSEC_MANUAL_REQID_MAX + 1;
 
-	exit_log("unable to allocate reqid");
-	return 0; /* never reached, here to make compiler happy */
+		if (r == last_reqid) {
+			/* gone around the clock without success */
+			exit_log("unable to allocate reqid");
+		}
+		if (!find_connection_by_reqid(r)) {
+			last_reqid = r;
+			return r;
+		}
+	}
 }
 
 static bool have_wm_certs(const struct whack_message *wm)
@@ -1164,7 +1244,7 @@ void add_connection(const struct whack_message *wm)
 				err_buf);
 			return;
 		}
-		if (alg_info_ike->alg_info_cnt == 0) {
+		if (alg_info_ike->ai.alg_info_cnt == 0) {
 			loglog(RC_LOG_SERIOUS,
 				"got 0 transforms for ike=\"%s\"", wm->ike);
 			return;
@@ -1214,16 +1294,16 @@ void add_connection(const struct whack_message *wm)
 					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
-				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
+				char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf);
+				DBG_log("phase2alg string values: %s", buf);
 			});
 			if (c->alg_info_esp != NULL) {
-				if (c->alg_info_esp->alg_info_cnt == 0) {
+				if (c->alg_info_esp->ai.alg_info_cnt == 0) {
 					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"esp=\"%s\"",
@@ -1233,7 +1313,7 @@ void add_connection(const struct whack_message *wm)
 				}
 			} else {
 				loglog(RC_LOG_SERIOUS,
-					"esp string error: %s",
+					"phase2alg string error: %s",
 					err_buf);
 				pfree(c);
 				return;
@@ -1253,7 +1333,7 @@ void add_connection(const struct whack_message *wm)
 					buf);
 			});
 			if (c->alg_info_ike != NULL) {
-				if (c->alg_info_ike->alg_info_cnt == 0) {
+				if (c->alg_info_ike->ai.alg_info_cnt == 0) {
 					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"ike=\"%s\"",
@@ -1332,14 +1412,19 @@ void add_connection(const struct whack_message *wm)
 		c->spd.this.left = TRUE;
 		c->spd.that.left = FALSE;
 
+		c->send_ca = wm->send_ca;
 		same_rightca = same_leftca = FALSE;
+
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
-		if (same_rightca)
+		if (same_rightca) {
 			c->spd.that.ca = c->spd.this.ca;
-		else if (same_leftca)
+			c->spd.that.ca_path = c->spd.this.ca_path;
+		} else if (same_leftca) {
 			c->spd.this.ca = c->spd.that.ca;
+			c->spd.this.ca_path = c->spd.that.ca_path;
+		}
 
 		/*
 		 * How to add addresspool only for responder?
@@ -1385,10 +1470,10 @@ void add_connection(const struct whack_message *wm)
 
 		c->spd.next = NULL;
 
-		if (wm->sa_reqid) {
-			c->spd.reqid = wm->sa_reqid;
-		} else {
+		if (wm->sa_reqid == 0) {
 			c->spd.reqid = gen_reqid();
+		} else {
+			c->spd.reqid = wm->sa_reqid;
 		}
 
 		/* set internal fields */
@@ -1712,7 +1797,7 @@ struct connection *rw_instantiate(struct connection *c,
 {
 	struct connection *d = instantiate(c, him, his_id);
 
-	if (d && his_net && is_virtual_connection(c)) {
+	if (his_net != NULL && is_virtual_connection(c)) {
 		d->spd.that.client = *his_net;
 		if (subnetishost(his_net) && addrinsubnet(him, his_net))
 			d->spd.that.has_client = FALSE;
@@ -1728,8 +1813,10 @@ struct connection *rw_instantiate(struct connection *c,
 		d->spd.that.client = *aftoinfo(subnettypeof(
 						&d->spd.that.client))->none;
 	}
-	DBG(DBG_CONTROL,
-		DBG_log("instantiated \"%s\" for %s", d->name, ip_str(him)));
+	DBG(DBG_CONTROL, {
+		ipstr_buf b;
+		DBG_log("instantiated \"%s\" for %s", d->name, ipstr(him, &b));
+	});
 	return d;
 }
 
@@ -1957,8 +2044,7 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 			strcpy(p, w == 0 ? " ..." : "=== ...");
 			p += strlen(p);
 
-			addrtot(&c->spd.that.host_addr, 0, p, ADDRTOT_BUF);
-			p += strlen(p);
+			p += addrtot(&c->spd.that.host_addr, 0, p, ADDRTOT_BUF) - 1;
 
 			(void) fmt_client(&c->spd.that.client,
 					&c->spd.that.host_addr, "===", p);
@@ -1992,7 +2078,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					const ip_address *peer_client,
 					int transport_proto)
 {
-	struct connection *c = connections, *best = NULL;
+	struct connection *c, *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
 	struct spd_route *sr;
 	struct spd_route *best_sr;
@@ -2004,16 +2090,16 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
 	DBG(DBG_CONTROL, {
-			char ocb[ADDRTOT_BUF];
-			char pcb[ADDRTOT_BUF];
+		ipstr_buf a;
+		ipstr_buf b;
 
-			addrtot(our_client, 0, ocb, sizeof(ocb));
-			addrtot(peer_client, 0, pcb, sizeof(pcb));
-			DBG_log("find_connection: looking for policy for "
-				"connection: %s:%d/%d -> %s:%d/%d",
-				ocb, transport_proto, our_port, pcb,
-				transport_proto, peer_port);
-		});
+		DBG_log("find_connection: looking for policy for "
+			"connection: %s:%d/%d -> %s:%d/%d",
+			ipstr(our_client, &a),
+			transport_proto, our_port,
+			ipstr(peer_client, &b),
+			transport_proto, peer_port);
+	});
 
 	for (c = connections; c != NULL; c = c->ac_next) {
 		if (c->kind == CK_GROUP)
@@ -2110,11 +2196,10 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	if (srp != NULL && best != NULL)
 		*srp = best_sr;
 
-	if (DBGP(DBG_CONTROL)) {
-		if (best) {
+	DBG(DBG_CONTROL, {
+		if (best != NULL) {
 			char cib[CONN_INST_BUF];
-			DBG_log("find_connection: concluding with \"%s\"%s "
-				"[pri:%ld]{%p} kind=%s",
+			DBG_log("find_connection: concluding with \"%s\"%s [pri:%ld]{%p} kind=%s",
 				best->name,
 				(fmt_conn_instance(best, cib), cib),
 				best_prio,
@@ -2123,7 +2208,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 		} else {
 			DBG_log("find_connection: concluding with empty");
 		}
-	}
+	});
 
 	return best;
 }
@@ -2158,10 +2243,6 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 	struct iface_port *p;
 	struct connection *best = NULL;
 	struct spd_route *sr, *bestsr;
-	char ocb[ADDRTOT_BUF], pcb[ADDRTOT_BUF];
-
-	addrtot(our_client, 0, ocb, sizeof(ocb));
-	addrtot(peer_client, 0, pcb, sizeof(pcb));
 
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
@@ -2257,8 +2338,8 @@ struct connection *route_owner(struct connection *c,
 			struct spd_route **esrp)
 {
 	struct connection *d,
-	*best_ro = c,
-	*best_ero = c;
+		*best_ro = c,
+		*best_ero = c;
 	struct spd_route *srd, *src;
 	struct spd_route *best_sr, *best_esr;
 	enum routing_t best_routing, best_erouting;
@@ -2394,49 +2475,46 @@ struct connection *find_host_connection(const ip_address *me,
 	struct connection *c;
 
 	DBG(DBG_CONTROLMORE, {
-			char mebuf[ADDRTOT_BUF];
-			char himbuf[ADDRTOT_BUF];
-			DBG_log("find_host_connection "
-				"me=%s:%d him=%s:%d policy=%s",
-				(addrtot(me, 0, mebuf,
-					sizeof(mebuf)), mebuf), my_port,
-				him ? (addrtot(him, 0, himbuf,
-							sizeof(himbuf)),
-					himbuf) : "%any",
-				his_port, bitnamesof(sa_policy_bit_names,
-						policy));
-		});
+		ipstr_buf a;
+		ipstr_buf b;
+		DBG_log("find_host_connection me=%s:%d him=%s:%d policy=%s",
+			ipstr(me, &a), my_port,
+			him != NULL ? ipstr(him, &b) : "%any",
+			his_port,
+			bitnamesof(sa_policy_bit_names, policy));
+	});
 	c = find_host_pair_connections(__FUNCTION__, me, my_port, him,
 				his_port);
 
-	if (policy != LEMPTY) {
-		/*
-		 * If we have requirements for the policy, choose the first
-		 * matching connection.
-		 */
+	/*
+	 * If we have requirements for the policy, choose the first
+	 * matching connection.
+	 */
+	DBG(DBG_CONTROLMORE,
+		DBG_log("searching for connection with policy = %s",
+			bitnamesof(sa_policy_bit_names, policy)));
+	for (; c != NULL; c = c->hp_next) {
 		DBG(DBG_CONTROLMORE,
-			DBG_log("searching for connection with policy = %s",
-				bitnamesof(sa_policy_bit_names, policy)));
-		for (; c != NULL; c = c->hp_next) {
-			DBG(DBG_CONTROLMORE,
-				DBG_log("found policy = %s (%s)",
-					bitnamesof(sa_policy_bit_names,
-						c->policy),
-					c->name));
-			if (NEVER_NEGOTIATE(c->policy))
-				continue;
+			DBG_log("found policy = %s (%s)",
+				bitnamesof(sa_policy_bit_names,
+					c->policy),
+				c->name));
 
-			if ((policy & POLICY_XAUTH) !=
-				(c->policy & POLICY_XAUTH))
-				continue;
+		if (NEVER_NEGOTIATE(c->policy))
+			continue;
 
-			if ((c->policy & policy) == policy)
-				break;
-		}
+		/* if any policy is specified, make sure XAUTH matches */
+		if (policy != LEMPTY &&
+		    (policy & POLICY_XAUTH) != (c->policy & POLICY_XAUTH))
+			continue;
 
+		/*
+		 * Success if all specified policy bits are in candidate.
+		 * This will always be the case if policy is LEMPTY.
+		 */
+		if (LIN(policy, c->policy))
+			break;
 	}
-
-	for (; c != NULL && NEVER_NEGOTIATE(c->policy); c = c->hp_next) ;
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("find_host_connection returns %s",
@@ -3025,9 +3103,10 @@ static struct connection *fc_try(const struct connection *c,
 
 		for (sr = &d->spd; best != d && sr != NULL; sr = sr->next) {
 			policy_prio_t prio;
-			char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
 
-			if (DBGP(DBG_CONTROLMORE)) {
+			DBG(DBG_CONTROLMORE, {
+				char s3[SUBNETTOT_BUF];
+				char d3[SUBNETTOT_BUF];
 				subnettot(&sr->this.client, 0, s3,
 					sizeof(s3));
 				subnettot(&sr->that.client, 0, d3,
@@ -3043,12 +3122,14 @@ static struct connection *fc_try(const struct connection *c,
 					sr->this.protocol, sr->this.port,
 					d3, sr->that.protocol, sr->that.port,
 					is_virtual_sr(sr) ? "(virt)" : "");
-			}
+			});
 
 			if (!samesubnet(&sr->this.client, our_net)) {
 				DBG(DBG_CONTROLMORE,
-					DBG_log("   our client(%s) not in "
-						"our_net (%s)",
+					char s3[SUBNETTOT_BUF];
+					subnettot(&sr->this.client, 0, s3,
+						sizeof(s3));
+					DBG_log("   our client(%s) not in our_net (%s)",
 						s3, s1));
 
 				continue;
@@ -3063,16 +3144,17 @@ static struct connection *fc_try(const struct connection *c,
 					if (!samesubnet(&sr->that.client,
 							 peer_net) &&
 					    !is_virtual_sr(sr)) {
-						DBG(DBG_CONTROLMORE,
-							DBG_log("   their "
-								"client(%s) "
-								"not in same "
-								"peer_net (%s)",
-								d3, d1));
+						DBG(DBG_CONTROLMORE, {
+							char d3[SUBNETTOT_BUF];
+							subnettot(&sr->that.client, 0, d3,
+								sizeof(d3));
+							DBG_log("   their client(%s) not in same peer_net (%s)",
+								d3, d1);
+						});
 						continue;
 					}
 
-					virtualwhy = is_virtual_net_allowed(
+					virtualwhy = check_virtual_net_allowed(
 							d,
 							peer_net,
 							&sr->that.host_addr);
@@ -3086,9 +3168,7 @@ static struct connection *fc_try(const struct connection *c,
 						    peer_id : &sr->that.id)))
 					{
 						DBG(DBG_CONTROLMORE,
-							DBG_log("   virtual "
-								"net not "
-								"allowed"));
+							DBG_log("   virtual net not allowed"));
 						continue;
 					}
 				}
@@ -3130,9 +3210,8 @@ static struct connection *fc_try(const struct connection *c,
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
 			libreswan_log(
-				"peer proposal was reject in a virtual "
-				"connection policy because:");
-			libreswan_log("  %s", virtualwhy);
+				"peer proposal was reject in a virtual connection policy: %s",
+				virtualwhy);
 		}
 	}
 
@@ -3184,9 +3263,11 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		 * be marked as opportunistic.
 		 */
 		for (sr = &d->spd; sr != NULL; sr = sr->next) {
-			if (DBGP(DBG_CONTROLMORE)) {
-				char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
-				char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
+			DBG(DBG_CONTROLMORE, {
+				char s1[SUBNETTOT_BUF];
+				char d1[SUBNETTOT_BUF];
+				char s3[SUBNETTOT_BUF];
+				char d3[SUBNETTOT_BUF];
 
 				subnettot(our_net, 0, s1, sizeof(s1));
 				subnettot(peer_net, 0, d1, sizeof(d1));
@@ -3197,7 +3278,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				DBG_log("  fc_try_oppo trying %s:%s -> "
 					"%s vs %s:%s -> %s",
 					c->name, s1, d1, d->name, s3, d3);
-			}
+			});
 
 			if (!subnetinsubnet(our_net, &sr->this.client) ||
 				!subnetinsubnet(peer_net, &sr->that.client))
@@ -3250,18 +3331,19 @@ struct connection *find_client_connection(struct connection *c,
 	struct connection *d;
 	struct spd_route *sr;
 
-	if (DBGP(DBG_CONTROLMORE)) {
-		char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
+	DBG(DBG_CONTROLMORE, {
+		char s1[SUBNETTOT_BUF];
+		char d1[SUBNETTOT_BUF];
 
 		subnettot(our_net, 0, s1, sizeof(s1));
 		subnettot(peer_net, 0, d1, sizeof(d1));
 
 		DBG_log("find_client_connection starting with %s",
-			(c ? c->name : "(none)"));
+			c->name);
 		DBG_log("  looking for %s:%d/%d -> %s:%d/%d",
 			s1, our_protocol, our_port,
 			d1, peer_protocol, peer_port);
-	}
+	});
 
 	/*
 	 * Give priority to current connection
@@ -3275,14 +3357,15 @@ struct connection *find_client_connection(struct connection *c,
 			sr = sr->next) {
 			srnum++;
 
-			if (DBGP(DBG_CONTROLMORE)) {
-				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
+			DBG(DBG_CONTROLMORE, {
+				char s2[SUBNETTOT_BUF];
+				char d2[SUBNETTOT_BUF];
 
 				subnettot(&sr->this.client, 0, s2, sizeof(s2));
 				subnettot(&sr->that.client, 0, d2, sizeof(d2));
 				DBG_log("  concrete checking against sr#%d "
 					"%s -> %s", srnum, s2, d2);
-		}
+			});
 
 			if (samesubnet(&sr->this.client, our_net) &&
 				samesubnet(&sr->that.client, peer_net) &&
@@ -3324,8 +3407,9 @@ struct connection *find_client_connection(struct connection *c,
 					sra->this.host_port,
 					NULL,
 					sra->that.host_port);
-			if (DBGP(DBG_CONTROLMORE)) {
-				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
+			DBG(DBG_CONTROLMORE, {
+				char s2[SUBNETTOT_BUF];
+				char d2[SUBNETTOT_BUF];
 
 				subnettot(&sra->this.client, 0, s2,
 					sizeof(s2));
@@ -3335,7 +3419,7 @@ struct connection *find_client_connection(struct connection *c,
 				DBG_log("  checking hostpair %s -> %s is %s",
 					s2, d2,
 					(hp ? "found" : "not found"));
-			}
+			});
 		}
 
 		if (hp != NULL) {
@@ -3403,150 +3487,81 @@ static void show_one_sr(struct connection *c,
 			char *instance)
 {
 	char topo[CONN_BUF_LEN];
-	char srcip[ADDRTOT_BUF], dstip[ADDRTOT_BUF];
-	char thissemi[3 + sizeof("myup=")];
-	char thatsemi[3 + sizeof("theirup=")];
-	char thiscertsemi[3 + sizeof("mycert=") + PATH_MAX];
-	char thatcertsemi[3 + sizeof("hiscert=") + PATH_MAX];
-	char *thisup, *thatup;
+	ipstr_buf thisipb, thatipb, dns1b, dns2b;
 
 	(void) format_connection(topo, sizeof(topo), c, sr);
 	whack_log(RC_COMMENT, "\"%s\"%s: %s; %s; eroute owner: #%lu",
 		c->name, instance, topo,
 		enum_name(&routing_story, sr->routing),
 		sr->eroute_owner);
-	if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
-		isanyaddr(&c->spd.this.host_srcip))
-		strcpy(srcip, "unset");
-	else
-		addrtot(&sr->this.host_srcip, 0, srcip, sizeof(srcip));
-	if (addrbytesptr(&c->spd.that.host_srcip, NULL) == 0 ||
-		isanyaddr(&c->spd.that.host_srcip))
-		strcpy(dstip, "unset");
-	else
-		addrtot(&sr->that.host_srcip, 0, dstip, sizeof(dstip));
 
-	thissemi[0] = '\0';
-	thisup = thissemi;
-	if (sr->this.updown) {
-		thissemi[0] = ';';
-		thissemi[1] = ' ';
-		thissemi[2] = '\0';
-		strcat(thissemi, "myup=");
-		thisup = sr->this.updown;
-	}
+#define OPT_HOST(h, ipb)  (addrbytesptr(h, NULL) == 0 || isanyaddr(h) ? \
+			"unset" : ipstr(h, &ipb))
 
-	thatsemi[0] = '\0';
-	thatup = thatsemi;
-	if (sr->that.updown) {
-		thatsemi[0] = ';';
-		thatsemi[1] = ' ';
-		thatsemi[2] = '\0';
-		strcat(thatsemi, "theirup=");
-		thatup = sr->that.updown;
-	}
-
-	thiscertsemi[0] = '\0';
-	if (sr->this.cert_filename) {
-		snprintf(thiscertsemi, sizeof(thiscertsemi) - 1,
-			"; mycert=%s",
-			sr->this.cert_filename);
-	}
-
-	thatcertsemi[0] = '\0';
-	if (sr->that.cert_filename) {
-		snprintf(thatcertsemi, sizeof(thatcertsemi) - 1,
-			"; hiscert=%s",
-			sr->that.cert_filename);
-	}
+		/* note: this macro generates a pair of arguments */
+#define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s%s%s;",
+		"\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s%s%s%s%s",
 		c->name, instance,
 		oriented(*c) ? "oriented" : "unoriented",
-		srcip, dstip,
-		thissemi, thisup,
-		thatsemi, thatup,
-		thiscertsemi,
-		thatcertsemi);
+		OPT_HOST(&c->spd.this.host_srcip, thisipb),
+		OPT_HOST(&c->spd.that.host_srcip, thatipb),
+		OPT_PREFIX_STR("; myup=", sr->this.updown),
+		OPT_PREFIX_STR("; theirup=", sr->that.updown),
+		OPT_PREFIX_STR("; mycert=", sr->this.cert_filename),
+		OPT_PREFIX_STR("; hiscert=", sr->that.cert_filename));
 
-	{
-		char thisxauthsemi[XAUTH_USERNAME_LEN +
-				sizeof("my_xauthuser=")];
-		char thatxauthsemi[XAUTH_USERNAME_LEN +
-				sizeof("their_xauthuser=")];
-		char dns1[ADDRTOT_BUF], dns2[ADDRTOT_BUF];
+#undef OPT_HOST
+#undef OPT_PREFIX_STR
 
-		thisxauthsemi[0] = '\0';
-		snprintf(thisxauthsemi, sizeof(thisxauthsemi) - 1,
-			"my_xauthuser=%s; ",
-			sr->this.xauth_name != NULL ? sr->this.xauth_name : "[any]");
+	/*
+	 * Both should not be set, but if they are, we want
+	 * to know
+	 */
+#define COMBO(END, SERVER, CLIENT) \
+	(END.SERVER ? \
+		(END.CLIENT ? "BOTH??" : "server") : \
+		(END.CLIENT ? "client" : "none"))
 
-		thatxauthsemi[0] = '\0';
-		snprintf(thatxauthsemi, sizeof(thatxauthsemi) - 1,
-			"their_xauthuser=%s; ",
-			sr->that.xauth_name != NULL ? sr->that.xauth_name : "[any]");
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   xauth info: us:%s, them:%s, %s my_xauthuser=%s; their_xauthuser=%s",
+		c->name, instance,
+		/*
+		 * Both should not be set, but if they are, we want to
+		 * know
+		 */
+		COMBO(sr->this, xauth_server, xauth_client),
+		COMBO(sr->that, xauth_server, xauth_client),
+		/* should really be an enum name */
+		sr->this.xauth_server ?
+			c->xauthby == XAUTHBY_FILE ?
+				"method:file;" :
+			c->xauthby == XAUTHBY_PAM ?
+				"method:pam;" :
+				"method:alwaysok;" :
+			"",
+		sr->this.xauth_name != NULL ? sr->this.xauth_name : "[any]",
+		sr->that.xauth_name != NULL ? sr->that.xauth_name : "[any]");
 
-		whack_log(RC_COMMENT,
-			"\"%s\"%s:   xauth info: us:%s, them:%s, %s %s%s;",
-			c->name, instance,
-			/*
-			 * Both should not be set, but if they are, we want to
-			 * know
-			 */
-			sr->this.xauth_server ?
-				sr->this.xauth_client ? "both??" : "server" :
-				sr->this.xauth_client ? "client" : "none",
-			sr->that.xauth_server ?
-				sr->that.xauth_client ? "both??" : "server" :
-				sr->that.xauth_client ? "client" : "none",
-			/* should really be an enum name */
-			sr->this.xauth_server ?
-				c->xauthby == XAUTHBY_FILE ?
-					"method:file;" :
-				c->xauthby == XAUTHBY_PAM ?
-					"method:pam;" :
-					"method:alwaysok;" :
-				"",
-			thisxauthsemi,
-			thatxauthsemi);
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
+		"policy:%s, dns1:%s, dns2:%s, domain:%s%s;",
+		c->name, instance,
+		COMBO(sr->this, modecfg_client, modecfg_server),
+		COMBO(sr->that, modecfg_client, modecfg_server),
 
-		if (isanyaddr(&c->modecfg_dns1))
-			strcpy(dns1, "unset");
-		else
-			addrtot(&c->modecfg_dns1, 0, dns1, sizeof(dns1));
-		if (isanyaddr(&c->modecfg_dns2))
-			strcpy(dns2, "unset");
-		else
-			addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
+		(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
+		isanyaddr(&c->modecfg_dns1) ? "unset" : ipstr(&c->modecfg_dns1, &dns1b),
+		isanyaddr(&c->modecfg_dns2) ? "unset" : ipstr(&c->modecfg_dns2, &dns2b),
+		(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
+		(c->modecfg_banner == NULL) ? ", banner:unset" : "");
 
-		whack_log(RC_COMMENT,
-			"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
-			"policy:%s, dns1:%s, dns2:%s, domain:%s%s;",
-			c->name, instance,
-			/*
-			 * Both should not be set, but if they are, we want
-			 * to know
-			 */
-			(!sr->this.modecfg_server &&
-				!sr->this.modecfg_client) ? "none" :
-			(sr->this.modecfg_server &&
-				sr->this.modecfg_client) ? "both??" :
-			(sr->this.modecfg_server) ? "server" : "client",
-			(!sr->that.modecfg_server &&
-				!sr->that.modecfg_client) ? "none" :
-			(sr->that.modecfg_server &&
-				sr->that.modecfg_client) ? "both??" :
-			(sr->that.modecfg_server) ? "server" : "client",
-			(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
-			dns1,
-			dns2,
-			(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
-			(c->modecfg_banner == NULL) ? ", banner:unset" : "");
-		if (c->modecfg_banner != NULL) {
-			whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
-			c->name, instance, c->modecfg_banner);
-		}
+#undef COMBO
+
+	if (c->modecfg_banner != NULL) {
+		whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
+		c->name, instance, c->modecfg_banner);
 	}
 
 #ifdef HAVE_LABELED_IPSEC
@@ -3559,7 +3574,7 @@ static void show_one_sr(struct connection *c,
 		c->name, instance,
 		(c->policy_label == NULL) ? "unset" : c->policy_label);
 #else
-/* this makes output consistent for testing regardless of support */
+	/* this makes output consistent for testing regardless of support */
 	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no, loopback:no; ",
 		  c->name, instance);
 	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:unset; ",
@@ -3671,6 +3686,7 @@ void show_one_connection(struct connection *c)
 		mtustr, sapriostr);
 
 	/* slightly complicated stuff to avoid extra crap */
+	/* ??? real-world and DBG control flow mixed */
 	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; "
@@ -3715,41 +3731,42 @@ void show_one_connection(struct connection *c)
 
 void show_connections_status(void)
 {
-	int count, i, active;
+	int count = 0;
+	int active = 0;
 	struct connection *c;
-	struct connection **array;
 
 	whack_log(RC_COMMENT, " "); /* spacer */
 	whack_log(RC_COMMENT, "Connection list:"); /* spacer */
 	whack_log(RC_COMMENT, " "); /* spacer */
 
-	/* make an array of connections, and sort it */
-	count = 0;
-	for (c = connections; c != NULL; c = c->ac_next)
-		count++;
-	if (count == 0)
-		/* abort early to avoid a malloc(0) that uclibc does not like */
-		return;
-
-	array = alloc_bytes(sizeof(struct connection *) * count,
-			"connection array");
-
-	count = 0;
-	active = 0;
 	for (c = connections; c != NULL; c = c->ac_next) {
-		array[count++] = c;
+		count++;
 		if (c->spd.routing == RT_ROUTED_TUNNEL)
 			active++;
 	}
 
-	/* sort it! */
-	qsort(array, count, sizeof(struct connection *),
-		connection_compare_qsort);
+	if (count != 0) {
+		/* make an array of connections, sort it, and report it */
 
-	for (i = 0; i < count; i++)
-		show_one_connection(array[i]);
-	pfree(array);
-	whack_log(RC_COMMENT, " "); /* spacer */
+		struct connection **array =
+			alloc_bytes(sizeof(struct connection *) * count,
+				"connection array");
+		int i = 0;
+
+		for (c = connections; c != NULL; c = c->ac_next)
+			array[i++] = c;
+
+		/* sort it! */
+		qsort(array, count, sizeof(struct connection *),
+			connection_compare_qsort);
+
+		for (i = 0; i < count; i++)
+			show_one_connection(array[i]);
+
+		pfree(array);
+		whack_log(RC_COMMENT, " "); /* spacer */
+	}
+
 	whack_log(RC_COMMENT, "Total IPsec connections: loaded %d, active %d",
 		count, active);
 }
