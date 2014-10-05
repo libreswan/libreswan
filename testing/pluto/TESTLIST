@@ -507,7 +507,6 @@ kvmplutotest	ah-pluto-05		good
 kvmplutotest	ah-pluto-09		good
 kvmplutotest	ah-pluto-10		good
 kvmplutotest	ah-pluto-11		good
-kvmplutotest	ah-pluto-12		good
 kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	good
 kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	good
 kvmplutotest	interop-ikev1-strongswan-12-esp-sha2_256 good
