@@ -482,7 +482,7 @@ int main(int argc, char *argv[])
 	__u32 spi = 0;
 	int c;
 	ip_said said;
-	const char* error_s;
+	const char *error_s;
 	char ipsaid_txt[SATOT_BUF];
 
 	int outif = 0;

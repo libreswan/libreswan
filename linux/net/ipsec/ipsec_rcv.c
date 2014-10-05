@@ -125,7 +125,7 @@ module_param(ipsec_replaywin_override, int, 0644);
 MODULE_PARM_DESC(ipsec_replaywin_override,
 		 "override replay window (-1=no change, 0=disable, N=override value");
 
-DEBUG_NO_STATIC int ipsec_checkreplaywindow(struct ipsec_sa*ipsp, __u32 seq)
+DEBUG_NO_STATIC int ipsec_checkreplaywindow(struct ipsec_sa *ipsp, __u32 seq)
 {
 	__u32 diff;
 
@@ -155,7 +155,7 @@ DEBUG_NO_STATIC int ipsec_checkreplaywindow(struct ipsec_sa*ipsp, __u32 seq)
 	return 1;			/* out of order but good */
 }
 
-DEBUG_NO_STATIC int ipsec_updatereplaywindow(struct ipsec_sa*ipsp, __u32 seq)
+DEBUG_NO_STATIC int ipsec_updatereplaywindow(struct ipsec_sa *ipsp, __u32 seq)
 {
 	__u32 diff;
 
@@ -517,7 +517,7 @@ void ipsec_rcv_setoutif(struct ipsec_rcv_state *irs)
 static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 {
 	struct ipsec_sa *ipsp;
-	struct ipsec_sa* ipsnext = NULL;
+	struct ipsec_sa *ipsnext = NULL;
 	struct sk_buff *skb;
 	struct iphdr *ipp = lsw_ip4_hdr(irs);
 

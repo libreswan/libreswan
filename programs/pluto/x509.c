@@ -696,7 +696,7 @@ bool verify_x509cert(x509cert_t *cert, bool strict, realtime_t *until,
 /*
  *  list all X.509 certs in a chained list
  */
-static void list_x509cert_chain(const char *caption, x509cert_t* cert,
+static void list_x509cert_chain(const char *caption, x509cert_t *cert,
 				u_char auth_flags,
 				bool utc)
 {

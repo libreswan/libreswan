@@ -78,7 +78,7 @@ static bool match(const char *pattern, const chunk_t *ch)
 /*
  * find a boundary of the form -----tag name-----
  */
-static bool find_boundary(const char* tag, chunk_t *line)
+static bool find_boundary(const char *tag, chunk_t *line)
 {
 	chunk_t name = empty_chunk;
 

@@ -281,7 +281,7 @@ bool ikev2_out_sa(pb_stream *outs,
 
 struct db_trans_flat {
 	u_int8_t protoid;		/* Protocol-Id */
-	u_int16_t auth_method;		/* conveyed another way in ikev2*/
+	u_int16_t auth_method;		/* conveyed another way in ikev2 */
 	u_int16_t encr_transid;		/* Transform-Id */
 	u_int16_t integ_transid;	/* Transform-Id */
 	u_int16_t prf_transid;		/* Transform-Id */

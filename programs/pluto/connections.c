@@ -237,9 +237,9 @@ void delete_connection(struct connection *c, bool relations)
 
 	lset_t old_cur_debugging = cur_debugging;
 	union {
-		struct alg_info** ppai;
-		struct alg_info_esp** ppai_esp;
-		struct alg_info_ike** ppai_ike;
+		struct alg_info **ppai;
+		struct alg_info_esp **ppai_esp;
+		struct alg_info_ike **ppai_ike;
 	} palg_info;
 
 	set_cur_connection(c);
@@ -981,7 +981,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 			er = ttoaddr(dst->host_addr_name, 0, AF_UNSPEC,
 				&dst->host_addr);
 
-			/*The above call wipes out the port, put it again*/
+			/* The above call wipes out the port, put it again */
 			port = htons(dst->port);
 			setportof(port, &dst->host_addr);
 

@@ -191,7 +191,7 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 /*
  * forms the keyid from the public exponent e and modulus n
  */
-void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize)
+void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.ptr == 0x00) {

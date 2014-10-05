@@ -707,7 +707,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		passert(tkey23 != NULL);
 
 		DBG(DBG_CRYPT, DBG_log("NSS: enc keysize=%d", (int)keysize));
-		/*Deriving encryption key from SKEYID_e*/
+		/* Deriving encryption key from SKEYID_e */
 		/* Oakley Keying Material
 		 * Derived from Skeyid_e: if it is not big enough, generate more
 		 * using the PRF.

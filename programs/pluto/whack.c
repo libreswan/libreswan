@@ -951,7 +951,7 @@ int main(int argc, char **argv)
 
 	msg.sha2_truncbug = FALSE;
 
-	/*Network Manager support*/
+	/* Network Manager support */
 #ifdef HAVE_NM
 	msg.nmconfigured = FALSE;
 #endif

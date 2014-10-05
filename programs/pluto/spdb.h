@@ -108,7 +108,7 @@ struct db_v2_prop_conj {
 /* this is, for instance, ESP+AH, etc.    */
 struct db_v2_prop {
 	struct db_v2_prop_conj  *props; /* array */
-	unsigned int prop_cnt;          /* number of elements... AND*/
+	unsigned int prop_cnt;          /* number of elements... AND */
 };
 
 /* security association */

@@ -52,7 +52,7 @@ static void do_aes(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 	int outlen;
 
 	DBG(DBG_CRYPT, DBG_log("NSS do_aes: enter"));
-	ciphermech = CKM_AES_CBC; /*libreswan provides padding*/
+	ciphermech = CKM_AES_CBC; /* libreswan provides padding */
 
 	if (symkey == NULL) {
 		loglog(RC_LOG_SERIOUS,

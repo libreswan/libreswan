@@ -36,7 +36,7 @@ struct socket_list {
 	struct socket *socketp;
 	struct socket_list *next;
 };
-extern int pfkey_list_insert_socket(struct socket*, struct socket_list**);
+extern int pfkey_list_insert_socket(struct socket *, struct socket_list **);
 extern struct socket_list *pfkey_open_sockets;
 extern struct socket_list *pfkey_registered_sockets[];
 
@@ -54,10 +54,10 @@ struct supported_list {
 	struct ipsec_alg_supported *supportedp;
 	struct supported_list *next;
 };
-extern int pfkey_list_insert_supported(struct ipsec_alg_supported*,
-				       struct supported_list**);
-extern int pfkey_list_remove_supported(struct ipsec_alg_supported*,
-				       struct supported_list**);
+extern int pfkey_list_insert_supported(struct ipsec_alg_supported *,
+				       struct supported_list **);
+extern int pfkey_list_remove_supported(struct ipsec_alg_supported *,
+				       struct supported_list **);
 
 struct sockaddr_key {
 	uint16_t key_family;            /* PF_KEY */
@@ -66,8 +66,8 @@ struct sockaddr_key {
 };
 
 struct pfkey_extracted_data {
-	struct ipsec_sa* ips;
-	struct ipsec_sa* ips2;
+	struct ipsec_sa *ips;
+	struct ipsec_sa *ips2;
 	struct eroute *eroute;
 	int outif;
 	IPsecSAref_t sarefme;
@@ -82,43 +82,43 @@ struct sadb_comb;
 struct sadb_sadb;
 struct sadb_alg;
 
-extern int pfkey_alloc_eroute(struct eroute** eroute);
+extern int pfkey_alloc_eroute(struct eroute **eroute);
 
 extern int pfkey_sa_process(struct sadb_ext *pfkey_ext,
-			    struct pfkey_extracted_data* extr);
+			    struct pfkey_extracted_data *extr);
 
 extern int pfkey_lifetime_process(struct sadb_ext *pfkey_ext,
-				  struct pfkey_extracted_data* extr);
+				  struct pfkey_extracted_data *extr);
 
 extern int pfkey_address_process(struct sadb_ext *pfkey_ext,
-				 struct pfkey_extracted_data* extr);
+				 struct pfkey_extracted_data *extr);
 
 extern int pfkey_key_process(struct sadb_ext *pfkey_ext,
-			     struct pfkey_extracted_data* extr);
+			     struct pfkey_extracted_data *extr);
 
 extern int pfkey_ident_process(struct sadb_ext *pfkey_ext,
-			       struct pfkey_extracted_data* extr);
+			       struct pfkey_extracted_data *extr);
 
 extern int pfkey_sens_process(struct sadb_ext *pfkey_ext,
-			      struct pfkey_extracted_data* extr);
+			      struct pfkey_extracted_data *extr);
 
 extern int pfkey_prop_process(struct sadb_ext *pfkey_ext,
-			      struct pfkey_extracted_data* extr);
+			      struct pfkey_extracted_data *extr);
 
 extern int pfkey_supported_process(struct sadb_ext *pfkey_ext,
-				   struct pfkey_extracted_data* extr);
+				   struct pfkey_extracted_data *extr);
 
 extern int pfkey_spirange_process(struct sadb_ext *pfkey_ext,
-				  struct pfkey_extracted_data* extr);
+				  struct pfkey_extracted_data *extr);
 
 extern int pfkey_x_kmprivate_process(struct sadb_ext *pfkey_ext,
-				     struct pfkey_extracted_data* extr);
+				     struct pfkey_extracted_data *extr);
 
 extern int pfkey_x_satype_process(struct sadb_ext *pfkey_ext,
-				  struct pfkey_extracted_data* extr);
+				  struct pfkey_extracted_data *extr);
 
 extern int pfkey_x_debug_process(struct sadb_ext *pfkey_ext,
-				 struct pfkey_extracted_data* extr);
+				 struct pfkey_extracted_data *extr);
 
 extern int pfkey_upmsg(struct socket *, struct sadb_msg *);
 extern int pfkey_upmsgsk(struct sock *, struct sadb_msg *);
@@ -132,7 +132,7 @@ extern void pfkey_print(struct sadb_msg *msg, FILE *out);
 
 extern uint8_t satype2proto(uint8_t satype);
 extern uint8_t proto2satype(uint8_t proto);
-extern char* satype2name(uint8_t satype);
+extern char *satype2name(uint8_t satype);
 
 struct key_opt {
 	uint32_t key_pid;               /* process ID */
@@ -206,7 +206,7 @@ extern int pfkey_register_reply(int satype, struct sadb_msg *sadb_msg);
  * PF_KEYv2 build function prototypes
  */
 
-int pfkey_msg_hdr_build(struct sadb_ext**   pfkey_ext,
+int pfkey_msg_hdr_build(struct sadb_ext **pfkey_ext,
 			uint8_t msg_type,
 			uint8_t satype,
 			uint8_t msg_errno,
@@ -243,35 +243,35 @@ int pfkey_lifetime_build(struct sadb_ext ** pfkey_ext,
 			 uint64_t usetime,
 			 uint32_t packets);
 
-int pfkey_address_build(struct sadb_ext**   pfkey_ext,
+int pfkey_address_build(struct sadb_ext **pfkey_ext,
 			uint16_t exttype,
 			uint8_t proto,
 			uint8_t prefixlen,
-			struct sockaddr*    address);
+			struct sockaddr *address);
 
-int pfkey_key_build(struct sadb_ext**       pfkey_ext,
+int pfkey_key_build(struct sadb_ext **pfkey_ext,
 		    uint16_t exttype,
 		    uint16_t key_bits,
-		    unsigned char          *key);
+		    unsigned char *key);
 
-int pfkey_ident_build(struct sadb_ext**     pfkey_ext,
+int pfkey_ident_build(struct sadb_ext **pfkey_ext,
 		      uint16_t exttype,
 		      uint16_t ident_type,
 		      uint64_t ident_id,
 		      uint8_t ident_len,
-		      char*                 ident_string);
+		      char *ident_string);
 
 #ifdef __KERNEL__
 extern int pfkey_nat_t_new_mapping(struct ipsec_sa *, struct sockaddr *,
 				   __u16);
 extern int pfkey_x_nat_t_type_process(struct sadb_ext *pfkey_ext,
-				      struct pfkey_extracted_data* extr);
+				      struct pfkey_extracted_data *extr);
 extern int pfkey_x_nat_t_port_process(struct sadb_ext *pfkey_ext,
-				      struct pfkey_extracted_data* extr);
+				      struct pfkey_extracted_data *extr);
 #endif /* __KERNEL__ */
-int pfkey_x_nat_t_type_build(struct sadb_ext**  pfkey_ext,
+int pfkey_x_nat_t_type_build(struct sadb_ext **pfkey_ext,
 			     uint8_t type);
-int pfkey_x_nat_t_port_build(struct sadb_ext**  pfkey_ext,
+int pfkey_x_nat_t_port_build(struct sadb_ext **pfkey_ext,
 			     uint16_t exttype,
 			     uint16_t port);
 
@@ -286,20 +286,20 @@ int pfkey_sens_build(struct sadb_ext **pfkey_ext,
 
 int pfkey_x_protocol_build(struct sadb_ext **, uint8_t);
 
-int pfkey_prop_build(struct sadb_ext**      pfkey_ext,
+int pfkey_prop_build(struct sadb_ext **pfkey_ext,
 		     uint8_t replay,
 		     unsigned int comb_num,
-		     struct sadb_comb*      comb);
+		     struct sadb_comb *comb);
 
-int pfkey_supported_build(struct sadb_ext** pfkey_ext,
+int pfkey_supported_build(struct sadb_ext **pfkey_ext,
 			  uint16_t exttype,
 			  unsigned int alg_num,
-			  struct sadb_alg*  alg);
+			  struct sadb_alg *alg);
 
-int pfkey_x_satype_build(struct sadb_ext**  pfkey_ext,
+int pfkey_x_satype_build(struct sadb_ext **pfkey_ext,
 			 uint8_t satype);
 
-int pfkey_x_debug_build(struct sadb_ext**   pfkey_ext,
+int pfkey_x_debug_build(struct sadb_ext **pfkey_ext,
 			uint32_t tunnel,
 			uint32_t netlink,
 			uint32_t xform,
@@ -313,8 +313,8 @@ int pfkey_x_debug_build(struct sadb_ext**   pfkey_ext,
 			uint32_t ipcomp,
 			uint32_t verbose);
 
-int pfkey_msg_build(struct sadb_msg**       pfkey_msg,
-		    struct sadb_ext*        extensions[],
+int pfkey_msg_build(struct sadb_msg **pfkey_msg,
+		    struct sadb_ext *extensions[],
 		    int dir);
 
 /* in pfkey_v2_debug.c - routines to decode numbers -> strings */

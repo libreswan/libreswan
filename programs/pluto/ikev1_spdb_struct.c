@@ -72,7 +72,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 	DBG(DBG_PARSING, DBG_log("received sec ctx"));
 
-	/*doing sanity check*/
+	/* doing sanity check */
 	if (pbs_left(pbs) <
 	    (sizeof(ctx_doi) + sizeof(ctx_alg) + sizeof(ctx_len) + 1) ) {
 		DBG(DBG_PARSING,
@@ -80,15 +80,15 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		return FALSE;
 	}
 
-	/*reading ctx doi*/
+	/* reading ctx doi */
 	memcpy(&ctx_doi, pbs->cur, sizeof(ctx_doi));
 	pbs->cur += sizeof(ctx_doi);
 
-	/*reading ctx alg*/
+	/* reading ctx alg */
 	memcpy(&ctx_alg, pbs->cur, sizeof(ctx_alg));
 	pbs->cur += sizeof(ctx_alg);
 
-	/*reading ctx length*/
+	/* reading ctx length */
 	memcpy(&net_ctx_len, pbs->cur, sizeof(ctx_len));
 	pbs->cur += sizeof(ctx_len);
 	ctx_len = ntohs(net_ctx_len);
@@ -115,7 +115,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		return FALSE;
 	}
 
-	/* reading security label*/
+	/* reading security label */
 	memcpy(sec_ctx_value, pbs->cur, pbs_left(pbs));
 	i = pbs_left(pbs);
 
@@ -126,13 +126,13 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	 * we can add a \0 if there is space left in the buffer.
 	 */
 
-	if ( sec_ctx_value[i - 1] != '\0') {
-		/*check if we have space left and then append \0*/
+	if (sec_ctx_value[i - 1] != '\0') {
+		/*check if we have space left and then append \0 */
 		if (i < MAX_SECCTX_LEN) {
 			sec_ctx_value[i] = '\0';
 			i = i + 1;
 		} else {
-			/*there is no space left*/
+			/* there is no space left */
 			DBG(DBG_PARSING,
 			    DBG_log("received security label > MAX_SECCTX_LEN (should not happen really)"));
 			return FALSE;
@@ -162,7 +162,10 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		st->sec_ctx->ctx_alg = ctx_alg;
 		st->sec_ctx->ctx_doi = ctx_doi;
 
-		/* lets verify if the received security label is within range of this connection's policy's security label*/
+		/*
+		 * let's verify if the received security label is within range
+		 * of this connection's policy's security label
+		 */
 		if (!st->st_connection->labeled_ipsec) {
 			DBG_log("This state (connection) is not labeled ipsec enabled, so cannot proceed");
 			return FALSE;
@@ -640,7 +643,7 @@ bool ikev1_out_sa(pb_stream *outs,
 							     &val_pbs,
 							     " variable length sec ctx: ctx_len"))
 							return_on(ret, FALSE);
-						/*Sending '\0'  with sec ctx as we get it from kernel*/
+						/* Sending '\0'  with sec ctx as we get it from kernel */
 						if (!out_raw(st->sec_ctx->
 							     sec_ctx_value,
 							     st->sec_ctx->
@@ -1688,7 +1691,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			return FALSE;
 
 #ifndef HAVE_LABELED_IPSEC
-		/*This check is no longer valid when using security labels as SECCTX attribute is in private range and has value of 32001*/
+		/*
+		 * This check is no longer valid when using security labels as
+		 * SECCTX attribute is in private range and has value of 32001
+		 */
 		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF);
 #endif
 
@@ -1707,9 +1713,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		vdesc = ipsec_attr_val_descs[(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK)
 #ifdef HAVE_LABELED_IPSEC
-		/* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
-		/* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
-		/* which is NULL in ipsec_attr_val_desc*/
+		/*
+		 * The original code (without labeled ipsec) assumes
+		 *	a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF
+		 * so for retaining the same behavior when this is < LELEM_ROOF
+		 * and if more than >= LELEM_ROOF setting it to 0,
+		 * which is NULL in ipsec_attr_val_desc
+		 */
 					     >= LELEM_ROOF ? 0 : a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #endif

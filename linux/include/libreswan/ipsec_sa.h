@@ -177,10 +177,10 @@ struct ipsec_sa {
 	struct ipsec_lifetimes ips_life;        /* lifetime records */
 
 	/* selector information */
-	__u8 ips_transport_protocol;            /* protocol for this SA, if ports are involved */
-	struct sockaddr*ips_addr_s;             /* src sockaddr */
-	struct sockaddr*ips_addr_d;             /* dst sockaddr */
-	struct sockaddr*ips_addr_p;             /* proxy sockaddr */
+	__u8 ips_transport_protocol;		/* protocol for this SA, if ports are involved */
+	struct sockaddr *ips_addr_s;		/* src sockaddr */
+	struct sockaddr *ips_addr_d;		/* dst sockaddr */
+	struct sockaddr *ips_addr_p;		/* proxy sockaddr */
 	__u16 ips_addr_s_size;
 	__u16 ips_addr_d_size;
 	__u16 ips_addr_p_size;
@@ -223,10 +223,10 @@ struct ipsec_sa {
 	__u32 ips_sens_dpd;
 	__u8 ips_sens_sens_level;
 	__u8 ips_sens_sens_len;
-	__u64*          ips_sens_sens_bitmap;
+	__u64 *ips_sens_sens_bitmap;
 	__u8 ips_sens_integ_level;
 	__u8 ips_sens_integ_len;
-	__u64*          ips_sens_integ_bitmap;
+	__u64 *ips_sens_integ_bitmap;
 #endif
 	struct ipsec_alg_enc *ips_alg_enc;
 	struct ipsec_alg_auth *ips_alg_auth;
@@ -257,11 +257,11 @@ struct ipsec_sa {
 };
 
 struct IPsecSArefSubTable {
-	struct ipsec_sa* entry[IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES];
+	struct ipsec_sa *entry[IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES];
 };
 
 struct ipsec_sadb {
-	struct IPsecSArefSubTable* refTable[IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES];
+	struct IPsecSArefSubTable *refTable[IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES];
 	IPsecSAref_t refFreeList[IPSEC_SA_REF_FREELIST_NUM_ENTRIES];
 	int refFreeListHead;
 	int refFreeListTail;
@@ -273,8 +273,8 @@ struct ipsec_sadb {
 extern struct ipsec_sadb ipsec_sadb;
 
 extern int ipsec_sadb_init(void);
-extern struct ipsec_sa *ipsec_sa_alloc(int*error); /* pass in error var by pointer */
-extern int ipsec_sa_free(struct ipsec_sa* ips);
+extern struct ipsec_sa *ipsec_sa_alloc(int *error); /* pass in error var by pointer */
+extern int ipsec_sa_free(struct ipsec_sa *ips);
 
 #define ipsec_sa_get(ips, type) __ipsec_sa_get(ips, __FUNCTION__, __LINE__, \
 					       type)

@@ -169,7 +169,7 @@ extern bool match_dn(chunk_t a, chunk_t b, int *wildcards);
 extern int dn_count_wildcards(chunk_t dn);
 extern int dntoa(char *dst, size_t dstlen, chunk_t dn);
 extern int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn,
-			 const char* null_dn);
+			 const char *null_dn);
 extern err_t atodn(char *src, chunk_t *dn);
 extern bool parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert);
 extern bool parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl);
@@ -183,10 +183,10 @@ extern bool check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 			    const x509cert_t *issuer_cert);
 extern bool verify_x509cert(x509cert_t *cert, bool strict,
 				      realtime_t *until, x509cert_t *alt);
-extern x509cert_t* add_x509cert(x509cert_t *cert);
-extern x509cert_t* get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
+extern x509cert_t *add_x509cert(x509cert_t *cert);
+extern x509cert_t *get_x509cert(chunk_t issuer, chunk_t serial, chunk_t keyid,
 				x509cert_t *chain);
-extern x509cert_t* get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
+extern x509cert_t *get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 				u_char auth_flags);
 extern void share_x509cert(x509cert_t *cert);
 extern void free_x509cert(x509cert_t *cert);
@@ -202,7 +202,7 @@ extern void list_crls(bool utc, bool strict);
 extern void free_authcerts(void);
 extern void free_crls(void);
 extern void free_crl(x509crl_t *crl);
-extern void free_generalNames(generalName_t* gn, bool free_name);
+extern void free_generalNames(generalName_t *gn, bool free_name);
 extern void free_authcert_chain(x509cert_t *chain);
 
 extern x509cert_t *get_alt_cacert(chunk_t subject, chunk_t serial,

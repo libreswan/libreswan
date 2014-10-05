@@ -141,7 +141,7 @@ struct hmac_ctx {
 	sha512_context ctx_sha512;
 #endif
 	PK11SymKey *ikey, *okey;
-	PK11Context* ctx_nss;
+	PK11Context *ctx_nss;
 };
 
 extern void hmac_init(struct hmac_ctx *ctx,

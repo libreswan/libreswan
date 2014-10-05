@@ -856,13 +856,13 @@ static const char *const ipsec_var_attr_name[] = {
 	NULL,
 	"COMPRESS_PRIVATE_ALG (variable length)",
 #ifdef HAVE_LABELED_IPSEC
-	"NULL", /*ECN TUNNEL*/
+	"NULL", /* ECN TUNNEL */
 #endif
 };
 
 #ifdef HAVE_LABELED_IPSEC
 static const char *const ipsec_private_attr_name[] = {
-	"SECCTX" /*32001*/
+	"SECCTX" /* 32001 */
 };
 
 static enum_names ipsec_private_attr_names_tv = {
@@ -927,7 +927,7 @@ enum_names *const ipsec_attr_val_descs[] = {
 	NULL,	/* COMPRESS_DICT_SIZE */
 	NULL,	/* COMPRESS_PRIVATE_ALG */
 #ifdef HAVE_LABELED_IPSEC
-	NULL,	/*ECN_TUNNEL*/
+	NULL,	/* ECN_TUNNEL */
 #endif
 };
 
@@ -1419,7 +1419,7 @@ static const char *const ikev1_notify_cisco_chatter_name[] = {
 };
 
 static const char *const ikev1_notify_ios_alives_name[] = {
-	"ISAKMP_N_IOS_KEEP_ALIVE_REQ", /* 32768*/
+	"ISAKMP_N_IOS_KEEP_ALIVE_REQ", /* 32768 */
 	"ISAKMP_N_IOS_KEEP_ALIVE_ACK",
 };
 
@@ -1648,7 +1648,7 @@ const char *const critical_names[] = {
 	"RESERVED bit 4",	/* bit 4 */
 	"RESERVED bit 5",	/* bit 5 */
 	"RESERVED bit 6",	/* bit 6 */
-	"PAYLOAD_CRITICAL",	/* bit 7*/
+	"PAYLOAD_CRITICAL",	/* bit 7 */
 };
 
 /*
@@ -1683,7 +1683,7 @@ static const char *const ikev2_trans_type_encr_name_private_use1[] = {
 };
 
 static const char *const ikev2_trans_type_encr_name[] = {
-	"DES-IV64(obsoleted)",	/* 1*/
+	"DES-IV64(obsoleted)",	/* 1 */
 	"DES(obsoleted)",
 	"3DES",
 	"RC5",

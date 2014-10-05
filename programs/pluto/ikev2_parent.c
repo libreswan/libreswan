@@ -2080,7 +2080,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		{
 			struct isakmp_hdr hdr = md->hdr; /* grab cookies */
 
-			/* set msg responder flag - clear others*/
+			/* set msg responder flag - clear others */
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
 			hdr.isa_version = build_ikev2_version();
 			hdr.isa_np    = ISAKMP_NEXT_v2E;
@@ -2731,7 +2731,7 @@ void send_v2_notification(struct state *p1st,
 		hdr.isa_np = ISAKMP_NEXT_v2N;
 		/* XXX unconditionally clearing original initiator flag is wrong */
 		hdr.isa_flags &= ~ISAKMP_FLAGS_v2_IKE_I;
-		/* add msg responder flag*/
+		/* add msg responder flag */
 		hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;

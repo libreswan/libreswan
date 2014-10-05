@@ -336,7 +336,7 @@ static int _capi_cbc_encrypt(struct ipsec_alg_enc *alg, __u8 * key_e,
  *      1) setup cryptoapi cipher else continue
  *      2) register ipsec_alg object
  */
-static int setup_cipher_list(struct ipsec_alg_capi_cipher* clist)
+static int setup_cipher_list(struct ipsec_alg_capi_cipher *clist)
 {
 	struct ipsec_alg_capi_cipher *cptr;
 
@@ -386,7 +386,7 @@ static int setup_cipher_list(struct ipsec_alg_capi_cipher* clist)
 /*
  *      deregister ipsec_alg objects and unbind ciphers
  */
-static int unsetup_cipher_list(struct ipsec_alg_capi_cipher* clist)
+static int unsetup_cipher_list(struct ipsec_alg_capi_cipher *clist)
 {
 	struct ipsec_alg_capi_cipher *cptr;
 
@@ -400,7 +400,7 @@ static int unsetup_cipher_list(struct ipsec_alg_capi_cipher* clist)
 /*
  *      test loop for registered algos
  */
-static int test_cipher_list(struct ipsec_alg_capi_cipher* clist)
+static int test_cipher_list(struct ipsec_alg_capi_cipher *clist)
 {
 	int test_ret;
 	struct ipsec_alg_capi_cipher *cptr;

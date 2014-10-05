@@ -105,7 +105,7 @@ typedef struct {
 static int ipsec_saref_verify_slot(IPsecSAref_t ref);
 static int ipsec_SArefSubTable_alloc(unsigned table);
 static int ipsec_saref_freelist_init(void);
-static IPsecSAref_t ipsec_SAref_alloc(int*erorr); /* pass in error var by pointer */
+static IPsecSAref_t ipsec_SAref_alloc(int *erorr); /* pass in error var by pointer */
 
 static int ipsec_SAref_recycle(void)
 {
@@ -199,7 +199,7 @@ static int ipsec_SAref_recycle(void)
 static int ipsec_SArefSubTable_alloc(unsigned table)
 {
 	unsigned entry;
-	struct IPsecSArefSubTable* SArefsub;
+	struct IPsecSArefSubTable *SArefsub;
 
 	KLIPS_PRINT(debug_xform,
 		    "klips_debug:ipsec_SArefSubTable_alloc: "
@@ -295,7 +295,7 @@ int ipsec_sadb_init(void)
 	return error;
 }
 
-static IPsecSAref_t ipsec_SAref_alloc(int*error) /* pass in error var by pointer */
+static IPsecSAref_t ipsec_SAref_alloc(int *error) /* pass in error var by pointer */
 {
 	IPsecSAref_t SAref;
 
@@ -406,9 +406,9 @@ int ipsec_sa_print(struct ipsec_sa *ips)
 }
 #endif
 
-struct ipsec_sa*ipsec_sa_alloc(int*error) /* pass in error var by pointer */
+struct ipsec_sa*ipsec_sa_alloc(int *error) /* pass in error var by pointer */
 {
-	struct ipsec_sa* ips;
+	struct ipsec_sa *ips;
 
 	if ((ips = kmalloc(sizeof(*ips), GFP_ATOMIC) ) == NULL) {
 		KLIPS_PRINT(debug_xform,
