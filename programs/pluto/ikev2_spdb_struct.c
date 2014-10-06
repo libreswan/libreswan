@@ -1814,7 +1814,7 @@ stf_status ikev2_parse_child_sa_body(
 		}
 
 		/* Note: only try to match if we haven't had one */
-		if (!gotmatch && p2alg &&
+		if (!gotmatch && p2alg != NULL &&
 		    ikev2_match_transform_list_child(p2alg,
 						     proposal.isap_propnum,
 						     proposal.isap_protoid,
