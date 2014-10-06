@@ -1011,6 +1011,8 @@ static stf_status ikev2_process_transforms(struct ikev2_prop *prop,
 					   pb_stream *prop_pbs,
 					   struct ikev2_transform_list *itl)
 {
+	zero(itl);
+
 	while (prop->isap_numtrans-- > 0) {
 		pb_stream trans_pbs;
 		pb_stream attr_pbs;
@@ -1295,8 +1297,6 @@ stf_status ikev2_parse_parent_sa_body(
 	struct connection *c = st->st_connection;
 	struct ikev2_transform_list itl0;
 	struct ikev2_transform_list *itl = &itl0;
-
-	zero(&itl0);
 
 	/* find the policy structures: quite a dance */
 	sadb = st->st_sadb;
@@ -1714,8 +1714,6 @@ stf_status ikev2_parse_child_sa_body(
 	struct connection *c = st->st_connection;
 	struct ikev2_transform_list itl0;
 	struct ikev2_transform_list *itl = &itl0;
-
-	zero(&itl0);
 
 	DBG(DBG_CONTROLMORE, DBG_log("entered ikev2_parse_child_sa_body()"));
 
