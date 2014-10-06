@@ -517,7 +517,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			int def_ks = crypto_req_keysize(CRK_ESPorAH, ealg_i);
 
 			if (def_ks) {
-				int max_ks = BITS_PER_BYTE * 
+				int max_ks = BITS_PER_BYTE *
 					kernel_alg_esp_enc_max_keylen(ealg_i);
 
 				db_attr_add_values(db_ctx,
@@ -651,33 +651,53 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	return ctx_new;
 }
 
-bool ikev1_verify_phase2(int ealg, unsigned int key_len, int aalg,
-			     struct alg_info_esp *alg_info)
+bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
+			const struct alg_info_esp *alg_info)
 {
+	const struct esp_info *esp_info;
+	int i;
+
+	if (alg_info == NULL)
+		return TRUE;
+
 	if (key_len == 0)
 		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
 
-	if (alg_info != NULL) {
-		struct esp_info *esp_info;
-		int i;
-
-		ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
-			if (esp_info->transid == ealg &&
-			    (esp_info->enckeylen == 0 ||
-			     key_len == 0 ||
-			     esp_info->enckeylen == key_len) &&
-			    esp_info->auth == aalg) {
-				return TRUE;
-			}
+	ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+		if (esp_info->transid == ealg &&
+		    (esp_info->enckeylen == 0 ||
+		     key_len == 0 ||
+		     esp_info->enckeylen == key_len) &&
+		    esp_info->auth == aalg) {
+			return TRUE;
 		}
-		libreswan_log(
-			"IPsec Transform [%s (%d), %s] refused",
-			enum_name(&esp_transformid_names, ealg),
-			key_len,
-			enum_name(&auth_alg_names, aalg));
-		return FALSE;
 	}
-	return TRUE;
+
+	DBG(DBG_CONTROL, DBG_log(
+		"ESP IPsec Transform [%s (%d), %s] refused",
+		enum_name(&esp_transformid_names, ealg),
+		key_len,
+		enum_name(&auth_alg_names, aalg)));
+	return FALSE;
+}
+
+bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
+{
+	const struct esp_info *esp_info;	/* really AH */
+	int i;
+
+	if (alg_info == NULL)
+		return TRUE;
+
+	ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+		if (esp_info->auth == aalg)
+			return TRUE;
+	}
+
+	DBG(DBG_CONTROL, DBG_log(
+		"AH IPsec Transform [%s] refused",
+		enum_name(&ah_transformid_names, aalg)));
+	return FALSE;
 }
 
 void kernel_alg_show_status(void)
@@ -697,8 +717,8 @@ void kernel_alg_show_status(void)
 			  alg_p->sadb_alg_ivlen,
 			  alg_p->sadb_alg_minbits,
 			  alg_p->sadb_alg_maxbits);
-
 	}
+
 	ESP_AALG_FOR_EACH(sadb_id) {
 		unsigned id = alg_info_esp_sadb2aa(sadb_id);
 		struct sadb_alg *alg_p = &esp_aalg[sadb_id];
@@ -713,18 +733,31 @@ void kernel_alg_show_status(void)
 
 	whack_log(RC_COMMENT, " "); /* spacer */
 }
+
 void kernel_alg_show_connection(struct connection *c, const char *instance)
 {
 	struct state *st;
 	const char *satype;
 	const char *pfsbuf;
 
-	if (c->policy & POLICY_ENCRYPT)
+	switch (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+	default:	/* shut up gcc */
+	case 0u:
+		satype = "noESPnoAH";
+		break;
+
+	case POLICY_ENCRYPT:
 		satype = "ESP";
-	else if (c->policy & POLICY_AUTHENTICATE)
+		break;
+
+	case POLICY_AUTHENTICATE:
 		satype = "AH";
-	else
+		break;
+
+	case POLICY_ENCRYPT | POLICY_AUTHENTICATE:
 		satype = "ESP+AH";
+		break;
+	}
 
 	if (c->policy & POLICY_PFS) {
 		if (c->alg_info_esp && c->alg_info_esp->esp_pfsgroup) {
