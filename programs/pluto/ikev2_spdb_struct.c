@@ -1877,7 +1877,15 @@ stf_status ikev2_parse_child_sa_body(
 			case IKEv2_ENCR_CAMELLIA_CCM_A:
 			case IKEv2_ENCR_CAMELLIA_CCM_B:
 			case IKEv2_ENCR_CAMELLIA_CCM_C:
-				break; /* no IKE struct encrypt_desc yet */
+				/* no IKE struct encrypt_desc yet */
+				/* fall through */
+			case IKEv2_ENCR_AES_CBC:
+				/* these all have mandatory key length attributes */
+				if (ta.enckeylen == 0) {
+					loglog(RC_LOG_SERIOUS, "Missing mandatory KEY_LENGTH attribute - refusing proposal");
+					return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+				}
+				break;
 			default:
 				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter - refusing proposal");
 				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */
