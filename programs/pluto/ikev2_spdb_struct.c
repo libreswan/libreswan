@@ -1296,7 +1296,6 @@ stf_status ikev2_parse_parent_sa_body(
 	struct trans_attrs ta;
 	struct connection *c = st->st_connection;
 	struct ikev2_transform_list itl0;
-	struct ikev2_transform_list *itl = &itl0;
 
 	/* find the policy structures: quite a dance */
 	sadb = st->st_sadb;
@@ -1380,7 +1379,7 @@ stf_status ikev2_parse_parent_sa_body(
 		{
 			stf_status ret = ikev2_process_transforms(&proposal,
 								  &proposal_pbs,
-								  itl);
+								  &itl0);
 
 			if (ret != STF_OK) {
 				DBG(DBG_CONTROLMORE, DBG_log("ikev2_process_transforms() failed"));
@@ -1393,20 +1392,20 @@ stf_status ikev2_parse_parent_sa_body(
 		    ikev2_match_transform_list_parent(sadb,
 						      proposal.isap_propnum,
 						      proposal.isap_protoid,
-						      itl)) {
+						      &itl0)) {
 			winning_prop = proposal;
 			gotmatch = TRUE;
 
 			/*
 			 * record details of the winning transform now
-			 * because itl will change with later matches
+			 * because itl0 will change with later matches
 			 */
-			ta.encrypt = itl->encr_transforms[itl->encr_i];
-			ta.enckeylen = itl->encr_keylens[itl->encr_i] > 0 ?
-				       itl->encr_keylens[itl->encr_i] : 0;
-			ta.integ_hash = itl->integ_transforms[itl->integ_i];
-			ta.prf_hash = itl->prf_transforms[itl->prf_i];
-			ta.groupnum = itl->dh_transforms[itl->dh_i];
+			ta.encrypt = itl0.encr_transforms[itl0.encr_i];
+			ta.enckeylen = itl0.encr_keylens[itl0.encr_i] > 0 ?
+				       itl0.encr_keylens[itl0.encr_i] : 0;
+			ta.integ_hash = itl0.integ_transforms[itl0.integ_i];
+			ta.prf_hash = itl0.prf_transforms[itl0.prf_i];
+			ta.groupnum = itl0.dh_transforms[itl0.dh_i];
 		}
 	}
 
@@ -1713,7 +1712,6 @@ stf_status ikev2_parse_child_sa_body(
 	struct trans_attrs ta;
 	struct connection *c = st->st_connection;
 	struct ikev2_transform_list itl0;
-	struct ikev2_transform_list *itl = &itl0;
 
 	DBG(DBG_CONTROLMORE, DBG_log("entered ikev2_parse_child_sa_body()"));
 
@@ -1805,7 +1803,7 @@ stf_status ikev2_parse_child_sa_body(
 		{
 			stf_status ret = ikev2_process_transforms(&proposal,
 								  &proposal_pbs,
-								  itl);
+								  &itl0);
 
 			if (ret != STF_OK) {
 				DBG(DBG_CONTROLMORE, DBG_log("ikev2_process_transforms() failed"));
@@ -1818,18 +1816,18 @@ stf_status ikev2_parse_child_sa_body(
 		    ikev2_match_transform_list_child(p2alg,
 						     proposal.isap_propnum,
 						     proposal.isap_protoid,
-						     itl)) {
+						     &itl0)) {
 			winning_prop = proposal;
 			gotmatch = TRUE;
 
 			/*
 			 * record details of the winning transform now
-			 * because itl will change with later matches
+			 * because itl0 will change with later matches
 			 */
-			ta.encrypt = itl->encr_transforms[itl->encr_i];
-			ta.enckeylen = itl->encr_keylens[itl->encr_i] > 0 ?
-				       itl->encr_keylens[itl->encr_i] : 0;
-			ta.integ_hash = itl->integ_transforms[itl->integ_i];
+			ta.encrypt = itl0.encr_transforms[itl0.encr_i];
+			ta.enckeylen = itl0.encr_keylens[itl0.encr_i] > 0 ?
+				       itl0.encr_keylens[itl0.encr_i] : 0;
+			ta.integ_hash = itl0.integ_transforms[itl0.integ_i];
 
 			/* record peer's SPI value */
 			proto_info->attrs.spi = spival;
