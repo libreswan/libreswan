@@ -717,8 +717,8 @@ void kernel_alg_show_status(void)
 			  alg_p->sadb_alg_ivlen,
 			  alg_p->sadb_alg_minbits,
 			  alg_p->sadb_alg_maxbits);
-
 	}
+
 	ESP_AALG_FOR_EACH(sadb_id) {
 		unsigned id = alg_info_esp_sadb2aa(sadb_id);
 		struct sadb_alg *alg_p = &esp_aalg[sadb_id];
@@ -733,18 +733,31 @@ void kernel_alg_show_status(void)
 
 	whack_log(RC_COMMENT, " "); /* spacer */
 }
+
 void kernel_alg_show_connection(struct connection *c, const char *instance)
 {
 	struct state *st;
 	const char *satype;
 	const char *pfsbuf;
 
-	if (c->policy & POLICY_ENCRYPT)
+	switch (c->policy & (POLICY_ENCRYPT | POLICY_AUTHENTICATE)) {
+	default:	/* shut up gcc */
+	case 0u:
+		satype = "noESPnoAH";
+		break;
+
+	case POLICY_ENCRYPT:
 		satype = "ESP";
-	else if (c->policy & POLICY_AUTHENTICATE)
+		break;
+
+	case POLICY_AUTHENTICATE:
 		satype = "AH";
-	else
+		break;
+
+	case POLICY_ENCRYPT | POLICY_AUTHENTICATE:
 		satype = "ESP+AH";
+		break;
+	}
 
 	if (c->policy & POLICY_PFS) {
 		if (c->alg_info_esp && c->alg_info_esp->esp_pfsgroup) {
