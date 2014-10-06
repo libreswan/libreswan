@@ -517,7 +517,7 @@ static bool kernel_alg_db_add(struct db_context *db_ctx,
 			int def_ks = crypto_req_keysize(CRK_ESPorAH, ealg_i);
 
 			if (def_ks) {
-				int max_ks = BITS_PER_BYTE * 
+				int max_ks = BITS_PER_BYTE *
 					kernel_alg_esp_enc_max_keylen(ealg_i);
 
 				db_attr_add_values(db_ctx,
@@ -651,52 +651,52 @@ static struct db_context *kernel_alg_db_new(struct alg_info_esp *alg_info,
 	return ctx_new;
 }
 
-bool ikev1_verify_phase2(int protoid, int ealg, unsigned int key_len, int aalg,
-			     struct alg_info_esp *alg_info)
+bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
+			const struct alg_info_esp *alg_info)
 {
-	struct esp_info *esp_info;
+	const struct esp_info *esp_info;
 	int i;
 
 	if (alg_info == NULL)
 		return TRUE;
 
-	if (protoid == PROTO_IPSEC_ESP && key_len == 0)
+	if (key_len == 0)
 		key_len = crypto_req_keysize(CRK_ESPorAH, ealg);
 
-
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
-
-    		if (protoid == PROTO_IPSEC_ESP) {
-			if (esp_info->transid == ealg &&
-		    	(esp_info->enckeylen == 0 ||
-		     	key_len == 0 ||
-		     	esp_info->enckeylen == key_len) &&
-		    	esp_info->auth == aalg) {
-				return TRUE;
-			}
-		} else if (protoid == PROTO_IPSEC_AH) {
-			if (esp_info->auth == aalg)
-				return TRUE;
-		} else {
-			 DBG(DBG_CONTROL, DBG_log(
-				"IPsec transform '%d' is neither ESP or AH and cannot be compared against phase2alg=",
-				protoid));
+		if (esp_info->transid == ealg &&
+		    (esp_info->enckeylen == 0 ||
+		     key_len == 0 ||
+		     esp_info->enckeylen == key_len) &&
+		    esp_info->auth == aalg) {
+			return TRUE;
 		}
 	}
 
-	if (protoid == PROTO_IPSEC_ESP)
-		DBG(DBG_CONTROL, DBG_log(
-			"ESP IPsec Transform [%s (%d), %s] refused",
-			enum_name(&esp_transformid_names, ealg),
-			key_len,
-			enum_name(&auth_alg_names, aalg)));
+	DBG(DBG_CONTROL, DBG_log(
+		"ESP IPsec Transform [%s (%d), %s] refused",
+		enum_name(&esp_transformid_names, ealg),
+		key_len,
+		enum_name(&auth_alg_names, aalg)));
+	return FALSE;
+}
 
-	if (protoid == PROTO_IPSEC_AH)
-		DBG(DBG_CONTROL, DBG_log(
-			"AH IPsec Transform [%s] refused",
-			enum_name(&ah_transformid_names, aalg)));
-	
+bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info)
+{
+	const struct esp_info *esp_info;	/* really AH */
+	int i;
 
+	if (alg_info == NULL)
+		return TRUE;
+
+	ALG_INFO_ESP_FOREACH(alg_info, esp_info, i) {
+		if (esp_info->auth == aalg)
+			return TRUE;
+	}
+
+	DBG(DBG_CONTROL, DBG_log(
+		"AH IPsec Transform [%s] refused",
+		enum_name(&ah_transformid_names, aalg)));
 	return FALSE;
 }
 

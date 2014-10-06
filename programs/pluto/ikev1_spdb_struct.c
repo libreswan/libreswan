@@ -2455,10 +2455,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			/* Check AH proposal with configuration */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_phase2(PROTO_IPSEC_AH, 0,0, /* ealg and ekey_len */
-						     ah_attrs.transattrs.integ_hash,
-						     c->alg_info_esp)) {
-				DBG(DBG_CONTROL, DBG_log("ikev1_verify_phase2() failed for AH"));
+			    !ikev1_verify_ah(ah_attrs.transattrs.integ_hash,
+					c->alg_info_esp)) {
 				continue;
 			}
 			ah_attrs.spi = ah_spi;
@@ -2598,7 +2596,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 			/* check for allowed transforms in alg_info_esp */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_phase2(PROTO_IPSEC_ESP, esp_attrs.transattrs.encrypt,
+			    !ikev1_verify_esp(esp_attrs.transattrs.encrypt,
 						     esp_attrs.transattrs.enckeylen,
 						     esp_attrs.transattrs.integ_hash,
 						     c->alg_info_esp))
