@@ -1508,6 +1508,68 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		TRUE);
 }
 
+static stf_status ikev2_ship_cp_attr_ip4( u_int16_t type, ip_address *ip4,
+		const char *story, pb_stream *outpbs )
+{
+	struct ikev2_cp_attribute attr;
+	unsigned char *byte_ptr;
+	pb_stream a_pbs;
+	attr.type = type;
+	attr.len = ip4 == NULL ? 0 : 4;
+
+	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
+				&a_pbs))
+		return STF_INTERNAL_ERROR;
+
+	if (attr.len > 0) {
+		addrbytesptr(ip4, &byte_ptr);
+		if (!out_raw(byte_ptr, attr.len, &a_pbs, story))
+			return STF_INTERNAL_ERROR;
+	}
+
+	close_output_pbs(&a_pbs);
+	return STF_OK;
+}
+
+stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
+				  pb_stream *outpbs)
+{
+	struct ikev2_cp cp;
+	pb_stream cp_pbs;
+	bool cfg_reply = c->spd.that.has_lease ? TRUE : FALSE;
+
+	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
+				cfg_reply ? "Request" : "Reply"));
+
+	cp.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+	cp.isacp_np = np;
+	cp.isacp_type = cfg_reply ? IKEv2_CP_CFG_REQUEST : IKEv2_CP_CFG_REPLY;
+
+	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
+		return STF_INTERNAL_ERROR;
+
+	ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_ADDRESS,
+			cfg_reply ?  &c->spd.that.client.addr : NULL,
+			"IPV4 Address", &cp_pbs);
+
+	if(cfg_reply) {
+		if(!isanyaddr(&c->modecfg_dns1)) {
+			ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, &c->modecfg_dns1,
+					"DNS 1", &cp_pbs);
+		}
+		if(!isanyaddr(&c->modecfg_dns2)) {
+			ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, &c->modecfg_dns2,
+					"DNS 2", &cp_pbs);
+		}
+	} else {
+		ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, NULL, "DNS", &cp_pbs);
+	}
+
+	close_output_pbs(&cp_pbs);
+
+	return STF_OK;
+}
+
 static stf_status ikev2_send_auth(struct connection *c,
 				  struct state *st,
 				  enum phase1_role role,
@@ -1727,11 +1789,22 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* send out the AUTH payload */
 	{
-		stf_status authstat = ikev2_send_auth(c, st, O_INITIATOR, ISAKMP_NEXT_v2SA,
+		int np = c->spd.this.modecfg_client ?
+				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
+
+		stf_status authstat = ikev2_send_auth(c, st, O_INITIATOR, np,
 				idhash, &e_pbs_cipher);
 
 		if (authstat != STF_OK)
 			return authstat;
+	}
+
+	{
+		stf_status cpstat = ikev2_send_cp(c, ISAKMP_NEXT_v2SA,
+				&e_pbs_cipher);
+
+		if (cpstat != STF_OK)
+			return cpstat;
 	}
 
 	{
@@ -2143,9 +2216,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 			id_start = e_pbs_cipher.cur;
 
-			if (!out_struct(&r_id,
-					&ikev2_id_desc,
-					&e_pbs_cipher,
+			if (!out_struct(&r_id, &ikev2_id_desc, &e_pbs_cipher,
 					&r_id_pbs) ||
 			    !out_chunk(id_b, &r_id_pbs, "my identity"))
 				return STF_INTERNAL_ERROR;
@@ -2190,7 +2261,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			np = ISAKMP_NEXT_v2NONE;
 		} else {
 			DBG_log("CHILD SA proposals received");
-			np = ISAKMP_NEXT_v2SA;
+			np =  c->pool == NULL ?  ISAKMP_NEXT_v2SA : ISAKMP_NEXT_v2CP;
 		}
 
 		DBG(DBG_CONTROLMORE,
@@ -2207,7 +2278,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 				return authstat;
 		}
 
-		if (np == ISAKMP_NEXT_v2SA) {
+		if ((np ==  ISAKMP_NEXT_v2SA) || (np == ISAKMP_NEXT_v2CP)) {
 			/* must have enough to build an CHILD_SA */
 			ret = ikev2_child_sa_respond(md, O_RESPONDER,
 						     &e_pbs_cipher,
@@ -2405,6 +2476,9 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	/* authentication good */
 
 	/* TODO: see if there are any notifications */
+
+	if(c->spd.this.modecfg_client && md->chain[ISAKMP_NEXT_v2CP]){
+	}
 
 	/* See if there is a child SA available */
 	if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||

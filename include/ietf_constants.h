@@ -1108,6 +1108,44 @@ enum ikev1_auth_method {
 /* typedef to make our life easier */
 typedef u_int16_t oakley_auth_t;
 
+enum ikev2_cp_attribute_type {
+	/*
+	 * IKEv2 CP Attribute types
+	 * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+	 */
+	IKEv2_INTERNAL_IP4_ADDRESS = 1,
+	IKEv2_INTERNAL_IP4_NETMASK = 2,
+	IKEv2_INTERNAL_IP4_DNS = 3,
+	IKEv2_INTERNAL_IP4_NBNS = 4 /* unused by us, WINS is long dead */,
+	IKEv2_RESERVED_5 = 5,
+	IKEv2_INTERNAL_IP4_DHCP = 6,
+	IKEv2_APPLICATION_VERSION = 7,
+	IKEv2_INTERNAL_IP6_ADDRESS = 8,
+	IKEv2_RESERVED_9 = 9,
+	IKEv2_INTERNAL_IP6_DNS = 10,
+	IKEv2_RESERVED_11 = 11,
+	IKEv2_INTERNAL_IP6_DHCP  =12,
+	IKEv2_INTERNAL_IP4_SUBNET = 13,
+	IKEv2_SUPPORTED_ATTRIBUTES = 14,
+	IKEv2_INTERNAL_IP6_SUBNET = 15,
+	IKEv2_MIP6_HOME_PREFIX = 16,
+	IKEv2_INTERNAL_IP6_LINK = 17,
+	IKEv2_INTERNAL_IP6_PREFIX = 18,
+	IKEv2_HOME_AGENT_ADDRESS = 19,
+	IKEv2_P_CSCF_IP4_ADDRESS = 20,
+	IKEv2_P_CSCF_IP6_ADDRESS = 21,
+	IKEv2_FTT_KAT = 22,
+};
+
+
+/* extern enum_names ikev2_cp_names; */
+enum ikev2_cp_type {
+	IKEv2_CP_CFG_REQUEST = 1,
+	IKEv2_CP_CFG_REPLY = 2,
+	IKEv2_CP_CFG_SET = 3,
+	IKEv2_CP_CFG_ACK = 4
+};
+
 /* extern enum_names ikev2_auth_names; */
 enum ikev2_auth_method {
 	IKEv2_AUTH_RSA = 1,

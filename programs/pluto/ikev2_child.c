@@ -62,6 +62,7 @@
 #include "kernel.h"
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
+#include "addresspool.h"
 
 /* ??? this routine only produces DBG output.  Calls should be conditional but they are not */
 void ikev2_print_ts(struct traffic_selector *ts)
@@ -683,6 +684,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 
 	return bestfit;
 }
+
 /*
  * find the best connection and if it is AUTH exchange create the child state
  */
@@ -914,7 +916,6 @@ static stf_status ikev2_create_responder_child_state(
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
-
 	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
 		cst = md->st;
 	} else {
@@ -939,26 +940,69 @@ static stf_status ikev2_create_responder_child_state(
 	return STF_OK;	/* ignored */
 }
 
+static stf_status ikev2_cp_reply_state(struct msg_digest *md,
+	struct state **ret_cst,
+	enum isakmp_xchg_types isa_xchg)
+{
+	ip_address ipv4;
+	struct state *cst = NULL;
+	struct connection *c = md->st->st_connection;
+
+	err_t e = lease_an_address(c, &ipv4);
+	if (e != NULL) {
+		libreswan_log("ikev2 lease_an_address failure %s", e);
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (isa_xchg == ISAKMP_v2_CREATE_CHILD_SA) {
+		cst = md->st;
+	} else {
+		cst = duplicate_state(md->st);
+		insert_state(cst); /* needed for delete - we should never have duplicated before we were sure */
+	}
+
+	struct spd_route *spd = &md->st->st_connection->spd;
+	spd->that.has_lease = TRUE;
+	spd->that.client.addr = ipv4;
+	spd->that.client.maskbits = 32; /* export it as value */
+	spd->that.has_client = TRUE;
+	spd->that.has_lease = TRUE;
+
+	cst->st_ts_this = ikev2_end_to_ts(&spd->this);
+	cst->st_ts_that = ikev2_end_to_ts(&spd->that);
+	cst->st_connection = c;
+
+	*ret_cst = cst;	/* success! */
+	return STF_OK;
+}
+
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  enum phase1_role role,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	struct state *cst;	/* child state */
-	struct connection *c;
+	struct connection *c = md->st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
+	stf_status ret;
 
-	{
-		stf_status ret = ikev2_create_responder_child_state(md, &cst,
-				role, isa_xchg);
-
-		if (cst == NULL)
-			return ret;	/* things went badly */
+	if (c->pool != NULL) {
+		ret = ikev2_cp_reply_state(md, &cst, isa_xchg);
+		if (ret != STF_OK)
+			return ret;
+	} else {
+		ret = ikev2_create_responder_child_state(md, &cst, role,
+				isa_xchg);
 	}
-
-	c = cst->st_connection;
+	if (cst == NULL)
+		return ret;	/* things went badly */
 
 	md->st = cst;
+	c = cst->st_connection;
+
+	if (c->spd.that.has_lease) {
+		ikev2_send_cp(c, ISAKMP_NEXT_v2SA, outpbs);
+	}
 
 	/* start of SA out */
 	{

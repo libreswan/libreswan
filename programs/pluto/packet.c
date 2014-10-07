@@ -878,6 +878,30 @@ static field_desc ikev2id_fields[] = {
 struct_desc ikev2_id_desc = { "IKEv2 Identification Payload",
 			      ikev2id_fields, sizeof(struct ikev2_id) };
 
+static field_desc ikev2cp_fields[] = {
+	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
+	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2_cfg_type", &ikev2_cp_type_names },
+	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
+	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2_cp_desc = { "IKEv2 Configuration Payload",
+			      ikev2cp_fields, sizeof(struct ikev2_cp) };
+
+static field_desc ikev2_cp_attrbute_fields[] = {
+	{ ft_enum, 16 / BITS_PER_BYTE, "Attribute Type",
+		&ikev2_cp_attribute_type_names },
+	{ ft_lv, 16 / BITS_PER_BYTE, "length/value", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2_cp_attribute_desc = { "IKEv2 Configuration Payload Attribute",
+				       ikev2_cp_attrbute_fields,
+				       sizeof(struct ikev2_cp_attribute) };
+
 /* section 3.6
  * The Certificate Payload is defined as follows:
  *

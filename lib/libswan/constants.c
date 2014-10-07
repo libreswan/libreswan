@@ -671,7 +671,6 @@ enum_names ike_idtype_names = {
 	NULL
 };
 
-
 static enum_names ikev2_idtype_names_3 = {
 	ID_DER_ASN1_DN, ID_FC_NAME,
 	&ike_idtype_name[ID_DER_ASN1_DN],
@@ -1035,9 +1034,9 @@ enum_names xauth_type_names = {
 	NULL
 };
 
-/* XAUTH-STATUS attribute */
+/* IKEv1 XAUTH-STATUS attribute names  */
 static const char *const modecfg_attr_name_draft[] = {
-	"INTERNAL_IP4_ADDRESS",	/*1 */
+	"INTERNAL_IP4_ADDRESS",	/* 1 */
 	"INTERNAL_IP4_NETMASK",
 	"INTERNAL_IP4_DNS",
 	"INTERNAL_IP4_NBNS",
@@ -1281,6 +1280,53 @@ enum_names oakley_auth_names = {
 	&oakley_auth_names_private_use
 };
 
+/*
+ * IKEv2 CP attribute name. Some of them are shared with XAUTH Attrib names.
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+ */
+static const char *const ikev2_cp_attribute_type_name[] = {
+	"v2_INTERNAL_IP4_ADDRESS",	/* 1 */
+	"v2_INTERNAL_IP4_NETMASK",
+	"v2_INTERNAL_IP4_DNS",
+	"v2_INTERNAL_IP4_NBNS",
+	"v2_CP_ATTRIBUTE_RESERVED_5"
+	"v2_INTERNAL_IP4_DHCP",
+	"v2_APPLICATION_VERSION",
+	"v2_INTERNAL_IP6_ADDRESS",
+	"v2_CP_ATTRIBUTE_RESERVED_9",
+	"v2_INTERNAL_IP6_DNS",
+	"v2_CP_ATTRIBUTE_RESERVED_11"
+	"v2_INTERNAL_IP6_DHCP",
+	"v2_INTERNAL_IP4_SUBNET",	/* 13 */
+	"v2_SUPPORTED_ATTRIBUTES",
+	"v2_INTERNAL_IP6_SUBNET",
+	"v2_MIP6_HOME_PREFIX",
+	"v2_INTERNAL_IP6_LINK",
+	"v2_INTERNAL_IP6_PREFIX",
+	"v2_HOME_AGENT_ADDRESS",
+	"v2_P-CSCF_IP4_ADDRESS", /* 20 */
+};
+
+enum_names ikev2_cp_attribute_type_names = {
+	IKEv2_INTERNAL_IP4_ADDRESS,
+	IKEv2_FTT_KAT,
+	ikev2_cp_attribute_type_name,
+	NULL
+};
+
+static const char *const ikev2_cp_type_name[] = {
+	"IKEv2_CP_CFG_REQUEST" , /* 1 */
+	"IKEv2_CP_CFG_REPLY" ,
+	"IKEv2_CP_CFG_SET" ,
+	"IKEv2_CP_CFG_ACK"
+};
+
+enum_names ikev2_cp_type_names = {
+	IKEv2_CP_CFG_REQUEST,
+	IKEv2_CP_CFG_ACK,
+	ikev2_cp_type_name,
+	NULL
+};
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_name[] = {
@@ -1493,8 +1539,6 @@ enum_names ikev1_notify_names = {
 	ikev1_notify_name,
 	&ikev1_notify_status_names
 };
-
-
 
 /* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
 static const char *const ikev2_notify_name_16384[] = {
