@@ -60,8 +60,6 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 
-#include "xauth.h"
-
 #include "nat_traversal.h"
 #include "vendor.h"
 

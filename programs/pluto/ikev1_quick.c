@@ -74,7 +74,7 @@
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 
 #include "vendor.h"
 #include "nat_traversal.h"

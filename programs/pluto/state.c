@@ -45,7 +45,7 @@
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
-#include "xauth.h"	/* just for state_deletion_xauth_cleanup() */
+#include "ikev1_xauth.h"	/* just for state_deletion_xauth_cleanup() */
 #endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"

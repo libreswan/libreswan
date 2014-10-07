@@ -74,7 +74,7 @@
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "ike_alg.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 #include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
 
