@@ -1,0 +1,2 @@
+Strongswan - Strongswan IKEv2 using PSK the initiator (road). 
+The initiator request and IP address using CP. Thresponder has a pool leftsourceip
