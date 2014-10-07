@@ -1799,7 +1799,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			return authstat;
 	}
 
-	{
+	if (c->spd.this.modecfg_client){
 		stf_status cpstat = ikev2_send_cp(c, ISAKMP_NEXT_v2SA,
 				&e_pbs_cipher);
 
