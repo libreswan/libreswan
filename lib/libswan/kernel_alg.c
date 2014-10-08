@@ -147,8 +147,9 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 	 * support. The kernel allows ESP_CAST with variable keysizes, and
 	 * we only want to support 128bit. The kernel also allows ESP_BLOWFISH,
 	 * but its inventor Bruce Schneier has said to stop using blowfish
-	 * and use twofish instead. Finally, the kernel allows ESP_DES, which
-	 * is simply too weak to be allowed.
+	 * and use twofish instead. The kernel allows ESP_DES, which
+	 * is simply too weak to be allowed. And for ESP_AES_CTR it returns
+	 * the keysize including the 4 bytes of nonce.
 	 */
 	tmp_alg = *sadb_alg;
 	switch (exttype) {
@@ -160,6 +161,11 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 				/* Overruling kernel - we only want to support 128 */
 				tmp_alg.sadb_alg_minbits = 128;
 				tmp_alg.sadb_alg_maxbits = 128;
+				break;
+			case ESP_AES_CTR:
+				/* Overruling kernel - remove salt from calculation */
+				tmp_alg.sadb_alg_minbits = 128;
+				tmp_alg.sadb_alg_maxbits = 256;
 				break;
 			case ESP_BLOWFISH:
 			case ESP_DES:
@@ -468,15 +474,16 @@ struct esp_info *kernel_alg_esp_info(u_int8_t transid, u_int16_t keylen,
 	int sadb_aalg, sadb_ealg;
 	static struct esp_info ei_buf; /* static ??? fixme */
 
+	DBG(DBG_PARSING,
+		DBG_log("kernel_alg_esp_info(): transid=%d, keylen=%d,auth=%d, ",
+			transid, keylen, auth));
 	sadb_ealg = transid;
 	sadb_aalg = alg_info_esp_aa2sadb(auth);
 
 	if (!ESP_EALG_PRESENT(sadb_ealg) ||
 		!ESP_AALG_PRESENT(sadb_aalg)) {
 		DBG(DBG_PARSING,
-			DBG_log("kernel_alg_esp_info(): transid=%d, auth=%d, ei=NULL",
-				transid, auth);
-			);
+			DBG_log("kernel_alg_esp_info(): transid or auth not registered with kernel"));
 		return NULL;
 	}
 	zero(&ei_buf);
