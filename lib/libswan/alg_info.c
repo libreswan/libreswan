@@ -271,14 +271,10 @@ int alg_enum_search(enum_names *ed, const char *prefix,
  */
 static int ealg_getbyname_esp(const char *const str, size_t len)
 {
-	int ret;
-
 	if (str == NULL || *str == '\0')
 		return -1;
 
-	ret = alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
-
-	return ret;
+	return alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
 }
 
 /*
@@ -291,7 +287,7 @@ static int aalg_getbyname_esp(const char *str, size_t len)
 	static const char null_esp[] = "null";
 
 	if (str == NULL || *str == '\0')
-		return ret;
+		return -1;
 
 	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "",
 			str, len);
