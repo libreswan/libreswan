@@ -1,3 +1,2 @@
-Testing AH with aes128_gmac with NETKEY
+Testing AH with md5 with NETKEY
 
-The linux kernel seems to not yet support this
