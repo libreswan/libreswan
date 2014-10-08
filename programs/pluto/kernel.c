@@ -1729,6 +1729,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			if (enc_key_len == 7)
 				enc_key_len = 8;
 			break;
+
+		case IKEv2_ENCR_AES_CTR:
+			/* keymat contains 4 bytes of salt */
+			enc_key_len += AES_CTR_SALT_BYTES;
+			break;
+
 		case IKEv2_ENCR_AES_GCM_8:
 		case IKEv2_ENCR_AES_GCM_12:
 		case IKEv2_ENCR_AES_GCM_16:
