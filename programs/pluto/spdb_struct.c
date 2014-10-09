@@ -259,6 +259,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				       "multiple DH groups in aggressive mode can cause interop failure");
 				loglog(RC_LOG_SERIOUS,
 					"Deleting previous proposal in the hopes of selecting DH 2 or DH 5");
+
 				free_sa(gsp);
 				gsp = NULL;
 			}
