@@ -28,7 +28,7 @@ size_t dstlen;
 	char *bufend = buf + sizeof(buf);
 	size_t len;
 	char *p;
-	static char hex[] = "0123456789abcdef";
+	static const char hex[] = "0123456789abcdef";
 #       define  HEX32   (32 / 4)
 
 	p = bufend;

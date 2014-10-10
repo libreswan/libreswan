@@ -17,12 +17,12 @@ XFRM state:
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha512) 0xHASHKEY 256
+	auth-trunc hmac(sha256) 0xHASHKEY 128
 	enc cbc(aes) 0xENCKEY
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha512) 0xHASHKEY 256
+	auth-trunc hmac(sha256) 0xHASHKEY 128
 	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 192.0.2.0/24 dst 192.0.1.0/24 

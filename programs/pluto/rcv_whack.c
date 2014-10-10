@@ -412,8 +412,10 @@ void whack_process(int whackfd, const struct whack_message msg)
 			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
 				DBG_log("Also deleting any corresponding CHILD_SAs");
 				delete_my_family(st, FALSE);
+				/* note: no md->st to clear */
 			} else {
 				delete_state(st);
+				/* note: no md->st to clear */
 			}
 		}
 	}

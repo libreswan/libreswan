@@ -33,16 +33,16 @@ west #
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev2'
+  ah=sha256-modp1536
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.1.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.0.1.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
-  ah=sha256-modp1536
 found netkey IPsec stack
 west #
  echo "initdone"
@@ -90,15 +90,15 @@ src 192.1.2.23 dst 192.1.2.45
 west #
  ip xfrm pol
 src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority 1859 ptype main 
+	dir fwd priority 2883 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto ah reqid 1 mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority 1859 ptype main 
+	dir in priority 2883 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto ah reqid 1 mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority 1859 ptype main 
+	dir out priority 2883 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto ah reqid 1 mode tunnel
 src 0.0.0.0/0 dst 0.0.0.0/0 

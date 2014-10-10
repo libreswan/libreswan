@@ -5,15 +5,14 @@
  * (C)opyright 2012-2014 Paul Wouters <paul@libreswan.org>
  */
 
-#include "md5.h"
 
 #include <pk11pub.h>
 #include "lswlog.h"
+#include "md5.h"
 
 /* MD5 initialization. Begins an MD5 operation, writing a new context.
  */
-void osMD5Init(context)
-MD5_CTX * context;                                        /* context */
+void lsMD5Init(lsMD5_CTX *context)
 {
 	SECStatus status;
 
@@ -24,24 +23,19 @@ MD5_CTX * context;                                        /* context */
 }
 
 /* MD5 block update operation. Continues an MD5 message-digest
-   operation, processing another message block, and updating the
-   context.
+ * operation, processing another message block, and updating the
+ * context.
  */
-void osMD5Update(context, input, inputLen)
-MD5_CTX * context;                              /* context */
-const unsigned char *input;                     /* input block */
-u_int32_t inputLen;                                 /* length of input block */
+void lsMD5Update(lsMD5_CTX *context, const unsigned char *input, size_t inputLen)
 {
 	SECStatus status = PK11_DigestOp(context->ctx_nss, input, inputLen);
 	passert(status == SECSuccess);
 }
 
 /* MD5 finalization. Ends an MD5 message-digest operation, writing the
-   the message digest and zeroizing the context.
+ * the message digest and zeroing the context.
  */
-void osMD5Final(digest, context)
-unsigned char digest[16];                               /* message digest */
-MD5_CTX *context;                                       /* context */
+void lsMD5Final(unsigned char digest[MD5_DIGEST_SIZE], lsMD5_CTX *context)
 {
 	unsigned int length;
 	SECStatus status = PK11_DigestFinal(context->ctx_nss, digest, &length,

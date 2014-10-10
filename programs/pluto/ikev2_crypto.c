@@ -70,6 +70,9 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	passert(st->st_esp.present != st->st_ah.present);	/* only one */
 
 	/* ??? there is no kernel_alg_ah_info */
+	/* ??? will this work if the result of kernel_alg_esp_info
+	 * is a pointer into its own static buffer (therefore ephemeral)?
+	 */
 	ei = kernel_alg_esp_info(
 		ipi->attrs.transattrs.encrypt,
 		ipi->attrs.transattrs.enckeylen,

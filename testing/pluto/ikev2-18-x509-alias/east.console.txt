@@ -13,7 +13,6 @@ east #
 002 added connection description "road-east-ipv4-psk-ikev2/2x0"
 east #
  ipsec auto --add road-east-ipv6-psk-ikev2
-002 "road-east-ipv6-psk-ikev2": deleting connection
 002 conn: road-east-ipv6-psk-ikev2, rekeymargin (540s) >= salifetime (120s); reducing rekeymargin to 60 seconds
 002 added connection description "road-east-ipv6-psk-ikev2"
 east #
@@ -40,7 +39,7 @@ east #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
+000 nhelpers=-1, uniqueids=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx-attr-value=XXXX
 000 myid = (none)
@@ -87,11 +86,11 @@ east #
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
-000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
-000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
-000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
-000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashsize=48
-000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashsize=64
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20
+000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
+000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
+000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -108,7 +107,7 @@ east #
 000 Connection list:
 000  
 000 "road-east-ipv4-psk-ikev2/1x0": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]---192.1.2.254...192.1.3.209<192.1.3.209>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "road-east-ipv4-psk-ikev2/1x0":     oriented; my_ip=unset; their_ip=unset mycert=east; hiscert=road;
+000 "road-east-ipv4-psk-ikev2/1x0":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=road
 000 "road-east-ipv4-psk-ikev2/1x0":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-ipv4-psk-ikev2/1x0":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-ipv4-psk-ikev2/1x0":   labeled_ipsec:no, loopback:no; 
@@ -122,7 +121,7 @@ east #
 000 "road-east-ipv4-psk-ikev2/1x0":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "road-east-ipv4-psk-ikev2/1x0":   aliases: road-east-ipv4-psk-ikev2 
 000 "road-east-ipv4-psk-ikev2/2x0": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]---192.1.2.254...192.1.3.209<192.1.3.209>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org]===192.0.11.0/24; unrouted; eroute owner: #0
-000 "road-east-ipv4-psk-ikev2/2x0":     oriented; my_ip=unset; their_ip=unset mycert=east; hiscert=road;
+000 "road-east-ipv4-psk-ikev2/2x0":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=road
 000 "road-east-ipv4-psk-ikev2/2x0":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-ipv4-psk-ikev2/2x0":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-ipv4-psk-ikev2/2x0":   labeled_ipsec:no, loopback:no; 
@@ -136,7 +135,7 @@ east #
 000 "road-east-ipv4-psk-ikev2/2x0":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "road-east-ipv4-psk-ikev2/2x0":   aliases: road-east-ipv4-psk-ikev2 
 000 "road-east-ipv6-psk-ikev2": 2001:db8:1:2::/64===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]---192.1.2.254...192.1.3.209<192.1.3.209>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=testing@libreswan.org]===2001:db8:1:3::/64; unrouted; eroute owner: #0
-000 "road-east-ipv6-psk-ikev2":     oriented; my_ip=unset; their_ip=unset mycert=east; hiscert=road;
+000 "road-east-ipv6-psk-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=road
 000 "road-east-ipv6-psk-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-ipv6-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "road-east-ipv6-psk-ikev2":   labeled_ipsec:no, loopback:no; 
@@ -192,33 +191,9 @@ src 192.1.2.23 dst 192.1.3.209
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
-src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-src 192.1.3.209 dst 192.1.2.23
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-src 192.1.2.23 dst 192.1.3.209
-	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
-	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
 XFRM policy:
 src 2001:db8:1:2::/64 dst 2001:db8:1:3::/64 
 	dir out priority 25792 ptype main 
-	tmpl src 192.1.2.23 dst 192.1.3.209
-		proto esp reqid REQID mode tunnel
-src 192.0.2.0/24 dst 192.0.11.0/24 
-	dir out priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 2001:db8:1:3::/64 dst 2001:db8:1:2::/64 
@@ -240,6 +215,10 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 192.0.11.0/24 
+	dir out priority 2344 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.3.209
 		proto esp reqid REQID mode tunnel
 src 192.0.11.0/24 dst 192.0.2.0/24 
 	dir fwd priority 2344 ptype main 
@@ -333,10 +312,10 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u
-mainca                                                       ,,   
-road                                                         P,,  
-north                                                        P,,  
 hashsha2                                                     P,,  
+mainca                                                       ,,   
+north                                                        P,,  
+road                                                         P,,  
 west                                                         P,,  
 west-ec                                                      P,,  
 east #

@@ -61,11 +61,11 @@ west #
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
-000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
-000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
-000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashsize=48
-000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashsize=64
+000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashlen=16
+000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashlen=20
+000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
+000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
+000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -119,7 +119,7 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec look
 west NOW
-2001:db8:0:1::/64  -> 2001:db8:0:2::/64  => tun0x1001@2001:db8:1:2::23 esp0xf2818484@2001:db8:1:2::23  (4)  PAUL: sanitizer missed this line
+2001:db8:0:1::/64  -> 2001:db8:0:2::/64  => tun0x1000@2001:db8:1:2::23 esp0xf2818484@2001:db8:1:2::23  (4)  PAUL: sanitizer missed this line
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
@@ -165,12 +165,12 @@ done
 west #
  ipsec look
 west NOW
-2001:db8:0:1::/64  -> 2001:db8:0:2::/64  => tun0x1001@2001:db8:1:2::23 esp0xf2818484@2001:db8:1:2::23  (4)  PAUL: sanitizer missed this line
+2001:db8:0:1::/64  -> 2001:db8:0:2::/64  => tun0x1000@2001:db8:1:2::23 esp0xf2818484@2001:db8:1:2::23  (4)  PAUL: sanitizer missed this line
 ipsec0->eth1 mtu=16260(1500)->1500
 esp0xafaae4b1@2001:db8:1:2::45 ESP_AES_HMAC_SHA1: dir=in  src=2001:db8:1:2::23 iv_bits=128bits iv=0x1483f5c8aaaed18e6a2cc546be56993a ooowin=64 seq=4 bit=0xf alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(416,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=4 refhim=1  PAUL: sanitizer missed this line
 esp0xf2818484@2001:db8:1:2::23 ESP_AES_HMAC_SHA1: dir=out src=2001:db8:1:2::45 iv_bits=128bits iv=0x97575aec5a12c28975cb588e3c0684a3 ooowin=64 seq=4 alen=160 aklen=160 eklen=128 life(c,s,h)=bytes(752,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=2 refhim=0  PAUL: sanitizer missed this line
-tun0x1001@2001:db8:1:2::23 IPIP: dir=out src=2001:db8:1:2::45 life(c,s,h)=bytes(576,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=1 refhim=0
-tun0x1002@2001:db8:1:2::45 IPIP: dir=in  src=2001:db8:1:2::23 policy=2001:db8:0:2::/64->2001:db8:0:1::/64 flags=0x8<> life(c,s,h)=bytes(416,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=3 refhim=1
+tun0x1000@2001:db8:1:2::23 IPIP: dir=out src=2001:db8:1:2::45 life(c,s,h)=bytes(576,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=1 refhim=0
+tun0x1001@2001:db8:1:2::45 IPIP: dir=in  src=2001:db8:1:2::23 policy=2001:db8:0:2::/64->2001:db8:0:1::/64 flags=0x8<> life(c,s,h)=bytes(416,0,0) idle=1 natencap=nonesp natsport=4500 natdport=4500 refcount=3 ref=3 refhim=1
 IPSEC mangle TABLES
 iptables: No chain/target/match by that name.
 ip6tables: No chain/target/match by that name.

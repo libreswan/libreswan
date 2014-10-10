@@ -671,7 +671,6 @@ enum_names ike_idtype_names = {
 	NULL
 };
 
-
 static enum_names ikev2_idtype_names_3 = {
 	ID_DER_ASN1_DN, ID_FC_NAME,
 	&ike_idtype_name[ID_DER_ASN1_DN],
@@ -1035,9 +1034,9 @@ enum_names xauth_type_names = {
 	NULL
 };
 
-/* XAUTH-STATUS attribute */
+/* IKEv1 XAUTH-STATUS attribute names  */
 static const char *const modecfg_attr_name_draft[] = {
-	"INTERNAL_IP4_ADDRESS",	/*1 */
+	"INTERNAL_IP4_ADDRESS",	/* 1 */
 	"INTERNAL_IP4_NETMASK",
 	"INTERNAL_IP4_DNS",
 	"INTERNAL_IP4_NBNS",
@@ -1057,6 +1056,7 @@ static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP6_PREFIX",
 	"HOME_AGENT_ADDRESS",	/* 19 */
 };
+
 static enum_names modecfg_attr_names_draft = {
 	INTERNAL_IP4_ADDRESS,
 	HOME_AGENT_ADDRESS,
@@ -1280,6 +1280,53 @@ enum_names oakley_auth_names = {
 	&oakley_auth_names_private_use
 };
 
+/*
+ * IKEv2 CP attribute name. Some of them are shared with XAUTH Attrib names.
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+ */
+static const char *const ikev2_cp_attribute_type_name[] = {
+	"v2_INTERNAL_IP4_ADDRESS",	/* 1 */
+	"v2_INTERNAL_IP4_NETMASK",
+	"v2_INTERNAL_IP4_DNS",
+	"v2_INTERNAL_IP4_NBNS",
+	"v2_CP_ATTRIBUTE_RESERVED_5"
+	"v2_INTERNAL_IP4_DHCP",
+	"v2_APPLICATION_VERSION",
+	"v2_INTERNAL_IP6_ADDRESS",
+	"v2_CP_ATTRIBUTE_RESERVED_9",
+	"v2_INTERNAL_IP6_DNS",
+	"v2_CP_ATTRIBUTE_RESERVED_11"
+	"v2_INTERNAL_IP6_DHCP",
+	"v2_INTERNAL_IP4_SUBNET",	/* 13 */
+	"v2_SUPPORTED_ATTRIBUTES",
+	"v2_INTERNAL_IP6_SUBNET",
+	"v2_MIP6_HOME_PREFIX",
+	"v2_INTERNAL_IP6_LINK",
+	"v2_INTERNAL_IP6_PREFIX",
+	"v2_HOME_AGENT_ADDRESS",
+	"v2_P-CSCF_IP4_ADDRESS", /* 20 */
+};
+
+enum_names ikev2_cp_attribute_type_names = {
+	IKEv2_INTERNAL_IP4_ADDRESS,
+	IKEv2_FTT_KAT,
+	ikev2_cp_attribute_type_name,
+	NULL
+};
+
+static const char *const ikev2_cp_type_name[] = {
+	"IKEv2_CP_CFG_REQUEST" , /* 1 */
+	"IKEv2_CP_CFG_REPLY" ,
+	"IKEv2_CP_CFG_SET" ,
+	"IKEv2_CP_CFG_ACK"
+};
+
+enum_names ikev2_cp_type_names = {
+	IKEv2_CP_CFG_REQUEST,
+	IKEv2_CP_CFG_ACK,
+	ikev2_cp_type_name,
+	NULL
+};
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_name[] = {
@@ -1492,8 +1539,6 @@ enum_names ikev1_notify_names = {
 	ikev1_notify_name,
 	&ikev1_notify_status_names
 };
-
-
 
 /* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
 static const char *const ikev2_notify_name_16384[] = {
@@ -1856,15 +1901,6 @@ enum_names *const ikev2_trans_attr_val_descs[] = {
 	&ikev2_trans_attr_descs,	/* KEY_LENGTH */
 };
 
-/* socket address family info */
-static const char *const af_inet_name[] = {
-	"AF_INET",
-};
-
-static const char *const af_inet6_name[] = {
-	"AF_INET6",
-};
-
 
 static ip_address ipv4_any, ipv6_any;
 static ip_subnet ipv4_wildcard, ipv6_wildcard;
@@ -2036,6 +2072,18 @@ const char *enum_name(enum_names *ed, unsigned long val)
 	return NULL;
 }
 
+/* find or construct a string to describe an enum value */
+const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
+{
+	const char *p = enum_name(ed, val);
+
+	if (p == NULL) {
+		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		p = b->buf;
+	}
+	return p;
+}
+
 /*
  * find or construct a string to describe an enum value
  * Result may be in STATIC buffer -- NOT RE-ENTRANT!
@@ -2045,23 +2093,11 @@ const char *enum_name(enum_names *ed, unsigned long val)
  * (Of course that means that unnamed values will be shown
  * badly.)
  */
-const char *enum_showb(enum_names *ed, unsigned long val, char *buf,
-		size_t blen)
-{
-	const char *p = enum_name(ed, val);
-
-	if (p == NULL) {
-		snprintf(buf, blen, "%lu??", val);
-		p = buf;
-	}
-	return p;
-}
-
 const char *enum_show(enum_names *ed, unsigned long val)
 {
-	static char buf[ENUM_SHOW_BUF_LEN];	/* only one! NON-RE-ENTRANT */
+	static struct esb_buf buf;	/* only one! NON-RE-ENTRANT */
 
-	return enum_showb(ed, val, buf, sizeof(buf));
+	return enum_showb(ed, val, &buf);
 }
 
 /* sometimes the prefix gets annoying */
@@ -2069,7 +2105,7 @@ const char *strip_prefix(const char *s, const char *prefix)
 {
 	size_t pl = strlen(prefix);
 
-	return (s != NULL && strncmp(s, prefix, pl) == 0) ? s + pl : s;
+	return (s != NULL && strneq(s, prefix, pl)) ? s + pl : s;
 }
 
 /*
@@ -2158,6 +2194,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 const char *bitnamesof(const char *const table[], lset_t val)
 {
 	static char bitnamesbuf[200]; /* I hope that it is big enough! */
+
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
 }
 
@@ -2202,9 +2239,9 @@ const char *sparse_val_show(sparse_names sd, unsigned long val)
 	const char *p = sparse_name(sd, val);
 
 	if (p == NULL) {
-		static char buf[12]; /*
-				      * only one!  I hope that it is big enough
-				      */
+		/* only one!  I hope that it is big enough */
+		static char buf[12];
+
 		snprintf(buf, sizeof(buf), "%lu??", val);
 		p = buf;
 	}

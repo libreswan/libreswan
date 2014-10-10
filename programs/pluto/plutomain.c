@@ -403,7 +403,6 @@ static const struct option long_opts[] = {
 	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
 	{ "perpeerlogbase\0<path>", required_argument, NULL, 'P' },
 	{ "perpeerlog\0", no_argument, NULL, 'l' },
-	{ "noretransmits\0", no_argument, NULL, 'R' },
 	{ "coredir\0>dumpdir", required_argument, NULL, 'C' },	/* redundant spelling */
 	{ "dumpdir\0<dirname>", required_argument, NULL, 'C' },
 	{ "statsbin\0<filename>", required_argument, NULL, 'S' },
@@ -500,7 +499,7 @@ static void usage(void)
 		case '^':
 			force_nl = TRUE;
 			meta++;	/* eat ^ */
-			/* fall through */
+			/* FALL THROUGH */
 		default:
 			if (*meta == '\0')
 				snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
@@ -752,10 +751,6 @@ int main(int argc, char **argv)
 			strict_crl_policy = TRUE;
 			continue;
 
-		case 'R':
-			no_retransmits = TRUE;
-			continue;
-
 		case 'x':	/* --crlcheckinterval <seconds> */
 			ugh = ttoulb(optarg, 0, 10, TIME_T_MAX, &u);
 			if (ugh != NULL)
@@ -924,8 +919,6 @@ int main(int argc, char **argv)
 				cfg->setup.strings[KSF_PERPEERDIR]);
 			/* --perpeerlog */
 			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];
-			/* --noretransmits */
-			no_retransmits = !cfg->setup.options[KBF_RETRANSMITS];
 			if(cfg->setup.strings[KSF_DUMPDIR]) {
 				pfree(coredir);
 				/* dumpdir= */
@@ -1354,7 +1347,7 @@ int main(int argc, char **argv)
 	init_nat_traversal(keep_alive);
 
 	init_virtual_ip(virtual_private);
-	/* obsoletd by nss code init_rnd_pool(); */
+	/* obsoleted by nss code init_rnd_pool(); */
 	init_timer();
 	init_secret();
 	init_states();
@@ -1466,10 +1459,9 @@ void show_setup_plutomain()
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, retransmits=%s, force-busy=%s",
+		"nhelpers=%d, uniqueids=%s, force-busy=%s",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
-		no_retransmits ? "no" : "yes",
 		force_busy ? "yes" : "no");
 
 	whack_log(RC_COMMENT,

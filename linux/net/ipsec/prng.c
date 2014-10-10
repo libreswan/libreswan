@@ -55,8 +55,8 @@ size_t keylen;
 {
 	unsigned char k[256];
 	int i, j;
-	unsigned const char *p;
-	unsigned const char *keyend = key + keylen;
+	const unsigned char *p;
+	const unsigned char *keyend = key + keylen;
 	unsigned char t;
 
 	for (i = 0; i <= 255; i++)

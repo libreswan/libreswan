@@ -44,7 +44,7 @@ extern state_transition_fn
 	aggr_inR1_outI2,
 	aggr_inI2;
 
-extern void send_delete(struct state *st);
+extern bool send_delete(struct state *st);
 extern void accept_delete(struct state *st, struct msg_digest *md,
 			  struct payload_digest *p);
 

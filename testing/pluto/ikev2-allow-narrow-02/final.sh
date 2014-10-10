@@ -1,4 +1,4 @@
-ipsec look
+ipsec eroute
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

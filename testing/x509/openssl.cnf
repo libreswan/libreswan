@@ -39,6 +39,7 @@ certs		= $dir/certs		# Where the issued certs are kept
 crl_dir		= $dir/crl		# Where the issued crl are kept
 database	= $dir/index.txt	# database index file.
 new_certs_dir	= $dir/newcerts		# default place for new certs.
+unique_subject  = no
 
 #so we can put out own subjectAltName in there
 #@YYYemail_in_dn     = no

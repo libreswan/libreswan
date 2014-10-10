@@ -11,7 +11,7 @@ host. Acceptable values are
 (signifying that we will never send a X.509 certificate).
 The default for this option is 
 <emphasis remap='B'>sendifasked</emphasis>
-which may break compatibility with other vendor's IPSec implementations, such as
+which may break compatibility with other vendor's IPsec implementations, such as
 Cisco and SafeNet. If you find that you are getting errors about no ID/Key found,
 you likely need to set this to
 <emphasis remap='B'>always</emphasis>.

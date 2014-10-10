@@ -498,9 +498,10 @@ struct sadb_msg *m;
 }
 
 /*
- * set "ipaddress" to buffer.
+ * return string for IP address
+ * BEWARE: uses a static buffer.
  */
-static char *str_ipaddr(sa)
+static const char *str_ipaddr(sa)
 struct sockaddr *sa;
 {
 	static char buf[NI_MAXHOST];
@@ -518,8 +519,9 @@ struct sockaddr *sa;
 
 /*
  * set "/prefix[port number]" to buffer.
+ * BEWARE: result may be in a single static buffer.
  */
-static char *str_prefport(family, pref, port, ulp)
+static const char *str_prefport(family, pref, port, ulp)
 u_int family, pref, port, ulp;
 {
 	static char buf[128];
@@ -588,9 +590,9 @@ u_int ulp, p1, p2;
 
 /*
  * set "Mon Day Time Year" to buffer
- * Not re-entrant because it returns a pointer to a static buffer.
+ * NOT RE-ENTRANT because it returns a pointer to a static buffer.
  */
-static char *str_real_time(realtime_t t)
+static const char *str_real_time(realtime_t t)
 {
 	/* ??? What's 20?  What's 128?  Whats 4? */
 	static char buf[128];
@@ -608,8 +610,11 @@ static char *str_real_time(realtime_t t)
 	return buf;
 }
 
-/* print a monotonic clock time converted to real timebase */
-static char *str_mono_time(monotime_t t)
+/*
+ * print a monotonic clock time converted to real timebase
+ * uses str_real_time which is NOT RE-ENTRANT
+ */
+static const char *str_mono_time(monotime_t t)
 {
 	return str_real_time(realtimesum(realnow(), diffmonotime(t, mononow())));
 }

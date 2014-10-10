@@ -108,9 +108,9 @@ char me[] = "ipsec rsasigkey";  /* for messages */
 /* forwards */
 void rsasigkey(int nbits, char *configdir, char *password);
 void getrandom(size_t nbytes, unsigned char *buf);
-unsigned char *bundle(int e, mpz_t n, size_t *sizep);
-char *conv(unsigned char *bits, size_t nbytes, int format);
-char *hexout(mpz_t var);
+static const unsigned char *bundle(int e, mpz_t n, size_t *sizep);
+static const char *conv(const unsigned char *bits, size_t nbytes, int format);
+static const char *hexout(mpz_t var);
 void report(char *msg);
 
 #define RAND_BUF_SIZE 60
@@ -140,27 +140,26 @@ static void SECItemToHex(const SECItem * item, char * dst)
 }
 
 /*
- * hexOut - prepare hex output, guaranteeing even number of digits
- * The current Libreswan conversion routines expect an even digit count,
- * but the is no guarantee the data will have such length.
- * hexOut is like hexout but takes a SECItem *.
+ * hexOut - prepare hex output, guaranteeing even number of digits.
+ * (The current Libreswan conversion routines expect an even digit count.)
+ *
+ * NOTE: result is a pointer into a STATIC buffer.
  */
-static char *hexOut(SECItem *data)
+static const char *hexOut(SECItem *data)
 {
 	unsigned i;
-	static char hexbuf[3 + MAXBITS / 4 + 1];
-	char *hexp;
+	static char hexbuf[3 + BYTES_FOR_BITS(MAXBITS) * 2];
+	char *hexp = hexbuf;
 
-	zero(&hexbuf);
-	for (i = 0, hexp = hexbuf + 3; i < data->len; i++, hexp += 2)
+	if (data->len > BYTES_FOR_BITS(MAXBITS))
+		return "[too many bytes]";
+
+	*hexp++ = '0';
+	*hexp++ = 'x';
+	for (i = 0; i < data->len; i++, hexp += 2)
 		sprintf(hexp, "%02x", data->data[i]);
-	*hexp = '\0';
 
-	hexp = hexbuf + 1;
-	hexp[0] = '0';
-	hexp[1] = 'x';
-
-	return hexp;
+	return hexbuf;
 }
 
 /* UpdateRNG - Updates NSS's PRNG with user generated entropy. */
@@ -409,12 +408,12 @@ int main(int argc, char *argv[])
 void rsasigkey(int nbits, char *configdir, char *password)
 {
 	SECStatus rv;
-	PK11RSAGenParams rsaparams      = { nbits, (long) E };
-	secuPWData pwdata              = { PW_NONE, NULL };
-	PK11SlotInfo *slot              = NULL;
-	SECKEYPrivateKey *privkey       = NULL;
-	SECKEYPublicKey *pubkey         = NULL;
-	unsigned char *bundp            = NULL;
+	PK11RSAGenParams rsaparams = { nbits, (long) E };
+	secuPWData pwdata = { PW_NONE, NULL };
+	PK11SlotInfo *slot = NULL;
+	SECKEYPrivateKey *privkey = NULL;
+	SECKEYPublicKey *pubkey = NULL;
+	const unsigned char *bundp = NULL;
 	mpz_t n;
 	mpz_t e;
 	size_t bs;
@@ -593,13 +592,13 @@ unsigned char *buf;                     /* known to be big enough */
 }
 
 /*
-   - hexout - prepare hex output, guaranteeing even number of digits
+ * hexout - prepare hex output, guaranteeing even number of digits
  * (The current FreeS/WAN conversion routines want an even digit count,
  * but mpz_get_str doesn't promise one.)
+ *
+ * NOTE: result is a pointer into a STATIC buffer.
  */
-char *                          /* pointer to static buffer (ick) */
-hexout(var)
-mpz_t var;
+static const char *hexout(mpz_t var)
 {
 	static char hexbuf[3 + MAXBITS / 4 + 1];
 	char *hexp;
@@ -620,14 +619,12 @@ mpz_t var;
 /*
    - bundle - bundle e and n into an RFC2537-format lump
  * Note, calls hexout.
+ *
+ * NOTE: returns a pointer into a STATIC buffer
  */
-unsigned char *                         /* pointer to static buffer (ick) */
-bundle(e, n, sizep)
-int e;
-mpz_t n;
-size_t *sizep;
+static const unsigned char *bundle(int e, mpz_t n, size_t *sizep)
 {
-	char *hexp = hexout(n);
+	const char *hexp = hexout(n);
 	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
 	const char *er;
 	size_t size;
@@ -653,13 +650,10 @@ size_t *sizep;
 }
 
 /*
-   - conv - convert bits to output in specified format
+   - conv - convert bits to output in specified datatot format
+ * NOTE: result points into a STATIC buffer
  */
-char *                          /* pointer to static buffer (ick) */
-conv(bits, nbytes, format)
-unsigned char *bits;
-size_t nbytes;
-int format;                                     /* datatot() code */
+static const char *conv(const unsigned char *bits, size_t nbytes, int format)
 {
 	static char convbuf[MAXBITS / 4 + 50];  /* enough for hex */
 	size_t n;

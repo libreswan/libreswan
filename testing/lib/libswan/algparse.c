@@ -59,6 +59,7 @@ main(int argc, char *argv[]) {
 	/* esp= */
 	fprintf(stdout, "\n---- ESP tests that should succeed ----\n");
 
+	do_test("aes_gcm_a-128-null", PROTO_IPSEC_ESP);
 	do_test("3des-sha1;modp1024", PROTO_IPSEC_ESP);
 	do_test("3des-sha1;modp1536", PROTO_IPSEC_ESP);
 	do_test("3des-sha1;modp2048", PROTO_IPSEC_ESP);
@@ -143,6 +144,8 @@ main(int argc, char *argv[]) {
 	fprintf(stdout, "\n---- ESP tests that should fail----\n");
 
 	do_test("3des168-sha1", PROTO_IPSEC_ESP); /* should get rejected */
+	do_test("3des-null", PROTO_IPSEC_ESP); /* should get rejected */
+	do_test("aes128-null", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes224-sha1", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes512-sha1", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes-sha1555", PROTO_IPSEC_ESP); /* should get rejected */
@@ -158,6 +161,7 @@ main(int argc, char *argv[]) {
 	/* we no longer support IDxxx because we cannot know block/key sizes */
 	do_test("id3", PROTO_IPSEC_ESP); /* alternative spelling for 3DES */
 	do_test("id12", PROTO_IPSEC_ESP); /* alternative spelling for AES */
+	do_test("aes_gcm-md5", PROTO_IPSEC_ESP); /* AEAD must have auth null */
 
 	/* ah= */
 	fprintf(stdout, "\n---- AH tests that should succeed ----\n");
@@ -178,13 +182,14 @@ main(int argc, char *argv[]) {
 	do_test("id3", PROTO_IPSEC_AH);
 	do_test("3des", PROTO_IPSEC_AH);
 	do_test("null", PROTO_IPSEC_AH);
+	do_test("aes_gcm", PROTO_IPSEC_AH);
+	do_test("aes_ccm", PROTO_IPSEC_AH);
 
 #ifdef WORK_IN_PROGRESS
 	/* ike= */
 	fprintf(stdout, "\n---- IKE tests ----\n");
 	do_test("3des-sha1", PROTO_ISAKMP);
 #endif
-
 	report_leaks();
 	tool_close_log();
 	exit(0);

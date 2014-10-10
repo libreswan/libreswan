@@ -192,7 +192,7 @@ struct spd_route {
 	struct end that;
 	so_serial_t eroute_owner;
 	enum routing_t routing; /* level of routing in place */
-	uint32_t reqid;
+	reqid_t reqid;
 };
 
 struct connection {
@@ -205,7 +205,7 @@ struct connection {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	unsigned long sa_priority;
-	unsigned long sa_reqid;
+	reqid_t sa_reqid;
 	int encapsulation;
 
 	/* RFC 3706 DPD */

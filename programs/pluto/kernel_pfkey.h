@@ -20,7 +20,7 @@ extern void klips_register_proto(unsigned satype, const char *satypename);
 #endif
 extern void pfkey_close(void);
 #ifdef KLIPS
-extern void klips_pfkey_register_response(const struct sadb_msg *msg);
+extern void pfkey_register_response(const struct sadb_msg *msg);
 #endif
 extern void pfkey_dequeue(void);
 extern void pfkey_event(void);

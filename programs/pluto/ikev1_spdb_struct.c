@@ -320,15 +320,18 @@ bool ikev1_out_sa(pb_stream *outs,
 		struct isakmp_sa sa;
 
 		sa.isasa_np = np;
-		st->st_doi = sa.isasa_doi = ISAKMP_DOI_IPSEC; /* all we know */
+		sa.isasa_doi = ISAKMP_DOI_IPSEC; /* all we know */
 		if (!out_struct(&sa, &isakmp_sa_desc, outs, &sa_pbs))
 			return_on(ret, FALSE);
 	}
 
 	/* within SA: situation out */
-	st->st_situation = SIT_IDENTITY_ONLY;
-	if (!out_struct(&st->st_situation, &ipsec_sit_desc, &sa_pbs, NULL))
-		return_on(ret, FALSE);
+	{
+		static const u_int32_t situation = SIT_IDENTITY_ONLY;
+
+		if (!out_struct(&situation, &ipsec_sit_desc, &sa_pbs, NULL))
+			return_on(ret, FALSE);
+	}
 
 	/* within SA: Proposal Payloads
 	 *
@@ -1302,7 +1305,7 @@ rsasig_common:
 
 			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
 				val = decode_long_duration(&attr_pbs);
-				/* fall through */
+				/* FALL THROUGH */
 			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 				if (!LHAS(seen_attrs, OAKLEY_LIFE_TYPE)) {
 					ugh = "OAKLEY_LIFE_DURATION attribute not preceded by OAKLEY_LIFE_TYPE attribute";
@@ -1755,7 +1758,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
 			val = decode_long_duration(&attr_pbs);
-			/* fall through */
+			/* FALL THROUGH */
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
 			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
@@ -1873,8 +1876,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 							       ENCAPSULATION_MODE_UDP_TUNNEL_RFC
 							       +
 							       ENCAPSULATION_MODE_TUNNEL;
-				} else if (st->hidden_variables.
-					   st_nat_traversal & NAT_T_DETECTED) {
+				} else if (st->hidden_variables.st_nat_traversal &
+						NAT_T_DETECTED) {
 					loglog(RC_LOG_SERIOUS,
 					       "%s must only be used with NAT-T RFC",
 					       enum_name(&enc_mode_names,
@@ -1891,7 +1894,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 			default:
 				loglog(RC_LOG_SERIOUS,
-				       "unknown ENCAPSULATION_MODE %d in IPSec SA",
+				       "unknown ENCAPSULATION_MODE %d in IPsec SA",
 				       val);
 				return FALSE;
 
@@ -1984,7 +1987,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 		}
 
-		err_t ugh = kernel_alg_esp_enc_ok(
+		err_t ugh = check_kernel_encrypt_alg(
 				attrs->transattrs.encrypt,
 				attrs->transattrs.enckeylen);
 		if (ugh != NULL) {
@@ -1993,6 +1996,12 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				ugh);
 			return FALSE;
 		}
+	}
+
+	if (proto == PROTO_IPSEC_AH) {
+		DBG(DBG_CONTROL, DBG_log("PROTO AH: we should check registration of attrs->transattrs.integ_hash=%d",
+			attrs->transattrs.integ_hash));
+		/* if not registered, abort early */
 	}
 
 	return TRUE;
@@ -2298,7 +2307,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 		} while (next_proposal.isap_proposal == propno);
 
 		/* Now that we have all conjuncts, we should try
-		 * the Cartesian product of eachs tranforms!
+		 * the Cartesian product of each's tranforms!
 		 * At the moment, we take short-cuts on account of
 		 * our rudimentary hard-wired policy.
 		 * For now, we find an acceptable AH (if any)
@@ -2341,6 +2350,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				 * AH_SHA, AUTH_ALGORITHM_HMAC_SHA1
 				 * AH_DES, AUTH_ALGORITHM_DES_MAC (unimplemented)
 				 */
+				/* ??? this switch looks a lot like alg_info_esp_aa2sadb */
 				switch (ah_attrs.transattrs.integ_hash) {
 				case AUTH_ALGORITHM_NONE:
 					loglog(RC_LOG_SERIOUS,
@@ -2348,7 +2358,6 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					return BAD_PROPOSAL_SYNTAX;
 
 				case AUTH_ALGORITHM_HMAC_MD5:
-				/* fall through */
 				case AUTH_ALGORITHM_KPDK:
 					ok_transid = AH_MD5;
 					break;
@@ -2411,36 +2420,31 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				if (ah_attrs.transattrs.encrypt !=
 				    ok_transid) {
-					char esb[ENUM_SHOW_BUF_LEN];
+					struct esb_buf esb;
 
 					loglog(RC_LOG_SERIOUS,
 					       "%s attribute inappropriate in %s Transform",
 					       enum_showb(&auth_alg_names,
-							 ah_attrs.transattrs.
-							 integ_hash,
-							 esb, sizeof(esb)),
+							 ah_attrs.transattrs.integ_hash,
+							 &esb),
 					       enum_show(&ah_transformid_names,
-							 ah_attrs.transattrs.
-							 encrypt));
+							 ah_attrs.transattrs.encrypt));
 					return BAD_PROPOSAL_SYNTAX;
 				}
+				/* ??? should test be !ok_auth || !ESP_AALG_PRESENT(ok_transid) */
+				/* ??? why is this called ESP_AALG_PRESENT when we're doing AH? */
 				if (!ok_auth) {
-					char esb[ENUM_SHOW_BUF_LEN];
+					struct esb_buf esb;
 
 					DBG(DBG_CONTROL | DBG_CRYPT, {
 						ipstr_buf b;
 						DBG_log("%s attribute unsupported in %s Transform from %s",
 							enum_showb(&auth_alg_names,
-								  ah_attrs.
-								  transattrs.
-								  integ_hash,
-								  esb, sizeof(esb)),
+								  ah_attrs.transattrs.integ_hash,
+								  &esb),
 							enum_show(&ah_transformid_names,
-								  ah_attrs.
-								  transattrs.
-								  encrypt),
-							ipstr(&c->spd.that.
-							       host_addr, &b));
+								  ah_attrs.transattrs.encrypt),
+							ipstr(&c->spd.that.host_addr, &b));
 					});
 					continue;       /* try another */
 				}
@@ -2448,6 +2452,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			if (tn == ah_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
+
+			/* Check AH proposal with configuration */
+			if (c->alg_info_esp != NULL &&
+			    !ikev1_verify_ah(ah_attrs.transattrs.integ_hash,
+					c->alg_info_esp)) {
+				continue;
+			}
 			ah_attrs.spi = ah_spi;
 			inner_proto = IPPROTO_AH;
 			if (ah_attrs.encapsulation ==
@@ -2478,8 +2489,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				ugh = "no alg";
 
-				if (c->alg_info_esp) {
-					ugh = kernel_alg_esp_enc_ok(
+				if (c->alg_info_esp != NULL) {
+					ugh = check_kernel_encrypt_alg(
 						esp_attrs.transattrs.encrypt,
 						esp_attrs.transattrs.enckeylen);
 				}
@@ -2490,13 +2501,11 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case ESP_3DES:
 						break;
 					case ESP_NULL:
-						if (esp_attrs.transattrs.
-							integ_hash ==
+						if (esp_attrs.transattrs.integ_hash ==
 						    AUTH_ALGORITHM_NONE) {
 							loglog(RC_LOG_SERIOUS,
 							       "ESP_NULL requires auth algorithm");
-							return
-								BAD_PROPOSAL_SYNTAX;
+							return BAD_PROPOSAL_SYNTAX;
 						}
 
 						if (st->st_policy &
@@ -2513,7 +2522,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case ESP_DES: /* NOT safe */
 						loglog(RC_LOG_SERIOUS,
 						       "1DES was proposed, it is insecure and was rejected");
-						/* Fall through */
+						/* FALL THROUGH */
 					default:
 						{
 						ipstr_buf b;
@@ -2524,26 +2533,21 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						loglog(RC_LOG_SERIOUS,
 						       "unsupported ESP Transform %s from %s",
 						       enum_show(&esp_transformid_names,
-								 esp_attrs.
-								 transattrs.
-								 encrypt),
-						       ipstr(&c->spd.that.
-							      host_addr, &b));
+								 esp_attrs.transattrs.encrypt),
+						       ipstr(&c->spd.that.host_addr, &b));
 						continue; /* try another */
 						}
 					}
 				}
 
-				ugh = kernel_alg_esp_auth_ok(
-					esp_attrs.transattrs.integ_hash,
-					c->alg_info_esp);
-
-				if (ugh != NULL) {
+				if (!kernel_alg_esp_auth_ok(
+						esp_attrs.transattrs.integ_hash,
+						c->alg_info_esp)) {
 					switch (esp_attrs.transattrs.integ_hash)
 					{
 					case AUTH_ALGORITHM_NONE:
 						if (!ah_seen) {
-							DBG(DBG_CONTROL | DBG_CRYPT, {
+							DBG(DBG_CONTROL, {
 								ipstr_buf b;
 								DBG_log("ESP from %s must either have AUTH or be combined with AH",
 								    ipstr(&c->spd.that.host_addr, &b));
@@ -2551,6 +2555,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 							continue; /* try another */
 						}
 						break;
+
+					/* ??? why do we accept these when kernel_alg_esp_auth_ok says not to? */
 					case AUTH_ALGORITHM_HMAC_MD5:
 					case AUTH_ALGORITHM_HMAC_SHA1:
 					case AUTH_ALGORITHM_HMAC_SHA2_256:
@@ -2559,18 +2565,17 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					case AUTH_ALGORITHM_HMAC_RIPEMD:
 					case AUTH_ALGORITHM_AES_XCBC:
 						break;
+
 					default:
 						{
 						ipstr_buf b;
 
-						loglog(RC_LOG_SERIOUS,
+						DBG(DBG_CONTROL, DBG_log(
 						       "unsupported ESP auth alg %s from %s",
 						       enum_show(&auth_alg_names,
-								 esp_attrs.
-								 transattrs.
-								 integ_hash),
-						       ipstr(&c->spd.that.
-							      host_addr, &b));
+								 esp_attrs.transattrs.integ_hash),
+						       ipstr(&c->spd.that.host_addr,
+								&b)));
 						continue; /* try another */
 						}
 					}
@@ -2579,26 +2584,21 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (ah_seen &&
 				    ah_attrs.encapsulation !=
 				      esp_attrs.encapsulation) {
-					/* ??? This should be an error, but is it? */
 					loglog(RC_LOG_SERIOUS,
-					       "AH and ESP transforms disagree about encapsulation; TUNNEL presumed");
+					       "Skipped bogus proposal where AH and ESP transforms disagree about encapsulation");
+					continue; /* try another */
 				}
 
 				break; /* we seem to be happy */
 			}
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
-			/*
-			 * ML: at last check for allowed transforms in alg_info_esp
-			 *
-			 */
+
+			/* check for allowed transforms in alg_info_esp */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_phase2(esp_attrs.transattrs.
-						     encrypt,
-						     esp_attrs.transattrs.
-						     enckeylen,
-						     esp_attrs.transattrs.
-						     integ_hash,
+			    !ikev1_verify_esp(esp_attrs.transattrs.encrypt,
+						     esp_attrs.transattrs.enckeylen,
+						     esp_attrs.transattrs.integ_hash,
 						     c->alg_info_esp))
 				continue;
 			esp_attrs.spi = esp_spi;
@@ -2685,11 +2685,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						ipstr_buf b;
 						DBG_log("unsupported IPCOMP Transform %s from %s",
 							enum_show(&ipcomp_transformid_names,
-								  ipcomp_attrs.
-								  transattrs.
-								  encrypt),
-							ipstr(&c->spd.that.
-							       host_addr, &b));
+								  ipcomp_attrs.transattrs.encrypt),
+							ipstr(&c->spd.that.host_addr,
+								&b));
 					});
 					continue; /* try another */
 				}

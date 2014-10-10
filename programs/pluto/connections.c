@@ -72,7 +72,7 @@
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "xauth.h"
+#include "ikev1_xauth.h"
 #include "addresspool.h"
 #include "nat_traversal.h"
 
@@ -203,16 +203,8 @@ static void delete_end(struct end *e, bool that)
 	 * were collected during the exchange, so they
 	 * need to be removed along with the reference chain
 	 */
-	if (that && e->ca_path.u.x509 != NULL) {
-		x509cert_t *tmp = e->ca_path.u.x509;
-		free_authcert_chain(&tmp);
-
-		while (tmp != NULL) {
-			x509cert_t *nc = tmp->next;
-			pfreeany(tmp);
-			tmp = nc;
-		}
-	}
+	if (that && e->ca_path.ty != CERT_NONE && e->ca_path.u.x509 != NULL)
+		free_authcert_chain(e->ca_path.u.x509);
 
 	freeanychunk(e->ca);
 	release_cert(e->cert);
@@ -763,11 +755,11 @@ static void unshare_connection_strings(struct connection *c)
 
 	/* increment references to algo's, if any */
 	if (c->alg_info_ike) {
-		alg_info_addref(IKETOINFO(c->alg_info_ike));
+		alg_info_addref(&c->alg_info_ike->ai);
 	}
 
 	if (c->alg_info_esp) {
-		alg_info_addref(ESPTOINFO(c->alg_info_esp));
+		alg_info_addref(&c->alg_info_esp->ai);
 	}
 	if (c->pool !=  NULL)
 		reference_addresspool(c->pool);
@@ -1130,38 +1122,53 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static struct connection *find_connection_by_reqid(uint32_t reqid)
+static struct connection *find_connection_by_reqid(reqid_t reqid)
 {
 	struct connection *c;
 
-	if (reqid >= IPSEC_MANUAL_REQID_MAX -3 ) {
+	/* find base reqid */
+	if (reqid > IPSEC_MANUAL_REQID_MAX) {
 		reqid &= ~3;
 	}
 
-	for (c = connections; c != NULL; c = c->ac_next) {
+	for (c = connections; c != NULL; c = c->ac_next)
 		if (c->spd.reqid == reqid)
-			return c;
-	}
+			break;
 
-	return NULL;
+	return c;
 }
 
-static uint32_t gen_reqid(void)
+/*
+ * generate a base reqid for automatic keying
+ *
+ * We are actually allocating a group of four contiguous
+ * numbers: one is used for each SA in an SA bundle.
+ *
+ * - must not be in range 0 to IPSEC_MANUAL_REQID_MAX
+ * - is a multiple of 4 (not actually a requirement?)
+ * - does not duplicate any currently in use
+ */
+static reqid_t gen_reqid(void)
 {
-	uint32_t start;
-	static uint32_t reqid = IPSEC_MANUAL_REQID_MAX & ~3;
+	static reqid_t	last_reqid = IPSEC_MANUAL_REQID_MAX + 1;
+	reqid_t r = last_reqid;
 
-	start = reqid;
-	do {
-		reqid += 4;
-		if (reqid == 0)
-			reqid = (IPSEC_MANUAL_REQID_MAX & ~3) + 4;
-		if (!find_connection_by_reqid(reqid))
-			return reqid;
-	} while (reqid != start);
+	passert(r % 4 == 0);
+	for (;;) {
+		r += 4;	/* may wrap */
+		/* don't use range 0 to IPSEC_MANUAL_REQID_MAX */
+		if (r <= IPSEC_MANUAL_REQID_MAX)
+			r = IPSEC_MANUAL_REQID_MAX + 1;
 
-	exit_log("unable to allocate reqid");
-	return 0; /* never reached, here to make compiler happy */
+		if (r == last_reqid) {
+			/* gone around the clock without success */
+			exit_log("unable to allocate reqid");
+		}
+		if (!find_connection_by_reqid(r)) {
+			last_reqid = r;
+			return r;
+		}
+	}
 }
 
 static bool have_wm_certs(const struct whack_message *wm)
@@ -1287,13 +1294,13 @@ void add_connection(const struct whack_message *wm)
 					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
-				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
+				char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf);
+				DBG_log("phase2alg string values: %s", buf);
 			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->ai.alg_info_cnt == 0) {
@@ -1306,7 +1313,7 @@ void add_connection(const struct whack_message *wm)
 				}
 			} else {
 				loglog(RC_LOG_SERIOUS,
-					"esp string error: %s",
+					"phase2alg string error: %s",
 					err_buf);
 				pfree(c);
 				return;
@@ -1463,10 +1470,10 @@ void add_connection(const struct whack_message *wm)
 
 		c->spd.next = NULL;
 
-		if (wm->sa_reqid) {
-			c->spd.reqid = wm->sa_reqid;
-		} else {
+		if (wm->sa_reqid == 0) {
 			c->spd.reqid = gen_reqid();
+		} else {
+			c->spd.reqid = wm->sa_reqid;
 		}
 
 		/* set internal fields */
@@ -2331,8 +2338,8 @@ struct connection *route_owner(struct connection *c,
 			struct spd_route **esrp)
 {
 	struct connection *d,
-	*best_ro = c,
-	*best_ero = c;
+		*best_ro = c,
+		*best_ero = c;
 	struct spd_route *srd, *src;
 	struct spd_route *best_sr, *best_esr;
 	enum routing_t best_routing, best_erouting;
@@ -3147,7 +3154,7 @@ static struct connection *fc_try(const struct connection *c,
 						continue;
 					}
 
-					virtualwhy = is_virtual_net_allowed(
+					virtualwhy = check_virtual_net_allowed(
 							d,
 							peer_net,
 							&sr->that.host_addr);
@@ -3203,9 +3210,8 @@ static struct connection *fc_try(const struct connection *c,
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
 			libreswan_log(
-				"peer proposal was reject in a virtual "
-				"connection policy because:");
-			libreswan_log("  %s", virtualwhy);
+				"peer proposal was reject in a virtual connection policy: %s",
+				virtualwhy);
 		}
 	}
 

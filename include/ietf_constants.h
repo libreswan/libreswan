@@ -383,20 +383,25 @@
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 #define CAST_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
+/* TWOFISH_CBC_BLOCK_SIZE: (128 / BITS_PER_BYTE) */
+/* SERPENT_CBC_BLOCK_SIZE: (128 / BITS_PER_BYTE) */
+
+/*
+ * hand-computed max of *_CBC_BLOCK_SIZE
+ * Needs to be a compile-time constant for array allocation.
+ */
+#define MAX_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 
 #define DSS_QBITS 160 /* bits in DSS's "q" (FIPS 186-1) */
 
 /*
- * to statically allocate IV, we need max of
- * MD5_DIGEST_SIZE, SHA1_DIGEST_SIZE, and DES_CBC_BLOCK_SIZE.
- * To avoid combinatorial explosion, we leave out DES_CBC_BLOCK_SIZE.
+ * hand-computed max of
+ * MD5_DIGEST_SIZE, SHA1_DIGEST_SIZE, DES_CBC_BLOCK_SIZE, and
+ * SHA2_*_DIGEST_SIZE.
+ * Needs to be a compile-time constant for array allocation.
+ * To avoid combinatorial explosion, we cheat.
  */
-#define MAX_DIGEST_LEN_OLD \
-	(MD5_DIGEST_SIZE > SHA1_DIGEST_SIZE ? MD5_DIGEST_SIZE :	\
-	SHA1_DIGEST_SIZE)
-
-/* for max: SHA2_512 */
-#define MAX_DIGEST_LEN (512 / BITS_PER_BYTE)
+#define MAX_DIGEST_LEN SHA2_512_DIGEST_SIZE
 
 /* RFC 2404 "HMAC-SHA-1-96" section 3 */
 #define HMAC_SHA1_KEY_LEN SHA1_DIGEST_SIZE
@@ -1103,6 +1108,44 @@ enum ikev1_auth_method {
 /* typedef to make our life easier */
 typedef u_int16_t oakley_auth_t;
 
+enum ikev2_cp_attribute_type {
+	/*
+	 * IKEv2 CP Attribute types
+	 * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+	 */
+	IKEv2_INTERNAL_IP4_ADDRESS = 1,
+	IKEv2_INTERNAL_IP4_NETMASK = 2,
+	IKEv2_INTERNAL_IP4_DNS = 3,
+	IKEv2_INTERNAL_IP4_NBNS = 4 /* unused by us, WINS is long dead */,
+	IKEv2_RESERVED_5 = 5,
+	IKEv2_INTERNAL_IP4_DHCP = 6,
+	IKEv2_APPLICATION_VERSION = 7,
+	IKEv2_INTERNAL_IP6_ADDRESS = 8,
+	IKEv2_RESERVED_9 = 9,
+	IKEv2_INTERNAL_IP6_DNS = 10,
+	IKEv2_RESERVED_11 = 11,
+	IKEv2_INTERNAL_IP6_DHCP  =12,
+	IKEv2_INTERNAL_IP4_SUBNET = 13,
+	IKEv2_SUPPORTED_ATTRIBUTES = 14,
+	IKEv2_INTERNAL_IP6_SUBNET = 15,
+	IKEv2_MIP6_HOME_PREFIX = 16,
+	IKEv2_INTERNAL_IP6_LINK = 17,
+	IKEv2_INTERNAL_IP6_PREFIX = 18,
+	IKEv2_HOME_AGENT_ADDRESS = 19,
+	IKEv2_P_CSCF_IP4_ADDRESS = 20,
+	IKEv2_P_CSCF_IP6_ADDRESS = 21,
+	IKEv2_FTT_KAT = 22,
+};
+
+
+/* extern enum_names ikev2_cp_names; */
+enum ikev2_cp_type {
+	IKEv2_CP_CFG_REQUEST = 1,
+	IKEv2_CP_CFG_REPLY = 2,
+	IKEv2_CP_CFG_SET = 3,
+	IKEv2_CP_CFG_ACK = 4
+};
+
 /* extern enum_names ikev2_auth_names; */
 enum ikev2_auth_method {
 	IKEv2_AUTH_RSA = 1,
@@ -1335,8 +1378,8 @@ typedef enum {
 } v2_notification_t;
 
 /* Public key algorithm number
- * Same numbering as used in DNSsec
- * See RFC 2535 DNSsec 3.2 The KEY Algorithm Number Specification.
+ * Same numbering as used in DNSSEC
+ * See RFC 2535 DNSSEC 3.2 The KEY Algorithm Number Specification.
  * Also found in BIND 8.2.2 include/isc/dst.h as DST algorithm codes.
  */
 
@@ -1532,7 +1575,7 @@ struct ipsec_identity {
 };
 
 /* Limits on size of RSA moduli.
- * The upper bound matches that of DNSsec (see RFC 2537).
+ * The upper bound matches that of DNSSEC (see RFC 2537).
  * The lower bound must be more than 11 octets for certain
  * the encoding to work, but it must be much larger for any
  * real security. For now, we require 512 bits.

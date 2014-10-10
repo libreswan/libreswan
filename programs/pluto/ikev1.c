@@ -150,7 +150,7 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 
 #include "nat_traversal.h"
 #include "vendor.h"
@@ -298,7 +298,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_MAIN_I2, STATE_MAIN_I3,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED |
-	  SMF_REPLY
+		SMF_REPLY
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(ID)
 	  , EVENT_v1_RETRANSMIT, main_inR2_outI3 },
 
@@ -321,20 +321,20 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_MAIN_R2, STATE_MAIN_R3,
 	  SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED |
-	  SMF_REPLY | SMF_RELEASE_PENDING_P2,
+		SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(ID) | P(HASH), P(VID) | P(CR), PT(NONE),
 	  EVENT_SA_REPLACE, main_inI3_outR3 },
 
 	{ STATE_MAIN_R2, STATE_MAIN_R3,
 	  SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED |
-	  SMF_REPLY | SMF_RELEASE_PENDING_P2,
+		SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(ID) | P(SIG), P(VID) | P(CR) | P(CERT), PT(NONE),
 	  EVENT_SA_REPLACE, main_inI3_outR3 },
 
 	{ STATE_MAIN_R2, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_RPKE_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-	  SMF_ENCRYPTED |
-	  SMF_REPLY | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED |
+		SMF_REPLY | SMF_RELEASE_PENDING_P2,
 	  P(HASH), P(VID) | P(CR), PT(NONE),
 	  EVENT_SA_REPLACE, unexpected /* ??? not yet implemented */ },
 
@@ -346,19 +346,19 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_MAIN_I3, STATE_MAIN_I4,
 	  SMF_PSK_AUTH | SMF_INITIATOR |
-	  SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(ID) | P(HASH), P(VID) | P(CR), PT(NONE),
 	  EVENT_SA_REPLACE, main_inR3 },
 
 	{ STATE_MAIN_I3, STATE_MAIN_I4,
 	  SMF_DS_AUTH | SMF_INITIATOR |
-	  SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(ID) | P(SIG), P(VID) | P(CR) | P(CERT), PT(NONE),
 	  EVENT_SA_REPLACE, main_inR3 },
 
 	{ STATE_MAIN_I3, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_RPKE_AUTH | SMF_INITIATOR |
-	  SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_FIRST_ENCRYPTED_INPUT | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(HASH), P(VID) | P(CR), PT(NONE),
 	  EVENT_SA_REPLACE, unexpected /* ??? not yet implemented */ },
 
@@ -401,16 +401,16 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_AGGR_I1, STATE_AGGR_I2,
 	  SMF_PSK_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY |
-	  SMF_RELEASE_PENDING_P2,
-	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(HASH), P(VID) | P(NATD_RFC), PT(
-		  NONE),
+		SMF_RELEASE_PENDING_P2,
+	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(HASH), P(VID) | P(NATD_RFC),
+	  PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inR1_outI2 },
 
 	{ STATE_AGGR_I1, STATE_AGGR_I2,
 	  SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY |
-	  SMF_RELEASE_PENDING_P2,
-	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(SIG), P(VID) | P(NATD_RFC), PT(
-		  NONE),
+		SMF_RELEASE_PENDING_P2,
+	  P(SA) | P(KE) | P(NONCE) | P(ID) | P(SIG), P(VID) | P(NATD_RFC),
+	  PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inR1_outI2 },
 
 	/* STATE_AGGR_R1:
@@ -419,14 +419,14 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	 */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-	  SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(HASH), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
 	/* STATE_AGGR_R1: HDR*, HASH_I --> done */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
-	  SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
+		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
 	  P(SIG), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
@@ -483,7 +483,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	/* STATE_QUICK_I2: can only happen due to lost packet */
 	{ STATE_QUICK_I2, STATE_UNDEFINED,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED |
-	  SMF_RETRANSMIT_ON_DUPLICATE,
+		SMF_RETRANSMIT_ON_DUPLICATE,
 	  LEMPTY, LEMPTY, PT(NONE),
 	  EVENT_NULL, unexpected },
 
@@ -672,6 +672,7 @@ static stf_status informational(struct msg_digest *md)
 						st->hidden_variables.st_malformed_sent,
 						st->hidden_variables.st_malformed_received);
 					delete_state(st);
+					md->st = st = NULL;
 				}
 			}
 			return STF_IGNORE;
@@ -689,8 +690,10 @@ static stf_status informational(struct msg_digest *md)
 
 				/* deleting ISAKMP SA with the current remote peer */
 				delete_state(st);
+				md->st = st = NULL;
 
 				/* to find and store the connection associated with tmp_name */
+				/* ??? how do we know that tmp_name hasn't been freed? */
 				tmp_c = con_by_name(tmp_name, FALSE);
 
 				DBG_cond_dump(DBG_PARSING,
@@ -842,8 +845,8 @@ static stf_status informational(struct msg_digest *md)
 
 		default:
 			if (st != NULL &&
-			    st->st_connection->extra_debugging &
-			    IMPAIR_DIE_ONINFO) {
+			    (st->st_connection->extra_debugging &
+			     IMPAIR_DIE_ONINFO)) {
 				loglog(RC_LOG_SERIOUS,
 				       "received unhandled informational notification payload %d: '%s'",
 				       n->isan_type,
@@ -855,11 +858,11 @@ static stf_status informational(struct msg_digest *md)
 			       "received and ignored informational message");
 			return STF_IGNORE;
 		}
+	} else {
+		loglog(RC_LOG_SERIOUS,
+		       "received and ignored empty informational notification payload");
+		return STF_IGNORE;
 	}
-
-	loglog(RC_LOG_SERIOUS,
-	       "received and ignored empty informational notification payload");
-	return STF_IGNORE;
 }
 
 /* create output HDR as replica of input HDR - IKEv1 only */
@@ -890,6 +893,11 @@ void ikev1_echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
  *
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
  */
 void process_v1_packet(struct msg_digest **mdp)
 {
@@ -1048,7 +1056,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				/* XXX Could send notification back */
 				return;
 			}
-			st->st_reserve_msgid = FALSE;
+			st->st_msgid_reserved = FALSE;
 
 			init_phase2_iv(st, &md->hdr.isa_msgid);
 			new_iv_set = TRUE;
@@ -1166,9 +1174,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
 				return;
 			}
-
-			/* note that we need to reserve this message ID */
-			st->st_reserve_msgid = FALSE;
+			st->st_msgid_reserved = FALSE;
 
 			/* Quick Mode Initial IV */
 			init_phase2_iv(st, &md->hdr.isa_msgid);
@@ -1655,8 +1661,15 @@ void process_v1_packet(struct msg_digest **mdp)
 	}
 
 	process_packet_tail(mdp);
+	/* our caller will release_any_md(mdp); */
 }
 
+/*
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
+ */
 void process_packet_tail(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
@@ -2043,7 +2056,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					/* these are handled later on in informational() */
 					break;
 				}
-				/* fall through */
+				/* FALL THROUGH */
 			default:
 				if (st == NULL) {
 					loglog(RC_LOG_SERIOUS,
@@ -2068,6 +2081,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					       "received and failed on unknown informational message");
 					complete_v1_state_transition(mdp,
 								     STF_FATAL);
+					/* our caller will release_any_md(mdp); */
 					return;
 				}
 			}
@@ -2117,123 +2131,130 @@ void process_packet_tail(struct msg_digest **mdp)
 			 smc->first_out_payload);
 
 	complete_v1_state_transition(mdp, smc->processor(md));
+	/* our caller will release_any_md(mdp); */
 }
 
-static void update_retransmit_history(struct state *st, struct msg_digest *md)
+/*
+ * replace previous receive packet with latest, to update
+ * our notion of a retransmitted packet. This is important
+ * to do, even for failing transitions, and suspended transitions
+ * because the sender may well retransmit their request.
+ * We had better be idempotent since we can be called
+ * multiple times in handling a packet due to crypto helper logic.
+ */
+static void remember_received_packet(struct state *st, struct msg_digest *md)
 {
-	/*
-	 * replace previous receive packet with latest, to update
-	 * our notion of a retransmitted packet. This is important
-	 * to do, even for failing transitions, and suspended transitions
-	 * because the sender may well retransmit their request.
-	 */
-	pfreeany(st->st_rpacket.ptr);
-
 	if (md->encrypted) {
 		/* if encrypted, duplication already done */
-		st->st_rpacket = md->raw_packet;
-		md->raw_packet.ptr = NULL;
+		if (md->raw_packet.ptr != NULL) {
+			pfreeany(st->st_rpacket.ptr);
+			st->st_rpacket = md->raw_packet;
+			md->raw_packet.ptr = NULL;
+		}
 	} else {
+		/* this may be a repeat, but it will work */
+		pfreeany(st->st_rpacket.ptr);
 		clonetochunk(st->st_rpacket,
 			     md->packet_pbs.start,
 			     pbs_room(&md->packet_pbs), "raw packet");
 	}
 }
 
-/* complete job started by the state-specific state transition function */
+/* complete job started by the state-specific state transition function
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
+ */
 void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 {
 	struct msg_digest *md = *mdp;
-	const struct state_microcode *smc = md->smc;
-	enum state_kind from_state = md->from_state;
+	enum state_kind from_state;
 	struct state *st;
+
+	/* handle oddball/meta results now */
+
+	switch (result) {
+	case STF_SUSPEND:
+		cur_state = md->st;	/* might have changed */
+		/* FALL THROUGH */
+	case STF_INLINE:	/* all done, including release_any_md */
+		*mdp = NULL;	/* take md away from parent */
+		/* FALL THROUGH */
+	case STF_IGNORE:
+		DBG(DBG_CONTROL,
+		    DBG_log("complete v1 state transition with %s",
+			    enum_show(&stfstatus_name, result)));
+		return;
+
+	default:
+		break;
+	}
+
+	DBG(DBG_CONTROL,
+	    DBG_log("complete v1 state transition with %s",
+		result > STF_FAIL ?
+		    enum_name(&ikev1_notify_names, result - STF_FAIL) :
+		    enum_name(&stfstatus_name, result)));
+
+	/* safe to refer to *md */
+
+	from_state = md->from_state;
 
 	cur_state = st = md->st; /* might have changed */
 
-	/* If state has FRAGMENTATION support, import it */
-	if ( st && md->fragvid) {
-		DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
-		st->st_seen_fragvid = TRUE;
-	}
-	/* If state has DPD support, import it */
-	if ( st && md->dpd &&
-		   st->hidden_variables.st_peer_supports_dpd != md->dpd) {
-		DBG(DBG_DPD, DBG_log("peer supports dpd"));
-		st->hidden_variables.st_peer_supports_dpd = md->dpd;
+	passert(st != NULL);
 
-		if (dpd_active_locally(st)) {
-			DBG(DBG_DPD, DBG_log("dpd is active locally"));
-		}
-	}
-	/* If state has VID_NORTEL, import it to activate workaround */
-	if (st && md->nortel) {
-		DBG(DBG_CONTROLMORE, DBG_log("peer requires nortel contivity workaround"));
-		st->st_seen_nortel_vid = TRUE;
-	}
-
-	/* advance the state */
-	DBG(DBG_CONTROL,
-	    DBG_log("complete state transition with %s",
-		    enum_name(&stfstatus_name, result)));
-
-	/*
-	 * we can only be in calculating state if state is ignore,
-	 * or suspended.
-	 * ??? this code says inline is OK too.  Which is it?
-	 */
-	DBG(DBG_CONTROLMORE,
-		if (st != NULL) {
-			DBG_log("#%lu %s:%u st->st_calculating == %s;",
-				st->st_serialno, __FUNCTION__, __LINE__,
-				st->st_calculating ? "TRUE" : "FALSE");
-		});
-	passert(result == STF_INLINE || result == STF_IGNORE ||
-		result == STF_SUSPEND || !st->st_calculating);
+	passert(!st->st_calculating);
 
 	switch (result) {
-	case STF_IGNORE:
-		break;
-
-	case STF_INLINE:
-		/*
-		 * this is second time through complete state transition,
-		 * so the MD has already been freed.
-		 * ??? This comment is not true.
-		 * This has been proven by passert(md == NULL) failing.
-		 */
-		*mdp = NULL;
-		break;
-
-	case STF_SUSPEND:
-		/* update the previous packet history */
-		update_retransmit_history(st, md);
-
-		/*
-		 * the stf didn't complete its job:
-		 * detach from *mdp so *md won't be released by our caller.
-		 */
-		*mdp = NULL;
-		break;
-
 	case STF_OK:
+	{
 		/* advance the state */
+		const struct state_microcode *smc = md->smc;
 
 		libreswan_log("transition from state %s to state %s",
 			      enum_name(&state_names, from_state),
 			      enum_name(&state_names, smc->next_state));
 
-		if (!st->st_reserve_msgid &&
+		/* accept info from VID because we accept this message */
+
+		/* If state has FRAGMENTATION support, import it */
+		if (md->fragvid) {
+			DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
+			st->st_seen_fragvid = TRUE;
+		}
+
+		/* If state has DPD support, import it */
+		if (md->dpd &&
+		    st->hidden_variables.st_peer_supports_dpd != md->dpd) {
+			DBG(DBG_DPD, DBG_log("peer supports dpd"));
+			st->hidden_variables.st_peer_supports_dpd = md->dpd;
+
+			if (dpd_active_locally(st)) {
+				DBG(DBG_DPD, DBG_log("dpd is active locally"));
+			}
+		}
+
+		/* If state has VID_NORTEL, import it to activate workaround */
+		if (md->nortel) {
+			DBG(DBG_CONTROLMORE, DBG_log("peer requires Nortel Contivity workaround"));
+			st->st_seen_nortel_vid = TRUE;
+		}
+
+		if (!st->st_msgid_reserved &&
 		    IS_CHILD_SA(st) &&
 		    st->st_msgid != v1_MAINMODE_MSGID) {
 			struct state *p1st = state_with_serialno(
 				st->st_clonedfrom);
 
-			if (p1st) {
+			if (p1st != NULL) {
 				/* do message ID reservation */
 				reserve_msgid(p1st, st->st_msgid);
 			}
 
-			st->st_reserve_msgid = TRUE;
+			st->st_msgid_reserved = TRUE;
 		}
 
 		change_state(st, smc->next_state);
@@ -2268,7 +2289,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		release_fragments(st);
 
 		/* update the previous packet history */
-		update_retransmit_history(st, md);
+		remember_received_packet(st, md);
 
 		/* free previous transmit packet */
 		freeanychunk(st->st_tpacket);
@@ -2569,11 +2590,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 * if we are the responder: the initial Phase 2
 			 * message might outrun the final Phase 1 message.
 			 *
-			 * so, instead of actualling sending the traffic now,
+			 * so, instead of actually sending the traffic now,
 			 * we schedule an event to do so.
 			 *
 			 * but, in fact, quick_mode will enqueue a cryptographic operation
-			 * anyway, which will get done "later" anyway, so make it is just fine
+			 * anyway, which will get done "later" anyway, so maybe it is just fine
 			 * as it is.
 			 *
 			 */
@@ -2588,10 +2609,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			break;
 
 		break;
+	}
 
 	case STF_INTERNAL_ERROR:
 		/* update the previous packet history */
-		update_retransmit_history(st, md);
+		remember_received_packet(st, md);
 
 		whack_log(RC_INTERNALERR + md->note,
 			  "%s: internal error",
@@ -2607,18 +2629,18 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
+		/* ??? why no call of remember_received_packet? */
 		unset_suspended(st);
-		pexpect(!st->st_calculating);
 		libreswan_log(
 			"message in state %s ignored due to cryptographic overload",
 			enum_name(&state_names, from_state));
 		log_crypto_workers();
-		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
+		/* ??? the ikev2.c version used to FALL THROUGH to STF_FATAL */
 		break;
 
 	case STF_FATAL:
 		/* update the previous packet history */
-		update_retransmit_history(st, md);
+		remember_received_packet(st, md);
 
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
@@ -2631,23 +2653,25 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					"disconnectNM", st))
 				DBG(DBG_CONTROL,
 				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
-
-
 		}
 #endif
-		delete_event(st);
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
+		md->st = st = NULL;
 		break;
 
 	default:        /* a shortcut to STF_FAIL, setting md->note */
 		passert(result > STF_FAIL);
 		md->note = result - STF_FAIL;
-		result = STF_FAIL;
 		/* FALL THROUGH ... */
 	case STF_FAIL:
 		/* As it is, we act as if this message never happened:
 		 * whatever retrying was in place, remains in place.
+		 */
+		/*
+		 * ??? why no call of remember_received_packet?
+		 * Perhaps because the message hasn't been authenticated?
+		 * But then then any duplicate would lose too, I would think.
 		 */
 		whack_log(RC_NOTIFICATION + md->note,
 			  "%s: %s", enum_name(&state_names, st->st_state),
@@ -2660,24 +2684,28 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		    DBG_log("state transition function for %s failed: %s",
 			    enum_name(&state_names, from_state),
 			    enum_name(&ikev1_notify_names, md->note)));
+
+		if (st != NULL) {
 #ifdef HAVE_NM
-		if (st->st_connection->remotepeertype == CISCO &&
-		    st->st_connection->nmconfigured) {
-			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
-					"disconnectNM", st))
-				DBG(DBG_CONTROL,
-				    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
-
-
-		}
+			if (st->st_connection->remotepeertype == CISCO &&
+			    st->st_connection->nmconfigured) {
+				if (!do_command(st->st_connection,
+						&st->st_connection->spd,
+						"disconnectNM", st))
+					DBG(DBG_CONTROL,
+					    DBG_log("sending disconnect to NM failed, you may need to do it manually"));
+			}
 #endif
-		if (st != NULL && IS_PHASE1_INIT(st->st_state)) {
-			delete_event(st);
-			release_whack(st);
+			if (IS_PHASE1_INIT(st->st_state)) {
+				delete_event(st);
+				release_whack(st);
+			}
+			if (IS_QUICK(st->st_state)) {
+				delete_state(st);
+				if (md != NULL && st == md->st)
+					md->st = NULL;
+			}
 		}
-		if (st != NULL && IS_QUICK(st->st_state))
-			delete_state(st);
 		break;
 	}
 }

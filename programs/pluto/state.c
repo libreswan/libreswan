@@ -45,7 +45,7 @@
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
-#include "xauth.h"	/* just for state_deletion_xauth_cleanup() */
+#include "ikev1_xauth.h"	/* just for state_deletion_xauth_cleanup() */
 #endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -189,7 +189,7 @@ struct state *new_state(void)
 }
 
 /*
- * Initialize the state table (and mask*).
+ * Initialize the state table
  */
 void init_states(void)
 {
@@ -204,8 +204,11 @@ void v1_delete_state_by_xauth_name(struct state *st, void *name)
 	/* only support deleting ikev1 with xauth user name */
 	if (st->st_ikev2)
 		return;
-	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name))
-			delete_my_family(st, FALSE);
+
+	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
+		delete_my_family(st, FALSE);
+		/* note: no md->st to clear */
+	}
 }
 
 /* Find the state object with this serial number.
@@ -433,10 +436,14 @@ void delete_state(struct state *st)
 		if (IS_CHILD_SA(st) &&
 		    state_with_serialno(st->st_clonedfrom) == NULL) {
 			/* ??? in v2, there must be a parent */
-			DBG(DBG_CONTROL, DBG_log("IKE SA does not exist for this child SA"));
-			DBG(DBG_CONTROL, DBG_log("INFORMATIONAL exchange cannot be sent, deleting state"));
+			DBG(DBG_CONTROL, DBG_log("deleting state but IKE SA does not exist for this child SA so Informational Exchange cannot be sent"));
 			change_state(st, STATE_CHILDSA_DEL);
 		} else  {
+			/*
+			 * ??? in IKE v2, we should not immediately delete:
+			 * we should use an Informational Exchange to co-ordinate deletion.
+			 * ikev2_delete_out doesn't really accomplish this.
+			 */
 			send_delete(st);
 		}
 	}
@@ -450,7 +457,8 @@ void delete_state(struct state *st)
 	 */
 	flush_pending_by_state(st);
 
-	/* if there is anything in the cryptographic queue, then remove this
+	/*
+	 * if there is anything in the cryptographic queue, then remove this
 	 * state from it.
 	 */
 	delete_cryptographic_continuation(st);
@@ -458,7 +466,8 @@ void delete_state(struct state *st)
 	/* effectively, this deletes any ISAKMP SA that this state represents */
 	unhash_state(st);
 
-	/* tell kernel to delete any IPSEC SA
+	/*
+	 * tell kernel to delete any IPSEC SA
 	 * ??? we ought to tell peer to delete IPSEC SAs
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
@@ -620,9 +629,8 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 					libreswan_log("deleting state (%s)",
 						      enum_show(&state_names, this->st_state));
 
-					if (this->st_event != NULL)
-						delete_event(this);
 					delete_state(this);
+					/* note: no md->st to clear */
 
 					cur_state = old_cur_state;
 					set_debugging(old_cur_debugging);
@@ -660,6 +668,7 @@ void delete_states_dead_interfaces(void)
 	for (i = 0; st == NULL && i < STATE_TABLE_SIZE; i++)
 		for (st = statetable[i]; st != NULL; ) {
 			struct state *this = st;
+
 			st = st->st_hashchain_next; /* before this is deleted */
 			if (this->st_interface &&
 			    this->st_interface->change == IFN_DELETE) {
@@ -668,6 +677,7 @@ void delete_states_dead_interfaces(void)
 					this->st_serialno,
 					this->st_interface->ip_dev->id_vname);
 				delete_state(this);
+				/* note: no md->st to clear */
 			}
 		}
 }
@@ -834,8 +844,6 @@ struct state *duplicate_state(struct state *st)
 	memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
 	nst->st_connection = st->st_connection;
 
-	nst->st_doi = st->st_doi;
-	nst->st_situation = st->st_situation;
 	nst->quirks = st->quirks;
 	nst->hidden_variables = st->hidden_variables;
 	nst->st_remoteaddr = st->st_remoteaddr;
@@ -1149,7 +1157,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 				    (long unsigned)ntohl(msgid),
 				    (long unsigned)ntohl(st->st_msgid),
 				    (long unsigned)ntohl(st->st_msgid_phase15)));
-			if ((st->st_msgid_phase15 != 0 &&
+			if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
 			     msgid == st->st_msgid_phase15) ||
 			    msgid == st->st_msgid)
 				break;
@@ -1231,8 +1239,8 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
 	struct state
-	*st,
-	*best = NULL;
+		*st,
+		*best = NULL;
 	int i;
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
@@ -1293,22 +1301,21 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	const struct connection *c = st->st_connection;
 	char inst[CONN_INST_BUF];
 	char traffic_buf[512];
-	char *mbcp = traffic_buf;
 
 	state_buf[0] = '\0';   /* default to empty */
 	traffic_buf[0] = '\0';
 
 	if (IS_IKE_SA(st))
 		return; /* ignore non-IPsec states */
-	if (!IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+
+	if (!IS_IPSEC_SA_ESTABLISHED(st->st_state))
 		return; /* ignore non established states */
-	}
 
 	fmt_conn_instance(c, inst);
+
 	{
 		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN";
-
-		mbcp = traffic_buf + snprintf(traffic_buf,
+		char *mbcp = traffic_buf + snprintf(traffic_buf,
 				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%lu", mode,  st->st_esp.add_time);
 
 		if (get_sa_info(st, FALSE, NULL)) {
@@ -1322,6 +1329,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 					st->st_esp.our_bytes);
 		}
 	}
+
 	snprintf(state_buf, state_buf_len,
 		"#%lu: \"%s\"%s%s%s%s",
 		st->st_serialno,
@@ -1824,12 +1832,14 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 			delete_state(st);
 		}
 		st = next_st;
+		/* note: no md->st to clear */
 	}
 
 	/* delete self */
 	if (v2_responder_state)
 		change_state(pst, STATE_IKESA_DEL);
 	delete_state(pst);
+	/* note: no md->st to clear */
 }
 
 /* if the state is too busy to process a packet, say so */

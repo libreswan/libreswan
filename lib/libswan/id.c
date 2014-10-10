@@ -46,7 +46,7 @@
  */
 #define MAX_BUF 6
 
-unsigned char*temporary_cyclic_buffer(void)
+unsigned char *temporary_cyclic_buffer(void)
 {
 	/* MAX_BUF internal buffers */
 	static unsigned char buf[MAX_BUF][IDTOA_BUF];
@@ -455,7 +455,6 @@ bool same_id(const struct id *a, const struct id *b)
 /* compare two struct id values, DNs can contain wildcards */
 bool match_id(const struct id *a, const struct id *b, int *wildcards)
 {
-
 	bool match;
 
 	if (b->kind == ID_NONE) {

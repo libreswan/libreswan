@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	static int ipip_register;
 	static int ipcomp_register;
 
-	static struct option long_options[] =
+	static const struct option long_options[] =
 	{
 		{ "help",        no_argument, 0, 'h' },
 		{ "daemon",      required_argument, 0, 'f' },

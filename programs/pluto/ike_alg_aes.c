@@ -132,13 +132,8 @@ struct encrypt_desc algo_aes =
 	.do_crypt =     do_aes,
 };
 
-int ike_alg_aes_init(void)
+void ike_alg_aes_init(void)
 {
-	int ret = ike_alg_register_enc(&algo_aes);
-
-	return ret;
+	/* ??? nobody cares if this fails */
+	ike_alg_register_enc(&algo_aes);
 }
-
-/*
-   IKE_ALG_INIT_NAME: ike_alg_aes_init
- */

@@ -141,13 +141,17 @@ typedef const struct enum_names enum_names;
 
 extern const char *enum_name(enum_names *ed, unsigned long val);
 
-#define ENUM_SHOW_BUF_LEN	14	/* enough space for any unsigned 32-bit + "??" */
-extern const char *enum_showb(enum_names *ed, unsigned long val, char *buf, size_t blen);
+/* caller-allocated buffer for enum_showb */
+struct esb_buf {
+	/* enough space for any unsigned 32-bit + "??" */
+	char buf[14];
+};
+extern const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *);
+
+extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 
 /* sometimes the prefix gets annoying */
 extern const char *strip_prefix(const char *s, const char *prefix);
-
-extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 
 extern int enum_search(enum_names *ed, const char *string);
 

@@ -68,7 +68,7 @@ static void usage(void)
 extern char rootdir[PATH_MAX];          /* when evaluating paths, prefix this to them */
 extern char rootdir2[PATH_MAX];         /* when evaluating paths, prefix this to them */
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "config",              required_argument, NULL, 'C' },
 	{ "debug",               no_argument, NULL, 'D' },
