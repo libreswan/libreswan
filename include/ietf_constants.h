@@ -286,6 +286,7 @@
 #define  AES_KEY_MAX_LEN        256
 
 /* AES-CTR RFC 3686 The _only_ valid values are 128, 192 and 256 bits */
+#define AES_CTR_SALT_BYTES 4
 #define  AES_CTR_KEY_MIN_LEN 128
 #define  AES_CTR_KEY_DEF_LEN 128
 #define  AES_CTR_KEY_MAX_LEN 256
