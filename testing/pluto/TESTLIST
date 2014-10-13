@@ -305,8 +305,7 @@ kvmplutotest	x509-pluto-02		good
 
 # a test of sending and validating an X.509 cert
 #
-# incomplete test - disabled
-#umlplutotest	x509-pluto-03		good
+kvmplutotest	x509-pluto-03		good
 
 # NSS tests
 # a test for using nss with X.509 cert

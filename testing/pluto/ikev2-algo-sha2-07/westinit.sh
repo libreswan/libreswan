@@ -8,6 +8,7 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
+ipsec whack --debug-all --impair-retransmits
 ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-ipsec auto --status
+ipsec auto --status | grep westnet-eastnet-ipv4-psk-ikev2
 echo "initdone"
