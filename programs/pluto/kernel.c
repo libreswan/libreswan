@@ -306,10 +306,33 @@ ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel)
 	return htonl((ipsec_spi_t)latest_cpi);
 }
 
+static void fmt_traffic_str(struct state *st, char *istr, int istr_len, char *ostr, int ostr_len) {
+
+	if (st == NULL || IS_IKE_SA(st))
+		return;
+
+	if (get_sa_info(st, FALSE, NULL)) {
+		snprintf(istr, istr_len, "PLUTO_INBYTES='%u' ",
+			 st->st_esp.present ? st->st_esp.peer_bytes :
+			 st->st_ah.present ? st->st_ah.peer_bytes :
+			 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
+			 0);
+	}
+	if (get_sa_info(st, TRUE, NULL)) {
+		snprintf(ostr, ostr_len, "PLUTO_OUTBYTES='%u' ",
+			 st->st_esp.present ? st->st_esp.our_bytes :
+			 st->st_ah.present ? st->st_ah.our_bytes :
+			 st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
+			 0);
+
+	}
+}
+
 /* form the command string */
 int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			 struct spd_route *sr, struct state *st)
 {
+#define MAX_DISPLAY_BYTES 13
 	int result;
 	char
 		myid_str2[IDTOA_BUF],
@@ -327,7 +350,9 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		secure_peerid_str[IDTOA_BUF] = "",
 		secure_peerca_str[IDTOA_BUF] = "",
 		nexthop_str[sizeof("PLUTO_NEXT_HOP='' ") + ADDRTOT_BUF],
-		secure_xauth_username_str[IDTOA_BUF] = "";
+		secure_xauth_username_str[IDTOA_BUF] = "",
+		traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
+		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
 
 	ipstr_buf bme, bpeer;
 	ip_address ta;
@@ -385,6 +410,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		add_str(secure_xauth_username_str,
 			sizeof(secure_xauth_username_str), p, "' ");
 	}
+	fmt_traffic_str(st, traffic_in_str, sizeof(traffic_in_str), traffic_out_str, sizeof(traffic_out_str));
 
 	srcip_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
@@ -457,6 +483,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 #ifdef HAVE_NM
 		"PLUTO_NM_CONFIGURED='%u' "
 #endif
+			"%s" /* traffic in stats - if any */
+			"%s" /* traffic out stats - if any */
 
 		, c->name,
 		c->interface->ip_dev->id_vname,
@@ -494,16 +522,19 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		c->remotepeertype,		/* 30 */
 		c->cisco_dns_info ? c->cisco_dns_info : "",
 		c->modecfg_domain ? c->modecfg_domain : "",
-		c->modecfg_banner ? c->modecfg_banner : ""
+		c->modecfg_banner ? c->modecfg_banner : "",
 #ifdef HAVE_NM
-		, c->nmconfigured
+		c->nmconfigured,
 #endif
+		traffic_in_str,
+		traffic_out_str
 		);
 	/*
 	 * works for both old and new way of snprintf() returning
 	 * eiter -1 or the output length  -- by Carsten Schlote
 	 */
 	return ((result >= blen) || (result < 0)) ? -1 : result;
+#undef MAX_DISPLAY_BYTES
 }
 
 bool do_command(struct connection *c, struct spd_route *sr, const char *verb,
