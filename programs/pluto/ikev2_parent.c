@@ -2923,7 +2923,7 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 	struct state *st = NULL; /* child state */
 
 	if (IS_CHILD_SA(pst))
-		pst = state_with_serialno(st->st_clonedfrom);
+		pst = state_with_serialno(pst->st_clonedfrom);
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("ikev2 decrypt CREATE_CHILD_SA request"));
