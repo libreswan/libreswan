@@ -47,6 +47,8 @@ Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
+ ipsec whack --debug-all --impair-retransmits
+west #
  ipsec auto --add westnet-eastnet-x509-chain
 002 added connection description "westnet-eastnet-x509-chain"
 west #
@@ -68,15 +70,8 @@ west #
 003 "westnet-eastnet-x509-chain" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "westnet-eastnet-x509-chain" #1: received and ignored informational message
 003 "westnet-eastnet-x509-chain" #1: discarding duplicate packet; already STATE_MAIN_I3
-010 "westnet-eastnet-x509-chain" #1: STATE_MAIN_I3: retransmission; will wait 10s for response
-003 "westnet-eastnet-x509-chain" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-003 "westnet-eastnet-x509-chain" #1: received and ignored informational message
-010 "westnet-eastnet-x509-chain" #1: STATE_MAIN_I3: retransmission; will wait 20s for response
-003 "westnet-eastnet-x509-chain" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "westnet-eastnet-x509-chain" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
-003 "westnet-eastnet-x509-chain" #1: received and ignored informational message
-031 "westnet-eastnet-x509-chain" #1: max number of retransmissions (2) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
-000 "westnet-eastnet-x509-chain" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "westnet-eastnet-x509-chain" #1: supressing retransmit because IMPAIR_RETRANSMITS is set
+031 "westnet-eastnet-x509-chain" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

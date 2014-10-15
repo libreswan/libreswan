@@ -19,7 +19,7 @@ west #
 west #
  sleep 4 # wait for addconn thread
 west #
- ipsec auto --status |grep westnet-eastnet-route
+ ipsec auto --status | grep westnet-eastnet-route
 000 "westnet-eastnet-route": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; prospective erouted; eroute owner: #0
 000 "westnet-eastnet-route":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-route":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
@@ -60,6 +60,10 @@ src 192.1.2.45 dst 192.1.2.23
 	replay-window 32 flag af-unspec
 	auth-trunc hmac(sha1) 0xHASHKEY 96
 	enc cbc(aes) 0xENCKEY
+src 192.0.1.254 dst 192.0.2.254
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
+	replay-window 0 
+	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1 
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 

@@ -29,20 +29,26 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
+ modprobe cast6_generic
+west #
+ modprobe cast5_generic
+west #
+ modprobe cast_common
+west #
  strongswan starter --debug-all
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev1'
+  authby=secret
+  auto=add
+  esp=cast128-sha1-modp1536
+  keyexchange=ikev1
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.1.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.0.1.0/24
-  authby=secret
-  keyexchange=ikev1
-  auto=add
-[ 00.00] NET: Registered protocol family 15
 found netkey IPsec stack
 west #
  echo "initdone"
@@ -50,27 +56,29 @@ initdone
 west #
  strongswan up westnet-eastnet-ikev1
 initiating Main Mode IKE_SA westnet-eastnet-ikev1[1] to 192.1.2.23
-generating ID_PROT request 0 [ SA V V V ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-received packet: from 192.1.2.23[500] to 192.1.2.45[500]
-parsed ID_PROT response 0 [ SA V V ]
+generating ID_PROT request 0 [ SA V V V V ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed ID_PROT response 0 [ SA V V V ]
+received XAuth vendor ID
 received DPD vendor ID
-received unknown vendor ID: 40:48:b7:d5:6e:bc:e8:85:25:e7:de:7f:00:d6:c2:d3
-generating ID_PROT request 0 [ KE No ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-received packet: from 192.1.2.23[500] to 192.1.2.45[500]
-parsed ID_PROT response 0 [ KE No ]
+received NAT-T (RFC 3947) vendor ID
+generating ID_PROT request 0 [ KE No NAT-D NAT-D ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed ID_PROT response 0 [ KE No NAT-D NAT-D ]
 generating ID_PROT request 0 [ ID HASH ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-received packet: from 192.1.2.23[500] to 192.1.2.45[500]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed ID_PROT response 0 [ ID HASH ]
 IKE_SA westnet-eastnet-ikev1[1] established between 192.1.2.45[west]...192.1.2.23[east]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
-generating QUICK_MODE request 2303332086 [ HASH SA No KE ID ID ]
-sending packet: from 192.1.2.45[500] to 192.1.2.23[500]
-received packet: from 192.1.2.23[500] to 192.1.2.45[500]
-parsed QUICK_MODE response 2303332086 [ HASH SA No KE ID ID ]
+generating QUICK_MODE request 0123456789 [ HASH SA No KE ID ID ]
+sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
+received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
+parsed QUICK_MODE response 0123456789 [ HASH SA No KE ID ID ]
+connection 'westnet-eastnet-ikev1' established successfully
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.

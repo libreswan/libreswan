@@ -742,7 +742,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	}
 
-	DBG_log("found connection: %s", c ? c->name : "<none>");
+	DBG(DBG_CONTROL, DBG_log("found connection: %s", c ? c->name : "<none>"));
 
 	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
@@ -2267,7 +2267,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			np = ISAKMP_NEXT_v2NONE;
 		} else {
 			DBG_log("CHILD SA proposals received");
-			np =  c->pool == NULL ?  ISAKMP_NEXT_v2SA : ISAKMP_NEXT_v2CP;
+			np =  (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
+				ISAKMP_NEXT_v2CP :ISAKMP_NEXT_v2SA;
 		}
 
 		DBG(DBG_CONTROLMORE,
@@ -2922,7 +2923,7 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 	struct state *st = NULL; /* child state */
 
 	if (IS_CHILD_SA(pst))
-		pst = state_with_serialno(st->st_clonedfrom);
+		pst = state_with_serialno(pst->st_clonedfrom);
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("ikev2 decrypt CREATE_CHILD_SA request"));

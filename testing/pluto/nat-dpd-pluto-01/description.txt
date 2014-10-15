@@ -1,2 +1,4 @@
 NAT test with DPD enabled on east. North sends pings, so there
 should NOT be any DPD probes as the IPsec SA is active.
+This test uses netkey because get_sa_info() on KLIPS does
+not have support for idle checks (yet)
