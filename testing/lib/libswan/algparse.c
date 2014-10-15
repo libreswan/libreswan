@@ -138,8 +138,10 @@ main(int argc, char *argv[]) {
 	do_test("serpent", PROTO_IPSEC_ESP);
 	do_test("twofish", PROTO_IPSEC_ESP);
 	do_test("mars", PROTO_IPSEC_ESP);
-	/* should this be supported? */
-	do_test("modp1536", PROTO_IPSEC_ESP);
+	/*
+	 * should this be supported - for now man page says not 
+	 * do_test("modp1536", PROTO_IPSEC_ESP);
+	 */
 
 	fprintf(stdout, "\n---- ESP tests that should fail----\n");
 
@@ -190,6 +192,7 @@ main(int argc, char *argv[]) {
 	fprintf(stdout, "\n---- IKE tests ----\n");
 	do_test("3des-sha1", PROTO_ISAKMP);
 #endif
+	fflush(NULL);
 	report_leaks();
 	tool_close_log();
 	exit(0);
