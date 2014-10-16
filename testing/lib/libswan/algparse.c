@@ -139,7 +139,7 @@ main(int argc, char *argv[]) {
 	do_test("twofish", PROTO_IPSEC_ESP);
 	do_test("mars", PROTO_IPSEC_ESP);
 	/*
-	 * should this be supported - for now man page says not 
+	 * should this be supported - for now man page says not
 	 * do_test("modp1536", PROTO_IPSEC_ESP);
 	 */
 

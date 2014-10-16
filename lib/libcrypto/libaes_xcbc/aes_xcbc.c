@@ -21,14 +21,15 @@ void aes_xcbc_init(aes_xcbc_context *ctx)
 void aes_xcbc_write(aes_xcbc_context *ctx, const unsigned char *datap, size_t length)
 {
 	SECStatus status = PK11_DigestOp(ctx->ctx_nss, datap, length);
+
 	passert(status == SECSuccess);
 }
+
 void aes_xcbc_final(u_char *hash, aes_xcbc_context *ctx)
 {
 	unsigned int len;
-	SECStatus s;
+	SECStatus s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, AES_XCBC_DIGEST_SIZE);
 
-	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, AES_XCBC_DIGEST_SIZE);
 	passert(s == SECSuccess);
 	passert(len == AES_XCBC_DIGEST_SIZE);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);

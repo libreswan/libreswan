@@ -86,7 +86,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 static int build_ikev2_version();
 
 /* this is a crypto_req_cont_func */
-static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc, 
+static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 					 struct pluto_crypto_req *r);
 
 static stf_status ikev2_child_inIoutR_tail(struct qke_continuation *qke,
@@ -1813,8 +1813,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	{
 		/*
-		 * emit SA2i, TSi and TSr and 
-		 * (v2N_USE_TRANSPORT_MODE notification in transport mode) 
+		 * emit SA2i, TSi and TSr and
+		 * (v2N_USE_TRANSPORT_MODE notification in transport mode)
 		 * for it.
 		 */
 		lset_t policy;
@@ -2245,7 +2245,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		/*
 		 * send CERT payload RFC 4306 3.6, 1.2:([CERT,] )
 		 * upon which our received I2 CERTREQ is ignored,
-		 * but ultimately should go into the CERT decision 
+		 * but ultimately should go into the CERT decision
 		 */
 		if (send_cert) {
 			stf_status certstat = ikev2_send_cert(st, md,
@@ -2919,7 +2919,7 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 stf_status ikev2_child_inIoutR(struct msg_digest *md)
 {
 	struct state *pst = md->st;
-	struct state *st = NULL; /* child state */ 
+	struct state *st = NULL; /* child state */
 
 	if (IS_CHILD_SA(pst))
 		pst = state_with_serialno(st->st_clonedfrom);
@@ -2933,7 +2933,7 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 		if (ret != STF_OK)
 			return ret;
-	} 
+	}
 
 	st = duplicate_state(pst); /* create child state */
 	set_cur_state(st);      /* (caller will reset) */
@@ -3073,7 +3073,7 @@ static stf_status ikev2_child_inIoutR_tail(struct qke_continuation *qke,
 					"CREATE_CHILD_SA  message");
 			return STF_FATAL;
 		}
-	} /* HDR done */ 
+	} /* HDR done */
 
 	/* insert an Encryption payload header */
 	e.isag_np = ISAKMP_NEXT_v2SA;
@@ -3244,7 +3244,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		 * We only process Delete Payloads. The rest are
 		 * ignored.
 		 *
-		 * If no delete payloads were received, the Next 
+		 * If no delete payloads were received, the Next
 		 * Payload type to send will be NONE.
 		 *
 		 * IKE SA Delete cannot be combined with anything
@@ -3331,7 +3331,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 						v2del->isad_spisize);
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
-				
+
 				if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
 					libreswan_log("IPsec Delete Notification payload size is %tu but %u is required",
 						pbs_left(&p->pbs),

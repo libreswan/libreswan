@@ -1081,7 +1081,7 @@ enum ikev1_hash_attribute  {
 	OAKLEY_SHA2_256 = 4,
 	OAKLEY_SHA2_384 = 5,
 	OAKLEY_SHA2_512 = 6,
-	
+
 	OAKLEY_AES_XCBC = 9 /* stolen from ikev2 */
 };
 #define OAKLEY_HASH_MAX 10
@@ -1480,7 +1480,7 @@ enum ike_cert_type {
 
 /*
  * (IKEv1) IPsec AH transform values
- * 
+ *
  * IKEv1: http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
  * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-7
  *

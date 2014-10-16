@@ -531,7 +531,7 @@ int main(int argc, char *argv[])
 				longopts, 0)) != EOF) {
 		unsigned long u;
 		err_t ugh;
-		
+
 		switch (c) {
 		case 'g':
 			debug = TRUE;

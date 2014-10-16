@@ -356,6 +356,7 @@ static enum ikev2_trans_type_integ v1tov2_integ(enum ikev2_trans_type_integ oakl
 
 	case OAKLEY_AES_XCBC:
 		return IKEv2_AUTH_AES_XCBC_96;
+
 	default:
 		return IKEv2_AUTH_INVALID;
 	}
@@ -364,7 +365,6 @@ static enum ikev2_trans_type_integ v1tov2_integ(enum ikev2_trans_type_integ oakl
 static enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth)
 {
 	switch (ikev1_phase2_auth) {
-
 	case AUTH_ALGORITHM_HMAC_MD5:
 		return IKEv2_AUTH_HMAC_MD5_96;
 
