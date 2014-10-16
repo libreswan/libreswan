@@ -517,6 +517,7 @@ kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256	good
 kvmplutotest	interop-ikev2-strongswan-21-strongswan-cp-psk sha256	wip
 kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk	wip
 kvmplutotest	interop-ikev2-strongswan-23-initiator-cp	wip
+kvmplutotest	interop-ikev2-strongswan-24-esp-aes_ctr	good
 
 
 # kernel does not yet support these algo's
