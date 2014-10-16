@@ -1213,12 +1213,19 @@ static const char *const oakley_hash_name[] = {
 	"OAKLEY_SHA2_256",	/* RFC 4878 */
 	"OAKLEY_SHA2_384",	/* RFC 4878 */
 	"OAKLEY_SHA2_512",	/* RFC 4878 */
+	"UNUSED_7",
+	"UNUSED_8",
+	"OAKLEY_AES_XCBC" /* stolen from ikev2 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
 
 enum_names oakley_hash_names = {
 	OAKLEY_MD5,
+#if 0
+	/* waiting on NSS support */
+	OAKLEY_AES_XCBC,
+#endif
 	OAKLEY_SHA2_512,
 	oakley_hash_name,
 	NULL
@@ -1784,12 +1791,12 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_MD5",
 	"PRF_HMAC_SHA1",
 	"PRF_HMAC_TIGER",
-	"PRF_HMAC_AES128-XCBC",
+	"PRF_AES128-XCBC",
 	/* RFC 4868 Section 4 */
 	"PRF_HMAC_SHA2-256",
 	"PRF_HMAC_SHA2-384",
 	"PRF_HMAC_SHA2-512",
-	"IKEv2_PRF_AES128_CMAC"
+	"PRF_AES128_CMAC"
 };
 enum_names ikev2_trans_type_prf_names = {
 	IKEv2_PRF_HMAC_MD5,

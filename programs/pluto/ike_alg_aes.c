@@ -26,6 +26,7 @@
 #include "constants.h"
 #include "defs.h"
 #include "log.h"
+#include "crypto.h"
 #include "klips-crypto/aes_cbc.h"
 #include "alg_info.h"
 #include "ike_alg.h"
@@ -35,6 +36,21 @@
 #include <prerror.h>
 #include "lswconf.h"
 #include "lswlog.h"
+
+static void aes_xcbc_init_thunk(union hash_ctx *ctx)
+{
+	aes_xcbc_init(&ctx->ctx_aes_xcbc);
+}
+
+static void aes_xcbc_write_thunk(union hash_ctx *ctx, const unsigned char *datap, size_t length)
+{
+	aes_xcbc_write(&ctx->ctx_aes_xcbc, datap, length);
+}
+
+static void aes_xcbc_final_thunk(u_char *hash, union hash_ctx *ctx)
+{
+	aes_xcbc_final(hash, &ctx->ctx_aes_xcbc);
+}
 
 static void do_aes(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 		   u_int8_t *iv, bool enc)
@@ -132,8 +148,47 @@ struct encrypt_desc algo_aes =
 	.do_crypt =     do_aes,
 };
 
+static struct hash_desc hash_desc_aes_xcbc = {
+        .common = { .officname =  "aes_xcbc",
+                    .algo_type = IKE_ALG_HASH,
+                    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+                    .algo_v2id = IKEv2_PRF_AES128_XCBC,
+                    .algo_next = NULL, },
+        .hash_ctx_size = sizeof(aes_xcbc_context),
+        .hash_key_size = AES_XCBC_DIGEST_SIZE,
+        .hash_digest_len = AES_XCBC_DIGEST_SIZE,
+        .hash_integ_len = 0,    /* Not applicable */
+        .hash_block_size = AES_CBC_BLOCK_SIZE,
+        .hash_init = aes_xcbc_init_thunk,
+        .hash_update = aes_xcbc_write_thunk,
+        .hash_final = aes_xcbc_final_thunk,
+};
+
+static struct hash_desc integ_desc_aes_xcbc = {
+        .common = { .officname =  "aes_xcbc",
+                    .algo_type = IKE_ALG_INTEG,
+                    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+                    .algo_v2id = IKEv2_AUTH_AES_XCBC_96,
+                    .algo_next = NULL, },
+        .hash_ctx_size = sizeof(aes_xcbc_context),
+        .hash_key_size = AES_XCBC_DIGEST_SIZE,
+        .hash_digest_len = AES_XCBC_DIGEST_SIZE,
+        .hash_integ_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
+        .hash_block_size = AES_CBC_BLOCK_SIZE,
+        .hash_init = aes_xcbc_init_thunk,
+        .hash_update = aes_xcbc_write_thunk,
+        .hash_final = aes_xcbc_final_thunk,
+};
+
 void ike_alg_aes_init(void)
 {
-	/* ??? nobody cares if this fails */
-	ike_alg_register_enc(&algo_aes);
+	if (ike_alg_register_enc(&algo_aes) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes for IKE");
+
+	/* Waiting on NSS support - but we need registration so ESP will work */
+	if (ike_alg_register_hash(&hash_desc_aes_xcbc) != 1)
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register hash algo_aes_xcbc for IKE");
+#if 0
+	ike_alg_add(&integ_desc_aes_xcbc.common);
+#endif
 }
