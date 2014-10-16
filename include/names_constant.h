@@ -79,6 +79,8 @@ extern enum_names ikev2_idtype_names;
 extern enum_names ikev2_cert_type_names;
 extern enum_names ikev2_notify_names;
 extern enum_names ikev2_ts_type_names;
+extern enum_names ikev2_cp_type_names;
+extern enum_names ikev2_cp_attribute_type_names;
 
 #ifdef HAVE_LABELED_IPSEC
 extern u_int16_t secctx_attr_value;	/* ??? NOT A CONSTANT! */

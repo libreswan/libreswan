@@ -45,7 +45,7 @@
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
-#include "xauth.h"	/* just for state_deletion_xauth_cleanup() */
+#include "ikev1_xauth.h"	/* just for state_deletion_xauth_cleanup() */
 #endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -1319,14 +1319,20 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%lu", mode,  st->st_esp.add_time);
 
 		if (get_sa_info(st, FALSE, NULL)) {
+			u_int inb = st->st_esp.present ? st->st_esp.peer_bytes :
+				st->st_ah.present ? st->st_ah.peer_bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u",
-					st->st_esp.peer_bytes);
+
+			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
 		}
 		if (get_sa_info(st, TRUE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			snprintf(mbcp, buf_len - 1, ", outBytes=%u",
-					st->st_esp.our_bytes);
+			u_int outb = st->st_esp.present ? st->st_esp.our_bytes :
+				st->st_ah.present ? st->st_ah.our_bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
+
+			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
 		}
 	}
 

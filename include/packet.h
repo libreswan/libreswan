@@ -891,6 +891,27 @@ extern struct_desc ikev2_ts1_desc;
 /* rfc4306, section 3.14, encrypted payload, uses generic header */
 extern struct_desc ikev2_e_desc;
 
+/*
+ * Configuration Payload . RFC 5996 section 3.15
+ */
+struct ikev2_cp {
+	u_int8_t isacp_np;
+	u_int8_t isacp_critical;
+	u_int16_t isacp_length;
+	u_int8_t isacp_type;
+	u_int8_t isacp_res1; /* 3 octects */
+	u_int16_t isat_res2;
+};
+
+extern struct_desc ikev2_cp_desc;
+
+struct ikev2_cp_attribute {
+	u_int16_t type;
+	u_int16_t len;
+};
+
+extern struct_desc ikev2_cp_attribute_desc;
+
 /* union of all payloads */
 
 union payload {
@@ -918,6 +939,8 @@ union payload {
 	struct ikev2_certreq v2certreq;
 	struct ikev2_notify v2n;
 	struct ikev2_delete v2delete;
+	struct ikev2_cp v2cp;
+	struct ikev2_cp_attribute v2cp_attribute;
 };
 
 #endif /* _PACKET_H */

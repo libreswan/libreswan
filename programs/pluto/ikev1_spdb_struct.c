@@ -1783,7 +1783,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			switch (life_type) {
 			case SA_LIFE_TYPE_SECONDS:
 				/* silently limit duration to our maximum */
-				attrs->life_seconds = 
+				attrs->life_seconds =
 				    val > SA_LIFE_DURATION_MAXIMUM ?
 					deltatime(SA_LIFE_DURATION_MAXIMUM) :
 				    val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
@@ -2422,7 +2422,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				default:
 					loglog(RC_LOG_SERIOUS,
-					       "Unknown integ algorithm %d not supported", 
+					       "Unknown integ algorithm %d not supported",
 							ah_attrs.transattrs.integ_hash);
 					ok_auth = FALSE;
 					break;

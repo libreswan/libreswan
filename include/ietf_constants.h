@@ -285,7 +285,14 @@
 #define  AES_KEY_DEF_LEN        128
 #define  AES_KEY_MAX_LEN        256
 
+/*
+ * http://tools.ietf.org/html/rfc3566#section-4.1
+ */
+#define AES_XCBC_DIGEST_SIZE BYTES_FOR_BITS(128)
+#define AES_XCBC_DIGEST_SIZE_TRUNC BYTES_FOR_BITS(96)
+
 /* AES-CTR RFC 3686 The _only_ valid values are 128, 192 and 256 bits */
+#define AES_CTR_SALT_BYTES 4
 #define  AES_CTR_KEY_MIN_LEN 128
 #define  AES_CTR_KEY_DEF_LEN 128
 #define  AES_CTR_KEY_MAX_LEN 256
@@ -301,7 +308,7 @@
 
 /*
  * RFC 4309 AES CCM
- * http://tools.ietf.org/search/rfc4309#section-7.1
+ * http://tools.ietf.org/html/rfc4309#section-7.1
  */
 #define AES_CCM_SALT_BYTES 3
 #define AES_CCM_KEY_MIN_LEN 128
@@ -1022,8 +1029,7 @@ typedef u_int16_t ipsec_auth_t;
 
 /*
  * IKEv1 Oakley Encryption Algorithm attribute
- * draft-ietf-ipsec-ike-01.txt appendix A
- * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-4
  */
 
 enum ikev1_encr_attribute  {
@@ -1035,7 +1041,22 @@ enum ikev1_encr_attribute  {
 	OAKLEY_CAST_CBC = 6,
 	OAKLEY_AES_CBC = 7,
 	OAKLEY_CAMELLIA_CBC = 8,
+	/* remainder until private use are NOT official IKEv1 entries */
+	OAKLEY_AES_CTR = 13, /* taken from IKEv2 */
+	OAKLEY_AES_CCM_8 = 14,
+	OAKLEY_AES_CCM_12 = 15,
+	OAKLEY_AES_CCM_16 = 16,
 
+	OAKLEY_AES_GCM_8 = 18,
+	OAKLEY_AES_GCM_12 = 19,
+	OAKLEY_AES_GCM_16 = 20,
+
+	OAKLEY_CAMELLIA_CTR = 24,
+	OAKLEY_CAMELLIA_CCM_A = 25,
+	OAKLEY_CAMELLIA_CCM_B = 26,
+	OAKLEY_CAMELLIA_CCM_C = 27,
+
+	/* private user numbers */
 	OAKLEY_MARS_CBC = 65001,
 	OAKLEY_RC6_CBC = 65002,
 	OAKLEY_ID_65003 = 65003, /* unused - make enums easier */
@@ -1047,21 +1068,23 @@ enum ikev1_encr_attribute  {
 #define OAKLEY_ENCRYPT_MAX 65535 /* pretty useless :) */
 
 /*
- * Oakley Hash Algorithm attribute
- * draft-ietf-ipsec-ike-01.txt appendix A
- * and from http://www.isi.edu/in-notes/iana/assignments/ipsec-registry
+ * IKEv1 Oakley Hash Algorithm attribute
+ * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-6
  */
 
 typedef u_int16_t oakley_hash_t;
-/* 0 reserved */
-#define OAKLEY_MD5 1
-#define OAKLEY_SHA1 2
-#define OAKLEY_TIGER 3
-#define OAKLEY_SHA2_256 4
-#define OAKLEY_SHA2_384 5
-#define OAKLEY_SHA2_512 6
+enum ikev1_hash_attribute  {
+	/* 0 reserved */
+	OAKLEY_MD5 = 1,
+	OAKLEY_SHA1 = 2,
+	OAKLEY_TIGER = 3,
+	OAKLEY_SHA2_256 = 4,
+	OAKLEY_SHA2_384 = 5,
+	OAKLEY_SHA2_512 = 6,
 
-#define OAKLEY_HASH_MAX 7
+	OAKLEY_AES_XCBC = 9 /* stolen from ikev2 */
+};
+#define OAKLEY_HASH_MAX 10
 
 /*
  * Oakley Authentication Method attribute
@@ -1108,6 +1131,44 @@ enum ikev1_auth_method {
 /* typedef to make our life easier */
 typedef u_int16_t oakley_auth_t;
 
+enum ikev2_cp_attribute_type {
+	/*
+	 * IKEv2 CP Attribute types
+	 * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+	 */
+	IKEv2_INTERNAL_IP4_ADDRESS = 1,
+	IKEv2_INTERNAL_IP4_NETMASK = 2,
+	IKEv2_INTERNAL_IP4_DNS = 3,
+	IKEv2_INTERNAL_IP4_NBNS = 4 /* unused by us, WINS is long dead */,
+	IKEv2_RESERVED_5 = 5,
+	IKEv2_INTERNAL_IP4_DHCP = 6,
+	IKEv2_APPLICATION_VERSION = 7,
+	IKEv2_INTERNAL_IP6_ADDRESS = 8,
+	IKEv2_RESERVED_9 = 9,
+	IKEv2_INTERNAL_IP6_DNS = 10,
+	IKEv2_RESERVED_11 = 11,
+	IKEv2_INTERNAL_IP6_DHCP  =12,
+	IKEv2_INTERNAL_IP4_SUBNET = 13,
+	IKEv2_SUPPORTED_ATTRIBUTES = 14,
+	IKEv2_INTERNAL_IP6_SUBNET = 15,
+	IKEv2_MIP6_HOME_PREFIX = 16,
+	IKEv2_INTERNAL_IP6_LINK = 17,
+	IKEv2_INTERNAL_IP6_PREFIX = 18,
+	IKEv2_HOME_AGENT_ADDRESS = 19,
+	IKEv2_P_CSCF_IP4_ADDRESS = 20,
+	IKEv2_P_CSCF_IP6_ADDRESS = 21,
+	IKEv2_FTT_KAT = 22,
+};
+
+
+/* extern enum_names ikev2_cp_names; */
+enum ikev2_cp_type {
+	IKEv2_CP_CFG_REQUEST = 1,
+	IKEv2_CP_CFG_REPLY = 2,
+	IKEv2_CP_CFG_SET = 3,
+	IKEv2_CP_CFG_ACK = 4
+};
+
 /* extern enum_names ikev2_auth_names; */
 enum ikev2_auth_method {
 	IKEv2_AUTH_RSA = 1,
@@ -1126,6 +1187,7 @@ enum ikev2_auth_method {
 typedef enum ike_trans_type_dh oakley_group_t;
 
 /*	you must also touch: constants.c, crypto.c */
+/* https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-10 */
 enum ike_trans_type_dh {
 	OAKLEY_GROUP_invalid = 0,	/* not in standard */
 	OAKLEY_GROUP_MODP768 = 1,
@@ -1418,7 +1480,7 @@ enum ike_cert_type {
 
 /*
  * (IKEv1) IPsec AH transform values
- * 
+ *
  * IKEv1: http://www.iana.org/assignments/isakmp-registry/isakmp-registry.xhtml#isakmp-registry-7
  * IKEv2: https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-7
  *

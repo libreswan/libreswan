@@ -60,8 +60,6 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 
-#include "xauth.h"
-
 #include "nat_traversal.h"
 #include "vendor.h"
 
@@ -801,22 +799,32 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
 	unsigned int hisID = role == O_INITIATOR ?
 			     ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
 	struct payload_digest *const id_him = md->chain[hisID];
-	const pb_stream * id_pbs;
-	struct ikev2_id * id;
+	struct connection *c = md->st->st_connection;
+	const pb_stream *id_pbs;
+	struct ikev2_id *v2id;
 	struct id peer;
 
-	if (!id_him) {
+	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
 		return FALSE;
 	}
 
 	id_pbs = &id_him->pbs;
-	id = &id_him->payload.v2id;
-	peer.kind = id->isai_type;
+	v2id = &id_him->payload.v2id;
+	peer.kind = v2id->isai_type;
 
 	if (!extract_peer_id(&peer, id_pbs)) {
 		libreswan_log("IKEv2 mode peer ID extraction failed");
 		return FALSE;
+	}
+
+	if (peer.kind == ID_DER_ASN1_DN && peer.name.ptr != NULL &&
+			c->spd.that.id.kind == ID_FROMCERT) {
+		DBG(DBG_CONTROL, DBG_log("copying ID_DER_ASN1_DN name type for the peer ID"));
+		c->spd.that.id.kind = peer.kind;
+		clonereplacechunk(c->spd.that.id.name, peer.name.ptr,
+						       peer.name.len,
+						       "peer ID");
 	}
 
 	{
@@ -824,7 +832,7 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
 
 		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			      enum_show(&ikev2_idtype_names, id->isai_type), buf);
+			      enum_show(&ikev2_idtype_names, v2id->isai_type), buf);
 	}
 
 	return TRUE;

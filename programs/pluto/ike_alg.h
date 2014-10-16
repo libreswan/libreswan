@@ -19,7 +19,8 @@ struct ike_alg {
 struct encrypt_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	size_t enc_ctxsize;
-	size_t enc_blocksize;	/* also IV length */
+	size_t enc_blocksize;
+	size_t ivsize;
 	unsigned keydeflen;
 	unsigned keymaxlen;
 	unsigned keyminlen;

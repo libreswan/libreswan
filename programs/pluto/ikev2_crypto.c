@@ -100,6 +100,10 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 		ipi->keymat_len = ei->authkeylen;
 		break;
 
+	case IKEv2_ENCR_AES_CTR:
+		ipi->keymat_len = ei->enckeylen + ei->authkeylen + AES_CTR_SALT_BYTES;;
+		break;
+
 	case IKEv2_ENCR_AES_GCM_8:
 	case IKEv2_ENCR_AES_GCM_12:
 	case IKEv2_ENCR_AES_GCM_16:

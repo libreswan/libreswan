@@ -72,7 +72,7 @@
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "xauth.h"
+#include "ikev1_xauth.h"
 #include "addresspool.h"
 #include "nat_traversal.h"
 

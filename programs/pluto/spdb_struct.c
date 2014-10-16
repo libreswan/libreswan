@@ -91,7 +91,9 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	struct ike_info *ike_info;
 
 	/* Next two are for multiple proposals in agressive mode... */
-	unsigned last_modp = 0, wrong_modp = 0;
+	unsigned last_modp = 0;
+	bool warned_dropped_dhgr = FALSE;
+
 	int transcnt = 0;
 	int i;
 
@@ -215,43 +217,54 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			emp_sp = sa_copy_sa(base, 0);
 		}
 
-		/* Are we allowing multiple DH groups for IKEv1 Aggressive Mode? */
-
+		/*
+		 * Aggressive mode really only works with a single DH group.
+		 * If this is for Aggressive Mode, and we've previously seen
+		 * a different DH group, we try to deal with this.
+		 */
 		if (single_dh && transcnt > 0 &&
 		    ike_info->ike_modp != last_modp) {
-			/*
-			 * Already got a DH group and this one doesn't match
-			 */
+			if (last_modp == OAKLEY_GROUP_MODP1024 ||
+			    last_modp == OAKLEY_GROUP_MODP1536) {
+				/*
+				 * The previous group will work on old Cisco gear,
+				 * so we can discard this one.
+				 */
 
-			if (last_modp != OAKLEY_GROUP_MODP1024 && last_modp != OAKLEY_GROUP_MODP1536) {
+				if (!warned_dropped_dhgr) {
+					/* complain only once */
+					loglog(RC_LOG_SERIOUS,
+						"multiple DH groups were set in aggressive mode. Only first one used.");
+				}
+
+				loglog(RC_LOG_SERIOUS,
+					"transform (%s,%s,%s keylen %ld) ignored.",
+					enum_name(&oakley_enc_names, ike_info->ike_ealg),
+					enum_name(&oakley_hash_names, ike_info->ike_halg),
+					enum_name(&oakley_group_names, ike_info->ike_modp),
+					(long)ike_info->ike_eklen);
+				free_sa(emp_sp);
+				emp_sp = NULL;
+			} else {
+				/*
+				 * The previous group won't work on old Cisco gear,
+				 * so we discard the previous ones.
+				 * Of course this modp might be just as bad;
+				 * we won't look until the next one comes along.
+				 *
+				 * Lemma: there will be only a single previous
+				 * one in gsp (any others were discarded).
+				 */
 				loglog(RC_LOG_SERIOUS,
 				       "multiple DH groups in aggressive mode can cause interop failure");
 				loglog(RC_LOG_SERIOUS,
-					"Deleting previous proposal in the hopes of selecting DH 2 or DH 5 for");
-				wrong_modp++;
+					"Deleting previous proposal in the hopes of selecting DH 2 or DH 5");
 
 				free_sa(gsp);
 				gsp = NULL;
 			}
-			if (last_modp == OAKLEY_GROUP_MODP1024 ||  last_modp == OAKLEY_GROUP_MODP1536) {
-				/* the previous one will work on old cisco gear, so we can ignore this one */
 
-				if (wrong_modp == 0) { /* complain only once */
-					loglog(RC_LOG_SERIOUS,
-					"multiple DH groups were set in aggressive mode. Only first one used.");
-					wrong_modp++;
-				}
-
-				loglog(RC_LOG_SERIOUS,
-				"transform (%s,%s,%s keylen %ld) ignored.",
-				enum_name(&oakley_enc_names, ike_info->ike_ealg),
-				enum_name(&oakley_hash_names, ike_info->ike_halg),
-				enum_name(&oakley_group_names, ike_info->ike_modp),
-				(long)ike_info->ike_eklen);
-
-				free_sa(emp_sp);
-				emp_sp = NULL;
-			}
+			warned_dropped_dhgr = TRUE;
 		}
 
 		 if (emp_sp != NULL) {
@@ -282,6 +295,12 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				passert(emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 5);
 				passert(emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].type.oakley == OAKLEY_KEY_LENGTH);
 
+				/*
+				 * This odd FOR loop executes its body for
+				 * exactly two values of ks (def_ks and max_ks)
+				 * unless def_ks == max_ks, in which case it is
+				 * executed once.
+				 */
 				for (ks = def_ks; ; ks = max_ks) {
 					emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].val = ks;
 
@@ -306,7 +325,6 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 					free_sa(emp_sp);
 					emp_sp = NULL;
 					gsp = new;
-					
 				} else {
 					gsp = emp_sp;
 					emp_sp = NULL;

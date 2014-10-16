@@ -53,6 +53,7 @@ kvmplutotest	ikev2-19-x509-auto-start		good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
+kvmplutotest	ikev2-27-uniqueid			wip
 kvmplutotest	ikev1-cryptoload-01			wip
 kvmplutotest	ikev1-cryptoload-00			wip
 
@@ -69,7 +70,7 @@ kvmplutotest	ikev2-algo-02-modp2048-responder	good
 kvmplutotest	ikev2-algo-03-aes-ccm			good
 kvmplutotest	ikev2-algo-04-aes-gcm256		good
 kvmplutotest	ikev2-algo-05-aes-default		good
-kvmplutotest	ikev2-algo-06-aes-aes_xcbc		wip
+kvmplutotest	ikev2-algo-06-aes-aes_xcbc		good
 kvmplutotest	ikev2-algo-07-aes_ctr			good
 kvmplutotest	ikev2-algo-08-cast			good
 kvmplutotest	ikev2-algo-09-camellia			good
@@ -96,7 +97,6 @@ kvmplutotest	ikev2-algo-ike-sha2-03			good
 kvmplutotest	ikev1-algo-ike-sha2-01			good
 kvmplutotest	ikev1-algo-ike-sha2-02			good
 kvmplutotest	ikev1-algo-ike-sha2-03			good
-kvmplutotest	ikev1-algo-05-aes-aes			good
 kvmplutotest	ikev1-algo-04-mismatch			good
 kvmplutotest	ikev1-algo-05-3des-sha2			good
 
@@ -514,6 +514,12 @@ kvmplutotest	interop-ikev1-strongswan-12-esp-sha2_256 good
 kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 good
 kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512	good
 kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256	good
+kvmplutotest	interop-ikev2-strongswan-21-strongswan-cp-psk sha256	wip
+kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk	wip
+kvmplutotest	interop-ikev2-strongswan-23-initiator-cp	wip
+kvmplutotest	interop-ikev2-strongswan-24-esp-aes_ctr	good
+
+
 # kernel does not yet support these algo's
 kvmplutotest	ah-pluto-06		wip
 kvmplutotest	ah-pluto-07		wip
@@ -610,6 +616,7 @@ kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
 kvmplutotest	interop-ikev2-strongswan-15-create_child_sa-01	wip
 kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder	wip
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
+kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
 # strongswan still broken in v5.1.1
 kvmplutotest	interop-ikev2-strongswan-18-psk-cast		wip
 

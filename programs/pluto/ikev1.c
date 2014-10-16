@@ -150,7 +150,7 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 
 #include "nat_traversal.h"
 #include "vendor.h"

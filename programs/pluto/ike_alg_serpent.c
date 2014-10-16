@@ -84,6 +84,7 @@ static struct encrypt_desc encrypt_desc_serpent =
 	},
 	.enc_ctxsize = sizeof(struct serpent_context),
 	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
+	.ivsize = SERPENT_CBC_BLOCK_SIZE,
 	.keyminlen = SERPENT_KEY_MIN_LEN,
 	.keydeflen = SERPENT_KEY_DEF_LEN,
 	.keymaxlen = SERPENT_KEY_MAX_LEN,

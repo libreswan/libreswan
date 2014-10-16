@@ -202,3 +202,6 @@ extern bool force_busy;	/* config option to emulate responder under DOS */
 
 extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 				  enum phase1_role role);
+
+stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
+		pb_stream *outpbs);
