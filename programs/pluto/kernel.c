@@ -306,8 +306,11 @@ ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel)
 	return htonl((ipsec_spi_t)latest_cpi);
 }
 
-static void fmt_traffic_str(struct state *st, char *istr, int istr_len, char *ostr, int ostr_len) {
-
+static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char *ostr, size_t ostr_len)
+{
+	passert(istr_len > 0 && ostr_len > 0);
+	istr[0] = '\0';
+	ostr[0] = '\0';
 	if (st == NULL || IS_IKE_SA(st))
 		return;
 
