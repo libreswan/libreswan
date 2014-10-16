@@ -3,6 +3,7 @@ See also https://libreswan.org/
 v3.11 (unreleased)
 * x509: IKEv1 CA cert chain support with sendca option [Matt]
 * pluto: don't register ESP_BLOWFISH [Paul]
+* pluto: Support for aes_xcbc for ESP (and partially for IKEv2) [Paul]
 * IKEv1: Default to DH Group 2 and 5 for initiating Aggressive Mode [Paul]
          (3.9 included DH 14 which was prefered, causing interop issues)
 * pluto: Force ESP_CAST to only allow 128 bit key sizes [Paul]
