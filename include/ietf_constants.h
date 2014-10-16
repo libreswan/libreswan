@@ -1042,7 +1042,7 @@ enum ikev1_encr_attribute  {
 	OAKLEY_AES_CBC = 7,
 	OAKLEY_CAMELLIA_CBC = 8,
 	/* remainder until private use are NOT official IKEv1 entries */
-	OAKLEY_AES_CTR = 13,
+	OAKLEY_AES_CTR = 13, /* taken from IKEv2 */
 	OAKLEY_AES_CCM_8 = 14,
 	OAKLEY_AES_CCM_12 = 15,
 	OAKLEY_AES_CCM_16 = 16,

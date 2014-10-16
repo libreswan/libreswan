@@ -1207,14 +1207,14 @@ static enum_names oakley_enc_names_private_use_ssh = {
 
 static enum_names oakley_enc_names_private_use = {
 	OAKLEY_MARS_CBC,
-	OAKLEY_CAMELLIA_CCM_C,
+	OAKLEY_TWOFISH_CBC,
 	oakley_enc_name_private_use,
 	&oakley_enc_names_private_use_ssh
 };
 
 enum_names oakley_enc_names = {
 	OAKLEY_DES_CBC,
-	OAKLEY_AES_CTR,
+	OAKLEY_CAMELLIA_CCM_C,
 	oakley_enc_name,
 	&oakley_enc_names_private_use
 };
@@ -1235,18 +1235,15 @@ static const char *const oakley_hash_name[] = {
 	"OAKLEY_SHA2_512",	/* RFC 4878 */
 	"UNUSED_7",
 	"UNUSED_8",
-	"OAKLEY_AES_XCBC" /* stolen from ikev2 */
+	"DISABLED-OAKLEY_AES_XCBC" /* stolen from ikev2 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
 
 enum_names oakley_hash_names = {
 	OAKLEY_MD5,
-#if 0
-	/* waiting on NSS support */
-	OAKLEY_AES_XCBC,
-#endif
 	OAKLEY_SHA2_512,
+	/* OAKLEY_AES_XCBC waiting on NSS support */
 	oakley_hash_name,
 	NULL
 };

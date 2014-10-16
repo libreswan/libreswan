@@ -149,8 +149,8 @@ struct encrypt_desc algo_aes_cbc =
 	.do_crypt =     do_aes_cbc,
 };
 
-static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
-                  u_int8_t *nonce_iv, bool enc)
+static void do_aes_ctr(u_int8_t *buf UNUSED, size_t buf_len UNUSED, PK11SymKey *symkey UNUSED,
+                  u_int8_t *nonce_iv UNUSED, bool enc UNUSED)
 {
 	DBG(DBG_CRYPT, DBG_log("NSS do_aes_ctr: stubb only"));
 }
@@ -190,6 +190,7 @@ static struct hash_desc hash_desc_aes_xcbc = {
         .hash_final = aes_xcbc_final_thunk,
 };
 
+#ifdef NOT_YET
 static struct hash_desc integ_desc_aes_xcbc = {
         .common = { .officname =  "aes_xcbc",
                     .algo_type = IKE_ALG_INTEG,
@@ -205,6 +206,7 @@ static struct hash_desc integ_desc_aes_xcbc = {
         .hash_update = aes_xcbc_write_thunk,
         .hash_final = aes_xcbc_final_thunk,
 };
+#endif
 
 void ike_alg_aes_init(void)
 {
