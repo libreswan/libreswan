@@ -101,8 +101,9 @@ static stf_status ikev2_child_inIoutR_tail(struct qke_continuation *qke,
 static bool emit_iv(const struct state *st, pb_stream *pbs)
 {
 	size_t ivsize = st->st_oakley.encrypter->ivsize;
-	unsigned char ivbuf[ivsize];
+	unsigned char ivbuf[MAX_CBC_BLOCK_SIZE];
 
+	passert(ivsize <= MAX_CBC_BLOCK_SIZE);
 	get_rnd_bytes(ivbuf, ivsize);
 	return out_raw(ivbuf, ivsize, pbs, "IV");
 }
