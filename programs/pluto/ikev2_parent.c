@@ -1336,7 +1336,6 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 	/* encrypt the block */
 	{
-		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
 		size_t ivsize = pst->st_oakley.encrypter->ivsize;
 		unsigned char savediv[ivsize];
 		unsigned int cipherlen = e_pbs_cipher->cur - encstart;
