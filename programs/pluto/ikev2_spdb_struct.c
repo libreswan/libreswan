@@ -1192,15 +1192,6 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 			int defkeysize = crypto_req_keysize(parentSA ? CRK_IKEv2 : CRK_ESPorAH,
 				ta.encrypt);
 
-			if (ta.enckeylen != 0){
-				if (ta.enckeylen != ta.encrypter->keydeflen &&
-				    ta.enckeylen != ta.encrypter->keyminlen &&
-				    ta.enckeylen != ta.encrypter->keymaxlen) {
-
-					return STF_INTERNAL_ERROR;
-				}
-			}
-
 			if (ta.enckeylen == 0) {
 				/* pick up from received proposal, if any */
 				unsigned int stoe = st->st_oakley.enckeylen;
