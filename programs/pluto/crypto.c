@@ -77,6 +77,7 @@ static struct encrypt_desc crypto_encrypter_3des =
 		    .algo_next =     NULL, },
 	.enc_ctxsize =      sizeof(des_key_schedule) * 3,
 	.enc_blocksize =    DES_CBC_BLOCK_SIZE,
+	.ivsize =           DES_CBC_BLOCK_SIZE,
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keyminlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keymaxlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,

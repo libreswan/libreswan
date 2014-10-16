@@ -310,6 +310,9 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	case OAKLEY_AES_CBC:
 		return IKEv2_ENCR_AES_CBC;
 
+	case OAKLEY_AES_CTR:
+		return IKEv2_ENCR_AES_CTR;
+
 	case OAKLEY_CAMELLIA_CBC:
 		return IKEv2_ENCR_CAMELLIA_CBC;
 
@@ -328,6 +331,7 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	 */
 
 	default:
+		DBG(DBG_CONTROL, DBG_log("v1tov2_encr() missing v1 encr transform '%d'",oakley));
 		return IKEv2_ENCR_INVALID; /* this cannot go over the wire! It's 65536 */
 	}
 }

@@ -1041,7 +1041,22 @@ enum ikev1_encr_attribute  {
 	OAKLEY_CAST_CBC = 6,
 	OAKLEY_AES_CBC = 7,
 	OAKLEY_CAMELLIA_CBC = 8,
+	/* remainder until private use are NOT official IKEv1 entries */
+	OAKLEY_AES_CTR = 13,
+	OAKLEY_AES_CCM_8 = 14,
+	OAKLEY_AES_CCM_12 = 15,
+	OAKLEY_AES_CCM_16 = 16,
 
+	OAKLEY_AES_GCM_8 = 18,
+	OAKLEY_AES_GCM_12 = 19,
+	OAKLEY_AES_GCM_16 = 20,
+
+	OAKLEY_CAMELLIA_CTR = 24,
+	OAKLEY_CAMELLIA_CCM_A = 25,
+	OAKLEY_CAMELLIA_CCM_B = 26,
+	OAKLEY_CAMELLIA_CCM_C = 27,
+
+	/* private user numbers */
 	OAKLEY_MARS_CBC = 65001,
 	OAKLEY_RC6_CBC = 65002,
 	OAKLEY_ID_65003 = 65003, /* unused - make enums easier */
