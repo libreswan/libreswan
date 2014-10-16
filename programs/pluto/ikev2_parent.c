@@ -1337,9 +1337,11 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 	/* encrypt the block */
 	{
 		size_t ivsize = pst->st_oakley.encrypter->ivsize;
-		unsigned char savediv[ivsize];
+		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
+		unsigned char savediv[MAX_CBC_BLOCK_SIZE];
 		unsigned int cipherlen = e_pbs_cipher->cur - encstart;
 
+		passert(ivsize <= MAX_CBC_BLOCK_SIZE);
 		DBG(DBG_CRYPT,
 		    DBG_dump("data before encryption:", encstart, cipherlen));
 
@@ -1353,6 +1355,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("data after encryption:", encstart, cipherlen));
+		/* note: saved_iv's updated value is discarded */
 	}
 
 	/* okay, authenticate from beginning of IV */
