@@ -166,7 +166,7 @@ struct encrypt_desc algo_aes_ctr =
 		.algo_next =   NULL,
 	},
 	.enc_ctxsize =   sizeof(aes_context),
-	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.enc_blocksize = AES_BLOCK_SIZE,
 	.ivsize = 8,
 	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,

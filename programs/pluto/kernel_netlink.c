@@ -245,7 +245,7 @@ static struct encrypt_desc algo_aes_ccm_8 =
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_8,
 		.algo_next =    NULL,
 	},
-	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
+	.enc_blocksize =  AES_BLOCK_SIZE,
 	.ivsize =  8,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
@@ -262,7 +262,7 @@ static struct encrypt_desc algo_aes_ccm_12 =
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_12,
 		.algo_next =    NULL,
 	},
-	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
+	.enc_blocksize =  AES_BLOCK_SIZE,
 	.ivsize =  8,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
@@ -279,7 +279,7 @@ static struct encrypt_desc algo_aes_ccm_16 =
 		.algo_v2id =   IKEv2_ENCR_AES_CCM_16,
 		.algo_next =   NULL,
 	},
-	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.enc_blocksize = AES_BLOCK_SIZE,
 	.ivsize = 8,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
@@ -296,7 +296,7 @@ static struct encrypt_desc algo_aes_gcm_8 =
 		.algo_v2id =   IKEv2_ENCR_AES_GCM_8,
 		.algo_next =   NULL,
 	},
-	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.enc_blocksize = AES_BLOCK_SIZE,
 	.ivsize = 8,
 	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
@@ -313,7 +313,7 @@ static struct encrypt_desc algo_aes_gcm_12 =
 		.algo_v2id =   IKEv2_ENCR_AES_GCM_12,
 		.algo_next =   NULL,
 	},
-	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.enc_blocksize = AES_BLOCK_SIZE,
 	.ivsize = 8,
 	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
@@ -330,7 +330,7 @@ static struct encrypt_desc algo_aes_gcm_16 =
 		.algo_v2id =    IKEv2_ENCR_AES_GCM_16,
 		.algo_next =  NULL,
 	},
-	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.enc_blocksize = AES_BLOCK_SIZE,
 	.ivsize = 8,
 	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
 	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
