@@ -59,7 +59,6 @@
 [             serpent]    OK: alg=SERPENT(252)_000-MD5(1)_000, SERPENT(252)_000-SHA1(2)_000
 [             twofish]    OK: alg=TWOFISH(253)_000-MD5(1)_000, TWOFISH(253)_000-SHA1(2)_000
 [                mars]    OK: alg=MARS(249)_000-MD5(1)_000, MARS(249)_000-SHA1(2)_000
-[            modp1536]    OK: <should not fail and give default encr/integ auths>
 
 ---- ESP tests that should fail----
 [        3des168-sha1] ERROR: alg=  error=3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
@@ -101,3 +100,4 @@
 [                null] ERROR: alg=  error=AH cannot have null authentication, enc_alg=""(0), auth_alg="null", modp=""
 [             aes_gcm] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="aes_gcm", modp=""
 [             aes_ccm] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="aes_ccm", modp=""
+../algparse leak detective found no leaks

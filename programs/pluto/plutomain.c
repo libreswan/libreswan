@@ -368,7 +368,7 @@ u_int16_t secctx_attr_value = SECCTX;
  *
  * val values free due to removal of options: '1', '3', '4', 'G'
  */
- 
+
 #define DBG_OFFSET 256
 static const struct option long_opts[] = {
 	/* name, has_arg, flag, val */

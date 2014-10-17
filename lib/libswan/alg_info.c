@@ -182,7 +182,7 @@ enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti)
 	}
 }
 
-/* 
+/*
  * XXX This maps IPSEC AH Transform Identifiers to IKE Integrity Algorithm
  * Transform IDs. But IKEv1 and IKEv2 tables don't match fully! See:
  *
@@ -904,7 +904,6 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			}
 		}
 
-		
 		if (! DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
 			switch(aalg_id) {
 			case AH_NULL:

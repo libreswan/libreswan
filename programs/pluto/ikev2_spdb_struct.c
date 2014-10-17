@@ -310,6 +310,9 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	case OAKLEY_AES_CBC:
 		return IKEv2_ENCR_AES_CBC;
 
+	case OAKLEY_AES_CTR:
+		return IKEv2_ENCR_AES_CTR;
+
 	case OAKLEY_CAMELLIA_CBC:
 		return IKEv2_ENCR_CAMELLIA_CBC;
 
@@ -328,6 +331,7 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	 */
 
 	default:
+		DBG(DBG_CONTROL, DBG_log("v1tov2_encr() missing v1 encr transform '%d'",oakley));
 		return IKEv2_ENCR_INVALID; /* this cannot go over the wire! It's 65536 */
 	}
 }
@@ -349,6 +353,9 @@ static enum ikev2_trans_type_integ v1tov2_integ(enum ikev2_trans_type_integ oakl
 
 	case OAKLEY_SHA2_512:
 		return IKEv2_AUTH_HMAC_SHA2_512_256;
+
+	case OAKLEY_AES_XCBC:
+		return IKEv2_AUTH_AES_XCBC_96;
 
 	default:
 		return IKEv2_AUTH_INVALID;
@@ -373,6 +380,9 @@ static enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth
 	case AUTH_ALGORITHM_HMAC_SHA2_512:
 		return IKEv2_AUTH_HMAC_SHA2_512_256;
 
+	case AUTH_ALGORITHM_AES_XCBC:
+		return IKEv2_AUTH_AES_XCBC_96;
+
 	default:
 		return IKEv2_AUTH_INVALID;
 	}
@@ -395,6 +405,9 @@ static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 
 	case OAKLEY_SHA2_512:
 		return IKEv2_PRF_HMAC_SHA2_512;
+
+	case OAKLEY_AES_XCBC:
+		return IKEv2_PRF_AES128_XCBC;
 
 	default:
 		return IKEv2_PRF_INVALID;
@@ -1178,15 +1191,6 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 		if (ta.encrypter != NULL) {
 			int defkeysize = crypto_req_keysize(parentSA ? CRK_IKEv2 : CRK_ESPorAH,
 				ta.encrypt);
-
-			if (ta.enckeylen != 0){
-				if (ta.enckeylen != ta.encrypter->keydeflen &&
-				    ta.enckeylen != ta.encrypter->keyminlen &&
-				    ta.enckeylen != ta.encrypter->keymaxlen) {
-
-					return STF_INTERNAL_ERROR;
-				}
-			}
 
 			if (ta.enckeylen == 0) {
 				/* pick up from received proposal, if any */

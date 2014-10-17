@@ -86,7 +86,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 static int build_ikev2_version();
 
 /* this is a crypto_req_cont_func */
-static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc, 
+static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 					 struct pluto_crypto_req *r);
 
 static stf_status ikev2_child_inIoutR_tail(struct qke_continuation *qke,
@@ -100,10 +100,10 @@ static stf_status ikev2_child_inIoutR_tail(struct qke_continuation *qke,
  */
 static bool emit_iv(const struct state *st, pb_stream *pbs)
 {
-	size_t ivsize = st->st_oakley.encrypter->enc_blocksize;
+	size_t ivsize = st->st_oakley.encrypter->ivsize;
 	unsigned char ivbuf[MAX_CBC_BLOCK_SIZE];
 
-	passert(ivsize <= sizeof(ivbuf));
+	passert(ivsize <= MAX_CBC_BLOCK_SIZE);
 	get_rnd_bytes(ivbuf, ivsize);
 	return out_raw(ivbuf, ivsize, pbs, "IV");
 }
@@ -1258,7 +1258,7 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *pcrc,
 }
 
 /*
- * Pad message for CBC-mode encryption.
+ * Pad message for CBC-mode encryption. Should not be called for CTR or CCM/GCM
  * Octets are added to make the message a multiple of the cipher block size.
  * At least one octet is added and at most blocksize are added.
  * The first is 0, and each subsequent octet is one larger.
@@ -1337,14 +1337,16 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 	/* encrypt the block */
 	{
-		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
+		size_t ivsize = pst->st_oakley.encrypter->ivsize;
+		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		unsigned char savediv[MAX_CBC_BLOCK_SIZE];
 		unsigned int cipherlen = e_pbs_cipher->cur - encstart;
 
+		passert(ivsize <= MAX_CBC_BLOCK_SIZE);
 		DBG(DBG_CRYPT,
 		    DBG_dump("data before encryption:", encstart, cipherlen));
 
-		memcpy(savediv, iv, blocksize);
+		memcpy(savediv, iv, ivsize);
 
 		/* now, encrypt */
 		(st->st_oakley.encrypter->do_crypt)(encstart,
@@ -1354,6 +1356,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("data after encryption:", encstart, cipherlen));
+		/* note: saved_iv's updated value is discarded */
 	}
 
 	/* okay, authenticate from beginning of IV */
@@ -1387,7 +1390,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
  * Calls ikev2_process_payloads to decode the payloads within.
  *
  * This code assumes that the encrypted part of an IKE message starts
- * with an Initialization Vector (IV) of enc_blocksize of random octets.
+ * with an Initialization Vector (IV) of ivsize of random octets.
  * We will discard the IV after decryption.
  * This is true of Cipher Block Chaining mode (CBC).
  */
@@ -1403,6 +1406,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	unsigned char *iv = e_pbs->cur;	/* start of IV, right after header */
 	size_t integ_len = pst->st_oakley.integ_hasher->hash_integ_len;
 	size_t enc_blocksize = pst->st_oakley.encrypter->enc_blocksize;
+	size_t ivsize = pst->st_oakley.encrypter->ivsize;
 	unsigned char *roof= e_pbs->roof;
 	PK11SymKey *cipherkey, *authkey;
 
@@ -1412,7 +1416,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	 * - at least one byte for padding (just before integrity digest)
 	 * - truncated integrity digest (at end)
 	 */
-	if (roof - iv < (ptrdiff_t)(enc_blocksize + 1 + integ_len)) {
+	if (roof - iv < (ptrdiff_t)(ivsize + 1 + integ_len)) {
 		libreswan_log("encrypted payload impossibly short (%td)",
 			roof - iv);
 		return STF_FAIL;
@@ -1462,12 +1466,12 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	/* decrypt */
 	{
 		/*
-		 * The first [enc_blocksize] octet chunk is the IV.
+		 * The first [ivsize] octet chunk is the IV.
 		 * The encrypted data follows.
 		 * The last byte of encrypted data is one less than
 		 * the number of padding octets.
 		 */
-		unsigned char *encstart = iv + enc_blocksize;
+		unsigned char *encstart = iv + ivsize;
 		size_t enclen = roof - encstart;
 		unsigned char padlen;
 
@@ -1809,8 +1813,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	{
 		/*
-		 * emit SA2i, TSi and TSr and 
-		 * (v2N_USE_TRANSPORT_MODE notification in transport mode) 
+		 * emit SA2i, TSi and TSr and
+		 * (v2N_USE_TRANSPORT_MODE notification in transport mode)
 		 * for it.
 		 */
 		lset_t policy;
@@ -1848,6 +1852,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	}
 
 	/*
+	 * TODO WARNING: padding must not be done for CTR mode
+	 *
 	 * need to extend the packet so that we will know how big it is
 	 * since the length is under the integrity check
 	 */
@@ -2239,7 +2245,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		/*
 		 * send CERT payload RFC 4306 3.6, 1.2:([CERT,] )
 		 * upon which our received I2 CERTREQ is ignored,
-		 * but ultimately should go into the CERT decision 
+		 * but ultimately should go into the CERT decision
 		 */
 		if (send_cert) {
 			stf_status certstat = ikev2_send_cert(st, md,
@@ -2913,7 +2919,7 @@ bool ship_v2N(enum next_payload_types_ikev2 np,
 stf_status ikev2_child_inIoutR(struct msg_digest *md)
 {
 	struct state *pst = md->st;
-	struct state *st = NULL; /* child state */ 
+	struct state *st = NULL; /* child state */
 
 	if (IS_CHILD_SA(pst))
 		pst = state_with_serialno(st->st_clonedfrom);
@@ -2927,7 +2933,7 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 		if (ret != STF_OK)
 			return ret;
-	} 
+	}
 
 	st = duplicate_state(pst); /* create child state */
 	set_cur_state(st);      /* (caller will reset) */
@@ -3067,7 +3073,7 @@ static stf_status ikev2_child_inIoutR_tail(struct qke_continuation *qke,
 					"CREATE_CHILD_SA  message");
 			return STF_FATAL;
 		}
-	} /* HDR done */ 
+	} /* HDR done */
 
 	/* insert an Encryption payload header */
 	e.isag_np = ISAKMP_NEXT_v2SA;
@@ -3238,7 +3244,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		 * We only process Delete Payloads. The rest are
 		 * ignored.
 		 *
-		 * If no delete payloads were received, the Next 
+		 * If no delete payloads were received, the Next
 		 * Payload type to send will be NONE.
 		 *
 		 * IKE SA Delete cannot be combined with anything
@@ -3325,7 +3331,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 						v2del->isad_spisize);
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
-				
+
 				if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
 					libreswan_log("IPsec Delete Notification payload size is %tu but %u is required",
 						pbs_left(&p->pbs),
