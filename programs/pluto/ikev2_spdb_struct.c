@@ -396,6 +396,8 @@ static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 
 	case OAKLEY_SHA1:
 		return IKEv2_PRF_HMAC_SHA1;
+	
+	/* OAKLEY_TIGER not in IKEv2 */
 
 	case OAKLEY_SHA2_256:
 		return IKEv2_PRF_HMAC_SHA2_256;
