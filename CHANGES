@@ -13,6 +13,7 @@ v3.11 (unreleased)
   - rhbz#1145231 (rhel7) and rhbz#1144941 (fedora)
 * pluto: Added PLUTO_IN_BYTES= / PLUTO_OUT_BYTES= for updown [Antony]
 * NETKEY: don't trust PF_KEY API to tell us about IPCOMP support [Paul]
+* KLIPS: ip_select_ident was backported to 3.2.63 [Bram]
 * IKEv2: don't copy reserved ISAKMP flags in reply msg (rhbz#1052811) [Paul]
 * IKEv2: ISAKMP_FLAGS_v2_IKE_I was not always set on Original Initiator [Paul]
 * systemd: use After=network-online.target instead of network.target [Kim]
