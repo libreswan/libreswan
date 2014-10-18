@@ -143,7 +143,6 @@ void list_psks(void)
 	whack_log(RC_COMMENT, "List of Pre-shared secrets (from %s)",
 		  pluto_shared_secrets_file);
 	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, " ");
 	lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
 }
 
