@@ -69,7 +69,7 @@ static unsigned int maximum_retransmissions_quick_r1 =
 
 /*
  * This routine places an event in the event list.
- * Delay should really be a monotime_t but this is easier
+ * Delay should really be a deltatime_t but this is easier
  */
 void event_schedule(enum event_type type, time_t delay, struct state *st)
 {
@@ -85,6 +85,8 @@ void event_schedule(enum event_type type, time_t delay, struct state *st)
 	 * If the event is associated with a state, put a backpointer to the
 	 * event in the state object, so we can find and delete the event
 	 * if we need to (for example, if we receive a reply).
+	 * (There are actually three classes of event associated
+	 * with a state.)
 	 */
 	if (st != NULL) {
 		switch (type) {
@@ -166,15 +168,9 @@ void event_schedule(enum event_type type, time_t delay, struct state *st)
 static void retransmit_v1_msg(struct state *st)
 {
 	time_t delay = 0;	/* relative time; 0 means NO */
-	struct connection *c;
-	unsigned long try;
-	unsigned long try_limit;
-
-	passert(st != NULL);
-	c = st->st_connection;
-
-	try = st->st_try;
-	try_limit = c->sa_keying_tries;
+	struct connection *c = st->st_connection;
+	unsigned long try = st->st_try;
+	unsigned long try_limit = c->sa_keying_tries;
 
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;

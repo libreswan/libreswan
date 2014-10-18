@@ -363,15 +363,16 @@ struct state {
 	struct pubkey *st_peer_pubkey;
 
 	enum state_kind st_state;               /* State of exchange */
-	u_int8_t st_retransmit;                 /* Number of retransmits */
-	unsigned long st_try;                   /* number of times rekeying
-	                                           attempted */
-	                                        /* 0 means the only time */
-	deltatime_t st_margin;			/* life after EVENT_SA_REPLACE*/
-	unsigned long st_outbound_count;        /* traffic through eroute */
-	monotime_t st_outbound_time;		/* time of last change to
-	                                         * st_outbound_count
-						 */
+
+	u_int8_t st_retransmit;		/* Number of retransmits */
+	unsigned long st_try;		/* Number of times rekeying attempted.
+					 * 0 means the only time.
+					 */
+	deltatime_t st_margin;		/* life after EVENT_SA_REPLACE*/
+	unsigned long st_outbound_count;	/* traffic through eroute */
+	monotime_t st_outbound_time;	/* time of last change to
+					 * st_outbound_count
+					 */
 
 	bool st_calculating;                    /* set to TRUE, if we are
 	                                         * performing cryptographic
