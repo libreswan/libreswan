@@ -6,7 +6,7 @@ east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
  ipsec auto --add westnet-eastnet-ah
-003 phase2alg string error: hash_alg cannot be null or have a key length of 0, enc_alg=""(0), auth_alg="sha2_256", modp=""
+002 added connection description "westnet-eastnet-ah"
 east #
  echo "initdone"
 initdone

@@ -6,7 +6,7 @@ west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-aes256
-003 phase2alg string error: wrong authentication key length - key size must be 256, enc_alg="aes"(256), auth_alg="sha2_256", modp=""
+003 phase2alg string error: authentication algorithm does not take a variable key size, enc_alg="aes"(256), auth_alg="sha2_256", modp=""
 west #
  echo "initdone"
 initdone
