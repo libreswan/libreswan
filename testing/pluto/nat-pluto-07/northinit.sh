@@ -1,8 +1,6 @@
-#!/bin/sh
+/testing/guestbin/swan-prep
+ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
+ipsec auto --add northnet-eastnet-nat
+echo "initdone"
 
-: ==== start ====
-
-TESTNAME=nat-pluto-07 
-source /testing/pluto/bin/northlocal.sh
-
-echo done
