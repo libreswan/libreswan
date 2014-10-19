@@ -54,8 +54,8 @@ kvmplutotest	ikev2-19-x509-auto-start		good
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			wip
-kvmplutotest	ikev1-cryptoload-01			wip
-kvmplutotest	ikev1-cryptoload-00			wip
+kvmplutotest	ikev1-cryptoload-01			good
+kvmplutotest	ikev1-cryptoload-00			good
 
 kvmplutotest	ikev2-03-basic-rawrsa-nhelpers0		good
 kvmplutotest	ikev2-04-basic-x509-nhelpers0		good
@@ -75,11 +75,12 @@ kvmplutotest	ikev2-algo-07-aes_ctr			good
 kvmplutotest	ikev2-algo-08-cast			good
 kvmplutotest	ikev2-algo-09-camellia			good
 kvmplutotest	ikev2-algo-10-aes-gcm128		good
-kvmplutotest	ikev2-algo-11-gcm-prop2			wip
+kvmplutotest	ikev2-algo-11-gcm-prop2			good
 kvmplutotest	netkey-algo-aes_gcm-01			good
 kvmplutotest	netkey-algo-aes_gcm-02			good
 kvmplutotest	netkey-algo-aes_gcm-03			good
 kvmplutotest	netkey-algo-aes_ccm-01			good
+kvmplutotest	ikev1-algo-ike-sha2-03-netkey		good
 
 # various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good
@@ -208,7 +209,7 @@ kvmplutotest	dpd-08-netkey	wip
 # Delete SA test.
 kvmplutotest	delete-sa-01	good
 
-kvmplutotest	delete-state-01 wip
+kvmplutotest	delete-state-01 good
 
 #
 # oe-snat-01 - do Source address NAT and then OE
@@ -411,7 +412,7 @@ kvmplutotest	basic-pluto-12		wip
 kvmplutotest	basic-pluto-12-netkey	wip
 kvmplutotest	basic-pluto-13-netkey-route good
 kvmplutotest	basic-pluto-14-klips-route good
-kvmplutotest   basic-pluto-15-no-retransmit wip
+kvmplutotest	basic-pluto-15-no-retransmit wip
 
 #
 # test cases of what happens to X.509 based authorization system
