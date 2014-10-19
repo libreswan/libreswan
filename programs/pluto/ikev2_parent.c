@@ -2267,7 +2267,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			np = ISAKMP_NEXT_v2NONE;
 		} else {
 			DBG_log("CHILD SA proposals received");
-			np =  c->pool == NULL ?  ISAKMP_NEXT_v2SA : ISAKMP_NEXT_v2CP;
+			np =  (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
+				ISAKMP_NEXT_v2CP :ISAKMP_NEXT_v2SA;
 		}
 
 		DBG(DBG_CONTROLMORE,
