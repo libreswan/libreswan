@@ -831,6 +831,7 @@ enum ikev2_trans_type_prf {
 	IKEv2_PRF_HMAC_SHA2_384 = 6, /* RFC4868 */
 	IKEv2_PRF_HMAC_SHA2_512 = 7, /* RFC4868 */
 	IKEv2_PRF_AES128_CMAC = 8, /* RFC4615 */
+	IKEv2_PRF_9_INVALID = 9,
 	/* 9 - 1023 Reserved to IANA RFC4306 */
 	/* 1024 - 65535 Private Use RFC4306 */
 	IKEv2_PRF_INVALID = 65536
