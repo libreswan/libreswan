@@ -776,7 +776,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				case OAKLEY_3DES_CBC:
 					return "3DES does not take variable key lengths";
 				case OAKLEY_CAST_CBC:
-					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
+					if (p_ctx->eklen != 128) {
 						return "CAST is only supported for 128 bits (to avoid padding)";
 					}
 					break;
