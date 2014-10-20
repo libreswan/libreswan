@@ -742,7 +742,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	}
 
-	DBG_log("found connection: %s", c ? c->name : "<none>");
+	DBG(DBG_CONTROL, DBG_log("found connection: %s", c ? c->name : "<none>"));
 
 	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 

@@ -128,8 +128,9 @@ int kernel_alg_add(int satype, int exttype, const struct sadb_alg *sadb_alg)
 
 	alg_p = sadb_alg_ptr(satype, exttype, alg_id, TRUE);
 	if (alg_p == NULL) {
-		DBG_log("kernel_alg_add(%d,%d,%d) fails because alg combo is invalid",
-			satype, exttype, alg_id);
+		DBG(DBG_KERNEL,
+			DBG_log("kernel_alg_add(%d,%d,%d) fails because alg combo is invalid",
+			satype, exttype, alg_id));
 		return -1;
 	}
 
