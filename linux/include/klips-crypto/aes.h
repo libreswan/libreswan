@@ -61,8 +61,8 @@
 //      6 |  96  90  96
 //      8 | 120 120 120
 
-#define AES_KS_LENGTH   4 * AES_BLOCK_SIZE
-#define AES_RC_LENGTH   (9 * AES_BLOCK_SIZE) / 8 - 8
+#define AES_KS_LENGTH   (4 * AES_BLOCK_SIZE)
+#define AES_RC_LENGTH   ((9 * AES_BLOCK_SIZE) / 8 - 8)
 
 typedef struct {
 	u_int32_t aes_Nkey;                     // the number of words in the key input block
