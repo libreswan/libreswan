@@ -102,6 +102,9 @@ static CK_MECHANISM_TYPE nss_encryption_mech(
 	case OAKLEY_AES_CBC:
 		mechanism = CKM_AES_CBC;
 		break;
+	case OAKLEY_CAMELLIA_CBC:
+		mechanism = CKM_CAMELLIA_CBC;
+		break;
 #ifdef NOT_YET
 	case OAKLEY_AES_CTR:
 		mechanism = CKM_AES_CTR;
@@ -115,9 +118,6 @@ static CK_MECHANISM_TYPE nss_encryption_mech(
 	case OAKLEY_AES_GCM_12:
 	case OAKLEY_AES_GCM_16:
 		mechanism = CKM_AES_GCM;
-		break;
-	case OAKLEY_CAMELLIA_CBC:
-		mechanism = CKM_CAMELLIA_CBC:
 		break;
 	case OAKLEY_TWOFISH_CBC:
 		mechanism = CKM_TWOFISH_CBC;

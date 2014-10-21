@@ -2498,6 +2498,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (ugh != NULL) {
 					switch (esp_attrs.transattrs.encrypt) {
 					case ESP_AES:
+					case ESP_CAMELLIA:
+					case ESP_CAMELLIAv1:
 					case ESP_3DES:
 						break;
 					case ESP_NULL:
