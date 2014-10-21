@@ -310,7 +310,6 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(ke->ke_md != NULL);
 	complete_v2_state_transition(&ke->ke_md, e);
 	release_any_md(&ke->ke_md);
-	reset_cur_state();
 	reset_globals();
 }
 
@@ -3019,7 +3018,6 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *pcrc,
 	passert(qke->qke_md != NULL);
 	complete_v2_state_transition(&qke->qke_md, e);
 	release_any_md(&qke->qke_md);
-	reset_cur_state();
 	reset_globals();
 }
 
