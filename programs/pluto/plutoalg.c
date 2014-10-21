@@ -76,7 +76,7 @@ static int aalg_getbyname_ike(const char *str, size_t len)
 	static const char sha2_256_aka[] = "sha2";
 	static const char sha1_aka[] = "sha";
 
-	DBG_log("entering aalg_getbyname_ike()");
+	DBG(DBG_CONTROL, DBG_log("entering aalg_getbyname_ike()"));
 	if (str == NULL || str == '\0')
 		return ret;
 
