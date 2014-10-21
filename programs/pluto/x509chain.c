@@ -112,7 +112,9 @@ void release_authcert_chain(x509cert_t *chain)
 					      AUTH_CA);
 
 		chain = chain->next;
-		passert(ac != NULL);
+
+		if (ac == NULL)
+			continue;
 
 		if (--ac->count == 0)
 			free_first_authcert();
