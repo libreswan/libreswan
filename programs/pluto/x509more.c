@@ -659,7 +659,7 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 
 				if (load_cert(filelist[n]->d_name,
 						type, &cert))
-					add_authcert(cert.u.x509, auth_flags);
+					add_authcert(&cert.u.x509, auth_flags);
 
 				free(filelist[n]);	/* was malloced by scandir(3) */
 			}

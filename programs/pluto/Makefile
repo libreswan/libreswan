@@ -132,6 +132,7 @@ DISTSRC = \
 	kernel_noklips.c kernel_noklips.h \
 	ike_alg.c ike_alg_status.c ike_alg.h \
 	ike_alg_aes.c \
+	ike_alg_camellia.c \
 	rcv_whack.c rcv_whack.h \
 	${EXTRA_CRYPTO_SRCS} ike_alg_sha2.c \
 	log.c log.h \
@@ -174,6 +175,7 @@ OBJSPLUTO += pluto_crypt.o crypt_utils.o crypt_ke.o crypt_dh.o crypt_start_dh.o
 OBJSPLUTO += rnd.o spdb.o spdb_struct.o spdb_print.o
 OBJSPLUTO += vendor.o nat_traversal.o virtual.o
 OBJSPLUTO += ike_alg_aes.o
+OBJSPLUTO += ike_alg_camellia.o
 OBJSPLUTO += ${EXTRA_CRYPTO_OBJS} ike_alg_sha2.o
 OBJSPLUTO += ike_alg.o ike_alg_status.o db_ops.o
 OBJSPLUTO += ${XAUTH_OBJS}

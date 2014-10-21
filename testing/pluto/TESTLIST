@@ -513,6 +513,7 @@ kvmplutotest	interop-ikev1-strongswan-10-ah-initiator-sha256	good
 kvmplutotest	interop-ikev1-strongswan-11-ah-initiator-sha512	good
 kvmplutotest	interop-ikev1-strongswan-12-esp-sha2_256 good
 kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 good
+kvmplutotest	interop-ikev1-strongswan-14-camellia	good
 kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512	good
 kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256	good
 kvmplutotest	interop-ikev2-strongswan-21-strongswan-cp-psk sha256	wip

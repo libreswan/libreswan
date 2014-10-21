@@ -1161,12 +1161,12 @@ static const char *const oakley_enc_name[] = {
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
 	"OAKLEY_AES_CBC",
-	"OAKLEY_CAMELLIA_CBC", /* 8 */
+	"DISABLED-OAKLEY_CAMELLIA_CBC", /* 8 */
 	"UNUSED_9",
 	"UNUSED_10",
 	"UNUSED_11",
 	"UNUSED_12",
-	"OAKLEY_AES_CTR", /* stolen from IKEv2 */
+	"DISABLED-OAKLEY_AES_CTR", /* stolen from IKEv2 */
 	"OAKLEY_AES_CCM_A",
 	"OAKLEY_AES_CCM_B",
 	"OAKLEY_AES_CCM_16",
@@ -1242,8 +1242,7 @@ static const char *const oakley_hash_name[] = {
 
 enum_names oakley_hash_names = {
 	OAKLEY_MD5,
-	OAKLEY_SHA2_512,
-	/* OAKLEY_AES_XCBC waiting on NSS support */
+	OAKLEY_AES_XCBC, /* waiting on NSS support */
 	oakley_hash_name,
 	NULL
 };

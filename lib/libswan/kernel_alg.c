@@ -212,6 +212,7 @@ err_t check_kernel_encrypt_alg(int alg_id, unsigned int key_len)
 		case ESP_AES_CCM_16:
 		case ESP_AES_CTR:
 		case ESP_CAMELLIA:
+		case ESP_CAMELLIAv1:
 			/* ??? does 0 make sense here? */
 			if (key_len != 0 && key_len != 128 &&
 			    key_len != 192 && key_len != 256) {
