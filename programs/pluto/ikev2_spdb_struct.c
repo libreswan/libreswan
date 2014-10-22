@@ -1878,7 +1878,6 @@ stf_status ikev2_parse_child_sa_body(
 			case IKEv2_ENCR_CAST:
 				break; /* CAST is ESP only, not IKE */
 			case IKEv2_ENCR_AES_CTR:
-			case IKEv2_ENCR_CAMELLIA_CBC:
 			case IKEv2_ENCR_CAMELLIA_CTR:
 			case IKEv2_ENCR_CAMELLIA_CCM_A:
 			case IKEv2_ENCR_CAMELLIA_CCM_B:
@@ -1886,6 +1885,7 @@ stf_status ikev2_parse_child_sa_body(
 				/* no IKE struct encrypt_desc yet */
 				/* fall through */
 			case IKEv2_ENCR_AES_CBC:
+			case IKEv2_ENCR_CAMELLIA_CBC:
 				/* these all have mandatory key length attributes */
 				if (ta.enckeylen == 0) {
 					loglog(RC_LOG_SERIOUS, "Missing mandatory KEY_LENGTH attribute - refusing proposal");

@@ -4,6 +4,8 @@
 #include <nss.h>
 #include <pk11pub.h>
 
+#include "camellia.h"
+
 struct connection;	/* forward declaration */
 
 /* common prefix for struct encrypt_desc and struct hash_desc */
@@ -123,6 +125,10 @@ extern void ike_alg_serpent_init(void);
 
 #ifdef USE_AES
 extern void ike_alg_aes_init(void);
+#endif
+
+#ifdef USE_CAMELLIA
+extern void ike_alg_camellia_init(void);
 #endif
 
 #ifdef USE_SHA2

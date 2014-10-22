@@ -233,7 +233,7 @@ void store_x509certs(x509cert_t **firstcert, x509cert_t **verified_ca,
 
 		if (trust_authcert_candidate(cert, cacerts) &&
 		    verify_x509cert(cert, strict, &valid_until, cacerts)) {
-			add_authcert(cert, AUTH_CA);
+			add_authcert(&cert, AUTH_CA);
 			if (ver == NULL) {
 				ver = clone_thing(*cert, "x509cert_t");
 				*verified_ca = ver;

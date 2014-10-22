@@ -67,6 +67,7 @@
 [         aes224-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
 [         aes512-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(512), auth_alg="sha1", modp=""
 [         aes-sha1555] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(0), auth_alg="sha1555", modp=""
+[    camellia666-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="camellia"(666), auth_alg="sha1", modp=""
 [            blowfish] ERROR: alg=  error=ESP cipher not implemented, enc_alg="blowfish"(0), auth_alg="", modp=""
 [            des-sha1] ERROR: alg=  error=ESP cipher not implemented, enc_alg="des"(0), auth_alg="sha1", modp=""
 [          aes_ctr666] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ctr"(666), auth_alg="", modp=""

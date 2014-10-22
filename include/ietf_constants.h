@@ -390,8 +390,11 @@
 #define DES_CBC_BLOCK_SIZE BYTES_FOR_BITS(64)
 #define AES_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
 #define CAST_CBC_BLOCK_SIZE BYTES_FOR_BITS(128)
-/* TWOFISH_CBC_BLOCK_SIZE: (128 / BITS_PER_BYTE) */
-/* SERPENT_CBC_BLOCK_SIZE: (128 / BITS_PER_BYTE) */
+
+#define CAMELLIA_BLOCK_SIZE BYTES_FOR_BITS(128)
+
+/* TWOFISH_CBC_BLOCK_SIZE: BYTES_FOR_BITS(128) */
+/* SERPENT_CBC_BLOCK_SIZE: BYTES_FOR_BITS(128) */
 
 /*
  * hand-computed max of *_CBC_BLOCK_SIZE
@@ -831,6 +834,7 @@ enum ikev2_trans_type_prf {
 	IKEv2_PRF_HMAC_SHA2_384 = 6, /* RFC4868 */
 	IKEv2_PRF_HMAC_SHA2_512 = 7, /* RFC4868 */
 	IKEv2_PRF_AES128_CMAC = 8, /* RFC4615 */
+	IKEv2_PRF_9_INVALID = 9,
 	/* 9 - 1023 Reserved to IANA RFC4306 */
 	/* 1024 - 65535 Private Use RFC4306 */
 	IKEv2_PRF_INVALID = 65536
@@ -1561,6 +1565,7 @@ enum ipsec_cipher_algo {
 	ESP_ID254 = 254,
 	ESP_ID255 = 255,
 };
+#define ESP_CAMELLIAv1 22
 
 /* IPCOMP transform values
  * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.4.5

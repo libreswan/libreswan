@@ -39,7 +39,7 @@ west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 west #
- ipsec auto --status |grep westnet-eastnet-ipv4-psk-ikev2
+ ipsec auto --status | grep westnet-eastnet-ipv4-psk-ikev2
 000 "westnet-eastnet-ipv4-psk-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ipv4-psk-ikev2":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-ipv4-psk-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
@@ -130,6 +130,8 @@ west #
 000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=15, v2name=AES_CCM_B, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=0, v1name=0??, v2id=14, v2name=AES_CCM_A, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=24, v1name=OAKLEY_CAMELLIA_CTR, v2id=24, v2name=CAMELLIA_CTR, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
