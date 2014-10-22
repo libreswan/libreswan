@@ -732,6 +732,11 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 					"instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
 		}
+		if ((c->kind == CK_TEMPLATE) && c->spd.that.has_id_wildcards) {
+			DBG(DBG_CONTROL,
+				DBG_log("remote end has wildcard ID, needs instantiation"));
+			c = rw_instantiate(c, &md->sender, NULL, NULL);
+		}
 	}
 
 	/* Set up state */
