@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 06/29/2014
+.\"      Date: 10/22/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "06/29/2014" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "10/22/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -688,7 +688,7 @@ if present, a second public key\&. Either key can authenticate the signature, al
 .RS 4
 If you are using
 \fBleftrsasigkey=%cert\fR
-this defines the certificate you would like to use\&. It should point to a X\&.509 encoded certificate file\&. If you do not specify a full pathname, by default it will look in /etc/ipsec\&.d/certs\&. Libreswan will also check the NSS database for RSA keys\&. These can be software or hardware\&.
+this defines the certificate nickname of your certificate in the NSS database\&. This can be on software or hardware security device\&.
 .RE
 .PP
 \fBleftca\fR
@@ -706,12 +706,12 @@ and means that only peers with certificates signed by the same CA as the leftca 
 This option configures when Libreswan will send X\&.509 certificates to the remote host\&. Acceptable values are
 \fByes|always\fR
 (signifying that we should always send a certificate),
-\fBifasked\fR
+\fBsendifasked\fR
 (signifying that we should send a certificate if the remote end asks for it), and
 \fBno|never\fR
 (signifying that we will never send a X\&.509 certificate)\&. The default for this option is
-\fBifasked\fR
-which may break compatibility with other vendor\*(Aqs IPSec implementations, such as Cisco and SafeNet\&. If you find that you are getting errors about no ID/Key found, you likely need to set this to
+\fBsendifasked\fR
+which may break compatibility with other vendor\*(Aqs IPsec implementations, such as Cisco and SafeNet\&. If you find that you are getting errors about no ID/Key found, you likely need to set this to
 \fBalways\fR\&. This per\-conn option replaces the obsolete global
 \fBnocrsend\fR
 option\&.
@@ -869,10 +869,10 @@ setting, which should be left enabled unless libreswan acts as an XAUTH server u
 .PP
 \fBcisco\-unity\fR
 .RS 4
-whether to send a CISCO_UNITY payload to the peer we are initiating to\&. Acceptable values are:
+whether to send a CISCO_UNITY payload to the peer\&. Acceptable values are:
 \fBno\fR
 (the default) and
-\fByes\fR\&. It is recommended to leave this option unset, unless the remote peer (Cisco) requires it\&. This is an experimental option\&. It does not modify local behaviour\&. It is expected the remote peer might behave differently when it receives this vendor id\&. This option might be removed in a future release\&.
+\fByes\fR\&. It is recommended to leave this option unset, unless the remote peer (Cisco client or server) requires it\&. This option does not modify local behaviour\&. It can be needed to connect as a client to a Cisco server\&. It can also be needed to act as a server for a Cisco client, which otherwise might send back an error DEL_REASON_NON_UNITY_PEER\&.
 .RE
 .PP
 \fBoverlapip\fR
@@ -1074,6 +1074,16 @@ Typical values are about the 2000 range\&. These can be seen on the NETKEY stack
 when the connection is up\&. For "anonymous IPsec" or Opportunistic Encryption based connections, a much lower priority (65535) is used to ensure administrator configured IPsec always takes precedence over opportunistic IPsec\&.
 .RE
 .PP
+\fBsendca\fR
+.RS 4
+How much of our available X\&.509 trust chain to send with the End certificate, excluding any root CA\*(Aqs\&. Specifying
+\fBissuer\fR
+sends just the issuing intermediate CA, while
+\fB all\fR
+will send the entire chain of intermediate CA\*(Aqs\&.\fBnone\fR
+(the default) will not send any CA certs\&.
+.RE
+.PP
 \fBdisablearrivalcheck\fR
 .RS 4
 whether KLIPS\*(Aqs normal tunnel\-exit check (that a packet emerging from a tunnel has plausible addresses in its header) should be disabled; acceptable values are
@@ -1228,12 +1238,6 @@ The IKE NAT Traversal floating port (see RFC\-3947) to listen on\&. The default 
 The delay (in seconds) for NAT\-T keep\-alive packets, if these are enabled using
 \fBnat\-keepalive\fR
 This parameter may eventually become per\-connection\&.
-.RE
-.PP
-\fBretransmits\fR
-.RS 4
-Whether pluto should attempt to retransmit packets that get no reply\&. This is mostly used to disable retransmits while debugging a problem\&. Production use should always leave this enabled\&. The default is
-\fByes\fR\&.
 .RE
 .PP
 \fBvirtual\-private\fR
