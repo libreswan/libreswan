@@ -2,6 +2,9 @@
 See also https://libreswan.org/
 v3.11 (October 22, 2014)
 * x509: IKEv1 CA cert chain support with sendca option [Matt]
+* pluto: Fix mtu= option mangling introduced in 3.10 [Kim]
+* pluto: Fixes auto=start and auto=route with %defaultroute [Kim/Tuomo/Paul]
+         (troubled in 3.9 and 3.10)
 * pluto: Don't register ESP_BLOWFISH [Paul]
 * pluto: ESP support for aes_xcbc [Paul]
 * pluto: ESP support for aes_ctr [Paul]
