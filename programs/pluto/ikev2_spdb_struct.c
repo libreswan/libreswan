@@ -1619,8 +1619,6 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 			      propnum);
 		return FALSE;
 	}
-	if (itl->encr_trans_next > 1)
-		libreswan_log("Hugh is surprised there is more than one encryption transform, namely '%u'", itl->encr_trans_next);
 
 	if (ipprotoid == PROTO_v2_ESP) {
 		switch(itl->encr_transforms[0]) {
