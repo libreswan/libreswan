@@ -104,7 +104,7 @@ static void free_first_authcert(void)
  */
 void release_authcert_chain(x509cert_t *chain)
 {
-	lock_authcert_list("free_authcert_chain");
+	lock_authcert_list(__func__);
 	while (chain != NULL) {
 		x509cert_t *ac = get_authcert(chain->subject,
 					      chain->serialNumber,
@@ -119,7 +119,7 @@ void release_authcert_chain(x509cert_t *chain)
 		if (--ac->count == 0)
 			free_first_authcert();
 	}
-	unlock_authcert_list("free_authcert_chain");
+	unlock_authcert_list(__func__);
 }
 
 /*
