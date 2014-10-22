@@ -186,8 +186,13 @@ static int initiate_a_connection(struct connection *c,
 	c->extra_debugging |= moredebug;
 
 	if (!oriented(*c)) {
+		ipstr_buf a;
+		ipstr_buf b;
 		loglog(RC_ORIENT,
-		       "We cannot identify ourselves with either end of this connection.");
+		       "We cannot identify ourselves with either end of this connection. "
+		       " %s or %s are not usable",
+		       ipstr(&c->spd.this.host_addr, &a),
+		       ipstr(&c->spd.that.host_addr, &b));
 	} else if (NEVER_NEGOTIATE(c->policy)) {
 		loglog(RC_INITSHUNT,
 		       "cannot initiate an authby=never connection");
@@ -236,6 +241,10 @@ static int initiate_a_connection(struct connection *c,
 				POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
 
 		} else {
+			if ((c->policy &  POLICY_IKEV2_PROPOSE) &&
+					(c->policy & POLICY_IKEV2_ALLOW_NARROWING))
+				c = instantiate(c, NULL, NULL);
+
 			/* We will only request an IPsec SA if policy isn't empty
 			 * (ignoring Main Mode items).
 			 * This is a fudge, but not yet important.
@@ -290,15 +299,6 @@ void initiate_connection(const char *name, int whackfd,
 	is.importance = importance;
 
 	if (c != NULL) {
-		if (!oriented(*c)) {
-			whack_log(RC_LOG_SERIOUS,
-			  "cannot initiate unoriented connection \"%s\" - IP address not on system?", name);
-			close_any(is.whackfd);
-			return;
-		} 
-		if ((c->policy &  POLICY_IKEV2_PROPOSE) &&
-		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING))
-			c = instantiate(c, NULL, NULL);
 		initiate_a_connection(c, &is);
 		close_any(is.whackfd);
 		return;
