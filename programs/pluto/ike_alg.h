@@ -4,6 +4,8 @@
 #include <nss.h>
 #include <pk11pub.h>
 
+#include "camellia.h"
+
 struct connection;	/* forward declaration */
 
 /* common prefix for struct encrypt_desc and struct hash_desc */
@@ -19,7 +21,8 @@ struct ike_alg {
 struct encrypt_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	size_t enc_ctxsize;
-	size_t enc_blocksize;	/* also IV length */
+	size_t enc_blocksize;
+	size_t ivsize;
 	unsigned keydeflen;
 	unsigned keymaxlen;
 	unsigned keyminlen;
@@ -122,6 +125,10 @@ extern void ike_alg_serpent_init(void);
 
 #ifdef USE_AES
 extern void ike_alg_aes_init(void);
+#endif
+
+#ifdef USE_CAMELLIA
+extern void ike_alg_camellia_init(void);
 #endif
 
 #ifdef USE_SHA2

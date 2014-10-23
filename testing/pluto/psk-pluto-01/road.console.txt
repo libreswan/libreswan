@@ -23,11 +23,11 @@ initdone
 road #
  ipsec auto --up road-eastnet-psk
 003 "road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
-003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5 for
+003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 002 "road-eastnet-psk" #1: initiating Aggressive Mode #1, connection "road-eastnet-psk"
 003 "road-eastnet-psk" #1: multiple DH groups in aggressive mode can cause interop failure
-003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5 for
+003 "road-eastnet-psk" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 003 "road-eastnet-psk" #1: transform (OAKLEY_3DES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "road-eastnet-psk" #1: STATE_AGGR_I1: initiate
 003 "road-eastnet-psk" #1: received Vendor ID payload [Dead Peer Detection]

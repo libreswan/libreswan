@@ -290,6 +290,12 @@ void initiate_connection(const char *name, int whackfd,
 	is.importance = importance;
 
 	if (c != NULL) {
+		if (!oriented(*c)) {
+			whack_log(RC_LOG_SERIOUS,
+			  "cannot initiate unoriented connection \"%s\" - IP address not on system?", name);
+			close_any(is.whackfd);
+			return;
+		} 
 		if ((c->policy &  POLICY_IKEV2_PROPOSE) &&
 		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING))
 			c = instantiate(c, NULL, NULL);

@@ -1,5 +1,6 @@
 [Unit]
 Description=Internet Key Exchange (IKE) Protocol Daemon for IPsec
+Wants=network-online.target
 After=network-online.target
 
 [Service]

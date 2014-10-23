@@ -1154,14 +1154,34 @@ static enum_names oakley_prf_names = {
  */
 
 static const char *const oakley_enc_name[] = {
-	"OAKLEY_DES_CBC",	/* obsoleted */
+	"OAKLEY_DES_CBC", /* obsoleted */
 	"OAKLEY_IDEA_CBC",
-	"OAKLEY_BLOWFISH_CBC",	/* obsoleted */
+	"OAKLEY_BLOWFISH_CBC", /* obsoleted */
 	"OAKLEY_RC5_R16_B64_CBC",
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
 	"OAKLEY_AES_CBC",
-	"OAKLEY_CAMELLIA_CBC",	/* 8 */
+	"DISABLED-OAKLEY_CAMELLIA_CBC", /* 8 */
+	"UNUSED_9",
+	"UNUSED_10",
+	"UNUSED_11",
+	"UNUSED_12",
+	"DISABLED-OAKLEY_AES_CTR", /* stolen from IKEv2 */
+	"OAKLEY_AES_CCM_A",
+	"OAKLEY_AES_CCM_B",
+	"OAKLEY_AES_CCM_16",
+	"UNUSED_17",
+	"OAKLEY_AES_GCM_A",
+	"OAKLEY_AES_GCM_B",
+	"OAKLEY_AES_GCM_C",
+	"UNUSED_21",
+	"UNUSED_22",
+	"UNUSED_23",
+	"OAKLEY_CAMELLIA_CTR",
+	"OAKLEY_CAMELLIA_CCM_A",
+	"OAKLEY_CAMELLIA_CCM_B",
+	"OAKLEY_CAMELLIA_CCM_C",
+
 	/* 9-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
@@ -1194,7 +1214,7 @@ static enum_names oakley_enc_names_private_use = {
 
 enum_names oakley_enc_names = {
 	OAKLEY_DES_CBC,
-	OAKLEY_CAMELLIA_CBC,
+	OAKLEY_CAMELLIA_CCM_C,
 	oakley_enc_name,
 	&oakley_enc_names_private_use
 };
@@ -1213,13 +1233,16 @@ static const char *const oakley_hash_name[] = {
 	"OAKLEY_SHA2_256",	/* RFC 4878 */
 	"OAKLEY_SHA2_384",	/* RFC 4878 */
 	"OAKLEY_SHA2_512",	/* RFC 4878 */
+	"UNUSED_7",
+	"UNUSED_8",
+	"DISABLED-OAKLEY_AES_XCBC" /* stolen from ikev2 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
 
 enum_names oakley_hash_names = {
 	OAKLEY_MD5,
-	OAKLEY_SHA2_512,
+	OAKLEY_AES_XCBC, /* waiting on NSS support */
 	oakley_hash_name,
 	NULL
 };
@@ -1784,12 +1807,12 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_MD5",
 	"PRF_HMAC_SHA1",
 	"PRF_HMAC_TIGER",
-	"PRF_HMAC_AES128-XCBC",
+	"PRF_AES128-XCBC",
 	/* RFC 4868 Section 4 */
 	"PRF_HMAC_SHA2-256",
 	"PRF_HMAC_SHA2-384",
 	"PRF_HMAC_SHA2-512",
-	"IKEv2_PRF_AES128_CMAC"
+	"PRF_AES128_CMAC"
 };
 enum_names ikev2_trans_type_prf_names = {
 	IKEv2_PRF_HMAC_MD5,

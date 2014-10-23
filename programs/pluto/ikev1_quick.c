@@ -212,6 +212,19 @@ static void compute_proto_keymat(struct state *st,
 				/* XXX: obtained from peer - was it verified for validity yet? */
 			}
 			break;
+		case ESP_AES_CTR:
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+				needed_len =
+					st->st_esp.attrs.transattrs.enckeylen /
+					BITS_PER_BYTE;
+				/* XXX: obtained from peer - was it verified for validity yet? */
+			} else {
+				/* if no keylength set, pick strongest allowed */
+				needed_len = AES_CTR_KEY_MAX_LEN / BITS_PER_BYTE;
+			}
+			/* AES_CTR requires an extra AES_CTR_SALT_BYTES (4) bytes of salt */
+			needed_len += AES_CTR_SALT_BYTES;
+			break;
 		case ESP_AES_GCM_8:
 		case ESP_AES_GCM_12:
 		case ESP_AES_GCM_16:
@@ -258,6 +271,18 @@ static void compute_proto_keymat(struct state *st,
 			break;
 
 		case ESP_CAMELLIA:
+		case ESP_CAMELLIAv1:
+			needed_len = CAMELLIA_BLOCK_SIZE;
+			/* if an attribute is set, then use that! */
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+				needed_len =
+					st->st_esp.attrs.transattrs.enckeylen /
+					BITS_PER_BYTE;
+				/* XXX: obtained from peer - was it verified for validity yet? */
+			} else {
+				needed_len = 128 / BITS_PER_BYTE;
+			}
+			break;
 		case ESP_TWOFISH:
 		case ESP_SERPENT:
 			/* valid keysize enforced before we get here */
@@ -269,7 +294,7 @@ static void compute_proto_keymat(struct state *st,
 			} else {
 				/*
 				 * If no keylength set, pick mandatory to implement default
-				 * {CAMELLIA,TWOFISH,SERPENT}_DEF_KEY_LEN = 128
+				 * {TWOFISH,SERPENT}_DEF_KEY_LEN = 128
 				 */
 				needed_len = 128 / BITS_PER_BYTE;
 			}

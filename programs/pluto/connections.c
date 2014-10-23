@@ -192,19 +192,12 @@ void update_host_pairs(struct connection *c)
 }
 
 /* Delete a connection */
-#define DELETE_THIS_END(end)	delete_end(end, FALSE)
-#define DELETE_THAT_END(end)	delete_end(end, TRUE)
-
-static void delete_end(struct end *e, bool that)
+static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
 
-	/* the "that" end's ca_path contains certs that
-	 * were collected during the exchange, so they
-	 * need to be removed along with the reference chain
-	 */
-	if (that && e->ca_path.ty != CERT_NONE && e->ca_path.u.x509 != NULL)
-		free_authcert_chain(e->ca_path.u.x509);
+	if (e->ca_path.ty != CERT_NONE && e->ca_path.u.x509 != NULL)
+		release_authcert_chain(e->ca_path.u.x509);
 
 	freeanychunk(e->ca);
 	release_cert(e->cert);
@@ -217,8 +210,8 @@ static void delete_end(struct end *e, bool that)
 
 static void delete_sr(struct spd_route *sr)
 {
-	DELETE_THIS_END(&sr->this);
-	DELETE_THAT_END(&sr->that);
+	delete_end(&sr->this);
+	delete_end(&sr->that);
 }
 
 /*
@@ -843,6 +836,8 @@ static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
 	/* find the issuing cert */
 	while (ac != NULL) {
 		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags) {
+			/* increment reference count */
+			share_x509cert(ac);
 			new = clone_thing(*ac, "x509cert_t");
 			new->next = NULL;
 			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
@@ -874,6 +869,8 @@ static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
 			dntoa(tbuf, ASN1_BUF_LEN, iac->subject);
 			DBG(DBG_X509, DBG_log("load_end_ca_path : adding %s to chain",
 						tbuf));
+			/* increment reference count */
+			share_x509cert(iac);
 			new->next = clone_thing(*iac, "x509cert_t");
 			new = new->next;
 			new->next = NULL;

@@ -16,7 +16,8 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 srcdir?=$(shell pwd)/
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
-SUBDIRS=libmd5 libsha1 libsha2
+# needs ifdefs for USE_MD5, etc
+SUBDIRS=libmd5 libsha1 libsha2 libaes_xcbc
 
 ifeq ($(USE_EXTRACRYPTO),true)
 SUBDIRS+=libtwofish libserpent

@@ -31,6 +31,7 @@
 #ifdef USE_SHA2
 #include "sha2.h"
 #endif
+#include "aes_xcbc.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -123,6 +124,7 @@ union hash_ctx {
 	sha384_context ctx_sha384;
 	sha512_context ctx_sha512;
 #endif
+	aes_xcbc_context ctx_aes_xcbc;
 };
 
 /* HMAC package
@@ -130,7 +132,6 @@ union hash_ctx {
  * no persistent pointers into it.
  */
 
-#ifndef NO_HASH_CTX
 struct hmac_ctx {
 	const struct hash_desc *h;      /* underlying hash function */
 	size_t hmac_digest_len;         /* copy of h->hash_digest_len */
@@ -140,6 +141,8 @@ struct hmac_ctx {
 	sha256_context ctx_sha256;
 	sha512_context ctx_sha512;
 #endif
+	aes_xcbc_context ctx_aes_xcbc;
+
 	PK11SymKey *ikey, *okey;
 	PK11Context* ctx_nss;
 };
@@ -162,7 +165,6 @@ extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 		(ch).ptr = alloc_bytes((ch).len, name); \
 		hmac_final((ch).ptr, (ctx)); \
 }
-#endif
 
 extern CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher);
 extern void nss_symkey_log(PK11SymKey *key, const char *msg);

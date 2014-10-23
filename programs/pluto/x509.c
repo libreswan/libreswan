@@ -233,7 +233,7 @@ void store_x509certs(x509cert_t **firstcert, x509cert_t **verified_ca,
 
 		if (trust_authcert_candidate(cert, cacerts) &&
 		    verify_x509cert(cert, strict, &valid_until, cacerts)) {
-			add_authcert(cert, AUTH_CA);
+			add_authcert(&cert, AUTH_CA);
 			if (ver == NULL) {
 				ver = clone_thing(*cert, "x509cert_t");
 				*verified_ca = ver;
@@ -704,6 +704,7 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 	whack_log(RC_COMMENT, "List of X.509 %s Certificates:", caption);
 
 	while (cert != NULL) {
+		whack_log(RC_COMMENT, " ");
 		if (auth_flags == AUTH_NONE ||
 		    (auth_flags & cert->authority_flags)) {
 			unsigned keysize;
@@ -768,6 +769,7 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 				whack_log(RC_COMMENT, "       aserial:  %s",
 					  buf);
 			}
+			whack_log(RC_COMMENT, " ");
 		}
 		cert = cert->next;
 	}
@@ -804,6 +806,7 @@ void list_crls(bool utc, bool strict)
 
 	whack_log(RC_COMMENT, " ");
 	whack_log(RC_COMMENT, "List of X.509 CRLs:");
+	whack_log(RC_COMMENT, " ");
 
 	while (crl != NULL) {
 		char buf[ASN1_BUF_LEN];

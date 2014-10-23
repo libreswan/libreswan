@@ -138,8 +138,10 @@ main(int argc, char *argv[]) {
 	do_test("serpent", PROTO_IPSEC_ESP);
 	do_test("twofish", PROTO_IPSEC_ESP);
 	do_test("mars", PROTO_IPSEC_ESP);
-	/* should this be supported? */
-	do_test("modp1536", PROTO_IPSEC_ESP);
+	/*
+	 * should this be supported - for now man page says not
+	 * do_test("modp1536", PROTO_IPSEC_ESP);
+	 */
 
 	fprintf(stdout, "\n---- ESP tests that should fail----\n");
 
@@ -149,6 +151,7 @@ main(int argc, char *argv[]) {
 	do_test("aes224-sha1", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes512-sha1", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("aes-sha1555", PROTO_IPSEC_ESP); /* should get rejected */
+	do_test("camellia666-sha1", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("blowfish", PROTO_IPSEC_ESP); /* obsoleted */
 	do_test("des-sha1", PROTO_IPSEC_ESP); /* obsoleted */
 	do_test("aes_ctr666", PROTO_IPSEC_ESP); /* bad key size */
@@ -190,6 +193,7 @@ main(int argc, char *argv[]) {
 	fprintf(stdout, "\n---- IKE tests ----\n");
 	do_test("3des-sha1", PROTO_ISAKMP);
 #endif
+	fflush(NULL);
 	report_leaks();
 	tool_close_log();
 	exit(0);

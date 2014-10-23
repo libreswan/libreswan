@@ -33,11 +33,11 @@ west #
 west #
  ipsec auto --up west-east
 003 "west-east" #1: multiple DH groups in aggressive mode can cause interop failure
-003 "west-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5 for
+003 "west-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 002 "west-east" #1: initiating Aggressive Mode #1, connection "west-east"
 003 "west-east" #1: multiple DH groups in aggressive mode can cause interop failure
-003 "west-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5 for
+003 "west-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 003 "west-east" #1: transform (OAKLEY_AES_CBC,OAKLEY_SHA1,OAKLEY_GROUP_MODP1024 keylen 0) ignored.
 112 "west-east" #1: STATE_AGGR_I1: initiate
 003 "west-east" #1: received Vendor ID payload [Dead Peer Detection]

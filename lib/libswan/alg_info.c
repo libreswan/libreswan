@@ -182,7 +182,7 @@ enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_integ ti)
 	}
 }
 
-/* 
+/*
  * XXX This maps IPSEC AH Transform Identifiers to IKE Integrity Algorithm
  * Transform IDs. But IKEv1 and IKEv2 tables don't match fully! See:
  *
@@ -271,14 +271,10 @@ int alg_enum_search(enum_names *ed, const char *prefix,
  */
 static int ealg_getbyname_esp(const char *const str, size_t len)
 {
-	int ret;
-
 	if (str == NULL || *str == '\0')
 		return -1;
 
-	ret = alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
-
-	return ret;
+	return alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
 }
 
 /*
@@ -291,7 +287,7 @@ static int aalg_getbyname_esp(const char *str, size_t len)
 	static const char null_esp[] = "null";
 
 	if (str == NULL || *str == '\0')
-		return ret;
+		return -1;
 
 	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "",
 			str, len);
@@ -780,7 +776,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				case OAKLEY_3DES_CBC:
 					return "3DES does not take variable key lengths";
 				case OAKLEY_CAST_CBC:
-					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
+					if (p_ctx->eklen != 128) {
 						return "CAST is only supported for 128 bits (to avoid padding)";
 					}
 					break;
@@ -806,6 +802,8 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 						return "CAST is only supported for 128 bits (to avoid padding)";
 					}
 					break;
+				case ESP_CAMELLIA: /* this value is not used here, due to mixup in v1 and v2 */
+				case ESP_CAMELLIAv1: /* this value is hit instead */
 				case ESP_AES:
 				case ESP_AES_CTR:
 				case ESP_AES_GCM_8:
@@ -814,7 +812,6 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				case ESP_AES_CCM_8:
 				case ESP_AES_CCM_12:
 				case ESP_AES_CCM_16:
-				case ESP_CAMELLIA:
 				case ESP_TWOFISH:
 				case ESP_SERPENT:
 					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
@@ -908,7 +905,6 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 			}
 		}
 
-		
 		if (! DBGP(IMPAIR_SEND_KEY_SIZE_CHECK)) {
 			switch(aalg_id) {
 			case AH_NULL:

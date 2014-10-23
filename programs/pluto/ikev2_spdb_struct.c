@@ -310,6 +310,9 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	case OAKLEY_AES_CBC:
 		return IKEv2_ENCR_AES_CBC;
 
+	case OAKLEY_AES_CTR:
+		return IKEv2_ENCR_AES_CTR;
+
 	case OAKLEY_CAMELLIA_CBC:
 		return IKEv2_ENCR_CAMELLIA_CBC;
 
@@ -328,6 +331,7 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	 */
 
 	default:
+		DBG(DBG_CONTROL, DBG_log("v1tov2_encr() missing v1 encr transform '%d'",oakley));
 		return IKEv2_ENCR_INVALID; /* this cannot go over the wire! It's 65536 */
 	}
 }
@@ -349,6 +353,9 @@ static enum ikev2_trans_type_integ v1tov2_integ(enum ikev2_trans_type_integ oakl
 
 	case OAKLEY_SHA2_512:
 		return IKEv2_AUTH_HMAC_SHA2_512_256;
+
+	case OAKLEY_AES_XCBC:
+		return IKEv2_AUTH_AES_XCBC_96;
 
 	default:
 		return IKEv2_AUTH_INVALID;
@@ -373,6 +380,9 @@ static enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth
 	case AUTH_ALGORITHM_HMAC_SHA2_512:
 		return IKEv2_AUTH_HMAC_SHA2_512_256;
 
+	case AUTH_ALGORITHM_AES_XCBC:
+		return IKEv2_AUTH_AES_XCBC_96;
+
 	default:
 		return IKEv2_AUTH_INVALID;
 	}
@@ -386,6 +396,8 @@ static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 
 	case OAKLEY_SHA1:
 		return IKEv2_PRF_HMAC_SHA1;
+	
+	/* OAKLEY_TIGER not in IKEv2 */
 
 	case OAKLEY_SHA2_256:
 		return IKEv2_PRF_HMAC_SHA2_256;
@@ -395,6 +407,9 @@ static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 
 	case OAKLEY_SHA2_512:
 		return IKEv2_PRF_HMAC_SHA2_512;
+
+	case OAKLEY_AES_XCBC:
+		return IKEv2_PRF_AES128_XCBC;
 
 	default:
 		return IKEv2_PRF_INVALID;
@@ -1179,15 +1194,6 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 			int defkeysize = crypto_req_keysize(parentSA ? CRK_IKEv2 : CRK_ESPorAH,
 				ta.encrypt);
 
-			if (ta.enckeylen != 0){
-				if (ta.enckeylen != ta.encrypter->keydeflen &&
-				    ta.enckeylen != ta.encrypter->keyminlen &&
-				    ta.enckeylen != ta.encrypter->keymaxlen) {
-
-					return STF_INTERNAL_ERROR;
-				}
-			}
-
 			if (ta.enckeylen == 0) {
 				/* pick up from received proposal, if any */
 				unsigned int stoe = st->st_oakley.enckeylen;
@@ -1613,8 +1619,6 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 			      propnum);
 		return FALSE;
 	}
-	if (itl->encr_trans_next > 1)
-		libreswan_log("Hugh is surprised there is more than one encryption transform, namely '%u'", itl->encr_trans_next);
 
 	if (ipprotoid == PROTO_v2_ESP) {
 		switch(itl->encr_transforms[0]) {
@@ -1872,12 +1876,20 @@ stf_status ikev2_parse_child_sa_body(
 			case IKEv2_ENCR_CAST:
 				break; /* CAST is ESP only, not IKE */
 			case IKEv2_ENCR_AES_CTR:
-			case IKEv2_ENCR_CAMELLIA_CBC:
 			case IKEv2_ENCR_CAMELLIA_CTR:
 			case IKEv2_ENCR_CAMELLIA_CCM_A:
 			case IKEv2_ENCR_CAMELLIA_CCM_B:
 			case IKEv2_ENCR_CAMELLIA_CCM_C:
-				break; /* no IKE struct encrypt_desc yet */
+				/* no IKE struct encrypt_desc yet */
+				/* fall through */
+			case IKEv2_ENCR_AES_CBC:
+			case IKEv2_ENCR_CAMELLIA_CBC:
+				/* these all have mandatory key length attributes */
+				if (ta.enckeylen == 0) {
+					loglog(RC_LOG_SERIOUS, "Missing mandatory KEY_LENGTH attribute - refusing proposal");
+					return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+				}
+				break;
 			default:
 				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter - refusing proposal");
 				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */

@@ -72,7 +72,7 @@ x509cert_t *get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 				(same_dn(subject, cert->subject) &&
 					same_serial(serial,
 						cert->serialNumber)))) {
-			if (cert != x509authcerts) {
+			if (prev_cert && cert != x509authcerts) {
 				/* bring the certificate up front */
 				prev_cert->next = cert->next;
 				cert->next = x509authcerts;
@@ -97,27 +97,29 @@ static void free_first_authcert(void)
 	free_x509cert(first);
 }
 
-/* frees a chain of CA certificates from the x509authcert list.
+/* releases a chain of CA certificates from the x509authcert list.
+ * (decrement reference count, free the cert if it's the last reference)
  * get_authcert() moves the found cert to the front of the list,
  * so we can just do free_first_authcert().
  */
-void free_authcert_chain(x509cert_t *chain)
+void release_authcert_chain(x509cert_t *chain)
 {
-
+	lock_authcert_list(__func__);
 	while (chain != NULL) {
-		x509cert_t *ac = NULL;
-
-		lock_authcert_list("free_authcert_chain");
-		ac = get_authcert(chain->subject, chain->serialNumber,
-					      chain->subjectKeyID, AUTH_CA);
+		x509cert_t *ac = get_authcert(chain->subject,
+					      chain->serialNumber,
+					      chain->subjectKeyID,
+					      AUTH_CA);
 
 		chain = chain->next;
 
-		if (ac != NULL)
-			free_first_authcert();
+		if (ac == NULL)
+			continue;
 
-		unlock_authcert_list("free_authcert_chain");
+		if (--ac->count == 0)
+			free_first_authcert();
 	}
+	unlock_authcert_list(__func__);
 }
 
 /*
@@ -135,10 +137,18 @@ void free_authcerts(void)
 
 /*
  * add an authority certificate to the chained list
+ * MR: The first argument changed. For store_x509certs
+ * we have to return with the old cert if we're dealing
+ * with just updating the reference count and flags of an
+ * existing cert.
  */
-void add_authcert(x509cert_t *cert, u_char auth_flags)
+void add_authcert(x509cert_t **certp, u_char auth_flags)
 {
-	x509cert_t *old_cert;
+	x509cert_t *old_cert = NULL;
+	x509cert_t *cert = *certp;
+	int saved_count = 0;
+
+	passert(cert != NULL);
 
 	/* set authority flags */
 	cert->authority_flags |= auth_flags;
@@ -151,22 +161,26 @@ void add_authcert(x509cert_t *cert, u_char auth_flags)
 	if (old_cert != NULL) {
 		if (same_x509cert(cert, old_cert)) {
 			/*
-			 * cert is already present, just add additional
-			 * authority flags
+			 * cert is already present (by signature), just add additional
+			 * authority flags and increase the reference count
 			 */
 			old_cert->authority_flags |= cert->authority_flags;
 			DBG(DBG_X509 | DBG_PARSING,
-				DBG_log("  authcert is already present and identical");
-				);
+				DBG_log("  authcert is already present. updating flags and increasing count to %d",
+					 old_cert->count + 1));
 			unlock_authcert_list("add_authcert");
 
+			share_x509cert(old_cert);
 			free_x509cert(cert);
+			*certp = old_cert;
 			return;
 		} else {
 			/*
-			 * cert is already present but will be replaced by
-			 * new cert
+			 * cert is already present (by attributes but not
+			 * signature), and will be replaced by
+			 * new cert.
 			 */
+			saved_count = old_cert->count;
 			free_first_authcert();
 			DBG(DBG_X509 | DBG_PARSING,
 				DBG_log("  existing authcert deleted");
@@ -177,9 +191,10 @@ void add_authcert(x509cert_t *cert, u_char auth_flags)
 	/* add new authcert to chained list */
 	cert->next = x509authcerts;
 	x509authcerts = cert;
-	share_x509cert(cert);	/* set count to one */
+	cert->count = saved_count; /* restore original count if replaced */
+	share_x509cert(cert);	/* count++ */
 	DBG(DBG_X509 | DBG_PARSING,
-		DBG_log("  authcert inserted");
+		DBG_log("  authcert inserted, reference count: %d", cert->count);
 		);
 	unlock_authcert_list("add_authcert");
 }

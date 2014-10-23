@@ -81,55 +81,56 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- ip xfrm state
+ ipsec look
+west NOW
+XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0x30823be6 reqid 16389 mode transport
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
 	replay-window 32 
-	auth-trunc hmac(sha1) 0x44788e73c37f1866613e28622f068655b13c7df7 96
-	enc cbc(aes) 0x6d98d9eb48b1e843eb0e4f60efa0524a
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
-	proto comp spi 0x00006e28 reqid 16390 mode tunnel
+	proto comp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	comp deflate 
 src 192.1.2.23 dst 192.1.2.45
-	proto 4 spi 0xc0010217 reqid 0 mode tunnel
+	proto 4 spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0x24221646 reqid 16389 mode transport
+	proto esp spi 0xSPISPIXX reqid REQID mode transport
 	replay-window 32 
-	auth-trunc hmac(sha1) 0x810fa3fadd4744ee1277960d71e5163b25333920 96
-	enc cbc(aes) 0x022e2244054892b218682962fe502a56
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.45 dst 192.1.2.23
-	proto comp spi 0x00009e9d reqid 16390 mode tunnel
+	proto comp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	comp deflate 
 src 192.1.2.45 dst 192.1.2.23
-	proto 4 spi 0xc001022d reqid 0 mode tunnel
+	proto 4 spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
-west #
- ip xfrm policy
+XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24 
 	dir out priority 2344 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
-		proto comp reqid 16390 mode tunnel
+		proto comp reqid REQID mode tunnel
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 16389 mode transport
+		proto esp reqid REQID mode transport
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir fwd priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto comp reqid 16390 mode tunnel
+		proto comp reqid REQID mode tunnel
 		level use 
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 16389 mode transport
+		proto esp reqid REQID mode transport
 src 192.0.2.0/24 dst 192.0.1.0/24 
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
-		proto comp reqid 16390 mode tunnel
+		proto comp reqid REQID mode tunnel
 		level use 
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 16389 mode transport
+		proto esp reqid REQID mode transport
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -162,6 +163,21 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+169.254.0.0/16 dev eth2  scope link  metric 1004 
+192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
+192.0.2.0/24 via 192.1.2.23 dev eth1 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
+192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
 west #
  echo done
 done
