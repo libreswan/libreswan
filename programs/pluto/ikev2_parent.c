@@ -3050,7 +3050,7 @@ static stf_status ikev2_child_inIoutR_tail(struct qke_continuation *qke,
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 		hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
 		hdr.isa_np = ISAKMP_NEXT_v2E;
-		hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
+		hdr.isa_msgid = htonl(md->msgid_received);
 
 		/* encryption role based on original originator */
 		if (IS_V2_INITIATOR(pst->st_state)) {
