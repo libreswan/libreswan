@@ -68,6 +68,7 @@ d.ipsec.conf/compress.xml
 d.ipsec.conf/metric.xml
 d.ipsec.conf/mtu.xml
 d.ipsec.conf/priority.xml
+d.ipsec.conf/sendca.xml
 d.ipsec.conf/disablearrivalcheck.xml
 d.ipsec.conf/labeled-ipsec.xml
 d.ipsec.conf/policy-label.xml

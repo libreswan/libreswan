@@ -1,8 +1,11 @@
 
 See also https://libreswan.org/
-v3.11 (unreleased)
+v3.11 (October 22, 2014)
 * x509: IKEv1 CA cert chain support with sendca option [Matt]
-* pluto: don't register ESP_BLOWFISH [Paul]
+* pluto: Fix mtu= option mangling introduced in 3.10 [Kim]
+* pluto: Fixes auto=start and auto=route with %defaultroute [Kim/Tuomo/Paul]
+         (troubled in 3.9 and 3.10)
+* pluto: Don't register ESP_BLOWFISH [Paul]
 * pluto: ESP support for aes_xcbc [Paul]
 * pluto: ESP support for aes_ctr [Paul]
 * pluto: ESP support for camellia on NETKEY [Paul]
@@ -10,23 +13,33 @@ v3.11 (unreleased)
 * IKEv1: Default to DH Group 2 and 5 for initiating Aggressive Mode [Paul]
          (3.9 included DH 14 which was prefered, causing interop issues)
 * pluto: Force ESP_CAST to only allow 128 bit key sizes [Paul]
-* pluto: log_crypto_workers threads did not use static bool first_time [Coverity]
-* pluto: warn (not fail) on empty NSS private key passwords [Oskari Saarenmaa]
-  - rhbz#1145231 (rhel7) and rhbz#1144941 (fedora)
+* pluto: Log_crypto_workers threads did not use static bool first_time [Coverity]
+* pluto: Warn (not fail) on empty NSS private key passwords [Oskari Saarenmaa]
+         - rhbz#1145231 (rhel7) and rhbz#1144941 (fedora)
 * pluto: Added PLUTO_IN_BYTES= / PLUTO_OUT_BYTES= for updown [Antony]
-* NETKEY: don't trust PF_KEY API to tell us about IPCOMP support [Paul]
+* pluto: Handle list of certs from parse_pkcs7_cert [Hugh]
+* pluto: Fix --impair-retransmits IMPAIR code [Hugh]
+* pluto: separate SEND_V2_NOTIFICATION from SEND_NOTIFICATION [Hugh]
+* pluto: Various fixes/cleanups in algo registration functions [Paul/Hugh]
+* pluto: ah=null as a valid phase2alg for a connection [Paul]
+* pluto: Clean up complete_v*_state_transitions and related things [Hugh]
+* pluto: More crypto helper cleanup [Hugh]
+* NETKEY: Don't trust PF_KEY API to tell us about IPCOMP support [Paul]
 * KLIPS: ip_select_ident was backported to 3.2.63 [Bram]
-* IKEv2: don't copy reserved ISAKMP flags in reply msg (rhbz#1052811) [Paul]
+* IKEv2: Don't copy reserved ISAKMP flags in reply msg (rhbz#1052811) [Paul]
 * IKEv2: ISAKMP_FLAGS_v2_IKE_I was not always set on Original Initiator [Paul]
-* IKEv2: CP payload support [Antony]
-* systemd: use After=network-online.target instead of network.target [Kim]
-  - rhbz#1145245 (rhel7) and rhbz#1144832 (fedora)
-* systemd: add Wants=network-online.target [Lukas Wunner]
-* addconn: route before and after listen (bug introduced in 3.10) [Paul/Hugh]
-* rsasigkey: use a version of jam_str instead of strcpy() for hostname [Paul]
+* IKEv2: CP payload support for responder [Antony]
+* IKEv2: CREATE_CHILD_SA support for responder [Antony]
+         (NON_ADDITIONAL_SAS stub removed)
+* systemd: Use After=network-online.target instead of network.target [Kim]
+           - rhbz#1145245 (rhel7) and rhbz#1144832 (fedora)
+* systemd: Add Wants=network-online.target [Lukas Wunner]
+* addconn: Route before and after listen (bug introduced in 3.10) [Paul/Hugh]
+* rsasigkey: Use a version of jam_str instead of strcpy() for hostname [Paul]
 * IKEv2: CERTREQ payload should use SHA1 hash of DN instead of IKEv1 DN [Matt]
-* updown: pluto should give CAP_NET_RAW to updown for iptables -t mangle [Paul]
-* _stackmanager: fixed to work again with mawk [Marc-Christian Petersen/Tuomo]
+* updown: Pluto should give CAP_NET_RAW to updown for iptables -t mangle [Paul]
+* _stackmanager: Fixed to work again with mawk [Marc-Christian Petersen/Tuomo]
+* testing: Many test case updates [Paul/Antony/Hugh/Matt]
 * Bugtracker bugs fixed:
   #206: Libreswan v3.10 on 32-bit does not work [Kim]
 
