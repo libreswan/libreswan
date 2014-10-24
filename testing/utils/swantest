@@ -292,7 +292,7 @@ def shut_down_hosts(args, test_hosts):
 	if args.noreboot:
 		logging.debug("all hosts [%s] shutdown list", ' '.join(map(str, all_hosts)))
 		logging.debug("remove [%s] from shutdown list", ' '.join(map(str, test_hosts)))
-		for h in hosts:
+		for h in all_hosts:
 			for t in test_hosts:
 				if h == t:
 					all_hosts.remove(t)
