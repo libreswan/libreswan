@@ -365,7 +365,7 @@ umlXhost	x509-pluto-06		good
 #
 # a test case of PSK with aggressive mode
 kvmplutotest	psk-pluto-01		good
-kvmplutotest	psk-pluto-02		bad
+kvmplutotest	psk-pluto-02		good
 
 kvmplutotest	xauth-pluto-03		good
 kvmplutotest	xauth-pluto-04		good
@@ -549,7 +549,7 @@ kvmplutotest    loopback-pluto-03		good
 kvmplutotest    loopback-pluto-04		good
 kvmplutotest    loopback-pluto-05		good
 kvmplutotest    loopback-pluto-06		good
-kvmplutotest    labeled-ipsec-01		good
+kvmplutotest    labeled-ipsec-01		wip
 
 # compress tests, some use netkey
 kvmplutotest    compress-pluto-01		good
