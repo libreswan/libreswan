@@ -714,9 +714,7 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 	unexpected = shift();
 	/* we used to recommend people to provide an empty passphrase for NSS keys */
 	if (unexpected && (strcmp(flp->tok, "\"\"") == 0 || strcmp(flp->tok, "''") == 0)) {
-		libreswan_log("RSA private key file "
-				"-- ignoring empty token after friendly_name "
-				"-- this will be an error in a future release");
+		libreswan_log("RSA private key file -- ignoring empty token after friendly_name -- this will be an error in a future release");
 		unexpected = shift();
 	}
 	if (unexpected) {
