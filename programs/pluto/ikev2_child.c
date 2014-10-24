@@ -1000,7 +1000,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	md->st = cst;
 	c = cst->st_connection;
 
-	if (c->spd.that.has_lease && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+	/* if (c->spd.that.has_lease && md->chain[ISAKMP_NEXT_v2CP] != NULL) { */
+	if (c->spd.that.has_lease) {
 		ikev2_send_cp(c, ISAKMP_NEXT_v2SA, outpbs);
 	}
 
