@@ -292,9 +292,9 @@ def shut_down_hosts(args, test_hosts):
 	if args.noreboot:
 		logging.debug("all hosts [%s] shutdown list", ' '.join(map(str, all_hosts)))
 		logging.debug("remove [%s] from shutdown list", ' '.join(map(str, test_hosts)))
-		for h in all_hosts:
-			for t in test_hosts:
-				if h == t:
+		for t in test_hosts:
+			for h in all_hosts:
+				if h is t:
 					all_hosts.remove(t)
 
 	logging.debug("shutdown list [%s] ", ' '.join(map(str, all_hosts)))
@@ -304,7 +304,7 @@ def shut_down_hosts(args, test_hosts):
 		try:
 			num,host,state = line.split()
 			for h in all_hosts:
-				if h == host:
+				if h is host:
 					running.append(host)
 					cmd = "sudo virsh shutdown %s" % host
 					logging.debug("Found %s %s shutodwn send %s", host, state, cmd)
@@ -324,7 +324,7 @@ def shut_down_hosts(args, test_hosts):
 				try:
 					num,host,state = line.split()
 					for h in all_hosts:
-						if h == host:
+						if h is host:
 							running.append(host)
 				except:
 					pass
@@ -332,6 +332,7 @@ def shut_down_hosts(args, test_hosts):
 			pass
 		tries -= 1
 		time.sleep(1)
+
 	if len(running):
 		e = "KVMERROR not able to shutdown %s guests: [%s] abort" % (len(running), ' '.join(map(str, running)))
 		logging.error (e)
