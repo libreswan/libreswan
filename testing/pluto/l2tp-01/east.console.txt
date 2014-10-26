@@ -30,7 +30,7 @@ east #
  iptables -A OUTPUT -o eth1 -s 192.1.2.23 -p udp --sport 1701 -j REJECT
 east #
  (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
-[X] XXXX
+[B] PID
 east #
  echo done
 done

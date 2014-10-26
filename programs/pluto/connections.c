@@ -700,14 +700,17 @@ static size_t format_connection(char *buf, size_t buf_len,
 			FALSE, c->policy, oriented(*c));
 }
 
+void unshare_connection_end_certs(struct end *e)
+{
+	/* share_x checks for CERT_NONE */
+	share_cert(e->cert);
+	share_authcerts(e->ca_path);
+}
 /* spd_route's with end's get copied in xauth.c */
 void unshare_connection_end_strings(struct end *e)
 {
 	/* do "left" */
 	unshare_id_content(&e->id);
-
-	if(e->cert.ty != CERT_NONE)
-		share_cert(e->cert);
 
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
@@ -743,7 +746,9 @@ static void unshare_connection_strings(struct connection *c)
 	/* do "right" */
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		unshare_connection_end_strings(&sr->this);
+		unshare_connection_end_certs(&sr->this);
 		unshare_connection_end_strings(&sr->that);
+		unshare_connection_end_certs(&sr->that);
 	}
 
 	/* increment references to algo's, if any */
@@ -835,9 +840,8 @@ static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
 
 	/* find the issuing cert */
 	while (ac != NULL) {
-		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags) {
-			/* increment reference count */
-			share_x509cert(ac);
+		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags &&
+					!same_dn(ac->issuer, ac->subject)) { /* no root CA!*/
 			new = clone_thing(*ac, "x509cert_t");
 			new->next = NULL;
 			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
@@ -869,8 +873,6 @@ static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
 			dntoa(tbuf, ASN1_BUF_LEN, iac->subject);
 			DBG(DBG_X509, DBG_log("load_end_ca_path : adding %s to chain",
 						tbuf));
-			/* increment reference count */
-			share_x509cert(iac);
 			new->next = clone_thing(*iac, "x509cert_t");
 			new = new->next;
 			new->next = NULL;

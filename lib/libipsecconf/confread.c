@@ -129,7 +129,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_XAUTHBY] = XAUTHBY_FILE;
 	cfg->conn_default.options[KBF_XAUTHFAIL] = XAUTHFAIL_HARD;
-	//cfg->conn_default.options[KBF_SEND_CA] = CA_SEND_ISSUER;
 
 	cfg->conn_default.policy = POLICY_RSASIG | POLICY_TUNNEL |
 				   POLICY_ENCRYPT | POLICY_PFS;

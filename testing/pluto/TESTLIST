@@ -205,6 +205,7 @@ kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
 kvmplutotest	dpd-08-netkey	wip
+kvmplutotest	ikev2-dpd-01	wip
 
 # Delete SA test.
 kvmplutotest	delete-sa-01	good
@@ -365,7 +366,7 @@ umlXhost	x509-pluto-06		good
 #
 # a test case of PSK with aggressive mode
 kvmplutotest	psk-pluto-01		good
-kvmplutotest	psk-pluto-02		bad
+kvmplutotest	psk-pluto-02		good
 
 kvmplutotest	xauth-pluto-03		good
 kvmplutotest	xauth-pluto-04		good
@@ -411,7 +412,7 @@ kvmplutotest	basic-pluto-11		good
 kvmplutotest	basic-pluto-12		wip
 kvmplutotest	basic-pluto-12-netkey	wip
 kvmplutotest	basic-pluto-13-netkey-route good
-kvmplutotest	basic-pluto-14-klips-route good
+kvmplutotest	basic-pluto-14-klips-route wip
 kvmplutotest	basic-pluto-15-no-retransmit wip
 
 #
@@ -549,7 +550,7 @@ kvmplutotest    loopback-pluto-03		good
 kvmplutotest    loopback-pluto-04		good
 kvmplutotest    loopback-pluto-05		good
 kvmplutotest    loopback-pluto-06		good
-kvmplutotest    labeled-ipsec-01		good
+kvmplutotest    labeled-ipsec-01		wip
 
 # compress tests, some use netkey
 kvmplutotest    compress-pluto-01		good
