@@ -115,6 +115,10 @@ size_t dstlen;
 	if (dstlen > 0) {
 		if (dstlen < n)
 			p[dstlen - 1] = '\0';
+		/*
+		 * clang 3.4 thinks dst or p are uninitialized.
+		 * I don't see how -- DHR
+		 */
 		strcpy(dst, p);
 	}
 	return n;

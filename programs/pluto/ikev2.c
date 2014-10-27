@@ -1268,6 +1268,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_TOOMUCHCRYPTO:
+		passert(st != NULL);
 		unset_suspended(st);
 		pexpect(!st->st_calculating);
 		libreswan_log("message in state %s ignored due to cryptographic overload",

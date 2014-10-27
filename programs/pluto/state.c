@@ -1555,6 +1555,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			}
 #endif
 
+			/* mbcp not subsequently used */
 			mbcp = humanize_number(
 					(u_long)st->st_ipcomp.attrs.life_kilobytes,
 					mbcp,

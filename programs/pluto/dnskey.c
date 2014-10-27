@@ -61,7 +61,7 @@ static int adns_restart_count;
 
 static void release_all_continuations(void);
 
-bool adns_reapchild(pid_t pid, int status UNUSED)
+bool adns_reapchild(pid_t pid)
 {
 	if (pid == adns_pid) {
 		close_any(adns_qfd);

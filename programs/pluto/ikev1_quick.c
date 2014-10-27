@@ -272,15 +272,14 @@ static void compute_proto_keymat(struct state *st,
 
 		case ESP_CAMELLIA:
 		case ESP_CAMELLIAv1:
-			needed_len = CAMELLIA_BLOCK_SIZE;
 			/* if an attribute is set, then use that! */
-			if (st->st_esp.attrs.transattrs.enckeylen) {
+			if (st->st_esp.attrs.transattrs.enckeylen == 0) {
+				needed_len = CAMELLIA_BLOCK_SIZE;
+			} else {
 				needed_len =
 					st->st_esp.attrs.transattrs.enckeylen /
 					BITS_PER_BYTE;
 				/* XXX: obtained from peer - was it verified for validity yet? */
-			} else {
-				needed_len = 128 / BITS_PER_BYTE;
 			}
 			break;
 		case ESP_TWOFISH:
