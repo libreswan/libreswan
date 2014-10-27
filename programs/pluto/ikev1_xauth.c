@@ -423,6 +423,7 @@ static stf_status modecfg_resp(struct state *st,
 		{
 			struct isakmp_mode_attr attrh;
 
+			zero(&attrh);
 			attrh.isama_np = ISAKMP_NEXT_NONE;
 			attrh.isama_type = replytype;
 			attrh.isama_identifier = ap_id;
@@ -469,6 +470,7 @@ static stf_status modecfg_resp(struct state *st,
 				{
 					struct isakmp_attribute attr;
 
+					zero(&attr);
 					attr.isaat_af_type = attr_type |
 							     ISAKMP_ATTR_AF_TLV;
 					if (!out_struct(&attr,
@@ -742,6 +744,7 @@ stf_status xauth_send_request(struct state *st)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
+		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_REQUEST;
 		attrh.isama_identifier = 0;
@@ -845,6 +848,7 @@ stf_status modecfg_send_request(struct state *st)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
+		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_REQUEST;
 		attrh.isama_identifier = 0;
@@ -976,6 +980,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
+		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_SET;
 		attrh.isama_identifier = 0;
@@ -2331,6 +2336,7 @@ static stf_status xauth_client_resp(struct state *st,
 		{
 			struct isakmp_mode_attr attrh;
 
+			zero(&attrh);
 			attrh.isama_np = ISAKMP_NEXT_NONE;
 			attrh.isama_type = ISAKMP_CFG_REPLY;
 
@@ -2789,6 +2795,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 		struct isakmp_attribute attr;
 		pb_stream strattr, attrval;
 
+		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_ACK;
 
