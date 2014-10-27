@@ -49,6 +49,7 @@
 #include "whack.h"
 #include "ikev1_dpd.h"
 #include "ikev2.h"
+#include "pending.h" /* for flush_pending_by_connection */
 
 #include "nat_traversal.h"
 
@@ -497,10 +498,18 @@ static void liveness_check(struct state *st)
 					(long)timeout));
 			switch (c->dpd_action) {
 			case DPD_ACTION_CLEAR:
-				libreswan_log(
-					"IKEv2 peer liveness - clearing connection");
+				libreswan_log("IKEv2 peer liveness - clearing connection %s[%lu]",
+						c->name, c->instance_serial);
 				delete_states_by_connection(c, TRUE);
-				unroute_connection(c);
+				if (c->kind != CK_INSTANCE) {
+					/* remove any partial negotiations that are failing. */
+					flush_pending_by_connection(c);
+					DBG(DBG_DPD, DBG_log("livenss unrouting connection %s (%s)",
+								c->name,
+								enum_name(&connection_kind_names,
+									c->kind)));
+					unroute_connection(c);
+				}
 				return;
 
 			case DPD_ACTION_RESTART:
@@ -510,7 +519,7 @@ static void liveness_check(struct state *st)
 
 			case DPD_ACTION_HOLD:
 				DBG(DBG_CONTROL,
-					DBG_log("liveness_check - handling default by rescheduling"));
+						DBG_log("liveness_check - handling default by rescheduling"));
 				break;
 
 			default:
