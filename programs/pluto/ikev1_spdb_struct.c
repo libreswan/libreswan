@@ -204,6 +204,7 @@ static bool out_attr(int type,
 {
 	struct isakmp_attribute attr;
 
+	zero(&attr);
 	if (val >> 16 == 0) {
 		/* short value: use TV form */
 		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TV;
@@ -322,6 +323,7 @@ bool ikev1_out_sa(pb_stream *outs,
 	{
 		struct isakmp_sa sa;
 
+		zero(&sa);
 		sa.isasa_np = np;
 		sa.isasa_doi = ISAKMP_DOI_IPSEC; /* all we know */
 		if (!out_struct(&sa, &isakmp_sa_desc, outs, &sa_pbs))
@@ -518,6 +520,7 @@ bool ikev1_out_sa(pb_stream *outs,
 				bool oakley_keysize = FALSE;
 				bool ipsec_keysize = FALSE;
 
+				zero(&trans);
 				trans.isat_np = (tn == p->trans_cnt - 1) ?
 						ISAKMP_NEXT_NONE :
 						ISAKMP_NEXT_T;
@@ -600,6 +603,8 @@ bool ikev1_out_sa(pb_stream *outs,
 					if (st->sec_ctx != NULL &&
 					    st->st_connection->labeled_ipsec) {
 						struct isakmp_attribute attr;
+
+						zero(&attr);
 						pb_stream val_pbs;
 						attr.isaat_af_type =
 							secctx_attr_value |

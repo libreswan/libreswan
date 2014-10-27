@@ -70,6 +70,7 @@ static bool ikev2_out_attr(int type,
 {
 	struct ikev2_trans_attr attr;
 
+	zero(&attr);
 	if (val >> 16 == 0) {
 		/* short value: use TV form - reuse ISAKMP_ATTR_defines for ikev2 */
 		attr.isatr_type = type | ISAKMP_ATTR_AF_TV;

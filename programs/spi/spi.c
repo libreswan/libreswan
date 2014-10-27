@@ -1147,6 +1147,7 @@ int main(int argc, char *argv[])
 			}
 
 		}
+		break;
 	case XF_IP4:
 	case XF_IP6:
 	case XF_DEL:

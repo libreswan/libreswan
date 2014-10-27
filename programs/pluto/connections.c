@@ -700,7 +700,7 @@ static size_t format_connection(char *buf, size_t buf_len,
 			FALSE, c->policy, oriented(*c));
 }
 
-void unshare_connection_end_certs(struct end *e)
+static void unshare_connection_end_certs(struct end *e)
 {
 	/* share_x checks for CERT_NONE */
 	share_cert(e->cert);
