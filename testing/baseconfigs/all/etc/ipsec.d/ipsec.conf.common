@@ -307,7 +307,26 @@ conn road-east-base-id-nss
 	rightid=@east
         rightrsasigkey=0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv
 
-conn east-x509-rw
+conn west-eastnet-x509-ipv4
+	also=west-east-base-x509
+	also=eastnet-ipv4
+
+conn rw-eastnet-x509-ipv4
+	also=rw-east-base-x509
+	also=eastnet-ipv4
+
+conn west-east-base-x509
+        left=192.1.2.45
+        leftrsasigkey=%cert
+        leftid=%fromcert
+        leftcert=west
+        # Right security gateway, subnet behind it,toward left.
+        right=192.1.2.23
+        rightid=%fromcert
+        rightrsasigkey=%cert
+        rightcert=east
+
+conn rw-east-base-x509
         left=%any
         leftrsasigkey=%cert
         leftid=%fromcert
