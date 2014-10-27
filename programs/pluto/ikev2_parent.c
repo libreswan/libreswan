@@ -1543,7 +1543,7 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 
 	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
 				cfg_reply ? "Request" : "Reply"));
-
+	zero(&cp);
 	cp.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	cp.isacp_np = np;
 	cp.isacp_type = cfg_reply ? IKEv2_CP_CFG_REQUEST : IKEv2_CP_CFG_REPLY;

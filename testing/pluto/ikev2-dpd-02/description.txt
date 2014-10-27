@@ -1,0 +1,19 @@
+This tests the RFC3706 DPD implementation, with dpdaction=clear on east
+east instantiates. and dpdaction=restart on west.  
+
+This means east will clear the SA after the tunnel times out, while west
+will put the route into %trap, awaiting a new packet to trigger reestablishment
+of the tunnel.
+
+Order of Operations:
+
+1) East sets up for tunnel
+2) West initiates tunnel to east
+3) We idle for 20 seconds, to prove that DPD R_U_THERE/R_U_THERE_ACKs work.
+4) West blocks traffic on eth0
+5) Both sides trigger a DPD Timeout:
+	East clears the eroute & SA
+	West puts the eroute into %trap
+6) West removes the traffic block
+7) West sends icmp packets to east, triggering a renegotiation of the tunnel
+
