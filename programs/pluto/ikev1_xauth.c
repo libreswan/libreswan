@@ -522,7 +522,6 @@ static stf_status modecfg_resp(struct state *st,
 					break;
 
 				case MODECFG_DOMAIN:
-				{
 					if(st->st_connection->modecfg_domain) {
 						DBG_log("We are sending '%s' as domain",
 							st->st_connection->modecfg_domain);
@@ -534,11 +533,9 @@ static stf_status modecfg_resp(struct state *st,
 					} else {
 						DBG_log("We are not sending a domain");
 					}
-
-				}
+					break;
 
 				case MODECFG_BANNER:
-				{
 					if(st->st_connection->modecfg_banner) {
 						DBG_log("We are sending '%s' as banner",
 							st->st_connection->modecfg_banner);
@@ -550,8 +547,7 @@ static stf_status modecfg_resp(struct state *st,
 					} else {
 						DBG_log("We are not sending a banner");
 					}
-
-				}
+					break;
 
 				/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
 				case CISCO_SPLIT_INC:
