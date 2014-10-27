@@ -7,14 +7,24 @@ from os.path import isfile, join
 import platform
 import datetime 
 import sys
+import logging
 
 results = dict() 
 testlist = dict()
 
-def read_testlist(resultsdir, node):
-	r = resultsdir + "/TESTLIST"
+def read_testlist(resultsdir = ''):
+	t = "TESTLIST"
+	if resultsdir:
+		r = resultsdir +  '/' + t
+	else :
+		r = t
+
 	if not os.path.exists(r):
 		return None
+
+	logging.debug ("read tests from %s" % r)
+
+	testlist = dict()
 	f = open(r, 'r')
 	for line in f:
 		try:
@@ -25,15 +35,15 @@ def read_testlist(resultsdir, node):
 			continue
 		testlist[testdir] = testexpect
 	f.close
+	return True
 
-def read_dirs(resultsdir, node): 
+def read_dirs(args, output_dir = ''):
+
 	summary  = []
 
-	dirtable = { "columns" : [ "Dir", "Passed", "Failed", "Tests", "Run Time(Hours)"] , "runDir" : node, "suffix" : "",  "rows" : list() }
+	dirtable = { "columns" : [ "Dir", "Passed", "Failed", "Tests", "Run Time(Hours)"] , "runDir" : args.node, "suffix" : "",  "rows" : list() }
 
-	newrunpath =  resultsdir
-	if node :
-		newrunpath =  resultsdir + '/' + node
+	newrunpath =  args.resultsdir + '/' + args.node
 
 	dirs = listdir(newrunpath)
 	# dirs = [ '2014-09-24-blackswan-v3.10-233-g8602595-hugh-2014aug']
@@ -45,6 +55,13 @@ def read_dirs(resultsdir, node):
 		# 	continue
 
 		td = newrunpath  + '/' + d
+		if not read_testlist(td):
+			logging.info ("can not read a %s/TESTLIST will try other locaations", td)
+			if not read_testlist(newrunpath):
+				if not read_testlist('./'):
+					logging.error ("skip this dir %s. can not read %s/TESTLIST or %s/TESTLIST ./TESTLIST abort", td, td, newrunpath)
+					continue
+
 		table = { "columns" : [ "Test", "Expected", "Result", "Run time", "east" , "other console"] , "runDir" : '/results/' + os.path.basename(newrunpath) + '/' + d, "suffix" : "/OUTPUT",
 				"rows" : list()
 				}
@@ -60,12 +77,12 @@ def read_dirs(resultsdir, node):
 		row.append(s['runtime'])
 		dirtable["rows"].append(list(row))
 
-	o = open( resultsdir + '/' + 'graph.json', 'w')
+	o = open(args.resultsdir + '/' + 'graph.json', 'w')
 	o.write(json.dumps(summary, ensure_ascii=True, indent=2))
 	##print(json.dumps(summary, ensure_ascii=True, indent=2))
 	o.close
 
-	t = open(resultsdir + '/' + 'table.json', 'w')
+	t = open(args.resultsdir + '/' + 'table.json', 'w')
 	t.write(json.dumps(dirtable, ensure_ascii=True, indent=2))
 	##print(json.dumps(summary, ensure_ascii=True, indent=2))
 	t.close 
@@ -100,7 +117,7 @@ def diffstat(d, host):
 		hostr = ''
 		goodk =  d + '/' +  host + ".console.txt"
 		new  = d + '/OUTPUT/' + host + '.console.txt' 
-		if os.path.exists(new):
+		if os.path.exists(new) and os.path.getsize(new) >  0:
 			if os.path.exists(goodk):
 				cmd = diffcmd + ' ' + goodk + ' ' + new + ' | diffstat -f 0'
 				ds = commands.getoutput(cmd)
@@ -145,53 +162,53 @@ def diffstat_sum(r,d):
 
 		r.append(rest)
 
-def print_table_json(d, table, result):
+def print_table_json(rpath, table, result):
 	i = 0 
 	runtime = 0
 	st = dict ()
 	try:
-		tests = listdir(d)
+		tests = listdir(rpath)
 	except:
 		return None
-	#print "%s"%d
+	rd = os.path.basename(rpath)
 	for t in tests:
-		path = "%s/%s/OUTPUT/RESULT"%(d,t) 
-		if not os.path.exists(path):
+		r = "%s/%s/OUTPUT/RESULT"%(rpath,t) 
+		if not os.path.exists(r):
 			continue
 
 		i =  i + 1
-		f = open(path, 'r')
+		f = open(r, 'r')
 		for line in f:
 			x = json.loads(line)
 			if "result" in x and "testname"  in x:
 				x["result"] = x["result"].lower()
-				r = []
+				ret = []
 				results[x["testname"]] = x 
-				r.append(x["testname"])
+				ret.append(x["testname"])
 				if 'expect' in x:
-					r.append(x["expect"])
+					ret.append(x["expect"])
 				elif  x["testname"]  in testlist:
-					r.append(testlist[x["testname"]])
+					ret.append(testlist[x["testname"]])
 				else:
-					r.append("expect'")
+					ret.append("expect'")
 
-				r.append(x["result"])
-				r.append(x["runtime"])
+				ret.append(x["result"])
+				ret.append(x["runtime"])
 				runtime = runtime + x["runtime"]
 				#print("%s %s %s"%(x["result"], x["testname"], x["runtime"]))
 				try:
 					st[x["result"]]  =  st[x["result"]]   + 1
 				except:
 					st[x["result"]]  = 1
-				diffstat_sum(r, d + '/' + t)
-
-				table["rows"].append(list(r))
+				diffstat_sum(ret, rpath + '/' + t) 
+				table["rows"].append(list(ret))
 		f.close
 	if not st:
 		return None
 	table["summary"] = dict()
 	table["summary"]['failed'] = 0
 	table["summary"]['passed'] = 0
+	table["summary"]['dir'] = rd
 
 	for s in st: 
 		table["summary"][s] = st[s]
@@ -202,20 +219,21 @@ def print_table_json(d, table, result):
 	min = (runtime % 3600) // 60
 	sec = (runtime % 60) 
 	table["summary"]["runtime"] = "%02d:%02d:%02d"%(hr, min, sec)
-	match = re.search(r'(\d+-\d+-\d+)',d)
+	match = re.search(r'(\d+-\d+-\d+)',rd)
 	if match:
 		table["summary"]["date"] = match.group(1)
 	else:
-		print("warning missing date in %s. It does not start with date <d+-d+-d+>"%d)
+		table["summary"]["date"] = "0000-00-00"
+		print("warning missing date in %s. It does not start with date <d+-d+-d+>"%rd)
 
-	o = open(d + '/' + 'table.json', 'w')
+	o = open(rpath + '/' + 'table.json', 'w')
 	o.write(json.dumps(table, ensure_ascii=True, indent=2))
 	o.close
 
 	i3html = "../../i3.html"
-	if not os.path.exists(d + '/' + "index.html") :
+	if not os.path.exists(rpath + '/' + "index.html") :
 		try :
-			os.symlink(i3html, d + '/' + "index.html")
+			os.symlink(i3html, rpath + '/' + "index.html")
 		except :
 			pass
 
