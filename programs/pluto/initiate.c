@@ -446,7 +446,7 @@ static void cannot_oppo(struct connection *c,
 			    ocb, pcb, nc->name));
 
 		/*
-		 * okay, here we need add to the "next" policy, which is ought
+		 * okay, here we need add to the "next" policy, which ought
 		 * to be an instance.
 		 * We will add another entry to the spd_route list for the specific
 		 * situation that we have.
@@ -690,10 +690,9 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 	int hisport;
 	char demandbuf[256];
 	bool loggedit = FALSE;
-	bool work = FALSE;
 
 	/* on klips/mast assume we will do something */
-	work = kern_interface == USE_KLIPS ||
+	bool work = kern_interface == USE_KLIPS ||
 	       kern_interface == USE_MASTKLIPS ||
 	       kern_interface == USE_NETKEY;
 
@@ -733,24 +732,25 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 	if (isanyaddr(&b->our_client) || isanyaddr(&b->peer_client)) {
 		cannot_oppo(NULL, b, "impossible IP address");
 		work = FALSE;
-	} else if (!(c = find_connection_for_clients(&sr,
+	} else if ((c = find_connection_for_clients(&sr,
 						     &b->our_client,
 						     &b->peer_client,
-						     b->transport_proto))) {
+						     b->transport_proto))
+		   == NULL) {
 		/* No connection explicitly handles the clients and there
 		 * are no Opportunistic connections -- whine and give up.
 		 * The failure policy cannot be gotten from a connection; we pick %pass.
 		 */
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
-			loggedit = TRUE;
+			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 		cannot_oppo(NULL, b, "no routed template covers this pair");
 		work = FALSE;
 	} else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
-			loggedit = TRUE;
+			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 		loglog(RC_NOPEERIP,
 		       "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
@@ -794,7 +794,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
-			loggedit = TRUE;
+			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
 				  SOS_NOBODY, pcim_local_crypto
@@ -1028,8 +1028,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				passert(id_is_ipaddr(&ac->gateways_from_dns->
 						     gw_id));
 				loglog(RC_OPPOFAILURE,
-				       "no suitable connection for opportunism"
-				       " between %s and %s with %s as peer",
+				       "no suitable connection for opportunism between %s and %s with %s as peer",
 				       ipstr(&b->our_client, &b1),
 				       ipstr(&b->peer_client, &b2),
 				       ipstr(&ac->gateways_from_dns->gw_id.ip_addr, &b3));
@@ -1048,6 +1047,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 						b->transport_proto,
 						"no suitable connection");
 				}
+				/* c == NULL: act accordingly */
 			} else {
 				/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
 				passert(c->kind == CK_INSTANCE);
@@ -1096,7 +1096,12 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				ugh ? ugh : "ok");
 		});
 
-		if (ugh != NULL) {
+		if (c == NULL) {
+			/*
+			 * build_outgoing_opportunistic_connection failed.
+			 * This case has been handled already.
+			 */
+		} else if (ugh != NULL) {
 			b->policy_prio = c->prio;
 			b->failure_shunt = shunt_policy_spi(c, FALSE);
 			cannot_oppo(c, b, ugh);
