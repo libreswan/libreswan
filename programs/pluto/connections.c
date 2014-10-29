@@ -700,7 +700,7 @@ static size_t format_connection(char *buf, size_t buf_len,
 			FALSE, c->policy, oriented(*c));
 }
 
-void unshare_connection_end_certs(struct end *e)
+static void unshare_connection_end_certs(struct end *e)
 {
 	/* share_x checks for CERT_NONE */
 	share_cert(e->cert);
@@ -1403,7 +1403,6 @@ void add_connection(const struct whack_message *wm)
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
-
 		/*
 		 * Set this up so that we can log which end is which after
 		 * orient
@@ -1412,7 +1411,6 @@ void add_connection(const struct whack_message *wm)
 		c->spd.that.left = FALSE;
 
 		c->send_ca = wm->send_ca;
-		same_rightca = same_leftca = FALSE;
 
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
@@ -3319,7 +3317,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 }
 
-struct connection *find_client_connection(struct connection *c,
+struct connection *find_client_connection(struct connection *const c,
 					const ip_subnet *our_net,
 					const ip_subnet *peer_net,
 					const u_int8_t our_protocol,
@@ -3368,12 +3366,12 @@ struct connection *find_client_connection(struct connection *c,
 
 			if (samesubnet(&sr->this.client, our_net) &&
 				samesubnet(&sr->that.client, peer_net) &&
-				(sr->this.protocol == our_protocol) &&
+				sr->this.protocol == our_protocol &&
 				(!sr->this.port ||
-					(sr->this.port == our_port)) &&
+					sr->this.port == our_port) &&
 				(sr->that.protocol == peer_protocol) &&
 				(!sr->that.port ||
-					(sr->that.port == peer_port))) {
+					sr->that.port == peer_port)) {
 				passert(oriented(*c));
 				if (routed(sr->routing))
 					return c;
@@ -3383,6 +3381,11 @@ struct connection *find_client_connection(struct connection *c,
 		}
 
 		/* exact match? */
+		/*
+		 * clang 3.4 says: warning: Access to field 'host_pair' results in a dereference of a null pointer (loaded from variable 'c')
+		 * If so, the caller must have passed NULL for it
+		 * and earlier references would be wrong (segfault).
+		 */
 		d = fc_try(c, c->host_pair, NULL, our_net, peer_net,
 			our_protocol, our_port, peer_protocol, peer_port);
 

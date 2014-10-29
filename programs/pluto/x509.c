@@ -123,7 +123,7 @@ static x509crl_t *get_x509crl(chunk_t issuer, chunk_t serial, chunk_t keyid)
 		    (same_dn(crl->issuer,
 			     issuer) &&
 		     same_serial(serial, crl->authKeySerialNumber))) {
-			if (crl != x509crls) {
+			if (prev_crl != NULL) {
 				/* bring the CRL up front */
 				prev_crl->next = crl->next;
 				crl->next = x509crls;

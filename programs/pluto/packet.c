@@ -1912,6 +1912,10 @@ bool out_generic_raw(u_int8_t np, struct_desc *sd,
 
 bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 {
+	/*
+	 * clang 3.4: warning: The left operand of '-' [in pbs_left] is a garbage value
+	 * This diagnostic seems wrong.
+	 */
 	if (pbs_left(outs) < len) {
 		loglog(RC_LOG_SERIOUS,
 		       "not enough room left to place %lu bytes of %s in %s",

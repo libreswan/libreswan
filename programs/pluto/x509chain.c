@@ -72,7 +72,7 @@ x509cert_t *get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 				(same_dn(subject, cert->subject) &&
 					same_serial(serial,
 						cert->serialNumber)))) {
-			if (prev_cert && cert != x509authcerts) {
+			if (prev_cert != NULL) {
 				/* bring the certificate up front */
 				prev_cert->next = cert->next;
 				cert->next = x509authcerts;
