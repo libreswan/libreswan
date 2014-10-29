@@ -93,6 +93,7 @@ static struct encrypt_desc encrypt_desc_serpent =
 
 void ike_alg_serpent_init(void)
 {
-	/* ??? nobody notices failure */
-	ike_alg_register_enc(&encrypt_desc_serpent);
+	if (!ike_alg_register_enc(&encrypt_desc_serpent))
+		libreswan_log(
+                        "ike_alg_serpent_init(): OAKLEY_SERPENT_CBC activation failed");
 }

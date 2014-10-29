@@ -445,8 +445,9 @@ void handle_timer_event(void)
 static void liveness_check(struct state *st)
 {
 	struct state *pst;
-	struct connection *c = st->st_connection;
 	deltatime_t last_msg_age;
+
+	struct connection *c = st->st_connection;
 
 	passert(st->st_ikev2);
 
@@ -552,8 +553,7 @@ void handle_next_timer_event(void)
 	enum event_type type;
 	struct state *st;
 
-	if (ev == (struct event *) NULL)
-		return;
+	passert(ev != NULL);
 
 	evlist = evlist->ev_next;	/* Ok, we'll handle this event */
 	type = ev->ev_type;
@@ -571,29 +571,61 @@ void handle_next_timer_event(void)
 		}
 	});
 
+	passert(GLOBALS_ARE_RESET());
+
+	if (st != NULL)
+		set_cur_state(st);
+
 	/*
-	 * for state-associated events, pick up the state pointer
-	 * and remove the backpointer from the state object.
+	 * Check that st is as expected for the event type.
+	 *
+	 * For an event type associated with a state, remove the backpointer
+	 * from the appropriate slot of the state object.
+	 *
 	 * We'll eventually either schedule a new event, or delete the state.
 	 */
-	passert(GLOBALS_ARE_RESET());
-	if (st != NULL) {
-		if (type == EVENT_DPD || type == EVENT_DPD_TIMEOUT) {
-			passert(st->st_dpd_event == ev);
-			st->st_dpd_event = NULL;
-		} else if (type == EVENT_v2_LIVENESS) {
-			passert(st->st_liveness_event == ev);
-			st->st_liveness_event = NULL;
-		} else {
-			passert(st->st_event == ev);
-			st->st_event = NULL;
-		}
-		set_cur_state(st);
-	}
-
 	switch (type) {
 	case EVENT_REINIT_SECRET:
+#ifdef KLIPS
+	case EVENT_SHUNT_SCAN:
+#endif
+	case EVENT_PENDING_DDNS:
+	case EVENT_PENDING_PHASE2:
+	case EVENT_LOG_DAILY:
+	case EVENT_NAT_T_KEEPALIVE:
 		passert(st == NULL);
+		break;
+
+	case EVENT_v1_RETRANSMIT:
+	case EVENT_v2_RETRANSMIT:
+	case EVENT_SA_REPLACE:
+	case EVENT_SA_REPLACE_IF_USED:
+	case EVENT_v2_RESPONDER_TIMEOUT:
+	case EVENT_SA_EXPIRE:
+	case EVENT_SO_DISCARD:
+	case EVENT_CRYPTO_FAILED:
+		passert(st != NULL && st->st_event == ev);
+		st->st_event = NULL;
+		break;
+
+	case EVENT_v2_LIVENESS:
+		passert(st != NULL && st->st_liveness_event == ev);
+		st->st_liveness_event = NULL;
+		break;
+
+	case EVENT_DPD:
+	case EVENT_DPD_TIMEOUT:
+		passert(st != NULL && st->st_dpd_event == ev);
+		st->st_dpd_event = NULL;
+		break;
+
+	default:
+		bad_case(type);
+	}
+
+	/* now do the actual event's work */
+	switch (type) {
+	case EVENT_REINIT_SECRET:
 		DBG(DBG_CONTROL,
 			DBG_log("event EVENT_REINIT_SECRET handled"));
 		init_secret();
@@ -601,23 +633,24 @@ void handle_next_timer_event(void)
 
 #ifdef KLIPS
 	case EVENT_SHUNT_SCAN:
-		passert(st == NULL);
 		scan_proc_shunts();
 		break;
 #endif
 
 	case EVENT_PENDING_DDNS:
-		passert(st == NULL);
 		connection_check_ddns();
 		break;
 
 	case EVENT_PENDING_PHASE2:
-		passert(st == NULL);
 		connection_check_phase2();
 		break;
 
 	case EVENT_LOG_DAILY:
 		daily_log_event();
+		break;
+
+	case EVENT_NAT_T_KEEPALIVE:
+		nat_traversal_ka_event();
 		break;
 
 	case EVENT_v1_RETRANSMIT:
@@ -744,10 +777,6 @@ void handle_next_timer_event(void)
 		dpd_timeout(st);
 		break;
 
-	case EVENT_NAT_T_KEEPALIVE:
-		nat_traversal_ka_event();
-		break;
-
 	case EVENT_CRYPTO_FAILED:
 		DBG(DBG_CONTROL,
 			DBG_log("event crypto_failed on state #%lu, aborting",
@@ -757,9 +786,7 @@ void handle_next_timer_event(void)
 		break;
 
 	default:
-		loglog(RC_LOG_SERIOUS,
-			"INTERNAL ERROR: ignoring unknown expiring event %s",
-			enum_show(&timer_event_names, type));
+		bad_case(type);
 	}
 
 	pfree(ev);

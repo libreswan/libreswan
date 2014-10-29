@@ -423,6 +423,7 @@ static stf_status modecfg_resp(struct state *st,
 		{
 			struct isakmp_mode_attr attrh;
 
+			zero(&attrh);
 			attrh.isama_np = ISAKMP_NEXT_NONE;
 			attrh.isama_type = replytype;
 			attrh.isama_identifier = ap_id;
@@ -469,6 +470,7 @@ static stf_status modecfg_resp(struct state *st,
 				{
 					struct isakmp_attribute attr;
 
+					zero(&attr);
 					attr.isaat_af_type = attr_type |
 							     ISAKMP_ATTR_AF_TLV;
 					if (!out_struct(&attr,
@@ -522,7 +524,6 @@ static stf_status modecfg_resp(struct state *st,
 					break;
 
 				case MODECFG_DOMAIN:
-				{
 					if(st->st_connection->modecfg_domain) {
 						DBG_log("We are sending '%s' as domain",
 							st->st_connection->modecfg_domain);
@@ -534,11 +535,9 @@ static stf_status modecfg_resp(struct state *st,
 					} else {
 						DBG_log("We are not sending a domain");
 					}
-
-				}
+					break;
 
 				case MODECFG_BANNER:
-				{
 					if(st->st_connection->modecfg_banner) {
 						DBG_log("We are sending '%s' as banner",
 							st->st_connection->modecfg_banner);
@@ -550,8 +549,7 @@ static stf_status modecfg_resp(struct state *st,
 					} else {
 						DBG_log("We are not sending a banner");
 					}
-
-				}
+					break;
 
 				/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
 				case CISCO_SPLIT_INC:
@@ -746,6 +744,7 @@ stf_status xauth_send_request(struct state *st)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
+		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_REQUEST;
 		attrh.isama_identifier = 0;
@@ -849,6 +848,7 @@ stf_status modecfg_send_request(struct state *st)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
+		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_REQUEST;
 		attrh.isama_identifier = 0;
@@ -980,6 +980,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
+		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_SET;
 		attrh.isama_identifier = 0;
@@ -2335,6 +2336,7 @@ static stf_status xauth_client_resp(struct state *st,
 		{
 			struct isakmp_mode_attr attrh;
 
+			zero(&attrh);
 			attrh.isama_np = ISAKMP_NEXT_NONE;
 			attrh.isama_type = ISAKMP_CFG_REPLY;
 
@@ -2793,6 +2795,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 		struct isakmp_attribute attr;
 		pb_stream strattr, attrval;
 
+		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_ACK;
 

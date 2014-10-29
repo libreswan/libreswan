@@ -120,6 +120,7 @@ void ike_alg_twofish_init(void)
 		libreswan_log(
 			"ike_alg_twofish_init(): Experimental OAKLEY_TWOFISH_CBC_SSH activation failed");
 
-	/* ??? nobody cares if this fails */
-	ike_alg_register_enc(&encrypt_desc_twofish);
+	if (!ike_alg_register_enc(&encrypt_desc_twofish))
+		libreswan_log(
+			"ike_alg_twofish_init(): OAKLEY_TWOFISH_CBC activation failed");
 }

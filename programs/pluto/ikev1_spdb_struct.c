@@ -204,6 +204,7 @@ static bool out_attr(int type,
 {
 	struct isakmp_attribute attr;
 
+	zero(&attr);
 	if (val >> 16 == 0) {
 		/* short value: use TV form */
 		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TV;
@@ -322,6 +323,7 @@ bool ikev1_out_sa(pb_stream *outs,
 	{
 		struct isakmp_sa sa;
 
+		zero(&sa);
 		sa.isasa_np = np;
 		sa.isasa_doi = ISAKMP_DOI_IPSEC; /* all we know */
 		if (!out_struct(&sa, &isakmp_sa_desc, outs, &sa_pbs))
@@ -518,6 +520,7 @@ bool ikev1_out_sa(pb_stream *outs,
 				bool oakley_keysize = FALSE;
 				bool ipsec_keysize = FALSE;
 
+				zero(&trans);
 				trans.isat_np = (tn == p->trans_cnt - 1) ?
 						ISAKMP_NEXT_NONE :
 						ISAKMP_NEXT_T;
@@ -600,6 +603,8 @@ bool ikev1_out_sa(pb_stream *outs,
 					if (st->sec_ctx != NULL &&
 					    st->st_connection->labeled_ipsec) {
 						struct isakmp_attribute attr;
+
+						zero(&attr);
 						pb_stream val_pbs;
 						attr.isaat_af_type =
 							secctx_attr_value |
@@ -873,36 +878,38 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				    pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
 				    bool selection,		/* if this SA is a selection, only one tranform
 								 * can appear. */
-				    struct state *st)		/* current state object */
+				    struct state *const st)	/* current state object */
 {
 	u_int32_t ipsecdoisit;
 	pb_stream proposal_pbs;
 	struct isakmp_proposal proposal;
 	unsigned no_trans_left;
 	int last_transnum;
-	struct connection *c = st->st_connection;
-	struct spd_route *spd, *me = &c->spd;
+	struct connection *const c = st->st_connection;
+	struct spd_route *spd;
 	bool xauth_init, xauth_resp;
-	const char *role;
+	const char *const role = selection ? "initiator" : "responder";
 
-	role = "";
+	passert(c != NULL);
 
 	xauth_init = xauth_resp = FALSE;
 
 	/* calculate the per-end policy which might apply */
-	for (spd = me; spd; spd = spd->next) {
-		if (selection) { /* this is the initiator, we have proposed, they have answered,
-			          * and we must decide if they proposed what we wanted.
-			          */
-			role = "initiator";
+	for (spd = &c->spd; spd != NULL; spd = spd->next) {
+		if (selection) {
+			/*
+			 * this is the initiator, we have proposed, they have answered,
+			 * and we must decide if they proposed what we wanted.
+			 */
 			xauth_init |= spd->this.xauth_client;
 			xauth_resp |= spd->this.xauth_server;
-		} else { /* this is the responder, they have proposed to us, what
-			  * are we willing to be?
-			  */
-			role = "responder";
-			xauth_init = xauth_init | spd->this.xauth_server;
-			xauth_resp = xauth_resp | spd->this.xauth_client;
+		} else {
+			/*
+			 * this is the responder, they have proposed to us, what
+			 * are we willing to be?
+			 */
+			xauth_init |= spd->this.xauth_server;
+			xauth_resp |= spd->this.xauth_client;
 		}
 	}
 
@@ -1101,8 +1108,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 					ta.encrypter =
 						crypto_get_encrypter(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
-				} else
-				switch (val) {
+				} else switch (val) {
 				case OAKLEY_3DES_CBC:
 					ta.encrypt = val;
 					ta.encrypter =
@@ -1123,9 +1129,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				if (ike_alg_hash_present(val)) {
 					ta.prf_hash = val;
 					ta.prf_hasher = crypto_get_hasher(val);
-				} else
-/* #else */
-				switch (val) {
+				} else switch (val) {
 				case OAKLEY_MD5:
 				case OAKLEY_SHA1:
 					ta.prf_hash = val;
@@ -1185,24 +1189,21 @@ psk_common:
 						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
 						/* check that we can find a preshared secret */
-						struct connection *con =
-							st->st_connection;
-
-						if (get_preshared_secret(con)
+						if (get_preshared_secret(c)
 						    == NULL)
 						{
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
 
-							idtoa(&con->spd.this.id, mid,
+							idtoa(&c->spd.this.id, mid,
 							      sizeof(mid));
 							if (his_id_was_instantiated(
-									con))
+									c))
 							{
 								strcpy(hid,
 								       "%any");
 							} else {
-								idtoa(&con->spd.that.id, hid,
+								idtoa(&c->spd.that.id, hid,
 								      sizeof(hid));
 							}
 
