@@ -344,7 +344,7 @@ void restart_connections_by_peer(struct connection *c)
 		    (c->dnshostname == NULL && d->dnshostname == NULL &&
 		     sameaddr(&d->spd.that.host_addr,
 				 &c->spd.that.host_addr)))
-			initiate_connection(d->name, NULL_FD, 0,
+			initiate_connection(d->name, NULL_FD, LEMPTY,
 					    pcim_demand_crypto);
 	}
 }
@@ -1380,7 +1380,7 @@ static void connection_check_ddns1(struct connection *c)
 	 * lookup
 	 */
 	update_host_pairs(c);
-	initiate_connection(c->name, NULL_FD, 0, pcim_demand_crypto);
+	initiate_connection(c->name, NULL_FD, LEMPTY, pcim_demand_crypto);
 
 	/* no host pairs,  no more to do */
 	if (c->host_pair == NULL)
@@ -1395,7 +1395,7 @@ static void connection_check_ddns1(struct connection *c)
 		     streq(c->dnshostname, d->dnshostname)) ||
 		    (c->dnshostname == NULL && d->dnshostname == NULL &&
 		     sameaddr(&d->spd.that.host_addr, &c->spd.that.host_addr)))
-			initiate_connection(d->name, NULL_FD, 0,
+			initiate_connection(d->name, NULL_FD, LEMPTY,
 					    pcim_demand_crypto);
 	}
 }
