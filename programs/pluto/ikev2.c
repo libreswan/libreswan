@@ -1015,6 +1015,10 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		} else {
 			*pkind = kind = EVENT_SA_EXPIRE;
 		}
+
+		if (c->policy & POLICY_DONT_REKEY) {
+                        *pkind = kind = EVENT_SA_EXPIRE;
+                }
 	}
 	return delay;
 }
