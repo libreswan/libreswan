@@ -2831,7 +2831,6 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		DBG(DBG_CONTROL, {
 			    char buf[IDTOA_BUF];
-
 			    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
 					  "%none");
 			    DBG_log("offered CA: '%s'", buf);
