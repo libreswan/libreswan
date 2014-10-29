@@ -315,6 +315,17 @@ void initiate_connection(const char *name, int whackfd,
 	close_any(is.whackfd);
 }
 
+static bool same_in_some_sense(const struct connection *a,
+			const struct connection *b)
+{
+	return
+		(a->dnshostname != NULL && b->dnshostname != NULL &&
+			streq(a->dnshostname, b->dnshostname)) ||
+		(a->dnshostname == NULL && b->dnshostname == NULL &&
+			sameaddr(&a->spd.that.host_addr,
+					&b->spd.that.host_addr));
+}
+
 void restart_connections_by_peer(struct connection *c)
 {
 	struct connection *d;
@@ -322,13 +333,8 @@ void restart_connections_by_peer(struct connection *c)
 	if (c->host_pair == NULL)
 		return;
 
-	d = c->host_pair->connections;
-	for (; d != NULL; d = d->hp_next) {
-		if ((c->dnshostname && d->dnshostname &&
-		     streq(c->dnshostname, d->dnshostname)) ||
-		    (c->dnshostname == NULL && d->dnshostname == NULL &&
-		     sameaddr(&d->spd.that.host_addr,
-				 &c->spd.that.host_addr)))
+	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
+		if (same_in_some_sense(c, d))
 			terminate_connection(d->name);
 	}
 
@@ -337,13 +343,8 @@ void restart_connections_by_peer(struct connection *c)
 	if (c->host_pair == NULL)
 		return;
 
-	d = c->host_pair->connections;
-	for (; d != NULL; d = d->hp_next) {
-		if ((c->dnshostname && d->dnshostname &&
-		     streq(c->dnshostname, d->dnshostname)) ||
-		    (c->dnshostname == NULL && d->dnshostname == NULL &&
-		     sameaddr(&d->spd.that.host_addr,
-				 &c->spd.that.host_addr)))
+	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
+		if (same_in_some_sense(c, d))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
 					    pcim_demand_crypto);
 	}
@@ -1254,7 +1255,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 		 * for all connections: if the same Phase 1 IDs are used
 		 * for different IP addresses, unorient that connection.
 		 * We also check ports, since different Phase 1 ID's can
-		 * exist for the same IP when NAT is involved
+		 * exist for the same IP when NAT is involved.
 		 */
 		struct connection *d;
 
@@ -1262,6 +1263,26 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 			/* might move underneath us */
 			struct connection *next = d->ac_next;
 
+			/*
+			 * ??? is the sense oc the last clause inverted?
+			 * We are testing for all of:
+			 * 1: an appropriate kind to consider
+			 * 2: same ids, left and right
+			 * 3: same address family
+			 * 4: but different IP address or port
+			 * 5: differing dnsnames (sort of)
+			 *
+			 * The logic kind of suggests that in fact the
+			 * same dnsnames should be the same, not different.
+			 *
+			 * Let's make 5 clearer:
+			 *   if BOTH have dnsnames, they must be unequal.
+			 *
+			 * I suspect that it should be:
+			 *   if BOTH have dnsnames, they must be equal.
+			 *
+			 * In other words the streq result should be negated.
+			 */
 			if ((d->kind == CK_PERMANENT ||
 			     d->kind == CK_INSTANCE ||
 			     d->kind == CK_GOING_AWAY) &&
@@ -1273,7 +1294,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 				  &d->spd.that.host_addr) ||
 			      c->spd.that.host_port !=
 				  d->spd.that.host_port) &&
-			    !(c->dnshostname && d->dnshostname &&
+			    !(c->dnshostname != NULL && d->dnshostname != NULL &&
 			      streq(c->dnshostname, d->dnshostname))) {
 				/*
 				 * Paul and AA  tried to delete phase2
@@ -1386,15 +1407,8 @@ static void connection_check_ddns1(struct connection *c)
 	if (c->host_pair == NULL)
 		return;
 
-	d = c->host_pair->connections;
-	for (; d != NULL; d = d->hp_next) {
-		/* just in case we see ourselves */
-		if (c == d)
-			continue;
-		if ((c->dnshostname && d->dnshostname &&
-		     streq(c->dnshostname, d->dnshostname)) ||
-		    (c->dnshostname == NULL && d->dnshostname == NULL &&
-		     sameaddr(&d->spd.that.host_addr, &c->spd.that.host_addr)))
+	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
+		if (c != d && same_in_some_sense(c, d))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
 					    pcim_demand_crypto);
 	}
