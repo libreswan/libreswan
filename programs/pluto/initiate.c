@@ -340,6 +340,7 @@ void restart_connections_by_peer(struct connection *c)
 	char *dnshostname;
 	ip_address host_addr;
 	struct host_pair *hp = c->host_pair;
+	enum connection_kind kind  = c->kind;
 
 	if (hp == NULL)
 		return;
@@ -349,22 +350,27 @@ void restart_connections_by_peer(struct connection *c)
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		struct connection *next = d->hp_next; /* copy beofre d is deleteed, CK_INSTANCE */
-		if (same_host(dnshostname, &host_addr, d->dnshostname, &d->spd.that.host_addr))
+		if (same_host(dnshostname, &host_addr, d->dnshostname,
+					&d->spd.that.host_addr))
 			terminate_connection(d->name);
 		d = next;
 	}
 
-	if (c->kind != CK_INSTANCE)
+	if (kind != CK_INSTANCE)
 		update_host_pairs(c);
 
-	if (hp->connections == NULL)
+	if (hp->connections == NULL) {
+		pfreeany(dnshostname);
 		return;
+	}
 
 	for (d = hp->connections; d != NULL; d = d->hp_next) {
-		if (same_in_some_sense(c, d))
+		if (same_host(dnshostname, &host_addr, d->dnshostname,
+					&d->spd.that.host_addr)) 
 			initiate_connection(d->name, NULL_FD, LEMPTY,
-					    pcim_demand_crypto);
+					pcim_demand_crypto);
 	}
+	pfreeany(dnshostname);
 }
 
 /* (Possibly) Opportunistic Initiation:
