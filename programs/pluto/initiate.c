@@ -315,35 +315,52 @@ void initiate_connection(const char *name, int whackfd,
 	close_any(is.whackfd);
 }
 
+static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
+		const char *b_dnshostname, const ip_address *b_host_addr)
+{
+	/* should this be dnshostname and host_addr ?? */
+
+	return (a_dnshostname != NULL && b_dnshostname != NULL &&
+			streq(a_dnshostname, b_dnshostname)) ||
+		(a_dnshostname == NULL && b_dnshostname == NULL &&
+		 sameaddr(a_host_addr, b_host_addr));
+}
+
 static bool same_in_some_sense(const struct connection *a,
 			const struct connection *b)
 {
-	return
-		(a->dnshostname != NULL && b->dnshostname != NULL &&
-			streq(a->dnshostname, b->dnshostname)) ||
-		(a->dnshostname == NULL && b->dnshostname == NULL &&
-			sameaddr(&a->spd.that.host_addr,
-					&b->spd.that.host_addr));
+	return same_host(a->dnshostname, &a->spd.that.host_addr,
+			b->dnshostname, &b->spd.that.host_addr);
 }
 
 void restart_connections_by_peer(struct connection *c)
 {
 	struct connection *d;
+	/* if c is an CK_INSTANCE, it removed. keep copy of necessary bits */
+	char *dnshostname;
+	ip_address host_addr;
+	struct host_pair *hp = c->host_pair;
 
-	if (c->host_pair == NULL)
+	if (hp == NULL)
 		return;
 
+	dnshostname = clone_str(c->dnshostname, "dnshostname for restart");
+	host_addr = c->spd.that.host_addr;
+
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
-		if (same_in_some_sense(c, d))
+		struct connection *next = d->hp_next; /* copy beofre d is deleteed, CK_INSTANCE */
+		if (same_host(dnshostname, &host_addr, d->dnshostname, &d->spd.that.host_addr))
 			terminate_connection(d->name);
+		d = next;
 	}
 
-	update_host_pairs(c);
+	if (c->kind != CK_INSTANCE)
+		update_host_pairs(c);
 
-	if (c->host_pair == NULL)
+	if (hp->connections == NULL)
 		return;
 
-	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
+	for (d = hp->connections; d != NULL; d = d->hp_next) {
 		if (same_in_some_sense(c, d))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
 					    pcim_demand_crypto);
