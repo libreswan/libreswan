@@ -43,7 +43,7 @@ roadnet-eastnet-ikev2[1]: ESTABLISHED XXX second ago, 192.1.2.23[east]...192.1.3
 roadnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours
 roadnet-eastnet-ikev2[1]: IKE proposal: 3DES_CBC/HMAC_MD5_96/PRF_HMAC_MD5/MODP_2048
 roadnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
-roadnet-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA2_512_256, 0 bytes_i, 0 bytes_o, rekeying in 42 minutes
+roadnet-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA2_512_256, 0 bytes_i, 0 bytes_o, rekeying in XX minutes
 roadnet-eastnet-ikev2{1}:   0.0.0.0/0 === 192.0.2.1/32 
 east #
 east #

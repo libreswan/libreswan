@@ -21,6 +21,16 @@ east #
  echo "initdone"
 initdone
 east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec auto --down westnet-eastnet-ikev2 ; fi
+002 "westnet-eastnet-ikev2": terminating SAs using this connection
+002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_R2)
+005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=0B out=0B
+002 "westnet-eastnet-ikev2" #1: deleting state (STATE_PARENT_R2)
+east #
+ if [ -f /var/run/charon.pid ]; then sleep 5 ; fi
+east #
+ #
+east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
 east NOW
 192.0.2.0/24       -> 192.0.1.0/24       => %trap
@@ -37,6 +47,17 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then grep "message ID:" /tmp/pluto.log  ; fi
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 01
+|    message ID:  00 00 00 01
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 01
+|    message ID:  00 00 00 00
+|    message ID:  00 00 00 01
 east #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 east #

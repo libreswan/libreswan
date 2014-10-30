@@ -4,18 +4,18 @@ road #
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'roadnet-eastnet-ikev2'
-  left=192.1.3.209
-  leftid=@road
-  right=192.1.2.23
-  rightid=@east
-  leftsourceip=%config
-  rightsubnet=0.0.0.0/0
   authby=secret
-  keyexchange=ikev2
   auto=add
   esp=aes128-sha2_512
   ike=3des-md5-modp2048
+  keyexchange=ikev2
+  left=192.1.3.209
+  leftid=@road
+  leftsourceip=%config
   mobike=no
+  right=192.1.2.23
+  rightid=@east
+  rightsubnet=0.0.0.0/0
 found netkey IPsec stack
 road #
  echo "initdone"
@@ -27,10 +27,9 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
 sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
-sending cert request for "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 authentication of 'road' (myself) with pre-shared key
 establishing CHILD_SA roadnet-eastnet-ikev2
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr AUTH CPRQ(ADDR DNS) SA TSi TSr N(EAP_ONLY) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH CPRQ(ADDR DNS) SA TSi TSr N(EAP_ONLY) ]
 sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH CPRQ(ADDR DNS DNS) SA TSi TSr ]
@@ -43,8 +42,15 @@ installing DNS server 8.8.8.8 to /etc/strongswan/resolv.conf
 installing new virtual IP 192.0.2.1
 connection 'roadnet-eastnet-ikev2' established successfully
 road #
- ping -n -c 4 -I 192.0.1.254 192.0.2.254
-bind: Cannot assign requested address
+ ping -n -c 4 -I 192.0.2.1 192.1.2.23
+PING 192.1.2.23 (192.1.2.23) from 192.0.2.1 : 56(84) bytes of data.
+64 bytes from 192.1.2.23: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.1.2.23 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  echo done
 done
