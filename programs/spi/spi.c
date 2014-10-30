@@ -1150,8 +1150,12 @@ int main(int argc, char *argv[])
 					(int)maxbits);
 				exit(1);
 			}
-
 		}
+		/*
+		 * ??? this break was added in a2791fda77a5cfcc6bc992fbc5019f4448112f88
+		 * It is likely correct, but we're not sure.
+		 * Luckily this code is probably never used.
+		 */
 		break;
 	case XF_IP4:
 	case XF_IP6:
