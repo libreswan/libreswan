@@ -348,7 +348,7 @@ void restart_connections_by_peer(struct connection *c)
 	dnshostname = clone_str(c->dnshostname, "dnshostname for restart");
 	host_addr = c->spd.that.host_addr;
 
-	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
+	for (d = c->host_pair->connections; d != NULL;) {
 		struct connection *next = d->hp_next; /* copy beofre d is deleteed, CK_INSTANCE */
 		if (same_host(dnshostname, &host_addr, d->dnshostname,
 					&d->spd.that.host_addr))
