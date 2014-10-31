@@ -499,18 +499,7 @@ static void liveness_check(struct state *st)
 					(long)timeout));
 			switch (c->dpd_action) {
 			case DPD_ACTION_CLEAR:
-				libreswan_log("IKEv2 peer liveness - clearing connection %s[%lu]",
-						c->name, c->instance_serial);
-				delete_states_by_connection(c, TRUE);
-				if (c->kind != CK_INSTANCE) {
-					/* remove any partial negotiations that are failing. */
-					flush_pending_by_connection(c);
-					DBG(DBG_DPD, DBG_log("livenss unrouting connection %s (%s)",
-								c->name,
-								enum_name(&connection_kind_names,
-									c->kind)));
-					unroute_connection(c);
-				}
+				liveness_clear_connection(c, "IKEv2 liveness action");
 				return;
 
 			case DPD_ACTION_RESTART:

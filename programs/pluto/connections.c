@@ -3834,3 +3834,26 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 	}
 	return ue;
 }
+
+void liveness_clear_connection(struct connection *c, char *v)
+{
+	libreswan_log("%s: Clearing Connection %s[%lu] %s",v, c->name,
+			c->instance_serial, enum_name(&connection_kind_names,
+				c->kind));
+	/*
+	 * For CK_INSTANCE, delete_states_by_connection() will clear
+	 * Note that delete_states_by_connection changes c->kind but we need
+	 * to remember what it was to know if we still need to unroute after delete
+	 */
+	if (c->kind == CK_INSTANCE) {
+		delete_states_by_connection(c, TRUE);
+	} else {
+		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
+		delete_states_by_connection(c, TRUE);
+		DBG(DBG_DPD,
+				DBG_log("%s: unrouting connection %s",
+					enum_name(&connection_kind_names,
+						c->kind), v));
+		unroute_connection(c); /* --unroute */
+	}
+}
