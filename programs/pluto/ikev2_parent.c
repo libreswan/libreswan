@@ -1666,8 +1666,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	/* ??? seems wrong: not conditional at all */
 	delete_event(pst);
 	{
+		/* why not from svm->timeout_event ??? */
 		enum event_type x = EVENT_SA_REPLACE;
-		time_t delay = ikev2_replace_delay(st, &x, O_INITIATOR);
+		time_t delay = ikev2_replace_delay(pst, &x, O_INITIATOR);
 
 		event_schedule(x, delay, pst);
 	}
