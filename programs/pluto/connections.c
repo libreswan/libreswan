@@ -136,28 +136,36 @@ void release_connection(struct connection *c, bool relations)
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
-	struct connection *d = NULL, *conn_next_tmp = NULL, *conn_list = NULL;
-	struct host_pair *p = NULL;
+	struct host_pair *p = c->host_pair;
+	struct connection *d;
+	struct connection *conn_next_tmp;
+	struct connection *conn_list = NULL;
 	ip_address new_addr;
-	char *dnshostname;
+	char *dnshostname = c->dnshostname;
 
-	p = c->host_pair;
-	d = p ? p->connections : NULL;
+	/* ??? perhaps we should return early if dnshostname == NULL */
 
-	if (d == NULL ||
-		p == NULL ||
-		d->dnshostname == NULL ||
-		ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL ||
-		sameaddr(&new_addr, &p->him.addr))
+	if (p == NULL)
 		return;
 
-	/* remember this dnshostname */
-	dnshostname = c->dnshostname;
+	d = p->connections;
+
+	/* ??? looks as if addr_family is not allowed to change.  Bug? */
+	/* ??? why are we using d->dnshostname instead of c->hostname? */
+	if (d == NULL ||
+	    d->dnshostname == NULL ||
+	    ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL ||
+	    sameaddr(&new_addr, &p->him.addr))
+		return;
 
 	for (; d != NULL; d = conn_next_tmp) {
 		conn_next_tmp = d->hp_next;
-		if (d->dnshostname &&
-			streq(d->dnshostname, dnshostname)) {
+		/*
+		 * ??? this test used to assume that dnshostname != NULL
+		 * if d->dnshostname != NULL.  Is that true?
+		 */
+		if (d->dnshostname != NULL && dnshostname != NULL &&
+		    streq(d->dnshostname, dnshostname)) {
 			/*
 			 * If there is a dnshostname and it is the same as
 			 * the one that has changed, then change
@@ -173,9 +181,8 @@ void update_host_pairs(struct connection *c)
 		}
 	}
 
-	if (conn_list) {
-		d = conn_list;
-		for (; d != NULL; d = conn_next_tmp) {
+	if (conn_list != NULL) {
+		for (d = conn_list; d != NULL; d = conn_next_tmp) {
 			/*
 			 * connect the connection to the new host_pair
 			 */

@@ -794,8 +794,6 @@ static const struct option long_opts[] = {
 	{ 0, 0, 0, 0 }
 };
 
-static const char namechars[] = "abcdefghijklmnopqrstuvwxyz"
-				"ABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
 	.sun_path   = DEFAULT_CTLBASE CTL_SUFFIX,
@@ -1305,30 +1303,24 @@ int main(int argc, char **argv)
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy |= POLICY_TUNNEL | POLICY_OPPORTUNISTIC |
 					      POLICY_GROUP;
-			} else {
-				if (msg.left.id != NULL) {
-					int strlength = 0;
-					int n = 0;
-					const char *cp;
-					int dnshostname = 0;
-
-					strlength = strlen(optarg);
-					for (cp = optarg, n = strlength; n > 0;
-					     cp++, n--) {
-						if (strchr(namechars,
-							   *cp) != NULL) {
-							dnshostname = 1;
-							break;
-						}
-					}
-					if (dnshostname)
-						msg.dnshostname = optarg;
+			} else if (msg.left.id != NULL) {
+				if (ttoaddr_num(optarg, 0, msg.addr_family,
+					&msg.right.host_addr) == NULL) {
+					/* we have a proper numeric IP address */
+				} else {
+					/*
+					 * We asssume that we have a DNS name.
+					 * This logic matches confread.c.
+					 * ??? it would be kind to check the syntax.
+					 */
+					msg.dnshostname = optarg;
 					ttoaddr(optarg, 0, msg.addr_family,
 						&msg.right.host_addr);
 					/* we don't fail here.  pluto will re-check the DNS later */
-				} else
+				}
+			} else {
 				diagq(ttoaddr(optarg, 0, msg.addr_family,
-					      &msg.right.host_addr), optarg);
+				      &msg.right.host_addr), optarg);
 			}
 
 			msg.policy |= new_policy;

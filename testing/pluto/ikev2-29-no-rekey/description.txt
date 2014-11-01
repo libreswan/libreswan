@@ -1,0 +1,4 @@
+Basic pluto with IKEv2 on the initiator (west), and on the responder,
+using RAW RSA keys for authentication. 
+
+both sides have rekey=no and ikelifetime=90 sec on initiator 
