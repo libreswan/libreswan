@@ -205,3 +205,8 @@ extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 
 stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 		pb_stream *outpbs);
+
+stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
+                                     enum phase1_role role UNUSED,
+                                     enum next_payload_types_ikev2 np,
+                                     pb_stream *outpbs);
