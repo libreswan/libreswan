@@ -83,7 +83,7 @@ extern enum_names ikev2_cp_type_names;
 extern enum_names ikev2_cp_attribute_type_names;
 
 #ifdef HAVE_LABELED_IPSEC
-extern u_int16_t secctx_attr_value;	/* ??? NOT A CONSTANT! */
+extern u_int16_t secctx_attr_value;	/* ??? NOT A CONSTANT! AN ATTRIBUTE TYPE, NOT VALUE! */
 #endif
 
 extern const char *const natt_bit_names[];

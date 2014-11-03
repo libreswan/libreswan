@@ -2476,23 +2476,21 @@ bool install_inbound_ipsec_sa(struct state *st)
 	if (st->st_refhim == IPSEC_SAREF_NULL && !st->st_outbound_done) {
 
 #ifdef HAVE_LABELED_IPSEC
-		if (!st->st_connection->loopback) {
+		if (st->st_connection->loopback) {
+			DBG(DBG_CONTROL,
+			    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install outgoing SAs, so skipping this"));
+		} else
 #endif
-
-		DBG(DBG_CONTROL,
-		    DBG_log("installing outgoing SA now as refhim=%u",
-			    st->st_refhim));
-		if (!setup_half_ipsec_sa(st, FALSE)) {
-			DBG_log("failed to install outgoing SA: %u",
-				st->st_refhim);
-			return FALSE;
+		{
+			DBG(DBG_CONTROL,
+			    DBG_log("installing outgoing SA now as refhim=%u",
+				    st->st_refhim));
+			if (!setup_half_ipsec_sa(st, FALSE)) {
+				DBG_log("failed to install outgoing SA: %u",
+					st->st_refhim);
+				return FALSE;
+			}
 		}
-#ifdef HAVE_LABELED_IPSEC
-	} else {
-		DBG(DBG_CONTROL,
-		    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install outgoing SAs, so skipping this"));
-	}
-#endif
 
 		st->st_outbound_done = TRUE;
 	}
@@ -2501,18 +2499,13 @@ bool install_inbound_ipsec_sa(struct state *st)
 	/* (attempt to) actually set up the SAs */
 
 #ifdef HAVE_LABELED_IPSEC
-	if (!st->st_connection->loopback) {
+	if (st->st_connection->loopback) {
+		DBG(DBG_CONTROL,
+		    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install incoming SAs, so skipping this"));
+		return TRUE;
+	}
 #endif
-
 	return setup_half_ipsec_sa(st, TRUE);
-
-#ifdef HAVE_LABELED_IPSEC
-} else {
-	DBG(DBG_CONTROL,
-	    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install incoming SAs, so skipping this"));
-	return TRUE;
-}
-#endif
 }
 
 /* Install a route and then a prospective shunt eroute or an SA group eroute.
@@ -2859,7 +2852,6 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 #ifdef HAVE_LABELED_IPSEC
 	if (st->st_connection->loopback && st->st_state == STATE_QUICK_R1)
 		return TRUE;
-
 #endif
 
 	rb = could_route(st->st_connection);
@@ -3013,21 +3005,19 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 				}
 			}
 #ifdef HAVE_LABELED_IPSEC
-			if (!st->st_connection->loopback) {
+			if (!st->st_connection->loopback)
 #endif
-			(void) teardown_half_ipsec_sa(st, FALSE);
-#ifdef HAVE_LABELED_IPSEC
-		}
-#endif
+			{
+				(void) teardown_half_ipsec_sa(st, FALSE);
+			}
 		}
 #ifdef HAVE_LABELED_IPSEC
 		if (!st->st_connection->loopback ||
-		    st->st_state == STATE_QUICK_I2) {
+		    st->st_state == STATE_QUICK_I2)
 #endif
-		(void) teardown_half_ipsec_sa(st, TRUE);
-#ifdef HAVE_LABELED_IPSEC
-	}
-#endif
+		{
+			(void) teardown_half_ipsec_sa(st, TRUE);
+		}
 
 		break;
 #if defined(WIN32) && defined(WIN32_NATIVE)

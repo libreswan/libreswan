@@ -890,29 +890,27 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	}
 
 #ifdef HAVE_LABELED_IPSEC
-	{
-		if (policy_label) {
-			struct rtattr *attr;
-			struct xfrm_user_sec_ctx *uctx;
-			attr = (struct rtattr *)
-				((char *)&req + req.n.nlmsg_len);
-			attr->rta_type = XFRMA_SEC_CTX;
-			/* Passing null terminated sec label (strlen + '\0') */
-			DBG_log("passing security label %s (len=%zu +1) to kernel",
-				policy_label, strlen(policy_label));
-			attr->rta_len =
-				RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) +
-					strlen(policy_label) + 1);
-			uctx = RTA_DATA(attr);
-			uctx->exttype = XFRMA_SEC_CTX;
-			uctx->len = sizeof(struct xfrm_user_sec_ctx) +
-				strlen(policy_label) + 1;
-			uctx->ctx_doi = 1;
-			uctx->ctx_alg = 1;
-			uctx->ctx_len = strlen(policy_label) + 1;
-			memcpy(uctx + 1, policy_label, uctx->ctx_len);
-			req.n.nlmsg_len += attr->rta_len;
-		}
+	if (policy_label) {
+		struct rtattr *attr;
+		struct xfrm_user_sec_ctx *uctx;
+		attr = (struct rtattr *)
+			((char *)&req + req.n.nlmsg_len);
+		attr->rta_type = XFRMA_SEC_CTX;
+		/* Passing null terminated sec label (strlen + '\0') */
+		DBG_log("passing security label %s (len=%zu +1) to kernel",
+			policy_label, strlen(policy_label));
+		attr->rta_len =
+			RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) +
+				strlen(policy_label) + 1);
+		uctx = RTA_DATA(attr);
+		uctx->exttype = XFRMA_SEC_CTX;
+		uctx->len = sizeof(struct xfrm_user_sec_ctx) +
+			strlen(policy_label) + 1;
+		uctx->ctx_doi = 1;
+		uctx->ctx_alg = 1;
+		uctx->ctx_len = strlen(policy_label) + 1;
+		memcpy(uctx + 1, policy_label, uctx->ctx_len);
+		req.n.nlmsg_len += attr->rta_len;
 	}
 #endif
 
@@ -1250,8 +1248,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		attr->rta_len = RTA_LENGTH(xuctx.len);
 
 		memcpy(RTA_DATA(attr), &xuctx, sizeof(xuctx));
-		memcpy((char *)RTA_DATA(
-				attr) + sizeof(xuctx),
+		memcpy((char *)RTA_DATA(attr) + sizeof(xuctx),
 			sa->sec_ctx->sec_ctx_value,
 			sa->sec_ctx->ctx_len);
 
@@ -1429,7 +1426,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 	if (!found_sec_ctx) {
 		DBG(DBG_KERNEL,
-			DBG_log("xfrm: did not found XFRMA_SEC_CTX, trying next one"));
+			DBG_log("xfrm: did not find XFRMA_SEC_CTX; trying next one"));
 		DBG(DBG_KERNEL, DBG_log("xfrm: rta->len=%d", attr->rta_len));
 
 		remaining = n->nlmsg_len -
@@ -1437,7 +1434,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 		attr = RTA_NEXT(attr, remaining);
 
 		DBG(DBG_KERNEL,
-			DBG_log("xfrm: remaining=%d , rta->len = %d",
+			DBG_log("xfrm: remaining=%d, rta->len = %d",
 				remaining, attr->rta_len));
 		if (attr->rta_type == XFRMA_SEC_CTX) {
 			DBG(DBG_KERNEL,

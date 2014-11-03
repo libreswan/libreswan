@@ -1096,7 +1096,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
 						  SOS_NOBODY, pcim_local_crypto
 #ifdef HAVE_LABELED_IPSEC
-						  , NULL /*shall we pass uctx for opportunistic connections?*/
+						  , NULL /* shall we pass uctx for opportunistic connections? */
 #endif
 						  );
 				b->whackfd = NULL_FD; /* protect from close */

@@ -63,7 +63,7 @@
 #ifdef HAVE_LABELED_IPSEC
 static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 {
-	/*supported length is 256 bytes (257 including \0)*/
+	/* supported length is 256 bytes (257 including \0) */
 	char sec_ctx_value[MAX_SECCTX_LEN];
 	u_int8_t ctx_doi;
 	u_int8_t ctx_alg;
@@ -74,7 +74,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 	/* doing sanity check */
 	if (pbs_left(pbs) <
-	    (sizeof(ctx_doi) + sizeof(ctx_alg) + sizeof(ctx_len) + 1) ) {
+	    (sizeof(ctx_doi) + sizeof(ctx_alg) + sizeof(ctx_len) + 1)) {
 		DBG(DBG_PARSING,
 		    DBG_log("received perhaps corrupted security ctx (should not happen really)"));
 		return FALSE;
@@ -97,8 +97,8 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	    DBG_log("   received ctx_doi = %d, ctx_alg = %d, ctx_len = %d",
 		    ctx_doi, ctx_alg, ctx_len));
 
-	/* verifying remaining buffer length and ctx length matches or not (checking for any corruption)*/
-	if (ctx_len != pbs_left(pbs) ) {
+	/* verifying remaining buffer length and ctx length matches or not (checking for any corruption) */
+	if (ctx_len != pbs_left(pbs)) {
 		DBG(DBG_PARSING,
 		    DBG_log("received ctx length seems to be different than the length of string present in the buffer"));
 		DBG(DBG_PARSING,
@@ -127,7 +127,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	 */
 
 	if (i == 0 || sec_ctx_value[i - 1] != '\0') {
-		/*check if we have space left and then append \0 */
+		/* check if we have space left and then append \0 */
 		if (i < MAX_SECCTX_LEN) {
 			sec_ctx_value[i] = '\0';
 			i = i + 1;
@@ -139,17 +139,18 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		}
 	}
 
-	/*
-	   while (pbs_left(pbs) != 0){
-	   sec_ctx_value[i++]= *pbs->cur++;
-	    if(i == MAX_SECCTX_LEN){
-	    DBG(DBG_PARSING, DBG_log("security label reached maximum length (MAX_SECCTX_LEN) allowed"));
-	    break;
-	    }
-	   }
+#if 0	/* ??? what's this for? */
+	while (pbs_left(pbs) != 0) {
+		sec_ctx_value[i++]= *pbs->cur++;
+		if (i == MAX_SECCTX_LEN) {
+			DBG(DBG_PARSING, DBG_log("security label reached maximum length (MAX_SECCTX_LEN) allowed"));
+			break;
+		}
+	}
 
-	   sec_ctx_value[i]='\0';
-	 */
+	sec_ctx_value[i]='\0';
+#endif
+
 	DBG(DBG_PARSING,
 	    DBG_log("   sec ctx value: %s, len=%d", sec_ctx_value, i));
 
@@ -169,8 +170,8 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		if (!st->st_connection->labeled_ipsec) {
 			DBG_log("This state (connection) is not labeled ipsec enabled, so cannot proceed");
 			return FALSE;
-		} else if ( st->st_connection->policy_label != NULL &&
-			    within_range(st->sec_ctx->sec_ctx_value,
+		} else if (st->st_connection->policy_label != NULL &&
+			   within_range(st->sec_ctx->sec_ctx_value,
 					 st->st_connection->policy_label)) {
 			DBG_log("security context verification succedded");
 		} else {
@@ -178,7 +179,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 			return FALSE;
 		}
 
-	} else if (st->st_state == STATE_QUICK_I1 ) {
+	} else if (st->st_state == STATE_QUICK_I1) {
 		DBG(DBG_PARSING,
 		    DBG_log("Initiator state received security context from responder state, now verifying if both are same"));
 		if (streq(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
@@ -1008,7 +1009,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 	last_transnum = -1;
 	no_trans_left = proposal.isap_notrans;
-	for (;; ) {
+	for (;;) {
 		pb_stream trans_pbs;
 		u_char *attr_start;
 		size_t attr_len;
@@ -1697,10 +1698,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			return FALSE;
 
 #ifndef HAVE_LABELED_IPSEC
-		/*
-		 * This check is no longer valid when using security labels as
-		 * SECCTX attribute is in private range and has value of 32001
-		 */
+		/* This check is no longer valid when using security labels as SECCTX attribute is in private range and has value of 32001 */
 		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF);
 #endif
 
@@ -1713,6 +1711,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			return FALSE;
 		}
 
+		/* ??? see above: this will fail if HAVE_LABEL_IPSEC */
 		seen_attrs |= LELEM(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 
 		val = a.isaat_lv;
@@ -1721,7 +1720,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 #ifdef HAVE_LABELED_IPSEC
 		/*
 		 * The original code (without labeled ipsec) assumes
-		 *	a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF
+		 * a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF,
 		 * so for retaining the same behavior when this is < LELEM_ROOF
 		 * and if more than >= LELEM_ROOF setting it to 0,
 		 * which is NULL in ipsec_attr_val_desc
@@ -1751,15 +1750,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		switch (a.isaat_af_type) {
-#ifdef HAVE_LABELED_IPSEC
-		case SECCTX | ISAKMP_ATTR_AF_TLV:
-		{
-			pb_stream *   pbs = &attr_pbs;
-			if (!parse_secctx_attr(pbs, st))
-				return FALSE;
-		}
-		break;
-#endif
 		case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
 			if (LHAS(seen_durations, val)) {
@@ -1926,7 +1916,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		default:
 #ifdef HAVE_LABELED_IPSEC
 			if (a.isaat_af_type ==
-			    (secctx_attr_value | ISAKMP_ATTR_AF_TLV) ) {
+			    (secctx_attr_value | ISAKMP_ATTR_AF_TLV)) {
 				pb_stream *pbs = &attr_pbs;
 
 				if (!parse_secctx_attr(pbs, st))

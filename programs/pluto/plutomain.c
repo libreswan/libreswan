@@ -344,7 +344,7 @@ bool force_busy = FALSE;
 enum kernel_interface kern_interface = USE_NETKEY;	/* new default */
 
 #ifdef HAVE_LABELED_IPSEC
-u_int16_t secctx_attr_value = SECCTX;
+u_int16_t secctx_attr_value = SECCTX;	/* ??? this is really an attribute type! */
 #endif
 
 /*
@@ -419,6 +419,7 @@ static const struct option long_opts[] = {
 	{ "virtual-private\0<network_list>", required_argument, NULL, '6' },
 	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
 #ifdef HAVE_LABELED_IPSEC
+	/* ??? really an attribute type, not a value */
 	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* _ */
 	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },
 #endif

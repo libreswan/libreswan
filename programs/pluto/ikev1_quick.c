@@ -914,7 +914,7 @@ stf_status quick_outI1(int whack_sock,
 		       unsigned long try,
 		       so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-		       , struct xfrm_user_sec_ctx_ike * uctx
+		       , struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		       )
 {
