@@ -1649,6 +1649,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 {
 	lset_t seen_attrs = LEMPTY,
 	       seen_durations = LEMPTY;
+#ifdef HAVE_LABELED_IPSEC
+	bool seen_secctx_attr = FALSE;
+#endif
 	u_int16_t life_type = 0;
 	const struct oakley_group_desc *pfs_group = NULL;
 
@@ -1690,6 +1693,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		struct isakmp_attribute a;
 		pb_stream attr_pbs;
 		enum_names *vdesc;
+		u_int16_t ty;
 		u_int32_t val;                          /* room for larger value */
 		bool ipcomp_inappropriate = (proto == PROTO_IPCOMP);  /* will get reset if OK */
 
@@ -1697,38 +1701,36 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			       &attr_pbs))
 			return FALSE;
 
-#ifndef HAVE_LABELED_IPSEC
-		/* This check is no longer valid when using security labels as SECCTX attribute is in private range and has value of 32001 */
-		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF);
-#endif
-
-		if (LHAS(seen_attrs, a.isaat_af_type &
-			 ISAKMP_ATTR_RTYPE_MASK)) {
-			loglog(RC_LOG_SERIOUS,
-			       "repeated %s attribute in IPsec Transform %u",
-			       enum_show(&ipsec_attr_names, a.isaat_af_type),
-			       trans->isat_transnum);
-			return FALSE;
-		}
-
-		/* ??? see above: this will fail if HAVE_LABEL_IPSEC */
-		seen_attrs |= LELEM(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-
+		ty = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
 		val = a.isaat_lv;
 
-		vdesc = ipsec_attr_val_descs[(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK)
 #ifdef HAVE_LABELED_IPSEC
-		/*
-		 * The original code (without labeled ipsec) assumes
-		 * a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF,
-		 * so for retaining the same behavior when this is < LELEM_ROOF
-		 * and if more than >= LELEM_ROOF setting it to 0,
-		 * which is NULL in ipsec_attr_val_desc
-		 */
-					     >= LELEM_ROOF ? 0 : a.isaat_af_type &
-					     ISAKMP_ATTR_RTYPE_MASK
+		if (ty == secctx_attr_value) {
+			if (seen_secctx_attr) {
+				loglog(RC_LOG_SERIOUS,
+				       "repeated SECCTX attribute in IPsec Transform %u",
+				       trans->isat_transnum);
+				return FALSE;
+			}
+			seen_secctx_attr = TRUE;
+			vdesc = NULL;
+		} else
 #endif
-			];
+		{
+			passert(ty < LELEM_ROOF);
+			if (LHAS(seen_attrs, ty)) {
+				loglog(RC_LOG_SERIOUS,
+				       "repeated %s attribute in IPsec Transform %u",
+				       enum_show(&ipsec_attr_names, a.isaat_af_type),
+				       trans->isat_transnum);
+				return FALSE;
+			}
+
+			seen_attrs |= LELEM(ty);
+			passert(ty < ipsec_attr_val_descs_roof);
+			vdesc = ipsec_attr_val_descs[ty];
+		}
+
 		if (vdesc != NULL) {
 			if (enum_name(vdesc, val) == NULL) {
 				loglog(RC_LOG_SERIOUS,
@@ -1987,7 +1989,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		if (!LHAS(seen_attrs, KEY_LENGTH)) {
 			if (ipsec_keysize != 0) { /* ealg requires a key length attr */
 				loglog(RC_LOG_SERIOUS,
-		       			"IPsec encryption transform did not specify required KEY_LENGTH attribute");
+					"IPsec encryption transform did not specify required KEY_LENGTH attribute");
 				return FALSE;
 			}
 		}
@@ -1997,7 +1999,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				attrs->transattrs.enckeylen);
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,
-	       			"IPsec encryption transform rejected: %s",
+				"IPsec encryption transform rejected: %s",
 				ugh);
 			return FALSE;
 		}
