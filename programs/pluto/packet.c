@@ -1715,13 +1715,33 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 #endif
 			switch (fp->field_type) {
 			case ft_zig: /* should be zero, so ensure it is */
+				memset(cur, 0, i);
 				inp += i;
-				for (; i != 0; i--)
-					*cur++ = '\0';
+				cur += i;
 				break;
-			case ft_nat:            /* natural number (may be 0) */
+
 			case ft_len:            /* length of this struct and any following crud */
 			case ft_lv:             /* length/value field of attribute */
+				if (!immediate) {
+					/* We can't check the length because it must
+					 * be filled in after variable part is supplied.
+					 * We do record where this is so that it can be
+					 * filled in by a subsequent close_output_pbs().
+					 */
+					passert(obj.lenfld == NULL);    /* only one ft_len allowed */
+					obj.lenfld = cur;
+					obj.lenfld_desc = fp;
+
+					/* fill with crap so failure to overwrite will be noticed */
+					memset(cur, 0xFA, i);
+
+					inp += i;
+					cur += i;
+					break;
+				}
+				/* immediate form is just like a number */
+				/* FALL THROUGH */
+			case ft_nat:            /* natural number (may be 0) */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
@@ -1729,7 +1749,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
 			{
-				u_int32_t n = 0;
+				u_int32_t n;
 
 				switch (i) {
 				case 8 / BITS_PER_BYTE:
@@ -1746,20 +1766,6 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				}
 
 				switch (fp->field_type) {
-				case ft_len:                            /* length of this struct and any following crud */
-				case ft_lv:                             /* length/value field of attribute */
-					if (immediate)
-						break;                  /* not a length */
-					/* We can't check the length because it will likely
-					 * be filled in after variable part is supplied.
-					 * We do record where this is so that it can be
-					 * filled in by a subsequent close_output_pbs().
-					 */
-					passert(obj.lenfld == NULL);    /* only one ft_len allowed */
-					obj.lenfld = cur;
-					obj.lenfld_desc = fp;
-					break;
-
 				case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
 					if ((n & ISAKMP_ATTR_AF_MASK) ==
 					    ISAKMP_ATTR_AF_TV)
@@ -1801,6 +1807,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					break;
 				}
 
+				/* emit i low-order bytes of n in network order */
 				while (i-- != 0) {
 					cur[i] = (u_int8_t)n;
 					n >>= BITS_PER_BYTE;
