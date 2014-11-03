@@ -584,8 +584,7 @@ size_t format_end(char *buf,
 
 			if (needed > room)
 				loglog(RC_BADID,
-					"format_end: buffer too small for "
-					"dohost_name - should not happen\n");
+					"format_end: buffer too small for dohost_name - should not happen");
 		}
 	}
 
@@ -1235,7 +1234,7 @@ void add_connection(const struct whack_message *wm)
 		break;
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 		loglog(RC_LOG_SERIOUS,
-			"Must specify either AH or ESP.\n");
+			"Must specify either AH or ESP.");
 		return;
 	}
 
