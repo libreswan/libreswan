@@ -102,7 +102,7 @@ void terminate_connection(const char *nm)
 	} else {
 		int count;
 
-		loglog(RC_COMMENT, "terminating all conns with alias='%s'\n", nm);
+		loglog(RC_COMMENT, "terminating all conns with alias='%s'", nm);
 		count = foreach_connection_by_alias(nm, terminate_a_connection, NULL);
 
 		if (count == 0) {

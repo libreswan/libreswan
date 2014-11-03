@@ -223,7 +223,7 @@ void stop_adns(void)
 			adns_pid = 0;
 		} else {
 			libreswan_log(
-				"wait for end of ADNS process returned odd status 0x%x\n",
+				"wait for end of ADNS process returned odd status 0x%x",
 				status);
 			adns_pid = 0;
 		}

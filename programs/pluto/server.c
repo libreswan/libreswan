@@ -163,7 +163,7 @@ err_t init_ctl_socket(void)
 		if (g != NULL) {
 			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
 				loglog(RC_LOG_SERIOUS,
-				       "Can not chgrp ctl fd(%d) to gid=%d: %s\n",
+				       "Can not chgrp ctl fd(%d) to gid=%d: %s",
 				       ctl_fd, g->gr_gid, strerror(errno));
 			}
 		}
