@@ -1572,14 +1572,14 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 {
 	struct ikev2_cp cp;
 	pb_stream cp_pbs;
-	bool cfg_reply = c->spd.that.has_lease ? TRUE : FALSE;
+	bool cfg_reply = c->spd.that.has_lease;
 
 	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
-				cfg_reply ? "Request" : "Reply"));
+				cfg_reply ? "reply" : "request"));
 	zero(&cp);
 	cp.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	cp.isacp_np = np;
-	cp.isacp_type = cfg_reply ? IKEv2_CP_CFG_REQUEST : IKEv2_CP_CFG_REPLY;
+	cp.isacp_type = cfg_reply ? IKEv2_CP_CFG_REPLY : IKEv2_CP_CFG_REQUEST;
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return STF_INTERNAL_ERROR;
@@ -2302,8 +2302,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			np = ISAKMP_NEXT_v2NONE;
 		} else {
 			DBG_log("CHILD SA proposals received");
-			/*  np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ? */
-			np = c->pool != NULL ? ISAKMP_NEXT_v2CP :ISAKMP_NEXT_v2SA;
+			np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
+				ISAKMP_NEXT_v2CP :ISAKMP_NEXT_v2SA;
 		}
 
 		DBG(DBG_CONTROLMORE,
@@ -2519,9 +2519,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* TODO: see if there are any notifications */
 
-	if(c->spd.this.modecfg_client && md->chain[ISAKMP_NEXT_v2CP]){
-	}
-
 	/* See if there is a child SA available */
 	if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
 	    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
@@ -2680,6 +2677,26 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		if (ret != STF_OK)
 			return ret;
+	}
+
+	/* are we expecting a v2CP (RESP) ?  */
+	if(c->spd.this.modecfg_client) {
+		if (md->chain[ISAKMP_NEXT_v2CP] == NULL){
+			/* not really anything to here... but it would be worth unpending again */
+			libreswan_log("missing v2CP reply, not attempting to setup child SA");
+			/*  Delete previous retransmission event.  */
+			delete_event(st);
+			/*
+			 * ??? this isn't really a failure, is it?
+			 * If none of those payloads appeared, isn't this is a
+			 * legitimate negotiation of a parent?
+			 */
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], st))
+		{
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
 	}
 
 	/* examine each notification payload */

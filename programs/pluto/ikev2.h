@@ -210,3 +210,4 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
                                      enum phase1_role role UNUSED,
                                      enum next_payload_types_ikev2 np,
                                      pb_stream *outpbs);
+bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
