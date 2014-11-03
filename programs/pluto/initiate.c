@@ -304,7 +304,7 @@ void initiate_connection(const char *name, int whackfd,
 		return;
 	}
 
-	loglog(RC_COMMENT, "initiating all conns with alias='%s'\n", name);
+	loglog(RC_COMMENT, "initiating all conns with alias='%s'", name);
 	count = foreach_connection_by_alias(name, initiate_a_connection, &is);
 
 	if (count == 0) {
