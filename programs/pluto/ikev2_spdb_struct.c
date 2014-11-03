@@ -62,6 +62,7 @@
 #include "nat_traversal.h"
 
 /* Taken from ikev1_spdb_struct.c, as the format is similar */
+/* Note: cloned from out_attr, with the same bugs */
 static bool ikev2_out_attr(int type,
 		    unsigned long val,
 		    struct_desc *attr_desc,
@@ -70,7 +71,6 @@ static bool ikev2_out_attr(int type,
 {
 	struct ikev2_trans_attr attr;
 
-	zero(&attr);
 	if (val >> 16 == 0) {
 		/* short value: use TV form - reuse ISAKMP_ATTR_defines for ikev2 */
 		attr.isatr_type = type | ISAKMP_ATTR_AF_TV;
@@ -79,13 +79,14 @@ static bool ikev2_out_attr(int type,
 			return FALSE;
 	} else {
 		/*
-		 * We really only support KEY_LENGTH, with does not use this long
+		 * We really only support KEY_LENGTH, which does not use this long
 		 * attribute style. See comments in out_attr() in ikev1_spdb_struct.c
 		 */
 		pb_stream val_pbs;
 		u_int32_t nval = htonl(val);
 
 		attr.isatr_type = type | ISAKMP_ATTR_AF_TLV;
+		attr.isatr_lv = sizeof(nval);
 		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
 		    !out_raw(&nval, sizeof(nval), &val_pbs,
 			     "long attribute value"))

@@ -449,10 +449,8 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 bool ikev1_ship_CERT(u_int8_t type, chunk_t cert, pb_stream *outs, u_int8_t np)
 {
 	pb_stream cert_pbs;
-
 	struct isakmp_cert cert_hd;
 
-	zero(&cert_hd);
 	cert_hd.isacert_np = np;
 	cert_hd.isacert_type = type;
 
@@ -475,7 +473,6 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 	pb_stream cr_pbs;
 	struct isakmp_cr cr_hd;
 
-	zero(&cr_hd);
 	cr_hd.isacr_np = np;
 	cr_hd.isacr_type = type;
 
@@ -494,7 +491,7 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 
 /*
  * returns the concatenated SHA-1 hashes of each public key in the chain
- * */
+ */
 static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 {
 	unsigned char combined_hash[SHA1_DIGEST_SIZE * 8 /*max path len*/];
@@ -533,7 +530,6 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	pb_stream cr_pbs;
 	struct ikev2_certreq cr_hd;
 
-	zero(&cr_hd);
 	cr_hd.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL;
 	cr_hd.isacertreq_np = np;
 	cr_hd.isacertreq_enc = type;

@@ -423,7 +423,6 @@ static stf_status modecfg_resp(struct state *st,
 		{
 			struct isakmp_mode_attr attrh;
 
-			zero(&attrh);
 			attrh.isama_np = ISAKMP_NEXT_NONE;
 			attrh.isama_type = replytype;
 			attrh.isama_identifier = ap_id;
@@ -435,7 +434,8 @@ static stf_status modecfg_resp(struct state *st,
 		if (!get_internal_addresses(st, &ia, &has_lease))
 			return STF_INTERNAL_ERROR;
 
-		if (!isanyaddr(&ia.dns[0])) /* We got DNS addresses, answer with those */
+		/* If we got DNS addresses, answer with those */
+		if (!isanyaddr(&ia.dns[0]))
 			resp |= LELEM(INTERNAL_IP4_DNS);
 		else
 			resp &= ~LELEM(INTERNAL_IP4_DNS);
@@ -470,7 +470,6 @@ static stf_status modecfg_resp(struct state *st,
 				{
 					struct isakmp_attribute attr;
 
-					zero(&attr);
 					attr.isaat_af_type = attr_type |
 							     ISAKMP_ATTR_AF_TLV;
 					if (!out_struct(&attr,
@@ -744,23 +743,20 @@ stf_status xauth_send_request(struct state *st)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
-		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_REQUEST;
 		attrh.isama_identifier = 0;
 		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
 			return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out (name) */
+		/* Empty name atribute */
 		attr.isaat_af_type = XAUTH_USER_NAME;
-		attr.isaat_lv = 0;
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL))
 			return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out (password) */
+		/* Empty password attribute */
 		attr.isaat_af_type = XAUTH_USER_PASSWORD;
-		attr.isaat_lv = 0;
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL))
 			return STF_INTERNAL_ERROR;
@@ -848,51 +844,44 @@ stf_status modecfg_send_request(struct state *st)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
-		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_REQUEST;
 		attrh.isama_identifier = 0;
 		if (!out_struct(&attrh, &isakmp_attr_desc, &rbody, &strattr))
 			return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out (ipv4) */
+		/* Empty IPv4 address */
 		attr.isaat_af_type = INTERNAL_IP4_ADDRESS;
-		attr.isaat_lv = 0;
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL))
 			return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out (netmask) */
+		/* Empty IPv4 netmask */
 		attr.isaat_af_type = INTERNAL_IP4_NETMASK;
-		attr.isaat_lv = 0;
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc, &strattr,
 				NULL))
 			return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out (INTERNAL_IP4_DNS) */
+		/* Empty INTERNAL_IP4_DNS */
 		attr.isaat_af_type = INTERNAL_IP4_DNS;
-		attr.isaat_lv = 0;
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
 				&strattr, NULL))
 			return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out (MODECFG_BANNER) */
+		/* Empty banner */
 		attr.isaat_af_type = MODECFG_BANNER;
-		attr.isaat_lv = 0;
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
 				&strattr, NULL))
 			return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out (MODECFG_DOMAIN) */
+		/* Empty domain */
 		attr.isaat_af_type = MODECFG_DOMAIN;
-		attr.isaat_lv = 0;
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
 				&strattr, NULL))
 			return STF_INTERNAL_ERROR;
 
-		/* ISAKMP attr out (CISCO_SPLIT_INC) */
+		/* Empty Cisco split */
 		attr.isaat_af_type = CISCO_SPLIT_INC;
-		attr.isaat_lv = 0;
 		if (!out_struct(&attr, &isakmp_xauth_attribute_desc,
 				&strattr, NULL))
 			return STF_INTERNAL_ERROR;
@@ -980,7 +969,6 @@ static stf_status xauth_send_status(struct state *st, int status)
 		struct isakmp_attribute attr;
 		pb_stream strattr;
 
-		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_SET;
 		attrh.isama_identifier = 0;
@@ -2336,10 +2324,8 @@ static stf_status xauth_client_resp(struct state *st,
 		{
 			struct isakmp_mode_attr attrh;
 
-			zero(&attrh);
 			attrh.isama_np = ISAKMP_NEXT_NONE;
 			attrh.isama_type = ISAKMP_CFG_REPLY;
-
 			attrh.isama_identifier = ap_id;
 			if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr))
 				return STF_INTERNAL_ERROR;
@@ -2795,10 +2781,8 @@ static stf_status xauth_client_ackstatus(struct state *st,
 		struct isakmp_attribute attr;
 		pb_stream strattr, attrval;
 
-		zero(&attrh);
 		attrh.isama_np = ISAKMP_NEXT_NONE;
 		attrh.isama_type = ISAKMP_CFG_ACK;
-
 		attrh.isama_identifier = ap_id;
 		if (!out_struct(&attrh, &isakmp_attr_desc, rbody, &strattr))
 			return STF_INTERNAL_ERROR;
@@ -2811,6 +2795,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&attrval);
+
 		if (!close_message(&strattr, st))
 			return STF_INTERNAL_ERROR;
 	}

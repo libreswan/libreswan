@@ -196,6 +196,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 #endif
 
 /** output an attribute (within an SA) */
+/* Note: ikev2_out_attr is a clone, with the same bugs */
 static bool out_attr(int type,
 	      unsigned long val,
 	      struct_desc *attr_desc,
@@ -204,7 +205,6 @@ static bool out_attr(int type,
 {
 	struct isakmp_attribute attr;
 
-	zero(&attr);
 	if (val >> 16 == 0) {
 		/* short value: use TV form */
 		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TV;
@@ -223,6 +223,7 @@ static bool out_attr(int type,
 		u_int32_t nval = htonl(val);
 
 		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TLV;
+		attr.isaat_lv = sizeof(nval);
 		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
 		    !out_raw(&nval, sizeof(nval), &val_pbs,
 			     "long attribute value"))
@@ -323,7 +324,6 @@ bool ikev1_out_sa(pb_stream *outs,
 	{
 		struct isakmp_sa sa;
 
-		zero(&sa);
 		sa.isasa_np = np;
 		sa.isasa_doi = ISAKMP_DOI_IPSEC; /* all we know */
 		if (!out_struct(&sa, &isakmp_sa_desc, outs, &sa_pbs))
@@ -520,7 +520,6 @@ bool ikev1_out_sa(pb_stream *outs,
 				bool oakley_keysize = FALSE;
 				bool ipsec_keysize = FALSE;
 
-				zero(&trans);
 				trans.isat_np = (tn == p->trans_cnt - 1) ?
 						ISAKMP_NEXT_NONE :
 						ISAKMP_NEXT_T;
@@ -603,17 +602,12 @@ bool ikev1_out_sa(pb_stream *outs,
 					if (st->sec_ctx != NULL &&
 					    st->st_connection->labeled_ipsec) {
 						struct isakmp_attribute attr;
-
-						zero(&attr);
 						pb_stream val_pbs;
+
 						attr.isaat_af_type =
 							secctx_attr_value |
 							ISAKMP_ATTR_AF_TLV;
 
-						DBG(DBG_EMITTING,
-						    DBG_log("secctx_attr_value=%d, type=%d",
-							    secctx_attr_value,
-							    attr.isaat_af_type));
 						if (!out_struct(&attr,
 								attr_desc,
 								&trans_pbs,
@@ -623,6 +617,8 @@ bool ikev1_out_sa(pb_stream *outs,
 						    DBG_log("placing security context attribute in the out going structure"));
 						DBG(DBG_EMITTING,
 						    DBG_log("sending ctx_doi"));
+
+						/* size is 1 byte so host order and network order is the same */
 						if (!out_raw(&st->sec_ctx->
 							        ctx_doi,
 							     sizeof(st->sec_ctx
@@ -630,8 +626,10 @@ bool ikev1_out_sa(pb_stream *outs,
 							     &val_pbs,
 							     " variable length sec ctx: ctx_doi"))
 							return_on(ret, FALSE);
+
 						DBG(DBG_EMITTING,
 						    DBG_log("sending ctx_alg"));
+						/* size is 1 byte so host order and network order is the same */
 						if (!out_raw(&st->sec_ctx->
 							        ctx_alg,
 							     sizeof(st->sec_ctx
@@ -641,28 +639,35 @@ bool ikev1_out_sa(pb_stream *outs,
 							return_on(ret, FALSE);
 						DBG(DBG_EMITTING,
 						    DBG_log("sending ctx_len after conversion to network byte order"));
+
+						/* network order */
 						u_int16_t net_ctx_len = htons(st->sec_ctx->ctx_len);
+
 						if (!out_raw(&net_ctx_len,
 							     sizeof(st->sec_ctx
 								    ->ctx_len),
 							     &val_pbs,
 							     " variable length sec ctx: ctx_len"))
 							return_on(ret, FALSE);
-						/* Sending '\0'  with sec ctx as we get it from kernel */
+
+						/* Sending '\0' with sec ctx as we get it from kernel */
+
+						/* ??? host order */
 						if (!out_raw(st->sec_ctx->
 							     sec_ctx_value,
 							     st->sec_ctx->
 							     ctx_len, &val_pbs,
 							     " variable length sec ctx"))
 							return_on(ret, FALSE);
+
 						DBG(DBG_EMITTING,
 						    DBG_log("placed security context attribute in the out going structure"));
 						close_output_pbs(&val_pbs);
+
 						DBG(DBG_EMITTING,
 						    DBG_log("end of security context attribute in the out going structure"));
 					}
 #endif
-
 				}
 
 
@@ -1922,19 +1927,18 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 #ifdef HAVE_LABELED_IPSEC
 			if (a.isaat_af_type ==
 			    (secctx_attr_value | ISAKMP_ATTR_AF_TLV) ) {
-				pb_stream *   pbs = &attr_pbs;
+				pb_stream *pbs = &attr_pbs;
+
 				if (!parse_secctx_attr(pbs, st))
 					return FALSE;
-			} else {
+			} else
 #endif
-			loglog(RC_LOG_SERIOUS,
-			       "unsupported IPsec attribute %s",
-			       enum_show(&ipsec_attr_names, a.isaat_af_type));
-			return FALSE;
-
-#ifdef HAVE_LABELED_IPSEC
-		}
-#endif
+			{
+				loglog(RC_LOG_SERIOUS,
+				       "unsupported IPsec attribute %s",
+				       enum_show(&ipsec_attr_names, a.isaat_af_type));
+				return FALSE;
+			}
 		}
 
 		if (ipcomp_inappropriate) {
