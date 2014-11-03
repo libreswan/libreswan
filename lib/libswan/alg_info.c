@@ -1121,22 +1121,15 @@ struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
  */
 void alg_info_addref(struct alg_info *alg_info)
 {
-	if (alg_info != NULL) {
-		alg_info->ref_cnt++;
-	}
+	alg_info->ref_cnt++;
 }
-void alg_info_delref(struct alg_info **alg_info_p)
-{
-	struct alg_info *alg_info = *alg_info_p;
 
-	if (alg_info != NULL) {
-		passert(alg_info->ref_cnt != 0);
-		alg_info->ref_cnt--;
-		if (alg_info->ref_cnt == 0) {
-			alg_info_free(alg_info);
-		}
-		*alg_info_p = NULL;
-	}
+void alg_info_delref(struct alg_info *alg_info)
+{
+	passert(alg_info->ref_cnt != 0);
+	alg_info->ref_cnt--;
+	if (alg_info->ref_cnt == 0)
+		alg_info_free(alg_info);
 }
 
 /* snprint already parsed transform list (alg_info) */

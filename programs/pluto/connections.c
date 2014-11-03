@@ -236,12 +236,6 @@ void delete_connection(struct connection *c, bool relations)
 		cur_connection == c ? NULL : cur_connection;
 
 	lset_t old_cur_debugging = cur_debugging;
-	union {
-		struct alg_info **ppai;
-		struct alg_info_esp **ppai_esp;
-		struct alg_info_ike **ppai_ike;
-	} palg_info;
-
 	set_cur_connection(c);
 
 	/*
@@ -323,10 +317,17 @@ void delete_connection(struct connection *c, bool relations)
 	free_generalNames(c->requested_ca, TRUE);
 
 	gw_delref(&c->gw_info);
-	palg_info.ppai_esp = &c->alg_info_esp;
-	alg_info_delref(palg_info.ppai);
-	palg_info.ppai_ike = &c->alg_info_ike;
-	alg_info_delref(palg_info.ppai);
+
+	if (c->alg_info_ike != NULL) {
+		alg_info_delref(&c->alg_info_ike->ai);
+		c->alg_info_ike = NULL;
+	}
+
+	if (c->alg_info_esp != NULL) {
+		alg_info_delref(&c->alg_info_esp->ai);
+		c->alg_info_esp = NULL;
+	}
+
 	pfree(c);
 }
 
@@ -758,13 +759,14 @@ static void unshare_connection_strings(struct connection *c)
 	}
 
 	/* increment references to algo's, if any */
-	if (c->alg_info_ike) {
+	if (c->alg_info_ike != NULL)
 		alg_info_addref(&c->alg_info_ike->ai);
-	}
 
-	if (c->alg_info_esp) {
+	if (c->alg_info_esp != NULL)
 		alg_info_addref(&c->alg_info_esp->ai);
-	}
+
+	if (c->pool !=  NULL)
+		reference_addresspool(c->pool);
 }
 
 static bool load_end_certificate(const char *name, struct end *dst)
