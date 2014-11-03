@@ -1429,6 +1429,19 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	unsigned char *roof= e_pbs->roof;
 	PK11SymKey *cipherkey, *authkey;
 
+	if (st != NULL && !st->hidden_variables.st_skeyid_calculated)
+	{
+		DBG(DBG_CRYPT | DBG_CONTROL, {
+				ipstr_buf b;
+				DBG_log("received encrypted packet from %s:%u "
+						" but no exponents for state #%lu"
+						" to decrypt it",
+						ipstr(&md->sender, &b),
+						(unsigned)md->sender_port,
+						st->st_serialno);
+				});
+		return STF_FAIL;
+	}
 	/*
 	 * check to see if length is plausible.  Need room for:
 	 * - IV (at start)
