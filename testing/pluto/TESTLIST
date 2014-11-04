@@ -205,8 +205,9 @@ kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
 kvmplutotest	dpd-08-netkey	wip
-kvmplutotest	ikev2-liveness-05	wip
-kvmplutotest	ikev2-liveness-06	wip
+kvmplutotest	ikev2-liveness-05	good
+kvmplutotest	ikev2-liveness-06	good
+kvmplutotest	ikev2-liveness-07	good
 
 # Delete SA test.
 kvmplutotest	delete-sa-01	good
