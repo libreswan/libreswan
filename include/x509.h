@@ -235,4 +235,5 @@ extern bool match_subj_to_gn(x509cert_t *cert, generalName_t *gn);
 
 /* filter eliminating the directory entries '.' and '..' */
 typedef struct dirent dirent_t;
+
 #endif /* _X509_H */
