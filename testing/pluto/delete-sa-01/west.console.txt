@@ -60,7 +60,7 @@ west #
  # show the tunnel!
 west #
  ipsec eroute
-8          192.1.2.45/32      -> 192.1.2.23/32      => tun0x1001@192.1.2.23
+8          192.1.2.45/32      -> 192.1.2.23/32      => tun0x1000@192.1.2.23
 west #
  # "Time to shut down my computer!"...
 west #

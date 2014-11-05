@@ -72,7 +72,7 @@
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "xauth.h"
+#include "ikev1_xauth.h"
 #include "addresspool.h"
 #include "nat_traversal.h"
 
@@ -136,28 +136,36 @@ void release_connection(struct connection *c, bool relations)
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
-	struct connection *d = NULL, *conn_next_tmp = NULL, *conn_list = NULL;
-	struct host_pair *p = NULL;
+	struct host_pair *p = c->host_pair;
+	struct connection *d;
+	struct connection *conn_next_tmp;
+	struct connection *conn_list = NULL;
 	ip_address new_addr;
-	char *dnshostname;
+	char *dnshostname = c->dnshostname;
 
-	p = c->host_pair;
-	d = p ? p->connections : NULL;
+	/* ??? perhaps we should return early if dnshostname == NULL */
 
-	if (d == NULL ||
-		p == NULL ||
-		d->dnshostname == NULL ||
-		ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL ||
-		sameaddr(&new_addr, &p->him.addr))
+	if (p == NULL)
 		return;
 
-	/* remember this dnshostname */
-	dnshostname = c->dnshostname;
+	d = p->connections;
+
+	/* ??? looks as if addr_family is not allowed to change.  Bug? */
+	/* ??? why are we using d->dnshostname instead of c->hostname? */
+	if (d == NULL ||
+	    d->dnshostname == NULL ||
+	    ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL ||
+	    sameaddr(&new_addr, &p->him.addr))
+		return;
 
 	for (; d != NULL; d = conn_next_tmp) {
 		conn_next_tmp = d->hp_next;
-		if (d->dnshostname &&
-			streq(d->dnshostname, dnshostname)) {
+		/*
+		 * ??? this test used to assume that dnshostname != NULL
+		 * if d->dnshostname != NULL.  Is that true?
+		 */
+		if (d->dnshostname != NULL && dnshostname != NULL &&
+		    streq(d->dnshostname, dnshostname)) {
 			/*
 			 * If there is a dnshostname and it is the same as
 			 * the one that has changed, then change
@@ -173,9 +181,8 @@ void update_host_pairs(struct connection *c)
 		}
 	}
 
-	if (conn_list) {
-		d = conn_list;
-		for (; d != NULL; d = conn_next_tmp) {
+	if (conn_list != NULL) {
+		for (d = conn_list; d != NULL; d = conn_next_tmp) {
 			/*
 			 * connect the connection to the new host_pair
 			 */
@@ -192,10 +199,13 @@ void update_host_pairs(struct connection *c)
 }
 
 /* Delete a connection */
-
 static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
+
+	if (e->ca_path.ty != CERT_NONE && e->ca_path.u.x509 != NULL)
+		release_authcert_chain(e->ca_path.u.x509);
+
 	freeanychunk(e->ca);
 	release_cert(e->cert);
 	pfreeany(e->updown);
@@ -227,9 +237,9 @@ void delete_connection(struct connection *c, bool relations)
 
 	lset_t old_cur_debugging = cur_debugging;
 	union {
-		struct alg_info** ppai;
-		struct alg_info_esp** ppai_esp;
-		struct alg_info_ike** ppai_ike;
+		struct alg_info **ppai;
+		struct alg_info_esp **ppai_esp;
+		struct alg_info_ike **ppai_ike;
 	} palg_info;
 
 	set_cur_connection(c);
@@ -574,8 +584,7 @@ size_t format_end(char *buf,
 
 			if (needed > room)
 				loglog(RC_BADID,
-					"format_end: buffer too small for "
-					"dohost_name - should not happen\n");
+					"format_end: buffer too small for dohost_name - should not happen");
 		}
 	}
 
@@ -697,14 +706,17 @@ static size_t format_connection(char *buf, size_t buf_len,
 			FALSE, c->policy, oriented(*c));
 }
 
+static void unshare_connection_end_certs(struct end *e)
+{
+	/* share_x checks for CERT_NONE */
+	share_cert(e->cert);
+	share_authcerts(e->ca_path);
+}
 /* spd_route's with end's get copied in xauth.c */
 void unshare_connection_end_strings(struct end *e)
 {
 	/* do "left" */
 	unshare_id_content(&e->id);
-
-	if(e->cert.ty != CERT_NONE)
-		share_cert(e->cert);
 
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
@@ -740,22 +752,24 @@ static void unshare_connection_strings(struct connection *c)
 	/* do "right" */
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		unshare_connection_end_strings(&sr->this);
+		unshare_connection_end_certs(&sr->this);
 		unshare_connection_end_strings(&sr->that);
+		unshare_connection_end_certs(&sr->that);
 	}
 
 	/* increment references to algo's, if any */
 	if (c->alg_info_ike) {
-		alg_info_addref(IKETOINFO(c->alg_info_ike));
+		alg_info_addref(&c->alg_info_ike->ai);
 	}
 
 	if (c->alg_info_esp) {
-		alg_info_addref(ESPTOINFO(c->alg_info_esp));
+		alg_info_addref(&c->alg_info_esp->ai);
 	}
 	if (c->pool !=  NULL)
 		reference_addresspool(c->pool);
 }
 
-static void load_end_certificate(const char *name, struct end *dst)
+static bool load_end_certificate(const char *name, struct end *dst)
 {
 	realtime_t valid_until;
 	cert_t cert;
@@ -767,7 +781,7 @@ static void load_end_certificate(const char *name, struct end *dst)
 	dst->cert.ty = CERT_NONE;
 
 	if (name == NULL)
-		return;
+		return FALSE;
 
 	DBG(DBG_CONTROL, DBG_log("loading certificate %s", name));
 	dst->cert_filename = clone_str(name, "certificate name");
@@ -781,7 +795,7 @@ static void load_end_certificate(const char *name, struct end *dst)
 				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;
-			return;
+			return FALSE;
 		}
 	}
 
@@ -814,6 +828,62 @@ static void load_end_certificate(const char *name, struct end *dst)
 		bad_case(cert.ty);
 	}
 
+	return TRUE;
+}
+
+static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
+{
+	x509cert_t *ac = x509_get_authcerts_chain();
+	x509cert_t *new = NULL, *iac = NULL;
+	char ibuf[ASN1_BUF_LEN], tbuf[ASN1_BUF_LEN];
+
+	zero(&dst->ca_path);
+	dst->ca_path.ty = CERT_NONE;
+
+	/* don't load a ca_path */
+	if (issuer_dn.ptr == NULL || issuer_dn.len < 1)
+		return;
+
+	/* find the issuing cert */
+	while (ac != NULL) {
+		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags &&
+					!same_dn(ac->issuer, ac->subject)) { /* no root CA!*/
+			new = clone_thing(*ac, "x509cert_t");
+			new->next = NULL;
+			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
+			DBG(DBG_X509, DBG_log("load_end_ca_path : end cert issuer is %s",
+									ibuf));
+			break;
+		}
+		ac = ac->next;
+	}
+	/* starting with the issuer's CA copy the path down */
+	if (new != NULL) {
+		dst->ca_path.ty = CERT_X509_SIGNATURE;
+		dst->ca_path.u.x509 = new;
+
+		while ((iac = get_authcert(new->issuer,
+					   new->authKeySerialNumber,
+					   new->authKeyID, AUTH_CA)) != NULL) {
+			x509cert_t *rootcheck = NULL;
+
+			rootcheck = get_authcert(iac->issuer,
+					         iac->authKeySerialNumber,
+						 iac->authKeyID, AUTH_CA);
+
+			/* root cert is next, but we don't want it in the chain */
+			if (rootcheck != NULL && (same_dn(iac->subject,
+							  rootcheck->subject)))
+				break;
+
+			dntoa(tbuf, ASN1_BUF_LEN, iac->subject);
+			DBG(DBG_X509, DBG_log("load_end_ca_path : adding %s to chain",
+						tbuf));
+			new->next = clone_thing(*iac, "x509cert_t");
+			new = new->next;
+			new->next = NULL;
+		}
+	}
 }
 
 static bool extract_end(struct end *dst, const struct whack_end *src,
@@ -855,7 +925,9 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	}
 
 	/* load local end certificate and extract ID, if any */
-	load_end_certificate(src->cert, dst);
+	if (load_end_certificate(src->cert, dst))
+		load_end_ca_path(dst->cert.u.x509->issuer, dst);
+
 	/* ??? what should we do on load_end_certificate failure? */
 
 	/* does id has wildcards? */
@@ -914,7 +986,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 			er = ttoaddr(dst->host_addr_name, 0, AF_UNSPEC,
 				&dst->host_addr);
 
-			/*The above call wipes out the port, put it again*/
+			/* The above call wipes out the port, put it again */
 			port = htons(dst->port);
 			setportof(port, &dst->host_addr);
 
@@ -1055,38 +1127,53 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static struct connection *find_connection_by_reqid(uint32_t reqid)
+static struct connection *find_connection_by_reqid(reqid_t reqid)
 {
 	struct connection *c;
 
-	if (reqid >= IPSEC_MANUAL_REQID_MAX -3 ) {
+	/* find base reqid */
+	if (reqid > IPSEC_MANUAL_REQID_MAX) {
 		reqid &= ~3;
 	}
 
-	for (c = connections; c != NULL; c = c->ac_next) {
+	for (c = connections; c != NULL; c = c->ac_next)
 		if (c->spd.reqid == reqid)
-			return c;
-	}
+			break;
 
-	return NULL;
+	return c;
 }
 
-static uint32_t gen_reqid(void)
+/*
+ * generate a base reqid for automatic keying
+ *
+ * We are actually allocating a group of four contiguous
+ * numbers: one is used for each SA in an SA bundle.
+ *
+ * - must not be in range 0 to IPSEC_MANUAL_REQID_MAX
+ * - is a multiple of 4 (not actually a requirement?)
+ * - does not duplicate any currently in use
+ */
+static reqid_t gen_reqid(void)
 {
-	uint32_t start;
-	static uint32_t reqid = IPSEC_MANUAL_REQID_MAX & ~3;
+	static reqid_t	last_reqid = IPSEC_MANUAL_REQID_MAX + 1;
+	reqid_t r = last_reqid;
 
-	start = reqid;
-	do {
-		reqid += 4;
-		if (reqid == 0)
-			reqid = (IPSEC_MANUAL_REQID_MAX & ~3) + 4;
-		if (!find_connection_by_reqid(reqid))
-			return reqid;
-	} while (reqid != start);
+	passert(r % 4 == 0);
+	for (;;) {
+		r += 4;	/* may wrap */
+		/* don't use range 0 to IPSEC_MANUAL_REQID_MAX */
+		if (r <= IPSEC_MANUAL_REQID_MAX)
+			r = IPSEC_MANUAL_REQID_MAX + 1;
 
-	exit_log("unable to allocate reqid");
-	return 0; /* never reached, here to make compiler happy */
+		if (r == last_reqid) {
+			/* gone around the clock without success */
+			exit_log("unable to allocate reqid");
+		}
+		if (!find_connection_by_reqid(r)) {
+			last_reqid = r;
+			return r;
+		}
+	}
 }
 
 static bool have_wm_certs(const struct whack_message *wm)
@@ -1147,7 +1234,7 @@ void add_connection(const struct whack_message *wm)
 		break;
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 		loglog(RC_LOG_SERIOUS,
-			"Must specify either AH or ESP.\n");
+			"Must specify either AH or ESP.");
 		return;
 	}
 
@@ -1212,13 +1299,13 @@ void add_connection(const struct whack_message *wm)
 					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
-				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
+				char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf);
+				DBG_log("phase2alg string values: %s", buf);
 			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->ai.alg_info_cnt == 0) {
@@ -1231,7 +1318,7 @@ void add_connection(const struct whack_message *wm)
 				}
 			} else {
 				loglog(RC_LOG_SERIOUS,
-					"esp string error: %s",
+					"phase2alg string error: %s",
 					err_buf);
 				pfree(c);
 				return;
@@ -1322,7 +1409,6 @@ void add_connection(const struct whack_message *wm)
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
-
 		/*
 		 * Set this up so that we can log which end is which after
 		 * orient
@@ -1330,13 +1416,18 @@ void add_connection(const struct whack_message *wm)
 		c->spd.this.left = TRUE;
 		c->spd.that.left = FALSE;
 
+		c->send_ca = wm->send_ca;
+
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
-		if (same_rightca)
+		if (same_rightca) {
 			c->spd.that.ca = c->spd.this.ca;
-		else if (same_leftca)
+			c->spd.that.ca_path = c->spd.this.ca_path;
+		} else if (same_leftca) {
 			c->spd.this.ca = c->spd.that.ca;
+			c->spd.this.ca_path = c->spd.that.ca_path;
+		}
 
 		/*
 		 * How to add addresspool only for responder?
@@ -1382,10 +1473,10 @@ void add_connection(const struct whack_message *wm)
 
 		c->spd.next = NULL;
 
-		if (wm->sa_reqid) {
-			c->spd.reqid = wm->sa_reqid;
-		} else {
+		if (wm->sa_reqid == 0) {
 			c->spd.reqid = gen_reqid();
+		} else {
+			c->spd.reqid = wm->sa_reqid;
 		}
 
 		/* set internal fields */
@@ -2250,8 +2341,8 @@ struct connection *route_owner(struct connection *c,
 			struct spd_route **esrp)
 {
 	struct connection *d,
-	*best_ro = c,
-	*best_ero = c;
+		*best_ro = c,
+		*best_ero = c;
 	struct spd_route *srd, *src;
 	struct spd_route *best_sr, *best_esr;
 	enum routing_t best_routing, best_erouting;
@@ -3066,7 +3157,7 @@ static struct connection *fc_try(const struct connection *c,
 						continue;
 					}
 
-					virtualwhy = is_virtual_net_allowed(
+					virtualwhy = check_virtual_net_allowed(
 							d,
 							peer_net,
 							&sr->that.host_addr);
@@ -3122,9 +3213,8 @@ static struct connection *fc_try(const struct connection *c,
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
 			libreswan_log(
-				"peer proposal was reject in a virtual "
-				"connection policy because:");
-			libreswan_log("  %s", virtualwhy);
+				"peer proposal was reject in a virtual connection policy: %s",
+				virtualwhy);
 		}
 	}
 
@@ -3233,7 +3323,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 }
 
-struct connection *find_client_connection(struct connection *c,
+struct connection *find_client_connection(struct connection *const c,
 					const ip_subnet *our_net,
 					const ip_subnet *peer_net,
 					const u_int8_t our_protocol,
@@ -3282,12 +3372,12 @@ struct connection *find_client_connection(struct connection *c,
 
 			if (samesubnet(&sr->this.client, our_net) &&
 				samesubnet(&sr->that.client, peer_net) &&
-				(sr->this.protocol == our_protocol) &&
+				sr->this.protocol == our_protocol &&
 				(!sr->this.port ||
-					(sr->this.port == our_port)) &&
+					sr->this.port == our_port) &&
 				(sr->that.protocol == peer_protocol) &&
 				(!sr->that.port ||
-					(sr->that.port == peer_port))) {
+					sr->that.port == peer_port)) {
 				passert(oriented(*c));
 				if (routed(sr->routing))
 					return c;
@@ -3297,6 +3387,11 @@ struct connection *find_client_connection(struct connection *c,
 		}
 
 		/* exact match? */
+		/*
+		 * clang 3.4 says: warning: Access to field 'host_pair' results in a dereference of a null pointer (loaded from variable 'c')
+		 * If so, the caller must have passed NULL for it
+		 * and earlier references would be wrong (segfault).
+		 */
 		d = fc_try(c, c->host_pair, NULL, our_net, peer_net,
 			our_protocol, our_port, peer_protocol, peer_port);
 
@@ -3737,4 +3832,27 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 		}
 	}
 	return ue;
+}
+
+void liveness_clear_connection(struct connection *c, char *v)
+{
+	libreswan_log("%s: Clearing Connection %s[%lu] %s",v, c->name,
+			c->instance_serial, enum_name(&connection_kind_names,
+				c->kind));
+	/*
+	 * For CK_INSTANCE, delete_states_by_connection() will clear
+	 * Note that delete_states_by_connection changes c->kind but we need
+	 * to remember what it was to know if we still need to unroute after delete
+	 */
+	if (c->kind == CK_INSTANCE) {
+		delete_states_by_connection(c, TRUE);
+	} else {
+		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
+		delete_states_by_connection(c, TRUE);
+		DBG(DBG_DPD,
+				DBG_log("%s: unrouting connection %s",
+					enum_name(&connection_kind_names,
+						c->kind), v));
+		unroute_connection(c); /* --unroute */
+	}
 }

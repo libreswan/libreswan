@@ -508,7 +508,7 @@ static void usage(void)
 	exit(10);
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "config", required_argument, NULL, 'C' },
 	{ "debug", no_argument, NULL, 'D' },
@@ -726,6 +726,7 @@ int main(int argc, char *argv[])
 				conn->desired_state == STARTUP_START) {
 				if (verbose)
 					printf(" %s", conn->name);
+				resolve_defaultroute(conn);
 				starter_whack_add_conn(cfg, conn);
 			}
 		}

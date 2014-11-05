@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>sendca</emphasis></term>
+  <listitem>
+<para>
+How much of our available X.509 trust chain to send with the End certificate,
+excluding any root CA's. Specifying <emphasis remap="B">issuer</emphasis>
+sends just the issuing intermediate CA, while <emphasis remap="B"> all</emphasis>
+will send the entire chain of intermediate CA's.<emphasis remap="B">none</emphasis>
+(the default) will not send any CA certs.
+</para>
+  </listitem>
+  </varlistentry>

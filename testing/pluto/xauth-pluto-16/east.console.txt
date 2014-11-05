@@ -58,10 +58,10 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u
-mainca                                                       ,,   
-road                                                         P,,  
-north                                                        P,,  
 hashsha2                                                     P,,  
+mainca                                                       ,,   
+north                                                        P,,  
+road                                                         P,,  
 west                                                         P,,  
 west-ec                                                      P,,  
 east #

@@ -33,25 +33,25 @@ west #
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev2'
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.1.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.0.1.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
 Loading conn 'westnet-eastnet-ikev2b'
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.100.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.200.0/24
-  leftsubnet=192.0.100.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
 found netkey IPsec stack
 west #
  echo "initdone"
@@ -63,9 +63,10 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
+sending cert request for "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test EC CA, E=testing@libreswan.org"
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
@@ -80,13 +81,8 @@ establishing CHILD_SA westnet-eastnet-ikev2b
 generating CREATE_CHILD_SA request 2 [ SA No TSi TSr ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 2 [ N(NO_ADD_SAS) ]
-received NO_ADDITIONAL_SAS notify, no CHILD_SA built
-failed to establish CHILD_SA, keeping IKE_SA
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 2 [ N(NO_ADD_SAS) ]
-received message ID 2, expected 3. Ignored
-establishing connection 'westnet-eastnet-ikev2b' failed
+parsed CREATE_CHILD_SA response 2 [ SA No TSi TSr ]
+connection 'westnet-eastnet-ikev2b' established successfully
 west #
  # give failure time to happen
 west #
@@ -102,6 +98,8 @@ Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24 
+westnet-eastnet-ikev2b{2}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2b{2}:   192.0.100.0/24 === 192.0.200.0/24 
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

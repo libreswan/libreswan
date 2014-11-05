@@ -112,6 +112,18 @@ static const struct keyword_enum_value kw_dpdaction_values[] = {
 static const struct keyword_enum_values kw_dpdaction_list = VALUES_INITIALIZER(kw_dpdaction_values);
 
 /*
+ * Values for sendca={none,issuer,all}
+ */
+
+static const struct keyword_enum_value kw_sendca_values[] = {
+	{ "none",	CA_SEND_NONE },
+	{ "issuer",	CA_SEND_ISSUER },
+	{ "all",	CA_SEND_ALL },
+};
+
+static const struct keyword_enum_values kw_sendca_list = VALUES_INITIALIZER(kw_sendca_values);
+
+/*
  * Values for auto={add,start,route,ignore}
  */
 static const struct keyword_enum_value kw_auto_values[] = {
@@ -343,8 +355,6 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "fragicmp",       kv_config, kt_bool,      KBF_FRAGICMP, NOT_ENUM },
 	{ "hidetos",        kv_config, kt_bool,      KBF_HIDETOS, NOT_ENUM },
 	{ "uniqueids",      kv_config, kt_bool,      KBF_UNIQUEIDS, NOT_ENUM },
-	{ "retransmits",    kv_config, kt_bool,      KBF_RETRANSMITS,
-	  NOT_ENUM },
 	{ "overridemtu",    kv_config, kt_number,    KBF_OVERRIDEMTU,
 	  NOT_ENUM },
 	{ "strictcrlpolicy", kv_config, kt_bool,      KBF_STRICTCRLPOLICY,
@@ -485,13 +495,13 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KSF_POLICY_LABEL, NOT_ENUM },
 #endif
 
-	/* Cisco interop: remote peer type*/
+	/* Cisco interop: remote peer type */
 	{ "remote_peer_type", kv_conn | kv_auto | kv_alias, kt_enum, KBF_REMOTEPEERTYPE,
 	  &kw_remote_peer_type },	/* obsolete _ */
 	{ "remote-peer-type", kv_conn | kv_auto, kt_enum, KBF_REMOTEPEERTYPE,
 	  &kw_remote_peer_type },
 
-	/* Network Manager support*/
+	/* Network Manager support */
 #ifdef HAVE_NM
 	{ "nm_configured", kv_conn | kv_auto | kv_alias, kt_bool, KBF_NMCONFIGURED,
 	  NOT_ENUM },	/* obsolete _ */
@@ -584,6 +594,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "dpdaction",      kv_conn | kv_auto, kt_enum, KBF_DPDACTION,
 	  &kw_dpdaction_list },
+
+	{ "sendca",	    kv_conn | kv_auto, kt_enum, KBF_SEND_CA,
+	  &kw_sendca_list },
 
 	{ "mtu",            kv_conn | kv_auto, kt_number, KBF_CONNMTU,
 	  NOT_ENUM },

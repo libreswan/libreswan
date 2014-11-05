@@ -30,37 +30,55 @@
 
 #include <pk11pub.h>
 
-static void sha256_hash_final(u_char *hash, sha256_context *ctx)
-{
-	unsigned int len;
-	SECStatus s;
+/* sha256 thunks */
 
-	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_256_DIGEST_SIZE);
-	passert(s == SECSuccess);
-	passert(len == SHA2_256_DIGEST_SIZE);
-	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
+static void sha256_init_thunk(union hash_ctx *ctx)
+{
+	sha256_init(&ctx->ctx_sha256);
 }
 
-static void sha384_hash_final(u_char *hash, sha512_context *ctx)
+static void sha256_write_thunk(union hash_ctx *ctx, const unsigned char *datap, size_t length)
 {
-	unsigned int len;
-	SECStatus s;
-
-	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_384_DIGEST_SIZE);
-	passert(s == SECSuccess);
-	passert(len == SHA2_384_DIGEST_SIZE);
-	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
+	sha256_write(&ctx->ctx_sha256, datap, length);
 }
 
-static void sha512_hash_final(u_char *hash, sha512_context *ctx)
+static void sha256_final_thunk(u_char *hash, union hash_ctx *ctx)
 {
-	unsigned int len;
-	SECStatus s;
+	sha256_final(hash, &ctx->ctx_sha256);
+}
 
-	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_512_DIGEST_SIZE);
-	passert(s == SECSuccess);
-	passert(len == SHA2_512_DIGEST_SIZE);
-	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
+/* sha384 thunks */
+
+static void sha384_init_thunk(union hash_ctx *ctx)
+{
+	sha384_init(&ctx->ctx_sha384);
+}
+
+static void sha384_write_thunk(union hash_ctx *ctx, const unsigned char *datap, size_t length)
+{
+	sha384_write(&ctx->ctx_sha384, datap, length);
+}
+
+static void sha384_final_thunk(u_char *hash, union hash_ctx *ctx)
+{
+	sha384_final(hash, &ctx->ctx_sha384);
+}
+
+/* sha512 thunks */
+
+static void sha512_init_thunk(union hash_ctx *ctx)
+{
+	sha512_init(&ctx->ctx_sha512);
+}
+
+static void sha512_write_thunk(union hash_ctx *ctx, const unsigned char *datap, size_t length)
+{
+	sha512_write(&ctx->ctx_sha512, datap, length);
+}
+
+static void sha512_final_thunk(u_char *hash, union hash_ctx *ctx)
+{
+	sha512_final(hash, &ctx->ctx_sha512);
 }
 
 static struct hash_desc hash_desc_sha2_256 = {
@@ -72,11 +90,11 @@ static struct hash_desc hash_desc_sha2_256 = {
 	.hash_ctx_size = sizeof(sha256_context),
 	.hash_key_size = SHA2_256_DIGEST_SIZE,
 	.hash_digest_len = SHA2_256_DIGEST_SIZE,
-	.hash_integ_len = 0,    /*Not applicable*/
+	.hash_integ_len = 0,    /* Not applicable */
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))sha256_init,
-	.hash_update = (void (*)(void *, const u_char *, size_t ))sha256_write,
-	.hash_final = (void (*)(u_char *, void *))sha256_hash_final,
+	.hash_init = sha256_init_thunk,
+	.hash_update = sha256_write_thunk,
+	.hash_final = sha256_final_thunk,
 };
 
 static struct hash_desc integ_desc_sha2_256 = {
@@ -90,9 +108,9 @@ static struct hash_desc integ_desc_sha2_256 = {
 	.hash_digest_len = SHA2_256_DIGEST_SIZE,
 	.hash_integ_len = SHA2_256_DIGEST_SIZE / 2,
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))sha256_init,
-	.hash_update = (void (*)(void *, const u_char *, size_t ))sha256_write,
-	.hash_final = (void (*)(u_char *, void *))sha256_hash_final,
+	.hash_init = sha256_init_thunk,
+	.hash_update = sha256_write_thunk,
+	.hash_final = sha256_final_thunk,
 };
 
 static struct hash_desc hash_desc_sha2_384 = {
@@ -101,14 +119,14 @@ static struct hash_desc hash_desc_sha2_384 = {
 		    .algo_id =   OAKLEY_SHA2_384,
 		    .algo_v2id = IKEv2_PRF_HMAC_SHA2_384,
 		    .algo_next = NULL, },
-	.hash_ctx_size = sizeof(sha512_context),
+	.hash_ctx_size = sizeof(sha384_context),
 	.hash_key_size = SHA2_384_DIGEST_SIZE,
 	.hash_digest_len = SHA2_384_DIGEST_SIZE,
-	.hash_integ_len = 0,    /*Not applicable*/
+	.hash_integ_len = 0,    /* Not applicable */
 	.hash_block_size = HMAC_BUFSIZE * 2,
-	.hash_init = (void (*)(void *))sha384_init,
-	.hash_update = (void (*)(void *, const u_char *, size_t ))sha512_write,
-	.hash_final = (void (*)(u_char *, void *))sha384_hash_final,
+	.hash_init = sha384_init_thunk,
+	.hash_update = sha384_write_thunk,
+	.hash_final = sha384_final_thunk,
 };
 
 static struct hash_desc integ_desc_sha2_384 = {
@@ -117,14 +135,14 @@ static struct hash_desc integ_desc_sha2_384 = {
 		    .algo_id =   OAKLEY_SHA2_384,
 		    .algo_v2id = IKEv2_AUTH_HMAC_SHA2_384_192,
 		    .algo_next = NULL, },
-	.hash_ctx_size = sizeof(sha512_context),
+	.hash_ctx_size = sizeof(sha384_context),
 	.hash_key_size = SHA2_384_DIGEST_SIZE,
 	.hash_digest_len = SHA2_384_DIGEST_SIZE,
 	.hash_integ_len = SHA2_384_DIGEST_SIZE / 2,
 	.hash_block_size = HMAC_BUFSIZE * 2,
-	.hash_init = (void (*)(void *))sha384_init,
-	.hash_update = (void (*)(void *, const u_char *, size_t ))sha512_write,
-	.hash_final = (void (*)(u_char *, void *))sha384_hash_final,
+	.hash_init = sha384_init_thunk,
+	.hash_update = sha384_write_thunk,
+	.hash_final = sha384_final_thunk,
 };
 
 static struct hash_desc hash_desc_sha2_512 = {
@@ -136,11 +154,11 @@ static struct hash_desc hash_desc_sha2_512 = {
 	.hash_ctx_size = sizeof(sha512_context),
 	.hash_key_size = SHA2_512_DIGEST_SIZE,
 	.hash_digest_len = SHA2_512_DIGEST_SIZE,
-	.hash_integ_len = 0,      /*Not applicable*/
+	.hash_integ_len = 0,      /* Not applicable */
 	.hash_block_size = HMAC_BUFSIZE * 2,
-	.hash_init = (void (*)(void *))sha512_init,
-	.hash_update = (void (*)(void *, const u_char *, size_t ))sha512_write,
-	.hash_final = (void (*)(u_char *, void *))sha512_hash_final,
+	.hash_init = sha512_init_thunk,
+	.hash_update = sha512_write_thunk,
+	.hash_final = sha512_final_thunk,
 };
 
 static struct hash_desc integ_desc_sha2_512 = {
@@ -154,28 +172,22 @@ static struct hash_desc integ_desc_sha2_512 = {
 	.hash_digest_len = SHA2_512_DIGEST_SIZE,
 	.hash_integ_len = SHA2_512_DIGEST_SIZE / 2,
 	.hash_block_size = HMAC_BUFSIZE * 2,
-	.hash_init = (void (*)(void *))sha512_init,
-	.hash_update = (void (*)(void *, const u_char *, size_t ))sha512_write,
-	.hash_final = (void (*)(u_char *, void *))sha512_hash_final,
+	.hash_init = sha512_init_thunk,
+	.hash_update = sha512_write_thunk,
+	.hash_final = sha512_final_thunk,
 };
 
 /*
  * IKE_ALG_INIT_NAME: ike_alg_sha2_init
  */
-int ike_alg_sha2_init(void)
+void ike_alg_sha2_init(void)
 {
-	int ret;
+	if (ike_alg_register_hash(&hash_desc_sha2_512))
+		ike_alg_add(&integ_desc_sha2_256.common);
 
-	ret = ike_alg_register_hash(&hash_desc_sha2_512);
-	if (ret == 0) {
-		ret = ike_alg_register_hash(&hash_desc_sha2_384);
-		if (ret == 0) {
-			ret = ike_alg_register_hash(&hash_desc_sha2_256);
+	if (ike_alg_register_hash(&hash_desc_sha2_384))
+		ike_alg_add(&integ_desc_sha2_384.common);
 
-			ike_alg_add((struct ike_alg *) &integ_desc_sha2_256);
-			ike_alg_add((struct ike_alg *) &integ_desc_sha2_384);
-			ike_alg_add((struct ike_alg *) &integ_desc_sha2_512);
-		}
-	}
-	return ret;
+	if (ike_alg_register_hash(&hash_desc_sha2_256))
+		ike_alg_add(&integ_desc_sha2_512.common);
 }

@@ -1,19 +1,2 @@
-The network is configured as follows:
-
-    POLE
-      |
-    NORTH
-      |
-      NIC---EAST--SUNRISE
-
-East does not have north's certificate cached. East will send a CR to north, 
-and north will transmit its certificate to east via nic. North's certificate
-is issued by a CA east accepts (cacerts/caCert.pem), and so should be
-accepted.
-
-East has to set "leftca=" so that it will know which CA to ask for.
-
-NIC serves as a simple router between NORTH and EAST.
-
-The simple test is to connect the POLE and SUNRISE networks
-together. This is tested with a ping, a la "basic-pluto-03"
+As basic-pluto-01 but east uses a CA to validate west. west sends a CR to east
+as well as its cert.

@@ -22,9 +22,9 @@
  */
 
 struct ipsec_errs {
-	__u32 ips_alg_errs;                     /* number of algorithm errors */
-	__u32 ips_auth_errs;                    /* # of authentication errors */
-	__u32 ips_encsize_errs;                 /* # of encryption size errors*/
-	__u32 ips_encpad_errs;                  /* # of encryption pad  errors*/
-	__u32 ips_replaywin_errs;               /* # of pkt sequence errors */
+	__u32 ips_alg_errs;		/* number of algorithm errors */
+	__u32 ips_auth_errs;		/* # of authentication errors */
+	__u32 ips_encsize_errs;		/* # of encryption size errors */
+	__u32 ips_encpad_errs;		/* # of encryption pad errors */
+	__u32 ips_replaywin_errs;	/* # of pkt sequence errors */
 };

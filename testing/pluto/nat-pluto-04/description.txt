@@ -15,7 +15,3 @@ from EAST's network.
 East is configured with proxy_arp set, such that east will respond
 to ARPs' for addresses that it has a route for, that are in east's
 network.
-
-There is also another conn with *subnetwithin=0.0.0.0/0 configured, so
-this tests the overlap detection code that we suspect might not be perfect
-yet.

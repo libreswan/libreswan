@@ -366,7 +366,7 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
 }
 
 /*
- * is_virtual_net_allowed -
+ * check_virtual_net_allowed -
  * Check if the virtual network the client proposes is acceptable to us
  *
  * @param c Connection structure (active)
@@ -374,51 +374,50 @@ static bool net_in_list(const ip_subnet *peer_net, const ip_subnet *list,
  * @param his_addr Peers IP Address
  * @return bool True if allowed
  */
-err_t is_virtual_net_allowed(const struct connection *c,
+err_t check_virtual_net_allowed(const struct connection *c,
 			     const ip_subnet *peer_net,
 			     const ip_address *his_addr)
 {
+	const struct virtual_t *virt = c->spd.that.virt;
 	err_t why = NULL;
 
-	if (c->spd.that.virt == NULL)
+	if (virt == NULL)
 		return NULL;
 
-	if (c->spd.that.virt->flags & F_VIRTUAL_HOST) {
+	if (virt->flags & F_VIRTUAL_HOST) {
 		if (!subnetishost(peer_net)) {
-			why = "only virtual host IPs are allowed";
-			return why;
+			return "only virtual host IPs are allowed";
 		}
 	}
 
-	if (c->spd.that.virt->flags & F_VIRTUAL_NO) {
-		if (subnetishost(peer_net) &&
-		    addrinsubnet(his_addr, peer_net))
+	if (virt->flags & F_VIRTUAL_NO) {
+		if (subnetishost(peer_net) && addrinsubnet(his_addr, peer_net))
 			return NULL;
 	}
 
-	if (c->spd.that.virt->flags & F_VIRTUAL_PRIVATE) {
+	if (virt->flags & F_VIRTUAL_PRIVATE) {
 		if (net_in_list(peer_net, private_net_incl,
 				private_net_incl_len) &&
-		    !net_in_list(peer_net, private_net_excl, private_net_excl_len))
+		    !net_in_list(peer_net, private_net_excl,
+				private_net_excl_len))
 			return NULL;
 
 		why = "a private network virtual IP was required, but the proposed IP did not match our list (virtual-private=)";
 	}
 
-	if (c->spd.that.virt->n_net) {
-		if (net_in_list(peer_net, c->spd.that.virt->net,
-				c->spd.that.virt->n_net))
+	if (virt->n_net) {
+		/* ??? if why is already set, is this behaviour correct? */
+		if (net_in_list(peer_net, virt->net, virt->n_net))
 			return NULL;
 
 		why = "a specific network IP was required, but the proposed IP did not match our list (subnet=vhost:list)";
 	}
 
-	if (c->spd.that.virt->flags & F_VIRTUAL_ALL) {
+	if (virt->flags & F_VIRTUAL_ALL) {
+		/* ??? if why is already set, is this behaviour correct? */
 		/* %all must only be used for testing - log it */
-		loglog(RC_LOG_SERIOUS, "Warning - "
-			"v%s:%%all must only be used for testing",
-			(c->spd.that.virt->flags & F_VIRTUAL_HOST) ?
-				"host" : "net");
+		loglog(RC_LOG_SERIOUS, "Warning - v%s:%%all must only be used for testing",
+			(virt->flags & F_VIRTUAL_HOST) ? "host" : "net");
 		return NULL;
 	}
 

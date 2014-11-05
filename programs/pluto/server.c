@@ -94,7 +94,6 @@
 
 static const int on = TRUE;     /* by-reference parameter; constant, we hope */
 
-bool no_retransmits = FALSE;
 char *pluto_vendorid;
 
 static pid_t addconn_child_pid = 0;
@@ -164,7 +163,7 @@ err_t init_ctl_socket(void)
 		if (g != NULL) {
 			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
 				loglog(RC_LOG_SERIOUS,
-				       "Can not chgrp ctl fd(%d) to gid=%d: %s\n",
+				       "Can not chgrp ctl fd(%d) to gid=%d: %s",
 				       ctl_fd, g->gr_gid, strerror(errno));
 			}
 		}
@@ -392,8 +391,8 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 #endif
 
 	/* poke a hole for IKE messages in the IPsec layer */
-	if (kernel_ops->exceptsocket) {
-		if (!(*kernel_ops->exceptsocket)(fd, AF_INET)) {
+	if (kernel_ops->exceptsocket != NULL) {
+		if (!kernel_ops->exceptsocket(fd, AF_INET)) {
 			close(fd);
 			return -1;
 		}
@@ -406,7 +405,7 @@ void find_ifaces(void)
 {
 	mark_ifaces_dead();
 
-	if (kernel_ops->process_ifaces) {
+	if (kernel_ops->process_ifaces != NULL) {
 #if !defined(__CYGWIN32__)
 		kernel_ops->process_ifaces(find_raw_ifaces4());
 		kernel_ops->process_ifaces(find_raw_ifaces6());
@@ -461,19 +460,18 @@ static void childhandler(int sig UNUSED)
 	sigchildflag = TRUE;
 }
 
-/* perform wait4() on all children */
+/* perform waitpid() for any children */
 static void reapchildren(void)
 {
 	pid_t child;
 	int status;
-	struct rusage r;
 
 	sigchildflag = FALSE;
 	errno = 0;
 
-	while ((child = wait3(&status, WNOHANG, &r)) > 0) {
+	while ((child = waitpid(-1, &status, WNOHANG)) > 0) {
 		/* got a child to reap */
-		if (adns_reapchild(child, status))
+		if (adns_reapchild(child))
 			continue;
 
 		if (child == addconn_child_pid) {
@@ -641,7 +639,7 @@ void call_server(void)
 			if (kern_interface != NO_KERNEL) {
 				int fd = *kernel_ops->async_fdp;
 
-				if (kernel_ops->process_queue)
+				if (kernel_ops->process_queue != NULL)
 					kernel_ops->process_queue();
 				if (maxfd < fd)
 					maxfd = fd;
@@ -664,7 +662,7 @@ void call_server(void)
 			/* see if helpers need attention */
 			enumerate_crypto_helper_response_sockets(&readfds);
 
-			if (no_retransmits || next_time < 0) {
+			if (next_time < 0) {
 				/* select without timer */
 
 				ndes = lsw_select(maxfd + 1, &readfds,
@@ -769,7 +767,7 @@ void call_server(void)
 
 			passert(ndes == 0);
 		}
-		if (next_event() == 0 && !no_retransmits) {
+		if (next_event() == 0) {
 			/* timer event ready */
 			DBG(DBG_CONTROL, DBG_log("*time to handle event"));
 			handle_timer_event();
@@ -1097,12 +1095,11 @@ static bool send_packet(struct state *st, const char *where,
 				  NON_ESP_MARKER_SIZE : 0;
 
 	const u_int8_t *ptr;
-	unsigned long len = natt_bonus + alen + blen;
+	size_t len = natt_bonus + alen + blen;
 	ssize_t wlen;
 
 	if (len > MAX_OUTPUT_UDP_SIZE) {
-		DBG_log("send_ike_msg(): really too big %lu bytes",
-			(unsigned long) len);
+		DBG_log("send_ike_msg(): really too big %zu bytes", len);
 		return FALSE;
 	}
 
@@ -1125,8 +1122,8 @@ static bool send_packet(struct state *st, const char *where,
 
 	DBG(DBG_CONTROL | DBG_RAW, {
 		ipstr_buf b;
-		DBG_log("sending %lu bytes for %s through %s:%d to %s:%u (using #%lu)",
-			(unsigned long) len,
+		DBG_log("sending %zu bytes for %s through %s:%d to %s:%u (using #%lu)",
+			len,
 			where,
 			st->st_interface->ip_dev->id_rname,
 			st->st_interface->port,
@@ -1167,8 +1164,8 @@ static bool send_packet(struct state *st, const char *where,
 		usleep(500000);
 		ipstr_buf b;
 
-		DBG_log("JACOB 2-2: resending %lu bytes for %s through %s:%d to %s:%u:",
-			(unsigned long) len,
+		DBG_log("JACOB 2-2: resending %zu bytes for %s through %s:%d to %s:%u:",
+			len,
 			where,
 			st->st_interface->ip_dev->id_rname,
 			st->st_interface->port,
@@ -1252,12 +1249,11 @@ static bool send_frags(struct state *st, const char *where)
 
 			memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
 			ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION; /* one octet */
-			/* Do we need to set any of ISAKMP_FLAG_ENCRYPTION,
-			 * ISAKMP_FLAGS_MSG_R or ISAKMP_FLAGS_IKE_I ?
-			 * seems there might be disagreement between Cisco and Microsoft.
+			/* Do we need to set any of ISAKMP_FLAGS_v1_ENCRYPTION?
+			 * Seems there might be disagreement between Cisco and Microsoft.
 			 * st->st_suspended_md->hdr.isa_flags; TODO must this be set?
 			 */
-			ih->isa_flags &= ~ISAKMP_FLAG_ENCRYPTION;
+			ih->isa_flags &= ~ISAKMP_FLAGS_v1_ENCRYPTION;
 			ih->isa_length = htonl(isakmppl_len);
 		}
 
@@ -1313,11 +1309,12 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 	      (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
 	      st->st_seen_fragvid) ||
 	     ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-	      st->st_seen_fragments)))
+	      st->st_seen_fragments))) {
 		return send_frags(st, where);
-	else
+	} else {
 		return send_packet(st, where, FALSE, st->st_tpacket.ptr,
-				   st->st_tpacket.len, NULL, (size_t) 0);
+				   st->st_tpacket.len, NULL, 0);
+	}
 }
 
 bool send_ike_msg(struct state *st, const char *where)
@@ -1339,5 +1336,5 @@ bool send_keepalive(struct state *st, const char *where)
 	static const unsigned char ka_payload = 0xff;
 
 	return send_packet(st, where, TRUE, &ka_payload, sizeof(ka_payload),
-			   NULL, (size_t) 0);
+			   NULL, 0);
 }

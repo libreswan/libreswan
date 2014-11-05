@@ -1,3 +1,9 @@
 Testing AH mismatch with sha2_256 versus aes_xcbc
 
 This test should fail
+
+NOTE: buglet in east.pluto.log:
+
+| AH IPsec Transform [(null)] refused
+
+It is because ah_transformid_names starts with AH_MD5 (2) and md5 is 1 over the ikev1 wire

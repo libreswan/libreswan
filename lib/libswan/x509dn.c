@@ -50,6 +50,7 @@
 #ifdef USE_SHA2
 #include "sha2.h"
 #endif
+#include "aes_xcbc.h"
 #include <prerror.h>
 #include <nss.h>
 #include <pk11pub.h>
@@ -683,7 +684,7 @@ int dntoa(char *dst, size_t dstlen, chunk_t dn)
 	err_t ugh = NULL;
 	chunk_t str;
 
-	str.ptr = (unsigned char*)dst;
+	str.ptr = (unsigned char *)dst;
 	str.len = dstlen;
 	ugh = dn_parse(dn, &str);
 
@@ -699,7 +700,7 @@ int dntoa(char *dst, size_t dstlen, chunk_t dn)
 /*
  * Same as dntoa but prints a special string for a null dn
  */
-int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char* null_dn)
+int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
 {
 	if (dn.ptr == NULL)
 		return snprintf(dst, dstlen, "%s", null_dn);
@@ -957,7 +958,7 @@ bool same_dn(chunk_t a, chunk_t b)
 
 /*
  * compare two distinguished names by comparing the individual RDNs.
- * A single'*' character designates a wildcard RDN in DN b.
+ * A single '*' character designates a wildcard RDN in DN b.
  * If wildcards is NULL, exact match is required.
  */
 bool match_dn(chunk_t a, chunk_t b, int *wildcards)
@@ -1114,7 +1115,7 @@ void free_x509cert(x509cert_t *cert)
 	if (cert != NULL) {
 		free_generalNames(cert->subjectAltName, FALSE);
 		free_generalNames(cert->crlDistributionPoints, FALSE);
-		pfreeany(cert->certificate.ptr);
+		freeanychunk(cert->certificate);
 		pfree(cert);
 		cert = NULL;
 	}
@@ -1154,10 +1155,11 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_MD5:
 	case OID_MD5_WITH_RSA:
 	{
-		MD5_CTX context;
-		osMD5Init(&context);
-		osMD5Update(&context, tbs.ptr, tbs.len);
-		osMD5Final(digest->ptr, &context);
+		lsMD5_CTX context;
+
+		lsMD5Init(&context);
+		lsMD5Update(&context, tbs.ptr, tbs.len);
+		lsMD5Final(digest->ptr, &context);
 		digest->len = MD5_DIGEST_SIZE;
 		return TRUE;
 	}
@@ -1168,6 +1170,7 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA1_WITH_RSA_OIW:
 	{
 		SHA1_CTX context;
+
 		SHA1Init(&context);
 		SHA1Update(&context, tbs.ptr, tbs.len);
 		SHA1Final(digest->ptr, &context);
@@ -1179,35 +1182,23 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA256:
 	case OID_SHA256_WITH_RSA:
 	{
-		unsigned int len;
-		SECStatus s;
 		sha256_context context;
 
 		sha256_init(&context);
 		sha256_write(&context, tbs.ptr, tbs.len);
-		s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len,
-				SHA2_256_DIGEST_SIZE);
-		passert(s == SECSuccess);
-		passert(len == SHA2_256_DIGEST_SIZE);
-		PK11_DestroyContext(context.ctx_nss, PR_TRUE);
+		sha256_final(digest->ptr, &context);
 		digest->len = SHA2_256_DIGEST_SIZE;
 		return TRUE;
 	}
+
 	case OID_SHA384:
 	case OID_SHA384_WITH_RSA:
 	{
-		sha512_context context;
-		unsigned int len;
-		SECStatus s;
+		sha384_context context;
 
 		sha384_init(&context);
-		s = PK11_DigestOp(context.ctx_nss, tbs.ptr, tbs.len);
-		passert(s == SECSuccess);
-		s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len,
-				SHA2_384_DIGEST_SIZE);
-		passert(s == SECSuccess);
-		passert(len == SHA2_384_DIGEST_SIZE);
-		PK11_DestroyContext(context.ctx_nss, PR_TRUE);
+		sha384_write(&context, tbs.ptr, tbs.len);
+		sha384_final(digest->ptr, &context);
 		digest->len = SHA2_384_DIGEST_SIZE;
 		return TRUE;
 	}
@@ -1215,17 +1206,10 @@ static bool compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	case OID_SHA512_WITH_RSA:
 	{
 		sha512_context context;
-		unsigned int len;
-		SECStatus s;
 
 		sha512_init(&context);
 		sha512_write(&context, tbs.ptr, tbs.len);
-
-		s = PK11_DigestFinal(context.ctx_nss, digest->ptr, &len,
-				SHA2_512_DIGEST_SIZE);
-		passert(s == SECSuccess);
-		passert(len == SHA2_512_DIGEST_SIZE);
-		PK11_DestroyContext(context.ctx_nss, PR_TRUE);
+		sha512_final(digest->ptr, &context);
 		digest->len = SHA2_512_DIGEST_SIZE;
 		return TRUE;
 	}

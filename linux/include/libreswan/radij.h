@@ -74,7 +74,7 @@ struct radij_node {
 	struct  radij_mask *rj_mklist;          /* list of masks contained in subtree */
 	struct  radij_node *rj_p;               /* parent */
 	short rj_b;                             /* bit offset; -1-index(netmask) */
-	char rj_bmask;                          /* node: mask for bit test*/
+	char rj_bmask;                          /* node: mask for bit test */
 	u_char rj_flags;                        /* enumerated next */
 #define RJF_NORMAL      1                       /* leaf contains normal route */
 #define RJF_ROOT        2                       /* leaf is root leaf for tree */

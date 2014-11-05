@@ -34,7 +34,7 @@ north #
  ipsec auto --route north--east-pass
 north #
  (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
-[1] XXXX
+[X] XXXX
 north #
  ipsec auto --route north--east-l2tp
 north #

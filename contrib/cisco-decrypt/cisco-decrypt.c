@@ -1,5 +1,5 @@
 
-/* IPSec VPN client compatible with Cisco equipment.
+/* IPsec VPN client compatible with Cisco equipment.
    Copyright (C) 2004-2005 Maurice Massar
 
    This program is free software; you can redistribute it and/or modify

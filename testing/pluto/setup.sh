@@ -1,5 +1,5 @@
 
-if [ -z "$LIBRESWANSRCDIR" ]
+if [ -z "${LIBRESWANSRCDIR:-}" ]
 then
 	if [ -f ../../kvmsetup.sh ]
 	then

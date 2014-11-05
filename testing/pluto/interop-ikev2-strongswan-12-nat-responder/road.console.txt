@@ -13,6 +13,8 @@ road #
 Redirecting to: systemctl start ipsec.service
 [ 00.00] 
 road #
+ /testing/pluto/bin/wait-until-pluto-started
+road #
  ipsec auto --add road-eastnet-ikev2
 002 added connection description "road-eastnet-ikev2"
 road #
@@ -59,7 +61,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 road #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+ if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
 road #
 road #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

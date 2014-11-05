@@ -70,6 +70,7 @@ endif
 
 CFLAGS+=-DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
+CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libaes_xcbc
 
 LOGSRCS=lswlog.c lswid.c
 

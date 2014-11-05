@@ -8,7 +8,7 @@
 #include <pk11pub.h>
 #include "lswlog.h"
 
-void SHA1Init(SHA1_CTX* context)
+void SHA1Init(SHA1_CTX *context)
 {
 	SECStatus status;
 
@@ -18,13 +18,13 @@ void SHA1Init(SHA1_CTX* context)
 	passert(status == SECSuccess);
 }
 
-void SHA1Update(SHA1_CTX* context, const unsigned char* data, u_int32_t len)
+void SHA1Update(SHA1_CTX *context, const unsigned char *data, size_t len)
 {
 	SECStatus status = PK11_DigestOp(context->ctx_nss, data, len);
 	passert(status == SECSuccess);
 }
 
-void SHA1Final(unsigned char digest[SHA1_DIGEST_SIZE], SHA1_CTX* context)
+void SHA1Final(unsigned char digest[SHA1_DIGEST_SIZE], SHA1_CTX *context)
 {
 	unsigned int length;
 	SECStatus status = PK11_DigestFinal(context->ctx_nss, digest, &length,

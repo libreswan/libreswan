@@ -198,9 +198,9 @@ const char *src;	/* known to be full length */
 char *dst;
 size_t dstlen;	/* not large enough is a failure */
 {
-	char *p;
+	const char *p;
 	unsigned byte;
-	static char hex[] = "0123456789abcdef";
+	static const char hex[] = "0123456789abcdef";
 
 	if (dstlen < 1)
 		return SHORT;
@@ -238,10 +238,10 @@ const char *src;	/* known to be full length */
 char *dst;
 size_t dstlen;
 {
-	char *p;
+	const char *p;
 	unsigned byte1;
 	unsigned byte2;
-	static char base64[] =
+	static const char base64[] =
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 	if (dstlen < 3)
@@ -336,6 +336,10 @@ size_t errlen;
 		return "unknown character in input";
 
 	strcpy(errp, pre);
+	/*
+	 * clang 3.4 says "warning: Assigned value is garbage or undefined".
+	 * This does not seem to be correct.
+	 */
 	ch = *(src + BADOFF(errcode));
 	if (isprint(ch)) {
 		buf[0] = ch;

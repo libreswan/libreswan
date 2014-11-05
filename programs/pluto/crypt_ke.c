@@ -157,14 +157,16 @@ void calc_nonce(struct pluto_crypto_req *r)
 		     DEFAULT_NONCE_SIZE));
 }
 
-stf_status build_ke(struct pluto_crypto_req_cont *cn,
-		    struct state *st,
-		    const struct oakley_group_desc *group,
-		    enum crypto_importance importance)
+/* Note: not all cn's are the same subtype */
+stf_status build_ke_and_nonce(
+	struct pluto_crypto_req_cont *cn,
+	struct state *st,
+	const struct oakley_group_desc *group,
+	enum crypto_importance importance)
 {
 	struct pluto_crypto_req rd;
 
-	pcr_nonce_init(&rd, pcr_build_kenonce, importance);
+	pcr_nonce_init(&rd, pcr_build_ke_and_nonce, importance);
 	rd.pcr_d.kn.oakley_group = group->group;
 
 	cn->pcrc_serialno = st->st_serialno;

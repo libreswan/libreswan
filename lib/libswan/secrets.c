@@ -191,7 +191,7 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 /*
  * forms the keyid from the public exponent e and modulus n
  */
-void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize)
+void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.ptr == 0x00) {
@@ -700,6 +700,7 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 {
 	char friendly_name[PATH_MAX]; /* XXX: is there an NSS limit < PATH_MAX ? */
 	err_t ugh = NULL;
+	bool unexpected;
 
 	zero(&friendly_name);
 
@@ -710,7 +711,13 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 	else
 		memcpy(friendly_name, flp->tok, flp->cur - flp->tok);
 
-	if (shift()) {
+	unexpected = shift();
+	/* we used to recommend people to provide an empty passphrase for NSS keys */
+	if (unexpected && (strcmp(flp->tok, "\"\"") == 0 || strcmp(flp->tok, "''") == 0)) {
+		libreswan_log("RSA private key file -- ignoring empty token after friendly_name -- this will be an error in a future release");
+		unexpected = shift();
+	}
+	if (unexpected) {
 		ugh = "RSA private key file -- unexpected token after friendly_name";
 	} else {
 		ugh = extract_and_add_secret_from_nss_cert_file(rsak, friendly_name);
@@ -1108,6 +1115,10 @@ static void lsw_process_secret_records(struct secret **psecrets)
 					flp->filename, flp->lino);
 				continue;	/* abandon this record */
 			}
+			/*
+			 * The above test checks that there is enough space for strcpy
+			 * but clang 3.4 thinks the destination will overflow.
+			 */
 			strcpy(p, flp->tok);
 			(void) shift();	/* move to Record Boundary, we hope */
 			if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename"))

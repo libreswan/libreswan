@@ -46,7 +46,7 @@
  */
 #define MAX_BUF 6
 
-unsigned char*temporary_cyclic_buffer(void)
+unsigned char *temporary_cyclic_buffer(void)
 {
 	/* MAX_BUF internal buffers */
 	static unsigned char buf[MAX_BUF][IDTOA_BUF];
@@ -304,7 +304,8 @@ void remove_metachar(const char *src, char *dst, size_t dstlen)
 		if ((*src >= '0' && *src <= '9') ||
 			(*src >= 'a' && *src <= 'z') ||
 			(*src >= 'A' && *src <= 'Z') ||
-			*src == '_' || *src == '-') {
+			*src == '_' || *src == '-' ||
+			*src == '.') {
 			*dst++ = *src;
 			dstlen--;
 		} else {
@@ -455,7 +456,6 @@ bool same_id(const struct id *a, const struct id *b)
 /* compare two struct id values, DNs can contain wildcards */
 bool match_id(const struct id *a, const struct id *b, int *wildcards)
 {
-
 	bool match;
 
 	if (b->kind == ID_NONE) {

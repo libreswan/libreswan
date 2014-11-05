@@ -151,7 +151,7 @@ static void usage(char *s, FILE *f)
 	exit(-1);
 }
 
-static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
+static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		       char *life_opt[life_maxsever][life_maxtype],
 		       char *myoptarg)
 {
@@ -168,32 +168,25 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 			life_severity = life_hard;
 		} else {
 			fprintf(stderr,
-				"%s: missing lifetime severity in %s, optargt=0p%p, optargp=0p%p, sizeof(\"soft\")=%d\n",
+				"%s: missing lifetime severity in %s\n",
 				progname,
-				optargt,
-				optargt,
-				optargp,
-				(int)sizeof("soft"));
+				optargt);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 		if (debug) {
 			fprintf(stdout,
-				"%s: debug: life_severity=%d, optargt=0p%p=\"%s\", optargp=0p%p=\"%s\", sizeof(\"soft\")=%d\n",
+				"%s: debug: life_severity=%d (%s)\n",
 				progname,
 				life_severity,
-				optargt,
-				optargt,
-				optargp,
-				optargp,
-				(int)sizeof("soft"));
+				optargt);
 		}
 		if (*optargp++ != '-') {
 			fprintf(stderr,
 				"%s: expected '-' after severity of lifetime parameter to --life option.\n",
 				progname);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 		if (debug) {
 			fprintf(stdout,
@@ -218,7 +211,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				progname,
 				optargt);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 		if (debug) {
 			fprintf(stdout,
@@ -232,14 +225,14 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				progname,
 				optargt,
 				life_opt[life_severity][life_type]);
-			return 1;
+			return TRUE;
 		}
 		if (*optargp++ != '=') {
 			fprintf(stderr,
 				"%s: expected '=' after type of lifetime parameter to --life option.\n",
 				progname);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 		if (debug) {
 			fprintf(stdout,
@@ -258,7 +251,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				optargt + strlen(optargt),
 				optargp);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 
 		errno = 0;
@@ -270,7 +263,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				progname,
 				myoptarg,
 				optargp);
-			return 1;
+			return TRUE;
 		}
 
 		switch (*endptr) {
@@ -279,6 +272,11 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		case ' ':
 			break;	/* OK */
 		default:
+			/*
+			 * clang 3.4: warning: Null pointer passed as an argument to a 'nonnull' parameter
+			 * This is about the strlen(myoptarg).
+			 * It seems wrong.
+			 */
 			fprintf(stderr,
 				"%s: Invalid character='%c' at offset %d in lifetime option parameter: '%s', parameter string is %d characters long, %d valid value characters found.\n",
 				progname,
@@ -287,7 +285,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				myoptarg,
 				(int)strlen(myoptarg),
 				(int)(strcspn(optargp, ", ") - 1));
-			return 1;
+			return TRUE;
 		}
 		life_opt[life_severity][life_type] = optargt;
 		if (debug) {
@@ -298,10 +296,10 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		optargp = endptr + 1;
 	} while (*endptr != '\0');
 
-	return 0;
+	return FALSE;
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "ah", 1, 0, 'H' },
 	{ "esp", 1, 0, 'P' },
@@ -386,14 +384,14 @@ static int decode_esp(char *algname)
 				esp_info->encryptalg,
 				esp_info->authalg);
 		}
-		esp_ealg_id = esp_info->esp_ealg_id;
-		esp_aalg_id = esp_info->esp_aalg_id;
-		if (kernel_alg_proc_read() == 0) {
+		esp_ealg_id = esp_info->transid;
+		esp_aalg_id = esp_info->auth;
+		if (kernel_alg_proc_read()) {
 			err_t ugh;
 
 			proc_read_ok++;
 
-			ugh = kernel_alg_esp_enc_ok(esp_ealg_id, 0);
+			ugh = check_kernel_encrypt_alg(esp_ealg_id, 0);
 			if (ugh != NULL) {
 				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
 					"not present - %s\n",
@@ -405,13 +403,12 @@ static int decode_esp(char *algname)
 				exit(1);
 			}
 
-			ugh = kernel_alg_esp_auth_ok(esp_aalg_id, 0);
-			if (ugh != NULL) {
-				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - %s "
-					"not present\n",
+			if (!kernel_alg_esp_auth_ok(esp_aalg_id, 0)) {
+				/* ??? this message looks badly worded */
+				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
 					progname, esp_aalg_id,
 					enum_name(&auth_alg_names,
-						  esp_aalg_id), ugh);
+						  esp_aalg_id));
 				exit(1);
 			}
 		}
@@ -490,7 +487,7 @@ int main(int argc, char *argv[])
 	__u32 spi = 0;
 	int c;
 	ip_said said;
-	const char* error_s;
+	const char *error_s;
 	char ipsaid_txt[SATOT_BUF];
 
 	int outif = 0;
@@ -539,7 +536,7 @@ int main(int argc, char *argv[])
 				longopts, 0)) != EOF) {
 		unsigned long u;
 		err_t ugh;
-		
+
 		switch (c) {
 		case 'g':
 			debug = TRUE;
@@ -1115,13 +1112,13 @@ int main(int argc, char *argv[])
 			 * if explicit keylen told in encrypt algo, eg "aes128"
 			 * check actual keylen "equality"
 			 */
-			if (esp_info->esp_ealg_keylen &&
-			    esp_info->esp_ealg_keylen != keylen) {
+			if (esp_info->enckeylen &&
+			    esp_info->enckeylen != keylen) {
 				fprintf(stderr, "%s: invalid encryption keylen=%d, "
 					"required %d by encrypt algo string=\"%s\"\n",
 					progname,
 					(int)keylen,
-					(int)esp_info->esp_ealg_keylen,
+					(int)esp_info->enckeylen,
 					alg_string);
 				exit(1);
 
@@ -1153,8 +1150,13 @@ int main(int argc, char *argv[])
 					(int)maxbits);
 				exit(1);
 			}
-
 		}
+		/*
+		 * ??? this break was added in a2791fda77a5cfcc6bc992fbc5019f4448112f88
+		 * It is likely correct, but we're not sure.
+		 * Luckily this code is probably never used.
+		 */
+		break;
 	case XF_IP4:
 	case XF_IP6:
 	case XF_DEL:

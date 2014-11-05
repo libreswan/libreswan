@@ -4,15 +4,15 @@ east #
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'road-eastnet-ikev2'
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=%any
   leftid=@road
+  leftsubnet=192.1.3.209/32
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.1.3.209/32
-  authby=secret
-  keyexchange=ikev2
-  auto=add
 found netkey IPsec stack
 east #
  echo "initdone"
@@ -20,10 +20,25 @@ initdone
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
 east #
- if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+ if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
+Status of IKE charon daemon (strongSwan VERSION):
+  uptime: XXX seconds, since YYY
+  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
+Listening IP addresses:
+  192.0.2.254
+  192.1.2.23
+  192.9.2.23
+Connections:
+road-eastnet-ikev2:  192.1.2.23...%any  IKEv2
+road-eastnet-ikev2:   local:  [east] uses pre-shared key authentication
+road-eastnet-ikev2:   remote: [road] uses pre-shared key authentication
+road-eastnet-ikev2:   child:  192.0.2.0/24 === 192.1.3.209/32 TUNNEL
 Security Associations (1 up, 0 connecting):
 road-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.2.254[road]
+road-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours
+road-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
 road-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP in UDP SPIs: SPISPI_i SPISPI_o
+road-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA1_96, XXX bytes_i (4 pkts, XXs ago), XXX bytes_o (4 pkts, XXs ago), rekeying in XX minutes
 road-eastnet-ikev2{1}:   192.0.2.0/24 === 192.1.3.209/32 
 east #
 east #

@@ -5,7 +5,7 @@ void add_pgp_public_key(pgpcert_t *cert, time_t until,
 			enum dns_auth_level dns_auth_level)
 {
 }
-pgpcert_t*pluto_add_pgpcert(pgpcert_t *cert)
+pgpcert_t *pluto_add_pgpcert(pgpcert_t *cert)
 {
 	return NULL;
 }
@@ -13,7 +13,7 @@ void add_x509_public_key(struct id *keyid, x509cert_t *cert, time_t until,
 			 enum dns_auth_level dns_auth_level)
 {
 }
-x509cert_t*add_x509cert(x509cert_t *cert)
+x509cert_t *add_x509cert(x509cert_t *cert)
 {
 	return NULL;
 }
@@ -36,7 +36,7 @@ void list_acerts(bool utc)
 void list_groups(bool utc)
 {
 }
-void free_ietfAttrList(ietfAttrList_t* list)
+void free_ietfAttrList(ietfAttrList_t *list)
 {
 }
 

@@ -187,49 +187,74 @@ void remove_x509_public_key(/*const*/ x509cert_t *cert)
  */
 void ikev1_decode_cert(struct msg_digest *md)
 {
+	struct connection *c = md->st->st_connection;
 	struct payload_digest *p;
+	x509cert_t *chain = NULL;
 
 	for (p = md->chain[ISAKMP_NEXT_CERT]; p != NULL; p = p->next) {
 		struct isakmp_cert *const cert = &p->payload.cert;
-		chunk_t blob;
 
-		blob.ptr = p->pbs.cur;
-		blob.len = pbs_left(&p->pbs);
 		switch (cert->isacert_type) {
 		case CERT_X509_SIGNATURE:
 		{
+			chunk_t blob;
 			x509cert_t cert2 = empty_x509cert;
 
-			if (parse_x509cert(blob, 0, &cert2)) {
-				realtime_t valid_until;
+			clonetochunk(blob, p->pbs.cur, pbs_left(&p->pbs), "cert chain blob");
 
-				if (verify_x509cert(&cert2, strict_crl_policy,
-						&valid_until /* OUT */)) {
-					DBG(DBG_X509 | DBG_PARSING,
-						DBG_log("Public key validated"));
-					add_x509_public_key(NULL, &cert2,
-							valid_until,
-							DAL_SIGNED);
-				} else {
-					libreswan_log("X.509 certificate rejected");
-				}
-				free_generalNames(cert2.subjectAltName, FALSE);
-				free_generalNames(cert2.crlDistributionPoints,
-						FALSE);
+			if (parse_x509cert(blob, 0, &cert2)) {
+				x509cert_t *new = clone_thing(cert2, "x509cert_t");
+
+				new->next = chain;
+				chain = new;
 			} else {
 				libreswan_log("Syntax error in X.509 certificate");
+				freeanychunk(blob);
 			}
 			break;
 		}
+
+/*  http://tools.ietf.org/html/rfc4945
+ *  3.3.4. PKCS #7 Wrapped X.509 Certificate
+ *
+ *  This type defines a particular encoding, not a particular certificate
+ *  type.  Implementations SHOULD NOT generate CERTs that contain this
+ *  Certificate Type.  Implementations SHOULD accept CERTs that contain
+ *  this Certificate Type because several implementations are known to
+ *  generate them.  Note that those implementations sometimes include
+ *  entire certificate hierarchies inside a single CERT PKCS #7 payload,
+ *  which violates the requirement specified in ISAKMP that this payload
+ *  contain a single certificate.
+ *
+ *  PKCS7 case forklifted from above.. Needs to be tested!
+ *
+ */
 		case CERT_PKCS7_WRAPPED_X509:
 		{
+			chunk_t blob;
 			x509cert_t *cert2 = NULL;
 
-			if (parse_pkcs7_cert(blob, &cert2))
-				store_x509certs(&cert2, strict_crl_policy);
-			else
+			clonetochunk(blob, p->pbs.cur, pbs_left(&p->pbs), "cert chain blob");
+
+			if (parse_pkcs7_cert(blob, &cert2)) {
+				/* stick new certs at front of chain */
+				/*
+				 * ??? how is memory managed for the actual cert blobs?
+				 * Is not freeing "blob" good enough?  Leaky?
+				 */
+				if (cert2 != NULL) {
+					x509cert_t *p;
+
+					for (p = cert2; p->next != NULL; p = p->next)
+						;
+					p->next = chain;
+					chain = cert2;
+				}
+			} else {
 				libreswan_log(
 					"Syntax error in PKCS#7 wrapped X.509 certificates");
+				freeanychunk(blob);
+			}
 			break;
 		}
 		default:
@@ -237,7 +262,16 @@ void ikev1_decode_cert(struct msg_digest *md)
 				"ignoring %s certificate payload",
 				enum_show(&ike_cert_type_names,
 					cert->isacert_type));
-			DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
+		}
+	}
+
+	if (chain != NULL) {
+		x509cert_t *ok = NULL;
+		/* certs are validated here */
+		store_x509certs(&chain, &ok, strict_crl_policy);
+		if (ok != NULL) {
+			c->spd.that.ca_path.u.x509 = ok;
+			c->spd.that.ca_path.ty = CERT_X509_SIGNATURE;
 		}
 	}
 }
@@ -263,7 +297,7 @@ void ikev2_decode_cert(struct msg_digest *md)
 				realtime_t valid_until;
 
 				if (verify_x509cert(&cert2, strict_crl_policy,
-						&valid_until /* OUT */)) {
+						&valid_until, NULL)) {
 					DBG(DBG_X509 | DBG_PARSING,
 						DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,
@@ -282,10 +316,10 @@ void ikev2_decode_cert(struct msg_digest *md)
 		}
 		case CERT_PKCS7_WRAPPED_X509:
 		{
-			x509cert_t *cert2 = NULL;
+			x509cert_t *cert2 = NULL, *out = NULL;
 
 			if (parse_pkcs7_cert(blob, &cert2))
-				store_x509certs(&cert2, strict_crl_policy);
+				store_x509certs(&cert2, &out, strict_crl_policy);
 			else
 				libreswan_log(
 					"Syntax error in PKCS#7 wrapped X.509 certificates");
@@ -303,6 +337,19 @@ void ikev2_decode_cert(struct msg_digest *md)
 
 /*
  * Decode the CR payload of Phase 1.
+ *
+ *  http://tools.ietf.org/html/rfc4945
+ *  3.2.4. PKCS #7 wrapped X.509 certificate
+ *
+ *  This ID type defines a particular encoding (not a particular
+ *  certificate type); some current implementations may ignore CERTREQs
+ *  they receive that contain this ID type, and the editors are unaware
+ *  of any implementations that generate such CERTREQ messages.
+ *  Therefore, the use of this type is deprecated.  Implementations
+ *  SHOULD NOT require CERTREQs that contain this Certificate Type.
+ *  Implementations that receive CERTREQs that contain this ID type MAY
+ *  treat such payloads as synonymous with "X.509 Certificate -
+ *  Signature".
  */
 void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 {
@@ -326,10 +373,9 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 					continue;
 
 				gn = alloc_thing(generalName_t, "generalName");
-				clonetochunk(ca_name, ca_name.ptr, ca_name.len,
+				clonetochunk(gn->name, ca_name.ptr, ca_name.len,
 					"ca name");
 				gn->kind = GN_DIRECTORY_NAME;
-				gn->name = ca_name;
 				gn->next = *requested_ca;
 				*requested_ca = gn;
 			}
@@ -400,6 +446,27 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 	}
 }
 
+bool ikev1_ship_CERT(u_int8_t type, chunk_t cert, pb_stream *outs, u_int8_t np)
+{
+	pb_stream cert_pbs;
+
+	struct isakmp_cert cert_hd;
+
+	zero(&cert_hd);
+	cert_hd.isacert_np = np;
+	cert_hd.isacert_type = type;
+
+	if (!out_struct(&cert_hd, &isakmp_ipsec_certificate_desc, outs,
+				&cert_pbs))
+		return FALSE;
+
+	if (!out_chunk(cert, &cert_pbs, "CERT"))
+		return FALSE;
+
+	close_output_pbs(&cert_pbs);
+	return TRUE;
+}
+
 bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 			     chunk_t ca,
 			     pb_stream *outs,
@@ -408,6 +475,7 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 	pb_stream cr_pbs;
 	struct isakmp_cr cr_hd;
 
+	zero(&cr_hd);
 	cr_hd.isacr_np = np;
 	cr_hd.isacr_type = type;
 
@@ -465,6 +533,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	pb_stream cr_pbs;
 	struct ikev2_certreq cr_hd;
 
+	zero(&cr_hd);
 	cr_hd.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL;
 	cr_hd.isacertreq_np = np;
 	cr_hd.isacertreq_enc = type;
@@ -594,7 +663,7 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 
 				if (load_cert(filelist[n]->d_name,
 						type, &cert))
-					add_authcert(cert.u.x509, auth_flags);
+					add_authcert(&cert.u.x509, auth_flags);
 
 				free(filelist[n]);	/* was malloced by scandir(3) */
 			}

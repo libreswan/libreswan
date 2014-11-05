@@ -4,17 +4,17 @@ east #
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev2'
+  authby=secret
+  auto=add
+  esp=aes128-sha1
+  ike=aes128-sha1
+  keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.1.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.0.1.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
-  ike=aes128-sha1
-  esp=aes128-sha1
 found netkey IPsec stack
 east #
  echo "initdone"
@@ -37,7 +37,7 @@ westnet-eastnet-ikev2:   remote: [west] uses pre-shared key authentication
 westnet-eastnet-ikev2:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
 Security Associations (1 up, 0 connecting):
 westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.2.45[west]
-westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r, pre-shared key reauthentication in 2 hours
+westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours
 westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA1_96, XXX bytes_i (4 pkts, XXs ago), XXX bytes_o (4 pkts, XXs ago), rekeying in XX minutes

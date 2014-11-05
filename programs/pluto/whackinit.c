@@ -199,8 +199,8 @@ struct sockaddr_un ctl_addr = { AF_UNIX, DEFAULT_CTLBASE CTL_SUFFIX };
 /* helper variables and function to encode strings from whack message */
 
 static char
-*next_str,
-*str_roof;
+	*next_str,
+	*str_roof;
 
 static bool pack_str(char **p)
 {

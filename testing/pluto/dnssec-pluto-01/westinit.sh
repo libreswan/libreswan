@@ -6,7 +6,7 @@ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 # confirm with a ping
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # ensure this test cases has USE_DNSSEC compiled pluto
-ipsec pluto --version |grep DNSSEC | sed "s/Libreswan v[^ ]* /Libreswan vVERSION /"
+ipsec pluto --version |sed "s/^.*DNSSEC.*//" 
 echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/hosts
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started

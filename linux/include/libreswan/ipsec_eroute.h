@@ -62,12 +62,12 @@ struct eroute {
 	uint32_t er_pid;
 	uint32_t er_count;
 	uint64_t er_lasttime;
-	struct sockaddr_encap er_eaddr; /* MCR get rid of _encap, it is silly*/
+	struct sockaddr_encap er_eaddr; /* MCR get rid of _encap, it is silly */
 	struct sockaddr_encap er_emask;
 	struct ident er_ident_s;
 	struct ident er_ident_d;
-	struct sk_buff* er_first;
-	struct sk_buff* er_last;
+	struct sk_buff *er_first;
+	struct sk_buff *er_last;
 };
 
 #define er_dst er_said.dst

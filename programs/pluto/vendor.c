@@ -495,36 +495,35 @@ void init_vendorid(void)
 		} else if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
 			vid->vid = clone_str(vid->data, "vid->data (ignore)");
+			/* clang 3.4 thinks that vid->data might be NULL but it won't be */
 			vid->vid_len = strlen(vid->data);
 		} else if (vid->flags & VID_MD5HASH) {
 			/** VendorID is a string to hash with MD5 **/
 			unsigned char *vidm = alloc_bytes(MD5_DIGEST_SIZE,
 							 "VendorID MD5 (ignore)");
-			unsigned const char *d =
-				(unsigned const char *)vid->data;
-			MD5_CTX ctx;
+			const unsigned char *d = (const unsigned char *)vid->data;
+			lsMD5_CTX ctx;
 
 			vid->vid = (char *)vidm;
 
-			osMD5Init(&ctx);
-			osMD5Update(&ctx, d, strlen(vid->data));
-			osMD5Final(vidm, &ctx);
+			lsMD5Init(&ctx);
+			lsMD5Update(&ctx, d, strlen(vid->data));
+			lsMD5Final(vidm, &ctx);
 			vid->vid_len = MD5_DIGEST_SIZE;
 		} else if (vid->flags & VID_FSWAN_HASH) {
 			/** FreeS/WAN 2.00+ specific hash **/
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
 			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID (ignore)");
-			MD5_CTX ctx;
+			lsMD5_CTX ctx;
 			int i;
 
 			vid->vid = vidm;
 
-			osMD5Init(&ctx);
-			osMD5Update(&ctx,
-				    (const unsigned char *)vid->data, strlen(
-					    vid->data));
-			osMD5Final(hash, &ctx);
+			lsMD5Init(&ctx);
+			lsMD5Update(&ctx, (const unsigned char *)vid->data,
+				strlen(vid->data));
+			lsMD5Final(hash, &ctx);
 			vidm[0] = 'O';
 			vidm[1] = 'E';
 #if FSWAN_VID_SIZE <= 2 + MD5_DIGEST_SIZE
@@ -601,7 +600,7 @@ static void handle_known_vendorid(struct msg_digest *md,
 	case VID_NATT_IETF_07:
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
-		/* Fall through */
+		/* FALL THROUGH */
 	case VID_NATT_RFC:
 		if (md->quirks.qnat_traversal_vid < vid->id) {
 			DBG(DBG_NATT, DBG_log(" quirks.qnat_traversal_vid set to=%d ",
@@ -718,7 +717,7 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 							      len, pvid, st);
 					return;
 				}
-			} else if ((pvid->vid_len < len)   &&
+			} else if ((pvid->vid_len < len) &&
 				   (pvid->flags & VID_SUBSTRING)) {
 				if (memeq(pvid->vid, vid, pvid->vid_len)) {
 					handle_known_vendorid(md, vid, len,
@@ -736,11 +735,14 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		char log_vid[2 * MAX_LOG_VID_LEN + 1];
 		size_t i;
 
-		zero(&log_vid);
 		for (i = 0; (i < len) && (i < MAX_LOG_VID_LEN); i++) {
+			/*
+			 * clang 3.4 thinks the vid might be NULL; wrong
+			 */
 			log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
 			log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
 		}
+		log_vid[2 * i] = '\0';
 		loglog(RC_LOG_SERIOUS,
 		       "ignoring unknown Vendor ID payload [%s%s]",
 		       log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");

@@ -164,15 +164,15 @@ struct end {
 	bool has_id_wildcards;
 	char *updown;
 	u_int16_t host_port;		/* where the IKE port is */
-	bool host_port_specific;	/* if TRUE, then IKE ports are tested for*/
+	bool host_port_specific;	/* if TRUE, then IKE ports are tested for */
 	u_int16_t port;			/* port number, if per-port keying. */
 	u_int8_t protocol;		/* transport-protocol number, if per-X keying.*/
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	char   *cert_filename;		/* where we got the certificate */
 	cert_t cert;			/* end certificate */
-
-	chunk_t ca;			/* CA distinguished name */
+	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
+	cert_t ca_path;			/* chain of CA certs */
 
 	struct virtual_t *virt;
 
@@ -192,7 +192,7 @@ struct spd_route {
 	struct end that;
 	so_serial_t eroute_owner;
 	enum routing_t routing; /* level of routing in place */
-	uint32_t reqid;
+	reqid_t reqid;
 };
 
 struct connection {
@@ -205,7 +205,7 @@ struct connection {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	unsigned long sa_priority;
-	unsigned long sa_reqid;
+	reqid_t sa_reqid;
 	int encapsulation;
 
 	/* RFC 3706 DPD */
@@ -280,6 +280,7 @@ struct connection {
 	struct connection *ac_next;	/* all connections list link */
 
 	generalName_t *requested_ca;	/* collected certificate requests */
+	enum send_ca_policy send_ca;
 #ifdef XAUTH_HAVE_PAM
 	pam_handle_t  *pamh;		/*  PAM handle for that connection  */
 #endif
@@ -480,3 +481,4 @@ extern void update_host_pairs(struct connection *c);
 
 extern void unshare_connection_end_strings(struct end *e);
 
+extern void liveness_clear_connection(struct connection *c, char *v);

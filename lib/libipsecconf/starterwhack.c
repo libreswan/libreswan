@@ -287,6 +287,7 @@ static void init_whack_msg(struct whack_message *msg)
 	msg->magic = WHACK_MAGIC;
 }
 
+/* NOT RE-ENTRANT: uses a static buffer */
 static char *connection_name(struct starter_conn *conn)
 {
 	/* If connection name is '%auto', create a new name like conn_xxxxx */
@@ -524,12 +525,13 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.sa_priority   = conn->options[KBF_PRIORITY];
 
 	if (conn->options_set[KBF_REQID]) {
-		if ((conn->options[KBF_REQID] >= IPSEC_MANUAL_REQID_MAX -3) ||
-			(conn->options[KBF_REQID] == 0)) {
+		if (conn->options[KBF_REQID] <= 0 ||
+		    conn->options[KBF_REQID] > IPSEC_MANUAL_REQID_MAX) {
 			starter_log(LOG_LEVEL_ERR,
-				"Ignoring reqid value - range must be 1-16379");
+				"Ignoring reqid value - range must be 1-%u",
+				IPSEC_MANUAL_REQID_MAX);
 		} else {
-			msg.sa_reqid   = conn->options[KBF_REQID];
+			msg.sa_reqid = conn->options[KBF_REQID];
 		}
 	}
 
@@ -560,6 +562,12 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 				conn->name);
 		}
 	}
+
+	if (conn->options_set[KBF_SEND_CA])
+		msg.send_ca = conn->options[KBF_SEND_CA];
+	else
+		msg.send_ca = CA_SEND_NONE;
+
 
 	if (conn->options_set[KBF_FORCEENCAP])
 		msg.forceencaps = conn->options[KBF_FORCEENCAP];
@@ -593,14 +601,14 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.sha2_truncbug = conn->options[KBF_SHA2_TRUNCBUG];
 
 #ifdef HAVE_NM
-	/*Network Manager support*/
+	/* Network Manager support */
 	if (conn->options_set[KBF_NMCONFIGURED])
 		msg.nmconfigured = conn->options[KBF_NMCONFIGURED];
 
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	/*Labeled ipsec support*/
+	/* Labeled ipsec support */
 	if (conn->options_set[KBF_LOOPBACK])
 		msg.loopback = conn->options[KBF_LOOPBACK];
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" loopback=%d", conn->name,

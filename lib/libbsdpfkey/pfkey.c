@@ -391,11 +391,16 @@ u_int type;
  *	positive: success and return length sent.
  *	-1	: error occured, and set errno.
  */
-int pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
-int so;
-u_int satype, mode;
-struct sockaddr *src, *dst;
-u_int32_t min, max, reqid, seq;
+int pfkey_send_getspi(
+		int so,
+		u_int satype,
+		u_int mode,
+		struct sockaddr *src,
+		struct sockaddr *dst,
+		u_int32_t min,
+		u_int32_t max,
+		reqid_t reqid,
+		u_int32_t seq)
 {
 	struct sadb_msg *newmsg;
 	caddr_t ep;
@@ -519,18 +524,26 @@ u_int32_t min, max, reqid, seq;
  *	positive: success and return length sent.
  *	-1	: error occured, and set errno.
  */
-int pfkey_send_update(so, satype, mode, src, dst, spi, reqid, wsize,
-		      keymat, e_type, e_keylen, a_type, a_keylen, flags,
-		      l_alloc, l_bytes, l_addtime, l_usetime, seq)
-int so;
-u_int satype, mode, wsize;
-struct sockaddr *src, *dst;
-u_int32_t spi, reqid;
-caddr_t keymat;
-u_int e_type, e_keylen, a_type, a_keylen, flags;
-u_int32_t l_alloc;
-u_int64_t l_bytes, l_addtime, l_usetime;
-u_int32_t seq;
+int pfkey_send_update(
+	int so,
+	u_int satype,
+	u_int mode,
+	struct sockaddr *src,
+	struct sockaddr *dst,
+	u_int32_t spi,
+	reqid_t reqid,
+	u_int wsize,
+	caddr_t keymat,
+	u_int e_type,
+	u_int e_keylen,
+	u_int a_type,
+	u_int a_keylen,
+	u_int flags,
+	u_int32_t l_alloc,
+	u_int64_t l_bytes,
+	u_int64_t l_addtime,
+	u_int64_t l_usetime,
+	u_int32_t seq)
 {
 	int len;
 	if ((len = pfkey_send_x1(so, SADB_UPDATE, satype, mode, src, dst, spi,
@@ -551,26 +564,35 @@ u_int32_t seq;
  *	positive: success and return length sent.
  *	-1	: error occured, and set errno.
  */
-int pfkey_send_add(so, satype, mode, src, dst, spi, reqid, wsize,
-		   keymat, e_type, e_keylen, a_type, a_keylen, flags,
-		   l_alloc, l_bytes, l_addtime, l_usetime, seq)
-int so;
-u_int satype, mode, wsize;
-struct sockaddr *src, *dst;
-u_int32_t spi, reqid;
-caddr_t keymat;
-u_int e_type, e_keylen, a_type, a_keylen, flags;
-u_int32_t l_alloc;
-u_int64_t l_bytes, l_addtime, l_usetime;
-u_int32_t seq;
+int pfkey_send_add(
+		int so;
+		u_int satype,
+		u_int mode,
+		struct sockaddr *src,
+		struct sockaddr *dst,
+		u_int32_t spi,
+		reqid_t reqid;
+		u_int wsize,
+		caddr_t keymat;
+		u_int e_type,
+		u_int e_keylen,
+		u_int a_type,
+		u_int a_keylen,
+		u_int flags,
+		u_int32_t l_alloc;
+		u_int64_t l_bytes,
+		u_int64_t l_addtime,
+		u_int64_t l_usetime,
+		u_int32_t seq)
 {
-	int len;
-	if ((len = pfkey_send_x1(so, SADB_ADD, satype, mode, src, dst, spi,
+	int len = pfkey_send_x1(so, SADB_ADD, satype, mode, src, dst, spi,
 				 reqid, wsize,
 				 keymat, e_type, e_keylen, a_type, a_keylen,
 				 flags,
 				 l_alloc, l_bytes, l_addtime, l_usetime,
-				 seq)) < 0)
+				 seq);
+
+	if (len < 0)
 		return -1;
 
 	return len;
@@ -784,7 +806,7 @@ int so;
  * sadb_supported returned into ipsec_supported.
  * NOTE: sadb_msg_len must be host order.
  * IN:
- *	tlen: msg length, it's to makeing sure.
+ *	tlen: msg length (for checking)
  * OUT:
  *	 0: success and return length sent.
  *	-1: error occured, and set errno.
@@ -1148,17 +1170,27 @@ int so;
 }
 
 /* sending SADB_ADD or SADB_UPDATE message to the kernel */
-int pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
-		  keymat, e_type, e_keylen, a_type, a_keylen, flags,
-		  l_alloc, l_bytes, l_addtime, l_usetime, seq)
-int so;
-u_int type, satype, mode;
-const struct sockaddr *src, *dst;
-u_int32_t spi, reqid;
-u_int wsize;
-caddr_t keymat;
-u_int e_type, e_keylen, a_type, a_keylen, flags;
-u_int32_t l_alloc, l_bytes, l_addtime, l_usetime, seq;
+int pfkey_send_x1(
+		int so,
+		u_int type,
+		u_int satype,
+		u_int mode,
+		const struct sockaddr *src,
+		const struct sockaddr *dst,
+		u_int32_t spi,
+		reqid_t reqid,
+		u_int wsize,
+		caddr_t keymat,
+		u_int e_type,
+		u_int e_keylen,
+		u_int a_type,
+		u_int a_keylen,
+		u_int flags,
+		u_int32_t l_alloc,
+		u_int32_t l_bytes,
+		u_int32_t l_addtime,
+		u_int32_t l_usetime,
+		u_int32_t seq)
 {
 	struct sadb_msg *newmsg;
 	int len;
@@ -2134,11 +2166,11 @@ u_int32_t l_alloc, l_bytes, l_addtime, l_usetime;
  * copy secasvar data into sadb_address.
  * `buf' must has been allocated sufficiently.
  */
-static caddr_t pfkey_setsadbxsa2(buf, lim, mode0, reqid)
-caddr_t buf;
-caddr_t lim;
-u_int32_t mode0;
-u_int32_t reqid;
+static caddr_t pfkey_setsadbxsa2(
+		caddr_t buf,
+		caddr_t lim,
+		u_int32_t mode0,
+		reqid_t reqid)
 {
 	u_int8_t mode = mode0 & 0xff;
 	struct sadb_x_sa2 *p = (struct sadb_x_sa2 *)buf;

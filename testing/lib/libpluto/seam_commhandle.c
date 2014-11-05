@@ -64,7 +64,6 @@ void recv_pcap_packet_gen(u_char *user,
 	DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs));
 
 	process_packet(&md);
-
 	release_any_md(&md);
 
 	cur_state = NULL;

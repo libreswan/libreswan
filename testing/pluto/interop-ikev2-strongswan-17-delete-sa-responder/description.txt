@@ -1,0 +1,4 @@
+This tests processing a DELETE request with strongswan.
+
+Same as interop-ikev2-strongswan-14-delete-sa, except now
+the Original Responder initiates the delete request.

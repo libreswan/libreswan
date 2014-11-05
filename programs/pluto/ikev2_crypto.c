@@ -64,17 +64,23 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 		st->st_esp.present? &st->st_esp :
 		st->st_ah.present? &st->st_ah :
 		NULL;
+	struct esp_info *ei;
 
 	passert(ipi != NULL);	/* ESP or AH must be present */
 	passert(st->st_esp.present != st->st_ah.present);	/* only one */
 
 	/* ??? there is no kernel_alg_ah_info */
-	ipi->attrs.transattrs.ei = kernel_alg_esp_info(
+	/* ??? will this work if the result of kernel_alg_esp_info
+	 * is a pointer into its own static buffer (therefore ephemeral)?
+	 */
+	ei = kernel_alg_esp_info(
 		ipi->attrs.transattrs.encrypt,
 		ipi->attrs.transattrs.enckeylen,
 		ipi->attrs.transattrs.integ_hash);
 
-	passert(ipi->attrs.transattrs.ei != NULL);
+	passert(ei != NULL);
+	ipi->attrs.transattrs.ei = ei;
+
 	zero(&childsacalc);
 	childsacalc.prf_hasher = st->st_oakley.prf_hasher;
 
@@ -87,34 +93,42 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	childsacalc.skeyseed = st->st_skey_d_nss;
 
 	/* ??? no account is taken of AH */
-	switch (ipi->attrs.transattrs.ei->transid) { /* transid is same as encryptalg */
+	/* transid is same as esp_ealg_id */
+	switch (ei->transid) {
 	case IKEv2_ENCR_reserved:
 		/* AH */
-		ipi->keymat_len = ipi->attrs.transattrs.ei->authkeylen;
+		ipi->keymat_len = ei->authkeylen;
+		break;
+
+	case IKEv2_ENCR_AES_CTR:
+		ipi->keymat_len = ei->enckeylen + ei->authkeylen + AES_CTR_SALT_BYTES;;
 		break;
 
 	case IKEv2_ENCR_AES_GCM_8:
 	case IKEv2_ENCR_AES_GCM_12:
 	case IKEv2_ENCR_AES_GCM_16:
 		/* aes_gcm does not use an integ (auth) algo - see RFC 4106 */
-		ipi->keymat_len = ipi->attrs.transattrs.ei->enckeylen +
-			AES_GCM_SALT_BYTES;
+		ipi->keymat_len = ei->enckeylen + AES_GCM_SALT_BYTES;
 		break;
 
 	case IKEv2_ENCR_AES_CCM_8:
 	case IKEv2_ENCR_AES_CCM_12:
 	case IKEv2_ENCR_AES_CCM_16:
 		/* aes_ccm does not use an integ (auth) algo - see RFC 4309 */
-		ipi->keymat_len = ipi->attrs.transattrs.ei->enckeylen +
-			AES_CCM_SALT_BYTES;
+		ipi->keymat_len = ei->enckeylen + AES_CCM_SALT_BYTES;
 		break;
 
 	default:
 		/* ordinary ESP */
-		ipi->keymat_len = ipi->attrs.transattrs.ei->enckeylen +
-			ipi->attrs.transattrs.ei->authkeylen;
+		ipi->keymat_len = ei->enckeylen + ei->authkeylen;
 		break;
 	}
+
+	DBG(DBG_CONTROL,
+		DBG_log("enckeylen=%" PRIu32 ", authkeylen=%" PRIu32 ", keymat_len=%" PRIu16,
+			ei->enckeylen,
+			ei->authkeylen,
+			ipi->keymat_len));
 
 	/*
 	 *

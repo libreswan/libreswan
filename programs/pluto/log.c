@@ -134,7 +134,12 @@ void pluto_init_log(void)
 				"Cannot open logfile '%s': %s\n",
 				pluto_log_file, strerror(errno));
 		} else {
-			setbuf(pluto_log_fp, NULL);
+			/*
+			 * buffer by line:
+			 * should be faster that no buffering
+			 * and yet safe since each message is probably a line.
+			 */
+			setvbuf(pluto_log_fp, NULL, _IOLBF, 0);
 		}
 	}
 

@@ -199,7 +199,7 @@ INSTSUIDFLAGS=-m 0755 -g root -o root
 endif
 
 
-#INSTMANFLAGS?=--mode=0644
+INSTMANFLAGS?=--mode=0644
 INSTCONFFLAGS?=--mode=0644
 # For OSX use
 #INSTBINFLAGS?=-b -B .old
@@ -211,9 +211,15 @@ BISONOSFLAGS?=
 NSSFLAGS?=$(shell pkg-config --cflags nss)
 NSSLIBS?=$(shell pkg-config --libs nss)
 
-GCC?=gcc
+# To build with clang, use: scan-build make programs
 #GCC=clang
+GCC?=gcc
+
 MAKE?=make
+
+# You can compile using Electric Fence - this is used for running the test suite
+# EFENCE=-lefence
+EFENCE?=
 
 ifeq ($(ARCH),i686)
 GCCM?=-m32
@@ -222,7 +228,7 @@ ifeq ($(ARCH),x86_64)
 GCCM?=-m64
 endif
 
-GCC_LINT ?= -DGCC_LINT
+GCC_LINT?=-DGCC_LINT
 
 # some defaults that cause most if not all warnings
 # eventually: -Wshadow
@@ -242,15 +248,15 @@ WERROR?=-Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wm
 #
 # Example for a cross compile:
 # USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
-# USERCOMPILE?=-g -O2 ${WERROR} $(GCC_LINT)
-USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} $(GCC_LINT) -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE -DFORCE_PR_ASSERT
+# USERCOMPILE?=-g -O2 ${WERROR} ${GCC_LINT}
+USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} ${GCC_LINT} -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE -DFORCE_PR_ASSERT
 
 KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # You can also run this before starting libreswan on glibc systems:
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
 # extra link flags
-USERLINK?=-Wl,-z,relro,-z,now -g -pie #-lefence
+USERLINK?=-Wl,-z,relro,-z,now -g -pie ${EFENCE}
 
 PORTINCLUDE?=
 
@@ -369,9 +375,15 @@ USE_LABELED_IPSEC?=false
 
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
 USE_LIBCAP_NG?=true
+ifeq ($(OSDEP),darwin)
+USE_LIBCAP_NG=false
+endif
 
 # Support for Network Manager
 USE_NM?=true
+ifeq ($(OSDEP),darwin)
+USE_NM=false
+endif
 
 # Include LDAP support (currently used for fetching CRLs)
 USE_LDAP?=false
@@ -467,7 +479,8 @@ LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
-CRYPTOLIBS=${LIBSHA1} ${LIBMD5} ${LIBSHA2}
+LIBAES_XCBC=${OBJDIRTOP}/lib/libcrypto/libaes_xcbc/libaes_xcbc.a
+CRYPTOLIBS=${LIBSHA1} ${LIBMD5} ${LIBSHA2} ${LIBAES_XCBC}
 
 ifeq ($(USE_EXTRACRYPTO),true)
 CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH}
@@ -481,7 +494,7 @@ export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
 export LIBRESWANLIB LSWLOGLIB 
 export LIBDESSRCDIR
 export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
-export LIBSHA2 CRYPTOLIBS WHACKLIB IPSECCONFLIB
+export LIBSHA2 LIBAES_XCBC CRYPTOLIBS WHACKLIB IPSECCONFLIB
 export NSSFLAGS NSSLIBS
 
 #KERNELBUILDMFLAGS=--debug=biv V=1 

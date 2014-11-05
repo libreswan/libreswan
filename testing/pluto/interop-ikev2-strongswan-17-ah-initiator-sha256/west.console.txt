@@ -33,16 +33,16 @@ west #
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev2'
+  ah=sha256-modp1536
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.1.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.0.1.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
-  ah=sha256-modp1536
 found netkey IPsec stack
 west #
  echo "initdone"
@@ -54,9 +54,10 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
+sending cert request for "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test EC CA, E=testing@libreswan.org"
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
@@ -90,15 +91,15 @@ src 192.1.2.23 dst 192.1.2.45
 west #
  ip xfrm pol
 src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir fwd priority 1859 ptype main 
+	dir fwd priority 2883 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto ah reqid 1 mode tunnel
 src 192.0.2.0/24 dst 192.0.1.0/24 
-	dir in priority 1859 ptype main 
+	dir in priority 2883 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto ah reqid 1 mode tunnel
 src 192.0.1.0/24 dst 192.0.2.0/24 
-	dir out priority 1859 ptype main 
+	dir out priority 2883 ptype main 
 	tmpl src 192.1.2.45 dst 192.1.2.23
 		proto ah reqid 1 mode tunnel
 src 0.0.0.0/0 dst 0.0.0.0/0 

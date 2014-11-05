@@ -1,0 +1,2 @@
+Basic pluto with IKEv1 using PSK on the initiator (west), and Strongswan on
+the responder testing CAMELLIA for ESP

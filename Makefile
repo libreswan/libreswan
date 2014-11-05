@@ -605,7 +605,7 @@ install::
 	fi
 	@if test ! -f $(DESTDIR)/etc/pam.d/pluto ; then \
 		mkdir -p $(DESTDIR)/etc/pam.d/ ; \
-		$(INSTALL) pam.d/pluto $(DESTDIR)/etc/pam.d/pluto ; \
+		$(INSTALL) $(INSTCONFFLAGS) pam.d/pluto $(DESTDIR)/etc/pam.d/pluto ; \
 	else \
 		echo -e "\n************************** WARNING ***********************************" ; \
 		echo "We are not installing a new copy of the pam.d/pluto file, as one" ; \

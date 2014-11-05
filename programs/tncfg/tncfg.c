@@ -74,7 +74,7 @@ static void usage(char *name)
 	exit(1);
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "virtual", 1, 0, 'V' },
 	{ "physical", 1, 0, 'P' },

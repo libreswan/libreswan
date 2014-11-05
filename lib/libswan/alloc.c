@@ -145,6 +145,8 @@ void pfree(void *ptr)
 			}
 			pthread_mutex_unlock(&leak_detective_mutex);
 		}
+		/* stomp on memory!   Is another byte value better? */
+		memset(p, 0xEF, sizeof(union mhdr) + p->i.size);
 		p->i.magic = ~LEAK_MAGIC;
 		free(p);
 	} else {

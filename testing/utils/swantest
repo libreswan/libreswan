@@ -5,6 +5,7 @@ import os, commands
 import getopt, sys
 import sys
 import re
+import json
 import ujson
 import os,sys,socket,shutil
 import logging
@@ -17,7 +18,7 @@ try:
 	import setproctitle
 except ImportError as e:
 	module = str(e)[16:]
-	sys.exit("we requires the python module %s "%module)
+	sys.exit("we require the python module %s " % module)
 
 #hosts = ['east', 'west', 'road', 'nic', 'north']
 r_init = threading.Event()
@@ -25,13 +26,20 @@ i_ran = threading.Event()
 n_init = threading.Event()
 result_file_lock = threading.Lock()
 
+def rsync_file_to_dir (src, dst):
+	cmd="/usr/bin/rsync -q -aP %s %s/" % (src, dst)
+	logging.debug("%s %s", os.getcwd(), cmd)
+	try:
+		os.system(cmd)
+	except:
+		logging.exception("EXCEPTION ? cmd %s , cwd %s", os.getcwd(), cmd)
 
 class guest (threading.Thread):
 	def __init__(self, hostname, role, testname, args, install=None, compile=None):
 		threading.Thread.__init__(self)
 		self.hostname = hostname
 		self.role = role
-		self.testname = testname 
+		self.testname = testname
 		self.status = "NEW"
 		self.bootwait = args.bootwait
 		self.stoponerror = args.stoponerror
@@ -50,8 +58,8 @@ class guest (threading.Thread):
 			e = self.run_test()
 
 		if not e:
-			e = "end" 
-		self.log_line('./OUTPUT/RESULT', e)
+			e = "end"
+		self.log_line('OUTPUT/RESULT', e)
 		logging.info("%s done %s ran %s sec %s", self.hostname, self.testname,
 				(time.time() - self.start), e)
 
@@ -61,21 +69,21 @@ class guest (threading.Thread):
 			self.clean_abort();
 			return e
 
-		
+
 	def clean_abort(self):
-	   # we are aborting set all waiting events end of show.
-	   logging.debug("%s set all eventes to abort", self.hostname)
+	   # we are aborting: set all waiting events end of show.
+	   logging.debug("%s set all events to abort", self.hostname)
 	   r_init.set()
 	   n_init.set()
 	   i_ran.set()
-				
+
 
 	def run_test(self):
 
-		# now on we MUST match the entire prompt, 
-		# or elsewe end up sending too soon and getting mangling!
+		# now on we MUST match the entire prompt,
+		# or else we end up sending too soon and getting mangling!
 
-		prompt = "\[root@%s %s\]# "%(self.hostname, self.testname)
+		prompt = "\[root@%s %s\]# " % (self.hostname, self.testname)
 		logging.debug ("%s role %s running test %s prompt %s",
 				self.hostname, self.role, self.testname, prompt.replace("\\",""))
 
@@ -86,29 +94,29 @@ class guest (threading.Thread):
 		cmd = "cd /testing/pluto/%s " % (self.testname)
 		child.sendline(cmd)
 		try:
-			child.expect (prompt, searchwindowsize=100,timeout=timer) 
+			child.expect (prompt, searchwindowsize=100,timeout=timer)
 		except:
 			err = "failed [%s] test directory" %(cmd)
 			logging.error("%s", self.hostname, err)
 			return err
 
-		if(self.role == "initiator"):
+		if self.role == "initiator":
 			start = time.time()
-			logging.info("%s wait for responder and may be nic to initialize", 
+			logging.info("%s wait for responder and maybe nic to initialize",
 					self.hostname)
 			n_init.wait()
 			logging.debug("%s wait for responder to initialize", self.hostname)
 			r_init.wait()
-			logging.info("%s initiator is ready waited %s", self.hostname,
+			logging.info("%s initiator is ready (waited %s)", self.hostname,
 					(time.time() - start))
 
-		output_file = "./OUTPUT/%s.console.verbose.txt" % (self.hostname)
+		output_file = "OUTPUT/%s.console.verbose.txt" % (self.hostname)
 		f = open(output_file, 'w')
 		child.logfile = f
-		
+
 		self.status = "INIT-RUN"
-		cmd = "./%sinit.sh" %  (self.hostname) 
-		e = read_exec_shell_cmd( child, cmd, prompt, timer, self.hostname)
+		cmd = "./%sinit.sh" %  (self.hostname)
+		e = read_exec_shell_cmd(child, cmd, prompt, timer, self.hostname)
 
 		if (self.role == "responder"):
 			r_init.set()
@@ -116,29 +124,29 @@ class guest (threading.Thread):
 		if (self.role == "nic"):
 			n_init.set()
 
-		if e :
+		if e:
 			f.close
 			return e
 
-		cmd = "./%srun.sh" %  (self.hostname) 
+		cmd = "./%srun.sh" %  (self.hostname)
 		if os.path.exists(cmd):
 			e = read_exec_shell_cmd( child, cmd, prompt, timer, self.hostname)
 			i_ran.set()
 			if e:
 				f.close
 				return e
-		else: 
+		else:
 			start = time.time()
 			print("waiting for initiator to finish run")
 			i_ran.wait()
-			print("initiator is ran waited %s"%(time.time() - start))
+			print("initiator is ran waited %s" % (time.time() - start))
 
 		cmd = "./final.sh"
 		if os.path.exists(cmd):
 			e =  read_exec_shell_cmd( child, cmd, prompt, timer, self.hostname)
 			if e:
 				f.close
-				return e   
+				return e
 		f.close
 
 	def log_line(self, filename, msg):
@@ -147,11 +155,11 @@ class guest (threading.Thread):
 			return
 
 		logline = dict ()
-		#output_file = "./OUTPUT/RESULT"
+		#output_file = "OUTPUT/RESULT"
 		logline ["epoch"] = time.time()
-		logline ["hostname"]  =  self.hostname 
-		logline ["testname"]  =  self.testname 
-		logline ["msg"] = msg 
+		logline ["hostname"]  =  self.hostname
+		logline ["testname"]  =  self.testname
+		logline ["msg"] = msg
 		logline ["runtime"] = time.time() - self.start
 		logline ["time"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
 
@@ -165,16 +173,16 @@ class guest (threading.Thread):
 
 	def connect_to_kvm(self):
 
-		prompt = "\[root@%s " % (self.hostname) 
+		prompt = "\[root@%s " % (self.hostname)
 
 		vmlist = commands.getoutput("sudo virsh list")
-		running = 0
+		running = False
 		for line in vmlist.split("\n")[2:]:
 			try:
 				num,host,state = line.split()
 				if host == self.hostname and state == "running":
-					running = 1
-					print("Found %s running already"%self.hostname)
+					running = True
+					print("Found %s running already" % self.hostname)
 					continue
 			except:
 				pass
@@ -186,15 +194,15 @@ class guest (threading.Thread):
 			pause = 15
 
 		if not running:
-			done = 0
+			done = False
 			v_start = ''
 			tries =  bootwait;
 			while not done and tries != 0:
-				if os.path.isfile("./OUTPUT/stop-tests-now"):
-					return "aborting found ./OUTPUT/stop-tests-now"
+				if os.path.isfile("OUTPUT/stop-tests-now"):
+					return "aborting: found OUTPUT/stop-tests-now"
 
-				print("Booting %s %s/%s"%(self.hostname,tries, bootwait))
-				v_start = commands.getoutput("sudo virsh start %s"%self.hostname)
+				print("Booting %s %s/%s" % (self.hostname,tries, bootwait))
+				v_start = commands.getoutput("sudo virsh start %s" % self.hostname)
 				logging.info(v_start)
 				re_e = re.search(r'error:', v_start, re.I )
 				if re_e:
@@ -205,22 +213,22 @@ class guest (threading.Thread):
 
 					# just abort this test
 			if not done:
-				v_start = "KVMERROR %s "%self.hostname + v_start
+				v_start = "KVMERROR %s " % self.hostname + v_start
 				logging.error(v_start)
-				self.log_line('./OUTPUT/stop-tests-now', v_start)
+				self.log_line('OUTPUT/stop-tests-now', v_start)
 				if self.stoponerror:
 					# the whole show ends here
 					self.log_line('../stop-tests-now', v_start)
 					return v_start
 
 			time.sleep(pause)
-		elif self.reboot :
-			commands.getoutput("sudo virsh reboot %s"%self.hostname)
-			print("Rebooting %s - pausing %s seconds"%(self.hostname,pause))
+		elif self.reboot:
+			commands.getoutput("sudo virsh reboot %s" % self.hostname)
+			print("Rebooting %s - pausing %s seconds" % (self.hostname,pause))
 			time.sleep(pause)
 
-		print("Taking %s console by force"%self.hostname)
-		cmd = "sudo virsh console --force %s"%self.hostname
+		print("Taking %s console by force" % self.hostname)
+		cmd = "sudo virsh console --force %s" % self.hostname
 		timer = 120
 		child = pexpect.spawn(cmd)
 		child.delaybeforesend = 0.1
@@ -228,42 +236,42 @@ class guest (threading.Thread):
 		# child.logfile = sys.stdout
 		# don't match full prompt, we want it to work regardless cwd
 
-		done = 0
+		done = False
 		tries =  bootwait - pause + 1
 
-		print("Waiting on %s login: %s"%(self.hostname, prompt))
+		print("Waiting on %s login: %s" % (self.hostname, prompt))
 		while not done and tries != 0:
-			if os.path.isfile("./OUTPUT/stop-tests-now"):
-				return "aborting found ./OUTPUT/stop-tests-now"
+			if os.path.isfile("OUTPUT/stop-tests-now"):
+				return "aborting: found OUTPUT/stop-tests-now"
 			try:
 				child.sendline ('')
-				print("%s [%s] waiting on login: or %s"%(self.hostname,
+				print("%s [%s] waiting on login: or %s" % (self.hostname,
 					tries, prompt))
-				res = child.expect (['login: ', prompt], timeout=3) 
+				res = child.expect (['login: ', prompt], timeout=3)
 				if res == 0:
-					print("%s sending login name root"%self.hostname)
+					print("%s sending login name root" % self.hostname)
 					child.sendline ('root')
-					print("%s found, expecting password prompt"%self.hostname)
+					print("%s found, expecting password prompt" % self.hostname)
 					child.expect ('Password:', timeout=1)
-					print("%s found, sending password"%self.hostname)
+					print("%s found, sending password" % self.hostname)
 					child.sendline ('swan')
-					print("%s waiting on root shell prompt %s"%(self.hostname, prompt))
+					print("%s waiting on root shell prompt %s" % (self.hostname, prompt))
 					child.expect ('root.*', timeout=1)
-					print("got prompt %s"%prompt.replace("\\",""))
-					done = 1
+					print("got prompt %s" % prompt.replace("\\",""))
+					done = True
 				elif res == 1:
 					print('----------------------------------------------')
-					print(' Already logged in as root on %s'%prompt.replace("\\",""))
+					print(' Already logged in as root on %s' % prompt.replace("\\",""))
 					print('----------------------------------------------')
-					done = 1
+					done = True
 			except:
 				tries -= 1
 				time.sleep(1)
 
 		if not done:
-			err = 'KVMERROR console is not answering abort test'
+			err = 'KVMERROR console is not answering: abort test'
 			logging.error("%s %s %s",self.hostname, err, self.testname)
-			self.log_line('./OUTPUT/stop-tests-now', err)
+			self.log_line('OUTPUT/stop-tests-now', err)
 
 			if self.stoponerror:
 				logging.error("stop")
@@ -271,16 +279,24 @@ class guest (threading.Thread):
 			return err
 
 		child.sendline ('TERM=dumb; export TERM; unset LS_COLORS')
-		res = child.expect (['login: ', prompt], timeout=3) 
+		res = child.expect (['login: ', prompt], timeout=3)
 		child.setecho(False) ## this does not seems to work
 		child.sendline("stty sane")
-		res = child.expect (['login: ', prompt], timeout=3) 
+		res = child.expect (['login: ', prompt], timeout=3)
 		child.sendline("stty -onlcr")
-		res = child.expect (['login: ', prompt], timeout=3) 
+		res = child.expect (['login: ', prompt], timeout=3)
 		child.sendline("stty -echo")
-		res = child.expect (['login: ', prompt], timeout=3) 
+		res = child.expect (['login: ', prompt], timeout=3)
 
-# end of class 
+# end of class
+
+def get_results(r):
+	if os.path.exists(r):
+		f = open(r, 'r')
+		for line in f:
+			x = ujson.loads(line)
+			if "result" in x and "testname"  in x:
+				return x
 
 def shut_down_hosts(args, test_hosts):
 
@@ -291,9 +307,9 @@ def shut_down_hosts(args, test_hosts):
 	if args.noreboot:
 		logging.debug("all hosts [%s] shutdown list", ' '.join(map(str, all_hosts)))
 		logging.debug("remove [%s] from shutdown list", ' '.join(map(str, test_hosts)))
-		for h in hosts:
-			for t in test_hosts:
-				if h == t:
+		for t in test_hosts:
+			for h in all_hosts:
+				if h is t:
 					all_hosts.remove(t)
 
 	logging.debug("shutdown list [%s] ", ' '.join(map(str, all_hosts)))
@@ -303,13 +319,13 @@ def shut_down_hosts(args, test_hosts):
 		try:
 			num,host,state = line.split()
 			for h in all_hosts:
-				if h == host:
+				if h is host:
 					running.append(host)
-					cmd = "sudo virsh shutdown %s"%host
+					cmd = "sudo virsh shutdown %s" % host
 					logging.debug("Found %s %s shutodwn send %s", host, state, cmd)
 					shut = commands.getoutput(cmd)
 		except:
-			pass 
+			pass
 
 	tries = args.shutdownwait
 	while len(running) and tries != 0:
@@ -323,14 +339,15 @@ def shut_down_hosts(args, test_hosts):
 				try:
 					num,host,state = line.split()
 					for h in all_hosts:
-						if h == host:
+						if h is host:
 							running.append(host)
 				except:
-					pass 
+					pass
 		except:
 			pass
 		tries -= 1
 		time.sleep(1)
+
 	if len(running):
 		e = "KVMERROR not able to shutdown %s guests: [%s] abort" % (len(running), ' '.join(map(str, running)))
 		logging.error (e)
@@ -341,12 +358,12 @@ def orient (t):
 	if not os.path.exists("eastrun.sh"):
 		t["responder"] = "east"
 	else:
-		logging.error ("ABORT can't identify RESPONDER no %s/eastinit.sh"%os.getcwd())
+		logging.error ("ABORT can't identify RESPONDER: no %s/eastinit.sh" % os.getcwd())
 
 	if os.path.exists("nicinit.sh"):
 		t["nic"] = "nic"
 		test_hosts.append(t["nic"])
-	
+
 	tcpdump_devs = ["swan12"]
 	tcpdump_filter = "not stp and not port 22"
 
@@ -359,14 +376,14 @@ def orient (t):
 		t["initiator"] = "north"
 		tcpdump_devs.append("swan13")
 	else:
-		logging.error("ABORT can't identify INITIATOR in directory %s"%os.getcwd())
+		logging.error("ABORT can't identify INITIATOR in directory %s" % os.getcwd())
 
 	test_hosts.append(t["initiator"])
 	test_hosts.append(t["responder"])
 	cmds = []
-	for iface in tcpdump_devs: 
-		pcap_file =  './OUTPUT/' + iface + '.pcap'
-		cmd = "/sbin/tcpdump -s 0 -w %s -n -i %s %s &" %(pcap_file, iface, tcpdump_filter) 
+	for iface in tcpdump_devs:
+		pcap_file =  'OUTPUT/' + iface + '.pcap'
+		cmd = "/sbin/tcpdump -s 0 -w %s -n -i %s %s &" % (pcap_file, iface, tcpdump_filter)
 		logging.debug(cmd)
 		cmds.append(cmd)
 
@@ -378,19 +395,19 @@ def read_exec_shell_cmd(ex, filename, prompt, timer, hostname = ""):
 		logging.debug("%s execute commands from file %s", hostname, filename)
 		f_cmds = open(filename, "r")
 		for line in f_cmds:
-			if os.path.isfile("./OUTPUT/stop-tests-now"):
-				return "aborting found ./OUTPUT/stop-tests-now"
+			if os.path.isfile("OUTPUT/stop-tests-now"):
+				return "aborting: found OUTPUT/stop-tests-now"
 
-			line = line.strip()    
+			line = line.strip()
 			# We need the lines with # for the cut --- tuc sections
 			# if line and not line[0] == '#':
 			if line:
-				print("%s: %s"%(prompt.replace("\\",""), line))
+				print("%s: %s" % (prompt.replace("\\",""), line))
 				ex.sendline(line)
 				try:
-					ex.expect (prompt,timeout=timer, searchwindowsize=100) 
+					ex.expect(prompt,timeout=timer, searchwindowsize=100)
 				except:
-					err = "#%s timedout send line: %s"%(prompt,line)
+					err = "#%s timedout send line: %s" % (prompt,line)
 					logging.error("%s try sending CTRL+c and continue",err)
 					ex.sendcontrol('c')
 					ex.sendline(err)
@@ -402,15 +419,16 @@ def read_exec_shell_cmd(ex, filename, prompt, timer, hostname = ""):
 		f_cmds.close
 
 	else:
-		# not a file name but a command send it as it is.
+		# not a file name but a command: send it as it is.
 		print(filename)
 		ex.sendline(filename)
 		try:
 			ex.expect (prompt,timeout=timer, searchwindowsize=100)
 		except:
-			err = "%s failed to send command: %s"%(prompt, filename)
+			err = "%s failed to send command: %s" % (prompt, filename)
 			logging.debug("%s %s", hostname, err)
 			return	err
+
 # kill any lingering tcpdumps
 def kill_zombie_tcpdump(signal=1):
 	pids = commands.getoutput("pidof tcpdump")
@@ -421,10 +439,10 @@ def kill_zombie_tcpdump(signal=1):
 		except OSError as e:
 			logging.error("killing tcpdump process %s %s", pid, str(e))
 
-# kill all hanging previous of instance of this script.
+# kill all hanging previous of instances of this script.
 def kill_zombies(proctitle):
 	me = os.getpid()
-	zombie_pids = commands.getoutput("pidof %s"%proctitle)
+	zombie_pids = commands.getoutput("pidof %s" % proctitle)
 	for pid in ( zombie_pids.split() ):
 		if int(pid) != int(me):
 			logging.info ("killing %s pid %s from [%s] my pid %s", proctitle, pid, zombie_pids, me)
@@ -432,35 +450,87 @@ def kill_zombies(proctitle):
 	kill_zombie_tcpdump(signal=9)
 
 def init_output_dir():
-	output_dir="%s/OUTPUT"%os.getcwd()
+	output_dir = "%s/OUTPUT" % os.getcwd()
 
 	if os.path.isdir(output_dir):
-		shutil.rmtree(output_dir) 
-	os.mkdir(output_dir, 0o777) 
-	
+		shutil.rmtree(output_dir)
+	os.mkdir(output_dir, 0o777)
+
 def sanitize(cmd):
-	sanity =  commands.getoutput(cmd)
+	sanity = commands.getoutput(cmd)
 	#logging.info ("sanitizer output %s", sanity.replace("\n", " "))
 	logging.info ("sanitizer output %s", sanity)
 	return sanity
 
-def write_result(args, start, testname, sanity, result = 'FAILED', e = None, testexpect = ''):
-
+def split_sanity(sanity):
 	if sanity:
 		for line in sanity.split("\n")[2:]:
 			try:
 				key,name,value = line.split()
 				if key == "result":
-					result = value
+					return value
 			except:
 				pass
 
+def re_write_result(args, testname, sanity, result = "FAILED"):
+
+	changed = False
+
+	if sanity:
+		result = split_sanity(sanity)
+	else:
+		return
+	output_file = "OUTPUT/RESULT"
+	if not os.path.exists(output_file):
+		return
+
+	lines = []
+	f = open(output_file, 'r')
+	for line in f:
+		x = None
+		try:
+			x = ujson.loads(line)
+		except:
+			lines.append(line)
+			contine
+
+		if x and "result" in x and "testname" in x:
+			if x["result"] == result:
+				logging.debug("testcase %s result didn't change %s",testname, result)
+				continue
+
+			changed = True
+			logging.info("testcase %s result new '%s' old '%s'",testname, x["result"],  result)
+			x[result] = result
+			x["resanitized"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+			lines.append(ujson.dumps(x, ensure_ascii=True, double_precision=2))
+
+	f.close
+
+
+	if not changed:
+		return False
+
+	f = open(output_file, 'w')
+
+	for line in lines:
+		f.write(line)
+		f.write("\n")
+
+	f.close
+	return changed
+
+def write_result(args, start, testname, sanity, result = 'FAILED', e = None, testexpect = ''):
+
+	if sanity:
+		result = split_sanity(sanity)
+
 	logline = dict ()
-	output_file = "./OUTPUT/RESULT"
+	output_file = "OUTPUT/RESULT"
 	f = open(output_file, 'a')
 	logline ["epoch"] = time.time()
-	logline ["testname"]  =  testname 
-	logline ["result"] = result 
+	logline ["testname"]  =  testname
+	logline ["result"] = result
 	logline ["time"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
 	logline ["runtime"] = time.time() - start
 	logline ["node"] = args.node
@@ -468,36 +538,42 @@ def write_result(args, start, testname, sanity, result = 'FAILED', e = None, tes
 		logline ["expect"] = testexpect
 
 	if e:
-		logline ["error"] = e 
+		logline ["error"] = e
 	f.write(ujson.dumps(logline, ensure_ascii=True, double_precision=2))
 	f.write("\n")
 	f.close
 
-DEFAULTCONFIG =  { 
+DEFAULTCONFIG =  {
 	'resultsdir' : '/home/build/results',
 	'sanitizer' : "../../utils/sanitize.sh",
-	'bootwait' : 109, 
+	'bootwait' : 109,
 	'swanhosts' : ['east', 'west', 'road', 'north'],
 	'regualrhosts' : ['nic'],
 	'shutdownwait': 63,
 	'newrun' : None,
 	'stoponerror' : None,
 	'retry' : 5,
-	'node' : platform.node()
-
+	'node' : platform.node(),
+	'testlist' : "TESTLIST"
 }
 
 def cmdline():
-	parser = argparse.ArgumentParser(description='dotest arguments.')
+	parser = argparse.ArgumentParser(description='swantest arguments.')
 
 	parser.add_argument("--retry",
 			default=DEFAULTCONFIG['retry'], type=int,
 			help="retry when there is console error.")
 
-	parser.add_argument("--node", default=DEFAULTCONFIG['node'], action="store_true",
-			help="Default node name.")
+	parser.add_argument("--node", default=DEFAULTCONFIG['node'], help="Default node name.")
+
+	parser.add_argument("--resanitize", default=False, action="store_true",
+			help="re-sanitize results, run it from ~/libreswan/testing/pluto directory")
+
 	parser.add_argument("--graphs", default=False, action="store_true",
 			help="generate graphs and JSON tables.")
+
+	parser.add_argument("--stop", default=False, action="store_true",
+			help="stop tests now. call from testing/pluto directory")
 
 	parser.add_argument("--stoponerror",
 			default=DEFAULTCONFIG['stoponerror'], action="store_true",
@@ -509,27 +585,31 @@ def cmdline():
 
 	parser.add_argument("--resultsdir",
 						default=DEFAULTCONFIG['resultsdir'],
-						help="test results directory %s"%DEFAULTCONFIG['resultsdir'])
+						help="test results directory %s" % DEFAULTCONFIG['resultsdir'])
 	parser.add_argument("--sanitizer",
 						default=DEFAULTCONFIG['sanitizer'],
-						help="sanitizer script. %s"%DEFAULTCONFIG['sanitizer'])
+						help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
+	parser.add_argument("--testlist",
+						default=DEFAULTCONFIG['testlist'],
+						help="read kvmpluto tests from  %s. in the repositiry testing/pluto/TESTLIST." % DEFAULTCONFIG['testlist'])
+
 	parser.add_argument("-v", "--verbose",
 						default=1, type=int,
 						help="increase verbosity: 0 = only warnings, 1 = info, 2 = debug. Default info")
 	parser.add_argument("--bootwait",
 						default=DEFAULTCONFIG['bootwait'], type=int,
-						help="seconds to reboot guest. Default %s seconds"%DEFAULTCONFIG['bootwait'])
+						help="seconds to reboot guest. Default %s seconds" % DEFAULTCONFIG['bootwait'])
 	parser.add_argument("--shutdownwait",
-						default=DEFAULTCONFIG['shutdownwait'], type=int, 
-						help="seconds to wait for guest to shutdown. Default %s seconds"%DEFAULTCONFIG['shutdownwait'])
+						default=DEFAULTCONFIG['shutdownwait'], type=int,
+						help="seconds to wait for guest to shutdown. Default %s seconds" % DEFAULTCONFIG['shutdownwait'])
 	parser.add_argument('--testname', '-t',
 						help='The name of the test to run.')
 	parser.add_argument('--noreboot',
-						default=None, action="store_true", 
+						default=None, action="store_true",
 						help='Dont reboot vm. Default reboot')
 	parser.add_argument('--leavezombies',
-						default=None, action="store_true", 
-						help='leave other instances running. Default kill all other swantest and lingering tcpdump') 
+						default=None, action="store_true",
+						help='leave other instances running. Default kill all other swantest and lingering tcpdump')
 
 	args = parser.parse_args()
 
@@ -540,11 +620,11 @@ def cmdline():
 	setproctitle.setproctitle(proctitle)
 	logger =  logging.getLogger()
 	if args.verbose == 0:
-		logger.setLevel(logging.WARN) 
+		logger.setLevel(logging.WARN)
 	elif args.verbose == 1:
-		logger.setLevel(logging.INFO) 
+		logger.setLevel(logging.INFO)
 	elif args.verbose == 2:
-		logger.setLevel(logging.DEBUG) 
+		logger.setLevel(logging.DEBUG)
 
 	return args
 
@@ -553,7 +633,7 @@ def kvm_error(r_file):
 		return  False
 	f = open(r_file, 'r')
 	for line in f:
-		x = ujson.loads(line)
+		x = json.loads(line)
 		try:
 			re_e = re.search(r'KVMERROR', x['error'], re.I )
 			if re_e:
@@ -569,14 +649,14 @@ def kvm_error(r_file):
 def do_test(args, start='', testexpect=''):
 
 	if not start:
-		start = time.time() 
+		start = time.time()
 
-	args = cmdline() 
+	args = cmdline()
 
 	testname = ''
 	if args.testname:
 		testname =	args.testname
-	else: 
+	else:
 		testname = os.path.basename(os.getcwd())
 
 	logging.info("***** KVM PLUTO RUNNING test %s *******", testname)
@@ -589,7 +669,7 @@ def do_test(args, start='', testexpect=''):
 	init_output_dir()
 
 	if e:
-		write_result(args, start, testname, None, "abort", e) 
+		write_result(args, start, testname, None, "abort", e)
 		kill_zombie_tcpdump()
 		# we can't call exit(1) "make check" will abort then
 		return e
@@ -608,9 +688,9 @@ def do_test(args, start='', testexpect=''):
 	th_initiator = guest(t["initiator"], "initiator", testname, args)
 
 	# Start new Threads
-	th_responder.start() 
+	th_responder.start()
 	if "nic" in t:
-		th_nic.start()	
+		th_nic.start()
 	else:
 		n_init.set()
 
@@ -626,12 +706,100 @@ def do_test(args, start='', testexpect=''):
 	s = sanitize(args.sanitizer)
 	write_result(args, start, testname, s, testexpect = testexpect)
 
-def do_test_list(args, start, tried, output_dir):
-	r = "./TESTLIST"
-	if not os.path.exists(r):
-		return None 
 
-	logging.info("** found file %s **" , r)
+def skip_testlist_line(args, line, verbose=False):
+	
+
+	if line[0] == '#' or re.match('^[ \t]*$', line):
+		# skip the comments
+		return True
+
+	try:
+		testtype, testdir, testexpect = line.split()
+	except:
+		logging.error("****** skipping malformed: %s", line)
+		return True
+
+	if testtype == "skiptest":
+		if verbose:
+			logging.error("****** %s", line)
+		return True
+	elif testtype  != "kvmplutotest":
+		if verbose:
+			logging.error("****** skipping test %s: yet to be migrated to kvm style ", testdir)
+		return True
+	elif not os.path.exists(testdir):
+		if verbose:
+			logging.error("**** Skipping missing %s/%s *****",
+				os.getcwd(), testdir)
+		return True
+
+	return False
+
+def resanitize(args):
+	r = args.testlist
+	logging.info("re sanitize the existing results checking for %s. Typically, this should start from ~/libreswan/testing/pluto", r)
+	if not os.path.exists(r):
+		logging.error("ABORT re sanitize missing %s. Did it start from right place", r)
+		return None
+
+	output_dir = setup_result_dir(args)
+
+	rsync_file_to_dir(args.testlist, output_dir)
+	f = open(r, 'r')
+	for line in f:
+		logging.debug("%s", line)
+
+		if skip_testlist_line(args,line, verbose=False):
+			continue
+		
+		testtype, testdir, testexpect = line.split()
+		rdif = testdir  + '/OUTPUT/'
+
+		r1 = testdir  + '/OUTPUT/RESULT'
+
+		x = get_results(r1)
+		if not x :
+			# there is no result ?? 
+			continue
+		
+		if x and (x["result"] == 'failed'):
+			logging.debug("resanitize now %s %s",testdir, testexpect )
+
+			## chdir start
+			os.chdir(testdir)
+
+			s = sanitize(args.sanitizer)
+			a = re_write_result(args=args, testname = testdir, sanity=s)
+			if a:
+				logging.info("new result %s", a)
+
+			#for h in DEFAULTCONFIG['swanhosts']:
+			#	f = "OUTPUT/%s.console.diff"%h
+			#	if  os.path.exists(f):
+			#		cmd = "egrep '^[+-]' %s | egrep -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
+			#		(status, output) =  commands.getstatusoutput(cmd);
+			#		if not status:
+			#			print "cp %s/OUTPUT/%s.console.txt %s/ "%(testdir,h,testdir)
+			#			print "cat %s/%s"%(testdir,f)
+
+			os.chdir("..")
+			## chdir end
+
+		#copy the test  to new result directory
+		if os.path.exists(output_dir):
+			rsync_file_to_dir(testdir, output_dir);
+		else:
+			logging.info("missing output dir %s. can not copy resanitized results",output_dir)
+
+	testsum.read_dirs(args, output_dir)
+
+def do_test_list(args, start, tried, output_dir):
+	if not os.path.exists(args.testlist):
+		return None
+	ran =  1;
+
+	logging.info("** run kvmpluto tests from file %s **" , args.testlist)
 
 	if not os.path.exists(args.resultsdir):
 		try:
@@ -641,49 +809,28 @@ def do_test_list(args, start, tried, output_dir):
 	else:
 		logging.info("testresult directory %s exist", args.resultsdir)
 
-	if not os.path.exists(output_dir):
-		try:
-			os.mkdir(output_dir, 0o755)
-		except:
-			logging.error("failed to create directory %s", output_dir)
-	else:
-		logging.info("sub directory %s exist", output_dir)
-
-	s = './stop-tests-now'
-	if os.path.exists('./stop-tests-now') and (tried == 0):
+	s = 'stop-tests-now'
+	if os.path.exists(s) and (tried == 0):
 		os.unlink(s)
-		logging.debug("removing existing %s"%s)
+		logging.debug("removing existing %s" % s)
 
-	f = open(r, 'r')
-	for line in f: 
+	rsync_file_to_dir(args.testlist, output_dir)
+	f = open(args.testlist, 'r')
+	for line in f:
 		logging.debug("%s", line)
-		if os.path.exists('./stop-tests-now'):
-			logging.error("* stop all tests now. Found ./stop-tests-now *")
-			return True 
+		if os.path.exists(s):
+			logging.error("* stop all tests now. Found %s *", s)
+			return True
 
-		try:
-			testtype, testdir, testexpect = line.split() 
-		except:
+		if skip_testlist_line(args, line, verbose=True):
 			continue
-
-		if testtype[0] == '#':
-			# skip the comments
-			continue
-		elif testtype == "skiptest":
-			logging.error("****** %s", line)
-			continue
-		elif testtype  != "kvmplutotest":
-			logging.error("****** skip test %s yet to be migrated to kvm style ", testdir)
-			continue
-		elif not os.path.exists(testdir):
-			logging.error("**** Skipping non-existing cwd %s/%s *****",
-					os.getcwd(), testdir)
-			continue 
+		
+		testtype, testdir, testexpect = line.split()
 
 		r_file = output_dir + '/' + testdir  + '/OUTPUT/RESULT'
 		if os.path.exists(r_file) and tried and (tried < args.retry):
 			if kvm_error(r_file):
-				logging.info("result [%s] KVMERROR. delete previous run, retry %s/%s rutn this", r_file, tried, args.retry)
+				logging.info("result [%s] KVMERROR. delete previous run, retry %s/%s", r_file, tried, args.retry)
 				o_dir = output_dir + '/' + testdir
 				shutil.rmtree(o_dir)
 				try:
@@ -693,43 +840,43 @@ def do_test_list(args, start, tried, output_dir):
 
 			else:
 				continue
-		elif not os.path.exists(r_file):
-			logging.debug("%s is not there run this test", r_file)
-		else :
+		elif os.path.exists(r_file):
+			# output already exists: skip test
 			continue
-
-		os.chdir(testdir)
-		if os.path.exists('./stop-tests-now'):
-			logging.error("****** skip test %s found stop-tests-now *****", testdir) 
-			os.chdir("../")
-			continue
-
-		logging.debug("****** next test %s *****", testdir) 
-		do_test(args, testexpect = testexpect )
-		os.chdir("../")
-		if os.path.exists(output_dir):
-			try:
-				cmd="/usr/bin/rsync -q -aP %s %s/"%(testdir, output_dir)
-				logging.debug("%s %s", os.getcwd(), cmd)
-				os.system(cmd)
-			except:
-				pass
 		else:
-			logging.info("missing output dir %s. don't copy results",output_dir)
+			logging.debug("%s is not there; run this test", r_file)
+
+		## chdir start
+		os.chdir(testdir)
+		if os.path.exists('stop-tests-now'):
+			logging.error("****** skip test %s found stop-tests-now *****", testdir)
+			os.chdir("..")
+			## chdir end
+			continue
+
+		logging.debug("****** next test %s *****", testdir)
+		do_test(args, testexpect = testexpect )
+		ran =  ran + 1
+		os.chdir("..")
+		## chdir end
+
+		if os.path.exists(output_dir):
+			rsync_file_to_dir(testdir, output_dir)
+		else:
+			logging.info("missing output dir %s. can not copy results",output_dir)
 
 	f.close
-	return True
+	return ran
 
 def setup_result_dir(args):
 	date_dir = time.strftime("%Y-%m-%d", time.localtime())
-	output_dir = args.resultsdir 
+	output_dir = args.resultsdir
 
 	if (args.node):
 		output_dir = args.resultsdir + '/' + args.node
 
-
 	if not os.path.isdir(output_dir):
-		try :
+		try:
 			logging.debug("create directory %s", output_dir)
 			os.mkdir(output_dir, 0o777)
 		except:
@@ -740,15 +887,37 @@ def setup_result_dir(args):
 	if args.node:
 		output_dir = output_dir + '/' + date_dir + '-' + args.node
 	else:
-		output_dir = output_dir + '/' + date_dir 
+		output_dir = output_dir + '/' + date_dir
 
 	ipsecversion = ''
 	try:
+		# inside 'make check' IPSECVERSION is set
 		ipsecversion =  os.environ["IPSECVERSION"]
-		if ipsecversion:
-			output_dir = output_dir + '-' + ipsecversion
 	except:
 		pass
+
+	if not ipsecversion:
+		# Lets assume the path is <LIBRESWANSRC>/testing/utis 
+		cwd =  os.getcwd()
+		dn =   os.path.normpath(os.path.dirname(os.path.realpath(__file__)))
+		os.chdir(dn)
+		os.chdir("../../")
+		cmd = "make showversion"
+		ipsecversion = commands.getoutput(cmd)
+		ipsecversion = ipsecversion.strip()
+		try:
+			os.chdir(cwd)
+		except:
+			pass
+		logging.debug("cwd = %s , swantest = %s , %s, IPSECVERSION %s", cwd, dn, cmd, ipsecversion)
+	else :
+		logging.debug("IPSECVERSION %s was set in env", ipsecversion)
+
+	if ipsecversion:
+		output_dir = output_dir + '-' + ipsecversion
+
+	if (args.resanitize):
+		output_dir =  output_dir + "-resanitized"
 
 	if args.newrun and os.path.exists(output_dir):
 		logging.info("newrun, remove results [%s]", output_dir)
@@ -758,36 +927,53 @@ def setup_result_dir(args):
 			shutil.rmtree(output_dir)
 		else:
 			os.unlink(output_dir)
-	try :
+	try:
 		os.mkdir(output_dir, 0o777)
 	except:
 		logging.error("failed to create directory %s", output_dir)
-
 
 	logging.info("results will be in %s", output_dir)
 	return output_dir
 
 def gen_graphs_tables(args):
-	testsum.read_testlist(resultsdir = args.resultsdir, node = args.node)
-	testsum.read_dirs(resultsdir = args.resultsdir, node=args.node)
+	testsum.read_dirs(args)
+
+def gen_stop_tests_now(args):
+	if not os.path.exists(args.testlist):
+		return None
+
+	s = "stop-tests-now"
+	f = open(s, 'w')
+	f.write("stop\n")
+	f.close
 
 def main():
-	start = time.time() 
-	args = cmdline() 
+	start = time.time()
+	args = cmdline()
 	tried = 0
-	output_dir = setup_result_dir(args)
+	ran = 2 # used for summery generation.
 
 	if args.graphs:
 		gen_graphs_tables(args)
-	elif do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
+		return
+	elif args.stop:
+		gen_stop_tests_now(args)
+		return
+	elif args.resanitize:
+		resanitize(args)
+		return
+
+	output_dir = setup_result_dir(args)
+	if do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):
-			gen_graphs_tables(args)
+			if ran > 1:
+				gen_graphs_tables(args)
 			tried = 1 + tried
-			logging.info("retry TESTLIST %s/%s ", tried, args.retry)
-			do_test_list(args, start, tried, output_dir)
+			logging.info("retry %s %s/%s ", args.testlist, tried, args.retry)
+			ran = do_test_list(args, start, tried, output_dir)
 
 	else:
-		do_test(args, start = start)  # no TESTLIST. Lets try single test
+		do_test(args, start = start)  # no TESTLIST. Let's try a single test
 
 if __name__ == "__main__":
 	main()

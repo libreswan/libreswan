@@ -21,7 +21,7 @@ east #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 east #
  (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log 1>&2 ) &
-[1] XXXX
+[B] PID
 east #
  echo done
 done

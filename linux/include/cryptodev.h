@@ -466,8 +466,8 @@ extern int crypto_runregister_all(u_int32_t driverid);
  *     kept apart from the rest of the system.
  */
 struct uio;
-extern void cuio_copydata(struct uio* uio, int off, int len, caddr_t cp);
-extern void cuio_copyback(struct uio* uio, int off, int len, caddr_t cp);
+extern void cuio_copydata(struct uio *uio, int off, int len, caddr_t cp);
+extern void cuio_copyback(struct uio *uio, int off, int len, caddr_t cp);
 extern struct iovec *cuio_getptr(struct uio *uio, int loc, int *off);
 
 extern void crypto_copyback(int flags, caddr_t buf, int off, int size,

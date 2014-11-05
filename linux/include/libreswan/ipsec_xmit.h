@@ -100,13 +100,11 @@ struct ipsec_xmit_state {
 	struct sockaddr_encap matcher;  /* eroute search key */
 	struct eroute *eroute;
 	struct ipsec_sa *ipsp;          /* ipsec_sa pointers */
-	//struct ipsec_sa *ipsp_outer;    /* last SA applied by encap_bundle */
 	char sa_txt[SATOT_BUF];
 	size_t sa_len;
 	int hard_header_stripped;       /* has the hard header been removed yet? */
 	int hard_header_len;
 	struct net_device *physdev;
-/*	struct device *virtdev; */
 	short physmtu;
 	short cur_mtu;          /* copy of prv->mtu, cause prv may == NULL */
 	short mtudiff;
@@ -178,11 +176,11 @@ extern void ipsec_extract_ports(struct sk_buff *skb, unsigned char nexthdr,
 
 extern enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs);
 
-extern enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state*ixs);
+extern enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs);
 
 extern enum ipsec_xmit_value ipsec_tunnel_send(struct ipsec_xmit_state *ixs);
 
-extern void ipsec_xmit_cleanup(struct ipsec_xmit_state*ixs);
+extern void ipsec_xmit_cleanup(struct ipsec_xmit_state *ixs);
 
 extern int ipsec_xmit_trap_count;
 extern int ipsec_xmit_trap_sendcount;

@@ -55,15 +55,16 @@ typedef struct {
 } cert_t;
 
 
-extern chunk_t get_mycert(cert_t cert);
+extern chunk_t get_cert_chunk(cert_t cert);
 extern bool load_cert(const char *filename,
 		      const char *label, cert_t *cert);
 
 extern void share_cert(cert_t cert);
+extern void share_authcerts(cert_t chain);
 extern void release_cert(cert_t cert);
 extern void list_certs(bool utc);
 
-extern struct pubkey* allocate_RSA_public_key(const cert_t cert);
+extern struct pubkey *allocate_RSA_public_key(const cert_t cert);
 extern bool load_coded_file(const char *filename,
 			    const char *type, chunk_t *blob);
 extern bool cert_exists_in_nss(const char *nickname);

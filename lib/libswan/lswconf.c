@@ -249,104 +249,101 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
 	secuPWData *pwdInfo = (secuPWData *)arg;
 	PRFileDesc *fd;
-	PRInt32 nb;	/*number of bytes*/
-	char* password;
-	char* strings;
-	char* token = NULL;
+	PRInt32 nb;	/* number of bytes */
+	char *strings;
+	char *token;
+	int toklen;
 	const long maxPwdFileSize = NSSpwdfilesize;
-	int i, tlen = 0;
+	int i;
 
-	if (slot) {
-		token = PK11_GetTokenName(slot);
-		if (token) {
-			tlen = PORT_Strlen(token);
-			/*
-			 * libreswan_log("authentication needed for "
-			 *	"token name %s with length %d", token, tlen);
-			 */
-		} else {
-			return 0;
-		}
-	} else {
-		return 0;
-	}
+	if (slot == NULL)
+		return NULL;
+
+	token = PK11_GetTokenName(slot);
+	if (token == NULL)
+		return NULL;
+
+	toklen = PORT_Strlen(token);
+
+	/*
+	 * libreswan_log("authentication needed for token name %s with length %d", token, toklen);
+	 */
 
 	if (retry)
-		return 0;
+		return NULL;
 
 	strings = PORT_ZAlloc(maxPwdFileSize);
-	if (!strings) {
-		libreswan_log("Not able to allocate memory for reading "
-			"NSS password file");
-		return 0;
+	if (strings == NULL) {
+		libreswan_log("Not able to allocate memory for reading NSS password file");
+		return NULL;
 	}
 
-	if (pwdInfo->source == PW_FROMFILE) {
-		if (pwdInfo->data != NULL) {
-			fd = PR_Open(pwdInfo->data, PR_RDONLY, 0);
-			if (!fd) {
-				PORT_Free(strings);
-				libreswan_log(
-					"No password file \"%s\" exists.",
-					pwdInfo->data);
-				return 0;
-			}
+	/* From here on, every return must be preceded by PORT_Free(strings) */
 
-			nb = PR_Read(fd, strings, maxPwdFileSize);
-			PR_Close(fd);
+	if (pwdInfo->source != PW_FROMFILE) {
+		libreswan_log("NSS password source is not specified as file");
+		PORT_Free(strings);
+		return NULL;
+	}
 
-			if (nb == 0) {
-				libreswan_log("password file contains "
-					"no data");
-				PORT_Free(strings);
-				return 0;
-			}
+	if (pwdInfo->data == NULL) {
+		libreswan_log("Name of file with Password to NSS DB is not provided");
+		PORT_Free(strings);
+		return NULL;
+	}
 
-			i = 0;
-			do {
-				int start = i;
-				int slen;
+	fd = PR_Open(pwdInfo->data, PR_RDONLY, 0);
+	if (fd == NULL) {
+		libreswan_log("No password file \"%s\" exists.", pwdInfo->data);
+		PORT_Free(strings);
+		return NULL;
+	}
 
-				while (strings[i] != '\r' &&
-				       strings[i] != '\n' && i < nb)
-					i++;
-				strings[i++] = '\0';
+	nb = PR_Read(fd, strings, maxPwdFileSize);
+	PR_Close(fd);
 
-				while ((i < nb) && (strings[i] == '\r' ||
-					strings[i] == '\n'))
-					 strings[i++] = '\0';
+	for (i = 0; i < nb; ) {
+		/*
+		 * examine a line of the password file
+		 * token_name:password
+		 */
+		int start = i;
+		char *p;
+		int linelen;
 
-				password = &strings[start];
+		/* find end of line */
+		while (i < nb &&
+		       (strings[i] != '\0' &&
+			strings[i] != '\r' &&
+			strings[i] != '\n'))
+			i++;
 
-				if (PORT_Strncmp(password, token, tlen))
-					continue;
-				slen = PORT_Strlen(password);
+		if (i == nb) {
+			libreswan_log("NSS Password file ends with a partial line (ignored)");
+			break;	/* no match found */
+		}
 
-				if (slen < (tlen + 1))
-					continue;
-				if (password[tlen] != ':')
-					continue;
-				password = &password[tlen + 1];
-				break;
+		linelen = i - start;
 
-			} while (i < nb);
+		/* turn delimiter into NUL and skip over it */
+		strings[i++] = '\0';
 
-			password = PORT_Strdup((char*)password);
-			PORT_Free(strings);
+		p = &strings[start];
 
+		if (linelen >= toklen + 1 &&
+		    PORT_Strncmp(p, token, toklen) == 0 &&
+		    p[toklen] == ':') {
+			/* we have a winner! */
+			p = PORT_Strdup(&p[toklen + 1]);
 			/*
-			 * libreswan_log("Password passed to NSS is %s with "
-			 *	"length %d", password, PORT_Strlen(password));
+			 * libreswan_log("Password passed to NSS is %s with length %d", p, PORT_Strlen(p));
 			 */
-			return password;
-		} else {
-			libreswan_log("File with Password to NSS DB is "
-				"not provided");
-			return 0;
+			PORT_Free(strings);
+			return p;
 		}
 	}
 
-	libreswan_log("nss password source is not specified as file");
-	return 0;
+	/* no match found in password file */
+	PORT_Free(strings);
+	return NULL;
 }
-

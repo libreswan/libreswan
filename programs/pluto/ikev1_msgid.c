@@ -102,7 +102,7 @@ msgid_t generate_msgid(const struct state *st)
 
 	for (;; ) {
 		get_rnd_bytes((void *) &msgid, sizeof(msgid));
-		if (msgid != 0 && unique_msgid(st, msgid))
+		if (msgid != v1_MAINMODE_MSGID && unique_msgid(st, msgid))
 			break;
 
 		if (--timeout == 0) {

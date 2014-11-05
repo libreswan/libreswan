@@ -63,25 +63,30 @@ void ike_alg_show_status(void)
 	whack_log(RC_COMMENT, " "); /* spacer */
 
 	IKE_EALG_FOR_EACH(algo) {
-		static char v1namebuf[ENUM_SHOW_BUF_LEN];
-		static char v2namebuf[ENUM_SHOW_BUF_LEN];
+		struct esb_buf v1namebuf, v2namebuf;
+
 		passert(algo != NULL);
 		passert(algo->algo_id != 0 || algo->algo_v2id != 0);
 		whack_log(RC_COMMENT,
-			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%d, keydeflen=%d",
+			  "algorithm IKE encrypt: v1id=%d, v1name=%s, v2id=%d, v2name=%s, blocksize=%zu, keydeflen=%u",
 			  algo->algo_id,
-			  enum_showb(&oakley_enc_names, algo->algo_id, v1namebuf, sizeof(v1namebuf)),
+			  enum_showb(&oakley_enc_names, algo->algo_id, &v1namebuf),
 			  algo->algo_v2id,
-			  enum_showb(&ikev2_trans_type_encr_names, algo->algo_v2id, v2namebuf, sizeof(v2namebuf)),
-			  (int)((struct encrypt_desc *)algo)->enc_blocksize,
+			  enum_showb(&ikev2_trans_type_encr_names, algo->algo_v2id, &v2namebuf),
+			  ((struct encrypt_desc *)algo)->enc_blocksize,
 			  ((struct encrypt_desc *)algo)->keydeflen);
 	}
 	IKE_HALG_FOR_EACH(algo) {
+		/*
+		 * ??? we think that hash_integ_len is meaningless
+		 * (and 0) for IKE hashes
+		 */
+		pexpect(((struct hash_desc *)algo)->hash_integ_len == 0);
 		whack_log(RC_COMMENT,
-			  "algorithm IKE hash: id=%d, name=%s, hashsize=%d",
+			  "algorithm IKE hash: id=%d, name=%s, hashlen=%zu",
 			  algo->algo_id,
 			  enum_name(&oakley_hash_names, algo->algo_id),
-			  (int)((struct hash_desc *)algo)->hash_digest_len);
+			  ((struct hash_desc *)algo)->hash_digest_len);
 	}
 #define IKE_DH_ALG_FOR_EACH(idx) for (idx = 0; idx != oakley_group_size; idx++)
 	IKE_DH_ALG_FOR_EACH(i) {
@@ -126,32 +131,29 @@ void ike_alg_show_connection(struct connection *c, const char *instance)
 	}
 	st = state_with_serialno(c->newest_isakmp_sa);
 	if (st != NULL) {
-		static char encbuf[ENUM_SHOW_BUF_LEN];
-		static char prfbuf[ENUM_SHOW_BUF_LEN];
-		static char integbuf[ENUM_SHOW_BUF_LEN];
-		static char groupbuf[ENUM_SHOW_BUF_LEN];
+		struct esb_buf encbuf, prfbuf, integbuf, groupbuf;
 
 		if (!st->st_ikev2) { /* IKEv1 */
 			whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKE algorithm newest: %s_%03d-%s-%s",
 			  c->name,
 			  instance,
-			  strip_prefix(enum_showb(&oakley_enc_names, st->st_oakley.encrypt, encbuf, sizeof(encbuf)), "OAKLEY_"),
+			  strip_prefix(enum_showb(&oakley_enc_names, st->st_oakley.encrypt, &encbuf), "OAKLEY_"),
 		          /* st->st_oakley.encrypter->keydeflen, */
 			  st->st_oakley.enckeylen,
-			  strip_prefix(enum_showb(&oakley_hash_names, st->st_oakley.prf_hash, prfbuf, sizeof(prfbuf)), "OAKLEY_"),
-			  strip_prefix(enum_showb(&oakley_group_names, st->st_oakley.group->group, groupbuf, sizeof(groupbuf)), "OAKLEY_GROUP_"));
+			  strip_prefix(enum_showb(&oakley_hash_names, st->st_oakley.prf_hash, &prfbuf), "OAKLEY_"),
+			  strip_prefix(enum_showb(&oakley_group_names, st->st_oakley.group->group, &groupbuf), "OAKLEY_GROUP_"));
 		} else { /* IKEv2 */
 			whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKEv2 algorithm newest: %s_%03d-%s-%s-%s",
 			  c->name,
 			  instance,
-			  enum_showb(&ikev2_trans_type_encr_names, st->st_oakley.encrypt, encbuf, sizeof(encbuf)),
+			  enum_showb(&ikev2_trans_type_encr_names, st->st_oakley.encrypt, &encbuf),
 		          /* st->st_oakley.encrypter->keydeflen, */
 			  st->st_oakley.enckeylen,
-			  enum_showb(&ikev2_trans_type_integ_names, st->st_oakley.integ_hash, integbuf, sizeof(integbuf)),
-			  enum_showb(&ikev2_trans_type_prf_names, st->st_oakley.prf_hash, prfbuf, sizeof(prfbuf)),
-			  strip_prefix(enum_showb(&oakley_group_names, st->st_oakley.group->group, groupbuf, sizeof(groupbuf)), "OAKLEY_GROUP_"));
+			  enum_showb(&ikev2_trans_type_integ_names, st->st_oakley.integ_hash, &integbuf),
+			  enum_showb(&ikev2_trans_type_prf_names, st->st_oakley.prf_hash, &prfbuf),
+			  strip_prefix(enum_showb(&oakley_group_names, st->st_oakley.group->group, &groupbuf), "OAKLEY_GROUP_"));
 		}
 	}
 }
