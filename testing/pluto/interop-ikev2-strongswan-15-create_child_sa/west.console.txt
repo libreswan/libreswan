@@ -33,25 +33,25 @@ west #
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev2'
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.1.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.0.1.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
 Loading conn 'westnet-eastnet-ikev2b'
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.100.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.200.0/24
-  leftsubnet=192.0.100.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
 found netkey IPsec stack
 west #
  echo "initdone"
@@ -63,7 +63,7 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
 sending packet: from 192.1.2.45[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
-sending cert request for "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+sending cert request for "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test EC CA, E=testing@libreswan.org"
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2
 generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]

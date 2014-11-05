@@ -1,8 +1,8 @@
 s/^\(Starting strongSwan \)\(.*\)\( IPsec.*\)$/\1X.X.X\3/g
 s/^\(Status of IKE charon daemon (strongSwan \).*):$/\1VERSION):/g
-s/\(  uptime: \)\([0-9]*\)\( seconds, since \)\(.*\)$/\1XXX\3YYY/g
+s/\(  uptime: \)\([0-9]*\)\( second[s]*, since \)\(.*\)$/\1XXX\3YYY/g
 s/  malloc: sbrk [0-9]*, mmap [0-9]*, used [0-9]*, free [0-9]*$/  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX/g
-s/^\(.* ESTABLISHED \)\([0-9]*\)\( seconds ago.*\)$/\1XXX\3/g
+s/^\(.* ESTABLISHED \)\([0-9]*\)\( second[s]* ago.*\)$/\1XXX\3/g
 #s/^\(.* IKEv[12] SPIs: \)\(.*_i\)+*\( .*_r.\)\(,.*\)$/\1SPISPI_i SPISPI_r\4/g
 s/SPIs: [0-9a-z]*_i\([\*]*\) [0-9a-z]*_r\([\*]*\)/SPIs: SPISPI_i\1 SPISPI_r\2/g
 s/^\(.*  INSTALLED, TUNNEL, .* SPIs: \)\(.*_i \)\(.*_o\)$/\1SPISPI_i SPISPI_o/g
@@ -23,3 +23,4 @@ s/esp spi 0x[a-z0-9]* /esp spi 0xSPISPI /g
 s/auth-trunc \([^ ]*\) 0x[a-z0-9]* \(.*\)$/auth-trunc \1 0xKEY \2/g
 # strip out our own changing vendor id
 s/received unknown vendor ID: 40:48.*/received unknown vendor ID: LIBRESWAN/g
+s/rekeying in [0-9]* minutes/rekeying in XX minutes/g
