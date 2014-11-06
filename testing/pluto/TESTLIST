@@ -611,13 +611,13 @@ kvmplutotest	interop-ikev2-strongswan-06-aes192		good
 kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-ccm		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-gcm		good
-kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	wip
+kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-12-nat-responder	good
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
-kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
-kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder	wip
+kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	good
+kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
 kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
 # strongswan still broken in v5.1.1
