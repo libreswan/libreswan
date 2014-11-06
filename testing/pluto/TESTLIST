@@ -111,6 +111,7 @@ kvmplutotest	ikev2-minor-version-initiator		good
 kvmplutotest	ikev2-minor-version-responder		good
 kvmplutotest	ikev2-isakmp-reserved-flags-01		good
 kvmplutotest	ikev2-isakmp-reserved-flags-02		good
+kvmplutotest	ikev2-payload-reserved-flags-01		wip
 kvmplutotest	ikev2-allow-narrow-01			good
 kvmplutotest	ikev2-allow-narrow-02			good
 kvmplutotest	ikev2-allow-narrow-03			good
