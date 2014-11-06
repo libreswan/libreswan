@@ -319,7 +319,7 @@ def shut_down_hosts(args, test_hosts):
 		try:
 			num,host,state = line.split()
 			for h in all_hosts:
-				if h is host:
+				if h == host:
 					running.append(host)
 					cmd = "sudo virsh shutdown %s" % host
 					logging.debug("Found %s %s shutodwn send %s", host, state, cmd)
@@ -339,7 +339,7 @@ def shut_down_hosts(args, test_hosts):
 				try:
 					num,host,state = line.split()
 					for h in all_hosts:
-						if h is host:
+						if h == host:
 							running.append(host)
 				except:
 					pass
