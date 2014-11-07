@@ -1006,10 +1006,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
+		struct isakmp_sa r_sa;
 		stf_status ret;
 		pb_stream r_sa_pbs;
 
+		zero(&r_sa);
 		r_sa.isasa_np = isa_xchg == ISAKMP_v2_CREATE_CHILD_SA ?
 			ISAKMP_NEXT_v2Nr : ISAKMP_NEXT_v2TSi;
 

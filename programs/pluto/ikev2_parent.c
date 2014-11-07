@@ -924,9 +924,11 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
+		struct isakmp_sa r_sa;
 		stf_status ret;
 		pb_stream r_sa_pbs;
+
+		zero(&r_sa);
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			/* normal case */
