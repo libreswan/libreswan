@@ -832,7 +832,10 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
+		struct isakmp_sa r_sa;
+
+		zero(&r_sa);
+		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		/*
 		 * Almost guaranteed to send a VID, set the NEXT payload
