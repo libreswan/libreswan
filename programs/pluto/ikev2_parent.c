@@ -924,7 +924,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa;
+		struct ikev2_sa r_sa;
 		stf_status ret;
 		pb_stream r_sa_pbs;
 
