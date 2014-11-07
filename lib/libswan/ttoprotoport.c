@@ -49,7 +49,7 @@ int *has_port_wildcard;	/* set if port is %any */
 		service_name = src + src_len;
 	}
 
-	/* copy protocol name*/
+	/* copy protocol name */
 	memset(proto_name, '\0', sizeof(proto_name));
 	memcpy(proto_name, src, proto_len);
 

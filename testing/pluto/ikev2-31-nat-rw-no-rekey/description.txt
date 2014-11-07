@@ -1,0 +1,2 @@
+IKEv2 RW test with rekey=no and dpdaction clear on the responder,
+the initiator behind NAT and block everything. The responder will clear the connection.

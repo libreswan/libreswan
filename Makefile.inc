@@ -375,9 +375,15 @@ USE_LABELED_IPSEC?=false
 
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
 USE_LIBCAP_NG?=true
+ifeq ($(OSDEP),darwin)
+USE_LIBCAP_NG=false
+endif
 
 # Support for Network Manager
 USE_NM?=true
+ifeq ($(OSDEP),darwin)
+USE_NM=false
+endif
 
 # Include LDAP support (currently used for fetching CRLs)
 USE_LDAP?=false

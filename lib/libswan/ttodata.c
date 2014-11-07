@@ -336,6 +336,10 @@ size_t errlen;
 		return "unknown character in input";
 
 	strcpy(errp, pre);
+	/*
+	 * clang 3.4 says "warning: Assigned value is garbage or undefined".
+	 * This does not seem to be correct.
+	 */
 	ch = *(src + BADOFF(errcode));
 	if (isprint(ch)) {
 		buf[0] = ch;

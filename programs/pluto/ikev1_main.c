@@ -832,7 +832,10 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
+		struct isakmp_sa r_sa;
+
+		zero(&r_sa);
+		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		/*
 		 * Almost guaranteed to send a VID, set the NEXT payload
@@ -1381,8 +1384,7 @@ stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
 
 		if (e == STF_FAIL) {
 			loglog(RC_LOG_SERIOUS,
-				"failed to start async DH calculation, "
-				"stf=%s\n",
+				"failed to start async DH calculation, stf=%s",
 				enum_name(&stfstatus_name, e));
 			return e;
 		}
@@ -2549,8 +2551,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		if (!out_struct(&isan, &isakmp_notification_desc,
 					&r_hdr_pbs, &not_pbs)) {
 			libreswan_log(
-				"failed to build notification in send_"
-				"notification\n");
+				"failed to build notification in send_notification");
 			return;
 		}
 
@@ -2860,19 +2861,26 @@ bool ikev1_delete_out(struct state *st)
  * @param st State structure
  * @param md Message Digest
  * @param p Payload digest
+ *
+ * returns TRUE to indicate st needs to be deleted.
+ *	We dare not do that ourselves because st is still in use.
+ *	accept_self_delete must be called to do this
+ *	at a more appropriate time.
  */
-void accept_delete(struct state *st, struct msg_digest *md,
+bool accept_delete(struct msg_digest *md,
 		struct payload_digest *p)
 {
+	struct state *st = md->st;
 	struct isakmp_delete *d = &(p->payload.delete);
 	size_t sizespi;
 	int i;
+	bool self_delete = FALSE;
 
 	/* We only listen to encrypted notifications */
 	if (!md->encrypted) {
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: not encrypted");
-		return;
+		return self_delete;
 	}
 
 	/* If there is no SA related to this request, but it was encrypted */
@@ -2880,12 +2888,12 @@ void accept_delete(struct state *st, struct msg_digest *md,
 		/* can't happen (if msg is encrypt), but just to be sure */
 		loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: "
 			"ISAKMP SA not established");
-		return;
+		return self_delete;
 	}
 
 	if (d->isad_nospi == 0) {
 		loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: no SPI");
-		return;
+		return self_delete;
 	}
 
 	switch (d->isad_protoid) {
@@ -2900,13 +2908,13 @@ void accept_delete(struct state *st, struct msg_digest *md,
 
 	case PROTO_IPCOMP:
 		/* nothing interesting to delete */
-		return;
+		return self_delete;
 
 	default:
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: unknown Protocol ID (%s)",
 			enum_show(&protocol_names, d->isad_protoid));
-		return;
+		return self_delete;
 	}
 
 	if (d->isad_spisize != sizespi) {
@@ -2914,13 +2922,13 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			"ignoring Delete SA payload: bad SPI size (%d) for %s",
 			d->isad_spisize,
 			enum_show(&protocol_names, d->isad_protoid));
-		return;
+		return self_delete;
 	}
 
 	if (pbs_left(&p->pbs) != d->isad_nospi * sizespi) {
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: invalid payload size");
-		return;
+		return self_delete;
 	}
 
 	for (i = 0; i < d->isad_nospi; i++) {
@@ -2933,10 +2941,10 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			struct state *dst;
 
 			if (!in_raw(icookie, COOKIE_SIZE, &p->pbs, "iCookie"))
-				return;
+				return self_delete;
 
 			if (!in_raw(rcookie, COOKIE_SIZE, &p->pbs, "rCookie"))
-				return;
+				return self_delete;
 
 			dst = find_state_ikev1(icookie, rcookie,
 					v1_MAINMODE_MSGID);
@@ -2951,15 +2959,20 @@ void accept_delete(struct state *st, struct msg_digest *md,
 				 * identities
 				 */
 				loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
+			} else if (dst == st) {
+				/*
+				 * remember this for later:
+				 * we need st to do any remaining deletes
+				 */
+				self_delete = TRUE;
 			} else {
+				/* note: this code is cloned for handling self_delete */
 				loglog(RC_LOG_SERIOUS, "received Delete SA payload: deleting ISAKMP State #%lu",
 					dst->st_serialno);
 				if (nat_traversal_enabled)
 					nat_traversal_change_port_lookup(md,
 									dst);
 				delete_state(dst);
-				if (dst == st)
-					md->st = st = NULL;
 			}
 		} else {
 			/*
@@ -2970,7 +2983,7 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			struct state *dst;
 
 			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-				return;
+				return self_delete;
 
 			dst = find_phase2_state_to_delete(st,
 							d->isad_protoid,
@@ -3052,4 +3065,20 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			}
 		}
 	}
+
+	return self_delete;
+}
+
+/* now it is safe to delete our sponsor */
+void accept_self_delete(struct msg_digest *md)
+{
+	struct state *st = md->st;
+
+	/* note: this code is cloned from handling ISAKMP non-self_delete */
+	loglog(RC_LOG_SERIOUS, "received Delete SA payload: self-deleting ISAKMP State #%lu",
+		st->st_serialno);
+	if (nat_traversal_enabled)
+		nat_traversal_change_port_lookup(md, st);
+	delete_state(st);
+	md->st = st = NULL;
 }

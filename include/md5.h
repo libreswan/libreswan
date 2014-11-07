@@ -22,7 +22,7 @@
 #include <pk11pub.h>
 
 typedef struct {
-	PK11Context* ctx_nss;
+	PK11Context *ctx_nss;
 } lsMD5_CTX;
 
 void lsMD5Init(lsMD5_CTX *);

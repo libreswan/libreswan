@@ -78,7 +78,7 @@ static bool match(const char *pattern, const chunk_t *ch)
 /*
  * find a boundary of the form -----tag name-----
  */
-static bool find_boundary(const char* tag, chunk_t *line)
+static bool find_boundary(const char *tag, chunk_t *line)
 {
 	chunk_t name = empty_chunk;
 
@@ -301,7 +301,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 
 	if (symkey == NULL) {
 		loglog(RC_LOG_SERIOUS,
-			"do_3des: NSS derived enc key is NULL\n");
+			"do_3des: NSS derived enc key is NULL");
 		abort();
 	}
 
@@ -312,7 +312,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 	secparam = PK11_ParamFromIV(ciphermech, &ivitem);
 	if (secparam == NULL) {
 		loglog(RC_LOG_SERIOUS,
-			"do_3des: Failure to set up PKCS11 param (err %d)\n",
+			"do_3des: Failure to set up PKCS11 param (err %d)",
 			PR_GetError());
 		abort();
 	}
@@ -331,7 +331,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 						secparam);
 	if (enccontext == NULL) {
 		loglog(RC_LOG_SERIOUS,
-			"do_3des: PKCS11 context creation failure (err %d)\n",
+			"do_3des: PKCS11 context creation failure (err %d)",
 			PR_GetError());
 		abort();
 	}
@@ -339,7 +339,7 @@ void do_3des_nss(u_int8_t *buf, size_t buf_len,
 			buf_len);
 	if (rv != SECSuccess) {
 		loglog(RC_LOG_SERIOUS,
-			"do_3des: PKCS11 operation failure (err %d)\n",
+			"do_3des: PKCS11 operation failure (err %d)",
 			PR_GetError());
 		abort();
 	}

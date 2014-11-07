@@ -49,6 +49,7 @@
 #include "whack.h"
 #include "ikev1_dpd.h"
 #include "ikev2.h"
+#include "pending.h" /* for flush_pending_by_connection */
 
 #include "nat_traversal.h"
 
@@ -69,7 +70,7 @@ static unsigned int maximum_retransmissions_quick_r1 =
 
 /*
  * This routine places an event in the event list.
- * Delay should really be a monotime_t but this is easier
+ * Delay should really be a deltatime_t but this is easier
  */
 void event_schedule(enum event_type type, time_t delay, struct state *st)
 {
@@ -85,6 +86,8 @@ void event_schedule(enum event_type type, time_t delay, struct state *st)
 	 * If the event is associated with a state, put a backpointer to the
 	 * event in the state object, so we can find and delete the event
 	 * if we need to (for example, if we receive a reply).
+	 * (There are actually three classes of event associated
+	 * with a state.)
 	 */
 	if (st != NULL) {
 		switch (type) {
@@ -166,15 +169,9 @@ void event_schedule(enum event_type type, time_t delay, struct state *st)
 static void retransmit_v1_msg(struct state *st)
 {
 	time_t delay = 0;	/* relative time; 0 means NO */
-	struct connection *c;
-	unsigned long try;
-	unsigned long try_limit;
-
-	passert(st != NULL);
-	c = st->st_connection;
-
-	try = st->st_try;
-	try_limit = c->sa_keying_tries;
+	struct connection *c = st->st_connection;
+	unsigned long try = st->st_try;
+	unsigned long try_limit = c->sa_keying_tries;
 
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
@@ -448,8 +445,9 @@ void handle_timer_event(void)
 static void liveness_check(struct state *st)
 {
 	struct state *pst;
-	struct connection *c = st->st_connection;
 	deltatime_t last_msg_age;
+
+	struct connection *c = st->st_connection;
 
 	passert(st->st_ikev2);
 
@@ -501,10 +499,7 @@ static void liveness_check(struct state *st)
 					(long)timeout));
 			switch (c->dpd_action) {
 			case DPD_ACTION_CLEAR:
-				libreswan_log(
-					"IKEv2 peer liveness - clearing connection");
-				delete_states_by_connection(c, TRUE);
-				unroute_connection(c);
+				liveness_clear_connection(c, "IKEv2 liveness action");
 				return;
 
 			case DPD_ACTION_RESTART:
@@ -514,7 +509,7 @@ static void liveness_check(struct state *st)
 
 			case DPD_ACTION_HOLD:
 				DBG(DBG_CONTROL,
-					DBG_log("liveness_check - handling default by rescheduling"));
+						DBG_log("liveness_check - handling default by rescheduling"));
 				break;
 
 			default:
@@ -547,8 +542,7 @@ void handle_next_timer_event(void)
 	enum event_type type;
 	struct state *st;
 
-	if (ev == (struct event *) NULL)
-		return;
+	passert(ev != NULL);
 
 	evlist = evlist->ev_next;	/* Ok, we'll handle this event */
 	type = ev->ev_type;
@@ -566,29 +560,61 @@ void handle_next_timer_event(void)
 		}
 	});
 
+	passert(GLOBALS_ARE_RESET());
+
+	if (st != NULL)
+		set_cur_state(st);
+
 	/*
-	 * for state-associated events, pick up the state pointer
-	 * and remove the backpointer from the state object.
+	 * Check that st is as expected for the event type.
+	 *
+	 * For an event type associated with a state, remove the backpointer
+	 * from the appropriate slot of the state object.
+	 *
 	 * We'll eventually either schedule a new event, or delete the state.
 	 */
-	passert(GLOBALS_ARE_RESET());
-	if (st != NULL) {
-		if (type == EVENT_DPD || type == EVENT_DPD_TIMEOUT) {
-			passert(st->st_dpd_event == ev);
-			st->st_dpd_event = NULL;
-		} else if (type == EVENT_v2_LIVENESS) {
-			passert(st->st_liveness_event == ev);
-			st->st_liveness_event = NULL;
-		} else {
-			passert(st->st_event == ev);
-			st->st_event = NULL;
-		}
-		set_cur_state(st);
-	}
-
 	switch (type) {
 	case EVENT_REINIT_SECRET:
+#ifdef KLIPS
+	case EVENT_SHUNT_SCAN:
+#endif
+	case EVENT_PENDING_DDNS:
+	case EVENT_PENDING_PHASE2:
+	case EVENT_LOG_DAILY:
+	case EVENT_NAT_T_KEEPALIVE:
 		passert(st == NULL);
+		break;
+
+	case EVENT_v1_RETRANSMIT:
+	case EVENT_v2_RETRANSMIT:
+	case EVENT_SA_REPLACE:
+	case EVENT_SA_REPLACE_IF_USED:
+	case EVENT_v2_RESPONDER_TIMEOUT:
+	case EVENT_SA_EXPIRE:
+	case EVENT_SO_DISCARD:
+	case EVENT_CRYPTO_FAILED:
+		passert(st != NULL && st->st_event == ev);
+		st->st_event = NULL;
+		break;
+
+	case EVENT_v2_LIVENESS:
+		passert(st != NULL && st->st_liveness_event == ev);
+		st->st_liveness_event = NULL;
+		break;
+
+	case EVENT_DPD:
+	case EVENT_DPD_TIMEOUT:
+		passert(st != NULL && st->st_dpd_event == ev);
+		st->st_dpd_event = NULL;
+		break;
+
+	default:
+		bad_case(type);
+	}
+
+	/* now do the actual event's work */
+	switch (type) {
+	case EVENT_REINIT_SECRET:
 		DBG(DBG_CONTROL,
 			DBG_log("event EVENT_REINIT_SECRET handled"));
 		init_secret();
@@ -596,23 +622,24 @@ void handle_next_timer_event(void)
 
 #ifdef KLIPS
 	case EVENT_SHUNT_SCAN:
-		passert(st == NULL);
 		scan_proc_shunts();
 		break;
 #endif
 
 	case EVENT_PENDING_DDNS:
-		passert(st == NULL);
 		connection_check_ddns();
 		break;
 
 	case EVENT_PENDING_PHASE2:
-		passert(st == NULL);
 		connection_check_phase2();
 		break;
 
 	case EVENT_LOG_DAILY:
 		daily_log_event();
+		break;
+
+	case EVENT_NAT_T_KEEPALIVE:
+		nat_traversal_ka_event();
 		break;
 
 	case EVENT_v1_RETRANSMIT:
@@ -739,10 +766,6 @@ void handle_next_timer_event(void)
 		dpd_timeout(st);
 		break;
 
-	case EVENT_NAT_T_KEEPALIVE:
-		nat_traversal_ka_event();
-		break;
-
 	case EVENT_CRYPTO_FAILED:
 		DBG(DBG_CONTROL,
 			DBG_log("event crypto_failed on state #%lu, aborting",
@@ -752,9 +775,7 @@ void handle_next_timer_event(void)
 		break;
 
 	default:
-		loglog(RC_LOG_SERIOUS,
-			"INTERNAL ERROR: ignoring unknown expiring event %s",
-			enum_show(&timer_event_names, type));
+		bad_case(type);
 	}
 
 	pfree(ev);

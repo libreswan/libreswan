@@ -1,0 +1,2 @@
+Both sides have rekey=no and east ikelifetime=90 sec. west ikelifetime=100 sec.
+Both sides will leave a trap rule there.

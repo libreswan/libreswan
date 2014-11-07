@@ -182,7 +182,7 @@ void ipsec_mast_cleanup_saref(void)
 
 #if 0
 /* Paul: This seems to be unused dead code */
-enum ipsec_xmit_value ipsec_mast_send(struct ipsec_xmit_state*ixs)
+enum ipsec_xmit_value ipsec_mast_send(struct ipsec_xmit_state *ixs)
 {
 	/* new route/dst cache code from James Morris */
 	ixs->skb->dev = ixs->physdev;

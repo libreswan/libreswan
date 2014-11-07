@@ -72,7 +72,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 
 	DBG(DBG_PARSING, DBG_log("received sec ctx"));
 
-	/*doing sanity check*/
+	/* doing sanity check */
 	if (pbs_left(pbs) <
 	    (sizeof(ctx_doi) + sizeof(ctx_alg) + sizeof(ctx_len) + 1) ) {
 		DBG(DBG_PARSING,
@@ -80,15 +80,15 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		return FALSE;
 	}
 
-	/*reading ctx doi*/
+	/* reading ctx doi */
 	memcpy(&ctx_doi, pbs->cur, sizeof(ctx_doi));
 	pbs->cur += sizeof(ctx_doi);
 
-	/*reading ctx alg*/
+	/* reading ctx alg */
 	memcpy(&ctx_alg, pbs->cur, sizeof(ctx_alg));
 	pbs->cur += sizeof(ctx_alg);
 
-	/*reading ctx length*/
+	/* reading ctx length */
 	memcpy(&net_ctx_len, pbs->cur, sizeof(ctx_len));
 	pbs->cur += sizeof(ctx_len);
 	ctx_len = ntohs(net_ctx_len);
@@ -115,7 +115,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		return FALSE;
 	}
 
-	/* reading security label*/
+	/* reading security label */
 	memcpy(sec_ctx_value, pbs->cur, pbs_left(pbs));
 	i = pbs_left(pbs);
 
@@ -126,13 +126,13 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	 * we can add a \0 if there is space left in the buffer.
 	 */
 
-	if ( sec_ctx_value[i - 1] != '\0') {
-		/*check if we have space left and then append \0*/
+	if (sec_ctx_value[i - 1] != '\0') {
+		/*check if we have space left and then append \0 */
 		if (i < MAX_SECCTX_LEN) {
 			sec_ctx_value[i] = '\0';
 			i = i + 1;
 		} else {
-			/*there is no space left*/
+			/* there is no space left */
 			DBG(DBG_PARSING,
 			    DBG_log("received security label > MAX_SECCTX_LEN (should not happen really)"));
 			return FALSE;
@@ -162,7 +162,10 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		st->sec_ctx->ctx_alg = ctx_alg;
 		st->sec_ctx->ctx_doi = ctx_doi;
 
-		/* lets verify if the received security label is within range of this connection's policy's security label*/
+		/*
+		 * let's verify if the received security label is within range
+		 * of this connection's policy's security label
+		 */
 		if (!st->st_connection->labeled_ipsec) {
 			DBG_log("This state (connection) is not labeled ipsec enabled, so cannot proceed");
 			return FALSE;
@@ -201,6 +204,7 @@ static bool out_attr(int type,
 {
 	struct isakmp_attribute attr;
 
+	zero(&attr);
 	if (val >> 16 == 0) {
 		/* short value: use TV form */
 		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TV;
@@ -319,6 +323,7 @@ bool ikev1_out_sa(pb_stream *outs,
 	{
 		struct isakmp_sa sa;
 
+		zero(&sa);
 		sa.isasa_np = np;
 		sa.isasa_doi = ISAKMP_DOI_IPSEC; /* all we know */
 		if (!out_struct(&sa, &isakmp_sa_desc, outs, &sa_pbs))
@@ -515,6 +520,7 @@ bool ikev1_out_sa(pb_stream *outs,
 				bool oakley_keysize = FALSE;
 				bool ipsec_keysize = FALSE;
 
+				zero(&trans);
 				trans.isat_np = (tn == p->trans_cnt - 1) ?
 						ISAKMP_NEXT_NONE :
 						ISAKMP_NEXT_T;
@@ -597,6 +603,8 @@ bool ikev1_out_sa(pb_stream *outs,
 					if (st->sec_ctx != NULL &&
 					    st->st_connection->labeled_ipsec) {
 						struct isakmp_attribute attr;
+
+						zero(&attr);
 						pb_stream val_pbs;
 						attr.isaat_af_type =
 							secctx_attr_value |
@@ -640,7 +648,7 @@ bool ikev1_out_sa(pb_stream *outs,
 							     &val_pbs,
 							     " variable length sec ctx: ctx_len"))
 							return_on(ret, FALSE);
-						/*Sending '\0'  with sec ctx as we get it from kernel*/
+						/* Sending '\0'  with sec ctx as we get it from kernel */
 						if (!out_raw(st->sec_ctx->
 							     sec_ctx_value,
 							     st->sec_ctx->
@@ -870,36 +878,38 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				    pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
 				    bool selection,		/* if this SA is a selection, only one tranform
 								 * can appear. */
-				    struct state *st)		/* current state object */
+				    struct state *const st)	/* current state object */
 {
 	u_int32_t ipsecdoisit;
 	pb_stream proposal_pbs;
 	struct isakmp_proposal proposal;
 	unsigned no_trans_left;
 	int last_transnum;
-	struct connection *c = st->st_connection;
-	struct spd_route *spd, *me = &c->spd;
+	struct connection *const c = st->st_connection;
+	struct spd_route *spd;
 	bool xauth_init, xauth_resp;
-	const char *role;
+	const char *const role = selection ? "initiator" : "responder";
 
-	role = "";
+	passert(c != NULL);
 
 	xauth_init = xauth_resp = FALSE;
 
 	/* calculate the per-end policy which might apply */
-	for (spd = me; spd; spd = spd->next) {
-		if (selection) { /* this is the initiator, we have proposed, they have answered,
-			          * and we must decide if they proposed what we wanted.
-			          */
-			role = "initiator";
+	for (spd = &c->spd; spd != NULL; spd = spd->next) {
+		if (selection) {
+			/*
+			 * this is the initiator, we have proposed, they have answered,
+			 * and we must decide if they proposed what we wanted.
+			 */
 			xauth_init |= spd->this.xauth_client;
 			xauth_resp |= spd->this.xauth_server;
-		} else { /* this is the responder, they have proposed to us, what
-			  * are we willing to be?
-			  */
-			role = "responder";
-			xauth_init = xauth_init | spd->this.xauth_server;
-			xauth_resp = xauth_resp | spd->this.xauth_client;
+		} else {
+			/*
+			 * this is the responder, they have proposed to us, what
+			 * are we willing to be?
+			 */
+			xauth_init |= spd->this.xauth_server;
+			xauth_resp |= spd->this.xauth_client;
 		}
 	}
 
@@ -1098,8 +1108,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 					ta.encrypter =
 						crypto_get_encrypter(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
-				} else
-				switch (val) {
+				} else switch (val) {
 				case OAKLEY_3DES_CBC:
 					ta.encrypt = val;
 					ta.encrypter =
@@ -1120,9 +1129,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				if (ike_alg_hash_present(val)) {
 					ta.prf_hash = val;
 					ta.prf_hasher = crypto_get_hasher(val);
-				} else
-/* #else */
-				switch (val) {
+				} else switch (val) {
 				case OAKLEY_MD5:
 				case OAKLEY_SHA1:
 					ta.prf_hash = val;
@@ -1182,24 +1189,21 @@ psk_common:
 						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
 						/* check that we can find a preshared secret */
-						struct connection *con =
-							st->st_connection;
-
-						if (get_preshared_secret(con)
+						if (get_preshared_secret(c)
 						    == NULL)
 						{
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
 
-							idtoa(&con->spd.this.id, mid,
+							idtoa(&c->spd.this.id, mid,
 							      sizeof(mid));
 							if (his_id_was_instantiated(
-									con))
+									c))
 							{
 								strcpy(hid,
 								       "%any");
 							} else {
-								idtoa(&con->spd.that.id, hid,
+								idtoa(&c->spd.that.id, hid,
 								      sizeof(hid));
 							}
 
@@ -1688,7 +1692,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			return FALSE;
 
 #ifndef HAVE_LABELED_IPSEC
-		/*This check is no longer valid when using security labels as SECCTX attribute is in private range and has value of 32001*/
+		/*
+		 * This check is no longer valid when using security labels as
+		 * SECCTX attribute is in private range and has value of 32001
+		 */
 		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF);
 #endif
 
@@ -1707,9 +1714,13 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		vdesc = ipsec_attr_val_descs[(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK)
 #ifdef HAVE_LABELED_IPSEC
-		/* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
-		/* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
-		/* which is NULL in ipsec_attr_val_desc*/
+		/*
+		 * The original code (without labeled ipsec) assumes
+		 *	a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF
+		 * so for retaining the same behavior when this is < LELEM_ROOF
+		 * and if more than >= LELEM_ROOF setting it to 0,
+		 * which is NULL in ipsec_attr_val_desc
+		 */
 					     >= LELEM_ROOF ? 0 : a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #endif

@@ -26,6 +26,13 @@ i_ran = threading.Event()
 n_init = threading.Event()
 result_file_lock = threading.Lock()
 
+def rsync_file_to_dir (src, dst):
+	cmd="/usr/bin/rsync -q -aP %s %s/" % (src, dst)
+	logging.debug("%s %s", os.getcwd(), cmd)
+	try:
+		os.system(cmd)
+	except:
+		logging.exception("EXCEPTION ? cmd %s , cwd %s", os.getcwd(), cmd)
 
 class guest (threading.Thread):
 	def __init__(self, hostname, role, testname, args, install=None, compile=None):
@@ -283,6 +290,14 @@ class guest (threading.Thread):
 
 # end of class
 
+def get_results(r):
+	if os.path.exists(r):
+		f = open(r, 'r')
+		for line in f:
+			x = ujson.loads(line)
+			if "result" in x and "testname"  in x:
+				return x
+
 def shut_down_hosts(args, test_hosts):
 
 	running = []
@@ -292,9 +307,9 @@ def shut_down_hosts(args, test_hosts):
 	if args.noreboot:
 		logging.debug("all hosts [%s] shutdown list", ' '.join(map(str, all_hosts)))
 		logging.debug("remove [%s] from shutdown list", ' '.join(map(str, test_hosts)))
-		for h in hosts:
-			for t in test_hosts:
-				if h == t:
+		for t in test_hosts:
+			for h in all_hosts:
+				if h is t:
 					all_hosts.remove(t)
 
 	logging.debug("shutdown list [%s] ", ' '.join(map(str, all_hosts)))
@@ -332,6 +347,7 @@ def shut_down_hosts(args, test_hosts):
 			pass
 		tries -= 1
 		time.sleep(1)
+
 	if len(running):
 		e = "KVMERROR not able to shutdown %s guests: [%s] abort" % (len(running), ' '.join(map(str, running)))
 		logging.error (e)
@@ -446,16 +462,68 @@ def sanitize(cmd):
 	logging.info ("sanitizer output %s", sanity)
 	return sanity
 
-def write_result(args, start, testname, sanity, result = 'FAILED', e = None, testexpect = ''):
-
+def split_sanity(sanity):
 	if sanity:
 		for line in sanity.split("\n")[2:]:
 			try:
 				key,name,value = line.split()
 				if key == "result":
-					result = value
+					return value
 			except:
 				pass
+
+def re_write_result(args, testname, sanity, result = "FAILED"):
+
+	changed = False
+
+	if sanity:
+		result = split_sanity(sanity)
+	else:
+		return
+	output_file = "OUTPUT/RESULT"
+	if not os.path.exists(output_file):
+		return
+
+	lines = []
+	f = open(output_file, 'r')
+	for line in f:
+		x = None
+		try:
+			x = ujson.loads(line)
+		except:
+			lines.append(line)
+			contine
+
+		if x and "result" in x and "testname" in x:
+			if x["result"] == result:
+				logging.debug("testcase %s result didn't change %s",testname, result)
+				continue
+
+			changed = True
+			logging.info("testcase %s result new '%s' old '%s'",testname, x["result"],  result)
+			x[result] = result
+			x["resanitized"] = time.strftime("%Y-%m-%d %H:%M", time.localtime())
+			lines.append(ujson.dumps(x, ensure_ascii=True, double_precision=2))
+
+	f.close
+
+
+	if not changed:
+		return False
+
+	f = open(output_file, 'w')
+
+	for line in lines:
+		f.write(line)
+		f.write("\n")
+
+	f.close
+	return changed
+
+def write_result(args, start, testname, sanity, result = 'FAILED', e = None, testexpect = ''):
+
+	if sanity:
+		result = split_sanity(sanity)
 
 	logline = dict ()
 	output_file = "OUTPUT/RESULT"
@@ -485,8 +553,8 @@ DEFAULTCONFIG =  {
 	'newrun' : None,
 	'stoponerror' : None,
 	'retry' : 5,
-	'node' : platform.node()
-
+	'node' : platform.node(),
+	'testlist' : "TESTLIST"
 }
 
 def cmdline():
@@ -497,6 +565,10 @@ def cmdline():
 			help="retry when there is console error.")
 
 	parser.add_argument("--node", default=DEFAULTCONFIG['node'], help="Default node name.")
+
+	parser.add_argument("--resanitize", default=False, action="store_true",
+			help="re-sanitize results, run it from ~/libreswan/testing/pluto directory")
+
 	parser.add_argument("--graphs", default=False, action="store_true",
 			help="generate graphs and JSON tables.")
 
@@ -517,6 +589,10 @@ def cmdline():
 	parser.add_argument("--sanitizer",
 						default=DEFAULTCONFIG['sanitizer'],
 						help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
+	parser.add_argument("--testlist",
+						default=DEFAULTCONFIG['testlist'],
+						help="read kvmpluto tests from  %s. in the repositiry testing/pluto/TESTLIST." % DEFAULTCONFIG['testlist'])
+
 	parser.add_argument("-v", "--verbose",
 						default=1, type=int,
 						help="increase verbosity: 0 = only warnings, 1 = info, 2 = debug. Default info")
@@ -630,13 +706,100 @@ def do_test(args, start='', testexpect=''):
 	s = sanitize(args.sanitizer)
 	write_result(args, start, testname, s, testexpect = testexpect)
 
-def do_test_list(args, start, tried, output_dir):
-	r = "TESTLIST"
+
+def skip_testlist_line(args, line, verbose=False):
+	
+
+	if line[0] == '#' or re.match('^[ \t]*$', line):
+		# skip the comments
+		return True
+
+	try:
+		testtype, testdir, testexpect = line.split()
+	except:
+		logging.error("****** skipping malformed: %s", line)
+		return True
+
+	if testtype == "skiptest":
+		if verbose:
+			logging.error("****** %s", line)
+		return True
+	elif testtype  != "kvmplutotest":
+		if verbose:
+			logging.error("****** skipping test %s: yet to be migrated to kvm style ", testdir)
+		return True
+	elif not os.path.exists(testdir):
+		if verbose:
+			logging.error("**** Skipping missing %s/%s *****",
+				os.getcwd(), testdir)
+		return True
+
+	return False
+
+def resanitize(args):
+	r = args.testlist
+	logging.info("re sanitize the existing results checking for %s. Typically, this should start from ~/libreswan/testing/pluto", r)
 	if not os.path.exists(r):
+		logging.error("ABORT re sanitize missing %s. Did it start from right place", r)
+		return None
+
+	output_dir = setup_result_dir(args)
+
+	rsync_file_to_dir(args.testlist, output_dir)
+	f = open(r, 'r')
+	for line in f:
+		logging.debug("%s", line)
+
+		if skip_testlist_line(args,line, verbose=False):
+			continue
+		
+		testtype, testdir, testexpect = line.split()
+		rdif = testdir  + '/OUTPUT/'
+
+		r1 = testdir  + '/OUTPUT/RESULT'
+
+		x = get_results(r1)
+		if not x :
+			# there is no result ?? 
+			continue
+		
+		if x and (x["result"] == 'failed'):
+			logging.debug("resanitize now %s %s",testdir, testexpect )
+
+			## chdir start
+			os.chdir(testdir)
+
+			s = sanitize(args.sanitizer)
+			a = re_write_result(args=args, testname = testdir, sanity=s)
+			if a:
+				logging.info("new result %s", a)
+
+			#for h in DEFAULTCONFIG['swanhosts']:
+			#	f = "OUTPUT/%s.console.diff"%h
+			#	if  os.path.exists(f):
+			#		cmd = "egrep '^[+-]' %s | egrep -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
+			#		(status, output) =  commands.getstatusoutput(cmd);
+			#		if not status:
+			#			print "cp %s/OUTPUT/%s.console.txt %s/ "%(testdir,h,testdir)
+			#			print "cat %s/%s"%(testdir,f)
+
+			os.chdir("..")
+			## chdir end
+
+		#copy the test  to new result directory
+		if os.path.exists(output_dir):
+			rsync_file_to_dir(testdir, output_dir);
+		else:
+			logging.info("missing output dir %s. can not copy resanitized results",output_dir)
+
+	testsum.read_dirs(args, output_dir)
+
+def do_test_list(args, start, tried, output_dir):
+	if not os.path.exists(args.testlist):
 		return None
 	ran =  1;
 
-	logging.info("** found file %s **" , r)
+	logging.info("** run kvmpluto tests from file %s **" , args.testlist)
 
 	if not os.path.exists(args.resultsdir):
 		try:
@@ -646,46 +809,23 @@ def do_test_list(args, start, tried, output_dir):
 	else:
 		logging.info("testresult directory %s exist", args.resultsdir)
 
-	if not os.path.exists(output_dir):
-		try:
-			os.mkdir(output_dir, 0o755)
-		except:
-			logging.error("failed to create directory %s", output_dir)
-	else:
-		logging.info("sub directory %s exist", output_dir)
-
 	s = 'stop-tests-now'
 	if os.path.exists(s) and (tried == 0):
 		os.unlink(s)
 		logging.debug("removing existing %s" % s)
 
-	f = open(r, 'r')
+	rsync_file_to_dir(args.testlist, output_dir)
+	f = open(args.testlist, 'r')
 	for line in f:
 		logging.debug("%s", line)
 		if os.path.exists(s):
 			logging.error("* stop all tests now. Found %s *", s)
 			return True
 
-		if line[0] == '#' or re.match('^[ \t]*$', line):
-			# skip the comments
+		if skip_testlist_line(args, line, verbose=True):
 			continue
-
-		try:
-			testtype, testdir, testexpect = line.split()
-		except:
-			logging.error("****** skipping malformed: %s", line)
-			continue
-
-		if testtype == "skiptest":
-			logging.error("****** %s", line)
-			continue
-		elif testtype  != "kvmplutotest":
-			logging.error("****** skipping test %s: yet to be migrated to kvm style ", testdir)
-			continue
-		elif not os.path.exists(testdir):
-			logging.error("**** Skipping missing %s/%s *****",
-					os.getcwd(), testdir)
-			continue
+		
+		testtype, testdir, testexpect = line.split()
 
 		r_file = output_dir + '/' + testdir  + '/OUTPUT/RESULT'
 		if os.path.exists(r_file) and tried and (tried < args.retry):
@@ -721,14 +861,9 @@ def do_test_list(args, start, tried, output_dir):
 		## chdir end
 
 		if os.path.exists(output_dir):
-			try:
-				cmd="/usr/bin/rsync -q -aP %s %s/" % (testdir, output_dir)
-				logging.debug("%s %s", os.getcwd(), cmd)
-				os.system(cmd)
-			except:
-				pass
+			rsync_file_to_dir(testdir, output_dir)
 		else:
-			logging.info("missing output dir %s. don't copy results",output_dir)
+			logging.info("missing output dir %s. can not copy results",output_dir)
 
 	f.close
 	return ran
@@ -756,11 +891,33 @@ def setup_result_dir(args):
 
 	ipsecversion = ''
 	try:
+		# inside 'make check' IPSECVERSION is set
 		ipsecversion =  os.environ["IPSECVERSION"]
-		if ipsecversion:
-			output_dir = output_dir + '-' + ipsecversion
 	except:
 		pass
+
+	if not ipsecversion:
+		# Lets assume the path is <LIBRESWANSRC>/testing/utis 
+		cwd =  os.getcwd()
+		dn =   os.path.normpath(os.path.dirname(os.path.realpath(__file__)))
+		os.chdir(dn)
+		os.chdir("../../")
+		cmd = "make showversion"
+		ipsecversion = commands.getoutput(cmd)
+		ipsecversion = ipsecversion.strip()
+		try:
+			os.chdir(cwd)
+		except:
+			pass
+		logging.debug("cwd = %s , swantest = %s , %s, IPSECVERSION %s", cwd, dn, cmd, ipsecversion)
+	else :
+		logging.debug("IPSECVERSION %s was set in env", ipsecversion)
+
+	if ipsecversion:
+		output_dir = output_dir + '-' + ipsecversion
+
+	if (args.resanitize):
+		output_dir =  output_dir + "-resanitized"
 
 	if args.newrun and os.path.exists(output_dir):
 		logging.info("newrun, remove results [%s]", output_dir)
@@ -775,17 +932,14 @@ def setup_result_dir(args):
 	except:
 		logging.error("failed to create directory %s", output_dir)
 
-
 	logging.info("results will be in %s", output_dir)
 	return output_dir
 
 def gen_graphs_tables(args):
-	testsum.read_testlist(resultsdir = args.resultsdir, node = args.node)
-	testsum.read_dirs(resultsdir = args.resultsdir, node=args.node)
+	testsum.read_dirs(args)
 
 def gen_stop_tests_now(args):
-	r = "TESTLIST"
-	if not os.path.exists(r):
+	if not os.path.exists(args.testlist):
 		return None
 
 	s = "stop-tests-now"
@@ -797,19 +951,25 @@ def main():
 	start = time.time()
 	args = cmdline()
 	tried = 0
-	output_dir = setup_result_dir(args)
 	ran = 2 # used for summery generation.
 
 	if args.graphs:
 		gen_graphs_tables(args)
+		return
 	elif args.stop:
 		gen_stop_tests_now(args)
-	elif do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
+		return
+	elif args.resanitize:
+		resanitize(args)
+		return
+
+	output_dir = setup_result_dir(args)
+	if do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
 		while (tried < args.retry):
 			if ran > 1:
 				gen_graphs_tables(args)
 			tried = 1 + tried
-			logging.info("retry TESTLIST %s/%s ", tried, args.retry)
+			logging.info("retry %s %s/%s ", args.testlist, tried, args.retry)
 			ran = do_test_list(args, start, tried, output_dir)
 
 	else:

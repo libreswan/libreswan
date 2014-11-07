@@ -593,24 +593,7 @@ void dpd_timeout(struct state *st)
 
 	case DPD_ACTION_CLEAR:
 		/** dpdaction=clear - Wipe the SA & eroute - everything */
-
-		libreswan_log("DPD: Clearing Connection");
-		/*
-		 * For CK_INSTANCE, delete_states_by_connection() will clear
-		 * Note that delete_states_by_connection changes c->kind but we need
-		 * to remember what it was to know if we still need to unroute after delete
-		 */
-		if (c->kind == CK_INSTANCE) {
-			delete_states_by_connection(c, TRUE);
-		} else {
-			flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
-			delete_states_by_connection(c, TRUE);
-			DBG(DBG_DPD,
-			    DBG_log("DPD: unrouting connection (%s)",
-				    enum_name(&connection_kind_names,
-					      c->kind)));
-			unroute_connection(c); /* --unroute */
-		}
+		liveness_clear_connection(c, "IKEv1 DPD action");
 		break;
 
 	case DPD_ACTION_RESTART:

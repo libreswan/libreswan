@@ -495,6 +495,7 @@ void init_vendorid(void)
 		} else if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
 			vid->vid = clone_str(vid->data, "vid->data (ignore)");
+			/* clang 3.4 thinks that vid->data might be NULL but it won't be */
 			vid->vid_len = strlen(vid->data);
 		} else if (vid->flags & VID_MD5HASH) {
 			/** VendorID is a string to hash with MD5 **/
@@ -716,7 +717,7 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 							      len, pvid, st);
 					return;
 				}
-			} else if ((pvid->vid_len < len)   &&
+			} else if ((pvid->vid_len < len) &&
 				   (pvid->flags & VID_SUBSTRING)) {
 				if (memeq(pvid->vid, vid, pvid->vid_len)) {
 					handle_known_vendorid(md, vid, len,
@@ -734,11 +735,14 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		char log_vid[2 * MAX_LOG_VID_LEN + 1];
 		size_t i;
 
-		zero(&log_vid);
 		for (i = 0; (i < len) && (i < MAX_LOG_VID_LEN); i++) {
+			/*
+			 * clang 3.4 thinks the vid might be NULL; wrong
+			 */
 			log_vid[2 * i] = hexdig[(vid[i] >> 4) & 0xF];
 			log_vid[2 * i + 1] = hexdig[vid[i] & 0xF];
 		}
+		log_vid[2 * i] = '\0';
 		loglog(RC_LOG_SERIOUS,
 		       "ignoring unknown Vendor ID payload [%s%s]",
 		       log_vid, (len > MAX_LOG_VID_LEN) ? "..." : "");

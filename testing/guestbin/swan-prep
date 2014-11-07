@@ -277,6 +277,11 @@ if args.ipv6:
 	commands.getoutput("sysctl net.ipv6.conf.default.disable_ipv6=0")
 	commands.getoutput("/etc/init.d/network restart")
 
+if not os.path.isfile("/root/.gdbinit"):
+	fp = open("/root/.gdbinit","w")
+	fp.write("set auto-load safe-path /");
+	fp.close()
+
 # final prep - this kills any running userland
 output = commands.getoutput("ipsec stop")
 # python has no pidof :/. getoutput return a string not a list. 

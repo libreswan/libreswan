@@ -273,7 +273,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED,
 	  .req_clear_payloads = P(E),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(CERT),
+	  .opt_enc_payloads = P(CERT)|P(CP),
 	  .processor  = ikev2parent_inR2,
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
@@ -306,12 +306,12 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .flags =  /* not SMF2_INITIATOR */ SMF2_STATENEEDED | SMF2_REPLY,
 	  .req_clear_payloads = P(E),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr),
+	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
 	  .processor  = ikev2parent_inI2outR2,
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
-	/* Informational Exchange*/
+	/* Informational Exchange */
 
 	/* RFC 5996 1.4 "The INFORMATIONAL Exchange"
 	 *
@@ -329,7 +329,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_NULL, },
 
-	/* Informational Exchange*/
+	/* Informational Exchange */
 	{ .story      = "R1: process INFORMATIONAL",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R1,
@@ -340,7 +340,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_NULL, },
 
-	/* Informational Exchange*/
+	/* Informational Exchange */
 	{ .story      = "I3: INFORMATIONAL",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
@@ -361,7 +361,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	 *                <-- HDR, SK {SA, Nr, [KEr], [TSi, TSr]}
 	 */
 
-	/* Create Child SA Exchange*/
+	/* Create Child SA Exchange */
 	{ .story      = "I3: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
@@ -373,7 +373,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
-	/* Create Child SA Exchange*/
+	/* Create Child SA Exchange */
 	{ .story      = "R2: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
@@ -385,7 +385,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
-	/* Informational Exchange*/
+	/* Informational Exchange */
 	{ .story      = "R2: process INFORMATIONAL",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
@@ -396,7 +396,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_NULL, },
 
-	/* Informational Exchange*/
+	/* Informational Exchange */
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
 	  .state      = STATE_IKESA_DEL,
 	  .next_state = STATE_IKESA_DEL,
@@ -668,7 +668,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 			if (st != NULL) {
 				/* found this child state, so we'll use it */
-				/* note we update the st->st_msgid_lastack *AFTER* decryption*/
+				/* note we update the st->st_msgid_lastack *AFTER* decryption */
 			} else {
 				/*
 				 * didn't find something with the msgid, so maybe it's
@@ -1015,6 +1015,10 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		} else {
 			*pkind = kind = EVENT_SA_EXPIRE;
 		}
+
+		if (c->policy & POLICY_DONT_REKEY) {
+                        *pkind = kind = EVENT_SA_EXPIRE;
+                }
 	}
 	return delay;
 }
@@ -1268,6 +1272,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		break;
 
 	case STF_TOOMUCHCRYPTO:
+		passert(st != NULL);
 		unset_suspended(st);
 		pexpect(!st->st_calculating);
 		libreswan_log("message in state %s ignored due to cryptographic overload",

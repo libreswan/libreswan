@@ -1,0 +1,6 @@
+Basic pluto with IKEv2 using RSA on the initiator (west), and on the responder.
+
+This test sets a RESERVED bit on the Security Association Payloads. It should
+not be received again.
+
+The connection should establish

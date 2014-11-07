@@ -65,7 +65,7 @@ bool in_pending_use(struct connection *c)
 
 char *progname;
 
-const char*check_expiry(time_t expiration_date, int warning_interval,
+const char *check_expiry(time_t expiration_date, int warning_interval,
 			bool strict)
 {
 	return "ok (never)";

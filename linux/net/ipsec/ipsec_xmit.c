@@ -2495,7 +2495,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 			    "klips_debug:ipsec_xmit_init2: "
 			    "data fits in existing skb\n");
 	} else {
-		struct sk_buff* tskb;
+		struct sk_buff *tskb;
 
 		tskb = skb_copy_expand(ixs->skb,
 		                       /* The need for 2 * link layer length here remains unexplained...RGB */
@@ -2533,7 +2533,7 @@ cleanup:
 	return bundle_stat;
 }
 
-void ipsec_xmit_cleanup(struct ipsec_xmit_state*ixs)
+void ipsec_xmit_cleanup(struct ipsec_xmit_state *ixs)
 {
 	void *p;
 	if (ixs->saved_header) {

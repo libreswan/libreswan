@@ -164,7 +164,7 @@ struct end {
 	bool has_id_wildcards;
 	char *updown;
 	u_int16_t host_port;		/* where the IKE port is */
-	bool host_port_specific;	/* if TRUE, then IKE ports are tested for*/
+	bool host_port_specific;	/* if TRUE, then IKE ports are tested for */
 	u_int16_t port;			/* port number, if per-port keying. */
 	u_int8_t protocol;		/* transport-protocol number, if per-X keying.*/
 
@@ -481,3 +481,4 @@ extern void update_host_pairs(struct connection *c);
 
 extern void unshare_connection_end_strings(struct end *e);
 
+extern void liveness_clear_connection(struct connection *c, char *v);

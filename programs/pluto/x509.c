@@ -123,7 +123,7 @@ static x509crl_t *get_x509crl(chunk_t issuer, chunk_t serial, chunk_t keyid)
 		    (same_dn(crl->issuer,
 			     issuer) &&
 		     same_serial(serial, crl->authKeySerialNumber))) {
-			if (crl != x509crls) {
+			if (prev_crl != NULL) {
 				/* bring the CRL up front */
 				prev_crl->next = crl->next;
 				crl->next = x509crls;
@@ -696,7 +696,7 @@ bool verify_x509cert(x509cert_t *cert, bool strict, realtime_t *until,
 /*
  *  list all X.509 certs in a chained list
  */
-static void list_x509cert_chain(const char *caption, x509cert_t* cert,
+static void list_x509cert_chain(const char *caption, x509cert_t *cert,
 				u_char auth_flags,
 				bool utc)
 {
