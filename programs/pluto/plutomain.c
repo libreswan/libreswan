@@ -213,7 +213,7 @@ static int create_lock(void)
 			fprintf(stderr,
 				"pluto: FATAL: unable to create lock dir: \"%s\": %s\n",
 				ctlbase, strerror(errno));
-			exit_pluto(10);
+			exit_pluto(PLUTO_EXIT_LOCK_FAIL);
 		}
 	}
 
@@ -232,7 +232,7 @@ static int create_lock(void)
 						"pluto: FATAL: lock file \"%s\" already exists and could not be removed (%d %s)\n",
 						pluto_lock, errno,
 						strerror(errno));
-					exit_pluto(10);
+					exit_pluto(PLUTO_EXIT_LOCK_FAIL);
 				} else {
 					/*
 					 * lock file removed,
@@ -244,13 +244,13 @@ static int create_lock(void)
 				fprintf(stderr,
 					"pluto: FATAL: lock file \"%s\" already exists\n",
 					pluto_lock);
-				exit_pluto(10);
+				exit_pluto(PLUTO_EXIT_LOCK_FAIL);
 			}
 		} else {
 			fprintf(stderr,
 				"pluto: FATAL: unable to create lock file \"%s\" (%d %s)\n",
 				pluto_lock, errno, strerror(errno));
-			exit_pluto(1);
+			exit_pluto(PLUTO_EXIT_LOCK_FAIL);
 		}
 	}
 	pluto_lock_created = TRUE;
@@ -324,7 +324,7 @@ static void pluto_init_nss(char *confddir)
 	if (nss_init_status != SECSuccess) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS readonly initialization (\"%s\") failed (err %d)",
 			confddir, PR_GetError());
-		exit_pluto(10);
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	} else {
 		libreswan_log("NSS Initialized");
 		PK11_SetPasswordFunc(getNSSPassword);
@@ -1057,7 +1057,7 @@ int main(int argc, char **argv)
 
 		if (ugh != NULL) {
 			fprintf(stderr, "pluto: FATAL: %s", ugh);
-			exit_pluto(1);
+			exit_pluto(PLUTO_EXIT_SOCKET_FAIL);
 		}
 	}
 
@@ -1071,7 +1071,7 @@ int main(int argc, char **argv)
 
 				fprintf(stderr, "pluto: FATAL: fork failed (%d %s)\n",
 					errno, strerror(e));
-				exit_pluto(1);
+				exit_pluto(PLUTO_EXIT_FORK_FAIL);
 			}
 
 			if (pid != 0) {
@@ -1091,7 +1091,7 @@ int main(int argc, char **argv)
 			fprintf(stderr,
 				"FATAL: setsid() failed in main(). Errno %d: %s\n",
 				errno, strerror(e));
-			exit_pluto(1);
+			exit_pluto(PLUTO_EXIT_FAIL);
 		}
 	} else {
 		/* no daemon fork: we have to fill in lock file */
@@ -1180,7 +1180,7 @@ int main(int argc, char **argv)
 
 	if (fips_mode == -1) {
 		loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
-		exit_pluto(10);
+		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 	}
 
 	if (fips_product == 1)
@@ -1196,7 +1196,7 @@ int main(int argc, char **argv)
 		 */
 		if (fips_product && fips_kernel) {
 			loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
-			exit_pluto(10);
+			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 		} else if (fips_product) {
 			libreswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
 		} else if (fips_kernel) {
@@ -1233,7 +1233,7 @@ int main(int argc, char **argv)
 			loglog(RC_LOG_SERIOUS,
 				"FATAL (SOON): audit_open() failed : %s",
 				strerror(errno));
-			/* temp disabled exit_pluto(10); */
+			/* temp disabled exit_pluto(PLUTO_EXIT_FIPS_FAIL); */
 		}
 	}
 	rc = audit_log_acct_message(audit_fd, AUDIT_USER_START, NULL,
@@ -1244,7 +1244,7 @@ int main(int argc, char **argv)
 		loglog(RC_LOG_SERIOUS,
 			"FATAL: audit_log_acct_message failed: %s",
 			strerror(errno));
-		exit_pluto(10);
+		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 	}
 #else
 	libreswan_log("Linux audit support [disabled]");
