@@ -194,6 +194,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 				sadb = sadb_plus;
 		}
 		sadb = sa_v2_convert(sadb);
+		free_sa(st->st_sadb);
 		st->st_sadb = sadb;
 
 		/* look at all the proposals for the first group specified */
