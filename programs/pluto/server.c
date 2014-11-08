@@ -602,7 +602,7 @@ void call_server(void)
 			int maxfd = ctl_fd;
 
 			if (sigtermflag)
-				exit_pluto(0);
+				exit_pluto(PLUTO_EXIT_OK);
 
 			if (sighupflag) {
 				/* Ignorant folks think poking any daemon with SIGHUP
