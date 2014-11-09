@@ -29,9 +29,15 @@ ifconfig vireast up
 # add interfaces to a bridge
 brctl addbr br192_1_2
 brctl addif br192_1_2 virwest vireast
+ip link set br192_1_2 up
+ip addr add 192.1.2.11/24 dev br192_1_2
+ping -c 2 192.1.2.45
+ping -c 2 192.1.2.23
 # configure guest network
 ip netns exec west ifconfig west 192.1.2.45 netmask 255.255.255.0 up
 ip netns exec east ifconfig east 192.1.2.23 netmask 255.255.255.0 up
+ip netns exec  west ping -c 2 192.1.2.23
+ip netns exec  east ping -c 2 192.1.2.45
 ip netns exec west ipsec pluto --ctlbase /tmp/west/pluto --config /testing/pluto/ikev2-34-lxc/west.conf --secretsfile /testing/pluto/ikev2-34-lxc/west.secrets --ipsecdir /tmp/west/ipsec.d
 ip netns exec east ipsec pluto --ctlbase /tmp/east/pluto --config /testing/pluto/ikev2-34-lxc/east.conf --secretsfile /testing/pluto/ikev2-34-lxc/east.secrets --ipsecdir /tmp/east/ipsec.d
 ipsec addconn --ctlbase /tmp/west/pluto.ctl westnet-eastnet-ipv4-psk-ikev2 --config /testing/pluto/ikev2-34-lxc/west.conf
