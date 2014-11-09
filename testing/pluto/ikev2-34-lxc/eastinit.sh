@@ -45,6 +45,7 @@ ipsec addconn --ctlbase /tmp/east/pluto.ctl westnet-eastnet-ipv4-psk-ikev2 --con
 ip netns exec west ipsec whack --ctlbase /tmp/west/pluto --initiate --name westnet-eastnet-ipv4-psk-ikev2
 ip netns exec west ipsec addconn --ctlbase /tmp/west/pluto.ctl westnet-eastnet-ipv4-psk-ikev2
 ip netns exec east ipsec addconn --ctlbase /tmp/east/pluto.ctl westnet-eastnet-ipv4-psk-ikev2
+sleep 8
 ip netns exec west ipsec whack --ctlbase /tmp/east/pluto --status
 ip netns exec west ipsec whack --ctlbase /tmp/west/pluto --status
 ip netns exec west ipsec whack --ctlbase /tmp/west/pluto --initiate --name westnet-eastnet-ipv4-psk-ikev2
