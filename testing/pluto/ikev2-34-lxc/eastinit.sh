@@ -32,14 +32,14 @@ brctl addif br192_1_2 virwest vireast
 # configure guest network
 ip netns exec west ifconfig west 192.1.2.45 netmask 255.255.255.0 up
 ip netns exec east ifconfig east 192.1.2.23 netmask 255.255.255.0 up
-ip netns exec west ipsec pluto --ctlbase /tmp/west/pluto --config /testing/pluto/ikev2-11-simple-psk/west.conf --secretsfile /testing/pluto/ikev2-11-simple-psk/west.secrets --ipsecdir /tmp/west/ipsec.d
-ip netns exec east ipsec pluto --ctlbase /tmp/east/pluto --config /testing/pluto/ikev2-11-simple-psk/east.conf --secretsfile /testing/pluto/ikev2-11-simple-psk/east.secrets --ipsecdir /tmp/east/ipsec.d
-ipsec addconn --ctlbase /tmp/west/pluto.ctl westnet-eastnet-ipv4-psk-ikev2 --config /testing/pluto/ikev2-11-simple-psk/west.conf
-ipsec addconn --ctlbase /tmp/east/pluto.ctl westnet-eastnet-ipv4-psk-ikev2 --config /testing/pluto/ikev2-11-simple-psk/east.conf
+ip netns exec west ipsec pluto --ctlbase /tmp/west/pluto --config /testing/pluto/ikev2-34-lxc/west.conf --secretsfile /testing/pluto/ikev2-34-lxc/west.secrets --ipsecdir /tmp/west/ipsec.d
+ip netns exec east ipsec pluto --ctlbase /tmp/east/pluto --config /testing/pluto/ikev2-34-lxc/east.conf --secretsfile /testing/pluto/ikev2-34-lxc/east.secrets --ipsecdir /tmp/east/ipsec.d
+ipsec addconn --ctlbase /tmp/west/pluto.ctl westnet-eastnet-ipv4-psk-ikev2 --config /testing/pluto/ikev2-34-lxc/west.conf
+ipsec addconn --ctlbase /tmp/east/pluto.ctl westnet-eastnet-ipv4-psk-ikev2 --config /testing/pluto/ikev2-34-lxc/east.conf
 ip netns exec west ipsec whack --ctlbase /tmp/west/pluto --initiate --name westnet-eastnet-ipv4-psk-ikev2
 ip netns exec west ipsec addconn --ctlbase /tmp/west/pluto.ctl westnet-eastnet-ipv4-psk-ikev2
 ip netns exec east ipsec addconn --ctlbase /tmp/east/pluto.ctl westnet-eastnet-ipv4-psk-ikev2
-ip netns exec west ipsec whack --ctlbase /tmp/west/pluto --initiate --name westnet-eastnet-ipv4-psk-ikev2
-ip netns exec west ipsec whack --ctlbase /tmp/west/pluto --status
 ip netns exec west ipsec whack --ctlbase /tmp/east/pluto --status
+ip netns exec west ipsec whack --ctlbase /tmp/west/pluto --status
+ip netns exec west ipsec whack --ctlbase /tmp/west/pluto --initiate --name westnet-eastnet-ipv4-psk-ikev2
 echo "initdone"
