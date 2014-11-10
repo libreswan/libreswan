@@ -43,10 +43,10 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
- # Should be 2 hits for both west (sending) and east (receiving)
+ # Should be XX hits for both west (sending) and east (receiving)
 east #
- grep ISAKMP_FLAG_MSG_RESERVED_BIT6 /tmp/pluto.log | wc -l
-2
+ grep "flags: RESERVED" /tmp/pluto.log | wc -l
+8
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
