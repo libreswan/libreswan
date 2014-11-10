@@ -194,6 +194,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 				sadb = sadb_plus;
 		}
 		sadb = sa_v2_convert(sadb);
+		free_sa(st->st_sadb);
 		st->st_sadb = sadb;
 
 		/* look at all the proposals for the first group specified */
@@ -924,7 +925,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa;
+		struct ikev2_sa r_sa;
 		stf_status ret;
 		pb_stream r_sa_pbs;
 
