@@ -1726,6 +1726,7 @@ stf_status ikev2_parse_child_sa_body(
 	 * There is not c->alg_info_ah.
 	 */
 	p2alg = sa_v2_convert(kernel_alg_makedb(c->policy, c->alg_info_esp, TRUE));
+	st->st_sadb = p2alg; /* stick it here so it get freed along with st */
 
 	zero(&ta);
 
@@ -1947,9 +1948,13 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 	p2alg = sa_v2_convert(p2alg);
 
 	if(!ikev2_out_sa(outpbs, proto, p2alg, md->st, FALSE, np)) {
+		free_sa(p2alg);
+		p2alg = NULL;
 		libreswan_log("ikev2_emit_ipsec_sa: ikev2_out_sa() failed");
 		return STF_INTERNAL_ERROR;
 	}
+	free_sa(p2alg);
+	p2alg = NULL;
 
 	return STF_OK;
 }

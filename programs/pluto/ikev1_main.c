@@ -832,7 +832,10 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
+		struct isakmp_sa r_sa;
+
+		zero(&r_sa);
+		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		/*
 		 * Almost guaranteed to send a VID, set the NEXT payload
@@ -1381,8 +1384,7 @@ stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
 
 		if (e == STF_FAIL) {
 			loglog(RC_LOG_SERIOUS,
-				"failed to start async DH calculation, "
-				"stf=%s\n",
+				"failed to start async DH calculation, stf=%s",
 				enum_name(&stfstatus_name, e));
 			return e;
 		}
@@ -2549,8 +2551,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		if (!out_struct(&isan, &isakmp_notification_desc,
 					&r_hdr_pbs, &not_pbs)) {
 			libreswan_log(
-				"failed to build notification in send_"
-				"notification\n");
+				"failed to build notification in send_notification");
 			return;
 		}
 

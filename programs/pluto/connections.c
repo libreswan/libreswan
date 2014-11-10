@@ -584,8 +584,7 @@ size_t format_end(char *buf,
 
 			if (needed > room)
 				loglog(RC_BADID,
-					"format_end: buffer too small for "
-					"dohost_name - should not happen\n");
+					"format_end: buffer too small for dohost_name - should not happen");
 		}
 	}
 
@@ -766,8 +765,6 @@ static void unshare_connection_strings(struct connection *c)
 	if (c->alg_info_esp) {
 		alg_info_addref(&c->alg_info_esp->ai);
 	}
-	if (c->pool !=  NULL)
-		reference_addresspool(c->pool);
 }
 
 static bool load_end_certificate(const char *name, struct end *dst)
@@ -1235,7 +1232,7 @@ void add_connection(const struct whack_message *wm)
 		break;
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 		loglog(RC_LOG_SERIOUS,
-			"Must specify either AH or ESP.\n");
+			"Must specify either AH or ESP.");
 		return;
 	}
 
@@ -1753,6 +1750,9 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		d->spd.that.has_id_wildcards = FALSE;
 	}
 	unshare_connection_strings(d);
+
+	if (c->pool !=  NULL)
+		reference_addresspool(c->pool);
 
 	d->kind = CK_INSTANCE;
 
@@ -3833,4 +3833,27 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 		}
 	}
 	return ue;
+}
+
+void liveness_clear_connection(struct connection *c, char *v)
+{
+	libreswan_log("%s: Clearing Connection %s[%lu] %s",v, c->name,
+			c->instance_serial, enum_name(&connection_kind_names,
+				c->kind));
+	/*
+	 * For CK_INSTANCE, delete_states_by_connection() will clear
+	 * Note that delete_states_by_connection changes c->kind but we need
+	 * to remember what it was to know if we still need to unroute after delete
+	 */
+	if (c->kind == CK_INSTANCE) {
+		delete_states_by_connection(c, TRUE);
+	} else {
+		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
+		delete_states_by_connection(c, TRUE);
+		DBG(DBG_DPD,
+				DBG_log("%s: unrouting connection %s",
+					enum_name(&connection_kind_names,
+						c->kind), v));
+		unroute_connection(c); /* --unroute */
+	}
 }

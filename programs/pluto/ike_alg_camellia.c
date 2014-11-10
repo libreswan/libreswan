@@ -53,7 +53,7 @@ static void do_camellia_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 
 	if (symkey == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_camellia_cbc: NSS derived enc key in NULL\n");
+		       "do_camellia_cbc: NSS derived enc key in NULL");
 		abort();
 	}
 
@@ -64,7 +64,7 @@ static void do_camellia_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 	secparam = PK11_ParamFromIV(ciphermech, &ivitem);
 	if (secparam == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_camellia_cbc: Failure to set up PKCS11 param (err %d)\n",
+		       "do_camellia_cbc: Failure to set up PKCS11 param (err %d)",
 		       PR_GetError());
 		abort();
 	}
@@ -84,7 +84,7 @@ static void do_camellia_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 						secparam);
 	if (enccontext == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_camellia_cbc: PKCS11 context creation failure (err %d)\n",
+		       "do_camellia_cbc: PKCS11 context creation failure (err %d)",
 		       PR_GetError());
 		abort();
 	}
@@ -93,7 +93,7 @@ static void do_camellia_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 			      buf_len);
 	if (rv != SECSuccess) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_camellia_cbc: PKCS11 operation failure (err %d)\n",
+		       "do_camellia_cbc: PKCS11 operation failure (err %d)",
 		       PR_GetError());
 		abort();
 	}

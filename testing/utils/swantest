@@ -319,7 +319,7 @@ def shut_down_hosts(args, test_hosts):
 		try:
 			num,host,state = line.split()
 			for h in all_hosts:
-				if h is host:
+				if h == host:
 					running.append(host)
 					cmd = "sudo virsh shutdown %s" % host
 					logging.debug("Found %s %s shutodwn send %s", host, state, cmd)
@@ -339,7 +339,7 @@ def shut_down_hosts(args, test_hosts):
 				try:
 					num,host,state = line.split()
 					for h in all_hosts:
-						if h is host:
+						if h == host:
 							running.append(host)
 				except:
 					pass
@@ -646,7 +646,7 @@ def kvm_error(r_file):
 	return False
 
 
-def do_test(args, start='', testexpect=''):
+def do_test(args, start='', testexpect='', testlist = False):
 
 	if not start:
 		start = time.time()
@@ -702,6 +702,9 @@ def do_test(args, start='', testexpect=''):
 		th_nic.join()
 
 	kill_zombie_tcpdump()
+
+	if testlist:
+		e = shut_down_hosts(args, test_hosts)
 
 	s = sanitize(args.sanitizer)
 	write_result(args, start, testname, s, testexpect = testexpect)
@@ -796,10 +799,13 @@ def resanitize(args):
 
 def do_test_list(args, start, tried, output_dir):
 	if not os.path.exists(args.testlist):
-		return None
-	ran =  1;
+		return ("", False, 0);
+	ran =  0;
 
 	logging.info("** run kvmpluto tests from file %s **" , args.testlist)
+
+	if not tried:
+		output_dir = setup_result_dir(args)
 
 	if not os.path.exists(args.resultsdir):
 		try:
@@ -820,7 +826,7 @@ def do_test_list(args, start, tried, output_dir):
 		logging.debug("%s", line)
 		if os.path.exists(s):
 			logging.error("* stop all tests now. Found %s *", s)
-			return True
+			return (output_dir, True, ran)
 
 		if skip_testlist_line(args, line, verbose=True):
 			continue
@@ -855,7 +861,7 @@ def do_test_list(args, start, tried, output_dir):
 			continue
 
 		logging.debug("****** next test %s *****", testdir)
-		do_test(args, testexpect = testexpect )
+		do_test(args, testexpect = testexpect, testlist = True )
 		ran =  ran + 1
 		os.chdir("..")
 		## chdir end
@@ -866,7 +872,7 @@ def do_test_list(args, start, tried, output_dir):
 			logging.info("missing output dir %s. can not copy results",output_dir)
 
 	f.close
-	return ran
+	return (output_dir, True, ran)
 
 def setup_result_dir(args):
 	date_dir = time.strftime("%Y-%m-%d", time.localtime())
@@ -963,17 +969,18 @@ def main():
 		resanitize(args)
 		return
 
-	output_dir = setup_result_dir(args)
-	if do_test_list(args, start, tried, output_dir): #try if there is a TESTLIST
+	output_dir = ''
+	#if there is TESTLIST run in batch mode.
+	(output_dir, testlist, ran_tests) = do_test_list(args, start, tried, output_dir)
+	if testlist:
 		while (tried < args.retry):
-			if ran > 1:
+			if ran_tests > 0:
 				gen_graphs_tables(args)
 			tried = 1 + tried
 			logging.info("retry %s %s/%s ", args.testlist, tried, args.retry)
-			ran = do_test_list(args, start, tried, output_dir)
-
+			(output_dir, testlist, ran_tests) = do_test_list(args, start, tried, output_dir)
 	else:
-		do_test(args, start = start)  # no TESTLIST. Let's try a single test
+		do_test(args, start = start, testlist=False)  # no TESTLIST. Let's try a single test
 
 if __name__ == "__main__":
 	main()

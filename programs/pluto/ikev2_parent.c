@@ -194,6 +194,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 				sadb = sadb_plus;
 		}
 		sadb = sa_v2_convert(sadb);
+		free_sa(st->st_sadb);
 		st->st_sadb = sadb;
 
 		/* look at all the proposals for the first group specified */
@@ -924,9 +925,11 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
+		struct ikev2_sa r_sa;
 		stf_status ret;
 		pb_stream r_sa_pbs;
+
+		zero(&r_sa);
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			/* normal case */
@@ -1415,6 +1418,19 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	unsigned char *roof= e_pbs->roof;
 	PK11SymKey *cipherkey, *authkey;
 
+	if (st != NULL && !st->hidden_variables.st_skeyid_calculated)
+	{
+		DBG(DBG_CRYPT | DBG_CONTROL, {
+				ipstr_buf b;
+				DBG_log("received encrypted packet from %s:%u "
+						" but no exponents for state #%lu"
+						" to decrypt it",
+						ipstr(&md->sender, &b),
+						(unsigned)md->sender_port,
+						st->st_serialno);
+				});
+		return STF_FAIL;
+	}
 	/*
 	 * check to see if length is plausible.  Need room for:
 	 * - IV (at start)
@@ -1545,14 +1561,14 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 {
 	struct ikev2_cp cp;
 	pb_stream cp_pbs;
-	bool cfg_reply = c->spd.that.has_lease ? TRUE : FALSE;
+	bool cfg_reply = c->spd.that.has_lease;
 
 	DBG(DBG_CONTROLMORE, DBG_log("Send Configuration Payload %s ",
-				cfg_reply ? "Request" : "Reply"));
+				cfg_reply ? "reply" : "request"));
 	zero(&cp);
 	cp.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	cp.isacp_np = np;
-	cp.isacp_type = cfg_reply ? IKEv2_CP_CFG_REQUEST : IKEv2_CP_CFG_REPLY;
+	cp.isacp_type = cfg_reply ? IKEv2_CP_CFG_REPLY : IKEv2_CP_CFG_REQUEST;
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return STF_INTERNAL_ERROR;
@@ -1666,8 +1682,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	/* ??? seems wrong: not conditional at all */
 	delete_event(pst);
 	{
+		/* why not from svm->timeout_event ??? */
 		enum event_type x = EVENT_SA_REPLACE;
-		time_t delay = ikev2_replace_delay(st, &x, O_INITIATOR);
+		time_t delay = ikev2_replace_delay(pst, &x, O_INITIATOR);
 
 		event_schedule(x, delay, pst);
 	}
@@ -2274,8 +2291,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			np = ISAKMP_NEXT_v2NONE;
 		} else {
 			DBG_log("CHILD SA proposals received");
-			/*  np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ? */
-			np = c->pool != NULL ? ISAKMP_NEXT_v2CP :ISAKMP_NEXT_v2SA;
+			np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
+				ISAKMP_NEXT_v2CP :ISAKMP_NEXT_v2SA;
 		}
 
 		DBG(DBG_CONTROLMORE,
@@ -2491,9 +2508,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* TODO: see if there are any notifications */
 
-	if(c->spd.this.modecfg_client && md->chain[ISAKMP_NEXT_v2CP]){
-	}
-
 	/* See if there is a child SA available */
 	if (md->chain[ISAKMP_NEXT_v2SA] == NULL ||
 	    md->chain[ISAKMP_NEXT_v2TSi] == NULL ||
@@ -2652,6 +2666,26 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		if (ret != STF_OK)
 			return ret;
+	}
+
+	/* are we expecting a v2CP (RESP) ?  */
+	if(c->spd.this.modecfg_client) {
+		if (md->chain[ISAKMP_NEXT_v2CP] == NULL){
+			/* not really anything to here... but it would be worth unpending again */
+			libreswan_log("missing v2CP reply, not attempting to setup child SA");
+			/*  Delete previous retransmission event.  */
+			delete_event(st);
+			/*
+			 * ??? this isn't really a failure, is it?
+			 * If none of those payloads appeared, isn't this is a
+			 * legitimate negotiation of a parent?
+			 */
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], st))
+		{
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
 	}
 
 	/* examine each notification payload */

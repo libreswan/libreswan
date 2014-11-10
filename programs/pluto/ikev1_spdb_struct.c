@@ -126,7 +126,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 	 * we can add a \0 if there is space left in the buffer.
 	 */
 
-	if (sec_ctx_value[i - 1] != '\0') {
+	if (i == 0 || sec_ctx_value[i - 1] != '\0') {
 		/*check if we have space left and then append \0 */
 		if (i < MAX_SECCTX_LEN) {
 			sec_ctx_value[i] = '\0';

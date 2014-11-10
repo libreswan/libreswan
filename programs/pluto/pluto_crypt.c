@@ -243,7 +243,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 		if (sz == 0 && feof(in)) {
 			loglog(RC_LOG_SERIOUS,
-			       "pluto_crypto_helper: crypto helper %d normal exit (EOF)\n",
+			       "pluto_crypto_helper: crypto helper %d normal exit (EOF)",
 			       helpernum);
 			break;
 		} else if (sz != sizeof(req)) {
@@ -253,12 +253,12 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 				strerror_r(errno, errbuf, sizeof(errbuf));
 				loglog(RC_LOG_SERIOUS,
-				       "pluto_crypto_helper: crypto helper %d got read error: %s\n",
+				       "pluto_crypto_helper: crypto helper %d got read error: %s",
 				       helpernum, errbuf);
 			} else {
 				/* short read -- fatal */
 				loglog(RC_LOG_SERIOUS,
-				       "pluto_crypto_helper: crypto helper %d got a short read error: %zu instead of %zu\n",
+				       "pluto_crypto_helper: crypto helper %d got a short read error: %zu instead of %zu",
 				       helpernum, sz, sizeof(req));
 			}
 			break;
@@ -290,7 +290,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 			} else {
 				/* short write -- fatal */
 				loglog(RC_LOG_SERIOUS,
-				       "pluto_crypto_helper error: crypto helper %d write truncated: %zu instead of %zu\n",
+				       "pluto_crypto_helper error: crypto helper %d write truncated: %zu instead of %zu",
 				       helpernum, sz, sizeof(req));
 			}
 			break;
@@ -790,7 +790,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 
 	if (cn == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "failed to find crypto continuation associated with request ID %u performed by crypto helper %d\n",
+		       "failed to find crypto continuation associated with request ID %u performed by crypto helper %d",
 		       rr.pcr_id,
 		       w->pcw_helpernum);
 		return;

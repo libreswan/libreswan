@@ -256,6 +256,18 @@ conn eastnet-ipv4
 conn westnet-ipv4
 	leftsubnet=192.0.1.0/24
 
+conn east-ipv4-pool-100
+	leftaddresspool=192.0.2.100-192.0.2.199
+
+conn west-ipv4-pool-100
+	leftaddresspool=192.0.1.100-192.0.1.199
+
+conn left-defaultroute
+	leftsubnet=0.0.0.0/0 
+
+conn right-defaultroute
+	rightsubnet=0.0.0.0/0 
+
 conn west-east-base
 	also=west-east-base-ipv4
 	also=west-east-base-id-nss
@@ -311,9 +323,28 @@ conn west-eastnet-x509-ipv4
 	also=west-east-base-x509
 	also=eastnet-ipv4
 
+conn road-east-x509-ipv4
+	also=road-east-base-x509
+	leftmodecfgclient=yes
+	also=left-defaultroute
+	also=right-defaultroute
+	narrowing=yes
+
 conn rw-eastnet-x509-ipv4
 	also=rw-east-base-x509
-	also=eastnet-ipv4
+	also=east-ipv4-pool-100
+	also=right-defaultroute
+
+conn road-east-base-x509
+        left=%defaultroute
+        leftrsasigkey=%cert
+        leftid=%fromcert
+        leftcert=road
+        # Right security gateway, subnet behind it,toward left.
+        right=192.1.2.23
+        rightid=%fromcert
+        rightrsasigkey=%cert
+        rightcert=east
 
 conn west-east-base-x509
         left=192.1.2.45
