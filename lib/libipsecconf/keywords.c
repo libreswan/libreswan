@@ -381,8 +381,10 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  &kw_proto_stack },
 	{ "nhelpers", kv_config, kt_number, KBF_NHELPERS, NOT_ENUM },
 #ifdef HAVE_LABELED_IPSEC
+	/* ??? AN ATTRIBUTE TYPE, NOT VALUE! */
 	{ "secctx_attr_value", kv_config | kv_alias, kt_number, KBF_SECCTX, NOT_ENUM },	/* obsolete _ */
-	{ "secctx-attr-value", kv_config, kt_number, KBF_SECCTX, NOT_ENUM },
+	{ "secctx-attr-value", kv_config, kt_number, KBF_SECCTX, NOT_ENUM },	/* obsolete: not a value, a type */
+	{ "secctx-attr-type", kv_config, kt_number, KBF_SECCTX, NOT_ENUM },
 #endif
 	/* these options are obsoleted. Don't die on them */
 	{ "forwardcontrol", kv_config, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM },

@@ -151,6 +151,7 @@ extern void close_output_pbs(pb_stream *pbs);
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * !                            Length                             !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
  * Although the drafts are a little unclear, there are a few
  * places that specify that messages should be padded with 0x00
  * octets (bytes) to make the length a multiple of something.
@@ -183,22 +184,7 @@ extern void close_output_pbs(pb_stream *pbs);
  * require them to be zero).
  */
 
-#define NSIZEOF_isakmp_hdr	28	/* on-the-wire sizeof struct isakmpg_hdr */
-#define NOFFSETOF_isa_np	16	/* on-the-wire offset of isa_np (one octet) */
-#define NOFFSETOF_isag_length	2	/* on-the-wire offset of isag_length (two octets, network order */
-#define NOFFSETOF_isag_np	0	/* on-the-wire offset of isag_np (one octet) */
-#define NSIZEOF_isakmp_generic	4	/* on-the-wire sizeof isakmp_generic) */
-
-struct isakmp_hdr {
-	u_int8_t isa_icookie[COOKIE_SIZE];
-	u_int8_t isa_rcookie[COOKIE_SIZE];
-	u_int8_t isa_np;	/* Next payload */
-	u_int8_t isa_version;	/* high-order 4 bits: Major; low order 4: Minor */
-	u_int8_t isa_xchg;	/* Exchange type */
-	u_int8_t isa_flags;
-	u_int32_t isa_msgid;	/* Message ID (RAW) */
-	u_int32_t isa_length;	/* Length of message */
-};
+#include <isakmp_hdr.h>
 
 extern struct_desc isakmp_hdr_desc;
 
@@ -942,5 +928,9 @@ union payload {
 	struct ikev2_cp v2cp;
 	struct ikev2_cp_attribute v2cp_attribute;
 };
+
+#ifdef HAVE_LABELED_IPSEC
+extern struct_desc sec_ctx_desc;
+#endif
 
 #endif /* _PACKET_H */

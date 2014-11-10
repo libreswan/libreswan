@@ -83,7 +83,18 @@ extern enum_names ikev2_cp_type_names;
 extern enum_names ikev2_cp_attribute_type_names;
 
 #ifdef HAVE_LABELED_IPSEC
-extern u_int16_t secctx_attr_value;	/* ??? NOT A CONSTANT! AN ATTRIBUTE TYPE, NOT VALUE! */
+/*
+ * Attribute Type "constant" for Security Context
+ *
+ * ??? NOT A CONSTANT!
+ * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
+ * We then assigned 32001 which is in the private range RFC 2407.
+ * Unfortunately, we feel we have to support 10 as an option for backward
+ * compatability.
+ * This variable specifies (globally!!) which we support: 10 or 32001.
+ * ??? surely that makes migration to 32001 all or nothing.
+ */
+extern u_int16_t secctx_attr_type;
 #endif
 
 extern const char *const natt_bit_names[];

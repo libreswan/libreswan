@@ -4,7 +4,7 @@
 <para>
 Whether labeled IPsec should be enabled or not; acceptable values are
 <emphasis remap='B'>no</emphasis> (the default) and <emphasis remap='B'>yes</emphasis>.
-See also loopback=, policy-label= and secctx-attr-value=
+See also loopback=, policy-label= and secctx-attr-type=
 </para>
   </listitem>
   </varlistentry>

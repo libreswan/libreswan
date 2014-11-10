@@ -331,7 +331,7 @@ extern bool initiate_ondemand(const ip_address *our_client,
 			     bool held,
 			     int whackfd
 #ifdef HAVE_LABELED_IPSEC
-			     , struct xfrm_user_sec_ctx_ike *uctx
+			     , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			     , err_t why);
 extern void terminate_connection(const char *nm);
@@ -431,7 +431,7 @@ extern void add_pending(int whack_sock,
 			unsigned long try,
 			so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-			, struct xfrm_user_sec_ctx_ike *uctx
+			, const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			);
 

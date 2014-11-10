@@ -550,7 +550,7 @@ static void cannot_oppo(struct connection *c,
 static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac, err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
-				  , struct xfrm_user_sec_ctx_ike *uctx
+				  , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				  ); /* forward */
 
@@ -560,7 +560,7 @@ bool initiate_ondemand(const ip_address *our_client,
 		      bool held,
 		      int whackfd
 #ifdef HAVE_LABELED_IPSEC
-		      , struct xfrm_user_sec_ctx_ike *uctx
+		      , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		      , err_t why)
 {
@@ -702,7 +702,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac,
 				  err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
-				  , struct xfrm_user_sec_ctx_ike *uctx
+				  , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				  )
 {
@@ -730,16 +730,16 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 	hisport = ntohs(portof(&b->peer_client));
 
 #ifdef HAVE_LABELED_IPSEC
-	char sec_ctx_value[MAX_SECCTX_LEN];
-
-	zero(&sec_ctx_value);
-	if (uctx != NULL)
-		memcpy(sec_ctx_value, uctx->sec_ctx_value, uctx->ctx_len);
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("received security label string: %s", sec_ctx_value));
+	DBG(DBG_CONTROLMORE, {
+		if (uctx != NULL) {
+			DBG_log("received security label string: %.*s",
+				uctx->ctx.ctx_len,
+				uctx->sec_ctx_value);
+		}
+	});
 #endif
 
-	snprintf(demandbuf, 256,
+	snprintf(demandbuf, sizeof(demandbuf),
 		 "initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
 		 ours, ourport, his, hisport, b->transport_proto,
 		 oppo_step_name[b->step], b->want);

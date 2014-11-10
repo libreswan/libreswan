@@ -1,5 +1,5 @@
   <varlistentry>
-  <term><emphasis remap='B'>secctx-attr-value</emphasis></term>
+  <term><emphasis remap='B'>secctx-attr-type</emphasis></term>
   <listitem>
 <para>
 The value for the IPsec SA security context attribute identifier which is

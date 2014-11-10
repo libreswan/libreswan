@@ -967,16 +967,10 @@ void process_v1_packet(struct msg_digest **mdp)
 					md->hdr.isa_icookie,
 					md->hdr.isa_rcookie, md->hdr.isa_msgid,
 					md);
-				if (st != NULL)
-					DBG(DBG_CONTROL,
-					    DBG_log("loopback scenario: found a correct state for the received message"));
-
-
-				else
-					DBG(DBG_CONTROL,
-					    DBG_log("loopback scenario: did not found any state, perhaps a first message from the responder"));
-
-
+				DBG(DBG_CONTROL,
+					DBG_log(st == NULL ?
+						"loopback scenario: did not find any state; perhaps a first message from the responder" :
+						"loopback scenario: found a correct state for the received message"));
 			}
 #endif
 
@@ -1108,16 +1102,10 @@ void process_v1_packet(struct msg_digest **mdp)
 						       md->hdr.isa_rcookie,
 						       md->hdr.isa_msgid, md);
 
-			if (st != NULL)
-				DBG(DBG_CONTROL,
-				    DBG_log("loopback scenario: found a correct state for the received message"));
-
-
-			else
-				DBG(DBG_CONTROL,
-				    DBG_log("loopback scenario: did not found any state, perhaps a first message from the responder"));
-
-
+			DBG(DBG_CONTROL,
+				DBG_log(st == NULL ?
+					"loopback scenario: did not found any state; perhaps a first message from the responder" :
+					"loopback scenario: found a correct state for the received message"));
 		}
 #endif
 		if (st == NULL) {

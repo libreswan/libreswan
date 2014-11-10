@@ -34,7 +34,7 @@
 #include "libreswan/pfkeyv2.h"
 
 #include "constants.h"
-#include "packet.h"
+#include <isakmp_hdr.h>
 
 #include "natt_defines.h"
 

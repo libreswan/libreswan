@@ -344,7 +344,18 @@ bool force_busy = FALSE;
 enum kernel_interface kern_interface = USE_NETKEY;	/* new default */
 
 #ifdef HAVE_LABELED_IPSEC
-u_int16_t secctx_attr_value = SECCTX;	/* ??? this is really an attribute type! */
+/*
+ * Attribute Type "constant" for Security Context
+ *
+ * ??? NOT A CONSTANT!
+ * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
+ * We then assigned 32001 which is in the private range RFC 2407.
+ * Unfortunately, we feel we have to support 10 as an option for backward
+ * compatability.
+ * This variable specifies (globally!!) which we support: 10 or 32001.
+ * ??? surely that makes migration to 32001 all or nothing.
+ */
+u_int16_t secctx_attr_type = SECCTX;
 #endif
 
 /*
@@ -420,8 +431,9 @@ static const struct option long_opts[] = {
 	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
 #ifdef HAVE_LABELED_IPSEC
 	/* ??? really an attribute type, not a value */
-	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* _ */
-	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },
+	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* obsolete name; _ */
+	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },	/* obsolete name */
+	{ "secctx-attr-type\0<number>", required_argument, NULL, 'w' },
 #endif
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
 
@@ -680,7 +692,7 @@ int main(int argc, char **argv)
 				ugh = "must be a positive 32001 (default) or 10 (for backward compatibility)";
 				break;
 			}
-			secctx_attr_value = u;
+			secctx_attr_type = u;
 			continue;
 #endif
 
@@ -956,7 +968,7 @@ int main(int argc, char **argv)
 
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
 #ifdef HAVE_LABELED_IPSEC
-			secctx_attr_value = cfg->setup.options[KBF_SECCTX];
+			secctx_attr_type = cfg->setup.options[KBF_SECCTX];
 #endif
 			base_debugging = cfg->setup.options[KBF_PLUTODEBUG];
 
@@ -1473,8 +1485,8 @@ void show_setup_plutomain()
 		pluto_listen ? pluto_listen : "<any>");
 
 #ifdef HAVE_LABELED_IPSEC
-	whack_log(RC_COMMENT, "secctx-attr-value=%d", secctx_attr_value);
+	whack_log(RC_COMMENT, "secctx-attr-type=%d", secctx_attr_type);
 #else
-	whack_log(RC_COMMENT, "secctx-attr-value=<unsupported>");
+	whack_log(RC_COMMENT, "secctx-attr-type=<unsupported>");
 #endif
 }

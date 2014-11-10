@@ -1251,6 +1251,29 @@ static struct_desc *const payload_descs[] = {
 	&ikev2_cp_desc,			/* 57 ISAKMP_NEXT_v2CP */
 };
 
+#ifdef HAVE_LABELED_IPSEC
+/*
+ * Undocumented Security Context for Labeled IPSec
+ *
+ * See struct sec_ctx in state.h
+ */
+#include "labeled_ipsec.h"	/* for struct sec_ctx */
+
+static field_desc sec_ctx_fields[] = {
+	{ ft_nat,  8 / BITS_PER_BYTE, "DOI", NULL },
+	{ ft_nat,  8 / BITS_PER_BYTE, "Alg", NULL },
+	{ ft_nat, 16 / BITS_PER_BYTE, "length", NULL },	/* not ft_len */
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc sec_ctx_desc = {
+	"Label Security Context",
+	sec_ctx_fields,
+	sizeof(struct sec_ctx)
+};
+
+#endif
+
 const struct_desc *payload_desc(unsigned p)
 {
 	return p < elemsof(payload_descs) ? payload_descs[p] : NULL;

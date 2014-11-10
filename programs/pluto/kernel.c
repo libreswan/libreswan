@@ -129,7 +129,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 				       const ip_subnet *his,
 				       int transport_proto
 #ifdef HAVE_LABELED_IPSEC
-				       , struct xfrm_user_sec_ctx_ike *uctx
+				       , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				       , const char *why)
 {
@@ -929,7 +929,7 @@ static bool raw_eroute(const ip_address *this_host,
 		       enum pluto_sadb_operations op,
 		       const char *opname
 #ifdef HAVE_LABELED_IPSEC
-		       , char *policy_label
+		       , const char *policy_label
 #endif
 		       )
 {
@@ -952,9 +952,8 @@ static bool raw_eroute(const ip_address *this_host,
 			    dport,
 			    text_said);
 #ifdef HAVE_LABELED_IPSEC
-		    if (policy_label)
+		    if (policy_label != NULL)
 			    DBG_log("policy security label %s", policy_label);
-
 #endif
 	    });
 
@@ -1200,7 +1199,7 @@ bool eroute_connection(struct spd_route *sr,
 		       const struct pfkey_proto_info *proto_info,
 		       unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
-		       , char *policy_label
+		       , const char *policy_label
 #endif
 		       )
 {

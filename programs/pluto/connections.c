@@ -1577,7 +1577,7 @@ void add_connection(const struct whack_message *wm)
 #ifdef HAVE_LABELED_IPSEC
 		if (c->loopback &&
 		    portof(&c->spd.this.client.addr) !=
-		      portof(&c->spd.that.client.addr) ) {
+		      portof(&c->spd.that.client.addr)) {
 			struct spd_route *tmp_spd;
 			u_int16_t tmp_this_port, tmp_that_port;
 

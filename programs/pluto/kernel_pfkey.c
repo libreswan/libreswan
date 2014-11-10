@@ -860,7 +860,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
 #ifdef HAVE_LABELED_IPSEC
-		      , char *policy_label UNUSED
+		      , const char *policy_label UNUSED
 #endif
 		      )
 {

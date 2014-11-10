@@ -57,143 +57,100 @@
 #include "nat_traversal.h"
 
 #ifdef HAVE_LABELED_IPSEC
-#include "security_selinux.h"
-#endif
 
-#ifdef HAVE_LABELED_IPSEC
+#include "security_selinux.h"
+
 static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 {
-	/* supported length is 256 bytes (257 including \0) */
-	char sec_ctx_value[MAX_SECCTX_LEN];
-	u_int8_t ctx_doi;
-	u_int8_t ctx_alg;
-	u_int16_t net_ctx_len, ctx_len;
-	int i = 0;
+	struct xfrm_user_sec_ctx_ike uctx;
 
-	DBG(DBG_PARSING, DBG_log("received sec ctx"));
+	if (!in_struct(&uctx.ctx, &sec_ctx_desc, pbs, NULL))
+		return FALSE;
 
-	/* doing sanity check */
-	if (pbs_left(pbs) <
-	    (sizeof(ctx_doi) + sizeof(ctx_alg) + sizeof(ctx_len) + 1)) {
-		DBG(DBG_PARSING,
-		    DBG_log("received perhaps corrupted security ctx (should not happen really)"));
+	if (pbs_left(pbs) != uctx.ctx.ctx_len) {
+		/* ??? should we ignore padding? */
+		/* ??? is this the right way to log an error? */
+		libreswan_log("Sec Ctx Textual Label length mismatch (length=%u; packet space = %u)",
+			uctx.ctx.ctx_len, (unsigned)pbs_left(pbs));
 		return FALSE;
 	}
 
-	/* reading ctx doi */
-	memcpy(&ctx_doi, pbs->cur, sizeof(ctx_doi));
-	pbs->cur += sizeof(ctx_doi);
-
-	/* reading ctx alg */
-	memcpy(&ctx_alg, pbs->cur, sizeof(ctx_alg));
-	pbs->cur += sizeof(ctx_alg);
-
-	/* reading ctx length */
-	memcpy(&net_ctx_len, pbs->cur, sizeof(ctx_len));
-	pbs->cur += sizeof(ctx_len);
-	ctx_len = ntohs(net_ctx_len);
-
-	DBG(DBG_PARSING,
-	    DBG_log("   received ctx_doi = %d, ctx_alg = %d, ctx_len = %d",
-		    ctx_doi, ctx_alg, ctx_len));
-
-	/* verifying remaining buffer length and ctx length matches or not (checking for any corruption) */
-	if (ctx_len != pbs_left(pbs)) {
-		DBG(DBG_PARSING,
-		    DBG_log("received ctx length seems to be different than the length of string present in the buffer"));
-		DBG(DBG_PARSING,
-		    DBG_log("received ctx_len = %d, buffer left = %lu",
-			    ctx_len,
-			    pbs_left(pbs)));
+	if (uctx.ctx.ctx_len > MAX_SECCTX_LEN) {
+		/* ??? is this the right way to log an error? */
+		libreswan_log("Sec Ctx Textual Label too long (%u > %u)",
+			uctx.ctx.ctx_len, MAX_SECCTX_LEN);
 		return FALSE;
 	}
 
-	/* do not process security labels longer than MAX_SECCTX_LEN */
-	if (pbs_left(pbs) > MAX_SECCTX_LEN) {
-		DBG(DBG_PARSING,
-		    DBG_log("received security ctx longer than MAX_SECCTX_LEN which is not supported"));
-		return FALSE;
-	}
+	zero(&uctx.sec_ctx_value);	/* abundance of caution */
 
-	/* reading security label */
-	memcpy(sec_ctx_value, pbs->cur, pbs_left(pbs));
-	i = pbs_left(pbs);
+	if (in_raw(uctx.sec_ctx_value, uctx.ctx.ctx_len, pbs,
+			"Sec Ctx Textual Label"))
+		return FALSE;
 
 	/*
-	 * Checking if the received security label contains \0.
-	 * We expect the received label to have '\0', however to be
-	 * compliant with implementations that don't send \0
-	 * we can add a \0 if there is space left in the buffer.
+	 * The label should have been NUL-terminated.
+	 * We will generously add one if it is missing and there is room.
 	 */
-
-	if (i == 0 || sec_ctx_value[i - 1] != '\0') {
-		/* check if we have space left and then append \0 */
-		if (i < MAX_SECCTX_LEN) {
-			sec_ctx_value[i] = '\0';
-			i = i + 1;
-		} else {
-			/* there is no space left */
-			DBG(DBG_PARSING,
-			    DBG_log("received security label > MAX_SECCTX_LEN (should not happen really)"));
+	if (uctx.ctx.ctx_len == 0 ||
+	    uctx.sec_ctx_value[uctx.ctx.ctx_len - 1] != '\0') {
+		if (uctx.ctx.ctx_len == MAX_SECCTX_LEN) {
+			/* ??? is this the right way to log an error? */
+			libreswan_log("Sec Ctx Textual Label missing terminal NUL and there is no space to add it");
 			return FALSE;
 		}
+		/* ??? is this the right way to log a warning? */
+		libreswan_log("Sec Ctx Textual Label missing terminal NUL; we are adding it");
+		uctx.sec_ctx_value[uctx.ctx.ctx_len] = '\0';
+		uctx.ctx.ctx_len++;
 	}
 
-#if 0	/* ??? what's this for? */
-	while (pbs_left(pbs) != 0) {
-		sec_ctx_value[i++]= *pbs->cur++;
-		if (i == MAX_SECCTX_LEN) {
-			DBG(DBG_PARSING, DBG_log("security label reached maximum length (MAX_SECCTX_LEN) allowed"));
-			break;
-		}
+	if (strlen(uctx.sec_ctx_value) + 1 != uctx.ctx.ctx_len) {
+		/* ??? is this the right way to log a warning? */
+		libreswan_log("Error: Sec Ctx Textual Label contains embedded NUL");
+		return FALSE;
 	}
-
-	sec_ctx_value[i]='\0';
-#endif
-
-	DBG(DBG_PARSING,
-	    DBG_log("   sec ctx value: %s, len=%d", sec_ctx_value, i));
 
 	if (st->sec_ctx == NULL && st->st_state == STATE_QUICK_R0) {
-		DBG_log("Receievd sec ctx in responder state");
-		st->sec_ctx = alloc_thing(struct xfrm_user_sec_ctx_ike,
-					  "struct xfrm_user_sec_ctx_ike");
-		memcpy(st->sec_ctx->sec_ctx_value, sec_ctx_value, i);
-		st->sec_ctx->ctx_len = i;
-		st->sec_ctx->ctx_alg = ctx_alg;
-		st->sec_ctx->ctx_doi = ctx_doi;
+		DBG_log("Received sec ctx in responder state");
 
 		/*
-		 * let's verify if the received security label is within range
-		 * of this connection's policy's security label
+		 * verify that the received security label is
+		 * within range of this connection's policy's security label
 		 */
 		if (!st->st_connection->labeled_ipsec) {
-			DBG_log("This state (connection) is not labeled ipsec enabled, so cannot proceed");
+			libreswan_log("This state (connection) is not labeled ipsec enabled, so cannot proceed");
 			return FALSE;
 		} else if (st->st_connection->policy_label != NULL &&
-			   within_range(st->sec_ctx->sec_ctx_value,
+			   within_range(uctx.sec_ctx_value,
 					 st->st_connection->policy_label)) {
-			DBG_log("security context verification succedded");
+			DBG_log("security context verification succeeded");
 		} else {
-			DBG_log("security context verification failed (perhaps policy_label is not confgured for this connection)");
+			libreswan_log("security context verification failed (perhaps policy_label is not confgured for this connection)");
 			return FALSE;
 		}
-
+		/*
+		 * Note: this clones the whole of uctx.sec_ctx_value.
+		 * It would be reasonable to clone only the part that's used.
+		 */
+		st->sec_ctx = clone_thing(uctx, "struct xfrm_user_sec_ctx_ike");
+	} else if (st->st_state == STATE_QUICK_R0) {
+		/* ??? can this happen? */
+		/* ??? should we check that this label and first one match? */
+		DBG_log("Received sec ctx in responder state again: ignoring this one");
 	} else if (st->st_state == STATE_QUICK_I1) {
 		DBG(DBG_PARSING,
 		    DBG_log("Initiator state received security context from responder state, now verifying if both are same"));
-		if (streq(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
+		if (streq(st->sec_ctx->sec_ctx_value, uctx.sec_ctx_value)) {
 			DBG_log("security contexts are verified in the initiator state");
 		} else {
-			DBG_log("security context verification failed in the initiator state"
-				"(shouldnt reach here unless responder (or something in between) is modifying the security context");
+			libreswan_log("security context verification failed in the initiator state (shouldn't reach here unless responder (or something in between) is modifying the security context");
 			return FALSE;
 		}
-	} else if (st->st_state == STATE_QUICK_R0) {
-		DBG_log("Receievd sec ctx in responder state again, already stored it so doing nothing now");
 	}
 	return TRUE;
 }
+
 #endif
 
 /** output an attribute (within an SA) */
@@ -605,8 +562,9 @@ bool ikev1_out_sa(pb_stream *outs,
 						struct isakmp_attribute attr;
 						pb_stream val_pbs;
 
+						passert(st->sec_ctx->ctx.ctx_len <= MAX_SECCTX_LEN);
 						attr.isaat_af_type =
-							secctx_attr_value |
+							secctx_attr_type |
 							ISAKMP_ATTR_AF_TLV;
 
 						if (!out_struct(&attr,
@@ -614,59 +572,20 @@ bool ikev1_out_sa(pb_stream *outs,
 								&trans_pbs,
 								&val_pbs))
 							return_on(ret, FALSE);
-						DBG(DBG_EMITTING,
-						    DBG_log("placing security context attribute in the out going structure"));
-						DBG(DBG_EMITTING,
-						    DBG_log("sending ctx_doi"));
 
-						/* size is 1 byte so host order and network order is the same */
-						if (!out_raw(&st->sec_ctx->
-							        ctx_doi,
-							     sizeof(st->sec_ctx
-								    ->ctx_doi),
-							     &val_pbs,
-							     " variable length sec ctx: ctx_doi"))
+						if (!out_struct(&st->sec_ctx->ctx,
+								&sec_ctx_desc,
+								&val_pbs,
+								NULL))
 							return_on(ret, FALSE);
 
-						DBG(DBG_EMITTING,
-						    DBG_log("sending ctx_alg"));
-						/* size is 1 byte so host order and network order is the same */
-						if (!out_raw(&st->sec_ctx->
-							        ctx_alg,
-							     sizeof(st->sec_ctx
-								    ->ctx_alg),
-							     &val_pbs,
-							     " variable length sec ctx: ctx_alg"))
-							return_on(ret, FALSE);
-						DBG(DBG_EMITTING,
-						    DBG_log("sending ctx_len after conversion to network byte order"));
-
-						/* network order */
-						u_int16_t net_ctx_len = htons(st->sec_ctx->ctx_len);
-
-						if (!out_raw(&net_ctx_len,
-							     sizeof(st->sec_ctx
-								    ->ctx_len),
-							     &val_pbs,
-							     " variable length sec ctx: ctx_len"))
-							return_on(ret, FALSE);
-
-						/* Sending '\0' with sec ctx as we get it from kernel */
-
-						/* ??? host order */
 						if (!out_raw(st->sec_ctx->
 							     sec_ctx_value,
-							     st->sec_ctx->
-							     ctx_len, &val_pbs,
+							     st->sec_ctx->ctx.ctx_len, &val_pbs,
 							     " variable length sec ctx"))
 							return_on(ret, FALSE);
 
-						DBG(DBG_EMITTING,
-						    DBG_log("placed security context attribute in the out going structure"));
 						close_output_pbs(&val_pbs);
-
-						DBG(DBG_EMITTING,
-						    DBG_log("end of security context attribute in the out going structure"));
 					}
 #endif
 				}
@@ -1705,7 +1624,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		val = a.isaat_lv;
 
 #ifdef HAVE_LABELED_IPSEC
-		if (ty == secctx_attr_value) {
+		if (ty == secctx_attr_type) {
 			if (seen_secctx_attr) {
 				loglog(RC_LOG_SERIOUS,
 				       "repeated SECCTX attribute in IPsec Transform %u",
@@ -1918,7 +1837,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		default:
 #ifdef HAVE_LABELED_IPSEC
 			if (a.isaat_af_type ==
-			    (secctx_attr_value | ISAKMP_ATTR_AF_TLV)) {
+			    (secctx_attr_type | ISAKMP_ATTR_AF_TLV)) {
 				pb_stream *pbs = &attr_pbs;
 
 				if (!parse_secctx_attr(pbs, st))

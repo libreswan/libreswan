@@ -460,7 +460,7 @@ static bool mast_raw_eroute(const ip_address *this_host UNUSED,
 			    enum pluto_sadb_operations op UNUSED,
 			    const char *text_said UNUSED
 #ifdef HAVE_LABELED_IPSEC
-			    , char *policy_label UNUSED
+			    , const char *policy_label UNUSED
 #endif
 			    )
 {

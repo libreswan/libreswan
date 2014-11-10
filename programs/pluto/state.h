@@ -40,6 +40,8 @@
 # include <signal.h>
 #endif
 
+#include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
+
 /* Message ID mechanism.
  *
  * A Message ID is contained in each IKE message header.
@@ -193,21 +195,6 @@ struct traffic_selector {
 	ip_address low;
 	ip_address high;
 };
-
-#ifdef HAVE_LABELED_IPSEC
-/* security label length should not exceed 256 in most cases,
- * (discussed with kernel and selinux people).
- */
-#define MAX_SECCTX_LEN    257 /* including '\0'*/
-struct xfrm_user_sec_ctx_ike {
-	u_int16_t len;
-	u_int16_t exttype;
-	u_int8_t ctx_alg; /* LSMs: e.g., selinux == 1 */
-	u_int8_t ctx_doi;
-	u_int16_t ctx_len;
-	char sec_ctx_value[MAX_SECCTX_LEN];
-};
-#endif
 
 /* state object: record the state of a (possibly nascent) SA
  *
@@ -473,6 +460,7 @@ extern struct state *find_state_ikev1_loopback(const u_char *icookie,
 					       msgid_t msgid,
 					       const struct msg_digest *md);
 #endif
+
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 
