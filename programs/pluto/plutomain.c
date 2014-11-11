@@ -684,7 +684,7 @@ int main(int argc, char **argv)
 			continue;
 
 #ifdef HAVE_LABELED_IPSEC
-		case 'w':	/* --secctx-attr-value */
+		case 'w':	/* --secctx-attr-type */
 			ugh = ttoulb(optarg, 0, 0, 0xFFFF, &u);
 			if (ugh != NULL)
 				break;

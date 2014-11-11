@@ -90,7 +90,7 @@ d.ipsec.conf/virtual-private.xml
 d.ipsec.conf/myvendorid.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml
-d.ipsec.conf/secctx-attr-value.xml
+d.ipsec.conf/secctx-attr-type.xml
 d.ipsec.conf/plutofork.xml
 d.ipsec.conf/crlcheckinterval.xml
 d.ipsec.conf/strictcrlpolicy.xml
