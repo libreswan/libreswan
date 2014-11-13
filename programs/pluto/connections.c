@@ -765,8 +765,6 @@ static void unshare_connection_strings(struct connection *c)
 	if (c->alg_info_esp) {
 		alg_info_addref(&c->alg_info_esp->ai);
 	}
-	if (c->pool !=  NULL)
-		reference_addresspool(c->pool);
 }
 
 static bool load_end_certificate(const char *name, struct end *dst)
@@ -1752,6 +1750,9 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		d->spd.that.has_id_wildcards = FALSE;
 	}
 	unshare_connection_strings(d);
+
+	if (c->pool !=  NULL)
+		reference_addresspool(c->pool);
 
 	d->kind = CK_INSTANCE;
 

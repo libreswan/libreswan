@@ -512,7 +512,7 @@ void exit_log(const char *message, ...)
 
 	whack_log(RC_LOG_SERIOUS, "~FATAL ERROR: %s", m);
 
-	exit_pluto(1);
+	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
 void libreswan_exit_log_errno_routine(int e, const char *message, ...)
@@ -536,7 +536,7 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 	whack_log(RC_LOG_SERIOUS,
 		  "~FATAL ERROR: %s. Errno %d: %s", m, e, strerror(e));
 
-	exit_pluto(1);
+	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
 void libreswan_log_abort(const char *file_str, int line_no)
