@@ -798,7 +798,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			libreswan_log(
 				"rekeying existing instance \"%s\"%s, due to acquire",
 				c->name,
-				(fmt_conn_instance(c, cib), cib));
+				fmt_conn_instance(c, cib));
 
 			/*
 			 * we used to return here, but rekeying is a better choice. If we
@@ -845,7 +845,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			    char cib[CONN_INST_BUF];
 			    DBG_log("creating new instance from \"%s\"%s",
 				    c->name,
-				    (fmt_conn_instance(c, cib), cib));
+				    fmt_conn_instance(c, cib));
 		    });
 
 		idtoa(&sr->this.id, mycredentialstr, sizeof(mycredentialstr));

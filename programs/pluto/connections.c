@@ -2138,14 +2138,10 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 						subnettot(&c->spd.that.client,
 							0, c_pcb,
 							sizeof(c_pcb));
-						DBG_log("find_connection: "
-							"conn \"%s\"%s has "
-							"compatible peers: "
-							"%s -> %s [pri: %ld]",
+						DBG_log("find_connection: conn \"%s\"%s has compatible peers: %s -> %s [pri: %ld]",
 							c->name,
-							(fmt_conn_instance(c,
+							fmt_conn_instance(c,
 									cib),
-								cib),
 							c_ocb, c_pcb, prio);
 					});
 
@@ -2156,34 +2152,23 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 				}
 
 				DBG(DBG_CONTROLMORE, {
-						char cib[CONN_INST_BUF];
-						char cib2[CONN_INST_BUF];
-						DBG_log("find_connection: "
-							"comparing best "
-							"\"%s\"%s "
-							"[pri:%ld]{%p} "
-							"(child %s) to "
-							"\"%s\"%s "
-							"[pri:%ld]{%p} "
-							"(child %s)",
-							best->name,
-							(fmt_conn_instance(best,
-									cib),
-								cib),
-							best_prio,
-							best,
-							(best->policy_next ?
-								best->
-								policy_next->
-								name : "none"),
-							c->name,
-							(fmt_conn_instance(c,
-									cib2),
-								cib2), prio, c,
-							(c->policy_next ? c->
-								policy_next->
-								name : "none"));
-					});
+					char cib[CONN_INST_BUF];
+					char cib2[CONN_INST_BUF];
+					DBG_log("find_connection: comparing best \"%s\"%s [pri:%ld]{%p} (child %s) to \"%s\"%s [pri:%ld]{%p} (child %s)",
+						best->name,
+						fmt_conn_instance(best, cib),
+						best_prio,
+						best,
+						best->policy_next ?
+							best->policy_next->name :
+							"none",
+						c->name,
+						fmt_conn_instance(c, cib2),
+						prio, c,
+						c->policy_next ?
+							c->policy_next->name :
+							"none");
+				});
 
 				if (prio > best_prio) {
 					best = c;
@@ -2205,7 +2190,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			char cib[CONN_INST_BUF];
 			DBG_log("find_connection: concluding with \"%s\"%s [pri:%ld]{%p} kind=%s",
 				best->name,
-				(fmt_conn_instance(best, cib), cib),
+				fmt_conn_instance(best, cib),
 				best_prio,
 				best,
 				enum_name(&connection_kind_names, best->kind));
@@ -2413,46 +2398,41 @@ struct connection *route_owner(struct connection *c,
 	}
 
 	DBG(DBG_CONTROL, {
-			char cib[CONN_INST_BUF];
-			err_t m = builddiag("route owner of \"%s\"%s %s:",
-					c->name,
-					(fmt_conn_instance(c, cib), cib),
-					enum_name(&routing_story,
-						cur_spd->routing));
+		char cib[CONN_INST_BUF];
+		err_t m = builddiag("route owner of \"%s\"%s %s:",
+				c->name,
+				fmt_conn_instance(c, cib),
+				enum_name(&routing_story,
+					cur_spd->routing));
 
-			if (!routed(best_routing)) {
+		if (!routed(best_routing)) {
+			m = builddiag("%s NULL", m);
+		} else if (best_ro == c) {
+			m = builddiag("%s self", m);
+		} else {
+			m = builddiag("%s \"%s\"%s %s", m,
+				best_ro->name,
+				fmt_conn_instance(best_ro, cib),
+				enum_name(&routing_story, best_routing));
+		}
+
+		if (erop != NULL) {
+			m = builddiag("%s; eroute owner:", m);
+			if (!erouted(best_ero->spd.routing)) {
 				m = builddiag("%s NULL", m);
-			} else if (best_ro == c) {
+			} else if (best_ero == c) {
 				m = builddiag("%s self", m);
 			} else {
 				m = builddiag("%s \"%s\"%s %s", m,
-					best_ro->name,
-					(fmt_conn_instance(best_ro,
-							cib), cib),
+					best_ero->name,
+					fmt_conn_instance(best_ero, cib),
 					enum_name(&routing_story,
-						best_routing));
+						best_ero->spd.routing));
 			}
+		}
 
-			if (erop != NULL) {
-				m = builddiag("%s; eroute owner:", m);
-				if (!erouted(best_ero->spd.routing)) {
-					m = builddiag("%s NULL", m);
-				} else if (best_ero == c) {
-					m = builddiag("%s self", m);
-				} else {
-					m = builddiag("%s \"%s\"%s %s", m,
-						best_ero->name,
-						(fmt_conn_instance(best_ero,
-								cib),
-							cib),
-						enum_name(&routing_story,
-							best_ero->spd.
-							routing));
-				}
-			}
-
-			DBG_log("%s", m);
-		});
+		DBG_log("%s", m);
+	});
 
 	if (erop != NULL)
 		*erop = erouted(best_erouting) ? best_ero : NULL;
@@ -2953,8 +2933,7 @@ static bool is_virtual_net_used(struct connection *c,
 				idtoa(&d->spd.that.id, buf, sizeof(buf));
 
 				libreswan_log(
-					"Virtual IP %s overlaps with "
-					"connection %s\"%s\" (kind=%s) '%s'",
+					"Virtual IP %s overlaps with connection %s\"%s\" (kind=%s) '%s'",
 					client, d->name,
 					fmt_conn_instance(d, cbuf),
 					enum_name(&connection_kind_names,
@@ -2963,16 +2942,14 @@ static bool is_virtual_net_used(struct connection *c,
 
 				if (!kernel_overlap_supported()) {
 					libreswan_log(
-						"Kernel method '%s' does not "
-						"support overlapping IP ranges",
+						"Kernel method '%s' does not support overlapping IP ranges",
 						kernel_if_name());
 					return TRUE;
 
 				} else if (LIN(POLICY_OVERLAPIP, c->policy) &&
 					LIN(POLICY_OVERLAPIP, d->policy)) {
 					libreswan_log(
-						"overlap is okay by mutual "
-						"consent");
+						"overlap is okay by mutual consent");
 
 					/*
 					 * Look for another overlap to report

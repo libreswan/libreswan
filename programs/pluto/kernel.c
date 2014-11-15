@@ -708,11 +708,10 @@ static enum routability could_route(struct connection *c)
 			 */
 			inside->prio = outside->prio + 1;
 
-			fmt_conn_instance(inside, inst);
-
 			loglog(RC_LOG_SERIOUS,
 			       "conflict on eroute (%s), switching eroute to %s and linking %s",
-			       inst, inside->name, outside->name);
+			       fmt_conn_instance(inside, inst),
+			       inside->name, outside->name);
 
 			return route_nearconflict;
 		}
@@ -2739,9 +2738,8 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 				    char cib[CONN_INST_BUF];
 				    DBG_log("route_and_eroute: instance \"%s\"%s, setting eroute_owner {spd=%p,sr=%p} to #%ld (was #%ld) (newest_ipsec_sa=#%ld)",
 					    st->st_connection->name,
-					    (fmt_conn_instance(st->
-							       st_connection,
-							       cib), cib),
+					    fmt_conn_instance(st->st_connection,
+							      cib),
 					    &st->st_connection->spd, sr,
 					    st->st_serialno,
 					    sr->eroute_owner,
