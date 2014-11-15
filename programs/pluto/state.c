@@ -627,13 +627,15 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 
 					set_cur_state(this);
 
-					DBG_log("deleting state #%lu (%s) %s[%lu] %s",
+					DBG(DBG_CONTROL, {
+						char cib[CONN_INST_BUF];
+						DBG_log("deleting state #%lu (%s) \"%s\"%s",
 							st->st_serialno,
 							enum_show(&state_names,
 								this->st_state),
 							c->name,
-							c->instance_serial,
-							__func__);
+							fmt_conn_instance(c, cib));
+					});
 
 					delete_state(this);
 					/* note: no md->st to clear */
