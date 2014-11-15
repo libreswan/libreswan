@@ -54,7 +54,7 @@ kvmplutotest	ikev2-19-x509-auto-start		good
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			wip
-kvmplutotest	ikev2-29-no-rekey			wip
+kvmplutotest	ikev2-29-no-rekey			good
 kvmplutotest	ikev1-cryptoload-01			good
 kvmplutotest	ikev1-cryptoload-00			good
 
@@ -111,7 +111,7 @@ kvmplutotest	ikev2-minor-version-initiator		good
 kvmplutotest	ikev2-minor-version-responder		good
 kvmplutotest	ikev2-isakmp-reserved-flags-01		good
 kvmplutotest	ikev2-isakmp-reserved-flags-02		good
-kvmplutotest	ikev2-payload-reserved-flags-01		wip
+kvmplutotest	ikev2-payload-reserved-flags-01		good
 kvmplutotest	ikev2-allow-narrow-01			good
 kvmplutotest	ikev2-allow-narrow-02			good
 kvmplutotest	ikev2-allow-narrow-03			good
