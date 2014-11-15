@@ -354,7 +354,8 @@ void delete_state(struct state *st)
 	struct connection *const c = st->st_connection;
 	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
-	DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
+	libreswan_log("deleting state #%lu (%s)", st->st_serialno,
+				enum_show(&state_names, st->st_state));
 
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 		/* Note that a state/SA can have more then one of ESP/AH/IPCOMP */
@@ -626,8 +627,13 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 
 					set_cur_state(this);
 
-					libreswan_log("deleting state (%s)",
-						      enum_show(&state_names, this->st_state));
+					DBG_log("deleting state #%lu (%s) %s[%lu] %s",
+							st->st_serialno,
+							enum_show(&state_names,
+								this->st_state),
+							c->name,
+							c->instance_serial,
+							__func__);
 
 					delete_state(this);
 					/* note: no md->st to clear */
