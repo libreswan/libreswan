@@ -630,7 +630,7 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 					DBG(DBG_CONTROL, {
 						char cib[CONN_INST_BUF];
 						DBG_log("deleting state #%lu (%s) \"%s\"%s",
-							st->st_serialno,
+							this->st_serialno,
 							enum_show(&state_names,
 								this->st_state),
 							c->name,
