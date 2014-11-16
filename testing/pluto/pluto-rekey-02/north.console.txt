@@ -142,9 +142,9 @@ one
 north #
  ipsec auto --replace northnet-eastnet-nat
 002 "northnet-eastnet-nat": deleting connection
-002 "northnet-eastnet-nat" #2: deleting state (STATE_QUICK_I2)
+002 "northnet-eastnet-nat" #2: deleting state #2 (STATE_QUICK_I2)
 005 "northnet-eastnet-nat" #2: ESP traffic information: in=0B out=0B
-002 "northnet-eastnet-nat" #1: deleting state (STATE_MAIN_I4)
+002 "northnet-eastnet-nat" #1: deleting state #1 (STATE_MAIN_I4)
 002 added connection description "northnet-eastnet-nat"
 north #
  ipsec auto --up northnet-eastnet-nat
@@ -169,9 +169,9 @@ two
 north #
  ipsec auto --down northnet-eastnet-nat
 002 "northnet-eastnet-nat": terminating SAs using this connection
-002 "northnet-eastnet-nat" #4: deleting state (STATE_QUICK_I2)
+002 "northnet-eastnet-nat" #4: deleting state #4 (STATE_QUICK_I2)
 005 "northnet-eastnet-nat" #4: ESP traffic information: in=0B out=0B
-002 "northnet-eastnet-nat" #3: deleting state (STATE_MAIN_I4)
+002 "northnet-eastnet-nat" #3: deleting state #3 (STATE_MAIN_I4)
 north #
  sleep 2
 north #

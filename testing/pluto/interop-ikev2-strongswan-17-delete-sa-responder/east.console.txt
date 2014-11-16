@@ -23,9 +23,9 @@ initdone
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec auto --down westnet-eastnet-ikev2 ; fi
 002 "westnet-eastnet-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ikev2" #2: deleting state (STATE_PARENT_R2)
+002 "westnet-eastnet-ikev2" #2: deleting state #2 (STATE_PARENT_R2)
 005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-ikev2" #1: deleting state (STATE_PARENT_R2)
+002 "westnet-eastnet-ikev2" #1: deleting state #1 (STATE_PARENT_R2)
 east #
  if [ -f /var/run/charon.pid ]; then sleep 5 ; fi
 east #

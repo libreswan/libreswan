@@ -45,6 +45,7 @@ west #
 117 "westnet-eastnet-ipv4-psk-ikev1" #2: STATE_QUICK_I1: initiate
 002 "westnet-eastnet-ipv4-psk-ikev1" #2: supressing retransmit because IMPAIR_RETRANSMITS is set
 031 "westnet-eastnet-ipv4-psk-ikev1" #2: max number of retransmissions (0) reached STATE_QUICK_I1.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+002 "westnet-eastnet-ipv4-psk-ikev1" #2: deleting state #2 (STATE_QUICK_I1)
 west #
  echo done
 done

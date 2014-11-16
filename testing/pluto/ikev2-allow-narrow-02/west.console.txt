@@ -48,6 +48,7 @@ west #
 238 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: v2N_TS_UNACCEPTABLE
 002 "westnet-eastnet-ikev2" #2: supressing retransmit because IMPAIR_RETRANSMITS is set
 031 "westnet-eastnet-ikev2" #2: max number of retransmissions (0) reached STATE_PARENT_I2.  Possible authentication failure: no acceptable response to our first encrypted message
+002 "westnet-eastnet-ikev2" #2: deleting state #2 (STATE_PARENT_I2)
 #\[root@west ]#  timedout send line: ipsec auto --up  westnet-eastnet-ikev2
 echo done
 west #

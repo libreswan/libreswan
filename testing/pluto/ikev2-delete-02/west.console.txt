@@ -242,6 +242,7 @@ west #
  sleep 2
 west #
  ipsec whack --deletestate 2
+002 deleting state #2 (STATE_PARENT_I3)
 005 ESP traffic information: in=0B out=0B
 west #
  echo "sleeping a bit.. 2"
@@ -341,6 +342,7 @@ west #
 sleeping a bit.. 2
 west #
  ipsec whack --deletestate 1
+002 deleting state #1 (STATE_PARENT_I3)
 west #
  sleep 2
 west #
