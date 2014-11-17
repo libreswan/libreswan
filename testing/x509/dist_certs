@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 #
 # Copyright (C) 2007 Paul Wouters <paul@xelerance.com>
@@ -21,8 +21,9 @@
 # e: command returning error (outside of test) stops script
 set -ue
 
-# ??? odd: we descend into a directory that matches teh command name
-pushd "`dirname $0`"
+# we are changing current directory to directory where command is located at
+origindir="$(pwd)"
+cd "$(dirname $0)"
 
 if ! type touch >/dev/null
 then
@@ -634,4 +635,4 @@ openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out 
 openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/west_chain_root.crt -caname "west_chain_root" -out pkcs12/$machine.p12 -passin pass:foobar -passout pass:foobar
 
 echo "X509 test material generation complete"
-popd
+cd "${origindir}"
