@@ -7,7 +7,7 @@ then
 	echo "Unknown or broken test case /testing/pluto/$TESTNAME"
 	exit 1
 else
-	source /testing/pluto/$TESTNAME/testparams.sh
+	. /testing/pluto/$TESTNAME/testparams.sh
 fi
 if [ -f /testing/pluto/$TESTNAME/`hostname`run.sh ]
 then
