@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 TESTING=`readlink -f $0  | sed "s/libvirt.*$/libvirt/"`
 TESTDIR=`readlink -f $0  | sed "s/libvirt.*$//"`
@@ -15,9 +15,10 @@ echo "OSMEDIA=$OSMEDIA"
 # if we don't have certificates yet, generate them
 if [ ! -f  $LIBRESWANSRCDIR/testing/x509/pkcs12/mainca/west.p12 ]
 then
-	pushd $LIBRESWANSRCDIR/testing/x509
+	olddir=$(pwd)
+	cd $LIBRESWANSRCDIR/testing/x509
 	./dist_certs
-	popd
+	cd ${olddir}
 fi
 
 if [ -z "$POOLSPACE" -o -z "$OSTYPE" -o -z "$OSMEDIA" -o -z "$LIBRESWANSRCDIR" ]
@@ -40,7 +41,8 @@ then
 fi
 
 # Let's start
-pushd $TESTING
+olddir=$(pwd)
+cd $TESTING
 
 echo "testing "$OSTYPE"base.ks"
 
@@ -132,7 +134,7 @@ do
 done
 
 sudo virsh undefine swan"$OSTYPE"base
-popd
+cd ${olddir}
 
 echo "done"
 
