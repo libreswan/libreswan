@@ -8,9 +8,10 @@ fi
 
 if [ "$1" == "list" -o "$1" == "--list" ]
 then
-  pushd /vol/git/libreswan/testing/pluto
+  olddir=$(pwd)
+  cd /vol/git/libreswan/testing/pluto
   ls -d *
-  popd
+  cd ${olddir}
   exit 
 fi
 
