@@ -930,7 +930,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 	/* ??? what should we do on load_end_certificate failure? */
 
-	/* does id has wildcards? */
+	/* does id have wildcards? */
 	dst->has_id_wildcards = id_count_wildcards(&dst->id) > 0;
 
 	/* the rest is simple copying of corresponding fields */
@@ -1462,9 +1462,9 @@ void add_connection(const struct whack_message *wm)
 		 * or any wildcard ID to that end
 		 */
 		if (isanyaddr(&c->spd.this.host_addr) ||
-			c->spd.this.has_client_wildcard ||
-			c->spd.this.has_port_wildcard ||
-			c->spd.this.has_id_wildcards) {
+		    c->spd.this.has_client_wildcard ||
+		    c->spd.this.has_port_wildcard ||
+		    c->spd.this.has_id_wildcards) {
 			struct end t = c->spd.this;
 
 			c->spd.this = c->spd.that;
@@ -1506,11 +1506,10 @@ void add_connection(const struct whack_message *wm)
 				!NEVER_NEGOTIATE(c->policy)) ||
 			c->spd.that.has_client_wildcard ||
 			c->spd.that.has_port_wildcard ||
-			((c->policy & POLICY_SHUNT_MASK) == 0 &&
+			((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
 				c->spd.that.has_id_wildcards )) {
 			DBG(DBG_CONTROL,
-				DBG_log("based upon policy, the connection is "
-					"a template."));
+				DBG_log("based upon policy, the connection is a template."));
 
 			/*
 			 * Opportunistic or Road Warrior or wildcard client

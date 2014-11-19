@@ -1430,7 +1430,7 @@ int main(int argc, char **argv)
 			msg.policy |= POLICY_TUNNEL; /* client => tunnel */
 			continue;
 
-		case END_CLIENTWITHIN: /* --clienwithin <address range> */
+		case END_CLIENTWITHIN: /* --clientwithin <address range> */
 			if (end_seen & LELEM(END_CLIENT - END_FIRST))
 				diag("--clientwithin conflicts with --client");
 

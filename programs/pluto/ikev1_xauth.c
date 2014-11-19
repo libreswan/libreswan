@@ -560,6 +560,10 @@ static stf_status modecfg_resp(struct state *st,
 				 *
 				 *  SPLIT_INC  Length       IP addr      mask     proto?,sport?,dport?,proto?,sport?,dport?
 				 */
+					/*
+					 * ??? this really should use
+					 * packet emitting routines
+					 */
 
 					/* If we don't need split tunneling, just omit the payload */
 					if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
@@ -2138,76 +2142,76 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 			case CISCO_SPLIT_INC | ISAKMP_ATTR_AF_TLV:
 			{
-				struct spd_route *tmp_spd;
-				ip_address a;
-				char caddr[SUBNETTOT_BUF];
+				/*
+				 * ??? this really should be parsed by packet
+				 * routines
+				 */
 				size_t len = pbs_left(&strattr);
 				struct connection *c = st->st_connection;
-				struct spd_route *tmp_spd2 = &c->spd;
+				struct spd_route *last_spd = &c->spd;
 
 				DBG_log("Received Cisco Split tunnel route(s)");
-				if (!tmp_spd2->that.has_client) {
+				passert(last_spd->next == NULL);
+				if (!last_spd->that.has_client) {
 					ttosubnet("0.0.0.0/0.0.0.0", 0,
 						  AF_INET,
-						  &tmp_spd2->that.client);
-					tmp_spd2->that.has_client =
-						TRUE;
-					tmp_spd2->that.
-					has_client_wildcard =
+						  &last_spd->that.client);
+					last_spd->that.has_client = TRUE;
+					last_spd->that.has_client_wildcard =
 						FALSE;
 				}
 
-				while (len > 0) {
-					u_int32_t *ap;
-					tmp_spd = clone_thing(c->spd,
-							      "remote subnets policies");
+				/*
+				 * See diagram in modecfg_resp's
+				 * case CISCO_SPLIT_INC.
+				 * The 14 is explained there.
+				 */
+				while (len >= 14) {
+					u_int32_t *ap =
+						(u_int32_t *)(strattr.cur);
+					struct spd_route *tmp_spd =
+						clone_thing(c->spd,
+							    "remote subnets policies");
+					ip_address a;
+					char caddr[SUBNETTOT_BUF];
 
-					tmp_spd->this.id.name.ptr =
-						NULL;
-					tmp_spd->this.id.name.len = 0;
-					tmp_spd->that.id.name.ptr =
-						NULL;
-					tmp_spd->that.id.name.len = 0;
+					tmp_spd->this.id.name = empty_chunk;
+					tmp_spd->that.id.name = empty_chunk;
 
-					tmp_spd->this.host_addr_name =
-						NULL;
-					tmp_spd->that.host_addr_name =
-						NULL;
+					tmp_spd->this.host_addr_name = NULL;
+					tmp_spd->that.host_addr_name = NULL;
 
-					ap = (u_int32_t *)(strattr.cur);
+					/* grab 4 octet IP address */
 					a.u.v4.sin_family = AF_INET;
 					memcpy(&a.u.v4.sin_addr.s_addr,
 					       ap,
 					       sizeof(a.u.v4.sin_addr.
 						      s_addr));
 
-					addrtosubnet(&a,
-						     &tmp_spd->that.client);
+					addrtosubnet(&a, &tmp_spd->that.client);
 
-					len -= sizeof(a.u.v4.sin_addr.
-						       s_addr);
+					len -= sizeof(a.u.v4.sin_addr.s_addr);
 					strattr.cur +=
-						sizeof(a.u.v4.sin_addr.
-						       s_addr);
+						sizeof(a.u.v4.sin_addr.s_addr);
 
+					/* grab 4 octet address mask */
 					ap = (u_int32_t *)(strattr.cur);
 					a.u.v4.sin_family = AF_INET;
 					memcpy(&a.u.v4.sin_addr.s_addr,
 					       ap,
-					       sizeof(a.u.v4.sin_addr.
-						      s_addr));
+					       sizeof(a.u.v4.sin_addr.s_addr));
 
 					tmp_spd->that.client.maskbits =
 						masktocount(&a);
-					len -= sizeof(a.u.v4.sin_addr.
-						       s_addr);
+					len -= sizeof(a.u.v4.sin_addr.s_addr);
 					strattr.cur +=
-						sizeof(a.u.v4.sin_addr.
-						       s_addr);
+						sizeof(a.u.v4.sin_addr.s_addr);
 
+					/* set port to 0 (??? surely default) */
 					setportof(0,
 						  &tmp_spd->that.client.addr);
 
+					/* throw away 6 octets of who knows what */
 					len -= 6;
 					strattr.cur += 6;
 
@@ -2218,13 +2222,12 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						sizeof(caddr));
 
 					loglog(RC_INFORMATIONAL,
-						"Received subnet %s, maskbits %d", caddr,
+						"Received subnet %s, maskbits %d",
+						caddr,
 						tmp_spd->that.client.maskbits);
 
-					tmp_spd->this.cert_filename =
-						NULL;
-					tmp_spd->that.cert_filename =
-						NULL;
+					tmp_spd->this.cert_filename = NULL;
+					tmp_spd->that.cert_filename = NULL;
 
 					tmp_spd->this.cert.ty = CERT_NONE;
 					tmp_spd->that.cert.ty = CERT_NONE;
@@ -2239,8 +2242,12 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					unshare_connection_end_strings(&tmp_spd->that);
 
 					tmp_spd->next = NULL;
-					tmp_spd2->next = tmp_spd;
-					tmp_spd2 = tmp_spd;
+					last_spd->next = tmp_spd;
+					last_spd = tmp_spd;
+				}
+				if (len != 0) {
+					libreswan_log("ignoring %d unexpected octets at end of CISCO_SPLIT_INC attribute"
+						(int)len);
 				}
 				/*
 				 * ??? this won't work because CISCO_SPLIT_INC is way bigger than LELEM_ROOF
