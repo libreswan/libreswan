@@ -94,10 +94,10 @@ west #
 west #
  ipsec auto --down westnet-eastnet-compress
 002 "westnet-eastnet-compress": terminating SAs using this connection
-002 "westnet-eastnet-compress" #2: deleting state (STATE_QUICK_I2)
+002 "westnet-eastnet-compress" #2: deleting state #2 (STATE_QUICK_I2)
 005 "westnet-eastnet-compress" #2: ESP traffic information: in=0B out=0B
 005 "westnet-eastnet-compress" #2:  IPCOMP traffic information: in=0B out=0B
-002 "westnet-eastnet-compress" #1: deleting state (STATE_MAIN_I4)
+002 "westnet-eastnet-compress" #1: deleting state #1 (STATE_MAIN_I4)
 west #
  echo done
 done

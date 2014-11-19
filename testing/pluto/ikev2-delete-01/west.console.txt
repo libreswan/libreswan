@@ -159,7 +159,9 @@ west #
 000  
 west #
  ipsec whack --deletestate 1
+002 deleting state #2 (STATE_PARENT_I3)
 005 ESP traffic information: in=0B out=0B
+002 deleting state #1 (STATE_PARENT_I3)
 west #
  sleep 2
 west #

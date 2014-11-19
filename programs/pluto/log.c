@@ -664,15 +664,14 @@ void extra_debugging(const struct connection *c)
 	}
 
 	/*
-	 * if any debugging is no, make sure that we log the connection
+	 * if any debugging is on, make sure that we log the connection
 	 * we are processing, because it may not be clear in later debugging.
 	 */
-	if (cur_debugging) {
+	DBG(~LEMPTY, {
 		char b1[CONN_INST_BUF];
-		fmt_conn_instance(c, b1);
 		DBG_log("processing connection %s%s",
-			c->name, b1);
-	}
+			c->name, fmt_conn_instance(c, b1));
+	});
 
 }
 

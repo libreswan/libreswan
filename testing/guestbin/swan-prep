@@ -191,7 +191,9 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 			cmd = "certutil -N -d /etc/ipsec.d"
 			timer = 10
 			child = pexpect.spawn(cmd)
+			child.expect ('(?i)password')
 			child.sendline ('')
+			child.expect ('(?i)password')
 			child.sendline ('')
 
 			if args.eccert:
