@@ -5,11 +5,11 @@ import re
 from os import listdir
 from os.path import isfile, join
 import platform
-import datetime 
+import datetime
 import sys
 import logging
 
-results = dict() 
+results = dict()
 testlist = dict()
 
 def read_testlist(resultsdir = ''):
@@ -49,10 +49,10 @@ def read_dirs(args, output_dir = ''):
 	# dirs = [ '2014-09-24-blackswan-v3.10-233-g8602595-hugh-2014aug']
 	# print dirs
 
-	for d in sorted(dirs): 
+	for d in sorted(dirs):
 		# match = re.search(r'(2014-09-16)',d)
 		# if not match:
-		# 	continue
+		#	continue
 
 		td = newrunpath  + '/' + d
 		if not read_testlist(td):
@@ -67,7 +67,7 @@ def read_dirs(args, output_dir = ''):
 				}
 		s = print_table_json(td, table, results)
 		if not s:
-			continue 
+			continue
 		summary.append(s)
 		row = []
 		row.append(d)
@@ -85,7 +85,7 @@ def read_dirs(args, output_dir = ''):
 	t = open(args.resultsdir + '/' + 'table.json', 'w')
 	t.write(json.dumps(dirtable, ensure_ascii=True, indent=2))
 	##print(json.dumps(summary, ensure_ascii=True, indent=2))
-	t.close 
+	t.close
 
 
 def  grepfor(file, pattern, note, result, fixed=True):
@@ -96,7 +96,7 @@ def  grepfor(file, pattern, note, result, fixed=True):
 	else:
 		fixed = ''
 
-	cmd =  "grep " + fixed + "'" + pattern  + "'  " + file 
+	cmd =  "grep " + fixed + "'" + pattern  + "'  " + file
 	match = commands.getoutput(cmd)
 	#print("%s"%(cmd))
 	if match:
@@ -116,7 +116,7 @@ def diffstat(d, host):
 
 		hostr = ''
 		goodk =  d + '/' +  host + ".console.txt"
-		new  = d + '/OUTPUT/' + host + '.console.txt' 
+		new  = d + '/OUTPUT/' + host + '.console.txt'
 		if os.path.exists(new) and os.path.getsize(new) >  0:
 			if os.path.exists(goodk):
 				cmd = diffcmd + ' ' + goodk + ' ' + new + ' | diffstat -f 0'
@@ -127,22 +127,22 @@ def diffstat(d, host):
 					#print change
 				if not hostr:
 					hostr =  host + ' ' + "passed"
-			else: 
+			else:
 				hostr =  host + ' missing-baseline'
 		else:
-			hostr = "missing  OUTPUT/" + host + '.console.txt' 
-	
+			hostr = "missing  OUTPUT/" + host + '.console.txt'
+
 		plutolog = d + '/OUTPUT/' + host + '.pluto.log'
 		conslelog = d + '/OUTPUT/' + host + '.console.verbose.txt'
 
 		hostr = grepfor(plutolog, 'ASSERTION FAILED', "ASSERT", result = hostr)
 		hostr = grepfor(plutolog, 'EXPECTATION FAILED', "EXPECT", result = hostr)
 		hostr = grepfor(conslelog, 'segfault', "SEGFAULT", result = hostr)
-		hostr = grepfor(conslelog, 'general protection', "GPFAULT", result = hostr) 
+		hostr = grepfor(conslelog, 'general protection', "GPFAULT", result = hostr)
 		hostr = grepfor(conslelog, "^CORE FOUND$", "CORE", result = hostr, fixed = False)
 
 		return hostr
-	
+
 def diffstat_sum(r,d):
 		eastr =  diffstat(d, 'east');
 		if eastr:
@@ -163,7 +163,7 @@ def diffstat_sum(r,d):
 		r.append(rest)
 
 def print_table_json(rpath, table, result):
-	i = 0 
+	i = 0
 	runtime = 0
 	st = dict ()
 	try:
@@ -172,7 +172,7 @@ def print_table_json(rpath, table, result):
 		return None
 	rd = os.path.basename(rpath)
 	for t in tests:
-		r = "%s/%s/OUTPUT/RESULT"%(rpath,t) 
+		r = "%s/%s/OUTPUT/RESULT"%(rpath,t)
 		if not os.path.exists(r):
 			continue
 
@@ -183,7 +183,7 @@ def print_table_json(rpath, table, result):
 			if "result" in x and "testname"  in x:
 				x["result"] = x["result"].lower()
 				ret = []
-				results[x["testname"]] = x 
+				results[x["testname"]] = x
 				ret.append(x["testname"])
 				if 'expect' in x:
 					ret.append(x["expect"])
@@ -200,7 +200,7 @@ def print_table_json(rpath, table, result):
 					st[x["result"]]  =  st[x["result"]]   + 1
 				except:
 					st[x["result"]]  = 1
-				diffstat_sum(ret, rpath + '/' + t) 
+				diffstat_sum(ret, rpath + '/' + t)
 				table["rows"].append(list(ret))
 		f.close
 	if not st:
@@ -210,14 +210,14 @@ def print_table_json(rpath, table, result):
 	table["summary"]['passed'] = 0
 	table["summary"]['dir'] = rd
 
-	for s in st: 
+	for s in st:
 		table["summary"][s] = st[s]
-	table["summary"]["Total"] = i 
+	table["summary"]["Total"] = i
 	# str(datetime.timedelta(seconds=runtime)
 	# table["summary"]["runtime"] = runtime
 	hr = runtime // 3600
 	min = (runtime % 3600) // 60
-	sec = (runtime % 60) 
+	sec = (runtime % 60)
 	table["summary"]["runtime"] = "%02d:%02d:%02d"%(hr, min, sec)
 	match = re.search(r'(\d+-\d+-\d+)',rd)
 	if match:

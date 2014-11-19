@@ -711,7 +711,6 @@ def do_test(args, start='', testexpect='', testlist = False):
 
 
 def skip_testlist_line(args, line, verbose=False):
-	
 
 	if line[0] == '#' or re.match('^[ \t]*$', line):
 		# skip the comments
@@ -755,7 +754,7 @@ def resanitize(args):
 
 		if skip_testlist_line(args,line, verbose=False):
 			continue
-		
+
 		testtype, testdir, testexpect = line.split()
 		rdif = testdir  + '/OUTPUT/'
 
@@ -763,9 +762,9 @@ def resanitize(args):
 
 		x = get_results(r1)
 		if not x :
-			# there is no result ?? 
+			# there is no result ??
 			continue
-		
+
 		if x and (x["result"] == 'failed'):
 			logging.debug("resanitize now %s %s",testdir, testexpect )
 
@@ -830,7 +829,7 @@ def do_test_list(args, start, tried, output_dir):
 
 		if skip_testlist_line(args, line, verbose=True):
 			continue
-		
+
 		testtype, testdir, testexpect = line.split()
 
 		r_file = output_dir + '/' + testdir  + '/OUTPUT/RESULT'
@@ -903,7 +902,7 @@ def setup_result_dir(args):
 		pass
 
 	if not ipsecversion:
-		# Lets assume the path is <LIBRESWANSRC>/testing/utis 
+		# Let's assume the path is <LIBRESWANSRC>/testing/utils
 		cwd =  os.getcwd()
 		dn =   os.path.normpath(os.path.dirname(os.path.realpath(__file__)))
 		os.chdir(dn)
