@@ -2246,7 +2246,7 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					last_spd = tmp_spd;
 				}
 				if (len != 0) {
-					libreswan_log("ignoring %d unexpected octets at end of CISCO_SPLIT_INC attribute"
+					libreswan_log("ignoring %d unexpected octets at end of CISCO_SPLIT_INC attribute",
 						(int)len);
 				}
 				/*
