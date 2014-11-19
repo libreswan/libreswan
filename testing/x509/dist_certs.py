@@ -38,8 +38,9 @@ end_certs = {}
 
 
 def reset_files():
-	for dir in ['keys/', 'cacerts/', 'certs/',
-			    'pkcs12/', 'pkcs12/curveca', 'crls/']:
+	for dir in ['keys/', 'cacerts/', 'certs/', 'pkcs12/',
+			    'pkcs12/curveca', 'pkcs12/mainca',
+				'pkcs12/otherca', 'crls/']:
 		if os.path.isdir(dir):
 			shutil.rmtree(dir)
 		os.mkdir(dir)
@@ -251,7 +252,7 @@ def create_basic_pluto_cas(ca_names):
 		store_cert_and_key(name, ca, key)
 
 
-def create_pkcs12(name, cert, key, ca_cert):
+def create_pkcs12(path, name, cert, key, ca_cert):
 	""" Package and write out a .p12 file
 	"""
 	p12 = crypto.PKCS12()
@@ -259,7 +260,7 @@ def create_pkcs12(name, cert, key, ca_cert):
 	p12.set_privatekey(key)
 	p12.set_friendlyname(name)
 	p12.set_ca_certificates([ca_cert])
-	with open("pkcs12/" + name + ".p12", "wb") as f:
+	with open(path + name + ".p12", "wb") as f:
 		f.write(p12.export(passphrase="foobar"))
 
 
@@ -320,7 +321,8 @@ def create_mainca_end_certs(mainca_end_certs):
 									sign_alg=alg)
 		writeout_cert_and_key("certs/", name, cert, key)
 		store_cert_and_key(name, cert, key)
-		create_pkcs12(name, cert, key, ca_certs[signer][0])
+		create_pkcs12("pkcs12/"+ signer + '/',
+					  name, cert, key, ca_certs[signer][0])
 		serial += 1
 
 
@@ -365,7 +367,7 @@ def create_chained_certs(chain_ca_roots):
 
 				writeout_cert_and_key("certs/", endcert_name, ecert, ekey)
 				store_cert_and_key(endcert_name, ecert, ekey)
-				create_pkcs12(endcert_name, ecert, ekey, signpair[0])
+				create_pkcs12("pkcs12/", endcert_name, ecert, ekey, signpair[0])
 
 
 def create_leading_zero_crl():
