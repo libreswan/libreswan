@@ -386,8 +386,8 @@ def create_leading_zero_crl():
 
 		crl = zerosig.export(signcert, signkey,
 							 type=crypto.FILETYPE_TEXT, days=days)
-		pem = zerosig.export(signcert, signkey,
-							 type=crypto.FILETYPE_PEM, days=days)
+		der = zerosig.export(signcert, signkey,
+							 type=crypto.FILETYPE_ASN1, days=days)
 
 		for index, line in enumerate(crl.splitlines()):
 			if "Signature Algorithm" in line and index >= 5:
@@ -399,8 +399,8 @@ def create_leading_zero_crl():
 		if good:
 			print nl
 			print "found after %d signatures!" % (days)
-			with open("crls/crl-leading-zero-byte.pem", "wb") as f:
-				f.write(pem)
+			with open("crls/crl-leading-zero-byte.crl", "wb") as f:
+				f.write(der)
 			break
 
 		days += 1
@@ -422,29 +422,33 @@ def create_crlsets():
 
 	validcrl = crypto.CRL()
 	validcrl.add_revoked(revoked)
-	with open("crls/cacrlvalid.pem", "wb") as f:
+	with open("crls/cacrlvalid.crl", "wb") as f:
 		f.write(validcrl.export(ca_certs['mainca'][0],
 								ca_certs['mainca'][1],
+								type=crypto.FILETYPE_ASN1,
 								days=15))
 
 	othercrl = crypto.CRL()
 	othercrl.add_revoked(revoked)
-	with open("crls/othercacrl.pem", "wb") as f:
+	with open("crls/othercacrl.crl", "wb") as f:
 		f.write(othercrl.export(ca_certs['otherca'][0],
 								ca_certs['otherca'][1],
+								type=crypto.FILETYPE_ASN1,
 								days=15))
 
 	needupdate = crypto.CRL()
 	needupdate.add_revoked(revoked)
-	with open("crls/needupdate.pem", "wb") as f:
+	with open("crls/needupdate.crl", "wb") as f:
 		f.write(needupdate.export(ca_certs['mainca'][0],
 								  ca_certs['mainca'][1],
+								  type=crypto.FILETYPE_ASN1,
 								  days=0))
 	notyet = crypto.CRL()
 	notyet.add_revoked(future_revoked)
-	with open("crls/futurerevoke.pem", "wb") as f:
+	with open("crls/futurerevoke.crl", "wb") as f:
 		f.write(notyet.export(ca_certs['mainca'][0],
 							  ca_certs['mainca'][1],
+							  type=crypto.FILETYPE_ASN1,
 							  days=15))
 
 	create_leading_zero_crl()
