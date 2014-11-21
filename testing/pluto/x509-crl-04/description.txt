@@ -1,0 +1,10 @@
+west to east, both do not have their peer certificates cached
+west has leftsendcert=always (and east) with a specific rightca
+
+east and west has strictcrlpolicy=yes and crlcheckinterval=5s
+
+only east has a crl cached locally. nic serves out a crl
+that is fetched by west during the exchange
+
+west has to try the connection twice. the second time the crl
+will be cached and succeeds
