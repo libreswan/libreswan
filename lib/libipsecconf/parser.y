@@ -86,7 +86,7 @@ config_file:
 /* check out the version number - this is optional (and we're phasing out its use) */
 /* we have configs shipped with version 2 (INTEGER) and with version 2.0 (STRING, now  NUMBER/float was removed */
 
-versionstmt:
+versionstmt: /* NULL */
         | VERSION STRING EOL
         | VERSION INTEGER EOL
 	;
