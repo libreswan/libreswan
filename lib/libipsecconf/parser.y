@@ -79,8 +79,8 @@ static struct starter_comments_list *_parser_comments;
  */
 
 config_file:
-        blanklines versionstmt blanklines sections
-        | blanklines sections
+        blanklines versionstmt blanklines sections blanklines
+        | blanklines sections blanklines
         ;
 
 /* check out the version number - this is optional (and we're phasing out its use) */

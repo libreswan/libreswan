@@ -314,14 +314,9 @@ int parser_y_eof(void)
 	printf("stacktop->filename = %s\n",
 		stacktop->filename != NULL ? stacktop->filename : "NULL");
 #endif
-	if (stacktop->file){
-	    char ch;
-	    fseek(stacktop->file,-1L,SEEK_END);
-	    ch = (char)fgetc(stacktop->file);
-	    if (ch != '\n' && stacktop->once){
-		stacktop->once = 0;
-		return EOL;
-	    }
+	if (stacktop->once) {
+	    stacktop->once = 0;
+	    return EOL;
 	}
 	if(parser_y_eof()) {
 	   yyterminate();
