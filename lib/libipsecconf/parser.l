@@ -6,7 +6,7 @@
 /* Libreswan config file parser (parser.l)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2008,2014 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2008, 2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
@@ -38,12 +38,12 @@
 #include "ipsecconf/parserlast.h"
 #include "ipsecconf/starterlog.h"
 
-#define MAX_INCLUDE_DEPTH  10
+#define MAX_INCLUDE_DEPTH	10
 
 int lex_verbosity = 0;	/* how much tracing output to show */
 
-char rootdir[PATH_MAX];      /* when evaluating paths, prefix this to them */
-char rootdir2[PATH_MAX];     /* or... try this one too */
+char rootdir[PATH_MAX];		/* when evaluating paths, prefix this to them */
+char rootdir2[PATH_MAX];	/* or... try this one too */
 
 static int parser_y_eof(void);
 
@@ -57,11 +57,11 @@ static int parser_y_eof(void);
 
 struct ic_inputsource {
 	YY_BUFFER_STATE state;
-	FILE  *file;
+	FILE *file;
 	unsigned int line;
-	unsigned int once;
-	char  *filename;
-	int    fileglobcnt;
+	unsigned int once;	/* boolean */
+	char *filename;
+	int fileglobcnt;
 	glob_t fileglob;
 };
 
@@ -74,23 +74,23 @@ static struct ic_inputsource *stacktop;
 
 char *parser_cur_filename(void)
 {
-    return stacktop->filename;
+	return stacktop->filename;
 }
 
-int  parser_cur_lineno(void)
+int parser_cur_lineno(void)
 {
-    return stacktop->line;
+	return stacktop->line;
 }
 
 void parser_y_error(char *b, int size, const char *s)
 {
 #if defined(SOMETHING_FOR_SOME_ARCH)
-       extern char *yytext;
+	extern char *yytext;
 #endif
-       snprintf(b, size, "%s:%d: %s [%s]",
-		stacktop->filename ? stacktop->filename : "<none>",
-                stacktop->line,
-                s, yytext);
+	snprintf(b, size, "%s:%d: %s [%s]",
+		stacktop->filename == NULL ? "<none>" : stacktop->filename,
+		stacktop->line,
+		s, yytext);
 }
 
 void parser_y_init (const char *name, FILE *f)
@@ -106,17 +106,17 @@ void parser_y_init (const char *name, FILE *f)
 
 static void parser_y_close(struct ic_inputsource *iis)
 {
-	if (iis->filename) {
+	if (iis->filename != NULL) {
 		free(iis->filename);
-		iis->filename=NULL;
+		iis->filename = NULL;
 	}
-	if (iis->file) {
+	if (iis->file != NULL) {
 		fclose(iis->file);
-		iis->file=NULL;
+		iis->file = NULL;
 	}
 	if (iis->fileglob.gl_pathv) {
 		globfree(&iis->fileglob);
-		iis->fileglob.gl_pathv=NULL;
+		iis->fileglob.gl_pathv = NULL;
 	}
 }
 
@@ -125,7 +125,7 @@ static void parser_y_fini(void)
 {
 	unsigned int i;
 
-	for (i=0; i<MAX_INCLUDE_DEPTH; i++) {
+	for (i = 0; i < MAX_INCLUDE_DEPTH; i++) {
 		parser_y_close(&ic_private.stack[i]);
 	}
 	memset(&ic_private, 0, sizeof(ic_private));
@@ -135,38 +135,46 @@ static void parser_y_fini(void)
 static int parser_y_nextglobfile(struct ic_inputsource *iis)
 {
 	FILE *f;
-	int  fcnt;
+	int fcnt;
 
 #if 0
 	printf("fileglobcnt: %d pathc: %d cmp: %u\n",
-	       iis->fileglobcnt, stacktop->fileglob.gl_pathc,
-	       (iis->fileglobcnt >= (int)stacktop->fileglob.gl_pathc));
+		iis->fileglobcnt, stacktop->fileglob.gl_pathc,
+		(iis->fileglobcnt >= (int)stacktop->fileglob.gl_pathc));
 #endif
 
-	if((int)iis->fileglobcnt >= (int)stacktop->fileglob.gl_pathc) {
+	if ((int)iis->fileglobcnt >= (int)stacktop->fileglob.gl_pathc) {
 		/* EOFiles */
 		return -1;
 	}
 
-	/* increment for next time  */
+	/* increment for next time */
 	fcnt = iis->fileglobcnt++;
 
-	if(iis->file)     { fclose(iis->file);   iis->file=NULL; }
-	if(iis->filename) { free(iis->filename); iis->filename=NULL;}
+	if (iis->file != NULL) {
+		fclose(iis->file);
+		iis->file = NULL;
+	}
+	if (iis->filename != NULL) {
+		free(iis->filename);
+		iis->filename = NULL;
+	}
 
-	iis->line  = 1;
+	iis->line = 1;
 	iis->once = 1;
 	iis->filename = strdup(iis->fileglob.gl_pathv[fcnt]);
 
 	/* open the file */
 	f = fopen(iis->filename, "r");
-	if (!f) {
-                char ebuf[128];
-		snprintf(ebuf, 128, "can not open include filename: '%s'", iis->fileglob.gl_pathv[fcnt]);
-                yyerror(ebuf);
+	if (f == NULL) {
+		char ebuf[128];
+		snprintf(ebuf, sizeof(ebuf),
+			"can not open include filename: '%s'",
+			iis->fileglob.gl_pathv[fcnt]);
+		yyerror(ebuf);
 		return -1;
 	}
-	iis->file  = f;
+	iis->file = f;
 
 	yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
 
@@ -178,14 +186,14 @@ int parser_y_include (const char *filename)
 	const char *try;
 	char newname[PATH_MAX];
 	char newname2[PATH_MAX];
-        glob_t globbuf;
+	glob_t globbuf;
 	int globresult;
 
 	globbuf.gl_offs = 0;
 
 	try = filename;
-	newname[0]='\0';
-	newname2[0]='\0';
+	newname[0] = '\0';
+	newname2[0] = '\0';
 
 	/*
 	 * order of operations is: try rootdir, and then rootdir2
@@ -204,19 +212,18 @@ int parser_y_include (const char *filename)
 # define GB 0
 #endif
 
-	if(rootdir[0]!='\0' && filename[0]=='/')
-        {
-	    snprintf(newname, PATH_MAX, "%s%s", rootdir, filename);
-	    try = newname;
+	if (rootdir[0] != '\0' && filename[0] == '/') {
+		snprintf(newname, sizeof(newname), "%s%s", rootdir, filename);
+		try = newname;
 
-	    globresult = glob(try, GB, NULL, &globbuf);
-	    if(globresult == GLOB_NOMATCH && rootdir2[0]!='\0') {
-		    /* now try with rootdir2 */
-		    snprintf(newname2, PATH_MAX,
-			     "%s%s", rootdir2, filename);
-		    try = newname2;
-		    globresult = glob(try, GB, NULL, &globbuf);
-	    }
+		globresult = glob(try, GB, NULL, &globbuf);
+		if (globresult == GLOB_NOMATCH && rootdir2[0] != '\0') {
+			/* now try with rootdir2 */
+			snprintf(newname2, sizeof(newname2),
+				 "%s%s", rootdir2, filename);
+			try = newname2;
+			globresult = glob(try, GB, NULL, &globbuf);
+		}
 	} else {
 		/* try globbing plain name now.. */
 		globresult = glob(try, GB, NULL, &globbuf);
@@ -224,23 +231,23 @@ int parser_y_include (const char *filename)
 
 #undef GB
 
-	if(globresult == GLOB_NOMATCH)
-	{
+	if (globresult == GLOB_NOMATCH) {
 		/* no files found... */
-		starter_log(LOG_LEVEL_INFO, "warning: could not open include filename: '%s' (tried %s and %s)", filename, newname, newname2);
+		starter_log(LOG_LEVEL_INFO,
+			"warning: could not open include filename: '%s' (tried %s and %s)",
+			filename, newname, newname2);
 		globfree(&globbuf);
 		return 0;
 	}
 
-	if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH)
-	{
+	if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH) {
 		yyerror("max inclusion depth reached");
 		return 1;
 	}
 
-	if (lex_verbosity > 0)
-	{
-		starter_log(LOG_LEVEL_DEBUG, "including file '%s'(%s) from line %s:%d\n"
+	if (lex_verbosity > 0) {
+		starter_log(LOG_LEVEL_DEBUG,
+			    "including file '%s'(%s) from line %s:%d\n"
 			    , filename, try
 			    , stacktop->filename
 			    , stacktop->line);
@@ -252,35 +259,34 @@ int parser_y_include (const char *filename)
 	stacktop->fileglob = globbuf;
 	stacktop->fileglobcnt = 0;
 	stacktop->file = NULL;
-	stacktop->filename=NULL;
+	stacktop->filename = NULL;
 
 	return parser_y_eof();
 }
 
 int parser_y_eof(void)
 {
-	if(stacktop->state != YY_CURRENT_BUFFER) {
+	if (stacktop->state != YY_CURRENT_BUFFER) {
 		yy_delete_buffer(YY_CURRENT_BUFFER);
 	}
 
-	if(parser_y_nextglobfile(stacktop) == -1) {
+	if (parser_y_nextglobfile(stacktop) == -1) {
 		/* no more glob'ed files to process */
 
-		if (lex_verbosity > 0)
-		{
+		if (lex_verbosity > 0) {
 			int stackp = ic_private.stack_ptr;
 			starter_log(LOG_LEVEL_DEBUG,
-				    "end of file %s\n",stacktop->filename);
+				    "end of file %s\n", stacktop->filename);
 
-			if(stackp > 0) {
+			if (stackp > 0) {
 				starter_log(LOG_LEVEL_DEBUG,
-					    "resuming %s line %d\n"
-					    , ic_private.stack[stackp-1].filename
-					    , ic_private.stack[stackp-1].line);
+					"resuming %s line %d\n"
+					, ic_private.stack[stackp-1].filename
+					, ic_private.stack[stackp-1].line);
 			}
 		}
 
-		if(stacktop->state != YY_CURRENT_BUFFER)  {
+		if (stacktop->state != YY_CURRENT_BUFFER) {
 			yy_switch_to_buffer(stacktop->state);
 		}
 
@@ -296,14 +302,14 @@ int parser_y_eof(void)
 
 %}
 
-    /* lexical states:
-     *
-     * INITIAL
-     * USERDEF: after "="
-     * BOOLEAN: after keyword with BOOLWORD attribute, until \n
-     * COMMENTEQUAL: after keyword "x-comment"
-     * COMMENTSTRING: after = in COMMENTEQUAL state, until \n
-     */
+/* lexical states:
+ *
+ * INITIAL
+ * USERDEF: after "="
+ * BOOLEAN: after keyword with BOOLWORD attribute, until \n
+ * COMMENTEQUAL: after keyword "x-comment"
+ * COMMENTSTRING: after = in COMMENTEQUAL state, until \n
+ */
 
 %x USERDEF BOOLEAN COMMENTEQUAL COMMENTSTRING
 
@@ -312,161 +318,172 @@ int parser_y_eof(void)
 <<EOF>>	{
 #if 0
 	printf("stacktop->filename = %s\n",
-		stacktop->filename != NULL ? stacktop->filename : "NULL");
+		stacktop->filename == NULL ? "NULL" : stacktop->filename);
 #endif
-	if (stacktop->file){
-	    char ch;
-	    fseek(stacktop->file,-1L,SEEK_END);
-	    ch = (char)fgetc(stacktop->file);
-	    if (ch != '\n' && stacktop->once){
-		stacktop->once = 0;
-		return EOL;
-	    }
+	if (stacktop->file != NULL) {
+		char ch;
+		fseek(stacktop->file, -1L, SEEK_END);
+		ch = (char)fgetc(stacktop->file);
+		if (ch != '\n' && stacktop->once) {
+			stacktop->once = 0;
+			return EOL;
+		}
 	}
-	if(parser_y_eof()) {
-	   yyterminate();
+	if (parser_y_eof()) {
+		yyterminate();
 	}
 }
 
-^[\t ]*#.*\n	        { /* eat comment lines */
-                          stacktop->line++;
-		        }
+^[\t ]*#.*\n		{
+				/* eat comment lines */
+				stacktop->line++;
+			}
 
-^[\t ]*\n	        { /* eat blank lines */
-                          stacktop->line++;
-		        }
+^[\t ]*\n		{
+				/* eat blank lines */
+				stacktop->line++;
+			}
 
 ^[\t ]+			return FIRST_SPACES;
 
 [\t ]+			/* ignore spaces in line */ ;
 
-<USERDEF>[0-9]+         { /* process a number */
-                           yylval.num = strtoul(yytext, NULL, 10);
-                           BEGIN INITIAL;
-			   return INTEGER;
-                        }
-
-<USERDEF>%forever       { /* a number, really 0 */
-                           yylval.num = 0;
-                           BEGIN INITIAL;
-			   return INTEGER;
+<USERDEF>[0-9]+		{
+				/* process a number */
+				yylval.num = strtoul(yytext, NULL, 10);
+				BEGIN INITIAL;
+				return INTEGER;
 			}
 
-[0-9]+                  { /* process a number */
-                           yylval.num = strtoul(yytext, NULL, 10);
-                           BEGIN INITIAL;
-			   return INTEGER;
-                        }
+<USERDEF>%forever	{
+				/* a number, really 0 */
+				yylval.num = 0;
+				BEGIN INITIAL;
+				return INTEGER;
+			}
 
-<BOOLEAN>y   |
-<BOOLEAN>yes |
+[0-9]+			{
+				/* process a number */
+				yylval.num = strtoul(yytext, NULL, 10);
+				BEGIN INITIAL;
+				return INTEGER;
+			}
+
+<BOOLEAN>y    |
+<BOOLEAN>yes  |
 <BOOLEAN>true |
-<BOOLEAN>on             { /* process a boolean */
-                          yylval.num = 1;
-                          BEGIN INITIAL;
-			  return BOOL;
+<BOOLEAN>on		{
+				/* process a boolean */
+				yylval.num = 1;
+				BEGIN INITIAL;
+				return BOOL;
 			}
 
-<BOOLEAN>n   |
-<BOOLEAN>no  |
+<BOOLEAN>n     |
+<BOOLEAN>no    |
 <BOOLEAN>false |
-<BOOLEAN>off            { /* process a boolean */
-                          yylval.num = 0;
-                          BEGIN INITIAL;
-			  return BOOL;
-                        }
+<BOOLEAN>off		{
+				/* process a boolean */
+				yylval.num = 0;
+				BEGIN INITIAL;
+				return BOOL;
+			}
 
 <BOOLEAN>=		return EQUAL;
 
-<BOOLEAN>\n 	        {
-                          stacktop->line++;
-			  BEGIN INITIAL;
-			  return EOL;
-		        }
+<BOOLEAN>\n		{
+				stacktop->line++;
+				BEGIN INITIAL;
+				return EOL;
+			}
 
-<COMMENTEQUAL>=        {
-                            BEGIN COMMENTSTRING;
-                            return EQUAL;
-                        }
+<COMMENTEQUAL>=		{
+				BEGIN COMMENTSTRING;
+				return EQUAL;
+			}
 
-<COMMENTSTRING>[^\n]*   {
-                            yylval.s = strdup(yytext);
-                            BEGIN INITIAL;
-                            return STRING;
-                        }
+<COMMENTSTRING>[^\n]*	{
+				yylval.s = strdup(yytext);
+				BEGIN INITIAL;
+				return STRING;
+			}
 
 <USERDEF>\"[^\"\n]*\"	{
-                           char *s = yytext + 1;
-			   int len = strlen(s);
+				char *s = yytext + 1;
+				int len = strlen(s);
 
-			   assert(len>0);
+				assert(len>0);
 
-			   /* remove trailing " */
-			   s[len-1]='\0';
-			   if(yydebug) { fprintf(stderr, "STRING: \"%s\"\n", s);}
-			   yylval.s = strdup(s);
-			   BEGIN INITIAL;
-                           return STRING;
+				/* remove trailing " */
+				s[len-1] = '\0';
+				if (yydebug)
+					fprintf(stderr, "STRING: \"%s\"\n", s);
+				yylval.s = strdup(s);
+				BEGIN INITIAL;
+				return STRING;
 			}
 
 <USERDEF>\{[^\"\n]*\}	{
-                           char *s = yytext + 1;
-			   int len = strlen(s);
+				char *s = yytext + 1;
+				int len = strlen(s);
 
-			   assert(len>0);
+				assert(len > 0);
 
-			   /* remove trailing } */
-			   s[len-1]='\0';
-			   if(yydebug) { fprintf(stderr, "STRING{}: {%s}\n", s);}
-			   yylval.s = strdup(s);
-			   BEGIN INITIAL;
-                           return STRING;
+				/* remove trailing } */
+				s[len-1] = '\0';
+				if (yydebug)
+					fprintf(stderr, "STRING{}: {%s}\n", s);
+				yylval.s = strdup(s);
+				BEGIN INITIAL;
+				return STRING;
 			}
 
-<USERDEF>[^\" \t\n]+   {
-			   yylval.s = strdup(yytext);
-			   BEGIN INITIAL;
-                           return STRING;
+<USERDEF>[^\" \t\n]+	{
+				yylval.s = strdup(yytext);
+				BEGIN INITIAL;
+				return STRING;
 			}
 
-<USERDEF>[^\{} \t\n]+   {
-			   yylval.s = strdup(yytext);
-			   BEGIN INITIAL;
-                           return STRING;
+<USERDEF>[^\{} \t\n]+	{
+				yylval.s = strdup(yytext);
+				BEGIN INITIAL;
+				return STRING;
 			}
 
-\n  		        {
-                          stacktop->line++;
-			  return EOL;
-		        }
+\n			{
+				stacktop->line++;
+				return EOL;
+			}
 
 =			{ BEGIN USERDEF; return EQUAL; }
-version                 return VERSION;
+version			return VERSION;
 config			return CONFIG;
 setup			return SETUP;
 conn			{ BEGIN USERDEF; return CONN; }
 include			return INCLUDE;
 
-[^\"= \t\n]+	        {  int tok;
+[^\"= \t\n]+		{
+				int tok;
 
-                           if(yydebug) { fprintf(stderr, "STR/KEY: %s\n", yytext); }
-                           tok = parser_find_keyword(yytext, &yylval);
-			   switch(tok)
-			   {
-			   case BOOLWORD:
-			       BEGIN BOOLEAN;
-			       break;
-                           case COMMENT:
-			       BEGIN COMMENTEQUAL;
-                               break;
-			   default:
-                               break;
-			   }
-			   return tok;
+				if (yydebug)
+					fprintf(stderr, "STR/KEY: %s\n",
+						yytext);
+				tok = parser_find_keyword(yytext, &yylval);
+				switch(tok)
+				{
+				case BOOLWORD:
+					BEGIN BOOLEAN;
+					break;
+				case COMMENT:
+					BEGIN COMMENTEQUAL;
+					break;
+				default:
+					break;
+				}
+				return tok;
 			}
 
-#.*		        /* eat comment to end of line */ {
-                        }
+#.*			{ /* eat comment to end of line */ }
 
 .			yyerror(yytext);
 %%
