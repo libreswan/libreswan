@@ -32,6 +32,7 @@ parser.add_argument('--hostname', '-H', action='store', default='', help='The na
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
 parser.add_argument('--x509', '-x', action='store_true',  help='create X509 NSS file by importing test certs')
+parser.add_argument('--revoked', '-r', action='store_true',  help='load a revoked certificate')
 parser.add_argument('--eccert', '-e', action='store_true', help='enable an EC cert for this host')
 parser.add_argument('--certchain', '-c', action='store_true', help='import the ca-chain test certs')
 parser.add_argument('--46', '--64', action='store_true', help='Do not disable IPv6. Default is disable IPv6 ', dest = 'ipv', default = False)
@@ -233,6 +234,9 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d /etc/ipsec.d %s"%(ca,p12,pw))
 				# install all other public certs
 				# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
+
+				if args.revoked:
+					commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d /etc/ipsec.d %s" % pw)
 
 				for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec"):
 					if not hostname in certname:
