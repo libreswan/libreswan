@@ -412,13 +412,15 @@ def create_crlsets():
 	print "creating crl set"
 	revoked = crypto.Revoked()
 	revoked.set_rev_date(dates['OK_NOW'])
+	# the get_serial_number method results in a hex str like '0x17L'
+	# but set_serial needs a hex str like '17'
 	revoked.set_serial(
-			str(end_certs['revoked'][0].get_serial_number()))
+			hex(end_certs['revoked'][0].get_serial_number())[2:-1])
 
 	future_revoked = crypto.Revoked()
 	future_revoked.set_rev_date(dates['FUTURE'])
 	future_revoked.set_serial(
-			str(end_certs['revoked'][0].get_serial_number()))
+			hex(end_certs['revoked'][0].get_serial_number())[2:-1])
 
 	validcrl = crypto.CRL()
 	validcrl.add_revoked(revoked)
