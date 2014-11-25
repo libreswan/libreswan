@@ -8,7 +8,7 @@ then
 fi
 if [ -z "$VERSION" ]
 then
-	VERSION=`git tag | tail -1| sed -e "s/v//"`
+	VERSION=`git describe --tags --dirty | tail -1| sed -e "s/v//"`
 fi
 
 if [ -z "$FORCE" ]
