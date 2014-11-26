@@ -6,9 +6,9 @@
 #
 
 exe=${OBJDIRTOP}/programs/readwriteconf/readwriteconf
-args="--rootdir=${ROOTDIR}/testing/baseconfigs/all --config ${ROOTDIR}/testing/pluto/mast-pluto-01/east.conf"
+args="--rootdir=${ROOTDIR} --config ${ROOTDIR}/testing/pluto/mast-pluto-01/east.conf"
 echo "file $exe" >.gdbinit
-echo "set args $args >OUTPUT/west-flat.conf-out" >>.gdbinit
+echo "set args $args >OUTPUT/east-flat.conf-out" >>.gdbinit
 
 eval $exe $args 
 
