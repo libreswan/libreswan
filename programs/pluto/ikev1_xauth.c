@@ -449,30 +449,18 @@ static stf_status isakmp_add_attr (pb_stream *strattr,
 			break;
 
 		case MODECFG_DOMAIN:
-			if(st->st_connection->modecfg_domain) {
-				DBG_log("We are sending '%s' as domain",
-					st->st_connection->modecfg_domain);
-				if (!out_raw(st->st_connection->modecfg_domain,
-					     strlen(st->st_connection->modecfg_domain),
-					     &attrval, "")) {
-					return STF_INTERNAL_ERROR;
-				}
-			} else {
-				DBG_log("We are not sending a domain");
+			if (!out_raw(st->st_connection->modecfg_domain,
+				     strlen(st->st_connection->modecfg_domain),
+				     &attrval, "")) {
+				return STF_INTERNAL_ERROR;
 			}
 			break;
 
 		case MODECFG_BANNER:
-			if(st->st_connection->modecfg_banner) {
-				DBG_log("We are sending '%s' as banner",
-					st->st_connection->modecfg_banner);
-				if (!out_raw(st->st_connection->modecfg_banner,
-					     strlen(st->st_connection->modecfg_banner),
-					     &attrval, "")) {
-					return STF_INTERNAL_ERROR;
-				}
-			} else {
-				DBG_log("We are not sending a banner");
+			if (!out_raw(st->st_connection->modecfg_banner,
+				     strlen(st->st_connection->modecfg_banner),
+				     &attrval, "")) {
+				return STF_INTERNAL_ERROR;
 			}
 			break;
 
@@ -491,12 +479,6 @@ static stf_status isakmp_add_attr (pb_stream *strattr,
 			 * packet emitting routines
 			 */
 
-			/* If we don't need split tunneling, just omit the payload */
-			if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
-				DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
-				break;
-			}
-			DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
 			unsigned char si[14];	/* 14 is magic */
 
 			zero(&si);	/* OK: no pointer fields */
@@ -605,6 +587,7 @@ static stf_status modecfg_resp(struct state *st,
 			}
 		}
 
+		/* Send the attributes requested by the client. */
 		attr_type = 0;
 		while (resp != LEMPTY) {
 			if (resp & 1) {
@@ -614,6 +597,35 @@ static stf_status modecfg_resp(struct state *st,
 			}
 			attr_type++;
 			resp >>= 1;
+		}
+
+		/* Send these even if the client didn't request them. Due
+		 * to and unwise use of a bitmask the limited range of lset_t
+		 * causes us to loose track of whether the client requested
+		 * them. No biggie, the MODECFG draft allows us to send
+		 * attributes that the client didn't request and if we set
+		 * MODECFG_DOMAIN and MODECFG_BANNER in connection
+		 * configuration we probably want the client to see them
+		 * anyway. */
+		if(st->st_connection->modecfg_domain) {
+			DBG_log("We are sending '%s' as domain",
+				st->st_connection->modecfg_domain);
+			isakmp_add_attr (&strattr, MODECFG_DOMAIN, &ia, st);
+		} else {
+			DBG_log("We are not sending a domain");
+		}
+		if(st->st_connection->modecfg_banner) {
+			DBG_log("We are sending '%s' as banner",
+				st->st_connection->modecfg_banner);
+			isakmp_add_attr (&strattr, MODECFG_BANNER, &ia, st);
+		} else {
+			DBG_log("We are not sending a banner");
+		}
+		if (isanyaddr(&st->st_connection->spd.this.client.addr)) {
+			DBG_log("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
+		} else {
+			DBG_log("We are sending our subnet as CISCO_SPLIT_INC");
+			isakmp_add_attr (&strattr, CISCO_SPLIT_INC, &ia, st);
 		}
 
 		if (!close_message(&strattr, st))
