@@ -170,28 +170,47 @@ bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 	return justship_nonce(n, outs, np, name);
 }
 
-/** The whole message must be a multiple of 4 octets.
- * I'm not sure where this is spelled out, but look at
- * rfc2408 3.6 Transform Payload.
- * Note: it talks about 4 BYTE boundaries!
+/*
+ * In IKEv1, some implementations (including freeswan/openswan/libreswan)
+ * interpreted the RFC that the whole IKE message must padded to a multiple
+ * of 4 octets, but other implementations (i.e. Checkpoint in Aggressive Mode)
+ * drop padded IKE packets. Some of the text on this topic can be found in the
+ * IKEv1 RFC 2408 section 3.6 Transform Payload.
+ *
+ * The ikepad= option can be set to yes or no on a per-connection basis,
+ * and defaults to yes.
+ *
+ * In IKEv2, there is no padding specified in the RFC and some implementations
+ * will reject IKEv2 messages that are padded. As there are no known IKEv2
+ * clients that REQUIRE padding, padding is never done for IKEv2. If IKEv2
+ * clients are discovered in the wild, we will revisit this - please contact
+ * the libreswan developers if you find such an implementation.
+ * Therefor, the ikepad= option has no effect on IKEv2 connections.
  *
  * @param pbs PB Stream
  */
 bool close_message(pb_stream *pbs, struct state *st)
 {
-	size_t padding =  pad_up(pbs_offset(pbs), 4);
+	size_t padding;
 
-	/* Workaround for overzealous Checkpoint firewall */
+	if (st->st_ikev2) {
+		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required for IKEv2"));
+		close_output_pbs(pbs);
+		return TRUE;
+	}
+
+	padding =  pad_up(pbs_offset(pbs), 4);
+
 	if (padding != 0 && st != NULL && st->st_connection != NULL &&
 	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
-		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %zu bytes skipped by policy",
+		DBG(DBG_CONTROLMORE, DBG_log("IKEv1 message padding of %zu bytes skipped by policy",
 			padding));
 	} else if (padding != 0) {
-		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %zu bytes", padding));
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKEv1 message with %zu bytes", padding));
 		if (!out_zero(padding, pbs, "message padding"))
 			return FALSE;
 	} else {
-		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required"));
+		DBG(DBG_CONTROLMORE, DBG_log("no IKEv1 message padding required"));
 	}
 
 	close_output_pbs(pbs);
