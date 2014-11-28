@@ -190,11 +190,7 @@ case "${1}" in
 	echo "See 'man pluto' if you want to protect the NSS database with a password"
 	echo ""
 
-	TEMPFILE=$(/bin/mktemp "${IPSEC_CONFDDIR}/nsspw.XXXXXXX")
-	[ $? -gt 0 ] && TEMPFILE="${IPSEC_CONFDDIR}/nsspw.$$"
-	echo > ${TEMPFILE}
-	certutil -N -f "${TEMPFILE}" -d "${IPSEC_CONFDDIR}"
-	rm -f ${TEMPFILE}
+	certutil -N -d "${IPSEC_CONFDDIR} --empty-password"
 	if [ -x /usr/sbin/restorecon ]; then
 	    restorecon -Rv "${IPSEC_CONFDDIR}"
 	fi

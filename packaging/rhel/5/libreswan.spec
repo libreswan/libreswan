@@ -191,12 +191,8 @@ fi
 /sbin/chkconfig --add ipsec || :
 if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
      ! -f %{_sysconfdir}/ipsec.d/cert9.db ] ; then
-    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
-    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
-    echo > ${TEMPFILE}
-    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    certutil -N -f -d %{_sysconfdir}/ipsec.d --empty-password
     restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
-    rm -f ${TEMPFILE}
 fi
 
 %changelog
