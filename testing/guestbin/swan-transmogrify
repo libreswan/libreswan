@@ -77,12 +77,11 @@ for hostname in macs.keys():
 			fp.close()
 
 			if os.path.isfile("/usr/bin/systemctl"):
-				for service in ( "network", "iptables", "ip6tables"):
-					output += "\n" + commands.getoutput("systemctl restart %s.service"%service)
+					output += "\n" + commands.getoutput("systemctl restart network.service")
 			else:
-				for service in ( "network", "iptables", "ip6tables"):
-					output += "\n" + commands.getoutput("service %s restart"%service)
+					output += "\n" + commands.getoutput("service network restart")
 			# get rid of damn cp/mv/rm aliases for root
+
 			if not "#alias" in open("/root/.bashrc","r").read():
 				output += "\n" + commands.getoutput("sed -i 's/alias/# alias/g' /root/.bashrc")
 

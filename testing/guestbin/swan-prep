@@ -116,10 +116,6 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 	# always reload to avoid "service is masked" errors
 	commands.getoutput("/usr/bin/systemctl daemon-reload")
 
-# easy way to ensure we have the LOGDROP table for those OSes where we don't start a firewall with config
-commands.getoutput("iptables-restore /etc/sysconfig/iptables")
-commands.getoutput("ip6tables-restore /etc/sysconfig/ip6tables")
-
 # ensure cores are just dropped, not sent to aobrt-hook-ccpp or systemd.
 # setting /proc/sys/kernel/core_pattern to "core" or a pattern does not
 # work. And you cannot use shell redirection ">". So we hack it with "tee"
@@ -287,6 +283,12 @@ if not os.path.isfile("/root/.gdbinit"):
 	fp = open("/root/.gdbinit","w")
 	fp.write("set auto-load safe-path /");
 	fp.close()
+
+# Create LOGDROP (used to be done in swan-transmogrify but we want it here for docker)
+for ipt in ("iptables", "ip6tables"):
+	commands.getoutput("%s -N LOGDROP "%ipt)
+	commands.getoutput("%s -A LOGDROP -j LOG"%ipt)
+	commands.getoutput("%s -A LOGDROP -j DROP"%ipt)
 
 # final prep - this kills any running userland
 output = commands.getoutput("ipsec stop")
