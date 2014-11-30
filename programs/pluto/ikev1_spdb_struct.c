@@ -744,7 +744,7 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 			       &trans_pbs))
 			return LEMPTY;
 
-		while (pbs_left(&trans_pbs) != 0) {
+		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
 			if (!in_struct(&a, &isakmp_oakley_attribute_desc,
 				       &trans_pbs,
 				       &attr_pbs))
@@ -985,7 +985,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 		lset_t seen_attrs = LEMPTY,
 		       seen_durations = LEMPTY;
 
-		while (pbs_left(&trans_pbs) != 0) {
+		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
 			struct isakmp_attribute a;
 			pb_stream attr_pbs;
 			u_int32_t val; /* room for larger values */
@@ -1616,7 +1616,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	*attrs = null_ipsec_trans_attrs;
 	attrs->transattrs.encrypt = trans->isat_transid;
 
-	while (pbs_left(trans_pbs) != 0) {
+	while (pbs_left(trans_pbs) >= isakmp_ipsec_attribute_desc.size) {
 		struct isakmp_attribute a;
 		pb_stream attr_pbs;
 		enum_names *vdesc;
