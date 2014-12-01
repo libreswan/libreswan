@@ -19,14 +19,16 @@
 
 /*
  * Security Label Context representations.
+ *
+ * While security label length usually does not exceed 256,
+ * there have been requests (rhbz#1154784) for using larger
+ * labels. The maximum label size is PAGE_SIZE (4096 on a
+ * x86_64, but 64kb on ppc64). However, this label has to fit
+ * inside a netlink message whose maximum size is 32KiB.
+ * For now we picked the somewhat arbitrary size of 4096.
  */
 
-/*
- * Length of text of security label should not exceed 256 in most cases,
- * (discussed with kernel and selinux people). ??? "in most cases"!
- * We add one for terminating '\0'.  ??? superstition or guarantee?
- */
-#define MAX_SECCTX_LEN 257	/* including '\0'*/
+#define MAX_SECCTX_LEN 4096	/* including '\0'*/
 
 /*
  * sec_ctx: representation in IKE packets, excluding text.

@@ -473,7 +473,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 	struct {
 		struct nlmsghdr n;
 		struct nlmsgerr e;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	size_t len;
 	ssize_t r;
@@ -594,7 +594,7 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 	struct {
 		struct nlmsghdr n;
 		struct nlmsgerr e;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	int error;
 
@@ -657,7 +657,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			struct xfrm_userpolicy_info p;
 			struct xfrm_userpolicy_id id;
 		} u;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	int shift;
 	int dir;
@@ -954,7 +954,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_usersa_info p;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	struct rtattr *attr;
 	const struct aead_alg *aead;
@@ -1278,7 +1278,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_usersa_id id;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 
 	zero(&req);
@@ -1540,7 +1540,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_userpolicy_info pol;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*upe))) {
@@ -1596,7 +1596,7 @@ static bool netlink_get(void)
 {
 	struct {
 		struct nlmsghdr n;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	ssize_t r;
 	struct sockaddr_nl addr;
@@ -1677,7 +1677,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 			struct nlmsgerr e;
 			struct xfrm_usersa_info sa;
 		} u;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	static bool get_cpi_bug = FALSE;	/* sticky after failure */
 
@@ -2262,7 +2262,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_usersa_info info;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 
 	zero(&req);
