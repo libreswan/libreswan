@@ -189,9 +189,18 @@ struct ike_alg *ikev2_alg_find(unsigned algo_type,
 				   enum ikev2_trans_type_encr algo_v2id)
 {
 	struct ike_alg *e = ike_alg_base[algo_type];
+	int search_algo_v2id = algo_v2id;
+
+	/*
+	 * these types are mixed up, so go along with it :(
+	 * IKEv2_ENCR_CAMELLIA_CBC_ikev1 == ESP_CAMELLIAv1 
+	 * IKEv2_ENCR_CAMELLIA_CBC == ESP_CAMELLIA
+	 */
+	if (algo_type == IKE_ALG_ENCRYPT && algo_v2id == IKEv2_ENCR_CAMELLIA_CBC_ikev1)
+		search_algo_v2id = IKEv2_ENCR_CAMELLIA_CBC;
 
 	for (; e != NULL; e = e->algo_next) {
-		if (e->algo_v2id == algo_v2id)
+		if (e->algo_v2id == search_algo_v2id)
 			break;
 	}
 	return e;

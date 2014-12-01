@@ -376,6 +376,7 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 		case IKEv2_ENCR_AES_GCM_8:
 		case IKEv2_ENCR_AES_GCM_12:
 		case IKEv2_ENCR_AES_GCM_16:
+		case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */
 		case IKEv2_ENCR_CAMELLIA_CBC:
 		case IKEv2_ENCR_NULL_AUTH_AES_GMAC:
 			return AES_KEY_DEF_LEN;

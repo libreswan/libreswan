@@ -825,6 +825,9 @@ enum ikev2_trans_type_encr {
 	IKEv2_ENCR_INVALID = 65536,
 };
 
+#define IKEv2_ENCR_CAMELLIA_CBC_ikev1 IKEv2_RESERVED_IEEE_P1619_XTS_AES
+
+
 enum ikev2_trans_type_prf {
 	IKEv2_PRF_HMAC_MD5 = 1, /* RFC2104 */
 	IKEv2_PRF_HMAC_SHA1 = 2, /* RFC2104 */

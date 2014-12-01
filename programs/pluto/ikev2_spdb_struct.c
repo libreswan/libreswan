@@ -467,8 +467,13 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 				unsigned int attr_cnt;
 
 				dtfone->protoid = dp->protoid;
-				if (!f->parentSA)
+
+				if (!f->parentSA) {
 					dtfone->encr_transid = tr->transid;
+					/* IANA ikev1 / ipsec-v3 fixup */
+					if (dtfone->encr_transid == IKEv2_ENCR_CAMELLIA_CBC_ikev1)
+						dtfone->encr_transid = IKEv2_ENCR_CAMELLIA_CBC;
+				}
 
 				for (attr_cnt = 0; attr_cnt < tr->attr_cnt;
 				     attr_cnt++) {
@@ -528,10 +533,12 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 							break;
 
 						case ENCAPSULATION_MODE:
-							/* XXX */
 							break;
 
 						default:
+							libreswan_log(
+								"sa_v2_convert(): Ignored unknown IPsec transform attribute type: %d",
+								attr->type.ipsec);
 							break;
 						}
 					}
@@ -1883,10 +1890,10 @@ stf_status ikev2_parse_child_sa_body(
 			case IKEv2_ENCR_CAMELLIA_CCM_A:
 			case IKEv2_ENCR_CAMELLIA_CCM_B:
 			case IKEv2_ENCR_CAMELLIA_CCM_C:
-				/* no IKE struct encrypt_desc yet */
-				/* fall through */
+				/* no IKE struct encrypt_desc yet, fall through */
 			case IKEv2_ENCR_AES_CBC:
 			case IKEv2_ENCR_CAMELLIA_CBC:
+			case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */
 				/* these all have mandatory key length attributes */
 				if (ta.enckeylen == 0) {
 					loglog(RC_LOG_SERIOUS, "Missing mandatory KEY_LENGTH attribute - refusing proposal");
@@ -1894,7 +1901,7 @@ stf_status ikev2_parse_child_sa_body(
 				}
 				break;
 			default:
-				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter - refusing proposal");
+				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter for %d - refusing proposal", ta.encrypt);
 				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
