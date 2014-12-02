@@ -1558,6 +1558,8 @@ def setup_single_test(args, start='', st=None):
     test = dict()
     if args.docker:
         test["type"] = "dockerplutotest"
+        if check_host_netkey_stack():
+            return True
     elif args.kvm:
         test["type"] = "kvmplutotest"
     else:
@@ -1693,12 +1695,30 @@ def resanitize(args):
     #                       print "cp %s/OUTPUT/%s.console.txt %s/ "%(testdir,h,testdir)
     #                       print "cat %s/%s"%(testdir,f)
 
+def check_host_netkey_stack():
+    #check if there is netkey stack on the host
+    v_line = runcmd("ipsec version")
+    if v_line.split()[3] != '(netkey)':
+        logging.debug("no netkey stack found, try to load it %s", v_line)
+        runcmd("ipsec _stackmanager start --netkey")
+        v_line = runcmd("ipsec version")
+        if v_line.split()[3] != '(netkey)':
+            #give up
+            logging.error("ABORT no netkey stack found. can not run docker test, %s", v_line)
+            return True
+    else:
+        logging.debug("found netkey stack : %s", v_line)
+
 
 def run_docker_q(args, tests, st):
     logging.info(
         "%s Docker pluto tests to run. pool size %s, from %s", st[
             "dtorun"], args.npool,
             args.testlist)
+
+    if not check_host_netkey_stack():
+        return True
+
     with concurrent.futures.ProcessPoolExecutor(max_workers=int(args.npool)) as executor:
         for name, test in tests.items():
             if test["type"] != 'dockerplutotest':
@@ -1949,8 +1969,8 @@ def main():
     # if there is TESTLIST run in batch mode.
     (output_dir, testlist, ran_tests) = do_test_list(
         args, start, tried, output_dir)
-    logging.info("ran  %s retry %s %s/%s ",ran_tests, args.testlist, tried, args.retry)
     if testlist:
+        logging.info("ran  %s retry %s %s/%s ",ran_tests, args.testlist, tried, args.retry)
         while (tried <= args.retry):
             if ran_tests > 0:
                 gen_graphs_tables(args)
