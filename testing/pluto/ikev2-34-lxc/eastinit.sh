@@ -5,7 +5,7 @@ killall -9 pluto  2>/dev/null
 rm -fr /tmp/east/pluto.pid
 rm -fr /tmp/west/pluto.pid
 # load netkey stack on host
-ipsec _stackmanager start
+ipsec _stackmanager --config /testing/pluto/ikev2-34-lxc/west.conf start
 ipsec version |grep klips && echo you need netkey 
 # prep host for two pluto's
 mkdir -p /tmp/west/ipsec.d /tmp/east/ipsec.d
