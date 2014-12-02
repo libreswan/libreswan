@@ -1212,6 +1212,14 @@ def runcmd(cmd):
     logging.info("%s", cmd)
     return subprocess.getoutput(cmd)
 
+def runcmd_check_output(cmd):
+    logging.info("%s", cmd)
+    try:
+        o=subprocess.check_output(cmd, shell=True)
+        return (o, None)
+    except subprocess.CalledProcessError as e:
+        logging.error("ERROR %s %s", cmd, e.output)
+        return (o, e)
 
 def docker_stop_container(dname):
     if not dname:
@@ -1258,9 +1266,16 @@ def docker_swan_build(dname):
     # AA comment out make progreams
     # cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make
     # programs install'"%dname
-    cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make install'" % dname
-    runcmd(cmd)
-
+    cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make programs install'" % dname
+    (line, e) = runcmd_check_output(cmd)
+    if e:
+        retrun(e.output)
+    cmd = "docker exec -ti %s ipsec pluto --version" % dname
+    (line, e) = runcmd_check_output(cmd)
+    logging.debug("%s", str(line))
+    if re.search("not found", str(line)):
+        logging.error("ERROR %s" % line)
+        return ("no version found")
 
 def docker_containers_start_stop(args, test, st, stop):
     dnamei = test["initiator"] + "-" + test["name"]
@@ -1297,8 +1312,10 @@ def docker_containers_start_stop(args, test, st, stop):
 
     docker_add_route(test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
 
-    docker_swan_build(dnamei)
-    docker_swan_build(dnamer)
+    if docker_swan_build(dnamei):
+        return True
+    if docker_swan_build(dnamer):
+        return True
 
 
 def docker_net_bridge(dname, brname, iface, prefix):
@@ -1493,7 +1510,9 @@ def do_dockerplutotest(args, start, test, st):
     if not test_hosts:
         return
 
-    docker_containers_start_stop(args, test, st, False)
+    if docker_containers_start_stop(args, test, st, False):
+        return True
+
     docker_run_test(args, test)
     docker_clean(args, test, st)
     if "is_testlist" in st:
@@ -1617,7 +1636,8 @@ def do_single_test(args, start='', test=None, st=None):
     e = None
 
     if test["type"] == 'dockerplutotest':
-        do_dockerplutotest(args=args, start=start, test=test, st=st)
+        if do_dockerplutotest(args=args, start=start, test=test, st=st):
+            return True
     elif test["type"] == 'kvmplutotest':
         do_kvmplutotest(args=args, start=start, test=test, st=st)
     else:
@@ -1697,6 +1717,7 @@ def resanitize(args):
 
 def check_host_netkey_stack():
     #check if there is netkey stack on the host
+
     v_line = runcmd("ipsec version")
     if v_line.split()[3] != '(netkey)':
         logging.debug("no netkey stack found, try to load it %s", v_line)
@@ -1706,8 +1727,7 @@ def check_host_netkey_stack():
             #give up
             logging.error("ABORT no netkey stack found. can not run docker test, %s", v_line)
             return True
-    else:
-        logging.debug("found netkey stack : %s", v_line)
+    logging.debug(v_line)
 
 
 def run_docker_q(args, tests, st):
