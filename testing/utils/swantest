@@ -533,8 +533,10 @@ class scantests:
                     continue
                 if not "testname" in x:
                     continue
+                if not  x["result"]:
+                    continue
                 x["result"] = x["result"].lower()
-                self.tests[tname]["result"] = x["result"].lower()
+                self.tests[tname]["result"] = x["result"]
                 self.tests[tname]["runtime"] = round(x["runtime"], 2)
                 self.tsum["runtime"] += x["runtime"]
                 self.tsum[x["result"]] += 1
@@ -548,11 +550,11 @@ class scantests:
         if self.stdir:
             return
 
-        self.write_node_sum()
         self.graphsums.append(self.tsum)
         row = [self.tsum["dir"], self.tsum["passed"], self.tsum[
             "failed"], self.tsum["Total"], self.tsum["runtime"]]
         self.htmlsums["rows"].append(row)
+        self.write_node_sum()
 
     def create_test_run_table(self):
         table = {
@@ -611,6 +613,13 @@ class scantests:
             jsonfile.write(json.dumps(table, ensure_ascii=True, indent=2))
 
         self.write_txt(table)
+
+        i3html = "../../i3.html"
+        if not os.path.exists(self.trpath + '/' + "index.html") :
+            try :
+                os.symlink(i3html, self.trpath + '/' + "index.html")
+            except :
+                pass
 
     def write_txt(self, table):
         csvfile = self.trpath + '/' + 'table.txt'
