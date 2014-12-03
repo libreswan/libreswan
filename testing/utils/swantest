@@ -1043,11 +1043,14 @@ def re_write_result(sanity):
     lines = []
     f = open(output_file, 'r')
     for line in f:
+        line = line.strip()
+        if not line:
+            continue
+
         x = None
         try:
             x = json.loads(line)
         except:
-            lines.append(line)
             contine
 
         if x and "result" in x and "testname" in x:
@@ -1063,6 +1066,8 @@ def re_write_result(sanity):
             x["resanitized"] = time.strftime(
                 "%Y-%m-%d %H:%M", time.localtime())
             lines.append(json.dumps(x, ensure_ascii=True))
+        else:
+            lines.append(line)
 
     f.close
 
