@@ -385,7 +385,7 @@ class scantests:
 
     def scan_trun(self):
         if self.stdir:
-       	    trpath = self.stdir
+            trpath = self.stdir
             self.nopath = setup_result_dir(self.args, True)
         else:
             trpath = self.npath + '/' + self.tdir
@@ -411,12 +411,15 @@ class scantests:
                         "skip this dir %s . can not read %s/TESTLIST , %s/TESTLIST , ./TESTLIST abort", trpath, trpath, self.npath)
                     return True
 
+        if self.nopath:
+            rsync_file_to_dir(
+                (self.trpath + '/' + self.args.testlist), self.nopath)
+
     def read_testlist(self, resultsdir=''):
-        t = "TESTLIST"
         if resultsdir:
-            r = resultsdir + '/' + t
+            r = resultsdir + '/' + self.args.testlist
         else:
-            r = t
+            r = self.args.testlist
 
         if not os.path.exists(r):
             return None
@@ -426,6 +429,7 @@ class scantests:
         f = open(r, 'r')
         i = 0
         self.tests = collections.OrderedDict()
+        self.tests.clear()
 
         for l in f:
             line = l.strip()
@@ -469,6 +473,8 @@ class scantests:
                       (len(tests), self.trpath))
 
         self.tsum = collections.OrderedDict()
+        self.tsum.clear()
+
         self.tsum["Total"] = 0
         self.tsum['passed'] = 0
         self.tsum['failed'] = 0
@@ -533,7 +539,7 @@ class scantests:
                     continue
                 if not "testname" in x:
                     continue
-                if not  x["result"]:
+                if not x["result"]:
                     continue
                 x["result"] = x["result"].lower()
                 self.tests[tname]["result"] = x["result"]
@@ -615,10 +621,10 @@ class scantests:
         self.write_txt(table)
 
         i3html = "../../i3.html"
-        if not os.path.exists(self.trpath + '/' + "index.html") :
-            try :
+        if not os.path.exists(self.trpath + '/' + "index.html"):
+            try:
                 os.symlink(i3html, self.trpath + '/' + "index.html")
-            except :
+            except:
                 pass
 
     def write_txt(self, table):
@@ -1053,7 +1059,7 @@ def re_write_result(sanity):
             changed = True
             logging.info(
                 "testcase %s result new '%s' old '%s'", x["testname"], x["result"],  result)
-            x[result] = result
+            x["result"] = result
             x["resanitized"] = time.strftime(
                 "%Y-%m-%d %H:%M", time.localtime())
             lines.append(json.dumps(x, ensure_ascii=True))
@@ -1824,6 +1830,7 @@ def do_test_list(args, start, tried, output_dir):
     rsync_file_to_dir(args.testlist, odir)
 
     tests = collections.OrderedDict()  # slow but keeps the order
+    tests.clear()
 
     logging.info("** read tests from file %s **", args.testlist)
     f = open(args.testlist, 'r')
@@ -2006,7 +2013,7 @@ def main():
         return
     elif args.resanitize:
         resanitize(args)
-        #gen_graphs_tables(args)
+        # gen_graphs_tables(args)
         return
 
     if not args.leavezombies:
