@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 10/22/2014
+.\"      Date: 12/03/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "10/22/2014" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "12/03/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -455,9 +455,7 @@ option is specified, the mode is always strict, meaning no other received propos
 \fBike=aes\fR,
 \fBike=aes128\-md5;modp2048\fR,
 \fBike=aes128\-sha1;dh22\fR,
-\fBike=3des\-md5;modp1024,aes\-sha1;modp1536\fR
-or
-\fBike=modp1536\fR\&. The options must be suitable as a value of
+\fBike=3des\-md5;modp1024,aes\-sha1;modp1536\fR\&. The options must be suitable as a value of
 \fBipsec_spi\fR(8)\*(Aqs
 \fB\-\-ike\fR
 option\&. The default is to use IKE, and to allow all combinations of:
@@ -568,11 +566,11 @@ IKE fragmentation capabilities are negotiated via
 .PP
 \fBikepad\fR
 .RS 4
-Whether or not to pad IKE messages to a multiple of 4 bytes\&. Valid values are are
+Whether or not to pad IKEv1 messages to a multiple of 4 bytes\&. Valid values are are
 \fByes\fR, (the default) and
 \fBno\fR\&.
 .sp
-Normal RFC compliant behaviour is to use IKE padding\&. However some devices, for instance Checkpoint, can be configured to firewall Aggressive Mode IKE packets that have been padded\&. This option disables the required IKE padding for interop which such devices\&. This option should almost never be enabled\&.
+IKE padding is allowed in IKEv1 but it is known to cause interoperability issues\&. The ikepad= option can be used to disable IKEv1 padding\&. This is required for some devices (such as Checkpoint in Aggressive Mode) that reject padded IKEv1 packets\&. In IKEv2, no padding is allowed, and this option has no effect\&. If you find a device that seems to require IKE padding in IKEv2, please contact the libreswan developers\&. This option should almost never be enabled\&.
 .RE
 .PP
 \fBikev2\fR
