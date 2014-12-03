@@ -2931,6 +2931,10 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		}
 	}
 
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_CHILD_START);
+#endif
+
 	return TRUE;
 }
 
@@ -2938,9 +2942,13 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
  * we may not succeed, but we bull ahead anyway because
  * we cannot do anything better by recognizing failure
  */
-void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
-		     bool inbound_only USED_BY_KLIPS)
+void delete_ipsec_sa(struct state *st, bool inbound_only)
 {
+#ifdef USE_LINUX_AUDIT
+	/* XXX in IKEv2 we get a spurious call with a parent st :( */
+	if (IS_CHILD_SA(st))
+		linux_audit_conn(st, LAK_CHILD_DESTROY);
+#endif
 	switch (kern_interface) {
 	case USE_MASTKLIPS:
 	case USE_KLIPS:

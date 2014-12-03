@@ -2204,6 +2204,10 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	}
 
 	ISAKMP_SA_established(st->st_connection, st->st_serialno);
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
+
 
 	return STF_OK;
 }
@@ -2273,6 +2277,9 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 	}
 
 	ISAKMP_SA_established(st->st_connection, st->st_serialno);
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
 
 	passert((st->st_policy & POLICY_PFS) == 0 ||
 		st->st_pfs_group != NULL);

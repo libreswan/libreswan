@@ -1233,32 +1233,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_LINUX_AUDIT
-	libreswan_log("Linux audit support [enabled]");
-	/* test and log if audit is enabled on the system */
-	int audit_fd, rc;
-	audit_fd = audit_open();
-	if (audit_fd < 0) {
-		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
-			errno == EAFNOSUPPORT) {
-			loglog(RC_LOG_SERIOUS,
-				"Warning: kernel has no audit support");
-		} else {
-			loglog(RC_LOG_SERIOUS,
-				"FATAL (SOON): audit_open() failed : %s",
-				strerror(errno));
-			/* temp disabled exit_pluto(PLUTO_EXIT_FIPS_FAIL); */
-		}
-	}
-	rc = audit_log_acct_message(audit_fd, AUDIT_USER_START, NULL,
-				"starting pluto daemon", NULL, -1, NULL,
-				NULL, NULL, 1);
-	close(audit_fd);
-	if (rc < 0) {
-		loglog(RC_LOG_SERIOUS,
-			"FATAL: audit_log_acct_message failed: %s",
-			strerror(errno));
-		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
-	}
+	linux_audit_init();
 #else
 	libreswan_log("Linux audit support [disabled]");
 #endif
@@ -1396,6 +1371,8 @@ int main(int argc, char **argv)
 	init_avc();
 #endif
 
+	linux_audit(AUDIT_SERVICE_START, "started libreswan IKE daemon", NULL,
+			NULL, AUDIT_RESULT_OK);
 	daily_log_event();
 	call_server();
 	return -1;	/* Shouldn't ever reach this */
@@ -1445,8 +1422,10 @@ void exit_pluto(int status)
 	/* report memory leaks now, after all free_* calls */
 	if(leak_detective)
 		report_leaks();
-
 	close_log();	/* close the logfiles */
+
+	linux_audit(AUDIT_SERVICE_STOP, "stopped libreswan IKE daemon", NULL,
+			NULL, status == PLUTO_EXIT_OK ? AUDIT_RESULT_OK : AUDIT_RESULT_FAIL);
 	exit(status);	/* exit, with our error code */
 }
 

@@ -2156,6 +2156,10 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	change_state(st, STATE_PARENT_R2);
 	c->newest_isakmp_sa = st->st_serialno;
 
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
+
 	delete_event(st);
 	{
 		enum event_type x = EVENT_SA_REPLACE;
@@ -2505,6 +2509,10 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	c->newest_isakmp_sa = pst->st_serialno;
 
 	/* authentication good */
+
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
 
 	/* TODO: see if there are any notifications */
 

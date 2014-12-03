@@ -927,7 +927,10 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	 * payloads etc. will not lose our IV
 	 */
 	set_ph1_iv_from_new(st);
-
+	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
 	return STF_OK;
 }
 
@@ -1043,9 +1046,10 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 	 * payloads etc. will not lose our IV
 	 */
 	set_ph1_iv_from_new(st);
-
 	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
-
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
 	return STF_OK;
 }
 

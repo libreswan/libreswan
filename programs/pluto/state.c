@@ -357,6 +357,12 @@ void delete_state(struct state *st)
 	libreswan_log("deleting state #%lu (%s)", st->st_serialno,
 				enum_show(&state_names, st->st_state));
 
+#ifdef USE_LINUX_AUDIT
+	/* only log parent state deletes, we log children in ipsec_delete_sa() */
+	if (IS_IKE_SA_ESTABLISHED(st) || st->st_state == STATE_IKESA_DEL)
+		linux_audit_conn(st, LAK_PARENT_DESTROY);
+#endif
+
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 		/* Note that a state/SA can have more then one of ESP/AH/IPCOMP */
 		if (st->st_esp.present) {
