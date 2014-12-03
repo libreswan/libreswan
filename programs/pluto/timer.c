@@ -96,10 +96,21 @@ void event_schedule(enum event_type type, time_t delay, struct state *st)
 			passert(st->st_dpd_event == NULL);
 			st->st_dpd_event = ev;
 			break;
+
 		case EVENT_v2_LIVENESS:
 			passert(st->st_liveness_event == NULL);
 			st->st_liveness_event = ev;
 			break;
+
+		case EVENT_RETAIN:
+			/* no new event */
+			break;
+
+		case EVENT_v2_RELEASE_WHACK:
+			passert(st->st_rel_whack_event == NULL);
+			st->st_rel_whack_event = ev;
+			break;
+
 		default:
 			passert(st->st_event == NULL);
 			st->st_event = ev;
@@ -595,6 +606,10 @@ void handle_next_timer_event(void)
 	case EVENT_CRYPTO_FAILED:
 		passert(st != NULL && st->st_event == ev);
 		st->st_event = NULL;
+		break;
+
+	case EVENT_v2_RELEASE_WHACK:
+		release_whack(st);
 		break;
 
 	case EVENT_v2_LIVENESS:

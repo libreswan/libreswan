@@ -227,7 +227,7 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	  .next_state = STATE_PARENT_I1,
 	  .flags      = SMF2_INITIATOR,
 	  .processor  = NULL,
-	  .timeout_event = EVENT_NULL, };
+	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
 /* microcode for input packet processing */
 static const struct state_v2_microcode v2_state_microcode_table[] = {
@@ -244,7 +244,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_RETAIN, },
 
 	/* STATE_PARENT_I1: R1 --> I2
 	 *                     <--  HDR, SAr1, KEr, Nr, [CERTREQ]
@@ -260,7 +260,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2parent_inR1outI2,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_v2_RETRANSMIT, },
 
 	/* STATE_PARENT_I2: R2 -->
 	 *                     <--  HDR, SK {IDr, [CERT,] AUTH,
@@ -327,7 +327,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_RETAIN, },
 
 	/* Informational Exchange */
 	{ .story      = "R1: process INFORMATIONAL",
@@ -338,7 +338,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_RETAIN, },
 
 	/* Informational Exchange */
 	{ .story      = "I3: INFORMATIONAL",
@@ -349,7 +349,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_RETAIN, },
 
 	/*
 	 * There are three different CREATE_CHILD_SA's invocations,
@@ -394,7 +394,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_RETAIN, },
 
 	/* Informational Exchange */
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
@@ -405,7 +405,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_RETAIN, },
 
 	/* last entry */
 	{ .story      = "roof",
@@ -1138,7 +1138,29 @@ static void success_v2_state_transition(struct msg_digest *md)
 		struct connection *c = st->st_connection;
 
 		switch (kind) {
+		case EVENT_v2_RETRANSMIT:
+			delete_event(st);
+			if (DBGP(IMPAIR_RETRANSMITS)) {
+				libreswan_log( "supressing retransmit because IMPAIR_RETRANSMITS is set.");
+				if (st->st_rel_whack_event != NULL) {
+					pfreeany(st->st_rel_whack_event);
+					st->st_rel_whack_event = NULL;
+				}
+				event_schedule(EVENT_v2_RELEASE_WHACK,
+						EVENT_RETRANSMIT_DELAY_0, st);
+				kind = EVENT_SA_REPLACE;
+				delay = ikev2_replace_delay(st, &kind,
+						(svm->flags & SMF2_INITIATOR) ?
+						O_INITIATOR : O_RESPONDER);
+				event_schedule(kind, delay, st);
+
+			}  else {
+				event_schedule(EVENT_v2_RETRANSMIT,
+						EVENT_RETRANSMIT_DELAY_0, st);
+			}
+			break;
 		case EVENT_SA_REPLACE: /* SA replacement event */
+
 			delay = ikev2_replace_delay(st, &kind,
 					(svm->flags & SMF2_INITIATOR) ?
 					O_INITIATOR : O_RESPONDER);
@@ -1150,15 +1172,20 @@ static void success_v2_state_transition(struct msg_digest *md)
 			delete_event(st);
 			event_schedule(kind,
 				MAXIMUM_RETRANSMISSIONS_INITIAL *
-					EVENT_RETRANSMIT_DELAY_0,
-				st);
+					EVENT_RETRANSMIT_DELAY_0, st);
 			break;
 
 		case EVENT_NULL:
-			/* XXX: Is there really no case where we want to set no timer? */
-			/* dos_cookie is one 'valid' event, but it is used more? */
+			/*
+			 * Is there really no case where we want to set no  timer?
+			 * more likely an accident?
+			 */
 			DBG_log("V2 microcode entry (%s) has unspecified timeout_event",
-				svm->story);
+					svm->story);
+			break;
+
+		case EVENT_RETAIN:
+			/* the previous event is retained */
 			break;
 
 		default:

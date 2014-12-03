@@ -429,6 +429,11 @@ void delete_state(struct state *st)
 	if (st->st_ikev2)
 		delete_liveness_event(st);
 
+	if (st->st_rel_whack_event != NULL) {
+		pfreeany(st->st_rel_whack_event);
+		st->st_rel_whack_event = NULL;
+	}
+
 	/* if there is a suspended state transition, disconnect us */
 	if (st->st_suspended_md != NULL) {
 		passert(st->st_suspended_md->st == st);

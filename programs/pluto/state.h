@@ -402,6 +402,7 @@ struct state {
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
 	bool st_pend_liveness;			/* Waiting on an informational response */
 	struct event *st_liveness_event;
+	struct event *st_rel_whack_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */

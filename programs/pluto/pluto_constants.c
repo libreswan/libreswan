@@ -95,10 +95,12 @@ static const char *const timer_event_name[] = {
 	"EVENT_v2_RETRANSMIT",
 	"EVENT_v2_RESPONDER_TIMEOUT",
 	"EVENT_v2_LIVENESS",
+	"EVENT_v2_RELEASE_WHACK",
+	"EVENT_RETAIN",
 };
 
 enum_names timer_event_names =
-	{ EVENT_NULL, EVENT_v2_LIVENESS, timer_event_name, NULL };
+	{ EVENT_NULL, EVENT_RETAIN, timer_event_name, NULL };
 
 /* State of exchanges */
 static const char *const state_name[] = {

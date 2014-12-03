@@ -533,9 +533,6 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	/* Transmit */
 	send_ike_msg(st, __FUNCTION__);
 
-	delete_event(st);
-	event_schedule(EVENT_v2_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
-
 	reset_cur_state();
 	return STF_OK;
 }
@@ -1910,12 +1907,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	clonetochunk(pst->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet for ikev2_parent_outI1");
-
-	/*
-	 * Delete previous retransmission event.
-	 */
-	delete_event(st);
-	event_schedule(EVENT_v2_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
 	return STF_OK;
 }
