@@ -1164,6 +1164,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	char raddr[ADDRTOT_BUF];
 	char laddr[ADDRTOT_BUF];
 	char remoteid[IDTOA_BUF];
+	char remoteid_hex[2*IDTOA_BUF];
 	char audit_str[AUDIT_LOG_SIZE];
 	char cipher_str[AUDIT_LOG_SIZE];
 	char spi_str[AUDIT_LOG_SIZE];
@@ -1241,10 +1242,11 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		bad_case(op);
 	}
 
+
 	addrtot(&c->spd.this.host_addr, 0, laddr, sizeof(laddr));
 	addrtot(&c->spd.that.host_addr, 0, raddr, sizeof(raddr));
 	(void) idtoa(&c->spd.that.id, remoteid, sizeof(remoteid));
-
+	(void) datatot((const unsigned char *)remoteid, strlen(remoteid), 16, remoteid_hex, sizeof(remoteid_hex));
 
 	snprintf(audit_str, sizeof(audit_str), "op=%s type=%s mode=%s%s conn=%s %s state=%ld %s %s laddr=%s",
 		(op == LAK_PARENT_START || op == LAK_CHILD_START) ? "start" : "destroy",
@@ -1259,6 +1261,6 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		cipher_str,
 		spi_str,
 		laddr);
-	linux_audit(AUDIT_CRYPTO_SESSION, audit_str, remoteid, raddr, AUDIT_RESULT_OK);
+	linux_audit(AUDIT_CRYPTO_SESSION, audit_str, remoteid_hex, raddr, AUDIT_RESULT_OK);
 }
 #endif
