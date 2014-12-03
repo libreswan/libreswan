@@ -920,7 +920,7 @@ static void connection_state(struct state *st, void *data)
 	if (IS_IKE_SA(st)) {
 		if (lc->tunnel < tun_phase1)
 			lc->tunnel = tun_phase1;
-		if (IS_IKE_SA_ESTABLISHED(st->st_state)) {
+		if (IS_IKE_SA_ESTABLISHED(st)) {
 			if (lc->tunnel < tun_phase1up)
 				lc->tunnel = tun_phase1up;
 			lc->phase1 = p1_up;

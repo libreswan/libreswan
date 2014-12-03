@@ -472,7 +472,7 @@ void delete_state(struct state *st)
 	 * ??? we ought to tell peer to delete IPSEC SAs
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
-	    IS_CHILD_SA_ESTABLISHED(st))
+	    (IS_CHILD_SA_ESTABLISHED(st) || st->st_state == STATE_CHILDSA_DEL))
 		delete_ipsec_sa(st, FALSE);
 	else if (IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(st->st_state))
 		delete_ipsec_sa(st, TRUE);

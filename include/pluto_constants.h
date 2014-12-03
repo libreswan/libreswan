@@ -460,10 +460,6 @@ enum phase1_role {
 
 /* Only relevant to IKEv2 */
 
-#define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I2 || \
-				     (s) == STATE_PARENT_R1 || \
-				     (s) == STATE_IKESA_DEL)
-
 #define IS_V2_INITIATOR(s) ((s) == STATE_PARENT_I1 || \
 		            (s) == STATE_PARENT_I2 || \
 			    (s) == STATE_PARENT_I3)
@@ -472,7 +468,7 @@ enum phase1_role {
 
 #define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 
-#define IS_IKE_SA_ESTABLISHED(s) (IS_ISAKMP_SA_ESTABLISHED(s) || IS_PARENT_SA_ESTABLISHED(s))
+#define IS_IKE_SA_ESTABLISHED(st) (IS_ISAKMP_SA_ESTABLISHED(st->st_state) || IS_PARENT_SA_ESTABLISHED(st))
 
 /*
  * ??? Issue here is that our child SA appears as a
@@ -480,9 +476,12 @@ enum phase1_role {
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
 #define IS_CHILD_SA_ESTABLISHED(st) \
-    (((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) && \
-      IS_CHILD_SA(st)) || \
-     st->st_state == STATE_CHILDSA_DEL)
+    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) && \
+      IS_CHILD_SA(st))
+
+#define IS_PARENT_SA_ESTABLISHED(st) \
+    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) \
+	&& !IS_CHILD_SA(st))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 

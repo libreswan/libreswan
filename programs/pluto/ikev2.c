@@ -1069,7 +1069,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 						 sizeof(sadetails));
 			/* log our success */
 			w = RC_SUCCESS;
-		} else if (IS_PARENT_SA_ESTABLISHED(st->st_state)) {
+		} else if (!IS_PARENT_SA_ESTABLISHED(st->st_state)) {
 			fmt_isakmp_sa_established(st, sadetails,
 						  sizeof(sadetails));
 		}
