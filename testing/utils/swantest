@@ -384,7 +384,12 @@ class scantests:
                 json.dumps(self.htmlsums, ensure_ascii=True, indent=2))
 
     def scan_trun(self):
-        trpath = self.stdir or self.npath + '/' + self.tdir
+        if self.stdir:
+       	    trpath = self.stdir
+            self.nopath = setup_result_dir(self.args, True)
+        else:
+            trpath = self.npath + '/' + self.tdir
+            self.nopath = ''
 
         if not os.path.isdir(trpath):
             e = "test run directory %s is not a directory" % trpath
@@ -509,6 +514,8 @@ class scantests:
                 re_write_result(sanity=s)
 
             os.chdir("..")
+            if self.nopath:
+                rsync_file_to_dir((os.getcwd() + '/' + tname), self.nopath)
 
             if not test_hosts:
                 continue
@@ -1990,6 +1997,7 @@ def main():
         return
     elif args.resanitize:
         resanitize(args)
+        #gen_graphs_tables(args)
         return
 
     if not args.leavezombies:
