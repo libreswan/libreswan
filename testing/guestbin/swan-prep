@@ -116,6 +116,13 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 	# always reload to avoid "service is masked" errors
 	commands.getoutput("/usr/bin/systemctl daemon-reload")
 
+# we have to cleanup the audit log or we could get entries from previous test
+if os.path.isfile("/var/log/audit/audit.log"):
+	fp = open("/var/log/audit/audit.log","w")
+	fp.close()
+	if os.path.isfile("/lib/systemd/system/auditd.service"):
+		commands.getoutput("/usr/bin/systemctl auditd restart")
+
 # ensure cores are just dropped, not sent to aobrt-hook-ccpp or systemd.
 # setting /proc/sys/kernel/core_pattern to "core" or a pattern does not
 # work. And you cannot use shell redirection ">". So we hack it with "tee"

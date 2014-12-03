@@ -72,10 +72,6 @@ for hostname in macs.keys():
 			output += "\n" + commands.getoutput("restorecon -R /etc/ /root/.ssh")
 			output += "\n" + commands.getoutput("chcon -R --reference /var/log /testing/pluto")
 
-			# we have to cleanup the audit log or we could get entries from before this boot
-			fp = open("/var/log/audit/audit.log","w")
-			fp.close()
-
 			if os.path.isfile("/usr/bin/systemctl"):
 					output += "\n" + commands.getoutput("systemctl restart network.service")
 			else:
