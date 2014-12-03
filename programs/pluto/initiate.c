@@ -1269,6 +1269,12 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
  */
 bool uniqueIDs = FALSE; /* --uniqueids? */
 
+/* 
+ * Called by main_inI3_outR3_tail() which is called for initiator and responder
+ * alike! So this function should not be in initiate.c. It is also not called
+ * in IKEv2 code. All it does is set latest serial in connection and check xauth,
+ * so it is ikev1 specific. It is also not called in IKEv1 Aggressive Mode!
+ */
 void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {
 	c->newest_isakmp_sa = serial;
