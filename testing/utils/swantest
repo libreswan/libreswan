@@ -1212,14 +1212,16 @@ def runcmd(cmd):
     logging.info("%s", cmd)
     return subprocess.getoutput(cmd)
 
+
 def runcmd_check_output(cmd):
     logging.info("%s", cmd)
     try:
-        o=subprocess.check_output(cmd, shell=True)
+        o = subprocess.check_output(cmd, shell=True)
         return (o, None)
     except subprocess.CalledProcessError as e:
         logging.error("ERROR %s %s", cmd, e.output)
-        return (o, e)
+        return (None, e)
+
 
 def docker_stop_container(dname):
     if not dname:
@@ -1269,13 +1271,14 @@ def docker_swan_build(dname):
     cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make programs install'" % dname
     (line, e) = runcmd_check_output(cmd)
     if e:
-        retrun(e.output)
+        return(e.output)
     cmd = "docker exec -ti %s ipsec pluto --version" % dname
     (line, e) = runcmd_check_output(cmd)
     logging.debug("%s", str(line))
     if re.search("not found", str(line)):
         logging.error("ERROR %s" % line)
         return ("no version found")
+
 
 def docker_containers_start_stop(args, test, st, stop):
     dnamei = test["initiator"] + "-" + test["name"]
@@ -1610,7 +1613,12 @@ def do_single_test(args, start='', test=None, st=None):
         start = time.time()
 
     if "is_testlist" in st:
-        logging.debug("single test from a testlist worker?")
+        logging.debug("single test from a testlist worker pool")
+        if os.path.exists('stop-tests-now'):
+            logging.error(
+                "****** skip tests found stop-tests-now *****", os.getcwd())
+            return
+
         if os.path.exists(test["name"]):
             try:
                 logging.debug("chdir %s in dir %s", test["name"], os.getcwd())
@@ -1715,8 +1723,9 @@ def resanitize(args):
     #                       print "cp %s/OUTPUT/%s.console.txt %s/ "%(testdir,h,testdir)
     #                       print "cat %s/%s"%(testdir,f)
 
+
 def check_host_netkey_stack():
-    #check if there is netkey stack on the host
+    # check if there is netkey stack on the host
 
     v_line = runcmd("ipsec version")
     if v_line.split()[3] != '(netkey)':
@@ -1724,8 +1733,9 @@ def check_host_netkey_stack():
         runcmd("ipsec _stackmanager start --netkey")
         v_line = runcmd("ipsec version")
         if v_line.split()[3] != '(netkey)':
-            #give up
-            logging.error("ABORT no netkey stack found. can not run docker test, %s", v_line)
+            # give up
+            logging.error(
+                "ABORT no netkey stack found. can not run docker test, %s", v_line)
             return True
     logging.debug(v_line)
 
@@ -1990,14 +2000,17 @@ def main():
     (output_dir, testlist, ran_tests) = do_test_list(
         args, start, tried, output_dir)
     if testlist:
-        logging.info("ran  %s retry %s %s/%s ",ran_tests, args.testlist, tried, args.retry)
+        logging.info("ran  %s retry %s %s/%s ",
+                     ran_tests, args.testlist, tried, args.retry)
         while (tried <= args.retry):
             if ran_tests > 0:
                 gen_graphs_tables(args)
                 logging.info(
                     "retry %s %s/%s ", args.testlist, tried, args.retry)
-            (output_dir, testlist, ran_tests) = do_test_list(args, start, tried, output_dir)
-            logging.info("ran  %s retry %s %s/%s ",ran_tests, args.testlist, tried, args.retry)
+            (output_dir, testlist, ran_tests) = do_test_list(
+                args, start, tried, output_dir)
+            logging.info("ran  %s retry %s %s/%s ",
+                         ran_tests, args.testlist, tried, args.retry)
             tried = 1 + tried
 
     else:
