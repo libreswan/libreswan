@@ -143,6 +143,10 @@ install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
+install -d %{buildroot}%{_sysconfdir}/sysctl.d
+install -m 0644 packaging/rhel/libreswan-sysctl.conf \
+  %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
+
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
@@ -163,6 +167,8 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
+%dir %{_sysconfdir}/sysctl.d
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_unitdir}/ipsec.service
