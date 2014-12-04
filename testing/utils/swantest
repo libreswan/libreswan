@@ -1119,6 +1119,7 @@ DEFAULTCONFIG = {
         'regualrhosts': ['nic'],
         'resultsdir': '/home/build/results',
         'retry': 5,
+        'rpm' : '',
         'sanitizer': "../../utils/sanitize.sh",
         'shutdownwait': 63,
         'stoponerror': None,
@@ -1175,6 +1176,9 @@ def cmdline():
 
     parser.add_argument("--retry", default=DEFAULTCONFIG['retry'],
                         type=int, help="retry %d when there is console error." % DEFAULTCONFIG['retry'])
+    parser.add_argument("--rpm", default=DEFAULTCONFIG['rpm'],
+                        help="binary rpm to install libreswan %s. Default run make install" % DEFAULTCONFIG['rpm'])
+
 
     parser.add_argument("--sanitizer", default=DEFAULTCONFIG['sanitizer'],
                         help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
@@ -1291,11 +1295,15 @@ def docker_add_route(test, dnamei, dnamer, dnamen):
     runcmd("docker exec -ti %s ip route add default via 192.1.2.254" % dnamer)
 
 
-def docker_swan_build(dname):
+def docker_swan_build(args, dname):
     # AA comment out make progreams
     # cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make
     # programs install'"%dname
-    cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make programs install'" % dname
+    if (args.rpm):
+        cmd = "docker exec -ti %s /bin/bash -c 'rpm -vhi %s'" % (dname, args.rpm)
+    else:
+        cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make programs install'" % dname
+
     (line, e) = runcmd_check_output(cmd)
     if e:
         return(e.output)
@@ -1342,9 +1350,9 @@ def docker_containers_start_stop(args, test, st, stop):
 
     docker_add_route(test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
 
-    if docker_swan_build(dnamei):
+    if docker_swan_build(args, dnamei):
         return True
-    if docker_swan_build(dnamer):
+    if docker_swan_build(args, dnamer):
         return True
 
 
