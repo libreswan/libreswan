@@ -1370,9 +1370,10 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
 #endif
-
+#ifdef USE_LINUX_AUDIT
 	linux_audit(AUDIT_SERVICE_START, "started libreswan IKE daemon", NULL,
 			NULL, AUDIT_RESULT_OK);
+#endif
 	daily_log_event();
 	call_server();
 	return -1;	/* Shouldn't ever reach this */
@@ -1424,8 +1425,10 @@ void exit_pluto(int status)
 		report_leaks();
 	close_log();	/* close the logfiles */
 
+#ifdef USE_LINUX_AUDIT
 	linux_audit(AUDIT_SERVICE_STOP, "stopped libreswan IKE daemon", NULL,
 			NULL, status == PLUTO_EXIT_OK ? AUDIT_RESULT_OK : AUDIT_RESULT_FAIL);
+#endif
 	exit(status);	/* exit, with our error code */
 }
 
