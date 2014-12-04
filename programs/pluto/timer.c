@@ -660,6 +660,7 @@ void handle_next_timer_event(void)
 
 	case EVENT_v2_RELEASE_WHACK:
 		DBG(DBG_CONTROL, DBG_log("%s releasing whack for #%lu %s (sock=%d)",
+					enum_show(&timer_event_names, type),
 					st->st_serialno,
 					enum_name(&state_names, st->st_state),
 					st->st_whack_sock));
