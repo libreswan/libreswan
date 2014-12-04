@@ -609,7 +609,8 @@ void handle_next_timer_event(void)
 		break;
 
 	case EVENT_v2_RELEASE_WHACK:
-		release_whack(st);
+		DBG_log("event EVENT_v2_RELEASE_WHACK st_rel_whack_event=NULL %lu %s",  st->st_serialno, enum_name(&state_names, st->st_state));
+		st->st_rel_whack_event = NULL;
 		break;
 
 	case EVENT_v2_LIVENESS:
@@ -655,6 +656,14 @@ void handle_next_timer_event(void)
 
 	case EVENT_NAT_T_KEEPALIVE:
 		nat_traversal_ka_event();
+		break;
+
+	case EVENT_v2_RELEASE_WHACK:
+		DBG(DBG_CONTROL, DBG_log("%s releasing whack for #%lu %s (sock=%d)",
+					st->st_serialno,
+					enum_name(&state_names, st->st_state),
+					st->st_whack_sock));
+		release_whack(st);
 		break;
 
 	case EVENT_v1_RETRANSMIT:
