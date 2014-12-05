@@ -346,7 +346,7 @@ class scantests:
             self.tdirs.append(self.stdir)
             logging.info("scan a single directory %s" % self.stdir)
         else:
-            self.tdirs = sorted(listdir(self.npath))
+            self.tdirs = sorted(listdir(self.npath), reverse=True)
 
         if not self.tdirs:
             logging.info("node directory %s is empty", rnode)
@@ -580,12 +580,18 @@ class scantests:
                 row.append(0)
             if "responder" in test:
                 key = "%s-status" % test["responder"]
-                row.append(test[key])
+                if key in test:
+                    row.append(test[key])
+                else:
+                    row.append("-")
             else:
                 row.append("-")
             if "initiator" in test:
                 key = "%s-status" % test["initiator"]
-                row.append(test[key])
+                if key in test:
+                    row.append(test[key])
+                else:
+                    row.append("-")
             else:
                 row.append("-")
 
