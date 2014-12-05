@@ -107,5 +107,5 @@ void starter_use_log(bool debug, bool console, bool mysyslog)
 		log_to_syslog = mysyslog;
 	}
 	if (log_debugging)
-		starter_log(LOG_LEVEL_ERR, "debugging mode enabled\n");
+		starter_log(LOG_LEVEL_ERR, "debugging mode enabled");
 }

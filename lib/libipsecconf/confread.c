@@ -503,7 +503,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 				      &(end->nexthop)) != NULL) {
 #ifdef DNSSEC
 				starter_log(LOG_LEVEL_DEBUG,
-					    "Calling unbound_resolve() for %snexthop value\n",
+					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
 				if (!unbound_resolve(dnsctx, value,
 						strlen(value), AF_INET,
@@ -585,7 +585,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 			      &(end->sourceip)) != NULL) {
 #ifdef DNSSEC
 			starter_log(LOG_LEVEL_DEBUG,
-				    "Calling unbound_resolve() for %ssourceip value\n",
+				    "Calling unbound_resolve() for %ssourceip value",
 				    leftright);
 			if (!unbound_resolve(dnsctx, value,
 					strlen(value), AF_INET,
@@ -609,7 +609,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		}
 		if (!end->has_client) {
 			starter_log(LOG_LEVEL_INFO,
-				    "%ssourceip= used but not %ssubnet= defined, defaulting %ssubnet to %s\n",
+				    "%ssourceip= used but not %ssubnet= defined, defaulting %ssubnet to %s",
 				    leftright, leftright, leftright, value);
 			er = addrtosubnet(&end->sourceip, &end->subnet);
 			if (er) {
@@ -733,7 +733,7 @@ static bool translate_conn(struct starter_conn *conn,
 		field = kw->keyword.keydef->field;
 
 #ifdef PARSER_TYPE_DEBUG
-		starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d\n",
+		starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d",
 			    kw->keyword.keydef->keyname, field,
 			    kw->keyword.keydef->type);
 #endif
@@ -870,7 +870,7 @@ static bool translate_conn(struct starter_conn *conn,
 			}
 
 #if 0
-			starter_log(LOG_LEVEL_DEBUG, "#setting %s[%d]=%u\n",
+			starter_log(LOG_LEVEL_DEBUG, "#setting %s[%d]=%u",
 				    kw->keyword.keydef->keyname, field,
 				    kw->number);
 #endif
@@ -882,12 +882,12 @@ static bool translate_conn(struct starter_conn *conn,
 			break;
 		case kt_obsolete:
 			starter_log(LOG_LEVEL_INFO,
-				    "Warning: obsolete keyword '%s' ignored\n",
+				    "Warning: obsolete keyword '%s' ignored",
 				    kw->keyword.keydef->keyname);
 			break;
 		case kt_obsolete_quiet:
 			starter_log(LOG_LEVEL_DEBUG,
-				    "Warning: obsolete keyword '%s' ignored\n",
+				    "Warning: obsolete keyword '%s' ignored",
 				    kw->keyword.keydef->keyname);
 			break;
 		}
@@ -1070,7 +1070,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 #ifdef PARSER_TYPE_DEBUG
 	/* translate strings/numbers into conn items */
 	starter_log(LOG_LEVEL_DEBUG,
-		    "#checking options_set[KBF_TYPE,%d]=%d %d\n",
+		    "#checking options_set[KBF_TYPE,%d]=%d %d",
 		    KBF_TYPE,
 		    conn->options_set[KBF_TYPE], conn->options[KBF_TYPE]);
 #endif
@@ -1136,7 +1136,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 
 #ifdef STARTER_POLICY_DEBUG
 		starter_log(LOG_LEVEL_DEBUG,
-			    "%s: setting conn->policy=%08x (%08x)\n",
+			    "%s: setting conn->policy=%08x (%08x)",
 			    conn->name,
 			    (unsigned int)conn->policy,
 			    conn->options[KBF_AUTHBY]);
@@ -1355,7 +1355,7 @@ static bool init_load_conn(struct ub_ctx *dnsctx,
 			    defaultconn, resolvip, perr);
 
 	if (connerr) {
-		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s\n",
+		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s",
 			    sconn->name, *perr);
 	} else {
 		conn->state = STATE_LOADED;
@@ -1469,7 +1469,7 @@ struct starter_config *confread_load(const char *file,
 
 		/* if we have OE on, then create any missing OE conns! */
 		if (cfg->setup.options[KBF_OPPOENCRYPT]) {
-			starter_log(LOG_LEVEL_DEBUG, "Enabling OE conns\n");
+			starter_log(LOG_LEVEL_DEBUG, "Enabling OE conns");
 			add_any_oeconns(cfg, cfgp);
 		}
 	}

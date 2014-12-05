@@ -73,7 +73,7 @@ static int send_reply(int sock, char *buf, ssize_t len)
 	if (write(sock, buf, len) != len) {
 		int e = errno;
 
-		starter_log(LOG_LEVEL_ERR, "whack: write() failed (%d %s)\n",
+		starter_log(LOG_LEVEL_ERR, "whack: write() failed (%d %s)",
 			e, strerror(e));
 		return RC_WHACK_PROBLEM;
 	}
@@ -128,7 +128,7 @@ static int starter_whack_read_reply(int sock,
 				write(STDOUT_FILENO, ls, le - ls) == -1) {
 				int e = errno;
 				starter_log(LOG_LEVEL_ERR,
-					"whack: write() starterwhack.c:124 failed (%d %s), and ignored.\n",
+					"whack: write() starterwhack.c:124 failed (%d %s), and ignored.",
 					e, strerror(e));
 			}
 			/*
