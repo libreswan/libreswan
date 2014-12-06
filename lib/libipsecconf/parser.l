@@ -50,16 +50,11 @@ static int parser_y_eof(void);
 /* we want no actual output! */
 #define ECHO
 
-/* do not define this function, as it is not used, and fails -Werror */
-#if 0
-#define YY_NO_INPUT
-#endif
-
 struct ic_inputsource {
 	YY_BUFFER_STATE state;
 	FILE *file;
 	unsigned int line;
-	unsigned int once;	/* boolean */
+	bool once;
 	char *filename;
 	int fileglobcnt;
 	glob_t fileglob;
@@ -87,7 +82,7 @@ void parser_y_error(char *b, int size, const char *s)
 #if defined(SOMETHING_FOR_SOME_ARCH)
 	extern char *yytext;
 #endif
-	snprintf(b, size, "%s:%d: %s [%s]",
+	snprintf(b, size, "%s:%u: %s [%s]",
 		stacktop->filename == NULL ? "<none>" : stacktop->filename,
 		stacktop->line,
 		s, yytext);
@@ -97,7 +92,7 @@ void parser_y_init (const char *name, FILE *f)
 {
 	memset(&ic_private, 0, sizeof(ic_private));
 	ic_private.stack[0].line = 1;
-	ic_private.stack[0].once = 1;
+	ic_private.stack[0].once = TRUE;
 	ic_private.stack[0].file = f;
 	ic_private.stack[0].filename = strdup(name);
 	stacktop = &ic_private.stack[0];
@@ -161,7 +156,7 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 	}
 
 	iis->line = 1;
-	iis->once = 1;
+	iis->once = TRUE;
 	iis->filename = strdup(iis->fileglob.gl_pathv[fcnt]);
 
 	/* open the file */
@@ -191,14 +186,9 @@ int parser_y_include (const char *filename)
 
 	globbuf.gl_offs = 0;
 
-	try = filename;
-	newname[0] = '\0';
-	newname2[0] = '\0';
-
 	/*
-	 * order of operations is: try rootdir, and then rootdir2
-	 * only if it starts with /.
-	 * We never try plain name in that situation.
+	 * If the filename starts with /, we try to find it prefixed with
+	 * rootdir or rootdir2.
 	 *
 	 * glob() returns a match if that file exists, even without
 	 * having to do any globbing.
@@ -212,33 +202,59 @@ int parser_y_include (const char *filename)
 # define GB 0
 #endif
 
-	if (rootdir[0] != '\0' && filename[0] == '/') {
+	/*
+	 * If there is no rootdir, but there is a rootdir2, swap them.
+	 * This reduces the number of cases to be handled.
+	 */
+	if (rootdir[0] == '\0' && rootdir2[0] != '\0') {
+		strcpy(rootdir, rootdir2);
+		rootdir2[0] = '\0';
+	}
+
+	if (filename[0] != '/' || rootdir[0] == '\0') {
+		/* try plain name, with no rootdirs */
+		try = filename;
+		globresult = glob(try, GB, NULL, &globbuf);
+		if (globresult == GLOB_NOMATCH) {
+			/* no files found... */
+			starter_log(LOG_LEVEL_ERR,
+				"warning: could not open include filename: '%s'",
+				filename);
+			globfree(&globbuf);
+			return 0;
+		}
+	} else {
+		/* try prefixing with rootdir */
 		snprintf(newname, sizeof(newname), "%s%s", rootdir, filename);
 		try = newname;
 
 		globresult = glob(try, GB, NULL, &globbuf);
-		if (globresult == GLOB_NOMATCH && rootdir2[0] != '\0') {
-			/* now try with rootdir2 */
-			snprintf(newname2, sizeof(newname2),
-				 "%s%s", rootdir2, filename);
-			try = newname2;
-			globresult = glob(try, GB, NULL, &globbuf);
+		if (globresult == GLOB_NOMATCH) {
+			if (rootdir2[0] == '\0') {
+				starter_log(LOG_LEVEL_ERR,
+					"warning: could not open include filename '%s' (tried '%s')",
+					filename, newname);
+				globfree(&globbuf);
+				return 0;
+			} else {
+				/* try prefixing with rootdir2 */
+				snprintf(newname2, sizeof(newname2),
+					 "%s%s", rootdir2, filename);
+				try = newname2;
+				globresult = glob(try, GB, NULL, &globbuf);
+				if (globresult == GLOB_NOMATCH) {
+				starter_log(LOG_LEVEL_ERR,
+					"warning: could not open include filename: '%s' (tried '%s' and '%s')",
+					filename, newname, newname2);
+				globfree(&globbuf);
+				return 0;
+				}
+			}
 		}
-	} else {
-		/* try globbing plain name now.. */
-		globresult = glob(try, GB, NULL, &globbuf);
 	}
 
 #undef GB
 
-	if (globresult == GLOB_NOMATCH) {
-		/* no files found... */
-		starter_log(LOG_LEVEL_INFO,
-			"warning: could not open include filename: '%s' (tried %s and %s)",
-			filename, newname, newname2);
-		globfree(&globbuf);
-		return 0;
-	}
 
 	if (ic_private.stack_ptr >= MAX_INCLUDE_DEPTH) {
 		yyerror("max inclusion depth reached");
@@ -247,7 +263,7 @@ int parser_y_include (const char *filename)
 
 	if (lex_verbosity > 0) {
 		starter_log(LOG_LEVEL_DEBUG,
-			    "including file '%s'(%s) from line %s:%d\n"
+			    "including file '%s' ('%s') from %s:%u"
 			    , filename, try
 			    , stacktop->filename
 			    , stacktop->line);
@@ -264,7 +280,7 @@ int parser_y_include (const char *filename)
 	return parser_y_eof();
 }
 
-int parser_y_eof(void)
+static int parser_y_eof(void)
 {
 	if (stacktop->state != YY_CURRENT_BUFFER) {
 		yy_delete_buffer(YY_CURRENT_BUFFER);
@@ -275,12 +291,13 @@ int parser_y_eof(void)
 
 		if (lex_verbosity > 0) {
 			int stackp = ic_private.stack_ptr;
+
 			starter_log(LOG_LEVEL_DEBUG,
-				    "end of file %s\n", stacktop->filename);
+				    "end of file %s", stacktop->filename);
 
 			if (stackp > 0) {
 				starter_log(LOG_LEVEL_DEBUG,
-					"resuming %s line %d\n"
+					"resuming %s:%u"
 					, ic_private.stack[stackp-1].filename
 					, ic_private.stack[stackp-1].line);
 			}
@@ -305,10 +322,10 @@ int parser_y_eof(void)
 /* lexical states:
  *
  * INITIAL
- * USERDEF: after "="
- * BOOLEAN: after keyword with BOOLWORD attribute, until \n
- * COMMENTEQUAL: after keyword "x-comment"
- * COMMENTSTRING: after = in COMMENTEQUAL state, until \n
+ * USERDEF: after <INITIAL>"=" or <INITIAL>"conn"; returns to INITIAL after next token (integer or string)
+ * BOOLEAN: after keyword with BOOLWORD attribute; followed by '='; returns to INITIAL after next token (bool)
+ * COMMENTEQUAL: after keyword "x-comment"; followed by = and then switches to COMMENTSTRING
+ * COMMENTSTRING: after = in COMMENTEQUAL state; everything up to \n is a string; then returns to INITIAL
  */
 
 %x USERDEF BOOLEAN COMMENTEQUAL COMMENTSTRING
@@ -317,18 +334,23 @@ int parser_y_eof(void)
 
 <<EOF>>	{
 #if 0
-	printf("stacktop->filename = %s\n",
+	printf("EOF: stacktop->filename = %s\n",
 		stacktop->filename == NULL ? "NULL" : stacktop->filename);
 #endif
-	if (stacktop->file != NULL) {
-		char ch;
-		fseek(stacktop->file, -1L, SEEK_END);
-		ch = (char)fgetc(stacktop->file);
-		if (ch != '\n' && stacktop->once) {
-			stacktop->once = 0;
-			return EOL;
-		}
+	/*
+	 * Add a newline at the end of the file in case one was missing.
+	 * This code assumes that EOF is sticky:
+	 * that it can be detected repeatedly.
+	 */
+	if (stacktop->once) {
+		stacktop->once = FALSE;
+		return EOL;
 	}
+
+	/*
+	 * we've finished this file:
+	 * continue with the file it was included from (if any)
+	 */
 	if (parser_y_eof()) {
 		yyterminate();
 	}
@@ -346,9 +368,9 @@ int parser_y_eof(void)
 
 ^[\t ]+			return FIRST_SPACES;
 
-[\t ]+			/* ignore spaces in line */ ;
+<INITIAL,BOOLEAN>[\t ]+	/* ignore spaces in line */ ;
 
-<USERDEF>[0-9]+		{
+<INITIAL,USERDEF>[0-9]+	{
 				/* process a number */
 				yylval.num = strtoul(yytext, NULL, 10);
 				BEGIN INITIAL;
@@ -358,13 +380,6 @@ int parser_y_eof(void)
 <USERDEF>%forever	{
 				/* a number, really 0 */
 				yylval.num = 0;
-				BEGIN INITIAL;
-				return INTEGER;
-			}
-
-[0-9]+			{
-				/* process a number */
-				yylval.num = strtoul(yytext, NULL, 10);
 				BEGIN INITIAL;
 				return INTEGER;
 			}
@@ -409,6 +424,7 @@ int parser_y_eof(void)
 			}
 
 <USERDEF>\"[^\"\n]*\"	{
+				/* "string" */
 				char *s = yytext + 1;
 				int len = strlen(s);
 
@@ -424,6 +440,7 @@ int parser_y_eof(void)
 			}
 
 <USERDEF>\{[^\"\n]*\}	{
+				/* { string-without-quotes } */
 				char *s = yytext + 1;
 				int len = strlen(s);
 
@@ -439,12 +456,14 @@ int parser_y_eof(void)
 			}
 
 <USERDEF>[^\" \t\n]+	{
+				/* string-without-quotes-or-whitespace */
 				yylval.s = strdup(yytext);
 				BEGIN INITIAL;
 				return STRING;
 			}
 
 <USERDEF>[^\{} \t\n]+	{
+				/* string-without-braces-or-whitespace */
 				yylval.s = strdup(yytext);
 				BEGIN INITIAL;
 				return STRING;
@@ -456,10 +475,15 @@ int parser_y_eof(void)
 			}
 
 =			{ BEGIN USERDEF; return EQUAL; }
+
 version			return VERSION;
+
 config			return CONFIG;
+
 setup			return SETUP;
+
 conn			{ BEGIN USERDEF; return CONN; }
+
 include			return INCLUDE;
 
 [^\"= \t\n]+		{

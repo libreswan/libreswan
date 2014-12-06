@@ -38,13 +38,11 @@ static bool log_debugging = FALSE;
 static bool log_to_console = FALSE;
 static bool log_to_syslog = FALSE;
 
-static void do_print_info(int level, const char *buff)
+static void log_one_line(int level, const char *buff)
 {
-	if ((!log_debugging) && (level == LOG_LEVEL_DEBUG))
-		return;
-
 	if (log_to_console)
 		fprintf(stderr, "%s\n", buff);
+
 	if (log_to_syslog) {
 		if (level == LOG_LEVEL_ERR)
 			syslog(LOG_ERR, "%s\n", buff);
@@ -53,37 +51,11 @@ static void do_print_info(int level, const char *buff)
 	}
 }
 
-static void log_info_multiline(int level, const char *buff)
-{
-	char *copy, *b, *ptr, *end;
-
-	if (!buff)
-		return;
-
-	if ((!log_debugging) && (level == LOG_LEVEL_DEBUG))
-		return;
-
-	copy = strdup(buff);
-	if (!copy)
-		return;
-
-	end = copy + strlen(copy);
-	for (ptr = copy, b = copy; ptr <= end; ptr++) {
-		if (*ptr == '\n')
-			*ptr = '\0';
-		if (*ptr == '\0') {
-			if (b != end)
-				do_print_info(level, b);
-			b = ptr + 1;
-		}
-	}
-	free(copy);
-}
-
 void starter_log(int level, const char *fmt, ...)
 {
 	va_list args;
 	char buff[BUFF_SIZE];
+	char *b;
 
 	if (!log_debugging && level == LOG_LEVEL_DEBUG)
 		return;
@@ -91,7 +63,21 @@ void starter_log(int level, const char *fmt, ...)
 	va_start(args, fmt);
 	vsnprintf(buff, BUFF_SIZE - 1, fmt, args);
 	buff[BUFF_SIZE - 1] = '\0';
-	log_info_multiline(level, buff);
+
+	/* log each '\n'-terminated segment separately */
+	for (b = buff;;) {
+		char *p = strchr(b, '\n');
+
+		if (p == NULL)
+			break;
+		*p = '\0';
+		log_one_line(level, b);
+		b = p + 1;
+	}
+
+	/* log the '\0'- terminated segment */
+	log_one_line(level, b);
+
 	va_end(args);
 }
 

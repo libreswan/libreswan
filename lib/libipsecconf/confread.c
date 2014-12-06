@@ -461,7 +461,8 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		break;
 
 	case KH_NOTSET:
-		starter_log(LOG_LEVEL_DEBUG, "starter: case KH_NOTSET: empty");
+		ERR_FOUND("%s not specified", leftright);
+		starter_log(LOG_LEVEL_DEBUG, "starter: %s is KH_NOTSET", leftright);
 		break;
 	}
 
@@ -511,15 +512,14 @@ static bool validate_end(struct ub_ctx *dnsctx,
 				    !unbound_resolve(dnsctx, value,
 						strlen(value), AF_INET6,
 						&(end->nexthop)))
-					ERR_FOUND(
-						"bad value for %snexthop=%s\n",
+					ERR_FOUND("bad value for %snexthop=%s\n",
 						leftright, value);
 #else
 				er = ttoaddr(value, 0, family,
 						&(end->nexthop));
 				if (er != NULL)
-					ERR_FOUND(
-						"bad value for %snexthop=%s [%s]", leftright, value,
+					ERR_FOUND("bad value for %snexthop=%s [%s]",
+						leftright, value,
 						er);
 #endif
 			}
@@ -529,7 +529,6 @@ static bool validate_end(struct ub_ctx *dnsctx,
 #if 0
 		if (conn_st->policy & POLICY_OPPORTUNISTIC)
 			end->nexttype = KH_DEFAULTROUTE;
-
 #endif
 		anyaddr(family, &end->nexthop);
 
@@ -579,6 +578,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	 */
 	if (end->strings_set[KSCF_SOURCEIP]) {
 		char *value = end->strings[KSCF_SOURCEIP];
+
 		if (tnatoaddr(value, strlen(value), AF_INET,
 			      &(end->sourceip)) != NULL &&
 		    tnatoaddr(value, strlen(value), AF_INET6,
@@ -597,13 +597,13 @@ static bool validate_end(struct ub_ctx *dnsctx,
 					  leftright, value);
 #else
 			er = ttoaddr(value, 0, family, &(end->sourceip));
-			if (er)
+			if (er != NULL)
 				ERR_FOUND("bad addr %ssourceip=%s [%s]",
 					  leftright, value, er);
 #endif
 		} else {
 			er = tnatoaddr(value, 0, family, &(end->sourceip));
-			if (er)
+			if (er != NULL)
 				ERR_FOUND("bad numerical addr %ssourceip=%s [%s]",
 					leftright, value, er);
 		}
@@ -612,10 +612,9 @@ static bool validate_end(struct ub_ctx *dnsctx,
 				    "%ssourceip= used but not %ssubnet= defined, defaulting %ssubnet to %s",
 				    leftright, leftright, leftright, value);
 			er = addrtosubnet(&end->sourceip, &end->subnet);
-			if (er) {
-				ERR_FOUND(
-					"attempt to default %ssubnet from %s failed: %s", leftright, value,
-					er);
+			if (er != NULL) {
+				ERR_FOUND("attempt to default %ssubnet from %s failed: %s",
+					leftright, value, er);
 			}
 			end->has_client = TRUE;
 			end->has_client_wildcard = FALSE;
@@ -639,7 +638,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		ugh = ttoprotoport(value, 0, &end->protocol, &end->port,
 				   &end->has_port_wildcard);
 
-		if (ugh)
+		if (ugh != NULL)
 			ERR_FOUND("bad %sprotoport=%s [%s]", leftright, value,
 				  ugh);
 	}
