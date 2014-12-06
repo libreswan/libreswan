@@ -1890,7 +1890,8 @@ stf_status ikev2_parse_child_sa_body(
 			case IKEv2_ENCR_CAMELLIA_CCM_A:
 			case IKEv2_ENCR_CAMELLIA_CCM_B:
 			case IKEv2_ENCR_CAMELLIA_CCM_C:
-				/* no IKE struct encrypt_desc yet, fall through */
+				/* no IKE struct encrypt_desc yet */
+				/* FALL THROUGH */
 			case IKEv2_ENCR_AES_CBC:
 			case IKEv2_ENCR_CAMELLIA_CBC:
 			case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */

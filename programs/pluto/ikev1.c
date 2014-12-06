@@ -2476,7 +2476,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				 * (clang 3.4 noticed this)
 				 */
 				if (dpd_init(st) == STF_FAIL)
-					result = STF_FAIL; /* fall through */
+					result = STF_FAIL; /* ??? fall through */
 			}
 		}
 

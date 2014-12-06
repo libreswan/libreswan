@@ -664,8 +664,8 @@ static bool finish_pfkey_msg(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1],
 					case ENOENT:
 						loglog(RC_LOG_SERIOUS,
 						       "requested algorithm is not available in the kernel");
-					/* fall through to get error message */
-
+					/* to get error message, */
+					/* FALL THROUGH */
 					default:
 logerr:
 						libreswan_log_errno_routine(e1, "pfkey write() of %s message %u"
