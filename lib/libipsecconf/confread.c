@@ -405,7 +405,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 
 	case KH_IFACE:
 		/* generally, this doesn't show up at this stage */
-		starter_log(LOG_LEVEL_DEBUG, "starter: case KH_IFACE empty");
+		starter_log(LOG_LEVEL_DEBUG, "starter: %s is KH_IFACE", leftright);
 		break;
 
 	case KH_IPADDR:
@@ -452,16 +452,15 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	case KH_IPHOSTNAME:
 		/* generally, this doesn't show up at this stage */
 		starter_log(LOG_LEVEL_DEBUG,
-			    "starter: case KH_IPHOSTNAME empty");
+			    "starter: %s is KH_IPHOSTNAME", leftright);
 		break;
 
 	case KH_DEFAULTROUTE:
 		starter_log(LOG_LEVEL_DEBUG,
-			    "starter: case KH_DEFAULTROUTE: empty");
+			    "starter: %s is KH_DEFAULTROUTE", leftright);
 		break;
 
 	case KH_NOTSET:
-		ERR_FOUND("%s not specified", leftright);
 		starter_log(LOG_LEVEL_DEBUG, "starter: %s is KH_NOTSET", leftright);
 		break;
 	}
