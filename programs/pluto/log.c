@@ -1118,8 +1118,8 @@ void linux_audit_init()
 	libreswan_log("Linux audit activated");
 }
 
-void linux_audit(const int type, const char *message, const char *remoteid,
-		 const char *addr, const int result)
+void linux_audit(const int type, const char *message, const char *addr,
+		const int result)
 {
 
 	int audit_fd, rc;
@@ -1149,7 +1149,7 @@ void linux_audit(const int type, const char *message, const char *remoteid,
 	 * We log the remoteid instead of hostname
 	 */
 
-	rc = audit_log_user_message(audit_fd, type, message, remoteid, addr, NULL, result);
+	rc = audit_log_user_message(audit_fd, type, message, NULL, addr, NULL, result);
 	close(audit_fd);
 	if (rc < 0) {
 		loglog(RC_LOG_SERIOUS,
@@ -1159,20 +1159,23 @@ void linux_audit(const int type, const char *message, const char *remoteid,
 	}
 }
 
+/*
+ * any admin/network strings but go through audit_encode_nv_string()
+ */
 void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 {
 	char raddr[ADDRTOT_BUF];
 	char laddr[ADDRTOT_BUF];
-	char remoteid[IDTOA_BUF];
-	char remoteid_hex[2*IDTOA_BUF];
 	char audit_str[AUDIT_LOG_SIZE];
 	char cipher_str[AUDIT_LOG_SIZE];
 	char spi_str[AUDIT_LOG_SIZE];
 	struct connection *const c = st->st_connection;
 	bool initiator = FALSE;
-	char satype[IDTOA_BUF];
+	char head[IDTOA_BUF];
 	char integname[IDTOA_BUF];
 	struct esb_buf esb;
+	/* we need to free() this */
+	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
 
 	zero(&cipher_str);
 	zero(&spi_str);
@@ -1180,11 +1183,16 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	switch(op) {
 	case LAK_PARENT_START:
 	case LAK_PARENT_DESTROY:
-		snprintf(satype, sizeof(satype), "%s%s",
-			(st->st_ikev2) ? "IKEv2" : "IKEv1-",
-			(st->st_ikev2) ? "" :
-				enum_show(&oakley_auth_names, st->st_oakley.auth));
 		initiator = IS_V2_INITIATOR(st->st_state) || IS_PHASE1_INIT(st->st_state);
+		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=%ld ike-version=%s auth=%s",
+			op == LAK_PARENT_START ? "start" : "destroy",
+			initiator ? "initiator" : "responder",
+			conn_encode,
+			st->st_serialno,
+			st->st_ikev2 ? "2.0" : "1",
+			st->st_ikev2 ? ((c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG") :
+				strip_prefix(enum_show(&oakley_auth_names,
+					st->st_oakley.auth), "OAKLEY_"));
 		if (st->st_ikev2)
 			snprintf(integname, sizeof(integname), "%s_%zu",
 				st->st_oakley.integ_hasher->common.officname,
@@ -1193,17 +1201,26 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		else
 			snprintf(integname, sizeof(integname), "%s",
 				strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"));
+
 		snprintf(cipher_str, sizeof(cipher_str),
-			"cipher=%s ksize=%d mac=%s prf=%s group=%s",
+			"cipher=%s ksize=%d integ=%s pfs=%s",
 			st->st_oakley.encrypter->common.name,
 			st->st_oakley.enckeylen,
 			integname,
-			strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"),
 			strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
 		break;
+
 	case LAK_CHILD_START:
+	case LAK_CHILD_DESTROY:
+		snprintf(head, sizeof(head), "op=%s %s connstate=%ld, satype=%s samode=%s",
+			op == LAK_CHILD_START ? "start" : "destroy",
+			conn_encode,
+			st->st_serialno,
+			st->st_esp.present ? "ipsec-esp" : (st->st_ah.present ? "ipsec-ah" : "ipsec-policy"),
+			c->policy & POLICY_TUNNEL ? "tunnel" : "transport");
+
 		snprintf(cipher_str, sizeof(cipher_str),
-			"cipher=%s ksize=%d mac=%s",
+			"cipher=%s ksize=%d integ=%s",
 			st->st_esp.present ?
 				strip_prefix(enum_showb(&esp_transformid_names,
 					st->st_esp.attrs.transattrs.encrypt, &esb), "ESP_") :
@@ -1214,17 +1231,9 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			strip_prefix(enum_show(&auth_alg_names,
 				st->st_esp.attrs.transattrs.integ_hash),
 				"AUTH_ALGORITHM_"));
-		/* FALL THROUGH */
-	case LAK_CHILD_DESTROY:
-		/* does ESP with IPCOMP setup two IPsec SA's ? */
-		jam_str(satype, IDTOA_BUF, "ipsec-shunt");
-		if (st->st_esp.present)
-			jam_str(satype, IDTOA_BUF, "ipsec-esp");
-		if (st->st_ah.present)
-			jam_str(satype, IDTOA_BUF, "ipsec-ah");
 
 		snprintf(spi_str, sizeof(spi_str),
-		"inSPI=%lu(0x%08lx) outSPI=%lu(0x%08lx) inIPCOMP=%lu(0x%08lx) outIPCOMP=%lu(0x%08lx)",
+		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",
 		st->st_esp.present ? (unsigned long)ntohl(st->st_esp.attrs.spi) :
 			(unsigned long)ntohl(st->st_ah.attrs.spi),
 		st->st_esp.present ? (unsigned long)ntohl(st->st_esp.attrs.spi) :
@@ -1241,26 +1250,19 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	default:
 		bad_case(op);
 	}
-
+	free(conn_encode); /* allocated by audit_encode_nv_string() */
 
 	addrtot(&c->spd.this.host_addr, 0, laddr, sizeof(laddr));
 	addrtot(&c->spd.that.host_addr, 0, raddr, sizeof(raddr));
-	(void) idtoa(&c->spd.that.id, remoteid, sizeof(remoteid));
-	(void) datatot((const unsigned char *)remoteid, strlen(remoteid), 16, remoteid_hex, sizeof(remoteid_hex));
 
-	snprintf(audit_str, sizeof(audit_str), "op=%s type=%s mode=%s%s conn=%s %s state=%ld %s %s laddr=%s",
-		(op == LAK_PARENT_START || op == LAK_CHILD_START) ? "start" : "destroy",
-		satype,
-		c->policy & POLICY_TUNNEL ? "tunnel" : "transport",
-		(op == LAK_CHILD_START || op == LAK_CHILD_DESTROY) ? 
-			(st->st_ipcomp.present ? " ipcomp=yes" : " ipcomp=no") : "",
-		c->name,
-		(op == LAK_CHILD_START || op == LAK_CHILD_DESTROY) ? "" :
-			initiator ? "direction=initiator" : "direction=responder",
-		st->st_serialno,
+	snprintf(audit_str, sizeof(audit_str), "%s %s %s laddr=%s",
+		head,
 		cipher_str,
 		spi_str,
 		laddr);
-	linux_audit(AUDIT_CRYPTO_SESSION, audit_str, remoteid_hex, raddr, AUDIT_RESULT_OK);
+
+	linux_audit( (op == LAK_CHILD_START || op == LAK_CHILD_DESTROY) ?
+			AUDIT_CRYPTO_IPSEC_SA : AUDIT_CRYPTO_IKE_SA,
+		audit_str, raddr, AUDIT_RESULT_OK);
 }
 #endif
