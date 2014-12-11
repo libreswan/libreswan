@@ -395,7 +395,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	int family = conn_st->options[KBF_CONNADDRFAMILY];
 	bool err = FALSE;
 
-#  define ERR_FOUND(args ...) { err |= error_append(&err_str, ## args); }
+#  define ERR_FOUND(...) { err |= error_append(&err_str, __VA_ARGS__); }
 
 	if (!end->options_set[KNCF_IP])
 		conn_st->state = STATE_INCOMPLETE;
