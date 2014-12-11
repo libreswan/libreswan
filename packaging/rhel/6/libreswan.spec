@@ -56,7 +56,7 @@ BuildRequires: openldap-devel curl-devel
 BuildRequires: ElectricFence
 %endif
 # Only needed if xml man pages are modified and need regeneration
-# BuildRequires: xmlto
+BuildRequires: xmlto
 
 Requires: nss-tools, nss-softokn
 Requires: iproute >= 2.6.8
@@ -79,6 +79,8 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
+# remove man page for ipsec.conf so it is forced to regenerate
+rm ./programs/configs/ipsec.conf.5
 
 %build
 %if %{buildefence}
