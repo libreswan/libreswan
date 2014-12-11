@@ -175,7 +175,6 @@ rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
-%dir %{_sysconfdir}/sysctl.d
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_localstatedir}/run/pluto
