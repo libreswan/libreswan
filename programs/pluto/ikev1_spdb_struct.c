@@ -199,7 +199,7 @@ static bool out_attr(int type,
 	return TRUE;
 }
 
-#define return_on(var, val) do { var = val; goto return_out; } while (0);
+#define return_on(var, val) { (var) = (val); goto return_out; }
 
 /**
  * Output an SA, as described by a db_sa.

@@ -603,10 +603,13 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)
-		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Response"));
-	else
-		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Request"));
+	
+	DBG(DBG_CONTROL, {
+		if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)
+			DBG_log("I am receiving an IKE Response");
+		else
+			DBG_log("I am receiving an IKE Request");
+	});
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));

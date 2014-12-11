@@ -56,9 +56,10 @@ static char tmp_err[512];
  * to make sure that no packets get out that this conn would apply to, but we
  * refuse to negotiate it in any way, either incoming or outgoing.
  */
-#define POLICY_ONLY_CONN(conn) if (conn->options[KBF_AUTO] > \
-				   STARTUP_ONDEMAND) { conn->options[KBF_AUTO] = \
-							    STARTUP_POLICY; }
+#define POLICY_ONLY_CONN(conn) { \
+		if ((conn)->options[KBF_AUTO] > STARTUP_ONDEMAND) \
+			(conn)->options[KBF_AUTO] = STARTUP_POLICY; \
+	}
 
 
 #ifdef DNSSEC
@@ -196,23 +197,28 @@ static bool error_append(char **perr, const char *fmt, ...)
 	return TRUE;
 }
 
-#define KW_POLICY_FLAG(val, fl) if (conn->options_set[val]) \
-	{ if (conn->options[val]) \
-	  { \
-		  conn->policy |= fl; \
-	  } else { \
-		  conn->policy &= ~fl; \
-	  } }
+#define KW_POLICY_FLAG(val, fl) { \
+		if (conn->options_set[val]) { \
+			if (conn->options[val]) { \
+				conn->policy |= (fl); \
+			} else { \
+				conn->policy &= ~(fl); \
+			} \
+		} \
+	}
 
-#define KW_POLICY_NEGATIVE_FLAG(val, fl) if (conn->options_set[val]) \
-	{ if (!conn->options[val]) \
-	  { \
-		  conn->policy |= fl; \
-	  } else { \
-		  conn->policy &= ~fl; \
-	  } }
+#define KW_POLICY_NEGATIVE_FLAG(val, fl) { \
+		if (conn->options_set[val]) { \
+			if (!conn->options[val]) { \
+				conn->policy |= (fl); \
+			} else { \
+				conn->policy &= ~(fl); \
+			} \
+		}\
+	}
 
 #define FREE_LIST(v) { if ((v) != NULL) { free_list(v); (v) = NULL; } }
+
 /**
  * Free the pointer list
  *
@@ -388,8 +394,8 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	char *err_str = NULL;
 	int family = conn_st->options[KBF_CONNADDRFAMILY];
 	bool err = FALSE;
-#  define ERR_FOUND(args ...) do err |= error_append(&err_str, ## args); while (0)
 
+#  define ERR_FOUND(args ...) { err |= error_append(&err_str, ## args); }
 
 	if (!end->options_set[KNCF_IP])
 		conn_st->state = STATE_INCOMPLETE;

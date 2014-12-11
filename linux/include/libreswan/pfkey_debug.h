@@ -43,16 +43,17 @@ extern unsigned int pfkey_lib_debug;  /* bits selecting what to report */
 extern int (*pfkey_debug_func)(const char *message, ...) PRINTF_LIKE(1);
 extern int (*pfkey_error_func)(const char *message, ...) PRINTF_LIKE(1);
 
-#define DEBUGGING(level, args ...)  if (pfkey_lib_debug & level) { \
+#define DEBUGGING(level, args ...)  { if (pfkey_lib_debug & (level)) { \
 		if (pfkey_debug_func != NULL) { \
 			(*pfkey_debug_func)("pfkey_lib_debug:" args); \
 		} else { \
 			printf("pfkey_lib_debug:" args); \
-		} }
+		} } }
 
-#define ERROR(args ...)      if (pfkey_error_func != NULL) { \
-		(*pfkey_error_func)("pfkey_lib_debug:" args); \
-}
+#define ERROR(args ...)      { \
+		if (pfkey_error_func != NULL) \
+			(*pfkey_error_func)("pfkey_lib_debug:" args); \
+	}
 
 # define MALLOC(size) malloc(size)
 # define FREE(obj) free(obj)

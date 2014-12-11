@@ -231,8 +231,11 @@ void stop_adns(void)
 }
 
 /* tricky macro to pass any hot potato */
-#define TRY(x)  { err_t ugh = x; if (ugh != NULL) \
-			  return ugh; }
+#define TRY(x)  { \
+		err_t ugh = (x); \
+		if (ugh != NULL) \
+			  return ugh; \
+	}
 
 /* Process TXT X-IPsec-Server record, accumulating relevant ones
  * in cr->gateways_from_dns, a list sorted by "preference".
