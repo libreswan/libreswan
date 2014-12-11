@@ -50,7 +50,6 @@ formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
-
 class guest (threading.Thread):
 
     def __init__(self, hostname, role, testname, args, install=None, compile=None):
@@ -1080,10 +1079,13 @@ def re_write_result(sanity):
     if not changed:
         return False
 
-    with open(output_file, 'w') as f:
-        for line in lines:
-            f.write(line)
-            f.write("\n")
+    try:
+        with open(output_file, 'w') as f:
+            for line in lines:
+                f.write(line)
+                f.write("\n")
+    except:
+        logging.error("ERROR could not open file to write %s" ,output_file)
 
     return changed
 
