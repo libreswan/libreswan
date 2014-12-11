@@ -174,16 +174,16 @@ struct hidden_variables {
 };
 
 #define unset_suspended(st) { \
-	st->st_suspended_md = NULL; \
-	st->st_suspended_md_func = __FUNCTION__; \
-	st->st_suspended_md_line = __LINE__; \
+	(st)->st_suspended_md = NULL; \
+	(st)->st_suspended_md_func = __FUNCTION__; \
+	(st)->st_suspended_md_line = __LINE__; \
     }
 
 #define set_suspended(st, md) { \
-	passert(st->st_suspended_md == NULL); \
-	st->st_suspended_md = md; \
-	st->st_suspended_md_func = __FUNCTION__; \
-	st->st_suspended_md_line = __LINE__; \
+	passert((st)->st_suspended_md == NULL); \
+	(st)->st_suspended_md = (md); \
+	(st)->st_suspended_md_func = __FUNCTION__; \
+	(st)->st_suspended_md_line = __LINE__; \
     }
 
 /* IKEv2, this struct will be mapped into a ikev2_ts1 payload  */
@@ -518,15 +518,15 @@ extern bool dpd_active_locally(const struct state *st);
  * use these to change state, this gives us a handle on all state changes
  * which is good for tracking bugs, logging and anything else you might like
  */
-#define refresh_state(st) log_state(st, st->st_state)
-#define fake_state(st, new_state) log_state(st, new_state)
+#define refresh_state(st) log_state((st), (st)->st_state)
+#define fake_state(st, new_state) log_state((st), (new_state))
 #define change_state(st, new_state) \
-	do { \
+	{ \
 		if ((new_state) != (st)->st_state) { \
 			log_state((st), (new_state)); \
 			(st)->st_state = (new_state); \
 		} \
-	} while (0)
+	}
 
 extern bool state_busy(const struct state *st);
 

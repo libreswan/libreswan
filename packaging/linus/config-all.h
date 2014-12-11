@@ -70,9 +70,6 @@
 #define CONFIG_KLIPS_ENC_CRYPTOAPI 1
 #endif
 
-#define CONFIG_KLIPS_ALG_CRYPTOAPI #error
-#define CONFIG_KLIPS_ALG_AES #error
-
 /* off by default requires kernel patch */
 #if 0
 # ifndef CONFIG_KLIPS_OCF

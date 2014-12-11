@@ -49,7 +49,7 @@ struct esp;
  *
  *************************************/
 #define IPSEC_ALG_VERSION_QUAD(v)       \
-	(v >> 24), ((v >> 16) & 0xff), ((v >> 8) & 0xff), (v & 0xff)
+	((v) >> 24), (((v) >> 16) & 0xff), (((v) >> 8) & 0xff), ((v) & 0xff)
 /*
  *	Main ipsec_alg objects: "OOPrograming wannabe"
  *	Hierachy (carefully handled with _minimal_ cast'ing):
@@ -172,15 +172,15 @@ int ipsec_alg_esp_encrypt(struct ipsec_sa *sa_p, __u8 *idat, int ilen,
 int ipsec_alg_auth_key_create(struct ipsec_sa *sa_p);
 int ipsec_alg_sa_esp_hash(const struct ipsec_sa *sa_p, const __u8 *espp,
 			  int len, __u8 *hash, int hashlen);
-#define ipsec_alg_sa_esp_update(c, k, l) ipsec_alg_sa_esp_hash(c, k, l, NULL, \
-							       0)
+#define ipsec_alg_sa_esp_update(c, k, l) \
+		ipsec_alg_sa_esp_hash(c, k, l, NULL, 0)
 
 /* only called from ipsec_init.c */
 int ipsec_alg_init(void);
 
 /* algo module glue for static algos */
 void ipsec_alg_static_init(void);
-typedef int (*ipsec_alg_init_func_t) (void);
+typedef int (*ipsec_alg_init_func_t)(void);
 
 /**********************************************
 *
@@ -200,19 +200,19 @@ int ipsec_alg_sa_init(struct ipsec_sa *sa_p);
  */
 int ipsec_alg_sa_wipe(struct ipsec_sa *sa_p);
 
-#define IPSEC_ALG_MODULE_INIT_MOD( func_name )  \
+#define IPSEC_ALG_MODULE_INIT_MOD(func_name )  \
 	static int func_name(void);             \
 	module_init(func_name);                 \
 	static int __init func_name(void)
-#define IPSEC_ALG_MODULE_EXIT_MOD( func_name )  \
+#define IPSEC_ALG_MODULE_EXIT_MOD(func_name )  \
 	static void func_name(void);            \
 	module_exit(func_name);                 \
 	static void __exit func_name(void)
 
-#define IPSEC_ALG_MODULE_INIT_STATIC( func_name )       \
+#define IPSEC_ALG_MODULE_INIT_STATIC(func_name )       \
 	extern int func_name(void);             \
 	int func_name(void)
-#define IPSEC_ALG_MODULE_EXIT_STATIC( func_name )       \
+#define IPSEC_ALG_MODULE_EXIT_STATIC(func_name )       \
 	extern void func_name(void);            \
 	void func_name(void)
 
@@ -238,10 +238,10 @@ typedef void (*__cleanup_module_func_t)(void);
 	static inline __cleanup_module_func_t __cleanup_module_inline(void) \
 	{ return x; }
 #endif
-#define IPSEC_ALG_MODULE_INIT( func_name )      IPSEC_ALG_MODULE_INIT_MOD( \
-		func_name )
-#define IPSEC_ALG_MODULE_EXIT( func_name )      IPSEC_ALG_MODULE_EXIT_MOD( \
-		func_name )
+#define IPSEC_ALG_MODULE_INIT(func_name) \
+		IPSEC_ALG_MODULE_INIT_MOD(func_name)
+#define IPSEC_ALG_MODULE_EXIT(func_name) \
+		IPSEC_ALG_MODULE_EXIT_MOD(func_name)
 
 #else   /* not MODULE */
 #ifndef THIS_MODULE
@@ -252,10 +252,10 @@ typedef void (*__cleanup_module_func_t)(void);
  *	when algo.c file *is THE MODULE*, in all other
  *	cases, initialization is called explicitely from ipsec_alg_init()
  */
-#define IPSEC_ALG_MODULE_INIT( func_name )      IPSEC_ALG_MODULE_INIT_STATIC( \
-		func_name)
-#define IPSEC_ALG_MODULE_EXIT( func_name )      IPSEC_ALG_MODULE_EXIT_STATIC( \
-		func_name)
+#define IPSEC_ALG_MODULE_INIT(func_name) \
+		IPSEC_ALG_MODULE_INIT_STATIC(func_name)
+#define IPSEC_ALG_MODULE_EXIT(func_name) \
+		IPSEC_ALG_MODULE_EXIT_STATIC(func_name)
 #endif
 
 #endif /* IPSEC_ALG_H */

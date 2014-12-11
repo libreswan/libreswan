@@ -13,7 +13,7 @@ typedef int (*socket_fn)(int, int, int);
 static socket_fn real_socket = NULL;
 static int saref = 0;
 #define UNASSIGNED_SAREF 0
-#define INVALID_SAREF -1
+#define INVALID_SAREF (-1)
 
 int socket(int domain, int type, int protocol)
 {

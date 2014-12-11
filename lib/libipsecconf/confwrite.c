@@ -401,7 +401,7 @@ static void confwrite_conn(FILE *out,
 		    struct starter_conn *conn)
 {
 	/* short-cut for writing out a field (string-valued, indented, on its own line) */
-#	define cwf(name, value)	do fprintf(out, "\t" name "=%s\n", (value)); while (0)
+#	define cwf(name, value)	{ fprintf(out, "\t" name "=%s\n", (value)); }
 
 	fprintf(out, "# begin conn %s\n", conn->name);
 
@@ -469,8 +469,8 @@ static void confwrite_conn(FILE *out,
 		/* short-cuts for writing out a field that is a policy bit.
 		 * cwpbf flips the sense of teh bit.
 		 */
-#		define cwpb(name, p)  do cwf(name, noyes[(conn->policy & (p)) != LEMPTY]); while (0)
-#		define cwpbf(name, p)  do cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); while (0)
+#		define cwpb(name, p)  { cwf(name, noyes[(conn->policy & (p)) != LEMPTY]); }
+#		define cwpbf(name, p)  { cwf(name, noyes[(conn->policy & (p)) == LEMPTY]); }
 
 		switch (shunt_policy) {
 		case POLICY_SHUNT_TRAP:

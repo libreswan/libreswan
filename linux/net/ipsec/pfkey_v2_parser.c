@@ -79,7 +79,7 @@
 #include "libreswan/ipsec_alg.h"
 #include "libreswan/ipsec_kversion.h"
 
-#define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
+#define SENDERR(_x) { error = -(_x); goto errlab; }
 
 struct sklist_t {
 	struct socket *sk;

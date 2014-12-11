@@ -144,6 +144,13 @@ extern void show_setup_natt(void);
 /* should really be in libaudit.h */
 #define AUDIT_RESULT_FAIL 0
 #define AUDIT_RESULT_OK 1
+#ifndef AUDIT_CRYPTO_IKE_SA
+# define AUDIT_CRYPTO_IKE_SA 2408
+#endif
+#ifndef AUDIT_CRYPTO_IPSEC_SA
+# define AUDIT_CRYPTO_IPSEC_SA 2409
+#endif
+
 enum linux_audit_kind {
         LAK_PARENT_START,
         LAK_CHILD_START,
@@ -152,8 +159,7 @@ enum linux_audit_kind {
 };
 extern void linux_audit_init();
 extern void linux_audit(const int type, const char *message,
-			const char *remoteid, const char *addr,
-			const int result);
+			const char *addr, const int result);
 extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
 #endif
 

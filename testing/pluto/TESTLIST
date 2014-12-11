@@ -125,6 +125,8 @@ kvmplutotest	ikev2-allow-narrow-07			good
 kvmplutotest	ikev2-no-nhelpers-01			good
 kvmplutotest	pluto-ipcmp-01	good
 
+kvmplutotest	ikev1-connswitch-ports-01	wip
+
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
 ctltest	pluto-unit-01	good
@@ -217,7 +219,8 @@ kvmplutotest	delete-sa-01	good
 
 kvmplutotest	delete-state-01 good
 
-#
+kvmplutotest	ikev1-rekey-connswitch	wip
+
 # oe-snat-01 - do Source address NAT and then OE
 #
 # OE TEMP DISABLED umlplutotest	oe-snat-01	good

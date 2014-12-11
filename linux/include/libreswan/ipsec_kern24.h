@@ -49,9 +49,9 @@ static inline void random_ether_addr(u8 *addr)
 #define sk_stamp          stamp
 #define sk_socket         socket
 #define sk_sndbuf         sndbuf
-#define sock_flag(sk, flag)  sk->dead
-#define sk_for_each(sk, node, plist) for (sk = *plist; sk != NULL; \
-					  sk = sk->next)
+#define sock_flag(sk, flag)  ((sk)->dead)
+#define sk_for_each(sk, node, plist) \
+	for ((sk) = *(plist); (sk) != NULL; (sk) = (sk)->next)
 
 /* deal with 2.4 vs 2.6 issues with module counts */
 

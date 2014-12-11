@@ -423,8 +423,8 @@
 						 dst_release((s)->dst); \
 					 (s)->dst = NULL; \
 				 })
-# define skb_dst_set(s, p)       (s)->dst = (p)
-# define skb_dst(s)             (s)->dst
+# define skb_dst_set(s, p)       ((s)->dst = (p))
+# define skb_dst(s)             ((s)->dst)
 #endif
 
 /* The SLES10 kernel is known to not have these defines */

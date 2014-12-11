@@ -79,7 +79,7 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc, u_int8_t *buf,
 /* macros to manipulate IVs in state */
 
 #define update_iv(st)	{ \
-	passert(st->st_new_iv_len <= sizeof(st->st_iv)); \
+	passert((st)->st_new_iv_len <= sizeof((st)->st_iv)); \
 	(st)->st_iv_len = (st)->st_new_iv_len; \
 	memcpy((st)->st_iv, (st)->st_new_iv, (st)->st_new_iv_len); \
     }

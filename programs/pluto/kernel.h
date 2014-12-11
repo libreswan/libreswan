@@ -75,8 +75,8 @@ enum eroute_type {
 	ET_INT   = SA_INT,      /* (61)  internal type */
 	ET_IPIP  = SA_IPIP,     /* (4)   turn on tunnel type */
 };
-#define esatype2proto(X) (int)X
-#define proto2esatype(X) (enum eroute_type)X
+#define esatype2proto(X) ((int)(X))
+#define proto2esatype(X) ((enum eroute_type)(X))
 
 struct kernel_sa {
 	const ip_address *src;

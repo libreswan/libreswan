@@ -112,8 +112,8 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
 		st->st_maxsz = size;
 	return ptr;
 }
-#define ALLOC_BYTES_ST(z, s, st) alloc_bytes_st(z, s, &st);
-#define PFREE_ST(p, st)         do { st.st_curr_cnt--; pfree(p);  } while (0);
+#define ALLOC_BYTES_ST(z, s, st) alloc_bytes_st(z, s, &(st));
+#define PFREE_ST(p, st)         { st.st_curr_cnt--; pfree(p);  }
 
 #else /* NO_DB_OPS_STATS */
 
