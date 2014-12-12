@@ -530,6 +530,7 @@
 #ifdef alloc_netdev
 # if LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0)
 #  define ipsec_alloc_netdev(a,b,c,d) alloc_netdev(a,b,c,d)
+typedef struct ctl_table ctl_table;
 # else
 #  define ipsec_alloc_netdev(a,b,c,d) alloc_netdev(a,b,d)
 # endif
