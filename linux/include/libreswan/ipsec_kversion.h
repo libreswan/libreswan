@@ -372,6 +372,7 @@
 # define HAVE_NAMESPACES
 #endif
 
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)
 # define ip_chk_addr(a) inet_addr_type(&init_net, a)
 # define l_inet_addr_type(a)    inet_addr_type(&init_net, a)
@@ -524,6 +525,14 @@
 # define        HAVE_NETDEV_PRIV
 # define        HAVE_NET_DEVICE_OPS
 # define        HAVE_NETIF_QUEUE
+#endif
+
+#ifdef alloc_netdev
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0)
+#  define ipsec_alloc_netdev(a,b,c,d) alloc_netdev(a,b,c,d)
+# else
+#  define ipsec_alloc_netdev(a,b,c,d) alloc_netdev(a,b,d)
+# endif
 #endif
 
 #if !defined(DEFINE_RWLOCK)

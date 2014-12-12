@@ -887,11 +887,11 @@ int ipsec_mast_probe(struct net_device *dev)
 	dev->set_mac_address    = NULL;
 	dev->neigh_setup        = ipsec_mast_neigh_setup_dev;
 #endif
-#ifdef alloc_netdev
+#ifdef ipsec_alloc_netdev
 	dev->destructor         = free_netdev;
 #endif
 
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 	dev->priv = kmalloc(sizeof(struct mastpriv), GFP_KERNEL);
 	if (dev->priv == NULL)
 		return -ENOMEM;
@@ -931,7 +931,7 @@ int ipsec_mast_probe(struct net_device *dev)
 	return 0;
 }
 
-#ifdef alloc_netdev
+#ifdef ipsec_alloc_netdev
 static void ipsec_mast_netdev_setup(struct net_device *dev)
 {
 }
@@ -970,9 +970,9 @@ int ipsec_mast_createnum(int vifnum)
 
 	snprintf(name, IFNAMSIZ, MAST_DEV_FORMAT, vifnum);
 
-#ifdef alloc_netdev
-	im = alloc_netdev(sizeof(struct mastpriv), name,
-			  ipsec_mast_netdev_setup);
+#ifdef ipsec_alloc_netdev
+	im = ipsec_alloc_netdev(sizeof(struct mastpriv), name,
+			  NET_NAME_UNKNOWN, ipsec_mast_netdev_setup);
 #else
 	im = (struct net_device *)kmalloc(sizeof(struct net_device),
 					  GFP_KERNEL);
@@ -983,7 +983,7 @@ int ipsec_mast_createnum(int vifnum)
 		return -ENOMEM;
 	}
 
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 	memset((caddr_t)im, 0, sizeof(struct net_device));
 	memcpy(im->name, name, IFNAMSIZ);
 #endif
@@ -1024,7 +1024,7 @@ int ipsec_mast_deletenum(int vifnum)
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
 	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 	kfree(dev_ipsec->priv);
 	dev_ipsec->priv = NULL;
 #endif
@@ -1091,7 +1091,7 @@ int ipsec_mast_cleanup_devices(void)
 			mastdevices[i] = NULL;
 			ipsec_dev_put(dev_mast);
 			unregister_netdev(dev_mast);
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 			kfree(dev_mast->priv);
 			dev_mast->priv = NULL;
 #endif
