@@ -64,11 +64,11 @@ Requires: nss-tools, nss-softokn
 Requires: iproute >= 2.6.8
 
 %description
-Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is 
+Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is
 the Internet Protocol Security and uses strong cryptography to provide
 both authentication and encryption services.  These services allow you
 to build secure tunnels through untrusted networks.  Everything passing
-through the untrusted net is encrypted by the ipsec gateway machine and 
+through the untrusted net is encrypted by the ipsec gateway machine and
 decrypted by the gateway at the other end of the tunnel.  The resulting
 tunnel is a virtual private network or VPN.
 
@@ -144,9 +144,18 @@ FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
 install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
-# used when setting --perpeerlog without --perpeerlogbase 
+# used when setting --perpeerlog without --perpeerlogbase
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
+
+install -d %{buildroot}%{_sysconfdir}/sysctl.d
+install -m 0644 packaging/fedora/libreswan-sysctl.conf \
+  %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
+
+install -d %{buildroot}%{_tmpfilesdir}
+install -m 0644 packaging/fedora/libreswan-tmpfiles.conf  \
+  %{buildroot}%{_tmpfilesdir}/libreswan.conf
+
 
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
@@ -157,7 +166,7 @@ install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}
 echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 
-%files 
+%files
 %doc CHANGES COPYING CREDITS README* LICENSE
 %doc docs/*.* docs/examples
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
@@ -168,8 +177,10 @@ rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_localstatedir}/run/pluto
+%attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
@@ -189,7 +200,7 @@ rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 %postun
 %systemd_postun_with_restart ipsec.service
 
-%post 
+%post
 %systemd_post ipsec.service
 if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
      ! -f %{_sysconfdir}/ipsec.d/cert9.db ] ; then

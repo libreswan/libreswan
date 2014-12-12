@@ -67,6 +67,10 @@
 # define IP_SELECT_IDENT_NEW
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(3,15,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,17)
 # define IP_SELECT_IDENT_NEW
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(3,14,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,13,11)
+# define IP_SELECT_IDENT_NEW
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(3,13,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,12,0)
+# define IP_SELECT_IDENT_NEW
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(3,11,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,10,53)
 # define IP_SELECT_IDENT_NEW
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(3,5,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,103)
@@ -74,6 +78,7 @@
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(3,3,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,2,63)
 # define IP_SELECT_IDENT_NEW
 #endif
+
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
 # define SK_FOR_EACH(a,c) sk_for_each(a,c)
@@ -372,6 +377,7 @@
 # define HAVE_NAMESPACES
 #endif
 
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25)
 # define ip_chk_addr(a) inet_addr_type(&init_net, a)
 # define l_inet_addr_type(a)    inet_addr_type(&init_net, a)
@@ -423,8 +429,8 @@
 						 dst_release((s)->dst); \
 					 (s)->dst = NULL; \
 				 })
-# define skb_dst_set(s, p)       (s)->dst = (p)
-# define skb_dst(s)             (s)->dst
+# define skb_dst_set(s, p)       ((s)->dst = (p))
+# define skb_dst(s)             ((s)->dst)
 #endif
 
 /* The SLES10 kernel is known to not have these defines */
@@ -524,6 +530,15 @@
 # define        HAVE_NETDEV_PRIV
 # define        HAVE_NET_DEVICE_OPS
 # define        HAVE_NETIF_QUEUE
+#endif
+
+#ifdef alloc_netdev
+# if LINUX_VERSION_CODE >= KERNEL_VERSION(3,17,0)
+#  define ipsec_alloc_netdev(a,b,c,d) alloc_netdev(a,b,c,d)
+typedef struct ctl_table ctl_table;
+# else
+#  define ipsec_alloc_netdev(a,b,c,d) alloc_netdev(a,b,d)
+# endif
 #endif
 
 #if !defined(DEFINE_RWLOCK)

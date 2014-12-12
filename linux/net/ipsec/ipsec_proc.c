@@ -120,7 +120,7 @@ int sysctl_ipsec_debug_ipcomp = 0;
 int sysctl_ipsec_icmp = 0;
 int sysctl_ipsec_tos = 1; /* hide per default, unless hidetos=no */
 
-#define DECREMENT_UNSIGNED(X, amount) ((amount < (X)) ? (X)-amount : 0)
+#define DECREMENT_UNSIGNED(X, amount) (((X) >= (amount)) ? (X) - (amount) : 0)
 
 #ifdef CONFIG_KLIPS_ALG
 extern int ipsec_xform_show(struct seq_file *seq, void *offset);

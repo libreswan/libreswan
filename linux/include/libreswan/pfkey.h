@@ -148,11 +148,11 @@ struct key_opt {
 #define BITS_PER_OCTET 8
 #define OCTETBITS 8
 #define PFKEYBITS 64
-#define DIVUP(x, y) ((x + y - 1) / y)   /* divide, rounding upwards */
-#define ALIGN_N(x, y) (DIVUP(x, y) * y) /* align on y boundary */
+#define DIVUP(x, y) (((x) + (y) - 1) / (y))   /* divide, rounding upwards */
+#define ALIGN_N(x, y) (DIVUP((x), (y)) * (y)) /* align on y boundary */
 
 #define IPSEC_PFKEYv2_LEN(x)   ((x) * IPSEC_PFKEYv2_ALIGN)
-#define IPSEC_PFKEYv2_WORDS(x) (DIVUP(x, IPSEC_PFKEYv2_ALIGN))
+#define IPSEC_PFKEYv2_WORDS(x) (DIVUP((x), IPSEC_PFKEYv2_ALIGN))
 
 #define PFKEYv2_MAX_MSGSIZE 4096
 

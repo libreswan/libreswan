@@ -33,12 +33,14 @@
  * locked it if we don't already have the tdb_lock
  */
 
+/* ??? what's with the dangling else? */
 #define LOCK_PRNG() \
 	int ul = 0; \
 	if (spin_trylock_bh(&tdb_lock)) { \
 		ul = 1; \
 	} else
 
+/* ??? what's with the dangling else? */
 #define UNLOCK_PRNG() \
 	if (ul) { \
 		ul = 0; \

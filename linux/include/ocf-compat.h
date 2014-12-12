@@ -54,6 +54,7 @@ typedef struct {
 	int (*cryptodev_kprocess)(device_t dev, struct cryptkop *krp,
 				  int hint);
 } device_method_t;
+/* ??? DEVMETHOD isn't used in our code base.  And it looks funny. */
 #define DEVMETHOD(id, func)     id : func
 
 struct ocf_device {
@@ -82,6 +83,7 @@ struct ocf_device {
 	struct ocf_device _device; \
 	device_t
 
+/* ??? softc_device_init's definition sure looks funny. Not used in our code base. */
 #define softc_device_init(_sc, _name, _unit, _methods) \
 	if (1) { \
 		strncpy((_sc)->_device.name, _name, \
@@ -159,6 +161,7 @@ struct ocf_device {
 #undef printf
 #define printf(fmt ...)  printk(fmt)
 
+/* ??? what's with the dangling else? */
 #define KASSERT(c, p)    if (!(c)) { printk p; } else
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0)

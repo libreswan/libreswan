@@ -47,7 +47,7 @@
 /* bmc@telebase and others have suggested these macros if a box *does* have
    rand48.  Will consider for later if we're doing something that really
    requires stronger random numbers, but netcat and such certainly doesn't.
-   #define srandom(seed) srand48((long) seed)
+   #define srandom(seed) srand48((long) (seed))
  #define random()      lrand48() */
 
 /* if your machine doesn't have lstat(), it should have stat() [dos...] */

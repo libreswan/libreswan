@@ -92,8 +92,8 @@ static char *rj_zeroes, *rj_ones;
 #ifdef Bcmp
 # undef Bcmp
 #endif /* Bcmp */
-#define Bcmp(a, b, l) (l == \
-		       0 ? 0 : memcmp((caddr_t)(b), (caddr_t)(a), (size_t)l))
+#define Bcmp(a, b, l) \
+	((l) == 0 ? 0 : memcmp((caddr_t)(b), (caddr_t)(a), (size_t)(l)))
 /*
  * The data structure for the keys is a radix tree with one way
  * branching removed.  The index rj_b at an internal node n represents a bit

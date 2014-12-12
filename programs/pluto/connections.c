@@ -3024,7 +3024,7 @@ static bool is_virtual_net_used(struct connection *c,
 
 #define PATH_WEIGHT 1
 #define WILD_WEIGHT (MAX_CA_PATH_LEN + 1)
-#define PRIO_WEIGHT (MAX_WILDCARDS + 1) * WILD_WEIGHT
+#define PRIO_WEIGHT ((MAX_WILDCARDS + 1) * WILD_WEIGHT)
 
 /* fc_try: a helper function for find_client_connection */
 static struct connection *fc_try(const struct connection *c,
@@ -3507,9 +3507,9 @@ static void show_one_sr(struct connection *c,
 	 * to know
 	 */
 #define COMBO(END, SERVER, CLIENT) \
-	(END.SERVER ? \
-		(END.CLIENT ? "BOTH??" : "server") : \
-		(END.CLIENT ? "client" : "none"))
+	((END).SERVER ? \
+		((END).CLIENT ? "BOTH??" : "server") : \
+		((END).CLIENT ? "client" : "none"))
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   xauth info: us:%s, them:%s, %s my_xauthuser=%s; their_xauthuser=%s",

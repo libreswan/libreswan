@@ -2007,7 +2007,7 @@ int ipsec_tunnel_init(struct net_device *dev)
 		    (unsigned long) sizeof(struct ipsecpriv),
 		    dev->name ? dev->name : "NULL");
 
-#ifdef alloc_netdev
+#ifdef ipsec_alloc_netdev
 	dev->destructor         = free_netdev;
 #endif
 
@@ -2076,7 +2076,7 @@ int ipsec_tunnel_probe(struct net_device *dev)
 	return 0;
 }
 
-#ifdef alloc_netdev
+#ifdef ipsec_alloc_netdev
 static void ipsec_tunnel_netdev_setup(struct net_device *dev)
 {
 }
@@ -2108,9 +2108,9 @@ int ipsec_tunnel_createnum(int ifnum)
 		    ifnum);
 
 	sprintf(name, IPSEC_DEV_FORMAT, ifnum);
-#ifdef alloc_netdev
+#ifdef ipsec_alloc_netdev
 	dev_ipsec = alloc_netdev(sizeof(struct ipsecpriv), name,
-				 ipsec_tunnel_netdev_setup);
+				 NET_NAME_UNKNOWN, ipsec_tunnel_netdev_setup);
 #else
 	dev_ipsec = (struct net_device*)kmalloc(sizeof(struct net_device),
 						GFP_KERNEL);
@@ -2121,13 +2121,13 @@ int ipsec_tunnel_createnum(int ifnum)
 		       name);
 		return -ENOMEM;
 	}
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 	memset((caddr_t)dev_ipsec, 0, sizeof(struct net_device));
 	strncpy(dev_ipsec->name, name, sizeof(dev_ipsec->name));
 #ifdef PAUL_FIXME
 	dev_ipsec->next = NULL;
 #endif
-#endif  /* alloc_netdev */
+#endif  /* ipsec_alloc_netdev */
 #ifndef USE_NETDEV_OPS
 	dev_ipsec->init = &ipsec_tunnel_probe;
 #else
@@ -2196,10 +2196,10 @@ int ipsec_tunnel_deletenum(int vifnum)
 	KLIPS_PRINT(debug_tunnel, "Unregistering %s\n", dev_ipsec->name);
 	unregister_netdev(dev_ipsec);
 	KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 	kfree(dev_ipsec->priv);
 	dev_ipsec->priv = NULL;
-#endif  /* alloc_netdev */
+#endif  /* ipsec_alloc_netdev */
 
 	return 0;
 }
@@ -2239,10 +2239,10 @@ int ipsec_tunnel_cleanup_devices(void)
 			    dev_ipsec->name);
 		unregister_netdev(dev_ipsec);
 		KLIPS_PRINT(debug_tunnel, "Unregisted %s\n", dev_ipsec->name);
-#ifndef alloc_netdev
+#ifndef ipsec_alloc_netdev
 		kfree(dev_ipsec->priv);
 		dev_ipsec->priv = NULL;
-#endif          /* alloc_netdev */
+#endif          /* ipsec_alloc_netdev */
 	}
 
 #ifdef HAVE_UDP_ENCAP_CONVERT

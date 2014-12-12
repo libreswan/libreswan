@@ -86,6 +86,7 @@ struct ipsec_sadb ipsec_sadb;
 /* the sub table must be narrower (or equal) in bits than the variable type
    in the main table to count the number of unused entries in it. */
 typedef struct {
+	/* kind of compile-time, but not preprocessor time, assertion */
 	int testSizeOf_refSubTable :
 	((sizeof(IPsecRefTableUnusedCount) * 8) <
 	 IPSEC_SA_REF_SUBTABLE_IDX_WIDTH ? -1 : 1);
@@ -94,6 +95,7 @@ typedef struct {
 /* The field where the saref will be hosted in the skb must be wide enough to
    accomodate the information it needs to store. */
 typedef struct {
+	/* kind of compile-time, but not preprocessor time, assertion */
 	int testSizeOf_refField :
 	(IPSEC_SA_REF_HOST_FIELD_WIDTH <
 	 IPSEC_SA_REF_TABLE_IDX_WIDTH ? -1 : 1 );

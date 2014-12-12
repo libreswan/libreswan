@@ -198,7 +198,7 @@ unsigned char o_tos = 0;
 /* Debug macro: squirt whatever message and sleep a bit so we can see it go
    by.  need to call like Debug ((stuff)) [with no ; ] so macro args match!
    Beware: writes to stdOUT... */
-#define Debug(x) printf x; printf("\n"); fflush(stdout); sleep(1);
+#define Debug(x) { printf x; printf("\n"); fflush(stdout); sleep(1); }
 
 /* support routines -- the bulk of this thing.  Placed in such an order that
    we don't have to forward-declare anything: */

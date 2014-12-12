@@ -88,7 +88,9 @@ void ike_alg_show_status(void)
 			  enum_name(&oakley_hash_names, algo->algo_id),
 			  ((struct hash_desc *)algo)->hash_digest_len);
 	}
-#define IKE_DH_ALG_FOR_EACH(idx) for (idx = 0; idx != oakley_group_size; idx++)
+
+#define IKE_DH_ALG_FOR_EACH(idx) for ((idx) = 0; (idx) != oakley_group_size; (idx)++)
+
 	IKE_DH_ALG_FOR_EACH(i) {
 		const struct oakley_group_desc *gdesc = oakley_group + i;
 

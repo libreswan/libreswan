@@ -403,15 +403,15 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 	    DBG_log("  so %ssend cert.", send_cert ? "" : "do not "));
 
 	if (!send_cert) {
-		if (auth == OAKLEY_PRESHARED_KEY)
-			DBG(DBG_CONTROL,
-			    DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)"));
-		else if (certtype == CERT_NONE)
-			DBG(DBG_CONTROL,
-			    DBG_log("I did not send a certificate because I do not have one."));
-		else if (policy == cert_sendifasked)
-			DBG(DBG_CONTROL,
-			    DBG_log("I did not send my certificate because I was not asked to."));
+		DBG(DBG_CONTROL, {
+			if (auth == OAKLEY_PRESHARED_KEY)
+				DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)");
+			else if (certtype == CERT_NONE)
+				DBG_log("I did not send a certificate because I do not have one.");
+			else if (policy == cert_sendifasked)
+				DBG_log("I did not send my certificate because I was not asked to.");
+			/* ??? should there be an additional else catch-all? */
+		});
 	}
 }
 

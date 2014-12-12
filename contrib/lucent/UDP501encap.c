@@ -27,11 +27,11 @@ RJZ - LNX UDP501 # cat UDP501encap.c
 #define BOOL int
 
 #define DstPort 501
-	 #define DstPortHi DstPort >> 8
-	 #define DstPortLo DstPort & 0x00FF
+	 #define DstPortHi (DstPort >> 8)
+	 #define DstPortLo (DstPort & 0x00FF)
 #define SrcPort 501
-	 #define SrcPortHi SrcPort >> 8
-	 #define SrcPortLo SrcPort & 0x00FF
+	 #define SrcPortHi (SrcPort >> 8)
+	 #define SrcPortLo (SrcPort & 0x00FF)
 
 typedef unsigned short u16;
 typedef unsigned long u32;

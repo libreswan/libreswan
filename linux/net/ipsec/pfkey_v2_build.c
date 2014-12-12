@@ -67,7 +67,7 @@
 #include "libreswan/ipsec_sa.h"  /* IPSEC_SAREF_NULL, IPSEC_SA_REF_TABLE_IDX_WIDTH */
 #include "libreswan/pfkey_debug.h"
 
-#define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
+#define SENDERR(_x) { error = -(_x); goto errlab; }
 
 void pfkey_extensions_init(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
 {
@@ -276,9 +276,8 @@ int pfkey_sa_builds(struct sadb_ext **pfkey_ext,
 		SENDERR(EINVAL);
 	}
 
-	if ((IPSEC_SAREF_NULL != sab.sa_base.sadb_x_sa_ref) &&
-	    (sab.sa_base.sadb_x_sa_ref >=
-	     (1 << IPSEC_SA_REF_TABLE_IDX_WIDTH))) {
+	if (IPSEC_SAREF_NULL != sab.sa_base.sadb_x_sa_ref &&
+	    sab.sa_base.sadb_x_sa_ref >= (1 << IPSEC_SA_REF_TABLE_IDX_WIDTH)) {
 		DEBUGGING(PF_KEY_DEBUG_BUILD,
 			  "pfkey_sa_build: "
 			  "SAref=%d must be (SAref == IPSEC_SAREF_NULL(%d) || SAref < IPSEC_SA_REF_TABLE_NUM_ENTRIES(%d)).\n",
