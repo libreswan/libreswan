@@ -2,9 +2,6 @@
 PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/freebsd/include -isystem /usr/local/include
 PORTDEFINE+=-DHAS_SUN_LEN -DNEED_SIN_LEN
 
-TCLLIB=-ltcl8.4
-TCLINC=-isystem /usr/local/include/tcl8.4
-
 # no KLIPS, we will be using FreeBSD copy of pfkey code.
 USE_MAST=false
 USE_KLIPS=false

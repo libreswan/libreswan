@@ -4,10 +4,6 @@ USERCOMPILE+=-mcygwin -D__CYGWIN__ -D__CYGWIN32__
 USERLINK=-mcygwin 
 OSDEP=cygwin
 
-# no special settings needed for tcl.
-TCLLIB=/usr/local/tcl8.3/lib/libtcl83s.a
-TCLINC=-I/usr/local/tcl8.3/include -DSTATIC_BUILD #-DUSE_TCL_STUBS
-
 USE_KLIPS=false
 USE_NETKEY=false
 USE_WIN2K=true
