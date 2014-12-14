@@ -17,7 +17,17 @@ set -ue
 # capture path to my script as anchor for $me.dumb-cert-fragment
 me=`readlink -f $0`
 
-cd ~/libreswan/testing/pluto
+# be flexible about current directory
+if [ -f TESTLIST -a TESTLIST -ef ../../testing/pluto/TESTLIST ] ; then
+	# we're where we need to be
+	:
+elif [ -f pluto/TESTLIST -a pluto/TESTLIST -ef ../testing/pluto/TESTLIST ] ; then
+	cd pluto
+elif [ -f testing/pluto/TESTLIST ] ; then
+	cd testing/pluto
+else
+	echo $me: not in correct directory
+fi
 
 export preprocess=""
 
@@ -67,9 +77,9 @@ commontest() {
 
 	if [ ! -f "$testname/OUTPUT/RESULT" ] ; then
 		result=none
-	elif grep '"result":"passed"' "$testname/OUTPUT/RESULT" >/dev/null ; then
+	elif grep '"result": *"passed"' "$testname/OUTPUT/RESULT" >/dev/null ; then
 		result=good
-	elif grep '"result":"failed"' "$testname/OUTPUT/RESULT" >/dev/null ; then
+	elif grep '"result": *"failed"' "$testname/OUTPUT/RESULT" >/dev/null ; then
 		result=bad
 		for i in west east north road ; do
 			if [ ! -f "$testname/OUTPUT/$i.console.diff" ] ; then
