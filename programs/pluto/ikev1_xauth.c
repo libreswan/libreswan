@@ -791,7 +791,7 @@ stf_status xauth_send_request(struct state *st)
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
-		event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0 * 3,
+		event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0,
 			       st);
 	}
 
