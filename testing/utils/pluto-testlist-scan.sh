@@ -26,7 +26,8 @@ elif [ -f pluto/TESTLIST -a pluto/TESTLIST -ef ../testing/pluto/TESTLIST ] ; the
 elif [ -f testing/pluto/TESTLIST ] ; then
 	cd testing/pluto
 else
-	echo $me: not in correct directory
+	echo "$me: not in correct directory" >&2
+	exit 1
 fi
 
 export preprocess=""
