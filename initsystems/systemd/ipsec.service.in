@@ -16,7 +16,7 @@ EnvironmentFile=-@FINALSYSCONFDIR@/sysconfig/pluto
 ExecStartPre=@FINALLIBEXECDIR@/addconn --config @FINALCONFFILE@ --checkconfig
 ExecStartPre=@FINALLIBEXECDIR@/_stackmanager start
 ExecStartPre=@FINALSBINDIR@/ipsec --checknss
-ExecStart=@BINSH@ -c 'eval `@FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS`'
+ExecStart=@FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS
 ExecStop=@FINALLIBEXECDIR@/whack --shutdown
 ExecStopPost=/sbin/ip xfrm policy flush
 ExecStopPost=/sbin/ip xfrm state flush
@@ -24,5 +24,3 @@ ExecReload=@FINALLIBEXECDIR@/whack --listen
 
 [Install]
 WantedBy=multi-user.target
-Alias=libreswan.service
-Alias=pluto.service

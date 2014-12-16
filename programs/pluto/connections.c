@@ -833,57 +833,60 @@ static bool load_end_certificate(const char *name, struct end *dst)
 
 static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
 {
-	x509cert_t *ac = x509_get_authcerts_chain();
-	x509cert_t *new = NULL, *iac = NULL;
-	char ibuf[ASN1_BUF_LEN], tbuf[ASN1_BUF_LEN];
+	x509cert_t *ac;
+	x509cert_t **tip = &dst->ca_path.u.x509;
 
-	zero(&dst->ca_path);
 	dst->ca_path.ty = CERT_NONE;
+	dst->ca_path.u.x509 = NULL;
 
 	/* don't load a ca_path */
 	if (issuer_dn.ptr == NULL || issuer_dn.len < 1)
 		return;
 
-	/* find the issuing cert */
-	while (ac != NULL) {
-		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags &&
-					!same_dn(ac->issuer, ac->subject)) { /* no root CA!*/
-			new = clone_thing(*ac, "x509cert_t");
-			new->next = NULL;
-			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
-			DBG(DBG_X509, DBG_log("load_end_ca_path : end cert issuer is %s",
-									ibuf));
+	/* find the issuing cert (if any) */
+	/* ??? is != AUTH_NONE the right test? */
+	for (ac = x509_get_authcerts_chain(); ac != NULL; ac = ac->next) {
+		if (same_dn(issuer_dn, ac->subject) &&
+		    ac->authority_flags != AUTH_NONE &&
+		    !same_dn(ac->issuer, ac->subject)) {
+			/* no root CA! */
+			dst->ca_path.ty = CERT_X509_SIGNATURE;
 			break;
 		}
-		ac = ac->next;
 	}
-	/* starting with the issuer's CA copy the path down */
-	if (new != NULL) {
-		dst->ca_path.ty = CERT_X509_SIGNATURE;
-		dst->ca_path.u.x509 = new;
 
-		while ((iac = get_authcert(new->issuer,
-					   new->authKeySerialNumber,
-					   new->authKeyID, AUTH_CA)) != NULL) {
-			x509cert_t *rootcheck = NULL;
+	/* copy chain of issuing cert and its ancestor CAs */
+	while (ac != NULL) {
+		x509cert_t *next = get_authcert(ac->issuer,
+					 ac->authKeySerialNumber,
+					 ac->authKeyID, AUTH_CA);
+		x509cert_t *new;
 
-			rootcheck = get_authcert(iac->issuer,
-					         iac->authKeySerialNumber,
-						 iac->authKeyID, AUTH_CA);
+		/*
+		 * If there is a next and it has the same subject,
+		 * we're done.
+		 * ??? why?
+		 * ??? it is possible to have an empty copy chain.
+		 */
+		if (next != NULL &&
+		    same_dn(ac->subject, next->subject))
+			break;
 
-			/* root cert is next, but we don't want it in the chain */
-			if (rootcheck != NULL && (same_dn(iac->subject,
-							  rootcheck->subject)))
-				break;
+		/* copy *ac to tip of our chain */
+		new = clone_thing(*ac, "x509cert_t");
+		DBG(DBG_X509, {
+			char ibuf[ASN1_BUF_LEN];
+			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
+			DBG_log("load_end_ca_path: adding cert %s to chain",
+				ibuf);
+		});
 
-			dntoa(tbuf, ASN1_BUF_LEN, iac->subject);
-			DBG(DBG_X509, DBG_log("load_end_ca_path : adding %s to chain",
-						tbuf));
-			new->next = clone_thing(*iac, "x509cert_t");
-			new = new->next;
-			new->next = NULL;
-		}
+		*tip = new;
+		tip = &new->next;
+
+		ac = next;
 	}
+	*tip = NULL;
 }
 
 static bool extract_end(struct end *dst, const struct whack_end *src,

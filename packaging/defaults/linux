@@ -11,9 +11,6 @@ MODULE_FLAGS:=KLIPSMODULE=true -f ${MODULE_DEFCONFIG}
 PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/linux/include 
 PORTDEFINE=-DSCANDIR_HAS_CONST
 
-TCLLIB=-ltcl8.4
-TCLINC=-isystem /usr/include/tcl8.4
-
 # include KLIPS support
 USE_KLIPS?=true
 

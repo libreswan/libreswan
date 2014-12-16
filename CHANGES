@@ -1,6 +1,24 @@
 
 See also https://libreswan.org/
 
+v3.13 (unreleased)
+* IKEv2: whack and smc related time out fixes [Antony]
+* IKEv2: do not pad IKE messages (fix interop w. InsideSecure) [Paul]
+* IKEv2: Fix esp=camellia to use the IKEv2 IANA registry number for ESP [Paul]
+* IKEv2: Fix memory leaks in addresspool and child exchange sadb [Antony]
+* IKEv1: Don't copy isakmp_sa from received packet [Paul]
+* XAUTH: retransmit user/password request in 10s (instead of 30s) [Wolfgang]
+* pluto: major tidy of labeled ipsec code [Hugh]
+* pluto: fixes for uninitialized fields in output struct [Hugh/Paul]
+* pluto: audit format and log item update as per audit spec [Paul]
+* libipsecconf: Improve parser for pipe case (with NM) [Hugh/Lubomir Rintel]
+* readwriteconf: improve error handling [Hugh]
+* packaging: Various SPEC file fixes [Tuomo/Kim]
+* testing: docker test type support [Antony]
+* testing: test case updates/additions [Antony/Paul]
+* KLIPS: Support for kernel 3.17 [David/Paul]
+* NETKEY: Increase netlink message buffer for larger SElinux labels [Paul]
+
 v3.12 (November 6, 2014)
 * IKEv2: CP payload now installs internal address and dns [Antony]
 * IKEv2: Don't try to decrypt if DH is incomplete [Antony]

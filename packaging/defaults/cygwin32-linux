@@ -8,9 +8,6 @@ USERCOMPILE+=-mcygwin -D__CYGWIN__ -D__CYGWIN32__
 USERLINK=-L/0g/sandboxes/cygwin/lib -mcygwin 
 OSDEP=cygwin
 
-TCLLIB=-L/0g/sandboxes/cygwin/lib -ltcl84
-TCLINC=-I/0g/sandboxes/cygwin/tcl/include
-
 PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/win2k/include 
 
 USE_KLIPS=false

@@ -50,8 +50,9 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 #include "spdb.h"
+#include "spdb_print.h"
 
-static void print_sa_attr_oakley(struct db_attr *at)
+static void log_sa_attr_oakley(struct db_attr *at)
 {
 	const struct enum_names *en = NULL;
 
@@ -60,14 +61,14 @@ static void print_sa_attr_oakley(struct db_attr *at)
 
 	if (at->type.oakley < oakley_attr_val_descs_roof)
 		en = oakley_attr_val_descs[at->type.oakley];
-	printf("        type: %u(%s) val: %u(%s)\n",
+	DBG_log("        type: %u(%s) val: %u(%s)\n",
 	       at->type.oakley,
 	       enum_name(&oakley_attr_names, at->type.oakley +
 			 ISAKMP_ATTR_AF_TV),
 	       at->val,  en ? enum_name(en, at->val) : "unknown");
 }
 
-static void print_sa_attr_ipsec(struct db_attr *at)
+static void log_sa_attr_ipsec(struct db_attr *at)
 {
 	const struct enum_names *en = NULL;
 
@@ -76,71 +77,71 @@ static void print_sa_attr_ipsec(struct db_attr *at)
 
 	if (at->type.ipsec < ipsec_attr_val_descs_roof)
 		en = ipsec_attr_val_descs[at->type.ipsec];
-	printf("        type: %u(%s) val: %u(%s)\n",
+	DBG_log("        type: %u(%s) val: %u(%s)\n",
 	       at->type.ipsec,
 	       enum_name(&ipsec_attr_names,
 			 at->type.ipsec + ISAKMP_ATTR_AF_TV),
 	       at->val,  en ? enum_name(en, at->val) : "unknown");
 }
 
-static void print_sa_trans(struct db_sa *f, struct db_trans *tr)
+static void log_sa_trans(struct db_sa *f, struct db_trans *tr)
 {
 	unsigned int i;
 
-	printf("      transform: %u cnt: %u\n",
+	DBG_log("      transform: %u cnt: %u\n",
 	       tr->transid, tr->attr_cnt);
 	for (i = 0; i < tr->attr_cnt; i++) {
 		if (f->parentSA)
-			print_sa_attr_oakley(&tr->attrs[i]);
+			log_sa_attr_oakley(&tr->attrs[i]);
 		else
-			print_sa_attr_ipsec(&tr->attrs[i]);
+			log_sa_attr_ipsec(&tr->attrs[i]);
 	}
 }
 
-static void print_sa_prop(struct db_sa *f, struct db_prop *dp)
+static void log_sa_prop(struct db_sa *f, struct db_prop *dp)
 {
 	unsigned int i;
 
-	printf("    protoid: %u (%s) cnt: %u\n",
+	DBG_log("    protoid: %u (%s) cnt: %u\n",
 	       dp->protoid,
 	       enum_name(&protocol_names, dp->protoid),
 	       dp->trans_cnt);
 	for (i = 0; i < dp->trans_cnt; i++)
-		print_sa_trans(f, &dp->trans[i]);
+		log_sa_trans(f, &dp->trans[i]);
 }
 
-static void print_sa_prop_conj(struct db_sa *f, struct db_prop_conj *pc)
+static void log_sa_prop_conj(struct db_sa *f, struct db_prop_conj *pc)
 {
 	unsigned int i;
 
-	printf("  conjunctions cnt: %u\n",
+	DBG_log("  conjunctions cnt: %u\n",
 	       pc->prop_cnt);
 	for (i = 0; i < pc->prop_cnt; i++)
-		print_sa_prop(f, &pc->props[i]);
+		log_sa_prop(f, &pc->props[i]);
 }
 
-void sa_print(struct db_sa *f)
+void sa_log(struct db_sa *f)
 {
 	unsigned int i;
 
-	printf("sa disjunct cnt: %u\n",
+	DBG_log("sa disjunct cnt: %u\n",
 	       f->prop_conj_cnt);
 	for (i = 0; i < f->prop_conj_cnt; i++)
-		print_sa_prop_conj(f, &f->prop_conjs[i]);
+		log_sa_prop_conj(f, &f->prop_conjs[i]);
 }
 
-static void print_sa_v2_attr(struct db_attr *at)
+static void log_sa_v2_attr(struct db_attr *at)
 {
 	if (at->type.v2 == 0)
 		return;
 
-	printf("        type: %u(%s) val: %u(%s)\n",
+	DBG_log("        type: %u(%s) val: %u(%s)\n",
 	       at->type.v2,
 	       enum_name(&ikev2_trans_attr_descs, at->type.v2),
-	       at->val,  "unknown (fixme in print_sa_v2_attr()");
+	       at->val,  "unknown (fixme in log_sa_v2_attr()");
 }
 
-static void print_sa_v2_trans(struct db_v2_trans *tr)
+static void log_sa_v2_trans(struct db_v2_trans *tr)
 {
 	unsigned int i;
 	const struct enum_names *en = NULL;
@@ -148,45 +149,44 @@ static void print_sa_v2_trans(struct db_v2_trans *tr)
 	if (tr->transform_type < ikev2_transid_val_descs_roof)
 		en = ikev2_transid_val_descs[tr->transform_type];
 
-	printf("      type: %u(%s) value: %u(%s) attr_cnt: %u\n",
+	DBG_log("      type: %u(%s) value: %u(%s) attr_cnt: %u\n",
 	       tr->transform_type,
 	       enum_name(&ikev2_trans_type_names, tr->transform_type),
 	       tr->transid, en ? enum_name(en, tr->transid) : "unknown",
 	       tr->attr_cnt);
 	for (i = 0; i < tr->attr_cnt; i++)
-		print_sa_v2_attr(&tr->attrs[i]);
+		log_sa_v2_attr(&tr->attrs[i]);
 }
 
-static void print_sa_v2_prop_conj(struct db_v2_prop_conj *dp)
+static void log_sa_v2_prop_conj(struct db_v2_prop_conj *dp)
 {
 	unsigned int i;
 
-	printf("    proposal #%u protoid: %u (%s) cnt: %u\n",
+	DBG_log("    proposal #%u protoid: %u (%s) cnt: %u\n",
 	       dp->propnum,
 	       dp->protoid,
 	       enum_name(&protocol_names, dp->protoid),
 	       dp->trans_cnt);
 	for (i = 0; i < dp->trans_cnt; i++)
-		print_sa_v2_trans(&dp->trans[i]);
+		log_sa_v2_trans(&dp->trans[i]);
 }
 
-static void print_sa_v2_prop(struct db_v2_prop *pc)
+static void log_sa_v2_prop(struct db_v2_prop *pc)
 {
 	unsigned int i;
 
-	printf("  conjunctions cnt: %u\n",
+	DBG_log("  conjunctions cnt: %u\n",
 	       pc->prop_cnt);
 	for (i = 0; i < pc->prop_cnt; i++)
-		print_sa_v2_prop_conj(&pc->props[i]);
+		log_sa_v2_prop_conj(&pc->props[i]);
 }
 
-void sa_v2_print(struct db_sa *f)
+void sa_v2_log(struct db_sa *f)
 {
 	unsigned int i;
 
-	printf("sav2 disjoint cnt: %u\n",
+	DBG_log("sav2 disjoint cnt: %u\n",
 	       f->prop_disj_cnt);
 	for (i = 0; i < f->prop_disj_cnt; i++)
-		print_sa_v2_prop(&f->prop_disj[i]);
+		log_sa_v2_prop(&f->prop_disj[i]);
 }
-
