@@ -50,6 +50,7 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 #include "spdb.h"
+#include "spdb_print.h"
 
 static void log_sa_attr_oakley(struct db_attr *at)
 {
@@ -189,4 +190,3 @@ void sa_v2_log(struct db_sa *f)
 	for (i = 0; i < f->prop_disj_cnt; i++)
 		log_sa_v2_prop(&f->prop_disj[i]);
 }
-
