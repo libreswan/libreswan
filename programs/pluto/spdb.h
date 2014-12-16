@@ -196,9 +196,9 @@ extern struct db_sa *sa_copy_sa_first(struct db_sa *sa);
 extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
 
 /* in spdb_print.c - normally never used in pluto */
-extern void sa_print(struct db_sa *f);
+extern void sa_log(struct db_sa *f);
 
-extern void sa_v2_print(struct db_sa *f);
+extern void sa_v2_log(struct db_sa *f);
 
 /* IKEv1 <-> IKEv2 things */
 extern struct db_sa *sa_v2_convert(struct db_sa *f);
