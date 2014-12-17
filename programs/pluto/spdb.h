@@ -26,6 +26,7 @@
  * Note: only "basic" values are represented so far.
  * v2 is drastically simplified: there is only one attribute type
  * and it applies to any v2 protocols.
+ * ??? this use of union is very scary.
  */
 struct db_attr {
 	union {
