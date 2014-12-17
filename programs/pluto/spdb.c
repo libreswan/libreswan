@@ -1257,13 +1257,32 @@ void free_sa(struct db_sa *f)
 	}
 }
 
+/*
+ * ??? These clone functions appear to have a few problems.
+ *
+ * - they look as if they cause leaks since they clone something
+ *   and then write over the pointer to the original.
+ *   This makes sense in our "unshare" pattern, but "clone"
+ *   suggests that isn't what's going on.
+ *
+ * - these functions clone in place rather than returning a
+ *   pointer to the result.  A further hint that this isn't
+ *   actually cloning.
+ *
+ * - since they use clone_bytes to allocate a bigger structure
+ *   they are actually cloning thin air at the end of the original!
+ *   Why has electric fence not caught this?
+ *
+ * - How is it that clone_trans can increment tr->attr_cnt
+ *   without actually filling in a new attribute?
+ */
+
 void clone_trans(struct db_trans *tr, int extra)
 {
 	tr->attrs = clone_bytes(tr->attrs,
 				(tr->attr_cnt + extra) * sizeof(tr->attrs[0]),
 				"sa copy attrs array");
-	if (extra)
-		tr->attr_cnt = tr->attr_cnt + extra;
+	tr->attr_cnt = tr->attr_cnt + extra;
 }
 
 static void clone_prop(struct db_prop *p, int extra)
