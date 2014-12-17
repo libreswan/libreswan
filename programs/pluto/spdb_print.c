@@ -50,7 +50,6 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 #include "spdb.h"
-#include "spdb_print.h"
 
 static void log_sa_attr_oakley(struct db_attr *at)
 {
