@@ -136,7 +136,7 @@ static void log_sa_v2_attr(struct db_attr *at)
 
 	DBG_log("        type: %u(%s) val: %u(%s)\n",
 	       at->type.v2,
-	       enum_name(&ikev2_trans_attr_descs, at->type.v2),
+	       enum_name(&ikev2_trans_attr_descs, at->type.v2 + ISAKMP_ATTR_AF_TV),
 	       at->val,  "unknown (fixme in log_sa_v2_attr()");
 }
 
