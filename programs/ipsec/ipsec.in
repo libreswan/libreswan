@@ -153,9 +153,6 @@ case "${1}" in
 	fi
 	# this hardcoded ipsec.d needs to get fixed once we pass IPSECD properly
 	pk12util -i "${2}" -d "${IPSEC_CONFDDIR}"
-	if [ -x /usr/sbin/restorecon ]; then
-	    restorecon -Rv "${IPSEC_CONFDDIR}"
-	fi
 	exit 0
 	;;
     initnss|--initnss|checknss|--checknss)
