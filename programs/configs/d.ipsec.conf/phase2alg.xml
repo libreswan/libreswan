@@ -16,11 +16,19 @@ instance, "3des-md5" or "aes256-sha1;modp2048" or  "aes-sha1,aes-md5".
 <para> The format for AH is AUTH followed by an optional PFSgroup. For
 instance, "md5" or "sha1;modp1536".
 </para>
-<para>AES-GCM and AES-CCM use the syntax like
-"phase2alg=aes_ccm_c-256-null". The only supported key sizes are 128,
-192 and 256. The subscript (_a, _b and _c) stand for the ICV versions
-(8,12,16). It is recommended to migrate to the _c versions, as support
-for smaller ICV's will be removed in the future.</para>
+<para>AES-GCM and AES-CCM use a syntax like
+<emphasis remap='I'>phase2alg=aes_ccm-null</emphasis> or
+<emphasis remap='I'>phase2alg=aes_gcm-null</emphasis>. This syntax is also used for the ike= option.
+The supported key sizes are 128, 192 and 256, which are specified similarly
+to plain aes, i.e. <emphasis remap='I'>phase2alg=aes_gcm256</emphasis>. A
+subscript of <emphasis remap='I'>_c</emphasis>, <emphasis remap='I'>_b</emphasis>
+or <emphasis remap='I'>_a</emphasis> can be used to refer to the different ICV variants
+where a means 8 bytes, b means 12 bytes and c means 16 bytes. The default
+when not using a subscript is the 16 byte ICV, the recommended value by RFC-4106.
+Therefor phase2alg=aes_gcm256-null is equivalent to phase2alg=aes_gcm_c256-null.
+It is recommended to migrate to the _c versions (without specifying _c),
+as support for smaller ICV's might be removed in the future.</para>
+
 <para>Note that openswan and versions of libreswan up to 3.6 require
 adding the salt size to the key size. Therefor, to interop with an older
 version of openswan or libreswan, use: "phase2alg=aes_ccm_c-280-null". For
