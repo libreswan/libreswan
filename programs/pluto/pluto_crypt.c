@@ -64,6 +64,46 @@
 
 #include "lsw_select.h"
 
+struct pluto_crypto_req_cont *new_pcrc(
+	crypto_req_cont_func fn,
+	const char *name,
+	struct state *st,
+	struct msg_digest *md)
+{
+	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
+
+	r->pcrc_func = fn;
+	r->pcrc_serialno = st->st_serialno;
+	r->pcrc_md = md;
+	r->pcrc_name = name;
+	r->pcrc_replacing = SOS_NOBODY;
+
+	passert(md == NULL || md->st == st);
+	passert(st->st_suspended_md == NULL);
+
+	/*
+	 * There is almost always a non-NULL md.
+	 * Exception: main_inI2_outR2_tail initiates DH calculation
+	 * in parallel with normal processing that needs the md exclusively.
+	 */
+	if (md != NULL)
+		set_suspended(st, md);
+	return r;
+}
+
+struct pluto_crypto_req_cont *new_pcrc_repl(
+	crypto_req_cont_func fn,
+	const char *name,
+	struct state *st,
+	struct msg_digest *md,
+	so_serial_t replacing)
+{
+	struct pluto_crypto_req_cont *r = new_pcrc(fn, name, st, md);
+
+	r->pcrc_replacing = replacing;
+	return r;
+}
+
 TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 
 /*
