@@ -40,6 +40,26 @@
 
 #define elemsof(array) (sizeof(array) / sizeof(*(array)))	/* number of elements in an array */
 
+
+/*
+ * min()/max() macros that also do
+ * strict type-checking.. See the
+ * "unnecessary" pointer comparison.
+ * Copied from include/linux/kernel.h
+ * Copyright Torvalds et al.
+ */
+#define min(x, y) ({				\
+	typeof(x) _min1 = (x);			\
+	typeof(y) _min2 = (y);			\
+	(void) (&_min1 == &_min2);		\
+	_min1 < _min2 ? _min1 : _min2; })
+
+#define max(x, y) ({				\
+	typeof(x) _max1 = (x);			\
+	typeof(y) _max2 = (y);			\
+	(void) (&_max1 == &_max2);		\
+	_max1 > _max2 ? _max1 : _max2; })
+
 /* Many routines return only success or failure, but wish to describe
  * the failure in a message.  We use the convention that they return
  * a NULL on success and a pointer to constant string on failure.
