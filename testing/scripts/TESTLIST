@@ -53,6 +53,9 @@ unittest	readwriteconf-25	bad
 unittest	readwriteconf-26	good
 unittest	readwriteconf-27	good
 
+# test for authby=secret|rsasig
+unittest	readwriteconf-28	good
+
 # test cases for showhostkey.
 umlXhost	showhostkey-01		good
 umlXhost	showhostkey-02		good
