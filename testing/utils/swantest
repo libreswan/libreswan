@@ -400,7 +400,7 @@ class scantests:
 
         if not self.read_testlist(self.trpath):
             logging.info(
-                "can not read %s/TESTLIST will try other locaations", self.trpath)
+                "can not read %s/TESTLIST will try other locations", self.trpath)
             if self.args.resanitize:
                 # we need the TESTLIST in the self.trpath
                 return True
@@ -1659,7 +1659,7 @@ def do_single_test(args, start='', test=None, st=None):
         logging.debug("single test from a testlist worker pool")
         if os.path.exists('stop-tests-now'):
             logging.error(
-                "****** skip tests found stop-tests-now *****", os.getcwd())
+                "****** skip tests found stop-tests-now in dir %s *****", os.getcwd())
             return
 
         if os.path.exists(test["name"]):
