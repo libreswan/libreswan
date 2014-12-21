@@ -862,6 +862,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
+	bool send_certreq = FALSE;
 
 	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
@@ -988,17 +989,30 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 		close_output_pbs(&pb);
 	}
+	{
+		 /* decide to send a CERTREQ */
+		send_certreq = (c->policy & POLICY_RSASIG) &&
+			!has_preloaded_public_key(st);
+	}
 
 	/* Send NAT-T Notify payloads */
 	{
-		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		struct ikev2_generic in;
+		int np = send_certreq ? ISAKMP_NEXT_v2CERTREQ :
+			c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 
 		zero(&in);
 		in.isag_np = np;
 		in.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (!ikev2_out_nat_v2n(np, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
+	}
+
+	/* send CERTREQ  */
+	if(send_certreq) {
+		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
+		DBG(DBG_CONTROL, DBG_log("going to send a certreq"));
+		ikev2_send_certreq(st, md, O_RESPONDER, np, &md->rbody);
 	}
 
 	/* Send VendorID VID if needed.  Only one. */
