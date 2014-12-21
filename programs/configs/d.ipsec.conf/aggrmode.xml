@@ -1,7 +1,8 @@
   <varlistentry>
   <term><emphasis remap='B'>aggrmode</emphasis></term>
   <listitem>
-<para>Use Aggressive Mode instead of Main Mode. Aggressive Mode is less secure,
+<para>Use IKEv1 Aggressive Mode instead of IKEv1 Main Mode. This option has no effect
+when IKEv2 is used. Aggressive Mode is less secure,
 and vulnerable to Denial Of Service attacks. It is also vulnerable to brute force
 attacks with software such as <emphasis remap='B'>ikecrack</emphasis>. It should
 not be used, and it should especially not be used with XAUTH and group secrets (PSK).
