@@ -1,9 +1,11 @@
 /* Libreswan ISAKMP VendorID Handling
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2014 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ *
+ * See also https://github.com/royhills/ike-scan/blob/master/ike-vendor-ids
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -102,6 +104,7 @@
  *
  * Juniper, unknown vid:
  * 699369228741c6d4ca094c93e242c9de19e7b7c60000000500000500
+ * 166f932d55eb64d8e4df4fd37e2313f0d0fd8451000000000000
  *
  * KAME / Apple / Mac OSX?
  *  While searching (strings) in /usr/sbin/racoon on Mac OS X 10.3.3, I found it :
@@ -205,9 +208,10 @@ static struct vid_struct vid_tab[] = {
 		    "SSH Communications Security IPSEC Express version 4.1.0"),
 	DEC_MD5_VID(VID_SSH_IPSEC_4_2_0,
 		    "SSH Communications Security IPSEC Express version 4.2.0"),
-	{
-		VID_CISCO3K, VID_KEEP | VID_SUBSTRING_MATCH,
-		NULL, "Cisco VPN 3000 Series",
+	/* The VPN 3000 concentrator VID is a truncated MD5 hash of "ALTIGA GATEWAY" */
+	/* Last two bytes are version number, eg 0306 = 3.0.6 */
+	{ VID_CISCO3K, VID_KEEP | VID_SUBSTRING_MATCH,
+	  NULL, "Cisco VPN 3000 Series",
 		"\x1f\x07\xf7\x0e\xaa\x65\x14\xd3\xb0\xfa\x96\x54\x2a\x50", 14
 	},
 
@@ -215,6 +219,7 @@ static struct vid_struct vid_tab[] = {
 	  NULL, "Cisco IOS Device", "\x3e\x98\x40\x48", 4 },
 
 	/* note: md5('CISCO-UNITY') = 12f5f28c457168a9702d9fe274cc02d4 */
+	/*       last two bytes replaced with 01 00 */
 	{ VID_CISCO_UNITY, VID_KEEP, NULL, "Cisco-Unity",
 	  "\x12\xf5\xf2\x8c\x45\x71\x68\xa9\x70\x2d\x9f\xe2\x74\xcc\x01\x00",
 	  16 },
@@ -295,6 +300,7 @@ static struct vid_struct vid_tab[] = {
 	{ VID_MISC_IKEv2, VID_STRING | VID_KEEP, "IKEv2", "CAN-IKEv2", NULL,
 	  0 },
 
+	/* VID is ASCII "HeartBeat_Notify" plus a few bytes (version?) */
 	{ VID_MISC_HEARTBEAT_NOTIFY, VID_STRING | VID_SUBSTRING_DUMPHEXA,
 	  "HeartBeat_Notify", "HeartBeat Notify", NULL, 0 },
 
