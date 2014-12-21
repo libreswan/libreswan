@@ -841,7 +841,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 		sadb = &ipsec_sadb[(policy & pm) >> POLICY_IPSEC_SHIFT];
 
 		/* make copy, to keep from freeing the static policies */
-		sadb = sa_copy_sa(sadb, 0);
+		sadb = sa_copy_sa(sadb);
 		sadb->parentSA = FALSE;
 
 		DBG(DBG_CONTROL,
@@ -870,7 +870,7 @@ struct db_sa *kernel_alg_makedb(lset_t policy, struct alg_info_esp *ei,
 	t.prop_conjs = &pc;
 
 	/* make a fresh copy */
-	n = sa_copy_sa(&t, 0);
+	n = sa_copy_sa(&t);
 	n->parentSA = FALSE;
 
 	db_destroy(dbnew);

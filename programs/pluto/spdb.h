@@ -238,7 +238,7 @@ extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body 
 
 extern void free_sa_attr(struct db_attr *attr);
 extern void free_sa(struct db_sa *f);
-extern struct db_sa *sa_copy_sa(struct db_sa *sa, int extra);
+extern struct db_sa *sa_copy_sa(struct db_sa *sa);
 extern struct db_sa *sa_copy_sa_first(struct db_sa *sa);
 extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
 
@@ -251,7 +251,5 @@ extern void sa_v2_log(struct db_sa *f);
 extern struct db_sa *sa_v2_convert(struct db_sa *f);
 
 extern bool ikev2_acceptable_group(struct state *st, oakley_group_t group);
-
-extern void clone_trans(struct db_trans *tr, int extra);
 
 #endif /*  _SPDB_H_ */

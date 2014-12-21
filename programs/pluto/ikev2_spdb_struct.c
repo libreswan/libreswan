@@ -432,7 +432,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 		return NULL;
 
 	if (!f->dynamic)
-		f = sa_copy_sa(f, 0);
+		f = sa_copy_sa(f);
 
 	/* count transforms and allocate space for result */
 	{
