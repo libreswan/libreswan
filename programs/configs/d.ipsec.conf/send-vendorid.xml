@@ -1,0 +1,19 @@
+  <varlistentry>
+  <term><emphasis remap='B'>send-vendorid</emphasis></term>
+  <listitem>
+<para>whether to send our Vendor ID during IKE.
+Acceptable values are: <emphasis remap='B'>no</emphasis> (the default) and
+<emphasis remap='B'>yes</emphasis>. The vendor id sent can be configured
+using the "config setup" option <emphasis remap='B'>myvendorid=</emphasis>.
+It defaults to OE-Libreswan-VERSION.</para>
+
+<para>Vendor ID's can be useful in tracking interoperability
+problems. However, specific vendor identification and software versions
+can be useful to an attacker when there are known vulnerabilities to a
+specific vendor/version.</para>
+<para>The prefix OE stands for "Opportunistic Encryption". This prefix
+was historically used by The FreeS/WAN Project and The Openswan Project
+(openswan up to version 2.6.38) and in one Xeleranized openswan versions
+(2.6.39). Further Xeleranized openswan's use the prefix OSW.</para>
+  </listitem>
+  </varlistentry>
