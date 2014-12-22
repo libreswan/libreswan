@@ -421,10 +421,13 @@ static void confwrite_conn(FILE *out,
 	}
 	confwrite_side(out, &conn->left,  "left");
 	confwrite_side(out, &conn->right, "right");
+	/* fprintf(out, "# confwrite_int:\n"); */
 	confwrite_int(out, "", kv_conn, kv_auto,
 		      conn->options, conn->options_set, conn->strings);
+	/* fprintf(out, "# confwrite_str:\n"); */
 	confwrite_str(out, "", kv_conn, kv_auto,
 		      conn->strings, conn->strings_set);
+	/* fprintf(out, "# confwrite_comments:\n"); */
 	confwrite_comments(out, conn);
 
 	if (conn->connalias)
@@ -494,6 +497,10 @@ static void confwrite_conn(FILE *out,
 
 				case POLICY_RSASIG:
 					abs = "rsasig";
+					break;
+
+				case POLICY_PSK | POLICY_RSASIG:
+					abs = "secret|rsasig";
 					break;
 
 				default:

@@ -162,7 +162,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			 */
 			if (eklen > 0) {
 				/* duplicate, but change auth to match template */
-				emp_sp = sa_copy_sa(&oakley_empty, 0);
+				emp_sp = sa_copy_sa(&oakley_empty);
 
 				passert(emp_sp->dynamic);
 				emp_sp->prop_conjs[0].props[0].trans[0].attrs[2] =
@@ -214,7 +214,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			if (modp > 0)
 				grp->val = modp;
 		} else {
-			emp_sp = sa_copy_sa(base, 0);
+			emp_sp = sa_copy_sa(base);
 		}
 
 		/*
@@ -284,13 +284,26 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				passert(emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
 
 				if (emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 4) {
-					/* copy and add a slot */
+					/* add a key length attribute of 0 */
 					struct db_trans *tr = &emp_sp->prop_conjs[0].props[0].trans[0];
+					const int n = tr->attr_cnt;	/* 4, actually */
 					struct db_attr *old_attrs = tr->attrs;
+					struct db_attr *new_attrs = alloc_bytes(
+						(n + 1) * sizeof(old_attrs[0]),
+						"extended trans");
 
-					clone_trans(tr, 1);
+					passert(emp_sp->dynamic);
+					passert(old_attrs[0].type.oakley != OAKLEY_KEY_LENGTH &&
+						old_attrs[1].type.oakley != OAKLEY_KEY_LENGTH &&
+						old_attrs[2].type.oakley != OAKLEY_KEY_LENGTH &&
+						old_attrs[3].type.oakley != OAKLEY_KEY_LENGTH);
+					memcpy(new_attrs, old_attrs, n * sizeof(old_attrs[0]));
+					new_attrs[n].type.oakley = OAKLEY_KEY_LENGTH;
+					new_attrs[n].val = 0;
+
 					pfree(old_attrs);
-					tr->attrs[4].type.oakley = OAKLEY_KEY_LENGTH;
+					tr->attrs = new_attrs;
+					tr->attr_cnt++;
 				}
 				passert(emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 5);
 				passert(emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].type.oakley == OAKLEY_KEY_LENGTH);
@@ -305,7 +318,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 					emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].val = ks;
 
 					if (gsp == NULL) {
-						gsp = sa_copy_sa(emp_sp, 0);
+						gsp = sa_copy_sa(emp_sp);
 					} else {
 						struct db_sa *new = sa_merge_proposals(gsp, emp_sp);
 

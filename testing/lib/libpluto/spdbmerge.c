@@ -43,11 +43,11 @@ main(int argc, char *argv[]){
 	tool_init_log();
 
 	for (i = 0; i < elemsof(oakley_sadb); i++) {
-		gsp = sa_copy_sa(&oakley_empty, 0);
+		gsp = sa_copy_sa(&oakley_empty);
 
 		printf("\nmain mode oakley: %u\n", i);
 		//sa_print(&oakley_sadb[i]);
-		sa1 = sa_copy_sa(&oakley_sadb[i], 0);
+		sa1 = sa_copy_sa(&oakley_sadb[i]);
 
 		sa2 = sa_merge_proposals(gsp, sa1);
 

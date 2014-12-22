@@ -331,9 +331,32 @@ struct state {
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
 
-	bool st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
+	/*
+	 * Diffie-Hellman exchange values
+	 *
+	 * st_sec_nss is our local ephemeral secret.  Its sole use is an input
+	 * in the calculation of the shared secret.
+	 *
+	 * st_gi and st_gr (above) are the initiator and responder public
+	 * values that are shipped in KE payloads.
+	 * On initiator: st_gi = GROUP_GENERATOR ^ st_sec_nss
+	 *               st_gr comes from KE
+	 * On responder: st_gi comes from KE
+	 *               st_gr = GROUP_GENERATOR ^ st_sec_nss
+	 *
+	 * st_pubk_nss is ???
+	 *
+	 * st_shared_nss is the output of the DH: an ephemeral secret
+	 * shared by the two ends.  Of course the other end might
+	 * be a man in the middle unless we authenticate.
+	 * st_shared_nss = GROUP_GENERATOR ^ (initiator's st_sec_nss * responder's st_sec_nss)
+	 *               = st_gr ^ initiator's st_sec_nss
+	 *               = sg_gi ^ responder's st_sec_nss
+	 */
 
-	SECKEYPrivateKey *st_sec_nss;	/* secret (owned by NSS) */
+	bool st_sec_in_use;		/* bool: do st_sec_nss/st_pubk_nss hold values */
+
+	SECKEYPrivateKey *st_sec_nss;	/* our secret (owned by NSS) */
 
 	SECKEYPublicKey *st_pubk_nss;	/* DH public key (owned by NSS) */
 
@@ -342,6 +365,8 @@ struct state {
 					 * presence indicates PFS
 					 * selected.
 					 */
+	/* end of DH values */
+
 	enum crypto_importance st_import;       /* relative priority of crypto
 	                                         * operations
 	                                         */

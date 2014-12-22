@@ -1214,10 +1214,34 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 /* complete job started by the state-specific state transition function
  *
+ * This routine requires a valid non-NULL *mdp unless result is STF_INLINE.
+ * So, for example, it does not make sense for state transitions that are
+ * not provoked by a packet.
+ *
  * This routine will not release_any_md(mdp).  It is expected that its
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
+ *
+ * md is used to:
+ * - find st
+ * - success_v2_state_transition(md);
+ *   - for svm:
+ *     - svm->next_state,
+ *     - svm->flags & SMF2_REPLY,
+ *     - svm->timeout_event,
+ *     -svm->flags, story
+ *   - find from_state (st might be gone)
+ *   - ikev2_update_msgid_counters(md);
+ *   - nat_traversal_change_port_lookup(md, st)
+ * - !(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) to gate Notify payloads/exchanges [WRONG]
+ * - find note for STF_INTERNAL_ERROR
+ * - find note for STF_FAIL (might not be part of result (STF_FAIL+note))
+ *
+ * We don't use these but complete_v1_state_transition does:
+ * - record md->event_already_set
+ * - remember_received_packet(st, md);
+ * - fragvid, dpd, nortel
  */
 void complete_v2_state_transition(struct msg_digest **mdp,
 				  stf_status result)

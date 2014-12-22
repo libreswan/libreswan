@@ -2160,6 +2160,22 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
+ *
+ * md is used to:
+ * - find st
+ * - find from_state (st might be gone)
+ * - find note for STF_FAIL (might not be part of result (STF_FAIL+note))
+ * - find note for STF_INTERNAL_ERROR
+ * - record md->event_already_set
+ * - remember_received_packet(st, md);
+ * - nat_traversal_change_port_lookup(md, st);
+ * - smc for smc->next_state
+ * - smc for smc->flags & SMF_REPLY to trigger a reply
+ * - smc for smc->timeout_event
+ * - smc for !(smc->flags & SMF_INITIATOR) for Contivity mode
+ * - smc for smc->flags & SMF_RELEASE_PENDING_P2 to trigger unpend call
+ * - smc for smc->flags & SMF_INITIATOR to adjust retransmission
+ * - fragvid, dpd, nortel
  */
 void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 {
@@ -2542,8 +2558,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			break;
 		}
 
-		/* If we are the responder and the client is in "Contivity mode",
-		   we need to initiate Quick mode */
+		/*
+		 * If we are the responder and the client is in "Contivity mode",
+		 * we need to initiate Quick mode
+		 */
 		if (!(smc->flags & SMF_INITIATOR) &&
 		    IS_MODE_CFG_ESTABLISHED(st->st_state) &&
 		    (st->st_seen_nortel_vid)) {
@@ -2697,6 +2715,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			}
 			if (IS_QUICK(st->st_state)) {
 				delete_state(st);
+				/* wipe out dangling pointer to st */
 				if (md != NULL && st == md->st)
 					md->st = NULL;
 			}

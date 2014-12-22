@@ -108,18 +108,16 @@ void unpack_KE_from_helper(
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	/* ??? if st->st_sec_in_use how could we do our job? */
-	pexpect(!st->st_sec_in_use);
-	if (!st->st_sec_in_use) {
-		st->st_sec_in_use = TRUE;
-		freeanychunk(*g); /* happens in odd error cases */
+	passert(!st->st_sec_in_use);
+	st->st_sec_in_use = TRUE;
+	freeanychunk(*g); /* happens in odd error cases */
 
-		clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
-			     kn->gi.len, "saved gi value");
-		DBG(DBG_CRYPT,
-		    DBG_log("saving DH priv (local secret) and pub key into state struct"));
-		st->st_sec_nss = kn->secret;
-		st->st_pubk_nss = kn->pubk;
-	}
+	clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
+		     kn->gi.len, "saved gi value");
+	DBG(DBG_CRYPT,
+	    DBG_log("saving DH priv (local secret) and pub key into state struct"));
+	st->st_sec_nss = kn->secret;
+	st->st_pubk_nss = kn->pubk;
 }
 
 /* accept_KE

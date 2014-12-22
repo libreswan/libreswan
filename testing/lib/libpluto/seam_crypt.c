@@ -9,7 +9,6 @@ struct pluto_crypto_req rd;
 struct pluto_crypto_req *r = &rd;
 
 stf_status build_ke_and_nonce(struct pluto_crypto_req_cont *cn,
-		    struct state *st,
 		    const struct oakley_group_desc *group,
 		    enum crypto_importance importance)
 {

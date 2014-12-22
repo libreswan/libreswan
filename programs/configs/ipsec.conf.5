@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 12/10/2014
+.\"      Date: 12/21/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "12/10/2014" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "12/21/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -873,6 +873,19 @@ whether to send a CISCO_UNITY payload to the peer\&. Acceptable values are:
 \fByes\fR\&. It is recommended to leave this option unset, unless the remote peer (Cisco client or server) requires it\&. This option does not modify local behaviour\&. It can be needed to connect as a client to a Cisco server\&. It can also be needed to act as a server for a Cisco client, which otherwise might send back an error DEL_REASON_NON_UNITY_PEER\&.
 .RE
 .PP
+\fBsend\-vendorid\fR
+.RS 4
+whether to send our Vendor ID during IKE\&. Acceptable values are:
+\fBno\fR
+(the default) and
+\fByes\fR\&. The vendor id sent can be configured using the "config setup" option
+\fBmyvendorid=\fR\&. It defaults to OE\-Libreswan\-VERSION\&.
+.sp
+Vendor ID\*(Aqs can be useful in tracking interoperability problems\&. However, specific vendor identification and software versions can be useful to an attacker when there are known vulnerabilities to a specific vendor/version\&.
+.sp
+The prefix OE stands for "Opportunistic Encryption"\&. This prefix was historically used by The FreeS/WAN Project and The Openswan Project (openswan up to version 2\&.6\&.38) and in one Xeleranized openswan versions (2\&.6\&.39)\&. Further Xeleranized openswan\*(Aqs use the prefix OSW\&.
+.RE
+.PP
 \fBoverlapip\fR
 .RS 4
 a boolean (yes/no) that determines, when *subnet=vhost: is used, if the virtual IP claimed by this states created from this connection can with states created from other connections\&.
@@ -944,20 +957,21 @@ This option is obsoleted, please use phase2alg if you need the PFS to be differe
 .PP
 \fBaggrmode\fR
 .RS 4
-Use Aggressive Mode instead of Main Mode\&. Aggressive Mode is less secure, and vulnerable to Denial Of Service attacks\&. It is also vulnerable to brute force attacks with software such as
+Use IKEv1 Aggressive Mode instead of IKEv1 Main Mode\&. This option has no effect when IKEv2 is used\&. Acceptable values are
+\fBno\fR
+(the default) or
+\fByes\fR\&. When this option is enabled, IKEv1 Main Mode will no longer be allowed for this connection\&.
+.sp
+Aggressive Mode is less secure, and more vulnerable to Denial Of Service attacks\&. It is also vulnerable to brute force attacks with software such as
 \fBikecrack\fR\&. It should not be used, and it should especially not be used with XAUTH and group secrets (PSK)\&. If the remote system administrator insists on staying irresponsible, enable this option\&.
 .sp
 Aggressive Mode is further limited to only proposals with one DH group as there is no room to negotiate the DH group\&. Therefor it is mandatory for Aggressive Mode connections that both
 \fBike=\fR
 and
 \fBphase2alg=\fR
-options are specified with only fully specified proposal using one DH group\&. Acceptable values are
-\fByes\fR
-or
-\fBno\fR
-(the default)\&.
+options are specified with only one fully specified proposal using one DH group\&.
 .sp
-The ISAKMP SA is created in exchange 1 in aggressive mode\&. Libreswan has to send the exponent during that exchange, so it has to know what DH group to use before starting\&. This is why you can not have multiple DH groups in aggressive mode\&. In IKEv2, which uses a similar method to IKEv1 Aggressive Mode, there is a message to convey the DH group is wrong, and so an IKEv2 connection can actually recover from picking the wrong DH group by restarting its negotiation\&.
+The KE payload is created in the first exchange packet when using aggressive mode\&. The KE payload depends on the DH group used\&. This is why there cannot be multiple DH groups in IKEv1 aggressive mode\&. In IKEv2, which uses a similar method to IKEv1 Aggressive Mode, there is an INVALID_KE response payload that can inform the initiator of the responder\*(Aqs desired DH group and so an IKEv2 connection can actually recover from picking the wrong DH group by restarting its negotiation\&.
 .RE
 .PP
 \fBsalifetime\fR
@@ -1259,7 +1273,7 @@ Note: It seems that T\-Mobile in the US and Rogers/Fido in Canada have started u
 .PP
 \fBmyvendorid\fR
 .RS 4
-The string to use as our vendor id (VID) when send_vendorid=yes\&. The default is OE\-Libreswan\-VERSION\&.
+The string to use as our vendor id (VID) when send\-vendorid=yes\&. The default is OE\-Libreswan\-VERSION\&.
 .RE
 .PP
 \fBoe\fR

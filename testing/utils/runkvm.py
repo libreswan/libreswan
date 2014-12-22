@@ -11,7 +11,7 @@ try:
     import setproctitle
 except ImportError , e:
     module = str(e)[16:]
-    sys.exit("we requires the python module %s "%module)
+    sys.exit("we require the python module %s " % module)
 
 def read_exec_shell_cmd( ex, filename, prompt, timer):
     if os.path.exists(filename):
@@ -23,12 +23,12 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
             if line:
                 # give the prompt time to appear
 		time.sleep(0.5)
-                print "%s: %s"%(prompt.replace("\\",""), line)
+                print "%s: %s" % (prompt.replace("\\",""), line)
                 ex.sendline(line)
                 try:
                     ex.expect (prompt,timeout=timer, searchwindowsize=100) 
                 except:
-                    print "%s failed to send line: %s"%(prompt,line)
+                    print "%s failed to send line: %s" % (prompt,line)
                     return False
     else:
         print  filename 
@@ -36,7 +36,7 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
         try:
             ex.expect (prompt,timeout=timer, searchwindowsize=100)
         except:
-            print "%s failed to send filename: %s"%(prompt,filename)
+            print "%s failed to send filename: %s" % (prompt,filename)
     return True
 
 def connect_to_kvm(args, prompt = ''):
@@ -51,7 +51,7 @@ def connect_to_kvm(args, prompt = ''):
             num,host,state = line.split()
             if host == args.hostname and state == "running":
                running = 1
-               print "Found %s running already"%args.hostname
+               print "Found %s running already" % args.hostname
                continue
        except:
                pass
@@ -59,16 +59,16 @@ def connect_to_kvm(args, prompt = ''):
     if args.reboot:
        waittime = 20
        if not running:
-            print "Booting %s - pausing %s seconds"%(args.hostname,waittime)
-            commands.getoutput("sudo virsh start %s"%args.hostname)
+            print "Booting %s - pausing %s seconds" % (args.hostname,waittime)
+            commands.getoutput("sudo virsh start %s" % args.hostname)
             time.sleep(waittime)
        else:
-            commands.getoutput("sudo virsh reboot %s"%args.hostname)
-            print "Rebooting %s - pausing %s seconds"%(args.hostname,waittime)
+            commands.getoutput("sudo virsh reboot %s" % args.hostname)
+            print "Rebooting %s - pausing %s seconds" % (args.hostname,waittime)
             time.sleep(waittime)
 
-    print "Taking %s console by force"%args.hostname
-    cmd = "sudo virsh console --force %s"%args.hostname
+    print "Taking %s console by force" % args.hostname
+    cmd = "sudo virsh console --force %s" % args.hostname
     timer = 120
     child = pexpect.spawn(cmd)
     child.delaybeforesend = 0
@@ -77,14 +77,14 @@ def connect_to_kvm(args, prompt = ''):
 
     done = 0
     tries = 60
-    print "Waiting on %s login: or %s prompt"%(args.hostname, prompt)
+    print "Waiting on %s login: or %s prompt" % (args.hostname, prompt)
     while not done and tries != 0:
       try:
         print "sending ctrl-c return"
         #child = pexpect.spawn (cmd)
         #child.sendcontrol('c')
         child.sendline ('')
-        print "found, waiting on login: or %s"%prompt
+        print "found, waiting on login: or %s" % prompt
         res = child.expect (['login: ', prompt], timeout=3) 
 	if res == 0:
            print "sending login name root"
@@ -99,11 +99,11 @@ def connect_to_kvm(args, prompt = ''):
            done = 1
         elif res == 1:
           print  '----------------------------------------------------'
-          print  'Already logged in as root on %s'%args.hostname
+          print  'Already logged in as root on %s' % args.hostname
           print  '----------------------------------------------------'
           done = 1
       except:
-        print "(%s [%s] waiting)"%(args.hostname,tries)
+        print "(%s [%s] waiting)" % (args.hostname,tries)
         tries -= 1
         time.sleep(1)
  
@@ -125,7 +125,7 @@ def connect_to_kvm(args, prompt = ''):
 
 def run_final (args, child):
     timer = 30
-    prompt = "\[root@%s %s\]# "%(args.hostname, args.testname)
+    prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'a') 
     child.logfile = f
@@ -137,7 +137,7 @@ def run_final (args, child):
 
 def compile_on (args,child):
     timer = 900
-    prompt = "root@%s source"%args.hostname
+    prompt = "root@%s source" % args.hostname
     cmd = "cd /source/"
     read_exec_shell_cmd( child, cmd, prompt, timer)
     cmd = "/testing/guestbin/swan-build"
@@ -147,7 +147,7 @@ def compile_on (args,child):
 
 def make_install (args, child):
     timer=300
-    prompt = "root@%s source"%args.hostname
+    prompt = "root@%s source" % args.hostname
     cmd = "cd /source/"
     read_exec_shell_cmd( child, cmd, prompt, timer)
     cmd = "/testing/guestbin/swan-install"
@@ -161,15 +161,15 @@ def run_test(args, child):
     timer = 120
     ret = True
     # we MUST match the entire prompt, or elsewe end up sending too soon and getting mangling!
-    prompt = "\[root@%s %s\]# "%(args.hostname, args.testname)
+    prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
 
     cmd = "cd /testing/pluto/%s " % (args.testname)
-    print "%s: %s"%(prompt.replace("\\",""),cmd)
+    print "%s: %s" % (prompt.replace("\\",""),cmd)
     child.sendline(cmd)
     try:
         child.expect (prompt, searchwindowsize=100,timeout=timer) 
     except:
-        print "%s: failed to cd into test case at %s"%(args.hostname,args.testname)
+        print "%s: failed to cd into test case at %s" % (args.hostname,args.testname)
         return
 
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
@@ -212,13 +212,13 @@ def main():
     args = parser.parse_args()
 
     if args.final:
-        prompt = "\[root@%s %s\]# "%(args.hostname, args.testname)
+        prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
         child = connect_to_kvm(args, prompt)
     else :
         child = connect_to_kvm(args) 
 
     if not child:
-        sys.exit("Failed to launch/connect to %s - aborted"%args.hostname)
+        sys.exit("Failed to launch/connect to %s - aborted" % args.hostname)
 
     if args.compile:
         compile_on(args,child) 

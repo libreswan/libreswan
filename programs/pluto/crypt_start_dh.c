@@ -57,7 +57,7 @@
  *
  * Note: dh must be heap-allocated.
  */
-stf_status start_dh_secretiv(struct dh_continuation *dh,
+stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 			     struct state *st,
 			     enum crypto_importance importance,
 			     enum phase1_role role,
@@ -106,7 +106,7 @@ stf_status start_dh_secretiv(struct dh_continuation *dh,
 	       st->st_rcookie, COOKIE_SIZE);
 
 	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
-	return send_crypto_helper_request(&r, &dh->dh_pcrc);
+	return send_crypto_helper_request(&r, dh);
 }
 
 void finish_dh_secretiv(struct state *st,
@@ -194,15 +194,11 @@ stf_status start_dh_v2(struct msg_digest *md,
 		       crypto_req_cont_func pcrc_func)
 {
 	struct state *st = md->st;
-	struct dh_continuation *dh = alloc_thing(struct dh_continuation, name);
+	struct pluto_crypto_req_cont *dh = new_pcrc(
+		pcrc_func, name,
+		st, md);
 	struct pluto_crypto_req r;
 	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
-
-	dh->dh_md = md;
-	set_suspended(st, dh->dh_md);
-	dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-
-	pcrc_init(&dh->dh_pcrc, pcrc_func);
 
 	pcr_dh_init(&r, pcr_compute_dh_v2, st->st_import);
 
@@ -249,7 +245,7 @@ stf_status start_dh_v2(struct msg_digest *md,
 	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
 
 	{
-		stf_status e = send_crypto_helper_request(&r, &dh->dh_pcrc);
+		stf_status e = send_crypto_helper_request(&r, dh);
 
 		reset_globals(); /* XXX suspicious - why was this deemed neccessary? */
 
