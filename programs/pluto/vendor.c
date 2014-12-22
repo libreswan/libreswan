@@ -243,7 +243,7 @@ static struct vid_struct vid_tab[] = {
 	DEC_FSWAN_VID(VID_FSWAN_2_00_X509_1_3_1_LDAP_VID,
 		      "Linux FreeS/WAN 2.00 X.509-1.3.1 LDAP PLUTO_SENDS_VENDORID",
 		      "FreeS/WAN 2.00 (X.509-1.3.1 + LDAP)"),
-	DEC_FSWAN_VID(VID_LIBRESWAN2,
+	DEC_FSWAN_VID(VID_OPENSWAN2,
 		      "Openswan 2.2.0",
 		      "Openswan 2.2.0"),
 	{
@@ -478,6 +478,15 @@ static struct vid_struct vid_tab[] = {
 	  "\xf4\xed\x19\xe0\xc1\x14\xeb\x51\x6f\xaa\xac\x0e\xe3\x7d\xaf\x28\x07\xb4\x38\x1f",
 	  20 },
 
+	{ VID_LIBRESWAN, VID_KEEP | VID_SUBSTRING_DUMPHEXA,
+	  NULL, "Libreswan (3.6+)", "\x4f\x45\x2d\x4c\x69\x62\x72\x65\x73\x77\x61\x6e\x2d", 13 },
+
+	{ VID_LIBRESWAN_OLD, VID_KEEP | VID_SUBSTRING_MATCH, NULL, "Libreswan 3.0 - 3.5", "\x4f\x45\x4e", 3 },
+
+	{ VID_XOPENSWAN, VID_KEEP | VID_SUBSTRING_MATCH, NULL, "Openswan(xeleranized)", "\x4f\x53\x57", 3 },
+
+	{ VID_OPENSWANORG, VID_KEEP | VID_SUBSTRING_MATCH, NULL, "Openswan(project)", "\x4f\x45", 2 },
+
 	/* END OF TABLE */
 	{ 0, 0, NULL, NULL, NULL, 0 }
 };
@@ -649,6 +658,8 @@ static void handle_known_vendorid(struct msg_digest *md,
 		break;
 
 	case VID_LIBRESWANSELF:
+	case VID_LIBRESWAN:
+	case VID_LIBRESWAN_OLD:
 		/* not really useful, but it changes the msg from "ignored" to "received" */
 		break;
 
