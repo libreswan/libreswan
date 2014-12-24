@@ -518,10 +518,7 @@ void delete_state(struct state *st)
 	free_sa(st->st_sadb);
 	st->st_sadb = NULL;
 
-	if (st->st_sec_in_use) {
-		SECKEY_DestroyPublicKey(st->st_pubk_nss);
-		SECKEY_DestroyPrivateKey(st->st_sec_nss);
-	}
+	clear_dh_from_state(st);
 
 	freeanychunk(st->st_firstpacket_me);
 	freeanychunk(st->st_firstpacket_him);
@@ -1895,4 +1892,14 @@ bool state_busy(const struct state *st) {
 		}
 	}
 	return FALSE;
+}
+
+void clear_dh_from_state(struct state *st)
+{
+	/* when responding with INVALID_DH, we didn't do the work yet */
+	if (st->st_sec_in_use) {
+		SECKEY_DestroyPublicKey(st->st_pubk_nss);
+		SECKEY_DestroyPrivateKey(st->st_sec_nss);
+		st->st_sec_in_use = FALSE;
+	}
 }

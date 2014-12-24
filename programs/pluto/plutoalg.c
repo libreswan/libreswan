@@ -178,7 +178,7 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
  *      Proposals will be built by looping over default_ike_groups array and
  *      merging alg_info (ike_info) contents
  */
-static const int default_ike_groups[] = { DEFAULT_OAKLEY_GROUPS };
+/* default_ike_groups now non-static and moved to plutoalg.h */
 static const int default_ike_ealgs[] = { DEFAULT_OAKLEY_EALGS };
 static const int default_ike_aalgs[] = { DEFAULT_OAKLEY_AALGS };
 

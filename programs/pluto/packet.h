@@ -929,6 +929,12 @@ union payload {
 	struct ikev2_cp_attribute v2cp_attribute;
 };
 
+struct suggested_group {
+	u_int16_t /*oakley_group_t*/ sg_group;
+};
+
+extern struct_desc suggested_group_desc;
+
 #ifdef HAVE_LABELED_IPSEC
 extern struct_desc sec_ctx_desc;
 #endif

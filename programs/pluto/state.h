@@ -554,5 +554,6 @@ extern bool dpd_active_locally(const struct state *st);
 	}
 
 extern bool state_busy(const struct state *st);
+extern void clear_dh_from_state(struct state *st);
 
 #endif /* _STATE_H */

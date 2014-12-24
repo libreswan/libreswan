@@ -61,6 +61,11 @@
 #include "pending.h"
 #include "kernel.h"
 #include "nat_traversal.h"
+#include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
+
+#include "nss3/key.h" /* for SECKEY_DestroyPublicKey */
+
+#include "ietf_constants.h"
 
 /* Note: same definition appears in programs/pluto/ikev2.c */
 #define SEND_V2_NOTIFICATION(t) { \
@@ -102,6 +107,35 @@ static bool emit_iv(const struct state *st, pb_stream *pbs)
 	passert(ivsize <= MAX_CBC_BLOCK_SIZE);
 	get_rnd_bytes(ivbuf, ivsize);
 	return out_raw(ivbuf, ivsize, pbs, "IV");
+}
+
+/*
+ * We need an md because the crypto continuation mechanism requires one
+ * but we don't have one because we are not responding to an
+ * incoming packet.
+ * Solution: build a fake one.  How much do we need to fake?
+ * Note: almost identical code appears at the end of aggr_outI1.
+ */
+static stf_status crypto_helper_build_ke(struct state *st)
+{
+	struct msg_digest *fake_md = alloc_md();
+	struct pluto_crypto_req_cont *ke;
+	stf_status e;
+
+	fake_md->from_state = STATE_IKEv2_BASE;
+	fake_md->svm = &ikev2_parent_firststate_microcode;
+	fake_md->st = st;
+
+	ke = new_pcrc(ikev2_parent_outI1_continue, "ikev2_outI1 KE",
+		st, fake_md);
+	e = build_ke_and_nonce(ke, st->st_oakley.group, pcim_stranger_crypto);
+
+	/*
+	 * ??? what exactly do we expect for e?
+	 * ??? Who frees ke? md?
+	 */
+
+       return e;
 }
 
 /*
@@ -177,7 +211,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 	{
 		oakley_group_t groupnum = OAKLEY_GROUP_invalid;
 		struct db_sa *sadb;
-		unsigned int pc_cnt;
+		stf_status e;
 
 		/* inscrutable dance of the sadbs */
 		sadb = &oakley_sadb[sadb_index(policy, c)];
@@ -193,74 +227,21 @@ stf_status ikev2parent_outI1(int whack_sock,
 		free_sa(st->st_sadb);
 		st->st_sadb = sadb;
 
-		/* look at all the proposals for the first group specified */
+		/* Grab the DH group from the first configured proposal to build KE */
+		groupnum = first_modp_from_propset(c->alg_info_ike);
 
-		for (pc_cnt = 0;
-		     pc_cnt < sadb->prop_disj_cnt &&
-		     groupnum == 0;
-		     pc_cnt++)
-		{
-			/* look at all the proposals in this disjunction */
-			struct db_v2_prop *vp = &sadb->prop_disj[pc_cnt];
-			unsigned int pr_cnt;
-
-			for (pr_cnt = 0;
-			     pr_cnt < vp->prop_cnt && groupnum == OAKLEY_GROUP_invalid;
-			     pr_cnt++)
-			{
-				struct db_v2_prop_conj *vpc = &vp->props[pr_cnt];
-				unsigned int ts_cnt;
-
-				for (ts_cnt = 0;
-				     ts_cnt < vpc->trans_cnt && groupnum == OAKLEY_GROUP_invalid;
-				     ts_cnt++)
-				{
-					struct db_v2_trans *tr =
-						&vpc->trans[ts_cnt];
-
-					/* ??? why would tr be NULL? */
-					if (tr != NULL &&
-					    tr->transform_type
-					    == IKEv2_TRANS_TYPE_DH)
-					{
-						groupnum = tr->transid;
-					}
-				}
-			}
+		if (groupnum == OAKLEY_GROUP_invalid) {
+			libreswan_log("No valid MODP group found in configuration, defaulting to first default");
+			groupnum = default_ike_groups[0];
 		}
-		if (groupnum == OAKLEY_GROUP_invalid)
-			groupnum = OAKLEY_GROUP_MODP2048;
 		st->st_oakley.group = lookup_group(groupnum);	/* NULL if unknown */
+		passert(st->st_oakley.group != NULL);
 		st->st_oakley.groupnum = groupnum;
-	}
-
-	/*
-	 * Calculate KE and Nonce.
-	 *
-	 * We need an md because the crypto continuation mechanism requires one
-	 * but we don't have one because we are not responding to an
-	 * incoming packet.
-	 * Solution: build a fake one.  How much do we need to fake?
-	 * Note: almost identical code appears at the end of aggr_outI1.
-	 */
-	{
-		struct msg_digest *fake_md = alloc_md();
-		struct pluto_crypto_req_cont *ke;
-		stf_status e;
-
-		fake_md->from_state = STATE_IKEv2_BASE;
-		fake_md->svm = &ikev2_parent_firststate_microcode;
-		fake_md->st = st;
-
-		ke = new_pcrc(ikev2_parent_outI1_continue, "ikev2_outI1 KE",
-			st, fake_md);
-		e = build_ke_and_nonce(ke, st->st_oakley.group, importance);
 
 		/*
-		 * ??? what exactly do we expect for e?
-		 * ??? Who frees ke? md?
-		 */
-
+	 	 * Calculate KE and Nonce.
+	 	 */
+		e = crypto_helper_build_ke(st);
 		reset_globals();
 		return e;
 	}
@@ -436,7 +417,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
 		u_char *sa_start = md->rbody.cur;
 
-
+		/* XXX: already done at this point and the check is broken so it repeats */
 		if (st->st_sadb->prop_disj_cnt == 0 || st->st_sadb->prop_disj)
 			st->st_sadb = sa_v2_convert(st->st_sadb);
 
@@ -598,7 +579,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			/* we received dcookie we send earlier verify it */
 			if (md->chain[ISAKMP_NEXT_v2N]->payload.v2n.isan_spisize != 0) {
 				DBG(DBG_CONTROLMORE, DBG_log(
-					"DOS cookie contains non-zero length SPI - message dropped"
+					"DOS cookie contains non-zero length SPI - message discarded"
 				));
 				return STF_IGNORE;
 			}
@@ -759,25 +740,15 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	}
 
 
-	/*
-	 * We have to agree to the DH group before we actually know who
-	 * we are talking to.   If we support the group, we use it.
-	 *
-	 * It is really too hard here to go through all the possible policies
-	 * that might permit this group.  If we think we are being DOS'ed
-	 * then we should demand a cookie.
-	 */
 	{
 		struct ikev2_ke *ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
 
 		st->st_oakley.group = lookup_group(ke->isak_group);
-		if (st->st_oakley.group == NULL) {
-			ipstr_buf b;
+		if (!modp_in_propset(ke->isak_group,c->alg_info_ike)) {
+			DBG(DBG_CONTROL, DBG_log("need to send INVALID_KE for modp %d and suggest %d",
+				ke->isak_group,
+				first_modp_from_propset(c->alg_info_ike)));
 
-			libreswan_log(
-				"rejecting I1 from %s:%u, invalid DH group=%u",
-				ipstr(&md->sender, &b), md->sender_port,
-				ke->isak_group);
 			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		}
 	}
@@ -941,16 +912,19 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			 * RFC 5996 1.3 says that we should return
 			 * our desired group number when rejecting sender's.
 			 */
-			u_int16_t group_number = htons(
+			u_int16_t gn = htons(
 				st->st_oakley.group->group);
-			chunk_t dc = { (unsigned char *)&group_number,
-				sizeof(group_number) };
+			chunk_t dc = { (unsigned char *)&gn, sizeof(gn) };
 
+			DBG(DBG_CONTROL, DBG_log("INVALID_KEY_INFORMATION:, sending invalid_ke back with %s",
+				strip_prefix(enum_show(&oakley_group_names,
+					st->st_oakley.group->group),
+					"OAKLEY_GROUP_")));
 			send_v2_notification_from_state(st,
 				v2N_INVALID_KE_PAYLOAD, &dc);
-			delete_state(st);
+			delete_state(st); /* nothing to do or remember */
 			md->st = NULL;
-			return STF_FAIL;	/* don't send second notification */
+			return STF_FAIL;
 		}
 		default:
 			/* hope v1 and v2 notifications correspond! */
@@ -1064,6 +1038,12 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 	struct payload_digest *ntfy;
 
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
+		if (ntfy->payload.v2n.isan_spisize != 0) {
+			DBG(DBG_CONTROLMORE, DBG_log(
+				"Notify payload for IKE must have zero length SPI - message dropped"
+			));
+			return STF_IGNORE;
+		}
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_COOKIE:
 		{
@@ -1074,19 +1054,15 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 * Our state should not advance.  Instead
 			 * we should send our I1 packet with the same cookie.
 			 */
-			u_int8_t spisize;
 			const pb_stream *dc_pbs;
 
 			if (ntfy != md->chain[ISAKMP_NEXT_v2N] || ntfy->next != NULL) {
-				libreswan_log("v2N_COOKIE must be only notification in packet");
-				return STF_FAIL + v2N_INVALID_SYNTAX;
+				DBG(DBG_CONTROL, DBG_log("non-v2N_COOKIE notify payload(s) ignored "));
 			}
-			libreswan_log("Received anti-DDOS COOKIE -resending I1 with cookie payload");
-			spisize = ntfy->payload.v2n.isan_spisize;
 			dc_pbs = &ntfy->pbs;
 			clonetochunk(st->st_dcookie,
-				dc_pbs->cur + spisize,
-				pbs_left(dc_pbs) - spisize,
+				dc_pbs->cur,
+				pbs_left(dc_pbs),
 				"saved received dcookie");
 
 			DBG(DBG_CONTROLMORE,
@@ -1104,11 +1080,46 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			return ikev2_parent_outI1_common(md, st);
 		}
 		case v2N_INVALID_KE_PAYLOAD:
+		{
+			/* careful of DDOS, only log with debugging on */
+			struct suggested_group sg;
+
+                       /* we treat this as a "retransmit" event to rate limit these */
+                       if (st->st_retransmit >= MAXIMUM_RETRANSMISSIONS) {
+                               DBG(DBG_CONTROLMORE, DBG_log("ignoring received INVALID_KE packets - received too many (DoS?)"));
+                               return STF_IGNORE;
+                       }
+                       st->st_retransmit++;
+
+			if (!in_struct(&sg, &suggested_group_desc,
+				&ntfy->pbs, NULL))
+					return STF_IGNORE;
+
+			if (modp_in_propset(sg.sg_group,
+				st->st_connection->alg_info_ike)) {
+
+				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
+				st->st_oakley.groupnum = sg.sg_group;
+				st->st_oakley.group = lookup_group(sg.sg_group);
+				libreswan_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
+					strip_prefix(enum_show(&oakley_group_names,
+						sg.sg_group), "OAKLEY_GROUP_"));
+                                clear_dh_from_state(st); /* wipe our mismatched KE */
+				/* get a new KE */
+				return crypto_helper_build_ke(st);
+			} else {
+				libreswan_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
+					strip_prefix(enum_show(&oakley_group_names,
+						sg.sg_group), "OAKLEY_GROUP_"));
+				return STF_IGNORE;
+			}
+		}
+
 		case v2N_NO_PROPOSAL_CHOSEN:
 		default:
 			/*
-			 * ??? At least INVALID_KE_PAYLOAD and NO_PROPOSAL_CHOSEN
-			 * are legal and should keep us in this state.
+			 * ??? At least NO_PROPOSAL_CHOSEN
+			 * is legal and should keep us in this state.
 			 * The responder SPI ought to have been 0 (but might not be).
 			 * See rfc5996bis-04 2.6.
 			 */
@@ -2834,7 +2845,8 @@ void send_v2_notification(struct state *p1st,
 
 		zero(&hdr);
 		hdr.isa_version = build_ikev2_version();
-		memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
+		if (rcookie != NULL) /* some responses are with zero rSPI */
+			memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
 		memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
 		hdr.isa_xchg = ISAKMP_v2_SA_INIT;
 		hdr.isa_np = ISAKMP_NEXT_v2N;

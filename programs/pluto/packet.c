@@ -1251,7 +1251,19 @@ static struct_desc *const payload_descs[] = {
 	&ikev2_cp_desc,			/* 57 ISAKMP_NEXT_v2CP */
 };
 
+static field_desc suggested_group_fields[] = {
+	{ ft_enum, 16 / BITS_PER_BYTE, "suggested DH Group", &oakley_group_names },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc suggested_group_desc = {
+	"Suggested Group",
+	suggested_group_fields,
+	sizeof(struct suggested_group)
+};
+
 #ifdef HAVE_LABELED_IPSEC
+
 /*
  * Undocumented Security Context for Labeled IPSec
  *

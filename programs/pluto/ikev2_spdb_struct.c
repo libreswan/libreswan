@@ -428,6 +428,8 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	struct db_v2_prop_conj *pc;
 	struct db_v2_prop *pr;
 
+	DBG(DBG_CONTROL, DBG_log("FIXME: sa_v2_convert() called - known to be called a few times in a row"));
+
 	if (f == NULL)
 		return NULL;
 

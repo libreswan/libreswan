@@ -65,6 +65,12 @@
 
 #include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
+#include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
+
+#include "ietf_constants.h"
+
+#include "plutoalg.h" /* for default_ike_groups */
+
 /* Note: same definition appears in programs/pluto/ikev2_parent.c */
 #define SEND_V2_NOTIFICATION(t) { \
 		if (st != NULL) \
@@ -898,6 +904,17 @@ void ikev2_log_parentSA(struct state *st)
 	}
 }
 
+void send_v2_notification_invalid_ke(struct state *st)
+{
+	const u_int16_t gr = htons(first_modp_from_propset(
+		st->st_connection->alg_info_ike)); /* oakley_group_t */
+	chunk_t nd = {(unsigned char *)&gr, sizeof(gr) };
+
+	/* RFC 5996, Section 2.6 recommends using 0 responder SPI */
+	send_v2_notification(st, v2N_INVALID_KE_PAYLOAD, NULL,
+			st->st_icookie, NULL, &nd);
+}
+
 void send_v2_notification_from_state(struct state *st,
 				     v2_notification_t type,
 				     chunk_t *data)
@@ -1373,15 +1390,28 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			/*
 			 * Only send a notify is this packet was a request,
 			 * not if it was a reply.
-			 * ??? is this a reasonable choice?
 			 */
-			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R))
-				/*
-				 * ??? if this can be sent as part of an
-				 * existing exchange, rather than a new
-				 * Informational Exchange, should it not be?
-				 */
-				SEND_V2_NOTIFICATION(md->note);
+			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
+				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
+				/* Check if this is an IKE_INIT reply w INVALID_KE */
+				if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT &&
+				    md->note == (notification_t)v2N_INVALID_KE_PAYLOAD) {
+					DBG(DBG_CONTROL, DBG_log("sending IKE_INIT with INVALID_KE"));
+					send_v2_notification_invalid_ke(md->st);
+				} else {
+					/*
+					 * ??? if this can be sent as part of an
+					 * existing exchange, rather than a new
+					 * Informational Exchange, should it not be?
+					 *
+					 * Paul: The macro expands to
+					 * send_v2_notification_from_state() and if
+					 * st != NULL then calls send_v2_notification
+					 * which hardcodes ISAKMP_v2_SA_INIT
+					 */
+					SEND_V2_NOTIFICATION(md->note);
+				}
+			}
 		}
 
 		DBG(DBG_CONTROL,
@@ -1415,4 +1445,57 @@ v2_notification_t accept_v2_nonce(struct msg_digest *md,
 	}
 	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
 	return v2N_NOTHING_WRONG;
+}
+
+
+bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list)
+{
+
+	if (lookup_group(received) == NULL) {
+		DBG(DBG_CONTROL, DBG_log(
+			"Received DH group %d not supported", received));
+		return FALSE;
+	}
+
+	if (ai_list != NULL) {
+		struct ike_info *ike_info;
+		int cnt;
+
+		ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
+			if (received == ike_info->ike_modp)
+				return TRUE;
+		}
+		DBG(DBG_CONTROL, DBG_log(
+			"received DH group %d not in our proposal set", received));
+		return FALSE;
+	} else {
+		unsigned int cnt;
+
+		DBG(DBG_CONTROL,DBG_log("check our default proposal for receievd DH group"));
+		for (cnt = 0; cnt < elemsof(default_ike_groups); cnt++) {
+			if (received == default_ike_groups[cnt])
+				return TRUE;
+		}
+		DBG(DBG_CONTROL,DBG_log("received DH group not in our default proposal"));
+		return FALSE;
+	}
+}
+
+oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list)
+{
+	struct ike_info *ike_info;
+	int cnt;
+
+	if (ai_list == NULL)
+		return default_ike_groups[0];
+
+	ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
+		if (ike_info->ike_modp != OAKLEY_GROUP_invalid) {
+			/* confirm we support it */
+			if (lookup_group(ike_info->ike_modp) != NULL)
+				return ike_info->ike_modp;
+		}
+	}
+	/* no valid groups, again pick first from default list */
+	return default_ike_groups[0];
 }
