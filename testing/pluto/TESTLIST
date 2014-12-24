@@ -53,6 +53,7 @@ kvmplutotest	ikev2-17-rekey				good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
 
+kvmplutotest	ikev2-21-invalid-ke			good
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			wip
@@ -528,7 +529,9 @@ kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256	good
 kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk	good
 kvmplutotest	interop-ikev2-strongswan-23-initiator-cp	good
 kvmplutotest	interop-ikev2-strongswan-24-esp-aes_ctr	good
-kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch good
+kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
+kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
+
 
 # kernel does not yet support these algo's
 kvmplutotest	ah-pluto-06		wip
