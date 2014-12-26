@@ -133,7 +133,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.policy = POLICY_RSASIG | POLICY_TUNNEL |
 				   POLICY_ENCRYPT | POLICY_PFS;
-	cfg->conn_default.policy |= POLICY_IKEV2_ALLOW;         /* ikev2=yes */
+	cfg->conn_default.policy |= POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW;	/* ikev2=permit */
 	cfg->conn_default.policy |= POLICY_SAREF_TRACK;         /* sareftrack=yes */
 	cfg->conn_default.policy |= POLICY_IKE_FRAG_ALLOW;      /* ike_frag=yes */
 
@@ -1195,27 +1195,27 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	}
 
 	if (conn->options_set[KBF_IKEv2]) {
+		lset_t policy = LEMPTY;
+
 		switch (conn->options[KBF_IKEv2]) {
 		case fo_never:
-			conn->policy &= ~POLICY_IKEV2_ALLOW;
+			policy = POLICY_IKEV1_ALLOW;
 			break;
 
 		case fo_permit:
 			/* this is the default for now */
-			conn->policy |= POLICY_IKEV2_ALLOW;
+			policy = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW;
 			break;
 
 		case fo_propose:
-			conn->policy |= POLICY_IKEV2_ALLOW |
-					POLICY_IKEV2_PROPOSE;
+			policy = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
 			break;
 
 		case fo_insist:
-			conn->policy |= POLICY_IKEV1_DISABLE;
-			conn->policy |= POLICY_IKEV2_ALLOW |
-					POLICY_IKEV2_PROPOSE;
+			policy =                      POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
 			break;
 		}
+		conn->policy = (conn->policy & ~POLICY_IKEV2_MASK) | policy;
 	}
 
 	if (conn->options_set[KBF_IKE_FRAG]) {

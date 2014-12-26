@@ -39,8 +39,7 @@ extern state_transition_fn
 	main_inR2_outI3,
 	main_inI3_outR3,
 	main_inR3,
-	aggr_inI1_outR1_psk,
-	aggr_inI1_outR1_rsasig,
+	aggr_inI1_outR1,
 	aggr_inR1_outI2,
 	aggr_inI2;
 

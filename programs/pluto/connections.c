@@ -1286,7 +1286,6 @@ void add_connection(const struct whack_message *wm)
 				c->name,
 				prettypolicy(c->policy)));
 
-
 		c->alg_info_esp = NULL;
 		if (wm->esp != NULL) {
 			DBG(DBG_CONTROL,
@@ -2451,17 +2450,37 @@ struct connection *route_owner(struct connection *c,
 }
 
 /*
- * Find some connection with this pair of hosts.
- * We don't know enough to chose amongst those available.
- * ??? no longer usefully different from find_host_pair_connections
+ * find_host_connection: find the first satisfactory connection
+ *	with this pair of hosts.
+ *
+ * find_next_host_connection: find the next satisfactory connection
+ *	Starts where find_host_connection left off.
+ *	NOTE: it will return its argument; if you want to
+ *	advance, use c->hp_next.
+ *
+ * We start with the list that find_host_pair_connections would yield
+ * but we narrow the selection.
+ *
+ * We only yield a connection that can negotiate.
+ *
+ * The caller can specify policy requirements as
+ * req_policy and policy_exact_mask.
+ *
+ * All policy bits found in req_policy must be in the
+ * policy of the connection.
+ *
+ * For all bits in policy_exact mask, the req_policy
+ * and connection's policy must be equal.  Likely candidates:
+ * - XAUTH (POLICY_XAUTH)
+ * - kind of IKEV1 (POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW)
+ * These should only be used if the caller actually knows
+ * the exact value and has included it in req_policy.
  */
-struct connection *find_host_connection(const ip_address *me,
-					u_int16_t my_port,
-					const ip_address *him,
-					u_int16_t his_port, lset_t policy)
+struct connection *find_host_connection(
+	const ip_address *me, u_int16_t my_port,
+	const ip_address *him, u_int16_t his_port,
+	lset_t req_policy, lset_t policy_exact_mask)
 {
-	struct connection *c;
-
 	DBG(DBG_CONTROLMORE, {
 		ipstr_buf a;
 		ipstr_buf b;
@@ -2469,18 +2488,23 @@ struct connection *find_host_connection(const ip_address *me,
 			ipstr(me, &a), my_port,
 			him != NULL ? ipstr(him, &b) : "%any",
 			his_port,
-			bitnamesof(sa_policy_bit_names, policy));
+			bitnamesof(sa_policy_bit_names, req_policy));
 	});
-	c = find_host_pair_connections(__FUNCTION__, me, my_port, him,
-				his_port);
 
-	/*
-	 * If we have requirements for the policy, choose the first
-	 * matching connection.
-	 */
+	return find_next_host_connection(
+		find_host_pair_connections(__FUNCTION__,
+			me, my_port, him, his_port),
+		req_policy, policy_exact_mask);
+}
+
+struct connection *find_next_host_connection(
+	struct connection *c,
+	lset_t req_policy, lset_t policy_exact_mask)
+{
 	DBG(DBG_CONTROLMORE,
-		DBG_log("searching for connection with policy = %s",
-			bitnamesof(sa_policy_bit_names, policy)));
+		DBG_log("find_next_host_connection policy=%s",
+			bitnamesof(sa_policy_bit_names, req_policy)));
+
 	for (; c != NULL; c = c->hp_next) {
 		DBG(DBG_CONTROLMORE,
 			DBG_log("found policy = %s (%s)",
@@ -2491,22 +2515,29 @@ struct connection *find_host_connection(const ip_address *me,
 		if (NEVER_NEGOTIATE(c->policy))
 			continue;
 
-		/* if any policy is specified, make sure XAUTH matches */
-		if (policy != LEMPTY &&
-		    (policy & POLICY_XAUTH) != (c->policy & POLICY_XAUTH))
+		/*
+		 * Success may require exact match of:
+		 * (1) XAUTH (POLICY_XAUTH)
+		 * (2) kind of IKEV1 (POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW)
+		 * So if any bits are on in the exclusive OR, we fail.
+		 * Each of our callers knows what is known so specifies
+		 * the policy_exact_mask.
+		 */
+		if ((req_policy ^ c->policy) & policy_exact_mask)
 			continue;
 
 		/*
-		 * Success if all specified policy bits are in candidate.
-		 * This will always be the case if policy is LEMPTY.
+		 * Success if all specified policy bits are in candidate's policy.
+		 * It works even when the exact-match bits are included.
 		 */
-		if (LIN(policy, c->policy))
+		if ((req_policy & ~c->policy) == LEMPTY)
 			break;
 	}
 
 	DBG(DBG_CONTROLMORE,
-		DBG_log("find_host_connection returns %s",
+		DBG_log("find_next_host_connection returns %s",
 			c ? c->name : "empty"));
+
 	return c;
 }
 
@@ -2641,6 +2672,9 @@ struct connection *refine_host_connection(const struct state *st,
 	}
 
 	/*
+	 * NOTE: this comment block needs updating.  The distinction between
+	 * aggr_inI1_outR1_psk and aggr_inI1_outR1_rsasig was eliminated.
+	 *
 	 * Philippe Vouters' comment:
 	 * I do not understand the added value of this xauth_calcbaseauth call.
 	 * When this refine_host_connection is invoked, it already comes up
@@ -2650,7 +2684,7 @@ struct connection *refine_host_connection(const struct state *st,
 	 * the Libreswan transitions state engine which can be viewed and
 	 * understood while reading ./programs/pluto/ikev1.c.
 	 * st->st_oakley.auth is only assigned inside aggr_inI1_outR1_common
-	 * which is called by aggr_inI1_outR1_psk OR aggr_inI1_outR1_rsasig.
+	 * which is called by aggr_inI1_outR1.
 	 * The considered state transition is the following:
 	 * { STATE_AGGR_R0, STATE_AGGR_R1,
 	 *   SMF_PSK_AUTH| SMF_REPLY,

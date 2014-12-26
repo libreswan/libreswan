@@ -648,10 +648,10 @@ enum sa_policy_bits {
 	 * in that we can actually turn off everything, but it expands more
 	 * sensibly to an IKEv3 and other methods.
 	 */
-	POLICY_IKEV1_DISABLE_IX,	/* !accept IKEv1?  0x0100 0000 */
+	POLICY_IKEV1_ALLOW_IX,	/* !accept IKEv1?  0x0100 0000 */
 	POLICY_IKEV2_ALLOW_IX,	/* accept IKEv2?   0x0200 0000 */
 	POLICY_IKEV2_PROPOSE_IX,	/* propose IKEv2?  0x0400 0000 */
-#define POLICY_IKEV2_MASK	LRANGE(POLICY_IKEV1_DISABLE_IX, POLICY_IKEV2_PROPOSE_IX)
+#define POLICY_IKEV2_MASK	LRANGE(POLICY_IKEV1_ALLOW_IX, POLICY_IKEV2_PROPOSE_IX)
 
 	POLICY_IKEV2_ALLOW_NARROWING_IX,	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 
@@ -686,7 +686,7 @@ enum sa_policy_bits {
 #define POLICY_MODECFG_PULL	LELEM(POLICY_MODECFG_PULL_IX)	/* is modecfg pulled by client? */
 #define POLICY_AGGRESSIVE	LELEM(POLICY_AGGRESSIVE_IX)	/* do we do aggressive mode? */
 #define POLICY_OVERLAPIP	LELEM(POLICY_OVERLAPIP_IX)	/* can two conns that have subnet=vhost: declare the same IP? */
-#define POLICY_IKEV1_DISABLE	LELEM(POLICY_IKEV1_DISABLE_IX)	/* !accept IKEv1?  0x0100 0000 */
+#define POLICY_IKEV1_ALLOW	LELEM(POLICY_IKEV1_ALLOW_IX)	/* !accept IKEv1?  0x0100 0000 */
 #define POLICY_IKEV2_ALLOW	LELEM(POLICY_IKEV2_ALLOW_IX)	/* accept IKEv2?   0x0200 0000 */
 #define POLICY_IKEV2_PROPOSE	LELEM(POLICY_IKEV2_PROPOSE_IX)	/* propose IKEv2?  0x0400 0000 */
 #define POLICY_IKEV2_ALLOW_NARROWING	LELEM(POLICY_IKEV2_ALLOW_NARROWING_IX)	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
@@ -695,6 +695,8 @@ enum sa_policy_bits {
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)
 #define POLICY_IKE_FRAG_FORCE	LELEM(POLICY_IKE_FRAG_FORCE_IX)
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
+
+/* These policy bits must match exactly: POLICY_XAUTH, POLICY_AGGRESSIVE, POLICY_IKEV1_ALLOW */
 
 /* Any IPsec policy?  If not, a connection description
  * is only for ISAKMP SA, not IPSEC SA.  (A pun, I admit.)

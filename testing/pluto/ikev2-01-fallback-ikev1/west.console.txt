@@ -58,7 +58,7 @@ west #
 000 "westnet-eastnet-ikev2-fallback":    policy_label:unset; 
 000 "westnet-eastnet-ikev2-fallback":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 12;
 000 "westnet-eastnet-ikev2-fallback":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ikev2-fallback":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-ikev2-fallback":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ikev2-fallback":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-ikev2-fallback":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ikev2-fallback":   newest ISAKMP SA: #0; newest IPsec SA: #0; 

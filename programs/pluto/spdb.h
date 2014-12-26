@@ -219,7 +219,7 @@ extern complaint_t accept_oakley_auth_method(struct state *st,  /* current state
 					     bool credcheck);   /* whether we can check credentials now */
 #endif
 
-extern lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs);
+extern lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */);
 
 extern notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,           /* body of input SA Payload */
 					   const struct isakmp_sa *sa,  /* header of input SA Payload */

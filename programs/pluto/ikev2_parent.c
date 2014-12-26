@@ -614,30 +614,19 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		    DBG_log("will not send/process a dcookie"));
 	}
 
+	/* ??? from here on looks a lot like main_inI1_outR1 */
+
 	struct state *st = md->st;
-	lset_t policy = POLICY_IKEV2_ALLOW;
-	struct connection *c = find_host_connection(&md->iface->ip_addr,
-						    md->iface->port,
-						    &md->sender,
-						    md->sender_port,
-						    POLICY_IKEV2_ALLOW);
+
+	/* What we know is little.  And exact mask is LEMPTY. */
+	const lset_t policy = POLICY_IKEV2_ALLOW;
+
+	struct connection *c = find_host_connection(
+		&md->iface->ip_addr, md->iface->port,
+		&md->sender, md->sender_port,
+		policy, LEMPTY);
 
 	/* retrieve st->st_gi */
-
-#if 0
-	if (c == NULL) {
-		/*
-		 * make up a policy from the thing that was proposed, and see
-		 * if we can find a connection with that policy.
-		 */
-
-		pb_stream pre_sa_pbs = sa_pd->pbs;
-		policy = preparse_isakmp_sa_body(&pre_sa_pbs);
-		c = find_host_connection(&md->iface->ip_addr, pluto_port,
-					 (ip_address*)NULL, md->sender_port,
-					 policy);
-	}
-#endif
 
 	if (c == NULL) {
 		/* See if a wildcarded connection can be found.
@@ -651,12 +640,12 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d = find_host_connection(&md->iface->ip_addr,
-						 pluto_port,
-						 (ip_address*)NULL,
-						 md->sender_port, policy);
+			struct connection *d = find_host_connection(
+				&md->iface->ip_addr, pluto_port,
+				(ip_address*)NULL, md->sender_port,
+				policy, LEMPTY);
 
-			for (; d != NULL; d = d->hp_next) {
+			while (d != NULL) {
 				if (d->kind == CK_GROUP) {
 					/* ignore */
 				} else {
@@ -668,28 +657,27 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 					}
 
 					/* Opportunistic or Shunt: pick tightest match */
-					if (addrinsubnet(&md->sender,
-							 &d->spd.that.client)
-					    &&
+					if (addrinsubnet(
+						&md->sender,
+						&d->spd.that.client) &&
 					    (c == NULL ||
-					     !subnetinsubnet(&c->spd.that.
-							     client,
-							     &d->spd.that.
-							     client)))
+					     !subnetinsubnet(
+						&c->spd.that.client,
+						&d->spd.that.client))) {
 						c = d;
+					}
 				}
+				d = find_next_host_connection(d->hp_next,
+					policy, LEMPTY);
 			}
 		}
 		if (c == NULL) {
 			ipstr_buf b;
 
-			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
-			       " but no connection has been authorized%s%s",
-			       ipstr(&md->iface->ip_addr, &b),
-			       ntohs(portof(&md->iface->ip_addr)),
-			       (policy != LEMPTY) ? " with policy=" : "",
-			       (policy !=LEMPTY) ?
-			         bitnamesof(sa_policy_bit_names, policy) : "");
+			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no connection has been authorized with policy %s",
+				ipstr(&md->iface->ip_addr, &b),
+				ntohs(portof(&md->iface->ip_addr)),
+				bitnamesof(sa_policy_bit_names, policy));
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
 		if (c->kind != CK_TEMPLATE) {

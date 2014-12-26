@@ -702,13 +702,14 @@ static u_int32_t decode_long_duration(pb_stream *pbs)
 	return val;
 }
 
-/* Preparse the body of an ISAKMP SA Payload and find which policy is required
- * to match the packet. Errors are just ignored and will be detected and
- * handled later in parse_isakmp_sa_body().
+/* Preparse the body of an IKEv1 ISAKMP SA Payload and find which policy is
+ * required to match the packet. Errors are just ignored and will be detected
+ * and handled later in parse_isakmp_sa_body().
  *
  * All we want for the moment is to know whether peer is using RSA or PSK.
+ * NOTE: sa_pbs is passed by value so the caller's PBS is unchanged!
  */
-lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
+lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 {
 	pb_stream proposal_pbs;
 	struct isakmp_proposal proposal;
@@ -718,12 +719,12 @@ lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
 	pb_stream attr_pbs;
 	u_int32_t ipsecdoisit;
 	unsigned trans_left;
-	lset_t policy = 0;
+	lset_t policy = LEMPTY;
 
-	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, sa_pbs, NULL))
+	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, &sa_pbs, NULL))
 		return LEMPTY;
 
-	if (!in_struct(&proposal, &isakmp_proposal_desc, sa_pbs,
+	if (!in_struct(&proposal, &isakmp_proposal_desc, &sa_pbs,
 		       &proposal_pbs))
 		return LEMPTY;
 
@@ -772,7 +773,16 @@ lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
 		}
 	}
 
-	if ((policy & POLICY_PSK) && (policy & POLICY_RSASIG))
+	/*
+	 * These policy bits will be used in a call to find_host_connection.
+	 * The meaning is: each of these present bits must be present
+	 * in a connection's policy.
+	 * 
+	 * If both PSK and RSASIG are present now, that means that
+	 * either is acceptible.  The right way to express this is
+	 * to turn both off!
+	 */
+	if (LIN(POLICY_PSK | POLICY_RSASIG, policy))
 		policy &= ~(POLICY_PSK | POLICY_RSASIG);
 
 	return policy;

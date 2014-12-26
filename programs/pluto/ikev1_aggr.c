@@ -88,15 +88,12 @@
  *
  * Entry points:
  *	aggr_outI1:	called to initiate
- *	aggr_inI1_outR1_psk
- *	aggr_inI1_outR1_rsasig
+ *	aggr_inI1_outR1
  *	aggr_inR1_outI2
  *	aggr_inI2
  *
  * Called by:
- *	aggr_inI1_outR1_common: aggr_inI1_outR1_psk aggr_inI1_outR1_rsasig
- *		auth method is a param
- *	aggr_inI1_outR1_continue1: ke(aggr_inI1_outR1_common)
+ *	aggr_inI1_outR1_continue1: ke(aggr_inI1_outR1)
  *	aggr_inI1_outR1_continue2: dh(aggr_inI1_outR1_continue1)
  *	aggr_inI1_outR1_tail: aggr_inI1_outR1_continue2
  */
@@ -217,50 +214,58 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *ke,
 	}
 }
 
-static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
-					 int authtype)
+/* STATE_AGGR_R0:
+ * SMF_PSK_AUTH: HDR, SA, KE, Ni, IDii
+ *           --> HDR, SA, KE, Nr, IDir, HASH_R
+ * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDii
+ *           --> HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
+ */
+stf_status aggr_inI1_outR1(struct msg_digest *md)
 {
 	/* With Aggressive Mode, we get an ID payload in this, the first
 	 * message, so we can use it to index the preshared-secrets
 	 * when the IP address would not be meaningful (i.e. Road
-	 * Warrior).  So our first task is to unravel the ID payload.
+	 * Warrior).  That's the one justification for Aggressive Mode.
 	 */
 	struct state *st;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	struct connection *c = find_host_connection(&md->iface->ip_addr,
-						    md->iface->port,
-						    &md->sender,
-						    md->sender_port, LEMPTY);
 
-#if 0
+	const lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) |
+		POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW;
+
+	const lset_t policy_exact_mask = POLICY_XAUTH |
+		POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW;
+
+	struct connection *c = find_host_connection(
+		&md->iface->ip_addr, md->iface->port,
+		&md->sender, md->sender_port,
+		policy, policy_exact_mask);
+
+#if 0 /* ??? is this useful? */
 	if (c == NULL && md->iface->ike_float) {
-		c = find_host_connection(&md->iface->addr,
-					 pluto_nat_port,
-					 &md->sender, md->sender_port, LEMPTY);
+		/* ??? see above for discussion about policy argument */
+		c = find_host_connection(
+			&md->iface->addr, pluto_nat_port,
+			&md->sender, md->sender_port,
+			policy, policy_exact_mask);
 	}
 #endif
 
 	if (c == NULL) {
-		/* see if a wildcarded connection can be found */
-		pb_stream pre_sa_pbs = sa_pd->pbs;
-		lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs) |
-				POLICY_AGGRESSIVE;
-
 		c = find_host_connection(&md->iface->ip_addr, pluto_port,
 					 (ip_address*)NULL, md->sender_port,
-					 policy);
-		if (c == NULL || (c->policy & POLICY_AGGRESSIVE) == 0) {
+					 policy, policy_exact_mask);
+		if (c == NULL) {
 			ipstr_buf b;
 
-			loglog(RC_LOG_SERIOUS, "initial Aggressive Mode message from %s"
-			       " but no (wildcard) connection has been configured%s%s",
-			       ipstr(&md->sender, &b),
-			       (policy != LEMPTY) ? " with policy=" : "",
-			       (policy != LEMPTY) ?
-			       bitnamesof(sa_policy_bit_names, policy) : "");
+			loglog(RC_LOG_SERIOUS,
+				"initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
+				ipstr(&md->sender, &b),
+				bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		}
+		passert(LIN(policy, c->policy));
 		/* Create a temporary connection that is a copy of this one.
 		 * His ID isn't declared yet.
 		 */
@@ -277,14 +282,20 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 	st->st_interface = md->iface;
 	change_state(st, STATE_AGGR_R1);
 
-	/* until we have clue who this is, then be conservative about allocating
+	/*
+	 * until we have clue who this is, be conservative about allocating
 	 * them any crypto bandwidth
 	 */
 	st->st_import = pcim_stranger_crypto;
 
-	st->st_policy |= POLICY_AGGRESSIVE;
+	st->st_policy = policy;	/* ??? not sure what's needed here */
 
-	st->st_oakley.auth = authtype;
+	/* ??? not sure what's needed here */
+	st->st_oakley.auth = policy & POLICY_PSK ? OAKLEY_PRESHARED_KEY :
+		policy & POLICY_RSASIG ? OAKLEY_RSA_SIG :
+		0;	/* we don't really know */
+
+	/* note: ikev1_decode_peer_id() may change md->st->st_connection */
 
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
@@ -300,8 +311,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
-	pexpect(c == st->st_connection);	/* ??? how would this have changed? */
-	c = st->st_connection;
+	c = st->st_connection;	/* fixup after ikev1_decode_peer_id() */
 
 	extra_debugging(c);
 	st->st_try = 0;                                 /* Not our job to try again from start */
@@ -406,16 +416,6 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 			/* ??? should there be an additional else catch-all? */
 		});
 	}
-}
-
-stf_status aggr_inI1_outR1_psk(struct msg_digest *md)
-{
-	return aggr_inI1_outR1_common(md, OAKLEY_PRESHARED_KEY);
-}
-
-stf_status aggr_inI1_outR1_rsasig(struct msg_digest *md)
-{
-	return aggr_inI1_outR1_common(md, OAKLEY_RSA_SIG);
 }
 
 static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
@@ -653,8 +653,11 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	return STF_OK;
 }
 
-/* STATE_AGGR_I1: HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
- *           --> HDR*, HASH_I/SIG_I
+/* STATE_AGGR_I1:
+ * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
+ *           --> HDR*, HASH_I
+ * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
+ *           --> HDR*, [CERT,] SIG_I
  */
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 				       struct key_continuation *kc); /* forward */
@@ -668,7 +671,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	 */
 	struct state *st = md->st;
 
-	st->st_policy |= POLICY_AGGRESSIVE;
+	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
@@ -923,7 +926,9 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	return STF_OK;
 }
 
-/* STATE_AGGR_R1: HDR*, HASH_I --> done
+/* STATE_AGGR_R1:
+ * SMF_PSK_AUTH: HDR*, HASH_I --> done
+ * SMF_DS_AUTH:  HDR*, SIG_I  --> done
  */
 static stf_status aggr_inI2_tail(struct msg_digest *md,
 			  struct key_continuation *kc);         /* forward */
@@ -1093,6 +1098,14 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *ke,
 	passert(GLOBALS_ARE_RESET());
 }
 
+/* No initial state for aggr_outI1:
+ * SMF_DS_AUTH (RFC 2409 5.1) and SMF_PSK_AUTH (RFC 2409 5.4):
+ * -->HDR, SA, KE, Ni, IDii
+ *
+ * Not implemented:
+ * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
+ * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
+ */
 stf_status aggr_outI1(int whack_sock,
 		      struct connection *c,
 		      struct state *predecessor,

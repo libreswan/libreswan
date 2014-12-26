@@ -48,6 +48,7 @@
 #include "packet.h"
 #include "demux.h"	/* needs packet.h */
 #include "connections.h"
+#include "hostpair.h"
 #include "state.h"
 #include "md5.h"
 #include "sha1.h"
@@ -583,35 +584,41 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	close_output_pbs(&cr_pbs);
 	return TRUE;
 }
-bool collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
+
+generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
-	struct connection *d = find_host_connection(&md->iface->ip_addr,
-						pluto_port, (ip_address *)NULL,
-						md->sender_port, LEMPTY);
+	generalName_t *top = NULL;
+	struct connection *d = find_host_pair_connections(
+		__FUNCTION__,
+		&md->iface->ip_addr, pluto_port,
+		(ip_address *)NULL, md->sender_port);
 
 	for (; d != NULL; d = d->hp_next) {
-		/* must be a road warrior connection */
-		if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPORTUNISTIC) &&
-			d->spd.that.ca.ptr != NULL) {
-			generalName_t *gn;
-			bool new_entry = TRUE;
+		if (NEVER_NEGOTIATE(d->policy))
+			continue;
 
-			for (gn = *top; gn != NULL; gn = gn->next) {
+		/* we require a road warrior connection */
+		if (d->kind == CK_TEMPLATE &&
+		    !(d->policy & POLICY_OPPORTUNISTIC) &&
+		    d->spd.that.ca.ptr != NULL) {
+			generalName_t *gn;
+
+			for (gn = top; ; gn = gn->next) {
+				if (gn == NULL) {
+					gn = alloc_thing(generalName_t, "generalName");
+					gn->kind = GN_DIRECTORY_NAME;
+					gn->name = d->spd.that.ca;
+					gn->next = top;
+					top = gn;
+					break;
+				}
 				if (same_dn(gn->name, d->spd.that.ca)) {
-					new_entry = FALSE;
 					break;
 				}
 			}
-			if (new_entry) {
-				gn = alloc_thing(generalName_t, "generalName");
-				gn->kind = GN_DIRECTORY_NAME;
-				gn->name = d->spd.that.ca;
-				gn->next = *top;
-				*top = gn;
-			}
 		}
 	}
-	return *top != NULL;
+	return top;
 }
 
 /*

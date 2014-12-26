@@ -427,8 +427,7 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "%s", story);
 		}
 
-		if (try % 3 == 0 &&
-			(c->policy & POLICY_IKEV1_DISABLE) == LEMPTY) {
+		if (try % 3 == 0 && (c->policy & POLICY_IKEV1_ALLOW)) {
 			/*
 			 * so, let's retry with IKEv1, alternating every
 			 * three messages
@@ -609,6 +608,7 @@ void handle_next_timer_event(void)
 		break;
 
 	case EVENT_v2_RELEASE_WHACK:
+		passert(st != NULL && st->st_rel_whack_event == ev);
 		DBG_log("event EVENT_v2_RELEASE_WHACK st_rel_whack_event=NULL %lu %s",  st->st_serialno, enum_name(&state_names, st->st_state));
 		st->st_rel_whack_event = NULL;
 		break;

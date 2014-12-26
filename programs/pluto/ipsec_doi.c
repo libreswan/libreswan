@@ -215,21 +215,21 @@ bool close_message(pb_stream *pbs, struct state *st)
 	return TRUE;
 }
 
-static initiator_function *pick_initiator(struct connection *c UNUSED,
+static initiator_function *pick_initiator(struct connection *c,
 					  lset_t policy)
 {
-	if ((policy & POLICY_IKEV1_DISABLE) == LEMPTY &&
-	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == LEMPTY))) {
-		if (policy & POLICY_AGGRESSIVE) {
-			return aggr_outI1;
-		} else {
-			return main_outI1;
-		}
-	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
-		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
+	if ((policy & POLICY_IKEV2_PROPOSE) &&
+	    (policy & c->policy & POLICY_IKEV2_ALLOW) &&
+	    !c->failed_ikev2) {
+		/* we may try V2, and we haven't failed */
 		return ikev2parent_outI1;
+	} else if (policy & c->policy & POLICY_IKEV1_ALLOW) {
+		/* we may try V1; Aggressive or Main Mode? */
+		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
 	} else {
-		libreswan_log("Neither IKEv1 nor IKEv2 allowed");
+		libreswan_log("Neither IKEv1 nor IKEv2 allowed: %s%s",
+			c->failed_ikev2? "previous V2 failure, " : "",
+			bitnamesof(sa_policy_bit_names, policy & c->policy));
 		/*
 		 * tried IKEv2, if allowed, and failed,
 		 * and tried IKEv1, if allowed, and got nowhere.

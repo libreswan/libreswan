@@ -135,7 +135,7 @@ static void help(void)
 		" [--priority <prio>] [--reqid <reqid>]"
 		" \\\n   "
 
-		" [--ikev1-disable]"
+		" [--ikev1-allow]"
 		" [--ikev2-allow]"
 		" [--ikev2-propose]"
 		" \\\n   "
@@ -714,7 +714,7 @@ static const struct option long_opts[] = {
 	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
 
 
-	PS("ikev1-disable", IKEV1_DISABLE),
+	PS("ikev1-allow", IKEV1_ALLOW),
 	PS("ikev2-allow", IKEV2_ALLOW),
 	PS("ikev2-propose", IKEV2_PROPOSE),
 
@@ -1486,7 +1486,7 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_AGGRESSIVE_IX:             /* --aggrmode */
 		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:              /* --overlapip */
 
-		case CDP_SINGLETON + POLICY_IKEV1_DISABLE_IX:		/* --ikev1-disable */
+		case CDP_SINGLETON + POLICY_IKEV1_ALLOW_IX:		/* --ikev1-allow */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_IX:		/* --ikev2-allow */
 		case CDP_SINGLETON + POLICY_IKEV2_PROPOSE_IX:		/* --ikev2-propose */
 
@@ -1917,6 +1917,18 @@ int main(int argc, char **argv)
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY)
 				diag("must specify --rsasig or --psk for a connection");
 
+			/*
+			 * If neither v1 not v2, default to v1
+			 * (backward compatibility)
+			 */
+			if (!(msg.policy & POLICY_IKEV2_MASK))
+				msg.policy |= POLICY_IKEV1_ALLOW;
+
+			/*
+			 * ??? this test can never fail:
+			 *	!NEVER_NEGOTIATE=>HAS_IPSEC_POLICY
+			 * These interlocking tests should be redone.
+			 */
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
 			    (msg.left.has_client || msg.right.has_client))
 				diag("must not specify clients for ISAKMP-only connection");

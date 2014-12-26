@@ -376,28 +376,31 @@ static const struct state_microcode v1_state_microcode_table[] = {
 
 	/***** Phase 1 Aggressive Mode *****/
 
-	/* No state for aggr_outI1: -->HDR, SA, KE, Ni, IDii */
+	/* No initial state for aggr_outI1:
+	 * SMF_DS_AUTH (RFC 2409 5.1) and SMF_PSK_AUTH (RFC 2409 5.4):
+	 * -->HDR, SA, KE, Ni, IDii
+	 *
+	 * Not implemented:
+	 * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
+	 * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
+	 */
 
 	/* STATE_AGGR_R0:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Ni, IDii
-	 *                -->  HDR, SA, KE, Nr, IDir, HASH_R
-	 * SMF_DS_AUTH:  HDR, KE, Nr, SIG --> HDR*, IDi1, HASH_I
+	 *           --> HDR, SA, KE, Nr, IDir, HASH_R
+	 * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDii
+	 *           --> HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
 	 */
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
-	  SMF_PSK_AUTH | SMF_REPLY,
+	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_psk },
-
-	{ STATE_AGGR_R0, STATE_AGGR_R1,
-	  SMF_DS_AUTH | SMF_REPLY,
-	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_rsasig },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1 },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
-	 *                                 --> HDR*, HASH_I
-	 * SMF_DS_AUTH: HDR, SA, KE, Nr, IDir, SIG_R
-	 *                                 --> HDR*, SIG_I
+	 *           --> HDR*, HASH_I
+	 * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
+	 *           --> HDR*, [CERT,] SIG_I
 	 */
 	{ STATE_AGGR_I1, STATE_AGGR_I2,
 	  SMF_PSK_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY |
@@ -415,7 +418,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 
 	/* STATE_AGGR_R1:
 	 * SMF_PSK_AUTH: HDR*, HASH_I --> done
-	 * SMF_DS_AUTH: HDR*, SIG_I   --> done
+	 * SMF_DS_AUTH:  HDR*, SIG_I  --> done
 	 */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
@@ -423,7 +426,6 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	  P(HASH), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
-	/* STATE_AGGR_R1: HDR*, HASH_I --> done */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
 		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
@@ -2491,8 +2493,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				 * result is NEVER used
 				 * (clang 3.4 noticed this)
 				 */
-				if (dpd_init(st) == STF_FAIL)
-					result = STF_FAIL; /* ??? fall through */
+				stf_status s = dpd_init(st);
+
+				pexpect(s != STF_FAIL);
+				if (s == STF_FAIL)
+					result = STF_FAIL; /* ??? fall through !?! */
 			}
 		}
 
@@ -2724,6 +2729,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	}
 }
 
+/* note: may change which connection is referenced by md->st->st_connection */
 bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 {
 	struct state *const st = md->st;
@@ -2877,6 +2883,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	return TRUE;
 }
+
 /*
  * ships the full ca chain or only the end cert's issuer. This won't
  * include any root certs as the chain will not have any.

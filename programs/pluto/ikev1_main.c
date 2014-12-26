@@ -573,6 +573,7 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 
 stf_status main_inI1_outR1(struct msg_digest *md)
 {
+	/* ??? this code looks a lot like the middle of ikev2parent_inI1outR1 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	struct state *st;
 	struct connection *c;
@@ -582,38 +583,22 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	int numvidtosend = 1; /* we always send DPD VID */
 
 	/* random source ports are handled by find_host_connection */
-	c = find_host_connection(&md->iface->ip_addr, pluto_port,
-				&md->sender,
-				md->sender_port, LEMPTY);
-
-	if (c != NULL && (c->policy & POLICY_IKEV1_DISABLE)) {
-		ipstr_buf b;
-
-		loglog(RC_LOG_SERIOUS, "discard matching conn %s for I1 from "
-			"%s:%u. has ikev2=insist", c->name,
-			ipstr(&md->iface->ip_addr, &b),
-			ntohs(portof(&md->iface->ip_addr)));
-		c = NULL;
-	}
+	c = find_host_connection(
+		&md->iface->ip_addr, pluto_port,
+		&md->sender, md->sender_port,
+		POLICY_IKEV1_ALLOW, POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 
 	if (c == NULL) {
-		pb_stream pre_sa_pbs = sa_pd->pbs;
-		lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs);
+		lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) |
+			POLICY_IKEV1_ALLOW;
 
-#if 0
 		/*
 		 * Other IKE clients, such as strongswan, send the XAUTH
 		 * VID even for connections they do not want to run XAUTH on.
 		 * We need to depend on the policy negotiation, not the VID.
+		 * So we ignore md->quirks.xauth_vid
 		 */
 
-		/*
-		 * If there is XAUTH VID, copy it to policies.
-		 */
-		if (md->quirks.xauth_vid)
-			policy |= POLICY_XAUTH;
-
-#endif
 		/*
 		 * See if a wildcarded connection can be found.
 		 * We cannot pick the right connection, so we're making a guess.
@@ -626,31 +611,12 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d =
-				find_host_connection(&md->iface->ip_addr,
-						pluto_port,
-						(ip_address*)NULL,
-						md->sender_port, policy);
+			struct connection *d = find_host_connection(
+				&md->iface->ip_addr, pluto_port,
+				(ip_address *)NULL, md->sender_port,
+				policy, POLICY_XAUTH | POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 
-			for (; d != NULL; d = d->hp_next) {
-				if (d->policy & POLICY_IKEV1_DISABLE) {
-					ipstr_buf b;
-
-					DBG(DBG_CONTROL,DBG_log(
-						"discard matching conn %s for "
-						"I1 from %s:%u. %s%s %s has "
-						"ikev2=insist ", d->name,
-						ipstr(&md->iface->ip_addr, &b),
-						ntohs(portof(&md->iface->ip_addr)),
-						d->name,
-						(policy != LEMPTY) ?
-						" with policy=" : "",
-						(policy != LEMPTY) ?
-						bitnamesof(sa_policy_bit_names,
-							policy) : ""));
-					continue;
-				}
-
+			while (d != NULL) {
 				if (d->kind == CK_GROUP) {
 					/* ignore */
 				} else {
@@ -668,28 +634,29 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 					 * Opportunistic or Shunt:
 					 * pick tightest match
 					 */
-					if (addrinsubnet(&md->sender,
+					if (addrinsubnet(
+						&md->sender,
 						&d->spd.that.client) &&
-						(c == NULL ||
-						!subnetinsubnet(&c->spd.that.
-						client,
-						&d->spd.that.client)))
+					    (c == NULL ||
+					     !subnetinsubnet(
+						&c->spd.that.client,
+						&d->spd.that.client))) {
 						c = d;
+					}
 				}
+				d = find_next_host_connection(d->hp_next,
+					policy, POLICY_XAUTH | POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 			}
 		}
 
 		if (c == NULL) {
 			ipstr_buf b;
 
-			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
-				"received on %s:%u "
-				"but no connection has been authorized%s%s",
+			loglog(RC_LOG_SERIOUS,
+				"initial Main Mode message received on %s:%u but no connection has been authorized with policy %s",
 				ipstr(&md->iface->ip_addr, &b),
 				ntohs(portof(&md->iface->ip_addr)),
-				(policy != LEMPTY) ? " with policy=" : "",
-				(policy != LEMPTY) ?
-				bitnamesof(sa_policy_bit_names, policy) : "");
+				bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else if (c->kind != CK_TEMPLATE) {
@@ -1295,9 +1262,9 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 						&md->rbody, ISAKMP_NEXT_NONE))
 				return STF_INTERNAL_ERROR;
 		} else {
-			generalName_t *ca = NULL;
+			generalName_t *ca = collect_rw_ca_candidates(md);
 
-			if (collect_rw_ca_candidates(md, &ca)) {
+			if (ca != NULL) {
 				generalName_t *gn;
 
 				for (gn = ca; gn != NULL; gn = gn->next) {

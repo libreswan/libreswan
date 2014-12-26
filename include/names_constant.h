@@ -90,7 +90,7 @@ extern enum_names ikev2_cp_attribute_type_names;
  * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
  * We then assigned 32001 which is in the private range RFC 2407.
  * Unfortunately, we feel we have to support 10 as an option for backward
- * compatability.
+ * compatibility.
  * This variable specifies (globally!!) which we support: 10 or 32001.
  * ??? surely that makes migration to 32001 all or nothing.
  */

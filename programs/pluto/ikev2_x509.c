@@ -168,12 +168,13 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 					     outpbs, np))
 			return STF_INTERNAL_ERROR;
 	} else {
-		generalName_t *ca = NULL;
 		DBG(DBG_CONTROL,
 		    DBG_log("connection->kind is not CK_PERMANENT (instance), so collect CAs"));
+		generalName_t *ca = collect_rw_ca_candidates(md);
 
-		if (collect_rw_ca_candidates(md, &ca)) {
+		if (ca != NULL) {
 			generalName_t *gn;
+
 			DBG(DBG_CONTROL,
 			    DBG_log("connection is RW, lookup CA candidates"));
 

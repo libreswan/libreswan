@@ -560,25 +560,24 @@ static void confwrite_conn(FILE *out,
 					cwf("failureshunt", fps);
 			}
 
+			/* ikev2= */
 			{
 				const char *v2ps = "UNKNOWN";
 
 				switch (ikev2_policy) {
-				case 0:
+				case POLICY_IKEV1_ALLOW:
 					v2ps = "never";
 					break;
 
-				case POLICY_IKEV2_ALLOW:
-					/* it's the default, do not print anything */
-					/* fprintf(out, "\tikev2=permit\n"); */
-					v2ps = NULL;
+				case POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW:
+					v2ps = "permit";
 					break;
 
-				case POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
-					v2ps = "never";
+				case POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
+					v2ps = "propose";
 					break;
 
-				case POLICY_IKEV1_DISABLE | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
+				case                      POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE:
 					v2ps = "insist";
 					break;
 				}
@@ -590,7 +589,7 @@ static void confwrite_conn(FILE *out,
 				const char *fps = "UNKNOWN";
 
 				switch (ike_frag_policy) {
-				case 0:
+				case LEMPTY:
 					fps = "never";
 					break;
 

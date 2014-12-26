@@ -71,17 +71,17 @@ west #
 002 "TUNNEL-A" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 002 "TUNNEL-A" #1: no crl from issuer "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org" found (strict=no)
 004 "TUNNEL-A" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "TUNNEL-A" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "TUNNEL-A" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "TUNNEL-A" #2: STATE_QUICK_I1: initiate
 004 "TUNNEL-A" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up TUNNEL-B
-002 "TUNNEL-B" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "TUNNEL-B" #3: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "TUNNEL-B" #3: STATE_QUICK_I1: initiate
 004 "TUNNEL-B" #3: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --up TUNNEL-C
-002 "TUNNEL-C" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "TUNNEL-C" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "TUNNEL-C" #4: STATE_QUICK_I1: initiate
 004 "TUNNEL-C" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
@@ -151,7 +151,7 @@ west #
 000 "TUNNEL-A":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2; 
@@ -166,7 +166,7 @@ west #
 000 "TUNNEL-B":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-B":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "TUNNEL-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "TUNNEL-B":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #0; 
@@ -180,7 +180,7 @@ west #
 000 "TUNNEL-C":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4; 
@@ -208,7 +208,7 @@ west #
 000 "TUNNEL-A":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2; 
@@ -222,7 +222,7 @@ west #
 000 "TUNNEL-C":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4; 

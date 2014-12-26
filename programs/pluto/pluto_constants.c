@@ -303,7 +303,7 @@ const char *const sa_policy_bit_names[] = {
 	"MODECFG_PULL",
 	"AGGRESSIVE",
 	"OVERLAPIP",
-	"IKEV1_DISABLE",
+	"IKEV1_ALLOW",
 	"IKEV2_ALLOW",
 	"IKEV2_PROPOSE",
 	"IKEV2_ALLOW_NARROWING",

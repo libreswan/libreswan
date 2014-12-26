@@ -369,7 +369,9 @@ extern struct connection
 extern struct connection
 	*find_host_connection(const ip_address *me, u_int16_t my_port,
 		       const ip_address *him, u_int16_t his_port,
-		       lset_t policy),
+		       lset_t req_policy, lset_t policy_exact_mask),
+	*find_next_host_connection(struct connection *c,
+		       lset_t req_policy, lset_t policy_exact_mask),
 	*refine_host_connection(const struct state *st, const struct id *id,
 			bool initiator, bool aggrmode, bool *fromcert),
 	*find_client_connection(struct connection *c,

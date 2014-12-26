@@ -347,7 +347,7 @@ enum kernel_interface kern_interface = USE_NETKEY;	/* new default */
  * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
  * We then assigned 32001 which is in the private range RFC 2407.
  * Unfortunately, we feel we have to support 10 as an option for backward
- * compatability.
+ * compatibility.
  * This variable specifies (globally!!) which we support: 10 or 32001.
  * ??? surely that makes migration to 32001 all or nothing.
  */
@@ -1239,7 +1239,7 @@ int main(int argc, char **argv)
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			vc, compile_time_interop_options, getpid());
 
-		if (vc[2] == 'g' && vc[3] == 'i' && vc[4] == 't') {
+		if (startswith(&vc[2], "git")) {
 			/*
 			 * when people build RPMs from GIT, make sure they
 			 * get blamed appropriately, and that we get some way
@@ -1413,7 +1413,7 @@ void exit_pluto(int status)
 	free_pluto_main();	/* our static chars */
 
 	/* report memory leaks now, after all free_* calls */
-	if(leak_detective)
+	if (leak_detective)
 		report_leaks();
 	close_log();	/* close the logfiles */
 	exit(status);	/* exit, with our error code */
