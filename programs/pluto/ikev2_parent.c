@@ -63,7 +63,7 @@
 #include "nat_traversal.h"
 #include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
 
-#include "nss3/key.h" /* for SECKEY_DestroyPublicKey */
+#include "key.h" /* for SECKEY_DestroyPublicKey */
 
 #include "ietf_constants.h"
 
