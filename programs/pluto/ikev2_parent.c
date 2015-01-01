@@ -63,7 +63,7 @@
 #include "nat_traversal.h"
 #include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
 
-#include "nss3/key.h" /* for SECKEY_DestroyPublicKey */
+#include "key.h" /* for SECKEY_DestroyPublicKey */
 
 #include "ietf_constants.h"
 
@@ -1058,6 +1058,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 					   st->st_dcookie);
 			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
 
+			libreswan_log("Received anti-DDOS COOKIE, resending I1 with cookie payload");
 			md->svm = &ikev2_parent_firststate_microcode;
 
 			change_state(st, STATE_PARENT_I1);
