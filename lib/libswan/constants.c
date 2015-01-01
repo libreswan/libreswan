@@ -1161,12 +1161,12 @@ static const char *const oakley_enc_name[] = {
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
 	"OAKLEY_AES_CBC",
-	"DISABLED-OAKLEY_CAMELLIA_CBC", /* 8 */
+	"OAKLEY_CAMELLIA_CBC", /* 8 */
 	"UNUSED_9",
 	"UNUSED_10",
 	"UNUSED_11",
 	"UNUSED_12",
-	"DISABLED-OAKLEY_AES_CTR", /* stolen from IKEv2 */
+	"OAKLEY_AES_CTR", /* stolen from IKEv2 */
 	"OAKLEY_AES_CCM_A",
 	"OAKLEY_AES_CCM_B",
 	"OAKLEY_AES_CCM_16",

@@ -99,14 +99,14 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
  * The IV will subsequently be discarded after decryption.
  * This is true of Cipher Block Chaining mode (CBC).
  */
-static bool emit_iv(const struct state *st, pb_stream *pbs)
+static bool emit_wire_iv(const struct state *st, pb_stream *pbs)
 {
-	size_t ivsize = st->st_oakley.encrypter->ivsize;
+	size_t wire_iv_size = st->st_oakley.encrypter->wire_iv_size;
 	unsigned char ivbuf[MAX_CBC_BLOCK_SIZE];
 
-	passert(ivsize <= MAX_CBC_BLOCK_SIZE);
-	get_rnd_bytes(ivbuf, ivsize);
-	return out_raw(ivbuf, ivsize, pbs, "IV");
+	passert(wire_iv_size <= MAX_CBC_BLOCK_SIZE);
+	get_rnd_bytes(ivbuf, wire_iv_size);
+	return out_raw(ivbuf, wire_iv_size, pbs, "IV");
 }
 
 /*
@@ -1251,11 +1251,49 @@ static void ikev2_parent_inR1outI2_continue(struct pluto_crypto_req_cont *dh,
 }
 
 /*
- * Pad message for CBC-mode encryption. Should not be called for CTR or CCM/GCM
- * Octets are added to make the message a multiple of the cipher block size.
- * At least one octet is added and at most blocksize are added.
- * The first is 0, and each subsequent octet is one larger.
- * Thus the last octet contains one less than the number of octets added.
+ * Form the encryption IV (a.k.a. starting variable) from the salt
+ * (a.k.a. nonce) wire-iv and a counter set to 1.
+ *
+ * note: no iv is longer than MAX_CBC_BLOCK_SIZE
+ */
+static void construct_enc_iv(const char *name,
+			     u_char enc_iv[],
+			     u_char *wire_iv, chunk_t salt,
+			     const struct encrypt_desc *encrypter)
+{
+	DBG(DBG_CRYPT, DBG_log("construct_enc_iv: %s: salt-size=%zd wire-IV-size=%zd block-size %zd",
+			       name, encrypter->salt_size, encrypter->wire_iv_size,
+			       encrypter->enc_blocksize));
+	passert(salt.len == encrypter->salt_size);
+	passert(encrypter->enc_blocksize <= MAX_CBC_BLOCK_SIZE);
+	passert(encrypter->enc_blocksize >= encrypter->salt_size + encrypter->wire_iv_size);
+	size_t counter_size = encrypter->enc_blocksize - encrypter->salt_size - encrypter->wire_iv_size;
+	DBG(DBG_CRYPT, DBG_log("construct_enc_iv: %s: computed counter-size=%zd",
+			       name, counter_size));
+
+	memcpy(enc_iv, salt.ptr, salt.len);
+	memcpy(enc_iv + salt.len, wire_iv, encrypter->wire_iv_size);
+	if (counter_size > 0) {
+		memset(enc_iv + encrypter->enc_blocksize - counter_size, 0,
+		       counter_size - 1);
+		enc_iv[encrypter->enc_blocksize - 1] = 1;
+	}
+	DBG(DBG_CRYPT, DBG_dump(name, enc_iv, encrypter->enc_blocksize));
+}
+
+/*
+ * Append optional "padding" and reguired "padding-length" byte.
+ *
+ * Some encryption modes, namely CBC, require things to be padded to
+ * the encryption block-size.  While others, such as CTR, do not.
+ * Either way a "padding-length" byte is always appended.
+ *
+ * This code starts by appending a 0 pad-octet, and each subsequent
+ * octet is one larger.  Thus the last octet always contains one less
+ * than the number of octets added i.e., the padding-length.
+ *
+ * Adding to the confusion, ESP requires a minimum of 4-byte alignment
+ * and IKE is free to use the ESP code for padding - we don't.
  */
 static bool ikev2_padup_pre_encrypt(struct state *st,
 				    pb_stream *e_pbs_cipher) MUST_USE_RESULT;
@@ -1272,10 +1310,21 @@ static bool ikev2_padup_pre_encrypt(struct state *st,
 		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
 		char b[MAX_CBC_BLOCK_SIZE];
 		unsigned int i;
-		size_t padding = pad_up(pbs_offset(e_pbs_cipher), blocksize);
 
-		if (padding == 0)
-			padding = blocksize;
+		size_t padding;
+		if (pst->st_oakley.encrypter->pad_to_blocksize) {
+			padding = pad_up(pbs_offset(e_pbs_cipher), blocksize);
+			if (padding == 0) {
+				padding = blocksize;
+			}
+			DBG(DBG_CRYPT,
+			    DBG_log("ikev2_padup_pre_encrypt: adding %zd bytes of padding (last is padding-length)",
+				    padding));
+		} else {
+			padding = 1;
+			DBG(DBG_CRYPT,
+			    DBG_log("ikev2_padup_pre_encrypt: adding %zd byte padding-length", padding));
+		}
 
 		for (i = 0; i < padding; i++)
 			b[i] = i;
@@ -1308,7 +1357,7 @@ static unsigned char *ikev2_authloc(struct state *st,
 static stf_status ikev2_encrypt_msg(struct state *st,
 				    enum phase1_role role,
 				    unsigned char *authstart,
-				    unsigned char *iv,
+				    unsigned char *wire_iv,
 				    unsigned char *encstart,
 				    unsigned char *authloc,
 				    pb_stream *e_pbs UNUSED,
@@ -1320,32 +1369,35 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
+	chunk_t salt;
 	if (role == O_INITIATOR) {
 		cipherkey = pst->st_skey_ei_nss;
 		authkey = pst->st_skey_ai_nss;
+		salt = pst->st_skey_initiator_salt;
 	} else {
 		cipherkey = pst->st_skey_er_nss;
 		authkey = pst->st_skey_ar_nss;
+		salt = pst->st_skey_responder_salt;
 	}
 
 	/* encrypt the block */
 	{
-		size_t ivsize = pst->st_oakley.encrypter->ivsize;
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
-		unsigned char savediv[MAX_CBC_BLOCK_SIZE];
+		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
+		construct_enc_iv("encryption IV/starting-variable", enc_iv,
+				 wire_iv, salt,
+				 pst->st_oakley.encrypter);
+
 		unsigned int cipherlen = e_pbs_cipher->cur - encstart;
 
-		passert(ivsize <= MAX_CBC_BLOCK_SIZE);
 		DBG(DBG_CRYPT,
 		    DBG_dump("data before encryption:", encstart, cipherlen));
-
-		memcpy(savediv, iv, ivsize);
 
 		/* now, encrypt */
 		(st->st_oakley.encrypter->do_crypt)(encstart,
 						    cipherlen,
 						    cipherkey,
-						    savediv, TRUE);
+						    enc_iv, TRUE);
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("data after encryption:", encstart, cipherlen));
@@ -1383,9 +1435,11 @@ static stf_status ikev2_encrypt_msg(struct state *st,
  * Calls ikev2_process_payloads to decode the payloads within.
  *
  * This code assumes that the encrypted part of an IKE message starts
- * with an Initialization Vector (IV) of ivsize of random octets.
+ * with an Initialization Vector (IV) of WIRE_IV_SIZE random octets.
  * We will discard the IV after decryption.
- * This is true of Cipher Block Chaining mode (CBC).
+ *
+ * The (optional) salt, wire-iv, and (optional) 1 are combined to form
+ * the actual starting-variable (a.k.a. IV).
  */
 static
 stf_status ikev2_decrypt_msg(struct msg_digest *md,
@@ -1396,10 +1450,11 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		state_with_serialno(st->st_clonedfrom) : st;
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2E]->pbs;
 	unsigned char *authstart = md->packet_pbs.start;
-	unsigned char *iv = e_pbs->cur;	/* start of IV, right after header */
+	u_char *wire_iv = e_pbs->cur;	/* start of wire-IV, right after header */
+	const size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
 	size_t integ_len = pst->st_oakley.integ_hasher->hash_integ_len;
-	size_t enc_blocksize = pst->st_oakley.encrypter->enc_blocksize;
-	size_t ivsize = pst->st_oakley.encrypter->ivsize;
+	const size_t enc_blocksize = pst->st_oakley.encrypter->enc_blocksize;
+	const bool pad_to_blocksize = pst->st_oakley.encrypter->pad_to_blocksize;
 	unsigned char *roof= e_pbs->roof;
 	PK11SymKey *cipherkey, *authkey;
 
@@ -1419,23 +1474,26 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	/*
 	 * check to see if length is plausible.  Need room for:
 	 * - IV (at start)
-	 * - at least one byte for padding (just before integrity digest)
+	 * - the padding-length byte
 	 * - truncated integrity digest (at end)
 	 */
-	if (roof - iv < (ptrdiff_t)(ivsize + 1 + integ_len)) {
+	if (roof - wire_iv < (ptrdiff_t)(wire_iv_size + 1 + integ_len)) {
 		libreswan_log("encrypted payload impossibly short (%td)",
-			roof - iv);
+			      roof - wire_iv);
 		return STF_FAIL;
 	}
 
 	roof -= integ_len;	/* strip truncated digest */
 
+	chunk_t salt;
 	if (role == O_INITIATOR) {
 		cipherkey = pst->st_skey_er_nss;
 		authkey = pst->st_skey_ar_nss;
+		salt = pst->st_skey_responder_salt;
 	} else {
 		cipherkey = pst->st_skey_ei_nss;
 		authkey = pst->st_skey_ai_nss;
+		salt = pst->st_skey_initiator_salt;
 	}
 
 	/*
@@ -1471,35 +1529,34 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 
 	/* decrypt */
 	{
-		/*
-		 * The first [ivsize] octet chunk is the IV.
-		 * The encrypted data follows.
-		 * The last byte of encrypted data is one less than
-		 * the number of padding octets.
-		 */
-		unsigned char *encstart = iv + ivsize;
+		u_char *encstart = wire_iv + wire_iv_size;
 		size_t enclen = roof - encstart;
-		unsigned char padlen;
+		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
+		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
+		construct_enc_iv("decription IV/starting-variable", enc_iv,
+				 wire_iv, salt,
+				 pst->st_oakley.encrypter);
 
 		DBG(DBG_CRYPT,
 		    DBG_dump("data before decryption:", encstart, enclen));
 
-		if (enclen % enc_blocksize != 0) {
-			libreswan_log("cyphertext length (%zu) not a multiple of blocksize (%zu)",
-				enclen, enc_blocksize);
-			return STF_FAIL;
+		if (pad_to_blocksize) {
+			if (enclen % enc_blocksize != 0) {
+				libreswan_log("cyphertext length (%zu) not a multiple of blocksize (%zu)",
+					      enclen, enc_blocksize);
+				return STF_FAIL;
+			}
 		}
 
 		/* now, decrypt */
 		(pst->st_oakley.encrypter->do_crypt)(encstart,
 						     enclen,
 						     cipherkey,
-						     iv, FALSE);
+						     enc_iv, FALSE);
 
-		padlen = encstart[enclen - 1] + 1;
-
+		u_char padlen = encstart[enclen - 1] + 1;
 		if (padlen > enc_blocksize || padlen > enclen) {
-			libreswan_log("invalid last pad octet: 0x%2x", padlen - 1);
+			libreswan_log("invalid padding-length octet: 0x%2x", padlen - 1);
 			return STF_FAIL;
 		}
 
@@ -1726,7 +1783,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* insert IV */
 	iv = e_pbs.cur;
-	if (!emit_iv(st, &e_pbs))
+	if (!emit_wire_iv(st, &e_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* note where cleartext starts */
@@ -1860,8 +1917,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	}
 
 	/*
-	 * TODO WARNING: padding must not be done for CTR mode
-	 *
 	 * need to extend the packet so that we will know how big it is
 	 * since the length is under the integrity check
 	 */
@@ -2190,7 +2245,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 		/* insert IV */
 		iv = e_pbs.cur;
-		if (!emit_iv(st, &e_pbs))
+		if (!emit_wire_iv(st, &e_pbs))
 			return STF_INTERNAL_ERROR;
 
 		/* note where cleartext starts */
@@ -3112,7 +3167,7 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 
 	/* IV */
 	iv = e_pbs.cur;
-	if (!emit_iv(st, &e_pbs))
+	if (!emit_wire_iv(st, &e_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* note where cleartext starts */
@@ -3317,7 +3372,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 		/* insert IV */
 		iv = e_pbs.cur;
-		if (!emit_iv(st, &e_pbs))
+		if (!emit_wire_iv(st, &e_pbs))
 			return STF_INTERNAL_ERROR;
 
 		/* note where cleartext starts in output */
@@ -3732,7 +3787,7 @@ stf_status ikev2_send_informational(struct state *st)
 
 		/* IV */
 		iv = e_pbs.cur;
-		if (!emit_iv(st, &e_pbs))
+		if (!emit_wire_iv(st, &e_pbs))
 			return STF_INTERNAL_ERROR;
 
 		/* note where cleartext starts */
@@ -3854,7 +3909,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 
 	/* insert IV */
 	iv = e_pbs.cur;
-	if (!emit_iv(st, &e_pbs))
+	if (!emit_wire_iv(st, &e_pbs))
 		return FALSE;
 
 	/* note where cleartext starts */

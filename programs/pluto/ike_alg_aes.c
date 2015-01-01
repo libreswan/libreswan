@@ -36,6 +36,9 @@
 #include <prerror.h>
 #include "lswconf.h"
 #include "lswlog.h"
+#include "ike_alg_nss_cbc.h"
+#include "ctr_test_vectors.h"
+#include "cbc_test_vectors.h"
 
 static void aes_xcbc_init_thunk(union hash_ctx *ctx)
 {
@@ -52,83 +55,9 @@ static void aes_xcbc_final_thunk(u_char *hash, union hash_ctx *ctx)
 	aes_xcbc_final(hash, &ctx->ctx_aes_xcbc);
 }
 
+
 static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
-		   u_int8_t *iv, bool enc)
-{
-
-	u_int8_t iv_bak[AES_CBC_BLOCK_SIZE];
-	u_int8_t *new_iv = NULL;    /* logic will avoid copy to NULL */
-	u_int8_t *tmp_buf;
-
-	CK_MECHANISM_TYPE ciphermech;
-	SECItem ivitem;
-	SECItem *secparam;
-	PK11Context *enccontext;
-	SECStatus rv;
-	int outlen;
-
-	DBG(DBG_CRYPT, DBG_log("NSS do_aes_cbc: enter"));
-	ciphermech = CKM_AES_CBC; /* libreswan provides padding */
-
-	if (symkey == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "do_aes_cbc: NSS derived enc key in NULL");
-		abort();
-	}
-
-	ivitem.type = siBuffer;
-	ivitem.data = iv;
-	ivitem.len = AES_CBC_BLOCK_SIZE;
-
-	secparam = PK11_ParamFromIV(ciphermech, &ivitem);
-	if (secparam == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "do_aes_cbc: Failure to set up PKCS11 param (err %d)",
-		       PR_GetError());
-		abort();
-	}
-
-	outlen = 0;
-	tmp_buf = PR_Malloc((PRUint32)buf_len);
-
-	if (!enc) {
-		new_iv = iv_bak;
-		memcpy(new_iv,
-		       (char*) buf + buf_len - AES_CBC_BLOCK_SIZE,
-		       AES_CBC_BLOCK_SIZE);
-	}
-
-	enccontext = PK11_CreateContextBySymKey(ciphermech,
-						enc ? CKA_ENCRYPT : CKA_DECRYPT, symkey,
-						secparam);
-	if (enccontext == NULL) {
-		loglog(RC_LOG_SERIOUS,
-		       "do_aes_cbc: PKCS11 context creation failure (err %d)",
-		       PR_GetError());
-		abort();
-	}
-
-	rv = PK11_CipherOp(enccontext, tmp_buf, &outlen, buf_len, buf,
-			      buf_len);
-	if (rv != SECSuccess) {
-		loglog(RC_LOG_SERIOUS,
-		       "do_aes_cbc: PKCS11 operation failure (err %d)",
-		       PR_GetError());
-		abort();
-	}
-	PK11_DestroyContext(enccontext, PR_TRUE);
-	memcpy(buf, tmp_buf, buf_len);
-
-	if (enc)
-		new_iv = (u_int8_t*) buf + buf_len - AES_CBC_BLOCK_SIZE;
-
-	memcpy(iv, new_iv, AES_CBC_BLOCK_SIZE);
-	PR_Free(tmp_buf);
-
-	if (secparam != NULL)
-		SECITEM_FreeItem(secparam, PR_TRUE);
-	DBG(DBG_CRYPT, DBG_log("NSS do_aes_cbc: exit"));
-}
+		       u_int8_t *iv, bool enc);
 
 struct encrypt_desc algo_aes_cbc =
 {
@@ -142,17 +71,90 @@ struct encrypt_desc algo_aes_cbc =
 	},
 	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_CBC_BLOCK_SIZE,
-	.ivsize =       AES_CBC_BLOCK_SIZE,
+	.pad_to_blocksize = TRUE,
+	.wire_iv_size =       AES_CBC_BLOCK_SIZE,
 	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.keymaxlen =    AES_KEY_MAX_LEN,
 	.do_crypt =     do_aes_cbc,
 };
 
-static void do_aes_ctr(u_int8_t *buf UNUSED, size_t buf_len UNUSED, PK11SymKey *symkey UNUSED,
-                  u_int8_t *nonce_iv UNUSED, bool enc UNUSED)
+static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
+		       u_int8_t *iv, bool enc)
 {
-	DBG(DBG_CRYPT, DBG_log("NSS do_aes_ctr: stubb only"));
+	ike_alg_nss_cbc(CKM_AES_CBC, &algo_aes_cbc,
+			buf, buf_len, symkey, iv, enc);
+}
+
+static void do_aes_ctr(u_int8_t *buf, size_t buf_len, PK11SymKey *sym_key,
+		       u_int8_t *counter_block, bool encrypt)
+{
+	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: enter"));
+
+	if (sym_key == NULL) {
+		loglog(RC_LOG_SERIOUS, "do_aes_ctr: NSS derived enc key in NULL");
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+	}
+
+	CK_AES_CTR_PARAMS counter_param;
+	counter_param.ulCounterBits = sizeof(u_int32_t) * 8;/* Per RFC 3686 */
+	memcpy(counter_param.cb, counter_block, sizeof(counter_param.cb));
+	SECItem param;
+	param.type = siBuffer;
+	param.data = (void*)&counter_param;
+	param.len = sizeof(counter_param);
+
+	/* Output buffer for transformed data.  */
+	u_int8_t *out_buf = PR_Malloc((PRUint32)buf_len);
+	unsigned int out_len = 0;
+
+	if (encrypt) {
+		SECStatus rv = PK11_Encrypt(sym_key, CKM_AES_CTR, &param,
+					    out_buf, &out_len, buf_len,
+					    buf, buf_len);
+		if (rv != SECSuccess) {
+			loglog(RC_LOG_SERIOUS,
+			       "do_aes_ctr: PK11_Encrypt failure (err %d)", PR_GetError());
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		}
+	} else {
+		SECStatus rv = PK11_Decrypt(sym_key, CKM_AES_CTR, &param,
+					    out_buf, &out_len, buf_len,
+					    buf, buf_len);
+		if (rv != SECSuccess) {
+			loglog(RC_LOG_SERIOUS,
+			       "do_aes_ctr: PK11_Decrypt failure (err %d)", PR_GetError());
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		}
+	}
+
+	memcpy(buf, out_buf, buf_len);
+	PR_Free(out_buf);
+
+	/*
+	 * Finally update the counter located at the end of the
+	 * counter_block. It is incremented by 1 for every full or
+	 * partial block encoded/decoded.
+	 *
+	 * There's a portability assumption here that the IV buffer is
+	 * at least sizeof(u_int32_t) (4-byte) aligned.
+	 */
+	u_int32_t *counter = (u_int32_t*)(counter_block + AES_BLOCK_SIZE
+					  - sizeof(u_int32_t));
+	u_int32_t old_counter = ntohl(*counter);
+	size_t increment = (buf_len + AES_BLOCK_SIZE - 1) / AES_BLOCK_SIZE;
+	u_int32_t new_counter = old_counter + increment;
+	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: counter-block updated from 0x%lx to 0x%lx for %zd bytes",
+			       (unsigned long)old_counter, (unsigned long)new_counter, buf_len));
+	if (new_counter < old_counter) {
+		/* Wrap ... */
+		loglog(RC_LOG_SERIOUS,
+		       "do_aes_ctr: counter wrapped");
+		/* what next??? */
+	}
+	*counter = htonl(new_counter);
+
+	DBG(DBG_CRYPT, DBG_log("do_aes_ctr: exit"));
 }
 
 struct encrypt_desc algo_aes_ctr =
@@ -167,7 +169,9 @@ struct encrypt_desc algo_aes_ctr =
 	},
 	.enc_ctxsize =   sizeof(aes_context),
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.ivsize = 8,
+	.pad_to_blocksize = FALSE,
+	.wire_iv_size =	8,
+	.salt_size = 4,
 	.keyminlen =    AES_KEY_MIN_LEN,
 	.keydeflen =    AES_KEY_DEF_LEN,
 	.keymaxlen =    AES_KEY_MAX_LEN,
@@ -210,8 +214,18 @@ static struct hash_desc integ_desc_aes_xcbc = {
 
 void ike_alg_aes_init(void)
 {
+	if (!test_aes_cbc(&algo_aes_cbc)) {
+		loglog(RC_LOG_SERIOUS, "CKM_AES_CBC: test failure");
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+	}
 	if (ike_alg_register_enc(&algo_aes_cbc) != 1)
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_cbc for IKE");
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+
+	if (!test_aes_ctr(&algo_aes_ctr)) {
+		loglog(RC_LOG_SERIOUS, "CKM_AES_CTR: test failure");
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+	}
 	if (ike_alg_register_enc(&algo_aes_ctr) != 1)
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ctr for IKE");
 

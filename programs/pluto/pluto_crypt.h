@@ -171,7 +171,8 @@ struct pcr_skeyid_q {
 	oakley_hash_t integ_hash;
 	oakley_hash_t prf_hash;
 	enum phase1_role role;
-	size_t keysize;	/* of encryptor */
+	size_t key_size; /* of encryptor, in bytes */
+	size_t salt_size; /* ov IV salt, in bytes */
 	wire_chunk_t gi;
 	wire_chunk_t gr;
 	wire_chunk_t pss;
@@ -211,6 +212,8 @@ struct pcr_skeycalc_v2_r {
 	PK11SymKey *skeyid_er;
 	PK11SymKey *skeyid_pi;
 	PK11SymKey *skeyid_pr;
+	chunk_t skey_initiator_salt;
+	chunk_t skey_responder_salt;
 };
 
 struct pluto_crypto_req {

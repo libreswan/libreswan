@@ -22,7 +22,30 @@ struct encrypt_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	size_t enc_ctxsize;
 	size_t enc_blocksize;
-	size_t ivsize;
+	/*
+	 * Does this algorithm require padding to the above
+	 * ENC_BLOCKSIZE bytes?
+	 *
+	 * This shouldn't be confused with the need to pad things to
+	 * 4-bytes (ESP) or not at all (IKE).
+	 */
+	bool pad_to_blocksize;
+	/*
+	 * Number of additional bytes that should be extracted from
+	 * the initial shared-secret.
+	 *
+	 * CTR calls this nonce; CCM calls it salt.
+	 */
+	size_t salt_size;
+	/*
+	 * The IV sent across the wire; this is random material.
+	 *
+	 * The WIRE-IV which will be sent across the wire in public.
+	 * The SALT, WIRE-IV, and who-knows what else are concatenated
+	 * to form a ENC_BLOCKSIZE-byte starting-variable (aka IV).
+	 */
+	size_t wire_iv_size;
+
 	unsigned keydeflen;
 	unsigned keymaxlen;
 	unsigned keyminlen;

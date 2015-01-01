@@ -246,7 +246,8 @@ static struct encrypt_desc algo_aes_ccm_8 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
-	.ivsize =  8,
+	.wire_iv_size =  8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
@@ -263,7 +264,8 @@ static struct encrypt_desc algo_aes_ccm_12 =
 		.algo_next =    NULL,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
-	.ivsize =  8,
+	.wire_iv_size =  8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
@@ -280,7 +282,8 @@ static struct encrypt_desc algo_aes_ccm_16 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.ivsize = 8,
+	.wire_iv_size = 8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
@@ -297,7 +300,8 @@ static struct encrypt_desc algo_aes_gcm_8 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.ivsize = 8,
+	.wire_iv_size = 8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
@@ -314,7 +318,8 @@ static struct encrypt_desc algo_aes_gcm_12 =
 		.algo_next =   NULL,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.ivsize = 8,
+	.wire_iv_size = 8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
@@ -331,7 +336,8 @@ static struct encrypt_desc algo_aes_gcm_16 =
 		.algo_next =  NULL,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
-	.ivsize = 8,
+	.wire_iv_size = 8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
 	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,

@@ -407,6 +407,8 @@ struct state {
 	PK11SymKey *st_skey_er_nss;	/* KM for ISAKMP encryption */
 	PK11SymKey *st_skey_pi_nss;	/* KM for ISAKMP encryption */
 	PK11SymKey *st_skey_pr_nss;	/* KM for ISAKMP encryption */
+	chunk_t st_skey_initiator_salt;
+	chunk_t st_skey_responder_salt;
 
 	/* connection included in AUTH */
 	struct traffic_selector st_ts_this;

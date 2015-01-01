@@ -108,6 +108,10 @@ DISTMISC = CHANGES PLUTO-CONVENTIONS TODO ipsec.secrets Makefile routing.txt \
 	 pluto.8 ipsec_whack.8 ipsec.secrets.5 .cvsignore
 
 DISTSRC = \
+	ike_alg_nss_cbc.h ike_alg_nss_cbc.c \
+	cbc_test_vectors.h cbc_test_vectors.c \
+	ctr_test_vectors.h ctr_test_vectors.c \
+	test_buffer.h test_buffer.c \
         connections.c initiate.c terminate.c connections.h \
 	pending.c pending.h \
 	foodgroups.c foodgroups.h \
@@ -160,6 +164,10 @@ DISTSRC = \
 DIST = $(DISTMISC) $(DISTSRC)
 
 OBJSPLUTO  = connections.o initiate.o terminate.o
+OBJSPLUTO += ike_alg_nss_cbc.o
+OBJSPLUTO += cbc_test_vectors.o
+OBJSPLUTO += ctr_test_vectors.o
+OBJSPLUTO += test_buffer.o
 OBJSPLUTO += pending.o cookie.o crypto.o defs.o
 OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
 OBJSPLUTO += timer.o hmac.o hostpair.o

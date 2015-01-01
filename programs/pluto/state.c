@@ -548,6 +548,8 @@ void delete_state(struct state *st)
 	free_any_nss_symkey(st->st_skey_pr_nss);
 	free_any_nss_symkey(st->st_enc_key_nss);
 #   undef free_any_nss_symkey
+	freeanychunk(st->st_skey_initiator_salt);
+	freeanychunk(st->st_skey_responder_salt);
 
 #   define wipe_any(p, l) { \
 		if ((p) != NULL) { \
@@ -889,6 +891,18 @@ struct state *duplicate_state(struct state *st)
 	clone_nss_symkey_field(st_skey_pr_nss);
 	clone_nss_symkey_field(st_enc_key_nss);
 #   undef clone_nss_symkey_field
+#   define clone_any_chunk(field) { \
+		if (st->field.ptr == NULL) { \
+			nst->field.ptr = NULL; \
+			nst->field.len = 0; \
+		} else { \
+			clonetochunk(nst->field, st->field.ptr, st->field.len, \
+				#field " in duplicate state"); \
+		} \
+	}
+	clone_any_chunk(st_skey_initiator_salt);
+	clone_any_chunk(st_skey_responder_salt);
+#    undef clone_any_chunk
 
 	/* v2 duplication of state */
 #   define clone_chunk(ch, name) \

@@ -82,6 +82,9 @@
 
 #include "nat_traversal.h"
 
+#include "cbc_test_vectors.h"
+#include "ctr_test_vectors.h"
+
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
 #endif
@@ -536,8 +539,32 @@ static void usage(void)
 	exit(0);
 }
 
+
+#if 0
+/*
+ * XXX: Can't use this call to get encrypt_desc struct encrypt_desc
+ */
+extern struct encrypt_desc algo_aes_cbc;
+extern struct encrypt_desc algo_camellia_cbc;
+extern struct encrypt_desc algo_aes_ctr;
+#endif
+
 int main(int argc, char **argv)
 {
+#if 0
+	NSS_NoDB_Init(".");
+	if (!test_aes_cbc(&algo_aes_cbc)) {
+		printf("aes-cbc failed\n");
+	}
+	if (!test_camellia_cbc(&algo_camellia_cbc)) {
+		printf("camellia-cbc failed\n");
+	}
+	if (!test_aes_ctr(&algo_aes_ctr)) {
+		printf("aes-ctr failed\n");
+	}
+	exit(0);
+#endif
+
 	int lockfd;
 
 	/*
