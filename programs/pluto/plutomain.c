@@ -603,9 +603,6 @@ int main(int argc, char **argv)
 
 	libreswan_passert_fail = passert_fail;
 
-	if (getenv("PLUTO_WAIT_FOR_GDB"))
-		sleep(120);
-
 	/* handle arguments */
 	for (;; ) {
 		/*
