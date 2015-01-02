@@ -218,16 +218,19 @@ void ike_alg_aes_init(void)
 		loglog(RC_LOG_SERIOUS, "CKM_AES_CBC: test failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
-	if (ike_alg_register_enc(&algo_aes_cbc) != 1)
+	if (ike_alg_register_enc(&algo_aes_cbc) != 1) {
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_cbc for IKE");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+	}
 
 	if (!test_aes_ctr(&algo_aes_ctr)) {
 		loglog(RC_LOG_SERIOUS, "CKM_AES_CTR: test failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
-	if (ike_alg_register_enc(&algo_aes_ctr) != 1)
+	if (ike_alg_register_enc(&algo_aes_ctr) != 1) {
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ctr for IKE");
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+	}
 
 	/* Waiting on NSS support - but we need registration so ESP will work */
 	if (ike_alg_register_hash(&hash_desc_aes_xcbc) != 1)
