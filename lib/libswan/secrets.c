@@ -91,20 +91,23 @@ static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
 
-static double shannon_entropy(unsigned char *p, size_t size)
+static double shannon_entropy(const unsigned char *p, size_t size)
 {
 	double entropy = 0.0;
-	int histogram[256];
+	int histogram[UCHAR_MAX + 1];
 	unsigned int i;
 
-	memset(histogram, 0, sizeof(int) * 256 );
+	zero(&histogram);
 
 	for (i = 0; i < size; ++i)
 		++histogram[p[i]];
 
-	for (i = 0; i < 256; ++i) {
-		if (histogram[i])
-			entropy -= (double)histogram[i] / size * log2((double)histogram[i]/size);
+	for (i = 0; i <= UCHAR_MAX; ++i) {
+		if (histogram[i] != 0) {
+			double p = (double)histogram[i] / size;
+
+			entropy -=  p * log2(p);
+		}
 	}
 	DBG(DBG_CONTROL,
 		DBG_log("Shannon entropy of PSK is %f", entropy));
