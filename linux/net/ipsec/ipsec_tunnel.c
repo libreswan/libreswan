@@ -2108,8 +2108,8 @@ int ipsec_tunnel_createnum(int ifnum)
 		    ifnum);
 
 	sprintf(name, IPSEC_DEV_FORMAT, ifnum);
-#ifdef ipsec_alloc_netdev
-	dev_ipsec = alloc_netdev(sizeof(struct ipsecpriv), name,
+#ifdef alloc_netdev
+	dev_ipsec = ipsec_alloc_netdev(sizeof(struct ipsecpriv), name,
 				 NET_NAME_UNKNOWN, ipsec_tunnel_netdev_setup);
 #else
 	dev_ipsec = (struct net_device*)kmalloc(sizeof(struct net_device),
