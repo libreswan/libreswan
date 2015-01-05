@@ -32,10 +32,24 @@ SUBDIRS?=lib programs initsystems packaging testing
 clean::
 	-(cd ${LIBRESWANSRCDIR} && $(MAKE) modclean && $(MAKE) mod26clean)
 
-distclean:	clean
+# Make clean doesn't work so well when switching between in-vm and
+# native builds, just delete everything (but DO NOT delete stuff, such
+# as VMs, that we didn't create).
+#
+# See also testing/guestbin/swan-build
+distclean:	# clean
 	rm -f out.kpatch
-	if [ -f kvmsetup.sh ]; then source kvmsetup.sh; if [ -d "$$POOLSPACE" ]; then rm -rf $$POOLSPACE; fi; fi
-	if [ -d OBJ.$$OSDEP.$$ARCH ]; then rm -rf OBJ.$$OSDEP.$$ARCH/; fi
+	rm -rf OBJ.*
+	rm -rf modobj
+	rm -f lib/libipsecconf/lex.yy.c
+	rm -f lib/libipsecconf/parser.dot
+	rm -f lib/libipsecconf/parser.output
+	rm -f lib/libipsecconf/parser.tab.c
+	rm -f lib/libipsecconf/parser.tab.h
+	rm -f lib/libswan/Makefile.depend
+	rm -f lib/libipsecconf/Makefile.depend
+	rm -f lib/libwhack/Makefile.depend
+	rm -f programs/pluto/Makefile.depend
 
 install_file_list:
 	@for d in $(SUBDIRS) ; \
