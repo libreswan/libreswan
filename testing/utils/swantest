@@ -50,6 +50,7 @@ formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+
 class guest (threading.Thread):
 
     def __init__(self, hostname, role, testname, args, install=None, compile=None):
@@ -781,7 +782,7 @@ class scantests:
 
 def rsync_file_to_dir(src, dst):
     cmd = "/usr/bin/rsync -q -aP %s %s/" % (src, dst)
-    logging.debug("%s %s", os.getcwd(), cmd)
+    logging.debug("%s", cmd)
     try:
         os.system(cmd)
     except:
@@ -870,7 +871,7 @@ def orient(args, test):
     log_line = ''
     if os.path.exists("eastrun.sh"):
         logging.error(
-            "ABORT didn't expect eastrun.sh here something is wrong" % os.getcwd())
+            "ABORT didn't expect eastrun.sh in %s something is wrong", os.getcwd())
         return None, None
 
     if os.path.exists("eastinit.sh"):
@@ -1007,7 +1008,12 @@ def init_output_dir():
     output_dir = "%s/OUTPUT" % os.getcwd()
 
     if os.path.isdir(output_dir):
-        shutil.rmtree(output_dir)
+        try:
+            shutil.rmtree(output_dir)
+        except PermissionError:
+            logging.info("PermissionError to remove %s", output_dir)
+            return True
+
     os.mkdir(output_dir, 0o777)
 
 
@@ -1085,7 +1091,7 @@ def re_write_result(sanity):
                 f.write(line)
                 f.write("\n")
     except:
-        logging.error("ERROR could not open file to write %s" ,output_file)
+        logging.error("ERROR could not open file to write %s", output_file)
 
     return changed
 
@@ -1127,7 +1133,7 @@ DEFAULTCONFIG = {
         'regualrhosts': ['nic'],
         'resultsdir': '/home/build/results',
         'retry': 5,
-        'rpm' : '',
+        'rpm': '',
         'sanitizer': "../../utils/sanitize.sh",
         'shutdownwait': 63,
         'stoponerror': None,
@@ -1186,7 +1192,6 @@ def cmdline():
                         type=int, help="retry %d when there is console error." % DEFAULTCONFIG['retry'])
     parser.add_argument("--rpm", default=DEFAULTCONFIG['rpm'],
                         help="binary rpm to install libreswan %s. Default run make install" % DEFAULTCONFIG['rpm'])
-
 
     parser.add_argument("--sanitizer", default=DEFAULTCONFIG['sanitizer'],
                         help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
@@ -1308,7 +1313,8 @@ def docker_swan_build(args, dname):
     # cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make
     # programs install'"%dname
     if (args.rpm):
-        cmd = "docker exec -ti %s /bin/bash -c 'rpm -vhi %s'" % (dname, args.rpm)
+        cmd = "docker exec -ti %s /bin/bash -c 'rpm -vhi %s'" % (
+            dname, args.rpm)
     else:
         cmd = "docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make programs install'" % dname
 
@@ -1340,7 +1346,8 @@ def docker_containers_start_stop(args, test, st, stop):
     if stop:
         return
 
-    init_output_dir()
+    if init_output_dir():
+        return True
 
     didi = docker_start_container(test["initiator"], dnamei, args.dockerimage)
     didr = docker_start_container(test["responder"], dnamer, args.dockerimage)
@@ -1571,10 +1578,11 @@ def do_kvmplutotest(args, start, test, st):
 
     tcpdump_cmds, test_hosts = orient(args, test)
     if not test_hosts:
-        return
+        return "eroor"
 
     e = shut_down_hosts(args, test_hosts)
-    init_output_dir()
+    if init_output_dir():
+        return True
 
     if e:
         write_result(args, start, test["name"], None, "abort", e)
@@ -1665,7 +1673,7 @@ def do_single_test(args, start='', test=None, st=None):
         if os.path.exists(test["name"]):
             try:
                 logging.debug("chdir %s in dir %s", test["name"], os.getcwd())
-                os.chdir(test["name"])
+                os.chdir(test["name"])  # chdir start
             except:
                 logging.exception(
                     "EXCEPTION chdir %s in dir %s", test["name"], os.getcwd())
@@ -1680,25 +1688,29 @@ def do_single_test(args, start='', test=None, st=None):
     if os.path.exists('stop-tests-now'):
         logging.error(
             "****** skip test %s found stop-tests-now *****", testdir)
-        os.chdir("..")
-        # chdir end
+        os.chdir("..")  # chdir end
         return
 
     e = None
 
     if test["type"] == 'dockerplutotest':
         if do_dockerplutotest(args=args, start=start, test=test, st=st):
+            os.chdir("..")  # chdir end
             return True
     elif test["type"] == 'kvmplutotest':
-        do_kvmplutotest(args=args, start=start, test=test, st=st)
+        if do_kvmplutotest(args=args, start=start, test=test, st=st):
+            os.chdir("..")  # chdir end
+            return True
     else:
         logging.info("ABORT %s single test unknown type", test["type"])
+        os.chdir("..")  # chdir end
         return
 
     s = sanitize(args.sanitizer)
     write_result(args, start, test["name"], s, testexpect=test["expect"])
 
     if "odir" in st:
+        logging.info("copyig results ")
         rsync_file_to_dir(os.getcwd(), st["odir"])
     else:
         logging.debug("not copyig results ")
@@ -1814,11 +1826,6 @@ def run_kvm_q(args, tests, st):
         logging.debug("next up %s type %s", test["name"], test["type"])
         do_single_test(args=args, test=test, st=st)
         ran = ran + 1
-        if "odir" in st and os.path.exists(st["odir"]):
-            rsync_file_to_dir(test["name"], st["odir"])
-        elif "odir" in st:
-            logging.info(
-                "output dir %s is not there. can not copy results", st["odir"])
 
 
 def do_test_list(args, start, tried, output_dir):
