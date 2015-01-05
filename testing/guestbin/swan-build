@@ -21,8 +21,12 @@ rm -f lib/libswan/Makefile.depend lib/libipsecconf/Makefile.depend \
 
 echo ">>> $0 on $(hostname) at $(date)" >>compile-log.txt
 
-if ! make programs module >>compile-log.txt 2>&1; then
-    echo '"make programs module"'" failed: $?; see compile-log.txt"
+if make programs module >>compile-log.txt 2>&1; then
+    :
+else
+    status=$?
+    echo '"make programs module"'" failed: ${status}; see compile-log.txt"
+    exit ${status}
 fi
 
 echo "$0 finished on $(hostname) at $(date)"
