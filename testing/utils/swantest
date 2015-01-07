@@ -50,6 +50,9 @@ formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+class PipeworkEroor():
+    """General exception for pipework errors."""
+    pass
 
 class guest (threading.Thread):
 
@@ -1254,13 +1257,16 @@ def kvm_error(r_file):
 
 def runcmd(cmd):
     logging.info("%s", cmd)
-    return subprocess.getoutput(cmd)
+    o =  subprocess.getoutput(cmd)
+    logging.debug(o)
+    return o
 
 
 def runcmd_check_output(cmd):
     logging.info("%s", cmd)
     try:
         o = subprocess.check_output(cmd, shell=True)
+        logging.debug(o)
         return (o, None)
     except subprocess.CalledProcessError as e:
         logging.error("ERROR %s %s", cmd, e.output)
@@ -1360,8 +1366,10 @@ def docker_containers_start_stop(args, test, st, stop):
     if didn:
         docker_flush_eth0(dhost=test["nic"], dname=dnamen)
 
-    docker_add_net_bridges(
-        args, test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
+    try:
+        docker_add_net_bridges(args, test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
+    except:
+        return True
 
     docker_add_route(test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
 
@@ -1373,8 +1381,10 @@ def docker_containers_start_stop(args, test, st, stop):
 
 def docker_net_bridge(dname, brname, iface, prefix):
     cmd = "pipework %s -i %s %s %s" % (brname, iface, dname, prefix)
-    runcmd(cmd)
-
+    output = runcmd(cmd)
+    if output:
+        logging.error(output)
+        raise PipeworkEroor(output)
 
 def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
     # shared bridge between east - west, east - nic
