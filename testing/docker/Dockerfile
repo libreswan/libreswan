@@ -1,4 +1,4 @@
-FROM fedora:20
+FROM fedora:21
 MAINTAINER "Antony Antony" <antony@phenome.org>
 ENV container docker
 RUN yum -y update; yum clean all
