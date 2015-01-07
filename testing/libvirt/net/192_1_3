@@ -1,18 +1,15 @@
 <!--
-Based on testing/baseconfigs/net.nic.sh
-"nic" is not used as a VM, it is the host. It's
-interfaces are configured on the bridge. dhcp not used
-
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit 192_1_3
+or other application using the libvirt API.
 -->
 
 <network ipv6='yes'>
   <name>192_1_3</name>
-  <bridge name='swan13' stp='on' delay='0' />
-  <mac address='12:00:00:32:64:B0'/>
+  <uuid>109e6a4f-4e3f-4d7f-b122-c1cc69703043</uuid>
+  <bridge name='swan13' stp='on' delay='0'/>
+  <mac address='12:00:00:32:64:b0'/>
   <ip address='192.1.3.253' netmask='255.255.255.0'>
-    <dhcp>
-      <range start='192.1.3.128' end='192.1.3.196' />
-    </dhcp>
   </ip>
-  <ip family="ipv6" address="2001:db8:1:3::253" prefix="64"/>
 </network>

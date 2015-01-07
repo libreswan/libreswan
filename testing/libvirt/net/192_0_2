@@ -1,20 +1,15 @@
 <!--
-This net has no "nic" host in the diagram, so we made up 192.0.2.127
-and its mac address
-
-"nic" is not used as a VM, it is the host. It's
-interfaces are configured on the bridge. dhcp not used
-
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit 192_0_2
+or other application using the libvirt API.
 -->
 
 <network ipv6='yes'>
   <name>192_0_2</name>
-  <bridge name='swan02' stp='on' delay='0' />
-  <mac address='12:00:00:32:32:BA'/>
+  <uuid>9e2f3337-c9de-4b61-8281-45070e5d0805</uuid>
+  <bridge name='swan02' stp='on' delay='0'/>
+  <mac address='12:00:00:32:32:ba'/>
   <ip address='192.0.2.127' netmask='255.255.255.0'>
-    <dhcp>
-      <range start='192.0.2.128' end='192.0.2.200' />
-    </dhcp>
   </ip>
-  <ip family="ipv6" address="2001:db8:0:2::253" prefix="64"/>
 </network>
