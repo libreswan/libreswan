@@ -1840,7 +1840,7 @@ def do_test_list(args, start, tried, output_dir):
     odir = output_dir
 
     if not tried:
-        odir = setup_result_dir(args, False)
+        odir = setup_result_dir(args, True)
 
     st["odir"] = odir
     st["ktorun"] = 0
@@ -1921,8 +1921,8 @@ def do_test_list(args, start, tried, output_dir):
         return (odir, True, 0)
 
     # in every retry check if directry need to be  created
-    if not os.path.isdir(st["odir"]) and to_create:
-        if not makedirs_log(st["odri"], 0o775):
+    if not os.path.isdir(st["odir"]):
+        if not makedirs_log(st["odir"], 0o775):
             logging.error(
                 "failed to create directory %s. no results will be copied", st["odir"])
 
