@@ -7,7 +7,6 @@ or other application using the libvirt API.
 
 <network ipv6='yes'>
   <name>192_9_2</name>
-  <uuid>41a0d937-d4b7-423d-8863-53c5057ac457</uuid>
   <bridge name='swan92' stp='on' delay='0'/>
   <mac address='12:00:00:32:32:92'/>
   <ip address='192.9.2.253' netmask='255.255.255.0'>

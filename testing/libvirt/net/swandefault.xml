@@ -7,7 +7,6 @@ or other application using the libvirt API.
 
 <network ipv6='yes'>
   <name>swandefault</name>
-  <uuid>84ceada0-79c1-4269-82e1-f79dc2654d89</uuid>
   <forward mode='nat'/>
   <bridge name='virbr0' stp='on' delay='0'/>
   <mac address='52:54:00:99:9a:3b'/>
