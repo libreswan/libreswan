@@ -526,7 +526,7 @@
 
       <arg choice="plain">--deleteuser</arg>
       <arg choice="plain">--name
-      <replaceable>xauth-username</replaceable></arg>
+      <replaceable>username</replaceable></arg>
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
 
@@ -759,9 +759,7 @@
       <para><emphasis remap="B">pluto</emphasis> implements a large subset of
       IKE. This is enough for it to interoperate with other instances of
       <emphasis remap="B">pluto</emphasis>, and many other IKE
-      implementations. It currently supports XAUTH, ModeConfig, X.509, Dead
-      Peer Detection, Opportunistic Encryption and all the NAT Traversal
-      standards.</para>
+      implementations.</para>
 
       <para>The policy for acceptable characteristics for Security
       Associations is mostly hardwired into the code of <emphasis
@@ -908,8 +906,8 @@
       remap="B">pluto</emphasis>.</para>
 
       <para>The file <filename>/etc/ipsec.secrets</filename> is used to keep
-      preshared secret keys, RSA private keys, X.509 encoded keyfiles and
-      XAUTH passwords. Smartcards are handled via NSS. For
+      preshared secret keys and XAUTH passwords. RSA private keys, X.509 certificates,
+      CRLs, OCSP and smartcards are handled via NSS. For
       debugging, there is an argument to the <emphasis remap="B">pluto</emphasis>
       command to use a different file. This file is described in
       <citerefentry><refentrytitle>ipsec.secrets</refentrytitle>
