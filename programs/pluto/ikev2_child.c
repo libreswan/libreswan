@@ -1101,30 +1101,26 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	return STF_OK;
 }
 
-static bool ikev2_set_dns (pb_stream *cp_a_pbs, u_int16_t len, struct state *st)
+static bool ikev2_set_dns(pb_stream *cp_a_pbs, struct state *st)
 {
 	ip_address ip;
 	ipstr_buf ip_str;
 	struct connection *c = st->st_connection;
+	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), AF_INET, &ip);
 
-	if (len != sizeof(uint32_t)) {
-		libreswan_log("ERROR INTERNAL_IP4_DNS length is not %zu instead %u",
-				sizeof(uint32_t), len);
+	if (ugh != NULL) {
+		libreswan_log("ERROR INTERNAL_IP4_DNS malformed: %s", ugh);
 		return FALSE;
 	}
-
-	initaddr((const unsigned char *)cp_a_pbs->cur, sizeof(uint32_t),
-			AF_INET, &ip);
-	libreswan_log("received INTERNAL_IP4_DNS %s",
-			ipstr(&ip, &ip_str));
 
 	if (isanyaddr(&ip)) {
-		DBG(DBG_CONTROL, DBG_log("ERROR INTERNAL_IP4_DNS %s is invalid"
-					" #%lu %s[%lu]",
-					ipstr(&ip, &ip_str), st->st_serialno,
-					c->name, c->instance_serial));
+		libreswan_log("ERROR INTERNAL_IP4_DNS %s is invalid",
+				ipstr(&ip, &ip_str));
 		return FALSE;
 	}
+
+	libreswan_log("received INTERNAL_IP4_DNS %s",
+			ipstr(&ip, &ip_str));
 
 	char *old = c->cisco_dns_info;
 
@@ -1137,51 +1133,48 @@ static bool ikev2_set_dns (pb_stream *cp_a_pbs, u_int16_t len, struct state *st)
 		 */
 		size_t sz_old = strlen(old);
 		size_t sz_added = strlen(ip_str.buf) + 1;
-		char *new = alloc_bytes(sz_old + 1 + sz_added, 
+		char *new = alloc_bytes(sz_old + 1 + sz_added,
 				"ikev2 cisco_dns_info+");
+
 		memcpy(new, old, sz_old);
-		*(new + sz_old) = ' ';
+		new[sz_old] = ' ';
 		memcpy(new + sz_old + 1, ip_str.buf, sz_added);
 		c->cisco_dns_info = new;
-		pfreeany(old);
+		pfree(old);
 	}
 	return TRUE;
 }
 
-static bool ikev2_set_ia (pb_stream *cp_a_pbs, u_int16_t len, struct state *st)
+static bool ikev2_set_ia(pb_stream *cp_a_pbs, struct state *st)
 {
 	ip_address ip;
 	ipstr_buf ip_str;
 	struct connection *c = st->st_connection;
+	err_t ugh = initaddr(cp_a_pbs->cur, pbs_left(cp_a_pbs), AF_INET, &ip);
 
-	if (len != sizeof(uint32_t)) {
-		libreswan_log("ERROR INTERNAL_IP4_ADDRESS length is not %zu instead %u",
-				sizeof(uint32_t), len);
+	if (ugh != NULL) {
+		libreswan_log("ERROR INTERNAL_IP4_ADDRESS malformed: %s", ugh);
 		return FALSE;
 	}
 
-	initaddr((const unsigned char *)cp_a_pbs->cur, sizeof(uint32_t),
-			AF_INET, &ip);
+	if (isanyaddr(&ip)) {
+		libreswan_log("ERROR INTERNAL_IP4_ADDRESS %s is invalid",
+			ipstr(&ip, &ip_str));
+		return FALSE;
+	}
+
 	libreswan_log("received INTERNAL_IP4_ADDRESS %s",
 			ipstr(&ip, &ip_str));
 
-	if (isanyaddr(&ip)) {
-		DBG(DBG_CONTROL, DBG_log("ERROR INTERNAL_IP4_ADDRESS %s is invalid "
-					"as host source address #%lu %s[%lu]",
-					ipstr(&ip, &ip_str), st->st_serialno,
-					c->name, c->instance_serial));
-		return FALSE;
-	}
-
 	addrtosubnet(&ip, &c->spd.this.client);
-	setportof(0, &c->spd.this.client.addr);
+	setportof(0, &c->spd.this.client.addr);	/* ??? redundant? */
 
 	c->spd.this.has_client = TRUE;
+	/* ??? the following test seems obscure.  What's it about? */
 	if (addrbytesptr(&c->spd.this.host_srcip, NULL) == 0 ||
 			isanyaddr(&c->spd.this.host_srcip)) {
-		DBG(DBG_CONTROL, DBG_log( "setting host source IP address to %s #%lu %s[%lu]",
-					ipstr(&ip, &ip_str), st->st_serialno,
-					c->name, c->instance_serial));
+		DBG(DBG_CONTROL, DBG_log("setting host source IP address to %s",
+					ipstr(&ip, &ip_str)));
 		c->spd.this.host_srcip = ip;
 	}
 	return TRUE;
@@ -1212,20 +1205,20 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st)
 		}
 
 		switch (cp_a.type) {
-		case INTERNAL_IP4_ADDRESS:
-			if (!ikev2_set_ia(&cp_a_pbs, cp_a.len, st))
+		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+			if (!ikev2_set_ia(&cp_a_pbs, st))
 				return FALSE;
 			break;
 
-		case INTERNAL_IP4_DNS:
-			if (!ikev2_set_dns(&cp_a_pbs, cp_a.len, st))
+		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+			if (!ikev2_set_dns(&cp_a_pbs, st))
 				return FALSE;
 			break;
 		default:
 			libreswan_log("unknown attribute %s length %u",
-					enum_name(&ikev2_cp_attribute_type_names,
-						cp_a.type),
-					cp_a.len);
+				enum_name(&ikev2_cp_attribute_type_names,
+					cp_a.type),
+				cp_a.len);
 			break;
 		}
 	}

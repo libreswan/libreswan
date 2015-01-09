@@ -239,8 +239,8 @@ stf_status ikev2parent_outI1(int whack_sock,
 		st->st_oakley.groupnum = groupnum;
 
 		/*
-	 	 * Calculate KE and Nonce.
-	 	 */
+		 * Calculate KE and Nonce.
+		 */
 		e = crypto_helper_build_ke(st);
 		reset_globals();
 		return e;
@@ -2328,7 +2328,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		} else {
 			DBG_log("CHILD SA proposals received");
 			np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
-				ISAKMP_NEXT_v2CP :ISAKMP_NEXT_v2SA;
+				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
 		}
 
 		DBG(DBG_CONTROLMORE,
@@ -2709,11 +2709,11 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	}
 
 	/* are we expecting a v2CP (RESP) ?  */
-	if(c->spd.this.modecfg_client) {
-		if (md->chain[ISAKMP_NEXT_v2CP] == NULL){
+	if (c->spd.this.modecfg_client) {
+		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/* not really anything to here... but it would be worth unpending again */
 			libreswan_log("missing v2CP reply, not attempting to setup child SA");
-			/*  Delete previous retransmission event.  */
+			/* Delete previous retransmission event. */
 			delete_event(st);
 			/*
 			 * ??? this isn't really a failure, is it?
