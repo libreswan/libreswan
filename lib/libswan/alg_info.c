@@ -55,6 +55,9 @@ typedef struct alg_alias {
 static const alg_alias auth_alg_aliases[] = {
 	/* alg */	/* aliases */
 	{ "sha2_256",	{ "sha2", NULL } },
+	{ "sha2_256",	{ "sha256", NULL } },
+	{ "sha2_384",	{ "sha384", NULL } },
+	{ "sha2_512",	{ "sha512", NULL } },
 	{ "sha1",	{ "sha", NULL } },
 	{ "sha1",	{ "sha1_96", NULL } },
 	{ NULL, { NULL } }
