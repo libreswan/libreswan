@@ -113,7 +113,7 @@ static double shannon_entropy(const unsigned char *p, size_t size)
 		DBG_log("Shannon entropy of PSK is %f", entropy));
 
 	if (entropy < MIN_SHANNON_ENTROPY) {
-		loglog(RC_LOG_SERIOUS,"WARNING: PSK entropy of %f is less than minimum Shannon Entropy of %f - this will be rejected as of July 1st, 2015",
+		loglog(RC_LOG,"WARNING: PSK entropy of %f is less than minimum Shannon Entropy of %f - this will be rejected as of July 1st, 2015",
 			entropy, MIN_SHANNON_ENTROPY);
 	}
 

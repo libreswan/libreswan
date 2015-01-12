@@ -171,14 +171,13 @@ struct initiate_stuff {
 	enum crypto_importance importance;
 };
 
-static int initiate_a_connection(struct connection *c,
+static void initiate_a_connection(struct connection *c,
 				 void *arg)
 {
 	struct initiate_stuff *is = (struct initiate_stuff *)arg;
 	int whackfd = is->whackfd;
 	lset_t moredebug = is->moredebug;
 	enum crypto_importance importance = is->importance;
-	int success = 0;
 
 	set_cur_connection(c);
 
@@ -205,7 +204,6 @@ static int initiate_a_connection(struct connection *c,
 				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				       enum_show(&connection_kind_names,
 						 c->kind));
-				success = 1;
 				c->policy |= POLICY_UP;
 			} else
 			loglog(RC_NOPEERIP,
@@ -230,7 +228,6 @@ static int initiate_a_connection(struct connection *c,
 						 c->kind),
 				       (c->policy &
 					POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
-				success = 1;
 				c->policy |= POLICY_UP;
 			} else
 			loglog(RC_NOPEERIP,
@@ -276,13 +273,12 @@ static int initiate_a_connection(struct connection *c,
 						  , NULL
 #endif
 						  );
-				success = 1;
 			}
 		}
 	}
 	reset_cur_connection();
 
-	return success;
+	return;
 }
 
 void initiate_connection(const char *name, int whackfd,
