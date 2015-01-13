@@ -1,13 +1,12 @@
 /*
- * Simple INET/INET6/UNIX socket getpeercon() test server
+ * getpeercon_server: simple INET/INET6/UNIX socket getpeercon(3) test server
  *
- * compile: gcc -o getpeercon_server -lselinux getpeercon_server.c
+ * compile: gcc -Wall -o getpeercon_server -lselinux getpeercon_server.c
  *
  * Copyright Paul Moore <paul@paul-moore.com>
  * 
  * Paul Wouters <pwouters@redhat.com> added simplistic quit option. If
  * the server receives the text "quit" it will quit.
- *
  */
 
 /*
@@ -25,13 +24,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
  */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -50,34 +49,29 @@
 int main(int argc, char *argv[])
 {
 	int rc;
-	int srv_sock, cli_sock;
-	int true = 1;
-	struct sockaddr_storage cli_sock_saddr;
-	struct sockaddr *cli_sock_addr;
-	struct sockaddr_in6 *cli_sock_6addr;
-	socklen_t cli_sock_addr_len;
 	short srv_sock_port;
+	int srv_sock;
+	const int true_const = 1;
 	char *srv_sock_path = NULL;
-	char buffer[RECV_BUF_LEN];
-	char cli_sock_addr_str[INET6_ADDRSTRLEN + 1];
-	security_context_t ctx;
-	char *ctx_str;
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s <port|path>\n", argv[0]);
 		return 1;
 	}
+
 	srv_sock_port = atoi(argv[1]);
 	if (srv_sock_port == 0)
 		srv_sock_path = argv[1];
 
-	rc = getcon(&ctx);
-	if (rc < 0)
-		ctx_str = strdup("NO_CONTEXT");
-	else
-		ctx_str = strdup(ctx);
-	fprintf(stderr, "-> running as %s\n", ctx_str);
-	free(ctx_str);
+	{
+		security_context_t ctx;
+		int rc = getcon(&ctx);
+
+		fprintf(stderr, "-> running as %s\n",
+			rc < 0 ? "NO_CONTEXT" : ctx);
+		if (rc >= 0)
+			freecon(ctx);
+	}
 
 	fprintf(stderr, "-> creating socket ... ");
 	if (srv_sock_path == NULL)
@@ -85,13 +79,13 @@ int main(int argc, char *argv[])
 	else
 		srv_sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (srv_sock < 0) {
-		fprintf(stderr, "error: %d\n", srv_sock);
+		fprintf(stderr, "socket(2) error: %s\n", strerror(errno));
 		return 1;
 	}
 	rc = setsockopt(srv_sock,
-			SOL_SOCKET, SO_REUSEADDR, &true, sizeof(true));
+			SOL_SOCKET, SO_REUSEADDR, &true_const, sizeof(true_const));
 	if (rc < 0) {
-		fprintf(stderr, "error: %d\n", srv_sock);
+		fprintf(stderr, "setsockopt(2) error: %s\n", strerror(errno));
 		return 1;
 	}
 	fprintf(stderr, "ok\n");
@@ -120,71 +114,85 @@ int main(int argc, char *argv[])
 			  sizeof(srv_sock_addr));
 	}
 	if (rc < 0) {
-		fprintf(stderr, "bind error: %d\n", rc);
+		fprintf(stderr, "bind(2) error: %s\n", strerror(errno));
 		return 1;
 	}
 
 	rc = listen(srv_sock, LISTEN_QUEUE);
 	if (rc < 0) {
-		fprintf(stderr, "listen error: %d\n", rc);
+		fprintf(stderr, "listen(2) error: %s\n", strerror(errno));
 		return 1;
 	} else
 		fprintf(stderr, "ok\n");
 
-	cli_sock_addr = (struct sockaddr *)&cli_sock_saddr;
-	cli_sock_6addr = (struct sockaddr_in6 *)&cli_sock_saddr;
-
-	fprintf(stderr, "-> waiting ... ", srv_sock_port);
+	fprintf(stderr, "-> waiting ... ");
 	fflush(stdout);
 	/* loop forever */
 	for (;;) {
+		int cli_sock;
+		struct sockaddr_storage cli_sock_saddr;
+		struct sockaddr *const cli_sock_addr = (struct sockaddr *)&cli_sock_saddr;
+		struct sockaddr_in6 *const cli_sock_6addr = (struct sockaddr_in6 *)&cli_sock_saddr;
+		socklen_t cli_sock_addr_len;
+		char cli_sock_addr_str[INET6_ADDRSTRLEN + 1];
+		security_context_t ctx;
+		char *ctx_str;
+
 		//fflush(stdout);
 		memset(&cli_sock_saddr, 0, sizeof(cli_sock_saddr));
 		cli_sock_addr_len = sizeof(cli_sock_saddr);
 		cli_sock = accept(srv_sock, cli_sock_addr, &cli_sock_addr_len);
 		if (cli_sock < 0) {
-			fprintf(stderr, "error: %d\n", cli_sock);
+			fprintf(stderr, "accept(2) error: %s\n", strerror(errno));
 			continue;
 		}
 		rc = getpeercon(cli_sock, &ctx);
-		if (rc < 0)
-			ctx_str = strdup("NO_CONTEXT");
-		else
-			ctx_str = strdup(ctx);
-		switch (cli_sock_addr->sa_family) {
+		ctx_str = rc < 0 ? "NO_CONTEXT" : ctx;
+
+		switch (cli_sock_saddr.ss_family) {
 		case AF_INET6:
-			if (IN6_IS_ADDR_V4MAPPED(&cli_sock_6addr->sin6_addr))
+			if (IN6_IS_ADDR_V4MAPPED(&cli_sock_6addr->sin6_addr)) {
 				inet_ntop(AF_INET,
-				(void *)&cli_sock_6addr->sin6_addr.s6_addr32[3],
-					  cli_sock_addr_str, INET_ADDRSTRLEN);
-			else
-				inet_ntop(cli_sock_addr->sa_family,
-					  (void *)&cli_sock_6addr->sin6_addr,
-					  cli_sock_addr_str, INET6_ADDRSTRLEN);
+					&cli_sock_6addr->sin6_addr.s6_addr32[3],
+					cli_sock_addr_str, sizeof(cli_sock_addr_str));
+			} else {
+				inet_ntop(cli_sock_6addr->sin6_family,
+					&cli_sock_6addr->sin6_addr,
+					cli_sock_addr_str, sizeof(cli_sock_addr_str));
+			}
 			fprintf(stderr, "<- connect(%s,%s)\n",
 				cli_sock_addr_str, ctx_str);
 			break;
+
 		case AF_UNIX:
 			fprintf(stderr, "connect(UNIX,%s)\n", ctx_str);
 			break;
+
 		default:
 			fprintf(stderr, "connect(%d,%s)\n",
-				cli_sock_addr->sa_family, ctx_str);
+				cli_sock_saddr.ss_family, ctx_str);
 		}
-		free(ctx_str);
 
-		do {
-			rc = recv(cli_sock, buffer, RECV_BUF_LEN, 0);
-			if (rc < 0)
-				fprintf(stderr, "error: %d\n", rc);
-			else {
+		if (rc >= 0)
+			freecon(ctx);
+
+		for (;;) {
+			char buffer[RECV_BUF_LEN + 1];
+
+			rc = recv(cli_sock, buffer, sizeof(buffer) - 1, 0);
+			if (rc < 0) {
+				fprintf(stderr, "recv(2) error: %s\n", strerror(errno));
+				break;
+			} else if (rc == 0) {
+				break;
+			} else {
 				buffer[rc] = '\0';
-				if (rc > 1)
-					printf("   %s", buffer);
-				if (strncmp(buffer,"quit",4) == 0) 
-					exit(0);
+				/* ??? should this format include a \n? */
+				printf("   %s", buffer);
+				if (strcmp(buffer, "quit") == 0) 
+					break;
 			}
-		} while (rc > 0);
+		}
 		close(cli_sock);
 		fprintf(stderr, "-> connection closed\n");
 	}
