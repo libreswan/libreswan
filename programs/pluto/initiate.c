@@ -260,7 +260,7 @@ static void initiate_a_connection(struct connection *c,
 						  "cannot initiate: no acceptable kernel algorithms loaded");
 					reset_cur_connection();
 					close_any(is->whackfd);
-					return 0;
+					return;
 				}
 				free_sa(phase2_sa);
 			}
