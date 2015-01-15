@@ -17,6 +17,7 @@ v3.13 (unreleased)
 * pluto: audit format and log item update as per audit spec [Paul]
 * pluto: simplify and clarify sa_copy_sa and friends [Hugh]
 * pluto: small steps improving crypto helpers [Hugh]
+* pluto/rsasigkey: added --seedbits option (and seedbits= option) [Paul]
 * libipsecconf: Improve parser for pipe case (with NM) [Hugh/Lubomir Rintel]
 * readwriteconf: improve error handling [Hugh]
 * ipsec: ipsec --import does not need to run restorecon [Paul]
