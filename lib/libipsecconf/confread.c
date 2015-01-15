@@ -99,6 +99,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->setup.options[KBF_KEEPALIVE] = 0;                  /* config setup */
 	cfg->setup.options[KBF_NATIKEPORT] = NAT_IKE_UDP_PORT;
+
+	/* Don't inflict BSI requirements on everyone */
+	cfg->setup.options[KBF_SEEDBITS] = 0;
+
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;
 #endif
