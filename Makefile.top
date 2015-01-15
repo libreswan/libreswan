@@ -34,7 +34,6 @@ clean::
 
 distclean:	clean
 	rm -f out.kpatch
-	if [ -f kvmsetup.sh ]; then source kvmsetup.sh; if [ -d "$$POOLSPACE" ]; then rm -rf $$POOLSPACE; fi; fi
 	if [ -d OBJ.$$OSDEP.$$ARCH ]; then rm -rf OBJ.$$OSDEP.$$ARCH/; fi
 
 install_file_list:
