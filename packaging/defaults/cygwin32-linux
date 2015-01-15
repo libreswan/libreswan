@@ -1,6 +1,5 @@
 
 # this is the debian installed mingw32 package.
-USE_OBJDIR=true
 CC=/xelerance/cross/win2k/bin/i686-pc-cygwin-gcc
 AR=/xelerance/cross/win2k/bin/i686-pc-cygwin-ar
 USERCOMPILE=-g -O3 

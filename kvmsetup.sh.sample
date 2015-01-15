@@ -42,6 +42,3 @@ then
 	echo "WARNING: tcpdump is not installed or invalid TCPDUMP= "
 fi
 
-# we always use OBJ directories for KVM builds.
-USE_OBJDIR=true export USE_OBJDIR
-

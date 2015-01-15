@@ -203,9 +203,8 @@ OBJSADNS = adns.o
 OBJSWHACK = whack.o
 OBJSWHACKINIT = whackinit.o
 
-# we can't do tests with two conditions, but we can concatenate the strings
-SHOULDWERESTART=${USE_OBJDIR}$(wildcard plutomain.c)
-ifeq ($(SHOULDWERESTART),trueplutomain.c)
+SHOULDWERESTART=$(wildcard plutomain.c)
+ifeq ($(SHOULDWERESTART),plutomain.c)
 all programs clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/pluto && $(MAKE) $@
 else

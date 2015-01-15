@@ -66,9 +66,8 @@ MANLIST=$(MANDEFAULTLIST) $(EXTRA8MAN) $(EXTRA5MAN) $(EXTRA5PROC)
 CONFIGLIST=$(CONFFILES) $(CONFDFILES)
 PROGRAMSLIST=${PROGRAM} $(MANLIST) $(CONFIGLIST)
 
-# we can't do tests with two conditions, but we can concatenate the strings
-SHOULDWERESTART=${USE_OBJDIR}$(wildcard ../Makefile.program)
-ifeq ($(SHOULDWERESTART),true../Makefile.program)
+SHOULDWERESTART=$(wildcard ../Makefile.program)
+ifeq ($(SHOULDWERESTART),../Makefile.program)
 all programs config man clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/${SOURCEDIR} && $(MAKE) $@
 else

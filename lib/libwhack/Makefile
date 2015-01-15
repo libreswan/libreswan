@@ -55,9 +55,8 @@ MANS=
 
 .PHONY:	all install clean l t lt tar check checkprograms
 
-# we can't do tests with two conditions, but we can concatenate the strings
-SHOULDWERESTART=${USE_OBJDIR}$(wildcard whacklib.c)
-ifeq ($(SHOULDWERESTART),truewhacklib.c)
+SHOULDWERESTART=$(wildcard whacklib.c)
+ifeq ($(SHOULDWERESTART),whacklib.c)
 all programs clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/libwhack && make $@
 else

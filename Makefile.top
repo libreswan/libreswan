@@ -1,4 +1,5 @@
 # Libreswan master makefile
+#
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
@@ -87,7 +88,6 @@ export USE_XAUTHPAM
 export USE_LDAP
 export USE_LIBCURL
 export USE_EXTRACRYPTO
-export USE_OBJDIR
 export USE_DNSSEC USE_LINUX_AUDIT
 export USE_IPSEC_CONNECTION_LIMIT IPSEC_CONNECTION_LIMIT
 export USE_FIPSCHECK FIPSPRODUCTCHECK

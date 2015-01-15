@@ -409,13 +409,6 @@ HAVE_NO_FORK?=false
 
 NONINTCONFIG=oldconfig
 
-# Should we build with object directories?
-# (not really a code option, but a build option)
-# by default we will start using object directories.
-ifeq ($(USE_OBJDIR),)
-USE_OBJDIR?=true
-endif
-
 -include ${LIBRESWANSRCDIR}/Makefile.ver
 
 # make sure we only run this once per build,  its too expensive to run
@@ -448,14 +441,8 @@ INSTBINFLAGS=-D -b -B .old
 INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old
 endif
 
-ifeq ($(USE_OBJDIR),true)
 OBJDIR?=OBJ.${BUILDENV}.${ARCH}
 OBJDIRTOP?=${LIBRESWANSRCDIR}/${OBJDIR}
-else
-# where to place the object files which are built 
-OBJDIR?=.
-OBJDIRTOP?=${LIBRESWANSRCDIR}
-endif
 
 #
 #  Paranoia says to export these just to sure:

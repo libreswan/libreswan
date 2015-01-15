@@ -122,9 +122,8 @@ MANS=anyaddr.3 atoaddr.3 atoul.3 goodmask.3 \
 
 .PHONY:	all install clean l t lt tar check depend checkprograms
 
-# we can't do tests with two conditions, but we can concatenate the strings
-SHOULDWERESTART=${USE_OBJDIR}$(wildcard ttodata.3.xml)
-ifeq ($(SHOULDWERESTART),truettodata.3.xml)
+SHOULDWERESTART=$(wildcard ttodata.3.xml)
+ifeq ($(SHOULDWERESTART),ttodata.3.xml)
 all programs clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/libswan && make $@
 else
