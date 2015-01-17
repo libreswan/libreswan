@@ -24,4 +24,4 @@ CFLAGS+=-DFIPS_CHECK -DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\"
 LIBS+=  -lfipscheck
 endif
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program

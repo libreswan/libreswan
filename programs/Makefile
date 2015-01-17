@@ -14,7 +14,7 @@
 # for more details.
 
 LIBRESWANSRCDIR?=$(shell cd ..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/programs/
+SRCDIR?=${LIBRESWANSRCDIR}/programs/
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
@@ -51,5 +51,5 @@ def:
 cleanall distclean mostlyclean realclean install programs man config checkprograms clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
-		(cd $$d && $(MAKE) srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
+		(cd $$d && $(MAKE) SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
 	done; \

@@ -22,12 +22,12 @@ SOURCEDIR=configs
 CONFDSUBDIR=policies
 CONFDFILES=clear clear-or-private private-or-clear private block
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 
-ipsec.conf.5: ${srcdir}ipsec.conf.5.xml
+ipsec.conf.5: ${SRCDIR}ipsec.conf.5.xml
 
-${srcdir}ipsec.conf.5.xml: $(wildcard d.ipsec.conf/*.xml) ${srcdir}d.ipsec.conf/order.txt
-	cd ${srcdir} && cat `cat ${srcdir}d.ipsec.conf/order.txt` >ipsec.conf.5.xml
+${SRCDIR}ipsec.conf.5.xml: $(wildcard d.ipsec.conf/*.xml) ${SRCDIR}d.ipsec.conf/order.txt
+	cd ${SRCDIR} && cat `cat ${SRCDIR}d.ipsec.conf/order.txt` >ipsec.conf.5.xml
 
 diff:	ipsec.conf.5.xml
 	diff -B -w -u ipsec.conf.5.xml ipsec.conf.5.xml-ref

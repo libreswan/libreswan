@@ -2,9 +2,9 @@ LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
 
 UNITTEST=psk-v2
 CFLAGS=-DUSE_3DES
-INCLUDES=-I${srcdir}${LIBRESWANSRCDIR}/programs/pluto
-INCLUDES+=-I${srcdir}${LIBRESWANSRCDIR}/testing/lib/libpluto
-VPATH += ${srcdir}
+INCLUDES=-I${SRCDIR}${LIBRESWANSRCDIR}/programs/pluto
+INCLUDES+=-I${SRCDIR}${LIBRESWANSRCDIR}/testing/lib/libpluto
+VPATH += ${SRCDIR}
 LIBRESWANSRCDIRREL=../../..
 
 SOURCES=psk-v2.c packetsI1psk.c 

@@ -25,9 +25,9 @@ PROGRAM=readwriteconf
 
 # reach into pluto for now.
 INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
-INCLUDES+=-I${srcdir}
+INCLUDES+=-I${SRCDIR}
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 
 TAGS:	$(DISTSRC)
 	LC_ALL=C etags $(ETAGSFLAGS) $(DISTSRC) $(LIBSWANDIR)/*.[ch]

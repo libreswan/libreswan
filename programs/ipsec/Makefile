@@ -18,4 +18,4 @@ PROGRAM=ipsec
 PROGRAMDIR=${SBINDIR}
 MANPROGPREFIX:=./
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program

@@ -21,7 +21,7 @@ export TERMCAP
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
-srcdir?=$(shell pwd)
+SRCDIR?=$(shell pwd)/
 
 # dummy default rule
 def:
@@ -162,7 +162,7 @@ ifeq ($(strip $(OBJDIR)),.) # If OBJDIR is LIBRESWANSRCDIR (ie dot) then the sim
 programs man config install clean:: 
 	@for d in $(SUBDIRS) ; \
 	do \
-		(cd $$d && $(MAKE) srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
+		(cd $$d && $(MAKE) SRCDIR=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
 	done; 
 else
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
@@ -173,16 +173,16 @@ programs man config install clean:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
 	(cd ${ABSOBJDIR} && OBJDIRTOP=${ABSOBJDIR} OBJDIR=${ABSOBJDIR} ${MAKE} $@ )
 
-${OBJDIR}/Makefile: ${srcdir}/Makefile packaging/utils/makeshadowdir
+${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
-	@packaging/utils/makeshadowdir `(cd ${srcdir}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
+	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
 
 endif
 
 checkprograms:: 
 	@for d in $(SUBDIRS) ; \
 	do \
-		(cd $$d && $(MAKE) srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
+		(cd $$d && $(MAKE) SRCDIR=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
 	done; 
 
 clean::

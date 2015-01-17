@@ -13,9 +13,9 @@
 
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include $(LIBRESWANSRCDIR)/Makefile.inc
-include ${srcdir}Makefile.unit-settings
+include ${SRCDIR}Makefile.unit-settings
 
-srcdir?=$(shell pwd)/
+SRCDIR?=$(shell pwd)/
 
 SUBDIRS=eroute-01 spi-01 spigrp-01 tncfg-01
 
@@ -26,5 +26,5 @@ def:	check
 cleanall distclean mostlyclean realclean install programs checkprograms check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
-		${MAKE} -C $$d srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ;\
+		${MAKE} -C $$d SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ;\
 	done; 

@@ -24,4 +24,4 @@ LIBRARY=bsdpfkey
 LIB=libbsdpfkey.a
 ONEFILE=pfkey.c
 
-include ${srcdir}../Makefile.library
+include ${SRCDIR}../Makefile.library

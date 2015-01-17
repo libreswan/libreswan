@@ -20,5 +20,5 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=setup
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 

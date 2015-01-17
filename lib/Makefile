@@ -15,7 +15,7 @@
 LIBRESWANSRCDIR?=$(shell cd ..; pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
-srcdir?=$(shell pwd)/
+SRCDIR?=$(shell pwd)/
 
 SUBDIRS=libswan libcrypto libwhack libipsecconf
 
@@ -32,6 +32,6 @@ def:
 cleanall distclean mostlyclean realclean install man config programs checkprograms check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
-		(cd $$d && $(MAKE) srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
+		(cd $$d && $(MAKE) SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
 	done; 
 

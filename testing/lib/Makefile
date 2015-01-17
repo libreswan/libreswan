@@ -14,7 +14,7 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include $(LIBRESWANSRCDIR)/Makefile.inc
 
-srcdir?=${LIBRESWANSRCDIR}/testing/lib/
+SRCDIR?=${LIBRESWANSRCDIR}/testing/lib/
 
 SUBDIRS=libswan libpluto
 
@@ -27,6 +27,6 @@ def:
 cleanall distclean mostlyclean realclean install programs checkprograms check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
-		(cd $$d && $(MAKE) srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1; \
+		(cd $$d && $(MAKE) SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1; \
 	done; \
 

@@ -16,4 +16,4 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=auto
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program

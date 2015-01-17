@@ -16,4 +16,4 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=verify
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program

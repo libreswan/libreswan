@@ -19,5 +19,5 @@ EXTRA5PROC=${PROGRAM}.5
 
 LIBS=${LIBRESWANLIB}
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 

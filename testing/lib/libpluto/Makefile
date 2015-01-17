@@ -12,14 +12,13 @@
 # for more details.
 
 LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/testing/lib/libpluto/
+SRCDIR?=${LIBRESWANSRCDIR}/testing/lib/libpluto/
 include $(LIBRESWANSRCDIR)/Makefile.inc
 
 SUBDIRS=
-SRCDIR=${srcdir}
 UTILS=${LIBRESWANSRCDIR}/testing/utils
 
-TESTS=$(shell awk '{print $$2;}' ${srcdir}TESTLIST)
+TESTS=$(shell awk '{print $$2;}' ${SRCDIR}TESTLIST)
 
 all: ${TESTS}
 	echo ${TESTS}
@@ -35,14 +34,14 @@ def:
 	@false
 
 check:
-	@ECHO=: REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; . ${srcdir}TESTLIST
+	@ECHO=: REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; . ${SRCDIR}TESTLIST
 	@echo */core.*
 
 install install_file_list checkprograms programs:
 	@true
 
 clean:
-	cat ${srcdir}TESTLIST | while read testtype name status; \
+	cat ${SRCDIR}TESTLIST | while read testtype name status; \
 	do\
 		rm -rf `basename $$name .c`;\
 	done
@@ -58,8 +57,8 @@ mostlyclean: clean
 
 realclean: clean
 
-Makefile.depend: *.c ${srcdir}Makefile
-	(ls $(wildcard $(addprefix $(srcdir),*.c)) | grep '\.c' | xargs ${CC} -MM) >Makefile.depend
+Makefile.depend: *.c ${SRCDIR}Makefile
+	(ls $(wildcard $(addprefix $(SRCDIR),*.c)) | grep '\.c' | xargs ${CC} -MM) >Makefile.depend
 
 -include Makefile.depend
 

@@ -40,7 +40,7 @@ distclean:	clean
 install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
-		(cd $$d && $(MAKE) --no-print-directory srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} install_file_list ) || exit 1; \
+		(cd $$d && $(MAKE) --no-print-directory SRCDIR=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} install_file_list ) || exit 1; \
 	done;
 
 TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/openswan/*.h linux/net/ipsec/*.[ch])

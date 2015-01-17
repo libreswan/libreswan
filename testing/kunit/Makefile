@@ -13,9 +13,9 @@
 
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include $(LIBRESWANSRCDIR)/Makefile.inc
-include ${srcdir}Makefile.unit-settings
+include ${SRCDIR}Makefile.unit-settings
 
-srcdir?=$(shell pwd)/
+SRCDIR?=$(shell pwd)/
 
 SUBDIRS=libkern rcv-01 rcv-02 xmit-01 saref-01
 
@@ -42,5 +42,5 @@ check:	include/libreswan.h include/linux/madelinks include/net/madelinks include
 cleanall distclean mostlyclean realclean install programs checkprograms check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
-		(cd $$d && $(MAKE) srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
+		(cd $$d && $(MAKE) SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
 	done; 

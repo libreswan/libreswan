@@ -92,32 +92,32 @@ doinstall:: $(PROGRAMLIST)
 	@mkdir -p $(PROGRAMDIR) $(MANDIR8) $(MANDIR5) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
 	@if [ -n "$(PROGRAM)" ]; then $(INSTALL) $(INSTBINFLAGS) $(PROGRAM) $(PROGRAMDIR); fi
 	@$(foreach f, $(addsuffix .8, $(PROGRAM)), \
-		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
+		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
 		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR8)/$(MANPROGPREFIX)$f || exit 1; \
 	)
 	@$(foreach f, $(EXTRA8MAN), \
-		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
+		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
 		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR8)/ipsec_$f || exit 1; \
 	)
 	@$(foreach f, $(EXTRA5MAN), \
-		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
+		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
 		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR5)/$f || exit 1 ;\
 	)
 	@$(foreach f, $(EXTRA5PROC), \
-		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
+		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
 		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR5)/ipsec_$f || exit 1 ;\
 	)
 	@$(foreach f, $(CONFFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
+		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
 		if [ ! -f $(CONFDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDIR)/$f || exit 1; fi;\
 		$(INSTALL) $(INSTCONFFLAGS) $$g $(EXAMPLECONFDIR)/$f-sample || exit 1; \
 	)
 	@$(foreach f, $(EXCONFFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
+		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
 		$(INSTALL) $(INSTCONFFLAGS) $$g $(EXAMPLECONFDIR)/$f-sample || exit 1; \
 	)
 	@$(foreach f, $(CONFDFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
+		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
 		if [ ! -f $(CONFDDIR)/$(CONFDSUBDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDDIR)/$(CONFDSUBDIR)/$f || exit 1; fi;\
 	)
 
@@ -163,7 +163,7 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp ${NSSLIBS}
 # cancel direct version
 %: %.c
 
-%.o: ${srcdir}%.c
+%.o: ${SRCDIR}%.c
 	${CC} -c ${CFLAGS} $<
 
 include ${LIBRESWANSRCDIR}/programs/Makefile.manpages
@@ -171,13 +171,13 @@ include ${LIBRESWANSRCDIR}/programs/Makefile.manpages
 %.i: %.c 
 	$(CC) $(CFLAGS) -E -o $@ $< 
 
-%: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi
 	@if [ "${PROGRAM}.in" = $< ]; then chmod +x $@; fi
 
-%: ${srcdir}%.pl ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
+%: ${SRCDIR}%.pl ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver
 	@echo  'PL' $< '->' $@
 	@${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi
@@ -191,9 +191,9 @@ realclean: clean
 
 cleanall::
 ifneq ($(strip $(PROGRAM)),)
-	@if [ -r ${srcdir}$(PROGRAM).in ]; then rm -f $(PROGRAM); fi
-	@if [ -r ${srcdir}$(PROGRAM).pl ]; then rm -f $(PROGRAM); fi
-	@if [ -r ${srcdir}$(PROGRAM).c ];  then rm -f $(PROGRAM); fi
+	@if [ -r ${SRCDIR}$(PROGRAM).in ]; then rm -f $(PROGRAM); fi
+	@if [ -r ${SRCDIR}$(PROGRAM).pl ]; then rm -f $(PROGRAM); fi
+	@if [ -r ${SRCDIR}$(PROGRAM).c ];  then rm -f $(PROGRAM); fi
 	@if [ -n "$(OBJS)" ];     then rm -f $(PROGRAM); fi
 endif
 	@rm -f *.o

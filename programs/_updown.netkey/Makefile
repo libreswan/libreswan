@@ -16,7 +16,7 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=_updown.netkey
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 
 cleanall::
 	rm -f ${PROGRAM}

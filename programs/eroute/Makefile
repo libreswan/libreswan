@@ -19,5 +19,5 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 PROGRAM:=eroute
 EXTRA5PROC=eroute.5
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 

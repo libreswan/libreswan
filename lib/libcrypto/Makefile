@@ -13,7 +13,7 @@
 # for more details.
 
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=$(shell pwd)/
+SRCDIR?=$(shell pwd)/
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
 # needs ifdefs for USE_MD5, etc
@@ -33,6 +33,6 @@ def:
 cleanall distclean mostlyclean realclean install programs checkprograms check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
-		(cd $$d && $(MAKE) srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1; \
+		(cd $$d && $(MAKE) SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1; \
 	done; \
 

@@ -18,6 +18,6 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 PROGRAM:=tncfg
 EXTRA5PROC=${PROGRAM}.5
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 
 #

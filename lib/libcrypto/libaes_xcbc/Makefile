@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-srcdir?=./
+SRCDIR?=./
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.ver
@@ -9,7 +9,7 @@ OBJS := aes_xcbc.o
 ONEFILE=aes_xcbc.c
 LIBRARY=crypto/libaes_xcbc
 LIB=libaes_xcbc.a
-INCLUDES+=-I${srcdir}../include
+INCLUDES+=-I${SRCDIR}../include
 
-include ${srcdir}../../Makefile.library
+include ${SRCDIR}../../Makefile.library
 

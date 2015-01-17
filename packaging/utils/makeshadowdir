@@ -1,12 +1,12 @@
 #!/bin/sh
 
-srcdir=$1
+SRCDIR=$1
 OBJDIR=$2
 dirs=$3
 
-if [ "${OBJDIR}/Makefile" = "${srcdir}/Makefile" ]
+if [ "${OBJDIR}/Makefile" = "${SRCDIR}/Makefile" ]
 then
-	echo "failed. ${OBJDIR} == ${srcdir}"
+	echo "failed. ${OBJDIR} == ${SRCDIR}"
 	exit 1
 fi
 
@@ -17,14 +17,14 @@ if [ -f "${OBJDIRTOP}/Makefile" ]
 then
     : echo "Will not overwrite ${OBJDIRTOP}/Makefile"
 else
-	echo 'srcdir='${srcdir}/ 		 >${OBJDIRTOP}/Makefile
+	echo 'SRCDIR='${SRCDIR}/ 		 >${OBJDIRTOP}/Makefile
 	echo 'OBJDIR='${OBJDIR}                 >>${OBJDIRTOP}/Makefile
 	echo 'OBJDIRTOP='${OBJDIRTOP}           >>${OBJDIRTOP}/Makefile
-	echo 'VPATH+=${srcdir}' 		>>${OBJDIRTOP}/Makefile
+	echo 'VPATH+=${SRCDIR}' 		>>${OBJDIRTOP}/Makefile
 	echo 'OSDEP='${OSDEP}                   >>${OBJDIRTOP}/Makefile
 	echo 'BUILDENV='${BUILDENV}             >>${OBJDIRTOP}/Makefile
-	echo 'LIBRESWANSRCDIR='${srcdir}         >>${OBJDIRTOP}/Makefile
-	echo 'include ${srcdir}Makefile.top'   >>${OBJDIRTOP}/Makefile
+	echo 'LIBRESWANSRCDIR='${SRCDIR}         >>${OBJDIRTOP}/Makefile
+	echo 'include ${SRCDIR}Makefile.top'   >>${OBJDIRTOP}/Makefile
 
 	echo 'programs config man install clean checkprograms:: ' >>${OBJDIRTOP}/Makefile
 	echo '	@for d in $(SUBDIRS) ; \'                                >>${OBJDIRTOP}/Makefile
@@ -37,21 +37,21 @@ fi
 find $dirs -name Makefile -print | (cd ${OBJDIR}; while read file
 do
 	dirname=`dirname $file`
-	dsrcdir=${srcdir}/${dirname}
+	dsrcdir=${SRCDIR}/${dirname}
 	mkdir -p $dirname
 
 	if [ -f ${dirname}/Makefile ]
 	then
 	    : echo "Will not overwrite ${dirname}/Makefile"
 	else
-		echo 'srcdir='${dsrcdir}/ 		 >${dirname}/Makefile
+		echo 'SRCDIR='${dsrcdir}/ 		 >${dirname}/Makefile
 		echo 'OBJDIR='${OBJDIR}                 >>${dirname}/Makefile
 		echo 'OBJDIRTOP='${OBJDIRTOP}           >>${dirname}/Makefile
 		echo 'OSDEP='${OSDEP}                   >>${dirname}/Makefile
 		echo 'BUILDENV='${BUILDENV}             >>${dirname}/Makefile
-		echo 'VPATH+=${srcdir}' 		>>${dirname}/Makefile
-		echo 'LIBRESWANSRCDIR='${srcdir}        >>${dirname}/Makefile
-		echo 'include ${srcdir}Makefile'        >>${dirname}/Makefile
+		echo 'VPATH+=${SRCDIR}' 		>>${dirname}/Makefile
+		echo 'LIBRESWANSRCDIR='${SRCDIR}        >>${dirname}/Makefile
+		echo 'include ${SRCDIR}Makefile'        >>${dirname}/Makefile
 		echo '-include Makefile.depend'         >>${dirname}/Makefile
 	fi
 done

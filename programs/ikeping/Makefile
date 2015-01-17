@@ -18,4 +18,4 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 PROGRAM=ikeping
 LIBS=${LIBRESWANLIB}
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program

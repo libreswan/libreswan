@@ -17,7 +17,7 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=showhostkey
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 
 CFLAGS+= -lm
 

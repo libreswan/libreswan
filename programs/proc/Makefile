@@ -19,4 +19,4 @@ EXTRA5PROC:=version.5 trap_count.5 trap_sendcount.5
 
 LIBS:=${FREESWANLIB}
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program

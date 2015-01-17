@@ -14,7 +14,7 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 export LIBRESWANSRCDIR
 include $(LIBRESWANSRCDIR)/Makefile.inc
-srcdir?=${LIBRESWANSRCDIR}/testing/scripts/
+SRCDIR?=${LIBRESWANSRCDIR}/testing/scripts/
 
 SUBDIRS=
 UTILS=${LIBRESWANSRCDIR}/testing/utils
@@ -24,7 +24,7 @@ def:
 	@false
 
 check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
-	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ${srcdir}setup.sh; . ${UTILS}/functions.sh; . ${srcdir}TESTLIST
+	. ${LIBRESWANSRCDIR}/kvmsetup.sh; . ${SRCDIR}setup.sh; . ${UTILS}/functions.sh; . ${SRCDIR}TESTLIST
 
 one:
 	export LIBRESWANLIB=${LIBRESWANLIB} REGRESSRESULTS=$${REGRESSRESULTS-../results} ; . ${UTILS}/functions.sh; eval `grep ${TEST} TESTLIST`

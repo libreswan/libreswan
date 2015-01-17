@@ -1,4 +1,4 @@
-include ${srcdir}../Makefile.unit-settings
+include ${SRCDIR}../Makefile.unit-settings
 
 INCLUDES+=-I${LIBRESWANSRCDIR} -I${KLIPSINC} -I${LIBRESWANSRCDIR}/include
 UCFLAGS+=${USERCOMPILE} ${PORTINCLUDE} ${INCLUDES}
@@ -8,8 +8,8 @@ all:	check
 ${TESTCASE}:	${TESTCASE}.o ${IPSEC_OBJS} Makefile
 	${CC} -g -o ${TESTCASE} ${TESTCASE}.o ${IPSEC_OBJS} ${KUTILLIB} ${LIBRESWANLIB} ${LSWLOGLIB} ${LIBRESWANLIB} -lefence
 
-${TESTCASE}.o: ${srcdir}${TESTCASE}.c 
-	${CC} ${UCFLAGS} -c -o ${TESTCASE}.o ${srcdir}${TESTCASE}.c
+${TESTCASE}.o: ${SRCDIR}${TESTCASE}.c 
+	${CC} ${UCFLAGS} -c -o ${TESTCASE}.o ${SRCDIR}${TESTCASE}.c
 
 # build version.c using version number from Makefile.ver
 version.c:	${KLIPSSRC}/version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
@@ -27,8 +27,8 @@ clean:
 
 check:	${TESTCASE}
 	-rm -f pfkey.out
-	./${TESTCASE}-run.sh | sed -f ${srcdir}../conup.sed | tee ${TESTCASE}.conn.new  | diff - ${srcdir}${TESTCASE}.conn
-	hexdump -C pfkey.out | sed -f ${srcdir}../fixup.sed | tee ${TESTCASE}.out.new | diff - ${srcdir}${TESTCASE}.out
+	./${TESTCASE}-run.sh | sed -f ${SRCDIR}../conup.sed | tee ${TESTCASE}.conn.new  | diff - ${SRCDIR}${TESTCASE}.conn
+	hexdump -C pfkey.out | sed -f ${SRCDIR}../fixup.sed | tee ${TESTCASE}.out.new | diff - ${SRCDIR}${TESTCASE}.out
 
 install:	
 	@true

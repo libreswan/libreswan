@@ -14,11 +14,11 @@
 # for more details.
 
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/programs/spi/
+SRCDIR?=${LIBRESWANSRCDIR}/programs/spi/
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=spi
 EXTRA5PROC=${PROGRAM}.5
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 

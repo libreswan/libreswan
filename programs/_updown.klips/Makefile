@@ -16,7 +16,7 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=_updown.klips
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 
 programs: ${PROGRAM}
 

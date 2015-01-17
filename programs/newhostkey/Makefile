@@ -16,5 +16,5 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=newhostkey
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program
 

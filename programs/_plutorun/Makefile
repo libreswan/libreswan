@@ -16,4 +16,4 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=_plutorun
 
-include ${srcdir}../Makefile.program
+include ${SRCDIR}../Makefile.program

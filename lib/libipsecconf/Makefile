@@ -44,15 +44,15 @@ endif
 
 OBJS=${SRCS:.c=.o} 
 
-include ${srcdir}../Makefile.library
+include ${SRCDIR}../Makefile.library
 
 keywords.c: parser.tab.h
 
 lex.yy.c: parser.tab.c parser.l parser.y 
-	$(LEX) ${srcdir}parser.l
+	$(LEX) ${SRCDIR}parser.l
 
 parser.tab.h parser.tab.c: parser.l parser.y 
-	$(BISON) ${BISONOSFLAGS} -v -d ${srcdir}parser.y
+	$(BISON) ${BISONOSFLAGS} -v -d ${SRCDIR}parser.y
 
 cleanall::
 	$(RM) -f parser.tab.* lex.yy.* Makefile.depend

@@ -18,12 +18,12 @@
 # relative path to top directory of Libreswan source
 # Note: referenced in ${LIBRESWANSRCDIR}/Makefile.inc
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=./
+SRCDIR?=./
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${srcdir}Makefile.options
--include ${srcdir}Makefile.extra
-include ${srcdir}../Makefile.manpages
+include ${SRCDIR}Makefile.options
+-include ${SRCDIR}Makefile.extra
+include ${SRCDIR}../Makefile.manpages
 
 FMANDIR=$(MANTREE)/man5
 PMANDIR=$(MANTREE)/man8
@@ -227,7 +227,7 @@ doinstall: all
 	#
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
 	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
-	g=`if [ -r pluto.8 ]; then echo pluto.8; else echo ${srcdir}/pluto.8; fi`; \
+	g=`if [ -r pluto.8 ]; then echo pluto.8; else echo ${SRCDIR}/pluto.8; fi`; \
 	$(INSTALL) $(INSTMANFLAGS) $$g $(PMANDIR)/ipsec_pluto.8 || exit 1; \
 	echo '.so man8/ipsec_pluto.8' > $(PMANDIR)/ipsec_whack.8 || exit 1; \
 	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \
@@ -235,7 +235,7 @@ doinstall: all
 		do \
 			ln -s -f ipsec_$$from $(PMANDIR)/$$to; \
 		done
-	g=`if [ -r ipsec.secrets.5 ]; then echo ipsec.secrets.5; else echo ${srcdir}/ipsec.secrets.5; fi`; \
+	g=`if [ -r ipsec.secrets.5 ]; then echo ipsec.secrets.5; else echo ${SRCDIR}/ipsec.secrets.5; fi`; \
 	$(INSTALL) $(INSTMANFLAGS) $$g $(FMANDIR)/ipsec.secrets.5 || exit 1; \
 	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \
 		while read from to ; \
@@ -300,6 +300,6 @@ checkprograms:
 Makefile.depend: $(DISTSRC) $(LIBRESWANSRCDIR)/programs/pluto/Makefile
 	@(ls $(wildcard $(addprefix $(LIBRESWANSRCDIR)/programs/pluto/,$(DISTSRC))) | grep '\.c' | xargs $(CC) -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ) >Makefile.depend
 
--include ${srcdir}Makefile.depend
+-include ${SRCDIR}Makefile.depend
 
 # DO NOT DELETE

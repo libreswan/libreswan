@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/initsystems/systemd/
+SRCDIR?=${LIBRESWANSRCDIR}/initsystems/systemd/
 
 UPSTARTFILE=ipsec.conf
 DEFAULTFILE=default.pluto
@@ -27,7 +27,7 @@ installdefault:
 		$(INSTALL) $(DEFAULTFILE) $(DEFAULTDIR)/pluto ; \
 	fi
 
-%: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi

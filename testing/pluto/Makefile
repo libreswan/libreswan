@@ -40,7 +40,7 @@ install install_file_list checkprograms programs:
 	@true
 
 clean:
-	grep -v '^#' ${srcdir}TESTLIST | while read testtype name status; \
+	grep -v '^#' ${SRCDIR}TESTLIST | while read testtype name status; \
 	do\
 		rm -rf $$name/OUTPUT; \
 	done

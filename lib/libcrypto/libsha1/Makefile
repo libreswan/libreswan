@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-srcdir?=./
+SRCDIR?=./
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.ver
@@ -10,4 +10,4 @@ ONEFILE=sha1.c
 LIBRARY=crypto/libsha1
 LIB=libsha1.a
 
-include ${srcdir}../../Makefile.library
+include ${SRCDIR}../../Makefile.library
