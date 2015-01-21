@@ -179,16 +179,17 @@ struct db_sa {
 	(((c)->spd.this.xauth_client) << (POLICY_RSASIG_IX+2)))
 
 /*
- * IKEv1 based policies.
+ * IKE policies.  Indexed using sadb_index(), above.
  *
- * When it comes to IKEv2, it currently uses IKEv1 tables to describe
- * it.  The table is then converted, using sa_v2_convert(), to the v2
- * format.
+ * For IKEv2, it is described using IKEv1 constructs (e.g., constants
+ * such as OAKLEY_...), and then converted to IKEv2 using
+ * sa_v2_convert().  There really should be a pure IKEv2 table.
  *
  * am == agressive mode
  */
 extern struct db_sa IKEv1_oakley_sadb[1 << 4];
 extern struct db_sa IKEv1_oakley_am_sadb[1 << 4];
+extern struct db_sa IKEv2_oakley_sadb[1 << 4];
 
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS

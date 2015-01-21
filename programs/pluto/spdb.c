@@ -1020,6 +1020,220 @@ struct db_sa IKEv1_oakley_am_sadb[] = {
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
 };
 
+
+/* tables of transforms, in preference order (select based on AUTH) */
+
+static struct db_trans IKEv2_oakley_trans_psk[] = {
+#ifdef TEST_INDECENT_PROPOSAL
+	{ AD_TR(KEY_IKE, otpsk1024des3tiger) },
+#endif
+	{ AD_TR(KEY_IKE, otpsk2048aes256sha1) },
+	{ AD_TR(KEY_IKE, otpsk2048aes128sha1) },
+	{ AD_TR(KEY_IKE, otpsk2048aes256md5) },
+	{ AD_TR(KEY_IKE, otpsk2048aes128md5) },
+	{ AD_TR(KEY_IKE, otpsk2048des3sha1) },
+	{ AD_TR(KEY_IKE, otpsk2048des3md5) },
+	{ AD_TR(KEY_IKE, otpsk1536aes256sha1) },
+	{ AD_TR(KEY_IKE, otpsk1536aes128sha1) },
+	{ AD_TR(KEY_IKE, otpsk1536aes256md5) },
+	{ AD_TR(KEY_IKE, otpsk1536aes128md5) },
+	{ AD_TR(KEY_IKE, otpsk1536des3sha1) },
+	{ AD_TR(KEY_IKE, otpsk1536des3md5) },
+	{ AD_TR(KEY_IKE, otpsk1024aes256sha1) },
+	{ AD_TR(KEY_IKE, otpsk1024aes128sha1) },
+	{ AD_TR(KEY_IKE, otpsk1024aes256md5) },
+	{ AD_TR(KEY_IKE, otpsk1024aes128md5) },
+	{ AD_TR(KEY_IKE, otpsk1024des3sha1) },
+	{ AD_TR(KEY_IKE, otpsk1024des3md5) },
+};
+
+static struct db_trans IKEv2_oakley_trans_psk_xauthc[] = {
+	{ AD_TR(KEY_IKE, otpsk1536aes256sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1536aes128sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1536aes256md5_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1536aes128md5_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1536des3sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1536des3md5_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1024des3sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1024des3md5_xauthc) },
+};
+static struct db_trans IKEv2_oakley_trans_psk_xauths[] = {
+	{ AD_TR(KEY_IKE, otpsk1536aes256sha1_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1536aes128sha1_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1536aes256md5_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1536aes128md5_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1536des3sha1_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1536des3md5_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1024des3sha1_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1024des3md5_xauths) },
+};
+
+static struct db_trans IKEv2_oakley_trans_rsasig[] = {
+	{ AD_TR(KEY_IKE, otrsasig2048aes256sha1) },
+	{ AD_TR(KEY_IKE, otrsasig2048aes128sha1) },
+	{ AD_TR(KEY_IKE, otrsasig2048aes256md5) },
+	{ AD_TR(KEY_IKE, otrsasig2048aes128md5) },
+	{ AD_TR(KEY_IKE, otrsasig2048des3sha1) },
+	{ AD_TR(KEY_IKE, otrsasig2048des3md5) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes256sha1) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes128sha1) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes256md5) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes128md5) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3sha1) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3md5) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3sha1) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3md5) },
+	{ AD_TR(KEY_IKE, otrsasig1024aes256sha1) },
+	{ AD_TR(KEY_IKE, otrsasig1024aes128sha1) },
+	{ AD_TR(KEY_IKE, otrsasig1024aes256md5) },
+	{ AD_TR(KEY_IKE, otrsasig1024aes128md5) },
+};
+
+static struct db_trans IKEv2_oakley_trans_rsasig_xauthc[] = {
+	{ AD_TR(KEY_IKE, otrsasig1536aes256sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes128sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes256md5_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes128md5_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3md5_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3md5_xauthc) },
+};
+static struct db_trans IKEv2_oakley_trans_rsasig_xauths[] = {
+	{ AD_TR(KEY_IKE, otrsasig1536aes256sha1_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes128sha1_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes256md5_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1536aes128md5_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3sha1_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3md5_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3sha1_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3md5_xauths) },
+};
+
+/* In this table, either PSK or RSA sig is accepted.
+ * The order matters, but I don't know what would be best.
+ */
+static struct db_trans IKEv2_oakley_trans_pskrsasig[] = {
+#ifdef TEST_INDECENT_PROPOSAL
+	{ AD_TR(KEY_IKE, otpsk1024des3tiger) },
+#endif
+	{ AD_TR(KEY_IKE, otrsasig2048des3sha1) },
+	{ AD_TR(KEY_IKE, otpsk2048des3sha1) },
+	{ AD_TR(KEY_IKE, otrsasig2048des3md5) },
+	{ AD_TR(KEY_IKE, otpsk2048des3md5) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3sha1) },
+	{ AD_TR(KEY_IKE, otpsk1536des3sha1) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3md5) },
+	{ AD_TR(KEY_IKE, otpsk1536des3md5) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3sha1) },
+	{ AD_TR(KEY_IKE, otpsk1024des3sha1) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3md5) },
+	{ AD_TR(KEY_IKE, otpsk1024des3md5) },
+};
+
+static struct db_trans IKEv2_oakley_trans_pskrsasig_xauthc[] = {
+	{ AD_TR(KEY_IKE, otrsasig1536des3md5_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1536des3md5_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1536des3sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1024des3sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3md5_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1024des3md5_xauthc) },
+};
+
+static struct db_trans IKEv2_oakley_trans_pskrsasig_xauths[] = {
+	{ AD_TR(KEY_IKE, otrsasig1536des3md5_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1536des3md5_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1536des3sha1_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1536des3sha1_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3sha1_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1024des3sha1_xauths) },
+	{ AD_TR(KEY_IKE, otrsasig1024des3md5_xauths) },
+	{ AD_TR(KEY_IKE, otpsk1024des3md5_xauths) },
+};
+
+/*
+ * array of proposals to be conjoined (can only be one for Oakley)
+ * AND of protocols.
+ */
+static struct db_prop IKEv2_oakley_pc_psk[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_psk) } };
+
+static struct db_prop IKEv2_oakley_pc_rsasig[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_rsasig) } };
+
+static struct db_prop IKEv2_oakley_pc_pskrsasig[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_pskrsasig) } };
+
+static struct db_prop IKEv2_oakley_pc_psk_xauths[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_psk_xauths) } };
+
+static struct db_prop IKEv2_oakley_pc_rsasig_xauths[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_rsasig_xauths) } };
+
+static struct db_prop IKEv2_oakley_pc_pskrsasig_xauths[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_pskrsasig_xauths) } };
+
+static struct db_prop IKEv2_oakley_pc_psk_xauthc[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_psk_xauthc) } };
+
+static struct db_prop IKEv2_oakley_pc_rsasig_xauthc[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_rsasig_xauthc) } };
+
+static struct db_prop IKEv2_oakley_pc_pskrsasig_xauthc[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_pskrsasig_xauthc) } };
+
+/* array of proposal conjuncts (can only be one) (OR of protocol) */
+static struct db_prop_conj IKEv2_oakley_props_psk[] =
+	{ { AD_PC(IKEv2_oakley_pc_psk) } };
+
+static struct db_prop_conj IKEv2_oakley_props_rsasig[] =
+	{ { AD_PC(IKEv2_oakley_pc_rsasig) } };
+
+static struct db_prop_conj IKEv2_oakley_props_pskrsasig[] =
+	{ { AD_PC(IKEv2_oakley_pc_pskrsasig) } };
+
+static struct db_prop_conj IKEv2_oakley_props_psk_xauthc[] =
+	{ { AD_PC(IKEv2_oakley_pc_psk_xauthc) } };
+
+static struct db_prop_conj IKEv2_oakley_props_rsasig_xauthc[] =
+	{ { AD_PC(IKEv2_oakley_pc_rsasig_xauthc) } };
+
+static struct db_prop_conj IKEv2_oakley_props_pskrsasig_xauthc[] =
+	{ { AD_PC(IKEv2_oakley_pc_pskrsasig_xauthc) } };
+
+static struct db_prop_conj IKEv2_oakley_props_psk_xauths[] =
+	{ { AD_PC(IKEv2_oakley_pc_psk_xauths) } };
+
+static struct db_prop_conj IKEv2_oakley_props_rsasig_xauths[] =
+	{ { AD_PC(IKEv2_oakley_pc_rsasig_xauths) } };
+
+static struct db_prop_conj IKEv2_oakley_props_pskrsasig_xauths[] =
+	{ { AD_PC(IKEv2_oakley_pc_pskrsasig_xauths) } };
+
+struct db_sa IKEv2_oakley_sadb[] = {
+	{ AD_NULL },                                    /* none */
+	{ AD_SAp(IKEv2_oakley_props_psk) },             /* PSK */
+	{ AD_SAp(IKEv2_oakley_props_rsasig) },          /* RSASIG */
+	{ AD_SAp(IKEv2_oakley_props_pskrsasig) },       /* PSK + RSASIG */
+
+	{ AD_NULL },                                    /* XAUTHSERVER + none */
+	{ AD_SAp(IKEv2_oakley_props_psk_xauths) },      /* XAUTHSERVER + PSK */
+	{ AD_SAp(IKEv2_oakley_props_rsasig_xauths) },   /* XAUTHSERVER + RSA */
+	{ AD_SAp(IKEv2_oakley_props_pskrsasig_xauths) },/* XAUTHSERVER + RSA+PSK */
+
+	{ AD_NULL },                                    /* XAUTHCLIENT + none */
+	{ AD_SAp(IKEv2_oakley_props_psk_xauthc) },      /* XAUTHCLIENT + PSK */
+	{ AD_SAp(IKEv2_oakley_props_rsasig_xauthc) },   /* XAUTHCLIENT + RSA */
+	{ AD_SAp(IKEv2_oakley_props_pskrsasig_xauthc) },/* XAUTHCLIENT + RSA+PSK */
+
+	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + none */
+	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + PSK */
+	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA */
+	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
+};
+
 /**************** IPsec (quick mode) SA database ****************/
 
 /* arrays of attributes for transforms */
