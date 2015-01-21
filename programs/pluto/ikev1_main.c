@@ -188,7 +188,7 @@ stf_status main_outI1(int whack_sock,
 			numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
 		if (!ikev1_out_sa(&md.rbody,
-				&oakley_sadb[sadb_index(policy, c)],
+				&IKEv1_oakley_sadb[sadb_index(policy, c)],
 				st, TRUE, FALSE, np)) {
 			libreswan_log("outsa fail");
 			reset_cur_state();

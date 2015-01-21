@@ -1477,7 +1477,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 
 	/* Max transforms == 2 - Multiple transforms, 1 DH group */
 	revised_sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-		&oakley_am_sadb[sadb_index(policy, c)], TRUE);
+		&IKEv1_oakley_am_sadb[sadb_index(policy, c)], TRUE);
 
 	if (revised_sadb == NULL)
 		return FALSE;
