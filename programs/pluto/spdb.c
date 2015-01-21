@@ -1,4 +1,5 @@
 /* Security Policy Data Base (such as it is)
+ *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2006 Bart Trojanowski <bart@jukie.net>
@@ -6,6 +7,7 @@
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -740,10 +742,10 @@ static struct db_trans oakley_trans_psk[] = {
 };
 
 static struct db_trans oakley_trans_psk_xauthc[] = {
-	{ AD_TR(KEY_IKE, otpsk1536aes256md5_xauthc) },
-	{ AD_TR(KEY_IKE, otpsk1536aes128md5_xauthc) },
 	{ AD_TR(KEY_IKE, otpsk1536aes256sha1_xauthc) },
 	{ AD_TR(KEY_IKE, otpsk1536aes128sha1_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1536aes256md5_xauthc) },
+	{ AD_TR(KEY_IKE, otpsk1536aes128md5_xauthc) },
 	{ AD_TR(KEY_IKE, otpsk1536des3sha1_xauthc) },
 	{ AD_TR(KEY_IKE, otpsk1536des3md5_xauthc) },
 	{ AD_TR(KEY_IKE, otpsk1024des3sha1_xauthc) },
