@@ -181,10 +181,6 @@ struct db_sa {
 extern struct db_sa oakley_sadb[1 << 4];
 extern struct db_sa oakley_am_sadb[1 << 4];
 
-/* The oakley sadb for aggressive mode.
- */
-extern struct db_sa oakley_sadb_am;
-
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
  */
