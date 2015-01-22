@@ -40,14 +40,14 @@ struct cbc_test_vector {
  */
 const struct cbc_test_vector aes_cbc_test_vectors[] = {
 	{
-		.description = "Case #1: Encrypting 16 bytes (1 block) using AES-CBC with 128-bit key",
+		.description = "Encrypting 16 bytes (1 block) using AES-CBC with 128-bit key",
 		.key = "0x06a9214036b8a15b512e03d534120006",
 		.iv = "0x3dafba429d9eb430b422da802c9fac41",
 		.plaintext = "Single block msg",
 		.ciphertext = "0xe353779c1079aeb82708942dbe77181a"
 	},
 	{
-		.description = "Case #2: Encrypting 32 bytes (2 blocks) using AES-CBC with 128-bit key",
+		.description = "Encrypting 32 bytes (2 blocks) using AES-CBC with 128-bit key",
 		.key = "0xc286696d887c9aa0611bbb3e2025a45a",
 		.iv = "0x562e17996d093d28ddb3ba695a2e6f58",
 		.plaintext = 
@@ -58,7 +58,7 @@ const struct cbc_test_vector aes_cbc_test_vectors[] = {
 		"7586602d253cfff91b8266bea6d61ab1"
 	},
 	{
-		.description = "Case #3: Encrypting 48 bytes (3 blocks) using AES-CBC with 128-bit key",
+		.description = "Encrypting 48 bytes (3 blocks) using AES-CBC with 128-bit key",
 		.key = "0x6c3ea0477630ce21a2ce334aa746c2cd",
 		.iv = "0xc782dc4c098c66cbd9cd27d825682c81",
 		.plaintext = "This is a 48-byte message (exactly 3 AES blocks)",
@@ -68,7 +68,7 @@ const struct cbc_test_vector aes_cbc_test_vectors[] = {
 		"021c19216bad525c8579695d83ba2684"
 	},
 	{
-		.description = "Case #4: Encrypting 64 bytes (4 blocks) using AES-CBC with 128-bit key",
+		.description = "Encrypting 64 bytes (4 blocks) using AES-CBC with 128-bit key",
 		.key = "0x56e47a38c5598974bc46903dba290349",
 		.iv = "0x8ce82eefbea0da3c44699ed7db51b7d9",
 		.plaintext =
