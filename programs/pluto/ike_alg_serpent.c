@@ -84,6 +84,8 @@ static struct encrypt_desc encrypt_desc_serpent =
 	},
 	.enc_ctxsize = sizeof(struct serpent_context),
 	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
+	.pad_to_blocksize = TRUE,
+	.wire_iv_size = SERPENT_CBC_BLOCK_SIZE,
 	.keyminlen = SERPENT_KEY_MIN_LEN,
 	.keydeflen = SERPENT_KEY_DEF_LEN,
 	.keymaxlen = SERPENT_KEY_MAX_LEN,
@@ -92,6 +94,7 @@ static struct encrypt_desc encrypt_desc_serpent =
 
 void ike_alg_serpent_init(void)
 {
-	/* ??? nobody notices failure */
-	ike_alg_register_enc(&encrypt_desc_serpent);
+	if (!ike_alg_register_enc(&encrypt_desc_serpent))
+		libreswan_log(
+                        "ike_alg_serpent_init(): OAKLEY_SERPENT_CBC activation failed");
 }

@@ -61,7 +61,7 @@ static int adns_restart_count;
 
 static void release_all_continuations(void);
 
-bool adns_reapchild(pid_t pid, int status UNUSED)
+bool adns_reapchild(pid_t pid)
 {
 	if (pid == adns_pid) {
 		close_any(adns_qfd);
@@ -223,7 +223,7 @@ void stop_adns(void)
 			adns_pid = 0;
 		} else {
 			libreswan_log(
-				"wait for end of ADNS process returned odd status 0x%x\n",
+				"wait for end of ADNS process returned odd status 0x%x",
 				status);
 			adns_pid = 0;
 		}
@@ -231,8 +231,11 @@ void stop_adns(void)
 }
 
 /* tricky macro to pass any hot potato */
-#define TRY(x)  { err_t ugh = x; if (ugh != NULL) \
-			  return ugh; }
+#define TRY(x)  { \
+		err_t ugh = (x); \
+		if (ugh != NULL) \
+			  return ugh; \
+	}
 
 /* Process TXT X-IPsec-Server record, accumulating relevant ones
  * in cr->gateways_from_dns, a list sorted by "preference".

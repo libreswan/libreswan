@@ -183,7 +183,7 @@ static inline int libreswan_inet6_del_protocol(struct inet6_protocol *prot,
 #endif
 #else
 static inline int libreswan_inet_add_protocol(struct inet_protocol *prot,
-					      unsigned protocol, char*protstr)
+					      unsigned protocol, char *protstr)
 {
 #ifdef IPSKB_XFRM_TUNNEL_SIZE
 	inet_add_protocol(prot, protocol);

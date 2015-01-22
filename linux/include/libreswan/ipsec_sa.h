@@ -85,48 +85,48 @@ typedef unsigned short int IPsecRefTableUnusedCount;
 #define IPSEC_SA_REF_TABLE_NUM_ENTRIES (1 << IPSEC_SA_REF_TABLE_IDX_WIDTH)
 
 #ifdef __KERNEL__
-#if ((IPSEC_SA_REF_TABLE_IDX_WIDTH - (1 + IPSEC_SA_REF_MAINTABLE_IDX_WIDTH)) < \
-	0)
-#error \
-	"IPSEC_SA_REF_TABLE_IDX_WIDTH("IPSEC_SA_REF_TABLE_IDX_WIDTH") MUST be < 1 + IPSEC_SA_REF_MAINTABLE_IDX_WIDTH("IPSEC_SA_REF_MAINTABLE_IDX_WIDTH")"
+
+#define IPSEC_SA_REF_SUBTABLE_IDX_WIDTH \
+	(IPSEC_SA_REF_TABLE_IDX_WIDTH - IPSEC_SA_REF_MAINTABLE_IDX_WIDTH)
+
+#if IPSEC_SA_REF_SUBTABLE_IDX_WIDTH <= 0
+#error "IPSEC_SA_REF_TABLE_IDX_WIDTH("IPSEC_SA_REF_TABLE_IDX_WIDTH") MUST be > IPSEC_SA_REF_MAINTABLE_IDX_WIDTH("IPSEC_SA_REF_MAINTABLE_IDX_WIDTH")"
 #endif
 
-#define IPSEC_SA_REF_SUBTABLE_IDX_WIDTH (IPSEC_SA_REF_TABLE_IDX_WIDTH - \
-					 IPSEC_SA_REF_MAINTABLE_IDX_WIDTH)
+#define IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES \
+		(1 << IPSEC_SA_REF_MAINTABLE_IDX_WIDTH)
 
-#define IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES (1 << \
-					    IPSEC_SA_REF_MAINTABLE_IDX_WIDTH)
-#define IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES (1 << \
-					   IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
+#define IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES \
+		(1 << IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
 
-#define IPSEC_SA_REF_SUBTABLE_SIZE (IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES * \
-				    sizeof(struct ipsec_sa *))
+#define IPSEC_SA_REF_SUBTABLE_SIZE \
+		(IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES * sizeof(struct ipsec_sa *))
 
 #ifdef CONFIG_NETFILTER
 #define IPSEC_SA_REF_HOST_FIELD(x) ((struct sk_buff*)(x))->nfmark
+/* ??? typeof is a GCCism */
 #define IPSEC_SA_REF_HOST_FIELD_TYPE typeof(IPSEC_SA_REF_HOST_FIELD(NULL))
 #else /* CONFIG_NETFILTER */
 /* just make it work for now, it doesn't matter, since there is no nfmark */
 #define IPSEC_SA_REF_HOST_FIELD_TYPE unsigned long
 #endif /* CONFIG_NETFILTER */
-#define IPSEC_SA_REF_HOST_FIELD_WIDTH (8 * \
-				       sizeof(IPSEC_SA_REF_HOST_FIELD_TYPE))
+#define IPSEC_SA_REF_HOST_FIELD_WIDTH \
+		(8 * sizeof(IPSEC_SA_REF_HOST_FIELD_TYPE))
 #define IPSEC_SA_REF_FIELD_WIDTH (8 * sizeof(IPsecSAref_t))
 
 #define IPSEC_SA_REF_MAX         (~IPSEC_SAREF_NULL)
 #define IPSEC_SAREF_FIRST        1
 /* from libreswan.h #define IPSEC_SA_REF_MASK        (IPSEC_SA_REF_MAX >> (IPSEC_SA_REF_FIELD_WIDTH - IPSEC_SA_REF_TABLE_IDX_WIDTH)) */
-#define IPSEC_SA_REF_TABLE_MASK ((IPSEC_SA_REF_MAX >> \
-				  (IPSEC_SA_REF_FIELD_WIDTH - \
-				   IPSEC_SA_REF_MAINTABLE_IDX_WIDTH)) << \
-				 IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
-#define IPSEC_SA_REF_ENTRY_MASK  (IPSEC_SA_REF_MAX >> \
-				  (IPSEC_SA_REF_FIELD_WIDTH - \
-				   IPSEC_SA_REF_SUBTABLE_IDX_WIDTH))
+#define IPSEC_SA_REF_TABLE_MASK \
+	(IPSEC_SA_REF_MAX \
+	    >> (IPSEC_SA_REF_FIELD_WIDTH - IPSEC_SA_REF_MAINTABLE_IDX_WIDTH) \
+	    << IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
+#define IPSEC_SA_REF_ENTRY_MASK \
+	(IPSEC_SA_REF_MAX \
+	    >> (IPSEC_SA_REF_FIELD_WIDTH - IPSEC_SA_REF_SUBTABLE_IDX_WIDTH))
 
-#define IPsecSAref2table(x) (((x) & \
-			      IPSEC_SA_REF_TABLE_MASK) >> \
-			     IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
+#define IPsecSAref2table(x) \
+	(((x) & IPSEC_SA_REF_TABLE_MASK) >> IPSEC_SA_REF_SUBTABLE_IDX_WIDTH)
 #define IPsecSAref2entry(x) ((x) & IPSEC_SA_REF_ENTRY_MASK)
 #define IPsecSArefBuild(x, y) (((x) << IPSEC_SA_REF_SUBTABLE_IDX_WIDTH) + (y))
 
@@ -177,10 +177,10 @@ struct ipsec_sa {
 	struct ipsec_lifetimes ips_life;        /* lifetime records */
 
 	/* selector information */
-	__u8 ips_transport_protocol;            /* protocol for this SA, if ports are involved */
-	struct sockaddr*ips_addr_s;             /* src sockaddr */
-	struct sockaddr*ips_addr_d;             /* dst sockaddr */
-	struct sockaddr*ips_addr_p;             /* proxy sockaddr */
+	__u8 ips_transport_protocol;		/* protocol for this SA, if ports are involved */
+	struct sockaddr *ips_addr_s;		/* src sockaddr */
+	struct sockaddr *ips_addr_d;		/* dst sockaddr */
+	struct sockaddr *ips_addr_p;		/* proxy sockaddr */
 	__u16 ips_addr_s_size;
 	__u16 ips_addr_d_size;
 	__u16 ips_addr_p_size;
@@ -223,10 +223,10 @@ struct ipsec_sa {
 	__u32 ips_sens_dpd;
 	__u8 ips_sens_sens_level;
 	__u8 ips_sens_sens_len;
-	__u64*          ips_sens_sens_bitmap;
+	__u64 *ips_sens_sens_bitmap;
 	__u8 ips_sens_integ_level;
 	__u8 ips_sens_integ_len;
-	__u64*          ips_sens_integ_bitmap;
+	__u64 *ips_sens_integ_bitmap;
 #endif
 	struct ipsec_alg_enc *ips_alg_enc;
 	struct ipsec_alg_auth *ips_alg_auth;
@@ -257,11 +257,11 @@ struct ipsec_sa {
 };
 
 struct IPsecSArefSubTable {
-	struct ipsec_sa* entry[IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES];
+	struct ipsec_sa *entry[IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES];
 };
 
 struct ipsec_sadb {
-	struct IPsecSArefSubTable* refTable[IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES];
+	struct IPsecSArefSubTable *refTable[IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES];
 	IPsecSAref_t refFreeList[IPSEC_SA_REF_FREELIST_NUM_ENTRIES];
 	int refFreeListHead;
 	int refFreeListTail;
@@ -273,8 +273,8 @@ struct ipsec_sadb {
 extern struct ipsec_sadb ipsec_sadb;
 
 extern int ipsec_sadb_init(void);
-extern struct ipsec_sa *ipsec_sa_alloc(int*error); /* pass in error var by pointer */
-extern int ipsec_sa_free(struct ipsec_sa* ips);
+extern struct ipsec_sa *ipsec_sa_alloc(int *error); /* pass in error var by pointer */
+extern int ipsec_sa_free(struct ipsec_sa *ips);
 
 #define ipsec_sa_get(ips, type) __ipsec_sa_get(ips, __FUNCTION__, __LINE__, \
 					       type)

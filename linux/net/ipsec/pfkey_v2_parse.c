@@ -77,7 +77,7 @@ int (*pfkey_error_func)(const char *message, ...) PRINTF_LIKE(1);
 static struct satype_tbl {
 	uint8_t proto;
 	uint8_t satype;
-	char* name;
+	char *name;
 } satype_tbl[] = {
 #ifdef __KERNEL__
 	{ IPPROTO_ESP,  K_SADB_SATYPE_ESP,      "ESP"  },
@@ -194,8 +194,8 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 		SENDERR(EINVAL);
 	}
 
-	if (!((pfkey_sa->sadb_sa_exttype ==  K_SADB_EXT_SA) ||
-	      (pfkey_sa->sadb_sa_exttype ==  K_SADB_X_EXT_SA2))) {
+	if (pfkey_sa->sadb_sa_exttype !=  K_SADB_EXT_SA &&
+	    pfkey_sa->sadb_sa_exttype !=  K_SADB_X_EXT_SA2) {
 		ERROR("pfkey_sa_parse: "
 			"unknown exttype=%d, expecting K_SADB_EXT_SA=%d or K_SADB_X_EXT_SA2=%d.\n",
 			pfkey_sa->sadb_sa_exttype,
@@ -207,12 +207,12 @@ DEBUG_NO_STATIC int pfkey_sa_parse(struct sadb_ext *pfkey_ext)
 	if (pfkey_sa->sadb_sa_len > sizeof(struct sadb_sa) /
 	    IPSEC_PFKEYv2_ALIGN) {
 		if (pfkey_sa->sadb_x_sa_ref == IPSEC_SAREF_NULL ||
-		    pfkey_sa->sadb_x_sa_ref == ~(IPSEC_SAREF_NULL))
+		    pfkey_sa->sadb_x_sa_ref == ~IPSEC_SAREF_NULL)
 			pfkey_sa->sadb_x_sa_ref = IPSEC_SAREF_NULL;
 	}
 
-	if ((IPSEC_SAREF_NULL != pfkey_sa->sadb_x_sa_ref) &&
-	    (pfkey_sa->sadb_x_sa_ref >= (1 << IPSEC_SA_REF_TABLE_IDX_WIDTH))) {
+	if (IPSEC_SAREF_NULL != pfkey_sa->sadb_x_sa_ref &&
+	    pfkey_sa->sadb_x_sa_ref >= (1 << IPSEC_SA_REF_TABLE_IDX_WIDTH)) {
 		ERROR("pfkey_sa_parse: "
 			"SAref=%d must be (SAref == IPSEC_SAREF_NULL(%d) || SAref < IPSEC_SA_REF_TABLE_NUM_ENTRIES(%d)).\n",
 			pfkey_sa->sadb_x_sa_ref,
@@ -297,7 +297,7 @@ DEBUG_NO_STATIC int pfkey_address_parse(struct sadb_ext *pfkey_ext)
 	int error = 0;
 	int saddr_len = 0;
 	struct sadb_address *pfkey_address = (struct sadb_address *)pfkey_ext;
-	struct sockaddr* s =
+	struct sockaddr *s =
 		(struct sockaddr*)((char*)pfkey_address +
 				   sizeof(*pfkey_address));
 	char ipaddr_txt[ADDRTOT_BUF];

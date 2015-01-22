@@ -50,6 +50,7 @@ d.ipsec.conf/forceencaps.xml
 d.ipsec.conf/nat-keepalive.xml
 d.ipsec.conf/initial-contact.xml
 d.ipsec.conf/cisco-unity.xml
+d.ipsec.conf/send-vendorid.xml
 d.ipsec.conf/overlapip.xml
 d.ipsec.conf/reqid.xml
 d.ipsec.conf/dpddelay.xml
@@ -68,6 +69,7 @@ d.ipsec.conf/compress.xml
 d.ipsec.conf/metric.xml
 d.ipsec.conf/mtu.xml
 d.ipsec.conf/priority.xml
+d.ipsec.conf/sendca.xml
 d.ipsec.conf/disablearrivalcheck.xml
 d.ipsec.conf/labeled-ipsec.xml
 d.ipsec.conf/policy-label.xml
@@ -89,7 +91,8 @@ d.ipsec.conf/virtual-private.xml
 d.ipsec.conf/myvendorid.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml
-d.ipsec.conf/secctx-attr-value.xml
+d.ipsec.conf/seedbits.xml
+d.ipsec.conf/secctx-attr-type.xml
 d.ipsec.conf/plutofork.xml
 d.ipsec.conf/crlcheckinterval.xml
 d.ipsec.conf/strictcrlpolicy.xml

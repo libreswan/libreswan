@@ -2,12 +2,12 @@
 .\"     Title: IPSEC_RSASIGKEY
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/06/2013
+.\"      Date: 01/14/2015
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_RSASIGKEY" "8" "09/06/2013" "libreswan" "Executable programs"
+.TH "IPSEC_RSASIGKEY" "8" "01/14/2015" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,9 +31,7 @@
 ipsec_rsasigkey \- generate RSA signature key
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIrsasigkey\fR [\-\-verbose] [\-\-random\ \fIfilename\fR] [\-\-configdir\ \fInssdbdir\fR] [\-\-password\ \fInsspassword\fR] [\-\-hostname\ \fIhostname\fR] [nbits]
-.HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIrsasigkey\fR [\-\-verbose] [\-\-configdir\ \fInssdbdir\fR] [\-\-password\ \fInsspassword\fR] [\-\-hostname\ \fIhostname\fR]
+\fBipsec\fR \fIrsasigkey\fR [\-\-verbose] [\-\-random\ \fIdevice\fR] [\-\-seed\ \fInumbits\fR] [\-\-configdir\ \fInssdbdir\fR] [\-\-password\ \fInsspassword\fR] [\-\-hostname\ \fIhostname\fR] [nbits]
 .SH "DESCRIPTION"
 .PP
 \fIRsasigkey\fR
@@ -50,7 +48,8 @@ The public exponent is forced to the value
 .PP
 The
 \fB\-\-verbose\fR
-option makes\fIrsasigkey\fR
+option makes
+\fIrsasigkey\fR
 give a running commentary on standard error\&. By default, it works in silence until it is ready to generate output\&.
 .PP
 The
@@ -58,9 +57,15 @@ The
 option specifies a source for random bits used to seed the crypto library\*(Aqs RNG\&. The default is
 /dev/random
 (see
-\fBrandom\fR(4))\&. FreeS/WAN and Openswan without NSS support used this option to specify the random source used to directly create keys\&. Libreswan only uses it to seed the crypto libraries RNG\&. Under Linux with hardware random support, special devices might show up as
+\fBrandom\fR(4))\&. FreeS/WAN and Openswan without NSS support use this option to specify the random source used to directly create keys\&. Libreswan only uses it to seed the NSS crypto libraries RNG\&. Under Linux with hardware random support, special devices might show up as
 /dev/*rng*
-devices\&. However, these should never be access directly using this option, as hardware failures could lead to extremely non\-random values (streams of zeroes have been observed in the wild)
+devices\&. However, these should never be accessed directly using this option, as hardware failures could lead to extremely non\-random values (streams of zeroes have been observed in the wild)
+.PP
+The
+\fB\-\-seedbits\fR
+option specifies how many seed bits are pulled from the random device to seed the NSS PRNG\&. The default of 480bit comes from FIPS requirements\&. Seed bits are rounded up to a multiple of 8\&.
+.PP
+The use of a different random device or a reduction of seedbits from the default value is prevented when the system is running in FIPS mode\&.
 .PP
 The
 \fB\-\-configdir\fR
@@ -69,7 +74,8 @@ option specifies the nss configuration directory to use\&. This is the directory
 .PP
 The
 \fB\-\-password\fR
-option specifies the nss cryptographic module authentication password if the NSS module has been configured to require it\&. A password is required by hardware tokens and also by the internal softotken module when configured to run in FIPS mode\&.
+option specifies the nss cryptographic module authentication password if the NSS module has been configured to require it\&. A password is required by hardware tokens and also by the internal software token module when configured to run in FIPS mode\&. If the argument is
+\fIconfigdir\fR/nsspassword, the password comes from that file; otherwise argument is the password\&.
 .PP
 The
 \fB\-\-hostname\fR
@@ -140,7 +146,7 @@ respectively\&. The
 \fBCoefficient\fR
 line gives the Chinese Remainder Theorem coefficient, which is the inverse of
 \fIq\fR, mod
-\fIp\fR\&. These additional numbers (which must all be kept as secret as the private exponent) are precomputed aids to rapid signature generation\&. When NSS is used, these values are not available outside the NSS security database (softtoken or hardware token) and are instead filled in with the CKA_ID\&.
+\fIp\fR\&. These additional numbers (which must all be kept as secret as the private exponent) are precomputed aids to rapid signature generation\&. When NSS is used, these values are not available outside the NSS security database (software token or hardware token) and are instead filled in with the CKA_ID\&.
 .PP
 No attempt is made to break long lines\&.
 .PP

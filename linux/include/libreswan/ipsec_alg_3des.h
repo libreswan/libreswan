@@ -5,6 +5,6 @@ struct TripleDES_context {
 };
 typedef struct TripleDES_context TripleDES_context;
 
-#define ESP_3DES_KEY_SZ         3 * (sizeof(des_cblock))
+#define ESP_3DES_KEY_SZ         (3 * sizeof(des_cblock))
 #define ESP_3DES_CBC_BLK_LEN    8
 

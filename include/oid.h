@@ -17,7 +17,7 @@ typedef struct {
 
 extern const oid_t oid_names[];
 
-#define OID_UNKNOWN			-1
+#define OID_UNKNOWN			(-1)
 #define OID_ROLE			35
 #define OID_SUBJECT_KEY_ID		38
 #define OID_SUBJECT_ALT_NAME		41

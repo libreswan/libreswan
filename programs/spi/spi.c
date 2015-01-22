@@ -151,7 +151,7 @@ static void usage(char *s, FILE *f)
 	exit(-1);
 }
 
-static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
+static bool parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		       char *life_opt[life_maxsever][life_maxtype],
 		       char *myoptarg)
 {
@@ -172,7 +172,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				progname,
 				optargt);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 		if (debug) {
 			fprintf(stdout,
@@ -186,7 +186,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				"%s: expected '-' after severity of lifetime parameter to --life option.\n",
 				progname);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 		if (debug) {
 			fprintf(stdout,
@@ -211,7 +211,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				progname,
 				optargt);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 		if (debug) {
 			fprintf(stdout,
@@ -225,14 +225,14 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				progname,
 				optargt,
 				life_opt[life_severity][life_type]);
-			return 1;
+			return TRUE;
 		}
 		if (*optargp++ != '=') {
 			fprintf(stderr,
 				"%s: expected '=' after type of lifetime parameter to --life option.\n",
 				progname);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 		if (debug) {
 			fprintf(stdout,
@@ -251,7 +251,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				optargt + strlen(optargt),
 				optargp);
 			usage(progname, stderr);
-			return 1;
+			return TRUE;
 		}
 
 		errno = 0;
@@ -263,7 +263,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				progname,
 				myoptarg,
 				optargp);
-			return 1;
+			return TRUE;
 		}
 
 		switch (*endptr) {
@@ -272,6 +272,11 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		case ' ':
 			break;	/* OK */
 		default:
+			/*
+			 * clang 3.4: warning: Null pointer passed as an argument to a 'nonnull' parameter
+			 * This is about the strlen(myoptarg).
+			 * It seems wrong.
+			 */
 			fprintf(stderr,
 				"%s: Invalid character='%c' at offset %d in lifetime option parameter: '%s', parameter string is %d characters long, %d valid value characters found.\n",
 				progname,
@@ -280,7 +285,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 				myoptarg,
 				(int)strlen(myoptarg),
 				(int)(strcspn(optargp, ", ") - 1));
-			return 1;
+			return TRUE;
 		}
 		life_opt[life_severity][life_type] = optargt;
 		if (debug) {
@@ -291,7 +296,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 		optargp = endptr + 1;
 	} while (*endptr != '\0');
 
-	return 0;
+	return FALSE;
 }
 
 static const struct option longopts[] =
@@ -482,7 +487,7 @@ int main(int argc, char *argv[])
 	__u32 spi = 0;
 	int c;
 	ip_said said;
-	const char* error_s;
+	const char *error_s;
 	char ipsaid_txt[SATOT_BUF];
 
 	int outif = 0;
@@ -531,7 +536,7 @@ int main(int argc, char *argv[])
 				longopts, 0)) != EOF) {
 		unsigned long u;
 		err_t ugh;
-		
+
 		switch (c) {
 		case 'g':
 			debug = TRUE;
@@ -1145,8 +1150,13 @@ int main(int argc, char *argv[])
 					(int)maxbits);
 				exit(1);
 			}
-
 		}
+		/*
+		 * ??? this break was added in a2791fda77a5cfcc6bc992fbc5019f4448112f88
+		 * It is likely correct, but we're not sure.
+		 * Luckily this code is probably never used.
+		 */
+		break;
 	case XF_IP4:
 	case XF_IP6:
 	case XF_DEL:

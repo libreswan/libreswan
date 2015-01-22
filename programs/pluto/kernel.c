@@ -129,7 +129,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 				       const ip_subnet *his,
 				       int transport_proto
 #ifdef HAVE_LABELED_IPSEC
-				       , struct xfrm_user_sec_ctx_ike *uctx
+				       , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				       , const char *why)
 {
@@ -306,10 +306,36 @@ ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel)
 	return htonl((ipsec_spi_t)latest_cpi);
 }
 
+static void fmt_traffic_str(struct state *st, char *istr, size_t istr_len, char *ostr, size_t ostr_len)
+{
+	passert(istr_len > 0 && ostr_len > 0);
+	istr[0] = '\0';
+	ostr[0] = '\0';
+	if (st == NULL || IS_IKE_SA(st))
+		return;
+
+	if (get_sa_info(st, FALSE, NULL)) {
+		snprintf(istr, istr_len, "PLUTO_INBYTES='%u' ",
+			 st->st_esp.present ? st->st_esp.peer_bytes :
+			 st->st_ah.present ? st->st_ah.peer_bytes :
+			 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
+			 0);
+	}
+	if (get_sa_info(st, TRUE, NULL)) {
+		snprintf(ostr, ostr_len, "PLUTO_OUTBYTES='%u' ",
+			 st->st_esp.present ? st->st_esp.our_bytes :
+			 st->st_ah.present ? st->st_ah.our_bytes :
+			 st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
+			 0);
+
+	}
+}
+
 /* form the command string */
 int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			 struct spd_route *sr, struct state *st)
 {
+#define MAX_DISPLAY_BYTES 13
 	int result;
 	char
 		myid_str2[IDTOA_BUF],
@@ -327,7 +353,9 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		secure_peerid_str[IDTOA_BUF] = "",
 		secure_peerca_str[IDTOA_BUF] = "",
 		nexthop_str[sizeof("PLUTO_NEXT_HOP='' ") + ADDRTOT_BUF],
-		secure_xauth_username_str[IDTOA_BUF] = "";
+		secure_xauth_username_str[IDTOA_BUF] = "",
+		traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
+		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
 
 	ipstr_buf bme, bpeer;
 	ip_address ta;
@@ -385,6 +413,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		add_str(secure_xauth_username_str,
 			sizeof(secure_xauth_username_str), p, "' ");
 	}
+	fmt_traffic_str(st, traffic_in_str, sizeof(traffic_in_str), traffic_out_str, sizeof(traffic_out_str));
 
 	srcip_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
@@ -457,6 +486,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 #ifdef HAVE_NM
 		"PLUTO_NM_CONFIGURED='%u' "
 #endif
+			"%s" /* traffic in stats - if any */
+			"%s" /* traffic out stats - if any */
 
 		, c->name,
 		c->interface->ip_dev->id_vname,
@@ -494,16 +525,19 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		c->remotepeertype,		/* 30 */
 		c->cisco_dns_info ? c->cisco_dns_info : "",
 		c->modecfg_domain ? c->modecfg_domain : "",
-		c->modecfg_banner ? c->modecfg_banner : ""
+		c->modecfg_banner ? c->modecfg_banner : "",
 #ifdef HAVE_NM
-		, c->nmconfigured
+		c->nmconfigured,
 #endif
+		traffic_in_str,
+		traffic_out_str
 		);
 	/*
 	 * works for both old and new way of snprintf() returning
 	 * eiter -1 or the output length  -- by Carsten Schlote
 	 */
 	return ((result >= blen) || (result < 0)) ? -1 : result;
+#undef MAX_DISPLAY_BYTES
 }
 
 bool do_command(struct connection *c, struct spd_route *sr, const char *verb,
@@ -674,11 +708,10 @@ static enum routability could_route(struct connection *c)
 			 */
 			inside->prio = outside->prio + 1;
 
-			fmt_conn_instance(inside, inst);
-
 			loglog(RC_LOG_SERIOUS,
 			       "conflict on eroute (%s), switching eroute to %s and linking %s",
-			       inst, inside->name, outside->name);
+			       fmt_conn_instance(inside, inst),
+			       inside->name, outside->name);
 
 			return route_nearconflict;
 		}
@@ -895,7 +928,7 @@ static bool raw_eroute(const ip_address *this_host,
 		       enum pluto_sadb_operations op,
 		       const char *opname
 #ifdef HAVE_LABELED_IPSEC
-		       , char *policy_label
+		       , const char *policy_label
 #endif
 		       )
 {
@@ -918,9 +951,8 @@ static bool raw_eroute(const ip_address *this_host,
 			    dport,
 			    text_said);
 #ifdef HAVE_LABELED_IPSEC
-		    if (policy_label)
+		    if (policy_label != NULL)
 			    DBG_log("policy security label %s", policy_label);
-
 #endif
 	    });
 
@@ -1166,7 +1198,7 @@ bool eroute_connection(struct spd_route *sr,
 		       const struct pfkey_proto_info *proto_info,
 		       unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
-		       , char *policy_label
+		       , const char *policy_label
 #endif
 		       )
 {
@@ -1729,6 +1761,12 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			if (enc_key_len == 7)
 				enc_key_len = 8;
 			break;
+
+		case IKEv2_ENCR_AES_CTR:
+			/* keymat contains 4 bytes of salt */
+			enc_key_len += AES_CTR_SALT_BYTES;
+			break;
+
 		case IKEv2_ENCR_AES_GCM_8:
 		case IKEv2_ENCR_AES_GCM_12:
 		case IKEv2_ENCR_AES_GCM_16:
@@ -2297,7 +2335,7 @@ void init_kernel(void)
 		libreswan_log("FATAL: kernel interface '%s' not available",
 			      enum_name(&kern_interface_names,
 					kern_interface));
-		exit_pluto(5);
+		exit_pluto(PLUTO_EXIT_KERNEL_FAIL);
 	}
 
 	if (kernel_ops->init != NULL)
@@ -2436,23 +2474,21 @@ bool install_inbound_ipsec_sa(struct state *st)
 	if (st->st_refhim == IPSEC_SAREF_NULL && !st->st_outbound_done) {
 
 #ifdef HAVE_LABELED_IPSEC
-		if (!st->st_connection->loopback) {
+		if (st->st_connection->loopback) {
+			DBG(DBG_CONTROL,
+			    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install outgoing SAs, so skipping this"));
+		} else
 #endif
-
-		DBG(DBG_CONTROL,
-		    DBG_log("installing outgoing SA now as refhim=%u",
-			    st->st_refhim));
-		if (!setup_half_ipsec_sa(st, FALSE)) {
-			DBG_log("failed to install outgoing SA: %u",
-				st->st_refhim);
-			return FALSE;
+		{
+			DBG(DBG_CONTROL,
+			    DBG_log("installing outgoing SA now as refhim=%u",
+				    st->st_refhim));
+			if (!setup_half_ipsec_sa(st, FALSE)) {
+				DBG_log("failed to install outgoing SA: %u",
+					st->st_refhim);
+				return FALSE;
+			}
 		}
-#ifdef HAVE_LABELED_IPSEC
-	} else {
-		DBG(DBG_CONTROL,
-		    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install outgoing SAs, so skipping this"));
-	}
-#endif
 
 		st->st_outbound_done = TRUE;
 	}
@@ -2461,18 +2497,13 @@ bool install_inbound_ipsec_sa(struct state *st)
 	/* (attempt to) actually set up the SAs */
 
 #ifdef HAVE_LABELED_IPSEC
-	if (!st->st_connection->loopback) {
+	if (st->st_connection->loopback) {
+		DBG(DBG_CONTROL,
+		    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install incoming SAs, so skipping this"));
+		return TRUE;
+	}
 #endif
-
 	return setup_half_ipsec_sa(st, TRUE);
-
-#ifdef HAVE_LABELED_IPSEC
-} else {
-	DBG(DBG_CONTROL,
-	    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install incoming SAs, so skipping this"));
-	return TRUE;
-}
-#endif
 }
 
 /* Install a route and then a prospective shunt eroute or an SA group eroute.
@@ -2699,9 +2730,8 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 				    char cib[CONN_INST_BUF];
 				    DBG_log("route_and_eroute: instance \"%s\"%s, setting eroute_owner {spd=%p,sr=%p} to #%ld (was #%ld) (newest_ipsec_sa=#%ld)",
 					    st->st_connection->name,
-					    (fmt_conn_instance(st->
-							       st_connection,
-							       cib), cib),
+					    fmt_conn_instance(st->st_connection,
+							      cib),
 					    &st->st_connection->spd, sr,
 					    st->st_serialno,
 					    sr->eroute_owner,
@@ -2819,7 +2849,6 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 #ifdef HAVE_LABELED_IPSEC
 	if (st->st_connection->loopback && st->st_state == STATE_QUICK_R1)
 		return TRUE;
-
 #endif
 
 	rb = could_route(st->st_connection);
@@ -2902,6 +2931,10 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		}
 	}
 
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_CHILD_START);
+#endif
+
 	return TRUE;
 }
 
@@ -2909,9 +2942,13 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
  * we may not succeed, but we bull ahead anyway because
  * we cannot do anything better by recognizing failure
  */
-void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
-		     bool inbound_only USED_BY_KLIPS)
+void delete_ipsec_sa(struct state *st, bool inbound_only)
 {
+#ifdef USE_LINUX_AUDIT
+	/* XXX in IKEv2 we get a spurious call with a parent st :( */
+	if (IS_CHILD_SA(st))
+		linux_audit_conn(st, LAK_CHILD_DESTROY);
+#endif
 	switch (kern_interface) {
 	case USE_MASTKLIPS:
 	case USE_KLIPS:
@@ -2973,21 +3010,19 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 				}
 			}
 #ifdef HAVE_LABELED_IPSEC
-			if (!st->st_connection->loopback) {
+			if (!st->st_connection->loopback)
 #endif
-			(void) teardown_half_ipsec_sa(st, FALSE);
-#ifdef HAVE_LABELED_IPSEC
-		}
-#endif
+			{
+				(void) teardown_half_ipsec_sa(st, FALSE);
+			}
 		}
 #ifdef HAVE_LABELED_IPSEC
 		if (!st->st_connection->loopback ||
-		    st->st_state == STATE_QUICK_I2) {
+		    st->st_state == STATE_QUICK_I2)
 #endif
-		(void) teardown_half_ipsec_sa(st, TRUE);
-#ifdef HAVE_LABELED_IPSEC
-	}
-#endif
+		{
+			(void) teardown_half_ipsec_sa(st, TRUE);
+		}
 
 		break;
 #if defined(WIN32) && defined(WIN32_NATIVE)

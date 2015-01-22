@@ -16,8 +16,7 @@ Some examples are
 <emphasis remap='B'>ike=aes</emphasis>,
 <emphasis remap='B'>ike=aes128-md5;modp2048</emphasis>,
 <emphasis remap='B'>ike=aes128-sha1;dh22</emphasis>,
-<emphasis remap='B'>ike=3des-md5;modp1024,aes-sha1;modp1536</emphasis> or
-<emphasis remap='B'>ike=modp1536</emphasis>.
+<emphasis remap='B'>ike=3des-md5;modp1024,aes-sha1;modp1536</emphasis>.
 The options must be suitable as a value of
 <citerefentry><refentrytitle>ipsec_spi</refentrytitle><manvolnum>8</manvolnum></citerefentry>'s
 <option>--ike</option> option. The default is to use IKE, and to allow all combinations of:

@@ -64,6 +64,46 @@
 
 #include "lsw_select.h"
 
+struct pluto_crypto_req_cont *new_pcrc(
+	crypto_req_cont_func fn,
+	const char *name,
+	struct state *st,
+	struct msg_digest *md)
+{
+	struct pluto_crypto_req_cont *r = alloc_thing(struct pluto_crypto_req_cont, name);
+
+	r->pcrc_func = fn;
+	r->pcrc_serialno = st->st_serialno;
+	r->pcrc_md = md;
+	r->pcrc_name = name;
+	r->pcrc_replacing = SOS_NOBODY;
+
+	passert(md == NULL || md->st == st);
+	passert(st->st_suspended_md == NULL);
+
+	/*
+	 * There is almost always a non-NULL md.
+	 * Exception: main_inI2_outR2_tail initiates DH calculation
+	 * in parallel with normal processing that needs the md exclusively.
+	 */
+	if (md != NULL)
+		set_suspended(st, md);
+	return r;
+}
+
+struct pluto_crypto_req_cont *new_pcrc_repl(
+	crypto_req_cont_func fn,
+	const char *name,
+	struct state *st,
+	struct msg_digest *md,
+	so_serial_t replacing)
+{
+	struct pluto_crypto_req_cont *r = new_pcrc(fn, name, st, md);
+
+	r->pcrc_replacing = replacing;
+	return r;
+}
+
 TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 
 /*
@@ -243,7 +283,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 		if (sz == 0 && feof(in)) {
 			loglog(RC_LOG_SERIOUS,
-			       "pluto_crypto_helper: crypto helper %d normal exit (EOF)\n",
+			       "pluto_crypto_helper: crypto helper %d normal exit (EOF)",
 			       helpernum);
 			break;
 		} else if (sz != sizeof(req)) {
@@ -253,12 +293,12 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 
 				strerror_r(errno, errbuf, sizeof(errbuf));
 				loglog(RC_LOG_SERIOUS,
-				       "pluto_crypto_helper: crypto helper %d got read error: %s\n",
+				       "pluto_crypto_helper: crypto helper %d got read error: %s",
 				       helpernum, errbuf);
 			} else {
 				/* short read -- fatal */
 				loglog(RC_LOG_SERIOUS,
-				       "pluto_crypto_helper: crypto helper %d got a short read error: %zu instead of %zu\n",
+				       "pluto_crypto_helper: crypto helper %d got a short read error: %zu instead of %zu",
 				       helpernum, sz, sizeof(req));
 			}
 			break;
@@ -290,7 +330,7 @@ static void pluto_crypto_helper(int helper_fd, int helpernum)
 			} else {
 				/* short write -- fatal */
 				loglog(RC_LOG_SERIOUS,
-				       "pluto_crypto_helper error: crypto helper %d write truncated: %zu instead of %zu\n",
+				       "pluto_crypto_helper error: crypto helper %d write truncated: %zu instead of %zu",
 				       helpernum, sz, sizeof(req));
 			}
 			break;
@@ -790,7 +830,7 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 
 	if (cn == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "failed to find crypto continuation associated with request ID %u performed by crypto helper %d\n",
+		       "failed to find crypto continuation associated with request ID %u performed by crypto helper %d",
 		       rr.pcr_id,
 		       w->pcw_helpernum);
 		return;

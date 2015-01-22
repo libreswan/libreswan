@@ -56,9 +56,10 @@ static char tmp_err[512];
  * to make sure that no packets get out that this conn would apply to, but we
  * refuse to negotiate it in any way, either incoming or outgoing.
  */
-#define POLICY_ONLY_CONN(conn) if (conn->options[KBF_AUTO] > \
-				   STARTUP_ONDEMAND) { conn->options[KBF_AUTO] = \
-							    STARTUP_POLICY; }
+#define POLICY_ONLY_CONN(conn) { \
+		if ((conn)->options[KBF_AUTO] > STARTUP_ONDEMAND) \
+			(conn)->options[KBF_AUTO] = STARTUP_POLICY; \
+	}
 
 
 #ifdef DNSSEC
@@ -98,6 +99,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->setup.options[KBF_KEEPALIVE] = 0;                  /* config setup */
 	cfg->setup.options[KBF_NATIKEPORT] = NAT_IKE_UDP_PORT;
+
+	/* Don't inflict BSI requirements on everyone */
+	cfg->setup.options[KBF_SEEDBITS] = 0;
+
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;
 #endif
@@ -117,7 +122,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_IKEV1_NATT] = natt_both;
 
-	/*Network Manager support*/
+	/* Network Manager support */
 #ifdef HAVE_NM
 	cfg->conn_default.options[KBF_NMCONFIGURED] = FALSE;
 #endif
@@ -129,11 +134,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_XAUTHBY] = XAUTHBY_FILE;
 	cfg->conn_default.options[KBF_XAUTHFAIL] = XAUTHFAIL_HARD;
-	//cfg->conn_default.options[KBF_SEND_CA] = CA_SEND_ISSUER;
 
 	cfg->conn_default.policy = POLICY_RSASIG | POLICY_TUNNEL |
 				   POLICY_ENCRYPT | POLICY_PFS;
-	cfg->conn_default.policy |= POLICY_IKEV2_ALLOW;         /* ikev2=yes */
+	cfg->conn_default.policy |= POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW;	/* ikev2=permit */
 	cfg->conn_default.policy |= POLICY_SAREF_TRACK;         /* sareftrack=yes */
 	cfg->conn_default.policy |= POLICY_IKE_FRAG_ALLOW;      /* ike_frag=yes */
 
@@ -197,23 +201,28 @@ static bool error_append(char **perr, const char *fmt, ...)
 	return TRUE;
 }
 
-#define KW_POLICY_FLAG(val, fl) if (conn->options_set[val]) \
-	{ if (conn->options[val]) \
-	  { \
-		  conn->policy |= fl; \
-	  } else { \
-		  conn->policy &= ~fl; \
-	  } }
+#define KW_POLICY_FLAG(val, fl) { \
+		if (conn->options_set[val]) { \
+			if (conn->options[val]) { \
+				conn->policy |= (fl); \
+			} else { \
+				conn->policy &= ~(fl); \
+			} \
+		} \
+	}
 
-#define KW_POLICY_NEGATIVE_FLAG(val, fl) if (conn->options_set[val]) \
-	{ if (!conn->options[val]) \
-	  { \
-		  conn->policy |= fl; \
-	  } else { \
-		  conn->policy &= ~fl; \
-	  } }
+#define KW_POLICY_NEGATIVE_FLAG(val, fl) { \
+		if (conn->options_set[val]) { \
+			if (!conn->options[val]) { \
+				conn->policy |= (fl); \
+			} else { \
+				conn->policy &= ~(fl); \
+			} \
+		}\
+	}
 
 #define FREE_LIST(v) { if ((v) != NULL) { free_list(v); (v) = NULL; } }
+
 /**
  * Free the pointer list
  *
@@ -389,8 +398,8 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	char *err_str = NULL;
 	int family = conn_st->options[KBF_CONNADDRFAMILY];
 	bool err = FALSE;
-#  define ERR_FOUND(args ...) do err |= error_append(&err_str, ## args); while (0)
 
+#  define ERR_FOUND(...) { err |= error_append(&err_str, __VA_ARGS__); }
 
 	if (!end->options_set[KNCF_IP])
 		conn_st->state = STATE_INCOMPLETE;
@@ -406,7 +415,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 
 	case KH_IFACE:
 		/* generally, this doesn't show up at this stage */
-		starter_log(LOG_LEVEL_DEBUG, "starter: case KH_IFACE empty");
+		starter_log(LOG_LEVEL_DEBUG, "starter: %s is KH_IFACE", leftright);
 		break;
 
 	case KH_IPADDR:
@@ -453,16 +462,16 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	case KH_IPHOSTNAME:
 		/* generally, this doesn't show up at this stage */
 		starter_log(LOG_LEVEL_DEBUG,
-			    "starter: case KH_IPHOSTNAME empty");
+			    "starter: %s is KH_IPHOSTNAME", leftright);
 		break;
 
 	case KH_DEFAULTROUTE:
 		starter_log(LOG_LEVEL_DEBUG,
-			    "starter: case KH_DEFAULTROUTE: empty");
+			    "starter: %s is KH_DEFAULTROUTE", leftright);
 		break;
 
 	case KH_NOTSET:
-		starter_log(LOG_LEVEL_DEBUG, "starter: case KH_NOTSET: empty");
+		starter_log(LOG_LEVEL_DEBUG, "starter: %s is KH_NOTSET", leftright);
 		break;
 	}
 
@@ -504,7 +513,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 				      &(end->nexthop)) != NULL) {
 #ifdef DNSSEC
 				starter_log(LOG_LEVEL_DEBUG,
-					    "Calling unbound_resolve() for %snexthop value\n",
+					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
 				if (!unbound_resolve(dnsctx, value,
 						strlen(value), AF_INET,
@@ -512,15 +521,14 @@ static bool validate_end(struct ub_ctx *dnsctx,
 				    !unbound_resolve(dnsctx, value,
 						strlen(value), AF_INET6,
 						&(end->nexthop)))
-					ERR_FOUND(
-						"bad value for %snexthop=%s\n",
+					ERR_FOUND("bad value for %snexthop=%s\n",
 						leftright, value);
 #else
 				er = ttoaddr(value, 0, family,
 						&(end->nexthop));
 				if (er != NULL)
-					ERR_FOUND(
-						"bad value for %snexthop=%s [%s]", leftright, value,
+					ERR_FOUND("bad value for %snexthop=%s [%s]",
+						leftright, value,
 						er);
 #endif
 			}
@@ -530,7 +538,6 @@ static bool validate_end(struct ub_ctx *dnsctx,
 #if 0
 		if (conn_st->policy & POLICY_OPPORTUNISTIC)
 			end->nexttype = KH_DEFAULTROUTE;
-
 #endif
 		anyaddr(family, &end->nexthop);
 
@@ -580,13 +587,14 @@ static bool validate_end(struct ub_ctx *dnsctx,
 	 */
 	if (end->strings_set[KSCF_SOURCEIP]) {
 		char *value = end->strings[KSCF_SOURCEIP];
+
 		if (tnatoaddr(value, strlen(value), AF_INET,
 			      &(end->sourceip)) != NULL &&
 		    tnatoaddr(value, strlen(value), AF_INET6,
 			      &(end->sourceip)) != NULL) {
 #ifdef DNSSEC
 			starter_log(LOG_LEVEL_DEBUG,
-				    "Calling unbound_resolve() for %ssourceip value\n",
+				    "Calling unbound_resolve() for %ssourceip value",
 				    leftright);
 			if (!unbound_resolve(dnsctx, value,
 					strlen(value), AF_INET,
@@ -598,25 +606,24 @@ static bool validate_end(struct ub_ctx *dnsctx,
 					  leftright, value);
 #else
 			er = ttoaddr(value, 0, family, &(end->sourceip));
-			if (er)
+			if (er != NULL)
 				ERR_FOUND("bad addr %ssourceip=%s [%s]",
 					  leftright, value, er);
 #endif
 		} else {
 			er = tnatoaddr(value, 0, family, &(end->sourceip));
-			if (er)
+			if (er != NULL)
 				ERR_FOUND("bad numerical addr %ssourceip=%s [%s]",
 					leftright, value, er);
 		}
 		if (!end->has_client) {
 			starter_log(LOG_LEVEL_INFO,
-				    "%ssourceip= used but not %ssubnet= defined, defaulting %ssubnet to %s\n",
+				    "%ssourceip= used but not %ssubnet= defined, defaulting %ssubnet to %s",
 				    leftright, leftright, leftright, value);
 			er = addrtosubnet(&end->sourceip, &end->subnet);
-			if (er) {
-				ERR_FOUND(
-					"attempt to default %ssubnet from %s failed: %s", leftright, value,
-					er);
+			if (er != NULL) {
+				ERR_FOUND("attempt to default %ssubnet from %s failed: %s",
+					leftright, value, er);
 			}
 			end->has_client = TRUE;
 			end->has_client_wildcard = FALSE;
@@ -640,7 +647,7 @@ static bool validate_end(struct ub_ctx *dnsctx,
 		ugh = ttoprotoport(value, 0, &end->protocol, &end->port,
 				   &end->has_port_wildcard);
 
-		if (ugh)
+		if (ugh != NULL)
 			ERR_FOUND("bad %sprotoport=%s [%s]", leftright, value,
 				  ugh);
 	}
@@ -734,7 +741,7 @@ static bool translate_conn(struct starter_conn *conn,
 		field = kw->keyword.keydef->field;
 
 #ifdef PARSER_TYPE_DEBUG
-		starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d\n",
+		starter_log(LOG_LEVEL_DEBUG, "#analyzing %s[%d] kwtype=%d",
 			    kw->keyword.keydef->keyname, field,
 			    kw->keyword.keydef->type);
 #endif
@@ -871,7 +878,7 @@ static bool translate_conn(struct starter_conn *conn,
 			}
 
 #if 0
-			starter_log(LOG_LEVEL_DEBUG, "#setting %s[%d]=%u\n",
+			starter_log(LOG_LEVEL_DEBUG, "#setting %s[%d]=%u",
 				    kw->keyword.keydef->keyname, field,
 				    kw->number);
 #endif
@@ -883,12 +890,12 @@ static bool translate_conn(struct starter_conn *conn,
 			break;
 		case kt_obsolete:
 			starter_log(LOG_LEVEL_INFO,
-				    "Warning: obsolete keyword '%s' ignored\n",
+				    "Warning: obsolete keyword '%s' ignored",
 				    kw->keyword.keydef->keyname);
 			break;
 		case kt_obsolete_quiet:
 			starter_log(LOG_LEVEL_DEBUG,
-				    "Warning: obsolete keyword '%s' ignored\n",
+				    "Warning: obsolete keyword '%s' ignored",
 				    kw->keyword.keydef->keyname);
 			break;
 		}
@@ -1071,7 +1078,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 #ifdef PARSER_TYPE_DEBUG
 	/* translate strings/numbers into conn items */
 	starter_log(LOG_LEVEL_DEBUG,
-		    "#checking options_set[KBF_TYPE,%d]=%d %d\n",
+		    "#checking options_set[KBF_TYPE,%d]=%d %d",
 		    KBF_TYPE,
 		    conn->options_set[KBF_TYPE], conn->options[KBF_TYPE]);
 #endif
@@ -1123,8 +1130,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 
 #ifdef FIPS_CHECK
 		if (Pluto_IsFIPS()) {
-			if ((conn->options[KBF_AUTHBY] & POLICY_PSK) ==
-			    POLICY_PSK) {
+			if (LIN(POLICY_PSK, conn->options[KBF_AUTHBY]) {
 				starter_log(LOG_LEVEL_INFO,
 					    "while loading conn '%s', PSK not allowed in FIPS mode with NSS",
 					    conn->name);
@@ -1137,7 +1143,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 
 #ifdef STARTER_POLICY_DEBUG
 		starter_log(LOG_LEVEL_DEBUG,
-			    "%s: setting conn->policy=%08x (%08x)\n",
+			    "%s: setting conn->policy=%08x (%08x)",
 			    conn->name,
 			    (unsigned int)conn->policy,
 			    conn->options[KBF_AUTHBY]);
@@ -1193,27 +1199,27 @@ static bool load_conn(struct ub_ctx *dnsctx,
 	}
 
 	if (conn->options_set[KBF_IKEv2]) {
+		lset_t policy = LEMPTY;
+
 		switch (conn->options[KBF_IKEv2]) {
 		case fo_never:
-			conn->policy &= ~POLICY_IKEV2_ALLOW;
+			policy = POLICY_IKEV1_ALLOW;
 			break;
 
 		case fo_permit:
 			/* this is the default for now */
-			conn->policy |= POLICY_IKEV2_ALLOW;
+			policy = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW;
 			break;
 
 		case fo_propose:
-			conn->policy |= POLICY_IKEV2_ALLOW |
-					POLICY_IKEV2_PROPOSE;
+			policy = POLICY_IKEV1_ALLOW | POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
 			break;
 
 		case fo_insist:
-			conn->policy |= POLICY_IKEV1_DISABLE;
-			conn->policy |= POLICY_IKEV2_ALLOW |
-					POLICY_IKEV2_PROPOSE;
+			policy =                      POLICY_IKEV2_ALLOW | POLICY_IKEV2_PROPOSE;
 			break;
 		}
+		conn->policy = (conn->policy & ~POLICY_IKEV2_MASK) | policy;
 	}
 
 	if (conn->options_set[KBF_IKE_FRAG]) {
@@ -1356,7 +1362,7 @@ static bool init_load_conn(struct ub_ctx *dnsctx,
 			    defaultconn, resolvip, perr);
 
 	if (connerr) {
-		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s\n",
+		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s",
 			    sconn->name, *perr);
 	} else {
 		conn->state = STATE_LOADED;
@@ -1470,7 +1476,7 @@ struct starter_config *confread_load(const char *file,
 
 		/* if we have OE on, then create any missing OE conns! */
 		if (cfg->setup.options[KBF_OPPOENCRYPT]) {
-			starter_log(LOG_LEVEL_DEBUG, "Enabling OE conns\n");
+			starter_log(LOG_LEVEL_DEBUG, "Enabling OE conns");
 			add_any_oeconns(cfg, cfgp);
 		}
 	}

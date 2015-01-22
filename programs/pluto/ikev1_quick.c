@@ -74,7 +74,7 @@
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 
 #include "vendor.h"
 #include "nat_traversal.h"
@@ -212,6 +212,19 @@ static void compute_proto_keymat(struct state *st,
 				/* XXX: obtained from peer - was it verified for validity yet? */
 			}
 			break;
+		case ESP_AES_CTR:
+			if (st->st_esp.attrs.transattrs.enckeylen) {
+				needed_len =
+					st->st_esp.attrs.transattrs.enckeylen /
+					BITS_PER_BYTE;
+				/* XXX: obtained from peer - was it verified for validity yet? */
+			} else {
+				/* if no keylength set, pick strongest allowed */
+				needed_len = AES_CTR_KEY_MAX_LEN / BITS_PER_BYTE;
+			}
+			/* AES_CTR requires an extra AES_CTR_SALT_BYTES (4) bytes of salt */
+			needed_len += AES_CTR_SALT_BYTES;
+			break;
 		case ESP_AES_GCM_8:
 		case ESP_AES_GCM_12:
 		case ESP_AES_GCM_16:
@@ -258,6 +271,17 @@ static void compute_proto_keymat(struct state *st,
 			break;
 
 		case ESP_CAMELLIA:
+		case ESP_CAMELLIAv1:
+			/* if an attribute is set, then use that! */
+			if (st->st_esp.attrs.transattrs.enckeylen == 0) {
+				needed_len = CAMELLIA_BLOCK_SIZE;
+			} else {
+				needed_len =
+					st->st_esp.attrs.transattrs.enckeylen /
+					BITS_PER_BYTE;
+				/* XXX: obtained from peer - was it verified for validity yet? */
+			}
+			break;
 		case ESP_TWOFISH:
 		case ESP_SERPENT:
 			/* valid keysize enforced before we get here */
@@ -269,7 +293,7 @@ static void compute_proto_keymat(struct state *st,
 			} else {
 				/*
 				 * If no keylength set, pick mandatory to implement default
-				 * {CAMELLIA,TWOFISH,SERPENT}_DEF_KEY_LEN = 128
+				 * {TWOFISH,SERPENT}_DEF_KEY_LEN = 128
 				 */
 				needed_len = 128 / BITS_PER_BYTE;
 			}
@@ -833,32 +857,32 @@ void init_phase2_iv(struct state *st, const msgid_t *msgid)
 		      st->st_new_iv, st->st_new_iv_len);
 }
 
-static stf_status quick_outI1_tail(struct qke_continuation *qke,
+static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 				   struct pluto_crypto_req *r,
 				   struct state *st);
 
-/* this is a crypto_req_cont_func */
-static void quick_outI1_continue(struct pluto_crypto_req_cont *pcrc,
+static crypto_req_cont_func quick_outI1_continue;	/* type assertion */
+
+static void quick_outI1_continue(struct pluto_crypto_req_cont *qke,
 				 struct pluto_crypto_req *r)
 {
-	struct qke_continuation *qke = (struct qke_continuation *)pcrc;
 	struct state *const st = state_with_serialno(
-		qke->qke_pcrc.pcrc_serialno);
+		qke->pcrc_serialno);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("quick_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-			qke->qke_pcrc.pcrc_serialno));
+			qke->pcrc_serialno));
 
-	if (qke->qke_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (qke->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		release_any_md(&qke->qke_md);
+		release_any_md(&qke->pcrc_md);
 		return;
 	}
 
-	passert(qke->qke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(qke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
@@ -890,7 +914,7 @@ stf_status quick_outI1(int whack_sock,
 		       unsigned long try,
 		       so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-		       , struct xfrm_user_sec_ctx_ike * uctx
+		       , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		       )
 {
@@ -914,8 +938,8 @@ stf_status quick_outI1(int whack_sock,
 	if (uctx != NULL) {
 		st->sec_ctx = clone_thing(*uctx, "sec ctx structure");
 		DBG(DBG_CONTROL,
-		    DBG_log("pending phase 2 with security context %s, %d",
-			    st->sec_ctx->sec_ctx_value, st->sec_ctx->ctx_len));
+		    DBG_log("pending phase 2 with security context \"%s\"",
+			    st->sec_ctx->sec_ctx_value));
 	}
 #endif
 
@@ -978,17 +1002,17 @@ stf_status quick_outI1(int whack_sock,
 
 
 	{
-		struct qke_continuation *qke = alloc_thing(struct qke_continuation, "quick_outI1 KE");
+		struct pluto_crypto_req_cont *qke = new_pcrc_repl(
+			quick_outI1_continue, "quick_outI1 KE",
+			st, NULL, replacing);
 		stf_status e;
 
-		qke->qke_replacing = replacing;
-		pcrc_init(&qke->qke_pcrc, quick_outI1_continue);
-
-		if (policy & POLICY_PFS)
-			e = build_ke_and_nonce(&qke->qke_pcrc, st, st->st_pfs_group,
+		if (policy & POLICY_PFS) {
+			e = build_ke_and_nonce(qke, st->st_pfs_group,
 				     st->st_import);
-		else
-			e = build_nonce(&qke->qke_pcrc, st, st->st_import);
+		} else {
+			e = build_nonce(qke, st->st_import);
+		}
 
 		reset_globals();
 
@@ -996,7 +1020,7 @@ stf_status quick_outI1(int whack_sock,
 	}
 }
 
-static stf_status quick_outI1_tail(struct qke_continuation *qke,
+static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 				   struct pluto_crypto_req *r,
 				   struct state *st)
 {
@@ -1160,7 +1184,7 @@ static stf_status quick_outI1_tail(struct qke_continuation *qke,
 	delete_event(st);
 	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
-	if (qke->qke_replacing == SOS_NOBODY) {
+	if (qke->pcrc_replacing == SOS_NOBODY) {
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
 			  "%s: initiate",
 			  enum_name(&state_names, st->st_state));
@@ -1168,7 +1192,7 @@ static stf_status quick_outI1_tail(struct qke_continuation *qke,
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
 			  "%s: initiate to replace #%lu",
 			  enum_name(&state_names, st->st_state),
-			  qke->qke_replacing);
+			  qke->pcrc_replacing);
 	}
 
 	return STF_OK;
@@ -1790,15 +1814,10 @@ static enum verify_oppo_step quick_inI1_outR1_process_answer(
 static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 					      struct pluto_crypto_req *r);
 
-/* this is a crypto_req_cont_func */
-static void quick_inI1_outR1_cryptocontinue2(
-	struct pluto_crypto_req_cont *pcrc,
-	struct pluto_crypto_req *r);
 
-/* this is a crypto_req_cont_func */
-static void quick_inI1_outR1_cryptocontinue1(
-	struct pluto_crypto_req_cont *pcrc,
-	struct pluto_crypto_req *r);
+static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1;	/* type assertion */
+
+static crypto_req_cont_func quick_inI1_outR1_cryptocontinue2;	/* type assertion */
 
 static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 					    struct adns_continuation *ac)
@@ -2128,28 +2147,27 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		passert(st->st_connection != NULL);
 
 		{
-			struct qke_continuation *qke = alloc_thing(
-				struct qke_continuation,
-				"quick_outI1 KE");
-
+			struct pluto_crypto_req_cont *qke = new_pcrc(
+				quick_inI1_outR1_cryptocontinue1,
+				"quick_outI1 KE",
+				st, md);
 			stf_status e;
 			enum crypto_importance ci;
 
+			/*
+			 * ??? this code did NOT have a set_suspended(st, md).
+			 * Now that is perfomed by new_pcrc.  Correct?
+			 */
+			/* ??? can ci calc be absorbed into build*nonce? */
 			ci = pcim_ongoing_crypto;
 			if (ci < st->st_import)
 				ci = st->st_import;
 
-			qke->qke_md = md;
-			qke->qke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-			pcrc_init(&qke->qke_pcrc, quick_inI1_outR1_cryptocontinue1);
-
 			if (st->st_pfs_group != NULL) {
-				/* need to calculate KE and Nonce */
-				e = build_ke_and_nonce(&qke->qke_pcrc, st,
+				e = build_ke_and_nonce(qke,
 					st->st_pfs_group, ci);
 			} else {
-				/* KE and Nonce calculated */
-				e = build_nonce(&qke->qke_pcrc, st, ci);
+				e = build_nonce(qke, ci);
 			}
 
 			passert(st->st_connection != NULL);
@@ -2159,32 +2177,32 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 	}
 }
 
-/* this is a crypto_req_cont_func */
+/* redundant type assertion: static crypto_req_cont_func quick_inI1_outR1_cryptocontinue1; */
+
 static void quick_inI1_outR1_cryptocontinue1(
-	struct pluto_crypto_req_cont *pcrc,
+	struct pluto_crypto_req_cont *qke,
 	struct pluto_crypto_req *r)
 {
-	struct qke_continuation *qke = (struct qke_continuation *)pcrc;
-	struct msg_digest *md = qke->qke_md;
+	struct msg_digest *md = qke->pcrc_md;
 	struct state *const st = state_with_serialno(
-		qke->qke_pcrc.pcrc_serialno);
+		qke->pcrc_serialno);
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue1 for #%lu: calculated ke+nonce, calculating DH",
-			qke->qke_pcrc.pcrc_serialno));
+			qke->pcrc_serialno));
 
-	if (qke->qke_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (qke->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		release_any_md(&qke->qke_md);
+		release_any_md(&qke->pcrc_md);
 		return;
 	}
 
 	pexpect(st == md->st);	/* ??? why not? */
 
-	passert(qke->qke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(qke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
@@ -2201,25 +2219,20 @@ static void quick_inI1_outR1_cryptocontinue1(
 
 	if (st->st_pfs_group != NULL) {
 		/* PFS is on: do a new DH */
-		struct dh_continuation *dh = alloc_thing(
-			struct dh_continuation,
-			"quick outR1 DH");
+		struct pluto_crypto_req_cont *dh = new_pcrc(
+			quick_inI1_outR1_cryptocontinue2,
+			"quick outR1 DH",
+			st, md);
 
 		unpack_KE_from_helper(st, r, &st->st_gr);
 
-		qke->qke_md = NULL;	/* for neatness */
-
-		/* set up second calculation */
-		dh->dh_md = md;
-		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-		set_suspended(st, md);
-		pcrc_init(&dh->dh_pcrc, quick_inI1_outR1_cryptocontinue2);
-		e = start_dh_secret(&dh->dh_pcrc, st,
+		e = start_dh_secret(dh, st,
 				    st->st_import,
 				    O_RESPONDER,
 				    st->st_pfs_group->group);
 
-		/* In the STF_INLINE case, quick_inI1_outR1_cryptocontinue2 has
+		/*
+		 * In the STF_INLINE case, quick_inI1_outR1_cryptocontinue2 has
 		 * already called complete_v1_state_transition and it has freed
 		 * *dh.
 		 * It called quick_inI1_outR1_cryptocontinue2 which did the
@@ -2231,9 +2244,9 @@ static void quick_inI1_outR1_cryptocontinue1(
 		 */
 		if (e != STF_SUSPEND && e != STF_INLINE) {
 			passert(md != NULL);	/* ??? when would this fail? */
-			if (dh->dh_md != NULL) {
-				complete_v1_state_transition(&dh->dh_md, e);
-				release_any_md(&dh->dh_md);
+			if (dh->pcrc_md != NULL) {
+				complete_v1_state_transition(&dh->pcrc_md, e);
+				release_any_md(&dh->pcrc_md);
 			}
 		}
 	} else {
@@ -2245,37 +2258,38 @@ static void quick_inI1_outR1_cryptocontinue1(
 			passert(md != NULL);	/* ??? when would this fail? */
 			if (md != NULL) {
 				/* note: use qke-> pointer */
-				complete_v1_state_transition(&qke->qke_md, e);
-				release_any_md(&qke->qke_md);
+				complete_v1_state_transition(&qke->pcrc_md, e);
+				release_any_md(&qke->pcrc_md);
 			}
 		}
 	}
 	reset_cur_state();
+	/* ??? why does our caller not care about e? */
 }
 
-/* this is a crypto_req_cont_func */
+/* redundant type assertion: static crypto_req_cont_func quick_inI1_outR1_cryptocontinue2; */
+
 static void quick_inI1_outR1_cryptocontinue2(
-	struct pluto_crypto_req_cont *pcrc,
+	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r)
 {
-	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->dh_md;
+	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inI1_outR1_cryptocontinue2 for #%lu: calculated DH, sending R1",
-			dh->dh_pcrc.pcrc_serialno));
+			dh->pcrc_serialno));
 
-	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (dh->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		release_any_md(&dh->dh_md);
+		release_any_md(&dh->pcrc_md);
 		return;
 	}
 
-	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
@@ -2287,12 +2301,12 @@ static void quick_inI1_outR1_cryptocontinue2(
 	st->st_calculating = FALSE;
 	unset_suspended(st);
 
-	e = quick_inI1_outR1_cryptotail(dh->dh_md, r);
+	e = quick_inI1_outR1_cryptotail(dh->pcrc_md, r);
 	passert(e != STF_INLINE);
 	if (e == STF_OK) {
-		passert(dh->dh_md != NULL);
-		complete_v1_state_transition(&dh->dh_md, e);
-		release_any_md(&dh->dh_md);
+		passert(dh->pcrc_md != NULL);
+		complete_v1_state_transition(&dh->pcrc_md, e);
+		release_any_md(&dh->pcrc_md);
 	}
 
 	reset_cur_state();
@@ -2304,7 +2318,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	struct state *st = md->st;
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
 	struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
-	struct isakmp_sa sa = sapd->payload.sa;
+	struct isakmp_sa sa;
 	pb_stream r_sa_pbs;
 	u_char          /* set by START_HASH_PAYLOAD: */
 		*r_hashval,     /* where in reply to jam hash value */
@@ -2329,7 +2343,8 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 
 	passert(st->st_connection != NULL);
 
-	/* sa header is unchanged -- except for np */
+	zero(&sa);
+	sa.isasa_doi = ISAKMP_DOI_IPSEC;
 	sa.isasa_np = ISAKMP_NEXT_NONCE;
 	if (!out_struct(&sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
 		return STF_INTERNAL_ERROR;
@@ -2486,9 +2501,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 static stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 					      struct pluto_crypto_req *r);
 
-/* this is a crypto_req_cont_func */
-static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
-				      struct pluto_crypto_req *r);
+static crypto_req_cont_func quick_inR1_outI2_continue;	/* type assertion */
 
 stf_status quick_inR1_outI2(struct msg_digest *md)
 {
@@ -2517,18 +2530,13 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 	RETURN_STF_FAILURE(accept_PFS_KE(md, &st->st_gr, "Gr",
 					 "Quick Mode R1"));
 
-	if (st->st_pfs_group) {
-		struct dh_continuation *dh = alloc_thing(
-			struct dh_continuation,
-			"quick outI2 DH");
-
+	if (st->st_pfs_group != NULL) {
 		/* set up DH calculation */
-		dh->dh_md = md;
-		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-		passert(st != NULL);
-		set_suspended(st, md);
-		pcrc_init(&dh->dh_pcrc, quick_inR1_outI2_continue);
-		return start_dh_secret(&dh->dh_pcrc, st,
+		struct pluto_crypto_req_cont *dh = new_pcrc(
+			quick_inR1_outI2_continue, "quick outI2 DH",
+			st, md);
+
+		return start_dh_secret(dh, st,
 				       st->st_import,
 				       O_INITIATOR,
 				       st->st_pfs_group->group);
@@ -2538,28 +2546,28 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 	}
 }
 
-/* this is a crypto_req_cont_func */
-static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
+/* redundant type assertion: static crypto_req_cont_func quick_inR1_outI2_continue; */
+
+static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *dh,
 				      struct pluto_crypto_req *r)
 {
-	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->dh_md;
+	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("quick_inR1_outI2_continue for #%lu: calculated ke+nonce, calculating DH",
-			dh->dh_pcrc.pcrc_serialno));
+			dh->pcrc_serialno));
 
-	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (dh->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		release_any_md(&dh->dh_md);
+		release_any_md(&dh->pcrc_md);
 		return;
 	}
 
-	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
@@ -2571,11 +2579,11 @@ static void quick_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 	st->st_calculating = FALSE;
 	unset_suspended(st);
 
-	e = quick_inR1_outI2_cryptotail(dh->dh_md, r);
+	e = quick_inR1_outI2_cryptotail(dh->pcrc_md, r);
 
-	passert(dh->dh_md != NULL);
-	complete_v1_state_transition(&dh->dh_md, e);
-	release_any_md(&dh->dh_md);
+	passert(dh->pcrc_md != NULL);
+	complete_v1_state_transition(&dh->pcrc_md, e);
+	release_any_md(&dh->pcrc_md);
 	reset_cur_state();
 }
 

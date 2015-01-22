@@ -22,7 +22,7 @@ extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
 			      so_serial_t replacing,
 			      enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-			      , struct xfrm_user_sec_ctx_ike *
+			      , const struct xfrm_user_sec_ctx_ike *
 #endif
 			      );
 
@@ -39,14 +39,14 @@ extern state_transition_fn
 	main_inR2_outI3,
 	main_inI3_outR3,
 	main_inR3,
-	aggr_inI1_outR1_psk,
-	aggr_inI1_outR1_rsasig,
+	aggr_inI1_outR1,
 	aggr_inR1_outI2,
 	aggr_inI2;
 
 extern bool send_delete(struct state *st);
-extern void accept_delete(struct state *st, struct msg_digest *md,
+extern bool accept_delete(struct msg_digest *md,
 			  struct payload_digest *p);
+extern void accept_self_delete(struct msg_digest *md);
 
 extern void send_notification_from_state(struct state *st,
 					 enum state_kind from_state,

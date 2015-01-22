@@ -62,7 +62,7 @@ struct pending {
 	so_serial_t replacing;
 	monotime_t pend_time;
 #ifdef HAVE_LABELED_IPSEC
-	struct xfrm_user_sec_ctx_ike * uctx;
+	struct xfrm_user_sec_ctx_ike *uctx;
 #endif
 
 	struct pending *next;
@@ -76,7 +76,7 @@ void add_pending(int whack_sock,
 		 unsigned long try,
 		 so_serial_t replacing
 #ifdef HAVE_LABELED_IPSEC
-		 , struct xfrm_user_sec_ctx_ike * uctx
+		 , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		 )
 {
@@ -119,7 +119,7 @@ void add_pending(int whack_sock,
 		DBG(DBG_CONTROL,
 		    DBG_log("pending phase 2 with security context %s, %d",
 			    p->uctx->sec_ctx_value,
-			    p->uctx->ctx_len));
+			    p->uctx->ctx.ctx_len));
 	}
 #endif
 

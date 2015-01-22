@@ -418,7 +418,13 @@ if [ $(id -u) -ne 0 ]; then
     exit 4
 fi
 
-stack="$(ipsec addconn --config ${IPSEC_CONF} --liststack)"
+if [ "$2" == "--netkey" ]
+then
+	# manual override for use in docker
+	stack=netkey
+else
+	stack="$(ipsec addconn --config ${IPSEC_CONF} --liststack)"
+fi
 
 case ${stack} in
     netkey|klips|mast|none)

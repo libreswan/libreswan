@@ -64,7 +64,7 @@ BuildRequires: openldap-devel curl-devel
 BuildRequires: ElectricFence
 %endif
 # Only needed if xml man pages are modified and need regeneration
-# BuildRequires: xmlto
+BuildRequires: xmlto
 
 Requires: nss-tools
 Requires: iproute >= 2.6.8
@@ -87,6 +87,8 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{srcpkgver}
+# remove man page for ipsec.conf so it is forced to regenerate
+rm ./programs/configs/ipsec.conf.5
 
 %build
 %if %{buildefence}
@@ -191,12 +193,8 @@ fi
 /sbin/chkconfig --add ipsec || :
 if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
      ! -f %{_sysconfdir}/ipsec.d/cert9.db ] ; then
-    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
-    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
-    echo > ${TEMPFILE}
-    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    certutil -N -f -d %{_sysconfdir}/ipsec.d --empty-password
     restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
-    rm -f ${TEMPFILE}
 fi
 
 %changelog

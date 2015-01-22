@@ -40,6 +40,8 @@
 # include <signal.h>
 #endif
 
+#include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
+
 /* Message ID mechanism.
  *
  * A Message ID is contained in each IKE message header.
@@ -172,16 +174,16 @@ struct hidden_variables {
 };
 
 #define unset_suspended(st) { \
-	st->st_suspended_md = NULL; \
-	st->st_suspended_md_func = __FUNCTION__; \
-	st->st_suspended_md_line = __LINE__; \
+	(st)->st_suspended_md = NULL; \
+	(st)->st_suspended_md_func = __FUNCTION__; \
+	(st)->st_suspended_md_line = __LINE__; \
     }
 
 #define set_suspended(st, md) { \
-	passert(st->st_suspended_md == NULL); \
-	st->st_suspended_md = md; \
-	st->st_suspended_md_func = __FUNCTION__; \
-	st->st_suspended_md_line = __LINE__; \
+	passert((st)->st_suspended_md == NULL); \
+	(st)->st_suspended_md = (md); \
+	(st)->st_suspended_md_func = __FUNCTION__; \
+	(st)->st_suspended_md_line = __LINE__; \
     }
 
 /* IKEv2, this struct will be mapped into a ikev2_ts1 payload  */
@@ -193,21 +195,6 @@ struct traffic_selector {
 	ip_address low;
 	ip_address high;
 };
-
-#ifdef HAVE_LABELED_IPSEC
-/* security label length should not exceed 256 in most cases,
- * (discussed with kernel and selinux people).
- */
-#define MAX_SECCTX_LEN    257 /* including '\0'*/
-struct xfrm_user_sec_ctx_ike {
-	u_int16_t len;
-	u_int16_t exttype;
-	u_int8_t ctx_alg; /* LSMs: e.g., selinux == 1 */
-	u_int8_t ctx_doi;
-	u_int16_t ctx_len;
-	char sec_ctx_value[MAX_SECCTX_LEN];
-};
-#endif
 
 /* state object: record the state of a (possibly nascent) SA
  *
@@ -344,9 +331,32 @@ struct state {
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
 
-	bool st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
+	/*
+	 * Diffie-Hellman exchange values
+	 *
+	 * st_sec_nss is our local ephemeral secret.  Its sole use is an input
+	 * in the calculation of the shared secret.
+	 *
+	 * st_gi and st_gr (above) are the initiator and responder public
+	 * values that are shipped in KE payloads.
+	 * On initiator: st_gi = GROUP_GENERATOR ^ st_sec_nss
+	 *               st_gr comes from KE
+	 * On responder: st_gi comes from KE
+	 *               st_gr = GROUP_GENERATOR ^ st_sec_nss
+	 *
+	 * st_pubk_nss is ???
+	 *
+	 * st_shared_nss is the output of the DH: an ephemeral secret
+	 * shared by the two ends.  Of course the other end might
+	 * be a man in the middle unless we authenticate.
+	 * st_shared_nss = GROUP_GENERATOR ^ (initiator's st_sec_nss * responder's st_sec_nss)
+	 *               = st_gr ^ initiator's st_sec_nss
+	 *               = sg_gi ^ responder's st_sec_nss
+	 */
 
-	SECKEYPrivateKey *st_sec_nss;	/* secret (owned by NSS) */
+	bool st_sec_in_use;		/* bool: do st_sec_nss/st_pubk_nss hold values */
+
+	SECKEYPrivateKey *st_sec_nss;	/* our secret (owned by NSS) */
 
 	SECKEYPublicKey *st_pubk_nss;	/* DH public key (owned by NSS) */
 
@@ -355,6 +365,8 @@ struct state {
 					 * presence indicates PFS
 					 * selected.
 					 */
+	/* end of DH values */
+
 	enum crypto_importance st_import;       /* relative priority of crypto
 	                                         * operations
 	                                         */
@@ -363,15 +375,16 @@ struct state {
 	struct pubkey *st_peer_pubkey;
 
 	enum state_kind st_state;               /* State of exchange */
-	u_int8_t st_retransmit;                 /* Number of retransmits */
-	unsigned long st_try;                   /* number of times rekeying
-	                                           attempted */
-	                                        /* 0 means the only time */
-	deltatime_t st_margin;			/* life after EVENT_SA_REPLACE*/
-	unsigned long st_outbound_count;        /* traffic through eroute */
-	monotime_t st_outbound_time;		/* time of last change to
-	                                         * st_outbound_count
-						 */
+
+	u_int8_t st_retransmit;		/* Number of retransmits */
+	unsigned long st_try;		/* Number of times rekeying attempted.
+					 * 0 means the only time.
+					 */
+	deltatime_t st_margin;		/* life after EVENT_SA_REPLACE*/
+	unsigned long st_outbound_count;	/* traffic through eroute */
+	monotime_t st_outbound_time;	/* time of last change to
+					 * st_outbound_count
+					 */
 
 	bool st_calculating;                    /* set to TRUE, if we are
 	                                         * performing cryptographic
@@ -394,6 +407,8 @@ struct state {
 	PK11SymKey *st_skey_er_nss;	/* KM for ISAKMP encryption */
 	PK11SymKey *st_skey_pi_nss;	/* KM for ISAKMP encryption */
 	PK11SymKey *st_skey_pr_nss;	/* KM for ISAKMP encryption */
+	chunk_t st_skey_initiator_salt;
+	chunk_t st_skey_responder_salt;
 
 	/* connection included in AUTH */
 	struct traffic_selector st_ts_this;
@@ -414,6 +429,7 @@ struct state {
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
 	bool st_pend_liveness;			/* Waiting on an informational response */
 	struct event *st_liveness_event;
+	struct event *st_rel_whack_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
@@ -472,6 +488,7 @@ extern struct state *find_state_ikev1_loopback(const u_char *icookie,
 					       msgid_t msgid,
 					       const struct msg_digest *md);
 #endif
+
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 
@@ -528,16 +545,17 @@ extern bool dpd_active_locally(const struct state *st);
  * use these to change state, this gives us a handle on all state changes
  * which is good for tracking bugs, logging and anything else you might like
  */
-#define refresh_state(st) log_state(st, st->st_state)
-#define fake_state(st, new_state) log_state(st, new_state)
+#define refresh_state(st) log_state((st), (st)->st_state)
+#define fake_state(st, new_state) log_state((st), (new_state))
 #define change_state(st, new_state) \
-	do { \
+	{ \
 		if ((new_state) != (st)->st_state) { \
 			log_state((st), (new_state)); \
 			(st)->st_state = (new_state); \
 		} \
-	} while (0)
+	}
 
 extern bool state_busy(const struct state *st);
+extern void clear_dh_from_state(struct state *st);
 
 #endif /* _STATE_H */

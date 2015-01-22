@@ -37,17 +37,17 @@ extern void libreswan_switch_fail(int n,
 				  const char *file_str,
 				  unsigned long line_no) NEVER_RETURNS;
 
-#define bad_case(n) libreswan_switch_fail((int) n, __FILE__, __LINE__)
+#define bad_case(n) libreswan_switch_fail((int) (n), __FILE__, __LINE__)
 
-#define passert(pred) do { \
+#define passert(pred) { \
 		if (!(pred)) \
 			libreswan_passert_fail(#pred, __FILE__,  __LINE__); \
-	} while (0)
+	}
 
-#define pexpect(pred) do { \
+#define pexpect(pred) { \
 		if (!(pred)) \
 			pexpect_log(#pred, __FILE__, __LINE__); \
-	} while (0)
+	}
 
 /* evaluate x exactly once; assert that err_t result is NULL; */
 #define happy(x) { \

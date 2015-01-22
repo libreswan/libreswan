@@ -45,7 +45,7 @@
 #include "certs.h"
 #ifdef XAUTH_HAVE_PAM
 #include <security/pam_appl.h>
-#include "xauth.h"	/* just for state_deletion_xauth_cleanup() */
+#include "ikev1_xauth.h"	/* just for state_deletion_xauth_cleanup() */
 #endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -354,7 +354,14 @@ void delete_state(struct state *st)
 	struct connection *const c = st->st_connection;
 	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
-	DBG(DBG_CONTROL, DBG_log("deleting state #%lu", st->st_serialno));
+	libreswan_log("deleting state #%lu (%s)", st->st_serialno,
+				enum_show(&state_names, st->st_state));
+
+#ifdef USE_LINUX_AUDIT
+	/* only log parent state deletes, we log children in ipsec_delete_sa() */
+	if (IS_IKE_SA_ESTABLISHED(st) || st->st_state == STATE_IKESA_DEL)
+		linux_audit_conn(st, LAK_PARENT_DESTROY);
+#endif
 
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 		/* Note that a state/SA can have more then one of ESP/AH/IPCOMP */
@@ -422,6 +429,11 @@ void delete_state(struct state *st)
 	if (st->st_ikev2)
 		delete_liveness_event(st);
 
+	if (st->st_rel_whack_event != NULL) {
+		pfreeany(st->st_rel_whack_event);
+		st->st_rel_whack_event = NULL;
+	}
+
 	/* if there is a suspended state transition, disconnect us */
 	if (st->st_suspended_md != NULL) {
 		passert(st->st_suspended_md->st == st);
@@ -471,7 +483,7 @@ void delete_state(struct state *st)
 	 * ??? we ought to tell peer to delete IPSEC SAs
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
-	    IS_CHILD_SA_ESTABLISHED(st))
+	    (IS_CHILD_SA_ESTABLISHED(st) || st->st_state == STATE_CHILDSA_DEL))
 		delete_ipsec_sa(st, FALSE);
 	else if (IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(st->st_state))
 		delete_ipsec_sa(st, TRUE);
@@ -506,10 +518,7 @@ void delete_state(struct state *st)
 	free_sa(st->st_sadb);
 	st->st_sadb = NULL;
 
-	if (st->st_sec_in_use) {
-		SECKEY_DestroyPublicKey(st->st_pubk_nss);
-		SECKEY_DestroyPrivateKey(st->st_sec_nss);
-	}
+	clear_dh_from_state(st);
 
 	freeanychunk(st->st_firstpacket_me);
 	freeanychunk(st->st_firstpacket_him);
@@ -539,6 +548,8 @@ void delete_state(struct state *st)
 	free_any_nss_symkey(st->st_skey_pr_nss);
 	free_any_nss_symkey(st->st_enc_key_nss);
 #   undef free_any_nss_symkey
+	freeanychunk(st->st_skey_initiator_salt);
+	freeanychunk(st->st_skey_responder_salt);
 
 #   define wipe_any(p, l) { \
 		if ((p) != NULL) { \
@@ -626,8 +637,15 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 
 					set_cur_state(this);
 
-					libreswan_log("deleting state (%s)",
-						      enum_show(&state_names, this->st_state));
+					DBG(DBG_CONTROL, {
+						char cib[CONN_INST_BUF];
+						DBG_log("deleting state #%lu (%s) \"%s\"%s",
+							this->st_serialno,
+							enum_show(&state_names,
+								this->st_state),
+							c->name,
+							fmt_conn_instance(c, cib));
+					});
 
 					delete_state(this);
 					/* note: no md->st to clear */
@@ -873,6 +891,18 @@ struct state *duplicate_state(struct state *st)
 	clone_nss_symkey_field(st_skey_pr_nss);
 	clone_nss_symkey_field(st_enc_key_nss);
 #   undef clone_nss_symkey_field
+#   define clone_any_chunk(field) { \
+		if (st->field.ptr == NULL) { \
+			nst->field.ptr = NULL; \
+			nst->field.len = 0; \
+		} else { \
+			clonetochunk(nst->field, st->field.ptr, st->field.len, \
+				#field " in duplicate state"); \
+		} \
+	}
+	clone_any_chunk(st_skey_initiator_salt);
+	clone_any_chunk(st_skey_responder_salt);
+#    undef clone_any_chunk
 
 	/* v2 duplication of state */
 #   define clone_chunk(ch, name) \
@@ -1316,17 +1346,23 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	{
 		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN";
 		char *mbcp = traffic_buf + snprintf(traffic_buf,
-				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%lu", mode,  st->st_esp.add_time);
+				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%" PRIu64, mode,  st->st_esp.add_time);
 
 		if (get_sa_info(st, FALSE, NULL)) {
+			u_int inb = st->st_esp.present ? st->st_esp.peer_bytes :
+				st->st_ah.present ? st->st_ah.peer_bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0;
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u",
-					st->st_esp.peer_bytes);
+
+			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u", inb);
 		}
 		if (get_sa_info(st, TRUE, NULL)) {
 			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
-			snprintf(mbcp, buf_len - 1, ", outBytes=%u",
-					st->st_esp.our_bytes);
+			u_int outb = st->st_esp.present ? st->st_esp.our_bytes :
+				st->st_ah.present ? st->st_ah.our_bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0;
+
+			snprintf(mbcp, buf_len - 1, ", outBytes=%u", outb);
 		}
 	}
 
@@ -1549,6 +1585,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			}
 #endif
 
+			/* mbcp not subsequently used */
 			mbcp = humanize_number(
 					(u_long)st->st_ipcomp.attrs.life_kilobytes,
 					mbcp,
@@ -1869,4 +1906,14 @@ bool state_busy(const struct state *st) {
 		}
 	}
 	return FALSE;
+}
+
+void clear_dh_from_state(struct state *st)
+{
+	/* when responding with INVALID_DH, we didn't do the work yet */
+	if (st->st_sec_in_use) {
+		SECKEY_DestroyPublicKey(st->st_pubk_nss);
+		SECKEY_DestroyPrivateKey(st->st_sec_nss);
+		st->st_sec_in_use = FALSE;
+	}
 }

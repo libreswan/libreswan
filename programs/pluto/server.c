@@ -163,7 +163,7 @@ err_t init_ctl_socket(void)
 		if (g != NULL) {
 			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
 				loglog(RC_LOG_SERIOUS,
-				       "Can not chgrp ctl fd(%d) to gid=%d: %s\n",
+				       "Can not chgrp ctl fd(%d) to gid=%d: %s",
 				       ctl_fd, g->gr_gid, strerror(errno));
 			}
 		}
@@ -460,19 +460,18 @@ static void childhandler(int sig UNUSED)
 	sigchildflag = TRUE;
 }
 
-/* perform wait4() on all children */
+/* perform waitpid() for any children */
 static void reapchildren(void)
 {
 	pid_t child;
 	int status;
-	struct rusage r;
 
 	sigchildflag = FALSE;
 	errno = 0;
 
-	while ((child = wait3(&status, WNOHANG, &r)) > 0) {
+	while ((child = waitpid(-1, &status, WNOHANG)) > 0) {
 		/* got a child to reap */
-		if (adns_reapchild(child, status))
+		if (adns_reapchild(child))
 			continue;
 
 		if (child == addconn_child_pid) {
@@ -603,7 +602,7 @@ void call_server(void)
 			int maxfd = ctl_fd;
 
 			if (sigtermflag)
-				exit_pluto(0);
+				exit_pluto(PLUTO_EXIT_OK);
 
 			if (sighupflag) {
 				/* Ignorant folks think poking any daemon with SIGHUP
@@ -1091,7 +1090,14 @@ static bool send_packet(struct state *st, const char *where,
 	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
 	 * natt_bonus is the size of the addition (0 if not needed).
 	 */
-	const size_t natt_bonus = !just_a_keepalive &&
+	size_t natt_bonus;
+
+	if (st->st_interface == NULL) {
+		libreswan_log("Cannot send packet - interface vanished!");
+		return FALSE;
+	}
+
+	natt_bonus = !just_a_keepalive &&
 				  st->st_interface->ike_float ?
 				  NON_ESP_MARKER_SIZE : 0;
 
@@ -1297,8 +1303,14 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
 	 * natt_bonus is the size of the addition (0 if not needed).
 	 */
-	const size_t natt_bonus =
-		st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
+	size_t natt_bonus;
+
+	if (st->st_interface == NULL) {
+		libreswan_log("Cannot send packet - interface vanished!");
+		return FALSE;
+	}
+
+	natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
 
 	/* decide of whether we're to fragment  - IKEv1 only, draft-smyslov-ipsecme-ikev2-fragmentation not implemented yet */
 	if (!st->st_ikev2 &&

@@ -77,6 +77,8 @@ static struct encrypt_desc crypto_encrypter_3des =
 		    .algo_next =     NULL, },
 	.enc_ctxsize =      sizeof(des_key_schedule) * 3,
 	.enc_blocksize =    DES_CBC_BLOCK_SIZE,
+	.pad_to_blocksize = TRUE,
+	.wire_iv_size =           DES_CBC_BLOCK_SIZE,
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keyminlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keymaxlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
@@ -233,6 +235,10 @@ void init_crypto(void)
 	ike_alg_aes_init();
 #endif
 
+#ifdef USE_CAMELLIA
+	ike_alg_camellia_init();
+#endif
+
 #ifdef USE_3DES
 	ike_alg_add(&crypto_encrypter_3des.common);
 #endif
@@ -371,6 +377,8 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 		case IKEv2_ENCR_AES_GCM_8:
 		case IKEv2_ENCR_AES_GCM_12:
 		case IKEv2_ENCR_AES_GCM_16:
+		case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */
+		case IKEv2_ENCR_CAMELLIA_CBC:
 		case IKEv2_ENCR_NULL_AUTH_AES_GMAC:
 			return AES_KEY_DEF_LEN;
 		case IKEv2_ENCR_CAMELLIA_CTR:
@@ -423,6 +431,7 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 		case ESP_AES_GCM_16:
 			return AES_GCM_KEY_DEF_LEN;
 		case ESP_CAMELLIA:
+		case ESP_CAMELLIAv1:
 			return CAMELLIA_KEY_DEF_LEN;
 		case ESP_NULL_AUTH_AES_GMAC:
 			return AES_GMAC_KEY_DEF_LEN;

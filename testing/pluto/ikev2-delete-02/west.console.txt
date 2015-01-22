@@ -56,7 +56,7 @@ west #
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx-attr-value=XXXX
+000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
@@ -77,6 +77,9 @@ west #
 000 IKE algorithms supported:
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=24, v1name=OAKLEY_CAMELLIA_CTR, v2id=24, v2name=CAMELLIA_CTR, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
@@ -86,6 +89,7 @@ west #
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
 000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
 000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
+000 algorithm IKE hash: id=9, name=DISABLED-OAKLEY_AES_XCBC, hashlen=16
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -109,7 +113,7 @@ west #
 000 "west-east-delete1":    policy_label:unset; 
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -156,7 +160,7 @@ west #
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx-attr-value=XXXX
+000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
@@ -177,6 +181,9 @@ west #
 000 IKE algorithms supported:
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=24, v1name=OAKLEY_CAMELLIA_CTR, v2id=24, v2name=CAMELLIA_CTR, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
@@ -186,6 +193,7 @@ west #
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
 000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
 000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
+000 algorithm IKE hash: id=9, name=DISABLED-OAKLEY_AES_XCBC, hashlen=16
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -209,7 +217,7 @@ west #
 000 "west-east-delete1":    policy_label:unset; 
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
@@ -234,6 +242,7 @@ west #
  sleep 2
 west #
  ipsec whack --deletestate 2
+002 deleting state #2 (STATE_PARENT_I3)
 005 ESP traffic information: in=0B out=0B
 west #
  echo "sleeping a bit.. 2"
@@ -256,7 +265,7 @@ west #
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx-attr-value=XXXX
+000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
@@ -277,6 +286,9 @@ west #
 000 IKE algorithms supported:
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=24, v1name=OAKLEY_CAMELLIA_CTR, v2id=24, v2name=CAMELLIA_CTR, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
@@ -286,6 +298,7 @@ west #
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
 000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
 000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
+000 algorithm IKE hash: id=9, name=DISABLED-OAKLEY_AES_XCBC, hashlen=16
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -309,7 +322,7 @@ west #
 000 "west-east-delete1":    policy_label:unset; 
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #0; 
@@ -329,6 +342,7 @@ west #
 sleeping a bit.. 2
 west #
  ipsec whack --deletestate 1
+002 deleting state #1 (STATE_PARENT_I3)
 west #
  sleep 2
 west #
@@ -347,7 +361,7 @@ west #
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx-attr-value=XXXX
+000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
@@ -368,6 +382,9 @@ west #
 000 IKE algorithms supported:
 000  
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=24, v1name=OAKLEY_CAMELLIA_CTR, v2id=24, v2name=CAMELLIA_CTR, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
@@ -377,6 +394,7 @@ west #
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashlen=32
 000 algorithm IKE hash: id=5, name=OAKLEY_SHA2_384, hashlen=48
 000 algorithm IKE hash: id=6, name=OAKLEY_SHA2_512, hashlen=64
+000 algorithm IKE hash: id=9, name=DISABLED-OAKLEY_AES_XCBC, hashlen=16
 000 algorithm IKE dh group: id=2, name=OAKLEY_GROUP_MODP1024, bits=1024
 000 algorithm IKE dh group: id=5, name=OAKLEY_GROUP_MODP1536, bits=1536
 000 algorithm IKE dh group: id=14, name=OAKLEY_GROUP_MODP2048, bits=2048
@@ -400,7 +418,7 @@ west #
 000 "west-east-delete1":    policy_label:unset; 
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -421,9 +439,6 @@ west NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
 192.0.2.0/24 dev ipsec0  scope link 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 

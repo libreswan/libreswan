@@ -1,4 +1,0 @@
-Interop with strongswan using two connections that share the same Parent SA.
-This triggers a CREATE_CHILD_SA ISAKMP Exchange on strongswan and a child sa 
-is established.
-

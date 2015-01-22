@@ -83,6 +83,7 @@ enum keyword_numeric_config_field {
 	KBF_STRICTCRLPOLICY,
 	KBF_SEND_CA,
 	KBF_NATIKEPORT,
+	KBF_SEEDBITS,
 	KBF_KEEPALIVE,
 	KBF_PLUTORESTARTONCRASH,
 	KBF_CRLCHECKINTERVAL,
@@ -115,13 +116,13 @@ enum keyword_numeric_config_field {
 	KBF_CONNADDRFAMILY,
 	KBF_FORCEBUSY,
 	KBF_OVERLAPIP,
-	KBF_REMOTEPEERTYPE,     /*Cisco interop: remote peer type*/
-	KBF_NMCONFIGURED,       /*Network Manager support*/
+	KBF_REMOTEPEERTYPE,     /*Cisco interop: remote peer type */
+	KBF_NMCONFIGURED,       /*Network Manager support */
 	KBF_LOOPBACK,
 	KBF_LABELED_IPSEC,
 	KBF_SAREFTRACK,         /* saref tracking paramter for _updown */
 	KBF_WARNIGNORE,         /* to ignore obsoleted keywords */
-	KBF_SECCTX,             /*security context attribute value for labeled ipsec*/
+	KBF_SECCTX,             /*security context attribute value for labeled ipsec */
 	KBF_XAUTHBY,            /* method of xauth user auth - file, pam or alwaysok */
 	KBF_XAUTHFAIL,          /* method of failing, soft or hard */
 	KBF_IKE_FRAG,

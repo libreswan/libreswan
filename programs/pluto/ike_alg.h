@@ -4,6 +4,8 @@
 #include <nss.h>
 #include <pk11pub.h>
 
+#include "camellia.h"
+
 struct connection;	/* forward declaration */
 
 /* common prefix for struct encrypt_desc and struct hash_desc */
@@ -19,7 +21,31 @@ struct ike_alg {
 struct encrypt_desc {
 	struct ike_alg common;	/* MUST BE FIRST */
 	size_t enc_ctxsize;
-	size_t enc_blocksize;	/* also IV length */
+	size_t enc_blocksize;
+	/*
+	 * Does this algorithm require padding to the above
+	 * ENC_BLOCKSIZE bytes?
+	 *
+	 * This shouldn't be confused with the need to pad things to
+	 * 4-bytes (ESP) or not at all (IKE).
+	 */
+	bool pad_to_blocksize;
+	/*
+	 * Number of additional bytes that should be extracted from
+	 * the initial shared-secret.
+	 *
+	 * CTR calls this nonce; CCM calls it salt.
+	 */
+	size_t salt_size;
+	/*
+	 * The IV sent across the wire; this is random material.
+	 *
+	 * The WIRE-IV which will be sent across the wire in public.
+	 * The SALT, WIRE-IV, and who-knows what else are concatenated
+	 * to form a ENC_BLOCKSIZE-byte starting-variable (aka IV).
+	 */
+	size_t wire_iv_size;
+
 	unsigned keydeflen;
 	unsigned keymaxlen;
 	unsigned keyminlen;
@@ -122,6 +148,10 @@ extern void ike_alg_serpent_init(void);
 
 #ifdef USE_AES
 extern void ike_alg_aes_init(void);
+#endif
+
+#ifdef USE_CAMELLIA
+extern void ike_alg_camellia_init(void);
 #endif
 
 #ifdef USE_SHA2

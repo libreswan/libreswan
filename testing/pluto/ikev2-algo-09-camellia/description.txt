@@ -1,1 +1,3 @@
-IKEv2 test with esp=camellia-sha1
+IKEv2 test with camellia as cipher for ESP.
+
+It will also test IKE once support has been tested and activated

@@ -1,22 +1,91 @@
 
 See also https://libreswan.org/
-v3.11 (unreleased)
+
+v3.13 (unreleased)
+* IKEv2: whack and smc related time out fixes [Antony]
+* IKEv2: do not pad IKE messages (fix interop w. InsideSecure) [Paul]
+* IKEv2: Fix esp=camellia to use the IKEv2 IANA registry number for ESP [Paul]
+* IKEv2: Fix memory leaks in addresspool and child exchange sadb [Antony]
+* IKEv2: Support for INVALID_KE DH group re-transmits [Paul/Hugh]
+* IKEv2: if applicable, add CERTREQ payload to IKE_SA_INIT response [Antony]
+* IKEv1: Don't copy isakmp_sa from received packet [Paul]
+* XAUTH: retransmit user/password request in 10s (instead of 30s) [Wolfgang]
+* pluto: Support for IKEv1 and IKEv2 AES_CTR (ike=aes_ctr) [Andrew Cagney]
+* pluto: Support for CBC/CTR test vectors using NSS [Andrew Cagney]
+* pluto: major tidy of labeled ipsec code [Hugh]
+* pluto: fixes for uninitialized fields in output struct [Hugh/Paul]
+* pluto: audit format and log item update as per audit spec [Paul]
+* pluto: simplify and clarify sa_copy_sa and friends [Hugh]
+* pluto: small steps improving crypto helpers [Hugh]
+* pluto/rsasigkey: added --seedbits option (and seedbits= option) [Paul]
+* libipsecconf: Improve parser for pipe case (with NM) [Hugh/Lubomir Rintel]
+* readwriteconf: improve error handling [Hugh]
+* ipsec: ipsec --import does not need to run restorecon [Paul]
+* packaging: Various SPEC file fixes [Tuomo/Kim]
+* testing: docker test type support [Antony]
+* testing: test case updates/additions [Antony/Paul]
+* NETKEY: Increase netlink message buffer for larger SElinux labels [Paul]
+
+v3.12 (November 6, 2014)
+* IKEv2: CP payload now installs internal address and dns [Antony]
+* IKEv2: Don't try to decrypt if DH is incomplete [Antony]
+* IKEv2: If applicable, add a CERTREQ payload in IKE_SA_INIT response [Antony]
+* IKEv2: Fix parent I2 replace event delay [Antony]
+* IKEv2: Liveness fix for restarting instantiated connection [Antony]
+* IKEv2: Schedule expire instead of replace when rekey=no [Antony]
+* IKEv2: Zero out CP payload before sending [Antony]
+* IKEv2: Fix message id in create child sa response [Antony]
+* IKEv2: Don't try to instantiate unoriented connections [Antoy]
+* XAUTH: Fix 2 missing breaks when deciding on sending ModeCFG payloads [Paul]
+* X509: Ensure that root CA does not end up in the ca_path list [Matt]
+* pluto: Cleanup DYNDNS code and other clang warnings [Hugh]
+* pluto: lswconf.c: getNSSPassword: fix bugs and tidy [Hugh]
+* pluto: check return value of ike_alg_register_enc for twofish/serpent [Paul]
+* pluto: fix various uninitialised variables in out_struct() calls [Paul/Hugh]
+* KLIPS: Fix missing breaks in spi command algo type parsing [Paul]
+* KLIPS: Support for kernel 3.17 [David/Paul]
+* building: disable libcap-ng and NM support for OSX [Paul]
+
+v3.11 (October 22, 2014)
 * x509: IKEv1 CA cert chain support with sendca option [Matt]
-* pluto: don't register ESP_BLOWFISH [Paul]
+* pluto: Fix mtu= option mangling introduced in 3.10 [Kim]
+* pluto: Fixes auto=start and auto=route with %defaultroute [Kim/Tuomo/Paul]
+         (troubled in 3.9 and 3.10)
+* pluto: Don't register ESP_BLOWFISH [Paul]
+* pluto: ESP support for aes_xcbc [Paul]
+* pluto: ESP support for aes_ctr [Paul]
+* pluto: ESP support for camellia on NETKEY [Paul]
+* pluto: IKE support for aes_xcbc (pending NSS update) [Paul]
+* IKEv1: Default to DH Group 2 and 5 for initiating Aggressive Mode [Paul]
+         (3.9 included DH 14 which was prefered, causing interop issues)
 * pluto: Force ESP_CAST to only allow 128 bit key sizes [Paul]
-* pluto: log_crypto_workers threads did not use static bool first_time [Coverity]
-* pluto: warn (not fail) on empty NSS private key passwords [Oskari Saarenmaa]
-  - rhbz#1145231 (rhel7) and rhbz#1144941 (fedora)
-* NETKEY: don't trust PF_KEY API to tell us about IPCOMP support [Paul]
-* IKEv2: don't copy reserved ISAKMP flags in reply msg (rhbz#1052811) [Paul]
+* pluto: Log_crypto_workers threads did not use static bool first_time [Coverity]
+* pluto: Warn (not fail) on empty NSS private key passwords [Oskari Saarenmaa]
+         - rhbz#1145231 (rhel7) and rhbz#1144941 (fedora)
+* pluto: Added PLUTO_IN_BYTES= / PLUTO_OUT_BYTES= for updown [Antony]
+* pluto: Handle list of certs from parse_pkcs7_cert [Hugh]
+* pluto: Fix --impair-retransmits IMPAIR code [Hugh]
+* pluto: separate SEND_V2_NOTIFICATION from SEND_NOTIFICATION [Hugh]
+* pluto: Various fixes/cleanups in algo registration functions [Paul/Hugh]
+* pluto: ah=null as a valid phase2alg for a connection [Paul]
+* pluto: Clean up complete_v*_state_transitions and related things [Hugh]
+* pluto: More crypto helper cleanup [Hugh]
+* NETKEY: Don't trust PF_KEY API to tell us about IPCOMP support [Paul]
+* KLIPS: ip_select_ident was backported to 3.2.63 [Bram]
+* IKEv2: Don't copy reserved ISAKMP flags in reply msg (rhbz#1052811) [Paul]
 * IKEv2: ISAKMP_FLAGS_v2_IKE_I was not always set on Original Initiator [Paul]
-* systemd: use After=network-online.target instead of network.target [Kim]
-  - rhbz#1145245 (rhel7) and rhbz#1144832 (fedora)
-* addconn: route before and after listen (bug introduced in 3.10) [Paul/Hugh]
-* rsasigkey: use a version of jam_str instead of strcpy() for hostname [Paul]
+* IKEv2: CP payload support for responder [Antony]
+* IKEv2: CREATE_CHILD_SA support for responder [Antony]
+         (NON_ADDITIONAL_SAS stub removed)
+* systemd: Use After=network-online.target instead of network.target [Kim]
+           - rhbz#1145245 (rhel7) and rhbz#1144832 (fedora)
+* systemd: Add Wants=network-online.target [Lukas Wunner]
+* addconn: Route before and after listen (bug introduced in 3.10) [Paul/Hugh]
+* rsasigkey: Use a version of jam_str instead of strcpy() for hostname [Paul]
 * IKEv2: CERTREQ payload should use SHA1 hash of DN instead of IKEv1 DN [Matt]
-* updown: pluto should give CAP_NET_RAW to updown for iptables -t mangle [Paul]
-* _stackmanager: fixed to work again with mawk [Marc-Christian Petersen/Tuomo]
+* updown: Pluto should give CAP_NET_RAW to updown for iptables -t mangle [Paul]
+* _stackmanager: Fixed to work again with mawk [Marc-Christian Petersen/Tuomo]
+* testing: Many test case updates [Paul/Antony/Hugh/Matt]
 * Bugtracker bugs fixed:
   #206: Libreswan v3.10 on 32-bit does not work [Kim]
 
@@ -243,7 +312,7 @@ v3.6 (October 30, 2013)
   to randomised 3072-4096 (in blocks of 16) to fight keysize monoculture [Paul]
 * Removed unused and unmaintained USE_TAPROOM functionality [Paul]
 * NAT-T: Added 100.64.0.0/10 from RFC 6598 to virtual_private [Paul]
-* NSS: pluto should now open NSS files in readwrite, just read [Paul]
+* NSS: pluto should not open NSS files in readwrite, just read [Paul]
 * Bugtracker bugs fixed:
   #130: debian debuild creates a deb with /usr/libexec contents
         [Marc-Christian Petersen]

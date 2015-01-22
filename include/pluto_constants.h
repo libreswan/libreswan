@@ -120,6 +120,8 @@ enum event_type {
 	EVENT_v2_RETRANSMIT,		/* v2 Initiator: Retransmit IKE packet */
 	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
+	EVENT_v2_RELEASE_WHACK,		/* relase the whack fd */
+	EVENT_RETAIN,			/* don't change the previous event */
 };
 
 #define EVENT_REINIT_SECRET_DELAY	secs_per_hour
@@ -205,7 +207,7 @@ enum {
 	DBG_OPPO_IX,		/* opportunism */
 	DBG_CONTROLMORE_IX,	/* more detailed debugging */
 
-	DBG_PFKEY_IX,		/*turn on the pfkey library debugging*/
+	DBG_PFKEY_IX,		/* turn on the pfkey library debugging */
 	DBG_NATT_IX,		/* debugging of NAT-traversal */
 	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
 	DBG_DPD_IX,		/* DPD items */
@@ -460,10 +462,6 @@ enum phase1_role {
 
 /* Only relevant to IKEv2 */
 
-#define IS_PARENT_SA_ESTABLISHED(s) ((s) == STATE_PARENT_I2 || \
-				     (s) == STATE_PARENT_R1 || \
-				     (s) == STATE_IKESA_DEL)
-
 #define IS_V2_INITIATOR(s) ((s) == STATE_PARENT_I1 || \
 		            (s) == STATE_PARENT_I2 || \
 			    (s) == STATE_PARENT_I3)
@@ -472,7 +470,7 @@ enum phase1_role {
 
 #define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 
-#define IS_IKE_SA_ESTABLISHED(s) (IS_ISAKMP_SA_ESTABLISHED(s) || IS_PARENT_SA_ESTABLISHED(s))
+#define IS_IKE_SA_ESTABLISHED(st) (IS_ISAKMP_SA_ESTABLISHED(st->st_state) || IS_PARENT_SA_ESTABLISHED(st))
 
 /*
  * ??? Issue here is that our child SA appears as a
@@ -480,9 +478,12 @@ enum phase1_role {
  * So we fall back to checking if it is cloned, and therefore really a child.
  */
 #define IS_CHILD_SA_ESTABLISHED(st) \
-    (((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) && \
-      IS_CHILD_SA(st)) || \
-     st->st_state == STATE_CHILDSA_DEL)
+    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) && \
+      IS_CHILD_SA(st))
+
+#define IS_PARENT_SA_ESTABLISHED(st) \
+    ((st->st_state == STATE_PARENT_I3 || st->st_state == STATE_PARENT_R2) \
+	&& !IS_CHILD_SA(st))
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 
@@ -647,10 +648,10 @@ enum sa_policy_bits {
 	 * in that we can actually turn off everything, but it expands more
 	 * sensibly to an IKEv3 and other methods.
 	 */
-	POLICY_IKEV1_DISABLE_IX,	/* !accept IKEv1?  0x0100 0000 */
+	POLICY_IKEV1_ALLOW_IX,	/* !accept IKEv1?  0x0100 0000 */
 	POLICY_IKEV2_ALLOW_IX,	/* accept IKEv2?   0x0200 0000 */
 	POLICY_IKEV2_PROPOSE_IX,	/* propose IKEv2?  0x0400 0000 */
-#define POLICY_IKEV2_MASK	LRANGE(POLICY_IKEV1_DISABLE_IX, POLICY_IKEV2_PROPOSE_IX)
+#define POLICY_IKEV2_MASK	LRANGE(POLICY_IKEV1_ALLOW_IX, POLICY_IKEV2_PROPOSE_IX)
 
 	POLICY_IKEV2_ALLOW_NARROWING_IX,	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
 
@@ -685,7 +686,7 @@ enum sa_policy_bits {
 #define POLICY_MODECFG_PULL	LELEM(POLICY_MODECFG_PULL_IX)	/* is modecfg pulled by client? */
 #define POLICY_AGGRESSIVE	LELEM(POLICY_AGGRESSIVE_IX)	/* do we do aggressive mode? */
 #define POLICY_OVERLAPIP	LELEM(POLICY_OVERLAPIP_IX)	/* can two conns that have subnet=vhost: declare the same IP? */
-#define POLICY_IKEV1_DISABLE	LELEM(POLICY_IKEV1_DISABLE_IX)	/* !accept IKEv1?  0x0100 0000 */
+#define POLICY_IKEV1_ALLOW	LELEM(POLICY_IKEV1_ALLOW_IX)	/* !accept IKEv1?  0x0100 0000 */
 #define POLICY_IKEV2_ALLOW	LELEM(POLICY_IKEV2_ALLOW_IX)	/* accept IKEv2?   0x0200 0000 */
 #define POLICY_IKEV2_PROPOSE	LELEM(POLICY_IKEV2_PROPOSE_IX)	/* propose IKEv2?  0x0400 0000 */
 #define POLICY_IKEV2_ALLOW_NARROWING	LELEM(POLICY_IKEV2_ALLOW_NARROWING_IX)	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
@@ -694,6 +695,8 @@ enum sa_policy_bits {
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)
 #define POLICY_IKE_FRAG_FORCE	LELEM(POLICY_IKE_FRAG_FORCE_IX)
 #define POLICY_NO_IKEPAD	LELEM(POLICY_NO_IKEPAD_IX)	/* pad ike packets to 4 bytes or not */
+
+/* These policy bits must match exactly: POLICY_XAUTH, POLICY_AGGRESSIVE, POLICY_IKEV1_ALLOW */
 
 /* Any IPsec policy?  If not, a connection description
  * is only for ISAKMP SA, not IPSEC SA.  (A pun, I admit.)
@@ -763,3 +766,16 @@ enum PrivateKeyKind {
 #define XAUTH_MAX_PASS_LENGTH 128
 
 #define MIN_LIVENESS 1
+
+enum pluto_exit_code {
+	PLUTO_EXIT_OK = 0,
+	PLUTO_EXIT_FAIL = 1,
+	PLUTO_EXIT_SOCKET_FAIL = 2,
+	PLUTO_EXIT_FORK_FAIL = 3,
+	PLUTO_EXIT_FIPS_FAIL = 4,
+	PLUTO_EXIT_KERNEL_FAIL = 5,
+	PLUTO_EXIT_NSS_FAIL = 6,
+	PLUTO_EXIT_AUDIT_FAIL = 7,
+	PLUTO_EXIT_LOCK_FAIL = 10, /* historic value */
+};
+

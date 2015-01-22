@@ -31,6 +31,7 @@ west #
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_PARENT_I1: received unauthenticated v2N_INVALID_SYNTAX - ignored
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: supressing retransmit because IMPAIR_RETRANSMITS is set
 031 "westnet-eastnet-ipv4-psk-ikev2" #1: max number of retransmissions (0) reached STATE_PARENT_I1.  No response (or no acceptable response) to our first IKEv2 message
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state #1 (STATE_PARENT_I1)
 west #
  echo done
 done
@@ -40,9 +41,6 @@ west NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 

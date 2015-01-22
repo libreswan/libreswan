@@ -31,7 +31,7 @@ east #
 000 "westnet-eastnet-x509-nosend":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-x509-nosend":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-x509-nosend":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-x509-nosend":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-x509-nosend":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-x509-nosend":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-x509-nosend":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-x509-nosend":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -49,9 +49,6 @@ esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits
 tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
 192.0.1.0/24 dev ipsec0  scope link  src 192.0.2.254 
 192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 

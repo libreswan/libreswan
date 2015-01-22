@@ -1,19 +1,17 @@
 <!--
-Based on testing/baseconfigs/net.nic.sh
-"nic" is not used as a VM, it is the host. It's
-interfaces are configured on the bridge. dhcp not used
-
-Note: this network is on the diagram, but not used in test cases?
+WARNING: THIS IS AN AUTO-GENERATED FILE. CHANGES TO IT ARE LIKELY TO BE
+OVERWRITTEN AND LOST. Changes to this xml configuration should be made using:
+  virsh net-edit 192_9_2
+or other application using the libvirt API.
 -->
 
 <network ipv6='yes'>
   <name>192_9_2</name>
-  <bridge name='swan92' stp='on' delay='0' />
+  <bridge name='swan92' stp='on' delay='0'/>
   <mac address='12:00:00:32:32:92'/>
   <ip address='192.9.2.253' netmask='255.255.255.0'>
-    <dhcp>
-      <range start='192.9.2.128' end='192.9.2.196' />
-    </dhcp>
-  </ip>
-  <ip family="ipv6" address="2001:db8:9:2::253" prefix="64"/>
+	<dhcp>
+		<range start='192.9.2.128' end='192.9.2.196' />
+	</dhcp>
+   </ip>
 </network>

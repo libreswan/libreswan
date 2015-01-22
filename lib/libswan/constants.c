@@ -671,7 +671,6 @@ enum_names ike_idtype_names = {
 	NULL
 };
 
-
 static enum_names ikev2_idtype_names_3 = {
 	ID_DER_ASN1_DN, ID_FC_NAME,
 	&ike_idtype_name[ID_DER_ASN1_DN],
@@ -856,13 +855,13 @@ static const char *const ipsec_var_attr_name[] = {
 	NULL,
 	"COMPRESS_PRIVATE_ALG (variable length)",
 #ifdef HAVE_LABELED_IPSEC
-	"NULL", /*ECN TUNNEL*/
+	"NULL", /* ECN TUNNEL */
 #endif
 };
 
 #ifdef HAVE_LABELED_IPSEC
 static const char *const ipsec_private_attr_name[] = {
-	"SECCTX" /*32001*/
+	"SECCTX" /* 32001 */
 };
 
 static enum_names ipsec_private_attr_names_tv = {
@@ -927,7 +926,7 @@ enum_names *const ipsec_attr_val_descs[] = {
 	NULL,	/* COMPRESS_DICT_SIZE */
 	NULL,	/* COMPRESS_PRIVATE_ALG */
 #ifdef HAVE_LABELED_IPSEC
-	NULL,	/*ECN_TUNNEL*/
+	NULL,	/* ECN_TUNNEL */
 #endif
 };
 
@@ -1035,9 +1034,9 @@ enum_names xauth_type_names = {
 	NULL
 };
 
-/* XAUTH-STATUS attribute */
+/* IKEv1 XAUTH-STATUS attribute names  */
 static const char *const modecfg_attr_name_draft[] = {
-	"INTERNAL_IP4_ADDRESS",	/*1 */
+	"INTERNAL_IP4_ADDRESS",	/* 1 */
 	"INTERNAL_IP4_NETMASK",
 	"INTERNAL_IP4_DNS",
 	"INTERNAL_IP4_NBNS",
@@ -1155,14 +1154,34 @@ static enum_names oakley_prf_names = {
  */
 
 static const char *const oakley_enc_name[] = {
-	"OAKLEY_DES_CBC",	/* obsoleted */
+	"OAKLEY_DES_CBC", /* obsoleted */
 	"OAKLEY_IDEA_CBC",
-	"OAKLEY_BLOWFISH_CBC",	/* obsoleted */
+	"OAKLEY_BLOWFISH_CBC", /* obsoleted */
 	"OAKLEY_RC5_R16_B64_CBC",
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
 	"OAKLEY_AES_CBC",
-	"OAKLEY_CAMELLIA_CBC",	/* 8 */
+	"OAKLEY_CAMELLIA_CBC", /* 8 */
+	"UNUSED_9",
+	"UNUSED_10",
+	"UNUSED_11",
+	"UNUSED_12",
+	"OAKLEY_AES_CTR", /* stolen from IKEv2 */
+	"OAKLEY_AES_CCM_A",
+	"OAKLEY_AES_CCM_B",
+	"OAKLEY_AES_CCM_16",
+	"UNUSED_17",
+	"OAKLEY_AES_GCM_A",
+	"OAKLEY_AES_GCM_B",
+	"OAKLEY_AES_GCM_C",
+	"UNUSED_21",
+	"UNUSED_22",
+	"UNUSED_23",
+	"OAKLEY_CAMELLIA_CTR",
+	"OAKLEY_CAMELLIA_CCM_A",
+	"OAKLEY_CAMELLIA_CCM_B",
+	"OAKLEY_CAMELLIA_CCM_C",
+
 	/* 9-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
@@ -1195,7 +1214,7 @@ static enum_names oakley_enc_names_private_use = {
 
 enum_names oakley_enc_names = {
 	OAKLEY_DES_CBC,
-	OAKLEY_CAMELLIA_CBC,
+	OAKLEY_CAMELLIA_CCM_C,
 	oakley_enc_name,
 	&oakley_enc_names_private_use
 };
@@ -1214,13 +1233,16 @@ static const char *const oakley_hash_name[] = {
 	"OAKLEY_SHA2_256",	/* RFC 4878 */
 	"OAKLEY_SHA2_384",	/* RFC 4878 */
 	"OAKLEY_SHA2_512",	/* RFC 4878 */
+	"UNUSED_7",
+	"UNUSED_8",
+	"DISABLED-OAKLEY_AES_XCBC" /* stolen from ikev2 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
 
 enum_names oakley_hash_names = {
 	OAKLEY_MD5,
-	OAKLEY_SHA2_512,
+	OAKLEY_AES_XCBC, /* waiting on NSS support */
 	oakley_hash_name,
 	NULL
 };
@@ -1281,6 +1303,53 @@ enum_names oakley_auth_names = {
 	&oakley_auth_names_private_use
 };
 
+/*
+ * IKEv2 CP attribute name. Some of them are shared with XAUTH Attrib names.
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+ */
+static const char *const ikev2_cp_attribute_type_name[] = {
+	"v2_INTERNAL_IP4_ADDRESS",	/* 1 */
+	"v2_INTERNAL_IP4_NETMASK",
+	"v2_INTERNAL_IP4_DNS",
+	"v2_INTERNAL_IP4_NBNS",
+	"v2_CP_ATTRIBUTE_RESERVED_5"
+	"v2_INTERNAL_IP4_DHCP",
+	"v2_APPLICATION_VERSION",
+	"v2_INTERNAL_IP6_ADDRESS",
+	"v2_CP_ATTRIBUTE_RESERVED_9",
+	"v2_INTERNAL_IP6_DNS",
+	"v2_CP_ATTRIBUTE_RESERVED_11"
+	"v2_INTERNAL_IP6_DHCP",
+	"v2_INTERNAL_IP4_SUBNET",	/* 13 */
+	"v2_SUPPORTED_ATTRIBUTES",
+	"v2_INTERNAL_IP6_SUBNET",
+	"v2_MIP6_HOME_PREFIX",
+	"v2_INTERNAL_IP6_LINK",
+	"v2_INTERNAL_IP6_PREFIX",
+	"v2_HOME_AGENT_ADDRESS",
+	"v2_P-CSCF_IP4_ADDRESS", /* 20 */
+};
+
+enum_names ikev2_cp_attribute_type_names = {
+	IKEv2_INTERNAL_IP4_ADDRESS,
+	IKEv2_FTT_KAT,
+	ikev2_cp_attribute_type_name,
+	NULL
+};
+
+static const char *const ikev2_cp_type_name[] = {
+	"IKEv2_CP_CFG_REQUEST" , /* 1 */
+	"IKEv2_CP_CFG_REPLY" ,
+	"IKEv2_CP_CFG_SET" ,
+	"IKEv2_CP_CFG_ACK"
+};
+
+enum_names ikev2_cp_type_names = {
+	IKEv2_CP_CFG_REQUEST,
+	IKEv2_CP_CFG_ACK,
+	ikev2_cp_type_name,
+	NULL
+};
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_name[] = {
@@ -1419,7 +1488,7 @@ static const char *const ikev1_notify_cisco_chatter_name[] = {
 };
 
 static const char *const ikev1_notify_ios_alives_name[] = {
-	"ISAKMP_N_IOS_KEEP_ALIVE_REQ", /* 32768*/
+	"ISAKMP_N_IOS_KEEP_ALIVE_REQ", /* 32768 */
 	"ISAKMP_N_IOS_KEEP_ALIVE_ACK",
 };
 
@@ -1493,8 +1562,6 @@ enum_names ikev1_notify_names = {
 	ikev1_notify_name,
 	&ikev1_notify_status_names
 };
-
-
 
 /* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
 static const char *const ikev2_notify_name_16384[] = {
@@ -1648,7 +1715,7 @@ const char *const critical_names[] = {
 	"RESERVED bit 4",	/* bit 4 */
 	"RESERVED bit 5",	/* bit 5 */
 	"RESERVED bit 6",	/* bit 6 */
-	"PAYLOAD_CRITICAL",	/* bit 7*/
+	"PAYLOAD_CRITICAL",	/* bit 7 */
 };
 
 /*
@@ -1683,7 +1750,7 @@ static const char *const ikev2_trans_type_encr_name_private_use1[] = {
 };
 
 static const char *const ikev2_trans_type_encr_name[] = {
-	"DES-IV64(obsoleted)",	/* 1*/
+	"DES-IV64(obsoleted)",	/* 1 */
 	"DES(obsoleted)",
 	"3DES",
 	"RC5",
@@ -1740,12 +1807,12 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_MD5",
 	"PRF_HMAC_SHA1",
 	"PRF_HMAC_TIGER",
-	"PRF_HMAC_AES128-XCBC",
+	"PRF_AES128-XCBC",
 	/* RFC 4868 Section 4 */
 	"PRF_HMAC_SHA2-256",
 	"PRF_HMAC_SHA2-384",
 	"PRF_HMAC_SHA2-512",
-	"IKEv2_PRF_AES128_CMAC"
+	"PRF_AES128_CMAC"
 };
 enum_names ikev2_trans_type_prf_names = {
 	IKEv2_PRF_HMAC_MD5,

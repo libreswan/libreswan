@@ -55,11 +55,6 @@
 #include "keys.h"
 #include "ipsec_doi.h"
 
-static stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-				     enum phase1_role role,
-				     enum next_payload_types_ikev2 np,
-				     pb_stream *outpbs);
-
 /* Send v2CERT and v2 CERT */
 stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 			   enum phase1_role role,
@@ -159,7 +154,7 @@ stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
 	}
 	return STF_OK;
 }
-static stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
+stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 				     enum phase1_role role UNUSED,
 				     enum next_payload_types_ikev2 np,
 				     pb_stream *outpbs)
@@ -173,12 +168,13 @@ static stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 					     outpbs, np))
 			return STF_INTERNAL_ERROR;
 	} else {
-		generalName_t *ca = NULL;
 		DBG(DBG_CONTROL,
 		    DBG_log("connection->kind is not CK_PERMANENT (instance), so collect CAs"));
+		generalName_t *ca = collect_rw_ca_candidates(md);
 
-		if (collect_rw_ca_candidates(md, &ca)) {
+		if (ca != NULL) {
 			generalName_t *gn;
+
 			DBG(DBG_CONTROL,
 			    DBG_log("connection is RW, lookup CA candidates"));
 

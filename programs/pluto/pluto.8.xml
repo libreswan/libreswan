@@ -57,12 +57,13 @@
       <arg choice="opt">--secretsfile <replaceable>secrets-file</replaceable></arg>
       <arg choice="opt">--adns <replaceable>pathname</replaceable></arg>
       <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
+      <arg choice="opt">--seedbits <replaceable>numbits</replaceable></arg>
       <arg choice="opt">--perpeerlog</arg>
       <arg choice="opt">--perpeerlogbase <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--statsbin <replaceable>filename</replaceable></arg>
-      <arg choice="opt">--secctx-attr-value <replaceable>number</replaceable></arg>
+      <arg choice="opt">--secctx-attr-type <replaceable>number</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -526,7 +527,7 @@
 
       <arg choice="plain">--deleteuser</arg>
       <arg choice="plain">--name
-      <replaceable>xauth-username</replaceable></arg>
+      <replaceable>username</replaceable></arg>
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
 
@@ -759,9 +760,7 @@
       <para><emphasis remap="B">pluto</emphasis> implements a large subset of
       IKE. This is enough for it to interoperate with other instances of
       <emphasis remap="B">pluto</emphasis>, and many other IKE
-      implementations. It currently supports XAUTH, ModeConfig, X.509, Dead
-      Peer Detection, Opportunistic Encryption and all the NAT Traversal
-      standards.</para>
+      implementations.</para>
 
       <para>The policy for acceptable characteristics for Security
       Associations is mostly hardwired into the code of <emphasis
@@ -908,8 +907,8 @@
       remap="B">pluto</emphasis>.</para>
 
       <para>The file <filename>/etc/ipsec.secrets</filename> is used to keep
-      preshared secret keys, RSA private keys, X.509 encoded keyfiles and
-      XAUTH passwords. Smartcards are handled via NSS. For
+      preshared secret keys and XAUTH passwords. RSA private keys, X.509 certificates,
+      CRLs, OCSP and smartcards are handled via NSS. For
       debugging, there is an argument to the <emphasis remap="B">pluto</emphasis>
       command to use a different file. This file is described in
       <citerefentry><refentrytitle>ipsec.secrets</refentrytitle>
@@ -983,6 +982,18 @@
       forces pluto to do all operations in the main process. A value of
       <emphasis remap="I">-1</emphasis> tells pluto to perform the above
       calculation. Any other value forces the number to that amount.</para>
+
+      <para>Pluto uses the NSS crypto library as its random source. Some
+      government Three Letter Agency requires that pluto reads 440 bits
+      from /dev/random and feed this into the NSS RNG before drawing
+      random from the NSS library, despite the NSS library itself
+      already seeding its internal state. As this process can block
+      pluto for an extended time, the default is to not perform this
+      redundant seeding. The <emphasis remap="B">--seedbits</emphasis>
+      option can be used to specify the number of bits that will be
+      pulled from /dev/random and seeded into the NSS RNG.  This can
+      also be accomplished by specifying seedbits in the "config setup"
+      section of ipsec.conf. This option should not be used by most people.</para>
 
       <para><emphasis remap="B">pluto</emphasis> attempts to create a lockfile
       with the name <filename>/var/run/pluto/pluto.pid</filename>. If the

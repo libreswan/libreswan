@@ -150,7 +150,7 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 
 #include "nat_traversal.h"
 #include "vendor.h"
@@ -376,28 +376,31 @@ static const struct state_microcode v1_state_microcode_table[] = {
 
 	/***** Phase 1 Aggressive Mode *****/
 
-	/* No state for aggr_outI1: -->HDR, SA, KE, Ni, IDii */
+	/* No initial state for aggr_outI1:
+	 * SMF_DS_AUTH (RFC 2409 5.1) and SMF_PSK_AUTH (RFC 2409 5.4):
+	 * -->HDR, SA, KE, Ni, IDii
+	 *
+	 * Not implemented:
+	 * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
+	 * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
+	 */
 
 	/* STATE_AGGR_R0:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Ni, IDii
-	 *                -->  HDR, SA, KE, Nr, IDir, HASH_R
-	 * SMF_DS_AUTH:  HDR, KE, Nr, SIG --> HDR*, IDi1, HASH_I
+	 *           --> HDR, SA, KE, Nr, IDir, HASH_R
+	 * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDii
+	 *           --> HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
 	 */
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
-	  SMF_PSK_AUTH | SMF_REPLY,
+	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_psk },
-
-	{ STATE_AGGR_R0, STATE_AGGR_R1,
-	  SMF_DS_AUTH | SMF_REPLY,
-	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_rsasig },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1 },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
-	 *                                 --> HDR*, HASH_I
-	 * SMF_DS_AUTH: HDR, SA, KE, Nr, IDir, SIG_R
-	 *                                 --> HDR*, SIG_I
+	 *           --> HDR*, HASH_I
+	 * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
+	 *           --> HDR*, [CERT,] SIG_I
 	 */
 	{ STATE_AGGR_I1, STATE_AGGR_I2,
 	  SMF_PSK_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY |
@@ -415,7 +418,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 
 	/* STATE_AGGR_R1:
 	 * SMF_PSK_AUTH: HDR*, HASH_I --> done
-	 * SMF_DS_AUTH: HDR*, SIG_I   --> done
+	 * SMF_DS_AUTH:  HDR*, SIG_I  --> done
 	 */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
@@ -423,7 +426,6 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	  P(HASH), P(VID) | P(NATD_RFC), PT(NONE),
 	  EVENT_SA_REPLACE, aggr_inI2 },
 
-	/* STATE_AGGR_R1: HDR*, HASH_I --> done */
 	{ STATE_AGGR_R1, STATE_AGGR_R2,
 	  SMF_DS_AUTH | SMF_FIRST_ENCRYPTED_INPUT |
 		SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
@@ -839,7 +841,7 @@ static stf_status informational(struct msg_digest *md)
 
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
-						    0, pcim_demand_crypto);
+						    LEMPTY, pcim_demand_crypto);
 				return STF_IGNORE;
 			}
 
@@ -967,16 +969,10 @@ void process_v1_packet(struct msg_digest **mdp)
 					md->hdr.isa_icookie,
 					md->hdr.isa_rcookie, md->hdr.isa_msgid,
 					md);
-				if (st != NULL)
-					DBG(DBG_CONTROL,
-					    DBG_log("loopback scenario: found a correct state for the received message"));
-
-
-				else
-					DBG(DBG_CONTROL,
-					    DBG_log("loopback scenario: did not found any state, perhaps a first message from the responder"));
-
-
+				DBG(DBG_CONTROL,
+					DBG_log(st == NULL ?
+						"loopback scenario: did not find any state; perhaps a first message from the responder" :
+						"loopback scenario: found a correct state for the received message"));
 			}
 #endif
 
@@ -1108,16 +1104,10 @@ void process_v1_packet(struct msg_digest **mdp)
 						       md->hdr.isa_rcookie,
 						       md->hdr.isa_msgid, md);
 
-			if (st != NULL)
-				DBG(DBG_CONTROL,
-				    DBG_log("loopback scenario: found a correct state for the received message"));
-
-
-			else
-				DBG(DBG_CONTROL,
-				    DBG_log("loopback scenario: did not found any state, perhaps a first message from the responder"));
-
-
+			DBG(DBG_CONTROL,
+				DBG_log(st == NULL ?
+					"loopback scenario: did not found any state; perhaps a first message from the responder" :
+					"loopback scenario: found a correct state for the received message"));
 		}
 #endif
 		if (st == NULL) {
@@ -1677,6 +1667,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	enum state_kind from_state = md->from_state;
 	const struct state_microcode *smc = md->smc;
 	bool new_iv_set = md->new_iv_set;
+	bool self_delete = FALSE;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 		DBG(DBG_CRYPT, {
@@ -2089,12 +2080,11 @@ void process_packet_tail(struct msg_digest **mdp)
 					      &p->pbs));
 
 			p = p->next;
-
 		}
 
 		p = md->chain[ISAKMP_NEXT_D];
 		while (p != NULL) {
-			accept_delete(st, md, p);
+			self_delete |= accept_delete(md, p);
 			DBG_cond_dump(DBG_PARSING, "del:", p->pbs.cur, pbs_left(
 					      &p->pbs));
 			p = p->next;
@@ -2106,6 +2096,12 @@ void process_packet_tail(struct msg_digest **mdp)
 					pbs_left(&p->pbs), st);
 			p = p->next;
 		}
+	}
+
+	if (self_delete) {
+		accept_self_delete(md);
+		st = md->st;	/* st not subseqently used */
+		/* note: st ought to be NULL from here on */
 	}
 
 #if 0
@@ -2166,6 +2162,22 @@ static void remember_received_packet(struct state *st, struct msg_digest *md)
  * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
  * **mdp should not be freed.  So the caller should be prepared for
  * *mdp being set to NULL.
+ *
+ * md is used to:
+ * - find st
+ * - find from_state (st might be gone)
+ * - find note for STF_FAIL (might not be part of result (STF_FAIL+note))
+ * - find note for STF_INTERNAL_ERROR
+ * - record md->event_already_set
+ * - remember_received_packet(st, md);
+ * - nat_traversal_change_port_lookup(md, st);
+ * - smc for smc->next_state
+ * - smc for smc->flags & SMF_REPLY to trigger a reply
+ * - smc for smc->timeout_event
+ * - smc for !(smc->flags & SMF_INITIATOR) for Contivity mode
+ * - smc for smc->flags & SMF_RELEASE_PENDING_P2 to trigger unpend call
+ * - smc for smc->flags & SMF_INITIATOR to adjust retransmission
+ * - fragvid, dpd, nortel
  */
 void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 {
@@ -2479,9 +2491,13 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				/* don't ignore failure */
 				/* ??? in fact, we do ignore this:
 				 * result is NEVER used
+				 * (clang 3.4 noticed this)
 				 */
-				if (dpd_init(st) == STF_FAIL)
-					result = STF_FAIL; /* fall through */
+				stf_status s = dpd_init(st);
+
+				pexpect(s != STF_FAIL);
+				if (s == STF_FAIL)
+					result = STF_FAIL; /* ??? fall through !?! */
 			}
 		}
 
@@ -2547,8 +2563,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			break;
 		}
 
-		/* If we are the responder and the client is in "Contivity mode",
-		   we need to initiate Quick mode */
+		/*
+		 * If we are the responder and the client is in "Contivity mode",
+		 * we need to initiate Quick mode
+		 */
 		if (!(smc->flags & SMF_INITIATOR) &&
 		    IS_MODE_CFG_ESTABLISHED(st->st_state) &&
 		    (st->st_seen_nortel_vid)) {
@@ -2663,7 +2681,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	default:        /* a shortcut to STF_FAIL, setting md->note */
 		passert(result > STF_FAIL);
 		md->note = result - STF_FAIL;
-		/* FALL THROUGH ... */
+		/* FALL THROUGH */
 	case STF_FAIL:
 		/* As it is, we act as if this message never happened:
 		 * whatever retrying was in place, remains in place.
@@ -2702,6 +2720,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			}
 			if (IS_QUICK(st->st_state)) {
 				delete_state(st);
+				/* wipe out dangling pointer to st */
 				if (md != NULL && st == md->st)
 					md->st = NULL;
 			}
@@ -2710,6 +2729,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	}
 }
 
+/* note: may change which connection is referenced by md->st->st_connection */
 bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 {
 	struct state *const st = md->st;
@@ -2824,7 +2844,6 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		DBG(DBG_CONTROL, {
 			    char buf[IDTOA_BUF];
-
 			    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
 					  "%none");
 			    DBG_log("offered CA: '%s'", buf);
@@ -2864,6 +2883,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	return TRUE;
 }
+
 /*
  * ships the full ca chain or only the end cert's issuer. This won't
  * include any root certs as the chain will not have any.

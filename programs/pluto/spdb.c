@@ -1257,40 +1257,42 @@ void free_sa(struct db_sa *f)
 	}
 }
 
-void clone_trans(struct db_trans *tr, int extra)
+/*
+ * NOTE: "unshare" means turn each pointer to a shared object
+ * into a pointer to a clone of that object.  Even though the old pointer
+ * is overwritten, this isn't a leak since something else must have had
+ * a pointer to it.
+ *
+ * In these particular routines, this allows cloning to proceed top-down.
+ */
+
+static void unshare_trans(struct db_trans *tr)
 {
-	tr->attrs = clone_bytes(tr->attrs,
-				(tr->attr_cnt + extra) * sizeof(tr->attrs[0]),
-				"sa copy attrs array");
-	if (extra)
-		tr->attr_cnt = tr->attr_cnt + extra;
+	tr->attrs = clone_bytes(tr->attrs, tr->attr_cnt * sizeof(tr->attrs[0]),
+		"sa copy attrs array");
 }
 
-static void clone_prop(struct db_prop *p, int extra)
+static void unshare_prop(struct db_prop *p)
 {
 	unsigned int i;
 
-	p->trans = clone_bytes(p->trans,
-			       (p->trans_cnt + extra) * sizeof(p->trans[0]),
-			       "sa copy trans array");
-	/* p->trans_cnt is unchanged */
+	p->trans = clone_bytes(p->trans,  p->trans_cnt * sizeof(p->trans[0]),
+		"sa copy trans array");
 	for (i = 0; i < p->trans_cnt; i++)
-		clone_trans(&p->trans[i], 0);
+		unshare_trans(&p->trans[i]);
 }
 
-static void clone_propconj(struct db_prop_conj *pc, int extra)
+static void unshare_propconj(struct db_prop_conj *pc)
 {
 	unsigned int i;
 
-	pc->props = clone_bytes(pc->props,
-				(pc->prop_cnt + extra) * sizeof(pc->props[0]),
-				"sa copy prop array");
-	/* pc->props_cnt is unchanged */
+	pc->props = clone_bytes(pc->props, pc->prop_cnt * sizeof(pc->props[0]),
+		"sa copy prop array");
 	for (i = 0; i < pc->prop_cnt; i++)
-		clone_prop(&pc->props[i], 0);
+		unshare_prop(&pc->props[i]);
 }
 
-struct db_sa *sa_copy_sa(struct db_sa *sa, int extra)
+struct db_sa *sa_copy_sa(struct db_sa *sa)
 {
 	unsigned int i;
 	struct db_sa *nsa;
@@ -1299,14 +1301,11 @@ struct db_sa *sa_copy_sa(struct db_sa *sa, int extra)
 	nsa->dynamic = TRUE;
 	nsa->parentSA = sa->parentSA;
 
-	nsa->prop_conjs =
-		clone_bytes(nsa->prop_conjs,
-			    (nsa->prop_conj_cnt + extra) *
-				sizeof(nsa->prop_conjs[0]),
-			    "sa copy prop conj array");
-	/* nsa->prop_conj_cnt is unchanged */
+	nsa->prop_conjs = clone_bytes(nsa->prop_conjs,
+		sizeof(nsa->prop_conjs[0]) * nsa->prop_conj_cnt,
+		"sa copy prop conj array");
 	for (i = 0; i < nsa->prop_conj_cnt; i++)
-		clone_propconj(&nsa->prop_conjs[i], 0);
+		unshare_propconj(&nsa->prop_conjs[i]);
 
 	return nsa;
 }
@@ -1349,7 +1348,7 @@ struct db_sa *sa_copy_sa_first(struct db_sa *sa)
 			       sizeof(p->trans[0]),
 			       "sa copy 1 trans array");
 
-	clone_trans(&p->trans[0], 0);
+	unshare_trans(&p->trans[0]);
 	return nsa;
 }
 
@@ -1362,10 +1361,10 @@ struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 	unsigned int i, j, k;
 
 	if (a == NULL || a->prop_conj_cnt == 0)
-		return sa_copy_sa(b, 0);
+		return sa_copy_sa(b);
 
 	if (b == NULL || b->prop_conj_cnt == 0)
-		return sa_copy_sa(a, 0);
+		return sa_copy_sa(a);
 
 	n = clone_thing(*a, "conjoin sa");
 
@@ -1406,7 +1405,7 @@ struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 			pa->trans = t;
 			pa->trans_cnt = t_cnt;
 			for (k = 0; k < pa->trans_cnt; k++)
-				clone_trans(&pa->trans[k], 0);
+				unshare_trans(&pa->trans[k]);
 		}
 	}
 

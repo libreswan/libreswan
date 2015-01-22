@@ -173,6 +173,19 @@ void share_cert(cert_t cert)
 	}
 }
 
+void share_authcerts(cert_t chain)
+{
+	switch (chain.ty) {
+	case CERT_NONE:
+		break;
+	case CERT_X509_SIGNATURE:
+		share_authcert_chain(chain.u.x509);
+		break;
+	default:
+		bad_case(chain.ty);
+	}
+}
+
 bool cert_exists_in_nss(const char *nickname)
 {
 	CERTCertificate *cert;
@@ -252,7 +265,7 @@ void load_authcerts_from_nss(const char *type, u_char auth_flags)
 
 			if (load_cert_from_nss(node->cert->nickname,
 						type, &cert))
-				add_authcert(cert.u.x509, auth_flags);
+				add_authcert(&cert.u.x509, auth_flags);
 		}
 	}
 }

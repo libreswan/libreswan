@@ -1,5 +1,0 @@
-Basic pluto with IKEv1 using PSK on the initiator (west), and on the responder.
-
-This tests using aes_cbc (aalg_id=9) as AUTH algo (along with aes as ENCR algo)
-
-This requires NETKEY

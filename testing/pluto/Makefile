@@ -33,6 +33,7 @@ ifneq ($(UPDATE)$(UPDATEONLY),)
 endif
 ifeq ($(UPDATEONLY),)
 	../utils/swantest
+	../utils/swantest --resanitize
 endif
 
 install install_file_list checkprograms programs:

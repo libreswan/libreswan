@@ -7,16 +7,14 @@ pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
 
 cd /source
 
-echo ">>> $0 on `hostname` at `date`" >>compile-log.txt
+echo ">>> $0 on $(hostname) at $(date)" >>compile-log.txt
 
-if ! make install >>compile-log.txt 2>&1
-then
-	echo '"make install"'" failed: $?; see compile-log.txt"
+if ! make install >>compile-log.txt 2>&1; then
+    echo '"make install"'" failed: $?; see compile-log.txt"
 fi
 
-if ! make module_install >>compile-log.txt 2>&1
-then
-	echo '"make module_install"'" failed: $?; see compile-log.txt"
+if ! make module_install >>compile-log.txt 2>&1; then
+    echo '"make module_install"'" failed: $?; see compile-log.txt"
 fi
 
 # ensure selinux bits
@@ -24,12 +22,14 @@ restorecon /usr/local/sbin -Rv
 restorecon /usr/local/libexec/ipsec -Rv
 
 # disable autostarting via service or systemd
-if [ -x /usr/bin/systemctl -o -x /usr/sbin/systemctl -o -x /sbin/systemctl ] ; then
-	sed -i "s/Restart=always/Restart=no/" /lib/systemd/system/ipsec.service
-	systemctl disable ipsec.service
-	systemctl daemon-reload
+if [ -x /usr/bin/systemctl -o \
+    -x /usr/sbin/systemctl -o \
+    -x /sbin/systemctl ]; then
+    sed -i "s/Restart=always/Restart=no/" /lib/systemd/system/ipsec.service
+    systemctl disable ipsec.service
+    systemctl daemon-reload
 else
-	service ipsec disable
+    service ipsec disable
 fi
 
-echo "$0 finished on `hostname` at `date`"
+echo "$0 finished on $(hostname) at $(date)"

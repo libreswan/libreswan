@@ -10,9 +10,6 @@ PORTDEFINE+=-DHAS_SUN_LEN
 
 PORTLDFLAGS=-L/usr/pkg/lib
 
-TCLLIB=-ltcl8.4
-TCLINC=-isystem /usr/pkg/include/tcl8.4
-
 # no KLIPS, we will be using FreeBSD copy of pfkey code.
 USE_KLIPS=false
 USE_KERNEL26=false

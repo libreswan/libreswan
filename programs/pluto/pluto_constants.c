@@ -95,10 +95,12 @@ static const char *const timer_event_name[] = {
 	"EVENT_v2_RETRANSMIT",
 	"EVENT_v2_RESPONDER_TIMEOUT",
 	"EVENT_v2_LIVENESS",
+	"EVENT_v2_RELEASE_WHACK",
+	"EVENT_RETAIN",
 };
 
 enum_names timer_event_names =
-	{ EVENT_NULL, EVENT_v2_LIVENESS, timer_event_name, NULL };
+	{ EVENT_NULL, EVENT_RETAIN, timer_event_name, NULL };
 
 /* State of exchanges */
 static const char *const state_name[] = {
@@ -149,6 +151,9 @@ static const char *const state_name[] = {
 	"STATE_PARENT_I3",
 	"STATE_PARENT_R1",
 	"STATE_PARENT_R2",
+	"STATE_IKESA_DEL",
+	"STATE_CHILDSA_DEL",
+
 	"STATE_IKEv2_ROOF"
 };
 
@@ -298,7 +303,7 @@ const char *const sa_policy_bit_names[] = {
 	"MODECFG_PULL",
 	"AGGRESSIVE",
 	"OVERLAPIP",
-	"IKEV1_DISABLE",
+	"IKEV1_ALLOW",
 	"IKEV2_ALLOW",
 	"IKEV2_PROPOSE",
 	"IKEV2_ALLOW_NARROWING",

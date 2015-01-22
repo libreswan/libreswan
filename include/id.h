@@ -49,7 +49,7 @@ extern void free_myFQDN(void);
 
 extern err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only);
 extern void iptoid(const ip_address *ip, struct id *id);
-extern unsigned char* temporary_cyclic_buffer(void);
+extern unsigned char *temporary_cyclic_buffer(void);
 extern int idtoa(const struct id *id, char *dst, size_t dstlen);
 #define IDTOA_BUF	512
 extern void escape_metachar(const char *src, char *dst, size_t dstlen);

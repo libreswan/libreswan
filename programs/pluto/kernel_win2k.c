@@ -77,7 +77,7 @@ static bool win2k_raw_eroute(const ip_address *this_host UNUSED,
 			     unsigned int op UNUSED,
 			     const char *text_said UNUSED
 #ifdef HAVE_LABELED_IPSEC
-			     , char *policy_label UNSUSED
+			     , const char *policy_label UNSUSED
 #endif
 			     )
 {

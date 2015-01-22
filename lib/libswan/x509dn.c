@@ -50,6 +50,7 @@
 #ifdef USE_SHA2
 #include "sha2.h"
 #endif
+#include "aes_xcbc.h"
 #include <prerror.h>
 #include <nss.h>
 #include <pk11pub.h>
@@ -683,7 +684,7 @@ int dntoa(char *dst, size_t dstlen, chunk_t dn)
 	err_t ugh = NULL;
 	chunk_t str;
 
-	str.ptr = (unsigned char*)dst;
+	str.ptr = (unsigned char *)dst;
 	str.len = dstlen;
 	ugh = dn_parse(dn, &str);
 
@@ -699,7 +700,7 @@ int dntoa(char *dst, size_t dstlen, chunk_t dn)
 /*
  * Same as dntoa but prints a special string for a null dn
  */
-int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char* null_dn)
+int dntoa_or_null(char *dst, size_t dstlen, chunk_t dn, const char *null_dn)
 {
 	if (dn.ptr == NULL)
 		return snprintf(dst, dstlen, "%s", null_dn);

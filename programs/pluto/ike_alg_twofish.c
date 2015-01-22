@@ -88,6 +88,8 @@ static struct encrypt_desc encrypt_desc_twofish =
 	},
 	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
+	.pad_to_blocksize = TRUE,
+	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_MIN_LEN,
 	.keyminlen = TWOFISH_KEY_DEF_LEN,
 	.keymaxlen = TWOFISH_KEY_MAX_LEN,
@@ -106,6 +108,8 @@ static struct encrypt_desc encrypt_desc_twofish_ssh =
 	},
 	.enc_ctxsize = sizeof(twofish_context),
 	.enc_blocksize = TWOFISH_CBC_BLOCK_SIZE,
+	.pad_to_blocksize = TRUE,
+	.wire_iv_size = TWOFISH_CBC_BLOCK_SIZE,
 	.keydeflen = TWOFISH_KEY_MIN_LEN,
 	.keyminlen = TWOFISH_KEY_DEF_LEN,
 	.keymaxlen = TWOFISH_KEY_MAX_LEN,
@@ -118,6 +122,7 @@ void ike_alg_twofish_init(void)
 		libreswan_log(
 			"ike_alg_twofish_init(): Experimental OAKLEY_TWOFISH_CBC_SSH activation failed");
 
-	/* ??? nobody cares if this fails */
-	ike_alg_register_enc(&encrypt_desc_twofish);
+	if (!ike_alg_register_enc(&encrypt_desc_twofish))
+		libreswan_log(
+			"ike_alg_twofish_init(): OAKLEY_TWOFISH_CBC activation failed");
 }

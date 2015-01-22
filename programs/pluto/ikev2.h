@@ -16,7 +16,7 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 				    unsigned long try,
 				    enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-				    , struct xfrm_user_sec_ctx_ike * uctx
+				    , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				    );
 
@@ -202,3 +202,17 @@ extern bool force_busy;	/* config option to emulate responder under DOS */
 
 extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 				  enum phase1_role role);
+
+stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
+		pb_stream *outpbs);
+
+stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
+                                     enum phase1_role role UNUSED,
+                                     enum next_payload_types_ikev2 np,
+                                     pb_stream *outpbs);
+bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
+
+void send_v2_notification_invalid_ke(struct state *st);
+bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
+oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);
+

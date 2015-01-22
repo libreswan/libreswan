@@ -23,19 +23,12 @@
   <command>ipsec</command>    
     <arg choice='plain'><replaceable>rsasigkey</replaceable></arg>
     <arg choice='opt'>--verbose </arg>
-    <arg choice='opt'>--random <replaceable>filename</replaceable></arg>
+    <arg choice='opt'>--random <replaceable>device</replaceable></arg>
+    <arg choice='opt'>--seed <replaceable>numbits</replaceable></arg>
     <arg choice='opt'>--configdir <replaceable>nssdbdir</replaceable></arg>
     <arg choice='opt'>--password <replaceable>nsspassword</replaceable></arg>
     <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
     <arg choice='opt'>nbits </arg>
-</cmdsynopsis>
-<cmdsynopsis>
-  <command>ipsec</command>    
-    <arg choice='plain'><replaceable>rsasigkey</replaceable></arg>
-    <arg choice='opt'>--verbose </arg>
-    <arg choice='opt'>--configdir <replaceable>nssdbdir</replaceable></arg>
-    <arg choice='opt'>--password <replaceable>nsspassword</replaceable></arg>
-    <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -61,13 +54,21 @@ output.</para>
 source for random bits used to seed the crypto library's
 RNG. The default is <filename>/dev/random</filename> (see
 <citerefentry><refentrytitle>random</refentrytitle><manvolnum>4</manvolnum></citerefentry>).
-FreeS/WAN and Openswan without NSS support used this option to specify
+FreeS/WAN and Openswan without NSS support use this option to specify
 the random source used to directly create keys. Libreswan only uses
-it to seed the crypto libraries RNG. Under Linux with hardware random
+it to seed the NSS crypto libraries RNG. Under Linux with hardware random
 support, special devices might show up as <filename>/dev/*rng*</filename>
-devices. However, these should never be access directly using this option,
+devices. However, these should never be accessed directly using this option,
 as hardware failures could lead to extremely non-random values (streams
 of zeroes have been observed in the wild) </para>
+
+<para>The <option>--seedbits</option> option specifies how many seed bits are pulled from
+the random device to seed the NSS PRNG. The default of 480bit comes from FIPS requirements.
+Seed bits are rounded up to a multiple of 8.
+</para>
+
+<para>The use of a different random device or a reduction of seedbits from the default value is
+prevented when the system is running in FIPS mode.</para>
 
 <para>The <option>--configdir</option> option specifies the nss configuration directory to use.
 This is the directory where the NSS certificate, key and security modules databases reside. The

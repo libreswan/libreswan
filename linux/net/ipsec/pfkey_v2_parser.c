@@ -79,11 +79,11 @@
 #include "libreswan/ipsec_alg.h"
 #include "libreswan/ipsec_kversion.h"
 
-#define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
+#define SENDERR(_x) { error = -(_x); goto errlab; }
 
 struct sklist_t {
 	struct socket *sk;
-	struct sklist_t* next;
+	struct sklist_t *next;
 } pfkey_sklist_head, *pfkey_sklist, *pfkey_sklist_prev;
 
 static __u32 pfkey_msg_seq = 0;
@@ -102,7 +102,7 @@ static void dump_said(ip_said *s, int line)
 }
 #endif
 
-int pfkey_alloc_eroute(struct eroute** eroute)
+int pfkey_alloc_eroute(struct eroute **eroute)
 {
 	int error = 0;
 
@@ -200,7 +200,7 @@ static int pfkey_safe_build(int error, struct sadb_ext *extensions[K_SADB_MAX + 
 
 DEBUG_NO_STATIC int pfkey_getspi_parse(struct sock *sk,
 				       struct sadb_ext **extensions,
-				       struct pfkey_extracted_data* extr)
+				       struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	ipsec_spi_t minspi = htonl(256), maxspi = htonl(-1L);
@@ -406,10 +406,10 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 				       struct sadb_ext **extensions,
-				       struct pfkey_extracted_data* extr)
+				       struct pfkey_extracted_data *extr)
 {
 	int error = 0;
-	struct ipsec_sa* ipsq;
+	struct ipsec_sa *ipsq;
 	char sa[SATOT_BUF];
 	size_t sa_len;
 	struct sadb_ext *extensions_reply[K_SADB_EXT_MAX + 1];
@@ -721,10 +721,10 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_add_parse(struct sock *sk,
 				    struct sadb_ext **extensions,
-				    struct pfkey_extracted_data* extr)
+				    struct pfkey_extracted_data *extr)
 {
 	int error = 0;
-	struct ipsec_sa* ipsq;
+	struct ipsec_sa *ipsq;
 	char sa[SATOT_BUF];
 	size_t sa_len;
 	struct sadb_ext *extensions_reply[K_SADB_EXT_MAX + 1];
@@ -1037,7 +1037,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_delete_parse(struct sock *sk,
 				       struct sadb_ext **extensions,
-				       struct pfkey_extracted_data* extr)
+				       struct pfkey_extracted_data *extr)
 {
 	struct ipsec_sa *ipsp, *ipsq, *ipsr;
 	char sa[SATOT_BUF];
@@ -1197,7 +1197,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_get_parse(struct sock *sk,
 				    struct sadb_ext **extensions,
-				    struct pfkey_extracted_data* extr)
+				    struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct ipsec_sa *ipsp;
@@ -1475,7 +1475,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_acquire_parse(struct sock *sk,
 					struct sadb_ext **extensions,
-					struct pfkey_extracted_data* extr)
+					struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct socket_list *pfkey_socketsp;
@@ -1531,7 +1531,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_register_parse(struct sock *sk,
 					 struct sadb_ext **extensions,
-					 struct pfkey_extracted_data* extr)
+					 struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	uint8_t satype =
@@ -1797,7 +1797,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_expire_parse(struct sock *sk,
 				       struct sadb_ext **extensions,
-				       struct pfkey_extracted_data* extr)
+				       struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct socket_list *pfkey_socketsp;
@@ -1842,7 +1842,7 @@ errlab:
  */
 DEBUG_NO_STATIC int pfkey_flush_parse(struct sock *sk,
 				      struct sadb_ext **extensions,
-				      struct pfkey_extracted_data* extr)
+				      struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct socket_list *pfkey_socketsp;
@@ -1898,7 +1898,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_dump_parse(struct sock *sk,
 				     struct sadb_ext **extensions,
-				     struct pfkey_extracted_data* extr)
+				     struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 
@@ -1912,7 +1912,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_x_promisc_parse(struct sock *sk,
 					  struct sadb_ext **extensions,
-					  struct pfkey_extracted_data* extr)
+					  struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 
@@ -1926,7 +1926,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_x_pchange_parse(struct sock *sk,
 					  struct sadb_ext **extensions,
-					  struct pfkey_extracted_data* extr)
+					  struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 
@@ -1940,7 +1940,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_x_grpsa_parse(struct sock *sk,
 					struct sadb_ext **extensions,
-					struct pfkey_extracted_data* extr)
+					struct pfkey_extracted_data *extr)
 {
 	struct ipsec_sa *ips1p, *ips2p, *ipsp;
 	struct sadb_ext *extensions_reply[K_SADB_EXT_MAX + 1];
@@ -2193,7 +2193,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_x_addflow_parse(struct sock *sk,
 					  struct sadb_ext **extensions,
-					  struct pfkey_extracted_data* extr)
+					  struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct sadb_ext *extensions_reply[K_SADB_EXT_MAX + 1];
@@ -2505,7 +2505,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_x_delflow_parse(struct sock *sk,
 					  struct sadb_ext **extensions,
-					  struct pfkey_extracted_data* extr)
+					  struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct sadb_ext *extensions_reply[K_SADB_EXT_MAX + 1];
@@ -2739,7 +2739,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_x_msg_debug_parse(struct sock *sk,
 					    struct sadb_ext **extensions,
-					    struct pfkey_extracted_data* extr)
+					    struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 
@@ -3207,7 +3207,7 @@ errlab:
 
 DEBUG_NO_STATIC int pfkey_x_nat_t_new_mapping_parse(struct sock *sk,
 						    struct sadb_ext **extensions,
-						    struct pfkey_extracted_data* extr)
+						    struct pfkey_extracted_data *extr)
 {
 	/* K_SADB_X_NAT_T_NEW_MAPPING not used in kernel */
 	return -EINVAL;
@@ -3218,7 +3218,7 @@ DEBUG_NO_STATIC int pfkey_x_nat_t_new_mapping_parse(struct sock *sk,
  ********************************/
 
 DEBUG_NO_STATIC int pfkey_x_outif_process(struct sadb_ext *pfkey_ext,
-					  struct pfkey_extracted_data* extr)
+					  struct pfkey_extracted_data *extr)
 {
 	struct sadb_x_plumbif *oif;
 
@@ -3230,7 +3230,7 @@ DEBUG_NO_STATIC int pfkey_x_outif_process(struct sadb_ext *pfkey_ext,
 }
 
 DEBUG_NO_STATIC int pfkey_x_saref_process(struct sadb_ext *pfkey_ext,
-					  struct pfkey_extracted_data* extr)
+					  struct pfkey_extracted_data *extr)
 {
 	struct sadb_x_saref *saf;
 
@@ -3244,12 +3244,12 @@ DEBUG_NO_STATIC int pfkey_x_saref_process(struct sadb_ext *pfkey_ext,
 
 /* ext_processors: array of pointer to functions
  *
- * eg.: int ext_processor_function(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data* extr)
+ * eg.: int ext_processor_function(struct sadb_ext *pfkey_ext, struct pfkey_extracted_data *extr)
  *	returns 0 on success.
  */
 DEBUG_NO_STATIC int(*ext_processors[K_SADB_EXT_MAX + 1]) (
 	struct sadb_ext *pfkey_ext,
-	struct pfkey_extracted_data* extr) =
+	struct pfkey_extracted_data *extr) =
 {
 	NULL, /* pfkey_msg_process, */
 	pfkey_sa_process,
@@ -3334,7 +3334,7 @@ errlab:
  */
 DEBUG_NO_STATIC int pfkey_x_plumb_parse(struct sock *sk,
 					struct sadb_ext *extensions[],
-					struct pfkey_extracted_data* extr)
+					struct pfkey_extracted_data *extr)
 {
 	unsigned int vifnum;
 	int err;
@@ -3350,7 +3350,7 @@ DEBUG_NO_STATIC int pfkey_x_plumb_parse(struct sock *sk,
 
 DEBUG_NO_STATIC int pfkey_x_unplumb_parse(struct sock *sk,
 					  struct sadb_ext *extensions[],
-					  struct pfkey_extracted_data* extr)
+					  struct pfkey_extracted_data *extr)
 {
 	unsigned int vifnum;
 	int err;

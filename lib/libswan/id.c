@@ -304,7 +304,8 @@ void remove_metachar(const char *src, char *dst, size_t dstlen)
 		if ((*src >= '0' && *src <= '9') ||
 			(*src >= 'a' && *src <= 'z') ||
 			(*src >= 'A' && *src <= 'Z') ||
-			*src == '_' || *src == '-') {
+			*src == '_' || *src == '-' ||
+			*src == '.') {
 			*dst++ = *src;
 			dstlen--;
 		} else {

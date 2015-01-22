@@ -62,6 +62,11 @@
 /* for show_virtual_private: */
 #include "virtual.h"	/* needs connections.h */
 
+#ifdef USE_LINUX_AUDIT
+# include <libaudit.h>
+# include "crypto.h" /* for oakley_group_desc */
+#endif
+
 #ifndef NO_DB_OPS_STATS
 #define NO_DB_CONTEXT
 #include "db_ops.h"
@@ -76,8 +81,9 @@ bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
 	log_to_perpeer = FALSE,		/* should log go to per-IP file? */
-	log_with_timestamp = FALSE;	/* some people want timestamps, but we
+	log_with_timestamp = FALSE,	/* some people want timestamps, but we
 					 * don't want those in our test output */
+	log_to_audit = FALSE;		/* audit log messages for kernel */
 
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
@@ -512,7 +518,7 @@ void exit_log(const char *message, ...)
 
 	whack_log(RC_LOG_SERIOUS, "~FATAL ERROR: %s", m);
 
-	exit_pluto(1);
+	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
 void libreswan_exit_log_errno_routine(int e, const char *message, ...)
@@ -536,7 +542,7 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 	whack_log(RC_LOG_SERIOUS,
 		  "~FATAL ERROR: %s. Errno %d: %s", m, e, strerror(e));
 
-	exit_pluto(1);
+	exit_pluto(PLUTO_EXIT_FAIL);
 }
 
 void libreswan_log_abort(const char *file_str, int line_no)
@@ -664,15 +670,14 @@ void extra_debugging(const struct connection *c)
 	}
 
 	/*
-	 * if any debugging is no, make sure that we log the connection
+	 * if any debugging is on, make sure that we log the connection
 	 * we are processing, because it may not be clear in later debugging.
 	 */
-	if (cur_debugging) {
+	DBG(~LEMPTY, {
 		char b1[CONN_INST_BUF];
-		fmt_conn_instance(c, b1);
 		DBG_log("processing connection %s%s",
-			c->name, b1);
-	}
+			c->name, fmt_conn_instance(c, b1));
+	});
 
 }
 
@@ -921,7 +926,7 @@ static void connection_state(struct state *st, void *data)
 	if (IS_IKE_SA(st)) {
 		if (lc->tunnel < tun_phase1)
 			lc->tunnel = tun_phase1;
-		if (IS_IKE_SA_ESTABLISHED(st->st_state)) {
+		if (IS_IKE_SA_ESTABLISHED(st)) {
 			if (lc->tunnel < tun_phase1up)
 				lc->tunnel = tun_phase1up;
 			lc->phase1 = p1_up;
@@ -1087,3 +1092,177 @@ void log_state(struct state *st, enum state_kind new_state)
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("log_state for connection %s completed", conn->name));
 }
+
+#ifdef USE_LINUX_AUDIT
+void linux_audit_init()
+{
+	libreswan_log("Linux audit support [enabled]");
+	/* test and log if audit is enabled on the system */
+	int audit_fd;
+	audit_fd = audit_open();
+	if (audit_fd < 0) {
+		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
+			errno == EAFNOSUPPORT) {
+			loglog(RC_LOG_SERIOUS,
+				"Warning: kernel has no audit support");
+		} else {
+			loglog(RC_LOG_SERIOUS,
+				"FATAL: audit_open() failed : %s",
+				strerror(errno));
+			exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
+		}
+	} else {
+		log_to_audit = TRUE;
+	}
+	close(audit_fd);
+	libreswan_log("Linux audit activated");
+}
+
+void linux_audit(const int type, const char *message, const char *addr,
+		const int result)
+{
+
+	int audit_fd, rc;
+
+	if (!log_to_audit)
+		return;
+
+	audit_fd = audit_open();
+	if (audit_fd < 0) {
+			loglog(RC_LOG_SERIOUS,
+				"FATAL (SOON): audit_open() failed : %s",
+				strerror(errno));
+			exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
+	}
+
+	/*
+	 * audit_log_user_message() - log a general user message
+	 *
+	 * audit_fd - The fd returned by audit_open
+	 * type - type of message, ex: AUDIT_USYS_CONFIG, AUDIT_USER_LOGIN
+	 * message - the message text being sent
+	 * hostname - the hostname if known, NULL if unknown
+	 * addr - The network address of the user, NULL if unknown
+	 * tty - The tty of the user, if NULL will attempt to figure out
+	 * result - 1 is "success" and 0 is "failed"
+	 *
+	 * We log the remoteid instead of hostname
+	 */
+
+	rc = audit_log_user_message(audit_fd, type, message, NULL, addr, NULL, result);
+	close(audit_fd);
+	if (rc < 0) {
+		loglog(RC_LOG_SERIOUS,
+			"FATAL: audit log failed: %s",
+			strerror(errno));
+		exit_pluto(PLUTO_EXIT_AUDIT_FAIL);
+	}
+}
+
+/*
+ * any admin/network strings but go through audit_encode_nv_string()
+ */
+void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
+{
+	char raddr[ADDRTOT_BUF];
+	char laddr[ADDRTOT_BUF];
+	char audit_str[AUDIT_LOG_SIZE];
+	char cipher_str[AUDIT_LOG_SIZE];
+	char spi_str[AUDIT_LOG_SIZE];
+	struct connection *const c = st->st_connection;
+	bool initiator = FALSE;
+	char head[IDTOA_BUF];
+	char integname[IDTOA_BUF];
+	struct esb_buf esb;
+	/* we need to free() this */
+	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
+
+	zero(&cipher_str);
+	zero(&spi_str);
+
+	switch(op) {
+	case LAK_PARENT_START:
+	case LAK_PARENT_DESTROY:
+		initiator = IS_V2_INITIATOR(st->st_state) || IS_PHASE1_INIT(st->st_state);
+		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=%ld ike-version=%s auth=%s",
+			op == LAK_PARENT_START ? "start" : "destroy",
+			initiator ? "initiator" : "responder",
+			conn_encode,
+			st->st_serialno,
+			st->st_ikev2 ? "2.0" : "1",
+			st->st_ikev2 ? ((c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG") :
+				strip_prefix(enum_show(&oakley_auth_names,
+					st->st_oakley.auth), "OAKLEY_"));
+		if (st->st_ikev2)
+			snprintf(integname, sizeof(integname), "%s_%zu",
+				st->st_oakley.integ_hasher->common.officname,
+				st->st_oakley.integ_hasher->hash_integ_len *
+				BITS_PER_BYTE);
+		else
+			snprintf(integname, sizeof(integname), "%s",
+				strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"));
+
+		snprintf(cipher_str, sizeof(cipher_str),
+			"cipher=%s ksize=%d integ=%s pfs=%s",
+			st->st_oakley.encrypter->common.name,
+			st->st_oakley.enckeylen,
+			integname,
+			strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
+		break;
+
+	case LAK_CHILD_START:
+	case LAK_CHILD_DESTROY:
+		snprintf(head, sizeof(head), "op=%s %s connstate=%ld, satype=%s samode=%s",
+			op == LAK_CHILD_START ? "start" : "destroy",
+			conn_encode,
+			st->st_serialno,
+			st->st_esp.present ? "ipsec-esp" : (st->st_ah.present ? "ipsec-ah" : "ipsec-policy"),
+			c->policy & POLICY_TUNNEL ? "tunnel" : "transport");
+
+		snprintf(cipher_str, sizeof(cipher_str),
+			"cipher=%s ksize=%d integ=%s",
+			st->st_esp.present ?
+				strip_prefix(enum_showb(&esp_transformid_names,
+					st->st_esp.attrs.transattrs.encrypt, &esb), "ESP_") :
+				"none",
+			st->st_esp.present ?
+				st->st_esp.attrs.transattrs.enckeylen :
+				0,
+			strip_prefix(enum_show(&auth_alg_names,
+				st->st_esp.attrs.transattrs.integ_hash),
+				"AUTH_ALGORITHM_"));
+
+		snprintf(spi_str, sizeof(spi_str),
+		"in-spi=%lu(0x%08lx) out-spi=%lu(0x%08lx) in-ipcomp=%lu(0x%08lx) out-ipcomp=%lu(0x%08lx)",
+		st->st_esp.present ? (unsigned long)ntohl(st->st_esp.attrs.spi) :
+			(unsigned long)ntohl(st->st_ah.attrs.spi),
+		st->st_esp.present ? (unsigned long)ntohl(st->st_esp.attrs.spi) :
+			(unsigned long)ntohl(st->st_ah.attrs.spi),
+		st->st_esp.present ?  (unsigned long)ntohl(st->st_esp.our_spi) :
+			(unsigned long)ntohl(st->st_ah.our_spi),
+		st->st_esp.present ?  (unsigned long)ntohl(st->st_esp.our_spi) :
+			(unsigned long)ntohl(st->st_ah.our_spi),
+		st->st_ipcomp.present ?  (unsigned long)ntohl(st->st_ipcomp.attrs.spi) : (unsigned long)0,
+		st->st_ipcomp.present ?  (unsigned long)ntohl(st->st_ipcomp.attrs.spi) : (unsigned long)0,
+		st->st_ipcomp.present ? (unsigned long)ntohl(st->st_ipcomp.our_spi) : (unsigned long)0,
+		st->st_ipcomp.present ? (unsigned long)ntohl(st->st_ipcomp.our_spi) : (unsigned long)0);
+		break;
+	default:
+		bad_case(op);
+	}
+	free(conn_encode); /* allocated by audit_encode_nv_string() */
+
+	addrtot(&c->spd.this.host_addr, 0, laddr, sizeof(laddr));
+	addrtot(&c->spd.that.host_addr, 0, raddr, sizeof(raddr));
+
+	snprintf(audit_str, sizeof(audit_str), "%s %s %s laddr=%s",
+		head,
+		cipher_str,
+		spi_str,
+		laddr);
+
+	linux_audit( (op == LAK_CHILD_START || op == LAK_CHILD_DESTROY) ?
+			AUDIT_CRYPTO_IPSEC_SA : AUDIT_CRYPTO_IKE_SA,
+		audit_str, raddr, AUDIT_RESULT_OK);
+}
+#endif

@@ -67,7 +67,7 @@
 #include "libreswan/ipsec_sa.h"  /* IPSEC_SAREF_NULL, IPSEC_SA_REF_TABLE_IDX_WIDTH */
 #include "libreswan/pfkey_debug.h"
 
-#define SENDERR(_x) do { error = -(_x); goto errlab; } while (0)
+#define SENDERR(_x) { error = -(_x); goto errlab; }
 
 void pfkey_extensions_init(struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
 {
@@ -120,7 +120,7 @@ void pfkey_msg_free(struct sadb_msg **pfkey_msg)
 
 /* Default extension builders taken from the KLIPS code */
 
-int pfkey_msg_hdr_build(struct sadb_ext**   pfkey_ext,
+int pfkey_msg_hdr_build(struct sadb_ext **pfkey_ext,
 			uint8_t msg_type,
 			uint8_t satype,
 			uint8_t msg_errno,
@@ -276,9 +276,8 @@ int pfkey_sa_builds(struct sadb_ext **pfkey_ext,
 		SENDERR(EINVAL);
 	}
 
-	if ((IPSEC_SAREF_NULL != sab.sa_base.sadb_x_sa_ref) &&
-	    (sab.sa_base.sadb_x_sa_ref >=
-	     (1 << IPSEC_SA_REF_TABLE_IDX_WIDTH))) {
+	if (IPSEC_SAREF_NULL != sab.sa_base.sadb_x_sa_ref &&
+	    sab.sa_base.sadb_x_sa_ref >= (1 << IPSEC_SA_REF_TABLE_IDX_WIDTH)) {
 		DEBUGGING(PF_KEY_DEBUG_BUILD,
 			  "pfkey_sa_build: "
 			  "SAref=%d must be (SAref == IPSEC_SAREF_NULL(%d) || SAref < IPSEC_SA_REF_TABLE_NUM_ENTRIES(%d)).\n",
@@ -390,11 +389,11 @@ errlab:
 	return error;
 }
 
-int pfkey_address_build(struct sadb_ext**   pfkey_ext,
+int pfkey_address_build(struct sadb_ext **pfkey_ext,
 			uint16_t exttype,
 			uint8_t proto,
 			uint8_t prefixlen,
-			struct sockaddr*    address)
+			struct sockaddr *address)
 {
 	int error = 0;
 	int saddr_len = 0;
@@ -531,7 +530,7 @@ errlab:
 	return error;
 }
 
-int pfkey_key_build(struct sadb_ext**       pfkey_ext,
+int pfkey_key_build(struct sadb_ext **pfkey_ext,
 		    uint16_t exttype,
 		    uint16_t key_bits,
 		    unsigned char *         key)
@@ -592,12 +591,12 @@ errlab:
 	return error;
 }
 
-int pfkey_ident_build(struct sadb_ext**     pfkey_ext,
+int pfkey_ident_build(struct sadb_ext **pfkey_ext,
 		      uint16_t exttype,
 		      uint16_t ident_type,
 		      uint64_t ident_id,
 		      uint8_t ident_len,
-		      char*                 ident_string)
+		      char *ident_string)
 {
 	int error = 0;
 	struct sadb_ident *pfkey_ident = (struct sadb_ident *)*pfkey_ext;
@@ -685,7 +684,7 @@ int pfkey_sens_build(struct sadb_ext **pfkey_ext,
 	int error = 0;
 	struct sadb_sens *pfkey_sens = (struct sadb_sens *)*pfkey_ext;
 	int i;
-	uint64_t* bitmap;
+	uint64_t *bitmap;
 
 	DEBUGGING(PF_KEY_DEBUG_BUILD,
 		  "pfkey_sens_build:\n");
@@ -749,10 +748,10 @@ errlab:
 }
 #endif
 
-int pfkey_prop_build(struct sadb_ext**      pfkey_ext,
+int pfkey_prop_build(struct sadb_ext **pfkey_ext,
 		     uint8_t replay,
 		     unsigned int comb_num,
-		     struct sadb_comb*      comb)
+		     struct sadb_comb *comb)
 {
 	int error = 0;
 	int i;
@@ -826,10 +825,10 @@ errlab:
 	return error;
 }
 
-int pfkey_supported_build(struct sadb_ext** pfkey_ext,
+int pfkey_supported_build(struct sadb_ext **pfkey_ext,
 			  uint16_t exttype,
 			  unsigned int alg_num,
-			  struct sadb_alg*  alg)
+			  struct sadb_alg *alg)
 {
 	int error = 0;
 	unsigned int i;
@@ -906,7 +905,7 @@ errlab:
 }
 
 #if 0
-static int pfkey_spirange_build(struct sadb_ext**  pfkey_ext,
+static int pfkey_spirange_build(struct sadb_ext **pfkey_ext,
 			 uint16_t exttype UNUSED,
 			 uint32_t min,          /* in network order */
 			 uint32_t max)          /* in network order */
@@ -1013,7 +1012,7 @@ errlab:
 }
 #endif
 
-int pfkey_x_satype_build(struct sadb_ext**  pfkey_ext,
+int pfkey_x_satype_build(struct sadb_ext **pfkey_ext,
 			 uint8_t satype)
 {
 	int error = 0;
@@ -1068,7 +1067,7 @@ errlab:
 	return error;
 }
 
-int pfkey_x_debug_build(struct sadb_ext**   pfkey_ext,
+int pfkey_x_debug_build(struct sadb_ext **pfkey_ext,
 			uint32_t tunnel,
 			uint32_t netlink,
 			uint32_t xform,
@@ -1141,7 +1140,7 @@ errlab:
 	return error;
 }
 
-int pfkey_x_nat_t_type_build(struct sadb_ext**      pfkey_ext,
+int pfkey_x_nat_t_type_build(struct sadb_ext **pfkey_ext,
 			     uint8_t type)
 {
 	int error = 0;
@@ -1187,7 +1186,7 @@ errlab:
 	return error;
 }
 
-int pfkey_x_nat_t_port_build(struct sadb_ext**      pfkey_ext,
+int pfkey_x_nat_t_port_build(struct sadb_ext **pfkey_ext,
 			     uint16_t exttype,
 			     uint16_t port)
 {
@@ -1294,7 +1293,7 @@ int pfkey_saref_build(struct sadb_ext **pfkey_ext,
 		      IPsecSAref_t in, IPsecSAref_t out)
 {
 	int error = 0;
-	struct sadb_x_saref* s;
+	struct sadb_x_saref *s;
 
 	/* +4 because sadb_x_saref is not a multiple of 8 bytes */
 

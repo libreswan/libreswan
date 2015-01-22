@@ -110,7 +110,7 @@ extern enum ikev1_auth_attribute alg_info_esp_v2tov1aa(enum ikev2_trans_type_int
 
 extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
-extern void alg_info_delref(struct alg_info **alg_info);
+extern void alg_info_delref(struct alg_info *alg_info);
 
 extern struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 						   char *err_buf, size_t err_buf_len);

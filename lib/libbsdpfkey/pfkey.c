@@ -54,8 +54,8 @@
 
 unsigned int bsdpfkey_lib_debug = 0;
 libreswan_keying_debug_func_t pfkey_debug_func;
-#define PFKEY_DEBUG if (bsdpfkey_lib_debug) \
-		(*pfkey_debug_func)
+#define PFKEY_DEBUG { if (bsdpfkey_lib_debug) \
+		(*pfkey_debug_func); }
 
 static int findsupportedmap(int);
 static int setsupportedmap(const struct sadb_supported *sup, int properlen);

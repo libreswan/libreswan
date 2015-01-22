@@ -1,0 +1,34 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
+002 added connection description "westnet-eastnet-ipv4-psk-ikev1"
+east #
+ ipsec status | grep westnet-eastnet-ipv4-psk-ikev1
+000 "westnet-eastnet-ipv4-psk-ikev1": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ipv4-psk-ikev1":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-ipv4-psk-ikev1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
+000 "westnet-eastnet-ipv4-psk-ikev1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet-ipv4-psk-ikev1":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ipv4-psk-ikev1":    policy_label:unset; 
+000 "westnet-eastnet-ipv4-psk-ikev1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ikev1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "westnet-eastnet-ipv4-psk-ikev1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-ipv4-psk-ikev1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-ipv4-psk-ikev1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-ipv4-psk-ikev1":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithms wanted: 3DES(3)_000-SHA2_256(5)_000
+000 "westnet-eastnet-ipv4-psk-ikev1":   ESP algorithms loaded: 3DES(3)_000-SHA2_256(5)_000
+east #
+ echo "initdone"
+initdone
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

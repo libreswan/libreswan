@@ -1,5 +1,1 @@
-Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
-
-This is to verify we can use aes_ctr as encryption algo for ESP
-
-
+basic IKEv2 negotiating AES_CTR for IKE and ESP

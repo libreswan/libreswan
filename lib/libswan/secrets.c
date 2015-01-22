@@ -19,6 +19,8 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
+#include <math.h>
+
 #include <pthread.h>	/* pthread.h must be first include file */
 #include <stddef.h>
 #include <stdlib.h>
@@ -57,6 +59,8 @@
 #include <key.h>
 #include "lswconf.h"
 
+#include "internal.h"
+
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
 
@@ -86,6 +90,35 @@ static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
+
+static double shannon_entropy(const unsigned char *p, size_t size)
+{
+	double entropy = 0.0;
+	int histogram[UCHAR_MAX + 1];
+	unsigned int i;
+
+	zero(&histogram);
+
+	for (i = 0; i < size; ++i)
+		++histogram[p[i]];
+
+	for (i = 0; i <= UCHAR_MAX; ++i) {
+		if (histogram[i] != 0) {
+			double p = (double)histogram[i] / size;
+
+			entropy -=  p * log2(p);
+		}
+	}
+	DBG(DBG_CONTROL,
+		DBG_log("Shannon entropy of PSK is %f", entropy));
+
+	if (entropy < MIN_SHANNON_ENTROPY) {
+		loglog(RC_LOG,"WARNING: PSK entropy of %f is less than minimum Shannon Entropy of %f - this will be rejected as of July 1st, 2015",
+			entropy, MIN_SHANNON_ENTROPY);
+	}
+
+        return entropy;
+}
 
 static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 {
@@ -191,7 +224,7 @@ struct secret *lsw_get_defaultsecret(struct secret *secrets)
 /*
  * forms the keyid from the public exponent e and modulus n
  */
-void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize)
+void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize)
 {
 	/* eliminate leading zero byte in modulus from ASN.1 coding */
 	if (*n.ptr == 0x00) {
@@ -714,9 +747,7 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 	unexpected = shift();
 	/* we used to recommend people to provide an empty passphrase for NSS keys */
 	if (unexpected && (strcmp(flp->tok, "\"\"") == 0 || strcmp(flp->tok, "''") == 0)) {
-		libreswan_log("RSA private key file "
-				"-- ignoring empty token after friendly_name "
-				"-- this will be an error in a future release");
+		libreswan_log("RSA private key file -- ignoring empty token after friendly_name -- this will be an error in a future release");
 		unexpected = shift();
 	}
 	if (unexpected) {
@@ -734,10 +765,20 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 static err_t lsw_process_psk_secret(chunk_t *psk)
 {
 	err_t ugh = NULL;
+	double shannon;
 
 	if (*flp->tok == '"' || *flp->tok == '\'') {
 		clonetochunk(*psk, flp->tok + 1, flp->cur - flp->tok  - 2,
 			"PSK");
+		shannon = shannon_entropy(psk->ptr, psk->len);
+#ifdef AS_OF_JULY_1_2015
+		if (shannon < MIN_SHANNON_ENTROPY) {
+			ugh = builddiag("PSK entropy of %f is too weak - rejected (%s)", shannon, flp->tok);
+			libreswan_log("unloaded weak PSK");
+			freeanychunk(*psk);
+		} else
+#endif
+		DBG(DBG_CONTROLMORE, DBG_log("PSK entropy has Shannon Entropy of %f", shannon));
 		(void) shift();
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
@@ -759,7 +800,16 @@ static err_t lsw_process_psk_secret(chunk_t *psk)
 					flp->tok);
 		} else {
 			clonetochunk(*psk, buf, sz, "PSK");
+			shannon = shannon_entropy(psk->ptr, psk->len);
+#ifdef AS_OF_JULY_1_2015
+			if (shannon < MIN_SHANNON_ENTROPY) {
+				ugh = builddiag("PSK entropy of %f is too weak - rejected (%s)", shannon, flp->tok);
+				libreswan_log("unloaded weak PSK");
+				freeanychunk(*psk);
+			} else
+#endif
 			(void) shift();
+			DBG(DBG_CONTROLMORE, DBG_log("PSK entropy has Shannon Entropy of %f", shannon));
 		}
 	}
 
@@ -1117,6 +1167,10 @@ static void lsw_process_secret_records(struct secret **psecrets)
 					flp->filename, flp->lino);
 				continue;	/* abandon this record */
 			}
+			/*
+			 * The above test checks that there is enough space for strcpy
+			 * but clang 3.4 thinks the destination will overflow.
+			 */
 			strcpy(p, flp->tok);
 			(void) shift();	/* move to Record Boundary, we hope */
 			if (flushline("ignoring malformed INCLUDE -- expected Record Boundary after filename"))
@@ -1509,3 +1563,5 @@ void delete_public_keys(struct pubkey_list **head,
 			pp = &p->next;
 	}
 }
+
+

@@ -1,9 +1,0 @@
-These tests are Pluto unit tests - it runs IKE in a bottle.
-
-These tests are focused on aggressive mode, and use inputs
-and outputs which are local to this directory. This is an attempt to
-diversify the testing infrastructure.
-
-It does not talk to KLIPS at all, but does require that a number
-of aliases be configured on the loopback device.
-

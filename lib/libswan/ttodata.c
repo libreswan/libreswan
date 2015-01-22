@@ -336,6 +336,10 @@ size_t errlen;
 		return "unknown character in input";
 
 	strcpy(errp, pre);
+	/*
+	 * clang 3.4 says "warning: Assigned value is garbage or undefined".
+	 * This does not seem to be correct.
+	 */
 	ch = *(src + BADOFF(errcode));
 	if (isprint(ch)) {
 		buf[0] = ch;
@@ -355,6 +359,9 @@ size_t errlen;
 #ifdef TTODATA_MAIN
 
 #include <stdio.h>
+
+#define memeq(a, b, n) (memcmp((a), (b), (n)) == 0)
+#define streq(a, b) (strcmp((a), (b)) == 0)
 
 struct artab;
 static void check(struct artab *r, char *buf, size_t n, err_t oops,
@@ -400,7 +407,7 @@ int main(int argc, char *argv[])
 		p = (char *)malloc((size_t)n);
 		if (p == NULL) {
 			fprintf(stderr,
-				"%s: unable to malloc %d bytes for result\n",
+				"%s: unable to malloc %lu bytes for result\n",
 				pgm, n);
 			exit(1);
 		}
@@ -426,7 +433,7 @@ int main(int argc, char *argv[])
 		p2 = (char *)malloc((size_t)i);
 		if (p == NULL) {
 			fprintf(stderr,
-				"%s: unable to malloc %d bytes for result\n",
+				"%s: unable to malloc %lu bytes for result\n",
 				pgm, i);
 			exit(1);
 		}
@@ -598,27 +605,27 @@ int *status;
 	if (oops != NULL && r->data == NULL) {
 		/* error expected */
 	} else if (oops != NULL) {
-		printf("`%s' gave error `%s', expecting %d `", r->ascii,
+		printf("`%s' gave error `%s', expecting %lu `", r->ascii,
 			oops, strlen(r->data));
 		hexout(r->data, strlen(r->data), stdout);
 		printf("'\n");
 		*status = 1;
 	} else if (r->data == NULL) {
-		printf("`%s' gave %d `", r->ascii, n);
+		printf("`%s' gave %lu `", r->ascii, n);
 		hexout(buf, n, stdout);
 		printf("', expecting error\n");
 		*status = 1;
 	} else if (n != strlen(r->data)) {
-		printf("length wrong in `%s': got %d `", r->ascii, n);
+		printf("length wrong in `%s': got %lu `", r->ascii, n);
 		hexout(buf, n, stdout);
-		printf("', expecting %d `", strlen(r->data));
+		printf("', expecting %lu `", strlen(r->data));
 		hexout(r->data, strlen(r->data), stdout);
 		printf("'\n");
 		*status = 1;
 	} else if (!memeq(buf, r->data, n)) {
-		printf("`%s' gave %d `", r->ascii, n);
+		printf("`%s' gave %lu `", r->ascii, n);
 		hexout(buf, n, stdout);
-		printf("', expecting %d `", strlen(r->data));
+		printf("', expecting %lu `", strlen(r->data));
 		hexout(r->data, strlen(r->data), stdout);
 		printf("'\n");
 		*status = 1;
@@ -712,26 +719,26 @@ char *pgm;
 		} else if (n == 0) {
 			printf("`");
 			hexout(dr->data, strlen(dr->data), stdout);
-			printf("' %c gave error, expecting %d `%s'\n",
+			printf("' %c gave error, expecting %lu `%s'\n",
 				dr->format, should, dr->ascii);
 			status = 1;
 		} else if (dr->ascii == NULL) {
 			printf("`");
 			hexout(dr->data, strlen(dr->data), stdout);
-			printf("' %c gave %d `%.*s', expecting error\n",
+			printf("' %c gave %lu `%.*s', expecting error\n",
 				dr->format, n, (int)n, buf);
 			status = 1;
 		} else if (n != should) {
 			printf("length wrong in `");
 			hexout(dr->data, strlen(dr->data), stdout);
-			printf("': got %d `%s'", n, buf);
-			printf(", expecting %d `%s'\n", should, dr->ascii);
+			printf("': got %lu `%s'", n, buf);
+			printf(", expecting %lu `%s'\n", should, dr->ascii);
 			status = 1;
 		} else if (!streq(buf, dr->ascii)) {
 			printf("`");
 			hexout(dr->data, strlen(dr->data), stdout);
-			printf("' gave %d `%s'", n, buf);
-			printf(", expecting %d `%s'\n", should, dr->ascii);
+			printf("' gave %lu `%s'", n, buf);
+			printf(", expecting %lu `%s'\n", should, dr->ascii);
 			status = 1;
 		}
 		fflush(stdout);

@@ -5,7 +5,7 @@ void add_pgp_public_key(pgpcert_t *cert, time_t until,
 			enum dns_auth_level dns_auth_level)
 {
 }
-pgpcert_t*pluto_add_pgpcert(pgpcert_t *cert)
+pgpcert_t *pluto_add_pgpcert(pgpcert_t *cert)
 {
 	return NULL;
 }
@@ -13,7 +13,7 @@ void add_x509_public_key(struct id *keyid, x509cert_t *cert, time_t until,
 			 enum dns_auth_level dns_auth_level)
 {
 }
-x509cert_t*add_x509cert(x509cert_t *cert)
+x509cert_t *add_x509cert(x509cert_t *cert)
 {
 	return NULL;
 }
@@ -36,7 +36,7 @@ void list_acerts(bool utc)
 void list_groups(bool utc)
 {
 }
-void free_ietfAttrList(ietfAttrList_t* list)
+void free_ietfAttrList(ietfAttrList_t *list)
 {
 }
 
@@ -77,9 +77,9 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type, chunk_t ca, pb_stream *out
 	return FALSE;
 }
 
-bool collect_rw_ca_candidates(struct msg_digest *md, generalName_t **top)
+generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 {
-	return FALSE;
+	return NULL;
 }
 
 bool build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np)

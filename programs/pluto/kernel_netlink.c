@@ -245,7 +245,9 @@ static struct encrypt_desc algo_aes_ccm_8 =
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_8,
 		.algo_next =    NULL,
 	},
-	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
+	.enc_blocksize =  AES_BLOCK_SIZE,
+	.wire_iv_size =  8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
@@ -261,7 +263,9 @@ static struct encrypt_desc algo_aes_ccm_12 =
 		.algo_v2id =    IKEv2_ENCR_AES_CCM_12,
 		.algo_next =    NULL,
 	},
-	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
+	.enc_blocksize =  AES_BLOCK_SIZE,
+	.wire_iv_size =  8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
@@ -277,7 +281,9 @@ static struct encrypt_desc algo_aes_ccm_16 =
 		.algo_v2id =   IKEv2_ENCR_AES_CCM_16,
 		.algo_next =   NULL,
 	},
-	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.enc_blocksize = AES_BLOCK_SIZE,
+	.wire_iv_size = 8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
@@ -293,7 +299,9 @@ static struct encrypt_desc algo_aes_gcm_8 =
 		.algo_v2id =   IKEv2_ENCR_AES_GCM_8,
 		.algo_next =   NULL,
 	},
-	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.enc_blocksize = AES_BLOCK_SIZE,
+	.wire_iv_size = 8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
@@ -309,7 +317,9 @@ static struct encrypt_desc algo_aes_gcm_12 =
 		.algo_v2id =   IKEv2_ENCR_AES_GCM_12,
 		.algo_next =   NULL,
 	},
-	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.enc_blocksize = AES_BLOCK_SIZE,
+	.wire_iv_size = 8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
@@ -325,7 +335,9 @@ static struct encrypt_desc algo_aes_gcm_16 =
 		.algo_v2id =    IKEv2_ENCR_AES_GCM_16,
 		.algo_next =  NULL,
 	},
-	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.enc_blocksize = AES_BLOCK_SIZE,
+	.wire_iv_size = 8,
+	.pad_to_blocksize = FALSE,
 	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
 	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
@@ -467,7 +479,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 	struct {
 		struct nlmsghdr n;
 		struct nlmsgerr e;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	size_t len;
 	ssize_t r;
@@ -588,7 +600,7 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
 	struct {
 		struct nlmsghdr n;
 		struct nlmsgerr e;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	int error;
 
@@ -641,7 +653,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			enum pluto_sadb_operations sadb_op,
 			const char *text_said
 #ifdef HAVE_LABELED_IPSEC
-			, char *policy_label
+			, const char *policy_label
 #endif
 	)
 {
@@ -651,7 +663,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			struct xfrm_userpolicy_info p;
 			struct xfrm_userpolicy_id id;
 		} u;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	int shift;
 	int dir;
@@ -884,29 +896,28 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	}
 
 #ifdef HAVE_LABELED_IPSEC
-	{
-		if (policy_label) {
-			struct rtattr *attr;
-			struct xfrm_user_sec_ctx *uctx;
-			attr = (struct rtattr *)
-				((char *)&req + req.n.nlmsg_len);
-			attr->rta_type = XFRMA_SEC_CTX;
-			/* Passing null terminated sec label (strlen + '\0') */
-			DBG_log("passing security label %s (len=%zu +1) to kernel",
-				policy_label, strlen(policy_label));
-			attr->rta_len =
-				RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) +
-					strlen(policy_label) + 1);
-			uctx = RTA_DATA(attr);
-			uctx->exttype = XFRMA_SEC_CTX;
-			uctx->len = sizeof(struct xfrm_user_sec_ctx) +
-				strlen(policy_label) + 1;
-			uctx->ctx_doi = 1;
-			uctx->ctx_alg = 1;
-			uctx->ctx_len = strlen(policy_label) + 1;
-			memcpy(uctx + 1, policy_label, uctx->ctx_len);
-			req.n.nlmsg_len += attr->rta_len;
-		}
+	if (policy_label != NULL) {
+		size_t len = strlen(policy_label) + 1;
+		struct rtattr *attr = (struct rtattr *)
+			((char *)&req + req.n.nlmsg_len);
+		struct xfrm_user_sec_ctx *uctx;
+
+		passert(len <= MAX_SECCTX_LEN);
+		attr->rta_type = XFRMA_SEC_CTX;
+
+		DBG(DBG_KERNEL,
+			DBG_log("passing security label \"%s\" to kernel",
+				policy_label));
+		attr->rta_len =
+			RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + len);
+		uctx = RTA_DATA(attr);
+		uctx->exttype = XFRMA_SEC_CTX;
+		uctx->len = sizeof(struct xfrm_user_sec_ctx) + len;
+		uctx->ctx_doi = 1;	/* ??? hardwired and nameless */
+		uctx->ctx_alg = 1;	/* ??? hardwired and nameless */
+		uctx->ctx_len = len;
+		memcpy(uctx + 1, policy_label, len);
+		req.n.nlmsg_len += attr->rta_len;
 	}
 #endif
 
@@ -919,16 +930,17 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	ok = netlink_policy(&req.n, enoent_ok, text_said);
 	switch (dir) {
 	case XFRM_POLICY_IN:
-		if (req.n.nlmsg_type == XFRM_MSG_DELPOLICY)
+		if (req.n.nlmsg_type == XFRM_MSG_DELPOLICY) {
 			req.u.id.dir = XFRM_POLICY_FWD;
-		else if (!ok)
+		} else if (!ok) {
 			break;
-		else if (proto_info[0].encapsulation !=
+		} else if (proto_info[0].encapsulation !=
 			ENCAPSULATION_MODE_TUNNEL &&
-			esatype != ET_INT)
+			esatype != ET_INT) {
 			break;
-		else
+		} else {
 			req.u.p.dir = XFRM_POLICY_FWD;
+		}
 		ok &= netlink_policy(&req.n, enoent_ok, text_said);
 		break;
 	}
@@ -948,7 +960,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_usersa_info p;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 	struct rtattr *attr;
 	const struct aead_alg *aead;
@@ -1052,6 +1064,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	req.p.replay_window = sa->replay_window > 32 ? 32 : sa->replay_window;
 	req.p.reqid = sa->reqid;
+
 	/* TODO expose limits to kernel_sa via config */
 	req.p.lft.soft_byte_limit = XFRM_INF;
 	req.p.lft.soft_packet_limit = XFRM_INF;
@@ -1063,10 +1076,9 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 
 	if (sa->authkeylen) {
-		const char *name;
+		const char *name = sparse_name(aalg_list, sa->authalg);
 
-		name = sparse_name(aalg_list, sa->authalg);
-		if (!name) {
+		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"NETKEY/XFRM: unknown authentication algorithm: %u",
 				sa->authalg);
@@ -1147,13 +1159,14 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		}
 	}
 
+	/* ??? why does IPCOMP trump aead and ESP?  Shouldn't all be bundled? */
+
 	aead = get_aead_alg(sa->encalg);
 	if (sa->esatype == ET_IPCOMP) {
 		struct xfrm_algo algo;
-		const char *name;
+		const char *name = sparse_name(calg_list, sa->encalg);
 
-		name = sparse_name(calg_list, sa->encalg);
-		if (!name) {
+		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown compression algorithm: %u",
 				sa->encalg);
@@ -1170,7 +1183,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-	} else if (aead) {
+	} else if (aead != NULL) {
 		struct xfrm_algo_aead algo;
 
 		strcpy(algo.alg_name, aead->name);
@@ -1188,10 +1201,9 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	} else if (sa->esatype == ET_ESP) {
 		struct xfrm_algo algo;
-		const char *name;
+		const char *name = sparse_name(ealg_list, sa->encalg);
 
-		name = sparse_name(ealg_list, sa->encalg);
-		if (!name) {
+		if (name == NULL) {
 			loglog(RC_LOG_SERIOUS,
 				"unknown encryption algorithm: %u",
 				sa->encalg);
@@ -1231,23 +1243,21 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 #ifdef HAVE_LABELED_IPSEC
 	if (sa->sec_ctx != NULL) {
+		size_t len = sa->sec_ctx->ctx.ctx_len;
 		struct xfrm_user_sec_ctx xuctx;
 
-		xuctx.len = sizeof(struct xfrm_user_sec_ctx) +
-			sa->sec_ctx->ctx_len;
+		xuctx.len = sizeof(struct xfrm_user_sec_ctx) + len;
 		xuctx.exttype = XFRMA_SEC_CTX;
-		xuctx.ctx_alg = 1;
-		xuctx.ctx_doi = 1;
-		xuctx.ctx_len = sa->sec_ctx->ctx_len;
+		xuctx.ctx_alg = 1;	/* ??? sa->sec_ctx.ctx_alg? */
+		xuctx.ctx_doi = 1;	/* ??? sa->sec_ctx.ctx_doi? */
+		xuctx.ctx_len = len;
 
 		attr->rta_type = XFRMA_SEC_CTX;
 		attr->rta_len = RTA_LENGTH(xuctx.len);
 
 		memcpy(RTA_DATA(attr), &xuctx, sizeof(xuctx));
-		memcpy((char *)RTA_DATA(
-				attr) + sizeof(xuctx),
-			sa->sec_ctx->sec_ctx_value,
-			sa->sec_ctx->ctx_len);
+		memcpy((char *)RTA_DATA(attr) + sizeof(xuctx),
+			sa->sec_ctx->sec_ctx_value, len);
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1274,7 +1284,7 @@ static bool netlink_del_sa(const struct kernel_sa *sa)
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_usersa_id id;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} req;
 
 	zero(&req);
@@ -1352,17 +1362,13 @@ static void netlink_acquire(struct nlmsghdr *n)
 	err_t ugh = NULL;
 
 #ifdef HAVE_LABELED_IPSEC
-	struct rtattr *attr;
-	int remaining;
-	struct xfrm_user_sec_ctx *xuctx = NULL;
-	char sec_context_value[MAX_SECCTX_LEN];
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
-	bool found_sec_ctx = FALSE;
+	struct xfrm_user_sec_ctx_ike uctx_space;
+#endif
 
 	DBG(DBG_KERNEL,
 		DBG_log("xfrm netlink msg len %lu",
 			(unsigned long) n->nlmsg_len));
-#endif
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*acquire))) {
 		libreswan_log(
@@ -1371,15 +1377,6 @@ static void netlink_acquire(struct nlmsghdr *n)
 			(unsigned long) sizeof(*acquire));
 		return;
 	}
-
-#ifdef HAVE_LABELED_IPSEC
-	DBG(DBG_KERNEL,
-		DBG_log("xfrm:nlmsghdr= %lu", sizeof(struct nlmsghdr)));
-	DBG(DBG_KERNEL,
-		DBG_log("xfrm:acquire= %lu",
-			sizeof(struct xfrm_user_acquire)));
-	DBG(DBG_KERNEL, DBG_log("xfrm:rtattr= %lu", sizeof(struct rtattr)));
-#endif
 
 	/*
 	 * WARNING: netlink only guarantees 32-bit alignment.
@@ -1405,85 +1402,86 @@ static void netlink_acquire(struct nlmsghdr *n)
 	transport_proto = acquire->sel.proto;
 
 #ifdef HAVE_LABELED_IPSEC
-	attr = (struct rtattr *)
+
+	/* Run through rtattributes looking for XFRMA_SEC_CTX */
+
+	struct rtattr *attr = (struct rtattr *)
 		((char*) NLMSG_DATA(n) +
 			NLMSG_ALIGN(sizeof(struct xfrm_user_acquire)));
-
-	DBG(DBG_KERNEL, DBG_log("rtattr len= %d", attr->rta_len));
-
-	if (attr->rta_type == XFRMA_TMPL) {
-		DBG(DBG_KERNEL, DBG_log("xfrm: found XFRMA_TMPL"));
-	} else {
-		DBG(DBG_KERNEL, DBG_log("xfrm: not found XFRMA_TMPL"));
-		if (attr->rta_type == XFRMA_SEC_CTX) {
-			DBG(DBG_KERNEL, DBG_log("xfrm: found XFRMA_SEC_CTX"));
-			found_sec_ctx = TRUE;
-		}
-	}
-
-	if (!found_sec_ctx) {
-		DBG(DBG_KERNEL,
-			DBG_log("xfrm: did not found XFRMA_SEC_CTX, trying next one"));
-		DBG(DBG_KERNEL, DBG_log("xfrm: rta->len=%d", attr->rta_len));
-
-		remaining = n->nlmsg_len -
+	size_t remaining = n->nlmsg_len -
 			NLMSG_SPACE(sizeof(struct xfrm_user_acquire));
-		attr = RTA_NEXT(attr, remaining);
 
+	while (remaining > 0) {
 		DBG(DBG_KERNEL,
-			DBG_log("xfrm: remaining=%d , rta->len = %d",
-				remaining, attr->rta_len));
-		if (attr->rta_type == XFRMA_SEC_CTX) {
+			DBG_log("xfrm acquire rtattribute type %u", attr->rta_type));
+		switch (attr->rta_type) {
+		case XFRMA_TMPL:
+		case XFRMA_POLICY_TYPE:
+			/* discard */
+			break;
+		case XFRMA_SEC_CTX:
+		{
+			struct xfrm_user_sec_ctx *xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
+			size_t len = xuctx->ctx_len;	/* length of text of label */
+
 			DBG(DBG_KERNEL,
-				DBG_log("xfrm: found XFRMA_SEC_CTX now"));
-			found_sec_ctx = TRUE;
-		} else {
-			if (attr->rta_type == XFRMA_POLICY_TYPE) {
-				DBG(DBG_KERNEL,
-					DBG_log("xfrm: found XFRMA_POLICY_TYPE"));
-			} else {
-				DBG(DBG_KERNEL,
-					DBG_log("xfrm: not found anything, seems wierd"));
-				DBG(DBG_KERNEL,
-					DBG_log("xfrm: not found sec ctx still, perhaps not a labeled ipsec connection"));
+				DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%zu",
+					xuctx->exttype, xuctx->len,
+					xuctx->ctx_doi, xuctx->ctx_alg,
+					len));
+
+			if (uctx != NULL) {
+				libreswan_log("Second Sec Ctx label in a single Acquire message; ignoring Acquire message");
+				return;				
 			}
-		}
-	}
 
-	if (found_sec_ctx) {
-		xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
-		DBG(DBG_KERNEL,
-			DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%d",
-				xuctx->exttype, xuctx->len,
-				xuctx->ctx_doi, xuctx->ctx_alg,
-				xuctx->ctx_len));
+			if (len > MAX_SECCTX_LEN) {
+				libreswan_log("Sec Ctx label of length %zu, longer than MAX_SECCTX_LEN; ignoring Acquire message",
+					len);
+				return;
+			}
 
-		if (xuctx->ctx_len <= MAX_SECCTX_LEN) {
-			memcpy(sec_context_value, (xuctx + 1), xuctx->ctx_len);
-
+			/* note: xuctx + 1 is tricky: first byte after header */
 			DBG(DBG_KERNEL,
-				DBG_log("xfrm: xuctx security context value: %s",
-					sec_context_value));
+				DBG_log("xfrm: xuctx security context value: %.*s",
+					xuctx->ctx_len,
+					(const char *) (xuctx + 1)));
 
-			uctx = alloc_thing(struct xfrm_user_sec_ctx_ike,
-					"struct xfrm_user_sec_ctx_ike");
-			uctx->len = xuctx->len;
-			uctx->exttype = xuctx->exttype;
-			uctx->ctx_alg = xuctx->ctx_alg;
-			uctx->ctx_doi = xuctx->ctx_doi;
-			uctx->ctx_len = xuctx->ctx_len;	/*Length includes '\0'*/
+			zero(&uctx_space);
+			uctx = &uctx_space;
 
 			memcpy(uctx->sec_ctx_value, (xuctx + 1),
 				xuctx->ctx_len);
-		} else {
-			DBG(DBG_KERNEL,
-				DBG_log("(should not reach here really) received security length=%d > MAX_SECCTX_LEN",
-					xuctx->ctx_len));
-			DBG(DBG_KERNEL, DBG_log("ignoring ACQUIRE messages"));
-			goto ignore_acquire;
-		}
-	}
 
+			if (len == 0 || uctx->sec_ctx_value[len-1] != '\0') {
+				if (len == MAX_SECCTX_LEN) {
+					libreswan_log("Sec Ctx label missing final NUL and too long to add; ignoring Acquire message");
+					return;
+				}
+				libreswan_log("Sec Ctx label missing final NUL; we're adding it");
+				uctx->sec_ctx_value[len] = '\0';
+				len++;
+			}
+
+			if (strlen(uctx->sec_ctx_value) + 1 != len) {
+				libreswan_log("Sec Ctx label contains embedded NUL; ignoring Acquire message");
+				return;
+			}
+
+			uctx->ctx.ctx_alg = xuctx->ctx_alg;
+			uctx->ctx.ctx_doi = xuctx->ctx_doi;
+			uctx->ctx.ctx_len = len;	/* Length includes '\0'*/
+
+			break;
+		}
+		default:
+			DBG(DBG_KERNEL,
+				DBG_log("ignoring unkndown xfrm acquire payload type %u",
+					attr->rta_type));
+			break;
+		}
+		attr = RTA_NEXT(attr, remaining);	/* updates remaining too */
+	}
 #endif
 
 	src_proto = dst_proto = acquire->sel.proto;
@@ -1505,12 +1503,6 @@ static void netlink_acquire(struct nlmsghdr *n)
 						uctx,
 #endif
 						"%acquire-netlink");
-
-#ifdef HAVE_LABELED_IPSEC
-	pfreeany(uctx);
-
-ignore_acquire:
-#endif
 
 	if (ugh != NULL)
 		libreswan_log(
@@ -1554,7 +1546,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_userpolicy_info pol;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 
 	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*upe))) {
@@ -1610,7 +1602,7 @@ static bool netlink_get(void)
 {
 	struct {
 		struct nlmsghdr n;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	ssize_t r;
 	struct sockaddr_nl addr;
@@ -1691,7 +1683,7 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 			struct nlmsgerr e;
 			struct xfrm_usersa_info sa;
 		} u;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 	static bool get_cpi_bug = FALSE;	/* sticky after failure */
 
@@ -2276,7 +2268,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_usersa_info info;
-		char data[1024];
+		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
 
 	zero(&req);

@@ -122,6 +122,8 @@ BSDKAME_LIBS=${LIBBSDPFKEY}
 endif
 
 
+PLUTOMINUSL+= -lm # for log2() for shannon_entropy()
+
 # the files are defined here so that TAGS: can catch them.
 #
 X509_DIST_OBJS=x509.o x509more.o x509chain.o
@@ -150,8 +152,8 @@ ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
-XAUTH_DIST_SRCS=xauth.c xauth.h addresspool.c addresspool.h
-XAUTH_DIST_OBJS=xauth.o addresspool.o
+XAUTH_DIST_SRCS=ikev1_xauth.c ikev1_xauth.h addresspool.c addresspool.h
+XAUTH_DIST_OBJS=ikev1_xauth.o addresspool.o
 XAUTH_OBJS=${XAUTH_DIST_OBJS}
 XAUTH_SRCS=${XAUTH_DIST_SRCS}
 ifneq ($(BUILDENV), darwin)
@@ -206,7 +208,7 @@ DEFINES = $(EXTRA_DEFINES) \
 	${EXTRA_CRYPTO_DEFS} \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	-DBUILDER=\"${BUILDER}\" \
-	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5\
+	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5 -DUSE_CAMELLIA \
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${CURL_DEFS}\
@@ -217,7 +219,7 @@ DEFINES = $(EXTRA_DEFINES) \
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
 LIBSPLUTO+=$(LIBRESWANLIB) $(LIBPLUTO)
-LIBSPLUTO+=${LIBSHA1} ${LIBMD5} $(LIBSHA2)
+LIBSPLUTO+=${LIBSHA1} ${LIBMD5} $(LIBSHA2) ${LIBAES_XCBC}
 LIBSPLUTO+=$(X509_LIBS) 
 LIBSPLUTO+=$(THREADS_LIBS)
 LIBSPLUTO+=${CURL_LIBS}

@@ -80,7 +80,7 @@
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 
 #include "vendor.h"
 #include "nat_traversal.h"
@@ -99,7 +99,7 @@ stf_status main_outI1(int whack_sock,
 		unsigned long try,
 		enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		, struct xfrm_user_sec_ctx_ike * uctx
+		, const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 	)
 {
@@ -573,6 +573,7 @@ bool encrypt_message(pb_stream *pbs, struct state *st)
 
 stf_status main_inI1_outR1(struct msg_digest *md)
 {
+	/* ??? this code looks a lot like the middle of ikev2parent_inI1outR1 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	struct state *st;
 	struct connection *c;
@@ -582,38 +583,22 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	int numvidtosend = 1; /* we always send DPD VID */
 
 	/* random source ports are handled by find_host_connection */
-	c = find_host_connection(&md->iface->ip_addr, pluto_port,
-				&md->sender,
-				md->sender_port, LEMPTY);
-
-	if (c != NULL && (c->policy & POLICY_IKEV1_DISABLE)) {
-		ipstr_buf b;
-
-		loglog(RC_LOG_SERIOUS, "discard matching conn %s for I1 from "
-			"%s:%u. has ikev2=insist", c->name,
-			ipstr(&md->iface->ip_addr, &b),
-			ntohs(portof(&md->iface->ip_addr)));
-		c = NULL;
-	}
+	c = find_host_connection(
+		&md->iface->ip_addr, pluto_port,
+		&md->sender, md->sender_port,
+		POLICY_IKEV1_ALLOW, POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 
 	if (c == NULL) {
-		pb_stream pre_sa_pbs = sa_pd->pbs;
-		lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs);
+		lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) |
+			POLICY_IKEV1_ALLOW;
 
-#if 0
 		/*
 		 * Other IKE clients, such as strongswan, send the XAUTH
 		 * VID even for connections they do not want to run XAUTH on.
 		 * We need to depend on the policy negotiation, not the VID.
+		 * So we ignore md->quirks.xauth_vid
 		 */
 
-		/*
-		 * If there is XAUTH VID, copy it to policies.
-		 */
-		if (md->quirks.xauth_vid)
-			policy |= POLICY_XAUTH;
-
-#endif
 		/*
 		 * See if a wildcarded connection can be found.
 		 * We cannot pick the right connection, so we're making a guess.
@@ -626,31 +611,12 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 * but Food Groups kind of assumes one.
 		 */
 		{
-			struct connection *d =
-				find_host_connection(&md->iface->ip_addr,
-						pluto_port,
-						(ip_address*)NULL,
-						md->sender_port, policy);
+			struct connection *d = find_host_connection(
+				&md->iface->ip_addr, pluto_port,
+				(ip_address *)NULL, md->sender_port,
+				policy, POLICY_XAUTH | POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 
-			for (; d != NULL; d = d->hp_next) {
-				if (d->policy & POLICY_IKEV1_DISABLE) {
-					ipstr_buf b;
-
-					DBG(DBG_CONTROL,DBG_log(
-						"discard matching conn %s for "
-						"I1 from %s:%u. %s%s %s has "
-						"ikev2=insist ", d->name,
-						ipstr(&md->iface->ip_addr, &b),
-						ntohs(portof(&md->iface->ip_addr)),
-						d->name,
-						(policy != LEMPTY) ?
-						" with policy=" : "",
-						(policy != LEMPTY) ?
-						bitnamesof(sa_policy_bit_names,
-							policy) : ""));
-					continue;
-				}
-
+			while (d != NULL) {
 				if (d->kind == CK_GROUP) {
 					/* ignore */
 				} else {
@@ -668,28 +634,29 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 					 * Opportunistic or Shunt:
 					 * pick tightest match
 					 */
-					if (addrinsubnet(&md->sender,
+					if (addrinsubnet(
+						&md->sender,
 						&d->spd.that.client) &&
-						(c == NULL ||
-						!subnetinsubnet(&c->spd.that.
-						client,
-						&d->spd.that.client)))
+					    (c == NULL ||
+					     !subnetinsubnet(
+						&c->spd.that.client,
+						&d->spd.that.client))) {
 						c = d;
+					}
 				}
+				d = find_next_host_connection(d->hp_next,
+					policy, POLICY_XAUTH | POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW);
 			}
 		}
 
 		if (c == NULL) {
 			ipstr_buf b;
 
-			loglog(RC_LOG_SERIOUS, "initial Main Mode message "
-				"received on %s:%u "
-				"but no connection has been authorized%s%s",
+			loglog(RC_LOG_SERIOUS,
+				"initial Main Mode message received on %s:%u but no connection has been authorized with policy %s",
 				ipstr(&md->iface->ip_addr, &b),
 				ntohs(portof(&md->iface->ip_addr)),
-				(policy != LEMPTY) ? " with policy=" : "",
-				(policy != LEMPTY) ?
-				bitnamesof(sa_policy_bit_names, policy) : "");
+				bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		} else if (c->kind != CK_TEMPLATE) {
@@ -730,6 +697,11 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 				DBG_log("local endpoint has virt (vnet/vhost) "
 					"set without wildcards - needs "
 					"instantiation"));
+			c = rw_instantiate(c, &md->sender, NULL, NULL);
+		}
+		if ((c->kind == CK_TEMPLATE) && c->spd.that.has_id_wildcards) {
+			DBG(DBG_CONTROL,
+				DBG_log("remote end has wildcard ID, needs instantiation"));
 			c = rw_instantiate(c, &md->sender, NULL, NULL);
 		}
 	}
@@ -827,7 +799,10 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
+		struct isakmp_sa r_sa;
+
+		zero(&r_sa);
+		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		/*
 		 * Almost guaranteed to send a VID, set the NEXT payload
@@ -913,36 +888,36 @@ stf_status main_inI1_outR1(struct msg_digest *md)
  *
  */
 
-static stf_status main_inR1_outI2_tail(struct ke_continuation *ke,
+static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 				struct pluto_crypto_req *r);
 
-/* this is a crypto_req_cont_func */
-static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
+static crypto_req_cont_func main_inR1_outI2_continue;	/* type assertion */
+
+static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *ke,
 				struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->ke_md;
+	struct msg_digest *md = ke->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR1_outI2_continue for #%lu: calculated ke+nonce, sending I2",
-			ke->ke_pcrc.pcrc_serialno));
+			ke->pcrc_serialno));
 
-	if (ke->ke_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (ke->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
-		release_any_md(&ke->ke_md);
+		release_any_md(&ke->pcrc_md);
 		return;
 	}
 
-	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->ke_md);
+	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -952,9 +927,9 @@ static void main_inR1_outI2_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = main_inR1_outI2_tail(ke, r);
 
-	passert(ke->ke_md != NULL);
-	complete_v1_state_transition(&ke->ke_md, e);
-	release_any_md(&ke->ke_md);
+	passert(ke->pcrc_md != NULL);
+	complete_v1_state_transition(&ke->pcrc_md, e);
+	release_any_md(&ke->pcrc_md);
 
 	reset_cur_state();
 }
@@ -977,15 +952,12 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 	set_nat_traversal(st, md);
 
 	{
-		struct ke_continuation *ke = alloc_thing(
-			struct ke_continuation,
-			"outI2 KE");
-		ke->ke_md = md;
+		struct pluto_crypto_req_cont *ke = new_pcrc(
+			main_inR1_outI2_continue, "outI2 KE",
+			st, md);
 
 		passert(!st->st_sec_in_use);
-		pcrc_init(&ke->ke_pcrc, main_inR1_outI2_continue);
-		set_suspended(st, md);
-		return build_ke_and_nonce(&ke->ke_pcrc, st, st->st_oakley.group,
+		return build_ke_and_nonce(ke, st->st_oakley.group,
 				st->st_import);
 	}
 }
@@ -1021,10 +993,10 @@ bool ship_KE(struct state *st,
  *
  * We must verify that the proposal received matches one we sent.
  */
-static stf_status main_inR1_outI2_tail(struct ke_continuation *ke,
+static stf_status main_inR1_outI2_tail(struct pluto_crypto_req_cont *ke,
 				struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->ke_md;
+	struct msg_digest *md = ke->pcrc_md;
 	struct state *const st = md->st;
 
 	/* Build output packet HDR;KE;Ni */
@@ -1102,36 +1074,36 @@ static stf_status main_inR1_outI2_tail(struct ke_continuation *ke,
  *	    [,<<Cert-I_b>Ke_i]
  *	    --> HDR, <Nr_b>PubKey_i, <KE_b>Ke_r, <IDr1_b>Ke_r
  */
-static stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
+static stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 				struct pluto_crypto_req *r);
 
-/* this is a crypto_req_cont_func */
-static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
+static crypto_req_cont_func main_inI2_outR2_continue;	/* type assertion */
+
+static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *ke,
 				struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->ke_md;
+	struct msg_digest *md = ke->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
-			ke->ke_pcrc.pcrc_serialno));
+			ke->pcrc_serialno));
 
-	if (ke->ke_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (ke->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
-		release_any_md(&ke->ke_md);
+		release_any_md(&ke->pcrc_md);
 		return;
 	}
 
-	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->ke_md);
+	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -1140,9 +1112,9 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *pcrc,
 	st->st_calculating = FALSE;
 	e = main_inI2_outR2_tail(ke, r);
 
-	passert(ke->ke_md != NULL);
-	complete_v1_state_transition(&ke->ke_md, e);
-	release_any_md(&ke->ke_md);
+	passert(ke->pcrc_md != NULL);
+	complete_v1_state_transition(&ke->pcrc_md, e);
+	release_any_md(&ke->pcrc_md);
 	reset_cur_state();
 }
 
@@ -1166,17 +1138,13 @@ stf_status main_inI2_outR2(struct msg_digest *md)
 	ikev1_natd_init(st, md);
 
 	{
-		struct ke_continuation *ke = alloc_thing(
-			struct ke_continuation,
-			"inI2_outR2 KE");
-
-		ke->ke_md = md;
-		set_suspended(st, md);
+		struct pluto_crypto_req_cont *ke = new_pcrc(
+			main_inI2_outR2_continue, "inI2_outR2 KE",
+			st, md);
 
 		passert(!st->st_sec_in_use);
-		pcrc_init(&ke->ke_pcrc, main_inI2_outR2_continue);
-		return build_ke_and_nonce(&ke->ke_pcrc, st,
-				st->st_oakley.group, st->st_import);
+		return build_ke_and_nonce(ke,
+			st->st_oakley.group, st->st_import);
 	}
 }
 
@@ -1185,24 +1153,24 @@ stf_status main_inI2_outR2(struct msg_digest *md)
  * the state that it is working for may not yet care about the result.
  * We are precomputing the DH.
  */
-/* this is a crypto_req_cont_func */
-static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
+static crypto_req_cont_func main_inI2_outR2_calcdone;	/* type assertion */
+
+static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *dh,
 				struct pluto_crypto_req *r)
 {
-	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
 	struct state *st;
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_calcdone for #%lu: calculate DH finished",
-			dh->dh_pcrc.pcrc_serialno));
+			dh->pcrc_serialno));
 
-	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (dh->pcrc_serialno == SOS_NOBODY) {
 		libreswan_log("state #%lu disappeared during crypto",
-			dh->dh_pcrc.pcrc_serialno);
+			dh->pcrc_serialno);
 		/* note: no md exists in this odd case */
 		return;
 	}
-	st = state_with_serialno(dh->dh_pcrc.pcrc_serialno);
+	st = state_with_serialno(dh->pcrc_serialno);
 
 	set_cur_state(st);
 
@@ -1226,10 +1194,10 @@ static void main_inI2_outR2_calcdone(struct pluto_crypto_req_cont *pcrc,
 	reset_cur_state();
 }
 
-stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
+stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 				struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->ke_md;
+	struct msg_digest *md = ke->pcrc_md;
 	struct state *st = md->st;
 
 	/* send CR if auth is RSA and no preloaded RSA public key exists*/
@@ -1294,9 +1262,9 @@ stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
 						&md->rbody, ISAKMP_NEXT_NONE))
 				return STF_INTERNAL_ERROR;
 		} else {
-			generalName_t *ca = NULL;
+			generalName_t *ca = collect_rw_ca_candidates(md);
 
-			if (collect_rw_ca_candidates(md, &ca)) {
+			if (ca != NULL) {
 				generalName_t *gn;
 
 				for (gn = ca; gn != NULL; gn = gn->next) {
@@ -1339,25 +1307,15 @@ stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
 	 * is a retransmit, we keep only the last packet.
 	 *
 	 * Also, note that this is not a suspended state, since we are
-	 * actually just doing work in the background.
-	 *
+	 * actually just doing work in the background.  md will not be
+	 * retained.
 	 */
 	{
-		/*
-		 * Looks like we missed perform_dh() declared at
-		 * programs/pluto/pluto_crypt.h as external and implemented
-		 * nowhere.
-		 * Following code regarding dh_continuation allocation seems
-		 * useless as it's never used. At least, we should free it.
-		 */
-		struct dh_continuation *dh = alloc_thing(
-			struct dh_continuation,
-			"main_inI2_outR2_tail");
+		struct pluto_crypto_req_cont *dh = new_pcrc(
+			main_inI2_outR2_calcdone, "main_inI2_outR2_tail",
+			st, NULL);
 		stf_status e;
 
-		dh->dh_md = NULL;
-		dh->dh_pcrc.pcrc_serialno = st->st_serialno;
-		pcrc_init(&dh->dh_pcrc, main_inI2_outR2_calcdone);
 		passert(st->st_suspended_md == NULL);
 
 		DBG(DBG_CONTROLMORE,
@@ -1376,8 +1334,7 @@ stf_status main_inI2_outR2_tail(struct ke_continuation *ke,
 
 		if (e == STF_FAIL) {
 			loglog(RC_LOG_SERIOUS,
-				"failed to start async DH calculation, "
-				"stf=%s\n",
+				"failed to start async DH calculation, stf=%s",
 				enum_name(&stfstatus_name, e));
 			return e;
 		}
@@ -1680,33 +1637,33 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	return STF_OK;
 }
 
-/* this is a crypto_req_cont_func */
-static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
+static crypto_req_cont_func main_inR2_outI3_cryptotail;	/* type assertion */
+
+static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *dh,
 				struct pluto_crypto_req *r)
 {
-	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->dh_md;
+	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inR2_outI3_cryptotail for #%lu: calculated DH, sending R1",
-			dh->dh_pcrc.pcrc_serialno));
+			dh->pcrc_serialno));
 
-	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (dh->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 			"%s: Request was disconnected from state",
 			__FUNCTION__);
-		release_any_md(&dh->dh_md);
+		release_any_md(&dh->pcrc_md);
 		return;
 	}
 
-	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == dh->dh_md);
+	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -1715,17 +1672,17 @@ static void main_inR2_outI3_cryptotail(struct pluto_crypto_req_cont *pcrc,
 
 	e = main_inR2_outI3_continue(md, r);
 
-	passert(dh->dh_md != NULL);	/* ??? how would this fail? */
-	if (dh->dh_md != NULL) {
-		complete_v1_state_transition(&dh->dh_md, e);
-		release_any_md(&dh->dh_md);
+	passert(dh->pcrc_md != NULL);	/* ??? how would this fail? */
+	if (dh->pcrc_md != NULL) {
+		complete_v1_state_transition(&dh->pcrc_md, e);
+		release_any_md(&dh->pcrc_md);
 	}
 	reset_cur_state();
 }
 
 stf_status main_inR2_outI3(struct msg_digest *md)
 {
-	struct dh_continuation *dh;
+	struct pluto_crypto_req_cont *dh;
 	struct state *const st = md->st;
 
 	/* KE in */
@@ -1736,12 +1693,8 @@ stf_status main_inR2_outI3(struct msg_digest *md)
 	/* Nr in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_nr, "Nr"));
 
-	dh = alloc_thing(struct dh_continuation, "aggr outR1 DH");
-	dh->dh_md = md;
-	set_suspended(st, md);
-	dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-
-	pcrc_init(&dh->dh_pcrc, main_inR2_outI3_cryptotail);
+	dh = new_pcrc(main_inR2_outI3_cryptotail, "aggr outR1 DH",
+		st, md);
 	return start_dh_secretiv(dh, st,
 				st->st_import,
 				O_INITIATOR,
@@ -2197,6 +2150,10 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	}
 
 	ISAKMP_SA_established(st->st_connection, st->st_serialno);
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
+
 
 	return STF_OK;
 }
@@ -2266,6 +2223,9 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 	}
 
 	ISAKMP_SA_established(st->st_connection, st->st_serialno);
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
 
 	passert((st->st_policy & POLICY_PFS) == 0 ||
 		st->st_pfs_group != NULL);
@@ -2544,8 +2504,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		if (!out_struct(&isan, &isakmp_notification_desc,
 					&r_hdr_pbs, &not_pbs)) {
 			libreswan_log(
-				"failed to build notification in send_"
-				"notification\n");
+				"failed to build notification in send_notification");
 			return;
 		}
 
@@ -2855,19 +2814,26 @@ bool ikev1_delete_out(struct state *st)
  * @param st State structure
  * @param md Message Digest
  * @param p Payload digest
+ *
+ * returns TRUE to indicate st needs to be deleted.
+ *	We dare not do that ourselves because st is still in use.
+ *	accept_self_delete must be called to do this
+ *	at a more appropriate time.
  */
-void accept_delete(struct state *st, struct msg_digest *md,
+bool accept_delete(struct msg_digest *md,
 		struct payload_digest *p)
 {
+	struct state *st = md->st;
 	struct isakmp_delete *d = &(p->payload.delete);
 	size_t sizespi;
 	int i;
+	bool self_delete = FALSE;
 
 	/* We only listen to encrypted notifications */
 	if (!md->encrypted) {
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: not encrypted");
-		return;
+		return self_delete;
 	}
 
 	/* If there is no SA related to this request, but it was encrypted */
@@ -2875,12 +2841,12 @@ void accept_delete(struct state *st, struct msg_digest *md,
 		/* can't happen (if msg is encrypt), but just to be sure */
 		loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: "
 			"ISAKMP SA not established");
-		return;
+		return self_delete;
 	}
 
 	if (d->isad_nospi == 0) {
 		loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: no SPI");
-		return;
+		return self_delete;
 	}
 
 	switch (d->isad_protoid) {
@@ -2895,13 +2861,13 @@ void accept_delete(struct state *st, struct msg_digest *md,
 
 	case PROTO_IPCOMP:
 		/* nothing interesting to delete */
-		return;
+		return self_delete;
 
 	default:
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: unknown Protocol ID (%s)",
 			enum_show(&protocol_names, d->isad_protoid));
-		return;
+		return self_delete;
 	}
 
 	if (d->isad_spisize != sizespi) {
@@ -2909,13 +2875,13 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			"ignoring Delete SA payload: bad SPI size (%d) for %s",
 			d->isad_spisize,
 			enum_show(&protocol_names, d->isad_protoid));
-		return;
+		return self_delete;
 	}
 
 	if (pbs_left(&p->pbs) != d->isad_nospi * sizespi) {
 		loglog(RC_LOG_SERIOUS,
 			"ignoring Delete SA payload: invalid payload size");
-		return;
+		return self_delete;
 	}
 
 	for (i = 0; i < d->isad_nospi; i++) {
@@ -2928,10 +2894,10 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			struct state *dst;
 
 			if (!in_raw(icookie, COOKIE_SIZE, &p->pbs, "iCookie"))
-				return;
+				return self_delete;
 
 			if (!in_raw(rcookie, COOKIE_SIZE, &p->pbs, "rCookie"))
-				return;
+				return self_delete;
 
 			dst = find_state_ikev1(icookie, rcookie,
 					v1_MAINMODE_MSGID);
@@ -2946,15 +2912,20 @@ void accept_delete(struct state *st, struct msg_digest *md,
 				 * identities
 				 */
 				loglog(RC_LOG_SERIOUS, "ignoring Delete SA payload: ISAKMP SA used to convey Delete has different IDs from ISAKMP SA it deletes");
+			} else if (dst == st) {
+				/*
+				 * remember this for later:
+				 * we need st to do any remaining deletes
+				 */
+				self_delete = TRUE;
 			} else {
+				/* note: this code is cloned for handling self_delete */
 				loglog(RC_LOG_SERIOUS, "received Delete SA payload: deleting ISAKMP State #%lu",
 					dst->st_serialno);
 				if (nat_traversal_enabled)
 					nat_traversal_change_port_lookup(md,
 									dst);
 				delete_state(dst);
-				if (dst == st)
-					md->st = st = NULL;
 			}
 		} else {
 			/*
@@ -2965,7 +2936,7 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			struct state *dst;
 
 			if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
-				return;
+				return self_delete;
 
 			dst = find_phase2_state_to_delete(st,
 							d->isad_protoid,
@@ -3047,4 +3018,20 @@ void accept_delete(struct state *st, struct msg_digest *md,
 			}
 		}
 	}
+
+	return self_delete;
+}
+
+/* now it is safe to delete our sponsor */
+void accept_self_delete(struct msg_digest *md)
+{
+	struct state *st = md->st;
+
+	/* note: this code is cloned from handling ISAKMP non-self_delete */
+	loglog(RC_LOG_SERIOUS, "received Delete SA payload: self-deleting ISAKMP State #%lu",
+		st->st_serialno);
+	if (nat_traversal_enabled)
+		nat_traversal_change_port_lookup(md, st);
+	delete_state(st);
+	md->st = st = NULL;
 }

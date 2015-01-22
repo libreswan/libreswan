@@ -878,6 +878,30 @@ static field_desc ikev2id_fields[] = {
 struct_desc ikev2_id_desc = { "IKEv2 Identification Payload",
 			      ikev2id_fields, sizeof(struct ikev2_id) };
 
+static field_desc ikev2cp_fields[] = {
+	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
+	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2_cfg_type", &ikev2_cp_type_names },
+	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
+	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2_cp_desc = { "IKEv2 Configuration Payload",
+			      ikev2cp_fields, sizeof(struct ikev2_cp) };
+
+static field_desc ikev2_cp_attrbute_fields[] = {
+	{ ft_enum, 16 / BITS_PER_BYTE, "Attribute Type",
+		&ikev2_cp_attribute_type_names },
+	{ ft_lv, 16 / BITS_PER_BYTE, "length/value", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2_cp_attribute_desc = { "IKEv2 Configuration Payload Attribute",
+				       ikev2_cp_attrbute_fields,
+				       sizeof(struct ikev2_cp_attribute) };
+
 /* section 3.6
  * The Certificate Payload is defined as follows:
  *
@@ -1224,7 +1248,43 @@ static struct_desc *const payload_descs[] = {
 	&ikev2_ts_desc,			/* 44 ISAKMP_NEXT_v2TSi */
 	&ikev2_ts_desc,			/* 45 ISAKMP_NEXT_v2TSr */
 	&ikev2_e_desc,                  /* 46 ISAKMP_NEXT_v2E */
+	&ikev2_cp_desc,			/* 57 ISAKMP_NEXT_v2CP */
 };
+
+static field_desc suggested_group_fields[] = {
+	{ ft_enum, 16 / BITS_PER_BYTE, "suggested DH Group", &oakley_group_names },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc suggested_group_desc = {
+	"Suggested Group",
+	suggested_group_fields,
+	sizeof(struct suggested_group)
+};
+
+#ifdef HAVE_LABELED_IPSEC
+
+/*
+ * Undocumented Security Context for Labeled IPSec
+ *
+ * See struct sec_ctx in state.h
+ */
+#include "labeled_ipsec.h"	/* for struct sec_ctx */
+
+static field_desc sec_ctx_fields[] = {
+	{ ft_nat,  8 / BITS_PER_BYTE, "DOI", NULL },
+	{ ft_nat,  8 / BITS_PER_BYTE, "Alg", NULL },
+	{ ft_nat, 16 / BITS_PER_BYTE, "length", NULL },	/* not ft_len */
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc sec_ctx_desc = {
+	"Label Security Context",
+	sec_ctx_fields,
+	sizeof(struct sec_ctx)
+};
+
+#endif
 
 const struct_desc *payload_desc(unsigned p)
 {
@@ -1690,13 +1750,33 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 #endif
 			switch (fp->field_type) {
 			case ft_zig: /* should be zero, so ensure it is */
+				memset(cur, 0, i);
 				inp += i;
-				for (; i != 0; i--)
-					*cur++ = '\0';
+				cur += i;
 				break;
-			case ft_nat:            /* natural number (may be 0) */
+
 			case ft_len:            /* length of this struct and any following crud */
 			case ft_lv:             /* length/value field of attribute */
+				if (!immediate) {
+					/* We can't check the length because it must
+					 * be filled in after variable part is supplied.
+					 * We do record where this is so that it can be
+					 * filled in by a subsequent close_output_pbs().
+					 */
+					passert(obj.lenfld == NULL);    /* only one ft_len allowed */
+					obj.lenfld = cur;
+					obj.lenfld_desc = fp;
+
+					/* fill with crap so failure to overwrite will be noticed */
+					memset(cur, 0xFA, i);
+
+					inp += i;
+					cur += i;
+					break;
+				}
+				/* immediate form is just like a number */
+				/* FALL THROUGH */
+			case ft_nat:            /* natural number (may be 0) */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
@@ -1704,7 +1784,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
 			{
-				u_int32_t n = 0;
+				u_int32_t n;
 
 				switch (i) {
 				case 8 / BITS_PER_BYTE:
@@ -1721,20 +1801,6 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				}
 
 				switch (fp->field_type) {
-				case ft_len:                            /* length of this struct and any following crud */
-				case ft_lv:                             /* length/value field of attribute */
-					if (immediate)
-						break;                  /* not a length */
-					/* We can't check the length because it will likely
-					 * be filled in after variable part is supplied.
-					 * We do record where this is so that it can be
-					 * filled in by a subsequent close_output_pbs().
-					 */
-					passert(obj.lenfld == NULL);    /* only one ft_len allowed */
-					obj.lenfld = cur;
-					obj.lenfld_desc = fp;
-					break;
-
 				case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
 					if ((n & ISAKMP_ATTR_AF_MASK) ==
 					    ISAKMP_ATTR_AF_TV)
@@ -1776,6 +1842,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					break;
 				}
 
+				/* emit i low-order bytes of n in network order */
 				while (i-- != 0) {
 					cur[i] = (u_int8_t)n;
 					n >>= BITS_PER_BYTE;
@@ -1888,6 +1955,10 @@ bool out_generic_raw(u_int8_t np, struct_desc *sd,
 
 bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 {
+	/*
+	 * clang 3.4: warning: The left operand of '-' [in pbs_left] is a garbage value
+	 * This diagnostic seems wrong.
+	 */
 	if (pbs_left(outs) < len) {
 		loglog(RC_LOG_SERIOUS,
 		       "not enough room left to place %lu bytes of %s in %s",

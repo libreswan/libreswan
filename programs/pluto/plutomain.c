@@ -82,6 +82,9 @@
 
 #include "nat_traversal.h"
 
+#include "cbc_test_vectors.h"
+#include "ctr_test_vectors.h"
+
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"
 #endif
@@ -99,10 +102,6 @@
 # include "security_selinux.h"
 #endif
 
-#ifdef USE_LINUX_AUDIT
-# include <libaudit.h>
-#endif
-
 static const char *pluto_name;	/* name (path) we were invoked with */
 
 static const char *ctlbase = "/var/run/pluto";
@@ -112,6 +111,7 @@ static bool fork_desired = TRUE;
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
+static int pluto_nss_seedbits;
 static int nhelpers = -1;
 
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
@@ -213,7 +213,7 @@ static int create_lock(void)
 			fprintf(stderr,
 				"pluto: FATAL: unable to create lock dir: \"%s\": %s\n",
 				ctlbase, strerror(errno));
-			exit_pluto(10);
+			exit_pluto(PLUTO_EXIT_LOCK_FAIL);
 		}
 	}
 
@@ -232,7 +232,7 @@ static int create_lock(void)
 						"pluto: FATAL: lock file \"%s\" already exists and could not be removed (%d %s)\n",
 						pluto_lock, errno,
 						strerror(errno));
-					exit_pluto(10);
+					exit_pluto(PLUTO_EXIT_LOCK_FAIL);
 				} else {
 					/*
 					 * lock file removed,
@@ -244,13 +244,13 @@ static int create_lock(void)
 				fprintf(stderr,
 					"pluto: FATAL: lock file \"%s\" already exists\n",
 					pluto_lock);
-				exit_pluto(10);
+				exit_pluto(PLUTO_EXIT_LOCK_FAIL);
 			}
 		} else {
 			fprintf(stderr,
 				"pluto: FATAL: unable to create lock file \"%s\" (%d %s)\n",
 				pluto_lock, errno, strerror(errno));
-			exit_pluto(1);
+			exit_pluto(PLUTO_EXIT_LOCK_FAIL);
 		}
 	}
 	pluto_lock_created = TRUE;
@@ -315,6 +315,49 @@ static void set_cfg_string(char **target, char *value)
 	*target = strdup(value);
 }
 
+/*
+ * This function MUST NOT be used for anything else!
+ * It is used to seed the NSS PRNG based on --seedbits pluto argument
+ * or the seedbits= * config setup option in ipsec.conf.
+ * Everything else that needs random MUST use get_rnd_bytes()
+ * This function MUST NOT be changed to use /dev/urandom.
+ */
+static void get_bsi_random(size_t nbytes, unsigned char *buf)
+{
+	size_t ndone;
+	int dev;
+	ssize_t got;
+	const char *device = "/dev/random";
+
+	dev = open(device, 0);
+	if (dev < 0) {
+		loglog(RC_LOG_SERIOUS, "could not open %s (%s)\n",
+			device, strerror(errno));
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+	}
+
+	ndone = 0;
+		DBG(DBG_CONTROL,DBG_log("need %d bits random for extra seeding of the NSS PRNG",
+			(int) nbytes * BITS_PER_BYTE));
+
+	while (ndone < nbytes) {
+		got = read(dev, buf + ndone, nbytes - ndone);
+		if (got < 0) {
+			loglog(RC_LOG_SERIOUS,"read error on %s (%s)\n",
+				device, strerror(errno));
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		}
+		if (got == 0) {
+			loglog(RC_LOG_SERIOUS,"EOF on %s!?!\n",  device);
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		}
+		ndone += got;
+	}
+	close(dev);
+	DBG(DBG_CONTROL,DBG_log("read %ld bytes from /dev/random for NSS PRNG",
+		nbytes));
+}
+
 static void pluto_init_nss(char *confddir)
 {
 	SECStatus nss_init_status;
@@ -324,10 +367,27 @@ static void pluto_init_nss(char *confddir)
 	if (nss_init_status != SECSuccess) {
 		loglog(RC_LOG_SERIOUS, "FATAL: NSS readonly initialization (\"%s\") failed (err %d)",
 			confddir, PR_GetError());
-		exit_pluto(10);
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	} else {
 		libreswan_log("NSS Initialized");
 		PK11_SetPasswordFunc(getNSSPassword);
+	}
+
+	/*
+	 * This exists purely to make the BSI happy.
+	 * We do not infliect this on other users
+	 */
+	if (pluto_nss_seedbits != 0) {
+		SECStatus rv;
+		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
+		unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
+
+		get_bsi_random(seedbytes, buf); /* much TLA, very blocking */
+		rv = PK11_RandomUpdate(buf, seedbytes);
+		libreswan_log("seeded %d bytes into the NSS PRNG", seedbytes);
+		passert(rv == SECSuccess);
+		zero(&buf);
+		pfree(buf);
 	}
 }
 
@@ -344,7 +404,18 @@ bool force_busy = FALSE;
 enum kernel_interface kern_interface = USE_NETKEY;	/* new default */
 
 #ifdef HAVE_LABELED_IPSEC
-u_int16_t secctx_attr_value = SECCTX;
+/*
+ * Attribute Type "constant" for Security Context
+ *
+ * ??? NOT A CONSTANT!
+ * Originally, we assigned the value 10, but that properly belongs to ECN_TUNNEL.
+ * We then assigned 32001 which is in the private range RFC 2407.
+ * Unfortunately, we feel we have to support 10 as an option for backward
+ * compatibility.
+ * This variable specifies (globally!!) which we support: 10 or 32001.
+ * ??? surely that makes migration to 32001 all or nothing.
+ */
+u_int16_t secctx_attr_type = SECCTX;
 #endif
 
 /*
@@ -368,7 +439,7 @@ u_int16_t secctx_attr_value = SECCTX;
  *
  * val values free due to removal of options: '1', '3', '4', 'G'
  */
- 
+
 #define DBG_OFFSET 256
 static const struct option long_opts[] = {
 	/* name, has_arg, flag, val */
@@ -418,9 +489,12 @@ static const struct option long_opts[] = {
 	{ "virtual_private\0_", required_argument, NULL, '6' },	/* _ */
 	{ "virtual-private\0<network_list>", required_argument, NULL, '6' },
 	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
+	{ "seedbits\0<number>", required_argument, NULL, 'c' },
 #ifdef HAVE_LABELED_IPSEC
-	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* _ */
-	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },
+	/* ??? really an attribute type, not a value */
+	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* obsolete name; _ */
+	{ "secctx-attr-value\0<number>", required_argument, NULL, 'w' },	/* obsolete name */
+	{ "secctx-attr-type\0<number>", required_argument, NULL, 'w' },
 #endif
 	{ "vendorid\0<vendorid>", required_argument, NULL, 'V' },
 
@@ -527,8 +601,32 @@ static void usage(void)
 	exit(0);
 }
 
+
+#if 0
+/*
+ * XXX: Can't use this call to get encrypt_desc struct encrypt_desc
+ */
+extern struct encrypt_desc algo_aes_cbc;
+extern struct encrypt_desc algo_camellia_cbc;
+extern struct encrypt_desc algo_aes_ctr;
+#endif
+
 int main(int argc, char **argv)
 {
+#if 0
+	NSS_NoDB_Init(".");
+	if (!test_aes_cbc(&algo_aes_cbc)) {
+		printf("aes-cbc failed\n");
+	}
+	if (!test_camellia_cbc(&algo_camellia_cbc)) {
+		printf("camellia-cbc failed\n");
+	}
+	if (!test_aes_ctr(&algo_aes_ctr)) {
+		printf("aes-ctr failed\n");
+	}
+	exit(0);
+#endif
+
 	int lockfd;
 
 	/*
@@ -566,9 +664,6 @@ int main(int argc, char **argv)
 	char *virtual_private = NULL;
 
 	libreswan_passert_fail = passert_fail;
-
-	if (getenv("PLUTO_WAIT_FOR_GDB"))
-		sleep(120);
 
 	/* handle arguments */
 	for (;; ) {
@@ -669,9 +764,17 @@ int main(int argc, char **argv)
 				nhelpers = u;
 			}
 			continue;
+		case 'c':	/* --seedbits */
+			pluto_nss_seedbits = atoi(optarg);
+			if (pluto_nss_seedbits == 0) {
+				printf("pluto: seedbits must be an integer > 0");
+				/* not exit_pluto because we are not initialized yet */
+				exit(PLUTO_EXIT_NSS_FAIL);
+			}
+			continue;
 
 #ifdef HAVE_LABELED_IPSEC
-		case 'w':	/* --secctx-attr-value */
+		case 'w':	/* --secctx-attr-type */
 			ugh = ttoulb(optarg, 0, 0, 0xFFFF, &u);
 			if (ugh != NULL)
 				break;
@@ -679,7 +782,7 @@ int main(int argc, char **argv)
 				ugh = "must be a positive 32001 (default) or 10 (for backward compatibility)";
 				break;
 			}
-			secctx_attr_value = u;
+			secctx_attr_type = u;
 			continue;
 #endif
 
@@ -946,6 +1049,7 @@ int main(int argc, char **argv)
 				}
 			}
 
+			pluto_nss_seedbits = cfg->setup.options[KBF_SEEDBITS];
 			pluto_nat_port =
 				cfg->setup.options[KBF_NATIKEPORT];
 			keep_alive = cfg->setup.options[KBF_KEEPALIVE];
@@ -955,7 +1059,7 @@ int main(int argc, char **argv)
 
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
 #ifdef HAVE_LABELED_IPSEC
-			secctx_attr_value = cfg->setup.options[KBF_SECCTX];
+			secctx_attr_type = cfg->setup.options[KBF_SECCTX];
 #endif
 			base_debugging = cfg->setup.options[KBF_PLUTODEBUG];
 
@@ -1057,7 +1161,7 @@ int main(int argc, char **argv)
 
 		if (ugh != NULL) {
 			fprintf(stderr, "pluto: FATAL: %s", ugh);
-			exit_pluto(1);
+			exit_pluto(PLUTO_EXIT_SOCKET_FAIL);
 		}
 	}
 
@@ -1071,7 +1175,7 @@ int main(int argc, char **argv)
 
 				fprintf(stderr, "pluto: FATAL: fork failed (%d %s)\n",
 					errno, strerror(e));
-				exit_pluto(1);
+				exit_pluto(PLUTO_EXIT_FORK_FAIL);
 			}
 
 			if (pid != 0) {
@@ -1091,7 +1195,7 @@ int main(int argc, char **argv)
 			fprintf(stderr,
 				"FATAL: setsid() failed in main(). Errno %d: %s\n",
 				errno, strerror(e));
-			exit_pluto(1);
+			exit_pluto(PLUTO_EXIT_FAIL);
 		}
 	} else {
 		/* no daemon fork: we have to fill in lock file */
@@ -1180,7 +1284,7 @@ int main(int argc, char **argv)
 
 	if (fips_mode == -1) {
 		loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
-		exit_pluto(10);
+		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 	}
 
 	if (fips_product == 1)
@@ -1196,7 +1300,7 @@ int main(int argc, char **argv)
 		 */
 		if (fips_product && fips_kernel) {
 			loglog(RC_LOG_SERIOUS, "ABORT: FIPS product and kernel in FIPS mode");
-			exit_pluto(10);
+			exit_pluto(PLUTO_EXIT_FIPS_FAIL);
 		} else if (fips_product) {
 			libreswan_log("FIPS: FIPS product but kernel mode disabled - continuing");
 		} else if (fips_kernel) {
@@ -1220,32 +1324,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef USE_LINUX_AUDIT
-	libreswan_log("Linux audit support [enabled]");
-	/* test and log if audit is enabled on the system */
-	int audit_fd, rc;
-	audit_fd = audit_open();
-	if (audit_fd < 0) {
-		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
-			errno == EAFNOSUPPORT) {
-			loglog(RC_LOG_SERIOUS,
-				"Warning: kernel has no audit support");
-		} else {
-			loglog(RC_LOG_SERIOUS,
-				"FATAL (SOON): audit_open() failed : %s",
-				strerror(errno));
-			/* temp disabled exit_pluto(10); */
-		}
-	}
-	rc = audit_log_acct_message(audit_fd, AUDIT_USER_START, NULL,
-				"starting pluto daemon", NULL, -1, NULL,
-				NULL, NULL, 1);
-	close(audit_fd);
-	if (rc < 0) {
-		loglog(RC_LOG_SERIOUS,
-			"FATAL: audit_log_acct_message failed: %s",
-			strerror(errno));
-		exit_pluto(10);
-	}
+	linux_audit_init();
 #else
 	libreswan_log("Linux audit support [disabled]");
 #endif
@@ -1255,7 +1334,7 @@ int main(int argc, char **argv)
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			vc, compile_time_interop_options, getpid());
 
-		if (vc[2] == 'g' && vc[3] == 'i' && vc[4] == 't') {
+		if (startswith(&vc[2], "git")) {
 			/*
 			 * when people build RPMs from GIT, make sure they
 			 * get blamed appropriately, and that we get some way
@@ -1382,7 +1461,6 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 	init_avc();
 #endif
-
 	daily_log_event();
 	call_server();
 	return -1;	/* Shouldn't ever reach this */
@@ -1430,9 +1508,8 @@ void exit_pluto(int status)
 	free_pluto_main();	/* our static chars */
 
 	/* report memory leaks now, after all free_* calls */
-	if(leak_detective)
+	if (leak_detective)
 		report_leaks();
-
 	close_log();	/* close the logfiles */
 	exit(status);	/* exit, with our error code */
 }
@@ -1472,8 +1549,9 @@ void show_setup_plutomain()
 		pluto_listen ? pluto_listen : "<any>");
 
 #ifdef HAVE_LABELED_IPSEC
-	whack_log(RC_COMMENT, "secctx-attr-value=%d", secctx_attr_value);
+	whack_log(RC_COMMENT, "secctx-attr-type=%d", secctx_attr_type);
 #else
-	whack_log(RC_COMMENT, "secctx-attr-value=<unsupported>");
+	whack_log(RC_COMMENT, "secctx-attr-type=<unsupported>");
 #endif
 }
+

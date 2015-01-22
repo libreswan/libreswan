@@ -78,12 +78,12 @@
 
 /* returns 0 on success */
 int pfkey_sa_process(struct sadb_ext *pfkey_ext,
-		     struct pfkey_extracted_data* extr)
+		     struct pfkey_extracted_data *extr)
 {
 	struct k_sadb_sa *k_pfkey_sa = (struct k_sadb_sa *)pfkey_ext;
 	struct sadb_sa *pfkey_sa = (struct sadb_sa *)pfkey_ext;
 	int error = 0;
-	struct ipsec_sa* ipsp;
+	struct ipsec_sa *ipsp;
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_sa_process: .\n");
@@ -175,7 +175,7 @@ errlab:
 }
 
 int pfkey_lifetime_process(struct sadb_ext *pfkey_ext,
-			   struct pfkey_extracted_data* extr)
+			   struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct sadb_lifetime *pfkey_lifetime =
@@ -242,7 +242,7 @@ errlab:
 }
 
 int pfkey_address_process(struct sadb_ext *pfkey_ext,
-			  struct pfkey_extracted_data* extr)
+			  struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	int saddr_len = 0;
@@ -250,9 +250,9 @@ int pfkey_address_process(struct sadb_ext *pfkey_ext,
 	unsigned char **sap;
 	unsigned short * portp = 0;
 	struct sadb_address *pfkey_address = (struct sadb_address *)pfkey_ext;
-	struct sockaddr* s = (struct sockaddr*)
+	struct sockaddr *s = (struct sockaddr*)
 		((char*)pfkey_address + sizeof(*pfkey_address));
-	struct ipsec_sa* ipsp;
+	struct ipsec_sa *ipsp;
 
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_address_process:\n");
@@ -543,7 +543,7 @@ errlab:
 }
 
 int pfkey_key_process(struct sadb_ext *pfkey_ext,
-		      struct pfkey_extracted_data* extr)
+		      struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct sadb_key *pfkey_key = (struct sadb_key *)pfkey_ext;
@@ -609,7 +609,7 @@ errlab:
 }
 
 int pfkey_ident_process(struct sadb_ext *pfkey_ext,
-			struct pfkey_extracted_data* extr)
+			struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct sadb_ident *pfkey_ident = (struct sadb_ident *)pfkey_ext;
@@ -678,7 +678,7 @@ errlab:
 }
 
 int pfkey_sens_process(struct sadb_ext *pfkey_ext,
-		       struct pfkey_extracted_data* extr)
+		       struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 
@@ -692,7 +692,7 @@ errlab:
 }
 
 int pfkey_prop_process(struct sadb_ext *pfkey_ext,
-		       struct pfkey_extracted_data* extr)
+		       struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 
@@ -707,7 +707,7 @@ errlab:
 }
 
 int pfkey_supported_process(struct sadb_ext *pfkey_ext,
-			    struct pfkey_extracted_data* extr)
+			    struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 
@@ -722,7 +722,7 @@ errlab:
 }
 
 int pfkey_spirange_process(struct sadb_ext *pfkey_ext,
-			   struct pfkey_extracted_data* extr)
+			   struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 
@@ -733,7 +733,7 @@ int pfkey_spirange_process(struct sadb_ext *pfkey_ext,
 }
 
 int pfkey_x_kmprivate_process(struct sadb_ext *pfkey_ext,
-			      struct pfkey_extracted_data* extr)
+			      struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 
@@ -748,7 +748,7 @@ errlab:
 }
 
 int pfkey_x_satype_process(struct sadb_ext *pfkey_ext,
-			   struct pfkey_extracted_data* extr)
+			   struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct sadb_x_satype *pfkey_x_satype =
@@ -788,7 +788,7 @@ errlab:
 }
 
 int pfkey_x_nat_t_type_process(struct sadb_ext *pfkey_ext,
-			       struct pfkey_extracted_data* extr)
+			       struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct sadb_x_nat_t_type *pfkey_x_nat_t_type =
@@ -832,7 +832,7 @@ errlab:
 }
 
 int pfkey_x_nat_t_port_process(struct sadb_ext *pfkey_ext,
-			       struct pfkey_extracted_data* extr)
+			       struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct sadb_x_nat_t_port *pfkey_x_nat_t_port =
@@ -879,7 +879,7 @@ errlab:
 }
 
 int pfkey_x_debug_process(struct sadb_ext *pfkey_ext,
-			  struct pfkey_extracted_data* extr)
+			  struct pfkey_extracted_data *extr)
 {
 	int error = 0;
 	struct sadb_x_debug *pfkey_x_debug = (struct sadb_x_debug *)pfkey_ext;

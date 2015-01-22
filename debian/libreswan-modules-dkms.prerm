@@ -4,7 +4,7 @@ test $DEBIAN_SCRIPT_DEBUG && set -v -x
 
 #DEBHELPER#
 
-VERSION=$(dpkg-query -W -f='${Version}' libreswan-modules-dkms | sed -e 's/.*:\(.*\)/\1/' -e 's/\(.*\)-.*/\1/')
+VERSION=$(dpkg-query -W -f='${Version}' libreswan-modules-dkms | sed -e 's/.*:\(.*\)/\1/' -e 's/-.*//')
 
 case "$1" in
     remove|upgrade)

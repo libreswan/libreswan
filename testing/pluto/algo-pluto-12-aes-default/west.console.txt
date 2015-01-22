@@ -61,15 +61,15 @@ west #
 003 "westnet-eastnet-aes-default" #1: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-eastnet-aes-default" #1: Main mode peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-aes-default" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-default" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "westnet-eastnet-aes-default" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-aes-default" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-aes-default" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-default
 002 "westnet-eastnet-aes-default": deleting connection
-002 "westnet-eastnet-aes-default" #2: deleting state (STATE_QUICK_I2)
+002 "westnet-eastnet-aes-default" #2: deleting state #2 (STATE_QUICK_I2)
 005 "westnet-eastnet-aes-default" #2: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-default" #1: deleting state (STATE_MAIN_I4)
+002 "westnet-eastnet-aes-default" #1: deleting state #1 (STATE_MAIN_I4)
 west #
  #
 west #
@@ -89,15 +89,15 @@ west #
 003 "westnet-eastnet-aes-128" #3: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-eastnet-aes-128" #3: Main mode peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-aes-128" #3: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-128" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "westnet-eastnet-aes-128" #4: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-aes-128" #4: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-aes-128" #4: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-128
 002 "westnet-eastnet-aes-128": deleting connection
-002 "westnet-eastnet-aes-128" #4: deleting state (STATE_QUICK_I2)
+002 "westnet-eastnet-aes-128" #4: deleting state #4 (STATE_QUICK_I2)
 005 "westnet-eastnet-aes-128" #4: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-128" #3: deleting state (STATE_MAIN_I4)
+002 "westnet-eastnet-aes-128" #3: deleting state #3 (STATE_MAIN_I4)
 west #
  #
 west #
@@ -117,15 +117,15 @@ west #
 003 "westnet-eastnet-aes-256" #5: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-eastnet-aes-256" #5: Main mode peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-aes-256" #5: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-256" #6: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "westnet-eastnet-aes-256" #6: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-aes-256" #6: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-aes-256" #6: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_256-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-256
 002 "westnet-eastnet-aes-256": deleting connection
-002 "westnet-eastnet-aes-256" #6: deleting state (STATE_QUICK_I2)
+002 "westnet-eastnet-aes-256" #6: deleting state #6 (STATE_QUICK_I2)
 005 "westnet-eastnet-aes-256" #6: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-256" #5: deleting state (STATE_MAIN_I4)
+002 "westnet-eastnet-aes-256" #5: deleting state #5 (STATE_MAIN_I4)
 west #
  #
 west #
@@ -145,15 +145,15 @@ west #
 003 "westnet-eastnet-aes-mix-1" #7: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-eastnet-aes-mix-1" #7: Main mode peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-aes-mix-1" #7: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-mix-1" #8: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "westnet-eastnet-aes-mix-1" #8: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-aes-mix-1" #8: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-aes-mix-1" #8: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_256-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-1
 002 "westnet-eastnet-aes-mix-1": deleting connection
-002 "westnet-eastnet-aes-mix-1" #8: deleting state (STATE_QUICK_I2)
+002 "westnet-eastnet-aes-mix-1" #8: deleting state #8 (STATE_QUICK_I2)
 005 "westnet-eastnet-aes-mix-1" #8: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-mix-1" #7: deleting state (STATE_MAIN_I4)
+002 "westnet-eastnet-aes-mix-1" #7: deleting state #7 (STATE_MAIN_I4)
 west #
  #
 west #
@@ -173,15 +173,15 @@ west #
 003 "westnet-eastnet-aes-mix-2" #9: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-eastnet-aes-mix-2" #9: Main mode peer ID is ID_FQDN: '@east'
 004 "westnet-eastnet-aes-mix-2" #9: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "westnet-eastnet-aes-mix-2" #10: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "westnet-eastnet-aes-mix-2" #10: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-aes-mix-2" #10: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-aes-mix-2" #10: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-2
 002 "westnet-eastnet-aes-mix-2": deleting connection
-002 "westnet-eastnet-aes-mix-2" #10: deleting state (STATE_QUICK_I2)
+002 "westnet-eastnet-aes-mix-2" #10: deleting state #10 (STATE_QUICK_I2)
 005 "westnet-eastnet-aes-mix-2" #10: ESP traffic information: in=0B out=0B
-002 "westnet-eastnet-aes-mix-2" #9: deleting state (STATE_MAIN_I4)
+002 "westnet-eastnet-aes-mix-2" #9: deleting state #9 (STATE_MAIN_I4)
 west #
  echo done
 done

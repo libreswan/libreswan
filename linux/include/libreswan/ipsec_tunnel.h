@@ -17,19 +17,18 @@
  */
 
 # define DEV_QUEUE_XMIT(skb, device, pri) { \
-		skb->dev = device; \
+		(skb)->dev = (device); \
 		neigh_compat_output(skb); \
-		/* skb->dst->output(skb); */ \
+		/* (skb)->dst->output(skb); */ \
 }
 # define ICMP_SEND(skb_in, type, code, info, dev) \
-	icmp_send(skb_in, type, code, htonl(info))
+	icmp_send((skb_in), (type), (code), htonl(info))
 # define IP_SEND(skb, dev) \
 	ip_send(skb);
 
 #if defined(KLIPS)
 
-#define lsw_ip_hdr_version(ixirs)       (((struct iphdr *) (ixirs)->iph)-> \
-					 version)
+#define lsw_ip_hdr_version(ixirs)  (((struct iphdr *) (ixirs)->iph)->version)
 #define lsw_ip4_hdr(ixirs)      ((struct iphdr *) (ixirs)->iph)
 #define lsw_ip6_hdr(ixirs)      ((struct ipv6hdr *) (ixirs)->iph)
 
@@ -130,10 +129,10 @@ extern int lsw_ipv6_find_hdr(const struct sk_buff *skb, unsigned int *offset,
 #ifdef CONFIG_KLIPS_IPV6
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 34)
 # define ICMP6_SEND(skb_in, type, code, info, dev) \
-	icmpv6_send(skb_in, type, code, htonl(info), dev)
+	icmpv6_send((skb_in), (type), (code), htonl(info), (dev))
 #else
 # define ICMP6_SEND(skb_in, type, code, info, dev) \
-	icmpv6_send(skb_in, type, code, htonl(info))
+	icmpv6_send((skb_in), (type), (code), htonl(info))
 #endif
 #endif  /* CONFIG_KLIPS_IPV6 */
 

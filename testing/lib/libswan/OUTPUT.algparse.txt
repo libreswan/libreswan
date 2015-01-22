@@ -16,6 +16,9 @@
 [             aes-sha]    OK: alg=AES(12)_000-SHA1(2)_000
 [            aes-sha1]    OK: alg=AES(12)_000-SHA1(2)_000
 [            aes-sha2]    OK: alg=AES(12)_000-SHA2_256(5)_000
+[          aes-sha256]    OK: alg=AES(12)_000-SHA2_256(5)_000
+[          aes-sha384]    OK: alg=AES(12)_000-SHA2_384(6)_000
+[          aes-sha512]    OK: alg=AES(12)_000-SHA2_512(7)_000
 [         aes128-sha1]    OK: alg=AES(12)_128-SHA1(2)_000
 [     aes128-aes_xcbc]    OK: alg=AES(12)_128-AES_XCBC(9)_000
 [         aes192-sha1]    OK: alg=AES(12)_192-SHA1(2)_000
@@ -59,7 +62,6 @@
 [             serpent]    OK: alg=SERPENT(252)_000-MD5(1)_000, SERPENT(252)_000-SHA1(2)_000
 [             twofish]    OK: alg=TWOFISH(253)_000-MD5(1)_000, TWOFISH(253)_000-SHA1(2)_000
 [                mars]    OK: alg=MARS(249)_000-MD5(1)_000, MARS(249)_000-SHA1(2)_000
-[            modp1536]    OK: <should not fail and give default encr/integ auths>
 
 ---- ESP tests that should fail----
 [        3des168-sha1] ERROR: alg=  error=3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
@@ -68,6 +70,7 @@
 [         aes224-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
 [         aes512-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(512), auth_alg="sha1", modp=""
 [         aes-sha1555] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(0), auth_alg="sha1555", modp=""
+[    camellia666-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="camellia"(666), auth_alg="sha1", modp=""
 [            blowfish] ERROR: alg=  error=ESP cipher not implemented, enc_alg="blowfish"(0), auth_alg="", modp=""
 [            des-sha1] ERROR: alg=  error=ESP cipher not implemented, enc_alg="des"(0), auth_alg="sha1", modp=""
 [          aes_ctr666] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ctr"(666), auth_alg="", modp=""
@@ -86,6 +89,9 @@
 [                 sha]    OK: alg=SHA1(2)_000
 [                sha1]    OK: alg=SHA1(2)_000
 [                sha2]    OK: alg=SHA2_256(5)_000
+[              sha256]    OK: alg=SHA2_256(5)_000
+[              sha384]    OK: alg=SHA2_384(6)_000
+[              sha512]    OK: alg=SHA2_512(7)_000
 [            sha2_256]    OK: alg=SHA2_256(5)_000
 [            sha2_384]    OK: alg=SHA2_384(6)_000
 [            sha2_512]    OK: alg=SHA2_512(7)_000
@@ -101,3 +107,4 @@
 [                null] ERROR: alg=  error=AH cannot have null authentication, enc_alg=""(0), auth_alg="null", modp=""
 [             aes_gcm] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="aes_gcm", modp=""
 [             aes_ccm] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="aes_ccm", modp=""
+../algparse leak detective found no leaks

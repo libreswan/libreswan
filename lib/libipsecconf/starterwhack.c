@@ -73,7 +73,7 @@ static int send_reply(int sock, char *buf, ssize_t len)
 	if (write(sock, buf, len) != len) {
 		int e = errno;
 
-		starter_log(LOG_LEVEL_ERR, "whack: write() failed (%d %s)\n",
+		starter_log(LOG_LEVEL_ERR, "whack: write() failed (%d %s)",
 			e, strerror(e));
 		return RC_WHACK_PROBLEM;
 	}
@@ -128,7 +128,7 @@ static int starter_whack_read_reply(int sock,
 				write(STDOUT_FILENO, ls, le - ls) == -1) {
 				int e = errno;
 				starter_log(LOG_LEVEL_ERR,
-					"whack: write() starterwhack.c:124 failed (%d %s), and ignored.\n",
+					"whack: write() starterwhack.c:124 failed (%d %s), and ignored.",
 					e, strerror(e));
 			}
 			/*
@@ -601,14 +601,14 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.sha2_truncbug = conn->options[KBF_SHA2_TRUNCBUG];
 
 #ifdef HAVE_NM
-	/*Network Manager support*/
+	/* Network Manager support */
 	if (conn->options_set[KBF_NMCONFIGURED])
 		msg.nmconfigured = conn->options[KBF_NMCONFIGURED];
 
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	/*Labeled ipsec support*/
+	/* Labeled ipsec support */
 	if (conn->options_set[KBF_LOOPBACK])
 		msg.loopback = conn->options[KBF_LOOPBACK];
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" loopback=%d", conn->name,

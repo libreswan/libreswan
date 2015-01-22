@@ -61,9 +61,6 @@ west #
 default via 192.1.2.254 dev eth1 
 25.1.0.0/16 via 192.0.1.254 dev eth0 
 25.2.0.0/16 via 192.1.2.45 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
@@ -116,7 +113,7 @@ west #
 003 "westnet-all" #1: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-all" #1: Main mode peer ID is ID_FQDN: '@east'
 004 "westnet-all" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
-002 "westnet-all" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+002 "westnet-all" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-all" #2: STATE_QUICK_I1: initiate
 004 "westnet-all" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
@@ -136,9 +133,6 @@ default via 192.1.2.254 dev eth1
 25.1.0.0/16 via 192.0.1.254 dev eth0 
 25.2.0.0/16 via 192.1.2.45 dev eth1 
 128.0.0.0/1 dev ipsec0  scope link 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
@@ -151,9 +145,9 @@ west #
 west #
  ipsec auto --replace westnet-all
 002 "westnet-all": deleting connection
-002 "westnet-all" #2: deleting state (STATE_QUICK_I2)
+002 "westnet-all" #2: deleting state #2 (STATE_QUICK_I2)
 005 "westnet-all" #2: ESP traffic information: in=0B out=0B
-002 "westnet-all" #1: deleting state (STATE_MAIN_I4)
+002 "westnet-all" #1: deleting state #1 (STATE_MAIN_I4)
 002 added connection description "westnet-all"
 west #
  ipsec auto --status |grep westnet
@@ -165,7 +159,7 @@ west #
 000 "westnet-all":    policy_label:unset; 
 000 "westnet-all":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-all":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-all":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-all":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-all":   conn_prio: 24,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-all":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-all":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
@@ -180,9 +174,6 @@ ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 25.1.0.0/16 via 192.0.1.254 dev eth0 
 25.2.0.0/16 via 192.1.2.45 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
 192.0.2.0/24 via 192.1.2.23 dev eth1 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 

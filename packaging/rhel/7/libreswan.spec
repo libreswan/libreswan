@@ -58,7 +58,7 @@ BuildRequires: openldap-devel curl-devel
 BuildRequires: ElectricFence
 %endif
 # Only needed if xml man pages are modified and need regeneration
-# BuildRequires: xmlto
+BuildRequires: xmlto
 
 Requires: nss-tools, nss-softokn
 
@@ -80,6 +80,8 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
+# remove man page for ipsec.conf so it is forced to regenerate
+rm ./programs/configs/ipsec.conf.5
 
 %build
 %if %{buildefence}
@@ -143,6 +145,14 @@ install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
+install -d %{buildroot}%{_sysconfdir}/sysctl.d
+install -m 0644 packaging/rhel/libreswan-sysctl.conf \
+  %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
+
+install -d %{buildroot}%{_tmpfilesdir}
+install -m 0644 packaging/rhel/libreswan-tmpfiles.conf  \
+  %{buildroot}%{_tmpfilesdir}/libreswan.conf
+
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
@@ -163,8 +173,10 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_localstatedir}/run/pluto
+%attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
@@ -191,12 +203,8 @@ prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %endif
 if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
      ! -f %{_sysconfdir}/ipsec.d/cert9.db ] ; then
-    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
-    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
-    echo > ${TEMPFILE}
-    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    certutil -N -d %{_sysconfdir}/ipsec.d --empty-password
     restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
-    rm -f ${TEMPFILE}
 fi
 
 %changelog

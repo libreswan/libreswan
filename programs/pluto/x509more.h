@@ -33,8 +33,7 @@ extern void ikev2_decode_cert(struct msg_digest *md);
 extern void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca);
 extern void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca);
 
-extern bool collect_rw_ca_candidates(struct msg_digest *md,
-				     generalName_t **top);
+extern generalName_t *collect_rw_ca_candidates(struct msg_digest *md);
 
 extern bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 				    chunk_t ca, pb_stream *outs,

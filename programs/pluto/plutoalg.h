@@ -13,6 +13,9 @@ extern struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 extern void alg_info_snprint_phase2(char *buf, size_t buflen,
 				    struct alg_info_esp *alg_info);
 
-extern bool ikev1_verify_phase2(int ealg, unsigned int key_len, int aalg,
-				struct alg_info_esp *alg_info);
-   
+extern bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
+				const struct alg_info_esp *alg_info);
+
+extern bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info);
+
+static const oakley_group_t default_ike_groups[] = { DEFAULT_OAKLEY_GROUPS }; /* used for invalid_ke */

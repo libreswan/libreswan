@@ -30,7 +30,7 @@ east #
  iptables -A OUTPUT -o eth1 -s 192.1.2.23 -p udp --sport 1701 -j REJECT
 east #
  (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log 1>&2 ) &
-[X] XXXX
+[B] PID
 east #
  echo done
 done
@@ -43,9 +43,6 @@ ipsec0->eth1 mtu=16260(9999)->1500
 esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.254 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
-169.254.0.0/16 dev eth0  scope link  metric 1002 
-169.254.0.0/16 dev eth1  scope link  metric 1003 
-169.254.0.0/16 dev eth2  scope link  metric 1004 
 192.0.1.0/24 via 192.1.2.45 dev eth1 
 192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
 192.0.2.128 dev ppp0  proto kernel  scope link  src 192.0.2.254 

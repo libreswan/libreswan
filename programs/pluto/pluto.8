@@ -2,12 +2,12 @@
 .\"     Title: IPSEC_PLUTO
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 08/09/2014
+.\"      Date: 01/14/2015
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_PLUTO" "8" "08/09/2014" "libreswan" "Executable programs"
+.TH "IPSEC_PLUTO" "8" "01/14/2015" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-leak\-detective] [\-\-config\ \fIfilename\fR] [\-\-vendorid\ \fIVID\fR] [\-\-nofork] [\-\-stderrlog] [\-\-\-\-plutostderrlogtime] [\-\-logfile\ \fIfilename\fR] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-virtual\-private\ \fInetwork_list\fR] [\-\-keep\-alive\ \fIdelay_sec\fR] [\-\-force\-busy] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-natikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits] [\-\-statsbin\ \fIfilename\fR] [\-\-secctx\-attr\-value\ \fInumber\fR]
+\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-leak\-detective] [\-\-config\ \fIfilename\fR] [\-\-vendorid\ \fIVID\fR] [\-\-nofork] [\-\-stderrlog] [\-\-\-\-plutostderrlogtime] [\-\-logfile\ \fIfilename\fR] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-virtual\-private\ \fInetwork_list\fR] [\-\-keep\-alive\ \fIdelay_sec\fR] [\-\-force\-busy] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-natikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-seedbits\ \fInumbits\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-statsbin\ \fIfilename\fR] [\-\-secctx\-attr\-type\ \fInumber\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-help] [\-\-version]
 .HP \w'\fBipsec\fR\ 'u
@@ -39,7 +39,7 @@ pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-name\ \fIconnection\-name\fR [[\-\-ipv4] | [\-\-ipv6]] [[\-\-tunnelipv4] | [\-\-tunnelipv6]]
 .br
-[\-\-id\ \fIidentity\fR] [\-\-host\ \fIip\-address\fR] [\-\-cert\ \fIpath\fR] [\-\-ca\ \fIdistinguished\ name\fR] [\-\-groups\ \fIaccess\ control\ groups\fR] [\-\-sendcert\ yes\ |\ forced\ |\ always\ |\ ifasked\ |\ no\ |\ never] [\-\-certtype\ \fInumber\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-nexthop\ \fIip\-address\fR] [[\-\-client\ \fIsubnet\fR] | [\-\-clientwithin\ \fIsubnet\fR]] [\-\-clientprotoport\ \fIprotocol\fR/\fIport\fR] [\-\-srcip\ \fIip\-address\fR] [\-\-xauthserver] [\-\-xauthclient] [\-\-modecfgserver] [\-\-modecfgclient] [\-\-modecfgdns1\ \fIip\-address\fR] [\-\-modecfgdns2\ \fIip\-address\fR] [\-\-modecfgdomain\ \fIDNS\-domain\fR] [\-\-modecfgbanner\ \fIlogin\-banner\fR] [\-\-dnskeyondemand] [\-\-updown\ \fIupdown\fR]
+[\-\-id\ \fIidentity\fR] [\-\-host\ \fIip\-address\fR] [\-\-cert\ \fIpath\fR] [\-\-ca\ \fIdistinguished\ name\fR] [\-\-groups\ \fIaccess\ control\ groups\fR] [\-\-sendcert\ yes\ |\ forced\ |\ always\ |\ ifasked\ |\ no\ |\ never] [\-\-sendca\ none\ |\ issuer\ |\ all] [\-\-certtype\ \fInumber\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-nexthop\ \fIip\-address\fR] [[\-\-client\ \fIsubnet\fR] | [\-\-clientwithin\ \fIsubnet\fR]] [\-\-clientprotoport\ \fIprotocol\fR/\fIport\fR] [\-\-srcip\ \fIip\-address\fR] [\-\-xauthserver] [\-\-xauthclient] [\-\-modecfgserver] [\-\-modecfgclient] [\-\-modecfgdns1\ \fIip\-address\fR] [\-\-modecfgdns2\ \fIip\-address\fR] [\-\-modecfgdomain\ \fIDNS\-domain\fR] [\-\-modecfgbanner\ \fIlogin\-banner\fR] [\-\-dnskeyondemand] [\-\-updown\ \fIupdown\fR]
 .br
 \-\-to
 .br
@@ -71,7 +71,7 @@ pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-deletestate\ \fIstate\-number\fR [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR \-\-deleteuser \-\-name\ \fIxauth\-username\fR [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
+\fBipsec\fR \fIwhack\fR \-\-deleteuser \-\-name\ \fIusername\fR [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-name\ \fIconnection\-name\fR] [\-\-debug\-none] [\-\-debug\-all] [\-\-debug\-raw] [\-\-debug\-crypt] [\-\-debug\-parsing] [\-\-debug\-emitting] [\-\-debug\-control] [\-\-debug\-controlmore] [\-\-debug\-lifecycle] [\-\-debug\-klips] [\-\-debug\-pfkey] [\-\-debug\-dns] [\-\-debug\-dpd] [\-\-debug\-natt] [\-\-debug\-oppo] [\-\-debug\-oppoinfo] [\-\-debug\-whackwatch] [\-\-debug\-private] [\-\-impair\-delay\-adns\-key\-answer] [\-\-impair\-delay\-adns\-txt\-answer] [\-\-impair\-bust\-mi2] [\-\-impair\-bust\-mr2] [\-\-impair\-sa\-fail] [\-\-impair\-die\-oninfo] [\-\-impair\-jacob\-two\-two] [\-\-impair\-major\-version\-bump] [\-\-impair\-minor\-version\-bump] [\-\-impair\-retransmits] [\-\-impair\-send\-bogus\-isakmp\-flag] [\-\-impair\-send\-ikev2\-ke] [\-\-impair\-send\-key\-size\-check]
 .HP \w'\fBipsec\fR\ 'u
@@ -145,7 +145,7 @@ implementation of IPsec\&.
 .PP
 \fBpluto\fR
 implements a large subset of IKE\&. This is enough for it to interoperate with other instances of
-\fBpluto\fR, and many other IKE implementations\&. It currently supports XAUTH, ModeConfig, X\&.509, Dead Peer Detection, Opportunistic Encryption and all the NAT Traversal standards\&.
+\fBpluto\fR, and many other IKE implementations\&.
 .PP
 The policy for acceptable characteristics for Security Associations is mostly hardwired into the code of
 \fBpluto\fR
@@ -244,7 +244,7 @@ daemon and another IKE daemon (for example, another instance of
 .PP
 The file
 /etc/ipsec\&.secrets
-is used to keep preshared secret keys, RSA private keys, X\&.509 encoded keyfiles and XAUTH passwords\&. Smartcards are handled via NSS\&. For debugging, there is an argument to the
+is used to keep preshared secret keys and XAUTH passwords\&. RSA private keys, X\&.509 certificates, CRLs, OCSP and smartcards are handled via NSS\&. For debugging, there is an argument to the
 \fBpluto\fR
 command to use a different file\&. This file is described in
 \fBipsec.secrets\fR(5)\&.
@@ -317,6 +317,10 @@ forces pluto to do all operations in the main process\&. A value of
 \fI\-1\fR
 tells pluto to perform the above calculation\&. Any other value forces the number to that amount\&.
 .PP
+Pluto uses the NSS crypto library as its random source\&. Some government Three Letter Agency requires that pluto reads 440 bits from /dev/random and feed this into the NSS RNG before drawing random from the NSS library, despite the NSS library itself already seeding its internal state\&. As this process can block pluto for an extended time, the default is to not perform this redundant seeding\&. The
+\fB\-\-seedbits\fR
+option can be used to specify the number of bits that will be pulled from /dev/random and seeded into the NSS RNG\&. This can also be accomplished by specifying seedbits in the "config setup" section of ipsec\&.conf\&. This option should not be used by most people\&.
+.PP
 \fBpluto\fR
 attempts to create a lockfile with the name
 /var/run/pluto/pluto\&.pid\&. If the lockfile cannot be created,
@@ -362,10 +366,6 @@ Pluto supports
 \fB\-\-ipsecdir\fR\&.
 .PP
 Pluto may core dump\&. It will normally do so into the current working directory\&. You can specify the \-\-coredir option for pluto, or specify the dumpdir= option in ipsec\&.conf\&.
-.PP
-At times it may be desirable to turn off all timed events in
-\fBpluto\fR, this can be done with
-\fB\-\-noretransmits\fR\&.
 .PP
 If you are investigating a potential memory leak in pluto, start pluto with the \-\-leak\-detective option\&. Before the leak causes the system or pluto to die, shut down pluto in the regular way\&. pluto will display a list of leaks it has detected\&.
 .PP
@@ -571,6 +571,18 @@ if we are an Initiator\&. The values
 and
 \fBnever\fR
 are equivalent\&. NOTE: "forced" does not seem to be actually implemented \- do not use it\&.
+.RE
+.PP
+\fB\-\-sendca\fR\ \&\fInone|issuer|all\fR
+.RS 4
+How much of our available X\&.509 trust chain to send with the end certificate, excluding any root CAs\&. Specifying
+\fBissuer\fR
+sends just the issuing intermediate CA, while
+\fB all\fR
+will send the entire chain of intermediate CAs\&.\fBnone\fR
+will not send any CA certs\&. The default is
+\fBnone\fR
+which maintains the current libreswan behavior\&.
 .RE
 .PP
 \fB\-\-certtype\fR\ \&\fInumber\fR

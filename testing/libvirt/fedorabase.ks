@@ -1,4 +1,4 @@
-# Minimal Kickstart file - updated for fedora 19
+# Minimal Kickstart file - updated for fedora 21
 install
 text
 reboot
@@ -31,24 +31,11 @@ gdb
 tcpdump
 # nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
 -NetworkManager
-# to compile openswan
-gcc
-make
-flex
-bison
-gmp-devel
-nss-devel
-nspr-devel
-openldap-devel
-curl-devel 
-pam-devel
-redhat-rpm-config
-# not available at install time in this repo??
-#racoon2
-#nc6
-#unbound-devel
-#fipscheck-devel
-#libcap-ng-devel
+
+# The install repo is a cut-down version of Everything so stuff is
+# missing.  Leave installing most stuff to the POST stage where YUM is
+# available and pointing at the Everything repo.
+
 %end
 
 #%pre
@@ -66,9 +53,91 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 # Tuomo switched to this alternative work-around for pmtu issues
 sysctl -w net.ipv4.tcp_mtu_probing=1
 
+# Install extra stuff.  Since some of these RPMs are only found in the
+# Everything repository it is easier to to do it during POST when yum
+# is set up and pointing at Everything.
+
 # TODO: if rhel/centos, we should install epel-release too
-yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools pexpect racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace unbound pexpect strongswan net-tools bind-utils rpm-build nc psmisc lsof valgrind ElectricFence yum-utils screen
-debuginfo-install -y ElectricFence audit-libs cyrus-sasl glibc keyutils krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap openssl-libs pam pcre python-libs sqlite unbound-libs xz-libs zlib gmp nspr nss 
+yum install -y \
+    ElectricFence \
+    audit-libs-devel \
+    bind-utils \
+    bison \
+    curl-devel \
+    fipscheck-devel \
+    flex \
+    gcc \
+    git \
+    gmp-devel \
+    gmp-devel \
+    hping3 \
+    ipsec-tools \
+    kernel-devel \
+    libcap-ng-devel \
+    libevent-devel \
+    lsof \
+    make \
+    mtr \
+    nc \
+    nc6 \
+    net-tools \
+    nmap \
+    nspr-devel \
+    nss-devel \
+    nss-tools \
+    openldap-devel \
+    pam-devel \
+    pexpect \
+    psmisc \
+    python3-pexpect \
+    python3-setproctitle \
+    racoon2 \
+    redhat-rpm-config \
+    rpm-build \
+    screen \
+    strace \
+    strongswan \
+    unbound \
+    unbound-devel \
+    unbound-libs \
+    valgrind \
+    vim-enhanced \
+    wget \
+    xl2tpd \
+    yum-utils
+
+debuginfo-install -y \
+    ElectricFence \
+    audit-libs \
+    cyrus-sasl \
+    glibc \
+    gmp \
+    keyutils \
+    krb5-libs \
+    ldns \
+    libcap-ng \
+    libcom_err \
+    libcurl \
+    libevent \
+    libevent-devel \
+    libgcc \
+    libidn \
+    libselinux \
+    libssh2 \
+    nspr \
+    nss \
+    nss-softokn \
+    nss-softokn-freebl \
+    nss-util \
+    openldap \
+    openssl-libs \
+    pam \
+    pcre \
+    python-libs \
+    sqlite \
+    unbound-libs \
+    xz-libs \
+    zlib
 
 mkdir /testing /source
 

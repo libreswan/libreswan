@@ -37,7 +37,7 @@ struct in_addr mask;
 {
 	unsigned long x = ntohl(mask.s_addr);
 	/* clear rightmost contiguous string of 1-bits */
-#       define  CRCS1B(x)       (((x | (x - 1)) + 1) & x)
+#       define  CRCS1B(x)       ((((x) | ((x) - 1)) + 1) & (x))
 #       define  TOPBIT          (1UL << 31)
 
 	/* either zero, or has one string of 1-bits which is left-justified */

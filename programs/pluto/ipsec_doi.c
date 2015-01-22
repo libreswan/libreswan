@@ -76,7 +76,7 @@
 #include "ikev1_continuations.h"
 #include "ikev2.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 
 #include "vendor.h"
 #include "nat_traversal.h"
@@ -108,18 +108,16 @@ void unpack_KE_from_helper(
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
 	/* ??? if st->st_sec_in_use how could we do our job? */
-	pexpect(!st->st_sec_in_use);
-	if (!st->st_sec_in_use) {
-		st->st_sec_in_use = TRUE;
-		freeanychunk(*g); /* happens in odd error cases */
+	passert(!st->st_sec_in_use);
+	st->st_sec_in_use = TRUE;
+	freeanychunk(*g); /* happens in odd error cases */
 
-		clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
-			     kn->gi.len, "saved gi value");
-		DBG(DBG_CRYPT,
-		    DBG_log("saving DH priv (local secret) and pub key into state struct"));
-		st->st_sec_nss = kn->secret;
-		st->st_pubk_nss = kn->pubk;
-	}
+	clonetochunk(*g, WIRE_CHUNK_PTR(*kn, gi),
+		     kn->gi.len, "saved gi value");
+	DBG(DBG_CRYPT,
+	    DBG_log("saving DH priv (local secret) and pub key into state struct"));
+	st->st_sec_nss = kn->secret;
+	st->st_pubk_nss = kn->pubk;
 }
 
 /* accept_KE
@@ -170,49 +168,68 @@ bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 	return justship_nonce(n, outs, np, name);
 }
 
-/** The whole message must be a multiple of 4 octets.
- * I'm not sure where this is spelled out, but look at
- * rfc2408 3.6 Transform Payload.
- * Note: it talks about 4 BYTE boundaries!
+/*
+ * In IKEv1, some implementations (including freeswan/openswan/libreswan)
+ * interpreted the RFC that the whole IKE message must padded to a multiple
+ * of 4 octets, but other implementations (i.e. Checkpoint in Aggressive Mode)
+ * drop padded IKE packets. Some of the text on this topic can be found in the
+ * IKEv1 RFC 2408 section 3.6 Transform Payload.
+ *
+ * The ikepad= option can be set to yes or no on a per-connection basis,
+ * and defaults to yes.
+ *
+ * In IKEv2, there is no padding specified in the RFC and some implementations
+ * will reject IKEv2 messages that are padded. As there are no known IKEv2
+ * clients that REQUIRE padding, padding is never done for IKEv2. If IKEv2
+ * clients are discovered in the wild, we will revisit this - please contact
+ * the libreswan developers if you find such an implementation.
+ * Therefor, the ikepad= option has no effect on IKEv2 connections.
  *
  * @param pbs PB Stream
  */
 bool close_message(pb_stream *pbs, struct state *st)
 {
-	size_t padding =  pad_up(pbs_offset(pbs), 4);
+	size_t padding;
 
-	/* Workaround for overzealous Checkpoint firewall */
+	if (st->st_ikev2) {
+		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required for IKEv2"));
+		close_output_pbs(pbs);
+		return TRUE;
+	}
+
+	padding =  pad_up(pbs_offset(pbs), 4);
+
 	if (padding != 0 && st != NULL && st->st_connection != NULL &&
 	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
-		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %zu bytes skipped by policy",
+		DBG(DBG_CONTROLMORE, DBG_log("IKEv1 message padding of %zu bytes skipped by policy",
 			padding));
 	} else if (padding != 0) {
-		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %zu bytes", padding));
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKEv1 message with %zu bytes", padding));
 		if (!out_zero(padding, pbs, "message padding"))
 			return FALSE;
 	} else {
-		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required"));
+		DBG(DBG_CONTROLMORE, DBG_log("no IKEv1 message padding required"));
 	}
 
 	close_output_pbs(pbs);
 	return TRUE;
 }
 
-static initiator_function *pick_initiator(struct connection *c UNUSED,
+static initiator_function *pick_initiator(struct connection *c,
 					  lset_t policy)
 {
-	if ((policy & POLICY_IKEV1_DISABLE) == LEMPTY &&
-	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == LEMPTY))) {
-		if (policy & POLICY_AGGRESSIVE) {
-			return aggr_outI1;
-		} else {
-			return main_outI1;
-		}
-	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
-		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
+	if ((policy & POLICY_IKEV2_PROPOSE) &&
+	    (policy & c->policy & POLICY_IKEV2_ALLOW) &&
+	    !c->failed_ikev2) {
+		/* we may try V2, and we haven't failed */
 		return ikev2parent_outI1;
+	} else if (policy & c->policy & POLICY_IKEV1_ALLOW) {
+		/* we may try V1; Aggressive or Main Mode? */
+		return (policy & POLICY_AGGRESSIVE) ? aggr_outI1 : main_outI1;
 	} else {
-		libreswan_log("Neither IKEv1 nor IKEv2 allowed");
+		libreswan_log("Neither IKEv1 nor IKEv2 allowed: %s%s",
+			c->failed_ikev2? "previous V2 failure, " : "",
+			bitnamesof(sa_policy_bit_names, policy & c->policy));
 		/*
 		 * tried IKEv2, if allowed, and failed,
 		 * and tried IKEv1, if allowed, and got nowhere.
@@ -228,7 +245,7 @@ void ipsecdoi_initiate(int whack_sock,
 		       so_serial_t replacing,
 		       enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		       , struct xfrm_user_sec_ctx_ike * uctx
+		       , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		       )
 {

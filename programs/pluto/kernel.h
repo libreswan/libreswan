@@ -75,8 +75,8 @@ enum eroute_type {
 	ET_INT   = SA_INT,      /* (61)  internal type */
 	ET_IPIP  = SA_IPIP,     /* (4)   turn on tunnel type */
 };
-#define esatype2proto(X) (int)X
-#define proto2esatype(X) (enum eroute_type)X
+#define esatype2proto(X) ((int)(X))
+#define proto2esatype(X) ((enum eroute_type)(X))
 
 struct kernel_sa {
 	const ip_address *src;
@@ -168,7 +168,7 @@ struct kernel_ops {
 			   enum pluto_sadb_operations op,
 			   const char *text_said
 #ifdef HAVE_LABELED_IPSEC
-			   , char *policy_label
+			   , const char *policy_label
 #endif
 			   );
 	bool (*shunt_eroute)(struct connection *c,
@@ -322,7 +322,7 @@ extern void record_and_initiate_opportunistic(const ip_subnet *,
 					      const ip_subnet *,
 					      int transport_proto
 #ifdef HAVE_LABELED_IPSEC
-					      , struct xfrm_user_sec_ctx_ike *
+					      , const struct xfrm_user_sec_ctx_ike *
 #endif
 					      , const char *why);
 extern void init_kernel(void);
@@ -373,7 +373,7 @@ extern bool eroute_connection(struct spd_route *sr,
 			      const struct pfkey_proto_info *proto_info,
 			      unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
-			      , char *policy_label
+			      , const char *policy_label
 #endif
 			      );
 

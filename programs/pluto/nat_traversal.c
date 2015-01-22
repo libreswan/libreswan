@@ -116,9 +116,9 @@ static void natd_hash(const struct hash_desc *hasher, unsigned char *hash,
 	union hash_ctx ctx;
 
 	if (is_zero_cookie(icookie))
-		DBG_log("natd_hash: Warning, icookie is zero !!");
+		DBG(DBG_NATT, DBG_log("natd_hash: Warning, icookie is zero !!"));
 	if (is_zero_cookie(rcookie))
-		DBG_log("natd_hash: Warning, rcookie is zero !!");
+		DBG(DBG_NATT, DBG_log("natd_hash: Warning, rcookie is zero !!"));
 
 	/*
 	 * RFC 3947

@@ -24,7 +24,8 @@
 
     <cmdsynopsis>
       <command>ipsec</command>
-      <arg choice="plain"><replaceable>_stackmanager start</replaceable></arg>
+      <arg choice="plain"><replaceable>_stackmanager start</replaceable>
+<arg choice="opt">--netkey</arg></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -48,6 +49,11 @@ Framework (OCF) drivers, CryptoAPI drivers, and the modules for the
 specific stack (Linux NETKEY/XFM or KLIPS/MAST). Probing for OCF supported
 hardware is not supported - those modules must be loaded by the system
 before the start of the Libreswan sub system.</para>
+<para>When the --netkey option is given to the start command, the netkey stack is
+loaded regardless of the existence or contents of the ipsec.conf file. This is used
+for docker tests where the host system, which might not have libreswan installed,
+needs to run _stackmanager from the source tree to load the modules on the host so
+the modules are available inside the containers.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>

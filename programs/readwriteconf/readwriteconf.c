@@ -57,14 +57,12 @@
 char *progname;
 static int verbose = 0;
 
-static const char *usage_string = ""
-				  "Usage: readwriteconn [--config <file>] [--debug] [--rootdir <dir>] [--rootdir2 <dir2>] \n";
-
 static void usage(void)
 {
 	/* print usage */
-	fputs(usage_string, stderr);
-	exit(10);
+	printf("Usage: %s [--config <file>] [--debug] [--rootdir <dir>] [--rootdir2 <dir2>]\n",
+		progname);
+	exit(0);
 }
 
 
@@ -119,7 +117,18 @@ int main(int argc, char *argv[])
 			printf("#setting rootdir2=%s\n", optarg);
 			jam_str(rootdir2, sizeof(rootdir2), optarg);
 			break;
+		case '?':
+			exit(5);
+		default:
+			fprintf(stderr, "%s: getopt returned %d\n", progname, opt);
+			exit(6);
 		}
+	}
+
+	if (optind != argc) {
+		fprintf(stderr,"%s: unexpected arguments\n",
+			progname);
+		exit(4);
 	}
 
 	/* find config file */
@@ -150,9 +159,9 @@ int main(int argc, char *argv[])
 
 	cfg = confread_load(configfile, &err, FALSE, NULL, FALSE);
 
-	if (!cfg) {
-		printf("config file: %s cannot be loaded: %s\n", configfile,
-		       err);
+	if (cfg == NULL) {
+		fprintf(stderr, "%s: config file \"%s\" cannot be loaded: %s\n",
+			progname, configfile, err);
 		exit(3);
 	}
 

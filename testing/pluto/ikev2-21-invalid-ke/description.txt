@@ -1,0 +1,4 @@
+IKEv2 test with initial connect with mismatching DH group. West initiates
+and east sends an INVALID_KE with a suggested fixed DH group. West takes
+the suggestion and retries with the suggest DH group
+

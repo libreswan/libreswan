@@ -176,11 +176,11 @@ extern void ipsec_extract_ports(struct sk_buff *skb, unsigned char nexthdr,
 
 extern enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs);
 
-extern enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state*ixs);
+extern enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs);
 
 extern enum ipsec_xmit_value ipsec_tunnel_send(struct ipsec_xmit_state *ixs);
 
-extern void ipsec_xmit_cleanup(struct ipsec_xmit_state*ixs);
+extern void ipsec_xmit_cleanup(struct ipsec_xmit_state *ixs);
 
 extern int ipsec_xmit_trap_count;
 extern int ipsec_xmit_trap_sendcount;
@@ -188,9 +188,10 @@ extern int ipsec_xmit_trap_sendcount;
 extern int debug_xmit;
 extern int debug_mast;
 
-#define ipsec_xmit_dmp(_x, _y, _z) if (debug_xmit && \
-				       sysctl_ipsec_debug_verbose) \
-		ipsec_dmp_block(_x, _y, _z)
+#define ipsec_xmit_dmp(_x, _y, _z) { \
+		if (debug_xmit && sysctl_ipsec_debug_verbose) \
+			ipsec_dmp_block(_x, _y, _z); \
+	}
 
 extern int sysctl_ipsec_debug_verbose;
 extern int sysctl_ipsec_icmp;

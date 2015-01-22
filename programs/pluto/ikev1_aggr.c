@@ -71,7 +71,7 @@
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 
 #include "vendor.h"
 #include "nat_traversal.h"
@@ -88,15 +88,12 @@
  *
  * Entry points:
  *	aggr_outI1:	called to initiate
- *	aggr_inI1_outR1_psk
- *	aggr_inI1_outR1_rsasig
+ *	aggr_inI1_outR1
  *	aggr_inR1_outI2
  *	aggr_inI2
  *
  * Called by:
- *	aggr_inI1_outR1_common: aggr_inI1_outR1_psk aggr_inI1_outR1_rsasig
- *		auth method is a param
- *	aggr_inI1_outR1_continue1: ke(aggr_inI1_outR1_common)
+ *	aggr_inI1_outR1_continue1: ke(aggr_inI1_outR1)
  *	aggr_inI1_outR1_continue2: dh(aggr_inI1_outR1_continue1)
  *	aggr_inI1_outR1_tail: aggr_inI1_outR1_continue2
  */
@@ -104,51 +101,50 @@
 static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 				       struct pluto_crypto_req *r);
 
-/* this is a crypto_req_cont_func */
-static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
-					    struct pluto_crypto_req *r);
+static crypto_req_cont_func aggr_inR1_outI2_crypto_continue;
 
 /*
  * continuation from second calculation (the DH one)
  */
-/* this is a crypto_req_cont_func */
-static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
+
+static crypto_req_cont_func aggr_inI1_outR1_continue2;	/* type assertion */
+
+static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *dh,
 				      struct pluto_crypto_req *r)
 {
-	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->dh_md;
+	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_inI1_outR1_continue2 for #%lu: calculated ke+nonce+DH, sending R1",
-			dh->dh_pcrc.pcrc_serialno));
+			dh->pcrc_serialno));
 
-	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (dh->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		release_any_md(&dh->dh_md);
+		release_any_md(&dh->pcrc_md);
 		return;
 	}
 
-	passert(dh->dh_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(dh->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == dh->dh_md);
+	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating = FALSE;", st->st_serialno, __FUNCTION__, __LINE__));
 	st->st_calculating = FALSE;
 
-	e = aggr_inI1_outR1_tail(dh->dh_md, r);
+	e = aggr_inI1_outR1_tail(dh->pcrc_md, r);
 
-	passert(dh->dh_md != NULL);
-	complete_v1_state_transition(&dh->dh_md, e);
-	release_any_md(&dh->dh_md);
+	passert(dh->pcrc_md != NULL);
+	complete_v1_state_transition(&dh->pcrc_md, e);
+	release_any_md(&dh->pcrc_md);
 	reset_cur_state();
 }
 
@@ -157,30 +153,31 @@ static void aggr_inI1_outR1_continue2(struct pluto_crypto_req_cont *pcrc,
  * had the crypto helper actually do everything, but we need to do
  * some additional work to set that all up, so this is fine for now.
  */
-/* this is a crypto_req_cont_func */
-static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
+
+static crypto_req_cont_func aggr_inI1_outR1_continue1;	/* type assertion */
+
+static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *ke,
 				      struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->ke_md;
+	struct msg_digest *md = ke->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inI1_outR1: calculated ke+nonce, calculating DH"));
 
-	if (ke->ke_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (ke->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		release_any_md(&ke->ke_md);
+		release_any_md(&ke->pcrc_md);
 		return;
 	}
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->ke_md);
+	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -197,73 +194,78 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *pcrc,
 
 	/* set up second calculation */
 	{
-		struct dh_continuation *dh = alloc_thing(
-			struct dh_continuation,
-			"aggr outR1 DH");
+		struct pluto_crypto_req_cont *dh = new_pcrc(
+			aggr_inI1_outR1_continue2,
+			"aggr outR1 DH",
+			st, md);
 
-		dh->dh_md = md;
-		set_suspended(st, md);
-		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-		pcrc_init(&dh->dh_pcrc, aggr_inI1_outR1_continue2);
 		e = start_dh_secretiv(dh, st,
 				      st->st_import,
 				      O_RESPONDER,
 				      st->st_oakley.group->group);
 
 		if (e != STF_SUSPEND) {
-			passert(dh->dh_md != NULL);
-			complete_v1_state_transition(&dh->dh_md, e);
-			release_any_md(&dh->dh_md);
+			passert(dh->pcrc_md != NULL);
+			complete_v1_state_transition(&dh->pcrc_md, e);
+			release_any_md(&dh->pcrc_md);
 		}
 
 		reset_cur_state();
 	}
 }
 
-static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
-					 int authtype)
+/* STATE_AGGR_R0:
+ * SMF_PSK_AUTH: HDR, SA, KE, Ni, IDii
+ *           --> HDR, SA, KE, Nr, IDir, HASH_R
+ * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDii
+ *           --> HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
+ */
+stf_status aggr_inI1_outR1(struct msg_digest *md)
 {
 	/* With Aggressive Mode, we get an ID payload in this, the first
 	 * message, so we can use it to index the preshared-secrets
 	 * when the IP address would not be meaningful (i.e. Road
-	 * Warrior).  So our first task is to unravel the ID payload.
+	 * Warrior).  That's the one justification for Aggressive Mode.
 	 */
 	struct state *st;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	struct connection *c = find_host_connection(&md->iface->ip_addr,
-						    md->iface->port,
-						    &md->sender,
-						    md->sender_port, LEMPTY);
 
-#if 0
+	const lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) |
+		POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW;
+
+	const lset_t policy_exact_mask = POLICY_XAUTH |
+		POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW;
+
+	struct connection *c = find_host_connection(
+		&md->iface->ip_addr, md->iface->port,
+		&md->sender, md->sender_port,
+		policy, policy_exact_mask);
+
+#if 0 /* ??? is this useful? */
 	if (c == NULL && md->iface->ike_float) {
-		c = find_host_connection(&md->iface->addr,
-					 pluto_nat_port,
-					 &md->sender, md->sender_port, LEMPTY);
+		/* ??? see above for discussion about policy argument */
+		c = find_host_connection(
+			&md->iface->addr, pluto_nat_port,
+			&md->sender, md->sender_port,
+			policy, policy_exact_mask);
 	}
 #endif
 
 	if (c == NULL) {
-		/* see if a wildcarded connection can be found */
-		pb_stream pre_sa_pbs = sa_pd->pbs;
-		lset_t policy = preparse_isakmp_sa_body(&pre_sa_pbs) |
-				POLICY_AGGRESSIVE;
-
 		c = find_host_connection(&md->iface->ip_addr, pluto_port,
 					 (ip_address*)NULL, md->sender_port,
-					 policy);
-		if (c == NULL || (c->policy & POLICY_AGGRESSIVE) == 0) {
+					 policy, policy_exact_mask);
+		if (c == NULL) {
 			ipstr_buf b;
 
-			loglog(RC_LOG_SERIOUS, "initial Aggressive Mode message from %s"
-			       " but no (wildcard) connection has been configured%s%s",
-			       ipstr(&md->sender, &b),
-			       (policy != LEMPTY) ? " with policy=" : "",
-			       (policy != LEMPTY) ?
-			       bitnamesof(sa_policy_bit_names, policy) : "");
+			loglog(RC_LOG_SERIOUS,
+				"initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
+				ipstr(&md->sender, &b),
+				bitnamesof(sa_policy_bit_names, policy));
 			/* XXX notification is in order! */
 			return STF_IGNORE;
 		}
+		passert(LIN(policy, c->policy));
 		/* Create a temporary connection that is a copy of this one.
 		 * His ID isn't declared yet.
 		 */
@@ -280,14 +282,20 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 	st->st_interface = md->iface;
 	change_state(st, STATE_AGGR_R1);
 
-	/* until we have clue who this is, then be conservative about allocating
+	/*
+	 * until we have clue who this is, be conservative about allocating
 	 * them any crypto bandwidth
 	 */
 	st->st_import = pcim_stranger_crypto;
 
-	st->st_policy |= POLICY_AGGRESSIVE;
+	st->st_policy = policy;	/* ??? not sure what's needed here */
 
-	st->st_oakley.auth = authtype;
+	/* ??? not sure what's needed here */
+	st->st_oakley.auth = policy & POLICY_PSK ? OAKLEY_PRESHARED_KEY :
+		policy & POLICY_RSASIG ? OAKLEY_RSA_SIG :
+		0;	/* we don't really know */
+
+	/* note: ikev1_decode_peer_id() may change md->st->st_connection */
 
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
@@ -303,8 +311,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		return STF_FAIL + INVALID_ID_INFORMATION;
 	}
 
-	pexpect(c == st->st_connection);	/* ??? how would this have changed? */
-	c = st->st_connection;
+	c = st->st_connection;	/* fixup after ikev1_decode_peer_id() */
 
 	extra_debugging(c);
 	st->st_try = 0;                                 /* Not our job to try again from start */
@@ -360,18 +367,14 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 	/* Ni in */
 	RETURN_STF_FAILURE(accept_v1_nonce(md, &st->st_ni, "Ni"));
 
+	/* calculate KE and Nonce */
 	{
-		struct ke_continuation *ke = alloc_thing(
-			struct ke_continuation,
-			"outI2 KE");
+		struct pluto_crypto_req_cont *ke = new_pcrc(
+			aggr_inI1_outR1_continue1,
+			"outI2 KE",
+			st, md);
 
-		ke->ke_md = md;
-		set_suspended(st, md);
-
-		passert(!st->st_sec_in_use);	/* remnant of insanity */
-		/* need to calculate KE and Nonce */
-		pcrc_init(&ke->ke_pcrc, aggr_inI1_outR1_continue1);
-		return build_ke_and_nonce(&ke->ke_pcrc, st, st->st_oakley.group,
+		return build_ke_and_nonce(ke, st->st_oakley.group,
 				st->st_import);
 	}
 }
@@ -403,26 +406,16 @@ static void doi_log_cert_thinking(struct msg_digest *md UNUSED,
 	    DBG_log("  so %ssend cert.", send_cert ? "" : "do not "));
 
 	if (!send_cert) {
-		if (auth == OAKLEY_PRESHARED_KEY)
-			DBG(DBG_CONTROL,
-			    DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)"));
-		else if (certtype == CERT_NONE)
-			DBG(DBG_CONTROL,
-			    DBG_log("I did not send a certificate because I do not have one."));
-		else if (policy == cert_sendifasked)
-			DBG(DBG_CONTROL,
-			    DBG_log("I did not send my certificate because I was not asked to."));
+		DBG(DBG_CONTROL, {
+			if (auth == OAKLEY_PRESHARED_KEY)
+				DBG_log("I did not send a certificate because digital signatures are not being used. (PSK)");
+			else if (certtype == CERT_NONE)
+				DBG_log("I did not send a certificate because I do not have one.");
+			else if (policy == cert_sendifasked)
+				DBG_log("I did not send my certificate because I was not asked to.");
+			/* ??? should there be an additional else catch-all? */
+		});
 	}
-}
-
-stf_status aggr_inI1_outR1_psk(struct msg_digest *md)
-{
-	return aggr_inI1_outR1_common(md, OAKLEY_PRESHARED_KEY);
-}
-
-stf_status aggr_inI1_outR1_rsasig(struct msg_digest *md)
-{
-	return aggr_inI1_outR1_common(md, OAKLEY_RSA_SIG);
 }
 
 static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
@@ -508,8 +501,11 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 
 	/* start of SA out */
 	{
-		struct isakmp_sa r_sa = sa_pd->payload.sa;
+		struct isakmp_sa r_sa;
 		notification_t rn;
+
+		zero(&r_sa);
+		r_sa.isasa_doi = ISAKMP_DOI_IPSEC;
 
 		r_sa.isasa_np = ISAKMP_NEXT_KE;
 		if (!out_struct(&r_sa, &isakmp_sa_desc, &md->rbody, &r_sa_pbs))
@@ -657,8 +653,11 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	return STF_OK;
 }
 
-/* STATE_AGGR_I1: HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
- *           --> HDR*, HASH_I/SIG_I
+/* STATE_AGGR_I1:
+ * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
+ *           --> HDR*, HASH_I
+ * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
+ *           --> HDR*, [CERT,] SIG_I
  */
 static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 				       struct key_continuation *kc); /* forward */
@@ -672,7 +671,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	 */
 	struct state *st = md->st;
 
-	st->st_policy |= POLICY_AGGRESSIVE;
+	st->st_policy |= POLICY_AGGRESSIVE;	/* ??? surely this should be done elsewhere */
 
 	if (!ikev1_decode_peer_id(md, FALSE, TRUE)) {
 		char buf[IDTOA_BUF];
@@ -720,15 +719,11 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 
 	/* set up second calculation */
 	{
-		struct dh_continuation *dh = alloc_thing(
-			struct dh_continuation,
-			"aggr outR1 DH");
+		struct pluto_crypto_req_cont *dh = new_pcrc(
+			aggr_inR1_outI2_crypto_continue,
+			"aggr outR1 DH",
+			st, md);
 
-		dh->dh_md = md;
-		set_suspended(st, md);
-		dh->dh_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-
-		pcrc_init(&dh->dh_pcrc, aggr_inR1_outI2_crypto_continue);
 		return start_dh_secretiv(dh, st,
 					 st->st_import,
 					 O_INITIATOR,
@@ -736,30 +731,30 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	}
 }
 
-/* this is a crypto_req_cont_func */
-static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
+/* redundant type assertion: static crypto_req_cont_func aggr_inR1_outI2_crypto_continue; */
+
+static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *dh,
 					    struct pluto_crypto_req *r)
 {
-	struct dh_continuation *dh = (struct dh_continuation *)pcrc;
-	struct msg_digest *md = dh->dh_md;
+	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("aggr inR1_outI2: calculated DH, sending I2"));
 
-	if (dh->dh_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (dh->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		release_any_md(&dh->dh_md);
+		release_any_md(&dh->pcrc_md);
 		return;
 	}
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == dh->dh_md);
+	passert(st->st_suspended_md == dh->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -770,9 +765,9 @@ static void aggr_inR1_outI2_crypto_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = aggr_inR1_outI2_tail(md, NULL);
 
-	passert(dh->dh_md != NULL);
-	complete_v1_state_transition(&dh->dh_md, e);
-	release_any_md(&dh->dh_md);
+	passert(dh->pcrc_md != NULL);
+	complete_v1_state_transition(&dh->pcrc_md, e);
+	release_any_md(&dh->pcrc_md);
 	reset_cur_state();
 }
 
@@ -924,11 +919,16 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 	 * payloads etc. will not lose our IV
 	 */
 	set_ph1_iv_from_new(st);
-
+	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
 	return STF_OK;
 }
 
-/* STATE_AGGR_R1: HDR*, HASH_I --> done
+/* STATE_AGGR_R1:
+ * SMF_PSK_AUTH: HDR*, HASH_I --> done
+ * SMF_DS_AUTH:  HDR*, SIG_I  --> done
  */
 static stf_status aggr_inI2_tail(struct msg_digest *md,
 			  struct key_continuation *kc);         /* forward */
@@ -1040,9 +1040,10 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
 	 * payloads etc. will not lose our IV
 	 */
 	set_ph1_iv_from_new(st);
-
 	DBG(DBG_CONTROL, DBG_log("phase 1 complete"));
-
+#ifdef USE_LINUX_AUDIT
+	linux_audit_conn(st, LAK_PARENT_START);
+#endif
 	return STF_OK;
 }
 
@@ -1050,36 +1051,36 @@ static stf_status aggr_inI2_tail(struct msg_digest *md,
  * Initiate an Oakley Aggressive Mode exchange.
  * --> HDR, SA, KE, Ni, IDii
  */
-static stf_status aggr_outI1_tail(struct ke_continuation *ke,
+static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 				  struct pluto_crypto_req *r);	/* forward */
 
-/* this is a crypto_req_cont_func */
-static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
+static crypto_req_cont_func aggr_outI1_continue;	/* type assertion */
+
+static void aggr_outI1_continue(struct pluto_crypto_req_cont *ke,
 				struct pluto_crypto_req *r)
 {
-	struct ke_continuation *ke = (struct ke_continuation *)pcrc;
-	struct msg_digest *md = ke->ke_md;
+	struct msg_digest *md = ke->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
 
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_continue for #%lu: calculated ke+nonce, sending I1",
-			ke->ke_pcrc.pcrc_serialno));
+			ke->pcrc_serialno));
 
-	if (ke->ke_pcrc.pcrc_serialno == SOS_NOBODY) {
+	if (ke->pcrc_serialno == SOS_NOBODY) {
 		loglog(RC_LOG_SERIOUS,
 		       "%s: Request was disconnected from state",
 		       __FUNCTION__);
-		release_any_md(&ke->ke_md);
+		release_any_md(&ke->pcrc_md);
 		return;
 	}
 
-	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	passert(cur_state == NULL);
 	passert(st != NULL);
 
-	passert(st->st_suspended_md == ke->ke_md);
+	passert(st->st_suspended_md == ke->pcrc_md);
 	unset_suspended(st); /* no longer connected or suspended */
 
 	set_cur_state(st);
@@ -1089,14 +1090,22 @@ static void aggr_outI1_continue(struct pluto_crypto_req_cont *pcrc,
 
 	e = aggr_outI1_tail(ke, r);
 
-	passert(ke->ke_md != NULL);
-	complete_v1_state_transition(&ke->ke_md, e);
-	release_any_md(&ke->ke_md);
+	passert(ke->pcrc_md != NULL);
+	complete_v1_state_transition(&ke->pcrc_md, e);
+	release_any_md(&ke->pcrc_md);
 	reset_globals();
 
 	passert(GLOBALS_ARE_RESET());
 }
 
+/* No initial state for aggr_outI1:
+ * SMF_DS_AUTH (RFC 2409 5.1) and SMF_PSK_AUTH (RFC 2409 5.4):
+ * -->HDR, SA, KE, Ni, IDii
+ *
+ * Not implemented:
+ * RFC 2409 5.2: --> HDR, SA, [ HASH(1),] KE, <IDii_b>Pubkey_r, <Ni_b>Pubkey_r
+ * RFC 2409 5.3: --> HDR, SA, [ HASH(1),] <Ni_b>Pubkey_r, <KE_b>Ke_i, <IDii_b>Ke_i [, <Cert-I_b>Ke_i ]
+ */
 stf_status aggr_outI1(int whack_sock,
 		      struct connection *c,
 		      struct state *predecessor,
@@ -1104,7 +1113,7 @@ stf_status aggr_outI1(int whack_sock,
 		      unsigned long try,
 		      enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-		      , struct xfrm_user_sec_ctx_ike * uctx
+		      , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 		      )
 {
@@ -1175,51 +1184,50 @@ stf_status aggr_outI1(int whack_sock,
 			st->st_connection->name);
 	}
 
+	/*
+	 * Calculate KE and Nonce.
+	 *
+	 * We need an md because the crypto continuation mechanism requires one
+	 * but we don't have one because we are not responding to an
+	 * incoming packet.
+	 * Solution: build a fake one.  How much do we need to fake?
+	 * Note: almost identical code appears at the end of ikev2parent_outI1.
+	 */
 	{
-		struct ke_continuation *ke = alloc_thing(
-			struct ke_continuation,
-			"aggr_outI1 KE");
+		struct msg_digest *fake_md = alloc_md();
+		struct pluto_crypto_req_cont *ke;
 		stf_status e;
 
-		ke->ke_md = alloc_md();
-		ke->ke_md->st = st;
-		set_suspended(st, ke->ke_md);
+		fake_md->st = st;
+		fake_md->smc = NULL;	/* ??? */
+		fake_md->from_state = STATE_UNDEFINED;	/* ??? */
+
+		ke = new_pcrc(aggr_outI1_continue, "aggr_outI1 KE + nonce",
+			st, fake_md);
+		e = build_ke_and_nonce(ke, st->st_oakley.group, importance);
 
 		/*
-		 * ??? how would st->st_sec_in_use?
-		 * This routine creates *st itself so how would this field
-		 * be already filled-in.
+		 * ??? what exactly do we expect for e?
+		 * ??? Who frees ke? md?
 		 */
-		pexpect(!st->st_sec_in_use);
-		if (!st->st_sec_in_use) {
-			/* need to calculate KE and Nonce */
-			pcrc_init(&ke->ke_pcrc, aggr_outI1_continue);
-			e = build_ke_and_nonce(&ke->ke_pcrc, st, st->st_oakley.group,
-				     importance);
-		} else {
-			/* KE and Nonce already calculated */
-			ke->ke_pcrc.pcrc_serialno = st->st_serialno;	/* transitional */
-			e = aggr_outI1_tail(ke, NULL);
-		}
 
 		reset_globals();
-
 		return e;
 	}
 }
 
-static stf_status aggr_outI1_tail(struct ke_continuation *ke,
+static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 				  struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = ke->ke_md;
+	struct msg_digest *md = ke->pcrc_md;
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
 
-	passert(ke->ke_pcrc.pcrc_serialno == st->st_serialno);	/* transitional */
+	passert(ke->pcrc_serialno == st->st_serialno);	/* transitional */
 
 	DBG(DBG_CONTROL,
 		DBG_log("aggr_outI1_tail for #%lu",
-			ke->ke_pcrc.pcrc_serialno));
+			ke->pcrc_serialno));
 
 	/* the MD is already set up by alloc_md() */
 

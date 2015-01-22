@@ -1,0 +1,11 @@
+IKEv2 RW test with rekey=no and dpdaction clear on the responder,east.
+rekey=yes on initiator, rod. ikelifetime 80s.  East will clear with dpd action.
+
+
+The initiator is behind NAT. 
+1. Road initiates and establish connection.
+2. Road block traffic to east.
+3. East hit liveness clear and clears the connection , do not retry.
+4. Initiator keeps the tunnel up.
+4. initiator ike expires and rekey/reauthenticate, brings up the tunnel.
+

@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 06/29/2014
+.\"      Date: 01/14/2015
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "06/29/2014" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "01/14/2015" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -455,9 +455,7 @@ option is specified, the mode is always strict, meaning no other received propos
 \fBike=aes\fR,
 \fBike=aes128\-md5;modp2048\fR,
 \fBike=aes128\-sha1;dh22\fR,
-\fBike=3des\-md5;modp1024,aes\-sha1;modp1536\fR
-or
-\fBike=modp1536\fR\&. The options must be suitable as a value of
+\fBike=3des\-md5;modp1024,aes\-sha1;modp1536\fR\&. The options must be suitable as a value of
 \fBipsec_spi\fR(8)\*(Aqs
 \fB\-\-ike\fR
 option\&. The default is to use IKE, and to allow all combinations of:
@@ -508,7 +506,16 @@ For RFC\-5114 DH groups, use the "dh" keyword, eg "aes256\-sha1;dh23"
 .sp
 The format for AH is AUTH followed by an optional PFSgroup\&. For instance, "md5" or "sha1;modp1536"\&.
 .sp
-AES\-GCM and AES\-CCM use the syntax like "phase2alg=aes_ccm_c\-256\-null"\&. The only supported key sizes are 128, 192 and 256\&. The subscript (_a, _b and _c) stand for the ICV versions (8,12,16)\&. It is recommended to migrate to the _c versions, as support for smaller ICV\*(Aqs will be removed in the future\&.
+AES\-GCM and AES\-CCM use a syntax like
+\fIphase2alg=aes_ccm\-null\fR
+or
+\fIphase2alg=aes_gcm\-null\fR\&. This syntax is also used for the ike= option\&. The supported key sizes are 128, 192 and 256, which are specified similarly to plain aes, i\&.e\&.
+\fIphase2alg=aes_gcm256\fR\&. A subscript of
+\fI_c\fR,
+\fI_b\fR
+or
+\fI_a\fR
+can be used to refer to the different ICV variants where a means 8 bytes, b means 12 bytes and c means 16 bytes\&. The default when not using a subscript is the 16 byte ICV, the recommended value by RFC\-4106\&. Therefor phase2alg=aes_gcm256\-null is equivalent to phase2alg=aes_gcm_c256\-null\&. It is recommended to migrate to the _c versions (without specifying _c), as support for smaller ICV\*(Aqs might be removed in the future\&.
 .sp
 Note that openswan and versions of libreswan up to 3\&.6 require adding the salt size to the key size\&. Therefor, to interop with an older version of openswan or libreswan, use: "phase2alg=aes_ccm_c\-280\-null"\&. For CCM, the \*(Aqkeysize\*(Aq needs to be increased by 24, resulted in valid keysizes of 152, 215 and 280\&. For GCM the \*(Aqkeysize\*(Aq needs to be increased by 32, resulting valid \*(Aqkeysizes\*(Aq of 160, 224 and 288\&.
 .RE
@@ -568,11 +575,11 @@ IKE fragmentation capabilities are negotiated via
 .PP
 \fBikepad\fR
 .RS 4
-Whether or not to pad IKE messages to a multiple of 4 bytes\&. Valid values are are
+Whether or not to pad IKEv1 messages to a multiple of 4 bytes\&. Valid values are are
 \fByes\fR, (the default) and
 \fBno\fR\&.
 .sp
-Normal RFC compliant behaviour is to use IKE padding\&. However some devices, for instance Checkpoint, can be configured to firewall Aggressive Mode IKE packets that have been padded\&. This option disables the required IKE padding for interop which such devices\&. This option should almost never be enabled\&.
+IKE padding is allowed in IKEv1 but it is known to cause interoperability issues\&. The ikepad= option can be used to disable IKEv1 padding\&. This is required for some devices (such as Checkpoint in Aggressive Mode) that reject padded IKEv1 packets\&. In IKEv2, no padding is allowed, and this option has no effect\&. If you find a device that seems to require IKE padding in IKEv2, please contact the libreswan developers\&. This option should almost never be enabled\&.
 .RE
 .PP
 \fBikev2\fR
@@ -688,7 +695,7 @@ if present, a second public key\&. Either key can authenticate the signature, al
 .RS 4
 If you are using
 \fBleftrsasigkey=%cert\fR
-this defines the certificate you would like to use\&. It should point to a X\&.509 encoded certificate file\&. If you do not specify a full pathname, by default it will look in /etc/ipsec\&.d/certs\&. Libreswan will also check the NSS database for RSA keys\&. These can be software or hardware\&.
+this defines the certificate nickname of your certificate in the NSS database\&. This can be on software or hardware security device\&.
 .RE
 .PP
 \fBleftca\fR
@@ -706,12 +713,12 @@ and means that only peers with certificates signed by the same CA as the leftca 
 This option configures when Libreswan will send X\&.509 certificates to the remote host\&. Acceptable values are
 \fByes|always\fR
 (signifying that we should always send a certificate),
-\fBifasked\fR
+\fBsendifasked\fR
 (signifying that we should send a certificate if the remote end asks for it), and
 \fBno|never\fR
 (signifying that we will never send a X\&.509 certificate)\&. The default for this option is
-\fBifasked\fR
-which may break compatibility with other vendor\*(Aqs IPSec implementations, such as Cisco and SafeNet\&. If you find that you are getting errors about no ID/Key found, you likely need to set this to
+\fBsendifasked\fR
+which may break compatibility with other vendor\*(Aqs IPsec implementations, such as Cisco and SafeNet\&. If you find that you are getting errors about no ID/Key found, you likely need to set this to
 \fBalways\fR\&. This per\-conn option replaces the obsolete global
 \fBnocrsend\fR
 option\&.
@@ -869,10 +876,23 @@ setting, which should be left enabled unless libreswan acts as an XAUTH server u
 .PP
 \fBcisco\-unity\fR
 .RS 4
-whether to send a CISCO_UNITY payload to the peer we are initiating to\&. Acceptable values are:
+whether to send a CISCO_UNITY payload to the peer\&. Acceptable values are:
 \fBno\fR
 (the default) and
-\fByes\fR\&. It is recommended to leave this option unset, unless the remote peer (Cisco) requires it\&. This is an experimental option\&. It does not modify local behaviour\&. It is expected the remote peer might behave differently when it receives this vendor id\&. This option might be removed in a future release\&.
+\fByes\fR\&. It is recommended to leave this option unset, unless the remote peer (Cisco client or server) requires it\&. This option does not modify local behaviour\&. It can be needed to connect as a client to a Cisco server\&. It can also be needed to act as a server for a Cisco client, which otherwise might send back an error DEL_REASON_NON_UNITY_PEER\&.
+.RE
+.PP
+\fBsend\-vendorid\fR
+.RS 4
+whether to send our Vendor ID during IKE\&. Acceptable values are:
+\fBno\fR
+(the default) and
+\fByes\fR\&. The vendor id sent can be configured using the "config setup" option
+\fBmyvendorid=\fR\&. It defaults to OE\-Libreswan\-VERSION\&.
+.sp
+Vendor ID\*(Aqs can be useful in tracking interoperability problems\&. However, specific vendor identification and software versions can be useful to an attacker when there are known vulnerabilities to a specific vendor/version\&.
+.sp
+The prefix OE stands for "Opportunistic Encryption"\&. This prefix was historically used by The FreeS/WAN Project and The Openswan Project (openswan up to version 2\&.6\&.38) and in one Xeleranized openswan versions (2\&.6\&.39)\&. Further Xeleranized openswan\*(Aqs use the prefix OSW\&.
 .RE
 .PP
 \fBoverlapip\fR
@@ -946,20 +966,21 @@ This option is obsoleted, please use phase2alg if you need the PFS to be differe
 .PP
 \fBaggrmode\fR
 .RS 4
-Use Aggressive Mode instead of Main Mode\&. Aggressive Mode is less secure, and vulnerable to Denial Of Service attacks\&. It is also vulnerable to brute force attacks with software such as
+Use IKEv1 Aggressive Mode instead of IKEv1 Main Mode\&. This option has no effect when IKEv2 is used\&. Acceptable values are
+\fBno\fR
+(the default) or
+\fByes\fR\&. When this option is enabled, IKEv1 Main Mode will no longer be allowed for this connection\&.
+.sp
+Aggressive Mode is less secure, and more vulnerable to Denial Of Service attacks\&. It is also vulnerable to brute force attacks with software such as
 \fBikecrack\fR\&. It should not be used, and it should especially not be used with XAUTH and group secrets (PSK)\&. If the remote system administrator insists on staying irresponsible, enable this option\&.
 .sp
 Aggressive Mode is further limited to only proposals with one DH group as there is no room to negotiate the DH group\&. Therefor it is mandatory for Aggressive Mode connections that both
 \fBike=\fR
 and
 \fBphase2alg=\fR
-options are specified with only fully specified proposal using one DH group\&. Acceptable values are
-\fByes\fR
-or
-\fBno\fR
-(the default)\&.
+options are specified with only one fully specified proposal using one DH group\&.
 .sp
-The ISAKMP SA is created in exchange 1 in aggressive mode\&. Libreswan has to send the exponent during that exchange, so it has to know what DH group to use before starting\&. This is why you can not have multiple DH groups in aggressive mode\&. In IKEv2, which uses a similar method to IKEv1 Aggressive Mode, there is a message to convey the DH group is wrong, and so an IKEv2 connection can actually recover from picking the wrong DH group by restarting its negotiation\&.
+The KE payload is created in the first exchange packet when using aggressive mode\&. The KE payload depends on the DH group used\&. This is why there cannot be multiple DH groups in IKEv1 aggressive mode\&. In IKEv2, which uses a similar method to IKEv1 Aggressive Mode, there is an INVALID_KE response payload that can inform the initiator of the responder\*(Aqs desired DH group and so an IKEv2 connection can actually recover from picking the wrong DH group by restarting its negotiation\&.
 .RE
 .PP
 \fBsalifetime\fR
@@ -1074,6 +1095,16 @@ Typical values are about the 2000 range\&. These can be seen on the NETKEY stack
 when the connection is up\&. For "anonymous IPsec" or Opportunistic Encryption based connections, a much lower priority (65535) is used to ensure administrator configured IPsec always takes precedence over opportunistic IPsec\&.
 .RE
 .PP
+\fBsendca\fR
+.RS 4
+How much of our available X\&.509 trust chain to send with the End certificate, excluding any root CA\*(Aqs\&. Specifying
+\fBissuer\fR
+sends just the issuing intermediate CA, while
+\fB all\fR
+will send the entire chain of intermediate CA\*(Aqs\&.\fBnone\fR
+(the default) will not send any CA certs\&.
+.RE
+.PP
 \fBdisablearrivalcheck\fR
 .RS 4
 whether KLIPS\*(Aqs normal tunnel\-exit check (that a packet emerging from a tunnel has plausible addresses in its header) should be disabled; acceptable values are
@@ -1088,12 +1119,12 @@ and
 Whether labeled IPsec should be enabled or not; acceptable values are
 \fBno\fR
 (the default) and
-\fByes\fR\&. See also loopback=, policy\-label= and secctx\-attr\-value=
+\fByes\fR\&. See also loopback=, policy\-label= and secctx\-attr\-type=
 .RE
 .PP
 \fBpolicy\-label\fR
 .RS 4
-The string representation of an access control security label that is interpreted by the LSM (e\&.g\&. SELinux) for use with Labeled IPsec\&. See also loopback=, labeled\-ipsec= and secctx\-attr\-value=\&. For example,
+The string representation of an access control security label that is interpreted by the LSM (e\&.g\&. SELinux) for use with Labeled IPsec\&. See also loopback=, labeled\-ipsec= and secctx\-attr\-type=\&. For example,
 \fIpolicy\-label=system_u:object_r:ipsec_spd_t:s0\-s15:c0\&.c1023\fR
 .RE
 .PP
@@ -1230,12 +1261,6 @@ The delay (in seconds) for NAT\-T keep\-alive packets, if these are enabled usin
 This parameter may eventually become per\-connection\&.
 .RE
 .PP
-\fBretransmits\fR
-.RS 4
-Whether pluto should attempt to retransmit packets that get no reply\&. This is mostly used to disable retransmits while debugging a problem\&. Production use should always leave this enabled\&. The default is
-\fByes\fR\&.
-.RE
-.PP
 \fBvirtual\-private\fR
 .RS 4
 contains the networks that are allowed as subnet= for the remote clients when using the
@@ -1257,7 +1282,7 @@ Note: It seems that T\-Mobile in the US and Rogers/Fido in Canada have started u
 .PP
 \fBmyvendorid\fR
 .RS 4
-The string to use as our vendor id (VID) when send_vendorid=yes\&. The default is OE\-Libreswan\-VERSION\&.
+The string to use as our vendor id (VID) when send\-vendorid=yes\&. The default is OE\-Libreswan\-VERSION\&.
 .RE
 .PP
 \fBoe\fR
@@ -1277,7 +1302,12 @@ of them, where
 is the number of CPU\*(Aqs you have (including hypherthreaded CPU\*(Aqs)\&. A value of 0 forces pluto to do all operations in the main process\&. A value of \-1 tells pluto to perform the above calculation\&. Any other value forces the number to that amount\&.
 .RE
 .PP
-\fBsecctx\-attr\-value\fR
+\fBseedbits\fR
+.RS 4
+Pluto uses the NSS crypto library as its random source\&. Some government Three Letter Agencies require that pluto reads additional bits from /dev/random and feed these into the NSS RNG before drawing random from the NSS library, despite the NSS library itself already seeding its internal state\&. This process can block pluto for an extended time during startup, depending on the entropy of the system\&. Therefor, the default is to not perform this redundant seeding\&. If specifying a value, it is recommended to specify at least 460 bits (for FIPS) or 440 bits (for BSI)\&.
+.RE
+.PP
+\fBsecctx\-attr\-type\fR
 .RS 4
 The value for the IPsec SA security context attribute identifier which is used for Labeled IPsec\&. Defaults to the private use IANA value 32001 from the IPsec SA attributes registry\&. Old openswan versions might still be using the (stolen) value 10, which has since been assigned by IANA for something else\&. Other values are not recommended unless IANA assigns an actual value for this\&. See also labeled\-ipsec=, loopback= and policy\-label=
 .RE

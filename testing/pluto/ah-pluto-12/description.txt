@@ -1,3 +1,0 @@
-Testing AH failure with ah=null
-
-this should fail

@@ -1,6 +1,7 @@
 /*
  * addresspool management functions used with left/rightaddresspool= option.
  * Currently used for IKEv1 XAUTH/ModeConfig options if we are an XAUTH server.
+ * And in IKEv2 to respond to Configuration Payload (CP) request.
  *
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
@@ -18,7 +19,7 @@
 
 /* Address Pools
  *
- * With XAUTH, we need a way to allocate an address to a client.
+ * With XAUTH/CP, we need a way to allocate an address to a client.
  * This address must be unique on our system.
  * The pools of addresses to be used are declared in our config file.
  * Each connection may specify a pool as a range of IPv4 addresses.

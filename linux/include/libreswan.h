@@ -185,7 +185,7 @@ static inline deltatime_t monotimediff(monotime_t a, monotime_t b) {
 #include <linux/ctype.h>
 #include <libreswan/ipsec_kversion.h>
 #include <libreswan/ipsec_param.h>
-#define user_assert(foo)  /*nothing*/
+#define user_assert(foo)  { } /* nothing */
 
 #else /* NOT in kernel */
 #include <sys/types.h>
@@ -391,10 +391,10 @@ typedef uint32_t IPsecSAref_t;
 #define IPSEC_SA_REF_MASK           ((1u << IPSEC_SA_REF_TABLE_IDX_WIDTH) - 1u)
 #define IPSEC_NFMARK_IS_SAREF_BIT 0x80000000u
 
-#define IPsecSAref2NFmark(x) (((x) & \
-			       IPSEC_SA_REF_MASK) << IPSEC_SA_REF_TABLE_OFFSET)
-#define NFmark2IPsecSAref(x) (((x) >> \
-			       IPSEC_SA_REF_TABLE_OFFSET) & IPSEC_SA_REF_MASK)
+#define IPsecSAref2NFmark(x) \
+	(((x) & IPSEC_SA_REF_MASK) << IPSEC_SA_REF_TABLE_OFFSET)
+#define NFmark2IPsecSAref(x) \
+	(((x) >> IPSEC_SA_REF_TABLE_OFFSET) & IPSEC_SA_REF_MASK)
 
 #define IPSEC_SAREF_NULL ((IPsecSAref_t)0u)
 /* Not representable as an nfmark */
@@ -471,7 +471,7 @@ extern err_t ttodatav(const char *src, size_t srclen, int base,
 	       char *buf,  size_t buflen, size_t *needed,
 	       char *errp, size_t errlen, unsigned int flags);
 #define TTODATAV_BUF    40              /* ttodatav's largest non-literal message */
-#define TTODATAV_IGNORESPACE  (1 << 1)  /* ignore spaces in base64 encodings*/
+#define TTODATAV_IGNORESPACE  (1 << 1)  /* ignore spaces in base64 encodings */
 #define TTODATAV_SPACECOUNTS  0         /* do not ignore spaces in base64   */
 
 extern size_t datatot(const unsigned char *src, size_t srclen, int format,

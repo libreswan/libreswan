@@ -135,7 +135,7 @@ static void help(void)
 		" [--priority <prio>] [--reqid <reqid>]"
 		" \\\n   "
 
-		" [--ikev1-disable]"
+		" [--ikev1-allow]"
 		" [--ikev2-allow]"
 		" [--ikev2-propose]"
 		" \\\n   "
@@ -714,7 +714,7 @@ static const struct option long_opts[] = {
 	{ "remote_peer_type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
 
 
-	PS("ikev1-disable", IKEV1_DISABLE),
+	PS("ikev1-allow", IKEV1_ALLOW),
 	PS("ikev2-allow", IKEV2_ALLOW),
 	PS("ikev2-propose", IKEV2_PROPOSE),
 
@@ -794,8 +794,6 @@ static const struct option long_opts[] = {
 	{ 0, 0, 0, 0 }
 };
 
-static const char namechars[] = "abcdefghijklmnopqrstuvwxyz"
-				"ABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
 	.sun_path   = DEFAULT_CTLBASE CTL_SUFFIX,
@@ -951,7 +949,7 @@ int main(int argc, char **argv)
 
 	msg.sha2_truncbug = FALSE;
 
-	/*Network Manager support*/
+	/* Network Manager support */
 #ifdef HAVE_NM
 	msg.nmconfigured = FALSE;
 #endif
@@ -1305,30 +1303,24 @@ int main(int argc, char **argv)
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy |= POLICY_TUNNEL | POLICY_OPPORTUNISTIC |
 					      POLICY_GROUP;
-			} else {
-				if (msg.left.id != NULL) {
-					int strlength = 0;
-					int n = 0;
-					const char *cp;
-					int dnshostname = 0;
-
-					strlength = strlen(optarg);
-					for (cp = optarg, n = strlength; n > 0;
-					     cp++, n--) {
-						if (strchr(namechars,
-							   *cp) != NULL) {
-							dnshostname = 1;
-							break;
-						}
-					}
-					if (dnshostname)
-						msg.dnshostname = optarg;
+			} else if (msg.left.id != NULL) {
+				if (ttoaddr_num(optarg, 0, msg.addr_family,
+					&msg.right.host_addr) == NULL) {
+					/* we have a proper numeric IP address */
+				} else {
+					/*
+					 * We asssume that we have a DNS name.
+					 * This logic matches confread.c.
+					 * ??? it would be kind to check the syntax.
+					 */
+					msg.dnshostname = optarg;
 					ttoaddr(optarg, 0, msg.addr_family,
 						&msg.right.host_addr);
 					/* we don't fail here.  pluto will re-check the DNS later */
-				} else
+				}
+			} else {
 				diagq(ttoaddr(optarg, 0, msg.addr_family,
-					      &msg.right.host_addr), optarg);
+				      &msg.right.host_addr), optarg);
 			}
 
 			msg.policy |= new_policy;
@@ -1438,7 +1430,7 @@ int main(int argc, char **argv)
 			msg.policy |= POLICY_TUNNEL; /* client => tunnel */
 			continue;
 
-		case END_CLIENTWITHIN: /* --clienwithin <address range> */
+		case END_CLIENTWITHIN: /* --clientwithin <address range> */
 			if (end_seen & LELEM(END_CLIENT - END_FIRST))
 				diag("--clientwithin conflicts with --client");
 
@@ -1494,7 +1486,7 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_AGGRESSIVE_IX:             /* --aggrmode */
 		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:              /* --overlapip */
 
-		case CDP_SINGLETON + POLICY_IKEV1_DISABLE_IX:		/* --ikev1-disable */
+		case CDP_SINGLETON + POLICY_IKEV1_ALLOW_IX:		/* --ikev1-allow */
 		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_IX:		/* --ikev2-allow */
 		case CDP_SINGLETON + POLICY_IKEV2_PROPOSE_IX:		/* --ikev2-propose */
 
@@ -1925,6 +1917,18 @@ int main(int argc, char **argv)
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY)
 				diag("must specify --rsasig or --psk for a connection");
 
+			/*
+			 * If neither v1 not v2, default to v1
+			 * (backward compatibility)
+			 */
+			if (!(msg.policy & POLICY_IKEV2_MASK))
+				msg.policy |= POLICY_IKEV1_ALLOW;
+
+			/*
+			 * ??? this test can never fail:
+			 *	!NEVER_NEGOTIATE=>HAS_IPSEC_POLICY
+			 * These interlocking tests should be redone.
+			 */
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
 			    (msg.left.has_client || msg.right.has_client))
 				diag("must not specify clients for ISAKMP-only connection");

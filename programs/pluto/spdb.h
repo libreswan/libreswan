@@ -26,6 +26,7 @@
  * Note: only "basic" values are represented so far.
  * v2 is drastically simplified: there is only one attribute type
  * and it applies to any v2 protocols.
+ * ??? this use of union is very scary.
  */
 struct db_attr {
 	union {
@@ -38,7 +39,8 @@ struct db_attr {
 	u_int16_t val;
 };
 
-/* The logic of IKEv1 proposals is described in
+/*
+ * The logic of IKEv1 proposals is described in
  * RFC2408 "Internet Security Association and Key Management Protocol (ISAKMP)"
  * especially in Section 4.2 "Security Association Establishment"
  * and Section 3.5 "Proposal Payload"
@@ -64,62 +66,107 @@ struct db_attr {
  * Our in-program representation:
  */
 
-/* transform */
+/* transform: an array of attributes */
 struct db_trans {
-	u_int16_t transid;      /* Transform-Id */
-	struct db_attr *attrs;  /* array of attributes */
-	unsigned int attr_cnt;  /* number of elements */
+	u_int16_t transid;	/* Transform-Id */
+	struct db_attr *attrs;	/* [attr_cnt] attributes */
+	unsigned int attr_cnt;	/* number of attributes */
 };
 
-/* proposal - IKEv1 */
+/*
+ * IKEv1 proposal: an array of transforms (alternatives)
+ * Example: several different ESP transforms, any of which is OK.
+ */
 struct db_prop {
-	u_int8_t protoid;       /* Protocol-Id */
-	struct db_trans *trans; /* array (disjunction of elements) */
-	unsigned int trans_cnt; /* number of elements */
+	u_int8_t protoid;	/* Protocol-Id */
+	struct db_trans *trans;	/* [trans_cnt] transforms (disjunction) */
+	unsigned int trans_cnt;	/* number of transforms */
 	/* SPI size and value isn't part of DB */
 };
 
-/* conjunction (AND) of proposals - IKEv1 */
+/*
+ * IKEv1 conjunction of proposals: array of proposals, all of which must be used.
+ * Example: one is ESP, another is AH, result is ESP and AH.
+ */
 struct db_prop_conj {
-	struct db_prop *props;  /* array (conjunction of elements) */
-	unsigned int prop_cnt;  /* number of elements */
+	struct db_prop *props;	/* [prop_cnt] proposals (conjunction) */
+	unsigned int prop_cnt;	/* number of proposals */
 };
 
+/*
+ * The logic of IKEv2 Security Association Payloads is described in
+ * RFC5996bis section 3.3.
+ * An SA may contain multiple proposals; these are alternatives,
+ * in decreasing preference order.
+ * Each proposal contains a single IPsec protocol (IKE, ESP, or AH).
+ * Each proposal may contain multiple transforms.
+ * Each transform may contain multiple attributes.
+ *
+ * Each proposal is numbered, starting from one and increasing by one.
+ * Within each proposal, transforms of the same type (eg. ENCR, INTEG, ESN)
+ * are alternatives and each of the types that appear in the SA
+ * must appear in the matching SA.
+ *
+ * Combined-mode ciphers handle both integrity and encryption in a single
+ * (encryption) algorithm and thus their proposal must offer either no
+ * integrity algorithm or the "none" integrity algorithm.
+ *
+ * To offer both combined-mode and non-combined mode ciphers, separate
+ * proposals are required.
+ */
 
-/* transform - IKEv2 */
+/* IKEv2 transform */
 struct db_v2_trans {
 	enum ikev2_trans_type transform_type;
-	u_int16_t transid;              /* Transform-Id */
-	struct db_attr *attrs;          /* array of attributes */
-	unsigned int attr_cnt;          /* number of elements */
+	u_int16_t transid;	/* Transform-Id */
+	struct db_attr *attrs;	/* [attr_cnt] attributes */
+	unsigned int attr_cnt;	/* number of attributes */
 };
 
-/* proposal - IKEv2 */
-/* transforms are OR of each unique transform_type */
+/*
+ * IKEv2 proposal
+ * transforms are OR of each unique transform_type
+ * ??? that description is suspect.  How about:
+ * ??? A proposal A matches a proposal B iff
+ * ??? (1) all transform types present in A are present in the B, and
+ * ??? (2) for each transform type present in A, at least one
+ * ???     of the transforms of that type in A matches a transform in B.
+ * ??? In other words, all of the transforms with a particular
+ * ??? type form a disjunction, and the proposal is a conjunction
+ * ??? of these disjunctions.
+ *
+ * ??? if this is a disjunction (OR) why is it called *_conj?
+ * ??? this should probably be called db_v2_prop.
+ */
+
 struct db_v2_prop_conj {
 	u_int8_t propnum;
-	u_int8_t protoid;               /* Protocol-Id: ikev2_trans_type */
-	struct db_v2_trans *trans;      /* array (disjunction-OR) */
-	unsigned int trans_cnt;         /* number of elements */
+	u_int8_t protoid;	/* Protocol-Id: enum ikev2_trans_type */
+	struct db_v2_trans *trans;	/* [trans_cnt] transforms (OR) */
+	unsigned int trans_cnt;	/* number of transforms */
 	/* SPI size and value isn't part of DB */
 };
 
-/* conjunction (AND) of proposals - IKEv2 */
-/* this is, for instance, ESP+AH, etc.    */
+/*
+ * conjunction (AND) of proposals - IKEv2
+ * this is, for instance, ESP+AH, etc.
+ * ??? If this is multiple proposals why is it called *_prop?
+ * ??? This should probably be called db_v2_prop_conj
+ */
 struct db_v2_prop {
-	struct db_v2_prop_conj  *props; /* array */
-	unsigned int prop_cnt;          /* number of elements... AND*/
+	struct db_v2_prop_conj *props;	/* [prop_cnt] conjunctive proposals (AND) */
+	unsigned int prop_cnt;		/* number of conjunctive proposals */
 };
 
 /* security association */
 struct db_sa {
-	bool dynamic;                           /* set if these items were unshared on heap */
-	bool parentSA;                          /* set if this is a parent/oakley */
-	struct db_prop_conj    *prop_conjs;     /* v1: array (disjunction of elements) */
-	unsigned int prop_conj_cnt;             /* v1: number of elements */
+	bool dynamic;	/* set if these items were unshared on heap */
+	bool parentSA;	/* set if this is a parent/oakley */
+	struct db_prop_conj *prop_conjs;	/* v1: [prop_conj_cnt] conjunctions of proposals (disjunction) */
+	unsigned int prop_conj_cnt;	/* v1: number of conjunctions of proposals */
 
-	struct db_v2_prop      *prop_disj;      /* v2: array */
-	unsigned int prop_disj_cnt;             /* v2: number of elements... OR */
+	struct db_v2_prop *prop_disj;	/* v2: [prop_disj_cnt] */
+	unsigned int prop_disj_cnt;	/* v2: number of elements... OR */
 };
 
 /* The oakley sadb is subscripted by a bitset computed by sadb_index().
@@ -172,7 +219,7 @@ extern complaint_t accept_oakley_auth_method(struct state *st,  /* current state
 					     bool credcheck);   /* whether we can check credentials now */
 #endif
 
-extern lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs);
+extern lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */);
 
 extern notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,           /* body of input SA Payload */
 					   const struct isakmp_sa *sa,  /* header of input SA Payload */
@@ -191,20 +238,18 @@ extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body 
 
 extern void free_sa_attr(struct db_attr *attr);
 extern void free_sa(struct db_sa *f);
-extern struct db_sa *sa_copy_sa(struct db_sa *sa, int extra);
+extern struct db_sa *sa_copy_sa(struct db_sa *sa);
 extern struct db_sa *sa_copy_sa_first(struct db_sa *sa);
 extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
 
 /* in spdb_print.c - normally never used in pluto */
-extern void sa_print(struct db_sa *f);
+extern void sa_log(struct db_sa *f);
 
-extern void sa_v2_print(struct db_sa *f);
+extern void sa_v2_log(struct db_sa *f);
 
 /* IKEv1 <-> IKEv2 things */
 extern struct db_sa *sa_v2_convert(struct db_sa *f);
 
 extern bool ikev2_acceptable_group(struct state *st, oakley_group_t group);
-
-extern void clone_trans(struct db_trans *tr, int extra);
 
 #endif /*  _SPDB_H_ */

@@ -57,142 +57,104 @@
 #include "nat_traversal.h"
 
 #ifdef HAVE_LABELED_IPSEC
-#include "security_selinux.h"
-#endif
 
-#ifdef HAVE_LABELED_IPSEC
+#include "security_selinux.h"
+
 static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 {
-	/*supported length is 256 bytes (257 including \0)*/
-	char sec_ctx_value[MAX_SECCTX_LEN];
-	u_int8_t ctx_doi;
-	u_int8_t ctx_alg;
-	u_int16_t net_ctx_len, ctx_len;
-	int i = 0;
+	struct xfrm_user_sec_ctx_ike uctx;
 
-	DBG(DBG_PARSING, DBG_log("received sec ctx"));
+	if (!in_struct(&uctx.ctx, &sec_ctx_desc, pbs, NULL))
+		return FALSE;
 
-	/*doing sanity check*/
-	if (pbs_left(pbs) <
-	    (sizeof(ctx_doi) + sizeof(ctx_alg) + sizeof(ctx_len) + 1) ) {
-		DBG(DBG_PARSING,
-		    DBG_log("received perhaps corrupted security ctx (should not happen really)"));
+	if (pbs_left(pbs) != uctx.ctx.ctx_len) {
+		/* ??? should we ignore padding? */
+		/* ??? is this the right way to log an error? */
+		libreswan_log("Sec Ctx Textual Label length mismatch (length=%u; packet space = %u)",
+			uctx.ctx.ctx_len, (unsigned)pbs_left(pbs));
 		return FALSE;
 	}
 
-	/*reading ctx doi*/
-	memcpy(&ctx_doi, pbs->cur, sizeof(ctx_doi));
-	pbs->cur += sizeof(ctx_doi);
-
-	/*reading ctx alg*/
-	memcpy(&ctx_alg, pbs->cur, sizeof(ctx_alg));
-	pbs->cur += sizeof(ctx_alg);
-
-	/*reading ctx length*/
-	memcpy(&net_ctx_len, pbs->cur, sizeof(ctx_len));
-	pbs->cur += sizeof(ctx_len);
-	ctx_len = ntohs(net_ctx_len);
-
-	DBG(DBG_PARSING,
-	    DBG_log("   received ctx_doi = %d, ctx_alg = %d, ctx_len = %d",
-		    ctx_doi, ctx_alg, ctx_len));
-
-	/* verifying remaining buffer length and ctx length matches or not (checking for any corruption)*/
-	if (ctx_len != pbs_left(pbs) ) {
-		DBG(DBG_PARSING,
-		    DBG_log("received ctx length seems to be different than the length of string present in the buffer"));
-		DBG(DBG_PARSING,
-		    DBG_log("received ctx_len = %d, buffer left = %lu",
-			    ctx_len,
-			    pbs_left(pbs)));
+	if (uctx.ctx.ctx_len > MAX_SECCTX_LEN) {
+		/* ??? is this the right way to log an error? */
+		libreswan_log("Sec Ctx Textual Label too long (%u > %u)",
+			uctx.ctx.ctx_len, MAX_SECCTX_LEN);
 		return FALSE;
 	}
 
-	/* do not process security labels longer than MAX_SECCTX_LEN */
-	if (pbs_left(pbs) > MAX_SECCTX_LEN) {
-		DBG(DBG_PARSING,
-		    DBG_log("received security ctx longer than MAX_SECCTX_LEN which is not supported"));
-		return FALSE;
-	}
+	zero(&uctx.sec_ctx_value);	/* abundance of caution */
 
-	/* reading security label*/
-	memcpy(sec_ctx_value, pbs->cur, pbs_left(pbs));
-	i = pbs_left(pbs);
+	if (in_raw(uctx.sec_ctx_value, uctx.ctx.ctx_len, pbs,
+			"Sec Ctx Textual Label"))
+		return FALSE;
 
 	/*
-	 * Checking if the received security label contains \0.
-	 * We expect the received label to have '\0', however to be
-	 * compliant with implementations that don't send \0
-	 * we can add a \0 if there is space left in the buffer.
+	 * The label should have been NUL-terminated.
+	 * We will generously add one if it is missing and there is room.
 	 */
-
-	if ( sec_ctx_value[i - 1] != '\0') {
-		/*check if we have space left and then append \0*/
-		if (i < MAX_SECCTX_LEN) {
-			sec_ctx_value[i] = '\0';
-			i = i + 1;
-		} else {
-			/*there is no space left*/
-			DBG(DBG_PARSING,
-			    DBG_log("received security label > MAX_SECCTX_LEN (should not happen really)"));
+	if (uctx.ctx.ctx_len == 0 ||
+	    uctx.sec_ctx_value[uctx.ctx.ctx_len - 1] != '\0') {
+		if (uctx.ctx.ctx_len == MAX_SECCTX_LEN) {
+			/* ??? is this the right way to log an error? */
+			libreswan_log("Sec Ctx Textual Label missing terminal NUL and there is no space to add it");
 			return FALSE;
 		}
+		/* ??? is this the right way to log a warning? */
+		libreswan_log("Sec Ctx Textual Label missing terminal NUL; we are adding it");
+		uctx.sec_ctx_value[uctx.ctx.ctx_len] = '\0';
+		uctx.ctx.ctx_len++;
 	}
 
-	/*
-	   while (pbs_left(pbs) != 0){
-	   sec_ctx_value[i++]= *pbs->cur++;
-	    if(i == MAX_SECCTX_LEN){
-	    DBG(DBG_PARSING, DBG_log("security label reached maximum length (MAX_SECCTX_LEN) allowed"));
-	    break;
-	    }
-	   }
-
-	   sec_ctx_value[i]='\0';
-	 */
-	DBG(DBG_PARSING,
-	    DBG_log("   sec ctx value: %s, len=%d", sec_ctx_value, i));
+	if (strlen(uctx.sec_ctx_value) + 1 != uctx.ctx.ctx_len) {
+		/* ??? is this the right way to log a warning? */
+		libreswan_log("Error: Sec Ctx Textual Label contains embedded NUL");
+		return FALSE;
+	}
 
 	if (st->sec_ctx == NULL && st->st_state == STATE_QUICK_R0) {
-		DBG_log("Receievd sec ctx in responder state");
-		st->sec_ctx = alloc_thing(struct xfrm_user_sec_ctx_ike,
-					  "struct xfrm_user_sec_ctx_ike");
-		memcpy(st->sec_ctx->sec_ctx_value, sec_ctx_value, i);
-		st->sec_ctx->ctx_len = i;
-		st->sec_ctx->ctx_alg = ctx_alg;
-		st->sec_ctx->ctx_doi = ctx_doi;
+		DBG_log("Received sec ctx in responder state");
 
-		/* lets verify if the received security label is within range of this connection's policy's security label*/
+		/*
+		 * verify that the received security label is
+		 * within range of this connection's policy's security label
+		 */
 		if (!st->st_connection->labeled_ipsec) {
-			DBG_log("This state (connection) is not labeled ipsec enabled, so cannot proceed");
+			libreswan_log("This state (connection) is not labeled ipsec enabled, so cannot proceed");
 			return FALSE;
-		} else if ( st->st_connection->policy_label != NULL &&
-			    within_range(st->sec_ctx->sec_ctx_value,
+		} else if (st->st_connection->policy_label != NULL &&
+			   within_range(uctx.sec_ctx_value,
 					 st->st_connection->policy_label)) {
-			DBG_log("security context verification succedded");
+			DBG_log("security context verification succeeded");
 		} else {
-			DBG_log("security context verification failed (perhaps policy_label is not confgured for this connection)");
+			libreswan_log("security context verification failed (perhaps policy_label is not confgured for this connection)");
 			return FALSE;
 		}
-
-	} else if (st->st_state == STATE_QUICK_I1 ) {
+		/*
+		 * Note: this clones the whole of uctx.sec_ctx_value.
+		 * It would be reasonable to clone only the part that's used.
+		 */
+		st->sec_ctx = clone_thing(uctx, "struct xfrm_user_sec_ctx_ike");
+	} else if (st->st_state == STATE_QUICK_R0) {
+		/* ??? can this happen? */
+		/* ??? should we check that this label and first one match? */
+		DBG_log("Received sec ctx in responder state again: ignoring this one");
+	} else if (st->st_state == STATE_QUICK_I1) {
 		DBG(DBG_PARSING,
 		    DBG_log("Initiator state received security context from responder state, now verifying if both are same"));
-		if (streq(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
+		if (streq(st->sec_ctx->sec_ctx_value, uctx.sec_ctx_value)) {
 			DBG_log("security contexts are verified in the initiator state");
 		} else {
-			DBG_log("security context verification failed in the initiator state"
-				"(shouldnt reach here unless responder (or something in between) is modifying the security context");
+			libreswan_log("security context verification failed in the initiator state (shouldn't reach here unless responder (or something in between) is modifying the security context");
 			return FALSE;
 		}
-	} else if (st->st_state == STATE_QUICK_R0) {
-		DBG_log("Receievd sec ctx in responder state again, already stored it so doing nothing now");
 	}
 	return TRUE;
 }
+
 #endif
 
 /** output an attribute (within an SA) */
+/* Note: ikev2_out_attr is a clone, with the same bugs */
 static bool out_attr(int type,
 	      unsigned long val,
 	      struct_desc *attr_desc,
@@ -219,6 +181,7 @@ static bool out_attr(int type,
 		u_int32_t nval = htonl(val);
 
 		attr.isaat_af_type = type | ISAKMP_ATTR_AF_TLV;
+		attr.isaat_lv = sizeof(nval);
 		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
 		    !out_raw(&nval, sizeof(nval), &val_pbs,
 			     "long attribute value"))
@@ -236,7 +199,7 @@ static bool out_attr(int type,
 	return TRUE;
 }
 
-#define return_on(var, val) do { var = val; goto return_out; } while (0);
+#define return_on(var, val) { (var) = (val); goto return_out; }
 
 /**
  * Output an SA, as described by a db_sa.
@@ -598,63 +561,33 @@ bool ikev1_out_sa(pb_stream *outs,
 					    st->st_connection->labeled_ipsec) {
 						struct isakmp_attribute attr;
 						pb_stream val_pbs;
+
+						passert(st->sec_ctx->ctx.ctx_len <= MAX_SECCTX_LEN);
 						attr.isaat_af_type =
-							secctx_attr_value |
+							secctx_attr_type |
 							ISAKMP_ATTR_AF_TLV;
 
-						DBG(DBG_EMITTING,
-						    DBG_log("secctx_attr_value=%d, type=%d",
-							    secctx_attr_value,
-							    attr.isaat_af_type));
 						if (!out_struct(&attr,
 								attr_desc,
 								&trans_pbs,
 								&val_pbs))
 							return_on(ret, FALSE);
-						DBG(DBG_EMITTING,
-						    DBG_log("placing security context attribute in the out going structure"));
-						DBG(DBG_EMITTING,
-						    DBG_log("sending ctx_doi"));
-						if (!out_raw(&st->sec_ctx->
-							        ctx_doi,
-							     sizeof(st->sec_ctx
-								    ->ctx_doi),
-							     &val_pbs,
-							     " variable length sec ctx: ctx_doi"))
+
+						if (!out_struct(&st->sec_ctx->ctx,
+								&sec_ctx_desc,
+								&val_pbs,
+								NULL))
 							return_on(ret, FALSE);
-						DBG(DBG_EMITTING,
-						    DBG_log("sending ctx_alg"));
-						if (!out_raw(&st->sec_ctx->
-							        ctx_alg,
-							     sizeof(st->sec_ctx
-								    ->ctx_alg),
-							     &val_pbs,
-							     " variable length sec ctx: ctx_alg"))
-							return_on(ret, FALSE);
-						DBG(DBG_EMITTING,
-						    DBG_log("sending ctx_len after conversion to network byte order"));
-						u_int16_t net_ctx_len = htons(st->sec_ctx->ctx_len);
-						if (!out_raw(&net_ctx_len,
-							     sizeof(st->sec_ctx
-								    ->ctx_len),
-							     &val_pbs,
-							     " variable length sec ctx: ctx_len"))
-							return_on(ret, FALSE);
-						/*Sending '\0'  with sec ctx as we get it from kernel*/
+
 						if (!out_raw(st->sec_ctx->
 							     sec_ctx_value,
-							     st->sec_ctx->
-							     ctx_len, &val_pbs,
+							     st->sec_ctx->ctx.ctx_len, &val_pbs,
 							     " variable length sec ctx"))
 							return_on(ret, FALSE);
-						DBG(DBG_EMITTING,
-						    DBG_log("placed security context attribute in the out going structure"));
+
 						close_output_pbs(&val_pbs);
-						DBG(DBG_EMITTING,
-						    DBG_log("end of security context attribute in the out going structure"));
 					}
 #endif
-
 				}
 
 
@@ -769,13 +702,14 @@ static u_int32_t decode_long_duration(pb_stream *pbs)
 	return val;
 }
 
-/* Preparse the body of an ISAKMP SA Payload and find which policy is required
- * to match the packet. Errors are just ignored and will be detected and
- * handled later in parse_isakmp_sa_body().
+/* Preparse the body of an IKEv1 ISAKMP SA Payload and find which policy is
+ * required to match the packet. Errors are just ignored and will be detected
+ * and handled later in parse_isakmp_sa_body().
  *
  * All we want for the moment is to know whether peer is using RSA or PSK.
+ * NOTE: sa_pbs is passed by value so the caller's PBS is unchanged!
  */
-lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
+lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 {
 	pb_stream proposal_pbs;
 	struct isakmp_proposal proposal;
@@ -785,12 +719,12 @@ lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
 	pb_stream attr_pbs;
 	u_int32_t ipsecdoisit;
 	unsigned trans_left;
-	lset_t policy = 0;
+	lset_t policy = LEMPTY;
 
-	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, sa_pbs, NULL))
+	if (!in_struct(&ipsecdoisit, &ipsec_sit_desc, &sa_pbs, NULL))
 		return LEMPTY;
 
-	if (!in_struct(&proposal, &isakmp_proposal_desc, sa_pbs,
+	if (!in_struct(&proposal, &isakmp_proposal_desc, &sa_pbs,
 		       &proposal_pbs))
 		return LEMPTY;
 
@@ -839,7 +773,16 @@ lset_t preparse_isakmp_sa_body(pb_stream *sa_pbs)
 		}
 	}
 
-	if ((policy & POLICY_PSK) && (policy & POLICY_RSASIG))
+	/*
+	 * These policy bits will be used in a call to find_host_connection.
+	 * The meaning is: each of these present bits must be present
+	 * in a connection's policy.
+	 * 
+	 * If both PSK and RSASIG are present now, that means that
+	 * either is acceptible.  The right way to express this is
+	 * to turn both off!
+	 */
+	if (LIN(POLICY_PSK | POLICY_RSASIG, policy))
 		policy &= ~(POLICY_PSK | POLICY_RSASIG);
 
 	return policy;
@@ -870,36 +813,38 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				    pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
 				    bool selection,		/* if this SA is a selection, only one tranform
 								 * can appear. */
-				    struct state *st)		/* current state object */
+				    struct state *const st)	/* current state object */
 {
 	u_int32_t ipsecdoisit;
 	pb_stream proposal_pbs;
 	struct isakmp_proposal proposal;
 	unsigned no_trans_left;
 	int last_transnum;
-	struct connection *c = st->st_connection;
-	struct spd_route *spd, *me = &c->spd;
+	struct connection *const c = st->st_connection;
+	struct spd_route *spd;
 	bool xauth_init, xauth_resp;
-	const char *role;
+	const char *const role = selection ? "initiator" : "responder";
 
-	role = "";
+	passert(c != NULL);
 
 	xauth_init = xauth_resp = FALSE;
 
 	/* calculate the per-end policy which might apply */
-	for (spd = me; spd; spd = spd->next) {
-		if (selection) { /* this is the initiator, we have proposed, they have answered,
-			          * and we must decide if they proposed what we wanted.
-			          */
-			role = "initiator";
+	for (spd = &c->spd; spd != NULL; spd = spd->next) {
+		if (selection) {
+			/*
+			 * this is the initiator, we have proposed, they have answered,
+			 * and we must decide if they proposed what we wanted.
+			 */
 			xauth_init |= spd->this.xauth_client;
 			xauth_resp |= spd->this.xauth_server;
-		} else { /* this is the responder, they have proposed to us, what
-			  * are we willing to be?
-			  */
-			role = "responder";
-			xauth_init = xauth_init | spd->this.xauth_server;
-			xauth_resp = xauth_resp | spd->this.xauth_client;
+		} else {
+			/*
+			 * this is the responder, they have proposed to us, what
+			 * are we willing to be?
+			 */
+			xauth_init |= spd->this.xauth_server;
+			xauth_resp |= spd->this.xauth_client;
 		}
 	}
 
@@ -993,7 +938,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 
 	last_transnum = -1;
 	no_trans_left = proposal.isap_notrans;
-	for (;; ) {
+	for (;;) {
 		pb_stream trans_pbs;
 		u_char *attr_start;
 		size_t attr_len;
@@ -1098,8 +1043,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 					ta.encrypter =
 						crypto_get_encrypter(val);
 					ta.enckeylen = ta.encrypter->keydeflen;
-				} else
-				switch (val) {
+				} else switch (val) {
 				case OAKLEY_3DES_CBC:
 					ta.encrypt = val;
 					ta.encrypter =
@@ -1120,9 +1064,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payl
 				if (ike_alg_hash_present(val)) {
 					ta.prf_hash = val;
 					ta.prf_hasher = crypto_get_hasher(val);
-				} else
-/* #else */
-				switch (val) {
+				} else switch (val) {
 				case OAKLEY_MD5:
 				case OAKLEY_SHA1:
 					ta.prf_hash = val;
@@ -1182,24 +1124,21 @@ psk_common:
 						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
 						/* check that we can find a preshared secret */
-						struct connection *con =
-							st->st_connection;
-
-						if (get_preshared_secret(con)
+						if (get_preshared_secret(c)
 						    == NULL)
 						{
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
 
-							idtoa(&con->spd.this.id, mid,
+							idtoa(&c->spd.this.id, mid,
 							      sizeof(mid));
 							if (his_id_was_instantiated(
-									con))
+									c))
 							{
 								strcpy(hid,
 								       "%any");
 							} else {
-								idtoa(&con->spd.that.id, hid,
+								idtoa(&c->spd.that.id, hid,
 								      sizeof(hid));
 							}
 
@@ -1639,6 +1578,9 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 {
 	lset_t seen_attrs = LEMPTY,
 	       seen_durations = LEMPTY;
+#ifdef HAVE_LABELED_IPSEC
+	bool seen_secctx_attr = FALSE;
+#endif
 	u_int16_t life_type = 0;
 	const struct oakley_group_desc *pfs_group = NULL;
 
@@ -1680,6 +1622,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		struct isakmp_attribute a;
 		pb_stream attr_pbs;
 		enum_names *vdesc;
+		u_int16_t ty;
 		u_int32_t val;                          /* room for larger value */
 		bool ipcomp_inappropriate = (proto == PROTO_IPCOMP);  /* will get reset if OK */
 
@@ -1687,33 +1630,36 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			       &attr_pbs))
 			return FALSE;
 
-#ifndef HAVE_LABELED_IPSEC
-		/*This check is no longer valid when using security labels as SECCTX attribute is in private range and has value of 32001*/
-		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF);
-#endif
-
-		if (LHAS(seen_attrs, a.isaat_af_type &
-			 ISAKMP_ATTR_RTYPE_MASK)) {
-			loglog(RC_LOG_SERIOUS,
-			       "repeated %s attribute in IPsec Transform %u",
-			       enum_show(&ipsec_attr_names, a.isaat_af_type),
-			       trans->isat_transnum);
-			return FALSE;
-		}
-
-		seen_attrs |= LELEM(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
-
+		ty = a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK;
 		val = a.isaat_lv;
 
-		vdesc = ipsec_attr_val_descs[(a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK)
 #ifdef HAVE_LABELED_IPSEC
-		/* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
-		/* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
-		/* which is NULL in ipsec_attr_val_desc*/
-					     >= LELEM_ROOF ? 0 : a.isaat_af_type &
-					     ISAKMP_ATTR_RTYPE_MASK
+		if (ty == secctx_attr_type) {
+			if (seen_secctx_attr) {
+				loglog(RC_LOG_SERIOUS,
+				       "repeated SECCTX attribute in IPsec Transform %u",
+				       trans->isat_transnum);
+				return FALSE;
+			}
+			seen_secctx_attr = TRUE;
+			vdesc = NULL;
+		} else
 #endif
-			];
+		{
+			passert(ty < LELEM_ROOF);
+			if (LHAS(seen_attrs, ty)) {
+				loglog(RC_LOG_SERIOUS,
+				       "repeated %s attribute in IPsec Transform %u",
+				       enum_show(&ipsec_attr_names, a.isaat_af_type),
+				       trans->isat_transnum);
+				return FALSE;
+			}
+
+			seen_attrs |= LELEM(ty);
+			passert(ty < ipsec_attr_val_descs_roof);
+			vdesc = ipsec_attr_val_descs[ty];
+		}
+
 		if (vdesc != NULL) {
 			if (enum_name(vdesc, val) == NULL) {
 				loglog(RC_LOG_SERIOUS,
@@ -1735,15 +1681,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		switch (a.isaat_af_type) {
-#ifdef HAVE_LABELED_IPSEC
-		case SECCTX | ISAKMP_ATTR_AF_TLV:
-		{
-			pb_stream *   pbs = &attr_pbs;
-			if (!parse_secctx_attr(pbs, st))
-				return FALSE;
-		}
-		break;
-#endif
 		case SA_LIFE_TYPE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
 			if (LHAS(seen_durations, val)) {
@@ -1773,7 +1710,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			switch (life_type) {
 			case SA_LIFE_TYPE_SECONDS:
 				/* silently limit duration to our maximum */
-				attrs->life_seconds = 
+				attrs->life_seconds =
 				    val > SA_LIFE_DURATION_MAXIMUM ?
 					deltatime(SA_LIFE_DURATION_MAXIMUM) :
 				    val > deltasecs(st->st_connection->sa_ipsec_life_seconds) ?
@@ -1910,20 +1847,19 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		default:
 #ifdef HAVE_LABELED_IPSEC
 			if (a.isaat_af_type ==
-			    (secctx_attr_value | ISAKMP_ATTR_AF_TLV) ) {
-				pb_stream *   pbs = &attr_pbs;
+			    (secctx_attr_type | ISAKMP_ATTR_AF_TLV)) {
+				pb_stream *pbs = &attr_pbs;
+
 				if (!parse_secctx_attr(pbs, st))
 					return FALSE;
-			} else {
+			} else
 #endif
-			loglog(RC_LOG_SERIOUS,
-			       "unsupported IPsec attribute %s",
-			       enum_show(&ipsec_attr_names, a.isaat_af_type));
-			return FALSE;
-
-#ifdef HAVE_LABELED_IPSEC
-		}
-#endif
+			{
+				loglog(RC_LOG_SERIOUS,
+				       "unsupported IPsec attribute %s",
+				       enum_show(&ipsec_attr_names, a.isaat_af_type));
+				return FALSE;
+			}
 		}
 
 		if (ipcomp_inappropriate) {
@@ -1982,7 +1918,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		if (!LHAS(seen_attrs, KEY_LENGTH)) {
 			if (ipsec_keysize != 0) { /* ealg requires a key length attr */
 				loglog(RC_LOG_SERIOUS,
-		       			"IPsec encryption transform did not specify required KEY_LENGTH attribute");
+					"IPsec encryption transform did not specify required KEY_LENGTH attribute");
 				return FALSE;
 			}
 		}
@@ -1992,10 +1928,16 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				attrs->transattrs.enckeylen);
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,
-	       			"IPsec encryption transform rejected: %s",
+				"IPsec encryption transform rejected: %s",
 				ugh);
 			return FALSE;
 		}
+	}
+
+	if (proto == PROTO_IPSEC_AH) {
+		DBG(DBG_CONTROL, DBG_log("PROTO AH: we should check registration of attrs->transattrs.integ_hash=%d",
+			attrs->transattrs.integ_hash));
+		/* if not registered, abort early */
 	}
 
 	return TRUE;
@@ -2406,7 +2348,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 
 				default:
 					loglog(RC_LOG_SERIOUS,
-					       "Unknown integ algorithm %d not supported", 
+					       "Unknown integ algorithm %d not supported",
 							ah_attrs.transattrs.integ_hash);
 					ok_auth = FALSE;
 					break;
@@ -2446,6 +2388,13 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			}
 			if (tn == ah_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
+
+			/* Check AH proposal with configuration */
+			if (c->alg_info_esp != NULL &&
+			    !ikev1_verify_ah(ah_attrs.transattrs.integ_hash,
+					c->alg_info_esp)) {
+				continue;
+			}
 			ah_attrs.spi = ah_spi;
 			inner_proto = IPPROTO_AH;
 			if (ah_attrs.encapsulation ==
@@ -2485,6 +2434,8 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (ugh != NULL) {
 					switch (esp_attrs.transattrs.encrypt) {
 					case ESP_AES:
+					case ESP_CAMELLIA:
+					case ESP_CAMELLIAv1:
 					case ESP_3DES:
 						break;
 					case ESP_NULL:
@@ -2534,7 +2485,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					{
 					case AUTH_ALGORITHM_NONE:
 						if (!ah_seen) {
-							DBG(DBG_CONTROL | DBG_CRYPT, {
+							DBG(DBG_CONTROL, {
 								ipstr_buf b;
 								DBG_log("ESP from %s must either have AUTH or be combined with AH",
 								    ipstr(&c->spd.that.host_addr, &b));
@@ -2554,16 +2505,15 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 						break;
 
 					default:
-						/* ??? why do we log this?  Surely this is a common and normal state of affairs? */
 						{
 						ipstr_buf b;
 
-						loglog(RC_LOG_SERIOUS,
+						DBG(DBG_CONTROL, DBG_log(
 						       "unsupported ESP auth alg %s from %s",
 						       enum_show(&auth_alg_names,
 								 esp_attrs.transattrs.integ_hash),
 						       ipstr(&c->spd.that.host_addr,
-								&b));
+								&b)));
 						continue; /* try another */
 						}
 					}
@@ -2572,9 +2522,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				if (ah_seen &&
 				    ah_attrs.encapsulation !=
 				      esp_attrs.encapsulation) {
-					/* ??? This should be an error, but is it? */
 					loglog(RC_LOG_SERIOUS,
-					       "AH and ESP transforms disagree about encapsulation; TUNNEL presumed");
+					       "Skipped bogus proposal where AH and ESP transforms disagree about encapsulation");
+					continue; /* try another */
 				}
 
 				break; /* we seem to be happy */
@@ -2582,10 +2532,9 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
 
-			/* ML: at last check for allowed transforms in alg_info_esp */
-			/* ??? what's ML? */
+			/* check for allowed transforms in alg_info_esp */
 			if (c->alg_info_esp != NULL &&
-			    !ikev1_verify_phase2(esp_attrs.transattrs.encrypt,
+			    !ikev1_verify_esp(esp_attrs.transattrs.encrypt,
 						     esp_attrs.transattrs.enckeylen,
 						     esp_attrs.transattrs.integ_hash,
 						     c->alg_info_esp))

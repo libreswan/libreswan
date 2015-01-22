@@ -375,9 +375,15 @@ USE_LABELED_IPSEC?=false
 
 # Support for LIBCAP-NG to drop unneeded capabilities for the pluto daemon
 USE_LIBCAP_NG?=true
+ifeq ($(OSDEP),darwin)
+USE_LIBCAP_NG=false
+endif
 
 # Support for Network Manager
 USE_NM?=true
+ifeq ($(OSDEP),darwin)
+USE_NM=false
+endif
 
 # Include LDAP support (currently used for fetching CRLs)
 USE_LDAP?=false
@@ -473,7 +479,8 @@ LIBSHA1=${OBJDIRTOP}/lib/libcrypto/libsha1/libsha1.a
 LIBTWOFISH=${OBJDIRTOP}/lib/libcrypto/libtwofish/libtwofish.a
 LIBSERPENT=${OBJDIRTOP}/lib/libcrypto/libserpent/libserpent.a
 LIBSHA2=${OBJDIRTOP}/lib/libcrypto/libsha2/libsha2.a
-CRYPTOLIBS=${LIBSHA1} ${LIBMD5} ${LIBSHA2}
+LIBAES_XCBC=${OBJDIRTOP}/lib/libcrypto/libaes_xcbc/libaes_xcbc.a
+CRYPTOLIBS=${LIBSHA1} ${LIBMD5} ${LIBSHA2} ${LIBAES_XCBC}
 
 ifeq ($(USE_EXTRACRYPTO),true)
 CRYPTOLIBS+= ${LIBSERPENT} ${LIBTWOFISH}
@@ -487,7 +494,7 @@ export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
 export LIBRESWANLIB LSWLOGLIB 
 export LIBDESSRCDIR
 export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
-export LIBSHA2 CRYPTOLIBS WHACKLIB IPSECCONFLIB
+export LIBSHA2 LIBAES_XCBC CRYPTOLIBS WHACKLIB IPSECCONFLIB
 export NSSFLAGS NSSLIBS
 
 #KERNELBUILDMFLAGS=--debug=biv V=1 

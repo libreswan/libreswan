@@ -74,7 +74,7 @@ struct radij_node {
 	struct  radij_mask *rj_mklist;          /* list of masks contained in subtree */
 	struct  radij_node *rj_p;               /* parent */
 	short rj_b;                             /* bit offset; -1-index(netmask) */
-	char rj_bmask;                          /* node: mask for bit test*/
+	char rj_bmask;                          /* node: mask for bit test */
 	u_char rj_flags;                        /* enumerated next */
 #define RJF_NORMAL      1                       /* leaf contains normal route */
 #define RJF_ROOT        2                       /* leaf is root leaf for tree */
@@ -164,11 +164,10 @@ struct radij_node_head {
 #define Bcmp(a, b, n) memcmp(((caddr_t)(b)), ((caddr_t)(a)), (unsigned)(n))
 #define Bcopy(a, b, n) memmove(((caddr_t)(b)), ((caddr_t)(a)), (unsigned)(n))
 #define Bzero(p, n) memset((caddr_t)(p), 0, (unsigned)(n))
-#define R_Malloc(p, t, \
-		 n) ((p = \
+#define R_Malloc(p, t, n) (((p) = \
 			      (t) kmalloc((size_t)(n), \
 					  GFP_ATOMIC)), Bzero((p), (n)))
-#define Free(p) kfree((caddr_t)p);
+#define Free(p) kfree((caddr_t)(p));
 
 void rj_init __P((void));
 int rj_inithead __P((void **, int));

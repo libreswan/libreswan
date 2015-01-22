@@ -62,6 +62,7 @@
 #include "nat_traversal.h"
 
 /* Taken from ikev1_spdb_struct.c, as the format is similar */
+/* Note: cloned from out_attr, with the same bugs */
 static bool ikev2_out_attr(int type,
 		    unsigned long val,
 		    struct_desc *attr_desc,
@@ -78,13 +79,14 @@ static bool ikev2_out_attr(int type,
 			return FALSE;
 	} else {
 		/*
-		 * We really only support KEY_LENGTH, with does not use this long
+		 * We really only support KEY_LENGTH, which does not use this long
 		 * attribute style. See comments in out_attr() in ikev1_spdb_struct.c
 		 */
 		pb_stream val_pbs;
 		u_int32_t nval = htonl(val);
 
 		attr.isatr_type = type | ISAKMP_ATTR_AF_TLV;
+		attr.isatr_lv = sizeof(nval);
 		if (!out_struct(&attr, attr_desc, pbs, &val_pbs) ||
 		    !out_raw(&nval, sizeof(nval), &val_pbs,
 			     "long attribute value"))
@@ -281,7 +283,7 @@ bool ikev2_out_sa(pb_stream *outs,
 
 struct db_trans_flat {
 	u_int8_t protoid;		/* Protocol-Id */
-	u_int16_t auth_method;		/* conveyed another way in ikev2*/
+	u_int16_t auth_method;		/* conveyed another way in ikev2 */
 	u_int16_t encr_transid;		/* Transform-Id */
 	u_int16_t integ_transid;	/* Transform-Id */
 	u_int16_t prf_transid;		/* Transform-Id */
@@ -310,6 +312,9 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	case OAKLEY_AES_CBC:
 		return IKEv2_ENCR_AES_CBC;
 
+	case OAKLEY_AES_CTR:
+		return IKEv2_ENCR_AES_CTR;
+
 	case OAKLEY_CAMELLIA_CBC:
 		return IKEv2_ENCR_CAMELLIA_CBC;
 
@@ -328,6 +333,7 @@ static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 	 */
 
 	default:
+		DBG(DBG_CONTROL, DBG_log("v1tov2_encr() missing v1 encr transform '%d'",oakley));
 		return IKEv2_ENCR_INVALID; /* this cannot go over the wire! It's 65536 */
 	}
 }
@@ -349,6 +355,9 @@ static enum ikev2_trans_type_integ v1tov2_integ(enum ikev2_trans_type_integ oakl
 
 	case OAKLEY_SHA2_512:
 		return IKEv2_AUTH_HMAC_SHA2_512_256;
+
+	case OAKLEY_AES_XCBC:
+		return IKEv2_AUTH_AES_XCBC_96;
 
 	default:
 		return IKEv2_AUTH_INVALID;
@@ -373,6 +382,9 @@ static enum ikev2_trans_type_integ v1phase2tov2child_integ(int ikev1_phase2_auth
 	case AUTH_ALGORITHM_HMAC_SHA2_512:
 		return IKEv2_AUTH_HMAC_SHA2_512_256;
 
+	case AUTH_ALGORITHM_AES_XCBC:
+		return IKEv2_AUTH_AES_XCBC_96;
+
 	default:
 		return IKEv2_AUTH_INVALID;
 	}
@@ -386,6 +398,8 @@ static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 
 	case OAKLEY_SHA1:
 		return IKEv2_PRF_HMAC_SHA1;
+	
+	/* OAKLEY_TIGER not in IKEv2 */
 
 	case OAKLEY_SHA2_256:
 		return IKEv2_PRF_HMAC_SHA2_256;
@@ -395,6 +409,9 @@ static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 
 	case OAKLEY_SHA2_512:
 		return IKEv2_PRF_HMAC_SHA2_512;
+
+	case OAKLEY_AES_XCBC:
+		return IKEv2_PRF_AES128_XCBC;
 
 	default:
 		return IKEv2_PRF_INVALID;
@@ -411,11 +428,13 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	struct db_v2_prop_conj *pc;
 	struct db_v2_prop *pr;
 
+	DBG(DBG_CONTROL, DBG_log("FIXME: sa_v2_convert() called - known to be called a few times in a row"));
+
 	if (f == NULL)
 		return NULL;
 
 	if (!f->dynamic)
-		f = sa_copy_sa(f, 0);
+		f = sa_copy_sa(f);
 
 	/* count transforms and allocate space for result */
 	{
@@ -450,8 +469,13 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 				unsigned int attr_cnt;
 
 				dtfone->protoid = dp->protoid;
-				if (!f->parentSA)
+
+				if (!f->parentSA) {
 					dtfone->encr_transid = tr->transid;
+					/* IANA ikev1 / ipsec-v3 fixup */
+					if (dtfone->encr_transid == IKEv2_ENCR_CAMELLIA_CBC_ikev1)
+						dtfone->encr_transid = IKEv2_ENCR_CAMELLIA_CBC;
+				}
 
 				for (attr_cnt = 0; attr_cnt < tr->attr_cnt;
 				     attr_cnt++) {
@@ -511,10 +535,12 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 							break;
 
 						case ENCAPSULATION_MODE:
-							/* XXX */
 							break;
 
 						default:
+							libreswan_log(
+								"sa_v2_convert(): Ignored unknown IPsec transform attribute type: %d",
+								attr->type.ipsec);
 							break;
 						}
 					}
@@ -1011,6 +1037,8 @@ static stf_status ikev2_process_transforms(struct ikev2_prop *prop,
 					   pb_stream *prop_pbs,
 					   struct ikev2_transform_list *itl)
 {
+	zero(itl);
+
 	while (prop->isap_numtrans-- > 0) {
 		pb_stream trans_pbs;
 		pb_stream attr_pbs;
@@ -1177,15 +1205,6 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 			int defkeysize = crypto_req_keysize(parentSA ? CRK_IKEv2 : CRK_ESPorAH,
 				ta.encrypt);
 
-			if (ta.enckeylen != 0){
-				if (ta.enckeylen != ta.encrypter->keydeflen &&
-				    ta.enckeylen != ta.encrypter->keyminlen &&
-				    ta.enckeylen != ta.encrypter->keymaxlen) {
-
-					return STF_INTERNAL_ERROR;
-				}
-			}
-
 			if (ta.enckeylen == 0) {
 				/* pick up from received proposal, if any */
 				unsigned int stoe = st->st_oakley.enckeylen;
@@ -1294,9 +1313,6 @@ stf_status ikev2_parse_parent_sa_body(
 	struct trans_attrs ta;
 	struct connection *c = st->st_connection;
 	struct ikev2_transform_list itl0;
-	struct ikev2_transform_list *itl = &itl0;
-
-	zero(&itl0);
 
 	/* find the policy structures: quite a dance */
 	sadb = st->st_sadb;
@@ -1380,7 +1396,7 @@ stf_status ikev2_parse_parent_sa_body(
 		{
 			stf_status ret = ikev2_process_transforms(&proposal,
 								  &proposal_pbs,
-								  itl);
+								  &itl0);
 
 			if (ret != STF_OK) {
 				DBG(DBG_CONTROLMORE, DBG_log("ikev2_process_transforms() failed"));
@@ -1393,20 +1409,20 @@ stf_status ikev2_parse_parent_sa_body(
 		    ikev2_match_transform_list_parent(sadb,
 						      proposal.isap_propnum,
 						      proposal.isap_protoid,
-						      itl)) {
+						      &itl0)) {
 			winning_prop = proposal;
 			gotmatch = TRUE;
 
 			/*
 			 * record details of the winning transform now
-			 * because itl will change with later matches
+			 * because itl0 will change with later matches
 			 */
-			ta.encrypt = itl->encr_transforms[itl->encr_i];
-			ta.enckeylen = itl->encr_keylens[itl->encr_i] > 0 ?
-				       itl->encr_keylens[itl->encr_i] : 0;
-			ta.integ_hash = itl->integ_transforms[itl->integ_i];
-			ta.prf_hash = itl->prf_transforms[itl->prf_i];
-			ta.groupnum = itl->dh_transforms[itl->dh_i];
+			ta.encrypt = itl0.encr_transforms[itl0.encr_i];
+			ta.enckeylen = itl0.encr_keylens[itl0.encr_i] > 0 ?
+				       itl0.encr_keylens[itl0.encr_i] : 0;
+			ta.integ_hash = itl0.integ_transforms[itl0.integ_i];
+			ta.prf_hash = itl0.prf_transforms[itl0.prf_i];
+			ta.groupnum = itl0.dh_transforms[itl0.dh_i];
 		}
 	}
 
@@ -1614,8 +1630,6 @@ static bool ikev2_match_transform_list_child(struct db_sa *sadb,
 			      propnum);
 		return FALSE;
 	}
-	if (itl->encr_trans_next > 1)
-		libreswan_log("Hugh is surprised there is more than one encryption transform, namely '%u'", itl->encr_trans_next);
 
 	if (ipprotoid == PROTO_v2_ESP) {
 		switch(itl->encr_transforms[0]) {
@@ -1713,9 +1727,6 @@ stf_status ikev2_parse_child_sa_body(
 	struct trans_attrs ta;
 	struct connection *c = st->st_connection;
 	struct ikev2_transform_list itl0;
-	struct ikev2_transform_list *itl = &itl0;
-
-	zero(&itl0);
 
 	DBG(DBG_CONTROLMORE, DBG_log("entered ikev2_parse_child_sa_body()"));
 
@@ -1725,6 +1736,7 @@ stf_status ikev2_parse_child_sa_body(
 	 * There is not c->alg_info_ah.
 	 */
 	p2alg = sa_v2_convert(kernel_alg_makedb(c->policy, c->alg_info_esp, TRUE));
+	st->st_sadb = p2alg; /* stick it here so it get freed along with st */
 
 	zero(&ta);
 
@@ -1807,7 +1819,7 @@ stf_status ikev2_parse_child_sa_body(
 		{
 			stf_status ret = ikev2_process_transforms(&proposal,
 								  &proposal_pbs,
-								  itl);
+								  &itl0);
 
 			if (ret != STF_OK) {
 				DBG(DBG_CONTROLMORE, DBG_log("ikev2_process_transforms() failed"));
@@ -1816,22 +1828,22 @@ stf_status ikev2_parse_child_sa_body(
 		}
 
 		/* Note: only try to match if we haven't had one */
-		if (!gotmatch &&
+		if (!gotmatch && p2alg != NULL &&
 		    ikev2_match_transform_list_child(p2alg,
 						     proposal.isap_propnum,
 						     proposal.isap_protoid,
-						     itl)) {
+						     &itl0)) {
 			winning_prop = proposal;
 			gotmatch = TRUE;
 
 			/*
 			 * record details of the winning transform now
-			 * because itl will change with later matches
+			 * because itl0 will change with later matches
 			 */
-			ta.encrypt = itl->encr_transforms[itl->encr_i];
-			ta.enckeylen = itl->encr_keylens[itl->encr_i] > 0 ?
-				       itl->encr_keylens[itl->encr_i] : 0;
-			ta.integ_hash = itl->integ_transforms[itl->integ_i];
+			ta.encrypt = itl0.encr_transforms[itl0.encr_i];
+			ta.enckeylen = itl0.encr_keylens[itl0.encr_i] > 0 ?
+				       itl0.encr_keylens[itl0.encr_i] : 0;
+			ta.integ_hash = itl0.integ_transforms[itl0.integ_i];
 
 			/* record peer's SPI value */
 			proto_info->attrs.spi = spival;
@@ -1876,14 +1888,23 @@ stf_status ikev2_parse_child_sa_body(
 			case IKEv2_ENCR_CAST:
 				break; /* CAST is ESP only, not IKE */
 			case IKEv2_ENCR_AES_CTR:
-			case IKEv2_ENCR_CAMELLIA_CBC:
 			case IKEv2_ENCR_CAMELLIA_CTR:
 			case IKEv2_ENCR_CAMELLIA_CCM_A:
 			case IKEv2_ENCR_CAMELLIA_CCM_B:
 			case IKEv2_ENCR_CAMELLIA_CCM_C:
-				break; /* no IKE struct encrypt_desc yet */
+				/* no IKE struct encrypt_desc yet */
+				/* FALL THROUGH */
+			case IKEv2_ENCR_AES_CBC:
+			case IKEv2_ENCR_CAMELLIA_CBC:
+			case IKEv2_ENCR_CAMELLIA_CBC_ikev1: /* IANA ikev1/ipsec-v3 fixup */
+				/* these all have mandatory key length attributes */
+				if (ta.enckeylen == 0) {
+					loglog(RC_LOG_SERIOUS, "Missing mandatory KEY_LENGTH attribute - refusing proposal");
+					return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+				}
+				break;
 			default:
-				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter - refusing proposal");
+				loglog(RC_LOG_SERIOUS, "Did not find valid ESP encrypter for %d - refusing proposal", ta.encrypt);
 				pexpect(ta.encrypt == IKEv2_ENCR_NULL); /* fire photon torpedo! */
 				return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 			}
@@ -1938,9 +1959,13 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 	p2alg = sa_v2_convert(p2alg);
 
 	if(!ikev2_out_sa(outpbs, proto, p2alg, md->st, FALSE, np)) {
+		free_sa(p2alg);
+		p2alg = NULL;
 		libreswan_log("ikev2_emit_ipsec_sa: ikev2_out_sa() failed");
 		return STF_INTERNAL_ERROR;
 	}
+	free_sa(p2alg);
+	p2alg = NULL;
 
 	return STF_OK;
 }

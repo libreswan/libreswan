@@ -91,7 +91,9 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	struct ike_info *ike_info;
 
 	/* Next two are for multiple proposals in agressive mode... */
-	unsigned last_modp = 0, wrong_modp = 0;
+	unsigned last_modp = 0;
+	bool warned_dropped_dhgr = FALSE;
+
 	int transcnt = 0;
 	int i;
 
@@ -160,7 +162,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			 */
 			if (eklen > 0) {
 				/* duplicate, but change auth to match template */
-				emp_sp = sa_copy_sa(&oakley_empty, 0);
+				emp_sp = sa_copy_sa(&oakley_empty);
 
 				passert(emp_sp->dynamic);
 				emp_sp->prop_conjs[0].props[0].trans[0].attrs[2] =
@@ -212,46 +214,57 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			if (modp > 0)
 				grp->val = modp;
 		} else {
-			emp_sp = sa_copy_sa(base, 0);
+			emp_sp = sa_copy_sa(base);
 		}
 
-		/* Are we allowing multiple DH groups for IKEv1 Aggressive Mode? */
-
+		/*
+		 * Aggressive mode really only works with a single DH group.
+		 * If this is for Aggressive Mode, and we've previously seen
+		 * a different DH group, we try to deal with this.
+		 */
 		if (single_dh && transcnt > 0 &&
 		    ike_info->ike_modp != last_modp) {
-			/*
-			 * Already got a DH group and this one doesn't match
-			 */
+			if (last_modp == OAKLEY_GROUP_MODP1024 ||
+			    last_modp == OAKLEY_GROUP_MODP1536) {
+				/*
+				 * The previous group will work on old Cisco gear,
+				 * so we can discard this one.
+				 */
 
-			if (last_modp != OAKLEY_GROUP_MODP1024 && last_modp != OAKLEY_GROUP_MODP1536) {
+				if (!warned_dropped_dhgr) {
+					/* complain only once */
+					loglog(RC_LOG_SERIOUS,
+						"multiple DH groups were set in aggressive mode. Only first one used.");
+				}
+
+				loglog(RC_LOG_SERIOUS,
+					"transform (%s,%s,%s keylen %ld) ignored.",
+					enum_name(&oakley_enc_names, ike_info->ike_ealg),
+					enum_name(&oakley_hash_names, ike_info->ike_halg),
+					enum_name(&oakley_group_names, ike_info->ike_modp),
+					(long)ike_info->ike_eklen);
+				free_sa(emp_sp);
+				emp_sp = NULL;
+			} else {
+				/*
+				 * The previous group won't work on old Cisco gear,
+				 * so we discard the previous ones.
+				 * Of course this modp might be just as bad;
+				 * we won't look until the next one comes along.
+				 *
+				 * Lemma: there will be only a single previous
+				 * one in gsp (any others were discarded).
+				 */
 				loglog(RC_LOG_SERIOUS,
 				       "multiple DH groups in aggressive mode can cause interop failure");
 				loglog(RC_LOG_SERIOUS,
-					"Deleting previous proposal in the hopes of selecting DH 2 or DH 5 for");
-				wrong_modp++;
+					"Deleting previous proposal in the hopes of selecting DH 2 or DH 5");
 
 				free_sa(gsp);
 				gsp = NULL;
 			}
-			if (last_modp == OAKLEY_GROUP_MODP1024 ||  last_modp == OAKLEY_GROUP_MODP1536) {
-				/* the previous one will work on old cisco gear, so we can ignore this one */
 
-				if (wrong_modp == 0) { /* complain only once */
-					loglog(RC_LOG_SERIOUS,
-					"multiple DH groups were set in aggressive mode. Only first one used.");
-					wrong_modp++;
-				}
-
-				loglog(RC_LOG_SERIOUS,
-				"transform (%s,%s,%s keylen %ld) ignored.",
-				enum_name(&oakley_enc_names, ike_info->ike_ealg),
-				enum_name(&oakley_hash_names, ike_info->ike_halg),
-				enum_name(&oakley_group_names, ike_info->ike_modp),
-				(long)ike_info->ike_eklen);
-
-				free_sa(emp_sp);
-				emp_sp = NULL;
-			}
+			warned_dropped_dhgr = TRUE;
 		}
 
 		 if (emp_sp != NULL) {
@@ -271,22 +284,41 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				passert(emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
 
 				if (emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 4) {
-					/* copy and add a slot */
+					/* add a key length attribute of 0 */
 					struct db_trans *tr = &emp_sp->prop_conjs[0].props[0].trans[0];
+					const int n = tr->attr_cnt;	/* 4, actually */
 					struct db_attr *old_attrs = tr->attrs;
+					struct db_attr *new_attrs = alloc_bytes(
+						(n + 1) * sizeof(old_attrs[0]),
+						"extended trans");
 
-					clone_trans(tr, 1);
+					passert(emp_sp->dynamic);
+					passert(old_attrs[0].type.oakley != OAKLEY_KEY_LENGTH &&
+						old_attrs[1].type.oakley != OAKLEY_KEY_LENGTH &&
+						old_attrs[2].type.oakley != OAKLEY_KEY_LENGTH &&
+						old_attrs[3].type.oakley != OAKLEY_KEY_LENGTH);
+					memcpy(new_attrs, old_attrs, n * sizeof(old_attrs[0]));
+					new_attrs[n].type.oakley = OAKLEY_KEY_LENGTH;
+					new_attrs[n].val = 0;
+
 					pfree(old_attrs);
-					tr->attrs[4].type.oakley = OAKLEY_KEY_LENGTH;
+					tr->attrs = new_attrs;
+					tr->attr_cnt++;
 				}
 				passert(emp_sp->prop_conjs[0].props[0].trans[0].attr_cnt == 5);
 				passert(emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].type.oakley == OAKLEY_KEY_LENGTH);
 
+				/*
+				 * This odd FOR loop executes its body for
+				 * exactly two values of ks (def_ks and max_ks)
+				 * unless def_ks == max_ks, in which case it is
+				 * executed once.
+				 */
 				for (ks = def_ks; ; ks = max_ks) {
 					emp_sp->prop_conjs[0].props[0].trans[0].attrs[4].val = ks;
 
 					if (gsp == NULL) {
-						gsp = sa_copy_sa(emp_sp, 0);
+						gsp = sa_copy_sa(emp_sp);
 					} else {
 						struct db_sa *new = sa_merge_proposals(gsp, emp_sp);
 
@@ -306,7 +338,6 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 					free_sa(emp_sp);
 					emp_sp = NULL;
 					gsp = new;
-					
 				} else {
 					gsp = emp_sp;
 					emp_sp = NULL;

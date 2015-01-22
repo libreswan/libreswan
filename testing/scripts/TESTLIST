@@ -42,8 +42,6 @@ unittest	readwriteconf-15	good
 unittest	readwriteconf-16	good
 unittest	readwriteconf-17	good
 unittest	readwriteconf-18	good
-unittest	readwriteconf-19	good
-unittest	readwriteconf-20	good
 unittest	readwriteconf-21	good
 unittest	readwriteconf-22	good
 unittest	readwriteconf-23	good
@@ -51,8 +49,12 @@ unittest	readwriteconf-23	good
 unittest	readwriteconf-24	good
 # ipv4 - ipv6 mixes - need to be split in parts?
 unittest	readwriteconf-25	bad
-# missing EOL test
+# missing EOL tests
 unittest	readwriteconf-26	good
+unittest	readwriteconf-27	good
+
+# test for authby=secret|rsasig
+unittest	readwriteconf-28	good
 
 # test cases for showhostkey.
 umlXhost	showhostkey-01		good

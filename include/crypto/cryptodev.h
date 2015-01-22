@@ -127,7 +127,7 @@
 #define ARC4_MAX_KEY_LEN                256
 
 /* Max size of data that can be processed */
-#define CRYPTO_MAX_DATA_LEN             64 * 1024 - 1
+#define CRYPTO_MAX_DATA_LEN             (64 * 1024 - 1)
 
 #define CRYPTO_ALGORITHM_MIN    1
 #define CRYPTO_DES_CBC                  1
@@ -466,8 +466,8 @@ extern int crypto_runregister_all(u_int32_t driverid);
  *     kept apart from the rest of the system.
  */
 struct uio;
-extern void cuio_copydata(struct uio* uio, int off, int len, caddr_t cp);
-extern void cuio_copyback(struct uio* uio, int off, int len, caddr_t cp);
+extern void cuio_copydata(struct uio *uio, int off, int len, caddr_t cp);
+extern void cuio_copyback(struct uio *uio, int off, int len, caddr_t cp);
 extern struct iovec *cuio_getptr(struct uio *uio, int loc, int *off);
 
 extern void crypto_copyback(int flags, caddr_t buf, int off, int size,
