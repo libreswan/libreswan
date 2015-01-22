@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 12/21/2014
+.\"      Date: 01/14/2015
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "12/21/2014" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "01/14/2015" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -506,7 +506,16 @@ For RFC\-5114 DH groups, use the "dh" keyword, eg "aes256\-sha1;dh23"
 .sp
 The format for AH is AUTH followed by an optional PFSgroup\&. For instance, "md5" or "sha1;modp1536"\&.
 .sp
-AES\-GCM and AES\-CCM use the syntax like "phase2alg=aes_ccm_c\-256\-null"\&. The only supported key sizes are 128, 192 and 256\&. The subscript (_a, _b and _c) stand for the ICV versions (8,12,16)\&. It is recommended to migrate to the _c versions, as support for smaller ICV\*(Aqs will be removed in the future\&.
+AES\-GCM and AES\-CCM use a syntax like
+\fIphase2alg=aes_ccm\-null\fR
+or
+\fIphase2alg=aes_gcm\-null\fR\&. This syntax is also used for the ike= option\&. The supported key sizes are 128, 192 and 256, which are specified similarly to plain aes, i\&.e\&.
+\fIphase2alg=aes_gcm256\fR\&. A subscript of
+\fI_c\fR,
+\fI_b\fR
+or
+\fI_a\fR
+can be used to refer to the different ICV variants where a means 8 bytes, b means 12 bytes and c means 16 bytes\&. The default when not using a subscript is the 16 byte ICV, the recommended value by RFC\-4106\&. Therefor phase2alg=aes_gcm256\-null is equivalent to phase2alg=aes_gcm_c256\-null\&. It is recommended to migrate to the _c versions (without specifying _c), as support for smaller ICV\*(Aqs might be removed in the future\&.
 .sp
 Note that openswan and versions of libreswan up to 3\&.6 require adding the salt size to the key size\&. Therefor, to interop with an older version of openswan or libreswan, use: "phase2alg=aes_ccm_c\-280\-null"\&. For CCM, the \*(Aqkeysize\*(Aq needs to be increased by 24, resulted in valid keysizes of 152, 215 and 280\&. For GCM the \*(Aqkeysize\*(Aq needs to be increased by 32, resulting valid \*(Aqkeysizes\*(Aq of 160, 224 and 288\&.
 .RE
@@ -1291,6 +1300,11 @@ are started to help with cryptographic operations\&. Pluto will start
 of them, where
 \fIn\fR
 is the number of CPU\*(Aqs you have (including hypherthreaded CPU\*(Aqs)\&. A value of 0 forces pluto to do all operations in the main process\&. A value of \-1 tells pluto to perform the above calculation\&. Any other value forces the number to that amount\&.
+.RE
+.PP
+\fBseedbits\fR
+.RS 4
+Pluto uses the NSS crypto library as its random source\&. Some government Three Letter Agencies require that pluto reads additional bits from /dev/random and feed these into the NSS RNG before drawing random from the NSS library, despite the NSS library itself already seeding its internal state\&. This process can block pluto for an extended time during startup, depending on the entropy of the system\&. Therefor, the default is to not perform this redundant seeding\&. If specifying a value, it is recommended to specify at least 460 bits (for FIPS) or 440 bits (for BSI)\&.
 .RE
 .PP
 \fBsecctx\-attr\-type\fR

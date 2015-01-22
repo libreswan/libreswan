@@ -370,6 +370,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "virtual-private", kv_config, kt_string,     KSF_VIRTUALPRIVATE, NOT_ENUM },
 	{ "nat_ikeport",   kv_config | kv_alias, kt_number,      KBF_NATIKEPORT, NOT_ENUM },	/* obsolete _ */
 	{ "nat-ikeport",   kv_config, kt_number,      KBF_NATIKEPORT, NOT_ENUM },
+	{ "seedbits",   kv_config, kt_number,      KBF_SEEDBITS, NOT_ENUM },
 	{ "keep_alive", kv_config | kv_alias, kt_number,    KBF_KEEPALIVE, NOT_ENUM },	/* obsolete _ */
 	{ "keep-alive", kv_config, kt_number,    KBF_KEEPALIVE, NOT_ENUM },
 	{ "nat_traversal", kv_config, kt_obsolete_quiet, KBF_WARNIGNORE, NOT_ENUM },

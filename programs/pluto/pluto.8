@@ -2,12 +2,12 @@
 .\"     Title: IPSEC_PLUTO
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 01/08/2015
+.\"      Date: 01/14/2015
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_PLUTO" "8" "01/08/2015" "libreswan" "Executable programs"
+.TH "IPSEC_PLUTO" "8" "01/14/2015" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-leak\-detective] [\-\-config\ \fIfilename\fR] [\-\-vendorid\ \fIVID\fR] [\-\-nofork] [\-\-stderrlog] [\-\-\-\-plutostderrlogtime] [\-\-logfile\ \fIfilename\fR] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-virtual\-private\ \fInetwork_list\fR] [\-\-keep\-alive\ \fIdelay_sec\fR] [\-\-force\-busy] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-natikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-statsbin\ \fIfilename\fR] [\-\-secctx\-attr\-type\ \fInumber\fR]
+\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-leak\-detective] [\-\-config\ \fIfilename\fR] [\-\-vendorid\ \fIVID\fR] [\-\-nofork] [\-\-stderrlog] [\-\-\-\-plutostderrlogtime] [\-\-logfile\ \fIfilename\fR] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-virtual\-private\ \fInetwork_list\fR] [\-\-keep\-alive\ \fIdelay_sec\fR] [\-\-force\-busy] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-natikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-seedbits\ \fInumbits\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-statsbin\ \fIfilename\fR] [\-\-secctx\-attr\-type\ \fInumber\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-help] [\-\-version]
 .HP \w'\fBipsec\fR\ 'u
@@ -316,6 +316,10 @@ is the number of CPU\(cqs you have (including hypherthreaded CPU\(cqs)\&. A valu
 forces pluto to do all operations in the main process\&. A value of
 \fI\-1\fR
 tells pluto to perform the above calculation\&. Any other value forces the number to that amount\&.
+.PP
+Pluto uses the NSS crypto library as its random source\&. Some government Three Letter Agency requires that pluto reads 440 bits from /dev/random and feed this into the NSS RNG before drawing random from the NSS library, despite the NSS library itself already seeding its internal state\&. As this process can block pluto for an extended time, the default is to not perform this redundant seeding\&. The
+\fB\-\-seedbits\fR
+option can be used to specify the number of bits that will be pulled from /dev/random and seeded into the NSS RNG\&. This can also be accomplished by specifying seedbits in the "config setup" section of ipsec\&.conf\&. This option should not be used by most people\&.
 .PP
 \fBpluto\fR
 attempts to create a lockfile with the name

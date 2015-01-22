@@ -16,7 +16,7 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=rsasigkey
-LIBS=${LIBRESWANLIB} -lgmp
+LIBS=${LSWLOGLIB} ${LIBRESWANLIB} -lgmp
 LIBS+=${NSSLIBS}
 
 ifeq ($(USE_FIPSCHECK),true)

@@ -1090,7 +1090,14 @@ static bool send_packet(struct state *st, const char *where,
 	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
 	 * natt_bonus is the size of the addition (0 if not needed).
 	 */
-	const size_t natt_bonus = !just_a_keepalive &&
+	size_t natt_bonus;
+
+	if (st->st_interface == NULL) {
+		libreswan_log("Cannot send packet - interface vanished!");
+		return FALSE;
+	}
+
+	natt_bonus = !just_a_keepalive &&
 				  st->st_interface->ike_float ?
 				  NON_ESP_MARKER_SIZE : 0;
 
@@ -1296,8 +1303,14 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
 	 * natt_bonus is the size of the addition (0 if not needed).
 	 */
-	const size_t natt_bonus =
-		st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
+	size_t natt_bonus;
+
+	if (st->st_interface == NULL) {
+		libreswan_log("Cannot send packet - interface vanished!");
+		return FALSE;
+	}
+
+	natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
 
 	/* decide of whether we're to fragment  - IKEv1 only, draft-smyslov-ipsecme-ikev2-fragmentation not implemented yet */
 	if (!st->st_ikev2 &&

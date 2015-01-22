@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2014-2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,7 +41,7 @@ struct ctr_test_vector {
  */
 const struct ctr_test_vector aes_ctr_test_vectors[] = {
 	{
-		.description = "Test Vector #1: Encrypting 16 octets using AES-CTR with 128-bit key",
+		.description = "Encrypting 16 octets using AES-CTR with 128-bit key",
 		.key = "0x AE 68 52 F8 12 10 67 CC 4B F7 A5 76 55 77 F3 9E",
 		.plaintext = "0x 53 69 6E 67 6C 65 20 62 6C 6F 63 6B 20 6D 73 67",
 		.cb = "0x 00 00 00 30  00 00 00 00 00 00 00 00  00 00 00 01",
@@ -49,7 +49,7 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.output_cb = "0x 00 00 00 30 00 00 00 00 00 00 00 00 00 00 00 02",
 	},
 	{
-		.description = "Test Vector #2: Encrypting 32 octets using AES-CTR with 128-bit key",
+		.description = "Encrypting 32 octets using AES-CTR with 128-bit key",
 		.key = "0x 7E 24 06 78 17 FA E0 D7 43 D6 CE 1F 32 53 91 63",
 		.plaintext = "0x"
 		"00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F"
@@ -61,7 +61,7 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.output_cb = "0x 00 6C B6 DB C0 54 3B 59 DA 48 D9 0B 00 00 00 03",
 	},
 	{
-		.description = "Test Vector #3: Encrypting 36 octets using AES-CTR with 128-bit key",
+		.description = "Encrypting 36 octets using AES-CTR with 128-bit key",
 		.key = "0x 76 91 BE 03 5E 50 20 A8 AC 6E 61 85 29 F9 A0 DC",
 		.plaintext = "0x"
 		"00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F"
@@ -75,7 +75,7 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.output_cb = "0x 00 E0 01 7B  27 77 7F 3F 4A 17 86 F0  00 00 00 04",
 	},
 	{
-		.description = "Test Vector #4: Encrypting 16 octets using AES-CTR with 192-bit key",
+		.description = "Encrypting 16 octets using AES-CTR with 192-bit key",
 		.key = "0x"
 		"16 AF 5B 14 5F C9 F5 79 C1 75 F9 3E 3B FB 0E ED"
 		"86 3D 06 CC FD B7 85 15",
@@ -85,7 +85,7 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.output_cb = "0x 00 00 00 48  36 73 3C 14 7D 6D 93 CB  00 00 00 02",
 	},
 	{
-		.description = "Test Vector #5: Encrypting 32 octets using AES-CTR with 192-bit key",
+		.description = "Encrypting 32 octets using AES-CTR with 192-bit key",
 		.key = "0x"
 		"7C 5C B2 40 1B 3D C3 3C 19 E7 34 08 19 E0 F6 9C"
 		"67 8C 3D B8 E6 F6 A9 1A",
@@ -99,7 +99,7 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.output_cb = "0x 00 96 B0 3B  02 0C 6E AD C2 CB 50 0D  00 00 00 03",
 	},
 	{
-		.description = "Test Vector #6: Encrypting 36 octets using AES-CTR with 192-bit key",
+		.description = "Encrypting 36 octets using AES-CTR with 192-bit key",
 		.key = "0x"
 		"02 BF 39 1E E8 EC B1 59 B9 59 61 7B 09 65 27 9B"
 		"F5 9B 60 A7 86 D3 E0 FE",
@@ -115,7 +115,7 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.output_cb = "0x 00 07 BD FD  5C BD 60 27 8D CC 09 12  00 00 00 04",
 	},
 	{
-		.description = "Test Vector #7: Encrypting 16 octets using AES-CTR with 256-bit key",
+		.description = "Encrypting 16 octets using AES-CTR with 256-bit key",
 		.key = "0x"
 		"77 6B EF F2 85 1D B0 6F 4C 8A 05 42 C8 69 6F 6C"
 		"6A 81 AF 1E EC 96 B4 D3 7F C1 D6 89 E6 C1 C1 04",
@@ -125,7 +125,7 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.output_cb = "0x 00 00 00 60  DB 56 72 C9 7A A8 F0 B2  00 00 00 02",
 	},
 	{
-		.description = "Test Vector #8: Encrypting 32 octets using AES-CTR with 256-bit key",
+		.description = "Encrypting 32 octets using AES-CTR with 256-bit key",
 		.key = "0x"
 		"F6 D6 6D 6B D5 2D 59 BB 07 96 36 58 79 EF F8 86"
 		"C6 6D D5 1A 5B 6A 99 74 4B 50 59 0C 87 A2 38 84",
@@ -139,7 +139,7 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.output_cb = "0x 00 FA AC 24  C1 58 5E F1 5A 43 D8 75  00 00 00 03",
 	},
 	{
-		.description = "Test Vector #9: Encrypting 36 octets using AES-CTR with 256-bit key",
+		.description = "Encrypting 36 octets using AES-CTR with 256-bit key",
 		.key = "0x"
 		"FF 7A 61 7C E6 91 48 E4 F1 72 6E 2F 43 58 1D E2"
 		"AA 62 D9 F8 05 53 2E DF F1 EE D6 87 FB 54 15 3D",

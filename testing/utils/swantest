@@ -657,9 +657,11 @@ class scantests:
         st1 = ' '
         st2 = ' '
         if "initiator" in test:
-            st1 = test["%s-status" % test["initiator"]]
+            if "%s-status" % test["initiator"] in test:
+                st1 = test["%s-status" % test["initiator"]]
         if "responder" in test:
-            st2 = test["%s-status" % test["responder"]]
+            if "%s-status" % test["responder"] in test:
+                st2 = test["%s-status" % test["responder"]]
 
         if "result" in test:
             if "expect" in test:
@@ -754,7 +756,7 @@ class scantests:
         for role in ["initiator", "responder"]:
             host = self.tests[self.testname][role]
             plutolog = self.tpath + '/OUTPUT/' + host + '.pluto.log'
-            conslelog = self.tpath + '/OUTPUT/' + host + '.console.log'
+            conslelog = self.tpath + '/OUTPUT/' + host + '.console.txt'
 
             self.grep_n_add(role, plutolog, 'ASSERTION FAILED', "ASSERT")
             self.grep_n_add(role, plutolog, 'EXPECTATION FAILED', "EXPECT")
@@ -767,6 +769,7 @@ class scantests:
             return
 
         fixed = '-F '
+        fixed = ''
         key = "%s-status" % self.tests[self.testname][role]
         status = ''
 

@@ -4,7 +4,7 @@
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -64,26 +64,22 @@
 #define MIN_KEYBIT 2192
 
 #ifndef DEVICE
-/* To the openwrt people: Do not change /dev/random to /dev/urandom. The
- * /dev/random device is ONLY used for generating long term keys, which
- * should NEVER be done with /dev/urandom. If people use X.509, PSK or
- * even raw RSA keys generated on other systems, changing this will have
- * 0 effect. It's better to fail or bail out of generating a key, then
- * generate a bad one.
- */
 # define DEVICE  "/dev/random"
 #endif
 #ifndef MAXBITS
 # define MAXBITS 20000
 #endif
 
+#define DEFAULT_SEED_BITS 60 /* 480 bits of random seed */
+
 #define E       3               /* standard public exponent */
 /* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
 
 #define NSSDIR "/etc/ipsec.d"
 
+char *progname;
 char usage[] =
-	"rsasigkey [--verbose] [--random <device>] [--configdir <dir>] [--password <password>] [--hostname host] [<nbits>]";
+	"rsasigkey [--verbose] [--random <device>] [--configdir <dir>] [--password <password>] [--hostname host] [--seedbits bits] [<keybits>]";
 struct option opts[] = {
 	{ "rounds",    1,      NULL,   'p', }, /* obsoleted */
 	{ "noopt",     0,      NULL,   'n', }, /* obsoleted */
@@ -96,6 +92,7 @@ struct option opts[] = {
 	{ "configdir",        1,      NULL,   'c' },
 	{ "configdir2",        1,      NULL,   'd' }, /* nss tools use -d */
 	{ "password", 1,      NULL,   'P' },
+	{ "seedbits", 1,      NULL,   's' },
 	{ 0,           0,      NULL,   0, }
 };
 int verbose = 0;                /* narrate the action? */
@@ -106,14 +103,13 @@ char outputhostname[NS_MAXDNAME];  /* hostname for output */
 char me[] = "ipsec rsasigkey";  /* for messages */
 
 /* forwards */
-void rsasigkey(int nbits, char *configdir, char *password);
+void rsasigkey(int nbits, int seedbits, char *configdir, char *password);
 void getrandom(size_t nbytes, unsigned char *buf);
 static const unsigned char *bundle(int e, mpz_t n, size_t *sizep);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 static const char *hexout(mpz_t var);
 void report(char *msg);
 
-#define RAND_BUF_SIZE 60
 
 /* getModulus - returns modulus of the RSA public key */
 static SECItem *getModulus(SECKEYPublicKey *pk)
@@ -163,15 +159,17 @@ static const char *hexOut(SECItem *data)
 }
 
 /* UpdateRNG - Updates NSS's PRNG with user generated entropy. */
-static void UpdateNSS_RNG(void)
+static void UpdateNSS_RNG(int seedbits)
 {
 	SECStatus rv;
-	unsigned char buf[RAND_BUF_SIZE];
+	int seedbytes = BYTES_FOR_BITS(seedbits);
+	unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
 
-	getrandom(RAND_BUF_SIZE, buf);
-	rv = PK11_RandomUpdate(buf, sizeof buf);
+	getrandom(seedbytes, buf);
+	rv = PK11_RandomUpdate(buf, seedbytes);
 	assert(rv == SECSuccess);
 	zero(&buf);
+	pfree(buf);
 }
 
 /*  Returns the password passed in in the text file.
@@ -303,6 +301,7 @@ int main(int argc, char *argv[])
 {
 	int opt;
 	int nbits = 0;
+	int seedbits = DEFAULT_SEED_BITS;
 	char *configdir = NULL; /* where the NSS databases reside */
 	char *password = NULL;  /* password for token authentication */
 
@@ -343,6 +342,16 @@ int main(int argc, char *argv[])
 			break;
 		case 'P':       /* token authentication password */
 			password = optarg;
+			break;
+		case 's': /* seed bits */
+			seedbits = atoi(optarg);
+			if (PK11_IsFIPS()) {
+				if (seedbits < DEFAULT_SEED_BITS) {
+					fprintf(stderr, "%s: FIPS mode does not allow < %d seed bits\n",
+						me, DEFAULT_SEED_BITS);
+					exit(1);
+				}
+			}
 			break;
 		case '?':
 		default:
@@ -393,7 +402,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	rsasigkey(nbits, configdir, password);
+	rsasigkey(nbits, seedbits, configdir, password);
 	exit(0);
 }
 
@@ -405,7 +414,7 @@ int main(int argc, char *argv[])
  * real speed advantages.
  * See also: https://www.imperialviolet.org/2012/03/16/rsae.html
  */
-void rsasigkey(int nbits, char *configdir, char *password)
+void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 {
 	SECStatus rv;
 	PK11RSAGenParams rsaparams = { nbits, (long) E };
@@ -483,7 +492,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 #endif /* 0 */
 
 	/* Do some random-number initialization. */
-	UpdateNSS_RNG();
+	UpdateNSS_RNG(seedbits);
 	/* Log in to the token */
 	if (password) {
 		rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
@@ -553,9 +562,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 /*
    - getrandom - get some random bytes from /dev/random (or wherever)
  */
-void getrandom(nbytes, buf)
-size_t nbytes;
-unsigned char *buf;                     /* known to be big enough */
+void getrandom(size_t nbytes, unsigned char *buf)
 {
 	size_t ndone;
 	int dev;
@@ -570,8 +577,8 @@ unsigned char *buf;                     /* known to be big enough */
 
 	ndone = 0;
 	if (verbose) {
-		fprintf(stderr, "getting %d random bytes from %s...\n",
-			(int) nbytes,
+		fprintf(stderr, "getting %d random seed bytes for NSS from %s...\n",
+			(int) nbytes * BITS_PER_BYTE,
 			device);
 	}
 	while (ndone < nbytes) {
@@ -683,3 +690,12 @@ char *msg;
 
 	fprintf(stderr, "%s\n", msg);
 }
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
+{
+        exit(x);
+}
+

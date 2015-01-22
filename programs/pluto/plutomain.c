@@ -111,6 +111,7 @@ static bool fork_desired = TRUE;
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
+static int pluto_nss_seedbits;
 static int nhelpers = -1;
 
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
@@ -314,6 +315,49 @@ static void set_cfg_string(char **target, char *value)
 	*target = strdup(value);
 }
 
+/*
+ * This function MUST NOT be used for anything else!
+ * It is used to seed the NSS PRNG based on --seedbits pluto argument
+ * or the seedbits= * config setup option in ipsec.conf.
+ * Everything else that needs random MUST use get_rnd_bytes()
+ * This function MUST NOT be changed to use /dev/urandom.
+ */
+static void get_bsi_random(size_t nbytes, unsigned char *buf)
+{
+	size_t ndone;
+	int dev;
+	ssize_t got;
+	const char *device = "/dev/random";
+
+	dev = open(device, 0);
+	if (dev < 0) {
+		loglog(RC_LOG_SERIOUS, "could not open %s (%s)\n",
+			device, strerror(errno));
+		exit_pluto(PLUTO_EXIT_NSS_FAIL);
+	}
+
+	ndone = 0;
+		DBG(DBG_CONTROL,DBG_log("need %d bits random for extra seeding of the NSS PRNG",
+			(int) nbytes * BITS_PER_BYTE));
+
+	while (ndone < nbytes) {
+		got = read(dev, buf + ndone, nbytes - ndone);
+		if (got < 0) {
+			loglog(RC_LOG_SERIOUS,"read error on %s (%s)\n",
+				device, strerror(errno));
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		}
+		if (got == 0) {
+			loglog(RC_LOG_SERIOUS,"EOF on %s!?!\n",  device);
+			exit_pluto(PLUTO_EXIT_NSS_FAIL);
+		}
+		ndone += got;
+	}
+	close(dev);
+	DBG(DBG_CONTROL,DBG_log("read %ld bytes from /dev/random for NSS PRNG",
+		nbytes));
+}
+
 static void pluto_init_nss(char *confddir)
 {
 	SECStatus nss_init_status;
@@ -327,6 +371,23 @@ static void pluto_init_nss(char *confddir)
 	} else {
 		libreswan_log("NSS Initialized");
 		PK11_SetPasswordFunc(getNSSPassword);
+	}
+
+	/*
+	 * This exists purely to make the BSI happy.
+	 * We do not infliect this on other users
+	 */
+	if (pluto_nss_seedbits != 0) {
+		SECStatus rv;
+		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
+		unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
+
+		get_bsi_random(seedbytes, buf); /* much TLA, very blocking */
+		rv = PK11_RandomUpdate(buf, seedbytes);
+		libreswan_log("seeded %d bytes into the NSS PRNG", seedbytes);
+		passert(rv == SECSuccess);
+		zero(&buf);
+		pfree(buf);
 	}
 }
 
@@ -428,6 +489,7 @@ static const struct option long_opts[] = {
 	{ "virtual_private\0_", required_argument, NULL, '6' },	/* _ */
 	{ "virtual-private\0<network_list>", required_argument, NULL, '6' },
 	{ "nhelpers\0<number>", required_argument, NULL, 'j' },
+	{ "seedbits\0<number>", required_argument, NULL, 'c' },
 #ifdef HAVE_LABELED_IPSEC
 	/* ??? really an attribute type, not a value */
 	{ "secctx_attr_value\0_", required_argument, NULL, 'w' },	/* obsolete name; _ */
@@ -700,6 +762,14 @@ int main(int argc, char **argv)
 					break;
 
 				nhelpers = u;
+			}
+			continue;
+		case 'c':	/* --seedbits */
+			pluto_nss_seedbits = atoi(optarg);
+			if (pluto_nss_seedbits == 0) {
+				printf("pluto: seedbits must be an integer > 0");
+				/* not exit_pluto because we are not initialized yet */
+				exit(PLUTO_EXIT_NSS_FAIL);
 			}
 			continue;
 
@@ -979,6 +1049,7 @@ int main(int argc, char **argv)
 				}
 			}
 
+			pluto_nss_seedbits = cfg->setup.options[KBF_SEEDBITS];
 			pluto_nat_port =
 				cfg->setup.options[KBF_NATIKEPORT];
 			keep_alive = cfg->setup.options[KBF_KEEPALIVE];
@@ -1483,3 +1554,4 @@ void show_setup_plutomain()
 	whack_log(RC_COMMENT, "secctx-attr-type=<unsupported>");
 #endif
 }
+

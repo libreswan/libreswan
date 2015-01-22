@@ -57,6 +57,7 @@
       <arg choice="opt">--secretsfile <replaceable>secrets-file</replaceable></arg>
       <arg choice="opt">--adns <replaceable>pathname</replaceable></arg>
       <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
+      <arg choice="opt">--seedbits <replaceable>numbits</replaceable></arg>
       <arg choice="opt">--perpeerlog</arg>
       <arg choice="opt">--perpeerlogbase <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
@@ -981,6 +982,18 @@
       forces pluto to do all operations in the main process. A value of
       <emphasis remap="I">-1</emphasis> tells pluto to perform the above
       calculation. Any other value forces the number to that amount.</para>
+
+      <para>Pluto uses the NSS crypto library as its random source. Some
+      government Three Letter Agency requires that pluto reads 440 bits
+      from /dev/random and feed this into the NSS RNG before drawing
+      random from the NSS library, despite the NSS library itself
+      already seeding its internal state. As this process can block
+      pluto for an extended time, the default is to not perform this
+      redundant seeding. The <emphasis remap="B">--seedbits</emphasis>
+      option can be used to specify the number of bits that will be
+      pulled from /dev/random and seeded into the NSS RNG.  This can
+      also be accomplished by specifying seedbits in the "config setup"
+      section of ipsec.conf. This option should not be used by most people.</para>
 
       <para><emphasis remap="B">pluto</emphasis> attempts to create a lockfile
       with the name <filename>/var/run/pluto/pluto.pid</filename>. If the
