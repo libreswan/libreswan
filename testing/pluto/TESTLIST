@@ -58,7 +58,6 @@ kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			wip
 kvmplutotest	ikev2-29-no-rekey			good
-kvmplutotest	ikev2-32-nat-rw-rekey			good
 kvmplutotest	ikev1-cryptoload-01			good
 kvmplutotest	ikev1-cryptoload-00			good
 
@@ -635,7 +634,7 @@ kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
 kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
 # strongswan still broken in v5.1.1
-kvmplutotest	interop-ikev2-strongswan-18-psk-cast		wip
+kvmplutotest	interop-ikev2-strongswan-18-psk-cast		good
 
 
 #################################################################
