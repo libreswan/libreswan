@@ -1234,6 +1234,26 @@ struct db_sa IKEv2_oakley_sadb[] = {
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
 };
 
+/*
+ * The groups in this list.
+ *
+ * This MUST match the groups found in IKEv2_oakley_sadb.
+ */
+const enum ike_trans_type_dh IKEv2_oakley_sadb_groups[] = {
+	DEFAULT_OAKLEY_EALGS,
+	OAKLEY_GROUP_invalid
+};
+
+/*
+ * The default DH key to send with a default proposal.
+ *
+ * This must match the very first proposal.  If the other end chooses
+ * an alternative proposal requiring more keying material then an
+ * extra round trip will occure.
+ */
+const enum ike_trans_type_dh IKEv2_oakley_sadb_default_group =
+	OAKLEY_GROUP_MODP2048;
+
 /**************** IPsec (quick mode) SA database ****************/
 
 /* arrays of attributes for transforms */

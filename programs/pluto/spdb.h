@@ -190,6 +190,12 @@ struct db_sa {
 extern struct db_sa IKEv1_oakley_sadb[1 << 4];
 extern struct db_sa IKEv1_oakley_am_sadb[1 << 4];
 extern struct db_sa IKEv2_oakley_sadb[1 << 4];
+/*
+ * Terminated by OAKLEY_GROUP_invalid.  Must contain all groups found
+ * in IKEv2_oakley_sadb.
+ */
+extern const enum ike_trans_type_dh IKEv2_oakley_sadb_groups[];
+const enum ike_trans_type_dh IKEv2_oakley_sadb_default_group;
 
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
