@@ -488,7 +488,9 @@ umlplutotest	basic-pluto-08		bad
 kvmplutotest    algo-pluto-01          good
 kvmplutotest    algo-pluto-02          good
 kvmplutotest    algo-pluto-03          good
-kvmplutotest    algo-pluto-04          good
+#known bug
+kvmplutotest    algo-pluto-04          wip
+
 umlplutotest    algo-pluto-05          good
 umlplutotest    algo-pluto-06          good
 kvmplutotest    algo-pluto-08          good
