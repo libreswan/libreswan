@@ -230,11 +230,6 @@ stf_status ikev2parent_outI1(int whack_sock,
 
 		/* Grab the DH group from the first configured proposal to build KE */
 		groupnum = first_modp_from_propset(c->alg_info_ike);
-
-		if (groupnum == OAKLEY_GROUP_invalid) {
-			libreswan_log("No valid MODP group found in configuration, defaulting to first default");
-			groupnum = default_ike_groups[0];
-		}
 		st->st_oakley.group = lookup_group(groupnum);	/* NULL if unknown */
 		passert(st->st_oakley.group != NULL);
 		st->st_oakley.groupnum = groupnum;
