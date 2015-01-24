@@ -538,7 +538,6 @@ kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
 # kernel does not yet support these algo's
 kvmplutotest	ah-pluto-06		wip
 kvmplutotest	ah-pluto-07		wip
-kvmplutotest	ah-pluto-08		wip
 
 umlplutotest	protoport-01		good
 umlplutotest	protoport-02		good
