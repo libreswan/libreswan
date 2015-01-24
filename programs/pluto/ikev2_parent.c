@@ -893,8 +893,16 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		case INVALID_KEY_INFORMATION:
 		{
 			/*
-			 * RFC 5996 1.3 says that we should return
-			 * our desired group number when rejecting sender's.
+			 * RFC 5996 1.3 says that we should return our
+			 * desired group number when rejecting
+			 * sender's.
+			 *
+			 * [cagney]: This discovery that the MODP
+			 * group is invalid has come really late.  It
+			 * should have happend before our end of the
+			 * DH calculation occured - way back when the
+			 * packet was first received and the more
+			 * basic MODP check is performed.
 			 */
 			u_int16_t gn = htons(
 				st->st_oakley.group->group);
@@ -904,9 +912,16 @@ static stf_status ikev2_parent_inI1outR1_tail(
 				strip_prefix(enum_show(&oakley_group_names,
 					st->st_oakley.group->group),
 					"OAKLEY_GROUP_")));
+			/* wipe out any RCOOKIE that was set earlier */
+			DBG(DBG_CONTROL, DBG_log("Forcing the RCOOKIE to zero for INVALID_KE reply - hack!"));
+			unhash_state(st);
+			memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
+			insert_state(st);
+			/* Issue the INVALID_KE reply.  */
 			send_v2_notification_from_state(st,
 				v2N_INVALID_KE_PAYLOAD, &dc);
-			delete_state(st); /* nothing to do or remember */
+			/* nothing to do or remember */
+			delete_state(st);
 			md->st = NULL;
 			return STF_FAIL;
 		}
