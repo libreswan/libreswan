@@ -1,6 +1,7 @@
 Basic pluto test with west has auto=route and klips stack.
 
-This seems wrong:
+Despite being packet triggered, and this having a shunt, we still leak
+plaintext. This is wrong!
 
 15:28:53.576145 IP 192.1.2.45.500 > 192.1.2.23.500: isakmp: phase 1 I ident
 15:28:53.653041 IP 192.1.2.23.500 > 192.1.2.45.500: isakmp: phase 1 R ident
