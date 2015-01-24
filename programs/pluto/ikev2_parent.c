@@ -1089,7 +1089,13 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				libreswan_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
 					strip_prefix(enum_show(&oakley_group_names,
 						sg.sg_group), "OAKLEY_GROUP_"));
-                                clear_dh_from_state(st); /* wipe our mismatched KE */
+				/* wipe our mismatched KE */
+                                clear_dh_from_state(st);
+				/* wipe out any saved RCOOKIE */
+				DBG(DBG_CONTROL, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
+				unhash_state(st);
+				memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
+				insert_state(st);
 				/* get a new KE */
 				return crypto_helper_build_ke(st);
 			} else {
