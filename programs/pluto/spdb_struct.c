@@ -2,6 +2,7 @@
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2008 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -119,39 +120,50 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		struct db_sa *emp_sp;
 
 		if (!ike_info->ike_default) {
-			struct encrypt_desc *enc_desc;
-			struct db_attr  *enc, *hash, *auth, *grp, *enc_keylen;
 
 			unsigned ealg = ike_info->ike_ealg;
 			unsigned halg = ike_info->ike_halg;
 			unsigned modp = ike_info->ike_modp;
 			unsigned eklen = ike_info->ike_eklen;
+			DBG(DBG_CONTROL,
+			    DBG_log("oakley_alg_makedb() "
+				    "processing ealg=%u halg=%u modp=%u eklen=%u",
+				    ealg, halg, modp, eklen));
 
-			if (!ike_alg_enc_present(ealg)) {
+			struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
+			if (enc_desc == NULL) {
 				DBG_log("oakley_alg_makedb() "
 					"ike enc ealg=%d not present",
 					ealg);
 				continue;
 			}
-			if (!ike_alg_hash_present(halg)) {
-				DBG_log("oakley_alg_makedb() "
-					"ike hash halg=%d not present",
-					halg);
-				continue;
-			}
-			enc_desc = ike_alg_get_encrypter(ealg);
-
 			passert(enc_desc != NULL);
+
+			if (ike_alg_enc_requires_integ(enc_desc)) {
+				if (!ike_alg_hash_present(halg)) {
+					DBG_log("oakley_alg_makedb() "
+						"ike hash halg=%d not present but required for integrity",
+						halg);
+					continue;
+				}
+			} else {
+				if (!ike_alg_hash_present(halg)) {
+					DBG_log("oakley_alg_makedb() "
+						"ike PRF=%d not present but needed for AEAD",
+						halg);
+					continue;
+				}
+			}
 
 			if (eklen != 0 &&
 			    (eklen < enc_desc->keyminlen ||
 			     eklen >  enc_desc->keymaxlen)) {
-				DBG_log("ike_alg_db_new() ealg=%d (specified) keylen:%d, not valid min=%d, max=%d",
-					ealg,
-					eklen,
-					enc_desc->keyminlen,
-					enc_desc->keymaxlen);
-				continue;
+			  DBG_log("ike_alg_db_new() ealg=%d (specified) keylen:%d, not valid min=%d, max=%d",
+				  ealg,
+				  eklen,
+				  enc_desc->keyminlen,
+				  enc_desc->keymaxlen);
+			  continue;
 			}
 
 			/*
@@ -159,60 +171,102 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			 *
 			 * ??? what are these two cases and why does
 			 * eklen select between them?
+			 *
+			 * [cagney] I suspect that this is to
+			 * compensate for logic further down that,
+			 * when eklen==0, truncates the attrs array to
+			 * 4 elements and sa_copy_sa_first() when
+			 * applied to that structure won't allocate
+			 * space for the 5th (eklen) element - oops.
+			 * To be honest, the attrs should be a list OR
+			 * the eklen>0 path should always be taken OR
+			 * ...
+			 * 
+			 * The convoluted assignment is copying the
+			 * auth field (see "struct db_attr otempty"
+			 * above), from base to the new proposal.
 			 */
 			if (eklen > 0) {
 				/* duplicate, but change auth to match template */
 				emp_sp = sa_copy_sa(&oakley_empty);
-
-				passert(emp_sp->dynamic);
 				emp_sp->prop_conjs[0].props[0].trans[0].attrs[2] =
 				  base->prop_conjs[0].props[0].trans[0].attrs[2];
 			} else {
 				emp_sp = sa_copy_sa_first(base);
 			}
 
+			passert(emp_sp->dynamic);
 			passert(emp_sp->prop_conj_cnt == 1);
 			passert(emp_sp->prop_conjs[0].prop_cnt == 1);
 			passert(emp_sp->prop_conjs[0].props[0].trans_cnt == 1);
 
-			{
-				struct db_trans *trans = &emp_sp->prop_conjs[0].props[0].trans[0];
+			struct db_trans *trans = &emp_sp->prop_conjs[0].props[0].trans[0];
 
-				passert(emp_sp->dynamic);
-				passert(trans->attr_cnt == 4 || trans->attr_cnt == 5);
-				enc  = &trans->attrs[0];
-				hash = &trans->attrs[1];
-				auth = &trans->attrs[2];
-				grp  = &trans->attrs[3];
+			/* 
+			 * See "struct db_attr otempty" above for
+			 * where these magic values come from.
+			 */
+			passert(trans->attr_cnt == 4 || trans->attr_cnt == 5);
+			struct db_attr *enc  = &trans->attrs[0];
+			struct db_attr *hash = &trans->attrs[1];
+			struct db_attr *auth = &trans->attrs[2];
+			struct db_attr *grp  = &trans->attrs[3];
 
-				if (eklen > 0) {
-					enc_keylen = &trans->attrs[4];
-					enc_keylen->val = eklen;
-				} else {
-					trans->attr_cnt = 4;
-				}
+			if (eklen > 0) {
+				passert(trans->attr_cnt == 5);
+				struct db_attr *enc_keylen = &trans->attrs[4];
+				passert(enc_keylen->type.oakley == OAKLEY_KEY_LENGTH);
+				enc_keylen->val = eklen;
+			} else {
+				/* truncate */
+				trans->attr_cnt = 4;
 			}
 
-			passert(enc->type.oakley ==
-				OAKLEY_ENCRYPTION_ALGORITHM);
+			passert(enc->type.oakley == OAKLEY_ENCRYPTION_ALGORITHM);
 			if (ealg > 0)
 				enc->val = ealg;
 
-			passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
-			if (halg > 0)
+			/*
+			 * Either pass a hash algorithm or a PRF.
+			 *
+			 * Since AEAD algorithms don't need the hash,
+			 * but do need a PRF, the hash field can be
+			 * re-purposed as a PRF field.
+			 *
+			 * [cagney] While I suspect that type will
+			 * never initially be OAKLEY_PRF (it is
+			 * initialized using "struct db_attr otempty")
+			 * it doesn't hurt to be safe.
+			 */
+			passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM ||
+				hash->type.oakley == OAKLEY_PRF);
+			if (halg > 0) {
 				hash->val = halg;
+				if (ike_alg_enc_requires_integ(enc_desc)) {
+					hash->type.oakley = OAKLEY_HASH_ALGORITHM;	
+				} else {
+					hash->type.oakley = OAKLEY_PRF;	
+				}
+			}
 
 			/*
-			 * auth type for IKE must be set
-			 * (??? until we support AES-GCM in IKE)
+			 * auth type for IKE must be set.
+			 *
+			 * Logic above uses sa_copy_sa or brute force
+			 * to copy the field from BASE.
+			 *
+			 * ??? until we support AES-GCM in IKE
+			 *
+			 * [cagney] aes-gcm doesn't require HASH, just
+			 * the PRF, so auth is unrelated?
 			 */
 			passert(auth->type.oakley ==
 				OAKLEY_AUTHENTICATION_METHOD);
 
 			passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
-
 			if (modp > 0)
 				grp->val = modp;
+
 		} else {
 			emp_sp = sa_copy_sa(base);
 		}
@@ -352,5 +406,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 	if (gsp != NULL)
 		gsp->parentSA = TRUE;
 
+	DBG(DBG_CONTROL,
+	    DBG_log("oakley_alg_makedb() returning %p", gsp));
 	return gsp;
 }

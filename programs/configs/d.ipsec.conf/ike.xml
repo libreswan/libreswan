@@ -14,6 +14,8 @@ specified, the mode is always strict, meaning no other received proposals will b
 Some examples are
 <emphasis remap='B'>ike=3des-sha1,aes-sha1</emphasis>,
 <emphasis remap='B'>ike=aes</emphasis>,
+<emphasis remap='B'>ike=aes_ctr</emphasis>,
+<emphasis remap='B'>ike=aes_gcm256-sha2</emphasis>,
 <emphasis remap='B'>ike=aes128-md5;modp2048</emphasis>,
 <emphasis remap='B'>ike=aes128-sha1;dh22</emphasis>,
 <emphasis remap='B'>ike=3des-md5;modp1024,aes-sha1;modp1536</emphasis>.
@@ -24,7 +26,17 @@ The options must be suitable as a value of
                 cipher:                 3des or aes128 or aes256
                 hash:                   sha1 or md5
                 pfsgroup (DHgroup):     modp1024 or modp1536 or modp2048
-</emphasis></literallayout></para>
+</emphasis></literallayout>
+
+Note that AES-GCM is an AEAD algorithm, meaning that it performs encryption+authentication in one step. This
+means that AES-GCM must not specify an authentication algorithm. However, it does require a PRF function, so
+the second argument to an AEAD algorithm denotes the PRF. So ike=aes_gcm-sha2 means propose AES_GCM with no
+authentication and using SHA2 as the prf. Note that for phase2alg, there is no prf, so AES-GCM is
+specified for ESP as phase2=aes_gcm-null. The AES-GCM and AES-CCM algorithms support 8,12 and 16 byte ICV's.
+These can be specified using a postfix, for example aes_gcm_a (for 8), aes_gcm_b (for 12) and aes_gcm_c (for 16).
+The default (aes_gcm without postfix) refers to the 16 byte ICV version. It is strongly recommended to NOT use
+the 8 or 12 byte versions of GCM or CCM.
+</para>
 <para>
 Weak algorithms are regularly removed from libreswan. Currently, 1DES and modp768 have been removed and modp1024
 will be removed in the near future. Additionally, md5 and sha1 will be removed within the next few years. Null

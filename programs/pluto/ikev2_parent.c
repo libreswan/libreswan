@@ -12,6 +12,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1347,29 +1348,38 @@ static unsigned char *ikev2_authloc(struct state *st,
 	}
 
 	b12 = e_pbs->cur;
-	if (!out_zero(pst->st_oakley.integ_hasher->hash_integ_len, e_pbs,
-		      "length of truncated HMAC"))
+	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)
+			    ? pst->st_oakley.integ_hasher->hash_integ_len
+			    : pst->st_oakley.encrypter->aead_tag_size);
+	if (integ_size == 0) {
+		DBG(DBG_CRYPT, DBG_log("ikev2_authloc: HMAC/KEY size is zero"));
 		return NULL;
+	}
+
+	if (!out_zero(integ_size, e_pbs, "length of truncated HMAC/KEY")) {
+		return NULL;
+	}
 
 	return b12;
 }
 
 static stf_status ikev2_encrypt_msg(struct state *st,
 				    enum phase1_role role,
-				    unsigned char *authstart,
-				    unsigned char *wire_iv,
-				    unsigned char *encstart,
-				    unsigned char *authloc,
+				    unsigned char *auth_start,
+				    unsigned char *wire_iv_start,
+				    unsigned char *enc_start,
+				    unsigned char *integ_start,
 				    pb_stream *e_pbs UNUSED,
 				    pb_stream *e_pbs_cipher)
 {
 	struct state *pst = st;
-	PK11SymKey *cipherkey, *authkey;
 
 	if (IS_CHILD_SA(st))
 		pst = state_with_serialno(st->st_clonedfrom);
 
 	chunk_t salt;
+	PK11SymKey *cipherkey;
+	PK11SymKey *authkey;
 	if (role == O_INITIATOR) {
 		cipherkey = pst->st_skey_ei_nss;
 		authkey = pst->st_skey_ai_nss;
@@ -1380,51 +1390,85 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 		salt = pst->st_skey_responder_salt;
 	}
 
-	/* encrypt the block */
-	{
+	/* size of plain or cipher text.  */
+	size_t enc_size = e_pbs_cipher->cur - enc_start;
+
+	/* encrypt and authenticate the block */
+	if (ike_alg_enc_requires_integ(st->st_oakley.encrypter)) {
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("encryption IV/starting-variable", enc_iv,
-				 wire_iv, salt,
+				 wire_iv_start, salt,
 				 pst->st_oakley.encrypter);
 
-		unsigned int cipherlen = e_pbs_cipher->cur - encstart;
-
 		DBG(DBG_CRYPT,
-		    DBG_dump("data before encryption:", encstart, cipherlen));
+		    DBG_dump("data before encryption:", enc_start, enc_size));
 
 		/* now, encrypt */
-		(st->st_oakley.encrypter->do_crypt)(encstart,
-						    cipherlen,
+		(st->st_oakley.encrypter->do_crypt)(enc_start, enc_size,
 						    cipherkey,
 						    enc_iv, TRUE);
 
 		DBG(DBG_CRYPT,
-		    DBG_dump("data after encryption:", encstart, cipherlen));
+		    DBG_dump("data after encryption:", enc_start, enc_size));
 		/* note: saved_iv's updated value is discarded */
-	}
 
-	/* okay, authenticate from beginning of IV */
-	{
+		/* okay, authenticate from beginning of IV */
 		struct hmac_ctx ctx;
 		DBG(DBG_PARSING, DBG_log("Inside authloc"));
 		DBG(DBG_CRYPT,
 		    DBG_log("authkey pointer: %p", authkey));
 		hmac_init(&ctx, pst->st_oakley.integ_hasher, authkey);
 		DBG(DBG_PARSING, DBG_log("Inside authloc after init"));
-		hmac_update(&ctx, authstart, authloc - authstart);
+		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		DBG(DBG_PARSING, DBG_log("Inside authloc after update"));
-		hmac_final(authloc, &ctx);
+		hmac_final(integ_start, &ctx);
 		DBG(DBG_PARSING, DBG_log("Inside authloc after final"));
 
 		DBG(DBG_PARSING, {
-			    DBG_dump("data being hmac:", authstart, authloc -
-				     authstart);
-			    DBG_dump("out calculated auth:", authloc,
+			    DBG_dump("data being hmac:", auth_start,
+				     integ_start - auth_start);
+			    DBG_dump("out calculated auth:", integ_start,
 				     pst->st_oakley.integ_hasher->
 					hash_integ_len);
 		    });
+	} else {
+		size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
+		size_t integ_size = pst->st_oakley.encrypter->aead_tag_size;
+		/*
+		 * Additional Authenticated Data - AAD - size.
+		 * RFC5282 says: The Initialization Vector and Ciphertext
+		 * fields [...] MUST NOT be included in the associated
+		 * data.
+		 */
+		unsigned char *aad_start = auth_start;
+		size_t aad_size = enc_start - aad_start - wire_iv_size;
+
+		DBG(DBG_CRYPT,
+		    DBG_dump_chunk("Salt before authenticated encryption:", salt);
+		    DBG_dump("IV before authenticated encryption:",
+			     wire_iv_start, wire_iv_size);
+		    DBG_dump("AAD before authenticated encryption:",
+			     aad_start, aad_size);
+		    DBG_dump("data before authenticated encryption:",
+			     enc_start, enc_size);
+		    DBG_dump("integ before authenticated encryption:",
+			     integ_start, integ_size));
+		if (!st->st_oakley.encrypter->
+			do_aead_crypt_auth(salt.ptr, salt.len,
+					   wire_iv_start, wire_iv_size,
+					   aad_start, aad_size,
+					   enc_start, enc_size, integ_size,
+					   cipherkey, TRUE)) {
+			return STF_FAIL;
+		}
+		DBG(DBG_CRYPT,
+		    DBG_dump("data after authenticated encryption:",
+			     enc_start, enc_size);
+		    DBG_dump("integ after authenticated encryption:",
+			     integ_start, integ_size));
 	}
+
 
 	return STF_OK;
 }
@@ -1449,14 +1493,6 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2E]->pbs;
-	unsigned char *authstart = md->packet_pbs.start;
-	u_char *wire_iv = e_pbs->cur;	/* start of wire-IV, right after header */
-	const size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
-	size_t integ_len = pst->st_oakley.integ_hasher->hash_integ_len;
-	const size_t enc_blocksize = pst->st_oakley.encrypter->enc_blocksize;
-	const bool pad_to_blocksize = pst->st_oakley.encrypter->pad_to_blocksize;
-	unsigned char *roof= e_pbs->roof;
-	PK11SymKey *cipherkey, *authkey;
 
 	if (st != NULL && !st->hidden_variables.st_skeyid_calculated)
 	{
@@ -1471,21 +1507,51 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 				});
 		return STF_FAIL;
 	}
+
+	u_char *wire_iv_start = e_pbs->cur;
+	size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
+	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)
+			     ? pst->st_oakley.integ_hasher->hash_integ_len
+			     : pst->st_oakley.encrypter->aead_tag_size);
+
 	/*
-	 * check to see if length is plausible.  Need room for:
-	 * - IV (at start)
-	 * - the padding-length byte
-	 * - truncated integrity digest (at end)
+	 * check to see if length is plausible:
+	 * - wire-IV
+	 * - encoded data (possibly empty)
+	 * - at least one padding-length byte
+	 * - truncated integrity digest / tag
 	 */
-	if (roof - wire_iv < (ptrdiff_t)(wire_iv_size + 1 + integ_len)) {
-		libreswan_log("encrypted payload impossibly short (%td)",
-			      roof - wire_iv);
+	u_char *payload_end = e_pbs->roof;
+	if (payload_end < (wire_iv_start + wire_iv_size + 1 + integ_size)) {
+		libreswan_log("encrypted payload impossibly short (%zu)",
+			      payload_end - wire_iv_start);
 		return STF_FAIL;
 	}
 
-	roof -= integ_len;	/* strip truncated digest */
+	u_char *auth_start = md->packet_pbs.start;
+	u_char *enc_start = wire_iv_start + wire_iv_size;
+	u_char *integ_start = payload_end - integ_size;
+	size_t enc_size = integ_start - enc_start;
+
+	/*
+	 * Check if block-size is valid.  Do this before the payload's
+	 * integrity has been verified as block-alignment requirements
+	 * aren't exactly secret (originally this was being done
+	 * beteen integrity and decrypt).
+	 */
+	size_t enc_blocksize = pst->st_oakley.encrypter->enc_blocksize;
+	bool pad_to_blocksize = pst->st_oakley.encrypter->pad_to_blocksize;
+	if (pad_to_blocksize) {
+		if (enc_size % enc_blocksize != 0) {
+			libreswan_log("cyphertext length (%zu) not a multiple of blocksize (%zu)",
+				      enc_size, enc_blocksize);
+			return STF_FAIL;
+		}
+	}
 
 	chunk_t salt;
+	PK11SymKey *cipherkey;
+	PK11SymKey *authkey;
 	if (role == O_INITIATOR) {
 		cipherkey = pst->st_skey_er_nss;
 		authkey = pst->st_skey_ar_nss;
@@ -1496,79 +1562,95 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		salt = pst->st_skey_initiator_salt;
 	}
 
-	/*
-	 * check authenticator
-	 * The last [integ_len] bytes are the truncated digest.
-	 */
-	{
+	/* authenticate and decrypt the block. */
+	if (ike_alg_enc_requires_integ(st->st_oakley.encrypter)) {
+		/*
+		 * check authenticator.  The last INTEG_SIZE bytes are
+		 * the truncated digest.
+		 */
 		unsigned char td[MAX_DIGEST_LEN];
 		struct hmac_ctx ctx;
 
 		hmac_init(&ctx, pst->st_oakley.integ_hasher, authkey);
-		hmac_update(&ctx, authstart, roof - authstart);
+		hmac_update(&ctx, auth_start, integ_start - auth_start);
 		hmac_final(td, &ctx);
 
 		DBG(DBG_PARSING, {
 			DBG_dump("data for hmac:",
-				authstart, roof - authstart);
+				auth_start, integ_start - auth_start);
 			DBG_dump("calculated auth:",
-				td,
-				pst->st_oakley.integ_hasher-> hash_integ_len);
+				 td, integ_size);
 			DBG_dump("  provided auth:",
-				roof,
-				pst->st_oakley.integ_hasher->hash_integ_len);
+				 integ_start, integ_size);
 		    });
 
-		if (!memeq(td, roof, integ_len)) {
+		if (!memeq(td, integ_start, integ_size)) {
 			libreswan_log("failed to match authenticator");
 			return STF_FAIL;
 		}
-	}
 
-	DBG(DBG_PARSING, DBG_log("authenticator matched"));
+		DBG(DBG_PARSING, DBG_log("authenticator matched"));
 
-	/* decrypt */
-	{
-		u_char *encstart = wire_iv + wire_iv_size;
-		size_t enclen = roof - encstart;
+		/* decrypt */
+
 		/* note: no iv is longer than MAX_CBC_BLOCK_SIZE */
 		unsigned char enc_iv[MAX_CBC_BLOCK_SIZE];
 		construct_enc_iv("decription IV/starting-variable", enc_iv,
-				 wire_iv, salt,
+				 wire_iv_start, salt,
 				 pst->st_oakley.encrypter);
 
 		DBG(DBG_CRYPT,
-		    DBG_dump("data before decryption:", encstart, enclen));
-
-		if (pad_to_blocksize) {
-			if (enclen % enc_blocksize != 0) {
-				libreswan_log("cyphertext length (%zu) not a multiple of blocksize (%zu)",
-					      enclen, enc_blocksize);
-				return STF_FAIL;
-			}
-		}
-
-		/* now, decrypt */
-		(pst->st_oakley.encrypter->do_crypt)(encstart,
-						     enclen,
+		    DBG_dump("payload before decryption:", enc_start, enc_size));
+		(pst->st_oakley.encrypter->do_crypt)(enc_start, enc_size,
 						     cipherkey,
 						     enc_iv, FALSE);
+		DBG(DBG_CRYPT,
+		    DBG_dump("payload after decryption:", enc_start, enc_size));
 
-		u_char padlen = encstart[enclen - 1] + 1;
-		if (padlen > enc_blocksize || padlen > enclen) {
-			libreswan_log("invalid padding-length octet: 0x%2x", padlen - 1);
-			return STF_FAIL;
+	  } else {
+		/*
+		 * Additional Authenticated Data - AAD - size.
+		 * RFC5282 says: The Initialization Vector and Ciphertext
+		 * fields [...] MUST NOT be included in the associated
+		 * data.
+		 */
+		unsigned char *aad_start = auth_start;
+	        size_t aad_size = enc_start - auth_start - wire_iv_size;
+
+		DBG(DBG_CRYPT,
+		    DBG_dump_chunk("Salt before authenticated decryption:", salt);
+		    DBG_dump("IV before authenticated decryption:",
+			     wire_iv_start, wire_iv_size);
+		    DBG_dump("AAD before authenticated decryption:",
+			     aad_start, aad_size);
+		    DBG_dump("data before authenticated decryption:",
+			     enc_start, enc_size);
+		    DBG_dump("integ before authenticated decryption:",
+			     integ_start, integ_size));
+		if (!st->st_oakley.encrypter->
+			do_aead_crypt_auth(salt.ptr, salt.len,
+					   wire_iv_start, wire_iv_size,
+					   aad_start, aad_size,
+					   enc_start, enc_size, integ_size,
+					   cipherkey, FALSE)) {
+			return STF_FAIL; /* sub-code? */
 		}
-
-		/* don't bother to check any other pad octets */
-
-		DBG(DBG_CRYPT, {
-			    DBG_dump("decrypted payload:", encstart, enclen);
-			    DBG_log("striping %u bytes as pad", padlen);
-		    });
-
-		init_pbs(&md->clr_pbs, encstart, enclen - padlen, "cleartext");
+		DBG(DBG_CRYPT,
+		    DBG_dump("data after authenticated decryption:",
+			     enc_start, enc_size + integ_size));
 	}
+
+
+	u_char padlen = enc_start[enc_size - 1] + 1;
+	if (padlen > enc_blocksize || padlen > enc_size) {
+		libreswan_log("invalid padding-length octet: 0x%2x", padlen - 1);
+		return STF_FAIL;
+	}
+
+	/* don't bother to check any other pad octets */
+	DBG(DBG_CRYPT, DBG_log("striping %u bytes as pad", padlen));
+
+	init_pbs(&md->clr_pbs, enc_start, enc_size - padlen, "cleartext");
 
 	return ikev2_process_payloads(md, &md->clr_pbs,
 		md->chain[ISAKMP_NEXT_v2E]->payload.generic.isag_np,

@@ -6,6 +6,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -293,48 +294,29 @@ struct db_trans_flat {
 
 static enum ikev2_trans_type_encr v1tov2_encr(int oakley)
 {
-	switch (oakley) {
-	case OAKLEY_DES_CBC:
-		return IKEv2_ENCR_DES;
-
-	case OAKLEY_IDEA_CBC:
-		return IKEv2_ENCR_IDEA;
-
-	case OAKLEY_RC5_R16_B64_CBC:
-		return IKEv2_ENCR_RC5;
-
-	case OAKLEY_3DES_CBC:
-		return IKEv2_ENCR_3DES;
-
-	case OAKLEY_CAST_CBC:
-		return IKEv2_ENCR_CAST;
-
-	case OAKLEY_AES_CBC:
-		return IKEv2_ENCR_AES_CBC;
-
-	case OAKLEY_AES_CTR:
-		return IKEv2_ENCR_AES_CTR;
-
-	case OAKLEY_CAMELLIA_CBC:
-		return IKEv2_ENCR_CAMELLIA_CBC;
-
-	case OAKLEY_TWOFISH_CBC_SSH:
-		return IKEv2_ENCR_TWOFISH_CBC_SSH;
-
-	case OAKLEY_TWOFISH_CBC:
-		return IKEv2_ENCR_TWOFISH_CBC;
-
-	case OAKLEY_SERPENT_CBC:
-		return IKEv2_ENCR_SERPENT_CBC;
-
-	/*
-	 * We have some encryption algorithms in IKEv2 that do not exist in
-	 * IKEv1. This is a bad hack and the caller should be aware
-	 */
-
-	default:
-		DBG(DBG_CONTROL, DBG_log("v1tov2_encr() missing v1 encr transform '%d'",oakley));
+	struct ike_alg *alg = ikev1_alg_find(IKE_ALG_ENCRYPT, oakley);
+	if (alg == NULL) {
+		/*
+		 * Outch, somehow the v1 algorithm we found earlier
+		 * has disappeared!
+		 */
+		DBG(DBG_CONTROL, DBG_log("v1tov2_encr() unknown v1 encrypt algorithm '%d'", oakley));
 		return IKEv2_ENCR_INVALID; /* this cannot go over the wire! It's 65536 */
+	} else if (alg->algo_v2id == 0) {
+		/*
+		 * We have some encryption algorithms in IKEv2 that do
+		 * not exist in IKEv1 but this code assumes that they
+		 * do.  Someone will have to add another unofficial
+		 * IKEv1 algorithm id to its table or just not use
+		 * this function.
+		 *
+		 * Better, would be to just pass the ike_alg struct
+		 * around.
+		 */
+		DBG(DBG_CONTROL, DBG_log("v1tov2_encr() v1 encrypt algorithm '%d' has no v2 counterpart", oakley));
+		return IKEv2_ENCR_INVALID; /* this cannot go over the wire! It's 65536 */
+	} else {
+		return alg->algo_v2id;
 	}
 }
 
@@ -490,7 +472,6 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 							break;
 
 						case OAKLEY_ENCRYPTION_ALGORITHM:
-							/* XXX fails on IKEv2-only enc algos like CCM/GCM */
 							dtfone->encr_transid =
 								v1tov2_encr(
 									attr->val);
@@ -503,6 +484,11 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 							dtfone->prf_transid =
 								v1tov2_prf(
 									attr->val);
+							break;
+
+						case OAKLEY_PRF:
+							dtfone->prf_transid =
+								v1tov2_prf(attr->val);
 							break;
 
 						case OAKLEY_GROUP_DESCRIPTION:
@@ -724,7 +710,8 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				 int integ_keylen,
 				 unsigned prf_transform,
 				 int prf_keylen,
-				 unsigned dh_transform)
+				 unsigned dh_transform,
+				 bool enc_requires_integ)
 {
 	unsigned int pd_cnt;
 
@@ -732,16 +719,17 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 		struct db_v2_prop *pd = &sadb->prop_disj[pd_cnt];
 		struct db_v2_prop_conj *pj;
 		unsigned int tr_cnt;
-		bool
-			encr_matched = FALSE,
-			integ_matched = FALSE,
-			prf_matched = FALSE,
-			dh_matched = FALSE;
+		bool encr_matched = FALSE;
+		bool integ_matched = FALSE;
+		bool integ_checked = FALSE;
+		bool prf_matched = FALSE;
+		bool dh_matched = FALSE;
 		int
 			encrid = 0,
-			integid = 0,
 			prfid = 0,
 			dhid = 0;
+		unsigned int integid = 0;
+				
 		int
 			encrwin = -2,
 			integwin = -2,
@@ -759,8 +747,6 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 
 		for (tr_cnt = 0; tr_cnt < pj->trans_cnt; tr_cnt++) {
 			struct db_v2_trans *tr = &pj->trans[tr_cnt];
-			int keylen = -1;
-			unsigned int attr_cnt;
 
 			DBG(DBG_CONTROL, DBG_log(
 				"considering Transform Type %s, TransID %d",
@@ -768,8 +754,9 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 					tr->transform_type),
 				tr->transid));
 
-			for (attr_cnt = 0; attr_cnt < tr->attr_cnt;
-			     attr_cnt++) {
+			int keylen = -1;
+			unsigned int attr_cnt;
+			for (attr_cnt = 0; attr_cnt < tr->attr_cnt; attr_cnt++) {
 				struct db_attr *attr = &tr->attrs[attr_cnt];
 
 				if (attr->type.v2 == IKEv2_KEY_LENGTH) {
@@ -804,11 +791,27 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				break;
 
 			case IKEv2_TRANS_TYPE_INTEG:
+				/* 
+				 * When AEAD, current logic
+				 * (2015-01-08) still sends a single
+				 * AUTH_NONE INTEG transform, handle
+				 * that.
+				 */
 				integid = tr->transid;
-				if (tr->transid == integ_transform &&
-				    keylen == integ_keylen) {
-					integ_matched = TRUE;
-					integwin = keylen;
+				integ_checked = TRUE;
+				if (enc_requires_integ) {
+					if (integid != IKEv2_AUTH_NONE &&
+					    integid == integ_transform &&
+					    keylen == integ_keylen) {
+						integ_matched = TRUE;
+						integwin = keylen;
+					}
+				} else {
+					if (integid == IKEv2_AUTH_NONE &&
+					    integ_transform == IKEv2_AUTH_NONE) {
+						integ_matched = TRUE;
+						integwin = 0;
+					}
 				}
 				DBG(DBG_CONTROLMORE, {
 					struct esb_buf esb;
@@ -861,11 +864,26 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 			}
 
 			/* TODO: esn_matched not tested! */
-			/* TODO: This does not support AES GCM with no integ */
 			if (dh_matched && prf_matched && integ_matched && encr_matched) {
 				return TRUE;
 			}
 		}
+		if (!enc_requires_integ && !integ_checked) {
+			/*
+			 * Catch AEAD case where integrity isn't
+			 * required and we didn't send any over the
+			 * wire.  If INTEG_CHECKED then it must have been
+			 * rejected.
+			 *
+			 * Since pluto currently (2015-01-08) always
+			 * sends an INTEG transform this code
+			 * shouldn't be reached; but just in case ...
+			 */
+			if (dh_matched && prf_matched && encr_matched) {
+				return TRUE;
+			}
+		}
+
 		DBG(DBG_CONTROLMORE, {
 			/* note: enum_show uses a static buffer so more than one call per
 			   statement is dangerous */
@@ -879,7 +897,6 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				enum_show(&ikev2_trans_type_encr_names,
 					  encr_transform),
 					encr_keylen);
-			/* TODO: We could have no integ with aes_gcm, see how we fixed this for child SA */
 			DBG_log("            %s integ=(policy:%s vs offered:%s)",
 				integ_matched ? "succeeded" : "failed",
 				enum_showb(&ikev2_trans_type_integ_names, integid, &esb),
@@ -926,79 +943,61 @@ struct ikev2_transform_list {
 	unsigned int esn_i;
 };
 
-/* should be generalised and put somewhere universal */
-/* we should really have an enum for ESP_* which is shares between IKEv1 and IKEv2 */
-static bool ikev2_enc_requires_integ(enum ikev2_trans_type_encr t)
-{
-	switch (t) {
-	case IKEv2_ENCR_AES_GCM_8:
-	case IKEv2_ENCR_AES_GCM_12:
-	case IKEv2_ENCR_AES_GCM_16:
-	case IKEv2_ENCR_AES_CCM_8:
-	case IKEv2_ENCR_AES_CCM_12:
-	case IKEv2_ENCR_AES_CCM_16:
-		return FALSE;
-	default:
-		return TRUE;
-	}
-}
-
 static bool ikev2_match_transform_list_parent(struct db_sa *sadb,
 					      unsigned int propnum, u_int8_t ipprotoid,
 					      struct ikev2_transform_list *itl)
 {
-	bool need_integ;
-	unsigned int i;
-
 	DBG(DBG_CONTROL,DBG_log("ipprotoid is '%d'", ipprotoid));
+	passert(ipprotoid == PROTO_v2_ISAKMP);
 
-	if (ipprotoid == PROTO_v2_ESP && itl->encr_trans_next < 1) {
-		libreswan_log("ignored ESP proposal %u with no cipher transforms",
-			      propnum);
-		return FALSE;
-	}
-	if (ipprotoid == PROTO_v2_AH && itl->encr_trans_next > 1) {
-		libreswan_log("ignored AH proposal %u with cipher transform(s)",
-			      propnum);
-		return FALSE;
-	}
+	const struct encrypt_desc *alg = (const struct encrypt_desc*)
+		ikev2_alg_find(IKE_ALG_ENCRYPT, itl->encr_transforms[0]);
+	bool enc_requires_integ = ike_alg_enc_requires_integ(alg);
 
-
-	need_integ = ikev2_enc_requires_integ(itl->encr_transforms[0]);
-
-	if (ipprotoid == PROTO_v2_ESP) {
-		for (i = 1; i < itl->encr_trans_next; i++) {
-			if (ikev2_enc_requires_integ(itl->encr_transforms[i]) != need_integ) {
-				libreswan_log("rejecting proposal %u: encryption transforms mix CCM/GCM and non-CCM/GCM",
-					propnum);
-				return FALSE;
-			}
+	unsigned int i;
+	for (i = 1; i < itl->encr_trans_next; i++) {
+		const struct encrypt_desc *alg2 = (const struct encrypt_desc*)
+			ikev2_alg_find(IKE_ALG_ENCRYPT, itl->encr_transforms[i]);
+		if (ike_alg_enc_requires_integ(alg2) != enc_requires_integ) {
+			libreswan_log("rejecting ISAKMP proposal %u: encryption transforms mix AEAD (GCM, CCM) and non-AEAD",
+				      propnum);
+			return FALSE;
 		}
+	}
 
-		/* AES CCM (RFC 4309) and GCM (RFC 4106) do not have a separate integ */
-		if (need_integ) {
-			if (itl->integ_trans_next == 0) {
-				libreswan_log("rejecting proposal %u: encryption transform requires an integ transform",
-					propnum);
-				return FALSE;
-			}
-		} else {
-			if (itl->integ_trans_next != 0) {
-				libreswan_log("rejecting proposal %u: CCM/GCM encryption transform forbids an integ transform",
-					propnum);
-				return FALSE;
-			}
+	/*
+	 * AEAD algorithms (e.x, AES_GCM) do not require separate
+	 * integrity.  Only allow NONE.
+	 *
+	 * If there was no integrity transform on the wire a single
+	 * AUTH_NONE transform will have been added by
+	 * ikev2_process_transforms.
+	 */
+	passert(itl->integ_trans_next >= 1);
+	if (enc_requires_integ) {
+		if (itl->integ_trans_next == 1 &&
+		    itl->integ_transforms[0] == IKEv2_AUTH_NONE) {
+			libreswan_log("rejecting ISAKMP proposal %u: encryption transform requires an integrity transform",
+				      propnum);
+			return FALSE;
+		}
+	} else {
+		if (itl->integ_trans_next > 1 ||
+		    (itl->integ_trans_next == 1 && itl->integ_transforms[0] != IKEv2_AUTH_NONE)) {
+			libreswan_log("rejecting ISAKMP proposal %u: AEAD (i.e., CCM, GCM) encryption transform forbids an integrity transform",
+				      propnum);
+			return FALSE;
 		}
 	}
 
 	if (itl->prf_trans_next == 0) {
-		libreswan_log("ignored proposal %u with no PRF transform",
+		libreswan_log("ignored ISAKMP proposal %u with no PRF transform",
 			      propnum);
 		return FALSE;
 	}
 	if (itl->dh_trans_next == 0) {
 		libreswan_log(
-			"ignored proposal %u with no Diffie-Hellman transform",
+			"ignored ISAKMP proposal %u with no Diffie-Hellman transform",
 			propnum);
 		return FALSE;
 	}
@@ -1024,7 +1023,8 @@ static bool ikev2_match_transform_list_parent(struct db_sa *sadb,
 								 itl->integ_keylens[itl->integ_i],
 								 itl->prf_transforms[itl->prf_i],
 								 itl->prf_keylens[itl->prf_i],
-								 itl->dh_transforms[itl->dh_i]))
+								 itl->dh_transforms[itl->dh_i],
+								 enc_requires_integ))
 						return TRUE;
 				}
 			}
@@ -1112,16 +1112,29 @@ static stf_status ikev2_process_transforms(struct ikev2_prop *prop,
 			break;
 		}
 	}
+
 	if (itl->integ_trans_next == 0) {
+		/*
+		 * If there's no integrity (hash) transform, such as
+		 * for AEAD (e.x., AES_GCM) then fake up an AUTH_NONE
+		 * transform.  A single AUTH_NONE transform (fake or
+		 * real) should be ignored, and for-loops further in
+		 * assume at least one is present.
+		 */
 		itl->integ_transforms[0] = IKEv2_AUTH_NONE;
 		itl->integ_keylens[0] = 0;
 		itl->integ_trans_next = 1;
 	} else if (itl->integ_trans_next > 1) {
+		/*
+		 * If the integrity (hash) transform set contains more
+		 * than one algorithm than AUTH_NONE cannot be a
+		 * member.  But, as a single proposal it is ok and,
+		 * like the above hack, should be ignored.
+		 */
 		unsigned int i;
 
 		for (i=0; i < itl->integ_trans_next; i++) {
 			if (itl->integ_transforms[i] == IKEv2_AUTH_NONE) {
-				/* NONE cannot be part of a set of integ algos */
 				libreswan_log("IKEv2_AUTH_NONE integ transform cannot be part of a set - rejecting proposal");
 				return STF_FAIL + v2N_INVALID_SYNTAX;
 			}
@@ -1444,8 +1457,6 @@ stf_status ikev2_parse_parent_sa_body(
 
 	ta.integ_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
 								 ta.integ_hash);
-	/* XXX not true for AES_GCM */
-	passert(ta.integ_hasher != NULL);
 
 	ta.prf_hasher = (struct hash_desc *)ikev2_alg_find(IKE_ALG_HASH,
 								ta.prf_hash);

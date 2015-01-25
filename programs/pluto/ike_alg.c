@@ -6,8 +6,8 @@
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
  * Copyright (C) 2011-2012 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013-2014 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -59,7 +59,11 @@
 
 struct ike_alg *ike_alg_base[IKE_ALG_ROOF] = { NULL, NULL, NULL };
 
-/*	check if IKE encrypt algo is present */
+bool ike_alg_enc_requires_integ(const struct encrypt_desc *enc_desc)
+{
+	return enc_desc != NULL && enc_desc->do_aead_crypt_auth == NULL;
+}
+
 bool ike_alg_enc_present(int ealg)
 {
 	struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);

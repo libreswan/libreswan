@@ -235,6 +235,10 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 		memcpy(xaddr->a6, &addr->u.v6.sin6_addr, sizeof(xaddr->a6));
 }
 
+/*
+ * XXX: This code is duplicated in ike_alg_aes.c.  When the latter is
+ * enabled, this should be deleted.
+ */
 
 static struct encrypt_desc algo_aes_ccm_8 =
 {
@@ -290,60 +294,6 @@ static struct encrypt_desc algo_aes_ccm_16 =
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
 };
 
-static struct encrypt_desc algo_aes_gcm_8 =
-{
-	.common = {
-		.name = "aes_gcm_8",
-		.officname = "aes_gcm_8",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_v2id =   IKEv2_ENCR_AES_GCM_8,
-		.algo_next =   NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.wire_iv_size = 8,
-	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_gcm_12 =
-{
-	.common = {
-		.name = "aes_gcm_12",
-		.officname = "aes_gcm_12",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_v2id =   IKEv2_ENCR_AES_GCM_12,
-		.algo_next =   NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.wire_iv_size = 8,
-	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_gcm_16 =
-{
-	.common = {
-		.name = "aes_gcm_16",
-		.officname = "aes_gcm_16",
-		.algo_type =  IKE_ALG_ENCRYPT,
-		.algo_v2id =    IKEv2_ENCR_AES_GCM_16,
-		.algo_next =  NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.wire_iv_size = 8,
-	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
-	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =    AEAD_AES_KEY_MAX_LEN,
-};
-
 /*
  * wire-in Authenticated Encryption with Associated Data transforms
  * (do both enc and auth in one transform)
@@ -361,21 +311,21 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV8;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_A(8) for ESP");
 
 	alg.sadb_alg_ivlen = 12;
 	alg.sadb_alg_minbits = 128;
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV12;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_B(12) for ESP");
 
 	alg.sadb_alg_ivlen = 16;
 	alg.sadb_alg_minbits = 128;
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV16;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_C(16) for ESP");
 
 	/* keeping aes-ccm behaviour intact as before */
 	alg.sadb_alg_ivlen = 8;
@@ -383,29 +333,26 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV8;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_A(8) for ESP");
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV12;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_B(12) for ESP");
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV16;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_C(16) for ESP");
 
-	/* IKE algos (encryption and authentication combined) */
+	/*
+	 * XXX: This code is duplicated in ike_alg_aes.c.  When the
+	 * latter is enabled, this should be deleted.
+	 */
 	if (!ike_alg_register_enc(&algo_aes_ccm_8))
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for IKE");
 	if (!ike_alg_register_enc(&algo_aes_ccm_12))
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for IKE");
 	if (!ike_alg_register_enc(&algo_aes_ccm_16))
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_gcm_8))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_gcm_12))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_gcm_16))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for IKE");
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("Registered AEAD AES CCM/GCM algorithms"));

@@ -114,11 +114,13 @@ static CK_MECHANISM_TYPE nss_encryption_mech(
 	case OAKLEY_AES_CCM_16:
 		mechanism = CKM_AES_CCM;
 		break;
+#endif
 	case OAKLEY_AES_GCM_8:
 	case OAKLEY_AES_GCM_12:
 	case OAKLEY_AES_GCM_16:
 		mechanism = CKM_AES_GCM;
 		break;
+#ifdef NOT_YET
 	case OAKLEY_TWOFISH_CBC:
 		mechanism = CKM_TWOFISH_CBC;
 		break;
@@ -1192,7 +1194,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 			     )
 {
 	struct v2prf_stuff vpss;
-	size_t total_keysize;
 
 	chunk_t hmac_opad, hmac_ipad, hmac_pad_prf;
 	/* chunk_t hmac_pad_integ, hmac_zerobyte, hmac_val1, hmac_val2; */
@@ -1227,22 +1228,21 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
 		    key_size, salt_size));
 
-	const struct hash_desc *hasher = (struct hash_desc *)
+	const struct hash_desc *prf_hasher = (struct hash_desc *)
 		ikev2_alg_find(IKE_ALG_HASH, skq->prf_hash);
-
-	passert(hasher != NULL);
+	passert(prf_hasher != NULL);
 
 	const struct encrypt_desc *encrypter = skq->encrypter;
 	passert(encrypter != NULL);
 
-	hmac_opad = hmac_pads(HMAC_OPAD, hasher->hash_block_size);
-	hmac_ipad = hmac_pads(HMAC_IPAD, hasher->hash_block_size);
+	hmac_opad = hmac_pads(HMAC_OPAD, prf_hasher->hash_block_size);
+	hmac_ipad = hmac_pads(HMAC_IPAD, prf_hasher->hash_block_size);
 	hmac_pad_prf = hmac_pads(0x00,
-				 hasher->hash_block_size -
-				 hasher->hash_digest_len);
+				 prf_hasher->hash_block_size -
+				 prf_hasher->hash_digest_len);
 
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-	skeyseed_k = skeyid_digisig(vpss.ni, vpss.nr, shared, hasher);
+	skeyseed_k = skeyid_digisig(vpss.ni, vpss.nr, shared, prf_hasher);
 	passert(skeyseed_k != NULL);
 
 	/* now we have to generate the keys for everything */
@@ -1252,18 +1252,19 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		/* SK_p needs PRF hasher*2 key bytes */
 		/* SK_e needs key_size*2 key bytes */
 		/* ..._salt needs salt_size*2 bytes */
-		/* SK_a needs hash's key size */
-		const struct hash_desc *integ_hasher =
-			(struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG,
-							       skq->integ_hash);
-		int skd_bytes = hasher->hash_key_size;
-		int skp_bytes = hasher->hash_key_size;
-		int ska_bytes = integ_hasher->hash_key_size;
+		/* SK_a needs integ's key size*2 bytes */
 
+		int skd_bytes = prf_hasher->hash_key_size;
+		int skp_bytes = prf_hasher->hash_key_size;
+		const struct hash_desc *integ_hasher =
+			(struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG, skq->integ_hash);
+		int integ_size = integ_hasher != NULL ? integ_hasher->hash_key_size : 0;
+		size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
+		DBG(DBG_CRYPT,
+		    DBG_log("calc_skeyseed_v2: %zd = %d(d) + 2*%d(p) + 2*%zd(key) + 2*%zd(salt) + 2*%d(integ) bytes",
+			    total_keysize, skd_bytes, skp_bytes, key_size, salt_size, integ_size));
 		vpss.counter[0] = 0x01;
 		vpss.t.len = 0;
-		total_keysize = skd_bytes +
-				(2 * (ska_bytes + key_size + salt_size + skp_bytes));
 
 		DBG(DBG_CRYPT, {
 			    DBG_log("PRF+ input");
@@ -1280,7 +1281,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(skeyseed_k,
 							    CKM_CONCATENATE_BASE_AND_DATA,
 							    hmac_pad_prf, CKM_XOR_BASE_AND_DATA, CKA_DERIVE,
-							    hasher->hash_block_size);
+							    prf_hasher->hash_block_size);
 		passert(tkey1 != NULL);
 
 		for (;; ) {
@@ -1360,13 +1361,13 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 			PK11SymKey *tkey7 = pk11_derive_wrapper_lsw(tkey6,
 								    CKM_CONCATENATE_BASE_AND_DATA,
 								    counter,
-								    nss_key_derivation_mech(hasher),
+								    nss_key_derivation_mech(prf_hasher),
 								    CKA_DERIVE,
 								    0);
 			passert(tkey7 != NULL);
 
 			PK11SymKey *tkey8 = PK11_Derive_lsw(tkey7,
-							    nss_key_derivation_mech(hasher),
+							    nss_key_derivation_mech(prf_hasher),
 							    NULL,
 							    CKM_CONCATENATE_BASE_AND_DATA,
 							    CKA_DERIVE,
@@ -1388,14 +1389,14 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 			PK11SymKey *tkey10 = PK11_Derive_lsw(tkey9,
 							     CKM_CONCATENATE_BASE_AND_KEY,
 							     &param,
-							     nss_key_derivation_mech(hasher),
+							     nss_key_derivation_mech(prf_hasher),
 							     CKA_DERIVE,
 							     0);
 			passert(tkey10 != NULL);
 
 			if (vpss.counter[0] == 0x01) {
 				finalkey = PK11_Derive_lsw(tkey10,
-							   nss_key_derivation_mech(hasher),
+							   nss_key_derivation_mech(prf_hasher),
 							   NULL,
 							   CKM_CONCATENATE_BASE_AND_KEY,
 							   CKA_DERIVE,
@@ -1403,7 +1404,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 				passert(finalkey != NULL);
 
 				tkey11 = PK11_Derive_lsw(tkey10,
-							 nss_key_derivation_mech(hasher),
+							 nss_key_derivation_mech(prf_hasher),
 							 NULL,
 							 CKM_CONCATENATE_BASE_AND_KEY,
 							 CKA_DERIVE,
@@ -1411,7 +1412,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 				passert(tkey11 != NULL);
 			} else {
 				tkey11 = PK11_Derive_lsw(tkey10,
-							 nss_key_derivation_mech(hasher),
+							 nss_key_derivation_mech(prf_hasher),
 							 NULL,
 							 CKM_EXTRACT_KEY_FROM_KEY,
 							 CKA_DERIVE,
@@ -1474,13 +1475,13 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 		SK_ai_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
 							  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-							  ska_bytes);
-		next_bit += ska_bytes * BITS_PER_BYTE;
+							  integ_size);
+		next_bit += integ_size * BITS_PER_BYTE;
 
 		SK_ar_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
 							  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-							  ska_bytes);
-		next_bit += ska_bytes * BITS_PER_BYTE;
+							  integ_size);
+		next_bit += integ_size * BITS_PER_BYTE;
 
 		bs = next_bit;
 		param1.data = (unsigned char*)&bs;

@@ -6,7 +6,7 @@
  * Copyright (C) 2008-2012 Paul Wouters
  * Copyright (C) 2008-2010 David McCullough.
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013,2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1173,6 +1173,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	bool initiator = FALSE;
 	char head[IDTOA_BUF];
 	char integname[IDTOA_BUF];
+	char prfname[IDTOA_BUF];
 	struct esb_buf esb;
 	/* we need to free() this */
 	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
@@ -1193,20 +1194,30 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_ikev2 ? ((c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG") :
 				strip_prefix(enum_show(&oakley_auth_names,
 					st->st_oakley.auth), "OAKLEY_"));
-		if (st->st_ikev2)
+
+		snprintf(prfname, sizeof(prfname), "%s",
+			st->st_oakley.prf_hasher->common.officname);
+
+		if (st->st_oakley.integ_hasher != NULL) {
 			snprintf(integname, sizeof(integname), "%s_%zu",
 				st->st_oakley.integ_hasher->common.officname,
 				st->st_oakley.integ_hasher->hash_integ_len *
 				BITS_PER_BYTE);
-		else
-			snprintf(integname, sizeof(integname), "%s",
-				strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"));
+		} else {
+			if (!st->st_ikev2) {
+				/* ikev1 takes integ from prf, ecept of cause gcm */
+				/* but we dont support gcm in ikev1 for now */
+				jam_str(integname, sizeof(integname), prfname);
+			} else {
+				snprintf(integname, sizeof(integname), "none");
+			}
+                }
 
 		snprintf(cipher_str, sizeof(cipher_str),
-			"cipher=%s ksize=%d integ=%s pfs=%s",
-			st->st_oakley.encrypter->common.name,
+			"cipher=%s ksize=%d integ=%s prf=%s pfs=%s",
+			st->st_oakley.encrypter->common.officname,
 			st->st_oakley.enckeylen,
-			integname,
+			integname, prfname,
 			strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
 		break;
 
