@@ -185,6 +185,9 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	for dbfile in dbfiles:
 		os.chown(dbfile,0,0)
 
+	# restore /etc/hosts to original - some tests make changes
+	shutil.copy("/testing/baseconfigs/all/etc/hosts", "/etc/hosts")
+
 	if args.x509: 
 		if (userland == "libreswan" or userland == "openswan"):
 			print "Preparing X.509 files"
