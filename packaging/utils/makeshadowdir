@@ -40,7 +40,7 @@ SRCDIR=\$(abs_srcdir)/
 OBJDIRTOP=\${abs_top_builddir}
 OSDEP=${OSDEP}
 BUILDENV=${BUILDENV}
-VPATH+=\${srcdir}
+VPATH+=\${abs_srcdir}
 LIBRESWANSRCDIR=\${abs_top_srcdir}
 include \${srcdir}/Makefile
 -include Makefile.depend
@@ -63,7 +63,7 @@ include ../Makefile.dirs
 
 SRCDIR=\$(abs_srcdir)/
 OBJDIRTOP=\${abs_top_builddir}
-VPATH+=\${srcdir}
+VPATH+=\${abs_srcdir}
 OSDEP=${OSDEP}
 BUILDENV=${BUILDENV}
 LIBRESWANSRCDIR=\${abs_top_srcdir}
