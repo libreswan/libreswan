@@ -17,5 +17,3 @@ extern bool ikev1_verify_esp(int ealg, unsigned int key_len, int aalg,
 				const struct alg_info_esp *alg_info);
 
 extern bool ikev1_verify_ah(int aalg, const struct alg_info_esp *alg_info);
-
-static const oakley_group_t default_ike_groups[] = { DEFAULT_OAKLEY_GROUPS }; /* used for invalid_ke */

@@ -1260,9 +1260,8 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 		u_char *sa_start = md->rbody.cur;
 
 		if (!ikev1_out_sa(&md->rbody,
-			    &oakley_am_sadb[sadb_index(st->st_policy, c)],
-			    st,
-			    TRUE, TRUE, ISAKMP_NEXT_KE)) {
+				  IKEv1_oakley_am_sadb(st->st_policy, c),
+				  st, TRUE, TRUE, ISAKMP_NEXT_KE)) {
 			cur_state = NULL;
 			return STF_INTERNAL_ERROR;
 		}

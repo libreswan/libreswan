@@ -10,6 +10,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -59,7 +60,7 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-
+#include "spdb.h"
 #include "nat_traversal.h"
 #include "vendor.h"
 
@@ -904,15 +905,21 @@ void ikev2_log_parentSA(struct state *st)
 	}
 }
 
-void send_v2_notification_invalid_ke(struct state *st)
+void send_v2_notification_invalid_ke_from_state(struct state *st)
 {
-	const u_int16_t gr = htons(first_modp_from_propset(
-		st->st_connection->alg_info_ike)); /* oakley_group_t */
+	passert(st->st_oakley.group != NULL);
+	DBG(DBG_CONTROL,
+	    DBG_log("INVALID_KEY_INFORMATION: sending invalid_ke back with %s(%d)",
+		    strip_prefix(enum_show(&oakley_group_names,
+					   st->st_oakley.group->group),
+				 "OAKLEY_GROUP_"),
+		    st->st_oakley.group->group));
+	const u_int16_t gr = htons(st->st_oakley.group->group);
 	chunk_t nd = {(unsigned char *)&gr, sizeof(gr) };
 
 	/* RFC 5996, Section 2.6 recommends using 0 responder SPI */
 	send_v2_notification(st, v2N_INVALID_KE_PAYLOAD, NULL,
-			st->st_icookie, NULL, &nd);
+			     st->st_icookie, NULL, &nd);
 }
 
 void send_v2_notification_from_state(struct state *st,
@@ -1397,7 +1404,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT &&
 				    md->note == (notification_t)v2N_INVALID_KE_PAYLOAD) {
 					DBG(DBG_CONTROL, DBG_log("sending IKE_INIT with INVALID_KE"));
-					send_v2_notification_invalid_ke(md->st);
+					send_v2_notification_invalid_ke_from_state(md->st);
 				} else {
 					/*
 					 * ??? if this can be sent as part of an
@@ -1469,11 +1476,11 @@ bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list)
 			"received DH group %d not in our proposal set", received));
 		return FALSE;
 	} else {
-		unsigned int cnt;
-
+		const enum ike_trans_type_dh *group;
 		DBG(DBG_CONTROL,DBG_log("check our default proposal for receievd DH group"));
-		for (cnt = 0; cnt < elemsof(default_ike_groups); cnt++) {
-			if (received == default_ike_groups[cnt])
+		for (group = IKEv2_oakley_sadb_groups;
+		     *group != OAKLEY_GROUP_invalid; group++) {
+			if (received == (*group))
 				return TRUE;
 		}
 		DBG(DBG_CONTROL,DBG_log("received DH group not in our default proposal"));
@@ -1483,19 +1490,18 @@ bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list)
 
 oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list)
 {
-	struct ike_info *ike_info;
-	int cnt;
 
-	if (ai_list == NULL)
-		return default_ike_groups[0];
-
-	ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
-		if (ike_info->ike_modp != OAKLEY_GROUP_invalid) {
-			/* confirm we support it */
-			if (lookup_group(ike_info->ike_modp) != NULL)
-				return ike_info->ike_modp;
+	if (ai_list != NULL) {
+		struct ike_info *ike_info;
+		int cnt;
+		ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
+			if (ike_info->ike_modp != OAKLEY_GROUP_invalid) {
+				/* confirm we support it */
+				if (lookup_group(ike_info->ike_modp) != NULL)
+					return ike_info->ike_modp;
+			}
 		}
 	}
 	/* no valid groups, again pick first from default list */
-	return default_ike_groups[0];
+	return IKEv2_oakley_sadb_default_group;
 }

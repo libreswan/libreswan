@@ -215,7 +215,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 		stf_status e;
 
 		/* inscrutable dance of the sadbs */
-		sadb = &oakley_sadb[sadb_index(policy, c)];
+		sadb = IKEv2_oakley_sadb(policy);
 		{
 			struct db_sa *sadb_plus =
 				oakley_alg_makedb(st->st_connection->alg_info_ike,
@@ -230,11 +230,6 @@ stf_status ikev2parent_outI1(int whack_sock,
 
 		/* Grab the DH group from the first configured proposal to build KE */
 		groupnum = first_modp_from_propset(c->alg_info_ike);
-
-		if (groupnum == OAKLEY_GROUP_invalid) {
-			libreswan_log("No valid MODP group found in configuration, defaulting to first default");
-			groupnum = default_ike_groups[0];
-		}
 		st->st_oakley.group = lookup_group(groupnum);	/* NULL if unknown */
 		passert(st->st_oakley.group != NULL);
 		st->st_oakley.groupnum = groupnum;
@@ -731,15 +726,31 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	{
 		struct ikev2_ke *ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
-
 		st->st_oakley.group = lookup_group(ke->isak_group);
-		if (!modp_in_propset(ke->isak_group,c->alg_info_ike)) {
+		if (st->st_oakley.group == NULL) {
+			/*
+			 * It is arguable what to do here: reply with
+			 * INVALID_SYNTAX; reply with INVALID_KE and
+			 * no group; reply with INVALID_KE and a group
+			 * that matches; or reply INVALID_KE and the
+			 * default group.
+			 *
+			 * Go with the last one so that, for little
+			 * cost, a legitimate initiator gets a hint as
+			 * to the problem.
+			 */
+			st->st_oakley.groupnum = first_modp_from_propset(c->alg_info_ike);
+			st->st_oakley.group = lookup_group(st->st_oakley.groupnum);
 			DBG(DBG_CONTROL, DBG_log("need to send INVALID_KE for modp %d and suggest %d",
 				ke->isak_group,
-				first_modp_from_propset(c->alg_info_ike)));
-
+				st->st_oakley.group->group));
 			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		}
+		/*
+		 * Don't try to check if the group is acceptable here.
+		 * Need to first select the policy, and that happens
+		 * much later (although it shouldn't).
+		*/ 
 	}
 
 	/*
@@ -898,20 +909,26 @@ static stf_status ikev2_parent_inI1outR1_tail(
 		case INVALID_KEY_INFORMATION:
 		{
 			/*
-			 * RFC 5996 1.3 says that we should return
-			 * our desired group number when rejecting sender's.
+			 * RFC 5996 1.3 says that we should return our
+			 * desired group number when rejecting
+			 * sender's.
+			 *
+			 * [cagney]: This discovery that the MODP
+			 * group is invalid has come really late.  It
+			 * should have happend before our end of the
+			 * DH calculation occured - way back when the
+			 * packet was first received and the more
+			 * basic MODP check is performed.
 			 */
-			u_int16_t gn = htons(
-				st->st_oakley.group->group);
-			chunk_t dc = { (unsigned char *)&gn, sizeof(gn) };
-
-			DBG(DBG_CONTROL, DBG_log("INVALID_KEY_INFORMATION:, sending invalid_ke back with %s",
-				strip_prefix(enum_show(&oakley_group_names,
-					st->st_oakley.group->group),
-					"OAKLEY_GROUP_")));
-			send_v2_notification_from_state(st,
-				v2N_INVALID_KE_PAYLOAD, &dc);
-			delete_state(st); /* nothing to do or remember */
+			/* wipe out any RCOOKIE that was set earlier */
+			DBG(DBG_CONTROL, DBG_log("Forcing the RCOOKIE to zero for INVALID_KE reply - hack!"));
+			unhash_state(st);
+			memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
+			insert_state(st);
+			/* Issue the INVALID_KE reply.  */
+			send_v2_notification_invalid_ke_from_state(st);
+			/* nothing to do or remember */
+			delete_state(st);
 			md->st = NULL;
 			return STF_FAIL;
 		}
@@ -1094,7 +1111,13 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				libreswan_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
 					strip_prefix(enum_show(&oakley_group_names,
 						sg.sg_group), "OAKLEY_GROUP_"));
-                                clear_dh_from_state(st); /* wipe our mismatched KE */
+				/* wipe our mismatched KE */
+                                clear_dh_from_state(st);
+				/* wipe out any saved RCOOKIE */
+				DBG(DBG_CONTROL, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
+				unhash_state(st);
+				memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
+				insert_state(st);
 				/* get a new KE */
 				return crypto_helper_build_ke(st);
 			} else {

@@ -1330,7 +1330,7 @@ stf_status ikev2_parse_parent_sa_body(
 	/* find the policy structures: quite a dance */
 	sadb = st->st_sadb;
 	if (sadb == NULL) {
-		st->st_sadb = &oakley_sadb[sadb_index(c->policy, c)];
+		st->st_sadb = IKEv2_oakley_sadb(c->policy);
 		sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
 					 st->st_sadb, FALSE);
 		if (sadb != NULL)
