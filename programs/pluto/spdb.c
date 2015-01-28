@@ -1801,8 +1801,8 @@ static struct db_prop_conj IKEv1_oakley_props_rsasig_xauths[] =
 static struct db_prop_conj IKEv1_oakley_props_pskrsasig_xauths[] =
 	{ { AD_PC(IKEv1_oakley_pc_pskrsasig_xauths) } };
 
-/* the sadb entry, subscripted by sadb_index() */
-struct db_sa IKEv1_oakley_sadb[] = {
+/* the sadb entry, subscripted by IKEv1_sadb_index() */
+static struct db_sa IKEv1_oakley_sadb_table[] = {
 	{ AD_NULL },                                    /* none */
 	{ AD_SAp(IKEv1_oakley_props_psk) },             /* PSK */
 	{ AD_SAp(IKEv1_oakley_props_rsasig) },          /* RSASIG */
@@ -1892,8 +1892,8 @@ static struct db_prop_conj IKEv1_oakley_am_props_psk_xauths[] =
 static struct db_prop_conj IKEv1_oakley_am_props_rsasig_xauths[] =
 	{ { AD_PC(oakley_am_pc_rsasig_xauths) } };
 
-/* the sadb entry, subscripted by sadb_index() */
-struct db_sa IKEv1_oakley_am_sadb[] = {
+/* the sadb entry, subscripted by IKEv1_sadb_index() */
+static struct db_sa IKEv1_oakley_am_sadb_table[] = {
 	{ AD_NULL },                                    /* none */
 	{ AD_SAp(IKEv1_oakley_am_props_psk) },          /* PSK */
 	{ AD_SAp(IKEv1_oakley_am_props_rsasig) },       /* RSASIG */
@@ -1915,6 +1915,28 @@ struct db_sa IKEv1_oakley_am_sadb[] = {
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
 };
 
+/*
+ * The oakley sadb is subscripted by a bitset computed by
+ * IKEv1_sadb_index().
+ *
+ * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (ideosyncratic).
+ */
+static int IKEv1_sadb_index(lset_t x, struct connection *c)
+{
+	return (((x) & LRANGES(POLICY_PSK, POLICY_RSASIG)) |
+		(((c)->spd.this.xauth_server) << (POLICY_RSASIG_IX+1)) |
+		(((c)->spd.this.xauth_client) << (POLICY_RSASIG_IX+2)));
+}
+
+struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c)
+{
+	return &IKEv1_oakley_sadb_table[IKEv1_sadb_index(x, c)];
+}
+
+struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c)
+{
+	return &IKEv1_oakley_am_sadb_table[IKEv1_sadb_index(x, c)];
+}
 
 /*
  * Tables of transforms, in preference order (select based on AUTH).
@@ -2537,7 +2559,7 @@ static struct db_prop_conj IKEv2_oakley_props_rsasig_xauths[] =
 static struct db_prop_conj IKEv2_oakley_props_pskrsasig_xauths[] =
 	{ { AD_PC(IKEv2_oakley_pc_pskrsasig_xauths) } };
 
-struct db_sa IKEv2_oakley_sadb[] = {
+struct db_sa IKEv2_oakley_sadb_table[] = {
 	{ AD_NULL },                                    /* none */
 	{ AD_SAp(IKEv2_oakley_props_psk) },             /* PSK */
 	{ AD_SAp(IKEv2_oakley_props_rsasig) },          /* RSASIG */
@@ -2558,6 +2580,11 @@ struct db_sa IKEv2_oakley_sadb[] = {
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA */
 	{ AD_NULL },                                    /* XAUTHCLIENT+XAUTHSERVER + RSA+PSK */
 };
+
+struct db_sa *IKEv2_oakley_sadb(lset_t x, struct connection *c)
+{
+	return &IKEv2_oakley_sadb_table[IKEv1_sadb_index(x, c)];
+}
 
 /*
  * The groups in this list.

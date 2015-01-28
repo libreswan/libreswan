@@ -215,7 +215,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 		stf_status e;
 
 		/* inscrutable dance of the sadbs */
-		sadb = &IKEv2_oakley_sadb[sadb_index(policy, c)];
+		sadb = IKEv2_oakley_sadb(policy, c);
 		{
 			struct db_sa *sadb_plus =
 				oakley_alg_makedb(st->st_connection->alg_info_ike,

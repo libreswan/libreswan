@@ -169,17 +169,8 @@ struct db_sa {
 	unsigned int prop_disj_cnt;	/* v2: number of elements... OR */
 };
 
-/* The oakley sadb is subscripted by a bitset computed by sadb_index().
- *
- * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (ideosyncratic).
- */
-#define sadb_index(x, c) \
-	(((x) & LRANGES(POLICY_PSK, POLICY_RSASIG)) | \
-	(((c)->spd.this.xauth_server) << (POLICY_RSASIG_IX+1)) | \
-	(((c)->spd.this.xauth_client) << (POLICY_RSASIG_IX+2)))
-
 /*
- * IKE policies.  Indexed using sadb_index(), above.
+ * IKE policies.
  *
  * For IKEv2, it is described using IKEv1 constructs (e.g., constants
  * such as OAKLEY_...), and then converted to IKEv2 using
@@ -187,9 +178,10 @@ struct db_sa {
  *
  * am == agressive mode
  */
-extern struct db_sa IKEv1_oakley_sadb[1 << 4];
-extern struct db_sa IKEv1_oakley_am_sadb[1 << 4];
-extern struct db_sa IKEv2_oakley_sadb[1 << 4];
+struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c);
+struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c);
+struct db_sa *IKEv2_oakley_sadb(lset_t x, struct connection *c);
+
 /*
  * Terminated by OAKLEY_GROUP_invalid.  Must contain all groups found
  * in IKEv2_oakley_sadb.
