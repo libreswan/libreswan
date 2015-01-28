@@ -18,7 +18,7 @@
 # relative path to top directory of Libreswan source
 # Note: referenced in ${LIBRESWANSRCDIR}/Makefile.inc
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-SRCDIR?=./
+SRCDIR?=$(shell pwd)/
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${SRCDIR}Makefile.options

@@ -12,7 +12,7 @@
 # for more details.
 
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir:=./
+SRCDIR?=$(shell pwd)/
 export LIBRESWANSRCDIR
 include $(LIBRESWANSRCDIR)/Makefile.inc
 

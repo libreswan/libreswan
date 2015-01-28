@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-SRCDIR?=./
+SRCDIR?=$(shell pwd)/
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.ver
