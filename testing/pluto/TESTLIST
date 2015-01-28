@@ -123,6 +123,10 @@ kvmplutotest	ikev2-allow-narrow-04			good
 kvmplutotest	ikev2-allow-narrow-05			good
 kvmplutotest	ikev2-allow-narrow-06			good
 kvmplutotest	ikev2-allow-narrow-07			good
+kvmplutotest	ikev2-invalid-ke-01-invalid-modp	good
+kvmplutotest	ikev2-invalid-ke-02-wrong-modp		good
+kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
+kvmplutotest	ikev2-invalid-ke-04-default-responder	good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
 kvmplutotest	pluto-ipcmp-01	good
