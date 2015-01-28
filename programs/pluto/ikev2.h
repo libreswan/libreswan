@@ -212,7 +212,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
                                      pb_stream *outpbs);
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
-void send_v2_notification_invalid_ke(struct state *st);
+void send_v2_notification_invalid_ke_from_state(struct state *st);
 bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
 oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);
 

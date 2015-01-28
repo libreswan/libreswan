@@ -726,15 +726,31 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	{
 		struct ikev2_ke *ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
-
 		st->st_oakley.group = lookup_group(ke->isak_group);
-		if (!modp_in_propset(ke->isak_group,c->alg_info_ike)) {
+		if (st->st_oakley.group == NULL) {
+			/*
+			 * It is arguable what to do here: reply with
+			 * INVALID_SYNTAX; reply with INVALID_KE and
+			 * no group; reply with INVALID_KE and a group
+			 * that matches; or reply INVALID_KE and the
+			 * default group.
+			 *
+			 * Go with the last one so that, for little
+			 * cost, a legitimate initiator gets a hint as
+			 * to the problem.
+			 */
+			st->st_oakley.groupnum = first_modp_from_propset(c->alg_info_ike);
+			st->st_oakley.group = lookup_group(st->st_oakley.groupnum);
 			DBG(DBG_CONTROL, DBG_log("need to send INVALID_KE for modp %d and suggest %d",
 				ke->isak_group,
-				first_modp_from_propset(c->alg_info_ike)));
-
+				st->st_oakley.group->group));
 			return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 		}
+		/*
+		 * Don't try to check if the group is acceptable here.
+		 * Need to first select the policy, and that happens
+		 * much later (although it shouldn't).
+		*/ 
 	}
 
 	/*
@@ -904,22 +920,13 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			 * packet was first received and the more
 			 * basic MODP check is performed.
 			 */
-			u_int16_t gn = htons(
-				st->st_oakley.group->group);
-			chunk_t dc = { (unsigned char *)&gn, sizeof(gn) };
-
-			DBG(DBG_CONTROL, DBG_log("INVALID_KEY_INFORMATION:, sending invalid_ke back with %s",
-				strip_prefix(enum_show(&oakley_group_names,
-					st->st_oakley.group->group),
-					"OAKLEY_GROUP_")));
 			/* wipe out any RCOOKIE that was set earlier */
 			DBG(DBG_CONTROL, DBG_log("Forcing the RCOOKIE to zero for INVALID_KE reply - hack!"));
 			unhash_state(st);
 			memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
 			insert_state(st);
 			/* Issue the INVALID_KE reply.  */
-			send_v2_notification_from_state(st,
-				v2N_INVALID_KE_PAYLOAD, &dc);
+			send_v2_notification_invalid_ke_from_state(st);
 			/* nothing to do or remember */
 			delete_state(st);
 			md->st = NULL;
