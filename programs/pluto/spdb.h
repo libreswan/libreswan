@@ -1,8 +1,10 @@
 /* Security Policy Data Base (such as it is)
+ *
  * Copyright (C) 1998,1999,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -180,7 +182,7 @@ struct db_sa {
  */
 struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c);
 struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c);
-struct db_sa *IKEv2_oakley_sadb(lset_t x, struct connection *c);
+struct db_sa *IKEv2_oakley_sadb(lset_t x);
 
 /*
  * Terminated by OAKLEY_GROUP_invalid.  Must contain all groups found
