@@ -160,9 +160,15 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
  *      Proposals will be built by looping over default_ike_groups array and
  *      merging alg_info (ike_info) contents
  */
-static const int default_ike_groups[] = { DEFAULT_OAKLEY_EALGS };
-static const int default_ike_ealgs[] = { DEFAULT_OAKLEY_EALGS };
-static const int default_ike_aalgs[] = { DEFAULT_OAKLEY_AALGS };
+static const enum ike_trans_type_dh default_ike_groups[] = {
+	DEFAULT_OAKLEY_GROUPS
+};
+static const enum ikev1_encr_attribute default_ike_ealgs[] = {
+	DEFAULT_OAKLEY_EALGS
+};
+static const enum ikev1_hash_attribute default_ike_aalgs[] = {
+	DEFAULT_OAKLEY_AALGS
+};
 
 /*
  *	Add IKE alg info _with_ logic (policy):
