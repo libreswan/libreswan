@@ -2635,6 +2635,8 @@ struct connection *refine_host_connection(const struct state *st,
 	chunk_t peer_ca;
 	const chunk_t *psk;
 
+	*fromcert = FALSE;
+
 	psk = NULL;
 
 	our_pathlen = peer_pathlen = 0;
@@ -2777,15 +2779,21 @@ struct connection *refine_host_connection(const struct state *st,
 							d->spd.this.ca,
 							&our_pathlen);
 
-			DBG(DBG_CONTROLMORE,
-				DBG_log("refine_connection: checking %s "
-					"against %s, best=%s with "
+			DBG(DBG_CONTROLMORE, {
+				char b1[CONN_INST_BUF];
+				char b2[CONN_INST_BUF];
+
+				DBG_log("refine_connection: checking %s%s "
+					"against %s%s, best=%s with "
 					"match=%d(id=%d/ca=%d/reqca=%d)",
-					c->name, d->name,
+					c->name,
+					fmt_conn_instance(c, b1),
+					d->name,
+					fmt_conn_instance(d, b2),
 					best_found ?
 						best_found->name : "(none)",
 					match1 && match2 && match3,
-					match1, match2, match3));
+					match1, match2, match3);});
 
 			/* ignore group connections */
 			if (d->policy & POLICY_GROUP)
@@ -2836,10 +2844,16 @@ struct connection *refine_host_connection(const struct state *st,
 				 /* Disallow xauth/no xauth mismatch. */
 				continue;
 
-			DBG(DBG_CONTROLMORE,
-				DBG_log("refine_connection: checked %s "
-					"against %s, now for see if best",
-					c->name, d->name));
+			DBG(DBG_CONTROLMORE, {
+				char b1[CONN_INST_BUF];
+				char b2[CONN_INST_BUF];
+
+				DBG_log("refine_connection: checked %s%s "
+					"against %s%s, now for see if best",
+					c->name,
+					fmt_conn_instance(c, b1),
+					d->name,
+					fmt_conn_instance(d, b2)); } );
 
 			switch (auth) {
 			case OAKLEY_PRESHARED_KEY:
