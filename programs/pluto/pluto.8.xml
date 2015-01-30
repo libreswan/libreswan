@@ -559,8 +559,6 @@
       <arg choice="opt">--debug-oppoinfo</arg>
       <arg choice="opt">--debug-whackwatch</arg>
       <arg choice="opt">--debug-private</arg>
-      <arg choice="opt">--impair-delay-adns-key-answer</arg>
-      <arg choice="opt">--impair-delay-adns-txt-answer</arg>
       <arg choice="opt">--impair-bust-mi2</arg>
       <arg choice="opt">--impair-bust-mr2</arg>
       <arg choice="opt">--impair-sa-fail</arg>
@@ -572,6 +570,7 @@
       <arg choice="opt">--impair-send-bogus-isakmp-flag</arg>
       <arg choice="opt">--impair-send-ikev2-ke</arg>
       <arg choice="opt">--impair-send-key-size-check</arg>
+      <arg choice="opt">--impair-send-no-delete</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>

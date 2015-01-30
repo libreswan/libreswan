@@ -764,10 +764,6 @@ static const struct option long_opts[] = {
 	{ "debug-dpd",     no_argument, NULL, DBG_DPD_IX + DO },
 	{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX + DO },
 
-	{ "impair-delay-adns-key-answer", no_argument, NULL,
-		IMPAIR_DELAY_ADNS_KEY_ANSWER_IX + DO },
-	{ "impair-delay-adns-txt-answer", no_argument, NULL,
-		IMPAIR_DELAY_ADNS_TXT_ANSWER_IX + DO },
 	{ "impair-bust-mi2", no_argument, NULL, IMPAIR_BUST_MI2_IX + DO },
 	{ "impair-bust-mr2", no_argument, NULL, IMPAIR_BUST_MR2_IX + DO },
 	{ "impair-sa-fail",    no_argument, NULL, IMPAIR_SA_CREATION_IX + DO },
@@ -785,6 +781,8 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX + DO },
 	{ "impair-send-ikev2-ke", no_argument, NULL,
 		IMPAIR_SEND_IKEv2_KE_IX + DO },
+	{ "impair-send-no-delete", no_argument, NULL,
+		IMPAIR_SEND_NO_DELETE_IX + DO },
 	{ "impair-send-key-size-check", no_argument, NULL,
 		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
 #    undef DO

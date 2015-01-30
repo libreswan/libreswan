@@ -257,8 +257,7 @@ static const struct keyword_enum_value kw_plutodebug_values[] = {
 	{ "klips",    DBG_KERNEL },
 	{ "netkey",    DBG_KERNEL },
 
-	{ "impair-delay-adns-key-answer", IMPAIR_DELAY_ADNS_KEY_ANSWER },
-	{ "impair-delay-adns-txt-answer", IMPAIR_DELAY_ADNS_TXT_ANSWER },
+	/* should these be here? */
 	{ "impair-bust-mi2", IMPAIR_BUST_MI2 },
 	{ "impair-bust-mr2", IMPAIR_BUST_MR2 },
 };

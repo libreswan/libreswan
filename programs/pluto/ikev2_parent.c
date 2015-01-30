@@ -4137,29 +4137,9 @@ bool ikev2_delete_out(struct state *st)
 		} else {
 			res = ikev2_delete_out_guts(st, pst);
 		}
-#if 0	/* ??? deleting is done by delete_state (caller's caller), unconditionally; we must not */
-		if (!res) {
-			/* prepare to delete ourself */
-			change_state(st, STATE_CHILDSA_DEL);
-			delete_state(st);
-			if (md->st == st)
-				md->st = st = NULL;	/* but we don't have an md! */
-		}
-#endif
 	} else {
 		/* Parent SA */
 		res = ikev2_delete_out_guts(st, st);
-#if 0	/* ??? deleting is done by delete_state (caller's caller), unconditionally; we must not */
-		if (!res) {
-			/* delete our children and
-			 * then prepare to delete ourself.
-			 * Our children will be on the same hash chain
-			 * because we share IKE SPIs.
-			 */
-			delete_my_family(st, TRUE);
-			md->st = st = NULL;	/* but we don't have an md! */
-		}
-#endif
 	}
 
 	return res;

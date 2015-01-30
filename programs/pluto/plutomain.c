@@ -529,8 +529,6 @@ static const struct option long_opts[] = {
 
 	/* --impair-* options (using I for shorthand) */
 #define I(name, code) { "impair-" name, no_argument, NULL, (code) + DBG_OFFSET }
-	I("delay-adns-key-answer\0^", IMPAIR_DELAY_ADNS_KEY_ANSWER_IX),
-	I("delay-adns-txt-answer\0", IMPAIR_DELAY_ADNS_TXT_ANSWER_IX),
 	I("bust-mi2\0", IMPAIR_BUST_MI2_IX),
 	I("bust-mr2\0", IMPAIR_BUST_MR2_IX),
 	I("sa-creation\0", IMPAIR_SA_CREATION_IX),
@@ -543,6 +541,7 @@ static const struct option long_opts[] = {
 	I("send-bogus-payload-flag\0", IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX),
 	I("send-ikev2-ke\0", IMPAIR_SEND_IKEv2_KE_IX),
 	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK_IX),
+	I("send-no-delete\0", IMPAIR_SEND_NO_DELETE_IX),
 #undef I
 	{ 0, 0, 0, 0 }
 };
@@ -1414,11 +1413,11 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_SEND_BOGUS_PAYLOAD_FLAG enabled");
 	if (DBGP(IMPAIR_SEND_IKEv2_KE))
 		libreswan_log("Warning: IMPAIR_SEND_IKEv2_KE enabled");
+	if (DBGP(IMPAIR_SEND_KEY_SIZE_CHECK))
+		libreswan_log("Warning: IMPAIR_SEND_KEY_SIZE_CHECK enabled");
+	if (DBGP(IMPAIR_SEND_NO_DELETE))
+		libreswan_log("Warning: IMPAIR_SEND_NO_DELETE enabled");
 
-	if (DBGP(IMPAIR_DELAY_ADNS_KEY_ANSWER))
-		libreswan_log("Warning: IMPAIR_DELAY_ADNS_KEY_ANSWER enabled");
-	if (DBGP(IMPAIR_DELAY_ADNS_TXT_ANSWER))
-		libreswan_log("Warning: IMPAIR_DELAY_ADNS_TXT_ANSWER enabled");
 
 
 /* Initialize all of the various features */

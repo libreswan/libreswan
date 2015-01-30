@@ -184,21 +184,19 @@ const char *const debug_bit_names[] = {
 	"res16",
 	"res17",
 	"res18",
-	"res19",
-	"private",	/* 20 */
-	"impair-delay-adns-key-answer",	/* 21 */
-	"impair-delay-adns-txt-answer",	/* 22 */
-	"impair-bust-mi2",	/* 23 */
-	"impair-bust-mr2",	/* 24 */
-	"impair-sa-creation",	/* 25 */
-	"impair-die-oninfo",	/* 26 */
-	"impair-jacob-two-two",	/* 27 */
-	"impair-major-version-bump",	/* 28 */
-	"impair-minor-version-bump",	/* 29 */
-	"impair-retransmits",	/* 30 */
-	"impair-send-bogus-isakmp-flag",	/* 31 */
-	"impair-send-ikev2-ke",	/* 32 */
-	"impair-send-key-size-check", /* 33 */
+	"private",
+	"impair-bust-mi2",
+	"impair-bust-mr2",
+	"impair-sa-creation",
+	"impair-die-oninfo",
+	"impair-jacob-two-two",
+	"impair-major-version-bump",
+	"impair-minor-version-bump",
+	"impair-retransmits",
+	"impair-send-bogus-isakmp-flag",
+	"impair-send-ikev2-ke",
+	"impair-send-no-delete",
+	"impair-send-key-size-check",
 	NULL	/* termination for bitnamesof() */
 };
 

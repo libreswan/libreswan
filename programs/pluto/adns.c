@@ -230,12 +230,6 @@ static int worker(int qfd, int afd)
 		a.len = offsetof(struct adns_answer, ans) +
 			(a.result < 0 ? 0 : a.result);
 
-		if (((q.debugging & IMPAIR_DELAY_ADNS_KEY_ANSWER) &&
-				q.type == ns_t_key) ||
-			((q.debugging & IMPAIR_DELAY_ADNS_TXT_ANSWER) &&
-				q.type == ns_t_txt))
-			sleep(30); /* delay the answer */
-
 		/* write answer, possibly a bit at a time */
 		r = write_pipe(afd, (const unsigned char *)&a);
 
