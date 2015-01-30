@@ -68,6 +68,7 @@ kvmplutotest	ikev2-05-basic-psk-nhelpers0		good
 
 kvmplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
+kvmplutotest	ikev2-10-2behind-nat	wip
 
 # modp tests for checking if we deal with sending different KE's
 kvmplutotest	ikev2-algo-01-modp2048-initiator	good
@@ -220,8 +221,8 @@ kvmplutotest	ikev2-liveness-05	good
 kvmplutotest	ikev2-liveness-06	good
 kvmplutotest	ikev2-liveness-07	good
 
-# Delete SA test.
 kvmplutotest	delete-sa-01	good
+kvmplutotest	delete-sa-03	wip
 
 kvmplutotest	delete-state-01 good
 
