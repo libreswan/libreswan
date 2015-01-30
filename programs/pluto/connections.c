@@ -2651,7 +2651,7 @@ struct connection *refine_host_connection(const struct state *st,
 	zero(&peer_ca);
 
 	DBG(DBG_CONTROLMORE,
-		DBG_log("refine_connection: starting with %s",
+		DBG_log("refine_host_connection: starting with %s",
 			c->name));
 
 	peer_ca = get_peer_ca(peer_id);
@@ -2665,7 +2665,7 @@ struct connection *refine_host_connection(const struct state *st,
 		our_pathlen == 0) {
 
 		DBG(DBG_CONTROLMORE,
-			DBG_log("refine_connection: happy with starting "
+			DBG_log("refine_host_connection: happy with starting "
 				"point: %s",
 				c->name));
 
@@ -2783,7 +2783,7 @@ struct connection *refine_host_connection(const struct state *st,
 				char b1[CONN_INST_BUF];
 				char b2[CONN_INST_BUF];
 
-				DBG_log("refine_connection: checking %s%s "
+				DBG_log("refine_host_connection: checking %s%s "
 					"against %s%s, best=%s with "
 					"match=%d(id=%d/ca=%d/reqca=%d)",
 					c->name,
@@ -2925,7 +2925,7 @@ struct connection *refine_host_connection(const struct state *st,
 						our_pathlen <
 						best_our_pathlen))) {
 				DBG(DBG_CONTROLMORE,
-					DBG_log("refine_connection: picking "
+					DBG_log("refine_host_connection: picking "
 						"new best %s (wild=%d, peer_"
 						"pathlen=%d/our=%d)",
 						d->name,
