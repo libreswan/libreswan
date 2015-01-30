@@ -169,6 +169,7 @@ typedef enum {
 /* Misc. stuff */
 
 #define MAXIMUM_RETRANSMISSIONS              2
+#define MAXIMUM_INVALID_KE_RETRANS 3
 #define MAXIMUM_RETRANSMISSIONS_INITIAL      20
 #define MAXIMUM_RETRANSMISSIONS_QUICK_R1     20
 

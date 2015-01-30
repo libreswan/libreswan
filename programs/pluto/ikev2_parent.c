@@ -1095,12 +1095,12 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			/* careful of DDOS, only log with debugging on */
 			struct suggested_group sg;
 
-                       /* we treat this as a "retransmit" event to rate limit these */
-                       if (st->st_retransmit >= MAXIMUM_RETRANSMISSIONS) {
-                               DBG(DBG_CONTROLMORE, DBG_log("ignoring received INVALID_KE packets - received too many (DoS?)"));
-                               return STF_IGNORE;
-                       }
-                       st->st_retransmit++;
+			/* we treat this as a "retransmit" event to rate limit these */
+			if (st->st_retransmit >= MAXIMUM_INVALID_KE_RETRANS) {
+				DBG(DBG_CONTROLMORE, DBG_log("ignoring received INVALID_KE packets - received too many (DoS?)"));
+				return STF_IGNORE;
+			}
+			st->st_retransmit++;
 
 			if (!in_struct(&sg, &suggested_group_desc,
 				&ntfy->pbs, NULL))
