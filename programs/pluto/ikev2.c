@@ -917,9 +917,9 @@ void send_v2_notification_invalid_ke_from_state(struct state *st)
 	const u_int16_t gr = htons(st->st_oakley.group->group);
 	chunk_t nd = {(unsigned char *)&gr, sizeof(gr) };
 
-	/* RFC 5996, Section 2.6 recommends using 0 responder SPI */
+	/* RFC 7296 Section-2.6.1 recommends clearing rcookie */
 	send_v2_notification(st, v2N_INVALID_KE_PAYLOAD, NULL,
-			     st->st_icookie, NULL, &nd);
+			     st->st_icookie, NULL /* rcookie */, &nd);
 }
 
 void send_v2_notification_from_state(struct state *st,

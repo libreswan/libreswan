@@ -919,13 +919,17 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			 * DH calculation occured - way back when the
 			 * packet was first received and the more
 			 * basic MODP check is performed.
+			 *
+			 * RFC 7296 Section 2.6.1:  When the IKE_SA_INIT
+			 * exchange does not result in the creation of an
+			 * IKE SA due to INVALID_KE_PAYLOAD, NO_PROPOSAL_CHOSEN,
+			 * or COOKIE, the responder's SPI will be zero also in
+			 * the response message.  
 			 */
-			/* wipe out any RCOOKIE that was set earlier */
-			DBG(DBG_CONTROL, DBG_log("Forcing the RCOOKIE to zero for INVALID_KE reply - hack!"));
+			DBG(DBG_CONTROL, DBG_log("Clearing RCOOKIE for INVALID_KE reply"));
 			unhash_state(st);
 			memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
 			insert_state(st);
-			/* Issue the INVALID_KE reply.  */
 			send_v2_notification_invalid_ke_from_state(st);
 			/* nothing to do or remember */
 			delete_state(st);
