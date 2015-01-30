@@ -1367,8 +1367,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	close_output_pbs(&reply_stream);
 
-	/* let TCL hack it before we mark the length and copy it */
-
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet from aggr_outI1");
