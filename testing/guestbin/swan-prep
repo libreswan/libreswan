@@ -209,6 +209,11 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 			child.expect ('(?i)password')
 			child.sendline ('')
 
+                        if not os.path.isfile("/testing/x509/nss-pw"):
+                                sys.exit("\n\n---------------------------------------------------------------------\n"
+                                         "ABORT: no nss-pw file, did you run testing/x509/dist_certs?\n"
+                                         "---------------------------------------------------------------------\n")    
+
 			if args.eccert:
 				p12 = hostname + "-ec"
 				ca = "curveca"
