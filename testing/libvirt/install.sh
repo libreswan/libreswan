@@ -12,14 +12,6 @@ echo "POOLSPACE=${POOLSPACE}"
 echo "OSTYPE=${OSTYPE}"
 echo "OSMEDIA=${OSMEDIA}"
 
-# if we don't have certificates yet, generate them
-if [ ! -f  ${LIBRESWANSRCDIR}/testing/x509/pkcs12/mainca/west.p12 ]; then
-    olddir=$(pwd)
-    cd ${LIBRESWANSRCDIR}/testing/x509
-    ./dist_certs
-    cd ${olddir}
-fi
-
 if [ -z "${POOLSPACE}" -o \
     -z "${OSTYPE}" -o \
     -z "${OSMEDIA}" -o \

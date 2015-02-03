@@ -3,6 +3,7 @@
 	test harness
 
  Copyright (C) 2014 Matt Rogers <mrogers@redhat.com>
+ Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
 
  This program is free software; you can redistribute it and/or modify it
  under the terms of the GNU General Public License as published by the
@@ -44,7 +45,9 @@ def reset_files():
 		if os.path.isdir(dir):
 			shutil.rmtree(dir)
 		os.mkdir(dir)
-
+        for file in ['nss-pw']:
+                if os.path.isfile(file):
+                        os.remove(file)
 
 def writeout_cert(filename, item,
 				  type=crypto.FILETYPE_PEM):
@@ -548,6 +551,11 @@ def run_dist_certs():
 	create_crlsets()
 	create_ec_certs()
 
+def create_nss_pw():
+        print "creating nss-pw"
+        f = open("nss-pw","w")
+        f.write("foobar")
+        f.close()
 
 def main():
 	global dates
@@ -559,6 +567,8 @@ def main():
 		print "%s : %s" % (n, s)
 
 	run_dist_certs()
+
+        create_nss_pw()
 	print "finished!"
 
 

@@ -23,7 +23,7 @@ def:
 	@echo "Please read doc/intro.html or INSTALL before running make"
 	@false
 
-check: 	${LIBRESWANSRCDIR}/kvmsetup.sh
+check: 	${LIBRESWANSRCDIR}/kvmsetup.sh ${LIBRESWANSRCDIR}/testing/x509/nss-pw
 # skip rebuilding KVMs unless started with: make check UPDATE=1
 ifneq ($(UPDATE)$(UPDATEONLY),)
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --compile --install --hostname east
@@ -35,6 +35,9 @@ ifeq ($(UPDATEONLY),)
 	../utils/swantest
 	../utils/swantest --resanitize
 endif
+
+${LIBRESWANSRCDIR}/testing/x509/nss-pw:
+	cd ${LIBRESWANSRCDIR}/testing/x509/ && ./dist_certs.py
 
 install install_file_list checkprograms programs:
 	@true
