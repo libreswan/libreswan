@@ -91,6 +91,7 @@ yum install -y \
     psmisc \
     python3-pexpect \
     python3-setproctitle \
+    pyOpenSSL \
     racoon2 \
     redhat-rpm-config \
     rpm-build \
