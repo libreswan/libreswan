@@ -158,13 +158,6 @@ klipsdefaults:
 
 # programs
 
-ifeq ($(strip $(OBJDIR)),.) # If OBJDIR is LIBRESWANSRCDIR (ie dot) then the simple case:
-programs man config install clean:: 
-	@for d in $(SUBDIRS) ; \
-	do \
-		(cd $$d && $(MAKE) SRCDIR=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
-	done; 
-else
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
@@ -176,8 +169,6 @@ programs man config install clean:: ${OBJDIR}/Makefile
 ${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
 	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
-
-endif
 
 checkprograms:: 
 	@for d in $(SUBDIRS) ; \
