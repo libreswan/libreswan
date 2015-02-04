@@ -1,6 +1,8 @@
 # Pluto Makefile
+#
 # Copyright (C) 1997 Angelos D. Keromytis.
 # Copyright (C) 1998-2001  D. Hugh Redelmeier
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -14,11 +16,9 @@
 
 # All of the USE_ and HAVE_ variables are controlled from libreswan/Makefile.inc
 
-
-# relative path to top directory of Libreswan source
-# Note: referenced in ${LIBRESWANSRCDIR}/Makefile.inc
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-SRCDIR?=$(shell pwd)/
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${SRCDIR}Makefile.options
@@ -292,17 +292,9 @@ check:
 
 checkprograms:
 
-.c.o:
-	$(CC) $(USERCOMPILE) ${PORTINCLUDE} $(COPTS) $(ALLFLAGS) -c $<
-
 %.i: %.c
 	$(CC) $(USERCOMPILE) ${PORTINCLUDE} $(COPTS) $(ALLFLAGS) -E -o $@ $<
 
-
-# Gather dependencies caused by explicit #includes within .c files
-Makefile.depend: $(DISTSRC) $(LIBRESWANSRCDIR)/programs/pluto/Makefile
-	@(ls $(wildcard $(addprefix $(LIBRESWANSRCDIR)/programs/pluto/,$(DISTSRC))) | grep '\.c' | xargs $(CC) -MM ${COPTS} ${PORTINCLUDE} ${ALLFLAGS} ) >Makefile.depend
-
--include ${SRCDIR}Makefile.depend
-
-# DO NOT DELETE
+MK_DEPEND_FILES = $(DIST)
+MK_DEPEND_CFLAGS = $(USERCOMPILE) ${PORTINCLUDE} $(COPTS) $(ALLFLAGS)
+include $(top_srcdir)/mk/depend.mk
