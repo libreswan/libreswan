@@ -34,7 +34,7 @@ do
 # top_srcdir, abs_top_srcdir, ...
 OBJDIR=${OBJDIR}
 top_builddir=$top_builddir
-include \$(top_builddir)/../Makefile.dirs
+include \$(top_builddir)/../mk/dirs.mk
 
 SRCDIR=\$(abs_srcdir)/
 OBJDIRTOP=\${abs_top_builddir}
@@ -59,7 +59,7 @@ cat <<EOF > $OBJDIR/Makefile.tmp
 # top_srcdir, abs_top_srcdir, ...
 OBJDIR=${OBJDIR}
 top_builddir=.
-include ../Makefile.dirs
+include ../mk/dirs.mk
 
 SRCDIR=\$(abs_srcdir)/
 OBJDIRTOP=\${abs_top_builddir}
