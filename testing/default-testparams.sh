@@ -24,4 +24,4 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS openswan.sed"
 # temp silence klips nat-t oops
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS temp-natt-klips.oops.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS temp-selinux-ignore.sed"
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS pid-sanitize.sed"
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS misc-sanitize.sed"
