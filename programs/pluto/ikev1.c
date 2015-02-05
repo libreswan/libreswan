@@ -2812,7 +2812,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			      sizeof(expect));
 			idtoa(&peer, found, sizeof(found));
 			loglog(RC_LOG_SERIOUS,
-			       "we require peer to have ID '%s', but peer declares '%s'",
+			       "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
 			       expect, found);
 			return FALSE;
 		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
@@ -2825,12 +2825,40 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		}
 	} else {
 		struct connection *c = st->st_connection;
-		struct connection *r;
-		bool fc = 0;
+		struct connection *r = NULL;
+		bool fromcert;
+		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
+		lset_t auth_policy = LEMPTY;
+
+		switch (auth) {
+		case OAKLEY_PRESHARED_KEY:
+			auth_policy = POLICY_PSK;
+			break;
+		case OAKLEY_RSA_SIG:
+			auth_policy = POLICY_RSASIG;
+			break;
+		/* Not implemented */
+		case OAKLEY_DSS_SIG:
+		case OAKLEY_RSA_ENC:
+		case OAKLEY_RSA_REVISED_MODE:
+		case OAKLEY_ECDSA_P256:
+		case OAKLEY_ECDSA_P384:
+		case OAKLEY_ECDSA_P521:
+		default:
+			DBG(DBG_CONTROL, DBG_log("ikev1 ikev1_decode_peer_id bad_case due to not supported policy"));
+			// bad_case(auth);
+		}
+
+		if (aggrmode)
+			auth_policy |=  POLICY_AGGRESSIVE;
+
 		/* check for certificate requests */
 		ikev1_decode_cr(md, &c->requested_ca);
 
-		r = refine_host_connection(st, &peer, initiator, aggrmode, &fc);
+		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
+			r = refine_host_connection(st, &peer, initiator, auth_policy, &fromcert);
+			pexpect(r != NULL);
+		}
 
 		if (r == NULL) {
 			char buf[IDTOA_BUF];
@@ -2854,12 +2882,12 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			char b2[CONN_INST_BUF];
 
 			/* apparently, r is an improvement on c -- replace */
-			libreswan_log("switched from \"%s%s\" to \"%s%s\"",
+			libreswan_log("switched from \"%s\"%s to \"%s\"%s",
 				c->name,
 				fmt_conn_instance(c, b1),
 				r->name,
 				fmt_conn_instance(r, b2));
-			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) { /* CK_GROUP WOULD CAUSE PASSERT */
 				/* instantiate it, filling in peer's ID */
 				r = rw_instantiate(r, &c->spd.that.host_addr,
 						   NULL,
@@ -2880,7 +2908,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			c->spd.that.id = peer;
 			c->spd.that.has_id_wildcards = FALSE;
 			unshare_id_content(&c->spd.that.id);
-		} else if (fc) {
+		} else if (fromcert) {
 			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
 			duplicate_id(&r->spd.that.id, &peer);
 		}

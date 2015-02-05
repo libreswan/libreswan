@@ -1740,15 +1740,16 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 			const struct id *his_id)
 {
 	struct connection *d;
-	int wildcards;
 
 	passert(c->kind == CK_TEMPLATE);
 	passert(c->spd.next == NULL);
 
 	c->instance_serial++;
-	d = clone_thing(*c, "temporary connection");
+	d = clone_thing(*c, "instantiated connection");
 	if (his_id != NULL) {
-		passert(match_id(his_id, &d->spd.that.id, &wildcards));
+		int wildcards;
+
+		passert(d->spd.that.id.kind == ID_FROMCERT || match_id(his_id, &d->spd.that.id, &wildcards));
 		d->spd.that.id = *his_id;
 		d->spd.that.has_id_wildcards = FALSE;
 	}
@@ -1822,7 +1823,10 @@ struct connection *rw_instantiate(struct connection *c,
 	}
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
-		DBG_log("instantiated \"%s\" for %s", d->name, ipstr(him, &b));
+		char inst[CONN_INST_BUF];
+		DBG_log("instantiated \"%s\"%s for %s",
+			d->name, fmt_conn_instance(d, inst),
+			ipstr(him, &b));
 	});
 	return d;
 }
@@ -1987,10 +1991,13 @@ struct connection *oppo_instantiate(struct connection *c,
 
 	DBG(DBG_CONTROL, {
 			char topo[CONN_BUF_LEN];
+			char inst[CONN_INST_BUF];
 
 			(void) format_connection(topo, sizeof(topo), d,
 						&d->spd);
-			DBG_log("instantiated \"%s\": %s", d->name, topo);
+			DBG_log("instantiated \"%s\"%s: %s",
+				fmt_conn_instance(d, inst), d->name,
+				topo);
 		});
 	return d;
 }
@@ -2619,25 +2626,21 @@ static chunk_t get_peer_ca(const struct id *peer_id)
  */
 struct connection *refine_host_connection(const struct state *st,
 					const struct id *peer_id,
-					bool initiator, bool aggrmode,
+					bool initiator,
+					lset_t auth_policy,
 					bool *fromcert)
 {
 	struct connection *c = st->st_connection;
-	u_int16_t auth = st->st_oakley.auth;
 	struct connection *d;
 	struct connection *best_found = NULL;
-	lset_t auth_policy = LEMPTY;
-	lset_t p1mode_policy = aggrmode ? POLICY_AGGRESSIVE : LEMPTY;
 	const struct RSA_private_key *my_RSA_pri = NULL;
 	bool wcpip; /* wildcard Peer IP? */
 	int wildcards, best_wildcards;
 	int our_pathlen, best_our_pathlen, peer_pathlen, best_peer_pathlen;
 	chunk_t peer_ca;
-	const chunk_t *psk;
+	const chunk_t *psk = NULL;
 
 	*fromcert = FALSE;
-
-	psk = NULL;
 
 	our_pathlen = peer_pathlen = 0;
 	best_our_pathlen  = 0;
@@ -2673,54 +2676,8 @@ struct connection *refine_host_connection(const struct state *st,
 		return c;
 	}
 
-	/*
-	 * NOTE: this comment block needs updating.  The distinction between
-	 * aggr_inI1_outR1_psk and aggr_inI1_outR1_rsasig was eliminated.
-	 *
-	 * Philippe Vouters' comment:
-	 * I do not understand the added value of this xauth_calcbaseauth call.
-	 * When this refine_host_connection is invoked, it already comes up
-	 * with auth=OAKLEY_PRESHARED_KEY when sollictied by Shrew VPN Client
-	 * whether in Mutual PSK + XAuth or Mutual RSA + XAuth. The fact it
-	 * comes up with OAKLEY_PRESHARED_KEY in both cases should be given by
-	 * the Libreswan transitions state engine which can be viewed and
-	 * understood while reading ./programs/pluto/ikev1.c.
-	 * st->st_oakley.auth is only assigned inside aggr_inI1_outR1_common
-	 * which is called by aggr_inI1_outR1.
-	 * The considered state transition is the following:
-	 * { STATE_AGGR_R0, STATE_AGGR_R1,
-	 *   SMF_PSK_AUTH| SMF_REPLY,
-	 *   P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	 *   EVENT_RETRANSMIT, aggr_inI1_outR1_psk },
-	 *
-	 * { STATE_AGGR_R0, STATE_AGGR_R1,
-	 *   SMF_DS_AUTH | SMF_REPLY,
-	 *   P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	 *   EVENT_RETRANSMIT, aggr_inI1_outR1_rsasig },
-	 *
-	 * So st->st_oakley.auth should come up to refine_host_connection with
-	 * OAKLEY_PRESHARED_KEY (because of aggr_inI1_outR1_psk) and afterwards
-	 * with OAKLEY_RSA_SIG (because of aggr_inI1_outR1_rsasig). In such
-	 * actual only possible context, xauth_calcbaseauth is NO-OP operation.
-	 */
-	auth = xauth_calcbaseauth(auth);
-
-	switch (auth) {
-	case OAKLEY_PRESHARED_KEY:
-		auth_policy = POLICY_PSK;
+	if (auth_policy & POLICY_PSK) {
 		if (initiator) {
-			/*
-			 * Philippe Vouters' comment.
-			 * Without the if (initiator), refine_connection was
-			 * able to deal with:
-			 * %none %none: PSK "Secret"
-			 * but not with:
-			 * 192.168.1.2 @[GroupVPN]: PSK "Secret"
-			 * leading to no suitable connection found for:
-			 * : RSA "victor.vouters.dyndns.org - Vouters Illimited"
-			 *  when Shrew Client operates in Mutual RSA + XAuth
-			 * mode.
-			 */
 			psk = get_preshared_secret(c);
 			/*
 			 * It should be virtually impossible to fail to find
@@ -2729,10 +2686,7 @@ struct connection *refine_host_connection(const struct state *st,
 			if (psk == NULL)
 				return NULL; /* cannot determine PSK! */
 		}
-		break;
-
-	case OAKLEY_RSA_SIG:
-		auth_policy = POLICY_RSASIG;
+	} else if (auth_policy & POLICY_RSASIG) {
 		if (initiator) {
 			/*
 			 * At this point, we've committed to our RSA private
@@ -2743,14 +2697,10 @@ struct connection *refine_host_connection(const struct state *st,
 				 /* cannot determine my RSA private key! */
 				return NULL;
 		}
-		break;
-
-	default:
+	} else {
 		/* don't die bad_case(auth); */
 		DBG(DBG_CONTROL,
-			DBG_log("refine_connection: unsupported AUTH "
-				"TYPE='%d' (needs fix for enum_names)",
-				auth));
+			DBG_log("refine_host_connection: unexpected auth policy: only handling PSK or RSA"));
 		return NULL;
 	}
 
@@ -2808,10 +2758,11 @@ struct connection *refine_host_connection(const struct state *st,
 			 * Check for the match but also check to see if it's
 			 * the %fromcert + peer id match result. - matt
 			 */
-			if (!match1 &&
-			    !(*fromcert =
-				 id_kind(&d->spd.that.id) == ID_FROMCERT))
+			if (!match1) {
+			    *fromcert = id_kind(&d->spd.that.id) == ID_FROMCERT;
+			    if (!*fromcert)
 				continue;
+			}
 
 			/* if initiator, our ID must match exactly */
 			if (initiator &&
@@ -2822,66 +2773,69 @@ struct connection *refine_host_connection(const struct state *st,
 			 * Authentication used must fit policy of this
 			 * connection.
 			 */
-			if ((d->policy & auth_policy) == LEMPTY &&
-				(d->policy & POLICY_AGGRESSIVE) == LEMPTY)
+			if ((d->policy & auth_policy & ~POLICY_AGGRESSIVE) == LEMPTY) {
 				/* Our auth isn't OK for this connection. */
 				continue;
+			}
 
-			if ((d->policy & POLICY_AGGRESSIVE) ^ p1mode_policy)
+			if ((d->policy & (st->st_ikev2 ? POLICY_IKEV2_ALLOW : POLICY_IKEV1_ALLOW)) == LEMPTY) {
+				/* IKE version has to match */
+				continue;
+			}
+
+			if ((d->policy ^ auth_policy) & POLICY_AGGRESSIVE) {
 				/*
 				 * Disallow phase1 main/aggressive mode
 				 * mismatch.
 				 */
 				continue;
+			}
 
 			if (d->spd.this.xauth_server !=
-				c->spd.this.xauth_server)
-				/* Disallow xauth/no xauth mismatch. */
+			    c->spd.this.xauth_server) {
+				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				continue;
+			}
 
 			if (d->spd.this.xauth_client !=
-				c->spd.this.xauth_client)
-				 /* Disallow xauth/no xauth mismatch. */
+			    c->spd.this.xauth_client) {
+				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				continue;
+			}
 
 			DBG(DBG_CONTROLMORE, {
 				char b1[CONN_INST_BUF];
 				char b2[CONN_INST_BUF];
 
-				DBG_log("refine_connection: checked %s%s "
+				DBG_log("refine_host_connection: checked %s%s "
 					"against %s%s, now for see if best",
 					c->name,
 					fmt_conn_instance(c, b1),
 					d->name,
 					fmt_conn_instance(d, b2)); } );
 
-			switch (auth) {
-			case OAKLEY_PRESHARED_KEY:
+			if (auth_policy & POLICY_PSK) {
 				/* secret must match the one we already used */
-			{
 				const chunk_t *dpsk = get_preshared_secret(d);
 
-				if (aggrmode) {
-					/*
-					 * We can change PSK mid startup in
-					 * agressive mode.
-					 */
-					break;
-				}
+				/*
+				 * We can change PSK mid-way in IKEv2 or agressive mode.
+				 * If we initiated, the key we used and the key
+				 * we would have used with d must match.
+				 */
+				if (!st->st_ikev2 && !(auth_policy & POLICY_AGGRESSIVE)) {
+					if (dpsk == NULL)
+						continue; /* no secret */
 
-				if (dpsk == NULL)
-					continue; /* no secret */
-
-				if (initiator && psk != dpsk) {
-					if (psk->len != dpsk->len ||
-						!memeq(psk->ptr, dpsk->ptr,
-							psk->len))
-						continue; /* different secret */
+					if (initiator && psk != dpsk &&
+					    !(psk->len == dpsk->len &&
+					      memeq(psk->ptr, dpsk->ptr, psk->len))) {
+							continue; /* different secret */
+					}
 				}
 			}
-			break;
 
-			case OAKLEY_RSA_SIG:
+			if (auth_policy & POLICY_RSASIG) {
 				/*
 				 * We must at least be able to find our
 				 * private key.
@@ -2889,41 +2843,42 @@ struct connection *refine_host_connection(const struct state *st,
 				 * used in the SIG_I payload that we sent
 				 * previously.
 				 */
-			{
-				const struct RSA_private_key *pri =
-					get_RSA_private_key(d);
+				const struct RSA_private_key *pri = get_RSA_private_key(d);
 
-				if (pri == NULL ||
-					(initiator && (
-						!same_RSA_public_key(
-							&my_RSA_pri->pub,
-							&pri->pub))))
-					continue;
-			}
-			break;
+				if (pri == NULL)
+					continue;	/* no key */
 
-			default:
-				bad_case(auth);
+				if (initiator && 
+				    !same_RSA_public_key(&my_RSA_pri->pub, &pri->pub)) {
+					continue;	/* different key */
+				}
 			}
 
 			/*
-			 * D has passed all the tests.
+			 * Paul: We need to check all the other relevant
+			 * policy bits, like compression, pfs, etc
+			 */
+
+			/*
+			 * d has passed all the tests.
 			 * We'll go with it if the Peer ID was an exact match.
 			 */
-			if (match1 && wildcards == 0 && peer_pathlen == 0 &&
-			    our_pathlen == 0)
+			if (match1 && wildcards == 0 &&
+			    peer_pathlen == 0 && our_pathlen == 0)
 				return d;
 
 			/*
-			 * We'll remember it as best_found in case an exact
-			 * match doesn't come along.
+			 * If it was a non-exact (wildcard) match, we'll
+			 * remember it as best_found in case an exact match
+			 * doesn't come along.
+			 * ??? the logic involving *_pathlen looks wrong.
+			 * ??? which matters more peer_pathlen or our_pathlen minimization?
 			 */
 			if (best_found == NULL || wildcards < best_wildcards ||
-				((wildcards == best_wildcards && peer_pathlen <
-					best_peer_pathlen) ||
-					(peer_pathlen == best_peer_pathlen &&
-						our_pathlen <
-						best_our_pathlen))) {
+				((wildcards == best_wildcards &&
+				  peer_pathlen < best_peer_pathlen) ||
+				 (peer_pathlen == best_peer_pathlen &&
+				  our_pathlen < best_our_pathlen))) {
 				DBG(DBG_CONTROLMORE,
 					DBG_log("refine_host_connection: picking "
 						"new best %s (wild=%d, peer_"
@@ -2937,8 +2892,10 @@ struct connection *refine_host_connection(const struct state *st,
 				best_our_pathlen = our_pathlen;
 			}
 		}
-		if (wcpip)
-			return best_found; /* been around twice already */
+		if (wcpip) {
+			/* been around twice already */
+			return best_found;
+		}
 
 		/*
 		 * Starting second time around.

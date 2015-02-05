@@ -2191,6 +2191,8 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	if (!ikev2_decode_peer_id(md, O_RESPONDER))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
+	c = st->st_connection; /* in case we refined */
+
 	{
 		struct hmac_ctx id_ctx;
 		const pb_stream *id_pbs = &md->chain[ISAKMP_NEXT_v2IDi]->pbs;

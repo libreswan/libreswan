@@ -458,6 +458,8 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 {
 	bool match;
 
+	*wildcards = 0;
+
 	if (b->kind == ID_NONE) {
 		*wildcards = MAX_WILDCARDS;
 		match = TRUE;
@@ -466,7 +468,6 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 	} else if (a->kind == ID_DER_ASN1_DN) {
 		match = match_dn(a->name, b->name, wildcards);
 	} else {
-		*wildcards = 0;
 		match = same_id(a, b);
 	}
 

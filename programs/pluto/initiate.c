@@ -232,18 +232,19 @@ static int initiate_a_connection(struct connection *c,
 					POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
 				success = 1;
 				c->policy |= POLICY_UP;
-			} else
-			loglog(RC_NOPEERIP,
-			       "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-			       enum_show(&connection_kind_names,
-					 c->kind),
+			} else {
+				loglog(RC_NOPEERIP,
+			       		"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+			       		enum_show(&connection_kind_names,
+						c->kind),
 			       (c->policy &
 				POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
-
+			}
 		} else {
-			if ((c->policy &  POLICY_IKEV2_PROPOSE) &&
-					(c->policy & POLICY_IKEV2_ALLOW_NARROWING))
-				c = instantiate(c, NULL, NULL);
+			if (LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
+				c->kind == CK_TEMPLATE) {
+					c = instantiate(c, NULL, NULL);
+			}
 
 			/* We will only request an IPsec SA if policy isn't empty
 			 * (ignoring Main Mode items).
