@@ -2188,7 +2188,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			return ret;
 	}
 
-	if (!ikev2_decode_peer_id(md, O_RESPONDER))
+	if (!ikev2_decode_peer_id_and_certs(md, O_RESPONDER))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	c = st->st_connection; /* in case we refined */
@@ -2206,19 +2206,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		DBG(DBG_CRYPT, DBG_dump("idhash verify I2", idstart, idlen));
 		hmac_update(&id_ctx, idstart, idlen);
 		hmac_final(idhash_in, &id_ctx);
-	}
-
-	/* process CERT payload */
-	{
-		if (md->chain[ISAKMP_NEXT_v2CERT] != NULL) {
-			/*
-			 * should we check if we should accept a cert payload ?
-			 *  has_preloaded_public_key(st)
-			 */
-			DBG(DBG_CONTROLMORE,
-			    DBG_log("has a v2_CERT payload going to process it "));
-			ikev2_decode_cert(md);
-		}
 	}
 
 	/* process CERTREQ payload */
@@ -2558,7 +2545,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			return ret;
 	}
 
-	if (!ikev2_decode_peer_id(md, O_INITIATOR))
+	if (!ikev2_decode_peer_id_and_certs(md, O_INITIATOR))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	{
@@ -2574,16 +2561,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		DBG(DBG_CRYPT, DBG_dump("idhash auth R2", idstart, idlen));
 		hmac_update(&id_ctx, idstart, idlen);
 		hmac_final(idhash_in, &id_ctx);
-	}
-
-	if (md->chain[ISAKMP_NEXT_v2CERT] != NULL) {
-		/*
-		 * should we check if we should accept a cert payload ?
-		 *  has_preloaded_public_key(st)
-		 */
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("has a v2_CERT payload; going to decode it"));
-		ikev2_decode_cert(md);
 	}
 
 	/* process AUTH payload */

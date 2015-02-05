@@ -92,7 +92,7 @@ extern stf_status ikev2_process_payloads(struct msg_digest *md,
 					 enum next_payload_types_ikev2 np,
 					 bool enc);
 
-extern bool ikev2_decode_peer_id(struct msg_digest *md,
+extern bool ikev2_decode_peer_id_and_certs(struct msg_digest *md,
 				 enum phase1_role initiator);
 
 extern void ikev2_log_parentSA(struct state *st);

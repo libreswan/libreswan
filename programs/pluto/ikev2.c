@@ -804,7 +804,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	/* our caller with release_any_md(mdp) */
 }
 
-bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
+bool ikev2_decode_peer_id_and_certs(struct msg_digest *md, enum phase1_role role)
 {
 	unsigned int hisID = role == O_INITIATOR ?
 			     ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
@@ -829,6 +829,7 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
 	}
 
 	ikev2_decode_cert(md);
+
 	/* Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
 	 * We must not switch horses if we initiated:
