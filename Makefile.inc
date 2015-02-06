@@ -1,7 +1,9 @@
 # Libreswan pathnames and other master configuration
+#
 # Copyright (C) 2001, 2002  Henry Spencer.
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -20,9 +22,9 @@
 #  Doc:		man make
 #  Doc:		http://www.gnu.org/software/make/manual/make.html
 
-#
-#  If there is a "local" makfile include it, else ignore:
--include ${LIBRESWANSRCDIR}/Makefile.inc.local
+# Include any local Makefile.inc.local; local.mk is a wrapper
+# that deals with multiple include issues.
+include ${LIBRESWANSRCDIR}/mk/local.mk
 
 
 # Variables in this file with names starting with INC_ are not for use
