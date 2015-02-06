@@ -214,9 +214,6 @@ enum {
 	DBG_DPD_IX,		/* DPD items */
 	DBG_OPPOINFO_IX,	/* log various informational things about oppo/%trap-keying */
 	DBG_WHACKWATCH_IX,	/* never let WHACK go */
-	DBG_unused1_IX,
-	DBG_unused2_IX,
-	DBG_unused3_IX,
 	DBG_PRIVATE_IX,		/* displays private information: DANGER! */
 
 	IMPAIR_BUST_MI2_IX,			/* make MI2 really large */

@@ -520,7 +520,7 @@ void initialize_new_state(struct state *st,
 
 bool send_delete(struct state *st)
 {
-	if (!DBGP(IMPAIR_SEND_NO_DELETE)) {
+	if (DBGP(IMPAIR_SEND_NO_DELETE)) {
 		DBG(DBG_CONTROL,
 			DBG_log("send_delete(): impair-send-no-delete set - not sending Delete/Notify"));
 		return TRUE;

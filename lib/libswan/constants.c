@@ -181,9 +181,6 @@ const char *const debug_bit_names[] = {
 	"dpd",
 	"oppoinfo",	/* 14 */
 	"whackwatch",
-	"res16",
-	"res17",
-	"res18",
 	"private",
 	"impair-bust-mi2",
 	"impair-bust-mr2",
@@ -193,6 +190,7 @@ const char *const debug_bit_names[] = {
 	"impair-major-version-bump",
 	"impair-minor-version-bump",
 	"impair-retransmits",
+	"impair-send-bogus-payload-flag",
 	"impair-send-bogus-isakmp-flag",
 	"impair-send-ikev2-ke",
 	"impair-send-no-delete",

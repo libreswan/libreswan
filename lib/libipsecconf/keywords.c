@@ -256,10 +256,6 @@ static const struct keyword_enum_value kw_plutodebug_values[] = {
 	/* backwards compatibility */
 	{ "klips",    DBG_KERNEL },
 	{ "netkey",    DBG_KERNEL },
-
-	/* should these be here? */
-	{ "impair-bust-mi2", IMPAIR_BUST_MI2 },
-	{ "impair-bust-mr2", IMPAIR_BUST_MR2 },
 };
 
 static const struct keyword_enum_values kw_plutodebug_list = VALUES_INITIALIZER(kw_plutodebug_values);
