@@ -32,14 +32,9 @@ do
 
 # define autoconf style names such as srcdir, builddir, abs_srcdir,
 # top_srcdir, abs_top_srcdir, ...
-OBJDIR=${OBJDIR}
-top_builddir=$top_builddir
-include \$(top_builddir)/../mk/dirs.mk
+include ${top_builddir}/../mk/dirs.mk
 
-SRCDIR=\$(abs_srcdir)/
-OBJDIRTOP=\${abs_top_builddir}
 VPATH+=\${abs_srcdir}
-LIBRESWANSRCDIR=\${abs_top_srcdir}
 include \${srcdir}/Makefile
 -include Makefile.depend
 EOF
@@ -55,14 +50,9 @@ cat <<EOF > $OBJDIR/Makefile.tmp
 
 # define autoconf style names such as srcdir, builddir, abs_srcdir,
 # top_srcdir, abs_top_srcdir, ...
-OBJDIR=${OBJDIR}
-top_builddir=.
 include ../mk/dirs.mk
 
-SRCDIR=\$(abs_srcdir)/
-OBJDIRTOP=\${abs_top_builddir}
 VPATH+=\${abs_srcdir}
-LIBRESWANSRCDIR=\${abs_top_srcdir}
 include \${top_srcdir}/Makefile.top
 
 programs config man install clean checkprograms::

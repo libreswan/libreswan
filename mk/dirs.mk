@@ -1,7 +1,6 @@
-# Given either top_srcdir or top_builddir define all the autoconf
-# style directory variables
+# Define autoconf style directory variables, for Libreswan.
 #
-# Copyright (C) 2015 Andrew Cagney <andrew.cagney@yahoo.ca>
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -13,89 +12,171 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# Usage is either:
+# From a source directory Makefile use:
 #
-#   top_srcdir?=../..
-#   include $(top_srcdir)/Makefile.dirs
+#   ifndef top_srcdir
+#   include ../../mk/dirs.mk
+#   endif
 #
-# or (see the script makeshadowdirs):
+# (Since the Makefile is included from the build (OBJDIR) directory
+# where the relative paths are different and dirs.mk has already been
+# included, a guard is needed.)
 #
-#   top_builddir=../..
-#   include $(top_builddir)/../Makefile.dirs
+# From a generated build (OBJDIR) directory Makefile use:
 #
-# Since $(buildir)/Makefile includes $(srcdir)/Makefile there is
-# double include problem, hence the ifndef below.
-
-# The target .makefile.dirs.print, which prints the variables, can
-# be used for testing.  For builddir:
-#
-#   make OBJDIR=OBJ.linux top_buildir=../.. -f ../../../Makefile.dirs .makefile.dirs.print
-#
-# for srcdir:
-#
-#   make OBJDIR=OBJ.linux top_srcdir=../.. -f ../../Makefile.dirs .makefile.dirs.print
+#   include ../../../mk/dirs.mk
 #
 
-ifndef makefile.dirs.path
+# To help testing there is the target ".dirs.mk".  This will print out
+# all defined variables.  For instance:
+#
+#   ( cd . && make -f mk/dirs.mk .dirs.mk )
+#   ( cd programs && make -f ../mk/dirs.mk .dirs.mk )
+#   ( cd programs/pluto && make -f ../../mk/dirs.mk .dirs.mk )
+#
+#   ( cd OBJ.* && make -f ../mk/dirs.mk .dirs.mk )
+#   ( cd OBJ.*/programs && make -f ../../mk/dirs.mk .dirs.mk )
+#   ( cd OBJ.*/programs/pluto && make -f ../../../mk/dirs.mk .dirs.mk )
+#
+
+
+# Check for double include of mk/dirs.mk.  This, as they say, will
+# never happen.
+#
+# Unfortunately, given the presence of this test, you can guess that
+# it has.  Some broken Makefile code was effectively executing:
+#
+#      cd $(abs_top_builddir) && OBJDIR=$(abs_top_builddir) make ...
+#
+# (i.e., a totally bogus OBJDIR was being pushed into the child make's
+# environment).  Either by luck, or poor design, the generated OBJDIR
+# Makefiles would then "fix" OBJDIR forcing it to a correct value.
+# Remove the "fix" and chaos ensues.
+ifeq ($(.dirs.mk),)
+.dirs.mk := $(MAKEFILE_LIST)
+else
+$(warning mk/dirs.mk included twice)
+$(warning first include MAKEFILE_LIST: $(.dirs.mk))
+$(warning second include MAKEFILE_LIST: $(MAKEFILE_LIST))
+$(warning dirs.mk.in.srcdir: $(dirs.mk.in.srcdir))
+$(warning srcdir: $(srcdir))
+$(warning builddir: $(builddir))
+$(warning OBJDIR: $(OBJDIR))
+$(warning cwd: $(absdir .))
+$(error this will never happen ...)
+endif
+
 
 # Given a path to a higher directory (e.g., ../..) convert it to the
-# path down from that directory.
+# path from that directory down.  For instance: given "../.." ($(1)
+# variable) and the current directory "/libreswan/OBJ.linux/foo/bar",
+# "/foo/bar" is returned; given "." ($(1) variable) and the current
+# directory "/libreswan", "" is returned.
+dirs.mk.down.path.from = $(subst $(abspath $(1)),,$(abspath .))
+
+
+# Determine top_srcdir
 #
-# For instance, given "../.." ($(1) variable) and the current
-# directory "/libreswan/OBJ.linux/foo/bar" return "/foo/bar"
-makefile.dirs.path = $(subst $(abspath $(1)),,$(abspath .))
+# The last item in the GNU make variable MAKEFILE_LIST is the relative
+# path to the most recent included file (i.e., dirs.mk).  Since the
+# location of dirs.mk is known relative to top_srcdir, top_srcdir can
+# be determined.  These variables are "simply expanded" so that they
+# capture the current value.  For more information see MAKEFILE_LIST
+# and "simply expanded variables" in "info make".
+#
+# Extract the relative path to this file
+dirs.mk.file := $(lastword $(MAKEFILE_LIST))
+# Convert the relative path to this file into a relative path to this
+# file's directory.  Since $(dir) appends a trailing / (such as "mk/"
+# or "../mk/") that needs to be stripped.
+dirs.mk.dir := $(patsubst %/,%,$(dir $(dirs.mk.file)))
+# Finally, drop the mk/ sub-directory.  Again, since $(dir) appends a
+# trailing / (such as "./" or "../") that needs to be stripped.
+top_srcdir := $(patsubst %/,%,$(dir $(dirs.mk.dir)))
 
-ifndef OBJDIR
-$(error OBJDIR must be defined)
-endif
 
-ifndef top_builddir
-ifndef top_srcdir
-$(error one of top_srcdir and top_builddir must be defined)
-endif
-endif
+# Pull in sufficent stuff to get a definition of OBJDIR.  It might be
+# set by local includes so pull that in first.
+include $(top_srcdir)/mk/local.mk
+include $(top_srcdir)/mk/objdir.mk
 
-ifdef top_builddir
-ifdef top_srcdir
-$(error one of top_srcdir and top_builddir must be defined)
-endif
-endif
 
-ifdef top_builddir
-ifeq ($(top_builddir),.)
-# avoid ./..
-top_srcdir=..
+# Is this being included from the source directory (i.e., $(OBJDIR)
+# isn't found in the path)?
+ifeq ($(findstring /$(OBJDIR)/,$(abspath .)/),)
+dirs.mk.included.from.srcdir := true
 else
-top_srcdir=$(top_builddir)/..
+dirs.mk.included.from.srcdir := false
 endif
-builddir=.
-srcdir=$(top_srcdir)$(call makefile.dirs.path,$(top_builddir))
-else ifdef top_srcdir
+
+
+ifeq ($(dirs.mk.included.from.srcdir),true)
+
+# In the source tree ...
+
+srcdir := .
 ifeq ($(top_srcdir),.)
 # avoid ./OBJDIR
-top_builddir=$(OBJDIR)
+top_builddir := $(OBJDIR)
 else
-top_builddir=$(top_srcdir)/$(OBJDIR)
+top_builddir := $(top_srcdir)/$(OBJDIR)
 endif
-srcdir=.
-builddir=$(top_builddir)$(makefile.dir.path $(top_srcdir))
+builddir := $(top_builddir)$(call dirs.mk.down.path.from,$(top_srcdir))
+
+else
+
+# In the build (OBJDIR) tree ...
+
+builddir := .
+ifeq ($(top_srcdir),..)
+# avoid ""
+top_builddir := .
+else
+top_builddir := $(patsubst ../%,%,$(top_srcdir))
+endif
+srcdir := $(top_srcdir)$(call dirs.mk.down.path.from,$(top_builddir))
+
 endif
 
-abs_top_srcdir=$(abspath $(top_srcdir))
-abs_top_builddir=$(abspath $(top_builddir))
-abs_srcdir=$(abspath $(srcdir))
-abs_builddir=$(abspath $(builddir))
+# Absolute versions
+abs_srcdir := $(abspath $(srcdir))
+abs_top_srcdir := $(abspath $(top_srcdir))
+abs_builddir := $(abspath $(builddir))
+abs_top_builddir := $(abspath $(top_builddir))
+
+# For compatibility with existing include files:
+LIBRESWANSRCDIR?=$(abs_top_srcdir)
+SRCDIR?=$(abs_srcdir)/
+OBJDIRTOP?=$(abs_top_builddir)
+
 
 # Dot targets are never the default.
-.PHONY: .makefile.dirs.print
-.makefile.dirs.print:
-	@echo srcdir=$(srcdir)
-	@echo builddir=$(builddir)
-	@echo abs_srcdir=$(abs_srcdir)
-	@echo abs_builddir=$(abs_builddir)
+.PHONY: .dirs.mk
+.dirs.mk:
+	@echo ""
+	@echo For debugging:
+	@echo ""
+	@echo dirs.mk.file=$(dirs.mk.file)
+	@echo dirs.mk.dir=$(dirs.mk.dir)
 	@echo top_srcdir=$(top_srcdir)
+	@echo dirs.mk.included.from.srcdir="$(dirs.mk.included.from.srcdir)"
+	@echo ""
+	@echo Relative paths:
+	@echo ""
+	@echo srcdir=$(srcdir)
+	@echo top_srcdir=$(top_srcdir)
+	@echo builddir=$(builddir)
 	@echo top_builddir=$(top_builddir)
+	@echo ""
+	@echo Absolute paths:
+	@echo ""
+	@echo abs_srcdir=$(abs_srcdir)
 	@echo abs_top_srcdir=$(abs_top_srcdir)
+	@echo abs_builddir=$(abs_builddir)
 	@echo abs_top_builddir=$(abs_top_builddir)
-
-endif
+	@echo ""
+	@echo Backward compatibility:
+	@echo ""
+	@echo SRCDIR=$(SRCDIR)
+	@echo OBJDIRTOP=$(OBJDIRTOP)
+	@echo LIBRESWANSRCDIR=$(LIBRESWANSRCDIR)
