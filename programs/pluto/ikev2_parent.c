@@ -136,7 +136,7 @@ static stf_status crypto_helper_build_ke(struct state *st)
 	 * ??? Who frees ke? md?
 	 */
 
-       return e;
+	return e;
 }
 
 /*
@@ -291,8 +291,8 @@ static void ikev2_parent_outI1_continue(struct pluto_crypto_req_cont *ke,
  * used by IKEv2: parent, child (PFS)
  */
 static enum ike_trans_type_dh unpack_v2KE_from_helper(struct state *st,
-		       const struct pluto_crypto_req *r,
-		       chunk_t *g)
+			const struct pluto_crypto_req *r,
+			chunk_t *g)
 {
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
@@ -537,9 +537,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * TBD set force_busy dynamically.
 	 * Paul: Can we check for STF_TOOMUCHCRYPTO?
 	 */
-        if (force_busy) {
-                u_char dcookie[SHA1_DIGEST_SIZE];
-                chunk_t dc, ni, spiI;
+	if (force_busy) {
+		u_char dcookie[SHA1_DIGEST_SIZE];
+		chunk_t dc, ni, spiI;
 
 		setchunk(spiI, md->hdr.isa_icookie, COOKIE_SIZE);
 		setchunk(ni, md->chain[ISAKMP_NEXT_v2Ni]->pbs.cur,
@@ -560,9 +560,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			return STF_IGNORE;
 		}
 
-                ikev2_get_dcookie(dcookie, ni, &md->sender, spiI);
-                dc.ptr = dcookie;
-                dc.len = SHA1_DIGEST_SIZE;
+		ikev2_get_dcookie(dcookie, ni, &md->sender, spiI);
+		dc.ptr = dcookie;
+		dc.len = SHA1_DIGEST_SIZE;
 
 		/* check a v2N payload with type COOKIE */
 		if (md->chain[ISAKMP_NEXT_v2N] != NULL &&
@@ -892,7 +892,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 						&r_sa_pbs, st, FALSE);
 
 		if (ret != STF_OK) {
-			DBG(DBG_CONTROLMORE,DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
+			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2_parent_inI1outR1_tail()"));
 			return ret;
 		}
 	}
@@ -993,7 +993,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	}
 
 	/* send CERTREQ  */
-	if(send_certreq) {
+	if (send_certreq) {
 		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		DBG(DBG_CONTROL, DBG_log("going to send a certreq"));
 		ikev2_send_certreq(st, md, O_RESPONDER, np, &md->rbody);
@@ -1116,7 +1116,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 					strip_prefix(enum_show(&oakley_group_names,
 						sg.sg_group), "OAKLEY_GROUP_"));
 				/* wipe our mismatched KE */
-                                clear_dh_from_state(st);
+				clear_dh_from_state(st);
 				/* wipe out any saved RCOOKIE */
 				DBG(DBG_CONTROL, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
 				unhash_state(st);
@@ -1217,7 +1217,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 						NULL, st, TRUE);
 
 		if (ret != STF_OK) {
-			DBG(DBG_CONTROLMORE,DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
+			DBG(DBG_CONTROLMORE, DBG_log("ikev2_parse_parent_sa_body() failed in ikev2parent_inR1outI2()"));
 			return ret;
 		}
 	}
@@ -1228,7 +1228,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and
 	 * v2N_NAT_DETECTION_SOURCE_IP
 	 */
-	if(md->chain[ISAKMP_NEXT_v2N] != NULL)
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL)
 		ikev2_natd_lookup(md, st->st_rcookie);
 
 	/* initiate calculation of g^xy */
@@ -1642,7 +1642,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		 * data.
 		 */
 		unsigned char *aad_start = auth_start;
-	        size_t aad_size = enc_start - auth_start - wire_iv_size;
+		size_t aad_size = enc_start - auth_start - wire_iv_size;
 
 		DBG(DBG_CRYPT,
 		    DBG_dump_chunk("Salt before authenticated decryption:", salt);
@@ -1684,8 +1684,8 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		TRUE);
 }
 
-static stf_status ikev2_ship_cp_attr_ip4( u_int16_t type, ip_address *ip4,
-		const char *story, pb_stream *outpbs )
+static stf_status ikev2_ship_cp_attr_ip4(u_int16_t type, ip_address *ip4,
+		const char *story, pb_stream *outpbs)
 {
 	struct ikev2_cp_attribute attr;
 	unsigned char *byte_ptr;
@@ -1728,12 +1728,12 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 			cfg_reply ? &c->spd.that.client.addr : NULL,
 			"IPV4 Address", &cp_pbs);
 
-	if(cfg_reply) {
-		if(!isanyaddr(&c->modecfg_dns1)) {
+	if (cfg_reply) {
+		if (!isanyaddr(&c->modecfg_dns1)) {
 			ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, &c->modecfg_dns1,
 					"DNS 1", &cp_pbs);
 		}
-		if(!isanyaddr(&c->modecfg_dns2)) {
+		if (!isanyaddr(&c->modecfg_dns2)) {
 			ikev2_ship_cp_attr_ip4(IKEv2_INTERNAL_IP4_DNS, &c->modecfg_dns2,
 					"DNS 2", &cp_pbs);
 		}
@@ -2712,7 +2712,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 							tsr, tsi_n, tsr_n,
 							&best_tsi_i,
 							&best_tsr_i);
-					if (bfit_pr > bestfit_pr ) {
+					if (bfit_pr > bestfit_pr) {
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("protocol fitness found better match c %s, tsi[%d],tsr[%d]",
 							    c->name, best_tsi_i,
@@ -2838,7 +2838,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			}
 
 			if (p->payload.v2n.isan_type ==
-			    v2N_USE_TRANSPORT_MODE ) {
+			    v2N_USE_TRANSPORT_MODE) {
 				if (st->st_connection->policy & POLICY_TUNNEL) {
 					/* This means we did not send v2N_USE_TRANSPORT, however responder is sending it in now (inR2), seems incorrect */
 					DBG(DBG_CONTROLMORE,
@@ -3117,7 +3117,7 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 		/* in CREATE_CHILD_SA exchange we don't support new KE */
 		ipstr_buf b;
 
-		libreswan_log( "rejecting create child SA from %s:%u -- new KE in DH is not supported",
+		libreswan_log("rejecting create child SA from %s:%u -- new KE in DH is not supported",
 				ipstr(&md->sender, &b), md->sender_port);
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 	}
@@ -3196,11 +3196,11 @@ static void ikev2_child_inIoutR_continue(struct pluto_crypto_req_cont *qke,
 }
 
 static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
-				        struct pluto_crypto_req *r)
+					struct pluto_crypto_req *r)
 {
 	struct msg_digest *md = qke->pcrc_md;
 	struct state *st = md->st;
-        struct state *pst = st;
+	struct state *pst = st;
 	unsigned char *authstart;
 	unsigned char *encstart;
 	unsigned char *iv;
@@ -3735,7 +3735,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 					return STF_FAIL + v2N_INVALID_SYNTAX;
 				}
 
-				for (i = 0; i < v2del->isad_nrspi; i++ ) {
+				for (i = 0; i < v2del->isad_nrspi; i++) {
 					ipsec_spi_t spi;
 
 					if (!in_raw(&spi, sizeof(spi), &p->pbs, "SPI"))
