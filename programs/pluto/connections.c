@@ -811,6 +811,7 @@ static bool load_end_certificate(const char *name, struct end *dst)
 		if (ugh != NULL) {
 			loglog(RC_LOG_SERIOUS,"  %s", ugh);
 			free_x509cert(cert.u.x509);
+			return FALSE;
 		} else {
 			DBG(DBG_CONTROL,
 				DBG_log("certificate is valid"));
