@@ -26,6 +26,9 @@
 # that deals with multiple include issues.
 include ${LIBRESWANSRCDIR}/mk/local.mk
 
+# Pull in the target/build/host description and get a definition of
+# OBJDIR et.al.
+include ${LIBRESWANSRCDIR}/mk/objdir.mk
 
 # Variables in this file with names starting with INC_ are not for use
 # by Makefiles which include it; they are subject to change without warning.
@@ -52,17 +55,6 @@ export SHELL
 
 # location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
 BINSH=/bin/sh
-
-# supply kernel-configuration ARCH defaults
-ifeq ($(ARCH),)
-ARCH := $(shell uname -m)
-endif
-# always sanitize $(ARCH)
-ARCH := $(shell echo $(ARCH) | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
-
-ifeq ($(OSDEP),)
-OSDEP:=$(shell uname -s | tr 'A-Z' 'a-z')
-endif
 
 ### install pathnames
 
@@ -424,14 +416,6 @@ export IPSECVIDVERSION
 endif
 
 # include OSDEP/ARCH specific makefiles, if any.
-# OSDEP=linux,bsd,cygwin,darwin
-# 
-# but, BUILDENV could be mingw32-linux, darwin, or mingw32, etc..
-ifeq ($(BUILDENV),)
-BUILDENV=$(shell uname -s | tr 'A-Z' 'a-z' | sed -e 's/\(.*\)-.*/\1/')
-endif
-export BUILDENV
-export OSDEP
 include ${LIBRESWANSRCDIR}/packaging/defaults/${BUILDENV}
 -include ${LIBRESWANSRCDIR}/packaging/defaults/${BUILDENV}.${ARCH}
 
@@ -443,7 +427,6 @@ INSTBINFLAGS=-D -b -B .old
 INSTSUIDFLAGS=--mode=u+rxs,g+rx,o+rx --group=root -b -B .old
 endif
 
-OBJDIR?=OBJ.${BUILDENV}.${ARCH}
 OBJDIRTOP?=${LIBRESWANSRCDIR}/${OBJDIR}
 
 #
