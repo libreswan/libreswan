@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v3.13 (unreleased)
+* IKEv2: authby=null support (draft-ietf-ipsecme-authnull) [Paul/Antony/Hugh]
 * IKEv2: whack and smc related time out fixes [Antony]
 * IKEv2: do not pad IKE messages (fix interop w. InsideSecure) [Paul]
 * IKEv2: Fix esp=camellia to use the IKEv2 IANA registry number for ESP [Paul]
