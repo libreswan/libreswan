@@ -11,6 +11,7 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -240,8 +241,8 @@ static PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 	return dhshared;
 }
 
-/* SKEYID for preshared keys.
- * See draft-ietf-ipsec-ike-01.txt 4.1
+/* 
+ * SKEYID for preshared keys - RFC 7296 Section 2.13
  */
 
 static PK11SymKey *skeyid_preshared(const chunk_t pss,
@@ -252,14 +253,14 @@ static PK11SymKey *skeyid_preshared(const chunk_t pss,
 {
 	struct hmac_ctx ctx;
 
-	passert(hasher != NULL);
-
 	chunk_t nir;
 	unsigned int k;
 	CK_MECHANISM_TYPE mechanism;
 	u_char buf1[HMAC_BUFSIZE * 2], buf2[HMAC_BUFSIZE * 2];
 	chunk_t buf1_chunk, buf2_chunk;
 	PK11SymKey *skeyid;
+
+	passert(hasher != NULL);
 
 	DBG(DBG_CRYPT, {
 		    DBG_log("NSS: skeyid inputs (pss+NI+NR+shared-secret) hasher: %s",
@@ -269,7 +270,8 @@ static PK11SymKey *skeyid_preshared(const chunk_t pss,
 		    DBG_dump_chunk("nr: ", nr);
 	    });
 
-	/* We need to hmac_init with the concatenation of Ni_b and Nr_b,
+	/*
+	 * We need to hmac_init with the concatenation of Ni_b and Nr_b,
 	 * so we have to build a temporary concatentation.
 	 */
 
@@ -294,8 +296,6 @@ static PK11SymKey *skeyid_preshared(const chunk_t pss,
 		buf1[k] ^= HMAC_IPAD;
 		buf2[k] ^= HMAC_OPAD;
 	}
-
-	/* pfree(nir.ptr); */
 
 	mechanism = nss_key_derivation_mech(hasher);
 	buf1_chunk.ptr = buf1;
@@ -367,7 +367,8 @@ static PK11SymKey *skeyid_digisig(const chunk_t ni,
 		    DBG_dump_chunk("nr: ", nr);
 	    });
 
-	/* We need to hmac_init with the concatenation of Ni_b and Nr_b,
+	/*
+	 * We need to hmac_init with the concatenation of Ni_b and Nr_b,
 	 * so we have to build a temporary concatentation.
 	 */
 	nir.len = ni.len + nr.len;
@@ -1190,7 +1191,9 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 			     PK11SymKey **SK_pi_out,
 			     PK11SymKey **SK_pr_out,
 			     chunk_t *initiator_salt_out,
-			     chunk_t *responder_salt_out
+			     chunk_t *responder_salt_out,
+			     chunk_t *chunk_SK_pi_out,
+			     chunk_t *chunk_SK_pr_out
 			     )
 {
 	struct v2prf_stuff vpss;
@@ -1213,6 +1216,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		*SK_pr_k;
 	chunk_t initiator_salt;
 	chunk_t responder_salt;
+	chunk_t chunk_SK_pi;
+	chunk_t chunk_SK_pr;
 
 	zero(&vpss);
 
@@ -1516,11 +1521,19 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		SK_pi_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
 							  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
 							  skp_bytes);
+
+		/* store copy of SK_pi_k for later use in authnull */
+		chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", SK_pi_k, 0, skp_bytes);
+
 		next_bit += skp_bytes * BITS_PER_BYTE;
 
 		SK_pr_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
 							  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
 							  skp_bytes);
+
+		/* store copy of SK_pr_k for later use in authnull */
+		chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k, 0, skp_bytes);
+
 		next_bit += skp_bytes * BITS_PER_BYTE;
 
 		DBG(DBG_CRYPT,
@@ -1537,6 +1550,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		*SK_pr_out = SK_pr_k;
 		*initiator_salt_out = initiator_salt;
 		*responder_salt_out = responder_salt;
+		*chunk_SK_pi_out = chunk_SK_pi;
+		*chunk_SK_pr_out = chunk_SK_pr;
 
 		freeanychunk(hmac_opad);
 		freeanychunk(hmac_ipad);
@@ -1546,7 +1561,9 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	    DBG_log("calc_skeyseed_v2 pointers: shared %p, skeyseed %p, SK_d %p, SK_ai %p, SK_ar %p, SK_ei %p, SK_er %p, SK_pi %p, SK_pr %p",
 		    shared, skeyseed_k, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
 	    DBG_dump_chunk("calc_skeyseed_v2 initiator salt", initiator_salt);
-	    DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt));
+	    DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt);
+	    DBG_dump_chunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
+	    DBG_dump_chunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr));
 }
 
 /* MUST BE THREAD-SAFE */
@@ -1569,6 +1586,8 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 		*SK_pr;
 	chunk_t initiator_salt;
 	chunk_t responder_salt;
+	chunk_t chunk_SK_pi;
+	chunk_t chunk_SK_pr;
 	SECKEYPublicKey *pubk;
 
 	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
@@ -1607,7 +1626,9 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 			 &SK_pi,	/* output */
 			 &SK_pr,	/* output */
 			 &initiator_salt, /* output */
-			 &responder_salt); /* output */
+			 &responder_salt, /* output */
+			 &chunk_SK_pi, /* output */
+			 &chunk_SK_pr); /* output */
 
 	skr->shared = shared;
 	skr->skeyseed = skeyseed;
@@ -1620,4 +1641,6 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 	skr->skeyid_pr = SK_pr;
 	skr->skey_initiator_salt = initiator_salt;
 	skr->skey_responder_salt = responder_salt;
+	skr->skey_chunk_SK_pi = chunk_SK_pi;
+	skr->skey_chunk_SK_pr = chunk_SK_pr;
 }

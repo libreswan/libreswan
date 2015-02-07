@@ -8,6 +8,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -535,6 +536,137 @@ static struct db_attr otpsk1536aes256sha1_xauths[] = {
 	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
 };
 
+/* arrays of attributes for transforms, NULL Authentication */
+
+static struct db_attr otnull2048aes128sha1[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_CBC },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 128 },
+};
+static struct db_attr otnull2048aes128sha2[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_CBC },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA2_256 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 128 },
+};
+static struct db_attr otnull2048aes128xaes[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_CBC },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_AES_XCBC },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 128 },
+};
+static struct db_attr otnull2048aes256sha1[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_CBC },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
+};
+static struct db_attr otnull2048aes256sha2[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_CBC },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA2_256 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
+};
+static struct db_attr otnull2048aes256xaes[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_CBC },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_AES_XCBC },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
+};
+
+static struct db_attr otnull2048aes16gcm128sha1[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA1 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 128 },
+};
+static struct db_attr otnull2048aes16gcm128sha2[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA2_256 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 128 },
+};
+static struct db_attr otnull2048aes16gcm256sha1[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA1 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
+};
+static struct db_attr otnull2048aes16gcm256sha2[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA2_256 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP2048 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
+};
+
+static struct db_attr otnull4096aes16gcm128sha1[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA1 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP4096 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 128 },
+};
+static struct db_attr otnull4096aes16gcm128sha2[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA2_256 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP4096 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 128 },
+};
+static struct db_attr otnull4096aes16gcm256sha1[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA1 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP4096 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
+};
+static struct db_attr otnull4096aes16gcm256sha2[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA2_256 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP4096 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
+};
+
+static struct db_attr otnull8192aes16gcm128sha1[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA1 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP8192 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 128 },
+};
+static struct db_attr otnull8192aes16gcm128sha2[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA2_256 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP8192 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 128 },
+};
+static struct db_attr otnull8192aes16gcm256sha1[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA1 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP8192 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
+};
+static struct db_attr otnull8192aes16gcm256sha2[] = {
+	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_AES_GCM_16 },
+	{ .type.oakley = OAKLEY_PRF, .val = OAKLEY_SHA2_256 },
+	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_AUTH_NULL },
+	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val = OAKLEY_GROUP_MODP8192 },
+	{ .type.oakley = OAKLEY_KEY_LENGTH, .val = 256 },
+};
 /* arrays of attributes for transforms, RSA signatures */
 
 static struct db_attr otrsasig1024aes256md5[] = {
@@ -1367,6 +1499,53 @@ static struct db_trans IKEv2_oakley_trans_psk[] = {
 	{ AD_TR(KEY_IKE, otpsk2048aes128xaes) },
 };
 
+static struct db_trans IKEv2_oakley_trans_null[] = {
+	/*
+	 * IKEv2 proposal #0:
+	 * AES_GCM[256]
+	 * NULL
+	 * SHA1,SHA2_256
+	 * MODP2048, MODP4096, MODP8192
+	*/
+	{ AD_TR(KEY_IKE, otnull2048aes16gcm256sha1) },
+	{ AD_TR(KEY_IKE, otnull2048aes16gcm256sha2) },
+	{ AD_TR(KEY_IKE, otnull4096aes16gcm256sha1) },
+	{ AD_TR(KEY_IKE, otnull4096aes16gcm256sha2) },
+	{ AD_TR(KEY_IKE, otnull8192aes16gcm256sha1) },
+	{ AD_TR(KEY_IKE, otnull8192aes16gcm256sha2) },
+	/*
+	 * IKEv2 proposal #1:
+	 * AES_GCM[128]
+	 * NULL
+	 * SHA1,SHA2_256
+	 * MODP2048, MODP4096, MODP8192
+	 */
+	{ AD_TR(KEY_IKE, otnull2048aes16gcm128sha1) },
+	{ AD_TR(KEY_IKE, otnull2048aes16gcm128sha2) },
+	{ AD_TR(KEY_IKE, otnull4096aes16gcm128sha1) },
+	{ AD_TR(KEY_IKE, otnull4096aes16gcm128sha2) },
+	{ AD_TR(KEY_IKE, otnull8192aes16gcm128sha1) },
+	{ AD_TR(KEY_IKE, otnull8192aes16gcm128sha2) },
+	/*
+	 * IKEv2 proposal #2:
+	 * AES_CBC[256]
+	 * SHA1, SHA2_256, AES_XCBC
+	 * MODP2048
+	 */
+	{ AD_TR(KEY_IKE, otnull2048aes256sha1) },
+	{ AD_TR(KEY_IKE, otnull2048aes256sha2) },
+	{ AD_TR(KEY_IKE, otnull2048aes256xaes) },
+	/*
+	 * IKEv2 proposal #3:
+	 * AES_CBC[256]
+	 * SHA1, SHA2_256, AES_XCBC
+	 * MODP2048
+	 */
+	{ AD_TR(KEY_IKE, otnull2048aes128sha1) },
+	{ AD_TR(KEY_IKE, otnull2048aes128sha2) },
+	{ AD_TR(KEY_IKE, otnull2048aes128xaes) },
+};
+
 static struct db_trans IKEv2_oakley_trans_rsasig[] = {
 	/*
 	 * IKEv2 proposal #0:
@@ -1509,6 +1688,8 @@ static struct db_trans IKEv2_oakley_trans_pskrsasig[] = {
  */
 static struct db_prop IKEv2_oakley_pc_psk[] =
 	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_psk) } };
+static struct db_prop IKEv2_oakley_pc_null[] =
+	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_null) } };
 
 static struct db_prop IKEv2_oakley_pc_rsasig[] =
 	{ { AD_PR(PROTO_ISAKMP, IKEv2_oakley_trans_rsasig) } };
@@ -1519,6 +1700,8 @@ static struct db_prop IKEv2_oakley_pc_pskrsasig[] =
 /* array of proposal conjuncts (can only be one) (OR of protocol) */
 static struct db_prop_conj IKEv2_oakley_props_psk[] =
 	{ { AD_PC(IKEv2_oakley_pc_psk) } };
+static struct db_prop_conj IKEv2_oakley_props_null[] =
+	{ { AD_PC(IKEv2_oakley_pc_null) } };
 
 static struct db_prop_conj IKEv2_oakley_props_rsasig[] =
 	{ { AD_PC(IKEv2_oakley_pc_rsasig) } };
@@ -1528,6 +1711,7 @@ static struct db_prop_conj IKEv2_oakley_props_pskrsasig[] =
 
 struct db_sa IKEv2_oakley_sadb_table[] = {
 	{ AD_NULL },                                    /* none */
+	{ AD_SAp(IKEv2_oakley_props_null) },            /* NULL auth */
 	{ AD_SAp(IKEv2_oakley_props_psk) },             /* PSK */
 	{ AD_SAp(IKEv2_oakley_props_rsasig) },          /* RSASIG */
 	{ AD_SAp(IKEv2_oakley_props_pskrsasig) },       /* PSK + RSASIG */
@@ -1535,7 +1719,7 @@ struct db_sa IKEv2_oakley_sadb_table[] = {
 
 struct db_sa *IKEv2_oakley_sadb(lset_t x)
 {
-	unsigned index = x & LRANGES(POLICY_PSK, POLICY_RSASIG);
+	unsigned index = x & LRANGES(POLICY_PSK, POLICY_AUTH_NULL);
 	passert(index <= elemsof(IKEv2_oakley_sadb_table));
 	return &IKEv2_oakley_sadb_table[index];
 }

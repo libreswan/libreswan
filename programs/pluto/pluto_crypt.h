@@ -8,7 +8,8 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- *
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -214,6 +215,8 @@ struct pcr_skeycalc_v2_r {
 	PK11SymKey *skeyid_pr;
 	chunk_t skey_initiator_salt;
 	chunk_t skey_responder_salt;
+	chunk_t skey_chunk_SK_pi;
+	chunk_t skey_chunk_SK_pr;
 };
 
 struct pluto_crypto_req {

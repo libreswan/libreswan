@@ -6,9 +6,8 @@
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2010,2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012,2014 Antony Antony <antony@phenome.org>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
@@ -1773,6 +1772,8 @@ static stf_status ikev2_send_auth(struct connection *c,
 		a.isaa_type = IKEv2_AUTH_RSA;
 	} else if (c->policy & POLICY_PSK) {
 		a.isaa_type = IKEv2_AUTH_PSK;
+	} else if (c->policy & POLICY_AUTH_NULL) {
+		a.isaa_type = IKEv2_AUTH_NULL;
 	} else {
 		/* what else is there?... DSS not implemented. */
 		loglog(RC_LOG_SERIOUS, "Unknown or not implemented IKEv2 AUTH policy");
@@ -1790,7 +1791,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 				loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
 			return STF_FATAL;
 		}
-	} else if (c->policy & POLICY_PSK) {
+	} else if ((c->policy & POLICY_PSK) || (c->policy & POLICY_AUTH_NULL)) {
 		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs)) {
 				loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
 			return STF_FATAL;
@@ -2243,6 +2244,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 		break;
 	}
 	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_NULL:
 	{
 		stf_status authstat = ikev2_verify_psk_auth(
 				st,
@@ -2591,6 +2593,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		break;
 	}
 	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_NULL:
 	{
 		stf_status authstat = ikev2_verify_psk_auth(
 				pst,

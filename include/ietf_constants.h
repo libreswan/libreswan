@@ -6,7 +6,7 @@
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1112,7 +1112,7 @@ enum ikev1_auth_method {
 	OAKLEY_ECDSA_P384 = 10, /* RFC 4754 */
 	OAKLEY_ECDSA_P521 = 11, /* RFC 4754 */
 	/* 12 - 65000 Unassigned */
-
+	OAKLEY_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
 	/*
 	 * Note: the below xauth names are mapped via xauth_calcbaseauth()
 	 * to the base functions 1-4
@@ -1176,15 +1176,25 @@ enum ikev2_cp_type {
 	IKEv2_CP_CFG_ACK = 4
 };
 
-/* extern enum_names ikev2_auth_names; */
+/*
+ * extern enum_names ikev2_auth_names;
+ * http://www.iana.nl/assignments/ikev2-parameters/ikev2-parameters.xhtml
+ * IKEv2 Authentication Method
+ */
+
 enum ikev2_auth_method {
 	IKEv2_AUTH_RSA = 1,
 	IKEv2_AUTH_PSK = 2,
 	IKEv2_AUTH_DSA = 3,
-	IKEv2_AUTH_P256 = 9,
-	IKEv2_AUTH_P384 = 10,
-	IKEv2_AUTH_P521 = 11,
+	/* 4 - 8 unassigned */
+	IKEv2_AUTH_P256 = 9, /* RFC 4754 */
+	IKEv2_AUTH_P384 = 10, /* RFC 4754 */
+	IKEv2_AUTH_P521 = 11, /* RFC 4754 */
 	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
+	IKEv2_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
+	IKEv2_AUTH_SIG = 14, /* RFC 7427 */
+	/* 15 - 200 unassigned */
+	/* 201 - 255 private use */
 };
 
 /*

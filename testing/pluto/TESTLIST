@@ -130,6 +130,11 @@ kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
 kvmplutotest	ikev2-invalid-ke-04-default-responder	good
 
 kvmplutotest	ikev2-no-nhelpers-01			good
+
+kvmplutotest	ikev2-auth-null-01			good
+
+
+
 kvmplutotest	pluto-ipcmp-01	good
 
 kvmplutotest	ikev1-connswitch-ports-01	wip

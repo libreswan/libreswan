@@ -1,6 +1,6 @@
 /* state and event objects
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2001,2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
@@ -9,6 +9,9 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2014 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -409,6 +412,8 @@ struct state {
 	PK11SymKey *st_skey_pr_nss;	/* KM for ISAKMP encryption */
 	chunk_t st_skey_initiator_salt;
 	chunk_t st_skey_responder_salt;
+	chunk_t st_skey_chunk_SK_pi;
+	chunk_t st_skey_chunk_SK_pr;
 
 	/* connection included in AUTH */
 	struct traffic_selector st_ts_this;

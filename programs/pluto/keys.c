@@ -9,6 +9,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -692,6 +693,11 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 					  &c->spd.that.id,
 					  PPK_PSK, FALSE);
 	const struct private_key_stuff *pks = NULL;
+
+	if (c->policy & POLICY_AUTH_NULL) {
+	DBG(DBG_PRIVATE, DBG_log("PAUL:authnull method uses empty_chunk"));
+		return &empty_chunk;
+	}
 
 	if (s != NULL)
 		pks = lsw_get_pks(s);

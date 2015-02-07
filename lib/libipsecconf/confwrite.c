@@ -1,8 +1,8 @@
 /*
  * Libreswan config file writer (confwrite.c)
  * Copyright (C) 2004-2006 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2015 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  *
@@ -501,6 +501,10 @@ static void confwrite_conn(FILE *out,
 
 				case POLICY_PSK | POLICY_RSASIG:
 					abs = "secret|rsasig";
+					break;
+
+				case POLICY_AUTH_NULL:
+					abs = "null";
 					break;
 
 				default:

@@ -7,7 +7,7 @@
  * Copyright (C) 1998-2004  D. Hugh Redelmeier.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -497,6 +497,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					bool same = 0;
 
 					switch (kind) {
+					case PPK_NULL:
+							same = TRUE;
+						break;
 					case PPK_PSK:
 						same = s->pks.u.preshared_secret.len ==
 						       best->pks.u.preshared_secret.len &&

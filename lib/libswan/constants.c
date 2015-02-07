@@ -1,6 +1,6 @@
 /*
  * tables of names for values defined in constants.h
- * Copyright (C) 2012 Paul Wouteirs <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  *
@@ -1361,11 +1361,12 @@ static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_ECDSA_P384",
 	"IKEv2_AUTH_ECDSA_P521",
 	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
+	"IKEv2_AUTH_NULL",
 };
 
 enum_names ikev2_auth_names = {
 	IKEv2_AUTH_RSA,
-	IKEv2_AUTH_GSPM,
+	IKEv2_AUTH_NULL,
 	ikev2_auth_name,
 	NULL
 };
@@ -2051,12 +2052,13 @@ static const char *const ppk_name[] = {
 	"PPK_PSK",
 	"PPK_RSA",
 	"PPK_XAUTH",
+	"PPK_NULL",
 	NULL
 };
 
 enum_names ppk_names = {
 	PPK_PSK,
-	PPK_XAUTH,
+	PPK_NULL,
 	ppk_name,
 	NULL
 };

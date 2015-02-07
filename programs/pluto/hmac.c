@@ -5,7 +5,7 @@
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -56,8 +56,13 @@ void hmac_init(struct hmac_ctx *ctx,
 	PK11SymKey
 		*tkey1,
 		*tkey2;
-	unsigned int klen = PK11_GetKeyLength(symkey);
+	unsigned int klen;
 	chunk_t hmac_opad, hmac_ipad, hmac_pad;
+
+	if (symkey != NULL) 
+		klen = PK11_GetKeyLength(symkey);
+	else
+		klen = 0;
 
 	ctx->h = h;
 	ctx->hmac_digest_len = h->hash_digest_len;
@@ -235,8 +240,9 @@ PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
 	param.data = (unsigned char*)&string;
 	param.len = sizeof(string);
 
-	return PK11_Derive(base, mechanism, &param, target, operation,
-			   keySize);
+	return PK11_Derive(base, mechanism,
+		data.len == 0 ? NULL : &param,
+		target, operation, keySize);
 }
 
 /* MUST BE THREAD-SAFE */
@@ -350,8 +356,7 @@ chunk_t hmac_pads(u_char val, unsigned int len)
 void nss_symkey_log(PK11SymKey *key, const char *msg)
 {
 	if (key == NULL) {
-		/* ??? should we print this even if !DBG_CRYPT? */
-		DBG_log("NULL key %s", msg);
+		DBG(DBG_CRYPT,DBG_log("NULL key %s", msg));
 	} else {
 		DBG(DBG_CRYPT, {
 			DBG_log("computed key %s with length =%d", msg,

@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redaht.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -271,6 +272,8 @@ void finish_dh_v2(struct state *st,
 	st->st_skey_er_nss = dhv2->skeyid_er;
 	st->st_skey_initiator_salt = dhv2->skey_initiator_salt;
 	st->st_skey_responder_salt = dhv2->skey_responder_salt;
+	st->st_skey_chunk_SK_pi = dhv2->skey_chunk_SK_pi;
+	st->st_skey_chunk_SK_pr = dhv2->skey_chunk_SK_pr;
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;
 }

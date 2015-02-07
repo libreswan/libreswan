@@ -1,7 +1,7 @@
 /* manifest constants
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
@@ -582,12 +582,13 @@ extern const char *prettypolicy(lset_t policy);
 enum sa_policy_bits {
 	POLICY_PSK_IX,
 	POLICY_RSASIG_IX,
+	POLICY_AUTH_NULL_IX,
 #define POLICY_ISAKMP_SHIFT	POLICY_PSK_IX
 
 	/* policies that affect ID types that are acceptable - RSA, PSK, XAUTH
 	* ??? This set constant certainly doesn't include XAUTH.
 	*/
-#define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_RSASIG_IX)
+#define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
 
 	/* Quick Mode (IPSEC) attributes */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
@@ -661,6 +662,7 @@ enum sa_policy_bits {
 
 #define POLICY_PSK	LELEM(POLICY_PSK_IX)
 #define POLICY_RSASIG	LELEM(POLICY_RSASIG_IX)
+#define POLICY_AUTH_NULL LELEM(POLICY_AUTH_NULL_IX)
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
 #define POLICY_AUTHENTICATE	LELEM(POLICY_AUTHENTICATE_IX)	/* must be second */
 #define POLICY_COMPRESS	LELEM(POLICY_COMPRESS_IX)	/* must be third */
@@ -753,6 +755,7 @@ enum PrivateKeyKind {
 	PPK_PSK = 1,
 	PPK_RSA,
 	PPK_XAUTH,
+	PPK_NULL,
 };
 
 #define XAUTH_PROMPT_TRIES 3
