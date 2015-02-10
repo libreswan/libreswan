@@ -132,6 +132,9 @@ static void print_key(struct secret *secret,
 			if (disclose)
 				printf("    xauth: \"%s\"\n", pskbuf);
 			break;
+		case PPK_NULL:
+			// can't happen but the compiler does not know that
+			break;
 		}
 
 		l = l->next;
