@@ -133,6 +133,7 @@ kvmplutotest	ikev2-no-nhelpers-01			good
 
 kvmplutotest	ikev2-auth-null-01			good
 
+kvmplutotest	ikev2-ddos-01				wip
 
 
 kvmplutotest	pluto-ipcmp-01	good
