@@ -250,8 +250,12 @@ static void help(void)
 		" [--debug-private]"
 		"\n\n"
 		"testcases: [--whackrecord file] [--whackstoprecord]\n"
+		"\n\n"
 		"listen: whack"
 		" (--listen | --unlisten)"
+		"\n\n"
+		"ddos-protection: whack"
+		" (--ddos-busy | --ddos-unlimited | --ddos-auto)"
 		"\n\n"
 		"list: whack [--utc]"
 		" [--checkpubkeys]"
@@ -285,9 +289,8 @@ static void help(void)
 		"\n\n"
 		"status: whack"
 		" --status"
-		"\n\n"
-		"trafficstatus: whack"
 		" --trafficstatus"
+		" --globalstatus"
 		"\n\n"
 		"shutdown: whack"
 		" --shutdown"
@@ -378,6 +381,10 @@ enum option_enums {
 	OPT_LISTEN,
 	OPT_UNLISTEN,
 
+	OPT_DDOS_BUSY,
+	OPT_DDOS_UNLIMITED,
+	OPT_DDOS_AUTO,
+
 	OPT_REREADSECRETS,
 	OPT_REREADCACERTS,
 	OPT_REREADAACERTS,
@@ -386,6 +393,7 @@ enum option_enums {
 	OPT_REREADALL,
 
 	OPT_STATUS,
+	OPT_GLOBAL_STATUS,
 	OPT_SHUTDOWN,
 	OPT_TRAFFIC_STATUS,
 
@@ -573,6 +581,10 @@ static const struct option long_opts[] = {
 	{ "listen", no_argument, NULL, OPT_LISTEN + OO },
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
 
+	{ "ddos-busy", no_argument, NULL, OPT_DDOS_BUSY + OO },
+	{ "ddos-unlimited", no_argument, NULL, OPT_DDOS_UNLIMITED + OO },
+	{ "ddos-auto", no_argument, NULL, OPT_DDOS_AUTO + OO },
+
 	{ "rereadsecrets", no_argument, NULL, OPT_REREADSECRETS + OO },
 	{ "rereadcacerts", no_argument, NULL, OPT_REREADCACERTS + OO },
 	{ "rereadaacerts", no_argument, NULL, OPT_REREADAACERTS + OO },
@@ -581,6 +593,7 @@ static const struct option long_opts[] = {
 	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO },
 	{ "rereadall", no_argument, NULL, OPT_REREADALL + OO },
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
+	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
 	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
@@ -935,6 +948,7 @@ int main(int argc, char **argv)
 
 	clear_end(&msg.right);  /* left set from this after --to */
 
+	/* msg was zero'd - setting to NULL is not needed */
 	msg.name = NULL;
 	msg.dnshostname = NULL;
 
@@ -1198,6 +1212,17 @@ int main(int argc, char **argv)
 			msg.whack_deleteuser = TRUE;
 			continue;
 
+		case OPT_DDOS_BUSY: /* --ddos-busy */
+			msg.whack_ddos = DDOS_FORCE_BUSY;
+			continue;
+
+		case OPT_DDOS_UNLIMITED: /* --ddos-unlimited */
+			msg.whack_ddos = DDOS_FORCE_UNLIMITED;
+			continue;
+
+		case OPT_DDOS_AUTO: /* --ddos-auto */
+			msg.whack_ddos = DDOS_AUTO;
+			continue;
 
 		case OPT_LISTEN: /* --listen */
 			msg.whack_listen = TRUE;
@@ -1221,6 +1246,10 @@ int main(int argc, char **argv)
 
 		case OPT_STATUS: /* --status */
 			msg.whack_status = TRUE;
+			continue;
+
+		case OPT_GLOBAL_STATUS: /* --global-status */
+			msg.whack_global_status = TRUE;
 			continue;
 
 		case OPT_TRAFFIC_STATUS: /* --trafficstatus */
@@ -1962,9 +1991,10 @@ int main(int argc, char **argv)
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
 	      msg.whack_unlisten || msg.whack_list ||
+	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_reread || msg.whack_crash ||
-	      msg.whack_status || msg.whack_traffic_status || msg.whack_options ||
-	      msg.whack_shutdown))
+	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
+	      msg.whack_options || msg.whack_shutdown))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {

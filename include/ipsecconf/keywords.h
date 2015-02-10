@@ -49,6 +49,7 @@ enum keyword_string_config_field {
 	KSF_MYVENDORID,
 	KSF_PLUTOSTDERRLOG,
 	KSF_PROTOSTACK,
+	KSF_DDOS_MODE,
 	KSF_IKE,
 	KSF_ESP,
 	KSF_ALSO,
@@ -114,7 +115,9 @@ enum keyword_numeric_config_field {
 	KBF_IKEv2,
 	KBF_IKEv2_ALLOW_NARROWING,
 	KBF_CONNADDRFAMILY,
-	KBF_FORCEBUSY,
+	KBF_FORCEBUSY, /* obsoleted for KBF_DDOS_MODE */
+	KBF_DDOS_IKE_TRESHOLD,
+	KBF_MAX_HALFOPEN_IKE,
 	KBF_OVERLAPIP,
 	KBF_REMOTEPEERTYPE,     /*Cisco interop: remote peer type */
 	KBF_NMCONFIGURED,       /*Network Manager support */

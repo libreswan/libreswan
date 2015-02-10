@@ -81,11 +81,17 @@ static const struct keyword_enum_value kw_ynf_values[] = {
 	{ "never",     ynf_no },
 	{ "no",        ynf_no },
 	{ "yes",       ynf_yes },
-	{ "insist",     ynf_force },
+	{ "insist",    ynf_force },
 	{ "force",     ynf_force },
 };
-
 static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_values);
+
+static const struct keyword_enum_value kw_ddos_values[] = {
+	{ "auto",      DDOS_AUTO },
+	{ "busy",      DDOS_FORCE_BUSY },
+	{ "unlimited", DDOS_FORCE_UNLIMITED },
+};
+static const struct keyword_enum_values kw_ddos_list = VALUES_INITIALIZER(kw_ddos_values);
 
 /*
  * Values for authby={rsasig, secret, null}
@@ -358,8 +364,11 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "crlcheckinterval", kv_config, kt_time,     KBF_CRLCHECKINTERVAL,
 	  NOT_ENUM },
-	{ "force_busy",     kv_config | kv_alias, kt_bool,      KBF_FORCEBUSY, NOT_ENUM },	/* obsolete _ */
-	{ "force-busy",     kv_config, kt_bool,      KBF_FORCEBUSY, NOT_ENUM },
+	{ "force_busy",     kv_config | kv_alias, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },	/* obsolete _ */
+	{ "force-busy",     kv_config, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },
+	{ "ddos-mode",     kv_config | kv_processed , kt_enum, KSF_DDOS_MODE, &kw_ddos_list },
+	{ "ddos-ike-treshold",        kv_config, kt_number,     KBF_DDOS_IKE_TRESHOLD, NOT_ENUM },
+	{ "max-halfopen-ike",        kv_config, kt_number,     KBF_MAX_HALFOPEN_IKE, NOT_ENUM },
 	{ "ikeport",        kv_config, kt_number,     KBF_IKEPORT, NOT_ENUM },
 
 	{ "virtual_private", kv_config | kv_alias, kt_string,     KSF_VIRTUALPRIVATE, NOT_ENUM },	/* obsolete _ */

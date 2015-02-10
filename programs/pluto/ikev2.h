@@ -198,8 +198,6 @@ extern bool ship_v2N(enum next_payload_types_ikev2 np,
 		     v2_notification_t type,
 		     const chunk_t *n_data, pb_stream *rbody);
 
-extern bool force_busy;	/* config option to emulate responder under DOS */
-
 extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 				  enum phase1_role role);
 

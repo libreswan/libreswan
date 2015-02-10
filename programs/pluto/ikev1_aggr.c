@@ -230,6 +230,10 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	struct state *st;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 
+       if (drop_new_exchanges()) {
+		return STF_IGNORE;
+	}
+
 	const lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) |
 		POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW;
 
@@ -1119,6 +1123,13 @@ stf_status aggr_outI1(int whack_sock,
 {
 	struct state *st;
 	struct spd_route *sr;
+
+	if (drop_new_exchanges()) {
+		/* Only drop outgoing opportunistic connections */
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			return STF_IGNORE;
+		}
+	}
 
 	/* set up new state */
 	cur_state = st = new_state();

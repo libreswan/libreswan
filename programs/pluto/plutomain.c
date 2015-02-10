@@ -397,9 +397,6 @@ bool strict_crl_policy = FALSE;
 /* 0 is special and default: do not check crls dynamically */
 deltatime_t crl_check_interval = { 0 };
 
-/* by default pluto sends no cookies in ikev2 or ikev1 aggrmode */
-bool force_busy = FALSE;
-
 /* whether or not to use klips */
 enum kernel_interface kern_interface = USE_NETKEY;	/* new default */
 
@@ -452,6 +449,7 @@ static const struct option long_opts[] = {
 	{ "plutostderrlogtime\0", no_argument, NULL, 't' },
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
+	{ "force-unlimited\0", no_argument, NULL, 'U' },
 	{ "strictcrlpolicy\0", no_argument, NULL, 'r' },
 	{ "crlcheckinterval\0<seconds>", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
@@ -846,7 +844,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'D':	/* --force-busy */
-			force_busy = TRUE;
+			pluto_ddos_mode = DDOS_FORCE_BUSY;
+			continue;
+		case 'U':	/* --force-unlimited */
+			pluto_ddos_mode = DDOS_FORCE_UNLIMITED;
 			continue;
 
 		case 'r':	/* --strictcrlpolicy */
@@ -991,7 +992,14 @@ int main(int argc, char **argv)
 			fork_desired = cfg->setup.options[KBF_PLUTOFORK];
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
-			force_busy = cfg->setup.options[KBF_FORCEBUSY];
+			pluto_ddos_mode = cfg->setup.options[KSF_DDOS_MODE];
+			if (cfg->setup.options[KBF_FORCEBUSY]) { /* obsoleted */
+				pluto_ddos_mode = cfg->setup.options[KSF_DDOS_MODE] = DDOS_FORCE_BUSY;
+			}
+			/* ddos-ike-treshold and max-halfopen-ike */
+			pluto_ddos_treshold = cfg->setup.options[KBF_DDOS_IKE_TRESHOLD];
+			pluto_max_halfopen = cfg->setup.options[KBF_MAX_HALFOPEN_IKE];
+
 			strict_crl_policy =
 				cfg->setup.options[KBF_STRICTCRLPOLICY];
 			crl_check_interval = deltatime(
@@ -1535,10 +1543,16 @@ void show_setup_plutomain()
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, force-busy=%s",
+		"nhelpers=%d, uniqueids=%s",
 		nhelpers,
-		uniqueIDs ? "yes" : "no",
-		force_busy ? "yes" : "no");
+		uniqueIDs ? "yes" : "no");
+
+	whack_log(RC_COMMENT,
+		"ddos-cookies-treshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
+		pluto_max_halfopen,
+		pluto_ddos_treshold,
+		(pluto_ddos_mode == DDOS_AUTO) ? "auto" :
+			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 
 	whack_log(RC_COMMENT,
 		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s",

@@ -1443,6 +1443,20 @@ and take counter measures\&. The value can be
 \fIyes\fR\&. If enabled, pluto will be forced to be "busy"\&. In this state, which happens when there is a Denial of Service attack, pluto will use cookies before accepting new incoming IKE packets\&. Cookies are send and required for IKEv1 Aggressive Mode and in IKEv2\&. This option is mostly used for testing purposes, but can be selected by paranoid administrators as well\&.
 .RE
 .PP
+\fBddos\-ike\-treshold\&.xml\fR
+.RS 4
+The number of half\-open IKE SAs before the pluto IKE daemon will be placed in busy mode\&. When in busy mode, pluto activates anti\-DDoS counter measures\&. The default is 25000\&. Currently, counter measures consist of requiring IKEv2 anti\-DDoS cookies on new incoming IKE requests\&. The IKE daemon can be forced into busy mode using
+\fIipsec whack \-\-busy\fR
+or by specifying the
+\fIforce\-busy=yes\fR
+option\&.
+.RE
+.PP
+\fBmax\-halfopen\-ike\fR
+.RS 4
+The number of half\-open IKE SAs before the IKE daemon starts refusing all new IKE attempts\&. Established IKE peers are not affected\&. The default value is 50000\&.
+.RE
+.PP
 \fBdumpdir\fR
 .RS 4
 in what directory should things started by

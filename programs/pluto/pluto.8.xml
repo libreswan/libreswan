@@ -408,6 +408,20 @@
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
       <group choice="plain">
+        <arg choice="plain">--busy</arg>
+
+        <arg choice="plain">--relax</arg>
+      </group>
+
+      <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
+      <group choice="plain">
         <arg choice="plain">--route</arg>
 
         <arg choice="plain">--unroute</arg>
@@ -2435,6 +2449,31 @@
 
           <listitem>
             <para>stop listening for IKE traffic on public interfaces.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>The busy and relax options tells <emphasis remap="B">pluto</emphasis> to
+      explicitly activate or deactivate additional DDoS protection. Normally, these
+      meassures are automatically activate or deactivate based on the number of
+      states inside pluto. One of these DDoS protection methods is to active IKEv2
+      DCOOKIEs to defend against spoofed IKE packets.
+      </para>
+
+      <variablelist remap="TP">
+        <varlistentry>
+          <term><option>--busy</option></term>
+
+          <listitem>
+            <para>place pluto into busy mode and activate anti-DDoS measures.</para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--relax</option></term>
+
+          <listitem>
+            <para>pull pluto out of busy mode and deactivate anti-DDoS measures.</para>
           </listitem>
         </varlistentry>
       </variablelist>

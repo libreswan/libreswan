@@ -98,12 +98,10 @@ enum whack_opt_set {
 struct whack_message {
 	unsigned int magic;
 
-	/* for WHACK_STATUS: */
 	bool whack_status;
-
+	bool whack_global_status;
 	bool whack_traffic_status;
 
-	/* for WHACK_SHUTDOWN */
 	bool whack_shutdown;
 
 	/* END OF BASIC COMMANDS
@@ -237,6 +235,9 @@ struct whack_message {
 
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
+
+	/* for DDOS modes */
+	enum ddos_mode whack_ddos;
 
 	/* for WHACK_CRASH - note if a remote peer is known to have rebooted */
 	bool whack_crash;

@@ -162,7 +162,16 @@ stf_status ikev2parent_outI1(int whack_sock,
 #endif
 			     )
 {
-	struct state *st = new_state();
+	struct state *st;
+
+	if (drop_new_exchanges()) {
+		/* Only drop outgoing opportunistic connections */
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			return STF_IGNORE;
+		}
+	}
+
+	st = new_state();
 
 	/* set up new state */
 	get_cookie(TRUE, st->st_icookie, COOKIE_SIZE, &c->spd.that.host_addr);
@@ -531,14 +540,15 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 {
-	/* Check: as a responder, are we under DoS attack or not?
-	 * If yes go to 6 message exchange mode. It is a config option for now.
-	 * TBD set force_busy dynamically.
-	 * Paul: Can we check for STF_TOOMUCHCRYPTO?
-	 */
-	if (force_busy) {
-		u_char dcookie[SHA1_DIGEST_SIZE];
-		chunk_t dc, ni, spiI;
+	if (drop_new_exchanges()) {
+		/* only log for debug to prevent disk filling up */
+		DBG(DBG_CONTROL,DBG_log("pluto is overloaded with half-open IKE SAs - dropping IKE_INIT request"));
+		return STF_IGNORE;
+	}
+
+        if (require_ddos_cookies()) {
+                u_char dcookie[SHA1_DIGEST_SIZE];
+                chunk_t dc, ni, spiI;
 
 		setchunk(spiI, md->hdr.isa_icookie, COOKIE_SIZE);
 		setchunk(ni, md->chain[ISAKMP_NEXT_v2Ni]->pbs.cur,
@@ -606,7 +616,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		}
 	} else {
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("will not send/process a dcookie"));
+		    DBG_log("anti-DDoS cookies not required"));
 	}
 
 	/* ??? from here on looks a lot like main_inI1_outR1 */
@@ -3115,6 +3125,7 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 	set_cur_state(st);	/* (caller will reset) */
 	md->st = st;		/* feed back new state. ??? better way to do */
 	insert_state(st); /* needed for delete - we are duplicating early */
+	/* XXX we should call change_state() ? arent we in STATE_UNDEFINED now? */ 
 
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 		/* in CREATE_CHILD_SA exchange we don't support new KE */

@@ -552,15 +552,12 @@ extern bool dpd_active_locally(const struct state *st);
  */
 #define refresh_state(st) log_state((st), (st)->st_state)
 #define fake_state(st, new_state) log_state((st), (new_state))
-#define change_state(st, new_state) \
-	{ \
-		if ((new_state) != (st)->st_state) { \
-			log_state((st), (new_state)); \
-			(st)->st_state = (new_state); \
-		} \
-	}
+extern void change_state(struct state *st, enum state_kind new_state);
 
 extern bool state_busy(const struct state *st);
 extern void clear_dh_from_state(struct state *st);
+extern bool drop_new_exchanges(void);
+extern bool require_ddos_cookies(void);
+extern void show_globalstate_status(void);
 
 #endif /* _STATE_H */

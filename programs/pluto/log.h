@@ -137,6 +137,7 @@ extern void daily_log_event(void);
 
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
+extern void show_global_status(void);
 
 #ifdef USE_LINUX_AUDIT
 #include <libaudit.h>

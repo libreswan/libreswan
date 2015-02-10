@@ -800,6 +800,11 @@ static void show_system_security(void)
 
 }
 
+void show_global_status(void)
+{
+	show_globalstate_status();
+}
+
 void show_status(void)
 {
 	show_kernel_interface();

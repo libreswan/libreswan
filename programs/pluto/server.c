@@ -188,7 +188,11 @@ void delete_ctl_socket(void)
 	unlink(ctl_addr.sun_path);
 }
 
-bool listening = FALSE;                 /* should we pay attention to IKE messages? */
+bool listening = FALSE;  /* should we pay attention to IKE messages? */
+
+enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
+unsigned int pluto_max_halfopen = DEFAULT_MAXIMIM_HALFOPEN_IKE_SA;
+unsigned int pluto_ddos_treshold = DEFAULT_IKE_SA_DDOS_TRESHOLD;
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
@@ -1351,3 +1355,18 @@ bool send_keepalive(struct state *st, const char *where)
 	return send_packet(st, where, TRUE, &ka_payload, sizeof(ka_payload),
 			   NULL, 0);
 }
+
+void set_whack_pluto_ddos(enum ddos_mode mode)
+{
+	if (mode == pluto_ddos_mode) {
+		loglog(RC_LOG,"pluto DDoS protection remains in %s mode",
+		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
+		return;
+	}
+
+	pluto_ddos_mode = mode;
+	loglog(RC_LOG,"pluto DDoS protection mode set to %s",
+		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
+
+}
+

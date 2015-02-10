@@ -103,10 +103,19 @@ stf_status main_outI1(int whack_sock,
 #endif
 	)
 {
-	struct state *st = new_state();
+	struct state *st;
 	struct msg_digest md; /* use reply/rbody found inside */
 
 	int numvidtosend = 1; /* we always send DPD VID */
+
+	if (drop_new_exchanges()) {
+		/* Only drop outgoing opportunistic connections */
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			return STF_IGNORE;
+		}
+	}
+
+	st = new_state();
 
 	/* Increase VID counter for VID_IKE_FRAGMENTATION */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW)
@@ -580,6 +589,10 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	/* Determine how many Vendor ID payloads we will be sending */
 	int numvidtosend = 1; /* we always send DPD VID */
+
+	if (drop_new_exchanges()) {
+		return STF_IGNORE;
+	}
 
 	/* random source ports are handled by find_host_connection */
 	c = find_host_connection(

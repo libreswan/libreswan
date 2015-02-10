@@ -434,6 +434,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 		listening = FALSE;
 	}
 
+	if (msg.whack_ddos != DDOS_undefined)
+		set_whack_pluto_ddos(msg.whack_ddos);
+
 	if (msg.whack_reread & REREAD_SECRETS)
 		load_preshared_secrets();
 
@@ -556,6 +559,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_status)
 		show_status();
+
+	if (msg.whack_global_status)
+		show_global_status();
 
 	if (msg.whack_traffic_status)
 		show_states_status(TRUE);

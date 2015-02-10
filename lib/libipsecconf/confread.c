@@ -87,6 +87,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	TAILQ_INIT(&cfg->conns);
 
+	/* config setup */
 	cfg->setup.options[KBF_FRAGICMP] = FALSE; /* see sysctl_ipsec_icmp in ipsec_proc.c */
 	cfg->setup.options[KBF_HIDETOS]  = TRUE;
 	cfg->setup.options[KBF_PLUTORESTARTONCRASH]  = TRUE;
@@ -99,14 +100,17 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->setup.options[KBF_KEEPALIVE] = 0;                  /* config setup */
 	cfg->setup.options[KBF_NATIKEPORT] = NAT_IKE_UDP_PORT;
-
+	cfg->setup.options[KBF_DDOS_IKE_TRESHOLD] = DEFAULT_IKE_SA_DDOS_TRESHOLD;
+	cfg->setup.options[KBF_MAX_HALFOPEN_IKE] = DEFAULT_MAXIMIM_HALFOPEN_IKE_SA;
 	/* Don't inflict BSI requirements on everyone */
 	cfg->setup.options[KBF_SEEDBITS] = 0;
 
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;
 #endif
+	cfg->setup.options[KSF_DDOS_MODE] = DDOS_AUTO;
 
+	/* conn %default */
 	cfg->conn_default.options[KBF_NAT_KEEPALIVE] = TRUE;    /* per conn */
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 

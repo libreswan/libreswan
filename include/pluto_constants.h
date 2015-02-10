@@ -125,7 +125,7 @@ enum event_type {
 };
 
 #define EVENT_REINIT_SECRET_DELAY	secs_per_hour
-#define EVENT_CRYPTO_FAILED_DELAY	(5 * secs_per_minute)
+#define EVENT_CRYPTO_FAILED_DELAY	10
 #define EVENT_RETRANSMIT_DELAY_0	10	/* 10 seconds */
 #define EVENT_RETRANSMIT_DELAY_CAP	60	/* 10 seconds */
 #define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
@@ -144,6 +144,14 @@ enum crypto_importance {
 	pcim_ongoing_crypto,
 	pcim_local_crypto,
 	pcim_demand_crypto
+};
+
+/* is pluto automatically switching busy state or set manually */
+enum ddos_mode {
+	DDOS_undefined,
+        DDOS_AUTO,
+        DDOS_FORCE_BUSY,
+        DDOS_FORCE_UNLIMITED
 };
 
 /* status for state-transition-function
@@ -180,6 +188,8 @@ typedef enum {
 
 #define MAX_IKE_FRAGMENTS       16
 
+#define DEFAULT_MAXIMIM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
+#define DEFAULT_IKE_SA_DDOS_TRESHOLD 25000 /* fairly arbitrary */
 
 /* debugging settings: a set of selections for reporting
  * These would be more naturally situated in log.h,
@@ -305,7 +315,7 @@ enum {
  */
 
 enum state_kind {
-	STATE_UNDEFINED=0, /* 0 -- most likely accident */
+	STATE_UNDEFINED = 0,
 
 	/*  Opportunism states: see "Opportunistic Encryption" 2.2 */
 
@@ -349,7 +359,7 @@ enum state_kind {
 
 	STATE_XAUTH_I0,                 /* client state is awaiting request */
 	STATE_XAUTH_I1,                 /* client state is awaiting result code */
-	STATE_IKE_ROOF,
+	STATE_IKE_ROOF, /* rename to STATE_IKEv1_ROOF */
 
 	/*
 	 * IKEv2 states.
@@ -378,6 +388,10 @@ enum state_kind {
 
 	STATE_IKEv2_ROOF,
 };
+#define STATE_IKE_FLOOR STATE_MAIN_R0
+/* rename to STATE_IKE_ROOF, see above */
+#define MAX_STATES STATE_IKEv2_ROOF
+
 
 /* This is the IKE role, in RFC terms the Original Initiator or
  * Original Responder. It is used for SPI lookup.
@@ -394,7 +408,6 @@ enum phase1_role {
 	O_RESPONDER=2
 };
 
-#define STATE_IKE_FLOOR STATE_MAIN_R0
 
 #define PHASE1_INITIATOR_STATES  (LELEM(STATE_MAIN_I1) | \
 				  LELEM(STATE_MAIN_I2) | \
@@ -485,6 +498,8 @@ enum phase1_role {
 
 #define IS_IKE_SA(st) (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) ||\
 		IS_PARENT_SA(st))
+#define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
+#define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
 
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.

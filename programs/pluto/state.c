@@ -74,6 +74,8 @@
 #include <pk11pub.h>
 #include <keyhi.h>
 
+void update_state_stats(struct state *st, enum state_kind new_state);
+
 /*
  * Global variables: had to go somewhere, might as well be this file.
  */
@@ -85,6 +87,95 @@ u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT; /* Pluto's NAT-T port */
  * This file has the functions that handle the
  * state hash table and the Message ID list.
  */
+
+static unsigned int state_count[MAX_STATES]; /* for DDoS tracking, used in change_state */
+static unsigned int st_total;
+static unsigned int st_children; /* duplicates states for IPsec SAs */
+static unsigned int st_parents; /* new states for IKE SAs */
+static unsigned int st_half_open; /* all I-0 IKE SAs - initiating (and responding because of OE) */
+static unsigned int st_anonymous; /* established peer IKE SAs that used AUTH_NULL */
+static unsigned int st_authenticated; /* established authenticated peer IKE SAs */
+
+void change_state(struct state *st, enum state_kind new_state)
+{
+	enum state_kind old_state = st->st_state;
+
+	// tmp logging
+	const char* OLD = enum_name(&state_names, st->st_state);
+	const char* NEW = enum_name(&state_names, new_state);
+	libreswan_log("PAUL: from %s to %s", OLD, NEW);
+
+	if (new_state == old_state)
+		return;
+
+	log_state(st, new_state);
+	st->st_state = new_state;
+
+	update_state_stats(st, old_state);
+}
+
+void update_state_stats(struct state *st, enum state_kind old_state)
+{
+	struct connection *c = st->st_connection;
+	enum state_kind new_state = st->st_state;
+	enum state_kind s;
+
+	/* don't count STATE_UNDEFINED */
+	if (old_state != STATE_UNDEFINED)
+		state_count[old_state]--;
+	if (new_state != STATE_UNDEFINED)
+		state_count[new_state]++; 
+
+	st_total = st_parents = st_children = 0;
+	/* skip counting STATE_UNDEFINED states */
+	for (s = 1; s < MAX_STATES; s++) {
+		if (IS_IKE_STATE(s)) {
+			st_parents += state_count[s];
+		} else {
+			st_children += state_count[s]; 
+		}
+		st_total += state_count[s];
+	}
+	/*
+	 * we count I1 as half-open too because with OE, a plaintext
+	 * packet (that is spoofed) will trigger an outgoing IKE SA
+	 *
+	 * we could do better and check POLICY_OPPORTUNISTIC on I1's
+	 */
+	st_half_open = state_count[STATE_AGGR_R0] +
+		state_count[STATE_AGGR_I1] +
+		state_count[STATE_MAIN_R0] +
+		state_count[STATE_MAIN_I1] +
+		state_count[STATE_PARENT_R1] +
+		state_count[STATE_PARENT_I1];
+
+	/* st_anonymous and st_authenticated only count IKE SAs not IPsec SAs */
+	if (IS_PARENT_SA(st)) {
+		/* we have to count auth/anon based on connection property */
+		if (new_state == STATE_UNDEFINED) {
+			/* this is a delete */
+			if (c == NULL || c->policy & POLICY_OPPORTUNISTIC) {
+				st_anonymous--;
+			} else {
+				st_authenticated--;
+			}
+		}
+		if (old_state == STATE_UNDEFINED) {
+			/* this is an add - always unauth/anon at first */
+			st_anonymous++;
+		}
+		// check changed state for change from unauthenticated -> authenticated (count auth_null as unauthenticated)
+		if (new_state == STATE_PARENT_I3 || new_state == STATE_PARENT_R2 ||
+			new_state == STATE_MAIN_I4 || new_state == STATE_MAIN_R3 ||
+			new_state == STATE_AGGR_I2 || new_state == STATE_AGGR_R2)
+			
+			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				st_anonymous--;
+				st_authenticated++;
+			}
+	} /* we don't track anony/auth for child sa's */
+	pexpect(st_parents = st_anonymous + st_authenticated);
+}
 
 /* humanize_number: make large numbers clearer by expressing them as KB or MB, as appropriate.
  * The prefix is literally copied into the output.
@@ -862,6 +953,7 @@ struct state *duplicate_state(struct state *st)
 	st->st_outbound_time = mononow();
 
 	nst = new_state();
+	st_children++;
 
 	memcpy(nst->st_icookie, st->st_icookie, COOKIE_SIZE);
 	memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
@@ -1657,7 +1749,15 @@ void show_states_status(bool list_traffic)
 		whack_log(RC_COMMENT, " ");             /* spacer */
 	}	else {
 		whack_log(RC_COMMENT, " ");             /* spacer */
-		whack_log(RC_COMMENT, "State list:");   /* spacer */
+		whack_log(RC_COMMENT, "State Information: DDoS cookies %s, %s new IKE connections",
+			require_ddos_cookies() ? "REQUIRED" : "not required",
+			drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
+
+		whack_log(RC_COMMENT, "IKE SAs: total(%d), half-open(%d), authenticated(%d), anonymous(%d)",
+			st_total - st_children, st_half_open,
+			st_authenticated, st_anonymous);
+		whack_log(RC_COMMENT, "IPsec SAs: total(%d), anonymous(<todo>)",
+			st_children);
 		whack_log(RC_COMMENT, " ");             /* spacer */
 	}
 
@@ -1920,5 +2020,36 @@ void clear_dh_from_state(struct state *st)
 		SECKEY_DestroyPublicKey(st->st_pubk_nss);
 		SECKEY_DestroyPrivateKey(st->st_sec_nss);
 		st->st_sec_in_use = FALSE;
+	}
+}
+
+bool require_ddos_cookies()
+{
+	return (pluto_ddos_mode == DDOS_FORCE_BUSY) ||
+		((pluto_ddos_mode == DDOS_AUTO) &&
+			(st_half_open >= pluto_ddos_treshold));
+}
+
+bool drop_new_exchanges()
+{
+	return st_half_open >= pluto_max_halfopen;
+}
+
+void show_globalstate_status(void)
+{
+	enum state_kind s;
+
+	whack_log(RC_COMMENT, "~states.total %d",st_total);
+	whack_log(RC_COMMENT, "~states.ipsec %d",st_children);
+	whack_log(RC_COMMENT, "~states.ike %d",st_parents);
+	whack_log(RC_COMMENT, "~states.ike.anonymous %d",st_anonymous);
+	whack_log(RC_COMMENT, "~states.ike.authenticated %d",st_authenticated);
+	whack_log(RC_COMMENT, "~states.ike.halfopen %d",st_half_open);
+	whack_log(RC_COMMENT, "~states.ike.ddos_threshold %d",pluto_ddos_treshold);
+	whack_log(RC_COMMENT, "~states.ike.max.all %d",pluto_max_halfopen);
+	for (s = STATE_MAIN_R0; s < MAX_STATES; s++)
+	{
+		whack_log(RC_COMMENT, "~states.enumerate.%s:%d",
+			enum_show(&state_names, s), state_count[s]);
 	}
 }
