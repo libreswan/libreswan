@@ -103,7 +103,6 @@ void change_state(struct state *st, enum state_kind new_state)
 	// tmp logging
 	const char* OLD = enum_name(&state_names, st->st_state);
 	const char* NEW = enum_name(&state_names, new_state);
-	libreswan_log("PAUL: from %s to %s", OLD, NEW);
 
 	if (new_state == old_state)
 		return;
