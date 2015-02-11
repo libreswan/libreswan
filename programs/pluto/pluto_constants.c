@@ -284,6 +284,7 @@ enum_names stfstatus_name =
 const char *const sa_policy_bit_names[] = {
 	"PSK",
 	"RSASIG",
+	"AUTHNULL",
 	"ENCRYPT",
 	"AUTHENTICATE",
 	"COMPRESS",
