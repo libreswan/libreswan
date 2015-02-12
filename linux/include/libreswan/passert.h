@@ -4,6 +4,7 @@
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003  Michael Richardson <mcr@freeswan.org>
  * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -39,14 +40,19 @@ extern void libreswan_switch_fail(int n,
 
 #define bad_case(n) libreswan_switch_fail((int) (n), __FILE__, __LINE__)
 
-#define passert(pred) { \
-		if (!(pred)) \
-			libreswan_passert_fail(#pred, __FILE__,  __LINE__); \
+#define passert(pred) {							\
+		/* Shorter if(!(pred)) suppresses -Wparen */		\
+		if (pred); else {					\
+			libreswan_passert_fail(#pred, __FILE__,		\
+					       __LINE__);		\
+		}							\
 	}
 
-#define pexpect(pred) { \
-		if (!(pred)) \
-			pexpect_log(#pred, __FILE__, __LINE__); \
+#define pexpect(pred) {							\
+		/* Shorter if(!(pred)) suppresses -Wparen */		\
+		if (pred); else {					\
+			pexpect_log(#pred, __FILE__, __LINE__);		\
+		}							\
 	}
 
 /* evaluate x exactly once; assert that err_t result is NULL; */
