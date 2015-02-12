@@ -169,7 +169,7 @@ void update_state_stats(struct state *st, enum state_kind old_state)
 				st_authenticated++;
 			}
 	} /* we don't track anony/auth for child sa's */
-	pexpect(st_parents = st_anonymous + st_authenticated);
+	pexpect(st_parents == st_anonymous + st_authenticated);
 }
 
 /* humanize_number: make large numbers clearer by expressing them as KB or MB, as appropriate.
