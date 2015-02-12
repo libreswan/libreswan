@@ -133,8 +133,9 @@ static void print_key(struct secret *secret,
 				printf("    xauth: \"%s\"\n", pskbuf);
 			break;
 		case PPK_NULL:
-			// can't happen but the compiler does not know that
-			break;
+			/* can't happen but the compiler does not know that */
+			printf("%d(%d): NULL authentication -- cannot happen: %s\n", lineno, count, idb);
+			abort();
 		}
 
 		l = l->next;
