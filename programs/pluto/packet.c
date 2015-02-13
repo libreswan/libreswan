@@ -1322,10 +1322,10 @@ static err_t enum_enum_checker(
 	enum_names *ed = enum_enum_table(fp, last_enum);
 
 	if (ed == NULL) {
-		return builddiag(
-			"%s of %s has an unknown type: %lu",
-			fp->name, struct_name,
-			(unsigned long)last_enum);
+		return builddiag("%s of %s has an unknown type: %lu (0x%lx)",
+				 fp->name, struct_name,
+				 (unsigned long)last_enum,
+				 (unsigned long)last_enum);
 	}
 	return NULL;
 }
@@ -1386,7 +1386,8 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 					break;
 			/* FALL THROUGH */
 			case ft_nat: /* natural number (may be 0) */
-				DBG_log("   %s: %lu", fp->name,
+				DBG_log("   %s: %lu (0x%lx)", fp->name,
+					(unsigned long)n,
 					(unsigned long)n);
 				break;
 
@@ -1399,8 +1400,9 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 				last_enum = n;
-				DBG_log("   %s: %s", fp->name,
-					enum_show(fp->desc, n));
+				DBG_log("   %s: %s (0x%lx)", fp->name,
+					enum_show(fp->desc, n),
+					(unsigned long)n);
 				break;
 
 			case ft_loose_enum_enum:
@@ -1408,18 +1410,21 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 				enum_names *ed = enum_enum_table(fp, last_enum);
 
 				if (ed == NULL) {
-					DBG_log("   %s: %lu", fp->name,
+					DBG_log("   %s: %lu (0x%lx)", fp->name,
+						(unsigned long)n,
 						(unsigned long)n);
 				} else {
-					DBG_log("   %s: %s", fp->name,
-						enum_show(ed, n));
+					DBG_log("   %s: %s (0x%lx)", fp->name,
+						enum_show(ed, n),
+						(unsigned long)n);
 				}
 			}
 				break;
 
 			case ft_set: /* bits representing set */
-				DBG_log("   %s: %s", fp->name,
-					bitnamesof(fp->desc, n));
+				DBG_log("   %s: %s (0x%lx)", fp->name,
+					bitnamesof(fp->desc, n),
+					(unsigned long)n);
 				break;
 			default:
 				bad_case(fp->field_type);
@@ -1585,10 +1590,10 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				/* FALL THROUGH */
 				case ft_enum:   /* value from an enumeration */
 					if (enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag(
-							"%s of %s has an unknown value: %lu",
-							fp->name, sd->name,
-							(unsigned long)n);
+						ugh = builddiag("%s of %s has an unknown value: %lu (0x%lx)",
+								fp->name, sd->name,
+								(unsigned long)n,
+								(unsigned long)n);
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
@@ -1601,11 +1606,10 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 
 				case ft_set:            /* bits representing set */
 					if (!testset(fp->desc, n)) {
-						ugh = builddiag(
-							"bitset %s of %s has unknown member(s): %s",
-							fp->name, sd->name,
-							bitnamesof(fp->desc,
-								   n));
+						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%lx)",
+								fp->name, sd->name,
+								bitnamesof(fp->desc, n),
+								(unsigned long)n);
 					}
 					break;
 
@@ -1814,10 +1818,10 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				/* FALL THROUGH */
 				case ft_enum:   /* value from an enumeration */
 					if (enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag(
-							"%s of %s has an unknown value: %lu",
-							fp->name, sd->name,
-							(unsigned long)n);
+						ugh = builddiag("%s of %s has an unknown value: %lu (0x%lx)",
+								fp->name, sd->name,
+								(unsigned long)n,
+								(unsigned long)n);
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
@@ -1830,11 +1834,10 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 
 				case ft_set:            /* bits representing set */
 					if (!testset(fp->desc, n)) {
-						ugh = builddiag(
-							"bitset %s of %s has unknown member(s): %s",
-							fp->name, sd->name,
-							bitnamesof(fp->desc,
-								   n));
+						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%lx)",
+								fp->name, sd->name,
+								bitnamesof(fp->desc, n),
+								(unsigned long)n);
 					}
 					break;
 
