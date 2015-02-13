@@ -1,8 +1,10 @@
 /* parsing packets: formats and tools
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1192,7 +1194,7 @@ struct_desc ikev2_e_desc = { "IKEv2 Encryption Payload",
 			     ikev2generic_fields,
 			     sizeof(struct ikev2_generic) };
 
-/* descriptor for each payload type
+/* descriptor for each V1 payload type
  *
  * There is a slight problem in that some payloads differ, depending
  * on the mode.  Since this is table only used for top-level payloads,
@@ -1200,7 +1202,7 @@ struct_desc ikev2_e_desc = { "IKEv2 Encryption Payload",
  * That leaves only Identification payloads as a problem.
  * We make all these entries NULL
  */
-static struct_desc *const payload_descs[] = {
+static struct_desc *const v1_payload_descs[] = {
 	NULL,                           /* 0 ISAKMP_NEXT_NONE (No other payload following) */
 	&isakmp_sa_desc,                /* 1 ISAKMP_NEXT_SA (Security Association) */
 	NULL,                           /* 2 ISAKMP_NEXT_P (Proposal) */
@@ -1223,17 +1225,9 @@ static struct_desc *const payload_descs[] = {
 	NULL,                           /* 19 */
 	&isakmp_nat_d,                  /* 20=130 ISAKMP_NEXT_NATD_RFC=ISAKMP_NEXT_NATD_DRAFTS (NAT-D) */
 	&isakmp_nat_oa,                 /* 21=131 ISAKMP_NEXT_NATOA_RFC=ISAKMP_NEXT_NATOA_DRAFTS (NAT-OA) */
-	NULL,				/* 22 */
-	NULL,				/* 23 */
-	NULL,				/* 24 */
-	NULL,				/* 25 */
-	NULL,				/* 26 */
-	NULL,				/* 27 */
-	NULL,				/* 28 */
-	NULL,				/* 29 */
-	NULL,				/* 30 */
-	NULL,				/* 31 */
-	NULL,				/* 32 */
+};
+
+static struct_desc *const v2_payload_descs[] = {
 	&ikev2_sa_desc,                 /* 33 ISAKMP_NEXT_v2SA */
 	&ikev2_ke_desc,                 /* 34 ISAKMP_NEXT_v2KE */
 	&ikev2_id_desc,			/* 35 ISAKMP_NEXT_v2IDi */
@@ -1286,9 +1280,21 @@ struct_desc sec_ctx_desc = {
 
 #endif
 
-const struct_desc *payload_desc(unsigned p)
+const struct_desc *v1_payload_desc(unsigned p)
 {
-	return p < elemsof(payload_descs) ? payload_descs[p] : NULL;
+	return p < elemsof(v1_payload_descs) ? v1_payload_descs[p] : NULL;
+}
+
+const struct_desc *v2_payload_desc(unsigned p)
+{
+	if (p < ISAKMP_v2PAYLOAD_TYPE_BASE) {
+		return NULL;
+	}
+	unsigned q = p - ISAKMP_v2PAYLOAD_TYPE_BASE;
+	if (q >= elemsof(v2_payload_descs)) {
+		return NULL;
+	}
+	return v2_payload_descs[q];
 }
 
 void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)

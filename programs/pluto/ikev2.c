@@ -436,8 +436,6 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 	/* ??? zero out the digest descriptors -- might nuke ISAKMP_NEXT_v2E digest! */
 
 	while (np != ISAKMP_NEXT_v2NONE) {
-		struct_desc *sd = payload_desc(np);
-
 		DBG(DBG_CONTROL,
 		    DBG_log("Now let's proceed with payload (%s)",
 			    enum_show(&ikev2_payload_names, np)));
@@ -448,24 +446,27 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 			       PAYLIMIT);
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 		}
-
 		zero(pd);	/* ??? is this needed? */
 
-		if (sd == NULL || np < ISAKMP_v2PAYLOAD_TYPE_BASE) {
-			/* This payload is unknown to us.
-			 * RFCs 4306 and 5996 2.5 say that if the payload
-			 * has the Critical Bit, we should be upset
-			 * but if it does not, we should just ignore it.
+		struct_desc *sd = v2_payload_desc(np);
+		if (sd == NULL) {
+			/*
+			 * This payload is unknown to us.  RFCs 4306
+			 * and 5996 2.5 say that if the payload has
+			 * the Critical Bit, we should be upset but if
+			 * it does not, we should just ignore it.
 			 */
 			if (!in_struct(&pd->payload, &ikev2_generic_desc, in_pbs, &pd->pbs)) {
 				loglog(RC_LOG_SERIOUS, "malformed payload in packet");
 				return STF_FAIL + v2N_INVALID_SYNTAX;
 			}
 			if (pd->payload.v2gen.isag_critical & ISAKMP_PAYLOAD_CRITICAL) {
-				/* It was critical.
-				 * See RFC 5996 1.5 "Version Numbers and Forward Compatibility"
-				 * ??? we are supposed to send the offending np byte back in the
-				 * notify payload.
+				/*
+				 * It was critical.  See RFC 5996 1.5
+				 * "Version Numbers and Forward
+				 * Compatibility" ??? we are supposed
+				 * to send the offending np byte back
+				 * in the notify payload.
 				 */
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",

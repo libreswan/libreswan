@@ -1749,7 +1749,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			"";
 
 		while (np != ISAKMP_NEXT_NONE) {
-			struct_desc *sd = payload_desc(np);
+			struct_desc *sd = v1_payload_desc(np);
 
 			if (pd == &md->digest[PAYLIMIT]) {
 				loglog(RC_LOG_SERIOUS,
@@ -1799,12 +1799,12 @@ void process_packet_tail(struct msg_digest **mdp)
 
 				case ISAKMP_NEXT_NATD_DRAFTS:
 					np = ISAKMP_NEXT_NATD_RFC; /* NAT-D was a private use type before RFC-3947 */
-					sd = payload_desc(np);
+					sd = v1_payload_desc(np);
 					break;
 
 				case ISAKMP_NEXT_NATOA_DRAFTS:
 					np = ISAKMP_NEXT_NATOA_RFC; /* NAT-OA was a private use type before RFC-3947 */
-					sd = payload_desc(np);
+					sd = v1_payload_desc(np);
 					break;
 
 				case ISAKMP_NEXT_SAK: /* AKA ISAKMP_NEXT_NATD_BADDRAFTS */
