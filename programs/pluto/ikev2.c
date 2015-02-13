@@ -195,10 +195,15 @@ enum smf2_flags {
  *                            <--  HDR, SK {SA, Nr, KEr}
  */
 
+/*
+ * Convert a payload type into a set index.
+ */
+#define PINDEX(N) ((N) - ISAKMP_v2PAYLOAD_TYPE_BASE)
+
 /* Short forms for building payload type sets */
 
 #define PT(n) ISAKMP_NEXT_v2 ## n
-#define P(n) LELEM(PT(n) - ISAKMP_v2PAYLOAD_TYPE_BASE)
+#define P(N) LELEM(PINDEX(PT(N)))
 
 /* From RFC 5996:
  *
@@ -480,14 +485,9 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 			continue;
 		}
 
-		passert(np - ISAKMP_v2PAYLOAD_TYPE_BASE < LELEM_ROOF);
-
-		{
-			lset_t s = LELEM(np - ISAKMP_v2PAYLOAD_TYPE_BASE);
-
-			repeated |= seen & s;
-			seen |= s;
-		}
+		passert(PINDEX(np) < LELEM_ROOF);
+		repeated |= seen & LELEM(PINDEX(np));
+		seen |= LELEM(PINDEX(np));
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
 			loglog(RC_LOG_SERIOUS, "malformed payload in packet");
