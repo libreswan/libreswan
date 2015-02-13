@@ -1,4 +1,5 @@
 /* demultiplex incoming IKE messages
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
@@ -283,7 +284,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I3,
 	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
+	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
 	  .processor  = ikev2parent_inR2,
@@ -316,7 +317,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R2,
 	  .flags =  /* not SMF2_INITIATOR */ SMF2_STATENEEDED | SMF2_REPLY,
-	  .req_clear_payloads = P(E),
+	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
 	  .processor  = ikev2parent_inI2outR2,
@@ -338,7 +339,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
-	  .req_clear_payloads = P(E),
+	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
 	  .processor  = ikev2_child_inIoutR,
@@ -350,7 +351,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
-	  .req_clear_payloads = P(E),
+	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
 	  .processor  = ikev2_child_inIoutR,
@@ -369,7 +370,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I2,
 	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
+	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -379,7 +380,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
 	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
+	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -389,7 +390,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R1,
 	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
+	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -399,7 +400,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
 	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
+	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -409,7 +410,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .state      = STATE_IKESA_DEL,
 	  .next_state = STATE_IKESA_DEL,
 	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
+	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
@@ -438,7 +439,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 	lset_t seen = LEMPTY;
 	lset_t repeated = LEMPTY;
 
-	/* ??? zero out the digest descriptors -- might nuke ISAKMP_NEXT_v2E digest! */
+	/* ??? zero out the digest descriptors -- might nuke ISAKMP_NEXT_v2SK digest! */
 
 	while (np != ISAKMP_NEXT_v2NONE) {
 		DBG(DBG_CONTROL,
@@ -511,7 +512,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		}
 
 		switch (np) {
-		case ISAKMP_NEXT_v2E:
+		case ISAKMP_NEXT_v2SK:
 			/* RFC 5996 2.14 "Encrypted Payload":
 			 *
 			 * Next Payload - The payload type of the

@@ -1190,7 +1190,7 @@ struct_desc ikev2_ts1_desc = { "IKEv2 Traffic Selector",
  *
  *             Figure 21:  Encrypted Payload Format
  */
-struct_desc ikev2_e_desc = { "IKEv2 Encryption Payload",
+struct_desc ikev2_sk_desc = { "IKEv2 Encryption Payload",
 			     ikev2generic_fields,
 			     sizeof(struct ikev2_generic) };
 
@@ -1241,7 +1241,7 @@ static struct_desc *const v2_payload_descs[] = {
 	&ikev2_vendor_id_desc,          /* 43 ISAKMP_NEXT_v2V */
 	&ikev2_ts_desc,			/* 44 ISAKMP_NEXT_v2TSi */
 	&ikev2_ts_desc,			/* 45 ISAKMP_NEXT_v2TSr */
-	&ikev2_e_desc,                  /* 46 ISAKMP_NEXT_v2E */
+	&ikev2_sk_desc,                 /* 46 ISAKMP_NEXT_v2SK */
 	&ikev2_cp_desc,			/* 57 ISAKMP_NEXT_v2CP */
 };
 
