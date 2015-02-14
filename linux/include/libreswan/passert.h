@@ -42,7 +42,7 @@ extern void libreswan_switch_fail(int n,
 
 #define passert(pred) {							\
 		/* Shorter if(!(pred)) suppresses -Wparen */		\
-		if (pred); else {					\
+		if (pred) {} else {					\
 			libreswan_passert_fail(#pred, __FILE__,		\
 					       __LINE__);		\
 		}							\
@@ -50,7 +50,7 @@ extern void libreswan_switch_fail(int n,
 
 #define pexpect(pred) {							\
 		/* Shorter if(!(pred)) suppresses -Wparen */		\
-		if (pred); else {					\
+		if (pred) {} else {					\
 			pexpect_log(#pred, __FILE__, __LINE__);		\
 		}							\
 	}
