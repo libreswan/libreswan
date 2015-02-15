@@ -107,7 +107,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		pss = &nullpss;
 	}
 
-	DBG_dump_chunk("PAUL pss:", *pss);
+	DBG_dump_chunk("PSK:", *pss);
 
 	CK_EXTRACT_PARAMS bs;
 	SECItem param;

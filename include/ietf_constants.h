@@ -1460,8 +1460,9 @@ enum ike_id_type {
 	ID_DER_ASN1_GN = 10,
 	ID_KEY_ID = 11,
 	ID_FC_NAME = 12,	/* RFC 4595 */
+	ID_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
 	/* In IKEv1 registry, non-IKE value ID_LIST = 12 as per RFC 3554 */
-	/* 13-248 Unassigned */
+	/* 14-248 Unassigned */
 	/* 249-255 Reserved for private use */
 };
 

@@ -1331,7 +1331,7 @@ int main(int argc, char **argv)
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy |= POLICY_TUNNEL | POLICY_OPPORTUNISTIC |
 					      POLICY_GROUP;
-			} else if (msg.left.id != NULL) {
+			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
 				if (ttoaddr_num(optarg, 0, msg.addr_family,
 					&msg.right.host_addr) == NULL) {
 					/* we have a proper numeric IP address */

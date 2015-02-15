@@ -63,6 +63,7 @@
 # define RHEL_RELEASE_VERSION(x, y) 10
 #endif
 
+/* these seem debian/ubuntu specific and do not match fedora/rhel kernels */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,15,10)
 # define IP_SELECT_IDENT_NEW
 #elif LINUX_VERSION_CODE < KERNEL_VERSION(3,15,0) && LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,17)

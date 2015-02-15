@@ -610,7 +610,6 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 
-	
 	DBG(DBG_CONTROL, {
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)
 			DBG_log("I am receiving an IKE Response");
@@ -804,10 +803,11 @@ void process_v2_packet(struct msg_digest **mdp)
 	/* our caller with release_any_md(mdp) */
 }
 
-bool ikev2_decode_peer_id_and_certs(struct msg_digest *md, enum phase1_role role)
+bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 {
-	unsigned int hisID = role == O_INITIATOR ?
-			     ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
+	bool initiator = md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R;
+
+	unsigned int hisID = initiator ? ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
 	struct payload_digest *const id_him = md->chain[hisID];
 	struct connection *c = md->st->st_connection;
 	const pb_stream *id_pbs;
@@ -829,38 +829,32 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md, enum phase1_role role
 	}
 
 	ikev2_decode_cert(md);
+	/* check for certificate requests */
+	ikev2_decode_cr(md, &c->requested_ca);
 
-	/* Now that we've decoded the ID payload, let's see if we
-	 * need to switch connections.
-	 * We must not switch horses if we initiated:
-	 * - if the initiation was explicit, we'd be ignoring user's intent
-	 * - if opportunistic, we'll lose our HOLD info
-	 */
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)  {
-               if (!same_id(&md->st->st_connection->spd.that.id, &peer) &&
-                     id_kind(&md->st->st_connection->spd.that.id) != ID_FROMCERT) {
-                        char expect[IDTOA_BUF],
-                             found[IDTOA_BUF];
+	if (!same_id(&md->st->st_connection->spd.that.id, &peer) &&
+		id_kind(&md->st->st_connection->spd.that.id) != ID_FROMCERT) {
+			char expect[IDTOA_BUF],
+			     found[IDTOA_BUF];
 
-                        idtoa(&md->st->st_connection->spd.that.id, expect,
-                              sizeof(expect));
-                        idtoa(&peer, found, sizeof(found));
-                        loglog(RC_LOG_SERIOUS,
-                               "we require IKEv2 peer to have ID '%s', but peer declares '%s'",
-                               expect, found);
-                        return FALSE;
-                } else if (id_kind(&md->st->st_connection->spd.that.id) == ID_FROMCERT) {
-                        if (id_kind(&peer) != ID_DER_ASN1_DN) {
-                                loglog(RC_LOG_SERIOUS,
-                                       "peer ID is not a certificate type");
-                                return FALSE;
-                        }
-                        duplicate_id(&md->st->st_connection->spd.that.id, &peer);
-                }
-	} else {
-		/* responder of this exchange */
+			idtoa(&md->st->st_connection->spd.that.id, expect,
+				sizeof(expect));
+			idtoa(&peer, found, sizeof(found));
+			loglog(RC_LOG_SERIOUS,
+				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
+				expect, found);
+			return FALSE;
+	} else if (id_kind(&md->st->st_connection->spd.that.id) == ID_FROMCERT) {
+		if (id_kind(&peer) != ID_DER_ASN1_DN) {
+			loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
+			return FALSE;
+		}
+		duplicate_id(&md->st->st_connection->spd.that.id, &peer);
+	}
+
+	if (!initiator) {
 		struct connection *r = NULL;
-		bool fromcert;
+		bool fromcert = FALSE;
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
 		lset_t auth_policy = LEMPTY;
 
@@ -871,72 +865,77 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md, enum phase1_role role
 		case IKEv2_AUTH_PSK:
 			auth_policy = POLICY_PSK;
 			break;
+		case IKEv2_AUTH_NULL:
+			/* we cannot switch, parts of SKEYSEED are used as PSK */
+			break;
 		case IKEv2_AUTH_NONE:
 		default:
-			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to not-yet supported policy"));
-			// bad_case(auth);
+			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to unknown policy"));
 		}
 
-		/* check for certificate requests */
-		ikev2_decode_cr(md, &c->requested_ca);
-
+		/*
+		 * Now that we've decoded the ID payload, let's see if we
+		 * need to switch connections.
+		 * We must not switch horses if we initiated:
+		 * - if the initiation was explicit, we'd be ignoring user's intent
+		 * - if opportunistic, we'll lose our HOLD info
+		 */
 		if (auth_policy != LEMPTY) {
+			/* should really return c if no better match found */
 			r = refine_host_connection(md->st, &peer, FALSE /*initiator*/, auth_policy, &fromcert);
-			pexpect(r != NULL);
-		}
+			if (r == NULL) {
+				char buf[IDTOA_BUF];
 
-		if (r == NULL) {
-			char buf[IDTOA_BUF];
-
-			idtoa(&peer, buf, sizeof(buf));
-			DBG(DBG_CONTROL, DBG_log(
-			       "no refined connection for peer '%s'", buf));
-			r = c; /* ??? is this safe? */
-		}
-
-		DBG(DBG_CONTROL, {
-			    char buf[IDTOA_BUF];
-			    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
-					  "%none");
-			    DBG_log("offered CA: '%s'", buf);
-		    });
-
-		if (r != c) {
-			char b1[CONN_INST_BUF];
-			char b2[CONN_INST_BUF];
-
-			/* apparently, r is an improvement on c -- replace */
-
-			libreswan_log("switched from \"%s\"%s to \"%s\"%s",
-				c->name,
-				fmt_conn_instance(c, b1),
-				r->name,
-				fmt_conn_instance(r, b2));
-			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
-				/* instantiate it, filling in peer's ID */
-				r = rw_instantiate(r, &c->spd.that.host_addr,
-						   NULL, &peer);
+				idtoa(&peer, buf, sizeof(buf));
+				DBG(DBG_CONTROL, DBG_log(
+					"no refined connection for peer '%s'", buf));
+				r = c; /* ??? is this safe? */
 			}
 
-			md->st->st_connection = r; /* kill reference to c */
+			if (r != c) {
+				char b1[CONN_INST_BUF];
+				char b2[CONN_INST_BUF];
 
-			/* this ensures we don't move cur_connection from NULL to
-			 * something, requiring a reset_cur_connection()
-			 */
-			if (cur_connection == c)
-				set_cur_connection(r);
+				/* apparently, r is an improvement on c -- replace */
 
-			connection_discard(c);
-		} else if (c->spd.that.has_id_wildcards) {
-			free_id_content(&c->spd.that.id);
-			c->spd.that.id = peer;
-			c->spd.that.has_id_wildcards = FALSE;
-			unshare_id_content(&c->spd.that.id);
-		} else if (fromcert) {
-			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
-			duplicate_id(&r->spd.that.id, &peer);
+				libreswan_log("switched from \"%s\"%s to \"%s\"%s",
+					c->name,
+					fmt_conn_instance(c, b1),
+					r->name,
+					fmt_conn_instance(r, b2));
+				if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+					/* instantiate it, filling in peer's ID */
+					r = rw_instantiate(r, &c->spd.that.host_addr,
+						   NULL, &peer);
+				}
+
+				md->st->st_connection = r; /* kill reference to c */
+
+				/* this ensures we don't move cur_connection from NULL to
+				* something, requiring a reset_cur_connection()
+				*/
+				if (cur_connection == c)
+					set_cur_connection(r);
+
+				connection_discard(c);
+			} else if (c->spd.that.has_id_wildcards) {
+				free_id_content(&c->spd.that.id);
+				c->spd.that.id = peer;
+				c->spd.that.has_id_wildcards = FALSE;
+				unshare_id_content(&c->spd.that.id);
+			} else if (fromcert) {
+				DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
+				duplicate_id(&r->spd.that.id, &peer);
+			}
 		}
 	}
+
+	DBG(DBG_CONTROL, {
+		char buf[IDTOA_BUF];
+
+		dntoa_or_null(buf, IDTOA_BUF, c->spd.this.ca, "%none");
+		DBG_log("offered CA: '%s'", buf);
+	});
 
 	{
 		char buf[IDTOA_BUF];

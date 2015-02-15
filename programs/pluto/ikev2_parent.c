@@ -2199,7 +2199,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			return ret;
 	}
 
-	if (!ikev2_decode_peer_id_and_certs(md, O_RESPONDER))
+	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	c = st->st_connection; /* in case we refined */
@@ -2557,7 +2557,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			return ret;
 	}
 
-	if (!ikev2_decode_peer_id_and_certs(md, O_INITIATOR))
+	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	{
@@ -2993,7 +2993,18 @@ void send_v2_notification(struct state *p1st,
 		if (rcookie != NULL) /* some responses are with zero rSPI */
 			memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
 		memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
-		hdr.isa_xchg = ISAKMP_v2_SA_INIT;
+
+		/* incomplete */
+		switch (p1st->st_state) {
+		case STATE_PARENT_R1:
+			hdr.isa_xchg = ISAKMP_v2_AUTH;
+			break;
+		default:
+			/* default to old behaviour of hardcoding ISAKMP_v2_SA_INIT */
+			hdr.isa_xchg = ISAKMP_v2_SA_INIT;
+			break;
+		}
+
 		hdr.isa_np = ISAKMP_NEXT_v2N;
 		/* XXX unconditionally clearing original initiator flag is wrong */
 		hdr.isa_flags &= ~ISAKMP_FLAGS_v2_IKE_I;
@@ -3121,20 +3132,20 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 			return ret;
 	}
 
-	st = duplicate_state(pst);	/* create child state */
-	set_cur_state(st);	/* (caller will reset) */
-	md->st = st;		/* feed back new state. ??? better way to do */
-	insert_state(st); /* needed for delete - we are duplicating early */
-	/* XXX we should call change_state() ? arent we in STATE_UNDEFINED now? */ 
-
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 		/* in CREATE_CHILD_SA exchange we don't support new KE */
 		ipstr_buf b;
 
-		libreswan_log("rejecting create child SA from %s:%u -- new KE in DH is not supported",
+		libreswan_log("rejecting create child SA from %s:%u -- new KE in DH for PFS is not yet supported",
 				ipstr(&md->sender, &b), md->sender_port);
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 	}
+
+	st = duplicate_state(pst);	/* create child state */
+	set_cur_state(st);	/* (caller will reset) */
+	md->st = st;		/* feed back new state. ??? better way to do */
+	insert_state(st); /* needed for delete - we are duplicating early */
+	/* XXX we should call change_state() ? arent we in STATE_UNDEFINED now? */
 
 	freeanychunk(st->st_ni); /* this is from the parent. */
 	freeanychunk(st->st_nr); /* this is from the parent. */

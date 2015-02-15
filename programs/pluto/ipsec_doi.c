@@ -473,6 +473,9 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 		    DBG_dump_chunk("DER ASN1 DN:", peer->name));
 		break;
 
+	case ID_NULL:
+		break;
+
 	default:
 		/* XXX Could send notification back */
 		loglog(RC_LOG_SERIOUS,

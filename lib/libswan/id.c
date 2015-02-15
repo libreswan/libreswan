@@ -76,6 +76,8 @@ err_t atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
 		id->kind = ID_FROMCERT;
 	} else if (!oe_only && streq("%none", src)) {
 		id->kind = ID_NONE;
+	} else if (!oe_only && streq("%null", src)) {
+		id->kind = ID_NULL;
 	} else if (!oe_only && strchr(src, '=') != NULL) {
 		/* we interpret this as an ASCII X.501 ID_DER_ASN1_DN */
 		id->kind = ID_DER_ASN1_DN;
@@ -214,6 +216,9 @@ int idtoa(const struct id *id, char *dst, size_t dstlen)
 	case ID_NONE:
 		n = snprintf(dst, dstlen, "%s", "(none)");
 		break;
+	case ID_NULL:
+		n = snprintf(dst, dstlen, "%s", "ID_NULL");
+		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		if (isanyaddr(&id->ip_addr)) {
@@ -339,6 +344,7 @@ void unshare_id_content(struct id *id)
 	case ID_MYID:
 	case ID_FROMCERT:
 	case ID_NONE:
+	case ID_NULL:
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		break;
@@ -359,6 +365,7 @@ void free_id_content(struct id *id)
 	case ID_MYID:
 	case ID_FROMCERT:
 	case ID_NONE:
+	case ID_NULL:
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		break;
@@ -384,6 +391,7 @@ bool any_id(const struct id *a)
 	case ID_USER_FQDN:
 	case ID_DER_ASN1_DN:
 	case ID_KEY_ID:
+	case ID_NULL:
 		return FALSE;
 
 	default:
@@ -404,15 +412,26 @@ bool same_id(const struct id *a, const struct id *b)
 	a = resolve_myid(a);
 	b = resolve_myid(b);
 
-	if (b->kind == ID_NONE || a->kind == ID_NONE)
+	if (b->kind == ID_NONE || a->kind == ID_NONE) {
+		DBG(DBG_PARSING, DBG_log("id type with ID_NONE means wildcard match"));
 		return TRUE; /* it's the wildcard */
+	}
 
-	if (a->kind != b->kind)
+	if (a->kind != b->kind) {
+		DBG(DBG_PARSING, DBG_log("id kind mismatch"));
 		return FALSE;
+	}
 
 	switch (a->kind) {
 	case ID_NONE:
 		return TRUE; /* repeat of above for completeness */
+
+	case ID_NULL:
+		if (a->kind == b->kind) {
+			DBG(DBG_PARSING, DBG_log("ID_NULL: id kind matches"));
+			return TRUE;
+		}
+		return FALSE;
 
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:

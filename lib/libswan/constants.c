@@ -658,6 +658,7 @@ static const char *const ike_idtype_name[] = {
 	"ID_DER_ASN1_GN",
 	"ID_KEY_ID",
 	"ID_FC_NAME", /* RFC 3554 */
+	"ID_NULL", /* draft-ietf-ipsecme-ikev2-null-auth */
 };
 
 /* IKEv1 */
@@ -668,7 +669,7 @@ enum_names ike_idtype_names = {
 };
 
 static enum_names ikev2_idtype_names_3 = {
-	ID_DER_ASN1_DN, ID_FC_NAME,
+	ID_DER_ASN1_DN, ID_NULL,
 	&ike_idtype_name[ID_DER_ASN1_DN],
 	NULL
 };

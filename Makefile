@@ -445,7 +445,7 @@ kinstall:
 	( cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) install ) 2>&1 | tee -a out.kinstall
 	${ERRCHECK} out.kinstall
 
-kernelpatch3.5 kernelpatch2.6 kernelpatch:
+kernelpatch3 kernelpatch3.5 kernelpatch2.6 kernelpatch:
 	packaging/utils/kernelpatch 2.6
 
 kernelpatch2.4:
