@@ -3132,20 +3132,20 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 			return ret;
 	}
 
-	st = duplicate_state(pst);	/* create child state */
-	set_cur_state(st);	/* (caller will reset) */
-	md->st = st;		/* feed back new state. ??? better way to do */
-	insert_state(st); /* needed for delete - we are duplicating early */
-	/* XXX we should call change_state() ? arent we in STATE_UNDEFINED now? */ 
-
 	if (md->chain[ISAKMP_NEXT_v2KE] != NULL) {
 		/* in CREATE_CHILD_SA exchange we don't support new KE */
 		ipstr_buf b;
 
-		libreswan_log("rejecting create child SA from %s:%u -- new KE in DH is not supported",
+		libreswan_log("rejecting create child SA from %s:%u -- new KE in DH for PFS is not yet supported",
 				ipstr(&md->sender, &b), md->sender_port);
 		return STF_FAIL + v2N_INVALID_KE_PAYLOAD;
 	}
+
+	st = duplicate_state(pst);	/* create child state */
+	set_cur_state(st);	/* (caller will reset) */
+	md->st = st;		/* feed back new state. ??? better way to do */
+	insert_state(st); /* needed for delete - we are duplicating early */
+	/* XXX we should call change_state() ? arent we in STATE_UNDEFINED now? */
 
 	freeanychunk(st->st_ni); /* this is from the parent. */
 	freeanychunk(st->st_nr); /* this is from the parent. */
