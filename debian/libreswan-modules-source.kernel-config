@@ -102,4 +102,7 @@
 #undef CONFIG_KLIPS_OCF
 #endif
 
+/* no longer needed since 2.6.23 */
+#ifdef CONFIG_KLIPS_COMPAT_NAT_NFMARK
+#undef CONFIG_KLIPS_COMPAT_NAT_NFMARK
 #endif /* _CONFIG_ALL_H */

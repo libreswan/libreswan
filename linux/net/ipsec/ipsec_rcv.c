@@ -6,7 +6,7 @@
  * Copyright (C) 2007-2008   Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2011 Bart Trojanowski <bart@jukie.net>
- * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
+ * Copyright (C) 2012,2015  Paul Wouters  <paul@libreswan.org>
  * Copyright (C) 2011-2012 David McCullough <david_mccullough@mcafee.com>
  *
  * OCF/receive state machine written by
@@ -798,6 +798,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 			    irs->ipdaddr_txt);
 	}
 #endif
+#if defined(CONFIG_KLIPS_COMPAT_NAT_NFMARK)
 #if defined(CONFIG_NETFILTER)
 	skb->nfmark = IPSEC_NFMARK_IS_SAREF_BIT |
 		      (skb->nfmark &
@@ -808,7 +809,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 		    "IPIP SA sets skb->nfmark=0x%x.\n",
 		    (unsigned)skb->nfmark);
 #endif	/* CONFIG_NETFILTER */
-
+#endif
 	result = IPSEC_RCV_OK;
 
 rcvleave:
@@ -1796,6 +1797,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 	irs->ipsp->ips_life.ipl_usetime.ipl_last = jiffies / HZ;
 	irs->ipsp->ips_life.ipl_packets.ipl_count += 1;
 
+#if defined(CONFIG_KLIPS_COMPAT_NAT_NFMARK)
 #if defined(CONFIG_NETFILTER)
 	if (irs->proto == IPPROTO_ESP || irs->proto == IPPROTO_AH) {
 		skb->nfmark = IPSEC_NFMARK_IS_SAREF_BIT |
@@ -1809,7 +1811,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 			    (unsigned)skb->nfmark);
 	}
 #endif	/* CONFIG_NETFILTER */
-
+#endif
 	/* do we need to do more decapsulation */
 	if ((irs->proto == IPPROTO_ESP ||
 	     irs->proto == IPPROTO_AH ||

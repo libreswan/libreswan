@@ -87,11 +87,9 @@
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 
-#if defined(NET_26) && defined(CONFIG_IPSEC_NAT_TRAVERSAL)
-# ifdef HAVE_UDP_ENCAP_CONVERT
+#if defined(HAVE_UDP_ENCAP_CONVERT) && defined(CONFIG_IPSEC_NAT_TRAVERSAL)
 #  warning \
 	"You have CONFIG_IPSEC_NAT_TRAVERSAL set on a kernel > 2.6.22 that no longer need the NAT-T patch - you should recompile without it"
-# endif
 #include <net/xfrmudp.h>
 #endif
 
@@ -100,7 +98,7 @@
 	!defined(HAVE_XFRM4_UDP_REGISTER)
 # warning \
 	"You are trying to build KLIPS2.6 with NAT-T support, but you did not"
-# error   "properly apply the NAT-T patch to your 2.6 kernel source tree."
+# error   "properly apply the NAT-T patch to your < 2.6.23 kernel source tree."
 # endif
 #endif
 
