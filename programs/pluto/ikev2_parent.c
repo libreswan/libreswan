@@ -2993,7 +2993,18 @@ void send_v2_notification(struct state *p1st,
 		if (rcookie != NULL) /* some responses are with zero rSPI */
 			memcpy(hdr.isa_rcookie, rcookie, COOKIE_SIZE);
 		memcpy(hdr.isa_icookie, icookie, COOKIE_SIZE);
-		hdr.isa_xchg = ISAKMP_v2_SA_INIT;
+
+		/* incomplete */
+		switch (p1st->st_state) {
+		case STATE_PARENT_R1:
+			hdr.isa_xchg = ISAKMP_v2_AUTH;
+			break;
+		default:
+			/* default to old behaviour of hardcoding ISAKMP_v2_SA_INIT */
+			hdr.isa_xchg = ISAKMP_v2_SA_INIT;
+			break;
+		}
+
 		hdr.isa_np = ISAKMP_NEXT_v2N;
 		/* XXX unconditionally clearing original initiator flag is wrong */
 		hdr.isa_flags &= ~ISAKMP_FLAGS_v2_IKE_I;
