@@ -129,8 +129,8 @@ void update_state_stats(struct state *st, enum state_kind old_state)
 		} else {
 			st_children += state_count[s]; 
 		}
-		st_total += state_count[s];
 	}
+	st_total = st_parents + st_children;
 	/*
 	 * we count I1 as half-open too because with OE, a plaintext
 	 * packet (that is spoofed) will trigger an outgoing IKE SA
