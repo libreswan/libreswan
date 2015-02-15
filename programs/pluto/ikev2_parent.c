@@ -2199,7 +2199,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			return ret;
 	}
 
-	if (!ikev2_decode_peer_id_and_certs(md, O_RESPONDER))
+	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	c = st->st_connection; /* in case we refined */
@@ -2557,7 +2557,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			return ret;
 	}
 
-	if (!ikev2_decode_peer_id_and_certs(md, O_INITIATOR))
+	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
 	{
