@@ -610,7 +610,6 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 
-	
 	DBG(DBG_CONTROL, {
 		if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)
 			DBG_log("I am receiving an IKE Response");
@@ -865,6 +864,9 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 			break;
 		case IKEv2_AUTH_PSK:
 			auth_policy = POLICY_PSK;
+			break;
+		case IKEv2_AUTH_NULL:
+			/* we cannot switch, parts of SKEYSEED are used as PSK */
 			break;
 		case IKEv2_AUTH_NONE:
 		default:
