@@ -2658,6 +2658,12 @@ struct connection *refine_host_connection(const struct state *st,
 		DBG_log("refine_host_connection: starting with %s",
 			c->name));
 
+	if (auth_policy & POLICY_AUTH_NULL) {
+		DBG(DBG_CONTROLMORE,
+			DBG_log("refine_host_connection: cannot refine AUTH_NULL policy which is tied to ephemeral SKEYSEED"));
+		return c;
+	}
+
 	peer_ca = get_peer_ca(peer_id);
 
 	if (same_id(&c->spd.that.id, peer_id) &&
