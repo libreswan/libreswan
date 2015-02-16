@@ -42,7 +42,8 @@ spotless: spotless.subdirs
 install_file_list: install_file_list.subdirs
 # add more here
 $(SUBDIR_TARGETS):
+	set -e ; \
 	for d in $(SUBDIRS) ; \
 	do \
-		( cd $$d && $(MAKE) $(basename $@) || exit $$? ) ; \
+		( cd $$d && $(MAKE) $(basename $@) ) ; \
 	done
