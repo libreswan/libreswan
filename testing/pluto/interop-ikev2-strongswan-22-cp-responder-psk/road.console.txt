@@ -27,7 +27,8 @@ road #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, force-busy=no
+000 nhelpers=-1, uniqueids=yes
+000 ddos-cookies-treshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx-attr-type=XXXX
 000 myid = (none)
@@ -113,7 +114,9 @@ road #
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
-000 State list:
+000 State Information: DDoS cookies not required, Accepting new IKE connections
+000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
+000 IPsec SAs: total(0), anonymous(<todo>)
 000  
 000 Shunt list:
 000  
@@ -127,7 +130,7 @@ road #
 133 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: supressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: STATE_PARENT_I1: received v2N_MULTIPLE_AUTH_SUPPORTED but ignoring it
-134 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=oakley_3des_cbc_192 integ=md5_96 prf=md5 group=MODP2048}
+134 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_256 integ=sha1_96 prf=sha group=MODP2048}
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: supressing retransmit because IMPAIR_RETRANSMITS is set.
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1

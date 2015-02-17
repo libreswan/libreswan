@@ -27,7 +27,8 @@ east #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, force-busy=no
+000 nhelpers=-1, uniqueids=yes
+000 ddos-cookies-treshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
 000 secctx-attr-type=XXXX
 000 myid = (none)
@@ -114,7 +115,9 @@ east #
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
-000 State list:
+000 State Information: DDoS cookies not required, Accepting new IKE connections
+000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
+000 IPsec SAs: total(0), anonymous(<todo>)
 000  
 000 Shunt list:
 000  
