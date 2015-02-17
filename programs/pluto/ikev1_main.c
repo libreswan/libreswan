@@ -297,7 +297,7 @@ stf_status main_outI1(int whack_sock,
 	send_ike_msg(st, "main_outI1");
 
 	delete_event(st);
-	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule_ms(EVENT_v1_RETRANSMIT, c->r_interval, st);
 
 	if (predecessor != NULL) {
 		update_pending(predecessor, st);
@@ -2985,7 +2985,6 @@ bool accept_delete(struct msg_digest *md,
 					 * Useful if the other peer is
 					 * rebooting.
 					 */
-#define DELETE_SA_DELAY EVENT_RETRANSMIT_DELAY_0
 					if (dst->st_event != NULL &&
 					    dst->st_event->ev_type ==
 						  EVENT_SA_REPLACE &&

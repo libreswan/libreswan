@@ -40,6 +40,9 @@
 #include <libreswan.h>
 #include "libreswan/pfkeyv2.h"
 
+#include <event2/event.h>
+#include <event2/event_struct.h>
+
 #include "sysdep.h"
 #include "lswconf.h"
 #include "constants.h"
@@ -576,10 +579,18 @@ done:
 	close(whackfd);
 }
 
+static void whack_handle(int kernelfd);
+
+void whack_handle_cb(evutil_socket_t fd, const short event UNUSED,
+		void *arg UNUSED)
+{
+		whack_handle(fd);
+}
+
 /*
  * Handle a whack request.
  */
-void whack_handle(int whackctlfd)
+static void whack_handle(int whackctlfd)
 {
 	struct whack_message msg, msg_saved;
 	struct sockaddr_un whackaddr;

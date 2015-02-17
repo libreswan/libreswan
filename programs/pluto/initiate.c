@@ -1446,6 +1446,9 @@ static void connection_check_ddns1(struct connection *c)
 void connection_check_ddns(void)
 {
 	struct connection *c, *cnext;
+	struct timeval tv1;
+
+	gettimeofday(&tv1, NULL);
 
 	/* reschedule */
 	event_schedule(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
@@ -1459,6 +1462,18 @@ void connection_check_ddns(void)
 		connection_check_ddns1(c);
 	}
 	check_orientations();
+
+	DBG(DBG_CONTROL, {
+		struct timeval tv2;
+		unsigned long borrow;
+
+		gettimeofday(&tv2, NULL);
+		borrow = tv2.tv_usec < tv1.tv_usec ? 1 : 0;
+		DBG_log("elapsed time in %s for hostname lookup %lu.%06lu",
+			__func__,
+			(unsigned long)(tv2.tv_sec - borrow - tv2.tv_sec),
+			(unsigned long)(tv2.tv_usec + borrow * 1000000 - tv2.tv_usec));
+	});
 }
 
 /* time between scans of pending phase2 */

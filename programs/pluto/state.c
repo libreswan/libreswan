@@ -528,6 +528,12 @@ void delete_state(struct state *st)
 		st->st_rel_whack_event = NULL;
 	}
 
+	if (st->send_xauth_event != NULL) {
+		event_free(st->send_xauth_event);
+		pfreeany(st->send_xauth_event);
+		st->send_xauth_event = NULL;
+	}
+
 	/* if there is a suspended state transition, disconnect us */
 	if (st->st_suspended_md != NULL) {
 		passert(st->st_suspended_md->st == st);

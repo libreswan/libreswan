@@ -1391,7 +1391,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	/* Set up a retransmission event, half a minute hence */
 	delete_event(st);
-	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule_ms(EVENT_v1_RETRANSMIT, c->r_interval, st);
 
 	whack_log(RC_NEW_STATE + STATE_AGGR_I1,
 		  "%s: initiate", enum_name(&state_names, st->st_state));

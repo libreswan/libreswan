@@ -13,5 +13,6 @@
  * for more details.
  */
 
-extern void whack_handle(int kernelfd);
 extern void do_whacklisten(void);
+extern void whack_handle_cb(evutil_socket_t fd,
+		const short event UNUSED, void *arg UNUSED);

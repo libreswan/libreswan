@@ -185,6 +185,14 @@ void process_packet(struct msg_digest **mdp)
 	}
 }
 
+static void comm_handle(const struct iface_port *ifp);
+
+void comm_handle_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
+{
+	comm_handle((const struct iface_port *) arg);
+}
+
+
 /* wrapper for read_packet and process_packet
  *
  * The main purpose of this wrapper is to factor out teardown code
@@ -198,7 +206,7 @@ void process_packet(struct msg_digest **mdp)
  * read_packet is broken out to minimize the lifetime of the
  * enormous input packet buffer, an auto.
  */
-void comm_handle(const struct iface_port *ifp)
+static void comm_handle(const struct iface_port *ifp)
 {
 	struct msg_digest *md;
 
@@ -229,6 +237,7 @@ void comm_handle(const struct iface_port *ifp)
 	cur_state = NULL;
 	reset_cur_connection();
 	cur_from = NULL;
+	passert(GLOBALS_ARE_RESET());
 }
 
 /* read the message.

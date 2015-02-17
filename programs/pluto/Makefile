@@ -79,6 +79,9 @@ ifeq ($(USE_LINUX_AUDIT),true)
 LIBSPLUTO += -laudit
 endif
 
+LIBSPLUTO += -levent
+LIBSPLUTO += -levent_pthreads
+
 ifeq ($(USE_KLIPS),true)
 # Linux always supports udpfromto
 UDPFROMTO_SRCS=udpfromto.c

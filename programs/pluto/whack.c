@@ -124,6 +124,9 @@ static void help(void)
 		" [--reykeymargin <seconds>]"
 		" [--reykeyfuzz <percentage>]"
 		" \\\n   "
+		" [--retransmit-timeout <seconds>]"
+		" [--retransmit-interval <msecs>]"
+		" \\\n   "
 		" [--keyingtries <count>]"
 		" \\\n   "
 		" [--esp <esp-algos>]"
@@ -478,6 +481,8 @@ enum option_enums {
 	CD_CONNIPV4,
 	CD_CONNIPV6,
 
+	CD_RETRANSMIT_T,
+	CD_RETRANSMIT_I,
 	CD_IKELIFETIME,
 	CD_IPSECLIFETIME,
 	CD_RKMARGIN,
@@ -716,8 +721,11 @@ static const struct option long_opts[] = {
 
 	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO + NUMERIC_ARG },
 	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO + NUMERIC_ARG },
+	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_T + OO + NUMERIC_ARG },
+	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_I + OO + NUMERIC_ARG },
+
 	{ "rekeymargin", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
-	{ "rekeywindow", required_argument, NULL, CD_RKMARGIN + OO +NUMERIC_ARG },                                                        /* OBSOLETE */
+	{ "rekeywindow", required_argument, NULL, CD_RKMARGIN + OO +NUMERIC_ARG }, /* OBSOLETE */
 	{ "rekeyfuzz", required_argument, NULL, CD_RKFUZZ + OO + NUMERIC_ARG },
 	{ "keyingtries", required_argument, NULL, CD_KTRIES + OO + NUMERIC_ARG },
 	{ "ike",    required_argument, NULL, CD_IKE + OO },
@@ -983,6 +991,8 @@ int main(int argc, char **argv)
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
+	msg.r_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
+	msg.r_interval = RETRANSMIT_INTERVAL_DEFAULT;
 
 	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
@@ -1549,6 +1559,14 @@ int main(int argc, char **argv)
 		case CDP_FAIL:
 			msg.policy = (msg.policy & ~POLICY_FAIL_MASK) |
 				     ((lset_t)aux << POLICY_FAIL_SHIFT);
+			continue;
+
+		case CD_RETRANSMIT_T: /* --retransmit-timeout <seconds> */
+			msg.r_timeout = deltatime(opt_whole);
+			continue;
+
+		case CD_RETRANSMIT_I: /* --retransmit-interval <msecs> */
+			msg.r_interval = opt_whole;
 			continue;
 
 		case CD_IKELIFETIME: /* --ikelifetime <seconds> */

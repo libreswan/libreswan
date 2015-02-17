@@ -1363,6 +1363,8 @@ void add_connection(const struct whack_message *wm)
 		c->sa_rekey_margin = wm->sa_rekey_margin;
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
+		c->r_timeout = wm->r_timeout;
+		c->r_interval = wm->r_interval;
 
 		if (!deltaless(c->sa_rekey_margin, c->sa_ipsec_life_seconds)) {
 			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
@@ -3635,6 +3637,13 @@ void show_one_connection(struct connection *c)
 		(long) deltasecs(c->sa_rekey_margin),
 		c->sa_rekey_fuzz,
 		c->sa_keying_tries);
+
+	whack_log(RC_COMMENT,
+		"\"%s\"%s:   retransmit-interval: %ldms; retransmit-timeout: %lds;",
+		c->name,
+		instance,
+		c->r_interval,
+		(long) deltasecs(c->r_timeout));
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; "

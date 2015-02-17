@@ -49,6 +49,10 @@
 #include <sys/wait.h>
 #include <resolv.h>
 
+#include <event2/event.h>
+#include <event2/event_struct.h>
+#include <event2/thread.h>
+
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 #  include <asm/types.h>        /* for __u8, __u32 */
 #  include <linux/errqueue.h>
@@ -100,6 +104,9 @@ static pid_t addconn_child_pid = 0;
 
 /* list of interface devices */
 struct iface_list interface_dev;
+
+/* pluto's main Libevent event_base */
+static struct event_base *pluto_eb =  NULL;
 
 /* control (whack) socket */
 int ctl_fd = NULL_FD;   /* file descriptor of control (whack) socket */
@@ -248,6 +255,12 @@ static void free_dead_ifaces(void)
 				struct iface_dev *id;
 
 				*pp = p->next; /* advance *pp */
+
+				if (p->ev != NULL) {
+					event_del(p->ev);
+					p->ev = NULL;
+				}
+
 				close(p->fd);
 
 				id = p->ip_dev;
@@ -405,8 +418,23 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	return fd;
 }
 
+/* a wrapper for libevent's event_new + event_add; any error is fatal */
+struct event *pluto_event_new(evutil_socket_t fd, short events,
+		event_callback_fn cb, void *arg, const struct timeval *t)
+{
+	struct event *ev = event_new(pluto_eb, fd, events, cb, arg);
+	int r;
+
+	passert(ev != NULL);
+	r = event_add(ev, t);
+	passert(r >= 0);
+	return ev;
+}
+
 void find_ifaces(void)
 {
+	struct iface_port *ifp;
+
 	mark_ifaces_dead();
 
 	if (kernel_ops->process_ifaces != NULL) {
@@ -421,6 +449,24 @@ void find_ifaces(void)
 
 	if (interfaces == NULL)
 		loglog(RC_LOG_SERIOUS, "no public interfaces found");
+
+	if (listening) {
+		for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
+			if (ifp->ev != NULL) {
+				event_del(ifp->ev);
+				ifp->ev = NULL;
+				DBG_log("refresh. setup callback for interface %s:%u %d",
+						ifp->ip_dev->id_rname,ifp->port,
+						ifp->fd);
+			}
+			ifp->ev = pluto_event_new(ifp->fd,
+					EV_READ | EV_PERSIST, comm_handle_cb,
+					ifp, NULL);
+			DBG_log("setup callback for interface %s:%u fd %d",
+					ifp->ip_dev->id_rname, ifp->port,
+					ifp->fd);
+		}
+	}
 }
 
 void show_ifaces_status(void)
@@ -457,6 +503,16 @@ static void termhandler(int sig UNUSED)
 	sigtermflag = TRUE;
 }
 
+static void huphandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+{
+	libreswan_log( "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+}
+
+static void termhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
+{
+	exit_pluto(PLUTO_EXIT_OK);
+}
+
 static volatile sig_atomic_t sigchildflag = FALSE;
 
 static void childhandler(int sig UNUSED)
@@ -465,6 +521,7 @@ static void childhandler(int sig UNUSED)
 }
 
 /* perform waitpid() for any children */
+#if 0	/* ??? no longer used because of libevent? */
 static void reapchildren(void)
 {
 	pid_t child;
@@ -494,14 +551,56 @@ static void reapchildren(void)
 			      errno, strerror(errno));
 	}
 }
+#endif
+
+void init_event_base(void) {
+	DBG(DBG_CONTROLMORE, DBG_log("Initialize up libevent base"));
+	pluto_eb = event_base_new();
+	passert(pluto_eb != NULL);
+	passert(evthread_use_pthreads() >= 0);
+	passert(evthread_make_base_notifiable(pluto_eb) >= 0);
+}
+
+static void main_loop(void)
+{
+	int r;
+	struct event *ev_ctl ; /* AA_2015 don't forget to free it */
+	struct event *ev_sig_hup;
+	struct event *ev_sig_term;
+
+	/*
+	 * new lbevent setup and loop
+	 * setup basic events
+	 */
+
+	DBG(DBG_CONTROLMORE, DBG_log("Setting up events, loop start"));
+
+	ev_ctl = event_new(pluto_eb, ctl_fd, EV_READ | EV_PERSIST,
+			whack_handle_cb, NULL);
+
+	passert(ev_ctl != NULL);
+	passert(event_add(ev_ctl, NULL) >= 0);
+
+	ev_sig_term = event_new(pluto_eb, SIGTERM, EV_SIGNAL,termhandler_cb, NULL);
+	passert(ev_sig_term != NULL);
+	passert(event_add(ev_sig_term, NULL) >= 0);
+
+	ev_sig_hup = event_new(pluto_eb, SIGHUP, EV_SIGNAL|EV_PERSIST,
+			huphandler_cb, NULL);
+
+	passert(ev_sig_hup != NULL);
+	passert(event_add(ev_sig_hup, NULL) >= 0);
+
+	r = event_base_loop(pluto_eb, 0);
+	passert (r == 0);
+	return;
+}
 
 /* call_server listens for incoming ISAKMP packets and Whack messages,
  * and handles timer events.
  */
 void call_server(void)
 {
-	struct iface_port *ifp;
-
 	/* catch SIGHUP and SIGTERM */
 	{
 		int r;
@@ -593,191 +692,7 @@ void call_server(void)
 		}
 		/* parent continues */
 	}
-
-	for (;; ) {
-		lsw_fd_set readfds;
-		lsw_fd_set writefds;
-		int ndes;
-
-		/* wait for next interesting thing */
-
-		for (;; ) {
-			long next_time = next_event(); /* time to any pending timer event */
-			int maxfd = ctl_fd;
-
-			if (sigtermflag)
-				exit_pluto(PLUTO_EXIT_OK);
-
-			if (sighupflag) {
-				/* Ignorant folks think poking any daemon with SIGHUP
-				 * is polite.  We catch it and tell them otherwise.
-				 * There is one use: unsticking a hung recvfrom.
-				 * This sticking happens sometimes -- kernel bug?
-				 */
-				sighupflag = FALSE;
-				libreswan_log(
-					"Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
-			}
-
-			if (sigchildflag)
-				reapchildren();
-
-			LSW_FD_ZERO(&readfds);
-			LSW_FD_ZERO(&writefds);
-			LSW_FD_SET(ctl_fd, &readfds);
-
-			/* the only write file-descriptor of interest */
-			if (adns_qfd != NULL_FD && unsent_ADNS_queries) {
-				if (maxfd < adns_qfd)
-					maxfd = adns_qfd;
-				LSW_FD_SET(adns_qfd, &writefds);
-			}
-
-			if (adns_afd != NULL_FD) {
-				if (maxfd < adns_afd)
-					maxfd = adns_afd;
-				LSW_FD_SET(adns_afd, &readfds);
-			}
-
-#ifdef KLIPS
-			if (kern_interface != NO_KERNEL) {
-				int fd = *kernel_ops->async_fdp;
-
-				if (kernel_ops->process_queue != NULL)
-					kernel_ops->process_queue();
-				if (maxfd < fd)
-					maxfd = fd;
-				passert(!LSW_FD_ISSET(fd, &readfds));
-				LSW_FD_SET(fd, &readfds);
-			}
-#endif
-
-			if (listening) {
-				for (ifp = interfaces; ifp != NULL;
-				     ifp = ifp->next) {
-					if (maxfd < ifp->fd)
-						maxfd = ifp->fd;
-					passert(!LSW_FD_ISSET(ifp->fd,
-							      &readfds));
-					LSW_FD_SET(ifp->fd, &readfds);
-				}
-			}
-
-			/* see if helpers need attention */
-			enumerate_crypto_helper_response_sockets(&readfds);
-
-			if (next_time < 0) {
-				/* select without timer */
-
-				ndes = lsw_select(maxfd + 1, &readfds,
-						  &writefds, NULL, NULL);
-			} else if (next_time == 0) {
-				/* timer without select: there is a timer event pending,
-				 * and it should fire now so don't bother to do the select.
-				 */
-				ndes = 0; /* signify timer expiration */
-			} else {
-				/* select with timer */
-
-				struct timeval tm;
-
-				tm.tv_sec = next_time;
-				tm.tv_usec = 0;
-				ndes = lsw_select(maxfd + 1, &readfds,
-						  &writefds, NULL, &tm);
-			}
-
-			if (ndes != -1)
-				break; /* success */
-
-			if (errno != EINTR)
-				exit_log_errno((e,
-						"select() failed in call_server()"));
-
-
-			/* retry if terminated by signal */
-		}
-
-		DBG(DBG_CONTROL, DBG_log(" "));
-
-		/* figure out what is interesting */
-		/* do FD's before events are processed */
-
-		if (ndes > 0) {
-			/* at least one file descriptor is ready */
-
-			if (adns_qfd != NULL_FD &&
-			    LSW_FD_ISSET(adns_qfd, &writefds)) {
-				passert(ndes > 0);
-				send_unsent_ADNS_queries();
-				passert(GLOBALS_ARE_RESET());
-				ndes--;
-			}
-
-			if (adns_afd != NULL_FD &&
-			    LSW_FD_ISSET(adns_afd, &readfds)) {
-				passert(ndes > 0);
-				DBG(DBG_CONTROL,
-				    DBG_log("*received adns message"));
-				handle_adns_answer();
-				passert(GLOBALS_ARE_RESET());
-				ndes--;
-			}
-
-#ifdef KLIPS
-			if (kern_interface != NO_KERNEL &&
-			    LSW_FD_ISSET(*kernel_ops->async_fdp, &readfds)) {
-				passert(ndes > 0);
-				DBG(DBG_CONTROL,
-				    DBG_log("*received kernel message"));
-				kernel_ops->process_msg();
-				passert(GLOBALS_ARE_RESET());
-				ndes--;
-			}
-#endif
-
-			for (ifp = interfaces; ifp != NULL; ifp = ifp->next) {
-				if (LSW_FD_ISSET(ifp->fd, &readfds)) {
-					/* comm_handle will print DBG_CONTROL intro,
-					 * with more info than we have here.
-					 */
-
-					passert(ndes > 0);
-					comm_handle(ifp);
-					passert(GLOBALS_ARE_RESET());
-					ndes--;
-				}
-			}
-
-			if (LSW_FD_ISSET(ctl_fd, &readfds)) {
-				passert(ndes > 0);
-				DBG(DBG_CONTROL,
-				    DBG_log("*received whack message"));
-				whack_handle(ctl_fd);
-				passert(GLOBALS_ARE_RESET());
-				ndes--;
-			}
-
-			/* note we process helper things last on purpose */
-			{
-				int helpers = pluto_crypto_helper_response_ready(
-					&readfds);
-				DBG(DBG_CONTROL,
-				    DBG_log("* processed %d messages from cryptographic helpers",
-					    helpers));
-
-				ndes -= helpers;
-			}
-
-			passert(ndes == 0);
-		}
-		if (next_event() == 0) {
-			/* timer event ready */
-			DBG(DBG_CONTROL, DBG_log("*time to handle event"));
-			handle_timer_event();
-			passert(GLOBALS_ARE_RESET());
-		}
-	}
+	main_loop();
 }
 
 /* Process any message on the MSG_ERRQUEUE
@@ -1344,7 +1259,8 @@ bool resend_ike_v1_msg(struct state *st, const char *where)
 	return send_or_resend_ike_msg(st, where, TRUE);
 }
 
-/* send keepalive is special in two ways:
+/*
+ * send keepalive is special in two ways:
  * We don't want send errors logged (too noisy).
  * We don't want the packet prefixed with a non-ESP Marker.
  */
@@ -1356,6 +1272,12 @@ bool send_keepalive(struct state *st, const char *where)
 			   NULL, 0);
 }
 
+bool ev_before(struct pluto_event *pev, deltatime_t delay) {
+	struct timeval timeout;
+
+	return (event_pending(pev->ev, EV_TIMEOUT, &timeout) & EV_TIMEOUT) &&
+		deltaless_tv_dt(timeout, delay);
+}
 void set_whack_pluto_ddos(enum ddos_mode mode)
 {
 	if (mode == pluto_ddos_mode) {
@@ -1369,4 +1291,3 @@ void set_whack_pluto_ddos(enum ddos_mode mode)
 		mode == DDOS_AUTO ? "auto-detect" : mode == DDOS_FORCE_BUSY ? "active" : "unlimited");
 
 }
-

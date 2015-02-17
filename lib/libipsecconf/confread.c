@@ -147,6 +147,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_IKELIFETIME] =
 		OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
+
+	cfg->conn_default.options[KBF_RETRANSMIT_TIMEOUT] = RETRANSMIT_TIMEOUT_DEFAULT;
+	cfg->conn_default.options[KBF_RETRANSMIT_INTERVAL] = RETRANSMIT_INTERVAL_DEFAULT;
+
 	cfg->conn_default.options[KBF_SALIFETIME]  = SA_LIFE_DURATION_DEFAULT;
 	cfg->conn_default.options[KBF_REKEYMARGIN] =
 		SA_REPLACEMENT_MARGIN_DEFAULT;

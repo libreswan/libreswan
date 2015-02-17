@@ -54,7 +54,7 @@ void set_alloc_exit_log_func(exit_log_func_t func)
  *
  * Accepted Leaks:
  * - "struct iface" and "device name" (for "discovered" net interfaces)
- * - "struct event in event_schedule()" (events not associated with states)
+ * - "struct pluto_event in event_schedule()" (events not associated with states)
  * - "Pluto lock name" (one only, needed until end -- why bother?)
  */
 

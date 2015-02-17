@@ -1434,7 +1434,7 @@ int main(int argc, char **argv)
 
 	init_virtual_ip(virtual_private);
 	/* obsoleted by nss code init_rnd_pool(); */
-	init_timer();
+	init_event_base();
 	init_secret();
 	init_states();
 	init_connections();
@@ -1442,7 +1442,6 @@ int main(int argc, char **argv)
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
-	init_adns();
 	init_id();
 	init_vendorid();
 

@@ -42,6 +42,8 @@
 #endif
 
 #include <signal.h>
+#include <event2/event.h>
+#include <event2/event_struct.h>
 
 #include <libreswan.h>
 
@@ -63,6 +65,7 @@
 #include "lswconf.h"
 
 #include "lsw_select.h"
+#include  "server.h"
 
 struct pluto_crypto_req_cont *new_pcrc(
 	crypto_req_cont_func fn,
@@ -151,6 +154,7 @@ struct pluto_crypto_worker {
 	bool pcw_dead;          /* worker is dead */
 	/*TAILQ_HEAD*/ struct req_queue pcw_active;	/* queue of tasks for this worker */
 	int pcw_work;           /* how many items in pcw_active */
+	struct event *evm;      /* pointer to master_fd event.  AA_2015 free it */
 };
 
 static /*TAILQ_HEAD*/ struct req_queue backlog;
@@ -863,6 +867,14 @@ static void handle_helper_answer(struct pluto_crypto_worker *w)
 	pfree(cn);
 }
 
+static event_callback_routine handle_helper_answer_cb;
+
+static void handle_helper_answer_cb(evutil_socket_t fd UNUSED, const short event UNUSED,
+		void *arg)
+{
+	handle_helper_answer((struct pluto_crypto_worker *) arg);
+}
+
 /*
  * initialize a helper.
  */
@@ -874,6 +886,11 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	/* reset this */
 	w->pcw_master_fd = -1;
 	w->pcw_helpernum = n;
+
+	if(w->evm != NULL) {
+		event_del(w->evm);
+		w->evm = NULL;
+	}
 
 	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
 		loglog(RC_LOG_SERIOUS,
@@ -924,6 +941,15 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	} else {
 		libreswan_log("started thread for crypto helper %d (master fd %d)",
 			      n, w->pcw_master_fd);
+	}
+	{
+		/* setup call back crypto helper fd */
+		/* EV_WRITE event is ignored do we care about EV_WRITE AA_2015 ??? */
+
+		DBG(DBG_CONTROL, DBG_log("setup helper callback for master fd %d",
+				w->pcw_master_fd));
+		w->evm = pluto_event_new(w->pcw_master_fd, EV_READ | EV_PERSIST,
+				handle_helper_answer_cb, w, NULL);
 	}
 }
 

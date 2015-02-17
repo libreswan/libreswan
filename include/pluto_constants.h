@@ -109,6 +109,7 @@ enum event_type {
 
 	EVENT_SO_DISCARD,		/* v1/v2 discard unfinished state object */
 	EVENT_v1_RETRANSMIT,		/* v1 Retransmit IKE packet */
+	EVENT_v1_SEND_XAUTH,		/* v1 send xauth request */
 	EVENT_SA_REPLACE,		/* v1/v2 SA replacement event */
 	EVENT_SA_REPLACE_IF_USED,	/* v1 SA replacement event */
 	EVENT_SA_EXPIRE,		/* v1/v2 SA expiration event */
@@ -125,10 +126,19 @@ enum event_type {
 };
 
 #define EVENT_REINIT_SECRET_DELAY	secs_per_hour
-#define EVENT_CRYPTO_FAILED_DELAY	10
-#define EVENT_RETRANSMIT_DELAY_0	10	/* 10 seconds */
-#define EVENT_RETRANSMIT_DELAY_CAP	60	/* 10 seconds */
 #define EVENT_GIVEUP_ON_DNS_DELAY	(5 * secs_per_minute)
+#define EVENT_RELEASE_WHACK_DELAY	10	/* seconds */
+
+/*
+ * an arbitary milliseconds delay for responder. A workaround for iOS, iPhone.
+ * If xauth message arrive before main mode response iPhone may abort.
+ */
+#define EVENT_v1_SEND_XAUTH_DELAY	80 /* milliseconds */
+
+#define RETRANSMIT_TIMEOUT_DEFAULT	60  /* seconds */
+#define RETRANSMIT_INTERVAL_DEFAULT	500 /* wait time doubled each retransmit - in milliseconds */
+#define DELETE_SA_DELAY			RETRANSMIT_TIMEOUT_DEFAULT /* wait until the other side giveup on us */
+#define EVENT_CRYPTO_FAILED_DELAY	RETRANSMIT_TIMEOUT_DEFAULT /* wait till the other side give up on us */
 
 /*
  * operational importance of this cryptographic operation.
@@ -176,10 +186,15 @@ typedef enum {
 
 /* Misc. stuff */
 
-#define MAXIMUM_RETRANSMISSIONS              2
+#define MAXIMUM_v1_ACCEPED_DUPLICATES        2
+/*
+ * maximum retransmits per exchange, for IKEv1 (initiator and responder),
+ * IKEv2 initiator
+ */
+#define MAXIMUM_RETRANSMITS_PER_EXCHANGE     12
+
+#define MAXIMUM_RESPONDER_WAIT		   200 /* seconds before responder giveup */
 #define MAXIMUM_INVALID_KE_RETRANS 3
-#define MAXIMUM_RETRANSMISSIONS_INITIAL      20
-#define MAXIMUM_RETRANSMISSIONS_QUICK_R1     20
 
 #define MAXIMUM_MALFORMED_NOTIFY             16
 
@@ -188,6 +203,7 @@ typedef enum {
 
 #define MAX_IKE_FRAGMENTS       16
 
+#define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
 #define DEFAULT_MAXIMIM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
 #define DEFAULT_IKE_SA_DDOS_TRESHOLD 25000 /* fairly arbitrary */
 

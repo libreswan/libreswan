@@ -1589,7 +1589,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
 		   st->st_rpacket.len)) {
 		if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE) {
-			if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS) {
+			if (st->st_retransmit < MAXIMUM_v1_ACCEPED_DUPLICATES) {
 				st->st_retransmit++;
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",
@@ -2342,14 +2342,14 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
-			time_t delay;
+			unsigned long delay_ms; /* delay is in milliseconds here */
 			enum event_type kind = smc->timeout_event;
 			bool agreed_time = FALSE;
 			struct connection *c = st->st_connection;
 
 			switch (kind) {
 			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
-				delay = EVENT_RETRANSMIT_DELAY_0;
+				delay_ms = c->r_interval;
 				break;
 
 			case EVENT_SA_REPLACE: /* SA replacement event */
@@ -2363,19 +2363,19 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					 * rekeying.  The negative consequences seem
 					 * minor.
 					 */
-					delay = deltasecs(c->sa_ike_life_seconds);
+					delay_ms = deltamillisecs(c->sa_ike_life_seconds);
 					if ((c->policy & POLICY_DONT_REKEY) ||
-					    delay >= deltasecs(st->st_oakley.life_seconds))
+					    delay_ms >= deltamillisecs(st->st_oakley.life_seconds))
 					{
 						agreed_time = TRUE;
-						delay =
-						    deltasecs(st->st_oakley.life_seconds);
+						delay_ms = deltamillisecs(st->st_oakley.life_seconds);
 					}
 				} else {
 					/* Delay is min of up to four things:
 					 * each can limit the lifetime.
 					 */
-					delay = deltasecs(c->sa_ipsec_life_seconds);
+					time_t delay = deltasecs(c->sa_ipsec_life_seconds);
+
 #define clamp_delay(trans) { \
 		if (st->trans.present && \
 		    delay >= deltasecs(st->trans.attrs.life_seconds)) { \
@@ -2386,6 +2386,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					clamp_delay(st_ah);
 					clamp_delay(st_esp);
 					clamp_delay(st_ipcomp);
+					delay_ms = delay * 1000;
 #undef clamp_delay
 				}
 
@@ -2418,8 +2419,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					       EVENT_SA_EXPIRE;
 				}
 				if (kind != EVENT_SA_EXPIRE) {
-					time_t marg = deltasecs(
-						c->sa_rekey_margin);
+					time_t marg =
+						deltasecs(c->sa_rekey_margin);
 
 					if (smc->flags & SMF_INITIATOR) {
 						marg += marg *
@@ -2431,8 +2432,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						marg /= 2;
 					}
 
-					if (delay > marg) {
-						delay -= marg;
+					if (delay_ms > (unsigned long)marg * 1000) {
+						delay_ms -= (unsigned long)marg * 1000;
 						st->st_margin = deltatime(marg);
 					} else {
 						kind = EVENT_SA_EXPIRE;
@@ -2443,7 +2444,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			default:
 				bad_case(kind);
 			}
-			event_schedule(kind, delay, st);
+			event_schedule_ms(kind, delay_ms, st);
 		}
 
 		/* tell whack and log of progress */
@@ -2505,10 +2506,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (st->st_connection->spd.this.xauth_server) {
 			if (st->st_oakley.doing_xauth &&
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				libreswan_log(
-					"XAUTH: Sending XAUTH Login/Password Request");
-				xauth_send_request(st);
-				break;
+				DBG(DBG_CONTROL,
+						DBG_log("XAUTH: "
+						       "Sending XAUTH Login/Password Request"));
+				event_schedule_ms(EVENT_v1_SEND_XAUTH,
+						EVENT_v1_SEND_XAUTH_DELAY, st);
+						break;
 			}
 		}
 

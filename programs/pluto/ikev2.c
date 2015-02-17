@@ -1280,7 +1280,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 					st->st_rel_whack_event = NULL;
 				}
 				event_schedule(EVENT_v2_RELEASE_WHACK,
-						EVENT_RETRANSMIT_DELAY_0, st);
+						EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
 				delay = ikev2_replace_delay(st, &kind,
 						(svm->flags & SMF2_INITIATOR) ?
@@ -1288,8 +1288,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 				event_schedule(kind, delay, st);
 
 			}  else {
-				event_schedule(EVENT_v2_RETRANSMIT,
-						EVENT_RETRANSMIT_DELAY_0, st);
+				event_schedule_ms(EVENT_v2_RETRANSMIT,
+						c->r_interval, st);
 			}
 			break;
 		case EVENT_SA_REPLACE: /* SA replacement event */
@@ -1303,9 +1303,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 		case EVENT_v2_RESPONDER_TIMEOUT:
 			delete_event(st);
-			event_schedule(kind,
-				MAXIMUM_RETRANSMISSIONS_INITIAL *
-					EVENT_RETRANSMIT_DELAY_0, st);
+			event_schedule(kind, MAXIMUM_RESPONDER_WAIT, st);
 			break;
 
 		case EVENT_NULL:
@@ -1500,30 +1498,29 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 			  enum_name(&ikev2_notify_names, md->note));
 
 		if (md->note != NOTHING_WRONG) {
-			/*
-			 * Only send a notify is this packet was a request,
-			 * not if it was a reply.
-			 */
 			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
+				/* We are the exchange responder */
 				DBG(DBG_CONTROL, DBG_log("sending a notification reply"));
 				/* Check if this is an IKE_INIT reply w INVALID_KE */
 				if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT &&
 				    md->note == (notification_t)v2N_INVALID_KE_PAYLOAD) {
 					DBG(DBG_CONTROL, DBG_log("sending IKE_INIT with INVALID_KE"));
-					send_v2_notification_invalid_ke_from_state(md->st);
+					send_v2_notification_invalid_ke_from_state(st);
 				} else {
-					/*
-					 * ??? if this can be sent as part of an
-					 * existing exchange, rather than a new
-					 * Informational Exchange, should it not be?
-					 *
-					 * Paul: The macro expands to
-					 * send_v2_notification_from_state() and if
-					 * st != NULL then calls send_v2_notification
-					 * which hardcodes ISAKMP_v2_SA_INIT
-					 */
 					SEND_V2_NOTIFICATION(md->note);
 				}
+
+				if (st) {
+					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
+						delete_state(st);
+					} else {
+						delete_event(st);
+						event_schedule(EVENT_v2_RESPONDER_TIMEOUT, MAXIMUM_RESPONDER_WAIT, st);
+					}
+				}
+			} else {
+				/* We are the exchange initiator */
+				pexpect(st->st_event != NULL && st->st_event->ev_type == EVENT_v2_RETRANSMIT);
 			}
 		}
 

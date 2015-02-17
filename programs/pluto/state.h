@@ -421,7 +421,7 @@ struct state {
 
 	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
-	struct event *st_event;		/* timer event for this state object */
+	struct pluto_event *st_event;		/* timer event for this state object */
 
 	struct state *st_hashchain_next;	/* next in state hashbucket chain */
 	struct state *st_hashchain_prev;	/* previous in state hashbucket chain  */
@@ -433,8 +433,9 @@ struct state {
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
 	bool st_pend_liveness;			/* Waiting on an informational response */
-	struct event *st_liveness_event;
-	struct event *st_rel_whack_event;
+	struct pluto_event *st_liveness_event;
+	struct pluto_event *st_rel_whack_event;
+	struct pluto_event *send_xauth_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */
@@ -443,7 +444,7 @@ struct state {
 	                                           to receive */
 	u_int32_t st_dpd_peerseqno;             /* global variables */
 	u_int32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
-	struct event *st_dpd_event;		/* backpointer for DPD events */
+	struct pluto_event *st_dpd_event;		/* backpointer for DPD events */
 
 	bool st_seen_nortel_vid;                /* To work around a nortel bug */
 	struct isakmp_quirks quirks;            /* work arounds for faults in other products */

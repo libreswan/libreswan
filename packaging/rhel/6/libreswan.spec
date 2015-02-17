@@ -35,6 +35,7 @@ Provides: openswan-doc = %{version}-%{release}
 BuildRequires: pkgconfig net-tools
 BuildRequires: nss-devel >= 3.14.3, nspr-devel
 BuildRequires: pam-devel
+BuildRequires: libevent2-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
 %endif

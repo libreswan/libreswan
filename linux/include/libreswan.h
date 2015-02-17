@@ -30,6 +30,7 @@ typedef int bool;
 #endif
 
 #include <stddef.h>
+#include <sys/time.h>
 
 /* ================ time-related declarations ================ */
 
@@ -82,6 +83,10 @@ static inline deltatime_t deltatime(time_t secs) {
 	return d;
 }
 
+static inline unsigned long deltamillisecs(deltatime_t d) {
+	return d.delta_secs * 1000;
+}
+
 static inline time_t deltasecs(deltatime_t d) {
 	return d.delta_secs;
 }
@@ -94,6 +99,17 @@ static inline deltatime_t deltatimescale(int num, int denom, deltatime_t d) {
 static inline bool deltaless(deltatime_t a, deltatime_t b)
 {
 	return deltasecs(a) < deltasecs(b);
+}
+
+static inline bool deltaless_tv_tv(const struct timeval a, const struct timeval b)
+{
+	return a.tv_sec < b.tv_sec ||
+		( a.tv_sec == b.tv_sec && a.tv_usec < b.tv_usec);
+}
+
+static inline bool deltaless_tv_dt(const struct timeval a, const deltatime_t b)
+{
+	return a.tv_sec < deltasecs(b);
 }
 
 /* real time operations */
@@ -150,6 +166,7 @@ static inline bool monobefore(monotime_t a, monotime_t b)
 
 static inline deltatime_t monotimediff(monotime_t a, monotime_t b) {
 	deltatime_t d = { a.mono_secs - b.mono_secs };
+
 	return d;
 }
 

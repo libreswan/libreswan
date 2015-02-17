@@ -27,7 +27,7 @@ extern void init_demux(void);
 extern bool send_ike_msg(struct state *st, const char *where);
 extern bool resend_ike_v1_msg(struct state *st, const char *where);
 extern bool send_keepalive(struct state *st, const char *where);
-extern void comm_handle(const struct iface_port *ifp);
+extern event_callback_routine comm_handle_cb;
 
 extern pb_stream reply_stream;
 extern u_int8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];

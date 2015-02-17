@@ -65,6 +65,8 @@ d.ipsec.conf/rekeymargin.xml
 d.ipsec.conf/rekeyfuzz.xml
 d.ipsec.conf/keyingtries.xml
 d.ipsec.conf/ikelifetime.xml
+d.ipsec.conf/retransmit-timeout.xml
+d.ipsec.conf/retransmit-interval.xml
 d.ipsec.conf/compress.xml
 d.ipsec.conf/metric.xml
 d.ipsec.conf/mtu.xml

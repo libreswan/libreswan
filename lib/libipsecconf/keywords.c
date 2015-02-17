@@ -487,6 +487,12 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_SALIFETIME, NOT_ENUM },
 	{ "salifetime",     kv_conn | kv_auto, kt_time,   KBF_SALIFETIME,
 	  NOT_ENUM },
+
+	{ "retransmit-timeout", kv_conn | kv_auto, kt_time,   KBF_RETRANSMIT_TIMEOUT,
+	  NOT_ENUM },
+	{ "retransmit-interval", kv_conn | kv_auto, kt_number, KBF_RETRANSMIT_INTERVAL,
+	  NOT_ENUM },
+
 	{"ikepad",          kv_conn | kv_auto, kt_bool,   KBF_IKEPAD,
 	  NOT_ENUM },
 	{ "nat-ikev1-method", kv_conn | kv_auto | kv_processed, kt_enum,

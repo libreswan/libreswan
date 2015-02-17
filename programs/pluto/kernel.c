@@ -38,6 +38,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <event2/event.h>
+#include <event2/event_struct.h>
+#include <event2/thread.h>
+
 #include <libreswan.h>
 
 #include "sysdep.h"
@@ -102,6 +106,7 @@ static int num_ipsec_eroute = 0;
 #endif
 
 static void free_bare_shunt(struct bare_shunt **pp);
+
 
 static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
@@ -2243,14 +2248,40 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	return result;
 }
 
-const struct kernel_ops *kernel_ops;
+static event_callback_routine kernel_process_msg_cb;
+
+static void kernel_process_msg_cb(evutil_socket_t fd UNUSED,
+		const short event UNUSED, void *arg)
+{
+	const struct kernel_ops *kernel_ops = (const struct kernel_ops *) arg;
+
+	DBG(DBG_KERNEL, DBG_log(" %s process netlink message", __func__));
+	kernel_ops->process_msg();
+	passert(GLOBALS_ARE_RESET());
+}
+
+static event_callback_routine kernel_process_queue_cb;
+
+static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
+		const short event UNUSED, void *arg)
+{
+	const struct kernel_ops *kernel_ops = (const struct kernel_ops *) arg;
+
+	kernel_ops->process_queue();
+	passert(GLOBALS_ARE_RESET());
+
+}
 
 /* keep track of kernel version  */
 static char kversion[256];
 
+const struct kernel_ops *kernel_ops;
+
 void init_kernel(void)
 {
 	struct utsname un;
+	struct event *ev_fd; /* AA_2015 ??? when to free then */
+	struct event *ev_pq; /* AA_2015 ??? when to free this */
 
 #if defined(NETKEY_SUPPORT) || defined(KLIPS) || defined(KLIPS_MAST)
 	struct stat buf;
@@ -2348,6 +2379,26 @@ void init_kernel(void)
 
 	if (!kernel_ops->policy_lifetime)
 		event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
+
+	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
+
+	/* Note: kernel_ops is const but pluto_event_new cannot know that */
+	ev_fd = pluto_event_new(*kernel_ops->async_fdp, EV_READ | EV_PERSIST,
+			kernel_process_msg_cb, (void *)kernel_ops, NULL);
+
+	if (kernel_ops->process_queue != NULL) {
+		/*
+		 * AA_2015 this is untested code. only for non netkey ???
+		 * It seems in klips we should, besides kernel_process_msg,
+		 * call process_queue periodically.  Does the order
+		 * matter?
+		 */
+		static const struct timeval delay = {KERNEL_PROCESS_Q_PERIOD, 0};
+
+		/* Note: kernel_ops is read-only but pluto_event_new cannot know that */
+		ev_pq = pluto_event_new(NULL_FD, EV_TIMEOUT | EV_PERSIST,
+				kernel_process_queue_cb, (void *)kernel_ops, &delay);
+	}
 }
 
 void show_kernel_interface()

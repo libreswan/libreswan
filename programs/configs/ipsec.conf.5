@@ -1053,6 +1053,28 @@ how long the keying channel of a connection (buzzphrase: \(lqISAKMP SA\(rq) shou
 \fBsalifetime\fR\&.
 .RE
 .PP
+\fBretransmit\-timeout\fR
+.RS 4
+how long a single packet, including retransmits of that packet, may take before the IKE attempt is aborted\&. If rekeying is enabled, a new IKE attempt is started\&. The default set by
+\fBipsec_pluto\fR(8), currently is
+\fB60s\fR\&. See also:
+\fIretransmit\-interval\fR,
+\fIrekey\fR
+and
+\fIkeyingtries\fR\&.
+.RE
+.PP
+\fBretransmit\-interval\fR
+.RS 4
+the initial interval time period, specified in msecs, that pluto waits before retransmitting an IKE packet\&. This interval is doubled for each attempt (exponential back\-off)\&. The default set by
+\fBipsec_pluto\fR(8), currently is
+\fB500\fR\&. See also:
+\fIretransmit\-timeout\fR,
+\fIrekey\fR
+and
+\fIkeyingtries\fR\&.
+.RE
+.PP
 \fBcompress\fR
 .RS 4
 whether IPComp compression of content is proposed on the connection (link\-level compression does not work on encrypted data, so to be effective, compression must be done

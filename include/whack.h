@@ -129,6 +129,8 @@ struct whack_message {
 	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
+	deltatime_t r_timeout; /* in secs */
+	unsigned long  r_interval; /* in msec */
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
 	deltatime_t dpd_delay;

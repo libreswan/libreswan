@@ -1021,6 +1021,7 @@ typedef u_int16_t ipsec_auth_t;
 #define OAKLEY_LIFE_SECONDS 1
 #define OAKLEY_LIFE_KILOBYTES 2
 
+/* XXX These are not IETF constants but pluto constants */
 #define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT secs_per_hour
 #define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM secs_per_day
 
