@@ -435,7 +435,7 @@ struct state {
 	bool st_pend_liveness;			/* Waiting on an informational response */
 	struct pluto_event *st_liveness_event;
 	struct pluto_event *st_rel_whack_event;
-	struct pluto_event *send_xauth_event;
+	struct pluto_event *st_send_xauth_event;
 
 	/* RFC 3706 Dead Peer Detection */
 	monotime_t st_last_dpd;			/* Time of last DPD transmit (0 means never?) */

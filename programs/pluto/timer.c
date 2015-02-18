@@ -449,10 +449,10 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_v1_SEND_XAUTH:
-		passert(st != NULL && st->send_xauth_event == ev);
+		passert(st != NULL && st->st_send_xauth_event == ev);
 		DBG_log("event EVENT_v1_SEND_XAUTH %lu %s", st->st_serialno,
 				enum_name(&state_names, st->st_state));
-		st->send_xauth_event = NULL;
+		st->st_send_xauth_event = NULL;
 		break;
 
 	case EVENT_v1_RETRANSMIT:
@@ -860,8 +860,8 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 			break;
 
 		case  EVENT_v1_SEND_XAUTH:
-			passert(st->send_xauth_event == NULL);
-			st->send_xauth_event = ev;
+			passert(st->st_send_xauth_event == NULL);
+			st->st_send_xauth_event = ev;
 			break;
 
 		default:
