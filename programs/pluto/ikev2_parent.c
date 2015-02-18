@@ -2996,7 +2996,7 @@ void send_v2_notification(struct state *p1st,
 
 		/* incomplete */
 		switch (p1st->st_state) {
-		case STATE_PARENT_R1:
+		case STATE_PARENT_R2:
 			hdr.isa_xchg = ISAKMP_v2_AUTH;
 			break;
 		default:
