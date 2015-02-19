@@ -105,6 +105,10 @@ static struct bare_shunt *bare_shunts = NULL;
 static int num_ipsec_eroute = 0;
 #endif
 
+
+static struct event *ev_fd; /* could these two go in kernel_ops AA_2015 ??? */
+static struct event *ev_pq;
+
 static void free_bare_shunt(struct bare_shunt **pp);
 
 
@@ -2280,8 +2284,6 @@ const struct kernel_ops *kernel_ops;
 void init_kernel(void)
 {
 	struct utsname un;
-	struct event *ev_fd; /* AA_2015 ??? when to free then */
-	struct event *ev_pq; /* AA_2015 ??? when to free this */
 
 #if defined(NETKEY_SUPPORT) || defined(KLIPS) || defined(KLIPS_MAST)
 	struct stat buf;
@@ -3152,4 +3154,10 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 			*ago = monotimediff(mononow(), p2->peer_lastused);
 	}
 	return TRUE;
+}
+
+void free_kernelfd(void)
+{
+	event_free(ev_fd);
+	event_free(ev_pq);
 }
