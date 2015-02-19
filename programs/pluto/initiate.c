@@ -99,19 +99,6 @@ bool orient(struct connection *c)
 				if (p->ike_float)
 					continue;
 
-#ifdef HAVE_LABELED_IPSEC
-				if (c->loopback &&
-				    sameaddr(&sr->this.host_addr,
-					     &p->ip_addr)) {
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("loopback connections \"%s\" with interface %s!",
-						    c->name,
-						    p->ip_dev->id_rname));
-					c->interface = p;
-					break;
-				}
-#endif
-
 				for (;; ) {
 					/* check if this interface matches this end */
 					if (sameaddr(&sr->this.host_addr,

@@ -1396,7 +1396,6 @@ void add_connection(const struct whack_message *wm)
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-		c->loopback = wm->loopback;
 		c->labeled_ipsec = wm->labeled_ipsec;
 		c->policy_label = wm->policy_label;
 #endif
@@ -1577,43 +1576,6 @@ void add_connection(const struct whack_message *wm)
 
 				DBG_log("%s", topo);
 			});
-
-#ifdef HAVE_LABELED_IPSEC
-		if (c->loopback &&
-		    portof(&c->spd.this.client.addr) !=
-		      portof(&c->spd.that.client.addr)) {
-			struct spd_route *tmp_spd;
-			u_int16_t tmp_this_port, tmp_that_port;
-
-			tmp_spd = clone_thing(c->spd,
-					"loopback asymmetrical policies");
-			tmp_spd->this.id.name.ptr = NULL;
-			tmp_spd->this.id.name.len = 0;
-			tmp_spd->that.id.name.ptr = NULL;
-			tmp_spd->that.id.name.len = 0;
-			tmp_spd->this.host_addr_name = NULL;
-			tmp_spd->that.host_addr_name = NULL;
-			tmp_spd->this.updown = clone_str(tmp_spd->this.updown,
-							"updown");
-			tmp_spd->that.updown = clone_str(tmp_spd->that.updown,
-							"updown");
-			tmp_spd->this.cert_filename = NULL;
-			tmp_spd->that.cert_filename = NULL;
-			tmp_spd->this.cert.ty = CERT_NONE;
-			tmp_spd->that.cert.ty = CERT_NONE;
-			tmp_spd->this.ca.ptr = NULL;
-			tmp_spd->that.ca.ptr = NULL;
-			tmp_spd->this.virt = NULL;
-			tmp_spd->that.virt = NULL;
-			tmp_spd->next = NULL;
-			c->spd.next = tmp_spd;
-
-			tmp_this_port = portof(&tmp_spd->this.client.addr);
-			tmp_that_port = portof(&tmp_spd->that.client.addr);
-			setportof(tmp_this_port, &tmp_spd->that.client.addr);
-			setportof(tmp_that_port, &tmp_spd->this.client.addr);
-		}
-#endif
 
 #if 0
 		/*
@@ -3569,17 +3531,16 @@ static void show_one_sr(struct connection *c,
 	}
 
 #ifdef HAVE_LABELED_IPSEC
-	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s, loopback:%s; ",
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s; ",
 		c->name, instance,
-		c->labeled_ipsec ? "yes" : "no",
-		c->loopback ? "yes" : "no"
+		c->labeled_ipsec ? "yes" : "no"
 		);
 	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s; ",
 		c->name, instance,
 		(c->policy_label == NULL) ? "unset" : c->policy_label);
 #else
 	/* this makes output consistent for testing regardless of support */
-	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no, loopback:no; ",
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no; ",
 		  c->name, instance);
 	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:unset; ",
 		  c->name, instance);

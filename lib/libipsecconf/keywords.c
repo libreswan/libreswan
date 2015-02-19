@@ -498,8 +498,6 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "nat-ikev1-method", kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKEV1_NATT, &kw_ikev1natt_list },
 #ifdef HAVE_LABELED_IPSEC
-	{ "loopback",       kv_conn | kv_auto, kt_bool, KBF_LOOPBACK,
-	  NOT_ENUM },
 	{ "labeled_ipsec",   kv_conn | kv_auto | kv_alias, kt_bool, KBF_LABELED_IPSEC,
 	  NOT_ENUM },	/* obsolete _ */
 	{ "labeled-ipsec",   kv_conn | kv_auto, kt_bool, KBF_LABELED_IPSEC,

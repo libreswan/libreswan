@@ -960,22 +960,6 @@ void process_v1_packet(struct msg_digest **mdp)
 					      md->hdr.isa_rcookie,
 					      md->hdr.isa_msgid);
 
-#ifdef HAVE_LABELED_IPSEC
-			if (st != NULL && st->st_connection->loopback) {
-				DBG(DBG_CONTROL,
-				    DBG_log("loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
-
-				st = find_state_ikev1_loopback(
-					md->hdr.isa_icookie,
-					md->hdr.isa_rcookie, md->hdr.isa_msgid,
-					md);
-				DBG(DBG_CONTROL,
-					DBG_log(st == NULL ?
-						"loopback scenario: did not find any state; perhaps a first message from the responder" :
-						"loopback scenario: found a correct state for the received message"));
-			}
-#endif
-
 			if (st == NULL) {
 				/* perhaps this is a first message from the responder
 				 * and contains a responder cookie that we've not yet seen.
@@ -1095,21 +1079,6 @@ void process_v1_packet(struct msg_digest **mdp)
 		st = find_state_ikev1(md->hdr.isa_icookie, md->hdr.isa_rcookie,
 				      md->hdr.isa_msgid);
 
-#ifdef HAVE_LABELED_IPSEC
-		if (st != NULL && st->st_connection->loopback) {
-			DBG(DBG_CONTROL,
-			    DBG_log("loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
-
-			st = find_state_ikev1_loopback(md->hdr.isa_icookie,
-						       md->hdr.isa_rcookie,
-						       md->hdr.isa_msgid, md);
-
-			DBG(DBG_CONTROL,
-				DBG_log(st == NULL ?
-					"loopback scenario: did not found any state; perhaps a first message from the responder" :
-					"loopback scenario: found a correct state for the received message"));
-		}
-#endif
 		if (st == NULL) {
 			/* No appropriate Quick Mode state.
 			 * See if we have a Main Mode state.

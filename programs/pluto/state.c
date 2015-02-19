@@ -1077,45 +1077,6 @@ struct state *find_state_ikev1(const u_char *icookie,
 	return st;
 }
 
-#ifdef HAVE_LABELED_IPSEC
-struct state *find_state_ikev1_loopback(const u_char *icookie,
-					const u_char *rcookie,
-					msgid_t /*network order*/ msgid,
-					const struct msg_digest *md)
-{
-	struct state *st = *state_hash(icookie, rcookie);
-
-	while (st != (struct state *) NULL) {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
-		    !st->st_ikev2) {
-			DBG(DBG_CONTROL,
-			    DBG_log("loopback: v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
-				    st->st_serialno,
-				    (long unsigned)ntohl(msgid),
-				    (long unsigned)ntohl(st->st_msgid)));
-			if (msgid == st->st_msgid &&
-			    !(st->st_tpacket.ptr &&
-			      memeq(st->st_tpacket.ptr, md->packet_pbs.start,
-				     pbs_room(&md->packet_pbs))))
-				break;
-		}
-		st = st->st_hashchain_next;
-	}
-
-	DBG(DBG_CONTROL, {
-		    if (st == NULL)
-			    DBG_log("loopback: v1 state object not found");
-		    else
-			    DBG_log("loopback: v1 state object #%lu found, in %s",
-				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
-	    });
-
-	return st;
-}
-#endif
-
 /*
  * Find a state object for an IKEv2 state.
  * Note: only finds parent states.

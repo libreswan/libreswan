@@ -488,13 +488,6 @@ extern struct state
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
 	*find_sender(size_t packet_len, u_char * packet);
 
-#ifdef HAVE_LABELED_IPSEC
-extern struct state *find_state_ikev1_loopback(const u_char *icookie,
-					       const u_char *rcookie,
-					       msgid_t msgid,
-					       const struct msg_digest *md);
-#endif
-
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 

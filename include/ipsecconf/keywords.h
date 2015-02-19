@@ -123,7 +123,6 @@ enum keyword_numeric_config_field {
 	KBF_OVERLAPIP,
 	KBF_REMOTEPEERTYPE,     /*Cisco interop: remote peer type */
 	KBF_NMCONFIGURED,       /*Network Manager support */
-	KBF_LOOPBACK,
 	KBF_LABELED_IPSEC,
 	KBF_SAREFTRACK,         /* saref tracking paramter for _updown */
 	KBF_WARNIGNORE,         /* to ignore obsoleted keywords */

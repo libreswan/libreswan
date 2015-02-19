@@ -228,7 +228,6 @@ struct connection {
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	bool loopback;
 	bool labeled_ipsec;
 	char *policy_label;
 #endif

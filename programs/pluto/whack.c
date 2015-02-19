@@ -155,7 +155,7 @@ static void help(void)
 		" \\\n   "
 #endif
 #ifdef HAVE_LABELED_IPSEC
-		"[--loopback] [--labeledipsec] [--policylabel <label>]"
+		"[--labeledipsec] [--policylabel <label>]"
 		" \\\n   "
 #endif
 		"[--xauthby file|pam|alwaysok]"
@@ -502,7 +502,6 @@ enum option_enums {
 	CD_REMOTEPEERTYPE,
 	CD_SHA2_TRUNCBUG,
 	CD_NMCONFIGURED,
-	CD_LOOPBACK,
 	CD_LABELED_IPSEC,
 	CD_POLICY_LABEL,
 	CD_XAUTHBY,
@@ -754,7 +753,6 @@ static const struct option long_opts[] = {
 	{ "nm_configured", no_argument, NULL, CD_NMCONFIGURED + OO },
 #endif
 #ifdef HAVE_LABELED_IPSEC
-	{ "loopback", no_argument, NULL, CD_LOOPBACK + OO },
 	{ "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO },
 	{ "policylabel", required_argument, NULL, CD_POLICY_LABEL + OO },
 #endif
@@ -976,7 +974,6 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	msg.loopback = FALSE;
 	msg.labeled_ipsec = FALSE;
 	msg.policy_label = NULL;
 #endif
@@ -1676,10 +1673,6 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-		case CD_LOOPBACK:
-			msg.loopback = TRUE;
-			continue;
-
 		case CD_LABELED_IPSEC:
 			msg.labeled_ipsec = TRUE;
 			continue;

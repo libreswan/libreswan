@@ -179,7 +179,6 @@ struct whack_message {
 	int sa_priority;
 	reqid_t sa_reqid;
 
-	bool loopback;
 	bool labeled_ipsec;
 	char *policy_label;
 

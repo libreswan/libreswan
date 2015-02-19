@@ -132,7 +132,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	cfg->conn_default.options[KBF_LOOPBACK] = FALSE;
 	cfg->conn_default.options[KBF_LABELED_IPSEC] = FALSE;
 #endif
 
