@@ -106,8 +106,8 @@ static int num_ipsec_eroute = 0;
 #endif
 
 
-static struct event *ev_fd; /* could these two go in kernel_ops AA_2015 ??? */
-static struct event *ev_pq;
+static struct event *ev_fd = NULL; /* could these two go in kernel_ops AA_2015 ??? */
+static struct event *ev_pq = NULL;
 
 static void free_bare_shunt(struct bare_shunt **pp);
 
@@ -3158,6 +3158,13 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 void free_kernelfd(void)
 {
-	event_free(ev_fd);
-	event_free(ev_pq);
+	if (ev_fd != NULL) {
+		event_free(ev_fd);
+		ev_fd = NULL;
+	}
+	if (ev_pq != NULL) {
+		event_free(ev_pq);
+		ev_pq = NULL;
+	}
+
 }
