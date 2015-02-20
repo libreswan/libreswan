@@ -2211,8 +2211,10 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
 	/* We don't know his ID yet, so gw id must be an ipaddr */
-	passert(gw->key != NULL);
-	passert(id_is_ipaddr(&gw->gw_id));
+	// valid for AUTH_NULL 
+	// passert(gw->key != NULL);
+	if (gw)
+		passert(id_is_ipaddr(&gw->gw_id));
 
 	/* for each of our addresses... */
 	for (p = interfaces; p != NULL; p = p->next) {

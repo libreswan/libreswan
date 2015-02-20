@@ -393,7 +393,7 @@ enum find_oppo_step {
 	fos_our_client,
 	fos_our_txt,
 	fos_his_client,
-	fos_done
+	fos_done,
 };
 
 static const char *const oppo_step_name[] = {
@@ -800,6 +800,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		 */
 		if (b->held) {
 			/* what should we do on failure? */
+			/* check connection for "leak-during-ike" property */
 			(void) assign_hold(c, sr, b->transport_proto,
 					   &b->our_client, &b->peer_client);
 		}
@@ -844,8 +845,30 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		switch (b->step) {
 		case fos_start:
-			/* just starting out: select first query step */
-			next_step = fos_myid_ip_txt;
+			if (c != NULL && (c->policy & POLICY_AUTH_NULL)) {
+				struct gw_info *nullgw, *loopgw;
+
+				nullgw->client_id.kind = ID_NULL;
+				nullgw->gw_id.kind = ID_NULL;
+				nullgw->gw_key_present = FALSE;
+				nullgw->key = NULL;
+				nullgw->next = NULL;
+				for (loopgw = ac->gateways_from_dns; loopgw != NULL;
+				     loopgw = loopgw->next) {
+					if (loopgw->next == NULL)
+						loopgw->next = nullgw;
+				}
+
+				b->step = fos_his_client; /* skip all DNS */
+				initiate_ondemand_body(b, ac, ac_ugh
+#ifdef HAVE_LABELED_IPSEC
+							, uctx 
+#endif
+				);
+			} else {
+				/* just starting out: select first query step */
+				next_step = fos_myid_ip_txt;
+			}
 			break;
 
 		case fos_myid_ip_txt: /* IPSECKEY for our default IP address as %myid */
@@ -1027,7 +1050,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			next_step = fos_done; /* no more queries */
 
 			c = build_outgoing_opportunistic_connection(
-				ac->gateways_from_dns,
+				(ac == NULL) ? NULL : ac->gateways_from_dns,
 				&b->our_client,
 				&b->peer_client);
 
