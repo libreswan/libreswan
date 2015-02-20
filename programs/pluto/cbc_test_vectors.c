@@ -94,28 +94,28 @@ const struct cbc_test_vector aes_cbc_test_vectors[] = {
  */
 const struct cbc_test_vector camellia_cbc_test_vectors[] = {
 	{
-		.description = "Camellia: 16 bytes with 128-bit key #1",
+		.description = "Camellia: 16 bytes with 128-bit key",
 		.key = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
 		.iv = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
 		.plaintext = "0x" "80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
 		.ciphertext = "0x" "07 92 3A 39 EB 0A 81 7D 1C 4D 87 BD B8 2D 1F 1C"
 	},
 	{
-		.description = "Camellia: 16 bytes with 128-bit key #2",
+		.description = "Camellia: 16 bytes with 128-bit key",
 		.key = "0x" "00 11 22 33 44 55 66 77 88 99 AA BB CC DD EE FF",
 		.iv = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
 		.plaintext = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 ",
 		.ciphertext = "0x" "14 4D 2B 0F 50 0C 27 B7 EC 2C D1 2D 91 59 6F 37"
 	},
 	{
-		.description = "Camellia: 16 bytes with 256-bit key #1",
+		.description = "Camellia: 16 bytes with 256-bit key",
 		.key = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
 		.iv = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
 		.plaintext = "0x" "80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
 		.ciphertext = "0x" "B0 C6 B8 8A EA 51 8A B0 9E 84 72 48 E9 1B 1B 9D"
 	},
 	{
-		.description = "Camellia: 16 bytes with 256-bit key #2",
+		.description = "Camellia: 16 bytes with 256-bit key",
 		.key = "0x" "00 11 22 33 44 55 66 77 88 99 AA BB CC DD EE FF FF EE DD CC BB AA 99 88 77 66 55 44 33 22 11 00",
 		.iv = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
 		.plaintext = "0x" "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01",
