@@ -6,6 +6,12 @@ set -ue
 
 cd /source
 
+if [ -f /usr/libexec/ipsec/pluto ]
+then
+	echo "ABORT: found pluto outside /usr/local"
+	exit 1;
+fi
+
 # we don't trust all makefile dependancies, esp lib/
 rm -rf OBJ.linux.* modobj
 

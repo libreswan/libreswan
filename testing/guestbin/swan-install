@@ -3,6 +3,12 @@ set -x
 
 set -ue
 
+if [ -f /usr/libexec/ipsec/pluto ]
+then
+	echo "ABORT: existing pluot found outside /usr/local/"
+	exit 1
+fi
+
 pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
 
 cd /source
