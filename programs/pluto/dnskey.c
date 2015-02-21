@@ -1270,6 +1270,10 @@ static err_t build_dns_name(char name_buf[NS_MAXDNAME + 2],
 	/* note: all end in "." to suppress relative searches */
 	id = resolve_myid(id);
 	switch (id->kind) {
+	case ID_NULL:
+		/* ok */
+		return NULL;
+
 	case ID_IPV4_ADDR:
 	{
 		/* XXX: this is really ugly and only temporary until addrtot can
