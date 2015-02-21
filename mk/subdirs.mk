@@ -41,9 +41,20 @@ clean: clean.subdirs
 spotless: spotless.subdirs
 install_file_list: install_file_list.subdirs
 # add more here
+
+# generate current TARGET_SUBDIRS variable name; uses $@!
+mk.subdirs.target = $(shell echo $(basename $@) | tr '[a-z]' '[A-Z]')_SUBDIRS
+# Select SUBDIR list from either $(SUBDIRS) or $(TARGET_SUBDIRS)
+mk.subdirs.subdirs = $(if $(filter $(origin $(mk.subdirs.target)),undefined),$(SUBDIRS),$($(mk.subdirs.target)))
 $(SUBDIR_TARGETS):
 	set -e ; \
-	for d in $(SUBDIRS) ; \
-	do \
-		( cd $$d && $(MAKE) $(basename $@) ) ; \
-	done
+	subdirs="$(mk.subdirs.subdirs)" ; \
+	if test "x$$subdirs" = x ; then \
+		echo "------------------------------------------" ; \
+		echo "            SKIPPING $(basename $@)" ; \
+		echo "------------------------------------------" ; \
+	else \
+		for d in $$subdirs ; do \
+			$(MAKE) -C $$d $(basename $@) ; \
+		done ; \
+	fi
