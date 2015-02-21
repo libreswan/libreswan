@@ -236,7 +236,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 
 	ugh = pack_whack_msg(&wp);
 
-	if (ugh) {
+	if (ugh != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"send_wack_msg(): can't pack strings: %s", ugh);
 		return -1;
@@ -700,7 +700,7 @@ static bool one_subnet_from_string(struct starter_conn *conn,
 		subnets++;
 
 	e = ttosubnet(eln, subnets - eln, af, sn);
-	if (e) {
+	if (e != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets)",
 			conn->name,

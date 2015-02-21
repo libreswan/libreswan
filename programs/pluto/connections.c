@@ -994,7 +994,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 			port = htons(dst->port);
 			setportof(port, &dst->host_addr);
 
-			if (er) {
+			if (er != NULL) {
 				loglog(RC_COMMENT,
 					"failed to convert '%s' at load time: "
 					"%s", dst->host_addr_name, er);

@@ -2427,19 +2427,18 @@ static stf_status xauth_client_resp(struct state *st,
 
 					if (st->st_xauth_password.ptr ==
 					    NULL) {
-						struct secret *s;
+						struct secret *s =
+							lsw_get_xauthsecret(
+								st->st_connection,
+								st->st_xauth_username);
 
-						s = lsw_get_xauthsecret(
-							st->st_connection,
-							st->st_xauth_username);
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("looked up username=%s, got=%p",
 							    st->st_xauth_username,
 							    s));
-						if (s) {
-							struct
-							private_key_stuff *pks
-								= lsw_get_pks(s);
+						if (s != NULL) {
+							struct private_key_stuff
+								*pks = lsw_get_pks(s);
 
 							clonetochunk(
 								st->st_xauth_password,
@@ -2449,8 +2448,7 @@ static stf_status xauth_client_resp(struct state *st,
 						}
 					}
 
-					if (st->st_xauth_password.ptr ==
-					    NULL) {
+					if (st->st_xauth_password.ptr == NULL) {
 						char xauth_password[64];
 
 						if (st->st_whack_sock == -1) {

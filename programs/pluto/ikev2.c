@@ -1506,7 +1506,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 					SEND_V2_NOTIFICATION(md->note);
 				}
 
-				if (st) {
+				if (st != NULL) {
 					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
 						delete_state(st);
 					} else {

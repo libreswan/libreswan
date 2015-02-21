@@ -170,19 +170,21 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 	ip_address lip; /* --listen filter option */
 
 	if (pluto_listen) {
-		err_t e;
-		e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
-		if (e) {
+		err_t e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
+
+		if (e != NULL) {
 			DBG_log("invalid listen= option ignored: %s", e);
 			pluto_listen = NULL;
 		}
 	}
 
 	strcpy(useful_mast_name, "useless");
-	{ int new_useful = recalculate_mast_device_list(rifaces);
 
-	  if (new_useful != -1)
-		  useful_mastno = new_useful;
+	{
+		int new_useful = recalculate_mast_device_list(rifaces);
+
+		if (new_useful != -1)
+			useful_mastno = new_useful;
 	}
 
 	DBG_log("useful mast device %d", useful_mastno);

@@ -1702,11 +1702,11 @@ int main(int argc, char *argv[])
 						progname);
 				}
 				continue;
-			} else {
-				if (debug) {
-					printf("%s: parseable PF_KEY message.\n",
-						progname);
-				}
+			}
+
+			if (debug) {
+				printf("%s: parseable PF_KEY message.\n",
+					progname);
 			}
 			if ((pid_t)pfkey_msg->sadb_msg_pid == mypid) {
 				if (saref_me || dumpsaref) {
@@ -1714,7 +1714,8 @@ int main(int argc, char *argv[])
 						(struct sadb_x_saref *)
 						extensions[
 							K_SADB_X_EXT_SAREF];
-					if (s) {
+
+					if (s != NULL) {
 						printf("%s: saref=%d/%d\n",
 						       progname,
 						       s->sadb_x_saref_me,
