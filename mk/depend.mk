@@ -42,5 +42,11 @@ $(mk.depend.dependencies.file): $(srcdir)/Makefile $(mk.depend.file)
 	done > $@.tmp
 	mv $@.tmp $@
 
+clean: mk.depend.clean
+.PHONY: mk.depend.clean
+mk.depend.clean:
+	rm -f $(mk.depend.dependencies.file)
+	rm -f $(builddir)/*.d
+
 -include $(mk.depend.dependencies.file)
 
