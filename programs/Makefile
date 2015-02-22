@@ -43,5 +43,5 @@ ifeq ($(USE_BSDKAME),true)
 SUBDIRS+=_realsetup.bsd _updown.bsdkame
 endif
 
-CHECK_SUBDIRS=
+BROKEN_CHECK_SUBDIRS=$(SUBDIRS)
 include $(top_srcdir)/mk/subdirs.mk
