@@ -846,6 +846,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		switch (b->step) {
 		case fos_start:
 			if (c != NULL && !(c->policy & POLICY_RSASIG)) {
+				//if (ac == NULL)
+					
 				/* no dns queries to find the gateway. create one here */
 				struct gw_info *nullgw, *loopgw;
 				if (c->policy & POLICY_AUTH_NULL) {
