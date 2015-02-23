@@ -1,5 +1,6 @@
 /*
- * IKEv2 parent SA creation routines
+ * IKEv2 parent SA creation routines, for Libreswan
+ *
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
@@ -65,7 +66,6 @@
 #include "nat_traversal.h"
 #include "pam_conv.h"
 #include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
-
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 
 #include "ietf_constants.h"
@@ -1529,6 +1529,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 	return STF_OK;
 }
 
+
 /*
  * ikev2_decrypt_msg: decode the v2E payload.
  * The result is stored in-place.
@@ -1541,13 +1542,16 @@ static stf_status ikev2_encrypt_msg(struct state *st,
  * The (optional) salt, wire-iv, and (optional) 1 are combined to form
  * the actual starting-variable (a.k.a. IV).
  */
+
 static
-stf_status ikev2_decrypt_msg(struct msg_digest *md,
-			     enum phase1_role role)
+stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
+					       enum phase1_role original_role)
 {
+	/* caller should be passing in the original (parent) state. */
 	struct state *st = md->st;
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
+
 	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
 
 	if (st != NULL && !st->hidden_variables.st_skeyid_calculated)
@@ -1608,7 +1612,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	chunk_t salt;
 	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
-	if (role == O_INITIATOR) {
+	if (original_role == O_INITIATOR) {
 		cipherkey = pst->st_skey_er_nss;
 		authkey = pst->st_skey_ar_nss;
 		salt = pst->st_skey_responder_salt;
@@ -1707,10 +1711,31 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	DBG(DBG_CRYPT, DBG_log("striping %u bytes as pad", padlen));
 
 	init_pbs(&md->clr_pbs, enc_start, enc_size - padlen, "cleartext");
+	return STF_OK;
+}
 
-	return ikev2_process_payloads(md, &md->clr_pbs,
-		md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np,
-		TRUE);
+static
+stf_status ikev2_decrypt_msg(struct msg_digest *md,
+			     enum phase1_role original_role)
+{
+	stf_status status;
+	status = ikev2_verify_and_decrypt_sk_payload(md, original_role);
+	if (status != STF_OK) {
+		return status;
+	}
+	unsigned np = md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np;
+	struct ikev2_payloads_summary summary;
+	status = ikev2_decode_payloads(md, &md->clr_pbs, np, &summary);
+	if (status != STF_OK) {
+		return status;
+	}
+	struct ikev2_payload_errors errors;
+	status = ikev2_verify_payloads(summary, md->svm, TRUE, &errors);
+	if (status != STF_OK) {
+		ikev2_log_payload_errors(errors);
+		return status;
+	}
+	return STF_OK;
 }
 
 static stf_status ikev2_ship_cp_attr_ip4(u_int16_t type, ip_address *ip4,

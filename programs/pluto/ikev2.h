@@ -87,10 +87,7 @@ extern void send_v2_notification_from_md(struct msg_digest *md,
 					 v2_notification_t type,
 					 chunk_t *data);
 
-extern stf_status ikev2_process_payloads(struct msg_digest *md,
-					 pb_stream   *in_pbs,
-					 enum next_payload_types_ikev2 np,
-					 bool enc);
+extern stf_status ikev2_process_decrypted_payloads(struct msg_digest *md);
 
 extern bool ikev2_decode_peer_id_and_certs(struct msg_digest *md);
 
@@ -211,3 +208,26 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 void send_v2_notification_invalid_ke_from_state(struct state *st);
 bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
 oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);
+
+struct ikev2_payloads_summary {
+	lset_t seen;
+	lset_t repeated;
+};
+
+stf_status ikev2_decode_payloads(struct msg_digest *md,
+				 pb_stream    *in_pbs,
+				 enum next_payload_types_ikev2 np,
+				 struct ikev2_payloads_summary *summary);
+
+struct ikev2_payload_errors {
+	lset_t bad_repeat;
+	lset_t missing;
+	lset_t unexpected;
+};
+
+stf_status ikev2_verify_payloads(struct ikev2_payloads_summary summary,
+				 const struct state_v2_microcode *svm, bool enc,
+				 struct ikev2_payload_errors *errors);
+
+void ikev2_log_payload_errors(struct ikev2_payload_errors errors);
+
