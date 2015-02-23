@@ -845,16 +845,20 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		switch (b->step) {
 		case fos_start:
-			if (c != NULL && (c->policy & POLICY_AUTH_NULL)) {
+			if (c != NULL && !(c->policy & POLICY_RSASIG)) {
 				struct gw_info *nullgw, *loopgw;
-
-				nullgw->client_id.kind = ID_NULL;
-				nullgw->gw_id.kind = ID_NULL;
+				if (c->policy & POLICY_AUTH_NULL) {
+					nullgw->client_id.kind = ID_NULL;
+					nullgw->gw_id.kind = ID_NULL;
+				} else {
+					nullgw->client_id.kind = ID_USER_FQDN;
+					nullgw->gw_id.kind = ID_USER_FQDN;
+				}
 				nullgw->gw_key_present = FALSE;
 				nullgw->key = NULL;
 				nullgw->next = NULL;
 				for (loopgw = ac->gateways_from_dns; loopgw != NULL;
-				     loopgw = loopgw->next) {
+						loopgw = loopgw->next) {
 					if (loopgw->next == NULL)
 						loopgw->next = nullgw;
 				}
@@ -862,9 +866,9 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				b->step = fos_his_client; /* skip all DNS */
 				initiate_ondemand_body(b, ac, ac_ugh
 #ifdef HAVE_LABELED_IPSEC
-							, uctx 
+						, uctx 
 #endif
-				);
+						);
 			} else {
 				/* just starting out: select first query step */
 				next_step = fos_myid_ip_txt;
