@@ -846,6 +846,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		switch (b->step) {
 		case fos_start:
 			if (c != NULL && !(c->policy & POLICY_RSASIG)) {
+				/* no dns queries to find the gateway. create one here */
 				struct gw_info *nullgw, *loopgw;
 				if (c->policy & POLICY_AUTH_NULL) {
 					nullgw->client_id.kind = ID_NULL;
@@ -855,6 +856,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 					nullgw->gw_id.kind = ID_USER_FQDN;
 				}
 				nullgw->gw_key_present = FALSE;
+				nullgw->gw_id.ip_addr = b->peer_client;
 				nullgw->key = NULL;
 				nullgw->next = NULL;
 				for (loopgw = ac->gateways_from_dns; loopgw != NULL;
@@ -862,7 +864,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 					if (loopgw->next == NULL)
 						loopgw->next = nullgw;
 				}
-
+				c->gw_info = nullgw;
+				next_step = fos_his_client;
 				b->step = fos_his_client; /* skip all DNS */
 				initiate_ondemand_body(b, ac, ac_ugh
 #ifdef HAVE_LABELED_IPSEC
@@ -1054,7 +1057,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			next_step = fos_done; /* no more queries */
 
 			c = build_outgoing_opportunistic_connection(
-				(ac == NULL) ? NULL : ac->gateways_from_dns,
+				(ac == NULL) ? c->gw_info : ac->gateways_from_dns,
 				&b->our_client,
 				&b->peer_client);
 
@@ -1090,7 +1093,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			} else {
 				/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
 				passert(c->kind == CK_INSTANCE);
-				passert(c->gw_info != NULL);
+				// passert(c->gw_info != NULL);
 				passert(HAS_IPSEC_POLICY(c->policy));
 				passert(LHAS(LELEM(RT_UNROUTED) |
 					     LELEM(RT_ROUTED_PROSPECTIVE),
@@ -1265,7 +1268,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				break;
 
 			default:
-				bad_case(next_step);
+				// bad_case(next_step);
+				break;
 			}
 
 			if (ugh == NULL)

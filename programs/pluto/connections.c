@@ -1934,9 +1934,11 @@ struct connection *oppo_instantiate(struct connection *c,
 	if (sameaddr(peer_client, &d->spd.that.host_addr))
 		d->spd.that.has_client = FALSE;
 
-	passert(d->gw_info == NULL);
+	//passert(d->gw_info == NULL);
+	if (d->gw_info == NULL) {
 	gw_addref(gw);
 	d->gw_info = gw;
+	}
 
 	/*
 	 * Adjust routing if something is eclipsing c.
@@ -2213,8 +2215,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 	/* We don't know his ID yet, so gw id must be an ipaddr */
 	// valid for AUTH_NULL 
 	// passert(gw->key != NULL);
-	if (gw)
-		passert(id_is_ipaddr(&gw->gw_id));
+	// passert(id_is_ipaddr(&gw->gw_id));
 
 	/* for each of our addresses... */
 	for (p = interfaces; p != NULL; p = p->next) {
