@@ -30,7 +30,10 @@ typedef int bool;
 #endif
 
 #include <stddef.h>
+
+# ifndef __KERNEL__
 #include <sys/time.h>
+#endif
 
 /* ================ time-related declarations ================ */
 
