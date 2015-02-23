@@ -1,6 +1,8 @@
 # Libreswan library for parsing configuration files
+#
 # Copyright (C) 2005 Michael Richardson <mcr@xelerance.com> Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,11 +14,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.ver
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 
 LIBRARY=ipsecconf
 LIB=lib${LIBRARY}.a
@@ -44,20 +47,24 @@ endif
 
 OBJS=${SRCS:.c=.o} 
 
-include ${SRCDIR}../Makefile.library
+include $(top_srcdir)/mk/library.mk
 
-keywords.c: parser.tab.h
+# Hack to force the generated files to be built first.  Not too bad
+# since all the $(OBJS) indirectly depend on the header anyway.
+$(OBJS): parser.tab.h
 
-lex.yy.c: parser.tab.c parser.l parser.y 
-	$(LEX) ${SRCDIR}parser.l
+# Use UNIX basename to strip off the directory.
+lex.yy.c: parser.l
+	cd $(builddir) && $(LEX) $(srcdir)/$$(basename $<)
 
-parser.tab.h parser.tab.c: parser.l parser.y 
-	$(BISON) ${BISONOSFLAGS} -v -d ${SRCDIR}parser.y
+# Use wild card rule so that GNU Make knows that both are output from
+# single program.  Use UNIX basename to strip off the directory.
+%.tab.h %.tab.c: %.y
+	cd $(builddir) && $(BISON) ${BISONOSFLAGS} -v -d $(srcdir)/$$(basename $<)
 
-cleanall::
-	$(RM) -f parser.tab.* lex.yy.* Makefile.depend
+clean:
+	cd $(builddir) && $(RM) -f parser.tab.* lex.yy.*
 
-Makefile.depend: $(SRCS) $(LIBRESWANSRCDIR)/lib/libipsecconf/Makefile
-	(ls $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libipsecconf/,$(SRCS))) | grep '\.c' | xargs ${CC} -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}) >Makefile.depend
-
--include Makefile.depend
+MK_DEPEND_FILES = $(OBJS)
+MK_DEPEND_CFLAGS = $(CFLAGS)
+-include $(top_srcdir)/mk/depend.mk

@@ -21,9 +21,14 @@ ifndef MK_DEPEND_CFLAGS
 $(error define MK_DEPEND_CFLAGS)
 endif
 
-# In addition to compiling generate a dependency file.
+# In addition to compiling the .c file to .o, generate a dependency
+# file.  Force all output to the build directory.  $$(basename)
+# invokes UNIX basename.
 .c.o:
-	$(CC) $(MK_DEPEND_CFLAGS) -MMD -c $<
+	$(CC) $(MK_DEPEND_CFLAGS) \
+		-MMD -MF $(builddir)/$$(basename $@ .o).d \
+		-o $(builddir)/$$(basename $@) \
+		-c $<
 
 # Assume each source file has its own generated dependency file that
 # is updated whenever the corresponding output is updated.  Given
