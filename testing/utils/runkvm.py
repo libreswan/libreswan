@@ -135,6 +135,13 @@ def run_final (args, child):
     f.close 
     return
 
+def check_for_error (child, prompt):
+    child.sendline("echo status=$?")
+    # should extract the exit code from .match
+    if child.expect(['status=0', 'status=[1-9][0-9]*']) != 0:
+        sys.exit(1)
+    child.expect(prompt)
+
 def compile_on (args,child):
     timer = 900
     prompt = "root@%s source" % args.hostname
@@ -142,7 +149,7 @@ def compile_on (args,child):
     read_exec_shell_cmd( child, cmd, prompt, timer)
     cmd = "/testing/guestbin/swan-build"
     read_exec_shell_cmd( child, cmd, prompt, timer)
-
+    check_for_error(child, prompt)
     return  
 
 def make_install (args, child):
@@ -152,6 +159,7 @@ def make_install (args, child):
     read_exec_shell_cmd( child, cmd, prompt, timer)
     cmd = "/testing/guestbin/swan-install"
     read_exec_shell_cmd( child, cmd, prompt, timer)
+    check_for_error(child, prompt)
     return
 
 def run_test(args, child):
