@@ -213,11 +213,6 @@ systemctl enable sshd-shutdown.service
 # Needed for newer nss
 yum update -y 
 
-# Instal libreswan
-mount /source
-cd /source
-make programs module install module_install
-
 # ensure pluto does not get restarted by systemd on crash
 sed -i "s/Restart=always/Restart=no" /lib/systemd/system/ipsec.service
 
