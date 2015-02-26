@@ -1,10 +1,17 @@
 #!/bin/sh
 
-set -x
+set -eux
 
-set -ue
+if test -r kvmsetup.sh.sample ; then
+    cat <<EOF
 
-cd /source
+$PWD is a top-level source directory.
+Not CDing to /source
+
+EOF
+else
+    cd /source
+fi
 
 if [ -f /usr/libexec/ipsec/pluto ]
 then

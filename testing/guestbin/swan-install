@@ -2,6 +2,17 @@
 
 set -uex
 
+if test -r kvmsetup.sh.sample ; then
+    cat <<EOF
+
+$PWD is a top-level source directory.
+Not CDing to /source
+
+EOF
+else
+    cd /source
+fi
+
 if [ -f /usr/libexec/ipsec/pluto ]
 then
 	echo "ABORT: existing pluot found outside /usr/local/"
@@ -9,8 +20,6 @@ then
 fi
 
 pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
-
-cd /source
 
 echo ">>> $0 on $(hostname) at $(date)" >>compile-log.txt
 
