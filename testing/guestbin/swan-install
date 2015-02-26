@@ -18,7 +18,8 @@ if make install >>compile-log.txt 2>&1; then
     :
 else
     status=$?
-    echo '"make install"'" failed: $?; see compile-log.txt"
+    tail -20 compile-log.txt
+    echo '"make install"'" failed: ${status}; see compile-log.txt for details"
     exit $status
 fi
 
@@ -26,7 +27,8 @@ if make module_install >>compile-log.txt 2>&1; then
     :
 else
     status=$?
-    echo '"make module_install"'" failed: $?; see compile-log.txt"
+    tail -20 compile-log.txt
+    echo '"make module_install"'" failed: ${status}; see compile-log.txt details"
     exit $status
 fi
 

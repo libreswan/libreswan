@@ -31,7 +31,8 @@ if make programs module >>compile-log.txt 2>&1; then
     :
 else
     status=$?
-    echo '"make programs module"'" failed: ${status}; see compile-log.txt"
+    tail -20 compile-log.txt
+    echo '"make programs module"'" failed: ${status}; see compile-log.txt for details"
     exit ${status}
 fi
 
