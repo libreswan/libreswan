@@ -1,7 +1,6 @@
 #!/bin/sh
-set -x
 
-set -ue
+set -uex
 
 if [ -f /usr/libexec/ipsec/pluto ]
 then
@@ -15,12 +14,20 @@ cd /source
 
 echo ">>> $0 on $(hostname) at $(date)" >>compile-log.txt
 
-if ! make install >>compile-log.txt 2>&1; then
+if make install >>compile-log.txt 2>&1; then
+    :
+else
+    status=$?
     echo '"make install"'" failed: $?; see compile-log.txt"
+    exit $status
 fi
 
-if ! make module_install >>compile-log.txt 2>&1; then
+if make module_install >>compile-log.txt 2>&1; then
+    :
+else
+    status=$?
     echo '"make module_install"'" failed: $?; see compile-log.txt"
+    exit $status
 fi
 
 # ensure selinux bits
