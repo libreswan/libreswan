@@ -50,9 +50,10 @@ west #
 000 "westnet-eastnet-aggr":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-aggr":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-aggr":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-aggr":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-aggr":   labeled_ipsec:no; 
 000 "westnet-eastnet-aggr":    policy_label:unset; 
 000 "westnet-eastnet-aggr":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-aggr":   retransmit-interval: 500ms; retransmit-timeout: 60s;
 000 "westnet-eastnet-aggr":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-aggr":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-aggr":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;

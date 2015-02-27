@@ -119,9 +119,10 @@ west #
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ikev2":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ikev2":   labeled_ipsec:no; 
 000 "westnet-eastnet-ikev2":    policy_label:unset; 
 000 "westnet-eastnet-ikev2":   ike_life: 100s; ipsec_life: 28800s; rekey_margin: 20s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2":   retransmit-interval: 500ms; retransmit-timeout: 60s;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
@@ -145,6 +146,7 @@ west #
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha group=MODP2048}
+010 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: retransmission; will wait 500ms for response
 002 "westnet-eastnet-ikev2" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
 002 "westnet-eastnet-ikev2" #2: negotiated tunnel [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
 004 "westnet-eastnet-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
@@ -233,9 +235,10 @@ west #
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ikev2":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ikev2":   labeled_ipsec:no; 
 000 "westnet-eastnet-ikev2":    policy_label:unset; 
 000 "westnet-eastnet-ikev2":   ike_life: 100s; ipsec_life: 28800s; rekey_margin: 20s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2":   retransmit-interval: 500ms; retransmit-timeout: 60s;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
@@ -339,9 +342,10 @@ west #
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ikev2":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ikev2":   labeled_ipsec:no; 
 000 "westnet-eastnet-ikev2":    policy_label:unset; 
 000 "westnet-eastnet-ikev2":   ike_life: 100s; ipsec_life: 28800s; rekey_margin: 20s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2":   retransmit-interval: 500ms; retransmit-timeout: 60s;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
