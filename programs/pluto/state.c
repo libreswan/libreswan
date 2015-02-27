@@ -231,6 +231,29 @@ static char *humanize_number(unsigned long num,
 
 
 /*
+ * Hash table indexed by just the ICOOKIE.
+ *
+ * This is set up to work with any cookie hash table, so, eventually
+ * the code can be re-used on the old hash table.
+ *
+ * Access using hash_entry_common and unhash_entry above.
+ */
+static struct state_hash_table icookie_hash_table = {
+	.name = "icookie hash table",
+};
+
+static void hash_icookie(struct state *st)
+{
+	insert_by_state_cookies(&icookie_hash_table, &st->st_icookie_hash_entry,
+				st->st_icookie, zero_cookie);
+}
+
+static struct state_entry *icookie_chain(const u_char *icookie)
+{
+	return *hash_by_state_cookies(&icookie_hash_table, icookie, zero_cookie);
+}
+
+/*
  * State Table Functions
  *
  * The statetable is organized as a hash table.
@@ -247,8 +270,6 @@ static char *humanize_number(unsigned long num,
  * This means that you can look along that single chain for
  * your relatives.
  */
-
-#define STATE_TABLE_SIZE 32
 
 static struct state *statetable[STATE_TABLE_SIZE];
 
@@ -273,6 +294,7 @@ static struct state **state_hash(const u_char *icookie, const u_char *rcookie)
 	return &statetable[i];
 }
 
+
 /*
  * Get a state object.
  * Caller must schedule an event for this object so that it doesn't leak.
@@ -291,6 +313,9 @@ struct state *new_state(void)
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	st->st_whack_sock = NULL_FD;
 
+	/* back-link the hash entry.  */
+	st->st_icookie_hash_entry.state = st;
+
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
@@ -301,6 +326,8 @@ struct state *new_state(void)
 
 /*
  * Initialize the state table
+ *
+ * Redundant.
  */
 void init_states(void)
 {
@@ -384,6 +411,12 @@ void insert_state(struct state *st)
 	st->st_hashchain_next = *p;
 	*p = st;
 
+	/* 
+	 * Also insert it into the icookie table.  Should be more
+	 * selective about when this is done.
+	 */
+	hash_icookie(st);
+
 	/*
 	 * Ensure that somebody is in charge of killing this state:
 	 * if no event is scheduled for it, schedule one to discard the state.
@@ -451,6 +484,7 @@ void rehash_state(struct state *st)
 void unhash_state(struct state *st)
 {
 	unhash_state_common(st, TRUE);
+	remove_state_entry(&st->st_icookie_hash_entry);
 }
 
 /*
@@ -1178,36 +1212,40 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 }
 
 /*
- * Find a state object for an IKEv2 state, looking by icookie only.
- * Note: only finds parent states.
+ * Find a state object for an IKEv2 state, looking by icookie only and
+ * only matching "struct state" objects in the correct state.
+ *
+ * Note: only finds parent states (this is ok as only interested in
+ * state objects in the initial state).
  */
-struct state *find_state_ikev2_parent_init(const u_char *icookie)
+struct state *find_state_ikev2_parent_init(const u_char *icookie,
+					   enum state_kind expected_state)
 {
-	struct state *st = *state_hash(icookie, zero_cookie);
-
-	while (st != (struct state *) NULL) {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    st->st_ikev2 &&
-		    !IS_CHILD_SA(st)) {
+	struct state *st;
+	FOR_EACH_STATE_ENTRY(st, icookie_chain(icookie), {
+			if (!st->st_ikev2) {
+				continue;
+			}
+			if (st->st_state != expected_state) {
+				continue;
+			}
+			if (!memeq(icookie, st->st_icookie, COOKIE_SIZE)) {
+				continue;
+			}
+			if (IS_CHILD_SA(st)) {
+				continue;
+			}
 			DBG(DBG_CONTROL,
 			    DBG_log("parent_init v2 peer and cookies match on #%ld",
-				    st->st_serialno));
-			break;
-		}
-		st = st->st_hashchain_next;
-	}
-
-	DBG(DBG_CONTROL, {
-		    if (st == NULL) {
-			    DBG_log("parent_init v2 state object not found");
-		    } else {
+				    st->st_serialno);
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
-		    }
-	    });
+				    enum_show(&state_names, st->st_state)));
+			return st;
+		});
 
-	return st;
+	DBG(DBG_CONTROL, DBG_log("parent_init v2 state object not found"));
+	return NULL;
 }
 
 /*

@@ -666,8 +666,15 @@ void process_v2_packet(struct msg_digest **mdp)
 					     md->hdr.isa_rcookie);
 
 		if (st == NULL) {
+			/*
+			 * XXX: Since this call is only executed when
+			 * the original responder, hardwire that as
+			 * the accepted state.
+			 */
+			enum state_kind expected_state = STATE_PARENT_R1;
 			/* first time for this cookie, it's a new state! */
-			st = find_state_ikev2_parent_init(md->hdr.isa_icookie);
+			st = find_state_ikev2_parent_init(md->hdr.isa_icookie,
+							  expected_state);
 		}
 
 		if (st != NULL) {

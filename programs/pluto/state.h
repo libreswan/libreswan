@@ -1,4 +1,5 @@
-/* state and event objects
+/* state and event objects, for libreswan
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001,2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
@@ -22,7 +23,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #ifndef _STATE_H
@@ -44,6 +44,7 @@
 #endif
 
 #include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
+#include "state_entry.h"
 
 /* Message ID mechanism.
  *
@@ -427,6 +428,13 @@ struct state {
 	struct state *st_hashchain_next;	/* next in state hashbucket chain */
 	struct state *st_hashchain_prev;	/* previous in state hashbucket chain  */
 
+	/*
+	 * Hash table indexed by ICOOKIE+ZERO_COOKIE.
+	 *
+	 * Used to robustly find a state based only on ICOOKIE.
+	 */
+	struct state_entry st_icookie_hash_entry;
+
 	struct hidden_variables hidden_variables;
 
 	char st_xauth_username[XAUTH_USERNAME_LEN];	/* NUL-terminated */
@@ -492,7 +500,8 @@ extern struct state
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 
-extern struct state *find_state_ikev2_parent_init(const u_char *icookie);
+extern struct state *find_state_ikev2_parent_init(const u_char *icookie,
+						  enum state_kind expected_state);
 
 extern struct state *find_state_ikev2_child(const u_char *icookie,
 					    const u_char *rcookie,
