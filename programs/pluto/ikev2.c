@@ -94,7 +94,6 @@ struct state_v2_microcode {
 
 enum smf2_flags {
 	SMF2_INITIATOR = LELEM(1),
-	SMF2_STATENEEDED = LELEM(2),
 	SMF2_REPLY = LELEM(3),
 	SMF2_CONTINUE_MATCH = LELEM(4)	/* multiple SMC entries for this state: try the next if payloads don't work */
 };
@@ -251,7 +250,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process anti-spoofing cookie",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
-	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY | SMF2_CONTINUE_MATCH,
+	  .flags = SMF2_INITIATOR | SMF2_REPLY | SMF2_CONTINUE_MATCH,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
@@ -267,7 +266,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED | SMF2_REPLY,
+	  .flags = SMF2_INITIATOR | SMF2_REPLY,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2parent_inR1outI2,
@@ -282,7 +281,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I3,
-	  .flags = SMF2_INITIATOR | SMF2_STATENEEDED,
+	  .flags = SMF2_INITIATOR,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
@@ -297,7 +296,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_R1,
-	  .flags =  /* not SMF2_INITIATOR, not SMF2_STATENEEDED */ SMF2_REPLY,
+	  .flags =  /* not SMF2_INITIATOR */ SMF2_REPLY,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
@@ -315,7 +314,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "respond to IKE_AUTH",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R2,
-	  .flags =  /* not SMF2_INITIATOR */ SMF2_STATENEEDED | SMF2_REPLY,
+	  .flags =  /* not SMF2_INITIATOR */ SMF2_REPLY,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
@@ -337,7 +336,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
+	  .flags = SMF2_REPLY,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
@@ -349,7 +348,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags = SMF2_STATENEEDED | SMF2_REPLY,
+	  .flags = SMF2_REPLY,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
@@ -368,7 +367,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I2: process INFORMATIONAL",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I2,
-	  .flags      = SMF2_STATENEEDED,
+	  .flags      = 0,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
@@ -378,7 +377,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: INFORMATIONAL",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags      = SMF2_STATENEEDED,
+	  .flags      = 0,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
@@ -388,7 +387,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R1: process INFORMATIONAL",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R1,
-	  .flags      = SMF2_STATENEEDED,
+	  .flags      = 0,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
@@ -398,7 +397,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: process INFORMATIONAL",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags      = SMF2_STATENEEDED,
+	  .flags      = 0,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
@@ -408,7 +407,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
 	  .state      = STATE_IKESA_DEL,
 	  .next_state = STATE_IKESA_DEL,
-	  .flags      = SMF2_STATENEEDED,
+	  .flags      = 0,
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_encrypted_informational_ikev2,
@@ -599,9 +598,7 @@ void process_v2_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
 	struct state *st = NULL;
-	enum state_kind from_state = STATE_UNDEFINED; /* state we started in */
 	const struct state_v2_microcode *svm;
-	enum isakmp_xchg_types ix;
 
 	/* Look for an state which matches the various things we know:
 	 *
@@ -717,26 +714,32 @@ void process_v2_packet(struct msg_digest **mdp)
 		}
 	}
 
-	ix = md->hdr.isa_xchg;
-	if (st != NULL) {
-		from_state = st->st_state;
-		DBG(DBG_CONTROL,
-		    DBG_log("state found and its state is %s",
-			    enum_show(&state_names, from_state)));
-	}
+	/*
+	 * There is no "struct state" object if-and-only-if we're in
+	 * the start-state (STATE_UNDEFINED).  The start-state
+	 * transition will, likely, create the object.
+	 *
+	 * But what about when pluto, as the initial responder, is
+	 * fending of an attack attack by sending back and requiring
+	 * cookies - won't the cookie need a "struct state"?
+	 * According to the RFC: no.  Instead a small table of
+	 * constants can be used to generate cookies on the fly.
+	 */
+	const enum state_kind from_state = (st == NULL ? STATE_UNDEFINED
+					    : st->st_state);
+	DBG(DBG_CONTROL,
+	    if (st != NULL) {
+		    DBG_log("found state #%ld", (long int)st->st_serialno);
+	    }
+	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
+	passert((st == NULL) == (from_state == STATE_UNDEFINED));
+
+	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
-		if (svm->flags & SMF2_STATENEEDED) {
-			if (st == NULL)
-				continue;
-		} else {
-			if (st != NULL)
-				continue;
-		}
 		if (svm->state != from_state)
 			continue;
-
 		if (svm->recv_type != ix)
 			continue;
 
