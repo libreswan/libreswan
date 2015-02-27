@@ -1724,16 +1724,14 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 		return status;
 	}
 	unsigned np = md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np;
-	struct ikev2_payloads_summary summary;
-	status = ikev2_decode_payloads(md, &md->clr_pbs, np, &summary);
-	if (status != STF_OK) {
+	struct ikev2_payloads_summary summary = ikev2_decode_payloads(md, &md->clr_pbs, np);
+	if (summary.status != STF_OK) {
 		return status;
 	}
-	struct ikev2_payload_errors errors;
-	status = ikev2_verify_payloads(summary, md->svm, TRUE, &errors);
-	if (status != STF_OK) {
+	struct ikev2_payload_errors errors = ikev2_verify_payloads(summary, md->svm, TRUE);
+	if (errors.status != STF_OK) {
 		ikev2_log_payload_errors(errors);
-		return status;
+		return errors.status;
 	}
 	return STF_OK;
 }

@@ -121,7 +121,6 @@ enum smf2_flags {
 	SMF2_IKE_I_CLEAR = LELEM(2),
 
 	SMF2_REPLY = LELEM(3),
-	SMF2_CONTINUE_MATCH = LELEM(4),	/* multiple SMC entries for this state: try the next if payloads don't work */
 
 	/*
 	 * Is the MSG_R bit set.
@@ -291,7 +290,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process anti-spoofing cookie",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_REPLY | SMF2_CONTINUE_MATCH,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_REPLY,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
@@ -466,13 +465,13 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 /*
  * split an incoming message into payloads
  */
-stf_status ikev2_decode_payloads(struct msg_digest *md,
-					pb_stream    *in_pbs,
-					enum next_payload_types_ikev2 np,
-					struct ikev2_payloads_summary *summary)
+struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
+						    pb_stream    *in_pbs,
+						    enum next_payload_types_ikev2 np)
 {
 	struct payload_digest *pd = md->digest_roof;
-	*summary = (struct ikev2_payloads_summary) {
+	struct ikev2_payloads_summary summary = {
+		.status = STF_OK,
 		.seen = LEMPTY,
 		.repeated = LEMPTY,
 	};
@@ -491,7 +490,8 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 			loglog(RC_LOG_SERIOUS,
 			       "more than %d payloads in message; ignored",
 			       PAYLIMIT);
-			return STF_FAIL + v2N_INVALID_SYNTAX;
+			summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+			break;
 		}
 		zero(pd);	/* ??? is this needed? */
 
@@ -505,7 +505,8 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 			 */
 			if (!in_struct(&pd->payload, &ikev2_generic_desc, in_pbs, &pd->pbs)) {
 				loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-				return STF_FAIL + v2N_INVALID_SYNTAX;
+				summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+				break;
 			}
 			if (pd->payload.v2gen.isag_critical & ISAKMP_PAYLOAD_CRITICAL) {
 				/*
@@ -518,7 +519,8 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 				loglog(RC_LOG_SERIOUS,
 				       "critical payload (%s) was not understood. Message dropped.",
 				       enum_show(&ikev2_payload_names, np));
-				return STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
+				summary.status = STF_FAIL + v2N_UNSUPPORTED_CRITICAL_PAYLOAD;
+				break;
 			}
 			loglog(RC_COMMENT, "non-critical payload ignored because it contains an unknown or"
 			       " unexpected payload type (%s) at the outermost level",
@@ -528,12 +530,13 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 		}
 
 		passert(PINDEX(np) < LELEM_ROOF);
-		summary->repeated |= summary->seen & LELEM(PINDEX(np));
-		summary->seen |= LELEM(PINDEX(np));
+		summary.repeated |= summary.seen & LELEM(PINDEX(np));
+		summary.seen |= LELEM(PINDEX(np));
 
 		if (!in_struct(&pd->payload, sd, in_pbs, &pd->pbs)) {
 			loglog(RC_LOG_SERIOUS, "malformed payload in packet");
-			return STF_FAIL + v2N_INVALID_SYNTAX;
+			summary.status = STF_FAIL + v2N_INVALID_SYNTAX;
+			break;
 		}
 
 		DBG(DBG_PARSING,
@@ -579,26 +582,25 @@ stf_status ikev2_decode_payloads(struct msg_digest *md,
 	}
 
 	md->digest_roof = pd;
-	return STF_OK;
+	return summary;
 }
 
-stf_status ikev2_verify_payloads(struct ikev2_payloads_summary summary,
-				 const struct state_v2_microcode *svm, bool enc,
-				 struct ikev2_payload_errors *errors)
+struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
+						  const struct state_v2_microcode *svm, bool enc)
 {
 	lset_t req_payloads = enc ? svm->req_enc_payloads : svm->req_clear_payloads;
 	lset_t opt_payloads = enc ? svm->opt_enc_payloads : svm->opt_clear_payloads;
+	struct ikev2_payload_errors errors = {
+		.status = STF_OK,
+		.bad_repeat = summary.repeated & ~repeatable_payloads,
+		.missing = req_payloads & ~summary.seen,
+		.unexpected = summary.seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads,
+	};
 
-	errors->bad_repeat = summary.repeated & ~repeatable_payloads;
-	errors->missing = req_payloads & ~summary.seen;
-	errors->unexpected = summary.seen & ~req_payloads & ~opt_payloads & ~everywhere_payloads;
-
-	if ((errors->bad_repeat | errors->missing | errors->unexpected) != LEMPTY) {
-		return STF_FAIL + v2N_INVALID_SYNTAX;
+	if ((errors.bad_repeat | errors.missing | errors.unexpected) != LEMPTY) {
+		errors.status = STF_FAIL + v2N_INVALID_SYNTAX;
 	}
-
-	/* all good */
-	return STF_OK;
+	return errors;
 }
 
 void ikev2_log_payload_errors(struct ikev2_payload_errors errors)
@@ -777,6 +779,9 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
 
+	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
+	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
+
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
 		if (svm->state != from_state)
@@ -799,17 +804,50 @@ void process_v2_packet(struct msg_digest **mdp)
 			continue;
 		if ((svm->flags & SMF2_MSG_R_CLEAR) && msg_r)
 			continue;
+		/*
+		 * Since there's a state that, at least, looks like it
+		 * will accept the packet, unpack the clear payload
+		 * and continue matching.
+		 */
+		if (clear_payload_summary.status != STF_OK) {
+			DBG(DBG_CONTROL, DBG_log("Unpacking clear payload for svm: %s", svm->story));
+			clear_payload_summary = ikev2_decode_payloads(md, &md->message_pbs,
+								      md->hdr.isa_np);
+			if (clear_payload_summary.status != STF_OK) {
+				complete_v2_state_transition(mdp, clear_payload_summary.status);
+				return;
+			}
+		}
+		struct ikev2_payload_errors clear_payload_errors
+			= ikev2_verify_payloads(clear_payload_summary, svm, FALSE);
+		if (clear_payload_errors.status != STF_OK) {
+			/* Save this failure for later logging. */
+			clear_payload_status = clear_payload_errors;
+			continue;
+		}
+		/*
+		 * XXX: For encrypted packets should decrypt and keep
+		 * looking.  Since the responder delays DH calculation
+		 * until it receives AUTH, it isn't always possible.
+		 */
 		/* must be the right state machine entry */
 		break;
 	}
 
 	DBG(DBG_CONTROL, DBG_log("selected state microcode %s", svm->story));
+	if (st != NULL)
+		set_cur_state(st);
+	md->from_state = from_state;
+	md->st = st;
+	md->svm = svm;
 
 	if (svm->state == STATE_IKEv2_ROOF) {
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
-
 		/* no useful state microcode entry */
-		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
+		if (clear_payload_status.status != STF_OK) {
+			ikev2_log_payload_errors(clear_payload_status);
+			complete_v2_state_transition(mdp, clear_payload_status.status);
+		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/* We are responder for this message exchange */
 			SEND_V2_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
@@ -818,53 +856,6 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	if (state_busy(st))
 		return;
-
-	if (st != NULL)
-		set_cur_state(st);
-	md->from_state = from_state;
-	md->st = st;
-
-	/*
-	 * svm is tentative, now decode the payloads and examine the
-	 * contents and see if further refinement is needed.
-	 *
-	 * XXX: This should use a nested structure and not
-	 * SMF2_CONTINUE_MATCH.
-	 */
-	DBG(DBG_CONTROL, DBG_log("Checking clear payload of svm: %s", svm->story));
-	struct ikev2_payloads_summary summary;
-	stf_status status;
-	status = ikev2_decode_payloads(md, &md->message_pbs,
-				       md->hdr.isa_np, &summary);
-	if (status != STF_OK) {
-		complete_v2_state_transition(mdp, status);
-		/* our caller with release_any_md(mdp) */
-		return;
-	}
-	for (;;) {
-		struct ikev2_payload_errors errors;
-		status = ikev2_verify_payloads(summary, svm, FALSE, &errors);
-		if (status == STF_OK) {
-			break;
-		}
-		if (!(svm->flags & SMF2_CONTINUE_MATCH)) {
-			ikev2_log_payload_errors(errors);
-			complete_v2_state_transition(mdp, status);
-			/* our caller with release_any_md(mdp) */
-			return;
-		}
-		/* try the next microcode entry */
-		svm++;
-		DBG(DBG_CONTROL,
-		    DBG_log("Checking clear payload of next svm: %s", svm->story));
-	}
-	/*
-	 * XXX: For encrypted packets should decrypt and keep looking.
-	 * Since the responder delays DH calculation until it receives
-	 * AUTH, that isn't always possible.
-	 */
-
-	md->svm = svm; /* final */
 
 	DBG(DBG_PARSING, {
 		    if (pbs_left(&md->message_pbs) != 0)
