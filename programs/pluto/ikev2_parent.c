@@ -1544,8 +1544,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
  */
 
 static
-stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
-					       enum phase1_role original_role)
+stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md)
 {
 	/* caller should be passing in the original (parent) state. */
 	struct state *st = md->st;
@@ -1612,7 +1611,7 @@ stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 	chunk_t salt;
 	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
-	if (original_role == O_INITIATOR) {
+	if (md->role == O_INITIATOR) {
 		cipherkey = pst->st_skey_er_nss;
 		authkey = pst->st_skey_ar_nss;
 		salt = pst->st_skey_responder_salt;
@@ -1715,11 +1714,10 @@ stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 }
 
 static
-stf_status ikev2_decrypt_msg(struct msg_digest *md,
-			     enum phase1_role original_role)
+stf_status ikev2_decrypt_msg(struct msg_digest *md)
 {
 	stf_status status;
-	status = ikev2_verify_and_decrypt_sk_payload(md, original_role);
+	status = ikev2_verify_and_decrypt_sk_payload(md);
 	if (status != STF_OK) {
 		return status;
 	}
@@ -2448,7 +2446,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 	/* decrypt things. */
 	{
-		stf_status ret = ikev2_decrypt_msg(md, O_RESPONDER);
+		stf_status ret = ikev2_decrypt_msg(md);
 
 		if (ret != STF_OK)
 			return ret;
@@ -2831,7 +2829,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* decrypt things. */
 	{
-		stf_status ret = ikev2_decrypt_msg(md, O_INITIATOR);
+		stf_status ret = ikev2_decrypt_msg(md);
 
 		if (ret != STF_OK)
 			return ret;
@@ -3406,7 +3404,7 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 	/* decrypt message */
 	{
-		stf_status ret = ikev2_decrypt_msg(md, O_RESPONDER);
+		stf_status ret = ikev2_decrypt_msg(md);
 
 		if (ret != STF_OK)
 			return ret;
@@ -3532,14 +3530,12 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 		hdr.isa_msgid = htonl(md->msgid_received);
 
 		/* encryption role based on original originator */
-		if (IS_V2_INITIATOR(pst->st_state)) {
-			md->role = O_INITIATOR;
+		if (md->role == O_INITIATOR) {
 			/* add original initiator flag */
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 		} else {
-			md->role = O_RESPONDER;
 			/* not adding original initiator flag */
-		}
+			}
 
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
@@ -3618,7 +3614,6 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	enum phase1_role prole;	/* parent SA's role */
 
 	/*
 	 * get parent
@@ -3642,23 +3637,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			c_serialno, st->st_serialno));
 	}
 
-	/* Since an informational exchange can be started by the original responder,
-	 * things such as encryption, decryption should be done based on the original
-	 * role and not the md->role
-	 */
-	if (IS_V2_INITIATOR(st->st_state)) {
-		prole = O_INITIATOR;
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("received informational exchange request from the original responder"));
-	} else {
-		prole = O_RESPONDER;
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("received informational exchange request from the original initiator"));
-	}
-
 	/* decrypt message */
 	{
-		stf_status ret = ikev2_decrypt_msg(md, prole);
+		stf_status ret = ikev2_decrypt_msg(md);
 
 		if (ret != STF_OK)
 			return ret;
@@ -3954,7 +3935,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			close_output_pbs(&md->rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(st, prole,
+			ret = ikev2_encrypt_msg(st, md->role,
 						authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
