@@ -122,6 +122,21 @@ enum smf2_flags {
 
 	SMF2_REPLY = LELEM(3),
 	SMF2_CONTINUE_MATCH = LELEM(4),	/* multiple SMC entries for this state: try the next if payloads don't work */
+
+	/*
+	 * Is the MSG_R bit set.
+	 *
+	 * Requests have the bit clear, and responses have it set.
+	 *
+	 * Don't assume one of these flags are present.  Some state
+	 * processors internally deal with both the request and the
+	 * reply.
+	 *
+	 * In general, the relationship MSG_R != IKE_I does not hold
+	 * (it just holds during the initial exchange).
+	 */
+	SMF2_MSG_R_SET = LELEM(5),
+	SMF2_MSG_R_CLEAR = LELEM(6),
 };
 
 /*
@@ -262,7 +277,7 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	{ .story      = "initiate IKE_SA_INIT",
 	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_I1,
-	  .flags      = SMF2_IKE_I_CLEAR,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
@@ -276,7 +291,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process anti-spoofing cookie",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_REPLY | SMF2_CONTINUE_MATCH,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_REPLY | SMF2_CONTINUE_MATCH,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
@@ -292,7 +307,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_REPLY,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2parent_inR1outI2,
@@ -307,7 +322,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_AUTH response",
 	  .state      = STATE_PARENT_I2,
 	  .next_state = STATE_PARENT_I3,
-	  .flags = SMF2_IKE_I_CLEAR,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT)|P(CP),
@@ -322,7 +337,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_R1,
-	  .flags = SMF2_IKE_I_SET | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_REPLY,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
@@ -340,7 +355,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "respond to IKE_AUTH",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R2,
-	  .flags = SMF2_IKE_I_SET | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_REPLY,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
@@ -362,7 +377,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_CLEAR | SMF2_REPLY,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
@@ -374,7 +389,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags = SMF2_IKE_I_SET | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_REPLY,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
@@ -776,16 +791,14 @@ void process_v2_packet(struct msg_digest **mdp)
 			continue;
 		if ((svm->flags & SMF2_IKE_I_CLEAR) && ike_i)
 			continue;
-		/* Does the message responder flag match? */
-
-		/* ??? not sure that this is necessary, but it ought to be correct */
-		/* This check cannot apply for an informational exchange since one
-		 * can be initiated by the initial responder.
+		/*
+		 * Does the message reply flag match?
 		 */
-		if (ix != ISAKMP_v2_INFORMATIONAL &&
-		    (((svm->flags&SMF2_IKE_I_CLEAR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0)))
+		const bool msg_r = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
+		if ((svm->flags & SMF2_MSG_R_SET) && !msg_r)
 			continue;
-
+		if ((svm->flags & SMF2_MSG_R_CLEAR) && msg_r)
+			continue;
 		/* must be the right state machine entry */
 		break;
 	}
