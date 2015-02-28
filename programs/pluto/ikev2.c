@@ -640,7 +640,6 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors)
 void process_v2_packet(struct msg_digest **mdp)
 {
 	struct msg_digest *md = *mdp;
-	struct state *st = NULL;
 	const struct state_v2_microcode *svm;
 
 	/* Look for an state which matches the various things we know:
@@ -650,38 +649,78 @@ void process_v2_packet(struct msg_digest **mdp)
 	 */
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
+	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
+	const bool msg_r = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
+	const bool ike_i = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 
 	DBG(DBG_CONTROL, {
-		if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)
+		if (msg_r)
 			DBG_log("I am receiving an IKE Response");
 		else
 			DBG_log("I am receiving an IKE Request");
 	});
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) {
+	
+	if (ike_i) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
 		md->role = O_RESPONDER;
+	} else {
+		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Initiator"));
+		md->role = O_INITIATOR;
+	}
 
+	/*
+	 * Find the corresponding state
+	 */
+	struct state *st;
+	if (ix == ISAKMP_v2_SA_INIT) {
+		/*
+		 * For INIT messages, need to lookup using the ICOOKIE
+		 * and the expected state.  The RCOOKIE probably won't
+		 * match.
+		 *
+		 * An INIT-request has RCOOKIE=0.  In the case of a
+		 * re-transmit, where the original responder is in
+		 * state STATE_PARENT_R1 and has set its RCOOKIE to
+		 * something non-zero, that won't match.
+		 *
+		 * An INIT-responce as RCOOKIE!=0 (lets ignore
+		 * INVALID_KE).  Since the original responder, which
+		 * is in state STATE_PARENT_i1, still has RCOOKIE=0
+		 * that won't match.
+		 */
+		enum state_kind expected_state = (ike_i ? STATE_PARENT_R1 : STATE_PARENT_I1);
+		st = find_state_ikev2_parent_init(md->hdr.isa_icookie,
+						  expected_state);
+		if (st != NULL && md->role == O_INITIATOR) {
+			/*
+			 * Responder provided a cookie, record it.
+			 *
+			 * XXX: This is being done far too early.  The
+			 * packet should first get some validation.
+			 * It also might be an INVALID_KE in which
+			 * case the cookie shouldn't be updated at
+			 * all.
+			 */
+			unhash_state(st);
+			memcpy(st->st_rcookie,
+			       md->hdr.isa_rcookie,
+			       COOKIE_SIZE);
+			insert_state(st);
+		}
+	} else if (!msg_r) {
+		/*
+		 * A request; send it to the parent.
+		 */
 		st = find_state_ikev2_parent(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie);
-
-		if (st == NULL) {
-			/*
-			 * XXX: Since this call is only executed when
-			 * the original responder, hardwire that as
-			 * the accepted state.
-			 */
-			enum state_kind expected_state = STATE_PARENT_R1;
-			/* first time for this cookie, it's a new state! */
-			st = find_state_ikev2_parent_init(md->hdr.isa_icookie,
-							  expected_state);
-		}
-
 		if (st != NULL) {
 			/*
 			 * XXX: This solution is broken. If two exchanges (after the
 			 * initial exchange) are interleaved, we ignore the first
 			 * This is https://bugs.libreswan.org/show_bug.cgi?id=185
+			 *
+			 * Beware of unsigned arrithmetic.
 			 */
 			if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
 			    st->st_msgid_lastrecv > md->msgid_received) {
@@ -700,67 +739,47 @@ void process_v2_packet(struct msg_digest **mdp)
 			/* update lastrecv later on */
 		}
 	} else {
-		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Initiator"));
-		md->role = O_INITIATOR;
-
-		if (md->msgid_received == v2_INITIAL_MSGID) {
+		/*
+		 * A reply; find the child that made the request and
+		 * send it to that.
+		 */
+		st = find_state_ikev2_child(md->hdr.isa_icookie,
+					    md->hdr.isa_rcookie,
+					    md->hdr.isa_msgid); /* PAUL: really? not md->msgid_received */
+		if (st == NULL) {
+			/*
+			 * Didn't find a child waiting on that message
+			 * ID so presumably it isn't valid.
+			 */
 			st = find_state_ikev2_parent(md->hdr.isa_icookie,
 						     md->hdr.isa_rcookie);
-			if (st == NULL) {
-				st = find_state_ikev2_parent(
-					md->hdr.isa_icookie, zero_cookie);
-				if (st != NULL) {
-					/* responder inserted its cookie, record it */
-					unhash_state(st);
-					memcpy(st->st_rcookie,
-					       md->hdr.isa_rcookie,
-					       COOKIE_SIZE);
-					insert_state(st);
+			if (st != NULL) {
+				/*
+				 * Check if it's an old packet being
+				 * returned, and if so, drop it.
+				 * NOTE: in_struct() changed the byte
+				 * order.  *
+				 *
+				 * Beware of unsigned arrithmetic.
+				 */
+				if (st->st_msgid_lastack != v2_INVALID_MSGID &&
+				    st->st_msgid_lastrecv != v2_INVALID_MSGID &&
+				    md->msgid_received <= st->st_msgid_lastack) {
+					/* it's fine, it's just a retransmit */
+					DBG(DBG_CONTROL,
+					    DBG_log("dropping retransmitted responce with msgid %u from peer",
+						    md->msgid_received));
+					return;
+				} else {
+					/*
+					 * A reply for an unknown request.  Huh!
+					 */
+					libreswan_log("dropping unknown responce with msgid %u from peer (our last ack is %u)",
+						      md->msgid_received,
+						      st->st_msgid_lastack);
+					return;
 				}
 			}
-		} else {
-			st = find_state_ikev2_child(md->hdr.isa_icookie,
-						    md->hdr.isa_rcookie,
-						    md->hdr.isa_msgid); /* PAUL: really? not md->msgid_received */
-
-			if (st != NULL) {
-				/* found this child state, so we'll use it */
-				/* note we update the st->st_msgid_lastack *AFTER* decryption */
-			} else {
-				/*
-				 * didn't find something with the msgid, so maybe it's
-				 * not valid?
-				 */
-				st = find_state_ikev2_parent(
-					md->hdr.isa_icookie,
-					md->hdr.isa_rcookie);
-			}
-		}
-
-		if (st != NULL) {
-			/*
-			 * then there is something wrong with the msgid, so
-			 * maybe they retransmitted for some reason.
-			 * Check if it's an old packet being returned, and
-			 * if so, drop it.
-			 * NOTE: in_struct() changed the byte order.
-			 */
-			if (st->st_msgid_lastack != v2_INVALID_MSGID &&
-			    st->st_msgid_lastrecv != v2_INVALID_MSGID &&
-			    md->msgid_received <= st->st_msgid_lastack) {
-				/* it's fine, it's just a retransmit */
-				DBG(DBG_CONTROL,
-				    DBG_log("responding peer retransmitted msgid %u",
-					    md->msgid_received));
-				return;
-			}
-#if 0
-			libreswan_log("last msgid ack is %u, received: %u",
-				      st->st_msgid_lastack,
-				      md->msgid_received);
-			return;
-
-#endif
 		}
 	}
 
@@ -784,8 +803,6 @@ void process_v2_packet(struct msg_digest **mdp)
 	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
 
-	const enum isakmp_xchg_types ix = md->hdr.isa_xchg;
-
 	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
 	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
 
@@ -798,7 +815,6 @@ void process_v2_packet(struct msg_digest **mdp)
 		/*
 		 * Does the original initiator flag match?
 		 */
-		const bool ike_i = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) != 0;
 		if ((svm->flags & SMF2_IKE_I_SET) && !ike_i)
 			continue;
 		if ((svm->flags & SMF2_IKE_I_CLEAR) && ike_i)
@@ -806,7 +822,6 @@ void process_v2_packet(struct msg_digest **mdp)
 		/*
 		 * Does the message reply flag match?
 		 */
-		const bool msg_r = (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0;
 		if ((svm->flags & SMF2_MSG_R_SET) && !msg_r)
 			continue;
 		if ((svm->flags & SMF2_MSG_R_CLEAR) && msg_r)
