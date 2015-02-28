@@ -1543,7 +1543,6 @@ static stf_status ikev2_encrypt_msg(struct state *st,
  * the actual starting-variable (a.k.a. IV).
  */
 
-static
 stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md)
 {
 	/* caller should be passing in the original (parent) state. */

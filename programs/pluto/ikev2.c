@@ -136,6 +136,17 @@ enum smf2_flags {
 	 */
 	SMF2_MSG_R_SET = LELEM(5),
 	SMF2_MSG_R_CLEAR = LELEM(6),
+
+	/*
+	 * Should the SK (secured-by-key) payload be unpacked and
+	 * verified?
+	 *
+	 * The original responder, in R2 state isn't able to decrypt
+	 * incomming messages.
+	 *
+	 * Some state transition processes do their own decryption.
+	 */
+	SMF2_UNPACK_SK = LELEM(7),
 };
 
 /*
@@ -806,6 +817,9 @@ void process_v2_packet(struct msg_digest **mdp)
 	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
 	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
 
+	struct ikev2_payloads_summary enc_payload_summary =  { .status = STF_IGNORE };
+	struct ikev2_payload_errors enc_payload_status = { .status = STF_OK };
+
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
 		if (svm->state != from_state)
@@ -848,10 +862,39 @@ void process_v2_packet(struct msg_digest **mdp)
 			continue;
 		}
 		/*
-		 * XXX: For encrypted packets should decrypt and keep
-		 * looking.  Since the responder delays DH calculation
-		 * until it receives AUTH, it isn't always possible.
+		 * Continue checking by unpacking the SK payload but
+		 * only its ok and there's one to unpack.  Otherwise
+		 * assume its a correct match.
 		 */
+		if (!(svm->flags & SMF2_UNPACK_SK)) {
+			break;
+		}
+		if (!(svm->req_clear_payloads & LELEM(PINDEX(ISAKMP_NEXT_v2SK)))) {
+			break;
+		}
+		if (enc_payload_summary.status != STF_OK) {
+			DBG(DBG_CONTROL,
+			    DBG_log("Unpacking encrypted payload for svm: %s",
+				    svm->story));
+			stf_status status = ikev2_verify_and_decrypt_sk_payload(md);
+			if (status != STF_OK) {
+				complete_v2_state_transition(mdp, status);
+				return;
+			}
+			unsigned np = md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np;
+			enc_payload_summary = ikev2_decode_payloads(md, &md->clr_pbs, np);
+			if (enc_payload_summary.status != STF_OK) {
+				complete_v2_state_transition(mdp, enc_payload_summary.status);
+				return;
+			}
+		}
+		struct ikev2_payload_errors enc_payload_errors
+			= ikev2_verify_payloads(enc_payload_summary, svm, TRUE);
+		if (enc_payload_errors.status != STF_OK) {
+			/* Save this failure for later logging. */
+			enc_payload_status = enc_payload_errors;
+			continue;
+		}
 		/* must be the right state machine entry */
 		break;
 	}
@@ -869,8 +912,17 @@ void process_v2_packet(struct msg_digest **mdp)
 		if (clear_payload_status.status != STF_OK) {
 			ikev2_log_payload_errors(clear_payload_status);
 			complete_v2_state_transition(mdp, clear_payload_status.status);
+		} else if (enc_payload_status.status != STF_OK) {
+			ikev2_log_payload_errors(enc_payload_status);
+			complete_v2_state_transition(mdp, enc_payload_status.status);
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
-			/* We are responder for this message exchange */
+			/*
+			 * We are the responder to this message so
+			 * return someting.
+			 *
+			 * XXX: Returning INVALID_MESSAGE_ID seems
+			 * pretty bogus.
+			 */
 			SEND_V2_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
 		return;

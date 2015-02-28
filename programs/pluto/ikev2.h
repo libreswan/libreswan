@@ -209,6 +209,8 @@ void send_v2_notification_invalid_ke_from_state(struct state *st);
 bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
 oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);
 
+stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md);
+
 struct ikev2_payloads_summary {
 	stf_status status;
 	lset_t seen;
