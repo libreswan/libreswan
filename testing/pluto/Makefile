@@ -34,6 +34,7 @@ ifneq ($(UPDATE)$(UPDATEONLY),)
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname north
 endif
 ifeq ($(UPDATEONLY),)
+	make clean
 	../utils/swantest
 	../utils/swantest --resanitize
 endif
