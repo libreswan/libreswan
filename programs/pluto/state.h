@@ -425,9 +425,10 @@ struct state {
 
 	struct pluto_event *st_event;		/* timer event for this state object */
 
-	struct state *st_hashchain_next;	/* next in state hashbucket chain */
-	struct state *st_hashchain_prev;	/* previous in state hashbucket chain  */
-
+	/*
+	 * hash table entry indexed by ICOOKIE+RCOOKIE
+	 */
+	struct state_entry st_hash_entry;
 	/*
 	 * Hash table indexed by ICOOKIE+ZERO_COOKIE.
 	 *
