@@ -713,11 +713,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			 * case the cookie shouldn't be updated at
 			 * all.
 			 */
-			unhash_state(st);
-			memcpy(st->st_rcookie,
-			       md->hdr.isa_rcookie,
-			       COOKIE_SIZE);
-			insert_state(st);
+			rehash_state(st, md->hdr.isa_rcookie);
 		}
 	} else if (!msg_r) {
 		/*

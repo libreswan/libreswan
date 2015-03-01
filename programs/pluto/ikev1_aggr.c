@@ -720,9 +720,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 
 	/* moved the following up as we need Rcookie for hash, skeyids */
 	/* Reinsert the state, using the responder cookie we just received */
-	unhash_state(st);
-	memcpy(st->st_rcookie, md->hdr.isa_rcookie, COOKIE_SIZE);
-	insert_state(st); /* needs cookies, connection, and msgid (0) */
+	rehash_state(st, md->hdr.isa_rcookie);
 
 	ikev1_natd_init(st, md);
 

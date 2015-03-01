@@ -405,10 +405,13 @@ void insert_state(struct state *st)
 }
 
 /*
- * unlink a state object from the hash table that had a zero
- * rcookie before, and rehash it into the right place
+ * unlink a state object from the hash table, update its RCOOKIE and
+ * then, and hash it into the right place.
+ *
+ * This doesn't update ICOOKIE_HASH_TABLE since the ICOOKIE didn't
+ * change.
  */
-void rehash_state(struct state *st)
+void rehash_state(struct state *st, const u_char *rcookie)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("rehashing state object #%lu",
@@ -416,14 +419,24 @@ void rehash_state(struct state *st)
 
 	/* unlink from forward chain */
 	remove_state_entry(&st->st_hash_entry);
+	/* update the cookie */
+	memcpy(st->st_rcookie, rcookie, COOKIE_SIZE);
 	/* now, re-insert */
-	insert_state(st);
+	insert_by_state_cookies(&statetable, &st->st_hash_entry,
+				st->st_icookie, st->st_rcookie);
+	refresh_state(st); /* just logs change */
+	/*
+	 * insert_state has this, and this code once called
+	 * insert_state.  Is it still needed?
+	 */
+	if (st->st_event == NULL)
+		event_schedule(EVENT_SO_DISCARD, 0, st);
 }
 
 /*
  * unlink a state object from the hash table, but don't free it
  */
-void unhash_state(struct state *st)
+static void unhash_state(struct state *st)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("unhashing state object #%lu",

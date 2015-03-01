@@ -956,9 +956,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			 * the response message.  
 			 */
 			DBG(DBG_CONTROL, DBG_log("Clearing RCOOKIE for INVALID_KE reply"));
-			unhash_state(st);
-			memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
-			insert_state(st);
+			rehash_state(st, zero_cookie);
 			send_v2_notification_invalid_ke_from_state(st);
 			/* nothing to do or remember */
 			delete_state(st);
@@ -1148,9 +1146,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				clear_dh_from_state(st);
 				/* wipe out any saved RCOOKIE */
 				DBG(DBG_CONTROL, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
-				unhash_state(st);
-				memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
-				insert_state(st);
+				rehash_state(st, zero_cookie);
 				/* get a new KE */
 				return crypto_helper_build_ke(st);
 			} else {

@@ -475,8 +475,7 @@ extern bool states_use_connection(const struct connection *c);
 extern struct state *new_state(void);
 extern void init_states(void);
 extern void insert_state(struct state *st);
-extern void unhash_state(struct state *st);
-extern void rehash_state(struct state *st);
+extern void rehash_state(struct state *st, const u_char *rcookie);
 extern void release_whack(struct state *st);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
