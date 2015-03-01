@@ -850,9 +850,10 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				if (c->policy & POLICY_AUTH_NULL) {
 					struct gw_info nullgw;
 
-			    		DBG_log("setting c->gw_info for POLICY_AUTH_NULL");
+					DBG_log("setting c->gw_info for POLICY_AUTH_NULL");
 					nullgw.client_id.kind = ID_NULL;
 					nullgw.gw_id.kind = ID_NULL;
+					nullgw.gw_id.ip_addr = b->peer_client;
 					c->gw_info = clone_thing(nullgw, "nullgw info");
 				}
 				next_step = fos_his_client;
