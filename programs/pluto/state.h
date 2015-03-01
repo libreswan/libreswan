@@ -285,6 +285,9 @@ struct state {
 
 	/** IKEv2-only things **/
 
+	/* Am I the original initator, or responder - the IKE_I flag? */
+	enum phase1_role st_role;
+
 	/* message ID sequence for things we send (as initiator) */
 	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
 	msgid_t st_msgid_nextuse;               /* next one to use - host order */

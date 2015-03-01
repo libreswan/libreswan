@@ -107,13 +107,10 @@ enum smf2_flags {
 	 * original initiator and original responder halves.
 	 * 
 	 * Don't assume this flag is present.  If initiator and
-	 * responder states get merged then neither value will be
-	 * defined.  Instead (the non-existent) st->st_role field
-	 * should be used.
+	 * responder share states then this value will absent.
 	 *
 	 * Do not use this to determine O_INITIATOR vs O_RESPONDER.
-	 * Instead use either md->role or (the non-existent)
-	 * st->st_role field.
+	 * Instead use either md->role or st->st_role field.
 	 *
 	 * Arguably, this could be made a separate 3 state variable.
 	 */
@@ -787,6 +784,17 @@ void process_v2_packet(struct msg_digest **mdp)
 					return;
 				}
 			}
+		}
+	}
+
+	/*
+	 * Is the original role correct?
+	 */
+	if (st != NULL) {
+		if (st->st_role != md->role) {
+			DBG(DBG_CONTROL,
+			    DBG_log("state and md roles conflict; dropping packet"));
+			return;
 		}
 	}
 

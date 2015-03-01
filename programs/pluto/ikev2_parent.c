@@ -198,6 +198,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 	initialize_new_state(st, c, policy, try, whack_sock, importance);
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_I1);
+	st->st_role = O_INITIATOR;
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
@@ -745,6 +746,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 				     pcim_stranger_crypto);
 		st->st_ikev2 = TRUE;
 		change_state(st, STATE_PARENT_R1);
+		st->st_role = O_RESPONDER;
 		st->st_msgid_lastack = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
 
@@ -1416,7 +1418,6 @@ static unsigned char *ikev2_authloc(struct state *st,
 }
 
 static stf_status ikev2_encrypt_msg(struct state *st,
-				    enum phase1_role role,
 				    unsigned char *auth_start,
 				    unsigned char *wire_iv_start,
 				    unsigned char *enc_start,
@@ -1432,7 +1433,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 	chunk_t salt;
 	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
-	if (role == O_INITIATOR) {
+	if (st->st_role == O_INITIATOR) {
 		cipherkey = pst->st_skey_ei_nss;
 		authkey = pst->st_skey_ai_nss;
 		salt = pst->st_skey_initiator_salt;
@@ -2091,8 +2092,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		close_output_pbs(&md->rbody);
 		close_output_pbs(&reply_stream);
 
-		ret = ikev2_encrypt_msg(st, O_INITIATOR,
-					authstart,
+		ret = ikev2_encrypt_msg(st, authstart,
 					iv, encstart, authloc,
 					&e_pbs, &e_pbs_cipher);
 		if (ret != STF_OK)
@@ -2765,8 +2765,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 			close_output_pbs(&md->rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(st, O_RESPONDER,
-						authstart,
+			ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
 			if (ret != STF_OK)
@@ -3591,8 +3590,8 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&md->rbody);
 		close_output_pbs(&reply_stream);
-		ret = ikev2_encrypt_msg(st, O_RESPONDER, authstart, iv, encstart,
-				authloc, &e_pbs, &e_pbs_cipher);
+		ret = ikev2_encrypt_msg(st, authstart, iv, encstart,
+					authloc, &e_pbs, &e_pbs_cipher);
 
 		if (ret != STF_OK)
 			return ret;
@@ -3930,8 +3929,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			close_output_pbs(&md->rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(st, md->role,
-						authstart,
+			ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
 			if (ret != STF_OK)
@@ -4103,10 +4101,6 @@ stf_status ikev2_send_informational(struct state *st)
 		unsigned char *encstart;
 		unsigned char *iv;
 
-		/* encryption role based on role in INIT, not role in this exchange */
-		enum phase1_role role = IS_V2_INITIATOR(pst->st_state) ?
-			O_INITIATOR : O_RESPONDER;
-
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
 		pb_stream rbody;
@@ -4129,10 +4123,8 @@ stf_status ikev2_send_informational(struct state *st)
 			hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
 			/* encryption role based on original state not md state */
-			if (IS_V2_INITIATOR(pst->st_state)) {
+			if (pst->st_role == O_INITIATOR) {
 				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
-			} else {
-				/* not setting original initiator flag */
 			}
 			/* not setting message responder flag */
 
@@ -4185,8 +4177,7 @@ stf_status ikev2_send_informational(struct state *st)
 			close_output_pbs(&rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(st, role,
-						authstart,
+			ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
 			if (ret != STF_OK)
@@ -4223,7 +4214,6 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 	struct ikev2_generic e;
 	unsigned char *iv;
 	unsigned char *encstart;
-	enum phase1_role role;
 
 	/* make sure HDR is at start of a clean buffer */
 	zero(&reply_buffer);
@@ -4244,16 +4234,8 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 		hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
 		/* set Initiator flag if we are the IKE Original Initiator */
-		/*
-		 * ??? is this isa_flag setting correct?
-		 * Should it not reflect *this* exchange?
-		 */
-		if (pst->st_state == STATE_PARENT_I2 ||
-		    pst->st_state == STATE_PARENT_I3) {
-			role = O_INITIATOR;
+		if (pst->st_role == O_INITIATOR) {
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
-		} else {
-			role = O_RESPONDER;
 		}
 		/* we are sending a request, so ISAKMP_FLAGS_v2_MSG_R is unset */
 
@@ -4351,8 +4333,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 
-		ret = ikev2_encrypt_msg(st, role,
-					authstart,
+		ret = ikev2_encrypt_msg(st, authstart,
 					iv, encstart, authloc,
 					&e_pbs, &e_pbs_cipher);
 		if (ret != STF_OK)
