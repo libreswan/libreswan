@@ -25,6 +25,7 @@
  *
  */
 
+#include <pthread.h>    /* Must be the first include file */
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
@@ -33,6 +34,7 @@
 #include <gmp.h>
 
 #include <libreswan.h>
+#include <errno.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -61,6 +63,7 @@
 #include "pending.h"
 #include "kernel.h"
 #include "nat_traversal.h"
+#include "pam_conv.h"
 #include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
 
 #include "key.h" /* for SECKEY_DestroyPublicKey */
@@ -74,6 +77,23 @@
 		else \
 			send_v2_notification_from_md(md, t, NULL); \
 	}
+
+struct ikev2_pam_helper {
+	struct pam_thread_arg pam;	/* writable inside thread */
+	bool pam_status;		/* set inside the thread */
+	pthread_t tid;                  /* set before thread */
+	bool in_use;                    /* set before and inside thread */
+	struct timeval start_time;      /* set before thread */
+	struct timeval done_time;       /* set inside thread */
+	struct ikev2_pam_helper *next;  /* set outside thread */
+	int master_fd;                  /* master's fd (-1 if none) */
+	int helper_fd;                  /* helper's fd */
+	struct event *evm;              /* callback event on master_fd. */
+};
+
+static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md, bool pam_status);
+
+static struct ikev2_pam_helper *pluto_v2_pam_helpers = NULL;
 
 static crypto_req_cont_func ikev2_parent_outI1_continue;	/* type assertion */
 
@@ -2074,6 +2094,217 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	return STF_OK;
 }
 
+#ifdef XAUTH_HAVE_PAM
+/* IN AN AUTHENTICAL THREAD */
+static void *ikev2_pam_autherize_thread (void *x)
+{
+	struct ikev2_pam_helper *p = (struct ikev2_pam_helper *) x;
+	struct timeval done_delta;
+	FILE *in = fdopen(p->helper_fd, "rb");
+	FILE *out = fdopen(p->helper_fd, "wb");
+	size_t sz;
+
+	/* threads will go quietly if the master cancel it */
+	pthread_setcanceltype  (PTHREAD_CANCEL_ASYNCHRONOUS,  NULL);
+	pthread_setcancelstate (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
+	p->pam_status = ikev2_do_pam_authentication(&p->pam);
+        gettimeofday(&p->done_time, NULL);
+	timersub(&p->done_time, &p->start_time, &done_delta);
+
+	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread"
+				" finished work. status %s elapsed time"
+				" %lu.%06lu '%s'",
+				p->pam.st_serialno, p->pam.c_name,
+				p->pam.c_instance_serial,
+				p->pam_status ? "SUCCESS" : "FAIL",
+				(unsigned long)done_delta.tv_sec,
+				(unsigned long)(done_delta.tv_usec * 1000000),
+				p->pam.name));
+	p->in_use = FALSE;
+	sz = fwrite(p, sizeof(char), sizeof(p), out);
+	fflush(out);
+
+	if (sz != sizeof(p)) {
+		if (ferror(out) != 0) {
+			/* ??? is strerror(ferror(out)) correct? */
+			char errbuf[1024];       /* ??? how big is big enough? */
+
+			strerror_r(errno, errbuf, sizeof(errbuf));
+			loglog(RC_LOG_SERIOUS,
+					"IKEv2 PAM helper failed to write answer: %s", errbuf);
+		} else {
+			/* short write -- fatal */
+			loglog(RC_LOG_SERIOUS,
+					"IKEv2 PAM helper error: write truncated: %zu instead of %zu",
+					sz, sizeof(p));
+		}
+	}
+
+	fclose(in);
+	fclose(out);
+
+	return NULL;
+}
+
+static void free_pam_thread_entry(struct ikev2_pam_helper *p)
+{
+	pfreeany(p->pam.name);
+	pfreeany(p->pam.password);
+	pfreeany(p->pam.c_name);
+	pfreeany(p->pam.ra);
+	pthread_cancel(p->tid);
+	event_free(p->evm);
+	if (p->master_fd != NULL_FD)
+		close(p->master_fd);
+	if (p->helper_fd != NULL_FD)
+		close(p->helper_fd);
+	pfreeany(p);
+	p = NULL;
+}
+
+static void ikev2_pam_continue(struct ikev2_pam_helper *p)
+{
+	stf_status stf;
+	struct msg_digest *md;
+	struct ikev2_pam_helper *x;
+	struct timeval served_time;
+	struct timeval served_delta;
+	struct timeval done_delta;
+	struct state *st = state_with_serialno(p->pam.st_serialno);
+
+	gettimeofday(&served_time, NULL);
+	timersub(&served_time, &p->start_time, &served_delta);
+	timersub(&p->done_time, &p->start_time, &done_delta);
+
+	if (st == NULL) {
+		DBG(DBG_CONTROL, DBG_log("IKEv2 PAM helper thread calls"
+					" state #%lu, %s[%lu]."
+				        " The state is gone. elapsed time %lu.%06lu",
+					p->pam.st_serialno, p->pam.c_name,
+					p->pam.c_instance_serial,
+					(unsigned long)served_delta.tv_sec,
+					(unsigned long)(served_delta.tv_usec * 1000000)));
+		return;
+	}
+	read(p->master_fd, (void *)&x, sizeof(p));
+
+	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread"
+				" can continue. PAM status %s."
+				" elapsed time %lu.%06lu"
+				" PAM auth time %lu.%06lu U='%s'",
+				p->pam.st_serialno, p->pam.c_name,
+				p->pam.c_instance_serial,
+				p->pam_status ? "SUCCESS" : "FAIL",
+				(unsigned long)served_delta.tv_sec,
+				(unsigned long)(served_delta.tv_usec * 1000000),
+				(unsigned long)done_delta.tv_sec,
+				(unsigned long)(done_delta.tv_usec * 1000000),
+				p->pam.name));
+
+
+	md = st->st_suspended_md;
+	unset_suspended(md->st);
+	st->has_pam_thread = FALSE;
+
+	if(p->pam_status) {
+		/* This is a hardcoded continue, convert this to micro state. */
+		stf = ikev2_parent_inI2outR2_auth_tail(md, p->pam_status);
+	} else {
+		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;
+	}
+
+	free_pam_thread_entry(p);
+
+	complete_v2_state_transition(&md, stf);
+	release_any_md(&md);
+	reset_globals();
+}
+
+static event_callback_routine ikev2_pam_continue_cb;
+static void ikev2_pam_continue_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
+{
+	ikev2_pam_continue((struct ikev2_pam_helper *)arg);
+}
+
+/*
+ * in the middle of IKEv2 AUTH exchange, the AUTH payload is verified succsfully,
+ * now invoke PAM helper to authrorize connection.
+ * when pam helper is done state will be woken up and continue
+ */
+
+static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
+{
+	struct ikev2_pam_helper *p = alloc_thing(struct ikev2_pam_helper, "v2 pam helper");
+	struct state *st = md->st;
+	int thread_status;
+	int fds[2];
+	pthread_attr_t pattr;
+	ipstr_buf ra;
+	char thatid[IDTOA_BUF];
+
+	p->master_fd = NULL_FD;
+	set_suspended(md->st, md);
+	zero(p);
+	p->in_use = TRUE;
+	gettimeofday(&p->start_time, NULL);
+
+	if (socketpair(PF_UNIX, SOCK_STREAM, 0, fds) != 0) {
+		loglog(RC_LOG_SERIOUS, "could not create socketpair for ikev2 pam authorize: %s",
+				strerror(errno));
+		return STF_INTERNAL_ERROR;
+	}
+	p->master_fd = fds[0];
+	p->helper_fd = fds[1];
+
+	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));
+	p->pam.name = clone_str(thatid, "pam name thatid");
+
+	/* ??? if password is always "password" (seems odd) then wny is a copy needed? */
+	p->pam.password = clone_str("password", "password");
+	p->pam.c_name = clone_str(st->st_connection->name, "connection name, ikev2 pam");
+	p->pam.ra = clone_str(ipstr(&st->st_remoteaddr, &ra), "st remote address");
+	p->pam.c_instance_serial = st->st_connection->instance_serial;
+	p->pam.st_serialno = st->st_serialno;
+
+	p->next = pluto_v2_pam_helpers;
+	pluto_v2_pam_helpers = p;
+
+	DBG(DBG_CONTROL, DBG_log("#%lu, %s[%lu] start IKEv2 PAM helper thread U='%s' P='%s'",
+				p->pam.st_serialno, p->pam.c_name,
+				p->pam.c_instance_serial, p->pam.name,
+				p->pam.password));
+
+	pthread_attr_init(&pattr);
+	pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
+	thread_status = pthread_create(&p->tid, NULL,
+			ikev2_pam_autherize_thread, (void *)p);
+	if (thread_status != 0) {
+		loglog(RC_LOG_SERIOUS, "#%lu  %s[%lu] failed to start IKEv2 PAM"
+				"helper thread error = %d '%s'",
+				p->pam.st_serialno, p->pam.c_name,
+				p->pam.c_instance_serial,
+				thread_status, p->pam.name);
+		close(fds[1]);
+		close(fds[0]);
+		p->master_fd = NULL_FD;
+		return STF_INTERNAL_ERROR;
+
+	}
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s[%lu] started IKEv2 PAM helper thread '%s'",
+				p->pam.st_serialno, p->pam.c_name,
+				p->pam.c_instance_serial, p->pam.name));
+	st->has_pam_thread = TRUE;
+	pthread_attr_destroy(&pattr);
+
+	DBG(DBG_CONTROL, DBG_log("setup IKEv2 PAM authorize helper callback"
+				" for master fd %d", p->master_fd));
+	p->evm = pluto_event_new(p->master_fd, EV_READ, ikev2_pam_continue_cb,p, NULL);
+
+	return STF_SUSPEND;
+}
+#endif /* XAUTH_HAVE_PAM */
+
 /*
  *
  ***************************************************************
@@ -2099,6 +2330,7 @@ static crypto_req_cont_func ikev2_parent_inI2outR2_continue;
 static stf_status ikev2_parent_inI2outR2_tail(
 	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r);
+
 
 stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 {
@@ -2179,10 +2411,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
 	struct connection *c = st->st_connection;
-	unsigned char idhash_in[MAX_DIGEST_LEN], idhash_out[MAX_DIGEST_LEN];
-	unsigned char *authstart;
-	unsigned int np;
-	int v2_notify_num = 0;
+	unsigned char idhash_in[MAX_DIGEST_LEN];
 
 	/* extract calculated values from r */
 	finish_dh_v2(st, r);
@@ -2282,6 +2511,31 @@ static stf_status ikev2_parent_inI2outR2_tail(
 			      enum_name(&ikev2_auth_names,
 					md->chain[ISAKMP_NEXT_v2AUTH]->payload.
 					v2a.isaa_type));
+		return STF_FATAL;
+	}
+
+#ifdef XAUTH_HAVE_PAM
+	if (c->policy & POLICY_IKEV2_PAM_AUTHORIZE)
+		return ikev2_start_pam_authorize(md);
+#endif
+	return ikev2_parent_inI2outR2_auth_tail(md, TRUE);
+}
+
+static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
+		bool pam_status)
+{
+	struct state *const st = md->st;
+	struct connection *c = st->st_connection;
+	unsigned char idhash_out[MAX_DIGEST_LEN];
+	unsigned char *authstart;
+	unsigned int np;
+
+	if (!pam_status) {
+		/*
+		 * TBD: send this notification encrypted because
+		 * because AUTH payload succeed
+		 */
+		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 		return STF_FATAL;
 	}
 
@@ -2465,7 +2719,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 				DBG(DBG_CONTROL,
 				    DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s",
 					    enum_name(&ikev2_notify_names,
-						      v2_notify_num)));
+						      ret - STF_FAIL)));
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			} else if (ret != STF_OK) {
@@ -4169,8 +4423,30 @@ bool ikev2_delete_out(struct state *st)
  */
 static int build_ikev2_version()
 {
-/* TODO: if bumping, we should also set the Version flag in the ISAKMP haeder */
-return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))
-	<< ISA_MAJ_SHIFT) | (IKEv2_MINOR_VERSION +
-	(DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
+	/* TODO: if bumping, we should also set the Version flag in the ISAKMP header */
+	return ((IKEv2_MAJOR_VERSION + (DBGP(IMPAIR_MAJOR_VERSION_BUMP) ? 1 : 0))
+			<< ISA_MAJ_SHIFT) | (IKEv2_MINOR_VERSION +
+				(DBGP(IMPAIR_MINOR_VERSION_BUMP) ? 1 : 0));
 }
+
+#ifdef XAUTH_HAVE_PAM
+void state_deletion_cleanup(so_serial_t st_serialno)
+{
+	struct ikev2_pam_helper **pp;
+	struct ikev2_pam_helper *p;
+
+	/* search for finished pam threads */
+	for (pp = &pluto_v2_pam_helpers; (p = *pp) != NULL; pp = &p->next) {
+		if (p->pam.st_serialno == st_serialno) {
+			DBG(DBG_CONTROL, DBG_log("Deleting IKEv2 PAM helper thread for #%lu,"
+						" %s[%lu] status %s '%s'",
+						p->pam.st_serialno, p->pam.c_name,
+						p->pam.c_instance_serial,
+						p->pam_status ? "SUCCESS" : "FAIL",
+						p->pam.name));
+			free_pam_thread_entry(p);
+		}
+	}
+}
+
+#endif

@@ -203,13 +203,11 @@ extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 		pb_stream *outpbs);
 
-stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-                                     enum phase1_role role UNUSED,
-                                     enum next_payload_types_ikev2 np,
-                                     pb_stream *outpbs);
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
+stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
+		enum phase1_role role UNUSED, enum next_payload_types_ikev2 np,
+		pb_stream *outpbs);
 void send_v2_notification_invalid_ke_from_state(struct state *st);
 bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
 oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);
-

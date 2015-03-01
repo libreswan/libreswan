@@ -310,6 +310,21 @@ void init_states(void)
 		statetable[i] = (struct state *) NULL;
 }
 
+void delete_state_by_id_name(struct state *st, void *name)
+{
+	char thatidbuf[IDTOA_BUF];
+	struct connection *c = st->st_connection;
+
+	if (!IS_IKE_SA(st))
+		return;
+
+	idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+	if (streq(thatidbuf, name)) {
+		delete_my_family(st, FALSE);
+		/* note: no md->st to clear */
+	}
+}
+
 void v1_delete_state_by_xauth_name(struct state *st, void *name)
 {
 	/* only support deleting ikev1 with xauth user name */
@@ -540,6 +555,7 @@ void delete_state(struct state *st)
 
 #ifdef XAUTH_HAVE_PAM
 	state_deletion_xauth_cleanup(st);
+	state_deletion_cleanup(st->st_serialno);
 #endif
 
 	/* If DPD is enabled on this state object, clear any pending events */
@@ -1446,9 +1462,11 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	const struct connection *c = st->st_connection;
 	char inst[CONN_INST_BUF];
 	char traffic_buf[512];
+	char thatidbuf[IDTOA_BUF] ;
 
 	state_buf[0] = '\0';   /* default to empty */
 	traffic_buf[0] = '\0';
+	thatidbuf[0] = '\0';
 
 	if (IS_IKE_SA(st))
 		return; /* ignore non-IPsec states */
@@ -1481,13 +1499,21 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		}
 	}
 
+
+	if(st->st_xauth_username[0] == '\0') {
+		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+	}
+
 	snprintf(state_buf, state_buf_len,
-		"#%lu: \"%s\"%s%s%s%s",
+		"#%lu: \"%s\"%s%s%s%s%s%s%s",
 		st->st_serialno,
 		c->name, inst,
 		(st->st_xauth_username[0] != '\0') ? ", XAUTHuser=" : "",
 		(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "",
-		(traffic_buf[0] != '\0') ? traffic_buf : ""
+		(traffic_buf[0] != '\0') ? traffic_buf : "",
+		thatidbuf[0] != '\0' ? ", id='" : "",
+		thatidbuf[0] != '\0' ? thatidbuf : "",
+		thatidbuf[0] != '\0' ? "'" : ""
 		);
 }
 

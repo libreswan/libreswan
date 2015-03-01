@@ -399,6 +399,12 @@ void whack_process(int whackfd, const struct whack_message msg)
 		for_each_state(v1_delete_state_by_xauth_name, msg.name);
 	}
 
+	if (msg.whack_deleteid) {
+		DBG_log("received whack to delete connection by id %s",
+				msg.name);
+		for_each_state(delete_state_by_id_name, msg.name);
+	}
+
 	if (msg.whack_deletestate) {
 		struct state *st =
 			state_with_serialno(msg.whack_deletestateno);

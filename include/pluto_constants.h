@@ -121,7 +121,7 @@ enum event_type {
 	EVENT_v2_RETRANSMIT,		/* v2 Initiator: Retransmit IKE packet */
 	EVENT_v2_RESPONDER_TIMEOUT,	/* v2 Responder: give up on IKE Initiator */
 	EVENT_v2_LIVENESS,		/* for dead peer detection */
-	EVENT_v2_RELEASE_WHACK,		/* relase the whack fd */
+	EVENT_v2_RELEASE_WHACK,		/* release the whack fd */
 	EVENT_RETAIN,			/* don't change the previous event */
 };
 
@@ -680,6 +680,7 @@ enum sa_policy_bits {
 #define POLICY_IKEV2_MASK	LRANGE(POLICY_IKEV1_ALLOW_IX, POLICY_IKEV2_PROPOSE_IX)
 
 	POLICY_IKEV2_ALLOW_NARROWING_IX,	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
+	POLICY_IKEV2_PAM_AUTHORIZE_IX,
 
 	POLICY_SAREF_TRACK_IX,	/* Saref tracking via _updown */
 	POLICY_SAREF_TRACK_CONNTRACK_IX,	/* use conntrack optimization */
@@ -717,6 +718,7 @@ enum sa_policy_bits {
 #define POLICY_IKEV2_ALLOW	LELEM(POLICY_IKEV2_ALLOW_IX)	/* accept IKEv2?   0x0200 0000 */
 #define POLICY_IKEV2_PROPOSE	LELEM(POLICY_IKEV2_PROPOSE_IX)	/* propose IKEv2?  0x0400 0000 */
 #define POLICY_IKEV2_ALLOW_NARROWING	LELEM(POLICY_IKEV2_ALLOW_NARROWING_IX)	/* Allow RFC-5669 section 2.9? 0x0800 0000 */
+#define POLICY_IKEV2_PAM_AUTHORIZE     LELEM(POLICY_IKEV2_PAM_AUTHORIZE_IX)    /* non-standard, custom PAM authorize call on ID */
 #define POLICY_SAREF_TRACK	LELEM(POLICY_SAREF_TRACK_IX)	/* Saref tracking via _updown */
 #define POLICY_SAREF_TRACK_CONNTRACK	LELEM(POLICY_SAREF_TRACK_CONNTRACK_IX)	/* use conntrack optimization */
 #define POLICY_IKE_FRAG_ALLOW	LELEM(POLICY_IKE_FRAG_ALLOW_IX)

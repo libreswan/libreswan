@@ -133,6 +133,8 @@ static void help(void)
 		"\n"
 		"delete: whack --delete --name <connection_name>\n"
 		"\n"
+		"delete: whack --deleteid --name <id>\n"
+		"\n"
 		"deletestate: whack --deletestate <state_object_number>\n"
 		"\n"
 		"delete xauth user: whack --deleteuser --name <xauth_user_name> \\\n"
@@ -256,6 +258,7 @@ enum option_enums {
 	OPT_INITIATE,
 	OPT_TERMINATE,
 	OPT_DELETE,
+	OPT_DELETEID,
 	OPT_DELETESTATE,
 	OPT_DELETEUSER,
 	OPT_LISTEN,
@@ -458,6 +461,7 @@ static const struct option long_opts[] = {
 	{ "initiate", no_argument, NULL, OPT_INITIATE + OO },
 	{ "terminate", no_argument, NULL, OPT_TERMINATE + OO },
 	{ "delete", no_argument, NULL, OPT_DELETE + OO },
+	{ "deleteid", no_argument, NULL, OPT_DELETEID + OO },
 	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + OO +
 	  NUMERIC_ARG },
 	{ "deleteuser", no_argument, NULL, OPT_DELETEUSER + OO },
@@ -620,6 +624,7 @@ static const struct option long_opts[] = {
 	PS("ikev2-propose", IKEV2_PROPOSE),
 
 	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
+	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
 
 	PS("sareftrack", SAREF_TRACK),
 	PS("sarefconntrack", SAREF_TRACK_CONNTRACK),
@@ -1109,8 +1114,11 @@ int main(int argc, char **argv)
 			msg.whack_delete = TRUE;
 			continue;
 
-		/* --deletestate <state_object_number> */
-		case OPT_DELETESTATE:
+		case OPT_DELETEID: /* --deleteid  --name <id> */
+			msg.whack_deleteid = TRUE;
+			continue;
+
+		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
 			msg.whack_deletestate = TRUE;
 			msg.whack_deletestateno = opt_whole;
 			continue;
@@ -1935,7 +1943,8 @@ int main(int argc, char **argv)
 	if (!LDISJOINT(opts1_seen,
 		       LELEM(OPT_ROUTE) | LELEM(OPT_UNROUTE) |
 		       LELEM(OPT_INITIATE) | LELEM(OPT_TERMINATE) |
-		       LELEM(OPT_DELETE) | LELEM(OPT_DELETEUSER) | LELEM(OPT_CD))) {
+		       LELEM(OPT_DELETE) |  LELEM(OPT_DELETEID) |
+		       LELEM(OPT_DELETEUSER) | LELEM(OPT_CD))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
 	} else if (!msg.whack_options) {
@@ -1949,7 +1958,7 @@ int main(int argc, char **argv)
 	}
 
 	if (!(msg.whack_connection || msg.whack_key || msg.whack_myid ||
-	      msg.whack_delete || msg.whack_deletestate ||
+	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
 	      msg.whack_deleteuser ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||

@@ -143,7 +143,8 @@ struct pluto_crypto_worker {
 	int pcw_helpernum;
 	pthread_t pcw_pid;
 
-	/* socketpair's file descriptors
+	/* 
+	 * socketpair's file descriptors
 	 * Each socket is bidirectional and they are cross-connected.
 	 */
 	int pcw_master_fd;	/* master's fd (-1 if none) */
@@ -154,7 +155,7 @@ struct pluto_crypto_worker {
 	bool pcw_dead;          /* worker is dead */
 	/*TAILQ_HEAD*/ struct req_queue pcw_active;	/* queue of tasks for this worker */
 	int pcw_work;           /* how many items in pcw_active */
-	struct event *evm;      /* pointer to master_fd event.  AA_2015 free it */
+	struct event *evm;      /* pointer to master_fd event. AA_2015 free it */
 };
 
 static /*TAILQ_HEAD*/ struct req_queue backlog;
