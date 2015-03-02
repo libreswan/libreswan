@@ -22,12 +22,12 @@ $(error define MK_DEPEND_CFLAGS)
 endif
 
 # In addition to compiling the .c file to .o, generate a dependency
-# file.  Force all output to the build directory.  $$(basename)
-# invokes UNIX basename.
+# file.  Force all output to the build directory.  $(basename
+# $(notdir)) is an approximation of UNIX basename.
 .c.o:
 	$(CC) $(MK_DEPEND_CFLAGS) \
-		-MMD -MF $(builddir)/$$(basename $@ .o).d \
-		-o $(builddir)/$$(basename $@) \
+		-MMD -MF $(builddir)/$(basename $(notdir $@)).d \
+		-o $(builddir)/$(notdir $@) \
 		-c $<
 
 # Assume each source file has its own generated dependency file that
