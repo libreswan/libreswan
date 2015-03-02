@@ -31,10 +31,6 @@ typedef int bool;
 
 #include <stddef.h>
 
-# ifndef __KERNEL__
-#include <sys/time.h>
-#endif
-
 /* ================ time-related declarations ================ */
 
 enum {
@@ -45,7 +41,7 @@ enum {
 
 #if !defined(__KERNEL__)
 
-
+#include <sys/time.h>
 #include <time.h>
 
 /*
