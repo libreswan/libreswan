@@ -387,12 +387,13 @@ class scantests:
                 json.dumps(self.htmlsums, ensure_ascii=True, indent=2))
 
     def scan_trun(self):
+        self.nopath = ''
         if self.stdir:
             trpath = self.stdir
-            self.nopath = setup_result_dir(self.args, True)
+            if not self.args.scancwd:
+                self.nopath = setup_result_dir(self.args, True)
         else:
             trpath = self.npath + '/' + self.tdir
-            self.nopath = ''
 
         if not os.path.isdir(trpath):
             e = "test run directory %s is not a directory" % trpath
@@ -405,7 +406,7 @@ class scantests:
         if not self.read_testlist(self.trpath):
             logging.info(
                 "can not read %s/TESTLIST will try other locations", self.trpath)
-            if self.args.resanitize:
+            if self.args.resanitize or self.args.scancwd:
                 # we need the TESTLIST in the self.trpath
                 return True
             if not self.read_testlist(self.npath):
@@ -1052,10 +1053,10 @@ def re_write_result(sanity):
         return
 
     output_file = "OUTPUT/RESULT"
-    logging.debug("re write result to %s", output_file)
     if not os.path.exists(output_file):
-        logging.debug("no re write %s missing", output_file)
+        logging.debug("can not rewrite %s missing", output_file)
         return
+    logging.debug("read result %s", output_file)
 
     lines = []
     f = open(output_file, 'r')
@@ -1078,7 +1079,7 @@ def re_write_result(sanity):
 
             changed = True
             logging.info(
-                "testcase %s result new '%s' old '%s'", x["testname"], x["result"],  result)
+                "testcase %s new result '%s' old '%s'", x["testname"], x["result"],  result)
             x["result"] = result
             x["resanitized"] = time.strftime(
                 "%Y-%m-%d %H:%M", time.localtime())
@@ -1202,6 +1203,8 @@ def cmdline():
     parser.add_argument("--sanitizer", default=DEFAULTCONFIG['sanitizer'],
                         help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
 
+    parser.add_argument("--scancwd", default=False, action="store_true",
+                        help="san/resanitize  results, run in cwd")
     parser.add_argument(
         "--shutdownwait", default=DEFAULTCONFIG['shutdownwait'],
             type=int, help="seconds to wait for guest to shutdown. Default %s seconds" % DEFAULTCONFIG['shutdownwait'])
@@ -1765,10 +1768,28 @@ def skip_testlist_line(line, verbose=False):
     return False
 
 
+def scancwd(args):
+    r = args.testlist
+    stdir=os.getcwd()
+    logging.info(
+        "re scan results in CWD %s.", stdir, r)
+
+    if not os.path.exists(r):
+        logging.error(
+            "ABORT re sanitize missing %s/%s. Did it start from right place", stdir, r)
+        logging.info("run it from libreswan/testing/pluto?")
+        return None
+
+    s = scantests(args, stdir=stdir)
+    s.scan_test_runs()
+
+    return
+
+
 def resanitize(args):
     r = args.testlist
     logging.info(
-        "re sanitize the existing results in the current directory for %s.", r)
+        "re sanitize the existing results in the CWD %s.", r)
 
     if not os.path.exists(r):
         logging.error(
@@ -2056,6 +2077,9 @@ def main():
         resanitize(args)
         # gen_graphs_tables(args)
         return
+    elif args.scancwd:
+        scancwd(args)
+		return
 
     if not args.leavezombies:
         kill_zombies("swantest")

@@ -36,7 +36,7 @@ endif
 ifeq ($(UPDATEONLY),)
 	make clean
 	../utils/swantest
-	../utils/swantest --resanitize
+	../utils/swantest --scancwd
 endif
 
 ${LIBRESWANSRCDIR}/testing/x509/keys/mainca.key: ${LIBRESWANSRCDIR}/testing/x509/dist_certs.py
