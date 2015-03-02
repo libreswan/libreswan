@@ -95,7 +95,7 @@
 #include "fips.h"
 
 #ifdef HAVE_LIBCAP_NG
-# include <cap-ng.h>
+# include <cap-ng.h>	/* from libcap-ng devel */
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
