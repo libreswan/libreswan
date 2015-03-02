@@ -45,7 +45,7 @@
 
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
@@ -1956,7 +1956,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		/* decide to send CERT payload */
 		{
-			send_cert = doi_send_ikev2_cert_thinking(st);
+			send_cert = ikev2_send_cert_decision(st);
 
 			if (send_cert)
 				r_id.isai_np = ISAKMP_NEXT_v2CERT;
@@ -2624,7 +2624,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 		encstart = e_pbs_cipher.cur;
 
 		/* decide to send CERT payload before we generate IDr */
-		send_cert = doi_send_ikev2_cert_thinking(st);
+		send_cert = ikev2_send_cert_decision(st);
 
 		/* send out the IDr payload */
 		{
@@ -2667,7 +2667,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 		}
 
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("assembled IDr payload -- CERT next"));
+		    DBG_log("assembled IDr payload"));
 
 		/*
 		 * send CERT payload RFC 4306 3.6, 1.2:([CERT,] )

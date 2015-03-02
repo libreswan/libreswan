@@ -52,7 +52,8 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
+#include "nss_ocsp.h"
 #include "certs.h"
 #include "connections.h"	/* needs id.h */
 #include "foodgroups.h"
@@ -113,6 +114,14 @@ static const struct lsw_conf_options *oco;
 static char *coredir;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
+
+extern bool strict_crl_policy;
+
+static bool strict_ocsp_policy = FALSE;
+static bool ocsp_enable = FALSE;
+static char *ocsp_default_uri = NULL;
+static char *ocsp_trust_name = NULL;
+static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;
 
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
 
@@ -358,27 +367,28 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 		nbytes));
 }
 
-static void pluto_init_nss(char *confddir)
+static bool pluto_init_nss(char *nssdb)
 {
-	SECStatus nss_init_status;
+	SECStatus rv;
+	char dbuf[1024];
 
-	loglog(RC_LOG_SERIOUS, "nss directory plutomain: %s", confddir);
-	nss_init_status = NSS_Init(confddir);
-	if (nss_init_status != SECSuccess) {
-		loglog(RC_LOG_SERIOUS, "FATAL: NSS readonly initialization (\"%s\") failed (err %d)",
-			confddir, PR_GetError());
-		exit_pluto(PLUTO_EXIT_NSS_FAIL);
-	} else {
-		libreswan_log("NSS Initialized");
-		PK11_SetPasswordFunc(getNSSPassword);
+	snprintf(dbuf, sizeof(dbuf), "sql:%s", nssdb);
+	loglog(RC_LOG_SERIOUS, "NSS DB directory: %s", dbuf);
+	rv = NSS_Initialize(dbuf, "", "", SECMOD_DB, NSS_INIT_READONLY);
+	if (rv != SECSuccess) {
+		loglog(RC_LOG_SERIOUS, "NSS readonly initialization (\"%s\") failed (err %d)\n",
+			dbuf, PR_GetError());
+		return FALSE;
 	}
+
+	libreswan_log("NSS initialized");
+	PK11_SetPasswordFunc(getNSSPassword);
 
 	/*
 	 * This exists purely to make the BSI happy.
 	 * We do not infliect this on other users
 	 */
 	if (pluto_nss_seedbits != 0) {
-		SECStatus rv;
 		int seedbytes = BYTES_FOR_BITS(pluto_nss_seedbits);
 		unsigned char *buf = alloc_bytes(seedbytes,"TLA seedmix");
 
@@ -389,10 +399,9 @@ static void pluto_init_nss(char *confddir)
 		zero(&buf);
 		pfree(buf);
 	}
-}
 
-/* by default the CRL policy is lenient */
-bool strict_crl_policy = FALSE;
+	return TRUE;
+}
 
 /* 0 is special and default: do not check crls dynamically */
 deltatime_t crl_check_interval = { 0 };
@@ -450,8 +459,13 @@ static const struct option long_opts[] = {
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
 	{ "force-unlimited\0", no_argument, NULL, 'U' },
-	{ "strictcrlpolicy\0", no_argument, NULL, 'r' },
-	{ "crlcheckinterval\0<seconds>", required_argument, NULL, 'x' },
+	{ "crl_strict\0", no_argument, NULL, 'r' },
+	{ "ocsp_strict\0", no_argument, NULL, 'o' },
+	{ "ocsp_enable\0", no_argument, NULL, 'O' },
+	{ "ocsp_uri\0", required_argument, NULL, 'Y' },
+	{ "ocsp_timeout\0", required_argument, NULL, 'T' },
+	{ "ocsp_trust_name\0", required_argument, NULL, 'J' },
+	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
 	{ "use-nostack\0",  no_argument, NULL, 'n' },
@@ -854,6 +868,33 @@ int main(int argc, char **argv)
 			strict_crl_policy = TRUE;
 			continue;
 
+		case 'o':
+			strict_ocsp_policy = TRUE;
+			continue;
+
+		case 'O':
+			ocsp_enable = TRUE;
+			continue;
+
+		case 'Y':
+			ocsp_default_uri = optarg;
+			continue;
+
+		case 'J':
+			ocsp_trust_name = optarg;
+			continue;
+
+		case 'T':	/* --ocsp_timeout <seconds> */
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			if (u == 0) {
+				ugh = "must not be 0";
+				break;
+			}
+			ocsp_timeout = u;
+			continue;
+
 		case 'x':	/* --crlcheckinterval <seconds> */
 			ugh = ttoulb(optarg, 0, 10, TIME_T_MAX, &u);
 			if (ugh != NULL)
@@ -1002,6 +1043,20 @@ int main(int argc, char **argv)
 
 			strict_crl_policy =
 				cfg->setup.options[KBF_STRICTCRLPOLICY];
+
+			strict_ocsp_policy =
+				cfg->setup.options[KBF_STRICTOCSPPOLICY];
+
+			ocsp_enable = cfg->setup.options[KBF_OCSPENABLE];
+
+			set_cfg_string(&ocsp_default_uri,
+				       cfg->setup.strings[KSF_OCSPURI]);
+
+			ocsp_timeout = cfg->setup.options[KBF_OCSPTIMEOUT];
+
+			set_cfg_string(&ocsp_trust_name,
+				       cfg->setup.strings[KSF_OCSPTRUSTNAME]);
+
 			crl_check_interval = deltatime(
 				cfg->setup.options[KBF_CRLCHECKINTERVAL]);
 			uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
@@ -1239,7 +1294,22 @@ int main(int argc, char **argv)
 
 	init_constants();
 	pluto_init_log();
-	pluto_init_nss(oco->confddir);
+
+	if (!pluto_init_nss(oco->nssdir)) {
+		loglog(RC_LOG_SERIOUS, "FATAL: NSS initialization failure");
+		exit_pluto(10);
+	}
+
+	if (ocsp_enable) {
+		if (!init_nss_ocsp(ocsp_default_uri, ocsp_trust_name,
+						     ocsp_timeout,
+						     strict_ocsp_policy)) {
+			libreswan_log("Initializing NSS OCSP failed");
+			exit_pluto(10);
+		} else {
+			libreswan_log("NSS OCSP Enabled");
+		}
+	}
 
 #ifdef HAVE_LIBCAP_NG
 	/*
@@ -1449,19 +1519,6 @@ int main(int argc, char **argv)
 	init_fetch();
 #endif
 
-	/*
-	 * Loading X.509 CA certificates from disk (/etc/ipsec.d/cacerts/)
-	 * This method will go away in favor of NSS CAcerts only
-	 */
-	load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
-
-	/* Loading CA certs from NSS DB */
-	load_authcerts_from_nss("CA cert",  AUTH_CA);
-
-	/*
-	 * Loading X.509 CRLs - must happen after CAs are loaded
-	 * This method will go away in favor of NSS CRLs only
-	 */
 	load_crls();
 
 #ifdef HAVE_LABELED_IPSEC
@@ -1497,9 +1554,6 @@ void exit_pluto(int status)
 #if defined(LIBCURL) || defined(LDAP_VER)
 	free_crl_fetch();	/* free chain of crl fetch requests */
 #endif
-	/* free chain of X.509 authority certificates */
-	free_authcerts();
-	free_crls();	/* free chain of X.509 CRLs */
 
 	lsw_conf_free_oco();	/* free global_oco containing path names */
 

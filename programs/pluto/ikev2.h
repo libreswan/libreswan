@@ -182,14 +182,6 @@ extern void send_v2_notification(struct state *p1st,
 				 u_char *rcookie,
 				 chunk_t *data);
 
-extern bool doi_send_ikev2_cert_thinking(struct state *st);
-
-extern stf_status ikev2_send_cert(struct state *st,
-				  struct msg_digest *md,
-				  enum phase1_role role,
-				  enum next_payload_types_ikev2 np,
-				  pb_stream *outpbs);
-
 extern bool ship_v2N(enum next_payload_types_ikev2 np,
 		     u_int8_t critical,
 		     u_int8_t protoid,
@@ -205,9 +197,6 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
-stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-		enum phase1_role role UNUSED, enum next_payload_types_ikev2 np,
-		pb_stream *outpbs);
 void send_v2_notification_invalid_ke_from_state(struct state *st);
 bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
 oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);

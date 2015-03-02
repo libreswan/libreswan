@@ -62,7 +62,7 @@
 #include "mpzfuncs.h"
 
 #include "fetch.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 #include "nat_traversal.h"
 
@@ -452,7 +452,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
-			    trusted_ca(key->issuer, c->spd.that.ca,
+			    trusted_ca_nss(key->issuer, c->spd.that.ca,
 				       &pathlen)) {
 
 				DBG(DBG_CONTROL, {
@@ -592,9 +592,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    enum_name(&ppk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE) {
-		struct pubkey *my_public_key = allocate_RSA_public_key(
-			c->spd.this.cert);
+	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
+			c->spd.this.cert.u.nss_cert != NULL) {
+		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
+			c->spd.this.cert.u.nss_cert);
 
 		passert(my_public_key != NULL);
 
@@ -710,24 +711,6 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 					   pks->u.preshared_secret);
 	    });
 	return s == NULL ? NULL : &pks->u.preshared_secret;
-}
-
-/* check the existence of an RSA private key matching an RSA public
- * key contained in an X.509
- */
-bool has_private_key(cert_t cert)
-{
-	bool has_key = FALSE;
-	struct pubkey *pubkey;
-
-	pubkey = allocate_RSA_public_key(cert);
-	if (pubkey == NULL)
-		return FALSE;
-
-	has_key = lsw_has_private_rawkey(pluto_secrets, pubkey);
-
-	free_public_key(pubkey);
-	return has_key;
 }
 
 /* find the appropriate RSA private key (see get_secret).

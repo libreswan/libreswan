@@ -72,7 +72,7 @@ running in FIPS mode.
 
 To change the empty password, run:
 
-	certutil -W -d /etc/ipsec.d
+	certutil -W -d sql:/etc/ipsec.d
 
 Enter return for the "old password", then enter your new password.
 
@@ -139,13 +139,14 @@ Below, we will be using the nss tools to generate certificates
 * To create a certificate authority (CA certficate):
 
 	certutil -S -k rsa -n "ExampleCA" -s "CN=Example CA Inc" -w 12 \
-		-t "C,C,C" -x -d /etc/ipsec.d
+		-t "CT,," -x -d sql:/etc/ipsec.d
 
 It creates a certificate with RSA keys (-k rsa) with the nick name
 "ExampleCA", and with common name "Example CA Inc". The option
 "-w" specifies the certificates validy period. "-t" specifies the attributes
 of the certificate. "C" is required for creating a CA certificate. "-x" mean
-self signed. "-d" specifies the path of the database directory.
+self signed. "-d" specifies the path of the database directory. The directory
+path should be prefixed with 'sql:' in order to use the SQLite format.
 
 NOTE: It is not a requirement to create the CA in NSS database. The CA
 certificate can be obtained from anywhere in the world.
@@ -153,7 +154,7 @@ certificate can be obtained from anywhere in the world.
 * To create a user certificate signed by the above CA
 
 	certutil -S -k rsa -c "ExampleCA" -n "user1" -s "CN=User Common Name" \
-		-w 12 -t "u,u,u" -d /etc/ipsec.d 
+		-w 12 -t "u,u,u" -d sql:/etc/ipsec.d
 
 It creates a user cert with nick name "user1" with attributes
 "u,u,u" signed by the CA cert "ExampleCA". 
@@ -233,13 +234,12 @@ Paul: add "ipsec export" ?
 
 To export the CA certificate:
 
-	pk12util -o cacert1.p12 -n cacert1 -d /etc/ipsec.d
+	NSS_DEFAULT_DB_TYPE="sql:" pk12util -o cacert1.p12 -n cacert1 -d /etc/ipsec.d
 
 Copy the file "cacert1.p12" to the new machine and import it using:
 
 	ipsec import cacert1.p12
-	certutil -M -n cacert1 -t "C,C,C" -d /etc/ipsec.d
-
+	certutil -M -n cacert1 -t "CT,," -d sql:/etc/ipsec.d
 
 Example connection for ipsec.conf:
 

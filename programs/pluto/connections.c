@@ -75,6 +75,8 @@
 #include "ikev1_xauth.h"
 #include "addresspool.h"
 #include "nat_traversal.h"
+#include "pluto_x509.h"
+#include "nss_cert_load.h"
 
 #include "virtual.h"	/* needs connections.h */
 
@@ -203,13 +205,11 @@ static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
 
-	if (e->ca_path.ty != CERT_NONE && e->ca_path.u.x509 != NULL)
-		release_authcert_chain(e->ca_path.u.x509);
+	if (e->cert.u.nss_cert != NULL)
+		CERT_DestroyCertificate(e->cert.u.nss_cert);
 
 	freeanychunk(e->ca);
-	release_cert(e->cert);
 	pfreeany(e->updown);
-	pfreeany(e->cert_filename);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
 	pfreeany(e->xauth_name);
@@ -707,12 +707,6 @@ static size_t format_connection(char *buf, size_t buf_len,
 			FALSE, c->policy, oriented(*c));
 }
 
-static void unshare_connection_end_certs(struct end *e)
-{
-	/* share_x checks for CERT_NONE */
-	share_cert(e->cert);
-	share_authcerts(e->ca_path);
-}
 /* spd_route's with end's get copied in xauth.c */
 void unshare_connection_end_strings(struct end *e)
 {
@@ -726,7 +720,7 @@ void unshare_connection_end_strings(struct end *e)
 	e->xauth_name = clone_str(e->xauth_name, "xauth name");
 	e->xauth_password = clone_str(e->xauth_password, "xauth password");
 	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
-	e->cert_filename = clone_str(e->cert_filename, "cert_filename");
+	e->cert_nickname = clone_str(e->cert_nickname, "cert_nickname");
 }
 
 static void unshare_connection_strings(struct connection *c)
@@ -753,9 +747,7 @@ static void unshare_connection_strings(struct connection *c)
 	/* do "right" */
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		unshare_connection_end_strings(&sr->this);
-		unshare_connection_end_certs(&sr->this);
 		unshare_connection_end_strings(&sr->that);
-		unshare_connection_end_certs(&sr->that);
 	}
 
 	/* increment references to algo's, if any */
@@ -769,60 +761,52 @@ static void unshare_connection_strings(struct connection *c)
 		reference_addresspool(c->pool);
 }
 
-static bool load_end_certificate(const char *name, struct end *dst)
+static bool load_end_nss_certificate(const char *name, struct end *dst)
 {
-	realtime_t valid_until;
 	cert_t cert;
-	err_t ugh = NULL;
 
 	zero(&dst->cert);
 
-	/* initialize end certificate */
 	dst->cert.ty = CERT_NONE;
 
 	if (name == NULL)
 		return FALSE;
 
 	DBG(DBG_CONTROL, DBG_log("loading certificate %s", name));
-	dst->cert_filename = clone_str(name, "certificate name");
+	dst->cert_nickname = clone_str(name, "certificate nickname");
 
-	{
-		/* load cert from file */
-		bool valid_cert = load_cert_from_nss(name,
-						"host cert", &cert);
-		if (!valid_cert) {
-			whack_log(RC_FATAL, "cannot load certificate %s",
-				name);
-			/* clear the ID, we're expecting it via %fromcert */
-			dst->id.kind = ID_NONE;
-			return FALSE;
-		}
+	if (!load_nss_cert_from_db(name, &cert)) {
+		whack_log(RC_FATAL, "cannot load certificate %s",
+			name);
+		/* clear the ID, we're expecting it via %fromcert */
+		dst->id.kind = ID_NONE;
+		return FALSE;
 	}
 
 	switch (cert.ty) {
 	case CERT_X509_SIGNATURE:
 		if (dst->id.kind == ID_FROMCERT || dst->id.kind == ID_NONE)
-			select_x509cert_id(cert.u.x509, &dst->id);
+			select_nss_cert_id(cert.u.nss_cert, &dst->id);
 
 		/* check validity of cert */
-
-		valid_until = cert.u.x509->notAfter;
-		ugh = check_validity(cert.u.x509, &valid_until /* IN/OUT */);
-		if (ugh != NULL) {
-			loglog(RC_LOG_SERIOUS,"  %s", ugh);
-			free_x509cert(cert.u.x509);
+		if (CERT_CheckCertValidTimes(cert.u.nss_cert,
+					     PR_Now(),FALSE) !=
+						secCertTimeValid) {
+			loglog(RC_LOG_SERIOUS,"certificate time is expired/invalid");
+			CERT_DestroyCertificate(cert.u.nss_cert);
 			return FALSE;
 		} else {
 			DBG(DBG_CONTROL,
 				DBG_log("certificate is valid"));
-			add_x509_public_key(&dst->id, cert.u.x509, valid_until,
-					DAL_LOCAL);
-			dst->cert.ty = cert.ty;
-			dst->cert.u.x509 = add_x509cert(cert.u.x509);
+			add_nss_cert_public_key(&dst->id, cert.u.nss_cert,
+					   get_nss_cert_notafter(cert.u.nss_cert),
+					   DAL_LOCAL);
+			dst->cert = cert;
 
 			/* if no CA is defined, use issuer as default */
 			if (dst->ca.ptr == NULL)
-				dst->ca = dst->cert.u.x509->issuer;
+				dst->ca = secitem_to_chunk(
+						    cert.u.nss_cert->derIssuer);
 		}
 		break;
 	default:
@@ -830,64 +814,6 @@ static bool load_end_certificate(const char *name, struct end *dst)
 	}
 
 	return TRUE;
-}
-
-static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
-{
-	x509cert_t *ac;
-	x509cert_t **tip = &dst->ca_path.u.x509;
-
-	dst->ca_path.ty = CERT_NONE;
-	dst->ca_path.u.x509 = NULL;
-
-	/* don't load a ca_path */
-	if (issuer_dn.ptr == NULL || issuer_dn.len < 1)
-		return;
-
-	/* find the issuing cert (if any) */
-	/* ??? is != AUTH_NONE the right test? */
-	for (ac = x509_get_authcerts_chain(); ac != NULL; ac = ac->next) {
-		if (same_dn(issuer_dn, ac->subject) &&
-		    ac->authority_flags != AUTH_NONE &&
-		    !same_dn(ac->issuer, ac->subject)) {
-			/* no root CA! */
-			dst->ca_path.ty = CERT_X509_SIGNATURE;
-			break;
-		}
-	}
-
-	/* copy chain of issuing cert and its ancestor CAs */
-	while (ac != NULL) {
-		x509cert_t *next = get_authcert(ac->issuer,
-					 ac->authKeySerialNumber,
-					 ac->authKeyID, AUTH_CA);
-		x509cert_t *new;
-
-		/*
-		 * If there is a next and it has the same subject,
-		 * we're done.
-		 * ??? why?
-		 * ??? it is possible to have an empty copy chain.
-		 */
-		if (next != NULL &&
-		    same_dn(ac->subject, next->subject))
-			break;
-
-		/* copy *ac to tip of our chain */
-		new = clone_thing(*ac, "x509cert_t");
-		DBG(DBG_X509, {
-			char ibuf[ASN1_BUF_LEN];
-			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
-			DBG_log("load_end_ca_path: adding cert %s to chain",
-				ibuf);
-		});
-
-		*tip = new;
-		tip = &new->next;
-
-		ac = next;
-	}
-	*tip = NULL;
 }
 
 static bool extract_end(struct end *dst, const struct whack_end *src,
@@ -929,8 +855,8 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	}
 
 	/* load local end certificate and extract ID, if any */
-	if (load_end_certificate(src->cert, dst))
-		load_end_ca_path(dst->cert.u.x509->issuer, dst);
+	if (!load_end_nss_certificate(src->cert, dst))
+		DBG_log("certificate not loaded for this end");
 
 	/* ??? what should we do on load_end_certificate failure? */
 
@@ -1427,10 +1353,8 @@ void add_connection(const struct whack_message *wm)
 
 		if (same_rightca) {
 			c->spd.that.ca = c->spd.this.ca;
-			c->spd.that.ca_path = c->spd.this.ca_path;
 		} else if (same_leftca) {
 			c->spd.this.ca = c->spd.that.ca;
-			c->spd.this.ca_path = c->spd.that.ca_path;
 		}
 
 		/*
@@ -2632,7 +2556,7 @@ struct connection *refine_host_connection(const struct state *st,
 
 	if (same_id(&c->spd.that.id, peer_id) &&
 		(peer_ca.ptr != NULL) &&
-		trusted_ca(peer_ca, c->spd.that.ca, &peer_pathlen) &&
+		trusted_ca_nss(peer_ca, c->spd.that.ca, &peer_pathlen) &&
 		peer_pathlen == 0 &&
 		match_requested_ca(c->requested_ca, c->spd.this.ca,
 				&our_pathlen) &&
@@ -2694,7 +2618,7 @@ struct connection *refine_host_connection(const struct state *st,
 		for (; d != NULL; d = d->hp_next) {
 			bool match1 = match_id(peer_id, &d->spd.that.id,
 					&wildcards);
-			bool match2 = trusted_ca(peer_ca, d->spd.that.ca,
+			bool match2 = trusted_ca_nss(peer_ca, d->spd.that.ca,
 						&peer_pathlen);
 			bool match3 = match_requested_ca(c->requested_ca,
 							d->spd.this.ca,
@@ -3037,7 +2961,7 @@ static struct connection *fc_try(const struct connection *c,
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
 				match_id(&c->spd.that.id, &d->spd.that.id,
 					&wildcards) &&
-				trusted_ca(c->spd.that.ca, d->spd.that.ca,
+				trusted_ca_nss(c->spd.that.ca, d->spd.that.ca,
 					&pathlen)))
 			continue;
 
@@ -3203,7 +3127,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
 				match_id(&c->spd.that.id, &d->spd.that.id,
 					&wildcards) &&
-				trusted_ca(c->spd.that.ca, d->spd.that.ca,
+				trusted_ca_nss(c->spd.that.ca, d->spd.that.ca,
 					&pathlen)))
 			continue;
 
@@ -3475,8 +3399,8 @@ static void show_one_sr(struct connection *c,
 		OPT_HOST(&c->spd.that.host_srcip, thatipb),
 		OPT_PREFIX_STR("; myup=", sr->this.updown),
 		OPT_PREFIX_STR("; theirup=", sr->that.updown),
-		OPT_PREFIX_STR("; mycert=", sr->this.cert_filename),
-		OPT_PREFIX_STR("; hiscert=", sr->that.cert_filename));
+		OPT_PREFIX_STR("; mycert=", sr->this.cert_nickname),
+		OPT_PREFIX_STR("; hiscert=", sr->that.cert_nickname));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR

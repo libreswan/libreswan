@@ -131,7 +131,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -2889,37 +2889,20 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	return TRUE;
 }
 
-/*
- * ships the full ca chain or only the end cert's issuer. This won't
- * include any root certs as the chain will not have any.
- *
- * todo: incorporate certreq contents -
- * http://tools.ietf.org/html/rfc4945#section-3.2.7
- */
-bool ikev1_ship_ca_chain(cert_t chain, cert_t end_cert, pb_stream *outs,
-						  u_int8_t setnp,
-						  bool send_full_chain)
+bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
+					     u_int8_t type,
+					     u_int8_t setnp)
 {
-	x509cert_t *ca;
-	bool found_issuer = FALSE;
+	int i;
+	u_int8_t np;
 
-	for (ca = chain.u.x509; ca != NULL; ca = ca->next) {
-		u_int8_t np;
+	for (i = 0; i < n; i++) {
+		/* set np for last cert, or another */
+		np = i == n - 1 ? setnp : ISAKMP_NEXT_CERT;
 
-		if (!send_full_chain) {
-			/* the chain should start with the issuer */
-			if (same_dn(end_cert.u.x509->issuer, ca->subject)) {
-				found_issuer = TRUE;
-				np = setnp;
-			} else
-				continue;
-		} else
-			np = ca->next == NULL ? setnp : ISAKMP_NEXT_CERT;
-
-		if (!ikev1_ship_CERT(chain.ty, ca->certificate, outs, np))
-				return FALSE;
-		if (found_issuer)
-			break;
+		if (!ikev1_ship_CERT(type, chain[i], outs, np))
+			return FALSE;
 	}
+
 	return TRUE;
 }

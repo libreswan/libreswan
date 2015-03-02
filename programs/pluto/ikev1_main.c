@@ -66,7 +66,6 @@
 #include "ipsec_doi.h" /* needs demux.h and state.h */
 #include "whack.h"
 #include "fetch.h"
-#include "pkcs.h"
 #include "asn1.h"
 
 #include "sha1.h"
@@ -85,7 +84,7 @@
 #include "vendor.h"
 #include "nat_traversal.h"
 #include "ikev1_dpd.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.
@@ -1432,6 +1431,8 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	bool initial_contact = FALSE;
 	generalName_t *requested_ca = NULL;
 	cert_t mycert = st->st_connection->spd.this.cert;
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 
 	finish_dh_secretiv(st, r);
 
@@ -1447,18 +1448,25 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 	 * to always send one.
 	 */
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.ty != CERT_NONE &&
+		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
 		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
 		  st->hidden_variables.st_got_certrequest) ||
 		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	send_authcerts = (send_cert &&
-			  st->st_connection->spd.this.ca_path.ty != CERT_NONE &&
-			  st->st_connection->spd.this.ca_path.u.x509 != NULL &&
 			  st->st_connection->send_ca != CA_SEND_NONE);
 
 	send_full_chain = (send_authcerts &&
 			   st->st_connection->send_ca == CA_SEND_ALL);
+
+	if (send_authcerts) {
+		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
+						       mycert.u.nss_cert,
+					    send_full_chain ? TRUE : FALSE);
+	}
+
+	if (chain_len < 1)
+		send_authcerts = FALSE;
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
@@ -1547,18 +1555,20 @@ static stf_status main_inR2_outI3_continue(struct msg_digest *md,
 
 		libreswan_log("I am sending my cert");
 
-		if (!ikev1_ship_CERT(mycert.ty, get_cert_chunk(mycert),
-					&md->rbody, np))
+		if (!ikev1_ship_CERT(mycert.ty,
+				   get_dercert_from_nss_cert(mycert.u.nss_cert),
+				   &md->rbody, np))
 			return STF_INTERNAL_ERROR;
 
 		if (np == ISAKMP_NEXT_CERT) {
 			/* we've got CA certificates to send */
 			libreswan_log("I am sending a CA cert chain");
-			if (!ikev1_ship_ca_chain(st->st_connection->spd.this.ca_path,
-						 mycert,
-						 &md->rbody,
-						 send_cr ? ISAKMP_NEXT_CR : ISAKMP_NEXT_SIG,
-						 send_full_chain))
+			if (!ikev1_ship_chain(auth_chain,
+					      chain_len,
+					      &md->rbody,
+					      mycert.ty,
+					      send_cr ? ISAKMP_NEXT_CR :
+							ISAKMP_NEXT_SIG))
 				return STF_INTERNAL_ERROR;
 		}
 	}
@@ -1984,6 +1994,8 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	bool send_cert = FALSE;
 	bool send_authcerts = FALSE;
 	bool send_full_chain = FALSE;
+	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
+	int chain_len = 0;
 	u_int8_t np;
 
 	/*
@@ -2003,18 +2015,25 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	mycert = st->st_connection->spd.this.cert;
 
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		mycert.ty != CERT_NONE &&
+		mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
 		((st->st_connection->spd.this.sendcert == cert_sendifasked &&
 		  st->hidden_variables.st_got_certrequest) ||
 		 st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	send_authcerts = (send_cert &&
-			  st->st_connection->spd.this.ca_path.ty != CERT_NONE &&
-			  st->st_connection->spd.this.ca_path.u.x509 != NULL &&
 			  st->st_connection->send_ca != CA_SEND_NONE);
 
 	send_full_chain = (send_authcerts &&
 			   st->st_connection->send_ca == CA_SEND_ALL);
+
+	if (send_authcerts) {
+		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
+						       mycert.u.nss_cert,
+					    send_full_chain ? TRUE : FALSE);
+	}
+
+	if (chain_len < 1)
+		send_authcerts = FALSE;
 
 	doi_log_cert_thinking(md,
 			st->st_oakley.auth,
@@ -2067,20 +2086,21 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 
 	/* CERT out, if we have one */
 	if (send_cert) {
-		u_int8_t npp = send_authcerts ? ISAKMP_NEXT_CERT : ISAKMP_NEXT_SIG;
+		u_int8_t npp = send_authcerts ? ISAKMP_NEXT_CERT :
+					        ISAKMP_NEXT_SIG;
 
 		libreswan_log("I am sending my cert");
-		if (!ikev1_ship_CERT(mycert.ty, get_cert_chunk(mycert),
-					        &md->rbody, npp))
+		if (!ikev1_ship_CERT(mycert.ty,
+				   get_dercert_from_nss_cert(mycert.u.nss_cert),
+				   &md->rbody, npp))
 			return STF_INTERNAL_ERROR;
 
 		if (npp == ISAKMP_NEXT_CERT) {
 			libreswan_log("I am sending a CA cert chain");
-			if (!ikev1_ship_ca_chain(st->st_connection->spd.this.ca_path,
-						 mycert,
-						 &md->rbody,
-						 ISAKMP_NEXT_SIG,
-						 send_full_chain))
+			if (!ikev1_ship_chain(auth_chain, chain_len,
+							  &md->rbody,
+							  mycert.ty,
+							  ISAKMP_NEXT_SIG))
 				return STF_INTERNAL_ERROR;
 		}
 	}

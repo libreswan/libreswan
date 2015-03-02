@@ -57,7 +57,6 @@
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "whack.h"
 #include "fetch.h"
-#include "pkcs.h"
 #include "asn1.h"
 
 #include "sha1.h"
@@ -77,7 +76,7 @@
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -459,7 +458,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	 * to always send one.
 	 */
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		    mycert.ty != CERT_NONE &&
+		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
 		    ((st->st_connection->spd.this.sendcert ==
 		        cert_sendifasked &&
 		      st->hidden_variables.st_got_certrequest) ||
@@ -576,7 +575,8 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 				&cert_pbs))
 			return STF_INTERNAL_ERROR;
 
-		if (!out_chunk(get_cert_chunk(mycert), &cert_pbs, "CERT"))
+		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+								&cert_pbs, "CERT"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&cert_pbs);

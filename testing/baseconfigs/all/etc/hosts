@@ -19,4 +19,4 @@ ff02::3 ip6-allhosts
 192.1.2.23  east-out east-eth1	east	   
 192.0.2.254 east-in  east-eth0  east	   
 192.0.2.1   sunrise	
-
+192.9.4.245 nic nic.testing.libreswan.org

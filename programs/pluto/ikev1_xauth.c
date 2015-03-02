@@ -2166,8 +2166,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						caddr,
 						tmp_spd->that.client.maskbits);
 
-					tmp_spd->this.cert_filename = NULL;
-					tmp_spd->that.cert_filename = NULL;
+					tmp_spd->this.cert_nickname = NULL;
+					tmp_spd->that.cert_nickname = NULL;
 
 					tmp_spd->this.cert.ty = CERT_NONE;
 					tmp_spd->that.cert.ty = CERT_NONE;

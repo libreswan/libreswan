@@ -42,7 +42,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -832,7 +832,7 @@ static stf_status ikev2_create_responder_child_state(
 				      &d->spd.this.id) &&
 			      match_id(&c->spd.that.id,
 				       &d->spd.that.id, &wildcards) &&
-			      trusted_ca(c->spd.that.ca,
+			      trusted_ca_nss(c->spd.that.ca,
 					 d->spd.that.ca, &pathlen)))
 				continue;
 

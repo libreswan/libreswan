@@ -1,0 +1,2 @@
+west sends the 'signedbyother' cert
+east has 'otherca' loaded, but the connection only allows certs from mainca. fails

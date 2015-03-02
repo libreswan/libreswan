@@ -45,6 +45,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
