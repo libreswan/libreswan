@@ -2078,8 +2078,8 @@ def main():
         # gen_graphs_tables(args)
         return
     elif args.scancwd:
-        scancwd(args)
-		return
+       scancwd(args)
+       return
 
     if not args.leavezombies:
         kill_zombies("swantest")
