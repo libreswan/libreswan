@@ -1429,6 +1429,13 @@ int main(int argc, char *argv[])
 
 		switch (alg) {
 		case XF_OTHER_ALG:
+			if (enckeylen == 0) {
+				if (debug)
+					fprintf(stdout, "%s: key not provided (NULL alg?).\n",
+						progname);
+				break;
+
+			}
 			error = pfkey_key_build(&extensions[SADB_EXT_KEY_ENCRYPT],
 						SADB_EXT_KEY_ENCRYPT,
 						enckeylen * 8,

@@ -969,6 +969,9 @@ int ipsec_sadb_free(void)
 
 int ipsec_sa_wipe(struct ipsec_sa *ips)
 {
+	int hashval;
+	struct ipsec_sa **tpp;
+
 	if (ips == NULL)
 		return -ENODATA;
 
@@ -1107,6 +1110,14 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 	ips->ips_next = NULL;
 	ips->ips_prev = NULL;
 
+	hashval = IPS_HASH(&ips->ips_said);
+	tpp = &ipsec_sadb_hash[hashval];
+	while (*tpp) {
+		if (*tpp == ips)
+			*tpp = ips->ips_hnext;
+		else
+			tpp = &((*tpp)->ips_hnext);
+	}
 	if (ips->ips_hnext)
 		ipsec_sa_put(ips->ips_hnext, IPSEC_REFALLOC);
 	ips->ips_hnext = NULL;
