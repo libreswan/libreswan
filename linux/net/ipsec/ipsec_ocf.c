@@ -274,7 +274,8 @@ int ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 		return 1;
 	}
 
-	if (encalg && ipsp->ips_key_bits_e == 0) {
+	/* ESP_NULL is a special case,  no key */
+	if (encalg && encalg != ESP_NULL && ipsp->ips_key_bits_e == 0) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:ipsec_ocf_sa_init(a=0x%x,e=0x%x) e-key-bits=0\n",
 			    authalg, encalg);
