@@ -1,6 +1,0 @@
-$ORIGIN .
-root-servers.net	604800	IN KEY	256 3 1 (
-					AQOlh53+SrWA+kGvFW+lHm5sK6E1ICj0YxTW
-					s3xtowkh9sMVa5rlouwUtNEb4UrKbuyycW0O
-					ZGenSEFI5OIj3zaZ
-					) ; key id = 57142

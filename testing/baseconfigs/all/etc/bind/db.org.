@@ -2,19 +2,16 @@
 ; BIND data file for .org domain
 ;
 $TTL	604800
-@	IN	SOA	org. root.freeswan.org. (
+@	IN	SOA	org. root.testing.libreswan.org. (
 			      7		; Serial
 			 604800		; Refresh
 			  86400		; Retry
 			2419200		; Expire
 			 604800 )	; Negative Cache TTL
-		IN	NS	carrot.root-servers.net.
 		IN	NS	nic.root-servers.net.
-$INCLUDE Korg.+001+52697.key
-freeswan.org.	IN	NS	beet.root-servers.net.
-		IN	NS	nic.root-servers.net.
+; include dnssec keys
+testing.libreswan.org.	IN	NS	nic.root-servers.net.
 
 ; a domain that intentionally does not respond.
 screwy.org.	IN	NS	nothere.screwy.org.
 nothere.screwy.org.	IN	A	192.1.2.9
-;$INCLUDE Kfreeswan.org.+001+12345.key

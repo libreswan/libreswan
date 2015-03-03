@@ -2,16 +2,12 @@
 ; BIND data file for .root-servers.net. domain
 ;
 $TTL	604800
-@	IN	SOA	root-servers.net. root.freeswan.org. (
+@	IN	SOA	root-servers.net. root.testing.libreswan.org. (
 			      5		; Serial
 			 604800		; Refresh
 			  86400		; Retry
 			2419200		; Expire
 			 604800 )	; Negative Cache TTL
-		IN	NS	beet.root-servers.net.
-		IN	NS	carrot.root-servers.net.
 		IN	NS	nic.root-servers.net.
-beet.root-servers.net.		IN	A	192.1.2.129
-carrot.root-servers.net.	IN	A	192.1.2.130
 nic.root-servers.net.		IN	A	192.1.2.254
-$INCLUDE Kroot-servers.net.+001+57142.key
+; include keys
