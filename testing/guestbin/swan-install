@@ -1,8 +1,9 @@
 #!/bin/sh
 
-set -uex
+# we run with -x so : works instead of echo for output (not logging)
+set -eux
 
-if test -r kvmsetup.sh.sample ; then
+if [ -r kvmsetup.sh.sample ]; then
     cat <<EOF
 
 $PWD is a top-level source directory.
@@ -13,10 +14,9 @@ else
     cd /source
 fi
 
-if [ -f /usr/libexec/ipsec/pluto ]
-then
-	echo "ABORT: existing pluot found outside /usr/local/"
-	exit 1
+if [ -f /usr/libexec/ipsec/pluto ]; then
+    : ABORT: existing pluto found at /usr/libexec/ipsec/pluto
+    exit 1
 fi
 
 pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
@@ -24,21 +24,21 @@ pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
 echo ">>> $0 on $(hostname) at $(date)" >>compile-log.txt
 
 if make install >>compile-log.txt 2>&1; then
-    :
+    : 'make install' success
 else
     status=$?
     tail -20 compile-log.txt
-    echo '"make install"'" failed: ${status}; see compile-log.txt for details"
-    exit $status
+    : 'make install' failed: ${status}; see compile-log.txt for details
+    exit ${status}
 fi
 
 if make module_install >>compile-log.txt 2>&1; then
-    :
+    : 'make module install' success
 else
     status=$?
     tail -20 compile-log.txt
-    echo '"make module_install"'" failed: ${status}; see compile-log.txt details"
-    exit $status
+    : 'make module_install' failed: ${status}; see compile-log.txt details
+    exit ${status}
 fi
 
 # ensure selinux bits
@@ -49,7 +49,8 @@ restorecon /usr/local/libexec/ipsec -Rv
 if [ -x /usr/bin/systemctl -o \
     -x /usr/sbin/systemctl -o \
     -x /sbin/systemctl ]; then
-    sed -i "s/Restart=always/Restart=no/" /lib/systemd/system/ipsec.service
+    sed -i "s/Restart=always/Restart=no/" \
+	/lib/systemd/system/ipsec.service
     systemctl disable ipsec.service
     systemctl daemon-reload
 else

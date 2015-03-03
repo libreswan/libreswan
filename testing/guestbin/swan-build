@@ -1,11 +1,12 @@
 #!/bin/sh
 
+# we run with -x so : works instead of echo for output (not logging)
 set -eux
 
-if test -r kvmsetup.sh.sample ; then
+if [ -r kvmsetup.sh.sample ]; then
     cat <<EOF
 
-$PWD is a top-level source directory.
+${PWD} is a top-level source directory.
 Not CDing to /source
 
 EOF
@@ -13,10 +14,9 @@ else
     cd /source
 fi
 
-if [ -f /usr/libexec/ipsec/pluto ]
-then
-	echo "ABORT: found pluto outside /usr/local"
-	exit 1;
+if [ -f /usr/libexec/ipsec/pluto ]; then
+    : ABORT: existing pluto found at /usr/libexec/ipsec/pluto
+    exit 1
 fi
 
 # we don't trust all makefile dependancies, esp lib/
@@ -35,11 +35,11 @@ rm -f lib/libswan/Makefile.depend lib/libipsecconf/Makefile.depend \
 echo ">>> $0 on $(hostname) at $(date)" >>compile-log.txt
 
 if make programs module >>compile-log.txt 2>&1; then
-    :
+    : 'make programs module' success
 else
     status=$?
     tail -20 compile-log.txt
-    echo '"make programs module"'" failed: ${status}; see compile-log.txt for details"
+    : 'make programs module' failed: ${status}; see compile-log.txt for details
     exit ${status}
 fi
 
