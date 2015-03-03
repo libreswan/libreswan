@@ -26,6 +26,7 @@ v3.13 (unreleased)
 * testing: docker test type support [Antony]
 * testing: test case updates/additions [Antony/Paul]
 * NETKEY: Increase netlink message buffer for larger SElinux labels [Paul]
+* whack: cleanup help text [Tuomo]
 
 v3.12 (November 6, 2014)
 * IKEv2: CP payload now installs internal address and dns [Antony]
