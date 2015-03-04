@@ -23,8 +23,9 @@ fi
 if touch /var/lib/libvirt/qemu/lswantest; then
     rm -f /var/lib/libvirt/qemu/lswantest
 else
-    echo "The qemu group needs write permissions in /var/lib/libvirt/qemu/"
-    echo "ensure your user's main group is qemu, or chmod 777 this directory"
+    echo "The qemu group needs write permissions in directory"
+    echo "/var/lib/libvirt/qemu/. Ensure your user's main group is qemu,"
+    echo "and chmod g+w /var/lib/libvirt/qemu"
     exit 43
 fi
 
