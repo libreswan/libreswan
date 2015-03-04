@@ -1,0 +1,14 @@
+; BIND reverse data file for 192.in-addr.arpa.
+$TTL	604800
+@	IN	SOA	192.in-addr.arpa. root.testing.libreswan.org. (
+			2015030301	; Serial
+			 604800		; Refresh
+			  86400		; Retry
+			2419200		; Expire
+			 604800 )	; Negative Cache TTL
+	IN	NS	nic.testing.libreswan.org.
+; include keys
+
+; and my subdomains and keys
+0		IN	NS	nic.testing.libreswan.org.
+1		IN	NS	nic.testing.libreswan.org.
