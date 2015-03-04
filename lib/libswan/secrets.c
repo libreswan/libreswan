@@ -737,8 +737,12 @@ static err_t lsw_process_psk_secret(chunk_t *psk)
 	err_t ugh = NULL;
 
 	if (*flp->tok == '"' || *flp->tok == '\'') {
-		clonetochunk(*psk, flp->tok + 1, flp->cur - flp->tok  - 2,
-			"PSK");
+		size_t len = flp->cur - flp->tok  - 2;
+
+		if (len < 8) {
+			loglog(RC_LOG_SERIOUS,"WARNING: using a weak secret (PSK)");
+		}
+		clonetochunk(*psk, flp->tok + 1, len, "PSK");
 		(void) shift();
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*

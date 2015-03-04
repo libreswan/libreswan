@@ -276,6 +276,11 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 		c = rw_instantiate(c, &md->sender, NULL, NULL);
 	}
 
+	/* warn for especially dangerous Aggressive Mode and PSK */
+	if ((c->policy & POLICY_AGGRESSIVE) != LEMPTY){
+		loglog(RC_LOG_SERIOUS,
+			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
+	} 
 	/* Set up state */
 	cur_state = md->st = st = new_state();  /* (caller will reset cur_state) */
 	st->st_connection = c;
@@ -1131,6 +1136,11 @@ stf_status aggr_outI1(int whack_sock,
 		}
 	}
 
+	if ((c->policy & POLICY_AGGRESSIVE) != LEMPTY){
+		loglog(RC_LOG_SERIOUS,
+			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
+	}
+ 
 	/* set up new state */
 	cur_state = st = new_state();
 	st->st_connection = c;
