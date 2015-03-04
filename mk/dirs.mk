@@ -62,7 +62,7 @@ $(warning dirs.mk.in.srcdir: $(dirs.mk.in.srcdir))
 $(warning srcdir: $(srcdir))
 $(warning builddir: $(builddir))
 $(warning OBJDIR: $(OBJDIR))
-$(warning cwd: $(absdir .))
+$(warning cwd: $(abspath .))
 $(error this will never happen ...)
 endif
 
