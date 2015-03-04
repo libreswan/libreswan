@@ -122,8 +122,6 @@ BSDKAME_LIBS=${LIBBSDPFKEY}
 endif
 
 
-PLUTOMINUSL+= -lm # for log2() for shannon_entropy()
-
 # the files are defined here so that TAGS: can catch them.
 #
 X509_DIST_OBJS=x509.o x509more.o x509chain.o
