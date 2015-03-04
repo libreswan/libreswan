@@ -48,6 +48,11 @@ for hostname in macs.keys():
 			resolv = "/testing/baseconfigs/%s/etc/resolv.conf"%hostname
 		shutil.copyfile(resolv,"/etc/resolv.conf")
 
+		# and bind config - can be run on all hosts (to prevent network DNS packets) as well as on nic
+		if not os.path.isdir("/etc/bind"):
+			os.mkdir("/etc/bind")
+		output += "\n" + commands.getoutput("cp /testing/baseconfigs/all/etc/bind/* /etc/bind/")
+
 		if not os.path.isdir("/etc/ssh"):
 			os.makedirs("/etc/ssh",0755)
 		if not os.path.isdir("/root/.ssh"):
