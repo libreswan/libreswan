@@ -135,10 +135,12 @@ def run_final (args, child):
 
 def check_for_error (child, prompt):
     child.sendline("echo status=$?")
-    # should extract the exit code from .match
-    if child.expect(['status=0', 'status=[1-9][0-9]*']) != 0:
-        sys.exit(1)
-    child.expect(prompt)
+    child.expect('status=([0-9]+)\s*' + prompt, timeout=10)
+    status = int(child.match.group(1))
+    if status:
+        # anything non-zero, pass it out
+        print ""
+        sys.exit(status)
 
 def cd_to (child, args, dir):
     prompt = "\[root@%s %s\]# " % (args.hostname, os.path.basename(dir))
