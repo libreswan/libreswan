@@ -5,7 +5,7 @@
 ;
 $TTL	3600000
 .			  IN SOA . root.testing.libreswan.org. (
-				200211161	; serial
+				2015030301	; serial
 				   604800	; Refresh
 				    86400	; Retry
 			          2419200	; Expire

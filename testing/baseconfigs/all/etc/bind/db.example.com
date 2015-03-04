@@ -15,7 +15,7 @@ $ORIGIN example.com.
 @	3D IN SOA	localhost. root.localhost. (
 					; serial
 					; YYYYMMDDnn
-					  2002021801
+					  2015030301
 					12H		; refresh
 					30M		; retry
 					5w6d16h		; expiry

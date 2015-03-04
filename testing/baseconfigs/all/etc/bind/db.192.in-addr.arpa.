@@ -1,7 +1,7 @@
 ; BIND reverse data file for 192.in-addr.arpa.
 $TTL	604800
 @	IN	SOA	192.in-addr.arpa. root.testing.libreswan.org. (
-			200210241	; Serial
+			2015030301	; Serial
 			 604800		; Refresh
 			  86400		; Retry
 			2419200		; Expire

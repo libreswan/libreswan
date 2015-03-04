@@ -3,7 +3,7 @@
 ;
 $TTL	604800
 @	IN	SOA	root-servers.net. root.testing.libreswan.org. (
-			      5		; Serial
+			2015030301	; Serial
 			 604800		; Refresh
 			  86400		; Retry
 			2419200		; Expire
