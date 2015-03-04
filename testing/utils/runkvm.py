@@ -25,19 +25,11 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
 		time.sleep(0.5)
                 print "%s: %s" % (prompt.replace("\\",""), line)
                 ex.sendline(line)
-                try:
-                    ex.expect (prompt,timeout=timer, searchwindowsize=100) 
-                except:
-                    print "%s failed to send line: %s" % (prompt,line)
-                    return False
+                ex.expect (prompt,timeout=timer, searchwindowsize=100) 
     else:
         print  filename 
         ex.sendline(filename)
-        try:
-            ex.expect (prompt,timeout=timer, searchwindowsize=100)
-        except:
-            print "%s failed to send filename: %s" % (prompt,filename)
-    return True
+        ex.expect (prompt,timeout=timer, searchwindowsize=100)
 
 def connect_to_kvm(args, prompt = ''):
 
@@ -167,7 +159,6 @@ def run_test(args, child):
     #print 'TEST : ', args.testname
 
     timer = 120
-    ret = True
     # we MUST match the entire prompt, or elsewe end up sending too soon and getting mangling!
     prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
 
@@ -192,19 +183,15 @@ def run_test(args, child):
 	x509 = ""
 	
     cmd = "./%sinit.sh" %  (args.hostname) 
-    if not read_exec_shell_cmd( child, cmd, prompt, timer):
-        ret = False
+    read_exec_shell_cmd( child, cmd, prompt, timer):
 
     cmd = "./%srun.sh" %  (args.hostname) 
     if os.path.exists(cmd):
-        if not read_exec_shell_cmd( child, cmd, prompt, timer):
-            return False
+        read_exec_shell_cmd( child, cmd, prompt, timer):
         run_final(args,child)
         f.close
     else:
 	    f.close
-
-    return ret
 
 def main():
     setproctitle.setproctitle("swankvm")
