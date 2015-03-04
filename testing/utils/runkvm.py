@@ -207,6 +207,8 @@ def main():
     parser.add_argument('--final', action="store_true", help='run final.sh on the host.')
     parser.add_argument('--reboot', action="store_true", help='first reboot the host')
     parser.add_argument('--sourcedir', action='store', default='/source', help='source <directory> to build')
+    parser.add_argument('--run', action='store', help='run <command> then exit')
+    parser.add_argument('--runtime', type=float, default=120, help='max run-time (timeout) for the run command')
     # unused parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
 
@@ -218,6 +220,12 @@ def main():
 
     if not child:
         sys.exit("Failed to launch/connect to %s - aborted" % args.hostname)
+
+    if args.run:
+	# The explict cd gets the prompt in sync
+        prompt = cd_to(child, args, args.sourcedir)
+        read_exec_shell_cmd( child, args.run, prompt, args.runtime)
+        check_for_error(child, prompt)
 
     if args.compile:
         compile_on(args,child) 
