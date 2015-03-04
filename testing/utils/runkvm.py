@@ -134,21 +134,24 @@ def check_for_error (child, prompt):
         sys.exit(1)
     child.expect(prompt)
 
+def cd_to (child, args, dir):
+    prompt = "\[root@%s %s\]# " % (args.hostname, os.path.basename(dir))
+    # if a CD takes more than 10 seconds, there's surely a problem
+    read_exec_shell_cmd( child, "cd %s" % dir, prompt, 10)
+    # return the expected prompt
+    return prompt
+
 def compile_on (args,child):
+    prompt = cd_to(child, args, args.sourcedir)
     timer = 900
-    prompt = "root@%s source" % args.hostname
-    cmd = "cd /source/"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
     cmd = "/testing/guestbin/swan-build"
     read_exec_shell_cmd( child, cmd, prompt, timer)
     check_for_error(child, prompt)
     return  
 
 def make_install (args, child):
+    prompt = cd_to(child, args, args.sourcedir)
     timer=300
-    prompt = "root@%s source" % args.hostname
-    cmd = "cd /source/"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
     cmd = "/testing/guestbin/swan-install"
     read_exec_shell_cmd( child, cmd, prompt, timer)
     check_for_error(child, prompt)
@@ -203,6 +206,7 @@ def main():
     parser.add_argument('--x509', action="store_true", help='tell the guest to setup the X509 certs in NSS.')
     parser.add_argument('--final', action="store_true", help='run final.sh on the host.')
     parser.add_argument('--reboot', action="store_true", help='first reboot the host')
+    parser.add_argument('--sourcedir', action='store', default='/source', help='source <directory> to build')
     # unused parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
 
