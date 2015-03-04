@@ -13,6 +13,8 @@ except ImportError , e:
     module = str(e)[16:]
     sys.exit("we require the python module %s " % module)
 
+# XXX: This function's behaviour should not depend on the presence of
+# FILENAME.
 def read_exec_shell_cmd( ex, filename, prompt, timer):
     if os.path.exists(filename):
         f_cmds = open(filename, "r")
@@ -30,6 +32,10 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
         print  filename 
         ex.sendline(filename)
         ex.expect (prompt,timeout=timer, searchwindowsize=100)
+
+def run_shell_cmd(ex, command, prompt, timer):
+        ex.sendline(command)
+        ex.expect(prompt, timeout=timer, searchwindowsize=100)
 
 def connect_to_kvm(args, prompt = ''):
 
@@ -137,7 +143,7 @@ def check_for_error (child, prompt):
 def cd_to (child, args, dir):
     prompt = "\[root@%s %s\]# " % (args.hostname, os.path.basename(dir))
     # if a CD takes more than 10 seconds, there's surely a problem
-    read_exec_shell_cmd( child, "cd %s" % dir, prompt, 10)
+    run_shell_cmd(child, "cd %s" % dir, prompt, 10)
     # return the expected prompt
     return prompt
 
@@ -145,7 +151,7 @@ def compile_on (args,child):
     prompt = cd_to(child, args, args.sourcedir)
     timer = 900
     cmd = "/testing/guestbin/swan-build"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
+    run_shell_cmd(child, cmd, prompt, timer)
     check_for_error(child, prompt)
     return  
 
@@ -153,7 +159,7 @@ def make_install (args, child):
     prompt = cd_to(child, args, args.sourcedir)
     timer=300
     cmd = "/testing/guestbin/swan-install"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
+    run_shell_cmd(child, cmd, prompt, timer)
     check_for_error(child, prompt)
     return
 
@@ -224,7 +230,7 @@ def main():
     if args.run:
 	# The explict cd gets the prompt in sync
         prompt = cd_to(child, args, args.sourcedir)
-        read_exec_shell_cmd( child, args.run, prompt, args.runtime)
+        run_shell_cmd(child, args.run, prompt, args.runtime)
         check_for_error(child, prompt)
 
     if args.compile:
