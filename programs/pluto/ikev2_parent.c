@@ -2187,7 +2187,10 @@ static void ikev2_pam_continue(struct ikev2_pam_helper *p)
 					(unsigned long)(served_delta.tv_usec * 1000000)));
 		return;
 	}
-	read(p->master_fd, (void *)&x, sizeof(p));
+	if (read(p->master_fd, (void *)&x, sizeof(p)) == -1) {
+		libreswan_log("IKEv2 PAM helper read failed %d: %s",
+			errno, strerror(errno));
+	}
 
 	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread"
 				" can continue. PAM status %s."
