@@ -1907,25 +1907,24 @@ def do_test_list(args, start, tried, output_dir):
             return (odir, True, ran)
 
         r_file = odir + '/' + testdir + '/OUTPUT/RESULT'
-
-        if os.path.exists(r_file) and tried and (tried < args.retry):
-            if kvm_error(r_file):
-                logging.info(
-                    "result [%s] KVMERROR. delete previous run, retry %s/%s", r_file, tried, args.retry)
-                o = odir + '/' + testdir
-                shutil.rmtree(o)
+        if os.path.exists(r_file):
+            if tried and (tried < args.retry):
+                if kvm_error(r_file):
+                    logging.info(
+                        "result [%s] KVMERROR. deleting previous run, retrying %s/%s", r_file, tried, args.retry)
+                    o = odir + '/' + testdir
+                    shutil.rmtree(o)
+                else:
+                    TestList.log_skip(testdir, "%s exists and max retry count %s exceeded" % (r_file, args.retry))
+                    continue
             else:
+                # output already exists: skip test
+                TestList.log_skip(testdir, "%s exists, do not run again" % r_file)
+                if testtype == 'kvmplutotest':
+                    st["knottorun"] = st["knottorun"] + 1
+                if testtype == 'dockerplutotest':
+                    st["dnottorun"] = st["dnottorun"] + 1
                 continue
-        elif os.path.exists(r_file):
-            # output already exists: skip test
-            logging.debug("%s exist. Do not run %s again", r_file, testdir)
-            if testtype == 'kvmplutotest':
-                st["knottorun"] = st["knottorun"] + 1
-
-            if testtype == 'dockerplutotest':
-                st["dnottorun"] = st["dnottorun"] + 1
-
-            continue
 
         tests[testdir] = {}
         tests[testdir]["name"] = testdir  # do i need it double? may be not
