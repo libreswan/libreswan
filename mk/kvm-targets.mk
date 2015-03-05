@@ -77,3 +77,17 @@ kvm-install-%: kvm-print-% kvm-reboot-%
 
 .PHONY: kvm-update
 kvm-update: kvm-compile-east | $(KVM_INSTALL_TARGETS)
+
+KVM_EXCLUDE = bad|wip|incomplete
+KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')
+KVM_INCLUDE =
+KVM_INCLUDE_FLAG = $(if $(KVM_INCLUDE),--include '$(KVM_INCLUDE)')
+.PHONY: kvm-check
+kvm-check: kvm-print
+	: $@:
+	:   KVM_EXCLUDE: '$(KVM_EXCLUDE)'
+	:     KVM_EXCLUDE_FLAG: $(KVM_EXCLUDE_FLAG)
+	:   KVM_INCLUDE: '$(KVM_INCLUDE)'
+	:     KVM_INCLUDE_FLAG: $(KVM_INCLUDE_FLAG)
+	cd testing/pluto && $(KVM_SWANTEST_COMMAND) --testingdir $(KVM_EASTDIR)/testing $(KVM_INCLUDE_FLAG) $(KVM_EXCLUDE_FLAG)
+	cd testing/pluto && $(KVM_SWANTEST_COMMAND) --testingdir $(KVM_EASTDIR)/testing --scancwd
