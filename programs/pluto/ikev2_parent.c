@@ -2715,11 +2715,11 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 						     &e_pbs_cipher,
 						     ISAKMP_v2_AUTH);
 			if (ret > STF_FAIL) {
-				v2_notify_num = ret - STF_FAIL;
+				int v2_notify_num = ret - STF_FAIL;
 				DBG(DBG_CONTROL,
 				    DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s",
 					    enum_name(&ikev2_notify_names,
-						      ret - STF_FAIL)));
+						      v2_notify_num)));
 				np = ISAKMP_NEXT_v2NONE; /* use some day if we built a complete packet */
 				return ret; /* we should continue building a valid reply packet */
 			} else if (ret != STF_OK) {
