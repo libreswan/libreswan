@@ -64,7 +64,7 @@ class guest (threading.Thread):
         self.status = "NEW"
         self.bootwait = args.bootwait
         self.stoponerror = args.stoponerror
-
+        self.testingdir = args.testingdir
         self.reboot = True
         if args.noreboot:
             self.reboot = None
@@ -110,7 +110,8 @@ class guest (threading.Thread):
         timer = 120
         ret = True
 
-        cmd = "cd /testing/pluto/%s " % (self.testname)
+        cmd = "cd %s/pluto/%s " % (self.testingdir, self.testname)
+        print("sending command: " + cmd + " expecting prompt: " + prompt)
         child.sendline(str(cmd))
         try:
             child.expect(prompt, searchwindowsize=100, timeout=timer)
@@ -1221,6 +1222,8 @@ def cmdline():
     parser.add_argument(
         "--tcpdumpfilter", default=DEFAULTCONFIG['tcpdumpfilter'],
             help="tcpdump_filter used by tcpdump command. Default %s" % DEFAULTCONFIG['tcpdumpfilter'])
+
+    parser.add_argument("--testingdir", default="/testing", help="Change the /testing directory")
 
     parser.add_argument("--testlist", default=DEFAULTCONFIG['testlist'],
                         help="read kvmpluto tests from  %s" % DEFAULTCONFIG['testlist'])
