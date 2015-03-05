@@ -347,9 +347,9 @@ class TestList:
             reason = self.skip_test(testtype, testdir, testexpect)
             if reason and self.verbose:
                 TestList.log_skip(testdir, reason)
-                continue;
+                continue
             logging.debug("read: %s %s %s", testtype, testdir, testexpect)
-            return (testtype, testdir, testexpect);
+            return (testtype, testdir, testexpect)
 
         self.file.close
         raise StopIteration
@@ -366,6 +366,18 @@ class TestList:
         if testtype != "dockerplutotest" and testtype != "kvmplutotest":
             return "type %s yet to be migrated to kvm style" % testtype
 
+        if self.args.include:
+            if not self.args.include.search(testtype) and \
+               not self.args.include.search(testdir) and \
+               not self.args.include.search(testexpect):
+                return "does not match '--include %s' regular expression" % self.args.include.pattern
+
+        if self.args.exclude:
+            if self.args.exclude.search(testtype) or \
+               self.args.exclude.search(testdir) or \
+               self.args.exclude.search(testexpect):
+                return "matches '--exclude %s' regular expression" % self.args.exclude.pattern
+            
         return None
 
 # end of class
@@ -1186,6 +1198,8 @@ DEFAULTCONFIG = {
         'testlist': "TESTLIST"
 }
 
+def compile_regex_arg(string):
+    return re.compile(string)
 
 def cmdline():
 
@@ -1203,8 +1217,12 @@ def cmdline():
         "--dockerimage", default=DEFAULTCONFIG['dockerimage'],
             help="docker image id, default %s" % DEFAULTCONFIG['dockerimage'])
 
+    parser.add_argument("--exclude", default=None, type=compile_regex_arg, help="Exclude tests that match <regex>")
+
     parser.add_argument("--graphs", default=False, action="store_true",
                         help="generate graphs and JSON tables.")
+
+    parser.add_argument("--include", default=None, type=compile_regex_arg, help="Only include tests that match <regex>")
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
