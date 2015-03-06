@@ -55,7 +55,7 @@ do
 	    ;;
 	--config)
 	    config="--config $2"
-	    shift; shift
+	    shift
 	    ;;
 	--asynchronous)
 	    async="--asynchronous"
