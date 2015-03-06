@@ -115,8 +115,8 @@ class guest (threading.Thread):
         try:
             child.expect(prompt, searchwindowsize=100, timeout=timer)
         except:
-            err = "failed [%s] test directory" % (cmd)
-            logging.error("%s", self.hostname, err)
+            err = "failed [%s] test directory on %s" % (cmd, self.hostname)
+            logging.error("%s", err)
             return err
 
         if self.role == "initiator":
