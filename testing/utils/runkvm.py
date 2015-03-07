@@ -152,7 +152,7 @@ def cd_to (child, args, dir):
 def compile_on (args,child):
     prompt = cd_to(child, args, args.sourcedir)
     timer = 900
-    cmd = "/testing/guestbin/swan-build"
+    cmd = "%s/testing/guestbin/swan-build" % (args.sourcedir)
     run_shell_cmd(child, cmd, prompt, timer)
     check_for_error(child, prompt)
     return  
@@ -160,7 +160,7 @@ def compile_on (args,child):
 def make_install (args, child):
     prompt = cd_to(child, args, args.sourcedir)
     timer=300
-    cmd = "/testing/guestbin/swan-install"
+    cmd = "%s/testing/guestbin/swan-install" % (args.sourcedir)
     run_shell_cmd(child, cmd, prompt, timer)
     check_for_error(child, prompt)
     return
@@ -171,16 +171,7 @@ def run_test(args, child):
 
     timer = 120
     # we MUST match the entire prompt, or elsewe end up sending too soon and getting mangling!
-    prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
-
-    cmd = "cd /testing/pluto/%s " % (args.testname)
-    print "%s: %s" % (prompt.replace("\\",""),cmd)
-    child.sendline(cmd)
-    try:
-        child.expect (prompt, searchwindowsize=100,timeout=timer) 
-    except:
-        print "%s: failed to cd into test case at %s" % (args.hostname,args.testname)
-        return
+    prompt = cd_to(child, args, "%s/pluto/%s " % (args.testdir, args.testname))
 
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'w') 
@@ -215,6 +206,7 @@ def main():
     parser.add_argument('--final', action="store_true", help='run final.sh on the host.')
     parser.add_argument('--reboot', action="store_true", help='first reboot the host')
     parser.add_argument('--sourcedir', action='store', default='/source', help='source <directory> to build')
+    parser.add_argument('--testdir', action='store', default='/testing', help='test <directory> to run tests from')
     parser.add_argument('--run', action='store', help='run <command> then exit')
     parser.add_argument('--runtime', type=float, default=120, help='max run-time (timeout) for the run command')
     # unused parser.add_argument('--timer', default=120, help='timeout for each command for expect.')

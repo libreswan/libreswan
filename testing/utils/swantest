@@ -64,7 +64,7 @@ class guest (threading.Thread):
         self.status = "NEW"
         self.bootwait = args.bootwait
         self.stoponerror = args.stoponerror
-
+        self.testingdir = args.testingdir
         self.reboot = True
         if args.noreboot:
             self.reboot = None
@@ -110,13 +110,14 @@ class guest (threading.Thread):
         timer = 120
         ret = True
 
-        cmd = "cd /testing/pluto/%s " % (self.testname)
+        cmd = "cd %s/pluto/%s " % (self.testingdir, self.testname)
+        print("sending command: " + cmd + " expecting prompt: " + prompt)
         child.sendline(str(cmd))
         try:
             child.expect(prompt, searchwindowsize=100, timeout=timer)
         except:
-            err = "failed [%s] test directory" % (cmd)
-            logging.error("%s", self.hostname, err)
+            err = "failed [%s] test directory on %s" % (cmd, self.hostname)
+            logging.error("%s", err)
             return err
 
         if self.role == "initiator":
@@ -314,6 +315,73 @@ class guest (threading.Thread):
 # end of class
 
 
+class TestList:
+
+    def __iter__(self):
+        return self
+
+    def __init__(self, testlist, args, verbose = True):
+        self.verbose = verbose
+        self.args = args
+        self.file = open(testlist, 'r')
+
+    def __next__(self):
+        for line in self.file:
+            line = line.strip()
+            if not line:
+                logging.debug("skip blank lines")
+                continue
+            if line[0] == '#':
+                logging.debug("skip comment: %s", line)
+                continue
+            try:
+                testtype, testdir, testexpect = line.split()
+            except:
+                # This is serious
+                logging.error("****** malformed line: %s", line)
+                continue
+            if not os.path.exists(testdir):
+                # This is serious
+                logging.error("****** invalid test %s: directory %s/%s not found", testdir, os.getcwd(), testdir)
+                continue
+            reason = self.skip_test(testtype, testdir, testexpect)
+            if reason and self.verbose:
+                TestList.log_skip(testdir, reason)
+                continue
+            logging.debug("read: %s %s %s", testtype, testdir, testexpect)
+            return (testtype, testdir, testexpect)
+
+        self.file.close
+        raise StopIteration
+
+    def log_skip(testdir, reason):
+        # At error level so it it always appear, verbose above can
+        # suppress it.
+        logging.warning("****** skipping test %s: %s", testdir, reason)
+
+    def skip_test(self, testtype, testdir, testexpect):
+        if testtype == "skiptest":
+            return "type is skiptest"
+
+        if testtype != "dockerplutotest" and testtype != "kvmplutotest":
+            return "type %s yet to be migrated to kvm style" % testtype
+
+        if self.args.include:
+            if not self.args.include.search(testtype) and \
+               not self.args.include.search(testdir) and \
+               not self.args.include.search(testexpect):
+                return "does not match '--include %s' regular expression" % self.args.include.pattern
+
+        if self.args.exclude:
+            if self.args.exclude.search(testtype) or \
+               self.args.exclude.search(testdir) or \
+               self.args.exclude.search(testexpect):
+                return "matches '--exclude %s' regular expression" % self.args.exclude.pattern
+            
+        return None
+
+# end of class
+
 class scantests:
 
     def __init__(self, args, stdir=None, to_append=False):
@@ -430,38 +498,18 @@ class scantests:
 
         logging.debug("TESTLIST %s" % r)
 
-        f = open(r, 'r')
         i = 0
         self.tests = collections.OrderedDict()
         self.tests.clear()
 
-        for l in f:
-            line = l.strip()
-            if not line:
-                continue
-
-            logging.debug("red %s", line)
-
-            if skip_testlist_line(line, verbose=False):
-                continue
-            try:
-                testtype, testdir, testexpect = line.split()
-            except:
-                continue
-            # if  not ((testtype != "kvmplutotest" ) or  (testtype !=
-            # "dockerplutotest" )):
-            if (testtype != "dockerplutotest" and testtype != "kvmplutotest"):
-                continue
-            logging.debug(
-                "will checkout %s %s %s", testtype, testdir, testexpect)
-
+        logging.debug("Reading testlist file %s", r)
+        for testtype, testdir, testexpect in TestList(r, self.args, verbose=False):
             self.tests[testdir] = {}
             self.tests[testdir]["name"] = testdir
             self.tests[testdir]["type"] = testtype
             self.tests[testdir]["expect"] = testexpect
             i += 1
 
-        f.close
         logging.debug("red %s tests from %s" % (i, r))
         return True
 
@@ -1150,6 +1198,8 @@ DEFAULTCONFIG = {
         'testlist': "TESTLIST"
 }
 
+def compile_regex_arg(string):
+    return re.compile(string)
 
 def cmdline():
 
@@ -1167,8 +1217,12 @@ def cmdline():
         "--dockerimage", default=DEFAULTCONFIG['dockerimage'],
             help="docker image id, default %s" % DEFAULTCONFIG['dockerimage'])
 
+    parser.add_argument("--exclude", default=None, type=compile_regex_arg, help="Exclude tests that match <regex>")
+
     parser.add_argument("--graphs", default=False, action="store_true",
                         help="generate graphs and JSON tables.")
+
+    parser.add_argument("--include", default=None, type=compile_regex_arg, help="Only include tests that match <regex>")
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
@@ -1221,6 +1275,8 @@ def cmdline():
     parser.add_argument(
         "--tcpdumpfilter", default=DEFAULTCONFIG['tcpdumpfilter'],
             help="tcpdump_filter used by tcpdump command. Default %s" % DEFAULTCONFIG['tcpdumpfilter'])
+
+    parser.add_argument("--testingdir", default="/testing", help="Change the /testing directory")
 
     parser.add_argument("--testlist", default=DEFAULTCONFIG['testlist'],
                         help="read kvmpluto tests from  %s" % DEFAULTCONFIG['testlist'])
@@ -1735,39 +1791,6 @@ def do_single_test(args, start='', test=None, st=None):
         os.chdir("..")
         # chdir end
 
-
-def skip_testlist_line(line, verbose=False):
-
-    if line[0] == '#' or re.match('^[ \t]*$', line):
-        logging.debug("skip the comments")
-        return True
-
-    try:
-        testtype, testdir, testexpect = line.split()
-    except:
-        logging.error("****** skipping malformed: %s", line)
-        return True
-
-    if testtype == "skiptest":
-        if verbose:
-            logging.error("****** %s", line)
-        return True
-    elif testtype == "dockerplutotest":
-        return False
-    elif testtype != "kvmplutotest":
-        if verbose:
-            logging.error(
-                "****** skipping test %s: yet to be migrated to kvm style ", testdir)
-        return True
-    elif not os.path.exists(testdir):
-        if verbose:
-            logging.error("**** Skipping missing %s/%s *****",
-                          os.getcwd(), testdir)
-        return True
-
-    return False
-
-
 def scancwd(args):
     r = args.testlist
     stdir=os.getcwd()
@@ -1895,40 +1918,31 @@ def do_test_list(args, start, tried, output_dir):
     tests.clear()
 
     logging.info("** read tests from file %s **", args.testlist)
-    f = open(args.testlist, 'r')
-
-    for line in f:
+    for testtype, testdir, testexpect in TestList(args.testlist, args, verbose=True):
         st["n_lines"] = st["n_lines"] + 1
-        logging.debug("%s", line)
         if os.path.exists(s):
             logging.error("* stop all tests now. Found %s *", s)
             return (odir, True, ran)
 
-        if skip_testlist_line(line, verbose=True):
-            st["n_lines_skip"] = st["n_lines_skip"] + 1
-            continue
-
-        testtype, testdir, testexpect = line.split()
         r_file = odir + '/' + testdir + '/OUTPUT/RESULT'
-
-        if os.path.exists(r_file) and tried and (tried < args.retry):
-            if kvm_error(r_file):
-                logging.info(
-                    "result [%s] KVMERROR. delete previous run, retry %s/%s", r_file, tried, args.retry)
-                o = odir + '/' + testdir
-                shutil.rmtree(o)
+        if os.path.exists(r_file):
+            if tried and (tried < args.retry):
+                if kvm_error(r_file):
+                    logging.info(
+                        "result [%s] KVMERROR. deleting previous run, retrying %s/%s", r_file, tried, args.retry)
+                    o = odir + '/' + testdir
+                    shutil.rmtree(o)
+                else:
+                    TestList.log_skip(testdir, "%s exists and max retry count %s exceeded" % (r_file, args.retry))
+                    continue
             else:
+                # output already exists: skip test
+                TestList.log_skip(testdir, "%s exists, do not run again" % r_file)
+                if testtype == 'kvmplutotest':
+                    st["knottorun"] = st["knottorun"] + 1
+                if testtype == 'dockerplutotest':
+                    st["dnottorun"] = st["dnottorun"] + 1
                 continue
-        elif os.path.exists(r_file):
-            # output already exists: skip test
-            logging.debug("%s exist. Do not run %s again", r_file, testdir)
-            if testtype == 'kvmplutotest':
-                st["knottorun"] = st["knottorun"] + 1
-
-            if testtype == 'dockerplutotest':
-                st["dnottorun"] = st["dnottorun"] + 1
-
-            continue
 
         tests[testdir] = {}
         tests[testdir]["name"] = testdir  # do i need it double? may be not
@@ -1940,8 +1954,6 @@ def do_test_list(args, start, tried, output_dir):
 
         if testtype == 'dockerplutotest':
             st["dtorun"] = st["dtorun"] + 1
-
-    f.close
 
     if not (st["dtorun"] + st["ktorun"]):
 

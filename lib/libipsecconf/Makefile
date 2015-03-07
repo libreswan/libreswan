@@ -33,9 +33,9 @@ SRCS+=interfaces.c
 #enable to get lots more debugging about semantics.
 #CFLAGS+=-DPARSER_TYPE_DEBUG
 
-#ifeq ($(USE_FIPSCHECK),true)
-#CFLAGS+=-DFIPS_CHECK
-#endif
+ifeq ($(USE_FIPSCHECK),true)
+CFLAGS+=-DFIPS_CHECK
+endif
 
 ifeq ($(USE_NM),true)
 CFLAGS+=-DHAVE_NM

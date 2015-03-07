@@ -1136,8 +1136,8 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		conn->policy &= ~(POLICY_ID_AUTH_MASK);
 
 #ifdef FIPS_CHECK
-		if (Pluto_IsFIPS()) {
-			if (LIN(POLICY_PSK, conn->options[KBF_AUTHBY]) {
+		if (libreswan_fipsmode()) {
+			if (LIN(POLICY_PSK, conn->options[KBF_AUTHBY])) {
 				starter_log(LOG_LEVEL_INFO,
 					    "while loading conn '%s', PSK not allowed in FIPS mode with NSS",
 					    conn->name);
