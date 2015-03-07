@@ -11,14 +11,16 @@ class Remote:
         self.child = child
         self.hostname = hostname
         self.prompt = prompt
+        self.logging = False
 
     def run(self, command, timeout=TIMEOUT):
-        # XXX: swantest redirects pexpect's logging to a file from
-        # stdout, hence the print.  Better is to add a Tee logger.
-        # The re.replace() strips the \ from \[.  The result is pretty
-        # but misleading.
-        #
-        # print(("%s: %s" % (self.prompt.replace("\\", ""), command)))
+        # "swantest" just, sometimes, prints the prompt/command to the
+        # console.  An alternative would be to use fab.tee.Tee so that
+        # everything is written to both the file, and stdout.
+        if self.logging:
+            # The re.replace() strips the \ from \[.  The result is
+            # pretty but misleading.
+            print(("%s: %s" % (self.prompt.replace("\\", ""), command)))
         self.child.sendline(command)
         self.child.expect(self.prompt, timeout=timeout, searchwindowsize=SEARCH_WINDOW_SIZE)
 
