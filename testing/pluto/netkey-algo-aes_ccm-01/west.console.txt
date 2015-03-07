@@ -135,6 +135,7 @@ west #
 000 "westnet-eastnet-ccm":   labeled_ipsec:no, loopback:no; 
 000 "westnet-eastnet-ccm":    policy_label:unset; 
 000 "westnet-eastnet-ccm":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ccm":   retransmit-interval: 500ms; retransmit-timeout: 60s;
 000 "westnet-eastnet-ccm":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ccm":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ccm":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;

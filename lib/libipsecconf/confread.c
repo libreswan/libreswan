@@ -1136,8 +1136,8 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		conn->policy &= ~(POLICY_ID_AUTH_MASK);
 
 #ifdef FIPS_CHECK
-		if (Pluto_IsFIPS()) {
-			if (LIN(POLICY_PSK, conn->options[KBF_AUTHBY]) {
+		if (libreswan_fipsmode()) {
+			if (LIN(POLICY_PSK, conn->options[KBF_AUTHBY])) {
 				starter_log(LOG_LEVEL_INFO,
 					    "while loading conn '%s', PSK not allowed in FIPS mode with NSS",
 					    conn->name);
@@ -1169,6 +1169,9 @@ static bool load_conn(struct ub_ctx *dnsctx,
 
 	KW_POLICY_FLAG(KBF_IKEv2_ALLOW_NARROWING,
 		       POLICY_IKEV2_ALLOW_NARROWING);
+
+	KW_POLICY_FLAG(KBF_IKEv2_PAM_AUTHORIZE,
+		       POLICY_IKEV2_PAM_AUTHORIZE);
 
 	if (conn->strings_set[KSF_ESP])
 		conn->esp = clone_str(conn->strings[KSF_ESP],"KSF_ESP");

@@ -603,3 +603,5 @@ install::
 		echo "was already present.  You may wish to update it yourself if desired." ; \
 		echo -e "**********************************************************************\n" ; \
 	fi
+
+include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk

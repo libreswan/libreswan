@@ -77,6 +77,7 @@
 #include "ikev1_xauth.h"
 #include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
+#include "pam_conv.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
@@ -114,11 +115,6 @@ struct xauth_thread_arg {
 	char *connname;
 	st_jbuf_t *ptr;
 };
-
-#ifdef XAUTH_HAVE_PAM
-static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
-			  struct pam_response **response, void *appdata_ptr);
-#endif
 
 /*
  * pointer to an array of st_jbuf_t elements.
@@ -1022,61 +1018,6 @@ static stf_status xauth_send_status(struct state *st, int status)
 }
 
 #ifdef XAUTH_HAVE_PAM
-/** XAUTH PAM conversation
- *
- * @param num_msg Int.
- * @param msgm Pam Message Struct
- * @param response Where PAM will put the results
- * @param appdata_ptr Pointer to data struct (as we are using threads)
- * @return int PAM Return Code (possibly fudged)
- */
-static int xauth_pam_conv(int num_msg,
-			  const struct pam_message **msgm,
-			  struct pam_response **response,
-			  void *appdata_ptr)
-{
-	struct xauth_thread_arg *const arg = appdata_ptr;
-	int count = 0;
-	struct pam_response *reply;
-
-	if (num_msg <= 0)
-		return PAM_CONV_ERR;
-
-	reply = alloc_bytes(
-			num_msg * sizeof(struct pam_response), "pam_response");
-
-	for (count = 0; count < num_msg; ++count) {
-		const char *s = NULL;
-
-		switch (msgm[count]->msg_style) {
-		case PAM_PROMPT_ECHO_OFF:
-			s = arg->password;
-			break;
-		case PAM_PROMPT_ECHO_ON:
-			s = arg->name;
-			break;
-		}
-
-		if (s != NULL) {
-			/*
-			 * Add s to list of responses.
-			 * According to pam_conv(3), our caller will
-			 * use free(3) to free these arguments so
-			 * we must allocate them with malloc,
-			 * not our own allocators.
-			 */
-			size_t len = strlen(s) + 1;
-			char *t = malloc(len);	/* must be malloced */
-
-			memcpy(t, s, len);
-			reply[count].resp_retcode = 0;
-			reply[count].resp = t;
-		}
-	}
-
-	*response = reply;
-	return PAM_SUCCESS;
-}
 
 /** Do authentication via PAM (Plugable Authentication Modules)
  *
@@ -1100,7 +1041,7 @@ static bool do_pam_authentication(void *varg)
 	do {
 		ipstr_buf ra;
 
-		conv.conv = xauth_pam_conv;
+		conv.conv = pam_conv;
 		conv.appdata_ptr = varg;
 
 		what = "pam_start";
@@ -2427,19 +2368,18 @@ static stf_status xauth_client_resp(struct state *st,
 
 					if (st->st_xauth_password.ptr ==
 					    NULL) {
-						struct secret *s;
+						struct secret *s =
+							lsw_get_xauthsecret(
+								st->st_connection,
+								st->st_xauth_username);
 
-						s = lsw_get_xauthsecret(
-							st->st_connection,
-							st->st_xauth_username);
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("looked up username=%s, got=%p",
 							    st->st_xauth_username,
 							    s));
-						if (s) {
-							struct
-							private_key_stuff *pks
-								= lsw_get_pks(s);
+						if (s != NULL) {
+							struct private_key_stuff
+								*pks = lsw_get_pks(s);
 
 							clonetochunk(
 								st->st_xauth_password,
@@ -2449,8 +2389,7 @@ static stf_status xauth_client_resp(struct state *st,
 						}
 					}
 
-					if (st->st_xauth_password.ptr ==
-					    NULL) {
+					if (st->st_xauth_password.ptr == NULL) {
 						char xauth_password[64];
 
 						if (st->st_whack_sock == -1) {

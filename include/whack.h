@@ -234,6 +234,10 @@ struct whack_message {
 	bool whack_deleteuser;
 	bool whack_deleteuser_name;
 
+	/* for WHACK_DELETEUSER: */
+	bool whack_deleteid;
+	bool whack_deleteid_name;
+
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
 

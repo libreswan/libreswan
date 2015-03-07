@@ -10,15 +10,15 @@
 # space for everything:
 # Just a shorthand for the following definitions.
 # Can be eliminated if available space is fragmented.
-KVMPREFIX=/home/build/
+KVMPREFIX=/home/build
 
-LIBRESWANDIR=`readlink -f $0 | sed "s/libreswan.*$/libreswan/"`
+LIBRESWANDIR=$(readlink -f $0 | sed "s/libreswan.*$/libreswan/")
 
 
-REGRESSRESULTS=$KVMPREFIX/results
+REGRESSRESULTS=${KVMPREFIX}/results
 
 # set this to someplace with at least 100Mb free.
-POOLSPACE=$KVMPREFIX/pool
+POOLSPACE=${KVMPREFIX}/pool
 
 # Fedora media
 OSTYPE=fedora
@@ -32,13 +32,13 @@ OSMEDIA=http://download.fedoraproject.org/pub/fedora/linux/releases/21/Server/x8
 # Everything below should probably be left unchanged
 
 # note that "nic" and "sec" are the same host in different configurations
-REGULARHOSTS='nic'
-LIBRESWANHOSTS='east west road north'
+REGULARHOSTS="nic"
+LIBRESWANHOSTS="east west road north"
 
 # tell system location of special tcpdump, if any
-export TCPDUMP="/usr/sbin/tcpdump"
-if [ ! -f $TCPDUMP ]
-then
-	echo "WARNING: tcpdump is not installed or invalid TCPDUMP= "
-fi
+TCPDUMP=/usr/sbin/tcpdump
+export TCPDUMP
 
+if [ ! -f ${TCPDUMP} ]; then
+    echo "WARNING: tcpdump is not installed or invalid TCPDUMP= "
+fi

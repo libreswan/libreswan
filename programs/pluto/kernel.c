@@ -1716,7 +1716,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 					break;
 
 				loglog(RC_LOG_SERIOUS,
-				       "ESP transform %s(%d) / auth %s not implemented yet",
+				       "ESP transform %s(%d) / auth %s not implemented or allowed",
 				       enum_showb(&esp_transformid_names,
 						ta->encrypt,
 						&buftn),

@@ -1429,6 +1429,13 @@ int main(int argc, char *argv[])
 
 		switch (alg) {
 		case XF_OTHER_ALG:
+			if (enckeylen == 0) {
+				if (debug)
+					fprintf(stdout, "%s: key not provided (NULL alg?).\n",
+						progname);
+				break;
+
+			}
 			error = pfkey_key_build(&extensions[SADB_EXT_KEY_ENCRYPT],
 						SADB_EXT_KEY_ENCRYPT,
 						enckeylen * 8,
@@ -1702,11 +1709,11 @@ int main(int argc, char *argv[])
 						progname);
 				}
 				continue;
-			} else {
-				if (debug) {
-					printf("%s: parseable PF_KEY message.\n",
-						progname);
-				}
+			}
+
+			if (debug) {
+				printf("%s: parseable PF_KEY message.\n",
+					progname);
 			}
 			if ((pid_t)pfkey_msg->sadb_msg_pid == mypid) {
 				if (saref_me || dumpsaref) {
@@ -1714,7 +1721,8 @@ int main(int argc, char *argv[])
 						(struct sadb_x_saref *)
 						extensions[
 							K_SADB_X_EXT_SAREF];
-					if (s) {
+
+					if (s != NULL) {
 						printf("%s: saref=%d/%d\n",
 						       progname,
 						       s->sadb_x_saref_me,

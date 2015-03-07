@@ -23,7 +23,7 @@
 #include "constants.h"
 
 # include <nss.h>
-# include <pk11pub.h>
+# include <pk11pub.h>	/* from nss3 devel */
 
 struct lsw_conf_options {
 	char *rootdir;			/* default is "" --- used for testing */

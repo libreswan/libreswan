@@ -455,6 +455,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_IKE_FRAG, &kw_ynf_list },
 	{ "narrowing",      kv_conn | kv_auto, kt_bool,
 	  KBF_IKEv2_ALLOW_NARROWING, NOT_ENUM },
+	{ "pam-authorize",      kv_conn | kv_auto, kt_bool,
+	  KBF_IKEv2_PAM_AUTHORIZE, NOT_ENUM },
 	{ "sareftrack",     kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_SAREFTRACK, &kw_sareftrack_list },
 	{ "pfs",            kv_conn | kv_auto, kt_bool,   KBF_PFS,

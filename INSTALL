@@ -5,11 +5,12 @@ Specific vendors/distribution build instructions available in packaging/
 
 Build requirements
 ------------------
-bison flex pkgconfig gcc make xmlto gmp-devel nss-devel nspr-devel
+bison flex pkgconfig gcc make xmlto
+gmp-devel nss-devel nspr-devel libevent-devel
 
 for systemd: pkgconfig hostname systemd
 for pam/xauth: pam-devel
-for dnssec support: unbound-devel, ldns-devel
+for dnssec support: unbound-devel
 for FIPS support: fipscheck-devel
 for libcap-ng support: libcap-ng-devel
 for CRL fetching support: openldap-devel curl-devel

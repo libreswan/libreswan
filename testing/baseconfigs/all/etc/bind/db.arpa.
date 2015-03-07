@@ -2,17 +2,13 @@
 ; BIND reverse data file for west subnet
 ;
 $TTL	604800
-@	IN	SOA	arpa. root.freeswan.org. (
-			200210241	; Serial
+@	IN	SOA	arpa. root.libreswan.org. (
+			2015030301	; Serial
 			 604800		; Refresh
 			  86400		; Retry
 			2419200		; Expire
 			 604800 )	; Negative Cache TTL
-	IN	NS	beet.uml.freeswan.org.
-	IN	NS	nic.uml.freeswan.org.
-$INCLUDE Karpa.+001+06735.key
-
-; and my subdomain and KEY
-in-addr.arpa.	IN	NS	carrot.uml.freeswan.org.
-		IN	NS	nic.uml.freeswan.org.
-;$INCLUDE Kin-addr.arpa.+001+12345.key
+	IN	NS	nic.testing.libreswan.org.
+; include dnssec keys
+; and my subdomain and keys
+in-addr.arpa.	IN	NS	nic.testing.libreswan.org.

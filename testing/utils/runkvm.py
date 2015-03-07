@@ -13,6 +13,8 @@ except ImportError , e:
     module = str(e)[16:]
     sys.exit("we require the python module %s " % module)
 
+# XXX: This function's behaviour should not depend on the presence of
+# FILENAME.
 def read_exec_shell_cmd( ex, filename, prompt, timer):
     if os.path.exists(filename):
         f_cmds = open(filename, "r")
@@ -25,19 +27,15 @@ def read_exec_shell_cmd( ex, filename, prompt, timer):
 		time.sleep(0.5)
                 print "%s: %s" % (prompt.replace("\\",""), line)
                 ex.sendline(line)
-                try:
-                    ex.expect (prompt,timeout=timer, searchwindowsize=100) 
-                except:
-                    print "%s failed to send line: %s" % (prompt,line)
-                    return False
+                ex.expect (prompt,timeout=timer, searchwindowsize=100) 
     else:
         print  filename 
         ex.sendline(filename)
-        try:
-            ex.expect (prompt,timeout=timer, searchwindowsize=100)
-        except:
-            print "%s failed to send filename: %s" % (prompt,filename)
-    return True
+        ex.expect (prompt,timeout=timer, searchwindowsize=100)
+
+def run_shell_cmd(ex, command, prompt, timer):
+        ex.sendline(command)
+        ex.expect(prompt, timeout=timer, searchwindowsize=100)
 
 def connect_to_kvm(args, prompt = ''):
 
@@ -135,23 +133,36 @@ def run_final (args, child):
     f.close 
     return
 
-def compile_on (args,child):
-    timer = 900
-    prompt = "root@%s source" % args.hostname
-    cmd = "cd /source/"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
-    cmd = "/testing/guestbin/swan-build"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
+def check_for_error (child, prompt):
+    child.sendline("echo status=$?")
+    child.expect('status=([0-9]+)\s*' + prompt, timeout=10)
+    status = int(child.match.group(1))
+    if status:
+        # anything non-zero, pass it out
+        print ""
+        sys.exit(status)
 
+def cd_to (child, args, dir):
+    prompt = "\[root@%s %s\]# " % (args.hostname, os.path.basename(dir))
+    # if a CD takes more than 10 seconds, there's surely a problem
+    run_shell_cmd(child, "cd %s" % dir, prompt, 10)
+    # return the expected prompt
+    return prompt
+
+def compile_on (args,child):
+    prompt = cd_to(child, args, args.sourcedir)
+    timer = 900
+    cmd = "%s/testing/guestbin/swan-build" % (args.sourcedir)
+    run_shell_cmd(child, cmd, prompt, timer)
+    check_for_error(child, prompt)
     return  
 
 def make_install (args, child):
+    prompt = cd_to(child, args, args.sourcedir)
     timer=300
-    prompt = "root@%s source" % args.hostname
-    cmd = "cd /source/"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
-    cmd = "/testing/guestbin/swan-install"
-    read_exec_shell_cmd( child, cmd, prompt, timer)
+    cmd = "%s/testing/guestbin/swan-install" % (args.sourcedir)
+    run_shell_cmd(child, cmd, prompt, timer)
+    check_for_error(child, prompt)
     return
 
 def run_test(args, child):
@@ -159,18 +170,8 @@ def run_test(args, child):
     #print 'TEST : ', args.testname
 
     timer = 120
-    ret = True
     # we MUST match the entire prompt, or elsewe end up sending too soon and getting mangling!
-    prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
-
-    cmd = "cd /testing/pluto/%s " % (args.testname)
-    print "%s: %s" % (prompt.replace("\\",""),cmd)
-    child.sendline(cmd)
-    try:
-        child.expect (prompt, searchwindowsize=100,timeout=timer) 
-    except:
-        print "%s: failed to cd into test case at %s" % (args.hostname,args.testname)
-        return
+    prompt = cd_to(child, args, "%s/pluto/%s " % (args.testdir, args.testname))
 
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'w') 
@@ -184,19 +185,15 @@ def run_test(args, child):
 	x509 = ""
 	
     cmd = "./%sinit.sh" %  (args.hostname) 
-    if not read_exec_shell_cmd( child, cmd, prompt, timer):
-        ret = False
+    read_exec_shell_cmd( child, cmd, prompt, timer)
 
     cmd = "./%srun.sh" %  (args.hostname) 
     if os.path.exists(cmd):
-        if not read_exec_shell_cmd( child, cmd, prompt, timer):
-            return False
+        read_exec_shell_cmd( child, cmd, prompt, timer)
         run_final(args,child)
         f.close
     else:
-	    f.close
-
-    return ret
+        f.close
 
 def main():
     setproctitle.setproctitle("swankvm")
@@ -208,6 +205,10 @@ def main():
     parser.add_argument('--x509', action="store_true", help='tell the guest to setup the X509 certs in NSS.')
     parser.add_argument('--final', action="store_true", help='run final.sh on the host.')
     parser.add_argument('--reboot', action="store_true", help='first reboot the host')
+    parser.add_argument('--sourcedir', action='store', default='/source', help='source <directory> to build')
+    parser.add_argument('--testdir', action='store', default='/testing', help='test <directory> to run tests from')
+    parser.add_argument('--run', action='store', help='run <command> then exit')
+    parser.add_argument('--runtime', type=float, default=120, help='max run-time (timeout) for the run command')
     # unused parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
 
@@ -219,6 +220,12 @@ def main():
 
     if not child:
         sys.exit("Failed to launch/connect to %s - aborted" % args.hostname)
+
+    if args.run:
+	# The explict cd gets the prompt in sync
+        prompt = cd_to(child, args, args.sourcedir)
+        run_shell_cmd(child, args.run, prompt, args.runtime)
+        check_for_error(child, prompt)
 
     if args.compile:
         compile_on(args,child) 

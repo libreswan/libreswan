@@ -41,9 +41,23 @@ clean: clean.subdirs
 spotless: spotless.subdirs
 install_file_list: install_file_list.subdirs
 # add more here
+
+# generate $(TARGET) variable name, where TARGET is the current
+# target.  Uses $@ so only works within the target rule below.
+mk.subdirs.target = $(shell echo $(basename $@) | tr '[a-z]' '[A-Z]')
+
+# Decend into each of $(SUBDIRS) and run the target.  Use standard
+# backward filter trick to skip directories also found in
+# $(BROKEN_$(TARGET)_SUBDIRS)
 $(SUBDIR_TARGETS):
-	set -e ; \
-	for d in $(SUBDIRS) ; \
-	do \
-		( cd $$d && $(MAKE) $(basename $@) ) ; \
+	@set -eu ; \
+	subdirs="$(SUBDIRS)" ; \
+	echo "subdirs=$$subdirs" ; \
+	broken="$(strip $(BROKEN_$(mk.subdirs.target)_SUBDIRS))" ; \
+	echo "broken=$$broken" ; \
+	for d in $$subdirs ; do \
+		case " $$broken " in \
+		*" $$d "* ) echo "SKIPPING: make $(basename $@) in $$d" ;; \
+		*) $(MAKE) -C $$d $(basename $@) ;; \
+		esac ; \
 	done

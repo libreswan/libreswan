@@ -19,7 +19,5 @@ PROGRAM=showhostkey
 
 include ${SRCDIR}../Makefile.program
 
-CFLAGS+= -lm
-
 # Enable for workaround for bug in nspr 4.8.2 
 #CFLAGS+=-Wno-strict-prototypes

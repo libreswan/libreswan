@@ -16,6 +16,7 @@ east #
 000 "v6-tunnel-east-road":   labeled_ipsec:no, loopback:no; 
 000 "v6-tunnel-east-road":    policy_label:unset; 
 000 "v6-tunnel-east-road":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "v6-tunnel-east-road":   retransmit-interval: 500ms; retransmit-timeout: 60s;
 000 "v6-tunnel-east-road":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "v6-tunnel-east-road":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "v6-tunnel-east-road":   conn_prio: 128,128; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;

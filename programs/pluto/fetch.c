@@ -24,7 +24,7 @@
 #include <string.h>
 
 #ifdef LIBCURL
-#include <curl/curl.h>
+#include <curl/curl.h>	/* from libcurl devel */
 #endif
 
 #include <libreswan.h>

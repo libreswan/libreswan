@@ -27,7 +27,7 @@
 #include <arpa/inet.h>
 #include "constants.h"
 #include "lswlog.h"
-#include <unbound.h>
+#include <unbound.h>	/* from unbound devel */
 #include "dnssec.h"
 #include <errno.h>
 

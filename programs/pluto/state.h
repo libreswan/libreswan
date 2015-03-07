@@ -212,6 +212,7 @@ struct state {
 
 	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
 	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
+	bool has_pam_thread;                    /* per state PAM thread flag */
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_rekeytov2;                      /* true if this IKEv1 is about
@@ -532,6 +533,7 @@ extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
 extern void v1_delete_state_by_xauth_name(struct state *st, void *name);
+extern void delete_state_by_id_name(struct state *st, void *name);
 
 extern void set_state_ike_endpoints(struct state *st,
 				    struct connection *c);
@@ -553,5 +555,9 @@ extern void clear_dh_from_state(struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);
+
+#ifdef XAUTH_HAVE_PAM
+void state_deletion_cleanup(so_serial_t st_serialno);
+#endif
 
 #endif /* _STATE_H */

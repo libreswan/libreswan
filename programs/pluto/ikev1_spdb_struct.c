@@ -2405,9 +2405,10 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 		if (esp_seen) {
 			int previous_transnum = -1;
 			int tn;
-			err_t ugh;
 
 			for (tn = 0; tn != esp_proposal.isap_notrans; tn++) {
+				err_t ugh;
+
 				if (!parse_ipsec_transform(
 				      &esp_trans,
 				      &esp_attrs,

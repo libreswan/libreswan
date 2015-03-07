@@ -1,4 +1,6 @@
-/* routines for state objects
+/*
+ * routines for state objects
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001, 2013-2015 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
@@ -50,24 +52,24 @@
 #include <security/pam_appl.h>
 #include "ikev1_xauth.h"	/* just for state_deletion_xauth_cleanup() */
 #endif
-#include "connections.h"        /* needs id.h */
+#include "connections.h"	/* needs id.h */
 #include "state.h"
 #include "ikev1_msgid.h"
-#include "kernel.h"             /* needs connections.h */
+#include "kernel.h"	/* needs connections.h */
 #include "log.h"
-#include "packet.h"             /* so we can calculate sizeof(struct isakmp_hdr) */
-#include "keys.h"               /* for free_public_key */
+#include "packet.h"	/* so we can calculate sizeof(struct isakmp_hdr) */
+#include "keys.h"	/* for free_public_key */
 #include "rnd.h"
 #include "timer.h"
 #include "whack.h"
-#include "demux.h"      /* needs packet.h */
+#include "demux.h"	/* needs packet.h */
 #include "pending.h"
-#include "ipsec_doi.h"  /* needs demux.h and state.h */
+#include "ipsec_doi.h"	/* needs demux.h and state.h */
 
 #include "sha1.h"
 #include "md5.h"
 #include "cookie.h"
-#include "crypto.h" /* requires sha1.h and md5.h */
+#include "crypto.h"	/* requires sha1.h and md5.h */
 #include "spdb.h"
 
 #include <nss.h>
@@ -80,21 +82,25 @@ void update_state_stats(struct state *st, enum state_kind new_state);
  * Global variables: had to go somewhere, might as well be this file.
  */
 
-u_int16_t pluto_port = IKE_UDP_PORT;                    /* Pluto's port */
-u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT; /* Pluto's NAT-T port */
+u_int16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
+u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
 
 /*
  * This file has the functions that handle the
  * state hash table and the Message ID list.
  */
 
-static unsigned int state_count[MAX_STATES]; /* for DDoS tracking, used in change_state */
+/* for DDoS tracking, used in change_state */
+static unsigned int state_count[MAX_STATES];
 static unsigned int st_total;
-static unsigned int st_children; /* duplicates states for IPsec SAs */
-static unsigned int st_parents; /* new states for IKE SAs */
-static unsigned int st_half_open; /* all I-0 IKE SAs - initiating (and responding because of OE) */
-static unsigned int st_anonymous; /* established peer IKE SAs that used AUTH_NULL */
-static unsigned int st_authenticated; /* established authenticated peer IKE SAs */
+static unsigned int st_children;	/* duplicates states for IPsec SAs */
+static unsigned int st_parents;	/* new states for IKE SAs */
+/* all I-0 IKE SAs - initiating (and responding because of OE) */
+static unsigned int st_half_open;
+/* established peer IKE SAs that used AUTH_NULL */
+static unsigned int st_anonymous;
+/* established authenticated peer IKE SAs */
+static unsigned int st_authenticated;
 
 void change_state(struct state *st, enum state_kind new_state)
 {
@@ -119,7 +125,7 @@ void update_state_stats(struct state *st, enum state_kind old_state)
 	if (old_state != STATE_UNDEFINED)
 		state_count[old_state]--;
 	if (new_state != STATE_UNDEFINED)
-		state_count[new_state]++; 
+		state_count[new_state]++;
 
 	st_total = st_parents = st_children = 0;
 	/* skip counting STATE_UNDEFINED states */
@@ -127,7 +133,7 @@ void update_state_stats(struct state *st, enum state_kind old_state)
 		if (IS_IKE_STATE(s)) {
 			st_parents += state_count[s];
 		} else {
-			st_children += state_count[s]; 
+			st_children += state_count[s];
 		}
 	}
 	st_total = st_parents + st_children;
@@ -144,7 +150,9 @@ void update_state_stats(struct state *st, enum state_kind old_state)
 		state_count[STATE_PARENT_R1] +
 		state_count[STATE_PARENT_I1];
 
-	/* st_anonymous and st_authenticated only count IKE SAs not IPsec SAs */
+	/*
+	 * st_anonymous and st_authenticated only count IKE SAs not IPsec SAs
+	 */
 	if (IS_PARENT_SA(st)) {
 		/* we have to count auth/anon based on connection property */
 		if (new_state == STATE_UNDEFINED) {
@@ -159,7 +167,10 @@ void update_state_stats(struct state *st, enum state_kind old_state)
 			/* this is an add - always unauth/anon at first */
 			st_anonymous++;
 		}
-		// check changed state for change from unauthenticated -> authenticated (count auth_null as unauthenticated)
+		/*
+		 * check changed state for change from unauthenticated
+		 * -> authenticated (count auth_null as unauthenticated)
+		 */
 		if (new_state == STATE_PARENT_I3 || new_state == STATE_PARENT_R2 ||
 			new_state == STATE_MAIN_I4 || new_state == STATE_MAIN_R3 ||
 			new_state == STATE_AGGR_I2 || new_state == STATE_AGGR_R2)
@@ -172,12 +183,14 @@ void update_state_stats(struct state *st, enum state_kind old_state)
 	DBG(DBG_CONTROLMORE, DBG_log("%d total, %d children and %d parents of which %d anon and %d authenticated and %d half_open",
 		st_total, st_children, st_parents, st_anonymous, st_authenticated, st_half_open));
 #if 0
-	// known to mismatch for now
+	/* known to mismatch for now */
 	pexpect(st_parents == st_anonymous + st_authenticated);
 #endif
 }
 
-/* humanize_number: make large numbers clearer by expressing them as KB or MB, as appropriate.
+/*
+ * humanize_number: make large numbers clearer by expressing them as KB or MB,
+ * as appropriate.
  * The prefix is literally copied into the output.
  * Tricky representation: if the prefix starts with !, the number
  * is taken as kilobytes.  Thus the caller does not scaling, with the attendant
@@ -217,7 +230,8 @@ static char *humanize_number(unsigned long num,
 }
 
 
-/* State Table Functions
+/*
+ * State Table Functions
  *
  * The statetable is organized as a hash table.
  * The hash is purely based on the icookie and rcookie.
@@ -259,13 +273,16 @@ static struct state **state_hash(const u_char *icookie, const u_char *rcookie)
 	return &statetable[i];
 }
 
-/* Get a state object.
+/*
+ * Get a state object.
  * Caller must schedule an event for this object so that it doesn't leak.
  * Caller must insert_state().
  */
 struct state *new_state(void)
 {
-	static const struct state blank_state;  /* initialized all to zero & NULL */
+	/* initialized all to zero & NULL */
+	static const struct state blank_state;
+
 	static so_serial_t next_so = SOS_FIRST;
 	struct state *st;
 
@@ -278,7 +295,7 @@ struct state *new_state(void)
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
 	DBG(DBG_CONTROL, DBG_log("creating state object #%lu at %p",
-				 st->st_serialno, (void *) st));
+				st->st_serialno, (void *) st));
 	return st;
 }
 
@@ -293,6 +310,21 @@ void init_states(void)
 		statetable[i] = (struct state *) NULL;
 }
 
+void delete_state_by_id_name(struct state *st, void *name)
+{
+	char thatidbuf[IDTOA_BUF];
+	struct connection *c = st->st_connection;
+
+	if (!IS_IKE_SA(st))
+		return;
+
+	idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+	if (streq(thatidbuf, name)) {
+		delete_my_family(st, FALSE);
+		/* note: no md->st to clear */
+	}
+}
+
 void v1_delete_state_by_xauth_name(struct state *st, void *name)
 {
 	/* only support deleting ikev1 with xauth user name */
@@ -305,7 +337,8 @@ void v1_delete_state_by_xauth_name(struct state *st, void *name)
 	}
 }
 
-/* Find the state object with this serial number.
+/*
+ * Find the state object with this serial number.
  * This allows state object references that don't turn into dangerous
  * dangling pointers: reference a state by its serial number.
  * Returns NULL if there is no such state.
@@ -327,7 +360,8 @@ struct state *state_with_serialno(so_serial_t sn)
 	return NULL;
 }
 
-/* Insert a state object in the hash table. The object is inserted
+/*
+ * Insert a state object in the hash table. The object is inserted
  * at the begining of list.
  * Needs cookies, connection, and msgid.
  */
@@ -350,7 +384,8 @@ void insert_state(struct state *st)
 	st->st_hashchain_next = *p;
 	*p = st;
 
-	/* Ensure that somebody is in charge of killing this state:
+	/*
+	 * Ensure that somebody is in charge of killing this state:
 	 * if no event is scheduled for it, schedule one to discard the state.
 	 * If nothing goes wrong, this event will be replaced by
 	 * a more appropriate one.
@@ -361,7 +396,8 @@ void insert_state(struct state *st)
 	refresh_state(st);
 }
 
-/* common code to unhash a state: shared by rehash_state and unhash_state
+/*
+ * common code to unhash a state: shared by rehash_state and unhash_state
  * The difference is in the rcookie.
  */
 static void unhash_state_common(struct state *st, bool rcookie_may_be_previously_known)
@@ -369,7 +405,6 @@ static void unhash_state_common(struct state *st, bool rcookie_may_be_previously
 	struct state **p;
 
 	/* unlink from forward chain (might change bucket head) */
-
 	if (st->st_hashchain_prev != NULL) {
 		p = &st->st_hashchain_prev->st_hashchain_next;
 	} else if (rcookie_may_be_previously_known) {
@@ -400,7 +435,6 @@ static void unhash_state_common(struct state *st, bool rcookie_may_be_previously
 void rehash_state(struct state *st)
 {
 	/* unlink from forward chain */
-
 	DBG(DBG_CONTROL,
 	    DBG_log("rehashing state object #%lu",
 		    st->st_serialno));
@@ -411,14 +445,16 @@ void rehash_state(struct state *st)
 	insert_state(st);
 }
 
-/* unlink a state object from the hash table, but don't free it
+/*
+ * unlink a state object from the hash table, but don't free it
  */
 void unhash_state(struct state *st)
 {
 	unhash_state_common(st, TRUE);
 }
 
-/* Free the Whack socket file descriptor.
+/*
+ * Free the Whack socket file descriptor.
  * This has the side effect of telling Whack that we're done.
  */
 void release_whack(struct state *st)
@@ -452,13 +488,19 @@ void delete_state(struct state *st)
 				enum_show(&state_names, st->st_state));
 
 #ifdef USE_LINUX_AUDIT
-	/* only log parent state deletes, we log children in ipsec_delete_sa() */
+	/*
+	 * only log parent state deletes, we log children in
+	 * ipsec_delete_sa()
+	 */
 	if (IS_IKE_SA_ESTABLISHED(st) || st->st_state == STATE_IKESA_DEL)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 #endif
 
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
-		/* Note that a state/SA can have more then one of ESP/AH/IPCOMP */
+		/*
+		 * Note that a state/SA can have more then one of
+		 * ESP/AH/IPCOMP
+		 */
 		if (st->st_esp.present) {
 			char statebuf[1024];
 			char *sbcp = humanize_number(st->st_esp.peer_bytes,
@@ -513,6 +555,7 @@ void delete_state(struct state *st)
 
 #ifdef XAUTH_HAVE_PAM
 	state_deletion_xauth_cleanup(st);
+	state_deletion_cleanup(st->st_serialno);
 #endif
 
 	/* If DPD is enabled on this state object, clear any pending events */
@@ -553,7 +596,8 @@ void delete_state(struct state *st)
 		} else  {
 			/*
 			 * ??? in IKE v2, we should not immediately delete:
-			 * we should use an Informational Exchange to co-ordinate deletion.
+			 * we should use an Informational Exchange to
+			 * co-ordinate deletion.
 			 * ikev2_delete_out doesn't really accomplish this.
 			 */
 			send_delete(st);
@@ -562,7 +606,8 @@ void delete_state(struct state *st)
 
 	delete_event(st); /* delete any pending timer event */
 
-	/* Ditch anything pending on ISAKMP SA being established.
+	/*
+	 * Ditch anything pending on ISAKMP SA being established.
 	 * Note: this must be done before the unhash_state to prevent
 	 * flush_pending_by_state inadvertently and prematurely
 	 * deleting our connection.
@@ -575,7 +620,9 @@ void delete_state(struct state *st)
 	 */
 	delete_cryptographic_continuation(st);
 
-	/* effectively, this deletes any ISAKMP SA that this state represents */
+	/*
+	 * effectively, this deletes any ISAKMP SA that this state represents
+	 */
 	unhash_state(st);
 
 	/*
@@ -601,8 +648,10 @@ void delete_state(struct state *st)
 	 */
 	fake_state(st, STATE_UNDEFINED);
 
-	st->st_connection = NULL;       /* we might be about to free it */
-	cur_state = old_cur_state;      /* without st_connection, st isn't complete */
+	/* we might be about to free it */
+	st->st_connection = NULL;
+	/* without st_connection, st isn't complete */
+	cur_state = old_cur_state;
 	connection_discard(c);
 
 	change_state(st, STATE_UNDEFINED);
@@ -638,11 +687,15 @@ void delete_state(struct state *st)
 		} \
 	}
 	/* ??? free_any_nss_symkey(st->st_shared_nss); */
-	free_any_nss_symkey(st->st_skeyseed_nss);	/* same as st_skeyid_nss */
+
+	/* same as st_skeyid_nss */
+	free_any_nss_symkey(st->st_skeyseed_nss);
 	free_any_nss_symkey(st->st_skey_d_nss);	/* same as st_skeyid_d_nss */
-	free_any_nss_symkey(st->st_skey_ai_nss);	/* same as st_skeyid_a_nss */
+	/* same as st_skeyid_a_nss */
+	free_any_nss_symkey(st->st_skey_ai_nss);
 	free_any_nss_symkey(st->st_skey_ar_nss);
-	free_any_nss_symkey(st->st_skey_ei_nss);	/* same as st_skeyid_e_nss */
+	/* same as st_skeyid_e_nss */
+	free_any_nss_symkey(st->st_skey_ei_nss);
 	free_any_nss_symkey(st->st_skey_er_nss);
 	free_any_nss_symkey(st->st_skey_pi_nss);
 	free_any_nss_symkey(st->st_skey_pr_nss);
@@ -693,7 +746,8 @@ bool states_use_connection(const struct connection *c)
 	return FALSE;
 }
 
-/* delete all states that were created for a given connection,
+/*
+ * delete all states that were created for a given connection,
  * additionally delete any states for which func(st, c)
  * returns true.
  */
@@ -722,7 +776,8 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 			for (st = statetable[i]; st != NULL; ) {
 				struct state *this = st;
 
-				st = st->st_hashchain_next; /* before this is deleted */
+				/* before this is deleted */
+				st = st->st_hashchain_next;
 
 				/* on pass 2, ignore phase2 states */
 				if (pass == 1 &&
@@ -789,7 +844,8 @@ void delete_states_dead_interfaces(void)
 		for (st = statetable[i]; st != NULL; ) {
 			struct state *this = st;
 
-			st = st->st_hashchain_next; /* before this is deleted */
+			/* before this is deleted */
+			st = st->st_hashchain_next;
 			if (this->st_interface &&
 			    this->st_interface->change == IFN_DELETE) {
 				libreswan_log(
@@ -818,7 +874,8 @@ void delete_states_by_connection(struct connection *c, bool relations)
 	enum connection_kind ck = c->kind;
 	struct spd_route *sr;
 
-	/* save this connection's isakmp SA,
+	/*
+	 * save this connection's isakmp SA,
 	 * since it will get set to later SOS_NOBODY
 	 */
 	if (ck == CK_INSTANCE)
@@ -828,8 +885,9 @@ void delete_states_by_connection(struct connection *c, bool relations)
 		relations ? same_phase1_sa_relations : same_phase1_sa);
 
 	/*
-	 * Seems to dump here because 1 of the states is NULL.  Removing the Assert
-	 * makes things work.  We should fix this eventually.
+	 * Seems to dump here because 1 of the states is NULL.
+	 * Removing the Assert makes things work.
+	 * We should fix this eventually.
 	 *
 	 *  passert(c->newest_ipsec_sa == SOS_NOBODY
 	 *  && c->newest_isakmp_sa == SOS_NOBODY);
@@ -870,7 +928,8 @@ void delete_p2states_by_connection(struct connection *c)
 {
 	enum connection_kind ck = c->kind;
 
-	/* save this connection's isakmp SA,
+	/*
+	 * save this connection's isakmp SA,
 	 * since it will get set to later SOS_NOBODY
 	 */
 	if (ck == CK_INSTANCE)
@@ -884,7 +943,8 @@ void delete_p2states_by_connection(struct connection *c)
 	}
 }
 
-/* Walk through the state table, and delete each state whose phase 1 (IKE)
+/*
+ * Walk through the state table, and delete each state whose phase 1 (IKE)
  * peer is among those given.
  * TODO: This function is only called for ipsec whack --crash peer, but
  * it currently does not work for IKEv2, since IS_PHASE1() only works on IKEv1
@@ -910,7 +970,8 @@ void delete_states_by_peer(const ip_address *peer)
 				struct state *this = st;
 				struct connection *c = this->st_connection;
 
-				st = st->st_hashchain_next; /* before this is deleted */
+				/* before this is deleted */
+				st = st->st_hashchain_next;
 
 				DBG(DBG_CONTROL, {
 					ipstr_buf b;
@@ -984,11 +1045,15 @@ struct state *duplicate_state(struct state *st)
 		if (nst->field != NULL) \
 			PK11_ReferenceSymKey(nst->field); \
 	}
-	clone_nss_symkey_field(st_skeyseed_nss);	/* same as st_skeyid_nss */
-	clone_nss_symkey_field(st_skey_d_nss);	/* same as st_skeyid_d_nss */
-	clone_nss_symkey_field(st_skey_ai_nss);	/* same as st_skeyid_a_nss */
+	/* same as st_skeyid_nss */
+	clone_nss_symkey_field(st_skeyseed_nss);
+	/* same as st_skeyid_d_nss */
+	clone_nss_symkey_field(st_skey_d_nss);
+	/* same as st_skeyid_a_nss */
+	clone_nss_symkey_field(st_skey_ai_nss);
 	clone_nss_symkey_field(st_skey_ar_nss);
-	clone_nss_symkey_field(st_skey_ei_nss);	/* same as st_skeyid_e_nss */
+	/* same as st_skeyid_e_nss */
+	clone_nss_symkey_field(st_skey_ei_nss);
 	clone_nss_symkey_field(st_skey_er_nss);
 	clone_nss_symkey_field(st_skey_pi_nss);
 	clone_nss_symkey_field(st_skey_pr_nss);
@@ -1238,7 +1303,7 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 struct state *ikev1_find_info_state(const u_char *icookie,
 			      const u_char *rcookie,
 			      const ip_address *peer UNUSED,
-			      msgid_t /*network order*/ msgid)
+			      msgid_t /* network order */ msgid)
 {
 	struct state *st = *state_hash(icookie, rcookie);
 
@@ -1272,7 +1337,8 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 	return st;
 }
 
-/* Find the state that sent a packet
+/*
+ * Find the state that sent a packet
  * ??? this could be expensive -- it should be rate-limited to avoid DoS
  */
 struct state *find_sender(size_t packet_len, u_char *packet)
@@ -1305,15 +1371,15 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	*bogus = FALSE;
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		for (st = statetable[i]; st != NULL;
-		     st = st->st_hashchain_next) {
+			st = st->st_hashchain_next) {
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
-			    p1st->st_connection->host_pair ==
-			      st->st_connection->host_pair &&
-			    same_peer_ids(p1st->st_connection,
-					  st->st_connection, NULL)) {
+				p1st->st_connection->host_pair ==
+				st->st_connection->host_pair &&
+				same_peer_ids(p1st->st_connection,
+					st->st_connection, NULL)) {
 				struct ipsec_proto_info *pr =
 					protoid == PROTO_IPSEC_AH ?
-						&st->st_ah : &st->st_esp;
+					&st->st_ah : &st->st_esp;
 
 				if (pr->present) {
 					if (pr->attrs.spi == spi)
@@ -1328,7 +1394,8 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 	return NULL;
 }
 
-/* Find newest Phase 1 negotiation state object for suitable for connection c
+/*
+ * Find newest Phase 1 negotiation state object for suitable for connection c
  */
 struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
@@ -1339,12 +1406,12 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		for (st = statetable[i]; st != NULL;
-		     st = st->st_hashchain_next) {
+			st = st->st_hashchain_next) {
 			if (LHAS(ok_states, st->st_state) &&
-			    c->host_pair == st->st_connection->host_pair &&
-			    same_peer_ids(c, st->st_connection, NULL) &&
-			    (best == NULL ||
-			     best->st_serialno < st->st_serialno))
+				c->host_pair == st->st_connection->host_pair &&
+				same_peer_ids(c, st->st_connection, NULL) &&
+				(best == NULL ||
+					best->st_serialno < st->st_serialno))
 				best = st;
 		}
 	}
@@ -1360,15 +1427,15 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		for (st = statetable[i]; st != NULL;
-		     st = st->st_hashchain_next) {
+			st = st->st_hashchain_next) {
 			struct connection *c = st->st_connection;
 
 			/* XXX spd-enum */
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
-			    c->spd.eroute_owner == st->st_serialno &&
-			    c->spd.routing == RT_ROUTED_TUNNEL &&
-			    samesubnet(&c->spd.this.client, ours) &&
-			    samesubnet(&c->spd.that.client, his)) {
+				c->spd.eroute_owner == st->st_serialno &&
+				c->spd.routing == RT_ROUTED_TUNNEL &&
+				samesubnet(&c->spd.this.client, ours) &&
+				samesubnet(&c->spd.that.client, his)) {
 				if (st->st_outbound_count != count) {
 					st->st_outbound_count = count;
 					st->st_outbound_time = nw;
@@ -1395,9 +1462,11 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	const struct connection *c = st->st_connection;
 	char inst[CONN_INST_BUF];
 	char traffic_buf[512];
+	char thatidbuf[IDTOA_BUF] ;
 
 	state_buf[0] = '\0';   /* default to empty */
 	traffic_buf[0] = '\0';
+	thatidbuf[0] = '\0';
 
 	if (IS_IKE_SA(st))
 		return; /* ignore non-IPsec states */
@@ -1430,13 +1499,21 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 		}
 	}
 
+
+	if(st->st_xauth_username[0] == '\0') {
+		idtoa(&c->spd.that.id, thatidbuf, sizeof(thatidbuf));
+	}
+
 	snprintf(state_buf, state_buf_len,
-		"#%lu: \"%s\"%s%s%s%s",
+		"#%lu: \"%s\"%s%s%s%s%s%s%s",
 		st->st_serialno,
 		c->name, inst,
 		(st->st_xauth_username[0] != '\0') ? ", XAUTHuser=" : "",
 		(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "",
-		(traffic_buf[0] != '\0') ? traffic_buf : ""
+		(traffic_buf[0] != '\0') ? traffic_buf : "",
+		thatidbuf[0] != '\0' ? ", id='" : "",
+		thatidbuf[0] != '\0' ? thatidbuf : "",
+		thatidbuf[0] != '\0' ? "'" : ""
 		);
 }
 
@@ -1544,7 +1621,10 @@ void fmt_state(struct state *st, const monotime_t n,
 		} \
 }
 
-		/* XXX - mcr last used is really an attribute of the connection */
+		/*
+		 * XXX - mcr last used is really an attribute of
+		 * the connection
+		 */
 		lastused[0] = '\0';
 		if (c->spd.eroute_owner == st->st_serialno &&
 		    st->st_outbound_count != 0) {
@@ -1658,29 +1738,29 @@ void fmt_state(struct state *st, const monotime_t n,
 		}
 #ifdef KLIPS
 		if (st->st_ah.attrs.encapsulation ==
-		      ENCAPSULATION_MODE_TUNNEL ||
-		    st->st_esp.attrs.encapsulation ==
-		      ENCAPSULATION_MODE_TUNNEL ||
-		    st->st_ipcomp.attrs.encapsulation ==
-		      ENCAPSULATION_MODE_TUNNEL) {
+			ENCAPSULATION_MODE_TUNNEL ||
+			st->st_esp.attrs.encapsulation ==
+			ENCAPSULATION_MODE_TUNNEL ||
+			st->st_ipcomp.attrs.encapsulation ==
+			ENCAPSULATION_MODE_TUNNEL) {
 			add_said(&c->spd.that.host_addr, st->st_tunnel_out_spi,
-				 SA_IPIP);
+				SA_IPIP);
 			add_said(&c->spd.this.host_addr, st->st_tunnel_in_spi,
-				 SA_IPIP);
+				SA_IPIP);
 		}
 #endif
 
 		snprintf(state_buf2, state_buf2_len,
-			 "#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu %s %s%s",
-			 st->st_serialno,
-			 c->name, inst,
-			 lastused,
-			 buf,
-			 (unsigned long)st->st_ref,
-			 (unsigned long)st->st_refhim,
-			 traffic_buf,
-			 (st->st_xauth_username[0] != '\0') ? "XAUTHuser=" : "",
-			 (st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");
+			"#%lu: \"%s\"%s%s%s ref=%lu refhim=%lu %s %s%s",
+			st->st_serialno,
+			c->name, inst,
+			lastused,
+			buf,
+			(unsigned long)st->st_ref,
+			(unsigned long)st->st_refhim,
+			traffic_buf,
+			(st->st_xauth_username[0] != '\0') ? "XAUTHuser=" : "",
+			(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "");
 
 #       undef add_said
 	}
@@ -1754,7 +1834,7 @@ void show_states_status(bool list_traffic)
 			struct state *st;
 
 			for (st = statetable[i]; st != NULL;
-			     st = st->st_hashchain_next)
+				st = st->st_hashchain_next)
 				array[count++] = st;
 		}
 
@@ -1771,7 +1851,8 @@ void show_states_status(bool list_traffic)
 				fmt_list_traffic(st, state_buf,
 						sizeof(state_buf));
 				if (state_buf[0] != '\0')
-					whack_log(RC_INFORMATIONAL_TRAFFIC, "%s", state_buf);
+					whack_log(RC_INFORMATIONAL_TRAFFIC,
+						"%s", state_buf);
 			} else {
 
 				fmt_state(st, n, state_buf, sizeof(state_buf),
@@ -1790,7 +1871,8 @@ void show_states_status(bool list_traffic)
 	}
 }
 
-/* Given that we've used up a range of unused CPI's,
+/*
+ * Given that we've used up a range of unused CPI's,
  * search for a new range of currently unused ones.
  * Note: this is very expensive when not trivial!
  * If we can't find one easily, choose 0 (a bad SPI,
@@ -1815,7 +1897,10 @@ startover:
 
 				if (c < closest) {
 					if (c == 0) {
-						/* oops: next spot is occupied; start over */
+						/*
+						 * oops: next spot is
+						 * occupied; start over
+						 */
 						if (++tries == 20) {
 							/* FAILURE */
 							*latest_cpi =
@@ -1825,21 +1910,23 @@ startover:
 						}
 						base++;
 						if (base >
-						    IPCOMP_LAST_NEGOTIATED)
+							IPCOMP_LAST_NEGOTIATED)
 							base = IPCOMP_FIRST_NEGOTIATED;
 
-						goto startover; /* really a tail call */
+						/* really a tail call */
+						goto startover;
 					}
 					closest = c;
 				}
 			}
 		}
 	}
-	*latest_cpi = base;                     /* base is first in next free range */
-	*first_busy_cpi = closest + base;       /* and this is the roof */
+	*latest_cpi = base;	/* base is first in next free range */
+	*first_busy_cpi = closest + base;	/* and this is the roof */
 }
 
-/* Muck with high-order 16 bits of this SPI in order to make
+/*
+ * Muck with high-order 16 bits of this SPI in order to make
  * the corresponding SAID unique.
  * Its low-order 16 bits hold a well-known IPCOMP CPI.
  * Oh, and remember that SPIs are stored in network order.
@@ -1857,7 +1944,8 @@ startover:
 	/* network order makes first two bytes our target */
 	get_rnd_bytes((u_char *)&cpi, 2);
 
-	/* Make sure that the result is unique.
+	/*
+	 * Make sure that the result is unique.
 	 * Hard work.  If there is no unique value, we'll loop forever!
 	 */
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
@@ -1915,7 +2003,8 @@ bool dpd_active_locally(const struct state *st)
 
 void delete_my_family(struct state *pst, bool v2_responder_state)
 {
-	/* We are a parent: delete our children and
+	/*
+	 * We are a parent: delete our children and
 	 * then prepare to delete ourself.
 	 * Our children will be on the same hash chain
 	 * because we share IKE SPIs.
@@ -1930,7 +2019,8 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 
 	/* delete each of our children */
 	while (st != NULL) {
-		/* since we might be deleting st, we need to
+		/*
+		 * since we might be deleting st, we need to
 		 * grab onto its successor first
 		 */
 		struct state *next_st = st->st_hashchain_next;
@@ -1954,10 +2044,14 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 /* if the state is too busy to process a packet, say so */
 bool state_busy(const struct state *st) {
 	if (st != NULL) {
-		/* Ignore a packet if the state has a suspended state transition
-		 * Probably a duplicated packet but the original packet is not yet
-		 * recorded in st->st_rpacket, so duplicate checking won't catch.
-		 * ??? Should the packet be recorded earlier to improve diagnosis?
+		/*
+		 * Ignore a packet if the state has a suspended state
+		 * transition.
+		 * Probably a duplicated packet but the original packet is
+		 * not yet recorded in st->st_rpacket, so duplicate checking
+		 * won't catch.
+		 * ??? Should the packet be recorded earlier to improve
+		 * diagnosis?
 		 */
 		if (st->st_suspended_md != NULL) {
 			loglog(RC_LOG,
@@ -1967,9 +2061,10 @@ bool state_busy(const struct state *st) {
 		}
 
 		/*
-		 * if this state is busy calculating in between state transitions,
-		 * (there will be no suspended state), then we silently ignore the
-		 * packet, as there is nothing we can do right now.
+		 * if this state is busy calculating in between state
+		 * transitions, (there will be no suspended state),
+		 * then we silently ignore the packet, as there is
+		 * nothing we can do right now.
 		 */
 		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st != NULL && st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st != NULL && st->st_calculating ? "TRUE" : "FALSE"));
 		if (st->st_calculating) {

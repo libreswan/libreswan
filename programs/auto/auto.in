@@ -2,6 +2,7 @@
 # user interface to automatic keying and Pluto in general
 # Copyright (C) 1998, 1999, 2000  Henry Spencer.
 # Copyright (C) 2014 Paul Wouters
+# Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,15 +16,15 @@
 
 me='ipsec auto'
 usage="Usage:
-	$me [--showonly] [--asynchronous] --up connectionname
-	$me [--showonly] --{add|delete|replace|down} connectionname
-	$me [--showonly] --{route|unroute} connectionname
-	$me [--showonly] --{ready|status|rereadsecrets|rereadgroups}
-        $me [--showonly] --{rereadcacerts|rereadcrls|rereadall}
-        $me [--showonly] [--utc] --{listpubkeys|listcerts}
-        $me [--showonly] [--utc] --checkpubkeys
-        $me [--showonly] [--utc] --{listcacerts|listgroups}
-        $me [--showonly] [--utc] --{listcrls|listall}
+	${me} [--showonly] [--asynchronous] --up connectionname
+	${me} [--showonly] --{add|delete|replace|down} connectionname
+	${me} [--showonly] --{route|unroute} connectionname
+	${me} [--showonly] --{ready|status|rereadsecrets|rereadgroups}
+	${me} [--showonly] --{rereadcacerts|rereadcrls|rereadall}
+	${me} [--showonly] [--utc] --{listpubkeys|listcerts}
+	${me} [--showonly] [--utc] --checkpubkeys
+	${me} [--showonly] [--utc] --{listcacerts|listgroups}
+	${me} [--showonly] [--utc] --{listcrls|listall}
 
 	other options: [--config ipsecconfigfile] [--verbose]"
 
@@ -36,188 +37,175 @@ verbose=
 
 for dummy
 do
-	case "$1" in
-	--help)		echo "$usage" ; exit 0	;;
-	--version)	echo "$me $IPSEC_VERSION" ; exit 0	;;
-	--show)			;;
-	--showonly)	showonly='echo '	;;
-	--utc)		utc="$1"		;;
-	--config)	config="--config $2" ; shift	;;
-	--asynchronous)	async="--asynchronous"	;;
-	--verbose)	verbose=' --verbose '	;;
+    case "$1" in
+	--help)
+	    echo "${usage}"
+	    exit 0
+	    ;;
+	--version)
+	    echo "${me} $IPSEC_VERSION"
+	    exit 0
+	    ;;
+	--show)
+	    ;;
+	--showonly)
+	    showonly='echo '
+	    ;;
+	--utc)
+	    utc="$1"
+	    ;;
+	--config)
+	    config="--config $2"
+	    shift
+	    ;;
+	--asynchronous)
+	    async="--asynchronous"
+	    ;;
+	--verbose)
+	    verbose=" --verbose "
+	    ;;
 	--up|--down|--add|--delete|--replace|--route|--unroute)
-			if test " $op" != " "
-			then
-				echo "$usage" >&2
-				exit 2
-			fi
-			op="$1"
-			argc=1
-			;;
+	    if [ " ${op}" != " " ]; then
+		echo "${usage}" >&2
+		exit 2
+	    fi
+	    op="$1"
+	    argc=1
+	    ;;
 	--ready|--status|--rereadsecrets|--rereadgroups|\
-        --rereadcacerts|--rereadcrls|--rereadall|\
-        --listpubkeys|--listcerts|\
-        --checkpubkeys|\
-        --listcacerts|--listgroups|\
-        --listcrls|--listall)
-			if test " $op" != " "
-			then
-				echo "$usage" >&2
-				exit 2
-			fi
-			op="$1"
-			argc=0
-			;;
-	--)		shift ; break		;;
-	-*)		echo "$me: unknown option \`$1'" >&2 ; exit 2 ;;
-	*)		break			;;
-	esac
-	shift
+	--rereadcacerts|--rereadcrls|--rereadall|\
+	--listpubkeys|--listcerts|\
+	--checkpubkeys|\
+	--listcacerts|--listgroups|\
+	--listcrls|--listall)
+	    if [ " ${op}" != " " ]; then
+		echo "${usage}" >&2
+		exit 2
+	    fi
+	    op="$1"
+	    argc=0
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+	-*)
+	    echo "${me}: unknown option \"$1\"" >&2
+	    exit 2
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+    shift
 done
 
 names=
-case "$op$#:$1:$2" in
-2:*:up|2:*:down|2:*:add|2:*:delete|2:*:replace|2:*:route|2:*:unroute)
-		echo "$me: warning: obsolete command syntax used" >&2
-		names="$1"
-		op="--$2"
-		;;
-1:ready:|1:status:|1:rereadsecrets:|\
-1:rereadcacerts:|1:rereadcrls:|1:rereadall:\
-1:listpubkeys:|1:listcerts:|\
-1:listcacerts:|1:listgroups:|\
-1:listcrls:|1:listall:)
-		echo "$me: warning: obsolete command syntax used" >&2
-		op="--$1"
-		;;
---*)		if test " $argc" -ne $#
-		then
-			echo "$usage" >&2
-			exit 2
-		fi
-		names="$*"
-		;;
-*)		echo "$usage" >&2 ; exit 2	;;
-esac
-
-case "$op" in
---ready)          $showonly ipsec whack --listen ; exit ;;
---rereadsecrets)  $showonly ipsec whack --rereadsecrets ; exit ;;
---rereadgroups)   $showonly ipsec whack --listen ; exit ;;
---rereadcacerts)  $showonly ipsec whack --rereadcacerts ; exit ;;
---rereadcrls)     $showonly ipsec whack --rereadcrls ; exit ;;
---rereadall)      $showonly ipsec whack --rereadall ; exit ;;
---listpubkeys)    $showonly ipsec whack $utc --listpubkeys ; exit ;;
---checkpubkeys)   $showonly ipsec whack $utc --checkpubkeys ; exit ;;
---listcerts)      $showonly ipsec whack $utc --listcerts ; exit ;;
---listcacerts)    $showonly ipsec whack $utc --listcacerts ; exit ;;
---listgroups)     $showonly ipsec whack $utc --listgroups ; exit ;;
---listcrls)       $showonly ipsec whack $utc --listcrls ; exit ;;
---listall)        $showonly ipsec whack $utc --listall ; exit ;;
---up)             $showonly ipsec whack $async --name $names --initiate ; exit ;;
---down)           $showonly ipsec whack --name $names --terminate ; exit ;;
---delete)         $showonly ipsec whack --name $names --delete ; exit ;;
---route)          $showonly ipsec whack --name $names --route ; exit ;;
---unroute)        $showonly ipsec whack --name $names --unroute ; exit ;;
---status)         $showonly ipsec whack --status ; exit ;;
-esac
-
-	getphysdev=
-	getifaddr=
-	addr=
-	phys=
-	next=
-	multiaddr=
-	multidefault=
-
-	getphysdev() {
-	    local phys next addr
-	    phys=
-	    next=
-	    addr=
-	    while test $# -gt 0
-	      do
-	      case $1 in
-		  dev)
-		      phys=$2
-		      shift; shift;
-		      ;;
-		  via)
-		      next=$2
-		      shift; shift;
-		      ;;
-		  src)
-		      addr=$2
-		      shift; shift
-		      ;;
-		  *)
-		      shift
-		      ;;
-	      esac
-	    done
-	    echo "phys=$phys"
-	    echo "next=$next"
-	    echo "addr=$addr"
-	}
-
-	getifaddr() {
-	    local addr peer
-	    addr=
-	    peer=
-	    while test $# -gt 0
-	      do
-	      case $1 in
-		  inet)
-		      addr=$2
-		      shift; shift
-		      ;;
-		  peer)
-		      peer=$2
-		      shift; shift
-		      ;;
-		  *)
-		      shift
-		      ;;
-	      esac
-	    done
-	    if test -n "$peer"
-	    then
-		echo "next=${peer%/*}"
-	    fi
-	    echo "addr=${addr%/*}"
-	}
-
-	iproutedefault=`ip route list 0.0.0.0/0`
-	if test -n "$iproutedefault"
-	then
-	  if test `echo "$iproutedefault" | wc -l` -gt 1
-	  then
-	    multidefault=1
-	    iproutedefault=`echo "$iproutedefault" | head -1`
-	  fi
-	  eval `getphysdev $iproutedefault`
-	  if test -z "$next" -o -z "$addr" -a -n "$phys"
-	  then
-	    ipaddrlist=`ip -o -f inet addr list dev $phys` 
-	    if test `echo "$ipaddrlist" | wc -l` -gt 1
-	    then
-	      multiaddr=1
-	      ipaddrlist=`echo "$ipaddrlist" | head -1`
-	    fi
-	    eval `getifaddr $ipaddrlist`
-	  fi
-	  if test -n "$multidefault"
-	  then
-	    echo "multiple default routes, using $next on $phys"
-	  fi
-	  if test -n "$multiaddr"
-	  then
-	    echo "multiple ip addresses, using  $addr on $phys"
-	  fi
-	else
-	  echo "no default routes detected"
+case "${op}$#:$1:$2" in
+    2:*:up|2:*:down|2:*:add|2:*:delete|2:*:replace|2:*:route|2:*:unroute)
+	echo "${me}: warning: obsolete command syntax used" >&2
+	names="$1"
+	op="--$2"
+	;;
+    1:ready:|1:status:|1:rereadsecrets:|\
+    1:rereadcacerts:|1:rereadcrls:|1:rereadall:|\
+    1:listpubkeys:|1:listcerts:|\
+    1:listcacerts:|1:listgroups:|\
+    1:listcrls:|1:listall:)
+	echo "${me}: warning: obsolete command syntax used" >&2
+	op="--$1"
+	;;
+    --*)
+	if [ " $argc" -ne $# ];	then
+	    echo "${usage}" >&2
+	    exit 2
 	fi
-	defaultroutephys=$phys
-	defaultroutenexthop=$next
+	names="$*"
+	;;
+    *)
+	echo "${usage}" >&2
+	exit 2
+	;;
+esac
 
-$showonly ipsec addconn $verbose $config $options $names
+case "${op}" in
+    --ready)
+	${showonly} ipsec whack --listen
+	exit
+	;;
+    --rereadsecrets)
+	${showonly} ipsec whack --rereadsecrets
+	exit
+	;;
+    --rereadgroups)
+	${showonly} ipsec whack --listen
+	exit
+	;;
+    --rereadcacerts)
+	${showonly} ipsec whack --rereadcacerts
+	exit
+	;;
+    --rereadcrls)
+	${showonly} ipsec whack --rereadcrls
+	exit
+	;;
+    --rereadall)
+	${showonly} ipsec whack --rereadall
+	exit
+	;;
+    --listpubkeys)
+	${showonly} ipsec whack ${utc} --listpubkeys
+	exit
+	;;
+    --checkpubkeys)
+	${showonly} ipsec whack ${utc} --checkpubkeys
+	exit
+	;;
+    --listcerts)
+	${showonly} ipsec whack ${utc} --listcerts
+	exit
+	;;
+    --listcacerts)
+	${showonly} ipsec whack ${utc} --listcacerts
+	exit
+	;;
+    --listgroups)
+	${showonly} ipsec whack ${utc} --listgroups
+	exit
+	;;
+    --listcrls)
+	${showonly} ipsec whack ${utc} --listcrls
+	exit
+	;;
+    --listall)
+	${showonly} ipsec whack ${utc} --listall
+	exit
+	;;
+    --up)
+	${showonly} ipsec whack $async --name ${names} --initiate
+	exit
+	;;
+    --down)
+	${showonly} ipsec whack --name ${names} --terminate
+	exit
+	;;
+    --delete)
+	${showonly} ipsec whack --name ${names} --delete
+	exit
+	;;
+    --route)
+	${showonly} ipsec whack --name ${names} --route
+	exit
+	;;
+    --unroute)
+	${showonly} ipsec whack --name ${names} --unroute
+	exit
+	;;
+    --status)
+	${showonly}
+	ipsec whack --status
+	exit
+	;;
+esac
+
+${showonly} ipsec addconn ${verbose} ${config} ${names}

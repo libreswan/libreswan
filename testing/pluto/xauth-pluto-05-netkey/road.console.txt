@@ -27,6 +27,7 @@ road #
 000 "modecfg-road-eastnet-psk":   labeled_ipsec:no, loopback:no; 
 000 "modecfg-road-eastnet-psk":    policy_label:unset; 
 000 "modecfg-road-eastnet-psk":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "modecfg-road-eastnet-psk":   retransmit-interval: 500ms; retransmit-timeout: 60s;
 000 "modecfg-road-eastnet-psk":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "modecfg-road-eastnet-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+XAUTH+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "modecfg-road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;

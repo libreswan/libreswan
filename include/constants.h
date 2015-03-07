@@ -87,7 +87,7 @@ typedef int bool;
 
 #include <inttypes.h>
 
-#include <prcpucfg.h>
+#include <prcpucfg.h>	/* from nspr4 devel */
 
 #ifndef BITS_PER_BYTE
 # define BITS_PER_BYTE  8

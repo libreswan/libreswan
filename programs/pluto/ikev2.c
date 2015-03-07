@@ -318,46 +318,6 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_AUTH,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
-	/* Informational Exchange */
-
-	/* RFC 5996 1.4 "The INFORMATIONAL Exchange"
-	 *
-	 * HDR, SK {[N,] [D,] [CP,] ...}  -->
-	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
-	 */
-
-	{ .story      = "I2: process INFORMATIONAL",
-	  .state      = STATE_PARENT_I2,
-	  .next_state = STATE_PARENT_I2,
-	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
-	/* Informational Exchange */
-	{ .story      = "R1: process INFORMATIONAL",
-	  .state      = STATE_PARENT_R1,
-	  .next_state = STATE_PARENT_R1,
-	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
-	/* Informational Exchange */
-	{ .story      = "I3: INFORMATIONAL",
-	  .state      = STATE_PARENT_I3,
-	  .next_state = STATE_PARENT_I3,
-	  .flags      = SMF2_STATENEEDED,
-	  .req_clear_payloads = P(E),
-	  .opt_enc_payloads = P(N) | P(D) | P(CP),
-	  .processor  = process_encrypted_informational_ikev2,
-	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .timeout_event = EVENT_RETAIN, },
-
 	/*
 	 * There are three different CREATE_CHILD_SA's invocations,
 	 * this is the combined write up (not in RFC). See above for
@@ -393,6 +353,43 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/* Informational Exchange */
+
+	/* RFC 5996 1.4 "The INFORMATIONAL Exchange"
+	 *
+	 * HDR, SK {[N,] [D,] [CP,] ...}  -->
+	 *   <--  HDR, SK {[N,] [D,] [CP], ...}
+	 */
+
+	{ .story      = "I2: process INFORMATIONAL",
+	  .state      = STATE_PARENT_I2,
+	  .next_state = STATE_PARENT_I2,
+	  .flags      = SMF2_STATENEEDED,
+	  .req_clear_payloads = P(E),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "I3: INFORMATIONAL",
+	  .state      = STATE_PARENT_I3,
+	  .next_state = STATE_PARENT_I3,
+	  .flags      = SMF2_STATENEEDED,
+	  .req_clear_payloads = P(E),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "R1: process INFORMATIONAL",
+	  .state      = STATE_PARENT_R1,
+	  .next_state = STATE_PARENT_R1,
+	  .flags      = SMF2_STATENEEDED,
+	  .req_clear_payloads = P(E),
+	  .opt_enc_payloads = P(N) | P(D) | P(CP),
+	  .processor  = process_encrypted_informational_ikev2,
+	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .timeout_event = EVENT_RETAIN, },
+
 	{ .story      = "R2: process INFORMATIONAL",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
@@ -403,7 +400,6 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
 	  .timeout_event = EVENT_RETAIN, },
 
-	/* Informational Exchange */
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL",
 	  .state      = STATE_IKESA_DEL,
 	  .next_state = STATE_IKESA_DEL,
@@ -1510,7 +1506,7 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 					SEND_V2_NOTIFICATION(md->note);
 				}
 
-				if (st) {
+				if (st != NULL) {
 					if (md->hdr.isa_xchg == ISAKMP_v2_SA_INIT) {
 						delete_state(st);
 					} else {

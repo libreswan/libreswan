@@ -18,7 +18,7 @@
 #define _SERVER_H
 
 #include <sysqueue.h>
-#include <event2/event.h>
+#include <event2/event.h>	/* from libevent devel */
 #include <event2/event_struct.h>
 #include "timer.h"
 

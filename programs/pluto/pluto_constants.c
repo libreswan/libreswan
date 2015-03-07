@@ -309,6 +309,7 @@ const char *const sa_policy_bit_names[] = {
 	"IKEV2_ALLOW",
 	"IKEV2_PROPOSE",
 	"IKEV2_ALLOW_NARROWING",
+	"IKEV2_PAM_AUTHORIZE",
 	"SAREF_TRACK",
 	"SAREF_TRACK_CONNTRACK",
 	"IKE_FRAG_ALLOW",

@@ -21,9 +21,14 @@ ifndef MK_DEPEND_CFLAGS
 $(error define MK_DEPEND_CFLAGS)
 endif
 
-# In addition to compiling generate a dependency file.
+# In addition to compiling the .c file to .o, generate a dependency
+# file.  Force all output to the build directory.  $(basename
+# $(notdir)) is an approximation of UNIX basename.
 .c.o:
-	$(CC) $(MK_DEPEND_CFLAGS) -MMD -c $<
+	$(CC) $(MK_DEPEND_CFLAGS) \
+		-MMD -MF $(builddir)/$(basename $(notdir $@)).d \
+		-o $(builddir)/$(notdir $@) \
+		-c $<
 
 # Assume each source file has its own generated dependency file that
 # is updated whenever the corresponding output is updated.  Given
@@ -41,6 +46,12 @@ $(mk.depend.dependencies.file): $(srcdir)/Makefile $(mk.depend.file)
 		esac ; \
 	done > $@.tmp
 	mv $@.tmp $@
+
+clean: mk.depend.clean
+.PHONY: mk.depend.clean
+mk.depend.clean:
+	rm -f $(mk.depend.dependencies.file)
+	rm -f $(builddir)/*.d
 
 -include $(mk.depend.dependencies.file)
 

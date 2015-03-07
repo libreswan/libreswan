@@ -702,6 +702,10 @@ enum ipsec_xmit_value ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 				ixs->headroom += ESP_HEADER_LEN +
 						 16 /* ivsize */;
 				break;
+			case ESP_NULL:
+				ixs->blocksize = 1;
+				ixs->headroom += ESP_HEADER_LEN + 0 /* ivsize */;
+				break;
 			default:
 				if (ixs->stats)
 					ixs->stats->tx_errors++;
@@ -2128,6 +2132,10 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 					ixs->blocksize = 16;
 					ixs->headroom += ESP_HEADER_LEN +
 							 16 /* ivsize */;
+					break;
+				case ESP_NULL:
+					ixs->blocksize = 16;
+					ixs->headroom += ESP_HEADER_LEN + 0 /* ivsize */;
 					break;
 				default:
 					if (ixs->stats)
