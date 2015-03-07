@@ -4,6 +4,7 @@ import getopt, sys
 import time
 import os, commands
 import re
+from fab import shell
 
 try:
     import argparse
@@ -13,29 +14,17 @@ except ImportError , e:
     module = str(e)[16:]
     sys.exit("we require the python module %s " % module)
 
+# XXX: Hack so that shell.Remote can be used.  Should be passed around
+# instead of CHILD.
+REMOTE = None
+
 # XXX: This function's behaviour should not depend on the presence of
 # FILENAME.
 def read_exec_shell_cmd( ex, filename, prompt, timer):
     if os.path.exists(filename):
-        f_cmds = open(filename, "r")
-        for line in f_cmds:
-            line = line.strip()    
-            # We need the lines with # for the cut --- tuc sections
-            # if line and not line[0] == '#':
-            if line:
-                # give the prompt time to appear
-		time.sleep(0.5)
-                print "%s: %s" % (prompt.replace("\\",""), line)
-                ex.sendline(line)
-                ex.expect (prompt,timeout=timer, searchwindowsize=100) 
+        REMOTE.read_file_run(filename, timeout=timer)
     else:
-        print  filename 
-        ex.sendline(filename)
-        ex.expect (prompt,timeout=timer, searchwindowsize=100)
-
-def run_shell_cmd(ex, command, prompt, timer):
-        ex.sendline(command)
-        ex.expect(prompt, timeout=timer, searchwindowsize=100)
+        REMOTE.run(filename, timeout=timer)
 
 def connect_to_kvm(args, prompt = ''):
 
@@ -133,37 +122,19 @@ def run_final (args, child):
     f.close 
     return
 
-def check_for_error (child, prompt):
-    child.sendline("echo status=$?")
-    child.expect('status=([0-9]+)\s*' + prompt, timeout=10)
-    status = int(child.match.group(1))
-    if status:
-        # anything non-zero, pass it out
-        print ""
-        sys.exit(status)
-
-def cd_to (child, args, dir):
-    prompt = "\[root@%s %s\]# " % (args.hostname, os.path.basename(dir))
-    # if a CD takes more than 10 seconds, there's surely a problem
-    run_shell_cmd(child, "cd %s" % dir, prompt, 10)
-    # return the expected prompt
-    return prompt
-
-def compile_on (args,child):
-    prompt = cd_to(child, args, args.sourcedir)
+def compile_on(args, remote):
+    prompt = remote.cd(args.sourcedir)
     timer = 900
     cmd = "%s/testing/guestbin/swan-build" % (args.sourcedir)
-    run_shell_cmd(child, cmd, prompt, timer)
-    check_for_error(child, prompt)
-    return  
+    remote.run(cmd, timeout=timer)
+    remote.exit_if_error()
 
-def make_install (args, child):
-    prompt = cd_to(child, args, args.sourcedir)
+def make_install(args, remote):
+    prompt = remote.cd(args.sourcedir)
     timer=300
     cmd = "%s/testing/guestbin/swan-install" % (args.sourcedir)
-    run_shell_cmd(child, cmd, prompt, timer)
-    check_for_error(child, prompt)
-    return
+    remote.run(cmd, timeout=timer)
+    remote.exit_if_error()
 
 def run_test(args, child):
     #print 'HOST : ', args.hostname 
@@ -221,17 +192,18 @@ def main():
     if not child:
         sys.exit("Failed to launch/connect to %s - aborted" % args.hostname)
 
+    REMOTE = shell.Remote(child, args.hostname)
+
     if args.run:
-	# The explict cd gets the prompt in sync
-        prompt = cd_to(child, args, args.sourcedir)
-        run_shell_cmd(child, args.run, prompt, args.runtime)
-        check_for_error(child, prompt)
+        REMOTE.cd(args.sourcedir)
+        REMOTE.run(args.run, timeout=args.runtime)
+        REMOTE.exit_if_error()
 
     if args.compile:
-        compile_on(args,child) 
+        compile_on(args, REMOTE) 
 
     if args.install:
-        make_install(args,child) 
+        make_install(args, REMOTE) 
 
     if (args.testname and not args.final):
         run_test(args,child)
