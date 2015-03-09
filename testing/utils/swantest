@@ -381,7 +381,7 @@ class TestList:
                self.args.exclude.search(testdir) or \
                self.args.exclude.search(testexpect):
                 return "matches '--exclude %s' regular expression" % self.args.exclude.pattern
-            
+
         return None
 
 # end of class
