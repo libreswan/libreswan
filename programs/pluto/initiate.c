@@ -845,28 +845,16 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		switch (b->step) {
 		case fos_start:
-			if (c != NULL && !(c->policy & POLICY_RSASIG)) {
-				//if (ac == NULL)
-					
+			if (c != NULL && ((c->policy & POLICY_RSASIG) == LEMPTY)) {
 				/* no dns queries to find the gateway. create one here */
-				struct gw_info *nullgw, *loopgw;
 				if (c->policy & POLICY_AUTH_NULL) {
-					nullgw->client_id.kind = ID_NULL;
-					nullgw->gw_id.kind = ID_NULL;
-				} else {
-					nullgw->client_id.kind = ID_USER_FQDN;
-					nullgw->gw_id.kind = ID_USER_FQDN;
+					struct gw_info nullgw;
+
+			    		DBG_log("setting c->gw_info for POLICY_AUTH_NULL");
+					nullgw.client_id.kind = ID_NULL;
+					nullgw.gw_id.kind = ID_NULL;
+					c->gw_info = clone_thing(nullgw, "nullgw info");
 				}
-				nullgw->gw_key_present = FALSE;
-				nullgw->gw_id.ip_addr = b->peer_client;
-				nullgw->key = NULL;
-				nullgw->next = NULL;
-				for (loopgw = ac->gateways_from_dns; loopgw != NULL;
-						loopgw = loopgw->next) {
-					if (loopgw->next == NULL)
-						loopgw->next = nullgw;
-				}
-				c->gw_info = nullgw;
 				next_step = fos_his_client;
 				b->step = fos_his_client; /* skip all DNS */
 				initiate_ondemand_body(b, ac, ac_ugh
@@ -875,6 +863,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 #endif
 						);
 			} else {
+			   	DBG_log("just starting out: select first query step");
 				/* just starting out: select first query step */
 				next_step = fos_myid_ip_txt;
 			}
@@ -1133,11 +1122,13 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		DBG(DBG_CONTROL, {
 			ipstr_buf b1;
 			ipstr_buf b2;
-			DBG_log("initiate on demand from %s to %s new state: %s with ugh: %s",
+			DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
+				(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
 				ipstr(&b->our_client, &b1),
 				ipstr(&b->peer_client, &b2),
 				oppo_step_name[b->step],
-				ugh ? ugh : "ok");
+				ugh ? " - error:" : "",
+				ugh ? ugh : "");
 		});
 
 		if (c == NULL) {
@@ -1151,7 +1142,9 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			cannot_oppo(c, b, ugh);
 		} else if (next_step == fos_done) {
 			/* nothing to do */
+			DBG_log("fos_done - should be enter continue_oppo ?");
 		} else {
+			DBG_log("setup up the next query");
 			/* set up the next query */
 			struct find_oppo_continuation *cr = alloc_thing(
 				struct find_oppo_continuation,

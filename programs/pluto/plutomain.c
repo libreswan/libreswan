@@ -1442,6 +1442,7 @@ int main(int argc, char **argv)
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
+	init_adns();
 	init_id();
 	init_vendorid();
 
