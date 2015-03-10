@@ -1,0 +1,3 @@
+basic OE test triggered by whack
+
+note that myid= in ipsec.conf is broken! use whack
