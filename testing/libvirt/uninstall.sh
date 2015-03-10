@@ -8,6 +8,12 @@ source ${LIBRESWANSRCDIR}/kvmsetup.sh
 
 cd $TESTING
 
+for netname in net/*; do
+    net=$(basename $netname)
+    sudo virsh net-destroy $net
+    sudo virsh net-undefine $net
+done
+
 for hostfilename in vm/*; do
     hostname=$(basename ${hostfilename})
     sudo virsh destroy $hostname

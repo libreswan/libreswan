@@ -25,6 +25,7 @@ from os import listdir
 from os.path import isfile, join
 from multiprocessing import Process, Queue
 from json import encoder
+from fab import shell
 
 try:
     import argparse
@@ -70,19 +71,25 @@ class guest (threading.Thread):
             self.reboot = None
 
     def run(self):
-        self.start = time.time()
-        e = self.boot_n_grab_console()
-        self.status = "INIT"
-        if e:
-            self.clean_abort()
-        else:
-            e = self.run_test()
+        try:
+            self.start = time.time()
+            e = self.boot_n_grab_console()
+            self.status = "INIT"
+            if e:
+                self.clean_abort()
+            else:
+                e = self.run_test()
 
-        if not e:
-            e = "end"
-        self.log_line('OUTPUT/RESULT', e)
-        logging.info("%s done %s ran %s sec %s", self.hostname, self.testname,
-                     round(time.time() - self.start, 2), e)
+                if not e:
+                    e = "end"
+            self.log_line('OUTPUT/RESULT', e)
+            logging.info("%s done %s ran %s sec %s", self.hostname, self.testname,
+                         round(time.time() - self.start, 2), e)
+        except Exception as x:
+            # XXXX: Bad, but easiest way to get rid of a deadlock when
+            # things go wrong
+            self.clean_abort()
+            raise x
 
     def boot_n_grab_console(self):
         e = self.connect_to_kvm()
@@ -302,15 +309,12 @@ class guest (threading.Thread):
                 self.log_line('../stop-tests-now', err)
             return err
 
-        child.sendline('TERM=dumb; export TERM; unset LS_COLORS')
-        res = child.expect(['login: ', prompt], timeout=3)
+        remote = shell.Remote(child, self.hostname)
+        remote.run('TERM=dumb; export TERM; unset LS_COLORS')
         child.setecho(False)  # this does not seems to work
-        child.sendline("stty sane")
-        res = child.expect(['login: ', prompt], timeout=3)
-        child.sendline("stty -onlcr")
-        res = child.expect(['login: ', prompt], timeout=3)
-        child.sendline("stty -echo")
-        res = child.expect(['login: ', prompt], timeout=3)
+        remote.run("stty sane")
+        remote.run("stty -onlcr")
+        remote.run("stty -echo")
 
 # end of class
 
@@ -377,7 +381,7 @@ class TestList:
                self.args.exclude.search(testdir) or \
                self.args.exclude.search(testexpect):
                 return "matches '--exclude %s' regular expression" % self.args.exclude.pattern
-            
+
         return None
 
 # end of class
