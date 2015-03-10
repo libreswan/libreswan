@@ -20,7 +20,7 @@
 # XXX: For compatibility
 abs_top_srcdir ?= $(abspath ${LIBRESWANSRCDIR})
 
-KVM_RUN_COMMAND ?= $(abs_top_srcdir)/testing/utils/runkvm.py
+KVM_RUNKVM_COMMAND ?= $(abs_top_srcdir)/testing/utils/runkvm.py
 KVM_MOUNTS_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmmounts.sh
 KVM_SWANTEST_COMMAND ?= $(abs_top_srcdir)/testing/utils/swantest
 
@@ -52,28 +52,31 @@ kvm-print:
 	:   KVM_PRINT_TARGETS: $(KVM_PRINT_TARGETS)
 	:   KVM_EASTDIR: $(KVM_EASTDIR)
 
+.PHONY: kvm-run
+kvm-run: $(KVM_RUN_TARGETS)
 KVM_RUN_TARGETS = $(patsubst %,kvm-run-%,$(KVM_HOSTS))
 .PHONY: $(KVM_RUN_TARGETS)
 $(KVM_RUN_TARGETS):
+	: RUN: '$(RUN)'
 	test '$(RUN)' != ""
-	$(KVM_RUN_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --run '$(RUN)'
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --run '$(RUN)'
 
 KVM_REBOOT_TARGETS = $(patsubst %,kvm-reboot-%,$(KVM_HOSTS))
 .PHONY: $(KVM_REBOOT_TARGETS)
 $(KVM_REBOOT_TARGETS):
-	$(KVM_RUN_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --reboot
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --reboot
 
 KVM_COMPILE_TARGETS = $(patsubst %,kvm-compile-%,$(KVM_HOSTS))
 #.PHONY: $(KVM_COMPILE_TARGETS)
 #$(KVM_COMPILE_TARGETS):
 kvm-compile-%: kvm-print-% kvm-reboot-%
-	$(KVM_RUN_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --compile
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --compile
 
 KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
 #.PHONY: $(KVM_INSTALL_TARGETS)
 #$(KVM_INSTALL_TARGETS):
 kvm-install-%: kvm-print-% kvm-reboot-%
-	$(KVM_RUN_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --install
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --install
 
 .PHONY: kvm-update
 kvm-update: kvm-compile-east | $(KVM_INSTALL_TARGETS)
