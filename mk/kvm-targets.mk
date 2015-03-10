@@ -52,14 +52,16 @@ kvm-print:
 	:   KVM_PRINT_TARGETS: $(KVM_PRINT_TARGETS)
 	:   KVM_EASTDIR: $(KVM_EASTDIR)
 
-.PHONY: kvm-run
-kvm-run: $(KVM_RUN_TARGETS)
 KVM_RUN_TARGETS = $(patsubst %,kvm-run-%,$(KVM_HOSTS))
 .PHONY: $(KVM_RUN_TARGETS)
 $(KVM_RUN_TARGETS):
 	: RUN: '$(RUN)'
+	: KVM_SOURCEDIR: $(KVM_SOURCEDIR)
+	: KVM_HOST: $(KVM_HOST)
 	test '$(RUN)' != ""
 	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --run '$(RUN)'
+.PHONY: kvm-run
+kvm-run: $(KVM_RUN_TARGETS)
 
 KVM_REBOOT_TARGETS = $(patsubst %,kvm-reboot-%,$(KVM_HOSTS))
 .PHONY: $(KVM_REBOOT_TARGETS)
