@@ -675,7 +675,7 @@ void extra_debugging(const struct connection *c)
 	 */
 	DBG(~LEMPTY, {
 		char b1[CONN_INST_BUF];
-		DBG_log("processing connection %s%s",
+		DBG_log("processing connection \"%s\"%s",
 			c->name, fmt_conn_instance(c, b1));
 	});
 

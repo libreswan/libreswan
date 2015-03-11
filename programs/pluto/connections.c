@@ -1789,7 +1789,7 @@ struct connection *rw_instantiate(struct connection *c,
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
 		char inst[CONN_INST_BUF];
-		DBG_log("instantiated \"%s\"%s for %s",
+		DBG_log("rw_instantiate() instantiated \"%s\"%s for %s",
 			d->name, fmt_conn_instance(d, inst),
 			ipstr(him, &b));
 	});
@@ -1888,7 +1888,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	struct connection *d = instantiate(c, him, his_id);
 
 	DBG(DBG_CONTROL,
-		DBG_log("oppo instantiate d=%s from c=%s with c->routing "
+		DBG_log("oppo instantiate d=\"%s\" from c=\"%s\" with c->routing "
 			"%s, d->routing %s",
 			d->name, c->name,
 			enum_name(&routing_story, c->spd.routing),
@@ -1962,7 +1962,7 @@ struct connection *oppo_instantiate(struct connection *c,
 
 			(void) format_connection(topo, sizeof(topo), d,
 						&d->spd);
-			DBG_log("instantiated \"%s\"%s: %s",
+			DBG_log("oppo_instantiate() instantiated \"%s\"%s: %s",
 				fmt_conn_instance(d, inst), d->name,
 				topo);
 		});
@@ -2254,22 +2254,14 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 							"to %s",
 							best->name, c->name));
 
-					for (bestsr = &best->spd;
-						best != c && bestsr;
-						bestsr = bestsr->next) {
-						if (!subnetinsubnet(&bestsr->
-							this.client,
-							&sr->this.
-							client) ||
-							(samesubnet(&bestsr->
-							this.client,
-							&sr->this.client) &&
-							!subnetinsubnet(
-								&bestsr->
-								that.client,
-								&sr->
-								that.client)))
+					for (bestsr = &best->spd; best != c && bestsr; bestsr = bestsr->next) {
+						if (!subnetinsubnet(&bestsr->this.client,
+							&sr->this.client) || (samesubnet(&bestsr->this.client,
+							&sr->this.client) && !subnetinsubnet(
+								&bestsr->that.client,
+								&sr->that.client))) {
 							best = c;
+						}
 					}
 				}
 			}

@@ -713,7 +713,13 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			       ipstr(&md->iface->ip_addr, &b), pluto_port, c->name);
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 		}
-		c = rw_instantiate(c, &md->sender, NULL, NULL);
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			/* opporstunistic */
+			c = oppo_instantiate(c, &md->sender, &c->spd.that.id, NULL, &c->spd.this.host_addr, &md->sender);
+		} else {
+			/* regular roadwarrior */
+			c = rw_instantiate(c, &md->sender, NULL, NULL);
+		}
 	} else {
 		/* We found a non-wildcard connection.
 		 * Double check whether it needs instantiation anyway (eg. vnet=)

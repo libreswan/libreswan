@@ -590,7 +590,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 		subnettot(&ei->client,  0, ei3, sizeof(ei3));
 		subnettot(&er->client,  0, er3, sizeof(er3));
 		DBG_log("  ikev2_evaluate_connection_fit evaluating our "
-			"I=%s:%s:%d/%d R=%s:%d/%d %s to their:",
+			"conn=\"%s\" I=%s:%d/%d R=%s:%d/%d %s to their:",
 			d->name, ei3, ei->protocol, ei->port,
 			er3, er->protocol, er->port,
 			is_virtual_connection(d) ? "(virt)" : "");
