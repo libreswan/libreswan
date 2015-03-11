@@ -22,16 +22,8 @@ CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${CROSSFLAGS}
 
 CFLAGS+=-pthread
 
-CFLAGS+= $(USERCOMPILE)
-CFLAGS+= ${WERROR}
-
-ifeq ($(USE_DNSSEC),true)
-CFLAGS+= -DDNSSEC
-endif
-
-ifeq ($(USE_KLIPS),true)
-CFLAGS+= -DKLIPS
-endif
+# XXX: hack until everything uses a consistent .c.o rule
+CFLAGS+=$(USERLAND_CFLAGS)
 
 ARFLAGS=crvs
 MANS=

@@ -3,6 +3,7 @@
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -56,19 +57,6 @@ PFKEYV2_SRCS+=pfkey_v2_build.c pfkey_v2_ext_bits.c pfkey_v2_parse.c
 PFKEYV2_SRCS+=pfkey_v2_debug.c 
 endif
 
-ifeq ($(USE_LIBCURL),true)
-CFLAGS+=-DLIBCURL
-endif
-
-ifeq ($(USE_LDAP),true)
-CFLAGS+=-DLDAP_VER=3
-endif
-
-ifeq ($(USE_FIPSCHECK),true)
-CFLAGS+=-DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\" -DFIPS_CHECK
-endif
-
-CFLAGS+=-DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libaes_xcbc
 
@@ -91,27 +79,10 @@ LIBL=liblswlog.a
 CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
 CFLAGS+=-I${LIBRESWANSRCDIR}
 CFLAGS+=${PFKEYV2_DEFS} ${KLIPS_DEFS} $(NSSFLAGS)
-CFLAGS+= -I${LIBRESWANSRCDIR}/include ${PORTINCLUDE} $(USERCOMPILE) ${CROSSFLAGS}
-CFLAGS+= ${WERROR}
-
-ifeq ($(USE_SINGLE_CONF_DIR),true)
-CFLAGS+= -DSINGLE_CONF_DIR=1
-endif
-
-ifeq ($(USE_LABELED_IPSEC),true)
-CFLAGS+=-DHAVE_LABELED_IPSEC
-endif
-
-ifeq ($(USE_DNSSEC),true)
-CFLAGS+=-DDNSSEC
-endif
-
-CFLAGS+=-DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
-CFLAGS+=-DIPSEC_CONFDDIR=\"$(FINALCONFDDIR)\"
-CFLAGS+=-DIPSEC_CONF=\"$(FINALCONFFILE)\"
-CFLAGS+=-DIPSEC_VARDIR=\"$(FINALVARDIR)\"
-CFLAGS+=-DIPSEC_EXECDIR=\"$(FINALLIBEXECDIR)\"
-CFLAGS+=-DIPSEC_SBINDIR=\"$(FINALSBINDIR)\"
+CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
+# XXX: hack until everything uses a consistent .c.o rule
+CFLAGS+=$(USERLAND_CFLAGS)
+CFLAGS+=${CROSSFLAGS}
 
 ARFLAGS=crvs
 EXTHDRS=des.h

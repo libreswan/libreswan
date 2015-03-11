@@ -20,7 +20,6 @@ PROGLIBS=${WHACKLIB} ${IPSECCONFLIB}
 #EXTRALIBS=-lefence
 
 ifeq ($(USE_DNSSEC),true)
-CFLAGS+= -DDNSSEC
 PROGLIBS+=-lunbound
 endif
 

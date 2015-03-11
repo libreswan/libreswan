@@ -30,6 +30,9 @@ include ${LIBRESWANSRCDIR}/mk/local.mk
 # OBJDIR et.al.
 include ${LIBRESWANSRCDIR}/mk/objdir.mk
 
+# Suck in the definition of the USERLAND_CFLAGS
+include ${LIBRESWANSRCDIR}/mk/userland-cflags.mk
+
 # Variables in this file with names starting with INC_ are not for use
 # by Makefiles which include it; they are subject to change without warning.
 #
@@ -202,6 +205,9 @@ INSTCONFFLAGS?=--mode=0644
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS?=
 
+# XXX: Don't add NSSFLAGS to USERLAND_CFLAGS for now.  It needs to go
+# after -I$(top_srcdir)/include and fixing that is an entirely
+# separate cleanup.
 NSSFLAGS?=$(shell pkg-config --cflags nss)
 NSSLIBS?=$(shell pkg-config --libs nss)
 
@@ -215,44 +221,8 @@ MAKE?=make
 # EFENCE=-lefence
 EFENCE?=
 
-ifeq ($(ARCH),i686)
-GCCM?=-m32
-endif
-ifeq ($(ARCH),x86_64)
-GCCM?=-m64
-endif
-
-GCC_LINT?=-DGCC_LINT
-
-# some defaults that cause most if not all warnings
-# eventually: -Wshadow -pedantic
-ifeq ($(origin WERROR_CFLAGS),undefined)
-WERROR_CFLAGS = -Werror
-endif
-ifeq ($(origin WARNING_CFLAG),undefined)
-WARNING_CFLAGS = -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
-endif
-ifeq ($(origin WERROR),undefined)
-# WERROR will go away
-WERROR = $(WARNING_CFLAGS) $(WERROR_CFLAGS)
-endif
-
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
-
-# extra compile flags, for userland and kernel stuff, e.g. -g for debug info
-# you can add to this in the defaults file using +=
-# -DGCC_LINT uses gcc-specific declarations to improve compile-time diagnostics.
-# -DCOMPILER_HAS_NO_PRINTF_LIKE if your old compiler gives you errors with
-# PRINTF_LIKE(x)
-#
-# Warning: Using -O3 is known to cause problems with the NSS code, see
-#          https://bugzilla.redhat.com/show_bug.cgi?id=884710
-#
-# Example for a cross compile:
-# USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
-# USERCOMPILE?=-g -O2 ${WERROR} ${GCC_LINT}
-USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} ${GCC_LINT} -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE -DFORCE_PR_ASSERT
 
 KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # You can also run this before starting libreswan on glibc systems:

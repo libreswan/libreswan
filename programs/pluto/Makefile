@@ -20,6 +20,7 @@ ifndef top_srcdir
 include ../../mk/dirs.mk
 endif
 
+# XXX: Pluto doesn't include mk/program.mk?
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${SRCDIR}Makefile.options
 -include ${SRCDIR}Makefile.extra
@@ -40,26 +41,6 @@ SYSDEP_OBJ=sysdep_${OSDEP}.o
 
 BUILDER=${shell echo ${USER}@`hostname` }
 # End of configuration coping options.
-
-CPPFLAGS = $(HDRDIRS) $(DEFINES) \
-	-DSHARED_SECRETS_FILE=\"${FINALCONFDIR}/ipsec.secrets\" \
-	-DIPSEC_SBINDIR=\"${FINALSBINDIR}\" \
-	-DIPSEC_EXECDIR=\"${FINALLIBEXECDIR}\" \
-	-DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\" \
-	-DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\" \
-
-ifeq ($(HAVE_BROKEN_POPEN),true)
-CFLAGS+=-DHAVE_BROKEN_POPEN
-endif
-
-ifeq ($(HAVE_NO_FORK),true)
-CFLAGS+=-DHAVE_NO_FORK
-endif
-
-# Enable ALLOW_MICROSOFT_BAD_PROPOSAL
-CFLAGS+=-DALLOW_MICROSOFT_BAD_PROPOSAL
-
-ALLFLAGS = $(CPPFLAGS) $(CFLAGS) ${CROSSFLAGS} ${NSSFLAGS}
 
 LDFLAGS+=${NSSLIBS}
 
@@ -293,8 +274,8 @@ check:
 checkprograms:
 
 %.i: %.c
-	$(CC) $(USERCOMPILE) ${PORTINCLUDE} $(COPTS) $(ALLFLAGS) -E -o $@ $<
+	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
 
 MK_DEPEND_FILES = $(DIST)
-MK_DEPEND_CFLAGS = $(USERCOMPILE) ${PORTINCLUDE} $(COPTS) $(ALLFLAGS)
+MK_DEPEND_CFLAGS = $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(DEFINES) $(NSSFLAGS) $(CFLAGS) ${CROSSFLAGS}
 include $(top_srcdir)/mk/depend.mk

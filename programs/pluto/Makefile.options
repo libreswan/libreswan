@@ -18,14 +18,6 @@
 
 # All of the USE_ and HAVE_ variables are controlled from libreswan/Makefile.inc
 
-ifeq ($(USE_DNSSEC),true)
-DNSSECDEF=-DDNSSEC
-endif
-
-ifeq ($(USE_LINUX_AUDIT),true)
-CFLAGS += -DUSE_LINUX_AUDIT
-endif
-
 ifeq ($(USE_LDAP),true)
 # Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
 # if you require LDAPv2 
@@ -38,8 +30,6 @@ endif
 ifeq ($(USE_XAUTHPAM),true)
 XAUTH_HAVE_PAM=1
 endif
-
-CFLAGS +=-g ${WERROR}
 
 # where to find klips headers and Libreswan headers
 # and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
