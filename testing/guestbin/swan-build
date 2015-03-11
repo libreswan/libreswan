@@ -39,7 +39,7 @@ if make programs module >>compile-log.txt 2>&1; then
 else
     status=$?
     tail -20 compile-log.txt
-    : 'make programs module' failed: ${status}; see compile-log.txt for details
+    : 'make programs module' failed: ${status}\; see compile-log.txt for details
     exit ${status}
 fi
 
