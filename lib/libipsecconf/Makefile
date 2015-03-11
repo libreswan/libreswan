@@ -33,6 +33,18 @@ SRCS+=interfaces.c
 #enable to get lots more debugging about semantics.
 #CFLAGS+=-DPARSER_TYPE_DEBUG
 
+ifeq ($(USE_FIPSCHECK),true)
+CFLAGS+=-DFIPS_CHECK
+endif
+
+ifeq ($(USE_NM),true)
+CFLAGS+=-DHAVE_NM
+endif
+
+ifeq ($(USE_LABELED_IPSEC),true)
+CFLAGS+=-DHAVE_LABELED_IPSEC
+endif
+
 OBJS=${SRCS:.c=.o} 
 
 include $(top_srcdir)/mk/library.mk
