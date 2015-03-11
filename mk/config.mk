@@ -227,13 +227,15 @@ GCC_LINT?=-DGCC_LINT
 # some defaults that cause most if not all warnings
 # eventually: -Wshadow -pedantic
 ifeq ($(origin WERROR_CFLAGS),undefined)
-#WERROR_CFLAGS ?= -Werror
+WERROR_CFLAGS = -Werror
 endif
 ifeq ($(origin WARNING_CFLAG),undefined)
-WARNING_CFLAGS ?= -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
+WARNING_CFLAGS = -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
 endif
-# WERROR may go away
-WERROR ?= $(WARNING_CFLAGS) $(WERROR_CFLAGS)
+ifeq ($(origin WERROR),undefined)
+# WERROR will go away
+WERROR = $(WARNING_CFLAGS) $(WERROR_CFLAGS)
+endif
 
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
