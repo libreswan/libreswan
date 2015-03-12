@@ -12,8 +12,18 @@
 # Can be eliminated if available space is fragmented.
 KVMPREFIX=/home/build
 
+# XXX: Scripts under testing like to read in this file to determine
+# this file's directory....
+#
+# XXX: This assumes that the source tree's top-level directory is
+# called libreswan.*.  If it isn't it will need to be overridden.
 LIBRESWANDIR=$(readlink -f $0 | sed "s/libreswan.*$/libreswan/")
 
+# /source's mount point, default:
+# SOURCEDIR=${LIBRESWANDIR}
+
+# /testing's mount point, default:
+# TESTINGDIR=${LIBRESWANDIR}/testing
 
 REGRESSRESULTS=${KVMPREFIX}/results
 

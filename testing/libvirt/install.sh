@@ -6,8 +6,13 @@ LIBRESWANSRCDIR=$(dirname $TESTDIR)
 
 source ${LIBRESWANSRCDIR}/kvmsetup.sh
 
-echo "TESTDIR=${TESTDIR}"
-echo "LIBRESWANSRCDIR=${LIBRESWANSRCDIR}"
+# backward commpatible; old kvmsetup.sh files modify LIBRESWASRCDIR
+# and TESTDIR
+TESTINGDIR=${TESTINGDIR:-${TESTDIR}}
+SOURCEDIR=${SOURCEDIR:-${LIBRESWANSRCDIR}}
+
+echo "TESTINGDIR=${TESTINGDIR}"
+echo "SOURCEDIR=${SOURCEDIR}
 echo "POOLSPACE=${POOLSPACE}"
 echo "OSTYPE=${OSTYPE}"
 echo "OSMEDIA=${OSMEDIA}"
@@ -121,8 +126,8 @@ for hostfilename in vm/*; do
     rm -f vm/${hostname}.converted 
     cp vm/${hostname} vm/${hostname}.converted
     sed -i \
-	-e "s:@@TESTDIR@@:${TESTDIR}:" \
-	-e "s:@@LIBRESWANSRCDIR@@:${LIBRESWANSRCDIR}:" \
+	-e "s:@@TESTINGDIR@@:${TESTINGDIR}:" \
+	-e "s:@@SOURCEDIR@@:${SOURCEDIR}:" \
 	-e "s:@@POOLSPACE@@:${POOLSPACE}:" \
 	-e "s:@@USER@@:$(id -u):" \
 	-e "s:@@GROUP@@:$(id -g qemu):" \
