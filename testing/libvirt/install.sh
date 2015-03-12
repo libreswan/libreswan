@@ -81,7 +81,7 @@ if [ ! -f $base.qcow2 ]; then
 	echo "creating $base.img"
 	# create the 8GB disk image ourselves - latest virt-install won't create it
 	chmod ga+x ~ ${POOLSPACE}
-	dd if=/dev/zero of=$base.img bs=1024k count=8192
+	fallocate -l 8G $base.img
     fi
     # install base guest to obtain a file image that will be used as uml root
     # For static networking add kernel args parameters ip=.... etc
