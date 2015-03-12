@@ -1,27 +1,18 @@
 
 if [ -z "${LIBRESWANSRCDIR}" ]; then
-    if [ -f ../../kvmsetup.sh ]; then
-	LIBRESWANSRCDIR=$(cd ../.. && pwd)
-    else
-	if [ -f ../../../kvmsetup.sh ]; then
-	    LIBRESWANSRCDIR=$(cd ../../.. && pwd)
-	fi
-    fi  	
+    echo "LIBRESWANSRCDIR not set" 1>&1
+    exit 1
 fi
-
-if [ ! -f ${LIBRESWANSRCDIR}/kvmsetup.sh ]; then
-    echo "kvmsetup.sh not found at LIBRESWANSRCDIR=${LIBRESWANSRCDIR}/."
-    echo "Is LIBRESWANSRCDIR set correctly?"
-    exit 5
+# starts with /? - the pattern match is anchored
+if ! expr ${LIBRESWANSRCDIR} : / > /dev/null; then
+    echo "${LIBRESWANSRCDIR} needs to be absolute"
+    exit 1
 fi
-
-LIBRESWANSRCDIR=$(cd ${LIBRESWANSRCDIR}; pwd)
-export LIBRESWANSRCDIR
 
 TESTINGROOT=${LIBRESWANSRCDIR}/testing
-UTILS=$(cd ${TESTINGROOT}/utils && pwd)
+UTILS=${TESTINGROOT}/utils
 KLIPSTOP=${LIBRESWANSRCDIR}/linux
-FIXUPDIR=$(cd ${LIBRESWANSRCDIR}/testing/sanitizers && pwd)
+FIXUPDIR=${LIBRESWANSRCDIR}/testing/sanitizers
 CONSOLEDIFFDEBUG=${CONSOLEDIFFDEBUG:-false}
 
 # find this on the path if not already set.
