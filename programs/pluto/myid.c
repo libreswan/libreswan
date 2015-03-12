@@ -56,10 +56,8 @@ const struct id *resolve_myid(const struct id *id)
 	// loglog(RC_LOG_SERIOUS,"resolve_myid() called for id:%s",tmpid);
 
 	if ((id)->kind == ID_MYID) {
-		loglog(RC_LOG_SERIOUS,"resolve_myid() type is ID_MYID");
 		return &myids[myid_state];
 	} else {
-		loglog(RC_LOG_SERIOUS,"resolve_myid() type is not ID_MYID");
 		return id;
 	}
 }
@@ -101,9 +99,6 @@ static void calc_myid_str(enum myid_state s)
 
 void set_myid(enum myid_state s, char *idstr)
 {
-	if (idstr == NULL)
-		loglog(RC_LOG_SERIOUS,"set_myid: passed NULL as idstr");
-
 	if (idstr != NULL) {
 		struct id id;
 		err_t ugh = atoid(idstr, &id, FALSE, FALSE);
@@ -128,7 +123,6 @@ void set_myFQDN(void)
 	char FQDN[HOST_NAME_MAX + 1];
 	int r = gethostname(FQDN, sizeof(FQDN));
 
-	loglog(RC_LOG_SERIOUS,"set_myFQDN() called");
 	free_id_content(&myids[MYID_HOSTNAME]);
 	myids[MYID_HOSTNAME] = empty_id;
 	if (r != 0) {
