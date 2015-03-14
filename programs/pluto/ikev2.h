@@ -209,25 +209,27 @@ void send_v2_notification_invalid_ke_from_state(struct state *st);
 bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
 oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);
 
+stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md);
+
 struct ikev2_payloads_summary {
+	stf_status status;
 	lset_t seen;
 	lset_t repeated;
 };
 
-stf_status ikev2_decode_payloads(struct msg_digest *md,
-				 pb_stream    *in_pbs,
-				 enum next_payload_types_ikev2 np,
-				 struct ikev2_payloads_summary *summary);
+struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
+						    pb_stream *in_pbs,
+						    enum next_payload_types_ikev2 np);
 
 struct ikev2_payload_errors {
+	stf_status status;
 	lset_t bad_repeat;
 	lset_t missing;
 	lset_t unexpected;
 };
 
-stf_status ikev2_verify_payloads(struct ikev2_payloads_summary summary,
-				 const struct state_v2_microcode *svm, bool enc,
-				 struct ikev2_payload_errors *errors);
+struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
+						  const struct state_v2_microcode *svm, bool enc);
 
 void ikev2_log_payload_errors(struct ikev2_payload_errors errors);
 

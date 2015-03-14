@@ -485,10 +485,6 @@ enum phase1_role {
 
 /* Only relevant to IKEv2 */
 
-#define IS_V2_INITIATOR(s) ((s) == STATE_PARENT_I1 || \
-		            (s) == STATE_PARENT_I2 || \
-			    (s) == STATE_PARENT_I3)
-
 /* adding for just a R2 or I3 check. Will need to be changed when parent/child discerning is fixed */
 
 #define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)

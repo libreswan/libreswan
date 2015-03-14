@@ -231,6 +231,29 @@ static char *humanize_number(unsigned long num,
 
 
 /*
+ * Hash table indexed by just the ICOOKIE.
+ *
+ * This is set up to work with any cookie hash table, so, eventually
+ * the code can be re-used on the old hash table.
+ *
+ * Access using hash_entry_common and unhash_entry above.
+ */
+static struct state_hash_table icookie_hash_table = {
+	.name = "icookie hash table",
+};
+
+static void hash_icookie(struct state *st)
+{
+	insert_by_state_cookies(&icookie_hash_table, &st->st_icookie_hash_entry,
+				st->st_icookie, zero_cookie);
+}
+
+static struct state_entry *icookie_chain(const u_char *icookie)
+{
+	return *hash_by_state_cookies(&icookie_hash_table, icookie, zero_cookie);
+}
+
+/*
  * State Table Functions
  *
  * The statetable is organized as a hash table.
@@ -248,30 +271,18 @@ static char *humanize_number(unsigned long num,
  * your relatives.
  */
 
-#define STATE_TABLE_SIZE 32
+static struct state_hash_table statetable = {
+	.name = "state hash table",
+};
 
-static struct state *statetable[STATE_TABLE_SIZE];
+/*
+ * Some macros to ease iterating over the above table
+ */
+#define FOR_EACH_ENTRY(ST, I, CODE) \
+	FOR_EACH_STATE_ENTRY(ST, statetable.entries[I], CODE)
 
-static struct state **state_hash(const u_char *icookie, const u_char *rcookie)
-{
-	u_int i = 0, j;
-
-	DBG(DBG_RAW | DBG_CONTROL, {
-		    DBG_dump("ICOOKIE:", icookie, COOKIE_SIZE);
-		    DBG_dump("RCOOKIE:", rcookie, COOKIE_SIZE);
-	    });
-
-	/* XXX the following hash is pretty pathetic */
-
-	for (j = 0; j < COOKIE_SIZE; j++)
-		i = i * 407 + icookie[j] + rcookie[j];
-
-	i = i % STATE_TABLE_SIZE;
-
-	DBG(DBG_CONTROL, DBG_log("state hash entry %d", i));
-
-	return &statetable[i];
-}
+#define FOR_EACH_HASH_ENTRY(ST, ICOOKIE, RCOOKIE, CODE) \
+	FOR_EACH_HASH_BY_STATE_COOKIES_ENTRY(ST, statetable, ICOOKIE, RCOOKIE, CODE)
 
 /*
  * Get a state object.
@@ -291,6 +302,10 @@ struct state *new_state(void)
 	passert(next_so > SOS_FIRST);   /* overflow can't happen! */
 	st->st_whack_sock = NULL_FD;
 
+	/* back-link the hash entry.  */
+	st->st_hash_entry.state = st;
+	st->st_icookie_hash_entry.state = st;
+
 	anyaddr(AF_INET, &st->hidden_variables.st_nat_oa);
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
@@ -301,13 +316,12 @@ struct state *new_state(void)
 
 /*
  * Initialize the state table
+ *
+ * Redundant.
  */
 void init_states(void)
 {
-	int i;
 
-	for (i = 0; i < STATE_TABLE_SIZE; i++)
-		statetable[i] = (struct state *) NULL;
 }
 
 void delete_state_by_id_name(struct state *st, void *name)
@@ -348,14 +362,14 @@ void v1_delete_state_by_xauth_name(struct state *st, void *name)
 struct state *state_with_serialno(so_serial_t sn)
 {
 	if (sn >= SOS_FIRST) {
-		struct state *st;
 		int i;
-
-		for (i = 0; i < STATE_TABLE_SIZE; i++)
-			for (st = statetable[i]; st != NULL;
-			     st = st->st_hashchain_next)
+		for (i = 0; i < STATE_TABLE_SIZE; i++) {
+			struct state *st;
+			FOR_EACH_ENTRY(st, i, {
 				if (st->st_serialno == sn)
 					return st;
+			});
+		}
 	}
 	return NULL;
 }
@@ -367,22 +381,16 @@ struct state *state_with_serialno(so_serial_t sn)
  */
 void insert_state(struct state *st)
 {
-	struct state **p = state_hash(st->st_icookie, st->st_rcookie);
-
-	passert(st->st_hashchain_prev == NULL &&
-		st->st_hashchain_next == NULL);
-
 	DBG(DBG_CONTROL,
 	    DBG_log("inserting state object #%lu",
-		    st->st_serialno));
-
-	if (*p != NULL) {
-		/* hash chain is not empty; stick st at front */
-		passert((*p)->st_hashchain_prev == NULL);
-		(*p)->st_hashchain_prev = st;
-	}
-	st->st_hashchain_next = *p;
-	*p = st;
+		    st->st_serialno))
+	insert_by_state_cookies(&statetable, &st->st_hash_entry,
+				st->st_icookie, st->st_rcookie);
+	/* 
+	 * Also insert it into the icookie table.  Should be more
+	 * selective about when this is done.
+	 */
+	hash_icookie(st);
 
 	/*
 	 * Ensure that somebody is in charge of killing this state:
@@ -397,60 +405,44 @@ void insert_state(struct state *st)
 }
 
 /*
- * common code to unhash a state: shared by rehash_state and unhash_state
- * The difference is in the rcookie.
+ * unlink a state object from the hash table, update its RCOOKIE and
+ * then, and hash it into the right place.
+ *
+ * This doesn't update ICOOKIE_HASH_TABLE since the ICOOKIE didn't
+ * change.
  */
-static void unhash_state_common(struct state *st, bool rcookie_may_be_previously_known)
+void rehash_state(struct state *st, const u_char *rcookie)
 {
-	struct state **p;
-
-	/* unlink from forward chain (might change bucket head) */
-	if (st->st_hashchain_prev != NULL) {
-		p = &st->st_hashchain_prev->st_hashchain_next;
-	} else if (rcookie_may_be_previously_known) {
-		p = state_hash(st->st_icookie, st->st_rcookie);
-		if (*p != st)
-			p = state_hash(st->st_icookie, zero_cookie);
-	} else {
-		p = state_hash(st->st_icookie, zero_cookie);
-	}
-
-	passert(*p == st);
-	*p = st->st_hashchain_next;
-
-	/* unlink from backward chain */
-	if (st->st_hashchain_next != NULL) {
-		passert(st->st_hashchain_next->st_hashchain_prev == st);
-		st->st_hashchain_next->st_hashchain_prev =
-			st->st_hashchain_prev;
-	}
-
-	st->st_hashchain_next = st->st_hashchain_prev = NULL;
-}
-
-/*
- * unlink a state object from the hash table that had a zero
- * rcookie before, and rehash it into the right place
- */
-void rehash_state(struct state *st)
-{
-	/* unlink from forward chain */
 	DBG(DBG_CONTROL,
 	    DBG_log("rehashing state object #%lu",
 		    st->st_serialno));
 
-	unhash_state_common(st, FALSE);
-
+	/* unlink from forward chain */
+	remove_state_entry(&st->st_hash_entry);
+	/* update the cookie */
+	memcpy(st->st_rcookie, rcookie, COOKIE_SIZE);
 	/* now, re-insert */
-	insert_state(st);
+	insert_by_state_cookies(&statetable, &st->st_hash_entry,
+				st->st_icookie, st->st_rcookie);
+	refresh_state(st); /* just logs change */
+	/*
+	 * insert_state has this, and this code once called
+	 * insert_state.  Is it still needed?
+	 */
+	if (st->st_event == NULL)
+		event_schedule(EVENT_SO_DISCARD, 0, st);
 }
 
 /*
  * unlink a state object from the hash table, but don't free it
  */
-void unhash_state(struct state *st)
+static void unhash_state(struct state *st)
 {
-	unhash_state_common(st, TRUE);
+	DBG(DBG_CONTROL,
+	    DBG_log("unhashing state object #%lu",
+		    st->st_serialno));
+	remove_state_entry(&st->st_hash_entry);
+	remove_state_entry(&st->st_icookie_hash_entry);
 }
 
 /*
@@ -734,15 +726,14 @@ void delete_state(struct state *st)
 bool states_use_connection(const struct connection *c)
 {
 	/* are there any states still using it? */
-	struct state *st = NULL;
 	int i;
-
-	for (i = 0; st == NULL && i < STATE_TABLE_SIZE; i++)
-		for (st = statetable[i]; st != NULL;
-		     st = st->st_hashchain_next)
+	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *st;
+		FOR_EACH_ENTRY(st, i, {
 			if (st->st_connection == c)
 				return TRUE;
-
+			});
+	}
 	return FALSE;
 }
 
@@ -766,18 +757,15 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 	 * ISAKMP SA states found in the first pass, avoiding a second.
 	 */
 	for (pass = 0; pass != 2; pass++) {
-		int i;
-
+		DBG(DBG_CONTROL, DBG_log("pass %d", pass));
 		/* For each hash chain... */
+		int i;
 		for (i = 0; i < STATE_TABLE_SIZE; i++) {
-			struct state *st;
-
-			/* For each state in the hash chain... */
-			for (st = statetable[i]; st != NULL; ) {
-				struct state *this = st;
-
-				/* before this is deleted */
-				st = st->st_hashchain_next;
+			struct state *this;
+			FOR_EACH_ENTRY(this, i, {
+					DBG(DBG_CONTROL,
+					    DBG_log("index %d state #%ld", i,
+						    this->st_serialno));
 
 				/* on pass 2, ignore phase2 states */
 				if (pass == 1 &&
@@ -810,7 +798,7 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 					cur_state = old_cur_state;
 					set_debugging(old_cur_debugging);
 				}
-			}
+			});
 		}
 	}
 }
@@ -837,15 +825,10 @@ static bool same_phase1_sa_relations(struct state *this,
 
 void delete_states_dead_interfaces(void)
 {
-	struct state *st = NULL;
 	int i;
-
-	for (i = 0; st == NULL && i < STATE_TABLE_SIZE; i++)
-		for (st = statetable[i]; st != NULL; ) {
-			struct state *this = st;
-
-			/* before this is deleted */
-			st = st->st_hashchain_next;
+	for (i = 0; i < STATE_TABLE_SIZE; i++) {
+		struct state *this;
+		FOR_EACH_ENTRY(this, i, {
 			if (this->st_interface &&
 			    this->st_interface->change == IFN_DELETE) {
 				libreswan_log(
@@ -855,7 +838,8 @@ void delete_states_dead_interfaces(void)
 				delete_state(this);
 				/* note: no md->st to clear */
 			}
-		}
+		});
+	}
 }
 
 /*
@@ -873,6 +857,8 @@ void delete_states_by_connection(struct connection *c, bool relations)
 {
 	enum connection_kind ck = c->kind;
 	struct spd_route *sr;
+
+	DBG(DBG_CONTROL, DBG_log("Deleting states for connection"));
 
 	/*
 	 * save this connection's isakmp SA,
@@ -963,16 +949,9 @@ void delete_states_by_peer(const ip_address *peer)
 	for (ph1 = 0; ph1 < 2; ph1++) {
 		/* For each hash chain... */
 		for (i = 0; i < STATE_TABLE_SIZE; i++) {
-			struct state *st;
-
-			/* For each state in the hash chain... */
-			for (st = statetable[i]; st != NULL; ) {
-				struct state *this = st;
+			struct state *this;
+			FOR_EACH_ENTRY(this, i, {
 				struct connection *c = this->st_connection;
-
-				/* before this is deleted */
-				st = st->st_hashchain_next;
-
 				DBG(DBG_CONTROL, {
 					ipstr_buf b;
 					DBG_log("comparing %s to %s",
@@ -996,7 +975,7 @@ void delete_states_by_peer(const ip_address *peer)
 							this);
 					}
 				}
-			}
+			});
 		}
 	}
 }
@@ -1036,6 +1015,7 @@ struct state *duplicate_state(struct state *st)
 	nst->st_clonedfrom = st->st_serialno;
 	nst->st_import = st->st_import;
 	nst->st_ikev2 = st->st_ikev2;
+	nst->st_role = st->st_role;
 	nst->st_seen_fragvid = st->st_seen_fragvid;
 	nst->st_seen_fragments = st->st_seen_fragments;
 	nst->st_event = NULL;
@@ -1095,12 +1075,10 @@ void for_each_state(void (*f)(struct state *, void *data), void *data)
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;
-
-		for (st = statetable[i]; st != NULL;
-		     st = st->st_hashchain_next) {
+		FOR_EACH_ENTRY(st, i, {
 			set_cur_state(st);
 			f(st, data);
-		}
+		});
 	}
 	cur_state = ocs;
 }
@@ -1112,9 +1090,8 @@ struct state *find_state_ikev1(const u_char *icookie,
 			       const u_char *rcookie,
 			       msgid_t /*network order*/ msgid)
 {
-	struct state *st = *state_hash(icookie, rcookie);
-
-	while (st != (struct state *) NULL) {
+	struct state *st;
+	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
 		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    !st->st_ikev2) {
@@ -1126,8 +1103,7 @@ struct state *find_state_ikev1(const u_char *icookie,
 			if (msgid == st->st_msgid)
 				break;
 		}
-		st = st->st_hashchain_next;
-	}
+	});
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
@@ -1149,9 +1125,8 @@ struct state *find_state_ikev1(const u_char *icookie,
 struct state *find_state_ikev2_parent(const u_char *icookie,
 				      const u_char *rcookie)
 {
-	struct state *st = *state_hash(icookie, rcookie);
-
-	while (st != (struct state *) NULL) {
+	struct state *st;
+	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
 		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2 &&
@@ -1161,8 +1136,7 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 				    st->st_serialno));
 			break;
 		}
-		st = st->st_hashchain_next;
-	}
+	});
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
@@ -1178,36 +1152,40 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 }
 
 /*
- * Find a state object for an IKEv2 state, looking by icookie only.
- * Note: only finds parent states.
+ * Find a state object for an IKEv2 state, looking by icookie only and
+ * only matching "struct state" objects in the correct state.
+ *
+ * Note: only finds parent states (this is ok as only interested in
+ * state objects in the initial state).
  */
-struct state *find_state_ikev2_parent_init(const u_char *icookie)
+struct state *find_state_ikev2_parent_init(const u_char *icookie,
+					   enum state_kind expected_state)
 {
-	struct state *st = *state_hash(icookie, zero_cookie);
-
-	while (st != (struct state *) NULL) {
-		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
-		    st->st_ikev2 &&
-		    !IS_CHILD_SA(st)) {
+	struct state *st;
+	FOR_EACH_STATE_ENTRY(st, icookie_chain(icookie), {
+			if (!st->st_ikev2) {
+				continue;
+			}
+			if (st->st_state != expected_state) {
+				continue;
+			}
+			if (!memeq(icookie, st->st_icookie, COOKIE_SIZE)) {
+				continue;
+			}
+			if (IS_CHILD_SA(st)) {
+				continue;
+			}
 			DBG(DBG_CONTROL,
 			    DBG_log("parent_init v2 peer and cookies match on #%ld",
-				    st->st_serialno));
-			break;
-		}
-		st = st->st_hashchain_next;
-	}
-
-	DBG(DBG_CONTROL, {
-		    if (st == NULL) {
-			    DBG_log("parent_init v2 state object not found");
-		    } else {
+				    st->st_serialno);
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
-				    enum_show(&state_names, st->st_state));
-		    }
-	    });
+				    enum_show(&state_names, st->st_state)));
+			return st;
+		});
 
-	return st;
+	DBG(DBG_CONTROL, DBG_log("parent_init v2 state object not found"));
+	return NULL;
 }
 
 /*
@@ -1217,9 +1195,8 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 				     const u_char *rcookie,
 				     msgid_t msgid)
 {
-	struct state *st = *state_hash(icookie, rcookie);
-
-	while (st != (struct state *) NULL) {
+	struct state *st;
+	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
 		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2 &&
@@ -1229,8 +1206,7 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 				    st->st_serialno));
 			break;
 		}
-		st = st->st_hashchain_next;
-	}
+	});
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
@@ -1254,9 +1230,8 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 					       u_int8_t protoid,
 					       ipsec_spi_t spi)
 {
-	struct state *st = *state_hash(icookie, rcookie);
-
-	while (st != (struct state *) NULL) {
+	struct state *st;
+	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
 		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    st->st_ikev2 && IS_CHILD_SA(st)) {
@@ -1281,8 +1256,7 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 			}
 
 		}
-		st = st->st_hashchain_next;
-	}
+	});
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
@@ -1305,9 +1279,8 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 			      const ip_address *peer UNUSED,
 			      msgid_t /* network order */ msgid)
 {
-	struct state *st = *state_hash(icookie, rcookie);
-
-	while (st != (struct state *) NULL) {
+	struct state *st;
+	FOR_EACH_HASH_ENTRY(st, icookie, rcookie, {
 		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE)) {
 			DBG(DBG_CONTROL,
@@ -1321,8 +1294,7 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 			    msgid == st->st_msgid)
 				break;
 		}
-		st = st->st_hashchain_next;
-	}
+	});
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
@@ -1343,18 +1315,18 @@ struct state *ikev1_find_info_state(const u_char *icookie,
  */
 struct state *find_sender(size_t packet_len, u_char *packet)
 {
-	int i;
-	struct state *st;
-
 	if (packet_len >= sizeof(struct isakmp_hdr)) {
-		for (i = 0; i < STATE_TABLE_SIZE; i++)
-			for (st = statetable[i]; st != NULL;
-			     st = st->st_hashchain_next)
+		int i;
+		for (i = 0; i < STATE_TABLE_SIZE; i++) {
+			struct state *st;
+			FOR_EACH_ENTRY(st, i, {
 				if (st->st_tpacket.ptr != NULL &&
 				    st->st_tpacket.len == packet_len &&
 				    memeq(st->st_tpacket.ptr, packet,
 					   packet_len))
 					return st;
+			});
+		}
 	}
 
 	return NULL;
@@ -1370,8 +1342,7 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 
 	*bogus = FALSE;
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		for (st = statetable[i]; st != NULL;
-			st = st->st_hashchain_next) {
+		FOR_EACH_ENTRY(st, i, {
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state) &&
 				p1st->st_connection->host_pair ==
 				st->st_connection->host_pair &&
@@ -1389,7 +1360,7 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 						*bogus = TRUE;
 				}
 			}
-		}
+		});
 	}
 	return NULL;
 }
@@ -1399,21 +1370,19 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
  */
 struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 {
-	struct state
-		*st,
-		*best = NULL;
+	struct state *best = NULL;
 	int i;
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		for (st = statetable[i]; st != NULL;
-			st = st->st_hashchain_next) {
+		struct state *st;
+		FOR_EACH_ENTRY(st, i, {
 			if (LHAS(ok_states, st->st_state) &&
 				c->host_pair == st->st_connection->host_pair &&
 				same_peer_ids(c, st->st_connection, NULL) &&
 				(best == NULL ||
 					best->st_serialno < st->st_serialno))
 				best = st;
-		}
+		});
 	}
 
 	return best;
@@ -1421,13 +1390,11 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 
 void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			unsigned long count, monotime_t nw)
-{
-	struct state *st;
-	int i;
+{	int i;
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		for (st = statetable[i]; st != NULL;
-			st = st->st_hashchain_next) {
+		struct state *st;
+		FOR_EACH_ENTRY(st, i, {
 			struct connection *c = st->st_connection;
 
 			/* XXX spd-enum */
@@ -1442,7 +1409,7 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 				}
 				return;
 			}
-		}
+		});
 	}
 	DBG(DBG_CONTROL,
 	    {
@@ -1811,11 +1778,10 @@ void show_states_status(bool list_traffic)
 	/* make count of states */
 	count = 0;
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
-		struct state *st;
-
-		for (st = statetable[i]; st != NULL;
-		     st = st->st_hashchain_next)
+		struct state *st UNUSED;
+		FOR_EACH_ENTRY(st, i, {
 			count++;
+		});
 	}
 
 	if (count != 0) {
@@ -1832,10 +1798,9 @@ void show_states_status(bool list_traffic)
 		count = 0;
 		for (i = 0; i < STATE_TABLE_SIZE; i++) {
 			struct state *st;
-
-			for (st = statetable[i]; st != NULL;
-				st = st->st_hashchain_next)
+			FOR_EACH_ENTRY(st, i, {
 				array[count++] = st;
+			});
 		}
 
 		/* sort it! */
@@ -1889,9 +1854,7 @@ startover:
 	closest = ~0;   /* not close at all */
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;
-
-		for (st = statetable[i]; st != NULL;
-		     st = st->st_hashchain_next) {
+		FOR_EACH_ENTRY(st, i, {
 			if (st->st_ipcomp.present) {
 				cpi_t c = ntohl(st->st_ipcomp.our_spi) - base;
 
@@ -1919,7 +1882,7 @@ startover:
 					closest = c;
 				}
 			}
-		}
+		});
 	}
 	*latest_cpi = base;	/* base is first in next free range */
 	*first_busy_cpi = closest + base;	/* and this is the roof */
@@ -1950,8 +1913,7 @@ startover:
 	 */
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		const struct state *s;
-
-		for (s = statetable[i]; s != NULL; s = s->st_hashchain_next) {
+		FOR_EACH_ENTRY(s, i, {
 			if (s->st_ipcomp.present &&
 			    sameaddr(&s->st_connection->spd.that.host_addr,
 				     &st->st_connection->spd.that.host_addr) &&
@@ -1961,7 +1923,7 @@ startover:
 
 				goto startover;
 			}
-		}
+		});
 	}
 	return cpi;
 }
@@ -2012,27 +1974,14 @@ void delete_my_family(struct state *pst, bool v2_responder_state)
 	struct state *st;
 
 	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
-
-	/* find first in chain */
-	for (st = pst; st->st_hashchain_prev != NULL; )
-		st = st->st_hashchain_prev;
-
-	/* delete each of our children */
-	while (st != NULL) {
-		/*
-		 * since we might be deleting st, we need to
-		 * grab onto its successor first
-		 */
-		struct state *next_st = st->st_hashchain_next;
-
+	FOR_EACH_HASH_ENTRY(st, pst->st_icookie, pst->st_rcookie, {
 		if (st->st_clonedfrom == pst->st_serialno) {
 			if (v2_responder_state)
 				change_state(st, STATE_CHILDSA_DEL);
 			delete_state(st);
 		}
-		st = next_st;
 		/* note: no md->st to clear */
-	}
+	});
 
 	/* delete self */
 	if (v2_responder_state)

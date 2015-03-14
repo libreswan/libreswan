@@ -132,6 +132,7 @@ DISTSRC = \
 	rnd.c rnd.h \
 	server.c server.h \
 	state.c state.h \
+	state_entry.c state_entry.h \
 	${SYSDEP_SRC} \
 	timer.c timer.h \
 	$(X509_DIST_SRCS) \
@@ -156,6 +157,7 @@ OBJSPLUTO += gcm_test_vectors.o
 OBJSPLUTO += test_buffer.o
 OBJSPLUTO += pending.o cookie.o crypto.o defs.o
 OBJSPLUTO += foodgroups.o log.o state.o plutomain.o plutoalg.o server.o
+OBJSPLUTO += state_entry.o
 OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
 OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
