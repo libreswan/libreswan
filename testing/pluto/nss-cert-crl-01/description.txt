@@ -1,0 +1,5 @@
+ocsp: west sends OK cert
+      east sends OK cert
+
+	using the mainca CRL, no fetch
+	west's cert is not on the CRL: pass

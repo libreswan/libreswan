@@ -63,7 +63,6 @@
 #include "ikev1_quick.h"
 #include "whack.h"
 #include "fetch.h"
-#include "pkcs.h"
 #include "asn1.h"
 
 #include "sha1.h"
@@ -84,7 +83,7 @@
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.

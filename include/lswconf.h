@@ -34,6 +34,7 @@ struct lsw_conf_options {
 	char *policies_dir;		/* "/etc/ipsec.d/policies" */
 	char *cacerts_dir;		/* "/etc/ipsec.d/cacerts" */
 	char *crls_dir;			/* "/etc/ipsec.d/crls" */
+	char *nssdir;			/* "/var/lib/pluto" */
 };
 
 typedef struct {

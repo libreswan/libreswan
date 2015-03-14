@@ -42,7 +42,10 @@ extern state_transition_fn
 	aggr_inI1_outR1,
 	aggr_inR1_outI2,
 	aggr_inI2;
-
+/*
+ * forward
+ */
+struct oakley_group_desc;
 extern bool send_delete(struct state *st);
 extern bool accept_delete(struct msg_digest *md,
 			  struct payload_digest *p);

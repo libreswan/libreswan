@@ -34,6 +34,7 @@ BINNAMEPLUTO = pluto
 BINNAMEWHACK = whack
 BINNAMEWHACKINIT = whackinit
 BINNAMEADNS = _pluto_adns
+BINNAMEIMPORTCRL = _import_crl
 
 OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 SYSDEP_SRC=sysdep_${OSDEP}.c
@@ -51,7 +52,7 @@ endif
 LIBSADNS = $(LIBRESWANLIB)
 LIBSADNS += -lresolv # -lefence
 
-LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB) -lrt
+LIBSPLUTO += $(IPSECCONFLIB) $(LIBRESWANLIB)   -lrt
 ifeq ($(USE_DNSSEC),true)
 LIBSPLUTO += -lunbound
 endif
@@ -114,7 +115,7 @@ DISTSRC = \
 	ikev1_msgid.c \
         ikev2.c ikev2_parent.c ikev2_child.c ikev2_crypto.c \
 	ikev2_prfplus.c ikev2_spdb_struct.c \
-	ikev2_rsa.c ikev2_psk.c ikev2_x509.c \
+	ikev2_rsa.c ikev2_psk.c \
 	kernel.c kernel.h \
 	${NETKEY_SRCS} \
 	${KLIPS_SRCS} ${MAST_SRCS} ${WIN2K_SRCS} \
@@ -144,7 +145,10 @@ DISTSRC = \
 	${AGGRESSIVE_DIST_SRCS} \
 	${LABELED_IPSEC_DIST_SRCS} \
 	packet.c pluto_constants.c readwhackmsg.c \
-	certload.c pem.c pkcs.c \
+	nss_cert_load.c nss_cert_load.h pem.c \
+	nss_cert_vfy.c nss_cert_vfy.h \
+	nss_ocsp.c nss_ocsp.h \
+	nss_crl_import.c nss_crl_import.h \
 	${UDPFROMTO_SRCS}
 
 DIST = $(DISTMISC) $(DISTSRC)
@@ -162,7 +166,7 @@ OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
 OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o 
-OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_x509.o ikev2_crypto.o ikev2_prfplus.o
+OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o ikev2_prfplus.o
 OBJSPLUTO += kernel.o
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
 OBJSPLUTO += kernel_noklips.o rcv_whack.o
@@ -181,7 +185,8 @@ OBJSPLUTO += ${X509_OBJS} ${THREADS_OBJS}
 OBJSPLUTO += ${OBJSLIBPLUTO}
 OBJSPLUTO += ${SYSDEP_OBJ}
 OBJSPLUTO += packet.o pluto_constants.o readwhackmsg.o
-OBJSPLUTO += certload.o pem.o pkcs.o
+OBJSPLUTO += nss_cert_load.o pem.o nss_cert_vfy.o
+OBJSPLUTO += nss_ocsp.o nss_crl_import.o
 OBJSPLUTO += ${UDPFROMTO_SRCS:.c=.o}
 
 OBJSADNS = adns.o

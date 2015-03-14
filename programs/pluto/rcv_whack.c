@@ -49,7 +49,7 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
@@ -319,8 +319,9 @@ static void key_add_request(const struct whack_message *msg)
  */
 void whack_process(int whackfd, const struct whack_message msg)
 {
-	const struct lsw_conf_options *oco = lsw_init_options();
-
+	/* May be needed in future:
+	 * const struct lsw_conf_options *oco = lsw_init_options();
+	 */
 	if (msg.whack_options) {
 		switch (msg.opt_set) {
 		case WHACK_ADJUSTOPTIONS:
@@ -452,10 +453,12 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_list & LIST_PUBKEYS)
 		list_public_keys(msg.whack_utc, msg.whack_check_pub_keys);
 
+#if 0
 	if (msg.whack_reread & REREAD_CACERTS) {
 		load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
 		load_authcerts_from_nss("CA cert", AUTH_CA);
 	}
+#endif
 
 	if (msg.whack_reread & REREAD_CRLS)
 		load_crls();
@@ -464,13 +467,13 @@ void whack_process(int whackfd, const struct whack_message msg)
 		list_psks();
 
 	if (msg.whack_list & LIST_CERTS)
-		list_certs(msg.whack_utc);
+		list_certs();
 
 	if (msg.whack_list & LIST_CACERTS)
-		list_authcerts("CA", AUTH_CA, msg.whack_utc);
+		list_authcerts();
 
 	if (msg.whack_list & LIST_CRLS) {
-		list_crls(msg.whack_utc, strict_crl_policy);
+		list_crls();
 #if defined(LIBCURL) || defined(LDAP_VER)
 		list_crl_fetch_requests(msg.whack_utc);
 #endif

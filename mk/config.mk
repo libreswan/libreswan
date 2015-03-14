@@ -128,6 +128,7 @@ VARDIR?=$(DESTDIR)$(FINALVARDIR)
 FINALLOGDIR?=$(FINALVARDIR)/log
 LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
 
+NSSDIR?=$(FINALCONFDDIR)
 
 # An attempt is made to automatically figure out where boot/shutdown scripts 
 # will finally go:  the first directory in INC_RCDIRS which exists gets them.
@@ -413,7 +414,6 @@ OBJDIRTOP?=${LIBRESWANSRCDIR}/${OBJDIR}
 export OBJDIR
 export OBJDIRTOP
 
-
 ### paths within the source tree
 
 KLIPSINC=${LIBRESWANSRCDIR}/linux/include
@@ -471,6 +471,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
+			-e "s:@IPSEC_NSSDIR@:$(NSSDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@MODPROBE@:$(MODPROBE):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \

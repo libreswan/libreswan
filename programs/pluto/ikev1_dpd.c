@@ -60,8 +60,7 @@
 #include "pending.h" /* for flush_pending_by_connection */
 
 #include "ikev1_dpd.h"
-#include "x509more.h"
-
+#include "pluto_x509.h"
 /**
  * Initialize RFC 3706 Dead Peer Detection
  *

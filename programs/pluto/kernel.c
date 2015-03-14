@@ -61,7 +61,7 @@
 #include "kernel_bsdkame.h"
 #include "packet.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "log.h"
 #include "server.h"
@@ -445,7 +445,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&sr->that.id, &key->id) &&
-			    trusted_ca(key->issuer, sr->that.ca, &pathlen)) {
+			    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen)) {
 				dntoa_or_null(peerca_str, IDTOA_BUF,
 					key->issuer, "");
 				escape_metachar(peerca_str, secure_peerca_str,

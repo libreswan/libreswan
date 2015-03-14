@@ -28,6 +28,7 @@ SUBDIRS+=_secretcensor _updown
 SUBDIRS+=auto barf verify ipsec look newhostkey secrets 
 SUBDIRS+=rsasigkey setup showhostkey
 SUBDIRS+=ikeping readwriteconf
+SUBDIRS+=_import_crl
 
 ifeq ($(USE_KLIPS),true)
 SUBDIRS+= _updown.klips 
