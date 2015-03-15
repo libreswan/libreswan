@@ -1189,7 +1189,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	switch(op) {
 	case LAK_PARENT_START:
 	case LAK_PARENT_DESTROY:
-		initiator = IS_V2_INITIATOR(st->st_state) || IS_PHASE1_INIT(st->st_state);
+		initiator = (st->st_role == O_INITIATOR) || IS_PHASE1_INIT(st->st_state);
 		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=%ld ike-version=%s auth=%s",
 			op == LAK_PARENT_START ? "start" : "destroy",
 			initiator ? "initiator" : "responder",
