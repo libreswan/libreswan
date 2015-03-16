@@ -34,14 +34,14 @@ endif
 USERLAND_CFLAGS+=$(DEBUG_CFLAGS)
 
 ifeq ($(origin OPTIMIZE_CFLAGS),undefined)
-OPTIMIZE_CFLAGS=-O2
+OPTIMIZE_CFLAGS=-O2 -Wp,-D_FORTIFY_SOURCE=2
 endif
 USERLAND_CFLAGS+=$(OPTIMIZE_CFLAGS)
 
 # Dumping ground for an arbitrary set of flags.  Should probably be
 # separated out.
 ifeq ($(origin USERCOMPILE),undefined)
-USERCOMPILE= -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE -DFORCE_PR_ASSERT
+USERCOMPILE= -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE -DFORCE_PR_ASSERT
 endif
 USERLAND_CFLAGS+=$(USERCOMPILE)
 
