@@ -28,8 +28,10 @@ fi
 
 failure=0
 
-for host in $LIBRESWANHOSTS
+for host in $(../../utils/kvmhosts.sh)
 do
+   # The host list includes "nic" but that is ok as the checks below
+   # filter it out.
    if [ -f "${host}.console.txt" ]
    then
 	#echo "re-sanitizing ${host}"

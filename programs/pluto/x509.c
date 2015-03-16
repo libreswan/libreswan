@@ -1326,7 +1326,7 @@ bool ikev2_send_cert_decision(struct state *st)
 }
 
 stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-				     enum phase1_role role UNUSED,
+				     enum original_role role UNUSED,
 				     enum next_payload_types_ikev2 np,
 				     pb_stream *outpbs)
 {
@@ -1369,13 +1369,13 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 }
 
 static bool ikev2_send_certreq_INIT_decision(struct state *st,
-					     enum phase1_role role)
+					     enum original_role role)
 {
 	struct connection *c;
 
 	DBG(DBG_CONTROL, DBG_log("IKEv2 CERTREQ: send a cert request?"));
 
-	if (role != O_INITIATOR) {
+	if (role != ORIGINAL_INITIATOR) {
 		DBG(DBG_CONTROL,
 			DBG_log("IKEv2 CERTREQ: not the original initiator"));
 		return FALSE;
@@ -1409,7 +1409,7 @@ static bool ikev2_send_certreq_INIT_decision(struct state *st,
 
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually)  */
 stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
-			   enum phase1_role role,
+			   enum original_role role,
 			   enum next_payload_types_ikev2 np,
 			   pb_stream *outpbs)
 {

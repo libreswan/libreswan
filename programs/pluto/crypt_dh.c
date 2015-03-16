@@ -1066,7 +1066,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	 * need gi on responder, gr on initiator
 	 */
 
-	setchunk_from_wire(g, &dhq, dhq.role == O_RESPONDER ? &dhq.gi : &dhq.gr);
+	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT,
 	    DBG_dump_chunk("peer's g: ", g));
@@ -1123,7 +1123,7 @@ void calc_dh(struct pluto_crypto_req *r)
 
 	/* now calculate the (g^x)(g^y) */
 
-	setchunk_from_wire(g, &dhq, dhq.role == O_RESPONDER ? &dhq.gi : &dhq.gr);
+	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
@@ -1605,7 +1605,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 
 	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
 
-	setchunk_from_wire(g, &dhq, dhq.role == O_RESPONDER ? &dhq.gi : &dhq.gr);
+	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 

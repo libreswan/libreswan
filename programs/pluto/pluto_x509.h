@@ -60,12 +60,12 @@ extern int get_auth_chain(chunk_t *out_chain, int chain_max,
 					      bool full_chain);
 extern bool ikev2_send_cert_decision(struct state *st);
 extern stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-				     enum phase1_role role UNUSED,
+				     enum original_role role UNUSED,
 				     enum next_payload_types_ikev2 np,
 				     pb_stream *outpbs);
 
 stf_status ikev2_send_cert(struct state *st, struct msg_digest *md,
-			   enum phase1_role role,
+			   enum original_role role,
 			   enum next_payload_types_ikev2 np,
 			   pb_stream *outpbs);
 extern int filter_dotfiles(

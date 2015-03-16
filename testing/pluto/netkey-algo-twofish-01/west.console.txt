@@ -132,7 +132,7 @@ west #
 000 "westnet-eastnet-twofish":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-twofish":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-twofish":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-twofish":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-twofish":   labeled_ipsec:no; 
 000 "westnet-eastnet-twofish":    policy_label:unset; 
 000 "westnet-eastnet-twofish":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-twofish":   retransmit-interval: 500ms; retransmit-timeout: 60s;

@@ -24,7 +24,7 @@ east #
 000 "nss-cert-ocsp":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east_chain_endcert
 000 "nss-cert-ocsp":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "nss-cert-ocsp":   labeled_ipsec:no, loopback:no; 
+000 "nss-cert-ocsp":   labeled_ipsec:no; 
 000 "nss-cert-ocsp":    policy_label:unset; 
 000 "nss-cert-ocsp":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_int_2.testing.libreswan.org, E=testing@libreswan.org'...'%any'
 000 "nss-cert-ocsp":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;

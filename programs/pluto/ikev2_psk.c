@@ -64,7 +64,7 @@ static u_char psk_key_pad_str[] = "Key Pad for IKEv2";  /* 4306  2:15 */
 static int psk_key_pad_str_len = 17;                    /* sizeof( psk_key_pad_str); -1 */
 
 static bool ikev2_calculate_psk_sighash(struct state *st,
-					enum phase1_role role,
+					enum original_role role,
 					unsigned char *idhash,
 					chunk_t firstpacket,
 					unsigned char *signed_octets)
@@ -156,7 +156,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	    DBG_dump("inner prf output", prf_psk, hash_len));
 
 	/* decide nonce based on the role */
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		/* on initiator, we need to hash responders nonce */
 		nonce = &st->st_nr;
 		nonce_name = "inputs to hash2 (responder nonce)";
@@ -223,7 +223,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 }
 
 bool ikev2_calculate_psk_auth(struct state *st,
-			      enum phase1_role role,
+			      enum original_role role,
 			      unsigned char *idhash,
 			      pb_stream *a_pbs)
 {
@@ -245,7 +245,7 @@ bool ikev2_calculate_psk_auth(struct state *st,
 }
 
 stf_status ikev2_verify_psk_auth(struct state *st,
-				 enum phase1_role role,
+				 enum original_role role,
 				 unsigned char *idhash,
 				 pb_stream *sig_pbs)
 {
@@ -253,9 +253,9 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 	unsigned char calc_hash[hash_len];
 	size_t sig_len = pbs_left(sig_pbs);
 
-	enum phase1_role invertrole;
+	enum original_role invertrole;
 
-	invertrole = (role == O_INITIATOR ? O_RESPONDER : O_INITIATOR);
+	invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 
 	if (sig_len != hash_len) {
 		libreswan_log("negotiated prf: %s ",

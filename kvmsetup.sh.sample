@@ -41,10 +41,6 @@ OSMEDIA=http://download.fedoraproject.org/pub/fedora/linux/releases/21/Server/x8
 
 # Everything below should probably be left unchanged
 
-# note that "nic" and "sec" are the same host in different configurations
-REGULARHOSTS="nic"
-LIBRESWANHOSTS="east west road north"
-
 # tell system location of special tcpdump, if any
 TCPDUMP=/usr/sbin/tcpdump
 export TCPDUMP

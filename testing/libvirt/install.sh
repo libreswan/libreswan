@@ -1,5 +1,6 @@
 #!/bin/sh -x
 
+# Assume this script is in testing/libvirt/ adjacent to testing/utils/
 TESTING=$(dirname $(readlink -f $0))
 TESTDIR=$(dirname $TESTING)
 LIBRESWANSRCDIR=$(dirname $TESTDIR)
@@ -113,8 +114,7 @@ if [ ! -f $base.qcow2 ]; then
     sudo qemu-img convert -O qcow2 $base.img $base.qcow2
 fi
 
-for hostfilename in vm/*; do
-    hostname=$(basename ${hostfilename})
+for hostname in $(${TESTDIR}/utils/kvmhosts.sh); do
     # Use the the base disk to create VM disks
     qemu-img create -F qcow2 -f qcow2 \
 	-b $base.qcow2 ${POOLSPACE}/${hostname}.qcow2
