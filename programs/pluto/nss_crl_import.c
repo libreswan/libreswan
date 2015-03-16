@@ -25,8 +25,12 @@
 #include <sys/wait.h>
 #include <cert.h>
 #include "nss_crl_import.h"
-
 #include <certdb.h>
+#include "log.h"
+#include "lswalloc.h"
+
+static const char crl_name[] = "_import_crl";
+
 /* 
  * Calls the _import_crl process to add a CRL to the NSS db.
  */
@@ -40,6 +44,8 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 	SECItem crl_si;
 	char *arg[4] = { NULL };
 	char lenarg[32];
+	char crl_path_space[4096]; /* plenty long? */
+	ssize_t n = 0;
 	int wstatus;
 	int ret = -1;
 	int pfd[2];
@@ -50,9 +56,40 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 	}
 
 	snprintf(lenarg, sizeof(lenarg), "%lu", len);
-	arg[0] = PLUTO_CRL_HELPER;
 	arg[1] = (char *)url;
 	arg[2] = lenarg;
+
+	/* find a pathname to the CRL import helper */
+#if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
+	/*
+	 * The program will be in the same directory as Pluto,
+	 * so we use the sympolic link /proc/self/exe to
+	 * tell us of the path prefix.
+	 */
+	n = readlink("/proc/self/exe", crl_path_space,
+		sizeof(crl_path_space));
+	if (n < 0) {
+# ifdef __uClibc__
+	/* on some nommu we have no proc/self/exe, try without path */
+	*crl_path_space = '\0';
+	n = 0;
+# else
+	exit_log_errno((e, "readlink(\"/proc/self/exe\") failed for crl helper"));
+# endif
+	}
+#else
+	arg[0] = clone_str("/usr/local/libexec/ipsec/_import_crl","crl helper");
+#endif
+
+	if ((size_t)n > sizeof(crl_path_space) - sizeof(crl_name))
+                        exit_log("path to %s is too long", crl_name);
+
+	while (n > 0 && crl_path_space[n - 1] != '/')
+		n--;
+
+	strcpy(crl_path_space + n, crl_name);
+
+	arg[0] = clone_str(crl_path_space, "crl path");
 
 	DBG_log("Calling %s to import CRL - url: %s, der size: %s",
 						  arg[0],
@@ -141,6 +178,7 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 					 WEXITSTATUS(wstatus));
 			ret = WEXITSTATUS(wstatus);
 		}
+		pfree(arg[0]);
 		break;
 	}
 
