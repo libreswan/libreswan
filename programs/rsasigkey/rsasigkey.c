@@ -75,7 +75,7 @@
 #define E       3               /* standard public exponent */
 /* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
 
-#define NSSDIR "/etc/ipsec.d"
+#define NSSDIR "sql:/etc/ipsec.d"
 
 char *progname;
 char usage[] =

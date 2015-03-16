@@ -26,7 +26,7 @@ verbose=
 host=
 random="--random /dev/random"
 output="@FINALCONFDIR@/ipsec.secrets"
-configdir="@FINALCONFDDIR@"
+configdir="@FINALNSSDIR@"
 password=
 for dummy; do
     case "$1" in
@@ -97,7 +97,7 @@ if [ ! -d ${configdir} ]; then
     exit 255
 fi
 
-certutil -L -d $configdir >/dev/null 2>/dev/null
+certutil -L -d sql:$configdir >/dev/null 2>/dev/null
 RETVAL=$?
 if [ ${RETVAL} -eq 255 ]; then
     echo "NSS database in $configdir not initialized."
@@ -105,7 +105,7 @@ if [ ${RETVAL} -eq 255 ]; then
     exit 255
 fi
 
-key=$(ipsec rsasigkey ${verbose} ${random} --configdir ${configdir} ${password} ${host} ${bits})
+key=$(ipsec rsasigkey ${verbose} ${random} --configdir sql:${configdir} ${password} ${host} ${bits})
 RETVAL=$?
 if [ ${RETVAL} -eq 0 ]; then
     umask 077
