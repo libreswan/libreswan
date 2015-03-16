@@ -110,8 +110,8 @@ enum smf2_flags {
 	 * Don't assume this flag is present.  If initiator and
 	 * responder share states then this value will absent.
 	 *
-	 * Do not use this to determine O_INITIATOR vs O_RESPONDER.
-	 * Instead use either md->role or st->st_role field.
+	 * Do not use this to determine ORIGINAL_INITIATOR vs ORIGINAL_RESPONDER.
+	 * Instead use either md->original_role or st->st_original_role field.
 	 *
 	 * Arguably, this could be made a separate 3 state variable.
 	 */
@@ -672,10 +672,10 @@ void process_v2_packet(struct msg_digest **mdp)
 	
 	if (ike_i) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
-		md->role = O_RESPONDER;
+		md->original_role = ORIGINAL_RESPONDER;
 	} else {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Initiator"));
-		md->role = O_INITIATOR;
+		md->original_role = ORIGINAL_INITIATOR;
 	}
 
 	/*
@@ -701,7 +701,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		enum state_kind expected_state = (ike_i ? STATE_PARENT_R1 : STATE_PARENT_I1);
 		st = find_state_ikev2_parent_init(md->hdr.isa_icookie,
 						  expected_state);
-		if (st != NULL && md->role == O_INITIATOR) {
+		if (st != NULL && md->original_role == ORIGINAL_INITIATOR) {
 			/*
 			 * Responder provided a cookie, record it.
 			 *
@@ -792,7 +792,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	 * Is the original role correct?
 	 */
 	if (st != NULL) {
-		if (st->st_role != md->role) {
+		if (st->st_original_role != md->original_role) {
 			DBG(DBG_CONTROL,
 			    DBG_log("state and md roles conflict; dropping packet"));
 			return;
@@ -1231,7 +1231,7 @@ void ikev2_update_msgid_counters(struct msg_digest *md)
 }
 
 time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-		enum phase1_role role)
+		enum original_role role)
 {
 	enum event_type kind = *pkind;
 	time_t delay;   /* unwrapped deltatime_t */
@@ -1284,7 +1284,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		/* unwrapped deltatime_t */
 		time_t marg = deltasecs(c->sa_rekey_margin);
 
-		if (role == O_INITIATOR) {
+		if (role == ORIGINAL_INITIATOR) {
 			marg += marg *
 				c->sa_rekey_fuzz / 100.E0 *
 				(rand() / (RAND_MAX + 1.E0));
@@ -1432,7 +1432,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 				event_schedule(EVENT_v2_RELEASE_WHACK,
 						EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
-				delay = ikev2_replace_delay(st, &kind, md->role);
+				delay = ikev2_replace_delay(st, &kind, md->original_role);
 				event_schedule(kind, delay, st);
 
 			}  else {
@@ -1442,7 +1442,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 			break;
 		case EVENT_SA_REPLACE: /* SA replacement event */
 
-			delay = ikev2_replace_delay(st, &kind, md->role);
+			delay = ikev2_replace_delay(st, &kind, md->original_role);
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;

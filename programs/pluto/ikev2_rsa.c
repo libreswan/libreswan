@@ -62,7 +62,7 @@ static u_char der_digestinfo[] = {
 static int der_digestinfo_len = sizeof(der_digestinfo);
 
 static void ikev2_calculate_sighash(struct state *st,
-				    enum phase1_role role,
+				    enum original_role role,
 				    unsigned char *idhash,
 				    chunk_t firstpacket,
 				    unsigned char *sig_octets)
@@ -71,7 +71,7 @@ static void ikev2_calculate_sighash(struct state *st,
 	const chunk_t *nonce;
 	const char    *nonce_name;
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		/* on initiator, we need to hash responders nonce */
 		nonce = &st->st_nr;
 		nonce_name = "inputs to hash2 (responder nonce)";
@@ -100,7 +100,7 @@ static void ikev2_calculate_sighash(struct state *st,
 }
 
 bool ikev2_calculate_rsa_sha1(struct state *st,
-			      enum phase1_role role,
+			      enum original_role role,
 			      unsigned char *idhash,
 			      pb_stream *a_pbs)
 {
@@ -172,7 +172,7 @@ static err_t try_RSA_signature_v2(const u_char hash_val[MAX_DIGEST_LEN],
 }
 
 stf_status ikev2_verify_rsa_sha1(struct state *st,
-				 enum phase1_role role,
+				 enum original_role role,
 				 unsigned char *idhash,
 				 const struct pubkey_list *keys_from_dns,
 				 const struct gw_info *gateways_from_dns,
@@ -180,9 +180,9 @@ stf_status ikev2_verify_rsa_sha1(struct state *st,
 {
 	unsigned char calc_hash[SHA1_DIGEST_SIZE];
 	unsigned int hash_len = SHA1_DIGEST_SIZE;
-	enum phase1_role invertrole;
+	enum original_role invertrole;
 
-	invertrole = (role == O_INITIATOR ? O_RESPONDER : O_INITIATOR);
+	invertrole = (role == ORIGINAL_INITIATOR ? ORIGINAL_RESPONDER : ORIGINAL_INITIATOR);
 
 	ikev2_calculate_sighash(st, invertrole, idhash, st->st_firstpacket_him,
 				calc_hash);

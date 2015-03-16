@@ -409,19 +409,27 @@ enum state_kind {
 #define MAX_STATES STATE_IKEv2_ROOF
 
 
-/* This is the IKE role, in RFC terms the Original Initiator or
- * Original Responder. It is used for SPI lookup.
- * This does NOT refer to whether we are sending an IKE request or
- * an IKE response. This role sets ISAKMP_FLAGS_IKE_I, * but NOT
- * ISAKMP_FLAGS_MSG_R. These are two different bits!
- * In other words: ISAKMP_FLAGS_IKE_I != !ISAKMP_FLAGS_MSG_R
+/*
+ * The IKEv2 (RFC 7296) original role - either the "original
+ * initiator" or the "original responder" - as determined by the "I
+ * (Initiator)" flag in the (ISAKMP_FLAGS_v2_IKE_I) in the payload
+ * header.  The "original initiator" either sent: the initial INIT
+ * packet; or, the CREATE_CHILD_SA rekey-ike request.
  *
- * The ISAKMP_FLAGS_IKE_I flag is present in IKEv1, but the
- * ISAKMP_FLAGS_MSG_R is only present in IKEv2.
+ * The bit is used to identify which keying material to use when
+ * encrypting and decrypting SK payloads.
+ *
+ * Separate to this is the IKEv2 "R (Response)" flag
+ * (ISAKMP_FLAGS_v2_MSG_R) in the payload header.  The response flag
+ * that a message is a responce to a previous request.  Since either
+ * end can send requests, either end can also set the "R" flag.
+ *
+ * The IKEv1 equivalent is the phase1 role.  It is identified by the
+ * IKEv1 IS_PHASE1_INIT() macro.
  */
-enum phase1_role {
-	O_INITIATOR=1,
-	O_RESPONDER=2
+enum original_role {
+	ORIGINAL_INITIATOR = 1,
+	ORIGINAL_RESPONDER = 2
 };
 
 

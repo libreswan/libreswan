@@ -83,7 +83,7 @@ struct msg_digest {
 	bool new_iv_set;			/* (v1) */
 	struct state *st;			/* current state object */
 
-	enum phase1_role role;			/* (v2) */
+	enum original_role original_role;	/* (v2) */
 	msgid_t msgid_received;			/* (v2) - Host order! */
 
 	pb_stream rbody;			/* room for reply body (after header) */

@@ -54,7 +54,7 @@
 #include "alg_info.h"
 #include "kernel_alg.h"
 
-void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
+void ikev2_derive_child_keys(struct state *st, enum original_role role)
 {
 	struct v2prf_stuff childsacalc;
 
@@ -156,7 +156,7 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	v2genbytes(&rkeymat, ipi->keymat_len,
 		   "responder keys", &childsacalc);
 
-	if (role != O_INITIATOR) {
+	if (role != ORIGINAL_INITIATOR) {
 		DBG(DBG_CRYPT, {
 			    DBG_dump_chunk("our  keymat", ikeymat);
 			    DBG_dump_chunk("peer keymat", rkeymat);

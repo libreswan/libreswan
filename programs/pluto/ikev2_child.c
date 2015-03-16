@@ -139,7 +139,7 @@ static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 			 pb_stream *outpbs,
 			 unsigned int lt,
 			 struct traffic_selector *ts,
-			 enum phase1_role role UNUSED)
+			 enum original_role role UNUSED)
 {
 	struct ikev2_ts its;
 	struct ikev2_ts1 its1;
@@ -213,7 +213,7 @@ static stf_status ikev2_emit_ts(struct msg_digest *md UNUSED,
 
 stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 			      pb_stream *outpbs,
-			      enum phase1_role role,
+			      enum original_role role,
 			      struct connection *c0,
 			      lset_t policy UNUSED)
 {
@@ -222,7 +222,7 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 	struct spd_route *sr;
 	stf_status ret;
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		ts_i = &st->st_ts_this;
 		ts_r = &st->st_ts_that;
 	} else {
@@ -232,14 +232,14 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 
 	for (sr = &c0->spd; sr != NULL; sr = sr->next) {
 		ret = ikev2_emit_ts(md, outpbs, ISAKMP_NEXT_v2TSr,
-				    ts_i, O_INITIATOR);
+				    ts_i, ORIGINAL_INITIATOR);
 		if (ret != STF_OK)
 			return ret;
 
-		if (role == O_INITIATOR) {
+		if (role == ORIGINAL_INITIATOR) {
 			ret = ikev2_emit_ts(md, outpbs,
 					    st->st_connection->policy & POLICY_TUNNEL ? ISAKMP_NEXT_v2NONE : ISAKMP_NEXT_v2N,
-					    ts_r, O_RESPONDER);
+					    ts_r, ORIGINAL_RESPONDER);
 		} else {
 			struct payload_digest *p;
 			for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL;
@@ -249,14 +249,14 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 					DBG_log("Received v2N_USE_TRANSPORT_MODE from the other end, next payload is v2N_USE_TRANSPORT_MODE notification");
 					ret = ikev2_emit_ts(md, outpbs,
 							    ISAKMP_NEXT_v2N,
-							    ts_r, O_RESPONDER);
+							    ts_r, ORIGINAL_RESPONDER);
 					break;
 				}
 			}
 			if (!p) {
 				ret = ikev2_emit_ts(md, outpbs,
 						    ISAKMP_NEXT_v2NONE,
-						    ts_r, O_RESPONDER);
+						    ts_r, ORIGINAL_RESPONDER);
 			}
 		}
 
@@ -392,7 +392,7 @@ static int ikev2_match_protocol(u_int8_t proto, u_int8_t ts_proto,
  */
 int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 					   const struct spd_route *sr,
-					   enum phase1_role role,
+					   enum original_role role,
 					   const struct traffic_selector *tsi,
 					   const struct traffic_selector *tsr,
 					   int tsi_n,
@@ -405,7 +405,7 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 	const struct end *ei, *er;
 	int narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
 	} else {
@@ -418,8 +418,8 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 		int tsr_ni;
 
 		int fitrange_i = ikev2_match_protocol(ei->protocol, tsi[tsi_ni].ipprotoid,
-			role == O_RESPONDER && narrowing,
-			role == O_INITIATOR && narrowing,
+			role == ORIGINAL_RESPONDER && narrowing,
+			role == ORIGINAL_INITIATOR && narrowing,
 			"tsi", tsi_ni);
 
 		if (fitrange_i == 0)
@@ -427,8 +427,8 @@ int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 
 		for (tsr_ni = 0; tsr_ni < tsr_n; tsr_ni++) {
 			int fitrange_r = ikev2_match_protocol(er->protocol, tsr[tsr_ni].ipprotoid,
-				role == O_RESPONDER && narrowing,
-				role == O_INITIATOR && narrowing,
+				role == ORIGINAL_RESPONDER && narrowing,
+				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
 
 			int matchiness;
@@ -499,7 +499,7 @@ static int ikev2_match_port_range(u_int16_t port, struct traffic_selector ts,
  */
 int ikev2_evaluate_connection_port_fit(const struct connection *d,
 				       const struct spd_route *sr,
-				       enum phase1_role role,
+				       enum original_role role,
 				       const struct traffic_selector *tsi,
 				       const struct traffic_selector *tsr,
 				       int tsi_n,
@@ -512,7 +512,7 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 	const struct end *ei, *er;
 	int narrowing = (d->policy & POLICY_IKEV2_ALLOW_NARROWING);
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
 	} else {
@@ -524,8 +524,8 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 	for (tsi_ni = 0; tsi_ni < tsi_n; tsi_ni++) {
 		int tsr_ni;
 		int fitrange_i = ikev2_match_port_range(ei->port, tsi[tsi_ni],
-			role == O_RESPONDER && narrowing,
-			role == O_INITIATOR && narrowing,
+			role == ORIGINAL_RESPONDER && narrowing,
+			role == ORIGINAL_INITIATOR && narrowing,
 			"tsi", tsi_ni);
 
 		if (fitrange_i == 0)
@@ -533,8 +533,8 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
 
 		for (tsr_ni = 0; tsr_ni < tsr_n; tsr_ni++) {
 			int fitrange_r = ikev2_match_port_range(er->port, tsr[tsr_ni],
-				role == O_RESPONDER && narrowing,
-				role == O_INITIATOR && narrowing,
+				role == ORIGINAL_RESPONDER && narrowing,
+				role == ORIGINAL_INITIATOR && narrowing,
 				"tsr", tsr_ni);
 
 			int matchiness;
@@ -566,7 +566,7 @@ int ikev2_evaluate_connection_port_fit(const struct connection *d,
  */
 int ikev2_evaluate_connection_fit(const struct connection *d,
 				  const struct spd_route *sr,
-				  enum phase1_role role,
+				  enum original_role role,
 				  const struct traffic_selector *tsi,
 				  const struct traffic_selector *tsr,
 				  int tsi_n,
@@ -576,7 +576,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 	int bestfit = -1;
 	const struct end *ei, *er;
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		ei = &sr->this;
 		er = &sr->that;
 	} else {
@@ -691,7 +691,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 static stf_status ikev2_create_responder_child_state(
 	struct msg_digest *md,
 	struct state **ret_cst,	/* where to return child state */
-	enum phase1_role role, enum isakmp_xchg_types isa_xchg)
+	enum original_role role, enum isakmp_xchg_types isa_xchg)
 {
 	/*
 	 * parent state. only for AUTH exchange. for CREATE_CHILD_SA exchange
@@ -910,7 +910,7 @@ static stf_status ikev2_create_responder_child_state(
 
 	if (bsr == NULL) {
 		/* ??? why do we act differently based on role? */
-		if (role == O_INITIATOR)
+		if (role == ORIGINAL_INITIATOR)
 			return STF_FAIL;
 		else
 			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
@@ -924,7 +924,7 @@ static stf_status ikev2_create_responder_child_state(
 	}
 	cst->st_connection = c;
 
-	if (role == O_INITIATOR) {
+	if (role == ORIGINAL_INITIATOR) {
 		memcpy(&cst->st_ts_this, &tsi[best_tsi_i],
 		       sizeof(struct traffic_selector));
 		memcpy(&cst->st_ts_that, &tsr[best_tsr_i],
@@ -977,7 +977,7 @@ static stf_status ikev2_cp_reply_state(struct msg_digest *md,
 }
 
 stf_status ikev2_child_sa_respond(struct msg_digest *md,
-				  enum phase1_role role,
+				  enum original_role role,
 				  pb_stream *outpbs,
 				  enum isakmp_xchg_types isa_xchg)
 {
@@ -1051,7 +1051,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return ret;	/* should we delete_state cst? */
 	}
 
-	if (role == O_RESPONDER) {
+	if (role == ORIGINAL_RESPONDER) {
 		struct payload_digest *p;
 
 		for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
