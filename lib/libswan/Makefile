@@ -83,7 +83,6 @@ CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
 # XXX: hack until everything uses a consistent .c.o rule
 CFLAGS+=$(USERLAND_CFLAGS) 
 CFLAGS+=${CROSSFLAGS}
-CFLAGS+=-DIPSEC_NSSDIR=\"$(NSSDIR)\"
 
 ARFLAGS=crvs
 EXTHDRS=des.h
