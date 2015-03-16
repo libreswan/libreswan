@@ -16,13 +16,14 @@
  * for more details.
  */
 
+extern struct xfrm_user_sec_ctx_ike *uctx;
 
 extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
 			      so_serial_t replacing,
 			      enum crypto_importance importance
 #ifdef HAVE_LABELED_IPSEC
-			      , const struct xfrm_user_sec_ctx_ike *
+			      , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 			      );
 
