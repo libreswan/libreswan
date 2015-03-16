@@ -93,7 +93,7 @@ east #
 000 "westnet-eastnet-dh15":   labeled_ipsec:no; 
 000 "westnet-eastnet-dh15":    policy_label:unset; 
 000 "westnet-eastnet-dh15":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "westnet-eastnet-dh15":   retransmit-interval: 500ms; retransmit-timeout: 60s;
+000 "westnet-eastnet-dh15":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-dh15":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-dh15":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-dh15":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
