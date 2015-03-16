@@ -815,20 +815,20 @@ static bool sag_eroute(struct state *st,
 void unroute_connection(struct connection *c)
 {
 	struct spd_route *sr;
-	enum routing_t cr;
 
 	for (sr = &c->spd; sr; sr = sr->next) {
-		cr = sr->routing;
+		enum routing_t cr = sr->routing;
 
 		if (erouted(cr)) {
 			/* cannot handle a live one */
-			passert(sr->routing != RT_ROUTED_TUNNEL);
+			passert(cr != RT_ROUTED_TUNNEL);
 			if (kernel_ops->shunt_eroute != NULL) {
 				kernel_ops->shunt_eroute(c, sr, RT_UNROUTED,
 							 ERO_DELETE, "delete");
-			} else {   loglog(RC_COMMENT,
-					  "no shunt_eroute implemented for %s interface",
-					  kernel_ops->kern_name);
+			} else {
+				loglog(RC_COMMENT,
+					"no shunt_eroute implemented for %s interface",
+					kernel_ops->kern_name);
 			}
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
