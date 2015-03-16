@@ -16,7 +16,7 @@
  * for more details.
  */
 
-extern struct xfrm_user_sec_ctx_ike *uctx;
+struct xfrm_user_sec_ctx_ike *uctx; /* forward declaration */
 
 extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
