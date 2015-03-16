@@ -115,7 +115,7 @@ east #
 000 "road-east-ipv4-psk-ikev2/1x0":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=road
 000 "road-east-ipv4-psk-ikev2/1x0":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-ipv4-psk-ikev2/1x0":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "road-east-ipv4-psk-ikev2/1x0":   labeled_ipsec:no, loopback:no; 
+000 "road-east-ipv4-psk-ikev2/1x0":   labeled_ipsec:no; 
 000 "road-east-ipv4-psk-ikev2/1x0":    policy_label:unset; 
 000 "road-east-ipv4-psk-ikev2/1x0":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-ipv4-psk-ikev2/1x0":   ike_life: 240s; ipsec_life: 120s; rekey_margin: 60s; rekey_fuzz: 100%; keyingtries: 0;
@@ -129,7 +129,7 @@ east #
 000 "road-east-ipv4-psk-ikev2/2x0":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=road
 000 "road-east-ipv4-psk-ikev2/2x0":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-ipv4-psk-ikev2/2x0":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "road-east-ipv4-psk-ikev2/2x0":   labeled_ipsec:no, loopback:no; 
+000 "road-east-ipv4-psk-ikev2/2x0":   labeled_ipsec:no; 
 000 "road-east-ipv4-psk-ikev2/2x0":    policy_label:unset; 
 000 "road-east-ipv4-psk-ikev2/2x0":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-ipv4-psk-ikev2/2x0":   ike_life: 240s; ipsec_life: 120s; rekey_margin: 60s; rekey_fuzz: 100%; keyingtries: 0;
@@ -143,7 +143,7 @@ east #
 000 "road-east-ipv6-psk-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=east; hiscert=road
 000 "road-east-ipv6-psk-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-east-ipv6-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "road-east-ipv6-psk-ikev2":   labeled_ipsec:no, loopback:no; 
+000 "road-east-ipv6-psk-ikev2":   labeled_ipsec:no; 
 000 "road-east-ipv6-psk-ikev2":    policy_label:unset; 
 000 "road-east-ipv6-psk-ikev2":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "road-east-ipv6-psk-ikev2":   ike_life: 240s; ipsec_life: 120s; rekey_margin: 60s; rekey_fuzz: 100%; keyingtries: 0;
