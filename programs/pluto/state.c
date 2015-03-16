@@ -1390,7 +1390,8 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 
 void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			unsigned long count, monotime_t nw)
-{	int i;
+{
+	int i;
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
 		struct state *st;

@@ -175,7 +175,8 @@ static bool fetchline(chunk_t *src, chunk_t *line)
 	if (extract_token(line, '\n', src)) {
 		if (line->len > 0 && *(line->ptr + line->len - 1) == '\r')
 			line->len--;	/* remove optional \r */
-	} else {	/*last line ends without newline */
+	} else {
+		/* last line ends without newline */
 		*line = *src;
 		src->ptr += src->len;
 		src->len = 0;
@@ -248,7 +249,8 @@ err_t pemtobin(chunk_t *blob)
 				else if (match("DEK-Info", &name))
 					return "DEK-Info: encrypted files no longer supported outside of the NSS database, please import these into NSS";
 
-			} else { /* state is PEM_BODY */
+			} else {
+				/* state is PEM_BODY */
 				const char *ugh = NULL;
 				size_t len = 0;
 				chunk_t data;

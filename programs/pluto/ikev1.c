@@ -2859,7 +2859,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 				fmt_conn_instance(c, b1),
 				r->name,
 				fmt_conn_instance(r, b2));
-			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) { /* CK_GROUP WOULD CAUSE PASSERT */
+			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 				/* instantiate it, filling in peer's ID */
 				r = rw_instantiate(r, &c->spd.that.host_addr,
 						   NULL,

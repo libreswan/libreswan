@@ -1916,7 +1916,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		int ipsec_keysize = crypto_req_keysize(CRK_ESPorAH, attrs->transattrs.encrypt);
 
 		if (!LHAS(seen_attrs, KEY_LENGTH)) {
-			if (ipsec_keysize != 0) { /* ealg requires a key length attr */
+			if (ipsec_keysize != 0) {
+				/* ealg requires a key length attr */
 				loglog(RC_LOG_SERIOUS,
 					"IPsec encryption transform did not specify required KEY_LENGTH attribute");
 				return FALSE;

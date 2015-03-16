@@ -134,14 +134,14 @@ static void db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans
 	ctx->trans0 = NULL;
 	ctx->attrs0 = NULL;
 
-	if (max_trans > 0) { /* quite silly if not */
+	if (max_trans > 0) {
 		ctx->trans0 = ALLOC_BYTES_ST(
 			sizeof(struct db_trans) * max_trans,
 			"db_context->trans",
 			db_trans_st);
 	}
 
-	if (max_attrs > 0) { /* quite silly if not */
+	if (max_attrs > 0) {
 		ctx->attrs0 = ALLOC_BYTES_ST(
 			sizeof(struct db_attr) * max_attrs,
 			"db_context->attrs", db_attrs_st);

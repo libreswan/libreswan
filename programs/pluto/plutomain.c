@@ -1034,7 +1034,8 @@ int main(int argc, char **argv)
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 			pluto_ddos_mode = cfg->setup.options[KSF_DDOS_MODE];
-			if (cfg->setup.options[KBF_FORCEBUSY]) { /* obsoleted */
+			if (cfg->setup.options[KBF_FORCEBUSY]) {
+				/* obsoleted */
 				pluto_ddos_mode = cfg->setup.options[KSF_DDOS_MODE] = DDOS_FORCE_BUSY;
 			}
 			/* ddos-ike-treshold and max-halfopen-ike */
