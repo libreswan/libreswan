@@ -173,7 +173,7 @@ realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 
 	if (CERT_GetCertTimes(cert, &notBefore, &notAfter) !=
 			SECSuccess)
-		ret.real_secs = (time_t) -1;
+		ret.real_secs = (time_t) 0;
 	else
 		ret.real_secs = (time_t) notAfter;
 
