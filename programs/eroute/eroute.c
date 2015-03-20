@@ -145,7 +145,6 @@ int main(int argc, char **argv)
 
 	int error = 0;
 
-	char ipaddr_txt[ADDRTOT_BUF];
 	struct sadb_ext *extensions[K_SADB_EXT_MAX + 1];
 	struct sadb_msg *pfkey_msg;
 	ip_address pfkey_address_s_ska;
@@ -730,11 +729,12 @@ sa_build:
 						 sockaddrof(&
 							    pfkey_address_s_ska))))
 		{
-			addrtot(&pfkey_address_s_ska, 0, ipaddr_txt,
-				sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_s extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&pfkey_address_s_ska, &b),
+				error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -750,10 +750,11 @@ sa_build:
 						 0,
 						 0,
 						 sockaddrof(&said.dst)))) {
-			addrtot(&said.dst, 0, ipaddr_txt, sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_d extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&said.dst, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -783,11 +784,11 @@ sa_build:
 						 sockaddrof(&
 							    pfkey_address_sflow_ska))))
 		{
-			addrtot(&pfkey_address_sflow_ska, 0, ipaddr_txt,
-				sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_sflow extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&pfkey_address_sflow_ska, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -808,11 +809,11 @@ sa_build:
 						 sockaddrof(&
 							    pfkey_address_dflow_ska))))
 		{
-			addrtot(&pfkey_address_dflow_ska, 0, ipaddr_txt,
-				sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_dflow extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&pfkey_address_dflow_ska, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -834,11 +835,11 @@ sa_build:
 						 sockaddrof(&
 							    pfkey_address_smask_ska))))
 		{
-			addrtot(&pfkey_address_smask_ska, 0, ipaddr_txt,
-				sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_smask extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&pfkey_address_smask_ska, &b), error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}
@@ -860,11 +861,12 @@ sa_build:
 						 sockaddrof(&
 							    pfkey_address_dmask_ska))))
 		{
-			addrtot(&pfkey_address_dmask_ska, 0, ipaddr_txt,
-				sizeof(ipaddr_txt));
+			ipstr_buf b;
+
 			fprintf(stderr,
 				"%s: Trouble building address_dmask extension (%s), error=%d.\n",
-				progname, ipaddr_txt, error);
+				progname, ipstr(&pfkey_address_dmask_ska, &b),
+				error);
 			pfkey_extensions_free(extensions);
 			exit(1);
 		}

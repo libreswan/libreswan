@@ -92,6 +92,8 @@ done
 west #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
 west #
+ if [ -f /var/run/pluto/pluto.pid ]; then grep "message ID:" /tmp/pluto.log  ; fi
+west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
 Security Associations (0 up, 0 connecting):
   none

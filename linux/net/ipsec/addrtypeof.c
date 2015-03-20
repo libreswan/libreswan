@@ -59,8 +59,6 @@ unsigned char **dstp;   /* NULL means just a size query */
 		break;
 	default:
 		return 0;
-
-		break;
 	}
 
 	if (dstp != NULL)

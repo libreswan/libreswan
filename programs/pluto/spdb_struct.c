@@ -102,7 +102,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 	if (ai == NULL) {
 		DBG(DBG_CONTROL, DBG_log(
-			    "no IKE algorithms for this connection "));
+			    "no specific IKE algorithms specified - using defaults"));
 		return NULL;
 	}
 
@@ -196,9 +196,6 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			if (ealg > 0)
 				enc->val = ealg;
 
-			modp = ike_info->ike_modp;
-			eklen = ike_info->ike_eklen;
-
 			passert(hash->type.oakley == OAKLEY_HASH_ALGORITHM);
 			if (halg > 0)
 				hash->val = halg;
@@ -242,11 +239,10 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			free_sa(emp_sp);
 			emp_sp = NULL;
 		} else {
-
 			int def_ks = 0;
 
 			if (!ike_info->ike_default && ike_info->ike_eklen == 0)
-				def_ks = crypto_req_keysize(1 /* IKEv1*/, ike_info->ike_ealg);
+				def_ks = crypto_req_keysize(CRK_IKEv1, ike_info->ike_ealg);
 
 			if (def_ks != 0) {
 				struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ike_info->ike_ealg);

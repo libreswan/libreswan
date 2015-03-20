@@ -30,7 +30,7 @@ west #
  # ensure this test cases has USE_DNSSEC compiled pluto
 west #
  ipsec pluto --version |grep DNSSEC | sed "s/Libreswan v[^ ]* /Libreswan vVERSION /"
-Libreswan vVERSION XFRM(netkey) KLIPS NSS DNSSEC LABELED_IPSEC LIBCAP_NG XAUTH_PAM NETWORKMANAGER KLIPS_MAST CURL(non-NSS)
+Libreswan vVERSION XFRM(netkey) KLIPS NSS DNSSEC FIPS_CHECK LABELED_IPSEC LIBCAP_NG XAUTH_PAM NETWORKMANAGER KLIPS_MAST CURL(non-NSS)
 west #
  echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/hosts
 west #
@@ -54,9 +54,9 @@ west #
 west #
  ipsec auto --status | egrep "oriented|east-from-hosts"
 000 "westnet-eastnet-etc-hosts": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<east-from-hosts-file>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-etc-hosts":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-etc-hosts":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-etc-hosts-auto-add": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<east-from-hosts-file>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-etc-hosts-auto-add":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-etc-hosts-auto-add":     oriented; my_ip=unset; their_ip=unset
 west #
  echo "initdone"
 initdone
@@ -73,7 +73,7 @@ west #
 108 "westnet-eastnet-etc-hosts" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "westnet-eastnet-etc-hosts" #1: received Vendor ID payload [CAN-IKEv2]
 002 "westnet-eastnet-etc-hosts" #1: Main mode peer ID is ID_FQDN: '@east'
-004 "westnet-eastnet-etc-hosts" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 prf=sha group=MODP2048}
+004 "westnet-eastnet-etc-hosts" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "westnet-eastnet-etc-hosts" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-etc-hosts" #2: STATE_QUICK_I1: initiate
 004 "westnet-eastnet-etc-hosts" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
@@ -111,10 +111,6 @@ default via 192.1.2.254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-west #
-west #
- ipsec whack --shutdown
-002 shutting down
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

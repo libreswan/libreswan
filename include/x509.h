@@ -24,20 +24,20 @@
 #define _X509_H
 
 /* Maximum length of ASN.1 distinquished name */
-#define ASN1_BUF_LEN          512
+#define ASN1_BUF_LEN	512
 
 /* Definition of generalNames kinds */
 
 typedef enum {
-	GN_OTHER_NAME =             0,
-	GN_RFC822_NAME =            1,
-	GN_DNS_NAME =               2,
-	GN_X400_ADDRESS =           3,
-	GN_DIRECTORY_NAME =         4,
-	GN_EDI_PARTY_NAME =         5,
-	GN_URI =                    6,
-	GN_IP_ADDRESS =             7,
-	GN_REGISTERED_ID =          8
+	GN_OTHER_NAME =		0,
+	GN_RFC822_NAME =	1,
+	GN_DNS_NAME =		2,
+	GN_X400_ADDRESS =	3,
+	GN_DIRECTORY_NAME =	4,
+	GN_EDI_PARTY_NAME =	5,
+	GN_URI =		6,
+	GN_IP_ADDRESS =		7,
+	GN_REGISTERED_ID =	8
 } generalNames_t;
 
 /* access structure for a GeneralName */
@@ -45,17 +45,17 @@ typedef enum {
 typedef struct generalName generalName_t;
 
 struct generalName {
-	generalName_t   *next;
+	generalName_t *next;
 	generalNames_t kind;
 	chunk_t name;
 };
 
 /* authority flags */
 
-#define AUTH_NONE       0x00    /* no authorities */
-#define AUTH_CA         0x01    /* certification authority */
-#define AUTH_AA         0x02    /* authorization authority */
-#define AUTH_OCSP       0x04    /* ocsp signing authority */
+#define AUTH_NONE	0x00	/* no authorities */
+#define AUTH_CA		0x01	/* certification authority */
+#define AUTH_AA		0x02	/* authorization authority */
+#define AUTH_OCSP	0x04	/* ocsp signing authority */
 
 /* forward declaration */
 struct id;
@@ -65,7 +65,7 @@ struct id;
 typedef struct x509cert x509cert_t;
 
 struct x509cert {
-	x509cert_t     *next;
+	x509cert_t *next;
 	realtime_t installed;
 	int count;
 	u_char authority_flags;
@@ -94,13 +94,13 @@ struct x509cert {
 	/*       critical */
 	/*       extnValue */
 	bool isCA;
-	bool isOcspSigner;               /* ocsp */
+	bool isOcspSigner;		/* ocsp */
 	chunk_t subjectKeyID;
 	chunk_t authKeyID;
 	chunk_t authKeySerialNumber;
-	chunk_t accessLocation;            /* ocsp */
-	generalName_t            *subjectAltName;
-	generalName_t            *crlDistributionPoints;
+	chunk_t accessLocation;		/* ocsp */
+	generalName_t *subjectAltName;
+	generalName_t *crlDistributionPoints;
 	/* signatureAlgorithm */
 	int algorithm;
 	chunk_t signature;
@@ -121,7 +121,7 @@ struct revokedCert {
 typedef struct x509crl x509crl_t;
 
 struct x509crl {
-	x509crl_t     *next;
+	x509crl_t *next;
 	realtime_t installed;
 	generalName_t *distributionPoints;
 	chunk_t certificateList;
@@ -132,7 +132,7 @@ struct x509crl {
 	chunk_t issuer;
 	realtime_t thisUpdate;
 	realtime_t nextUpdate;
-	revokedCert_t      *revokedCertificates;
+	revokedCert_t *revokedCertificates;
 	/*   v2 extensions */
 	/*   crlExtensions */
 	/*     extension */
@@ -164,7 +164,7 @@ extern const x509cert_t empty_x509cert;
 extern bool same_serial(chunk_t a, chunk_t b);
 extern bool same_keyid(chunk_t a, chunk_t b);
 extern bool same_dn(chunk_t a, chunk_t b);
-#define MAX_CA_PATH_LEN         7
+#define MAX_CA_PATH_LEN		7
 extern bool match_dn(chunk_t a, chunk_t b, int *wildcards);
 extern int dn_count_wildcards(chunk_t dn);
 extern int dntoa(char *dst, size_t dstlen, chunk_t dn);
@@ -219,11 +219,11 @@ extern void unlock_authcert_list(const char *who);	/* in secrets.c */
 #else
 /* WARNING empty x509 locking functions defined bypassing real locking */
 /* not fixing this hack, see issues #1390, #1391, #1392 */
-#define check_crls(who)                 /* nothing */
-#define lock_crl_list(who)              /* nothing */
-#define unlock_crl_list(who)            /* nothing */
-#define lock_authcert_list(who)         /* nothing */
-#define unlock_authcert_list(who)       /* nothing */
+#define check_crls(who)			/* nothing */
+#define lock_crl_list(who)		/* nothing */
+#define unlock_crl_list(who)		/* nothing */
+#define lock_authcert_list(who)		/* nothing */
+#define unlock_authcert_list(who)	/* nothing */
 #endif
 
 /* filter eliminating the directory entries '.' and '..' */

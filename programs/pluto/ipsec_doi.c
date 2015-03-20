@@ -271,7 +271,9 @@ void ipsecdoi_initiate(int whack_sock,
 					 , uctx
 #endif
 					 );
-			return;
+		} else {
+			/* fizzle: whack_sock will be unused */
+			close_any(whack_sock);
 		}
 	} else if (HAS_IPSEC_POLICY(policy)) {
 
@@ -287,7 +289,6 @@ void ipsecdoi_initiate(int whack_sock,
 				    , uctx
 #endif
 				    );
-			return;
 		} else {
 			/* ??? we assume that peer_nexthop_sin isn't important:
 			 * we already have it from when we negotiated the ISAKMP SA!
@@ -299,12 +300,8 @@ void ipsecdoi_initiate(int whack_sock,
 					   , uctx
 #endif
 					   );
-			return;
 		}
 	}
-
-	/* fall through in the case of error */
-	close_any(whack_sock);
 }
 
 /* Replace SA with a fresh one that is similar
@@ -336,7 +333,7 @@ void ipsecdoi_replace(struct state *st,
 
 		initiator = pick_initiator(c, policy);
 		passert(!HAS_IPSEC_POLICY(policy));
-		if (initiator) {
+		if (initiator != NULL) {
 			(void) initiator(whack_sock, st->st_connection, st,
 					 policy,
 					 try, st->st_import
@@ -344,6 +341,9 @@ void ipsecdoi_replace(struct state *st,
 					 , st->sec_ctx
 #endif
 					 );
+		} else {
+			/* fizzle: whack_sock will be unused */
+			close_any(whack_sock);
 		}
 	} else {
 		/* Add features of actual old state to policy.  This ensures
@@ -380,7 +380,6 @@ void ipsecdoi_replace(struct state *st,
 #endif
 				  );
 	}
-	/* don't close whack_sock here as some caller above might have placed it in the state object */
 }
 
 /*
@@ -527,20 +526,16 @@ void send_delete(struct state *st)
 		ikev1_delete_out(st);
 }
 
-void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
+void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 {
-	char *b = sadetails;
+	struct connection *const c = st->st_connection;
+	char *b;
 	const char *ini = " {";
-	const char *fin = "";
-	struct connection *c = st->st_connection;
+	ipstr_buf ipb;
 
-	passert(c != NULL);
-	strcpy(sadetails,
-	       (c->policy & POLICY_TUNNEL ?
-		" tunnel mode" : " transport mode"));
-	b += strlen(sadetails);
-
-	/* -1 is to leave space for "fin" */
+	b = jam_str(sadetails, sad_len,
+	       c->policy & POLICY_TUNNEL ?
+		" tunnel mode" : " transport mode");
 
 	if (st->st_esp.present) {
 		char esb[ENUM_SHOW_BUF_LEN];
@@ -553,7 +548,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 				    c->forceencaps ? "enabled" : "disabled"));
 		}
 
-		snprintf(b, sad_len - (b - sadetails) - 1,
+		snprintf(b, sad_len - (b - sadetails),
 			 "%sESP%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s",
 			 ini,
 			 (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? "/NAT" : "",
@@ -564,101 +559,76 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 			 st->st_esp.attrs.transattrs.enckeylen,
 			 strip_prefix(enum_show(&auth_alg_names,
 				   st->st_esp.attrs.transattrs.integ_hash), "AUTH_ALGORITHM_"));
+
+		/* advance b to end of string */
+		b = b + strlen(b);
+
 		ini = " ";
-		fin = "}";
 	}
-	/* advance b to end of string */
-	b = b + strlen(b);
 
 	if (st->st_ah.present) {
-		snprintf(b, sad_len - (b - sadetails) - 1,
+		snprintf(b, sad_len - (b - sadetails),
 			 "%sAH=>0x%08lx <0x%08lx",
 			 ini,
 			 (unsigned long)ntohl(st->st_ah.attrs.spi),
 			 (unsigned long)ntohl(st->st_ah.our_spi));
+
+		/* advance b to end of string */
+		b = b + strlen(b);
+
 		ini = " ";
-		fin = "}";
 	}
-	/* advance b to end of string */
-	b = b + strlen(b);
 
 	if (st->st_ipcomp.present) {
-		snprintf(b, sad_len - (b - sadetails) - 1,
+		snprintf(b, sad_len - (b - sadetails),
 			 "%sIPCOMP=>0x%08lx <0x%08lx",
 			 ini,
 			 (unsigned long)ntohl(st->st_ipcomp.attrs.spi),
 			 (unsigned long)ntohl(st->st_ipcomp.our_spi));
+
+		/* advance b to end of string */
+		b = b + strlen(b);
+
 		ini = " ";
-		fin = "}";
 	}
 
-	/* advance b to end of string */
-	b = b + strlen(b);
+	b = add_str(sadetails, sad_len, b, ini);
+	b = add_str(sadetails, sad_len, b, "NATOA=");
+	b = add_str(sadetails, sad_len, b,
+		isanyaddr(&st->hidden_variables.st_nat_oa) ? "none" :
+			ipstr(&st->hidden_variables.st_nat_oa, &ipb));
 
-	{
-		char oa[ADDRTOT_BUF];
+	b = add_str(sadetails, sad_len, b, " NATD=");
 
-		strcpy(oa, "none");
-		if (!isanyaddr(&st->hidden_variables.st_nat_oa)) {
-			addrtot(&st->hidden_variables.st_nat_oa, 0,
-				oa, sizeof(oa));
-		}
-		snprintf(b, sad_len - (b - sadetails) - 1,
-			 "%sNATOA=%s",
-			 ini, oa);
-		ini = " ";
-		fin = "}";
-	}
-
-	b = b + strlen(b);
-	{
+	if (isanyaddr(&st->hidden_variables.st_natd)) {
+		b = add_str(sadetails, sad_len, b, "none");
+	} else {
 		char oa[ADDRTOT_BUF + sizeof(":00000")];
 
-		strcpy(oa, "none");
-		if (!isanyaddr(&st->hidden_variables.st_natd)) {
-			char oa2[ADDRTOT_BUF];
-			addrtot(&st->hidden_variables.st_natd, 0,
-				oa2, sizeof(oa2));
-			snprintf(oa, sizeof(oa),
-				 "%s:%d", oa2, st->st_remoteport);
-		}
-		snprintf(b, sad_len - (b - sadetails) - 1,
-			 "%sNATD=%s",
-			 ini, oa);
-		ini = " ";
-		fin = "}";
+		snprintf(oa, sizeof(oa),
+			 "%s:%d",
+			 ipstr(&st->hidden_variables.st_natd, &ipb),
+			 st->st_remoteport);
+		b = add_str(sadetails, sad_len, b, oa);
 	}
 
-	/* advance b to end of string */
-	b = b + strlen(b);
-
-	snprintf(b, sad_len - (b - sadetails) - 1,
-		 "%sDPD=%s", ini,
-		 dpd_active_locally(st) ? "active" : "passive");
-
-	ini = " ";
-	fin = "}";
+	b = add_str(sadetails, sad_len, b,
+		dpd_active_locally(st) ? " DPD=active" : " DPD=passive");
 
 	if (st->st_xauth_username[0] != '\0') {
-		b = b + strlen(b);
-		snprintf(b, sad_len - (b - sadetails) - 1,
-			 "%sXAUTHuser=%s",
-			 ini,
-			 st->st_xauth_username);
-
-		ini = " ";
-		fin = "}";
+		b = add_str(sadetails, sad_len, b, " XAUTHuser=");
+		b = add_str(sadetails, sad_len, b, st->st_xauth_username);
 	}
 
-	strcat(b, fin);
+	add_str(sadetails, sad_len, b, "}");
 }
 
-void fmt_isakmp_sa_established(struct state *st, char *sadetails, int sad_len)
+void fmt_isakmp_sa_established(struct state *st, char *sadetails, size_t sad_len)
 {
 
 	/* document ISAKMP SA details for admin's pleasure */
 	char *b = sadetails;
-	const char *authname;
+	const char *authname, *prfname;
 	const char *integstr, *integname;
 	char integname_tmp[20];
 
@@ -669,6 +639,7 @@ void fmt_isakmp_sa_established(struct state *st, char *sadetails, int sad_len)
 	if (st->st_ikev2) {
 		authname = "IKEv2";
 		integstr = " integ=";
+		prfname = "prf=";
 		snprintf(integname_tmp, sizeof(integname_tmp), "%s_%zu",
 			 st->st_oakley.integ_hasher->common.officname,
 			 st->st_oakley.integ_hasher->hash_integ_len *
@@ -678,14 +649,16 @@ void fmt_isakmp_sa_established(struct state *st, char *sadetails, int sad_len)
 		authname = enum_show(&oakley_auth_names, st->st_oakley.auth);
 		integstr = "";
 		integname = "";
+		prfname = "integ=";
 	}
 
 	snprintf(b, sad_len - (b - sadetails) - 1,
-		 " {auth=%s cipher=%s_%d%s%s prf=%s group=%s}",
+		 " {auth=%s cipher=%s_%d%s%s %s%s group=%s}",
 		 strip_prefix(authname,"OAKLEY_"),
 		 st->st_oakley.encrypter->common.name,
 		 st->st_oakley.enckeylen,
 		 integstr, integname,
+		 prfname,
 		 strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"),
 		 strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
 	st->hidden_variables.st_logged_p1algos = TRUE;

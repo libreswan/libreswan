@@ -223,10 +223,12 @@ static void free_dead_ifaces(void)
 
 	for (p = interfaces; p != NULL; p = p->next) {
 		if (p->change == IFN_DELETE) {
+			ipstr_buf b;
+
 			libreswan_log("shutting down interface %s/%s %s:%d",
 				      p->ip_dev->id_vname,
 				      p->ip_dev->id_rname,
-				      ip_str(&p->ip_addr), p->port);
+				      ipstr(&p->ip_addr, &b), p->port);
 			some_dead = TRUE;
 		} else if (p->change == IFN_ADD) {
 			some_new = TRUE;
@@ -374,9 +376,11 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 
 	setportof(htons(port), &ifp->addr);
 	if (bind(fd, sockaddrof(&ifp->addr), sockaddrlenof(&ifp->addr)) < 0) {
+		ipstr_buf b;
+
 		log_errno((e, "bind() for %s/%s %s:%u in process_raw_ifaces()",
 			   ifp->name, v_name,
-			   ip_str(&ifp->addr), (unsigned) port));
+			   ipstr(&ifp->addr, &b), (unsigned) port));
 		close(fd);
 		return -1;
 	}
@@ -420,10 +424,13 @@ void show_ifaces_status(void)
 {
 	struct iface_port *p;
 
-	for (p = interfaces; p != NULL; p = p->next)
+	for (p = interfaces; p != NULL; p = p->next) {
+		ipstr_buf b;
+
 		whack_log(RC_COMMENT, "interface %s/%s %s@%d",
 			  p->ip_dev->id_vname, p->ip_dev->id_rname,
-			  ip_str(&p->ip_addr), p->port);
+			  ipstr(&p->ip_addr, &b), p->port);
+	}
 	whack_log(RC_COMMENT, " ");     /* spacer */
 }
 
@@ -468,13 +475,14 @@ static void reapchildren(void)
 		/* got a child to reap */
 		if (adns_reapchild(child, status))
 			continue;
+
 		if (child == addconn_child_pid) {
 			DBG(DBG_CONTROLMORE,
 			    DBG_log("reaped addconn helper child"));
 			addconn_child_pid = 0;
 			continue;
 		}
-		/*Threads are created instead of child processes when using LIBNSS*/
+		/* Threads are created instead of child processes when using LIBNSS */
 		libreswan_log("child pid=%d (status=%d) is not my child!",
 			      child, status);
 	}
@@ -513,8 +521,7 @@ void call_server(void)
 		passert(r == 0);
 	}
 
-	/* do equivalent of ipsec whack --listen */
-	do_whacklisten();
+	/* do_whacklisten() is now done by the addconn fork */
 
 	/*
 	 * fork to issue the command "ipsec addconn --autoall"
@@ -1116,15 +1123,17 @@ static bool send_packet(struct state *st, const char *where,
 		ptr = aptr;
 	}
 
-	DBG(DBG_CONTROL | DBG_RAW,
-	    DBG_log("sending %lu bytes for %s through %s:%d to %s:%u (using #%lu)",
-		    (unsigned long) len,
-		    where,
-		    st->st_interface->ip_dev->id_rname,
-		    st->st_interface->port,
-		    ip_str(&st->st_remoteaddr),
-		    st->st_remoteport,
-		    st->st_serialno));
+	DBG(DBG_CONTROL | DBG_RAW, {
+		ipstr_buf b;
+		DBG_log("sending %lu bytes for %s through %s:%d to %s:%u (using #%lu)",
+			(unsigned long) len,
+			where,
+			st->st_interface->ip_dev->id_rname,
+			st->st_interface->port,
+			ipstr(&st->st_remoteaddr, &b),
+			st->st_remoteport,
+			st->st_serialno);
+	});
 	DBG(DBG_RAW, DBG_dump(NULL, ptr, len));
 
 	setportof(htons(st->st_remoteport), &st->st_remoteaddr);
@@ -1141,9 +1150,11 @@ static bool send_packet(struct state *st, const char *where,
 
 	if (wlen != (ssize_t)len) {
 		if (just_a_keepalive) {
+			ipstr_buf b;
+
 			log_errno((e, "sendto on %s to %s:%u failed in %s",
 				   st->st_interface->ip_dev->id_rname,
-				   ip_str(&st->st_remoteaddr),
+				   ipstr(&st->st_remoteaddr, &b),
 				   st->st_remoteport,
 				   where));
 		}
@@ -1154,13 +1165,14 @@ static bool send_packet(struct state *st, const char *where,
 	if (DBGP(IMPAIR_JACOB_TWO_TWO)) {
 		/* sleep for half a second, and second another packet */
 		usleep(500000);
+		ipstr_buf b;
 
 		DBG_log("JACOB 2-2: resending %lu bytes for %s through %s:%d to %s:%u:",
 			(unsigned long) len,
 			where,
 			st->st_interface->ip_dev->id_rname,
 			st->st_interface->port,
-			ip_str(&st->st_remoteaddr),
+			ipstr(&st->st_remoteaddr, &b),
 			st->st_remoteport);
 
 		wlen = sendto(st->st_interface->fd,
@@ -1173,7 +1185,7 @@ static bool send_packet(struct state *st, const char *where,
 				log_errno((e,
 					   "sendto on %s to %s:%u failed in %s",
 					   st->st_interface->ip_dev->id_rname,
-					   ip_str(&st->st_remoteaddr),
+					   ipstr(&st->st_remoteaddr, &b),
 					   st->st_remoteport,
 					   where));
 			}
@@ -1240,7 +1252,8 @@ static bool send_frags(struct state *st, const char *where)
 
 			memcpy(ih, st->st_tpacket.ptr, NSIZEOF_isakmp_hdr);
 			ih->isa_np = ISAKMP_NEXT_IKE_FRAGMENTATION; /* one octet */
-			/* Do we need to set any of ISAKMP_FLAG_ENCRYPTION, ISAKMP_FLAGS_R or ISAKMP_FLAGS_I ?
+			/* Do we need to set any of ISAKMP_FLAG_ENCRYPTION,
+			 * ISAKMP_FLAGS_MSG_R or ISAKMP_FLAGS_IKE_I ?
 			 * seems there might be disagreement between Cisco and Microsoft.
 			 * st->st_suspended_md->hdr.isa_flags; TODO must this be set?
 			 */

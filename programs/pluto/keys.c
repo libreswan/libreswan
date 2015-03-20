@@ -119,12 +119,13 @@ static int print_secrets(struct secret *secret,
 	strcpy(idb1, "%any");
 	strcpy(idb2, "");
 
-	if (ids != NULL)
+	if (ids != NULL) {
 		idtoa(&ids->id, idb1, sizeof(idb1));
-	if (ids->next != NULL) {
-		idtoa(&ids->next->id, idb2, sizeof(idb2));
-		if (ids->next->next)
-			more = "more";
+		if (ids->next != NULL) {
+			idtoa(&ids->next->id, idb2, sizeof(idb2));
+			if (ids->next->next)
+				more = "more";
+		}
 	}
 
 	whack_log(RC_COMMENT, "    %d: %s %s %s%s", lsw_get_secretlineno(
@@ -868,7 +869,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 							TRUE);
 
 			if (!check_pub_keys ||
-			    strncmp(check_expiry_msg, "ok", 2) != 0) {
+			    !startswith(check_expiry_msg, "ok")) {
 				char expires_buf[REALTIMETOA_BUF];
 				char installed_buf[REALTIMETOA_BUF];
 				char id_buf[IDTOA_BUF];

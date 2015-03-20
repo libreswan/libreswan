@@ -1,1 +1,1 @@
-/^.*Vacuuming done, freed 0 bytes$/d
+/^.*Vacuuming done, freed [0123456789]* bytes$/d

@@ -5,7 +5,7 @@
 
 Summary: Libreswan IPSEC implementation
 Name: libreswan
-Version: 3.9
+Version: 3.10
 # Build KLIPS kernel module?
 %{!?buildklips: %{expand: %%define buildklips 0}}
 
@@ -131,7 +131,7 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %files 
 %defattr(-,root,root)
-%doc BUGS CHANGES COPYING CREDITS README LICENSE
+%doc CHANGES COPYING CREDITS README LICENSE
 %doc OBJ.linux.*/programs/examples/*.conf
 #%doc doc/manpage.d/*
 # /usr/share/doc/libreswan/*

@@ -102,7 +102,7 @@
  * gets established. This is because the phase 2 may never actually succeed
  * (usually due to authorization issues, which may be DNS or otherwise related)
  * and if the responding end dies (gets restarted, or the conn gets reloaded
- * with the right policy), then we may have a bum phase 1 SA, and we can not
+ * with the right policy), then we may have a bum phase 1 SA, and we cannot
  * re-negotiate. (This happens WAY too often)
  *
  * The phase 2 dpd_init() will attempt to kill the phase 1 DPD_EVENT, if it
@@ -149,7 +149,7 @@ stf_status dpd_init(struct state *st)
 		 * Why would this happen? because a quick mode SA can take
 		 * some time to create (DNS lookups for instance), and the phase 1
 		 * might have been taken down for some reason in the meantime.
-		 * We really can not do anything here --- attempting to invoke
+		 * We really cannot do anything here --- attempting to invoke
 		 * the DPD action would be a good idea, but we really should
 		 * do that outside this function.
 		 */
@@ -299,7 +299,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 
 	if (st != p1st) {
 		/*
-		 * reschedule next event, since we can not do it from the activity
+		 * reschedule next event, since we cannot do it from the activity
 		 * routine.
 		 */
 		event_schedule(EVENT_DPD, deltasecs(nextdelay), st);
@@ -320,11 +320,14 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 */
 	dpd_sched_timeout(p1st, nw, timeout);
 
-	DBG(DBG_DPD, DBG_log("DPD: sending R_U_THERE %u to %s:%d (state #%lu)",
-			     p1st->st_dpd_seqno,
-			     ip_str(&p1st->st_remoteaddr),
-			     p1st->st_remoteport,
-			     p1st->st_serialno));
+	DBG(DBG_DPD, {
+		ipstr_buf b;
+		DBG_log("DPD: sending R_U_THERE %u to %s:%d (state #%lu)",
+			 p1st->st_dpd_seqno,
+			 ipstr(&p1st->st_remoteaddr, &b),
+			 p1st->st_remoteport,
+			 p1st->st_serialno);
+	});
 
 	if (send_isakmp_notification(p1st, R_U_THERE,
 				     &seqno, sizeof(seqno)) != STF_IGNORE) {

@@ -107,12 +107,8 @@ static void confwrite_int(FILE *out,
 		case kt_invertbool:
 			/* special enumeration */
 			if (options_set[k->field]) {
-				int val = options[k->field];
-				if (k->type == kt_invertbool)
-					val = !val;
-
 				fprintf(out, "\t%s%s=%s\n", side,
-					k->keyname, val ? "yes" : "no");
+					k->keyname, options[k->field] ? "yes" : "no");
 			}
 			continue;
 
@@ -306,10 +302,9 @@ static void confwrite_side(FILE *out,
 
 	case KH_IPADDR:
 		{
-			char as[ADDRTOT_BUF];
+			ipstr_buf as;
 
-			addrtot(&end->addr, 0, as, sizeof(as));
-			fprintf(out, "\t%s=%s\n", side, as);
+			fprintf(out, "\t%s=%s\n", side, ipstr(&end->addr, &as));
 		}
 		break;
 	}
@@ -328,10 +323,10 @@ static void confwrite_side(FILE *out,
 
 	case KH_IPADDR:
 		{
-			char as[ADDRTOT_BUF];
+			ipstr_buf as;
 
-			addrtot(&end->nexthop, 0, as, sizeof(as));
-			fprintf(out, "\t%snexthop=%s\n", side, as);
+			fprintf(out, "\t%snexthop=%s\n",
+				side, ipstr(&end->nexthop, &as));
 		}
 		break;
 
@@ -374,10 +369,10 @@ static void confwrite_side(FILE *out,
 		fprintf(out, "\t%scert=%s\n", side, end->cert);
 
 	if (!isanyaddr(&end->sourceip)) {
-		char as[ADDRTOT_BUF];
+		ipstr_buf as;
 
-		addrtot(&end->sourceip, 0, as, sizeof(as));
-		fprintf(out, "\t%ssourceip=%s\n", side, as);
+		fprintf(out, "\t%ssourceip=%s\n",
+			side, ipstr(&end->sourceip, &as));
 	}
 
 	confwrite_int(out, side,

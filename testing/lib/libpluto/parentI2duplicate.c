@@ -127,7 +127,7 @@ main(int argc, char *argv[]){
 
 		/* find st involved */
 		st = state_with_serialno(2);
-		if (st)
+		if (st != NULL)
 			delete_state(st);
 	}
 

@@ -294,7 +294,7 @@ void ikev2_decode_cert(struct msg_digest *md)
 		default:
 			loglog(RC_LOG_SERIOUS,
 				"ignoring %s certificate payload",
-				enum_show(&ike_cert_type_names,
+				enum_show(&ikev2_cert_type_names,
 					v2cert->isac_enc));
 			DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
 		}
@@ -391,13 +391,16 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 		} else {
 			loglog(RC_LOG_SERIOUS,
 				"ignoring %s certificate request payload",
-				enum_show(&ike_cert_type_names,
+				enum_show(&ikev2_cert_type_names,
 					cr->isacertreq_enc));
 		}
 	}
 }
 
-bool ikev1_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_t np)
+bool ikev1_build_and_ship_CR(enum ike_cert_type type,
+			     chunk_t ca,
+			     pb_stream *outs,
+			     enum next_payload_types_ikev1 np)
 {
 	pb_stream cr_pbs;
 	struct isakmp_cr cr_hd;
@@ -418,8 +421,10 @@ bool ikev1_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs, u_int8_
 	return TRUE;
 }
 
-bool ikev2_build_and_ship_CR(u_int8_t type, chunk_t ca, pb_stream *outs,
-			u_int8_t np)
+bool ikev2_build_and_ship_CR(enum ike_cert_type type,
+			     chunk_t ca,
+			     pb_stream *outs,
+			     enum next_payload_types_ikev2 np)
 {
 	pb_stream cr_pbs;
 	struct ikev2_certreq cr_hd;
@@ -507,6 +512,7 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 
 		if (n < 0) {
 			char buff[256];
+
 			strerror_r(errno, buff, 256);
 			libreswan_log("  scandir() ./ error: %s", buff);
 		} else {
@@ -517,9 +523,9 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 						type, &cert))
 					add_authcert(cert.u.x509, auth_flags);
 
-				free(filelist[n]);
+				free(filelist[n]);	/* was malloced by scandir(3) */
 			}
-			free(filelist);
+			free(filelist);	/* was malloced by scandir(3) */
 		}
 
 		/* restore directory path */

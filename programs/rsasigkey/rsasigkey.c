@@ -359,7 +359,8 @@ int main(int argc, char *argv[])
 
 	if (argv[optind] == NULL) {
 		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
-		nbits = 3072 + 16 * rand() % 64;
+		srand(time(NULL));
+		nbits = 3072 + 16 * (rand() % 64);
 	} else {
 		unsigned long u;
 		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);

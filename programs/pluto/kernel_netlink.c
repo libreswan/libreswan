@@ -144,7 +144,16 @@ static sparse_names aalg_list = {
 	{ SADB_X_AALG_SHA2_256HMAC_TRUNCBUG, "hmac(sha256)" },
 	{ SADB_X_AALG_SHA2_384HMAC, "hmac(sha384)" },
 	{ SADB_X_AALG_SHA2_512HMAC, "hmac(sha512)" },
-	{ SADB_X_AALG_RIPEMD160HMAC, "ripemd160" },
+	{ SADB_X_AALG_RIPEMD160HMAC, "hmac(rmd160)" },
+	{ SADB_X_AALG_AES_XCBC_MAC, "xcbc(aes)" },
+	/* { SADB_X_AALG_RSA - not supported by us */
+	/*
+	 * GMAC's not supported by Linux kernel yet
+	 *
+	{ SADB_X_AALG_AH_AES_128_GMAC, "" },
+	{ SADB_X_AALG_AH_AES_192_GMAC, "" },
+	{ SADB_X_AALG_AH_AES_256_GMAC, "" },
+	 */
 	{ 0, sparse_end }
 };
 
@@ -156,7 +165,11 @@ static sparse_names ealg_list = {
 	{ SADB_X_EALG_CASTCBC, "cast5" },
 	/* { SADB_X_EALG_BLOWFISHCBC, "blowfish" }, obsoleted */
 	{ SADB_X_EALG_AESCBC, "aes" },
-	{ SADB_X_EALG_AESCTR, "ctr(aes)" },
+	{ SADB_X_EALG_AESCTR, "rfc3686(ctr(aes))" },
+	/*
+	 * Not yet implemented in Linux kernel xfrm_algo.c
+	{ SADB_X_EALG_SEEDCBC, "cbc(seed)" },
+	 */
 	{ SADB_X_EALG_CAMELLIACBC, "cbc(camellia)" },
 	/* 252 draft-ietf-ipsec-ciph-aes-cbc-00 */
 	{ SADB_X_EALG_SERPENTCBC, "serpent" },
@@ -187,6 +200,13 @@ static const struct aead_alg aead_algs[] =
 		.name = "rfc4106(gcm(aes))" },
 	{ .id = SADB_X_EALG_AES_GCM_ICV16, .icvlen = 16,
 		.name = "rfc4106(gcm(aes))" },
+	/*
+	 * The Linux kernel has rfc4494 "cmac(aes)", except there is
+	 * no such AH/ESP transform, only an IKEv2 transform.
+	 * Presumably for AF_KEY use of userland
+	{ .id = SADB_X_EALG_NULL_AUTH_AES_GMAC, .icvlen = 16,
+		.name = "rfc4543(gcm(aes))" },
+	*/
 };
 
 static const struct aead_alg *get_aead_alg(int algid)
@@ -881,7 +901,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		name = sparse_name(aalg_list, sa->authalg);
 		if (!name) {
 			loglog(RC_LOG_SERIOUS,
-				"unknown authentication algorithm: %u",
+				"NETKEY/XFRM: unknown authentication algorithm: %u",
 				sa->authalg);
 			return FALSE;
 		}
@@ -895,8 +915,13 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * this.
 		 */
 
-		if (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 ||
-			sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) {
+		switch (sa->authalg)
+		{
+		case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
+		case AUTH_ALGORITHM_HMAC_SHA2_256:
+		case AUTH_ALGORITHM_HMAC_SHA2_384:
+		case AUTH_ALGORITHM_HMAC_SHA2_512:
+		{
 			struct xfrm_algo_auth algo;
 
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
@@ -909,6 +934,14 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 				algo.alg_trunc_len = 96;
 				/* fixup to the real number, not our private number */
 				sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
+				break;
+
+			case AUTH_ALGORITHM_HMAC_SHA2_384:
+				algo.alg_trunc_len = 192;
+				break;
+
+			case AUTH_ALGORITHM_HMAC_SHA2_512:
+				algo.alg_trunc_len = 256;
 				break;
 			}
 
@@ -924,21 +957,26 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
+			break;
+		}
+		default:
+		{
+			struct xfrm_algo algo_old;
 
-		} else {
-			struct xfrm_algo algo;
-			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
+			algo_old.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			attr->rta_type = XFRMA_ALG_AUTH;
 			attr->rta_len = RTA_LENGTH(
-				sizeof(algo) + sa->authkeylen);
-			strcpy(algo.alg_name, name);
-			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
+				sizeof(algo_old) + sa->authkeylen);
+			strcpy(algo_old.alg_name, name);
+			memcpy(RTA_DATA(attr), &algo_old, sizeof(algo_old));
 			memcpy((char *)RTA_DATA(
-					attr) + sizeof(algo), sa->authkey,
+					attr) + sizeof(algo_old), sa->authkey,
 				sa->authkeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
+			break;
+		}
 		}
 	}
 
@@ -1053,7 +1091,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		loglog(RC_LOG_SERIOUS,
 			"Warning: expected to find an existing IPsec SA - continuing as Add SA");
-		return netlink_add_sa(sa, 0);
+		return netlink_add_sa(sa, FALSE);
 	}
 	return ret;
 }
@@ -1448,22 +1486,20 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 #endif
 
-	src_proto = 0;	/* XXX-MCR where to get protocol from? */
-	dst_proto = 0;	/* ditto */
 	src_proto = dst_proto = acquire->sel.proto;
 
 	/*
 	 * XXX also the type of src/dst should be checked to make sure
 	 *     that they aren't v4 to v6 or something goofy
 	 */
-	if (!(ugh = xfrm_to_ip_address(family, srcx, &src)) &&
-		!(ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
-		!(ugh = add_port(family, &src, acquire->sel.sport)) &&
-		!(ugh = add_port(family, &dst, acquire->sel.dport)) &&
-		!(ugh = src_proto == dst_proto ?
+	if (NULL == (ugh = xfrm_to_ip_address(family, srcx, &src)) &&
+	    NULL == (ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
+	    NULL == (ugh = add_port(family, &src, acquire->sel.sport)) &&
+	    NULL == (ugh = add_port(family, &dst, acquire->sel.dport)) &&
+	    NULL == (ugh = src_proto == dst_proto ?
 			NULL : "src and dst protocols differ") &&
-		!(ugh = addrtosubnet(&src, &ours)) &&
-		!(ugh = addrtosubnet(&dst, &his)))
+	    NULL == (ugh = addrtosubnet(&src, &ours)) &&
+	    NULL == (ugh = addrtosubnet(&dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, transport_proto,
 #ifdef HAVE_LABELED_IPSEC
 						uctx,
@@ -1900,12 +1936,7 @@ static bool netlink_shunt_eroute(struct connection *c,
 	}
 
 	{
-		const ip_address *peer = &sr->that.host_addr;
 		char buf2[256];
-		const struct af_info *fam = aftoinfo(addrtypeof(peer));
-
-		if (fam == NULL)
-			fam = aftoinfo(AF_INET);
 
 		snprintf(buf2, sizeof(buf2), "eroute_connection %s", opname);
 
@@ -1942,10 +1973,10 @@ static bool netlink_shunt_eroute(struct connection *c,
 		snprintf(buf2, sizeof(buf2), "eroute_connection %s inbound",
 			opname);
 
-		return netlink_raw_eroute(&sr->this.host_addr,
-					&sr->this.client,
-					&sr->that.host_addr,
+		return netlink_raw_eroute(&sr->that.host_addr,
 					&sr->that.client,
+					&sr->this.host_addr,
+					&sr->this.client,
 					htonl(spi),
 					c->encapsulation ==
 					ENCAPSULATION_MODE_TRANSPORT ?
@@ -1969,15 +2000,17 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 	ip_address lip;	/* --listen filter option */
 
 	if (pluto_listen) {
-		err_t e;
-		e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
-		if (e) {
+		err_t e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
+
+		if (e != NULL) {
 			DBG_log("invalid listen= option ignored: %s\n", e);
 			pluto_listen = NULL;
 		}
-		DBG(DBG_CONTROL,
+		DBG(DBG_CONTROL, {
+			ipstr_buf b;
 			DBG_log("Only looking to listen on %s\n",
-				ip_str(&lip)));
+				ipstr(&lip, &b));
+		});
 	}
 
 	/*
@@ -1992,13 +2025,11 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 		struct raw_iface *vfp;
 
 		/* ignore if virtual (ipsec*) interface */
-		if (strncmp(ifp->name, IPSECDEVPREFIX,
-				sizeof(IPSECDEVPREFIX) - 1) == 0)
+		if (startswith(ifp->name, IPSECDEVPREFIX))
 			continue;
 
 		/* ignore if virtual (mast*) interface */
-		if (strncmp(ifp->name, MASTDEVPREFIX,
-				sizeof(MASTDEVPREFIX) - 1) == 0)
+		if (startswith(ifp->name, MASTDEVPREFIX))
 			continue;
 
 		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
@@ -2011,14 +2042,14 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				 *
 				 * Many interesting cases.
 				 */
-				if (strncmp(vfp->name, IPSECDEVPREFIX,
-						sizeof(IPSECDEVPREFIX) - 1) ==
-					0) {
+				if (startswith(vfp->name, IPSECDEVPREFIX)) {
 					if (v != NULL) {
+						ipstr_buf b;
+
 						loglog(RC_LOG_SERIOUS,
 							"ipsec interfaces %s and %s share same address %s",
 							v->name, vfp->name,
-							ip_str(&ifp->addr));
+							ipstr(&ifp->addr, &b));
 						bad = TRUE;
 					} else {
 						/* current winner */
@@ -2038,10 +2069,12 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 						continue;
 					}
 					if (after) {
+						ipstr_buf b;
+
 						loglog(RC_LOG_SERIOUS,
 							"IP interfaces %s and %s share address %s!",
 							ifp->name, vfp->name,
-							ip_str(&ifp->addr));
+							ipstr(&ifp->addr, &b));
 					}
 					bad = TRUE;
 				}
@@ -2070,10 +2103,12 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 					(sizeof(fvp) - 1));
 				v = &fake_v;
 			} else {
-				DBG(DBG_CONTROL,
+				DBG(DBG_CONTROL, {
+					ipstr_buf b;
 					DBG_log("IP interface %s %s has no matching ipsec* interface -- ignored",
 						ifp->name,
-						ip_str(&ifp->addr)));
+						ipstr(&ifp->addr, &b));
+				});
 				continue;
 			}
 		}
@@ -2091,8 +2126,10 @@ add_entry:
 		 */
 		if (pluto_listen != NULL) {
 			if (!sameaddr(&lip, &ifp->addr)) {
+				ipstr_buf b;
+
 				libreswan_log("skipping interface %s with %s",
-					ifp->name, ip_str(&ifp->addr));
+					ifp->name, ipstr(&ifp->addr, &b));
 				continue;
 			}
 		}
@@ -2107,6 +2144,7 @@ add_entry:
 				/* search is over if at end of list */
 				if (q == NULL) {
 					/* matches nothing -- create a new entry */
+					ipstr_buf b;
 					int fd = create_socket(ifp, v->name,
 							pluto_port);
 
@@ -2141,7 +2179,7 @@ add_entry:
 						"adding interface %s/%s %s:%d",
 						q->ip_dev->id_vname,
 						q->ip_dev->id_rname,
-						ip_str(&q->ip_addr),
+						ipstr(&q->ip_addr, &b),
 						q->port);
 
 					/*
@@ -2150,8 +2188,7 @@ add_entry:
 					 * not support it, and gave an error
 					 * it one tried to turn it on.
 					 */
-					if (addrtypeof(&ifp->addr) ==
-						AF_INET) {
+					if (addrtypeof(&ifp->addr) == AF_INET) {
 						fd = create_socket(ifp,
 								v->name,
 								pluto_nat_port);
@@ -2177,7 +2214,7 @@ add_entry:
 						libreswan_log(
 							"adding interface %s/%s %s:%d",
 							q->ip_dev->id_vname, q->ip_dev->id_rname,
-							ip_str(&q->ip_addr),
+							ipstr(&q->ip_addr, &b),
 							q->port);
 					}
 
@@ -2228,7 +2265,8 @@ add_entry:
  * @param sa Kernel SA to be queried
  * @return bool True if successful
  */
-static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes)
+static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes,
+		uint64_t *add_time)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2259,6 +2297,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, u_int *bytes)
 		return FALSE;
 
 	*bytes = (u_int) rsp.info.curlft.bytes;
+	*add_time = rsp.info.curlft.add_time;
 	return TRUE;
 }
 

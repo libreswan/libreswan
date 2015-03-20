@@ -767,7 +767,7 @@ static field_desc ikev2trans_fields[] = {
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
-	{ ft_enum_enum, 16 / BITS_PER_BYTE, "IKEv2 transform ID", &v2_transform_ID_enums }, /* select enum based on transform type */
+	{ ft_loose_enum_enum, 16 / BITS_PER_BYTE, "IKEv2 transform ID", &v2_transform_ID_enums }, /* select enum based on transform type */
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -869,7 +869,7 @@ static field_desc ikev2id_fields[] = {
 	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "id_type", &ike_idtype_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "id_type", &ikev2_idtype_names },
 	{ ft_zig,  8 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_zig, 16 / BITS_PER_BYTE, NULL, NULL },
 	{ ft_end,  0, NULL, NULL }
@@ -898,7 +898,7 @@ static field_desc ikev2_cert_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
-	  &ike_cert_type_names },
+	  &ikev2_cert_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -927,7 +927,7 @@ static field_desc ikev2_cert_req_fields[] = {
 	{ ft_set, 8 / BITS_PER_BYTE, "critical bit", critical_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
 	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
-	  &ike_cert_type_names },
+	  &ikev2_cert_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1257,8 +1257,7 @@ static enum_names *enum_enum_table(
 static err_t enum_enum_checker(
 	const char *struct_name,
 	const field_desc *fp,
-	u_int32_t last_enum,
-	u_int32_t n)
+	u_int32_t last_enum)
 {
 	enum_names *ed = enum_enum_table(fp, last_enum);
 
@@ -1267,11 +1266,6 @@ static err_t enum_enum_checker(
 			"%s of %s has an unknown type: %lu",
 			fp->name, struct_name,
 			(unsigned long)last_enum);
-	} else if (enum_name(ed, n) == NULL) {
-		return builddiag(
-			"%s of %s has an unknown value: %lu",
-			fp->name, struct_name,
-			(unsigned long)n);
 	}
 	return NULL;
 }
@@ -1305,7 +1299,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		case ft_lv:             /* length/value field of attribute */
 		case ft_enum:           /* value from an enumeration */
 		case ft_loose_enum:     /* value from an enumeration with only some names known */
-		case ft_enum_enum:	/* value from an enumeration with name table based on previous enum */
+		case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_set:            /* bits representing set */
@@ -1349,7 +1343,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 					enum_show(fp->desc, n));
 				break;
 
-			case ft_enum_enum:
+			case ft_loose_enum_enum:
 			{
 				enum_names *ed = enum_enum_table(fp, last_enum);
 
@@ -1483,7 +1477,7 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 			case ft_lv:             /* length/value field of attribute */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
-			case ft_enum_enum:	/* value from an enumeration with name table based on previous enum */
+			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
@@ -1541,8 +1535,8 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 					last_enum = n;
 					break;
 
-				case ft_enum_enum:	/* value from an enumeration with name table based on previous enum */
-					ugh = enum_enum_checker(sd->name, fp, last_enum, n);
+				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
+					ugh = enum_enum_checker(sd->name, fp, last_enum);
 					break;
 
 				case ft_set:            /* bits representing set */
@@ -1705,7 +1699,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 			case ft_lv:             /* length/value field of attribute */
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
-			case ft_enum_enum:	/* value from an enumeration with name table based on previous enum */
+			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
 			case ft_af_enum:        /* Attribute Format + value from an enumeration */
 			case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 			case ft_set:            /* bits representing set */
@@ -1764,8 +1758,8 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 					last_enum = n;
 					break;
 
-				case ft_enum_enum:	/* value from an enumeration with name table based on previous enum */
-					ugh = enum_enum_checker(sd->name, fp, last_enum, n);
+				case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
+					ugh = enum_enum_checker(sd->name, fp, last_enum);
 					break;
 
 				case ft_set:            /* bits representing set */

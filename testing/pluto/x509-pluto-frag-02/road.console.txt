@@ -23,9 +23,9 @@ road #
 road #
  rm -fr /var/run/pluto/pluto.pid
 road #
- /usr/local/libexec/ipsec/_stackmanager stop
+ PATH/libexec/ipsec/_stackmanager stop
 road #
- /usr/local/libexec/ipsec/_stackmanager start
+ PATH/libexec/ipsec/_stackmanager start
 [ 00.00] AVX instructions are not detected.
 [ 00.00] AVX instructions are not detected.
 [ 00.00] registered KLIPS /proc/sys/net
@@ -64,7 +64,7 @@ road #
 002 "modecfg-road-east" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 002 "modecfg-road-east" #1: no crl from issuer "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org" found (strict=no)
 002 "modecfg-road-east" #1: transition from state STATE_MAIN_I3 to state STATE_MAIN_I4
-004 "modecfg-road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=oakley_3des_cbc_192 prf=sha group=MODP1536}
+004 "modecfg-road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=oakley_3des_cbc_192 integ=sha group=MODP1536}
 041 "modecfg-road-east" #1: modecfg-road-east prompt for Username:
 040 "modecfg-road-east" #1: modecfg-road-east prompt for Password:
 002 "modecfg-road-east" #1: XAUTH: Answering XAUTH challenge with user='use3'

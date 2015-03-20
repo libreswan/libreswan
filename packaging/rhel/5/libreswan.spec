@@ -16,7 +16,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.9
+Version: 3.10
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
@@ -189,7 +189,8 @@ fi
 
 %post 
 /sbin/chkconfig --add ipsec || :
-if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
+     ! -f %{_sysconfdir}/ipsec.d/cert9.db ] ; then
     TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
     [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
     echo > ${TEMPFILE}

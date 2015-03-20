@@ -12,11 +12,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- */
-
-#ifndef USE_UNBOUND     /* whole file! */
-
-/*
+ *
  * This program executes as multiple processes.  The Master process
  * receives queries (struct adns_query messages) from Pluto and distributes
  * them amongst Worker processes.  These Worker processes are created
@@ -63,7 +59,7 @@
 #include <libreswan.h>
 
 #include "constants.h"
-#include "adns.h"	/* needs <resolv.h> */
+#include "adns.h"
 #include "lsw_select.h"
 
 /* shared by all processes */
@@ -119,7 +115,8 @@ static enum helper_exit_status read_pipe(int fd, unsigned char *stuff,
 	return HES_CONTINUE;
 }
 
-/* Write a variable-length record to a pipe.
+/*
+ * Write a variable-length record to a pipe.
  * First bytes must be a size_t containing the length.
  * HES_CONTINUE if record written
  * Others are errors.
@@ -149,11 +146,13 @@ static enum helper_exit_status write_pipe(int fd, const unsigned char *stuff)
 
 /**************** worker process ****************/
 
-/* The interface in RHL6.x and BIND distribution 8.2.2 are different,
+/*
+ * The interface in RHL6.x and BIND distribution 8.2.2 are different,
  * so we build some of our own :-(
  */
 
-/* Support deprecated interface to allow for older releases of the resolver.
+/*
+ * Support deprecated interface to allow for older releases of the resolver.
  * Fake new interface!
  * See resolver(3) bind distribution (should be in RHL6.1, but isn't).
  * __RES was 19960801 in RHL6.2, an old resolver.
@@ -180,7 +179,7 @@ static enum helper_exit_status write_pipe(int fd, const unsigned char *stuff)
 	res_query(dname, class, type, answer, anslen)
 # define res_nclose(statp) res_close()
 
-#define statp  ((struct __res_state *)(&_res))
+# define statp  ((struct __res_state *)(&_res))
 
 #else /* !OLD_RESOLVER */
 
@@ -188,6 +187,7 @@ static struct __res_state my_res_state /* = { 0 } */;
 static res_state statp = &my_res_state;
 
 #endif /* !OLD_RESOLVER */
+
 
 static int worker(int qfd, int afd)
 {
@@ -265,7 +265,13 @@ struct worker_info {
 static struct worker_info wi[MAX_WORKERS];
 static struct worker_info *wi_roof = wi;
 
-/* request FIFO */
+/*
+ * request FIFO
+ *
+ * Note: struct query_list objects are allocated by malloc(3).
+ * They are made available for reuse by putting them on the free_queries list
+ * but never actually freed (free(3)).
+ */
 
 struct query_list {
 	struct query_list *next;
@@ -523,7 +529,8 @@ static int master(void)
 	}
 }
 
-/* Not to be invoked by strangers -- user hostile.
+/*
+ * Not to be invoked by strangers -- user hostile.
  * Mandatory args: query-fd answer-fd
  * Optional arg: -d, signifying "debug".
  */
@@ -557,5 +564,3 @@ int main(int argc UNUSED, char **argv)
 
 	return master();
 }
-
-#endif /* !USE_UNBOUND */

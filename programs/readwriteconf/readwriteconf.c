@@ -126,17 +126,17 @@ int main(int argc, char *argv[])
 	if (confdir == NULL)
 		confdir = IPSEC_CONFDIR;
 
-	if (!configfile) {
+	if (configfile == NULL) {
+		/* ??? see code clone in programs/addconn/addconn.c */
 		configfile = alloc_bytes(strlen(confdir) +
-					 sizeof("/ipsec.conf") + 2,
+					 sizeof("/ipsec.conf"),
 					 "conf file");
 
 		/* calculate default value for configfile */
-		configfile[0] = '\0';
-		strcpy(configfile, confdir);
-		if (configfile[strlen(configfile) - 1] != '/')
-			strcat(configfile, "/");
-		strcat(configfile, "ipsec.conf");
+		strcpy(configfile, confdir);	/* safe: see allocation above */
+		if (configfile[0] != '\0' && configfile[strlen(configfile) - 1] != '/')
+			strcat(configfile, "/");	/* safe: see allocation above */
+		strcat(configfile, "ipsec.conf");	/* safe: see allocation above */
 	}
 
 	if (verbose > 3) {
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
 	cfg = confread_load(configfile, &err, FALSE, NULL, FALSE);
 
 	if (!cfg) {
-		printf("config file: %s can not be loaded: %s\n", configfile,
+		printf("config file: %s cannot be loaded: %s\n", configfile,
 		       err);
 		exit(3);
 	}

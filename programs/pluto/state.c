@@ -86,7 +86,7 @@ u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT; /* Pluto's NAT-T port */
 /* humanize_number: make large numbers clearer by expressing them as KB or MB, as appropriate.
  * The prefix is literally copied into the output.
  * Tricky representation: if the prefix starts with !, the number
- * is taken as kilobytes.  This prevents the caller scaling, with the attendant
+ * is taken as kilobytes.  Thus the caller does not scaling, with the attendant
  * risk of overflow.  The ! is not printed.
  */
 static char *humanize_number(unsigned long num,
@@ -197,6 +197,15 @@ void init_states(void)
 
 	for (i = 0; i < STATE_TABLE_SIZE; i++)
 		statetable[i] = (struct state *) NULL;
+}
+
+void v1_delete_state_by_xauth_name(struct state *st, void *name)
+{
+	/* only support deleting ikev1 with xauth user name */
+	if (st->st_ikev2)
+		return;
+	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name))
+			delete_my_family(st, FALSE);
 }
 
 /* Find the state object with this serial number.
@@ -322,18 +331,15 @@ void release_whack(struct state *st)
 
 void release_fragments(struct state *st)
 {
-	struct ike_frag *frag;
+	struct ike_frag *frag = st->ike_frags;
 
-	if (!st)
-		return;
-
-	frag = st->ike_frags;
 	while (frag != NULL) {
 		struct ike_frag *this = frag;
 
 		frag = this->next;
 		release_md(this->md);
-		free(this);
+
+		pfree(this);
 	}
 
 	st->ike_frags = NULL;
@@ -350,13 +356,13 @@ void delete_state(struct state *st)
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 		/* Note that a state/SA can have more then one of ESP/AH/IPCOMP */
 		if (st->st_esp.present) {
-			char statebuf[1024], *sbcp;
-
-			sbcp = humanize_number(st->st_esp.peer_bytes,
-					       statebuf, statebuf +
-					       sizeof(statebuf),
+			char statebuf[1024];
+			char *sbcp = humanize_number(st->st_esp.peer_bytes,
+					       statebuf,
+					       statebuf + sizeof(statebuf),
 					       "ESP traffic information: in=");
-			sbcp = humanize_number(st->st_esp.our_bytes,
+
+			(void)humanize_number(st->st_esp.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -367,13 +373,13 @@ void delete_state(struct state *st)
 		}
 
 		if (st->st_ah.present) {
-			char statebuf[1024], *sbcp;
-
-			sbcp = humanize_number(st->st_ah.peer_bytes,
-					       statebuf, statebuf +
-					       sizeof(statebuf),
+			char statebuf[1024];
+			char *sbcp = humanize_number(st->st_ah.peer_bytes,
+					       statebuf,
+					       statebuf + sizeof(statebuf),
 					       "AH traffic information: in=");
-			sbcp = humanize_number(st->st_ah.our_bytes,
+
+			(void)humanize_number(st->st_ah.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -384,13 +390,13 @@ void delete_state(struct state *st)
 		}
 
 		if (st->st_ipcomp.present) {
-			char statebuf[1024], *sbcp;
-
-			sbcp = humanize_number(st->st_ipcomp.peer_bytes,
-					       statebuf, statebuf +
-					       sizeof(statebuf),
+			char statebuf[1024];
+			char *sbcp = humanize_number(st->st_ipcomp.peer_bytes,
+					       statebuf,
+					       statebuf + sizeof(statebuf),
 					       " IPCOMP traffic information: in=");
-			sbcp = humanize_number(st->st_ipcomp.our_bytes,
+
+			(void)humanize_number(st->st_ipcomp.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
 					       " out=");
@@ -428,7 +434,7 @@ void delete_state(struct state *st)
 		    state_with_serialno(st->st_clonedfrom) == NULL) {
 			/* ??? in v2, there must be a parent */
 			DBG(DBG_CONTROL, DBG_log("IKE SA does not exist for this child SA"));
-			DBG(DBG_CONTROL, DBG_log("INFORMATIONAL exchange can not be sent, deleting state"));
+			DBG(DBG_CONTROL, DBG_log("INFORMATIONAL exchange cannot be sent, deleting state"));
 			change_state(st, STATE_CHILDSA_DEL);
 		} else  {
 			send_delete(st);
@@ -525,26 +531,25 @@ void delete_state(struct state *st)
 	free_any_nss_symkey(st->st_enc_key_nss);
 #   undef free_any_nss_symkey
 
-	if (st->st_ah.our_keymat != NULL)
-		memset(st->st_ah.our_keymat, 0, st->st_ah.keymat_len);
+#   define wipe_any(p, l) { \
+		if ((p) != NULL) { \
+			memset((p), 0x00, (l)); \
+			pfree(p); \
+			(p) = NULL; \
+		} \
+	}
+	wipe_any(st->st_ah.our_keymat, st->st_ah.keymat_len);
+	wipe_any(st->st_ah.peer_keymat, st->st_ah.keymat_len);
+	wipe_any(st->st_esp.our_keymat, st->st_esp.keymat_len);
+	wipe_any(st->st_esp.peer_keymat, st->st_esp.keymat_len);
 
-	if (st->st_ah.peer_keymat != NULL)
-		memset(st->st_ah.peer_keymat, 0, st->st_ah.keymat_len);
+	wipe_any(st->st_xauth_password.ptr, st->st_xauth_password.len);
+#   undef wipe_any
 
-	if (st->st_esp.our_keymat != NULL)
-		memset(st->st_esp.our_keymat, 0, st->st_esp.keymat_len);
-
-	if (st->st_esp.peer_keymat != NULL)
-		memset(st->st_esp.peer_keymat, 0, st->st_esp.keymat_len);
-
-	pfreeany(st->st_ah.our_keymat);
-	pfreeany(st->st_ah.peer_keymat);
-	pfreeany(st->st_esp.our_keymat);
-	pfreeany(st->st_esp.peer_keymat);
-	freeanychunk(st->st_xauth_password);
 #ifdef HAVE_LABELED_IPSEC
 	pfreeany(st->sec_ctx);
 #endif
+	zero(st);
 	pfree(st);
 }
 
@@ -774,13 +779,15 @@ void delete_states_by_peer(const ip_address *peer)
 			for (st = statetable[i]; st != NULL; ) {
 				struct state *this = st;
 				struct connection *c = this->st_connection;
-				char ra[ADDRTOT_BUF];
 
 				st = st->st_hashchain_next; /* before this is deleted */
 
-				addrtot(&this->st_remoteaddr, 0, ra,
-					sizeof(ra));
-				DBG_log("comparing %s to %s\n", ra, peerstr);
+				DBG(DBG_CONTROL, {
+					ipstr_buf b;
+					DBG_log("comparing %s to %s\n",
+						ipstr(&this->st_remoteaddr, &b),
+						peerstr);
+				});
 
 				if (sameaddr(&this->st_remoteaddr, peer)) {
 					if (ph1 == 0 &&
@@ -875,7 +882,6 @@ struct state *duplicate_state(struct state *st)
 	return nst;
 }
 
-#if 1
 void for_each_state(void (*f)(struct state *, void *data), void *data)
 {
 	struct state *ocs = cur_state;
@@ -892,7 +898,6 @@ void for_each_state(void (*f)(struct state *, void *data), void *data)
 	}
 	cur_state = ocs;
 }
-#endif
 
 /*
  * Find a state object for an IKEv1 state
@@ -1282,6 +1287,51 @@ void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 	    });
 }
 
+void fmt_list_traffic(struct state *st, char *state_buf,
+		      const size_t state_buf_len)
+{
+	const struct connection *c = st->st_connection;
+	char inst[CONN_INST_BUF];
+	char traffic_buf[512];
+	char *mbcp = traffic_buf;
+
+	state_buf[0] = '\0';   /* default to empty */
+	traffic_buf[0] = '\0';
+
+	if (IS_IKE_SA(st))
+		return; /* ignore non-IPsec states */
+	if (!IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
+		return; /* ignore non established states */
+	}
+
+	fmt_conn_instance(c, inst);
+	{
+		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN";
+
+		mbcp = traffic_buf + snprintf(traffic_buf,
+				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%lu", mode,  st->st_esp.add_time);
+
+		if (get_sa_info(st, FALSE, NULL)) {
+			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
+			mbcp += snprintf(mbcp, buf_len - 1, ", inBytes=%u",
+					st->st_esp.peer_bytes);
+		}
+		if (get_sa_info(st, TRUE, NULL)) {
+			size_t buf_len =  traffic_buf + sizeof(traffic_buf) - mbcp;
+			snprintf(mbcp, buf_len - 1, ", outBytes=%u",
+					st->st_esp.our_bytes);
+		}
+	}
+	snprintf(state_buf, state_buf_len,
+		"#%lu: \"%s\"%s%s%s%s",
+		st->st_serialno,
+		c->name, inst,
+		(st->st_xauth_username[0] != '\0') ? ", XAUTHuser=" : "",
+		(st->st_xauth_username[0] != '\0') ? st->st_xauth_username : "",
+		(traffic_buf[0] != '\0') ? traffic_buf : ""
+		);
+}
+
 void fmt_state(struct state *st, const monotime_t n,
 	       char *state_buf, const size_t state_buf_len,
 	       char *state_buf2, const size_t state_buf2_len)
@@ -1345,6 +1395,7 @@ void fmt_state(struct state *st, const monotime_t n,
 		}
 	}
 
+	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
 	if (st->st_calculating)
 		idlestr = "crypto_calculating";
 	else if (st->st_suspended_md)
@@ -1493,8 +1544,7 @@ void fmt_state(struct state *st, const monotime_t n,
 			mbcp = humanize_number(
 					(u_long)st->st_ipcomp.attrs.life_kilobytes,
 					mbcp,
-					traffic_buf +
-					  sizeof(traffic_buf),
+					traffic_buf + sizeof(traffic_buf),
 					"! IPCOMPmax=");
 		}
 #ifdef KLIPS
@@ -1548,14 +1598,18 @@ static int state_compare(const void *a, const void *b)
 	return connection_compare(ca, cb);
 }
 
-void show_states_status(void)
+void show_states_status(bool list_traffic)
 {
 	int i;
 	int count;
 
-	whack_log(RC_COMMENT, " ");             /* spacer */
-	whack_log(RC_COMMENT, "State list:");   /* spacer */
-	whack_log(RC_COMMENT, " ");             /* spacer */
+	if (list_traffic) {
+		whack_log(RC_COMMENT, " ");             /* spacer */
+	}	else {
+		whack_log(RC_COMMENT, " ");             /* spacer */
+		whack_log(RC_COMMENT, "State list:");   /* spacer */
+		whack_log(RC_COMMENT, " ");             /* spacer */
+	}
 
 	/* make count of states */
 	count = 0;
@@ -1596,15 +1650,23 @@ void show_states_status(void)
 			char state_buf2[LOG_WIDTH];
 			struct state *st = array[i];
 
-			fmt_state(st, n, state_buf, sizeof(state_buf),
-				  state_buf2, sizeof(state_buf2));
-			whack_log(RC_COMMENT, "%s", state_buf);
-			if (state_buf2[0] != '\0')
-				whack_log(RC_COMMENT, "%s", state_buf2);
+			if (list_traffic) {
+				fmt_list_traffic(st, state_buf,
+						sizeof(state_buf));
+				if (state_buf[0] != '\0')
+					whack_log(RC_INFORMATIONAL_TRAFFIC, "%s", state_buf);
+			} else {
 
-			/* show any associated pending Phase 2s */
-			if (IS_IKE_SA(st))
-				show_pending_phase2(st->st_connection, st);
+				fmt_state(st, n, state_buf, sizeof(state_buf),
+						state_buf2, sizeof(state_buf2));
+				whack_log(RC_COMMENT, "%s", state_buf);
+				if (state_buf2[0] != '\0')
+					whack_log(RC_COMMENT, "%s", state_buf2);
+
+				/* show any associated pending Phase 2s */
+				if (IS_IKE_SA(st))
+					show_pending_phase2(st->st_connection, st);
+			}
 		}
 
 		whack_log(RC_COMMENT, " "); /* spacer */
@@ -1732,4 +1794,69 @@ bool dpd_active_locally(const struct state *st)
 {
 	return deltasecs(st->st_connection->dpd_delay) != 0 &&
 		deltasecs(st->st_connection->dpd_timeout) != 0;
+}
+
+void delete_my_family(struct state *pst, bool v2_responder_state)
+{
+	/* We are a parent: delete our children and
+	 * then prepare to delete ourself.
+	 * Our children will be on the same hash chain
+	 * because we share IKE SPIs.
+	 */
+	struct state *st;
+
+	passert(!IS_CHILD_SA(pst));	/* we had better be a parent */
+
+	/* find first in chain */
+	for (st = pst; st->st_hashchain_prev != NULL; )
+		st = st->st_hashchain_prev;
+
+	/* delete each of our children */
+	while (st != NULL) {
+		/* since we might be deleting st, we need to
+		 * grab onto its successor first
+		 */
+		struct state *next_st = st->st_hashchain_next;
+
+		if (st->st_clonedfrom == pst->st_serialno) {
+			if (v2_responder_state)
+				change_state(st, STATE_CHILDSA_DEL);
+			delete_state(st);
+		}
+		st = next_st;
+	}
+
+	/* delete self */
+	if (v2_responder_state)
+		change_state(pst, STATE_IKESA_DEL);
+	delete_state(pst);
+}
+
+/* if the state is too busy to process a packet, say so */
+bool state_busy(const struct state *st) {
+	if (st != NULL) {
+		/* Ignore a packet if the state has a suspended state transition
+		 * Probably a duplicated packet but the original packet is not yet
+		 * recorded in st->st_rpacket, so duplicate checking won't catch.
+		 * ??? Should the packet be recorded earlier to improve diagnosis?
+		 */
+		if (st->st_suspended_md != NULL) {
+			loglog(RC_LOG,
+			       "discarding packet received during asynchronous work (DNS or crypto) in %s",
+			       enum_name(&state_names, st->st_state));
+			return TRUE;
+		}
+
+		/*
+		 * if this state is busy calculating in between state transitions,
+		 * (there will be no suspended state), then we silently ignore the
+		 * packet, as there is nothing we can do right now.
+		 */
+		DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st != NULL && st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st != NULL && st->st_calculating ? "TRUE" : "FALSE"));
+		if (st->st_calculating) {
+			libreswan_log("message received while calculating. Ignored.");
+			return TRUE;
+		}
+	}
+	return FALSE;
 }

@@ -127,7 +127,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	    DBG_dump("inner prf output", prf_psk, hash_len));
 
 	/* decide nonce based on the role */
-	if (role == INITIATOR) {
+	if (role == O_INITIATOR) {
 		/* on initiator, we need to hash responders nonce */
 		nonce = &st->st_nr;
 		nonce_name = "inputs to hash2 (responder nonce)";
@@ -226,7 +226,7 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 
 	enum phase1_role invertrole;
 
-	invertrole = (role == INITIATOR ? RESPONDER : INITIATOR);
+	invertrole = (role == O_INITIATOR ? O_RESPONDER : O_INITIATOR);
 
 	if (sig_len != hash_len) {
 		libreswan_log("negotiated prf: %s ",

@@ -10,7 +10,7 @@
 %endif
 
 Name:    %{kmod_name}-kmod
-Version: 3.9
+Version: 3.10
 Release: 1%{?dist}%{ocf}
 Group:   System Environment/Kernel
 License: GPLv2
@@ -75,7 +75,7 @@ find %{buildroot} -type f -name \*.ko -exec %{__chmod} u+x \{\} \;
 %{__rm} -rf %{buildroot}
 
 %changelog
-* Mon Mar 11 2013 Paul Wouters <pwouters@redhat.com> - 3.9
+* Mon Mar 11 2013 Paul Wouters <pwouters@redhat.com> - 3.10
 - Customized for libreswan KLIPS kernel module
 
 * Fri Jan 28 2011 Alan Bartlett <ajb@elrepo.org> - 0.5-6

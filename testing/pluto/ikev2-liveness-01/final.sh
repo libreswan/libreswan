@@ -1,4 +1,5 @@
 ipsec look
+grep "message ID:" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
