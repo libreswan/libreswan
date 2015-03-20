@@ -8,7 +8,6 @@ Standards-Version: 3.8.4
 Build-Depends: bison,
                bzip2,
                debhelper (>= 7.1),
-               dpatch,
                flex,
                htmldoc,
                libcurl4-openssl-dev,
