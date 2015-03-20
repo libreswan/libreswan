@@ -77,6 +77,7 @@ static struct encrypt_desc crypto_encrypter_3des =
 		    .algo_next =     NULL, },
 	.enc_ctxsize =      sizeof(des_key_schedule) * 3,
 	.enc_blocksize =    DES_CBC_BLOCK_SIZE,
+	.ivsize =           DES_CBC_BLOCK_SIZE,
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keyminlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.keymaxlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
@@ -85,6 +86,22 @@ static struct encrypt_desc crypto_encrypter_3des =
 #endif
 
 #ifdef USE_MD5
+
+static void lsMD5Init_thunk(union hash_ctx *context)
+{
+	lsMD5Init(&context->ctx_md5);
+}
+
+static void lsMD5Update_thunk(union hash_ctx *context, const unsigned char *input, size_t inputLen)
+{
+	lsMD5Update(&context->ctx_md5, input, inputLen);
+}
+
+static void lsMD5Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_ctx *context)
+{
+	lsMD5Final(digest, &context->ctx_md5);
+}
+
 static struct hash_desc crypto_hasher_md5 =
 {
 	.common = { .name = "oakley_md5",
@@ -93,14 +110,14 @@ static struct hash_desc crypto_hasher_md5 =
 		    .algo_id =   OAKLEY_MD5,
 		    .algo_v2id = IKEv2_PRF_HMAC_MD5,
 		    .algo_next = NULL, },
-	.hash_ctx_size = sizeof(MD5_CTX),
-	.hash_key_size =   MD5_DIGEST_SIZE,
+	.hash_ctx_size = sizeof(lsMD5_CTX),
+	.hash_key_size = MD5_DIGEST_SIZE,
 	.hash_digest_len = MD5_DIGEST_SIZE,
-	.hash_integ_len = 0,    /*Not applicable*/
+	.hash_integ_len = 0,    /* Not applicable */
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))osMD5Init,
-	.hash_update = (void (*)(void *, const u_int8_t *, size_t))osMD5Update,
-	.hash_final = (void (*)(u_char *, void *))osMD5Final,
+	.hash_init = lsMD5Init_thunk,
+	.hash_update = lsMD5Update_thunk,
+	.hash_final = lsMD5Final_thunk,
 };
 
 static struct hash_desc crypto_integ_md5 =
@@ -111,19 +128,40 @@ static struct hash_desc crypto_integ_md5 =
 		    .algo_id =   OAKLEY_MD5,
 		    .algo_v2id = IKEv2_AUTH_HMAC_MD5_96,
 		    .algo_next = NULL, },
-	.hash_ctx_size = sizeof(MD5_CTX),
+	.hash_ctx_size = sizeof(lsMD5_CTX),
 	.hash_key_size =   MD5_DIGEST_SIZE,
 	.hash_digest_len = MD5_DIGEST_SIZE,
 	.hash_integ_len = MD5_DIGEST_SIZE_96,
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))osMD5Init,
-	.hash_update = (void (*)(void *, const u_int8_t *, size_t))osMD5Update,
-	.hash_final = (void (*)(u_char *, void *))osMD5Final,
+	.hash_init = lsMD5Init_thunk,
+	.hash_update = lsMD5Update_thunk,
+	.hash_final = lsMD5Final_thunk,
 };
 #endif
 
 #ifdef USE_SHA1
-static struct hash_desc crypto_hasher_sha1 =
+
+static void SHA1Init_thunk(union hash_ctx *context)
+{
+	SHA1Init(&context->ctx_sha1);
+}
+
+static void SHA1Update_thunk(union hash_ctx *context, const unsigned char *input, size_t inputLen)
+{
+	SHA1Update(&context->ctx_sha1, input, inputLen);
+}
+
+static void SHA1Final_thunk(unsigned char digest[MD5_DIGEST_SIZE], union hash_ctx *context)
+{
+	SHA1Final(digest, &context->ctx_sha1);
+}
+
+
+/* Also used in nat_traversal.c.  I don't know how to call SHA1 by name.
+ * RFC 5996 2.23 only allows "SHA-1 digest of the SPIs (in the order they appear
+ * in the header), IP address, and port from which this packet was sent. "
+ */
+struct hash_desc crypto_hasher_sha1 =
 {
 	.common = { .name = "oakley_sha",
 		    .officname = "sha1",
@@ -134,11 +172,11 @@ static struct hash_desc crypto_hasher_sha1 =
 	.hash_ctx_size = sizeof(SHA1_CTX),
 	.hash_key_size =   SHA1_DIGEST_SIZE,
 	.hash_digest_len = SHA1_DIGEST_SIZE,
-	.hash_integ_len = 0,    /*Not applicable*/
+	.hash_integ_len = 0,	/* Not applicable */
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))SHA1Init,
-	.hash_update = (void (*)(void *, const u_int8_t *, size_t))SHA1Update,
-	.hash_final = (void (*)(u_char *, void *))SHA1Final,
+	.hash_init = SHA1Init_thunk,
+	.hash_update = SHA1Update_thunk,
+	.hash_final = SHA1Final_thunk,
 };
 
 static struct hash_desc crypto_integ_sha1 =
@@ -154,10 +192,11 @@ static struct hash_desc crypto_integ_sha1 =
 	.hash_digest_len = SHA1_DIGEST_SIZE,
 	.hash_integ_len = SHA1_DIGEST_SIZE_96,
 	.hash_block_size = HMAC_BUFSIZE,
-	.hash_init = (void (*)(void *))SHA1Init,
-	.hash_update = (void (*)(void *, const u_int8_t *, size_t))SHA1Update,
-	.hash_final = (void (*)(u_char *, void *))SHA1Final,
+	.hash_init = SHA1Init_thunk,
+	.hash_update = SHA1Update_thunk,
+	.hash_final = SHA1Final_thunk,
 };
+
 #endif
 
 void init_crypto(void)
@@ -195,8 +234,12 @@ void init_crypto(void)
 	ike_alg_aes_init();
 #endif
 
+#ifdef USE_CAMELLIA
+	ike_alg_camellia_init();
+#endif
+
 #ifdef USE_3DES
-	ike_alg_add((struct ike_alg *) &crypto_encrypter_3des);
+	ike_alg_add(&crypto_encrypter_3des.common);
 #endif
 
 #ifdef USE_SHA2
@@ -204,13 +247,13 @@ void init_crypto(void)
 #endif
 
 #ifdef USE_SHA1
-	ike_alg_add((struct ike_alg *) &crypto_hasher_sha1);
-	ike_alg_add((struct ike_alg *) &crypto_integ_sha1);
+	ike_alg_add(&crypto_hasher_sha1.common);
+	ike_alg_add(&crypto_integ_sha1.common);
 #endif
 
 #ifdef USE_MD5
-	ike_alg_add((struct ike_alg *) &crypto_hasher_md5);
-	ike_alg_add((struct ike_alg *) &crypto_integ_md5);
+	ike_alg_add(&crypto_hasher_md5.common);
+	ike_alg_add(&crypto_integ_md5.common);
 #endif
 }
 
@@ -333,6 +376,7 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 		case IKEv2_ENCR_AES_GCM_8:
 		case IKEv2_ENCR_AES_GCM_12:
 		case IKEv2_ENCR_AES_GCM_16:
+		case IKEv2_ENCR_CAMELLIA_CBC:
 		case IKEv2_ENCR_NULL_AUTH_AES_GMAC:
 			return AES_KEY_DEF_LEN;
 		case IKEv2_ENCR_CAMELLIA_CTR:
@@ -385,6 +429,7 @@ int crypto_req_keysize(enum crk_proto ksproto, int algo)
 		case ESP_AES_GCM_16:
 			return AES_GCM_KEY_DEF_LEN;
 		case ESP_CAMELLIA:
+		case ESP_CAMELLIAv1:
 			return CAMELLIA_KEY_DEF_LEN;
 		case ESP_NULL_AUTH_AES_GMAC:
 			return AES_GMAC_KEY_DEF_LEN;

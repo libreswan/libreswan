@@ -60,9 +60,9 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u
-road                                                         P,,  
-north                                                        P,,  
 hashsha2                                                     P,,  
+north                                                        P,,  
+road                                                         P,,  
 west                                                         P,,  
 west-ec                                                      P,,  
 east #

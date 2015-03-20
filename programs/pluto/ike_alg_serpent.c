@@ -84,18 +84,15 @@ static struct encrypt_desc encrypt_desc_serpent =
 	},
 	.enc_ctxsize = sizeof(struct serpent_context),
 	.enc_blocksize = SERPENT_CBC_BLOCK_SIZE,
+	.ivsize = SERPENT_CBC_BLOCK_SIZE,
 	.keyminlen = SERPENT_KEY_MIN_LEN,
 	.keydeflen = SERPENT_KEY_DEF_LEN,
 	.keymaxlen = SERPENT_KEY_MAX_LEN,
 	.do_crypt = do_serpent,
 };
 
-int ike_alg_serpent_init(void)
+void ike_alg_serpent_init(void)
 {
-	int ret = ike_alg_register_enc(&encrypt_desc_serpent);
-
-	return ret;
+	/* ??? nobody notices failure */
+	ike_alg_register_enc(&encrypt_desc_serpent);
 }
-/*
-   IKE_ALG_INIT_NAME: ike_alg_serpent_init
- */

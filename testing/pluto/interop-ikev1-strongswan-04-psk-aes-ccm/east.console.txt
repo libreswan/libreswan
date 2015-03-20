@@ -4,16 +4,16 @@ east #
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev1'
+  authby=secret
+  auto=add
+  esp=aes256ccm16-modp2048
+  ike=3des-sha1
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.1.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.0.1.0/24
-  authby=secret
-  auto=add
-  ike=3des-sha1
-  esp=aes256ccm16-modp2048
 found netkey IPsec stack
 east #
  echo "initdone"

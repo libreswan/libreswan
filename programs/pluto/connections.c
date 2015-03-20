@@ -72,7 +72,7 @@
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "xauth.h"
+#include "ikev1_xauth.h"
 #include "addresspool.h"
 #include "nat_traversal.h"
 
@@ -192,10 +192,13 @@ void update_host_pairs(struct connection *c)
 }
 
 /* Delete a connection */
-
 static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
+
+	if (e->ca_path.ty != CERT_NONE && e->ca_path.u.x509 != NULL)
+		release_authcert_chain(e->ca_path.u.x509);
+
 	freeanychunk(e->ca);
 	release_cert(e->cert);
 	pfreeany(e->updown);
@@ -745,17 +748,17 @@ static void unshare_connection_strings(struct connection *c)
 
 	/* increment references to algo's, if any */
 	if (c->alg_info_ike) {
-		alg_info_addref(IKETOINFO(c->alg_info_ike));
+		alg_info_addref(&c->alg_info_ike->ai);
 	}
 
 	if (c->alg_info_esp) {
-		alg_info_addref(ESPTOINFO(c->alg_info_esp));
+		alg_info_addref(&c->alg_info_esp->ai);
 	}
 	if (c->pool !=  NULL)
 		reference_addresspool(c->pool);
 }
 
-static void load_end_certificate(const char *name, struct end *dst)
+static bool load_end_certificate(const char *name, struct end *dst)
 {
 	realtime_t valid_until;
 	cert_t cert;
@@ -767,9 +770,9 @@ static void load_end_certificate(const char *name, struct end *dst)
 	dst->cert.ty = CERT_NONE;
 
 	if (name == NULL)
-		return;
+		return FALSE;
 
-	DBG(DBG_CONTROL, DBG_log("loading certificate %s\n", name));
+	DBG(DBG_CONTROL, DBG_log("loading certificate %s", name));
 	dst->cert_filename = clone_str(name, "certificate name");
 
 	{
@@ -777,11 +780,11 @@ static void load_end_certificate(const char *name, struct end *dst)
 		bool valid_cert = load_cert_from_nss(name,
 						"host cert", &cert);
 		if (!valid_cert) {
-			whack_log(RC_FATAL, "cannot load certificate %s\n",
+			whack_log(RC_FATAL, "cannot load certificate %s",
 				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;
-			return;
+			return FALSE;
 		}
 	}
 
@@ -814,6 +817,65 @@ static void load_end_certificate(const char *name, struct end *dst)
 		bad_case(cert.ty);
 	}
 
+	return TRUE;
+}
+
+static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
+{
+	x509cert_t *ac = x509_get_authcerts_chain();
+	x509cert_t *new = NULL, *iac = NULL;
+	char ibuf[ASN1_BUF_LEN], tbuf[ASN1_BUF_LEN];
+
+	zero(&dst->ca_path);
+	dst->ca_path.ty = CERT_NONE;
+
+	/* don't load a ca_path */
+	if (issuer_dn.ptr == NULL || issuer_dn.len < 1)
+		return;
+
+	/* find the issuing cert */
+	while (ac != NULL) {
+		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags) {
+			/* increment reference count */
+			share_x509cert(ac);
+			new = clone_thing(*ac, "x509cert_t");
+			new->next = NULL;
+			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
+			DBG(DBG_X509, DBG_log("load_end_ca_path : end cert issuer is %s",
+									ibuf));
+			break;
+		}
+		ac = ac->next;
+	}
+	/* starting with the issuer's CA copy the path down */
+	if (new != NULL) {
+		dst->ca_path.ty = CERT_X509_SIGNATURE;
+		dst->ca_path.u.x509 = new;
+
+		while ((iac = get_authcert(new->issuer,
+					   new->authKeySerialNumber,
+					   new->authKeyID, AUTH_CA)) != NULL) {
+			x509cert_t *rootcheck = NULL;
+
+			rootcheck = get_authcert(iac->issuer,
+					         iac->authKeySerialNumber,
+						 iac->authKeyID, AUTH_CA);
+
+			/* root cert is next, but we don't want it in the chain */
+			if (rootcheck != NULL && (same_dn(iac->subject,
+							  rootcheck->subject)))
+				break;
+
+			dntoa(tbuf, ASN1_BUF_LEN, iac->subject);
+			DBG(DBG_X509, DBG_log("load_end_ca_path : adding %s to chain",
+						tbuf));
+			/* increment reference count */
+			share_x509cert(iac);
+			new->next = clone_thing(*iac, "x509cert_t");
+			new = new->next;
+			new->next = NULL;
+		}
+	}
 }
 
 static bool extract_end(struct end *dst, const struct whack_end *src,
@@ -855,7 +917,9 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	}
 
 	/* load local end certificate and extract ID, if any */
-	load_end_certificate(src->cert, dst);
+	if (load_end_certificate(src->cert, dst))
+		load_end_ca_path(dst->cert.u.x509->issuer, dst);
+
 	/* ??? what should we do on load_end_certificate failure? */
 
 	/* does id has wildcards? */
@@ -1055,38 +1119,53 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-static struct connection *find_connection_by_reqid(uint32_t reqid)
+static struct connection *find_connection_by_reqid(reqid_t reqid)
 {
 	struct connection *c;
 
-	if (reqid >= IPSEC_MANUAL_REQID_MAX -3 ) {
+	/* find base reqid */
+	if (reqid > IPSEC_MANUAL_REQID_MAX) {
 		reqid &= ~3;
 	}
 
-	for (c = connections; c != NULL; c = c->ac_next) {
+	for (c = connections; c != NULL; c = c->ac_next)
 		if (c->spd.reqid == reqid)
-			return c;
-	}
+			break;
 
-	return NULL;
+	return c;
 }
 
-static uint32_t gen_reqid(void)
+/*
+ * generate a base reqid for automatic keying
+ *
+ * We are actually allocating a group of four contiguous
+ * numbers: one is used for each SA in an SA bundle.
+ *
+ * - must not be in range 0 to IPSEC_MANUAL_REQID_MAX
+ * - is a multiple of 4 (not actually a requirement?)
+ * - does not duplicate any currently in use
+ */
+static reqid_t gen_reqid(void)
 {
-	uint32_t start;
-	static uint32_t reqid = IPSEC_MANUAL_REQID_MAX & ~3;
+	static reqid_t	last_reqid = IPSEC_MANUAL_REQID_MAX + 1;
+	reqid_t r = last_reqid;
 
-	start = reqid;
-	do {
-		reqid += 4;
-		if (reqid == 0)
-			reqid = (IPSEC_MANUAL_REQID_MAX & ~3) + 4;
-		if (!find_connection_by_reqid(reqid))
-			return reqid;
-	} while (reqid != start);
+	passert(r % 4 == 0);
+	for (;;) {
+		r += 4;	/* may wrap */
+		/* don't use range 0 to IPSEC_MANUAL_REQID_MAX */
+		if (r <= IPSEC_MANUAL_REQID_MAX)
+			r = IPSEC_MANUAL_REQID_MAX + 1;
 
-	exit_log("unable to allocate reqid");
-	return 0; /* never reached, here to make compiler happy */
+		if (r == last_reqid) {
+			/* gone around the clock without success */
+			exit_log("unable to allocate reqid");
+		}
+		if (!find_connection_by_reqid(r)) {
+			last_reqid = r;
+			return r;
+		}
+	}
 }
 
 static bool have_wm_certs(const struct whack_message *wm)
@@ -1212,13 +1291,13 @@ void add_connection(const struct whack_message *wm)
 					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
 			DBG(DBG_CONTROL, {
-				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
+				char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf);
+				DBG_log("phase2alg string values: %s", buf);
 			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->ai.alg_info_cnt == 0) {
@@ -1231,7 +1310,7 @@ void add_connection(const struct whack_message *wm)
 				}
 			} else {
 				loglog(RC_LOG_SERIOUS,
-					"esp string error: %s",
+					"phase2alg string error: %s",
 					err_buf);
 				pfree(c);
 				return;
@@ -1330,13 +1409,19 @@ void add_connection(const struct whack_message *wm)
 		c->spd.this.left = TRUE;
 		c->spd.that.left = FALSE;
 
+		c->send_ca = wm->send_ca;
+		same_rightca = same_leftca = FALSE;
+
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
-		if (same_rightca)
+		if (same_rightca) {
 			c->spd.that.ca = c->spd.this.ca;
-		else if (same_leftca)
+			c->spd.that.ca_path = c->spd.this.ca_path;
+		} else if (same_leftca) {
 			c->spd.this.ca = c->spd.that.ca;
+			c->spd.this.ca_path = c->spd.that.ca_path;
+		}
 
 		/*
 		 * How to add addresspool only for responder?
@@ -1382,10 +1467,10 @@ void add_connection(const struct whack_message *wm)
 
 		c->spd.next = NULL;
 
-		if (wm->sa_reqid) {
-			c->spd.reqid = wm->sa_reqid;
-		} else {
+		if (wm->sa_reqid == 0) {
 			c->spd.reqid = gen_reqid();
+		} else {
+			c->spd.reqid = wm->sa_reqid;
 		}
 
 		/* set internal fields */
@@ -2250,8 +2335,8 @@ struct connection *route_owner(struct connection *c,
 			struct spd_route **esrp)
 {
 	struct connection *d,
-	*best_ro = c,
-	*best_ero = c;
+		*best_ro = c,
+		*best_ero = c;
 	struct spd_route *srd, *src;
 	struct spd_route *best_sr, *best_esr;
 	enum routing_t best_routing, best_erouting;
@@ -3066,7 +3151,7 @@ static struct connection *fc_try(const struct connection *c,
 						continue;
 					}
 
-					virtualwhy = is_virtual_net_allowed(
+					virtualwhy = check_virtual_net_allowed(
 							d,
 							peer_net,
 							&sr->that.host_addr);
@@ -3122,9 +3207,8 @@ static struct connection *fc_try(const struct connection *c,
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
 			libreswan_log(
-				"peer proposal was reject in a virtual "
-				"connection policy because:");
-			libreswan_log("  %s", virtualwhy);
+				"peer proposal was reject in a virtual connection policy: %s",
+				virtualwhy);
 		}
 	}
 

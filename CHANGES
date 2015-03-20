@@ -1,8 +1,50 @@
 
 See also https://libreswan.org/
+v3.11 (October 22, 2014)
+* x509: IKEv1 CA cert chain support with sendca option [Matt]
+* pluto: Fix mtu= option mangling introduced in 3.10 [Kim]
+* pluto: Fixes auto=start and auto=route with %defaultroute [Kim/Tuomo/Paul]
+         (troubled in 3.9 and 3.10)
+* pluto: Don't register ESP_BLOWFISH [Paul]
+* pluto: ESP support for aes_xcbc [Paul]
+* pluto: ESP support for aes_ctr [Paul]
+* pluto: ESP support for camellia on NETKEY [Paul]
+* pluto: IKE support for aes_xcbc (pending NSS update) [Paul]
+* IKEv1: Default to DH Group 2 and 5 for initiating Aggressive Mode [Paul]
+         (3.9 included DH 14 which was prefered, causing interop issues)
+* pluto: Force ESP_CAST to only allow 128 bit key sizes [Paul]
+* pluto: Log_crypto_workers threads did not use static bool first_time [Coverity]
+* pluto: Warn (not fail) on empty NSS private key passwords [Oskari Saarenmaa]
+         - rhbz#1145231 (rhel7) and rhbz#1144941 (fedora)
+* pluto: Added PLUTO_IN_BYTES= / PLUTO_OUT_BYTES= for updown [Antony]
+* pluto: Handle list of certs from parse_pkcs7_cert [Hugh]
+* pluto: Fix --impair-retransmits IMPAIR code [Hugh]
+* pluto: separate SEND_V2_NOTIFICATION from SEND_NOTIFICATION [Hugh]
+* pluto: Various fixes/cleanups in algo registration functions [Paul/Hugh]
+* pluto: ah=null as a valid phase2alg for a connection [Paul]
+* pluto: Clean up complete_v*_state_transitions and related things [Hugh]
+* pluto: More crypto helper cleanup [Hugh]
+* NETKEY: Don't trust PF_KEY API to tell us about IPCOMP support [Paul]
+* KLIPS: ip_select_ident was backported to 3.2.63 [Bram]
+* IKEv2: Don't copy reserved ISAKMP flags in reply msg (rhbz#1052811) [Paul]
+* IKEv2: ISAKMP_FLAGS_v2_IKE_I was not always set on Original Initiator [Paul]
+* IKEv2: CP payload support for responder [Antony]
+* IKEv2: CREATE_CHILD_SA support for responder [Antony]
+         (NON_ADDITIONAL_SAS stub removed)
+* systemd: Use After=network-online.target instead of network.target [Kim]
+           - rhbz#1145245 (rhel7) and rhbz#1144832 (fedora)
+* systemd: Add Wants=network-online.target [Lukas Wunner]
+* addconn: Route before and after listen (bug introduced in 3.10) [Paul/Hugh]
+* rsasigkey: Use a version of jam_str instead of strcpy() for hostname [Paul]
+* IKEv2: CERTREQ payload should use SHA1 hash of DN instead of IKEv1 DN [Matt]
+* updown: Pluto should give CAP_NET_RAW to updown for iptables -t mangle [Paul]
+* _stackmanager: Fixed to work again with mawk [Marc-Christian Petersen/Tuomo]
+* testing: Many test case updates [Paul/Antony/Hugh/Matt]
+* Bugtracker bugs fixed:
+  #206: Libreswan v3.10 on 32-bit does not work [Kim]
 
 v3.10 (September 1, 2014)
-* XAUTH: New option: ipsec whack --traficstatus [Antony]
+* XAUTH: New option: ipsec whack --trafficstatus [Antony]
 * XAUTH: New option: ipsec --deleteuser --name xauth-username [Antony]
 * XAUTH: Do not strip "-" from XAUTH usernames [Paul]
 * _updown.netkey: New environment variable PLUTO_ADDTIME for IPsec SA's [Paul]
@@ -11,7 +53,7 @@ v3.10 (September 1, 2014)
 * NETKEY: fix names for RIPEMD160 and AES_CTR [Paul]
 * KLIPS: support 3.16+ kernels with update __ip_select_ident() [Thomas Geulig]
 * _stackmanager: KLIPS support for alias devices [Marc-Christian Petersen]
-* pluto: Simplfy/tidy alg_info [Hugh]
+* pluto: Simplify/tidy alg_info [Hugh]
 * pluto: Simplify find_host_connection() and terminate_connection() [Hugh]
 * pluto: Fix a leaking socket in whack [Hugh]
 * pluto: Combine same_dn() and match_dn() to avoid deduplicate logic [Hugh]
@@ -34,14 +76,14 @@ v3.10 (September 1, 2014)
 * IKEv2: clarify O_responder/O_initiator and Request/Reply code [Paul]
 * IKEv2: Check received msgid is larger then previous before storing [Paul]
 * IKEv1: parse_ipsec_sa_body() did not allow newer AH transforms [Paul]
-* IKEv1: Add sha2 and aes_cbc support for ESP algo [Paul]
+* IKEv1: Add sha2 and aes_xcbc support for AH/ESP auth algorithm [Paul]
 * IKEv1: cap IKE lifetimes > 1d to 1d, instead of rejecting SA [Paul]
 * IKEv1: cisco-unity=yes now also sends VID when acting as VPN server
 * whack: Don't change exit status for RC_INFORMATIONAL* [Mike Gilbert]
 * rsasigkey: a logic error limited the randomness of the key size [Paul]
 * ipsec: create NSS DB on startup when missing [Paul]
 * ipsec: Added "ipsec --checknss" that creates-when-missing NSS DB [Paul]
-* verify: Make verify python3 compatbile [Slavek Kabrda]
+* verify: Make verify python3 compatible [Slavek Kabrda]
 * readwriteconf: Fix writing kt_invertbool's (like aggrmode=) [Paul]
 * testing: Obsoleted dotest.sh with dotest.py, speed increase [Antony]
 * testing: Added more test cases and general cleanup [Antony/Paul]
@@ -63,7 +105,7 @@ v3.9 (July 9, 2014)
 * pluto: Bogus keysizes (eg 3des666) was not rejected at IKE level [Paul/Hugh]
 * pluto: esp=aes now accepts both aes128 and aes256 [Paul/Hugh]
 * pluto: ipsec status did not display "000" for ESP default size [Paul]
-* pluto: ipsec status did not print IKE algo seperator (",") [Paul]
+* pluto: ipsec status did not print IKE algo separator (",") [Paul]
 * pluto: ipsec status no longer prints remote nexthop when oriented [Paul]
 * pluto: sa_copy_sa_first() memory leak fixed [Hugh]
 * pluto: Improved exponential backoff in message retransmission [Hugh]
@@ -84,15 +126,15 @@ v3.9 (July 9, 2014)
 * pluto: Add modp2048 to default proposal list [Paul]
 * pluto: oakley_alg_makedb() algo preference picking fixed [Paul/Hugh]
 * pluto: Added --impair-send-key-size-check for testing [Paul]
-* pluto: Make timer.c code IKE version independant [Antony]
+* pluto: Make timer.c code IKE version independent [Antony]
 * addconn: Default gateway finding logic fixes [Wolfgang]
 * addconn: Only resolve %defaultroute using the main routing table [Wolfgang]
 * addconn: ensure expired certificates show clearly over whack
 * NATT: Added nat-ikev1-method=drafts|rfc|both to workaround buggy Ciscos [Paul]
 * NATT: non port-floating (4500) NATT draft support removed [Paul]
-* NATT: Change order of NATT payloads to accomodate racoon sensitivity [Paul]
+* NATT: Change order of NATT payloads to accommodate racoon sensitivity [Paul]
 * NATT: ignore incoming ISAKMP_NEXT_SAK (AKA ISAKMP_NEXT_NATD_BADDRAFTS) [Paul]
-* NATT: Addded IKEv2 NAT-Traversal support [Antony]
+* NATT: Added IKEv2 NAT-Traversal support [Antony]
 * XAUTH: Cleanup code [Hugh]
 * XAUTH: Workaround for Android bug sending trailing NULL with password [Hugh]
 * XAUTH: Improved logging and output for automated processing (eg for NM) [Paul]
@@ -124,7 +166,7 @@ v3.9 (July 9, 2014)
        (kernel OCF support is still available and supported)
 * NETKEY: esp=cast failed due to wrong crypto identifier [Paul]
 * KLIPS: SAref patches for Ubuntu kernel 3.11.0-15.25 [Simon Deziel]
-* KLIPS: Improved suport for various 3.x Linux kernels [various]
+* KLIPS: Improved support for various 3.x Linux kernels [various]
 * KLIPS: support for CONFIG_USER_NS [Matt]
 * _stackmanager: only unload stack when switching (rhbz#1025687) [Paul/Tuomo]
 * building: remove LIBDIR as we install all programs in LIBEXECDIR [Tuomo]
@@ -220,7 +262,7 @@ v3.6 (October 30, 2013)
 * _stackmanager: coding style cleanup - fixes bashism [Tuomo]
 * testing: Various interop test case updates [Paul]
 * FIPS: Support versioned hmac files, fips test in non-fips mode [Paul]
-* rsasigkey/newhostkey: Keysize for new RSA keys keysize increasd from 2192
+* rsasigkey/newhostkey: Keysize for new RSA keys keysize increased from 2192
   to randomised 3072-4096 (in blocks of 16) to fight keysize monoculture [Paul]
 * Removed unused and unmaintained USE_TAPROOM functionality [Paul]
 * NAT-T: Added 100.64.0.0/10 from RFC 6598 to virtual_private [Paul]
@@ -317,7 +359,7 @@ v3.2 (April 13, 2013)
 * addresspool: Identify reconnecting client and re-use lease [Antony]
 * IKEv1: Support for sending initial_contact in Main Mode [Paul]
 * addconn: improve defaultroute finder [Kim]
-* compiling: fix use of variables in buidlsystem consitent [Tuomo]
+* compiling: fix use of variables in buildsystem consistent [Tuomo]
 * ipsec: fix syntax error in --help introduced in 3.1 [Tuomo]
 * verify: fix wrong confdir location [Tuomo]
 * pluto: cleanup of XAUTHuser and traffic statistics logging [Paul]
@@ -342,7 +384,7 @@ v3.2 (April 13, 2013)
         no default configdir [Tuomo]
    #78: NSS: segfault on libnss functions when using ikev2 [Antony]
    #85: NETKEY: Pass traffic selectors to the kernel in Transport Mode
-        support was incomplete and broke nat-t trasport mode [Kim/Tuomo]
+        support was incomplete and broke nat-t transport mode [Kim/Tuomo]
 
 v3.1 (March 14, 2013)
 * XAUTH: Support for leftaddresspool= [Antony]
@@ -445,9 +487,9 @@ v3.0 (January 02, 2013)
 * pluto: Added plutofork=yes|no to match pluto --nofork [Paul]
 * pluto: added ikeport= and nat_ikeport= options, and --natikeport [Paul]
 * pluto: support for secretsfile= and ipsecdir= in ipsec.conf [Paul]
-* pluto: remove old unsused USE_IPSECPOLICY code [Paul]
+* pluto: remove old unused USE_IPSECPOLICY code [Paul]
 * pluto: rhbz#609343: pluto crashes when removing logical interface [Avesh]
-* pluto: dont stop processing after --coredir argument [Paul]
+* pluto: don't stop processing after --coredir argument [Paul]
 * pluto: perform whack --listen and addconn --autoall on startup [Paul]
 * pluto: honour plutostderrlog= natively now _plutorun is gone
          This also adds a new option --logfile to the pluto daemon [Paul]
@@ -464,7 +506,7 @@ v3.0 (January 02, 2013)
   (rhbz#848132) [Avesh]
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
 * PAM: move pam out of contrib, and install config when HAVE_XAUTHPAM [Paul]
-* IKEv1: In aggresive mode: allow ISAKMP_NEXT_CR ISAKMP_NEXT_CERT as
+* IKEv1: In aggressive mode: allow ISAKMP_NEXT_CR ISAKMP_NEXT_CERT as
          payloads [Philippe]
 * IKEv1: aggressive mode sometimes picked wrong RSA/PSK conn [Philippe]
 * IKEv1: Simplify outgoing NAT-T proposals, fix logging [Paul]

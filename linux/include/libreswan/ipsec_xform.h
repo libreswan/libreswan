@@ -114,6 +114,8 @@
 	(x) == IPPROTO_IPIP ? "IPIP" : \
 	(x) == IPPROTO_COMP ? "COMP" : \
 	"UNKNOWN_proto"
+
+/* BEWARE: result may be in a static buffer */
 static inline const char *enc_name_id(unsigned id)
 {
 	static char buf[16];
@@ -121,6 +123,8 @@ static inline const char *enc_name_id(unsigned id)
 	snprintf(buf, sizeof(buf), "_ID%d", id);
 	return buf;
 }
+
+/* BEWARE: result may be in a static buffer */
 static inline const char *auth_name_id(unsigned id)
 {
 	static char buf[16];

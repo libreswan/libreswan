@@ -27,9 +27,9 @@
  *
  * The helper performs the heavy lifting of cryptographic functions
  * for pluto. It does this to avoid head-of-queue problems with aggressive
- * mode, to deal with the asynchronous nature of hardware offload.
+ * mode, and to deal with the asynchronous nature of hardware offload.
  *
- * (Unrelated code compartamentalize lookups to LDAP/HTTP/FTP for CRL fetching
+ * (Unrelated to code to compartmentalize lookups to LDAP/HTTP/FTP for CRL fetching
  * and checking.)
  */
 
@@ -44,13 +44,12 @@
  * cryptographic helper operations.
  */
 enum pluto_crypto_requests {
-	pcr_build_kenonce,	/* calculate g^i and nonce */
-	pcr_build_nonce,	/* just fetch a new nonce */
-	pcr_compute_dh_iv,	/* (g^x)(g^y) and skeyids for Phase 1 DH + prf */
-	pcr_compute_dh,	/* perform (g^x)(g^y) for Phase 2 PFS */
+	pcr_build_ke_and_nonce,	/* calculate g^i and generate a nonce */
+	pcr_build_nonce,	/* generate a nonce */
+	pcr_compute_dh_iv,	/* calculate (g^x)(g^y) and skeyids for Phase 1 DH + prf */
+	pcr_compute_dh,		/* calculate (g^x)(g^y) for Phase 2 PFS */
 	pcr_compute_dh_v2,	/* perform IKEv2 PARENT SA calculation, create SKEYSEED */
 };
-
 
 typedef unsigned int pcr_req_id;
 
@@ -231,9 +230,29 @@ struct pluto_crypto_req {
 
 struct pluto_crypto_req_cont;	/* forward reference */
 
-typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
-				struct pluto_crypto_req *,
-				err_t ugh);
+
+/*
+ * pluto_crypto_req_cont_func:
+ *
+ * A function that continues a state transition after
+ * an asynchronous cryptographic calculation completes.
+ *
+ * See also comments prefixing send_crypto_helper_request.
+ *
+ * It is passed a pointer to each of the two structures.
+ *
+ * struct pluto_crypto_req_cont:
+ *	Information back from helper process.
+ *	Notionally sent across the wire.
+ *
+ * struct pluto_crypto_req:
+ *	Bookkeeping information to resume the computation.
+ *	Never sent across wire but perhaps copied.
+ *	For example, it includes a struct msg_digest *
+ *	in the cases where that is appropriate
+ */
+typedef void (*crypto_req_cont_func)(struct pluto_crypto_req_cont *,
+				struct pluto_crypto_req *);
 
 /* The crypto continuation structure
  *
@@ -266,7 +285,7 @@ typedef void (*crypto_req_func)(struct pluto_crypto_req_cont *,
  * when the work is complete.
  */
 struct pluto_crypto_req_cont {
-	crypto_req_func pcrc_func;	/* function to continue with */
+	crypto_req_cont_func pcrc_func;	/* function to continue with */
 	/*
 	 * Sponsoring state's serial number and state pointer.
 	 * Currently a mish-mash but will transition
@@ -278,7 +297,7 @@ struct pluto_crypto_req_cont {
 	/* the rest of these fields are private to pluto_crypt.c */
 
 	TAILQ_ENTRY(pluto_crypto_req_cont) pcrc_list;
-	struct pluto_crypto_req *pcrc_pcr;	/* owner iff on backlogqueue */
+	struct pluto_crypto_req *pcrc_pcr;	/* owner iff on backlog queue */
 	pcr_req_id pcrc_id;
 	pb_stream pcrc_reply_stream;	/* reply stream of suspended state transition */
 	u_int8_t *pcrc_reply_buffer;	/* saved buffer contents (if any) */
@@ -320,7 +339,7 @@ extern int pluto_crypto_helper_response_ready(lsw_fd_set *readfds);
 extern void log_crypto_workers(void);
 
 /* actual helper functions */
-extern stf_status build_ke(struct pluto_crypto_req_cont *cn,
+extern stf_status build_ke_and_nonce(struct pluto_crypto_req_cont *cn,
 			   struct state *st,
 			   const struct oakley_group_desc *group,
 			   enum crypto_importance importance);
@@ -334,7 +353,7 @@ extern void calc_nonce(struct pluto_crypto_req *r);
 extern void compute_dh_shared(struct state *st, const chunk_t g,
 			      const struct oakley_group_desc *group);
 
-extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
+extern stf_status start_dh_secretiv(struct dh_continuation *dh,
 				    struct state *st,
 				    enum crypto_importance importance,
 				    enum phase1_role role,
@@ -355,7 +374,7 @@ extern void finish_dh_secret(struct state *st,
 extern stf_status start_dh_v2(struct msg_digest *md,
 			      const char *name,
 			      enum phase1_role role,
-			      crypto_req_func pcrc_func);
+			      crypto_req_cont_func pcrc_func);
 
 extern void finish_dh_v2(struct state *st,
 			 const struct pluto_crypto_req *r);
@@ -364,9 +383,10 @@ extern void calc_dh_iv(struct pluto_crypto_req *r);
 extern void calc_dh(struct pluto_crypto_req *r);
 extern void calc_dh_v2(struct pluto_crypto_req *r);
 
-extern void unpack_KE(struct state *st,
-		      const struct pluto_crypto_req *r,
-		      chunk_t *g);
+extern void unpack_KE_from_helper(
+	struct state *st,
+	const struct pluto_crypto_req *r,
+	chunk_t *g);
 
 extern void pcr_nonce_init(struct pluto_crypto_req *r,
 			    enum pluto_crypto_requests pcr_type,

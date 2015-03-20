@@ -299,6 +299,7 @@ static void retransmit_v1_msg(struct state *st)
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
 		}
 		delete_state(st);
+		/* note: no md->st to clear */
 	}
 }
 
@@ -431,6 +432,7 @@ static void retransmit_v2_msg(struct state *st)
 	}
 
 	delete_state(st);
+	/* note: no md->st to clear */
 }
 
 /*
@@ -722,8 +724,10 @@ void handle_next_timer_event(void)
 		if (st->st_ikev2 && IS_IKE_SA(st)) {
 			/* IKEv2 parent, delete children too */
 			delete_my_family(st, FALSE);
+			/* note: no md->st to clear */
 		} else {
 			delete_state(st);
+			/* note: no md->st to clear */
 		}
 		break;
 
@@ -744,6 +748,7 @@ void handle_next_timer_event(void)
 			DBG_log("event crypto_failed on state #%lu, aborting",
 				st->st_serialno));
 		delete_state(st);
+		/* note: no md->st to clear */
 		break;
 
 	default:

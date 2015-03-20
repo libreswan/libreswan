@@ -10,7 +10,7 @@
 # for more details.
 
 cd "`dirname $0`/../.."
-STRING="3.10"
+STRING="3.11"
 
 # To build the debs and skip the signature part
 BUILD_CMD="debuild -i -us -uc -b"

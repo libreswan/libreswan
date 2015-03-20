@@ -1,0 +1,35 @@
+/testing/guestbin/swan-prep --userland strongswan
+east #
+ strongswan starter --debug-all
+Starting strongSwan X.X.X IPsec [starter]...
+Loading config setup
+Loading conn 'westnet-eastnet-ikev2'
+  left=192.1.2.45
+  leftid=@west
+  right=192.1.2.23
+  rightid=@east
+  rightsubnet=192.0.2.0/24
+  leftsubnet=192.0.1.0/24
+  authby=secret
+  keyexchange=ikev2
+  auto=add
+  ike=3des-md5-modp2048
+  esp=aes128-sha2_512
+found netkey IPsec stack
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan status ; fi
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.2.45[west]
+westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24 
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

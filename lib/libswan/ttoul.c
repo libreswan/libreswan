@@ -27,11 +27,11 @@ int base;	/* 0 means figure it out */
 unsigned long *resultp;
 {
 	const char *stop;
-	static char hex[] = "0123456789abcdef";
-	static char uchex[] = "0123456789ABCDEF";
+	static const char hex[] = "0123456789abcdef";
+	static const char uchex[] = "0123456789ABCDEF";
 	int d;
 	char c;
-	char *p;
+	const char *p;
 	unsigned long r;
 	unsigned long rlimit;
 	int dlimit;

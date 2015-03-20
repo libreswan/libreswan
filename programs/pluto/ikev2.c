@@ -60,17 +60,15 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 
-#include "xauth.h"
-
 #include "nat_traversal.h"
 #include "vendor.h"
 
 #include "pluto_crypt.h"	/* just for log_crypto_workers() */
 
-#define SEND_NOTIFICATION(t) { \
+/* Note: same definition appears in programs/pluto/ikev2_parent.c */
+#define SEND_V2_NOTIFICATION(t) { \
 		if (st != NULL) \
-			send_v2_notification_from_state(st, t, \
-							NULL); \
+			send_v2_notification_from_state(st, t, NULL); \
 		else \
 			send_v2_notification_from_md(md, t, NULL); }
 
@@ -371,9 +369,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
-	  .processor  = ikev2_in_create_child_sa,
+	  .processor  = ikev2_child_inIoutR,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/* Create Child SA Exchange*/
 	{ .story      = "R2: CREATE_CHILD_SA",
@@ -383,9 +381,9 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	  .req_clear_payloads = P(E),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
-	  .processor  = ikev2_in_create_child_sa,
+	  .processor  = ikev2_child_inIoutR,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
-	  .timeout_event = EVENT_NULL, },
+	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/* Informational Exchange*/
 	{ .story      = "R2: process INFORMATIONAL",
@@ -493,7 +491,7 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
 		}
 
 		DBG(DBG_PARSING,
-		    DBG_log("processing payload: %s (len=%u)\n",
+		    DBG_log("processing payload: %s (len=%u)",
 			    enum_show(&ikev2_payload_names, np),
 			    pd->payload.generic.isag_length));
 
@@ -583,6 +581,11 @@ stf_status ikev2_process_payloads(struct msg_digest *md,
  *
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
  */
 void process_v2_packet(struct msg_digest **mdp)
 {
@@ -600,12 +603,12 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	md->msgid_received = ntohl(md->hdr.isa_msgid);
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)
 		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Response"));
 	else
 		DBG(DBG_CONTROL, DBG_log("I am receiving an IKE Request"));
 
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_IKE_I) {
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_IKE_I) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
 		md->role = O_RESPONDER;
 
@@ -732,7 +735,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * can be initiated by the initial responder.
 		 */
 		if (ix != ISAKMP_v2_INFORMATIONAL &&
-		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) != 0)))
+		    (((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) != 0)))
 			continue;
 
 		/* must be the right state machine entry */
@@ -745,9 +748,9 @@ void process_v2_packet(struct msg_digest **mdp)
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
 
 		/* no useful state microcode entry */
-		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R)) {
+		if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/* We are responder for this message exchange */
-			SEND_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
+			SEND_V2_NOTIFICATION(v2N_INVALID_MESSAGE_ID);
 		}
 		return;
 	}
@@ -769,6 +772,7 @@ void process_v2_packet(struct msg_digest **mdp)
 
 		if (stf != STF_OK) {
 			complete_v2_state_transition(mdp, stf);
+			/* our caller with release_any_md(mdp) */
 			return;
 		}
 	}
@@ -787,6 +791,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	DBG(DBG_CONTROL,
 	    DBG_log("calling processor %s", svm->story));
 	complete_v2_state_transition(mdp, (svm->processor)(md));
+	/* our caller with release_any_md(mdp) */
 }
 
 bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
@@ -794,22 +799,32 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
 	unsigned int hisID = role == O_INITIATOR ?
 			     ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
 	struct payload_digest *const id_him = md->chain[hisID];
-	const pb_stream * id_pbs;
-	struct ikev2_id * id;
+	struct connection *c = md->st->st_connection;
+	const pb_stream *id_pbs;
+	struct ikev2_id *v2id;
 	struct id peer;
 
-	if (!id_him) {
+	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
 		return FALSE;
 	}
 
 	id_pbs = &id_him->pbs;
-	id = &id_him->payload.v2id;
-	peer.kind = id->isai_type;
+	v2id = &id_him->payload.v2id;
+	peer.kind = v2id->isai_type;
 
 	if (!extract_peer_id(&peer, id_pbs)) {
 		libreswan_log("IKEv2 mode peer ID extraction failed");
 		return FALSE;
+	}
+
+	if (peer.kind == ID_DER_ASN1_DN && peer.name.ptr != NULL &&
+			c->spd.that.id.kind == ID_FROMCERT) {
+		DBG(DBG_CONTROL, DBG_log("copying ID_DER_ASN1_DN name type for the peer ID"));
+		c->spd.that.id.kind = peer.kind;
+		clonereplacechunk(c->spd.that.id.name, peer.name.ptr,
+						       peer.name.len,
+						       "peer ID");
 	}
 
 	{
@@ -817,7 +832,7 @@ bool ikev2_decode_peer_id(struct msg_digest *md, enum phase1_role role)
 
 		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			      enum_show(&ikev2_idtype_names, id->isai_type), buf);
+			      enum_show(&ikev2_idtype_names, v2id->isai_type), buf);
 	}
 
 	return TRUE;
@@ -920,27 +935,21 @@ void send_v2_notification_from_md(struct msg_digest *md,
 			     md->hdr.isa_icookie, md->hdr.isa_rcookie, data);
 }
 
-void ikev2_update_counters(struct msg_digest *md)
+void ikev2_update_msgid_counters(struct msg_digest *md)
 {
-	struct state *pst = md->pst;
 	struct state *st = md->st;
+	struct state *ikesa = IS_CHILD_SA(st) ?
+		state_with_serialno(st->st_clonedfrom) : st;
 
-	if (pst == NULL) {
-		if (IS_CHILD_SA(st))
-			pst = state_with_serialno(st->st_clonedfrom);
-		if (pst == NULL)
-			pst = st;
-	}
-
-	if (md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R) {
+	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
 		/* we were initiator for this message exchange */
-		pst->st_msgid_lastack = md->msgid_received;
-		if(pst->st_msgid_lastack <= pst->st_msgid_nextuse)
-			pst->st_msgid_nextuse = pst->st_msgid_lastack + 1;
+		ikesa->st_msgid_lastack = md->msgid_received;
+		if (ikesa->st_msgid_lastack <= ikesa->st_msgid_nextuse)
+			ikesa->st_msgid_nextuse = ikesa->st_msgid_lastack + 1;
 	} else {
 		/* we were responder for this message exchange */
-		if (md->msgid_received > pst->st_msgid_lastrecv)
-			pst->st_msgid_lastrecv = md->msgid_received;
+		if (md->msgid_received > ikesa->st_msgid_lastrecv)
+			ikesa->st_msgid_lastrecv = md->msgid_received;
 	}
 }
 
@@ -1010,9 +1019,8 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 	return delay;
 }
 
-static void success_v2_state_transition(struct msg_digest **mdp)
+static void success_v2_state_transition(struct msg_digest *md)
 {
-	struct msg_digest *md = *mdp;
 	const struct state_v2_microcode *svm = md->svm;
 	enum state_kind from_state = md->from_state;
 	struct state *st = md->st;
@@ -1027,7 +1035,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	change_state(st, svm->next_state);
 	w = RC_NEW_STATE + st->st_state;
 
-	ikev2_update_counters(md);
+	ikev2_update_msgid_counters(md);
 
 	/* tell whack and log of progress, if we are actually advancing */
 	if (from_state != svm->next_state) {
@@ -1170,20 +1178,49 @@ static void success_v2_state_transition(struct msg_digest **mdp)
 	}
 }
 
+/* complete job started by the state-specific state transition function
+ *
+ * This routine will not release_any_md(mdp).  It is expected that its
+ * caller will do this.  In fact, it will zap *mdp to NULL if it thinks
+ * **mdp should not be freed.  So the caller should be prepared for
+ * *mdp being set to NULL.
+ */
 void complete_v2_state_transition(struct msg_digest **mdp,
 				  stf_status result)
 {
 	struct msg_digest *md = *mdp;
-	/* const struct state_v2_microcode *svm=md->svm; */
 	struct state *st;
-	enum state_kind from_state = STATE_UNDEFINED;
 	const char *from_state_name;
 
-	cur_state = st = md->st; /* might have changed */
+	/* handle oddball/meta results now */
 
-	pexpect(st != NULL);   /*  STF_TOOMUCH_CRYPTO used to call delete_state(st); hitting this*/
+	switch (result) {
+	case STF_SUSPEND:
+		cur_state = md->st;	/* might have changed */
+		/* FALL THROUGH */
+	case STF_INLINE:	/* all done, including release_any_md */
+		*mdp = NULL;	/* take md away from parent */
+		/* FALL THROUGH */
+	case STF_IGNORE:
+		DBG(DBG_CONTROL,
+		    DBG_log("complete v2 state transition with %s",
+			    enum_show(&stfstatus_name, result)));
+		return;
+
+	default:
+		break;
+	}
+
+	/* safe to refer to *md */
+
+	st = md->st;
+	from_state_name = enum_name(&state_names,
+		st == NULL ? STATE_UNDEFINED : st->st_state);
+
+	cur_state = st; /* might have changed */
+
 	/*
-	 * XXX/SML:  There is no need to abort here in all cases if state is
+	 * XXX/SML:  There is no need to abort here in all cases where st is
 	 * null, so moved this precondition to where it's needed.  Some previous
 	 * logic appears to have been tooled to handle null state, and state might
 	 * be null legitimately in certain failure cases (STF_FAIL + xxx).
@@ -1195,59 +1232,39 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 * this function is called, we should be graceful here.  And for this
 	 * particular case, and similar failure cases, we want SEND_NOTIFICATION
 	 * (below) to let the peer know why we've rejected the request.
+	 *
+	 * Another case of null state is return from ikev2parent_inR1BoutI1B
+	 * which returns STF_IGNORE.
+	 *
+	 * Another case occurs when we finish an Informational Exchange message
+	 * that causes us to delete the IKE state.  In fact, that can be an
+	 * STF_OK and yet have no remaining state object at this point.
 	 */
-	if (st != NULL) {
-		from_state = st->st_state;
-		from_state_name = enum_name(&state_names, from_state);
-	} else {
-		from_state_name = "no-state";
-	}
 
-	/* advance the state */
 	DBG(DBG_CONTROL,
-	    DBG_log("complete v2 state transition with %s",
-		    enum_name(&stfstatus_name,
-			      result > STF_FAIL ? STF_FAIL : result)));
+	    DBG_log("complete v2 state transition from %s with %s",
+		from_state_name,
+		result > STF_FAIL ?
+		    enum_name(&ikev2_notify_names, result - STF_FAIL) :
+		    enum_name(&stfstatus_name, result)));
 
 	switch (result) {
-	case STF_IGNORE:
-		break;
-
-	case STF_INLINE:
-		/*
-		 * this is second time through complete state transition,
-		 * so the MD has already been freed.
-		 * ??? This comment is not true.
-		* This has been proven by passert(md == NULL) failing.
-		*/
-		*mdp = NULL;
-		break;
-
-	case STF_SUSPEND:
-		/* update the previous packet history */
-		/* IKEv2 XXX */ /* update_retransmit_history(st, md); */
-
-		/* the stf didn't complete its job: don't relase md */
-		*mdp = NULL;
-		break;
-
 	case STF_OK:
-		/* advance the state */
-		passert(st != NULL);
-		success_v2_state_transition(mdp);
+		if (st == NULL) {
+			DBG(DBG_CONTROL, DBG_log("STF_OK but no state object remains"));
+		} else {
+			/* advance the state */
+			success_v2_state_transition(md);
+		}
 		break;
 
 	case STF_INTERNAL_ERROR:
-		/* update the previous packet history */
-		/* TODO: fix: update_retransmit_history(st, md); */
-
-		whack_log(RC_INTERNALERR + md->note,
-			  "%s: internal error",
-			  enum_name(&state_names, st->st_state));
+		whack_log(RC_INTERNALERR + md->note, "%s: internal error",
+			  from_state_name);
 
 		DBG(DBG_CONTROL,
 		    DBG_log("state transition function for %s had internal error",
-			    enum_name(&state_names, from_state)));
+			    from_state_name));
 		break;
 
 	case STF_TOOMUCHCRYPTO:
@@ -1256,17 +1273,22 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		libreswan_log("message in state %s ignored due to cryptographic overload",
 			      from_state_name);
 		log_crypto_workers();
-		/* ??? why does the ikev1.c version break and the ikev2.c version FALL THROUGH? */
-		/* FALL THROUGH */
-	case STF_FATAL:
-		/* update the previous packet history */
-		/* update_retransmit_history(st, md); */
+		/*
+		 * ??? this used to FALL THROUGH to case STF_FATAL.
+		 *
+		 * Effectively we ignore this state transition
+		 * but keep the original state.
+		 *
+		 * ??? Perhaps we have half-computed crypto and perhaps
+		 * that is a problem if we try to advance the state later.
+		 */
+		break;
 
+	case STF_FATAL:
 		passert(st != NULL);
 		whack_log(RC_FATAL,
 			  "encountered fatal error in state %s",
 			  from_state_name);
-		delete_event(st);
 		release_whack(st);
 		if (IS_CHILD_SA(st)) {
 			struct state *pst = state_with_serialno(st->st_clonedfrom);
@@ -1275,12 +1297,12 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		}
 		release_pending_whacks(st, "fatal error");
 		delete_state(st);
+		md->st = st = NULL;
 		break;
 
 	default: /* a shortcut to STF_FAIL, setting md->note */
 		passert(result > STF_FAIL);
 		md->note = result - STF_FAIL;
-		result = STF_FAIL;	/* not actually used */
 		/* FALL THROUGH ... */
 	case STF_FAIL:
 		whack_log(RC_NOTIFICATION + md->note,
@@ -1290,11 +1312,17 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 		if (md->note != NOTHING_WRONG) {
 			/*
-			 * only send a notify is this packet was a request,
-			 * not if it was a reply
+			 * Only send a notify is this packet was a request,
+			 * not if it was a reply.
+			 * ??? is this a reasonable choice?
 			 */
-			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_MSG_R))
-				SEND_NOTIFICATION(md->note);
+			if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R))
+				/*
+				 * ??? if this can be sent as part of an
+				 * existing exchange, rather than a new
+				 * Informational Exchange, should it not be?
+				 */
+				SEND_V2_NOTIFICATION(md->note);
 		}
 
 		DBG(DBG_CONTROL,

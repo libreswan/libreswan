@@ -76,7 +76,7 @@
 #include "ikev1_continuations.h"
 #include "ikev2.h"
 
-#include "xauth.h"
+#include "ikev1_xauth.h"
 
 #include "vendor.h"
 #include "nat_traversal.h"
@@ -97,34 +97,18 @@
 	} \
 }
 
-/* create output HDR as replica of input HDR */
-void echo_hdr(struct msg_digest *md, bool enc, u_int8_t np)
-{
-	struct isakmp_hdr r_hdr = md->hdr; /* mostly same as incoming header */
-
-	/* make sure we start with a clean buffer */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
-
-	r_hdr.isa_flags &= ~ISAKMP_FLAG_COMMIT; /* we won't ever turn on this bit */
-	if (enc)
-		r_hdr.isa_flags |= ISAKMP_FLAG_ENCRYPTION;
-	/* some day, we may have to set r_hdr.isa_version */
-	r_hdr.isa_np = np;
-	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody))
-		impossible(); /* surely must have room and be well-formed */
-}
-
 /*
- * Processing FOR KE values.
+ * Process KE values.
  */
-void unpack_KE(struct state *st,
-	       const struct pluto_crypto_req *r,
-	       chunk_t *g)
+void unpack_KE_from_helper(
+	struct state *st,
+	const struct pluto_crypto_req *r,
+	chunk_t *g)
 {
 	const struct pcr_kenonce *kn = &r->pcr_d.kn;
 
+	/* ??? if st->st_sec_in_use how could we do our job? */
+	pexpect(!st->st_sec_in_use);
 	if (!st->st_sec_in_use) {
 		st->st_sec_in_use = TRUE;
 		freeanychunk(*g); /* happens in odd error cases */
@@ -138,7 +122,7 @@ void unpack_KE(struct state *st,
 	}
 }
 
-/* accept_ke
+/* accept_KE
  *
  * Check and accept DH public value (Gi or Gr) from peer's message.
  * According to RFC2409 "The Internet key exchange (IKE)" 5:
@@ -151,9 +135,6 @@ notification_t accept_KE(chunk_t *dest, const char *val_name,
 			 const struct oakley_group_desc *gr,
 			 pb_stream *pbs)
 {
-	/* To figure out which function calls us without a pbs */
-	passert(pbs != NULL);
-
 	if (pbs_left(pbs) != gr->bytes) {
 		loglog(RC_LOG_SERIOUS,
 		       "KE has %u byte DH public value; %u required",
@@ -201,7 +182,7 @@ bool close_message(pb_stream *pbs, struct state *st)
 	size_t padding =  pad_up(pbs_offset(pbs), 4);
 
 	/* Workaround for overzealous Checkpoint firewall */
-	if (padding != 0 && st && st->st_connection != NULL &&
+	if (padding != 0 && st != NULL && st->st_connection != NULL &&
 	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
 		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %zu bytes skipped by policy",
 			padding));
@@ -518,12 +499,9 @@ void initialize_new_state(struct state *st,
 	extra_debugging(c);
 }
 
-void send_delete(struct state *st)
+bool send_delete(struct state *st)
 {
-	if (st->st_ikev2)
-		ikev2_delete_out(st);
-	else
-		ikev1_delete_out(st);
+	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 
 void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
@@ -538,9 +516,9 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 		" tunnel mode" : " transport mode");
 
 	if (st->st_esp.present) {
-		char esb[ENUM_SHOW_BUF_LEN];
+		struct esb_buf esb;
 
-		if ( (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ||
+		if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ||
 			c->forceencaps) {
 			DBG(DBG_NATT, DBG_log("NAT-T: their IKE port is '%d'",
 				    c->spd.that.host_port));
@@ -555,7 +533,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 			 (unsigned long)ntohl(st->st_esp.attrs.spi),
 			 (unsigned long)ntohl(st->st_esp.our_spi),
 			 strip_prefix(enum_showb(&esp_transformid_names,
-				   st->st_esp.attrs.transattrs.encrypt, esb, sizeof(esb)), "ESP_"),
+				   st->st_esp.attrs.transattrs.encrypt, &esb), "ESP_"),
 			 st->st_esp.attrs.transattrs.enckeylen,
 			 strip_prefix(enum_show(&auth_alg_names,
 				   st->st_esp.attrs.transattrs.integ_hash), "AUTH_ALGORITHM_"));

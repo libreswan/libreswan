@@ -1,0 +1,4 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
+the responder. This tests aes_xcbc as hash algorithm for ESP and in the
+future also test the hash algo for prf and integ in IKE.
+

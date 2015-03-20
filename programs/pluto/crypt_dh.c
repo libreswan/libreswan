@@ -87,18 +87,47 @@ static PK11SymKey *pk11_extract_derive_wrapper_lsw(PK11SymKey *base,
 static CK_MECHANISM_TYPE nss_encryption_mech(
 	const struct encrypt_desc *encrypter)
 {
-	CK_MECHANISM_TYPE mechanism = 0x80000000;
+	/* the best wey have for "undefined" */
+	CK_MECHANISM_TYPE mechanism = CKM_VENDOR_DEFINED;
 
 	switch (encrypter->common.algo_id) {
 	case OAKLEY_3DES_CBC:
 		mechanism = CKM_DES3_CBC;
 		break;
+#ifdef NOT_YET
+	case OAKLEY_CAST_CBC:
+		mechanism = CKM_CAST5_CBC:
+		break;
+#endif
 	case OAKLEY_AES_CBC:
 		mechanism = CKM_AES_CBC;
 		break;
+	case OAKLEY_CAMELLIA_CBC:
+		mechanism = CKM_CAMELLIA_CBC;
+		break;
+#ifdef NOT_YET
+	case OAKLEY_AES_CTR:
+		mechanism = CKM_AES_CTR;
+		break;
+	case OAKLEY_AES_CCM_8:
+	case OAKLEY_AES_CCM_12:
+	case OAKLEY_AES_CCM_16:
+		mechanism = CKM_AES_CCM;
+		break;
+	case OAKLEY_AES_GCM_8:
+	case OAKLEY_AES_GCM_12:
+	case OAKLEY_AES_GCM_16:
+		mechanism = CKM_AES_GCM;
+		break;
+	case OAKLEY_TWOFISH_CBC:
+		mechanism = CKM_TWOFISH_CBC;
+		break;
+#endif
 	default:
 		loglog(RC_LOG_SERIOUS,
-			"NSS: Unsupported encryption mechanism");
+			"NSS: Unsupported encryption mechanism for %s",
+			strip_prefix(enum_name(&oakley_enc_names,
+				encrypter->common.algo_id), "OAKLEY_"));
 		break;
 	}
 	return mechanism;
@@ -123,7 +152,7 @@ static PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 	unsigned int dhshared_len;
 
 	DBG(DBG_CRYPT,
-		DBG_log("Started DH shared-secret computation in NSS:\n"));
+		DBG_log("Started DH shared-secret computation in NSS:"));
 
 	gettimeofday(&tv0, NULL);
 
@@ -472,7 +501,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		hmac_val1 = hmac_pads(0x01, 1);
 		hmac_val2 = hmac_pads(0x02, 1);
 
-		DBG(DBG_CRYPT, DBG_log("NSS: Started key computation\n"));
+		DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
 
 		/*Deriving SKEYID_d = hmac_xxx(SKEYID, g^xy | CKY-I | CKY-R | 0) */
 		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(skeyid,
@@ -484,7 +513,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 		passert(tkey1 != NULL);
 
-		/*DBG(DBG_CRYPT, DBG_log("Started key computation: 1, length=%d\n", PK11_GetKeyLength(tkey1)));
+		/*DBG(DBG_CRYPT, DBG_log("Started key computation: 1, length=%d", PK11_GetKeyLength(tkey1)));
 		 * nss_symkey_log(tkey1, "1");
 		 */
 
@@ -501,7 +530,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		param.data = (unsigned char *) &keyhandle;
 		param.len = sizeof(keyhandle);
 		DBG(DBG_CRYPT,
-		    DBG_log("NSS: dh shared param len=%d\n", param.len));
+		    DBG_log("NSS: dh shared param len=%d", param.len));
 
 		PK11SymKey *tkey3 = PK11_Derive_lsw(tkey2,
 						    CKM_CONCATENATE_BASE_AND_KEY,
@@ -706,7 +735,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 						     0);
 		passert(tkey23 != NULL);
 
-		DBG(DBG_CRYPT, DBG_log("NSS: enc keysize=%d\n", (int)keysize));
+		DBG(DBG_CRYPT, DBG_log("NSS: enc keysize=%d", (int)keysize));
 		/*Deriving encryption key from SKEYID_e*/
 		/* Oakley Keying Material
 		 * Derived from Skeyid_e: if it is not big enough, generate more
@@ -899,7 +928,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 					DBG(DBG_CRYPT,
 					    DBG_log(
-						    "NSS: Freed 25-39 symkeys\n"));
+						    "NSS: Freed 25-39 symkeys"));
 					break;
 				} else {
 
@@ -926,7 +955,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 					DBG(DBG_CRYPT,
 					    DBG_log(
-						    "NSS: Freed symkeys 31 34 35 37\n"));
+						    "NSS: Freed symkeys 31 34 35 37"));
 				}
 			}       /*end for*/
 		}               /*end else skeyid_e */
@@ -940,7 +969,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		*skeyid_e_out = skeyid_e;
 		*enc_key_out = enc_key;
 
-		DBG(DBG_CRYPT, DBG_log("NSS: pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p\n",
+		DBG(DBG_CRYPT, DBG_log("NSS: pointers skeyid_d %p,  skeyid_a %p,  skeyid_e %p,  enc_key %p",
 			skeyid_d, skeyid_a, skeyid_e, enc_key));
 
 
@@ -969,7 +998,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		PK11_FreeSymKey(tkey22);
 		PK11_FreeSymKey(tkey23);
 
-		DBG(DBG_CRYPT, DBG_log("NSS: Freed symkeys 1-23\n"));
+		DBG(DBG_CRYPT, DBG_log("NSS: Freed symkeys 1-23"));
 
 		freeanychunk(hmac_opad);
 		freeanychunk(hmac_ipad);
@@ -977,7 +1006,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		freeanychunk(hmac_zerobyte);
 		freeanychunk(hmac_val1);
 		freeanychunk(hmac_val2);
-		DBG(DBG_CRYPT, DBG_log("NSS: Freed padding chunks\n"));
+		DBG(DBG_CRYPT, DBG_log("NSS: Freed padding chunks"));
 	}
 
 	/* generate IV */
@@ -995,7 +1024,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		hasher->hash_update(&hash_ctx, gi.ptr, gi.len);
 		hasher->hash_update(&hash_ctx, gr.ptr, gr.len);
 		hasher->hash_final(new_iv->ptr, &hash_ctx);
-		DBG(DBG_CRYPT, DBG_log("end of IV generation\n"));
+		DBG(DBG_CRYPT, DBG_log("end of IV generation"));
 	}
 }
 
@@ -1124,7 +1153,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	CK_OBJECT_HANDLE keyhandle;
 	SECItem param, param1;
-	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation\n"));
+	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
 
 	PK11SymKey
 		*skeyseed_k,
@@ -1385,7 +1414,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 		}
 
 		DBG(DBG_CRYPT,
-		    DBG_log("NSS ikev2: finished computing key material for IKEv2 SA\n"));
+		    DBG_log("NSS ikev2: finished computing key material for IKEv2 SA"));
 
 		CK_EXTRACT_PARAMS bs = 0;
 
@@ -1436,7 +1465,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 							  skp_bytes);
 
 		DBG(DBG_CRYPT,
-		    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA\n"));
+		    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));
 		PK11_FreeSymKey(finalkey);
 
 		*skeyseed_out = skeyseed_k;

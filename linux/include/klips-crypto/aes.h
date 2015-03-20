@@ -61,29 +61,18 @@
 //      6 |  96  90  96
 //      8 | 120 120 120
 
-#if !defined(AES_BLOCK_SIZE) || (AES_BLOCK_SIZE == 32)
-#define AES_KS_LENGTH   120
-#define AES_RC_LENGTH    29
-#else
-#define AES_KS_LENGTH   4 * AES_BLOCK_SIZE
-#define AES_RC_LENGTH   (9 * AES_BLOCK_SIZE) / 8 - 8
-#endif
+#define AES_KS_LENGTH   (4 * AES_BLOCK_SIZE)
+#define AES_RC_LENGTH   ((9 * AES_BLOCK_SIZE) / 8 - 8)
 
 typedef struct {
 	u_int32_t aes_Nkey;                     // the number of words in the key input block
 	u_int32_t aes_Nrnd;                     // the number of cipher rounds
 	u_int32_t aes_e_key[AES_KS_LENGTH];     // the encryption key schedule
 	u_int32_t aes_d_key[AES_KS_LENGTH];     // the decryption key schedule
-#if !defined(AES_BLOCK_SIZE)
-	u_int32_t aes_Ncol;                     // the number of columns in the cipher state
-#endif
 } aes_context;
 
 // THE CIPHER INTERFACE
 
-#if !defined(AES_BLOCK_SIZE)
-extern void aes_set_blk(aes_context *, const int);
-#endif
 extern void aes_set_key(aes_context *, const unsigned char [], const int,
 			const int);
 extern void aes_encrypt(const aes_context *, const unsigned char [],

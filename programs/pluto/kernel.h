@@ -59,7 +59,7 @@ enum pluto_sadb_operations {
 struct pfkey_proto_info {
 	int proto;
 	int encapsulation;
-	unsigned reqid;
+	reqid_t reqid;
 };
 
 extern const struct pfkey_proto_info null_proto_info[2];
@@ -92,7 +92,7 @@ struct kernel_sa {
 	unsigned int transport_proto;
 	enum eroute_type esatype;
 	unsigned replay_window;
-	unsigned reqid;
+	reqid_t reqid;
 
 	unsigned authalg;
 	unsigned authkeylen;
@@ -192,7 +192,7 @@ struct kernel_ops {
 			       const ip_address *dst,
 			       int proto,
 			       bool tunnel_mode,
-			       unsigned reqid,
+			       reqid_t reqid,
 			       ipsec_spi_t min,
 			       ipsec_spi_t max,
 			       const char *text_said);
@@ -366,8 +366,6 @@ extern bool route_and_eroute(struct connection *c,
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
-
-extern bool update_ipsec_sa(struct state *st);
 
 extern bool eroute_connection(struct spd_route *sr,
 			      ipsec_spi_t spi, unsigned int proto,

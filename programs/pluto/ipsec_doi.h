@@ -16,7 +16,6 @@
  * for more details.
  */
 
-extern void echo_hdr(struct msg_digest *md, bool enc, u_int8_t np);
 
 extern void ipsecdoi_initiate(int whack_sock, struct connection *c,
 			      lset_t policy, unsigned long try,
@@ -45,7 +44,7 @@ extern state_transition_fn
 	aggr_inR1_outI2,
 	aggr_inI2;
 
-extern void send_delete(struct state *st);
+extern bool send_delete(struct state *st);
 extern void accept_delete(struct state *st, struct msg_digest *md,
 			  struct payload_digest *p);
 
