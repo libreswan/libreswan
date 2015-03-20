@@ -3,6 +3,12 @@
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2010 FURUSO Shinichi <Shinichi.Furuso@jp.sony.com>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012 Andrey Alexandrenko <aalexandrenko@telco-tech.de>
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -179,8 +185,6 @@ stf_status dpd_init(struct state *st)
 	return STF_OK;
 }
 
-bool was_eroute_idle(struct state *st, time_t since_when);
-
 /*
  * Only schedule a new timeout if there isn't one currently,
  * or if it would be sooner than the current timeout.
@@ -330,7 +334,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 
 }
 
-void p1_dpd_outI1(struct state *p1st)
+static void p1_dpd_outI1(struct state *p1st)
 {
 	time_t delay = p1st->st_connection->dpd_delay;
 	time_t timeout = p1st->st_connection->dpd_timeout;

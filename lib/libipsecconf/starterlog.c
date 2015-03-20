@@ -1,5 +1,9 @@
 /* FreeS/WAN IPsec starter (starter.c)
  * Copyright (C) 2001-2002 Mathieu Lafon - Arkoon Network Security
+ * Copyright (C) 2006-2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2007 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,18 +34,18 @@
  * o use syslog option in config file
  */
 
-static int _debug = 0;
-static int _console = 0;
-static int _syslog = 0;
+static bool log_debugging = FALSE;
+static bool log_to_console = FALSE;
+static bool log_to_syslog = FALSE;
 
 static void do_print_info(int level, const char *buff)
 {
-	if ((!_debug) && (level == LOG_LEVEL_DEBUG))
+	if ((!log_debugging) && (level == LOG_LEVEL_DEBUG))
 		return;
 
-	if (_console)
+	if (log_to_console)
 		fprintf(stderr, "%s\n", buff);
-	if (_syslog) {
+	if (log_to_syslog) {
 		if (level == LOG_LEVEL_ERR)
 			syslog(LOG_ERR, "%s\n", buff);
 		else
@@ -56,7 +60,7 @@ static void log_info_multiline(int level, const char *buff)
 	if (!buff)
 		return;
 
-	if ((!_debug) && (level == LOG_LEVEL_DEBUG))
+	if ((!log_debugging) && (level == LOG_LEVEL_DEBUG))
 		return;
 
 	copy = strdup(buff);
@@ -81,7 +85,7 @@ void starter_log(int level, const char *fmt, ...)
 	va_list args;
 	static char buff[BUFF_SIZE];
 
-	if ((!_debug) && (level == LOG_LEVEL_DEBUG))
+	if ((!log_debugging) && (level == LOG_LEVEL_DEBUG))
 		return;
 
 	va_start(args, fmt);
@@ -91,17 +95,17 @@ void starter_log(int level, const char *fmt, ...)
 	va_end(args);
 }
 
-void starter_use_log(int debug, int console, int mysyslog)
+void starter_use_log(bool debug, bool console, bool mysyslog)
 {
-	_debug = debug;
-	_console = console;
-	if (mysyslog != _syslog) {
+	log_debugging = debug;
+	log_to_console = console;
+	if (mysyslog != log_to_syslog) {
 		if (mysyslog)
 			openlog("ipsec_starter", LOG_PID, LOG_USER);
 		else
 			closelog();
-		_syslog = mysyslog;
+		log_to_syslog = mysyslog;
 	}
-	if (_debug)
+	if (log_debugging)
 		starter_log(LOG_LEVEL_ERR, "debugging mode enabled\n");
 }

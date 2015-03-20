@@ -1,0 +1,9 @@
+
+Setup as basic-pluto-01, but instead of starting pluto on west, we replay
+a captured IKE packet from the wild using netcat.
+
+Packet capture from wild (unused): weirdike-eastwest.pcap-ike.pcap
+Payload binary extracted for netcat: authip-rogue.raw
+
+(It seems to be a windows 2008 AuthIP IKE packet)
+

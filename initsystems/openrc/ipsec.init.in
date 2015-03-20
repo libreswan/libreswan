@@ -50,7 +50,7 @@ stop() {
 	start-stop-daemon --stop --pidfile "${PLUTO_PIDFILE}"
 	RETVAL=$?
 	${IPSEC_BINARY} _stackmanager stop
-	eend RETVAL
+	eend $RETVAL
 }
 
 reload() {

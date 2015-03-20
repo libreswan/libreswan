@@ -6,6 +6,9 @@
 #include "dnskey.h"
 
 /* ikev1.c */
+
+extern void init_ikev1(void);
+
 extern void complete_v1_state_transition(struct msg_digest **mdp,
 					 stf_status result);
 extern void process_v1_packet(struct msg_digest **mdp);
@@ -18,7 +21,6 @@ extern void process_v1_packet(struct msg_digest **mdp);
 /* continue with encrypted packet */
 extern void process_packet_tail(struct msg_digest **mdp);
 
-extern void unpack_nonce(chunk_t *n, struct pluto_crypto_req *r);
 extern bool justship_nonce(chunk_t *n,
 			   pb_stream *outs, u_int8_t np,
 			   const char *name);
@@ -129,6 +131,4 @@ static inline stf_status aggr_id_and_auth(struct msg_digest *md,
 	return oakley_id_and_auth(md, initiator, TRUE, cont_fn, kc);
 }
 
-extern bool do_command(struct connection *c, struct spd_route *sr,
-		       const char *verb, struct state *st);
 #endif

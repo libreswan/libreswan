@@ -82,14 +82,14 @@
 #define ESP_AES_CCM_A           14
 #define ESP_AES_CCM_B           15
 #define ESP_AES_CCM_C           16
-#define ESP_ID17                17
+#define ESP_ID17_UNASSIGNED     17
 #define ESP_AES_GCM_A           18
 #define ESP_AES_GCM_B           19
 #define ESP_AES_GCM_C           20
 #define ESP_SEED_CBC            21
 #define ESP_CAMELLIA            22
 #define ESP_NULL_AUTH_AES_GMAC  23 /* [RFC4543][Errata1821] */
-
+/* 24 - 248 Unassigned */
 #define ESP_MARS                249
 #define ESP_RC6                 250
 #define ESP_SERPENT             252

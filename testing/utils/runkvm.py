@@ -173,15 +173,6 @@ def run_test(args, child):
 	x509 = "--x509"
     else:
 	x509 = ""
-	testdir = os.getcwd()
-	testparams = open("%s/testparams.sh"%testdir, "r").readlines()
-	for line in testparams:
-		try:
-			(testkey, testvalue) = line.split('=')
-			if testkey == "x509" or testkey == "X509":
-				x509 = "--x509"
-		except:
-			pass
 	
     cmd = "./%sinit.sh" %  (args.hostname) 
     if not read_exec_shell_cmd( child, cmd, prompt, timer):

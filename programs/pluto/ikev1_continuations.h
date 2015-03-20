@@ -25,12 +25,14 @@ typedef stf_status initiator_function (int whack_sock,
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
  */
-#define RETURN_STF_FAILURE2(f, xf)                                      \
-	{ int r = (f); if (r != NOTHING_WRONG) { \
-		  if ((xf) != NULL) \
-			  pfree(xf);          \
-		  return STF_FAIL + r; } }
-
-#define RETURN_STF_FAILURE(f) RETURN_STF_FAILURE2(f, NULL)
+/* ??? why are there so many copies of this routine (ikev2.h, ikev1_continuations.h, ipsec_doi.c).
+ * Sometimes more than one copy is defined!
+ */
+#define RETURN_STF_FAILURE(f) { \
+	notification_t res = (f); \
+	if (res != NOTHING_WRONG) { \
+		  return STF_FAIL + res; \
+	} \
+}
 
 #endif /* _IKEv1_CONTINUATIONS */

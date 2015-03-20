@@ -4,6 +4,8 @@
  * Copyright (C) 2006 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -177,7 +179,7 @@ static struct db_attr otpsk2048aessha1[] = {
 
 static struct db_attr otpsk1024des3sha1[] = {
 	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_3DES_CBC },
-	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
 	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val =
 		  OAKLEY_PRESHARED_KEY },
 	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val =
@@ -186,7 +188,7 @@ static struct db_attr otpsk1024des3sha1[] = {
 
 static struct db_attr otpsk1536des3sha1[] = {
 	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_3DES_CBC },
-	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
 	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val =
 		  OAKLEY_PRESHARED_KEY },
 	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val =
@@ -195,7 +197,7 @@ static struct db_attr otpsk1536des3sha1[] = {
 
 static struct db_attr otpsk2048des3sha1[] = {
 	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_3DES_CBC },
-	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
 	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val =
 		  OAKLEY_PRESHARED_KEY },
 	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val =
@@ -270,7 +272,7 @@ static struct db_attr otpsk1024des3md5_xauths[] = {
 
 static struct db_attr otpsk1024des3sha1_xauths[] = {
 	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_3DES_CBC },
-	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
 	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val =
 		  XAUTHRespPreShared },
 	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val =
@@ -397,7 +399,7 @@ static struct db_attr otrsasig2048des3md5[] = {
 
 static struct db_attr otrsasig1024des3sha1[] = {
 	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_3DES_CBC },
-	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
 	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_RSA_SIG },
 	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val =
 		  OAKLEY_GROUP_MODP1024 },
@@ -405,7 +407,7 @@ static struct db_attr otrsasig1024des3sha1[] = {
 
 static struct db_attr otrsasig1536des3sha1[] = {
 	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_3DES_CBC },
-	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
 	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_RSA_SIG },
 	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val =
 		  OAKLEY_GROUP_MODP1536 },
@@ -413,7 +415,7 @@ static struct db_attr otrsasig1536des3sha1[] = {
 
 static struct db_attr otrsasig2048des3sha1[] = {
 	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_3DES_CBC },
-	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
 	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = OAKLEY_RSA_SIG },
 	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val =
 		  OAKLEY_GROUP_MODP2048 },
@@ -504,7 +506,7 @@ static struct db_attr otrsasig1536aesmd5_xauths[] = {
 
 static struct db_attr otrsasig1024des3sha1_xauths[] = {
 	{ .type.oakley = OAKLEY_ENCRYPTION_ALGORITHM, .val = OAKLEY_3DES_CBC },
-	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA },
+	{ .type.oakley = OAKLEY_HASH_ALGORITHM, .val = OAKLEY_SHA1 },
 	{ .type.oakley = OAKLEY_AUTHENTICATION_METHOD, .val = XAUTHRespRSA },
 	{ .type.oakley = OAKLEY_GROUP_DESCRIPTION, .val =
 		  OAKLEY_GROUP_MODP1024 },
@@ -659,58 +661,58 @@ static struct db_trans oakley_trans_pskrsasig_xauths[] = {
  * AND of protocols.
  */
 static struct db_prop oakley_pc_psk[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_psk) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_psk) } };
 
 static struct db_prop oakley_pc_rsasig[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_rsasig) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_rsasig) } };
 
 static struct db_prop oakley_pc_pskrsasig[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_pskrsasig) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_pskrsasig) } };
 
 static struct db_prop oakley_pc_psk_xauths[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_psk_xauths) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_psk_xauths) } };
 
 static struct db_prop oakley_pc_rsasig_xauths[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_rsasig_xauths) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_rsasig_xauths) } };
 
 static struct db_prop oakley_pc_pskrsasig_xauths[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_pskrsasig_xauths) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_pskrsasig_xauths) } };
 
 static struct db_prop oakley_pc_psk_xauthc[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_psk_xauthc) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_psk_xauthc) } };
 
 static struct db_prop oakley_pc_rsasig_xauthc[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_rsasig_xauthc) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_rsasig_xauthc) } };
 
 static struct db_prop oakley_pc_pskrsasig_xauthc[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_trans_pskrsasig_xauthc) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_trans_pskrsasig_xauthc) } };
 
 /* array of proposal conjuncts (can only be one) (OR of protocol) */
 static struct db_prop_conj oakley_props_psk[] = { { AD_PC(oakley_pc_psk) } };
 
 static struct db_prop_conj oakley_props_rsasig[] =
-{ { AD_PC(oakley_pc_rsasig) } };
+	{ { AD_PC(oakley_pc_rsasig) } };
 
-static struct db_prop_conj oakley_props_pskrsasig[] = { { AD_PC(
-								  oakley_pc_pskrsasig) } };
+static struct db_prop_conj oakley_props_pskrsasig[] =
+	{ { AD_PC(oakley_pc_pskrsasig) } };
 
-static struct db_prop_conj oakley_props_psk_xauthc[] = { { AD_PC(
-								   oakley_pc_psk_xauthc) } };
+static struct db_prop_conj oakley_props_psk_xauthc[] =
+	{ { AD_PC(oakley_pc_psk_xauthc) } };
 
-static struct db_prop_conj oakley_props_rsasig_xauthc[] = { { AD_PC(
-								      oakley_pc_rsasig_xauthc) } };
+static struct db_prop_conj oakley_props_rsasig_xauthc[] =
+	{ { AD_PC(oakley_pc_rsasig_xauthc) } };
 
-static struct db_prop_conj oakley_props_pskrsasig_xauthc[] = { { AD_PC(
-									 oakley_pc_pskrsasig_xauthc) } };
+static struct db_prop_conj oakley_props_pskrsasig_xauthc[] =
+	{ { AD_PC(oakley_pc_pskrsasig_xauthc) } };
 
-static struct db_prop_conj oakley_props_psk_xauths[] = { { AD_PC(
-								   oakley_pc_psk_xauths) } };
+static struct db_prop_conj oakley_props_psk_xauths[] =
+	{ { AD_PC(oakley_pc_psk_xauths) } };
 
-static struct db_prop_conj oakley_props_rsasig_xauths[] = { { AD_PC(
-								      oakley_pc_rsasig_xauths) } };
+static struct db_prop_conj oakley_props_rsasig_xauths[] =
+	{ { AD_PC(oakley_pc_rsasig_xauths) } };
 
-static struct db_prop_conj oakley_props_pskrsasig_xauths[] = { { AD_PC(
-									 oakley_pc_pskrsasig_xauths) } };
+static struct db_prop_conj oakley_props_pskrsasig_xauths[] =
+	{ { AD_PC(oakley_pc_pskrsasig_xauths) } };
 
 /* the sadb entry, subscripted by POLICY_PSK and POLICY_RSASIG bits */
 struct db_sa oakley_sadb[] = {
@@ -764,41 +766,41 @@ static struct db_trans oakley_am_trans_rsasig_xauths[] = {
 
 /* array of proposals to be conjoined (can only be one for Oakley) */
 static struct db_prop oakley_am_pc_psk[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_psk) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_psk) } };
 
 static struct db_prop oakley_am_pc_rsasig[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_rsasig) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_rsasig) } };
 
 static struct db_prop oakley_am_pc_psk_xauths[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_psk_xauths) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_psk_xauths) } };
 
 static struct db_prop oakley_am_pc_rsasig_xauths[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_rsasig_xauths) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_rsasig_xauths) } };
 
 static struct db_prop oakley_am_pc_psk_xauthc[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_psk_xauthc) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_psk_xauthc) } };
 
 static struct db_prop oakley_am_pc_rsasig_xauthc[] =
-{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_rsasig_xauthc) } };
+	{ { AD_PR(PROTO_ISAKMP, oakley_am_trans_rsasig_xauthc) } };
 
 /* array of proposal conjuncts (can only be one) */
 static struct db_prop_conj oakley_am_props_psk[] =
-{ { AD_PC(oakley_am_pc_psk) } };
+	{ { AD_PC(oakley_am_pc_psk) } };
 
 static struct db_prop_conj oakley_am_props_rsasig[] =
-{ { AD_PC(oakley_am_pc_rsasig) } };
+	{ { AD_PC(oakley_am_pc_rsasig) } };
 
 static struct db_prop_conj oakley_am_props_psk_xauthc[] =
-{ { AD_PC(oakley_am_pc_psk_xauthc) } };
+	{ { AD_PC(oakley_am_pc_psk_xauthc) } };
 
 static struct db_prop_conj oakley_am_props_rsasig_xauthc[] =
-{ { AD_PC(oakley_am_pc_rsasig_xauthc) } };
+	{ { AD_PC(oakley_am_pc_rsasig_xauthc) } };
 
 static struct db_prop_conj oakley_am_props_psk_xauths[] =
-{ { AD_PC(oakley_am_pc_psk_xauths) } };
+	{ { AD_PC(oakley_am_pc_psk_xauths) } };
 
 static struct db_prop_conj oakley_am_props_rsasig_xauths[] =
-{ { AD_PC(oakley_am_pc_rsasig_xauths) } };
+	{ { AD_PC(oakley_am_pc_rsasig_xauths) } };
 
 /*
  * the sadb entry, subscripted
@@ -955,15 +957,15 @@ static struct db_prop ah_esp_compress_pc[] = {
 static struct db_prop_conj ah_props[] = {
 	{ AD_PC(ah_pc) },
 #ifdef SUPPORT_ESP_NULL
-	{ AD_PC(espnull_pc) }
+	{ AD_PC(espnull_pc) },
 #endif
 };
 
 static struct db_prop_conj esp_props[] =
-{ { AD_PC(esp_pc) } };
+	{ { AD_PC(esp_pc) } };
 
 static struct db_prop_conj ah_esp_props[] =
-{ { AD_PC(ah_esp_pc) } };
+	{ { AD_PC(ah_esp_pc) } };
 
 static struct db_prop_conj compress_props[] = {
 	{ AD_PC(compress_pc) },
@@ -972,15 +974,15 @@ static struct db_prop_conj compress_props[] = {
 static struct db_prop_conj ah_compress_props[] = {
 	{ AD_PC(ah_compress_pc) },
 #ifdef SUPPORT_ESP_NULL
-	{ AD_PC(espnull_compress_pc) }
+	{ AD_PC(espnull_compress_pc) },
 #endif
 };
 
 static struct db_prop_conj esp_compress_props[] =
-{ { AD_PC(esp_compress_pc) } };
+	{ { AD_PC(esp_compress_pc) } };
 
 static struct db_prop_conj ah_esp_compress_props[] =
-{ { AD_PC(ah_esp_compress_pc) } };
+	{ { AD_PC(ah_esp_compress_pc) } };
 
 /* The IPsec sadb is subscripted by a bitset (subset of policy)
  * with members from { POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS }
@@ -1000,9 +1002,9 @@ struct db_sa ipsec_sadb[1 << 3] = {
 #undef AD
 #undef AD_NULL
 
-void free_sa_trans(struct db_trans *tr)
+static void free_sa_trans(struct db_trans *tr)
 {
-	if (tr->attrs) {
+	if (tr->attrs != NULL) {
 		pfree(tr->attrs);
 		tr->attrs = NULL;
 	}
@@ -1010,108 +1012,116 @@ void free_sa_trans(struct db_trans *tr)
 
 static void free_sa_v2_trans(struct db_v2_trans *tr)
 {
-	if (tr->attrs) {
+	if (tr->attrs != NULL) {
 		pfree(tr->attrs);
 		tr->attrs = NULL;
 	}
 }
 
-void free_sa_prop(struct db_prop *dp)
+static void free_sa_prop(struct db_prop *dp)
 {
-	unsigned int i;
+	if (dp->trans != NULL) {
+		unsigned int i;
 
-	for (i = 0; i < dp->trans_cnt; i++)
-		free_sa_trans(&dp->trans[i]);
-	if (dp->trans) {
+		for (i = 0; i < dp->trans_cnt; i++)
+			free_sa_trans(&dp->trans[i]);
 		pfree(dp->trans);
 		dp->trans = NULL;
+		dp->trans_cnt = 0;
 	}
 }
 
 static void free_sa_v2_prop(struct db_v2_prop_conj *dp)
 {
-	unsigned int i;
+	if (dp->trans != NULL) {
+		unsigned int i;
 
-	for (i = 0; i < dp->trans_cnt; i++)
-		free_sa_v2_trans(&dp->trans[i]);
-	if (dp->trans) {
+		for (i = 0; i < dp->trans_cnt; i++)
+			free_sa_v2_trans(&dp->trans[i]);
 		pfree(dp->trans);
 		dp->trans = NULL;
+		dp->trans_cnt = 0;
 	}
 }
 
-void free_sa_prop_conj(struct db_prop_conj *pc)
+static void free_sa_prop_conj(struct db_prop_conj *pc)
 {
-	unsigned int i;
+	if (pc->props != NULL) {
+		unsigned int i;
 
-	for (i = 0; i < pc->prop_cnt; i++)
-		free_sa_prop(&pc->props[i]);
-	if (pc->props)
+		for (i = 0; i < pc->prop_cnt; i++)
+			free_sa_prop(&pc->props[i]);
 		pfree(pc->props);
+		pc->props = NULL;
+		pc->prop_cnt = 0;
+	}
 }
 
 static void free_sa_v2_prop_disj(struct db_v2_prop *pc)
 {
-	unsigned int i;
+	if (pc->props != NULL) {
+		unsigned int i;
 
-	for (i = 0; i < pc->prop_cnt; i++)
-		free_sa_v2_prop(&pc->props[i]);
-	if (pc->props)
+		for (i = 0; i < pc->prop_cnt; i++)
+			free_sa_v2_prop(&pc->props[i]);
 		pfree(pc->props);
+		pc->props = NULL;
+		pc->prop_cnt = 0;
+	}
 }
 
 void free_sa(struct db_sa *f)
 {
-	unsigned int i;
+	if (f != NULL) {
+		unsigned int i;
 
-	if (f == NULL)
-		return;
+		if (f->prop_conjs != NULL) {
+			for (i = 0; i < f->prop_conj_cnt; i++)
+				free_sa_prop_conj(&f->prop_conjs[i]);
+			pfree(f->prop_conjs);
+			f->prop_conjs = NULL;
+			f->prop_conj_cnt = 0;
+		}
 
-	for (i = 0; i < f->prop_conj_cnt; i++)
-		free_sa_prop_conj(&f->prop_conjs[i]);
-	if (f->prop_conjs) {
-		pfree(f->prop_conjs);
-		f->prop_conjs = NULL;
-		f->prop_conj_cnt = 0;
-	}
+		if (f->prop_disj != NULL) {
+			for (i = 0; i < f->prop_disj_cnt; i++)
+				free_sa_v2_prop_disj(&f->prop_disj[i]);
+			pfree(f->prop_disj);
+			f->prop_disj = NULL;
+			f->prop_disj_cnt = 0;
+		}
 
-	for (i = 0; i < f->prop_disj_cnt; i++)
-		free_sa_v2_prop_disj(&f->prop_disj[i]);
-	if (f->prop_disj) {
-		pfree(f->prop_disj);
-		f->prop_disj = NULL;
-		f->prop_disj_cnt = 0;
-	}
-
-	if (f)
 		pfree(f);
+	}
 }
 
-void clone_trans(struct db_trans *tr)
+static void clone_trans(struct db_trans *tr)
 {
 	tr->attrs = clone_bytes(tr->attrs,
 				tr->attr_cnt * sizeof(tr->attrs[0]),
 				"sa copy attrs array");
 }
 
-void clone_prop(struct db_prop *p, int extra)
+static void clone_prop(struct db_prop *p, int extra)
 {
 	unsigned int i;
 
 	p->trans = clone_bytes(p->trans,
 			       (p->trans_cnt + extra) * sizeof(p->trans[0]),
 			       "sa copy trans array");
+	/* p->trans_cnt is unchanged */
 	for (i = 0; i < p->trans_cnt; i++)
 		clone_trans(&p->trans[i]);
 }
 
-void clone_propconj(struct db_prop_conj *pc, int extra)
+static void clone_propconj(struct db_prop_conj *pc, int extra)
 {
 	unsigned int i;
 
 	pc->props = clone_bytes(pc->props,
 				(pc->prop_cnt + extra) * sizeof(pc->props[0]),
 				"sa copy prop array");
+	/* pc->props_cnt is unchanged */
 	for (i = 0; i < pc->prop_cnt; i++)
 		clone_prop(&pc->props[i], 0);
 }
@@ -1130,7 +1140,7 @@ struct db_sa *sa_copy_sa(struct db_sa *sa, int extra)
 			    (nsa->prop_conj_cnt +
 			     extra) * sizeof(nsa->prop_conjs[0]),
 			    "sa copy prop conj array");
-
+	/* nsa->prop_conj_cnt is unchanged */
 	for (i = 0; i < nsa->prop_conj_cnt; i++)
 		clone_propconj(&nsa->prop_conjs[i], 0);
 
@@ -1138,7 +1148,8 @@ struct db_sa *sa_copy_sa(struct db_sa *sa, int extra)
 }
 
 /*
- * clone the sa, but keep only the first proposal
+ * clone the sa, but keep only the first transform (if any) of the first proposal (if any)
+ * ??? does this make sense?
  */
 struct db_sa *sa_copy_sa_first(struct db_sa *sa)
 {
@@ -1179,8 +1190,6 @@ struct db_sa *sa_copy_sa_first(struct db_sa *sa)
 
 /*
  * this routine takes two proposals and conjoins them (or)
- *
- *
  */
 struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 {

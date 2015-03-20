@@ -1,6 +1,6 @@
 /* Pluto main program
  * Copyright (C) 1997      Angelos D. Keromytis.
- * Copyright (C) 1998-2001 D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
@@ -8,8 +8,11 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -92,7 +95,6 @@
 #include <nspr.h>
 
 #include "fips.h"
-extern const char *fips_package_files[];
 
 #ifdef HAVE_LIBCAP_NG
 # include <cap-ng.h>
@@ -413,7 +415,7 @@ u_int16_t secctx_attr_value = SECCTX;
 /* pulled from main for show_setup_plutomain() */
 static const struct lsw_conf_options *oco;
 static char *coredir;
-char *pluto_vendorid;
+static char *pluto_vendorid;
 static int nhelpers = -1;
 
 int main(int argc, char **argv)

@@ -2,7 +2,9 @@
   <term><emphasis remap='B'>policy_label</emphasis></term>
   <listitem>
 <para>
-Avesh needs to write a man page entry for this.
+The string representation of an access control security label that is interpreted by the LSM (e.g. SELinux)
+for use with Labeled IPsec. See alo loopback=, labeled_ipsec= and secctx_attr_value=. For example,
+<emphasis remap='I'>policy_label=system_u:object_r:ipsec_spd_t:s0-s15:c0.c1023</emphasis>
 </para>
   </listitem>
   </varlistentry>

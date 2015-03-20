@@ -1,7 +1,9 @@
 /* Support of X.509 attribute certificates
  * Copyright (C) 2002 Ueli Gallizzi, Ariane Seiler
  * Copyright (C) 2003 Martin Berner, Lukas Suter
-
+ * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -77,9 +79,6 @@ struct x509acert {
 	int algorithm;
 	chunk_t signature;
 };
-
-/* used for initialization */
-extern const x509acert_t empty_ac;
 
 extern void free_ietfAttrList(ietfAttrList_t *list);
 extern void decode_groups(char *groups, ietfAttrList_t **listp);

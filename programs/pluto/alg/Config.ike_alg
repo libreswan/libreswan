@@ -1,9 +1,0 @@
-## 
-## IKE algorithms config. for static linking into pluto
-## By now  AES, 3DES,MD5 and SHA1/SHA2 are already present in pluto.
-## 
-## 1DES is no longer  supported (too weak)
-## BLOWFISH is no longer supported (author recommends switching to TWOFISH)
-##
-CONFIG_IKE_ALG_TWOFISH=y
-CONFIG_IKE_ALG_SERPENT=y

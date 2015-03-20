@@ -125,8 +125,6 @@ extern int pfkey_expire(struct ipsec_sa *, int);
 extern int pfkey_acquire(struct ipsec_sa *);
 #else /* ! __KERNEL__ */
 
-extern libreswan_keying_debug_func_t pfkey_debug_func;
-extern libreswan_keying_debug_func_t pfkey_error_func;
 extern void pfkey_print(struct sadb_msg *msg, FILE *out);
 
 #endif /* __KERNEL__ */

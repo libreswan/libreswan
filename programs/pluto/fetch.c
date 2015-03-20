@@ -63,7 +63,7 @@ struct fetch_req {
 	generalName_t *distributionPoints;
 };
 
-fetch_req_t empty_fetch_req = {
+static fetch_req_t empty_fetch_req = {
 	NULL,           /* next */
 	0,              /* installed */
 	0,              /* trials */
@@ -80,8 +80,8 @@ static pthread_mutex_t crl_fetch_list_mutex  = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex      = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t fetch_wake_cond       = PTHREAD_COND_INITIALIZER;
 
-/*
- * lock access to the chained crl list
+/* lock access to the chained crl list
+ * ??? declared in x509.h
  */
 void lock_crl_list(const char *who)
 {
@@ -91,8 +91,8 @@ void lock_crl_list(const char *who)
 	    );
 }
 
-/*
- * unlock access to the chained crl list
+/* unlock access to the chained crl list
+ * ??? declared in x509.h
  */
 void unlock_crl_list(const char *who)
 {
@@ -209,7 +209,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 			blob->ptr = alloc_bytes(response.len, "curl blob");
 			memcpy(blob->ptr, response.ptr, response.len);
 		} else {
-			plog("fetching uri (%s) with libcurl failed: %s", uri,
+			libreswan_log("fetching uri (%s) with libcurl failed: %s", uri,
 			     errorbuffer);
 		}
 		curl_easy_cleanup(curl);
@@ -254,7 +254,7 @@ static err_t parse_ldap_result(LDAP * ldap, LDAPMessage *result, chunk_t *blob)
 					memcpy(blob->ptr, values[0]->bv_val,
 					       blob->len);
 					if (values[1] != NULL)
-						plog(
+						libreswan_log(
 							"warning: more than one value was fetched from LDAP URL");
 
 
@@ -433,7 +433,7 @@ static void fetch_crls(void)
 			err_t ugh = fetch_asn1_blob(gn->name, &blob);
 
 			if (ugh != NULL) {
-				plog("fetch failed:  %s", ugh);
+				libreswan_log("fetch failed:  %s", ugh);
 			} else {
 				chunk_t crl_uri;
 				clonetochunk(crl_uri, gn->name.ptr,
@@ -517,13 +517,13 @@ void init_fetch(void)
 		/* init curl */
 		status = curl_global_init(CURL_GLOBAL_DEFAULT);
 		if (status != 0)
-			plog("libcurl could not be initialized, status = %d",
+			libreswan_log("libcurl could not be initialized, status = %d",
 			     status);
 
 #endif
 		status = pthread_create( &thread, NULL, fetch_thread, NULL);
 		if (status != 0)
-			plog(
+			libreswan_log(
 				"fetching thread could not be started, status = %d",
 				status);
 	}

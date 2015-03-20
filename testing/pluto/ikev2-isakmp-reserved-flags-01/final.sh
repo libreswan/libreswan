@@ -1,4 +1,5 @@
 ipsec look
+grep "minor version" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

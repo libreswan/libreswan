@@ -1,8 +1,6 @@
 /^033 Can.t Opportunistically initiate for/s/RR of type TXT for \(.*\) was not found$/no host \1 for TXT record/
 /^\(002 .*received Vendor ID Payload; ASCII hash: \).*/s//\1XXXXXXXXXXXX/
 s/ [({]using isakmp#.*[})]//
-s/\(IPsec SA established .* mode\) {.*}/\1/
-s/IPsec SA established {.*}/IPsec SA established/
 /^\=\=\= /d
 /eer ID is ID_IPV4_ADDR/d  
 s/ {isakmp=#.*\/ipsec=#.*}//

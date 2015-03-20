@@ -78,3 +78,4 @@ s/none on \/usr\/obj type hostfs (ro,.*)/none on \/usr\/obj type hostfs (ro, PAT
 /^MOUNTING .*/d
 /^.*padlock_sha: VIA PadLock Hash Engine not detected\.*$/d
 /^.*AVX instructions are not detected.*$/d
+/^.*AVX or AES-NI instructions are not detected.*$/d

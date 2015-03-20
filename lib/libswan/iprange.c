@@ -1,5 +1,6 @@
-/*
- * more minor utilities for mask length calculations for IKEv2
+/* more minor utilities for mask length calculations for IKEv2
+ * header: include/libswan.h
+ *
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -14,8 +15,7 @@
  */
 #include <stdlib.h>
 
-#include "libreswan.h"
-#include "libreswan/passert.h"
+#include "libswan.h"
 
 /*
  * this is stupid implementation, see goodmask.c for ideas

@@ -1,4 +1,6 @@
 /* misc. universal things
+ * Header: "defs.h"
+ *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -29,12 +31,24 @@
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 
+
+bool all_zero(const unsigned char *m, size_t len)
+{
+	size_t i;
+
+	for (i = 0; i != len; i++)
+		if (m[i] != '\0')
+			return FALSE;
+
+	return TRUE;
+}
+
 /*  checks if the expiration date has been reached and
  *  warns during the warning_interval of the imminent
  *  expiry. strict=TRUE declares a fatal error,
  *  strict=FALSE issues a warning upon expiry.
  */
-const char*check_expiry(time_t expiration_date, int warning_interval,
+const char *check_expiry(time_t expiration_date, int warning_interval,
 			bool strict)
 {
 	time_t tnow;
@@ -72,17 +86,3 @@ const char*check_expiry(time_t expiration_date, int warning_interval,
 		return buf;
 	}
 }
-
-/*  compare two chunks, returns zero if a equals b
- *  negative/positive if a is earlier/later in the alphabet than b
- */
-bool cmp_chunk(chunk_t a, chunk_t b)
-{
-	int cmp_len, len, cmp_value;
-
-	cmp_len = a.len - b.len;
-	len = (cmp_len < 0) ? a.len : b.len;
-	cmp_value = memcmp(a.ptr, b.ptr, len);
-
-	return (cmp_value == 0) ? cmp_len : cmp_value;
-};

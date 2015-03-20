@@ -1,5 +1,9 @@
 /* Simple ASN.1 parser
  * Copyright (C) 2000-2004 Andreas Steffen, Zuercher Hochschule Winterthur
+ * Copyright (C) 2005 Michael Richardson <mcr@marajade.sandelman.ca>
+ * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,12 +17,13 @@
  *
  */
 
-/* asn1_init() takes a debug argument which does not work when -DNO_DEBUG
+/* asn1_init() takes a debug argument which does not work without DEBUG
  * is specified. It does this to prevent logging private key info using
  * DBG_RAW. We define the two use cases here, it should not cause any
- * logging when -DNO_DEBUG is defined.
+ * logging when DEBUG is undefined.
  */
-#ifdef NO_DEBUG
+#ifndef DEBUG
+/* substitute parts */
 # define DBG_RAW         LELEM(0)
 # define DBG_PRIVATE       LELEM(20)
 #endif

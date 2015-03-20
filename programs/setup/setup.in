@@ -43,8 +43,7 @@ fi
 # which kernel are we using?
 IPSECprotostack=`ipsec addconn --config $IPSEC_CONF --liststack`
 
-systemd=$(pidof systemd)
-if [ "${systemd}" = 1 ]; then
+if [ -d /run/systemd/system ]; then
     initsystem=systemd
 elif [ -f /sbin/start ]; then
     if [ -r /etc/redhat-release ]; then

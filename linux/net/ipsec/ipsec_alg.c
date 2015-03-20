@@ -1098,7 +1098,7 @@ int ipsec_xform_show(struct seq_file *seq, void *offset)
 
 			seq_printf(seq, "\n");
 		}
-	} 
+	}
 
 	return 0;
 }

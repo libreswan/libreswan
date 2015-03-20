@@ -1,4 +1,5 @@
-/* error logging functions
+/*
+ * error logging functions
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
@@ -13,7 +14,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <stdio.h>
@@ -67,11 +67,11 @@ void tool_close_log(void)
 		closelog();
 }
 
-/* format a string for the log, with suitable prefixes.
+/*
+ * format a string for the log, with suitable prefixes.
  * A format starting with ~ indicates that this is a reprocessing
  * of the message, so prefixing and quoting is suppressed.
  */
-
 static void fmt_log(char *buf, size_t buf_len,
 		    const char *fmt, va_list ap)
 {
@@ -168,11 +168,11 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 	va_end(args);
 
 	if (log_to_stderr)
-		fprintf(stderr, "FATAL ERROR: %s. Errno %d: %s\n", m, e, strerror(
-				e));
+		fprintf(stderr, "FATAL ERROR: %s. Errno %d: %s\n",
+			m, e, strerror(e));
 	if (log_to_syslog)
-		syslog(LOG_ERR, "FATAL ERROR: %s. Errno %d: %s", m, e, strerror(
-			       e));
+		syslog(LOG_ERR, "FATAL ERROR: %s. Errno %d: %s",
+			m, e, strerror(e));
 
 	exit_tool(1);
 }
@@ -185,7 +185,7 @@ void libreswan_log_abort(const char *file_str, int line_no)
 
 /* Debugging message support */
 
-#if !defined(NO_DEBUG)
+#ifdef DEBUG
 
 void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 {
@@ -202,14 +202,6 @@ void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
 	libreswan_loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",
 			 file_str, line_no, pred_str);
 	abort(); /* exiting correctly doesn't always work */
-}
-
-void libreswan_pexpect_log(const char *pred_str, const char *file_str,
-			   unsigned long line_no)
-{
-	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "EXPECTATION FAILED at %s:%lu: %s", file_str,
-	       line_no, pred_str);
 }
 
 lset_t
@@ -258,7 +250,10 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 	bp = buf;
 
 	if (label != NULL && label[0] != '\0') {
-		/* Handle the label.  Care must be taken to avoid buffer overrun. */
+		/*
+		 * Handle the label.
+		 * Care must be taken to avoid buffer overrun.
+		 */
 		size_t llen = strlen(label);
 
 		if (llen + 1 > sizeof(buf)) {

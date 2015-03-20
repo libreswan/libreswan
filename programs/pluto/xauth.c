@@ -3,6 +3,13 @@
  * Copyright (C) 2001-2002 Colubris Networks
  * Copyright (C) 2003 Sean Mathews - Nu Tech Software Solutions, inc.
  * Copyright (C) 2003-2004 Xelerance Corporation
+ * Copyright (C) 2009 Ken Wilson <Ken_Wilson@securecomputing.com>
+ * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2013 Philippe Vouters <philippe.vouters@laposte.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -79,7 +86,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 static char pwdfile[PATH_MAX];
 
 /* We use crypt_mutex lock because not all systems have crypt_r() */
-pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t crypt_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct {
 	bool in_use;
@@ -595,9 +602,9 @@ static stf_status modecfg_resp(struct state *st,
 				case CISCO_SPLIT_INC:
 				{
 				/* example payload
-				 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00 
+				 *  70 04      00 0e      0a 00 00 00 ff 00 00 00 00 00 00 00 00 00
 				 *   \/          \/        \ \  /  /   \ \  / /   \  \  \ /  /  /
-				 *  28676        14        10.0.0.0    255.0.0.0  
+				 *  28676        14        10.0.0.0    255.0.0.0
 				 *
 				 *  SPLIT_INC  Length       IP addr      mask     proto?,sport?,dport?,proto?,sport?,dport?
 				 */
@@ -2718,7 +2725,7 @@ stf_status xauth_inI0(struct msg_digest *md)
 				libreswan_log(
 					"XAUTH: No username or password request was received.");
 				return STF_IGNORE;
-			}			    
+			}
 		} else {
 			if (!st->st_connection->spd.this.xauth_client) {
 				libreswan_log(

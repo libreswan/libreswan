@@ -1,4 +1,4 @@
-Basic pluto with IKEv2 on the initiator (west), and on the responder.
+as ikev2-05-basic-psk
 
 This test enables --impair-minor-version-bump that will send a higher
 minor version number on the initiator. The connection should still

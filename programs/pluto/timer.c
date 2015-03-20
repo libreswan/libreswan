@@ -4,6 +4,9 @@
  * Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -97,13 +100,11 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
 
 	DBG(DBG_CONTROL, {
 		    if (st == NULL) {
-			    DBG_log(
-				    "inserting event %s, timeout in %lu seconds",
+			    DBG_log("inserting event %s, timeout in %lu seconds",
 				    enum_show(&timer_event_names,
 					      type), (unsigned long)tm);
 		    } else {
-			    DBG_log(
-				    "inserting event %s, timeout in %lu seconds for #%lu",
+			    DBG_log("inserting event %s, timeout in %lu seconds for #%lu",
 				    enum_show(&timer_event_names,
 					      type), (unsigned long)tm,
 				    ev->ev_state->st_serialno);
@@ -127,8 +128,7 @@ void event_schedule(enum event_type type, time_t tm, struct state *st)
 					    enum_show(&timer_event_names,
 						      evt->ev_type));
 			    } else {
-				    DBG_log(
-					    "event added after event %s for #%lu",
+				    DBG_log("event added after event %s for #%lu",
 					    enum_show(&timer_event_names,
 						      evt->ev_type),
 					    evt->ev_state->st_serialno);
@@ -231,7 +231,8 @@ static void retransmit_v1_msg(struct state *st)
 		loglog(RC_NORETRANSMISSION,
 		       "max number of retransmissions (%d) reached %s%s",
 		       st->st_retransmit,
-		       enum_show(&state_names, st->st_state), details);
+		       enum_show(&state_names, st->st_state),
+		       details);
 		if (try != 0 && try != try_limit) {
 			/* A lot like EVENT_SA_REPLACE, but over again.
 			 * Since we know that st cannot be in use,
@@ -346,7 +347,8 @@ static void retransmit_v2_msg(struct state *st)
 	loglog(RC_NORETRANSMISSION,
 	       "max number of retransmissions (%d) reached %s%s",
 	       st->st_retransmit,
-	       enum_show(&state_names, st->st_state), details);
+	       enum_show(&state_names, st->st_state),
+	       details);
 
 	if (try != 0 && try != try_limit) {
 		/* A lot like EVENT_SA_REPLACE, but over again.
@@ -433,9 +435,9 @@ void handle_timer_event(void)
 	}
 }
 
-void liveness_check(struct state *st)
+static void liveness_check(struct state *st)
 {
-	time_t tm, last_liveness;
+	time_t tm, last_liveness, last_msg;
 	struct state *pst;
 	stf_status ret;
 	struct connection *c;
@@ -456,8 +458,18 @@ void liveness_check(struct state *st)
 		pst = st;
 	}
 
-	last_liveness = pst->st_last_liveness;
+	/* don't bother sending the check and reset
+	 * liveness stats if there has been incoming traffic */
+	if (get_sa_info(st, TRUE, &last_msg)) {
+		if (last_msg < c->dpd_timeout) {
+			pst->st_pend_liveness = FALSE;
+			pst->st_last_liveness = 0;
+			goto live_ok;
+		}
+	}
+
 	tm = now();
+	last_liveness = pst->st_last_liveness;
 	/* ensure that the very first liveness_check works out */
 	if (last_liveness == 0)
 		last_liveness = tm;
@@ -791,8 +803,7 @@ void delete_event(struct state *st)
 			if (*ev == NULL) {
 				DBG(DBG_CONTROL,
 				    DBG_log("event %s to be deleted not found",
-					    enum_show(&
-						      timer_event_names,
+					    enum_show(&timer_event_names,
 						      st->st_event->ev_type)));
 				break;
 			}
@@ -837,7 +848,7 @@ void delete_liveness_event(struct state *st)
 /*
  * Delete a DPD event.
  */
-void _delete_dpd_event(struct state *st, const char *file, int lineno)
+void attributed_delete_dpd_event(struct state *st, const char *file, int lineno)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
 	    DBG_log("state: %ld requesting DPD event %s to be deleted by %s:%d",
