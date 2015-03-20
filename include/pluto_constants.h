@@ -72,6 +72,12 @@ enum keyword_labeled_ipsec {
 enum keyword_xauthby {
     XAUTHBY_FILE = 0,
     XAUTHBY_PAM = 1,
+    XAUTHBY_ALWAYSOK = 2,
+};
+
+enum keyword_xauthfail {
+    XAUTHFAIL_HARD = 0,
+    XAUTHFAIL_SOFT = 1,
 };
 
 #ifdef NAT_TRAVERSAL
@@ -179,6 +185,8 @@ typedef enum {
 
 #define MAX_INPUT_UDP_SIZE             65536
 #define MAX_OUTPUT_UDP_SIZE            65536
+
+#define MAX_IKE_FRAGMENTS	16
 
 /* debugging settings: a set of selections for reporting
  * These would be more naturally situated in log.h,
@@ -442,6 +450,12 @@ enum four_options {
 	fo_insist  = 3   /* propose, and only accept if peer agrees */
 };
 
+enum ynf_options {
+	ynf_no   = 0,
+	ynf_yes  = 1,
+	ynf_force = 2,
+};
+
 enum saref_tracking {
 	sat_yes = 0, /* SAref tracking via _updown - the default */
 	sat_no = 1, /* no SAref tracking - third party will handle this */
@@ -531,13 +545,14 @@ enum pluto_policy {
 	POLICY_IKEV2_MASK = POLICY_IKEV1_DISABLE|POLICY_IKEV2_ALLOW|POLICY_IKEV2_PROPOSE,
 	POLICY_IKEV2_ALLOW_NARROWING = LELEM(27), /* Allow RFC-5669 section 2.9? 0x0800 0000 */
 
-	POLICY_MODECFGDNS1  = LELEM(28),   /* should we offer a DNS server IP */
-	POLICY_MODECFGDNS2  = LELEM(29),   /* should we offer another DNS server IP */
-	POLICY_MODECFGWINS1 = LELEM(30),   /* should we offer a WINS server IP */
-	POLICY_MODECFGWINS2 = LELEM(31),   /* should we offer another WINS server IP */
+	POLICY_SAREF_TRACK    = LELEM(28), /* Saref tracking via _updown */
+	POLICY_SAREF_TRACK_CONNTRACK    = LELEM(29), /* use conntrack optimization */
 
-	POLICY_SAREF_TRACK    = LELEM(32), /* Saref tracking via _updown */
-	POLICY_SAREF_TRACK_CONNTRACK    = LELEM(33), /* use conntrack optimization */
+	POLICY_IKE_FRAG_ALLOW = LELEM(30),
+	POLICY_IKE_FRAG_FORCE = LELEM(31),
+	POLICY_IKE_FRAG_MASK = POLICY_IKE_FRAG_ALLOW|POLICY_IKE_FRAG_FORCE,
+
+	/* policy used to be an int, but is not lset_t (unsigned long long type), so max is 63 */
 };
 
 /* Any IPsec policy?  If not, a connection description

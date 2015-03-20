@@ -440,6 +440,7 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
 		    "PLUTO_CONN_POLICY='%s' "
 		    "PLUTO_CONN_ADDRFAMILY='ipv%d' "
 #ifdef XAUTH
+		    "XAUTH_FAILED=%d "
 		    "%s "           /* XAUTH username - if any */
 #endif
 		    "%s "           /* PLUTO_MY_SRCIP - if any */
@@ -477,6 +478,7 @@ fmt_common_shell_out(char *buf, int blen, struct connection *c
 		    , prettypolicy(c->policy)
 		    , (c->addr_family == AF_INET) ? 4 : 6
 #ifdef XAUTH
+		    , (st && st->st_xauth_soft) ? 1 : 0
 		    , secure_xauth_username_str
 #endif
 		    , srcip_str
@@ -2875,7 +2877,7 @@ install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 	st->st_connection->spd.eroute_owner = sr->eroute_owner;
 	st->st_connection->spd.routing = sr->routing;
 
-	if(!st->st_connection->newest_ipsec_sa) {
+	if(!st->st_connection->newest_ipsec_sa && st->st_connection->spd.this.xauth_client) {
 		if(!do_command(st->st_connection, &st->st_connection->spd, "updateresolvconf", st)) {
 		DBG(DBG_CONTROL, DBG_log("Updating resolv.conf failed, you may need to update it manually"));
 		}
@@ -2966,7 +2968,8 @@ delete_ipsec_sa(struct state *st USED_BY_KLIPS, bool inbound_only USED_BY_KLIPS)
             }
 #endif
 
-	if (st->st_connection->remotepeertype == CISCO && st->st_serialno == st->st_connection->newest_ipsec_sa) {
+	if (st->st_connection->remotepeertype == CISCO && st->st_connection->spd.this.xauth_client &&
+	    st->st_serialno == st->st_connection->newest_ipsec_sa) {
 		if(!do_command(st->st_connection, &st->st_connection->spd, "restoreresolvconf", st)) {
 		DBG(DBG_CONTROL, DBG_log("Restoring resolv.conf failed, you may need to do it manually"));
 		}

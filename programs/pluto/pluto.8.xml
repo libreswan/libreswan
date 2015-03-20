@@ -1591,22 +1591,6 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--modecfgwins1</option></term>
-
-          <listitem>
-            <para>The IP address of the first WINS server to pass along to the ModeConfig Client</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--modecfgwins2</option></term>
-
-          <listitem>
-            <para>The IP address of the second WINS server to pass along to the ModeConfig Client</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
           <term><option>--dnskeyondemand</option></term>
 
           <listitem>

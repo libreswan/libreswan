@@ -2,11 +2,21 @@
   <term><emphasis remap='B'>xauthby</emphasis></term>
   <listitem>
 <para>When XAUTH support is available, set the method used by XAUTH to authenticate
-the user. The currently supported values are 'file' (the default) or 'pam'.
+the user. The currently supported values are <emphasis remap='I'>file</emphasis> (the default),
+ <emphasis remap='I'>pam</emphasis> or  <emphasis remap='I'>alwaysok</emphasis>. 
+The password file is located at <emphasis remap='I'>/etc/ipsec.d/passwd</emphasis>,
+and follows a syntax similar to the Apache htpasswd file, except an additional connection
+name argument is also present:
 </para>
-<para>
-The pam option is only available if compiled with USE_XAUTHPAM. Threads are used
+<para>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <emphasis remap='I'>username:password:conname</emphasis></para>
+<para>For supported password hashing methods, see <citerefentry><refentrytitle>crypt</refentrytitle>
+<manvolnum>3</manvolnum></citerefentry>. If pluto is running in FIPS mode, some hash methods,
+such as MD5, might not be available. The pam option is only available if compiled with USE_XAUTHPAM. Threads are used
 to launch an xauth authentication helper for file as well as pam methods.
+</para>
+<para>The <emphasis remap='I'>alwaysok</emphasis> should only be used if the XAUTH user authentication is not really
+used, but is required for interoperability, as it defeats the whole point of XAUTH which is to rely on a secret only
+known by a human.
 </para>
 </listitem>
   </varlistentry>

@@ -189,6 +189,8 @@ ctltest	 	vpn-dns-01		good
 # incomplete test - disabled
 #umlplutotest	x509-pluto-01		good
 
+#umlplutotest	x509-pluto-frag-01		good
+#
 #
 # a test of sending and validating an X.509 cert
 #
@@ -432,11 +434,22 @@ umlplutotest    netkey-pluto-02			good
 umlplutotest    netkey-pluto-03-sourceip        good
 umlplutotest    netkey-pluto-04			good
 umlplutotest    netkey-pluto-05			good
+umlplutotest    netkey-psk-pluto-06		good
+umlplutotest	netkey-psk-vhost-01		good
+umlplutotest	netkey-psk-vhost-02		good
+umlplutotest	netkey-psk-vhost-03		good
+umlplutotest	netkey-psk-vhost-04		good
 # Selinux / secure labeling tests (require netkey and selinux)
 umlplutotest    loopback-pluto-01		good
 umlplutotest    loopback-pluto-02		good
 umlplutotest    loopback-pluto-03		good
 umlplutotest    loopback-pluto-04		good
+
+# compress tests, some use netkey
+umlplutotest    compress-pluto-01		good
+umlplutotest    compress-pluto-02		bad
+umlplutotest    compress-pluto-03		good
+umlplutotest    compress-pluto-04		good
 
 # sourceip tests
 umlplutotest	sourceip-01			good
@@ -464,6 +477,7 @@ umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good
 umlplutotest	ikev2-09-rw-rsa				good
 umlplutotest	ikev2-10-basic-rawrsa-nss		good
+umlplutotest	ikev2-11-simple-psk			good
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good

@@ -74,7 +74,6 @@ void lsw_conf_setdefault(void)
     char *ipsecd_dir = FINALCONFDDIR;
     char *conffile   = FINALCONFFILE;
     char *var_dir    = FINALVARDIR;
-    char *env;
 #if 0
     char *exec_dir   = FINALLIBEXECDIR;
     char *lib_dir    = FINALLIBDIR;

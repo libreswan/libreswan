@@ -7,14 +7,8 @@ Libreswan IPsec subsystem.
 (The major exception is secrets for authentication;
 see
 <citerefentry><refentrytitle>ipsec.secrets</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)
-Its contents are not security-sensitive
-<emphasis remap='I'>unless</emphasis>
-manual keying is being done for more than just testing,
-in which case the encryption/authentication keys in the
-descriptions for the manually-keyed connections are very sensitive
-(and those connection descriptions
-are probably best kept in a separate file,
-via the include facility described below).</para>
+Its contents are not security-sensitive.
+</para>
 
 <para>The file is a text file, consisting of one or more
 <emphasis remap='I'>sections</emphasis>.

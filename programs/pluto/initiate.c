@@ -8,7 +8,6 @@
  * Copyright (C) 2010 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2012 Panagiotis Tamtamis <tamtamis@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -187,11 +186,6 @@ initiate_a_connection(struct connection *c
     /* turn on any extra debugging asked for */
     c->extra_debugging |= moredebug;
     
-    if (!oriented(*c)) {
-	(void)orient(c);
-	connect_to_host_pair(c);
-    }
-
     if (!oriented(*c))
     {
 	loglog(RC_ORIENT, "We cannot identify ourselves with either end of this connection.");
@@ -287,6 +281,7 @@ initiate_connection(const char *name, int whackfd
     struct connection *c = con_by_name(name, FALSE);
     int count;
 
+    passert(name != NULL);
     is.whackfd   = whackfd;
     is.moredebug = moredebug;
     is.importance= importance;
@@ -516,11 +511,7 @@ cannot_oppo(struct connection *c
 	return;
     }
 
-    /*
-     * NETKEY default for level param in tmpl is required, so no traffic will
-     * transmitted until an SA is fully up
-     */
-    if (b->held && kern_interface != USE_NETKEY)
+    if (b->held)
     {
 	int failure_shunt = b->failure_shunt;
 
@@ -821,7 +812,7 @@ initiate_ondemand_body(struct find_oppo_bundle *b
 	/* otherwise, there is some kind of static conn that can handle
 	 * this connection, so we initiate it */
 
-	if (b->held && kern_interface != USE_NETKEY)
+	if (b->held)
 	{
 	    /* what should we do on failure? */
 	    (void) assign_hold(c, sr, b->transport_proto, &b->our_client, &b->peer_client);

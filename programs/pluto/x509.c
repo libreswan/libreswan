@@ -98,14 +98,10 @@ add_x509cert(x509cert_t *cert)
     }
 
     /* insert new cert at the root of the chain */
-#if defined(LIBCURL) || defined(LDAP_VER)
     lock_certs_and_keys("add_x509cert");
-#endif
     cert->next = x509certs;
     x509certs = cert;
-#if defined(LIBCURL) || defined(LDAP_VER)
     unlock_certs_and_keys("add_x509cert");
-#endif
     return cert;
 }
 
@@ -171,13 +167,9 @@ release_x509cert(x509cert_t *cert)
 	x509cert_t **pp = &x509certs;
 	while (*pp != cert)
 	    pp = &(*pp)->next;
-#if defined(LIBCURL) || defined(LDAP_VER)
 	lock_certs_and_keys("release_x509cert");
-#endif
         *pp = cert->next;
-#if defined(LIBCURL) || defined(LDAP_VER)
 	unlock_certs_and_keys("release_x509cert");
-#endif
 	free_x509cert(cert);
     }
 }

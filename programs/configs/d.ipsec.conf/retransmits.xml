@@ -1,0 +1,10 @@
+  <varlistentry>
+  <term><emphasis remap='B'>retransmits</emphasis></term>
+  <listitem>
+<para>Whether pluto should attempt to retransmit packets that get no reply.
+This is mostly used to disable retransmits while debugging a problem. Production
+use should always leave this enabled. The default is <emphasis remap='B'>yes</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>
+

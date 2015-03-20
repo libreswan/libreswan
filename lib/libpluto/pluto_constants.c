@@ -309,12 +309,10 @@ const char *const sa_policy_bit_names[] = {
 	"IKEv2ALLOW",
 	"IKEv2Init",
 	"IKEv2ALLOW_NARROWING",
-	"ModeCFGDNS1",
-	"ModeCFGDNS2",
-	"ModeCFGWINS1",
-	"ModeCFGWINS2",
 	"SAREFTRACK",
 	"SAREFCONNTRACK",
+	"IKE_FRAG",
+	"IKE_FRAG_FORCE",
 	NULL
     };
 
@@ -332,14 +330,13 @@ const char *const policy_fail_names[4] = {
 	"REJECT",
     };
 
-static char pbitnamesbuf[200];   /* only one!  I hope that it is big enough! */
-
 /* print a policy: like bitnamesof, but it also does the non-bitfields.
  * Suppress the shunt and fail fields if 0.
  */
 const char *
 prettypolicy(lset_t policy)
 {
+    static char pbitnamesbuf[200];   /* NOT RE-ENTRANT!  I hope that it is big enough! */
     const char *bn = bitnamesofb(sa_policy_bit_names
 				 , policy & ~(POLICY_SHUNT_MASK | POLICY_FAIL_MASK)
 				 , pbitnamesbuf, sizeof(pbitnamesbuf));

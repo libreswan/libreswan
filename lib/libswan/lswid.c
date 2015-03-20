@@ -12,6 +12,7 @@
  * for more details.
  */
 
+#include <stddef.h>
 #include "lswalloc.h"
 #include "constants.h"
 #include "id.h"

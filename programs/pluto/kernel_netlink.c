@@ -547,13 +547,6 @@ netlink_raw_eroute(const ip_address *this_host
 	   DBG_log("satype(%d) is not used in netlink_raw_eroute.",satype));
     }
 
-    /* log warning for RFC-breaking implementation in NETKEY/XFRM stack */
-    if ( (proto_info[0].encapsulation != ENCAPSULATION_MODE_TUNNEL)
-	&& (transport_proto != 0)
-	&& (satype != 0)) {
-	   DBG_log("warning: NETKEY/XFRM in transport mode accepts ALL encrypted protoport packets between the hosts in violation of RFC 4301, Section 5.2");
-    }
-
     /* Bug #1004 fix.
      * There really isn't "client" with NETKEY and transport mode
      * so eroute must be done to natted, visible ip. If we don't hide
@@ -1349,7 +1342,6 @@ netlink_acquire(struct nlmsghdr *n)
 	xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
 	DBG(DBG_NETKEY, DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%d"
 				, xuctx->exttype, xuctx->len, xuctx->ctx_doi, xuctx->ctx_alg, xuctx->ctx_len));
-	DBG(DBG_NETKEY, DBG_log("xfrm xuctx security context: ", (xuctx+1), xuctx->ctx_len));
 
 	if(xuctx->ctx_len <= MAX_SECCTX_LEN) {
 	memcpy(sec_context_value, (xuctx+1), xuctx->ctx_len);

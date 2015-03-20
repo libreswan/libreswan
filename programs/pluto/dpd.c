@@ -162,12 +162,13 @@ dpd_init(struct state *st)
 	time_t n = now();
 	libreswan_log("Dead Peer Detection (RFC 3706): enabled");
 
-	if(st->st_dpd_event == NULL
-	   || (st->st_connection->dpd_delay + n) < st->st_dpd_event->ev_time) {
-	    delete_dpd_event(st);
-	    event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
+	if(st->st_dpd_event == NULL || (st->st_connection->dpd_delay + n) < st->st_dpd_event->ev_time)
+	{
+	   if(st->st_dpd_event != NULL) {
+		delete_dpd_event(st);
+	   }
+	   event_schedule(EVENT_DPD, st->st_connection->dpd_delay, st);
 	}
-
     } else {
       libreswan_log("Dead Peer Detection (RFC 3706): not enabled because peer did not advertise it");
     }
@@ -197,7 +198,8 @@ dpd_sched_timeout(struct state *p1st, time_t tm, time_t timeout)
     {
 	DBG(DBG_DPD, DBG_log("DPD: scheduling timeout to %lu"
 			     , (unsigned long)timeout));
-        delete_dpd_event(p1st);
+        if (p1st->st_dpd_event != NULL)
+		delete_dpd_event(p1st);
         event_schedule(EVENT_DPD_TIMEOUT, timeout, p1st);
     }   
 }

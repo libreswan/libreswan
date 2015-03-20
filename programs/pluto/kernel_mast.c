@@ -166,25 +166,6 @@ init_useful_mast(ip_address addr UNUSED, char *vname)
     }
 
 
-#if 0
-    /*
-     * The mast interface does not need an IP address, as we route
-     *  into it using using route table 50 from the main routing table
-     */
-
-    /* now configure an IP address on the mast number */
-    {
-	char cmd[512];
-	
-	/* 1452 gives us enough space for IP + UDP + typical ESP */
-	snprintf(cmd, sizeof(cmd)
-		 , "ifconfig %s inet %s netmask 255.255.255.255 mtu 1452"
-		 , vname
-		 , ip_str(&addr));
-	
-	invoke_command("plumb","", cmd);
-    }
-#endif
     return mastno;
 }
 

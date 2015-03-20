@@ -4,8 +4,8 @@ srcdir?=${LIBRESWANSRCDIR}/initsystems/systemd/
 UPSTARTFILE=ipsec.conf
 DEFAULTFILE=default.pluto
 SUBDIRS=
-UPSTARTDIR=$(DESTDIR)/etc/init
-DEFAULTDIR=$(CONFDIR)/default
+UPSTARTDIR=$(SYSCONFDIR)/init
+DEFAULTDIR=$(SYSCONFDIR)/default
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top

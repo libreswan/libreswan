@@ -93,13 +93,13 @@ struct alg_info {
 
 struct alg_info_esp {
 	ALG_INFO_COMMON;
-	struct esp_info esp[64];
+	struct esp_info esp[128];
 	int esp_pfsgroup;
 };
 
 struct alg_info_ike {
 	ALG_INFO_COMMON;
-	struct ike_info ike[64];
+	struct ike_info ike[128];
 };
 
 #define ESPTOINFO(X) (struct alg_info *)X

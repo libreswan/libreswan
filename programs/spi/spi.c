@@ -558,7 +558,7 @@ main(int argc, char *argv[])
 #ifdef DEBUG
 			debug = 1;
 			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
-			cur_debugging = 0xffffffff;
+			/* paul: this is a plutoism? cur_debugging = 0xffffffff; */
 			argcount--;
 #else
 			fprintf(stderr, "%s: Cannot set debug - compiled without DEBUG\n", progname);

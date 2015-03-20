@@ -6,6 +6,8 @@
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Hiren Joshi <joshihirenn@gmail.com>
  * Copyright (C) 2009 Anthony Tong <atong@TrustedCS.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 Wolfgang Nothdurft <wolfgang@linogate.de>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -521,12 +523,19 @@ static const struct state_microcode state_microcode_table[] = {
 
     /***** informational messages *****/
 
+    /* Informational Exchange (RFC 2408 4.8):
+     * HDR N/D
+     * Unencrypted: must not occur after ISAKMP Phase 1 exchange of keying material.
+     */
     /* STATE_INFO: */
     { STATE_INFO, STATE_UNDEFINED
     , SMF_ALL_AUTH
     , LEMPTY, LEMPTY, PT(NONE)
     , EVENT_NULL, informational },
 
+    /* Informational Exchange (RFC 2408 4.8):
+     * HDR* N/D
+     */
     /* STATE_INFO_PROTECTED: */
     { STATE_INFO_PROTECTED, STATE_UNDEFINED
     , SMF_ALL_AUTH | SMF_ENCRYPTED
@@ -645,12 +654,10 @@ informational(struct msg_digest *md)
     {
         pb_stream *const n_pbs = &n_pld->pbs;
         struct isakmp_notification *const n = &n_pld->payload.notification;
-        int disp_len;
-        char disp_buf[200];
 	struct state *st = md->st;            /* may be NULL */
 
         /* Switch on Notification Type (enum) */
-	/* note that we can get notification payloads unencrypted
+	/* note that we _can_ get notification payloads unencrypted
 	 * once we are at least in R3/I4. 
 	 * and that the handler is expected to treat them suspiciously.
 	 */
@@ -803,22 +810,18 @@ informational(struct msg_digest *md)
 #ifdef DEBUG
 	    if(st!=NULL
 	       && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO) {
-		loglog(RC_LOG_SERIOUS, "received and failed on unknown informational message");
+		loglog(RC_LOG_SERIOUS, "received unhandled informational notification payload %d: '%s'"
+			, n->isan_type
+			, enum_name(&notification_names, n->isan_type));
 		return STF_FATAL;
 	    }
-#endif	    
-            if (pbs_left(n_pbs) >= sizeof(disp_buf)-1)
-                disp_len = sizeof(disp_buf)-1;
-            else
-                disp_len = pbs_left(n_pbs);
-            memcpy(disp_buf, n_pbs->cur, disp_len);
-            disp_buf[disp_len] = '\0';
-            break;
+#endif
+	    loglog(RC_LOG_SERIOUS, "received and ignored informational message for unknown state");
+	    return STF_IGNORE;
         }
     }
 
-    loglog(RC_LOG_SERIOUS, "received and ignored informational message");
-
+    loglog(RC_LOG_SERIOUS, "received and ignored empty informational notification payload");
     return STF_IGNORE;
 }
 
@@ -1123,6 +1126,9 @@ process_v1_packet(struct msg_digest **mdp)
 
 #ifdef MODECFG
     case ISAKMP_XCHG_MODE_CFG:
+	DBG(DBG_CONTROLMORE , DBG_log(" in %s:%d case %s", __func__, __LINE__
+				, enum_show(&exchange_names, md->hdr.isa_xchg)));
+
 	if (is_zero_cookie(md->hdr.isa_icookie))
 	{
 	    libreswan_log("Mode Config message is invalid because"
@@ -1152,7 +1158,11 @@ process_v1_packet(struct msg_digest **mdp)
 
 	if (st == NULL)
 	{
-	    /* No appropriate Mode Config state.
+		DBG(DBG_CONTROLMORE 
+			, DBG_log(" in %s:%d No appropriate Mode Config state yet."
+				  "See if we have a Main Mode state" 
+				, __func__, __LINE__));
+	     /* No appropriate Mode Config state.
 	     * See if we have a Main Mode state.
 	     * ??? what if this is a duplicate of another message?
 	     */
@@ -1169,6 +1179,16 @@ process_v1_packet(struct msg_digest **mdp)
 
 	    set_cur_state(st);
 
+	    DBG(DBG_CONTROLMORE, DBG_log(" processing received "
+				    "isakmp_xchg_type %s."
+				    , enum_show(&exchange_names, md->hdr.isa_xchg)));
+	    DBG(DBG_CONTROLMORE, DBG_log(" this is a%s%s%s%s" 
+				    , st->st_connection->spd.this.xauth_server ? " xauthserver" : ""
+				    , st->st_connection->spd.this.xauth_client ? " xauthclient" : ""
+				    , st->st_connection->spd.this.modecfg_server ? " modecfgserver" : ""
+				    , st->st_connection->spd.this.modecfg_client  ? " modecfgclient" : ""
+				    ));
+
 	    if (!IS_ISAKMP_SA_ESTABLISHED(st->st_state))
 	    {
 		loglog(RC_LOG_SERIOUS, "Mode Config message is unacceptable because"
@@ -1177,6 +1197,7 @@ process_v1_packet(struct msg_digest **mdp)
 		/* XXX Could send notification back */
 		return;
 	    }
+	    DBG(DBG_CONTROLMORE, DBG_log(" call  init_phase2_iv"));
 	    init_phase2_iv(st, &md->hdr.isa_msgid);
 	    new_iv_set = TRUE;
 
@@ -1205,11 +1226,21 @@ process_v1_packet(struct msg_digest **mdp)
 	       && st->quirks.xauth_ack_msgid)
 	    {
 		from_state = STATE_XAUTH_R1;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s "
+					"state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid==TRUE"
+					, enum_name(&state_names, st->st_state
+					)));
 	    }
 	    else if(st->st_connection->spd.this.xauth_client
 		    && IS_PHASE1(st->st_state))
 	    {
-		from_state = STATE_XAUTH_I0;
+		    from_state = STATE_XAUTH_I0;
+		    DBG(DBG_CONTROLMORE
+				    , DBG_log(" set from_state to %s "
+				    "this is xauthclient and IS_PHASE1() == TRUE"
+				    , enum_name(&state_names, st->st_state
+				    )));
 	    }
 	    else if(st->st_connection->spd.this.xauth_client
 		    && st->st_state == STATE_XAUTH_I1)
@@ -1219,22 +1250,52 @@ process_v1_packet(struct msg_digest **mdp)
 		 * because it wants to start over again.
 		 */
 		from_state = STATE_XAUTH_I0;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s "
+				"this is xauthclient and state == STATE_XAUTH_I1"
+				, enum_name(&state_names, st->st_state
+				)));
 	    }
 	    else if(st->st_connection->spd.this.modecfg_server
 		    && IS_PHASE1(st->st_state))
 	    {
 		from_state = STATE_MODE_CFG_R0;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s "
+				"this is modecfgserver and IS_PHASE1() == TRUE"
+				, enum_name(&state_names, st->st_state
+				)));
 	    }
 	    else if(st->st_connection->spd.this.modecfg_client
 		    && IS_PHASE1(st->st_state))
 	    {
 		from_state = STATE_MODE_CFG_R1;
+		DBG(DBG_CONTROLMORE
+				, DBG_log(" set from_state to %s "
+				"this is modecfgclient and IS_PHASE1() == TRUE"
+				, enum_name(&state_names, st->st_state
+				)));
 	    }
 	    else {
-		/* XXX check if we are being a mode config server here */
-		libreswan_log("received MODECFG message when in state %s, and we aren't xauth client"
-		     , enum_name(&state_names, st->st_state));
-		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
+		    DBG(DBG_CONTROLMORE , DBG_log("in %s:%d processed received "
+					    "isakmp_xchg_type %s."
+					    , __func__, __LINE__ 
+					    , enum_show(&exchange_names, md->hdr.isa_xchg)));
+		    DBG(DBG_CONTROLMORE , DBG_log("this is a%s%s%s%s in state %s. "
+					    "Reply with UNSUPPORTED_EXCHANGE_TYPE"
+					    , st->st_connection->spd.this.xauth_server ? " xauthserver" : ""
+					    , st->st_connection->spd.this.xauth_client ? " xauthclient" : ""
+					    , st->st_connection->spd.this.modecfg_server ? " modecfgserver" : ""
+					    , st->st_connection->spd.this.modecfg_client  ? " modecfgclient" : ""
+					    , enum_name(&state_names, st->st_state)
+					    ));
+		    /* after iphone tests disabled
+		     libreswan_log("in state %s isakmp_xchg_types %s not supported."
+		     "reply UNSUPPORTED_EXCHANGE_TYPE" 	
+		     , enum_name(&state_names, st->st_state)
+		     , enum_show(&exchange_names, md->hdr.isa_xchg));
+		     SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
+		     */
 		return;
 	    }
 	}
@@ -1296,6 +1357,146 @@ process_v1_packet(struct msg_digest **mdp)
     {
 	libreswan_log("IKE message has the Commit Flag set but Pluto doesn't implement this feature; ignoring flag");
     }
+
+	/* Handle IKE fragmentation payloads */
+	if (md->hdr.isa_np == ISAKMP_NEXT_IKE_FRAGMENTATION)
+	{
+		struct isakmp_ikefrag fraghdr;
+		struct ike_frag *ike_frag, **i;
+		int last_frag_index = 0;  /* index of the last fragment */
+		pb_stream frag_pbs;
+
+		if ((st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) == 0)
+		{
+		   loglog(RC_LOG, "discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
+		   return;
+		}
+
+		if (st == NULL)
+		{
+			plog("received IKE fragment, but have no state. Ignoring packet.");
+			return;
+		}
+
+		if (!in_struct(&fraghdr, &isakmp_ikefrag_desc, &md->message_pbs, &frag_pbs)
+		||  pbs_room(&frag_pbs) != fraghdr.isafrag_length || fraghdr.isafrag_np != 0
+		||  fraghdr.isafrag_number == 0 || fraghdr.isafrag_number > 16)
+		{
+			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			return;
+		}
+
+		DBG(DBG_CONTROL, DBG_log("received IKE fragment id '%d', number '%u'%s"
+		    , fraghdr.isafrag_id
+		    , fraghdr.isafrag_number
+		    , (fraghdr.isafrag_flags == 1) ? "(last)" : ""));
+
+		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
+		if (ike_frag == NULL)
+			return;
+
+		ike_frag->md = md;
+		ike_frag->index = fraghdr.isafrag_number;
+		ike_frag->last = (fraghdr.isafrag_flags & 1);
+		ike_frag->size = pbs_left(&frag_pbs);
+		ike_frag->data = frag_pbs.cur;
+
+#if 0 
+/* is this ever hit? It was wrongly checking one byte instead of 4 bytes of marker */
+		/* Strip non-ESP marker from first fragment */
+		if (md->iface->ike_float && ike_frag->index == 1
+		    && (ike_frag->size >= NON_ESP_MARKER_SIZE
+			&& memcmp(non_ESP_marker, ike_frag->data, NON_ESP_MARKER_SIZE) == 0))
+		{
+			ike_frag->data += NON_ESP_MARKER_SIZE;
+			ike_frag->size -= NON_ESP_MARKER_SIZE;
+		}
+#endif
+
+		/* Add the fragment to the state */
+		i = &st->ike_frags;
+		while (1)
+		{
+			if (ike_frag)
+			{
+				/* Still looking for a place to insert ike_frag */
+				if (*i == NULL || (*i)->index > ike_frag->index)
+				{
+					ike_frag->next = *i;
+					*i = ike_frag;
+					ike_frag = NULL;
+				}
+				else if ((*i)->index == ike_frag->index)
+				{
+					/* Replace fragment with same index */
+					struct ike_frag *old = *i;
+					ike_frag->next = old->next;
+					*i = ike_frag;
+					release_md(old->md);
+					free(old);
+					ike_frag = NULL;
+				}
+			}
+
+			if (*i == NULL)
+				break;
+			else if ((*i)->last)
+				last_frag_index = (*i)->index;
+
+			i = &(*i)->next;
+		};
+
+		/* We have the last fragment, reassemble if complete */
+		if (last_frag_index)
+		{
+			size_t size = 0;
+			int prev_index = 0;
+			struct ike_frag *frag;
+			for (frag = st->ike_frags; frag; frag = frag->next)
+			{
+				size += frag->size;
+				if (frag->index != ++prev_index)
+				{
+					break; /* fragment list incomplete */
+				}
+				else if (frag->index == last_frag_index)
+				{
+					struct msg_digest *md = alloc_md();
+					u_int8_t *buffer = alloc_bytes(size, "IKE fragments buffer");
+					size_t offset = 0;
+
+					md->iface = frag->md->iface;
+					md->sender = frag->md->sender;
+					md->sender_port = frag->md->sender_port;
+
+					/* Reassemble fragments in buffer */
+					frag = st->ike_frags;
+					while (frag && frag->index <= last_frag_index)
+					{
+						passert(offset + frag->size <= size);
+						memcpy(buffer + offset, frag->data, frag->size);
+						offset += frag->size;
+						frag = frag->next;
+					}
+
+					init_pbs(&md->packet_pbs, buffer, size, "packet");
+
+					process_packet(&md);
+					if (md != NULL)
+						release_md(md);
+					release_fragments(st);
+					/* optimize: if receiving fragments, immediately respond with fragments too */
+					st->st_seen_fragments = TRUE;
+					DBG(DBG_CONTROL, DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
+					break;
+				}
+			}
+		}
+
+		/* Don't release the md, taken care of by the ike_frag code */
+		*mdp = NULL;
+		return;
+	}
 
     /* Set smc to describe this state's properties.
      * Look up the appropriate microcode based on state and
@@ -1363,7 +1564,7 @@ process_v1_packet(struct msg_digest **mdp)
 		loglog(RC_RETRANSMISSION
 		    , "retransmitting in response to duplicate packet; already %s"
 		    , enum_name(&state_names, st->st_state));
-		send_packet(st, "retransmit in response to duplicate", TRUE);
+		resend_ike_v1_msg(st, "retransmit in response to duplicate");
 	    }
 	    else
 	    {
@@ -1596,12 +1797,12 @@ void process_packet_tail(struct msg_digest **mdp)
 
 #ifdef NAT_TRAVERSAL
 		case ISAKMP_NEXT_NATD_DRAFTS:
-		    np = ISAKMP_NEXT_NATD_RFC;  /* NAT-D relocated */
+		    np = ISAKMP_NEXT_NATD_RFC;  /* NAT-D was a private use type before RFC-3947 */
 		    sd = payload_descs[np];
 		    break;
 
 		case ISAKMP_NEXT_NATOA_DRAFTS:
-		    np = ISAKMP_NEXT_NATOA_RFC;  /* NAT-OA relocated */
+		    np = ISAKMP_NEXT_NATOA_RFC;  /* NAT-OA was a private use type before RFC-3947 */
 		    sd = payload_descs[np];
 		    break;
 #endif
@@ -1781,7 +1982,7 @@ void process_packet_tail(struct msg_digest **mdp)
     }
 
     /* Ignore payloads that we don't handle:
-     * Delete, Notification, VendorID
+     * Delete, Notification, VendorID (comment about what we don't handle outdated?)
      */
     /* XXX Handle Notifications */
     {
@@ -1789,35 +1990,34 @@ void process_packet_tail(struct msg_digest **mdp)
 
 	p = md->chain[ISAKMP_NEXT_N];
 	while(p != NULL) {
-	    if(p->payload.notification.isan_type != R_U_THERE
-	       && p->payload.notification.isan_type != R_U_THERE_ACK
-		&& p->payload.notification.isan_type != ISAKMP_N_CISCO_LOAD_BALANCE
-	       && p->payload.notification.isan_type != PAYLOAD_MALFORMED) {
-		
 		switch(p->payload.notification.isan_type) {
-		case INVALID_MESSAGE_ID:
-		default:
-		    if (st!= NULL) {
-		    	loglog(RC_LOG_SERIOUS
-			   , "ignoring informational payload, type %s msgid=%08x"
-			   , enum_show(&ipsec_notification_names
-				       , p->payload.notification.isan_type), st->st_msgid);
-		    } 
-		    else {
-		    	loglog(RC_LOG_SERIOUS
-			   , "ignoring informational payload, type %s on st==NULL (deleted?)"
-			   , enum_show(&ipsec_notification_names
-				       , p->payload.notification.isan_type));
 
-		    }
-		}
+		case R_U_THERE:
+		case R_U_THERE_ACK:
+		case ISAKMP_N_CISCO_LOAD_BALANCE:
+		case PAYLOAD_MALFORMED:
+		case INVALID_MESSAGE_ID:
+			/* these are handled later on in informational() */
+			break;
+		default:
+			if (st == NULL)
+			{
+		    	  loglog(RC_LOG_SERIOUS
+			   , "ignoring informational payload %s, no corresponding state"
+			   , enum_show(&ipsec_notification_names, p->payload.notification.isan_type));
+			} else {
+		    	  loglog(RC_LOG_SERIOUS
+			   , "ignoring informational payload %s, msgid=%08x"
+			   , enum_show(&ipsec_notification_names, p->payload.notification.isan_type)
+			   , st->st_msgid);
+			}
 #ifdef DEBUG
-		if(st!=NULL
-		   && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO) {
-		    loglog(RC_LOG_SERIOUS, "received and failed on unknown informational message");
-		    complete_v1_state_transition(mdp, STF_FATAL);
-		    return;
-		}
+			if(st!=NULL && st->st_connection->extra_debugging & IMPAIR_DIE_ONINFO)
+			{
+			   loglog(RC_LOG_SERIOUS, "received and failed on unknown informational message");
+			   complete_v1_state_transition(mdp, STF_FATAL);
+			   return;
+			}
 #endif	    
 	    }
 	    DBG_cond_dump(DBG_PARSING, "info:", p->pbs.cur, pbs_left(&p->pbs));
@@ -1918,6 +2118,11 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
     TCLCALLOUT("adjustFailure", st, (st ? st->st_connection : NULL), md);
     result = md->result;
 
+    /* If state has FRAGMENTATION support, import it */
+    if( st && md->fragvid) {
+	DBG(DBG_CONTROLMORE, DBG_log("peer supports fragmentation"));
+	st->st_seen_fragvid = TRUE;
+    }
     /* If state has DPD support, import it */
     if( st && md->dpd && st->hidden_variables.st_dpd != md->dpd) {
 	DBG(DBG_DPD, DBG_log("peer supports dpd"));
@@ -2006,6 +2211,9 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		delete_event(st);
 	    }
 
+		/* Delete IKE fragments */
+		release_fragments(st);
+
 	    /* update the previous packet history */
 	    update_retransmit_history(st, md);
 
@@ -2041,11 +2249,11 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* actually send the packet
 		 * Note: this is a great place to implement "impairments"
 		 * for testing purposes.  Suppress or duplicate the
-		 * send_packet call depending on st->st_state.
+		 * send_ike_msg call depending on st->st_state.
 		 */
 
 		TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
-		send_packet(st, enum_name(&state_names, from_state), TRUE);
+		send_ike_msg(st, enum_name(&state_names, from_state));
 	    }
 
 	    TCLCALLOUT("adjustTimers", st, st->st_connection, md);
@@ -2380,8 +2588,7 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		      , "encountered fatal error in state %s"
 		      , enum_name(&state_names, st->st_state));
 #ifdef HAVE_NM
-	   if (st->st_connection->remotepeertype == CISCO 
-	       && st->st_connection->nmconfigured) {
+	   if (st->st_connection->remotepeertype == CISCO && st->st_connection->nmconfigured) {
 		if(!do_command(st->st_connection, &st->st_connection->spd, "disconnectNM", st)) {
                 DBG(DBG_CONTROL, DBG_log("sending disconnect to NM failed, you may need to do it manually"));
                 }
@@ -2415,8 +2622,7 @@ complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			, enum_name(&state_names, from_state)
 			, enum_name(&ipsec_notification_names, md->note)));
 #ifdef HAVE_NM
-           if (st->st_connection->remotepeertype == CISCO
-               && st->st_connection->nmconfigured) {
+           if (st->st_connection->remotepeertype == CISCO && st->st_connection->nmconfigured) {
                 if(!do_command(st->st_connection, &st->st_connection->spd, "disconnectNM", st)) {
                 DBG(DBG_CONTROL, DBG_log("sending disconnect to NM failed, you may need to do it manually"));
                 }

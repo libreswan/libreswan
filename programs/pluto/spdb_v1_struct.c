@@ -528,9 +528,12 @@ out_sa(pb_stream *outs
 		{
 		    passert(!oakley_mode);
 		    passert(st->st_pfs_group != &unset_group);
-		    out_attr(GROUP_DESCRIPTION, st->st_pfs_group->group
+		    if(!out_attr(GROUP_DESCRIPTION, st->st_pfs_group->group
 			, attr_desc, attr_val_descs
-			, &trans_pbs);
+			, &trans_pbs))
+		    {
+			return_on(ret, FALSE);
+		    }
 		}
 
 		/* automatically generate duration
@@ -538,13 +541,19 @@ out_sa(pb_stream *outs
 		 */
 		if (oakley_mode)
 		{
-		    out_attr(OAKLEY_LIFE_TYPE, OAKLEY_LIFE_SECONDS
+		    if(!out_attr(OAKLEY_LIFE_TYPE, OAKLEY_LIFE_SECONDS
 			, attr_desc, attr_val_descs
-			, &trans_pbs);
-		    out_attr(OAKLEY_LIFE_DURATION
+			, &trans_pbs))
+		    {
+			return_on(ret, FALSE);
+		    }
+		    if(!out_attr(OAKLEY_LIFE_DURATION
 			, st->st_connection->sa_ike_life_seconds
 			, attr_desc, attr_val_descs
-			, &trans_pbs);
+			, &trans_pbs))
+		    {
+			return_on(ret, FALSE);
+		    }
 		}
 		else
 		{
@@ -573,7 +582,7 @@ out_sa(pb_stream *outs
 #endif
 #endif
 
-			out_attr(ENCAPSULATION_MODE
+			if(!out_attr(ENCAPSULATION_MODE
 #ifdef NAT_TRAVERSAL
 #ifdef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
 			    , NAT_T_ENCAPSULATION_MODE(st,st->st_policy)
@@ -590,32 +599,46 @@ out_sa(pb_stream *outs
 			      ? ENCAPSULATION_MODE_TUNNEL : ENCAPSULATION_MODE_TRANSPORT
 #endif
 			    , attr_desc, attr_val_descs
-			    , &trans_pbs);
+			    , &trans_pbs))
+			{
+			   return_on(ret, FALSE);
+			}
 		    }
-		    out_attr(SA_LIFE_TYPE, SA_LIFE_TYPE_SECONDS
+		    if(!out_attr(SA_LIFE_TYPE, SA_LIFE_TYPE_SECONDS
 			, attr_desc, attr_val_descs
-			, &trans_pbs);
-		    out_attr(SA_LIFE_DURATION
+			, &trans_pbs))
+		    {
+			return_on(ret, FALSE);
+		    }
+		    if(!out_attr(SA_LIFE_DURATION
 			, st->st_connection->sa_ipsec_life_seconds
 			, attr_desc, attr_val_descs
-			, &trans_pbs);
+			, &trans_pbs))
+		    {
+			return_on(ret, FALSE);
+		    }
 #ifdef HAVE_LABELED_IPSEC
 		    if(st->sec_ctx != NULL && st->st_connection->labeled_ipsec) {
 			struct isakmp_attribute attr;
 			pb_stream val_pbs;
 			attr.isaat_af_type = secctx_attr_value | ISAKMP_ATTR_AF_TLV;
 			DBG(DBG_EMITTING, DBG_log("secctx_attr_value=%d, type=%d", secctx_attr_value, attr.isaat_af_type));
-			out_struct(&attr, attr_desc, &trans_pbs, &val_pbs); 
+			if(!out_struct(&attr, attr_desc, &trans_pbs, &val_pbs))
+			   return_on(ret, FALSE);
 			DBG(DBG_EMITTING, DBG_log("placing security context attribute in the out going structure"));
 			DBG(DBG_EMITTING, DBG_log("sending ctx_doi"));
-			out_raw(&st->sec_ctx->ctx_doi, sizeof(st->sec_ctx->ctx_doi),  &val_pbs, " variable length sec ctx: ctx_doi");
+			if(!out_raw(&st->sec_ctx->ctx_doi, sizeof(st->sec_ctx->ctx_doi),  &val_pbs, " variable length sec ctx: ctx_doi"))
+			   return_on(ret, FALSE);
 			DBG(DBG_EMITTING, DBG_log("sending ctx_alg"));
-			out_raw(&st->sec_ctx->ctx_alg, sizeof(st->sec_ctx->ctx_alg),  &val_pbs, " variable length sec ctx: ctx_alg");
+			if(!out_raw(&st->sec_ctx->ctx_alg, sizeof(st->sec_ctx->ctx_alg),  &val_pbs, " variable length sec ctx: ctx_alg"))
+			   return_on(ret, FALSE);
 			DBG(DBG_EMITTING, DBG_log("sending ctx_len after conversion to network byte order"));
 			u_int16_t net_ctx_len = htons(st->sec_ctx->ctx_len);
-			out_raw(&net_ctx_len, sizeof(st->sec_ctx->ctx_len),  &val_pbs, " variable length sec ctx: ctx_len");
+			if(!out_raw(&net_ctx_len, sizeof(st->sec_ctx->ctx_len),  &val_pbs, " variable length sec ctx: ctx_len"))
+			   return_on(ret, FALSE);
 			/*Sending '\0'  with sec ctx as we get it from kernel*/
-			out_raw(st->sec_ctx->sec_ctx_value, st->sec_ctx->ctx_len, &val_pbs, " variable length sec ctx");
+			if(!out_raw(st->sec_ctx->sec_ctx_value, st->sec_ctx->ctx_len, &val_pbs, " variable length sec ctx"))
+			   return_on(ret, FALSE);
 			DBG(DBG_EMITTING, DBG_log("placed security context attribute in the out going structure"));
         		close_output_pbs(&val_pbs);
 			DBG(DBG_EMITTING, DBG_log("end of security context attribute in the out going structure"));
@@ -630,11 +653,17 @@ out_sa(pb_stream *outs
 		    struct db_attr *a = &t->attrs[an];
 
 		    if(oakley_mode) {
-			out_attr(a->type.oakley, a->val
+			if(!out_attr(a->type.oakley, a->val
 				 , attr_desc, attr_val_descs
-				 , &trans_pbs);
+				 , &trans_pbs))
+			{
+			   return_on(ret, FALSE);
+			}
 		    } else {
-				out_attr(a->type.ipsec,  a->val , attr_desc, attr_val_descs , &trans_pbs);
+				if(!out_attr(a->type.ipsec,  a->val , attr_desc, attr_val_descs , &trans_pbs))
+				{
+				   return_on(ret, FALSE);
+				}
 			
 		    }
 
@@ -1729,6 +1758,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
 		switch (val) {
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
+				DBG(DBG_NATT, DBG_log("NAT-T non-encap: Installing IPsec SA without ENCAP, st->hidden_variables.st_nat_traversal is '%d'", st->hidden_variables.st_nat_traversal));
 				if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 					loglog(RC_LOG_SERIOUS,
 						"%s must only be used if "
@@ -1757,12 +1787,13 @@ parse_ipsec_transform(struct isakmp_transform *trans
 #endif
 
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
+				DBG(DBG_NATT, DBG_log("NAT-T draft: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'", st->hidden_variables.st_nat_traversal));
 				if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES) {
 					loglog(RC_LOG_SERIOUS,
 						"%s must only be used with old IETF drafts",
 						enum_name(&enc_mode_names, val));
 					if(st->st_connection->remotepeertype == CISCO) {
-					DBG_log( "Allowing, as this may be due to rekey");
+					DBG_log( "Allowing, as this may be due to remote_peer Cisco rekey");
 					attrs->encapsulation = val - ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS + ENCAPSULATION_MODE_TUNNEL;
 					}
 					else {
@@ -1791,6 +1822,7 @@ parse_ipsec_transform(struct isakmp_transform *trans
 #endif
 
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
+				DBG(DBG_NATT, DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is '%d'", st->hidden_variables.st_nat_traversal));
 				if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 					(st->hidden_variables.st_nat_traversal & NAT_T_WITH_ENCAPSULATION_RFC_VALUES)) {
 					attrs->encapsulation = val - ENCAPSULATION_MODE_UDP_TUNNEL_RFC + ENCAPSULATION_MODE_TUNNEL;
@@ -1947,10 +1979,13 @@ echo_proposal(
 	 * but we'll ignore that.
 	 */
 	pi->our_spi = get_my_cpi(sr, tunnel_mode);
-	out_raw((u_char *) &pi->our_spi
+	if(!out_raw((u_char *) &pi->our_spi
 	     + IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE
 	    , IPCOMP_CPI_SIZE
-	    , &r_proposal_pbs, "CPI");
+	    , &r_proposal_pbs, "CPI"))
+	{
+	   impossible();
+	}
     }
     else
     {
@@ -1960,8 +1995,11 @@ echo_proposal(
 	    , sr
 	    , tunnel_mode);
 	/* XXX should check for errors */
-	out_raw((u_char *) &pi->our_spi, IPSEC_DOI_SPI_SIZE
-	    , &r_proposal_pbs, "SPI");
+	if(!out_raw((u_char *) &pi->our_spi, IPSEC_DOI_SPI_SIZE
+	    , &r_proposal_pbs, "SPI"))
+	{
+	   impossible();
+	}
     }
 
     /* Transform */
@@ -2463,22 +2501,18 @@ parse_ipsec_sa_body(
 	    int previous_transnum = -1;
 	    int tn;
 
-#ifdef NEVER	/* we think IPcomp is working now */
-	    /**** FUDGE TO PREVENT UNREQUESTED IPCOMP:
-	     **** NEEDED BECAUSE OUR IPCOMP IS EXPERIMENTAL (UNSTABLE).
-	     ****/
 	    if (!(st->st_policy & POLICY_COMPRESS))
 	    {
-		plog("compression proposed by %s, but policy for \"%s\" forbids it"
+		libreswan_log("compression proposed by %s, but policy for \"%s\" forbids it"
 		    , ip_str(&c->spd.that.host_addr), c->name);
-		continue;	/* unwanted compression proposal */
+		return BAD_PROPOSAL_SYNTAX;
 	    }
-#endif
+
 	    if (!can_do_IPcomp)
 	    {
-		libreswan_log("compression proposed by %s, but KLIPS is not configured with IPCOMP"
+		libreswan_log("compression proposed by %s, but kernel has no IPCOMP support"
 		    , ip_str(&c->spd.that.host_addr));
-		continue;
+		return BAD_PROPOSAL_SYNTAX;
 	    }
 
 	    if (well_known_cpi != 0 && !ah_seen && !esp_seen)

@@ -7,14 +7,13 @@
 %global USE_LINUX_AUDIT true
 
 %global fipscheck_version 1.3.0
-%global buildklips 0
 %global buildefence 0
 %global development 0
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.0
+Version: 3.1
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
@@ -76,25 +75,11 @@ decrypted by the gateway at the other end of the tunnel.  The resulting
 tunnel is a virtual private network or VPN.
 
 This package contains the daemons and userland tools for setting up
-Libreswan. It optionally also builds the Libreswan KLIPS IPsec stack that
-is an alternative for the NETKEY/XFRM IPsec stack that exists in the
-default Linux kernel.
+Libreswan. To build KLIPS, see the kmod-libreswan.spec file.
 
 Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
 
 Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
-
-%if %{buildklips}
-%package klips
-Summary: Libreswan kernel module
-Group:  System Environment/Kernel
-Release: %{krelver}_%{release}
-Requires: kernel = %{kversion}, %{name}-%{version}
-
-%description klips
-This package contains only the ipsec module for the RedHat/Fedora series of
-kernels.
-%endif
 
 %prep
 %setup -q -n libreswan-%{srcpkgver}
@@ -142,21 +127,6 @@ FS=$(pwd)
 %{nil}
 %endif
 
-%if %{buildklips}
-mkdir -p BUILD.%{_target_cpu}
-
-cd packaging/fedora
-# rpm doesn't know we're compiling kernel code. optflags will give us -m64
-%{__make} -C $FS MODBUILDDIR=$FS/BUILD.%{_target_cpu} \
-    LIBRESWANSRCDIR=$FS \
-    KLIPSCOMPILE="%{optflags}" \
-    KERNELSRC=/lib/modules/%{kversion}/build \
-    ARCH=%{_arch} \
-    MODULE_DEF_INCLUDE=$FS/packaging/fedora/config-%{_target_cpu}.h \
-    MODULE_EXTRA_INCLUDE=$FS/packaging/fedora/extra_%{krelver}.h \
-    include module
-%endif
-
 %install
 rm -rf ${RPM_BUILD_ROOT}
 %{__make} \
@@ -180,17 +150,6 @@ install -d %{buildroot}%{_sbindir}
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/fipscheck
 %endif
 
-%if %{buildklips}
-mkdir -p %{buildroot}/lib/modules/%{kversion}/kernel/net/ipsec
-for i in $FS/BUILD.%{_target_cpu}/ipsec.ko  $FS/modobj/ipsec.o
-do
-  if [ -f $i ]
-  then
-    cp $i %{buildroot}/lib/modules/%{kversion}/kernel/net/ipsec 
-  fi
-done
-%endif
-
 echo "include /etc/ipsec.d/*.secrets" > $RPM_BUILD_ROOT%{_sysconfdir}/ipsec.secrets
 rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 
@@ -201,11 +160,14 @@ rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
-%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/cacerts
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
+%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
+%attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0700,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_unitdir}/ipsec.service
-%attr(0644,root,root) %{_sysconfdir}/pam.d/pluto
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
@@ -214,28 +176,16 @@ rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 %{_libdir}/fipscheck/*.hmac
 %endif
 
-%if %{buildklips}
-%files klips
-/lib/modules/%{kversion}/kernel/net/ipsec
-%endif
-
 %preun
 %systemd_preun ipsec.service
 
 %postun
 %systemd_postun_with_restart ipsec.service
 
-%if %{buildklips}
-%postun klips
-/sbin/depmod -ae %{kversion}
-%post klips
-/sbin/depmod -ae %{kversion}
-%endif
-
 %post 
 %systemd_post ipsec.service
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.0-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.1-1
 - Automated build from release tar ball
 

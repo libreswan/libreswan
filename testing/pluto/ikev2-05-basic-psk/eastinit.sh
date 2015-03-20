@@ -1,6 +1,6 @@
 : ==== start ====
 TESTNAME=ikev2-05-basic-psk
-/testing/guestbin/swanprep
+/testing/guestbin/swan-prep
 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started

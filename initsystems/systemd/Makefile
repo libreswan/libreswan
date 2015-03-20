@@ -10,7 +10,7 @@ SYSTEMDDIR=${UNITDIR}
 else
 SYSTEMDDIR=$(DESTDIR)/${UNITDIR}
 endif
-SYSCONFIGDIR=$(CONFDIR)/sysconfig
+SYSCONFIGDIR=$(SYSCONFDIR)/sysconfig
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top

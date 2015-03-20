@@ -31,7 +31,7 @@
  */
 #define CA_CERT_WARNING_INTERVAL	30 /* days */
 #define OCSP_CERT_WARNING_INTERVAL      30 /* days */
-#define PUBKEY_WARNING_INTERVAL		 7 /* days */
+#define PUBKEY_WARNING_INTERVAL		14 /* days */
 #define CRL_WARNING_INTERVAL		 7 /* days */
 #define ACERT_WARNING_INTERVAL           1 /* day */
 

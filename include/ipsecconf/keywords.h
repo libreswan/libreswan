@@ -49,6 +49,8 @@ enum keyword_string_config_field {
     KSF_CONNALIAS,
     KSF_LISTEN,
     KSF_POLICY_LABEL,
+    KSF_MODECFGDNS1,
+    KSF_MODECFGDNS2,
     KSF_MAX
 };
 
@@ -112,7 +114,9 @@ enum keyword_numeric_config_field {
     KBF_SAREFTRACK, /* saref tracking paramter for _updown */
     KBF_WARNIGNORE, /* to ignore obsoleted keywords */
     KBF_SECCTX, /*security context attribute value for labeled ipsec*/
-    KBF_XAUTHBY, /* method of xauth user auth, file or pam */
+    KBF_XAUTHBY, /* method of xauth user auth - file, pam or alwaysok */
+    KBF_XAUTHFAIL, /* method of failing, soft or hard */
+    KBF_IKE_FRAG,
     KBF_MAX
 };
 
@@ -144,10 +148,7 @@ enum keyword_string_conn_field {
     KSCF_SOURCEIP     = 15,
     KSCF_XAUTHUSERNAME= 16,
     KSCF_SUBNETS      = 17,
-    KSCF_MODECFGDNS1  = 18,
-    KSCF_MODECFGDNS2  = 19,
-    KSCF_MODECFGWINS1 = 20,
-    KSCF_MODECFGWINS2 = 21,
+    KSCF_ADDRESSPOOL  = 18,
     KSCF_MAX
 };
 
@@ -226,6 +227,7 @@ enum keyword_type {
     kt_number,             /* an integer */
     kt_time,               /* a number representing time */
     kt_percent,            /* a number representing percentage */
+    kt_range,		   /* ip address range 1.2.3.4-1.2.3.10 */
     kt_ipaddr,             /* an IP address */
     kt_subnet,             /* an IP address subnet */
     kt_idtype,             /* an ID type */

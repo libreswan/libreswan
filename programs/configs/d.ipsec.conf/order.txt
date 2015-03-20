@@ -7,6 +7,7 @@ d.ipsec.conf/type.xml
 d.ipsec.conf/left.xml
 d.ipsec.conf/leftsubnet.xml
 d.ipsec.conf/leftsubnets.xml
+d.ipsec.conf/leftaddresspool.xml
 d.ipsec.conf/leftprotoport.xml
 d.ipsec.conf/leftnexthop.xml
 d.ipsec.conf/leftsourceip.xml
@@ -22,6 +23,7 @@ d.ipsec.conf/phase2alg.xml
 d.ipsec.conf/sha2_truncbug.xml
 d.ipsec.conf/esp.xml
 d.ipsec.conf/ah.xml
+d.ipsec.conf/ike_frag.xml
 d.ipsec.conf/ikev2.xml
 d.ipsec.conf/narrowing.xml
 d.ipsec.conf/sareftrack.xml
@@ -37,6 +39,7 @@ d.ipsec.conf/leftxauthusername.xml
 d.ipsec.conf/leftmodecfgserver.xml
 d.ipsec.conf/leftmodecfgclient.xml
 d.ipsec.conf/xauthby.xml
+d.ipsec.conf/xauthfail.xml
 d.ipsec.conf/modecfgpull.xml
 d.ipsec.conf/modecfgoptions.xml
 d.ipsec.conf/remote_peer_type.xml
@@ -64,7 +67,6 @@ d.ipsec.conf/policy_label.xml
 d.ipsec.conf/loopback.xml
 d.ipsec.conf/failureshunt.xml
 d.ipsec.conf/connautoend.xml
-d.ipsec.conf/connmanual.xml
 d.ipsec.conf/configsections.xml
 d.ipsec.conf/myid.xml
 d.ipsec.conf/protostack.xml
@@ -76,6 +78,7 @@ d.ipsec.conf/disable_port_floating.xml
 d.ipsec.conf/force_keepalive.xml
 d.ipsec.conf/nat_ikeport.xml
 d.ipsec.conf/keep_alive.xml
+d.ipsec.conf/retransmits.xml
 d.ipsec.conf/virtual_private.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml

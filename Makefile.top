@@ -43,6 +43,8 @@ install_file_list:
 		(cd $$d && $(MAKE) --no-print-directory srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} install_file_list ) || exit 1; \
 	done; 
 
+TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/openswan/*.h linux/net/ipsec/*.[ch])
+
 tags:	$(TAGSFILES)
 	@LC_ALL=C ctags $(CTAGSFLAGS) ${TAGSFILES}
 
@@ -55,6 +57,17 @@ TAGS:	$(TAGSFILES)
 
 .PHONY: dummy
 dummy:
+
+
+
+kvm:	checkprograms 
+	# touch to get ownership of file
+	touch ${POOL}/swan${OSTYPE}base.img
+	./testing/utils/virtinstall-base ${POOL} ${OSTYPE} ${OSMEDIA}
+	./testing/utils/lswan-check --pool ${POOL} --ostype ${OSTYPE} --osmedia ${OSMEDIA}
+	@echo Done creating KVM infrastructure
+
+
 
 # DESTDIR is normally set in Makefile.inc
 check:	kvm Makefile.ver

@@ -1,0 +1,196 @@
+#!/usr/bin/python
+#
+# Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+# 
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+
+import os,sys,time,commands
+import subprocess
+try:
+	import libvirt
+	import argparse
+except ImportError , e:
+	module = str(e)[16:]
+	sys.exit("we requires the python module %s "%module)
+
+def main():
+	cwd = os.getcwd()
+	ourpath = "%s/%s"%(cwd,os.path.dirname(__file__))
+	ourpath = ourpath.replace("/./","/")
+	libreswansrcdir = ourpath.replace("/testing/utils","")
+
+	kvmsetup = "%s/kvmsetup.sh"%libreswansrcdir
+
+	pool = "%s/%s"%(libreswansrcdir,"pool")
+	regress = "%s/%s"%(libreswansrcdir,"results")
+	ostype = ""
+	osmedia = ""
+	
+	if os.path.isfile(kvmsetup):
+		# Is there an easier way in python? 
+		for line in open(kvmsetup,"r").readlines():
+			line = line.strip()
+			if line and line[0] != '#':
+				try:
+					keyword,keyvalue = line.split("=")
+					keyword = keyword.upper()
+					if keyword == "POOL":
+						pool = keyvalue
+					elif keyword == "OSMEDIA":
+						osmedia = keyvalue
+					elif keyword == "OSTYPE":
+						ostype = keyvalue
+					elif keyword == "REGRESSRESULTS":
+						regress = keyvalue
+					else:
+						print "ignoring unknown keyword '%s'"%keyword
+				except:
+					print "ignoring line: %s"%line
+					break
+
+
+	# we set all our options if there is a file, arguments override though
+	parser = argparse.ArgumentParser(description='lswan-check arguments')
+	parser.add_argument('--pool','--poolspace','-p', action='store', help='Default location for all KVM images')
+	parser.add_argument('--osmedia','-m', action='store', help='OS media URL for network installer')
+	parser.add_argument('--ostype','-t', action='store', help='OS media TYPE, currently either fedora or ubuntu')
+	parser.add_argument('--results','--regressresults','-r',action='store', help='Directory for test result output')
+	parser.add_argument('--force','-f',action='store_true', help='Force creation of new KVM file images')
+	args = parser.parse_args()
+
+	if args.osmedia:
+		osmedia = args.osmedia
+	if args.ostype:
+		ostype = args.ostype
+	if args.pool:
+		pool = args.pool
+	if args.results:
+		regress = args.results
+
+	if not ostype or not osmedia:
+		print >> sys.stderr, "%s: OSTYPE or OSMEDIA not defined - aborted"%os.path.basename(__file__)
+		print >> sys.stderr, "Please set the OSTYPE= and OSMEDIA= in kvmsetup.sh or use --osmedia / --ostype"
+		if not os.path.isfile(kvmsetup):
+			sys.exit("No %s found. For help, see %s.sample"%(kvmsetup,kvmsetup))
+	
+	if not os.path.isdir(pool):
+		try:
+			os.mkdir(pool)
+		except:
+			sys.exit("Failed to create pool dir '%s', change POOL= in kvmsetup.sh"%pool)
+	if not os.path.isdir(regress):
+		try:
+			os.mkdir(regress)
+		except:
+			sys.exit("Failed to create results dir '%s', change REGRESSRESULTS= in kvmsetup.sh"%regress)
+
+	print "libreswansrcdir=%s\nPOOL=%s\nOSMEDIA=%s\nOSTYPE=%s\nREGRESSRESULTS=%s"%(libreswansrcdir,pool,osmedia,ostype,regress)
+
+	baseimgdisk = "%s/swan%sbase.img"%(pool,ostype)
+	if args.force:
+		if os.path.isfile(baseimgdisk):
+			os.unlink(baseimgdisk)
+		qcows = os.listdir(pool)
+		for qcow in qcows:
+			os.unlink(qcow)
+
+	# under normal operation with "make check", this will not happen here but in testing/utils/virtinstall-base
+	# Doing it under a plain shell shows better stdout output
+	if not os.path.isfile(baseimgdisk):
+		print "Installing base OS in base image"
+		# TODO: convert to native libvirt
+		cpuinfo = open("/proc/cpuinfo","r").read()
+		if "vmx" in cpuinfo:
+			cpu = "--hvm"
+		else:
+			cpu = ""
+		installcmd = "sudo virt-install --connect=qemu:///system --network=network:default,model=virtio --initrd-inject=%s/testing/libvirt/%sbase.ks --extra-args='ks=file:/%sbase.ks console=tty0 console=ttyS0,115200 ' --name=swan%sbase --disk %s/swan%sbase.img,size=8 --ram 1024 --vcpus=1 --check-cpu --accelerate --location=%s --nographics --autostart --noreboot %s"%(libreswansrcdir, ostype, ostype, ostype, pool, ostype, osmedia, cpu)
+	
+		print installcmd
+		qemup = subprocess.Popen(installcmd, shell=True, stdout=subprocess.PIPE)
+		for line in iter(qemup.stdout.readline, ''):
+			print line.strip()
+		qemup.stdout.close()
+
+	requiredNetworks = os.listdir("%s/testing/libvirt/net"%libreswansrcdir)
+	print "Required networks: %s"%", ".join(requiredNetworks)
+	requiredVMs = os.listdir("%s/testing/libvirt/vm"%libreswansrcdir)
+	print "Required VMs: %s"%", ".join(requiredVMs)
+
+	convertcmd = "qemu-img convert -O qcow2 %s/swan%sbase.img %s/swan%sbase.qcow2"%(pool,ostype,pool,ostype)
+	print convertcmd
+	commands.getoutput(convertcmd)
+	for vm in requiredVMs:
+		qcowcmd = "qemu-img create -F qcow2 -f qcow2 -b %s/swan%sbase.qcow2 %s/%s.qcow2"%(pool,ostype,pool,vm)
+		# libvirt and qemu permissions are a nightmare :(
+		print qcowcmd
+		commands.getoutput(qcowcmd)
+		if os.path.isfile("%s/%s.qcow2"%(pool,vm)):
+			os.chmod("%s/%s.qcow2"%(pool,vm),0777)
+
+
+	# connect to libvirtd - will cause authentication if needed
+	conn=libvirt.open("qemu:///system")
+
+	vms = conn.listDefinedDomains()
+	networks = conn.listDefinedNetworks()
+
+	if args.force:
+		print "Deleting all libreswan networks and vms in 5 seconds"
+		time.sleep(5)
+
+		for vm in requiredVMs:
+			if vm in vms:
+				try:
+					host = conn.lookupByName(vm)
+					if host.isActive():
+						host.destroy()
+					if host.IsPersistent():
+						host.undefine()
+				except:
+					sys.exit("Failed to destroy vm '%s'"%vm)
+
+		for net in requiredNetworks:
+			if net in networks:
+				try:
+					netw = conn.networkLookupByName(net)
+					if netw.isActive():
+						netw.destroy()
+					if netw.IsPersistent():
+						netw.undefine()
+				except:
+					sys.exit("Failed to destroy network '%s'"%net)
+
+	# get a new list, we might have destroyed something
+	vms = conn.listDefinedDomains()
+	print "Current VMs: %s"%", ".join(vms)
+	networks = conn.listDefinedNetworks()
+	print "Current networks: %s"%", ".join(networks)
+	for network in requiredNetworks:
+		if not network in networks:
+			networkXML = open("%s/testing/libvirt/net/%s"%(libreswansrcdir,network),"r").read()
+			try:
+				netw = conn.networkDefineXML(networkXML)
+				netw.create()
+			except:
+				print "libvirt lied and did not list %s in conn.listDefinedNetworks()"%network
+	for host in requiredVMs:
+		if not host in vms:
+			hostXML = open("%s/testing/libvirt/vm/%s"%(libreswansrcdir,host),"r").read()
+			try:
+				vm = conn.DefineXML(hostXML)
+				vm.create()
+			except:
+				print "libvirt lied and did not list %s in conn.listDefinedDomains()"%host
+
+if __name__ == "__main__":
+    main()
+

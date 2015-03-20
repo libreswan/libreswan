@@ -302,6 +302,7 @@
 
 #define IKE_UDP_PORT	500
 #define NAT_T_IKE_FLOAT_PORT 4500 /* RFC-3947 */
+#define NON_ESP_MARKER_SIZE 4	/* RFC3948: bytes of zeros, same size as ESP SPI */
 
 /* Version numbers - IKEv1 */
 #define ISAKMP_MAJOR_VERSION   0x1
@@ -386,7 +387,8 @@ enum next_payload_types {
 
 	/* SPECIAL CASES */
 	ISAKMP_NEXT_NATD_DRAFTS  = 130,   /* NAT-Traversal: NAT-D (drafts) */
-	ISAKMP_NEXT_NATOA_DRAFTS = 131   /* NAT-Traversal: NAT-OA (drafts) */
+	ISAKMP_NEXT_NATOA_DRAFTS = 131,   /* NAT-Traversal: NAT-OA (drafts) */
+	ISAKMP_NEXT_IKE_FRAGMENTATION = 132,    /* Cisco proprietary IKE fragmentation */
 };
 
 /* These values are to be used within the Type field of an Attribute (14) 
@@ -400,7 +402,7 @@ enum next_payload_types {
 #define    INTERNAL_IP4_ADDRESS        1
 #define    INTERNAL_IP4_NETMASK        2
 #define    INTERNAL_IP4_DNS            3
-#define    INTERNAL_IP4_NBNS           4
+#define    INTERNAL_IP4_NBNS           4 /* unused by us, WINS is long dead */
 #define    INTERNAL_ADDRESS_EXPIRY     5
 #define    INTERNAL_IP4_DHCP           6
 #define    APPLICATION_VERSION         7

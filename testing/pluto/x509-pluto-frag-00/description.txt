@@ -1,0 +1,9 @@
+Basic pluto X.509 test but now west and east are dropping UDP packets >
+1500 (tried dropping fragments but linux outsmarts us) and our policies
+forbid IKE fragmentation. The CERT payload is causing an IKE payload of
+more then 1500 bytes, so the UDP packet will be lost.
+
+As a result, this connection should fail to establish. This serves as
+a basis for our IKE fragmentation tests that work around the iussie of
+routers dropping UDP fragments.
+

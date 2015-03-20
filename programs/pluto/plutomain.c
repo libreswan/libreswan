@@ -337,6 +337,22 @@ set_cfg_string(char **target, char *value)
     *target = strdup(value);
 }
 
+static void
+pluto_init_nss(char *confddir)
+{
+	char buf[100];
+	snprintf(buf, sizeof(buf), "%s",confddir);
+	loglog(RC_LOG_SERIOUS,"nss directory plutomain: %s",buf);
+	SECStatus nss_init_status= NSS_InitReadWrite(buf);
+	if (nss_init_status != SECSuccess) {
+	    loglog(RC_LOG_SERIOUS, "NSS initialization failed (err %d)\n", PR_GetError());
+        exit_pluto(10);
+	} else {
+	    libreswan_log("NSS Initialized");
+	    PK11_SetPasswordFunc(getNSSPassword);
+      }
+}
+
 /** by default the CRL policy is lenient */
 bool strict_crl_policy = FALSE;
 
@@ -348,10 +364,6 @@ bool force_busy = FALSE;
 
 /* whether or not to use klips */
 enum kernel_interface kern_interface = USE_NETKEY; /* new default */
-
-bool   log_to_stderr_desired = FALSE;
-bool   log_to_logfile_desired = FALSE;
-bool   log_with_timestamp_desired = FALSE;
 
 #ifdef HAVE_LABELED_IPSEC
 u_int16_t secctx_attr_value=SECCTX;
@@ -365,6 +377,16 @@ main(int argc, char **argv)
     int nhelpers = -1;
     char *coredir;
     const struct lsw_conf_options *oco;
+
+    /* 
+     * We read the intentions for how to log from command line options
+     * and the config file. Then we prepare to be able to log, but until
+     * then log to stderr (better then nothing). Once we are ready to
+     * actually do loggin according to the methods desired, we set the
+     * variables for those methods
+     */
+    bool   log_to_stderr_desired = FALSE;
+    bool   log_to_file_desired = FALSE;
 
     coredir = NULL;
 
@@ -388,8 +410,12 @@ main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_LIBCAP_NG
-	/* Drop capabilities */
-	capng_clear(CAPNG_SELECT_BOTH);
+	/* 
+	 * Drop capabilities - this generates a false positive valgrind warning 
+	 * See: http://marc.info/?l=linux-security-module&m=125895232029657
+	 */
+	capng_clear(CAPNG_SELECT_BOTH); 
+
 	capng_updatev(CAPNG_ADD, CAPNG_EFFECTIVE|CAPNG_PERMITTED,
 			CAP_NET_BIND_SERVICE, CAP_NET_ADMIN, CAP_NET_RAW,
 			CAP_IPC_LOCK, CAP_AUDIT_WRITE,
@@ -580,11 +606,11 @@ main(int argc, char **argv)
 
 	case 'g':	/* --logfile */
 	    pluto_log_file = optarg;
-	    log_to_logfile_desired = TRUE;
+	    log_to_file_desired = TRUE;
 	    continue;
 
 	case 't':	/* --plutostderrlogtime */
-	    log_with_timestamp_desired = TRUE;
+	    log_with_timestamp = TRUE;
 	    continue;
 
 	case 'G':       /* --use-auto */
@@ -772,11 +798,10 @@ main(int argc, char **argv)
 	    /* long_opts[] is. */
 	    struct starter_config *cfg = read_cfg_file(optarg);
 
-	    /* no config option: log_to_stderr_desired */
 	    set_cfg_string(&pluto_log_file, cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
 
 	    fork_desired = cfg->setup.options[KBF_PLUTOFORK]; /* plutofork= */
-	    log_with_timestamp_desired =
+	    log_with_timestamp =
 		cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 	    force_busy = cfg->setup.options[KBF_FORCEBUSY];
 	    strict_crl_policy = cfg->setup.options[KBF_STRICTCRLPOLICY];
@@ -881,13 +906,11 @@ main(int argc, char **argv)
 
     /* select between logging methods */
 
-    if (log_to_stderr_desired) {
+    if (log_to_stderr_desired || log_to_file_desired) {
 	log_to_syslog = FALSE;
-	if (log_with_timestamp_desired)
-	   log_with_timestamp = TRUE;
     }
-    else
-	log_to_stderr = FALSE;
+    if (!log_to_stderr_desired)
+	   log_to_stderr = FALSE;
 
 #ifdef DEBUG
 #if 0
@@ -981,18 +1004,7 @@ main(int argc, char **argv)
 
     init_constants();
     pluto_init_log();
-
-	char buf[100];
-	snprintf(buf, sizeof(buf), "%s",oco->confddir);
-	loglog(RC_LOG_SERIOUS,"nss directory plutomain: %s",buf);
-	SECStatus nss_init_status= NSS_InitReadWrite(buf);
-	if (nss_init_status != SECSuccess) {
-	    loglog(RC_LOG_SERIOUS, "NSS initialization failed (err %d)\n", PR_GetError());
-        exit_pluto(10);
-	} else {
-	    libreswan_log("NSS Initialized");
-	    PK11_SetPasswordFunc(getNSSPassword);
-      }
+    pluto_init_nss(oco->confddir);
 
 #ifdef FIPS_CHECK
 	const char *package_files[]= { IPSECLIBDIR"/setup",
@@ -1232,8 +1244,11 @@ main(int argc, char **argv)
 
     /* loading X.509 CA certificates */
     load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
+#if 0
+    /* unused */
     /* loading X.509 AA certificates */
     load_authcerts("AA cert", oco->aacerts_dir, AUTH_AA);
+#endif
 
     /* loading X.509 CRLs */
     load_crls();

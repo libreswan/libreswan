@@ -13,7 +13,21 @@
  * for more details.
  */
 
+#ifndef _XAUTH_H
+#define _XAUTH_H
+
+#define POOL_ADDRESS_FREE 0
+#define POOL_ADDRESS_USED 1
 struct state;
+
+/**
+ * Addresses assigned (usually via MODE_CONFIG) to the Initiator
+ * */
+struct internal_addr
+{
+	ip_address    ipaddr;
+	ip_address    dns[2];
+};
 
 stf_status modecfg_resp(struct state *st,unsigned int resp
 			, pb_stream *s, u_int16_t cmd
@@ -54,4 +68,5 @@ extern stf_status xauth_inI0(struct msg_digest *md);
 extern stf_status xauth_inI1(struct msg_digest *md);
 extern oakley_auth_t xauth_calcbaseauth(oakley_auth_t baseauth);
 extern stf_status modecfg_send_request(struct state *st);
-
+int rel_addr_pool (struct connection *c);
+#endif  /*#ifndef _XAUTH_Ha */

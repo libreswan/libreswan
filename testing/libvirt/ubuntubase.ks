@@ -37,7 +37,7 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 ip link set eth0 mtu 1400
 
 # TODO: Do we need to configure universe/multiverse/everythingverse?
-apt-get install -y wget vim bison flex gcc make netcat strace 
+apt-get install -y wget vim bison flex gcc make netcat strace python-pexpect
 # racoon2 not available on ubuntu?
 apt-get install -y libnss3-tools libnss3-dev libunbound-dev libgmp-devel libldap-dev libcurl4-nss-dev libcap-ng-dev libpam-dev ipsec-tools
 # no package for fipscheck-devel?
@@ -95,5 +95,15 @@ EOD
 mount /source
 cd /source
 make programs module install module_install
+
+# ensure pluto does not get restarted by systemd on crash
+sed -i "s/Restart=always/Restart=no" /lib/systemd/system/ipsec.service
+
+ln -s /testing/guestbin/swan-init /usr/bin/swan-init
+ln -s /testing/guestbin/swan-prep /usr/bin/swan-prep
+ln -s /testing/guestbin/swan-build /usr/bin/swan-build
+ln -s /testing/guestbin/swan-install /usr/bin/swan-install
+ln -s /testing/guestbin/swan-update /usr/bin/swan-update
+ln -s /testing/guestbin/swan-run /usr/bin/swan-run
 
 %end

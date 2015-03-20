@@ -30,7 +30,7 @@ CONFIG_KLIPS_ALG_SHA2=m
 #CONFIG_KLIPS_ALG_NULL=n
 
 # Use CryptoAPI for ALG? - by default, no.
-CONFIG_KLIPS_ENC_CRYPTOAPI=n
+CONFIG_KLIPS_ENC_CRYPTOAPI=y
 
 
 # IP Compression: new, probably still has minor bugs.
@@ -39,19 +39,3 @@ CONFIG_KLIPS_IPCOMP=y
 # To enable userspace-switchable KLIPS debugging, say 'y'.
 CONFIG_KLIPS_DEBUG=y
 
-#
-#
-# $Log: module.defs,v $
-# Revision 1.4  2005/09/26 02:37:15  mcr
-# 	remove NAT_TRAVERSAL from all defaults.
-#
-# Revision 1.3  2005/05/11 01:53:24  mcr
-# 	adjusted module make file template.
-#
-# Revision 1.2  2004/09/06 18:37:41  mcr
-# 	make sure that IPIP is defined for modules.
-#
-# Revision 1.1  2004/08/03 18:20:12  mcr
-# 	makefile templates and settings for 2.6 compilation.
-#
-#
