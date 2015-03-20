@@ -1489,8 +1489,7 @@ void print_psk_crack_values(const char *psk_crack_file)
 			err_sys("ERROR: fopen");
 	} else {
 		fp = stdout;
-		printf(
-			"IKE PSK parameters (g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r):\n");
+		printf("IKE PSK parameters (g_xr:g_xi:cky_r:cky_i:sai_b:idir_b:ni_b:nr_b:hash_r):\n");
 	}
 
 	hexdata = hexstring(psk_values.g_xr, psk_values.g_xr_len);

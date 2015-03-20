@@ -671,14 +671,11 @@ int long_only;
 				char *buf;
 
 				if (__asprintf(&buf,
-					       _(
-						       "%s: option `%s' is ambiguous\n"),
+					       _("%s: option `%s' is ambiguous\n"),
 					       argv[0], argv[optind]) >= 0) {
 
 					if (_IO_fwide(stderr, 0) > 0)
 						__fwprintf(stderr, L"%s", buf);
-
-
 					else
 						fputs(buf, stderr);
 

@@ -144,8 +144,7 @@ static void print_key(struct secret *secret,
 			break;
 
 		case PPK_PIN:
-			printf(
-				"%d:(%d) PIN key-type not yet supported for id: %s\n", lineno, count,
+			printf("%d:(%d) PIN key-type not yet supported for id: %s\n", lineno, count,
 				idb);
 			break;
 		}
@@ -276,8 +275,7 @@ static void show_dnskey(struct secret *s,
 	gethostname(qname, sizeof(qname));
 
 	if (pks->kind != PPK_RSA) {
-		printf(
-			"%s: wrong kind of key %s in show_dnskey. Expected PPK_RSA.\n",
+		printf("%s: wrong kind of key %s in show_dnskey. Expected PPK_RSA.\n",
 			progname, enum_name(&ppk_names, pks->kind));
 		exit(5);
 	}
@@ -320,15 +318,17 @@ static void show_confkey(struct secret *s,
 		switch (pks->kind) {
 		case PPK_PSK:
 			enumstr = "PPK_PSK";
+			break;
 		case PPK_PIN:
 			enumstr = "PPK_PIN";
+			break;
 		case PPK_XAUTH:
 			enumstr = "PPK_XAUTH";
+			break;
 		default:
 			sscanf(enumstr, "UNKNOWN (%d)", (int *)pks->kind);
 		}
-		printf(
-			"%s: wrong kind of key %s in show_confkey. Expected PPK_RSA.\n", progname,
+		printf("%s: wrong kind of key %s in show_confkey. Expected PPK_RSA.\n", progname,
 			enumstr);
 		exit(5);
 	}

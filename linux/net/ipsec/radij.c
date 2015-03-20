@@ -385,8 +385,8 @@ on1:
 		} while (b > (unsigned) x->rj_b); /* x->rj_b < b && x->rj_b >= 0 */
 #ifdef RJ_DEBUG
 		if (rj_debug)
-			printk("klips_debug:rj_insert: Going In:\n"), traverse(
-				p);
+			printk("klips_debug:rj_insert: Going In:\n"),
+				traverse(p);
 #endif          /* RJ_DEBUG */
 		t = rj_newpair(v_arg, b, nodes);
 		tt = t->rj_l;

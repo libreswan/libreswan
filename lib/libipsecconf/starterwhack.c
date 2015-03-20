@@ -96,8 +96,8 @@ static int starter_whack_read_reply(int sock,
 		if (rl < 0) {
 			int e = errno;
 
-			fprintf(stderr, "whack: read() failed (%d %s)\n", e, strerror(
-					e));
+			fprintf(stderr, "whack: read() failed (%d %s)\n", e,
+				strerror(e));
 			return RC_WHACK_PROBLEM;
 		}
 		if (rl == 0) {

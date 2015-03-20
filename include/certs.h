@@ -45,9 +45,6 @@ struct rsa_privkey {
 	chunk_t field[8];
 };
 
-/* used for initialization */
-extern const rsa_privkey_t empty_rsa_privkey;
-
 /* certificate access structure
  * currently X.509 certificates are supported
  */
@@ -60,8 +57,6 @@ typedef struct {
 	} u;
 } cert_t;
 
-/* used for initialization */
-extern const cert_t empty_cert;
 
 extern chunk_t get_mycert(cert_t cert);
 extern bool load_cert(bool forcedtype,

@@ -17,17 +17,6 @@
  *
  */
 
-/* asn1_init() takes a debug argument which does not work without DEBUG
- * is specified. It does this to prevent logging private key info using
- * DBG_RAW. We define the two use cases here, it should not cause any
- * logging when DEBUG is undefined.
- */
-#ifndef DEBUG
-/* substitute parts */
-# define DBG_RAW         LELEM(0)
-# define DBG_PRIVATE       LELEM(20)
-#endif
-
 /* Defines some primitive ASN1 types */
 
 typedef enum {
@@ -115,8 +104,8 @@ typedef struct {
 extern int known_oid(chunk_t object);
 extern size_t asn1_length(chunk_t *blob);
 extern void code_asn1_length(size_t length, chunk_t *code);
-extern u_char* build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
-extern u_char* build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
+extern u_char *build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
+extern u_char *build_asn1_explicit_object(chunk_t *object, asn1_t outer_type,
 					  asn1_t inner_type, size_t datalen);
 extern bool is_printablestring(chunk_t str);
 extern time_t asn1totime(const chunk_t *utctime, asn1_t type);

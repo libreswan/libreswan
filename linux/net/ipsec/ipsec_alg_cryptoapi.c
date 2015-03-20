@@ -77,8 +77,7 @@
 #warning "Building an unusable module :P"
 /* Catch old CryptoAPI by not allowing module to load */
 IPSEC_ALG_MODULE_INIT_STATIC( ipsec_cryptoapi_init ){
-	printk(
-		KERN_WARNING "ipsec_cryptoapi.o was not built on stock Linux CryptoAPI (2.4.22+ or 2.6.x), not loading.\n");
+	printk(KERN_WARNING "ipsec_cryptoapi.o was not built on stock Linux CryptoAPI (2.4.22+ or 2.6.x), not loading.\n");
 	return -EINVAL;
 }
 #else
@@ -472,8 +471,7 @@ static int setup_cipher_list(struct ipsec_alg_capi_cipher* clist)
 			continue;
 		} else {
 			if (debug_crypto > 0)
-				printk(
-					KERN_INFO "setup_cipher_list(): going to init ciphername=%s: noauto=%d parm[0]=%d parm[1]=%d\n",
+				printk(KERN_INFO "setup_cipher_list(): going to init ciphername=%s: noauto=%d parm[0]=%d parm[1]=%d\n",
 					cptr->ciphername,
 					noauto,
 					cptr->parm[0],
@@ -501,8 +499,7 @@ static int setup_cipher_list(struct ipsec_alg_capi_cipher* clist)
 				       cptr->ciphername);
 			}
 		} else {
-			printk(
-				KERN_INFO "KLIPS: lookup for ciphername=%s: not found \n",
+			printk(KERN_INFO "KLIPS: lookup for ciphername=%s: not found \n",
 				cptr->ciphername);
 		}
 	}
@@ -537,8 +534,7 @@ static int test_cipher_list(struct ipsec_alg_capi_cipher* clist)
 				cptr->alg.ixt_common.ixt_support.ias_exttype,
 				cptr->alg.ixt_common.ixt_support.ias_id,
 				test_crypto);
-			printk(
-				"test_cipher_list(alg_type=%d alg_id=%d): test_ret=%d\n",
+			printk("test_cipher_list(alg_type=%d alg_id=%d): test_ret=%d\n",
 				cptr->alg.ixt_common.ixt_support.ias_exttype,
 				cptr->alg.ixt_common.ixt_support.ias_id,
 				test_ret);

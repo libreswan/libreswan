@@ -350,8 +350,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 					id->id_count++;
 
 					q->ip_addr = ifp->addr;
-					setportof(htons(
-							  pluto_natt_float_port),
+					setportof(htons(pluto_natt_float_port),
 						  &q->ip_addr);
 					q->port = pluto_natt_float_port;
 					q->fd = fd;

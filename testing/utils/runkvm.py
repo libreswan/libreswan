@@ -57,24 +57,24 @@ def connect_to_kvm(args, prompt = ''):
                pass
 
     if args.reboot:
-       waittime = 30
+       waittime = 20
        if not running:
-            print "Booting %s - pauzing %s seconds"%(args.hostname,waittime)
+            print "Booting %s - pausing %s seconds"%(args.hostname,waittime)
             commands.getoutput("sudo virsh start %s"%args.hostname)
             time.sleep(waittime)
        else:
             commands.getoutput("sudo virsh reboot %s"%args.hostname)
-            print "Rebooting %s - pauzing %s seconds"%(args.hostname,waittime)
+            print "Rebooting %s - pausing %s seconds"%(args.hostname,waittime)
             time.sleep(waittime)
 
     print "Taking %s console by force"%args.hostname
     cmd = "sudo virsh console --force %s"%args.hostname
-    timer = 180
+    timer = 120
     child = pexpect.spawn(cmd)
     # don't match full prompt, we want it to work regardless cwd
 
     done = 0
-    tries = 30
+    tries = 40
     print "Waiting on %s login: or %s prompt"%(args.hostname, prompt)
     while not done and tries != 0:
       try:

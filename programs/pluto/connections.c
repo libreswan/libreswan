@@ -244,9 +244,7 @@ void delete_connection(struct connection *c, bool relations)
 	struct connection *old_cur_connection =
 		cur_connection == c ? NULL : cur_connection;
 
-#ifdef DEBUG
 	lset_t old_cur_debugging = cur_debugging;
-#endif
 	union {
 		struct alg_info** ppai;
 		struct alg_info_esp** ppai_esp;
@@ -324,9 +322,7 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind != CK_GOING_AWAY)
 		pfreeany(c->spd.that.virt);
 
-#ifdef DEBUG
 	set_debugging(old_cur_debugging);
-#endif
 	pfreeany(c->name);
 	pfreeany(c->cisco_dns_info);
 	pfreeany(c->modecfg_domain);
@@ -1297,15 +1293,16 @@ void add_connection(const struct whack_message *wm)
 				c->alg_info_esp = alg_info_ah_create_from_str(
 					wm->esp ? wm->esp : "", &ugh);
 
-			DBG(DBG_CRYPT | DBG_CONTROL,
-				static char buf[256] = "<NULL>";
-				if (c->alg_info_esp)
+			DBG(DBG_CONTROL,
+				{static char buf[256] = "<NULL>";
+
+				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf);
-				);
-			if (c->alg_info_esp) {
+				DBG_log("esp string values: %s", buf); }
+			);
+			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->alg_info_cnt == 0) {
 					loglog(RC_NOALGO,
 						"got 0 transforms for "
@@ -1524,8 +1521,7 @@ void add_connection(const struct whack_message *wm)
 			((c->policy & POLICY_SHUNT_MASK) == 0 &&
 				c->spd.that.has_id_wildcards )) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"based upon policy, the connection is "
+				DBG_log("based upon policy, the connection is "
 					"a template."));
 
 			/*
@@ -1544,8 +1540,7 @@ void add_connection(const struct whack_message *wm)
 			c->kind = CK_TEMPLATE;
 		} else if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
 			DBG(DBG_CONTROL,
-				DBG_log(
-					"based upon policy narrowing=yes, "
+				DBG_log("based upon policy narrowing=yes, "
 					"the connection is a template."));
 			c->kind = CK_TEMPLATE;
 		} else {
@@ -1554,9 +1549,7 @@ void add_connection(const struct whack_message *wm)
 
 		set_policy_prio(c); /* must be after kind is set */
 
-#ifdef DEBUG
 		c->extra_debugging = wm->debugging;
-#endif
 
 		c->gw_info = NULL;
 
@@ -1652,8 +1645,7 @@ void add_connection(const struct whack_message *wm)
 #endif
 
 		DBG(DBG_CONTROL,
-			DBG_log(
-				"ike_life: %lus; ipsec_life: %lus; "
+			DBG_log("ike_life: %lus; ipsec_life: %lus; "
 				"rekey_margin: %lus; "
 				"rekey_fuzz: %lu%%; keyingtries: "
 				"%lu; policy: %s",
@@ -1738,7 +1730,7 @@ char *add_group_instance(struct connection *group, const ip_subnet *target)
 }
 
 /* An old target has disappeared for a group: delete instance. */
-void remove_group_instance(const struct connection *group USED_BY_DEBUG,
+void remove_group_instance(const struct connection *group,
 			const char *name)
 {
 	passert(group->kind == CK_GROUP);
@@ -1863,8 +1855,7 @@ struct connection *ikev2_ts_instantiate(struct connection *c,
 	struct connection *d = instantiate(c, him, his_id);
 
 	DBG(DBG_CONTROL,
-		DBG_log(
-			"ikev2_ts instantiate d=%s from c=%s with c->routing "
+		DBG_log("ikev2_ts instantiate d=%s from c=%s with c->routing "
 			"%s, d->routing %s",
 			d->name, c->name,
 			enum_name(&routing_story, c->spd.routing),
@@ -1933,14 +1924,13 @@ struct connection *oppo_instantiate(struct connection *c,
 				const ip_address *him,
 				const struct id *his_id,
 				struct gw_info *gw,
-				const ip_address *our_client USED_BY_DEBUG,
+				const ip_address *our_client,
 				const ip_address *peer_client)
 {
 	struct connection *d = instantiate(c, him, his_id);
 
 	DBG(DBG_CONTROL,
-		DBG_log(
-			"oppo instantiate d=%s from c=%s with c->routing "
+		DBG_log("oppo instantiate d=%s from c=%s with c->routing "
 			"%s, d->routing %s",
 			d->name, c->name,
 			enum_name(&routing_story, c->spd.routing),
@@ -2183,8 +2173,7 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 				DBG(DBG_CONTROLMORE, {
 						char cib[CONN_INST_BUF];
 						char cib2[CONN_INST_BUF];
-						DBG_log(
-							"find_connection: "
+						DBG_log("find_connection: "
 							"comparing best "
 							"\"%s\"%s "
 							"[pri:%ld]{%p} "
@@ -2226,12 +2215,10 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 	if (srp != NULL && best != NULL)
 		*srp = best_sr;
 
-#ifdef DEBUG
 	if (DBGP(DBG_CONTROL)) {
 		if (best) {
 			char cib[CONN_INST_BUF];
-			DBG_log(
-				"find_connection: concluding with \"%s\"%s "
+			DBG_log("find_connection: concluding with \"%s\"%s "
 				"[pri:%ld]{%p} kind=%s",
 				best->name,
 				(fmt_conn_instance(best, cib), cib),
@@ -2242,7 +2229,6 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 			DBG_log("find_connection: concluding with empty");
 		}
 	}
-#endif /* DEBUG */
 
 	return best;
 }
@@ -2516,8 +2502,7 @@ struct connection *find_host_connection2(const char *func,
 	DBG(DBG_CONTROLMORE, {
 			char mebuf[ADDRTOT_BUF];
 			char himbuf[ADDRTOT_BUF];
-			DBG_log(
-				"find_host_connection2 called from %s, "
+			DBG_log("find_host_connection2 called from %s, "
 				"me=%s:%d him=%s:%d policy=%s",
 				func,
 				(addrtot(me, 0, mebuf,
@@ -2768,8 +2753,7 @@ struct connection *refine_host_connection(const struct state *st,
 	default:
 		/* don't die bad_case(auth); */
 		DBG(DBG_CONTROL,
-			DBG_log(
-				"refine_connection: unsupported AUTH "
+			DBG_log("refine_connection: unsupported AUTH "
 				"TYPE='%d' (needs fix for enum_names)",
 				auth));
 		return NULL;
@@ -2802,8 +2786,7 @@ struct connection *refine_host_connection(const struct state *st,
 			bool match = match1 && match2 && match3;
 
 			DBG(DBG_CONTROLMORE,
-				DBG_log(
-					"refine_connection: checking %s "
+				DBG_log("refine_connection: checking %s "
 					"against %s, best=%s with "
 					"match=%d(id=%d/ca=%d/reqca=%d)",
 					c->name, d->name, best_found ?
@@ -2859,8 +2842,7 @@ struct connection *refine_host_connection(const struct state *st,
 				continue;
 
 			DBG(DBG_CONTROLMORE,
-				DBG_log(
-					"refine_connection: checked %s "
+				DBG_log("refine_connection: checked %s "
 					"against %s, now for see if best",
 					c->name, d->name));
 
@@ -2934,8 +2916,7 @@ struct connection *refine_host_connection(const struct state *st,
 						our_pathlen <
 						best_our_pathlen))) {
 				DBG(DBG_CONTROLMORE,
-					DBG_log(
-						"refine_connection: picking "
+					DBG_log("refine_connection: picking "
 						"new best %s (wild=%d, peer_"
 						"pathlen=%d/our=%d)",
 						d->name,
@@ -3149,7 +3130,6 @@ static struct connection *fc_try(const struct connection *c,
 
 		for (sr = &d->spd; best != d && sr != NULL; sr = sr->next) {
 			policy_prio_t prio;
-#ifdef DEBUG
 			char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
 
 			if (DBGP(DBG_CONTROLMORE)) {
@@ -3169,12 +3149,10 @@ static struct connection *fc_try(const struct connection *c,
 					d3, sr->that.protocol, sr->that.port,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
-#endif /* DEBUG */
 
 			if (!samesubnet(&sr->this.client, our_net)) {
 				DBG(DBG_CONTROLMORE,
-					DBG_log(
-						"   our client(%s) not in "
+					DBG_log("   our client(%s) not in "
 						"our_net (%s)",
 						s3, s1));
 
@@ -3193,8 +3171,7 @@ static struct connection *fc_try(const struct connection *c,
 						(!is_virtual_sr(sr))
 						) {
 						DBG(DBG_CONTROLMORE,
-							DBG_log(
-								"   their "
+							DBG_log("   their "
 								"client(%s) "
 								"not in same "
 								"peer_net (%s)",
@@ -3217,8 +3194,7 @@ static struct connection *fc_try(const struct connection *c,
 								sr->that.id)) ))
 					{
 						DBG(DBG_CONTROLMORE,
-							DBG_log(
-								"   virtual "
+							DBG_log("   virtual "
 								"net not "
 								"allowed"));
 						continue;
@@ -3317,7 +3293,6 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		 * be marked as opportunistic.
 		 */
 		for (sr = &d->spd; sr != NULL; sr = sr->next) {
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
 				char s3[SUBNETTOT_BUF], d3[SUBNETTOT_BUF];
@@ -3328,12 +3303,10 @@ static struct connection *fc_try_oppo(const struct connection *c,
 					sizeof(s3));
 				subnettot(&sr->that.client, 0, d3,
 					sizeof(d3));
-				DBG_log(
-					"  fc_try_oppo trying %s:%s -> "
+				DBG_log("  fc_try_oppo trying %s:%s -> "
 					"%s vs %s:%s -> %s",
 					c->name, s1, d1, d->name, s3, d3);
 			}
-#endif /* DEBUG */
 
 			if (!subnetinsubnet(our_net, &sr->this.client) ||
 				!subnetinsubnet(peer_net, &sr->that.client))
@@ -3387,7 +3360,6 @@ struct connection *find_client_connection(struct connection *c,
 	struct connection *d;
 	struct spd_route *sr;
 
-#ifdef DEBUG
 	if (DBGP(DBG_CONTROLMORE)) {
 		char s1[SUBNETTOT_BUF], d1[SUBNETTOT_BUF];
 
@@ -3400,7 +3372,6 @@ struct connection *find_client_connection(struct connection *c,
 			s1, our_protocol, our_port,
 			d1, peer_protocol, peer_port);
 	}
-#endif /* DEBUG */
 
 	/*
 	 * Give priority to current connection
@@ -3414,7 +3385,6 @@ struct connection *find_client_connection(struct connection *c,
 			sr = sr->next) {
 			srnum++;
 
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
 
@@ -3423,7 +3393,6 @@ struct connection *find_client_connection(struct connection *c,
 				DBG_log("  concrete checking against sr#%d "
 					"%s -> %s", srnum, s2, d2);
 		}
-#endif /* DEBUG */
 
 			if (samesubnet(&sr->this.client, our_net) &&
 				samesubnet(&sr->that.client, peer_net) &&
@@ -3466,7 +3435,6 @@ struct connection *find_client_connection(struct connection *c,
 					sra->this.host_port,
 					NULL,
 					sra->that.host_port);
-#ifdef DEBUG
 			if (DBGP(DBG_CONTROLMORE)) {
 				char s2[SUBNETTOT_BUF], d2[SUBNETTOT_BUF];
 
@@ -3479,7 +3447,6 @@ struct connection *find_client_connection(struct connection *c,
 					s2, d2,
 					(hp ? "found" : "not found"));
 			}
-#endif /* DEBUG */
 		}
 
 		if (hp != NULL) {

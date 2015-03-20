@@ -1,3 +1,6 @@
 Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
 
 This is to verify we can use SHA2_256 and AES for IKE, specifically ike=aes128-sha2_256
+
+Additionally, it uses "sha2" on east and sha2_256" on west to test if the "sha2" alias
+works properly.

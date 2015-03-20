@@ -323,7 +323,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_options) {
 		switch (msg.opt_set) {
 		case WHACK_ADJUSTOPTIONS:
-#ifdef DEBUG
 			if (msg.name == NULL) {
 				/* we do a two-step so that if either old or new would
 				 * cause the message to print, it will be printed.
@@ -342,15 +341,13 @@ void whack_process(int whackfd, const struct whack_message msg)
 				if (c != NULL) {
 					c->extra_debugging = msg.debugging;
 					DBG(DBG_CONTROL,
-					    DBG_log(
-						    "\"%s\" extra_debugging = %s",
+					    DBG_log("\"%s\" extra_debugging = %s",
 						    c->name,
 						    bitnamesof(debug_bit_names,
 							       c->
 							       extra_debugging)));
 				}
 			}
-#endif
 			break;
 
 		case WHACK_SETDUMPDIR:
@@ -361,8 +358,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			/* close old filename */
 			if (whackrecordfile) {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "stopped recording whack messages to %s\n",
+				    DBG_log("stopped recording whack messages to %s\n",
 					    whackrecordname));
 				fclose(whackrecordfile);
 			}
@@ -376,8 +372,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 		case WHACK_STOPWHACKRECORD:
 			if (whackrecordfile) {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "stopped recording whack messages to %s\n",
+				    DBG_log("stopped recording whack messages to %s\n",
 					    whackrecordname));
 				fclose(whackrecordfile);
 			}
@@ -530,8 +525,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 			whack_log(RC_DEAF, "need --listen before --initiate");
 		} else {
 			initiate_connection(msg.name,
-					    msg.whack_async ? NULL_FD : dup_any(
-						    whackfd),
+					    msg.whack_async ?
+					      NULL_FD :
+					      dup_any(whackfd),
 					    msg.debugging,
 					    pcim_demand_crypto);
 		}
@@ -545,12 +541,13 @@ void whack_process(int whackfd, const struct whack_message msg)
 			(void)initiate_ondemand(&msg.oppo_my_client,
 						&msg.oppo_peer_client, 0,
 						FALSE,
-						msg.whack_async ? NULL_FD : dup_any(
-							whackfd)
+						msg.whack_async ?
+						  NULL_FD :
+						  dup_any(whackfd),
 #ifdef HAVE_LABELED_IPSEC
-						, NULL
+						NULL,
 #endif
-						, "whack");
+						"whack");
 		}
 	}
 
@@ -625,15 +622,16 @@ void whack_handle(int whackctlfd)
 				"ignoring runt message from whack: got %d bytes",
 				(int)n);
 		} else if (msg.magic != WHACK_MAGIC) {
+			if (msg.whack_shutdown) {
+				libreswan_log("shutting down%s",
+				    (msg.magic != WHACK_BASIC_MAGIC) ?  " despite whacky magic" : "");
+				exit_pluto(0);  /* delete lock and leave, with 0 status */
+			}
 			if (msg.magic == WHACK_BASIC_MAGIC) {
 				/* Only basic commands.  Simpler inter-version compatibility. */
 				if (msg.whack_status)
 					show_status();
 
-				if (msg.whack_shutdown) {
-					libreswan_log("shutting down");
-					exit_pluto(0);  /* delete lock and leave, with 0 status */
-				}
 				ugh = "";               /* bail early, but without complaint */
 			} else {
 				ugh = builddiag(

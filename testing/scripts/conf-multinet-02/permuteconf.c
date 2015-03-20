@@ -146,8 +146,7 @@ int main(int argc, char *argv[])
 		confdir = IPSEC_CONFDIR;
 
 	if (!configfile) {
-		configfile = alloc_bytes(strlen(
-						 confdir) +
+		configfile = alloc_bytes(strlen(confdir) +
 					 sizeof("/ipsec.conf") + 2,
 					 "conf file");
 

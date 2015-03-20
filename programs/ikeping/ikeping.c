@@ -68,26 +68,28 @@ static void help(void)
 
 static void hton_ping(struct isakmp_hdr *ih)
 {
+#if 0
 	u_int32_t *ihp;
-
 	ihp = (u_int32_t *)ih;
 
 	/* put it in network byte order. */
 	/* cookies are byte viewed anyway */
-	// ihp[4] = htonl(ihp[4]);
+	ihp[4] = htonl(ihp[4]);
+#endif
 	ih->isa_msgid  = htonl(ih->isa_msgid);
 	ih->isa_length = htonl(ih->isa_length);
 }
 
 static void ntoh_ping(struct isakmp_hdr *ih)
 {
+#if 0
 	u_int32_t *ihp;
-
 	ihp = (u_int32_t *)ih;
 
 	/* put it in network byte order. */
 	/* cookies are byte viewed anyway */
-	// ihp[4] = ntohl(ihp[4]);
+	ihp[4] = ntohl(ihp[4]);
+#endif
 	ih->isa_msgid  = ntohl(ih->isa_msgid);
 	ih->isa_length = ntohl(ih->isa_length);
 }
@@ -122,7 +124,6 @@ static void send_ping(int afamily,
 
 	fprintf(stderr, "IKE version octet:%d; exchange type:%d\n", ih.isa_version, ih.isa_xchg);
 
-	
 	switch (afamily) {
 	case AF_INET:
 		raddr->u.v4.sin_port = htons(rport);
@@ -145,7 +146,7 @@ static void send_ping(int afamily,
 }
 
 /*
- * send an IKE ping reply 
+ * send an IKE ping reply
  *
  */
 static void reply_packet(int afamily,
@@ -172,14 +173,14 @@ static void reply_packet(int afamily,
 	op->isa_length = ilen ? ilen : 0;
 
 	hton_ping(op);
-	
+
 	len = sizeof(*op);
 	if (plen) {
 		if (plen > len) {
 			plen = len;
 			fprintf(stderr, "Packet length capped at %d - no more data", plen);
 		}
-	} 
+	}
 	if (sendto(s, op, plen, 0, (struct sockaddr *)dst_addr,
 		   dst_len) < 0) {
 		perror("sendto");
@@ -214,8 +215,7 @@ static void receive_ping(int afamily, int s, int reply, int natt)
 		/* need to skip 4 bytes! */
 		if (rbuf[0] != 0x0 || rbuf[1] != 0x0 ||
 		    rbuf[2] != 0x0 || rbuf[3] != 0x0) {
-			printf(
-				"kernel failed to steal ESP packet (SPI=0x%02x%02x%02x%02x) of length %d\n",
+			printf("kernel failed to steal ESP packet (SPI=0x%02x%02x%02x%02x) of length %d\n",
 				rbuf[0], rbuf[1], rbuf[2], rbuf[3],
 				n);
 			return;
@@ -394,7 +394,6 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 			continue;
-			
 
 		case 's':
 			listen_only++;
@@ -422,8 +421,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'b':
-			errstr = ttoaddr(optarg, strlen(
-						 optarg), afamily, &laddr);
+			errstr = ttoaddr(optarg, strlen(optarg),
+				         afamily, &laddr);
 			if (errstr != NULL) {
 				fprintf(stderr,
 					"Invalid local address '%s': %s\n",

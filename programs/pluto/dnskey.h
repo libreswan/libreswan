@@ -46,7 +46,7 @@ struct adns_continuation {
 	struct id id;                           /* subject of query */
 	bool sgw_specified;
 	struct id sgw_id;                       /* peer, if constrained */
-	lset_t debugging;                       /* only used #ifdef DEBUG, but don't want layout to change */
+	lset_t debugging;
 	struct gw_info *gateways_from_dns;      /* answer, if looking for our TXT rrs */
 #ifdef USE_KEYRR
 	struct pubkey_list *keys_from_dns;      /* answer, if looking for KEY rrs */

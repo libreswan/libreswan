@@ -53,7 +53,7 @@
 #include "keys.h"
 #include "ikev2_prfplus.h"
 
-void v2prfplus(struct v2prf_stuff *vps)
+static void v2prfplus(struct v2prf_stuff *vps)
 {
 	struct hmac_ctx ctx;
 

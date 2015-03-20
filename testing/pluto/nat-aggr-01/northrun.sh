@@ -1,2 +1,2 @@
-ipsec auto --up northnet--eastnet-nat
+ipsec auto --up northnet-eastnet-nat
 echo done

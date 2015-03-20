@@ -95,11 +95,11 @@ extern struct proto_ops SOCKOPS_WRAPPED(pfkey_ops);
 
 #ifdef NET_26
 static DEFINE_RWLOCK(pfkey_sock_lock);
-HLIST_HEAD(pfkey_sock_list);
+static HLIST_HEAD(pfkey_sock_list);
 static DECLARE_WAIT_QUEUE_HEAD(pfkey_sock_wait);
 static atomic_t pfkey_sock_users = ATOMIC_INIT(0);
 #else
-struct sock *pfkey_sock_list = NULL;
+static struct sock *pfkey_sock_list = NULL;
 #endif
 
 struct supported_list *pfkey_supported_list[K_SADB_SATYPE_MAX + 1];
@@ -136,7 +136,7 @@ DEBUG_NO_STATIC int pfkey_recvmsg(struct socket *sock, struct msghdr *msg,
 				  int size, int flags, struct scm_cookie *scm);
 #endif
 
-struct net_proto_family pfkey_family_ops = {
+static struct net_proto_family pfkey_family_ops = {
 #ifdef NET_26
 	.owner  = THIS_MODULE,
 #endif
@@ -217,7 +217,7 @@ static __inline__ void pfkey_unlock_sock_list(void)
 }
 #endif
 
-int pfkey_list_remove_socket(struct socket *socketp,
+static int pfkey_list_remove_socket(struct socket *socketp,
 			     struct socket_list **sockets)
 {
 	struct socket_list *socket_listp, *prev;
@@ -621,9 +621,9 @@ int pfkey_upmsgsk(struct sock *sk, struct sadb_msg *pfkey_msg)
 							  pfkey_msg->
 							  sadb_msg_len *
 							  IPSEC_PFKEYv2_ALIGN)));
-	memcpy(skb_transport_header(
-		       skb), pfkey_msg, pfkey_msg->sadb_msg_len *
-	       IPSEC_PFKEYv2_ALIGN);
+	memcpy(skb_transport_header(skb),
+		pfkey_msg,
+		pfkey_msg->sadb_msg_len * IPSEC_PFKEYv2_ALIGN);
 
 	if ((error = sock_queue_rcv_skb(sk, skb)) < 0) {
 		skb->sk = NULL;

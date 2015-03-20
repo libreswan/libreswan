@@ -27,8 +27,8 @@ east #
 Status of IKE charon daemon (strongSwan VERSION):
   uptime: XXX seconds, since YYY
   malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
-  worker threads: 8 of 16 idle, 7/1/0/0 working, job queue: 0/0/0/0, scheduled: 3
-  loaded plugins: charon aes des sha1 sha2 md5 random nonce x509 revocation constraints pubkey pkcs1 pkcs8 pgp dnskey pem openssl fips-prf gmp xcbc cmac hmac attr kernel-netlink resolve socket-default stroke updown xauth-generic
+  worker threads: 11 of 16 idle, 5/0/0/0 working, job queue: 0/0/0/0, scheduled: 3
+  loaded plugins: charon curl aes des rc2 sha1 sha2 md4 md5 random nonce x509 revocation constraints pubkey pkcs1 pkcs8 pkcs12 pgp dnskey sshkey pem openssl fips-prf gmp xcbc cmac hmac attr kernel-netlink resolve socket-default farp stroke updown eap-identity eap-md5 eap-gtc eap-mschapv2 eap-tls eap-ttls eap-peap xauth-generic xauth-eap dhcp
 Listening IP addresses:
   192.0.2.254
   192.1.2.23
@@ -43,7 +43,7 @@ westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.
 westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r, pre-shared key reauthentication in 2 hours
 westnet-eastnet-ikev2[1]: IKE proposal: 3DES_CBC/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_1536
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{1}:  AES_GCM_16_256, XXX bytes_i (xxs ago), XX bytes_o (XXs ago), rekeying in XX minutes
+westnet-eastnet-ikev2{1}:  AES_GCM_16_256, 336 bytes_i (4 pkts, 11s ago), 336 bytes_o (4 pkts, 11s ago), rekeying in 44 minutes
 westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24 
 east #
 east #

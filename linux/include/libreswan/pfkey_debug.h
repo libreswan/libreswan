@@ -1,6 +1,6 @@
 /* pf_key debugging facility
  * definitions: linux/net/ipsec/pfkey_v2_parse.c, lib/libbsdpfkey/pfkey.c
- * 
+ *
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003  Michael Richardson <mcr@freeswan.org>
  *

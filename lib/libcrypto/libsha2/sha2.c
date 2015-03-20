@@ -8,8 +8,10 @@
  *
  * (C)opyright 2005 Michael Richardson <mcr@xelerance.com>
  * (C)opyright 2008-2009 Avesh Agarwal <avagarwa@redhat.com>
- * (C)opyright 2012 Paul Wouters <paul@libreswan.org>
+ * (C)opyright 2012-2013 Paul Wouters <paul@libreswan.org>
  */
+
+#include <libreswan.h> /* for DEBUG for NSS PR_ASSERT() */
 
 #ifdef __KERNEL__
 # include <linux/string.h>

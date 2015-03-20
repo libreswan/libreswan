@@ -1,0 +1,18 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+
+Identical to ikev2-algo-ike-sha2-03, but now we use ike=aes128-sha2_256 instead of aes-sha2_256
+
+This (as of writing) gives the following error:
+
+| proposal 1 failed encr= (policy:aes-cbc vs offered:aes-cbc)
+|             succeeded integ=(policy:AUTH_HMAC_SHA2_256_128 vs offered:AUTH_HMAC_SHA2_256_128)
+|             succeeded prf=  (policy:prf-hmac-sha2-256 vs offered:prf-hmac-sha2-256)
+|             succeeded dh=   (policy:OAKLEY_GROUP_MODP1536 vs offered:OAKLEY_GROUP_MODP1536)
+| proposal 1 failed encr= (policy:aes-cbc vs offered:aes-cbc)
+|             succeeded integ=(policy:AUTH_HMAC_SHA2_256_128 vs offered:AUTH_HMAC_SHA2_256_128)
+|             succeeded prf=  (policy:prf-hmac-sha2-256 vs offered:prf-hmac-sha2-256)
+|             failed dh=   (policy:OAKLEY_GROUP_MODP1024 vs offered:OAKLEY_GROUP_MODP1536)
+| complete v2 state transition with (null)
+| state transition function for STATE_PARENT_I1 failed: NO_PROPOSAL_CHOSEN
+
+note the first proposal fully matches but the encr= says "failed"

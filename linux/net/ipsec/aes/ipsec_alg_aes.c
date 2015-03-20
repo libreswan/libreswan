@@ -244,8 +244,7 @@ IPSEC_ALG_MODULE_INIT_STATIC( ipsec_aes_init )
 		int ret;
 		ipsec_alg_AES_MAC.ixt_common.ixt_support.ias_id = auth_id;
 		ret = register_ipsec_alg_auth(&ipsec_alg_AES_MAC);
-		printk(
-			"ipsec_aes_init(alg_type=%d alg_id=%d name=%s): ret=%d\n",
+		printk("ipsec_aes_init(alg_type=%d alg_id=%d name=%s): ret=%d\n",
 			ipsec_alg_AES_MAC.ixt_common.ixt_support.ias_exttype,
 			ipsec_alg_AES_MAC.ixt_common.ixt_support.ias_id,
 			ipsec_alg_AES_MAC.ixt_common.ixt_name,
@@ -255,15 +254,13 @@ IPSEC_ALG_MODULE_INIT_STATIC( ipsec_aes_init )
 				ipsec_alg_AES_MAC.ixt_common.ixt_support.ias_exttype,
 				ipsec_alg_AES_MAC.ixt_common.ixt_support.ias_id,
 				test_aes);
-			printk(
-				"ipsec_aes_init(alg_type=%d alg_id=%d): test_ret=%d\n",
+			printk("ipsec_aes_init(alg_type=%d alg_id=%d): test_ret=%d\n",
 				ipsec_alg_AES_MAC.ixt_common.ixt_support.ias_exttype,
 				ipsec_alg_AES_MAC.ixt_common.ixt_support.ias_id,
 				test_ret);
 		}
 	} else {
-		printk(
-			KERN_DEBUG "klips_debug: experimental ipsec_alg_AES_MAC not registered [Ok] (auth_id=%d)\n",
+		printk(KERN_DEBUG "klips_debug: experimental ipsec_alg_AES_MAC not registered [Ok] (auth_id=%d)\n",
 			auth_id);
 	}
 #endif  /* CONFIG_KLIPS_ENC_AES_MAC */

@@ -276,7 +276,6 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 	}
 #endif /* CONFIG_KLIPS_IPCOMP */
 
-#ifdef NAT_TRAVERSAL
 	seq_printf(seq, " natencap=");
 	switch(sa_p->ips_natt_type) {
 	case 0:
@@ -295,9 +294,6 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 
 	seq_printf(seq, " natsport=%d", sa_p->ips_natt_sport);
 	seq_printf(seq, " natdport=%d", sa_p->ips_natt_dport);
-#else
-	seq_printf(seq, " natencap=na");
-#endif /* NAT_TRAVERSAL */
 
 	/* we decrement by one, because this SA has been referenced in order to dump this info */
 	seq_printf(seq, " refcount=%d", atomic_read(&sa_p->ips_refcount)-1);

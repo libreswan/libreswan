@@ -201,37 +201,24 @@ void parse_option(char *arg, option_data *opt)
 		printf("Usage: ipsec_hack [options]\n");
 		printf("Options:\n");
 		printf("\tfile={filename}\t\t\t read options from file\n");
-		printf(
-			"\tsrc={dotted IPv4 address}\t source address of the IPsec connection\n");
-		printf(
-			"\tdst={dotted IPv4 address}\t destination address of the IPsec connection\n");
-		printf(
-			"\tfake_src={dotted IPv4 address}\t source address of the attack packet\n");
-		printf(
-			"\tfake_dst={dotted IPv4 address}\t destination address of the attack packet\n");
+		printf("\tsrc={dotted IPv4 address}\t source address of the IPsec connection\n");
+		printf("\tdst={dotted IPv4 address}\t destination address of the IPsec connection\n");
+		printf("\tfake_src={dotted IPv4 address}\t source address of the attack packet\n");
+		printf("\tfake_dst={dotted IPv4 address}\t destination address of the attack packet\n");
 		printf("\tspi={hex int}\t\t\t SPI of the IPsec connection\n");
-		printf(
-			"\tlif={interface name}\t\t name of the listening interface\n");
-		printf(
-			"\tsif={interface name}\t\t name of the interface where the attack packets are sent\n");
-		printf(
-			"\tguess={xx:xx:xx:xx:xx:xx:xx:xx}\t first guess of the plaintext block\n");
+		printf("\tlif={interface name}\t\t name of the listening interface\n");
+		printf("\tsif={interface name}\t\t name of the interface where the attack packets are sent\n");
+		printf("\tguess={xx:xx:xx:xx:xx:xx:xx:xx}\t first guess of the plaintext block\n");
 		printf("\tblock={xx:xx:xx:xx:xx:xx:xx:xx}\t block to crack\n");
-		printf(
-			"\toiv={xx:xx:xx:xx:xx:xx:xx:xx}\t IV used to enrypt the block\n");
-		printf(
-			"\tdmac={xx:xx:xx:xx:xx:xx}\t MAC address of the gateway\n");
+		printf("\toiv={xx:xx:xx:xx:xx:xx:xx:xx}\t IV used to enrypt the block\n");
+		printf("\tdmac={xx:xx:xx:xx:xx:xx}\t MAC address of the gateway\n");
 		printf("\t\t\t\t\t used to send attack packets\n");
 		printf("\t-v\t\t\t\t verbose mode\n");
 		printf("\t-vv\t\t\t\t more verbose mode\n");
-		printf(
-			"\t-s\t\t\t\t exit if SPI between src and dst not seen for n seconds\n");
-		printf(
-			"\t-i{int}\t\t\t\t packet counter reporting interval (default is 1000)\n");
-		printf(
-			"\t-w{int}\t\t\t\t seconds to wait before existing if SPI not seen\n");
-		printf(
-			"\t-cd\t\t\t\t allow random reserved bit in IP header (default is NO)\n");
+		printf("\t-s\t\t\t\t exit if SPI between src and dst not seen for n seconds\n");
+		printf("\t-i{int}\t\t\t\t packet counter reporting interval (default is 1000)\n");
+		printf("\t-w{int}\t\t\t\t seconds to wait before existing if SPI not seen\n");
+		printf("\t-cd\t\t\t\t allow random reserved bit in IP header (default is NO)\n");
 		exit(1);
 	}
 	if (strncmp("-v", arg, 2) == 0)

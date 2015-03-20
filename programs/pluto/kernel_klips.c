@@ -158,8 +158,7 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 				v = &fake_v;
 			} else {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "IP interface %s %s has no matching ipsec* interface -- ignored",
+				    DBG_log("IP interface %s %s has no matching ipsec* interface -- ignored",
 					    ifp->name, ip_str(&ifp->addr)));
 				continue;
 			}
@@ -197,21 +196,17 @@ add_entry:
 						break;
 
 					DBG(DBG_NATT,
-					    DBG_log(
-						    "NAT-T KLIPS: checking for nat_traversal_support_non_ike for IPv4"));
+					    DBG_log("NAT-T KLIPS: checking for nat_traversal_support_non_ike for IPv4"));
 					if (nat_traversal_support_non_ike &&
 					    addrtypeof(&ifp->addr) ==
 					    AF_INET) {
 						DBG(DBG_NATT,
-						    DBG_log(
-							    "NAT-T KLIPS: found, calling nat_traversal_espinudp_socket"));
-						nat_traversal_espinudp_socket(
-							fd, "IPv4",
+						    DBG_log("NAT-T KLIPS: found, calling nat_traversal_espinudp_socket"));
+						nat_traversal_espinudp_socket(fd, "IPv4",
 							ESPINUDP_WITH_NON_IKE);
 					} else {
 						DBG(DBG_NATT,
-						    DBG_log(
-							    "NAT-T KLIPS: support not found, nat_traversal_support_non_ike = %s",
+						    DBG_log("NAT-T KLIPS: support not found, nat_traversal_support_non_ike = %s",
 							    nat_traversal_support_non_ike
 							    ?
 							    "TRUE" : "FALSE"));
@@ -258,8 +253,7 @@ add_entry:
 					    addrtypeof(&ifp->addr) ==
 					    AF_INET) {
 						DBG(DBG_NATT,
-						    DBG_log(
-							    "NAT-T KLIPS: found floating port, calling nat_traversal_espinudp_socket"));
+						    DBG_log("NAT-T KLIPS: found floating port, calling nat_traversal_espinudp_socket"));
 						fd = create_socket(ifp,
 								   v->name,
 								   pluto_natt_float_port);
@@ -275,8 +269,7 @@ add_entry:
 						id->id_count++;
 
 						q->ip_addr = ifp->addr;
-						setportof(htons(
-								  pluto_natt_float_port),
+						setportof(htons(pluto_natt_float_port),
 							  &q->ip_addr);
 						q->port =
 							pluto_natt_float_port;
