@@ -217,8 +217,7 @@ void comm_handle(const struct iface_port *ifp)
 	if (read_packet(md))
 		process_packet(&md);
 
-	if (md != NULL)
-		release_md(md);
+	release_any_md(&md);
 
 	cur_state = NULL;
 	reset_cur_connection();
@@ -375,8 +374,7 @@ static bool read_packet(struct msg_digest *md)
 		    (int) pbs_room(&md->packet_pbs),
 		    ip_str(cur_from), (unsigned) cur_from_port,
 		    ifp->ip_dev->id_rname,
-		    ifp->port)
-	    );
+		    ifp->port));
 
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
@@ -387,12 +385,12 @@ static bool read_packet(struct msg_digest *md)
 	 */
 	{
 		static const u_int8_t non_ESP_marker[NON_ESP_MARKER_SIZE] =
-		{ 0x00, };
+			{ 0x00, };
 
 		if (md->iface->ike_float &&
 		    pbs_left(&md->packet_pbs) >= NON_ESP_MARKER_SIZE &&
-		    memcmp(md->packet_pbs.cur, non_ESP_marker,
-			   NON_ESP_MARKER_SIZE) == 0) {
+		    memeq(md->packet_pbs.cur, non_ESP_marker,
+			   NON_ESP_MARKER_SIZE)) {
 			bool happy = in_raw(NULL, NON_ESP_MARKER_SIZE,
 					    &md->packet_pbs,
 					    "spurious extra Non ESP Marker");
@@ -412,8 +410,7 @@ static bool read_packet(struct msg_digest *md)
 		DBG(DBG_NATT,
 		    DBG_log("NAT-T keep-alive (boggus ?) should not reach this point. "
 			    "Ignored. Sender: %s:%u", ip_str(cur_from),
-			    (unsigned) cur_from_port);
-		    );
+			    (unsigned) cur_from_port));
 		return FALSE;
 	}
 

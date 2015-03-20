@@ -1,4 +1,6 @@
-/* Pluto Asynchronous DNS Helper Program -- for internal use only!
+/*
+ * Pluto Asynchronous DNS Helper Program -- for internal use only!
+ *
  * Copyright (C) 2002  D. Hugh Redelmeier.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -14,7 +16,8 @@
 
 #ifndef USE_UNBOUND     /* whole file! */
 
-/* This program executes as multiple processes.  The Master process
+/*
+ * This program executes as multiple processes.  The Master process
  * receives queries (struct adns_query messages) from Pluto and distributes
  * them amongst Worker processes.  These Worker processes are created
  * by the Master whenever a query arrives and no existing Worker is free.
@@ -55,28 +58,22 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <resolv.h>
-#include <netdb.h>      /* ??? for h_errno */
+#include <netdb.h>	/* ??? for h_errno */
 
 #include <libreswan.h>
 
-/* GCC magic! */
-#ifdef GCC_LINT
-# define UNUSED __attribute__ ((unused))
-#else
-# define UNUSED /* ignore */
-#endif
-
 #include "constants.h"
-#include "adns.h"       /* needs <resolv.h> */
+#include "adns.h"	/* needs <resolv.h> */
 #include "lsw_select.h"
 
 /* shared by all processes */
 
-static const char *name;        /* program name, for messages */
+static const char *name;	/* program name, for messages */
 
 static bool debug = FALSE;
 
-/* Read a variable-length record from a pipe (and no more!).
+/*
+ * Read a variable-length record from a pipe (and no more!).
  * First bytes must be a size_t containing the length.
  * HES_CONTINUE if record read
  * HES_OK if EOF
@@ -84,7 +81,7 @@ static bool debug = FALSE;
  * Others are errors.
  */
 static enum helper_exit_status read_pipe(int fd, unsigned char *stuff,
-					 size_t minlen, size_t maxlen)
+					size_t minlen, size_t maxlen)
 {
 	size_t n = 0;
 	size_t goal = minlen;
@@ -94,8 +91,8 @@ static enum helper_exit_status read_pipe(int fd, unsigned char *stuff,
 
 		if (m == -1) {
 			if (errno != EINTR) {
-				syslog(LOG_ERR, "Input error on pipe: %s", strerror(
-					       errno));
+				syslog(LOG_ERR, "Input error on pipe: %s",
+					strerror(errno));
 				return HES_IO_ERROR_IN;
 			}
 		} else if (m == 0) {
@@ -138,8 +135,9 @@ static enum helper_exit_status write_pipe(int fd, const unsigned char *stuff)
 		if (m == -1) {
 			/* error, but ignore and retry if EINTR */
 			if (errno != EINTR) {
-				syslog(LOG_ERR, "Output error from master: %s", strerror(
-					       errno));
+				syslog(LOG_ERR,
+					"Output error from master: %s",
+					strerror(errno));
 				return HES_IO_ERROR_OUT;
 			}
 		} else {
@@ -168,6 +166,10 @@ static enum helper_exit_status write_pipe(int fd, const unsigned char *stuff)
 #endif
 
 #ifdef __UCLIBC__
+#define OLD_RESOLVER 1
+#endif
+
+#ifndef __GLIBC__
 #define OLD_RESOLVER 1
 #endif
 
@@ -202,19 +204,19 @@ static int worker(int qfd, int afd)
 		statp->options |= RES_DEBUG;
 	}
 
-	for (;; ) {
+	for (;;) {
 		struct adns_query q;
 		struct adns_answer a;
 
 		enum helper_exit_status r = read_pipe(qfd, (unsigned char *)&q,
-						      sizeof(q), sizeof(q));
+						sizeof(q), sizeof(q));
 
 		if (r != HES_CONTINUE)
 			return r; /* some kind of exit */
 
 		if (q.qmagic != ADNS_Q_MAGIC) {
 			syslog(LOG_ERR,
-			       "error in input from master: bad magic");
+				"error in input from master: bad magic");
 			return HES_BAD_MAGIC;
 		}
 
@@ -222,17 +224,16 @@ static int worker(int qfd, int afd)
 		a.serial = q.serial;
 
 		a.result = res_nquery(statp, q.name_buf, ns_c_in, q.type,
-				      a.ans, sizeof(a.ans));
+				a.ans, sizeof(a.ans));
 		a.h_errno_val = h_errno;
 
-		a.len =
-			offsetof(struct adns_answer,
-				 ans) + (a.result < 0 ? 0 : a.result);
+		a.len = offsetof(struct adns_answer, ans) +
+			(a.result < 0 ? 0 : a.result);
 
-		if (((q.debugging & IMPAIR_DELAY_ADNS_KEY_ANSWER) && q.type ==
-		     ns_t_key) ||
-		    ((q.debugging & IMPAIR_DELAY_ADNS_TXT_ANSWER) && q.type ==
-		     ns_t_txt))
+		if (((q.debugging & IMPAIR_DELAY_ADNS_KEY_ANSWER) &&
+				q.type == ns_t_key) ||
+			((q.debugging & IMPAIR_DELAY_ADNS_TXT_ANSWER) &&
+				q.type == ns_t_txt))
 			sleep(30); /* delay the answer */
 
 		/* write answer, possibly a bit at a time */
@@ -294,8 +295,8 @@ static bool spawn_worker(void)
 		/* fork failed: ignore if at least one worker exists */
 		if (wi_roof == wi) {
 			syslog(LOG_ERR,
-			       "fork(2) error creating first worker: %s", strerror(
-				       errno));
+				"fork(2) error creating first worker: %s",
+				strerror(errno));
 			exit(HES_FORK);
 		}
 		close(qfds[0]);
@@ -384,7 +385,7 @@ static void query(void)
 	}
 
 	r = read_pipe(PLUTO_QFD, (unsigned char *)&q->aq,
-		      sizeof(q->aq), sizeof(q->aq));
+		sizeof(q->aq), sizeof(q->aq));
 
 	if (r == HES_OK) {
 		/* EOF: we're done, except for unanswered queries */
@@ -394,7 +395,8 @@ static void query(void)
 		q->next = free_queries;
 		free_queries = q;
 
-		/* Send bye-bye to unbusy processes.
+		/*
+		 * Send bye-bye to unbusy processes.
 		 * Note that if there are queued queries, there won't be
 		 * any non-busy workers.
 		 */
@@ -436,15 +438,14 @@ static void query(void)
 			}
 		}
 	}
-	return;
 }
 
 static void answer(struct worker_info *w)
 {
 	struct adns_answer a;
 	enum helper_exit_status r = read_pipe(w->afd, (unsigned char *)&a,
-					      offsetof(struct adns_answer,
-						       ans), sizeof(a));
+					offsetof(struct adns_answer,
+						ans), sizeof(a));
 
 	if (r == HES_OK) {
 		/* unexpected EOF */
@@ -458,7 +459,7 @@ static void answer(struct worker_info *w)
 	} else if (a.continuation != w->continuation) {
 		/* answer doesn't match query */
 		syslog(LOG_ERR,
-		       "Input from worker error: continuation mismatch");
+			"Input from worker error: continuation mismatch");
 		exit(HES_SYNC);
 	} else {
 		/* pass the answer on to Pluto */
@@ -475,7 +476,7 @@ static void answer(struct worker_info *w)
 /* assumption: input limited; accept blocking on output */
 static int master(void)
 {
-	for (;; ) {
+	for (;;) {
 		lsw_fd_set readfds;
 		int maxfd = PLUTO_QFD;  /* approximate lower bound */
 		int ndes = 0;
@@ -498,14 +499,13 @@ static int master(void)
 		if (ndes == 0)
 			return HES_OK; /* done! */
 
-		do
-			ndes =
-				lsw_select(maxfd + 1, &readfds, NULL, NULL,
-					   NULL);
-		while (ndes == -1 && errno == EINTR);
+		do {
+			ndes = lsw_select(maxfd + 1, &readfds, NULL, NULL,
+					NULL);
+		} while (ndes == -1 && errno == EINTR);
 		if (ndes == -1) {
 			syslog(LOG_ERR, "select(2) error: %s",
-			       strerror(errno));
+				strerror(errno));
 			exit(HES_IO_ERROR_SELECT);
 		} else if (ndes > 0) {
 			if (LSW_FD_ISSET(PLUTO_QFD, &readfds)) {
@@ -514,7 +514,7 @@ static int master(void)
 			}
 			for (w = wi; ndes > 0 && w != wi_roof; w++) {
 				if (w->busy &&
-				    LSW_FD_ISSET(w->afd, &readfds)) {
+					LSW_FD_ISSET(w->afd, &readfds)) {
 					answer(w);
 					ndes--;
 				}

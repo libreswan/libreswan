@@ -16,7 +16,6 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=_realsetup
 PROGRAMOBJDIR=_realsetup.bsd
-PROGRAMDIR=${LIBDIR}
 
 include ${srcdir}../Makefile.program
 

@@ -31,40 +31,46 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
- ipsec _stackmanager start
-[ 00.00] NET: Registered protocol family 15
-west #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+ ipsec setup start
+Redirecting to: systemctl start ipsec.service
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  # first should fail to load
 west #
  ipsec auto --add badkeysize-shouldnotload
+003 esp string error: wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ccm_a"(152), auth_alg="null", modp=""
 west #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-ccm-a
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2-ccm-a"
 west #
  ipsec auto --status
 000 using kernel interface: netkey
-000 interface lo/lo 127.0.0.1
-000 interface eth0/eth0 192.0.1.254
-000 interface eth1/eth1 192.1.2.45
-000 interface eth2/eth2 192.9.4.45
+000 interface lo/lo 127.0.0.1@4500
+000 interface lo/lo 127.0.0.1@500
+000 interface eth0/eth0 192.0.1.254@4500
+000 interface eth0/eth0 192.0.1.254@500
+000 interface eth1/eth1 192.1.2.45@4500
+000 interface eth1/eth1 192.1.2.45@500
+000 interface eth2/eth2 192.9.4.45@4500
+000 interface eth2/eth2 192.9.4.45@500
+000  
 000  
 000 fips mode=disabled;
-000 SElinux=disabled
+000 SElinux=XXXXX
 000  
 000 config setup options:
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
-000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
+000 sbindir=/usr/local/sbin, libexecdir=/usr/local/libexec/ipsec
+000 nhelpers=-1, uniqueids=yes, retransmits=yes, force-busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx_attr_value=XXXX
+000 secctx-attr-value=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
-000 nat_traversal=no, keep_alive=20, nat_ikeport=4500, disable_port_floating=yes
+000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
+000 virtual-private (%priv):
 000  
 000 ESP algorithms supported:
 000  
@@ -134,9 +140,9 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":    policy_label:unset; 
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms wanted: AES_CCM_A(14)_128-NONE(0)_000
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms loaded: AES_CCM_A(14)_128-NONE(0)_000
@@ -152,10 +158,13 @@ west #
 initdone
 west #
  ipsec auto --up  westnet-eastnet-ipv4-psk-ikev2-ccm-a
+002 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #1: initiating v2 parent SA
 133 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #1: STATE_PARENT_I1: initiate
 133 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=oakley_sha group=modp2048}
-004 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_CCM_A_128-NONE NATOA=none NATD=none DPD=none}
+134 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_256 integ=sha1_96 prf=sha group=MODP2048}
+002 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #2: IKEv2 mode peer ID is ID_FQDN: '@east'
+002 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #2: negotiated tunnel [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
+004 "westnet-eastnet-ipv4-psk-ikev2-ccm-a" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_CCM_A_128-NONE NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -189,6 +198,22 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 	dir in priority 2344 ptype main 
 	tmpl src 192.1.2.23 dst 192.1.2.45
 		proto esp reqid REQID mode tunnel
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
@@ -264,6 +289,22 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket out priority 0 ptype main 
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -281,7 +322,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

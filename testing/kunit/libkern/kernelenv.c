@@ -166,9 +166,9 @@ void nfsim_check_packet(const struct sk_buff *skb)
 		return;
 
 	/* Packet should not have been changed where not writable. */
-	if (memcmp(skb->head + extra->writable_len,
+	if (!memeq(skb->head + extra->writable_len,
 		   extra->data + extra->writable_len,
-		   linear_len - extra->writable_len) != 0)
+		   linear_len - extra->writable_len))
 		barf("skb modified without being made writable!");
 }
 

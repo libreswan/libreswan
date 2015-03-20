@@ -26,7 +26,6 @@
 #include <errno.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -96,8 +95,7 @@ bool ike_alg_enc_ok(int ealg, unsigned key_len,
 			 "key_len=%d, keyminlen=%d, keymaxlen=%d",
 			 ealg, key_len,
 			 enc_desc->keyminlen,
-			 enc_desc->keymaxlen
-			 );
+			 enc_desc->keymaxlen);
 		libreswan_log("ike_alg_enc_ok(): %.*s", (int)ugh_buf_len,  ugh_buf);
 		ret = FALSE;
 	}
@@ -134,7 +132,7 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 	 * simple test to toss low key_len, will accept it only
 	 * if specified in "esp" string
 	 */
-	int ealg_insecure = (key_len < 128);
+	bool ealg_insecure = (key_len < 128);
 
 	if (ealg_insecure || alg_info_ike) {
 		int i;
@@ -159,13 +157,13 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group,
 			}
 		}
 		libreswan_log(
-			"Oakley Transform [%s (%d), %s, %s] refused %s",
+			"Oakley Transform [%s (%d), %s, %s] refused%s",
 			enum_name(&oakley_enc_names, ealg), key_len,
 			enum_name(&oakley_hash_names, aalg),
-			enum_name(&oakley_group_names,
-				  group),
-			ealg_insecure ? "due to insecure key_len and enc. alg. not listed in \"ike\" string" : ""
-			);
+			enum_name(&oakley_group_names, group),
+			ealg_insecure ?
+				" due to insecure key_len and enc. alg. not listed in \"ike\" string" :
+				"");
 		return FALSE;
 	}
 	return TRUE;
@@ -257,7 +255,7 @@ int ike_alg_register_hash(struct hash_desc *hash_desc)
 	}
 
 	if (hash_desc->common.name == NULL)
-		hash_desc->common.name = clone_str(alg_name, "hasher name");
+		hash_desc->common.name = clone_str(alg_name, "hasher name (ignore)");
 
 return_out:
 	if (ret == 0)

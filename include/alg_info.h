@@ -49,9 +49,9 @@ struct parser_context {
 	char ealg_buf[16];
 	char aalg_buf[16];
 	char modp_buf[16];
-	int (*ealg_getbyname)(const char *const str, int len);
-	int (*aalg_getbyname)(const char *const str, int len);
-	int (*modp_getbyname)(const char *const str, int len);
+	int (*ealg_getbyname)(const char *const str, size_t len);
+	int (*aalg_getbyname)(const char *const str, size_t len);
+	int (*modp_getbyname)(const char *const str, size_t len);
 	char *ealg_str;
 	char *aalg_str;
 	char *modp_str;
@@ -121,11 +121,11 @@ extern void alg_info_free(struct alg_info *alg_info);
 extern void alg_info_addref(struct alg_info *alg_info);
 extern void alg_info_delref(struct alg_info **alg_info);
 
-extern struct alg_info_esp * alg_info_esp_create_from_str(const char *alg_str,
-						   err_t *err_p);
+extern struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
+						   char *err_buf, size_t err_buf_len);
 
-extern struct alg_info_esp * alg_info_ah_create_from_str(const char *alg_str,
-						  err_t *err_p);
+extern struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
+						  char *err_buf, size_t err_buf_len);
 
 extern int alg_info_parse(const char *str);
 extern int alg_info_snprint(char *buf, int buflen,
@@ -138,18 +138,17 @@ extern void alg_info_snprint_ike(char *buf, size_t buflen,
 #define ALG_INFO_IKE_FOREACH(ai, ai_ike, i) \
 	for (i = (ai)->alg_info_cnt, ai_ike = (ai)->ike; i--; ai_ike++)
 
-extern int alg_enum_search_prefix(enum_names *ed, const char *prefix,
-				  const char *str, int str_len);
-extern int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
-				 const char *postfix, const char *str,
-				 int str_len);
+extern int alg_enum_search(enum_names *ed, const char *prefix,
+			   const char *postfix, const char *name,
+			   size_t name_len);
 
-struct parser_context;	/* so it isn't local to the function prototype */
 struct oakley_group_desc;	/* so it isn't local to the function prototype */
+
+extern const struct parser_context empty_p_ctx;	/* full of zeros and NULLs */
 
 extern int alg_info_parse_str(struct alg_info *alg_info,
 			      const char *alg_str,
-			      const char **err_p,
+			      char *err_buf, size_t err_buf_len,
 			      void (*parser_init)(
 				      struct parser_context *p_ctx),
 			      void (*alg_info_add)(struct alg_info *alg_info,

@@ -5,7 +5,7 @@
 
 Summary: Libreswan IPSEC implementation
 Name: libreswan
-Version: 3.8
+Version: 3.9
 # Build KLIPS kernel module?
 %{!?buildklips: %{expand: %%define buildklips 0}}
 
@@ -69,7 +69,6 @@ sed -i 's/-Werror/#-Werror/' lib/liblwres/Makefile
 %{__make} \
   USERCOMPILE='-g $(RPM_OPT_FLAGS) -DGCC_LINT' \
   INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libdir}/ipsec \
   FINALBINDIR=%{_libdir}/ipsec \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANTREE=%{_mandir} \
@@ -92,7 +91,6 @@ done
 %{__make} \
   DESTDIR=%{buildroot} \
   INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libdir}/ipsec \
   FINALBINDIR=%{_libdir}/ipsec \
   FINALLIBEXECDIR=%{_libdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \

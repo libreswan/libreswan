@@ -1,5 +1,6 @@
 /*
  * extract parts of an ip_subnet, and related
+ *
  * Copyright (C) 2000  Henry Spencer.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,12 +13,11 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-
 #include "internal.h"
 #include "libreswan.h"
 
 /*
-   - subnettypeof - get the address type of an ip_subnet
+ * subnettypeof - get the address type of an ip_subnet
  */
 int subnettypeof(src)
 const ip_subnet * src;
@@ -26,7 +26,7 @@ const ip_subnet * src;
 }
 
 /*
-   - networkof - get the network address of a subnet
+ * networkof - get the network address of a subnet
  */
 void networkof(src, dst)
 const ip_subnet * src;
@@ -36,7 +36,7 @@ ip_address *dst;
 }
 
 /*
-   - maskof - get the mask of a subnet, as an address
+ * maskof - get the mask of a subnet, as an address
  */
 void maskof(src, dst)
 const ip_subnet * src;
@@ -48,7 +48,7 @@ ip_address *dst;
 	unsigned char *p;
 
 	if ((size_t)src->maskbits > n * 8 || n > sizeof(buf))
-		return;         /* "can't happen" */
+		return;	/* "can't happen" */
 
 	p = buf;
 	for (b = src->maskbits; b >= 8; b -= 8)
@@ -62,9 +62,9 @@ ip_address *dst;
 }
 
 /*
-   - masktocount - convert a mask, expressed as an address, to a bit count
+ * masktocount - convert a mask, expressed as an address, to a bit count
  */
-int                             /* -1 if not valid mask */
+int	/* -1 if not valid mask */
 masktocount(src)
 const ip_address * src;
 {
@@ -86,14 +86,14 @@ const ip_address * src;
 		p++;
 		n += 8;
 	}
-	if (p < stop && *p != 0) {      /* boundary in mid-byte */
+	if (p < stop && *p != 0) {	/* boundary in mid-byte */
 		b = *p++;
 		while (b & 0x80) {
 			b <<= 1;
 			n++;
 		}
 		if ((b & 0xff) != 0)
-			return -1;      /* bits not contiguous */
+			return -1;	/* bits not contiguous */
 	}
 	while (p < stop && *p == 0)
 		p++;

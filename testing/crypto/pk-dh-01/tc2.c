@@ -17,20 +17,19 @@ static void perform_t2_test(void)
 	struct pcr_skeyid_r *skr = &r.pcr_d.dhr;
 	struct pcr_skeyid_q *skq = &r.pcr_d.dhq;
 
-	skq->thespace.start = 0;
-	skq->thespace.len   = sizeof(skq->space);
+	INIT_WIRE_ARENA(*skq);
+
 	skq->auth = tc2_auth;
 	skq->hash = tc2_hash;
 	skq->oakley_group = tc2_oakleygroup;
 	skq->init = tc2_init;
 	skq->keysize = tc2_encrypter->keydeflen / BITS_PER_BYTE;
 
-#define copydatlen(field, data, len) do { \
+#define copydatlen(field, data, len) { \
 		chunk_t tchunk;           \
 		setchunk(tchunk, data, len); \
-		pluto_crypto_copychunk(&skq->thespace, skq->space \
-				       , &skq->field, tchunk); }   \
-	while (0)
+		WIRE_CLONE_CHUNK(*skq, field, tchunk); \
+	}
 
 	copydatlen(ni, tc2_ni, tc2_ni_len);
 	copydatlen(nr, tc2_nr, tc2_nr_len);
@@ -42,7 +41,7 @@ static void perform_t2_test(void)
 
 #define dumpdat(field) \
 	libreswan_DBG_dump(#field,      \
-			   wire_chunk_ptr(skq, &skq->field), \
+			   WIRE_CHUNK_PTR(*skq, field), \
 			   skq->field.len);
 
 	dumpdat(icookie);
@@ -64,7 +63,7 @@ static void perform_t2_test(void)
 	fflush(stderr);
 
 	{
-		void *shared = wire_chunk_ptr(skr, &skr->shared);
+		void *shared = WIRE_CHUNK_PTR(*skr, shared);
 
 		libreswan_DBG_dump("shared", shared, skr->shared.len);
 	}

@@ -1,3 +1,2 @@
-Interop testcase for strongswan initiator behind nat with virtual ip,
-that is no subnet lives on the road/strongswan side.
+Interop testcase for strongswan initiator behind nat
 

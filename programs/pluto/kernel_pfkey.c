@@ -247,9 +247,9 @@ static bool pfkey_input_ready(void)
 	LSW_FD_ZERO(&readfds);  /* we only care about pfkeyfd */
 	LSW_FD_SET(pfkeyfd, &readfds);
 
-	do
+	do {
 		ndes = lsw_select(pfkeyfd + 1, &readfds, NULL, NULL, &tm);
-	while (ndes == -1 && errno == EINTR);
+	} while (ndes == -1 && errno == EINTR);
 
 	if (ndes < 0) {
 		log_errno((e, "select() failed in pfkey_get()"));
@@ -309,7 +309,7 @@ static bool pfkey_get(pfkey_buf *buf)
 			     || (buf->msg.sadb_msg_type == SADB_REGISTER)
 			     || (buf->msg.sadb_msg_pid == 0 &&
 				 buf->msg.sadb_msg_type ==
-				 K_SADB_X_NAT_T_NEW_MAPPING)
+				   K_SADB_X_NAT_T_NEW_MAPPING)
 			     )) {
 			/* not for us: ignore */
 			DBG(DBG_KERNEL,
@@ -439,10 +439,10 @@ static void process_pfkey_acquire(pfkey_buf *buf,
 	 */
 
 	if (buf->msg.sadb_msg_pid == 0 && /* we only wish to hear from kernel */
-	    !(ugh = src_proto ==
-		    dst_proto ? NULL : "src and dst protocols differ") &&
-	    !(ugh = addrtypeof(src) ==
-		    addrtypeof(dst) ? NULL : "conflicting address types") &&
+	    !(ugh = src_proto == dst_proto ?
+		NULL : "src and dst protocols differ") &&
+	    !(ugh = addrtypeof(src) == addrtypeof(dst) ?
+	        NULL : "conflicting address types") &&
 	    !(ugh = addrtosubnet(src, &ours)) &&
 	    !(ugh = addrtosubnet(dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, 0,
@@ -703,10 +703,9 @@ logerr:
 				 * If the caller wants it, response will point to space.
 				 */
 				pfkey_buf b;
-				pfkey_buf *bp = response !=
-						NULL ? response : &b;
-				int seq =
-					((struct sadb_msg *) extensions[0])->
+				pfkey_buf *bp = response != NULL ?
+					response : &b;
+				int seq = ((struct sadb_msg *) extensions[0])->
 					sadb_msg_seq;
 
 				if (!pfkey_get_response(bp, seq)) {
@@ -825,7 +824,8 @@ static int kernelop2klips(enum pluto_sadb_operations op)
 
 #if defined(KLIPS_MAST)
 	/* In mast mode, we never want to set an eroute.
-	 * Setting the POLICYONLY disables eroutes. */
+	 * Setting the POLICYONLY disables eroutes.
+	 */
 	if (kernel_ops->type == USE_MASTKLIPS)
 		klips_flags |= SADB_X_SAFLAGS_POLICYONLY;
 #endif
@@ -853,7 +853,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      unsigned int transport_proto,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
-		      time_t use_lifetime UNUSED,
+		      deltatime_t use_lifetime UNUSED,
 		      unsigned long sa_priority UNUSED,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
@@ -994,30 +994,26 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 		return FALSE;
 
 	if (sa->authkeylen != 0) {
-		success =
-			pfkey_build(pfkey_key_build(&extensions[
-							    K_SADB_EXT_KEY_AUTH
-						    ],
-						    K_SADB_EXT_KEY_AUTH,
-						    sa->authkeylen *
-						    BITS_PER_BYTE,
-						    sa->authkey),
-				    "pfkey_key_a Add SA",
-				    sa->text_said, extensions);
+		success = pfkey_build(pfkey_key_build(&extensions[
+							K_SADB_EXT_KEY_AUTH],
+						      K_SADB_EXT_KEY_AUTH,
+						      sa->authkeylen *
+							BITS_PER_BYTE,
+						      sa->authkey),
+				      "pfkey_key_a Add SA",
+				      sa->text_said, extensions);
 		if (!success)
 			return FALSE;
 	}
 
 #ifdef KLIPS_MAST
 	if (sa->ref != IPSEC_SAREF_NULL || sa->refhim != IPSEC_SAREF_NULL) {
-		success =
-			pfkey_build(pfkey_saref_build(&extensions[
-							      K_SADB_X_EXT_SAREF
-						      ],
-						      sa->ref,
-						      sa->refhim),
-				    "pfkey_key_sare Add SA",
-				    sa->text_said, extensions);
+		success = pfkey_build(pfkey_saref_build(&extensions[
+							   K_SADB_X_EXT_SAREF],
+							sa->ref,
+							sa->refhim),
+				      "pfkey_key_sare Add SA",
+				      sa->text_said, extensions);
 		if (!success)
 			return FALSE;
 	}
@@ -1034,16 +1030,14 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 	}
 
 	if (sa->enckeylen != 0) {
-		success =
-			pfkey_build(pfkey_key_build(&extensions[
-							    K_SADB_EXT_KEY_ENCRYPT
-						    ],
-						    K_SADB_EXT_KEY_ENCRYPT,
-						    sa->enckeylen *
-						    BITS_PER_BYTE,
-						    sa->enckey),
-				    "pfkey_key_e Add SA",
-				    sa->text_said, extensions);
+		success = pfkey_build(pfkey_key_build(&extensions[
+							K_SADB_EXT_KEY_ENCRYPT],
+						      K_SADB_EXT_KEY_ENCRYPT,
+						      sa->enckeylen *
+							BITS_PER_BYTE,
+						      sa->enckey),
+				      "pfkey_key_e Add SA",
+				      sa->text_said, extensions);
 		if (!success)
 			return FALSE;
 	}
@@ -1118,9 +1112,8 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 
 #ifdef KLIPS_MAST
 		if (replies[K_SADB_X_EXT_SAREF]) {
-			struct sadb_x_saref *sar =
-				(struct sadb_x_saref *)replies[
-					K_SADB_X_EXT_SAREF];
+			struct sadb_x_saref *sar = (struct sadb_x_saref *)
+				replies[K_SADB_X_EXT_SAREF];
 
 			sa->ref = sar->sadb_x_saref_me;
 			sa->refhim = sar->sadb_x_saref_him;
@@ -1349,7 +1342,8 @@ bool pfkey_shunt_eroute(struct connection *c,
 					SA_INT,
 					sr->this.protocol,
 					ET_INT,
-					null_proto_info, 0,
+					null_proto_info,
+					deltatime(0),
 					c->sa_priority, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label
@@ -1480,12 +1474,9 @@ static const char *read_proto(const char * s, size_t * len,
 		*transport_proto = 0;
 		return 0;
 	}
-	ugh = ttoul(p + 1, l - ((p - s) + 1), 10, &proto);
-	if (ugh != 0)
+	ugh = ttoulb(p + 1, l - ((p - s) + 1), 10, 0xFFFF, &proto);
+	if (ugh != NULL)
 		return ugh;
-
-	if (proto > 65535)
-		return "protocol number is too large, legal range is 0-65535";
 
 	*len = p - s;
 	*transport_proto = proto;
@@ -1521,15 +1512,14 @@ void scan_proc_shunts(void)
 {
 	static const char procname[] = "/proc/net/ipsec_eroute";
 	FILE *f;
-	time_t nw = now();
+	monotime_t nw = mononow();
 	int lino;
 	struct eroute_info *expired = NULL;
 
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 
 	DBG(DBG_CONTROL,
-	    DBG_log("scanning for shunt eroutes")
-	    );
+	    DBG_log("scanning for shunt eroutes"));
 
 	/* free any leftover entries: they will be refreshed if still current */
 	while (orphaned_holds != NULL) {
@@ -1622,7 +1612,7 @@ void scan_proc_shunts(void)
 			/* our client */
 
 			context = "source subnet field malformed: ";
-			ugh = ttosubnet((char *)ff[0].ptr, ff[0].len, 0,
+			ugh = ttosubnet((char *)ff[0].ptr, ff[0].len, AF_UNSPEC,
 					&eri.ours);
 			if (ugh != NULL)
 				break;
@@ -1630,7 +1620,7 @@ void scan_proc_shunts(void)
 			/* his client */
 
 			context = "destination subnet field malformed: ";
-			ugh = ttosubnet((char *)ff[2].ptr, ff[2].len, 0,
+			ugh = ttosubnet((char *)ff[2].ptr, ff[2].len, AF_UNSPEC,
 					&eri.his);
 			if (ugh != NULL)
 				break;
@@ -1720,9 +1710,7 @@ void scan_proc_shunts(void)
 						if (eri.count != bs->count) {
 							bs->count = eri.count;
 							bs->last_activity = nw;
-						} else if (nw -
-							   bs->last_activity >
-							   SHUNT_PATIENCE) {
+						} else if (monobefore(monotimesum(bs->last_activity, deltatime(SHUNT_PATIENCE)), nw)) {
 							eri.next = expired;
 							expired = clone_thing(
 								eri,
@@ -1769,12 +1757,11 @@ void scan_proc_shunts(void)
  * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
  * could mean that the SA is broken and needs to be replace anyway.
  */
-bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
+bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 {
 	static const char procname[] = "/proc/net/ipsec_spi";
 	FILE *f;
-	char buf[1024];
-	int ret = TRUE;
+	int ret;
 
 	passert(st != NULL);
 
@@ -1782,7 +1769,8 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 	if (f == NULL) { /** Can't open the file, perhaps were are on 26sec? */
 		ret = TRUE;
 	} else {
-		while (f != NULL) {
+		for (;;) {
+			char buf[1024];
 			char *line;
 			char text_said[SATOT_BUF];
 			u_int8_t proto = 0;
@@ -1790,7 +1778,7 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 			ip_said said;
 			ipsec_spi_t spi = 0;
 			static const char idle[] = "idle=";
-			time_t idle_time;                               /* idle time we read from /proc */
+			deltatime_t idle_time;                               /* idle time we read from /proc */
 
 			dst = st->st_connection->spd.this.host_addr;    /* inbound SA */
 			if (st->st_ah.present) {
@@ -1820,6 +1808,7 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 			if (strncmp(line, text_said, strlen(text_said)) == 0) {
 				/* we found a match, now try to find idle= */
 				char *p = strstr(line, idle);
+
 				if (p == NULL) {        /* SAs which haven't been used yet
 					                   don't have it */
 					ret = TRUE;     /* it didn't have traffic */
@@ -1838,12 +1827,12 @@ bool pfkey_was_eroute_idle(struct state *st, time_t idle_max)
 						ret = TRUE;
 						break;
 					}
-					idle_time = idle_time_int;
+					idle_time = deltatime(idle_time_int);
 				}
-				if (idle_time > idle_max) {
+				if (deltaless(idle_max, idle_time)) {
 					DBG(DBG_KERNEL,
 					    DBG_log("SA %s found idle for more than %ld sec",
-						    text_said, idle_max));
+						    text_said, (long)deltasecs(idle_max)));
 					ret = TRUE;
 					break;
 				} else {
@@ -1909,8 +1898,7 @@ bool pfkey_plumb_mast_device(int mast_dev)
 					 ++pfkey_seq, pid)))
 		return FALSE;
 
-	if ((error =
-		     pfkey_outif_build(&extensions[K_SADB_X_EXT_PLUMBIF],
+	if ((error = pfkey_outif_build(&extensions[K_SADB_X_EXT_PLUMBIF],
 				       mast_dev)))
 		return FALSE;
 

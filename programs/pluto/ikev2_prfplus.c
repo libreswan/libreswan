@@ -33,7 +33,6 @@
 #include <signal.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -57,7 +56,7 @@ static void v2prfplus(struct v2prf_stuff *vps)
 {
 	struct hmac_ctx ctx;
 
-	hmac_init_chunk(&ctx, vps->prf_hasher, *vps->skeyseed);
+	hmac_init(&ctx, vps->prf_hasher, vps->skeyseed);
 	hmac_update_chunk(&ctx, vps->t);
 	hmac_update_chunk(&ctx, vps->ni);
 	hmac_update_chunk(&ctx, vps->nr);

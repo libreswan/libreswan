@@ -17,7 +17,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>     /* system(), strtoul() */
+#include <stdlib.h>     /* system() */
 #include <unistd.h>     /* getuid() */
 #include <linux/types.h>
 #include <sys/ioctl.h>  /* ioctl() */
@@ -132,8 +132,7 @@ static int createdelete_virtual(int createdelete, char *virtname)
 		exit(1);
 	}
 
-	if ((error =
-		     pfkey_outif_build(&extensions[SADB_X_EXT_PLUMBIF],
+	if ((error = pfkey_outif_build(&extensions[SADB_X_EXT_PLUMBIF],
 				       vifnum))) {
 		fprintf(stderr,
 			"%s: Trouble building outif extension, error=%d.\n",
@@ -190,17 +189,15 @@ int main(int argc, char *argv[])
 	char virtname[64];
 	struct stat sts;
 
-	memset(&ifr, 0, sizeof(ifr));
-	memset(&shc, 0, sizeof(shc));
+	zero(&ifr);
+	zero(&shc);
 	virtname[0] = '\0';
 	progname = argv[0];
 
 	tool_init_log();
 
-	while ((c =
-			getopt_long_only(argc, argv, "" /*"adchvV:P:l:+:"*/,
-					 longopts,
-					 0)) != EOF) {
+	while ((c = getopt_long_only(argc, argv, "" /*"adchvV:P:l:+:"*/,
+				     longopts, 0)) != EOF) {
 		switch (c) {
 		case 'g':
 			debug = 1;
@@ -235,12 +232,12 @@ int main(int argc, char *argv[])
 		case 'C':
 			check_conflict(shc.cf_cmd, createdelete);
 			createdelete = SADB_X_PLUMBIF;
-			strncat(virtname, optarg, sizeof(virtname) - 1);
+			jam_str(virtname, sizeof(virtname), optarg);
 			break;
 		case 'D':
 			check_conflict(shc.cf_cmd, createdelete);
 			createdelete = SADB_X_UNPLUMBIF;
-			strncat(virtname, optarg, sizeof(virtname) - 1);
+			jam_str(virtname, sizeof(virtname), optarg);
 			break;
 
 		case 'V':
@@ -269,7 +266,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if ( ((stat("/proc/net/pfkey", &sts)) == 0) ) {
+	if (stat("/proc/net/pfkey", &sts) == 0) {
 		fprintf(stderr,
 			"%s: NETKEY does not support virtual interfaces.\n",
 			progname);

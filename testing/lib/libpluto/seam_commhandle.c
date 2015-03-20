@@ -63,8 +63,7 @@ void recv_pcap_packet_gen(u_char *user,
 
 	process_packet(&md);
 
-	if (md != NULL)
-		release_md(md);
+	release_any_md(&md);
 
 	cur_state = NULL;
 	reset_cur_connection();

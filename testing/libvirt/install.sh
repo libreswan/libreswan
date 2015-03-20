@@ -28,6 +28,7 @@ fi
 
 touch /var/lib/libvirt/qemu/lswantest || (
 	echo "The qemu group needs write permissions in /var/lib/libvirt/qemu/"
+	echo "ensure your user's main group is qemu, or chmod 777 this directory"
 	exit 43
 )
 rm -f /var/lib/libvirt/qemu/lswantest
@@ -49,45 +50,14 @@ then
 	exit 42
 fi
 
-echo "creating VM disk images"
-
-if [ ! -f $POOLSPACE/swan"$OSTYPE"base.img ]
-then
-	echo "Creating base $OSTYPE image using libvirt"
-
-	# check for hardware VM instructions
-	cpu="--hvm"
-	grep vmx /proc/cpuinfo > /dev/null || cpu=""
-
-	# install base guest to obtain a file image that will be used as uml root
-	# For static networking add kernel args parameters ip=.... etc
-	# (network settings in kickstart are ignored by modern dracut)
-	sudo virt-install --connect=qemu:///system \
-	   --network=network:default,model=virtio \
-	   --initrd-inject=./"$OSTYPE"base.ks \
-	   --extra-args="swanname=swan"$OSTYPE"base ks=file:/'$OSTYPE'base.ks \
-	   console=tty0 console=ttyS0,115200" \
-	   --name=swan"$OSTYPE"base \
-	   --disk $POOLSPACE/swan"$OSTYPE"base.img,size=8 \
-	   --ram 1024 \
-	   --vcpus=1 \
-	   --check-cpu \
-	   --accelerate \
-	   --location=$OSMEDIA \
-	   --nographics \
-	   --autostart \
-	   --noreboot \
-	   $cpu
-fi
-
 # Create the virtual networks
-
 for netname in net/*
 do
   net=`basename $netname`
   if [ -z "`sudo virsh net-list --all |grep $net | awk '{ print $1}'`" ];
   then
 	sudo virsh net-define net/$net
+	sudo virsh net-autostart $net
 	echo $net created 
 	sudo virsh net-start $net
 	echo $net activated
@@ -99,6 +69,41 @@ do
 	echo $net already exists - not created
   fi
 done
+
+echo "creating VM disk images"
+
+if [ ! -f $POOLSPACE/swan"$OSTYPE"base.img ]
+then
+	echo "Creating base $OSTYPE image using libvirt"
+
+	# check for hardware VM instructions
+	cpu="--hvm"
+	grep vmx /proc/cpuinfo > /dev/null || cpu=""
+
+	# create the 8GB disk image ourselves - latest virt-install won't create it
+	chmod ga+x ~ $POOLSPACE
+	dd if=/dev/zero of=$POOLSPACE/swan"$OSTYPE"base.img bs=1024k count=8192
+	# install base guest to obtain a file image that will be used as uml root
+	# For static networking add kernel args parameters ip=.... etc
+	# (network settings in kickstart are ignored by modern dracut)
+	sudo virt-install --connect=qemu:///system \
+	   --network=network:swandefault,model=virtio \
+	   --initrd-inject=./"$OSTYPE"base.ks \
+	   --extra-args="swanname=swan${OSTYPE}base ks=file:/${OSTYPE}base.ks \
+	   console=tty0 console=ttyS0,115200" \
+	   --name=swan"$OSTYPE"base \
+	   --disk path=$POOLSPACE/swan"$OSTYPE"base.img \
+	   --ram 1024 \
+	   --vcpus=1 \
+	   --check-cpu \
+	   --accelerate \
+	   --location=$OSMEDIA \
+	   --nographics \
+	   --autostart \
+	   --noreboot \
+	   $cpu
+fi
+
 
 # create many copies of this image using copy-on-write
 qemu-img convert -O qcow2 $POOLSPACE/swan"$OSTYPE"base.img $POOLSPACE/swan"$OSTYPE"base.qcow2

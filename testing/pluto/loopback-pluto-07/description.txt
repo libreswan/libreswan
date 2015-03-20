@@ -1,0 +1,8 @@
+
+This loopback tests a weird configuration that triggers a passert in
+connections.c instantiate()
+
+The passert it hits is:
+
+    passert(c->spd.next == NULL);
+

@@ -25,7 +25,6 @@
 #include <netinet/in.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include <libreswan/passert.h>
 
 #include "constants.h"
@@ -33,11 +32,8 @@
 
 /*
  * To obsolete or convert to runtime options:
- * ALG_PATCH
  * ALLOW_MICROSOFT_BAD_PROPOSAL
- * DMALLOC
  * EMIT_ISAKMP_SPI
- * I_DONT_CARE_OF_SSH_SENTINEL
  * IPSEC_CONNECTION_LIMIT
  * NET_21
  * NO_EXTRA_IKE
@@ -49,11 +45,9 @@
  * PLUTO_GROUP_CTL
  * SINGLE_CONF_DIR
  * SOFTREMOTE_CLIENT_WORKAROUND
- * SUPPORT_ESP_NULL
  * TEST_INDECENT_PROPOSAL
  * USE_3DES USE_AES USE_MD5 USE_SERPENT USE_SHA1 USE_SHA2 USE_TWOFISH
  * USE_KEYRR
- * VIRTUAL_IP
  */
 
 static const char *const kern_interface_name[] = {
@@ -66,7 +60,7 @@ static const char *const kern_interface_name[] = {
 	"bsdkame"
 };
 enum_names kern_interface_names =
-{ NO_KERNEL, USE_BSDKAME, kern_interface_name, NULL };
+	{ NO_KERNEL, USE_BSDKAME, kern_interface_name, NULL };
 
 /* DPD actions */
 static const char *const dpd_action_name[] = {
@@ -76,31 +70,35 @@ static const char *const dpd_action_name[] = {
 };
 
 enum_names dpd_action_names =
-{ EVENT_NULL, DPD_ACTION_RESTART, dpd_action_name, NULL };
+	{ DPD_ACTION_CLEAR, DPD_ACTION_RESTART, dpd_action_name, NULL };
 
 /* Timer events */
 static const char *const timer_event_name[] = {
 	"EVENT_NULL",
+
 	"EVENT_REINIT_SECRET",
 	"EVENT_SHUNT_SCAN",
+	"EVENT_LOG_DAILY",
+	"EVENT_PENDING_DDNS",
+	"EVENT_PENDING_PHASE2",
+
 	"EVENT_SO_DISCARD",
-	"EVENT_RETRANSMIT",
+	"EVENT_v1_RETRANSMIT",
 	"EVENT_SA_REPLACE",
 	"EVENT_SA_REPLACE_IF_USED",
 	"EVENT_SA_EXPIRE",
 	"EVENT_NAT_T_KEEPALIVE",
 	"EVENT_DPD",
 	"EVENT_DPD_TIMEOUT",
-	"EVENT_LOG_DAILY",
 	"EVENT_CRYPTO_FAILED",
-	"EVENT_PENDING_PHASE2",
+
 	"EVENT_v2_RETRANSMIT",
+	"EVENT_v2_RESPONDER_TIMEOUT",
 	"EVENT_v2_LIVENESS",
-	"EVENT_PENDING_DDNS"
 };
 
 enum_names timer_event_names =
-{ EVENT_NULL, EVENT_PENDING_DDNS, timer_event_name, NULL };
+	{ EVENT_NULL, EVENT_v2_LIVENESS, timer_event_name, NULL };
 
 /* State of exchanges */
 static const char *const state_name[] = {
@@ -149,11 +147,10 @@ static const char *const state_name[] = {
 	"STATE_PARENT_R1",
 	"STATE_PARENT_R2",
 	"STATE_IKEv2_ROOF"
-
 };
 
 enum_names state_names =
-{ STATE_MAIN_R0, STATE_IKEv2_ROOF - 1, state_name, NULL };
+	{ STATE_MAIN_R0, STATE_IKEv2_ROOF - 1, state_name, NULL };
 
 /* story for state */
 
@@ -203,41 +200,30 @@ const char *const state_story[] = {
 };
 
 enum_names state_stories =
-{ STATE_MAIN_R0, STATE_IKEv2_ROOF - 1, state_story, NULL };
+	{ STATE_MAIN_R0, STATE_IKEv2_ROOF - 1, state_story, NULL };
 
 static const char *const natt_method_result_name[] = {
-	"NAT behind me",        /* 30 */
-	"NAT behind peer"       /* 31 */
 };
-static enum_names natt_method_result_names =
-{ NAT_TRAVERSAL_NAT_BHND_ME, NAT_TRAVERSAL_NAT_BHND_PEER,
-  natt_method_result_name, NULL };
 
-static const char *const natt_method_name[] = {
-	"draft-ietf-ipsec-nat-t-ike-00/01", /* 1 */
+/*
+ * natt_bit_names is dual purpose:
+ * - for bitnamesof(natt_bit_names, lset_t of enum natt_method)
+ * - for enum_name(&natt_method_names, enum natt_method)
+ */
+const char *const natt_bit_names[] = {
+	"none",
 	"draft-ietf-ipsec-nat-t-ike-02/03",
 	"draft-ietf-ipsec-nat-t-ike-05",
-	"RFC 3947 (NAT-Traversal)" /* 4*/
+	"RFC 3947 (NAT-Traversal)",
+
+	"I am behind NAT",
+	"peer behind NAT",
+	NULL	/* end for bitnamesof() */
 };
+
 enum_names natt_method_names =
-{ NAT_TRAVERSAL_METHOD_IETF_00_01, NAT_TRAVERSAL_METHOD_IETF_RFC,
-  natt_method_name, &natt_method_result_names };
-
-/* pluto crypto operations */
-static const char *const pluto_cryptoop_strings[] = {
-	"build_kenonce",        /* calculate g^i and nonce */
-	"rsa_sign",             /* do rsa signature operation */
-	"rsa_check",            /* do rsa signature check */
-	"x509cert_fetch",       /* X.509 fetch operation */
-	"x509crl_fetch",        /* X.509 crl fetch operation */
-	"build_nonce",          /* just fetch a new nonce */
-	"compute dh+iv",        /* perform (g^x)(g^y) and calculate skeyids */
-	"compute dh(p2)",       /* perform (g^x)(g^y) */
-	"compute dh(v2)",       /* IKEv2 IKE_SA calculation */
-};
-
-enum_names pluto_cryptoop_names =
-{ pcr_build_kenonce, pcr_compute_dh_v2, pluto_cryptoop_strings, NULL };
+	{ NAT_TRAVERSAL_METHOD_none, NATED_PEER,
+	  natt_bit_names, NULL };
 
 /* pluto crypto importance */
 static const char *const pluto_cryptoimportance_strings[] = {
@@ -250,8 +236,8 @@ static const char *const pluto_cryptoimportance_strings[] = {
 };
 
 enum_names pluto_cryptoimportance_names =
-{ pcim_notset_crypto, pcim_demand_crypto,
-  pluto_cryptoimportance_strings, NULL };
+	{ pcim_notset_crypto, pcim_demand_crypto,
+	  pluto_cryptoimportance_strings, NULL };
 
 /* routing status names */
 
@@ -267,7 +253,7 @@ static const char *const routing_story_strings[] = {
 };
 
 enum_names routing_story =
-{ RT_UNROUTED, RT_ROUTED_TUNNEL, routing_story_strings, NULL };
+	{ RT_UNROUTED, RT_ROUTED_TUNNEL, routing_story_strings, NULL };
 
 static const char *const stfstatus_names[] = {
 	"STF_IGNORE",
@@ -280,13 +266,13 @@ static const char *const stfstatus_names[] = {
 	"STF_STOLEN",
 	"STF_FAIL"
 };
-enum_names stfstatus_name =
-{ STF_IGNORE, STF_FAIL, stfstatus_names, NULL };
 
-/* Goal BITs for establishing an SA
+enum_names stfstatus_name =
+	{ STF_IGNORE, STF_FAIL, stfstatus_names, NULL };
+
+/* Names for sa_policy_bits.
  * Note: we drop the POLICY_ prefix so that logs are more concise.
  */
-
 const char *const sa_policy_bit_names[] = {
 	"PSK",
 	"RSASIG",
@@ -298,30 +284,27 @@ const char *const sa_policy_bit_names[] = {
 	"DISABLEARRIVALCHECK",
 	"SHUNT0",
 	"SHUNT1",
-	"FAILSHUNT0",
-	"FAILSHUNT1",
-	"DONTREKEY",
+	"FAIL0",
+	"FAIL1",
+	"DONT_REKEY",
 	"OPPORTUNISTIC",
 	"GROUP",
 	"GROUTED",
 	"UP",
 	"XAUTH",
-	"MODECFGPULL",
+	"MODECFG_PULL",
 	"AGGRESSIVE",
-	"PERHOST",
-	"SUBHOST",
-	"PERPROTO",
 	"OVERLAPIP",
-	"!IKEv1",
-	"IKEv2ALLOW",
-	"IKEv2Init",
-	"IKEv2ALLOW_NARROWING",
-	"SAREFTRACK",
-	"SAREFCONNTRACK",
-	"IKE_FRAG",
+	"IKEV1_DISABLE",
+	"IKEV2_ALLOW",
+	"IKEV2_PROPOSE",
+	"IKEV2_ALLOW_NARROWING",
+	"SAREF_TRACK",
+	"SAREF_TRACK_CONNTRACK",
+	"IKE_FRAG_ALLOW",
 	"IKE_FRAG_FORCE",
 	"NO_IKEPAD",
-	NULL
+	NULL	/* end for bitnamesof() */
 };
 
 static const char *const policy_shunt_names[4] = {
@@ -358,8 +341,8 @@ const char *prettypolicy(lset_t policy)
 		 pbitnamesbuf,
 		 shunt != 0 ? "+" : "",
 		 shunt != 0 ? policy_shunt_names[shunt] : "",
-		 fail != 0 ? "+failure" : "", fail !=
-		 0 ? policy_fail_names[fail] : "",
+		 fail != 0 ? "+failure" : "",
+		 fail != 0 ? policy_fail_names[fail] : "",
 		 NEVER_NEGOTIATE(policy) ? "+NEVER_NEGOTIATE" : "");
 	return buf;
 }

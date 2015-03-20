@@ -22,19 +22,17 @@
 #ifndef _CERTS_H
 #define _CERTS_H
 
-#include "libreswan/ipsec_policy.h"
-
 #include "secrets.h"
 #include "x509.h"
 
 /* advance warning of imminent expiry of
  * cacerts, public keys, and crls
+ * unused: OCSP_CERT_WARNING_INTERVAL	(30 * secs_per_day)
+ * unused: ACERT_WARNING_INTERVAL	(1 * secs_per_day)
  */
-#define CA_CERT_WARNING_INTERVAL        30      /* days */
-#define OCSP_CERT_WARNING_INTERVAL      30      /* days */
-#define PUBKEY_WARNING_INTERVAL         14      /* days */
-#define CRL_WARNING_INTERVAL             7      /* days */
-#define ACERT_WARNING_INTERVAL           1      /* day */
+#define CA_CERT_WARNING_INTERVAL	(30 * secs_per_day)
+#define PUBKEY_WARNING_INTERVAL		(14 * secs_per_day)
+#define CRL_WARNING_INTERVAL		(7 * secs_per_day)
 
 /* access structure for RSA private keys */
 
@@ -49,34 +47,28 @@ struct rsa_privkey {
  * currently X.509 certificates are supported
  */
 typedef struct {
-	bool forced;
-	enum ipsec_cert_type type;
+	enum ike_cert_type ty;
 	union {
-		x509cert_t *x509;
-		chunk_t blob;
+		/* some day we may support more */
+		x509cert_t *x509;	/* CERT_X509_SIGNATURE */
 	} u;
 } cert_t;
 
 
 extern chunk_t get_mycert(cert_t cert);
-extern bool load_cert(bool forcedtype,
-		      const char *filename,
-		      int verbose,
+extern bool load_cert(const char *filename,
 		      const char *label, cert_t *cert);
 
-extern bool same_cert(const cert_t *a, const cert_t *b);
 extern void share_cert(cert_t cert);
 extern void release_cert(cert_t cert);
 extern void list_certs(bool utc);
 
 extern struct pubkey* allocate_RSA_public_key(const cert_t cert);
 extern bool load_coded_file(const char *filename,
-			    int verbose,
 			    const char *type, chunk_t *blob);
 extern bool cert_exists_in_nss(const char *nickname);
-extern bool load_cert_from_nss(bool forcedtype,
-			       const char *nssHostCertNickName,
-			       int verbose, const char *label, cert_t *cert);
+extern bool load_cert_from_nss(const char *nssHostCertNickName,
+			       const char *label, cert_t *cert);
 extern void load_authcerts_from_nss(const char *type, u_char auth_flags);
 
 #endif /* _CERTS_H */

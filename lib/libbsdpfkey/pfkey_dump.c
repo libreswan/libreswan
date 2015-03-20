@@ -104,7 +104,8 @@
 static char *str_ipaddr(struct sockaddr *);
 static char *str_prefport(u_int, u_int, u_int, u_int);
 static void str_upperspec(u_int, u_int, u_int);
-static char *str_time(time_t);
+static char *str_mono_time(monotime_t);
+static char *str_time(deltime_t);
 static void str_lifetime_byte(struct sadb_lifetime *, char *);
 
 struct val2str {
@@ -310,14 +311,14 @@ struct sadb_msg *m;
 
 	/* lifetime */
 	if (m_lftc != NULL) {
-		time_t tmp_time = time(0);
+		realtime_t nw = realnow();
 
 		printf("\tcreated: %s",
 		       str_time(m_lftc->sadb_lifetime_addtime));
-		printf("\tcurrent: %s\n", str_time(tmp_time));
+		printf("\tcurrent: %s\n", str_time(nw));
 		printf("\tdiff: %lu(s)",
 		       (u_long)(m_lftc->sadb_lifetime_addtime == 0 ?
-				0 : (tmp_time -
+				0 : (nw -
 				     m_lftc->sadb_lifetime_addtime)));
 
 		printf("\thard: %lu(s)",
@@ -328,7 +329,7 @@ struct sadb_msg *m;
 				0 : m_lfts->sadb_lifetime_addtime));
 
 		printf("\tlast: %s",
-		       str_time(m_lftc->sadb_lifetime_usetime));
+		       str_mon_time(m_lftc->sadb_lifetime_usetime));
 		printf("\thard: %lu(s)",
 		       (u_long)(m_lfth == NULL ?
 				0 : m_lfth->sadb_lifetime_usetime));
@@ -357,8 +358,6 @@ struct sadb_msg *m;
 
 	/* XXX DEBUG */
 	printf("refcnt=%u\n", m->sadb_msg_reserved);
-
-	return;
 }
 
 void pfkey_spdump(m)
@@ -396,10 +395,18 @@ struct sadb_msg *m;
 		case AF_INET6:
 			if (getnameinfo(sa, sa->sa_len, NULL, 0,
 					pbuf, sizeof(pbuf),
-					NI_NUMERICSERV) != 0)
+					NI_NUMERICSERV) != 0) {
 				sport = 0;      /*XXX*/
-			else
-				sport = atoi(pbuf);
+			} else {
+				unsigned long u = 0;
+				err_t ugh = ttoulb(pbuf, 0, 0, 0xFFFF, &u);
+
+				if (ugh != NULL) {
+					printf("source port: %s\n", ugh);
+					return;
+				}
+				sport = u;
+			}
 			printf("%s%s ", str_ipaddr(sa),
 			       str_prefport(sa->sa_family,
 					    m_saddr->sadb_address_prefixlen,
@@ -418,10 +425,18 @@ struct sadb_msg *m;
 		case AF_INET6:
 			if (getnameinfo(sa, sa->sa_len, NULL, 0,
 					pbuf, sizeof(pbuf),
-					NI_NUMERICSERV) != 0)
+					NI_NUMERICSERV) != 0) {
 				dport = 0;      /*XXX*/
-			else
-				dport = atoi(pbuf);
+			} else {
+				unsigned long u = 0;
+				err_t ugh = ttoulb(pbuf, 0, 0, 0xFFFF, &u);
+
+				if (ugh != NULL) {
+					printf("destination port: %s\n", ugh);
+					return;
+				}
+				dport = u;
+			}
 			printf("%s%s ", str_ipaddr(sa),
 			       str_prefport(sa->sa_family,
 					    m_daddr->sadb_address_prefixlen,
@@ -462,9 +477,9 @@ struct sadb_msg *m;
 	/* lifetime */
 	if (m_lftc) {
 		printf("\tcreated: %s  ",
-		       str_time(m_lftc->sadb_lifetime_addtime));
+		       str_mono_time(m_lftc->sadb_lifetime_addtime));
 		printf("lastused: %s\n",
-		       str_time(m_lftc->sadb_lifetime_usetime));
+		       str_mono_time(m_lftc->sadb_lifetime_usetime));
 	}
 	if (m_lfth) {
 		printf("\tlifetime: %lu(s) ",
@@ -480,8 +495,6 @@ struct sadb_msg *m;
 
 	/* XXX TEST */
 	printf("\trefcnt=%u\n", m->sadb_msg_reserved);
-
-	return;
 }
 
 /*
@@ -531,7 +544,7 @@ u_int family, pref, port, ulp;
 		snprintf(prefbuf, sizeof(prefbuf), "/%u", pref);
 
 	if (ulp == IPPROTO_ICMPV6) {
-		memset(portbuf, 0, sizeof(portbuf));
+		zero(&portbuf);
 	} else {
 		if (port == IPSEC_PORT_ANY)
 			snprintf(portbuf, sizeof(portbuf), "[%s]", "any");
@@ -575,19 +588,18 @@ u_int ulp, p1, p2;
 
 /*
  * set "Mon Day Time Year" to buffer
+ * Not re-entrant because it returns a pointer to a static buffer.
  */
-static char *str_time(t)
-time_t t;
+static char *str_real_time(realtime_t t)
 {
+	/* ??? What's 20?  What's 128?  Whats 4? */
 	static char buf[128];
 
 	if (t == 0) {
-		int i = 0;
-		for (; i < 20; )
-			buf[i++] = ' ';
+		memset(buf, ' ', 20);
 	} else {
-		char *t0;
-		t0 = ctime(&t);
+		char *t0 = ctime(&t.real_secs);
+
 		memcpy(buf, t0 + 4, 20);
 	}
 
@@ -596,9 +608,13 @@ time_t t;
 	return buf;
 }
 
-static void str_lifetime_byte(x, str)
-struct sadb_lifetime *x;
-char *str;
+/* print a monotonic clock time converted to real timebase */
+static char *str_mono_time(monotime_t t)
+{
+	return str_real_time(realtimesum(realnow(), diffmonotime(t, mononow())));
+}
+
+static void str_lifetime_byte(struct sadb_lifetime *x, char *str)
 {
 	double y;
 	char *unit;

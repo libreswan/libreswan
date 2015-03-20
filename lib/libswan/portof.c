@@ -1,5 +1,6 @@
 /*
  * low-level ip_address ugliness
+ *
  * Copyright (C) 2000  Henry Spencer.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -16,9 +17,9 @@
 #include "libreswan.h"
 
 /*
-   - portof - get the port field of an ip_address
+ * portof - get the port field of an ip_address
  */
-int                             /* network order */
+int	/* network order */
 portof(src)
 const ip_address * src;
 {
@@ -32,17 +33,17 @@ const ip_address * src;
 
 		break;
 	default:
-		return -1;      /* "can't happen" */
+		return -1;	/* "can't happen" */
 
 		break;
 	}
 }
 
 /*
-   - setportof - set the port field of an ip_address
+ * setportof - set the port field of an ip_address
  */
 void setportof(port, dst)
-int port;                       /* network order */
+int port;	/* network order */
 ip_address *dst;
 {
 	switch (dst->u.v4.sin_family) {
@@ -56,7 +57,7 @@ ip_address *dst;
 }
 
 /*
-   - sockaddrof - get a pointer to the sockaddr hiding inside an ip_address
+ * sockaddrof - get a pointer to the sockaddr hiding inside an ip_address
  */
 struct sockaddr *sockaddrof(src)
 ip_address *src;
@@ -71,16 +72,16 @@ ip_address *src;
 
 		break;
 	default:
-		return NULL;    /* "can't happen" */
+		return NULL;	/* "can't happen" */
 
 		break;
 	}
 }
 
 /*
-   - sockaddrlenof - get length of the sockaddr hiding inside an ip_address
+ * sockaddrlenof - get length of the sockaddr hiding inside an ip_address
  */
-size_t                          /* 0 for error */
+size_t	/* 0 for error */
 sockaddrlenof(src)
 const ip_address * src;
 {

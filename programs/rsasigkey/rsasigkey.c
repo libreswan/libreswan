@@ -151,7 +151,7 @@ static char *hexOut(SECItem *data)
 	static char hexbuf[3 + MAXBITS / 4 + 1];
 	char *hexp;
 
-	memset(hexbuf, 0, 3 + MAXBITS / 4 + 1);
+	zero(&hexbuf);
 	for (i = 0, hexp = hexbuf + 3; i < data->len; i++, hexp += 2)
 		sprintf(hexp, "%02x", data->data[i]);
 	*hexp = '\0';
@@ -172,7 +172,7 @@ static void UpdateNSS_RNG(void)
 	getrandom(RAND_BUF_SIZE, buf);
 	rv = PK11_RandomUpdate(buf, sizeof buf);
 	assert(rv == SECSuccess);
-	memset(buf, 0, sizeof buf);
+	zero(&buf);
 }
 
 /*  Returns the password passed in in the text file.
@@ -361,7 +361,15 @@ int main(int argc, char *argv[])
 		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
 		nbits = 3072 + 16 * rand() % 64;
 	} else {
-		nbits = atoi(argv[optind]);
+		unsigned long u;
+		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);
+
+		if (ugh != NULL) {
+			fprintf(stderr, "%s: keysize specification is malformed: %s\n",
+				me, ugh);
+			exit(1);
+		}
+		nbits = u;
 	}
 
 	if (nbits < MIN_KEYBIT ) {
@@ -403,24 +411,34 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	mpz_t e;
 	size_t bs;
 	char n_str[3 + MAXBITS / 4 + 1];
-	char buf[100];
-	time_t now = time((time_t *)NULL);
+	realtime_t now = realnow();
 
 	mpz_init(n);
 	mpz_init(e);
 
-	snprintf(buf, sizeof(buf), "%s/nsspassword", configdir);
-	pwdata.source =
-		password ? (strcmp(password,
-				   buf) ? PW_PLAINTEXT : PW_FROMFILE) :
-		PW_NONE;
-	pwdata.data = password ? password : NULL;
+	if (password == NULL) {
+		pwdata.source = PW_NONE;
+	} else {
+		/* check if passwd == configdir/nsspassword */
+		size_t cdl = strlen(configdir);
+		size_t pwl = strlen(password);
+		static const char suf[] = "/nsspassword";
+
+		if (pwl == cdl + sizeof(suf) - 1 &&
+			memeq(password, configdir, cdl) &&
+			memeq(password + cdl, suf, sizeof(suf)))
+			pwdata.source = PW_FROMFILE;
+		else
+			pwdata.source = PW_PLAINTEXT;
+	}
+	pwdata.data = password;
 
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
-	snprintf(buf, sizeof(buf), "%s", configdir);
-	if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
-		fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
-			me, PR_GetError());
+
+	rv = NSS_InitReadWrite(configdir);
+	if (rv != SECSuccess) {
+		fprintf(stderr, "%s: NSS_InitReadWrite(%s) returned %d\n",
+			me, configdir, PR_GetError());
 		exit(1);
 	}
 #ifdef FIPS_CHECK
@@ -446,14 +464,16 @@ void rsasigkey(int nbits, char *configdir, char *password)
 	/* slot = PK11_GetBestSlot(CKM_RSA_PKCS_KEY_PAIR_GEN, password ? &pwdata : NULL); */
 	/* or the user may specify the name of a token. */
 
-	/*if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
-	        rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
-	        if (rv != SECSuccess) {
-	                fprintf(stderr, "%s: could not authenticate to token '%s'\n",
-	                        me, PK11_GetTokenName(slot));
-	                return;
-	        }
-	   }*/
+#if 0
+	if (PK11_IsFIPS() || !PK11_IsInternal(slot)) {
+		rv = PK11_Authenticate(slot, PR_FALSE, &pwdata);
+		if (rv != SECSuccess) {
+			fprintf(stderr, "%s: could not authenticate to token '%s'\n",
+				me, PK11_GetTokenName(slot));
+			return;
+		}
+	}
+#endif /* 0 */
 
 	/* Do some random-number initialization. */
 	UpdateNSS_RNG();
@@ -491,8 +511,8 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	/* and the output */
 	report("output...\n");  /* deliberate extra newline */
-	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(
-		       &now));
+	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname,
+		ctime(&now.real_secs));
 	/* ctime provides \n */
 	printf("\t# for signatures only, UNSAFE FOR ENCRYPTION\n");
 	bundp = bundle(E, n, &bs);
@@ -503,7 +523,7 @@ void rsasigkey(int nbits, char *configdir, char *password)
 
 	SECItem *ckaID = PK11_MakeIDFromPubKey(getModulus(pubkey));
 	if (ckaID != NULL) {
-		printf("\t# everything after this point is CKA_ID in hex formati - not the real values \n");
+		printf("\t# everything after this point is CKA_ID in hex format - not the real values \n");
 		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
 		printf("\tPrime1: %s\n", hexOut(ckaID));
 		printf("\tPrime2: %s\n", hexOut(ckaID));
@@ -600,7 +620,7 @@ mpz_t n;
 size_t *sizep;
 {
 	char *hexp = hexout(n);
-	static unsigned char bundbuf[2 + MAXBITS / 8];
+	static unsigned char bundbuf[2 + BYTES_FOR_BITS(MAXBITS)];
 	const char *er;
 	size_t size;
 

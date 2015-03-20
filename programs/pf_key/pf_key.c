@@ -257,8 +257,8 @@ int main(int argc, char *argv[])
 	signal(SIGINT,  controlC);
 	signal(SIGTERM, controlC);
 
-	while ((readlen =
-			read(pfkey_sock, pfkey_buf, sizeof(pfkey_buf))) > 0) {
+	while ((readlen = read(pfkey_sock, pfkey_buf, sizeof(pfkey_buf))) > 0)
+	{
 		msg = (struct sadb_msg *)pfkey_buf;
 
 		/* first, see if we got enough for an sadb_msg */

@@ -1,0 +1,137 @@
+setenforce 0
+east #
+ /testing/guestbin/swan-prep --46
+east #
+ ipsec setup start
+[ 00.00] NET: Registered protocol family 15
+Redirecting to: systemctl start ipsec.service
+east #
+ /testing/pluto/bin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-6in4
+east #
+ echo "initdone"
+initdone
+east #
+ ipsec look
+east NOW
+XFRM state:
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
+	replay-window 32 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+XFRM policy:
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
+	dir out priority 25792 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
+	dir fwd priority 25792 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
+	dir in priority 25792 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1 
+169.254.0.0/16 dev eth0  scope link  metric 1002 
+169.254.0.0/16 dev eth1  scope link  metric 1003 
+169.254.0.0/16 dev eth2  scope link  metric 1004 
+192.0.1.0/24 via 192.1.2.45 dev eth1 
+192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
+192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
+192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
+unreachable ::/96 dev lo  metric 1024  error -101
+unreachable ::ffff:0.0.0.0/96 dev lo  metric 1024  error -101
+2001:db8:0:1::254 via 2001:db8:1:2::45 dev eth1  metric 0 
+    cache 
+2001:db8:0:2::/64 dev eth0  proto kernel  metric 256 
+2001:db8::/48 via 2001:db8:1:2::45 dev eth1  metric 1024 
+2001:db8:1:2::/64 dev eth1  proto kernel  metric 256 
+2001:db8:9:2::/64 dev eth2  proto kernel  metric 256 
+unreachable 2002:a00::/24 dev lo  metric 1024  error -101
+unreachable 2002:7f00::/24 dev lo  metric 1024  error -101
+unreachable 2002:a9fe::/32 dev lo  metric 1024  error -101
+unreachable 2002:ac10::/28 dev lo  metric 1024  error -101
+unreachable 2002:c0a8::/32 dev lo  metric 1024  error -101
+unreachable 2002:e000::/19 dev lo  metric 1024  error -101
+unreachable 3ffe:ffff::/32 dev lo  metric 1024  error -101
+fe80::/64 dev eth0  proto kernel  metric 256 
+fe80::/64 dev eth1  proto kernel  metric 256 
+fe80::/64 dev eth2  proto kernel  metric 256 
+default via 2001:db8:1:2::254 dev eth1  metric 1 
+default via 2001:db8:1:2::254 dev eth1  metric 1024 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+type=AVC msg=audit(1395258051.659:47): avc:  denied  { read } for  pid=1749 comm="pluto" name="ipsec.conf.common" dev="9p" ino=529045 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
+type=AVC msg=audit(1395258051.659:47): avc:  denied  { open } for  pid=1749 comm="pluto" path="/testing/baseconfigs/all/etc/ipsec.d/ipsec.conf.common" dev="9p" ino=529045 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
+type=SYSCALL msg=audit(1395258051.659:47): arch=c000003e syscall=2 success=yes exit=12 a0=7fb4d4108600 a1=0 a2=1b6 a3=7370692f6374652f items=0 ppid=1748 pid=1749 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=4294967295 tty=(none) comm="pluto" exe="/usr/local/libexec/ipsec/pluto" subj=system_u:system_r:ipsec_t:s0 key=(null)
+type=AVC msg=audit(1395258051.661:48): avc:  denied  { read } for  pid=1749 comm="pluto" name="pluto.log" dev="tmpfs" ino=14055 scontext=system_u:system_r:ipsec_t:s0 tcontext=unconfined_u:object_r:user_tmp_t:s0 tclass=lnk_file
+type=AVC msg=audit(1395258051.661:48): avc:  denied  { create } for  pid=1749 comm="pluto" name="east.pluto.log" scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
+type=AVC msg=audit(1395258051.661:48): avc:  denied  { write } for  pid=1749 comm="pluto" name="east.pluto.log" dev="9p" ino=530834 scontext=system_u:system_r:ipsec_t:s0 tcontext=system_u:object_r:var_log_t:s0 tclass=file
+type=SYSCALL msg=audit(1395258051.661:48): arch=c000003e syscall=2 success=yes exit=3 a0=7fb4d4114970 a1=241 a2=1b6 a3=3 items=0 ppid=1748 pid=1749 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=4294967295 tty=(none) comm="pluto" exe="/usr/local/libexec/ipsec/pluto" subj=system_u:system_r:ipsec_t:s0 key=(null)
+

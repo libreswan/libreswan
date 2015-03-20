@@ -22,10 +22,7 @@ POOLSPACE=$KVMPREFIX/pool
 # Fedora media
 OSTYPE=fedora
 # Note: Replace this with your local Fedora tree if you have one.
-OSMEDIA=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
-# OSMEDIA=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os
-# OSMEDIA=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
-# OSMEDIA=http://fedora.mirror.nexicom.net/linux/releases/test/18-Alpha/Fedora/x86_64/os/
+OSMEDIA=http://fedora.mirror.nexicom.net/linux/releases/20/Fedora/x86_64/os/
 
 # Ubuntu media
 # OSTYPE=ubuntu

@@ -29,7 +29,9 @@ extern /* void */ int pfkey_cleanup(void);
 extern int pfkey_registered_show(struct seq_file *seq, void *offset);
 extern int pfkey_supported_show(struct seq_file *seq, void *offset);
 extern int pfkey_show(struct seq_file *seq, void *offset);
-
+#ifdef HAVE_USER_NS
+extern uint32_t pfkey_kuid_to_uid(kuid_t kuid);
+#endif
 struct socket_list {
 	struct socket *socketp;
 	struct socket_list *next;

@@ -12,11 +12,11 @@ void recv_pcap_packet1(u_char *user,
 	st->st_connection->extra_debugging = add_debugging;
 
 	/* now fill in the SKEYSEED values from constants.. not calculated */
-	clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret,
+	WIRE_CLONE_DATA(kn, secret, tc3_secret,
 			 tc3_secret_len);
-	clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_ni,
+	WIRE_CLONE_DATA(kn, n,   tc3_ni,
 			 tc3_ni_len);
-	clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gi,
+	WIRE_CLONE_DATA(kn, gi,  tc3_gi,
 			 tc3_gi_len);
 
 	run_continuation(r);

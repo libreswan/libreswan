@@ -53,9 +53,8 @@ for hostname in macs.keys():
 		if not os.path.isdir("/root/.ssh"):
 			os.makedirs("/root/.ssh",0700)
 		output += "\n" + commands.getoutput("cp /testing/baseconfigs/all/etc/ssh/*key* /etc/ssh/")
-		output += "\n" + commands.getoutput("cp /testing/baseconfigs/all/etc/ssh/*key* /etc/ssh/")
-		shutil.copyfile("/testing/baseconfigs/all/etc/ssh/authorized_keys","/root/.ssh/authorized_keys")
-		output += "\n" + commands.getoutput("chmod 600 /etc/ssh/*key* /root/.ssh/authorized_keys")
+		output += "\n" + commands.getoutput("cp /testing/baseconfigs/all/root/.ssh/* /root/.ssh/")
+		output += "\n" + commands.getoutput("chmod 600 /etc/ssh/*key* /root/.ssh/*")
 
 		if GUESTOS == "redhat":
 			shutil.copyfile("/testing/baseconfigs/%s/etc/sysconfig/network"%hostname, "/etc/sysconfig/network")

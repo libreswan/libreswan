@@ -1,14 +1,7 @@
   <varlistentry>
   <term><emphasis remap='B'>nat_traversal</emphasis></term>
   <listitem>
-<para>whether to accept/offer to support NAT (NAPT, also known as "IP Masqurade")
-workaround for IPsec. Acceptable values are:
-<emphasis remap='B'>yes</emphasis>
-and
-<emphasis remap='B'>no</emphasis>
-(the default).
-This parameter may eventually become per-connection.</para>
-
+<para>OBSOLETE.  Support for NAT Traversal is always enabled.</para>
   </listitem>
   </varlistentry>
 

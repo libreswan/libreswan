@@ -7,7 +7,7 @@ are separated using comma's.
 </para>
 <para>The default values are the same as for ike=
 Note also that not all ciphers available to the kernel (eg through CryptoAPI)
-are necessarilly supported here.</para>
+are necessarily supported here.</para>
 <para> The format for ESP is ENC-AUTH followed by an optional PFSgroup. For
 instance, "3des-md5" or "aes256-sha1;modp2048" or  "aes-sha1,aes-md5".
 </para>

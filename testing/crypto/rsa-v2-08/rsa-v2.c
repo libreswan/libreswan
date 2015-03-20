@@ -125,7 +125,6 @@ int main(int argc, char *argv[])
 
 	/* initialize list of moduli */
 	init_crypto();
-	load_lswcrypto();
 
 	readwhackmsg("../../lib/libpluto/lib-parentI1/ikev2.record");
 	c1 = con_by_name("westnet--eastnet-ikev2", TRUE);
@@ -135,7 +134,7 @@ int main(int argc, char *argv[])
 
 	init_pbs(&outs, outbuf, 1024, "rsa signature");
 
-	load_preshared_secrets(NULL_FD);
+	load_preshared_secrets();
 
 	clonetochunk(st1.st_firstpacket_me, packet1 + 32, packet1_len - 32,
 		     "I1");

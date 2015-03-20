@@ -35,7 +35,7 @@
  *	special case: ipsec core modular with this static algo inside:
  *	must avoid MODULE magic for this file
  */
-#if CONFIG_KLIPS_MODULE && CONFIG_KLIPS_ENC_CRYPTOAPI
+#if defined(CONFIG_KLIPS_MODULE) && defined(CONFIG_KLIPS_ENC_CRYPTOAPI)
 #undef MODULE
 #endif
 
@@ -64,7 +64,7 @@
 
 #include "libreswan.h"
 #include "libreswan/ipsec_alg.h"
-#include "libreswan/ipsec_policy.h"
+#include "libreswan/ipsec_xform.h"
 
 #include <linux/crypto.h>
 #ifdef CRYPTO_API_VERSION_CODE
@@ -378,9 +378,8 @@ static __u8 *_capi_new_key(struct ipsec_alg_enc *alg, const __u8 *key,
 	/*
 	 *	alloc tfm
 	 */
-	tfm =
-		crypto_blkcipher_tfm(crypto_alloc_blkcipher(cptr->ciphername,
-							    0, 0));
+	tfm = crypto_blkcipher_tfm(crypto_alloc_blkcipher(cptr->ciphername,
+							  0, 0));
 	if (!tfm) {
 		printk(KERN_ERR "_capi_new_key(): "
 		       "NULL tfm for \"%s\" cryptoapi (\"%s\") algo\n",
@@ -553,6 +552,7 @@ IPSEC_ALG_MODULE_INIT_STATIC( ipsec_cryptoapi_init ){
 		test_ret = test_cipher_list(alg_capi_carray);
 	return ret;
 }
+
 IPSEC_ALG_MODULE_EXIT_STATIC( ipsec_cryptoapi_fini ){
 	unsetup_cipher_list(alg_capi_carray);
 	return;

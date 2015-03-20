@@ -1,5 +1,6 @@
 /*
  * convert binary form of subnet description to text
+ *
  * Copyright (C) 2000  Henry Spencer.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,19 +13,18 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  */
-
 #include "internal.h"
 #include "libreswan.h"
 #include "constants.h"
 
 /*
-   - subnettot - convert subnet to text "addr/bitcount"
+ * subnettot - convert subnet to text "addr/bitcount"
  */
-size_t                          /* space needed for full conversion */
+size_t	/* space needed for full conversion */
 subnettot(sub, format, dst, dstlen)
 const ip_subnet * sub;
-int format;                     /* character */
-char *dst;                      /* need not be valid if dstlen is 0 */
+int format;	/* character */
+char *dst;	/* need not be valid if dstlen is 0 */
 size_t dstlen;
 {
 	size_t len;
@@ -50,7 +50,7 @@ size_t dstlen;
 		rest = 0;
 	}
 
-	len += ultoa((unsigned long)sub->maskbits, 10, p, rest);
+	len += ultot((unsigned long)sub->maskbits, 10, p, rest);
 
 	return len;
 }
@@ -80,7 +80,7 @@ size_t dstlen;
 
 	/* base = 10 */
 	*end++ = ':';
-	len += ultoa(ntohs(portof(&sub->addr)), 10, end, dstlen - (alen + 1));
+	len += ultot(ntohs(portof(&sub->addr)), 10, end, dstlen - (alen + 1));
 
 	return len;
 }

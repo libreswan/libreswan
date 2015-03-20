@@ -1,0 +1,13 @@
+
+<network ipv6='yes'>
+  <name>swandefault</name>
+  <forward mode='nat'/>
+  <bridge name='virbr0' stp='on' delay='0'/>
+<!--  <mac address='52:54:00:9a:e1:17'/> -->
+  <domain name='swandefault'/>
+  <ip address='192.168.234.1' netmask='255.255.255.0'>
+    <dhcp>
+      <range start='192.168.234.128' end='192.168.234.254'/>
+    </dhcp>
+  </ip>
+</network>

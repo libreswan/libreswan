@@ -113,7 +113,6 @@ int main(int argc, char *argv[])
 
 	/* initialize list of moduli */
 	init_crypto();
-	load_lswcrypto();
 
 	init_seam_kernelalgs();
 

@@ -37,7 +37,6 @@
 #include <arpa/inet.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "socketwrapper.h"
@@ -255,9 +254,8 @@ struct raw_iface *find_raw_ifaces4(void)
 	   the union. See if.h */
 	for (bp = buf, j = 0;
 	     bp < (unsigned char *)buf + (size_t)ifconf.ifc_len;
-	     bp =
-		     (struct ifreq *) ((unsigned char *)bp +
-				       _SIZEOF_ADDR_IFREQ(*bp)),
+	     bp = (struct ifreq *)
+		((unsigned char *)bp +_SIZEOF_ADDR_IFREQ(*bp)),
 	     j++) {
 		struct raw_iface ri;
 		const struct sockaddr_in *rs =
@@ -376,12 +374,11 @@ bool do_command_darwin(struct connection *c, struct spd_route *sr,
 		nexthop_str[0] = '\0';
 		if (addrbytesptr(&sr->this.host_nexthop, NULL) &&
 		    !isanyaddr(&sr->this.host_nexthop)) {
-			char *n;
-			strcpy(nexthop_str, "PLUTO_NEXT_HOP='");
-			n = nexthop_str + strlen(nexthop_str);
+			char *n = jam_str(nexthop_str, sizeof(nexthop_str), "PLUTO_NEXT_HOP='");
+
 			addrtot(&sr->this.host_nexthop, 0,
-				n, sizeof(nexthop_str) - strlen(nexthop_str));
-			strncat(nexthop_str, "' ", sizeof(nexthop_str));
+				n, sizeof(nexthop_str) - (n - nexthop_str));
+			add_str(nexthop_str, sizeof(nexthop_str), n, "' ");
 		}
 
 		addrtot(&sr->this.host_addr, 0, me_str, sizeof(me_str));
@@ -408,33 +405,22 @@ bool do_command_darwin(struct connection *c, struct spd_route *sr,
 			sizeof(peerclientmask_str));
 
 		secure_xauth_username_str[0] = '\0';
-		if (st != NULL && st->st_xauth_username) {
-			size_t len;
-			strcpy(secure_xauth_username_str,
-			       "PLUTO_XAUTH_USERNAME='");
+		if (st != NULL && st->st_xauth_username[0] != '\0') {
+			char *p = jam_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), "PLUTO_XAUTH_USERNAME='");
 
-			len = strlen(secure_xauth_username_str);
 			remove_metachar(st->st_xauth_username,
-					secure_xauth_username_str + len,
-					sizeof(secure_xauth_username_str) -
-					(len + 2));
-			strncat(secure_xauth_username_str, "'",
-				sizeof(secure_xauth_username_str) - 1);
+					p,
+					sizeof(secure_xauth_username_str) - (p - secure_xauth_username_str) - 2);
+			add_str(secure_xauth_username_str, sizeof(secure_xauth_username_str), p, "'");
 		}
 
 		srcip_str[0] = '\0';
 		if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
 		    !isanyaddr(&sr->this.host_srcip)) {
-			char *p;
-			int l;
-			strncat(srcip_str, "PLUTO_MY_SOURCEIP=",
-				sizeof(srcip_str));
-			strncat(srcip_str, "'", sizeof(srcip_str));
-			l = strlen(srcip_str);
-			p = srcip_str + l;
+			char *p = jam_str(srcip_str, sizeof(srcip_str), "PLUTO_MY_SOURCEIP='");
 
-			addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str));
-			strncat(srcip_str, "'", sizeof(srcip_str));
+			addrtot(&sr->this.host_srcip, 0, p, sizeof(srcip_str) - (p - srcip_str));
+			add_str(srcip_str, sizeof(srcip_str), p, "'");
 		}
 
 		{
@@ -507,8 +493,8 @@ bool do_command_darwin(struct connection *c, struct spd_route *sr,
 				   prettypolicy(c->policy),
 				   secure_xauth_username_str,
 				   srcip_str,
-				   sr->this.updown ==
-				   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+				   sr->this.updown == NULL ?
+				     DEFAULT_UPDOWN : sr->this.updown)) {
 			loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 			       verb_suffix);
 			return FALSE;

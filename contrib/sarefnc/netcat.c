@@ -32,7 +32,7 @@
    for your own architecture [and please send diffs...]: */
 /* #undef _POSIX_SOURCE		/* might need this for something? */
 #define HAVE_BIND               /* ASSUMPTION -- seems to work everywhere! */
-#define HAVE_HELP               /* undefine if you dont want the help text */
+#define HAVE_HELP               /* undefine if you don't want the help text */
 /* #define ANAL			/* if you want case-sensitive DNS matching */
 
 #ifdef HAVE_STDLIB_H
@@ -690,9 +690,8 @@ newskt:
 		holler("nnetfd reuseaddr failed"); /* ??? */
 #ifdef SO_BROADCAST
 	if (o_allowbroad) {
-		rr =
-			setsockopt(nnetfd, SOL_SOCKET, SO_BROADCAST, &x,
-				   sizeof(x));
+		rr = setsockopt(nnetfd, SOL_SOCKET, SO_BROADCAST, &x,
+				sizeof(x));
 		if (rr == -1)
 			holler("nnetfd reuseaddr failed"); /* ??? */
 	}
@@ -711,9 +710,8 @@ newskt:
 #endif
 	if (o_keepalive) {
 		x = 1;
-		rr =
-			setsockopt(nnetfd, SOL_SOCKET, SO_KEEPALIVE, &x,
-				   sizeof(x));
+		rr = setsockopt(nnetfd, SOL_SOCKET, SO_KEEPALIVE, &x,
+				sizeof(x));
 		if (rr == -1)
 			holler("nnetfd set keepalive failed");
 	}
@@ -891,9 +889,8 @@ socklen_t *addrlen;
 	if (!requested_refinfo) {
 		int val = 1;
 
-		rc =
-			setsockopt(fd, IPPROTO_IP, IP_IPSEC_REFINFO, &val,
-				   sizeof(val));
+		rc = setsockopt(fd, IPPROTO_IP, IP_IPSEC_REFINFO, &val,
+				sizeof(val));
 		if (rc == -1)
 			bail("failed setting IPsec SAref cmsg info flag");
 		requested_refinfo = 1;
@@ -1075,7 +1072,7 @@ whoisit:
    thing to emerge after all the intervening crud.  Doesn't work for UDP on
    any machines I've tested, but feel free to surprise me. */
 #ifdef IP_OPTIONS
-	if (!o_verbose)                 /* if we wont see it, we dont care */
+	if (!o_verbose)                 /* if we won't see it, we don't care */
 		goto dol_noop;
 	optbuf = Hmalloc(40);
 	x = 40;
@@ -1127,7 +1124,7 @@ dol_noop:
 	errno = 0;
 	x = 0;          /* use as a flag... */
 	if (rad)        /* xxx: fix to go down the *list* if we have one? */
-		if (memcmp(rad, whozis->iaddrs, sizeof(SA)))
+		if (!memeq(rad, whozis->iaddrs, sizeof(SA)))
 			x = 1;
 	if (rp)
 		if (z != rp)
@@ -1607,7 +1604,7 @@ char ** argv;
 		cp = Hmalloc(BIGSIZ);
 		argv[1] = cp;                                   /* head of new arg block */
 		fprintf(stderr, "Cmd line: ");
-		fflush(stderr);                                 /* I dont care if it's unbuffered or not! */
+		fflush(stderr);                                 /* I don't care if it's unbuffered or not! */
 		insaved = read(0, cp, BIGSIZ - 1);              /* we're gonna fake fgets() here */
 		cp[BIGSIZ - 1] = '\0';
 		if (insaved <= 0)
@@ -1644,10 +1641,8 @@ char ** argv;
 
 /* If your shitbox doesn't have getopt, step into the nineties already. */
 /* optarg, optind = next-argv-component [i.e. flag arg]; optopt = last-char */
-	while ((x =
-			getopt(argc, argv,
-			       "abc:e:g:G:hi:klno:p:q:rs:S:T:tuvw:z")) !=
-	       EOF) {
+	while ((x = getopt(argc, argv, "abc:e:g:G:hi:klno:p:q:rs:S:T:tuvw:z"))
+	       != EOF) {
 /* Debug (("in go: x now %c, optarg %x optind %d", x, optarg, optind)) */
 		switch (x) {
 		case 'a':
@@ -1789,7 +1784,7 @@ char ** argv;
 	Debug(("fd_set size %d", sizeof(*ding1)))       /* how big *is* it? */
 	FD_SET(0, ding1);                               /* stdin *is* initially open */
 	if (o_random) {
-		SRAND(time(0));
+		SRAND(time(NULL));
 		randports = Hmalloc(65536); /* big flag array for ports */
 	}
 #ifdef GAPING_SECURITY_HOLE

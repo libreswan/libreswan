@@ -20,10 +20,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.
- *
  */
 
 #include <stddef.h>
@@ -45,7 +41,6 @@
 #endif
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -68,8 +63,6 @@
 #include "fetch.h"
 #include "x509more.h"
 
-#include "lswcrypto.h"
-
 #include "nat_traversal.h"
 
 #include <prerror.h>
@@ -85,27 +78,12 @@
 #include <time.h>
 #include "lswconf.h"
 
-static int sign_hash_nss(const struct RSA_private_key *k,
-			 const u_char *hash_val,
-			 size_t hash_len, u_char *sig_val, size_t sig_len);
-
 char *pluto_shared_secrets_file;
 static struct secret *pluto_secrets = NULL;
 
-void load_preshared_secrets(int whackfd)
+void load_preshared_secrets()
 {
-	prompt_pass_t pass;
-
-	pass.prompt = whack_log;
-	pass.fd = whackfd;
-	lsw_load_preshared_secrets(&pluto_secrets
-#ifdef SINGLE_CONF_DIR
-				   , FALSE /* to much log noise in a shared directory mode */
-#else
-				   , TRUE
-#endif
-				   , pluto_shared_secrets_file,
-				   &pass);
+	lsw_load_preshared_secrets(&pluto_secrets , pluto_shared_secrets_file);
 }
 
 void free_preshared_secrets(void)
@@ -124,13 +102,14 @@ static int print_secrets(struct secret *secret,
 	struct id_list *ids;
 
 	switch (pks->kind) {
-	case PPK_PSK: kind = "PSK";
+	case PPK_PSK:
+		kind = "PSK";
 		break;
-	case PPK_RSA: kind = "RSA";
+	case PPK_RSA:
+		kind = "RSA";
 		break;
-	case PPK_PIN: kind = "PIN";
-		break;
-	case PPK_XAUTH: kind = "XAUTH";
+	case PPK_XAUTH:
+		kind = "XAUTH";
 		break;
 	default:
 		return 1;
@@ -164,17 +143,8 @@ void list_psks(void)
 	lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
 }
 
-/*
- * compute an RSA signature with PKCS#1 padding
- */
-void sign_hash(const struct RSA_private_key *k,
-	       const u_char *hash_val, size_t hash_len,
-	       u_char *sig_val, size_t sig_len)
-{
-	sign_hash_nss(k, hash_val, hash_len, sig_val, sig_len);
-}
-
-static int sign_hash_nss(const struct RSA_private_key *k,
+/* returns the length of the result on success; 0 on failure */
+int sign_hash(const struct RSA_private_key *k,
 		  const u_char *hash_val, size_t hash_len,
 		  u_char *sig_val, size_t sig_len)
 {
@@ -198,9 +168,10 @@ static int sign_hash_nss(const struct RSA_private_key *k,
 		return 0;
 	}
 
-	if ( PK11_Authenticate(slot, PR_FALSE,
+	/* XXX: is there no way to detect if we _need_ to authenticate ?? */
+	if (PK11_Authenticate(slot, PR_FALSE,
 			       lsw_return_nss_password_file_info()) ==
-	     SECSuccess ) {
+	     SECSuccess) {
 		DBG(DBG_CRYPT,
 		    DBG_log("NSS: Authentication to NSS successful\n"));
 	} else {
@@ -211,39 +182,40 @@ static int sign_hash_nss(const struct RSA_private_key *k,
 	privateKey = PK11_FindKeyByKeyID(slot, &ckaId,
 					 lsw_return_nss_password_file_info());
 	if (privateKey == NULL) {
+		DBG(DBG_CRYPT,
+		    DBG_log("Can't find the private key from the NSS CKA_ID\n"));
 		if (k->pub.nssCert != NULL) {
 			privateKey = PK11_FindKeyByAnyCert(k->pub.nssCert,
 							   lsw_return_nss_password_file_info());
-			DBG(DBG_CRYPT,
-			    DBG_log("Can't find the private key from the NSS CKA_ID\n"));
+			if (privateKey == NULL) {
+				loglog(RC_LOG_SERIOUS,
+				       "Can't find the private key from the NSS CERT (err %d)\n",
+				       PR_GetError());
+			}
 		}
 	}
 
-	if (!privateKey) {
-		loglog(RC_LOG_SERIOUS,
-		       "Can't find the private key from the NSS CERT (err %d)\n",
-		       PR_GetError());
-		PK11_FreeSlot(slot);
-		return 0;
-	}
+	PK11_FreeSlot(slot);
 
-	if (slot)
-		PK11_FreeSlot(slot);
+	if (privateKey == NULL)
+		return 0;
 
 	data.type = siBuffer;
 	data.len = hash_len;
 	data.data = DISCARD_CONST(u_char *, hash_val);
 
-	/*signature.len=PK11_SignatureLen(privateKey);*/
 	signature.len = sig_len;
 	signature.data = sig_val;
 
-	SECStatus s = PK11_Sign(privateKey, &signature, &data);
-	if (s != SECSuccess) {
-		loglog(RC_LOG_SERIOUS,
-		       "RSA_sign_hash: sign function failed (%d)\n",
-		       PR_GetError());
-		return 0;
+	{
+		SECStatus s = PK11_Sign(privateKey, &signature, &data);
+
+		if (s != SECSuccess) {
+			loglog(RC_LOG_SERIOUS,
+			       "RSA_sign_hash: sign function failed (%d)\n",
+			       PR_GetError());
+			return 0;
+		}
 	}
 
 	DBG(DBG_CRYPT, DBG_log("RSA_sign_hash: Ended using NSS"));
@@ -256,12 +228,12 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 {
 	SECKEYPublicKey *publicKey;
 	PRArenaPool *arena;
-	SECStatus retVal = SECSuccess;
+	SECStatus retVal;
 	SECItem nss_n, nss_e;
 	SECItem signature, data;
 	chunk_t n, e;
 
-	/*Converting n and e to form public key in SECKEYPublicKey data structure*/
+	/* Converting n and e to form public key in SECKEYPublicKey data structure */
 
 	arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	if (arena == NULL) {
@@ -269,9 +241,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		return "10" "NSS error: Not enough memory to create arena";
 	}
 
-	publicKey =
-		(SECKEYPublicKey *) PORT_ArenaZAlloc(arena,
-						     sizeof(SECKEYPublicKey));
+	publicKey = (SECKEYPublicKey *)
+		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
 	if (!publicKey) {
 		PORT_FreeArena(arena, PR_FALSE);
 		PORT_SetError(SEC_ERROR_NO_MEMORY);
@@ -283,11 +254,11 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 	publicKey->pkcs11Slot = NULL;
 	publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
-	/*Converting n(modulus) and e(exponent) from mpz_t form to chunk_t*/
+	/* Converting n(modulus) and e(exponent) from mpz_t form to chunk_t */
 	n = mpz_to_n_autosize(&k->n);
 	e = mpz_to_n_autosize(&k->e);
 
-	/*Converting n and e to nss_n and nss_e*/
+	/* Converting n and e to nss_n and nss_e */
 	nss_n.data = n.ptr;
 	nss_n.len = (unsigned int)n.len;
 	nss_n.type = siBuffer;
@@ -330,7 +301,7 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k,
 		return "13" "NSS error: Not able to decrypt";
 	}
 
-	if (memcmp(data.data + data.len - hash_len, hash_val, hash_len) != 0) {
+	if (!memeq(data.data + data.len - hash_len, hash_val, hash_len)) {
 		pfree(data.data);
 		loglog(RC_LOG_SERIOUS, "RSA Signature NOT verified");
 		return "14" "NSS error: Not able to verify";
@@ -441,7 +412,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 	s.tn = s.tried;
 
 	/* try all gateway records hung off c */
-	if ((c->policy & POLICY_OPPO)) {
+	if ((c->policy & POLICY_OPPORTUNISTIC)) {
 		struct gw_info *gw;
 
 		for (gw = c->gw_info; gw != NULL; gw = gw->next) {
@@ -458,6 +429,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 	{
 		struct pubkey_list *p, **pp;
 		int pathlen;
+		realtime_t nw = realnow();
 
 		pp = &pluto_pubkeys;
 
@@ -478,7 +450,6 @@ stf_status RSA_check_signature_gen(struct state *st,
 			    same_id(&c->spd.that.id, &key->id) &&
 			    trusted_ca(key->issuer, c->spd.that.ca,
 				       &pathlen)) {
-				time_t tnow;
 
 				DBG(DBG_CONTROL, {
 					    char buf[IDTOA_BUF];
@@ -489,9 +460,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    });
 
 				/* check if found public key has expired */
-				time(&tnow);
-				if (key->until_time != UNDEFINED_TIME &&
-				    key->until_time < tnow) {
+				if (!isundefinedrealtime(key->until_time) &&
+				    realbefore(key->until_time, nw)) {
 					loglog(RC_LOG_SERIOUS,
 					       "cached RSA public key has expired and has been deleted");
 					*pp = free_public_keyentry(p);
@@ -618,12 +588,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    enum_name(&ppk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PPK_RSA &&
-	    c->spd.this.sendcert != cert_forcedtype &&
-	    (c->spd.this.cert.type == CERT_X509_SIGNATURE ||
-	     c->spd.this.cert.type == CERT_PKCS7_WRAPPED_X509)) {
+	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE) {
 		struct pubkey *my_public_key = allocate_RSA_public_key(
 			c->spd.this.cert);
+
 		passert(my_public_key != NULL);
 
 		best = lsw_find_secret_by_public_key(pluto_secrets,
@@ -634,7 +602,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	}
 
 	if (his_id_was_instantiated(c) && (!(c->policy & POLICY_AGGRESSIVE)) &&
-	    isanyaddr(&c->spd.that.host_addr) ) {
+	    isanyaddr(&c->spd.that.host_addr)) {
 		DBG(DBG_CONTROL,
 		    DBG_log("instantiating him to 0.0.0.0"));
 
@@ -645,9 +613,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 			      &rw_id.ip_addr));
 		his_id = &rw_id;
 		idtoa(his_id, idhim2, IDTOA_BUF);
-	}
-
-	else if ( (c->policy & POLICY_PSK) &&
+	} else if ((c->policy & POLICY_PSK) &&
 		  (kind == PPK_PSK) &&
 		  (((c->kind == CK_TEMPLATE) &&
 		    (c->spd.that.id.kind == ID_NONE)) ||
@@ -693,7 +659,7 @@ struct secret *lsw_get_xauthsecret(const struct connection *c UNUSED,
 	    DBG_log("started looking for xauth secret for %s",
 		    xauthname));
 
-	memset(&xa_id, 0, sizeof(xa_id));
+	zero(&xa_id);
 	xa_id.kind = ID_FQDN;
 	xa_id.name.ptr = (unsigned char *)xauthname;
 	xa_id.name.len = strlen(xauthname);
@@ -778,14 +744,6 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 	return s == NULL ? NULL : &pks->u.RSA_private_key;
 }
 
-/*
- * get the matching RSA private key belonging to a given X.509 certificate
- */
-const struct RSA_private_key*get_x509_private_key(x509cert_t *cert)
-{
-	return lsw_get_x509_private_key(pluto_secrets, cert);
-}
-
 /* public key machinery
  * Note: caller must set dns_auth_level.
  */
@@ -807,7 +765,7 @@ struct pubkey *public_key_from_rsa(const struct RSA_public_key *k)
 	 * invariant: recount > 0.
 	 */
 	p->refcnt = 1;
-	p->installed_time = now();
+	p->installed_time = realnow();
 	return p;
 }
 
@@ -881,7 +839,7 @@ err_t add_public_key(const struct id *id,
 	pk->id = *id;
 	pk->dns_auth_level = dns_auth_level;
 	pk->alg = alg;
-	pk->until_time = UNDEFINED_TIME;
+	pk->until_time = undefinedrealtime();
 	pk->issuer = empty_chunk;
 
 	install_public_key(pk, head);
@@ -897,7 +855,7 @@ void list_public_keys(bool utc, bool check_pub_keys)
 
 	if (!check_pub_keys) {
 		whack_log(RC_COMMENT, " ");
-		whack_log(RC_COMMENT, "List of Public Keys:");
+		whack_log(RC_COMMENT, "List of RSA Public Keys:");
 		whack_log(RC_COMMENT, " ");
 	}
 
@@ -905,37 +863,34 @@ void list_public_keys(bool utc, bool check_pub_keys)
 		struct pubkey *key = p->key;
 
 		if (key->alg == PUBKEY_ALG_RSA) {
-			char id_buf[IDTOA_BUF];
-			char expires_buf[TIMETOA_BUF];
-			char installed_buf[TIMETOA_BUF];
-			const char *check_expiry_msg = NULL;
-
-			check_expiry_msg = check_expiry(key->until_time,
+			const char *check_expiry_msg = check_expiry(key->until_time,
 							PUBKEY_WARNING_INTERVAL,
 							TRUE);
 
 			if (!check_pub_keys ||
-			    (check_pub_keys &&
-			     strncmp(check_expiry_msg, "ok", 2))) {
+			    strncmp(check_expiry_msg, "ok", 2) != 0) {
+				char expires_buf[REALTIMETOA_BUF];
+				char installed_buf[REALTIMETOA_BUF];
+				char id_buf[IDTOA_BUF];
+
 				idtoa(&key->id, id_buf, IDTOA_BUF);
+
 				whack_log(RC_COMMENT,
 					  "%s, %4d RSA Key %s (%s private key), until %s %s",
-					  timetoa(&key->installed_time, utc,
+					  realtimetoa(key->installed_time, utc,
 						  installed_buf,
 						  sizeof(installed_buf)),
 					  8 * key->u.rsa.k,
 					  key->u.rsa.keyid,
 					  (has_private_rawkey(key) ? "has" :
 					   "no"),
-					  timetoa(&key->until_time, utc,
+					  realtimetoa(key->until_time, utc,
 						  expires_buf,
 						  sizeof(expires_buf)),
-					  check_expiry(key->until_time,
-						       PUBKEY_WARNING_INTERVAL,
-						       TRUE));
+					  check_expiry_msg);
 
 				whack_log(RC_COMMENT, "       %s '%s'",
-					  enum_show(&ident_names,
+					  enum_show(&ike_idtype_names,
 						    key->id.kind), id_buf);
 
 				if (key->issuer.len > 0) {

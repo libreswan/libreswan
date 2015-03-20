@@ -1,2 +1,2 @@
-ipsec auto --up matchme
+ipsec auto --up loopback-west
 echo done

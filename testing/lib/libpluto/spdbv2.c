@@ -10,16 +10,13 @@
 #include "spdb.h"
 #include "ike_alg.h"
 
+#include "seam_exitlog.c"
+
 #include "efencedef.h"
 
 char *progname;
 
 bool can_do_IPcomp = TRUE;
-
-void exit_log(const char *msg, ...)
-{
-	lsw_abort();
-}
 
 struct state *state_with_serialno(so_serial_t sn)
 {
@@ -30,11 +27,6 @@ struct state *state_with_serialno(so_serial_t sn)
 void whack_log(int rc, const char *msg, ...)
 {
 	lsw_abort();
-}
-
-void exit_tool(int stat)
-{
-	exit(stat);
 }
 
 const chunk_t *get_preshared_secret(const struct connection *c)
@@ -74,7 +66,7 @@ main(int argc, char *argv[]){
 	struct db_sa *sa1 = NULL;
 	struct db_sa *sa2 = NULL;
 	struct alg_info_ike *aii;
-	err_t ugh;
+	char err_buf[256];	/* ??? big enough? */
 
 	EF_PROTECT_FREE = 1;
 	EF_FREE_WIPES  = 1;
@@ -85,12 +77,12 @@ main(int argc, char *argv[]){
 	tool_init_log();
 	init_crypto();
 
-	aii = alg_info_ike_create_from_str("3des", &ugh);
+	aii = alg_info_ike_create_from_str("3des", err_buf, sizeof(err_buf));
 
 	gsp = oakley_alg_makedb(aii,
 				&oakley_sadb[POLICY_RSASIG >>
 					     POLICY_ISAKMP_SHIFT],
-				-1);
+				FALSE);
 	sa_print(gsp);
 
 	gsp = sa_v2_convert(gsp);

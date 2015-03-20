@@ -1,5 +1,5 @@
 #ifndef _IKEV1_H
-#define _IKEv1_H
+#define _IKEV1_H
 
 #include "pluto_crypt.h"
 #include "ikev1_continuations.h"
@@ -67,7 +67,7 @@ extern stf_status aggr_outI1(int whack_sock,
 
 extern void ikev1_delete_out(struct state *st);
 
-extern bool decode_peer_id(struct msg_digest *md, bool initiator,
+extern bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator,
 			   bool aggrmode);
 
 extern size_t RSA_sign_hash(struct connection *c,
@@ -117,5 +117,14 @@ static inline stf_status aggr_id_and_auth(struct msg_digest *md,
 {
 	return oakley_id_and_auth(md, initiator, TRUE, cont_fn, kc);
 }
+
+#if 0	/* not yet disentangled from spdb.h */
+extern bool ikev1_out_sa(pb_stream *outs,
+		struct db_sa *sadb,
+		struct state *st,
+		bool oakley_mode,
+		bool aggressive_mode,
+		u_int8_t np);
+#endif
 
 #endif

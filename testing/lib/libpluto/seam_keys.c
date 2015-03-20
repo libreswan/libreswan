@@ -1,6 +1,6 @@
 
 /* keys.c SEAM */
-void load_preshared_secrets(int whackfd)
+void load_preshared_secrets()
 {
 }
 chunk_t mysecret = { .ptr = "abcd", .len = 4 };

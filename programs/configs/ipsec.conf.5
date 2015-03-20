@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 12/08/2013
+.\"      Date: 06/29/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "12/08/2013" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "06/29/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -46,7 +46,7 @@ A line which contains
 and a file name, separated by white space, is replaced by the contents of that file, preceded and followed by empty lines\&. If the file name is not a full pathname, it is considered to be relative to the directory containing the including file\&. Such inclusions can be nested\&. Only a single filename may be supplied, and it may not contain white space, but it may include shell wildcards (see
 \fBsh\fR(1)); for example:
 .PP
-\fBinclude\fR\fBipsec\&.*\&.conf\fR
+\fBinclude \fR\fB/etc/ipsec\&.d/*\&.conf\fR
 .PP
 The intention of the include facility is mostly to permit keeping information on connections, or sets of connections, separate from the main configuration file\&. This permits such connection descriptions to be changed, copied to the other security gateways involved, etc\&., without having to constantly extract them from the configuration file and then insert them back into it\&. Note also the
 \fBalso\fR
@@ -54,7 +54,7 @@ and
 \fBalsoflip\fR
 parameters (described below) which permit splitting a single logical section (e\&.g\&. a connection description) into several actual sections\&.
 .PP
-The first significant line of the file must specify the version of this specification that it conforms to:
+The first significant line of the file may specify a version of this specification for backwards compatibility with freeswan and openswan\&. It is ignored and unused\&. For compatibility with openswan, specify:
 .PP
 \fBversion 2\fR
 .PP
@@ -204,12 +204,12 @@ The following parameters are relevant to IKE automatic keying\&. Unless otherwis
 .PP
 \fBconnaddrfamily\fR
 .RS 4
-the connection addrress family of the connection; currently the accepted values are
+the connection address family of the connection; currently the accepted values are
 \fBipv4\fR
 (the default); or
 \fBipv6\fR\&. This option is confusing, especially when doing IPv4\-in\-IPv6 or IPv6\-in\-IPv4 tunnels\&. The developers hope to remove this option in the near future for proper auto\-detection\&. For now, set connaddrfamily= to the family of the *subnet= options, and if those are not defined, to the family of the left=/right= options\&.
 .sp
-IPv6 is supported with NETKEY since libreswan 2\&.4 and with KLIPS since Libreswan 2\&.6\&.33
+IPv6 is supported with NETKEY and with KLIPS in all Libreswan versions
 .RE
 .PP
 \fBtype\fR
@@ -228,11 +228,12 @@ the type of the connection; currently the accepted values are
 (required) the IP address of the left participant\*(Aqs public\-network interface, in any form accepted by
 \fBipsec_ttoaddr\fR(3)\&. Currently, IPv4 and IPv6 IP addresses are supported\&. There are several magic values\&. If it is
 \fB%defaultroute\fR, and the
-\fBconfig\fR\fBsetup\fR
+\fBconfig setup\fR
 section\*(Aqs,
 \fBinterfaces\fR
 specification contains
-\fB%defaultroute,\fR\fBleft\fR
+\fB%defaultroute\fR,
+\fBleft\fR
 will be filled in automatically with the local address of the default\-route interface (as determined at IPsec startup time); this also overrides any value supplied for
 \fBleftnexthop\fR\&. (Either
 \fBleft\fR
@@ -256,8 +257,8 @@ and
 \fB%opportunisticgroup\fR
 makes this a policy group conn: one that will be instantiated into a regular or opportunistic conn for each CIDR block listed in the policy group file with the same name as the conn\&.
 .sp
-If using IP addresses in combination with NAT, always use the actual local machine\*(Aqs (NAT\*(Aqed) IP address, and if the remote (eg right=) is NAT\*(Aqed as well, the remote\*(Aqs public (\fBnot\fR
-NAT\*(Aqed) IP address\&. Note that this makes the configuration no longer symmetrical on both sides, so you cannot use an identical configuration file on both hosts\&.
+If using IP addresses in combination with NAT, always use the actual local machine\*(Aqs (NATed) IP address, and if the remote (eg right=) is NATed as well, the remote\*(Aqs public (\fBnot\fR
+NATed) IP address\&. Note that this makes the configuration no longer symmetrical on both sides, so you cannot use an identical configuration file on both hosts\&.
 .RE
 .PP
 \fBleftsubnet\fR
@@ -265,19 +266,19 @@ NAT\*(Aqed) IP address\&. Note that this makes the configuration no longer symme
 private subnet behind the left participant, expressed as
 \fInetwork\fR\fB/\fR\fInetmask\fR
 (actually, any form acceptable to
-\fBipsec_ttosubnet\fR(3)); Currentlly, IPv4 and IPv6 ranges are supported\&. if omitted, essentially assumed to be
+\fBipsec_ttosubnet\fR(3)); Currently, IPv4 and IPv6 ranges are supported\&. if omitted, essentially assumed to be
 \fIleft\fR/32, signifying that the left end of the connection goes to the left participant only
 .sp
 It supports two magic shorthands
 \fIvhost:\fR
 and
 \fIvnet:\fR, which can list subnets in the same syntax as
-\fIvirtual_private\fR\&. The value
+\fIvirtual\-private\fR\&. The value
 \fI%priv\fR
 expands to the networks specified in
-\fIvirtual_private\fR\&. The value
+\fIvirtual\-private\fR\&. The value
 \fI%no\fR
-means no subnet\&. A common use for allowing roadwarrios to come in on public IPs or via accepted NATed networks from RFC1918 is to use
+means no subnet\&. A common use for allowing roadwarriors to come in on public IPs or via accepted NATed networks from RFC1918 is to use
 \fIleftsubnet=vhost:%no,%priv\fR\&. The
 \fIvnet:\fR
 option can be used to allow RFC1918 subnets without hardcoding them\&. When using vnet the connection will instantiate, allowing for multiple tunnels with different subnets\&.
@@ -287,7 +288,7 @@ option can be used to allow RFC1918 subnets without hardcoding them\&. When usin
 .RS 4
 specify multiple private subnets behind the left participant, expressed as {
 \fInetworkA\fR\fB/\fR\fInetmaskA\fR\fInetworkB\fR\fB/\fR\fInetmaskB\fR\fI[\&.\&.\&.]\fR
-} If both a leftsubnets= and rightsubnets= is defined, all combinations of subnet tunnels will be instantiated\&. You cannot use leftsubnet and leftsubnets together\&. For examples see
+} If both a leftsubnets= and rightsubnets= are defined, all combinations of subnet tunnels will be established as IPsec tunnels\&. You cannot use leftsubnet= and leftsubnets= together\&. For examples see
 \fItesting/pluto/multinet\-*\fR\&.
 .RE
 .PP
@@ -310,7 +311,7 @@ When
 is specified, the connection may not specify either
 \fIleftsubnet=\fR
 or
-\fIleftsubnets=\fR\&. Address pools are fully allocated when the connection is loaded, so the ranges should be sane\&. For example, specifing a range
+\fIleftsubnets=\fR\&. Address pools are fully allocated when the connection is loaded, so the ranges should be sane\&. For example, specifying a range
 \fIrightaddresspool=10\&.0\&.0\&.0\-11\&.0\&.0\&.0\fR
 will lead to massive memory allocation\&. Address pools specifying the exact same range are shared between different connections\&. Different addresspools should not be defined to partially overlap\&.
 .RE
@@ -332,8 +333,8 @@ can be used to allow all UDP traffic on the connection\&. Note that this option 
 \fIipsec eroute\fR
 and
 \fIipsec auto \-\-status\fR
-eg:\fI"l2tp": 193\&.110\&.157\&.131[@aivd\&.xelernace\&.com]:7/1701\&.\&.\&.%any:17/1701\fR
-This option only filters outbound traffic\&. Inbound traffic selection must still be based on firewall rules activated by an updown script\&. The variablees $PLUTO_MY_PROTOCOL, $PLUTO_PEER_PROTOCOL, $PLUTO_MY_PORT, and $PLUTO_PEER_PORT are available for use in
+eg:\fI"l2tp": 193\&.110\&.157\&.131[@aivd\&.libreswan\&.org]:7/1701\&.\&.\&.%any:17/1701\fR
+This option only filters outbound traffic\&. Inbound traffic selection must still be based on firewall rules activated by an updown script\&. The variables $PLUTO_MY_PROTOCOL, $PLUTO_PEER_PROTOCOL, $PLUTO_MY_PORT, and $PLUTO_PEER_PORT are available for use in
 \fIupdown\fR
 scripts\&. Older workarounds for bugs involved a setting of
 \fI17/0\fR
@@ -357,7 +358,7 @@ is
 \fB%defaultroute\fR, and
 \fBinterfaces=%defaultroute\fR
 is used in the
-\fBconfig\fR\fBsetup\fR
+\fBconfig setup\fR
 section, the next\-hop gateway address of the default\-route interface will be used\&. The magic value
 \fB%direct\fR
 signifies a value to be filled in (by automatic keying) with the peer\*(Aqs address\&. Relevant only locally, other end need not agree on it\&.
@@ -415,7 +416,7 @@ what operation, if any, should be done automatically at IPsec startup; currently
 \fBipsec auto\fR\fB\-\-up\fR), and
 \fBignore\fR
 (also the default) (signifying no automatic startup operation)\&. See the
-\fBconfig\fR\fBsetup\fR
+\fBconfig setup\fR
 discussion below\&. Relevant only locally, other end need not agree on it (but in general, for an intended\-to\-be\-permanent connection, both ends should use
 \fBauto=start\fR
 to ensure that any reboot causes immediate renegotiation)\&.
@@ -466,9 +467,9 @@ option\&. The default is to use IKE, and to allow all combinations of:
 .\}
 .nf
 \fB
-                cipher:                 3des or aes
+                cipher:                 3des or aes128 or aes256
                 hash:                   sha1 or md5
-                pfsgroup (DHgroup):     modp1024 or modp1536
+                pfsgroup (DHgroup):     modp1024 or modp1536 or modp2048
 \fR
 .fi
 .if n \{\
@@ -489,16 +490,17 @@ Sets the type of SA that will be produced\&. Valid options are:
 \fBesp\fR
 for encryption (the default),
 \fBah\fR
-for authentication only, and
-\fBah+esp\fR
-for nested AH+ESP\&. Note that ESP already includes AH \- the ah+esp option is for double ah headers, and should only be used when connecting to some racoon configurations that do this\&.
+for authentication only\&.
+.sp
+The very first IPsec designs called for use of AH plus ESP to offer authentication, integrity and confidentiality\&. That dual protocol use was a significant burden, so ESP was extended to offer all three services, and AH remained as an auth/integ\&. Only broken configurations (often used with racoon) require the strange double authentication using
+\fBah+esp\fR\&. Additionally, AH does not play well with NATs, so it is strongly recommended to use ESP with the null cipher if you require unencrypted authenticated transport\&.
 .RE
 .PP
 \fBphase2alg\fR
 .RS 4
 Specifies the algorithms that will be offered/accepted for a phase2 negotiation\&. If not specified, a secure set of defaults will be used\&. Sets are separated using comma\*(Aqs\&.
 .sp
-The default values are the same as for ike= Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarilly supported here\&.
+The default values are the same as for ike= Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarily supported here\&.
 .sp
 The format for ESP is ENC\-AUTH followed by an optional PFSgroup\&. For instance, "3des\-md5" or "aes256\-sha1;modp2048" or "aes\-sha1,aes\-md5"\&.
 .sp
@@ -506,16 +508,32 @@ For RFC\-5114 DH groups, use the "dh" keyword, eg "aes256\-sha1;dh23"
 .sp
 The format for AH is AUTH followed by an optional PFSgroup\&. For instance, "md5" or "sha1;modp1536"\&.
 .sp
-A special case is AES CCM, which uses the syntax of "phase2alg=aes_ccm_a\-152\-null"
+AES\-GCM and AES\-CCM use the syntax like "phase2alg=aes_ccm_c\-256\-null"\&. The only supported key sizes are 128, 192 and 256\&. The subscript (_a, _b and _c) stand for the ICV versions (8,12,16)\&. It is recommended to migrate to the _c versions, as support for smaller ICV\*(Aqs will be removed in the future\&.
 .sp
-A special case is phase2=sha2_256\-96 which does not mean 96 bits, but means truncating the sha2_256 hash to 96 bit\&. This is the same as specifying sha2_truncbug=yes (only supported on NETKEY)\&.
+Note that openswan and versions of libreswan up to 3\&.6 require adding the salt size to the key size\&. Therefor, to interop with an older version of openswan or libreswan, use: "phase2alg=aes_ccm_c\-280\-null"\&. For CCM, the \*(Aqkeysize\*(Aq needs to be increased by 24, resulted in valid keysizes of 152, 215 and 280\&. For GCM the \*(Aqkeysize\*(Aq needs to be increased by 32, resulting valid \*(Aqkeysizes\*(Aq of 160, 224 and 288\&.
 .RE
 .PP
-\fBsha2_truncbug\fR
+\fBsha2\-truncbug\fR
 .RS 4
-The default hash truncation for sha2_256 is 128 bits\&. Linux implemented the draft version which stated 96 bits\&. This option enables using the bad 96 bits version to interop with older linux kernels (unpatched version 2\&.6\&.33 and older) and libreswan versions before 2\&.6\&.38\&. Currently the accepted values are
-\fBno\fR, (the default) signifying default IETF truncation of 128 bits, or
-\fByes\fR, signifying 96 bits broken Linux kernel style truncation\&.
+The default ESP hash truncation for sha2_256 is 128 bits\&. Some IPsec implementations (Linux before 2\&.6\&.33, some Cisco (2811?) routers) implement the draft version which stated 96 bits\&. If a draft implementation communicates with an RFC implementation, both ends will reject encrypted packets from each other\&.
+.sp
+This option enables using the draft 96 bits version to interop with those implementations\&. Currently the accepted values are
+\fBno\fR, (the default) signifying default RFC truncation of 128 bits, or
+\fByes\fR, signifying the draft 96 bits truncation\&.
+.sp
+Another workaround is to switch from sha2_256 to sha2_128 or sha2_512\&.
+.RE
+.PP
+\fBnat\-ikev1\-method\fR
+.RS 4
+NAT Traversal in IKEv1 is negotiated via Vendor ID options as specified in RFC 3947\&. However, many implementations only support the draft version of the RFC\&. Libreswan sends both the RFC and the most common draft versions (02, 02_n and 03) to maximize interoperability\&. Unfortunately, there are known broken implementations of RFC 3947, notably Cisco routers that have not been updated to the latest firmware\&. As the NAT\-T payload is sent in the very first packet of the initiator, there is no method to auto\-detect this problem and initiate a workaround\&.
+.sp
+This option allows fine tuning which of the NAT\-T payloads to consider for sending and processing\&. Currently the accepted values are
+\fBdrafts\fR,
+\fBrfc\fR
+or
+\fBboth\fR
+(the default)\&. To interoperate with known broken devices, use nat\-ikev1\-method=drafts\&.
 .RE
 .PP
 \fBesp\fR
@@ -532,10 +550,10 @@ AH authentication algorithm to be used for the connection, e\&.g here\&.
 The options must be suitable as a value of
 \fBipsec_spi\fR(8)\*(Aqs
 \fB\-\-ah\fR
-option\&. The default is not to use AH\&. If for some (invalid) reason you still think you need AH, please use esp with the null encryption cipher instead\&. Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarilly supported here\&.
+option\&. The default is not to use AH\&. If for some (invalid) reason you still think you need AH, please use esp with the null encryption cipher instead\&. Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarily supported here\&.
 .RE
 .PP
-\fBike_frag\fR
+\fBike\-frag\fR
 .RS 4
 Whether or not to allow IKE fragmentation\&. Valid values are are
 \fByes\fR, (the default),
@@ -543,9 +561,9 @@ Whether or not to allow IKE fragmentation\&. Valid values are are
 or
 \fBforce\fR\&.
 .sp
-IKE fragmentation capablities are negotiated via
-\fIvendor id\fR\&. If pluto does not receive the FRAGMENTATION vendor id, no IKE fragments will be sent, regardless of the ike_frag= setting\&. When set to
-\fByes\fR, IKE fragmentation will be attempted on the first re\-transmit of an IKE packet of a size larger then 576 bytes for IPv4 and 1280 bytes for IPv6\&. If ike_frag is set to force, IKE fragmentation is used on initial transmits of such sized packets as well\&. When we have received IKE fragments for a connection, pluto behaves as if in force mode\&.
+IKE fragmentation capabilities are negotiated via
+\fIvendor id\fR\&. If pluto does not receive the FRAGMENTATION vendor id, no IKE fragments will be sent, regardless of the ike\-frag= setting\&. When set to
+\fByes\fR, IKE fragmentation will be attempted on the first re\-transmit of an IKE packet of a size larger then 576 bytes for IPv4 and 1280 bytes for IPv6\&. If ike\-frag is set to force, IKE fragmentation is used on initial transmits of such sized packets as well\&. When we have received IKE fragments for a connection, pluto behaves as if in force mode\&.
 .RE
 .PP
 \fBikepad\fR
@@ -584,7 +602,7 @@ IKEv2 (RFC5996) Section 2\&.9 Traffic Selector narrowing options\&. Currently th
 \fBno\fR, (the default) signifying no narrowing will be proposed or accepted, or
 \fByes\fR, signifying IKEv2 negotiation may allow establishing an IPsec connection with narrowed down traffic selectors\&. This option is ignored for IKEv1\&.
 .sp
-There are security implications in allowing narrowing down the proposal\&. For one, what should be done with packets that we hoped to tunnel, but cannot\&. Should these be dropped or send in the clear? Second, this could cause thousands of narrowed down Child SA\*(Aqs to be created if the conn has a broad policy (eg 0/0 to 0/0)\&. One possible good use case scenario is that a remote end (that you fully trust) allows you to define a 0/0 to them, while adjusting what traffic you route via them, and what traffic remains outside the tunnel\&. However, it is always preferred to setup the exact tunnel policy you want, as this will be much clearer to the user\&.
+There are security implications in allowing narrowing down the proposal\&. For one, what should be done with packets that we hoped to tunnel, but cannot\&. Should these be dropped or send in the clear? Second, this could cause thousands of narrowed down Child SAs to be created if the conn has a broad policy (eg 0/0 to 0/0)\&. One possible good use case scenario is that a remote end (that you fully trust) allows you to define a 0/0 to them, while adjusting what traffic you route via them, and what traffic remains outside the tunnel\&. However, it is always preferred to setup the exact tunnel policy you want, as this will be much clearer to the user\&.
 .RE
 .PP
 \fBsareftrack\fR
@@ -767,7 +785,7 @@ or
 \fIusername:password:conname\fR
 .sp
 For supported password hashing methods, see
-\fBcrypt\fR(3)\&. If pluto is running in FIPS mode, some hash methods, such as MD5, might not be available\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
+\fBcrypt\fR(3)\&. If pluto is running in FIPS mode, some hash methods, such as MD5, might not be available\&. Threads are used to launch an xauth authentication helper for file as well as PAM methods\&.
 .sp
 The
 \fIalwaysok\fR
@@ -800,7 +818,7 @@ When we are an XAUTH client, these options will be treated as defaults\&. If the
 The split tunneling directive will be sent automatically if the xauth server side has configured a network other than 0\&.0\&.0\&.0/0
 .RE
 .PP
-\fBremote_peer_type\fR
+\fBremote\-peer\-type\fR
 .RS 4
 Set the remote peer type\&. This can enable additional processing during the IKE negotiation\&. Acceptable values are
 \fBcisco\fR
@@ -809,7 +827,7 @@ or
 (the default)\&. When set to cisco, support for Cisco IPsec gateway redirection and Cisco obtained DNS and domainname are enabled\&. This includes automatically updating (and restoring) /etc/resolv\&.conf\&. These options require that XAUTH is also enabled on this connection\&.
 .RE
 .PP
-\fBnm_configured\fR
+\fBnm\-configured\fR
 .RS 4
 Mark this connection as controlled by Network Manager\&. Acceptable values are
 \fByes\fR
@@ -831,19 +849,17 @@ or
 (the default)\&.
 .RE
 .PP
-\fBnat_keepalive\fR
+\fBnat\-keepalive\fR
 .RS 4
-whether to send any NAT\-T keep\-alives\&. These 1 byte packets are send to prevent the NAT router from closing its port when there is not enough traffic on the IPsec connection\&. Acceptable values are:
+whether to send any NAT\-T keep\-alives\&. These one byte packets are send to prevent the NAT router from closing its port when there is not enough traffic on the IPsec connection\&. Acceptable values are:
 \fByes\fR
-(the deault) and
-\fBno\fR\&. This per\-conn option takes precedence over the global (config setup)
-\fIforce_keepalive=\fR
-option\&.
+(the default) and
+\fBno\fR\&.
 .RE
 .PP
-\fBinitial_contact\fR
+\fBinitial\-contact\fR
 .RS 4
-whether to send an INITIAL_CONTACT payload to the peer we are initiating to, if we currently have no IPsec SA\*(Aqs up with that peer\&. Acceptable values are:
+whether to send an INITIAL_CONTACT payload to the peer we are initiating to, if we currently have no IPsec SAs up with that peer\&. Acceptable values are:
 \fBno\fR
 (the default) and
 \fByes\fR\&. It is recommended to leave this option unset, unless the remote peer requires it to allow reconnects\&. The only known peer at this time is Cisco, which will not allow a reconnect (despite authentication) to replace an existing IPsec SA unless it receives an INITIAL_CONTACT payload\&. Receiving this payload is ignored and the choice to replace or add an IPsec SA when libreswan is a responder is purely based on the
@@ -851,7 +867,7 @@ whether to send an INITIAL_CONTACT payload to the peer we are initiating to, if 
 setting, which should be left enabled unless libreswan acts as an XAUTH server using PSK ("group secret")\&. This option can cause a few seconds of downtime on the IPsec tunnel between the time the remote clears the old IPsec SA in response to our INITIAL_CONTACT message, and the time we finish setting up the new IPsec SA\&. If there is an XAUTH step in between, and especially when XAUTH requires the use of some two\-factor token, this downtime could be even longer\&.
 .RE
 .PP
-\fBcisco_unity\fR
+\fBcisco\-unity\fR
 .RS 4
 whether to send a CISCO_UNITY payload to the peer we are initiating to\&. Acceptable values are:
 \fBno\fR
@@ -867,12 +883,12 @@ Note that connection instances created by the Opportunistic Encryption or PKIX (
 .sp
 The default is no\&.
 .sp
-This feature is only available with kernel drivers that support SAs to overlapping conns\&. At present only the (klips)mast protocol stack supports this feature\&.
+This feature is only available with kernel drivers that support SAs to overlapping conns\&. At present only the (klips) mast protocol stack supports this feature\&.
 .RE
 .PP
 \fBreqid\fR
 .RS 4
-a unique identifier used to match IPsec SA\*(Aqs using iptables with NETKEY/XFRM\&. This identifier is normally automatically allocated in groups of 4\&. It is exported to the _updown script as REQID\&. On Linux, reqids are supported with IP Connection Tracking and NAT (iptables)\&. Automaticly generated values use the range 16380 and higher\&. Manually specified reqid values therefor must be between 1 and 16379\&.
+a unique identifier used to match IPsec SAs using iptables with NETKEY/XFRM\&. This identifier is normally automatically allocated in groups of 4\&. It is exported to the _updown script as REQID\&. On Linux, reqids are supported with IP Connection Tracking and NAT (iptables)\&. Automatically generated values use the range 16380 and higher\&. Manually specified reqid values therefor must be between 1 and 16379\&.
 .sp
 Automatically generated reqids use a range of 0\-3 (eg 16380\-16383 for the first reqid)\&. These are used depending on the exact policy (AH, AH+ESP, IPCOMP, etc)\&. Manually assigned reqids are all identical\&. Instantiations of connections (those using %any wildcards) will all use the same reqid\&.
 .sp
@@ -881,7 +897,7 @@ For KLIPS, when using the MAST variant, a different mechanism called SAref is in
 .PP
 \fBdpddelay\fR
 .RS 4
-Set the delay (in seconds) between Dead Peer Dectection (RFC 3706) keepalives (R_U_THERE, R_U_THERE_ACK) that are sent for this connection (default
+Set the delay (in seconds) between Dead Peer Detection (RFC 3706) keepalives (R_U_THERE, R_U_THERE_ACK) that are sent for this connection (default
 30
 seconds)\&. If dpddelay is set, dpdtimeout also needs to be set\&.
 .RE
@@ -903,7 +919,7 @@ means the eroute and SA with both be cleared\&.
 \fBrestart\fR
 means that
 \fIALL\fR
-SA\*(Aqs to the dead peer will renegotiated\&.
+SAs to the dead peer will renegotiated\&.
 .sp
 \fIdpdaction=clear\fR
 is really only useful on the server of a Road Warrior config\&.
@@ -925,7 +941,7 @@ to use PFS anyway\&. Acceptable values are
 .PP
 \fBpfsgroup\fR
 .RS 4
-This option is obsoleted, please use phase2alg if you need the pfs to be different from phase1 (the default) using: phase2alg=aes128\-md5;modp1024
+This option is obsoleted, please use phase2alg if you need the PFS to be different from phase1 (the default) using: phase2alg=aes128\-md5;modp1024
 .RE
 .PP
 \fBaggrmode\fR
@@ -959,7 +975,7 @@ how long a particular instance of a connection (a set of encryption/authenticati
 \fB24h\fR)\&. Normally, the connection is renegotiated (via the keying channel) before it expires\&. The two ends need not exactly agree on
 \fBsalifetime\fR, although if they do not, there will be some clutter of superseded connections on the end which thinks the lifetime is longer\&.
 .sp
-The keywords "keylife" and "lifetime" are aliases for "salifetime\&."
+The keywords "keylife" and "lifetime" are obsoleted aliases for "salifetime\&." Change your configs to use "salifetime" instead\&.
 .RE
 .PP
 \fBrekey\fR
@@ -1008,12 +1024,12 @@ means \(lqnever give up\(rq (obsolete: this can be written
 \fBikelifetime\fR
 .RS 4
 how long the keying channel of a connection (buzzphrase: \(lqISAKMP SA\(rq) should last before being renegotiated; acceptable values as for
-\fBkeylife\fR
+\fBsalifetime\fR
 (default set by
 \fBipsec_pluto\fR(8), currently
 \fB1h\fR, maximum
 \fB24h\fR)\&. The two\-ends\-disagree case is similar to that of
-\fBkeylife\fR\&.
+\fBsalifetime\fR\&.
 .RE
 .PP
 \fBcompress\fR
@@ -1044,7 +1060,7 @@ Set the metric for the routes to the ipsecX or mastX interface\&. This makes it 
 .PP
 \fBmtu\fR
 .RS 4
-Set the mtu for the route(s) to the remote endpoint and/or subnets\&. This is sometimes required when the overhead of the IPsec encapsultion would cause the packet the become too big for a router on the path\&. Since IPsec cannot trust any unauthenticated ICMP messages, PATH MTU discovery does not work\&. This can also be needed when using "6to4" IPV6 deployments, which adds another header on the packet size\&. Acceptable values are positive numbers\&. There is no default\&.
+Set the MTU for the route(s) to the remote endpoint and/or subnets\&. This is sometimes required when the overhead of the IPsec encapsulation would cause the packet the become too big for a router on the path\&. Since IPsec cannot trust any unauthenticated ICMP messages, PATH MTU discovery does not work\&. This can also be needed when using "6to4" IPV6 deployments, which adds another header on the packet size\&. Acceptable values are positive numbers\&. There is no default\&.
 .RE
 .PP
 \fBpriority\fR
@@ -1055,7 +1071,7 @@ KLIPS and NETKEY use a priority system based on "most specific match first"\&. I
 .sp
 Typical values are about the 2000 range\&. These can be seen on the NETKEY stack using
 \fBip xfrm policy\fR
-when the connection is up\&. For "anonymous IPsec" or Opoprtunistic Encryption based connections, a much lower priority (65535) is used to ensure administrator configured IPsec always takes precedence over opportunistic IPsec\&.
+when the connection is up\&. For "anonymous IPsec" or Opportunistic Encryption based connections, a much lower priority (65535) is used to ensure administrator configured IPsec always takes precedence over opportunistic IPsec\&.
 .RE
 .PP
 \fBdisablearrivalcheck\fR
@@ -1067,18 +1083,18 @@ and
 (the default)\&. Tunnel\-exit checks improve security and do not break any normal configuration\&. Relevant only locally, other end need not agree on it\&.
 .RE
 .PP
-\fBlabeled_ipsec\fR
+\fBlabeled\-ipsec\fR
 .RS 4
 Whether labeled IPsec should be enabled or not; acceptable values are
 \fBno\fR
 (the default) and
-\fByes\fR\&. See also loopback=, policy_label= and secctx_attr_value=
+\fByes\fR\&. See also loopback=, policy\-label= and secctx\-attr\-value=
 .RE
 .PP
-\fBpolicy_label\fR
+\fBpolicy\-label\fR
 .RS 4
-The string representation of an access control security label that is interpreted by the LSM (e\&.g\&. SELinux) for use with Labeled IPsec\&. See alo loopback=, labeled_ipsec= and secctx_attr_value=\&. For example,
-\fIpolicy_label=system_u:object_r:ipsec_spd_t:s0\-s15:c0\&.c1023\fR
+The string representation of an access control security label that is interpreted by the LSM (e\&.g\&. SELinux) for use with Labeled IPsec\&. See also loopback=, labeled\-ipsec= and secctx\-attr\-value=\&. For example,
+\fIpolicy\-label=system_u:object_r:ipsec_spd_t:s0\-s15:c0\&.c1023\fR
 .RE
 .PP
 \fBloopback\fR
@@ -1131,7 +1147,7 @@ Parameters are optional unless marked \(lq(required)\(rq\&.
 The currently\-accepted
 \fIparameter\fR
 names in a
-\fBconfig\fR\fBsetup\fR
+\fBconfig setup\fR
 section are:
 .PP
 \fBmyid\fR
@@ -1148,7 +1164,7 @@ is set to the IP address in
 .PP
 \fBprotostack\fR
 .RS 4
-decide which protocol stack is going to be used\&. Valid values are "klips", "netkey" (the default) and "mast"\&. The "mast" stack is a variation for the klips stack\&. The value "auto" has been obsoleted\&.
+decide which protocol stack is going to be used\&. Valid values are "klips", "netkey" (the default) and "mast"\&. The "mast" stack is a variation for the KLIPS stack\&. The value "auto" has been obsoleted\&.
 .RE
 .PP
 \fBinterfaces\fR
@@ -1179,46 +1195,38 @@ setting)\&. Currently only accepts one IP address\&.
 \fBikeport\fR
 .RS 4
 The IKE port to listen on\&. The default value is
-\fB500\fR\&. As IKE is an internet standard, changing this means pluto will no longer be able to interop with other devices, unless they have also been explicitely configured to use a non\-standard IKE port\&. There might also be other subtle assumptions within the kernel that port 500 is used\&. Changing this port is strongly discouraged, and should probably only be done for testing or when required to circumvent VPN blocking technologies as employed by certain commercial companies and national governments\&. See also
-\fBnat_ikeport\fR\&.
+\fB500\fR\&. As IKE is an internet standard, changing this means pluto will no longer be able to interop with other devices, unless they have also been explicitly configured to use a non\-standard IKE port\&. There might also be other subtle assumptions within the kernel that port 500 is used\&. Changing this port is strongly discouraged, and should probably only be done for testing or when required to circumvent VPN blocking technologies as employed by certain commercial companies and national governments\&. See also
+\fBnat\-ikeport\fR\&.
 .RE
 .PP
 \fBnat_traversal\fR
 .RS 4
-whether to accept/offer to support NAT (NAPT, also known as "IP Masqurade") workaround for IPsec\&. Acceptable values are:
-\fByes\fR
-and
-\fBno\fR
-(the default)\&. This parameter may eventually become per\-connection\&.
+OBSOLETE\&. Support for NAT Traversal is always enabled\&.
 .RE
 .PP
 \fBdisable_port_floating\fR
 .RS 4
-whether to enable the newer NAT\-T standards for port floating\&. Acceptable values are
-\fBno\fR
-(the default) and
-\fByes\fR
-\&.
+OBSOLETE
 .RE
 .PP
 \fBforce_keepalive\fR
 .RS 4
 This option has been obsoleted since libreswan version 3\&.2\&. See the
-\fInat_keepalive\fR
-option to enable/disable NAT\-KA packets on a per\-connection basis\&.
+\fInat\-keepalive\fR
+option\&.
 .RE
 .PP
-\fBnat_ikeport\fR
+\fBnat\-ikeport\fR
 .RS 4
 The IKE NAT Traversal floating port (see RFC\-3947) to listen on\&. The default value is
-\fB4500\fR\&. As IKE/NATT is an internet standard, changing this means pluto will no longer be able to interop with other devices, unless they have also been explicitely configured to use a non\-standard IKE/NATT port\&. There might also be other subtle assumptions within the kernel that port 4500 is used\&. Changing this port is strongly discouraged, and should probably only be done for testing or when required to circumvent VPN blocking technologies as employed by certain commercial companies and national governments\&. See also
+\fB4500\fR\&. As IKE/NATT is an internet standard, changing this means pluto will no longer be able to interoperate with other devices, unless they have also been explicitly configured to use a non\-standard IKE/NATT port\&. There might also be other subtle assumptions within the kernel that port 4500 is used\&. Changing this port is strongly discouraged, and should probably only be done for testing or when required to circumvent VPN blocking technologies as employed by certain commercial companies and national governments\&. See also
 \fBikeport\fR\&.
 .RE
 .PP
-\fBkeep_alive\fR
+\fBkeep\-alive\fR
 .RS 4
 The delay (in seconds) for NAT\-T keep\-alive packets, if these are enabled using
-\fBforce_keepalive\fR
+\fBnat\-keepalive\fR
 This parameter may eventually become per\-connection\&.
 .RE
 .PP
@@ -1228,7 +1236,7 @@ Whether pluto should attempt to retransmit packets that get no reply\&. This is 
 \fByes\fR\&.
 .RE
 .PP
-\fBvirtual_private\fR
+\fBvirtual\-private\fR
 .RS 4
 contains the networks that are allowed as subnet= for the remote clients when using the
 \fBvhost:\fR
@@ -1241,10 +1249,15 @@ parameters\&. In other words, the address ranges that may live behind a NAT rout
 and IPv6 is denoted as
 \fI%v6:aaaa::bbbb:cccc:dddd:eeee/mm\fR\&. One can exclude subnets by using the
 \fB!\fR\&. For example, if the VPN server is giving access to 192\&.168\&.1\&.0/24, this option should be set to:
-\fIvirtual_private=%v4:10\&.0\&.0\&.0/8,%v4:192\&.168\&.0\&.0/16,%v4:172\&.16\&.0\&.0/12,%v4:!192\&.168\&.1\&.0/24\fR\&. This parameter is only needed on the server side and not on the client side that resides behind the NAT router, as the client will just use its IP address for the inner IP setting\&. This parameter may eventually become per\-connection\&. See also
+\fIvirtual\-private=%v4:10\&.0\&.0\&.0/8,%v4:192\&.168\&.0\&.0/16,%v4:172\&.16\&.0\&.0/12,%v4:!192\&.168\&.1\&.0/24\fR\&. This parameter is only needed on the server side and not on the client side that resides behind the NAT router, as the client will just use its IP address for the inner IP setting\&. This parameter may eventually become per\-connection\&. See also
 \fBleftsubnet=\fR
 .sp
-Note: It seems that T\-Mobile in the US and Rogers/Fido in Canada have started using 25\&.0\&.0\&.0/8 as their pre\-NAT range\&. This range technically belongs to the Defence Interoperable Network Services Authority (DINSA), an agency of the Ministry of Defence of the United Kingdom\&. The network range seems to not have been announced for decades, which is probably why these organisasions "borrowed" this range\&. To support roadwarriors on these 3G networks, you might have to add it to the virtual_private= line\&.
+Note: It seems that T\-Mobile in the US and Rogers/Fido in Canada have started using 25\&.0\&.0\&.0/8 as their pre\-NAT range\&. This range technically belongs to the Defence Interoperable Network Services Authority (DINSA), an agency of the Ministry of Defence of the United Kingdom\&. The network range seems to not have been announced for decades, which is probably why these organisations "borrowed" this range\&. To support roadwarriors on these 3G networks, you might have to add it to the virtual\-private= line\&.
+.RE
+.PP
+\fBmyvendorid\fR
+.RS 4
+The string to use as our vendor id (VID) when send_vendorid=yes\&. The default is OE\-Libreswan\-VERSION\&.
 .RE
 .PP
 \fBoe\fR
@@ -1264,15 +1277,15 @@ of them, where
 is the number of CPU\*(Aqs you have (including hypherthreaded CPU\*(Aqs)\&. A value of 0 forces pluto to do all operations in the main process\&. A value of \-1 tells pluto to perform the above calculation\&. Any other value forces the number to that amount\&.
 .RE
 .PP
-\fBsecctx_attr_value\fR
+\fBsecctx\-attr\-value\fR
 .RS 4
-The value for the IPsec SA security context attribute identifier which is used for Labeled IPsec\&. Defaults to the private use IANA value 32001 from the IPsec SA attributes registry\&. Old openswan versions might still be using the (stolen) value 10, which has since been assigned by IANA for something else\&. Other values are not recommended unless IANA assigns an actual value for this\&. See also labeled_ipsec=, loopback= and policy_label=
+The value for the IPsec SA security context attribute identifier which is used for Labeled IPsec\&. Defaults to the private use IANA value 32001 from the IPsec SA attributes registry\&. Old openswan versions might still be using the (stolen) value 10, which has since been assigned by IANA for something else\&. Other values are not recommended unless IANA assigns an actual value for this\&. See also labeled\-ipsec=, loopback= and policy\-label=
 .RE
 .PP
 \fBplutofork\fR
 .RS 4
-Wether\fIpluto\fR
-will turn into a daemon by forking in the background, or wether it will remain on the foreground\&. Valid options are
+Whether\fIpluto\fR
+will turn into a daemon by forking in the background, or whether it will remain on the foreground\&. Valid options are
 \fIyes\fR
 (the default) or
 \fIno\fR\&. Older init systems, such as sysv initscripts, require that pluto forks into the background\&. Newer init systems, such as
@@ -1390,11 +1403,11 @@ Whether pluto logs messages with the current timestamp as prefix\&. This might b
 \&.
 .RE
 .PP
-\fBforce_busy\fR
+\fBforce\-busy\fR
 .RS 4
 Emulate a
 \fIbusy system\fR
-and take counter meassures\&. The value can be
+and take counter measures\&. The value can be
 \fIno\fR
 (the default) or
 \fIyes\fR\&. If enabled, pluto will be forced to be "busy"\&. In this state, which happens when there is a Denial of Service attack, pluto will use cookies before accepting new incoming IKE packets\&. Cookies are send and required for IKEv1 Aggressive Mode and in IKEv2\&. This option is mostly used for testing purposes, but can be selected by paranoid administrators as well\&.
@@ -1405,23 +1418,23 @@ and take counter meassures\&. The value can be
 in what directory should things started by
 \fIsetup\fR
 (notably the Pluto daemon) be allowed to dump core? The default value is
-\fI/var/run/pluto\fR\&. When SElinux runs in enforced mode, changing this requires a similar change in the SElinux policy for the pluto daemon\&.
+\fI/var/run/pluto\fR\&. When SELinux runs in enforced mode, changing this requires a similar change in the SELinux policy for the pluto daemon\&.
 .RE
 .PP
 \fBstatsbin\fR
 .RS 4
-This option specifies an optional external program to report tunnel state changes too\&. The default is not to report tunnel state changes\&. This program can be used to notify the user\*(Aqs desktop or to report tunnel changes to a central logging server\&.
+This option specifies an optional external program to report tunnel state changes too\&. The default is not to report tunnel state changes\&. This program can be used to notify the user\*(Aqs desktop (dbus, NetworkManager) or to report tunnel changes to a central logging server\&.
 .RE
 .PP
 \fBipsecdir\fR
 .RS 4
 in what directory the X509, NSS and OE related files should be stored\&. The default value is
-\fI/etc/ipsec\&.d\fR\&. When SElinux runs in enforced mode, changing this requires a similar change in the SElinux policy for the pluto daemon\&. Note that NSS generated db files contain their location within their files, so you cannot move this directory without re\-creating the NSS files\&.
+\fI/etc/ipsec\&.d\fR\&. When SELinux runs in enforced mode, changing this requires a similar change in the SELinux policy for the pluto daemon\&. Note that NSS generated db files contain their location within their files, so you cannot move this directory without re\-creating the NSS files\&.
 .RE
 .PP
 \fBsecretsfile\fR
 .RS 4
-in which file the secrets credentials are stored\&. See
+in which file the secret credentials such as preshared keys (PSKs) are stored\&. See
 \fIman ipsec\&.secrets\fR
 for the syntax\&. The default value is
 \fI/etc/ipsec\&.secrets\fR\&.
@@ -1442,7 +1455,7 @@ When disabled, logging is done to syslog or into a single log file, as defined b
 in what directory the per\-peer log should be created, if enabled via the
 \fBperpeerlog\fR
 option\&. This will result in sub directories in the structure /192/0/2\&. The default value is
-\fI/var/log/pluto/peer/\fR\&. When SElinux runs in enforced mode, changing this requires a similar change in the SElinux policy for the pluto daemon\&.
+\fI/var/log/pluto/peer/\fR\&. When SELinux runs in enforced mode, changing this requires a similar change in the SELinux policy for the pluto daemon\&.
 .RE
 .PP
 \fBfragicmp\fR
@@ -1727,7 +1740,7 @@ may be introduced in the future to separate these two cases\&.
 It would be good to have a line\-continuation syntax, especially for the very long lines involved in RSA signature keys\&.
 .PP
 \fBFirst packet caching\fR
-is only implemented for the KLIPS(NG) and MAST stacks\&. NETKEY returns POSIX\-breaking responses, visiable as
+is only implemented for the KLIPS(NG) and MAST stacks\&. NETKEY returns POSIX\-breaking responses, visible as
 \fIconnect: Resource temporarily unavailable\fR
 errors\&. This affects Opportunistic Encryption and DPD\&. Functionality on the BSD and Windows stacks is unknown\&.
 .PP

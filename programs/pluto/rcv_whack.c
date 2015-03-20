@@ -46,8 +46,8 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "whack.h"              /* needs connections.h */
@@ -65,6 +65,7 @@
 #include "server.h"
 #include "fetch.h"
 #include "timer.h"
+#include "ikev2.h"
 
 #include "kernel_alg.h"
 #include "ike_alg.h"
@@ -112,7 +113,7 @@ void do_whacklisten()
 	reset_adns_restart_count();
 	set_myFQDN();
 	find_ifaces();
-	load_preshared_secrets(NULL_FD);
+	load_preshared_secrets();
 	load_groups();
 }
 
@@ -145,26 +146,24 @@ static FILE *whackrecordfile = NULL;
  * being first.
  *
  */
-static bool writewhackrecord(char *buf, int buflen)
+static bool writewhackrecord(char *buf, size_t buflen)
 {
 	u_int32_t header[3];
-	time_t n;
 
 	/* round up buffer length */
-	int abuflen = (buflen + 3) & ~0x3;
+	size_t abuflen = (buflen + sizeof(header[0]) - 1) & ~(sizeof(header[0]) - 1);
 
 	/* bail if we aren't writing anything */
 	if (whackrecordfile == NULL)
 		return TRUE;
 
-	header[0] = buflen + sizeof(u_int32_t) * 3;
+	header[0] = buflen + sizeof(header);
 	header[1] = 0;
-	time(&n);
-	header[2] = n;
+	header[2] = time(NULL);	/* ??? is this reasonable? 2038 */
 
 	/* DBG_log("buflen: %u abuflen: %u\n", header[0], abuflen); */
 
-	if (fwrite(header, sizeof(u_int32_t) * 3, 1, whackrecordfile) < 1)
+	if (fwrite(header, sizeof(header), 1, whackrecordfile) < 1)
 		DBG_log("writewhackrecord: fwrite error when writing header");
 
 	if (fwrite(buf, abuflen, 1, whackrecordfile) < 1)
@@ -185,7 +184,7 @@ static bool openwhackrecordfile(char *file)
 	char FQDN[HOST_NAME_MAX + 1];
 	u_int32_t magic;
 	struct tm tm1, *tm;
-	time_t n;
+	realtime_t n = realnow();
 
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));
@@ -199,15 +198,14 @@ static bool openwhackrecordfile(char *file)
 		return FALSE;
 	}
 
-	time(&n);
-	tm = localtime_r(&n, &tm1);
+	tm = localtime_r(&n.real_secs, &tm1);
 	strftime(when, sizeof(when), "%F %T", tm);
 
 	fprintf(whackrecordfile, "#!-pluto-whack-file- recorded on %s on %s\n",
 		FQDN, when);
 
 	magic = WHACK_BASIC_MAGIC;
-	writewhackrecord((char *)&magic, 4);
+	writewhackrecord((char *)&magic, sizeof(magic));
 
 	DBG(DBG_CONTROL,
 	    DBG_log("started recording whack messages to %s\n",
@@ -398,9 +396,19 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 		if (st == NULL) {
 			loglog(RC_UNKNOWN_NAME, "no state #%lu to delete",
-			       msg.whack_deletestateno);
+					msg.whack_deletestateno);
 		} else {
-			delete_state(st);
+			DBG_log("received whack to delete %s state #%lu %s",
+				st->st_ikev2 ? "IKEv2" : "IKEv1",
+				st->st_serialno,
+				enum_name(&state_names, st->st_state));
+
+			if (st->st_ikev2 && !IS_CHILD_SA(st)) {
+				DBG_log("Also deleting any corresponding CHILD_SAs");
+				v2_delete_my_family(st, INITIATOR);
+			} else {
+				delete_state(st);
+			}
 		}
 	}
 
@@ -419,7 +427,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 	}
 
 	if (msg.whack_reread & REREAD_SECRETS)
-		load_preshared_secrets(whackfd);
+		load_preshared_secrets();
 
 	if (msg.whack_list & LIST_PUBKEYS)
 		list_public_keys(msg.whack_utc, msg.whack_check_pub_keys);
@@ -429,14 +437,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 		load_authcerts_from_nss("CA cert", AUTH_CA);
 	}
 
-	if (msg.whack_reread & REREAD_AACERTS)
-		load_authcerts("AA cert", oco->aacerts_dir, AUTH_AA);
-
-	if (msg.whack_reread & REREAD_ACERTS)
-		load_acerts();
-
 	if (msg.whack_reread & REREAD_CRLS)
-
 		load_crls();
 
 	if (msg.whack_list & LIST_PSKS)
@@ -444,15 +445,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_list & LIST_CERTS)
 		list_certs(msg.whack_utc);
-
-	if (msg.whack_list & LIST_AACERTS)
-		list_authcerts("AA", AUTH_AA, msg.whack_utc);
-
-	if (msg.whack_list & LIST_ACERTS)
-		list_acerts(msg.whack_utc);
-
-	if (msg.whack_list & LIST_GROUPS)
-		list_groups(msg.whack_utc);
 
 	if (msg.whack_list & LIST_CACERTS)
 		list_authcerts("CA", AUTH_CA, msg.whack_utc);
@@ -591,7 +583,7 @@ void whack_handle(int whackctlfd)
 		close(whackfd);
 		return;
 	}
-	memset(&msg, 0, sizeof(msg));
+	zero(&msg);
 	n = read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
 		log_errno((e, "read() failed in whack_handle()"));

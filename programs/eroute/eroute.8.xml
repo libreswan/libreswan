@@ -360,7 +360,7 @@
   <refsect1 id="see_also">
     <title>SEE ALSO</title>
 
-    <para>ipsec(8), ipsec_manual(8), ipsec_tncfg(8), ipsec_spi(8),
+    <para>ipsec(8), ipsec_tncfg(8), ipsec_spi(8),
     ipsec_spigrp(8), ipsec_klipsdebug(8), ipsec_eroute(5)</para>
   </refsect1>
 

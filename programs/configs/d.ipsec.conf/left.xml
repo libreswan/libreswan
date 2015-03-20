@@ -9,12 +9,11 @@ There are several magic values.  If it is
 <emphasis remap='B'>%defaultroute</emphasis>,
 and
 the
-<emphasis remap='B'>config</emphasis>
-<emphasis remap='B'>setup</emphasis>
+<emphasis remap='B'>config setup</emphasis>
 section's,
 <emphasis remap='B'>interfaces</emphasis>
 specification contains
-<emphasis remap='B'>%defaultroute,</emphasis>
+<emphasis remap='B'>%defaultroute</emphasis>,
 <emphasis remap='B'>left</emphasis>
 will be filled in automatically with the local address
 of the default-route interface (as determined at IPsec startup time);
@@ -52,9 +51,9 @@ makes this a policy group conn: one that will be instantiated
 into a regular or opportunistic conn for each CIDR block listed in the
 policy group file with the same name as the conn.</para>
 <para>If using IP addresses in combination with NAT, always use the
-actual local machine's (NAT'ed) IP address, and if the remote (eg right=)
-is NAT'ed as well, the remote's public (<emphasis remap='B'>not</emphasis>
-NAT'ed) IP address. Note that this makes the configuration no longer
+actual local machine's (NATed) IP address, and if the remote (eg right=)
+is NATed as well, the remote's public (<emphasis remap='B'>not</emphasis>
+NATed) IP address. Note that this makes the configuration no longer
 symmetrical on both sides, so you cannot use an identical configuration
 file on both hosts.</para>
 

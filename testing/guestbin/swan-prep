@@ -15,7 +15,10 @@ except ImportError , e:
 # prevent double installs from going unnoticed
 if os.path.isfile("/usr/sbin/ipsec") or os.path.isfile("/sbin/ipsec"):
 	if os.path.isfile("/usr/local/sbin/ipsec"):
-		sys.exit("ABORT: found a swan userland in the base system as well as /usr/local")
+		sys.exit("\n\n---------------------------------------------------------------------\n"
+                             "ABORT: found a swan userland in the base system as well as /usr/local\n"
+			     "---------------------------------------------------------------------\n")    
+
 
 # just in case a new copy was installed
 if os.path.isfile("/usr/local/sbin/ipsec") and os.path.isfile("/usr/sbin/restorecon"):
@@ -29,6 +32,7 @@ parser.add_argument('--hostname', '-H', action='store', default='', help='The na
 # we should get this from the testparams.sh file?
 parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
 parser.add_argument('--x509', '-x', action='store_true',  help='create X509 NSS file by importing test certs')
+parser.add_argument('--eccert', '-e', action='store_true', help='enable an EC cert for this host')
 parser.add_argument('--46', '--64', action='store_true', help='Do not disable IPv6. Default is disable IPv6 ', dest = 'ipv', default = False)
 parser.add_argument('--6', action='store_true', help='Enable IPv6 and run - /etc/init.d/network restart', dest = 'ipv6', default = False)
 args = parser.parse_args()
@@ -107,10 +111,24 @@ if os.path.isfile("/lib/systemd/system/ipsec.service"):
 	if "Restart=always" in service:
 		fp = open("/lib/systemd/system/ipsec.service","w")
 		fp.write("".join(service).replace("Restart=always","Restart=no"))
-		commands.getoutput("/usr/bin/systemctl daemon-reload")
+	# always reload to avoid "service is masked" errors
+	commands.getoutput("/usr/bin/systemctl daemon-reload")
 
 # easy way to ensure we have the LOGDROP table for those OSes where we don't start a firewall with config
 commands.getoutput("iptables-restore /etc/sysconfig/iptables")
+commands.getoutput("ip6tables-restore /etc/sysconfig/ip6tables")
+
+# ensure cores are just dropped, not sent to aobrt-hook-ccpp. Although we could try and use that,
+# and depend on systemd-coredumpctl output and copying
+#
+# we can core directly in testcase dir but that requires fixing all final.sh and console output
+#commands.getoutput("sysctl -w kernel.core_pattern=/testing/pluto/%s/OUTPUT/core.%%h.%%e.%%p"%testname)
+#
+commands.getoutput("sysctl -w kernel.core_pattern=/tmp/core.%h.%e.%p")
+if not os.path.isfile("/etc/sysctl.d/coredump.conf") and not os.path.islink("/etc/sysctl.d/coredump.conf"):
+	os.symlink("/dev/null", "/etc/sysctl.d/coredump.conf")
+	commands.getoutput("/lib/systemd/systemd-sysctl")
+
 
 if userland == "libreswan" or userland == "openswan" or userland == "strongswan":
 	# copy in base configs
@@ -133,6 +151,10 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	# test specific files
 	ipsecconf = "/testing/pluto/%s/%s.conf"%(testname,hostname)
 	ipsecsecrets = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
+	xl2tpdconf = "/testing/pluto/%s/%s.xl2tpd.conf"%(testname,hostname)
+	pppoptions = "/testing/pluto/%s/%s.ppp-options.xl2tpd"%(testname,hostname)
+	chapfile = "/testing/pluto/%s/chap-secrets"%testname
+
 	if not os.path.isfile(ipsecconf):
 		ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf"%hostname
 	if not os.path.isfile(ipsecsecrets):
@@ -150,7 +172,18 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	shutil.copy(ipsecconf, dstconf)
 	shutil.copy(ipsecsecrets,dstsecrets);
 	os.chmod(dstsecrets, 0600)
-    
+
+	if os.path.isfile(xl2tpdconf):
+		shutil.copyfile(xl2tpdconf, "/etc/xl2tpd/xl2tpd.conf")
+	if os.path.isfile(pppoptions):
+		shutil.copyfile(pppoptions, "/etc/ppp/options.xl2tpd")
+	if os.path.isfile(chapfile):
+		shutil.copyfile(chapfile, "/etc/ppp/chap-secrets")
+
+	dbfiles = glob.glob("/etc/ipsec.d/*db")
+	for dbfile in dbfiles:
+		os.chown(dbfile,0,0)
+
 	if args.x509: 
 		if (userland == "libreswan" or userland == "openswan"):
 			print "Preparing X.509 files"
@@ -164,17 +197,35 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 			child.sendline ('')
 			child.sendline ('')
 
-			commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/%s.p12 -d /etc/ipsec.d -w /testing/x509/nss-pw"%hostname)
+			if args.eccert:
+				p12 = hostname + "-ec"
+				ca = "curveca"
+				pw = "-W \"\""
+			else:
+				p12 = hostname
+				ca = "mainca"
+				pw = "-w /testing/x509/nss-pw"
+
+			commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d /etc/ipsec.d %s"%(ca,p12,pw))
 			# install all other public certs
 			# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
-			for certname in ( "west", "east", "road", "north","hashsha2"):
-				if certname is not hostname:
+
+			for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec"):
+				if not hostname in certname:
 					commands.getoutput("certutil -A -n %s -t 'P,u' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt"%(certname,certname))
 		elif userland == "strongswan":
-			shutil.copy("/testing/x509/cacerts/mainca.crt","/etc/strongswan/ipsec.d/cacerts/")
-			shutil.copy("/testing/x509/keys/%s.key"%hostname,"/etc/strongswan/ipsec.d/private/")
-			for certname in ( "west", "east", "road", "north","hashsha2"):
-				shutil.copy("/testing/x509/certs/%s.crt"%hostname,"/etc/strongswan/ipsec.d/certs/")
+			if args.eccert:
+				ca = "curveca"
+				key = hostname + "-ec"
+			else:
+				ca = "mainca"
+				key = hostname
+
+			shutil.copy("/testing/x509/cacerts/%s.crt"%ca,"/etc/strongswan/ipsec.d/cacerts/")
+			shutil.copy("/testing/x509/keys/%s.key"%key,"/etc/strongswan/ipsec.d/private/")
+
+			for certname in ( "west", "east", "road", "north","hashsha2","west-ec","east-ec"):
+				shutil.copy("/testing/x509/certs/%s.crt"%certname,"/etc/strongswan/ipsec.d/certs/")
 
 if userland == "racoon2" or userland == "racoon":
 	# Racoon uses x509 files straight from /testing/x509/*

@@ -48,7 +48,6 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"
-#include "lswcrypto.h"
 #include "lswconf.h"
 #include "secrets.h"
 #include "mpzfuncs.h"
@@ -95,15 +94,6 @@ void (exit_tool)(int x)
 	exit(x);
 }
 
-static void phasemeout_loglog(int mess_no UNUSED, const char *message, ...)
-{
-	va_list args;
-
-	va_start(args, message);
-	vfprintf(stderr, message, args);
-	va_end(args);
-}
-
 static void print_key(struct secret *secret,
 		      struct private_key_stuff *pks,
 		      bool disclose)
@@ -142,11 +132,6 @@ static void print_key(struct secret *secret,
 			if (disclose)
 				printf("    xauth: \"%s\"\n", pskbuf);
 			break;
-
-		case PPK_PIN:
-			printf("%d:(%d) PIN key-type not yet supported for id: %s\n", lineno, count,
-				idb);
-			break;
 		}
 
 		l = l->next;
@@ -176,7 +161,7 @@ static int pickbyid(struct secret *secret UNUSED,
 {
 	char *rsakeyid = (char *)uservoid;
 
-	if (strcmp(pks->u.RSA_private_key.pub.keyid, rsakeyid) == 0)
+	if (streq(pks->u.RSA_private_key.pub.keyid, rsakeyid))
 		return 0;
 
 	return 1;
@@ -319,9 +304,6 @@ static void show_confkey(struct secret *s,
 		case PPK_PSK:
 			enumstr = "PPK_PSK";
 			break;
-		case PPK_PIN:
-			enumstr = "PPK_PIN";
-			break;
 		case PPK_XAUTH:
 			enumstr = "PPK_XAUTH";
 			break;
@@ -361,7 +343,6 @@ int main(int argc, char *argv[])
 	char *rsakeyid, *keyid;
 	struct secret *host_secrets = NULL;
 	struct secret *s;
-	prompt_pass_t pass;
 
 	rsakeyid = NULL;
 	keyid = NULL;
@@ -391,11 +372,16 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'p':
-			precedence = atoi(optarg);
-			if ( (precedence < 0) || (precedence > 255)) {
-				fprintf(stderr,
-					"precedence must be between 0 and 255\n");
-				exit(5);
+			{
+				unsigned long u;
+				err_t ugh = ttoulb(optarg, 0, 10, 255, &u);
+
+				if (ugh != NULL) {
+					fprintf(stderr,
+						"precedence malformed: %s\n", ugh);
+					exit(5);
+				}
+				precedence = u;
 			}
 			break;
 		case 'L':
@@ -416,8 +402,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'f': /* --file arg */
-			secrets_file[0] = '\0';
-			strncat(secrets_file, optarg, PATH_MAX - 1);
+			jam_str(secrets_file, sizeof(secrets_file), optarg);
 			break;
 
 		case 'i':
@@ -463,37 +448,26 @@ usage:
 		goto usage;
 	}
 
-	if (verbose > 2) {
-		fprintf(stderr,
-			"verbosity cannot be set this high\n");
-	}
-
-	/* now load file from indicated location */
-	pass.prompt = phasemeout_loglog;
-	pass.fd = 2; /* stderr */
-
-	PRBool nss_initialized = PR_FALSE;
-	SECStatus rv;
-	char buf[100];
-	snprintf(buf, sizeof(buf), "%s", oco->confddir);
 	if (verbose)
 		fprintf(stderr, "ipsec showhostkey using nss directory: %s\n",
-			buf);
+			oco->confddir);
 	PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
-	if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
-		fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
-			progname, PR_GetError());
-		exit(1);
+
+	{
+		SECStatus rv = NSS_InitReadWrite(oco->confddir);
+
+		if (rv != SECSuccess) {
+			fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",
+				progname, PR_GetError());
+			exit(1);
+		}
 	}
-	nss_initialized = PR_TRUE;
+
 	PK11_SetPasswordFunc(getNSSPassword);
 
-	load_lswcrypto();
-	lsw_load_preshared_secrets(&host_secrets, verbose > 0 ? TRUE : FALSE,
-				   secrets_file, &pass);
+	lsw_load_preshared_secrets(&host_secrets, secrets_file);
 
-	if (nss_initialized)
-		NSS_Shutdown();
+	NSS_Shutdown();
 	PR_Cleanup();
 
 	/* options that apply to entire files */

@@ -169,21 +169,6 @@ ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
 use_comment=true
 
-# check interface version
-case "${PLUTO_VERSION}" in
-    1.*)
-	# Older Pluto?!?  Play it safe, script may be using new features.
-	echo "${0}: obsolete interface version \"${PLUTO_VERSION}\"," >&2
-	echo "${0}: 	called by obsolete Pluto?" >&2
-	exit 2
-	;;
-    2.*)
-	;;
-    *)	echo "${0}: unknown interface version \"${PLUTO_VERSION}\"" >&2
-	exit 2
-	;;
-esac
-
 # check parameter(s)
 case "${1}:$*" in
     ':')
@@ -492,11 +477,7 @@ changesource() {
     if [ -n "${IPROUTETABLE}" ]; then
 	parms3="${parms3} table ${IPROUTETABLE}"
     fi
-    cmd=add
-    if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep mast0; then
-	cmd=change
-    fi
-    it="ip route ${cmd} ${parms} ${parms2} ${parms3}"
+    it="ip route replace ${parms} ${parms2} ${parms3}"
     case "${PLUTO_PEER_CLIENT}" in
  	"0.0.0.0/0"|"::/0")
 	    # opportunistic encryption work around

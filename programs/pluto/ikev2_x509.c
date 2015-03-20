@@ -52,7 +52,6 @@
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"
-#include "dpd.h"
 #include "keys.h"
 #include "ipsec_doi.h"
 
@@ -114,7 +113,7 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 		cert.isac_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 
-	cert.isac_enc = mycert.type;
+	cert.isac_enc = mycert.ty;
 
 	if (send_certreq) {
 		cert.isac_critical = ISAKMP_PAYLOAD_NONCRITICAL;
@@ -144,14 +143,9 @@ stf_status ikev2_send_cert( struct state *st, struct msg_digest *md,
 				outpbs, &cert_pbs))
 			return STF_INTERNAL_ERROR;
 
-		if (mycert.forced) {
-			if (!out_chunk(mycert.u.blob, &cert_pbs,
-				       "forced CERT"))
-				return STF_INTERNAL_ERROR;
-		} else {
-			if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
-				return STF_INTERNAL_ERROR;
-		}
+		if (!out_chunk(get_mycert(mycert), &cert_pbs, "CERT"))
+			return STF_INTERNAL_ERROR;
+
 		close_output_pbs(&cert_pbs);
 	}
 
@@ -186,18 +180,17 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 			    DBG_log("connection is RW, lookup CA candidates"));
 
 			for (gn = ca; gn != NULL; gn = gn->next) {
-				if (!build_and_ship_CR(CERT_X509_SIGNATURE,
+				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 						       gn->name, outpbs,
-						       gn->next ==
-						       NULL ? np :
-						       ISAKMP_NEXT_v2CERTREQ))
+						       gn->next == NULL ? np :
+						         ISAKMP_NEXT_v2CERTREQ))
 					return STF_INTERNAL_ERROR;
 			}
 			free_generalNames(ca, FALSE);
 		} else {
 			DBG(DBG_CONTROL,
 			    DBG_log("Not a roadwarrior instance, sending empty CA in CERTREQ"));
-			if (!build_and_ship_CR(CERT_X509_SIGNATURE,
+			if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
 					       empty_chunk,
 					       outpbs, np))
 				return STF_INTERNAL_ERROR;
@@ -209,36 +202,35 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 /* just for ref copy from ikev1_main.c
 
      doi_log_cert_thinking(md , st->st_oakley.auth
-                          , mycert.type
-                          , st->st_connection->spd.this.sendcert
-                          , st->hidden_variables.st_got_certrequest
-                          , send_cert);
+			   , mycert.type
+			   , st->st_connection->spd.this.sendcert
+			   , st->hidden_variables.st_got_certrequest
+			   , send_cert);
 
      doi_log_cert_thinking(struct msg_digest *md UNUSED
-                      , u_int16_t auth
-                      , enum ipsec_cert_type certtype
-                      , enum certpolicy policy
-                      , bool gotcertrequest
-                      , bool send_cert)
+			   , u_int16_t auth
+			   , enum ike_cert_type certtype
+			   , enum certpolicy policy
+			   , bool gotcertrequest
+			   , bool send_cert)
  */
 
 bool doi_send_ikev2_cert_thinking(struct state *st)
 {
 	cert_t mycert = st->st_connection->spd.this.cert;
-	enum ipsec_cert_type certtype = mycert.type;
+	enum ike_cert_type certtype = mycert.ty;
 	enum certpolicy policy = st->st_connection->spd.this.sendcert;
-	bool send_cert       = FALSE;
+	bool send_cert = FALSE;
 
 	struct connection *c  = st->st_connection;
 
 	/* decide to send_cert or not */
 	send_cert = (c->policy & POLICY_RSASIG) &&
-		    mycert.type != CERT_NONE &&
+		    mycert.ty != CERT_NONE &&
 		    ((st->st_connection->spd.this.sendcert ==
-		      cert_sendifasked &&
+		        cert_sendifasked &&
 		      st->hidden_variables.st_got_certrequest) ||
-		     st->st_connection->spd.this.sendcert == cert_alwayssend ||
-		     st->st_connection->spd.this.sendcert == cert_forcedtype);
+		     st->st_connection->spd.this.sendcert == cert_alwayssend);
 
 	/* log the steps led to the decision */
 

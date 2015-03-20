@@ -24,12 +24,11 @@
 #include "constants.h"
 #include "defs.h"
 #include "log.h"
-#include "libsha2/sha2.h"
+#include "crypto.h"
 #include "alg_info.h"
 #include "ike_alg.h"
 
 #include <pk11pub.h>
-#include "lswlog.h"
 
 static void sha256_hash_final(u_char *hash, sha256_context *ctx)
 {
@@ -37,10 +36,9 @@ static void sha256_hash_final(u_char *hash, sha256_context *ctx)
 	SECStatus s;
 
 	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_256_DIGEST_SIZE);
-	PR_ASSERT(len == SHA2_256_DIGEST_SIZE);
-	PR_ASSERT(s == SECSuccess);
+	passert(s == SECSuccess);
+	passert(len == SHA2_256_DIGEST_SIZE);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
-	DBG(DBG_CRYPT, DBG_log("NSS SHA 256 hash final : end"));
 }
 
 static void sha384_hash_final(u_char *hash, sha512_context *ctx)
@@ -49,10 +47,9 @@ static void sha384_hash_final(u_char *hash, sha512_context *ctx)
 	SECStatus s;
 
 	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_384_DIGEST_SIZE);
-	PR_ASSERT(len == SHA2_384_DIGEST_SIZE);
-	PR_ASSERT(s == SECSuccess);
+	passert(s == SECSuccess);
+	passert(len == SHA2_384_DIGEST_SIZE);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
-	DBG(DBG_CRYPT, DBG_log("NSS SHA 384 hash final : end"));
 }
 
 static void sha512_hash_final(u_char *hash, sha512_context *ctx)
@@ -61,10 +58,9 @@ static void sha512_hash_final(u_char *hash, sha512_context *ctx)
 	SECStatus s;
 
 	s = PK11_DigestFinal(ctx->ctx_nss, hash, &len, SHA2_512_DIGEST_SIZE);
-	PR_ASSERT(len == SHA2_512_DIGEST_SIZE);
-	PR_ASSERT(s == SECSuccess);
+	passert(s == SECSuccess);
+	passert(len == SHA2_512_DIGEST_SIZE);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
-	DBG(DBG_CRYPT, DBG_log("NSS SHA 512 hash final : end"));
 }
 
 static struct hash_desc hash_desc_sha2_256 = {
@@ -163,6 +159,9 @@ static struct hash_desc integ_desc_sha2_512 = {
 	.hash_final = (void (*)(u_char *, void *))sha512_hash_final,
 };
 
+/*
+ * IKE_ALG_INIT_NAME: ike_alg_sha2_init
+ */
 int ike_alg_sha2_init(void)
 {
 	int ret;
@@ -180,7 +179,3 @@ int ike_alg_sha2_init(void)
 	}
 	return ret;
 }
-
-/*
-   IKE_ALG_INIT_NAME: ike_alg_sha2_init
- */

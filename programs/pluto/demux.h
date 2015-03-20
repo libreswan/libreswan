@@ -73,7 +73,7 @@ struct msg_digest {
 	struct state *pst;                      /* parent state object (if any) */
 
 	enum phase1_role role;                  /* (ikev2 only) */
-	msgid_t msgid_received;                 /* (ikev2 only) */
+	msgid_t msgid_received;                 /* (ikev2 only) - Host order! */
 
 	pb_stream rbody;                        /* room for reply body (after header) */
 	notification_t note;                    /* reason for failure */
@@ -101,6 +101,7 @@ struct msg_digest {
 
 extern struct msg_digest *alloc_md(void);
 extern void release_md(struct msg_digest *md);
+extern void release_any_md(struct msg_digest **mdp);
 
 typedef stf_status state_transition_fn (struct msg_digest *md);
 

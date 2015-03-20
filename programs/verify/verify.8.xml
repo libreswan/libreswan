@@ -32,13 +32,6 @@
 examines the local system for a number of common system faults and
 configuration mistakes.</para>
 
-<para>In addition, 
-<emphasis remap='I'>verify</emphasis>
-performs checks relevant to Opportunistic Encryption if this is enabled
-via <emphasis remap='I'>oe=yes</emphasis> in the configuration file
-<emphasis remap='I'>ipsec.conf</emphasis>.
-It looks in forward DNS for an IPSECKEY record for the system's hostname or
-<emphasis remap='I'>myid=</emphasis> value.</para> 
 
 </refsect1>
 

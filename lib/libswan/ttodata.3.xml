@@ -301,15 +301,6 @@ the result supplied by
 is always NUL-terminated,
 and its needed-size return value includes space for the terminating NUL.</para>
 
-<para>Several obsolete variants of these functions
-(<emphasis remap='I'>atodata</emphasis>,
-<emphasis remap='I'>datatoa</emphasis>,
-<emphasis remap='I'>atobytes</emphasis>,
-and
-<emphasis remap='I'>bytestoa</emphasis>)
-are temporarily also supported.</para>
-</refsect1>
-
 <refsect1 id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>sprintf</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_atoaddr</refentrytitle><manvolnum>3</manvolnum></citerefentry></para>
 </refsect1>

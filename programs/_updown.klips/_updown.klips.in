@@ -159,22 +159,6 @@ fi
 LIBRESWAN_RESOLV_CONF=@FINALVARDIR@/run/pluto/libreswan-resolv-conf-backup
 ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
-# check interface version
-case "${PLUTO_VERSION}" in
-    1.*)
-	# Older Pluto?!?  Play it safe, script may be using new features.
-	echo "${0}: obsolete interface version \"${PLUTO_VERSION}\"," >&2
-	echo "${0}: 	called by obsolete Pluto?" >&2
-	exit 2
-	;;
-    2.*)
-	;;
-    *)
-	echo "${0}: unknown interface version \"${PLUTO_VERSION}\"" >&2
-	exit 2
-	;;
-esac
-
 # check parameter(s)
 case "${1}:$*" in
     ':')
@@ -216,7 +200,7 @@ uprule() {
 }
 
 downrule() {
-    if [ -n "${PLUTO_MY_SOURCEIP}" ]; then
+    if [ -n "${PLUTO_MY_SOURCEIP}"  -a ${PLUTO_IS_PEER_CISCO} -eq 1 ]; then
 	dorule delete
 	ip route flush cache
     fi
@@ -379,11 +363,7 @@ changesource() {
     if [ -n "${IPROUTETABLE}" ]; then
 	parms3="${parms3} table ${IPROUTETABLE}"
     fi
-    cmd=add
-    if ! ip -o route get ${PLUTO_MY_SOURCEIP%/*} | grep ipsec0; then
-	cmd=change
-    fi
-    it="ip route ${cmd} ${parms} ${parms2} ${parms3}"
+    it="ip route replace ${parms} ${parms2} ${parms3}"
     case "${PLUTO_PEER_CLIENT}" in
  	"0.0.0.0/0"|"::/0")
 	    # opportunistic encryption work around

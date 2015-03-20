@@ -172,7 +172,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 
 	if (pluto_listen) {
 		err_t e;
-		e = ttoaddr(pluto_listen, 0, 0, &lip);
+		e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 		if (e) {
 			DBG_log("invalid listen= option ignored: %s\n", e);
 			pluto_listen = NULL;
@@ -288,8 +288,8 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						"struct iface_port");
 				id = alloc_thing(struct iface_dev,
 						 "struct iface_dev");
-				memset(q, 0, sizeof(*q));
-				memset(id, 0, sizeof(*id));
+				zero(q);
+				zero(id);
 				if (firstq == NULL)
 					firstq = q;
 
@@ -307,12 +307,6 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				q->port = pluto_port;
 				q->ike_float = FALSE;
 
-				if (nat_traversal_support_non_ike &&
-				    addrtypeof(&ifp->addr) == AF_INET)
-					nat_traversal_espinudp_socket(fd,
-								      "IPv4",
-								      ESPINUDP_WITH_NON_IKE);
-
 				/* done with primary interface */
 				q->next = interfaces;
 				interfaces = q;
@@ -329,11 +323,10 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				 * the kernel did not support it, and gave an error
 				 * it one tried to turn it on.
 				 */
-				if (nat_traversal_support_port_floating &&
-				    addrtypeof(&ifp->addr) == AF_INET) {
+				if (addrtypeof(&ifp->addr) == AF_INET) {
 					fd = create_socket(ifp,
 							   q->ip_dev->id_vname,
-							   pluto_natt_float_port);
+							   pluto_nat_port);
 					if (fd < 0) {
 						libreswan_log(
 							"failed to create socket for NAT-T: %s",
@@ -342,17 +335,16 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 						break;
 					}
 					nat_traversal_espinudp_socket(fd,
-								      "IPv4",
-								      ESPINUDP_WITH_NON_ESP);
+								      "IPv4");
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
 					q->ip_dev = id;
 					id->id_count++;
 
 					q->ip_addr = ifp->addr;
-					setportof(htons(pluto_natt_float_port),
+					setportof(htons(pluto_nat_port),
 						  &q->ip_addr);
-					q->port = pluto_natt_float_port;
+					q->port = pluto_nat_port;
 					q->fd = fd;
 					q->change = IFN_ADD;
 					q->ike_float = TRUE;
@@ -440,13 +432,14 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 			   "%s",        /* actual script */
 			   ref,
 			   refhim,
-			   (c->policy &
-			    POLICY_SAREF_TRACK_CONNTRACK) ? "conntrack" :
-			   ( (c->policy & POLICY_SAREF_TRACK) ? "yes" : "no"),
+			   (c->policy & POLICY_SAREF_TRACK_CONNTRACK) ?
+			     "conntrack" :
+			   (c->policy & POLICY_SAREF_TRACK) ?
+			     "yes" : "no",
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown ==
-			   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown == NULL ?
+			     DEFAULT_UPDOWN : sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
@@ -464,7 +457,7 @@ static bool mast_raw_eroute(const ip_address *this_host UNUSED,
 			    unsigned int transport_proto UNUSED,
 			    unsigned int satype UNUSED,
 			    const struct pfkey_proto_info *proto_info UNUSED,
-			    time_t use_lifetime UNUSED,
+			    deltatime_t use_lifetime UNUSED,
 			    unsigned long sa_priority UNUSED,
 			    enum pluto_sadb_operations op UNUSED,
 			    const char *text_said UNUSED
@@ -515,7 +508,8 @@ static bool mast_sag_eroute_replace(struct state *st, struct spd_route *sr)
 
 	/* The state, st, has the new SAref values, but we need to remove
 	 * the rule based on the previous state with the old SAref values.
-	 * So we have to find it the hard way (it's a cpu hog). */
+	 * So we have to find it the hard way (it's a cpu hog).
+	 */
 	old_st = state_with_serialno(sr->eroute_owner);
 	if (!old_st)
 		old_st = st;
@@ -574,7 +568,8 @@ static bool mast_sag_eroute(struct state *st, struct spd_route *sr,
 			op);
 		if (addop)
 			/* If the pfkey op failed, and we were adding a new SA,
-			 * then it's OK to fail early. */
+			 * then it's OK to fail early.
+			 */
 			return FALSE;
 	}
 

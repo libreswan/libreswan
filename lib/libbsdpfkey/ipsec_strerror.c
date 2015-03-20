@@ -84,6 +84,4 @@ void __ipsec_set_strerror(const char *str)
 {
 	__ipsec_errcode = EIPSEC_SYSTEM_ERROR;
 	ipsec_errlist[EIPSEC_SYSTEM_ERROR] = str;
-
-	return;
 }

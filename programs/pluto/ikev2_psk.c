@@ -53,7 +53,6 @@
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"
-#include "dpd.h"
 #include "keys.h"
 
 #include <nss.h>
@@ -81,25 +80,21 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		return FALSE; /* failure: no PSK to use */
 	}
 
-	PK11SymKey *shared;
 	CK_EXTRACT_PARAMS bs;
 	SECItem param;
 
-	memcpy(&shared, st->st_shared.ptr, st->st_shared.len);
-
-	/*	RFC 4306  2:15
-	    AUTH = prf(prf(Shared Secret,"Key Pad for IKEv2"), <msg octets>)
+	/* RFC 4306 2.15:
+	 * AUTH = prf(prf(Shared Secret,"Key Pad for IKEv2"), <msg octets>)
 	 */
 
 	/* calculate inner prf */
 	{
 		struct hmac_ctx id_ctx;
-		chunk_t pss_chunk;
 
-		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(shared,
+		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(st->st_shared_nss,
 							    CKM_CONCATENATE_DATA_AND_BASE, *pss, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 							    0);
-		PR_ASSERT(tkey1 != NULL);
+		passert(tkey1 != NULL);
 
 		bs = 0;
 		param.data = (unsigned char*)&bs;
@@ -109,18 +104,12 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 						&param,
 						CKM_CONCATENATE_BASE_AND_DATA,
 						CKA_DERIVE, pss->len);
-		PR_ASSERT(tkey2 != NULL);
+		passert(tkey2 != NULL);
 
-		pss_chunk.len = sizeof(PK11SymKey *);
-		pss_chunk.ptr = alloc_bytes(pss_chunk.len,
-					    "ikev2_calculate_psk_sighash: calculated pss_chunk");
-		memcpy(pss_chunk.ptr, &tkey2, pss_chunk.len);
-
-		hmac_init_chunk(&id_ctx, st->st_oakley.prf_hasher, pss_chunk);
+		hmac_init(&id_ctx, st->st_oakley.prf_hasher, tkey2);
 
 		PK11_FreeSymKey(tkey1);
 		PK11_FreeSymKey(tkey2);
-		pfree(pss_chunk.ptr);
 		hmac_update(&id_ctx, psk_key_pad_str, psk_key_pad_str_len);
 		hmac_final(prf_psk, &id_ctx);
 	}
@@ -150,15 +139,18 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	/* calculate outer prf */
 	{
 		struct hmac_ctx id_ctx;
-		chunk_t pp_chunk, pps_chunk;
+		chunk_t pp_chunk;
 
 		pp_chunk.ptr = prf_psk;
 		pp_chunk.len = hash_len;
 
-		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(shared,
-							    CKM_CONCATENATE_DATA_AND_BASE, pp_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
+		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(st->st_shared_nss,
+							    CKM_CONCATENATE_DATA_AND_BASE,
+							    pp_chunk,
+							    CKM_EXTRACT_KEY_FROM_KEY,
+							    CKA_DERIVE,
 							    0);
-		PR_ASSERT(tkey1 != NULL);
+		passert(tkey1 != NULL);
 
 		bs = 0;
 		param.data = (unsigned char*)&bs;
@@ -168,18 +160,12 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 						&param,
 						CKM_CONCATENATE_BASE_AND_DATA,
 						CKA_DERIVE, hash_len);
-		PR_ASSERT(tkey2 != NULL);
+		passert(tkey2 != NULL);
 
-		pps_chunk.len = sizeof(PK11SymKey *);
-		pps_chunk.ptr = alloc_bytes(pps_chunk.len,
-					    "ikev2_calculate_psk_sighash: calculated pss_chunk");
-		memcpy(pps_chunk.ptr, &tkey2, pps_chunk.len);
-
-		hmac_init_chunk(&id_ctx, st->st_oakley.prf_hasher, pps_chunk);
+		hmac_init(&id_ctx, st->st_oakley.prf_hasher, tkey2);
 
 		PK11_FreeSymKey(tkey1);
 		PK11_FreeSymKey(tkey2);
-		pfree(pps_chunk.ptr);
 
 /*
  *  For the responder, the octets to
@@ -223,7 +209,8 @@ bool ikev2_calculate_psk_auth(struct state *st,
 	DBG(DBG_CRYPT,
 	    DBG_dump("PSK auth octets", signed_octets, hash_len ));
 
-	out_raw(signed_octets, hash_len, a_pbs, "PSK auth");
+	if (!out_raw(signed_octets, hash_len, a_pbs, "PSK auth"))
+		return FALSE;
 
 	return TRUE;
 }
@@ -259,10 +246,10 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 	    DBG_dump("Received PSK auth octets", sig_pbs->cur, sig_len);
 	    DBG_dump("Calculated PSK auth octets", calc_hash, hash_len));
 
-	if (memcmp(sig_pbs->cur, calc_hash, hash_len) ) {
+	if (memeq(sig_pbs->cur, calc_hash, hash_len) ) {
+		return STF_OK;
+	} else {
 		libreswan_log("AUTH mismatch: Received AUTH != computed AUTH");
 		return STF_FAIL;
-	} else {
-		return STF_OK;
 	}
 }

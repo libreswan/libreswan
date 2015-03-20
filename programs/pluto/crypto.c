@@ -39,8 +39,6 @@
 #include "alg_info.h"
 #include "ike_alg.h"
 
-#include "lswcrypto.h"
-
 #include "pem.h"
 
 /* moduli and generator. */
@@ -67,8 +65,8 @@ static MP_INT generator_dh22,
        generator_dh24;
 
 #ifdef USE_3DES
-static void do_3des(u_int8_t *buf, size_t buf_len, u_int8_t *key,
-		    size_t key_size, u_int8_t *iv, bool enc);
+static void do_3des(u_int8_t *buf, size_t buf_len, PK11SymKey *key,
+		    u_int8_t *iv, bool enc);
 static struct encrypt_desc crypto_encrypter_3des =
 {
 	.common = { .name = "oakley_3des_cbc",
@@ -275,11 +273,11 @@ const struct oakley_group_desc *lookup_group(u_int16_t group)
  * See RFC 2409 "IKE" Appendix B
  */
 static void do_3des(u_int8_t *buf, size_t buf_len,
-		    u_int8_t *key, size_t key_size, u_int8_t *iv, bool enc)
+		    PK11SymKey *key, u_int8_t *iv, bool enc)
 {
 	passert(key != NULL);
 
-	do_3des_nss(buf, buf_len, key, key_size, iv, enc);
+	do_3des_nss(buf, buf_len, key, iv, enc);
 }
 
 /* hash and prf routines */
@@ -307,16 +305,96 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
 
 #if 0
 	DBG(DBG_CRYPT,
-	    DBG_log("encrypting buf=%p size=%d keyptr: %p keysize: %d, iv: %p enc: %d",
-		    buf, size, st->st_enc_key.ptr,
-		    st->st_enc_key.len, st->st_new_iv, enc));
+	    DBG_log("encrypting buf=%p size=%d NSS keyptr: %p, iv: %p enc: %d",
+		    buf, size, st->st_enc_key_nss,
+		    st->st_new_iv, enc));
 #endif
 
-	e->do_crypt(buf, size, st->st_enc_key.ptr,
-		    st->st_enc_key.len, st->st_new_iv, enc);
+	e->do_crypt(buf, size, st->st_enc_key_nss, st->st_new_iv, enc);
+}
 
-	/*
-	   e->set_key(&ctx, st->st_enc_key.ptr, st->st_enc_key.len);
-	   e->cbc_crypt(&ctx, buf, size, st->st_new_iv, enc);
-	 */
+/*
+ * Return a required oakley or ipsec keysize or 0 if not required.
+ * The first parameter uses 0 for ESP, and anything above that for
+ * IKE major version
+ */
+int crypto_req_keysize(int ksproto, int algo)
+{
+	switch(ksproto) {
+	case 2: /* IKEv2 */
+		switch(algo) {
+		case IKEv2_ENCR_CAST:
+			return CAST_KEY_DEF_LEN;
+		case IKEv2_ENCR_AES_CBC:
+		case IKEv2_ENCR_AES_CTR:
+		case IKEv2_ENCR_AES_CCM_8:
+		case IKEv2_ENCR_AES_CCM_12:
+		case IKEv2_ENCR_AES_CCM_16:
+		case IKEv2_ENCR_AES_GCM_8:
+		case IKEv2_ENCR_AES_GCM_12:
+		case IKEv2_ENCR_AES_GCM_16:
+		case IKEv2_ENCR_NULL_AUTH_AES_GMAC:
+			return AES_KEY_DEF_LEN;
+		case IKEv2_ENCR_CAMELLIA_CTR:
+		case IKEv2_ENCR_CAMELLIA_CCM_A:
+		case IKEv2_ENCR_CAMELLIA_CCM_B:
+		case IKEv2_ENCR_CAMELLIA_CCM_C:
+			return CAMELLIA_KEY_DEF_LEN;
+		/* private use */
+		case IKEv2_ENCR_SERPENT_CBC:
+			return SERPENT_KEY_DEF_LEN;
+		case IKEv2_ENCR_TWOFISH_CBC:
+		case IKEv2_ENCR_TWOFISH_CBC_SSH: /* ?? */
+			return TWOFISH_KEY_DEF_LEN;
+		default:
+			return 0;
+		}
+	case 1: /* IKEv1 */
+		switch(algo) {
+		case OAKLEY_CAST_CBC:
+			return CAST_KEY_DEF_LEN;
+		case OAKLEY_AES_CBC:
+			return AES_KEY_DEF_LEN;
+		case OAKLEY_CAMELLIA_CBC:
+			return CAMELLIA_KEY_DEF_LEN;
+		/* private use */
+		case OAKLEY_SERPENT_CBC:
+			return SERPENT_KEY_DEF_LEN;
+		case OAKLEY_TWOFISH_CBC:
+		case OAKLEY_TWOFISH_CBC_SSH: /* ?? */
+			return TWOFISH_KEY_DEF_LEN;
+		default:
+			return 0;
+		}
+	case 0: /* ESP */
+		switch(algo) {
+		case ESP_CAST:
+			return CAST_KEY_DEF_LEN;
+		case ESP_AES:
+			return AES_KEY_DEF_LEN;
+		case ESP_AES_CTR:
+			return AES_CTR_KEY_DEF_LEN;
+		case ESP_AES_CCM_8:
+		case ESP_AES_CCM_12:
+		case ESP_AES_CCM_16:
+			return AES_CCM_KEY_DEF_LEN;
+		case ESP_AES_GCM_8:
+		case ESP_AES_GCM_12:
+		case ESP_AES_GCM_16:
+			return AES_GCM_KEY_DEF_LEN;
+		case ESP_CAMELLIA:
+			return CAMELLIA_KEY_DEF_LEN;
+		case ESP_NULL_AUTH_AES_GMAC:
+			return AES_GMAC_KEY_DEF_LEN;
+		/* private use */
+		case ESP_SERPENT:
+			return SERPENT_KEY_DEF_LEN;
+		case ESP_TWOFISH:
+			return TWOFISH_KEY_DEF_LEN;
+		default:
+			return 0;
+		}
+	default:
+		bad_case(ksproto);
+	}
 }

@@ -1,0 +1,110 @@
+/testing/guestbin/swan-prep
+west #
+ # confirm that the network is alive
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # make sure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ # confirm with a ping
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ ipsec setup start
+[ 00.00] registered KLIPS /proc/sys/net
+[ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=253 name=cbc(twofish) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] 
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
+west #
+ /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --debug-all --impair-send-key-size-check
+west #
+ ipsec auto --add westnet-eastnet-aes256
+002 added connection description "westnet-eastnet-aes256"
+west #
+ ipsec auto --status |grep westnet-eastnet-aes256
+000 "westnet-eastnet-aes256": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<192.1.2.23>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-aes256":     oriented; my_ip=unset; their_ip=unset;
+000 "westnet-eastnet-aes256":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-aes256":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet-aes256":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-aes256":    policy_label:unset; 
+000 "westnet-eastnet-aes256":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-aes256":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
+000 "westnet-eastnet-aes256":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "westnet-eastnet-aes256":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-aes256":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-eastnet-aes256":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
+000 "westnet-eastnet-aes256":   IKE algorithms wanted: AES_CBC(7)_128-SHA1(2)_000-MODP1536(5), AES_CBC(7)_128-SHA1(2)_000-MODP1024(2)
+000 "westnet-eastnet-aes256":   IKE algorithms found:  AES_CBC(7)_128-SHA1(2)_160-MODP1536(5), AES_CBC(7)_128-SHA1(2)_160-MODP1024(2)
+000 "westnet-eastnet-aes256":   ESP algorithms wanted: 3DES(3)_333-SHA1(2)_000
+000 "westnet-eastnet-aes256":   ESP algorithms loaded: 3DES(3)_333-SHA1(2)_000
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up  westnet-eastnet-aes256
+002 "westnet-eastnet-aes256" #1: initiating Main Mode
+104 "westnet-eastnet-aes256" #1: STATE_MAIN_I1: initiate
+003 "westnet-eastnet-aes256" #1: received Vendor ID payload [Dead Peer Detection]
+003 "westnet-eastnet-aes256" #1: received Vendor ID payload [FRAGMENTATION]
+003 "westnet-eastnet-aes256" #1: received Vendor ID payload [RFC 3947]
+002 "westnet-eastnet-aes256" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
+106 "westnet-eastnet-aes256" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+003 "westnet-eastnet-aes256" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
+108 "westnet-eastnet-aes256" #1: STATE_MAIN_I3: sent MI3, expecting MR3
+003 "westnet-eastnet-aes256" #1: received Vendor ID payload [CAN-IKEv2]
+002 "westnet-eastnet-aes256" #1: Main mode peer ID is ID_FQDN: '@east'
+004 "westnet-eastnet-aes256" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_128 prf=sha group=MODP1024}
+002 "westnet-eastnet-aes256" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
+117 "westnet-eastnet-aes256" #2: STATE_QUICK_I1: initiate
+010 "westnet-eastnet-aes256" #2: STATE_QUICK_I1: retransmission; will wait 10s for response
+010 "westnet-eastnet-aes256" #2: STATE_QUICK_I1: retransmission; will wait 20s for response
+031 "westnet-eastnet-aes256" #2: max number of retransmissions (2) reached STATE_QUICK_I1.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+000 "westnet-eastnet-aes256" #2: starting keying attempt 2 of an unlimited number, but releasing whack
+west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.2.254 DST=192.0.1.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
+ echo done
+done
+west #
+ # should not match anything
+west #
+ grep ID_UNASSIGNED_ID4 /tmp/pluto.log
+west #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+west #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+

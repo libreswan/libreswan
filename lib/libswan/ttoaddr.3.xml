@@ -129,8 +129,7 @@ The result of applying
 to an IPv4 address is always complete and does not contain leading zeros.</para>
 
 <para>Use of hexadecimal addresses is
-<emphasis remap='B'>strongly</emphasis>
-<emphasis remap='B'>discouraged</emphasis>;
+<emphasis remap='B'>strongly discouraged</emphasis>;
 they are included only to save hassles when dealing with
 the handful of perverted programs which already print 
 network addresses in hexadecimal.</para>
@@ -239,9 +238,12 @@ and
 <function>ttosubnet</function>
 specifies the address family of interest.
 It should be either
-<emphasis remap='B'>AF_INET</emphasis>
+<emphasis remap='B'>AF_INET</emphasis>,
+<emphasis remap='B'>AF_INET6</emphasis>,
 or
-<emphasis remap='B'>AF_INET6</emphasis>.</para>
+<emphasis remap='B'>AF_UNSPEC</emphasis>.
+If it is <emphasis remap='B'>AF_UNSPEC</emphasis>,
+the family will be based on the string.</para>
 
 <para>The
 <varname role='parameter'>dstlen</varname>

@@ -41,7 +41,7 @@ userland may still have lost them on its own.</para>
 </refsect1>
 
 <refsect1 id='files'><title>FILES</title>
-<para>/proc/net/ipsec/stats/trap_sendcount</para>
+<para>/proc/net/ipsec/stats/trap_count</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>

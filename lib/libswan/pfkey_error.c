@@ -1,5 +1,6 @@
 /*
  * open a pfkey socket or dump a reason why it failed.
+ *
  * Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -11,7 +12,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
- *
  */
 #include <stdio.h>
 #include <errno.h>
@@ -61,14 +61,14 @@ void pfkey_write_error(int writeerror, int err)
 		break;
 	case ESOCKTNOSUPPORT:
 		fprintf(stderr,
-			"Algorithm support not available in the kernel.  Please compile in support.\n");
+			"Algorithm support not available in the kernel. Please compile in support.\n");
 		break;
 	case EEXIST:
 		fprintf(stderr, "SA already in use.  Delete old one first.\n");
 		break;
 	case ENOENT:
 		fprintf(stderr,
-			"device does not exist.  See FreeS/WAN installation procedure.\n");
+			"device does not exist.  See Libreswan installation procedure.\n");
 		break;
 	case ENXIO:
 		fprintf(stderr, "SA does not exist.  Cannot delete.\n");

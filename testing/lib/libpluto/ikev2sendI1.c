@@ -18,11 +18,11 @@ struct state *sendI1(struct connection *c1, int debugging)
 	c1->extra_debugging = debugging;
 
 	/* now fill in the KE values from a constant.. not calculated */
-	clonetowirechunk(&kn->thespace, kn->space, &kn->secret, tc3_secret,
+	WIRE_CLONE_DATA(kn, secret, tc3_secret,
 			 tc3_secret_len);
-	clonetowirechunk(&kn->thespace, kn->space, &kn->n,   tc3_ni,
+	WIRE_CLONE_DATA(kn, n,   tc3_ni,
 			 tc3_ni_len);
-	clonetowirechunk(&kn->thespace, kn->space, &kn->gi,  tc3_gi,
+	WIRE_CLONE_DATA(kn, gi,  tc3_gi,
 			 tc3_gi_len);
 
 	run_continuation(r);

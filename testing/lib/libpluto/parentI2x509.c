@@ -52,7 +52,7 @@ int add_debugging = DBG_EMITTING | DBG_CONTROL | DBG_CONTROLMORE |
 
 #include "seam_recv1i.c"
 
-long crl_check_interval = 0;
+deltatime_t crl_check_interval = { 0 };
 
 main(int argc, char *argv[]){
 	int len;
@@ -97,7 +97,7 @@ main(int argc, char *argv[]){
 
 	infile = argv[1];
 	conn_name = argv[2];
-	load_preshared_secrets(NULL_FD);
+	load_preshared_secrets();
 	readwhackmsg(infile);
 
 	send_packet_setup_pcap("parentI2x509.pcap");

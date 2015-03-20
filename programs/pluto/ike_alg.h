@@ -1,6 +1,9 @@
 #ifndef _IKE_ALG_H
 #define _IKE_ALG_H
 
+#include <nss.h>
+#include <pk11pub.h>
+
 /* forward reference */
 struct connection;
 
@@ -24,8 +27,7 @@ struct encrypt_desc {
 	unsigned keyminlen;
 	void (*do_crypt)(u_int8_t *dat,
 			 size_t datasize,
-			 u_int8_t *key,
-			 size_t key_size,
+			 PK11SymKey *key,
 			 u_int8_t *iv,
 			 bool enc);
 };
@@ -100,7 +102,7 @@ extern const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 
 extern struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				       struct db_sa *basic,
-				       int maxtrans);
+				       bool single_dh);
 
 extern struct db_sa *kernel_alg_makedb(lset_t policy,
 				       struct alg_info_esp *ei,

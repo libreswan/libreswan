@@ -306,7 +306,7 @@ errlab:
 	return error;
 }
 
-int pfkey_sa_build(struct sadb_ext **       pfkey_ext,
+int pfkey_sa_build(struct sadb_ext **pfkey_ext,
 		   uint16_t exttype,
 		   uint32_t spi,
 		   uint8_t replay_window,
@@ -621,7 +621,7 @@ int pfkey_ident_build(struct sadb_ext**     pfkey_ext,
 		SENDERR(EINVAL);
 	}
 
-	if ((ident_type == SADB_IDENTTYPE_RESERVED)) {
+	if (ident_type == SADB_IDENTTYPE_RESERVED) {
 		ERROR("pfkey_ident_build: "
 		      "ident_type must be non-zero.\n");
 		SENDERR(EINVAL);
@@ -789,9 +789,8 @@ int pfkey_prop_build(struct sadb_ext**      pfkey_ext,
 	for (i = 0; i < 3; i++)
 		pfkey_prop->sadb_prop_reserved[i] = 0;
 
-	combp =
-		(struct sadb_comb*)((char*)*pfkey_ext +
-				    sizeof(struct sadb_prop));
+	combp = (struct sadb_comb*)
+		((char*)*pfkey_ext + sizeof(struct sadb_prop));
 	for (i = 0; i < (int)comb_num; i++) {
 		memcpy(combp, &(comb[i]), sizeof(struct sadb_comb));
 		combp++;
@@ -875,9 +874,8 @@ int pfkey_supported_build(struct sadb_ext** pfkey_ext,
 	pfkey_supported->sadb_supported_exttype = exttype;
 	pfkey_supported->sadb_supported_reserved = 0;
 
-	pfkey_alg =
-		(struct sadb_alg*)((char*)pfkey_supported +
-				   sizeof(struct sadb_supported));
+	pfkey_alg = (struct sadb_alg*)
+		((char*)pfkey_supported + sizeof(struct sadb_supported));
 	for (i = 0; i < alg_num; i++) {
 		memcpy(pfkey_alg, &(alg[i]), sizeof(struct sadb_alg));
 		pfkey_alg->sadb_alg_reserved = 0;
@@ -1405,9 +1403,8 @@ int pfkey_msg_build(struct sadb_msg **pfkey_msg, struct sadb_ext *extensions[],
 	 * point pfkey_ext to immediately after the space for the header,
 	 * i.e. at the first extension location.
 	 */
-	pfkey_ext =
-		(struct sadb_ext*)(((char*)(*pfkey_msg)) +
-				   sizeof(struct sadb_msg));
+	pfkey_ext = (struct sadb_ext*)
+		(((char*)(*pfkey_msg)) + sizeof(struct sadb_msg));
 
 	for (ext = 1; ext <= K_SADB_EXT_MAX; ext++) {
 		/* copy from extension[ext] to buffer */
@@ -1466,9 +1463,8 @@ int pfkey_msg_build(struct sadb_msg **pfkey_msg, struct sadb_ext *extensions[],
  * this is silly, there is no need to reparse the message that we just built.
  *
  */
-	if ((error =
-		     pfkey_msg_parse(*pfkey_msg, NULL, extensions_check,
-				     dir))) {
+	if ((error = pfkey_msg_parse(*pfkey_msg, NULL, extensions_check, dir)))
+	{
 		ERROR("pfkey_msg_build: "
 		      "Trouble parsing newly built pfkey message, error=%d.\n",
 		      error);

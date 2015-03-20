@@ -1,6 +1,5 @@
 [Unit]
 Description=Internet Key Exchange (IKE) Protocol Daemon for IPsec
-After=syslog.target
 After=network.target
 #After=remote-fs.target
 
@@ -10,7 +9,6 @@ Restart=always
 # backwards compatible with plutorestartoncrash=no
 #RestartPreventExitStatus=137 143 SIGTERM SIGKILL
 EnvironmentFile=-@FINALSYSCONFDIR@/sysconfig/pluto
-#Environment=IPSEC_LIBDIR=@FINALLIBEXECDIR@
 #Environment=IPSEC_SBINDIR=@FINALSBINDIR@
 #Environment=IPSEC_EXECDIR=@FINALLIBEXECDIR@/ipsec
 #PIDFile=@FINALVARDIR@/run/pluto/pluto.pid

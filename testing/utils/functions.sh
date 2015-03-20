@@ -79,9 +79,13 @@ kvmplutotest () {
 		echo "****** skip test $testdir found stop-tests-now *****"
 	else
 		echo '***** KVM PLUTO RUNNING' $testdir${KLIPS_MODULE} '*******'
-		cd $testdir 
-		${UTILS}/dotest.sh 
-		cd ../
+		if [ -d $testdir ] ; then
+			cd $testdir 
+			${UTILS}/dotest.sh 
+			cd ../
+		else
+			echo '**** Skipping non-existing test $testdir *****'
+		fi
 	fi
 }
 
@@ -148,7 +152,7 @@ complibtest() {
         FILE=${LIBRESWANSRCDIR}/linux/net/ipsec/$testsrc
     fi
 
-    eval $(cd ${LIBRESWANSRCDIR} && LIBRESWANSRCDIR=$(pwd) ${MAKE} --no-print-directory env )
+    eval $(cd ${LIBRESWANSRCDIR} && LIBRESWANSRCDIR=$(pwd) make --no-print-directory env )
 
     EXTRAFLAGS=
     EXTRALIBS=
@@ -168,8 +172,8 @@ complibtest() {
     stat=99
     if [ -n "${FILE-}" -a -r "${FILE-}" ]
     then
-	    ${ECHO} "   "CC -g -o $testobj -D$symbol ${FILE} ${LIBRESWANLIB} 
-	    ${CC} -g -o $testobj -D$symbol ${MOREFLAGS} ${PORTINCLUDE} ${EXTRAFLAGS} -I${LIBRESWANSRCDIR}/linux/include -I${LIBRESWANSRCDIR} -I${LIBRESWANSRCDIR}/include ${FILE} ${LIBRESWANLIB} ${EXTRALIBS}
+	    ${ECHO} " ${CC} -g -o $testobj -DSWAN_TESTING -D$symbol ${MOREFLAGS} ${PORTINCLUDE} ${EXTRAFLAGS} -I${LIBRESWANSRCDIR}/linux/include -I${LIBRESWANSRCDIR} -I${LIBRESWANSRCDIR}/include ${FILE} ${LIBRESWANLIB} ${EXTRALIBS} -Iinclude/"
+	    ${CC} -g -o $testobj -DSWAN_TESTING -D$symbol ${MOREFLAGS} ${PORTINCLUDE} ${EXTRAFLAGS} -I${LIBRESWANSRCDIR}/linux/include -I${LIBRESWANSRCDIR} -I${LIBRESWANSRCDIR}/include ${FILE} ${LIBRESWANLIB} ${EXTRALIBS} -Iinclude/
 	    rm -rf lib-$testobj/OUTPUT
 	    mkdir -p lib-$testobj/OUTPUT
     fi
@@ -427,7 +431,7 @@ recordresults() {
 	    regress) echo ${TEST_PROB_REPORT} >$REGRESSRESULTS/$REPORT_NAME/regress.txt;;
 	       goal) echo ${TEST_GOAL_ITEM}   >$REGRESSRESULTS/$REPORT_NAME/goal.txt;;
 	    exploit) echo ${TEST_EXPLOIT_URL} >$REGRESSRESULTS/$REPORT_NAME/exploit.txt;;
-		  *) echo "unknown TEST_PURPOSE (${TEST_PURPOSE})" ;;
+		  *) echo "unknown TEST_PURPOSE ${TEST_PURPOSE}";;
 	    esac
 	)
 
@@ -501,3 +505,101 @@ lookforcore() {
 	done
     fi
 }
+
+###################################
+#
+#  test type: unittest
+#
+# testparams.sh should specify a script to be run as $TESTSCRIPT
+#          REF_CONSOLE_OUTPUT= name of reference output
+#    
+# The script will be started with:
+#          ROOTDIR=    set to root of source code.
+#          OBJDIRTOP=  set to location of object files
+# 
+#
+# testparams.sh should set PROGRAMS= to a list of subdirs of programs/
+#                that must be built before using the test. This allows
+#                additional modules to be built.
+#
+# If there is a Makefile in the subdir, it will be invoked as
+# "make checkprograms". It will have the above variables as well,
+# and make get the build environment with 
+#    include ${ROOTDIR}/programs/Makefile.program
+#
+# The stdout of the script will be set to an output file, which will then
+# be sanitized using the normal set of fixup scripts.
+#          
+#
+###################################
+
+do_unittest() {
+
+    export ROOTDIR=${OPENSWANSRCDIR}
+    eval `(cd $ROOTDIR; make --no-print-directory env )`
+    failnum=1
+
+    if [ ! -x "$TESTSCRIPT" ]; then echo "TESTSCRIPT=$TESTSCRIPT is not executable"; exit 41; fi
+
+    echo "BUILDING DEPENDANCIES"
+    (cd ${ROOTDIR}/programs;
+     for program in ${PROGRAMS}
+     do
+	if [ -d $program ]; then (cd $program && make programs checkprograms ); fi
+     done)
+
+    echo "BUILDING TEST CASE"
+    # if there is a makefile, run it and bail if fails
+    if [ -f Makefile ]; then
+	if make checkprograms; then
+	    :
+	else
+	    exit 1;
+	fi
+    fi
+
+    # make sure we get all core dumps!
+    ulimit -c unlimited
+    export OBJDIRTOP
+
+    OUTDIR=${OBJDIRTOP}/testing/${TESTSUBDIR}/${TESTNAME}
+    mkdir -p ${OUTDIR}
+    rm -f OUTPUT; ln -f -s ${OUTDIR} OUTPUT
+
+    echo "RUNNING $TESTSCRIPT"
+    ./$TESTSCRIPT >${OUTDIR}/console.txt
+    echo "DONE    $TESTSCRIPT"
+
+    stat=$?
+    echo Exit code $stat
+    if [ $stat -gt 128 ]
+    then
+	stat="$stat core"
+    else
+        consolediff "" OUTPUT/console.txt $REF_CONSOLE_OUTPUT
+	case "$success" in
+	true)	exit 0 ;;
+	*)	exit $failnum ;;
+	esac
+    fi
+}
+
+#
+#  ???
+unittest() {
+    testcase=$1
+    testexpect=$2
+
+    echo '**** make unittest RUNNING '$testcase' ****'
+
+    echo Running $testobj
+    ( preptest $testcase unittest false && do_unittest )
+    stat=$?
+
+    TEST_PURPOSE=regress recordresults $testcase "$testexpect" "$stat" $testcase false
+}
+
+
+
+
+

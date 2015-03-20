@@ -7,7 +7,7 @@ interfaces are configured on the bridge. dhcp not used
 
 -->
 
-<network>
+<network ipv6='yes'>
   <name>192_0_3</name>
   <bridge name='swan03' stp='on' delay='0' />
   <mac address='12:00:00:32:32:BB'/>
@@ -16,4 +16,5 @@ interfaces are configured on the bridge. dhcp not used
       <range start='192.0.3.128' end='192.0.3.200' />
     </dhcp>
   </ip>
+  <ip family="ipv6" address="2001:db8:0:3::253" prefix="64"/>
 </network>

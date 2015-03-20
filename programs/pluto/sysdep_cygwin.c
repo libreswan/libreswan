@@ -30,7 +30,6 @@
 #include <arpa/inet.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -113,8 +112,8 @@ bool use_interface(const char *rifn)
 
 	ri = alloc_thing(*ri, "static interface");
 
-	e = ttoaddr(rifn, strlen(rifn), 0, &ri->addr);
-	if (e) {
+	e = ttoaddr(rifn, strlen(rifn), AF_UNSPEC, &ri->addr);
+	if (e != NULL) {
 		fprintf(stderr, "--interface failed: %s\n", e);
 		exit(10);
 	}

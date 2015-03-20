@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: _STACKMANAGER
 .\"    Author: Paul Wouters
-.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/16/2012
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 03/26/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "_STACKMANAGER" "8" "12/16/2012" "libreswan" "Executable programs"
+.TH "_STACKMANAGER" "8" "03/26/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -45,7 +45,6 @@ option in the
 This involves loading and optionally unloading of the required kernel modules\&. Because the Linux kernel cannot autodetect most crypto related drivers on\-demand, _stackmanager handles loading the hardware random number (RNG) device drivers, OpenBSD/FreeBSD Cryptographic Framework (OCF) drivers, CryptoAPI drivers, and the modules for the specific stack (Linux NETKEY/XFM or KLIPS/MAST)\&. Probing for OCF supported hardware is not supported \- those modules must be loaded by the system before the start of the Libreswan sub system\&.
 .SH "SEE ALSO"
 .PP
-
 \fBip\fR(8),
 \fBipsec_tncfg\fR(8),
 \fBipsec.conf\fR(5),
