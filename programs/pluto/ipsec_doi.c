@@ -794,7 +794,11 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	    && st->st_connection->spd.that.host_port != 0)
 	   || st->st_connection->forceencaps) {
 	    natinfo="/NAT";
+	} else {
+	DBG(DBG_NATT, DBG_log("NAT-T: their IKE port is '%d'", st->st_connection->spd.that.host_port));
+	DBG(DBG_NATT, DBG_log("NAT-T: forceencaps is '%s'", st->st_connection->forceencaps ? "enabled" : "disabled"));
 	}
+
 	snprintf(b, sad_len-(b-sadetails)-1
 		 , "%sESP%s=>0x%08lx <0x%08lx xfrm=%s_%d-%s"
 		 , ini
@@ -883,6 +887,21 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
     
     ini = " ";
     fin = "}";
+
+#ifdef XAUTH
+    if (st->st_xauth_username != NULL && strlen(st->st_xauth_username) !=0) {
+	b = b + strlen(b);
+	snprintf(b, sad_len-(b-sadetails)-1
+	     , "%sXAUTHuser=%s"
+	     , ini
+	     , st->st_xauth_username
+	     );
+    
+    ini = " ";
+    fin = "}";
+
+    }
+#endif
     
     strcat(b, fin);
 }

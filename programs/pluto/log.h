@@ -28,6 +28,7 @@
 extern bool
     log_to_stderr,	/* should log go to stderr? */
     log_to_syslog,	/* should log go to syslog? */
+    log_to_file,	/* should log to a file? */
     log_to_perpeer,     /* should log go to per-IP file? */
     log_with_timestamp; /* prefix timestamp */
 
@@ -36,7 +37,7 @@ extern bool log_did_something;  /* set if we should log time again to debug*/
 extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
 
-extern char debug_prefix;
+extern const char debug_prefix;
 
 /* used in some messages to distiguish
  * which pluto is which, when doing

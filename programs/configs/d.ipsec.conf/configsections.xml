@@ -17,7 +17,6 @@ config setup
 	klipsdebug=none
 	plutodebug=control
 	protostack=auto
-	manualstart=
 </emphasis>
 </literallayout> <!-- .fi -->
 

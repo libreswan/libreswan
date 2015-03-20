@@ -1009,7 +1009,7 @@ quick_outI1_tail(struct pluto_crypto_req_cont *pcrc
 
     /* send the packet */
 
-    send_packet(st, "quick_outI1", TRUE);
+    send_ike_msg(st, "quick_outI1");
 
     delete_event(st);
     event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);

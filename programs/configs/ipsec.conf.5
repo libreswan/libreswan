@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/23/2012
+.\"      Date: 03/13/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "12/23/2012" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "03/13/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -34,9 +34,7 @@ ipsec.conf \- IPsec configuration and connections
 The optional
 \fIipsec\&.conf\fR
 file specifies most configuration and control information for the Libreswan IPsec subsystem\&. (The major exception is secrets for authentication; see
-\fBipsec.secrets\fR(5)\&.) Its contents are not security\-sensitive
-\fIunless\fR
-manual keying is being done for more than just testing, in which case the encryption/authentication keys in the descriptions for the manually\-keyed connections are very sensitive (and those connection descriptions are probably best kept in a separate file, via the include facility described below)\&.
+\fBipsec.secrets\fR(5)\&.) Its contents are not security\-sensitive\&.
 .PP
 The file is a text file, consisting of one or more
 \fIsections\fR\&. White space followed by
@@ -149,8 +147,7 @@ A
 section contains a
 \fIconnection specification\fR, defining a network connection to be made using IPsec\&. The name given is arbitrary, and is used to identify the connection to
 \fBipsec_auto\fR(8)
-and
-\fBipsec_manual\fR(8)\&. Here\*(Aqs a simple example:
+Here\*(Aqs a simple example:
 .sp
 .if n \{\
 .RS 4
@@ -202,10 +199,10 @@ and
 \fBright\fR
 reversed\&.
 .PP
-Parameters are optional unless marked \(lq(required)\(rq; a parameter required for manual keying need not be included for a connection which will use only automatic keying, and vice versa\&.
+Parameters are optional unless marked \(lq(required)\(rq
 .SS "CONN PARAMETERS: GENERAL"
 .PP
-The following parameters are relevant to both automatic and manual keying\&. Unless otherwise noted, for a connection to work, in general it is necessary for the two ends to agree exactly on the values of these parameters\&.
+The following parameters are relevant to IKE automatic keying\&. Unless otherwise noted, for a connection to work, in general it is necessary for the two ends to agree exactly on the values of these parameters\&.
 .PP
 \fBconnaddrfamily\fR
 .RS 4
@@ -300,6 +297,30 @@ specify multiple private subnets behind the left participant, expressed as {
 \fItesting/pluto/multinet\-*\fR\&.
 .RE
 .PP
+\fBleftaddresspool\fR
+.RS 4
+address pool from with the XAUTH server can assign IP addresses to clients\&. When configured as an XAUTH server, using
+\fIleftxauthserver=yes\fR
+this option specifies the address pool from which IP addresses are taken to assign the the XAUTH clients\&. The syntax of the address pool specifies a range (not a CIDR), in the following syntax:
+\fIrightaddresspool=192\&.168\&.1\&.100\-192\&.168\&.1\&.200\fR\&. Generally, the
+\fIrightaddresspool=\fR
+option will be accompanied by
+\fIrightxauthclient=yes\fR,
+\fIleftxauthserver=yes\fR
+and
+\fIleftsubnet=0\&.0\&.0\&.0/0\fR
+option\&.
+.sp
+When
+\fIleftaddresspool=\fR
+is specified, the connection may not specify either
+\fIleftsubnet=\fR
+or
+\fIleftsubnets=\fR\&. Address pools are fully allocated when the connection is loaded, so the ranges should be sane\&. For example, specifing a range
+\fIrightaddresspool=10\&.0\&.0\&.0\-11\&.0\&.0\&.0\fR
+will lead to massive memory allocation\&. Address pools specifying the exact same range are shared between different connections\&. Different addresspools should not be defined to partially overlap\&.
+.RE
+.PP
 \fBleftprotoport\fR
 .RS 4
 allowed protocols and ports over connection, also called Port Selectors\&. The argument is in the form
@@ -385,7 +406,7 @@ tools\&. In situations calling for more control, it may be preferable for the us
 script, which makes the appropriate adjustments for his system\&.
 .SS "CONN PARAMETERS: AUTOMATIC KEYING"
 .PP
-The following parameters are relevant only to automatic keying, and are ignored in manual keying\&. Unless otherwise noted, for a connection to work, in general it is necessary for the two ends to agree exactly on the values of these parameters\&.
+The following parameters are relevant to automatic keying via IKE\&. Unless otherwise noted, for a connection to work, in general it is necessary for the two ends to agree exactly on the values of these parameters\&.
 .PP
 \fBauto\fR
 .RS 4
@@ -401,11 +422,6 @@ what operation, if any, should be done automatically at IPsec startup; currently
 \fBstart\fR
 (signifying that plus an
 \fBipsec auto\fR
-\fB\-\-up\fR),
-\fBmanual\fR
-(signifying an
-\fBipsec\fR
-\fBmanual\fR
 \fB\-\-up\fR), and
 \fBignore\fR
 (also the default) (signifying no automatic startup operation)\&. See the
@@ -521,6 +537,19 @@ The options must be suitable as a value of
 \fBipsec_spi\fR(8)\*(Aqs
 \fB\-\-ah\fR
 option\&. The default is not to use AH\&. If for some (invalid) reason you still think you need AH, please use esp with the null encryption cipher instead\&. Note also that not all ciphers available to the kernel (eg through CryptoAPI) are necessarilly supported here\&.
+.RE
+.PP
+\fBike_frag\fR
+.RS 4
+Whether or not to allow IKE fragmentation\&. Valid values are are
+\fByes\fR, (the default),
+\fBno\fR
+or
+\fBforce\fR\&.
+.sp
+IKE fragmentation capablities are negotiated via
+\fIvendor id\fR\&. If pluto does not receive the FRAGMENTATION vendor id, no IKE fragments will be sent, regardless of the ike_frag= setting\&. When set to
+\fByes\fR, IKE fragmentation will be attempted on the first re\-transmit of an IKE packet of a size larger then 576 bytes for IPv4 and 1280 bytes for IPv6\&. If ike_frag is set to force, IKE fragmentation is used on initial transmits of such sized packets as well\&. When we have received IKE fragments for a connection, pluto behaves as if in force mode\&.
 .RE
 .PP
 \fBikev2\fR
@@ -719,9 +748,31 @@ or
 .PP
 \fBxauthby\fR
 .RS 4
-When XAUTH support is available, set the method used by XAUTH to authenticate the user\&. The currently supported values are \*(Aqfile\*(Aq (the default) or \*(Aqpam\*(Aq\&.
+When XAUTH support is available, set the method used by XAUTH to authenticate the user\&. The currently supported values are
+\fIfile\fR
+(the default),
+\fIpam\fR
+or
+\fIalwaysok\fR\&. The password file is located at
+\fI/etc/ipsec\&.d/passwd\fR, and follows a syntax similar to the Apache htpasswd file, except an additional connection name argument is also present:
 .sp
-The pam option is only available if compiled with USE_XAUTHPAM\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
+\ \&\ \&\ \&\ \&\ \&
+\fIusername:password:conname\fR
+.sp
+For supported password hashing methods, see
+\fBcrypt\fR(3)\&. If pluto is running in FIPS mode, some hash methods, such as MD5, might not be available\&. The pam option is only available if compiled with USE_XAUTHPAM\&. Threads are used to launch an xauth authentication helper for file as well as pam methods\&.
+.sp
+The
+\fIalwaysok\fR
+should only be used if the XAUTH user authentication is not really used, but is required for interoperability, as it defeats the whole point of XAUTH which is to rely on a secret only known by a human\&.
+.RE
+.PP
+\fBxauthfail\fR
+.RS 4
+When XAUTH support is available, set the failure method desired when authentication has failed\&. The currently supported values are
+\fIhard\fR
+(the default) and
+\fIsoft\fR\&. A soft failure means the IPsec SA is allowed to be established, as if authentication had passed successfully, but the XAUTH_FAILED environment variable will be set to 1 for the updown script, which can then be used to redirect the user into a walled garden, for example a payment portal\&.
 .RE
 .PP
 \fBmodecfgpull\fR
@@ -733,9 +784,9 @@ or
 (the default)\&.
 .RE
 .PP
-\fBmodecfgdns1\fR, \fBmodecfgdns2\fR, \fBmodecfgwins1\fR, \fBmodecfgwins2\fR
+\fBmodecfgdns1\fR, \fBmodecfgdns2\fR
 .RS 4
-Specify the IP address for DNS or WINS servers for the client to use\&.
+Specify the IP address for DNS servers for the client to use\&. These will be send when using XAUTH with ModeConfig when we are an xauthserver\&.
 .RE
 .PP
 \fBremote_peer_type\fR
@@ -923,11 +974,16 @@ encryption); acceptable values are
 \fByes\fR
 and
 \fBno\fR
-(the default)\&. The two ends need not agree\&. A value of
+(the default)\&.
+.sp
+As of libreswan 3\&.1, both ends
+\fBmust\fR
+agree\&. In previous versions of libreswan, openswan and freeswan, compression was always accepted even if not configured\&. In light of the BEAST attacks on TLS, using compression and encryptions has come under more scrutiny, and it was decided that it should be possible for the local policy of an endpoint to disallow compression\&. A value of
 \fByes\fR
-causes IPsec to propose both compressed and uncompressed, and prefer compressed\&. A value of
+causes pluto to propose compression and reject proposals without it\&. A value of
 \fBno\fR
-prevents IPsec from proposing compression; a proposal to compress will still be accepted\&.
+prevents pluto from proposing compression; a proposal to compress will be
+\fBrejected\fR\&.
 .RE
 .PP
 \fBmetric\fR
@@ -974,19 +1030,6 @@ what to do with packets when negotiation fails\&. The default is
 \fBreject\fR
 have the obvious meanings\&.
 .RE
-.SS "CONN PARAMETERS: MANUAL KEYING"
-.PP
-This command was obsoleted around the same time that Al Gore invented the internet\&. ipsec manual was used in the jurassic period to load static keys into the kernel\&. There are no rational reasons to use this, and it is not supported anymore\&. If you need to create static SAs, then you can use
-\fBipsec spi\fR
-and
-\fBipsec eroute\fR
-when using KLIPS or
-\fBip xfrm \fR
-or
-\fBsetkey\fR
-when using NETKEY\&.
-.PP
-No rational person uses static keys\&. They are not easier to use\&. REPEAT: they are not easier to use\&.
 .SH "CONFIG SECTIONS"
 .PP
 At present, the only
@@ -1006,7 +1049,6 @@ config setup
 	klipsdebug=none
 	plutodebug=control
 	protostack=auto
-	manualstart=
 \fR
 .fi
 .if n \{\
@@ -1054,8 +1096,6 @@ is the default;
 must be used to denote no interfaces, or when using the NETKEY stack\&. If
 \fB%defaultroute\fR
 is used (implicitly or explicitly) information about the default route and its interface is noted for use by
-\fBipsec_manual\fR(8)
-and
 \fBipsec_auto\fR(8)\&.)
 .RE
 .PP
@@ -1112,6 +1152,12 @@ The IKE NAT Traversal floating port (see RFC\-3947) to listen on\&. The default 
 The delay (in seconds) for NAT\-T keep\-alive packets, if these are enabled using
 \fBforce_keepalive\fR
 This parameter may eventually become per\-connection\&.
+.RE
+.PP
+\fBretransmits\fR
+.RS 4
+Whether pluto should attempt to retransmit packets that get no reply\&. This is mostly used to disable retransmits while debugging a problem\&. Production use should always leave this enabled\&. The default is
+\fByes\fR\&.
 .RE
 .PP
 \fBvirtual_private\fR
@@ -1251,7 +1297,15 @@ unique, so a new (automatically\-keyed) connection using the same ID is almost i
 .PP
 \fBplutorestartoncrash\fR
 .RS 4
-prevent pluto from restarting after it crashed\&. This option should only be used when debugging a crasher\&. It will prevent overwriting a core file on a new start, or a cascade of core files\&. This option is also required if used with plutostderrlog= to avoid clearing the logs of the crasher\&. Values can be yes (the default) or no\&.
+prevent pluto from restarting after it crashed\&. This option should only be used by developers when debugging a crasher\&. It will prevent overwriting a core file on a new start, or a cascade of core files\&. This option is also required if used with plutostderrlog= to avoid clearing the logs of the crasher\&. Values can be yes (the default) or no\&.
+.sp
+This option is ignored on modern init systems such as
+\fBsystemd\fR(1)
+and upstart\&. For systemd, change the
+\fIipsec\&.service\fR
+file to contain
+\fIRestart=no\fR\&. See
+\fBsystemd.service\fR(5)
 .RE
 .PP
 \fBplutostderrlog\fR
@@ -1566,7 +1620,6 @@ When choosing a connection to use to respond to a negotiation which doesn\*(Aqt 
 \fBipsec\fR(8),
 \fBipsec_ttoaddr\fR(8),
 \fBipsec_auto\fR(8),
-\fBipsec_manual\fR(8),
 \fBipsec_rsasigkey\fR(8)
 .SH "HISTORY"
 .PP
@@ -1598,11 +1651,6 @@ option is ambiguous\&. Should the SA permits any port through or should the SA n
 \fB%one\fR
 may be introduced in the future to separate these two cases\&.
 .PP
-\fIipsec_manual\fR
-is not nearly as generous about the syntax of subnets, addresses, etc\&. as the usual Libreswan user interfaces\&. Four\-component dotted\-decimal must be used for all addresses\&. It
-\fIis\fR
-smart enough to translate bit\-count netmasks to dotted\-decimal form\&.
-.PP
 It would be good to have a line\-continuation syntax, especially for the very long lines involved in RSA signature keys\&.
 .PP
 \fBFirst packet caching\fR
@@ -1625,10 +1673,6 @@ The ability to specify different identities,
 In principle it might be necessary to control MTU on an interface\-by\-interface basis, rather than with the single global override that
 \fBoverridemtu\fR
 provides\&. This feature is planned for a future release\&.
-.PP
-A number of features which
-\fIcould\fR
-be implemented in both manual and automatic keying actually are not yet implemented for manual keying\&. This is unlikely to be fixed any time soon\&.
 .PP
 If conns are to be added before DNS is available,
 \fBleft=\fR\fIFQDN\fR,

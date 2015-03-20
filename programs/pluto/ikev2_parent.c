@@ -470,8 +470,10 @@ ikev2_parent_outI1_common(struct msg_digest *md
     close_message(&md->rbody);
     close_output_pbs(&reply_stream);
 
+#if 0
     /* let TCL hack it before we mark the length and copy it */
     TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
+#endif
 
     freeanychunk(st->st_tpacket);
     clonetochunk(st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream)
@@ -483,15 +485,13 @@ ikev2_parent_outI1_common(struct msg_digest *md
 		 , pbs_offset(&reply_stream), "saved first packet");
 
     /* Transmit */
-    send_packet(st, __FUNCTION__, TRUE);
+    send_ike_msg(st, __FUNCTION__);
 
+#if 0
     /* Set up a retransmission event, half a minute henceforth */
     TCLCALLOUT("v2_adjustTimers", st, st->st_connection, md);
-
-#ifdef TPM
- tpm_stolen:
- tpm_ignore:
 #endif
+
     delete_event(st);
     event_schedule(EVENT_v2_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
@@ -897,8 +897,10 @@ ikev2_parent_inI1outR1_tail(struct pluto_crypto_req_cont *pcrc
     close_message(&md->rbody);
     close_output_pbs(&reply_stream);
 
+#if 0
     /* let TCL hack it before we mark the length. */
     TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
+#endif
 
     /* keep it for a retransmit if necessary */
     freeanychunk(st->st_tpacket);
@@ -913,7 +915,6 @@ ikev2_parent_inI1outR1_tail(struct pluto_crypto_req_cont *pcrc
     /* note: retransimission is driven by initiator */
 
     return STF_OK;
-    
 }
 
 /*
@@ -1569,12 +1570,13 @@ ikev2_parent_inR1outI2_tail(struct pluto_crypto_req_cont *pcrc
 	if(ret != STF_OK) return ret;
     }
 
-
+#if 0
     /* let TCL hack it before we mark the length. */
     TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
+#endif
 
     /* keep it for a retransmit if necessary, but on initiator
-     * we never do that, but send_packet() uses it.
+     * we never do that, but send_ike_msg() uses it.
      */
     freeanychunk(pst->st_tpacket);
     clonetochunk(pst->st_tpacket, reply_stream.start, pbs_offset(&reply_stream)
@@ -1997,9 +1999,10 @@ ikev2_parent_inI2outR2_tail(struct pluto_crypto_req_cont *pcrc
 	}
     }
 
-
+#if 0
     /* let TCL hack it before we mark the length. */
     TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
+#endif
 
     /* keep it for a retransmit if necessary */
     freeanychunk(st->st_tpacket);
@@ -2453,7 +2456,7 @@ send_v2_notification(struct state *p1st, u_int16_t type
    clonetochunk(p1st->st_tpacket, reply.start, pbs_offset(&reply)
 		                    , "notification packet");
 
-   send_packet(p1st, __FUNCTION__, TRUE);
+   send_ike_msg(p1st, __FUNCTION__);
 }
 /* add notify payload to the rbody */
 bool ship_v2N (unsigned int np, u_int8_t  critical,
@@ -2761,16 +2764,17 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 	if(ret != STF_OK) return ret;
         }
 
-
+#if 0
 	/* let TCL hack it before we mark the length. */
 	TCLCALLOUT("v2_avoidEmitting", st, st->st_connection, md);
+#endif
 
 	/* keep it for a retransmit if necessary */
 	freeanychunk(st->st_tpacket);
 	clonetochunk(st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream)
 			, "reply packet for informational exchange");
 
-	send_packet(st, __FUNCTION__, TRUE);
+	send_ike_msg(st, __FUNCTION__);
 	}
 
 	/* Now carry out the actualy task, we can not carry the actual task since 
@@ -3081,16 +3085,17 @@ void ikev2_delete_out(struct state *st)
 	if(ret != STF_OK) goto end;
         }
 
-
+#if 0
 	/* let TCL hack it before we mark the length. */
 	TCLCALLOUT("v2_avoidEmitting", pst, pst->st_connection, &md);
+#endif
 
 	/* keep it for a retransmit if necessary */
 	freeanychunk(pst->st_tpacket);
 	clonetochunk(pst->st_tpacket, reply_stream.start, pbs_offset(&reply_stream)
 			, "request packet for informational exchange");
 
-	send_packet(pst, __FUNCTION__, TRUE);
+	send_ike_msg(pst, __FUNCTION__);
 
 	/* update state */
 	ikev2_update_counters(&md);

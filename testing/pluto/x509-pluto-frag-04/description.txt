@@ -1,0 +1,6 @@
+Basic pluto X.509 test from x509-pluto-01, but now
+east has ike_frag=no, so road will not see its vendorid, and
+so cannot fall back to sending IKE fragments.
+
+The connection should therefor fail.
+

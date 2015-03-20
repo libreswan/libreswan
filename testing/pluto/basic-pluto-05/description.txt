@@ -1,4 +1,2 @@
-This is a test of the NORTH-EAST connection.
-
-It does so with PFS on.
+This is a test of the NORTH-EAST connection, without NAT
 

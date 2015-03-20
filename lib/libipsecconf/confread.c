@@ -110,11 +110,15 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.options[KBF_LABELED_IPSEC] = LI_NO;
 #endif
 
+#ifdef XAUTH
 	cfg->conn_default.options[KBF_XAUTHBY] = XAUTHBY_FILE;
+	cfg->conn_default.options[KBF_XAUTHFAIL] = XAUTHFAIL_HARD;
+#endif
 
 	cfg->conn_default.policy = POLICY_RSASIG|POLICY_TUNNEL|POLICY_ENCRYPT|POLICY_PFS;
 	cfg->conn_default.policy |= POLICY_IKEV2_ALLOW; /* ikev2=yes */
 	cfg->conn_default.policy |= POLICY_SAREF_TRACK;  /* sareftrack=yes */
+	cfg->conn_default.policy |= POLICY_IKE_FRAG_ALLOW; /* ike_frag=yes */
 
 	cfg->conn_default.options[KBF_IKELIFETIME] = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
 	cfg->conn_default.options[KBF_SALIFETIME]  = SA_LIFE_DURATION_DEFAULT;
@@ -137,9 +141,9 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->conn_default.right.nexttype = KH_NOTSET;
 	anyaddr(AF_INET, &cfg->conn_default.right.nexthop);
 
-	/* default is to look in DNS */
-	cfg->conn_default.left.key_from_DNS_on_demand = TRUE;
-	cfg->conn_default.right.key_from_DNS_on_demand = TRUE;
+	/* default is NOT to look in DNS */
+	cfg->conn_default.left.key_from_DNS_on_demand = FALSE;
+	cfg->conn_default.right.key_from_DNS_on_demand = FALSE;
 
 
 	cfg->conn_default.options[KBF_AUTO] = STARTUP_IGNORE;
@@ -337,6 +341,7 @@ static int load_setup (struct starter_config *cfg
 	    case kt_rsakey:
 	    case kt_ipaddr:
 	    case kt_subnet:
+		case kt_range:
 	    case kt_idtype:
 		err++;
 		break;
@@ -403,7 +408,6 @@ static int validate_end(struct ub_ctx *dnsctx
 	starter_log(LOG_LEVEL_DEBUG, "starter: case KH_IFACE empty");
 	break;
 	
-    case KH_IPHOSTNAME:
     case KH_IPADDR:
 	assert(end->strings[KSCF_IP] != NULL);
 
@@ -419,26 +423,10 @@ static int validate_end(struct ub_ctx *dnsctx
 	    break;
 	}
 
-	starter_log(LOG_LEVEL_DEBUG, "starter: check what we need to do for  '%s' ", end->strings[KNCF_IP]);
 	er = ttoaddr_num(end->strings[KNCF_IP], 0, family, &(end->addr));
 	if(er) {
-	    starter_log(LOG_LEVEL_DEBUG, "starter: ttoaddr_num failed, not numeric  '%s' ", end->strings[KNCF_IP]);
 	    /* not numeric, so set the type to the string type */
 	    end->addrtype = KH_IPHOSTNAME; 
-	    /* but also resolve it now */
-#ifdef DNSSEC
-		   starter_log(LOG_LEVEL_DEBUG, "Calling unbound_resolve() for endpoint value\n");
-		   bool e = unbound_resolve(dnsctx, end->strings[KNCF_IP], strlen(end->strings[KNCF_IP]), AF_INET, &(end->addr));
-		   if(!e) {
-			e = unbound_resolve(dnsctx, end->strings[KNCF_IP], strlen(end->strings[KNCF_IP]), AF_INET6, &(end->addr));
-		   }
-		   if(!e) ERR_FOUND("Resolving failed for remote address =%s\n", end->strings[KNCF_IP]);
-#else
-		   er = ttoaddr(end->strings[KNCF_IP], 0, family, &(end->addr));
-#endif
-	/* put it back into starter as textual ip */
-	addrtot(&end->addr, 0, end->strings[KNCF_IP],0 );
-	starter_log(LOG_LEVEL_DEBUG, "starter: Resolved to %s !",  end->strings[KNCF_IP]);
 	}
 
         if(end->id == NULL) {
@@ -461,6 +449,11 @@ static int validate_end(struct ub_ctx *dnsctx
 	conn_st->policy |= POLICY_GROUP;
 	break;
 	
+    case KH_IPHOSTNAME:
+	/* generally, this doesn't show up at this stage */
+	starter_log(LOG_LEVEL_DEBUG, "starter: case KH_IPHOSTNAME empty");
+	break;
+
     case KH_DEFAULTROUTE:
 	starter_log(LOG_LEVEL_DEBUG, "starter: case KH_DEFAULTROUTE: empty");
 	break;
@@ -474,6 +467,12 @@ static int validate_end(struct ub_ctx *dnsctx
     if(end->strings_set[KSCF_SUBNET])
     {
 	char *value = end->strings[KSCF_SUBNET];
+
+	if(end->strings_set[KSCF_ADDRESSPOOL])
+	{
+	   ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=", leftright, leftright);
+	}
+
 
         if ( ((strlen(value)>=6) && (strncmp(value,"vhost:",6)==0)) ||
 	     ((strlen(value)>=5) && (strncmp(value,"vnet:",5)==0)) ) {
@@ -491,6 +490,7 @@ static int validate_end(struct ub_ctx *dnsctx
     /* set nexthop address to something consistent, by default */
     anyaddr(family, &end->nexthop);
     anyaddr(addrtypeof(&end->addr), &end->nexthop);
+
 
     /* validate the KSCF_NEXTHOP */
     if(end->strings_set[KSCF_NEXTHOP])
@@ -570,8 +570,8 @@ static int validate_end(struct ub_ctx *dnsctx
     if(end->strings_set[KSCF_SOURCEIP])
     {
 	char *value = end->strings[KSCF_SOURCEIP];
-	if (tnatoaddr(value, strlen(value), AF_INET, &(end->nexthop)) != NULL
-	    && tnatoaddr(value, strlen(value), AF_INET6, &(end->nexthop)) != NULL) {
+	if (tnatoaddr(value, strlen(value), AF_INET, &(end->sourceip)) != NULL
+	    && tnatoaddr(value, strlen(value), AF_INET6, &(end->sourceip)) != NULL) {
 #ifdef DNSSEC
            starter_log(LOG_LEVEL_DEBUG, "Calling unbound_resolve() for %ssourceip value\n",leftright);
            bool e = unbound_resolve(dnsctx, value, strlen(value), AF_INET, &(end->sourceip));
@@ -588,7 +588,8 @@ static int validate_end(struct ub_ctx *dnsctx
 		if (er) ERR_FOUND("bad numerical addr %ssourceip=%s [%s]", leftright, value, er);
 	}
 	if(!end->has_client) {
-	    starter_log(LOG_LEVEL_INFO, "defaulting %ssubnet to %s\n", leftright, value);
+	    starter_log(LOG_LEVEL_INFO, "%ssourceip= used but not %ssubnet= defined, defaulting %ssubnet to %s\n"
+		, leftright, leftright, leftright, value);
 	    er = addrtosubnet(&end->sourceip, &end->subnet);
 	    if (er) ERR_FOUND("attempt to default %ssubnet from %s failed: %s", leftright, value, er);
 	    end->has_client = TRUE;
@@ -618,9 +619,21 @@ static int validate_end(struct ub_ctx *dnsctx
 	if (ugh) ERR_FOUND("bad %sprotoport=%s [%s]", leftright, value, ugh);
     }
 
-    if(end->options_set[KNCF_XAUTHSERVER]) {
+#ifdef XAUTH
+    if (end->strings_set[KSCF_ADDRESSPOOL]) {
+	   char *addresspool = end->strings[KSCF_ADDRESSPOOL];
+	   if(end->strings_set[KSCF_SUBNET])
+	   {
+		ERR_FOUND("cannot specify both %ssubnet= and %saddresspool=", leftright, leftright);
+	   }
+	   starter_log(LOG_LEVEL_DEBUG,"connection's  addresspool set to: %s",end->strings[KSCF_ADDRESSPOOL] );
+	   ttorange(addresspool, 0, AF_INET, &end->pool_range);
+    }
+
+    if(end->options_set[KNCF_XAUTHSERVER] || end->options_set[KNCF_XAUTHCLIENT]) {
 	conn_st->policy |= POLICY_XAUTH;
     }
+#endif
 
     /*
     KSCF_SUBNETWITHIN    --- not sure what to do with it.
@@ -716,6 +729,7 @@ bool translate_conn (struct starter_conn *conn
 	case kt_dirname:
 	case kt_bitstring:
 	case kt_ipaddr:
+	case kt_range:
 	case kt_subnet:
 	case kt_idtype:
 	    /* all treated as strings for now */
@@ -1106,7 +1120,11 @@ static int load_conn (struct ub_ctx *dnsctx
 
     KW_POLICY_FLAG(KBF_AGGRMODE, POLICY_AGGRESSIVE);
 
+#ifdef XAUTH
+# ifdef MODECFG
     KW_POLICY_FLAG(KBF_MODECONFIGPULL, POLICY_MODECFG_PULL);
+# endif
+#endif
 
     KW_POLICY_FLAG(KBF_OVERLAPIP, POLICY_OVERLAPIP);
 
@@ -1126,6 +1144,19 @@ static int load_conn (struct ub_ctx *dnsctx
     if(conn->strings_set[KSF_IKE]) {
 	conn->ike = xstrdup(conn->strings[KSF_IKE]);
     }
+
+#ifdef XAUTH
+# ifdef MODECFG
+    if(conn->strings_set[KSF_MODECFGDNS1]) {
+    starter_log(LOG_LEVEL_DEBUG,"connection's  conn->modecfg_dns1 set to: %s",conn->strings[KSF_MODECFGDNS1] );
+       conn->modecfg_dns1 = xstrdup(conn->strings[KSF_MODECFGDNS1]);
+    }
+    if(conn->strings_set[KSF_MODECFGDNS2]) {
+    starter_log(LOG_LEVEL_DEBUG,"connection's  conn->modecfg_dns2 set to: %s",conn->strings[KSF_MODECFGDNS2] );
+       conn->modecfg_dns2 = xstrdup(conn->strings[KSF_MODECFGDNS2]);
+    } 
+    # endif
+#endif
 
     if(conn->strings_set[KSF_CONNALIAS]) {
 	conn->connalias = xstrdup(conn->strings[KSF_CONNALIAS]);
@@ -1154,6 +1185,24 @@ static int load_conn (struct ub_ctx *dnsctx
 	case fo_insist:
 	    conn->policy |= POLICY_IKEV1_DISABLE;
 	    conn->policy |= POLICY_IKEV2_ALLOW|POLICY_IKEV2_PROPOSE;
+	    break;
+	}
+    }
+
+    if(conn->options_set[KBF_IKE_FRAG]) {
+	switch(conn->options[KBF_IKE_FRAG]) {
+	case ynf_no:
+	    conn->policy &= ~POLICY_IKE_FRAG_ALLOW;
+	    conn->policy &= ~POLICY_IKE_FRAG_FORCE;
+	    break;
+	    
+	case ynf_yes:
+	    /* this is the default */
+	    conn->policy |= POLICY_IKE_FRAG_ALLOW;
+	    break;
+	    
+	case ynf_force:
+	    conn->policy |= POLICY_IKE_FRAG_ALLOW|POLICY_IKE_FRAG_FORCE;
 	    break;
 	}
     }
@@ -1241,6 +1290,10 @@ void conn_default (char *n, struct starter_conn *conn,
     
     CONN_STR(conn->esp);
     CONN_STR(conn->ike);
+#ifdef XAUTH
+    CONN_STR(conn->modecfg_dns1);
+    CONN_STR(conn->modecfg_dns2);
+#endif
 #ifdef HAVE_LABELED_IPSEC
     CONN_STR(conn->policy_label);
 #endif
@@ -1443,6 +1496,10 @@ static void confread_free_conn(struct starter_conn *conn)
 #ifdef ALG_PATCH
 	FREE_STR(conn->esp);
 	FREE_STR(conn->ike);
+#endif
+#ifdef XAUTH
+	FREE_STR(conn->modecfg_dns1);
+	FREE_STR(conn->modecfg_dns2);
 #endif
 	FREE_STR(conn->left.virt);
 	FREE_STR(conn->right.virt);

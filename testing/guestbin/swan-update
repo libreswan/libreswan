@@ -1,4 +1,4 @@
 #!/bin/sh
 
-swan-build
-swan-install
+/testing/guestbin/swan-build
+/testing/guestbin/swan-install

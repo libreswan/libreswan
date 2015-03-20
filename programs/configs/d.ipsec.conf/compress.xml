@@ -9,15 +9,17 @@ acceptable values are
 and
 <emphasis remap='B'>no</emphasis>
 (the default).
-The two ends need not agree.
-A value of
-<emphasis remap='B'>yes</emphasis>
-causes IPsec to propose both compressed and uncompressed,
-and prefer compressed.
-A value of
-<emphasis remap='B'>no</emphasis>
-prevents IPsec from proposing compression;
-a proposal to compress will still be accepted.</para>
+</para><para>
+As of libreswan 3.1, both ends <emphasis remap='B'>must</emphasis>
+agree. In previous versions of libreswan, openswan and freeswan,
+compression was always accepted even if not configured. In light of the
+BEAST attacks on TLS, using compression and encryptions has come under
+more scrutiny, and it was decided that it should be possible for the local
+policy of an endpoint to disallow  compression.  A value of
+<emphasis remap='B'>yes</emphasis> causes pluto to propose compression and reject
+proposals without it.  A value of <emphasis remap='B'>no</emphasis>
+prevents pluto from proposing compression; a proposal to compress will
+be <emphasis remap='B'>rejected</emphasis>.</para>
   </listitem>
   </varlistentry>
 

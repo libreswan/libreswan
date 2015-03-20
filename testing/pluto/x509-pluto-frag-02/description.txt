@@ -1,0 +1,5 @@
+Basic pluto X.509 test from x509-pluto-01, but now
+road has ike_frag=force set so it should send out MAIN_I3
+in fragments on the first run, but as east has no fragmentation
+support enabled, the missing FRAGMENTATION support vendorid
+should cause road to not use fragmentation.

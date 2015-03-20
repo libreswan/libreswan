@@ -10,12 +10,14 @@
 # space for everything:
 # Just a shorthand for the following definitions.
 # Can be eliminated if available space is fragmented.
-KVMPREFIX=/home/build/kvm-testing
+KVMPREFIX=/home/build/
+
+LIBRESAWNBASE=/home/build/libreswan/
 
 REGRESSRESULTS=$KVMPREFIX/results
 
 # set this to someplace with at least 100Mb free.
-POOLSPACE=$KVMPREFIX/kvmbuild
+POOLSPACE=$KVMPREFIX/pool
 
 # Fedora media
 OSTYPE=fedora
@@ -45,5 +47,3 @@ fi
 # we always use OBJ directories for KVM builds.
 USE_OBJDIR=true export USE_OBJDIR
 
-# comment this out to signify that you've customized this script
-echo "please customise your kvmsetup.sh" ; exit 99

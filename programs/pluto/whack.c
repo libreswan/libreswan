@@ -125,9 +125,18 @@ help(void)
 	    " \\\n   "
 	    " [--remote_peer_type <cisco>]"
 	    " \\\n   "
+#ifdef HAVE_NM
 	    "[--nm_configured]"
 	    " \\\n   "
-	    "[--xauthby file | pam]"
+#endif
+#ifdef HAVE_LABELED_IPSEC
+	    "[--loopback] [--labeledipsec] [--policylabel <label>]"
+	    " \\\n   "
+#endif
+#ifdef XAUTH
+	    "[--xauthby file|pam|alwaysok]"
+	    "[--xauthfail hard|soft]"
+#endif
 	    " \\\n   "
 	    " [--dontrekey]"
 	    " [--aggrmode]"
@@ -145,11 +154,10 @@ help(void)
 	    " [--modecfgserver]"
 	    " [--modecfgclient]"
 	    " [--modecfgpull]"
+	    " [--addresspool]"
 #ifdef MODECFG_DNSWINS
 	    " [--modecfgdns1]"
 	    " [--modecfgdns2]"
-	    " [--modecfgwins1]"
-	    " [--modecfgwins2]"
 #endif
 #endif
 	    " \\\n   "
@@ -425,6 +433,7 @@ enum option_enums {
     END_XAUTHCLIENT,
     END_MODECFGCLIENT,
     END_MODECFGSERVER,
+    END_ADDRESSPOOL,
     END_SENDCERT,
     END_CERTTYPE,
     END_SRCIP,
@@ -465,8 +474,6 @@ enum option_enums {
     CD_OVERLAPIP,    /* can two conns that have subnet=vhost: declare the same IP? */
     CD_MODECFGDNS1,
     CD_MODECFGDNS2,
-    CD_MODECFGWINS1,
-    CD_MODECFGWINS2,
     CD_METRIC,
     CD_CONNMTU,
     CD_TUNNELIPV4,
@@ -492,6 +499,7 @@ enum option_enums {
     CD_LABELED_IPSEC,
     CD_POLICY_LABEL,
     CD_XAUTHBY,
+    CD_XAUTHFAIL,
     CD_ESP	
 #   define CD_LAST CD_ESP	/* last connection description */
 
@@ -676,16 +684,17 @@ static const struct option long_opts[] = {
     { "xauth", no_argument, NULL, END_XAUTHSERVER + OO },
     { "xauthserver", no_argument, NULL, END_XAUTHSERVER + OO },
     { "xauthclient", no_argument, NULL, END_XAUTHCLIENT + OO },
+    { "xauthby", required_argument, NULL, CD_XAUTHBY + OO},
+    { "xauthfail", required_argument, NULL, CD_XAUTHFAIL + OO},
 #endif
 #ifdef MODECFG
     { "modecfgpull",   no_argument, NULL, CD_MODECFGPULL + OO },
     { "modecfgserver", no_argument, NULL, END_MODECFGSERVER + OO },
     { "modecfgclient", no_argument, NULL, END_MODECFGCLIENT + OO },
+    { "addresspool", required_argument, NULL, END_ADDRESSPOOL + OO },
 #ifdef MODECFG_DNSWINS
     { "modecfgdns1", required_argument, NULL, CD_MODECFGDNS1 + OO },
     { "modecfgdns2", required_argument, NULL, CD_MODECFGDNS2 + OO },
-    { "modecfgwins1", required_argument, NULL, CD_MODECFGWINS1 + OO },
-    { "modecfgwins2", required_argument, NULL, CD_MODECFGWINS2 + OO },
     { "modeconfigserver", no_argument, NULL, END_MODECFGSERVER + OO },
     { "modeconfigclient", no_argument, NULL, END_MODECFGCLIENT + OO },
 #endif
@@ -716,7 +725,6 @@ static const struct option long_opts[] = {
     { "labeledipsec", no_argument, NULL, CD_LABELED_IPSEC + OO},
     { "policylabel", required_argument, NULL, CD_POLICY_LABEL + OO },
 #endif
-    { "xauthby", required_argument, NULL, CD_XAUTHBY + OO},
 #ifdef DEBUG
     { "debug-none", no_argument, NULL, DBGOPT_NONE + OO },
     { "debug-all", no_argument, NULL, DBGOPT_ALL + OO },
@@ -942,7 +950,10 @@ main(int argc, char **argv)
     msg.policy_label = NULL;
 #endif
 
+#ifdef XAUTH
     msg.xauthby = XAUTHBY_FILE;
+    msg.xauthfail = XAUTHFAIL_HARD;
+#endif
 
     msg.sa_ike_life_seconds = OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
     msg.sa_ipsec_life_seconds = PLUTO_SA_LIFE_DURATION_DEFAULT;
@@ -1566,14 +1577,33 @@ main(int argc, char **argv)
 		msg.policy_label = optarg;
 		continue;
 #endif
-
-	case CD_XAUTHBY: /* --xauthby <file or pam>*/
+#ifdef XAUTH
+	case CD_XAUTHBY:
 		if ( strcmp(optarg, "pam" ) == 0) {
 			msg.xauthby = XAUTHBY_PAM;
-		} else {
+			continue;
+		} else if ( strcmp(optarg, "file" ) == 0) {
 			msg.xauthby = XAUTHBY_FILE;
+			continue;
+		} else  if ( strcmp(optarg, "alwaysok" ) == 0) {
+			msg.xauthby = XAUTHBY_ALWAYSOK;
+			continue;
+		} else {
+			fprintf(stderr, "whack: unknown xauthby method '%s' ignored",optarg);
 		}
 		continue;
+	case CD_XAUTHFAIL:
+		if ( strcmp(optarg, "hard" ) == 0) {
+			msg.xauthfail = XAUTHFAIL_HARD;
+			continue;
+		} else if ( strcmp(optarg, "soft" ) == 0) {
+			msg.xauthfail = XAUTHFAIL_SOFT;
+			continue;
+		} else {
+			fprintf(stderr, "whack: unknown xauthfail method '%s' ignored",optarg);
+		}
+		continue;
+#endif
 
 	case CD_CONNIPV4:
 	    if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST))
@@ -1659,6 +1689,9 @@ main(int argc, char **argv)
 	case END_MODECFGSERVER:
 	    msg.right.modecfg_server = TRUE;
 	    continue;
+	case END_ADDRESSPOOL:
+	    ttorange(optarg, 0, AF_INET, &msg.right.pool_range);
+	    continue;
 
 #ifdef MODECFG_DNSWINS
 	case CD_MODECFGDNS1:
@@ -1671,18 +1704,6 @@ main(int argc, char **argv)
 	   af_used_by = long_opts[long_index].name;
 	   diagq(ttoaddr(optarg, 0, msg.addr_family
 		, &msg.modecfg_dns2), optarg);
-	   continue;
-
-	case CD_MODECFGWINS1:
-	   af_used_by = long_opts[long_index].name;
-	   diagq(ttoaddr(optarg, 0, msg.addr_family
-		, &msg.modecfg_wins1), optarg);
-	   continue;
-
-	case CD_MODECFGWINS2:
-	   af_used_by = long_opts[long_index].name;
-	   diagq(ttoaddr(optarg, 0, msg.addr_family
-		, &msg.modecfg_wins2), optarg);
 	   continue;
 #endif
 #endif /* MODECFG */
@@ -1923,11 +1944,6 @@ main(int argc, char **argv)
             diag("remote_peer_type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
             msg.remotepeertype = NON_CISCO; /*NON_CISCO=0*/
     }
-
-   if (msg.xauthby != XAUTHBY_FILE && msg.xauthby != XAUTHBY_PAM) {
-          diag("xauthby can only be \"XAUTHBY_FILE\" or \"XAUTHBY_PAM\" - defaulting to file authentication");
-       msg.xauthby = XAUTHBY_FILE;
-   }
 
     /* pack strings for inclusion in message */
     wp.msg = &msg;

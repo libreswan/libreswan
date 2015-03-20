@@ -26,6 +26,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <limits.h>
 #include <errno.h>
@@ -47,7 +48,6 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "lswcrypto.h"
-#include "lswlog.h"
 #include "lswconf.h"
 #include "secrets.h"
 #include "mpzfuncs.h"
@@ -86,12 +86,11 @@ char *progname = "ipsec showhostkey";	/* for messages */
 
 void exit_tool(int code)
 {
-    tool_close_log();
     exit(code);
 }
 
 void
-showhostkey_log(int mess_no, const char *message, ...)
+phasemeout_loglog(int mess_no, const char *message, ...)
 {
     va_list args;
 
@@ -99,7 +98,6 @@ showhostkey_log(int mess_no, const char *message, ...)
     vfprintf(stderr, message, args);
     va_end(args);
 }
-
 
 int print_key(struct secret *secret
 	      , struct private_key_stuff *pks
@@ -363,9 +361,6 @@ int main(int argc, char *argv[])
     rsakeyid=NULL;
     keyid=NULL;
 
-    /* start up logging system */
-    tool_init_log();
-
     snprintf(secrets_file, PATH_MAX, "%s/ipsec.secrets", oco->confdir);
     
     while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF) {
@@ -471,14 +466,14 @@ int main(int argc, char *argv[])
     }
 
     /* now load file from indicated location */
-    pass.prompt=showhostkey_log;
+    pass.prompt=phasemeout_loglog;
     pass.fd = 2; /* stderr */
 
     PRBool nss_initialized = PR_FALSE;
     SECStatus rv;
     char buf[100];
     snprintf(buf, sizeof(buf), "%s",oco->confddir);
-    loglog(RC_LOG_SERIOUS,"nss directory showhostkey: %s",buf);
+    fprintf(stderr, "nss directory showhostkey: %s",buf);
     PR_Init(PR_USER_THREAD, PR_PRIORITY_NORMAL, 1);
     if ((rv = NSS_InitReadWrite(buf)) != SECSuccess) {
 	fprintf(stderr, "%s: NSS_InitReadWrite returned %d\n",progname, PR_GetError());

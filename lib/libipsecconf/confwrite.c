@@ -81,6 +81,7 @@ void confwrite_int(FILE *out,
 	case kt_percent:
 	case kt_ipaddr:
 	case kt_subnet:
+	case kt_range:
 	case kt_idtype:
 	case kt_bitstring:
 	    /* none of these are valid number types */
@@ -197,6 +198,7 @@ void confwrite_str(FILE *out,
 
 	case kt_rsakey:
 	case kt_ipaddr:
+	case kt_range:
 	case kt_subnet:
 	case kt_idtype:
 	case kt_bitstring:
@@ -245,13 +247,6 @@ void confwrite_side(FILE *out,
 		    char   *side)
 {
     char databuf[2048];  /* good for a 12288 bit rsa key */
-    int  keyingtype;
-
-    if(conn->manualkey) {
-	keyingtype=kv_manual;
-    } else {
-	keyingtype=kv_auto;
-    }
 
     switch(end->addrtype) {
     case KH_NOTSET:
@@ -363,11 +358,9 @@ void confwrite_side(FILE *out,
     }
 
     confwrite_int(out, side,
-		  kv_conn|kv_leftright,
-		  keyingtype,
+		  kv_conn|kv_leftright, kv_auto,
 		  end->options, end->options_set, end->strings);
-    confwrite_str(out, side, kv_conn|kv_leftright,
-		  keyingtype,
+    confwrite_str(out, side, kv_conn|kv_leftright, kv_auto,
 		  end->strings, end->strings_set);
 
 }
@@ -389,14 +382,6 @@ void confwrite_comments(FILE *out, struct starter_conn *conn)
 void confwrite_conn(FILE *out,
 		    struct starter_conn *conn)
 {
-    int  keyingtype;
-
-    if(conn->manualkey) {
-	keyingtype=kv_manual;
-    } else {
-	keyingtype=kv_auto;
-    }
-
     fprintf(out,"# begin conn %s\n",conn->name);
     
     fprintf(out, "conn %s\n", conn->name);
@@ -415,11 +400,9 @@ void confwrite_conn(FILE *out,
     }
     confwrite_side(out, conn, &conn->left,  "left");
     confwrite_side(out, conn, &conn->right, "right");
-    confwrite_int(out, "", kv_conn,
-		  keyingtype,
+    confwrite_int(out, "", kv_conn, kv_auto,
 		  conn->options, conn->options_set, conn->strings);
-    confwrite_str(out, "", kv_conn,
-		  keyingtype,
+    confwrite_str(out, "", kv_conn, kv_auto,
 		  conn->strings, conn->strings_set);
     confwrite_comments(out, conn);
 
@@ -427,9 +410,7 @@ void confwrite_conn(FILE *out,
 	fprintf(out, "\tconnalias=\"%s\"\n", conn->connalias);
     }
 
-    if(conn->manualkey) {
-	fprintf(out, "\tmanual=add\n");
-    } else {
+    {
 	switch(conn->desired_state) {
 	case STARTUP_IGNORE:
 	    fprintf(out, "\tauto=ignore\n");
@@ -454,13 +435,11 @@ void confwrite_conn(FILE *out,
     }
 
     if(conn->policy) {
-	int auth_policy, phase2_policy, shunt_policy, failure_policy;
-	int ikev2_policy;
-
-	phase2_policy = (conn->policy & (POLICY_AUTHENTICATE|POLICY_ENCRYPT));
-	failure_policy = (conn->policy & POLICY_FAIL_MASK);
-	shunt_policy=(conn->policy & POLICY_SHUNT_MASK);
-	ikev2_policy = conn->policy & POLICY_IKEV2_MASK;
+	lset_t phase2_policy = (conn->policy & (POLICY_AUTHENTICATE|POLICY_ENCRYPT));
+	lset_t failure_policy = (conn->policy & POLICY_FAIL_MASK);
+	lset_t shunt_policy= (conn->policy & POLICY_SHUNT_MASK);
+	lset_t ikev2_policy = (conn->policy & POLICY_IKEV2_MASK);
+	lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 
 	switch(shunt_policy) {
 	case POLICY_SHUNT_TRAP:
@@ -494,8 +473,8 @@ void confwrite_conn(FILE *out,
 		fprintf(out, "\toverlapip=no\n");
 	    }
 	    
-	    auth_policy=(conn->policy & POLICY_ID_AUTH_MASK);
-	    switch(auth_policy) {
+	    switch (conn->policy & POLICY_ID_AUTH_MASK)
+	    {
 	    case POLICY_PSK:
 		fprintf(out, "\tauthby=secret\n");
 		break;
@@ -561,7 +540,23 @@ void confwrite_conn(FILE *out,
 		fprintf(out, "\tikev2=insist\n");
 		break;
 	    }
-	    break;
+
+	    switch(ike_frag_policy) {
+	    case 0:
+		fprintf(out, "\tike_frag=never\n"); 
+		break;
+
+	    case POLICY_IKE_FRAG_ALLOW:
+		/* it's the default, do not print anything */
+		/* fprintf(out, "\tike_frag=yes\n"); */
+		break;
+		
+	    case POLICY_IKE_FRAG_ALLOW|POLICY_IKE_FRAG_FORCE:
+		fprintf(out, "\tike_frag=force\n");
+		break;
+	     }
+
+	    break; /* case POLICY_SHUNT_PASS trap */
 
 	case POLICY_SHUNT_PASS:
 	    fprintf(out, "\ttype=passthrough\n");

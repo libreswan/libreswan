@@ -65,8 +65,10 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 ifconfig eth0 mtu 1400
 
 # TODO: if rhel/centos, we should install epel-release too
-yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools
-yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel
+yum install -y wget vim-enhanced bison flex gmp-devel nss-devel nss-tools  gcc make kernel-devel unbound-libs ipsec-tools pexpect
+yum install -y racoon2 nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel audit-libs-devel strace
+# at least for f17 it is a separate package
+yum install -y pexpect 
 
 mkdir /testing /source
 
@@ -122,12 +124,36 @@ systemctl enable network.service
 systemctl enable iptables.service
 systemctl enable ip6tables.service
 
-# Takes a long time, disable for now
-# yum update -y 
+# Needed for newer nss
+yum update -y 
 
 # Instal openswan
 mount /source
 cd /source
 make programs module install module_install
+
+# ensure pluto does not get restarted by systemd on crash
+sed -i "s/Restart=always/Restart=no" /lib/systemd/system/ipsec.service
+
+#ensure we can get coredumps
+echo " * soft core unlimited" >> /etc/security/limits.conf
+echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
+ln -s /testing/guestbin/swan-init /usr/bin/swan-init
+ln -s /testing/guestbin/swan-prep /usr/bin/swan-prep
+ln -s /testing/guestbin/swan-build /usr/bin/swan-build
+ln -s /testing/guestbin/swan-install /usr/bin/swan-install
+ln -s /testing/guestbin/swan-update /usr/bin/swan-update
+ln -s /testing/guestbin/swan-run /usr/bin/swan-run
+
+# add easy names so we can jump from vm to vm
+
+cat << EOD >> /etc/hosts
+
+192.0.1.254 west
+192.0.2.254 east
+192.0.3.254 north
+192.1.3.209 road
+192.1.2.254 nic
+EOD
 
 %end

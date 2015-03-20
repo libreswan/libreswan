@@ -1363,7 +1363,7 @@ aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc
     DBG_cond_dump(DBG_RAW, "sending:\n",
 		  st->st_tpacket.ptr, st->st_tpacket.len);
 
-    send_packet(st, "aggr_outI1", TRUE);
+    send_ike_msg(st, "aggr_outI1");
 
     /* Set up a retransmission event, half a minute henceforth */
     TCLCALLOUT("adjustTimers", st, st->st_connection, md);

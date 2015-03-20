@@ -69,6 +69,14 @@ typedef int bool;
 #define streq(a, b) (strcmp((a), (b)) == 0)	/* clearer shorthand */
 #define strcaseeq(a, b) (strcasecmp((a), (b)) == 0)	/* clearer shorthand */
 
+/* Jam a string into a buffer of limited size (truncation is silent).
+ * This is somewhat like what people mistakenly think strncpy does
+ * but the parameter order is like snprintf.
+ * The result is a pointer to the NUL at the end.  This is unconventional but useful.
+ * NOTE: Is it really wise to silently truncate?  Only the caller knows.
+ */
+extern char *jam_str(char *dest, size_t size, const char *src);
+
 /* set type with room for at least 64 elements for ALG opts
  * (was 32 in stock FS)
  */
@@ -89,19 +97,19 @@ typedef unsigned long long lset_t;
  * An enum_names describes an enumeration.
  * enum_name() returns the name of an enum value, or NULL if invalid.
  * enum_show() is like enum_name, except it formats a numeric representation
- *    for any invalid value (in a static area!)
+ *    for any invalid value (in a static area -- NOT RE-ENTRANT)
  *
- * bitnames() formats a display of a set of named bits (in a static area)
+ * bitnames() formats a display of a set of named bits (in a static area -- NOT RE-ENTRANT)
  */
 
 typedef const struct enum_names enum_names;
 
 extern const char *enum_name(enum_names *ed, unsigned long val);
-extern const char *enum_show(enum_names *ed, unsigned long val);
+extern const char *enum_show(enum_names *ed, unsigned long val);	/* NOT RE-ENTRANT */
 extern int enum_search(enum_names *ed, const char *string);
 
 extern bool testset(const char *const table[], lset_t val);
-extern const char *bitnamesof(const char *const table[], lset_t val);
+extern const char *bitnamesof(const char *const table[], lset_t val);	/* NOT RE-ENTRANT */
 extern const char *bitnamesofb(const char *const table[]
 			       , lset_t val
 			       , char *buf, size_t blen);
@@ -141,7 +149,7 @@ struct sparse_name {
 typedef const struct sparse_name sparse_names[];
 
 extern const char *sparse_name(sparse_names sd, unsigned long val);
-extern const char *sparse_val_show(sparse_names sd, unsigned long val);
+extern const char *sparse_val_show(sparse_names sd, unsigned long val);	/* uses static buffer -- NOT RE-ENTRANT */
 extern const char sparse_end[];
 
 #define FULL_INET_ADDRESS_SIZE    6

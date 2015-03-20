@@ -518,7 +518,7 @@ int ikev2_evaluate_connection_port_fit(struct connection *d
 				DBG(DBG_CONTROL,DBG_log("   narrowing=yes want to narrow ei->port 0-65355 to tsi[%d] %d-%d"
 							,tsr_ni, tsr[tsr_ni].startport, tsr[tsr_ni].endport)); 
 				if( tsr[tsr_ni].startport <= tsi[tsr_ni].endport ){
-					fitrange2 = 1 + tsr[tsr_ni].endport - tsr[tsi_ni].startport;
+					fitrange2 = 1 + tsr[tsr_ni].endport - tsr[tsr_ni].startport;
 						DBG(DBG_CONTROL,DBG_log("  tsr[%d] %d-%d <= er->port 0-65535 can be narrowed  fitrange2 %d"
 									,tsr_ni, tsr[tsr_ni].startport, tsr[tsr_ni].endport,fitrange2));
 				}

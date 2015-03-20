@@ -22,6 +22,7 @@
 #ifndef _STATE_H
 #define _STATE_H
 
+#include <pthread.h>	/* Must be the first include file */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -33,7 +34,6 @@
 #include <pk11pub.h>
 
 #ifdef XAUTH_HAVE_PAM
-# include <pthread.h>
 # include <signal.h>
 #endif
 
@@ -130,6 +130,16 @@ struct ipsec_proto_info {
     time_t peer_lastused;
 };
 
+struct ike_frag
+{
+	struct ike_frag *next;
+	struct msg_digest *md;
+	int index;
+	int last;
+	u_int8_t *data;
+	size_t size;
+};
+
 /*
  * internal state that
  * should get copied by god... to the child SA state.
@@ -218,6 +228,8 @@ struct state
     const char        *st_suspended_md_func;
     int                st_suspended_md_line;
 
+	struct ike_frag *ike_frags;                /* collected ike fragments */
+
     struct trans_attrs st_oakley;
 
     struct ipsec_proto_info st_ah;
@@ -240,8 +252,9 @@ struct state
 
     ip_address         st_remoteaddr;          /* where to send packets to */
     u_int16_t          st_remoteport;          /* host byte order */
+
     
-    const struct iface_port *st_interface;     /* where to send from */
+    const struct iface_port *st_interface;     /* where to send from */  /* dhr 2013: why? There was already connection->interface */
     ip_address         st_localaddr;           /* where to send them from */
     u_int16_t          st_localport;           
 
@@ -389,13 +402,14 @@ struct state
     u_int32_t           st_dpd_expectseqno;     /* Next R_U_THERE_ACK
 						   to receive */
     u_int32_t           st_dpd_peerseqno;       /* global variables */
-    struct event       *st_dpd_event;          /* backpointer for DPD events */
+    struct event       *st_dpd_event;           /* backpointer for DPD events */
 
-    u_int32_t           st_seen_vendorid;      /* Bit field about
+    lset_t           st_seen_vendorid;       /* Bit field about
 						  recognized Vendor ID */
-    struct isakmp_quirks quirks;          /* work arounds for faults in other
- 					   * products */
-    
+    struct isakmp_quirks quirks;                /* work arounds for faults in other products */
+    bool                st_xauth_soft;          /* XAUTH failed but policy is to soft fail */
+    bool		st_seen_fragvid;	/* should really use st_seen_vendorid, but no one else is */
+    bool		st_seen_fragments;	/* did we receive ike fragments from peer, if so use them in return as well */
 };
 
 /* global variables */
@@ -479,6 +493,7 @@ extern void fmt_state(struct state *st, const time_t n
 		     , char *state_buf2, const size_t state_buf_len2);
 extern void delete_states_by_peer(ip_address *peer);
 extern void replace_states_by_peer(ip_address *peer);
+extern void release_fragments(struct state *st);
 
 extern void set_state_ike_endpoints(struct state *st
 				    , struct connection *c);
@@ -505,6 +520,7 @@ extern void delete_states_dead_interfaces(void);
 #define fake_state(st,new_state) /* do nothing */
 #define change_state(st, new_state) do { (st)->st_state=(new_state); } while(0)
 #endif
+
 
 #endif /* _STATE_H */
 

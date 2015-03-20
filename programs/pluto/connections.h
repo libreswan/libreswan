@@ -115,20 +115,23 @@ typedef unsigned long policy_prio_t;
 #define POLICY_PRIO_BUF	(3+1+3+1)
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
+#ifdef XAUTH_HAVE_PAM
+# include <pthread.h>	/* Must be the first include file */
+# include <security/pam_appl.h>
+# include <signal.h>
+#endif
+
 /* Note that we include this even if not X509, because we do not want the
  * structures to change lots.
  */
 #include "x509.h"
 #include "pgp.h"
 #include "certs.h"
+#include "defs.h"
+#include <sys/queue.h>
 
 struct virtual_t;
 
-#ifdef XAUTH_HAVE_PAM
-# include <security/pam_appl.h>
-# include <pthread.h>
-# include <signal.h>
-#endif
 
 struct ietfAttr;	/* forward declaration of ietfAttr defined in ac.h */
 struct host_pair;    /* opaque type */
@@ -169,6 +172,7 @@ struct end {
     bool xauth_client;
     char *xauth_name;
     char *xauth_password;
+    ip_range pool_range;        /* store start of v4 addresspool */
 /*#ifdef MODECFG */
     bool modecfg_server;        /* Give local addresses to tunnel's end */
     bool modecfg_client;        /* request address for local end */
@@ -216,8 +220,10 @@ struct connection {
    char *policy_label;
 #endif
 
+#ifdef XAUTH
    enum keyword_xauthby xauthby;
-
+   enum keyword_xauthfail xauthfail;
+#endif
 
     bool               forceencaps;         /* always use NAT-T encap */
     
@@ -269,12 +275,11 @@ struct connection {
     char *dnshostname;
 #endif /* DYNAMICDNS */
 #ifdef XAUTH
-# ifdef MODECFG
+#ifdef MODECFG
     ip_address modecfg_dns1;
     ip_address modecfg_dns2;
-    ip_address modecfg_wins1;
-    ip_address modecfg_wins2;
-# endif
+    struct ip_pool *pool;  /*v4 addresspool as a range, start end */
+#endif
     char *cisco_dns_info;
     char *cisco_domain_info;
     char *cisco_banner;

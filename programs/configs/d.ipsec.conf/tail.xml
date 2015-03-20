@@ -26,7 +26,7 @@ information about the client subnets to complete the instantiation.</para>
 </refsect1>
 
 <refsect1 id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_manual</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_ttoaddr</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>, <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 id='history'><title>HISTORY</title>
@@ -68,14 +68,6 @@ for quite a number of uses involving TCP. The keyword
 <emphasis remap='B'>%one</emphasis> may be introduced in the future to
 separate these two cases.</para>
 
-<para><emphasis remap='I'>ipsec_manual</emphasis>
-is not nearly as generous about the syntax of subnets,
-addresses, etc. as the usual Libreswan user interfaces.
-Four-component dotted-decimal must be used for all addresses.
-It
-<emphasis remap='I'>is</emphasis>
-smart enough to translate bit-count netmasks to dotted-decimal form.</para>
-
 <para>It would be good to have a line-continuation syntax,
 especially for the very long lines involved in
 RSA signature keys.</para>
@@ -112,11 +104,6 @@ interface-by-interface basis,
 rather than with the single global override that
 <emphasis remap='B'>overridemtu</emphasis>
 provides. This feature is planned for a future release.</para>
-
-<para>A number of features which <emphasis remap='I'>could</emphasis> be implemented in
-both manual and automatic keying
-actually are not yet implemented for manual keying.
-This is unlikely to be fixed any time soon.</para>
 
 <para>If conns are to be added before DNS is available,
 <emphasis remap='B'>left=</emphasis><emphasis remap='I'>FQDN</emphasis>,

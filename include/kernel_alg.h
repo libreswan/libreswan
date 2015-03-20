@@ -56,7 +56,7 @@ extern struct db_context * kernel_alg_db_new(struct alg_info_esp *ai
 					     , lset_t policy
 					     , bool logit);
 
-/* returns pointer to static buffer, no reentrant */
+/* returns pointer to static buffer -- NOT RE-ENTRANT */
 extern struct esp_info *kernel_alg_esp_info(u_int8_t transid
 					    , u_int16_t keylen
 					    , u_int16_t auth);

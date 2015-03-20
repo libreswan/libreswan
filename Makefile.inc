@@ -46,6 +46,9 @@ export SHELL
 
 .PHONY:	programs man config checkprograms clean
 
+# location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
+BINSH=/bin/sh
+
 # supply kernel-configuration ARCH defaults
 ifeq ($(ARCH),)
 ARCH := $(shell uname -m)
@@ -100,11 +103,16 @@ MANTREE=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
 MANPLACES=man3 man5 man8
 
 # where configuration files go
-FINALCONFFILE?=/etc/ipsec.conf
+FINALSYSCONFDIR?=/etc
+
+# final configuration file
+FINALCONFFILE?=$(FINALSYSCONFDIR)/ipsec.conf
 CONFFILE?=$(DESTDIR)$(FINALCONFFILE)
 
-FINALCONFDIR?=/etc
+FINALCONFDIR?=$(FINALSYSCONFDIR)
+
 CONFDIR?=$(DESTDIR)$(FINALCONFDIR)
+SYSCONFDIR?=$(DESTDIR)$(FINALSYSCONFDIR)
 
 FINALCONFDDIR?=${FINALCONFDIR}/ipsec.d
 CONFDDIR?=$(DESTDIR)$(FINALCONFDDIR)
@@ -452,6 +460,9 @@ HAVE_OPENSSL?=false
 # Userland (IKE) Open Cryptographic Framework support (hw crypto offload)
 # For Kernel level OCF support, enable CONFIG_KLIPS_OCF on a kernel that
 # has support for OCF (inline or module)
+# Only enable this when compiling for embedded systems with very limited CPU
+# power, and only if there is actually some hardware accelerator present
+# for which there is an OCF kernel driver available.
 HAVE_OCF?=false
 
 ifeq ($(HAVE_OCF),true)
@@ -600,6 +611,23 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
                         -e "s:@MODPROBE@:$(MODPROBE):g" \
+                        -e "s:@BINSH@:$(BINSH):g" \
+                        -e "s:@FINALSYSCONFDIR@:$(FINALSYSCONFDIR):g" \
+                        -e "s:@FINALRCDIR@:$(FINALRCDIR):g" \
+
+# For KVM testing setup
+#POOL?=${LIBRESWANSRCDIR}/pool
+POOL?=/vol/pool
+# support types are fedora and ubuntu
+OSTYPE?=fedora
+#OSMEDIA?=http://fedora.mirror.nexicom.net/linux/releases/17/Fedora/x86_64/os/
+OSMEDIA?=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os
+
+# Ubuntu media
+# OSTYPE?=ubuntu
+# OSMEDIA?=http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
+
+
 
 # for emacs
 #

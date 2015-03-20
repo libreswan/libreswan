@@ -346,6 +346,7 @@ size_t errlen;
 	static const char pre[] = "unknown character (`";
 	static const char suf[] = "') in input";
 	char buf[5];
+	/* it would be a VERY good idea if REQD <= TTODATAV_BUF */
 #	define	REQD	(sizeof(pre) - 1 + sizeof(buf) - 1 + sizeof(suf))
 	struct sizecheck {
 		char bigenough[TTODATAV_BUF - REQD];	/* see above */

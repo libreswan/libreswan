@@ -1,0 +1,4 @@
+This test has a road warrior, ("road":initiator) connecting to east(responder).
+INTERNAL_IP4_ADDRESS is configued as leftsubnet /32.
+authby=X509 CERT
+xauthby=alwaysok

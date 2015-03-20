@@ -70,7 +70,8 @@
 #include "plutocerts.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "xauth.h"
+#include "xauth.h" 
+#include "addresspool.h"
 #ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
 #endif
@@ -270,6 +271,9 @@ delete_connection(struct connection *c, bool relations)
 	     , ip_str(&c->spd.that.host_addr)
 	     , c->newest_isakmp_sa, c->newest_ipsec_sa);
 	c->kind = CK_GOING_AWAY;
+#ifdef MODECFG
+	rel_lease_addr(c);
+#endif	
     }
     else
     {
@@ -321,6 +325,14 @@ delete_connection(struct connection *c, bool relations)
     pfreeany(c->cisco_dns_info);
     pfreeany(c->cisco_domain_info);
     pfreeany(c->cisco_banner);
+
+#ifdef PAUL_DISABLED
+    if(c->pool) {
+            pfreeany(c->pool);
+            c->pool = NULL;
+    }
+#endif 
+
 #endif
 #ifdef HAVE_LABELED_IPSEC
     pfreeany(c->policy_label);
@@ -381,6 +393,7 @@ void
 delete_connections_by_name(const char *name, bool strict)
 {
     bool f = FALSE;
+    passert(name != NULL);
     struct connection *c = con_by_name(name, strict);
 
     if(c==NULL) {
@@ -957,6 +970,8 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
 #ifdef MODECFG
     dst->modecfg_server = src->modecfg_server;
     dst->modecfg_client = src->modecfg_client;
+    dst->pool_range = src->pool_range;
+
 #endif
 #ifdef XAUTH
     dst->xauth_server = src->xauth_server;
@@ -1344,13 +1359,16 @@ add_connection(const struct whack_message *wm)
 	c->labeled_ipsec = wm->labeled_ipsec;
 	c->policy_label = NULL;
 	if(wm->policy_label) {
-	c->policy_label = clone_str(wm->policy_label, "security label");
+		c->policy_label = clone_str(wm->policy_label, "security label");
 	}
 	DBG(DBG_CONTROL, DBG_log("loopback=%d labeled_ipsec=%d, policy_label=%s", c->loopback, c->labeled_ipsec, c->policy_label));
 #endif
 
+#ifdef XAUTH
 	/* XAUTH pam or file */
-	c->xauthby=wm->xauthby;
+	c->xauthby = wm->xauthby;
+	c->xauthfail = wm->xauthfail;
+#endif
 
 	c->metric = wm->metric;
 	c->connmtu = wm->connmtu;
@@ -1365,6 +1383,23 @@ add_connection(const struct whack_message *wm)
 	same_leftca  = extract_end(&c->spd.this, &wm->left, "left");
 	same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
+
+	/* 
+	 * How to add addresspool only for responder? 
+	 * It is not necessary on the initiator
+	 */
+	 
+	if (wm->left.pool_range.start.u.v4.sin_addr.s_addr) {
+		/* there is address pool range add to the global list */
+		c->pool = install_addresspool(&wm->left.pool_range
+				,&pluto_pools);
+	}
+	if (wm->right.pool_range.start.u.v4.sin_addr.s_addr) {
+		/* there is address pool range add to the global list */
+		c->pool = install_addresspool(&wm->right.pool_range
+				, &pluto_pools);
+	}
+
 	if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 	{
 	    c->policy |= POLICY_XAUTH;
@@ -1377,11 +1412,10 @@ add_connection(const struct whack_message *wm)
 
 #ifdef MODECFG
 #ifdef MODECFG_DNSWINS
+	/* type is ip_address, not a string */ 
 	c->modecfg_dns1 = wm->modecfg_dns1;
 	c->modecfg_dns2 = wm->modecfg_dns2;
-	c->modecfg_wins1 = wm->modecfg_wins1;
-	c->modecfg_wins2 = wm->modecfg_wins2;
-#endif
+#endif 
 #endif
 
 	default_end(&c->spd.this, &c->spd.that.host_addr);
@@ -1473,14 +1507,7 @@ add_connection(const struct whack_message *wm)
 
 	unshare_connection_strings(c);
 
-        /*
-         * Philippe Vouters:
-         * Commented out this (void)orient(c);. Call check_orientations();
-         * inside call_server() instead.
-         * Change to be checked by Paul Wouters with his "redhat" connection
-         * to an actual Cisco equipment.
-         */
-//	(void)orient(c);
+	(void)orient(c);
 	connect_to_host_pair(c);
 
 	/* log all about this connection */
@@ -3285,11 +3312,7 @@ show_one_sr(struct connection *c
     char topo[CONN_BUF_LEN];
     char srcip[ADDRTOT_BUF], dstip[ADDRTOT_BUF];
     char thissemi[3+sizeof("myup=")];
-    char thatsemi[3+sizeof("hisup=")];
-#ifdef XAUTH
-    char thisxauthsemi[XAUTH_USERNAME_LEN+sizeof("myxauthuser=")];
-    char thatxauthsemi[XAUTH_USERNAME_LEN+sizeof("hisxauthuser=")];
-#endif
+    char thatsemi[3+sizeof("theirup=")];
     char thiscertsemi[3+sizeof("mycert=")+PATH_MAX];
     char thatcertsemi[3+sizeof("hiscert=")+PATH_MAX];
     char *thisup, *thatup;
@@ -3328,7 +3351,7 @@ show_one_sr(struct connection *c
 	thatsemi[0]=';';
 	thatsemi[1]=' ';
 	thatsemi[2]='\0';
-	strcat(thatsemi, "hisup=");
+	strcat(thatsemi, "theirup=");
 	thatup=sr->that.updown;
     }
     
@@ -3346,34 +3369,87 @@ show_one_sr(struct connection *c
 		 , sr->that.cert_filename);
     }
 
-    whack_log(RC_COMMENT, "\"%s\"%s:     myip=%s; hisip=%s%s%s%s%s%s%s;"
-	      , c->name, instance, srcip, dstip
+    whack_log(RC_COMMENT, "\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s%s%s;"
+	      , c->name, instance
+	      , oriented(*c) ? "oriented" : "unoriented"
+	      , srcip, dstip
 	      , thissemi, thisup
 	      , thatsemi, thatup
 	      , thiscertsemi
 	      , thatcertsemi);
     
 #ifdef XAUTH
-    if(sr->this.xauth_name || sr->that.xauth_name) {
+    {
+	char thisxauthsemi[XAUTH_USERNAME_LEN+sizeof("my_xauthuser=")];
+	char thatxauthsemi[XAUTH_USERNAME_LEN+sizeof("their_xauthuser=")];
+	char dns1[ADDRTOT_BUF], dns2[ADDRTOT_BUF];
+
 	thisxauthsemi[0]='\0';
-	if(sr->this.xauth_name) {
 	    snprintf(thisxauthsemi, sizeof(thisxauthsemi)-1
-		     , "myxauthuser=%s; "
-		     , sr->this.xauth_name);
-	}
+		     , "my_xauthuser=%s; "
+		     , sr->this.xauth_name ? sr->this.xauth_name : "[any]");
 	
 	thatxauthsemi[0]='\0';
-	if(sr->that.xauth_name) {
 	    snprintf(thatxauthsemi, sizeof(thatxauthsemi)-1
-		     , "hisxauthuser=%s; "
-		     , sr->that.xauth_name);
+		     , "their_xauthuser=%s; "
+		     , sr->that.xauth_name ? sr->that.xauth_name : "[any]");
+
+	if(isanyaddr(&c->modecfg_dns1)) {
+		strcpy(dns1, "unset");
+	} else {
+		addrtot(&c->modecfg_dns1, 0, dns1, sizeof(dns1));
 	}
-	whack_log(RC_COMMENT, "\"%s\"%s:     xauth info: %s%s"
-		  , c->name, instance
-		  , thisxauthsemi
-		  , thatxauthsemi);
+	if(isanyaddr(&c->modecfg_dns2)) {
+		strcpy(dns2, "unset");
+	} else {
+		addrtot(&c->modecfg_dns2, 0, dns2, sizeof(dns2));
+	}
+
+        whack_log(RC_COMMENT, "\"%s\"%s:   xauth info: us:%s, them:%s, %s %s%s;"
+                  , c->name, instance
+                  /* both should not be set, but if they are, we want to know */
+                  , (!sr->this.xauth_server && !sr->this.xauth_client) ? "none" :
+                    (sr->this.xauth_server && sr->this.xauth_client) ? "both??" :
+                    (sr->this.xauth_server) ? "server" : "client"
+                  , (!sr->that.xauth_server && !sr->that.xauth_client) ? "none" :
+                    (sr->that.xauth_server && sr->that.xauth_client) ? "both??" :
+                    (sr->that.xauth_server) ? "server" : "client"
+                  /* should really be an enum name */
+                  , (sr->this.xauth_server) ?  (c->xauthby == XAUTHBY_FILE) ? "method:file;" :
+                    ((c->xauthby == XAUTHBY_PAM) ? "method:pam;" : "method:alwaysok;" ) : ""
+                  , thisxauthsemi
+                  , thatxauthsemi
+                );
+
+# ifdef MODECFG
+        whack_log(RC_COMMENT, "\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns1:%s, dns2:%s;"
+                  , c->name, instance
+                  /* both should not be set, but if they are, we want to know */
+                  , (!sr->this.modecfg_server && !sr->this.modecfg_client) ? "none" :
+                    (sr->this.modecfg_server && sr->this.modecfg_client) ? "both??" :
+                    (sr->this.modecfg_server) ? "server" : "client"
+                  , (!sr->that.modecfg_server && !sr->that.modecfg_client) ? "none" :
+                    (sr->that.modecfg_server && sr->that.modecfg_client) ? "both??" :
+                    (sr->that.modecfg_server) ? "server" : "client"
+                  , (c->policy & POLICY_MODECFG_PULL) ? "pull" : "push"
+                  , dns1
+                  , dns2
+                );
+# endif
     }
 #endif
+#ifdef HAVE_LABELED_IPSEC
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:%s, loopback:%s; "
+		  , c->name, instance
+		  , c->labeled_ipsec ? "yes" : "no" 
+		  , c->loopback ? "yes" : "no" 
+		);
+       whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s; "
+		  , c->name, instance
+		  , (c->policy_label == NULL) ? "unset" : c->policy_label
+		);
+#endif
+
 }
 
 void 
@@ -3382,6 +3458,7 @@ show_one_connection(struct connection *c)
     const char *ifn;
     char instance[1 + 10 + 1];
     char prio[POLICY_PRIO_BUF];
+    char mtustr[8];
     
     ifn = oriented(*c)? c->interface->ip_dev->id_rname : "";
 
@@ -3418,7 +3495,7 @@ show_one_connection(struct connection *c)
     
     whack_log(RC_COMMENT
 	      , "\"%s\"%s:   ike_life: %lus; ipsec_life: %lus;"
-	      " rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu%s%s "
+	      " rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu%s%s;"
 	      , c->name
 	      , instance
 	      , (unsigned long) c->sa_ike_life_seconds
@@ -3433,31 +3510,37 @@ show_one_connection(struct connection *c)
     if (c->policy_next)
     {
 	whack_log(RC_COMMENT
-		  , "\"%s\"%s:   policy_next: %s"
-		  , c->name, instance, c->policy_next->name);
+		 , "\"%s\"%s:   policy_next: %s"
+		 , c->name, instance, c->policy_next->name);
     }
     
-    /* Note: we display key_from_DNS_on_demand as if policy [lr]KOD */
+    /* Note: we _no longer_ display key_from_DNS_on_demand as if policy [lr]KOD */
     fmt_policy_prio(c->prio, prio);
     whack_log(RC_COMMENT
-	      , "\"%s\"%s:   policy: %s%s%s; prio: %s; interface: %s; "
-	      , c->name
-	      , instance
-	      , prettypolicy(c->policy)
-	      , c->spd.this.key_from_DNS_on_demand? "+lKOD" : ""
-	      , c->spd.that.key_from_DNS_on_demand? "+rKOD" : ""
-	      , prio
-	      , ifn);
-   
-    if(c->connmtu > 0 || c->metric > 0) {
-	whack_log(RC_COMMENT
-		  , "\"%s\"%s:   network params: metric:%lu; mtu:%lu; "
-		  , c->name
-		  , instance
-		  , (unsigned long)c->metric 
-		  , (unsigned long)c->connmtu);
+		, "\"%s\"%s:   policy: %s; %s%s%s"
+		, c->name
+		, instance
+		, prettypolicy(c->policy)
+		, c->spd.this.key_from_DNS_on_demand? "+lKOD" : ""
+		, c->spd.that.key_from_DNS_on_demand? "+rKOD" : ""
+		, (c->spd.this.key_from_DNS_on_demand || c->spd.that.key_from_DNS_on_demand) ? ";" : ""
+		);
+
+    if(c->connmtu > 0) {
+	snprintf(mtustr,7,"%d",c->connmtu);
+    } else {
+	strcpy(mtustr, "unset");
     }
- 
+    whack_log(RC_COMMENT
+		, "\"%s\"%s:   prio: %s; interface: %s; metric: %lu, mtu: %s;"
+		, c->name
+		, instance
+		, prio
+		, ifn
+		, (unsigned long)c->metric
+		, mtustr
+		);
+
     /* slightly complicated stuff to avoid extra crap */
     if(c->dpd_timeout > 0 || DBGP(DBG_DPD)) {
 	whack_log(RC_COMMENT
@@ -3503,7 +3586,7 @@ show_one_connection(struct connection *c)
 void
 show_connections_status(void)
 {
-    int count, i;
+    int count, i, active;
     struct connection *c;
     struct connection **array;
 
@@ -3521,9 +3604,14 @@ show_connections_status(void)
     array = alloc_bytes(sizeof(struct connection *)*count, "connection array");
 
     count=0;
+    active=0;
     for (c = connections; c != NULL; c = c->ac_next)
     {
 	array[count++]=c;
+	if (c->spd.routing == RT_ROUTED_TUNNEL)
+	{
+	 active++;
+	}
     }
 
     /* sort it! */
@@ -3534,6 +3622,8 @@ show_connections_status(void)
 	show_one_connection(array[i]);
     }
     pfree(array);
+    whack_log(RC_COMMENT, " "); /* spacer */
+    whack_log(RC_COMMENT,"Total IPsec connections: loaded %d, active %d",count,active);
 }
 
 /* Delete a connection if it is an instance and it is no longer in use.

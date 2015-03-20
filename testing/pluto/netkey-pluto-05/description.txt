@@ -1,6 +1,6 @@
 Same as netkey-01 but we also add a passthrough route to verify the issue
 with http://lists.libreswan.org/pipermail/users/2007-April/012298.html
-mentioned at  http://bugs.xelerance.com/view.php?id=907
+mentioned at  http://bugs.libreswan.org/view.php?id=907
 
 It will require a manual adding of dir out and dir forward policies, eg
 ip xfrm policy add dir in src subnet1 dst subnet2

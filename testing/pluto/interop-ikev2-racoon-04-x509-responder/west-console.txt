@@ -198,7 +198,7 @@ west:~# ipsec auto --status
 000  
 000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
 000  
-000 "west--east-ikev2": 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=east.testing.xelerance.com, E=testing@xelerance.com,S-C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Xelerance, OU=Test Department, CN=west.testing.xelerance.com, E=testing@xelerance.com,S-C]; unrouted; eroute owner: #0
+000 "west--east-ikev2": 192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing.libreswan.org,S-C]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing.libreswan.org,S-C]; unrouted; eroute owner: #0
 000 "west--east-ikev2":     myip=unset; hisip=unset; mycert=/testing/baseconfigs/all/etc/ipsec.d/certs/east.crt; hiscert=/testing/baseconfigs/all/etc/ipsec.d/certs/west.crt;
 000 "west--east-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3
 000 "west--east-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init; prio: 32,32; interface: eth1; 

@@ -21,6 +21,7 @@ INCLUDES+=${NSSFLAGS}
 CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${CROSSFLAGS}
 CFLAGS+=-DDEBUG
 
+CFLAGS+=-pthread
 
 CFLAGS+= $(USERCOMPILE)
 ifneq ($(BUILDENV),darwin)
@@ -43,6 +44,10 @@ endif
 
 ifeq ($(USE_DNSSEC),true)
 CFLAGS+= -DDNSSEC
+endif
+
+ifeq ($(USE_XAUTH),true)
+CFLAGS+= -DXAUTH -DMODECFG -DMODECFG_DNSWINS
 endif
 
 ifeq ($(USE_KLIPS),true)

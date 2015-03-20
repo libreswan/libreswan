@@ -19,8 +19,6 @@ If
 is used (implicitly or explicitly)
 information about the default route and its interface is noted for
 use by
-<citerefentry><refentrytitle>ipsec_manual</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-and
 <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>.)</para>
   </listitem>
   </varlistentry>

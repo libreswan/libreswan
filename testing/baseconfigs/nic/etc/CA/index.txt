@@ -1,6 +1,0 @@
-V	060426012336Z		03	unknown	/C=CA/ST=Ottawa/L=Ontario/O=Xelerance Corporation/OU=FreeSWAN support/CN=east.uml.freeswan.org/emailAddress=root@east.uml.freeswan.org
-V	060426012340Z		04	unknown	/C=CA/ST=Ottawa/L=Ontario/O=Xelerance Corporation/OU=FreeSWAN development/CN=west.uml.freeswan.org/emailAddress=root@west.uml.freeswan.org
-V	060426021422Z		05	unknown	/C=CA/ST=Ontario/L=Ottawa/O=Xelerance/CN=west.uml.libreswan.org/emailAddress=root@west.uml.libreswan.org
-V	060426025158Z		06	unknown	/C=CA/ST=Ontario/L=Ottawa/O=Xelerance/CN=east.uml.libreswan.org/emailAddress=root@east.uml.libreswan.org
-V	060426045803Z		07	unknown	/C=CA/ST=Ontario/L=Ottawa/O=Xelerance/CN=north.uml.freeswan.org/emailAddress=root@north.uml.freeswan.org
-V	060426060054Z		08	unknown	/C=CA/ST=British Columbia/L=Vancouver/O=Lions/CN=north.uml.freeswan.org/emailAddress=root@north.uml.freeswan.org

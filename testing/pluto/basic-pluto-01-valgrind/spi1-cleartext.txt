@@ -1,0 +1,1 @@
+../../klips/west-icmp-01/spi1-cleartext.txt

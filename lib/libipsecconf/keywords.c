@@ -71,8 +71,23 @@ struct keyword_enum_value kw_fourvalued_values[]={
     { "always",    fo_insist },
     { "no",        fo_never  }
 };
+
 struct keyword_enum_values kw_fourvalued_list=
 { kw_fourvalued_values, sizeof(kw_fourvalued_values)/sizeof(struct keyword_enum_value)};
+
+/*
+ * Values for yes/no/force, used by ike_frag
+ */
+struct keyword_enum_value kw_ynf_values[]={
+    { "never",     ynf_no},
+    { "no",        ynf_no},
+    { "yes",       ynf_yes},
+    { "insist",     ynf_force},
+    { "force",     ynf_force},
+};
+
+struct keyword_enum_values kw_ynf_list=
+{ kw_ynf_values, sizeof(kw_ynf_values)/sizeof(struct keyword_enum_value)};
 
 /*
  * Values for authby={rsasig, secret}
@@ -240,13 +255,23 @@ struct keyword_enum_values kw_labeled_ipsec=
     { kw_labeled_ipsec_list, sizeof(kw_labeled_ipsec_list)/sizeof(struct keyword_enum_value)};
 #endif
 
+#ifdef XAUTH
 struct keyword_enum_value kw_xauthby_list[]={
     { "file",         XAUTHBY_FILE },
     { "pam",         XAUTHBY_PAM },
+    { "alwaysok",    XAUTHBY_ALWAYSOK },
 };
 
 struct keyword_enum_values kw_xauthby=
     { kw_xauthby_list, sizeof(kw_xauthby_list)/sizeof(struct keyword_enum_value)};
+
+struct keyword_enum_value kw_xauthfail_list[]={
+    { "hard",         XAUTHFAIL_HARD },
+    { "soft",         XAUTHFAIL_SOFT },
+};
+struct keyword_enum_values kw_xauthfail=
+    { kw_xauthfail_list, sizeof(kw_xauthfail_list)/sizeof(struct keyword_enum_value)};
+#endif
 
 
 /*
@@ -363,7 +388,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"retransmits",    kv_config, kt_bool,      KBF_RETRANSMITS,NOT_ENUM},
     {"overridemtu",    kv_config, kt_number,    KBF_OVERRIDEMTU,NOT_ENUM},
     {"strictcrlpolicy",kv_config, kt_bool,      KBF_STRICTCRLPOLICY,NOT_ENUM},
-    {"crlcheckinterval",kv_config, kt_number,	KBF_CRLCHECKINTERVAL,NOT_ENUM},
+    {"crlcheckinterval",kv_config, kt_time,	KBF_CRLCHECKINTERVAL,NOT_ENUM},
     {"force_busy",     kv_config, kt_bool,      KBF_FORCEBUSY,NOT_ENUM},
     {"ikeport",        kv_config,kt_number,     KBF_IKEPORT, NOT_ENUM},
 #ifdef NAT_TRAVERSAL
@@ -416,6 +441,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"authby",         kv_conn|kv_auto, kt_enum,   KBF_AUTHBY,     &kw_authby_list},
     {"keyexchange",    kv_conn|kv_auto, kt_enum,   KBF_KEYEXCHANGE, &kw_keyexchange_list},
     {"ikev2",          kv_conn|kv_auto|kv_processed,kt_enum,KBF_IKEv2,&kw_fourvalued_list},
+    {"ike_frag",       kv_conn|kv_auto|kv_processed,kt_enum,KBF_IKE_FRAG,&kw_ynf_list},
     {"narrowing",      kv_conn|kv_auto, kt_bool,   KBF_IKEv2_ALLOW_NARROWING, NOT_ENUM},
     {"sareftrack",     kv_conn|kv_auto|kv_processed,kt_enum,KBF_SAREFTRACK,&kw_sareftrack_list},
     {"pfs",            kv_conn|kv_auto, kt_bool,   KBF_PFS,          NOT_ENUM},
@@ -437,7 +463,10 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"nm_configured", kv_conn|kv_auto, kt_enum, KBF_NMCONFIGURED, &kw_nm_configured},
 #endif
 
+#ifdef XAUTH
     {"xauthby", kv_conn|kv_auto, kt_enum, KBF_XAUTHBY, &kw_xauthby},
+    {"xauthfail", kv_conn|kv_auto, kt_enum, KBF_XAUTHFAIL, &kw_xauthfail},
+#endif
 
 #ifdef NAT_TRAVERSAL
     {"forceencaps",    kv_conn|kv_auto, kt_bool,   KBF_FORCEENCAP, NOT_ENUM},
@@ -481,10 +510,13 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"modecfgclient", kv_conn|kv_auto|kv_leftright, kt_bool, KNCF_MODECONFIGCLIENT, NOT_ENUM},
     {"xauthusername", kv_conn|kv_auto|kv_leftright, kt_string, KSCF_XAUTHUSERNAME, NOT_ENUM},
     {"modecfgpull", kv_conn|kv_auto, kt_invertbool, KBF_MODECONFIGPULL , NOT_ENUM},
-    {"modecfgdns1", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGDNS1,NOT_ENUM},
-    {"modecfgdns2", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGDNS2,NOT_ENUM},
-    {"modecfgwins1", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGWINS1,NOT_ENUM},
-    {"modecfgwins2", kv_conn|kv_auto|kv_leftright, kt_ipaddr, KSCF_MODECFGWINS2,NOT_ENUM},
+    /* these are really kt_ipaddr, but we handle them as string until we load them into a whack message */
+    {"modecfgdns1", kv_conn|kv_auto, kt_string, KSF_MODECFGDNS1, NOT_ENUM}, 
+    {"modecfgdns2", kv_conn|kv_auto, kt_string, KSF_MODECFGDNS2, NOT_ENUM},
+    {"addresspool", kv_conn|kv_auto|kv_leftright, kt_range, KSCF_ADDRESSPOOL, NOT_ENUM},
+    {"modecfgwins1", kv_conn|kv_auto, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM},
+    {"modecfgwins2", kv_conn|kv_auto, kt_obsolete, KBF_WARNIGNORE, NOT_ENUM},
+
     {NULL, 0, 0, 0, NOT_ENUM}
 };
 
