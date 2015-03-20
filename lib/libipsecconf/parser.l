@@ -217,7 +217,7 @@ int parser_y_include (const char *filename)
 	if(globresult == GLOB_NOMATCH)
 	{
 		/* no files found... */
-		starter_log(LOG_LEVEL_INFO, "could not open include filename: '%s' (tried %s and %s)", filename, newname, newname2);
+		starter_log(LOG_LEVEL_INFO, "warning: could not open include filename: '%s' (tried %s and %s)", filename, newname, newname2);
 		globfree(&globbuf);
 		return 0;
 	}

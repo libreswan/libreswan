@@ -18,10 +18,6 @@
 
 # All of the USE_ and HAVE_ variables are controlled from libreswan/Makefile.inc
 
-ifeq ($(USE_DYNAMICDNS),true)
-DYNAMICDNSDEF=-DDYNAMICDNS
-endif
-
 ifeq ($(USE_DNSSEC),true)
 DNSSECDEF=-DDNSSEC
 endif
@@ -36,19 +32,11 @@ ifeq ($(USE_LDAP),true)
 LDAP_VERSION=3
 endif
 
-# whether or not to enable aggressive mode exchanges.
-ifeq ($(USE_AGGRESSIVE),true)
-AGGRESSIVE=1
-endif
-
-ifeq ($(USE_XAUTH),true)
-XAUTH=1
 # compile with PAM support will increase the size of the distribution
 # and thus it may not be the best solution for embeded systems. XAUTH
 # will use the crypt() lib and a password file by default.
 ifeq ($(USE_XAUTHPAM),true)
 XAUTH_HAVE_PAM=1
-endif
 endif
 
 CFLAGS +=-g ${WERROR}
@@ -70,9 +58,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 # -DDEBUG enables debugging code, allowing for debugging output
 #    (note that output must also be selected at runtime, so it is
 #    reasonable to always define this)
-# -DPLUTO_SENDS_VENDORID enables pluto to send out a VendorID payload.
-#    this can be used by remote nodes to work around faults (bugs),
-#    but is most useful to humans who are debugging things.
 # -DLEAK_DETECTIVE enables crude code to find memory allocation leaks.
 # -DOLD_RESOLVER.  At some point, the resolver interface changed.
 #    This macro enables Pluto support for the old interface.
@@ -95,10 +80,6 @@ HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/inclu
 
 USE_ADNS=true
 BINNAMEADNSIFNEEDED=$(BINNAMEADNS)
-
-ifeq ($(USE_VENDORID),true)
-VENDORID=-DPLUTO_SENDS_VENDORID
-endif
 
 ifeq ($(USE_KEYRR),true)
 KEYRR_DEFINES=-DUSE_KEYRR
@@ -177,19 +158,12 @@ ifeq ($(HAVE_OPENSSL),true)
 OPENSSL_LIBS=-lcrypto
 endif
 
-ifeq ($(HAVE_STATSD),true)
-HAVE_STATSD_DEFS=-DHAVE_STATSD
-endif
-
 ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
 IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
 endif
 
 XAUTH_DIST_SRCS=xauth.c xauth.h addresspool.c addresspool.h
 XAUTH_DIST_OBJS=xauth.o addresspool.o
-ifeq ($(USE_XAUTH),true)
-# This compile option activates xauth code and modecfg needed by xauth
-XAUTH_DEFS=-DXAUTH -DMODECFG -DMODECFG_DNSWINS
 XAUTH_OBJS=${XAUTH_DIST_OBJS}
 XAUTH_SRCS=${XAUTH_DIST_SRCS}
 ifneq ($(BUILDENV), darwin)
@@ -200,16 +174,11 @@ ifeq ($(USE_XAUTHPAM),true)
 XAUTHPAM_DEFS=-DXAUTH_HAVE_PAM
 XAUTHPAM_LIBS=-lpam -ldl
 endif
-endif
 
 AGGRESSIVE_DIST_OBJS=ikev1_aggr.o
 AGGRESSIVE_DIST_SRCS=${AGGRESSIVE_DIST_OBJS:.o=.c}
-ifeq ($(USE_AGGRESSIVE),true)
-# This compile option activates xauth code and modecfg needed by xauth
-AGGRESSIVE_DEFS=-DAGGRESSIVE
 AGGRESSIVE_OBJS=${AGGRESSIVE_DIST_OBJS}
 AGGRESSIVE_SRCS=${AGGRESSIVE_DIST_SRCS}
-endif
 
 # LABELED IPSEC support - requires SElinux
 LABELED_IPSEC_DIST_OBJS=security_selinux.o
@@ -221,14 +190,6 @@ LABELED_IPSEC_SRCS=${LABELED_IPSEC_DIST_SRCS}
 LABELED_IPSEC_LIBS=-lselinux
 endif
 
-ifeq ($(USE_NAT_TRAVERSAL),true)
-NAT_DEFS=-DNAT_TRAVERSAL
-endif
-
-ifeq ($(USE_NAT_TRAVERSAL_TRANSPORT_MODE),true)
-NAT_DEFS+=-DI_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-endif
-
 ifeq ($(USE_LIBCURL),true)
 # This compile option activates dynamic URL fetching
 # with libcurl in the source code
@@ -237,10 +198,10 @@ CURL_LLIBS=-lcurl
 endif
 
 ifeq ($(USE_EXTRACRYPTO),true)
-EXTRA_CRYPTO_DEFS=-DUSE_TWOFISH -DUSE_BLOWFISH -DUSE_SERPENT 
-EXTRA_CRYPTO_SRCS=ike_alg_blowfish.c ike_alg_twofish.c ike_alg_serpent.c 
-EXTRA_CRYPTO_OBJS=ike_alg_blowfish.o ike_alg_twofish.o ike_alg_serpent.o 
-EXTRA_CRYPTO_LIBS=$(LIBBLOWFISH) $(LIBTWOFISH) $(LIBSERPENT) 
+EXTRA_CRYPTO_DEFS=-DUSE_TWOFISH -DUSE_SERPENT 
+EXTRA_CRYPTO_SRCS=ike_alg_twofish.c ike_alg_serpent.c 
+EXTRA_CRYPTO_OBJS=ike_alg_twofish.o ike_alg_serpent.o 
+EXTRA_CRYPTO_LIBS=$(LIBTWOFISH) $(LIBSERPENT) 
 endif
 
 
@@ -252,62 +213,45 @@ ifeq ($(USE_LEAK_DETECTIVE),true)
 LEAK_CONF=-DLEAK_DETECTIVE
 endif
 
-ifeq ($(USE_TAPROOM),true)
-LIBTPM=tpm/libtpm.a
-TPM_LIBS=${LIBTPM} ${TCLLIB}
-TPM_DEFS=-DTPM ${TCLINC} 
-endif
-
 DEFINES = $(EXTRA_DEFINES) \
 	${VENDORID} \
 	$(KEYRR_DEFINES) \
 	$(BYTE_ORDER) \
-	$(DYNAMICDNSDEF) \
 	$(DNSSECDEF) \
 	$(NETKEY_DEFS) \
 	$(X509_DEFS) \
 	${EXTRA_CRYPTO_DEFS} \
-	-DPLUTO \
-	${KLIPS_DEFS} ${WIN2K_DEFS} ${TPM_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
+	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	-DBUILDER=\"${BUILDER}\" \
 	-DDEBUG \
 	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5\
-	${AGGRESSIVE_DEFS} \
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
-	${NAT_DEFS} ${CURL_DEFS}\
+	${CURL_DEFS}\
 	${SINGLE_CONF_DIR} \
-	${HAVE_STATSD_DEFS} \
 	${IPSEC_CONNECTION_LIMIT_DEFS} \
         ${LEAK_CONF} # -DLEAK_DETECTIVE now handled via USE_LEAK_DETECTIVE in Makefile.inc
 
 
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
-LIBSPLUTO =$(OBJSGCRYPT)
 LIBSPLUTO+=$(LIBLSWCRYPTO)
 LIBSPLUTO+=$(LIBDESLITE) $(LIBAES) $(LIBRESWANLIB) $(LIBPLUTO)
 LIBSPLUTO+=${LIBSHA1} ${LIBMD5}
 LIBSPLUTO+=$(X509_LIBS) 
 LIBSPLUTO+=$(THREADS_LIBS)
-LIBSPLUTO+=${CURL_LIBS} ${TPM_LIBS}
+LIBSPLUTO+=${CURL_LIBS}
 LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} $(LIBSHA2) ${LABELED_IPSEC_LIBS}
-LIBSPLUTO+=${WHACKLIB} ${PLUTOLIB} ${BSDKAME_LIBS} ${NSSLIBS}
-PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${TPM_LLIBS} ${THREADS_LLIBS} 
+LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} ${NSSLIBS}
+PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS} 
 PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} ${NSSLIBS}
 PLUTOMINUSL+= ${OPENSSL_LIBS} ${LIBCRYPT} -lgmp #-lefence
 
 # For avoiding implicit DSO linking
 LIBSPLUTO+= -lpthread
 ifeq ($(USE_FIPSCHECK),true)
-FIPS_CHECK=1
 DEFINES+=-DFIPS_CHECK
 LIBSPLUTO+= -lfipscheck
-endif
-
-# Use MODP group described in RFC 5114
-ifeq ($(USE_MODP_RFC5114),true)
-DEFINES+=-DUSE_MODP_RFC5114
 endif
 
 ifeq ($(USE_DMALLOC),true)

@@ -294,7 +294,7 @@ static err_t fetch_ldap_url(chunk_t url, chunk_t *blob)
 
 	char *ldap_url = alloc_bytes(url.len + 1, "ldap query");
 
-	sprintf(ldap_url, "%.*s", (int)url.len, url.ptr);
+	snprintf(ldap_url, url.len + 1, "%.*s", (int)url.len, url.ptr);
 
 	DBG(DBG_CONTROL,
 	    DBG_log("Trying LDAP URL '%s'", ldap_url)
@@ -394,9 +394,7 @@ static err_t fetch_asn1_blob(chunk_t url, chunk_t *blob)
 		    DBG_log("  fetched blob coded in DER format")
 		    );
 	} else {
-		bool pgp = FALSE;
-
-		ugh = pemtobin(blob, &pgp);
+		ugh = pemtobin(blob);
 		if (ugh == NULL) {
 			if (is_asn1(*blob)) {
 				DBG(DBG_PARSING,

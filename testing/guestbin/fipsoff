@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# unmount if we find it mounted
+grep /proc/sys/crypto/fips_enabled /proc/mounts > /dev/null && umount /proc/sys/crypto/fips_enabled
+echo "0" > /tmp/fips_enabled
+mount --bind /tmp/fips_enabled /proc/sys/crypto/fips_enabled
+chcon system_u:object_r:proc_t:s0 /proc/sys/crypto/fips_enabled

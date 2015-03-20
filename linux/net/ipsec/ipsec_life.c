@@ -7,6 +7,7 @@
  * Copyright (C) 2006 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2006 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2012 David McCullough <david_mccullough@mcafee.com>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -139,8 +140,7 @@ enum ipsec_life_alive ipsec_lifetime_check(struct ipsec_lifetime64 *il64,
  * if the buffer were large enough: snprintf semantics).
  * This is used in /proc routines and in debug output.
  */
-int ipsec_lifetime_format(char *buffer,
-			  int buflen,
+int ipsec_lifetime_format(struct seq_file *seq,
 			  char *lifename,
 			  enum ipsec_life_type timebaselife,
 			  struct ipsec_lifetime64 *lifetime)
@@ -157,21 +157,12 @@ int ipsec_lifetime_format(char *buffer,
 	if (lifetime->ipl_count > 1 ||
 	    lifetime->ipl_soft      ||
 	    lifetime->ipl_hard) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 3, 0))
-		len = ipsec_snprintf(buffer, buflen,
-				     "%s(%Lu,%Lu,%Lu)",
-				     lifename,
-				     count,
-				     lifetime->ipl_soft,
-				     lifetime->ipl_hard);
-#else           /* XXX high 32 bits are not displayed */
-		len = ipsec_snprintf(buffer, buflen,
-				     "%s(%lu,%lu,%lu)",
-				     lifename,
-				     (unsigned long)count,
-				     (unsigned long)lifetime->ipl_soft,
-				     (unsigned long)lifetime->ipl_hard);
-#endif
+		seq_printf(seq,
+			   "%s(%Lu,%Lu,%Lu)",
+			   lifename,
+			   count,
+			   lifetime->ipl_soft,
+			   lifetime->ipl_hard);
 	}
 
 	return len;

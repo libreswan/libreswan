@@ -55,10 +55,8 @@
 #include "timer.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
-#ifdef NAT_TRAVERSAL
 #include "packet.h"     /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 
 #include "lsw_select.h"
 #include "alg_info.h"
@@ -77,8 +75,6 @@ static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messag
  * The corresponding ACQUIRE message might have been lost.
  */
 struct eroute_info *orphaned_holds = NULL;
-
-extern const struct pfkey_proto_info null_proto_info[2];
 
 static pid_t pid;
 
@@ -307,11 +303,9 @@ static bool pfkey_get(pfkey_buf *buf)
 			     || (buf->msg.sadb_msg_pid == 0 &&
 				 buf->msg.sadb_msg_type == SADB_ACQUIRE)
 			     || (buf->msg.sadb_msg_type == SADB_REGISTER)
-#ifdef NAT_TRAVERSAL
 			     || (buf->msg.sadb_msg_pid == 0 &&
 				 buf->msg.sadb_msg_type ==
 				 K_SADB_X_NAT_T_NEW_MAPPING)
-#endif
 			     )) {
 			/* not for us: ignore */
 			DBG(DBG_KERNEL,
@@ -497,12 +491,10 @@ static void pfkey_async(pfkey_buf *buf)
 			/* to simulate loss of ACQUIRE, delete this call */
 			process_pfkey_acquire(buf, extensions);
 			break;
-#ifdef NAT_TRAVERSAL
 		case K_SADB_X_NAT_T_NEW_MAPPING:
 			process_pfkey_nat_t_new_mapping(&(buf->msg),
 							extensions);
 			break;
-#endif
 		default:
 			/* ignored */
 			break;
@@ -861,6 +853,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
 		      time_t use_lifetime UNUSED,
+		      unsigned long sa_priority UNUSED,
 		      enum pluto_sadb_operations op,
 		      const char *text_said
 #ifdef HAVE_LABELED_IPSEC
@@ -1054,7 +1047,6 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 			return FALSE;
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (sa->natt_type != 0) {
 		success = pfkey_build(pfkey_x_nat_t_type_build(
 					      &extensions[
@@ -1111,7 +1103,6 @@ bool pfkey_add_sa(struct kernel_sa *sa, bool replace)
 				return FALSE;
 		}
 	}
-#endif
 
 	success = finish_pfkey_msg(extensions, "Add SA", sa->text_said, &pfb);
 
@@ -1357,7 +1348,8 @@ bool pfkey_shunt_eroute(struct connection *c,
 					SA_INT,
 					sr->this.protocol,
 					ET_INT,
-					null_proto_info, 0, op, buf2
+					null_proto_info, 0,
+					c->sa_priority, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 					, c->policy_label
 #endif

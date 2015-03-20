@@ -33,3 +33,9 @@
 /* udpfromto socket option for Linux */
 #define HAVE_UDPFROMTO 1
 #define HAVE_IP_PKTINFO 1
+
+/* Linux and KAME use this */
+#ifndef IPSEC_MANUAL_REQID_MAX
+# define IPSEC_MANUAL_REQID_MAX  0x3fff
+#endif
+

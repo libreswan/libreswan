@@ -193,15 +193,6 @@ extern int sysctl_ipsec_regress_pfkey_lossage;
 #define inet_protocol net_protocol
 #endif
 
-#if defined(CONFIG_IPSEC_NAT_TRAVERSAL) && CONFIG_IPSEC_NAT_TRAVERSAL
-#define NAT_TRAVERSAL 1
-#else
-/* let people either #undef, or #define = 0 it */
-#ifdef CONFIG_IPSEC_NAT_TRAVERSAL
-#undef CONFIG_IPSEC_NAT_TRAVERSAL
-#endif
-#endif
-
 #ifndef IPSEC_DEFAULT_TTL
 #define IPSEC_DEFAULT_TTL 64
 #endif

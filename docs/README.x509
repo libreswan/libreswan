@@ -3,6 +3,10 @@ Installation and Configuration Guide
 
      X.509 - based on version 1.4.8
 
+
+NOTE: This README pre-dates NSS support and is left mostly for historic purposes
+
+
 Contents
 
    1. Summary

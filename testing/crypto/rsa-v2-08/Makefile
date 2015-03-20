@@ -60,8 +60,3 @@ packetsI1.c: ../../lib/libpluto/lib-parentI1/parentI1.pcap
 
 rsa-v2: rsa-v2.o $(OBJS) ${LIBS}
 	$(CC) $(CFLAGS) -o $@ $@.o ${OBJS} ${PROGLIBS} $(LDFLAGS) $(LDLIBS) $(USERLINK)
-
-
-
-
-

@@ -36,7 +36,6 @@
 #include "lswlog.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 
 /*  Note that there may be as many as six IDs that are temporary at
@@ -257,16 +256,22 @@ void escape_metachar(const char *src, char *dst, size_t dstlen)
 		case '"':
 		case '`':
 		case '$':
-			sprintf(dst, "\\03%o", *src & 0xFF);
-			dst += 4;
-			dstlen -= 4;
+		{
+			int n = snprintf(dst, dstlen, "\\03%o", *src & 0xFF);
+
+			passert((size_t)n < dstlen);	/* no truncation! */
+			dst += n;
+			dstlen -= n;
 			break;
+		}
 		default:
+			passert(1 < dstlen);	/* no truncation! */
 			*dst++ = *src;
 			dstlen--;
 		}
 		src++;
 	}
+	passert(1 <= dstlen);	/* no truncation! */
 	*dst = '\0';
 }
 
@@ -367,6 +372,11 @@ bool any_id(const struct id *a)
 	}
 	/* NOTREACHED */
 	return FALSE;
+}
+
+int id_kind(const struct id *id)
+{
+	return id->kind;
 }
 
 /* compare two struct id values */

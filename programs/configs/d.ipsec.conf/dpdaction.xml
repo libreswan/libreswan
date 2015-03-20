@@ -4,10 +4,11 @@
 <para>When a DPD enabled peer is declared dead, what action should be taken.
 <emphasis remap='B'>hold</emphasis> (default) means the eroute will be put into %hold status, while
 <emphasis remap='B'>clear</emphasis> means the eroute and SA with both be cleared. 
-<emphasis remap='B'>restart</emphasis> means the the SA will immediately be renegotiated, and
-<emphasis remap='B'>restart_by_peer</emphasis> means that <emphasis remap='I'>ALL</emphasis> SA's
+<emphasis remap='B'>restart</emphasis> means that <emphasis remap='I'>ALL</emphasis> SA's
 to the dead peer will renegotiated.</para>
 <para><emphasis remap='I'>dpdaction=clear</emphasis> is really only useful on the server of a Road Warrior config.
 </para>
+<para>The value <emphasis remap='B'>restart_by_peer</emphasis> has been obsoleted and its functionality moved
+into the regular restart action.</para>
   </listitem>
   </varlistentry>

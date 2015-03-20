@@ -24,11 +24,12 @@
  *
  * - generating initiator cookies (8 bytes, once per Phase 1 initiation).
  *
- * - 32 bytes per DH local secret.  Once per Main Mode exchange and once
+ * - IKEv1: 32 bytes per DH local secret.  Once per Aggr/Main Mode exchange and once
  *   per Quick Mode Exchange with PFS.  (Size is our choice, with
  *   tradeoffs.)
+ * - IKEv2:
  *
- * - 16 bytes per nonce we generate.  Once per Main Mode exchange and
+ * - 16 bytes per nonce we generate.  Once per Aggr/Main Mode exchange and
  *   once per Quick Mode exchange.  (Again, we choose the size.)
  *
  * - 4 bytes per SPI number that we generate.  We choose the SPIs for all

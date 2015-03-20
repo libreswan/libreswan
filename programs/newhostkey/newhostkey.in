@@ -14,16 +14,16 @@
 #
 
 me="ipsec newhostkey"
-usage="Usage: $me --output filename [--random device] [--bits n] [--quiet] [--hostname host] [--configdir nssdbdir] [--password password] 
+usage="Usage: $me [--output filename] [--random device] [--bits n] [--quiet] [--hostname host] [--configdir nssdbdir] [--password password] 
          or
        $me --output - [--random device] [--bits n] [--quiet] [--verbose] [--hostname host]  [--configdir nssdbdir] [--password password] >filename"
 
-bits=2192
+bits=
 verbose=
 host=
 random="--random /dev/random"
-output=
-configdir="--configdir @FINALCONFDDIR@"
+output="@FINALCONFDIR@/ipsec.secrets"
+configdir="@FINALCONFDDIR@"
 password=
 for dummy
 do
@@ -35,7 +35,7 @@ do
 	--verbose)	verbose=--verbose 	;;
 	--version)	echo "$me $IPSEC_VERSION" ; exit 0	;;
 	--random)	random="--random $2" ; shift	;;
-    --configdir)    configdir="--configdir $2" ;    shift   ;;
+    --configdir)    configdir="$2" ;    shift   ;;
     --password)     password="--password $2" ;      shift   ;;
 	--help)	echo "$usage" ; exit 0	;;
 	--)	shift ; break		;;
@@ -45,37 +45,28 @@ do
 	shift
 done
 
-if test " $output" = " " && test ! -f /etc/ipsec.secrets
-then
-    output=/etc/ipsec.secrets
-fi
-
-if test " $output" = " "
-then
-	echo "$0: no --output specification included" >&2
-	exit 1
-elif test " $verbose" != " " -a " $output" != " -" -a -s "$output"
+if test " $verbose" != " " -a " $output" != " -" -a -s "$output"
 then
 	echo "$0: WARNING: file \`$output' exists, appending to it" >&2
 fi
 
-if test ! -d $nssdir
+if test ! -d $configdir
 then
-        echo "No such directory: $nssdir"
+        echo "No such directory: $configdir"
         exit 255
 fi
 
-certutil -L -d $nssdir >/dev/null 2>/dev/null
+certutil -L -d $configdir >/dev/null 2>/dev/null
 RETVAL=$?
 if [ $RETVAL -eq 255 ];
 then
-        echo "NSS database in $nssdir not initialized. Please run 'ipsec initnss $configdir'"
+        echo "NSS database in $configdir not initialized. Please run 'ipsec initnss --configdir $configdir'"
         exit 255
 fi
 
 (
 	echo ': RSA	{'
-	ipsec rsasigkey $verbose $random $configdir $password $host $bits 
+	ipsec rsasigkey $verbose $random --configdir $configdir $password $host $bits 
 	echo '	}'
 	echo '# do not change the indenting of that "}"'
 ) |

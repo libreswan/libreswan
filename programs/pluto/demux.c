@@ -46,11 +46,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -63,20 +59,7 @@
 #include "ikev1.h"
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "timer.h"
-#if 0
-#include "whack.h"      /* requires connections.h */
-#include "server.h"
-#ifdef XAUTH
-#include "xauth.h"
-#endif
-#ifdef NAT_TRAVERSAL
-#include "nat_traversal.h"
-#endif
-#include "vendor.h"
-#include "dpd.h"
-#endif
 #include "udpfromto.h"
-#include "tpm/tpm.h"
 
 /* This file does basic header checking and demux of
  * incoming packets.
@@ -146,12 +129,29 @@ void process_packet(struct msg_digest **mdp)
 		}
 	}
 
-	if (md->packet_pbs.roof != md->message_pbs.roof) {
+	if (md->packet_pbs.roof < md->message_pbs.roof) {
 		libreswan_log(
-			"size (%u) differs from size specified in ISAKMP HDR (%u)",
-			(unsigned) pbs_room(
-				&md->packet_pbs), md->hdr.isa_length);
+			"received packet size (%u) is smaller than from "
+			"size specified in ISAKMP HDR (%u) - packet dropped",
+			(unsigned) pbs_room(&md->packet_pbs),
+			md->hdr.isa_length);
+		/* abort processing corrupt packet */
 		return;
+	} else if (md->packet_pbs.roof > md->message_pbs.roof) {
+		/*
+		 * Some (old?) versions of the Cisco VPN client send an additional
+		 * 16 bytes of zero bytes - Complain but accept it
+		 */
+		DBG(DBG_CONTROL, {
+			DBG_log(
+			"size (%u) in received packet is larger than the size "
+			"specified in ISAKMP HDR (%u) - ignoring extraneous bytes",
+			(unsigned) pbs_room(&md->packet_pbs),
+			md->hdr.isa_length);
+			DBG_dump("extraneous bytes:", md->message_pbs.roof,
+				md->packet_pbs.roof - md->message_pbs.roof);
+		/* continue */
+		});
 	}
 
 	maj = (md->hdr.isa_version >> ISA_MAJ_SHIFT);
@@ -161,10 +161,8 @@ void process_packet(struct msg_digest **mdp)
 	    DBG_log(
 		    " processing version=%u.%u packet with exchange type=%s (%d)",
 		    maj, min,
-		    enum_name(&exchange_names, md->hdr.isa_xchg),
+		    enum_name(&exchange_names_ikev1orv2, md->hdr.isa_xchg),
 		    md->hdr.isa_xchg));
-
-	TCLCALLOUT("processRawPacket", NULL, NULL, md);
 
 	switch (maj) {
 	case ISAKMP_MAJOR_VERSION:
@@ -176,14 +174,12 @@ void process_packet(struct msg_digest **mdp)
 		break;
 
 	default:
+		/*
+		 * We should never get here - any other major is rejected
+		 * earlier
+		 */
 		bad_case(maj);
 	}
-#ifdef TPM
-tpm_stolen:
-tpm_ignore:
-	return;
-
-#endif
 }
 
 /* wrapper for read_packet and process_packet
@@ -245,9 +241,7 @@ static bool read_packet(struct msg_digest *md)
 	/* ??? this buffer seems *way* too big */
 	u_int8_t bigbuffer[MAX_INPUT_UDP_SIZE];
 
-#ifdef NAT_TRAVERSAL
 	u_int8_t *_buffer = bigbuffer;
-#endif
 	union {
 		struct sockaddr sa;
 		struct sockaddr_in sa_in4;
@@ -353,7 +347,6 @@ static bool read_packet(struct msg_digest *md)
 	cur_from = &md->sender;
 	cur_from_port = md->sender_port;
 
-#ifdef NAT_TRAVERSAL
 	if (ifp->ike_float == TRUE) {
 		u_int32_t non_esp;
 		if (packet_len < (int)sizeof(u_int32_t)) {
@@ -374,19 +367,13 @@ static bool read_packet(struct msg_digest *md)
 		_buffer += sizeof(u_int32_t);
 		packet_len -= sizeof(u_int32_t);
 	}
-#endif
 
 	/* Clone actual message contents
 	 * and set up md->packet_pbs to describe it.
 	 */
 	init_pbs(&md->packet_pbs
-#ifdef NAT_TRAVERSAL
 		 , clone_bytes(_buffer, packet_len,
 			       "message buffer in comm_handle()")
-#else
-		 , clone_bytes(bigbuffer, packet_len,
-			       "message buffer in comm_handle()")
-#endif
 		 , packet_len, "packet");
 
 	DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL,
@@ -399,8 +386,6 @@ static bool read_packet(struct msg_digest *md)
 
 	DBG(DBG_RAW,
 	    DBG_dump("", md->packet_pbs.start, pbs_room(&md->packet_pbs)));
-
-#ifdef NAT_TRAVERSAL
 
 	/* We think that in 2013 Feb, Apple iOS Racoon
 	 * sometimes generates an extra useless buggy confusing
@@ -438,7 +423,6 @@ static bool read_packet(struct msg_digest *md)
 		    );
 		return FALSE;
 	}
-#endif
 
 	return TRUE;
 }

@@ -8,7 +8,7 @@ struct v2prf_stuff {
 	chunk_t nr;
 	chunk_t spii;
 	chunk_t spir;
-	u_char counter[1];
+	u_char counter[1]; /* why is this an array of 1? */
 	unsigned int availbytes;
 	unsigned int nextbytes;
 };

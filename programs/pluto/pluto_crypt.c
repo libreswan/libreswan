@@ -73,6 +73,9 @@ TAILQ_HEAD(req_queue, pluto_crypto_req_cont);
 struct pluto_crypto_worker {
 	int pcw_helpernum;
 	/* pthread_t pcw_pid; */
+	/* ??? Note: the declaration and use of pcw_pid very much violates POSIX pthreads.
+	 * pthread_t is an opaque type with few legitimate operations on it.
+	 */
 	long int pcw_pid;
 	int pcw_pipe;
 	int pcw_helper_pipe;
@@ -89,21 +92,19 @@ static int backlogqueue_len = 0;
 
 static void init_crypto_helper(struct pluto_crypto_worker *w, int n);
 static void cleanup_crypto_helper(struct pluto_crypto_worker *w, int status);
-static void handle_helper_comm(struct pluto_crypto_worker *w);
-extern void free_preshared_secrets(void);
 
 static void *pluto_helper_thread(void *w);
 
 /* may be NULL if we are to do all the work ourselves */
-struct pluto_crypto_worker *pc_workers = NULL;
-int pc_workers_cnt = 0;
-int pc_worker_num;
-pcr_req_id pcw_id;
+static struct pluto_crypto_worker *pc_workers = NULL;
+static int pc_workers_cnt = 0;
+static int pc_worker_num;
+static pcr_req_id pcw_id;
 
 /* local in child */
-int pc_helper_num = -1;
+static int pc_helper_num = -1;
 
-void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
+static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 {
 	DBG(DBG_CONTROL,
 	    DBG_log("helper %d doing %s op id: %u",
@@ -153,7 +154,7 @@ void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 	}
 }
 
-void pluto_crypto_helper(int fd, int helpernum)
+static void pluto_crypto_helper(int fd, int helpernum)
 {
 	FILE *in  = fdopen(fd, "rb");
 	FILE *out = fdopen(fd, "wb");
@@ -576,7 +577,7 @@ void delete_cryptographic_continuation(struct state *st)
  * but is is most fair.
  *
  */
-void handle_helper_comm(struct pluto_crypto_worker *w)
+static void handle_helper_comm(struct pluto_crypto_worker *w)
 {
 	struct pluto_crypto_req reqbuf[2];
 	unsigned char *inloc;
@@ -763,7 +764,7 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 	}
 }
 
-void *pluto_helper_thread(void *w)
+static void *pluto_helper_thread(void *w)
 {
 	struct pluto_crypto_worker *helper;
 

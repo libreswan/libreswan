@@ -74,8 +74,6 @@ int dumpsaref = 0;
 int saref_him = 0;
 int saref_me  = 0;
 char *command;
-extern char *optarg;
-extern int optind, opterr, optopt;
 char scratch[2];
 unsigned char *iv = NULL, *enckey = NULL, *authkey = NULL;
 size_t ivlen = 0, enckeylen = 0, authkeylen = 0;
@@ -98,7 +96,6 @@ int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
 int replay_window = 0;
 char sa[SATOT_BUF];
 
-extern unsigned int pfkey_lib_debug; /* used by libfreeswan/pfkey_v2_build */
 int pfkey_sock;
 lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
@@ -408,7 +405,6 @@ static struct option const longopts[] =
 	{ 0, 0, 0, 0 }
 };
 
-#ifdef NAT_TRAVERSAL
 static bool pfkey_build(int error,
 			const char *description,
 			const char *text_said,
@@ -423,7 +419,6 @@ static bool pfkey_build(int error,
 		return FALSE;
 	}
 }
-#endif
 
 int decode_esp(char *algname)
 {
@@ -527,10 +522,8 @@ int main(int argc, char *argv[])
 	ip_address pfkey_ident_s_ska;
 	ip_address pfkey_ident_d_ska;
 #endif
-#ifdef NAT_TRAVERSAL
 	u_int32_t natt;
 	u_int16_t sport, dport;
-#endif
 	uint32_t life[life_maxsever][life_maxtype];
 	char *life_opt[life_maxsever][life_maxtype];
 	struct stat sts;
@@ -538,11 +531,9 @@ int main(int argc, char *argv[])
 
 	progname = argv[0];
 	mypid = getpid();
-#ifdef NAT_TRAVERSAL
 	natt = 0;
 	sport = 0;
 	dport = 0;
-#endif
 
 	tool_init_log();
 
@@ -622,10 +613,14 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'l':
-			progname = malloc(strlen(argv[0]) +
-					  10 +     /* update this when changing the sprintf() */
-					  strlen(optarg));
-			sprintf(progname, "%s --label %s",
+		{
+			static const char combine_fmt[] = "%s --label %s";
+			size_t room = strlen(argv[0]) +
+					  sizeof(combine_fmt) +
+					  strlen(optarg);
+
+			progname = malloc(room);
+			snprintf(progname, room, combine_fmt,
 				argv[0],
 				optarg);
 			tool_close_log();
@@ -633,6 +628,7 @@ int main(int argc, char *argv[])
 
 			argcount -= 2;
 			break;
+		}
 		case 'H':
 			if (alg) {
 				fprintf(stderr,
@@ -1065,7 +1061,6 @@ int main(int argc, char *argv[])
 			}
 			break;
 
-#ifdef NAT_TRAVERSAL
 		case 'F':  /* src port */
 			sport = strtoul(optarg, &endptr, 0);
 			if (!(endptr == optarg + strlen(optarg))) {
@@ -1103,14 +1098,6 @@ int main(int argc, char *argv[])
 				}
 			}
 			break;
-#else
-		case 'F':
-		case 'G':
-		case 'N':
-			fprintf(stderr,
-				"NAT-Traversal is not enabled in build\n");
-			exit(50);
-#endif
 
 		case 'S':
 			if (src_opt) {
@@ -1706,7 +1693,6 @@ int main(int argc, char *argv[])
 #endif          /* PFKEY_IDENT */
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (natt != 0) {
 		bool success;
 
@@ -1772,7 +1758,6 @@ int main(int argc, char *argv[])
 		}
 #endif
 	}
-#endif  /* NAT_TRAVERSAL */
 
 	if (debug) {
 		fprintf(stdout, "%s: assembling pfkey msg....\n",

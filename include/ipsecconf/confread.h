@@ -106,6 +106,8 @@ struct starter_conn {
 	char *ike;
 	char *modecfg_dns1;
 	char *modecfg_dns2;
+	char *modecfg_domain;
+	char *modecfg_banner;
 	char *policy_label;
 };
 

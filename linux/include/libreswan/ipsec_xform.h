@@ -67,12 +67,12 @@
 
 #define ESP_NONE                0
 #define ESP_DES_IV64            1
-#define ESP_DES                 2
+#define ESP_DES                 2 /* obsoleted */
 #define ESP_3DES                3
 #define ESP_RC5                 4
 #define ESP_IDEA                5
 #define ESP_CAST                6
-#define ESP_BLOWFISH            7
+#define ESP_BLOWFISH            7 /* obsoleted */
 #define ESP_3IDEA               8
 #define ESP_DES_IV32            9
 #define ESP_RC4                 10

@@ -1,0 +1,3 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+
+This is to verify we can use SHA2_256 and 3DES for IKE, specifically ike=3des-sha2_256

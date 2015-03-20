@@ -73,9 +73,9 @@ diff -urN libreswan-2.4.0/include/pluto_constants.h libreswan-2.4.0-OpenSClient/
  
  
  /* Any IPsec policy?  If not, a connection description
-diff -urN libreswan-2.4.0/lib/liblibreswan/constants.c libreswan-2.4.0-OpenSClient/lib/liblibreswan/constants.c
---- libreswan-2.4.0/lib/liblibreswan/constants.c	2005-06-23 03:45:55.000000000 +0200
-+++ libreswan-2.4.0-OpenSClient/lib/liblibreswan/constants.c	2005-09-26 16:52:47.000000000 +0200
+diff -urN libreswan-2.4.0/lib/libswan/constants.c libreswan-2.4.0-OpenSClient/lib/libswan/constants.c
+--- libreswan-2.4.0/lib/libswan/constants.c	2005-06-23 03:45:55.000000000 +0200
++++ libreswan-2.4.0-OpenSClient/lib/libswan/constants.c	2005-09-26 16:52:47.000000000 +0200
 @@ -529,17 +529,32 @@
  	"INTERNAL_IP6_DNS",
  	"INTERNAL_IP6_NBNS",

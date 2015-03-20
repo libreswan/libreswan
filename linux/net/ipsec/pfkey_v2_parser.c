@@ -436,9 +436,7 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 		((struct sadb_msg*)extensions[K_SADB_EXT_RESERVED])->
 		sadb_msg_satype;
 
-#ifdef NAT_TRAVERSAL
 	struct ipsec_sa *nat_t_ips_saved = NULL;
-#endif
 	KLIPS_PRINT(debug_pfkey,
 		    "klips_debug:pfkey_update_parse: .\n");
 
@@ -493,7 +491,6 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 		    sa_len ? sa : " (error)",
 		    extr->ips->ips_flags & EMT_INBOUND ? "in" : "out");
 
-#ifdef NAT_TRAVERSAL
 	if (extr->ips->ips_natt_sport || extr->ips->ips_natt_dport) {
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_update_parse: only updating NAT-T ports "
@@ -519,7 +516,6 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 		nat_t_ips_saved = extr->ips;
 		extr->ips = ipsq;
 	} else
-#endif
 	{
 		/* XXX extr->ips->ips_rcvif = &(enc_softc[em->em_if].enc_if);*/
 		extr->ips->ips_rcvif = NULL;
@@ -765,7 +761,6 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 			    pfkey_socketsp->socketp);
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (nat_t_ips_saved) {
 		/**
 		 * As we _really_ update existing SA, we keep tdbq and need to delete
@@ -784,7 +779,6 @@ DEBUG_NO_STATIC int pfkey_update_parse(struct sock *sk,
 
 		goto errlab;
 	}
-#endif
 
 	/* ipsec_sa_add does tdb_lock */
 	if ((error = ipsec_sa_add(extr->ips))) {
@@ -3262,7 +3256,6 @@ errlab:
 	return error;
 }
 
-#ifdef NAT_TRAVERSAL
 int pfkey_nat_t_new_mapping(struct ipsec_sa *ipsp, struct sockaddr *ipaddr,
 			    __u16 sport)
 {
@@ -3389,7 +3382,6 @@ DEBUG_NO_STATIC int pfkey_x_nat_t_new_mapping_parse(struct sock *sk,
 	/* K_SADB_X_NAT_T_NEW_MAPPING not used in kernel */
 	return -EINVAL;
 }
-#endif
 
 /*******************************
  * EXTENSION PARSERS FOR KLIPS
@@ -3451,14 +3443,10 @@ DEBUG_NO_STATIC int(*ext_processors[K_SADB_EXT_MAX +
 	pfkey_address_process,
 	pfkey_x_debug_process,
 	pfkey_x_protocol_process,
-#ifdef NAT_TRAVERSAL
 	pfkey_x_nat_t_type_process,
 	pfkey_x_nat_t_port_process,
 	pfkey_x_nat_t_port_process,
 	pfkey_address_process,
-#else
-	NULL, NULL, NULL, NULL,
-#endif
 	pfkey_x_outif_process,
 	pfkey_x_saref_process,
 };
@@ -3565,11 +3553,7 @@ DEBUG_NO_STATIC int(*msg_parsers[K_SADB_MAX + 1])(struct sock *sk,
 	pfkey_x_addflow_parse,
 	pfkey_x_delflow_parse,
 	pfkey_x_msg_debug_parse,
-#ifdef NAT_TRAVERSAL
 	pfkey_x_nat_t_new_mapping_parse,
-#else
-	NULL,
-#endif
 	pfkey_x_plumb_parse,
 	pfkey_x_unplumb_parse,
 	};

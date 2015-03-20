@@ -30,15 +30,17 @@
  * the "conn foo" stanzas
  */
 enum keyword_string_config_field {
-	KSF_INTERFACES    = 0, /* loose_enum evantually */
+	KSF_INTERFACES    = 0, /* loose_enum eventually */
 	/* KSF_PACKETDEFAULT = 5, */
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
 	KSF_DUMPDIR,
+	KSF_STATSBINARY,
 	KSF_IPSECDIR,
 	KSF_SECRETSFILE,
 	KSF_PERPEERDIR,
 	KSF_MYID,
+	KSF_MYVENDORID,
 	KSF_PLUTOSTDERRLOG,
 	KSF_PROTOSTACK,
 	KSF_IKE,
@@ -50,6 +52,8 @@ enum keyword_string_config_field {
 	KSF_POLICY_LABEL,
 	KSF_MODECFGDNS1,
 	KSF_MODECFGDNS2,
+	KSF_MODECFGDOMAIN,
+	KSF_MODECFGBANNER,
 	KSF_MAX
 };
 
@@ -69,6 +73,8 @@ enum keyword_numeric_config_field {
 	KBF_PERPEERLOG,
 	KBF_OVERRIDEMTU,
 	KBF_CONNMTU,
+	KBF_PRIORITY,
+	KBF_REQID,
 	KBF_STRICTCRLPOLICY,
 	KBF_NATTRAVERSAL,
 	KBF_NATIKEPORT,
@@ -117,6 +123,9 @@ enum keyword_numeric_config_field {
 	KBF_IKE_FRAG,
 	KBF_NAT_KEEPALIVE,      /* per conn enabling/disabling of sending keep-alives - different from global force_keepalives */
 	KBF_INITIAL_CONTACT,
+	KBF_CISCO_UNITY,
+	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
+	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
 	KBF_MAX
 };
 
@@ -197,11 +206,11 @@ enum keyword_keyexchange {
 
 /* values for auto={add,start,route,ignore} */
 enum keyword_auto {
-	STARTUP_IGNORE  = 0,
-	STARTUP_POLICY  = 1,
-	STARTUP_ADD     = 2,
-	STARTUP_ROUTE   = 3,
-	STARTUP_START   = 4
+	STARTUP_IGNORE     = 0,
+	STARTUP_POLICY     = 1,
+	STARTUP_ADD        = 2,
+	STARTUP_ONDEMAND   = 3,
+	STARTUP_START      = 4
 };
 
 enum keyword_satype {
@@ -245,15 +254,16 @@ struct keyword_def {
 	unsigned int validity;          /* has bits kv_config or kv_conn set */
 	enum keyword_type type;
 	unsigned int field;             /* one of keyword_*_field */
-	struct keyword_enum_values *validenum;
+	const struct keyword_enum_values *validenum;
 };
 
 struct keyword {
-	struct keyword_def *keydef;
+	const struct keyword_def *keydef;
 	bool keyleft;
 	char               *string;
 };
 
+/* note: these lists are dynamic */
 struct kw_list {
 	struct kw_list *next;
 	struct keyword keyword;
@@ -291,10 +301,9 @@ struct config_parsed {
 	bool got_default;
 };
 
-extern struct keyword_def ipsec_conf_keywords_v2[];
-extern const int ipsec_conf_keywords_v2_count;
+extern const struct keyword_def ipsec_conf_keywords_v2[];
 
-extern unsigned int parser_enum_list(struct keyword_def *kd, const char *s,
+extern unsigned int parser_enum_list(const struct keyword_def *kd, const char *s,
 				     bool list);
 extern unsigned int parser_loose_enum(struct keyword *k, const char *s);
 

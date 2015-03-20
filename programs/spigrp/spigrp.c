@@ -129,10 +129,13 @@ int main(int argc, char **argv)
 
 	if (argc > 1 && strcmp(argv[1], "--label") == 0) {
 		if (argc > 2) {
-			progname = malloc(strlen(argv[0]) +
-					  10 +     /* update this when changing the sprintf() */
-					  strlen(argv[2]));
-			sprintf(progname, "%s --label %s",
+			static const char combine_fmt[] = "%s --label %s";
+			size_t room = strlen(argv[0]) +
+					  sizeof(combine_fmt) +
+					  strlen(optarg);
+
+			progname = malloc(room);
+			snprintf(progname, room, combine_fmt,
 				argv[0],
 				argv[2]);
 			if (debug)

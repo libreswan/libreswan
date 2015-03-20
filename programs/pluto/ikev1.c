@@ -130,11 +130,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -149,16 +145,13 @@
 #include "timer.h"
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
-#ifdef XAUTH
+
 #include "xauth.h"
-#endif
-#ifdef NAT_TRAVERSAL
+
 #include "nat_traversal.h"
-#endif
 #include "vendor.h"
 #include "dpd.h"
 #include "udpfromto.h"
-#include "tpm/tpm.h"
 #include "hostpair.h"
 
 /* state_microcode is a tuple of information parameterizing certain
@@ -277,11 +270,7 @@ static const struct state_microcode state_microcode_table[] = {
 	 */
 	{ STATE_MAIN_R1, STATE_MAIN_R2,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY
-#ifdef NAT_TRAVERSAL
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(NONE)
-#else
-	  , P(KE) | P(NONCE), P(VID) | P(CR), PT(NONE)
-#endif
 	  , EVENT_RETRANSMIT, main_inI2_outR2 },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
@@ -308,11 +297,7 @@ static const struct state_microcode state_microcode_table[] = {
 	{ STATE_MAIN_I2, STATE_MAIN_I3,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED |
 	  SMF_REPLY
-#ifdef NAT_TRAVERSAL
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(ID)
-#else
-	  , P(KE) | P(NONCE), P(VID) | P(CR), PT(ID)
-#endif
 	  , EVENT_RETRANSMIT, main_inR2_outI3 },
 
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
@@ -391,7 +376,6 @@ static const struct state_microcode state_microcode_table[] = {
 
 	/* No state for aggr_outI1: -->HDR, SA, KE, Ni, IDii */
 
-#if defined(AGGRESSIVE)
 	/* STATE_AGGR_R0:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Ni, IDii
 	 *                -->  HDR, SA, KE, Nr, IDir, HASH_R
@@ -453,18 +437,6 @@ static const struct state_microcode state_microcode_table[] = {
 	{ STATE_AGGR_R2, STATE_UNDEFINED,
 	  SMF_ALL_AUTH,
 	  LEMPTY, LEMPTY, PT(NONE), EVENT_NULL, unexpected },
-#else
-	/*
-	 * put in dummy states so that the state numbering does not
-	 * change depending upon build options.
-	 */
-	PHONY_STATE(STATE_AGGR_I1),
-	PHONY_STATE(STATE_AGGR_I1),
-	PHONY_STATE(STATE_AGGR_R1),
-	PHONY_STATE(STATE_AGGR_R1),
-	PHONY_STATE(STATE_AGGR_I2),
-	PHONY_STATE(STATE_AGGR_R2),
-#endif
 
 	/***** Phase 2 Quick Mode *****/
 
@@ -482,12 +454,8 @@ static const struct state_microcode state_microcode_table[] = {
 	 */
 	{ STATE_QUICK_R0, STATE_QUICK_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY
-#ifdef NAT_TRAVERSAL
 	  , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(
 		  NATOA_RFC), PT(NONE)
-#else
-	  , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID), PT(NONE)
-#endif
 	  , EVENT_RETRANSMIT, quick_inI1_outR1 },
 
 	/* STATE_QUICK_I1:
@@ -498,12 +466,8 @@ static const struct state_microcode state_microcode_table[] = {
 	 */
 	{ STATE_QUICK_I1, STATE_QUICK_I2,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_ENCRYPTED | SMF_REPLY
-#ifdef NAT_TRAVERSAL
 	  , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(
 		  NATOA_RFC), PT(HASH)
-#else
-	  , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID), PT(HASH)
-#endif
 	  , EVENT_SA_REPLACE, quick_inR1_outI2 },
 
 	/* STATE_QUICK_R1: HDR*, HASH(3) --> done
@@ -548,32 +512,29 @@ static const struct state_microcode state_microcode_table[] = {
 	  P(HASH), LEMPTY, PT(NONE),
 	  EVENT_NULL, informational },
 
-#ifdef XAUTH
 	{ STATE_XAUTH_R0, STATE_XAUTH_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_NULL, xauth_inR0 }, /*Re-transmit may be done by previous state*/
 
 	{ STATE_XAUTH_R1, STATE_MAIN_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR1 },
 
 #if 0
 	/* for situation where there is XAUTH + ModeCFG */
 	{ STATE_XAUTH_R2, STATE_XAUTH_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR2 },
 
 	{ STATE_XAUTH_R3, STATE_MAIN_R3,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(NONE),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(NONE),
 	  EVENT_SA_REPLACE, xauth_inR3 },
 #endif
-#endif
 
-#ifdef MODECFG
 /* MODE_CFG_x:
  * Case R0:  Responder	->	Initiator
  *			<-	Req(addr=0)
@@ -585,12 +546,12 @@ static const struct state_microcode state_microcode_table[] = {
 
 	{ STATE_MODE_CFG_R0, STATE_MODE_CFG_R1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR0 },
 
 	{ STATE_MODE_CFG_R1, STATE_MODE_CFG_R2,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR1 },
 
 	{ STATE_MODE_CFG_R2, STATE_UNDEFINED,
@@ -600,21 +561,18 @@ static const struct state_microcode state_microcode_table[] = {
 
 	{ STATE_MODE_CFG_I1, STATE_MAIN_I4,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_RELEASE_PENDING_P2,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, modecfg_inR1 },
-#endif
 
-#ifdef XAUTH
 	{ STATE_XAUTH_I0, STATE_XAUTH_I1,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, xauth_inI0 },
 
 	{ STATE_XAUTH_I1, STATE_MAIN_I4,
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY | SMF_RELEASE_PENDING_P2,
-	  P(ATTR) | P(HASH), P(VID), PT(HASH),
+	  P(MCFG_ATTR) | P(HASH), P(VID), PT(HASH),
 	  EVENT_SA_REPLACE, xauth_inI1 },
-#endif
 
 #undef P
 #undef PT
@@ -1295,14 +1253,12 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-#ifdef XAUTH
-			if (st->st_oakley.xauth != 0) {
+			if (st->st_oakley.doing_xauth) {
 				libreswan_log(
 					"Cannot do Quick Mode until XAUTH done.");
 				return;
 			}
-#endif
-#ifdef MODECFG
+
 			if (st->st_state ==
 			    STATE_MODE_CFG_R2)                          /* Have we just given an IP address to peer? */
 				change_state(st, STATE_MAIN_R3);        /* ISAKMP is up... */
@@ -1314,7 +1270,6 @@ void process_v1_packet(struct msg_digest **mdp)
 					"SoftRemote workaround: Cannot do Quick Mode until MODECFG done.");
 				return;
 			}
-#endif
 #endif
 
 			set_cur_state(st);
@@ -1344,26 +1299,18 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			from_state = STATE_QUICK_R0;
 		} else {
-#ifdef XAUTH
-			if (st->st_oakley.xauth != 0) {
+			if (st->st_oakley.doing_xauth) {
 				libreswan_log(
 					"Cannot do Quick Mode until XAUTH done.");
 				return;
 			}
-#endif
 			set_cur_state(st);
 			from_state = st->st_state;
 		}
 
 		break;
 
-#ifdef MODECFG
 	case ISAKMP_XCHG_MODE_CFG:
-		DBG(DBG_CONTROLMORE,
-		    DBG_log(" in %s:%d case %s", __func__, __LINE__,
-			    enum_show(&exchange_names,
-				      md->hdr.isa_xchg)));
-
 		if (is_zero_cookie(md->hdr.isa_icookie)) {
 			libreswan_log("Mode Config message is invalid because"
 				      " it has an Initiator Cookie of 0");
@@ -1413,7 +1360,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			DBG(DBG_CONTROLMORE, DBG_log(" processing received "
 						     "isakmp_xchg_type %s.",
-						     enum_show(&exchange_names,
+						     enum_show(&exchange_names_ikev1,
 							       md->hdr.isa_xchg)));
 			DBG(DBG_CONTROLMORE, DBG_log(" this is a%s%s%s%s",
 						     st->st_connection->spd.
@@ -1522,7 +1469,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    __func__,
 					    __LINE__,
 					    enum_show(&
-						      exchange_names,
+						      exchange_names_ikev1,
 						      md->hdr.isa_xchg)));
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("this is a%s%s%s%s in state %s. "
@@ -1549,7 +1496,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				   libreswan_log("in state %s isakmp_xchg_types %s not supported."
 				   "reply UNSUPPORTED_EXCHANGE_TYPE"
 				   , enum_name(&state_names, st->st_state)
-				   , enum_show(&exchange_names, md->hdr.isa_xchg));
+				   , enum_show(&exchange_names_ikev1, md->hdr.isa_xchg));
 				   SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 				 */
 				return;
@@ -1568,29 +1515,11 @@ void process_v1_packet(struct msg_digest **mdp)
 		}
 
 		break;
-#endif
 
-#if 0
-	/* this code is NOT tested yet */
-	case ISAKMP_XCHG_ECHOREQUEST_PRIVATE:
-	case ISAKMP_XCHG_ECHOREQUEST:
-		receive_ike_echo_request(md);
-		return;
-
-	case ISAKMP_XCHG_ECHOREPLY_PRIVATE:
-	case ISAKMP_XCHG_ECHOREPLY:
-		receive_ike_echo_reply(md);
-		return;
-
-#endif
-
-#ifdef NOTYET
 	case ISAKMP_XCHG_NGRP:
-#endif
-
 	default:
 		libreswan_log("unsupported exchange type %s in message",
-			      enum_show(&exchange_names, md->hdr.isa_xchg));
+			      enum_show(&exchange_names_ikev1, md->hdr.isa_xchg));
 		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
@@ -1763,12 +1692,9 @@ void process_v1_packet(struct msg_digest **mdp)
 	smc = ike_microcode_index[from_state - STATE_IKE_FLOOR];
 
 	if (st != NULL) {
-#if defined(XAUTH)
 		oakley_auth_t baseauth =
 			xauth_calcbaseauth(st->st_oakley.auth);
-#else
-		oakley_auth_t baseauth = st->st_oakley.auth;
-#endif
+
 		while (!LHAS(smc->flags, baseauth)) {
 			smc++;
 			passert(smc->state == from_state);
@@ -1956,16 +1882,8 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 			}
 
-			TCLCALLOUT_crypt("preDecrypt", st, &md->message_pbs,
-					 pbs_offset(&md->message_pbs),
-					 pbs_left(&md->message_pbs));
-
 			crypto_cbc_encrypt(e, FALSE, md->message_pbs.cur,
 					   pbs_left(&md->message_pbs), st);
-
-			TCLCALLOUT_crypt("postDecrypt", st, &md->message_pbs,
-					 pbs_offset(&md->message_pbs),
-					 pbs_left(&md->message_pbs));
 
 		}
 
@@ -1984,8 +1902,6 @@ void process_packet_tail(struct msg_digest **mdp)
 			return;
 		}
 	}
-
-	TCLCALLOUT("recvMessage", st, (st ? st->st_connection : NULL), md);
 
 	/* Digest the message.
 	 * Padding must be removed to make hashing work.
@@ -2018,7 +1934,6 @@ void process_packet_tail(struct msg_digest **mdp)
 				return;
 			}
 
-#ifdef NAT_TRAVERSAL
 			/*
 			 * only do this in main mode. In aggressive mode, there
 			 * is no negotiation of NAT-T method. Get it right.
@@ -2045,7 +1960,6 @@ void process_packet_tail(struct msg_digest **mdp)
 					break;
 				}
 			}
-#endif
 
 			if (sd == NULL) {
 				/* payload type is out of range or requires special handling */
@@ -2058,7 +1972,6 @@ void process_packet_tail(struct msg_digest **mdp)
 						isakmp_ipsec_identification_desc;
 					break;
 
-#ifdef NAT_TRAVERSAL
 				case ISAKMP_NEXT_NATD_DRAFTS:
 					np = ISAKMP_NEXT_NATD_RFC; /* NAT-D was a private use type before RFC-3947 */
 					sd = payload_descs[np];
@@ -2068,12 +1981,12 @@ void process_packet_tail(struct msg_digest **mdp)
 					np = ISAKMP_NEXT_NATOA_RFC; /* NAT-OA was a private use type before RFC-3947 */
 					sd = payload_descs[np];
 					break;
-#endif
+
 				default:
 					loglog(RC_LOG_SERIOUS, "%smessage ignored because it contains an unknown or"
 					       " unexpected payload type (%s) at the outermost level",
 					       excuse,
-					       enum_show(&payload_names, np));
+					       enum_show(&payload_names_ikev1, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
@@ -2092,15 +2005,15 @@ void process_packet_tail(struct msg_digest **mdp)
 					loglog(RC_LOG_SERIOUS, "%smessage ignored because it "
 					       "contains an unexpected payload type (%s)",
 					       excuse,
-					       enum_show(&payload_names, np));
+					       enum_show(&payload_names_ikev1, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
 
 				DBG(DBG_PARSING,
 				    DBG_log(
-					    "got payload 0x%qx(%s) needed: 0x%qx opt: 0x%qx",
-					    s, enum_show(&payload_names, np),
+					    "got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
+					    s, enum_show(&payload_names_ikev1, np),
 					    needed, smc->opt_payloads));
 				needed &= ~s;
 			}
@@ -2163,7 +2076,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			loglog(RC_LOG_SERIOUS,
 			       "message for %s is missing payloads %s",
 			       enum_show(&state_names, from_state),
-			       bitnamesof(payload_name, needed));
+			       bitnamesof(payload_name_ikev1, needed));
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 			return;
 		}
@@ -2328,7 +2241,6 @@ void process_packet_tail(struct msg_digest **mdp)
 	/* this does not seem to be right */
 
 	/* VERIFY that we only accept NAT-D/NAT-OE when they sent us the VID */
-#ifdef NAT_TRAVERSAL
 	if ((md->chain[ISAKMP_NEXT_NATD_RFC] != NULL ||
 	     md->chain[ISAKMP_NEXT_NATOA_RFC] != NULL) &&
 	    !(st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES)) {
@@ -2341,26 +2253,13 @@ void process_packet_tail(struct msg_digest **mdp)
 		return;
 	}
 #endif
-#endif
 
 	/* possibly fill in hdr */
 	if (smc->first_out_payload != ISAKMP_NEXT_NONE)
 		echo_hdr(md, (smc->flags & SMF_OUTPUT_ENCRYPTED) != 0,
 			 smc->first_out_payload);
 
-	TCLCALLOUT("changeState", st, (st ? st->st_connection : NULL), md);
-	/* XXX recheck md->smc, because it may have changed. */
-
 	complete_v1_state_transition(mdp, smc->processor(md));
-#ifdef TPM
-tpm_ignore:
-	return;
-
-tpm_stolen:
-	*mdp = NULL;
-	return;
-
-#endif
 }
 
 static void update_retransmit_history(struct state *st, struct msg_digest *md)
@@ -2395,7 +2294,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	cur_state = st = md->st; /* might have changed */
 
 	md->result = result;
-	TCLCALLOUT("adjustFailure", st, (st ? st->st_connection : NULL), md);
 	result = md->result;
 
 	/* If state has FRAGMENTATION support, import it */
@@ -2414,6 +2312,11 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			st->hidden_variables.st_dpd_local = 1;
 			DBG(DBG_DPD, DBG_log("enabling sending dpd"));
 		}
+	}
+	/* If state has VID_NORTEL, import it to activate workaround */
+	if (st && md->nortel) {
+		DBG(DBG_CONTROLMORE, DBG_log("peer requires nortel contivity workaround"));
+		st->st_seen_nortel_vid = TRUE;
 	}
 
 	/* advance the state */
@@ -2503,14 +2406,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* free previous transmit packet */
 		freeanychunk(st->st_tpacket);
 
-#ifdef NAT_TRAVERSAL
 		/* in aggressive mode, there will be no reply packet in transition
 		 * from STATE_AGGR_R1 to STATE_AGGR_R2 */
 		if (nat_traversal_enabled) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
-#endif
 
 		/* if requested, send the new reply packet */
 		if (smc->flags & SMF_REPLY) {
@@ -2538,11 +2439,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			 * send_ike_msg call depending on st->st_state.
 			 */
 
-			TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
 			send_ike_msg(st, enum_name(&state_names, from_state));
 		}
-
-		TCLCALLOUT("adjustTimers", st, st->st_connection, md);
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
@@ -2715,10 +2613,9 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			}
 		}
 
-#ifdef XAUTH
 		/* Special case for XAUTH server */
 		if (st->st_connection->spd.this.xauth_server) {
-			if ((st->st_oakley.xauth != 0) &&
+			if (st->st_oakley.doing_xauth &&
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				libreswan_log(
 					"XAUTH: Sending XAUTH Login/Password Request");
@@ -2739,9 +2636,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			break;
 		}
 
-#endif
-
-#ifdef MODECFG
 		/*
 		 * when talking to some vendors, we need to initiate a mode
 		 * cfg request to get challenged, but there is also an
@@ -2785,7 +2679,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		   we need to initiate Quick mode */
 		if (!(smc->flags & SMF_INITIATOR) &&
 		    IS_MODE_CFG_ESTABLISHED(st->st_state) &&
-		    (st->st_seen_vendorid & LELEM(VID_NORTEL))) {
+		    (st->st_seen_nortel_vid)) {
+			libreswan_log("Nortel 'Contivity Mode' detected, starting Quick Mode");
 			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
 			set_cur_state(st);
 			quick_outI1(st->st_whack_sock, st, st->st_connection,
@@ -2805,7 +2700,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			    DBG_log("waiting for modecfg set from server"));
 			break;
 		}
-#endif
 
 		if (st->st_rekeytov2) {
 			DBG(DBG_CONTROL,
@@ -2936,15 +2830,5 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			delete_state(st);
 		break;
 	}
-
-#ifdef TPM
-tpm_ignore:
-	return;
-
-tpm_stolen:
-	*mdp = NULL;
-	return;
-
-#endif
 
 }

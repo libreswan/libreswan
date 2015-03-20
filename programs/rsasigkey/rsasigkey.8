@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: IPSEC_RSASIGKEY
 .\"    Author: Paul Wouters
-.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/16/2012
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 09/06/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_RSASIGKEY" "8" "12/16/2012" "libreswan" "Executable programs"
+.TH "IPSEC_RSASIGKEY" "8" "09/06/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,9 +31,9 @@
 ipsec_rsasigkey \- generate RSA signature key
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIrsasigkey\fR [\-\-verbose] [\-\-random\ \fIfilename\fR] [\-\-rounds\ \fInr\fR] [\-\-configdir\ \fInssdbdir\fR] [\-\-password\ \fInsspassword\fR] [\-\-hostname\ \fIhostname\fR] [\-\-noopt] nbits
+\fBipsec\fR \fIrsasigkey\fR [\-\-verbose] [\-\-random\ \fIfilename\fR] [\-\-configdir\ \fInssdbdir\fR] [\-\-password\ \fInsspassword\fR] [\-\-hostname\ \fIhostname\fR] [nbits]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIrsasigkey\fR [\-\-verbose] [\-\-configdir\ \fInssdbdir\fR] [\-\-password\ \fInsspassword\fR] [\-\-hostname\ \fIhostname\fR] [\-\-noopt] [\-\-oldkey\ \fIfilename\fR]
+\fBipsec\fR \fIrsasigkey\fR [\-\-verbose] [\-\-configdir\ \fInssdbdir\fR] [\-\-password\ \fInsspassword\fR] [\-\-hostname\ \fIhostname\fR]
 .SH "DESCRIPTION"
 .PP
 \fIRsasigkey\fR
@@ -55,35 +55,17 @@ give a running commentary on standard error\&. By default, it works in silence u
 .PP
 The
 \fB\-\-random\fR
-option specifies a source for random bits\&. The default is
+option specifies a source for random bits used to seed the crypto library\*(Aqs RNG\&. The default is
 /dev/random
 (see
-\fBrandom\fR(4))\&. Normally,
-\fIrsasigkey\fR
-reads exactly
-\fInbits\fR
-random bits from the source; in extremely\-rare circumstances it may need more\&. Under Linux with hardware random support, the special device
-/dev/hw_random
-is created\&. However, the driver does not guarantee FIPS compliant random, and some hardware is so broken that it return extremely non\-random data\&. Therefor
-/dev/hw_random
-should
-\fBnever\fR
-be used with the
-\fB\-\-random\fR
-option\&. Instead, one should run the
-\fBrngd\fR(8)
-daemon to funnel randomness from
-/dev/hw_random
-into
-/dev/random\&.
-.PP
-The
-\fB\-\-rounds\fR
-option specifies the number of rounds to be done by the pz_probab_prime_p probabilistic primality checker\&. The default, 30, is fairly rigorous and should not normally have to be overridden\&.
+\fBrandom\fR(4))\&. FreeS/WAN and Openswan without NSS support used this option to specify the random source used to directly create keys\&. Libreswan only uses it to seed the crypto libraries RNG\&. Under Linux with hardware random support, special devices might show up as
+/dev/*rng*
+devices\&. However, these should never be access directly using this option, as hardware failures could lead to extremely non\-random values (streams of zeroes have been observed in the wild)
 .PP
 The
 \fB\-\-configdir\fR
-option specifies the nss configuration directory to use\&. This is the directory where the NSS certificate, key and security modules databases reside\&.
+option specifies the nss configuration directory to use\&. This is the directory where the NSS certificate, key and security modules databases reside\&. The default value is
+/etc/ipsec\&.d\&.
 .PP
 The
 \fB\-\-password\fR
@@ -94,24 +76,6 @@ The
 option specifies what host name to use in the first line of the output (see below); the default is what
 \fBgethostname\fR(2)
 returns\&.
-.PP
-The
-\fB\-\-noopt\fR
-option suppresses an optimization of the private key (to be precise, setting of the decryption exponent to
-\fBlcm(p\-1,q\-1)\fR
-rather than
-\fB(p\-1)*(q\-1))\fR
-which speeds up operations on it slightly but can cause it to flunk a validity check in old RSA implementations (notably, obsolete versions of
-\fBipsec_pluto\fR(8)
-.PP
-\fB\-\-oldkey\fR
-option specifies that rather than generate a new key,
-\fIrsasigkey\fR
-should read an old key from the
-file
-(the name \*(Aq\-\*(Aq means \*(Aqstandard input\*(Aq) and use that to generate its output\&. Input lines which do not look like
-\fIrsasigkey\fR
-output are silently ignored\&. This permits updating old keys to the current format\&.
 .PP
 The output format looks like this (with long numbers trimmed down for clarity):
 .sp
@@ -138,7 +102,6 @@ The output format looks like this (with long numbers trimmed down for clarity):
 .RE
 .\}
 .sp
-
 The first (comment) line, indicating the nature and date of the key, and giving a host name, is used by
 \fBipsec_showhostkey\fR(8)
 when generating some forms of key output\&.
@@ -177,16 +140,16 @@ respectively\&. The
 \fBCoefficient\fR
 line gives the Chinese Remainder Theorem coefficient, which is the inverse of
 \fIq\fR, mod
-\fIp\fR\&. These additional numbers (which must all be kept as secret as the private exponent) are precomputed aids to rapid signature generation\&.
+\fIp\fR\&. These additional numbers (which must all be kept as secret as the private exponent) are precomputed aids to rapid signature generation\&. When NSS is used, these values are not available outside the NSS security database (softtoken or hardware token) and are instead filled in with the CKA_ID\&.
 .PP
 No attempt is made to break long lines\&.
 .PP
 The US patent on the RSA algorithm expired 20 Sept 2000\&.
 .SH "EXAMPLES"
 .PP
-\fBipsec rsasigkey \-\-verbose 2192 >mykey\&.txt\fR
+\fBipsec rsasigkey \-\-verbose 4096 >mykey\&.txt\fR
 .RS 4
-generates a 2192\-bit signature key and puts it in the file
+generates a 4096\-bit signature key and puts it in the file
 mykey\&.txt, with running commentary on standard error\&. The file contents can be inserted verbatim into a suitable entry in the
 ipsec\&.secrets
 file (see
@@ -195,20 +158,11 @@ ipsec\&.conf
 (see
 \fBipsec_showhostkey\fR(8))\&.
 .RE
-.PP
-\fBipsec rsasigkey \-\-verbose \-\-oldkey oldie >latest\&.txt\fR
-.RS 4
-takes the old signature key from file
-oldie
-and puts a version in the current format into the file
-latest, with running commentary on standard error\&.
-.RE
 .SH "FILES"
 .PP
 /dev/random, /dev/urandom
 .SH "SEE ALSO"
 .PP
-
 \fBrandom\fR(4),
 \fBrngd\fR(8),
 \fBipsec_showhostkey\fR(8),
@@ -217,7 +171,17 @@ latest, with running commentary on standard error\&.
 \fIGNU MP, the GNU multiple precision arithmetic library, edition 2\&.0\&.2, by Torbj Granlund\fR
 .SH "HISTORY"
 .PP
-Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Henry Spencer\&.
+Originally written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Henry Spencer\&. Updated for the Libreswan Project by Paul Wouters\&.
+.PP
+The
+\fI\-\-round\fR
+and
+\fI\-\-noopt\fR
+options were obsoleted as these were only used with the old non\-library crypto code
+.PP
+The
+\fI\-\-random\fR
+device is only used for seeding the crypto library, not for direct random to generate keys
 .SH "BUGS"
 .PP
 There is an internal limit on
@@ -225,13 +189,11 @@ There is an internal limit on
 .PP
 \fIrsasigkey\fR\*(Aqs run time is difficult to predict, since
 /dev/random
-output can be arbitrarily delayed if the system\*(Aqs entropy pool is low on randomness, and the time taken by the search for primes is also somewhat unpredictable\&. A reasonably typical time for a 1024\-bit key on a quiet 100MHz Pentium MMX with plenty of randomness available is 20 seconds, almost all of it in the prime searches\&. Generating a 2192\-bit key on the same system usually takes several minutes\&. A 4096\-bit key took an hour and a half of CPU time\&.
-.PP
-The
-\fB\-\-oldkey\fR
-option does not check its input format as rigorously as it might\&. Corrupted
-\fIrsasigkey\fR
-output may confuse it\&.
+output can be arbitrarily delayed if the system\*(Aqs entropy pool is low on randomness, and the time taken by the search for primes is also somewhat unpredictable\&. Specifically, embedded systems and most virtual machines are low on entropy\&. In such a situation, consider generating the RSA key on another machine, and copying
+ipsec\&.secrets
+and the
+ipsec\&.d/*db
+files to the embedded platform\&. Note that NSS embeds the full path in the DB files, so the path on proxy machine must be identical to the path on the destination machine\&.
 .SH "AUTHOR"
 .PP
 \fBPaul Wouters\fR

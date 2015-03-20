@@ -62,6 +62,7 @@ extern bool any_id(const struct id *a);
 extern bool same_id(const struct id *a, const struct id *b);
 #define MAX_WILDCARDS   15
 extern bool match_id(const struct id *a, const struct id *b, int *wildcards);
+extern int id_kind(const struct id *id);
 extern int id_count_wildcards(const struct id *id);
 #define id_is_ipaddr(id) ((id)->kind == ID_IPV4_ADDR || (id)->kind == \
 			  ID_IPV6_ADDR)

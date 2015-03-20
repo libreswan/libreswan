@@ -1,0 +1,9 @@
+
+Using netkey and the looopback feature, pluto connects to itself for an SA.
+This is used for MLS type labeling of connections on the same host
+
+This tests a problem where a connection between 127.0.0.1 and 127.0.0.01
+fails to match the secret:
+
+%any %any 127.0.0.1: PSK "test"
+

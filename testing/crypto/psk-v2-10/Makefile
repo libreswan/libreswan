@@ -61,8 +61,3 @@ packetsI1psk.c: ../../lib/libpluto/lib-parentI1psk/parentI1psk.pcap
 
 psk-v2: psk-v2.o $(OBJS) ${LIBS}
 	$(CC) $(CFLAGS) -o $@ $@.o ${OBJS} ${PROGLIBS} $(LDFLAGS) $(LDLIBS) $(USERLINK)
-
-
-
-
-

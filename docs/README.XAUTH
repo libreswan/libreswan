@@ -11,12 +11,13 @@ Ported to OpenSwan by Sean Mathews Nu Tech Software (www.nutech.com)
 XAUTH server code rewritten for Openswan 2.1.0 to permit both client
 and server side code. Many changes, most visible to user.
 
-Threading fixed by Philippe Vouters 
+Threading fixed by Philippe Vouters in Libreswan
+
+Addresspool support added by Antony Antony in Libreswan
 
 Installation:
 
-1.  USE_XAUTH=true will compile the XAUTH code. If you also want
-    to be able to yse PAM to authenticate XAUTH users, you need
+1.  If you want to be able to yse PAM to authenticate XAUTH users, you need
     to also set USE_XAUTHPAM=true in Makefile.inc.
 
 2.  Build & Install as normal.

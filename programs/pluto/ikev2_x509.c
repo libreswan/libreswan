@@ -39,11 +39,7 @@
 #include "id.h"
 #include "x509.h"
 #include "x509more.h"
-#include "pgp.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -200,7 +196,7 @@ static stf_status ikev2_send_certreq( struct state *st, struct msg_digest *md,
 						       gn->name, outpbs,
 						       gn->next ==
 						       NULL ? np :
-						       ISAKMP_NEXT_CR))
+						       ISAKMP_NEXT_v2CERTREQ))
 					return STF_INTERNAL_ERROR;
 			}
 			free_generalNames(ca, FALSE);

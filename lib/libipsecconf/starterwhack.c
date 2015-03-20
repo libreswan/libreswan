@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "sysdep.h"
+
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/files.h"
@@ -41,6 +43,7 @@
 #include "lswlog.h"
 #include "whack.h"
 #include "id.h"
+
 
 static void update_ports(struct whack_message * m)
 {
@@ -71,7 +74,7 @@ static int send_reply(int sock, char *buf, ssize_t len)
 	return 0;
 }
 
-int starter_whack_read_reply(int sock,
+static int starter_whack_read_reply(int sock,
 			     char xauthname[XAUTH_MAX_NAME_LENGTH],
 			     char xauthpass[XAUTH_MAX_PASS_LENGTH],
 			     int xauthnamelen,
@@ -282,7 +285,7 @@ static char *connection_name(struct starter_conn *conn)
 	static char buf[32];
 
 	if (strcmp(conn->name, "%auto") == 0) {
-		sprintf(buf, "conn_%ld", conn->id);
+		snprintf(buf, sizeof(buf), "conn_%ld", conn->id);
 		return buf;
 	} else {
 		return conn->name;
@@ -382,7 +385,6 @@ static void set_whack_end(struct starter_config *cfg,
 	w->virt = l->virt;
 	w->key_from_DNS_on_demand = l->key_from_DNS_on_demand;
 
-#ifdef XAUTH
 	if (l->options_set[KNCF_XAUTHSERVER])
 		w->xauth_server = l->options[KNCF_XAUTHSERVER];
 	if (l->options_set[KNCF_XAUTHCLIENT])
@@ -390,14 +392,11 @@ static void set_whack_end(struct starter_config *cfg,
 	if (l->strings_set[KSCF_XAUTHUSERNAME])
 		w->xauth_name = l->strings[KSCF_XAUTHUSERNAME];
 
-# ifdef MODECFG
 	if (l->options_set[KNCF_MODECONFIGSERVER])
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];
 	if (l->options_set[KNCF_MODECONFIGCLIENT])
 		w->modecfg_client = l->options[KNCF_MODECONFIGCLIENT];
 	w->pool_range = l->pool_range;
-# endif
-#endif
 }
 
 static int starter_whack_add_pubkey(struct starter_config *cfg,
@@ -519,7 +518,21 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 	if (conn->options_set[KBF_CONNMTU])
 		msg.connmtu   = conn->options[KBF_CONNMTU];
+	if (conn->options_set[KBF_PRIORITY])
+		msg.sa_priority   = conn->options[KBF_PRIORITY];
 
+	if (conn->options_set[KBF_REQID]) {
+		if ((conn->options[KBF_REQID] >= IPSEC_MANUAL_REQID_MAX -3) || 
+		    (conn->options[KBF_REQID] == 0)) {
+			starter_log(LOG_LEVEL_ERR,
+				    "Ignoring reqid value - range must be 1-16379");
+		    } else {
+			msg.sa_reqid   = conn->options[KBF_REQID];
+		    }
+	}
+
+	/* default to HOLD */
+	msg.dpd_action = DPD_ACTION_HOLD;
 	if (conn->options_set[KBF_DPDDELAY] &&
 	    conn->options_set[KBF_DPDTIMEOUT]) {
 		msg.dpd_delay   = conn->options[KBF_DPDDELAY];
@@ -530,11 +543,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		if (conn->options_set[KBF_REKEY] && conn->options[KBF_REKEY] ==
 		    FALSE) {
 			if ( (conn->options[KBF_DPDACTION] ==
-			      DPD_ACTION_RESTART_BY_PEER ||
-			      conn->options[KBF_DPDACTION] ==
 			      DPD_ACTION_RESTART)) {
 				starter_log(LOG_LEVEL_ERR,
-					    "conn: \"%s\" warning dpdaction cannot be 'restart' or 'restart_by_peer' when rekey=no - defaulting to 'hold'",
+					    "conn: \"%s\" warning dpdaction cannot be 'restart'  when rekey=no - defaulting to 'hold'",
 					    conn->name);
 				msg.dpd_action = DPD_ACTION_HOLD;
 			}
@@ -548,19 +559,27 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 				    conn->name);
 		}
 	}
-#ifdef NAT_TRAVERSAL
+
 	if (conn->options_set[KBF_FORCEENCAP])
 		msg.forceencaps = conn->options[KBF_FORCEENCAP];
 	if (conn->options_set[KBF_NAT_KEEPALIVE])
 		msg.nat_keepalive = conn->options[KBF_NAT_KEEPALIVE];
 	else
 		msg.nat_keepalive = TRUE;
-#endif
 
+	/* Activate sending out own vendorid */
+	if (conn->options_set[KBF_SEND_VENDORID])
+		msg.send_vendorid = conn->options[KBF_SEND_VENDORID];
+
+	/* Activate Cisco quircky behaviour not replacing old IPsec SA's */
 	if (conn->options_set[KBF_INITIAL_CONTACT])
 		msg.initial_contact = conn->options[KBF_INITIAL_CONTACT];
 
-	/*Cisco interop : remote peer type*/
+	/* Activate their quircky behaviour - rumored to be needed for ModeCfg and RSA */
+	if (conn->options_set[KBF_CISCO_UNITY])
+		msg.cisco_unity = conn->options[KBF_CISCO_UNITY];
+
+	/* Active our Cisco interop code if set */
 	if (conn->options_set[KBF_REMOTEPEERTYPE])
 		msg.remotepeertype = conn->options[KBF_REMOTEPEERTYPE];
 
@@ -587,17 +606,37 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		    conn->name, msg.labeled_ipsec);
 
 	msg.policy_label = conn->policy_label;
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%d",
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" policy_label=%s",
 		    conn->name, msg.policy_label);
 #endif
 
-#ifdef XAUTH
+	msg.modecfg_domain = conn->modecfg_domain;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgdomain=%s",
+		    conn->name, msg.modecfg_domain);
+	msg.modecfg_banner = conn->modecfg_banner;
+	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" modecfgbanner=%s",
+		    conn->name, msg.modecfg_banner);
 	if (conn->options_set[KBF_XAUTHBY])
 		msg.xauthby = conn->options[KBF_XAUTHBY];
 	if (conn->options_set[KBF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KBF_XAUTHFAIL];
 
-#endif
+	if (conn->modecfg_dns1) {
+		if (!tnatoaddr(conn->modecfg_dns1, 0, AF_INET,
+			       &(msg.modecfg_dns1)) &&
+		    !tnatoaddr(conn->modecfg_dns1, 0, AF_INET6,
+			       &(msg.modecfg_dns1)))
+			starter_log(LOG_LEVEL_ERR,
+				    "Ignoring modecfgdns1= entry, it is not a valid IPv4 or IPv6 address");
+	}
+	if (conn->modecfg_dns2) {
+		if (!tnatoaddr(conn->modecfg_dns2, 0, AF_INET,
+			       &(msg.modecfg_dns2)) &&
+		    !tnatoaddr(conn->modecfg_dns2, 0, AF_INET6,
+			       &(msg.modecfg_dns2)))
+			starter_log(LOG_LEVEL_ERR,
+				    "Ignoring modecfgdns2= entry, it is not a valid IPv4 or IPv6 address");
+	}
 
 	set_whack_end(cfg, "left",  &msg.left, &conn->left);
 	set_whack_end(cfg, "right", &msg.right, &conn->right);
@@ -608,27 +647,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.esp = conn->esp;
 	msg.ike = conn->ike;
 
-	if (conn->modecfg_dns1) {
-		if (!tnatoaddr(conn->modecfg_dns1, 0, AF_INET,
-			       &(msg.modecfg_dns1)) &&
-		    !tnatoaddr(conn->modecfg_dns1, 0, AF_INET6,
-			       &(msg.modecfg_dns1)))
-			starter_log(LOG_LEVEL_ERR,
-				    "Ignoring modecfg_dns1 entry, it is not a valid IPv4 or IPv6 address");
-
-
-	}
-	if (conn->modecfg_dns2) {
-		if (!tnatoaddr(conn->modecfg_dns2, 0, AF_INET,
-			       &(msg.modecfg_dns2)) &&
-		    !tnatoaddr(conn->modecfg_dns2, 0, AF_INET6,
-			       &(msg.modecfg_dns2)))
-			starter_log(LOG_LEVEL_ERR,
-				    "Ignoring modecfg_dns2 entry, it is not a valid IPv4 or IPv6 address");
-
-
-	}
-	msg.tpmeval = NULL;
 
 	r =  send_whack_msg(&msg, cfg->ctlbase);
 
@@ -642,7 +660,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	return r;
 }
 
-bool one_subnet_from_string(struct starter_conn *conn,
+static bool one_subnet_from_string(struct starter_conn *conn,
 			    char **psubnets,
 			    int af,
 			    ip_subnet *sn,
@@ -819,30 +837,7 @@ int starter_whack_add_conn(struct starter_config *cfg,
 				       cfg, conn);
 }
 
-int starter_whack_basic_del_conn(struct starter_config *cfg,
-				 struct starter_conn *conn)
-{
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_delete = TRUE;
-	msg.name = connection_name(conn);
-	return send_whack_msg(&msg, cfg->ctlbase);
-}
-
-int starter_whack_del_conn(struct starter_config *cfg,
-			   struct starter_conn *conn)
-{
-	/* basic case, nothing special to synthize! */
-	if (!conn->left.strings_set[KSCF_SUBNETS] &&
-	    !conn->right.strings_set[KSCF_SUBNETS])
-		return starter_whack_basic_del_conn(cfg, conn);
-
-	return starter_permutate_conns(starter_whack_basic_del_conn,
-				       cfg, conn);
-}
-
-int starter_whack_basic_route_conn(struct starter_config *cfg,
+static int starter_whack_basic_route_conn(struct starter_config *cfg,
 				   struct starter_conn *conn)
 {
 	struct whack_message msg;
@@ -876,22 +871,3 @@ int starter_whack_initiate_conn(struct starter_config *cfg,
 	msg.name = connection_name(conn);
 	return send_whack_msg(&msg, cfg->ctlbase);
 }
-
-int starter_whack_listen(struct starter_config *cfg)
-{
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_listen = TRUE;
-	return send_whack_msg(&msg, cfg->ctlbase);
-}
-
-int starter_whack_shutdown(struct starter_config *cfg)
-{
-	struct whack_message msg;
-
-	init_whack_msg(&msg);
-	msg.whack_shutdown = TRUE;
-	return send_whack_msg(&msg, cfg->ctlbase);
-}
-

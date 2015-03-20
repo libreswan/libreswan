@@ -409,7 +409,6 @@ int pfkey_address_process(struct sadb_ext *pfkey_ext,
 			extr->eroute->er_eaddr.sen_type = SENT_IP4;
 		}
 		break;
-#ifdef NAT_TRAVERSAL
 	case K_SADB_X_EXT_NAT_T_OA:
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_address_process: "
@@ -417,7 +416,6 @@ int pfkey_address_process(struct sadb_ext *pfkey_ext,
 		sap = (unsigned char **)&(extr->ips->ips_natt_oa);
 		extr->ips->ips_natt_oa_size = saddr_len;
 		break;
-#endif
 	default:
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_address_process: "
@@ -437,9 +435,7 @@ int pfkey_address_process(struct sadb_ext *pfkey_ext,
 	case K_SADB_X_EXT_ADDRESS_SRC_MASK:
 	case K_SADB_X_EXT_ADDRESS_DST_MASK:
 #endif
-#ifdef NAT_TRAVERSAL
 	case K_SADB_X_EXT_NAT_T_OA:
-#endif
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:pfkey_address_process: "
 			    "allocating %d bytes for saddr.\n",
@@ -801,7 +797,6 @@ errlab:
 	return error;
 }
 
-#ifdef NAT_TRAVERSAL
 int pfkey_x_nat_t_type_process(struct sadb_ext *pfkey_ext,
 			       struct pfkey_extracted_data* extr)
 {
@@ -892,7 +887,6 @@ int pfkey_x_nat_t_port_process(struct sadb_ext *pfkey_ext,
 errlab:
 	return error;
 }
-#endif
 
 int pfkey_x_debug_process(struct sadb_ext *pfkey_ext,
 			  struct pfkey_extracted_data* extr)

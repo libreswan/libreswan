@@ -1,6 +1,0 @@
-bad-updown-01:
-
-"westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24
-
-West has a bad updown script.  This simulates a bug in 2.03 that was found when
-Pluto carsed run on a system without the ip(8) command.

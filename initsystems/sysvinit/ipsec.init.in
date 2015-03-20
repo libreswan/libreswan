@@ -196,9 +196,9 @@ restart() {
 
 status() {
     local RC
-    if [ -f ${pidfile} ]; then
-	if [ -r ${pidfile} ]; then
-	    pid=$(cat ${pidfile})
+    if [ -f ${plutopid} ]; then
+	if [ -r ${plutopid} ]; then
+	    pid=$(cat ${plutopid})
 	    if [ -n "$pid" -a -d /proc/${pid} ]; then
 		RC=0	# running
 	    else
@@ -274,7 +274,7 @@ case "$1" in
 	RETVAL=$?
 	;;
     status)
-	status -p ${plutopid} status
+	status
 	RETVAL=$?
 	;;
     version)

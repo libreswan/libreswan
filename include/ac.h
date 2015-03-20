@@ -81,7 +81,6 @@ struct x509acert {
 /* used for initialization */
 extern const x509acert_t empty_ac;
 
-extern void unshare_ietfAttrList(ietfAttrList_t **listp);
 extern void free_ietfAttrList(ietfAttrList_t *list);
 extern void decode_groups(char *groups, ietfAttrList_t **listp);
 extern void load_acerts(void);

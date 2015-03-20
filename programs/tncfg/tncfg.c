@@ -246,14 +246,19 @@ int main(int argc, char *argv[])
 			strncpy(shc.cf_name, optarg, sizeof(shc.cf_name));
 			break;
 		case 'l':
-			progname = malloc(strlen(argv[0]) +
-					  10 +     /* update this when changing the sprintf() */
-					  strlen(optarg));
-			sprintf(progname, "%s --label %s",
+		{
+			static const char combine_fmt[] = "%s --label %s";
+			size_t room = strlen(argv[0]) +
+					  sizeof(combine_fmt) +
+					  strlen(optarg);
+
+			progname = malloc(room);
+			snprintf(progname, room, combine_fmt,
 				argv[0],
 				optarg);
 			argcount -= 2;
 			break;
+		}
 		default:
 			usage(progname);
 			break;

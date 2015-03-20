@@ -40,15 +40,11 @@
 #include "lswtime.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "secrets.h"
 
 #include "defs.h"
 #include "ac.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -67,15 +63,12 @@
 #include "alg_info.h"
 #include "spdb.h"
 #include "ike_alg.h"
-#include "plutocerts.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "xauth.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
 
@@ -255,7 +248,6 @@ void connect_to_host_pair(struct connection *c)
 			hp = alloc_thing(struct host_pair, "host_pair");
 			hp->me.addr = c->spd.this.host_addr;
 			hp->him.addr = c->spd.that.host_addr;
-#ifdef NAT_TRAVERSAL
 			hp->me.host_port =
 				nat_traversal_enabled ? pluto_port : c->spd.
 				this.
@@ -264,10 +256,6 @@ void connect_to_host_pair(struct connection *c)
 				nat_traversal_enabled ? pluto_port : c->spd.
 				that.
 				host_port;
-#else
-			hp->me.host_port = c->spd.this.host_port;
-			hp->him.host_port = c->spd.that.host_port;
-#endif
 			hp->connections = NULL;
 			hp->pending = NULL;
 			hp->next = host_pairs;

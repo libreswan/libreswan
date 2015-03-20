@@ -140,12 +140,10 @@ struct ipsec_rcv_state {
 			struct ipcomphdr *compp;
 		} ipcompstuff;
 	} protostuff;
-#ifdef NAT_TRAVERSAL
 	__u8 natt_type;
 	__u16 natt_sport;
 	__u16 natt_dport;
 	int natt_len;
-#endif
 
 	/*
 	 * rcv state machine use

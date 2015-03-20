@@ -62,14 +62,8 @@
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 #include "keys.h"
 
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
-
-#ifdef NAT_TRAVERSAL
 #include "packet.h"  /* for pb_stream in nat_traversal.h */
 #include "nat_traversal.h"
-#endif
 
 bool can_do_IPcomp = TRUE;  /* can system actually perform IPCOMP? */
 
@@ -439,6 +433,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "PLUTO_MY_CLIENT_MASK='%s' "
 			  "PLUTO_MY_PORT='%u' "
 			  "PLUTO_MY_PROTOCOL='%u' "
+			  "PLUTO_SA_REQID='%u' "
 			  "PLUTO_PEER='%s' "
 			  "PLUTO_PEER_ID='%s' "
 			  "PLUTO_PEER_CLIENT='%s' "
@@ -452,17 +447,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  "%s "         /* optional mtu */
 			  "PLUTO_CONN_POLICY='%s' "
 			  "PLUTO_CONN_ADDRFAMILY='ipv%d' "
-#ifdef XAUTH
 			  "XAUTH_FAILED=%d "
 			  "%s "         /* XAUTH username - if any */
-#endif
 			  "%s "         /* PLUTO_MY_SRCIP - if any */
-#ifdef XAUTH
 			  "PLUTO_IS_PEER_CISCO='%u' "
-			  "PLUTO_CISCO_DNS_INFO='%s' "
-			  "PLUTO_CISCO_DOMAIN_INFO='%s' "
+			  "PLUTO_PEER_DNS_INFO='%s' "
+			  "PLUTO_PEER_DOMAIN_INFO='%s' "
 			  "PLUTO_PEER_BANNER='%s' "
-#endif  /* XAUTH */
 #ifdef HAVE_NM
 			  "PLUTO_NM_CONFIGURED='%u' "
 #endif
@@ -477,6 +468,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  myclientmask_str,
 			  sr->this.port,
 			  sr->this.protocol,
+			  sr->reqid,
 			  peer_str,
 			  secure_peerid_str,
 			  peerclient_str,
@@ -490,17 +482,13 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			  connmtu_str,
 			  prettypolicy(c->policy),
 			  (c->addr_family == AF_INET) ? 4 : 6
-#ifdef XAUTH
 			  , (st && st->st_xauth_soft) ? 1 : 0,
 			  secure_xauth_username_str
-#endif
 			  , srcip_str
-#ifdef XAUTH
 			  , c->remotepeertype,
 			  c->cisco_dns_info ? c->cisco_dns_info : "",
-			  c->cisco_domain_info ? c->cisco_domain_info : "",
-			  c->cisco_banner ? c->cisco_banner : ""
-#endif  /* XAUTH */
+			  c->modecfg_domain ? c->modecfg_domain : "",
+			  c->modecfg_banner ? c->modecfg_banner : ""
 #ifdef HAVE_NM
 			  , c->nmconfigured
 #endif
@@ -607,9 +595,7 @@ static enum routability could_route(struct connection *c)
 
 	/* if routing would affect IKE messages, reject */
 	if (kern_interface != NO_KERNEL
-#ifdef NAT_TRAVERSAL
 	    && c->spd.this.host_port != pluto_natt_float_port
-#endif
 	    && c->spd.this.host_port != IKE_UDP_PORT &&
 	    addrinsubnet(&c->spd.that.host_addr, &c->spd.that.client)) {
 		loglog(RC_LOG_SERIOUS,
@@ -899,6 +885,7 @@ static bool raw_eroute(const ip_address *this_host,
 		       enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
 		       time_t use_lifetime,
+		       unsigned long sa_priority,
 		       enum pluto_sadb_operations op,
 		       const char *opname USED_BY_DEBUG
 #ifdef HAVE_LABELED_IPSEC
@@ -936,7 +923,7 @@ static bool raw_eroute(const ip_address *this_host,
 					spi, proto,
 					transport_proto,
 					esatype, proto_info,
-					use_lifetime, op, text_said
+					use_lifetime, sa_priority, op, text_said
 #ifdef HAVE_LABELED_IPSEC
 					, policy_label
 #endif
@@ -1060,7 +1047,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 					       htonl(shunt_spi), SA_INT,
 					       transport_proto,
 					       ET_INT, null_proto_info,
-					       SHUNT_PATIENCE, ERO_REPLACE, why
+					       SHUNT_PATIENCE, DEFAULT_IPSEC_SA_PRIORITY,
+					       ERO_REPLACE, why
 #ifdef HAVE_LABELED_IPSEC
 					       , NULL
 #endif
@@ -1096,7 +1084,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       SA_INT,
 			       transport_proto,
 			       ET_INT, null_proto_info,
-			       SHUNT_PATIENCE, ERO_ADD, why
+			       SHUNT_PATIENCE, ERO_ADD,
+			       DEFAULT_IPSEC_SA_PRIORITY, why
 #ifdef HAVE_LABELED_IPSEC
 			       , NULL
 #endif
@@ -1123,7 +1112,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       htonl(shunt_spi), SA_INT,
 			       0, /* transport_proto */
 			       ET_INT, null_proto_info,
-			       SHUNT_PATIENCE, op, why
+			       SHUNT_PATIENCE, DEFAULT_IPSEC_SA_PRIORITY,
+			       op, why
 #ifdef HAVE_LABELED_IPSEC
 			       , NULL
 #endif
@@ -1187,7 +1177,7 @@ bool eroute_connection(struct spd_route *sr,
 			  proto,
 			  sr->this.protocol,
 			  esatype,
-			  proto_info, 0, op, buf2
+			  proto_info, 0, DEFAULT_IPSEC_SA_PRIORITY, op, buf2
 #ifdef HAVE_LABELED_IPSEC
 			  , policy_label
 #endif
@@ -1536,7 +1526,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->esatype = ET_IPCOMP;
 		said_next->encalg = compalg;
 		said_next->encapsulation = encapsulation;
-		said_next->reqid = c->spd.reqid + 2;
+		said_next->reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid  :  c->spd.reqid + 2 ;
 		said_next->text_said = text_said;
 		said_next->sa_lifetime = c->sa_ipsec_life_seconds;
 
@@ -1600,7 +1590,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			{ FALSE, ESP_NULL, AUTH_ALGORITHM_HMAC_SHA1,
 			  0, HMAC_SHA1_KEY_LEN,
 			  SADB_EALG_NULL, SADB_AALG_SHA1HMAC },
-
+#if 0
 			{ FALSE, ESP_DES, AUTH_ALGORITHM_NONE,
 			  DES_CBC_BLOCK_SIZE, 0,
 			  SADB_EALG_DESCBC, SADB_AALG_NONE },
@@ -1611,7 +1601,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			  DES_CBC_BLOCK_SIZE,
 			  HMAC_SHA1_KEY_LEN, SADB_EALG_DESCBC,
 			  SADB_AALG_SHA1HMAC },
-
+#endif
 			{ FALSE, ESP_3DES, AUTH_ALGORITHM_NONE,
 			  DES_CBC_BLOCK_SIZE * 3, 0,
 			  SADB_EALG_3DESCBC, SADB_AALG_NONE },
@@ -1635,7 +1625,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		/* static const int esp_max = elemsof(esp_info); */
 		/* int esp_count; */
 
-#ifdef NAT_TRAVERSAL
 		u_int8_t natt_type = 0;
 		u_int16_t natt_sport = 0, natt_dport = 0;
 		ip_address natt_oa;
@@ -1657,7 +1646,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 			natt_oa = st->hidden_variables.st_nat_oa;
 		}
-#endif
 
 		DBG(DBG_CRYPT,
 		    DBG_log(
@@ -1804,18 +1792,17 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->enckey = esp_dst_keymat;
 		said_next->encapsulation = encapsulation;
 		said_next->reqid = c->spd.reqid + 1;
+		said_next->reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid  :  c->spd.reqid + 1 ;
 
 #ifdef HAVE_LABELED_IPSEC
 		said_next->sec_ctx = st->sec_ctx;
 #endif
 
-#ifdef NAT_TRAVERSAL
 		said_next->natt_sport = natt_sport;
 		said_next->natt_dport = natt_dport;
 		said_next->transid = st->st_esp.attrs.transattrs.encrypt;
 		said_next->natt_type = natt_type;
 		said_next->natt_oa = &natt_oa;
-#endif
 		said_next->outif   = -1;
 #ifdef KLIPS_MAST
 		if (st->st_esp.attrs.encapsulation ==
@@ -2007,7 +1994,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].proto = IPPROTO_COMP;
 				proto_info[i].encapsulation =
 					st->st_ipcomp.attrs.encapsulation;
-				proto_info[i].reqid = c->spd.reqid + 2;
+				proto_info[i].reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid : c->spd.reqid + 2;
 				i++;
 			}
 
@@ -2015,7 +2002,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				proto_info[i].proto = IPPROTO_ESP;
 				proto_info[i].encapsulation =
 					st->st_esp.attrs.encapsulation;
-				proto_info[i].reqid = c->spd.reqid + 1;
+				proto_info[i].reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid : c->spd.reqid + 1;
 				i++;
 			}
 
@@ -2049,6 +2036,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 					  esatype,                      /* esatype */
 					  proto_info,                   /* " */
 					  0,                            /* lifetime */
+					  c->sa_priority,		/* IPsec SA prio */
 					  ERO_ADD_INBOUND,              /* op */
 					  "add inbound"                 /* opname */
 #ifdef HAVE_LABELED_IPSEC
@@ -2147,7 +2135,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY,
 				  c->spd.this.protocol,
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
-				  null_proto_info, 0,
+				  null_proto_info, 0, c->sa_priority, 
 				  ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
 				  , c->policy_label
@@ -2209,8 +2197,8 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 const struct kernel_ops *kernel_ops;
 
-/* keep track of kernel version */
-char kversion[256];
+/* keep track of kernel version  */
+static char kversion[256];
 
 void init_kernel(void)
 {
@@ -2222,7 +2210,7 @@ void init_kernel(void)
 
 	/* get kernel version */
 	uname(&un);
-	strncpy(kversion, un.release, sizeof(kversion));
+	jam_str(kversion, sizeof(kversion), un.release);
 
 	switch (kern_interface) {
 #if defined(NETKEY_SUPPORT)
@@ -2763,6 +2751,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 						  ET_INT,
 						  null_proto_info,
 						  SHUNT_PATIENCE,
+						  DEFAULT_IPSEC_SA_PRIORITY,
 						  ERO_REPLACE, "restore"
 #ifdef HAVE_LABELED_IPSEC
 						  , NULL /* bare shunt are not associated with any connection so no security label*/
@@ -2851,7 +2840,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 			return FALSE;
 
 		DBG(DBG_KERNEL,
-		    DBG_log("set up outoing SA, ref=%u/%u", st->st_ref,
+		    DBG_log("set up outgoing SA, ref=%u/%u", st->st_ref,
 			    st->st_refhim));
 		st->st_outbound_done = TRUE;
 	}
@@ -2870,7 +2859,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		return TRUE;
 
 	sr = &st->st_connection->spd;
-	if (st->st_connection->remotepeertype == CISCO)
+	if (st->st_connection->remotepeertype == CISCO && sr->next)
 		sr = sr->next;
 
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
@@ -2899,21 +2888,12 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		}
 	}
 
+	/* XXX why is this needed? Skip the bogus original conn? */
 	if (st->st_connection->remotepeertype == CISCO) {
-
 		sr = st->st_connection->spd.next;
-		st->st_connection->spd.eroute_owner = sr->eroute_owner;
-		st->st_connection->spd.routing = sr->routing;
-
-		if (!st->st_connection->newest_ipsec_sa &&
-		    st->st_connection->spd.this.xauth_client) {
-			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
-					"updateresolvconf", st)) {
-				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "Updating resolv.conf failed, you may need to update it manually"));
-			}
+		if (sr != NULL) {
+			st->st_connection->spd.eroute_owner = sr->eroute_owner;
+			st->st_connection->spd.routing = sr->routing;
 		}
 	}
 
@@ -3004,18 +2984,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 	}
 #endif
 
-		if (st->st_connection->remotepeertype == CISCO &&
-		    st->st_connection->spd.this.xauth_client &&
-		    st->st_serialno == st->st_connection->newest_ipsec_sa) {
-			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
-					"restoreresolvconf", st)) {
-				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "Restoring resolv.conf failed, you may need to do it manually"));
-			}
-		}
-
 		break;
 #if defined(WIN32) && defined(WIN32_NATIVE)
 	case USE_WIN32_NATIVE:
@@ -3036,7 +3004,6 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 	} /* switch kern_interface */
 }
 
-#ifdef NAT_TRAVERSAL
 static bool update_nat_t_ipsec_esp_sa(struct state *st, bool inbound)
 {
 	struct connection *c = st->st_connection;
@@ -3093,7 +3060,6 @@ bool update_ipsec_sa(struct state *st USED_BY_KLIPS)
 	}
 	return TRUE;
 }
-#endif
 
 bool was_eroute_idle(struct state *st, time_t since_when)
 {

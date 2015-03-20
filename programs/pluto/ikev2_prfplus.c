@@ -65,7 +65,7 @@ void v2prfplus(struct v2prf_stuff *vps)
 	hmac_final_chunk(vps->t, "skeyseed_t1", &ctx);
 	DBG(DBG_CRYPT, {
 		    char b[20];
-		    sprintf(b, "prf+[%u]:", vps->counter[0]);
+		    snprintf(b, sizeof(b), "prf+[%u]:", vps->counter[0]);
 		    DBG_dump_chunk(b, vps->t);
 	    });
 

@@ -54,8 +54,7 @@
 
 char *progname;
 char me[] = "ipsec eroute";
-extern char *optarg;
-extern int optind, opterr, optopt;
+
 char *eroute_af_opt, *said_af_opt, *edst_opt, *spi_opt, *proto_opt, *said_opt,
 *dst_opt, *src_opt;
 char *transport_proto_opt, *src_port_opt, *dst_port_opt;
@@ -461,14 +460,19 @@ int main(int argc, char **argv)
 			dst_port_opt = optarg;
 			break;
 		case 'l':
-			progname = malloc(strlen(argv[0]) +
-					  10 +     /* update this when changing the sprintf() */
-					  strlen(optarg));
-			sprintf(progname, "%s --label %s",
+		{
+			static const char combine_fmt[] = "%s --label %s";
+			size_t room = strlen(argv[0]) +
+					  sizeof(combine_fmt) +
+					  strlen(optarg);
+
+			progname = malloc(room);
+			snprintf(progname, room, combine_fmt,
 				argv[0],
 				optarg);
 			argcount -= 2;
 			break;
+		}
 		case 'i': /* specifies the address family of the SAID, stored in said_af */
 			if (said_af_opt) {
 				fprintf(stderr,

@@ -108,20 +108,20 @@ static int pluto_ifn_roof = 0;
 
 bool invoke_command(const char *verb, const char *verb_suffix, char *cmd)
 {
-	DBG(DBG_CONTROL, DBG_log("executing %s%s: %s",
-				 verb, verb_suffix, cmd));
-	{
-		char tmp[100];
-		int slen, i;
-		memset(tmp, 0, sizeof(tmp));
-		slen = strlen(cmd);
-		DBG(DBG_CONTROL,
-		    DBG_log("popen(): cmd is %d chars long", slen));
-		for (i = 0; i < slen; i += 80) {
-			strncpy(tmp, &cmd[i], 80);
-			DBG(DBG_CONTROL, DBG_log("cmd(%4d):%s:", i, tmp));
-		}
-	}
+#	define CHUNK_WIDTH	80	/* units for cmd logging */
+	DBG(DBG_CONTROL, {
+		int slen = strlen(cmd);
+		int i;
+
+		DBG_log("executing %s%s: %s",
+			 verb, verb_suffix, cmd);
+		DBG_log("popen cmd is %d chars long", slen);
+		for (i = 0; i < slen; i += CHUNK_WIDTH)
+			DBG_log("cmd(%4d):%.*s:", i,
+				slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
+				&cmd[i]);
+	});
+#	undef CHUNK_WIDTH
 
 	{
 		/* invoke the script, catching stderr and stdout

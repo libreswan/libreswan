@@ -118,16 +118,13 @@ typedef unsigned long policy_prio_t;
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
 #ifdef XAUTH_HAVE_PAM
-# include <pthread.h>   /* Must be the first include file */
-# include <security/pam_appl.h>
-# include <signal.h>
+# include <security/pam_appl.h>	/* needed for pam_handle_t */
 #endif
 
 /* Note that we include this even if not X509, because we do not want the
  * structures to change lots.
  */
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
@@ -168,17 +165,15 @@ struct end {
 	struct ietfAttrList *groups;    /* access control groups */
 
 	struct virtual_t *virt;
-/*#ifdef XAUTH*/
+
 	bool xauth_server;
 	bool xauth_client;
 	char *xauth_name;
 	char *xauth_password;
 	ip_range pool_range;    /* store start of v4 addresspool */
-/*#ifdef MODECFG */
 	bool modecfg_server;    /* Give local addresses to tunnel's end */
 	bool modecfg_client;    /* request address for local end */
-/*#endif*/
-/*#endif*/
+
 };
 
 struct spd_route {
@@ -199,6 +194,8 @@ struct connection {
 	time_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
+	unsigned long sa_priority;
+	unsigned long sa_reqid;
 	int encapsulation;
 
 	/* RFC 3706 DPD */
@@ -208,27 +205,26 @@ struct connection {
 
 	bool nat_keepalive;             /* Suppress sending NAT-T Keep-Alives */
 	bool initial_contact;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
+	bool cisco_unity;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
+	bool send_vendorid;           /* Send our vendorid? Security vs Debugging help */
+	bool sha2_truncbug;
+
+	/*Network Manager support*/
+#ifdef HAVE_NM
+	bool nmconfigured;
+#endif
+
+#ifdef HAVE_LABELED_IPSEC
+	bool loopback;
+	bool labeled_ipsec;
+	char *policy_label;
+#endif
 
 	/*Cisco interop: remote peer type*/
 	enum keyword_remotepeertype remotepeertype;
 
-	enum keyword_sha2_truncbug sha2_truncbug;
-
-	/*Network Manager support*/
-#ifdef HAVE_NM
-	enum keyword_nmconfigured nmconfigured;
-#endif
-
-#ifdef HAVE_LABELED_IPSEC
-	enum keyword_loopback loopback;
-	enum keyword_labeled_ipsec labeled_ipsec;
-	char *policy_label;
-#endif
-
-#ifdef XAUTH
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;
-#endif
 
 	bool forceencaps;                       /* always use NAT-T encap */
 
@@ -276,24 +272,18 @@ struct connection {
 #ifdef XAUTH_HAVE_PAM
 	pam_handle_t  *pamh;            /*  PAM handle for that connection  */
 #endif
-#ifdef DYNAMICDNS
 	char *dnshostname;
-#endif  /* DYNAMICDNS */
-#ifdef XAUTH
-#ifdef MODECFG
+
 	ip_address modecfg_dns1;
 	ip_address modecfg_dns2;
 	struct ip_pool *pool; /*v4 addresspool as a range, start end */
-#endif
-	char *cisco_dns_info;
-	char *cisco_domain_info;
-	char *cisco_banner;
-#endif  /* XAUTH */
+	char *cisco_dns_info; /* scratchpad for writing IP addresses */
+	char *modecfg_domain;
+	char *modecfg_banner;
+
 	u_int8_t metric;          /* metric for tunnel routes */
 	u_int16_t connmtu;          /* mtu for tunnel routes */
-#ifdef HAVE_STATSD
 	u_int32_t statsval;             /* track what we have told statsd */
-#endif
 };
 
 #define oriented(c) ((c).interface != NULL)
@@ -375,7 +365,7 @@ extern struct connection
 		       const ip_address *him, u_int16_t his_port,
 		       lset_t policy),
 *refine_host_connection(const struct state *st, const struct id *id,
-			bool initiator, bool aggrmode),
+			bool initiator, bool aggrmode, bool *fromcert),
 *find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,
@@ -462,11 +452,9 @@ extern void show_one_connection(struct connection *c);
 extern void show_connections_status(void);
 extern int  connection_compare(const struct connection *ca,
 			       const struct connection *cb);
-#ifdef NAT_TRAVERSAL
 extern void update_host_pair(const char *why, struct connection *c,
 			     const ip_address *myaddr, u_int16_t myport,
 			     const ip_address *hisaddr, u_int16_t hisport);
-#endif /* NAT_TRAVERSAL */
 
 /* export to pending.c */
 extern void host_pair_enqueue_pending(const struct connection *c,
@@ -474,9 +462,7 @@ extern void host_pair_enqueue_pending(const struct connection *c,
 				      struct pending **pnext);
 struct pending **host_pair_first_pending(const struct connection *c);
 
-#ifdef DYNAMICDNS
 void connection_check_ddns(void);
-#endif
 
 void connection_check_phase2(void);
 void init_connections(void);

@@ -11,7 +11,7 @@ Homepage: http://www.libreswan.org/
 Package: libreswan
 Architecture: any
 Pre-Depends: debconf | debconf-2.0
-Depends: ${shlibs:Depends}, ${misc:Depends}, bsdmainutils, openssl, host, iproute, iproute (>=20041019-0.1), libnspr4, libnss3, libunbound2
+Depends: ${shlibs:Depends}, ${misc:Depends}, bsdmainutils, openssl, host, iproute, iproute (>=20041019-0.1), libnspr4, libnss3, libunbound2, libnss3-tools
 Suggests: libreswan-modules-source | libreswan-modules-dkms, libreswan-doc, curl
 Provides: ike-server
 Conflicts: ike-server
