@@ -1,5 +1,25 @@
 
 See also https://libreswan.org/
+
+v3.12 (November 6, 2014)
+* IKEv2: CP payload now installs internal address and dns [Antony]
+* IKEv2: Don't try to decrypt if DH is incomplete [Antony]
+* IKEv2: If applicable, add a CERTREQ payload in IKE_SA_INIT response [Antony]
+* IKEv2: Fix parent I2 replace event delay [Antony]
+* IKEv2: Liveness fix for restarting instantiated connection [Antony]
+* IKEv2: Schedule expire instead of replace when rekey=no [Antony]
+* IKEv2: Zero out CP payload before sending [Antony]
+* IKEv2: Fix message id in create child sa response [Antony]
+* IKEv2: Don't try to instantiate unoriented connections [Antoy]
+* XAUTH: Fix 2 missing breaks when deciding on sending ModeCFG payloads [Paul]
+* X509: Ensure that root CA does not end up in the ca_path list [Matt]
+* pluto: Cleanup DYNDNS code and other clang warnings [Hugh]
+* pluto: lswconf.c: getNSSPassword: fix bugs and tidy [Hugh]
+* pluto: check return value of ike_alg_register_enc for twofish/serpent [Paul]
+* pluto: fix various uninitialised variables in out_struct() calls [Paul/Hugh]
+* KLIPS: Fix missing breaks in spi command algo type parsing [Paul]
+* building: disable libcap-ng and NM support for OSX [Paul]
+
 v3.11 (October 22, 2014)
 * x509: IKEv1 CA cert chain support with sendca option [Matt]
 * pluto: Fix mtu= option mangling introduced in 3.10 [Kim]
@@ -266,7 +286,7 @@ v3.6 (October 30, 2013)
   to randomised 3072-4096 (in blocks of 16) to fight keysize monoculture [Paul]
 * Removed unused and unmaintained USE_TAPROOM functionality [Paul]
 * NAT-T: Added 100.64.0.0/10 from RFC 6598 to virtual_private [Paul]
-* NSS: pluto should now open NSS files in readwrite, just read [Paul]
+* NSS: pluto should not open NSS files in readwrite, just read [Paul]
 * Bugtracker bugs fixed:
   #130: debian debuild creates a deb with /usr/libexec contents
         [Marc-Christian Petersen]

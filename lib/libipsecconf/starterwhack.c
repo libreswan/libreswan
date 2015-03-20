@@ -601,14 +601,14 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.sha2_truncbug = conn->options[KBF_SHA2_TRUNCBUG];
 
 #ifdef HAVE_NM
-	/*Network Manager support*/
+	/* Network Manager support */
 	if (conn->options_set[KBF_NMCONFIGURED])
 		msg.nmconfigured = conn->options[KBF_NMCONFIGURED];
 
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	/*Labeled ipsec support*/
+	/* Labeled ipsec support */
 	if (conn->options_set[KBF_LOOPBACK])
 		msg.loopback = conn->options[KBF_LOOPBACK];
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" loopback=%d", conn->name,

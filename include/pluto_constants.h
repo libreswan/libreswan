@@ -205,7 +205,7 @@ enum {
 	DBG_OPPO_IX,		/* opportunism */
 	DBG_CONTROLMORE_IX,	/* more detailed debugging */
 
-	DBG_PFKEY_IX,		/*turn on the pfkey library debugging*/
+	DBG_PFKEY_IX,		/* turn on the pfkey library debugging */
 	DBG_NATT_IX,		/* debugging of NAT-traversal */
 	DBG_X509_IX,		/* X.509/pkix verify, cert retrival */
 	DBG_DPD_IX,		/* DPD items */

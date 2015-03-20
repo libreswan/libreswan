@@ -176,11 +176,11 @@ extern void ipsec_extract_ports(struct sk_buff *skb, unsigned char nexthdr,
 
 extern enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs);
 
-extern enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state*ixs);
+extern enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs);
 
 extern enum ipsec_xmit_value ipsec_tunnel_send(struct ipsec_xmit_state *ixs);
 
-extern void ipsec_xmit_cleanup(struct ipsec_xmit_state*ixs);
+extern void ipsec_xmit_cleanup(struct ipsec_xmit_state *ixs);
 
 extern int ipsec_xmit_trap_count;
 extern int ipsec_xmit_trap_sendcount;

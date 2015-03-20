@@ -45,8 +45,9 @@ extern state_transition_fn
 	aggr_inI2;
 
 extern bool send_delete(struct state *st);
-extern void accept_delete(struct state *st, struct msg_digest *md,
+extern bool accept_delete(struct msg_digest *md,
 			  struct payload_digest *p);
+extern void accept_self_delete(struct msg_digest *md);
 
 extern void send_notification_from_state(struct state *st,
 					 enum state_kind from_state,

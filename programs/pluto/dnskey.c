@@ -61,7 +61,7 @@ static int adns_restart_count;
 
 static void release_all_continuations(void);
 
-bool adns_reapchild(pid_t pid, int status UNUSED)
+bool adns_reapchild(pid_t pid)
 {
 	if (pid == adns_pid) {
 		close_any(adns_qfd);
@@ -223,7 +223,7 @@ void stop_adns(void)
 			adns_pid = 0;
 		} else {
 			libreswan_log(
-				"wait for end of ADNS process returned odd status 0x%x\n",
+				"wait for end of ADNS process returned odd status 0x%x",
 				status);
 			adns_pid = 0;
 		}

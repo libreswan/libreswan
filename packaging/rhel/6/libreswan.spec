@@ -14,7 +14,7 @@
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: 3.11
+Version: 3.12
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
@@ -195,6 +195,6 @@ if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
 fi
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.11-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.12-1
 - Automated build from release tar ball
 

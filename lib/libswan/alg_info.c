@@ -1181,7 +1181,7 @@ void alg_info_snprint(char *buf, size_t buflen,
 						alg_info_esp->esp_pfsgroup),
 					"OAKLEY_GROUP_"),
 				alg_info_esp->esp_pfsgroup);
-			ptr += strlen(ptr);
+			ptr += strlen(ptr);	/* ptr not subsequently used */
 		}
 		break;
 	}
@@ -1212,7 +1212,7 @@ void alg_info_snprint(char *buf, size_t buflen,
 				strip_prefix(enum_name(&oakley_group_names, alg_info_esp->esp_pfsgroup),
 				   "OAKLEY_GROUP_"),
 				alg_info_esp->esp_pfsgroup);
-			ptr += strlen(ptr);
+			ptr += strlen(ptr);	/* ptr not subsequently used */
 		}
 		break;
 	}
@@ -1251,7 +1251,7 @@ void alg_info_snprint(char *buf, size_t buflen,
 	default:
 		snprintf(buf, be - ptr, "INVALID protoid=%d\n",
 			alg_info->alg_info_protoid);
-		ptr += strlen(ptr);
+		ptr += strlen(ptr);	/* ptr not subsequently used */
 		break;
 	}
 }

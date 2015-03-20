@@ -1,5 +1,9 @@
 /testing/guestbin/swan-prep --userland strongswan
 west #
+ ip addr add 192.0.100.254/24 dev eth0:1
+west #
+ ip route add 192.0.200.0/24 via 192.1.2.23  dev eth1
+west #
  # confirm that the network is alive
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
@@ -12,9 +16,21 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
+ ping -n -c 4 -I 192.0.100.254 192.0.200.254
+PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
+64 bytes from 192.0.200.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.200.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
  # make sure that clear text does not get through
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+west #
+ iptables -A INPUT -i eth1 -s 192.0.200.0/24 -j LOGDROP
 west #
  iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 west #
@@ -29,29 +45,38 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
+ ping -n -c 4 -I 192.0.100.254 192.0.200.254
+PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.200.254 DST=192.0.100.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=1 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.200.254 DST=192.0.100.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=2 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.200.254 DST=192.0.100.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=3 
+[ 00.00] IN=eth1 OUT= MAC=12:00:00:64:64:45:12:00:00:64:64:23:08:00 SRC=192.0.200.254 DST=192.0.100.254 LEN=84 TOS=0x00 PREC=0x00 TTL=64 ID=000 PROTO=ICMP TYPE=0 CODE=0 ID=000 SEQ=4 
+--- 192.0.200.254 ping statistics ---
+4 packets transmitted, 0 received, 100% packet loss, time XXXX
+west #
  strongswan starter --debug-all
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'westnet-eastnet-ikev2'
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.1.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  leftsubnet=192.0.1.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
 Loading conn 'westnet-eastnet-ikev2b'
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=192.1.2.45
   leftid=@west
+  leftsubnet=192.0.100.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.200.0/24
-  leftsubnet=192.0.100.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
 found netkey IPsec stack
 west #
  echo "initdone"
@@ -65,7 +90,7 @@ received packet: from 192.1.2.23[500] to 192.1.2.45[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) ]
 authentication of 'west' (myself) with pre-shared key
 establishing CHILD_SA westnet-eastnet-ikev2
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) N(ADD_4_ADDR) N(ADD_4_ADDR) N(EAP_ONLY) ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr ]
@@ -75,74 +100,50 @@ scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
 connection 'westnet-eastnet-ikev2' established successfully
 west #
+ ping -n -c 4 -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.2.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
  strongswan up westnet-eastnet-ikev2b
 establishing CHILD_SA westnet-eastnet-ikev2b
 generating CREATE_CHILD_SA request 2 [ SA No TSi TSr ]
 sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ N(NO_ADD_SAS) ]
-received message ID 0, expected 2. Ignored
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ N(NO_ADD_SAS) ]
-received message ID 0, expected 2. Ignored
-retransmit 1 of request with message ID 2
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ N(NO_ADD_SAS) ]
-received message ID 0, expected 2. Ignored
-retransmit 2 of request with message ID 2
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ N(NO_ADD_SAS) ]
-received message ID 0, expected 2. Ignored
-retransmit 3 of request with message ID 2
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ N(NO_ADD_SAS) ]
-received message ID 0, expected 2. Ignored
-retransmit 4 of request with message ID 2
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ N(NO_ADD_SAS) ]
-received message ID 0, expected 2. Ignored
-retransmit 5 of request with message ID 2
-sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
-parsed CREATE_CHILD_SA response 0 [ N(NO_ADD_SAS) ]
-received message ID 0, expected 2. Ignored
-#\[root@west ]#  timedout send line: strongswan up westnet-eastnet-ikev2b
-# give failure time to happen
+parsed CREATE_CHILD_SA response 2 [ SA No TSi TSr ]
+connection 'westnet-eastnet-ikev2b' established successfully
 west #
- sleep 3
+ ping -n -c 4 -I 192.0.100.254 192.0.200.254
+PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
+64 bytes from 192.0.200.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.200.254: icmp_seq=4 ttl=64 time=0.XXX ms
+--- 192.0.200.254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  echo done
+done
 west #
- dif [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
-one
+ echo done
+done
+west #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
 west #
  if [ -f /var/run/charon.pid ]; then strongswan status ; fi
-west #
-Status of IKE charon daemon (strongSwan VERSION):
-  uptime: 2 minutes, since Sep 16 10:39:28 2014
-  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
-Listening IP addresses:
-  192.0.1.254
-  192.1.2.45
-  192.9.4.45
-Connections:
-westnet-eastnet-ikev2:  192.1.2.45...192.1.2.23  IKEv2
-westnet-eastnet-ikev2:   local:  [west] uses pre-shared key authentication
-westnet-eastnet-ikev2:   remote: [east] uses pre-shared key authentication
-westnet-eastnet-ikev2:   child:  192.0.1.0/24 === 192.0.2.0/24 TUNNEL
-westnet-eastnet-ikev2b:   child:  192.0.100.0/24 === 192.0.200.0/24 TUNNEL
 Security Associations (1 up, 0 connecting):
-westnet-eastnet-ikev2[1]: ESTABLISHED 2 minutes ago, 192.1.2.45[west]...192.1.2.23[east]
-westnet-eastnet-ikev2[1]: IKEv2 SPIs: SPISPI_i SPISPI_r pre-shared key reauthentication in 2 hours
-westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
-westnet-eastnet-ikev2[1]: Tasks active: CHILD_CREATE 
+westnet-eastnet-ikev2[1]: ESTABLISHED XXX seconds ago, 192.1.2.45[west]...192.1.2.23[east]
 westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
-westnet-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA1_96, 0 bytes_i, 0 bytes_o, rekeying in 40 minutes
 westnet-eastnet-ikev2{1}:   192.0.1.0/24 === 192.0.2.0/24 
+westnet-eastnet-ikev2b{2}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev2b{2}:   192.0.100.0/24 === 192.0.200.0/24 
+west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #

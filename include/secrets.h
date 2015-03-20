@@ -58,7 +58,7 @@ struct RSA_private_key {
 		dP,				/* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
 		dQ,				/* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
 		qInv;				/* (q^-1) mod p */
-	unsigned char ckaid[HMAC_BUFSIZE];	/*ckaid for use in NSS*/
+	unsigned char ckaid[HMAC_BUFSIZE];	/* ckaid for use in NSS */
 	unsigned int ckaid_len;
 };
 
@@ -137,7 +137,7 @@ extern void free_remembered_public_keys(void);
 extern void delete_public_keys(struct pubkey_list **head,
 			       const struct id *id,
 			       enum pubkey_alg alg);
-extern void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize);
+extern void form_keyid(chunk_t e, chunk_t n, char *keyid, unsigned *keysize);
 
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);

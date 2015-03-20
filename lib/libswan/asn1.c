@@ -344,7 +344,7 @@ bool extract_object(const asn1Object_t *const objects,
 			*objectID = ctx->loopAddr[obj.level];
 			obj = objects[*objectID];
 		} else {
-			ctx->loopAddr[obj.level] = 0; /* exit loop or option*/
+			ctx->loopAddr[obj.level] = 0; /* exit loop or option */
 			return TRUE;
 		}
 	}

@@ -66,13 +66,13 @@ x509cert_t *get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 	x509cert_t *prev_cert = NULL;
 
 	while (cert != NULL) {
-		if (cert->authority_flags & auth_flags &&
+		if ((cert->authority_flags & auth_flags) &&
 			((keyid.ptr != NULL) ?
 				same_keyid(keyid, cert->subjectKeyID) :
 				(same_dn(subject, cert->subject) &&
 					same_serial(serial,
 						cert->serialNumber)))) {
-			if (prev_cert && cert != x509authcerts) {
+			if (prev_cert != NULL) {
 				/* bring the certificate up front */
 				prev_cert->next = cert->next;
 				cert->next = x509authcerts;
@@ -85,7 +85,29 @@ x509cert_t *get_authcert(chunk_t subject, chunk_t serial, chunk_t keyid,
 	}
 	return NULL;
 }
+/*
+ * increase reference count for authcerts in @ref
+ */
+void share_authcert_chain(x509cert_t *ref)
+{
+	lock_authcert_list(__func__);
+	for (; ref != NULL; ref = ref->next) {
+		x509cert_t *ac = get_authcert(ref->subject,
+				       ref->serialNumber,
+				       ref->subjectKeyID, AUTH_CA);
 
+		if (ac != NULL) {
+			DBG(DBG_X509, {
+				char sbuf[ASN1_BUF_LEN];
+				dntoa_or_null(sbuf, ASN1_BUF_LEN, ac->subject, "null");
+				DBG_log("share_authcert_chain: %s increasing count from %d",
+					 sbuf, ac->count);
+			});
+			share_x509cert(ac);
+		}
+	}
+	unlock_authcert_list(__func__);
+}
 /*
  * free the first authority certificate in the chain
  */
@@ -115,6 +137,13 @@ void release_authcert_chain(x509cert_t *chain)
 
 		if (ac == NULL)
 			continue;
+
+		DBG(DBG_X509, {
+			char sbuf[ASN1_BUF_LEN];
+			dntoa_or_null(sbuf, ASN1_BUF_LEN, ac->subject, "null");
+			DBG_log("release_authcert_chain: CA: %s, count before release: %d",
+				       sbuf, ac->count);
+		});
 
 		if (--ac->count == 0)
 			free_first_authcert();
@@ -168,10 +197,11 @@ void add_authcert(x509cert_t **certp, u_char auth_flags)
 			DBG(DBG_X509 | DBG_PARSING,
 				DBG_log("  authcert is already present. updating flags and increasing count to %d",
 					 old_cert->count + 1));
-			unlock_authcert_list("add_authcert");
 
 			share_x509cert(old_cert);
 			free_x509cert(cert);
+			unlock_authcert_list("add_authcert");
+
 			*certp = old_cert;
 			return;
 		} else {

@@ -839,7 +839,7 @@ static stf_status informational(struct msg_digest *md)
 
 				/* Initiating connection to the redirected peer */
 				initiate_connection(tmp_name, tmp_whack_sock,
-						    0, pcim_demand_crypto);
+						    LEMPTY, pcim_demand_crypto);
 				return STF_IGNORE;
 			}
 
@@ -1677,6 +1677,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	enum state_kind from_state = md->from_state;
 	const struct state_microcode *smc = md->smc;
 	bool new_iv_set = md->new_iv_set;
+	bool self_delete = FALSE;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 		DBG(DBG_CRYPT, {
@@ -2089,12 +2090,11 @@ void process_packet_tail(struct msg_digest **mdp)
 					      &p->pbs));
 
 			p = p->next;
-
 		}
 
 		p = md->chain[ISAKMP_NEXT_D];
 		while (p != NULL) {
-			accept_delete(st, md, p);
+			self_delete |= accept_delete(md, p);
 			DBG_cond_dump(DBG_PARSING, "del:", p->pbs.cur, pbs_left(
 					      &p->pbs));
 			p = p->next;
@@ -2106,6 +2106,12 @@ void process_packet_tail(struct msg_digest **mdp)
 					pbs_left(&p->pbs), st);
 			p = p->next;
 		}
+	}
+
+	if (self_delete) {
+		accept_self_delete(md);
+		st = md->st;	/* st not subseqently used */
+		/* note: st ought to be NULL from here on */
 	}
 
 #if 0
@@ -2479,6 +2485,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 				/* don't ignore failure */
 				/* ??? in fact, we do ignore this:
 				 * result is NEVER used
+				 * (clang 3.4 noticed this)
 				 */
 				if (dpd_init(st) == STF_FAIL)
 					result = STF_FAIL; /* fall through */
@@ -2824,7 +2831,6 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 		DBG(DBG_CONTROL, {
 			    char buf[IDTOA_BUF];
-
 			    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
 					  "%none");
 			    DBG_log("offered CA: '%s'", buf);

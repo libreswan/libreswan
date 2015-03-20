@@ -180,13 +180,13 @@ static void UpdateNSS_RNG(void)
  */
 static char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
-	char* phrases, *phrase;
+	char *phrases, *phrase;
 	PRFileDesc *fd;
 	PRInt32 nb;
 	const char *pwFile = (const char *)arg;
 	int i;
 	const long maxPwdFileSize = 4096;
-	char* tokenName = NULL;
+	char *tokenName = NULL;
 	int tokenLen = 0;
 
 	if (!pwFile)
