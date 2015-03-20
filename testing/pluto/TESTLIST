@@ -54,6 +54,7 @@ kvmplutotest	ikev2-19-x509-auto-start		good
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			wip
+kvmplutotest	ikev2-29-no-rekey			wip
 kvmplutotest	ikev1-cryptoload-01			good
 kvmplutotest	ikev1-cryptoload-00			good
 
@@ -80,15 +81,14 @@ kvmplutotest	netkey-algo-aes_gcm-01			good
 kvmplutotest	netkey-algo-aes_gcm-02			good
 kvmplutotest	netkey-algo-aes_gcm-03			good
 kvmplutotest	netkey-algo-aes_ccm-01			good
-kvmplutotest	ikev1-algo-ike-sha2-03-netkey		good
 
 # various ESP SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-sha2-01			good
 kvmplutotest	ikev2-algo-sha2-02			good
 kvmplutotest	ikev2-algo-sha2-03			good
 kvmplutotest	ikev2-algo-sha2-04			good
-kvmplutotest	ikev2-algo-sha2-05			wip
-kvmplutotest	ikev1-algo-esp-sha2-05			wip
+kvmplutotest	ikev2-algo-sha2-05			good
+kvmplutotest	ikev1-algo-esp-sha2-05			good
 kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-07			wip
 kvmplutotest	ikev2-algo-sha2-08			good
@@ -111,6 +111,7 @@ kvmplutotest	ikev2-minor-version-initiator		good
 kvmplutotest	ikev2-minor-version-responder		good
 kvmplutotest	ikev2-isakmp-reserved-flags-01		good
 kvmplutotest	ikev2-isakmp-reserved-flags-02		good
+kvmplutotest	ikev2-payload-reserved-flags-01		wip
 kvmplutotest	ikev2-allow-narrow-01			good
 kvmplutotest	ikev2-allow-narrow-02			good
 kvmplutotest	ikev2-allow-narrow-03			good
@@ -205,6 +206,9 @@ kvmplutotest	dpd-06	good
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
 kvmplutotest	dpd-08-netkey	wip
+kvmplutotest	ikev2-liveness-05	good
+kvmplutotest	ikev2-liveness-06	good
+kvmplutotest	ikev2-liveness-07	good
 
 # Delete SA test.
 kvmplutotest	delete-sa-01	good
@@ -365,7 +369,7 @@ umlXhost	x509-pluto-06		good
 #
 # a test case of PSK with aggressive mode
 kvmplutotest	psk-pluto-01		good
-kvmplutotest	psk-pluto-02		bad
+kvmplutotest	psk-pluto-02		good
 
 kvmplutotest	xauth-pluto-03		good
 kvmplutotest	xauth-pluto-04		good
@@ -411,7 +415,7 @@ kvmplutotest	basic-pluto-11		good
 kvmplutotest	basic-pluto-12		wip
 kvmplutotest	basic-pluto-12-netkey	wip
 kvmplutotest	basic-pluto-13-netkey-route good
-kvmplutotest	basic-pluto-14-klips-route good
+kvmplutotest	basic-pluto-14-klips-route wip
 kvmplutotest	basic-pluto-15-no-retransmit wip
 
 #
@@ -516,9 +520,8 @@ kvmplutotest	interop-ikev1-strongswan-13-esp-sha2_512 good
 kvmplutotest	interop-ikev1-strongswan-14-camellia	good
 kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512	good
 kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256	good
-kvmplutotest	interop-ikev2-strongswan-21-strongswan-cp-psk sha256	wip
-kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk	wip
-kvmplutotest	interop-ikev2-strongswan-23-initiator-cp	wip
+kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk	good
+kvmplutotest	interop-ikev2-strongswan-23-initiator-cp	good
 kvmplutotest	interop-ikev2-strongswan-24-esp-aes_ctr	good
 
 
@@ -549,7 +552,7 @@ kvmplutotest    loopback-pluto-03		good
 kvmplutotest    loopback-pluto-04		good
 kvmplutotest    loopback-pluto-05		good
 kvmplutotest    loopback-pluto-06		good
-kvmplutotest    labeled-ipsec-01		good
+kvmplutotest    labeled-ipsec-01		wip
 
 # compress tests, some use netkey
 kvmplutotest    compress-pluto-01		good
@@ -609,14 +612,13 @@ kvmplutotest	interop-ikev2-strongswan-06-aes192		good
 kvmplutotest	interop-ikev2-strongswan-07-strongswan		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-ccm		good
 kvmplutotest	interop-ikev2-strongswan-09-psk-aes-gcm		good
-kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	wip
+kvmplutotest	interop-ikev2-strongswan-10-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-11-nat-initiator	good
 kvmplutotest	interop-ikev2-strongswan-12-nat-responder	good
 kvmplutotest	interop-ikev2-strongswan-13-ah-initiator	good
 kvmplutotest	interop-ikev2-strongswan-14-delete-sa		good
-kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	wip
-kvmplutotest	interop-ikev2-strongswan-15-create_child_sa-01	wip
-kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder	wip
+kvmplutotest	interop-ikev2-strongswan-15-create_child_sa	good
+kvmplutotest	interop-ikev2-strongswan-17-delete-sa-responder good
 kvmplutotest	interop-ikev2-strongswan-19-x509-res-certreq    good
 kvmplutotest	interop-ikev2-strongswan-20-psk-aes_xcbc	good
 # strongswan still broken in v5.1.1

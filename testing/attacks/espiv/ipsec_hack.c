@@ -155,7 +155,7 @@ void user_ipv4_handler(u8 *packet, option_data *opt)
 	if (ethh->h_proto != 0x0008)
 		return;
 
-	/* Check the addresses and spi*/
+	/* Check the addresses and spi */
 	if (htonl(ipH->saddr) != opt->src_address ||
 	    htonl(ipH->daddr) != opt->dst_address) {
 		if (opt->verbose > 1)

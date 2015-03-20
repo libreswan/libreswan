@@ -82,8 +82,8 @@ struct whack_end {
 	bool send_ca;
 	enum ike_cert_type certtype;
 
-	char *host_addr_name;	/* DNS name for host, of hosttype==IPHOSTNAME*/
-				/* pluto will convert to IP address again,
+	char *host_addr_name;	/* DNS name for host, of hosttype==IPHOSTNAME
+				 * pluto will convert to IP address again,
 				 * if this is non-NULL when conn fails.
 				 */
 };
@@ -138,7 +138,7 @@ struct whack_message {
 	enum dpd_action dpd_action;
 	int dpd_count;
 
-	/* Cisco interop:  remote peer type*/
+	/* Cisco interop:  remote peer type */
 	enum keyword_remotepeertype remotepeertype;
 
 	/* Force the use of NAT-T on a connection */
@@ -163,7 +163,7 @@ struct whack_message {
 
 	bool sha2_truncbug;
 
-	/* Checking if this connection is configured by Network Manager*/
+	/* Checking if this connection is configured by Network Manager */
 	bool nmconfigured;
 
 	/* XAUTH Authentication can be file (default) PAM or 'alwaysok' */

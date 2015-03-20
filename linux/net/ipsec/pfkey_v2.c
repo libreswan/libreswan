@@ -1296,7 +1296,7 @@ DEBUG_NO_STATIC int supported_add_all(int satype,
 DEBUG_NO_STATIC int supported_remove_all(int satype)
 {
 	int error = 0;
-	struct ipsec_alg_supported*supportedp;
+	struct ipsec_alg_supported *supportedp;
 
 	while (pfkey_supported_list[satype]) {
 		const char *n;

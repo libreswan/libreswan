@@ -45,7 +45,7 @@ extern spinlock_t tdb_lock;
 extern int ipsec_sadb_init(void);
 extern int ipsec_sadb_cleanup(__u8);
 
-extern struct ipsec_sa *ipsec_sa_alloc(int*error);
+extern struct ipsec_sa *ipsec_sa_alloc(int *error);
 
 extern struct ipsec_sa *ipsec_sa_getbyid(ip_said *, int type);
 extern /* void */ int ipsec_sa_add(struct ipsec_sa *);

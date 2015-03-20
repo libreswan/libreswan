@@ -136,28 +136,36 @@ void release_connection(struct connection *c, bool relations)
 /* update the host pairs with the latest DNS ip address */
 void update_host_pairs(struct connection *c)
 {
-	struct connection *d = NULL, *conn_next_tmp = NULL, *conn_list = NULL;
-	struct host_pair *p = NULL;
+	struct host_pair *p = c->host_pair;
+	struct connection *d;
+	struct connection *conn_next_tmp;
+	struct connection *conn_list = NULL;
 	ip_address new_addr;
-	char *dnshostname;
+	char *dnshostname = c->dnshostname;
 
-	p = c->host_pair;
-	d = p ? p->connections : NULL;
+	/* ??? perhaps we should return early if dnshostname == NULL */
 
-	if (d == NULL ||
-		p == NULL ||
-		d->dnshostname == NULL ||
-		ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL ||
-		sameaddr(&new_addr, &p->him.addr))
+	if (p == NULL)
 		return;
 
-	/* remember this dnshostname */
-	dnshostname = c->dnshostname;
+	d = p->connections;
+
+	/* ??? looks as if addr_family is not allowed to change.  Bug? */
+	/* ??? why are we using d->dnshostname instead of c->hostname? */
+	if (d == NULL ||
+	    d->dnshostname == NULL ||
+	    ttoaddr(d->dnshostname, 0, d->addr_family, &new_addr) != NULL ||
+	    sameaddr(&new_addr, &p->him.addr))
+		return;
 
 	for (; d != NULL; d = conn_next_tmp) {
 		conn_next_tmp = d->hp_next;
-		if (d->dnshostname &&
-			streq(d->dnshostname, dnshostname)) {
+		/*
+		 * ??? this test used to assume that dnshostname != NULL
+		 * if d->dnshostname != NULL.  Is that true?
+		 */
+		if (d->dnshostname != NULL && dnshostname != NULL &&
+		    streq(d->dnshostname, dnshostname)) {
 			/*
 			 * If there is a dnshostname and it is the same as
 			 * the one that has changed, then change
@@ -173,9 +181,8 @@ void update_host_pairs(struct connection *c)
 		}
 	}
 
-	if (conn_list) {
-		d = conn_list;
-		for (; d != NULL; d = conn_next_tmp) {
+	if (conn_list != NULL) {
+		for (d = conn_list; d != NULL; d = conn_next_tmp) {
 			/*
 			 * connect the connection to the new host_pair
 			 */
@@ -230,9 +237,9 @@ void delete_connection(struct connection *c, bool relations)
 
 	lset_t old_cur_debugging = cur_debugging;
 	union {
-		struct alg_info** ppai;
-		struct alg_info_esp** ppai_esp;
-		struct alg_info_ike** ppai_ike;
+		struct alg_info **ppai;
+		struct alg_info_esp **ppai_esp;
+		struct alg_info_ike **ppai_ike;
 	} palg_info;
 
 	set_cur_connection(c);
@@ -577,8 +584,7 @@ size_t format_end(char *buf,
 
 			if (needed > room)
 				loglog(RC_BADID,
-					"format_end: buffer too small for "
-					"dohost_name - should not happen\n");
+					"format_end: buffer too small for dohost_name - should not happen");
 		}
 	}
 
@@ -700,14 +706,17 @@ static size_t format_connection(char *buf, size_t buf_len,
 			FALSE, c->policy, oriented(*c));
 }
 
+static void unshare_connection_end_certs(struct end *e)
+{
+	/* share_x checks for CERT_NONE */
+	share_cert(e->cert);
+	share_authcerts(e->ca_path);
+}
 /* spd_route's with end's get copied in xauth.c */
 void unshare_connection_end_strings(struct end *e)
 {
 	/* do "left" */
 	unshare_id_content(&e->id);
-
-	if(e->cert.ty != CERT_NONE)
-		share_cert(e->cert);
 
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
@@ -743,7 +752,9 @@ static void unshare_connection_strings(struct connection *c)
 	/* do "right" */
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		unshare_connection_end_strings(&sr->this);
+		unshare_connection_end_certs(&sr->this);
 		unshare_connection_end_strings(&sr->that);
+		unshare_connection_end_certs(&sr->that);
 	}
 
 	/* increment references to algo's, if any */
@@ -835,9 +846,8 @@ static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
 
 	/* find the issuing cert */
 	while (ac != NULL) {
-		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags) {
-			/* increment reference count */
-			share_x509cert(ac);
+		if (same_dn(issuer_dn, ac->subject) && ac->authority_flags &&
+					!same_dn(ac->issuer, ac->subject)) { /* no root CA!*/
 			new = clone_thing(*ac, "x509cert_t");
 			new->next = NULL;
 			dntoa(ibuf, ASN1_BUF_LEN, new->subject);
@@ -869,8 +879,6 @@ static void load_end_ca_path(chunk_t issuer_dn, struct end *dst)
 			dntoa(tbuf, ASN1_BUF_LEN, iac->subject);
 			DBG(DBG_X509, DBG_log("load_end_ca_path : adding %s to chain",
 						tbuf));
-			/* increment reference count */
-			share_x509cert(iac);
 			new->next = clone_thing(*iac, "x509cert_t");
 			new = new->next;
 			new->next = NULL;
@@ -978,7 +986,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 			er = ttoaddr(dst->host_addr_name, 0, AF_UNSPEC,
 				&dst->host_addr);
 
-			/*The above call wipes out the port, put it again*/
+			/* The above call wipes out the port, put it again */
 			port = htons(dst->port);
 			setportof(port, &dst->host_addr);
 
@@ -1226,7 +1234,7 @@ void add_connection(const struct whack_message *wm)
 		break;
 	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
 		loglog(RC_LOG_SERIOUS,
-			"Must specify either AH or ESP.\n");
+			"Must specify either AH or ESP.");
 		return;
 	}
 
@@ -1401,7 +1409,6 @@ void add_connection(const struct whack_message *wm)
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
-
 		/*
 		 * Set this up so that we can log which end is which after
 		 * orient
@@ -1410,7 +1417,6 @@ void add_connection(const struct whack_message *wm)
 		c->spd.that.left = FALSE;
 
 		c->send_ca = wm->send_ca;
-		same_rightca = same_leftca = FALSE;
 
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
@@ -3317,7 +3323,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 }
 
-struct connection *find_client_connection(struct connection *c,
+struct connection *find_client_connection(struct connection *const c,
 					const ip_subnet *our_net,
 					const ip_subnet *peer_net,
 					const u_int8_t our_protocol,
@@ -3366,12 +3372,12 @@ struct connection *find_client_connection(struct connection *c,
 
 			if (samesubnet(&sr->this.client, our_net) &&
 				samesubnet(&sr->that.client, peer_net) &&
-				(sr->this.protocol == our_protocol) &&
+				sr->this.protocol == our_protocol &&
 				(!sr->this.port ||
-					(sr->this.port == our_port)) &&
+					sr->this.port == our_port) &&
 				(sr->that.protocol == peer_protocol) &&
 				(!sr->that.port ||
-					(sr->that.port == peer_port))) {
+					sr->that.port == peer_port)) {
 				passert(oriented(*c));
 				if (routed(sr->routing))
 					return c;
@@ -3381,6 +3387,11 @@ struct connection *find_client_connection(struct connection *c,
 		}
 
 		/* exact match? */
+		/*
+		 * clang 3.4 says: warning: Access to field 'host_pair' results in a dereference of a null pointer (loaded from variable 'c')
+		 * If so, the caller must have passed NULL for it
+		 * and earlier references would be wrong (segfault).
+		 */
 		d = fc_try(c, c->host_pair, NULL, our_net, peer_net,
 			our_protocol, our_port, peer_protocol, peer_port);
 
@@ -3821,4 +3832,27 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 		}
 	}
 	return ue;
+}
+
+void liveness_clear_connection(struct connection *c, char *v)
+{
+	libreswan_log("%s: Clearing Connection %s[%lu] %s",v, c->name,
+			c->instance_serial, enum_name(&connection_kind_names,
+				c->kind));
+	/*
+	 * For CK_INSTANCE, delete_states_by_connection() will clear
+	 * Note that delete_states_by_connection changes c->kind but we need
+	 * to remember what it was to know if we still need to unroute after delete
+	 */
+	if (c->kind == CK_INSTANCE) {
+		delete_states_by_connection(c, TRUE);
+	} else {
+		flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
+		delete_states_by_connection(c, TRUE);
+		DBG(DBG_DPD,
+				DBG_log("%s: unrouting connection %s",
+					enum_name(&connection_kind_names,
+						c->kind), v));
+		unroute_connection(c); /* --unroute */
+	}
 }

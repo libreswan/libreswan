@@ -1,29 +1,31 @@
-ip addr add 192.0.4.254/32 dev eth0
+/testing/guestbin/swan-prep --userland strongswan
+road #
+ ip addr add 192.0.4.254/32 dev eth0
 road #
  # make sure that clear text does not get through
 road #
  iptables -A INPUT -i eth1 -s 192.0.4.0/24 -j LOGDROP
+road #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 road #
  ping -n -c 2 -I 192.0.4.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.4.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
 road #
- /testing/guestbin/swan-prep --userland strongswan
-road #
  strongswan starter --debug-all
 Starting strongSwan X.X.X IPsec [starter]...
 Loading config setup
 Loading conn 'road-eastnet-ikev2'
+  authby=secret
+  auto=add
+  keyexchange=ikev2
   left=%defaultroute
   leftid=@road
   leftsubnet=192.0.4.0/24
   right=192.1.2.23
   rightid=@east
   rightsubnet=192.0.2.0/24
-  authby=secret
-  keyexchange=ikev2
-  auto=add
 found netkey IPsec stack
 road #
  echo "initdone"

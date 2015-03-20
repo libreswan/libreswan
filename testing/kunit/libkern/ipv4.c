@@ -505,7 +505,7 @@ int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
 }
 #endif
 
-int ip_fragment(struct sk_buff *skb, int (*output)(struct sk_buff*))
+int ip_fragment(struct sk_buff *skb, int (*output)(struct sk_buff *))
 {
 	log_packet(skb, "ip_fragment");
 	(*output)(skb);

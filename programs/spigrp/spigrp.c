@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 	int i, nspis;
 	int said_opt = 0;
 
-	const char* error_s = NULL;
+	const char *error_s = NULL;
 	int j;
 	struct said_af said_af_array[4];
 

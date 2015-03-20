@@ -144,7 +144,7 @@ struct hmac_ctx {
 	aes_xcbc_context ctx_aes_xcbc;
 
 	PK11SymKey *ikey, *okey;
-	PK11Context* ctx_nss;
+	PK11Context *ctx_nss;
 };
 
 extern void hmac_init(struct hmac_ctx *ctx,

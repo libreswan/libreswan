@@ -70,6 +70,7 @@ static bool ikev2_out_attr(int type,
 {
 	struct ikev2_trans_attr attr;
 
+	zero(&attr);
 	if (val >> 16 == 0) {
 		/* short value: use TV form - reuse ISAKMP_ATTR_defines for ikev2 */
 		attr.isatr_type = type | ISAKMP_ATTR_AF_TV;
@@ -281,7 +282,7 @@ bool ikev2_out_sa(pb_stream *outs,
 
 struct db_trans_flat {
 	u_int8_t protoid;		/* Protocol-Id */
-	u_int16_t auth_method;		/* conveyed another way in ikev2*/
+	u_int16_t auth_method;		/* conveyed another way in ikev2 */
 	u_int16_t encr_transid;		/* Transform-Id */
 	u_int16_t integ_transid;	/* Transform-Id */
 	u_int16_t prf_transid;		/* Transform-Id */

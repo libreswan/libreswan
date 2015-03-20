@@ -68,11 +68,11 @@ static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 	int outlen;
 
 	DBG(DBG_CRYPT, DBG_log("NSS do_aes_cbc: enter"));
-	ciphermech = CKM_AES_CBC; /*libreswan provides padding*/
+	ciphermech = CKM_AES_CBC; /* libreswan provides padding */
 
 	if (symkey == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_aes_cbc: NSS derived enc key in NULL\n");
+		       "do_aes_cbc: NSS derived enc key in NULL");
 		abort();
 	}
 
@@ -83,7 +83,7 @@ static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 	secparam = PK11_ParamFromIV(ciphermech, &ivitem);
 	if (secparam == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_aes_cbc: Failure to set up PKCS11 param (err %d)\n",
+		       "do_aes_cbc: Failure to set up PKCS11 param (err %d)",
 		       PR_GetError());
 		abort();
 	}
@@ -103,7 +103,7 @@ static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 						secparam);
 	if (enccontext == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_aes_cbc: PKCS11 context creation failure (err %d)\n",
+		       "do_aes_cbc: PKCS11 context creation failure (err %d)",
 		       PR_GetError());
 		abort();
 	}
@@ -112,7 +112,7 @@ static void do_aes_cbc(u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 			      buf_len);
 	if (rv != SECSuccess) {
 		loglog(RC_LOG_SERIOUS,
-		       "do_aes_cbc: PKCS11 operation failure (err %d)\n",
+		       "do_aes_cbc: PKCS11 operation failure (err %d)",
 		       PR_GetError());
 		abort();
 	}

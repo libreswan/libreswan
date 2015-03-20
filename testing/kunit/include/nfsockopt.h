@@ -38,7 +38,7 @@ struct nf_userspace_message {
 	} type;
 
 	/* operation. in the case of syscalls, this
-	   is the SYS_<syscall> number*/
+	   is the SYS_<syscall> number */
 	int opcode;
 
 	/* length of any data following this header */

@@ -163,7 +163,7 @@ err_t init_ctl_socket(void)
 		if (g != NULL) {
 			if (fchown(ctl_fd, -1, g->gr_gid) != 0) {
 				loglog(RC_LOG_SERIOUS,
-				       "Can not chgrp ctl fd(%d) to gid=%d: %s\n",
+				       "Can not chgrp ctl fd(%d) to gid=%d: %s",
 				       ctl_fd, g->gr_gid, strerror(errno));
 			}
 		}
@@ -460,19 +460,18 @@ static void childhandler(int sig UNUSED)
 	sigchildflag = TRUE;
 }
 
-/* perform wait4() on all children */
+/* perform waitpid() for any children */
 static void reapchildren(void)
 {
 	pid_t child;
 	int status;
-	struct rusage r;
 
 	sigchildflag = FALSE;
 	errno = 0;
 
-	while ((child = wait3(&status, WNOHANG, &r)) > 0) {
+	while ((child = waitpid(-1, &status, WNOHANG)) > 0) {
 		/* got a child to reap */
-		if (adns_reapchild(child, status))
+		if (adns_reapchild(child))
 			continue;
 
 		if (child == addconn_child_pid) {

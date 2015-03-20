@@ -74,7 +74,7 @@ static uint32_t pfkey_seq = 0;
 #define EMT_INEROUTE    14              /* set incoming policy for IPIP on a chain */
 #define EMT_INREPLACEROUTE      15      /* replace incoming policy for IPIP on a chain */
 
-static void usage(char* arg)
+static void usage(char *arg)
 {
 	fprintf(stdout,
 		"usage: %s --{add,addin,replace,replacein} --eraf <inet | inet6> --src <src>/<srcmaskbits>|<srcmask> --dst <dst>/<dstmaskbits>|<dstmask> [ --transport-proto <protocol> ] [ --src-port <source-port> ] [ --dst-port <dest-port> ] <SA>\n",

@@ -37,7 +37,7 @@ char *wait_for_output(void);
 /* We want to fork: split other program */
 void fork_other_program(void);
 
-/* Start a program*/
+/* Start a program */
 void start_program(const char *name, int argc, char *argv[]);
 int end_program(const char *name);
 

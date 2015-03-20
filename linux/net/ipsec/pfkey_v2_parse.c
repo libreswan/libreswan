@@ -77,7 +77,7 @@ int (*pfkey_error_func)(const char *message, ...) PRINTF_LIKE(1);
 static struct satype_tbl {
 	uint8_t proto;
 	uint8_t satype;
-	char* name;
+	char *name;
 } satype_tbl[] = {
 #ifdef __KERNEL__
 	{ IPPROTO_ESP,  K_SADB_SATYPE_ESP,      "ESP"  },
@@ -297,7 +297,7 @@ DEBUG_NO_STATIC int pfkey_address_parse(struct sadb_ext *pfkey_ext)
 	int error = 0;
 	int saddr_len = 0;
 	struct sadb_address *pfkey_address = (struct sadb_address *)pfkey_ext;
-	struct sockaddr* s =
+	struct sockaddr *s =
 		(struct sockaddr*)((char*)pfkey_address +
 				   sizeof(*pfkey_address));
 	char ipaddr_txt[ADDRTOT_BUF];
