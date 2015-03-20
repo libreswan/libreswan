@@ -93,8 +93,8 @@ struct sadb_sens {
 /* sizeof(struct sadb_sens) == 16 */
 
 /* followed by:
-        uint64_t	sadb_sens_bitmap[sens_len];
-        uint64_t	sadb_integ_bitmap[integ_len];  */
+	uint64_t	sadb_sens_bitmap[sens_len];
+	uint64_t	sadb_integ_bitmap[integ_len];  */
 
 struct sadb_prop {
 	uint16_t sadb_prop_len;
@@ -105,9 +105,9 @@ struct sadb_prop {
 /* sizeof(struct sadb_prop) == 8 */
 
 /* followed by:
-        struct sadb_comb sadb_combs[(sadb_prop_len +
-                sizeof(uint64_t) - sizeof(struct sadb_prop)) /
-                sizeof(strut sadb_comb)]; */
+	struct sadb_comb sadb_combs[(sadb_prop_len +
+		sizeof(uint64_t) - sizeof(struct sadb_prop)) /
+		sizeof(strut sadb_comb)]; */
 
 struct sadb_comb {
 	uint8_t sadb_comb_auth;
@@ -137,9 +137,9 @@ struct sadb_supported {
 /* sizeof(struct sadb_supported) == 8 */
 
 /* followed by:
-        struct sadb_alg sadb_algs[(sadb_supported_len +
-                sizeof(uint64_t) - sizeof(struct sadb_supported)) /
-                sizeof(struct sadb_alg)]; */
+	struct sadb_alg sadb_algs[(sadb_supported_len +
+		sizeof(uint64_t) - sizeof(struct sadb_supported)) /
+		sizeof(struct sadb_alg)]; */
 
 struct sadb_alg {
 	uint8_t sadb_alg_id;

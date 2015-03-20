@@ -93,8 +93,8 @@ int main(int argc, char **argv)
 
 		switch (ipq_message_type(buf)) {
 		case NLMSG_ERROR:
-			fprintf(stderr, "Received error message %d\n", ipq_get_msgerr(
-					buf));
+			fprintf(stderr, "Received error message %d\n",
+				ipq_get_msgerr(buf));
 			break;
 
 		case IPQM_PACKET:

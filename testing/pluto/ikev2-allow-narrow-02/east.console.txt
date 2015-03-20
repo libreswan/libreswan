@@ -6,10 +6,6 @@ east #
  /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
 east #
  /testing/pluto/bin/wait-until-pluto-started
-[ 00.00] alg: No test for cipher_null (cipher_null-generic)
-[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for compress_null (compress_null-generic)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
 east #
  ipsec auto --add westnet-eastnet-ikev2
 east #
@@ -25,7 +21,7 @@ east #
 000 interface eth2/eth2 192.9.2.23
 000  
 000 fips mode=disabled;
-000 SElinux=enabled
+000 SElinux=disabled
 000  
 000 config setup options:
 000  

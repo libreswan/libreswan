@@ -441,22 +441,15 @@ bool match_id(const struct id *a, const struct id *b, int *wildcards)
 	if (b->kind == ID_NONE) {
 		*wildcards = MAX_WILDCARDS;
 		match = TRUE;
-		goto done;
-	}
-
-	if (a->kind != b->kind) {
+	} else if (a->kind != b->kind) {
 		match = FALSE;
-		goto done;
-	}
-
-	if (a->kind == ID_DER_ASN1_DN) {
+	} else if (a->kind == ID_DER_ASN1_DN) {
 		match = match_dn(a->name, b->name, wildcards);
 	} else {
 		*wildcards = 0;
 		match = same_id(a, b);
 	}
 
-done:
 	DBG(DBG_CONTROLMORE,
 	    {
 		    char abuf[IDTOA_BUF];

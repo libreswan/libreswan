@@ -331,16 +331,14 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 		} else if (addr.nl_pid != 0) {
 			/* not for us: ignore */
 			DBG(DBG_KERNEL,
-			    DBG_log(
-				    "netlink: ignoring %s message from process %u",
+			    DBG_log("netlink: ignoring %s message from process %u",
 				    sparse_val_show(xfrm_type_names,
 						    rsp.n.nlmsg_type),
 				    addr.nl_pid));
 			continue;
 		} else if (rsp.n.nlmsg_seq != seq) {
 			DBG(DBG_KERNEL,
-			    DBG_log(
-				    "netlink: ignoring out of sequence (%u/%u) message %s",
+			    DBG_log("netlink: ignoring out of sequence (%u/%u) message %s",
 				    rsp.n.nlmsg_seq, seq,
 				    sparse_val_show(xfrm_type_names,
 						    rsp.n.nlmsg_type)));
@@ -712,8 +710,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 					   strlen(policy_label) + 1);
 			uctx = RTA_DATA(attr);
 			uctx->exttype = XFRMA_SEC_CTX;
-			uctx->len = sizeof(struct xfrm_user_sec_ctx) + strlen(
-				policy_label) + 1;
+			uctx->len = sizeof(struct xfrm_user_sec_ctx) +
+				strlen(policy_label) + 1;
 			uctx->ctx_doi = 1;
 			uctx->ctx_alg = 1;
 			uctx->ctx_len = strlen(policy_label) + 1;
@@ -886,8 +884,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		if ( (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256) ||
 		     (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) ) {
 			struct xfrm_algo_auth algo;
-			    DBG(DBG_KERNEL, DBG_log(
-				    "  using new struct xfrm_algo_auth for XFRM message with explicit truncation for sha2_256"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			algo.alg_trunc_len =
 				(sa->authalg ==
@@ -908,8 +904,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 		} else {
 			struct xfrm_algo algo;
-			    DBG(DBG_KERNEL, DBG_log(
-				    "  using old struct xfrm_algo for XFRM message"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
 			attr->rta_type = XFRMA_ALG_AUTH;
 			attr->rta_len = RTA_LENGTH(
@@ -1031,7 +1025,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	}
 #endif
 	ret = send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
-	if (ret == FALSE && errno == ESRCH &&
+	if (!ret && errno == ESRCH &&
 	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 			loglog(RC_LOG_SERIOUS, "Warning: expected to find "
 			       "an existing IPsec SA - continuing as Add SA");
@@ -1361,8 +1355,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 	if (!found_sec_ctx) {
 		DBG(DBG_KERNEL,
-		    DBG_log(
-			    "xfrm: did not found XFRMA_SEC_CTX, trying next one"));
+		    DBG_log("xfrm: did not found XFRMA_SEC_CTX, trying next one"));
 		DBG(DBG_KERNEL, DBG_log("xfrm: rta->len=%d", attr->rta_len));
 
 		remaining = n->nlmsg_len -
@@ -1382,11 +1375,9 @@ static void netlink_acquire(struct nlmsghdr *n)
 				    DBG_log("xfrm: found XFRMA_POLICY_TYPE"));
 			} else {
 				DBG(DBG_KERNEL,
-				    DBG_log(
-					    "xfrm: not found anything, seems wierd"));
+				    DBG_log("xfrm: not found anything, seems wierd"));
 				DBG(DBG_KERNEL,
-				    DBG_log(
-					    "xfrm: not found sec ctx still, perhaps not a labeled ipsec connection"));
+				    DBG_log("xfrm: not found sec ctx still, perhaps not a labeled ipsec connection"));
 			}
 		}
 	}
@@ -1394,8 +1385,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 	if (found_sec_ctx) {
 		xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
 		DBG(DBG_KERNEL,
-		    DBG_log(
-			    "xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%d",
+		    DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%d",
 			    xuctx->exttype, xuctx->len,
 			    xuctx->ctx_doi, xuctx->ctx_alg, xuctx->ctx_len));
 
@@ -1420,13 +1410,11 @@ static void netlink_acquire(struct nlmsghdr *n)
 				       xuctx->ctx_len);
 			} else {
 				DBG(DBG_KERNEL,
-				    DBG_log(
-					    "not enough memory for struct xfrm_user_sec_ctx_ike"));
+				    DBG_log("not enough memory for struct xfrm_user_sec_ctx_ike"));
 			}
 		} else {
 			DBG(DBG_KERNEL,
-			    DBG_log(
-				    "(should not reach here really) received security length=%d > MAX_SECCTX_LEN",
+			    DBG_log("(should not reach here really) received security length=%d > MAX_SECCTX_LEN",
 				    xuctx->ctx_len));
 			DBG(DBG_KERNEL, DBG_log("ignoring ACQUIRE messages"));
 			goto ignore_acquire;
@@ -1819,12 +1807,6 @@ static bool netlink_shunt_eroute(struct connection *c,
 {
 	ipsec_spi_t spi;
 
-	DBG(DBG_CONTROL,
-	    DBG_log(
-		    "request to %s a %s policy with netkey kernel --- experimental",
-		    opname,
-		    enum_name(&routing_story, rt_kind)));
-
 	/* We are constructing a special SAID for the eroute.
 	 * The destination doesn't seem to matter, but the family does.
 	 * The protocol is SA_INT -- mark this as shunt.
@@ -1942,8 +1924,7 @@ static bool netlink_shunt_eroute(struct connection *c,
 					  &sr->this.client,
 					  &sr->that.host_addr,
 					  &sr->that.client,
-					  htonl(
-						  spi),
+					  htonl(spi),
 					  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : SA_INT,
 					  sr->this.protocol,
 					  ET_INT,
@@ -2055,8 +2036,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 				v = &fake_v;
 			} else {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "IP interface %s %s has no matching ipsec* interface -- ignored",
+				    DBG_log("IP interface %s %s has no matching ipsec* interface -- ignored",
 					    ifp->name, ip_str(&ifp->addr)));
 				continue;
 			}
@@ -2153,8 +2133,7 @@ add_entry:
 						id->id_count++;
 
 						q->ip_addr = ifp->addr;
-						setportof(htons(
-								  pluto_natt_float_port),
+						setportof(htons(pluto_natt_float_port),
 							  &q->ip_addr);
 						q->port =
 							pluto_natt_float_port;

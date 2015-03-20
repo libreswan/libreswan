@@ -1,4 +1,5 @@
-This is a test of NAT-traversal.
+This is a test of NAT-traversal. It uses raw RSA keys. It uses extrusion,
+so no virtual ip code is used.
 
 The network is configured as follows:
 

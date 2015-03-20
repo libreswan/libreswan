@@ -37,8 +37,6 @@ extern void init_crypto(void);
 
 /* Oakley group descriptions */
 
-extern MP_INT groupgenerator;   /* MODP group generator (2) */
-
 struct oakley_group_desc {
 	u_int16_t group;
 /* RFC 5114 defines new modp groups each having different generator */

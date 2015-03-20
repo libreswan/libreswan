@@ -8,7 +8,7 @@
 # DEFAULTS, possibly overridden by <systype> recursive call:
 # pick gcc if you'd rather , and/or do -g instead of -O if debugging
 # debugging
-# DFLAGS = -DTEST -DDEBUG
+# DFLAGS = -DTEST
 CFLAGS = -O
 XFLAGS = 	# xtra cflags, set by systype targets
 XLIBS =		# xtra libs if necessary?

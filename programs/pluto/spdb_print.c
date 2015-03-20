@@ -52,7 +52,7 @@
 #include "db_ops.h"
 #include "spdb.h"
 
-void print_sa_attr_oakley(struct db_attr *at)
+static void print_sa_attr_oakley(struct db_attr *at)
 {
 	const struct enum_names *en = NULL;
 
@@ -68,7 +68,7 @@ void print_sa_attr_oakley(struct db_attr *at)
 	       at->val,  en ? enum_name(en, at->val) : "unknown");
 }
 
-void print_sa_attr_ipsec(struct db_attr *at)
+static void print_sa_attr_ipsec(struct db_attr *at)
 {
 	const struct enum_names *en = NULL;
 
@@ -84,7 +84,7 @@ void print_sa_attr_ipsec(struct db_attr *at)
 	       at->val,  en ? enum_name(en, at->val) : "unknown");
 }
 
-void print_sa_trans(struct db_sa *f, struct db_trans *tr)
+static void print_sa_trans(struct db_sa *f, struct db_trans *tr)
 {
 	unsigned int i;
 
@@ -98,7 +98,7 @@ void print_sa_trans(struct db_sa *f, struct db_trans *tr)
 	}
 }
 
-void print_sa_prop(struct db_sa *f, struct db_prop *dp)
+static void print_sa_prop(struct db_sa *f, struct db_prop *dp)
 {
 	unsigned int i;
 
@@ -110,7 +110,7 @@ void print_sa_prop(struct db_sa *f, struct db_prop *dp)
 		print_sa_trans(f, &dp->trans[i]);
 }
 
-void print_sa_prop_conj(struct db_sa *f, struct db_prop_conj *pc)
+static void print_sa_prop_conj(struct db_sa *f, struct db_prop_conj *pc)
 {
 	unsigned int i;
 
@@ -141,7 +141,7 @@ static void print_sa_v2_attr(struct db_attr *at)
 	       at->val,  "unknown (fixme in print_sa_v2_attr()");
 }
 
-void print_sa_v2_trans(struct db_v2_trans *tr)
+static void print_sa_v2_trans(struct db_v2_trans *tr)
 {
 	unsigned int i;
 	const struct enum_names *en = NULL;
@@ -158,7 +158,7 @@ void print_sa_v2_trans(struct db_v2_trans *tr)
 		print_sa_v2_attr(&tr->attrs[i]);
 }
 
-void print_sa_v2_prop_conj(struct db_v2_prop_conj *dp)
+static void print_sa_v2_prop_conj(struct db_v2_prop_conj *dp)
 {
 	unsigned int i;
 
@@ -171,7 +171,7 @@ void print_sa_v2_prop_conj(struct db_v2_prop_conj *dp)
 		print_sa_v2_trans(&dp->trans[i]);
 }
 
-void print_sa_v2_prop(struct db_v2_prop *pc)
+static void print_sa_v2_prop(struct db_v2_prop *pc)
 {
 	unsigned int i;
 

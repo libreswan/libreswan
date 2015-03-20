@@ -283,8 +283,7 @@ int ipsec_ocf_sa_init(struct ipsec_sa *ipsp, int authalg, int encalg)
 	}
 
 	if (ipsp->ocf_in_use)
-		printk(
-			"KLIPS: ipsec_ocf_sa_init received SA is already initted?\n");
+		printk("KLIPS: ipsec_ocf_sa_init received SA is already initted?\n");
 
 
 	memset(&crie, 0, sizeof(crie));
@@ -378,8 +377,7 @@ int ipsec_ocf_sa_free(struct ipsec_sa *ipsp)
 {
 	KLIPS_PRINT(debug_pfkey, "klips_debug:ipsec_ocf_sa_free()\n");
 	if (!ipsp->ocf_in_use)
-		printk(
-			"KLIPS: ipsec_ocf_sa_free received SA that is not initted?\n");
+		printk("KLIPS: ipsec_ocf_sa_free received SA that is not initted?\n");
 
 
 	crypto_freesession(ipsp->ocf_cryptoid);
@@ -504,26 +502,19 @@ static int ipsec_ocf_rcv_cb(struct cryptop *crp)
 		/* adjust the ipp pointer to point to the header we decoded */
 		irs->iph = newiph;
 
-		skb_set_network_header(irs->skb, ipsec_skb_offset(irs->skb,
-								  ((unsigned
-								    char *)
-								   skb_network_header(
-									   irs
-									   ->
-									   skb))
+		skb_set_network_header(irs->skb,
+				       ipsec_skb_offset(irs->skb,
+							((unsigned char *)
+							skb_network_header(irs->skb))
 								  +
 								  sizeof(struct
 									 ipcomphdr)));
-		skb_set_transport_header(irs->skb, ipsec_skb_offset(irs->skb,
-								    ((unsigned
-								      char *)
-								     skb_transport_header(
-									     irs
-									     ->
-									     skb))
+		skb_set_transport_header(irs->skb,
+					 ipsec_skb_offset(irs->skb,
+					                  ((unsigned char *)
+							  skb_transport_header(irs->skb))
 								    +
-								    sizeof(
-									    struct
+								    sizeof(struct
 									    ipcomphdr)));
 
 		if (lsw_ip_hdr_version(irs) == 6) {
@@ -896,23 +887,16 @@ static int ipsec_ocf_xmit_cb(struct cryptop *crp)
 
 			skb_set_network_header(ixs->skb,
 					       ipsec_skb_offset(ixs->skb,
-								((
-									 void
-									 *)
+								((void *)
 								 skb_network_header(
-									 ixs->
-									 skb))
+									 ixs->skb))
 								+
 								ptr_delta));
 			skb_set_transport_header(ixs->skb,
 						 ipsec_skb_offset(ixs->skb,
-								  ((
-									   void
-									   *)
+								  ((void *)
 								   skb_transport_header(
-									   ixs
-									   ->
-									   skb))
+									   ixs->skb))
 								  +
 								  ptr_delta));
 			KLIPS_IP_PRINT(debug_tunnel & DB_TN_XMIT, ixs->iph);
@@ -1008,8 +992,8 @@ static int ipsec_ocf_xmit_cb(struct cryptop *crp)
 							      comp_len);
 			lsw_ip4_hdr(ixs)->check       = 0;
 			lsw_ip4_hdr(ixs)->check       =
-				ip_fast_csum((char *) ixs->iph, lsw_ip4_hdr(
-						     ixs)->ihl);
+				ip_fast_csum((char *) ixs->iph,
+					     lsw_ip4_hdr(ixs)->ihl);
 		}
 
 		/* Update skb length/tail by "unputting" the shrinkage */
@@ -1448,8 +1432,7 @@ void ipsec_ocf_init(void)
 	for (s = ocf_esp_algs; s->ias_name; s++) {
 		if (ipsec_ocf_check_alg(s)) {
 			(void)pfkey_list_insert_supported(s,
-							  &(
-								  pfkey_supported_list
+							  &(pfkey_supported_list
 								  [
 									  SADB_SATYPE_ESP
 								  ]));
@@ -1460,8 +1443,7 @@ void ipsec_ocf_init(void)
 	for (s = ocf_ah_algs; s->ias_name; s++) {
 		if (ipsec_ocf_check_alg(s))
 			(void)pfkey_list_insert_supported(s,
-							  &(
-								  pfkey_supported_list
+							  &(pfkey_supported_list
 								  [
 									  SADB_SATYPE_AH
 								  ]));

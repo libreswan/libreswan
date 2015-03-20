@@ -50,8 +50,8 @@ extern int kernel_alg_esp_auth_keylen(int auth);
 extern int kernel_alg_proc_read(void);
 
 /* get sadb_alg for passed args */
-extern const struct sadb_alg * kernel_alg_sadb_alg_get(int satype, int exttype,
-						       int alg_id);
+extern const struct sadb_alg * kernel_alg_sadb_alg_get(unsigned satype, unsigned exttype,
+						       unsigned alg_id);
 
 /* returns pointer to static buffer -- NOT RE-ENTRANT */
 extern struct esp_info *kernel_alg_esp_info(u_int8_t transid,
@@ -71,6 +71,7 @@ extern int esp_aalg_num;
 #define ESP_EALG_FOR_EACH_UPDOWN(algo) \
 	for (algo = K_SADB_EALG_MAX; algo > 0; algo--) \
 		if (ESP_EALG_PRESENT(algo))
+
 #define ESP_AALG_PRESENT(algo) ((algo <= SADB_AALG_MAX) && \
 				(esp_aalg[(algo)].sadb_alg_id == (algo)))
 #define ESP_AALG_FOR_EACH(algo) \

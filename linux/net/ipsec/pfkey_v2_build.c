@@ -448,8 +448,7 @@ int pfkey_address_build(struct sadb_ext**   pfkey_ext,
 		if (len > 0 && len < (int)sizeof(ipaddr_txt)) {
 			snprintf(&ipaddr_txt[len - 1],
 				 sizeof(ipaddr_txt) - len, ":%d",
-				 ntohs(
-					 ((struct sockaddr_in*)address)->
+				 ntohs(((struct sockaddr_in*)address)->
 					 sin_port));
 		}
 		break;
@@ -902,7 +901,8 @@ errlab:
 	return error;
 }
 
-int pfkey_spirange_build(struct sadb_ext**  pfkey_ext,
+#if 0
+static int pfkey_spirange_build(struct sadb_ext**  pfkey_ext,
 			 uint16_t exttype UNUSED,
 			 uint32_t min,          /* in network order */
 			 uint32_t max)          /* in network order */
@@ -962,7 +962,7 @@ errlab:
 	return error;
 }
 
-int pfkey_x_kmprivate_build(struct sadb_ext**       pfkey_ext)
+static int pfkey_x_kmprivate_build(struct sadb_ext **pfkey_ext)
 {
 	int error = 0;
 	struct sadb_x_kmprivate *pfkey_x_kmprivate =
@@ -1007,6 +1007,7 @@ int pfkey_x_kmprivate_build(struct sadb_ext**       pfkey_ext)
 errlab:
 	return error;
 }
+#endif
 
 int pfkey_x_satype_build(struct sadb_ext**  pfkey_ext,
 			 uint8_t satype)
@@ -1415,8 +1416,7 @@ int pfkey_msg_build(struct sadb_msg **pfkey_msg, struct sadb_ext *extensions[],
 			if (!pfkey_permitted_extension(dir,
 						       (*pfkey_msg)->
 						       sadb_msg_type, ext)) {
-				ERROR(
-					"ext type %d not permitted for %d/%d (build)\n",
+				ERROR("ext type %d not permitted for %d/%d (build)\n",
 					ext,
 					dir, (*pfkey_msg)->sadb_msg_type);
 				SENDERR(EINVAL);

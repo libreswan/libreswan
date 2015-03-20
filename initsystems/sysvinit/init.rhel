@@ -153,13 +153,13 @@ stop() {
 	done
 	echo
 	rm -f ${plutoctl} # we won't be using this anymore
-	if [ -s ${plutopid} ]; then
-	    # pluto did not die peacefully
-	    echo "Attempt to shut Pluto down failed!  Trying kill"
-	    killproc -p ${plutopid} ${IPSEC_EXECDIR}/pluto
-	    RETVAL=$?
-	    [ ${RETVAL} -eq 0 ] && rm -f ${plutopid}
-	fi
+    fi
+    if [ -s ${plutopid} ]; then
+	# pluto did not die peacefully
+	echo "Attempt to shut Pluto down failed!  Trying kill"
+	killproc -p ${plutopid} ${IPSEC_EXECDIR}/pluto
+	RETVAL=$?
+	[ ${RETVAL} -eq 0 ] && rm -f ${plutopid}
     fi
 
     ipsec _stackmanager stop
@@ -184,13 +184,10 @@ restart() {
 }
 
 condrestart() {
-    verify_config
-    RETVAL=$?
     if [ -f ${lockfile} ]; then
 	restart
-	RETVAL=$?
+	return $?
     fi
-    return ${RETVAL}
 }
 
 version() {

@@ -115,11 +115,7 @@ extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
 #define out_chunk(ch, outs, name) out_raw((ch).ptr, (ch).len, (outs), (name))
 extern void close_output_pbs(pb_stream *pbs);
 
-#ifdef DEBUG
 #define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
-#else
-#define DBG_dump_pbs(pbs) do {} while (0)
-#endif
 
 /* ISAKMP Header: for all messages
  * layout from RFC 2408 "ISAKMP" section 3.1
@@ -208,8 +204,6 @@ struct isakmp_generic {
 	u_int8_t isag_reserved;
 	u_int16_t isag_length;
 };
-
-extern struct_desc isakmp_generic_desc;
 
 /* ISAKMP Data Attribute (generic representation within payloads)
  * layout from RFC 2408 "ISAKMP" section 3.3
@@ -701,9 +695,10 @@ extern struct_desc isakmp_ikefrag_desc;
  * on the mode.  Since this is table only used for top-level payloads,
  * Proposal and Transform payloads need not be handled.
  * That leaves only Identification payloads as a problem.
- * We make all these entries NULL
+ * We make all these entries NULL.
+ * ??? is there a good reason for these two things to be in one table?
  */
-extern struct_desc *const payload_descs[ISAKMP_NEXT_ROOF];
+extern const struct_desc *payload_desc(unsigned p);
 
 /*
  * IKEv2 structures
@@ -860,9 +855,6 @@ struct ikev2_delete {
 };
 
 extern struct_desc ikev2_delete_desc;
-
-/* rfc4306, section 3.12, vendor ID, uses generic header */
-extern struct_desc ikev2_vendor_id_desc;
 
 /* rfc4306, section 3.13 */
 struct ikev2_ts {

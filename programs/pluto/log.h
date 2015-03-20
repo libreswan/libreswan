@@ -43,8 +43,6 @@ extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
 extern char *pluto_stats_binary;
 
-extern const char debug_prefix;
-
 /* used in some messages to distiguish
  * which pluto is which, when doing
  * unit testing
@@ -81,30 +79,15 @@ extern void passert_fail(const char *pred_str,
 /* for pushing state to other subsystems */
 extern void log_state(struct state *st, enum state_kind state);
 
-#ifdef DEBUG
-
 extern void extra_debugging(const struct connection *c);
 
-# define reset_debugging() { set_debugging(base_debugging); }
+#define reset_debugging() { set_debugging(base_debugging); }
 
-# define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
+#define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
 			      && cur_state == NULL \
 			      && cur_connection == NULL \
 			      && cur_from == NULL \
 			      && cur_debugging == base_debugging)
-
-#else /*!DEBUG*/
-
-# define extra_debugging(c)  { }
-
-# define reset_debugging() { }
-
-# define GLOBALS_ARE_RESET() (whack_log_fd == NULL_FD \
-			      && cur_state == NULL \
-			      && cur_connection == NULL \
-			      && cur_from == NULL)
-
-#endif /*!DEBUG*/
 
 #define reset_globals() { \
 		whack_log_fd = NULL_FD; \
@@ -164,8 +147,6 @@ extern void show_setup_natt(void);
  */
 extern bool logged_txt_warning;
 extern bool logged_myid_ip_txt_warning;
-extern bool logged_myid_ip_key_warning;
 extern bool logged_myid_fqdn_txt_warning;
-extern bool logged_myid_fqdn_key_warning;
 
 #endif /* _PLUTO_LOG_H */

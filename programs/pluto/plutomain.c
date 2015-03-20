@@ -110,15 +110,13 @@
 
 const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
-bool fork_desired = TRUE;
+static bool fork_desired = TRUE;
 
 /* used for 'ipsec status' */
 static char *ipsecconf = NULL;
 static char *ipsecdir = NULL;
 
-#ifdef DEBUG
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
-#endif
 
 /** usage - print help messages
  *
@@ -171,7 +169,6 @@ static void usage(const char *mess)
 		" \\\n\t"
 		"[--secctx_attr_value <number>]"
 #endif
-#ifdef DEBUG
 		" \\\n\t"
 		"[--debug-none]"
 		" [--debug-all]"
@@ -192,7 +189,6 @@ static void usage(const char *mess)
 		" [--debug-dpd]"
 		" [ --debug-private]"
 		" [ --debug-pfkey]"
-#endif
 		" [ --debug-nat-t]"
 		" \\\n\t"
 		"[--nat_traversal] [--keep_alive <delay_sec>]"
@@ -469,9 +465,7 @@ int main(int argc, char **argv)
 	capng_apply(CAPNG_SELECT_BOTH);
 #endif
 
-#ifdef DEBUG
 	libreswan_passert_fail = passert_fail;
-#endif
 
 	if (getenv("PLUTO_WAIT_FOR_GDB"))
 		sleep(120);
@@ -531,72 +525,72 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 			{ "secctx_attr_value", required_argument, NULL, 'w' },
 #endif
-#ifdef DEBUG
 			{ "debug-none", no_argument, NULL, 'N' },
 			{ "debug-all", no_argument, NULL, 'A' },
 
-			{ "debug-raw", no_argument, NULL, DBG_RAW +
+			{ "debug-raw", no_argument, NULL, DBG_RAW_IX +
 			  DBG_OFFSET },
-			{ "debug-crypt", no_argument, NULL, DBG_CRYPT +
+			{ "debug-crypt", no_argument, NULL, DBG_CRYPT_IX +
 			  DBG_OFFSET },
-			{ "debug-crypto", no_argument, NULL, DBG_CRYPT +
+			{ "debug-crypto", no_argument, NULL, DBG_CRYPT_IX +
 			  DBG_OFFSET },
-			{ "debug-parsing", no_argument, NULL, DBG_PARSING +
+			{ "debug-parsing", no_argument, NULL, DBG_PARSING_IX +
 			  DBG_OFFSET },
-			{ "debug-emitting", no_argument, NULL, DBG_EMITTING +
+			{ "debug-emitting", no_argument, NULL, DBG_EMITTING_IX +
 			  DBG_OFFSET },
-			{ "debug-control", no_argument, NULL, DBG_CONTROL +
+			{ "debug-control", no_argument, NULL, DBG_CONTROL_IX +
 			  DBG_OFFSET },
-			{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE +
+			{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE_IX +
 			  DBG_OFFSET },
-			{ "debug-kernel", no_argument, NULL, DBG_KERNEL +
+			{ "debug-kernel", no_argument, NULL, DBG_KERNEL_IX +
 			  DBG_OFFSET },
-			{ "debug-dns", no_argument, NULL, DBG_DNS +
+			{ "debug-dns", no_argument, NULL, DBG_DNS_IX +
 			  DBG_OFFSET },
-			{ "debug-oppo", no_argument, NULL, DBG_OPPO +
+			{ "debug-oppo", no_argument, NULL, DBG_OPPO_IX +
 			  DBG_OFFSET },
-			{ "debug-oppoinfo", no_argument, NULL, DBG_OPPOINFO +
+			{ "debug-oppoinfo", no_argument, NULL, DBG_OPPOINFO_IX +
 			  DBG_OFFSET },
 			{ "debug-controlmore", no_argument, NULL,
-			  DBG_CONTROLMORE + DBG_OFFSET },
-			{ "debug-dpd", no_argument, NULL, DBG_DPD +
+			  DBG_CONTROLMORE_IX + DBG_OFFSET },
+			{ "debug-dpd", no_argument, NULL, DBG_DPD_IX +
 			  DBG_OFFSET },
-			{ "debug-x509", no_argument, NULL, DBG_X509 +
+			{ "debug-x509", no_argument, NULL, DBG_X509_IX +
 			  DBG_OFFSET },
-			{ "debug-private", no_argument, NULL, DBG_PRIVATE +
+			{ "debug-private", no_argument, NULL, DBG_PRIVATE_IX +
 			  DBG_OFFSET },
-			{ "debug-pfkey", no_argument, NULL, DBG_PFKEY +
+			{ "debug-pfkey", no_argument, NULL, DBG_PFKEY_IX +
 			  DBG_OFFSET },
 
 			/* for backwards compatibility */
-			{ "debug-klips", no_argument, NULL, DBG_KERNEL +
+			{ "debug-klips", no_argument, NULL, DBG_KERNEL_IX +
 			  DBG_OFFSET },
-			{ "debug-netkey", no_argument, NULL, DBG_KERNEL +
+			{ "debug-netkey", no_argument, NULL, DBG_KERNEL_IX +
 			  DBG_OFFSET },
 
 			{ "impair-delay-adns-key-answer", no_argument, NULL,
-			  IMPAIR_DELAY_ADNS_KEY_ANSWER + DBG_OFFSET },
+			  IMPAIR_DELAY_ADNS_KEY_ANSWER_IX + DBG_OFFSET },
 			{ "impair-delay-adns-txt-answer", no_argument, NULL,
-			  IMPAIR_DELAY_ADNS_TXT_ANSWER + DBG_OFFSET },
+			  IMPAIR_DELAY_ADNS_TXT_ANSWER_IX + DBG_OFFSET },
 			{ "impair-bust-mi2", no_argument, NULL,
-			  IMPAIR_BUST_MI2 + DBG_OFFSET },
+			  IMPAIR_BUST_MI2_IX + DBG_OFFSET },
 			{ "impair-bust-mr2", no_argument, NULL,
-			  IMPAIR_BUST_MR2 + DBG_OFFSET },
+			  IMPAIR_BUST_MR2_IX + DBG_OFFSET },
 			{ "impair-sa-creation", no_argument, NULL,
-			  IMPAIR_SA_CREATION + DBG_OFFSET },
+			  IMPAIR_SA_CREATION_IX + DBG_OFFSET },
 			{ "impair-die-oninfo", no_argument, NULL,
-			  IMPAIR_DIE_ONINFO + DBG_OFFSET },
+			  IMPAIR_DIE_ONINFO_IX + DBG_OFFSET },
 			{ "impair-jacob-two-two", no_argument, NULL,
-			  IMPAIR_JACOB_TWO_TWO + DBG_OFFSET },
+			  IMPAIR_JACOB_TWO_TWO_IX + DBG_OFFSET },
 			{ "impair-major-version-bump", no_argument, NULL,
-			  IMPAIR_MAJOR_VERSION_BUMP + DBG_OFFSET },
+			  IMPAIR_MAJOR_VERSION_BUMP_IX + DBG_OFFSET },
 			{ "impair-minor-version-bump", no_argument, NULL,
-			  IMPAIR_MINOR_VERSION_BUMP + DBG_OFFSET },
+			  IMPAIR_MINOR_VERSION_BUMP_IX + DBG_OFFSET },
 			{ "impair-retransmits", no_argument, NULL,
-			  IMPAIR_RETRANSMITS + DBG_OFFSET },
+			  IMPAIR_RETRANSMITS_IX + DBG_OFFSET },
 			{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
-			  IMPAIR_SEND_BOGUS_ISAKMP_FLAG + DBG_OFFSET },
-#endif
+			  IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DBG_OFFSET },
+			{ "impair-send-ikev2-ke", no_argument, NULL,
+			  IMPAIR_SEND_IKEv2_KE_IX + DBG_OFFSET },
 			{ 0, 0, 0, 0 }
 		};
 		/* Note: we don't like the way short options get parsed
@@ -646,8 +640,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    count < -1)
-					usage(
-						"<nhelpers> must be a positive number, 0 or -1");
+					usage("<nhelpers> must be a positive number, 0 or -1");
 
 
 				nhelpers = count;
@@ -657,8 +650,7 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 		case 'w': /* --secctx_attr_value*/
 			if (optarg == NULL || !isdigit(optarg[0]))
-				usage(
-					"missing (positive integer) value of secctx_attr_value (needed only if using labeled ipsec)");
+				usage("missing (positive integer) value of secctx_attr_value (needed only if using labeled ipsec)");
 
 
 			{
@@ -667,8 +659,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    (value != SECCTX && value != 10) )
-					usage(
-						"<secctx_attr_value> must be a positive number (32001 by default, 10 for backward compatibility, or any other future number assigned by IANA)");
+					usage("<secctx_attr_value> must be a positive number (32001 by default, 10 for backward compatibility, or any other future number assigned by IANA)");
 
 
 				secctx_attr_value = (u_int16_t)value;
@@ -760,8 +751,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    interval <= 0)
-					usage(
-						"<interval-time> must be a positive number");
+					usage("<interval-time> must be a positive number");
 
 
 				crl_check_interval = interval;
@@ -791,8 +781,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    port <= 0 || port > 0x10000)
-					usage(
-						"<port-number> must be a number between 1 and 65535");
+					usage("<port-number> must be a number between 1 and 65535");
 
 
 				pluto_port = port;
@@ -808,8 +797,7 @@ int main(int argc, char **argv)
 
 				if (*endptr != '\0' || endptr == optarg ||
 				    port <= 0 || port > 0x10000)
-					usage(
-						"<port-number> must be a number between 1 and 65535");
+					usage("<port-number> must be a number between 1 and 65535");
 
 
 				pluto_natt_float_port = port;
@@ -821,15 +809,13 @@ int main(int argc, char **argv)
 			if (snprintf(ctl_addr.sun_path,
 				     sizeof(ctl_addr.sun_path),
 				     "%s%s", ctlbase, CTL_SUFFIX) == -1)
-				usage(
-					"<path>" CTL_SUFFIX " too long for sun_path");
+				usage("<path>" CTL_SUFFIX " too long for sun_path");
 
 
 			if (snprintf(info_addr.sun_path,
 				     sizeof(info_addr.sun_path),
 				     "%s%s", ctlbase, INFO_SUFFIX) == -1)
-				usage(
-					"<path>" INFO_SUFFIX " too long for sun_path");
+				usage("<path>" INFO_SUFFIX " too long for sun_path");
 
 
 			if (snprintf(pluto_lock, sizeof(pluto_lock),
@@ -851,7 +837,6 @@ int main(int argc, char **argv)
 			pluto_adns_option = optarg;
 			continue;
 
-#ifdef DEBUG
 		case 'N': /* --debug-none */
 			base_debugging = DBG_NONE;
 			continue;
@@ -859,7 +844,6 @@ int main(int argc, char **argv)
 		case 'A': /* --debug-all */
 			base_debugging = DBG_ALL;
 			continue;
-#endif
 
 		case 'P': /* --perpeerlogbase */
 			base_perpeer_logdir = optarg;
@@ -882,11 +866,9 @@ int main(int argc, char **argv)
 		case '4': /* --disable_port_floating */
 			nat_t_spf = FALSE;
 			continue;
-#ifdef DEBUG
 		case '5': /* --debug-nat_t */
 			base_debugging |= DBG_NATT;
 			continue;
-#endif
 		case '6': /* --virtual_private */
 			virtual_private = optarg;
 			continue;
@@ -969,9 +951,7 @@ int main(int argc, char **argv)
 #ifdef HAVE_LABELED_IPSEC
 			secctx_attr_value = cfg->setup.options[KBF_SECCTX];
 #endif
-#ifdef DEBUG
 			base_debugging = cfg->setup.options[KBF_PLUTODEBUG];
-#endif
 			char *protostack = cfg->setup.strings[KSF_PROTOSTACK];
 			if (protostack == NULL || *protostack == 0) {
 				kern_interface = USE_NETKEY;
@@ -1001,13 +981,11 @@ int main(int argc, char **argv)
 		}
 
 		default:
-#ifdef DEBUG
-			if (c >= DBG_OFFSET) {
-				base_debugging |= c - DBG_OFFSET;
+			if (DBG_OFFSET <= c && c < DBG_OFFSET + IMPAIR_roof_IX) {
+				base_debugging |= LELEM(c - DBG_OFFSET);
 				continue;
 			}
 #       undef DBG_OFFSET
-#endif
 			bad_case(c);
 		}
 		break;
@@ -1040,12 +1018,10 @@ int main(int argc, char **argv)
 	if (!log_to_stderr_desired)
 		log_to_stderr = FALSE;
 
-#ifdef DEBUG
 #if 0
 	if (kernel_ops->set_debug)
 		(*kernel_ops->set_debug)(cur_debugging, DBG_log, DBG_log);
 
-#endif
 #endif
 
 	/** create control socket.
@@ -1319,6 +1295,8 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_RETRANSMITS enabled");
 	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG))
 		libreswan_log("Warning: IMPAIR_SEND_BOGUS_ISAKMP_FLAG enabled");
+	if (DBGP(IMPAIR_SEND_IKEv2_KE))
+		libreswan_log("Warning: IMPAIR_SEND_IKEv2_KE enabled");
 
 
 	if (DBGP(IMPAIR_DELAY_ADNS_KEY_ANSWER))

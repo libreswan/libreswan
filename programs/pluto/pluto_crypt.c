@@ -8,7 +8,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Stefan Arentz <stefan@arentz.ca>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -111,7 +111,6 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		    helpernum,
 		    enum_show(&pluto_cryptoop_names, r->pcr_type),
 		    r->pcr_id));
-#ifdef DEBUG
 	{
 		char *d = getenv("PLUTO_CRYPTO_HELPER_DELAY");
 		if (d != NULL) {
@@ -121,7 +120,6 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 			sleep(delay);
 		}
 	}
-#endif
 
 	/* now we have the entire request in the buffer, process it */
 	switch (r->pcr_type) {
@@ -165,8 +163,7 @@ static void pluto_crypto_helper(int fd, int helpernum)
 #if !(defined(macintosh) || (defined(__MACH__) && defined(__APPLE__)))
 	int status = pthread_setschedprio(pthread_self(), 10);
 	DBG(DBG_CONTROL,
-	    DBG_log(
-		    "status value returned by setting the priority of this thread (id=%d) %d",
+	    DBG_log("status value returned by setting the priority of this thread (id=%d) %d",
 		    helpernum, status));
 #endif
 
@@ -222,8 +219,7 @@ static void pluto_crypto_helper(int fd, int helpernum)
 
 	if (!feof(in)) {
 		loglog(RC_LOG_SERIOUS, "helper %d got error: %s", helpernum,
-		       strerror(ferror(
-					in)));
+		       strerror(ferror(in)));
 		goto error;
 	}
 
@@ -247,8 +243,7 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
 	int cnt;
 
 	DBG(DBG_CONTROL,
-	    DBG_log(
-		    "asking helper %d to do %s op on seq: %u (len=%u, pcw_work=%d)",
+	    DBG_log("asking helper %d to do %s op on seq: %u (len=%u, pcw_work=%d)",
 		    w->pcw_helpernum,
 		    enum_show(&pluto_cryptoop_names, r->pcr_type),
 		    r->pcr_id, (unsigned int)r->pcr_len, w->pcw_work + 1));
@@ -264,8 +259,7 @@ static bool crypto_write_request(struct pluto_crypto_worker *w,
 			return FALSE;
 		}
 		if (DBGP(DBG_CONTROL) || cnt != wlen) {
-			DBG_log(
-				"crypto helper write of request: cnt=%d<wlen=%d. \n", cnt,
+			DBG_log("crypto helper write of request: cnt=%d<wlen=%d. \n", cnt,
 				wlen);
 		}
 
@@ -326,12 +320,10 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 			    pc_worker_num, w->pcw_dead, w->pcw_work, cnt));
 
 		/* see if there is something to clean up after */
-		if (w->pcw_dead      == TRUE &&
-		    w->pcw_reaped == TRUE) {
+		if (w->pcw_dead && w->pcw_reaped) {
 			cleanup_crypto_helper(w, 0);
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "clnup %d: w->pcw_dead: %d w->pcw_work: %d cnt: %d",
+			    DBG_log("clnup %d: w->pcw_dead: %d w->pcw_work: %d cnt: %d",
 				    pc_worker_num, w->pcw_dead, w->pcw_work,
 				    cnt));
 		}
@@ -350,8 +342,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 
 			w = &pc_workers[pc_worker_num];
 			/* see if there is something to clean up after */
-			if (w->pcw_dead      == TRUE &&
-			    w->pcw_reaped == TRUE)
+			if (w->pcw_dead && w->pcw_reaped)
 				cleanup_crypto_helper(w, 0);
 		}
 		DBG(DBG_CONTROL,
@@ -378,8 +369,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 
 		backlogqueue_len++;
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "critical demand crypto operation queued on backlog as %d'th item, id: q#%u",
+		    DBG_log("critical demand crypto operation queued on backlog as %d'th item, id: q#%u",
 			    backlogqueue_len, r->pcr_id));
 		*toomuch = FALSE;
 		return NULL;
@@ -401,8 +391,7 @@ err_t send_crypto_helper_request(struct pluto_crypto_req *r,
 		init_crypto_helper(w, pc_worker_num);
 		if (w->pcw_pid == -1) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "found only a dead helper, and failed to restart it"));
+			    DBG_log("found only a dead helper, and failed to restart it"));
 			*toomuch = TRUE;
 			return "failed to start a new helper";
 		}
@@ -456,8 +445,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 		r = cn->pcrc_pcr;
 
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "removing backlog item id: q#%u from queue: %d left",
+		    DBG_log("removing backlog item id: q#%u from queue: %d left",
 			    r->pcr_id, backlogqueue_len));
 
 		/* w points to a worker. Make sure it is live */
@@ -465,8 +453,7 @@ static void crypto_send_backlog(struct pluto_crypto_worker *w)
 			init_crypto_helper(w, pc_worker_num);
 			if (w->pcw_pid == -1) {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "found only a dead helper, and failed to restart it"));
+				    DBG_log("found only a dead helper, and failed to restart it"));
 				/* XXX invoke callback with failure */
 				passert(0);
 				if (pbs_offset(&cn->pcrc_reply_stream))
@@ -524,8 +511,7 @@ void delete_cryptographic_continuation(struct state *st)
 			backlogqueue_len--;
 			r = cn->pcrc_pcr;
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "removing deleted backlog item id: q#%u from queue: %d left",
+			    DBG_log("removing deleted backlog item id: q#%u from queue: %d left",
 				    r->pcr_id, backlogqueue_len));
 			/* if it was on the backlog, it was saved, free it */
 			pfree(r);

@@ -3,7 +3,7 @@
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,11 +43,9 @@ bool
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
 
-#ifdef DEBUG
-void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
+static void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
 			       unsigned long line_no) NEVER_RETURNS;
 libreswan_passert_fail_t libreswan_passert_fail = libreswanlib_passert_fail;
-#endif
 
 void tool_init_log(void)
 {
@@ -141,23 +139,6 @@ void libreswan_log_errno_routine(int e, const char *message, ...)
 		syslog(LOG_ERR, "ERROR: %s. Errno %d: %s", m, e, strerror(e));
 }
 
-void libreswan_exit_log(const char *message, ...)
-{
-	va_list args;
-	char m[LOG_WIDTH]; /* longer messages will be truncated */
-
-	va_start(args, message);
-	fmt_log(m, sizeof(m), message, args);
-	va_end(args);
-
-	if (log_to_stderr)
-		fprintf(stderr, "FATAL ERROR: %s\n", m);
-	if (log_to_syslog)
-		syslog(LOG_ERR, "FATAL ERROR: %s", m);
-
-	exit_tool(1);
-}
-
 void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 {
 	va_list args;
@@ -185,8 +166,6 @@ void libreswan_log_abort(const char *file_str, int line_no)
 
 /* Debugging message support */
 
-#ifdef DEBUG
-
 void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 {
 	char buf[30];
@@ -195,7 +174,7 @@ void libreswan_switch_fail(int n, const char *file_str, unsigned long line_no)
 	libreswan_passert_fail(buf, file_str, line_no);
 }
 
-void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
+static void libreswanlib_passert_fail(const char *pred_str, const char *file_str,
 			       unsigned long line_no)
 {
 	/* we will get a possibly unplanned prefix.  Hope it works */
@@ -293,5 +272,3 @@ void libreswan_DBG_dump(const char *label, const void *p, size_t len)
 #   undef DUMP_LABEL_WIDTH
 #   undef DUMP_WIDTH
 }
-
-#endif /* DEBUG */

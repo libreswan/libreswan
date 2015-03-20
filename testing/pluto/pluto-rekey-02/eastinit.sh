@@ -1,15 +1,6 @@
-#!/bin/sh
-: ==== start ====
-TESTNAME=pluto-rekey-02
-source /testing/pluto/bin/eastlocal.sh
-
-arp -s 192.0.2.1 10:00:00:dc:bc:01
-
-ipsec setup start
+/testing/guestbin/swan-prep
+ipsec _stackmanager start 
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec auto --add northnet--eastnet-nat
-
-echo done
-
-
+ipsec auto --add northnet-eastnet-nat
+echo "initdone"

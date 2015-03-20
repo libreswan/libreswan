@@ -500,10 +500,9 @@ char *argv[];
 			     (long)i - 16, ks, ks2, ks3, (C_Block *)iv3,
 			     DES_ENCRYPT);
 	if (memcmp(cbc_out, cbc3_ok,
-		   (unsigned int)(strlen((char *)cbc_data) + 1 + 7) / 8 * 8) !=
-	    0) {
-		printf(
-			"des_ede3_cbc_encrypt inplace and chained encrypt error\n");
+		   (unsigned int)(strlen((char *)cbc_data) + 1 + 7) / 8 * 8) != 0)
+	     {
+		printf("des_ede3_cbc_encrypt inplace and chained encrypt error\n");
 		err = 1;
 	}
 
@@ -547,8 +546,7 @@ char *argv[];
 			     (long)i - 16, ks, ks2, ks3, (C_Block *)iv3,
 			     DES_DECRYPT);
 	if (memcmp(cbc_in, cbc_data, strlen(cbc_data) + 1) != 0) {
-		printf(
-			"des_ede3_cbc_encrypt inplace and chained decrypt error\n");
+		printf("des_ede3_cbc_encrypt inplace and chained decrypt error\n");
 		err = 1;
 	}
 

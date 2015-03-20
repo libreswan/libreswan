@@ -361,11 +361,11 @@ static int ipsec_mast_check_outbound_policy(struct ipsec_xmit_state *ixs)
 			subnet6toa(&ipsp->ips_flow_d.u.v6.sin6_addr,
 				   &ipsp->ips_mask_d.u.v6.sin6_addr,
 				   0, dflow_txt, sizeof(dflow_txt));
-			inet_addrtot(AF_INET6, &lsw_ip6_hdr(
-					     ixs)->saddr, 0, saddr_txt,
+			inet_addrtot(AF_INET6,
+				     &lsw_ip6_hdr(ixs)->saddr, 0, saddr_txt,
 				     sizeof(saddr_txt));
-			inet_addrtot(AF_INET6, &lsw_ip6_hdr(
-					     ixs)->daddr, 0, daddr_txt,
+			inet_addrtot(AF_INET6,
+				     &lsw_ip6_hdr(ixs)->daddr, 0, daddr_txt,
 				     sizeof(daddr_txt));
 		} else {
 			subnettoa(ipsp->ips_flow_s.u.v4.sin_addr,
@@ -374,11 +374,11 @@ static int ipsec_mast_check_outbound_policy(struct ipsec_xmit_state *ixs)
 			subnettoa(ipsp->ips_flow_d.u.v4.sin_addr,
 				  ipsp->ips_mask_d.u.v4.sin_addr,
 				  0, dflow_txt, sizeof(dflow_txt));
-			inet_addrtot(AF_INET, &lsw_ip4_hdr(
-					     ixs)->saddr, 0, saddr_txt,
+			inet_addrtot(AF_INET,
+				     &lsw_ip4_hdr(ixs)->saddr, 0, saddr_txt,
 				     sizeof(saddr_txt));
-			inet_addrtot(AF_INET, &lsw_ip4_hdr(
-					     ixs)->daddr, 0, daddr_txt,
+			inet_addrtot(AF_INET,
+				     &lsw_ip4_hdr(ixs)->daddr, 0, daddr_txt,
 				     sizeof(daddr_txt));
 		}
 
@@ -769,8 +769,7 @@ int ipsec_mast_device_event(struct notifier_block *unused, unsigned long event,
 				    dev->flags);
 			if (strncmp(dev->name, "ipsec",
 				    strlen("ipsec")) == 0) {
-				printk(
-					KERN_CRIT "IPSEC EVENT: KLIPS device %s shut down.\n",
+				printk(KERN_CRIT "IPSEC EVENT: KLIPS device %s shut down.\n",
 					dev->name);
 			}
 			break;

@@ -1,18 +1,12 @@
-: ==== start ====
-TESTNAME=interop-ikev2-strongswan-06-aes192
-source /testing/pluto/bin/westnlocal.sh
-
+/testing/guestbin/swan-prep
 # confirm that the network is alive
-ping -n -c 1 192.0.2.254
+ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through
-iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
-# confirm with a ping to east-in
-ping -n -c 1 192.0.2.254
-
-ipsec setup start
+iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+# confirm with a ping
+ping -n -c 4 -I 192.0.1.254 192.0.2.254
+ipsec _stackmanager start
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec whack --whackrecord /var/tmp/ikev2.record
-ipsec auto --add westnet--eastnet-ikev2
-ipsec auto --status
+ipsec auto --add westnet-eastnet-ikev2
 echo "initdone"

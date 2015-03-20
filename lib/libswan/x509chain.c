@@ -146,8 +146,7 @@ void add_authcert(x509cert_t *cert, u_char auth_flags)
 			/* cert is already present, just add additional authority flags */
 			old_cert->authority_flags |= cert->authority_flags;
 			DBG(DBG_X509 | DBG_PARSING,
-			    DBG_log(
-				    "  authcert is already present and identical")
+			    DBG_log("  authcert is already present and identical")
 			    );
 			unlock_authcert_list("add_authcert");
 
@@ -186,8 +185,8 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 	save_dir = getcwd(buf, ASN1_BUF_LEN);
 
 	if (chdir(path)) {
-		libreswan_log("Could not change to directory '%s': %s", path, strerror(
-				      errno));
+		libreswan_log("Could not change to directory '%s': %s",
+			path, strerror(errno));
 	} else {
 		DBG(DBG_CONTROL, DBG_log("Changed path to directory '%s'",
 					 path));

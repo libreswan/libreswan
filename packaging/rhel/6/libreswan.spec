@@ -14,7 +14,7 @@
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: 3.7
+Version: 3.8
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
@@ -30,6 +30,7 @@ Requires(preun): /sbin/service
 Conflicts: openswan < %{version}-%{release}
 Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
+Provides: openswan-doc = %{version}-%{release}
 
 BuildRequires: pkgconfig net-tools
 BuildRequires: nss-devel >= 3.14.3, nspr-devel
@@ -195,6 +196,6 @@ if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
 fi
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.7-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.8-1
 - Automated build from release tar ball
 

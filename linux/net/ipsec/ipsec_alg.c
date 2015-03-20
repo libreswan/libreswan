@@ -563,8 +563,7 @@ static int check_enc(struct ipsec_alg_enc *ixt)
 
 zero_key_ok:
 	if (ixt->ixt_e_ctx_size == 0 && ixt->ixt_e_new_key == NULL) {
-		barf_out(
-			KERN_ERR "invalid key_e_size=%d and ixt_e_new_key=NULL\n",
+		barf_out(KERN_ERR "invalid key_e_size=%d and ixt_e_new_key=NULL\n",
 			ixt->ixt_e_ctx_size);
 	}
 	if (ixt->ixt_e_cbc_encrypt == NULL)
@@ -608,8 +607,7 @@ static int check_auth(struct ipsec_alg_auth *ixt)
 			 ixt->ixt_common.ixt_support.ias_keymaxbits);
 	if (ixt->ixt_common.ixt_support.ias_keymaxbits !=
 	    ixt->ixt_common.ixt_support.ias_keyminbits)
-		barf_out(
-			KERN_ERR "keymaxbits must equal keyminbits (not sure).\n");
+		barf_out(KERN_ERR "keymaxbits must equal keyminbits (not sure).\n");
 
 
 	if (ixt->ixt_a_keylen == 0)

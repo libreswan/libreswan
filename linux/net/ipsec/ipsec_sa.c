@@ -123,8 +123,8 @@ static int ipsec_SAref_recycle(void)
 		    ipsec_sadb.refFreeListCont,
 		    (ipsec_sadb.refTable[IPsecSAref2table(ipsec_sadb.
 							  refFreeListCont)] !=
-		     NULL) ? IPsecSAref2SA(
-			    ipsec_sadb.refFreeListCont) : NULL,
+		     NULL) ?
+		     IPsecSAref2SA(ipsec_sadb.refFreeListCont) : NULL,
 		    IPsecSAref2table(ipsec_sadb.refFreeListCont),
 		    IPsecSAref2entry(ipsec_sadb.refFreeListCont));
 
@@ -332,8 +332,7 @@ static IPsecSAref_t ipsec_SAref_alloc(int*error) /* pass in error var by pointer
 		    "allocating SAref=%d, table=%u, entry=%u of %u.\n",
 		    SAref,
 		    IPsecSAref2table(SAref),
-		    IPsecSAref2entry(
-			    SAref),
+		    IPsecSAref2entry(SAref),
 		    IPSEC_SA_REF_MAINTABLE_NUM_ENTRIES *
 		    IPSEC_SA_REF_SUBTABLE_NUM_ENTRIES);
 
@@ -956,8 +955,7 @@ int ipsec_sadb_free(void)
 						entry[entry
 						];
 
-					BUG_ON(atomic_read(
-						       &sa1->ips_refcount) ==
+					BUG_ON(atomic_read(&sa1->ips_refcount) ==
 					       1);
 					ipsec_sa_put(sa1, IPSEC_REFSAADD);
 					ipsec_sadb.refTable[table]->entry[entry
@@ -989,8 +987,7 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 		    ipsec_sadb.refTable != NULL)
 			subtable =
 				ipsec_sadb.refTable[IPsecSAref2table(
-							    IPsecSA2SAref(ips))
-				];
+							    IPsecSA2SAref(ips))];
 
 		sa_len = KLIPS_SATOT(debug_xform, &ips->ips_said, 0, sa,
 				     sizeof(sa));

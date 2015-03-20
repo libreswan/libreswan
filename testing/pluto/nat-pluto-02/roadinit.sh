@@ -1,14 +1,5 @@
-#!/bin/sh
-
-# make sure that NAT is working
-#ping -c 4 -n sunrise
-: ==== start ====
-TESTNAME=nat-pluto-02
-source /testing/pluto/bin/roadlocal.sh
-
+/testing/guestbin/swan-prep
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec auto --add road--eastnet-nat
-
-echo done
+ipsec auto --add road-eastnet-nat
+echo "initdone"

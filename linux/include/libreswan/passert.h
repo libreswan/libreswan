@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  * Copyright (C) 2003  Michael Richardson <mcr@freeswan.org>
+ * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -21,8 +22,6 @@
 #define _LIBRESWAN_PASSERT_H
 /* our versions of assert: log result */
 
-#ifdef DEBUG
-
 typedef void (*libreswan_passert_fail_t)(const char *pred_str,
 					 const char *file_str,
 					 unsigned long line_no) NEVER_RETURNS;
@@ -32,7 +31,7 @@ extern libreswan_passert_fail_t libreswan_passert_fail;
 extern void pexpect_log(const char *pred_str,
 			const char *file_str, unsigned long line_no);
 
-# define impossible() do { \
+#define impossible() do { \
 		if (libreswan_passert_fail) {                                        \
 			(*libreswan_passert_fail)("impossible", __FILE__, \
 						  __LINE__); \
@@ -42,9 +41,9 @@ extern void libreswan_switch_fail(int n,
 				  const char *file_str,
 				  unsigned long line_no) NEVER_RETURNS;
 
-# define bad_case(n) libreswan_switch_fail((int) n, __FILE__, __LINE__)
+#define bad_case(n) libreswan_switch_fail((int) n, __FILE__, __LINE__)
 
-# define passert(pred) do { \
+#define passert(pred) do { \
 		if (!(pred)) \
 			if (libreswan_passert_fail) { \
 				(*libreswan_passert_fail)(#pred, __FILE__, \
@@ -52,28 +51,18 @@ extern void libreswan_switch_fail(int n,
 			} \
 } while (0)
 
-# define pexpect(pred) do { \
+#define pexpect(pred) do { \
 		if (!(pred)) \
 			pexpect_log(#pred, __FILE__, __LINE__); \
 } while (0)
 
 /* assert that an err_t is NULL; evaluate exactly once */
-# define happy(x) { \
+#define happy(x) { \
 		err_t ugh = x; \
 		if (ugh != NULL) \
 			if (libreswan_passert_fail) { (*libreswan_passert_fail)( \
 							      ugh, __FILE__, \
 							      __LINE__); }  \
 }
-
-#else /*!DEBUG*/
-
-# define impossible() lsw_abort()
-# define bad_case(n) lsw_abort()
-# define passert(pred)  { }             /* do nothing */
-# define pexpect(pred)  { }             /* do nothing */
-# define happy(x)  { (void) x; }        /* evaluate non-judgementally */
-
-#endif /*!DEBUG*/
 
 #endif /* _LIBRESWAN_PASSERT_H */

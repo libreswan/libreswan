@@ -69,7 +69,7 @@ typedef struct chunk chunk_t;
 #define chunkcpy(dst, chunk) \
 	do { memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len; } while (0)
 #define same_chunk(a, b) \
-	(a).len == (b).len && memcmp((a).ptr, (b).ptr, (b).len) == 0
+	((a).len == (b).len && memeq((a).ptr, (b).ptr, (b).len))
 
 extern const chunk_t empty_chunk;
 

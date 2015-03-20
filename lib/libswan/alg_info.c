@@ -159,7 +159,7 @@ int alg_enum_search_prefix(enum_names *ed, const char *prefix, const char *str,
 		*ptr++ = toupper(*str++);
 	*ptr = 0;
 
-	DBG(DBG_CRYPT, DBG_log("enum_search_prefix () "
+	DBG(DBG_CONTROL, DBG_log("alg_enum_search_prefix() "
 			       "calling enum_search(%p, \"%s\")", ed, buf));
 
 	ret = enum_search(ed, buf);
@@ -193,19 +193,23 @@ int alg_enum_search_ppfix(enum_names *ed, const char *prefix,
  *      Search esp_transformid_names for a match, eg:
  *              "3des" <=> "ESP_3DES"
  */
-#define ESP_MAGIC_ID 0x00ffff01
 static int ealg_getbyname_esp(const char *const str, int len)
 {
 	int ret = -1;
+	unsigned num;
 
 	if (!str || !*str)
-		goto out;
-	/* leave special case for eg:  "id248" string */
-	if (strcmp("id", str) == 0)
-		return ESP_MAGIC_ID;
+		return ret;
 
 	ret = alg_enum_search_prefix(&esp_transformid_names, "ESP_", str, len);
-out:
+	if (ret >= 0)
+		return ret;
+
+	/* support idXXX as syntax, matching iana numbers directly */
+	sscanf(str, "id%d%n", &ret, &num);
+	if (ret >= 0 && num != strlen(str))
+		ret = -1;
+
 	return ret;
 }
 
@@ -213,33 +217,44 @@ out:
  *      Search auth_alg_names for a match, eg:
  *              "md5" <=> "AUTH_ALGORITHM_HMAC_MD5"
  */
-static int aalg_getbyname_esp(const char *const str, int len)
+static int aalg_getbyname_esp(const char *str, int len)
 {
 	int ret = -1;
 	unsigned num;
+	static const char sha2_256_aka[] = "sha2";
 
-	if (!str || !*str)
-		goto out;
+	DBG_log("entering aalg_getbyname_esp()");
+        if (!str || !*str)
+                return ret;
+
+	/* handle "sha2" as "sha2_256" */
+	if (len == sizeof(sha2_256_aka)-1 && strncasecmp(str, sha2_256_aka, sizeof(sha2_256_aka)-1) == 0) {
+		DBG_log("interpreting ESP sha2 as sha2_256");
+		str = "sha2_256";
+		len = strlen(str);
+       }
+
 	ret = alg_enum_search_prefix(&auth_alg_names, "AUTH_ALGORITHM_HMAC_",
 				     str, len);
 	if (ret >= 0)
-		goto out;
+		return ret;
 	ret = alg_enum_search_prefix(&auth_alg_names, "AUTH_ALGORITHM_", str,
 				     len);
 	if (ret >= 0)
-		goto out;
+		return ret;
 
 	/* Special value for no authentication since zero is already used. */
 	ret = INT_MAX;
 	if (!strncasecmp(str, "null", len))
-		goto out;
+		return ret;
 
 	sscanf(str, "id%d%n", &ret, &num);
 	if (ret >= 0 && num != strlen(str))
 		ret = -1;
-out:
+
 	return ret;
 }
+
 static int modp_getbyname_esp(const char *const str, int len)
 {
 	int ret = -1;
@@ -622,10 +637,12 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 		ealg_id =
 			p_ctx->ealg_getbyname(p_ctx->ealg_buf,
 					      strlen(p_ctx->ealg_buf));
+#if 0
 		if (ealg_id == ESP_MAGIC_ID) {
 			ealg_id = p_ctx->eklen;
 			p_ctx->eklen = 0;
 		}
+#endif
 		if (ealg_id < 0) {
 			p_ctx->err = "enc_alg not found";
 			return -1;
@@ -921,7 +938,7 @@ void alg_info_delref(struct alg_info **alg_info_p)
 
 /*	snprint already parsed transform list (alg_info)	*/
 int alg_info_snprint(char *buf, int buflen,
-		     struct alg_info *alg_info)
+		     const struct alg_info *alg_info)
 {
 	char *ptr = buf;
 	struct esp_info *esp_info;
@@ -945,9 +962,9 @@ int alg_info_snprint(char *buf, int buflen,
 				 (int)esp_info->esp_ealg_keylen,
 				 enum_name(&auth_alg_names,
 					   esp_info->esp_aalg_id) +
-				 (esp_info->esp_aalg_id ? sizeof(
-					  "AUTH_ALGORITHM_HMAC") : sizeof(
-					  "AUTH_ALGORITHM")),
+				 (esp_info->esp_aalg_id ?
+					sizeof("AUTH_ALGORITHM_HMAC") :
+					sizeof("AUTH_ALGORITHM")),
 				 esp_info->esp_aalg_id,
 				 (int)esp_info->esp_aalg_keylen);
 			size_t np = strlen(ptr);

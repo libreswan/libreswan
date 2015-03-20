@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/initsystems/sysvinit/
+srcdir?=${LIBRESWANSRCDIR}/initsystems/openrc/
 
 INITDFILE=ipsec.init
 SUBDIRS=

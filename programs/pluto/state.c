@@ -8,7 +8,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
@@ -689,18 +689,14 @@ static void foreach_states_by_connection_func(struct connection *c,
 					struct state *old_cur_state =
 						cur_state ==
 						this ? NULL : cur_state;
-#ifdef DEBUG
 					lset_t old_cur_debugging =
 						cur_debugging;
-#endif
 
 					set_cur_state(this);
 					(*successfunc)(this, c, arg);
 
 					cur_state = old_cur_state;
-#ifdef DEBUG
 					set_debugging(old_cur_debugging);
-#endif
 				}
 			}
 		}
@@ -1068,10 +1064,9 @@ struct state *find_state_ikev1(const u_char *icookie,
 	while (st != (struct state *) NULL) {
 		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
 		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
-		    st->st_ikev2 == FALSE) {
+		    !st->st_ikev2) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
+			    DBG_log("v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
 				    st->st_serialno,
 				    (long unsigned)ntohl(msgid),
 				    (long unsigned)ntohl(st->st_msgid)));
@@ -1105,10 +1100,9 @@ struct state *find_state_ikev1_loopback(const u_char *icookie,
 	while (st != (struct state *) NULL) {
 		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
 		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
-		    st->st_ikev2 == FALSE) {
+		    !st->st_ikev2) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "loopback: v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
+			    DBG_log("loopback: v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
 				    st->st_serialno,
 				    (long unsigned)ntohl(msgid),
 				    (long unsigned)ntohl(st->st_msgid)));
@@ -1125,8 +1119,7 @@ struct state *find_state_ikev1_loopback(const u_char *icookie,
 		    if (st == NULL)
 			    DBG_log("loopback: v1 state object not found");
 		    else
-			    DBG_log(
-				    "loopback: v1 state object #%lu found, in %s",
+			    DBG_log("loopback: v1 state object #%lu found, in %s",
 				    st->st_serialno,
 				    enum_show(&state_names, st->st_state));
 	    });
@@ -1147,8 +1140,8 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 	while (st != (struct state *) NULL) {
 		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
 		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
-		    st->st_ikev2 == TRUE &&
-		    st->st_clonedfrom == 0) {
+		    st->st_ikev2 &&
+		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v2 peer and cookies match on #%ld",
 				    st->st_serialno));
@@ -1180,8 +1173,8 @@ struct state *find_state_ikev2_parent_init(const u_char *icookie)
 
 	while (st != (struct state *) NULL) {
 		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
-		    st->st_ikev2 == TRUE &&
-		    st->st_clonedfrom == 0) {
+		    st->st_ikev2 &&
+		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v2 peer and cookies match on #%ld",
 				    st->st_serialno));
@@ -1215,7 +1208,7 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 	while (st != (struct state *) NULL) {
 		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
 		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
-		    st->st_ikev2 == TRUE &&
+		    st->st_ikev2 &&
 		    st->st_msgid == msgid) {
 			DBG(DBG_CONTROL,
 			    DBG_log("v2 peer, cookies and msgid match on #%ld",
@@ -1252,7 +1245,7 @@ struct state *find_state_ikev2_child_to_delete(const u_char *icookie,
 	while (st != (struct state *) NULL) {
 		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
 		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0 &&
-		    st->st_ikev2 == TRUE) {
+		    st->st_ikev2) {
 			struct ipsec_proto_info *pr = protoid ==
 						      PROTO_IPSEC_AH ?
 						      &st->st_ah : &st->st_esp;
@@ -1295,8 +1288,7 @@ struct state *find_info_state(const u_char *icookie,
 		if (memcmp(icookie, st->st_icookie, COOKIE_SIZE) == 0 &&
 		    memcmp(rcookie, st->st_rcookie, COOKIE_SIZE) == 0) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "peer and cookies match on #%ld, provided msgid %08lx vs %08lx/%08lx",
+			    DBG_log("peer and cookies match on #%ld, provided msgid %08lx vs %08lx/%08lx",
 				    st->st_serialno,
 				    (long unsigned)ntohl(msgid),
 				    (long unsigned)ntohl(st->st_msgid),
@@ -1492,7 +1484,7 @@ void fmt_state(struct state *st, const time_t n,
 			time_t tn = time(NULL);
 
 			/* stats are on parent sa */
-			if (st->st_clonedfrom != SOS_NOBODY) {
+			if (IS_CHILD_SA(st)) {
 				pst = state_with_serialno(st->st_clonedfrom);
 				if (pst != NULL) {
 					snprintf(dpdbuf, sizeof(dpdbuf),

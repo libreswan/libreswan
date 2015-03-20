@@ -107,8 +107,7 @@ bool orient(struct connection *c)
 				    sameaddr(&sr->this.host_addr,
 					     &p->ip_addr)) {
 					DBG(DBG_CONTROLMORE,
-					    DBG_log(
-						    "loopback connections \"%s\" with interface %s!",
+					    DBG_log("loopback connections \"%s\" with interface %s!",
 						    c->name,
 						    p->ip_dev->id_rname));
 					c->interface = p;
@@ -127,19 +126,16 @@ bool orient(struct connection *c)
 							if (c->interface->
 							    ip_dev ==
 							    p->ip_dev) {
-								loglog(
-									RC_LOG_SERIOUS,
+								loglog(RC_LOG_SERIOUS,
 									"both sides of \"%s\" are our interface %s!",
 									c->name,
 									p->ip_dev->id_rname);
 							} else {
-								loglog(
-									RC_LOG_SERIOUS, "two interfaces match \"%s\" (%s, %s)",
+								loglog(RC_LOG_SERIOUS, "two interfaces match \"%s\" (%s, %s)",
 									c->name, c->interface->ip_dev->id_rname,
 									p->ip_dev->id_rname);
 							}
-							terminate_connection(
-								c->name);
+							terminate_connection(c->name);
 							c->interface = NULL; /* withdraw orientation */
 							return FALSE;
 						}
@@ -325,14 +321,11 @@ void restart_connections_by_peer(struct connection *c)
 
 	d = c->host_pair->connections;
 	for (; d != NULL; d = d->hp_next) {
-		if (
-			(c->dnshostname && d->dnshostname &&
-			 streq(c->dnshostname, d->dnshostname)) ||
-			(c->dnshostname == NULL && d->dnshostname == NULL &&
-			sameaddr(&d->spd.that.host_addr,
-				 &c->spd.that.host_addr)
-			)
-			)
+		if ((c->dnshostname && d->dnshostname &&
+		     streq(c->dnshostname, d->dnshostname)) ||
+		    (c->dnshostname == NULL && d->dnshostname == NULL &&
+		     sameaddr(&d->spd.that.host_addr,
+				 &c->spd.that.host_addr)))
 			terminate_connection(d->name);
 	}
 
@@ -343,14 +336,11 @@ void restart_connections_by_peer(struct connection *c)
 
 	d = c->host_pair->connections;
 	for (; d != NULL; d = d->hp_next) {
-		if (
-			(c->dnshostname && d->dnshostname &&
-			 streq(c->dnshostname, d->dnshostname)) ||
-			(c->dnshostname == NULL && d->dnshostname == NULL &&
-			sameaddr(&d->spd.that.host_addr,
-				 &c->spd.that.host_addr)
-			)
-			)
+		if ((c->dnshostname && d->dnshostname &&
+		     streq(c->dnshostname, d->dnshostname)) ||
+		    (c->dnshostname == NULL && d->dnshostname == NULL &&
+		     sameaddr(&d->spd.that.host_addr,
+				 &c->spd.that.host_addr)))
 			initiate_connection(d->name, NULL_FD, 0,
 					    pcim_demand_crypto);
 	}
@@ -491,7 +481,6 @@ static void cannot_oppo(struct connection *c,
 				      nc->newest_ipsec_sa,
 				      ocb, pcb));
 
-#ifdef DEBUG
 		if (DBGP(DBG_OPPO | DBG_CONTROLMORE)) {
 			char state_buf[LOG_WIDTH];
 			char state_buf2[LOG_WIDTH];
@@ -502,7 +491,6 @@ static void cannot_oppo(struct connection *c,
 			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
 			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
 		}
-#endif          /* DEBUG */
 
 		if (!route_and_eroute(c, shunt_spd, st)) {
 			whack_log(RC_OPPOFAILURE,
@@ -521,8 +509,7 @@ static void cannot_oppo(struct connection *c,
 		 */
 		if (failure_shunt == 0) {
 			DBG(DBG_OPPO,
-			    DBG_log(
-				    "no explicit failure shunt for %s to %s; removing spurious hold shunt",
+			    DBG_log("no explicit failure shunt for %s to %s; removing spurious hold shunt",
 				    ocb, pcb));
 		}
 		(void) replace_bare_shunt(&b->our_client, &b->peer_client,
@@ -592,7 +579,6 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 					   cr->b.transport_proto);
 	}
 
-#ifdef DEBUG
 	/* if we're going to ignore the error, at least note it in debugging log */
 	if (cr->b.failure_ok && ugh != NULL) {
 		DBG(DBG_CONTROL | DBG_DNS,
@@ -602,12 +588,10 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 
 			    addrtot(&cr->b.our_client, 0, ocb, sizeof(ocb));
 			    addrtot(&cr->b.peer_client, 0, pcb, sizeof(pcb));
-			    DBG_log(
-				    "continuing from failed DNS lookup for %s, %s to %s: %s",
+			    DBG_log("continuing from failed DNS lookup for %s, %s to %s: %s",
 				    cr->b.want, ocb, pcb, ugh);
 		    });
 	}
-#endif
 
 	if (!cr->b.failure_ok && ugh != NULL) {
 		c = find_connection_for_clients(NULL, &cr->b.our_client,
@@ -858,8 +842,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 			if (ugh != NULL) {
 				/* cannot use our IP as OE identitiy for initiation */
 				DBG(DBG_OPPO,
-				    DBG_log(
-					    "can not use our IP (%s:IPSECKEY) as identity: %s",
+				    DBG_log("can not use our IP (%s:IPSECKEY) as identity: %s",
 					    myid_str[MYID_IP],
 					    ugh));
 				if (!logged_myid_ip_txt_warning) {
@@ -890,8 +873,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 			if (ugh != NULL) {
 				/* cannot use our hostname as OE identitiy for initiation */
 				DBG(DBG_OPPO,
-				    DBG_log(
-					    "can not use our hostname (%s:IPSECKEY) as identity: %s",
+				    DBG_log("can not use our hostname (%s:IPSECKEY) as identity: %s",
 					    myid_str[MYID_HOSTNAME],
 					    ugh));
 				if (!logged_myid_fqdn_txt_warning) {
@@ -1015,8 +997,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 								&gwp->key->u.
 								rsa)) {
 						DBG(DBG_CONTROL,
-						    DBG_log(
-							    "initiate on demand found IPSECKEY with right public key at: %s",
+						    DBG_log("initiate on demand found IPSECKEY with right public key at: %s",
 							    mycredentialstr));
 						ugh = NULL;
 						break;
@@ -1092,8 +1073,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 				}
 				c->gw_info->key->last_tried_time = now();
 				DBG(DBG_OPPO | DBG_CONTROL,
-				    DBG_log(
-					    "initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
+				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
 					    ours, ourport, his, hisport,
 					    b->transport_proto,
 					    oppo_step_name[b->step], b->want));
@@ -1122,8 +1102,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 
 			    addrtot(&b->our_client, 0, ours2, sizeof(ours));
 			    addrtot(&b->peer_client, 0, his2, sizeof(his));
-			    DBG_log(
-				    "initiate on demand from %s to %s new state: %s with ugh: %s",
+			    DBG_log("initiate on demand from %s to %s new state: %s with ugh: %s",
 				    ours2, his2, oppo_step_name[b->step],
 				    ugh ? ugh : "ok");
 		    });
@@ -1367,8 +1346,7 @@ static void connection_check_ddns1(struct connection *c)
 	    ((c->policy & POLICY_SHUNT_MASK) == 0 &&
 	     c->spd.that.has_id_wildcards)) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "pending ddns: connection \"%s\" with wildcard not started",
+		    DBG_log("pending ddns: connection \"%s\" with wildcard not started",
 			    c->name));
 		return;
 	}
@@ -1376,16 +1354,14 @@ static void connection_check_ddns1(struct connection *c)
 	e = ttoaddr(c->dnshostname, 0, 0, &new_addr);
 	if (e != NULL) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",
+		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",
 			    c->name, c->dnshostname, e));
 		return;
 	}
 
 	if (isanyaddr(&new_addr)) {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "pending ddns: connection \"%s\" still no address for \"%s\"",
+		    DBG_log("pending ddns: connection \"%s\" still no address for \"%s\"",
 			    c->name, c->dnshostname));
 		return;
 	}
@@ -1467,16 +1443,14 @@ void connection_check_phase2(void)
 
 		if (NEVER_NEGOTIATE(c->policy)) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "pending review: connection \"%s\" has no negotiated policy, skipped",
+			    DBG_log("pending review: connection \"%s\" has no negotiated policy, skipped",
 				    c->name));
 			continue;
 		}
 
 		if (!(c->policy & POLICY_UP)) {
 			DBG(DBG_CONTROL,
-			    DBG_log(
-				    "pending review: connection \"%s\" was not up, skipped",
+			    DBG_log("pending review: connection \"%s\" was not up, skipped",
 				    c->name));
 			continue;
 		}

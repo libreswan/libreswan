@@ -60,9 +60,9 @@ static MP_INT
 	dh23_modulus,
 	dh24_modulus;
 
-MP_INT groupgenerator;  /* MODP group generator (2) */
+static MP_INT groupgenerator;  /* MODP group generator (2) */
 
-MP_INT generator_dh22,
+static MP_INT generator_dh22,
        generator_dh23,
        generator_dh24;
 
@@ -307,8 +307,7 @@ void crypto_cbc_encrypt(const struct encrypt_desc *e, bool enc,
 
 #if 0
 	DBG(DBG_CRYPT,
-	    DBG_log(
-		    "encrypting buf=%p size=%d keyptr: %p keysize: %d, iv: %p enc: %d",
+	    DBG_log("encrypting buf=%p size=%d keyptr: %p keysize: %d, iv: %p enc: %d",
 		    buf, size, st->st_enc_key.ptr,
 		    st->st_enc_key.len, st->st_new_iv, enc));
 #endif

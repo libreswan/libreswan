@@ -129,7 +129,7 @@ extern struct alg_info_esp * alg_info_ah_create_from_str(const char *alg_str,
 
 extern int alg_info_parse(const char *str);
 extern int alg_info_snprint(char *buf, int buflen,
-		     struct alg_info *alg_info);
+		     const struct alg_info *alg_info);
 
 extern void alg_info_snprint_ike(char *buf, size_t buflen,
 			  struct alg_info_ike *alg_info);

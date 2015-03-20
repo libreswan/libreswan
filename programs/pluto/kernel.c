@@ -102,8 +102,7 @@ static int num_ipsec_eroute = 0;
 
 static void free_bare_shunt(struct bare_shunt **pp);
 
-#ifdef DEBUG
-void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs)
+static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
 	DBG(DBG_KERNEL,
 	    {
@@ -118,14 +117,12 @@ void DBG_bare_shunt_log(const char *op, const struct bare_shunt *bs)
 		    subnettot(&(bs)->his, 0, hist, sizeof(hist));
 		    satot(&(bs)->said, 0, sat, sizeof(sat));
 		    fmt_policy_prio(bs->policy_prio, prio);
-		    DBG_log(
-			    "%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
+		    DBG_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
 			    op, (const void *)(bs), ourst, ourport,
 			    (bs)->transport_proto, hist, hisport,
 			    sat, prio, (bs)->why);
 	    });
 }
-#endif
 
 void record_and_initiate_opportunistic(const ip_subnet *ours,
 				       const ip_subnet *his,
@@ -888,7 +885,7 @@ static bool raw_eroute(const ip_address *this_host,
 		       time_t use_lifetime,
 		       unsigned long sa_priority,
 		       enum pluto_sadb_operations op,
-		       const char *opname USED_BY_DEBUG
+		       const char *opname
 #ifdef HAVE_LABELED_IPSEC
 		       , char *policy_label
 #endif
@@ -930,7 +927,7 @@ static bool raw_eroute(const ip_address *this_host,
 #endif
 					);
 
-	if (result == FALSE || DBGP(DBG_CONTROL | DBG_KERNEL))
+	if (!result || DBGP(DBG_CONTROL | DBG_KERNEL))
 		DBG_log("raw_eroute result=%u\n", result);
 
 	return result;
@@ -1041,8 +1038,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			/* is there already a broad host-to-host bare shunt? */
 			if (bs_pp == NULL) {
 				DBG(DBG_KERNEL,
-				    DBG_log(
-					    "replacing broad host-to-host bare shunt"));
+				    DBG_log("replacing broad host-to-host bare shunt"));
 				if (raw_eroute(null_host, &this_broad_client,
 					       null_host, &that_broad_client,
 					       htonl(shunt_spi), SA_INT,
@@ -1187,7 +1183,7 @@ bool eroute_connection(struct spd_route *sr,
 
 /* assign a bare hold to a connection */
 
-bool assign_hold(struct connection *c USED_BY_DEBUG,
+bool assign_hold(struct connection *c,
 		 struct spd_route *sr,
 		 int transport_proto,
 		 const ip_address *src, const ip_address *dst)
@@ -1463,8 +1459,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			goto fail;
 		}
 
-		time(
-			(inbound) ? &st->st_esp.our_lastused : &st->st_esp.peer_lastused);
+		time((inbound) ? &st->st_esp.our_lastused : &st->st_esp.peer_lastused);
 
 		DBG(DBG_KERNEL,
 		    DBG_log("added tunnel with ref=%u", said_next->ref));
@@ -1649,8 +1644,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		DBG(DBG_CRYPT,
-		    DBG_log(
-			    "looking for alg with transid: %d keylen: %d auth: %d\n",
+		    DBG_log("looking for alg with transid: %d keylen: %d auth: %d\n",
 			    st->st_esp.attrs.transattrs.encrypt,
 			    st->st_esp.attrs.transattrs.enckeylen,
 			    st->st_esp.attrs.transattrs.integ_hash));
@@ -1686,8 +1680,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			}
 
 			DBG(DBG_CRYPT,
-			    DBG_log(
-				    "checking transid: %d keylen: %d auth: %d\n",
+			    DBG_log("checking transid: %d keylen: %d auth: %d\n",
 				    ei->transid, ei->enckeylen, ei->auth));
 
 			if (st->st_esp.attrs.transattrs.encrypt ==
@@ -1775,8 +1768,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if ( (said_next->authalg == AUTH_ALGORITHM_HMAC_SHA2_256) &&
 		     (st->st_connection->sha2_truncbug)) {
 			if (kernel_ops->sha2_truncbug_support) {
-				DBG_log(
-					" authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits");
+				DBG_log(" authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits");
 				/* We need to tell the kernel to mangle the sha2_256, as instructed by the user */
 				said_next->authalg =
 					AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG;
@@ -2094,13 +2086,11 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (new_refhim != IPSEC_SAREF_NULL)
 		st->st_refhim = new_refhim;
 
-#ifdef DEBUG
 	/* if the impaired is set, pretend this fails */
 	if (st->st_connection->extra_debugging & IMPAIR_SA_CREATION) {
 		DBG_log("Impair SA creation is set, pretending to fail");
 		goto fail;
 	}
-#endif
 	return TRUE;
 
 fail:
@@ -2145,7 +2135,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY,
 				  c->spd.this.protocol,
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
-				  null_proto_info, 0, c->sa_priority, 
+				  null_proto_info, 0, c->sa_priority,
 				  ERO_DEL_INBOUND, "delete inbound"
 #ifdef HAVE_LABELED_IPSEC
 				  , c->policy_label
@@ -2333,8 +2323,7 @@ static void look_for_replacement_state(struct state *st)
 
 	DBG(DBG_CONTROL, {
 		    DBG_log("checking if this is a replacement state");
-		    DBG_log(
-			    "  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu ",
+		    DBG_log("  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu ",
 			    st, ost, st->st_serialno,
 			    ost ? ost->st_serialno : 0);
 	    });
@@ -2412,8 +2401,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 	case route_easy:
 	case route_nearconflict:
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "   routing is easy, or has resolvable near-conflict"));
+		    DBG_log("   routing is easy, or has resolvable near-conflict"));
 		break;
 
 	case route_unnecessary:
@@ -2450,8 +2438,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 #ifdef HAVE_LABELED_IPSEC
 	} else {
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "in case of loopback, the state that initiated this quick mode exchange will install outgoing SAs, so skipping this"));
+		    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install outgoing SAs, so skipping this"));
 	}
 #endif
 
@@ -2470,8 +2457,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 #ifdef HAVE_LABELED_IPSEC
 } else {
 	DBG(DBG_CONTROL,
-	    DBG_log(
-		    "in case of loopback, the state that initiated this quick mode exchange will install incoming SAs, so skipping this"));
+	    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install incoming SAs, so skipping this"));
 	return TRUE;
 }
 #endif
@@ -2502,8 +2488,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 	ro = route_owner(c, sr, &rosr, &ero, &esr);
 
 	DBG(DBG_CONTROLMORE,
-	    DBG_log(
-		    "route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: %lu",
+	    DBG_log("route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: %lu",
 		    c->name,
 		    (c->policy_next ? c->policy_next->name : "none"),
 		    ero ? ero->name : "null",
@@ -2635,8 +2620,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 			     &esr->this.host_nexthop)) {
 			if (!do_command(ro, sr, "unroute", st)) {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "unroute command returned an error"));
+				    DBG_log("unroute command returned an error"));
 			}
 			route_installed = do_command(c, sr, "route", st);
 			if (!route_installed)
@@ -2653,8 +2637,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 
 			if (!do_command(ro, sr, "unroute", st)) {
 				DBG(DBG_CONTROL,
-				    DBG_log(
-					    "unroute command returned an error"));
+				    DBG_log("unroute command returned an error"));
 			}
 		}
 
@@ -2701,8 +2684,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 
 			DBG(DBG_CONTROL, {
 				    char cib[CONN_INST_BUF];
-				    DBG_log(
-					    "route_and_eroute: instance \"%s\"%s, setting eroute_owner {spd=%p,sr=%p} to #%ld (was #%ld) (newest_ipsec_sa=#%ld)",
+				    DBG_log("route_and_eroute: instance \"%s\"%s, setting eroute_owner {spd=%p,sr=%p} to #%ld (was #%ld) (newest_ipsec_sa=#%ld)",
 					    st->st_connection->name,
 					    (fmt_conn_instance(st->
 							       st_connection,
@@ -2998,14 +2980,12 @@ void delete_ipsec_sa(struct state *st USED_BY_KLIPS,
 #if defined(WIN32) && defined(WIN32_NATIVE)
 	case USE_WIN32_NATIVE:
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "No support (required?) to delete_ipsec_sa with Win2k"));
+		    DBG_log("No support (required?) to delete_ipsec_sa with Win2k"));
 		break;
 #endif
 	case NO_KERNEL:
 		DBG(DBG_CONTROL,
-		    DBG_log(
-			    "No support required to delete_ipsec_sa with NoKernel support"));
+		    DBG_log("No support required to delete_ipsec_sa with NoKernel support"));
 		break;
 	default:
 		DBG(DBG_CONTROL,

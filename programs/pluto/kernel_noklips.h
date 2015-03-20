@@ -13,5 +13,4 @@
  * for more details.
  */
 
-extern void init_noklips(void);
 extern const struct kernel_ops noklips_kernel_ops;

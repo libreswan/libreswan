@@ -223,12 +223,18 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		    st->st_connection->name));
 
 	/* If no DPD, then get out of here */
-	if (!st->hidden_variables.st_dpd)
+	if (!st->hidden_variables.st_dpd) {
+		DBG(DBG_DPD,
+		    DBG_log("DPD: no DPD active"));
 		return;
+	}
 
 	/* If there is no state, there can be no DPD */
-	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state))
+	if (!IS_ISAKMP_SA_ESTABLISHED(p1st->st_state)) {
+		DBG(DBG_DPD,
+		    DBG_log("DPD: no phase1 state, so no DPD"));
 		return;
+	}
 
 	/* find out when now is */
 	tm = now();
@@ -285,8 +291,11 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 			 * more DPD packets are sent to cancel the outstanding DPD timer.
 			 */
 			if (p1st->st_dpd_event != NULL &&
-			    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT)
+			    p1st->st_dpd_event->ev_type == EVENT_DPD_TIMEOUT) {
+				DBG(DBG_DPD,
+			    	    DBG_log("DPD: deleting p1st DPD event"));
 				delete_dpd_event(p1st);
+			}
 
 			event_schedule(EVENT_DPD, nextdelay, st);
 			return;
@@ -342,7 +351,7 @@ static void p1_dpd_outI1(struct state *p1st)
 	dpd_outI(p1st, p1st, FALSE, delay, timeout);
 }
 
-void p2_dpd_outI1(struct state *p2st)
+static void p2_dpd_outI1(struct state *p2st)
 {
 	struct state *st;
 	time_t delay = p2st->st_connection->dpd_delay;
@@ -429,8 +438,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	}
 
 	DBG(DBG_DPD,
-	    DBG_log(
-		    "DPD: received R_U_THERE seq:%u time:%lu (state=#%lu name=\"%s\")",
+	    DBG_log("DPD: received R_U_THERE seq:%u time:%lu (state=#%lu name=\"%s\")",
 		    seqno,
 		    (unsigned long)tm,
 		    p1st->st_serialno, p1st->st_connection->name));
@@ -511,8 +519,7 @@ stf_status dpd_inR(struct state *p1st,
 
 	seqno = ntohl(*(u_int32_t *)pbs->cur);
 	DBG(DBG_DPD,
-	    DBG_log(
-		    "DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
+	    DBG_log("DPD: R_U_THERE_ACK, seqno received: %u expected: %u (state=#%lu)",
 		    seqno, p1st->st_dpd_expectseqno, p1st->st_serialno));
 
 	if (seqno == p1st->st_dpd_expectseqno) {
@@ -565,8 +572,7 @@ void dpd_timeout(struct state *st)
 		libreswan_log("DPD: Putting connection into %%trap");
 		if (c->kind == CK_INSTANCE) {
 			DBG(DBG_DPD,
-			    DBG_log(
-				    "DPD: warning dpdaction=hold on instance futile - will be deleted"));
+			    DBG_log("DPD: warning dpdaction=hold on instance futile - will be deleted"));
 		}
 		delete_states_by_connection(c, TRUE);
 		break;

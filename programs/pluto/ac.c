@@ -527,8 +527,7 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 			switch (type_oid) {
 			case OID_AUTHENTICATION_INFO:
 				DBG(DBG_PARSING,
-				    DBG_log(
-					    "  need to parse authenticationInfo")
+				    DBG_log("  need to parse authenticationInfo")
 				    );
 				break;
 			case OID_ACCESS_IDENTITY:
@@ -568,8 +567,7 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 			switch (extn_oid) {
 			case OID_CRL_DISTRIBUTION_POINTS:
 				DBG(DBG_PARSING,
-				    DBG_log(
-					    "  need to parse crlDistributionPoints")
+				    DBG_log("  need to parse crlDistributionPoints")
 				    );
 				break;
 			case OID_AUTHORITY_KEY_ID:
@@ -579,8 +577,7 @@ static bool parse_ac(chunk_t blob, x509acert_t *ac)
 				break;
 			case OID_TARGET_INFORMATION:
 				DBG(DBG_PARSING,
-				    DBG_log(
-					    "  need to parse targetInformation")
+				    DBG_log("  need to parse targetInformation")
 				    );
 				break;
 			case OID_NO_REV_AVAIL:

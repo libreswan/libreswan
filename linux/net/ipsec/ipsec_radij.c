@@ -286,8 +286,7 @@ int ipsec_makeroute(struct sockaddr_encap *eaddr,
 			if (!(retrt->er_ident_s.data =
 				      kmalloc(data_len, GFP_KERNEL))) {
 				kfree(retrt);
-				printk(
-					"klips_error:ipsec_makeroute: not able to allocate kernel memory (%d)\n",
+				printk("klips_error:ipsec_makeroute: not able to allocate kernel memory (%d)\n",
 					data_len);
 				return ENOMEM;
 			}
@@ -315,8 +314,7 @@ int ipsec_makeroute(struct sockaddr_encap *eaddr,
 				if (retrt->er_ident_s.data)
 					kfree(retrt->er_ident_s.data);
 				kfree(retrt);
-				printk(
-					"klips_error:ipsec_makeroute: not able to allocate kernel memory (%d)\n",
+				printk("klips_error:ipsec_makeroute: not able to allocate kernel memory (%d)\n",
 					data_len);
 				return ENOMEM;
 			}
@@ -358,22 +356,20 @@ int ipsec_makeroute(struct sockaddr_encap *eaddr,
 
 	if (debug_eroute) {
 		char buf1[SUBNETTOA_BUF], buf2[SUBNETTOA_BUF];
-		if (rd_key((&(retrt->er_rjt)))->sen_type == SENT_IP6) {
-			subnet6toa(&rd_key((&(retrt->er_rjt)))->sen_ip6_src,
-				   &rd_mask(
-					   (&(retrt->er_rjt)))->sen_ip6_src, 0,
-				   buf1, sizeof(buf1));
-			subnet6toa(&rd_key((&(retrt->er_rjt)))->sen_ip6_dst,
-				   &rd_mask(
-					   (&(retrt->er_rjt)))->sen_ip6_dst, 0,
-				   buf2, sizeof(buf2));
+		if (rd_key(&retrt->er_rjt)->sen_type == SENT_IP6) {
+			subnet6toa(&rd_key(&retrt->er_rjt)->sen_ip6_src,
+				   &rd_mask(&retrt->er_rjt)->sen_ip6_src,
+				   0, buf1, sizeof(buf1));
+			subnet6toa(&rd_key(&retrt->er_rjt)->sen_ip6_dst,
+				   &rd_mask(&retrt->er_rjt)->sen_ip6_dst,
+				   0, buf2, sizeof(buf2));
 		} else {
-			subnettoa(rd_key((&(retrt->er_rjt)))->sen_ip_src,
-				  rd_mask((&(retrt->er_rjt)))->sen_ip_src, 0,
-				  buf1, sizeof(buf1));
-			subnettoa(rd_key((&(retrt->er_rjt)))->sen_ip_dst,
-				  rd_mask((&(retrt->er_rjt)))->sen_ip_dst, 0,
-				  buf2, sizeof(buf2));
+			subnettoa(rd_key(&retrt->er_rjt)->sen_ip_src,
+				  rd_mask(&retrt->er_rjt)->sen_ip_src,
+				  0, buf1, sizeof(buf1));
+			subnettoa(rd_key(&retrt->er_rjt)->sen_ip_dst,
+				  rd_mask(&retrt->er_rjt)->sen_ip_dst,
+				  0, buf2, sizeof(buf2));
 		}
 		sa_len = KLIPS_SATOT(debug_eroute, &retrt->er_said, 0, sa,
 				     sizeof(sa));
@@ -503,13 +499,13 @@ int ipsec_rj_walker_show(struct radij_node *rn, void *arg)
 		buf_len = subnettoa(key->sen_ip_src, mask->sen_ip_src, 0, buf1,
 				    sizeof(buf1));
 		if (key->sen_sport != 0)
-			sprintf(buf1 + buf_len - 1, ":%d", ntohs(
-					key->sen_sport));
+			sprintf(buf1 + buf_len - 1, ":%d",
+				ntohs(key->sen_sport));
 		buf_len = subnettoa(key->sen_ip_dst, mask->sen_ip_dst, 0, buf2,
 				    sizeof(buf2));
 		if (key->sen_dport != 0)
-			sprintf(buf2 + buf_len - 1, ":%d", ntohs(
-					key->sen_dport));
+			sprintf(buf2 + buf_len - 1, ":%d",
+				ntohs(key->sen_dport));
 
 	} else {
 		return 0;

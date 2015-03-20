@@ -289,9 +289,7 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 
 	c = st->st_connection;
 
-#ifdef DEBUG
 	extra_debugging(c);
-#endif
 	st->st_try = 0;                                 /* Not our job to try again from start */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
@@ -1138,9 +1136,7 @@ stf_status aggr_outI1(int whack_sock,
 #endif
 	set_state_ike_endpoints(st, c);
 
-#ifdef DEBUG
 	extra_debugging(c);
-#endif
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;
 	st->st_whack_sock = whack_sock;
 	st->st_try = try;
@@ -1164,7 +1160,7 @@ stf_status aggr_outI1(int whack_sock,
 
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-	if (init_am_st_oakley(st, policy) == FALSE) {
+	if (!init_am_st_oakley(st, policy)) {
 		/*
 		 * This is only the case if NO IKE proposal was specified in the
 		 * configuration file.  It's not the case if there were multiple

@@ -149,8 +149,7 @@ static inline int libreswan_inet_add_protocol(struct inet_protocol *prot,
 	int err = inet_add_protocol(prot, protocol);
 
 	if (err)
-		printk(
-			KERN_ERR "KLIPS: can not register %s protocol - recompile with CONFIG_INET_%s disabled or as module\n", protstr,
+		printk(KERN_ERR "KLIPS: can not register %s protocol - recompile with CONFIG_INET_%s disabled or as module\n", protstr,
 			protstr);
 	return err;
 }
@@ -163,8 +162,7 @@ static inline int libreswan_inet6_add_protocol(struct inet6_protocol *prot,
 	int err = inet6_add_protocol(prot, protocol);
 
 	if (err)
-		printk(
-			KERN_ERR "KLIPS: can not register %s protocol - recompile with CONFIG_INET_%s disabled or as module\n", protstr,
+		printk(KERN_ERR "KLIPS: can not register %s protocol - recompile with CONFIG_INET_%s disabled or as module\n", protstr,
 			protstr);
 	return err;
 }
@@ -313,13 +311,11 @@ int ipsec_klips_init(void)
 	/* register our ESP-UDP handler */
 	if (udp4_register_esp_rcvencap(klips26_rcv_encap,
 				       &klips_old_encap) != 0)
-		printk(
-			KERN_ERR "KLIPS: can not register klips26_rcv_encap function\n");
+		printk(KERN_ERR "KLIPS: can not register klips26_rcv_encap function\n");
 
 
 	else
-		KLIPS_PRINT(1,
-			    "KLIPS: registered klips26_rcv_encap function\n");
+		KLIPS_PRINT(1, "KLIPS: registered klips26_rcv_encap function\n");
 
 #endif
 
@@ -415,8 +411,7 @@ ipsec_cleanup(void)
 	 */
 	if (udp4_unregister_esp_rcvencap(klips26_rcv_encap,
 					 klips_old_encap) < 0)
-		printk(
-			KERN_ERR "KLIPS: can not unregister klips_rcv_encap function\n");
+		printk(KERN_ERR "KLIPS: can not unregister klips_rcv_encap function\n");
 
 
 # endif

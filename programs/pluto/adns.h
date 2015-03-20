@@ -44,7 +44,7 @@ struct adns_query {
 	size_t len;
 	unsigned int qmagic;
 	unsigned long serial;
-	lset_t debugging;       /* only used #ifdef DEBUG, but don't want layout to change */
+	lset_t debugging;
 	char name_buf[NS_MAXDNAME + 2];
 	int type;               /* T_KEY or T_TXT */
 };

@@ -4,6 +4,7 @@
  * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002  Richard Guy Briggs.
  * Copyright (C) 2005-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,6 +59,7 @@
 #include "libreswan/ipsec_ah.h"
 #include "libreswan/ipsec_esp.h"
 #include "libreswan/ipsec_sa.h"  /* IPSEC_SAREF_NULL */
+#include <libreswan/pfkey_debug.h> /* PF_KEY_DEBUG_PARSE_MAX */
 
 #include "lswlog.h"
 #include "alg_info.h"
@@ -501,16 +503,10 @@ int main(int argc, char *argv[])
 				    longopts, 0)) != EOF) {
 		switch (c) {
 		case 'g':
-#ifdef DEBUG
 			debug = 1;
 			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
 			/* paul: this is a plutoism? cur_debugging = 0xffffffff; */
 			argcount--;
-#else
-			fprintf(stderr,
-				"%s: Cannot set debug - compiled without DEBUG\n",
-				progname);
-#endif
 			break;
 
 		case 'R':
@@ -1656,8 +1652,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "setting natt_type to %d\n", natt);
 
 		if (sport != 0) {
-			err =
-				pfkey_x_nat_t_port_build(
+			err = pfkey_x_nat_t_port_build(
 					&extensions[K_SADB_X_EXT_NAT_T_SPORT],
 					K_SADB_X_EXT_NAT_T_SPORT,
 					sport);
@@ -1672,8 +1667,7 @@ int main(int argc, char *argv[])
 		}
 
 		if (dport != 0) {
-			err =
-				pfkey_x_nat_t_port_build(
+			err = pfkey_x_nat_t_port_build(
 					&extensions[K_SADB_X_EXT_NAT_T_DPORT],
 					K_SADB_X_EXT_NAT_T_DPORT,
 					dport);
@@ -1844,8 +1838,7 @@ int main(int argc, char *argv[])
 			/* first, see if we got enough for an sadb_msg */
 			if ((size_t)readlen < sizeof(struct sadb_msg)) {
 				if (debug) {
-					printf(
-						"%s: runt packet of size: %ld (<%lu)\n",
+					printf("%s: runt packet of size: %ld (<%lu)\n",
 						progname, (long)readlen,
 						(unsigned long)sizeof(struct
 								      sadb_msg));
@@ -1855,8 +1848,7 @@ int main(int argc, char *argv[])
 
 			/* okay, we got enough for a message, print it out */
 			if (debug) {
-				printf(
-					"%s: pfkey v%d msg received. type=%d(%s) seq=%d len=%d pid=%d errno=%d satype=%d(%s)\n",
+				printf("%s: pfkey v%d msg received. type=%d(%s) seq=%d len=%d pid=%d errno=%d satype=%d(%s)\n",
 					progname,
 					pfkey_msg->sadb_msg_version,
 					pfkey_msg->sadb_msg_type,
@@ -1874,8 +1866,7 @@ int main(int argc, char *argv[])
 			    (ssize_t)(pfkey_msg->sadb_msg_len *
 				      IPSEC_PFKEYv2_ALIGN)) {
 				if (debug) {
-					printf(
-						"%s: packet size read from socket=%d doesn't equal sadb_msg_len %u * %u; message not decoded\n",
+					printf("%s: packet size read from socket=%d doesn't equal sadb_msg_len %u * %u; message not decoded\n",
 						progname,
 						(int)readlen,
 						(unsigned)pfkey_msg->sadb_msg_len,
@@ -1887,15 +1878,13 @@ int main(int argc, char *argv[])
 			if (pfkey_msg_parse(pfkey_msg, NULL, extensions,
 					    EXT_BITS_OUT)) {
 				if (debug) {
-					printf(
-						"%s: unparseable PF_KEY message.\n",
+					printf("%s: unparseable PF_KEY message.\n",
 						progname);
 				}
 				continue;
 			} else {
 				if (debug) {
-					printf(
-						"%s: parseable PF_KEY message.\n",
+					printf("%s: parseable PF_KEY message.\n",
 						progname);
 				}
 			}

@@ -90,7 +90,7 @@
 #endif
 
 /*
- * try and handle time wraps in a nicer manner
+ * try to handle time wraps in a nicer manner
  */
 #define ipsec_jiffies_elapsed(now, last) \
 	((last) <= \

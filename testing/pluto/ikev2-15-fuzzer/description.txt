@@ -1,0 +1,4 @@
+This uses ikev2-05-basic-psk as a setup, and then sends known broken
+and malicious packets from the buster IKE fuzzer by Iustina Melinte.
+
+These packets are fake I1 packets of "west" being sent to "east"
