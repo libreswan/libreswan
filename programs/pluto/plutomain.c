@@ -206,7 +206,7 @@ usage(const char *mess)
 	    " \\\n\t"
 	    "[--nat_traversal] [--keep_alive <delay_sec>]"
 	    " \\\n\t"
-            "[--force_keepalive] [--disable_port_floating]"
+            "[--disable_port_floating]"
 #endif
 	   " \\\n\t"
 	   "[--virtual_private <network_list>]"
@@ -399,7 +399,6 @@ main(int argc, char **argv)
     bool nat_traversal = FALSE;
     bool nat_t_spf = TRUE;  /* support port floating */
     unsigned int keep_alive = 0;
-    bool force_keepalive = FALSE;
 #endif
     /** Overridden by virtual_private= in ipsec.conf */
     char *virtual_private = NULL;
@@ -481,7 +480,7 @@ main(int argc, char **argv)
 #ifdef NAT_TRAVERSAL
 	    { "nat_traversal", no_argument, NULL, '1' },
 	    { "keep_alive", required_argument, NULL, '2' },
-	    { "force_keepalive", no_argument, NULL, '3' },
+	    { "force_keepalive", no_argument, NULL, '3' }, /* obsolete, ignored */
 	    { "disable_port_floating", no_argument, NULL, '4' },
 	    { "debug-nat_t", no_argument, NULL, '5' },
 	    { "debug-nattraversal", no_argument, NULL, '5' },
@@ -775,8 +774,8 @@ main(int argc, char **argv)
 	case '2':	/* --keep_alive */
 	    keep_alive = atoi(optarg);
 	    continue;
-	case '3':	/* --force_keepalive */
-	    force_keepalive = TRUE;
+	case '3':	/* --force_keepalive has been obsoleted */
+	    libreswan_log("Ignored obsoleted option --force_keepalive");
 	    continue;
 	case '4':	/* --disable_port_floating */
 	    nat_t_spf = FALSE;
@@ -830,7 +829,6 @@ main(int argc, char **argv)
 	    pluto_natt_float_port = cfg->setup.options[KBF_NATIKEPORT];
 	    nat_traversal = cfg->setup.options[KBF_NATTRAVERSAL];
 	    keep_alive = cfg->setup.options[KBF_KEEPALIVE];
-	    force_keepalive = cfg->setup.options[KBF_FORCE_KEEPALIVE];
 	    nat_t_spf = !cfg->setup.options[KBF_DISABLEPORTFLOATING];
 #endif
 	    set_cfg_string(&virtual_private,
@@ -1217,7 +1215,7 @@ main(int argc, char **argv)
 /** Initialize all of the various features */
 
 #ifdef NAT_TRAVERSAL
-    init_nat_traversal(nat_traversal, keep_alive, force_keepalive, nat_t_spf);
+    init_nat_traversal(nat_traversal, keep_alive, nat_t_spf);
 #endif
 
     init_virtual_ip(virtual_private);

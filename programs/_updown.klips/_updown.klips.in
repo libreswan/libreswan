@@ -444,7 +444,7 @@ dorule() {
 	    if [ -n "${oops}" -o ${st} -ne 0 ]; then
 		echo "${0}: dorule \"${it}\" failed (${oops})" >&2
 	    fi
-	    if [ ${st} -eq 0 -a -n "${it2" ]; then
+	    if [ ${st} -eq 0 -a -n "${it2}" ]; then
 		oops="$(eval ${it2} 2>&1)"
 		st=$?
 		if [ -z "${oops}" -a ${st} -ne 0 ]; then

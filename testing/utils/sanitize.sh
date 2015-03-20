@@ -31,5 +31,5 @@ else
         exit 1
 fi
 
-consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.txt ${INITIATOR}.console.txt
-consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.txt ${RESPONDER}.console.txt
+consolediff ${INITIATOR} OUTPUT/${INITIATOR}.console.verbose.txt ${INITIATOR}.console.txt
+consolediff ${RESPONDER} OUTPUT/${RESPONDER}.console.verbose.txt ${RESPONDER}.console.txt

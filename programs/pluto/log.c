@@ -132,7 +132,7 @@ pluto_init_log(void)
 	setbuf(stderr, NULL);
 
     if (log_to_file && (pluto_log_file != NULL)) {
-	pluto_log_fd =  fopen(pluto_log_file, "a");
+	pluto_log_fd =  fopen(pluto_log_file, "w");
     }
     if(pluto_log_fd == NULL) {
  	fprintf(stderr, "Cannot open logfile '%s': %s", pluto_log_file, strerror(errno));
@@ -369,7 +369,7 @@ open_peerlog(struct connection *c)
     if (c->log_file_err)
 	return;
 
-    c->log_file = fopen(c->log_file_name, "a");
+    c->log_file = fopen(c->log_file_name, "w");
     if (c->log_file == NULL)
     {
 	if (c->log_file_err)

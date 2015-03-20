@@ -1316,7 +1316,10 @@ ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 	       )
 
 	    {
-		release_connection(d, FALSE);
+		    /*  Paul and AA  tried to delete phase2 didn't really work.
+		     * delete_p2states_by_connection(d); 
+		     */
+		    release_connection(d, FALSE);
 	    }
 	    d = next;
 	}

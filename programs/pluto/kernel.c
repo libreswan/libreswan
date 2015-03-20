@@ -87,14 +87,14 @@ static void set_text_said(char *text_said
 
 const struct pfkey_proto_info null_proto_info[2] = {
         {
-                proto: IPPROTO_ESP,
-                encapsulation: ENCAPSULATION_MODE_TRANSPORT,
-                reqid: 0
+                .proto = IPPROTO_ESP,
+                .encapsulation = ENCAPSULATION_MODE_TRANSPORT,
+                .reqid = 0
         },
         {
-                proto: 0,
-                encapsulation: 0,
-                reqid: 0
+                .proto = 0,
+                .encapsulation = 0,
+                .reqid = 0
         }
 };
 
@@ -1372,6 +1372,7 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
 
     char text_said[SATOT_BUF];
     int encapsulation;
+    bool add_selector;
 
     replace = inbound && (kernel_ops->get_spi != NULL);
 
@@ -1393,12 +1394,17 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         dst_client = c->spd.that.client;
     }
 
-    encapsulation = ENCAPSULATION_MODE_TRANSPORT;
     if (st->st_ah.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL
         || st->st_esp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL
         || st->st_ipcomp.attrs.encapsulation == ENCAPSULATION_MODE_TUNNEL)
     {
-        encapsulation = ENCAPSULATION_MODE_TUNNEL;
+	encapsulation = ENCAPSULATION_MODE_TUNNEL;
+	add_selector = 0;	/* Don't add selectors for tunnel mode */
+    } else {
+	encapsulation = ENCAPSULATION_MODE_TRANSPORT;
+	/* RFC 4301, Section 5.2 Requires traffic selectors to be set on
+	 * transport mode */
+	add_selector = 1;
     }
 
     memset(said, 0, sizeof(said));
@@ -1441,6 +1447,8 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
         said_next->dst_client = &dst_client;
+	said_next->inbound = inbound;
+	said_next->add_selector = add_selector;
         said_next->transport_proto = c->spd.this.protocol;
         said_next->spi = ipip_spi;
         said_next->esatype = ET_IPIP;
@@ -1534,6 +1542,8 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
         said_next->dst_client = &dst_client;
+	said_next->inbound = inbound;
+	said_next->add_selector = add_selector;
         said_next->transport_proto = c->spd.this.protocol;
         said_next->spi = ipcomp_spi;
         said_next->esatype = ET_IPCOMP;
@@ -1747,6 +1757,8 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
         said_next->dst_client = &dst_client;
+	said_next->inbound = inbound;
+	said_next->add_selector = add_selector;
         said_next->transport_proto = c->spd.this.protocol;
         said_next->spi = esp_spi;
         said_next->esatype = ET_ESP;
@@ -1882,6 +1894,8 @@ setup_half_ipsec_sa(struct state *st, bool inbound)
         said_next->dst = &dst.addr;
         said_next->src_client = &src_client;
         said_next->dst_client = &dst_client;
+	said_next->inbound = inbound;
+	said_next->add_selector = add_selector;
         said_next->transport_proto = c->spd.this.protocol;
         said_next->spi = ah_spi;
         said_next->esatype = ET_AH;

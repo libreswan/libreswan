@@ -57,8 +57,10 @@ road #
 003 "modecfg-road-east" #1: received Vendor ID payload [XAUTH]
 002 "modecfg-road-east" #1: transition from state STATE_MAIN_I1 to state STATE_MAIN_I2
 106 "modecfg-road-east" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+002 "modecfg-road-east" #1: I will NOT send an initial contact payload
 002 "modecfg-road-east" #1: I am sending my cert
 002 "modecfg-road-east" #1: I am sending a certificate request
+002 "modecfg-road-east" #1: Not sending INITIAL_CONTACT
 002 "modecfg-road-east" #1: transition from state STATE_MAIN_I2 to state STATE_MAIN_I3
 108 "modecfg-road-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "modecfg-road-east" #1: received Vendor ID payload [CAN-IKEv2]

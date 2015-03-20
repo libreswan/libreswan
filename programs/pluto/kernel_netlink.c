@@ -84,14 +84,14 @@ extern const struct pfkey_proto_info null_proto_info[2];
 
 static const struct pfkey_proto_info broad_proto_info[2] = { 
         {
-                proto: IPPROTO_ESP,
-                encapsulation: ENCAPSULATION_MODE_TUNNEL,
-                reqid: 0
+                .proto = IPPROTO_ESP,
+                .encapsulation = ENCAPSULATION_MODE_TUNNEL,
+                .reqid = 0
         },
         {
-                proto: 0,
-                encapsulation: 0,
-                reqid: 0
+                .proto = 0,
+                .encapsulation = 0,
+                .reqid = 0
         }
 };
 
@@ -572,23 +572,6 @@ netlink_raw_eroute(const ip_address *this_host
 		    , proto, that_client_t, local_that_client_t);
 	    });
 
-	/* We have a bug somewhere in the code where NATD port of remote
-	 * gets applied to protoport port of host. Happily it only seem
-	 * to affect natted transport mode so we can undo that corruption
-	 * here. This corruption of that_host port is random and we couldn't
-	 * find the place where it happens. Port of that_client is anyway the
-	 * port we should use here.
-	 * Bug #1101. Tuomo
-	 */
-	if(portof(&that_client->addr) != portof(that_host)) {
-	    libreswan_log("%s: WARNING: that_client port %u and that_host"
-			 " port %u don't match. Using that_client port."
-			 , __FUNCTION__
-			 , ntohs(portof(&that_client->addr))
-			 , ntohs(portof(that_host)));
-	    setportof(portof(&that_client->addr), &local_that_client.addr);
-	}
-
  	that_client = &local_that_client;
     }
 
@@ -672,7 +655,16 @@ netlink_raw_eroute(const ip_address *this_host
 	req.u.p.lft.hard_byte_limit = XFRM_INF;
 	req.u.p.lft.hard_packet_limit = XFRM_INF;
 
-	req.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
+	/*
+	 * NEW will fail when an existing policy, UPD always works.
+	 * This seems to happen in cases with NAT'ed XP clients, or
+	 * quick recycling/resurfacing of roadwarriors on the same IP.
+	 *
+	 * UPD is also needed for two separate tunnels with same end subnets
+	 * Like A = B = C config where both A - B and B - C have tunnel A = C
+	 * configured.
+	 */
+	req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
 	if (sadb_op == ERO_REPLACE)
 	{
 	    req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
@@ -814,6 +806,33 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
     else
     {
 	req.p.mode = XFRM_MODE_TRANSPORT;
+    }
+
+    /* We only add traffic selectors for transport mode. The problem is that
+     * Tunnel mode ipsec with ipcomp is layered so that ipcomp tunnel is
+     * protected with transport mode ipsec but in this case we shouldn't any
+     * more add traffic selectors. Caller function will inform us if we
+     * need or don't need selectors. */
+    if (sa->add_selector) {
+	ip_subnet src_tmp;
+	ip_subnet dst_tmp;
+	const ip_subnet *src;
+	const ip_subnet *dst;
+
+	/* With XFRM/NETKEY and transport mode with nat-traversal we need
+	 * to change outbound IPsec SA to point to exteral ip of the peer.
+	 * Here we substitute real client ip with NATD ip. */
+	if (sa->inbound == 0) {
+	    addrtosubnet(sa->dst, &dst_tmp);
+	    dst = &dst_tmp;
+	} else
+	    dst = sa->dst_client;
+
+	if (sa->inbound == 1) {
+	    addrtosubnet(sa->src, &src_tmp);
+	    src = &src_tmp;
+	} else
+	    src = sa->src_client;
 
 	req.p.sel.sport = portof(&sa->src_client->addr);
 	req.p.sel.dport = portof(&sa->dst_client->addr);
@@ -845,12 +864,12 @@ netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	req.p.sel.sport_mask = (req.p.sel.sport) ? ~0:0;
 	req.p.sel.dport_mask = (req.p.sel.dport) ? ~0:0;
-	ip2xfrm(&sa->src_client->addr, &req.p.sel.saddr);
-	ip2xfrm(&sa->dst_client->addr, &req.p.sel.daddr);
-	req.p.sel.prefixlen_s = sa->src_client->maskbits;
-	req.p.sel.prefixlen_d = sa->dst_client->maskbits;
+	ip2xfrm(&src->addr, &req.p.sel.saddr);
+	ip2xfrm(&dst->addr, &req.p.sel.daddr);
+	req.p.sel.prefixlen_s = src->maskbits;
+	req.p.sel.prefixlen_d = dst->maskbits;
 	req.p.sel.proto = sa->transport_proto;
-	req.p.sel.family = sa->src_client->addr.u.v4.sin_family;
+	req.p.sel.family = src->addr.u.v4.sin_family;
 
     }
 
@@ -1065,86 +1084,86 @@ netlink_del_sa(const struct kernel_sa *sa)
 
 struct encrypt_desc algo_aes_ccm_8 =
 {
-	common: {
-	  name: "aes_ccm_8",
-	  officname: "aes_ccm_8",
-	  algo_type:    IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_CCM_8,
-	  algo_next:    NULL, },
-	enc_blocksize:  AES_CBC_BLOCK_SIZE,
-	keyminlen:      AES_KEY_MIN_LEN + 3,
-	keydeflen:      AES_KEY_DEF_LEN + 3,
-	keymaxlen:      AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_ccm_8",
+	  .officname = "aes_ccm_8",
+	  .algo_type =    IKE_ALG_ENCRYPT,
+	  .algo_v2id =    IKEv2_ENCR_AES_CCM_8,
+	  .algo_next =    NULL, },
+	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
+	.keyminlen =      AES_KEY_MIN_LEN + 3,
+	.keydeflen =      AES_KEY_DEF_LEN + 3,
+	.keymaxlen =      AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_ccm_12 =
 {
-	common: {
-	  name: "aes_ccm_12",
-	  officname: "aes_ccm_12",
-	  algo_type:    IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_CCM_12,
-	  algo_next:    NULL, },
-	enc_blocksize:  AES_CBC_BLOCK_SIZE,
-	keyminlen:      AES_KEY_MIN_LEN + 3,
-	keydeflen:      AES_KEY_DEF_LEN + 3,
-	keymaxlen:      AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_ccm_12",
+	  .officname = "aes_ccm_12",
+	  .algo_type =    IKE_ALG_ENCRYPT,
+	  .algo_v2id =    IKEv2_ENCR_AES_CCM_12,
+	  .algo_next =    NULL, },
+	.enc_blocksize =  AES_CBC_BLOCK_SIZE,
+	.keyminlen =      AES_KEY_MIN_LEN + 3,
+	.keydeflen =      AES_KEY_DEF_LEN + 3,
+	.keymaxlen =      AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_ccm_16 =
 {
-	common: {
-	  name: "aes_ccm_16",
-	  officname: "aes_ccm_16",
-	  algo_type: 	IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_CCM_16,
-	  algo_next: 	NULL, },
-	enc_blocksize: 	AES_CBC_BLOCK_SIZE,
-	keyminlen: 	AES_KEY_MIN_LEN + 3,
-	keydeflen: 	AES_KEY_DEF_LEN + 3,
-	keymaxlen: 	AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_ccm_16",
+	  .officname = "aes_ccm_16",
+	  .algo_type = 	 IKE_ALG_ENCRYPT,
+	  .algo_v2id =   IKEv2_ENCR_AES_CCM_16,
+	  .algo_next = 	 NULL, },
+	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.keyminlen = 	 AES_KEY_MIN_LEN + 3,
+	.keydeflen = 	 AES_KEY_DEF_LEN + 3,
+	.keymaxlen = 	 AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_gcm_8 =
 {
-	common: {
-	  name: "aes_gcm_8",
-	  officname: "aes_gcm_8",
-	  algo_type: 	IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_GCM_8,
-	  algo_next: 	NULL, },
-	enc_blocksize: 	AES_CBC_BLOCK_SIZE,
-	keyminlen: 	AES_KEY_MIN_LEN + 3,
-	keydeflen: 	AES_KEY_DEF_LEN + 3,
-	keymaxlen: 	AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_gcm_8",
+	  .officname = "aes_gcm_8",
+	  .algo_type = 	 IKE_ALG_ENCRYPT,
+	  .algo_v2id =   IKEv2_ENCR_AES_GCM_8,
+	  .algo_next =   NULL, },
+	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.keyminlen = 	 AES_KEY_MIN_LEN + 3,
+	.keydeflen = 	 AES_KEY_DEF_LEN + 3,
+	.keymaxlen = 	 AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_gcm_12 =
 {
-	common: {
-	  name: "aes_gcm_12",
-	  officname: "aes_gcm_12",
-	  algo_type: 	IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_GCM_12,
-	  algo_next: 	NULL, },
-	enc_blocksize: 	AES_CBC_BLOCK_SIZE,
-	keyminlen: 	AES_KEY_MIN_LEN + 3,
-	keydeflen: 	AES_KEY_DEF_LEN + 3,
-	keymaxlen: 	AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_gcm_12",
+	  .officname = "aes_gcm_12",
+	  .algo_type = 	 IKE_ALG_ENCRYPT,
+	  .algo_v2id =   IKEv2_ENCR_AES_GCM_12,
+	  .algo_next = 	 NULL, },
+	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.keyminlen = 	 AES_KEY_MIN_LEN + 3,
+	.keydeflen = 	 AES_KEY_DEF_LEN + 3,
+	.keymaxlen = 	 AES_KEY_MAX_LEN + 3,
 };
 
 struct encrypt_desc algo_aes_gcm_16 =
 {
-	common: {
-	  name: "aes_gcm_16",
-	  officname: "aes_gcm_16",
-	  algo_type: 	IKE_ALG_ENCRYPT,
-	  algo_v2id:    IKEv2_ENCR_AES_GCM_16,
-	  algo_next: 	NULL, },
-	enc_blocksize: 	AES_CBC_BLOCK_SIZE,
-	keyminlen: 	AES_KEY_MIN_LEN + 3,
-	keydeflen: 	AES_KEY_DEF_LEN + 3,
-	keymaxlen: 	AES_KEY_MAX_LEN + 3,
+	.common = {
+	  .name = "aes_gcm_16",
+	  .officname = "aes_gcm_16",
+	  .algo_type = 	IKE_ALG_ENCRYPT,
+	  .algo_v2id =    IKEv2_ENCR_AES_GCM_16,
+	  .algo_next = 	NULL, },
+	.enc_blocksize = AES_CBC_BLOCK_SIZE,
+	.keyminlen = 	AES_KEY_MIN_LEN + 3,
+	.keydeflen = 	AES_KEY_DEF_LEN + 3,
+	.keymaxlen = 	AES_KEY_MAX_LEN + 3,
 };
 
 static void
@@ -2252,37 +2271,37 @@ netkey_do_command(struct connection *c, struct spd_route *sr
 }
 
 const struct kernel_ops netkey_kernel_ops = {
-    kern_name: "netkey",
-    type: USE_NETKEY,
-    inbound_eroute:  TRUE,
-    policy_lifetime: TRUE,
-    async_fdp: &netlink_bcast_fd,
-    replay_window: 32,
+    .kern_name = "netkey",
+    .type = USE_NETKEY,
+    .inbound_eroute =  TRUE,
+    .policy_lifetime = TRUE,
+    .async_fdp = &netlink_bcast_fd,
+    .replay_window = 32,
     
-    init: init_netlink,
-    pfkey_register: linux_pfkey_register,
-    pfkey_register_response: linux_pfkey_register_response,
-    process_msg: netlink_process_msg,
-    raw_eroute: netlink_raw_eroute,
-    add_sa: netlink_add_sa, 
-    del_sa: netlink_del_sa,
-    get_sa: netlink_get_sa,
-    process_queue: NULL,
-    grp_sa: NULL,
-    get_spi: netlink_get_spi,
-    exceptsocket: NULL,
-    docommand: netkey_do_command,
-    process_ifaces: netlink_process_raw_ifaces,
-    shunt_eroute: netlink_shunt_eroute,
-    sag_eroute: netlink_sag_eroute,
-    eroute_idle: netlink_eroute_idle,
-    set_debug: NULL,    /* pfkey_set_debug, */
+    .init = init_netlink,
+    .pfkey_register = linux_pfkey_register,
+    .pfkey_register_response = linux_pfkey_register_response,
+    .process_msg = netlink_process_msg,
+    .raw_eroute = netlink_raw_eroute,
+    .add_sa = netlink_add_sa, 
+    .del_sa = netlink_del_sa,
+    .get_sa = netlink_get_sa,
+    .process_queue = NULL,
+    .grp_sa = NULL,
+    .get_spi = netlink_get_spi,
+    .exceptsocket = NULL,
+    .docommand = netkey_do_command,
+    .process_ifaces = netlink_process_raw_ifaces,
+    .shunt_eroute = netlink_shunt_eroute,
+    .sag_eroute = netlink_sag_eroute,
+    .eroute_idle = netlink_eroute_idle,
+    .set_debug = NULL,    /* pfkey_set_debug, */
     /* We should implement netlink_remove_orphaned_holds
      * if netlink  specific changes are needed.
      */
-    remove_orphaned_holds: pfkey_remove_orphaned_holds,
-    overlap_supported: FALSE,
-    sha2_truncbug_support: TRUE,
+    .remove_orphaned_holds = pfkey_remove_orphaned_holds,
+    .overlap_supported = FALSE,
+    .sha2_truncbug_support = TRUE,
 };
 #endif /* linux && NETKEY_SUPPORT */
 

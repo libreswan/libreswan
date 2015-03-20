@@ -1,0 +1,388 @@
+From 12eaba9a92f01f000affc3fb8cceae7ec00d6ec6 Mon Sep 17 00:00:00 2001
+From: Bart Trojanowski <bart@jukie.net>
+Date: Fri, 4 Jun 2010 11:32:01 -0400
+Subject: [PATCH 1/2] SAREF: add support for SA selection through sendmsg()
+
+This patch allows for packets to be tagged with the SAref to be used
+when using the sendmsg() system call, and for the recvmsg() call to
+return the SAref that was used to decode the packet.  The SAref is
+used by the KLIPS IPsec stack to select the correct SA for the packet.
+---
+ include/linux/in.h     |    1 +
+ include/net/ip.h       |    3 +
+ include/net/xfrm.h     |   18 ++++++++
+ net/ipv4/Kconfig       |   10 +++++
+ net/ipv4/icmp.c        |    4 ++
+ net/ipv4/ip_output.c   |   10 +++++
+ net/ipv4/ip_sockglue.c |  103 +++++++++++++++++++++++++++++++++++++++++++++++-
+ net/ipv4/raw.c         |    2 +
+ net/ipv4/udp.c         |    8 ++++
+ 9 files changed, 158 insertions(+), 1 deletions(-)
+
+diff --git a/include/linux/in.h b/include/linux/in.h
+index cf196da..b29c2fc 100644
+--- a/include/linux/in.h
++++ b/include/linux/in.h
+@@ -76,6 +76,7 @@ struct in_addr {
+ #define IP_XFRM_POLICY	17
+ #define IP_PASSSEC	18
+ #define IP_TRANSPARENT	19
++#define IP_IPSEC_REFINFO 30     /* used with CONFIG_INET_IPSEC_SAREF */
+ 
+ /* BSD compatibility */
+ #define IP_RECVRETOPTS	IP_RETOPTS
+diff --git a/include/net/ip.h b/include/net/ip.h
+index 2f47e54..71bc817 100644
+--- a/include/net/ip.h
++++ b/include/net/ip.h
+@@ -56,6 +56,9 @@ struct ipcm_cookie
+ 	int			oif;
+ 	struct ip_options	*opt;
+ 	union skb_shared_tx	shtx;
++#ifdef CONFIG_INET_IPSEC_SAREF
++	struct sec_path         *sp;
++#endif
+ };
+ 
+ #define IPCB(skb) ((struct inet_skb_parm*)((skb)->cb))
+diff --git a/include/net/xfrm.h b/include/net/xfrm.h
+index 223e90a..327ad1f 100644
+--- a/include/net/xfrm.h
++++ b/include/net/xfrm.h
+@@ -907,13 +907,31 @@ static inline void xfrm_dst_destroy(struct xfrm_dst *xdst)
+ 
+ extern void xfrm_dst_ifdown(struct dst_entry *dst, struct net_device *dev);
+ 
++#ifdef CONFIG_INET_IPSEC_SAREF
++typedef unsigned int xfrm_sec_unique_t;
++#endif
++
+ struct sec_path
+ {
+ 	atomic_t		refcnt;
++#ifdef CONFIG_INET_IPSEC_SAREF
++	xfrm_sec_unique_t       ref;       /*reference to high-level policy*/
++#endif
+ 	int			len;
+ 	struct xfrm_state	*xvec[XFRM_MAX_DEPTH];
+ };
+ 
++#ifdef CONFIG_INET_IPSEC_SAREF
++struct ipcm_cookie;
++struct ipsec_secpath_saref_ops {
++	int (*set_ipc_saref)(struct ipcm_cookie *ipc, xfrm_sec_unique_t saref);
++	void (*get_secpath_sarefs)(struct sec_path *sp,
++			xfrm_sec_unique_t *refme, xfrm_sec_unique_t *refhim);
++};
++extern int register_ipsec_secpath_saref_ops(struct ipsec_secpath_saref_ops *ops);
++extern void unregister_ipsec_secpath_saref_ops(struct ipsec_secpath_saref_ops *ops);
++#endif
++
+ static inline struct sec_path *
+ secpath_get(struct sec_path *sp)
+ {
+diff --git a/net/ipv4/Kconfig b/net/ipv4/Kconfig
+index 70491d9..066c658 100644
+--- a/net/ipv4/Kconfig
++++ b/net/ipv4/Kconfig
+@@ -397,6 +397,16 @@ config INET_XFRM_MODE_BEET
+ 
+ 	  If unsure, say Y.
+ 
++config INET_IPSEC_SAREF
++	bool "IP: IPsec SAref interface (KLIPS)"
++	default y
++	select XFRM
++	---help---
++          This exports a mechanism that allows the KLIPS IPsec stack to
++          support mast mode without using nfmark and iptables.
++
++	  If unsure, say Y.
++
+ config INET_LRO
+ 	bool "Large Receive Offload (ipv4/tcp)"
+ 	default y
+diff --git a/net/ipv4/icmp.c b/net/ipv4/icmp.c
+index 5bc13fe..f86a4fa 100644
+--- a/net/ipv4/icmp.c
++++ b/net/ipv4/icmp.c
+@@ -362,6 +362,8 @@ static void icmp_reply(struct icmp_bxm *icmp_param, struct sk_buff *skb)
+ 	struct inet_sock *inet;
+ 	__be32 daddr;
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	if (ip_options_echo(&icmp_param->replyopts, skb))
+ 		return;
+ 
+@@ -423,6 +425,8 @@ void icmp_send(struct sk_buff *skb_in, int type, int code, __be32 info)
+ 	struct net *net;
+ 	struct sock *sk;
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	if (!rt)
+ 		goto out;
+ 	net = dev_net(rt->u.dst.dev);
+diff --git a/net/ipv4/ip_output.c b/net/ipv4/ip_output.c
+index f989518..ba2f4ca 100644
+--- a/net/ipv4/ip_output.c
++++ b/net/ipv4/ip_output.c
+@@ -72,6 +72,7 @@
+ #include <net/arp.h>
+ #include <net/icmp.h>
+ #include <net/checksum.h>
++#include <net/xfrm.h>
+ #include <net/inetpeer.h>
+ #include <linux/igmp.h>
+ #include <linux/netfilter_ipv4.h>
+@@ -410,6 +411,10 @@ static void ip_copy_metadata(struct sk_buff *to, struct sk_buff *from)
+ 	/* Copy the flags to each fragment. */
+ 	IPCB(to)->flags = IPCB(from)->flags;
+ 
++#ifdef CONFIG_INET_IPSEC_SAREF
++	to->sp = secpath_get(from->sp);
++#endif
++
+ #ifdef CONFIG_NET_SCHED
+ 	to->tc_index = from->tc_index;
+ #endif
+@@ -950,6 +955,9 @@ alloc_new_skb:
+ 			 */
+ 			skb->ip_summed = csummode;
+ 			skb->csum = 0;
++#ifdef CONFIG_INET_IPSEC_SAREF
++			skb->sp = secpath_get(ipc->sp);
++#endif
+ 			skb_reserve(skb, hh_len);
+ 			*skb_tx(skb) = ipc->shtx;
+ 
+@@ -1365,6 +1373,8 @@ void ip_send_reply(struct sock *sk, struct sk_buff *skb, struct ip_reply_arg *ar
+ 	__be32 daddr;
+ 	struct rtable *rt = skb_rtable(skb);
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	if (ip_options_echo(&replyopts.opt, skb))
+ 		return;
+ 
+diff --git a/net/ipv4/ip_sockglue.c b/net/ipv4/ip_sockglue.c
+index e982b5c..0f88698 100644
+--- a/net/ipv4/ip_sockglue.c
++++ b/net/ipv4/ip_sockglue.c
+@@ -49,6 +49,7 @@
+ #define IP_CMSG_RETOPTS		16
+ #define IP_CMSG_PASSSEC		32
+ #define IP_CMSG_ORIGDSTADDR     64
++#define IP_CMSG_IPSEC_REFINFO   128
+ 
+ /*
+  *	SOL_IP control messages.
+@@ -149,6 +150,62 @@ static void ip_cmsg_recv_dstaddr(struct msghdr *msg, struct sk_buff *skb)
+ 	put_cmsg(msg, SOL_IP, IP_ORIGDSTADDR, sizeof(sin), &sin);
+ }
+ 
++#ifdef CONFIG_INET_IPSEC_SAREF
++static struct ipsec_secpath_saref_ops *ipsec_secpath_saref_ops = NULL;
++
++int register_ipsec_secpath_saref_ops(struct ipsec_secpath_saref_ops *ops)
++{
++	if (ipsec_secpath_saref_ops)
++		return -EBUSY;
++
++	rcu_assign_pointer(ipsec_secpath_saref_ops, ops);
++
++	return 0;
++}
++EXPORT_SYMBOL(register_ipsec_secpath_saref_ops);
++
++void unregister_ipsec_secpath_saref_ops(struct ipsec_secpath_saref_ops *ops)
++{
++	rcu_assign_pointer(ipsec_secpath_saref_ops, NULL);
++}
++EXPORT_SYMBOL(unregister_ipsec_secpath_saref_ops);
++
++static void ip_cmsg_recv_ipsec_refinfo(struct msghdr *msg, struct sk_buff *skb)
++{
++	struct ipsec_secpath_saref_ops *ops;
++	xfrm_sec_unique_t refs[2] = {0, 0};
++
++	rcu_read_lock_bh();
++	ops = rcu_dereference(ipsec_secpath_saref_ops);
++	if (ops && ops->get_secpath_sarefs)
++		ops->get_secpath_sarefs(skb->sp, &refs[0], &refs[1]);
++	rcu_read_unlock_bh();
++
++	put_cmsg(msg, SOL_IP, IP_IPSEC_REFINFO, sizeof(refs), &refs);
++}
++
++static int ip_cmsg_send_ipsec_refinfo(struct cmsghdr *cmsg, struct ipcm_cookie *ipc)
++{
++	int rc = -EINVAL;
++	struct ipsec_secpath_saref_ops *ops;
++	xfrm_sec_unique_t *ref;
++
++	if(cmsg->cmsg_len != CMSG_LEN(sizeof(xfrm_sec_unique_t)))
++		goto bail;
++
++	ref = (xfrm_sec_unique_t*)CMSG_DATA(cmsg);
++
++	rcu_read_lock_bh();
++	ops = rcu_dereference(ipsec_secpath_saref_ops);
++	if (ops && ops->set_ipc_saref)
++		rc = ops->set_ipc_saref(ipc, *ref);
++	rcu_read_unlock_bh();
++
++bail:
++	return rc;
++}
++#endif
++
+ void ip_cmsg_recv(struct msghdr *msg, struct sk_buff *skb)
+ {
+ 	struct inet_sock *inet = inet_sk(skb->sk);
+@@ -185,8 +242,16 @@ void ip_cmsg_recv(struct msghdr *msg, struct sk_buff *skb)
+ 
+ 	if ((flags >>= 1) == 0)
+ 		return;
++
+ 	if (flags & 1)
+ 		ip_cmsg_recv_dstaddr(msg, skb);
++	if ((flags >>= 1) == 0)
++		return;
++
++#ifdef CONFIG_INET_IPSEC_SAREF
++	if (flags & 1)
++		ip_cmsg_recv_ipsec_refinfo(msg, skb);
++#endif
+ 
+ }
+ EXPORT_SYMBOL(ip_cmsg_recv);
+@@ -219,12 +284,25 @@ int ip_cmsg_send(struct net *net, struct msghdr *msg, struct ipcm_cookie *ipc)
+ 			ipc->addr = info->ipi_spec_dst.s_addr;
+ 			break;
+ 		}
++
++#ifdef CONFIG_INET_IPSEC_SAREF
++		case IP_IPSEC_REFINFO:
++		{
++			err = ip_cmsg_send_ipsec_refinfo(cmsg, ipc);
++			if(err)
++				return err;
++
++			break;
++		}
++#endif
++
+ 		default:
+ 			return -EINVAL;
+ 		}
+ 	}
+ 	return 0;
+ }
++EXPORT_SYMBOL(ip_cmsg_send);
+ 
+ 
+ /* Special input handler for packets caught by router alert option.
+@@ -455,7 +533,11 @@ static int do_ip_setsockopt(struct sock *sk, int level,
+ 	    optname == IP_MULTICAST_TTL ||
+ 	    optname == IP_MULTICAST_ALL ||
+ 	    optname == IP_MULTICAST_LOOP ||
+-	    optname == IP_RECVORIGDSTADDR) {
++	    optname == IP_RECVORIGDSTADDR
++#ifdef CONFIG_INET_IPSEC_SAREF
++	    || optname == IP_IPSEC_REFINFO
++#endif
++	    ) {
+ 		if (optlen >= sizeof(int)) {
+ 			if (get_user(val, (int __user *) optval))
+ 				return -EFAULT;
+@@ -549,6 +631,14 @@ static int do_ip_setsockopt(struct sock *sk, int level,
+ 		else
+ 			inet->cmsg_flags &= ~IP_CMSG_ORIGDSTADDR;
+ 		break;
++#ifdef CONFIG_INET_IPSEC_SAREF
++	case IP_IPSEC_REFINFO:
++		if (val)
++			inet->cmsg_flags |= IP_CMSG_IPSEC_REFINFO;
++		else
++			inet->cmsg_flags &= ~IP_CMSG_IPSEC_REFINFO;
++		break;
++#endif
+ 	case IP_TOS:	/* This sets both TOS and Precedence */
+ 		if (sk->sk_type == SOCK_STREAM) {
+ 			val &= ~3;
+@@ -962,6 +1052,9 @@ int ip_setsockopt(struct sock *sk, int level,
+ 	if (err == -ENOPROTOOPT && optname != IP_HDRINCL &&
+ 			optname != IP_IPSEC_POLICY &&
+ 			optname != IP_XFRM_POLICY &&
++#ifdef CONFIG_INET_IPSEC_SAREF
++			optname != IP_IPSEC_REFINFO &&
++#endif
+ 			!ip_mroute_opt(optname)) {
+ 		lock_sock(sk);
+ 		err = nf_setsockopt(sk, PF_INET, optname, optval, optlen);
+@@ -991,6 +1084,9 @@ int compat_ip_setsockopt(struct sock *sk, int level, int optname,
+ 	if (err == -ENOPROTOOPT && optname != IP_HDRINCL &&
+ 			optname != IP_IPSEC_POLICY &&
+ 			optname != IP_XFRM_POLICY &&
++#ifdef CONFIG_INET_IPSEC_SAREF
++			optname != IP_IPSEC_REFINFO &&
++#endif
+ 			!ip_mroute_opt(optname)) {
+ 		lock_sock(sk);
+ 		err = compat_nf_setsockopt(sk, PF_INET, optname,
+@@ -1070,6 +1166,11 @@ static int do_ip_getsockopt(struct sock *sk, int level, int optname,
+ 	case IP_PASSSEC:
+ 		val = (inet->cmsg_flags & IP_CMSG_PASSSEC) != 0;
+ 		break;
++#ifdef CONFIG_INET_IPSEC_SAREF
++	case IP_IPSEC_REFINFO:
++		val = (inet->cmsg_flags & IP_CMSG_IPSEC_REFINFO) != 0;
++		break;
++#endif
+ 	case IP_RECVORIGDSTADDR:
+ 		val = (inet->cmsg_flags & IP_CMSG_ORIGDSTADDR) != 0;
+ 		break;
+diff --git a/net/ipv4/raw.c b/net/ipv4/raw.c
+index ab996f9..9698885 100644
+--- a/net/ipv4/raw.c
++++ b/net/ipv4/raw.c
+@@ -460,6 +460,8 @@ static int raw_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
+ 	u8  tos;
+ 	int err;
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	err = -EMSGSIZE;
+ 	if (len > 0xFFFF)
+ 		goto out;
+diff --git a/net/ipv4/udp.c b/net/ipv4/udp.c
+index 0fa9f70..00b8438 100644
+--- a/net/ipv4/udp.c
++++ b/net/ipv4/udp.c
+@@ -593,6 +593,8 @@ int udp_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
+ 	int corkreq = up->corkflag || msg->msg_flags&MSG_MORE;
+ 	int (*getfrag)(void *, char *, int, int, int, struct sk_buff *);
+ 
++	memset(&ipc, 0, sizeof(ipc));
++
+ 	if (len > 0xFFFF)
+ 		return -EMSGSIZE;
+ 
+@@ -769,6 +771,12 @@ out:
+ 	ip_rt_put(rt);
+ 	if (free)
+ 		kfree(ipc.opt);
++#ifdef CONFIG_INET_IPSEC_SAREF
++	if(ipc.sp) {
++		secpath_put(ipc.sp);
++		ipc.sp=NULL;
++	}
++#endif
+ 	if (!err)
+ 		return len;
+ 	/*
+-- 
+1.7.0.2.g2b0b7e7
+

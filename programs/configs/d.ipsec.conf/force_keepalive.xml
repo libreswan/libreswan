@@ -1,14 +1,9 @@
   <varlistentry>
   <term><emphasis remap='B'>force_keepalive</emphasis></term>
   <listitem>
-<para>whether to force sending NAT-T keep-alives to support NAT which
-are send to prevent the NAT router from closing its port when there is
-not enough traffic on the IPsec connection. Acceptable values are:
-<emphasis remap='B'>yes</emphasis>
-and
-<emphasis remap='B'>no</emphasis>
-(the default).
-This parameter may eventually become per-connection.</para>
+<para>This option has been obsoleted since libreswan version 3.2. See the
+<emphasis remap='I'>force_keepalive</emphasis> option to enable/disable NAT-KA
+packets on a per-connection basis. </para>
   </listitem>
   </varlistentry>
 

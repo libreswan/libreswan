@@ -282,7 +282,20 @@ delete_connection(struct connection *c, bool relations)
     release_connection(c, relations);	/* won't delete c */
 
     if (c->kind == CK_GROUP)
-	delete_group(c);
+	delete_group(c); 
+
+#if 0
+    /* TODO:  this will be enabled in the next version */
+    if((c->pool != NULL) && (c->kind == CK_TEMPLATE)){
+	    DBG(DBG_CONTROLMORE ,DBG_log(" free addresspool entry for the"
+				    " conn %s kind %s conn serial %d pool" 
+				    " refcnt %u", c->name
+				    ,enum_name(&connection_kind_names,c->kind)
+				    , c->instance_serial, c->pool->refcnt));
+	    free_addresspool_entry(c->pool);
+	    *&c->pool = NULL;
+    }
+#endif
 
     /* free up any logging resources */
     perpeer_logfree(c);
@@ -325,13 +338,6 @@ delete_connection(struct connection *c, bool relations)
     pfreeany(c->cisco_dns_info);
     pfreeany(c->cisco_domain_info);
     pfreeany(c->cisco_banner);
-
-#ifdef PAUL_DISABLED
-    if(c->pool) {
-            pfreeany(c->pool);
-            c->pool = NULL;
-    }
-#endif 
 
 #endif
 #ifdef HAVE_LABELED_IPSEC
@@ -1374,6 +1380,8 @@ add_connection(const struct whack_message *wm)
 	c->connmtu = wm->connmtu;
 
 	c->forceencaps = wm->forceencaps;
+	c->nat_keepalive = wm->nat_keepalive;
+	c->initial_contact = wm->initial_contact;
 
 	c->addr_family = wm->addr_family;
 	c->tunnel_addr_family = wm->tunnel_addr_family;
@@ -3495,7 +3503,7 @@ show_one_connection(struct connection *c)
     
     whack_log(RC_COMMENT
 	      , "\"%s\"%s:   ike_life: %lus; ipsec_life: %lus;"
-	      " rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu%s%s;"
+	      " rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu; sha2_truncbug:%s; initial_contact:%s;"
 	      , c->name
 	      , instance
 	      , (unsigned long) c->sa_ike_life_seconds
@@ -3503,8 +3511,8 @@ show_one_connection(struct connection *c)
 	      , (unsigned long) c->sa_rekey_margin
 	      , (unsigned long) c->sa_rekey_fuzz
 	      , (unsigned long) c->sa_keying_tries
-	      , (c->sha2_truncbug) ? "; sha2_truncbug: yes" : ""
-	      , (c->forceencaps) ? "; force_encaps: yes" : ""
+	      , (c->sha2_truncbug) ? "yes" : "no"
+	      , (c->initial_contact) ? "yes" : "no"
 	     );
 
     if (c->policy_next)
@@ -3544,12 +3552,15 @@ show_one_connection(struct connection *c)
     /* slightly complicated stuff to avoid extra crap */
     if(c->dpd_timeout > 0 || DBGP(DBG_DPD)) {
 	whack_log(RC_COMMENT
-		  , "\"%s\"%s:   dpd: %s; delay:%lu; timeout:%lu;  "
+		  , "\"%s\"%s:   dpd: %s; delay:%lu; timeout:%lu; nat-t: force_encaps:%s; nat_keepalive:%s;"
 		  , c->name
 		  , instance
 		  , enum_name(&dpd_action_names, c->dpd_action)
 		  , (unsigned long)c->dpd_delay
-		  , (unsigned long)c->dpd_timeout);
+		  , (unsigned long)c->dpd_timeout
+		  , (c->forceencaps) ? "yes" : "no"
+		  , (c->nat_keepalive) ? "yes" : "no"
+		);
     }
 
     if(c->extra_debugging) {

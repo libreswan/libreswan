@@ -13,10 +13,6 @@
  *
  */
 
-#ifndef HAVE_LABELED_IPSEC
-# error this file should not be used without HAVE_LABELED_IPSEC
-#endif
-
 #include "security_selinux.h"
 #include "lswlog.h"
 

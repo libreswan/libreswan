@@ -49,7 +49,7 @@ consolediff() {
         fi
     done
 
-    fixedoutput=OUTPUT/${prefix}.console.fixed.txt
+    fixedoutput=OUTPUT/${prefix}.console.txt
     rm -f $fixedoutput OUTPUT/${prefix}.console.diff
     $CONSOLEDIFFDEBUG && echo Cleanups is $cleanups
     eval $cleanups >$fixedoutput
@@ -70,3 +70,40 @@ consolediff() {
 	success=false
     fi
 }
+
+# test entry point:
+kvmplutotest () {
+	testdir=$1
+	testexpect=$2
+	echo '***** KVM PLUTO RUNNING' $testdir${KLIPS_MODULE} '*******'
+  	cd $testdir 
+	${UTILS}/dotest.sh 
+	cd ../
+}
+
+#
+#  ???
+skiptest() {
+	testdir=$1
+	testexpect=$2
+	echo '****** skip test $testdir yet to be migrated to kvm style '
+}
+
+ctltest() {
+	testdir=$1
+        testexpect=$2
+	echo '****** ctltest test $testdir yet to be migrated to kvm style '
+}
+
+umlXhost () {
+	testdir=$1
+        testexpect=$2
+	echo '****** umlXhost test $testdir yet to be migrated to kvm style '
+}
+
+umlplutotest () {
+	testdir=$1
+	testexpect=$2
+	echo '****** umlplutotest test $testdir yet to be migrated to kvm style '
+}
+

@@ -74,8 +74,7 @@
 #define NAT_T_DETECTED \
 	( LELEM(NAT_TRAVERSAL_NAT_BHND_ME) | LELEM(NAT_TRAVERSAL_NAT_BHND_PEER) )
 
-void init_nat_traversal (bool activate, unsigned int keep_alive_period,
-	bool fka, bool spf);
+void init_nat_traversal (bool activate, unsigned int keep_alive_period, bool spf);
 
 extern bool nat_traversal_enabled;
 extern bool nat_traversal_support_non_ike;
