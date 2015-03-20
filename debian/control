@@ -39,8 +39,7 @@ Depends: bsdmainutils,
          ${misc:Depends},
          ${shlibs:Depends}
 Suggests: curl,
-          libreswan-doc,
-          libreswan-modules-source | libreswan-modules-dkms
+          libreswan-doc
 Provides: ike-server
 Conflicts: ike-server
 Replaces: ike-server
@@ -54,11 +53,6 @@ Description: Internet Key Exchange daemon
  .
  The Libreswan IKE daemon is named pluto. It was inherited from the FreeS/WAN
  project, but provides improved X.509 certificate support and other features.
- .
- In order to use the KLIPS IPsec code instead of the native version, you will
- need to either install libreswan-modules-source and build the appropriate
- module for your kernel or use libreswan-modules-dkms which automates this
- task.
 
 Package: libreswan-dbg
 Architecture: any
@@ -66,9 +60,8 @@ Section: debug
 Priority: extra
 Depends: libreswan (= ${binary:Version}), ${misc:Depends}
 Description: Internet Key Exchange daemon - debugging symbols
- Libreswan is an IPsec based VPN solution for the Linux kernel. It can use the
- native IPsec stack as well as the KLIPS kernel module. Both IKEv1 and IKEv2
- protocols are supported.
+ Libreswan is an IPsec based VPN solution for the Linux kernel. Both
+ IKEv1 and IKEv2 protocols are supported.
  .
  This package provides the symbols needed for debugging of libreswan
  binaries.
@@ -78,48 +71,7 @@ Architecture: all
 Section: doc
 Depends: ${misc:Depends}
 Description: Internet Key Exchange daemon - documentation
- Libreswan is an IPsec based VPN solution for the Linux kernel. It can use the
- native IPsec stack as well as the KLIPS kernel module. Both IKEv1 and IKEv2
- protocols are supported.
+ Libreswan is an IPsec based VPN solution for the Linux kernel. Both
+ IKEv1 and IKEv2 protocols are supported.
  .
  This package provides the free parts of the documentation for Libreswan.
-
-Package: libreswan-modules-source
-Architecture: all
-Section: kernel
-Depends: bzip2, debhelper, ${misc:Depends}
-Recommends: linux-headers | linux-source, module-assistant | kernel-package
-Suggests: libreswan
-Description: Internet Key Exchange daemon - kernel module source
- Libreswan is an IPsec based VPN solution for the Linux kernel. It can use the
- native IPsec stack as well as the KLIPS kernel module. Both IKEv1 and IKEv2
- protocols are supported.
- .
- For support of the old-style KLIPS ipsecX network interfaces a custom
- kernel module is needed.
- .
- This package contains source code for the Libreswan IPsec kernel module,
- which can be used with tools like module-assistant or kernel-package
- for manual building of local kernel images.
- .
- Kernel versions >= 2.6.23 no longer need to be patched to provide NAT
- Traversal support for KLIPS.
-
-Package: libreswan-modules-dkms
-Architecture: any
-Section: kernel
-Depends: dkms, libreswan, ${misc:Depends}
-Description: Internet Key Exchange daemon - DKMS source
- Libreswan is an IPsec based VPN solution for the Linux kernel. It can use the
- native IPsec stack as well as the KLIPS kernel module. Both IKEv1 and IKEv2
- protocols are supported.
- .
- For support of the old-style KLIPS ipsecX network interfaces a custom
- kernel module is needed.
- .
- This package contains source code for the Libreswan IPsec kernel module,
- which can be used with DKMS so that local kernel images are automatically
- built and installed every time relevant kernel packages are upgraded.
- .
- Kernel versions >= 2.6.23 no longer need to be patched to provide NAT
- Traversal support for KLIPS.
