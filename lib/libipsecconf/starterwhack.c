@@ -162,7 +162,7 @@ int starter_whack_read_reply(int sock,
 				}
 				if (xauthnamelen > XAUTH_MAX_NAME_LENGTH) { /* for input >= 128, xauthnamelen would be 129 */
 					xauthnamelen = XAUTH_MAX_NAME_LENGTH;
-					starter_log(LOG_LEVEL_ERR, "xauth name cannot be >= %s chars", XAUTH_MAX_NAME_LENGTH);
+					starter_log(LOG_LEVEL_ERR, "xauth name cannot be >= %d chars", XAUTH_MAX_NAME_LENGTH);
 				}
 				ret=send_reply(sock, xauthname, xauthnamelen);
 				if(ret!=0) return ret;
@@ -541,7 +541,14 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg
 	if(conn->options_set[KBF_FORCEENCAP]) {
 		msg.forceencaps=conn->options[KBF_FORCEENCAP];
 	}
+	if(conn->options_set[KBF_NAT_KEEPALIVE]) {
+		msg.nat_keepalive=conn->options[KBF_NAT_KEEPALIVE];
+	} else msg.nat_keepalive = TRUE;
 #endif
+
+	if(conn->options_set[KBF_INITIAL_CONTACT]) {
+		msg.initial_contact=conn->options[KBF_INITIAL_CONTACT];
+	}
 
 	/*Cisco interop : remote peer type*/
 	if(conn->options_set[KBF_REMOTEPEERTYPE]) {

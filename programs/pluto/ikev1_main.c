@@ -1477,6 +1477,7 @@ main_inR2_outI3_continue(struct msg_digest *md
     pb_stream id_pbs;	/* ID Payload; also used for hash calculation */
     bool send_cert = FALSE;
     bool send_cr = FALSE;
+    bool initial_contact = FALSE;
     generalName_t *requested_ca = NULL;
     cert_t mycert = st->st_connection->spd.this.cert;
 
@@ -1521,6 +1522,25 @@ main_inR2_outI3_continue(struct msg_digest *md
      * we don't heed them anyway
      */
     free_generalNames(requested_ca, TRUE);
+
+
+    /*
+     * Determine if we need to send INITIAL_CONTACT payload 
+     * 
+     * We are INITIATOR in I2, this is not a Quick Mode rekey, so if there is
+     * a phase2 that we have for which the phase1 expired, this state has no way of
+     * finding out, so this would mean adding the payload, which would destroy the
+     * remote phase2, and cause downtime until we establish the new phase2. It
+     * is better not to send this payload, which is why the per-connection
+     * keyword default for initial_contact is 'no'. But some interop with Cisco
+     * requires this.
+     *
+     * In Quick Mode, we need to do a little more work, but that's in ikev1_quick.c
+     *
+     */
+    initial_contact = st->st_connection->initial_contact;
+    libreswan_log("I will %ssend an initial contact payload", initial_contact ? "" : "NOT ");
+
 
     /* done parsing; initialize crypto  */
 
@@ -1615,7 +1635,7 @@ main_inR2_outI3_continue(struct msg_digest *md
 	if (auth_payload == ISAKMP_NEXT_HASH)
 	{
 	    /* HASH_I out */
-	    if (!out_generic_raw(ISAKMP_NEXT_NONE
+	    if (!out_generic_raw(initial_contact ? ISAKMP_NEXT_N : ISAKMP_NEXT_NONE
 				 , &isakmp_hash_desc
 				 , &md->rbody
 				 , hash_val, hash_len, "HASH_I"))
@@ -1634,7 +1654,7 @@ main_inR2_outI3_continue(struct msg_digest *md
 		return STF_FAIL + AUTHENTICATION_FAILED;
 	    }
 
-	    if (!out_generic_raw(ISAKMP_NEXT_NONE
+	    if (!out_generic_raw(initial_contact ? ISAKMP_NEXT_N : ISAKMP_NEXT_NONE
 				 , &isakmp_signature_desc
 				 , &md->rbody
 				 , sig_val
@@ -1642,6 +1662,31 @@ main_inR2_outI3_continue(struct msg_digest *md
 				 , "SIG_I"))
 		return STF_INTERNAL_ERROR;
 	}
+    }
+
+    /* INITIAL_CONTACT */
+    if (initial_contact)
+    {
+        pb_stream notify_pbs;
+        struct isakmp_notification isan;
+
+	libreswan_log("I am sending INITIAL_CONTACT");
+
+        isan.isan_np = ISAKMP_NEXT_NONE;
+        isan.isan_doi = ISAKMP_DOI_IPSEC;
+        isan.isan_protoid = PROTO_ISAKMP;
+        isan.isan_spisize = COOKIE_SIZE * 2;  
+        isan.isan_type = IPSEC_INITIAL_CONTACT;
+        if (!out_struct(&isan, &isakmp_notification_desc, &md->rbody, &notify_pbs))
+            return STF_INTERNAL_ERROR;
+        if (!out_raw(st->st_icookie, COOKIE_SIZE, &notify_pbs, "notify icookie"))
+            return STF_INTERNAL_ERROR;  
+        if (!out_raw(st->st_rcookie, COOKIE_SIZE, &notify_pbs, "notify rcookie"))
+            return STF_INTERNAL_ERROR;  
+	/* zero length data payload */
+        close_output_pbs(&notify_pbs);
+    } else {
+	libreswan_log("Not sending INITIAL_CONTACT");
     }
 
     /* encrypt message, except for fixed part of header */

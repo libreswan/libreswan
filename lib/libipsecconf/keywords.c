@@ -381,7 +381,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"plutofork",           kv_config, kt_bool,      KBF_PLUTOFORK,NOT_ENUM},
     {"perpeerlog",        kv_config, kt_bool,   KBF_PERPEERLOG,NOT_ENUM},
     {"perpeerlogdir",        kv_config, kt_dirname,   KSF_PERPEERDIR,NOT_ENUM},
-    {"oe",             kv_config, kt_bool,      KBF_OPPOENCRYPT,NOT_ENUM},
+    {"oe",             kv_config, kt_obsolete,      KBF_WARNIGNORE,NOT_ENUM},
     {"fragicmp",       kv_config, kt_bool,      KBF_FRAGICMP,NOT_ENUM},
     {"hidetos",        kv_config, kt_bool,      KBF_HIDETOS,NOT_ENUM},
     {"uniqueids",      kv_config, kt_bool,      KBF_UNIQUEIDS,NOT_ENUM},
@@ -397,7 +397,7 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"nat_ikeport",   kv_config,kt_number,      KBF_NATIKEPORT, NOT_ENUM},
     {"disable_port_floating", kv_config,kt_bool,KBF_DISABLEPORTFLOATING, NOT_ENUM},
     {"keep_alive", kv_config,kt_number,    KBF_KEEPALIVE, NOT_ENUM},
-    {"force_keepalive", kv_config,kt_bool,    KBF_FORCE_KEEPALIVE, NOT_ENUM},
+    {"force_keepalive", kv_config,kt_obsolete,    KBF_WARNIGNORE, NOT_ENUM},
 #endif
     {"listen",     kv_config, kt_string, KSF_LISTEN,NOT_ENUM},
     {"protostack",     kv_config, kt_string,    KSF_PROTOSTACK, &kw_proto_stack},
@@ -445,6 +445,10 @@ struct keyword_def ipsec_conf_keywords_v2[]={
     {"narrowing",      kv_conn|kv_auto, kt_bool,   KBF_IKEv2_ALLOW_NARROWING, NOT_ENUM},
     {"sareftrack",     kv_conn|kv_auto|kv_processed,kt_enum,KBF_SAREFTRACK,&kw_sareftrack_list},
     {"pfs",            kv_conn|kv_auto, kt_bool,   KBF_PFS,          NOT_ENUM},
+#ifdef NAT_TRAVERSAL
+    {"nat_keepalive",  kv_conn|kv_auto, kt_bool,   KBF_NAT_KEEPALIVE,          NOT_ENUM},
+#endif
+    {"initial_contact", kv_conn|kv_auto, kt_bool,   KBF_INITIAL_CONTACT,          NOT_ENUM},
     {"sha2_truncbug",  kv_conn|kv_auto, kt_enum,   KBF_SHA2_TRUNCBUG,          &kw_sha2_truncbug},
     {"keylife",        kv_conn|kv_auto|kv_alias, kt_time,   KBF_SALIFETIME,NOT_ENUM},
     {"lifetime",       kv_conn|kv_auto|kv_alias, kt_time,   KBF_SALIFETIME,NOT_ENUM},

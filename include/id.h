@@ -75,6 +75,7 @@ extern void
  * callers may use it.
  */
 extern const char *pluto_ip_str(const ip_address *src);
+extern bool duplicate_id(struct id *dst, struct id *src) ;
 
 #endif /* _ID_H */
 

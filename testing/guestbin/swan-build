@@ -1,5 +1,5 @@
 #!/bin/sh
 
 cd /source
-rm -rf OBJ* modobj*
+rm -rf OBJ.linux.x86_64 modobj*
 make programs module 2>&1 > compile-log.txt

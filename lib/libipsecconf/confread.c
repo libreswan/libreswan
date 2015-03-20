@@ -89,11 +89,13 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_IKEPORT]= IKE_UDP_PORT;
 #ifdef NAT_TRAVERSAL
 	cfg->setup.options[KBF_DISABLEPORTFLOATING]= FALSE;
-	cfg->setup.options[KBF_FORCE_KEEPALIVE]= FALSE;
-	cfg->setup.options[KBF_KEEPALIVE]= 0;
+	cfg->setup.options[KBF_KEEPALIVE]= 0; /* config setup */
 	cfg->setup.options[KBF_NATIKEPORT]= NAT_T_IKE_FLOAT_PORT;
+	cfg->conn_default.options[KBF_NAT_KEEPALIVE] = TRUE; /* per conn */
 #endif
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
+
+	cfg->conn_default.options[KBF_INITIAL_CONTACT] = FALSE;
 
 	/*Cisco interop: remote peer type*/
 	cfg->conn_default.options[KBF_REMOTEPEERTYPE] = NON_CISCO;
@@ -693,7 +695,7 @@ bool translate_conn (struct starter_conn *conn
 	    snprintf(_tmp_err, sizeof(_tmp_err),
 		     "keyword '%s' is not valid in a conn (%s) (#%d)\n",
 		     kw->keyword.keydef->keyname, sl->name, i);
-	    starter_log(LOG_LEVEL_INFO, _tmp_err);
+	    starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
 	    continue;
 	}
 	
@@ -744,7 +746,7 @@ bool translate_conn (struct starter_conn *conn
 			 , conn->name
 			 , sl->name);
 		
-		starter_log(LOG_LEVEL_INFO, _tmp_err);
+		starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
 		if(kw->keyword.string == NULL
 		   || (*the_strings)[field] == NULL
 		   || strcmp(kw->keyword.string, (*the_strings)[field])!=0)
@@ -812,7 +814,7 @@ bool translate_conn (struct starter_conn *conn
 			 , conn->name
 			 , sl->name);
 		
-		starter_log(LOG_LEVEL_INFO, _tmp_err);
+		starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
 		
 		/* only fatal if we try to change values */
 		if((*the_options)[field] != kw->number
@@ -855,7 +857,7 @@ bool translate_conn (struct starter_conn *conn
 			 , kw->keyword.keydef->keyname
 			 , conn->name
 			 , sl->name);
-		starter_log(LOG_LEVEL_INFO, _tmp_err);
+		starter_log(LOG_LEVEL_INFO, "%s", _tmp_err);
 		if((*the_options)[field] != kw->number)
 		{
 		    err++;

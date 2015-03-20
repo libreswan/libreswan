@@ -713,7 +713,7 @@ static void success_v2_state_transition(struct msg_digest **mdp)
     /* tell whack and log of progress */
     {
 	const char *story = enum_name(&state_stories, st->st_state);
-	char sadetails[128];
+	char sadetails[512];
 
 	passert(st->st_state >= STATE_IKEv2_BASE);
 	passert(st->st_state <  STATE_IKEv2_ROOF);

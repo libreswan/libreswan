@@ -60,8 +60,6 @@
       <arg choice="opt">--keep_alive
       <replaceable>delay_sec</replaceable></arg>
 
-      <arg choice="opt">--force_keepalive</arg>
-
       <arg choice="opt">--force_busy</arg>
 
       <arg choice="opt">--disable_port_floating</arg>
@@ -378,6 +376,7 @@
         </group></arg>
 
       <arg choice="opt">--forceencaps</arg>
+      <arg choice="opt">--no-keep-alive</arg>
 
       <arg choice="opt"><group choice="plain">
           <arg choice="opt">--initiateontraffic</arg>

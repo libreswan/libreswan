@@ -62,9 +62,9 @@ dummy:
 
 kvm:	checkprograms 
 	# touch to get ownership of file
-	touch ${POOL}/swan${OSTYPE}base.img
-	./testing/utils/virtinstall-base ${POOL} ${OSTYPE} ${OSMEDIA}
-	./testing/utils/lswan-check --pool ${POOL} --ostype ${OSTYPE} --osmedia ${OSMEDIA}
+	#touch ${POOLSPACE}/swan${OSTYPE}base.img
+	#./testing/utils/virtinstall-base ${POOLSPACE} ${OSTYPE} ${OSMEDIA}
+	#./testing/utils/lswan-check --pool ${POOL} --ostype ${OSTYPE} --osmedia ${OSMEDIA}
 	@echo Done creating KVM infrastructure
 
 

@@ -105,18 +105,18 @@ extern struct db_sa oakley_sadb_am;
 extern struct db_sa ipsec_sadb[1 << 3];
 
 /* for db_sa */
-#define AD_SAp(x)    prop_conjs: x, prop_conj_cnt: elemsof(x), parentSA:TRUE
-#define AD_SAc(x)    prop_conjs: x, prop_conj_cnt: elemsof(x), parentSA:FALSE
-#define AD_NULL     prop_conjs: NULL, prop_conj_cnt: 0,
+#define AD_SAp(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), .parentSA = TRUE
+#define AD_SAc(x)    .prop_conjs = (x), .prop_conj_cnt = elemsof(x), .parentSA = FALSE
+#define AD_NULL     .prop_conjs = NULL, .prop_conj_cnt = 0,
 
 /* for db_trans */
-#define AD_TR(p, x) transid: p, attrs: x, attr_cnt: elemsof(x)	
+#define AD_TR(p, x) .transid = (p), .attrs = (x), .attr_cnt = elemsof(x)
 
 /* for db_prop */
-#define AD_PR(p, x) protoid: p, trans: x, trans_cnt: elemsof(x)	
+#define AD_PR(p, x) .protoid = (p), .trans = (x), .trans_cnt = elemsof(x)
 
 /* for db_prop_conj */
-#define AD_PC(x) props: x, prop_cnt: elemsof(x)	
+#define AD_PC(x) .props = (x), .prop_cnt = elemsof(x)
 
 
 extern bool out_sa(

@@ -92,6 +92,7 @@
  *   DSL FW Version: Alcatel, Version 3.9.122)
  * 4485152d18b6bbcd0be8a8469579ddcc
  * 625027749d5ab97f5616c1602765cf480a3b7d0b)
+ * 424e455300000009 (Nortel Contivity)
  *
  * Zyxel Zywall 2 / Zywall 30w
  * 625027749d5ab97f5616c1602765cf480a3b7d0b
@@ -101,6 +102,9 @@
  *
  * Solaris 10 has RF 3974 but also md5('RFC XXXX') whih is 810fa565f8ab14369105d706fbd57279
  * (yes, the 'XXXX' are _really_ four times the letter X)
+ *
+ * Juniper, unknown vid:
+ * 699369228741c6d4ca094c93e242c9de19e7b7c60000000500000500
  */
 
 #define MAX_LOG_VID_LEN		32
@@ -620,6 +624,7 @@ static void handle_known_vendorid (struct msg_digest *md
 #endif
 	    
 	case VID_LIBRESWANSELF:
+	    vid_useful = TRUE; /* not really useful, but it changes the msg from "ignored" to "received" */
 	    break;
 
 	case VID_CISCO_IKE_FRAGMENTATION:

@@ -6,34 +6,32 @@
 %global USE_NM true
 %global USE_LINUX_AUDIT true
 
+%global _hardened_build 1
+
 %global fipscheck_version 1.3.0
 %global buildefence 0
 %global development 0
 
+%global prever rc1
+
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.1
-
-# The default kernel version to build for is the latest of
-# the installed binary kernel
-# This can be overridden by "--define 'kversion x.x.x-y.y.y'"
-%define defkv %(rpm -q kernel kernel-debug| grep -v "not installed" | sed -e "s/kernel-debug-//" -e  "s/kernel-//" -e "s/\.[^.]*$//"  | sort | tail -1 )
-%{!?kversion: %{expand: %%define kversion %defkv}}
-%define krelver %(echo %{kversion} | tr -s '-' '_')
-# Libreswan -pre/-rc nomenclature has to co-exist with hyphen paranoia
-%define srcpkgver %(echo %{version} | tr -s '_' '-')
-
-Release: 1%{?dist}
+Version: 3.2
+Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
-Source: https://download.libreswan.org/%{name}-%{srcpkgver}.tar.gz
+Source: https://download.libreswan.org/%{name}-%{version}%{?prever}.tar.gz
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
 BuildRequires: systemd
 Requires(post): coreutils bash systemd
 Requires(preun): systemd
 Requires(postun): systemd
+
+Conflicts: openswan < %{version}-%{release}
+Obsoletes: openswan < %{version}-%{release}
+Provides: openswan = %{version}-%{release}
 
 BuildRequires: pkgconfig hostname
 BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
@@ -82,7 +80,7 @@ Libreswan also supports IKEv2 (RFC4309) and Secure Labeling
 Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
-%setup -q -n libreswan-%{srcpkgver}
+%setup -q -n libreswan-%{version}%{?prever}
 
 %build
 %if %{buildefence}
@@ -92,11 +90,12 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 #796683: -fno-strict-aliasing
 %{__make} \
 %if %{development}
-   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
+   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %else
-  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
+  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %endif
-  USERLINK="-g -pie %{?efence}" \
+  USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
+  INITSYSTEM=systemd \
   USE_DYNAMICDNS="true" \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
@@ -122,8 +121,8 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-  fipshmac -d $RPM_BUILD_ROOT%{_libdir}/fipscheck ` ls $RPM_BUILD_ROOT%{_libexecdir}/ipsec/*|grep -v setup` \
-  fipshmac -d $RPM_BUILD_ROOT%{_libdir}/fipscheck $RPM_BUILD_ROOT%{_sbindir}/ipsec \
+  fipshmac -d %{buildroot}%{_libdir}/fipscheck ` ls %{buildroot}%{_libexecdir}/ipsec/*|grep -v setup` \
+  fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
 %{nil}
 %endif
 
@@ -137,21 +136,22 @@ rm -rf ${RPM_BUILD_ROOT}
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
   INSTMANFLAGS="-m 644" \
+  INITSYSTEM=systemd \
   install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
-install -d -m 0700 %{buildroot}%{_localstatedir}/run/pluto
+install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 # used when setting --perpeerlog without --perpeerlogbase 
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
 %if %{USE_FIPSCHECK}
-mkdir -p $RPM_BUILD_ROOT%{_libdir}/fipscheck
+mkdir -p %{buildroot}%{_libdir}/fipscheck
 %endif
 
-echo "include /etc/ipsec.d/*.secrets" > $RPM_BUILD_ROOT%{_sysconfdir}/ipsec.secrets
-rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
+echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+rm -fr %{buildroot}/etc/rc.d/rc*
 
 %files 
 %doc BUGS CHANGES COPYING CREDITS README LICENSE
@@ -165,7 +165,7 @@ rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
-%attr(0700,root,root) %dir %{_localstatedir}/run/pluto
+%attr(0755,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_unitdir}/ipsec.service
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
 %{_sbindir}/ipsec
@@ -186,6 +186,5 @@ rm -fr $RPM_BUILD_ROOT/etc/rc.d/rc*
 %systemd_post ipsec.service
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.1-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.2-1
 - Automated build from release tar ball
-

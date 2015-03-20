@@ -1007,6 +1007,7 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
     DBG(DBG_CRYPT, DBG_log("NSS: Started key computation\n"));
 
     PK11SymKey *skeyseed_k, *SK_d_k, *SK_ai_k, *SK_ar_k, *SK_ei_k, *SK_er_k, *SK_pi_k, *SK_pr_k;
+    PK11SymKey *shared_pk11;
 
     /* this doesn't take any memory, it's just moving pointers around */
     setchunk_fromwire(vpss.ni, &skq->ni, skq);
@@ -1021,6 +1022,7 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 		  , (long unsigned)keysize));
 
 
+    memcpy(&shared_pk11, shared.ptr, shared.len);
     const struct hash_desc *hasher = (struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH, skq->prf_hash, 0);
     passert(hasher);
 
@@ -1080,11 +1082,13 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 	for(;;)
 	{
 	   PK11SymKey *tkey11 = NULL, *tkey3 = NULL;
+	    DBG_log("AA  inside %s : %d loop ", __func__, __LINE__);
 
 	   if(vpss.counter[0]== 0x01) {
 		PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(tkey1, CKM_XOR_BASE_AND_DATA
 			, hmac_ipad, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE, 0);
 		PR_ASSERT(tkey2!=NULL);
+
 
 		tkey3 = pk11_derive_wrapper_lsw(tkey2, CKM_CONCATENATE_BASE_AND_DATA
 			, vpss.ni, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE, 0);
@@ -1093,9 +1097,8 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 		PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(tkey1, CKM_XOR_BASE_AND_DATA
 			, hmac_ipad, CKM_CONCATENATE_BASE_AND_KEY, CKA_DERIVE, 0);
 		PR_ASSERT(tkey2!=NULL);
-	
 
-		keyhandle=PK11_GetSymKeyHandle(tkey11);
+		keyhandle=PK11_GetSymKeyHandle(shared_pk11);
 		param.data=(unsigned char*)&keyhandle;
 		param.len=sizeof(keyhandle);
 
@@ -1106,7 +1109,6 @@ calc_skeyseed_v2(struct pcr_skeyid_q *skq
 		tkey3 = pk11_derive_wrapper_lsw(tkey12, CKM_CONCATENATE_BASE_AND_DATA
 			, vpss.ni, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE, 0);
 		PK11_FreeSymKey(tkey2);
-		PK11_FreeSymKey(tkey11);
 		PK11_FreeSymKey(tkey12);
 	   }       
 

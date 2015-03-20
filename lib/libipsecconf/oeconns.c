@@ -503,7 +503,7 @@ void add_any_oeconns(struct starter_config *cfg,
 
 			conn = alloc_add_conn(cfg, (*oc)->oe_cn, &perr);
 			if(conn == NULL) {
-				starter_log(LOG_LEVEL_INFO, "Can not create conn %s:\n",
+				starter_log(LOG_LEVEL_INFO, "Can not create conn %s:%s\n",
 					    (*oc)->oe_cn, perr);
 				continue;
 			}

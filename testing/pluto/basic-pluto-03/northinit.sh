@@ -1,4 +1,3 @@
-#!/bin/sh
 /testing/guestbin/swan-prep
 ping -c 4 -n 192.0.3.254
 ipsec _stackmanager start 

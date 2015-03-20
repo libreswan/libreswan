@@ -2,3 +2,7 @@ Basic pluto test with a variation - the responder has no such policy.
 
 It does have the packetdefault policy, which may cause a problem. Or not.
 
+Paul: I am not sure if this tests anything without oe=yes, which used
+      to be the default, so I enabled it. It appears this test is to ensure
+      failure. Needs more sanitizing before we can commit known good output
+

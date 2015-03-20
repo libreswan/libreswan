@@ -140,7 +140,8 @@ help(void)
 	    " \\\n   "
 	    " [--dontrekey]"
 	    " [--aggrmode]"
-	    " [--forceencaps]"
+	    " [--initialcontact]"
+	    " [--forceencaps] [--no-nat_keepalive]"
             " \\\n   "
             " [--dpddelay <seconds> --dpdtimeout <seconds>]"
             " [--dpdaction (clear|hold|restart|restart_by_peer)]"
@@ -154,7 +155,7 @@ help(void)
 	    " [--modecfgserver]"
 	    " [--modecfgclient]"
 	    " [--modecfgpull]"
-	    " [--addresspool]"
+	    " [--addresspool <network range>]"
 #ifdef MODECFG_DNSWINS
 	    " [--modecfgdns1]"
 	    " [--modecfgdns2]"
@@ -490,6 +491,8 @@ enum option_enums {
     CD_DPDTIMEOUT,
     CD_DPDACTION,
     CD_FORCEENCAPS,
+    CD_NO_NAT_KEEPALIVE,
+    CD_INITIAL_CONTACT,
     CD_IKE,
     CD_PFSGROUP,
     CD_REMOTEPEERTYPE,
@@ -677,6 +680,8 @@ static const struct option long_opts[] = {
 	, CD_FAIL0 + (POLICY_FAIL_REJECT >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
     { "dontrekey", no_argument, NULL, CD_DONT_REKEY + OO },
     { "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO },
+    { "no-nat_keepalive", no_argument, NULL, CD_NO_NAT_KEEPALIVE + OO },
+    { "initialcontact", no_argument, NULL, CD_INITIAL_CONTACT + OO },
     { "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
     { "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
     { "dpdaction", required_argument, NULL, CD_DPDACTION + OO },
@@ -1507,6 +1512,14 @@ main(int argc, char **argv)
 
 	case CD_FORCEENCAPS:
             msg.forceencaps = TRUE;
+            continue;
+
+	case CD_NO_NAT_KEEPALIVE: /* --no-nat_keepalive */
+            msg.nat_keepalive = FALSE;
+            continue;
+
+	case CD_INITIAL_CONTACT: /* --initialcontact */
+            msg.initial_contact = TRUE;
             continue;
 
         case CD_DPDDELAY:
