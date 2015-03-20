@@ -84,7 +84,7 @@ struct trans_attrs {
 
 	bool doing_xauth;		/* did we negotiate Extended Authentication and still doing it? */
 
-	u_int16_t groupnum;		/* for IKEv2 */
+	oakley_group_t groupnum;		/* for IKEv2 */
 
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
 	u_int32_t life_kilobytes;	/* max life of this SA in kilobytes */
@@ -131,6 +131,7 @@ struct ipsec_proto_info {
 	u_int peer_bytes;
 	monotime_t our_lastused;
 	monotime_t peer_lastused;
+	uint64_t add_time;
 };
 
 struct ike_frag {
@@ -170,7 +171,14 @@ struct hidden_variables {
 	ip_address st_natd;
 };
 
+#define unset_suspended(st) { \
+	st->st_suspended_md = NULL; \
+	st->st_suspended_md_func = __FUNCTION__; \
+	st->st_suspended_md_line = __LINE__; \
+    }
+
 #define set_suspended(st, md) { \
+	passert(st->st_suspended_md == NULL); \
 	st->st_suspended_md = md; \
 	st->st_suspended_md_func = __FUNCTION__; \
 	st->st_suspended_md_line = __LINE__; \
@@ -324,7 +332,7 @@ struct state {
 	u_int8_t st_peeridentity_protocol;
 	u_int16_t st_peeridentity_port;
 
-	u_int8_t st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
+	bool st_sec_in_use;                 /* bool: do st_sec_nss/st_pubk_nss hold values */
 
 	SECKEYPrivateKey *st_sec_nss;	/* secret (owned by NSS) */
 
@@ -442,6 +450,7 @@ struct connection;      /* forward declaration of tag */
 extern void delete_states_by_connection(struct connection *c, bool relations);
 extern void delete_p2states_by_connection(struct connection *c);
 extern void rekey_p2states_by_connection(struct connection *c);
+extern void delete_my_family(struct state *pst, bool v2_responder_state);
 
 extern struct state
 	*duplicate_state(struct state *st),
@@ -486,18 +495,24 @@ extern void initialize_new_state(struct state *st,
 				 int whack_sock,
 				 enum crypto_importance importance);
 
-extern void show_states_status(void);
+extern void show_states_status(bool list_traffic);
 
 void for_each_state(void (*f)(struct state *, void *data), void *data);
 
 extern void find_my_cpi_gap(cpi_t *latest_cpi, cpi_t *first_busy_cpi);
 extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, const struct state *st);
+
+extern void fmt_list_traffic(struct state *st, char *state_buf,
+			     const size_t state_buf_len);
+
 extern void fmt_state(struct state *st, const monotime_t n,
 		      char *state_buf, const size_t state_buf_len,
 		      char *state_buf2, const size_t state_buf_len2);
+
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
+extern void v1_delete_state_by_xauth_name(struct state *st, void *name);
 
 extern void set_state_ike_endpoints(struct state *st,
 				    struct connection *c);
@@ -519,5 +534,7 @@ extern bool dpd_active_locally(const struct state *st);
 			(st)->st_state = (new_state); \
 		} \
 	} while (0)
+
+extern bool state_busy(const struct state *st);
 
 #endif /* _STATE_H */

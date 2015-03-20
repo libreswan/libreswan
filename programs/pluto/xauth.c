@@ -83,7 +83,7 @@ static stf_status xauth_client_ackstatus(struct state *st,
 					 pb_stream *rbody,
 					 u_int16_t ap_id);
 
-/* BEWARE:This code is multi-threaded.
+/* BEWARE: This code is multi-threaded.
  *
  * Any static object is likely shared and probably has to be protected by
  * a lock.
@@ -120,12 +120,14 @@ static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
 			  struct pam_response **response, void *appdata_ptr);
 #endif
 
-/* pointer to an array of st_jbuf_t elements.
+/*
+ * pointer to an array of st_jbuf_t elements.
  * The last element has .st==NULL (and !.in_use).
  * Unused ones (not the last) have some meaningless non-NULL value in .st.  Yuck!
  * All manipulations must be protected via st_jbuf_mutex.
  * If no entries are in use, the array must be freed:
  * two tests in do_authentication depend on this.
+ * Note: managed by calloc/realloc/free
  */
 static st_jbuf_t *st_jbuf_mem = NULL;
 
@@ -147,7 +149,7 @@ static void dealloc_st_jbuf(st_jbuf_t *ptr)
 	}
 
 	/* no remaining entries in use: free array */
-	free(st_jbuf_mem);
+	free(st_jbuf_mem);	/* was calloc()ed or realloc()ed */
 	st_jbuf_mem = NULL;
 }
 
@@ -163,7 +165,8 @@ static st_jbuf_t *get_ptr_matching_tid(void)
 	return NULL;
 }
 
-/* Find or create a free slot in the st_jbuf_mem array.
+/*
+ * Find or create a free slot in the st_jbuf_mem array.
  * Note: after return, caller MUST set the .st field of the result to a
  * non-NULL value or bad things happen. The only caller does this.
  * The caller must not have locked st_jbuf_mutex: we will.
@@ -174,12 +177,17 @@ static st_jbuf_t *alloc_st_jbuf(void)
 
 	pthread_mutex_lock(&st_jbuf_mutex);
 	if (st_jbuf_mem == NULL) {
-		/* no array: allocate one slot plus endmarker
-		 * calloc ensures that the endmarker has .st == NULL
-		 */
+		/* no array: allocate one slot plus endmarker */
 		st_jbuf_mem = calloc(2, sizeof(st_jbuf_t));
 		if (st_jbuf_mem == NULL)
 			lsw_abort();
+
+		/*
+		 * Initialize end marker.
+		 * calloc(3) does not guarantee that pointer .st is
+		 * initialized to NULL but it will set .in_use to FALSE.
+		 */
+		st_jbuf_mem[1].st = NULL;
 
 		ptr = st_jbuf_mem;
 		/* new entry is going in first slot in our new array */
@@ -1052,7 +1060,7 @@ static int xauth_pam_conv(int num_msg,
 			 * not our own allocators.
 			 */
 			size_t len = strlen(s) + 1;
-			char *t = malloc(len);
+			char *t = malloc(len);	/* must be malloced */
 
 			memcpy(t, s, len);
 			reply[count].resp_retcode = 0;
@@ -1084,6 +1092,8 @@ static bool do_pam_authentication(void *varg)
 	 * Failure is handled by "break".
 	 */
 	do {
+		ipstr_buf ra;
+
 		conv.conv = xauth_pam_conv;
 		conv.appdata_ptr = varg;
 
@@ -1097,7 +1107,7 @@ static bool do_pam_authentication(void *varg)
 		/* Send the remote host address to PAM */
 		what = "pam_set_item";
 		retval = pam_set_item(pamh, PAM_RHOST,
-				      pluto_ip_str(&arg->st->st_remoteaddr));
+				      ipstr(&arg->st->st_remoteaddr, &ra));
 		if (retval != PAM_SUCCESS)
 			break;
 
@@ -1151,6 +1161,10 @@ static bool do_pam_authentication(void *varg)
  * Example creation of file with two entries (without connectionname):
  *	htpasswd -c -b /etc/ipsec.d/passwd road roadpass
  *	htpasswd -b /etc/ipsec.d/passwd home homepass
+ *
+ * NOTE: htpasswd on your system may create a crypt() incompatible hash
+ * by default (i.e. a type id of $apr1$). To create a crypt() compatible
+ * hash with htpasswd use the -d option.
  *
  * @return bool success
  */
@@ -1226,7 +1240,7 @@ static bool do_file_authentication(void *varg)
 		    DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s)",
 			    userid, arg->name,
 			    passwdhash,
-			    connectionname == NULL? "" : connectionname, arg->connname));
+			    connectionname == NULL? "<any>" : connectionname, arg->connname));
 
 		if (streq(userid, arg->name) &&
 		    (connectionname == NULL || streq(connectionname, arg->connname)))
@@ -1247,6 +1261,7 @@ static bool do_file_authentication(void *varg)
 			win = cp != NULL && streq(cp, passwdhash);
 			pthread_mutex_unlock(&crypt_mutex);
 
+			/* ??? DBG and real-world code mixed */
 			if (DBGP(DBG_CRYPT)) {
 				DBG_log("XAUTH: checking user(%s:%s) pass %s vs %s", userid, connectionname, cp,
 					passwdhash);
@@ -2029,18 +2044,16 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
-				char caddr[SUBNETTOT_BUF];
+				ipstr_buf b;
+				u_int32_t *ap = (u_int32_t *)(strattr.cur);
 
-				u_int32_t *ap =
-					(u_int32_t *)(strattr.cur);
 				a.u.v4.sin_family = AF_INET;
 				memcpy(&a.u.v4.sin_addr.s_addr, ap,
 				       sizeof(a.u.v4.sin_addr.s_addr));
 
-				addrtot(&a, 0, caddr, sizeof(caddr));
 				loglog(RC_INFORMATIONAL,
 					"Received IP4 NETMASK %s",
-					caddr);
+					ipstr(&a, &b));
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
@@ -2067,13 +2080,13 @@ stf_status modecfg_inR1(struct msg_digest *md)
 
 					if (old == NULL) {
 						c->cisco_dns_info =
-							clone_str(
-								caddr,
+							clone_str(caddr,
 								"cisco_dns_info");
 					} else {
 						/*
-						 * concatenate new IP address string on end of
-						 * existing string, separated by ' '.
+						 * concatenate new IP address
+						 * string on end of existing
+						 * string, separated by ' '.
 						 */
 						size_t sz_old = strlen(old);
 						size_t sz_added =
@@ -2101,7 +2114,10 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_domain =
 					cisco_stringify(&strattr,
 							"Domain");
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				/*
+				 * ??? this won't work because MODECFG_DOMAIN is way bigger than LELEM_ROOF
+				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				 */
 				break;
 			}
 
@@ -2110,7 +2126,10 @@ stf_status modecfg_inR1(struct msg_digest *md)
 				st->st_connection->modecfg_banner =
 					cisco_stringify(&strattr,
 							"Banner");
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				/*
+				 * ??? this won't work because MODECFG_BANNER is way bigger than LELEM_ROOF
+				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				 */
 				break;
 			}
 
@@ -2220,7 +2239,10 @@ stf_status modecfg_inR1(struct msg_digest *md)
 					tmp_spd2->next = tmp_spd;
 					tmp_spd2 = tmp_spd;
 				}
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				/*
+				 * ??? this won't work because CISCO_SPLIT_INC is way bigger than LELEM_ROOF
+				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				 */
 				break;
 			}
 
@@ -2228,14 +2250,16 @@ stf_status modecfg_inR1(struct msg_digest *md)
 			case INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
 			{
 				DBG_log("Received and ignored obsoleted Cisco NetBEUI NS info");
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				/*
+				 * ??? this won't work because INTERNAL_IP4_NBNS and INTERNAL_IP6_NBNS are way bigger than LELEM_ROOF
+				 * resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
+				 */
 				break;
 			}
 
 			default:
 			{
 				log_bad_attr("modecfg", &modecfg_attr_names, attr.isaat_af_type);
-				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 			}
 
@@ -2442,11 +2466,11 @@ static stf_status xauth_client_resp(struct state *st,
 
 						/* replace the first newline character with a string-terminating \0. */
 						{
-							char* cptr = memchr(xauth_password,
+							char *cptr = memchr(xauth_password,
 								'\n',
 								sizeof(xauth_password));
-							if (cptr)
-								cptr = '\0';
+							if (cptr != NULL)
+								*cptr = '\0';
 						}
 						clonereplacechunk(
 							st->st_xauth_password,
@@ -2528,7 +2552,6 @@ stf_status xauth_inI0(struct msg_digest *md)
 	struct isakmp_mode_attr *ma = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->payload.mode_attribute;
 	pb_stream *attrs = &md->chain[ISAKMP_NEXT_MCFG_ATTR]->pbs;
 	lset_t xauth_resp = LEMPTY;
-	lset_t mcfg_resp = LEMPTY;	/* ??? value never used */
 
 	int status = 0;
 	stf_status stat = STF_FAIL;
@@ -2632,27 +2655,22 @@ stf_status xauth_inI0(struct msg_digest *md)
 
 		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			DBG_log("Received Cisco Internal IPv4 address");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			DBG_log("Received Cisco Internal IPv4 netmask");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			DBG_log("Received Cisco IPv4 DNS info");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TV:
 			DBG_log("Received Cisco IPv4 Subnet info");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TV:
 			DBG_log("Received Cisco NetBEUI NS info");
-			mcfg_resp |= LELEM(attr.isaat_af_type);
 			break;
 
 		default:

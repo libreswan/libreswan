@@ -161,15 +161,12 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 
 	for (prev = NULL, p = host_pairs; p != NULL; prev = p, p = p->next) {
 		DBG(DBG_CONTROLMORE, {
-			    char b1[ADDRTOT_BUF];
-			    char b2[ADDRTOT_BUF];
-			    DBG_log("find_host_pair: comparing to %s:%d %s:%d\n",
-				    (addrtot(&p->me.addr, 0, b1,
-					     sizeof(b1)), b1),
-				    p->me.host_port,
-				    (addrtot(&p->him.addr, 0, b2,
-					     sizeof(b2)), b2),
-				    p->him.host_port);
+			ipstr_buf b1;
+			ipstr_buf b2;
+
+			DBG_log("find_host_pair: comparing to %s:%d %s:%d\n",
+				ipstr(&p->me.addr, &b1), p->me.host_port,
+				ipstr(&p->him.addr, &b2), p->him.host_port);
 		    });
 
 		if (sameaddr(&p->me.addr, myaddr) &&
@@ -204,17 +201,16 @@ struct connection *find_host_pair_connections(const char *func,
 		find_host_pair(myaddr, myport, hisaddr, hisport);
 
 	DBG(DBG_CONTROLMORE, {
-		    char b1[ADDRTOT_BUF];
-		    char b2[ADDRTOT_BUF];
-		    DBG_log("find_host_pair_conn (%s): %s:%d %s:%d -> hp:%s\n",
-			    func,
-			    (addrtot(myaddr,  0, b1, sizeof(b1)), b1),
-			    myport,
-			    hisaddr ? (addrtot(hisaddr, 0, b2,
-					       sizeof(b2)), b2) : "%any",
-			    hisport,
-			    (hp &&
-			     hp->connections) ? hp->connections->name : "none");
+		ipstr_buf bm;
+		ipstr_buf bh;
+
+		DBG_log("find_host_pair_conn (%s): %s:%d %s:%d -> hp:%s\n",
+			func,
+			ipstr(myaddr, &bm), myport,
+			hisaddr != NULL ? ipstr(hisaddr, &bh) : "%any",
+			hisport,
+			hp != NULL && hp->connections != NULL ?
+				hp->connections->name : "none");
 	    });
 
 	return hp == NULL ? NULL : hp->connections;
@@ -229,19 +225,16 @@ void connect_to_host_pair(struct connection *c)
 						      c->spd.that.host_port);
 
 		DBG(DBG_CONTROLMORE, {
-			    char b1[ADDRTOT_BUF];
-			    char b2[ADDRTOT_BUF];
-			    DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp:%s\n",
-				    (addrtot(&c->spd.this.host_addr, 0, b1,
-					     sizeof(b1)), b1),
-				    c->spd.this.host_port,
-				    (addrtot(&c->spd.that.host_addr, 0, b2,
-					     sizeof(b2)), b2),
-				    c->spd.that.host_port,
-				    (hp &&
-				     hp->connections) ? hp->connections->name :
-				    "none");
-		    });
+			ipstr_buf b1;
+			ipstr_buf b2;
+			DBG_log("connect_to_host_pair: %s:%d %s:%d -> hp:%s\n",
+				ipstr(&c->spd.this.host_addr, &b1),
+				c->spd.this.host_port,
+				ipstr(&c->spd.that.host_addr, &b2),
+				c->spd.that.host_port,
+				(hp != NULL && hp->connections) ?
+					hp->connections->name : "none");
+		});
 
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */

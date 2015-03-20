@@ -10,11 +10,11 @@ east #
  ipsec setup stop
 Redirecting to: systemctl stop ipsec.service
 east #
- /usr/local/libexec/ipsec/_stackmanager stop
+ PATH/libexec/ipsec/_stackmanager stop
 east #
  rm -fr /var/run/pluto/pluto.pid
 east #
- /usr/local/libexec/ipsec/_stackmanager start
+ PATH/libexec/ipsec/_stackmanager start
 [ 00.00] AVX instructions are not detected.
 [ 00.00] AVX instructions are not detected.
 [ 00.00] registered KLIPS /proc/sys/net

@@ -40,12 +40,13 @@
 
 static int exchange_number;
 static int major, minor, plen, ilen;
+static const char *my_name;
 
 static void help(void)
 {
 	fprintf(stderr,
 		"Usage:\n\n"
-		"ikeping"
+		"%s"
 		" [--listen]     causes IKEping to open a socket and reply to requests.\n"
 		" [--verbose]    causes IKEping to hexdump all packets sent/received.\n"
 		" [--ikeport <port-number>]      port to listen on/send from\n"
@@ -62,6 +63,7 @@ static void help(void)
 		" [--wait seconds]    time to wait for replies, defaults to 3 seconds.\n"
 		" host/port ...\n\n"
 		"Libreswan %s\n",
+		my_name,
 		ipsec_version_code());
 }
 
@@ -121,7 +123,8 @@ static void send_ping(int afamily,
 	ih.isa_msgid = rand();
 	ih.isa_length = ilen ? ilen : 0;
 
-	fprintf(stderr, "IKE version octet:%d; exchange type:%d\n", ih.isa_version, ih.isa_xchg);
+	fprintf(stderr, "%s: IKE version octet:%d; exchange type:%d\n",
+		my_name, ih.isa_version, ih.isa_xchg);
 
 	switch (afamily) {
 	case AF_INET:
@@ -148,18 +151,16 @@ static void send_ping(int afamily,
  * send an IKE ping reply
  *
  */
-static void reply_packet(int afamily,
-			 int s,
+static void reply_packet(int s,
 			 ip_address *dst_addr,
 			 int dst_len,
 			 struct isakmp_hdr *op)
 {
-	int i, tmp, len;
-
-	tmp = afamily;  /* shut up compiler */
+	int i, len;
 
 	for (i = 0; i < COOKIE_SIZE; i++) {
-		tmp = op->isa_icookie[i];
+		int tmp = op->isa_icookie[i];
+
 		op->isa_icookie[i] = op->isa_rcookie[i];
 		op->isa_rcookie[i] = tmp;
 	}
@@ -174,10 +175,11 @@ static void reply_packet(int afamily,
 	hton_ping(op);
 
 	len = sizeof(*op);
-	if (plen) {
+	if (plen != 0) {
 		if (plen > len) {
 			plen = len;
-			fprintf(stderr, "Packet length capped at %d - no more data", plen);
+			fprintf(stderr, "%s: Packet length capped at %d - no more data",
+				my_name, plen);
 		}
 	}
 	if (sendto(s, op, plen, 0, (struct sockaddr *)dst_addr,
@@ -196,7 +198,7 @@ static void receive_ping(int afamily, int s, int reply, int natt)
 	ip_address sender;
 	struct isakmp_hdr ih;
 	char rbuf[256];
-	char buf[64];
+	char buf[ADDRTOT_BUF];
 	int n, rport;
 	unsigned int sendlen;
 	const char *xchg_name;
@@ -236,8 +238,8 @@ static void receive_ping(int afamily, int s, int reply, int natt)
 	}
 
 	if ((unsigned int)n < sizeof(ih)) {
-		fprintf(stderr, "read short packet (%d) from %s/%d\n",
-			n, buf, rport);
+		fprintf(stderr, "%s: read short packet (%d) from %s/%d\n",
+			my_name, n, buf, rport);
 		return;
 	}
 
@@ -276,7 +278,7 @@ static void receive_ping(int afamily, int s, int reply, int natt)
 	       ih.isa_xchg);
 
 	if (reply && xchg == ISAKMP_XCHG_ECHOREQUEST_PRIVATE)
-		reply_packet(afamily, s, &sender, sendlen, &ih);
+		reply_packet(s, &sender, sendlen, &ih);
 }
 
 static const struct option long_opts[] = {
@@ -316,6 +318,7 @@ int main(int argc, char **argv)
 	ip_address laddr, raddr;
 	char *afam = "";
 
+	my_name = argv[0];
 	afamily = AF_INET;
 	pfamily = PF_INET;
 	lport = 500;
@@ -333,13 +336,13 @@ int main(int argc, char **argv)
 			return 0;       /* GNU coding standards say to stop here */
 
 		case 'V':               /* --version */
-			fprintf(stderr, "Libreswan %s\n",
-				ipsec_version_code());
+			fprintf(stderr, "Libreswan %s %s\n",
+				my_name, ipsec_version_code());
 			return 0;       /* GNU coding standards say to stop here */
 
 		case 'v':               /* --label <string> */
 			verbose++;
-			continue;
+			break;
 
 		case 'T':
 			natt++;
@@ -350,97 +353,107 @@ int main(int argc, char **argv)
 			if (optarg == foo || exchange_number < 0 ||
 			    exchange_number > 255) {
 				fprintf(stderr,
-					"Invalid exchange number '%s' (should be 0<=x<=255)\n",
-					optarg);
+					"%s: Invalid exchange number '%s' (should be 0<=x<=255)\n",
+					my_name, optarg);
 				exit(1);
 			}
-			continue;
+			break;
+
 		case 'M':
 			major = strtol(optarg, &foo, 0);
 			if (optarg == foo || major < 0 || major > 15) {
 				fprintf(stderr,
-					"Invalid major number '%s' (should be 0<=x<=15)\n",
-					optarg);
+					"%s: Invalid major number '%s' (should be 0<=x<=15)\n",
+					my_name, optarg);
 				exit(1);
 			}
-			continue;
+			break;
+
 		case 'm':
 			minor = strtol(optarg, &foo, 0);
 			if (optarg == foo || minor < 0 || minor > 15) {
 				fprintf(stderr,
-					"Invalid major minor '%s' (should be 0<=x<=15)\n",
-					optarg);
+					"%s: Invalid major minor '%s' (should be 0<=x<=15)\n",
+					my_name, optarg);
 				exit(1);
 			}
-			continue;
+			break;
+
 		case 'L':
 			ilen = strtol(optarg, &foo, 0);
 			if (optarg == foo || ilen < 0) {
 				fprintf(stderr,
-					"Invalid IKE length '%s' (should be positive)\n",
-					optarg);
+					"%s: Invalid IKE length '%s' (should be positive)\n",
+					my_name, optarg);
 				exit(1);
 			}
-			continue;
+			break;
+
 		case 'l':
 			plen = strtol(optarg, &foo, 0);
 			if (optarg == foo || plen < 0) {
 				fprintf(stderr,
-					"Invalid Packet length '%s' (should be positive)\n",
-					optarg);
+					"%s: Invalid Packet length '%s' (should be positive)\n",
+					my_name, optarg);
 				exit(1);
 			}
-			continue;
+			break;
 
 		case 's':
 			listen_only++;
-			continue;
+			break;
 
 		case 'p':
 			lport = strtol(optarg, &foo, 0);
 			if (optarg == foo || lport < 0 || lport > 65535) {
 				fprintf(stderr,
-					"Invalid port number '%s' (should be 0<=x<65536)\n",
-					optarg);
+					"%s: Invalid port number '%s' (should be 0<=x<65536)\n",
+					my_name, optarg);
 				exit(1);
 			}
-			continue;
+			break;
 
 		case 'w':
 			/* convert msec to sec */
 			waitTime = strtol(optarg, &foo, 0) * 500;
 			if (optarg == foo || waitTime < 0) {
 				fprintf(stderr,
-					"Invalid waittime number '%s' (should be 0<=x)\n",
-					optarg);
+					"%s: Invalid waittime number '%s' (should be 0<=x)\n",
+					my_name, optarg);
 				exit(1);
 			}
-			continue;
+			break;
 
 		case 'b':
 			errstr = ttoaddr(optarg, strlen(optarg),
 				         afamily, &laddr);
 			if (errstr != NULL) {
 				fprintf(stderr,
-					"Invalid local address '%s': %s\n",
-					optarg, errstr);
+					"%s: Invalid local address '%s': %s\n",
+					my_name, optarg, errstr);
 				exit(1);
 			}
-			continue;
+			break;
 
 		case '4':
 			afamily = AF_INET;
 			pfamily = PF_INET;
 			afam = "IPv4";
-			continue;
+			break;
 
 		case '6':
 			afamily = AF_INET6;
 			pfamily = PF_INET6;
 			afam = "IPv6";
-			continue;
+			break;
+
+		case '?':
+			/* Unknown flag.  Diagnostic printed by getopt_long */
+			return 1;
 
 		default:
+			fprintf(stderr, "%s internal error: unhandled option 0x%x\n",
+				my_name, c);
 			exit(1);
 		}
 	}
@@ -481,8 +494,8 @@ int main(int argc, char **argv)
 		r = setsockopt(s, SOL_UDP, UDP_ESPINUDP, &type, sizeof(type));
 		if ((r < 0) && (errno == ENOPROTOOPT)) {
 			fprintf(stderr,
-				"NAT-Traversal: ESPINUDP(%d) not supported by kernel for family %s",
-				type, afam);
+				"%s NAT-Traversal: ESPINUDP(%d) not supported by kernel for family %s",
+				my_name, type, afam);
 		}
 	}
 
@@ -493,7 +506,7 @@ int main(int argc, char **argv)
 			char *port;
 			char *host;
 			int dport = 500;
-			char namebuf[128];
+			ipstr_buf b;
 
 			host = argv[optind];
 
@@ -504,9 +517,9 @@ int main(int argc, char **argv)
 				dport = strtol(port, &foo, 0);
 				if (port == foo || dport < 0 || dport >
 				    65535) {
-					fprintf(stderr, "Invalid port number '%s' "
+					fprintf(stderr, "%s: Invalid port number '%s' "
 						"(should be 0<=x<65536)\n",
-						port);
+						my_name, port);
 					exit(1);
 				}
 			}
@@ -515,14 +528,13 @@ int main(int argc, char **argv)
 					 afamily, &raddr);
 			if (errstr != NULL) {
 				fprintf(stderr,
-					"Invalid remote address '%s': %s\n",
-					host, errstr);
+					"%s: Invalid remote address '%s': %s\n",
+					my_name, host, errstr);
 				exit(1);
 			}
 
-			addrtot(&raddr, 0, namebuf, sizeof(namebuf));
-
-			printf("Sending packet to %s/%d\n", namebuf, dport);
+			printf("Sending packet to %s/%d\n",
+				ipstr(&raddr, &b), dport);
 
 			send_ping(afamily, s, &raddr, dport);
 			numSenders++;

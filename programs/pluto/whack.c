@@ -211,6 +211,10 @@ static void help(void)
 		"\n\n"
 		"deletestate: whack"
 		" --deletestate <state_object_number>"
+		"\n\n"
+		"delete xauth user: whack"
+		" --deleteuser --name <xauth_user_name>"
+		"\n\n"
 		" --crash <ip-address>"
 		"\n\n"
 		"pubkey: whack"
@@ -280,6 +284,9 @@ static void help(void)
 		"\n\n"
 		"status: whack"
 		" --status"
+		"\n\n"
+		"trafficstatus: whack"
+		" --trafficstatus"
 		"\n\n"
 		"shutdown: whack"
 		" --shutdown"
@@ -366,6 +373,7 @@ enum option_enums {
 	OPT_TERMINATE,
 	OPT_DELETE,
 	OPT_DELETESTATE,
+	OPT_DELETEUSER,
 	OPT_LISTEN,
 	OPT_UNLISTEN,
 
@@ -378,6 +386,7 @@ enum option_enums {
 
 	OPT_STATUS,
 	OPT_SHUTDOWN,
+	OPT_TRAFFIC_STATUS,
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
@@ -557,6 +566,7 @@ static const struct option long_opts[] = {
 	{ "delete", no_argument, NULL, OPT_DELETE + OO },
 	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + OO +
 	  NUMERIC_ARG },
+	{ "deleteuser", no_argument, NULL, OPT_DELETEUSER + OO },
 	{ "crash", required_argument, NULL, OPT_DELETECRASH + OO },
 	{ "listen", no_argument, NULL, OPT_LISTEN + OO },
 	{ "unlisten", no_argument, NULL, OPT_UNLISTEN + OO },
@@ -569,6 +579,7 @@ static const struct option long_opts[] = {
 	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO },
 	{ "rereadall", no_argument, NULL, OPT_REREADALL + OO },
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
+	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
 	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
@@ -974,12 +985,8 @@ int main(int argc, char **argv)
 		/* decode a numeric argument, if expected */
 		if (0 <= c) {
 			if (c & NUMERIC_ARG) {
-				char *endptr;
-
 				c -= NUMERIC_ARG;
-				opt_whole = strtoul(optarg, &endptr, 0);
-
-				if (*endptr != '\0' || endptr == optarg)
+				if (ttoul(optarg, 0, 0, &opt_whole) != NULL)
 					diagq("badly formed numeric argument",
 					      optarg);
 			}
@@ -1181,6 +1188,11 @@ int main(int argc, char **argv)
 			}
 			continue;
 
+		case OPT_DELETEUSER: /* --deleteuser  --name <xauth username> */
+			msg.whack_deleteuser = TRUE;
+			continue;
+
+
 		case OPT_LISTEN: /* --listen */
 			msg.whack_listen = TRUE;
 			continue;
@@ -1203,6 +1215,10 @@ int main(int argc, char **argv)
 
 		case OPT_STATUS: /* --status */
 			msg.whack_status = TRUE;
+			continue;
+
+		case OPT_TRAFFIC_STATUS: /* --trafficstatus */
+			msg.whack_traffic_status = TRUE;
 			continue;
 
 		case OPT_SHUTDOWN: /* --shutdown */
@@ -1401,10 +1417,8 @@ int main(int argc, char **argv)
 				diag("--client conflicts with --clientwithin");
 
 			tunnel_af_used_by = long_opts[long_index].name;
-			if ( ((strlen(optarg) >= 6) &&
-			      (strncmp(optarg, "vhost:", 6) == 0)) ||
-			     ((strlen(optarg) >= 5) &&
-			      (strncmp(optarg, "vnet:", 5) == 0)) ) {
+			if (startswith(optarg, "vhost:") ||
+			    startswith(optarg, "vnet:")) {
 				msg.right.virt = optarg;
 			} else {
 				diagq(ttosubnet(optarg, 0,
@@ -1894,7 +1908,7 @@ int main(int argc, char **argv)
 	if (!LDISJOINT(opts1_seen,
 		       LELEM(OPT_ROUTE) | LELEM(OPT_UNROUTE) |
 		       LELEM(OPT_INITIATE) | LELEM(OPT_TERMINATE) |
-		       LELEM(OPT_DELETE) | LELEM(OPT_CD))) {
+		       LELEM(OPT_DELETE) | LELEM(OPT_DELETEUSER) | LELEM(OPT_CD))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diag("missing --name <connection_name>");
 	} else if (!msg.whack_options) {
@@ -1909,17 +1923,19 @@ int main(int argc, char **argv)
 
 	if (!(msg.whack_connection || msg.whack_key || msg.whack_myid ||
 	      msg.whack_delete || msg.whack_deletestate ||
+	      msg.whack_deleteuser ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
 	      msg.whack_unlisten || msg.whack_list ||
 	      msg.whack_reread || msg.whack_crash ||
-	      msg.whack_status || msg.whack_options || msg.whack_shutdown))
+	      msg.whack_status || msg.whack_traffic_status || msg.whack_options ||
+	      msg.whack_shutdown))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {
 		if (msg.ike == NULL)
-			diag("can not specify aggressive mode without ike= to set algorithm");
+			diag("cannot specify aggressive mode without ike= to set algorithm");
 	}
 
 	update_ports(&msg);
@@ -2094,12 +2110,19 @@ int main(int argc, char **argv)
 					/* figure out prefix number
 					 * and how it should affect our exit status
 					 */
+					/*
+					 * we don't generally use strtoul but
+					 * in this case, its failure mode
+					 * (0 for nonsense) is probably OK.
+					 */
 					{
 						unsigned long s =
 							strtoul(ls, NULL, 10);
 
 						switch (s) {
 						case RC_COMMENT:
+						case RC_INFORMATIONAL:
+						case RC_INFORMATIONAL_TRAFFIC:
 						case RC_LOG:
 							/* ignore */
 							break;

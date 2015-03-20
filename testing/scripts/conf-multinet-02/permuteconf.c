@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 	cfg = confread_load(configfile, &err, NULL);
 
 	if (!cfg) {
-		printf("config file: %s can not be loaded: %s\n", configfile,
+		printf("config file: %s cannot be loaded: %s\n", configfile,
 		       err);
 		exit(3);
 	}

@@ -875,7 +875,7 @@ static int ipsec_ocf_xmit_cb(struct cryptop *crp)
 			ixs->iph = (void*)((char*)ixs->iph + ptr_delta);
 
 			/*
-			 * can not free it here, because we are under
+			 * cannot free it here, because we are under
 			 * IRQ, potentially, so queue it for later
 			 */
 			kfree_skb(ixs->skb);

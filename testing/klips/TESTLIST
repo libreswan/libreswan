@@ -1,9 +1,9 @@
 #
 # This isn't actually a shell script. It just looks like one.
-# Some tools other than /bin/sh process it. 
+# Some tools other than /bin/sh process it.
 #
 # Lines that start with # are comments. # to the right is not valid.
-# 
+#
 # The first word provides the test type. For a list of test types,
 # see doc/{,src/}makecheck.html.
 #
@@ -26,7 +26,7 @@
 #
 skiptest east-des-parity-01	missing
 
-	
+
 #
 # east-icmp-01: pass ping packets through manually keyed ESP SA and confirm
 #		encipherment.
@@ -34,13 +34,13 @@ skiptest east-des-parity-01	missing
 klipstest east-icmp-01		good
 
 #
-# east-icmp-03: pass ping packets through manually keyed ESP SA 
+# east-icmp-03: pass ping packets through manually keyed ESP SA
 #		with IPCOMP and confirm	encipherment.
 #
 klipstest east-icmp-03		good
 
 #
-# east-icmp-04: pass ping packets through manually keyed ESP SA 
+# east-icmp-04: pass ping packets through manually keyed ESP SA
 #		with 3DES-SHA-1 authenticators
 #
 klipstest east-icmp-04		good
@@ -75,7 +75,7 @@ klipstest west-bigicmp-01		good
 klipstest west-icmp-01		good
 
 #
-# west-icmp-03: decode ESP/IPCOMP packets 
+# west-icmp-03: decode ESP/IPCOMP packets
 #
 klipstest west-icmp-03		good
 
@@ -113,42 +113,42 @@ skiptest east-lifetime-04	missing
 
 #
 # east-drop-01: %drop policy
-# 
+#
 klipstest east-drop-01		good
 
 #
 # east-hold-01: %hold policy
-# 
+#
 klipstest east-hold-01		good
 
 #
 # east-none-01: %none policy
-# 
+#
 klipstest east-none-01		good
 
 #
 # east-pass-01: %pass policy
-# 
+#
 klipstest east-pass-01		good
 
 #
 # east-reject-01: %reject policy
-# 
+#
 klipstest east-reject-01	good
 
 #
 # east-trap-01: %trap policy
-# 
+#
 klipstest east-trap-01		good
 
 #
 # east-trapsubnet-01: %trapsubnet policy
-# 
+#
 klipstest east-trapsubnet-01	good
 
 #
 # east-ikepass-01: local ike with pass policy
-# 
+#
 #klipstest east-ikepass-01	good
 
 #
@@ -274,7 +274,7 @@ klipstest west-icmp-02	good
 
 #
 # ah-esp-01: check an automatically keyed conn using ah+esp
-# 
+#
 skiptest	ah-esp-01	good
 
 #

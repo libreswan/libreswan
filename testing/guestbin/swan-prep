@@ -257,19 +257,29 @@ if args.ipv6:
 
 # final prep - this kills any running userland
 output = commands.getoutput("ipsec stop")
-# python has no pidof :/
-pluto = commands.getoutput("pidof pluto")
-charon = commands.getoutput("pidof charon")
-shrew = commands.getoutput("pidof iked")
-racoon1 = commands.getoutput("pidof racoon2-spmd")
-racoon2 = commands.getoutput("pidof racoon2-iked")
+# python has no pidof :/. getoutput return a string not a list. 
+# split the string to make a list. Empty strings will discarded
 
-for pid in ( pluto, charon, shrew, racoon1, racoon2 ):
+pids = []
+pluto = commands.getoutput("pidof pluto")
+pids.extend(pluto.split())
+charon = commands.getoutput("pidof starter")
+pids.extend(charon.split())
+charonstarter = commands.getoutput("pidof charon")
+pids.extend(charonstarter.split())
+shrew = commands.getoutput("pidof iked")
+pids.extend(shrew.split())
+racoon1 = commands.getoutput("pidof racoon2-spmd")
+pids.extend(racoon1.split())
+racoon2 = commands.getoutput("pidof racoon2-iked")
+pids.extend(racoon2.split())
+
+for pid in pids:
 	if pid:
 		os.kill(int(pid),9)
 
 # note shrew and racoon2 share a pid file name
-for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/spmd.pid"):
+for pidfile in ( "/var/run/pluto/pluto.pid", "/var/run/charon.pid", "/var/run/iked.pid","/var/run/spmd.pid", "/var/run/starter.charon.pid"):
 	if os.path.isfile(pidfile):
 		os.unlink(pidfile)
 

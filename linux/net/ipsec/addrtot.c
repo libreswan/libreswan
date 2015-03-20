@@ -348,6 +348,20 @@ char **dstp;                    /* where to put result pointer */
 }
 
 /*
+ * simplified interface to addrtot()
+ *
+ * Caller should allocate a buffer to hold the result as long
+ * as the resulting string is needed.  Usually just long enough
+ * to output.
+ */
+
+const char *ipstr(const ip_address *src, ipstr_buf *b)
+{
+	addrtot(src, 0, b->buf, sizeof(b->buf));
+	return b->buf;
+}
+
+/*
    - reverse6 - modern IPv6 reverse-lookup conversion (RFC 2874)
  * this version removed as it was obsoleted in the end.
  */

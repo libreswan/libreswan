@@ -20,8 +20,8 @@ east #
 east #
  ipsec auto --status |grep westnet-eastnet-aes256
 000 "westnet-eastnet-aes256": 192.0.2.0/24===192.1.2.23<192.1.2.23>[@east]...192.1.2.45<192.1.2.45>[@west]===192.0.1.0/24; unrouted; eroute owner: #0
-000 "westnet-eastnet-aes256":     oriented; my_ip=unset; their_ip=unset;
-000 "westnet-eastnet-aes256":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
+000 "westnet-eastnet-aes256":     oriented; my_ip=unset; their_ip=unset
+000 "westnet-eastnet-aes256":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-aes256":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-aes256":   labeled_ipsec:no, loopback:no; 
 000 "westnet-eastnet-aes256":    policy_label:unset; 
@@ -31,8 +31,8 @@ east #
 000 "westnet-eastnet-aes256":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "westnet-eastnet-aes256":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-aes256":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "westnet-eastnet-aes256":   IKE algorithms wanted: AES_CBC(7)_128-SHA1(2)_000-MODP1536(5), AES_CBC(7)_128-SHA1(2)_000-MODP1024(2)
-000 "westnet-eastnet-aes256":   IKE algorithms found:  AES_CBC(7)_128-SHA1(2)_160-MODP1536(5), AES_CBC(7)_128-SHA1(2)_160-MODP1024(2)
+000 "westnet-eastnet-aes256":   IKE algorithms wanted: AES_CBC(7)_128-SHA1(2)_000-MODP2048(14), AES_CBC(7)_128-SHA1(2)_000-MODP1536(5), AES_CBC(7)_128-SHA1(2)_000-MODP1024(2)
+000 "westnet-eastnet-aes256":   IKE algorithms found:  AES_CBC(7)_128-SHA1(2)_160-MODP2048(14), AES_CBC(7)_128-SHA1(2)_160-MODP1536(5), AES_CBC(7)_128-SHA1(2)_160-MODP1024(2)
 000 "westnet-eastnet-aes256":   ESP algorithms wanted: 3DES(3)_000-SHA1(2)_000
 000 "westnet-eastnet-aes256":   ESP algorithms loaded: 3DES(3)_000-SHA1(2)_000
 east #
@@ -42,6 +42,7 @@ east #
  # should not match anything
 east #
  grep ID_UNASSIGNED_ID4 /tmp/pluto.log
+east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 east #

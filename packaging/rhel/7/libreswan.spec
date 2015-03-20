@@ -15,7 +15,7 @@
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: 3.9
+Version: 3.10
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
@@ -189,7 +189,8 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %if %{USE_FIPSCHECK}
 prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %endif
-if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
+     ! -f %{_sysconfdir}/ipsec.d/cert9.db ] ; then
     TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
     [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
     echo > ${TEMPFILE}
@@ -199,5 +200,5 @@ if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
 fi
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.9-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.10-1
 - Automated build from release tar ball

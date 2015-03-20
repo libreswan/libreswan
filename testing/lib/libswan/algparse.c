@@ -73,7 +73,7 @@ main(int argc, char *argv[]) {
 	do_test("aes-sha1", PROTO_IPSEC_ESP);
 	do_test("aes-sha2", PROTO_IPSEC_ESP);
 	do_test("aes128-sha1", PROTO_IPSEC_ESP);
-	do_test("aes128-aes_cbc", PROTO_IPSEC_ESP);
+	do_test("aes128-aes_xcbc", PROTO_IPSEC_ESP);
 	do_test("aes192-sha1", PROTO_IPSEC_ESP);
 	do_test("aes256-sha1", PROTO_IPSEC_ESP);
 	do_test("aes256-sha", PROTO_IPSEC_ESP);
@@ -107,6 +107,8 @@ main(int argc, char *argv[]) {
 	do_test("aes_gcm-null", PROTO_IPSEC_ESP);
 	do_test("aes_ccm-256-null", PROTO_IPSEC_ESP);
 	do_test("aes_gcm-192-null", PROTO_IPSEC_ESP);
+#if 0
+	/* these are caught using "aliasing" and rewritten to the above syntax */
 	do_test("aes_ccm_8-128-null", PROTO_IPSEC_ESP);
 	do_test("aes_ccm_8-192-null", PROTO_IPSEC_ESP);
 	do_test("aes_ccm_8-256-null", PROTO_IPSEC_ESP);
@@ -125,10 +127,13 @@ main(int argc, char *argv[]) {
 	do_test("aes_gcm_16-128-null", PROTO_IPSEC_ESP);
 	do_test("aes_gcm_16-192-null", PROTO_IPSEC_ESP);
 	do_test("aes_gcm_16-256-null", PROTO_IPSEC_ESP);
+#endif
 	/* other */
 	do_test("aes_ctr", PROTO_IPSEC_ESP);
 	do_test("aesctr", PROTO_IPSEC_ESP);
-	do_test("aes128_ctr", PROTO_IPSEC_ESP);
+	do_test("aes_ctr128", PROTO_IPSEC_ESP);
+	do_test("aes_ctr192", PROTO_IPSEC_ESP);
+	do_test("aes_ctr256", PROTO_IPSEC_ESP);
 	do_test("serpent", PROTO_IPSEC_ESP);
 	do_test("twofish", PROTO_IPSEC_ESP);
 	do_test("mars", PROTO_IPSEC_ESP);
@@ -143,6 +148,7 @@ main(int argc, char *argv[]) {
 	do_test("aes-sha1555", PROTO_IPSEC_ESP); /* should get rejected */
 	do_test("blowfish", PROTO_IPSEC_ESP); /* obsoleted */
 	do_test("des-sha1", PROTO_IPSEC_ESP); /* obsoleted */
+	do_test("aes_ctr666", PROTO_IPSEC_ESP); /* bad key size */
 	do_test("aes128-sha2_128", PROTO_IPSEC_ESP); /* _128 does not exist */
 	do_test("vanitycipher", PROTO_IPSEC_ESP);
 	do_test("ase-sah", PROTO_IPSEC_ESP); /* should get rejected */
@@ -157,13 +163,19 @@ main(int argc, char *argv[]) {
 	do_test("sha", PROTO_IPSEC_AH);
 	do_test("sha1", PROTO_IPSEC_AH);
 	do_test("sha2", PROTO_IPSEC_AH);
+	do_test("sha2_256", PROTO_IPSEC_AH);
+	do_test("sha2_384", PROTO_IPSEC_AH);
+	do_test("sha2_512", PROTO_IPSEC_AH);
+	do_test("aes_xcbc", PROTO_IPSEC_AH);
+	do_test("ripemd", PROTO_IPSEC_AH);
 
 	fprintf(stdout, "\n---- AH tests that should fail ----\n");
-	do_test("null", PROTO_IPSEC_AH);
 	do_test("aes-sha1", PROTO_IPSEC_AH);
 	do_test("vanityhash1", PROTO_IPSEC_AH);
 	do_test("aes_gcm_c-256", PROTO_IPSEC_AH);
 	do_test("id3", PROTO_IPSEC_AH);
+	do_test("3des", PROTO_IPSEC_AH);
+	do_test("null", PROTO_IPSEC_AH);
 
 #ifdef WORK_IN_PROGRESS
 	/* ike= */

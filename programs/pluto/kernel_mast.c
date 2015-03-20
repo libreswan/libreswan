@@ -105,8 +105,7 @@ static int recalculate_mast_device_list(struct raw_iface *rifaces)
 
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		/* look for virtual (mast*) interface */
-		if (strncmp(ifp->name, MASTDEVPREFIX, sizeof(MASTDEVPREFIX) -
-			    1))
+		if (!startswith(ifp->name, MASTDEVPREFIX))
 			continue;
 
 		if (sscanf(ifp->name, "mast%d", &mastno) == 1) {
@@ -195,28 +194,26 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		/* ignore if virtual (ipsec*) interface */
-		if (strncmp(ifp->name, IPSECDEVPREFIX, sizeof(IPSECDEVPREFIX) -
-			    1) == 0)
+		if (startswith(ifp->name, IPSECDEVPREFIX))
 			continue;
 
 		/* ignore if virtual (mast*) interface */
-		if (strncmp(ifp->name, MASTDEVPREFIX, sizeof(MASTDEVPREFIX) -
-			    1) == 0) {
+		if (startswith(ifp->name, MASTDEVPREFIX)) {
 			found_mast = TRUE;
 			continue;
 		}
 
 		/* ignore if loopback interface */
-		if (strncmp(ifp->name, "lo", 2) == 0)
+		if (startswith(ifp->name, "lo"))
 			continue;
 
 		/* ignore if --listen is specified and we do not match */
-		if (pluto_listen != NULL) {
-			if (!sameaddr(&lip, &ifp->addr)) {
-				libreswan_log("skipping interface %s with %s",
-					      ifp->name, ip_str(&ifp->addr));
-				continue;
-			}
+		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
+			ipstr_buf b;
+
+			libreswan_log("skipping interface %s with %s",
+				      ifp->name, ipstr(&ifp->addr, &b));
+			continue;
 		}
 
 		/*
@@ -272,6 +269,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 				/* matches nothing -- create a new entry */
 				char *vname;
 				int fd;
+				ipstr_buf b;
 
 				if (useful_mastno == -1)
 					useful_mastno = init_useful_mast(
@@ -315,7 +313,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 					"adding interface %s/%s %s:%d (fd=%d)",
 					q->ip_dev->id_vname,
 					q->ip_dev->id_rname,
-					ip_str(&q->ip_addr),
+					ipstr(&q->ip_addr, &b),
 					q->port, q->fd);
 
 				/*
@@ -354,7 +352,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 					libreswan_log(
 						"adding interface %s/%s %s:%d (fd=%d)",
 						q->ip_dev->id_vname, q->ip_dev->id_rname,
-						ip_str(&q->ip_addr),
+						ipstr(&q->ip_addr, &b),
 						q->port, q->fd);
 				}
 
@@ -414,7 +412,7 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 	}
 
 	ref = refhim = IPSEC_SAREF_NULL;
-	if (st) {
+	if (st != NULL) {
 		ref   = st->st_ref;
 		refhim = st->st_refhim;
 		DBG(DBG_KERNEL,

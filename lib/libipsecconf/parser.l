@@ -194,21 +194,14 @@ int parser_y_include (const char *filename)
 	 *
 	 * glob() returns a match if that file exists, even without
 	 * having to do any globbing.
+	 *
+	 * Use GNU GLOB_BRACE extension to glob(3) if available.
 	 */
-
-
-/* use GNU extensions to glob(3), but only if available */
 
 #ifdef GLOB_BRACE
 # define GB GLOB_BRACE
 #else
 # define GB 0
-#endif
-
-#ifdef GLOB_NOMAGIC
-# define GNM GLOB_NOMAGIC
-#else
-# define GNM 0
 #endif
 
 	if(rootdir[0]!='\0' && filename[0]=='/')
@@ -222,12 +215,14 @@ int parser_y_include (const char *filename)
 		    snprintf(newname2, PATH_MAX,
 			     "%s%s", rootdir2, filename);
 		    try = newname2;
-		    globresult = glob(try, GB|GNM, NULL, &globbuf);
+		    globresult = glob(try, GB, NULL, &globbuf);
 	    }
 	} else {
 		/* try globbing plain name now.. */
-		globresult = glob(try, GB|GNM, NULL, &globbuf);
+		globresult = glob(try, GB, NULL, &globbuf);
 	}
+
+#undef GB
 
 	if(globresult == GLOB_NOMATCH)
 	{

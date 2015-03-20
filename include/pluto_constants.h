@@ -276,22 +276,24 @@ enum {
  * All routines are about transitioning to the next state
  * (which might actually be the same state).
  *
- * Messages are named [MQ][IR]n where
+ * IKE V1 messages are sometimes called [MAQ][IR]n where
  * - M stands for Main Mode (Phase 1);
+ *   A stands for Aggressive Mode (Phase 1);
  *   Q stands for Quick Mode (Phase 2)
  * - I stands for Initiator;
  *   R stands for Responder
- * - n, a digit, stands for the number of the message
+ * - n, a digit, stands for the number of the message from this role
+ *   within this exchange
  *
  * It would be more convenient if each state accepted a message
- * and produced one.  This is the case for states at the start
+ * and produced one.  This is not the case for states at the start
  * or end of an exchange.  To fix this, we pretend that there are
- * MR0 and QR0 messages before the MI1 and QR1 messages.  Similarly,
- * we pretend that there are MR4 and QR2 messages.
+ * MR0 and QR0 messages before the MI1 and QR1 messages.
  *
- * STATE_MAIN_R0 and STATE_QUICK_R0 are intermediate states (not
+ * STATE_MAIN_R0 and STATE_QUICK_R0 are ephemeral states (not
  * retained between messages) representing the state that accepts the
- * first message of an exchange has been read but not processed.
+ * first message of an exchange that has been read but not yet processed
+ * and accepted.
  *
  * v1_state_microcode_table in ikev1.c and
  * v2_state_microcode_table in ikev2.c describe
@@ -373,9 +375,19 @@ enum state_kind {
 	STATE_IKEv2_ROOF,
 };
 
+/* This is the IKE role, in RFC terms the Original Initiator or
+ * Original Responder. It is used for SPI lookup.
+ * This does NOT refer to whether we are sending an IKE request or
+ * an IKE response. This role sets ISAKMP_FLAGS_IKE_I, * but NOT
+ * ISAKMP_FLAGS_MSG_R. These are two different bits!
+ * In other words: ISAKMP_FLAGS_IKE_I != !ISAKMP_FLAGS_MSG_R
+ *
+ * The ISAKMP_FLAGS_IKE_I flag is present in IKEv1, but the
+ * ISAKMP_FLAGS_MSG_R is only present in IKEv2.
+ */
 enum phase1_role {
-	INITIATOR=1,
-	RESPONDER=2
+	O_INITIATOR=1,
+	O_RESPONDER=2
 };
 
 #define STATE_IKE_FLOOR STATE_MAIN_R0
@@ -574,14 +586,6 @@ enum sa_policy_bits {
 	*/
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_RSASIG_IX)
 
-	/* Policies that affect choices of proposal.
-	 * Includes xauth policy from connection c.
-	 * The result is a small set and it will fit in "unsigned".
-	 */
-#define POLICY_ISAKMP(x, c)	(((x) & LRANGES(POLICY_PSK, POLICY_RSASIG)) | \
-					(((c)->spd.this.xauth_server) << 2) | \
-					(((c)->spd.this.xauth_client) << 3))
-
 	/* Quick Mode (IPSEC) attributes */
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */
@@ -692,93 +696,6 @@ enum sa_policy_bits {
 
 /* Don't allow negotiation? */
 #define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
-
-/* Oakley transform attributes
- * https://www.iana.org/assignments/ipsec-registry/ipsec-registry.xhtml#ipsec-registry-2
- */
-
-#define OAKLEY_ENCRYPTION_ALGORITHM    1
-#define OAKLEY_HASH_ALGORITHM          2
-#define OAKLEY_AUTHENTICATION_METHOD   3
-#define OAKLEY_GROUP_DESCRIPTION       4
-#define OAKLEY_GROUP_TYPE              5
-#define OAKLEY_GROUP_PRIME             6        /* B/V */
-#define OAKLEY_GROUP_GENERATOR_ONE     7        /* B/V */
-#define OAKLEY_GROUP_GENERATOR_TWO     8        /* B/V */
-#define OAKLEY_GROUP_CURVE_A           9        /* B/V */
-#define OAKLEY_GROUP_CURVE_B          10        /* B/V */
-#define OAKLEY_LIFE_TYPE              11
-#define OAKLEY_LIFE_DURATION          12        /* B/V */
-#define OAKLEY_PRF                    13
-#define OAKLEY_KEY_LENGTH             14
-#define OAKLEY_FIELD_SIZE             15
-#define OAKLEY_GROUP_ORDER            16        /* B/V */
-/* 17-16383 Unassigned */
-/* 16384-32767 Reserved for private use */
-
-/* IPsec DOI attributes
- * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
- */
-
-#define SA_LIFE_TYPE             1
-#define SA_LIFE_DURATION         2      /* B/V */
-#define GROUP_DESCRIPTION        3
-#define ENCAPSULATION_MODE       4
-#define AUTH_ALGORITHM           5
-#define KEY_LENGTH               6
-#define KEY_ROUNDS               7
-#define COMPRESS_DICT_SIZE       8
-#define COMPRESS_PRIVATE_ALG     9      /* B/V */
-#define SECCTX                   32001  /* B/V */
-
-/* for each IPsec attribute, which enum_names describes its values? */
-
-#if 0	/*???? THIS IS DUPLICATED FROM include/ieft_constants.h.  WHY? */
-/* SA Lifetime Type attribute
- * RFC2407 The Internet IP security Domain of Interpretation for ISAKMP 4.5
- * Default time specified in 4.5
- *
- * There are two defaults for IPSEC SA lifetime, SA_LIFE_DURATION_DEFAULT,
- * and PLUTO_SA_LIFE_DURATION_DEFAULT.
- * SA_LIFE_DURATION_DEFAULT is specified in RFC2407 "The Internet IP
- * Security Domain of Interpretation for ISAKMP" 4.5.  It applies when
- * an ISAKMP negotiation does not explicitly specify a life duration.
- * PLUTO_SA_LIFE_DURATION_DEFAULT is specified in pluto(8).  It applies
- * when a connection description does not specify --ipseclifetime.
- * The value of SA_LIFE_DURATION_MAXIMUM is our local policy.
- */
-
-#define SA_LIFE_TYPE_SECONDS   1
-#define SA_LIFE_TYPE_KBYTES    2
-
-#define SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* RFC2407 4.5 */
-#define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* pluto(8) */
-#define SA_LIFE_DURATION_MAXIMUM secs_per_day
-
-#define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
-#define SA_REPLACEMENT_FUZZ_DEFAULT         100 /* (IPSEC & IKE) 100% of MARGIN */
-#define SA_REPLACEMENT_RETRIES_DEFAULT      0   /*  (IPSEC & IKE) */
-
-#define SA_LIFE_DURATION_K_DEFAULT  0xFFFFFFFFlu
-
-#endif
-
-#if 0	/*???? THIS IS DUPLICATED FROM include/ieft_constants.h.  WHY? */
-/* Oakley Lifetime Type attribute
- * draft-ietf-ipsec-ike-01.txt appendix A
- * As far as I can see, there is no specification for
- * OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT.  This could lead to interop problems!
- * For no particular reason, we chose one hour.
- * The value of OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM is our local policy.
- */
-
-#define OAKLEY_LIFE_SECONDS   1
-#define OAKLEY_LIFE_KILOBYTES 2
-
-#define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT secs_per_hour
-#define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM secs_per_day
-
-#endif
 
 enum pubkey_source {
 	PUBKEY_NOTSET       = 0,

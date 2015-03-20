@@ -1,0 +1,4 @@
+Basic pluto test:
+
+the policy has been adjusted to permit only AES256 for phase 1 and uses
+a bogus key size for phase 2. The IKEv1 connection should be rejected.

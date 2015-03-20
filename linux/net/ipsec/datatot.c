@@ -57,7 +57,6 @@ size_t dstlen;
 		prefix = "0x";
 		break;
 	case ':':
-		format = 'x';
 		breakevery = 2;
 		breakchar = ':';
 	/* FALLTHROUGH */

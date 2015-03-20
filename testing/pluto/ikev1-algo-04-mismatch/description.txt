@@ -1,0 +1,9 @@
+Basic pluto with IKEv1 using PSK on the initiator (west), and on the responder.
+
+This is to verify we don't setup an ESP with with incompatible algo / hash sizes.
+In libreswan-3.9, an 3des<->aes mismatched ESP proposal caused an SA to be setup
+with the initiator proposal instead of being rejected.
+
+We use an impair function to fail quickly without retransmits.
+
+this uses netkey for no particular reason

@@ -1,0 +1,4 @@
+Testing AH with aes256_gmac with NETKEY
+
+The linux kernel seems to not yet support this
+

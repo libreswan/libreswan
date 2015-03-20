@@ -1,4 +1,5 @@
 /testing/guestbin/swan-prep --x509
+certutil  -d /etc/ipsec.d -D -n mainca
 # confirm that the network is alive
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through
@@ -7,6 +8,6 @@ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-x509
-ipsec auto --status
+ipsec auto --add westnet-eastnet-x509-nosend
+ipsec auto --status |grep westnet-eastnet-x509-nosend
 echo "initdone"

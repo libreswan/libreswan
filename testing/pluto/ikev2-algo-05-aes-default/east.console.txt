@@ -29,10 +29,28 @@ east #
 | encrid(12), keylen(128), encr_keylen(128)
 --
 |    af+type: IKEv2_KEY_LENGTH
+|    length/value: 256
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 128
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 256
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 128
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 256
+--
+|    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
 --
 |    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 256
 --
 |    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
@@ -42,6 +60,12 @@ east #
 --
 | IKEv2_KEY_LENGTH attribute 128
 | encrid(12), keylen(128), encr_keylen(128)
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 128
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 128
 --
 |    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
@@ -71,10 +95,22 @@ east #
 |    length/value: 256
 --
 |    af+type: IKEv2_KEY_LENGTH
+|    length/value: 256
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 256
+--
+|    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
 --
 | IKEv2_KEY_LENGTH attribute 128
 | encrid(12), keylen(128), encr_keylen(128)
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 128
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 128
 --
 |    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
@@ -98,14 +134,16 @@ east #
 |    length/value: 256
 --
 |    af+type: IKEv2_KEY_LENGTH
+|    length/value: 256
+--
+|    af+type: IKEv2_KEY_LENGTH
+|    length/value: 256
+--
+|    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
 --
 |    af+type: IKEv2_KEY_LENGTH
 |    length/value: 128
-east #
-east #
- ipsec whack --shutdown
-002 shutting down
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

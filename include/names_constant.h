@@ -75,6 +75,7 @@ extern enum_names *const ikev2_trans_attr_val_descs[];
 extern enum_names *const ikev2_transid_val_descs[];
 extern const unsigned int ikev2_transid_val_descs_roof;
 extern const struct enum_enum_names v2_transform_ID_enums;
+extern enum_names ikev2_idtype_names;
 extern enum_names ikev2_cert_type_names;
 extern enum_names ikev2_notify_names;
 extern enum_names ikev2_ts_type_names;

@@ -1,0 +1,36 @@
+Testing two connections with one being a passthrough for a specific port,
+in this case we pick ports symmetrically using 222 <-> 222
+
+currently east (192.1.2.23) shows:
+
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 
+	dir fwd priority 1440 ptype main 
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 
+	dir in priority 1440 ptype main 
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 
+	dir out priority 1440 ptype main 
+
+both in and fwd policy have src/dst swapped wrong
+
+issuing a fix manually solves the packet flow:
+
+ip xfrm policy add src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222 priority 1440 dir in
+ip xfrm policy add src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222 priority 1440 dir fwd
+
+When changing the passthrough to a regular tunnel, the policy shows up correct:
+
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 222 dport 222 
+	dir out priority 1952 ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid 16397 mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222 
+	dir fwd priority 1952 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 16397 mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp sport 222 dport 222 
+	dir in priority 1952 ptype main 
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid 16397 mode tunnel
+
+and the 222 packets go properly over its own IPsec SA different
+from all other traffic picking the other conn's IPsec SA.
