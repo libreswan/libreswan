@@ -71,7 +71,7 @@ config KLIPS_ALG
 
 config KLIPS_ENC_CRYPTOAPI
 	bool 'CryptoAPI algorithm interface'
-	default n
+	default y
 	depends on KLIPS_ALG
 	help
 	   Enable the algorithm interface to make all CryptoAPI 1.0 algorithms

@@ -3,6 +3,8 @@
  * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -77,8 +79,27 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	childsacalc.skeyseed = &st->st_skey_d;
 
 	st->st_esp.present = TRUE;
-	st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
-				st->st_esp.attrs.transattrs.ei->authkeylen;
+	switch (ipi->attrs.transattrs.ei->transid) { /* transid is same as encryptalg */
+	case IKEv2_ENCR_AES_GCM_8:
+	case IKEv2_ENCR_AES_GCM_12:
+	case IKEv2_ENCR_AES_GCM_16:
+		/* aes_gcm does not use an integ (auth) algo - see RFC 4106 */
+		st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
+			AES_GCM_SALT_BYTES;
+		break;
+	case IKEv2_ENCR_AES_CCM_8:
+	case IKEv2_ENCR_AES_CCM_12:
+	case IKEv2_ENCR_AES_CCM_16:
+		/* aes_ccm does not use an integ (auth) algo - see RFC 4309 */
+		st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
+			AES_CCM_SALT_BYTES;
+		break;
+
+	default:
+		st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
+			st->st_esp.attrs.transattrs.ei->authkeylen;
+		break;
+	}
 
 /*
  *
@@ -96,6 +117,8 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
  *    the encryption key is taken from the first octets of KEYMAT and
  *    the authentication key is taken from the next octets.
  *
+ *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for 
+ *    salt (AES_GCM_SALT_BYTES)
  */
 
 	v2genbytes(&ikeymat, st->st_esp.keymat_len,

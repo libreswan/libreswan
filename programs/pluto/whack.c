@@ -5,7 +5,13 @@
  * Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Shingo Yamawaki
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2010 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2011 Mika Ilmaranta <ilmis@foobar.fi>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -216,7 +222,6 @@ static void help(void)
 		" \\\n   "
 		" [--debug-control]"
 		" [--debug-controlmore]"
-		" [--debug-klips]"
 		" [--debug-dns]"
 		" [--debug-pfkey]"
 		" [--debug-dpd]"
@@ -508,7 +513,7 @@ enum option_enums {
 	DBGOPT_EMITTING,        /* same order as DBG_* */
 	DBGOPT_CONTROL,         /* same order as DBG_* */
 	DBGOPT_LIFECYCLE,       /* same order as DBG_* */
-	DBGOPT_KLIPS,           /* same order as DBG_* */
+	DBGOPT_KERNEL,          /* same order as DBG_* */
 	DBGOPT_DNS,             /* same order as DBG_* */
 	DBGOPT_OPPO,            /* same order as DBG_* */
 	DBGOPT_CONTROLMORE,     /* same order as DBG_* */
@@ -749,7 +754,7 @@ static const struct option long_opts[] = {
 	{ "debug-emitting", no_argument, NULL, DBGOPT_EMITTING + OO },
 	{ "debug-control", no_argument, NULL, DBGOPT_CONTROL + OO },
 	{ "debug-lifecycle", no_argument, NULL, DBGOPT_LIFECYCLE + OO },
-	{ "debug-klips", no_argument, NULL, DBGOPT_KLIPS + OO },
+	{ "debug-kernel", no_argument, NULL, DBGOPT_KERNEL + OO },
 	{ "debug-dns", no_argument, NULL, DBGOPT_DNS + OO },
 	{ "debug-oppo", no_argument, NULL, DBGOPT_OPPO + OO },
 	{ "debug-oppoinfo", no_argument, NULL, DBGOPT_OPPOINFO + OO },
@@ -1805,12 +1810,12 @@ int main(int argc, char **argv)
 		case DBGOPT_EMITTING:                           /* --debug-emitting */
 		case DBGOPT_CONTROL:                            /* --debug-control */
 		case DBGOPT_LIFECYCLE:                          /* --debug-lifecycle */
-		case DBGOPT_KLIPS:                              /* --debug-klips */
+		case DBGOPT_KERNEL:                             /* --debug-kernel */
 		case DBGOPT_DNS:                                /* --debug-dns */
 		case DBGOPT_OPPO:                               /* --debug-oppo */
 		case DBGOPT_CONTROLMORE:                        /* --debug-controlmore */
 		case DBGOPT_PFKEY:                              /* --debug-pfkey */
-		case DBGOPT_NATT:                               /* --debug-pfkey */
+		case DBGOPT_NATT:                               /* --debug-natt */
 		case DBGOPT_X509:                               /* --debug-pfkey */
 		case DBGOPT_DPD:                                /* --debug-dpd */
 		case DBGOPT_OPPOINFO:                           /* --debug-oppoinfo */

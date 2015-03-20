@@ -1,9 +1,11 @@
 /*
  * Cryptographic helper function - calculate DH
+ *
  * Copyright (C) 2006-2008 Michael C. Richardson <mcr@xelerance.com>
+ * Copyright (C) 2007-2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -273,10 +275,10 @@ stf_status start_dh_v2(struct pluto_crypto_req_cont *cn,
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey=%s",
-		    enum_name(&trans_type_prf_names,   st->st_oakley.prf_hash),
-		    enum_name(&trans_type_integ_names,
+		    enum_name(&ikev2_trans_type_prf_names,   st->st_oakley.prf_hash),
+		    enum_name(&ikev2_trans_type_integ_names,
 			      st->st_oakley.integ_hash),
-		    enum_name(&trans_type_encr_names,
+		    enum_name(&ikev2_trans_type_encr_names,
 			      st->st_oakley.encrypt)));
 
 	/* convert appropriate data to dhq */

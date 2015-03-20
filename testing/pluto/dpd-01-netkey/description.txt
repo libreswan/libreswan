@@ -1,0 +1,4 @@
+This tests the RFC3706 DPD implementation, with dpdaction=clear on east,
+and dpdaction=restart on west.
+
+Same as dpd-01 but now using netkey on both ends.

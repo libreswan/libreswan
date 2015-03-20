@@ -476,6 +476,9 @@ lookforcore() {
 	if [ -f ./testparams.sh ]
 	then
 	    . ./testparams.sh
+	elif [ -f ../../default-testparams.sh ]
+	then
+		. ../../default-testparams.sh
 	fi
 
 	# get rid of any pluto core files.

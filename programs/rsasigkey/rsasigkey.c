@@ -57,7 +57,7 @@
 #  include <fipscheck.h>
 #endif
 
-/* 
+/*
  * We allow 2192 as a minimum, but default to a random value between 3072 and
  * 4096. The range is used to avoid a mono-culture of key sizes.
  */
@@ -116,19 +116,19 @@ void report(char *msg);
 #define RAND_BUF_SIZE 60
 
 /* getModulus - returns modulus of the RSA public key */
-SECItem *getModulus(SECKEYPublicKey *pk)
+static SECItem *getModulus(SECKEYPublicKey *pk)
 {
 	return &pk->u.rsa.modulus;
 }
 
 /* getPublicExponent - returns public exponent of the RSA public key */
-SECItem *getPublicExponent(SECKEYPublicKey *pk)
+static SECItem *getPublicExponent(SECKEYPublicKey *pk)
 {
 	return &pk->u.rsa.publicExponent;
 }
 
 /* Caller must ensure that dst is at least item->len*2+1 bytes long */
-void SECItemToHex(const SECItem * item, char * dst)
+static void SECItemToHex(const SECItem * item, char * dst)
 {
 	if (dst && item && item->data) {
 		unsigned char * src = item->data;
@@ -145,7 +145,7 @@ void SECItemToHex(const SECItem * item, char * dst)
  * but the is no guarantee the data will have such length.
  * hexOut is like hexout but takes a SECItem *.
  */
-char *hexOut(SECItem *data)
+static char *hexOut(SECItem *data)
 {
 	unsigned i;
 	static char hexbuf[3 + MAXBITS / 4 + 1];
@@ -164,7 +164,7 @@ char *hexOut(SECItem *data)
 }
 
 /* UpdateRNG - Updates NSS's PRNG with user generated entropy. */
-void UpdateNSS_RNG(void)
+static void UpdateNSS_RNG(void)
 {
 	SECStatus rv;
 	unsigned char buf[RAND_BUF_SIZE];
@@ -179,7 +179,7 @@ void UpdateNSS_RNG(void)
  *  Uses the password once and nulls it out to prevent
  *  PKCS11 from calling us forever.
  */
-char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
+static char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
 	char* phrases, *phrase;
 	PRFileDesc *fd;
@@ -254,7 +254,7 @@ char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
 	return phrase;
 }
 
-char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
+static char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
 	secuPWData *pwdata = (secuPWData *)arg;
 	secuPWData pwnull = { PW_NONE, 0 };
@@ -351,7 +351,6 @@ int main(int argc, char *argv[])
 				strerror(errno));
 			exit(1);
 		}
-		fprintf(stdout,"hostname is '%s'\n",outputhostname);
 	}
 
 	if (!configdir) {
@@ -360,7 +359,7 @@ int main(int argc, char *argv[])
 
 	if (argv[optind] == NULL) {
 		/* default: spread bits between 3072 - 4096 in multiple's of 16 */
-		nbits = 3072 + 16 * rand() % 64; 
+		nbits = 3072 + 16 * rand() % 64;
 	} else {
 		nbits = atoi(argv[optind]);
 	}

@@ -3,6 +3,11 @@
  * Copyright (C) 2001 Marco Bertossa, Andreas Schleiss
  * Copyright (C) 2002 Mario Strasser
  * Copyright (C) 2000-2004 Andreas Steffen, Zuercher Hochschule Winterthur
+ * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2007 Michael Richardson <mcr@xelerance.com>
+ * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -218,19 +223,15 @@ extern x509cert_t *x509_get_authcerts_chain(void);
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 extern void check_crls(void);
-extern void lock_crl_list(const char *who);
-extern void unlock_crl_list(const char *who);
-extern void lock_cacert_list(const char *who);
-extern void unlock_cacert_list(const char *who);
-extern void lock_authcert_list(const char *who);
-extern void unlock_authcert_list(const char *who);
+extern void lock_crl_list(const char *who);	/* in fetch.c */
+extern void unlock_crl_list(const char *who);	/* in fetch.c */
+extern void lock_authcert_list(const char *who);	/* in secrets.c */
+extern void unlock_authcert_list(const char *who);	/* in secrets.c */
 #else
 /* WARNING empty x509 locking functions defined bypassing real locking */
 /* not fixing this hack, see issues #1390, #1391, #1392 */
-#define lock_crl_list(who)              /* nothing */
 #define unlock_crl_list(who)            /* nothing */
 #define lock_cacert_list(who)           /* nothing */
-#define unlock_cacert_list(who)         /* nothing */
 #define lock_authcert_list(who)         /* nothing */
 #define unlock_authcert_list(who)       /* nothing */
 #endif

@@ -48,6 +48,8 @@ CONFIG_KLIPS_ENC_AES=y
 # Use CryptoAPI for ALG - by default, yes.
 CONFIG_KLIPS_ENC_CRYPTOAPI=y
 
+CONFIG_KLIPS_ENC_NULL=y
+
 # IP Compression: new, probably still has minor bugs.
 CONFIG_KLIPS_IPCOMP=y
 

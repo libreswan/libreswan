@@ -1,6 +1,7 @@
 /* get-next-event loop
- * Copyright (C) 1998-2001  D. Hugh Redelmeier <hugh@mimosa.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 1998-2001,2013  D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -68,13 +69,5 @@ extern void show_ifaces_status(void);
 extern void free_ifaces(void);
 extern void show_debug_status(void);
 extern void call_server(void);
-
-/* in rcv_info.c */
-extern err_t init_info_socket(void);
-extern void delete_info_socket(void);
-
-extern bool adns_reapchild(pid_t pid, int status);
-
-extern const char *init_pluto_vendorid(void);
 
 #endif /* _SERVER_H */

@@ -88,6 +88,7 @@ d.ipsec.conf/retransmits.xml
 d.ipsec.conf/virtual_private.xml
 d.ipsec.conf/oe.xml
 d.ipsec.conf/nhelpers.xml
+d.ipsec.conf/secctx_attr_value.xml
 d.ipsec.conf/plutofork.xml
 d.ipsec.conf/crlcheckinterval.xml
 d.ipsec.conf/strictcrlpolicy.xml

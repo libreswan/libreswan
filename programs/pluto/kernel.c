@@ -7,7 +7,8 @@
  * Copyright (C) 2010 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2009-2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2010 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -1659,27 +1660,18 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			/* if it is the last key entry, then ask algo */
 			if (ei == &esp_info[elemsof(esp_info)]) {
 				/* Check for additional kernel alg */
-				if ((ei =
-					     kernel_alg_esp_info(st->st_esp.
-								 attrs.
-								 transattrs
-								 .encrypt,
-								 st->st_esp.
-								 attrs.
-								 transattrs.
-								 enckeylen,
-								 st->st_esp.
-								 attrs.
-								 transattrs.
-								 integ_hash))
-				    !=
-				    NULL)
+				ei = kernel_alg_esp_info(st->st_esp.
+							attrs.transattrs.encrypt,
+							st->st_esp.attrs.transattrs.enckeylen,
+							st->st_esp.attrs.transattrs.integ_hash);
+				if (ei != NULL)
 					break;
 
-				/* note: enum_show may use a static buffer, so two
+				/* Note: enum_show may use a static buffer, so two
 				 * calls in one printf would be a mistake.
 				 * enum_name does the same job, without a static buffer,
 				 * assuming the name will be found.
+				 * Also consider enum_showb.
 				 */
 				loglog(RC_LOG_SERIOUS,
 				       "ESP transform %s(%d) / auth %s not implemented yet",
@@ -1722,7 +1714,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		key_len = st->st_esp.attrs.transattrs.enckeylen /
 			  BITS_PER_BYTE;
-		if (key_len) {
+		if (key_len != 0) {
 			/* XXX: must change to check valid _range_ key_len */
 			if (key_len > ei->enckeylen) {
 				loglog(RC_LOG_SERIOUS,
@@ -1736,24 +1728,36 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		} else {
 			key_len = ei->enckeylen;
 		}
-		/* Grrrrr.... f*cking 7 bits jurassic algos  */
 
-		/* 168 bits in kernel, need 192 bits for keymat_len */
-		if (ei->transid == ESP_3DES && key_len == 21)
-			key_len = 24;
-
-		/* 56 bits in kernel, need 64 bits for keymat_len */
-		if (ei->transid == ESP_DES && key_len == 7)
-			key_len = 8;
-
-		/* divide up keying material */
-		/* passert(st->st_esp.keymat_len == ei->enckeylen + ei->authkeylen); */
-		if (st->st_esp.keymat_len != key_len + ei->authkeylen) {
-			DBG_log("keymat_len=%d key_len=%d authkeylen=%d",
-				st->st_esp.keymat_len, (int)key_len,
-				(int)ei->authkeylen);
+		switch (ei->transid) {
+		case ESP_3DES:
+			/* Grrrrr.... f*cking 7 bits jurassic algos  */
+			/* 168 bits in kernel, need 192 bits for keymat_len */
+			if (key_len == 21)
+				key_len = 24;
+			break;
+		case ESP_DES:
+			/* Grrrrr.... f*cking 7 bits jurassic algos  */
+			/* 56 bits in kernel, need 64 bits for keymat_len */
+			if (key_len == 7)
+				key_len = 8;
+			break;
+		case IKEv2_ENCR_AES_GCM_8:
+		case IKEv2_ENCR_AES_GCM_12:
+		case IKEv2_ENCR_AES_GCM_16:
+			/* keymat contains 4 bytes of salt */
+			key_len += AES_GCM_SALT_BYTES;
+			break;
+		case IKEv2_ENCR_AES_CCM_8:
+		case IKEv2_ENCR_AES_CCM_12:
+		case IKEv2_ENCR_AES_CCM_16:
+			/* keymat contains 4 bytes of salt */
+			key_len += AES_CCM_SALT_BYTES;
+			break;
 		}
-		passert(st->st_esp.keymat_len == (key_len + ei->authkeylen));
+
+		passert(st->st_esp.keymat_len == key_len + ei->authkeylen);
+
 
 		set_text_said(text_said, &dst.addr, esp_spi, SA_ESP);
 
@@ -1783,13 +1787,17 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				goto fail;
 			}
 		}
+
+		/* divide up keying material */
+		said_next->enckey = esp_dst_keymat;
+		said_next->enckeylen = key_len;
+		said_next->encalg = ei->encryptalg;
+
+		said_next->authkey = esp_dst_keymat + key_len;
 		said_next->authkeylen = ei->authkeylen;
 		/* said_next->authkey = esp_dst_keymat + ei->enckeylen; */
-		said_next->authkey = esp_dst_keymat + key_len;
-		said_next->encalg = ei->encryptalg;
 		/* said_next->enckeylen = ei->enckeylen; */
-		said_next->enckeylen = key_len;
-		said_next->enckey = esp_dst_keymat;
+
 		said_next->encapsulation = encapsulation;
 		said_next->reqid = c->spd.reqid + 1;
 		said_next->reqid = (c->spd.reqid < IPSEC_MANUAL_REQID_MAX) ? c->spd.reqid  :  c->spd.reqid + 1 ;
@@ -2075,8 +2083,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			s[0].text_said = text_said0;
 			s[1].text_said = text_said1;
 
-			if (!kernel_ops->grp_sa(s + 1, s))
+			if (!kernel_ops->grp_sa(s + 1, s)) {
+				DBG_log("grp_sa failed");
 				goto fail;
+			}
 		}
 		/* could update said, but it will not be used */
 	}

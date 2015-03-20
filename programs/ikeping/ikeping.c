@@ -39,8 +39,8 @@
 
 #include "natt_defines.h"
 
-/* what exchange number to use for outgoing requests */
 static int exchange_number;
+static int major, minor, plen, ilen;
 
 static void help(void)
 {
@@ -56,6 +56,10 @@ static void help(void)
 		" [--version]    just dump version number and exit\n"
 		" [--nat-t]      enabled NONESP encapsulation on port\n"
 		" [--exchangenum num]    use num instead of 244 for the exchange type.\n"
+		" [--major num] use num as IKE major instead of 1.\n"
+		" [--minor min] use num as IKE minor instead of 1.\n"
+		" [--packetlength len] use len as actual packet length instead of real size.\n"
+		" [--ikelength len] use len as ike header declared length instead of 0.\n"
 		" [--wait seconds]    time to wait for replies, defaults to 3 seconds.\n"
 		" host/port ...\n\n"
 		"Libreswan %s\n",
@@ -70,7 +74,7 @@ static void hton_ping(struct isakmp_hdr *ih)
 
 	/* put it in network byte order. */
 	/* cookies are byte viewed anyway */
-	ihp[4] = htonl(ihp[4]);
+	// ihp[4] = htonl(ihp[4]);
 	ih->isa_msgid  = htonl(ih->isa_msgid);
 	ih->isa_length = htonl(ih->isa_length);
 }
@@ -83,13 +87,13 @@ static void ntoh_ping(struct isakmp_hdr *ih)
 
 	/* put it in network byte order. */
 	/* cookies are byte viewed anyway */
-	ihp[4] = ntohl(ihp[4]);
+	// ihp[4] = ntohl(ihp[4]);
 	ih->isa_msgid  = ntohl(ih->isa_msgid);
 	ih->isa_length = ntohl(ih->isa_length);
 }
 
 /*
- * send an IKE ping
+ * send an IKE ping echo
  *
  */
 static void send_ping(int afamily,
@@ -109,13 +113,16 @@ static void send_ping(int afamily,
 		ih.isa_rcookie[i] = rand() & 0xff;
 
 	ih.isa_np    = NOTHING_WRONG;
-	ih.isa_version = (1 << ISA_MAJ_SHIFT) | 0;
+	ih.isa_version = (major << ISA_MAJ_SHIFT) | minor;
 	ih.isa_xchg  = (exchange_number ?
 			exchange_number : ISAKMP_XCHG_ECHOREQUEST_PRIVATE);
 	ih.isa_flags = 0;
 	ih.isa_msgid = rand();
-	ih.isa_length = 0;
+	ih.isa_length = ilen ? ilen : 0;
 
+	fprintf(stderr, "IKE version octet:%d; exchange type:%d\n", ih.isa_version, ih.isa_xchg);
+
+	
 	switch (afamily) {
 	case AF_INET:
 		raddr->u.v4.sin_port = htons(rport);
@@ -138,7 +145,7 @@ static void send_ping(int afamily,
 }
 
 /*
- * send an IKE ping
+ * send an IKE ping reply 
  *
  */
 static void reply_packet(int afamily,
@@ -147,7 +154,7 @@ static void reply_packet(int afamily,
 			 int dst_len,
 			 struct isakmp_hdr *op)
 {
-	int i, tmp;
+	int i, tmp, len;
 
 	tmp = afamily;  /* shut up compiler */
 
@@ -158,15 +165,22 @@ static void reply_packet(int afamily,
 	}
 
 	op->isa_np    = NOTHING_WRONG;
-	op->isa_version = (1 << ISA_MAJ_SHIFT) | 0;
+	op->isa_version = (major << ISA_MAJ_SHIFT) | minor;
 	op->isa_xchg  = ISAKMP_XCHG_ECHOREPLY_PRIVATE;
 	op->isa_flags = 0;
 	op->isa_msgid = rand();
-	op->isa_length = 0;
+	op->isa_length = ilen ? ilen : 0;
 
 	hton_ping(op);
-
-	if (sendto(s, op, sizeof(*op), 0, (struct sockaddr *)dst_addr,
+	
+	len = sizeof(*op);
+	if (plen) {
+		if (plen > len) {
+			plen = len;
+			fprintf(stderr, "Packet length capped at %d - no more data", plen);
+		}
+	} 
+	if (sendto(s, op, plen, 0, (struct sockaddr *)dst_addr,
 		   dst_len) < 0) {
 		perror("sendto");
 		exit(5);
@@ -279,6 +293,9 @@ static const struct option long_opts[] = {
 	{ "nat-t",       no_argument, NULL, 'T' },
 	{ "natt",        no_argument, NULL, 'T' },
 	{ "exchangenum", required_argument, NULL, 'E' },
+	{ "major", required_argument, NULL, 'M' },
+	{ "ikelength", required_argument, NULL, 'L' },
+	{ "packetlength", required_argument, NULL, 'l' },
 	{ "wait",        required_argument, NULL, 'w' },
 	{ 0, 0, 0, 0 }
 };
@@ -311,7 +328,7 @@ int main(int argc, char **argv)
 	bzero(&laddr, sizeof(laddr));
 
 	while ((c =
-			getopt_long(argc, argv, "hVvsp:b:46E:w:", long_opts,
+			getopt_long(argc, argv, "hVvsp:b:46E:M:m:L:l:w:", long_opts,
 				    0)) != EOF) {
 		switch (c) {
 		case 'h':               /* --help */
@@ -333,14 +350,51 @@ int main(int argc, char **argv)
 
 		case 'E':
 			exchange_number = strtol(optarg, &foo, 0);
-			if (optarg == foo || exchange_number < 1 ||
+			if (optarg == foo || exchange_number < 0 ||
 			    exchange_number > 255) {
 				fprintf(stderr,
-					"Invalid exchange number '%s' (should be 1<=x<255)\n",
+					"Invalid exchange number '%s' (should be 0<=x<=255)\n",
 					optarg);
 				exit(1);
 			}
 			continue;
+		case 'M':
+			major = strtol(optarg, &foo, 0);
+			if (optarg == foo || major < 0 || major > 15) {
+				fprintf(stderr,
+					"Invalid major number '%s' (should be 0<=x<=15)\n",
+					optarg);
+				exit(1);
+			}
+			continue;
+		case 'm':
+			minor = strtol(optarg, &foo, 0);
+			if (optarg == foo || minor < 0 || minor > 15) {
+				fprintf(stderr,
+					"Invalid major minor '%s' (should be 0<=x<=15)\n",
+					optarg);
+				exit(1);
+			}
+			continue;
+		case 'L':
+			ilen = strtol(optarg, &foo, 0);
+			if (optarg == foo || ilen < 0) {
+				fprintf(stderr,
+					"Invalid IKE length '%s' (should be positive)\n",
+					optarg);
+				exit(1);
+			}
+			continue;
+		case 'l':
+			plen = strtol(optarg, &foo, 0);
+			if (optarg == foo || plen < 0) {
+				fprintf(stderr,
+					"Invalid Packet length '%s' (should be positive)\n",
+					optarg);
+				exit(1);
+			}
+			continue;
+			
 
 		case 's':
 			listen_only++;

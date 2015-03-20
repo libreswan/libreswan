@@ -20,6 +20,8 @@
 #include <linux/config.h>
 #endif
 
+#define HAVE_NAMESPACES 1
+
 #define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/kernel.h> /* printk() */
@@ -581,6 +583,9 @@ struct xform_functions esp_xform_funcs[] = {
 struct inet_protocol esp_protocol = {
 	.handler = ipsec_rcv,
 	.no_policy = 1,
+#ifdef HAVE_NAMESPACES
+	.netns_ok = 1,
+#endif
 };
 
 #ifdef CONFIG_KLIPS_IPV6

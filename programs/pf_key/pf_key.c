@@ -66,7 +66,7 @@ static void Usage(void)
 	exit(1);
 }
 
-void pfkey_register(uint8_t satype)
+static void pfkey_register(uint8_t satype)
 {
 	/* for registering SA types that can be negotiated */
 	int error = 0;
@@ -110,7 +110,7 @@ void pfkey_register(uint8_t satype)
 
 int dienow;
 
-void controlC(int foo UNUSED)
+static void controlC(int foo UNUSED)
 {
 	fflush(stdout);
 	printf("%s: Exiting on signal 15\n", progname);

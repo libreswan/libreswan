@@ -247,7 +247,7 @@ static int worker(int qfd, int afd)
 
 /**************** master process ****************/
 
-bool eof_from_pluto = FALSE;
+static bool eof_from_pluto = FALSE;
 #define PLUTO_QFD       0       /* queries come on stdin */
 #define PLUTO_AFD       1       /* answers go out on stdout */
 

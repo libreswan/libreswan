@@ -1,7 +1,10 @@
 /* manifest constants
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
- * Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012 Philippe Vouters <philippe.vouters@laposte.net>
+ * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -173,7 +176,7 @@ typedef enum {
  * NOTE: changes here must be done in concert with changes to DBGOPT_*
  * in whack.c.  A change to WHACK_MAGIC in whack.h will be required too.
  */
-#if !defined(NO_DEBUG)
+#ifdef DEBUG
 
 #define DBG_RAW         LELEM(0)                                /* raw packet I/O */
 #define DBG_CRYPT       LELEM(1)                                /* encryption/decryption of messages */
@@ -236,7 +239,8 @@ typedef enum {
  * retained between messages) representing the state that accepts the
  * first message of an exchange has been read but not processed.
  *
- * state_microcode state_microcode_table in demux.c describes
+ * v1_state_microcode_table in ikev1.c and
+ * v2_state_microcode_table in ikev2.c describe
  * other important details.
  */
 

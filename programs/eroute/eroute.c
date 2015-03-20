@@ -46,6 +46,7 @@
 #include "libreswan/ipsec_encap.h"
 #include "lswlog.h"
 #include "pfkey_help.h"
+#include "libreswan/pfkey_debug.h"
 
 #include "lsw_select.h"
 
@@ -131,7 +132,11 @@ static struct option const longopts[] =
 	{ 0, 0, 0, 0 }
 };
 
-void exit_tool(int x)
+/* exit_tool() is needed if the library was compiled with DEBUG, even if we are not.
+ * The odd-looking parens are to prevent macro expansion:
+ * lswlog.h without DEBUG define a macro exit_tool().
+ */
+void (exit_tool)(int x)
 {
 	exit(x);
 }

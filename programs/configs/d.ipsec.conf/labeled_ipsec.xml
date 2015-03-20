@@ -2,7 +2,9 @@
   <term><emphasis remap='B'>labeled_ipsec</emphasis></term>
   <listitem>
 <para>
-Avesh needs to write a man page entry for this.
+Whether labeled IPsec should be enabled or not; acceptable values are
+<emphasis remap='B'>no</emphasis> (the default) and <emphasis remap='B'>yes</emphasis>.
+See also loopback=, policy_label= and secctx_attr_value=
 </para>
   </listitem>
   </varlistentry>

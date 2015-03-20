@@ -3,7 +3,10 @@
  * Copyright (C) 2006  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2010-2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -220,7 +223,7 @@ PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
 			   keySize);
 }
 
-PK11SymKey * PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
+PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 			     SECItem *param, CK_MECHANISM_TYPE target,
 			     CK_ATTRIBUTE_TYPE operation, int keysize)
 {

@@ -1,12 +1,21 @@
 /*
  * information about connections between hosts and clients
  *
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
- * Copyright (C) 2003-2010 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 1998-2002,2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2009-2010 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2003-2011 Paul Wouters <paul@xelerance.com>
+ * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
+ * Copyright (C) 2009-2011 Avesh Agarwal <avagarwa@redhat.com>
+ * Copyright (C) 2010 Bart Trojanowski <bart@jukie.net>
+ * Copyright (C) 2010 Shinichi Furuso <Shinichi.Furuso@jp.sony.com>
+ * Copyright (C) 2010,2013 Tuomo Soini <tis@foobar.fi>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012 Philippe Vouters <Philippe.Vouters@laposte.net>
+ * Copyright (C) 2012 Bram <bram-bcrafjna-erqzvar@spam.wizbit.be>
+ * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,7 +26,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <string.h>
@@ -733,7 +741,9 @@ size_t format_end(char *buf,
  * format topology of a connection.
  * Two symmetric ends separated by ...
  */
-size_t format_connection(char *buf, size_t buf_len,
+#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
+
+static size_t format_connection(char *buf, size_t buf_len,
 			const struct connection *c,
 			struct spd_route *sr)
 {
@@ -1110,7 +1120,7 @@ static bool check_connection_end(const struct whack_end *this,
 	return TRUE; /* happy */
 }
 
-struct connection *find_connection_by_reqid(uint32_t reqid)
+static struct connection *find_connection_by_reqid(uint32_t reqid)
 {
 	struct connection *c;
 
@@ -1143,6 +1153,32 @@ static uint32_t gen_reqid(void)
 	exit_log("unable to allocate reqid");
 	return 0; /* never reached, here to make compiler happy */
 }
+
+static bool have_local_nss_certs(const struct whack_message *wm)
+{
+	if (wm->left.cert != NULL) {
+		if (!cert_exists_in_nss(wm->left.cert)) {
+			loglog(RC_COMMENT, "leftcert with the "
+					   "nickname \"%s\" does "
+					   "not exist in NSS db",
+					   wm->left.cert);
+			return FALSE;
+		}
+	}
+
+	if (wm->right.cert != NULL) {
+		if (!cert_exists_in_nss(wm->right.cert)) {
+			loglog(RC_COMMENT, "rightcert with the "
+					   "nickname \"%s\" does "
+					   "not exist in NSS db",
+					   wm->right.cert);
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 
 void add_connection(const struct whack_message *wm)
 {
@@ -1387,6 +1423,10 @@ void add_connection(const struct whack_message *wm)
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
 		c->requested_ca = NULL;
+
+		/* pre-check for leftcert/rightcert availablility */
+		if (!have_local_nss_certs(wm))
+			return;
 
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
@@ -3668,6 +3708,12 @@ static void show_one_sr(struct connection *c,
 		c->name, instance,
 		(c->policy_label == NULL) ? "unset" : c->policy_label
 		);
+#else
+/* this makes output consistent for testing regardless of support */
+	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no, loopback:no; ",
+		  c->name, instance);
+	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:unset; ",
+		  c->name, instance);
 #endif
 
 }

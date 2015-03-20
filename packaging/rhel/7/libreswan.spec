@@ -15,8 +15,8 @@
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
-Version: 3.6
-Release: %{?prever:0.}2%{?prever:.%{prever}}%{?dist}
+Version: 3.7
+Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
 Source: https://download.libreswan.org/%{name}-%{version}%{?prever}.tar.gz
@@ -33,7 +33,7 @@ Obsoletes: openswan < %{version}-%{release}
 Provides: openswan = %{version}-%{release}
 
 BuildRequires: pkgconfig hostname
-BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
+BuildRequires: nss-devel >= 3.14.3, nspr-devel
 BuildRequires: pam-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
@@ -147,7 +147,7 @@ install -d %{buildroot}%{_sbindir}
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
-install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
+install -m644 packaging/rhel/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
 echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
@@ -190,13 +190,15 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %if %{USE_FIPSCHECK}
 prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %endif
-if [ ! -f /etc/ipsec.d/cert8.db ] ; then
-echo > /var/tmp/libreswan-nss-pwd
-certutil -N -f /var/tmp/libreswan-nss-pwd -d /etc/ipsec.d
-restorecon /etc/ipsec.d/*db 2>/dev/null || :
-rm /var/tmp/libreswan-nss-pwd
+if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db ] ; then
+    TEMPFILE=$(/bin/mktemp %{_sysconfdir}/ipsec.d/nsspw.XXXXXXX)
+    [ $? -gt 0 ] && TEMPFILE=%{_sysconfdir}/ipsec.d/nsspw.$$
+    echo > ${TEMPFILE}
+    certutil -N -f ${TEMPFILE} -d %{_sysconfdir}/ipsec.d
+    restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
+    rm -f ${TEMPFILE}
 fi
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.6-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.7-1
 - Automated build from release tar ball

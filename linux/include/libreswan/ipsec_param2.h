@@ -23,8 +23,7 @@
 #define netdev_priv(dev) (dev->priv)
 #endif
 
-#define KLIPS_IP_SELECT_IDENT(iph, skb) ip_select_ident(iph, skb_dst(skb), \
-							NULL)
+#define KLIPS_IP_SELECT_IDENT(iph, skb) __ip_select_ident(iph, skb_dst(skb), 0)
 
 #if !defined(HAVE_CURRENT_UID)
 #define current_uid() (current->uid)

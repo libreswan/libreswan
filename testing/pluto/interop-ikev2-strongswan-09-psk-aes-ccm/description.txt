@@ -1,0 +1,7 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and Strongswan on
+the responder.
+
+This uses ike=aes-sha1 on both sides. It seems strongswan rejects this because
+we use "aes" and not "aes128" on the libreswan side.
+
+

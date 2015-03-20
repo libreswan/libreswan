@@ -59,7 +59,7 @@ west #
 000 sbindir=/usr/local/sbin, libdir=/usr/local/libexec/ipsec, libexecdir=/usr/local/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, retransmits=yes, force_busy=no
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
-000 secctx_attr_value=<unsupported>
+000 secctx_attr_value=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
 000  
@@ -81,11 +81,11 @@ west #
 000  
 000 IKE algorithms supported:
 000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65004, name=OAKLEY_SERPENT_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65005, name=OAKLEY_TWOFISH_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: id=65289, name=OAKLEY_TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65005, v1name=OAKLEY_TWOFISH_CBC, v2id=65005, v2name=TWOFISH_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=65289, v1name=OAKLEY_TWOFISH_CBC_SSH, v2id=65289, v2name=TWOFISH_CBC_SSH, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -110,6 +110,8 @@ west #
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=west; hiscert=east;
 000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "westnet-eastnet-ikev2":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ikev2":    policy_label:unset; 
 000 "westnet-eastnet-ikev2":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -132,7 +134,7 @@ west #
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: initiate
 133 "westnet-eastnet-ikev2" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "westnet-eastnet-ikev2" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_128 integ=sha1_96 prf=oakley_sha group=modp2048}
-004 "westnet-eastnet-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode
+004 "westnet-eastnet-ikev2" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=none}
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -171,14 +173,14 @@ west #
  echo done
 done
 west #
-[THIS FILTER FAILED] ipsec look
-west NOW
-192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0xa1543f6e@192.1.2.23  (2)
+ ipsec look
+west Sat Dec  7 21:59:38 EST 2013
+192.0.1.0/24       -> 192.0.2.0/24       => tun0x1001@192.1.2.23 esp0x99717bdd@192.1.2.23  (2)
 ipsec0->eth1 mtu=16260(1500)->1500
-esp0xa1543f6e@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0x7cfe0ed86551ef77a59b7b0e54e2332b ooowin=64 seq=2 alen=160 aklen=160 eklen=128 jiffies=4294723199 life(c,s,h)=bytes(304,0,0) idle=2 natencap=na refcount=3 ref=2 refhim=0
-esp0xfc83c985@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0x3da767f87dc21449e71870d80b4b9de6 ooowin=64 seq=2 bit=0x3 alen=160 aklen=160 eklen=128 jiffies=4294723199 life(c,s,h)=bytes(168,0,0) idle=2 natencap=na refcount=3 ref=4 refhim=1
-tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294723199 life(c,s,h)=bytes(208,0,0) idle=2 natencap=na refcount=3 ref=1 refhim=0
-tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294723199 life(c,s,h)=bytes(168,0,0) idle=2 natencap=na refcount=3 ref=3 refhim=1
+esp0x93b12e9c@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xc108d57411d1497d6e3f70bc1784d0a6 ooowin=64 seq=2 bit=0x3 alen=160 aklen=160 eklen=128 jiffies=4294723011 life(c,s,h)=bytes(168,0,0) idle=2 natencap=na refcount=3 ref=4 refhim=1
+esp0x99717bdd@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xd8ffe7b1af32232dd5ee34fad4f05b1e ooowin=64 seq=2 alen=160 aklen=160 eklen=128 jiffies=4294723011 life(c,s,h)=bytes(304,0,0) idle=2 natencap=na refcount=3 ref=2 refhim=0
+tun0x1001@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=4294723011 life(c,s,h)=bytes(208,0,0) idle=2 natencap=na refcount=3 ref=1 refhim=0
+tun0x1002@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=4294723011 life(c,s,h)=bytes(168,0,0) idle=2 natencap=na refcount=3 ref=3 refhim=1
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES

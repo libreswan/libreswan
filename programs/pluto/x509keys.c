@@ -7,7 +7,7 @@
  * Copyright (C) 2006 Matthias Haas" <mh@pompase.net>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -166,13 +166,13 @@ void decode_cert(struct msg_digest *md)
 							    valid_until,
 							    DAL_SIGNED);
 				} else {
-					plog("X.509 certificate rejected");
+					libreswan_log("X.509 certificate rejected");
 				}
 				free_generalNames(cert2.subjectAltName, FALSE);
 				free_generalNames(cert2.crlDistributionPoints,
 						  FALSE);
 			} else {
-				plog("Syntax error in X.509 certificate");
+				libreswan_log("Syntax error in X.509 certificate");
 			}
 		} else if (cert->isacert_type == CERT_PKCS7_WRAPPED_X509) {
 			x509cert_t *cert2 = NULL;
@@ -180,7 +180,7 @@ void decode_cert(struct msg_digest *md)
 			if (parse_pkcs7_cert(blob, &cert2))
 				store_x509certs(&cert2, strict_crl_policy);
 			else
-				plog(
+				libreswan_log(
 					"Syntax error in PKCS#7 wrapped X.509 certificates");
 
 
@@ -218,13 +218,13 @@ void ikev2_decode_cert(struct msg_digest *md)
 							    valid_until,
 							    DAL_SIGNED);
 				} else {
-					plog("X.509 certificate rejected");
+					libreswan_log("X.509 certificate rejected");
 				}
 				free_generalNames(cert2.subjectAltName, FALSE);
 				free_generalNames(cert2.crlDistributionPoints,
 						  FALSE);
 			} else {
-				plog("Syntax error in X.509 certificate");
+				libreswan_log("Syntax error in X.509 certificate");
 			}
 		} else if (v2cert->isac_enc == CERT_PKCS7_WRAPPED_X509) {
 			x509cert_t *cert2 = NULL;
@@ -232,7 +232,7 @@ void ikev2_decode_cert(struct msg_digest *md)
 			if (parse_pkcs7_cert(blob, &cert2))
 				store_x509certs(&cert2, strict_crl_policy);
 			else
-				plog(
+				libreswan_log(
 					"Syntax error in PKCS#7 wrapped X.509 certificates");
 
 

@@ -1,0 +1,6 @@
+Basic pluto with IKEv1 using PSK on the initiator (west), and Strongswan on
+the responder testing AES GCM
+
+This uses ike=3des-sha1 on both sides to avoid aes key size ambiguity. It uses
+aes gcm 16 for ESP.
+
