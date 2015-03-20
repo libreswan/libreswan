@@ -1032,12 +1032,10 @@ void sema_init(struct semaphore *sem, int val);
 
 static inline void prefetch(const void *x)
 {
-	;
 }
 
 static inline void smp_read_barrier_depends(void)
 {
-	;
 }
 
 /* timer.h */

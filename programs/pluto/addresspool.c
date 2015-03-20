@@ -1,4 +1,7 @@
 /*
+ * addresspool management functions used with left/rightaddresspool= option.
+ * Currently used for IKEv1 XAUTH/ModeConfig options if we are an XAUTH server.
+ *
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it

@@ -308,7 +308,6 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 			loglog(RC_LOG_SERIOUS,
 			       "CRL rejected: crl issuer cacert not found for (%s)",
 			       distpoint);
-			;
 
 			free_crl(crl);
 			unlock_authcert_list("insert_crl");

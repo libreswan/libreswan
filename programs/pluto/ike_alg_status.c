@@ -56,6 +56,9 @@ void ike_alg_show_status(void)
 	unsigned alg, i;
 	struct ike_alg *algo;
 
+	whack_log(RC_COMMENT, "IKE algorithms supported:");
+	whack_log(RC_COMMENT, " "); /* spacer */
+
 	IKE_EALG_FOR_EACH(algo) {
 		passert(algo != NULL);
 		alg = algo->algo_id;
@@ -87,6 +90,8 @@ void ike_alg_show_status(void)
 			  (int)gdesc->bytes * BITS_PER_BYTE
 			  );
 	}
+
+	whack_log(RC_COMMENT, " "); /* spacer */
 }
 /*
  *      Show IKE algorithms for
@@ -101,7 +106,7 @@ void ike_alg_show_connection(struct connection *c, const char *instance)
 		char buf[1024];
 
 		alg_info_snprint(buf, sizeof(buf) - 1,
-				 (struct alg_info *)c->alg_info_ike, TRUE);
+				 (struct alg_info *)c->alg_info_ike);
 		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKE algorithms wanted: %s",
 			  c->name,

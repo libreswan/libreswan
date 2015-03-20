@@ -82,7 +82,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	TAILQ_INIT(&cfg->conns);
 
-	cfg->setup.options[KBF_FRAGICMP] = TRUE;
+	cfg->setup.options[KBF_FRAGICMP] = FALSE; /* see sysctl_ipsec_icmp in ipsec_proc.c */
 	cfg->setup.options[KBF_HIDETOS]  = TRUE;
 	cfg->setup.options[KBF_PLUTORESTARTONCRASH]  = TRUE;
 	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = FALSE;
@@ -91,6 +91,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_PLUTOFORK] = TRUE; /* change in the future */
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
+	cfg->setup.options[KBF_NHELPERS] = -1; /* see also plutomain.c */
 #ifdef NAT_TRAVERSAL
 	cfg->setup.options[KBF_DISABLEPORTFLOATING] = FALSE;
 	cfg->setup.options[KBF_KEEPALIVE] = 0;                  /* config setup */
@@ -1257,7 +1258,7 @@ static int load_conn(struct ub_ctx *dnsctx,
 			    conn->strings[KSF_MODECFGDNS2] );
 		conn->modecfg_dns2 = xstrdup(conn->strings[KSF_MODECFGDNS2]);
 	}
-    # endif
+#  endif
 #endif
 
 	if (conn->strings_set[KSF_CONNALIAS])

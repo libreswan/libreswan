@@ -1712,6 +1712,10 @@ void show_states_status(void)
 	int count;
 	struct state **array;
 
+	whack_log(RC_COMMENT, " "); /* spacer */
+	whack_log(RC_COMMENT, "State list:"); /* spacer */
+	whack_log(RC_COMMENT, " "); /* spacer */
+
 	/* make count of states */
 	count = 0;
 	for (i = 0; i < STATE_TABLE_SIZE; i++) {
@@ -1756,6 +1760,7 @@ void show_states_status(void)
 
 		/* free the array */
 		pfree(array);
+		whack_log(RC_COMMENT, " "); /* spacer */
 	}
 }
 

@@ -793,7 +793,6 @@ u32 inet_select_addr(const struct net_device *dev, u32 dst, int scope)
 		if (!addr)
 			addr = ifa->ifa_local;
 	}
-	;
 
 	return addr;
 }

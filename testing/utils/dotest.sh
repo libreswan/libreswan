@@ -102,6 +102,15 @@ RESPONDER_PID=$!
 
 wait_till_pid_end "$INITIATOR" $INITIATOR_PID
 wait_till_pid_end "$RESPONDER" $RESPONDER_PID
+echo "running any post scripts"
+if [ -f "$INITIATOR"post1.sh ] ; then
+	../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --post
+	../../utils/runkvm.py --host $RESPONDER --testname $TESTNAME --post
+elif [ -f "$RESPONDER"post1.sh ] ; then
+	../../utils/runkvm.py --host $RESPONDER --testname $TESTNAME --post
+	../../utils/runkvm.py --host $INITIATOR --testname $TESTNAME --post
+fi
+
 echo "start final.sh on responder $RESPONDER for $TESTNAME"
 ../../utils/runkvm.py --final --hostname $RESPONDER --testname $TESTNAME &
 RESPONDER_FINAL_PID=$!

@@ -434,7 +434,7 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 	if (st) {
 		ref   = st->st_ref;
 		refhim = st->st_refhim;
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("Using saref=%u/%u for verb=%s\n", ref, refhim,
 			    verb));
 	}

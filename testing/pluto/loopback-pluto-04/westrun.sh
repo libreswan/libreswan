@@ -1,8 +1,7 @@
 ipsec auto --up  loopback-04
-
 ip xfrm state
 ip xfrm policy
-route -n
+ip route list
 ipsec auto --delete loopback-04
 ip xfrm state
 ip xfrm policy

@@ -235,14 +235,14 @@ struct ipsec_sa {
 	int ocf_in_use;
 	int64_t ocf_cryptoid;
 
-	#define IPSEC_REFALLOC  0
-	#define IPSEC_REFINTERN 1
-	#define IPSEC_REFSAADD  2
-	#define IPSEC_REFOTHER  3
-	#define IPSEC_REFPROC   4
-	#define IPSEC_REFTX     5
-	#define IPSEC_REFRX     6
-	#define IPSEC_REFSA     7
+#	define IPSEC_REFALLOC  0
+#	define IPSEC_REFINTERN 1
+#	define IPSEC_REFSAADD  2
+#	define IPSEC_REFOTHER  3
+#	define IPSEC_REFPROC   4
+#	define IPSEC_REFTX     5
+#	define IPSEC_REFRX     6
+#	define IPSEC_REFSA     7
 
 #if 0   /* IPSEC_SA_RECOUNT_DEBUG */
 	/*
@@ -250,7 +250,7 @@ struct ipsec_sa {
 	 * it a lot easier to determine problems with refcount and SA freeing
 	 */
 
-	#define IPSEC_SA_RECOUNT_DEBUG 1
+#	define IPSEC_SA_RECOUNT_DEBUG 1
 	unsigned char ips_track[IPSEC_REFSA + 1];
 
 	struct ipsec_sa *ips_raw;

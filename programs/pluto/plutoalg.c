@@ -155,7 +155,7 @@ static int default_ike_groups[] = {
 static void alg_info_ike_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
 			     int aalg_id, int ak_bits,
-			     int modp_id, int permitmann UNUSED)
+			     int modp_id)
 {
 	int i = 0, n_groups;
 
@@ -217,13 +217,13 @@ static void alg_info_snprint_esp(char *buf, size_t buflen,
 	strncat(buf, "none", buflen - 1);
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
-		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL)) {
+		if (kernel_alg_esp_enc_ok(esp_info->esp_ealg_id, 0, NULL) != NULL) {
 			DBG_log("esp algid=%d not available",
 				esp_info->esp_ealg_id);
 			continue;
 		}
 
-		if (kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL)) {
+		if (kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL) != NULL) {
 			DBG_log("auth algid=%d not available",
 				esp_info->esp_aalg_id);
 			continue;
@@ -286,7 +286,7 @@ static void alg_info_snprint_ah(char *buf, size_t buflen,
 
 	ALG_INFO_ESP_FOREACH(alg_info, esp_info, cnt) {
 
-		if (kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL)) {
+		if (kernel_alg_esp_auth_ok(esp_info->esp_aalg_id, NULL) != NULL) {
 			DBG_log("auth algid=%d not available",
 				esp_info->esp_aalg_id);
 			continue;
@@ -443,8 +443,7 @@ struct alg_info_ike *alg_info_ike_create_from_str(const char *alg_str,
 			       alg_str, err_p,
 			       parser_init_ike,
 			       alg_info_ike_add,
-			       lookup_group,
-			       TRUE) < 0) {
+			       lookup_group) < 0) {
 		pfreeany(alg_info_ike);
 		alg_info_ike = NULL;
 	}
@@ -720,6 +719,9 @@ void kernel_alg_show_status(void)
 	unsigned sadb_id, id;
 	struct sadb_alg *alg_p;
 
+	whack_log(RC_COMMENT, "ESP algorithms supported:");
+	whack_log(RC_COMMENT, " "); /* spacer */
+
 	ESP_EALG_FOR_EACH(sadb_id) {
 		id = sadb_id;
 		alg_p = &esp_ealg[sadb_id];
@@ -745,6 +747,8 @@ void kernel_alg_show_status(void)
 			  alg_p->sadb_alg_maxbits
 			  );
 	}
+
+	whack_log(RC_COMMENT, " "); /* spacer */
 }
 void kernel_alg_show_connection(struct connection *c, const char *instance)
 {
@@ -775,7 +779,7 @@ void kernel_alg_show_connection(struct connection *c, const char *instance)
 	if (c->alg_info_esp != NULL) {
 
 		alg_info_snprint(buf, sizeof(buf),
-				 (struct alg_info *)c->alg_info_esp, TRUE);
+				 (struct alg_info *)c->alg_info_esp);
 		whack_log(RC_COMMENT,
 			  "\"%s\"%s:   %s algorithms wanted: %s",
 			  c->name,

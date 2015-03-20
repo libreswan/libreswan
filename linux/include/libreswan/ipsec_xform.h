@@ -137,6 +137,7 @@ static inline const char *auth_name_id(unsigned id)
 	 "_UNKNOWN_comp") :                                     \
 	(x)->ips_encalg == ESP_NONE ? "" : \
 	(x)->ips_encalg == ESP_NULL ? "_NULL" : \
+	/* ESP_DES left out on purpose */ \
 	(x)->ips_encalg == ESP_3DES ? "_3DES" : \
 	(x)->ips_encalg == ESP_AES ? "_AES" : \
 	(x)->ips_encalg == ESP_SERPENT ? "_SERPENT" : \

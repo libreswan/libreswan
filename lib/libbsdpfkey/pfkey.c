@@ -152,7 +152,6 @@ void foreach_supported_alg(void (*algregister)(int satype, int extype,
 	int tlen, i;
 	int satype, supported_exttype;
 
-	;
 	caddr_t p;
 
 	for (i = 0; i < sizeof(supported_map) / sizeof(supported_map[0]);

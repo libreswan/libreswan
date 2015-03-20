@@ -130,9 +130,15 @@ static int ipsec_ocf_compalg(int compalg)
 static int ipsec_ocf_authalg(int authalg)
 {
 	switch (authalg) {
-	case AH_SHA:  return CRYPTO_SHA1_HMAC;
+	case AH_SHA:     return CRYPTO_SHA1_HMAC;
 
-	case AH_MD5:  return CRYPTO_MD5_HMAC;
+	case AH_SHA2_256: return CRYPTO_SHA2_256_HMAC;
+
+	case AH_SHA2_384: return CRYPTO_SHA2_384_HMAC;
+
+	case AH_SHA2_512: return CRYPTO_SHA2_512_HMAC;
+
+	case AH_MD5:      return CRYPTO_MD5_HMAC;
 	}
 	return 0;
 }
@@ -1312,6 +1318,30 @@ static struct ipsec_alg_supported ocf_ah_algs[] = {
 		.ias_keymaxbits = 160,
 	},
 	{
+		.ias_name       = "ocf-sha256hmac",
+		.ias_id         = AH_SHA2_256,
+		.ias_exttype    = SADB_EXT_SUPPORTED_AUTH,
+		.ias_ivlen      = 0,
+		.ias_keyminbits = 256,
+		.ias_keymaxbits = 256,
+	},
+	{
+		.ias_name       = "ocf-sha384hmac",
+		.ias_id         = AH_SHA2_384,
+		.ias_exttype    = SADB_EXT_SUPPORTED_AUTH,
+		.ias_ivlen      = 0,
+		.ias_keyminbits = 384,
+		.ias_keymaxbits = 384,
+	},
+	{
+		.ias_name       = "ocf-sha512hmac",
+		.ias_id         = AH_SHA2_512,
+		.ias_exttype    = SADB_EXT_SUPPORTED_AUTH,
+		.ias_ivlen      = 0,
+		.ias_keyminbits = 512,
+		.ias_keymaxbits = 512,
+	},
+	{
 		.ias_name       = NULL,
 		.ias_id         = 0,
 		.ias_exttype    = 0,
@@ -1338,6 +1368,30 @@ static struct ipsec_alg_supported ocf_esp_algs[] = {
 		.ias_ivlen      = 0,
 		.ias_keyminbits = 160,
 		.ias_keymaxbits = 160,
+	},
+	{
+		.ias_name       = "ocf-sha256hmac",
+		.ias_id         = AH_SHA2_256,
+		.ias_exttype    = SADB_EXT_SUPPORTED_AUTH,
+		.ias_ivlen      = 0,
+		.ias_keyminbits = 256,
+		.ias_keymaxbits = 256,
+	},
+	{
+		.ias_name       = "ocf-sha384hmac",
+		.ias_id         = AH_SHA2_384,
+		.ias_exttype    = SADB_EXT_SUPPORTED_AUTH,
+		.ias_ivlen      = 0,
+		.ias_keyminbits = 384,
+		.ias_keymaxbits = 384,
+	},
+	{
+		.ias_name       = "ocf-sha512hmac",
+		.ias_id         = AH_SHA2_512,
+		.ias_exttype    = SADB_EXT_SUPPORTED_AUTH,
+		.ias_ivlen      = 0,
+		.ias_keyminbits = 512,
+		.ias_keymaxbits = 512,
 	},
 	{
 		.ias_name       = "ocf-aes",

@@ -160,24 +160,24 @@ extern int sysctl_ipsec_regress_pfkey_lossage;
 /*
  * debugging routines.
  */
-	#define KLIPS_ERROR(flag, format, args ...) if (printk_ratelimit() || \
-							flag) \
-		printk(KERN_ERR "KLIPS " format, ## args)
-	#define KLIPS_PRINT(flag, format, args ...) \
+#define KLIPS_ERROR(flag, format, args ...) if (printk_ratelimit() || \
+						flag) \
+	printk(KERN_ERR "KLIPS " format, ## args)
+#define KLIPS_PRINT(flag, format, args ...) \
 	((flag) ? printk(KERN_INFO format, ## args) : 0)
-	#define KLIPS_PRINTMORE(flag, format, args ...) \
+#define KLIPS_PRINTMORE(flag, format, args ...) \
 	((flag) ? printk(format, ## args) : 0)
-	#define KLIPS_IP_PRINT(flag, ip) \
+#define KLIPS_IP_PRINT(flag, ip) \
 	((flag) ? ipsec_print_ip(ip) : 0)
-	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) \
+#define KLIPS_SATOT(flag, sa, format, dst, dstlen) \
 	((flag) ? satot(sa, format, dst, dstlen) : 0)
 #if 0 /* not CONFIG_KLIPS_DEBUG */
-	#define KLIPS_ERROR(flag, format, args ...) if (printk_ratelimit()) \
-		printk(KERN_ERR "KLIPS " format, ## args)
-	#define KLIPS_PRINT(flag, format, args ...) do ; while (0)
-	#define KLIPS_PRINTMORE(flag, format, args ...) do ; while (0)
-	#define KLIPS_IP_PRINT(flag, ip) do ; while (0)
-	#define KLIPS_SATOT(flag, sa, format, dst, dstlen) (0)
+#define KLIPS_ERROR(flag, format, args ...) if (printk_ratelimit()) \
+	printk(KERN_ERR "KLIPS " format, ## args)
+#define KLIPS_PRINT(flag, format, args ...) do ; while (0)
+#define KLIPS_PRINTMORE(flag, format, args ...) do ; while (0)
+#define KLIPS_IP_PRINT(flag, ip) do ; while (0)
+#define KLIPS_SATOT(flag, sa, format, dst, dstlen) (0)
 #endif /* CONFIG_KLIPS_DEBUG */
 
 /*

@@ -103,9 +103,6 @@
 #include <nspr.h>
 #ifdef FIPS_CHECK
 # include <fipscheck.h>
-/* hardcoded path needs fixing! */
-# define IPSECLIBDIR "/usr/libexec/ipsec"
-# define IPSECSBINDIR "/usr/sbin"
 #endif
 
 #ifdef HAVE_LIBCAP_NG
@@ -123,6 +120,10 @@
 const char *ctlbase = "/var/run/pluto";
 char *pluto_listen = NULL;
 bool fork_desired = TRUE;
+
+/* used for 'ipsec status' */
+static char *ipsecconf = NULL;
+static char *ipsecdir = NULL;
 
 #ifdef DEBUG
 libreswan_passert_fail_t libreswan_passert_fail = passert_fail;
@@ -190,8 +191,7 @@ static void usage(const char *mess)
 		" \\\n\t"
 		"[--debug-control]"
 		"[--debug-lifecycle]"
-		" [--debug-klips]"
-		" [--debug-netkey]"
+		" [--debug-kernel]"
 		" [--debug-x509]"
 		" [--debug-dns]"
 		" [--debug-oppo]"
@@ -362,12 +362,14 @@ enum kernel_interface kern_interface = USE_NETKEY; /* new default */
 u_int16_t secctx_attr_value = SECCTX;
 #endif
 
+/* pulled from main for show_setup_plutomain() */
+static const struct lsw_conf_options *oco;
+static char *coredir;
+static int nhelpers = -1;
+
 int main(int argc, char **argv)
 {
 	int lockfd;
-	int nhelpers = -1;
-	char *coredir;
-	const struct lsw_conf_options *oco;
 
 	/*
 	 * We read the intentions for how to log from command line options
@@ -497,9 +499,7 @@ int main(int argc, char **argv)
 			  DBG_OFFSET },
 			{ "debug-lifecycle", no_argument, NULL, DBG_LIFECYCLE +
 			  DBG_OFFSET },
-			{ "debug-klips", no_argument, NULL, DBG_KLIPS +
-			  DBG_OFFSET },
-			{ "debug-netkey", no_argument, NULL, DBG_NETKEY +
+			{ "debug-kernel", no_argument, NULL, DBG_KERNEL +
 			  DBG_OFFSET },
 			{ "debug-dns", no_argument, NULL, DBG_DNS +
 			  DBG_OFFSET },
@@ -516,6 +516,12 @@ int main(int argc, char **argv)
 			{ "debug-private", no_argument, NULL, DBG_PRIVATE +
 			  DBG_OFFSET },
 			{ "debug-pfkey", no_argument, NULL, DBG_PFKEY +
+			  DBG_OFFSET },
+
+			/* for backwards compatibility */
+			{ "debug-klips", no_argument, NULL, DBG_KERNEL +
+			  DBG_OFFSET },
+			{ "debug-netkey", no_argument, NULL, DBG_KERNEL +
 			  DBG_OFFSET },
 
 			{ "impair-delay-adns-key-answer", no_argument, NULL,
@@ -681,13 +687,11 @@ int main(int argc, char **argv)
 
 		case 'D': /* --force_busy */
 			force_busy = TRUE;
-			continue
-			;
+			continue;
 
 		case 'r': /* --strictcrlpolicy */
 			strict_crl_policy = TRUE;
-			continue
-			;
+			continue;
 
 		case 'R':
 			no_retransmits = TRUE;
@@ -709,8 +713,7 @@ int main(int argc, char **argv)
 
 				crl_check_interval = interval;
 			}
-			continue
-			;
+			continue;
 
 		case 'u': /* --uniqueids */
 			uniqueIDs = TRUE;
@@ -789,6 +792,9 @@ int main(int argc, char **argv)
 
 		case 'f': /* --ipsecdir <ipsec-dir> */
 			(void)lsw_init_ipsecdir(optarg);
+			/* Keep a copy of the filename so we can show it in ipsec status */
+                        ipsecdir = alloc_bytes(strlen(optarg)+1, "ipsecdir filename");
+                        strncpy(ipsecdir,optarg, strlen(optarg));
 			continue;
 
 		case 'a': /* --adns <pathname> */
@@ -838,10 +844,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'z': /* --config */
-			;
-			/* Config struct to variables mapper. This will overwrite */
-			/* all previously set options. Keep this in the same order than */
-			/* long_opts[] is. */
+		{
+			/* Keep a copy of the filename so we can show it in ipsec status */
+			ipsecconf = alloc_bytes(strlen(optarg)+1, "ipsecconf filename");
+			strncpy(ipsecconf,optarg, strlen(optarg));
+
+			/* Config struct to variables mapper. This will overwrite
+			 * all previously set options. Keep this in the same order as
+			 * long_opts[] is.
+			 */
 			struct starter_config *cfg = read_cfg_file(optarg);
 
 			set_cfg_string(&pluto_log_file,
@@ -869,15 +880,19 @@ int main(int argc, char **argv)
 			set_cfg_string(&pluto_shared_secrets_file,
 				       cfg->setup.strings[KSF_SECRETSFILE]);                 /* --secrets */
 			if (cfg->setup.strings[KSF_IPSECDIR] != NULL &&
-			    *cfg->setup.strings[KSF_IPSECDIR] != 0)
-				lsw_init_ipsecdir(cfg->setup.strings[
-							  KSF_IPSECDIR]);       /* --ipsecdir */
+			    *cfg->setup.strings[KSF_IPSECDIR] != 0) {
+				lsw_init_ipsecdir(cfg->setup.strings[KSF_IPSECDIR]);       /* --ipsecdir */
+				/* Keep a copy of the filename so we can show it in ipsec status */
+				ipsecdir = alloc_bytes(strlen(cfg->setup.strings[KSF_IPSECDIR])+1,
+							"ipsecdir filename");
+				strncpy(ipsecdir,cfg->setup.strings[KSF_IPSECDIR],
+					strlen(cfg->setup.strings[KSF_IPSECDIR]));
+				}
 			set_cfg_string(&base_perpeer_logdir,
 				       cfg->setup.strings[KSF_PERPEERDIR]);     /* --perpeerlogbase */
 			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];    /* --perpeerlog */
 			no_retransmits = !cfg->setup.options[KBF_RETRANSMITS];  /* --noretransmits */
-			set_cfg_string(&coredir,
-				       cfg->setup.strings[KSF_DUMPDIR]);        /* --dumpdir */
+			set_cfg_string(&coredir, cfg->setup.strings[KSF_DUMPDIR]); /* --dumpdir */
 			/* no config option: pluto_adns_option */
 #ifdef NAT_TRAVERSAL
 			pluto_natt_float_port =
@@ -889,6 +904,7 @@ int main(int argc, char **argv)
 #endif
 			set_cfg_string(&virtual_private,
 				       cfg->setup.strings[KSF_VIRTUALPRIVATE]);
+
 			nhelpers = cfg->setup.options[KBF_NHELPERS];
 #ifdef HAVE_LABELED_IPSEC
 			secctx_attr_value = cfg->setup.options[KBF_SECCTX];
@@ -922,6 +938,7 @@ int main(int argc, char **argv)
 
 			confread_free(cfg);
 			continue;
+		}
 
 		default:
 #ifdef DEBUG
@@ -1051,40 +1068,40 @@ int main(int argc, char **argv)
 	pluto_init_nss(oco->confddir);
 
 #ifdef FIPS_CHECK
-	const char *package_files[] = { IPSECLIBDIR "/setup",
-					IPSECLIBDIR "/addconn",
-					IPSECLIBDIR "/auto",
-					IPSECLIBDIR "/barf",
-					IPSECLIBDIR "/eroute",
-					IPSECLIBDIR "/ikeping",
-					IPSECLIBDIR "/readwriteconf",
-					IPSECLIBDIR "/_keycensor",
-					IPSECLIBDIR "/klipsdebug",
-					IPSECLIBDIR "/look",
-					IPSECLIBDIR "/newhostkey",
-					IPSECLIBDIR "/pf_key",
-					IPSECLIBDIR "/_pluto_adns",
-					IPSECLIBDIR "/_plutorun",
-					IPSECLIBDIR "/_realsetup",
-					IPSECLIBDIR "/rsasigkey",
-					IPSECLIBDIR "/pluto",
-					IPSECLIBDIR "/_secretcensor",
-					IPSECLIBDIR "/secrets",
-					IPSECLIBDIR "/showhostkey",
-					IPSECLIBDIR "/spi",
-					IPSECLIBDIR "/spigrp",
-					IPSECLIBDIR "/_stackmanager",
-					IPSECLIBDIR "/tncfg",
-					IPSECLIBDIR "/_updown",
-					IPSECLIBDIR "/_updown.klips",
-					IPSECLIBDIR "/_updown.mast",
-					IPSECLIBDIR "/_updown.netkey",
-					IPSECLIBDIR "/verify",
-					IPSECLIBDIR "/whack",
-					IPSECSBINDIR "/ipsec",
+	const char *package_files[] = { IPSEC_EXECDIR "/setup",
+					IPSEC_EXECDIR "/addconn",
+					IPSEC_EXECDIR "/auto",
+					IPSEC_EXECDIR "/barf",
+					IPSEC_EXECDIR "/eroute",
+					IPSEC_EXECDIR "/ikeping",
+					IPSEC_EXECDIR "/readwriteconf",
+					IPSEC_EXECDIR "/_keycensor",
+					IPSEC_EXECDIR "/klipsdebug",
+					IPSEC_EXECDIR "/look",
+					IPSEC_EXECDIR "/newhostkey",
+					IPSEC_EXECDIR "/pf_key",
+					IPSEC_EXECDIR "/_pluto_adns",
+					IPSEC_EXECDIR "/_plutorun",
+					IPSEC_EXECDIR "/_realsetup",
+					IPSEC_EXECDIR "/rsasigkey",
+					IPSEC_EXECDIR "/pluto",
+					IPSEC_EXECDIR "/_secretcensor",
+					IPSEC_EXECDIR "/secrets",
+					IPSEC_EXECDIR "/showhostkey",
+					IPSEC_EXECDIR "/spi",
+					IPSEC_EXECDIR "/spigrp",
+					IPSEC_EXECDIR "/_stackmanager",
+					IPSEC_EXECDIR "/tncfg",
+					IPSEC_EXECDIR "/_updown",
+					IPSEC_EXECDIR "/_updown.klips",
+					IPSEC_EXECDIR "/_updown.mast",
+					IPSEC_EXECDIR "/_updown.netkey",
+					IPSEC_EXECDIR "/verify",
+					IPSEC_EXECDIR "/whack",
+					IPSEC_SBINDIR "/ipsec",
 					NULL };
 
-	if (Pluto_IsFIPS() && !FIPSCHECK_verify_files(package_files)) {
+	if ( (Pluto_IsFIPS() == 1) && !FIPSCHECK_verify_files(package_files)) {
 		loglog(RC_LOG_SERIOUS,
 		       "FATAL: FIPS integrity verification test failed");
 		exit_pluto(10);
@@ -1144,10 +1161,13 @@ int main(int argc, char **argv)
 		libreswan_log("Starting Pluto (Libreswan Version %s%s) pid:%u",
 			      vc, compile_time_interop_options, getpid());
 #endif
-		if (Pluto_IsFIPS())
+		if (Pluto_IsFIPS() == 1) {
 			libreswan_log("Pluto is running in FIPS mode");
-		else
+		} else if (Pluto_IsFIPS() == 0) {
 			libreswan_log("Pluto is NOT running in FIPS mode");
+		} else {
+			libreswan_log("ERROR: FIPS detection failed, Pluto running in non-FIPS mode");
+		}
 
 		if ((vc[0] == 'c' && vc[1] == 'v' && vc[2] == 's') ||
 		    (vc[2] == 'g' && vc[3] == 'i' && vc[4] == 't')) {
@@ -1365,4 +1385,40 @@ void exit_pluto(int status)
 #endif /* LEAK_DETECTIVE */
 	close_log();            /* close the logfiles */
 	exit(status);           /* exit, with our error code */
+}
+
+void show_setup_plutomain()
+{
+	whack_log(RC_COMMENT, "config setup options:");     /* spacer */
+	whack_log(RC_COMMENT, " ");     /* spacer */
+        whack_log(RC_COMMENT, "configdir=%s, configfile=%s, secrets=%s, ipsecdir=%s, "
+		  "dumpdir=%s",
+		oco->confdir,
+		oco->conffile,
+		pluto_shared_secrets_file,
+		oco->confddir,
+		coredir);
+
+	whack_log(RC_COMMENT, "sbindir=%s, libdir=%s, libexecdir=%s",
+		IPSEC_SBINDIR ,
+		IPSEC_LIBDIR ,
+		IPSEC_EXECDIR );
+
+        whack_log(RC_COMMENT, "nhelpers=%d, uniqueids=%s, retransmits=%s, force_busy=%s",
+		nhelpers,
+		uniqueIDs ? "yes" : "no",
+		no_retransmits ? "no" : "yes",
+		force_busy ? "yes" : "no");
+
+        whack_log(RC_COMMENT, "ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%d, listen=%s",
+		pluto_port,
+		strict_crl_policy ? "yes" : "no",
+		crl_check_interval,
+		pluto_listen ? pluto_listen : "<any>");
+
+#ifdef HAVE_LABELED_IPSEC
+        whack_log(RC_COMMENT, "secctx_attr_value=%d", secctx_attr_value);
+#else
+        whack_log(RC_COMMENT, "secctx_attr_value=<unsupported>");
+#endif
 }

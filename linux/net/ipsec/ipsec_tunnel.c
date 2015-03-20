@@ -1733,6 +1733,9 @@ DEBUG_NO_STATIC int ipsec_tunnel_udp_encap_prepare(int fd, int encap_type)
 	sk->sk_destruct        = ipsec_tunnel_udp_encap_destruct;
 	udp_sk(sk)->encap_type = encap_type;
 	udp_sk(sk)->encap_rcv  = klips26_udp_encap_rcv;
+#ifdef NEED_UDP_ENCAP_ENABLE
+	udp_encap_enable();
+#endif
 
 	/* add the tunnel to our list so we can check on it later */
 	list_add(&ctx->link, &ipsec_tunnel_udp_encap_list);

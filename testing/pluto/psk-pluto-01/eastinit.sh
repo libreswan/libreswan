@@ -1,6 +1,5 @@
 : ==== start ====
-#TESTNAME=psk-pluto-01
-#/testing/guestbin/swan-prep --testname $TESTNAME
+/testing/guestbin/swan-prep
 
 /usr/local/libexec/ipsec/_stackmanager start
 /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf

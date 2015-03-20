@@ -2,9 +2,19 @@
 # This isn't actually a shell script. It just looks like one.
 # Some tools other than /bin/sh process it. 
 #
-# See doc/src/makecheck.html#TESTLIST for the format.
+
 # test-kind	directory-containing-test	expectation	[PR#]
 
+# test-kind:
+#  umlplutotest - not yet converted, will not be run with 'make check'
+#  kvmplutotest - coverted to use KVM, will be run with 'make check'
+#  skip - skip this test
+#  hwtest - connect to physical test machines, not KVM [FUTURE]
+
+# expectation:
+#  good - output matches known output
+#  bad  - output should NOT match [only for unit tests, not pluto test]
+#  incomplete - 
 
 # basic pluto test - bring up your basic CONN between eastnet-westnet.
 kvmplutotest	basic-pluto-01	good
@@ -449,10 +459,10 @@ umlplutotest	netkey-psk-vhost-02		good
 umlplutotest	netkey-psk-vhost-03		good
 umlplutotest	netkey-psk-vhost-04		good
 # Selinux / secure labeling tests (require netkey and selinux)
-umlplutotest    loopback-pluto-01		good
-umlplutotest    loopback-pluto-02		good
-umlplutotest    loopback-pluto-03		good
-umlplutotest    loopback-pluto-04		good
+kvmplutotest    loopback-pluto-01		good
+kvmplutotest    loopback-pluto-02		good
+kvmplutotest    loopback-pluto-03		good
+kvmplutotest    loopback-pluto-04		good
 
 # compress tests, some use netkey
 umlplutotest    compress-pluto-01		good
@@ -467,32 +477,34 @@ umlplutotest	sourceip-02			good
 #################################################################
 # IPv6 tests
 #################################################################
-kvmplutotest	ipv6-v6-through-v6-klips-klips		good
+kvmplutotest	ipv6-v6-through-v6-klips-klips		incomplete	
 umlplutotest	ipv6-v6-through-v6-netkey-netkey	good
 umlplutotest	ipv6-v6-through-v6-klips-netkey		good
 umlplutotest	ipv6-v4-through-v6-klips-klips		good
 umlplutotest	ipv6-v6-through-v4-klips-klips		good
-kvmplutotest	ipv6-transport-mode-01-klips-klips	good
-kvmplutotest	ipv6-transport-mode-02-netkey-netkey	good
-kvmplutotest	ipv6-transport-mode-03-klips-netkey	good
-kvmplutotest	ipv6-tunnel-mode-01-klips-klips		good
-kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	good
-kvmplutotest	ipv6-tunnel-mode-03-klips-netkey	good
+kvmplutotest	ipv6-transport-mode-01-klips-klips	incomplete
+kvmplutotest	ipv6-transport-mode-02-netkey-netkey	incomplete
+kvmplutotest	ipv6-transport-mode-03-klips-netkey	incomplete
+kvmplutotest	ipv6-tunnel-mode-01-klips-klips		incomplete
+kvmplutotest	ipv6-tunnel-mode-02-netkey-netkey	incomplete
+kvmplutotest	ipv6-tunnel-mode-03-klips-netkey	incomplete
+kvmplutotest	ipv6-transport-ts-mode-04-netkey-netkey	incomplete
 
 #################################################################
 # IKEv2 tests
 #################################################################
-umlplutotest	ikev2-01-fallback-ikev1			good
+kvmplutotest	ikev2-01-fallback-ikev1			good
 umlplutotest	ikev2-02-responder-send-notify		good
-umlplutotest	ikev2-03-basic-rawrsa			good
+kvmlplutotest	ikev2-03-basic-rawrsa			good
 kvmplutotest	ikev2-04-basic-x509			good
 kvmplutotest	ikev2-05-basic-psk			good
 umlplutotest	ikev2-06-6msg				good
 umlplutotest	ikev2-07-biddown			good
 umlplutotest	ikev2-08-delete-notify			good
-umlplutotest	ikev2-09-rw-rsa				good
+kvmplutotest	ikev2-09-rw-rsa				good
 umlplutotest	ikev2-10-basic-rawrsa-nss		good
-umlplutotest	ikev2-11-simple-psk			good
+kvmplutotest	ikev2-11-simple-psk			good
+kvmplutotest	ikev2-12-no-nhelpers			good
 
 umlplutotest	ikev2-x509-01		good
 umlplutotest	ikev2-x509-02		good
@@ -519,7 +531,7 @@ umlplutotest	ikev2-allow-narrow-06			good
 umlplutotest	ikev2-allow-narrow-07			good
 umlplutotest	ikev2-allow-narrow-08-nss		good
 
-umlplutotest	ikev2-no-nhelpers-01			good
+kvmplutotest	ikev2-no-nhelpers-01			good
 
 #################################################################
 # Interop tests
@@ -536,9 +548,19 @@ umlplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 umlplutotest    interop-ikev2-strongswan-04-x509-responder	good
 umlplutotest    interop-ikev2-strongswan-05-x509-initiator	good
 
+skip		interop-racoon-iphone4s-nonat		incomplete
+skip		interop-racoon-iphone5-nonat		incomplete
+
 #################################################################
 # Specific bug tests
 #################################################################
 # trying out bug #888
 umlplutotest	phase1-expire-01-reconnect-klips		good
 umlplutotest	phase1-expire-02-reconnect-netkey		good
+
+umlplutotest	x509-pluto-frag-00			good
+umlplutotest	x509-pluto-frag-01			good
+umlplutotest	x509-pluto-frag-02			good
+umlplutotest	x509-pluto-frag-03			good
+umlplutotest	x509-pluto-frag-04			good
+

@@ -221,26 +221,7 @@ static void calc_dh_shared(chunk_t *shared, const chunk_t g,
 	    );
 
 	SECKEY_DestroyPublicKey(remote_pubk);
-
-#if 0
-	/*
-	 * note,  a 533 MHz Xscale will exceed this test,  and that is a fast
-	 * processor by embedded standards.  Disabling for now so we don't
-	 * pollute the logs with nasty warnings that are actually perfectly
-	 * normal operation.
-	 */
-
-	/* if took more than 200 msec ... */
-	if (tv_diff > 200000) {
-		loglog(RC_LOG_SERIOUS, "WARNING: calc_dh_shared(): for %s took "
-		       "%ld usec",
-		       enum_show(&oakley_group_names,
-				 group->group),
-		       tv_diff);
-	}
-#endif
-
-	DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret pointer:\n", *shared);
+	DBG_cond_dump_chunk(DBG_CRYPT, "DH shared-secret (pointer):\n", *shared);
 }
 
 /* SKEYID for preshared keys.
@@ -266,9 +247,9 @@ static void skeyid_preshared(const chunk_t pss,
 	PK11SymKey *shared, *skeyid;
 
 	DBG(DBG_CRYPT, {
-		    DBG_log("NSS: skeyid inputs (pss+NI+NR+shared) hasher: %s",
+		    DBG_log("NSS: skeyid inputs (pss+NI+NR+shared-secret) hasher: %s",
 			    hasher->common.name);
-		    DBG_dump_chunk("shared-secret: ", shared_chunk);
+		    DBG_dump_chunk("shared-secret (pointer in chunk_t): ", shared_chunk);
 		    DBG_dump_chunk("ni: ", ni);
 		    DBG_dump_chunk("nr: ", nr);
 	    });
@@ -352,7 +333,7 @@ static void skeyid_preshared(const chunk_t pss,
 	PK11_FreeSymKey(tkey3);
 
 	DBG(DBG_CRYPT,
-	    DBG_dump_chunk("NSS: st_skeyid in skeyid_preshared(): ",
+	    DBG_dump_chunk("NSS: st_skeyid in skeyid_preshared() (pointer): ",
 			   *skeyid_chunk));
 }
 
@@ -1247,9 +1228,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 		for (;; ) {
 			PK11SymKey *tkey11 = NULL, *tkey3 = NULL;
-			DBG_log("AA  inside %s : %d loop ", __func__,
-				__LINE__);
-
 			if (vpss.counter[0] == 0x01) {
 				PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(
 					tkey1, CKM_XOR_BASE_AND_DATA,

@@ -48,12 +48,16 @@ if [ "${systemd}" = 1 ]; then
     initsystem=systemd
 elif [ -f /sbin/start ]; then
     if [ -r /etc/redhat-release ]; then
-	initsystem=sysv
+	initsystem=rhsysv
     else
 	initsystem=upstart
     fi
-else
+elif [ -f /sbin/rc-service ]; then
+    initsystem=openrc
+elif [ -d /etc/ipsec.d ]; then
     initsystem=sysv
+else
+    initsystem=unknown
 fi
 
 case "$1" in
@@ -74,12 +78,18 @@ case "$1" in
 		echo "Redirecting to: systemctl start ipsec.service"
 		exec systemctl start ipsec.service
 	    fi
-	elif [ ${initsystem} = sysv ]; then
+	elif [ ${initsystem} = rhsysv ]; then
 	    echo "Redirecting to: service ipsec start"
 	    exec service ipsec start
 	elif [ ${initsystem} = upstart ]; then
 	    echo "Redirecting to: start ipsec"
 	    exec start ipsec
+	elif [ ${initsystem} = openrc ]; then
+	    echo "Redirecting to: rc-service ipsec start"
+	    exec rc-service ipsec start
+	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec start"
+	    exec /etc/init.d/ipsec start
 	else
 	    echo "Unknown init system in use - aborted"
 	    exit 3
@@ -92,13 +102,18 @@ case "$1" in
 	    echo "Redirecting to: systemctl stop ipsec.service"
 	    # don't exec, we need to cleanup the IPsec stack afterwards
 	    systemctl stop ipsec.service
-	elif [ ${initsystem} = sysv ]; then
+	elif [ ${initsystem} = rhsysv ]; then
 	    echo "Redirecting to: service ipsec stop"
-	    # don't exec, we need to cleanup the IPsec stack afterwards
-	    service ipsec stop
+	    exec service ipsec stop
 	elif [ ${initsystem} = upstart ]; then
 	    echo "Redirecting to: stop ipsec"
 	    stop ipsec
+	elif [ ${initsystem} = openrc ]; then
+	    echo "Redirecting to: rc-service ipsec stop"
+	    exec rc-service ipsec stop
+	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec stop"
+	    exec /etc/init.d/ipsec stop
 	else
 	    echo "Unknown init system in use - aborted"
 	    exit 3
@@ -111,13 +126,11 @@ case "$1" in
 	[ -f /proc/net/pfkey ] && ip xfrm state flush && ip xfrm policy flush
 
 	# Cleaning up backup resolv.conf
-	if [ -e ${LIBRESWAN_RESOLV_CONF} ]
-	then
-		if grep 'Libreswan' ${ORIG_RESOLV_CONF} > /dev/null 2>&1
-		then
-			cp ${LIBRESWAN_RESOLV_CONF} ${ORIG_RESOLV_CONF}
-		fi
-		rm -f  ${LIBRESWAN_RESOLV_CONF}
+	if [ -e ${LIBRESWAN_RESOLV_CONF} ]; then
+	    if grep 'Libreswan' ${ORIG_RESOLV_CONF} > /dev/null 2>&1; then
+		cp ${LIBRESWAN_RESOLV_CONF} ${ORIG_RESOLV_CONF}
+	    fi
+	    rm -f  ${LIBRESWAN_RESOLV_CONF}
 	fi
 	exit 0
 	;;
@@ -125,12 +138,18 @@ case "$1" in
 	if [ ${initsystem} = systemd ]; then
 	    echo "Redirecting to: systemctl status ipsec.service"
 	    exec systemctl status ipsec.service
-	elif [ ${initsystem} = sysv ]; then
+	elif [ ${initsystem} = rhsysv ]; then
 	    echo "Redirecting to: service ipsec status"
 	    exec service ipsec status
 	elif [ ${initsystem} = upstart ]; then
 	    echo "Redirecting to: status ipsec"
 	    exec status ipsec
+	elif [ ${initsystem} = openrc ]; then
+	    echo "Redirecting to: rc-service ipsec status"
+	    exec rc-service ipsec status
+	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec status"
+	    exec /etc/init.d/ipsec status
 	else
 	    echo "Unknown init system in use - aborted"
 	    exit 3
@@ -152,12 +171,18 @@ case "$1" in
 		systemctl stop ipsec.service
 		exec systemctl start ipsec.service
 	    fi
-	elif [ ${initsystem} = sysv ]; then
+	elif [ ${initsystem} = rhsysv ]; then
 	    echo "Redirecting to: service ipsec restart"
 	    exec service ipsec restart
 	elif [ ${initsystem} = upstart ]; then
 	    echo "Redirecting to: restart ipsec"
 	    exec restart ipsec
+	elif [ ${initsystem} = openrc ]; then
+	    echo "Redirecting to: rc-service ipsec restart"
+	    exec rc-service ipsec restart
+	elif [ ${initsystem} = sysv ]; then
+	    echo "Redirecting to: /etc/init.d/ipsec restart"
+	    exec /etc/init.d/ipsec restart
 	else
 	    echo "Unknown init system in use - aborted"
 	    exit 3

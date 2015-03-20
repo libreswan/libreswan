@@ -443,8 +443,8 @@ void show_virtual_private()
 				i = private_net_ok_len;
 			}
 		}
-		;
-	} else { all_ok[0] = '\0';
+	} else {
+		all_ok[0] = '\0';
 	}
 
 	if (private_net_ko != NULL) {
@@ -458,10 +458,10 @@ void show_virtual_private()
 			} else {
 				truncko = 1;
 				i = private_net_ko_len;
-			};
+			}
 		}
-		;
-	} else { all_ko[0] = '\0';
+	} else {
+		all_ko[0] = '\0';
 	}
 
 	whack_log(RC_COMMENT, "virtual_private (%%priv):");
@@ -489,4 +489,6 @@ void show_virtual_private()
 		whack_log(RC_COMMENT,
 			  "         private address space in internal use, it should be excluded!");
 	}
+
+	whack_log(RC_COMMENT, " ");     /* spacer */
 }
