@@ -511,6 +511,8 @@ def main():
 		sscmd = "/usr/sbin/ss"
 	elif os.path.isfile("/bin/ss"):
 		sscmd = "/bin/ss"
+	elif os.path.isfile("/sbin/ss"):
+		sscmd = "/sbin/ss"
 
 	installstartcheck()
 	ipsecconfcheck()

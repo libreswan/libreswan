@@ -126,14 +126,6 @@ static st_jbuf_t *st_jbuf_mem = NULL;
 
 pthread_mutex_t st_jbuf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-/**
- * Get IP address from a PAM environment variable
- * 
- * @param pamh An open PAM filehandle
- * @param var Environment Variable to get the IP address from.  Usually IPADDR, DNS[12], WINS[12]
- * @param addr Pointer to var where you want IP address stored
- * @return int Return code
- */
 static
 void dealloc_st_jbuf(st_jbuf_t *ptr)
 {
@@ -230,6 +222,14 @@ void sigIntHandler(int sig)
 
 #ifdef XAUTH_HAVE_PAM
 
+/**
+ * Get IP address from a PAM environment variable
+ * 
+ * @param pamh An open PAM filehandle
+ * @param var Environment Variable to get the IP address from.  Usually IPADDR, DNS[12], WINS[12]
+ * @param addr Pointer to var where you want IP address stored
+ * @return int Return code
+ */
 static
 int get_addr(pam_handle_t *pamh,const char *var,ip_address *addr)
 {

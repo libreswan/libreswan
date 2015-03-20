@@ -139,14 +139,6 @@ release_connection(struct connection *c, bool relations)
 
 #ifdef DYNAMICDNS
 
-/* used by update_host_pairs */
-#define list_rm(etype, enext, e, ehead) { \
-	etype **ep; \
-	for (ep = &(ehead); *ep != (e); ep = &(*ep)->enext) \
-	    passert(*ep != NULL);    /* we must not come up empty-handed */ \
-	*ep = (e)->enext; \
-    }
-
 /* update the host pairs with the latest DNS ip address */
 void
 update_host_pairs(struct connection *c)
@@ -753,8 +745,8 @@ format_connection(char *buf, size_t buf_len
 		  , struct spd_route *sr)
 {
     size_t w = format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY);
-
-    w += snprintf(buf + w, buf_len - w, "...");
+    snprintf(buf + w, buf_len - w, "...");
+    w += strlen(buf + w);
     return w + format_end(buf + w, buf_len - w, &sr->that, &sr->this, FALSE, c->policy);
 }
 
@@ -911,7 +903,7 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
     }
     else
     {
-	err_t ugh = atoid(src->id, &dst->id, TRUE);
+	err_t ugh = atoid(src->id, &dst->id, TRUE, FALSE);
 
 	if (ugh != NULL)
 	{
@@ -925,7 +917,7 @@ extract_end(struct end *dst, const struct whack_end *src, const char *which)
     /* decode CA distinguished name, if any */
     if (src->ca != NULL)
     {
-	if streq(src->ca, "%same")
+	if (streq(src->ca, "%same"))
 	    same_ca = TRUE;
 	else if (!streq(src->ca, "%any"))
 	{
@@ -1199,7 +1191,7 @@ add_connection(const struct whack_message *wm)
 	} 
 
 	loglog(RC_NOALGO
-	       , "esp string error: %s"
+	       , "ike string error: %s"
 	       , ugh? ugh : "Unknown");
 	return;
     }
@@ -3030,7 +3022,7 @@ fc_try(const struct connection *c
     DBG(DBG_CONTROLMORE,
 	DBG_log("  fc_try concluding with %s [%ld]"
 		, (best ? best->name : "none"), best_prio)
-    )
+    );
 
     if(best == NULL) {
 	if(virtualwhy != NULL) {
@@ -3135,7 +3127,7 @@ fc_try_oppo(const struct connection *c
     DBG(DBG_CONTROLMORE,
 	DBG_log("  fc_try_oppo concluding with %s [%ld]"
 		, (best ? best->name : "none"), best_prio)
-    )
+    );
     return best;
 
 }
@@ -3214,7 +3206,7 @@ find_client_connection(struct connection *c
 	    DBG_log("  fc_try %s gives %s"
 		    , c->name
 		    , (d ? d->name : "none"))
-	)
+	);
 
 	if (d == NULL)
 	    d = unrouted;
@@ -3270,7 +3262,7 @@ find_client_connection(struct connection *c
     DBG(DBG_CONTROLMORE,
 	DBG_log("  concluding with d = %s"
 		, (d ? d->name : "none"))
-    )
+    );
     return d;
 }
 

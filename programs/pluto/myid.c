@@ -103,7 +103,7 @@ set_myid(enum myid_state s, char *idstr)
     if (idstr != NULL)
     {
 	struct id id;
-	err_t ugh = atoid(idstr, &id, FALSE);
+	err_t ugh = atoid(idstr, &id, FALSE, FALSE);
 
 	if (ugh != NULL)
 	{

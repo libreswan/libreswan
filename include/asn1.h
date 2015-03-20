@@ -84,8 +84,10 @@ typedef enum {
 #define ASN1_BODY	0x20
 #define ASN1_RAW	0x40
 
-#define ASN1_INVALID_LENGTH     0xffffffff
+#define ASN1_INVALID_LENGTH     (~(size_t) 0)	/* largest size_t */
 
+#define ASN1_MAX_LEN	(1U << (8*3))	/* don't handle objects with length greater than this */
+#define ASN1_MAX_LEN_LEN    4	/* no coded length takes more than 4 bytes. */
 
 /* definition of an ASN.1 object */
 
@@ -107,7 +109,7 @@ typedef struct {
 } asn1_ctx_t;
 
 extern int known_oid(chunk_t object);
-extern u_int asn1_length(chunk_t *blob);
+extern size_t asn1_length(chunk_t *blob);
 extern void code_asn1_length(size_t length, chunk_t *code);
 extern u_char* build_asn1_object(chunk_t *object, asn1_t type, size_t datalen);
 extern u_char* build_asn1_explicit_object(chunk_t *object, asn1_t outer_type

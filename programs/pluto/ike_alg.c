@@ -139,11 +139,9 @@ bool ike_alg_ok_final(int ealg, unsigned key_len, int aalg, unsigned int group, 
 						 (ike_info->ike_eklen==key_len)) &&
 						(ike_info->ike_halg == aalg) &&
 						(ike_info->ike_modp == group)) {
-#ifndef USE_1DES
 					if (ealg_insecure) 
-						loglog(RC_LOG_SERIOUS, "You should NOT use insecure IKE algorithms (%s)!"
+						loglog(RC_LOG_SERIOUS, "You should NOT use insecure/broken IKE algorithms (%s)!"
 								, enum_name(&oakley_enc_names, ealg));
-#endif
 					return TRUE;
 				}
 			}

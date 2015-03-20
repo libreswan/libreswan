@@ -17,7 +17,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.2
+Version: 3.3
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
@@ -186,5 +186,5 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %systemd_post ipsec.service
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.2-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.3-1
 - Automated build from release tar ball

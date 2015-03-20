@@ -106,11 +106,6 @@ echo "start final.sh on responder $RESPONDER for $TESTNAME"
 ../../utils/runkvm.py --final --hostname $RESPONDER --testname $TESTNAME &
 RESPONDER_FINAL_PID=$!
 wait_till_pid_end "$RESPONDER" $RESPONDER_FINAL_PID
-echo "start final.sh on initiator $INITIATOR for $TESTNAME"
-../../utils/runkvm.py --final --hostname $INITIATOR --testname $TESTNAME &
-INITIATOR_FINAL_PID=$!
-wait_till_pid_end "$RESPONDER" $RESPONDER_FINAL_PID
-wait_till_pid_end "$INITIATOR" $INITIATOR_FINAL_PID
 
 TCPDUMP_PID_R=`pidof sudo`
 if [ -f ./OUTPUT/$SWAN_PCAP.pid ] ; then

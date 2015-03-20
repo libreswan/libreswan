@@ -68,16 +68,14 @@
 #define	MAXBITS	20000
 #endif
 
-/* the code in getoldkey() knows about this */
 #define	E	3		/* standard public exponent */
-
 /*#define F4	65537*/	/* preferred public exponent, Fermat's 4th number */
+
 char usage[] = "rsasigkey [--verbose] [--random device] [--configdir dir] [--password password] nbits [--hostname host] [--noopt] [--rounds num]";
 struct option opts[] = {
   {"verbose",	0,	NULL,	'v',},
   {"random",	1,	NULL,	'r',},
   {"rounds",	1,	NULL,	'p',},
-  {"oldkey",	1,	NULL,	'o',},
   {"hostname",	1,	NULL,	'H',},
   {"noopt",	0,	NULL,	'n',},
   {"help",		0,	NULL,	'h',},
@@ -97,7 +95,6 @@ int do_lcm = 1;			/* use lcm(p-1, q-1), not (p-1)*(q-1) */
 char me[] = "ipsec rsasigkey";	/* for messages */
 
 /* forwards */
-int getoldkey(char *filename);
 void rsasigkey(int nbits, char *configdir, char *password);
 void initprime(mpz_t var, int nbits, int eval);
 void initrandom(mpz_t var, int nbits);
@@ -169,7 +166,7 @@ void UpdateNSS_RNG(void)
 }
 
 /*  Returns the password passed in in the text file.
- *  Uses the password once and nulls it out the prevent
+ *  Uses the password once and nulls it out to prevent
  *  PKCS11 from calling us forever.
  */
 char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
@@ -184,63 +181,63 @@ char *GetFilePasswd(PK11SlotInfo *slot, PRBool retry, void *arg)
     int tokenLen = 0;
 
     if (!pwFile) {
-	return 0;
+		return 0;
     }
 
     if (retry) {
-	return 0;  /* no good retrying - the files contents will be the same */
+		return 0;  /* no good retrying - the files contents will be the same */
     }
 
     phrases = PORT_ZAlloc(maxPwdFileSize);
 
     if (!phrases) {
-	return 0; /* out of memory */
+		return 0; /* out of memory */
     }
 
     fd = PR_Open(pwFile, PR_RDONLY, 0);
     if (!fd) {
-	fprintf(stderr, "No password file \"%s\" exists.\n", pwFile);
-	PORT_Free(phrases);
-	return NULL;
+		fprintf(stderr, "No password file \"%s\" exists.\n", pwFile);
+		PORT_Free(phrases);
+		return NULL;
     }
     nb = PR_Read(fd, phrases, maxPwdFileSize);
 
     PR_Close(fd);
 
     if (nb == 0) {
-	fprintf(stderr,"password file contains no data\n");
-	PORT_Free(phrases);
-	return NULL;
+		fprintf(stderr,"password file contains no data\n");
+		PORT_Free(phrases);
+		return NULL;
     }
 
     if (slot) {
-	tokenName = PK11_GetTokenName(slot);
-	if (tokenName) {
-	    tokenLen = PORT_Strlen(tokenName);
-	}
+		tokenName = PK11_GetTokenName(slot);
+		if (tokenName) {
+	    	tokenLen = PORT_Strlen(tokenName);
+		}
     }
     i = 0;
     do {
-	int startphrase = i;
-	int phraseLen;
-	/* handle the Windows EOL case */
-	while (phrases[i] != '\r' && phrases[i] != '\n' && i < nb) i++;
-	/* terminate passphrase */
-	phrases[i++] = '\0';
-	/* clean up any EOL before the start of the next passphrase */
-	while ( (i<nb) && (phrases[i] == '\r' || phrases[i] == '\n')) {
+		int startphrase = i;
+		int phraseLen;
+		/* handle the Windows EOL case */
+		while (phrases[i] != '\r' && phrases[i] != '\n' && i < nb) i++;
+		/* terminate passphrase */
 		phrases[i++] = '\0';
-	}
-	/* now analyze the current passphrase */
-	phrase = &phrases[startphrase];
-	if (!tokenName)
+		/* clean up any EOL before the start of the next passphrase */
+		while ( (i<nb) && (phrases[i] == '\r' || phrases[i] == '\n')) {
+			phrases[i++] = '\0';
+		}
+		/* now analyze the current passphrase */
+		phrase = &phrases[startphrase];
+		if (!tokenName)
+			break;
+		if (PORT_Strncmp(phrase, tokenName, tokenLen)) continue;
+		phraseLen = PORT_Strlen(phrase);
+		if (phraseLen < (tokenLen+1)) continue;
+		if (phrase[tokenLen] != ':') continue;
+		phrase = &phrase[tokenLen+1];
 		break;
-	if (PORT_Strncmp(phrase, tokenName, tokenLen)) continue;
-	phraseLen = PORT_Strlen(phrase);
-	if (phraseLen < (tokenLen+1)) continue;
-	if (phrase[tokenLen] != ':') continue;
-	phrase = &phrase[tokenLen+1];
-	break;
     } while (i<nb);
 
     phrase = PORT_Strdup((char*)phrase);
@@ -256,15 +253,15 @@ char *GetModulePassword(PK11SlotInfo *slot, PRBool retry, void *arg)
     char *pw;
 
     if (pwdata == NULL) {
-	pwdata = &pwnull;
+		pwdata = &pwnull;
     }
 
     if (PK11_ProtectedAuthenticationPath(slot)) {
-	pwdata = &pwxtrn;
+		pwdata = &pwxtrn;
     }
     if (retry && pwdata->source != PW_NONE) {
-	fprintf(stderr, "%s: Incorrect password/PIN entered.\n", me);
-	return NULL;
+		fprintf(stderr, "%s: Incorrect password/PIN entered.\n", me);
+		return NULL;
     }
 
     switch (pwdata->source) {
@@ -299,7 +296,6 @@ int main(int argc, char *argv[])
 	int errflg = 0;
 	int i;
 	int nbits;
-	char *oldkeyfile = NULL;
 	char *configdir = NULL; /* where the NSS databases reside */
 	char *password = NULL;  /* password for token authentication */
 
@@ -317,9 +313,6 @@ int main(int argc, char *argv[])
 				fprintf(stderr, "%s: rounds must be > 0\n", me);
 				exit(2);
 			}
-			break;
-		case 'o':	/* reformat old key */
-			oldkeyfile = optarg;
 			break;
 		case 'H':	/* set hostname for output */
 			strcpy(outputhostname, optarg);
@@ -361,11 +354,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (oldkeyfile == NULL) {
-		assert(argv[optind] != NULL);
-		nbits = atoi(argv[optind]);
-	} else
-		nbits = getoldkey(oldkeyfile);
+	assert(argv[optind] != NULL);
+	nbits = atoi(argv[optind]);
 
 	if (nbits <= 0) {
 		fprintf(stderr, "%s: invalid bit count (%d)\n", me, nbits);
@@ -385,115 +375,6 @@ int main(int argc, char *argv[])
 }
 
 /*
- - getoldkey - fetch an old key's primes
- */
-int				/* nbits */
-getoldkey(filename)
-char *filename;
-{
-#ifdef OLD_GCC
-	fprintf(stderr, "%s: getoldkey is broken\n", me);
-	exit(1);
-#else
-	FILE *f;
-	char line[MAXBITS/2];
-	char *p;
-	char *value;
-	static char pube[] = "PublicExponent:";
-	static char pubevalue[] = "0x03";
-	static char pr1[] = "Prime1:";
-	static char pr2[] = "Prime2:";
-#	define	STREQ(a, b)	(strcmp(a, b) == 0)
-	int sawpube = 0;
-	int sawpr1 = 0;
-	int sawpr2 = 0;
-	int nbits;
-	char fsin[2];
-	fsin[0]='-'; /*file stdin*/
-	fsin[1]='\0';
-
-	nbits = 0;
- 
-	if (STREQ(filename, fsin))
-		f = stdin;
-	else
-		f = fopen(filename, "r");
-	if (f == NULL) {
-		fprintf(stderr, "%s: unable to open file `%s' (%s)\n", me,
-						filename, strerror(errno));
-		exit(1);
-	}
-	if (verbose)
-		fprintf(stderr, "getting old key from %s...\n", filename);
-
-	while (fgets(line, sizeof(line), f) != NULL) {
-		p = line + strlen(line) - 1;
-		if (*p != '\n') {
-			fprintf(stderr, "%s: over-long line in file `%s'\n",
-							me, filename);
-			exit(1);
-		}
-		*p = '\0';
-
-		p = line + strspn(line, " \t");		/* p -> first word */
-		value = strpbrk(p, " \t");		/* value -> after it */
-		if (value != NULL) {
-			*value++ = '\0';
-			value += strspn(value, " \t");
-			/* value -> second word if any */
-		}
-
-		if (value == NULL || *value == '\0') {
-			/* wrong format */
-		} else if (STREQ(p, pube)) {
-			sawpube = 1;
-			if (!STREQ(value, pubevalue)) {
-				fprintf(stderr, "%s: wrong public exponent (`%s') in old key\n",
-					me, value);
-				exit(1);
-			}
-		} else if (STREQ(p, pr1)) {
-			if (sawpr1) {
-				fprintf(stderr, "%s: duplicate `%s' lines in `%s'\n",
-					me, pr1, filename);
-				exit(1);
-			}
-			sawpr1 = 1;
-			nbits = (strlen(value) - 2) * 4 * 2;
-			if (mpz_init_set_str(prime1, value, 0) < 0) {
-				fprintf(stderr, "%s: conversion error in reading old prime1\n",
-					me);
-				exit(1);
-			}
-		} else if (STREQ(p, pr2)) {
-			if (sawpr2) {
-				fprintf(stderr, "%s: duplicate `%s' lines in `%s'\n",
-					me, pr2, filename);
-				exit(1);
-			}
-			sawpr2 = 1;
-			if (mpz_init_set_str(prime2, value, 0) < 0) {
-				fprintf(stderr, "%s: conversion error in reading old prime2\n",
-					me);
-				exit(1);
-			}
-		}
-	}
-	
-	if (f != stdin)
-		fclose(f);
-
-	if (!sawpube || !sawpr1 || !sawpr2) {
-		fprintf(stderr, "%s: old key missing or incomplete\n", me);
-		exit(1);
-	}
-
-	assert(sawpr1);		/* and thus nbits is known */
-	return(nbits);
-#endif
-}
-
-/*
  - rsasigkey - generate an RSA signature key
  * e is fixed at 3, without discussion.  That would not be wise if these
  * keys were to be used for encryption, but for signatures there are some
@@ -503,13 +384,11 @@ char *filename;
 /* Generates an RSA signature key using nss.
  * Curretly e is fixed at 3, but we may change that.  We may
  * use F4 if preformance doesn't degrade much realative to 3.
- * Notice that useoldkey is not yet supported.
  */
 void
 rsasigkey(int nbits, char *configdir, char *password)
 {
     SECStatus rv;
-    PRBool nss_initialized          = PR_FALSE;
     PK11RSAGenParams rsaparams      = { nbits, (long) E };
     secuPWData  pwdata              = { PW_NONE, NULL };
     PK11SlotInfo *slot              = NULL;
@@ -555,7 +434,6 @@ rsasigkey(int nbits, char *configdir, char *password)
 	}
 
 	PK11_SetPasswordFunc(GetModulePassword);
-	nss_initialized = PR_TRUE;
 
 	/* Good for now but someone may want to use a hardware token */
 	slot = PK11_GetInternalKeySlot();
@@ -600,7 +478,6 @@ rsasigkey(int nbits, char *configdir, char *password)
 	assert(!mpz_set_str(n, n_str, 16));
 
 	/* and the output */
-	/* note, getoldkey() knows about some of this */
 	report("output...\n");          /* deliberate extra newline */
 	printf("\t# RSA %d bits   %s   %s", nbits, outputhostname, ctime(&now));
                                                        /* ctime provides \n */
@@ -612,7 +489,7 @@ rsasigkey(int nbits, char *configdir, char *password)
 
 	SECItem *ckaID=PK11_MakeIDFromPubKey(getModulus(pubkey));
 	if(ckaID!=NULL) {
-		printf("\t# everything after this point is CKA_ID in hex format when using NSS\n");
+		printf("\t# everything after this point is CKA_ID in hex formati - not the real values \n");
 		printf("\tPrivateExponent: %s\n", hexOut(ckaID));
 		printf("\tPrime1: %s\n", hexOut(ckaID));
 		printf("\tPrime2: %s\n", hexOut(ckaID));
@@ -628,9 +505,7 @@ rsasigkey(int nbits, char *configdir, char *password)
     if (privkey) SECKEY_DestroyPrivateKey(privkey);
     if (pubkey) SECKEY_DestroyPublicKey(pubkey);    
 
-    if (nss_initialized) {
 	(void) NSS_Shutdown();
-    }
     (void) PR_Cleanup();
 }
 

@@ -174,7 +174,7 @@ decode_cert(struct msg_digest *md)
 		{
 		    DBG(DBG_X509 | DBG_PARSING,
 			DBG_log("Public key validated")
-		    )
+		    );
 			add_x509_public_key(NULL, &cert2, valid_until, DAL_SIGNED);
 		}
 		else
@@ -228,7 +228,7 @@ ikev2_decode_cert(struct msg_digest *md)
 		{
 		    DBG(DBG_X509 | DBG_PARSING,
 			DBG_log("Public key validated")
-		    )
+		    );
 			add_x509_public_key(NULL, &cert2, valid_until, DAL_SIGNED);
 		}
 		else
@@ -301,7 +301,7 @@ decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 		char buf[IDTOA_BUF];
 		dntoa_or_null(buf, IDTOA_BUF, ca_name, "%any");
 		DBG_log("requested CA: '%s'", buf);
-	    )
+	    );
 	}
 	else
 	    loglog(RC_LOG_SERIOUS, "ignoring %s certificate request payload",
@@ -349,7 +349,7 @@ ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 		char buf[IDTOA_BUF];
 		dntoa_or_null(buf, IDTOA_BUF, ca_name, "%any");
 		DBG_log("requested CA: '%s'", buf);
-	    )
+	    );
 	}
 	else
 	    loglog(RC_LOG_SERIOUS, "ignoring %s certificate request payload",

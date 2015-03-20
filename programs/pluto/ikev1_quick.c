@@ -541,7 +541,7 @@ decode_net_id(struct isakmp_ipsec_id *id
 
     DBG(DBG_PARSING | DBG_CONTROL,
         DBG_log("%s protocol/port is %d/%d", which, id->isaiid_protoid, id->isaiid_port)
-    )
+    );
 
     return TRUE;
 }
@@ -1713,7 +1713,8 @@ quick_inI1_outR1_authtail(struct verify_oppo_bundle *b
 	    he.port = b->his.port;
 
 	    l = format_end(buf, sizeof(buf), &me, NULL, TRUE, LEMPTY);
-	    l += snprintf(buf + l, sizeof(buf) - l, "...");
+	    snprintf(buf + l, sizeof(buf) - l, "...");
+	    l += strlen(buf + l);
 	    (void)format_end(buf + l, sizeof(buf) - l, &he, NULL, FALSE, LEMPTY);
 	    libreswan_log("cannot respond to IPsec SA request"
 		" because no connection is known for %s"

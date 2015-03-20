@@ -642,11 +642,9 @@ kernel_alg_esp_ok_final(int ealg, unsigned int key_len, int aalg, struct alg_inf
 						((esp_info->esp_ealg_keylen==0) || (key_len==0) ||
 						 (esp_info->esp_ealg_keylen==key_len)) &&
 						(esp_info->esp_aalg_id == aalg)) {
-#ifndef USE_1DES
 					if (ealg_insecure) 
-						loglog(RC_LOG_SERIOUS, "You should NOT use insecure ESP algorithms [%s (%d)]!"
+						loglog(RC_LOG_SERIOUS, "You should NOT use insecure/broken ESP algorithms [%s (%d)]!"
 								, enum_name(&esp_transformid_names, ealg), key_len);
-#endif
 					return TRUE;
 				}
 			}

@@ -80,7 +80,7 @@ des_cblock (*key);
 	{
 	int i;
 
-	for (i=0; i<DES_KEY_SZ; i++)
+	for (i=0; i<(int)DES_KEY_SZ; i++)
 		(*key)[i]=odd_parity[(*key)[i]];
 	}
 
@@ -89,7 +89,7 @@ des_cblock (*key);
 	{
 	int i;
 
-	for (i=0; i<DES_KEY_SZ; i++)
+	for (i=0; i<(int)DES_KEY_SZ; i++)
 		{
 		if ((*key)[i] != odd_parity[(*key)[i]])
 			return(0);

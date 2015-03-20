@@ -1,0 +1,377 @@
+diff -ru a/include/linux/in.h b/include/linux/in.h
+--- a/include/linux/in.h
++++ b/include/linux/in.h
+@@ -76,6 +76,7 @@
+ #define IP_XFRM_POLICY	17
+ #define IP_PASSSEC	18
+ #define IP_TRANSPARENT	19
++#define IP_IPSEC_REFINFO 30 /* used with CONFIG_INET_IPSEC_SAREF */
+ 
+ /* BSD compatibility */
+ #define IP_RECVRETOPTS	IP_RETOPTS
+diff -ru a/include/net/ip.h b/include/net/ip.h
+--- a/include/net/ip.h
++++ b/include/net/ip.h
+@@ -54,6 +54,9 @@
+ 	int			oif;
+ 	struct ip_options_rcu	*opt;
+ 	__u8			tx_flags;
++#ifdef CONFIG_INET_IPSEC_SAREF
++    struct sec_path *sp;
++#endif
+ };
+ 
+ #define IPCB(skb) ((struct inet_skb_parm*)((skb)->cb))
+diff -ru a/include/net/xfrm.h b/include/net/xfrm.h
+--- a/include/net/xfrm.h
++++ b/include/net/xfrm.h
+@@ -963,12 +963,30 @@
+ 
+ extern void xfrm_dst_ifdown(struct dst_entry *dst, struct net_device *dev);
+ 
++#ifdef CONFIG_INET_IPSEC_SAREF
++typedef unsigned int xfrm_sec_unique_t;
++#endif
++
+ struct sec_path {
+ 	atomic_t		refcnt;
++#ifdef CONFIG_INET_IPSEC_SAREF
++    xfrm_sec_unique_t       ref;       /*reference to high-level policy*/
++#endif    
+ 	int			len;
+ 	struct xfrm_state	*xvec[XFRM_MAX_DEPTH];
+ };
+ 
++#ifdef CONFIG_INET_IPSEC_SAREF
++struct ipcm_cookie;
++struct ipsec_secpath_saref_ops {
++    int (*set_ipc_saref)(struct ipcm_cookie *ipc, xfrm_sec_unique_t saref);
++    void (*get_secpath_sarefs)(struct sec_path *sp,
++                    xfrm_sec_unique_t *refme, xfrm_sec_unique_t *refhim);
++};
++extern int register_ipsec_secpath_saref_ops(struct ipsec_secpath_saref_ops *ops);
++extern void unregister_ipsec_secpath_saref_ops(struct ipsec_secpath_saref_ops *ops);
++#endif
++
+ static inline int secpath_exists(struct sk_buff *skb)
+ {
+ #ifdef CONFIG_XFRM
+diff -ru a/net/ipv4/icmp.c b/net/ipv4/icmp.c
+--- a/net/ipv4/icmp.c
++++ b/net/ipv4/icmp.c
+@@ -336,6 +336,8 @@
+ 	struct inet_sock *inet;
+ 	__be32 daddr;
+ 
++    memset(&ipc, 0, sizeof(ipc));
++
+ 	if (ip_options_echo(&icmp_param->replyopts.opt.opt, skb))
+ 		return;
+ 
+@@ -488,6 +490,8 @@
+ 	struct net *net;
+ 	struct sock *sk;
+ 
++    memset(&ipc, 0, sizeof(ipc));
++
+ 	if (!rt)
+ 		goto out;
+ 	net = dev_net(rt->dst.dev);
+diff -ru a/net/ipv4/ip_output.c b/net/ipv4/ip_output.c
+--- a/net/ipv4/ip_output.c
++++ b/net/ipv4/ip_output.c
+@@ -72,6 +72,7 @@
+ #include <net/arp.h>
+ #include <net/icmp.h>
+ #include <net/checksum.h>
++#include <net/xfrm.h>
+ #include <net/inetpeer.h>
+ #include <linux/igmp.h>
+ #include <linux/netfilter_ipv4.h>
+@@ -435,6 +436,10 @@
+ 	/* Copy the flags to each fragment. */
+ 	IPCB(to)->flags = IPCB(from)->flags;
+ 
++#ifdef CONFIG_INET_IPSEC_SAREF
++    to->sp = secpath_get(from->sp);
++#endif
++
+ #ifdef CONFIG_NET_SCHED
+ 	to->tc_index = from->tc_index;
+ #endif
+@@ -803,6 +808,7 @@
+ 			    int getfrag(void *from, char *to, int offset,
+ 					int len, int odd, struct sk_buff *skb),
+ 			    void *from, int length, int transhdrlen,
++                struct ipcm_cookie *ipc,
+ 			    unsigned int flags)
+ {
+ 	struct inet_sock *inet = inet_sk(sk);
+@@ -937,6 +943,9 @@
+ 			 */
+ 			skb->ip_summed = csummode;
+ 			skb->csum = 0;
++#ifdef CONFIG_INET_IPSEC_SAREF
++            skb->sp = secpath_get(ipc->sp);
++#endif
+ 			skb_reserve(skb, hh_len);
+ 			skb_shinfo(skb)->tx_flags = cork->tx_flags;
+ 
+@@ -1125,7 +1134,7 @@
+ 	}
+ 
+ 	return __ip_append_data(sk, fl4, &sk->sk_write_queue, &inet->cork.base, getfrag,
+-				from, length, transhdrlen, flags);
++				from, length, transhdrlen, ipc, flags);
+ }
+ 
+ ssize_t	ip_append_page(struct sock *sk, struct flowi4 *fl4, struct page *page,
+@@ -1448,7 +1457,7 @@
+ 		return ERR_PTR(err);
+ 
+ 	err = __ip_append_data(sk, fl4, &queue, &cork, getfrag,
+-			       from, length, transhdrlen, flags);
++			       from, length, transhdrlen, ipc, flags);
+ 	if (err) {
+ 		__ip_flush_pending_frames(sk, &queue, &cork);
+ 		return ERR_PTR(err);
+@@ -1485,6 +1494,8 @@
+ 	struct ipcm_cookie ipc;
+ 	struct flowi4 fl4;
+ 	struct rtable *rt = skb_rtable(skb);
++    
++    memset(&ipc, 0, sizeof(ipc));
+ 
+ 	if (ip_options_echo(&replyopts.opt.opt, skb))
+ 		return;
+diff -ru a/net/ipv4/ip_sockglue.c b/net/ipv4/ip_sockglue.c
+--- a/net/ipv4/ip_sockglue.c
++++ b/net/ipv4/ip_sockglue.c
+@@ -51,6 +51,7 @@
+ #define IP_CMSG_RETOPTS		16
+ #define IP_CMSG_PASSSEC		32
+ #define IP_CMSG_ORIGDSTADDR     64
++#define IP_CMSG_IPSEC_REFINFO   128
+ 
+ /*
+  *	SOL_IP control messages.
+@@ -144,6 +145,61 @@
+ 	put_cmsg(msg, SOL_IP, IP_ORIGDSTADDR, sizeof(sin), &sin);
+ }
+ 
++#ifdef CONFIG_INET_IPSEC_SAREF
++static struct ipsec_secpath_saref_ops *ipsec_secpath_saref_ops = NULL;
++
++int register_ipsec_secpath_saref_ops(struct ipsec_secpath_saref_ops *ops)
++{
++       if (ipsec_secpath_saref_ops)
++               return -EBUSY;
++
++       rcu_assign_pointer(ipsec_secpath_saref_ops, ops);
++
++       return 0;
++}
++EXPORT_SYMBOL(register_ipsec_secpath_saref_ops);
++
++void unregister_ipsec_secpath_saref_ops(struct ipsec_secpath_saref_ops *ops)
++{
++       rcu_assign_pointer(ipsec_secpath_saref_ops, NULL);
++}
++EXPORT_SYMBOL(unregister_ipsec_secpath_saref_ops);
++
++static void ip_cmsg_recv_ipsec_refinfo(struct msghdr *msg, struct sk_buff *skb)
++{
++       struct ipsec_secpath_saref_ops *ops;
++       xfrm_sec_unique_t refs[2] = {0, 0};
++
++       rcu_read_lock_bh();
++       ops = rcu_dereference(ipsec_secpath_saref_ops);
++       if (ops && ops->get_secpath_sarefs)
++               ops->get_secpath_sarefs(skb->sp, &refs[0], &refs[1]);
++       rcu_read_unlock_bh();
++
++       put_cmsg(msg, SOL_IP, IP_IPSEC_REFINFO, sizeof(refs), &refs);
++}
++
++static int ip_cmsg_send_ipsec_refinfo(struct cmsghdr *cmsg, struct ipcm_cookie *ipc)
++{
++       int rc = -EINVAL;
++       struct ipsec_secpath_saref_ops *ops;
++       xfrm_sec_unique_t *ref;
++
++       if(cmsg->cmsg_len != CMSG_LEN(sizeof(xfrm_sec_unique_t)))
++               goto bail;
++
++       ref = (xfrm_sec_unique_t*)CMSG_DATA(cmsg);
++
++       rcu_read_lock_bh();
++       ops = rcu_dereference(ipsec_secpath_saref_ops);
++       if (ops && ops->set_ipc_saref)
++               rc = ops->set_ipc_saref(ipc, *ref);
++       rcu_read_unlock_bh();
++bail:
++       return rc;
++}
++#endif
++
+ void ip_cmsg_recv(struct msghdr *msg, struct sk_buff *skb)
+ {
+ 	struct inet_sock *inet = inet_sk(skb->sk);
+@@ -180,8 +236,16 @@
+ 
+ 	if ((flags >>= 1) == 0)
+ 		return;
++
+ 	if (flags & 1)
+ 		ip_cmsg_recv_dstaddr(msg, skb);
++    if ((flags >>= 1) == 0)
++        return;
++
++#ifdef CONFIG_INET_IPSEC_SAREF
++       if (flags & 1)
++               ip_cmsg_recv_ipsec_refinfo(msg, skb);
++#endif
+ 
+ }
+ EXPORT_SYMBOL(ip_cmsg_recv);
+@@ -214,13 +278,25 @@
+ 			ipc->addr = info->ipi_spec_dst.s_addr;
+ 			break;
+ 		}
++
++#ifdef CONFIG_INET_IPSEC_SAREF
++               case IP_IPSEC_REFINFO:
++               {
++                       err = ip_cmsg_send_ipsec_refinfo(cmsg, ipc);
++                       if(err)
++                               return err;
++
++                       break;
++               }
++#endif
++
+ 		default:
+ 			return -EINVAL;
+ 		}
+ 	}
+ 	return 0;
+ }
+-
++EXPORT_SYMBOL(ip_cmsg_send);
+ 
+ /* Special input handler for packets caught by router alert option.
+    They are selected only by protocol field, and then processed likely
+@@ -478,6 +554,9 @@
+ 	case IP_MULTICAST_ALL:
+ 	case IP_MULTICAST_LOOP:
+ 	case IP_RECVORIGDSTADDR:
++#ifdef CONFIG_INET_IPSEC_SAREF
++    case IP_IPSEC_REFINFO:
++#endif
+ 		if (optlen >= sizeof(int)) {
+ 			if (get_user(val, (int __user *) optval))
+ 				return -EFAULT;
+@@ -575,6 +654,14 @@
+ 		else
+ 			inet->cmsg_flags &= ~IP_CMSG_ORIGDSTADDR;
+ 		break;
++#ifdef CONFIG_INET_IPSEC_SAREF
++    case IP_IPSEC_REFINFO:
++        if (val)
++            inet->cmsg_flags |= IP_CMSG_IPSEC_REFINFO;
++        else
++            inet->cmsg_flags &= ~IP_CMSG_IPSEC_REFINFO;
++        break;
++#endif
+ 	case IP_TOS:	/* This sets both TOS and Precedence */
+ 		if (sk->sk_type == SOCK_STREAM) {
+ 			val &= ~INET_ECN_MASK;
+@@ -1056,6 +1143,9 @@
+ 	if (err == -ENOPROTOOPT && optname != IP_HDRINCL &&
+ 			optname != IP_IPSEC_POLICY &&
+ 			optname != IP_XFRM_POLICY &&
++#ifdef CONFIG_INET_IPSEC_SAREF
++            optname != IP_IPSEC_REFINFO &&
++#endif
+ 			!ip_mroute_opt(optname)) {
+ 		lock_sock(sk);
+ 		err = nf_setsockopt(sk, PF_INET, optname, optval, optlen);
+@@ -1085,6 +1175,9 @@
+ 	if (err == -ENOPROTOOPT && optname != IP_HDRINCL &&
+ 			optname != IP_IPSEC_POLICY &&
+ 			optname != IP_XFRM_POLICY &&
++#ifdef CONFIG_INET_IPSEC_SAREF
++            optname != IP_IPSEC_REFINFO &&
++#endif
+ 			!ip_mroute_opt(optname)) {
+ 		lock_sock(sk);
+ 		err = compat_nf_setsockopt(sk, PF_INET, optname,
+@@ -1168,6 +1261,11 @@
+ 	case IP_PASSSEC:
+ 		val = (inet->cmsg_flags & IP_CMSG_PASSSEC) != 0;
+ 		break;
++#ifdef CONFIG_INET_IPSEC_SAREF
++	case IP_IPSEC_REFINFO:
++		val = (inet->cmsg_flags & IP_CMSG_IPSEC_REFINFO) != 0;
++		break;
++#endif
+ 	case IP_RECVORIGDSTADDR:
+ 		val = (inet->cmsg_flags & IP_CMSG_ORIGDSTADDR) != 0;
+ 		break;
+diff -ru a/net/ipv4/Kconfig b/net/ipv4/Kconfig
+--- a/net/ipv4/Kconfig
++++ b/net/ipv4/Kconfig
+@@ -382,6 +382,16 @@
+ 	  Support for IPsec BEET mode.
+ 
+ 	  If unsure, say Y.
++config INET_IPSEC_SAREF
++    bool "IP: IPsec SAref interface (KLIPS)"
++    default y
++    select XFRM
++    ---help---
++      This exports a mechanism that allows the KLIPS IPsec stack to
++      support mast mode without using nfmark and iptables.
++
++      If unsure, say Y.
++            
+ 
+ config INET_LRO
+ 	tristate "Large Receive Offload (ipv4/tcp)"
+diff -ru a/net/ipv4/raw.c b/net/ipv4/raw.c
+--- a/net/ipv4/raw.c
++++ b/net/ipv4/raw.c
+@@ -471,6 +471,8 @@
+ 	int err;
+ 	struct ip_options_data opt_copy;
+ 
++    memset(&ipc, 0, sizeof(ipc));
++
+ 	err = -EMSGSIZE;
+ 	if (len > 0xFFFF)
+ 		goto out;
+diff -ru a/net/ipv4/udp.c b/net/ipv4/udp.c
+--- a/net/ipv4/udp.c
++++ b/net/ipv4/udp.c
+@@ -809,6 +809,8 @@
+ 	struct sk_buff *skb;
+ 	struct ip_options_data opt_copy;
+ 
++    memset(&ipc, 0, sizeof(ipc));
++
+ 	if (len > 0xFFFF)
+ 		return -EMSGSIZE;
+ 
+@@ -1007,6 +1009,12 @@
+ 	ip_rt_put(rt);
+ 	if (free)
+ 		kfree(ipc.opt);
++#ifdef CONFIG_INET_IPSEC_SAREF
++    if(ipc.sp) {
++        secpath_put(ipc.sp);
++        ipc.sp=NULL;
++    }
++#endif
+ 	if (!err)
+ 		return len;
+ 	/*

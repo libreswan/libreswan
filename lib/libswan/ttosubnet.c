@@ -107,7 +107,7 @@ ip_subnet *dst;
 	oops = ttoul(mask, mlen, 10, &bc);
 	if (oops == NULL) {
 		/* ttoul succeeded, it's a bit-count mask */
-		if (bc > nbits)
+		if (bc > (unsigned long)nbits)
 			return "subnet mask bit count too large";
 		i = bc;
 	} else if(af == AF_INET) {

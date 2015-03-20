@@ -1019,7 +1019,6 @@ main(int argc, char **argv)
 					IPSECLIBDIR"/pf_key",
 					IPSECLIBDIR"/_pluto_adns",
 					IPSECLIBDIR"/_plutorun",
-					IPSECLIBDIR"/ranbits",
 					IPSECLIBDIR"/_realsetup",
 					IPSECLIBDIR"/rsasigkey",
 					IPSECLIBDIR"/pluto",
@@ -1110,9 +1109,6 @@ main(int argc, char **argv)
 	     */
 	    libreswan_log("@(#) built on "__DATE__":" __TIME__ " by " BUILDER);
 	}
-#if defined(USE_1DES)
-	libreswan_log("WARNING: 1DES is enabled");
-#endif
     }
 
     if(coredir) {
@@ -1240,21 +1236,22 @@ main(int argc, char **argv)
     init_fetch();
 #endif
 
-    /* loading X.509 CA certificates */
+    /* loading X.509 CA certificates from disk (/etc/ipsec.d/cacerts/) */
     load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
+
 #if 0
     /* unused */
     /* loading X.509 AA certificates */
     load_authcerts("AA cert", oco->aacerts_dir, AUTH_AA);
 #endif
 
-    /* loading X.509 CRLs */
-    load_crls();
-    /* loading attribute certificates (experimental) */
-    load_acerts();
-
     /*Loading CA certs from NSS DB*/
     load_authcerts_from_nss("CA cert",  AUTH_CA);
+
+    /* loading X.509 CRLs - must happen after CAs are loaded */
+    load_crls();
+    /* loading attribute certificates from disk (should prob be removed) */
+    load_acerts();
 
 #ifdef HAVE_LABELED_IPSEC
     init_avc();

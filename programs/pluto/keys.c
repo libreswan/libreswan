@@ -74,9 +74,6 @@
 
 #include "lswcrypto.h"
 
-/* Maximum length of filename and passphrase buffer */
-#define BUF_LEN		256
-
 #ifdef NAT_TRAVERSAL
 #define PB_STREAM_UNDEFINED
 #include "nat_traversal.h"
@@ -271,8 +268,8 @@ err_t RSA_signature_verify_nss(const struct RSA_public_key *k
     publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
     /*Converting n(modulus) and e(exponent) from mpz_t form to chunk_t*/
-    n = mpz_to_n2(&k->n);
-    e = mpz_to_n2(&k->e);
+    n = mpz_to_n_autosize(&k->n);
+    e = mpz_to_n_autosize(&k->e);
 
     /*Converting n and e to nss_n and nss_e*/
     nss_n.data = n.ptr;

@@ -689,7 +689,7 @@ decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 
 	    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca, "%none");
 	    DBG_log("offered CA: '%s'", buf);
-	)
+	);
 
 	if (r != c)
 	{

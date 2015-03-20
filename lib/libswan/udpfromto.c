@@ -176,7 +176,7 @@ int recvfromto(int s, void *buf, size_t len, int flags,
 }
 
 int sendfromto(int s, void *buf, size_t len, int flags,
-			  struct sockaddr *from, socklen_t fromlen,
+			  struct sockaddr *from,
 			  struct sockaddr *to, socklen_t tolen)
 {
 #if defined(HAVE_IP_PKTINFO) || defined(HAVE_IP_SENDSRCADDR)
@@ -318,7 +318,7 @@ int main(int argc, char **argv)
 	printf("server: replying from address packet was received on to source address\n");
 
 	if ((n = sendfromto(server_socket, buf, n, 0,
-		(struct sockaddr *)&to, tl,
+		(struct sockaddr *)&to
 		(struct sockaddr *)&from, fl)) < 0) {
 		perror("server: sendfromto");
 	}

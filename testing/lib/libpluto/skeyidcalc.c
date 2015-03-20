@@ -1,4 +1,6 @@
 #define LEAK_DETECTIVE
+#define USE_MD5
+#define USE_SHA1
 #define USE_SHA2
 #include "../../programs/pluto/crypt_dh.c"
 

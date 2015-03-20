@@ -818,7 +818,7 @@ ikev2_parent_inI1outR1_tail(struct pluto_crypto_req_cont *pcrc
 	r_hdr.isa_np = ISAKMP_NEXT_v2SA;
 	r_hdr.isa_flags &= ~ISAKMP_FLAGS_I;
 	r_hdr.isa_flags |=  ISAKMP_FLAGS_R;
-	// PAUL shouldn't we set r_hdr.isa_msgid = [htonl](st->st_msgid);  here?
+	/* PAUL shouldn't we set r_hdr.isa_msgid = [htonl](st->st_msgid);  here? */
 	if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream, &md->rbody))
 	    return STF_INTERNAL_ERROR;
     }
@@ -905,7 +905,7 @@ ikev2_parent_inI1outR1_tail(struct pluto_crypto_req_cont *pcrc
     /* keep it for a retransmit if necessary */
     freeanychunk(st->st_tpacket);
     clonetochunk(st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream)
-		 , "reply packet for ikev2_parent_inI1outR1_tail")
+		 , "reply packet for ikev2_parent_inI1outR1_tail");
 
     /* save packet for later signing */
     freeanychunk(st->st_firstpacket_me);
@@ -1970,7 +1970,7 @@ ikev2_parent_inI2outR2_tail(struct pluto_crypto_req_cont *pcrc
 	    ret = ikev2_child_sa_respond(md, RESPONDER, &e_pbs_cipher);
 	    if(ret > STF_FAIL) {
 		v2_notify_num = ret - STF_FAIL;
-		DBG(DBG_CONTROL,DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s", enum_name(&ikev2_notify_names, v2_notify_num)))
+		DBG(DBG_CONTROL,DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s", enum_name(&ikev2_notify_names, v2_notify_num)));
 		np = ISAKMP_NEXT_NONE;
 	    } else if(ret != STF_OK) {
 		DBG_log("ikev2_child_sa_respond returned %s", enum_name(&stfstatus_name, ret));
@@ -2250,11 +2250,11 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				else {
 					c->spd.that.has_client = TRUE;
 				}
-					//AAAA
+				/* AAAA */
 			}
 			else {
 				DBG(DBG_CONTROLMORE, DBG_log(("reject responder TSi/TSr Traffic Selector")));
-				// prevents parent from going to I3
+				/* prevents parent from going to I3 */
 				return STF_FAIL + v2N_TS_UNACCEPTABLE;
 			}
     } /* end of TS check block */
@@ -2430,7 +2430,7 @@ send_v2_notification(struct state *p1st, u_int16_t type
 	n_hdr.isa_flags &= ~ISAKMP_FLAGS_I;
 	n_hdr.isa_flags  |=  ISAKMP_FLAGS_R;
 #warning check msgid code here
-	// PAUL: shouldn't we set n_hdr.isa_msgid = [htonl](p1st->st_msgid);
+	/* PAUL: shouldn't we set n_hdr.isa_msgid = [htonl](p1st->st_msgid); */
 	if (!out_struct(&n_hdr, &isakmp_hdr_desc, &reply, &rbody)) 
 	{
     	    libreswan_log("error initializing hdr for notify message");
@@ -2827,7 +2827,7 @@ stf_status process_informational_ikev2(struct msg_digest *md)
 			case PROTO_IPSEC_AH:
 			case PROTO_IPSEC_ESP:
 				{				
-				//pb_stream del_pbs;
+				/* pb_stream del_pbs; */
 				struct ikev2_delete;
 				u_int16_t i;
 				u_char *spi;
@@ -2992,7 +2992,7 @@ void ikev2_delete_out(struct state *st)
 		role = RESPONDER;
 		}
 
-		//r_hdr.isa_flags  |=  ISAKMP_FLAGS_R;
+		/* r_hdr.isa_flags  |=  ISAKMP_FLAGS_R; */
 
 		if (!out_struct(&r_hdr, &isakmp_hdr_desc, &reply_stream, &rbody))
 		{
@@ -3029,9 +3029,11 @@ void ikev2_delete_out(struct state *st)
 				{
 				pb_stream del_pbs;
 				struct ikev2_delete v2del_tmp;
-				//u_int16_t i, j=0;
-				//u_char *spi;
-				//char spi_buf[1024];
+				/*
+				 * u_int16_t i, j=0;
+				 * u_char *spi;
+				 * char spi_buf[1024];
+				 */
 
 				zero(&v2del_tmp);
 				v2del_tmp.isad_np = ISAKMP_NEXT_NONE;

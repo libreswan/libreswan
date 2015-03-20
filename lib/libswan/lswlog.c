@@ -115,7 +115,7 @@ libreswan_log(const char *message, ...)
 }
 
 void
-libreswan_loglog(int mess_no, const char *message, ...)
+libreswan_loglog(int mess_no UNUSED, const char *message, ...)
 {
     va_list args;
     char m[LOG_WIDTH];	/* longer messages will be truncated */

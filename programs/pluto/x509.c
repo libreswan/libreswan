@@ -75,10 +75,6 @@ static x509crl_t  *x509crls    = NULL;
  */
 static pgpcert_t *pgpcerts   = NULL;
 
-
-/* Maximum length of ASN.1 distinquished name */
-#define ASN1_BUF_LEN	      512
-
 /*
  *  add a X.509 user/host certificate to the chained list
  */
@@ -339,7 +335,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 		    (crl->distributionPoints->name.len < PATH_MAX ?
 		     crl->distributionPoints->name.len : PATH_MAX));
 	    
-	    libreswan_log("crl issuer cacert not found for (%s)",
+	    loglog(RC_LOG_SERIOUS, "CRL rejected: crl issuer cacert not found for (%s)",
 			 distpoint);;
 
 	    free_crl(crl);
@@ -348,7 +344,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 	}
 	DBG(DBG_X509,
 	    DBG_log("crl issuer cacert found")
-	)
+	);
 
 	/* check the issuer's signature of the crl */
 	valid_sig = check_signature(crl->tbsCertList, crl->signature
@@ -362,7 +358,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 	}
 	DBG(DBG_X509,
 	    DBG_log("valid crl signature")
-	)
+	);
 
 	lock_crl_list("insert_crl");
 	oldcrl = get_x509crl(crl->issuer, crl->authKeySerialNumber
@@ -382,14 +378,14 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
 		free_first_crl();
 		DBG(DBG_X509,
 		    DBG_log("thisUpdate is newer - existing crl deleted")
-		)
+		);
 	    }
 	    else
 	    {
 		unlock_crl_list("insert_crls");
 		DBG(DBG_X509,
 		    DBG_log("thisUpdate is not newer - existing crl not replaced");
-		)
+		);
 		free_crl(crl);
 		return oldcrl->nextUpdate - time(NULL) > 2*crl_check_interval;
 	    }
@@ -406,7 +402,7 @@ insert_crl(chunk_t blob, chunk_t crl_uri)
     }
     else
     {
-	libreswan_log("  error in X.509 crl %s", (char *)crl_uri.ptr);
+	loglog(RC_LOG_SERIOUS, "  error in X.509 crl %s", (char *)crl_uri.ptr);
 	free_crl(crl);
 	return FALSE;
     }
@@ -443,7 +439,7 @@ load_crls(void)
 		chunk_t blob = empty_chunk;
 		char *filename = filelist[n]->d_name;
 
-		if (load_coded_file(filename, NULL, 
+		if (load_coded_file(filename, 
 #ifdef SINGLE_CONF_DIR
 			FALSE, /* too verbose in a shared dir */
 #else
@@ -508,7 +504,7 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 
 	DBG(DBG_X509,
 	    DBG_log("issuer crl \"%s\" found", ibuf)
-	)
+	);
      
 #if defined(LIBCURL) || defined(LDAP_VER)
 	add_distribution_points(cert->crlDistributionPoints
@@ -531,7 +527,7 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
      
 	    DBG(DBG_X509,
 		DBG_log("valid crl signature on \"%s\"", cbuf)
-	    )
+	    );
 
 	    /* with strict crl policy the public key must have the same
 	     * lifetime as the crl
@@ -568,7 +564,7 @@ verify_by_crl(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	    {
 		DBG(DBG_X509,
 		    DBG_log("crl is \"%s\" valid", cbuf)
-		)
+		);
 	    }
 
 	    if (revoked_crl || (strict && expired_crl))
@@ -617,8 +613,8 @@ check_crls(void)
 		    , buf, ASN1_BUF_LEN);
 		DBG_log("authkey: %s", buf);
 	    }
-	    DBG_log("%ld seconds left", time_left)
-	)
+	    DBG_log("%ld seconds left", time_left);
+	);
 	if (time_left < 2*crl_check_interval)
 	    add_crl_fetch_request(crl->issuer, crl->distributionPoints);
 	crl = crl->next;
@@ -665,7 +661,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 			, abuf, ASN1_BUF_LEN);
 		DBG_log("authkey:  %s", abuf);
 	    }
-	)
+	);
 
 	ugh = check_validity(cert, until);
 
@@ -677,7 +673,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 
 	DBG(DBG_X509,
 	    DBG_log("valid certificate for \"%s\"", sbuf)
-	)
+	);
 
 	lock_authcert_list("verify_x509cert");
 	issuer_cert = get_authcert(cert->issuer, cert->authKeySerialNumber
@@ -691,7 +687,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	}
 	DBG(DBG_X509,
 	    DBG_log("issuer cacert \"%s\" found", ibuf)
-	)
+	);
 
 	if (!check_signature(cert->tbsCertificate, cert->signature,
 			     cert->algorithm, issuer_cert))
@@ -704,7 +700,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	DBG(DBG_X509,
 	    DBG_log("valid certificate signature (%s -> %s)"
 		    , ibuf, sbuf);
-	)
+	);
 	unlock_authcert_list("verify_x509cert");
 
 
@@ -713,7 +709,7 @@ verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 	{
 	    DBG(DBG_CONTROL,
 		DBG_log("reached self-signed root ca")
-	    )
+	    );
 	    return TRUE;
 	}
 	else
@@ -739,11 +735,13 @@ static void
 list_x509cert_chain(const char *caption, x509cert_t* cert, u_char auth_flags
  , bool utc)
 {
-    bool first = TRUE;
     time_t tnow;
 
     /* determine the current time */
     time(&tnow);
+
+    whack_log(RC_COMMENT, " ");
+    whack_log(RC_COMMENT, "List of X.509 %s Certificates:", caption);
 
     while (cert != NULL)
     {
@@ -758,14 +756,6 @@ list_x509cert_chain(const char *caption, x509cert_t* cert, u_char auth_flags
 
 	    c.type = CERT_X509_SIGNATURE;
 	    c.u.x509 = cert;
-
-	    if (first)
-	    {
-		whack_log(RC_COMMENT, " ");
-		whack_log(RC_COMMENT, "List of X.509 %s Certificates:", caption);
-		whack_log(RC_COMMENT, " ");
-		first = FALSE;
-	    }
 
 	    whack_log(RC_COMMENT, "%s, count: %d", timetoa(&cert->installed, utc, tbuf, sizeof(tbuf)),
 		      cert->count);
@@ -840,12 +830,8 @@ list_crls(bool utc, bool strict)
     lock_crl_list("list_crls");
     crl = x509crls;
 
-    if (crl != NULL)
-    {
-	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, "List of X.509 CRLs:");
-	whack_log(RC_COMMENT, " ");
-    }
+    whack_log(RC_COMMENT, " ");
+    whack_log(RC_COMMENT, "List of X.509 CRLs:");
 
     while (crl != NULL)
     {
