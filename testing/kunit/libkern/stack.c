@@ -1,4 +1,4 @@
 int dump_stack(void)
 {
-  return 0;
+	return 0;
 }

@@ -3,19 +3,19 @@
  * header file for FreeS/WAN library functions
  * Copyright (C) 1998, 1999, 2000  Henry Spencer.
  * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
  *
  */
-#define	_LIBRESWAN_H	/* seen it, no need to see it again */
+#define _LIBRESWAN_H    /* seen it, no need to see it again */
 
 /* you'd think this should be builtin to compiler... */
 #ifndef TRUE
@@ -39,13 +39,12 @@
 # endif
 #endif
 
-
 /*
  * We've just got to have some datatypes defined...  And annoyingly, just
  * where we get them depends on whether we're in userland or not.
  */
 /* things that need to come from one place or the other, depending */
-#if defined(linux) 
+#if defined(linux)
 #if defined(__KERNEL__)
 #include <linux/types.h>
 #include <linux/socket.h>
@@ -67,15 +66,13 @@
 #include <stdio.h>
 
 #  define uint8_t u_int8_t
-#  define uint16_t u_int16_t 
-#  define uint32_t u_int32_t 
-#  define uint64_t u_int64_t 
+#  define uint16_t u_int16_t
+#  define uint32_t u_int32_t
+#  define uint64_t u_int64_t
 
+#endif  /* __KERNEL__ */
 
-
-#endif /* __KERNEL__ */
-
-#endif /* linux */
+#endif  /* linux */
 
 #define DEBUG_NO_STATIC static
 
@@ -83,7 +80,7 @@
  * Yes Virginia, we have started a windows port.
  */
 #if defined(__CYGWIN32__)
-#if !defined(WIN32_KERNEL) 
+#if !defined(WIN32_KERNEL)
 /* get windows equivalents */
 #include <stdio.h>
 #include <string.h>
@@ -92,8 +89,8 @@
 #include <cygwin/socket.h>
 #include <assert.h>
 #define user_assert(foo) assert(foo)
-#endif /* _KERNEL */
-#endif /* WIN32 */
+#endif  /* _KERNEL */
+#endif  /* WIN32 */
 
 /*
  * Kovacs? A macosx port?
@@ -136,7 +133,6 @@
 #define s6_addr16 __u6_addr.__u6_addr16
 #endif
 
-
 #ifndef IPPROTO_COMP
 #  define IPPROTO_COMP 108
 #endif /* !IPPROTO_COMP */
@@ -146,8 +142,8 @@
 #endif /* !IPPROTO_INT */
 
 #if !defined(ESPINUDP_WITH_NON_IKE)
-#define ESPINUDP_WITH_NON_IKE   1  /* draft-ietf-ipsec-nat-t-ike-00/01 */
-#define ESPINUDP_WITH_NON_ESP   2  /* draft-ietf-ipsec-nat-t-ike-02    */
+#define ESPINUDP_WITH_NON_IKE   1       /* draft-ietf-ipsec-nat-t-ike-00/01 */
+#define ESPINUDP_WITH_NON_ESP   2       /* draft-ietf-ipsec-nat-t-ike-02    */
 #endif
 
 /*
@@ -159,24 +155,23 @@
 /* first, some quick fakes in case we're on an old system with no IPv6 */
 #if !defined(s6_addr16) && defined(__CYGWIN32__)
 struct in6_addr {
-	union 
-	{
-		u_int8_t	u6_addr8[16];
-		u_int16_t	u6_addr16[8];
-		u_int32_t	u6_addr32[4];
+	union {
+		u_int8_t u6_addr8[16];
+		u_int16_t u6_addr16[8];
+		u_int32_t u6_addr32[4];
 	} in6_u;
-#define s6_addr			in6_u.u6_addr8
-#define s6_addr16		in6_u.u6_addr16
-#define s6_addr32		in6_u.u6_addr32
+#define s6_addr                 in6_u.u6_addr8
+#define s6_addr16               in6_u.u6_addr16
+#define s6_addr32               in6_u.u6_addr32
 };
 struct sockaddr_in6 {
-	unsigned short int	sin6_family;    /* AF_INET6 */
-	__u16			sin6_port;      /* Transport layer port # */
-	__u32			sin6_flowinfo;  /* IPv6 flow information */
-	struct in6_addr		sin6_addr;      /* IPv6 address */
-	__u32			sin6_scope_id;  /* scope id (new in RFC2553) */
+	unsigned short int sin6_family;         /* AF_INET6 */
+	__u16 sin6_port;                        /* Transport layer port # */
+	__u32 sin6_flowinfo;                    /* IPv6 flow information */
+	struct in6_addr sin6_addr;              /* IPv6 address */
+	__u32 sin6_scope_id;                    /* scope id (new in RFC2553) */
 };
-#endif	/* !s6_addr16 */
+#endif  /* !s6_addr16 */
 
 /* then the main types */
 typedef struct {
@@ -194,21 +189,21 @@ typedef struct {
 	ip_address end;
 } ip_range;
 
-#define ip_address_family(a)	((a)->u.v4.sin_family)
+#define ip_address_family(a)    ((a)->u.v4.sin_family)
 #define ip_address_cmp(a, b) \
 	(ip_address_family((a)) != ip_address_family((b)) || \
-	(ip_address_family((a)) == AF_INET ? \
-			((a)->u.v4.sin_addr.s_addr != (b)->u.v4.sin_addr.s_addr) : \
-			memcmp((a)->u.v6.sin6_addr.s6_addr32, \
-					(b)->u.v6.sin6_addr.s6_addr32, sizeof(u_int32_t) * 4) \
-			))
-#define	ip_address_isany(a) \
+	 (ip_address_family((a)) == AF_INET ? \
+	  ((a)->u.v4.sin_addr.s_addr != (b)->u.v4.sin_addr.s_addr) : \
+	  memcmp((a)->u.v6.sin6_addr.s6_addr32, \
+		 (b)->u.v6.sin6_addr.s6_addr32, sizeof(u_int32_t) * 4) \
+	 ))
+#define ip_address_isany(a) \
 	(ip_address_family((a)) == AF_INET6 ? \
-			((a)->u.v6.sin6_addr.s6_addr[0] == 0 && \
-				(a)->u.v6.sin6_addr.s6_addr[1] == 0 && \
-				(a)->u.v6.sin6_addr.s6_addr[2] == 0 && \
-				(a)->u.v6.sin6_addr.s6_addr[3] == 0) : \
-			((a)->u.v4.sin_addr.s_addr == 0))
+	 ((a)->u.v6.sin6_addr.s6_addr[0] == 0 && \
+	  (a)->u.v6.sin6_addr.s6_addr[1] == 0 && \
+	  (a)->u.v6.sin6_addr.s6_addr[2] == 0 && \
+	  (a)->u.v6.sin6_addr.s6_addr[3] == 0) : \
+	 ((a)->u.v4.sin_addr.s_addr == 0))
 
 /* and the SA ID stuff */
 #ifdef __KERNEL__
@@ -216,31 +211,30 @@ typedef __u32 ipsec_spi_t;
 #else
 typedef u_int32_t ipsec_spi_t;
 #endif
-typedef struct {		/* to identify an SA, we need: */
-        ip_address dst;		/* A. destination host */
-        ipsec_spi_t spi;	/* B. 32-bit SPI, assigned by dest. host */
-#		define	SPI_PASS	256	/* magic values... */
-#		define	SPI_DROP	257	/* ...for use... */
-#		define	SPI_REJECT	258	/* ...with SA_INT */
-#		define	SPI_HOLD	259
-#		define	SPI_TRAP	260
-#		define  SPI_TRAPSUBNET  261
-	int proto;		/* C. protocol */
-#		define	SA_ESP	50	/* IPPROTO_ESP */
-#		define	SA_AH	51	/* IPPROTO_AH */
-#		define	SA_IPIP	4	/* IPPROTO_IPIP */
-#		define	SA_COMP	108	/* IPPROTO_COMP */
-#		define	SA_INT	61	/* IANA reserved for internal use */
+typedef struct {                                /* to identify an SA, we need: */
+	ip_address dst;                         /* A. destination host */
+	ipsec_spi_t spi;                        /* B. 32-bit SPI, assigned by dest. host */
+#               define  SPI_PASS        256     /* magic values... */
+#               define  SPI_DROP        257     /* ...for use... */
+#               define  SPI_REJECT      258     /* ...with SA_INT */
+#               define  SPI_HOLD        259
+#               define  SPI_TRAP        260
+#               define  SPI_TRAPSUBNET  261
+	int proto;                      /* C. protocol */
+#               define  SA_ESP  50      /* IPPROTO_ESP */
+#               define  SA_AH   51      /* IPPROTO_AH */
+#               define  SA_IPIP 4       /* IPPROTO_IPIP */
+#               define  SA_COMP 108     /* IPPROTO_COMP */
+#               define  SA_INT  61      /* IANA reserved for internal use */
 } ip_said;
 
 /* misc */
-typedef const char *err_t;	/* error message, or NULL for success */
-struct prng {			/* pseudo-random-number-generator guts */
+typedef const char *err_t;      /* error message, or NULL for success */
+struct prng {                   /* pseudo-random-number-generator guts */
 	unsigned char sbox[256];
 	int i, j;
 	unsigned long count;
 };
-
 
 /*
  * definitions for user space, taken from freeswan/ipsec_sa.h
@@ -254,41 +248,39 @@ typedef uint32_t IPsecSAref_t;
  */
 #define IPSEC_SA_REF_TABLE_IDX_WIDTH 15
 #define IPSEC_SA_REF_TABLE_OFFSET    16
-#define IPSEC_SA_REF_MASK           ((1u<<IPSEC_SA_REF_TABLE_IDX_WIDTH)-1u)
+#define IPSEC_SA_REF_MASK           ((1u << IPSEC_SA_REF_TABLE_IDX_WIDTH) - 1u)
 #define IPSEC_NFMARK_IS_SAREF_BIT 0x80000000u
 
-#define IPsecSAref2NFmark(x) (((x)&IPSEC_SA_REF_MASK) << IPSEC_SA_REF_TABLE_OFFSET)
-#define NFmark2IPsecSAref(x) (((x) >> IPSEC_SA_REF_TABLE_OFFSET)&IPSEC_SA_REF_MASK)
+#define IPsecSAref2NFmark(x) (((x) & \
+			       IPSEC_SA_REF_MASK) << IPSEC_SA_REF_TABLE_OFFSET)
+#define NFmark2IPsecSAref(x) (((x) >> \
+			       IPSEC_SA_REF_TABLE_OFFSET) & IPSEC_SA_REF_MASK)
 
 #define IPSEC_SAREF_NULL ((IPsecSAref_t)0u)
 /* Not representable as an nfmark */
 #define IPSEC_SAREF_NA   ((IPsecSAref_t)0xffff0001)
 
-
 /* GCC magic for use in function definitions! */
 #ifdef GCC_LINT
-# define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n+1)))
+# define PRINTF_LIKE(n) __attribute__ ((format(printf, n, n + 1)))
 # define NEVER_RETURNS __attribute__ ((noreturn))
 # define UNUSED __attribute__ ((unused))
 #else
-# define PRINTF_LIKE(n)	/* ignore */
-# define NEVER_RETURNS /* ignore */
-# define UNUSED /* ignore */
+# define PRINTF_LIKE(n) /* ignore */
+# define NEVER_RETURNS  /* ignore */
+# define UNUSED         /* ignore */
 #endif
 
 #ifdef COMPILER_HAS_NO_PRINTF_LIKE
 # undef PRINTF_LIKE
-# define PRINTF_LIKE(n)	/* ignore */
+# define PRINTF_LIKE(n) /* ignore */
 #endif
-
 
 /*
  * function to log stuff from libraries that may be used in multiple
  * places.
  */
 typedef int (*libreswan_keying_debug_func_t)(const char *message, ...);
-
-
 
 /*
  * new IPv6-compatible functions
@@ -297,7 +289,7 @@ typedef int (*libreswan_keying_debug_func_t)(const char *message, ...);
 /* text conversions */
 err_t ttoul(const char *src, size_t srclen, int format, unsigned long *dst);
 size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
-#define	ULTOT_BUF	(22+1)	/* holds 64 bits in octal */
+#define ULTOT_BUF       (22 + 1)  /* holds 64 bits in octal */
 
 /* looks up names in DNS */
 err_t ttoaddr(const char *src, size_t srclen, int af, ip_address *dst);
@@ -307,50 +299,57 @@ err_t ttoaddr_num(const char *src, size_t srclen, int af, ip_address *dst);
 
 err_t tnatoaddr(const char *src, size_t srclen, int af, ip_address *dst);
 size_t addrtot(const ip_address *src, int format, char *buf, size_t buflen);
-size_t inet_addrtot(int type,const void *src, int format, char *buf, size_t buflen);
+size_t inet_addrtot(int type, const void *src, int format, char *buf,
+		    size_t buflen);
 size_t sin_addrtot(const void *sin, int format, char *dst, size_t dstlen);
 /* RFC 1886 old IPv6 reverse-lookup format is the bulkiest */
-#define	ADDRTOT_BUF	(32*2 + 3 + 1 + 3 + 1 + 1)
+#define ADDRTOT_BUF     (32 * 2 + 3 + 1 + 3 + 1 + 1)
 err_t ttorange(const char *src, size_t srclen, int af, ip_range *dst);
 err_t ttosubnet(const char *src, size_t srclen, int af, ip_subnet *dst);
 size_t subnettot(const ip_subnet *src, int format, char *buf, size_t buflen);
-#define	SUBNETTOT_BUF	(ADDRTOT_BUF + 1 + 3)
-size_t subnetporttot(const ip_subnet *src, int format, char *buf, size_t buflen);
-#define	SUBNETPROTOTOT_BUF	(SUBNETTOTO_BUF + ULTOT_BUF)
+#define SUBNETTOT_BUF   (ADDRTOT_BUF + 1 + 3)
+size_t subnetporttot(const ip_subnet *src, int format, char *buf,
+		     size_t buflen);
+#define SUBNETPROTOTOT_BUF      (SUBNETTOTO_BUF + ULTOT_BUF)
 err_t ttosa(const char *src, size_t srclen, ip_said *dst);
 size_t satot(const ip_said *src, int format, char *bufptr, size_t buflen);
-#define	SATOT_BUF	(5 + ULTOA_BUF + 1 + ADDRTOT_BUF)
+#define SATOT_BUF       (5 + ULTOA_BUF + 1 + ADDRTOT_BUF)
 err_t ttodata(const char *src, size_t srclen, int base, char *buf,
-						size_t buflen, size_t *needed);
+	      size_t buflen, size_t *needed);
 err_t ttodatav(const char *src, size_t srclen, int base,
 	       char *buf,  size_t buflen, size_t *needed,
 	       char *errp, size_t errlen, unsigned int flags);
-#define	TTODATAV_BUF	40	/* ttodatav's largest non-literal message */
-#define TTODATAV_IGNORESPACE  (1<<1)  /* ignore spaces in base64 encodings*/
-#define TTODATAV_SPACECOUNTS  0       /* do not ignore spaces in base64   */
+#define TTODATAV_BUF    40              /* ttodatav's largest non-literal message */
+#define TTODATAV_IGNORESPACE  (1 << 1)  /* ignore spaces in base64 encodings*/
+#define TTODATAV_SPACECOUNTS  0         /* do not ignore spaces in base64   */
 
-size_t datatot(const unsigned char *src, size_t srclen, int format
-	       , char *buf, size_t buflen);
+size_t datatot(const unsigned char *src, size_t srclen, int format,
+	       char *buf, size_t buflen);
 size_t keyblobtoid(const unsigned char *src, size_t srclen, char *dst,
-								size_t dstlen);
-size_t splitkeytoid(const unsigned char *e, size_t elen, const unsigned char *m,
-					size_t mlen, char *dst, size_t dstlen);
-#define	KEYID_BUF	10	/* up to 9 text digits plus NUL */
+		   size_t dstlen);
+size_t splitkeytoid(const unsigned char *e, size_t elen,
+		    const unsigned char *m,
+		    size_t mlen, char *dst, size_t dstlen);
+#define KEYID_BUF       10      /* up to 9 text digits plus NUL */
 err_t ttoprotoport(char *src, size_t src_len, u_int8_t *proto, u_int16_t *port,
-                                                       int *has_port_wildcard);
+		   int *has_port_wildcard);
 
 /* initializations */
-void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto, ip_said *dst);
+void initsaid(const ip_address *addr, ipsec_spi_t spi, int proto,
+	      ip_said *dst);
 err_t loopbackaddr(int af, ip_address *dst);
 err_t unspecaddr(int af, ip_address *dst);
 err_t anyaddr(int af, ip_address *dst);
-err_t initaddr(const unsigned char *src, size_t srclen, int af, ip_address *dst);
+err_t initaddr(const unsigned char *src, size_t srclen, int af,
+	       ip_address *dst);
 err_t add_port(int af, ip_address *addr, unsigned short port);
-err_t initsubnet(const ip_address *addr, int maskbits, int clash, ip_subnet *dst);
+err_t initsubnet(const ip_address *addr, int maskbits, int clash,
+		 ip_subnet *dst);
 err_t addrtosubnet(const ip_address *addr, ip_subnet *dst);
 
 /* misc. conversions and related */
-err_t rangetosubnet(const ip_address *from, const ip_address *to, ip_subnet *dst);
+err_t rangetosubnet(const ip_address *from, const ip_address *to,
+		    ip_subnet *dst);
 int addrtypeof(const ip_address *src);
 int subnettypeof(const ip_subnet *src);
 size_t addrlenof(const ip_address *src);
@@ -397,153 +396,129 @@ const char *dns_string_datetime(time_t seconds,
 				char *buf,
 				int bufsize);
 
-
 /*
  * old functions, to be deleted eventually
  */
 
 /* unsigned long */
-const char *			/* NULL for success, else string literal */
-atoul(
-	const char *src,
-	size_t srclen,		/* 0 means strlen(src) */
-	int base,		/* 0 means figure it out */
+const char *                    /* NULL for success, else string literal */
+atoul(  const char *src,
+	size_t srclen,          /* 0 means strlen(src) */
+	int base,               /* 0 means figure it out */
 	unsigned long *resultp
-);
-size_t				/* space needed for full conversion */
-ultoa(
-	unsigned long n,
+	);
+size_t                          /* space needed for full conversion */
+ultoa(  unsigned long n,
 	int base,
 	char *dst,
 	size_t dstlen
-);
-#define	ULTOA_BUF	21	/* just large enough for largest result, */
-				/* assuming 64-bit unsigned long! */
+	);
+#define ULTOA_BUF       21      /* just large enough for largest result, */
+                                /* assuming 64-bit unsigned long! */
 
 /* Internet addresses */
-const char *			/* NULL for success, else string literal */
-atoaddr(
-	const char *src,
-	size_t srclen,		/* 0 means strlen(src) */
+const char *                    /* NULL for success, else string literal */
+atoaddr(const char *src,
+	size_t srclen,          /* 0 means strlen(src) */
 	struct in_addr *addr
-);
-size_t				/* space needed for full conversion */
-addrtoa(
-	struct in_addr addr,
-	int format,		/* character; 0 means default */
+	);
+size_t                          /* space needed for full conversion */
+addrtoa(struct in_addr addr,
+	int format,             /* character; 0 means default */
 	char *dst,
 	size_t dstlen
-);
-#define	ADDRTOA_BUF	ADDRTOT_BUF
+	);
+#define ADDRTOA_BUF     ADDRTOT_BUF
 
 /* subnets */
-const char *			/* NULL for success, else string literal */
-atosubnet(
-	const char *src,
-	size_t srclen,		/* 0 means strlen(src) */
-	struct in_addr *addr,
-	struct in_addr *mask
-);
-size_t				/* space needed for full conversion */
-subnettoa(
-	struct in_addr addr,
-	struct in_addr mask,
-	int format,		/* character; 0 means default */
-	char *dst,
-	size_t dstlen
-);
-size_t				/* space needed for full conversion */
-subnet6toa(
-	struct in6_addr *addr,
-	struct in6_addr *mask,
-	int format,		/* character; 0 means default */
-	char *dst,
-	size_t dstlen
-);
-#define	SUBNETTOA_BUF SUBNETTOT_BUF	/* large enough for worst case result */
+const char *                    /* NULL for success, else string literal */
+atosubnet(const char *src,
+	  size_t srclen,        /* 0 means strlen(src) */
+	  struct in_addr *addr,
+	  struct in_addr *mask
+	  );
+size_t                          /* space needed for full conversion */
+subnettoa(struct in_addr addr,
+	  struct in_addr mask,
+	  int format,           /* character; 0 means default */
+	  char *dst,
+	  size_t dstlen
+	  );
+size_t                          /* space needed for full conversion */
+subnet6toa(struct in6_addr *addr,
+	   struct in6_addr *mask,
+	   int format,          /* character; 0 means default */
+	   char *dst,
+	   size_t dstlen
+	   );
+#define SUBNETTOA_BUF SUBNETTOT_BUF     /* large enough for worst case result */
 
 /* ranges */
-const char *			/* NULL for success, else string literal */
-atoasr(
-	const char *src,
-	size_t srclen,		/* 0 means strlen(src) */
-	char *type,		/* 'a', 's', 'r' */
-	struct in_addr *addrs	/* two-element array */
-);
-size_t				/* space needed for full conversion */
-rangetoa(
-	struct in_addr *addrs,	/* two-element array */
-	int format,		/* character; 0 means default */
-	char *dst,
-	size_t dstlen
-);
-#define	RANGETOA_BUF	34	/* large enough for worst case result */
+const char *                    /* NULL for success, else string literal */
+atoasr( const char *src,
+	size_t srclen,          /* 0 means strlen(src) */
+	char *type,             /* 'a', 's', 'r' */
+	struct in_addr *addrs   /* two-element array */
+	);
+size_t                          /* space needed for full conversion */
+rangetoa(struct in_addr *addrs, /* two-element array */
+	 int format,            /* character; 0 means default */
+	 char *dst,
+	 size_t dstlen
+	 );
+#define RANGETOA_BUF    34      /* large enough for worst case result */
 
 /* data types for SA conversion functions */
 
 /* generic data, e.g. keys */
-const char *			/* NULL for success, else string literal */
-atobytes(
-	const char *src,
-	size_t srclen,		/* 0 means strlen(src) */
-	char *dst,
-	size_t dstlen,
-	size_t *lenp		/* NULL means don't bother telling me */
-);
-size_t				/* 0 failure, else true size */
-bytestoa(
-	const unsigned char *src,
-	size_t srclen,
-	int format,		/* character; 0 means default */
-	char *dst,
-	size_t dstlen
-);
+const char *                    /* NULL for success, else string literal */
+atobytes(const char *src,
+	 size_t srclen,         /* 0 means strlen(src) */
+	 char *dst,
+	 size_t dstlen,
+	 size_t *lenp           /* NULL means don't bother telling me */
+	 );
+size_t                          /* 0 failure, else true size */
+bytestoa(const unsigned char *src,
+	 size_t srclen,
+	 int format,            /* character; 0 means default */
+	 char *dst,
+	 size_t dstlen
+	 );
 
 /* old versions of generic-data functions; deprecated */
-size_t				/* 0 failure, else true size */
-atodata(
-	const char *src,
-	size_t srclen,		/* 0 means strlen(src) */
+size_t                          /* 0 failure, else true size */
+atodata(const char *src,
+	size_t srclen,          /* 0 means strlen(src) */
 	char *dst,
 	size_t dstlen
-);
-size_t				/* 0 failure, else true size */
-datatoa(
-	const unsigned char *src,
+	);
+size_t                          /* 0 failure, else true size */
+datatoa(const unsigned char *src,
 	size_t srclen,
-	int format,		/* character; 0 means default */
+	int format,             /* character; 0 means default */
 	char *dst,
 	size_t dstlen
-);
+	);
 
 /* part extraction and special addresses */
-struct in_addr
-subnetof(
-	struct in_addr addr,
-	struct in_addr mask
-);
-struct in_addr
-hostof(
-	struct in_addr addr,
-	struct in_addr mask
-);
-struct in_addr
-broadcastof(
-	struct in_addr addr,
-	struct in_addr mask
-);
+struct in_addr subnetof(struct in_addr addr,
+			struct in_addr mask
+			);
+struct in_addr hostof( struct in_addr addr,
+		       struct in_addr mask
+		       );
+struct in_addr broadcastof(struct in_addr addr,
+			   struct in_addr mask
+			   );
 
 /* mask handling */
-int
-goodmask(
-	struct in_addr mask
-);
+int goodmask(struct in_addr mask
+	     );
 extern int masktobits(struct in_addr mask);
 extern int mask6tobits(struct in6_addr *mask);
 extern struct in_addr  bitstomask(int n);
 extern struct in6_addr bitstomask6(int n);
-
-
 
 /*
  * ENUM of klips debugging values. Not currently used in klips.
@@ -551,22 +526,21 @@ extern struct in6_addr bitstomask6(int n);
  * so we can actually pack it all into a single 32-bit word.
  */
 enum klips_debug_flags {
-    KDF_VERBOSE     = 0,
-    KDF_XMIT        = 1,
-    KDF_NETLINK     = 2, /* obsolete */
-    KDF_XFORM       = 3,
-    KDF_EROUTE      = 4,
-    KDF_SPI         = 5,
-    KDF_RADIJ       = 6,
-    KDF_ESP         = 7,
-    KDF_AH          = 8, /* obsolete */
-    KDF_RCV         = 9,
-    KDF_TUNNEL      = 10,
-    KDF_PFKEY       = 11,
-    KDF_COMP        = 12,
-    KDF_NATT        = 13,
+	KDF_VERBOSE     = 0,
+	KDF_XMIT        = 1,
+	KDF_NETLINK     = 2, /* obsolete */
+	KDF_XFORM       = 3,
+	KDF_EROUTE      = 4,
+	KDF_SPI         = 5,
+	KDF_RADIJ       = 6,
+	KDF_ESP         = 7,
+	KDF_AH          = 8, /* obsolete */
+	KDF_RCV         = 9,
+	KDF_TUNNEL      = 10,
+	KDF_PFKEY       = 11,
+	KDF_COMP        = 12,
+	KDF_NATT        = 13,
 };
-
 
 /*
  * Debugging levels for pfkey_lib_debug
@@ -582,26 +556,23 @@ extern unsigned int pfkey_lib_debug;  /* bits selecting what to report */
 
 /*
  * pluto and lwdnsq need to know the maximum size of the commands to,
- * and replies from lwdnsq. 
+ * and replies from lwdnsq.
  */
 
 #define LWDNSQ_CMDBUF_LEN      1024
 #define LWDNSQ_RESULT_LEN_MAX  4096
 
-
 /* syntax for passthrough SA */
 #ifndef PASSTHROUGHNAME
-#define	PASSTHROUGHNAME	"%passthrough"
-#define	PASSTHROUGH4NAME	"%passthrough4"
-#define	PASSTHROUGH6NAME	"%passthrough6"
-#define	PASSTHROUGHIS	"tun0@0.0.0.0"
-#define	PASSTHROUGH4IS	"tun0@0.0.0.0"
-#define	PASSTHROUGH6IS	"tun0@::"
-#define	PASSTHROUGHTYPE	"tun"
-#define	PASSTHROUGHSPI	0
-#define	PASSTHROUGHDST	0
+#define PASSTHROUGHNAME "%passthrough"
+#define PASSTHROUGH4NAME        "%passthrough4"
+#define PASSTHROUGH6NAME        "%passthrough6"
+#define PASSTHROUGHIS   "tun0@0.0.0.0"
+#define PASSTHROUGH4IS  "tun0@0.0.0.0"
+#define PASSTHROUGH6IS  "tun0@::"
+#define PASSTHROUGHTYPE "tun"
+#define PASSTHROUGHSPI  0
+#define PASSTHROUGHDST  0
 #endif
-
-
 
 #endif /* _LIBRESWAN_H */

@@ -623,13 +623,3 @@ OSMEDIA?=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os
 # Ubuntu media
 # OSTYPE?=ubuntu
 # OSMEDIA?=http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
-
-
-
-# for emacs
-#
-# Local Variables: ;;;
-# mode: makefile ;;;
-# End Variables: ;;;
-#
-

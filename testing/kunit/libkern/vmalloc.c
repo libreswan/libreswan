@@ -2,9 +2,9 @@
 #include "slab_fake.h"
 
 struct cache_sizes {
-	size_t		 cs_size;
-	void	*cs_cachep;
-	void	*cs_dmacachep;
+	size_t cs_size;
+	void    *cs_cachep;
+	void    *cs_dmacachep;
 };
 
 struct cache_sizes malloc_sizes[] = {
@@ -16,32 +16,32 @@ struct cache_sizes malloc_sizes[] = {
 
 void init_kmalloc(void)
 {
-  struct cache_sizes *sizes;
+	struct cache_sizes *sizes;
 
-  sizes = malloc_sizes;
-  while(sizes->cs_size) {
-    sizes->cs_cachep = &sizes->cs_size;
-    sizes->cs_dmacachep = &sizes->cs_size;
-    sizes++;
-  }
+	sizes = malloc_sizes;
+	while (sizes->cs_size) {
+		sizes->cs_cachep = &sizes->cs_size;
+		sizes->cs_dmacachep = &sizes->cs_size;
+		sizes++;
+	}
 }
 
 void *vmalloc(unsigned long size)
 {
-  return malloc(size);
+	return malloc(size);
 }
 
 void vfree(void *addr)
 {
-  return free(addr);
+	return free(addr);
 }
 
 void *kmem_cache_alloc(int *cachep, int flags)
 {
-  return malloc(*cachep);
+	return malloc(*cachep);
 }
 
 void *__kmalloc(unsigned long size, int flags)
 {
-  return malloc(size);
+	return malloc(size);
 }

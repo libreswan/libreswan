@@ -20,33 +20,33 @@
 #include "lswalloc.h"
 
 #ifdef KLIPS
-# define USED_BY_KLIPS	/* ignore */
+# define USED_BY_KLIPS  /* ignore */
 #else
-# define USED_BY_KLIPS	UNUSED
+# define USED_BY_KLIPS  UNUSED
 #endif
 
 #ifdef DEBUG
-# define USED_BY_DEBUG	/* ignore */
+# define USED_BY_DEBUG  /* ignore */
 #else
-# define USED_BY_DEBUG	UNUSED
+# define USED_BY_DEBUG  UNUSED
 #endif
 
 /* type of serial number of a state object
  * Needed in connections.h and state.h; here to simplify dependencies.
  */
 typedef unsigned long so_serial_t;
-#define SOS_NOBODY	0	/* null serial number */
-#define SOS_FIRST	1	/* first normal serial number */
+#define SOS_NOBODY      0       /* null serial number */
+#define SOS_FIRST       1       /* first normal serial number */
 
 /* warns a predefined interval before expiry */
 extern const char* check_expiry(time_t expiration_date,
-    int warning_interval, bool strict);
+				int warning_interval, bool strict);
 
 /* cleanly exit Pluto */
 
 extern void exit_pluto(int /*status*/) NEVER_RETURNS;
 
-typedef u_int32_t msgid_t;	/* Network order for ikev1, host order for ikev2 */
+typedef u_int32_t msgid_t;      /* Network order for ikev1, host order for ikev2 */
 
 /* zero all bytes */
 #define zero(x) memset((x), '\0', sizeof(*(x)))
@@ -62,7 +62,9 @@ extern bool all_zero(const unsigned char *m, size_t len);
  * USE WITH CAUTION and only when you know it's safe to discard the const
  */
 #ifdef __GNUC__
-#define DISCARD_CONST(vartype, varname) (__extension__ ({ const vartype tmp = (varname); (vartype)(uintptr_t)tmp; }))
+#define DISCARD_CONST(vartype, \
+		      varname) (__extension__({ const vartype tmp = (varname); \
+						(vartype)(uintptr_t)tmp; }))
 #else
 #define DISCARD_CONST(vartype, varname) ((vartype)(uintptr_t)(varname))
 #endif

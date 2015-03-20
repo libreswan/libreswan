@@ -35,10 +35,3 @@ endif
 #else
 obj-$(CONFIG_KLIPS_ENC_AES) += aes.o
 #endif
-
-
-# Local Variables:
-# compile-command: "(cd ../../.. && source umlsetup.sh && make -C ${POOLSPACE} module/ipsec.o)"
-# End Variables:
-#
-

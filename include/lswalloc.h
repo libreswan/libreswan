@@ -23,45 +23,50 @@
 
 extern void leak_pfree(void *ptr, int leak);
 extern void *alloc_bytes2(size_t size, const char *name, int leak_detective);
-extern void *clone_bytes2(const void *orig, size_t size
-			  , const char *name, int leak_detective);
+extern void *clone_bytes2(const void *orig, size_t size,
+			  const char *name, int leak_detective);
 
 extern int leak_detective;
 extern void report_leaks(void);
 # define pfree(ptr) leak_pfree(ptr, leak_detective)
 # define alloc_bytes(size, name) (alloc_bytes2(size, name, leak_detective))
-# define clone_bytes(orig, size, name) (clone_bytes2(orig,size,name,leak_detective))
+# define clone_bytes(orig, size, \
+		     name) (clone_bytes2(orig, size, name, leak_detective))
 
 #define alloc_thing(thing, name) (alloc_bytes(sizeof(thing), (name)))
 
-#define clone_thing(orig, name) clone_bytes((const void *)&(orig), sizeof(orig), (name))
+#define clone_thing(orig, name) clone_bytes((const void *)&(orig), \
+					    sizeof(orig), (name))
 #define clone_str(str, name) \
-    ((str) == NULL? NULL : clone_bytes((str), strlen((str))+1, (name)))
+	((str) == NULL ? NULL : clone_bytes((str), strlen((str)) + 1, (name)))
 
-#define pfreeany(p) do { if ((p) != NULL) pfree(p); } while (0)
+#define pfreeany(p) do { if ((p) != NULL) \
+				 pfree(p); } while (0)
 #define replace(p, q) do { pfreeany(p); (p) = (q); } while (0)
-
 
 /* chunk is a simple pointer-and-size abstraction */
 
 struct chunk {
-    u_char *ptr;
-    size_t len;
-    };
+	u_char *ptr;
+	size_t len;
+};
 typedef struct chunk chunk_t;
 
-#define setchunk(ch, addr, size) do { (ch).ptr = (addr); (ch).len = (size); } while (0)
+#define setchunk(ch, addr, size) do { (ch).ptr = (addr); (ch).len = (size); \
+} while (0)
 /* NOTE: freeanychunk, unlike pfreeany, NULLs .ptr */
 #define freeanychunk(ch) do { pfreeany((ch).ptr); (ch).ptr = NULL; } while (0)
 #define clonetochunk(ch, addr, size, name) \
-    do { (ch).ptr = clone_bytes((addr), (ch).len = (size), name); } while (0)
+	do { (ch).ptr = clone_bytes((addr), (ch).len = (size), name); \
+	} while (0)
 #define clonereplacechunk(ch, addr, size, name) \
-    do { pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); } while (0)
+	do { pfreeany((ch).ptr); clonetochunk(ch, addr, size, name); \
+	} while (0)
 #define chunkcpy(dst, chunk) \
-    do { memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len;} while (0)
+	do { memcpy(dst, chunk.ptr, chunk.len); dst += chunk.len; } while (0)
 #define same_chunk(a, b) \
-    (a).len == (b).len && memcmp((a).ptr, (b).ptr, (b).len) == 0
-  
+	(a).len == (b).len && memcmp((a).ptr, (b).ptr, (b).len) == 0
+
 extern const chunk_t empty_chunk;
 
 /* compare two chunks */
@@ -78,13 +83,14 @@ extern void set_exit_log_func(exit_log_func_t func);
 #endif
 
 #define free_lsw_nss_symkey(ch)  \
-               do { PK11SymKey *ptr=0; \
-                 if((ch).ptr!=NULL) { memcpy(&ptr, (ch).ptr, (ch).len); memset((ch).ptr,0,(ch).len );} \
-                 if(ptr!=NULL) { PK11_FreeSymKey(ptr);} } while (0)
+	do { PK11SymKey *ptr = 0; \
+	     if ((ch).ptr != NULL) { memcpy(&ptr, (ch).ptr, (ch).len); \
+				     memset((ch).ptr, 0, (ch).len ); } \
+	     if (ptr != NULL) { PK11_FreeSymKey(ptr); } } while (0)
 
 #define dup_lsw_nss_symkey(ch)  \
-               do { PK11SymKey *ptr=0; \
-                  if((ch).ptr!=NULL) { memcpy(&ptr, (ch).ptr, (ch).len);} \
-                  if(ptr!=NULL) { PK11_ReferenceSymKey(ptr);} } while (0)
+	do { PK11SymKey *ptr = 0; \
+	     if ((ch).ptr != NULL) { memcpy(&ptr, (ch).ptr, (ch).len); } \
+	     if (ptr != NULL) { PK11_ReferenceSymKey(ptr); } } while (0)
 
 #endif /* _LSW_ALLOC_H_ */

@@ -4,13 +4,13 @@
  * Variable and procedure names have been modified so that they don't
  * conflict with the original BSD code, as a small number of modifications
  * have been introduced and we may want to reuse this code in BSD.
- * 
+ *
  * The `j' in `radij' is pronounced as a voiceless guttural (like a Greek
- * chi or a German ch sound (as `doch', not as in `milch'), or even a 
+ * chi or a German ch sound (as `doch', not as in `milch'), or even a
  * spanish j as in Juan.  It is not as far back in the throat like
  * the corresponding Hebrew sound, nor is it a soft breath like the English h.
  * It has nothing to do with the Dutch ij sound.
- * 
+ *
  * Here is the appropriate copyright notice:
  */
 
@@ -50,11 +50,11 @@
  */
 
 #ifndef _RADIJ_H_
-#define	_RADIJ_H_
+#define _RADIJ_H_
 
-/* 
-#define RJ_DEBUG
-*/
+/*
+   #define RJ_DEBUG
+ */
 
 #ifdef __KERNEL__
 
@@ -70,28 +70,27 @@
  * Radix search tree node layout.
  */
 
-struct radij_node
-{
-	struct	radij_mask *rj_mklist;	/* list of masks contained in subtree */
-	struct	radij_node *rj_p;	/* parent */
-	short	rj_b;			/* bit offset; -1-index(netmask) */
-	char	rj_bmask;		/* node: mask for bit test*/
-	u_char	rj_flags;		/* enumerated next */
-#define RJF_NORMAL	1		/* leaf contains normal route */
-#define RJF_ROOT	2		/* leaf is root leaf for tree */
-#define RJF_ACTIVE	4		/* This node is alive (for rtfree) */
+struct radij_node {
+	struct  radij_mask *rj_mklist;          /* list of masks contained in subtree */
+	struct  radij_node *rj_p;               /* parent */
+	short rj_b;                             /* bit offset; -1-index(netmask) */
+	char rj_bmask;                          /* node: mask for bit test*/
+	u_char rj_flags;                        /* enumerated next */
+#define RJF_NORMAL      1                       /* leaf contains normal route */
+#define RJF_ROOT        2                       /* leaf is root leaf for tree */
+#define RJF_ACTIVE      4                       /* This node is alive (for rtfree) */
 	union {
-		struct {			/* leaf only data: */
-			caddr_t	rj_Key;	/* object of search */
-			caddr_t	rj_Mask;	/* netmask, if present */
-			struct	radij_node *rj_Dupedkey;
+		struct {                        /* leaf only data: */
+			caddr_t rj_Key;         /* object of search */
+			caddr_t rj_Mask;        /* netmask, if present */
+			struct  radij_node *rj_Dupedkey;
 		} rj_leaf;
-		struct {			/* node only data: */
-			int	rj_Off;		/* where to start compare */
-			struct	radij_node *rj_L;/* progeny */
-			struct	radij_node *rj_R;/* progeny */
-		}rj_node;
-	}		rj_u;
+		struct {                                /* node only data: */
+			int rj_Off;                     /* where to start compare */
+			struct  radij_node *rj_L;       /* progeny */
+			struct  radij_node *rj_R;       /* progeny */
+		} rj_node;
+	}               rj_u;
 #ifdef RJ_DEBUG
 	int rj_info;
 	struct radij_node *rj_twin;
@@ -111,78 +110,84 @@ struct radij_node
  */
 
 extern struct radij_mask {
-	short	rm_b;			/* bit offset; -1-index(netmask) */
-	char	rm_unused;		/* cf. rj_bmask */
-	u_char	rm_flags;		/* cf. rj_flags */
-	struct	radij_mask *rm_mklist;	/* more masks to try */
-	caddr_t	rm_mask;		/* the mask */
-	int	rm_refs;		/* # of references to this struct */
+	short rm_b;                     /* bit offset; -1-index(netmask) */
+	char rm_unused;                 /* cf. rj_bmask */
+	u_char rm_flags;                /* cf. rj_flags */
+	struct  radij_mask *rm_mklist;  /* more masks to try */
+	caddr_t rm_mask;                /* the mask */
+	int rm_refs;                    /* # of references to this struct */
 } *rj_mkfreelist;
 
-#define MKGet(m) {\
-	if (rj_mkfreelist) {\
-		m = rj_mkfreelist; \
-		rj_mkfreelist = (m)->rm_mklist; \
-	} else \
-		R_Malloc(m, struct radij_mask *, sizeof (*(m))); }\
+#define MKGet(m) { \
+		if (rj_mkfreelist) { \
+			m = rj_mkfreelist; \
+			rj_mkfreelist = (m)->rm_mklist; \
+		} else { \
+			R_Malloc(m, struct radij_mask *, sizeof(*(m))); } } \
 
-#define MKFree(m) { (m)->rm_mklist = rj_mkfreelist; rj_mkfreelist = (m);}
+#define MKFree(m) { (m)->rm_mklist = rj_mkfreelist; rj_mkfreelist = (m); }
 
 struct radij_node_head {
-	struct	radij_node *rnh_treetop;
-	int	rnh_addrsize;		/* permit, but not require fixed keys */
-	int	rnh_pktsize;		/* permit, but not require fixed keys */
+	struct  radij_node *rnh_treetop;
+	int rnh_addrsize;                       /* permit, but not require fixed keys */
+	int rnh_pktsize;                        /* permit, but not require fixed keys */
 #if 0
-	struct	radij_node *(*rnh_addaddr)	/* add based on sockaddr */
-		__P((void *v, void *mask,
-		     struct radij_node_head *head, struct radij_node nodes[]));
+	struct  radij_node *(*rnh_addaddr)      /* add based on sockaddr */
+	__P((void *v, void *mask,
+	     struct radij_node_head *head, struct radij_node nodes[]));
 #endif
-	int (*rnh_addaddr)	/* add based on sockaddr */
-		__P((void *v, void *mask,
-		     struct radij_node_head *head, struct radij_node nodes[]));
-	struct	radij_node *(*rnh_addpkt)	/* add based on packet hdr */
-		__P((void *v, void *mask,
-		     struct radij_node_head *head, struct radij_node nodes[]));
+	int (*rnh_addaddr)      /* add based on sockaddr */
+	__P((void *v, void *mask,
+	     struct radij_node_head *head, struct radij_node nodes[]));
+	struct  radij_node *(*rnh_addpkt)       /* add based on packet hdr */
+	__P((void *v, void *mask,
+	     struct radij_node_head *head, struct radij_node nodes[]));
 #if 0
-	struct	radij_node *(*rnh_deladdr)	/* remove based on sockaddr */
-		__P((void *v, void *mask, struct radij_node_head *head));
+	struct  radij_node *(*rnh_deladdr)      /* remove based on sockaddr */
+	__P((void *v, void *mask, struct radij_node_head *head));
 #endif
-	int (*rnh_deladdr)	/* remove based on sockaddr */
-		__P((void *v, void *mask, struct radij_node_head *head, struct radij_node **node));
-	struct	radij_node *(*rnh_delpkt)	/* remove based on packet hdr */
-		__P((void *v, void *mask, struct radij_node_head *head));
-	struct	radij_node *(*rnh_matchaddr)	/* locate based on sockaddr */
-		__P((void *v, struct radij_node_head *head));
-	struct	radij_node *(*rnh_matchpkt)	/* locate based on packet hdr */
-		__P((void *v, struct radij_node_head *head));
-	int	(*rnh_walktree)			/* traverse tree */
-		__P((struct radij_node_head *head, int (*f)(struct radij_node *rn, void *w), void *w));
-	struct	radij_node rnh_nodes[3];	/* empty tree for common case */
+	int (*rnh_deladdr)      /* remove based on sockaddr */
+	__P((void *v, void *mask, struct radij_node_head *head,
+	     struct radij_node **node));
+	struct  radij_node *(*rnh_delpkt)       /* remove based on packet hdr */
+	__P((void *v, void *mask, struct radij_node_head *head));
+	struct  radij_node *(*rnh_matchaddr)    /* locate based on sockaddr */
+	__P((void *v, struct radij_node_head *head));
+	struct  radij_node *(*rnh_matchpkt)     /* locate based on packet hdr */
+	__P((void *v, struct radij_node_head *head));
+	int     (*rnh_walktree)                 /* traverse tree */
+	__P((struct radij_node_head *head,
+	     int (*f)(struct radij_node *rn, void *w), void *w));
+	struct  radij_node rnh_nodes[3];        /* empty tree for common case */
 };
-
 
 #define Bcmp(a, b, n) memcmp(((caddr_t)(b)), ((caddr_t)(a)), (unsigned)(n))
 #define Bcopy(a, b, n) memmove(((caddr_t)(b)), ((caddr_t)(a)), (unsigned)(n))
 #define Bzero(p, n) memset((caddr_t)(p), 0, (unsigned)(n))
-#define R_Malloc(p, t, n) ((p = (t) kmalloc((size_t)(n), GFP_ATOMIC)), Bzero((p),(n)))
+#define R_Malloc(p, t, \
+		 n) ((p = \
+			      (t) kmalloc((size_t)(n), \
+					  GFP_ATOMIC)), Bzero((p), (n)))
 #define Free(p) kfree((caddr_t)p);
 
-void	 rj_init __P((void));
-int	 rj_inithead __P((void **, int));
-int	 rj_refines __P((void *, void *));
-int	 rj_walktree __P((struct radij_node_head *head, int (*f)(struct radij_node *rn, void *w), void *w));
+void rj_init __P((void));
+int rj_inithead __P((void **, int));
+int rj_refines __P((void *, void *));
+int rj_walktree __P((struct radij_node_head *head, int (*f)(
+			     struct radij_node *rn, void *w), void *w));
 struct radij_node
-	 *rj_addmask __P((void *, int, int)) /* , rgb */ ;
+*rj_addmask __P((void *, int, int)) /* , rgb */;
 int /* * */ rj_addroute __P((void *, void *, struct radij_node_head *,
-			struct radij_node [2])) /* , rgb */ ;
-int /* * */ rj_delete __P((void *, void *, struct radij_node_head *, struct radij_node **)) /* , rgb */ ;
+			     struct radij_node [2])) /* , rgb */;
+int /* * */ rj_delete __P((void *, void *, struct radij_node_head *,
+			   struct radij_node **)) /* , rgb */;
 struct radij_node /* rgb */
-	 *rj_insert __P((void *, struct radij_node_head *, int *,
-			struct radij_node [2])),
-	 *rj_match __P((void *, struct radij_node_head *)),
-	 *rj_newpair __P((void *, int, struct radij_node[2])),
-	 *rj_search __P((void *, struct radij_node *)),
-	 *rj_search_m __P((void *, struct radij_node *, void *));
+*rj_insert __P((void *, struct radij_node_head *, int *,
+		struct radij_node [2])),
+*rj_match __P((void *, struct radij_node_head *)),
+*rj_newpair __P((void *, int, struct radij_node[2])),
+*rj_search __P((void *, struct radij_node *)),
+*rj_search_m __P((void *, struct radij_node *, void *));
 
 void rj_deltree(struct radij_node_head *);
 void rj_delnodes(struct radij_node *);
@@ -192,6 +197,6 @@ int radijcleanup(void);
 
 extern struct radij_node_head *mask_rjhead;
 extern int maj_keylen;
-#endif /* __KERNEL__ */
+#endif  /* __KERNEL__ */
 
-#endif /* _RADIJ_H_ */
+#endif  /* _RADIJ_H_ */

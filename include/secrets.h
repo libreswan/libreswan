@@ -28,49 +28,49 @@
 # define SHARED_SECRETS_FILE  "/etc/ipsec.secrets"
 #endif
 
-struct state;	 /* forward declaration */
+struct state;   /* forward declaration */
 struct secret;  /* opaque definition, private to secrets.c */
 
-struct RSA_public_key
-{
-    char keyid[KEYID_BUF];	/* see ipsec_keyblobtoid(3) */
+struct RSA_public_key {
+	char keyid[KEYID_BUF];  /* see ipsec_keyblobtoid(3) */
 
-    /* length of modulus n in octets: [RSA_MIN_OCTETS, RSA_MAX_OCTETS] */
-    unsigned k;
+	/* length of modulus n in octets: [RSA_MIN_OCTETS, RSA_MAX_OCTETS] */
+	unsigned k;
 
-    /* public: */
-    MP_INT
-	n,	/* modulus: p * q */
-	e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
-    CERTCertificate *nssCert;
+	/* public: */
+	MP_INT
+		n,      /* modulus: p * q */
+		e;      /* exponent: relatively prime to (p-1) * (q-1) [probably small] */
+	CERTCertificate *nssCert;
 };
 
 struct RSA_private_key {
-    struct RSA_public_key pub;	/* must be at start for RSA_show_public_key */
+	struct RSA_public_key pub; /* must be at start for RSA_show_public_key */
 
-    MP_INT
-	d,	/* private exponent: (e^-1) mod ((p-1) * (q-1)) */
+	MP_INT
+		d,                              /* private exponent: (e^-1) mod ((p-1) * (q-1)) */
 	/* help for Chinese Remainder Theorem speedup: */
-	p,	/* first secret prime */
-	q,	/* second secret prime */
-	dP,	/* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
-	dQ,	/* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
-	qInv;	/* (q^-1) mod p */
-    unsigned char ckaid[HMAC_BUFSIZE];  /*ckaid for use in NSS*/
-    unsigned int  ckaid_len;	
+		p,                              /* first secret prime */
+		q,                              /* second secret prime */
+		dP,                             /* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
+		dQ,                             /* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
+		qInv;                           /* (q^-1) mod p */
+	unsigned char ckaid[HMAC_BUFSIZE];      /*ckaid for use in NSS*/
+	unsigned int ckaid_len;
 };
 
 extern void free_RSA_public_content(struct RSA_public_key *rsa);
 
-extern err_t unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey);
+extern err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
+				   const chunk_t *pubkey);
 
 struct private_key_stuff {
-    enum PrivateKeyKind kind;
-    union {
-	chunk_t preshared_secret;
-	struct RSA_private_key RSA_private_key;
-	/* struct smartcard *smartcard; */
-    } u;
+	enum PrivateKeyKind kind;
+	union {
+		chunk_t preshared_secret;
+		struct RSA_private_key RSA_private_key;
+		/* struct smartcard *smartcard; */
+	} u;
 };
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -85,92 +85,92 @@ extern struct id_list *lsw_get_idlist(const struct secret *s);
 typedef int (*secret_eval)(struct secret *secret,
 			   struct private_key_stuff *pks,
 			   void *uservoid);
-			   
+
 extern struct secret *lsw_foreach_secret(struct secret *secrets,
 					 secret_eval func, void *uservoid);
 extern struct secret *lsw_get_defaultsecret(struct secret *secrets);
 
-
 /* public key machinery  */
 struct pubkey {
-    struct id id;
-    unsigned refcnt;	/* reference counted! */
-    enum dns_auth_level dns_auth_level;
-    char *dns_sig;
-    time_t installed_time
-	, last_tried_time
-	, last_worked_time
-	, until_time;
-    chunk_t issuer;
-    enum pubkey_alg alg;
-    union {
-	struct RSA_public_key rsa;
-    } u;
+	struct id id;
+	unsigned refcnt; /* reference counted! */
+	enum dns_auth_level dns_auth_level;
+	char *dns_sig;
+	time_t installed_time,
+	       last_tried_time,
+	       last_worked_time,
+	       until_time;
+	chunk_t issuer;
+	enum pubkey_alg alg;
+	union {
+		struct RSA_public_key rsa;
+	} u;
 };
 
 struct pubkey_list {
-    struct pubkey *key;
-    struct pubkey_list *next;
+	struct pubkey *key;
+	struct pubkey_list *next;
 };
-
 
 /* struct used to prompt for a secret passphrase
  * from a console with file descriptor fd
  */
-#define MAX_PROMPT_PASS_TRIALS	5
-#define PROMPT_PASS_LEN		64
+#define MAX_PROMPT_PASS_TRIALS  5
+#define PROMPT_PASS_LEN         64
 
-typedef void (*pass_prompt_func)(int mess_no, const char *message, ...) PRINTF_LIKE(2);   
+typedef void (*pass_prompt_func)(int mess_no, const char *message,
+				 ...) PRINTF_LIKE (2);
 
 typedef struct {
-    char secret[PROMPT_PASS_LEN];
-    pass_prompt_func prompt;
-    int fd;
+	char secret[PROMPT_PASS_LEN];
+	pass_prompt_func prompt;
+	int fd;
 } prompt_pass_t;
 
-
-extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
+extern struct pubkey_list *pubkeys;     /* keys from ipsec.conf */
 
 extern struct pubkey *public_key_from_rsa(const struct RSA_public_key *k);
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
 extern void free_remembered_public_keys(void);
-extern void delete_public_keys(struct pubkey_list **head
-			       , const struct id *id
-			       , enum pubkey_alg alg);
+extern void delete_public_keys(struct pubkey_list **head,
+			       const struct id *id,
+			       enum pubkey_alg alg);
 extern void form_keyid(chunk_t e, chunk_t n, char* keyid, unsigned *keysize);
 
-extern void form_keyid_from_nss(SECItem e, SECItem n, char* keyid, unsigned *keysize);
-extern err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key *rsak, char *nssHostCertNickName);
+extern void form_keyid_from_nss(SECItem e, SECItem n, char* keyid,
+				unsigned *keysize);
+extern err_t extract_and_add_secret_from_nss_cert_file(
+	struct RSA_private_key *rsak, char *nssHostCertNickName);
 
 extern struct pubkey *reference_key(struct pubkey *pk);
 extern void unreference_key(struct pubkey **pkp);
 
-extern err_t add_public_key(const struct id *id
-    , enum dns_auth_level dns_auth_level
-    , enum pubkey_alg alg
-    , const chunk_t *key
-    , struct pubkey_list **head);
+extern err_t add_public_key(const struct id *id,
+			    enum dns_auth_level dns_auth_level,
+			    enum pubkey_alg alg,
+			    const chunk_t *key,
+			    struct pubkey_list **head);
 
-extern bool same_RSA_public_key(const struct RSA_public_key *a
-    , const struct RSA_public_key *b);
+extern bool same_RSA_public_key(const struct RSA_public_key *a,
+				const struct RSA_public_key *b);
 extern void install_public_key(struct pubkey *pk, struct pubkey_list **head);
 
 extern void free_public_key(struct pubkey *pk);
 
-extern void lsw_load_preshared_secrets(struct secret **psecrets
-				       , int verbose
-				       , const char *secrets_file
-				       , prompt_pass_t *pass);
+extern void lsw_load_preshared_secrets(struct secret **psecrets,
+				       int verbose,
+				       const char *secrets_file,
+				       prompt_pass_t *pass);
 extern void lsw_free_preshared_secrets(struct secret **psecrets);
 
 extern bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk);
 
-extern struct secret *lsw_find_secret_by_id(struct secret *secrets
-					    , enum PrivateKeyKind kind
-					    , const struct id *my_id
-					    , const struct id *his_id
-					    , bool asym);
+extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
+					    enum PrivateKeyKind kind,
+					    const struct id *my_id,
+					    const struct id *his_id,
+					    bool asym);
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 extern void lock_certs_and_keys(const char *who);
@@ -178,9 +178,7 @@ extern void unlock_certs_and_keys(const char *who);
 #endif
 
 #include "x509.h"
-extern const struct RSA_private_key*
-lsw_get_x509_private_key(struct secret *secrets, x509cert_t *cert);
-
-
+extern const struct RSA_private_key*lsw_get_x509_private_key(
+	struct secret *secrets, x509cert_t *cert);
 
 #endif /* _SECRETS_H */

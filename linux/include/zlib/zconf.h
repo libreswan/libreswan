@@ -1,6 +1,6 @@
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2002 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* @(#) $Id: zconf.h,v 1.4 2004/07/10 07:48:40 mcr Exp $ */
@@ -13,27 +13,27 @@
  * compile with -DZ_PREFIX. The "standard" zlib should be compiled without it.
  */
 #ifdef IPCOMP_PREFIX
-#  define deflateInit_	ipcomp_deflateInit_
-#  define deflate	ipcomp_deflate
-#  define deflateEnd	ipcomp_deflateEnd
-#  define inflateInit_ 	ipcomp_inflateInit_
-#  define inflate	ipcomp_inflate
-#  define inflateEnd	ipcomp_inflateEnd
-#  define deflateInit2_	ipcomp_deflateInit2_
+#  define deflateInit_  ipcomp_deflateInit_
+#  define deflate       ipcomp_deflate
+#  define deflateEnd    ipcomp_deflateEnd
+#  define inflateInit_  ipcomp_inflateInit_
+#  define inflate       ipcomp_inflate
+#  define inflateEnd    ipcomp_inflateEnd
+#  define deflateInit2_ ipcomp_deflateInit2_
 #  define deflateSetDictionary ipcomp_deflateSetDictionary
-#  define deflateCopy	ipcomp_deflateCopy
-#  define deflateReset	ipcomp_deflateReset
-#  define deflateParams	ipcomp_deflateParams
-#  define inflateInit2_	ipcomp_inflateInit2_
+#  define deflateCopy   ipcomp_deflateCopy
+#  define deflateReset  ipcomp_deflateReset
+#  define deflateParams ipcomp_deflateParams
+#  define inflateInit2_ ipcomp_inflateInit2_
 #  define inflateSetDictionary ipcomp_inflateSetDictionary
-#  define inflateSync	ipcomp_inflateSync
+#  define inflateSync   ipcomp_inflateSync
 #  define inflateSyncPoint ipcomp_inflateSyncPoint
-#  define inflateReset	ipcomp_inflateReset
-#  define compress	ipcomp_compress
-#  define compress2	ipcomp_compress2
-#  define uncompress	ipcomp_uncompress
-#  define adler32	ipcomp_adler32
-#  define crc32		ipcomp_crc32
+#  define inflateReset  ipcomp_inflateReset
+#  define compress      ipcomp_compress
+#  define compress2     ipcomp_compress2
+#  define uncompress    ipcomp_uncompress
+#  define adler32       ipcomp_adler32
+#  define crc32         ipcomp_crc32
 #  define get_crc_table ipcomp_get_crc_table
 /* SSS: these also need to be prefixed to avoid clash with ppp_deflate and ext2compression */
 #  define inflate_blocks ipcomp_deflate_blocks
@@ -66,16 +66,16 @@
 #endif
 
 #ifdef Z_PREFIX
-#  define Byte		z_Byte
-#  define uInt		z_uInt
-#  define uLong		z_uLong
-#  define Bytef	        z_Bytef
-#  define charf		z_charf
-#  define intf		z_intf
-#  define uIntf		z_uIntf
-#  define uLongf	z_uLongf
-#  define voidpf	z_voidpf
-#  define voidp		z_voidp
+#  define Byte          z_Byte
+#  define uInt          z_uInt
+#  define uLong         z_uLong
+#  define Bytef         z_Bytef
+#  define charf         z_charf
+#  define intf          z_intf
+#  define uIntf         z_uIntf
+#  define uLongf        z_uLongf
+#  define voidpf        z_voidpf
+#  define voidp         z_voidp
 #endif
 
 #if (defined(_WIN32) || defined(__WIN32__)) && !defined(WIN32)
@@ -117,7 +117,8 @@
 #endif
 
 /* Some Mac compilers merge all .h files incorrectly: */
-#if defined(__MWERKS__) || defined(applec) ||defined(THINK_C) ||defined(__SC__)
+#if defined(__MWERKS__) || defined(applec) || defined(THINK_C) || \
+	defined(__SC__)
 #  define NO_DUMMY_DECL
 #endif
 
@@ -125,7 +126,6 @@
 #if defined(__BORLANDC__) && (__BORLANDC__ < 0x500)
 #  define NEED_DUMMY_RETURN
 #endif
-
 
 /* Maximum value for memLevel in deflateInit2 */
 #ifndef MAX_MEM_LEVEL
@@ -147,18 +147,18 @@
 
 /* The memory requirements for deflate are (in bytes):
             (1 << (windowBits+2)) +  (1 << (memLevel+9))
- that is: 128K for windowBits=15  +  128K for memLevel = 8  (default values)
- plus a few kilobytes for small objects. For example, if you want to reduce
- the default memory requirements from 256K to 128K, compile with
+   that is: 128K for windowBits=15  +  128K for memLevel = 8  (default values)
+   plus a few kilobytes for small objects. For example, if you want to reduce
+   the default memory requirements from 256K to 128K, compile with
      make CFLAGS="-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7"
- Of course this will generally degrade compression (there's no free lunch).
+   Of course this will generally degrade compression (there's no free lunch).
 
    The memory requirements for inflate are (in bytes) 1 << windowBits
- that is, 32K for windowBits=15 (default value) plus a few kilobytes
- for small objects.
-*/
+   that is, 32K for windowBits=15 (default value) plus a few kilobytes
+   for small objects.
+ */
 
-                        /* Type declarations */
+/* Type declarations */
 
 #ifndef OF /* function prototypes */
 #  ifdef STDC
@@ -175,7 +175,7 @@
  * just define FAR to be empty.
  */
 #if (defined(M_I86SM) || defined(M_I86MM)) && !defined(__32BIT__)
-   /* MSC small or medium model */
+/* MSC small or medium model */
 #  define SMALL_MEDIUM
 #  ifdef _MSC_VER
 #    define FAR _far
@@ -241,39 +241,39 @@
 #endif
 
 #if !defined(MACOS) && !defined(TARGET_OS_MAC)
-typedef unsigned char  Byte;  /* 8 bits */
+typedef unsigned char Byte;     /* 8 bits */
 #endif
-typedef unsigned int   uInt;  /* 16 bits or more */
-typedef unsigned long  uLong; /* 32 bits or more */
+typedef unsigned int uInt;      /* 16 bits or more */
+typedef unsigned long uLong;    /* 32 bits or more */
 
 #ifdef SMALL_MEDIUM
-   /* Borland C/C++ and some old MSC versions ignore FAR inside typedef */
+/* Borland C/C++ and some old MSC versions ignore FAR inside typedef */
 #  define Bytef Byte FAR
 #else
-   typedef Byte  FAR Bytef;
+typedef Byte FAR Bytef;
 #endif
-typedef char  FAR charf;
-typedef int   FAR intf;
-typedef uInt  FAR uIntf;
+typedef char FAR charf;
+typedef int FAR intf;
+typedef uInt FAR uIntf;
 typedef uLong FAR uLongf;
 
 #ifdef STDC
-   typedef void FAR *voidpf;
-   typedef void     *voidp;
+typedef void FAR *voidpf;
+typedef void     *voidp;
 #else
-   typedef Byte FAR *voidpf;
-   typedef Byte     *voidp;
+typedef Byte FAR *voidpf;
+typedef Byte     *voidp;
 #endif
 
 #ifdef HAVE_UNISTD_H
-#  include <sys/types.h> /* for off_t */
-#  include <unistd.h>    /* for SEEK_* and off_t */
+#  include <sys/types.h>        /* for off_t */
+#  include <unistd.h>           /* for SEEK_* and off_t */
 #  define z_off_t  off_t
 #endif
 #ifndef SEEK_SET
-#  define SEEK_SET        0       /* Seek from beginning of file.  */
-#  define SEEK_CUR        1       /* Seek from current position.  */
-#  define SEEK_END        2       /* Set file pointer to EOF plus "offset" */
+#  define SEEK_SET        0             /* Seek from beginning of file.  */
+#  define SEEK_CUR        1             /* Seek from current position.  */
+#  define SEEK_END        2             /* Set file pointer to EOF plus "offset" */
 #endif
 #ifndef z_off_t
 #  define  z_off_t long

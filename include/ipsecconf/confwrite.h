@@ -26,6 +26,5 @@ void confwrite_list(FILE *out, char *prefix, int val, struct keyword_def *k);
 void confwrite(struct starter_config *cfg, FILE *out);
 void confwrite_conn(FILE *out, struct starter_conn *conn);
 
-
 #endif /* _IPSEC_CONFWRITE_H_ */
 

@@ -9,9 +9,9 @@
 #define SHA1_H
 
 typedef struct {
-    uint32_t state[5];
-    uint32_t count[2];
-    unsigned char buffer[64];
+	uint32_t state[5];
+	uint32_t count[2];
+	unsigned char buffer[64];
 } SHA1_CTX;
 
 void SHA1Transform(uint32_t state[5], unsigned char buffer[64]);

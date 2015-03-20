@@ -23,14 +23,14 @@ static void perform_t2_test(void)
 	skq->hash = tc2_hash;
 	skq->oakley_group = tc2_oakleygroup;
 	skq->init = tc2_init;
-	skq->keysize = tc2_encrypter->keydeflen/BITS_PER_BYTE;
+	skq->keysize = tc2_encrypter->keydeflen / BITS_PER_BYTE;
 
 #define copydatlen(field, data, len) do { \
 		chunk_t tchunk;           \
 		setchunk(tchunk, data, len); \
 		pluto_crypto_copychunk(&skq->thespace, skq->space \
 				       , &skq->field, tchunk); }   \
-		while(0)
+	while (0)
 
 	copydatlen(ni, tc2_ni, tc2_ni_len);
 	copydatlen(nr, tc2_nr, tc2_nr_len);
@@ -41,9 +41,9 @@ static void perform_t2_test(void)
 	copydatlen(rcookie, tc2_rcookie, tc2_rcookie_len);
 
 #define dumpdat(field) \
-	libreswan_DBG_dump(#field,	\
-			  wire_chunk_ptr(skq, &skq->field), \
-			  skq->field.len);
+	libreswan_DBG_dump(#field,      \
+			   wire_chunk_ptr(skq, &skq->field), \
+			   skq->field.len);
 
 	dumpdat(icookie);
 	dumpdat(rcookie);
@@ -55,7 +55,7 @@ static void perform_t2_test(void)
 
 	fflush(stdout);
 	fflush(stderr);
-	
+
 	calc_dh_v2(&r);
 
 	printf("\noutput:\n");
@@ -68,5 +68,5 @@ static void perform_t2_test(void)
 
 		libreswan_DBG_dump("shared", shared, skr->shared.len);
 	}
-	
+
 }

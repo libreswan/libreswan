@@ -2,12 +2,12 @@
  * crypto-class pseudorandom number generator
  * currently uses same algorithm as RC4(TM), from Schneier 2nd ed p397
  * Copyright (C) 2002  Henry Spencer.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
@@ -44,10 +44,9 @@
 	} else
 
 /*
- - prng_init - initialize PRNG from a key
+   - prng_init - initialize PRNG from a key
  */
-void
-prng_init(prng, key, keylen)
+void prng_init(prng, key, keylen)
 struct prng *prng;
 const unsigned char *key;
 size_t keylen;
@@ -72,7 +71,7 @@ size_t keylen;
 		t = prng->sbox[i];
 		prng->sbox[i] = prng->sbox[j];
 		prng->sbox[j] = t;
-		k[i] = 0;	/* clear out key memory */
+		k[i] = 0;       /* clear out key memory */
 	}
 	prng->i = 0;
 	prng->j = 0;
@@ -80,10 +79,9 @@ size_t keylen;
 }
 
 /*
- - prng_bytes - get some pseudorandom bytes from PRNG
+   - prng_bytes - get some pseudorandom bytes from PRNG
  */
-void
-prng_bytes(prng, dst, dstlen)
+void prng_bytes(prng, dst, dstlen)
 struct prng *prng;
 unsigned char *dst;
 size_t dstlen;
@@ -91,7 +89,7 @@ size_t dstlen;
 	int i, j, t;
 	unsigned char *p = dst;
 	size_t remain = dstlen;
-#	define	MAXCOUNT	4000000000ul
+#       define  MAXCOUNT        4000000000ul
 
 	LOCK_PRNG();
 
@@ -116,10 +114,9 @@ size_t dstlen;
 }
 
 /*
- - prnt_count - how many bytes have been extracted from PRNG so far?
+   - prnt_count - how many bytes have been extracted from PRNG so far?
  */
-unsigned long
-prng_count(prng)
+unsigned long prng_count(prng)
 struct prng *prng;
 {
 	unsigned long c;
@@ -130,10 +127,9 @@ struct prng *prng;
 }
 
 /*
- - prng_final - clear out PRNG to ensure nothing left in memory
+   - prng_final - clear out PRNG to ensure nothing left in memory
  */
-void
-prng_final(prng)
+void prng_final(prng)
 struct prng *prng;
 {
 	int i;
@@ -142,6 +138,6 @@ struct prng *prng;
 		prng->sbox[i] = 0;
 	prng->i = 0;
 	prng->j = 0;
-	prng->count = 0;	/* just for good measure */
+	prng->count = 0;        /* just for good measure */
 }
 

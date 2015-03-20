@@ -1,10 +1,14 @@
 
 See also https://libreswan.org/
 
+v3.4 (June 6, 2013)
+* Change coding style to Linux kernel [Team]
+* IN MEMORIAM: June 3rd, 2013 Hugh Daniel
+
 v3.3 (May 13, 2013)
 * SECURITY: atodn() buffer overflow with oe=yes [Florian/Hugh/Paul]
-            affected: libreswan 3.0 and 3.1 (CVE-2013-2053)
-            see also: openswan up to 2.6.38 (CVE-2013-2052)
+            affected: libreswan 3.0 and 3.1 (CVE-2013-2052)
+            see also: openswan up to 2.6.38 (CVE-2013-2053)
             see also: strongswan up to 4.3.4 (CVE-2013-2054)
 * security: dn_parse(), hex_str() write beyond end of the buffer [Florian]
 * security: get_rnd_bytes: Abort on random number generator failure [Florian]
@@ -182,7 +186,7 @@ v3.0 (January 02, 2013)
 * whack: don't try to write to closed stdout tty [Philippe]
 * DPD: reduce flood of DPD messages with unexpected seqno [Andrey Alexandrenko]
 * DPD: We did not send DPD VID in aggressive mode with NAT-T disabled
-* DPD: dpdaction=restart can cause full phase1 timeout after DPD 
+* DPD: dpdaction=restart can cause full phase1 timeout after DPD
   (rhbz#848132) [Avesh]
 * PAM: updated contrib/pam.d/pluto (rhbz#815127) [Philippe Vouters]
 * PAM: move pam out of contrib, and install config when HAVE_XAUTHPAM [Paul]

@@ -289,10 +289,6 @@ ifneq ($(strip $(MOD24BUILDDIR)),)
 ${MOD24BUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module24.make
 	mkdir -p ${MOD24BUILDDIR}
 	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module24.make ${MOD24BUILDDIR}/Makefile
-	echo "# "                        >> ${MOD24BUILDDIR}/Makefile
-	echo "# Local Variables: "       >> ${MOD24BUILDDIR}/Makefile
-	echo "# compile-command: \"${MAKE} LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} TOPDIR=${KERNELSRC} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG} -f Makefile ipsec.o\""         >> ${MOD24BUILDDIR}/Makefile
-	echo "# End: "       >> ${MOD24BUILDDIR}/Makefile
 
 module:
 	@if [ -f ${KERNELSRC}/README.libreswan-2 ] ; then \
@@ -389,10 +385,6 @@ ${MODBUILDDIR}/Makefile : ${LIBRESWANSRCDIR}/packaging/makefiles/module.make
 	(rm -f ${MODBUILDDIR}/aes; mkdir -p ${MODBUILDDIR}/aes && cd ${MODBUILDDIR}/aes && ln -s -f ${LIBRESWANSRCDIR}/linux/net/ipsec/aes/* . && ln -s -f Makefile.fs2_6 Makefile)
 	mkdir -p ${MODBUILDDIR}/aes
 	cp ${LIBRESWANSRCDIR}/packaging/makefiles/module.make ${MODBUILDDIR}/Makefile
-	echo "# "                        >> ${MODBUILDDIR}/Makefile
-	echo "# Local Variables: "       >> ${MODBUILDDIR}/Makefile
-	echo "# compile-command: \"${MAKE} -C ${LIBRESWANSRCDIR} ARCH=${ARCH} KERNELSRC=${KERNELSRC} MODBUILDDIR=${MODBUILDDIR} module26\""         >> ${MODBUILDDIR}/Makefile
-	echo "# End: "       >> ${MODBUILDDIR}/Makefile
 	ln -s -f ${LIBRESWANSRCDIR}/linux/net/ipsec/match*.S ${MODBUILDDIR}
 
 module26:

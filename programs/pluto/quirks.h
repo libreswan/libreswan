@@ -21,19 +21,18 @@
  */
 
 /**
- * Where to store various quirks (ususally encountered during interop) 
+ * Where to store various quirks (ususally encountered during interop)
  *
  */
 struct isakmp_quirks {
-  bool xauth_ack_msgid;         /**< Whether to reset the msgid after an
-				 * xauth set, such as for SSH Sentinel. */
-  bool modecfg_pull_mode;       /* if the client should request his IP */
-  unsigned short nat_traversal_vid;  /**< which NAT-type vendor IDs we got */
-  bool xauth_vid;               /**< if the client has XAUTH */
+	bool xauth_ack_msgid;                   /**< Whether to reset the msgid after an
+	                                         * xauth set, such as for SSH Sentinel. */
+	bool modecfg_pull_mode;                 /* if the client should request his IP */
+	unsigned short nat_traversal_vid;       /**< which NAT-type vendor IDs we got */
+	bool xauth_vid;                         /**< if the client has XAUTH */
 };
 
-extern void copy_quirks(struct isakmp_quirks *dq
-			, struct isakmp_quirks *sq);
-
+extern void copy_quirks(struct isakmp_quirks *dq,
+			struct isakmp_quirks *sq);
 
 #endif

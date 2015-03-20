@@ -1,4 +1,4 @@
-/* 
+/*
  * unit test for IKEv2 RSA signature/verification
  *
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
@@ -17,8 +17,8 @@
 
 #define LEAK_DETECTIVE
 #define AGGRESSIVE 1
-#define XAUTH 
-#define MODECFG 
+#define XAUTH
+#define MODECFG
 #define DEBUG 1
 #define PRINT_SA_DEBUG 1
 #define USE_KEYRR 1
@@ -48,20 +48,27 @@
 #include "seam_east.c"
 #include "seam_rnd.c"
 #include "seam_timer.c"
-#include "seam_initiate.c" 
+#include "seam_initiate.c"
 #include "seam_xauth.c"
 #include "seam_natt.c"
 #include "seam_state.c"
 #include "seam_kernelops.c"
 
-void gw_addref(struct gw_info *gw) {}
-void gw_delref(struct gw_info **gwp) {}
-bool in_pending_use(struct connection *c) { return FALSE; }
+void gw_addref(struct gw_info *gw)
+{
+}
+void gw_delref(struct gw_info **gwp)
+{
+}
+bool in_pending_use(struct connection *c)
+{
+	return FALSE;
+}
 
 char *progname;
 
-const char*
-check_expiry(time_t expiration_date, int warning_interval, bool strict)
+const char*check_expiry(time_t expiration_date, int warning_interval,
+			bool strict)
 {
 	return "ok (never)";
 }
@@ -69,7 +76,7 @@ check_expiry(time_t expiration_date, int warning_interval, bool strict)
 void exit_log(const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
+	char m[LOG_WIDTH];      /* longer messages will be truncated */
 
 	va_start(args, message);
 	vsnprintf(m, sizeof(m), message, args);
@@ -99,7 +106,7 @@ int main(int argc, char *argv[])
 	struct state st1;
 
 	progname = argv[0];
-	cur_debugging = DBG_CRYPT|DBG_KLIPS|DBG_PARSING;
+	cur_debugging = DBG_CRYPT | DBG_KLIPS | DBG_PARSING;
 
 	memset(&st1, 0, sizeof(st1));
 	pluto_shared_secrets_file = "../../baseconfigs/east/etc/ipsec.secrets";
@@ -116,27 +123,27 @@ int main(int argc, char *argv[])
 	/* now derive the keys for the CHILD_SA */
 	{
 		struct ipsec_proto_info *ipi;
-		
-		setchunk(st1.st_skey_d, tc3_results_skey_d, sizeof(tc3_results_skey_d));
+
+		setchunk(st1.st_skey_d, tc3_results_skey_d,
+			 sizeof(tc3_results_skey_d));
 
 		ipi = &st1.st_esp;
 		ipi->attrs.transattrs.encrypt   = IKEv2_ENCR_AES_CBC;
 		ipi->attrs.transattrs.enckeylen = 128;
-		ipi->attrs.transattrs.integ_hash= alg_info_esp_v2tov1aa(IKEv2_AUTH_HMAC_SHA1_96);
+		ipi->attrs.transattrs.integ_hash = alg_info_esp_v2tov1aa(
+			IKEv2_AUTH_HMAC_SHA1_96);
 
 		ikev2_derive_child_keys(&st1);
 
-		DBG_dump("our  keymat: "
-			 , ipi->our_keymat
-			 , ipi->keymat_len);
+		DBG_dump("our  keymat: ",
+			 ipi->our_keymat,
+			 ipi->keymat_len);
 
-		DBG_dump("peer keymat: "
-			 , ipi->peer_keymat
-			 , ipi->keymat_len);
+		DBG_dump("peer keymat: ",
+			 ipi->peer_keymat,
+			 ipi->keymat_len);
 	}
-		
 
 	exit(0);
 }
-
 

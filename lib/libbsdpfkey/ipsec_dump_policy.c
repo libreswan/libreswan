@@ -58,7 +58,7 @@ static const char *ipsp_policy_strs[] = {
 };
 
 static char *ipsec_dump_ipsecrequest(char *, size_t,
-	struct sadb_x_ipsecrequest *, size_t);
+				     struct sadb_x_ipsecrequest *, size_t);
 static int set_addresses(char *, size_t, struct sockaddr *, struct sockaddr *);
 static char *set_address(char *, size_t, struct sockaddr *);
 
@@ -67,10 +67,9 @@ static char *set_address(char *, size_t, struct sockaddr *);
  * Must call free() later.
  * When delimiter == NULL, alternatively ' '(space) is applied.
  */
-char *
-ipsec_dump_policy(policy, delimiter)
-	caddr_t policy;
-	char *delimiter;
+char *ipsec_dump_policy(policy, delimiter)
+caddr_t policy;
+char *delimiter;
 {
 	struct sadb_x_policy *xpl = (struct sadb_x_policy *)policy;
 	struct sadb_x_ipsecrequest *xisr;
@@ -82,6 +81,7 @@ ipsec_dump_policy(policy, delimiter)
 	/* sanity check */
 	if (policy == NULL)
 		return NULL;
+
 	if (xpl->sadb_x_policy_exttype != SADB_X_EXT_POLICY) {
 		__ipsec_errcode = EIPSEC_INVAL_EXTTYPE;
 		return NULL;
@@ -113,17 +113,17 @@ ipsec_dump_policy(policy, delimiter)
 		return NULL;
 	}
 
-	buflen = strlen(ipsp_dir_strs[xpl->sadb_x_policy_dir])
-		+ 1	/* space */
-		+ strlen(ipsp_policy_strs[xpl->sadb_x_policy_type])
-		+ 1;	/* NUL */
+	buflen = strlen(ipsp_dir_strs[xpl->sadb_x_policy_dir]) +
+		 1 +    /* space */
+		 strlen(ipsp_policy_strs[xpl->sadb_x_policy_type]) +
+		 1;     /* NUL */
 
 	if ((buf = malloc(buflen)) == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return NULL;
 	}
 	snprintf(buf, buflen, "%s %s", ipsp_dir_strs[xpl->sadb_x_policy_dir],
-	    ipsp_policy_strs[xpl->sadb_x_policy_type]);
+		 ipsp_policy_strs[xpl->sadb_x_policy_type]);
 
 	if (xpl->sadb_x_policy_type != IPSEC_POLICY_IPSEC) {
 		__ipsec_errcode = EIPSEC_NO_ERROR;
@@ -149,7 +149,7 @@ ipsec_dump_policy(policy, delimiter)
 		xisr = (struct sadb_x_ipsecrequest *)((caddr_t)xpl + off);
 
 		if (ipsec_dump_ipsecrequest(isrbuf, sizeof(isrbuf), xisr,
-		    PFKEY_EXTLEN(xpl) - off) == NULL) {
+					    PFKEY_EXTLEN(xpl) - off) == NULL) {
 			free(buf);
 			return NULL;
 		}
@@ -171,12 +171,11 @@ ipsec_dump_policy(policy, delimiter)
 	return buf;
 }
 
-static char *
-ipsec_dump_ipsecrequest(buf, len, xisr, bound)
-	char *buf;
-	size_t len;
-	struct sadb_x_ipsecrequest *xisr;
-	size_t bound;	/* boundary */
+static char *ipsec_dump_ipsecrequest(buf, len, xisr, bound)
+char *buf;
+size_t len;
+struct sadb_x_ipsecrequest *xisr;
+size_t bound;           /* boundary */
 {
 	const char *proto, *mode, *level;
 	char abuf[NI_MAXHOST * 2 + 2];
@@ -255,9 +254,9 @@ ipsec_dump_ipsecrequest(buf, len, xisr, bound)
 		return NULL;
 	}
 
-	if (xisr->sadb_x_ipsecrequest_reqid == 0)
+	if (xisr->sadb_x_ipsecrequest_reqid == 0) {
 		snprintf(buf, len, "%s/%s/%s/%s", proto, mode, abuf, level);
-	else {
+	} else {
 		int ch;
 
 		if (xisr->sadb_x_ipsecrequest_reqid > IPSEC_MANUAL_REQID_MAX)
@@ -265,42 +264,44 @@ ipsec_dump_ipsecrequest(buf, len, xisr, bound)
 		else
 			ch = ':';
 		snprintf(buf, len, "%s/%s/%s/%s%c%u", proto, mode, abuf, level,
-		    ch, xisr->sadb_x_ipsecrequest_reqid);
+			 ch, xisr->sadb_x_ipsecrequest_reqid);
 	}
 
 	return buf;
 }
 
-static int
-set_addresses(buf, len, sa1, sa2)
-	char *buf;
-	size_t len;
-	struct sockaddr *sa1;
-	struct sockaddr *sa2;
+static int set_addresses(buf, len, sa1, sa2)
+char *buf;
+size_t len;
+struct sockaddr *sa1;
+struct sockaddr *sa2;
 {
 	char tmp1[NI_MAXHOST], tmp2[NI_MAXHOST];
 
 	if (set_address(tmp1, sizeof(tmp1), sa1) == NULL ||
 	    set_address(tmp2, sizeof(tmp2), sa2) == NULL)
 		return -1;
+
 	if (strlen(tmp1) + 1 + strlen(tmp2) + 1 > len)
 		return -1;
+
 	snprintf(buf, len, "%s-%s", tmp1, tmp2);
 	return 0;
 }
 
-static char *
-set_address(buf, len, sa)
-	char *buf;
-	size_t len;
-	struct sockaddr *sa;
+static char *set_address(buf, len, sa)
+char *buf;
+size_t len;
+struct sockaddr *sa;
 {
 	const int niflags = NI_NUMERICHOST;
 
 	if (len < 1)
 		return NULL;
+
 	buf[0] = '\0';
 	if (getnameinfo(sa, sa->sa_len, buf, len, NULL, 0, niflags) != 0)
 		return NULL;
+
 	return buf;
 }

@@ -91,42 +91,38 @@
 # define DEFAULT_UPDOWN "ipsec _updown"
 #endif
 
-bool
-do_command_cygwin(struct connection *c UNUSED
-		  , struct spd_route *sr UNUSED
-		  , const char *verb UNUSED
-		  , struct state *st UNUSED)
+bool do_command_cygwin(struct connection *c UNUSED,
+		       struct spd_route *sr UNUSED,
+		       const char *verb UNUSED,
+		       struct state *st UNUSED)
 {
-    return FALSE;
+	return FALSE;
 }
 
 /* Called to handle --interface <ifname>
  * Semantics: if specified, only these (real) interfaces are considered.
  */
-bool
-use_interface(const char *rifn)
+bool use_interface(const char *rifn)
 {
-    struct raw_iface *ri;
-    static int ifnum=0;
-    err_t e;
+	struct raw_iface *ri;
+	static int ifnum = 0;
+	err_t e;
 
-    if(pluto_ifn_inst[0]=='\0') {
-	pluto_ifn_inst = clone_str(rifn, "genifn");
-    }
+	if (pluto_ifn_inst[0] == '\0')
+		pluto_ifn_inst = clone_str(rifn, "genifn");
 
-    ri = alloc_thing(*ri, "static interface");
+	ri = alloc_thing(*ri, "static interface");
 
-    e = ttoaddr(rifn, strlen(rifn), 0, &ri->addr);
-    if(e) {
-	fprintf(stderr, "--interface failed: %s\n", e);
-	exit(10);
-    }
-    snprintf(ri->name, sizeof(ri->name), "ifn%d", ifnum++);
+	e = ttoaddr(rifn, strlen(rifn), 0, &ri->addr);
+	if (e) {
+		fprintf(stderr, "--interface failed: %s\n", e);
+		exit(10);
+	}
+	snprintf(ri->name, sizeof(ri->name), "ifn%d", ifnum++);
 
-    ri->next = static_ifn;
-    static_ifn = ri;
+	ri->next = static_ifn;
+	static_ifn = ri;
 
-    return TRUE;
+	return TRUE;
 }
-
 

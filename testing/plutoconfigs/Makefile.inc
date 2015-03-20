@@ -597,12 +597,6 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
                         -e "s:@MODPROBE@:$(MODPROBE):g" \
-                        -e "s:@BINSH@:$(BINSH):g" \
+                        -e "s:@BINSH@:$(BINSH):g"
 
-# for emacs
-#
-# Local Variables: ;;;
-# mode: makefile ;;;
-# End Variables: ;;;
-#
 

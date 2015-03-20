@@ -1,12 +1,12 @@
 /*
  * initialize subnet structure
  * Copyright (C) 2000, 2002  Henry Spencer.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
@@ -17,15 +17,15 @@
 #include "libreswan.h"
 
 /*
- - initsubnet - initialize ip_subnet from address and count
+   - initsubnet - initialize ip_subnet from address and count
  *
  * The only hard part is checking for host-part bits turned on.
  */
-err_t				/* NULL for success, else string literal */
+err_t                           /* NULL for success, else string literal */
 initsubnet(addr, count, clash, dst)
-const ip_address *addr;
+const ip_address * addr;
 int count;
-int clash;			/* '0' zero host-part bits, 'x' die on them */
+int clash;                      /* '0' zero host-part bits, 'x' die on them */
 ip_subnet *dst;
 {
 	unsigned char *p;
@@ -48,23 +48,26 @@ ip_subnet *dst;
 		break;
 	default:
 		return "unknown clash-control value in initsubnet";
+
 		break;
 	}
 
 	c = count / 8;
 	if (c > n)
 		return "impossible mask count";
+
 	p += c;
 	n -= c;
 
 	m = 0xff;
 	c = count % 8;
-	if (n > 0 && c != 0)	/* partial byte */
+	if (n > 0 && c != 0)    /* partial byte */
 		m >>= c;
 	for (; n > 0; n--) {
 		if ((*p & m) != 0) {
 			if (die)
 				return "improper subnet, host-part bits on";
+
 			*p &= ~m;
 		}
 		m = 0xff;
@@ -76,11 +79,11 @@ ip_subnet *dst;
 }
 
 /*
- - addrtosubnet - initialize ip_subnet from a single address
+   - addrtosubnet - initialize ip_subnet from a single address
  */
-err_t				/* NULL for success, else string literal */
+err_t                           /* NULL for success, else string literal */
 addrtosubnet(addr, dst)
-const ip_address *addr;
+const ip_address * addr;
 ip_subnet *dst;
 {
 	int n;
@@ -89,6 +92,7 @@ ip_subnet *dst;
 	n = addrbytesptr(&dst->addr, (unsigned char **)NULL);
 	if (n == 0)
 		return "unknown address family";
-	dst->maskbits = n*8;
+
+	dst->maskbits = n * 8;
 	return NULL;
 }

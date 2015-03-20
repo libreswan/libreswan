@@ -1,4 +1,4 @@
-/* 
+/*
  * unit tests for cryptographic helper function - calculate KE and nonce
  *             using the memory mapped hifn 7956.
  *
@@ -21,7 +21,7 @@
 #define PK_DH_REGRESS 1
 #define ENHANCED_MODE 1
 
-int pkdh_verbose=0;
+int pkdh_verbose = 0;
 
 #include <stdio.h>
 
@@ -38,7 +38,7 @@ char *progname;
 void exit_log(const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
+	char m[LOG_WIDTH];      /* longer messages will be truncated */
 
 	va_start(args, message);
 	vsnprintf(m, sizeof(m), message, args);
@@ -58,13 +58,12 @@ void exit_tool(int code)
 int main(int argc, char *argv[])
 {
 	progname = argv[0];
-	
+
 	/* initialize list of moduli */
 	init_crypto();
 
-	if(argc>1) {
-		pk_verbose_execute=1;
-	}
+	if (argc > 1)
+		pk_verbose_execute = 1;
 
 	vulcanpk_mapping = mapvulcanpk();
 	/* initialize chip */
