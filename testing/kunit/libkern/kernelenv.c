@@ -1137,7 +1137,6 @@ u32 jhash(void *key, u32 length, u32 initval)
 	case 2: a += ((u32)k[1] << 8);
 	case 1: a += k[0];
 	}
-	;
 
 	__jhash_mix(a, b, c);
 
@@ -1170,7 +1169,6 @@ u32 jhash2(u32 *k, u32 length, u32 initval)
 	case 2: b += k[1];
 	case 1: a += k[0];
 	}
-	;
 
 	__jhash_mix(a, b, c);
 

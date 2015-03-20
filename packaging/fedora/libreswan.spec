@@ -12,19 +12,19 @@
 %global buildefence 0
 %global development 0
 
-%global prever rc1
+#global prever rc1
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.4
+Version: 3.5
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
 Source: https://download.libreswan.org/%{name}-%{version}%{?prever}.tar.gz
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
-BuildRequires: systemd
+BuildRequires: systemd systemd-units
 Requires(post): coreutils bash systemd
 Requires(preun): systemd
 Requires(postun): systemd
@@ -186,5 +186,5 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %systemd_post ipsec.service
 
 %changelog
-* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.4-1
+* Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.5-1
 - Automated build from release tar ball

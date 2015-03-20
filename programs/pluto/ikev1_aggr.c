@@ -553,7 +553,7 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 		build_id_payload(&id_hd, &id_b, &st->st_connection->spd.this);
 		id_hd.isaiid_np =
 			(send_cert) ? ISAKMP_NEXT_CERT : auth_payload;
-		;
+
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&md->rbody, &r_id_pbs) ||
 		    !out_chunk(id_b, &r_id_pbs, "my identity"))

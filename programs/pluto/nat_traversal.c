@@ -77,6 +77,8 @@
 
 #define DEFAULT_KEEP_ALIVE_PERIOD  20
 
+extern u_int16_t pluto_natt_float_port; /* for show_setup_natt() */
+
 bool nat_traversal_enabled = FALSE;
 bool nat_traversal_support_non_ike = FALSE;
 bool nat_traversal_support_port_floating = FALSE;
@@ -1141,5 +1143,14 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 			ugh);
 }
 
-#endif
+void show_setup_natt()
+{
+	whack_log(RC_COMMENT, " ");     /* spacer */
+	whack_log(RC_COMMENT, "nat_traversal=%s, keep_alive=%d, nat_ikeport=%d, disable_port_floating=%s",
+		nat_traversal_enabled ? "yes" : "no",
+		nat_kap,
+		pluto_natt_float_port,
+		nat_traversal_support_port_floating ? "no" : "yes");
+}
 
+#endif

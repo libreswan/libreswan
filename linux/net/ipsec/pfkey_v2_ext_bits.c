@@ -365,12 +365,12 @@ pfkey_ext_track extensions_bitmaps[2 /*in/out*/][2 /*perm/req*/][K_SADB_MAX +
 /* SADB_X_DELFLOW */
 				1ULL << SADB_EXT_RESERVED
 /*| 1ULL<<SADB_EXT_SA*/
-				#if 0   /* SADB_X_CLREROUTE doesn't need all these... */
+#if 0   /* SADB_X_CLREROUTE doesn't need all these... */
 				| 1ULL << K_SADB_X_EXT_ADDRESS_SRC_FLOW |
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_FLOW |
 				1ULL << K_SADB_X_EXT_ADDRESS_SRC_MASK |
 				1ULL << K_SADB_X_EXT_ADDRESS_DST_MASK
-				#endif
+#endif
 				,
 /* SADB_X_DEBUG */
 				1ULL << SADB_EXT_RESERVED |

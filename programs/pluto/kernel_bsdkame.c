@@ -88,7 +88,7 @@ static void bsdkame_init_pfkey(void)
 	if (fcntl(pfkeyfd, F_SETFD, FD_CLOEXEC) != 0)
 		exit_log_errno((e, "fcntl(FD_CLOEXEC) in init_pfkeyfd()"));
 
-	DBG(DBG_KLIPS,
+	DBG(DBG_KERNEL,
 	    DBG_log("process %u listening for PF_KEY_V2 on file descriptor %d",
 		    (unsigned)pid, pfkeyfd));
 }
@@ -326,7 +326,7 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 	switch (satype) {
 	case SADB_SATYPE_AH:
 		ret = kernel_alg_add(satype, supp_exttype, alg);
-		DBG(DBG_KLIPS,
+		DBG(DBG_KERNEL,
 		    DBG_log("algregister_ah(%p) exttype=%d alg_id=%d, "
 			    "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
 			    "ret=%d",
@@ -340,7 +340,7 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 
 	case SADB_SATYPE_ESP:
 		ret = kernel_alg_add(satype, supp_exttype, alg);
-		DBG(DBG_KLIPS, DBG_log("algregister(%p) alg_id=%d, "
+		DBG(DBG_KERNEL, DBG_log("algregister(%p) alg_id=%d, "
 				       "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
 				       "ret=%d",
 				       alg,
@@ -352,7 +352,7 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 		break;
 
 	case SADB_X_SATYPE_IPCOMP:
-		DBG(DBG_KLIPS, DBG_log("ipcomp algregister(%p) alg_id=%d, "
+		DBG(DBG_KERNEL, DBG_log("ipcomp algregister(%p) alg_id=%d, "
 				       "alg_ivlen=%d, alg_minbits=%d, alg_maxbits=%d, "
 				       "ret=%d",
 				       alg,
@@ -989,7 +989,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	memcpy(keymat, sa->enckey, sa->enckeylen);
 	memcpy(keymat + sa->enckeylen, sa->authkey, sa->authkeylen);
 
-	DBG(DBG_KLIPS,
+	DBG(DBG_KERNEL,
 	    DBG_log(
 		    "calling pfkey_send_x1 for pfkeyseq=%d encalg=%d/%d authalg=%d/%d spi=%08x, reqid=%u, satype=%d\n",
 		    pfkey_seq,

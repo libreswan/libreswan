@@ -205,8 +205,7 @@ typedef enum {
 #define DBG_EMITTING    LELEM(3)                                /* show encoding of messages */
 #define DBG_CONTROL     LELEM(4)                                /* control flow within Pluto */
 #define DBG_LIFECYCLE   LELEM(5)                                /* SA lifecycle */
-#define DBG_KLIPS       LELEM(6)                                /* messages with the kernel */
-#define DBG_NETKEY      LELEM(6)                                /* same as previous entry!! */
+#define DBG_KERNEL      LELEM(6)                                /* messages with the kernel */
 #define DBG_DNS         LELEM(7)                                /* DNS activity */
 #define DBG_OPPO        LELEM(8)                                /* opportunism */
 #define DBG_CONTROLMORE LELEM(9)                                /* more detailed debugging */

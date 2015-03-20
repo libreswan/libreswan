@@ -2604,33 +2604,41 @@ cleanup:
 
 void ipsec_xmit_cleanup(struct ipsec_xmit_state*ixs)
 {
+	void *p;
 	if (ixs->saved_header) {
-		kfree(ixs->saved_header);
+		p = ixs->saved_header;
 		ixs->saved_header = NULL;
+		kfree(p);
 	}
 	if (ixs->skb) {
-		ipsec_kfree_skb(ixs->skb);
+		p = ixs->skb;
 		ixs->skb = NULL;
+		ipsec_kfree_skb(p);
 	}
 	if (ixs->oskb) {
-		ipsec_kfree_skb(ixs->oskb);
+		p = ixs->oskb;
 		ixs->oskb = NULL;
+		ipsec_kfree_skb(p);
 	}
 	if (ixs->pre_ipcomp_skb) {
-		ipsec_kfree_skb(ixs->pre_ipcomp_skb);
+		p = ixs->pre_ipcomp_skb;
 		ixs->pre_ipcomp_skb = NULL;
+		ipsec_kfree_skb(p);
 	}
 	if (ixs->ips.ips_ident_s.data) {
-		kfree(ixs->ips.ips_ident_s.data);
+		p = ixs->ips.ips_ident_s.data;
 		ixs->ips.ips_ident_s.data = NULL;
+		kfree(p);
 	}
 	if (ixs->ips.ips_ident_d.data) {
-		kfree(ixs->ips.ips_ident_d.data);
+		p = ixs->ips.ips_ident_d.data;
 		ixs->ips.ips_ident_d.data = NULL;
+		kfree(p);
 	}
 	if (ixs->ipsp) {
-		ipsec_sa_put(ixs->ipsp, IPSEC_REFTX);
+		p = ixs->ipsp;
 		ixs->ipsp = NULL;
+		ipsec_sa_put(p, IPSEC_REFTX);
 	}
 }
 

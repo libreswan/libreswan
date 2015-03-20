@@ -1,10 +1,7 @@
-: ==== start ====
-TESTNAME=ikev2-algo-03-aes-ccm
-source /testing/pluto/bin/eastlocal.sh
-
-ipsec setup start
+/testing/guestbin/swan-prep
+ipsec _stackmanager start 
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec whack --whackrecord /var/tmp/ikev2.record
-ipsec auto --add  westnet-eastnet-ikev2
+ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-ccm-a
+ipsec auto --status
 echo "initdone"

@@ -300,7 +300,7 @@ static void __alg_info_esp_add(struct alg_info_esp *alg_info,
 static void alg_info_esp_add(struct alg_info *alg_info,
 			     int ealg_id, int ek_bits,
 			     int aalg_id, int ak_bits,
-			     int modp_id UNUSED, bool permit_manconn)
+			     int modp_id UNUSED)
 {
 	/*	Policy: default to 3DES */
 	if (ealg_id == 0)
@@ -308,8 +308,7 @@ static void alg_info_esp_add(struct alg_info *alg_info,
 
 	if (ealg_id > 0) {
 
-		if (aalg_id > 0 ||
-		    (permit_manconn && aalg_id == 0)) {
+		if (aalg_id > 0) {
 			if (aalg_id == INT_MAX)
 				aalg_id = 0;
 			__alg_info_esp_add((struct alg_info_esp *)alg_info,
@@ -333,10 +332,9 @@ static void alg_info_esp_add(struct alg_info *alg_info,
 static void alg_info_ah_add(struct alg_info *alg_info,
 			    int ealg_id, int ek_bits,
 			    int aalg_id, int ak_bits,
-			    int modp_id UNUSED, bool permit_manconn)
+			    int modp_id UNUSED)
 {
-	if (aalg_id > 0 ||
-	    (permit_manconn && aalg_id == 0)) {
+	if (aalg_id > 0) {
 		__alg_info_esp_add((struct alg_info_esp *)alg_info,
 				   ealg_id, ek_bits,
 				   aalg_id, ak_bits);
@@ -612,11 +610,9 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 			       void (*alg_info_add)(struct alg_info *alg_info,
 						    int ealg_id, int ek_bits,
 						    int aalg_id, int ak_bits,
-						    int modp_id,
-						    bool permitmann),
+						    int modp_id),
 			       const struct oakley_group_desc *(*lookup_group)(
-				       u_int16_t group),
-			       bool permitike)
+				       u_int16_t group))
 {
 	int ealg_id, aalg_id;
 	int modp_id = 0;
@@ -697,7 +693,7 @@ static int parser_alg_info_add(struct parser_context *p_ctx,
 	(*alg_info_add)(alg_info,
 			ealg_id, p_ctx->eklen,
 			aalg_id, p_ctx->aklen,
-			modp_id, permitike);
+			modp_id);
 	return 0;
 
 out:
@@ -711,11 +707,9 @@ int alg_info_parse_str(struct alg_info *alg_info,
 		       void (*alg_info_add)(struct alg_info *alg_info,
 					    int ealg_id, int ek_bits,
 					    int aalg_id, int ak_bits,
-					    int modp_id,
-					    bool permitmann),
+					    int modp_id),
 		       const struct oakley_group_desc *(*lookup_group)(
-			       u_int16_t group),
-		       bool permitmann)
+			       u_int16_t group))
 {
 	struct parser_context ctx;
 	int ret;
@@ -731,7 +725,7 @@ int alg_info_parse_str(struct alg_info *alg_info,
 
 	/* use default if nul esp string */
 	if (!*alg_str)
-		(*alg_info_add)(alg_info, 0, 0, 0, 0, 0, 0);
+		(*alg_info_add)(alg_info, 0, 0, 0, 0, 0);
 
 	for (ret = 0, ptr = alg_str; ret < ST_EOF; ) {
 		ctx.ch = *ptr++;
@@ -748,8 +742,7 @@ int alg_info_parse_str(struct alg_info *alg_info,
 
 			if (parser_alg_info_add(&ctx, alg_info,
 						alg_info_add,
-						lookup_group,
-						permitmann) < 0) {
+						lookup_group) < 0) {
 				snprintf(err_buf, sizeof(err_buf),
 					 "%s, enc_alg=\"%s\", auth_alg=\"%s\", "
 					 "modp=\"%s\"",
@@ -827,8 +820,7 @@ static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 }
 
 struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
-						  const char **err_p,
-						  bool permitmann)
+						  const char **err_p)
 {
 	struct alg_info_esp *alg_info_esp;
 	char esp_buf[256];
@@ -853,8 +845,7 @@ struct alg_info_esp *alg_info_esp_create_from_str(const char *alg_str,
 				 esp_buf, err_p,
 				 parser_init_esp,
 				 alg_info_esp_add,
-				 NULL,
-				 permitmann);
+				 NULL);
 
 out:
 	if (ret < 0) {
@@ -866,8 +857,7 @@ out:
 }
 
 struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
-						 const char **err_p,
-						 bool permitmann)
+						 const char **err_p)
 {
 	struct alg_info_esp *alg_info_esp;
 	char esp_buf[256];
@@ -889,8 +879,7 @@ struct alg_info_esp *alg_info_ah_create_from_str(const char *alg_str,
 				 esp_buf, err_p,
 				 parser_init_ah,
 				 alg_info_ah_add,
-				 NULL,
-				 permitmann);
+				 NULL);
 
 	if (ret < 0) {
 		pfreeany(alg_info_esp);
@@ -940,8 +929,7 @@ void alg_info_delref(struct alg_info **alg_info_p)
 
 /*	snprint already parsed transform list (alg_info)	*/
 int alg_info_snprint(char *buf, int buflen,
-		     struct alg_info *alg_info,
-		     bool permitike)
+		     struct alg_info *alg_info)
 {
 	char *ptr = buf;
 	struct esp_info *esp_info;
@@ -1036,7 +1024,7 @@ int alg_info_snprint(char *buf, int buflen,
 	}
 
 	case PROTO_ISAKMP:
-		if (permitike) {
+		{
 			ALG_INFO_IKE_FOREACH((struct alg_info_ike *)alg_info,
 					     ike_info, cnt) {
 				snprintf(ptr, buflen,

@@ -71,9 +71,7 @@ MP_INT generator_dh22,
        generator_dh24;
 #endif
 
-#ifdef IKE_ALG
-
-# ifdef USE_3DES
+#ifdef USE_3DES
 static void do_3des(u_int8_t *buf, size_t buf_len, u_int8_t *key,
 		    size_t key_size, u_int8_t *iv, bool enc);
 static struct encrypt_desc crypto_encrypter_3des =
@@ -91,9 +89,9 @@ static struct encrypt_desc crypto_encrypter_3des =
 	.keymaxlen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.do_crypt =         do_3des,
 };
-# endif
+#endif
 
-# ifdef USE_MD5
+#ifdef USE_MD5
 static struct hash_desc crypto_hasher_md5 =
 {
 	.common = { .name = "oakley_md5",
@@ -129,9 +127,9 @@ static struct hash_desc crypto_integ_md5 =
 	.hash_update = (void (*)(void *, const u_int8_t *, size_t))osMD5Update,
 	.hash_final = (void (*)(u_char *, void *))osMD5Final,
 };
-# endif
+#endif
 
-# ifdef USE_SHA1
+#ifdef USE_SHA1
 static struct hash_desc crypto_hasher_sha1 =
 {
 	.common = { .name = "oakley_sha",
@@ -167,7 +165,6 @@ static struct hash_desc crypto_integ_sha1 =
 	.hash_update = (void (*)(void *, const u_int8_t *, size_t))SHA1Update,
 	.hash_final = (void (*)(u_char *, void *))SHA1Final,
 };
-# endif
 #endif
 
 void init_crypto(void)
@@ -197,7 +194,6 @@ void init_crypto(void)
 	    )
 		exit_log("mpz_init_set_str() failed in init_crypto()");
 
-#ifdef IKE_ALG
 	{
 #ifdef USE_TWOFISH
 		{
@@ -239,16 +235,17 @@ void init_crypto(void)
 			ike_alg_sha2_init();
 		}
 #endif
+
 #ifdef USE_SHA1
 		ike_alg_add((struct ike_alg *) &crypto_hasher_sha1);
 		ike_alg_add((struct ike_alg *) &crypto_integ_sha1);
 #endif
+
 #ifdef USE_MD5
 		ike_alg_add((struct ike_alg *) &crypto_hasher_md5);
 		ike_alg_add((struct ike_alg *) &crypto_integ_md5);
 #endif
 	}
-#endif
 }
 
 /* Oakley group description

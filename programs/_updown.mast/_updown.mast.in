@@ -208,10 +208,16 @@ checkipsec() {
 	if ! ( iptables -n -t mangle -L IPSEC >/dev/null 2>&1); then
 	    iptables -t mangle -N IPSEC
 	fi
+	if ! ( ip6tables -n -t mangle -L IPSEC >/dev/null 2>&1); then
+	    ip6tables -t mangle -N IPSEC
+	fi
 
 	# we also need to have a NEW_IPSEC_CONN chain
 	if ! ( iptables -n -t mangle -L NEW_IPSEC_CONN >/dev/null 2>&1); then
 	    iptables -t mangle -N NEW_IPSEC_CONN
+	fi
+	if ! ( ip6tables -n -t mangle -L NEW_IPSEC_CONN >/dev/null 2>&1); then
+	    ip6tables -t mangle -N NEW_IPSEC_CONN
 	fi
 
 	# initialize the IPSEC chain if needed
@@ -223,10 +229,21 @@ checkipsec() {
 		iptables -t mangle -A IPSEC -j NEW_IPSEC_CONN
 		iptables -t mangle -A IPSEC -j CONNMARK --save-mark
 	    fi
+	    if [ "$(ip6tables -n -t mangle -L IPSEC | wc -l )" != 6 ]; then
+		ip6tables -t mangle -F IPSEC
+		ip6tables -t mangle -A IPSEC -j CONNMARK --restore-mark
+		ip6tables -t mangle -A IPSEC -m mark --mark 0x80000000/0x80000000 -j RETURN
+		ip6tables -t mangle -A IPSEC -j NEW_IPSEC_CONN
+		ip6tables -t mangle -A IPSEC -j CONNMARK --save-mark
+	    fi
 	else
 	    if [ "$(iptables -n -t mangle -L IPSEC | wc -l )" != 3 ]; then
 		iptables -t mangle -F IPSEC
 		iptables -t mangle -A IPSEC -j NEW_IPSEC_CONN
+	    fi
+	    if [ "$(ip6tables -n -t mangle -L IPSEC | wc -l )" != 3 ]; then
+		ip6tables -t mangle -F IPSEC
+		ip6tables -t mangle -A IPSEC -j NEW_IPSEC_CONN
 	    fi
 	fi
 
@@ -256,10 +273,20 @@ checkipsec() {
 	    iptables -t mangle -I OUTPUT 1 -p udp --sport 4500 -j ACCEPT
 	    iptables -t mangle -I OUTPUT 1 -p udp --dport 4500 -j ACCEPT
 	fi
+	if ! (ip6tables -n -t mangle -L OUTPUT | grep -q '^IPSEC'); then
+	    ip6tables -t mangle -I OUTPUT 1 -j IPSEC
+	    ip6tables -t mangle -I OUTPUT 1 -p udp --sport 500 -j ACCEPT
+	    ip6tables -t mangle -I OUTPUT 1 -p udp --dport 500 -j ACCEPT
+	    ip6tables -t mangle -I OUTPUT 1 -p udp --sport 4500 -j ACCEPT
+	    ip6tables -t mangle -I OUTPUT 1 -p udp --dport 4500 -j ACCEPT
+	fi
 
 	# now look for -j IPSEC in PREROUTING chains.
 	if ! (iptables -n -t mangle -L PREROUTING | grep -q '^IPSEC'); then
 	    iptables -t mangle -I PREROUTING 1 -j IPSEC
+	fi
+	if ! (ip6tables -n -t mangle -L PREROUTING | grep -q '^IPSEC'); then
+	    ip6tables -t mangle -I PREROUTING 1 -j IPSEC
 	fi
 
 	if [ -w /proc/sys/net/ipv4/conf/${PLUTO_INTERFACE}/src_valid_mark ]; then
@@ -491,20 +518,22 @@ doipsecrule() {
 
 	case ${1} in
 	    add)
-		it="iptables -t mangle -I NEW_IPSEC_CONN 1 ${rulespec}"
+		it4="iptables -t mangle -I NEW_IPSEC_CONN 1 ${rulespec}"
+		it6="ip6tables -t mangle -I NEW_IPSEC_CONN 1 ${rulespec}"
 		;;
 	    delete)
-		it="iptables -t mangle -D NEW_IPSEC_CONN ${rulespec}"
+		it4="iptables -t mangle -D NEW_IPSEC_CONN ${rulespec}"
+		it6="ip6tables -t mangle -D NEW_IPSEC_CONN ${rulespec}"
 		;;
 	esac
 
-	oops="$(set +x; eval ${it} 2>&1)"
+	oops="$(set +x; eval ${it4}; eval ${it6}; 2>&1)"
 	st=$?
 	if [ -z  "${oops}" -a ${st} -ne 0 ]; then
 	    oops="silent error, exit status ${st}"
 	fi
 	if [ -n "${oops}" -o ${st} -ne 0 ]; then
-	    echo "${0}: doipsecrule \"${it}\" failed (${oops})" >&2
+	    echo "${0}: doipsecrule \"${it4}\" or \"${it6}\" failed (${oops})" >&2
 	fi
 	return ${st}
     fi

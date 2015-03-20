@@ -25,4 +25,4 @@ ExecReload=@FINALSBINDIR@/ipsec whack --listen
 
 [Install]
 WantedBy=multi-user.target
-Alias=syslog.service
+Alias=libreswan.service

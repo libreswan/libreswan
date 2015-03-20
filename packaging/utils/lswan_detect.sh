@@ -6,154 +6,151 @@
 
 #
 #  Some distro's don't add the sbin directories to the normal users PATH
-PATH=$PATH:/sbin:/usr/sbin
+PATH=${PATH}:/sbin:/usr/sbin
 
 
 return_initsystem() {
-# try to detect the running init system, perhaps more then one can be installed?
-
-if test -z "`uname -o 2> /dev/null | grep inux`"
-then
-	echo >&2 "Error: This non-supported init system not yet supported."
+    # try to detect the running init system, perhaps more then one can
+    # be installed?
+    if [ -z "$(uname -o 2> /dev/null | grep inux)" ]; then
+	echo "Error: This init system is not yet supported." >&2
 	return 89
-fi
+    fi
 
-#
-#  works for systemd, not upstart?
-if test -e /proc/1/comm ; then
-	if test "`cat /proc/1/comm`" = "systemd" ; then
-		echo "systemd"
-		return
+    #  works for systemd, not upstart?
+    if [ -e /proc/1/comm  ]; then
+	if [ "$(cat /proc/1/comm)" = "systemd" ]; then
+	    echo "systemd"
+	    return
 	fi
-fi
+    fi
 
-if test -f /lib/systemd/systemd -a -d /var/run/systemd
-then
+    if [ -f /lib/systemd/systemd -a -d /var/run/systemd ]; then
 	echo "systemd"
 	return
-fi
+    fi
 
-if test -f /sbin/start
-then
+    if [ -f /sbin/start ]; then
 	# override for rhel/centos to use sysvinit
-	if test -e /etc/redhat-release ;
-	then
-		echo "sysvinit"
+	if [ -e /etc/redhat-release ]; then
+	    echo "sysvinit"
 	else
-		echo "upstart"
+	    echo "upstart"
 	fi
 	return
-fi
+    fi
 
-# really, most have this, it is probably a backwards compatiblity or realy sysvinit
-if test -d /etc/init.d
-then
+    # really, most have this, it is probably a backwards compatiblity or
+    # really sysvinit
+    if [ -d /etc/init.d ]; then
 	echo "sysvinit"
 	return
-fi
+    fi
 
-echo >&2 "unknown init system, please email dev@libreswan.org with: `uname -a`"
-echo "unknown"
-exit 1
+    echo "unknown init system, please email swan-dev@lists.libreswan.org with: $(uname -a)" >&2
+    echo "unknown"
+    exit 1
 }
 
 return_distro() {
-
-if test -z "`uname -o 2> /dev/null | grep inux`"
-then
+    # try to detect the distro
+    if [ -z "$(uname -o 2> /dev/null | grep inux)" ]; then
 	# non-Linux, so this will be BSD, OSX or cygwin/Windows
-	echo >&2 "Error: This non-supported system is not configurable at this time."
+	echo "Error: This system is not supported yet." >&2 
 	return 88
-fi
+    fi
 
-if test -f /etc/redhat-release
-then
-	VER="`grep 'Fedora release'  /etc/redhat-release | awk '{ print $3;}'`"
-	if test -n "$VER"
-	then
-		echo "fedora/$VER"
-		return
+    if [ -f /etc/redhat-release ]; then
+	VER="$(grep 'Fedora release'  /etc/redhat-release | awk '{print $3;}')"
+	if [ -n "${VER}" ]; then
+	    echo "fedora/${VER}"
+	    return
 	fi
-	VER="`grep 'Red Hat Enterprise'  /etc/redhat-release | awk '{ print $7;}'`"
-	if test -n "$VER"
-	then
-		echo "rhel/$VER"
-		return
+	VER="$(grep 'Red Hat Enterprise'  /etc/redhat-release | awk '{print $7;}')"
+	if [ -n "${VER}" ]; then
+	    echo "rhel/${VER}"
+	    return
 	fi
-	VER="`grep CentOS /etc/redhat-release | awk '{ print $3;}'`"
-	if test -n "$VER"
-	then
-		echo "centos/$VER"
-		return
+	VER="$(grep CentOS /etc/redhat-release | awk '{ print $3;}')"
+	if [ -n "${VER}" ]; then
+	    echo "centos/${VER}"
+	    return
 	fi
-	VER="`grep 'Foobar Linux'  /etc/redhat-release | awk '{ print $4;}'`"
-	if test -n "$VER"
-	then
-		echo "foobar/$VER"
-		return
+	VER="$(grep 'Foobar Linux'  /etc/redhat-release | awk '{print $4;}')"
+	if [ -n "${VER}" ]; then
+	    echo "foobar/${VER}"
+	    return
 	fi
-	if test -n "`grep enterprise-release /etc/redhat-release`"
-	then
-		echo >&2 "The unbreakable broke - Oracle is welcome to submit patches"
-		return 90
+	if [ -n "$(grep enterprise-release /etc/redhat-release)" ]; then
+	    echo "The unbreakable broke - Oracle is welcome to submit patches" >&2
+	    return 90
 	fi
-fi
+    fi
 
-#
-#  Test for OpenSuSE:
-if test -f /etc/SuSE-brand
-then
-	if test "`head -1 /etc/SuSE-brand | tr '[:upper:]' '[:lower:]'`" = "opensuse" ; then
-		echo "opensuse/`grep VERSION /etc/SuSE-brand | awk '{ print $3}'`"
-		return
+    #  Test for OpenSuSE:
+    if [ -f /etc/SuSE-brand ]; then
+	if [ "$(head -1 /etc/SuSE-brand | tr '[:upper:]' '[:lower:]')" = "opensuse" ]; then
+	    echo "opensuse/$(grep VERSION /etc/SuSE-brand | awk '{print $3;}')"
+	    return
 	fi
-fi
+    fi
 
-#
-#  Test for SuSE/SLES:
-if test -f /etc/SuSE-release
-then
-	if grep -i suse /etc/SuSE-release > /dev/null 2>&1 ; then
-		VER="`grep VERSION /etc/SuSE-release | awk '{ print $3}'`"
-		PAT="`grep PATCHLEVEL /etc/SuSE-release | awk '{ print $3}'`"
-		echo "suse/${VER}.${PAT}"
+    #  Test for SuSE/SLES:
+    if [ -f /etc/SuSE-release ]; then
+	if grep -i suse /etc/SuSE-release > /dev/null 2>&1; then
+	    VER="$(grep VERSION /etc/SuSE-release | awk '{print $3;}')"
+	    PAT="$(grep PATCHLEVEL /etc/SuSE-release | awk '{print $3;}')"
+	    echo "suse/${VER}.${PAT}"
 	fi
 	return
-fi
+    fi
 
-# Check ubuntu before debian, as it also has /etc/debian_version
-if test -f /etc/lsb-release
-then
+    # Check ubuntu before debian, as it also has /etc/debian_version
+    if [ -f /etc/lsb-release ]; then
 	. /etc/lsb-release
-	if test "$DISTRIB_ID" = "Ubuntu"
-	then
-		echo "ubuntu/$DISTRIB_RELEASE"
-		return
+	if [ "${DISTRIB_ID}" = "Ubuntu" ]; then
+	    echo "ubuntu/${DISTRIB_RELEASE}"
+	    return
 	fi
-fi
+    fi
 
-if test -f /etc/debian_version
-then
-	VER="`cat /etc/debian_version | sed 's/^\([0-9]\.[0-9]\).*$/\1/'`"
-	echo "debian/$VER"
+    if [ -f /etc/debian_version ]; then
+	VER="$(cat /etc/debian_version | sed 's/^\([0-9]\.[0-9]\).*$/\1/')"
+	echo "debian/${VER}"
 	return
-fi
+    fi
 
-if test -f /etc/arch-release
-then
+    if [ -f /etc/arch-release ]; then
 	# Arch Linux has no version, rolling release only
 	echo "archlinux"
 	return
-fi
+    fi
 
-echo >&2 "unknown distribution, please email dev@libreswan.org with: `uname -a`"
-echo "unknown"
-exit 1
+    if [ -f /etc/alpine-release ]; then
+	VER="$(cat /etc/alpine-release | sed 's/^\([0-9]\.[0-9]\).*$/\1/')"
+	echo "alpine/${VER}"
+	return
+    fi
 
+    if [ -f /etc/gentoo-release ]; then
+	VER="$(cat /etc/gentoo-release | awk '{print $NF;}')"
+	echo "gentoo/${VER}"
+	return
+    fi
+
+    echo "unknown distribution, please email swan-dev@lists.libreswan.org with: $(uname -a)"  >&2
+    echo "unknown"
+    exit 1
 }
 
 case "$1" in
-help|--help|-h|'')
+    distro|--distro)
+	return_distro
+	;;
+    init|--init|initsystem|--initsystem)
+	return_initsystem
+	;;
+    *)
 	echo "Usage: $0 <distro|init>"
 	echo "    distro  will detect the distribution (eg fedora/18, ubuntu/12.10, etc.)"
 	echo "    init    will detect the init system used (systemd, upstart, sysvinit)"
@@ -163,13 +160,4 @@ help|--help|-h|'')
 	echo
 	exit 1
 	;;
-distro|--distro)
-	return_distro
-	;;
-
-init|--init|initsystem|--initsystem)
-	return_initsystem
-	;;
 esac
-
-

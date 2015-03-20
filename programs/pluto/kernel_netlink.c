@@ -334,7 +334,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 			continue;
 		} else if (addr.nl_pid != 0) {
 			/* not for us: ignore */
-			DBG(DBG_NETKEY,
+			DBG(DBG_KERNEL,
 			    DBG_log(
 				    "netlink: ignoring %s message from process %u",
 				    sparse_val_show(xfrm_type_names,
@@ -342,7 +342,7 @@ static bool send_netlink_msg(struct nlmsghdr *hdr, struct nlmsghdr *rbuf,
 				    addr.nl_pid));
 			continue;
 		} else if (rsp.n.nlmsg_seq != seq) {
-			DBG(DBG_NETKEY,
+			DBG(DBG_KERNEL,
 			    DBG_log(
 				    "netlink: ignoring out of sequence (%u/%u) message %s",
 				    rsp.n.nlmsg_seq, seq,
@@ -530,7 +530,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		break;
 	}
 	if (satype != 0) {
-		DBG(DBG_NETKEY,
+		DBG(DBG_KERNEL,
 		    DBG_log("satype(%d) is not used in netlink_raw_eroute.",
 			    satype));
 	}
@@ -550,14 +550,19 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		 * Variable "that" should be remote, but here it's not.
 		 * We must check "dir" to find out remote address.
 		 */
+		int local_port;
+
 		if (dir == XFRM_POLICY_OUT) {
+			local_port = portof(&that_client->addr);
 			addrtosubnet(that_host, &local_client);
 			that_client = &local_client;
 		} else {
+			local_port = portof(&this_client->addr);
 			addrtosubnet(this_host, &local_client);
 			this_client = &local_client;
 		}
-		DBG(DBG_NETKEY,
+		setportof(local_port, &local_client.addr);
+		DBG(DBG_KERNEL,
 		    DBG_log("%s: using host address instead of client subnet",
 			    __func__));
 	}
@@ -869,7 +874,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		if ( (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256) ||
 		     (sa->authalg == AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG) ) {
 			struct xfrm_algo_auth algo;
-			DBG(DBG_NETKEY,
+			DBG(DBG_KERNEL,
 			    DBG_log(
 				    "  using new struct xfrm_algo_auth for XFRM message with explicit truncation for sha2_256"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
@@ -892,7 +897,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 		} else {
 			struct xfrm_algo algo;
-			DBG(DBG_NETKEY,
+			DBG(DBG_KERNEL,
 			    DBG_log(
 				    "  using old struct xfrm_algo for XFRM message"));
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
@@ -1195,11 +1200,9 @@ static void linux_pfkey_register_response(const struct sadb_msg *msg)
 {
 	switch (msg->sadb_msg_satype) {
 	case SADB_SATYPE_ESP:
-#ifdef KERNEL_ALG
 		kernel_alg_register_pfkey(msg,
 					  msg->sadb_msg_len *
 					  IPSEC_PFKEYv2_ALIGN);
-#endif
 		/* XXX Need to grab list from the kernel. */
 		linux_pfkey_add_aead();
 		break;
@@ -1268,7 +1271,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 	struct xfrm_user_sec_ctx_ike *uctx = NULL;
 	bool found_sec_ctx = FALSE;
 
-	DBG(DBG_NETKEY,
+	DBG(DBG_KERNEL,
 	    DBG_log("xfrm netlink msg len %lu", (unsigned long) n->nlmsg_len));
 #endif
 
@@ -1281,11 +1284,11 @@ static void netlink_acquire(struct nlmsghdr *n)
 	}
 
 #ifdef HAVE_LABELED_IPSEC
-	DBG(DBG_NETKEY,
+	DBG(DBG_KERNEL,
 	    DBG_log("xfrm:nlmsghdr= %lu", sizeof(struct nlmsghdr)));
-	DBG(DBG_NETKEY,
+	DBG(DBG_KERNEL,
 	    DBG_log("xfrm:acquire= %lu", sizeof(struct xfrm_user_acquire)));
-	DBG(DBG_NETKEY, DBG_log("xfrm:rtattr= %lu", sizeof(struct rtattr)));
+	DBG(DBG_KERNEL, DBG_log("xfrm:rtattr= %lu", sizeof(struct rtattr)));
 #endif
 
 	/* to get rid of complaints about strict alignment: */
@@ -1299,48 +1302,48 @@ static void netlink_acquire(struct nlmsghdr *n)
 	transport_proto = acquire->sel.proto;
 
 #ifdef HAVE_LABELED_IPSEC
-	tmp = (char*) acquire;
+	tmp = (char*) NLMSG_DATA(n);
 	tmp = tmp + NLMSG_ALIGN(sizeof(struct xfrm_user_acquire));
 	attr = (struct rtattr *)tmp;
 
-	DBG(DBG_NETKEY, DBG_log("rtattr len= %lu", attr->rta_len));
+	DBG(DBG_KERNEL, DBG_log("rtattr len= %lu", attr->rta_len));
 
 	if ( attr->rta_type == XFRMA_TMPL ) {
-		DBG(DBG_NETKEY, DBG_log("xfrm: found XFRMA_TMPL"));
+		DBG(DBG_KERNEL, DBG_log("xfrm: found XFRMA_TMPL"));
 	} else {
-		DBG(DBG_NETKEY, DBG_log("xfrm: not found XFRMA_TMPL"));
+		DBG(DBG_KERNEL, DBG_log("xfrm: not found XFRMA_TMPL"));
 		if (attr->rta_type == XFRMA_SEC_CTX ) {
-			DBG(DBG_NETKEY, DBG_log("xfrm: found XFRMA_SEC_CTX"));
+			DBG(DBG_KERNEL, DBG_log("xfrm: found XFRMA_SEC_CTX"));
 			found_sec_ctx = TRUE;
 		}
 	}
 
 	if (!found_sec_ctx) {
-		DBG(DBG_NETKEY,
+		DBG(DBG_KERNEL,
 		    DBG_log(
 			    "xfrm: did not found XFRMA_SEC_CTX, trying next one"));
-		DBG(DBG_NETKEY, DBG_log("xfrm: rta->len=%lu", attr->rta_len));
+		DBG(DBG_KERNEL, DBG_log("xfrm: rta->len=%lu", attr->rta_len));
 
 		remaining = n->nlmsg_len -
 			    NLMSG_SPACE(sizeof(struct xfrm_user_acquire));
 		attr = RTA_NEXT(attr, remaining);
 
-		DBG(DBG_NETKEY,
+		DBG(DBG_KERNEL,
 		    DBG_log("xfrm: remaining=%d , rta->len = %lu", remaining,
 			    attr->rta_len));
 		if (attr->rta_type == XFRMA_SEC_CTX ) {
-			DBG(DBG_NETKEY, DBG_log(
+			DBG(DBG_KERNEL, DBG_log(
 				    "xfrm: found XFRMA_SEC_CTX now"));
 			found_sec_ctx = TRUE;
 		} else {
 			if (attr->rta_type == XFRMA_POLICY_TYPE ) {
-				DBG(DBG_NETKEY,
+				DBG(DBG_KERNEL,
 				    DBG_log("xfrm: found XFRMA_POLICY_TYPE"));
 			} else {
-				DBG(DBG_NETKEY,
+				DBG(DBG_KERNEL,
 				    DBG_log(
 					    "xfrm: not found anything, seems wierd"));
-				DBG(DBG_NETKEY,
+				DBG(DBG_KERNEL,
 				    DBG_log(
 					    "xfrm: not found sec ctx still, perhaps not a labeled ipsec connection"));
 			}
@@ -1349,7 +1352,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 	if (found_sec_ctx) {
 		xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
-		DBG(DBG_NETKEY,
+		DBG(DBG_KERNEL,
 		    DBG_log(
 			    "xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%d",
 			    xuctx->exttype, xuctx->len,
@@ -1358,7 +1361,7 @@ static void netlink_acquire(struct nlmsghdr *n)
 		if (xuctx->ctx_len <= MAX_SECCTX_LEN) {
 			memcpy(sec_context_value, (xuctx + 1), xuctx->ctx_len);
 
-			DBG(DBG_NETKEY,
+			DBG(DBG_KERNEL,
 			    DBG_log("xfrm: xuctx security context value: %s",
 				    sec_context_value));
 
@@ -1375,16 +1378,16 @@ static void netlink_acquire(struct nlmsghdr *n)
 				memcpy(uctx->sec_ctx_value, (xuctx + 1),
 				       xuctx->ctx_len);
 			} else {
-				DBG(DBG_NETKEY,
+				DBG(DBG_KERNEL,
 				    DBG_log(
 					    "not enough memory for struct xfrm_user_sec_ctx_ike"));
 			}
 		} else {
-			DBG(DBG_NETKEY,
+			DBG(DBG_KERNEL,
 			    DBG_log(
 				    "(should not reach here really) received security length=%d > MAX_SECCTX_LEN",
 				    xuctx->ctx_len));
-			DBG(DBG_NETKEY, DBG_log("ignoring ACQUIRE messages"));
+			DBG(DBG_KERNEL, DBG_log("ignoring ACQUIRE messages"));
 			goto ignore_acquire;
 		}
 	}
@@ -1489,7 +1492,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 			      "?")) {
 		return;
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
-		DBG(DBG_NETKEY,
+		DBG(DBG_KERNEL,
 		    DBG_log("netlink_policy_expire: policy died on us: "
 			    "dir=%d, index=%d",
 			    req.id.dir, req.id.index));
@@ -1501,13 +1504,13 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 			(unsigned long) sizeof(rsp.pol));
 		return;
 	} else if (req.id.index != rsp.pol.index) {
-		DBG(DBG_NETKEY,
+		DBG(DBG_KERNEL,
 		    DBG_log("netlink_policy_expire: policy was replaced: "
 			    "dir=%d, oldindex=%d, newindex=%d",
 			    req.id.dir, req.id.index, rsp.pol.index));
 		return;
 	} else if (upe->pol.curlft.add_time != rsp.pol.curlft.add_time) {
-		DBG(DBG_NETKEY,
+		DBG(DBG_KERNEL,
 		    DBG_log("netlink_policy_expire: policy was replaced "
 			    " and you have won the lottery: "
 			    "dir=%d, index=%d",
@@ -1549,7 +1552,7 @@ static bool netlink_get(void)
 		return TRUE;
 	} else if (addr.nl_pid != 0) {
 		/* not for us: ignore */
-		DBG(DBG_NETKEY,
+		DBG(DBG_KERNEL,
 		    DBG_log("netlink_get: ignoring %s message from process %u",
 			    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type),
 			    addr.nl_pid));
@@ -1562,7 +1565,7 @@ static bool netlink_get(void)
 		return TRUE;
 	}
 
-	DBG(DBG_NETKEY,
+	DBG(DBG_KERNEL,
 	    DBG_log("netlink_get: %s message",
 		    sparse_val_show(xfrm_type_names, rsp.n.nlmsg_type)));
 
@@ -1655,7 +1658,7 @@ retry:
 		return 0;
 	}
 
-	DBG(DBG_NETKEY,
+	DBG(DBG_KERNEL,
 	    DBG_log("netlink_get_spi: allocated 0x%x for %s",
 		    ntohl(rsp.u.sa.id.spi), text_said));
 	return rsp.u.sa.id.spi;
@@ -1808,11 +1811,9 @@ static bool netlink_shunt_eroute(struct connection *c,
 
 		case ERO_ADD_INBOUND:
 			break;
-			;
 
 		case ERO_DEL_INBOUND:
 			break;
-			;
 
 		default:
 			bad_case(op);

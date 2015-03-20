@@ -5,7 +5,7 @@
 
 Summary: Libreswan IPSEC implementation
 Name: libreswan
-Version: 3.4
+Version: 3.5
 # Build KLIPS kernel module?
 %{!?buildklips: %{expand: %%define buildklips 0}}
 

@@ -162,10 +162,10 @@ void mpi_mulpowm( MPI res, MPI *basearray, MPI *exparray, MPI m)
 	MPI *G; /* table with precomputed values of size 2^k */
 	MPI tmp;
 
-  #ifdef USE_BARRETT
+#ifdef USE_BARRETT
 	MPI barrett_y, barrett_r1, barrett_r2;
 	int barrett_k;
-  #endif
+#endif
 
 	for (k = 0; basearray[k]; k++ )
 		;
@@ -187,9 +187,9 @@ void mpi_mulpowm( MPI res, MPI *basearray, MPI *exparray, MPI m)
 	G = m_alloc_clear( (1 << k) * sizeof *G );
 #endif
 
-  #ifdef USE_BARRETT
+#ifdef USE_BARRETT
 	barrett_y = init_barrett( m, &barrett_k, &barrett_r1, &barrett_r2 );
-  #endif
+#endif
 	/* and calculate */
 	tmp =  mpi_alloc( mpi_get_nlimbs(m) + 1 );
 	mpi_set_ui( res, 1 );
@@ -229,11 +229,11 @@ void mpi_mulpowm( MPI res, MPI *basearray, MPI *exparray, MPI m)
 
 	/* cleanup */
 	mpi_free(tmp);
-  #ifdef USE_BARRETT
+#ifdef USE_BARRETT
 	mpi_free(barrett_y);
 	mpi_free(barrett_r1);
 	mpi_free(barrett_r2);
-  #endif
+#endif
 	for (i = 0; i < (1 << k); i++ )
 		mpi_free(G[i]);
 	m_free(G);

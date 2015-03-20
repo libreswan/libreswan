@@ -1,5 +1,11 @@
 #!/bin/sh
+#
 
 cd /source
-rm -rf OBJ.linux.x86_64 modobj*
-make programs module 2>&1 > compile-log.txt
+
+# do don't trust all makefile dependancies, esp lib/
+rm -rf /tmp/lsw_build modobj*
+
+# we use /tmp because it is on tmpfs and compiles much faster, even faster
+# than using ccache on the regular disk image files.
+make OBJDIR=/tmp/lsw_build programs module 2>&1 > compile-log.txt

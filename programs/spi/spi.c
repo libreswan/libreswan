@@ -84,7 +84,6 @@ int address_family = 0;
 unsigned char proto = 0;
 int alg = 0;
 
-#ifdef KERNEL_ALG
 /*
  *      Manual connection support for modular algos (ipsec_alg) --Juanjo.
  */
@@ -95,7 +94,6 @@ struct alg_info_esp *alg_info = NULL;   /* algorithm info got from string */
 struct esp_info *esp_info = NULL;       /* esp info from 1st (only) element */
 const char *alg_err;                    /* auxiliar for parsing errors */
 int proc_read_ok = 0;                   /* /proc/net/pf_key_support read ok */
-#endif /* KERNEL_ALG */
 
 int replay_window = 0;
 char sa[SATOT_BUF];
@@ -439,8 +437,7 @@ int decode_esp(char *algname)
 		esp_alg = XF_ESP3DES;
 #ifdef KERNEL_ALG
 	} else if ((alg_info =
-			    alg_info_esp_create_from_str(algname, &alg_err,
-							 FALSE))) {
+			    alg_info_esp_create_from_str(algname, &alg_err))) {
 		int esp_ealg_id, esp_aalg_id;
 
 		esp_alg = XF_OTHER_ALG;
@@ -1153,7 +1150,6 @@ int main(int argc, char *argv[])
 					       life_opt,
 					       optarg) != 0)
 				exit(1);
-			;
 			break;
 		default:
 			fprintf(stderr,

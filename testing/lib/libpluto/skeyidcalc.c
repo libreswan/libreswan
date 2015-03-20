@@ -132,17 +132,17 @@ struct skey_rsacalc {
 	u_int16_t oakley_group;
 } rsasc[] = {
 	{
-		shared: { shared1, sizeof(shared1) },
-		ni:     { ni1, sizeof(ni1) },
-		nr:     { nr1, sizeof(nr1) },
-		gi: { gi1, sizeof(gi1) },
-		gr: { gr1, sizeof(gr1) },
-		icookie: { ic1, sizeof(ic1) },
-		rcookie: { rc1, sizeof(rc1) },
-		keysize: 8 * 3,
-		auth: OAKLEY_RSA_SIG,
-		prf_hash: OAKLEY_MD5,
-		oakley_group: OAKLEY_GROUP_MODP1536
+		.shared = { shared1, sizeof(shared1) },
+		.ni = { ni1, sizeof(ni1) },
+		.nr = { nr1, sizeof(nr1) },
+		.gi = { gi1, sizeof(gi1) },
+		.gr = { gr1, sizeof(gr1) },
+		.icookie = { ic1, sizeof(ic1) },
+		.rcookie = { rc1, sizeof(rc1) },
+		.keysize = 8 * 3,
+		.auth = OAKLEY_RSA_SIG,
+		.prf_hash = OAKLEY_MD5,
+		.oakley_group = OAKLEY_GROUP_MODP1536
 	}
 };
 

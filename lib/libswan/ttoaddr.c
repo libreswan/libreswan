@@ -591,7 +591,6 @@ void regress()
 			printf("%u: '%s' failed to parse: %s\n",
 			       count, r->input, oops);
 			status++;
-			;
 			continue;
 		}
 

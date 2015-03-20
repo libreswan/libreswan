@@ -1377,10 +1377,11 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 			 "cleartext");
 	}
 
-	{ stf_status ret;
-	  ret = ikev2_process_payloads(md, &md->clr_pbs, st->st_state, np);
-	  if (ret != STF_OK)
-		  return ret;
+	{
+		stf_status ret;
+		ret = ikev2_process_payloads(md, &md->clr_pbs, st->st_state, np);
+		if (ret != STF_OK)
+			return ret;
 	}
 
 	return STF_OK;

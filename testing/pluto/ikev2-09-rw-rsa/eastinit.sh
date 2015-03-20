@@ -1,10 +1,7 @@
-: ==== start ====
-TESTNAME=ikev2-09-rw-rsa
-source /testing/pluto/bin/eastnlocal.sh
-
-ipsec setup start
+/testing/guestbin/swan-prep
+ipsec _stackmanager start 
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec whack --whackrecord /var/tmp/ikev2.record
-ipsec auto --add  westnet-eastnet-ikev2
+ipsec auto --add westnet-eastnet-ikev2
+ipsec auto --status
 echo "initdone"

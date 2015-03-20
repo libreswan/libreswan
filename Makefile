@@ -33,7 +33,7 @@ def:
 	@echo " make module module_install programs install"
 	@echo
 	@echo "When using KLIPS with OCF:"
-	@echo " make MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/ocf/config-all.hmodules module module_install programs install"
+	@echo " make CONFIG_KLIPS_OCF=y MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/ocf/config-all.hmodules module module_install programs install"
 	@echo
 	@echo "When using NETKEY:"
 	@echo " make programs install"
