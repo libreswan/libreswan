@@ -60,8 +60,6 @@ clean: unpatch
 	-find $(CURDIR) -name "*.o" | xargs --no-run-if-empty rm
 	-find $(CURDIR)/lib/libcrypto -name "*.a" | xargs --no-run-if-empty rm
 
-	rm -rf debian/libreswan-modules-source-build/
-
 	# Really clean (#356716)
 	# This is a hack: should be better implemented
 	rm -f lib/libswan/libswan.a || true
@@ -184,83 +182,6 @@ install-libreswan-doc: build
 	# more lintian cleanups
 	find $(CURDIR)/debian/libreswan-doc -name ".gitignore" | xargs --no-run-if-empty rm -f
 
-install-libreswan-modules-source: DH_OPTIONS=-plibreswan-modules-source
-install-libreswan-modules-source: PKGDIR=$(CURDIR)/debian/libreswan-modules-source
-install-libreswan-modules-source: BUILDDIR=$(CURDIR)/debian/libreswan-modules-source-build
-install-libreswan-modules-source: patch
-	dh_testdir
-	dh_testroot
-	dh_installdirs
-	mkdir -p "$(BUILDDIR)/modules/libreswan"
-	mkdir -p "$(BUILDDIR)/modules/libreswan/lib"
-	mkdir -p "$(BUILDDIR)/modules/libreswan/debian"
-	mkdir -p "$(BUILDDIR)/modules/libreswan/packaging"
-	mkdir -p "$(BUILDDIR)/modules/libreswan/patches/kernel"
-	cp -r CHANGES CREDITS Makefile Makefile.top Makefile.inc Makefile.ver linux/ \
-		"$(BUILDDIR)/modules/libreswan"
-	cp -r lib/libcrypto "$(BUILDDIR)/modules/libreswan/lib/"
-	cp -r packaging/makefiles packaging/linus packaging/utils packaging/defaults/ packaging/ocf \
-		"$(BUILDDIR)/modules/libreswan/packaging/"
-	cp -r patches/kernel/2.6.32 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/2.6.34 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/2.6.35 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/2.6.38 "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/3.0.0  "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	cp -r patches/kernel/3.2.0  "$(BUILDDIR)/modules/libreswan/patches/kernel/"
-	find "$(BUILDDIR)/modules/libreswan/lib/" -name "*.o" | xargs --no-run-if-empty rm
-	install --mode=644 debian/libreswan-modules-source.kernel-config "$(BUILDDIR)/modules/libreswan/config-all.h"
-	install --mode=755 debian/libreswan-modules-source.rules "$(BUILDDIR)/modules/libreswan/debian/rules"
-	install --mode=644 debian/libreswan-modules-source.control.in "$(BUILDDIR)/modules/libreswan/debian/control.in"
-	install --mode=644 debian/libreswan-modules-source.docs "$(BUILDDIR)/modules/libreswan/debian/docs.in"
-	install --mode=644 debian/libreswan-modules-source.lintian-overrides.in "$(BUILDDIR)/modules/libreswan/debian/lintian-overrides.in"
-	install --mode=644 debian/compat "$(BUILDDIR)/modules/libreswan/debian/"
-	install --mode=644 debian/changelog "$(BUILDDIR)/modules/libreswan/debian/"
-	install --mode=644 debian/copyright "$(BUILDDIR)/modules/libreswan/debian/"
-	install --mode=644 debian/NEWS "$(BUILDDIR)/modules/libreswan/debian/"
-	install --mode=644 debian/README.Debian "$(BUILDDIR)/modules/libreswan/debian/"
-
-	tar -C $(BUILDDIR) -c modules/ | bzip2 -9 > \
-		"$(PKGDIR)/usr/src/libreswan-modules.tar.bz2"
-
-	dh_installdocs -plibreswan-modules-source -n
-	dh_installchangelogs CHANGES
-
-	# more lintian cleanups
-	find $(PKGDIR) -name ".gitignore" | xargs --no-run-if-empty rm -f
-
-install-libreswan-modules-dkms: DH_OPTIONS=-plibreswan-modules-dkms
-install-libreswan-modules-dkms: VERSION:=$(shell dpkg-parsechangelog | grep '^Version: ' | cut -d: -f3 | cut -d- -f1)
-install-libreswan-modules-dkms: patch
-	dh_testdir
-	dh_testroot
-	dh_installdirs
-	mkdir -p "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/lib"
-	mkdir -p "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/debian"
-	mkdir -p "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/packaging"
-	cp -r Makefile Makefile.top Makefile.inc Makefile.ver linux/ \
-		"$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)"
-	cp -r lib/libcrypto "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/lib"
-	cp -r packaging/makefiles packaging/linus packaging/utils packaging/defaults/ packaging/ocf \
-		"$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/packaging/"
-	find "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/lib" -name "*.o" | xargs --no-run-if-empty rm
-	install --mode=644 debian/libreswan-modules-source.kernel-config "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/config-all.h"
-	sed -e "s/#VERSION#/$(VERSION)/g" debian/libreswan-modules-dkms.dkms.conf.in > "$(CURDIR)/debian/libreswan-modules-dkms/usr/src/libreswan-$(VERSION)/dkms.conf"
-
-	dh_installdocs -plibreswan-modules-dkms -n
-	dh_installchangelogs CHANGES
-
-	# more lintian cleanups
-	find $(CURDIR)/debian/libreswan-modules-dkms -name ".gitignore" | xargs --no-run-if-empty rm -f
-
-	# Ensure +x for scrips
-	find $(CURDIR)/debian/libreswan-modules-dkms -type f -name "*.sh" -o -name "*.pl" | xargs --no-run-if-empty chmod 755
-
-	# remove empty dir
-	find $(CURDIR)/debian/libreswan-modules-dkms -type d -name debian | xargs --no-run-if-empty rmdir
-
-	# These are not executable scripts, more like "shell source" files
-	find $(CURDIR)/debian/libreswan-modules-dkms -name sshenv -o -name setup | xargs --no-run-if-empty chmod 644
-
 binary-common:
 	dh_testdir
 	dh_testroot
@@ -278,13 +199,13 @@ binary-common:
 	dh_builddeb
 
 # Build architecture-independent files here.
-binary-indep: install-libreswan-doc install-libreswan-modules-source
+binary-indep: install-libreswan-doc
 	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
 
 # Build architecture-dependent files here.
-binary-arch: install-libreswan install-libreswan-modules-dkms
+binary-arch: install-libreswan
 	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
 
 binary: binary-indep binary-arch
-.PHONY: clean binary-indep binary-arch binary-common install-libreswan-modules-dkms \
-        install-libreswan-modules-source install-libreswan-doc install-libreswan
+.PHONY: clean binary-indep binary-arch binary-common \
+        install-libreswan-doc install-libreswan
