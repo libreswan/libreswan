@@ -21,16 +21,16 @@ static int selinux_ready = 0;
 void init_avc(void)
 {
 	if (!is_selinux_enabled()) {
-		DBG_log("selinux support is NOT enabled.\n");
+		DBG_log("selinux support is NOT enabled.");
 		return;
 	} else {
-		DBG_log("selinux support is enabled.\n");
+		DBG_log("selinux support is enabled.");
 	}
 
 	if (avc_init("libreswan", NULL, NULL, NULL, NULL) == 0)
 		selinux_ready = 1;
 	else
-		DBG_log("selinux: could not initialize avc.\n");
+		DBG_log("selinux: could not initialize avc.");
 }
 
 int within_range(security_context_t sl, security_context_t range)

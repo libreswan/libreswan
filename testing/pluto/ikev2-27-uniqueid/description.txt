@@ -1,0 +1,6 @@
+testing ikev2 uniqueid code. initiator gets new ip and restart.
+This causes an "route already in use" on east.
+
+The IKEv1 works properly.
+The IKEv2 case works when restarting with the same IP address, but
+fails when its IP address changed.

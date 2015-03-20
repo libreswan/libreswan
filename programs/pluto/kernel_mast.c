@@ -173,7 +173,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 		err_t e;
 		e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 		if (e) {
-			DBG_log("invalid listen= option ignored: %s\n", e);
+			DBG_log("invalid listen= option ignored: %s", e);
 			pluto_listen = NULL;
 		}
 	}
@@ -185,7 +185,7 @@ static void mast_process_raw_ifaces(struct raw_iface *rifaces)
 		  useful_mastno = new_useful;
 	}
 
-	DBG_log("useful mast device %d\n", useful_mastno);
+	DBG_log("useful mast device %d", useful_mastno);
 	if (useful_mastno >= 0)
 		snprintf(useful_mast_name, sizeof(useful_mast_name), "mast%d", useful_mastno);
 
@@ -416,7 +416,7 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 		ref   = st->st_ref;
 		refhim = st->st_refhim;
 		DBG(DBG_KERNEL,
-		    DBG_log("Using saref=%u/%u for verb=%s\n", ref, refhim,
+		    DBG_log("Using saref=%u/%u for verb=%s", ref, refhim,
 			    verb));
 	}
 
@@ -599,7 +599,7 @@ const struct kernel_ops mast_kernel_ops = {
 	.replay_window = 64,
 
 	.pfkey_register = klips_pfkey_register,
-	.pfkey_register_response = klips_pfkey_register_response,
+	.pfkey_register_response = pfkey_register_response,
 	.process_queue = pfkey_dequeue,
 	.process_msg = pfkey_event,
 	.raw_eroute = mast_raw_eroute,

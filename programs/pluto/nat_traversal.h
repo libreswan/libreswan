@@ -139,18 +139,18 @@ bool ikev2_out_nat_v2n(u_int8_t np, pb_stream *outs, struct msg_digest *md);
 		? ( ((nat_t_policy) & POLICY_TUNNEL) \
 		    ? ( ((st)->hidden_variables.st_nat_traversal & \
 			 NAT_T_WITH_ENCAPSULATION_RFC_VALUES) \
-			? (ENCAPSULATION_MODE_UDP_TUNNEL_RFC) \
-			: (ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS) \
+			? ENCAPSULATION_MODE_UDP_TUNNEL_RFC \
+			: ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS \
 			) \
 		    : ( ((st)->hidden_variables.st_nat_traversal & \
 			 NAT_T_WITH_ENCAPSULATION_RFC_VALUES) \
-			? (ENCAPSULATION_MODE_UDP_TRANSPORT_RFC) \
-			: (ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS) \
+			? ENCAPSULATION_MODE_UDP_TRANSPORT_RFC \
+			: ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS \
 			) \
 		    ) \
 		: ( ((st)->st_policy & POLICY_TUNNEL) \
-		    ? (ENCAPSULATION_MODE_TUNNEL) \
-		    : (ENCAPSULATION_MODE_TRANSPORT) \
+		    ? ENCAPSULATION_MODE_TUNNEL \
+		    : ENCAPSULATION_MODE_TRANSPORT \
 		    ) \
 		)
 

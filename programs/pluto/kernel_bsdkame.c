@@ -356,11 +356,11 @@ static void bsdkame_algregister(int satype, int supp_exttype,
 
 static void bsdkame_pfkey_register(void)
 {
-	DBG_log("pfkey_register AH\n");
+	DBG_log("pfkey_register AH");
 	pfkey_send_register(pfkeyfd, SADB_SATYPE_AH);
 	pfkey_recv_register(pfkeyfd);
 
-	DBG_log("pfkey_register ESP\n");
+	DBG_log("pfkey_register ESP");
 	pfkey_send_register(pfkeyfd, SADB_SATYPE_ESP);
 	pfkey_recv_register(pfkeyfd);
 
@@ -519,7 +519,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 		break;
 
 	default:
-		DBG_log("shunt_eroute called with spi=%08x\n", spi);
+		DBG_log("shunt_eroute called with spi=%08x", spi);
 		policy = IPSEC_POLICY_IPSEC;
 	}
 
@@ -545,7 +545,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 		break;
 
 	default:
-		DBG_log("bsdkame_raw_eroute not installing eroute to proto=%d\n",
+		DBG_log("bsdkame_raw_eroute not installing eroute to proto=%d",
 			proto);
 		return TRUE;
 	}
@@ -578,11 +578,11 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 		policylen += ir->sadb_x_ipsecrequest_len;
 
-		DBG_log("request_len=%u policylen=%u\n",
+		DBG_log("request_len=%u policylen=%u",
 			ir->sadb_x_ipsecrequest_len, policylen);
 
 	} else {
-		DBG_log("setting policy=%d\n", policy);
+		DBG_log("setting policy=%d", policy);
 	}
 
 	policy_struct->sadb_x_policy_len = PFKEY_UNIT64(policylen);
@@ -600,7 +600,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 
 	if (ret < 0) {
 		extern int __ipsec_errcode;
-		DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=eroute\n", ret,
+		DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=eroute", ret,
 			__ipsec_errcode, ipsec_strerror(),
 			saddr, daddr, pfkey_seq);
 		return FALSE;
@@ -667,7 +667,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 		break;
 
 	default:
-		DBG_log("shunt_eroute called with spi=%08x\n", spi);
+		DBG_log("shunt_eroute called with spi=%08x", spi);
 	}
 
 	if (sr->routing == RT_ROUTED_ECLIPSED && c->kind == CK_TEMPLATE) {
@@ -781,11 +781,11 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 
 			policylen += ir->sadb_x_ipsecrequest_len;
 
-			DBG_log("request_len=%u policylen=%u\n",
+			DBG_log("request_len=%u policylen=%u",
 				ir->sadb_x_ipsecrequest_len, policylen);
 
 		} else {
-			DBG_log("setting policy=%d\n", policy);
+			DBG_log("setting policy=%d", policy);
 		}
 
 		policy_struct->sadb_x_policy_len = PFKEY_UNIT64(policylen);
@@ -802,7 +802,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 
 		if (ret < 0) {
 			extern int __ipsec_errcode;
-			DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s\n", ret,
+			DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s", ret,
 				__ipsec_errcode, ipsec_strerror(),
 				saddr, daddr, pfkey_seq, opname);
 			return FALSE;
@@ -826,7 +826,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 		int policylen;
 		int ret;
 
-		DBG_log("need to send a delete message\n");
+		DBG_log("need to send a delete message");
 
 		snprintf(buf2, sizeof(buf2),
 			 "eroute_connection %s", opname);
@@ -858,7 +858,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 
 		if (ret < 0) {
 			extern int __ipsec_errcode;
-			DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s\n", ret,
+			DBG_log("ret = %d from send_spdadd: %d (%s) addr=%p/%p seq=%u opname=%s", ret,
 				__ipsec_errcode, ipsec_strerror(),
 				saddr, daddr, pfkey_seq, opname);
 			return FALSE;
@@ -892,7 +892,7 @@ static bool bsdkame_sag_eroute(struct state *st,
 {
 	int proto;
 
-	DBG_log("sag eroute called\n");
+	DBG_log("sag eroute called");
 
 	proto = 0;
 	if (st->st_ah.present)
@@ -959,7 +959,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 
 	if ((sa->enckeylen + sa->authkeylen) > sizeof(keymat)) {
 		libreswan_log(
-			"Key material is too big for kernel interface: %d>%d\n",
+			"Key material is too big for kernel interface: %d>%d",
 			(sa->enckeylen + sa->authkeylen),
 			sizeof(keymat));
 		return FALSE;
@@ -971,7 +971,7 @@ static bool bsdkame_add_sa(const struct kernel_sa *sa, bool replace)
 	memcpy(keymat + sa->enckeylen, sa->authkey, sa->authkeylen);
 
 	DBG(DBG_KERNEL,
-	    DBG_log("calling pfkey_send_x1 for pfkeyseq=%d encalg=%d/%d authalg=%d/%d spi=%08x, reqid=%u, satype=%d\n",
+	    DBG_log("calling pfkey_send_x1 for pfkeyseq=%d encalg=%d/%d authalg=%d/%d spi=%08x, reqid=%u, satype=%d",
 		    pfkey_seq,
 		    sa->encalg, sa->enckeylen,
 		    sa->authalg, sa->authkeylen,
@@ -1056,7 +1056,7 @@ static bool bsdkame_except_socket(int socketfd, int family)
 		break;
 #endif
 	default:
-		libreswan_log("unsupported address family (%d)\n", family);
+		libreswan_log("unsupported address family (%d)", family);
 		return FALSE;
 	}
 
@@ -1067,14 +1067,14 @@ static bool bsdkame_except_socket(int socketfd, int family)
 	policy.sadb_x_policy_dir = IPSEC_DIR_INBOUND;
 	if (setsockopt(socketfd, level, optname, &policy,
 		       sizeof(policy)) == -1) {
-		libreswan_log("bsdkame except socket setsockopt: %s\n", strerror(
+		libreswan_log("bsdkame except socket setsockopt: %s", strerror(
 				      errno));
 		return FALSE;
 	}
 	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
 	if (setsockopt(socketfd, level, optname, &policy,
 		       sizeof(policy)) == -1) {
-		libreswan_log("bsdkame except socket setsockopt: %s\n", strerror(
+		libreswan_log("bsdkame except socket setsockopt: %s", strerror(
 				      errno));
 		return FALSE;
 	}
@@ -1087,26 +1087,26 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	async_fdp: &pfkeyfd,
 	replay_window: 64,
 
-	pfkey_register: bsdkame_pfkey_register,
-	pfkey_register_response: bsdkame_pfkey_register_response,
-	process_queue: bsdkame_dequeue,
-	process_msg: bsdkame_event,
-	raw_eroute: bsdkame_raw_eroute,
-	shunt_eroute: bsdkame_shunt_eroute,
-	sag_eroute: bsdkame_sag_eroute,
-	add_sa: bsdkame_add_sa,
-	grp_sa: NULL,
-	del_sa: bsdkame_del_sa,
-	get_spi: NULL,
-	eroute_idle: bsdkame_was_eroute_idle,
-	inbound_eroute: FALSE,
-	policy_lifetime: TRUE,
-	init: bsdkame_init_pfkey,
-	exceptsocket: bsdkame_except_socket,
-	docommand: bsdkame_do_command,
-	set_debug: bsdkame_set_debug,
-	remove_orphaned_holds: bsdkame_remove_orphaned_holds,
-	process_ifaces: bsdkame_process_raw_ifaces,
-	overlap_supported: FALSE,
-	sha2_truncbug_support: FALSE,
+	.pfkey_register = bsdkame_pfkey_register,
+	.pfkey_register_response = bsdkame_pfkey_register_response,
+	.process_queue = bsdkame_dequeue,
+	.process_msg = bsdkame_event,
+	.raw_eroute = bsdkame_raw_eroute,
+	.shunt_eroute = bsdkame_shunt_eroute,
+	.sag_eroute = bsdkame_sag_eroute,
+	.add_sa = bsdkame_add_sa,
+	.grp_sa = NULL,
+	.del_sa = bsdkame_del_sa,
+	.get_spi = NULL,
+	.eroute_idle = bsdkame_was_eroute_idle,
+	.inbound_eroute = FALSE,
+	.policy_lifetime = TRUE,
+	.init = bsdkame_init_pfkey,
+	.exceptsocket = bsdkame_except_socket,
+	.docommand = bsdkame_do_command,
+	.set_debug = bsdkame_set_debug,
+	.remove_orphaned_holds = bsdkame_remove_orphaned_holds,
+	.process_ifaces = bsdkame_process_raw_ifaces,
+	.overlap_supported = FALSE,
+	.sha2_truncbug_support = FALSE,
 };

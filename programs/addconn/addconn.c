@@ -1,8 +1,9 @@
 /*
  * A program to read the configuration file and load a single conn
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012 Kim B. Heino <b@bbbs.net>
+ * Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2014 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2012-2013 Kim B. Heino <b@bbbs.net>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -507,7 +508,7 @@ static void usage(void)
 	exit(10);
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "config", required_argument, NULL, 'C' },
 	{ "debug", no_argument, NULL, 'D' },
@@ -728,16 +729,35 @@ int main(int argc, char *argv[])
 				resolve_defaultroute(conn);
 				starter_whack_add_conn(cfg, conn);
 			}
-			if (conn->desired_state == STARTUP_ONDEMAND)
-				starter_whack_route_conn(cfg, conn);
 		}
 
-		/* We added all connections, let pluto listen, then startup our conns */
+		/*
+		 * We loaded all connections. Now tell pluto to listen,
+		 * then route the conns and resolve default route.
+		 */
 		starter_whack_listen(cfg);
 
 		if (verbose)
-			printf("  Pass #2: Initiating auto=start connections\n");
+			printf("  Pass #2: Routing auto=route and auto=start connections\n");
 
+		for (conn = cfg->conns.tqh_first;
+			conn != NULL;
+			conn = conn->link.tqe_next) {
+			if (conn->desired_state == STARTUP_ADD ||
+				conn->desired_state == STARTUP_ONDEMAND ||
+				conn->desired_state == STARTUP_START) {
+				if (verbose)
+					printf(" %s", conn->name);
+				resolve_defaultroute(conn);
+				if (conn->desired_state == STARTUP_ONDEMAND ||
+				    conn->desired_state == STARTUP_START) {
+					starter_whack_route_conn(cfg, conn);
+				}
+			}
+		}
+
+		if (verbose)
+			printf("  Pass #3: Initiating auto=start connections\n");
 
 		for (conn = cfg->conns.tqh_first;
 			conn != NULL;
@@ -745,10 +765,10 @@ int main(int argc, char *argv[])
 			if (conn->desired_state == STARTUP_START) {
 				if (verbose)
 					printf(" %s", conn->name);
-				resolve_defaultroute(conn);
 				starter_whack_initiate_conn(cfg, conn);
 			}
 		}
+
 		if (verbose)
 			printf("\n");
 	} else {

@@ -78,9 +78,9 @@ struct packet_byte_stream {
 	struct_desc *desc;
 	const char *name;			/* what does this PBS represent? */
 	u_int8_t
-	*start,
-	*cur,		/* current position in stream */
-	*roof;		/* byte after last in PBS (on output: just a limit) */
+		*start,
+		*cur,		/* current position in stream */
+		*roof;		/* byte after last in PBS (on output: just a limit) */
 	/* For an output PBS, the length field will be filled in later so
 	 * we need to record its particulars.  Note: it may not be aligned.
 	 */
@@ -89,10 +89,16 @@ struct packet_byte_stream {
 };
 typedef struct packet_byte_stream pb_stream;
 
-/* For an input PBS, pbs_offset is amount of stream processed.
- * For an output PBS, pbs_offset is current size of stream.
- * For an input PBS, pbs_room is size of stream.
- * For an output PBS, pbs_room is maximum size allowed.
+/*
+ * For an input PBS:
+ *	pbs_offset is amount of stream processed.
+ *	pbs_room is size of stream.
+ *	pbs_left is amount of stream remaining
+ *
+ * For an output PBS:
+ *	pbs_offset is current size of stream.
+ *	pbs_room is maximum size allowed.
+ *	pbs_left is amount of space remaining
  */
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
@@ -885,6 +891,27 @@ extern struct_desc ikev2_ts1_desc;
 /* rfc4306, section 3.14, encrypted payload, uses generic header */
 extern struct_desc ikev2_e_desc;
 
+/*
+ * Configuration Payload . RFC 5996 section 3.15
+ */
+struct ikev2_cp {
+	u_int8_t isacp_np;
+	u_int8_t isacp_critical;
+	u_int16_t isacp_length;
+	u_int8_t isacp_type;
+	u_int8_t isacp_res1; /* 3 octects */
+	u_int16_t isat_res2;
+};
+
+extern struct_desc ikev2_cp_desc;
+
+struct ikev2_cp_attribute {
+	u_int16_t type;
+	u_int16_t len;
+};
+
+extern struct_desc ikev2_cp_attribute_desc;
+
 /* union of all payloads */
 
 union payload {
@@ -912,6 +939,8 @@ union payload {
 	struct ikev2_certreq v2certreq;
 	struct ikev2_notify v2n;
 	struct ikev2_delete v2delete;
+	struct ikev2_cp v2cp;
+	struct ikev2_cp_attribute v2cp_attribute;
 };
 
 #endif /* _PACKET_H */

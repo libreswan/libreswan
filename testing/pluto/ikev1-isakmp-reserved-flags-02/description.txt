@@ -1,0 +1,13 @@
+Basic pluto with IKEv2 using RSA on the initiator (west), and on the responder.
+
+This test sets the ISAKMP flags bit 6 which is currently RESERVED
+
+RFC 5996 Section 2.5:
+
+   Also, for forward compatibility, all fields marked RESERVED MUST be
+   set to zero by an implementation running version 2.0, and their
+   content MUST be ignored by an implementation running version 2.0
+
+(also applies to IKEv1)
+
+The connection should establish

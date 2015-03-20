@@ -54,8 +54,10 @@
 
 /*
  * invoke helper to do DH work (IKEv1)
+ *
+ * Note: dh must be heap-allocated.
  */
-stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
+stf_status start_dh_secretiv(struct dh_continuation *dh,
 			     struct state *st,
 			     enum crypto_importance importance,
 			     enum phase1_role role,
@@ -78,7 +80,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 
 	passert(r.pcr_d.dhq.oakley_group != OAKLEY_GROUP_invalid);
 	DBG(DBG_CONTROL | DBG_CRYPT,
-	    DBG_log("parent1 type: %d group: %d len: %d\n", r.pcr_type,
+	    DBG_log("parent1 type: %d group: %d len: %d", r.pcr_type,
 		    r.pcr_d.dhq.oakley_group, (int)r.pcr_len));
 
 	if (pss != NULL)
@@ -104,7 +106,7 @@ stf_status start_dh_secretiv(struct pluto_crypto_req_cont *cn,
 	       st->st_rcookie, COOKIE_SIZE);
 
 	passert(dhq->oakley_group != OAKLEY_GROUP_invalid);
-	return send_crypto_helper_request(&r, cn);
+	return send_crypto_helper_request(&r, &dh->dh_pcrc);
 }
 
 void finish_dh_secretiv(struct state *st,
@@ -134,7 +136,7 @@ stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 			   oakley_group_t oakley_group2)
 {
 	struct pluto_crypto_req r;
-	struct pcr_skeyid_q *const dhq= &r.pcr_d.dhq;
+	struct pcr_skeyid_q *const dhq = &r.pcr_d.dhq;
 	const chunk_t *pss = get_preshared_secret(st->st_connection);
 
 	pcr_dh_init(&r, pcr_compute_dh, importance);
@@ -189,7 +191,7 @@ void finish_dh_secret(struct state *st,
 stf_status start_dh_v2(struct msg_digest *md,
 		       const char *name,
 		       enum phase1_role role,
-		       crypto_req_func pcrc_func)
+		       crypto_req_cont_func pcrc_func)
 {
 	struct state *st = md->st;
 	struct dh_continuation *dh = alloc_thing(struct dh_continuation, name);

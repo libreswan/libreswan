@@ -71,7 +71,7 @@
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
-#include "xauth.h"
+#include "ikev1_xauth.h"
 #include "nat_traversal.h"
 
 #include "virtual.h"	/* needs connections.h */
@@ -290,6 +290,12 @@ void initiate_connection(const char *name, int whackfd,
 	is.importance = importance;
 
 	if (c != NULL) {
+		if (!oriented(*c)) {
+			whack_log(RC_LOG_SERIOUS,
+			  "cannot initiate unoriented connection \"%s\" - IP address not on system?", name);
+			close_any(is.whackfd);
+			return;
+		} 
 		if ((c->policy &  POLICY_IKEV2_PROPOSE) &&
 		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING))
 			c = instantiate(c, NULL, NULL);
@@ -1155,8 +1161,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 					break;
 				}
 				cr->b.step = fos_myid_hostname_txt;
-			/* fall through */
-
+			/* FALL THROUGH */
 			case fos_myid_hostname_txt:
 				if (c->spd.this.id.kind == ID_MYID &&
 				    myid_state != MYID_SPECIFIED) {
@@ -1173,8 +1178,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				}
 
 				cr->b.step = fos_our_client;
-			/* fall through */
-
+			/* FALL THROUGH */
 			case fos_our_client: /* IPSECKEY for our client */
 				if (!sameaddr(&c->spd.this.host_addr,
 					      &b->our_client)) {
@@ -1192,8 +1196,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 					break;
 				}
 				cr->b.step = fos_our_txt;
-			/* fall through */
-
+			/* FALL THROUGH */
 			case fos_our_txt: /* IPSECKEY for us */
 				cr->b.failure_ok = b->failure_ok = TRUE;
 				cr->b.want = b->want = "our IPSECKEY record";

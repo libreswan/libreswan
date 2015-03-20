@@ -32,7 +32,7 @@ ifneq ($(UPDATE)$(UPDATEONLY),)
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname north
 endif
 ifeq ($(UPDATEONLY),)
-	../utils/dotest.py
+	../utils/swantest
 endif
 
 install install_file_list checkprograms programs:

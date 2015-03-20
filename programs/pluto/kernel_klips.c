@@ -75,7 +75,7 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 			err_t e;
 			e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 			if (e) {
-				DBG_log("invalid listen= option ignored: %s\n",
+				DBG_log("invalid listen= option ignored: %s",
 					e);
 				pluto_listen = NULL;
 			}
@@ -367,7 +367,7 @@ const struct kernel_ops klips_kernel_ops = {
 	.replay_window = 64,
 
 	.pfkey_register = klips_pfkey_register,
-	.pfkey_register_response = klips_pfkey_register_response,
+	.pfkey_register_response = pfkey_register_response,
 	.process_queue = pfkey_dequeue,
 	.process_msg = pfkey_event,
 	.raw_eroute = pfkey_raw_eroute,

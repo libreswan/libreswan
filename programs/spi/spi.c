@@ -168,25 +168,18 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 			life_severity = life_hard;
 		} else {
 			fprintf(stderr,
-				"%s: missing lifetime severity in %s, optargt=0p%p, optargp=0p%p, sizeof(\"soft\")=%d\n",
+				"%s: missing lifetime severity in %s\n",
 				progname,
-				optargt,
-				optargt,
-				optargp,
-				(int)sizeof("soft"));
+				optargt);
 			usage(progname, stderr);
 			return 1;
 		}
 		if (debug) {
 			fprintf(stdout,
-				"%s: debug: life_severity=%d, optargt=0p%p=\"%s\", optargp=0p%p=\"%s\", sizeof(\"soft\")=%d\n",
+				"%s: debug: life_severity=%d (%s)\n",
 				progname,
 				life_severity,
-				optargt,
-				optargt,
-				optargp,
-				optargp,
-				(int)sizeof("soft"));
+				optargt);
 		}
 		if (*optargp++ != '-') {
 			fprintf(stderr,
@@ -301,7 +294,7 @@ static int parse_life_options(u_int32_t life[life_maxsever][life_maxtype],
 	return 0;
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "ah", 1, 0, 'H' },
 	{ "esp", 1, 0, 'P' },
@@ -386,14 +379,14 @@ static int decode_esp(char *algname)
 				esp_info->encryptalg,
 				esp_info->authalg);
 		}
-		esp_ealg_id = esp_info->esp_ealg_id;
-		esp_aalg_id = esp_info->esp_aalg_id;
-		if (kernel_alg_proc_read() == 0) {
+		esp_ealg_id = esp_info->transid;
+		esp_aalg_id = esp_info->auth;
+		if (kernel_alg_proc_read()) {
 			err_t ugh;
 
 			proc_read_ok++;
 
-			ugh = kernel_alg_esp_enc_ok(esp_ealg_id, 0);
+			ugh = check_kernel_encrypt_alg(esp_ealg_id, 0);
 			if (ugh != NULL) {
 				fprintf(stderr, "%s: ESP encryptalg=%d (\"%s\") "
 					"not present - %s\n",
@@ -405,13 +398,12 @@ static int decode_esp(char *algname)
 				exit(1);
 			}
 
-			ugh = kernel_alg_esp_auth_ok(esp_aalg_id, 0);
-			if (ugh != NULL) {
-				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - %s "
-					"not present\n",
+			if (!kernel_alg_esp_auth_ok(esp_aalg_id, 0)) {
+				/* ??? this message looks badly worded */
+				fprintf(stderr, "%s: ESP authalg=%d (\"%s\") - alg not present\n",
 					progname, esp_aalg_id,
 					enum_name(&auth_alg_names,
-						  esp_aalg_id), ugh);
+						  esp_aalg_id));
 				exit(1);
 			}
 		}
@@ -539,7 +531,7 @@ int main(int argc, char *argv[])
 				longopts, 0)) != EOF) {
 		unsigned long u;
 		err_t ugh;
-		
+
 		switch (c) {
 		case 'g':
 			debug = TRUE;
@@ -1115,13 +1107,13 @@ int main(int argc, char *argv[])
 			 * if explicit keylen told in encrypt algo, eg "aes128"
 			 * check actual keylen "equality"
 			 */
-			if (esp_info->esp_ealg_keylen &&
-			    esp_info->esp_ealg_keylen != keylen) {
+			if (esp_info->enckeylen &&
+			    esp_info->enckeylen != keylen) {
 				fprintf(stderr, "%s: invalid encryption keylen=%d, "
 					"required %d by encrypt algo string=\"%s\"\n",
 					progname,
 					(int)keylen,
-					(int)esp_info->esp_ealg_keylen,
+					(int)esp_info->enckeylen,
 					alg_string);
 				exit(1);
 

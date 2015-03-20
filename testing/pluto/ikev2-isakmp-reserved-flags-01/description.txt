@@ -1,6 +1,6 @@
 Basic pluto with IKEv2 using RSA on the initiator (west), and on the responder.
 
-This test adds a bogus ISAKMP RESERVED flag to the payload on the initiator
+This test sets the ISAKMP flags bit 6 which is currently RESERVED
 
 RFC 5996 Section 2.5:
 

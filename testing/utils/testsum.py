@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import ujson
+import json
 import os, commands
 import re
 from os import listdir
@@ -36,7 +36,14 @@ def read_dirs(resultsdir, node):
 		newrunpath =  resultsdir + '/' + node
 
 	dirs = listdir(newrunpath)
+	# dirs = [ '2014-09-24-blackswan-v3.10-233-g8602595-hugh-2014aug']
+	# print dirs
+
 	for d in sorted(dirs): 
+		# match = re.search(r'(2014-09-16)',d)
+		# if not match:
+		# 	continue
+
 		td = newrunpath  + '/' + d
 		table = { "columns" : [ "Test", "Expected", "Result", "Run time", "east" , "other console"] , "runDir" : '/results/' + os.path.basename(newrunpath) + '/' + d, "suffix" : "/OUTPUT",
 				"rows" : list()
@@ -54,25 +61,34 @@ def read_dirs(resultsdir, node):
 		dirtable["rows"].append(list(row))
 
 	o = open( resultsdir + '/' + 'graph.json', 'w')
-	o.write(ujson.dumps(summary, ensure_ascii=True, double_precision=2)) 
-	##print(ujson.dumps(summary, ensure_ascii=True, double_precision=2)) 
+	o.write(json.dumps(summary, ensure_ascii=True, indent=2))
+	##print(json.dumps(summary, ensure_ascii=True, indent=2))
 	o.close
 
 	t = open(resultsdir + '/' + 'table.json', 'w')
-	t.write(ujson.dumps(dirtable, ensure_ascii=True, double_precision=2)) 
-	##print(ujson.dumps(summary, ensure_ascii=True, double_precision=2)) 
+	t.write(json.dumps(dirtable, ensure_ascii=True, indent=2))
+	##print(json.dumps(summary, ensure_ascii=True, indent=2))
 	t.close 
 
 
-def  fgrepfor(file, pattern, note):
+def  grepfor(file, pattern, note, result, fixed=True):
 	if not os.path.exists(file):
-		return None
+		return result
+        if fixed:
+		fixed = '-F '
+	else:
+		fixed = ''
 
-	cmd =  "fgrep  '" + pattern  + "'  " + file 
+	cmd =  "grep " + fixed + "'" + pattern  + "'  " + file 
 	match = commands.getoutput(cmd)
+	#print("%s"%(cmd))
 	if match:
-		print("%s"%(cmd))
-		return note
+		print("%s %s"%(cmd, result))
+		if result:
+			result = result + " " + note
+		else:
+			restult = note
+	return result
 
 
 def diffstat(d, host):
@@ -100,15 +116,15 @@ def diffstat(d, host):
 			hostr = "missing  OUTPUT/" + host + '.console.txt' 
 	
 		plutolog = d + '/OUTPUT/' + host + '.pluto.log'
-		assertion = fgrepfor(plutolog, 'ASSERTION FAILED', "ASSERT")
-		if assertion:
-			hostr  = hostr + " " + assertion
+		conslelog = d + '/OUTPUT/' + host + '.console.verbose.txt'
 
-		exception = fgrepfor(plutolog, 'EXPECTATION FAILED', "EXPECT")
-		if exception:
-			hostr  = hostr + " " + exception
+		hostr = grepfor(plutolog, 'ASSERTION FAILED', "ASSERT", result = hostr)
+		hostr = grepfor(plutolog, 'EXPECTATION FAILED', "EXPECT", result = hostr)
+		hostr = grepfor(conslelog, 'segfault', "SEGFAULT", result = hostr)
+		hostr = grepfor(conslelog, 'general protection', "GPFAULT", result = hostr) 
+		hostr = grepfor(conslelog, "^CORE FOUND$", "CORE", result = hostr, fixed = False)
+
 		return hostr
-
 	
 def diffstat_sum(r,d):
 		eastr =  diffstat(d, 'east');
@@ -146,7 +162,7 @@ def print_table_json(d, table, result):
 		i =  i + 1
 		f = open(path, 'r')
 		for line in f:
-			x = ujson.loads(line)
+			x = json.loads(line)
 			if "result" in x and "testname"  in x:
 				x["result"] = x["result"].lower()
 				r = []
@@ -190,13 +206,17 @@ def print_table_json(d, table, result):
 	if match:
 		table["summary"]["date"] = match.group(1)
 	else:
-		print("warning missing date in %s. It does not start wity date <d+-d+-d+>"%d)
+		print("warning missing date in %s. It does not start with date <d+-d+-d+>"%d)
 
 	o = open(d + '/' + 'table.json', 'w')
-	o.write(ujson.dumps(table, ensure_ascii=True, double_precision=2)) 
+	o.write(json.dumps(table, ensure_ascii=True, indent=2))
 	o.close
 
-	if not os.path.exists(d + '/' + "index.html"):
-		os.symlink("../../i3.html", d + '/' + "index.html")
+	i3html = "../../i3.html"
+	if not os.path.exists(d + '/' + "index.html") :
+		try :
+			os.symlink(i3html, d + '/' + "index.html")
+		except :
+			pass
 
 	return table["summary"]

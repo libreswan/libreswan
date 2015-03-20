@@ -1392,16 +1392,16 @@ struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b)
 			struct db_prop *pa = &pca->props[j];
 			struct db_prop *pb = &pcb->props[j];
 			struct db_trans *t;
-			int t_cnt = (pa->trans_cnt + pb->trans_cnt);
+			int t_cnt = pa->trans_cnt + pb->trans_cnt;
 
 			t = alloc_bytes(t_cnt * sizeof(pa->trans[0]),
 					"sa copy trans array");
 
-			memcpy(t, pa->trans, (pa->trans_cnt) *
+			memcpy(t, pa->trans, pa->trans_cnt *
 			       sizeof(pa->trans[0]));
-			memcpy(t + (pa->trans_cnt),
+			memcpy(t + pa->trans_cnt,
 			       pb->trans,
-			       (pb->trans_cnt) * sizeof(pa->trans[0]));
+			       pb->trans_cnt * sizeof(pa->trans[0]));
 
 			pa->trans = t;
 			pa->trans_cnt = t_cnt;

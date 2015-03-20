@@ -154,12 +154,19 @@ enum rc_type {
  * A call must doubly parenthesize the argument list (no varargs macros).
  * The first argument must be "e", the local variable that captures errno.
  */
-#define log_errno(a) do { int e = errno; libreswan_log_errno_routine a; \
-} while (0)
+#define log_errno(a) \
+	do { \
+		int e = errno; \
+		libreswan_log_errno_routine a; \
+	} while (0)
+
 extern void libreswan_log_errno_routine(int e, const char *message,
 					...) PRINTF_LIKE(2);
-#define exit_log_errno(a) do { int e = errno; \
-			       libreswan_exit_log_errno_routine a; } while (0)
+#define exit_log_errno(a) \
+	do { \
+		int e = errno; \
+		libreswan_exit_log_errno_routine a; \
+	} while (0)
 
 extern void libreswan_exit_log_errno_routine(int e, const char *message,
 					     ...) PRINTF_LIKE(2) NEVER_RETURNS;

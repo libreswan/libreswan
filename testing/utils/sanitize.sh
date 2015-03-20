@@ -1,7 +1,7 @@
 #!/bin/bash
 . ../../../kvmsetup.sh
 if [ -f ./testparams.sh ] ; then
-	. ./testparams.sh 
+	. ./testparams.sh
 else
 	. ../../default-testparams.sh
 fi
@@ -27,7 +27,7 @@ elif [ -f roadinit.sh ] ; then
         INITIATOR=road
 elif [ -f northinit.sh ] ; then
         INITIATOR=north
-else 
+else
         echo "can't identify INITIATOR"
         exit 1
 fi
@@ -42,7 +42,7 @@ rc="./${RESPONDER}.console.txt"
 result="passed"
 for f in $ivc $ic $rvc $rc ; do
 	if [ ! -f $ivc ] ; then
-		echo "missing requirred file $f"
+		echo "missing required file $f"
 		result="passed"
 	fi
 done

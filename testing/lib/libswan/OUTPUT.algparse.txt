@@ -2,6 +2,7 @@
   Electric Fence 2.2.2 Copyright (C) 1987-1999 Bruce Perens <bruce@perens.com>
 
 ---- ESP tests that should succeed ----
+[  aes_gcm_a-128-null]    OK: alg=AES_GCM_A(18)_128-NONE(0)_000
 [  3des-sha1;modp1024]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP1024(2)
 [  3des-sha1;modp1536]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP1536(5)
 [  3des-sha1;modp2048]    OK: alg=3DES(3)_000-SHA1(2)_000; pfsgroup=MODP2048(14)
@@ -24,10 +25,10 @@
 [     aes256-sha2_256]    OK: alg=AES(12)_256-SHA2_256(5)_000
 [     aes256-sha2_384]    OK: alg=AES(12)_256-SHA2_384(6)_000
 [     aes256-sha2_512]    OK: alg=AES(12)_256-SHA2_512(7)_000
-[            camellia]    OK: alg=CAMELLIA(23)_000-MD5(1)_000, CAMELLIA(23)_000-SHA1(2)_000
-[         camellia128]    OK: alg=CAMELLIA(23)_128-MD5(1)_000, CAMELLIA(23)_128-SHA1(2)_000
-[         camellia192]    OK: alg=CAMELLIA(23)_192-MD5(1)_000, CAMELLIA(23)_192-SHA1(2)_000
-[         camellia256]    OK: alg=CAMELLIA(23)_256-MD5(1)_000, CAMELLIA(23)_256-SHA1(2)_000
+[            camellia]    OK: alg=CAMELLIA(22)_000-MD5(1)_000, CAMELLIA(22)_000-SHA1(2)_000
+[         camellia128]    OK: alg=CAMELLIA(22)_128-MD5(1)_000, CAMELLIA(22)_128-SHA1(2)_000
+[         camellia192]    OK: alg=CAMELLIA(22)_192-MD5(1)_000, CAMELLIA(22)_192-SHA1(2)_000
+[         camellia256]    OK: alg=CAMELLIA(22)_256-MD5(1)_000, CAMELLIA(22)_256-SHA1(2)_000
 [  aes_ccm_a-128-null]    OK: alg=AES_CCM_A(14)_128-NONE(0)_000
 [  aes_ccm_a-192-null]    OK: alg=AES_CCM_A(14)_192-NONE(0)_000
 [  aes_ccm_a-256-null]    OK: alg=AES_CCM_A(14)_256-NONE(0)_000
@@ -58,23 +59,27 @@
 [             serpent]    OK: alg=SERPENT(252)_000-MD5(1)_000, SERPENT(252)_000-SHA1(2)_000
 [             twofish]    OK: alg=TWOFISH(253)_000-MD5(1)_000, TWOFISH(253)_000-SHA1(2)_000
 [                mars]    OK: alg=MARS(249)_000-MD5(1)_000, MARS(249)_000-SHA1(2)_000
-[            modp1536]    OK: <should not fail>
-h_alg="", modp=""
 
 ---- ESP tests that should fail----
 [        3des168-sha1] ERROR: alg=  error=3DES does not take variable key lengths, enc_alg="3des"(168), auth_alg="sha1", modp=""
+[           3des-null] ERROR: alg=  error=non-AEAD ESP cipher cannot have null authentication, enc_alg="3des"(0), auth_alg="null", modp=""
+[         aes128-null] ERROR: alg=  error=non-AEAD ESP cipher cannot have null authentication, enc_alg="aes"(128), auth_alg="null", modp=""
 [         aes224-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(224), auth_alg="sha1", modp=""
 [         aes512-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes"(512), auth_alg="sha1", modp=""
 [         aes-sha1555] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(0), auth_alg="sha1555", modp=""
-[            blowfish] ERROR: alg=  error=cipher too weak or not implemented, enc_alg="blowfish"(0), auth_alg="", modp=""
-[            des-sha1] ERROR: alg=  error=cipher too weak or not implemented, enc_alg="des"(0), auth_alg="sha1", modp=""
+[    camellia666-sha1] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="camellia"(666), auth_alg="sha1", modp=""
+[            blowfish] ERROR: alg=  error=ESP cipher not implemented, enc_alg="blowfish"(0), auth_alg="", modp=""
+[            des-sha1] ERROR: alg=  error=ESP cipher not implemented, enc_alg="des"(0), auth_alg="sha1", modp=""
 [          aes_ctr666] ERROR: alg=  error=wrong encryption key length - key size must be 128 (default), 192 or 256, enc_alg="aes_ctr"(666), auth_alg="", modp=""
 [     aes128-sha2_128] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(128), auth_alg="sha2_128", modp=""
+[aes256-sha2_256-4096] ERROR: alg=  error=authentication algorithm does not take a variable key size, enc_alg="aes"(256), auth_alg="sha2_256", modp=""
+[ aes256-sha2_256-128] ERROR: alg=  error=authentication algorithm does not take a variable key size, enc_alg="aes"(256), auth_alg="sha2_256", modp=""
 [        vanitycipher] ERROR: alg=  error=enc_alg not found, enc_alg="vanitycipher"(0), auth_alg="", modp=""
 [             ase-sah] ERROR: alg=  error=enc_alg not found, enc_alg="ase"(0), auth_alg="sah", modp=""
 [            aes-sah1] ERROR: alg=  error=hash_alg not found, enc_alg="aes"(0), auth_alg="sah1", modp=""
 [                 id3] ERROR: alg=  error=enc_alg not found, enc_alg="id"(3), auth_alg="", modp=""
 [                id12] ERROR: alg=  error=enc_alg not found, enc_alg="id"(12), auth_alg="", modp=""
+[         aes_gcm-md5] ERROR: alg=  error=AEAD ESP cipher must have null authentication, enc_alg="aes_gcm"(0), auth_alg="md5", modp=""
 
 ---- AH tests that should succeed ----
 [                 md5]    OK: alg=MD5(1)_000
@@ -93,4 +98,7 @@ h_alg="", modp=""
 [       aes_gcm_c-256] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="aes_gcm_c", modp=""
 [                 id3] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="id3", modp=""
 [                3des] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="3des", modp=""
-[                null] ERROR: <should not crash>
+[                null] ERROR: alg=  error=AH cannot have null authentication, enc_alg=""(0), auth_alg="null", modp=""
+[             aes_gcm] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="aes_gcm", modp=""
+[             aes_ccm] ERROR: alg=  error=hash_alg not found, enc_alg=""(0), auth_alg="aes_ccm", modp=""
+../algparse leak detective found no leaks

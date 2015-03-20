@@ -36,10 +36,6 @@ enum {
 	IPSEC_LEVEL_UNIQUE      = 3
 };
 
-#ifndef IPSEC_MANUAL_REQID_MAX
-# define IPSEC_MANUAL_REQID_MAX  0x3fff
-#endif
-
 #define IPSEC_REPLAYWSIZE  32
 
 #if !(defined(__FreeBSD__) || defined(macintosh) || (defined(__MACH__) && \

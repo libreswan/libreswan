@@ -187,49 +187,74 @@ void remove_x509_public_key(/*const*/ x509cert_t *cert)
  */
 void ikev1_decode_cert(struct msg_digest *md)
 {
+	struct connection *c = md->st->st_connection;
 	struct payload_digest *p;
+	x509cert_t *chain = NULL;
 
 	for (p = md->chain[ISAKMP_NEXT_CERT]; p != NULL; p = p->next) {
 		struct isakmp_cert *const cert = &p->payload.cert;
-		chunk_t blob;
 
-		blob.ptr = p->pbs.cur;
-		blob.len = pbs_left(&p->pbs);
 		switch (cert->isacert_type) {
 		case CERT_X509_SIGNATURE:
 		{
+			chunk_t blob;
 			x509cert_t cert2 = empty_x509cert;
 
-			if (parse_x509cert(blob, 0, &cert2)) {
-				realtime_t valid_until;
+			clonetochunk(blob, p->pbs.cur, pbs_left(&p->pbs), "cert chain blob");
 
-				if (verify_x509cert(&cert2, strict_crl_policy,
-						&valid_until /* OUT */)) {
-					DBG(DBG_X509 | DBG_PARSING,
-						DBG_log("Public key validated"));
-					add_x509_public_key(NULL, &cert2,
-							valid_until,
-							DAL_SIGNED);
-				} else {
-					libreswan_log("X.509 certificate rejected");
-				}
-				free_generalNames(cert2.subjectAltName, FALSE);
-				free_generalNames(cert2.crlDistributionPoints,
-						FALSE);
+			if (parse_x509cert(blob, 0, &cert2)) {
+				x509cert_t *new = clone_thing(cert2, "x509cert_t");
+
+				new->next = chain;
+				chain = new;
 			} else {
 				libreswan_log("Syntax error in X.509 certificate");
+				freeanychunk(blob);
 			}
 			break;
 		}
+
+/*  http://tools.ietf.org/html/rfc4945
+ *  3.3.4. PKCS #7 Wrapped X.509 Certificate
+ *
+ *  This type defines a particular encoding, not a particular certificate
+ *  type.  Implementations SHOULD NOT generate CERTs that contain this
+ *  Certificate Type.  Implementations SHOULD accept CERTs that contain
+ *  this Certificate Type because several implementations are known to
+ *  generate them.  Note that those implementations sometimes include
+ *  entire certificate hierarchies inside a single CERT PKCS #7 payload,
+ *  which violates the requirement specified in ISAKMP that this payload
+ *  contain a single certificate.
+ *
+ *  PKCS7 case forklifted from above.. Needs to be tested!
+ *
+ */
 		case CERT_PKCS7_WRAPPED_X509:
 		{
+			chunk_t blob;
 			x509cert_t *cert2 = NULL;
 
-			if (parse_pkcs7_cert(blob, &cert2))
-				store_x509certs(&cert2, strict_crl_policy);
-			else
+			clonetochunk(blob, p->pbs.cur, pbs_left(&p->pbs), "cert chain blob");
+
+			if (parse_pkcs7_cert(blob, &cert2)) {
+				/* stick new certs at front of chain */
+				/*
+				 * ??? how is memory managed for the actual cert blobs?
+				 * Is not freeing "blob" good enough?  Leaky?
+				 */
+				if (cert2 != NULL) {
+					x509cert_t *p;
+
+					for (p = cert2; p->next != NULL; p = p->next)
+						;
+					p->next = chain;
+					chain = cert2;
+				}
+			} else {
 				libreswan_log(
 					"Syntax error in PKCS#7 wrapped X.509 certificates");
+				freeanychunk(blob);
+			}
 			break;
 		}
 		default:
@@ -237,7 +262,16 @@ void ikev1_decode_cert(struct msg_digest *md)
 				"ignoring %s certificate payload",
 				enum_show(&ike_cert_type_names,
 					cert->isacert_type));
-			DBG_cond_dump_chunk(DBG_PARSING, "CERT:\n", blob);
+		}
+	}
+
+	if (chain != NULL) {
+		x509cert_t *ok = NULL;
+		/* certs are validated here */
+		store_x509certs(&chain, &ok, strict_crl_policy);
+		if (ok != NULL) {
+			c->spd.that.ca_path.u.x509 = ok;
+			c->spd.that.ca_path.ty = CERT_X509_SIGNATURE;
 		}
 	}
 }
@@ -263,7 +297,7 @@ void ikev2_decode_cert(struct msg_digest *md)
 				realtime_t valid_until;
 
 				if (verify_x509cert(&cert2, strict_crl_policy,
-						&valid_until /* OUT */)) {
+						&valid_until, NULL)) {
 					DBG(DBG_X509 | DBG_PARSING,
 						DBG_log("Public key validated"));
 					add_x509_public_key(NULL, &cert2,
@@ -282,10 +316,10 @@ void ikev2_decode_cert(struct msg_digest *md)
 		}
 		case CERT_PKCS7_WRAPPED_X509:
 		{
-			x509cert_t *cert2 = NULL;
+			x509cert_t *cert2 = NULL, *out = NULL;
 
 			if (parse_pkcs7_cert(blob, &cert2))
-				store_x509certs(&cert2, strict_crl_policy);
+				store_x509certs(&cert2, &out, strict_crl_policy);
 			else
 				libreswan_log(
 					"Syntax error in PKCS#7 wrapped X.509 certificates");
@@ -303,6 +337,19 @@ void ikev2_decode_cert(struct msg_digest *md)
 
 /*
  * Decode the CR payload of Phase 1.
+ *
+ *  http://tools.ietf.org/html/rfc4945
+ *  3.2.4. PKCS #7 wrapped X.509 certificate
+ *
+ *  This ID type defines a particular encoding (not a particular
+ *  certificate type); some current implementations may ignore CERTREQs
+ *  they receive that contain this ID type, and the editors are unaware
+ *  of any implementations that generate such CERTREQ messages.
+ *  Therefore, the use of this type is deprecated.  Implementations
+ *  SHOULD NOT require CERTREQs that contain this Certificate Type.
+ *  Implementations that receive CERTREQs that contain this ID type MAY
+ *  treat such payloads as synonymous with "X.509 Certificate -
+ *  Signature".
  */
 void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 {
@@ -326,10 +373,9 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 					continue;
 
 				gn = alloc_thing(generalName_t, "generalName");
-				clonetochunk(ca_name, ca_name.ptr, ca_name.len,
+				clonetochunk(gn->name, ca_name.ptr, ca_name.len,
 					"ca name");
 				gn->kind = GN_DIRECTORY_NAME;
-				gn->name = ca_name;
 				gn->next = *requested_ca;
 				*requested_ca = gn;
 			}
@@ -351,6 +397,9 @@ void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 
 /*
  * Decode the IKEv2 CR payload of Phase 1.
+ *
+ * This needs to handle the SHA-1 hashes instead. However, receiving CRs
+ * does nothing ATM.
  */
 void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 {
@@ -397,6 +446,25 @@ void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca)
 	}
 }
 
+bool ikev1_ship_CERT(u_int8_t type, chunk_t cert, pb_stream *outs, u_int8_t np)
+{
+	pb_stream cert_pbs;
+
+	struct isakmp_cert cert_hd;
+	cert_hd.isacert_np = np;
+	cert_hd.isacert_type = type;
+
+	if (!out_struct(&cert_hd, &isakmp_ipsec_certificate_desc, outs,
+				&cert_pbs))
+		return FALSE;
+
+	if (!out_chunk(cert, &cert_pbs, "CERT"))
+		return FALSE;
+
+	close_output_pbs(&cert_pbs);
+	return TRUE;
+}
+
 bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 			     chunk_t ca,
 			     pb_stream *outs,
@@ -421,6 +489,39 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 	return TRUE;
 }
 
+/*
+ * returns the concatenated SHA-1 hashes of each public key in the chain
+ * */
+static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
+{
+	unsigned char combined_hash[SHA1_DIGEST_SIZE * 8 /*max path len*/];
+	x509cert_t *ca = NULL;
+	chunk_t result = empty_chunk;
+	size_t sz = 0;
+
+	zero(&combined_hash);
+
+	for (ca = ca_chain; ca != NULL; ca = ca->next) {
+		unsigned char sighash[SHA1_DIGEST_SIZE];
+		SHA1_CTX ctx_sha1;
+
+		SHA1Init(&ctx_sha1);
+		SHA1Update(&ctx_sha1, ca->signature.ptr, ca->signature.len);
+		SHA1Final(sighash, &ctx_sha1);
+
+		DBG(DBG_CRYPT, DBG_dump("SHA-1 of CA signature",
+							sighash,
+							SHA1_DIGEST_SIZE));
+
+		memcpy(combined_hash + sz, sighash, SHA1_DIGEST_SIZE);
+		sz += SHA1_DIGEST_SIZE;
+	}
+	passert(sz <= sizeof(combined_hash));
+	clonetochunk(result, combined_hash, sz, "combined CERTREQ hash");
+	DBG(DBG_CRYPT, DBG_dump_chunk("Combined CERTREQ hashes", result));
+	return result;
+}
+
 bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 			     chunk_t ca,
 			     pb_stream *outs,
@@ -436,12 +537,49 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	/* build CR header */
 	if (!out_struct(&cr_hd, &ikev2_certificate_req_desc, outs, &cr_pbs))
 		return FALSE;
+	/*
+	 * The Certificate Encoding field has the same values as those defined
+	 * in Section 3.6.  The Certification Authority field contains an
+	 * indicator of trusted authorities for this certificate type.  The
+	 * Certification Authority value is a concatenated list of SHA-1 hashes
+	 * of the public keys of trusted Certification Authorities (CAs).  Each
+	 * is encoded as the SHA-1 hash of the Subject Public Key Info element
+	 * (see section 4.1.2.7 of [PKIX]) from each Trust Anchor certificate.
+	 * The 20-octet hashes are concatenated and included with no other
+	 * formatting.
+	 *
+	 * How are multiple trusted CAs chosen?
+	 */
 
 	if (ca.ptr != NULL) {
-		/* build CR body containing the distinguished name of the CA */
-		if (!out_chunk(ca, &cr_pbs, "CA"))
-			return FALSE;
+		char cbuf[ASN1_BUF_LEN];
+
+		dntoa(cbuf, ASN1_BUF_LEN, ca);
+		x509cert_t *authcert = get_authcert(ca, empty_chunk,
+							empty_chunk,
+							AUTH_CA);
+		if (authcert != NULL) {
+			DBG(DBG_X509, DBG_log("located authcert %s for CERTREQ",
+									 cbuf));
+			/*
+			 * build CR body containing the concatenated SHA-1 hashes of the
+			 * CA's public key. This function currently only uses a single CA
+			 * and should support more in the future
+			 * */
+			chunk_t cr_full_hash = ikev2_hash_ca_keys(authcert);
+			if (!out_chunk(cr_full_hash, &cr_pbs, "CA cert public key hashes")) {
+				freeanychunk(cr_full_hash);
+				return FALSE;
+			}
+			freeanychunk(cr_full_hash);
+		} else {
+			DBG(DBG_X509, DBG_log("could not locate authcert %s for CERTREQ", cbuf));
+		}
 	}
+	/*
+	 * can it be empty?
+	 * this function's returns need fixing
+	 * */
 	close_output_pbs(&cr_pbs);
 	return TRUE;
 }
@@ -521,7 +659,7 @@ void load_authcerts(const char *type, const char *path, u_char auth_flags)
 
 				if (load_cert(filelist[n]->d_name,
 						type, &cert))
-					add_authcert(cert.u.x509, auth_flags);
+					add_authcert(&cert.u.x509, auth_flags);
 
 				free(filelist[n]);	/* was malloced by scandir(3) */
 			}

@@ -219,14 +219,14 @@ struct xfrm_user_sec_ctx_ike {
 struct state {
 	so_serial_t st_serialno;                /* serial number (for seniority)*/
 	so_serial_t st_clonedfrom;              /* serial number of parent */
-	int st_usage;
 
 	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
 	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
 	bool st_rekeytov2;                      /* true if this IKEv1 is about
-	                                        * to be replaced with IKEv2 */
+	                                         * to be replaced with IKEv2
+						 */
 
 	struct connection *st_connection;       /* connection for this SA */
 	int st_whack_sock;                      /* fd for our Whack TCP socket.
@@ -238,7 +238,7 @@ struct state {
 	const char        *st_suspended_md_func;
 	int st_suspended_md_line;
 
-	struct ike_frag *ike_frags;                /* collected ike fragments */
+	struct ike_frag *ike_frags;		/* collected ike fragments */
 
 	struct trans_attrs st_oakley;
 
@@ -246,17 +246,14 @@ struct state {
 	struct ipsec_proto_info st_esp;
 	struct ipsec_proto_info st_ipcomp;
 
-	ipsec_spi_t st_tunnel_in_spi;                   /* KLUDGE */
-	ipsec_spi_t st_tunnel_out_spi;                  /* KLUDGE */
+	ipsec_spi_t st_tunnel_in_spi;		/* KLUDGE */
+	ipsec_spi_t st_tunnel_out_spi;		/* KLUDGE */
 
-	IPsecSAref_t st_ref;                            /* our kernel name for our incoming SA */
-	IPsecSAref_t st_refhim;                         /* our kernel name for our outgoing SA */
-	bool st_outbound_done;                          /* if true, then outgoing SA already installed */
+	IPsecSAref_t st_ref;			/* our kernel name for our incoming SA */
+	IPsecSAref_t st_refhim;			/* our kernel name for our outgoing SA */
+	bool st_outbound_done;			/* if true, then outgoing SA already installed */
 
 	const struct oakley_group_desc *st_pfs_group;   /*group for Phase 2 PFS */
-
-	u_int32_t st_doi;                               /* Domain of Interpretation */
-	u_int32_t st_situation;
 
 	lset_t st_policy;                       /* policy for IPsec SA */
 
@@ -267,26 +264,45 @@ struct state {
 	ip_address st_localaddr;                /* where to send them from */
 	u_int16_t st_localport;
 
-	struct db_sa      *st_sadb;
+	struct db_sa *st_sadb;
 
-	/* IKEv1 things */
+	/** IKEv1-only things **/
+
 	msgid_t st_msgid;                       /* MSG-ID from header.
 	                                           Network Order! */
-	bool st_reserve_msgid;                  /* if TRUE, then message id
-	                                           has been reserved already */
+	bool st_msgid_reserved;			/* is msgid reserved yet? */
 
 	msgid_t st_msgid_phase15;               /* msgid for phase 1.5 - Network Order! */
-	msgid_t st_msgid_phase15b;              /* msgid for phase 1.5 - Network Order! */
 
 	/* only for a state representing an ISAKMP SA */
-	struct msgid_list  *st_used_msgids;     /* used-up msgids */
+	struct msgid_list *st_used_msgids;	/* used-up msgids */
 
-	/** IKEv2 only things **/
+	chunk_t st_rpacket;			/* Received packet - v1 only */
+
+	/* Initialization Vectors for IKE encryption */
+
+	u_char st_new_iv[MAX_DIGEST_LEN];	/* tentative IV (calculated from current packet) */
+	u_char st_iv[MAX_DIGEST_LEN];           /* accepted IV (after packet passes muster) */
+	u_char st_ph1_iv[MAX_DIGEST_LEN];       /* IV at end of phase 1 */
+
+	unsigned int st_new_iv_len;
+	unsigned int st_iv_len;
+	unsigned int st_ph1_iv_len;
+
+	/* end of IKEv1-only things */
+
+	/** IKEv2-only things **/
+
 	/* message ID sequence for things we send (as initiator) */
 	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
 	msgid_t st_msgid_nextuse;               /* next one to use - host order */
 	/* message ID sequence for things we receive (as responder) */
 	msgid_t st_msgid_lastrecv;             /* last one peer sent - Host order v2 only */
+
+	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
+	chunk_t st_firstpacket_him;             /* copy of his message 1 (for hashing) */
+
+	/** end of IKEv2-only things **/
 
 
 	/* symmetric stuff */
@@ -304,8 +320,6 @@ struct state {
 
 	/* my stuff */
 	chunk_t st_tpacket;                     /* Transmitted packet */
-	chunk_t st_firstpacket_me;              /* copy of my message 1 */
-	chunk_t st_firstpacket_him;             /* copy of his message 1 */
 
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
@@ -316,8 +330,6 @@ struct state {
 	u_int16_t st_myuserport;
 
 	/* his stuff */
-
-	chunk_t st_rpacket;                    /* Received packet */
 
 	/* Phase 2 ID payload info about peer's user */
 	u_int8_t st_peeruserprotoid;           /* IDcx.protoid */
@@ -367,9 +379,8 @@ struct state {
 	                                         * this time
 	                                         */
 
-	chunk_t st_p1isa;                       /* Phase 1 initiator SA
-	                                           (Payload) for HASH
-	                                         */
+	chunk_t st_p1isa;	/* Phase 1 initiator SA (Payload) for HASH */
+
 	/* v1 names are aliases for subset of v2 fields (#define) */
 #define st_skeyid_nss   st_skeyseed_nss
 	PK11SymKey *st_skeyseed_nss;	/* Key material */
@@ -384,28 +395,20 @@ struct state {
 	PK11SymKey *st_skey_pi_nss;	/* KM for ISAKMP encryption */
 	PK11SymKey *st_skey_pr_nss;	/* KM for ISAKMP encryption */
 
-	struct connection *st_childsa;          /* connection included in AUTH */
-	struct traffic_selector st_ts_this, st_ts_that;
-
-	/* Initialization Vectors for IKE encryption */
-
-	u_char st_new_iv[MAX_DIGEST_LEN];	/* tentative IV (calculated from current packet) */
-	u_char st_iv[MAX_DIGEST_LEN];           /* accepted IV (after packet passes muster) */
-	u_char st_ph1_iv[MAX_DIGEST_LEN];       /* IV at end of phase 1 */
-
-	unsigned int st_new_iv_len;
-	unsigned int st_iv_len;
-	unsigned int st_ph1_iv_len;
+	/* connection included in AUTH */
+	struct traffic_selector st_ts_this;
+	struct traffic_selector st_ts_that;
 
 	PK11SymKey *st_enc_key_nss;	/* Oakley Encryption key */
 
-	struct event *st_event;		/* backpointer for certain events */
-	struct state *st_hashchain_next;	/* Next in list */
-	struct state *st_hashchain_prev;	/* Previous in list */
+	struct event *st_event;		/* timer event for this state object */
+
+	struct state *st_hashchain_next;	/* next in state hashbucket chain */
+	struct state *st_hashchain_prev;	/* previous in state hashbucket chain  */
 
 	struct hidden_variables hidden_variables;
 
-	char st_xauth_username[XAUTH_USERNAME_LEN];
+	char st_xauth_username[XAUTH_USERNAME_LEN];	/* NUL-terminated */
 	chunk_t st_xauth_password;
 
 	monotime_t st_last_liveness;		/* Time of last v2 informational (0 means never?) */
@@ -419,7 +422,7 @@ struct state {
 	                                           to receive */
 	u_int32_t st_dpd_peerseqno;             /* global variables */
 	u_int32_t st_dpd_rdupcount;		/* openbsd isakmpd bug workaround */
-	struct event       *st_dpd_event;       /* backpointer for DPD events */
+	struct event *st_dpd_event;		/* backpointer for DPD events */
 
 	bool st_seen_nortel_vid;                /* To work around a nortel bug */
 	struct isakmp_quirks quirks;            /* work arounds for faults in other products */
@@ -430,8 +433,8 @@ struct state {
 
 /* global variables */
 
-extern u_int16_t pluto_port;            /* Pluto's port */
-extern u_int16_t pluto_nat_port; /* Pluto's NATT floating port */
+extern u_int16_t pluto_port;		/* Pluto's port */
+extern u_int16_t pluto_nat_port;	/* Pluto's NATT floating port */
 
 extern bool states_use_connection(const struct connection *c);
 

@@ -83,9 +83,9 @@ static void log_info_multiline(int level, const char *buff)
 void starter_log(int level, const char *fmt, ...)
 {
 	va_list args;
-	static char buff[BUFF_SIZE];
+	char buff[BUFF_SIZE];
 
-	if ((!log_debugging) && (level == LOG_LEVEL_DEBUG))
+	if (!log_debugging && level == LOG_LEVEL_DEBUG)
 		return;
 
 	va_start(args, fmt);

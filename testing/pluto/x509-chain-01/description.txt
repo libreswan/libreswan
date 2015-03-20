@@ -1,0 +1,26 @@
+x509 test for the delivery of intermediate CA chains.
+sendca=all for the full chain
+
+west has the chain:
+
+west_chain_root ->
+west_chain_intermediate_1 ->
+west_chain_intermediate_2 ->
+west_chain_intermediate_3 ->
+west_chain_endcert        
+
+I also has east's root ca: east_chain_root           
+
+east has the chain:
+
+east_chain_root ->           
+east_chain_intermediate_1 ->
+east_chain_intermediate_2 ->
+east_chain_intermediate_3 ->
+east_chain_endcert        
+
+It also has west's root ca: west_chain_root
+
+Upon a CR the host delivers the CERT payloads for the endcert and 
+intermediates 1, 2, and 3. The chain is verified by the peer down to
+the host's chain_root.

@@ -1,4 +1,4 @@
-: ==== start ====
+/testing/guestbin/swan-prep
 # confirm that the network is alive
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through
@@ -8,5 +8,5 @@ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-compress
-ipsec auto --status
+ipsec auto --status | grep westnet-eastnet-compress
 echo "initdone"

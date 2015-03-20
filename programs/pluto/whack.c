@@ -91,8 +91,9 @@ static void help(void)
 		" [--groups <access control groups>]"
 		" [--cert <path>]"
 		" [--ca <distinguished name>]"
+		" [--sendca no|issuer|all]"
 		" [--sendcert]"
-		" [--sendcerttype number]"
+		" [--sendcerttype number]" /* deprecated? */
 		" \\\n   "
 		" [--nexthop <ip-address>]"
 		" \\\n   "
@@ -483,6 +484,7 @@ enum option_enums {
 	CD_INITIAL_CONTACT,
 	CD_CISCO_UNITY,
 	CD_IKE,
+	CD_SEND_CA,
 	CD_PFSGROUP,
 	CD_REMOTEPEERTYPE,
 	CD_SHA2_TRUNCBUG,
@@ -695,6 +697,7 @@ static const struct option long_opts[] = {
 	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
 	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
+	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
 
@@ -778,6 +781,8 @@ static const struct option long_opts[] = {
 	{ "impair-retransmits", no_argument, NULL, IMPAIR_RETRANSMITS_IX + DO },
 	{ "impair-send-bogus-isakmp-flag", no_argument, NULL,
 		IMPAIR_SEND_BOGUS_ISAKMP_FLAG_IX + DO },
+	{ "impair-send-bogus-payload-flag", no_argument, NULL,
+		IMPAIR_SEND_BOGUS_PAYLOAD_FLAG_IX + DO },
 	{ "impair-send-ikev2-ke", no_argument, NULL,
 		IMPAIR_SEND_IKEv2_KE_IX + DO },
 	{ "impair-send-key-size-check", no_argument, NULL,
@@ -832,7 +837,7 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 	}
 }
 
-static void update_ports(struct whack_message * m)
+static void update_ports(struct whack_message *m)
 {
 	int port;
 
@@ -910,8 +915,9 @@ int main(int argc, char **argv)
 		end_seen = LEMPTY,
 		end_seen_before_to = LEMPTY;
 	const char
-	*af_used_by = NULL,
-	*tunnel_af_used_by = NULL;
+		*af_used_by = NULL,
+		*tunnel_af_used_by = NULL;
+	char keyspace[RSA_MAX_ENCODING_BYTES];	/* space for at most one RSA key */
 
 	char xauthname[XAUTH_MAX_NAME_LENGTH];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
@@ -970,7 +976,7 @@ int main(int argc, char **argv)
 	msg.addr_family = AF_INET;
 	msg.tunnel_addr_family = AF_INET;
 
-	for (;; ) {
+	for (;;) {
 		int long_index;
 		unsigned long opt_whole = 0; /* numeric argument for some flags */
 
@@ -1132,8 +1138,11 @@ int main(int argc, char **argv)
 
 		case OPT_PUBKEYRSA: /* --pubkeyrsa <key> */
 		{
-			static char keyspace[RSA_MAX_ENCODING_BYTES];
 			char mydiag_space[TTODATAV_BUF];
+
+			if (msg.keyval.ptr != NULL)
+				diagq("only one RSA public-key allowed", optarg);
+
 			ugh = ttodatav(optarg, 0, 0,
 				       keyspace, sizeof(keyspace),
 				       &msg.keyval.len, mydiag_space,
@@ -1540,6 +1549,15 @@ int main(int argc, char **argv)
 			msg.sa_keying_tries = opt_whole;
 			continue;
 
+		case CD_SEND_CA:
+			if (streq(optarg, "issuer"))
+				msg.send_ca = CA_SEND_ISSUER;
+			else if (streq(optarg, "all"))
+				msg.send_ca = CA_SEND_ALL;
+			else
+				msg.send_ca = CA_SEND_NONE;
+			continue;
+
 		case CD_FORCEENCAPS:
 			msg.forceencaps = TRUE;
 			continue;
@@ -1549,11 +1567,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKEV1_NATT: /* --ikev1_natt */
-			if ( streq(optarg, "both"))
+			if (streq(optarg, "both"))
 				msg.ikev1_natt = natt_both;
-			else if ( streq(optarg, "rfc"))
+			else if (streq(optarg, "rfc"))
 				msg.ikev1_natt = natt_rfc;
-			else if ( streq(optarg, "drafts"))
+			else if (streq(optarg, "drafts"))
 				msg.ikev1_natt = natt_drafts;
 			else
 				diag("--ikev1-natt options are 'both', 'rfc' or 'drafts'");
@@ -1577,13 +1595,13 @@ int main(int argc, char **argv)
 
 		case CD_DPDACTION:
 			msg.dpd_action = 255;
-			if ( streq(optarg, "clear"))
+			if (streq(optarg, "clear"))
 				msg.dpd_action = DPD_ACTION_CLEAR;
-			else if ( streq(optarg, "hold"))
+			else if (streq(optarg, "hold"))
 				msg.dpd_action = DPD_ACTION_HOLD;
-			else if ( streq(optarg, "restart"))
+			else if (streq(optarg, "restart"))
 				msg.dpd_action = DPD_ACTION_RESTART;
-			else if ( streq(optarg, "restart_by_peer"))
+			else if (streq(optarg, "restart_by_peer"))
 				/* obsolete (not advertised) option for compatibility */
 				msg.dpd_action = DPD_ACTION_RESTART;
 			continue;
@@ -1746,32 +1764,32 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_XAUTHBY:
-			if ( streq(optarg, "pam" )) {
+			if (streq(optarg, "pam")) {
 				msg.xauthby = XAUTHBY_PAM;
 				continue;
-			} else if ( streq(optarg, "file" )) {
+			} else if (streq(optarg, "file")) {
 				msg.xauthby = XAUTHBY_FILE;
 				continue;
-			} else if ( streq(optarg, "alwaysok" )) {
+			} else if (streq(optarg, "alwaysok")) {
 				msg.xauthby = XAUTHBY_ALWAYSOK;
 				continue;
 			} else {
 				fprintf(stderr,
-					"whack: unknown xauthby method '%s' ignored",
+					"whack: unknown xauthby method '%s' ignored\n",
 					optarg);
 			}
 			continue;
 
 		case CD_XAUTHFAIL:
-			if ( streq(optarg, "hard" )) {
+			if (streq(optarg, "hard")) {
 				msg.xauthfail = XAUTHFAIL_HARD;
 				continue;
-			} else if ( streq(optarg, "soft" )) {
+			} else if (streq(optarg, "soft")) {
 				msg.xauthfail = XAUTHFAIL_SOFT;
 				continue;
 			} else {
 				fprintf(stderr,
-					"whack: unknown xauthfail method '%s' ignored",
+					"whack: unknown xauthfail method '%s' ignored\n",
 					optarg);
 			}
 			continue;
@@ -1789,6 +1807,17 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_REQID:
+			if (opt_whole <= 0  ||
+			    opt_whole > IPSEC_MANUAL_REQID_MAX) {
+				char buf[120];
+
+				snprintf(buf, sizeof(buf),
+					"invalid reqid value - range must be 1-%u \"%s\"",
+					IPSEC_MANUAL_REQID_MAX,
+					optarg);
+				diag(buf);
+			}
+
 			msg.sa_reqid = opt_whole;
 			continue;
 
@@ -2062,7 +2091,7 @@ int main(int argc, char **argv)
 			char buf[4097]; /* arbitrary limit on log line length */
 			char *be = buf;
 
-			for (;; ) {
+			for (;;) {
 				char *ls = buf;
 				ssize_t rl =
 					read(sock, be,
@@ -2088,7 +2117,7 @@ int main(int argc, char **argv)
 				be += rl;
 				*be = '\0';
 
-				for (;; ) {
+				for (;;) {
 					char *le = strchr(ls, '\n');
 
 					if (le == NULL) {

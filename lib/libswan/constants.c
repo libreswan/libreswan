@@ -44,7 +44,7 @@
  * That allows a guarantee that the result is NUL-terminated.
  *
  * The result is a pointer:
- *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
  * Warning: Is it really wise to silently truncate?  Only the caller knows.
@@ -68,7 +68,7 @@ char *jam_str(char *dest, size_t size, const char *src)
 /*
  * Add a string to a partially filled buffer of limited size
  *
- * This is similar to what people mistakenly thing strncat does
+ * This is similar to what people mistakenly think strncat does
  * but add_str matches jam_str so the arguments are quite different.
  * OpenBSD's strlcat serves the same purpose.
  *
@@ -81,7 +81,7 @@ char *jam_str(char *dest, size_t size, const char *src)
  * the first one.
  *
  * The result is a pointer:
- *   if the string fit, to the NUL at the end of the string in dest;
+ *   if the string fits, to the NUL at the end of the string in dest;
  *   if the string was truncated, to the roof of dest.
  *
  * The results of jam_str and add_str provide suitable values for hint
@@ -443,13 +443,15 @@ enum_names exchange_names_ikev1orv2 = {
 };
 
 /* Flag BITS */
-const char *const flag_bit_names[] = {
-	"ISAKMP_FLAG_ENCRYPTION",	/* bit 0 */
-	"ISAKMP_FLAG_COMMIT",	/* bit 1 */
-	"bit 2",	/* bit 2 */
-	"ISAKMP_FLAG_IKE_INIT",	/* bit 3 */
-	"ISAKMP_FLAG_VERSION",	/* bit 4 */
-	"ISAKMP_FLAG_MSG_RESPONSE",	/* bit 5 */
+const char *const isakmp_flag_names[] = {
+	"ISAKMP_FLAG_v1_ENCRYPTION", /* IKEv1 only bit 0 */
+	"ISAKMP_FLAG_v1_COMMIT", /* IKEv1 only bit 1 */
+	"ISAKMP_FLAG_v1_AUTHONLY", /* IKEv1 only bit 2 */
+	"ISAKMP_FLAG_v2_IKE_INIT", /* IKEv2 only bit 3 */
+	"ISAKMP_FLAG_v2_VERSION", /* IKEv2 only bit 4 */
+	"ISAKMP_FLAG_v2_MSG_RESPONSE", /* IKEv2 only bit 5 */
+	"ISAKMP_FLAG_MSG_RESERVED_BIT6",
+	"ISAKMP_FLAG_MSG_RESERVED_BIT7",
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -668,7 +670,6 @@ enum_names ike_idtype_names = {
 	&ike_idtype_name[ID_IPV4_ADDR],
 	NULL
 };
-
 
 static enum_names ikev2_idtype_names_3 = {
 	ID_DER_ASN1_DN, ID_FC_NAME,
@@ -1033,9 +1034,9 @@ enum_names xauth_type_names = {
 	NULL
 };
 
-/* XAUTH-STATUS attribute */
+/* IKEv1 XAUTH-STATUS attribute names  */
 static const char *const modecfg_attr_name_draft[] = {
-	"INTERNAL_IP4_ADDRESS",	/*1 */
+	"INTERNAL_IP4_ADDRESS",	/* 1 */
 	"INTERNAL_IP4_NETMASK",
 	"INTERNAL_IP4_DNS",
 	"INTERNAL_IP4_NBNS",
@@ -1055,6 +1056,7 @@ static const char *const modecfg_attr_name_draft[] = {
 	"INTERNAL_IP6_PREFIX",
 	"HOME_AGENT_ADDRESS",	/* 19 */
 };
+
 static enum_names modecfg_attr_names_draft = {
 	INTERNAL_IP4_ADDRESS,
 	HOME_AGENT_ADDRESS,
@@ -1152,14 +1154,34 @@ static enum_names oakley_prf_names = {
  */
 
 static const char *const oakley_enc_name[] = {
-	"OAKLEY_DES_CBC",	/* obsoleted */
+	"OAKLEY_DES_CBC", /* obsoleted */
 	"OAKLEY_IDEA_CBC",
-	"OAKLEY_BLOWFISH_CBC",	/* obsoleted */
+	"OAKLEY_BLOWFISH_CBC", /* obsoleted */
 	"OAKLEY_RC5_R16_B64_CBC",
 	"OAKLEY_3DES_CBC",
 	"OAKLEY_CAST_CBC",
 	"OAKLEY_AES_CBC",
-	"OAKLEY_CAMELLIA_CBC",	/* 8 */
+	"DISABLED-OAKLEY_CAMELLIA_CBC", /* 8 */
+	"UNUSED_9",
+	"UNUSED_10",
+	"UNUSED_11",
+	"UNUSED_12",
+	"DISABLED-OAKLEY_AES_CTR", /* stolen from IKEv2 */
+	"OAKLEY_AES_CCM_A",
+	"OAKLEY_AES_CCM_B",
+	"OAKLEY_AES_CCM_16",
+	"UNUSED_17",
+	"OAKLEY_AES_GCM_A",
+	"OAKLEY_AES_GCM_B",
+	"OAKLEY_AES_GCM_C",
+	"UNUSED_21",
+	"UNUSED_22",
+	"UNUSED_23",
+	"OAKLEY_CAMELLIA_CTR",
+	"OAKLEY_CAMELLIA_CCM_A",
+	"OAKLEY_CAMELLIA_CCM_B",
+	"OAKLEY_CAMELLIA_CCM_C",
+
 	/* 9-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
@@ -1192,7 +1214,7 @@ static enum_names oakley_enc_names_private_use = {
 
 enum_names oakley_enc_names = {
 	OAKLEY_DES_CBC,
-	OAKLEY_CAMELLIA_CBC,
+	OAKLEY_CAMELLIA_CCM_C,
 	oakley_enc_name,
 	&oakley_enc_names_private_use
 };
@@ -1211,13 +1233,16 @@ static const char *const oakley_hash_name[] = {
 	"OAKLEY_SHA2_256",	/* RFC 4878 */
 	"OAKLEY_SHA2_384",	/* RFC 4878 */
 	"OAKLEY_SHA2_512",	/* RFC 4878 */
+	"UNUSED_7",
+	"UNUSED_8",
+	"DISABLED-OAKLEY_AES_XCBC" /* stolen from ikev2 */
 	/* 7-65000 Unassigned */
 	/* 65001-65535 Reserved for private use */
 };
 
 enum_names oakley_hash_names = {
 	OAKLEY_MD5,
-	OAKLEY_SHA2_512,
+	OAKLEY_AES_XCBC, /* waiting on NSS support */
 	oakley_hash_name,
 	NULL
 };
@@ -1278,6 +1303,53 @@ enum_names oakley_auth_names = {
 	&oakley_auth_names_private_use
 };
 
+/*
+ * IKEv2 CP attribute name. Some of them are shared with XAUTH Attrib names.
+ * http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-21
+ */
+static const char *const ikev2_cp_attribute_type_name[] = {
+	"v2_INTERNAL_IP4_ADDRESS",	/* 1 */
+	"v2_INTERNAL_IP4_NETMASK",
+	"v2_INTERNAL_IP4_DNS",
+	"v2_INTERNAL_IP4_NBNS",
+	"v2_CP_ATTRIBUTE_RESERVED_5"
+	"v2_INTERNAL_IP4_DHCP",
+	"v2_APPLICATION_VERSION",
+	"v2_INTERNAL_IP6_ADDRESS",
+	"v2_CP_ATTRIBUTE_RESERVED_9",
+	"v2_INTERNAL_IP6_DNS",
+	"v2_CP_ATTRIBUTE_RESERVED_11"
+	"v2_INTERNAL_IP6_DHCP",
+	"v2_INTERNAL_IP4_SUBNET",	/* 13 */
+	"v2_SUPPORTED_ATTRIBUTES",
+	"v2_INTERNAL_IP6_SUBNET",
+	"v2_MIP6_HOME_PREFIX",
+	"v2_INTERNAL_IP6_LINK",
+	"v2_INTERNAL_IP6_PREFIX",
+	"v2_HOME_AGENT_ADDRESS",
+	"v2_P-CSCF_IP4_ADDRESS", /* 20 */
+};
+
+enum_names ikev2_cp_attribute_type_names = {
+	IKEv2_INTERNAL_IP4_ADDRESS,
+	IKEv2_FTT_KAT,
+	ikev2_cp_attribute_type_name,
+	NULL
+};
+
+static const char *const ikev2_cp_type_name[] = {
+	"IKEv2_CP_CFG_REQUEST" , /* 1 */
+	"IKEv2_CP_CFG_REPLY" ,
+	"IKEv2_CP_CFG_SET" ,
+	"IKEv2_CP_CFG_ACK"
+};
+
+enum_names ikev2_cp_type_names = {
+	IKEv2_CP_CFG_REQUEST,
+	IKEv2_CP_CFG_ACK,
+	ikev2_cp_type_name,
+	NULL
+};
 
 /* ikev2 auth methods */
 static const char *const ikev2_auth_name[] = {
@@ -1490,8 +1562,6 @@ enum_names ikev1_notify_names = {
 	ikev1_notify_name,
 	&ikev1_notify_status_names
 };
-
-
 
 /* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13 */
 static const char *const ikev2_notify_name_16384[] = {
@@ -1737,12 +1807,12 @@ static const char *const ikev2_trans_type_prf_name[] = {
 	"PRF_HMAC_MD5",
 	"PRF_HMAC_SHA1",
 	"PRF_HMAC_TIGER",
-	"PRF_HMAC_AES128-XCBC",
+	"PRF_AES128-XCBC",
 	/* RFC 4868 Section 4 */
 	"PRF_HMAC_SHA2-256",
 	"PRF_HMAC_SHA2-384",
 	"PRF_HMAC_SHA2-512",
-	"IKEv2_PRF_AES128_CMAC"
+	"PRF_AES128_CMAC"
 };
 enum_names ikev2_trans_type_prf_names = {
 	IKEv2_PRF_HMAC_MD5,
@@ -1852,15 +1922,6 @@ enum_names *const ikev2_trans_attr_val_descs[] = {
 	NULL,	/* 12 */
 	NULL,	/* 13 */
 	&ikev2_trans_attr_descs,	/* KEY_LENGTH */
-};
-
-/* socket address family info */
-static const char *const af_inet_name[] = {
-	"AF_INET",
-};
-
-static const char *const af_inet6_name[] = {
-	"AF_INET6",
 };
 
 
@@ -2034,6 +2095,18 @@ const char *enum_name(enum_names *ed, unsigned long val)
 	return NULL;
 }
 
+/* find or construct a string to describe an enum value */
+const char *enum_showb(enum_names *ed, unsigned long val, struct esb_buf *b)
+{
+	const char *p = enum_name(ed, val);
+
+	if (p == NULL) {
+		snprintf(b->buf, sizeof(b->buf), "%lu??", val);
+		p = b->buf;
+	}
+	return p;
+}
+
 /*
  * find or construct a string to describe an enum value
  * Result may be in STATIC buffer -- NOT RE-ENTRANT!
@@ -2043,23 +2116,11 @@ const char *enum_name(enum_names *ed, unsigned long val)
  * (Of course that means that unnamed values will be shown
  * badly.)
  */
-const char *enum_showb(enum_names *ed, unsigned long val, char *buf,
-		size_t blen)
-{
-	const char *p = enum_name(ed, val);
-
-	if (p == NULL) {
-		snprintf(buf, blen, "%lu??", val);
-		p = buf;
-	}
-	return p;
-}
-
 const char *enum_show(enum_names *ed, unsigned long val)
 {
-	static char buf[ENUM_SHOW_BUF_LEN];	/* only one! NON-RE-ENTRANT */
+	static struct esb_buf buf;	/* only one! NON-RE-ENTRANT */
 
-	return enum_showb(ed, val, buf, sizeof(buf));
+	return enum_showb(ed, val, &buf);
 }
 
 /* sometimes the prefix gets annoying */
@@ -2067,7 +2128,7 @@ const char *strip_prefix(const char *s, const char *prefix)
 {
 	size_t pl = strlen(prefix);
 
-	return (s != NULL && strncmp(s, prefix, pl) == 0) ? s + pl : s;
+	return (s != NULL && strneq(s, prefix, pl)) ? s + pl : s;
 }
 
 /*
@@ -2156,6 +2217,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
 const char *bitnamesof(const char *const table[], lset_t val)
 {
 	static char bitnamesbuf[200]; /* I hope that it is big enough! */
+
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
 }
 
@@ -2200,9 +2262,9 @@ const char *sparse_val_show(sparse_names sd, unsigned long val)
 	const char *p = sparse_name(sd, val);
 
 	if (p == NULL) {
-		static char buf[12]; /*
-				      * only one!  I hope that it is big enough
-				      */
+		/* only one!  I hope that it is big enough */
+		static char buf[12];
+
 		snprintf(buf, sizeof(buf), "%lu??", val);
 		p = buf;
 	}

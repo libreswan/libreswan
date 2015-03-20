@@ -99,7 +99,7 @@ static void usage(char* arg)
 	exit(1);
 }
 
-static struct option const longopts[] =
+static const struct option longopts[] =
 {
 	{ "dst", 1, 0, 'D' },
 	{ "src", 1, 0, 'S' },

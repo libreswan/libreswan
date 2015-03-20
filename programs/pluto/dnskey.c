@@ -720,10 +720,7 @@ static err_t eat_name(pb_stream *pbs)
 			unsigned ix;
 
 			if (ip >= pbs->roof)
-				return
-					"ran out of message in middle of compressed domain name";
-
-
+				return "ran out of message in middle of compressed domain name";
 
 			ix = ((b & ~0xC0u) << 8) | *ip++;
 			if (jump_count == 0)
@@ -1029,10 +1026,7 @@ static err_t process_answer_section(pb_stream *pbs,
 		TRY(eat_name_helpfully(pbs, "Answer Section"));
 
 		if (!in_struct(&rrf, &rr_fixed_desc, pbs, NULL))
-			return
-				"failed to get fixed part of Answer Section Resource Record";
-
-
+			return "failed to get fixed part of Answer Section Resource Record";
 
 		if (rrf.rdlength > pbs_left(pbs))
 			return "RD Length extends beyond end of message";
@@ -1211,10 +1205,7 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 		TRY(eat_name_helpfully(&pbs, "Authority Section"));
 
 		if (!in_struct(&rrf, &rr_fixed_desc, &pbs, NULL))
-			return
-				"failed to get fixed part of Authority Section Resource Record";
-
-
+			return "failed to get fixed part of Authority Section Resource Record";
 
 		if (rrf.rdlength > pbs_left(&pbs))
 			return "RD Length extends beyond end of message";
@@ -1327,8 +1318,7 @@ static err_t build_dns_name(char name_buf[NS_MAXDNAME + 2],
 	break;
 
 	default:
-		return
-			"can only query DNS for key for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR";
+		return "can only query DNS for key for ID that is a FQDN, IPV4_ADDR, or IPV6_ADDR";
 	}
 
 	DBG(DBG_CONTROL | DBG_DNS,
@@ -1465,7 +1455,7 @@ static void release_all_continuations()
 		num_released++;
 	}
 
-	DBG_log("release_all_cnt: released %d, %d in flight => %d\n",
+	DBG_log("release_all_cnt: released %d, %d in flight => %d",
 		num_released, adns_in_flight,  adns_in_flight - num_released);
 
 	adns_in_flight -= num_released;

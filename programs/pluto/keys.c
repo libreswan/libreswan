@@ -139,8 +139,10 @@ static int print_secrets(struct secret *secret,
 
 void list_psks(void)
 {
+	whack_log(RC_COMMENT, " ");
 	whack_log(RC_COMMENT, "List of Pre-shared secrets (from %s)",
 		  pluto_shared_secrets_file);
+	whack_log(RC_COMMENT, " ");
 	lsw_foreach_secret(pluto_secrets, print_secrets, NULL);
 }
 
@@ -164,7 +166,7 @@ int sign_hash(const struct RSA_private_key *k,
 	slot = PK11_GetInternalKeySlot();
 	if (slot == NULL) {
 		loglog(RC_LOG_SERIOUS,
-		       "RSA_sign_hash: Unable to find (slot security) device (err %d)\n",
+		       "RSA_sign_hash: Unable to find (slot security) device (err %d)",
 		       PR_GetError());
 		return 0;
 	}
@@ -174,23 +176,23 @@ int sign_hash(const struct RSA_private_key *k,
 			       lsw_return_nss_password_file_info()) ==
 	     SECSuccess) {
 		DBG(DBG_CRYPT,
-		    DBG_log("NSS: Authentication to NSS successful\n"));
+		    DBG_log("NSS: Authentication to NSS successful"));
 	} else {
 		DBG(DBG_CRYPT,
-		    DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password\n"));
+		    DBG_log("NSS: Authentication to NSS either failed or not required,if NSS DB without password"));
 	}
 
 	privateKey = PK11_FindKeyByKeyID(slot, &ckaId,
 					 lsw_return_nss_password_file_info());
 	if (privateKey == NULL) {
 		DBG(DBG_CRYPT,
-		    DBG_log("Can't find the private key from the NSS CKA_ID\n"));
+		    DBG_log("Can't find the private key from the NSS CKA_ID"));
 		if (k->pub.nssCert != NULL) {
 			privateKey = PK11_FindKeyByAnyCert(k->pub.nssCert,
 							   lsw_return_nss_password_file_info());
 			if (privateKey == NULL) {
 				loglog(RC_LOG_SERIOUS,
-				       "Can't find the private key from the NSS CERT (err %d)\n",
+				       "Can't find the private key from the NSS CERT (err %d)",
 				       PR_GetError());
 			}
 		}
@@ -213,7 +215,7 @@ int sign_hash(const struct RSA_private_key *k,
 
 		if (s != SECSuccess) {
 			loglog(RC_LOG_SERIOUS,
-			       "RSA_sign_hash: sign function failed (%d)\n",
+			       "RSA_sign_hash: sign function failed (%d)",
 			       PR_GetError());
 			return 0;
 		}
