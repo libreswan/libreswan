@@ -23,12 +23,12 @@ extern struct host_pair *find_host_pair(const ip_address *myaddr
 					, const ip_address *hisaddr
 					, u_int16_t hisport);
 
-#define list_rm(etype, enext, e, ehead) { \
+#define list_rm(etype, enext, e, ehead) do { \
 	etype **ep; \
 	for (ep = &(ehead); *ep != (e); ep = &(*ep)->enext) \
 	    passert(*ep != NULL);    /* we must not come up empty-handed */ \
 	*ep = (e)->enext; \
-    }
+    } while (0)
 
 extern void remove_host_pair(struct host_pair *hp);
 

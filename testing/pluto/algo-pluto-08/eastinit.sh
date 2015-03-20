@@ -1,8 +1,7 @@
-: ==== start ====
-TESTNAME=algo-pluto-08
-source /testing/pluto/bin/eastlocal.sh
-
-ipsec setup start
-/testing/pluto/basic-pluto-01/eroutewait.sh trap
-
+/testing/guestbin/swan-prep
+ipsec _stackmanager start 
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
+/testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-esp-null-alg
+ipsec auto --status
+echo "initdone"

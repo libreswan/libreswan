@@ -22,12 +22,14 @@
  * on doing it better, but note that this counts zero bits, not
  * 1 bits, and it doesn't assume that the mask is properly formed.
  *
+ * BUG: the function name is clearly a lie.
+ * For example, an all 0 address yields 0, not 32 or 128.
+ * For example, an all 1 address yields 32 or 128, not 0.
  */
 int ikev2_highorder_zerobits(ip_address b)
 {
     unsigned char *bp;
-    int i, j;
-    u_int32_t mask;
+    unsigned int i, j;
     size_t n;
     int zerobits = 0;
 
@@ -37,10 +39,12 @@ int ikev2_highorder_zerobits(ip_address b)
 
     zerobits = 0;
     for(j=0; j<n; j++) {
-	mask = 1UL << 7;
+	unsigned char mask = 1UL << 7;
+
 	if(*bp) {
 	    for(i=0; i<8; i++) {
-		if(*bp & mask) return ((8*n)-(zerobits+i));
+		if(*bp & mask)
+		    return (8*n) - (zerobits+i);
 		mask >>= 1;
 	    }
 	}
@@ -74,13 +78,13 @@ int ikev2_calc_iprangediff(ip_address low, ip_address high)
 	return -1;
 
     addrbytesptr_write(&diff, &dp);
-    for(i=0; i<n; i++) {
+    for(i=0; i<(int)n; i++) {
 	if(hp[i]==lp[i]) { dp[i]=0; continue; }
 	break;
     }
 
     /* two values are the same -- no diff */
-    if(i==n) return 0;
+    if(i == (int)n) return 0;
     if(hp[i] < lp[i]) {
 	/* need to swap! */
 	t=hp; hp=lp; lp=t;

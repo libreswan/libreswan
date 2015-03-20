@@ -169,7 +169,7 @@ db_trans_expand(struct db_context *ctx, int delta_trans)
 	int ret = -1;
 	struct db_trans *new_trans, *old_trans;
 	int max_trans = ctx->max_trans + delta_trans;
-	int offset;
+	ptrdiff_t offset;
 
 	old_trans = ctx->trans0;
 	new_trans = ALLOC_BYTES_ST ( sizeof (struct db_trans) * max_trans, 
@@ -210,7 +210,7 @@ db_attrs_expand(struct db_context *ctx, int delta_attrs)
 	struct db_trans *t;
 	unsigned int ti;
 	int max_attrs = ctx->max_attrs + delta_attrs;
-	int offset;
+	ptrdiff_t offset;
 
 	old_attrs = ctx->attrs0;
 	new_attrs = ALLOC_BYTES_ST ( sizeof (struct db_attr) * max_attrs, 

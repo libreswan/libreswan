@@ -46,8 +46,12 @@
 #include "pgp.h"
 #include "certs.h"
 #include "secrets.h"
-#include "md5.h"
-#include "sha1.h"
+#ifdef USE_MD5
+# include "md5.h"
+#endif
+#ifdef USE_SHA1
+# include "sha1.h"
+#endif
 #ifdef USE_SHA2
 # include "sha2.h"
 #endif
@@ -472,16 +476,39 @@ static const x501rdn_t x501rdns[] = {
   {"TCGID"        , {oid_TCGID, 12}, ASN1_PRINTABLESTRING}
 };
 
-#define X501_RDN_ROOF   24
+#define X501_RDN_ROOF   elemsof(x501rdns)
 
-/* Maximum length of ASN.1 distinquished name */
-#define ASN1_BUF_LEN	      512
+static void format_chunk(chunk_t *ch, const char *format, ...) PRINTF_LIKE(2);
 
+/* format into a chunk.
+ * The chunk is used as a cursor for free space at the end of the buffer.
+ * We leave it advanced to the remainder of the free space.
+ * BUG: if there is no free space to start with, we don't do anything.
+ */
 static void
-update_chunk(chunk_t *ch, int n)
+format_chunk(chunk_t *ch, const char *format, ...)
 {
-    n = (n > -1 && n < (int)ch->len)? n : (int)ch->len-1;
-    ch->ptr += n; ch->len -= n;
+    if (ch->len > 0) {
+	size_t len = ch->len;
+	va_list args;
+	va_start(args, format);
+	int ret = vsnprintf((char *)ch->ptr, len, format, args);
+	va_end(args);
+	if (ret < 0) {
+	    /* BUG: if ret < 0, vsnprintf encountered some error, we ought to raise a stink
+	     * For now: pretend nothing happened!
+	     */
+	} else if ((size_t)ret > len) {
+	    /* BUG: if ret >= len, then the vsnprintf output was truncate, we ought to raise a stink!
+	     * For now: accept truncated output.
+	     */
+	    ch->ptr += len;
+	    ch->len = 0;
+	} else {
+	    ch->ptr += ret;
+	    ch->len -= ret;
+	}
+    }
 }
 
 
@@ -612,9 +639,7 @@ dn_parse(chunk_t dn, chunk_t *str)
     err_t ugh;
 
     if(dn.ptr == NULL) {
-	const char *e = "(empty)";
-	strncpy((char *)str->ptr, e, str->len);
-	update_chunk(str, strlen(e));
+	format_chunk(str, "(empty)");
 	return NULL;
     }
     ugh = init_rdn(dn, &rdn, &attribute, &next);
@@ -632,19 +657,17 @@ dn_parse(chunk_t dn, chunk_t *str)
 	if (first)		/* first OID/value pair */
 	    first = FALSE;
 	else			/* separate OID/value pair by a comma */
-	    update_chunk(str, snprintf((char *)str->ptr,str->len,", "));
+	    format_chunk(str, ", ");
 
 	/* print OID */
 	oid_code = known_oid(oid);
 	if (oid_code == OID_UNKNOWN)	/* OID not found in list */
 	    hex_str(oid, str);
 	else
-	    update_chunk(str, snprintf((char *)str->ptr,str->len,"%s",
-			      oid_names[oid_code].name));
+	    format_chunk(str, "%s", oid_names[oid_code].name);
 
 	/* print value */
-	update_chunk(str, snprintf((char *)str->ptr,str->len,"=%.*s",
-			      (int)value.len,value.ptr));
+	format_chunk(str, "=%.*s", (int)value.len, value.ptr);
     }
     return NULL;
 }
@@ -684,9 +707,9 @@ void
 hex_str(chunk_t bin, chunk_t *str)
 {
     u_int i;
-    update_chunk(str, snprintf((char *)str->ptr,str->len,"0x"));
+    format_chunk(str, "0x");
     for (i=0; i < bin.len; i++)
-	update_chunk(str, snprintf((char *)str->ptr,str->len,"%02X",*bin.ptr++));
+	format_chunk(str, "%02X", *bin.ptr++);
 }
 
 
@@ -705,8 +728,7 @@ dntoa(char *dst, size_t dstlen, chunk_t dn)
 
     if (ugh != NULL) /* error, print DN as hex string */
     {
-	DBG(DBG_PARSING,
-	    DBG_log("error in DN parsing: %s", ugh));
+	libreswan_log("error in DN parsing: %s", ugh);
 	str.ptr = (unsigned char *)dst;
 	str.len = dstlen;
 	hex_str(dn, &str);
@@ -775,11 +797,11 @@ atodn(char *src, chunk_t *dn)
         UNKNOWN_OID =	4
     } state_t;
 
-    u_char oid_len_buf[3];
-    u_char name_len_buf[3];
-    u_char rdn_seq_len_buf[3];
-    u_char rdn_set_len_buf[3];
-    u_char dn_seq_len_buf[3];
+    u_char oid_len_buf[ASN1_MAX_LEN_LEN];
+    u_char name_len_buf[ASN1_MAX_LEN_LEN];
+    u_char rdn_seq_len_buf[ASN1_MAX_LEN_LEN];
+    u_char rdn_set_len_buf[ASN1_MAX_LEN_LEN];
+    u_char dn_seq_len_buf[ASN1_MAX_LEN_LEN];
 
     chunk_t asn1_oid_len     = { oid_len_buf,     0 };
     chunk_t asn1_name_len    = { name_len_buf,    0 };
@@ -797,7 +819,7 @@ atodn(char *src, chunk_t *dn)
 
     err_t ugh = NULL;
 
-    u_char *dn_ptr = dn->ptr + 4;
+    u_char *dn_ptr = dn->ptr + 1 + ASN1_MAX_LEN_LEN;	/* leave room for prefix */
 
     state_t state = SEARCH_OID;
 
@@ -818,7 +840,7 @@ atodn(char *src, chunk_t *dn)
 		oid.len++;
 	    else
 	    {
-		for (pos = 0; pos < X501_RDN_ROOF; pos++)
+		for (pos = 0; pos < (int)X501_RDN_ROOF; pos++)
 		{
 		    if (strlen(x501rdns[pos].name) == oid.len &&
 			strncasecmp(x501rdns[pos].name, (char *)oid.ptr, oid.len) == 0)
@@ -885,25 +907,37 @@ atodn(char *src, chunk_t *dn)
 		code_asn1_length(rdn_set_len, &asn1_rdn_set_len);
 
 		/* encode the relative distinguished name */
-		*dn_ptr++ = ASN1_SET;
-		chunkcpy(dn_ptr, asn1_rdn_set_len);
-		*dn_ptr++ = ASN1_SEQUENCE;
-		chunkcpy(dn_ptr, asn1_rdn_seq_len);
-		*dn_ptr++ = ASN1_OID;
-		chunkcpy(dn_ptr, asn1_oid_len);
-		chunkcpy(dn_ptr, x501rdns[pos].oid);
-		/* encode the ASN.1 character string type of the name */
-		*dn_ptr++ = (x501rdns[pos].type == ASN1_PRINTABLESTRING
-		    && !is_printablestring(name))? ASN1_T61STRING : x501rdns[pos].type;
-		chunkcpy(dn_ptr, asn1_name_len);
-		chunkcpy(dn_ptr, name);
+		if (IDTOA_BUF <  dn_ptr - dn->ptr
+		+ 1 + asn1_rdn_set_len.len	/* set */
+		+ 1 + asn1_rdn_seq_len.len	/* sequence */
+		+ 1 + asn1_oid_len.len + x501rdns[pos].oid.len	/* oid len, oid */
+		+ 1 + asn1_name_len.len + name.len  /* type name */
+		) {
+		    /* no room! */
+		    ugh = "DN is too big";
+		    state = UNKNOWN_OID;
+		    /* I think that it is safe to continue (but perhaps pointless) */
+		} else {
+		    *dn_ptr++ = ASN1_SET;
+		    chunkcpy(dn_ptr, asn1_rdn_set_len);
+		    *dn_ptr++ = ASN1_SEQUENCE;
+		    chunkcpy(dn_ptr, asn1_rdn_seq_len);
+		    *dn_ptr++ = ASN1_OID;
+		    chunkcpy(dn_ptr, asn1_oid_len);
+		    chunkcpy(dn_ptr, x501rdns[pos].oid);
+		    /* encode the ASN.1 character string type of the name */
+		    *dn_ptr++ = (x501rdns[pos].type == ASN1_PRINTABLESTRING
+			&& !is_printablestring(name))? ASN1_T61STRING : x501rdns[pos].type;
+		    chunkcpy(dn_ptr, asn1_name_len);
+		    chunkcpy(dn_ptr, name);
 
-		/* accumulate the length of the distinguished name sequence */
-		dn_seq_len += 1 + asn1_rdn_set_len.len + rdn_set_len;
+		    /* accumulate the length of the distinguished name sequence */
+		    dn_seq_len += 1 + asn1_rdn_set_len.len + rdn_set_len;
 
-		/* reset name and change state */
-		name = empty_chunk;
-		state = SEARCH_OID;
+		    /* reset name and change state */
+		    name = empty_chunk;
+		    state = SEARCH_OID;
+		}
 	    }
 	    break;
 	case UNKNOWN_OID:
@@ -911,9 +945,9 @@ atodn(char *src, chunk_t *dn)
 	}
     } while (*src++ != '\0');
 
-    /* complete the distinguished name sequence*/
-    code_asn1_length(dn_seq_len, &asn1_dn_seq_len);
-    dn->ptr += 3 - asn1_dn_seq_len.len;
+    /* complete the distinguished name sequence: prefix it with ASN1_SEQUENCE and length */
+    code_asn1_length((size_t)dn_seq_len, &asn1_dn_seq_len);
+    dn->ptr += ASN1_MAX_LEN_LEN + 1 - 1 - asn1_dn_seq_len.len;
     dn->len =  1 + asn1_dn_seq_len.len + dn_seq_len;
     dn_ptr = dn->ptr;
     *dn_ptr++ = ASN1_SEQUENCE;
@@ -1220,6 +1254,7 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 {
     switch (alg)
     {
+#ifdef USE_MD5
 	case OID_MD5:
 	case OID_MD5_WITH_RSA:
 	{
@@ -1230,6 +1265,8 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	    digest->len = MD5_DIGEST_SIZE;
 	    return TRUE;
 	}
+#endif
+#ifdef USE_SHA1
 	case OID_SHA1:
 	case OID_SHA1_WITH_RSA:
 	case OID_SHA1_WITH_RSA_OIW:
@@ -1241,6 +1278,7 @@ compute_digest(chunk_t tbs, int alg, chunk_t *digest)
 	    digest->len = SHA1_DIGEST_SIZE;
 	    return TRUE;
 	}
+#endif
 #ifdef USE_SHA2
 	case OID_SHA256:
 	case OID_SHA256_WITH_RSA:
@@ -1312,17 +1350,15 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 	case OID_SHA256_WITH_RSA:
 	case OID_SHA384_WITH_RSA:
 	case OID_SHA512_WITH_RSA:
+	case OID_SHA224_WITH_RSA:
 	{
 
 	   SECKEYPublicKey *publicKey;
 	   PRArenaPool *arena;
-	   SECStatus retVal = SECSuccess;
-	   SECItem nss_n, nss_e, dsig;
-	   SECItem signature;
-           mpz_t e;
-           mpz_t n;
-	   mpz_t s;
-	   chunk_t nc, ec, sc, dsigc;
+	   SECStatus retVal;
+	   SECItem nss_n, nss_e;
+	   SECItem dsig, signature;
+	   int skip;
 
 	    arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	    if (arena == NULL) {
@@ -1334,7 +1370,7 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 	    if (!publicKey) {
 	        PORT_FreeArena (arena, PR_FALSE);
 	        PORT_SetError (SEC_ERROR_NO_MEMORY);
-		DBG(DBG_PARSING, DBG_log("NSS: error in allocating memory to public key"));
+		DBG(DBG_X509 | DBG_CONTROL, DBG_log("NSS: error in allocating memory to public key"));
 	        return FALSE;
 	    }
 
@@ -1343,40 +1379,30 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
 	    publicKey->pkcs11Slot = NULL;
 	    publicKey->pkcs11ID = CK_INVALID_HANDLE;
 
-            n_to_mpz(s, sig.ptr, sig.len);
-            n_to_mpz(e, issuer_cert->publicExponent.ptr,
-                        issuer_cert->publicExponent.len);
-            n_to_mpz(n, issuer_cert->modulus.ptr,
-                        issuer_cert->modulus.len);
+            DBG(DBG_X509 | DBG_CONTROL, /* n */
+                DBG_dump("NSS cert: modulus : ", issuer_cert->modulus.ptr, issuer_cert->modulus.len);
+            );
 
+            DBG(DBG_X509 | DBG_CONTROL, /* e */
+                DBG_dump("NSS cert: exponent : ", issuer_cert->publicExponent.ptr, issuer_cert->publicExponent.len);
+            );
 
-	    nc = mpz_to_n2((const MP_INT *)&n);
-            ec = mpz_to_n2((const MP_INT *)&e);
-	    sc = mpz_to_n2((const MP_INT *)&s);
+            DBG(DBG_X509 | DBG_CONTROL, /* s */
+                DBG_dump("NSS: input signature : ", sig.ptr, sig.len);
+            );
 
-            DBG(DBG_PARSING,
-                DBG_dump_chunk("NSS cert: modulus : ", nc)
-            )
-
-            DBG(DBG_PARSING,
-                DBG_dump_chunk("NSS cert: exponent : ", ec)
-            )
-
-            DBG(DBG_PARSING,
-                DBG_dump_chunk("NSS: input signature : ", sc)
-            )
-
-            mpz_clear(e);
-            mpz_clear(n);
-            mpz_clear(s);
-
-    /*Converting n and e to nss_n and nss_e*/
-	    nss_n.data = nc.ptr;
-	    nss_n.len = (unsigned int) nc.len;
+	    /*Converting n and e to nss_n and nss_e*/
+	    skip = (issuer_cert->modulus.len > 0 && issuer_cert->modulus.ptr[0] == 0x00) ? 1 : 0;
+	    if (skip != 1) {
+		DBG(DBG_X509 | DBG_CONTROL, DBG_log("NSS: RSA Modulus has no leading 0x00 byte, modules < 2^511 ?"));
+	    }
+	    nss_n.data = issuer_cert->modulus.ptr + skip;
+	    nss_n.len =  issuer_cert->modulus.len - skip;
 	    nss_n.type = siBuffer;
 
-	    nss_e.data = ec.ptr;
-	    nss_e.len  = (unsigned int)ec.len;
+	    /* exponents are always < 2^255, so they never have a leading zero */
+	    nss_e.data = issuer_cert->publicExponent.ptr;
+	    nss_e.len  = issuer_cert->publicExponent.len;
 	    nss_e.type = siBuffer;
 
 	    retVal = SECITEM_CopyItem(arena, &publicKey->u.rsa.modulus, &nss_n);
@@ -1384,57 +1410,72 @@ decrypt_sig(chunk_t sig, int alg, const x509cert_t *issuer_cert,
               retVal = SECITEM_CopyItem (arena, &publicKey->u.rsa.publicExponent, &nss_e);
             }
 
-	    if(retVal != SECSuccess){
-	    pfree(nc.ptr);
-	    pfree(ec.ptr);
-	    pfree(sc.ptr);
-	    SECKEY_DestroyPublicKey (publicKey);
-            DBG_log("NSS x509dn.c: error in creating public key");
-	    return FALSE;
+	    if (retVal != SECSuccess) {
+		SECKEY_DestroyPublicKey (publicKey);
+		loglog(RC_LOG_SERIOUS, "NSS x509dn.c: error in creating public key");
+		return FALSE;
 	    }
 
+	    skip = sig.len > nss_n.len && sig.ptr[0] == 0x00 ? 1 : 0;
+
+	    if (skip != 1) {
+		DBG(DBG_X509 | DBG_CONTROL, DBG_log("NSS: RSA Signature has no leading 0x00 byte?"));
+	    }
+
+	    signature.data = sig.ptr + skip;
+	    signature.len  = sig.len - skip;
 	    signature.type = siBuffer;
-	    signature.data = sc.ptr;
-	    signature.len  = (unsigned int)sc.len;
+	    DBG(DBG_X509 | DBG_CONTROL, DBG_log("RSA Signature length is %d", signature.len));
 
-	    dsigc.len = (unsigned int)sc.len;
-	    dsigc.ptr = alloc_bytes(dsigc.len, "NSS decrypted signature");
-            dsig.type = siBuffer;
-            dsig.data = dsigc.ptr;
-            dsig.len  = (unsigned int)dsigc.len;
+	    dsig.len = signature.len; /* this is a hack! yes, a digest will always be shorter then the full sig */
+	    dsig.data = alloc_bytes(dsig.len, "NSS decrypted signature");
+	    dsig.type = siBuffer;
 
-    	    /*Verifying RSA signature*/
-	    if(PK11_VerifyRecover(publicKey,&signature,&dsig,lsw_return_nss_password_file_info()) == SECSuccess )
+	    /*Verifying RSA signature*/
+	    if (PK11_VerifyRecover(publicKey, &signature, &dsig /*output*/, lsw_return_nss_password_file_info()) == SECSuccess)
 	    {
-            DBG(DBG_PARSING,
-                DBG_dump("NSS decrypted sig: ", dsig.data, dsig.len);
-                DBG_log("NSS: length of decrypted sig = %d", dsig.len);
-	    );
+		DBG(DBG_X509 | DBG_CONTROL,
+		DBG_dump("NSS digest sig: ", dsig.data, dsig.len);
+		DBG_log("NSS: length of digest sig = %d", dsig.len);
+		);
+	    } else {
+			loglog(RC_LOG_SERIOUS, "NSS: PK11_VerifyRecover() failed (%d)", PR_GetError());
 	    }
+	
+	    SECKEY_DestroyPublicKey(publicKey);
 
-            pfree(nc.ptr);
-            pfree(ec.ptr);
-	    pfree(sc.ptr);
-	    SECKEY_DestroyPublicKey (publicKey);
-
-	   if(memcmp(dsig.data+dsig.len-digest->len,digest->ptr, digest->len)==0)
-	   {
-            pfree(dsigc.ptr);
-	    DBG(DBG_PARSING,
-		DBG_log("NSS: RSA Signature verified, hash values matched")
+	    DBG(DBG_X509 | DBG_CONTROL,
+	    DBG_dump("NSS scratchpad plus computed digest sig: ", dsig.data, dsig.len);
+	    DBG_dump("NSS adjusted digest sig: ", dsig.data + dsig.len - digest->len, digest->len);
+	    DBG_dump_chunk("NSS expected digest sig: ", *digest);
 	    );
-	    return TRUE;
-	   }
+	    
+	    if(memcmp(dsig.data + dsig.len - digest->len, digest->ptr, digest->len) == 0)
+	    {
+		pfree(dsig.data);
+		DBG(DBG_CONTROL, DBG_log("NSS: RSA Signature verified, hash values matched"));
+		return TRUE;
+	    }
+	    pfree(dsig.data);
 
-           pfree(dsigc.ptr);
-	   DBG(DBG_PARSING, DBG_log("NSS: RSA Signature NOT verified"));
-	   return FALSE;
+	    loglog(RC_LOG_SERIOUS, "NSS: RSA Signature FAILED verification");
+	    digest->len = 0;
+	    return FALSE;
 	}
+
+	case OID_MD2_WITH_RSA:
+	{
+	    loglog(RC_LOG_SERIOUS, "NSS: RSA Signature FAILED verification - RSA with MD2 not supported - too weak");
+	    digest->len = 0;
+	    return FALSE;
+	}
+
 	default:
+	    loglog(RC_LOG_SERIOUS, "decrypt_sig: RSA Signature FAILED verification - OID RSA algorithm '%d' not supported"
+		, alg);
 	    digest->len = 0;
 	    return FALSE;
     }
-
 }
 
 /*
@@ -1449,15 +1490,15 @@ check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 
     if (algorithm != OID_UNKNOWN)
     {
-	DBG(DBG_X509 | DBG_PARSING,
+	DBG(DBG_X509 | DBG_CONTROL,
 	    DBG_log("signature algorithm: '%s'",oid_names[algorithm].name);
-	)
+	);
     }
     else
     {
-	DBG(DBG_X509 | DBG_PARSING,
+	DBG(DBG_X509 | DBG_CONTROL,
 	    DBG_log("unknown signature algorithm");
-	)
+	);
     }
 
     if (!compute_digest(tbs, algorithm, &digest))
@@ -1466,9 +1507,9 @@ check_signature(chunk_t tbs, chunk_t sig, int algorithm,
 	return FALSE;
     }
 
-    DBG(DBG_PARSING,
+    DBG(DBG_CONTROL,
 	DBG_dump_chunk("  digest:", digest)
-    )
+    );
 
     if (!decrypt_sig(sig, algorithm, issuer_cert, &digest))
     {
@@ -1501,9 +1542,9 @@ parse_basicConstraints(chunk_t blob, int level0)
 	if (objectID == BASIC_CONSTRAINTS_CA)
 	{
 	    isCA = object.len && *object.ptr;
-	    DBG(DBG_PARSING,
+	    DBG(DBG_CONTROL,
 		DBG_log("  %s",(isCA)?"TRUE":"FALSE");
-	    )
+	    );
 	}
 	objectID++;
     }
@@ -1572,7 +1613,7 @@ parse_generalName(chunk_t blob, int level0)
 	case GN_OBJ_URI:
 	    DBG(DBG_PARSING,
 		DBG_log("  '%.*s'", (int)object.len, object.ptr);
-	    )
+	    );
 	    valid_gn = TRUE;
 	    break;
 	case GN_OBJ_DIRECTORY_NAME:
@@ -1580,14 +1621,14 @@ parse_generalName(chunk_t blob, int level0)
 		u_char buf[ASN1_BUF_LEN];
 		dntoa((char *)buf, ASN1_BUF_LEN, object);
 		DBG_log("  '%s'", buf)
-	    )
+	    );
 	    valid_gn = TRUE;
 	    break;
 	case GN_OBJ_IP_ADDRESS:
 	    DBG(DBG_PARSING,
 		DBG_log("  '%d.%d.%d.%d'", *object.ptr, *(object.ptr+1),
 				      *(object.ptr+2), *(object.ptr+3));
-	    )
+	    );
 	    valid_gn = TRUE;
 	    break;
 	case GN_OBJ_OTHER_NAME:
@@ -1935,7 +1976,7 @@ parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 	    cert->version = (object.len) ? (1+(u_int)*object.ptr) : 1;
 	    DBG(DBG_PARSING,
 		DBG_log("  v%d", cert->version);
-	    )
+	    );
 	    break;
 	case X509_OBJ_SERIAL_NUMBER:
 	    cert->serialNumber = object;
@@ -2008,7 +2049,7 @@ parse_x509cert(chunk_t blob, u_int level0, x509cert_t *cert)
 	    critical = object.len && *object.ptr;
 	    DBG(DBG_PARSING,
 		DBG_log("  %s",(critical)?"TRUE":"FALSE");
-	    )
+	    );
 	    break;
 	case X509_OBJ_EXTN_VALUE:
 	    {
@@ -2097,7 +2138,7 @@ parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 	    crl->version = (object.len) ? (1+(u_int)*object.ptr) : 1;
 	    DBG(DBG_PARSING,
 		DBG_log("  v%d", crl->version);
-	    )
+	    );
 	    break;
 	case CRL_OBJ_SIG_ALG:
 	    crl->sigAlg = parse_algorithmIdentifier(object, level);
@@ -2140,7 +2181,7 @@ parse_x509crl(chunk_t blob, u_int level0, x509crl_t *crl)
 	    critical = object.len && *object.ptr;
 	    DBG(DBG_PARSING,
 		DBG_log("  %s",(critical)?"TRUE":"FALSE");
-	    )
+	    );
 	    break;
 	case CRL_OBJ_EXTN_VALUE:
 	    {

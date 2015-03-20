@@ -1,8 +1,7 @@
 ALG:=aes
-CONFIG_YES:=$(CONFIG_IKE_ALG_AES)
 
-ALG_SRCS-$(CONFIG_YES)  := $(ALG_SRCS-$(CONFIG_YES)) ike_alg_$(ALG).c
-ALG_OBJS-$(CONFIG_YES)  := $(ALG_OBJS-$(CONFIG_YES)) ike_alg_$(ALG).o
+ALG_SRCS-y  := $(ALG_SRCS-y) ike_alg_$(ALG).c
+ALG_OBJS-y  := $(ALG_OBJS-y) ike_alg_$(ALG).o
 
 ike_alg_$(ALG).o: ike_alg_$(ALG).c
 	$(CC) $(COPTS) $(ALLFLAGS) -c $<

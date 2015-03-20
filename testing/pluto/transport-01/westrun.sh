@@ -1,7 +1,5 @@
 ipsec auto --up  west--east-port3
-
-telnet east-out 3 | wc -l
-telnet east-out 2 | wc -l
-
+echo "transmitted text" | nc 192.1.2.23  3 
+echo "transmitted text" | nc 192.1.2.23  2 
 ipsec look
 echo done

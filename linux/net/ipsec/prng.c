@@ -14,8 +14,10 @@
  * License for more details.
  */
 #include "libreswan.h"
+#ifndef __KERNEL__
+#error This file should only be used for building KLIPS
+#endif
 
-#ifdef __KERNEL__
 #include "libreswan/ipsec_proto.h"
 
 /* for local_bh_disable() on older kernels without linux/asm/softirq.h */
@@ -40,14 +42,6 @@
 		ul = 0; \
 		spin_unlock_bh(&tdb_lock); \
 	} else
-
-#else
-
-#define LOCK_PRNG()
-#define UNLOCK_PRNG()
-
-#endif
-
 
 /*
  - prng_init - initialize PRNG from a key
@@ -151,92 +145,3 @@ struct prng *prng;
 	prng->count = 0;	/* just for good measure */
 }
 
-
-
-#ifdef PRNG_MAIN
-
-#include <stdio.h>
-#include <stdlib.h>
-
-void regress();
-
-int
-main(argc, argv)
-int argc;
-char *argv[];
-{
-	struct prng pr;
-	unsigned char buf[100];
-	unsigned char *p;
-	size_t n;
-
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s {key|-r}\n", argv[0]);
-		exit(2);
-	}
-
-	if (strcmp(argv[1], "-r") == 0) {
-		regress();
-		fprintf(stderr, "regress() returned?!?\n");
-		exit(1);
-	}
-
-	prng_init(&pr, argv[1], strlen(argv[1]));
-	prng_bytes(&pr, buf, 32);
-	printf("0x");
-	for (p = buf, n = 32; n > 0; p++, n--)
-		printf("%02x", *p);
-	printf("\n%lu bytes\n", prng_count(&pr));
-	prng_final(&pr);
-	exit(0);
-}
-
-void
-regress()
-{
-	struct prng pr;
-	unsigned char buf[100];
-	unsigned char *p;
-	size_t n;
-	/* somewhat non-random sample key */
-	unsigned char key[] = "here we go gathering nuts in May";
-	/* first thirty bytes of output from that key */
-	unsigned char good[] = "\x3f\x02\x8e\x4a\x2a\xea\x23\x18\x92\x7c"
-				"\x09\x52\x83\x61\xaa\x26\xce\xbb\x9d\x71"
-				"\x71\xe5\x10\x22\xaf\x60\x54\x8d\x5b\x28";
-	int nzero, none;
-	int show = 0;
-
-	prng_init(&pr, key, strlen(key));
-	prng_bytes(&pr, buf, sizeof(buf));
-	for (p = buf, n = sizeof(buf); n > 0; p++, n--) {
-		if (*p == 0)
-			nzero++;
-		if (*p == 255)
-			none++;
-	}
-	if (nzero > 3 || none > 3) {
-		fprintf(stderr, "suspiciously non-random output!\n");
-		show = 1;
-	}
-	if (memcmp(buf, good, strlen(good)) != 0) {
-		fprintf(stderr, "incorrect output!\n");
-		show = 1;
-	}
-	if (show) {
-		fprintf(stderr, "0x");
-		for (p = buf, n = sizeof(buf); n > 0; p++, n--)
-			fprintf(stderr, "%02x", *p);
-		fprintf(stderr, "\n");
-		exit(1);
-	}
-	if (prng_count(&pr) != sizeof(buf)) {
-		fprintf(stderr, "got %lu bytes, but count is %lu\n",
-			(unsigned long)sizeof(buf), prng_count(&pr));
-		exit(1);
-	}
-	prng_final(&pr);
-	exit(0);
-}
-
-#endif /* PRNG_MAIN */

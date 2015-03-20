@@ -1,4 +1,4 @@
-Basic pluto test using IPv6 (and NETKEY):
+Basic pluto test using IPv6 (and KLIPS):
 
 "westnet-eastnet": 2001:db8:0:1::254/64===2001:db8:1:2::45[@west]...2001:db8:1:2::23[@east]===2001:db8:0:2::254/64
 
@@ -6,4 +6,4 @@ Basic pluto test using IPv6 (and NETKEY):
 2) west adds an ip6table rule to block plaintext from eastnet
 3) west pings again, but pong should be dropped by rule
 4) west initiates connection "westnet-eastnet-ipv6"; east responds
-5) netjig sends ping packets from westnet to eastnet
+5) packets flow from westnet to eastnet

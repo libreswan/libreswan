@@ -74,7 +74,6 @@ extern void call_server(void);
 extern err_t init_info_socket(void);
 extern void delete_info_socket(void);
 
-extern bool pluto_crypt_handle_dead_child(int pid, int status);
 extern bool adns_reapchild(pid_t pid, int status);
 
 extern const char *init_pluto_vendorid(void);

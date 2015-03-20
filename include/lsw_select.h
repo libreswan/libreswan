@@ -22,7 +22,7 @@
 
 #define LSW_NFDBITS   (8 * sizeof (long int))
 #define LSW_FDELT(d)  ((d) / LSW_NFDBITS)
-#define LSW_FDMASK(d) ((long int) 1 << ((d) % LSW_NFDBITS))
+#define LSW_FDMASK(d) ((long int) (1UL << ((d) % LSW_NFDBITS)))
 #define LSW_FD_SETCOUNT	((LSW_FD_SETSIZE + LSW_NFDBITS - 1) / LSW_NFDBITS)
 
 typedef struct {

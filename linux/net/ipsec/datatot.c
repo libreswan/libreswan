@@ -119,14 +119,14 @@ size_t dstlen;
 			ntodo = inblocksize;
 		} else
 			nreal = inblocksize;
-		out = (outblocksize > stop - dst) ? outblock : dst;
+		out = ((ptrdiff_t)outblocksize > stop - dst) ? outblock : dst;
 
 		convert((const char *)src, nreal, format, out);
 		needed += outblocksize;
 		sincebreak += outblocksize;
 		if (dst < stop) {
 			if (out != dst) {
-				user_assert(outblocksize > stop - dst);
+				user_assert((ptrdiff_t)outblocksize > stop - dst);
 				memcpy(dst, out, stop - dst);
 				dst = stop;
 			} else

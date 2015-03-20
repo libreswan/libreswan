@@ -23,7 +23,7 @@ SUBDIRS=
 SUBDIRS+=proc pluto addconn 
 SUBDIRS+=configs _keycensor _plutorun _stackmanager
 SUBDIRS+=_secretcensor _updown 
-SUBDIRS+=auto barf verify ipsec look newhostkey ranbits secrets 
+SUBDIRS+=auto barf verify ipsec look newhostkey secrets 
 SUBDIRS+=rsasigkey setup showhostkey
 SUBDIRS+=ikeping readwriteconf
 

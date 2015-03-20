@@ -51,11 +51,7 @@ XAUTH_HAVE_PAM=1
 endif
 endif
 
-# -O on Linux makes gcc coredump when compiling sha1.c
-# -Wundef is nice but RHL5.2 compiler doesn't support it
-CFLAGS +=-g -Wall -W -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast \
-	-Wcast-qual -Wmissing-declarations -Wwrite-strings \
-	-Wstrict-prototypes # -Wundef
+CFLAGS +=-g ${WERROR}
 
 ifeq ($(HAVE_OCF),true)
 CFLAGS += -DHAVE_OCF
@@ -240,13 +236,6 @@ CURL_DEFS=-DLIBCURL
 CURL_LLIBS=-lcurl
 endif
 
-ifeq ($(USE_WEAKSTUFF),true)
-WEAK_DEFS=-DUSE_VERYWEAK_DH1=1
-ifeq ($(USE_NOCRYPTO),true)
-WEAK_DEFS+=-DUSE_1DES
-endif
-endif
-
 ifeq ($(USE_EXTRACRYPTO),true)
 EXTRA_CRYPTO_DEFS=-DUSE_TWOFISH -DUSE_BLOWFISH -DUSE_SERPENT 
 EXTRA_CRYPTO_SRCS=ike_alg_blowfish.c ike_alg_twofish.c ike_alg_serpent.c 
@@ -282,13 +271,12 @@ DEFINES = $(EXTRA_DEFINES) \
 	${KLIPS_DEFS} ${WIN2K_DEFS} ${TPM_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
 	-DBUILDER=\"${BUILDER}\" \
 	-DDEBUG \
-	-DUSE_AES -DUSE_3DES -DUSE_SHA2 \
+	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5\
 	-DIKE_ALG -DKERNEL_ALG \
 	${AGGRESSIVE_DEFS} \
 	${LABELED_IPSEC_DEFS} \
 	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
 	${NAT_DEFS} ${CURL_DEFS}\
-	${WEAK_DEFS} \
 	${SINGLE_CONF_DIR} \
 	${HAVE_STATSD_DEFS} \
 	${IPSEC_CONNECTION_LIMIT_DEFS} \

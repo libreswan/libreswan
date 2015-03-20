@@ -221,7 +221,7 @@ GCC_LINT ?= -DGCC_LINT
 # Example for a cross compile:
 # USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
 # USERCOMPILE?=-g -O2 ${WERROR} $(GCC_LINT)
-USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} $(GCC_LINT) -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4  -mtune=generic -fno-strict-aliasing -fPIE -DPIE  -Wall -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wbad-function-cast
+USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} $(GCC_LINT) -pipe -Wall -Wextra -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4  -mtune=generic -fno-strict-aliasing -fPIE -DPIE 
 
 KLIPSCOMPILE=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # Additional debugging for developers (warning: can crash libreswan!)
@@ -424,15 +424,6 @@ USE_LDAP?=false
 
 # Include libcurl support (currently used for fetching CRLs)
 USE_LIBCURL?=true
-
-# should we include all manner of known to be broken/weak?
-# use this only if you are building some kind of a testing
-# device. Normal use does not need any of this.
-USE_WEAKSTUFF?=false
-
-# Build algorithms that don't even encrypt (also must set WEAKSTUFF)
-# unless you are doing negative testing, turning this on is foolish.
-USE_NOCRYPTO?=false
 
 # should we include additional (strong) algorithms?  It adds a measureable
 # amount of code space to pluto, and many of the algorithms have not had

@@ -39,7 +39,7 @@ void readwhackmsg(char *infile)
 	/* round up to multiple of 4 */
 	abuflen = (plen + 3) & ~0x3;
 
-	if(abuflen > sizeof(m1)) {
+	if(abuflen > sizeof(m1) || abuflen < plen) {
 	    fprintf(stderr, "whackmsg file has too big a record=%zu > %zu\n"
 		    , abuflen, sizeof(m1));
 	    fclose(record);

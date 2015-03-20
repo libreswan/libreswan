@@ -277,8 +277,12 @@ decode_iii(char **pp, struct id *gw_id)
     if (*p == '@')
     {
 	/* gateway specification in this record is @FQDN */
-	err_t ugh = atoid(p, gw_id, FALSE);
 
+	if(strspn(p," ") >= IDTOA_BUF) {
+	    return builddiag("malformed FQDN in TXT " our_TXT_attr_string ": ID too large for IDTOA_BUF");
+	}
+
+	err_t ugh = atoid(p, gw_id, FALSE, TRUE); /* only run OE related parts of atoid() */
 	if (ugh != NULL)
 	    return builddiag("malformed FQDN in TXT " our_TXT_attr_string ": %s"
 			     , ugh);
@@ -1348,7 +1352,7 @@ gw_addref(struct gw_info *gw)
 {
     if (gw != NULL)
     {
-	DBG(DBG_DNS, DBG_log("gw_addref: %p refcnt: %d++", gw, gw->refcnt))
+	DBG(DBG_DNS, DBG_log("gw_addref: %p refcnt: %d++", gw, gw->refcnt));
 	gw->refcnt++;
     }
 }

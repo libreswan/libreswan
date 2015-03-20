@@ -50,7 +50,7 @@ ip_address *dst;
 	size_t n = addrlenof(&src->addr);
 	unsigned char *p;
 
-	if (src->maskbits > n*8 || n > sizeof(buf))
+	if ((size_t)src->maskbits > n*8 || n > sizeof(buf))
 		return;		/* "can't happen" */
 
 	p = buf;
@@ -58,7 +58,7 @@ ip_address *dst;
 		*p++ = 0xff;
 	if (b != 0)
 		*p++ = (0xff << (8 - b)) & 0xff;
-	while (p - buf < n)
+	while ((size_t)(p - buf) < n)
 		*p++ = 0;
 
 	(void) initaddr(buf, n, addrtypeof(&src->addr), dst);

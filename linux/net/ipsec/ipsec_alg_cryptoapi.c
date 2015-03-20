@@ -179,12 +179,13 @@ static inline void *sg_virt(struct scatterlist *sg)
 # define CIPHERNAME_NULL		cbc(null)
 #endif
 #define CIPHERNAME_AES		cbc(aes)
-#define CIPHERNAME_1DES		cbc(des)
 #define CIPHERNAME_3DES		cbc(des3_ede)
 #define CIPHERNAME_BLOWFISH	cbc(blowfish)
 #define CIPHERNAME_CAST		cbc(cast5)
 #define CIPHERNAME_SERPENT	cbc(serpent)
 #define CIPHERNAME_TWOFISH	cbc(twofish)
+/* 1DES no longer supported */
+#undef CIPHERNAME_1DES
 
 #define DIGESTNAME_MD5		"md5"
 #define DIGESTNAME_SHA1		"sha1"
@@ -208,9 +209,6 @@ MODULE_PARM_DESC(noauto, "Dont try all known algos, just setup enabled ones");
 #ifdef CONFIG_KLIPS_ENC_NULL
 static int cipher_null[] = {-1, -1};
 #endif
-#ifdef CONFIG_KLIPS_ENC_1DES
-static int des_ede1[] = {-1, -1};
-#endif
 static int des_ede3[] = {-1, -1};
 static int aes[] = {-1, -1};
 static int blowfish[] = {-1, -1};
@@ -221,9 +219,6 @@ static int twofish[] = {-1, -1};
 #ifdef CONFIG_KLIPS_ENC_NULL
 module_param_array(cipher_null,int,NULL,0444);
 #endif
-#ifdef CONFIG_KLIPS_ENC_1DES
-module_param_array(des_ede1,int,NULL,0444);
-#endif
 module_param_array(des_ede3,int,NULL,0444);
 module_param_array(aes,int,NULL,0444);
 module_param_array(blowfish,int,NULL,0444);
@@ -233,9 +228,6 @@ module_param_array(twofish,int,NULL,0444);
 
 #ifdef CONFIG_KLIPS_ENC_NULL
 MODULE_PARM_DESC(cipher_null, "0: disable | 1: force_enable | min,max: dontuse");
-#endif
-#ifdef CONFIG_KLIPS_ENC_1DES
-MODULE_PARM_DESC(des_ede1, "0: disable | 1: force_enable | min,max: dontuse");
 #endif
 MODULE_PARM_DESC(des_ede3, "0: disable | 1: force_enable | min,max: dontuse");
 MODULE_PARM_DESC(aes, "0: disable | 1: force_enable | min,max: keybitlens");
@@ -260,9 +252,6 @@ static struct ipsec_alg_capi_cipher alg_capi_carray[] = {
   { CIPHERNAME_CAST,     8, 128, 128, cast   ,  { ixt_common:{ ixt_support:{ ias_id: ESP_CAST,}}}},
   { CIPHERNAME_BLOWFISH, 8,  96, 448, blowfish, { ixt_common:{ ixt_support:{ ias_id: ESP_BLOWFISH,}}}},
   { CIPHERNAME_3DES,     8, 192, 192, des_ede3, { ixt_common:{ ixt_support:{ ias_id: ESP_3DES,}}}},
-#ifdef CONFIG_KLIPS_ENC_1DES
-  { CIPHERNAME_1DES,     8,  64,  64, des_ede1, { ixt_common:{ ixt_support:{ ias_id: ESP_DES,}}}},
-#endif
 #ifdef CONFIG_KLIPS_ENC_NULL
   { CIPHERNAME_NULL,     1,  0,  0, cipher_null, { ias_id: ESP_NULL,}},
 #endif

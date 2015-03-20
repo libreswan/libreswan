@@ -456,8 +456,10 @@ process_v2_packet(struct msg_digest **mdp)
  	   Since the wrong state is a responder, we just add a check for initiator,
 	   so we hit STATE_IKEv2_ROOF
 	 */
-	//if ( ((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0) )
-        //        continue;
+	/*
+	  if ( ((svm->flags&SMF2_INITIATOR) != 0) != ((md->hdr.isa_flags & ISAKMP_FLAGS_R) != 0) )
+               continue;
+	*/
 	
 	/* must be the right state */
 	break;
@@ -504,6 +506,7 @@ process_v2_packet(struct msg_digest **mdp)
 	       , bitnamesof(payload_name, needed));
 	SEND_NOTIFICATION(PAYLOAD_MALFORMED);
 	return;
+    }
 #endif
 
     md->svm = svm;
@@ -915,7 +918,7 @@ void complete_v2_state_transition(struct msg_digest **mdp
 
     cur_state = st = md->st;	/* might have changed */
 
-    /* passert(st);  // apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
+    /* passert(st);   apparently on STF_TOOMUCH_CRYPTO we have no state? Needs fixing */
     /*
      * XXX/SML:  There is no need to abort here in all cases if state is
      * null, so moved this precondition to where it's needed.  Some previous
@@ -950,6 +953,13 @@ void complete_v2_state_transition(struct msg_digest **mdp
     case STF_IGNORE:
 	break;
 
+    case STF_INLINE:         /* this is second time through complete
+			      * state transition, so the MD has already
+			      * been freed.
+			      0				  */
+	*mdp = NULL;
+	break;
+
     case STF_SUSPEND:
 	/* update the previous packet history */
 	/* IKEv2 XXX */ /* update_retransmit_history(st, md); */
@@ -957,13 +967,6 @@ void complete_v2_state_transition(struct msg_digest **mdp
 	/* the stf didn't complete its job: don't relase md */
 	*mdp = NULL;
 	break;
-
-    case STF_INLINE:         /* mcr: this is second time through complete
-			      * state transition, so the MD has already
-			      * been freed.
-			      0				  */
-			      *mdp = NULL;
-			      /* fall through to STF_OK */
 
     case STF_OK:
 	/* advance the state */

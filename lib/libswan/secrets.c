@@ -62,9 +62,6 @@
 #include <key.h>
 #include "lswconf.h"
 
-/* Maximum length of filename and passphrase buffer */
-#define BUF_LEN		256
-
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
 
@@ -88,13 +85,9 @@ static const struct fld RSA_private_field[] =
 
 };
 
-static err_t lsw_process_psk_secret(const struct secret *secrets
-				    , chunk_t *psk);
-static err_t lsw_process_rsa_secret(const struct secret *secrets
-				    , struct RSA_private_key *rsak);
-static err_t lsw_process_rsa_keyfile(struct secret **psecrets
-				     , int verbose
-				     , struct RSA_private_key *rsak
+static err_t lsw_process_psk_secret(chunk_t *psk);
+static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak);
+static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak
 				     , prompt_pass_t *pass);
 
 #ifdef DEBUG
@@ -273,7 +266,7 @@ allocate_RSA_public_key(const cert_t cert)
 	break;
     default:
 	libreswan_log("RSA public key allocation error");
-	pfreeany(pk)
+	pfreeany(pk);
 	return NULL;
     }
 
@@ -336,11 +329,11 @@ struct secret *lsw_foreach_secret(struct secret *secrets,
 }
 
 struct secret_byid {
-    int            kind;
+    enum PrivateKeyKind kind;
     struct pubkey *my_public_key;
 };
     
-int lsw_check_secret_byid(struct secret *secret,
+static int lsw_check_secret_byid(struct secret *secret UNUSED,
 			  struct private_key_stuff *pks,
 			  void *uservoid)
 {
@@ -367,7 +360,7 @@ int lsw_check_secret_byid(struct secret *secret,
 
 struct secret *lsw_find_secret_by_public_key(struct secret *secrets
 					     , struct pubkey *my_public_key
-					     , int kind)
+					     , enum PrivateKeyKind kind)
 {
     struct secret_byid sb;
 
@@ -697,15 +690,13 @@ bool lsw_has_private_rawkey(struct secret *secrets, struct pubkey *pk)
  * process rsa key file protected with optional passphrase which can either be
  * read from ipsec.secrets or prompted for by using whack
  */
-err_t lsw_process_rsa_keyfile(struct secret **psecrets
-			      , int verbose
-			      , struct RSA_private_key *rsak
+static err_t lsw_process_rsa_keyfile(struct RSA_private_key *rsak
 			      , prompt_pass_t *pass)
 {
-    char filename[BUF_LEN];
+    char filename[PATH_MAX];
     err_t ugh = NULL;
 
-    memset(filename,'\0', BUF_LEN);
+    memset(filename,'\0', PATH_MAX);
     memset(pass->secret,'\0', sizeof(pass->secret));
 
     /* we expect the filename of a PKCS#1 private key file */
@@ -744,7 +735,7 @@ err_t lsw_process_rsa_keyfile(struct secret **psecrets
 }
 
 /* parse PSK from file */
-static err_t lsw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
+static err_t lsw_process_psk_secret(chunk_t *psk)
 {
     err_t ugh = NULL;
     
@@ -781,7 +772,7 @@ static err_t lsw_process_psk_secret(const struct secret *secrets, chunk_t *psk)
 }
 
 /* parse XAUTH secret from file */
-static err_t lsw_process_xauth_secret(const struct secret *secrets, chunk_t *xauth)
+static err_t lsw_process_xauth_secret(chunk_t *xauth)
 {
     err_t ugh = NULL;
     
@@ -823,8 +814,7 @@ static err_t lsw_process_xauth_secret(const struct secret *secrets, chunk_t *xau
  * The fields come from BIND 8.2's representation
  */
 static err_t
-lsw_process_rsa_secret(const struct secret *secrets
-		       , struct RSA_private_key *rsak)
+lsw_process_rsa_secret(struct RSA_private_key *rsak)
 {
     unsigned char buf[RSA_MAX_ENCODING_BYTES];	/* limit on size of binary representation of key */
     const struct fld *p;
@@ -969,7 +959,7 @@ lock_certs_and_keys(const char *who)
     pthread_mutex_lock(&certs_and_keys_mutex);
     DBG(DBG_CONTROLMORE,
 	DBG_log("certs and keys locked by '%s'", who)
-    )
+    );
 }
 
 /*
@@ -980,7 +970,7 @@ unlock_certs_and_keys(const char *who)
 {
     DBG(DBG_CONTROLMORE,
 	DBG_log("certs and keys unlocked by '%s'", who)
-    )
+    );
     pthread_mutex_unlock(&certs_and_keys_mutex);
 }
 
@@ -994,7 +984,7 @@ lock_authcert_list(const char *who)
     pthread_mutex_lock(&authcert_list_mutex);
     DBG(DBG_CONTROLMORE,
 	DBG_log("authcert list locked by '%s'", who)
-    )
+    );
 }
 
 /*
@@ -1005,7 +995,7 @@ unlock_authcert_list(const char *who)
 {
     DBG(DBG_CONTROLMORE,
 	DBG_log("authcert list unlocked by '%s'", who)
-    )
+    );
     pthread_mutex_unlock(&authcert_list_mutex);
 }
 #endif
@@ -1015,26 +1005,25 @@ process_secret(struct secret **psecrets, int verbose,
 	       struct secret *s, prompt_pass_t *pass)
 {
     err_t ugh = NULL;
-    struct secret *secrets = *psecrets;
 
     s->pks.kind = PPK_PSK;	/* default */
     if (*flp->tok == '"' || *flp->tok == '\'')
     {
 	/* old PSK format: just a string */
-	ugh = lsw_process_psk_secret(secrets, &s->pks.u.preshared_secret);
+	ugh = lsw_process_psk_secret(&s->pks.u.preshared_secret);
     }
     else if (tokeqword("psk"))
     {
 	/* preshared key: quoted string or ttodata format */
 	ugh = !shift()? "unexpected end of record in PSK"
-	    : lsw_process_psk_secret(secrets, &s->pks.u.preshared_secret);
+	    : lsw_process_psk_secret(&s->pks.u.preshared_secret);
     }
     else if (tokeqword("xauth"))
     {
 	/* xauth key: quoted string or ttodata format */
 	s->pks.kind = PPK_XAUTH;
 	ugh = !shift()? "unexpected end of record in PSK"
-	    : lsw_process_xauth_secret(secrets, &s->pks.u.preshared_secret);
+	    : lsw_process_xauth_secret(&s->pks.u.preshared_secret);
     }
     else if (tokeqword("rsa"))
     {
@@ -1048,12 +1037,11 @@ process_secret(struct secret **psecrets, int verbose,
 	}
 	else if (tokeq("{"))
 	{
-	    ugh = lsw_process_rsa_secret(secrets, &s->pks.u.RSA_private_key);
+	    ugh = lsw_process_rsa_secret(&s->pks.u.RSA_private_key);
 	}
 	else
 	{
-	    ugh = lsw_process_rsa_keyfile(psecrets, verbose,
-					  &s->pks.u.RSA_private_key,pass);
+	    ugh = lsw_process_rsa_keyfile(&s->pks.u.RSA_private_key,pass);
 	}
 	if(!ugh && verbose) {
 	    libreswan_log("loaded private key for keyid: %s:%s",
@@ -1223,7 +1211,7 @@ lsw_process_secret_records(struct secret **psecrets, int verbose,
 		}
 		else
 		{
-		    ugh = atoid(flp->tok, &id, FALSE);
+		    ugh = atoid(flp->tok, &id, FALSE, FALSE);
 		}
 		
 		if (ugh != NULL)
@@ -1455,9 +1443,9 @@ free_public_keys(struct pubkey_list **keys)
  * - format specified in RFC 2537 RSA/MD5 Keys and SIGs in the DNS
  * - exponent length in bytes (1 or 3 octets)
  *   + 1 byte if in [1, 255]
- *   + otherwise 0x00 followed by 2 bytes of length
- * - exponent
- * - modulus
+ *   + otherwise 0x00 followed by 2 bytes of length (big-endian)
+ * - exponent (of specified length)
+ * - modulus (the rest of the pubkey chunk)
  */
 err_t
 unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
@@ -1465,24 +1453,33 @@ unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
     chunk_t exponent;
     chunk_t mod;
 
-    rsa->keyid[0] = '\0';	/* in case of keybolbtoid failure */
+    rsa->keyid[0] = '\0';	/* in case of keyblobtoid failure */
 
     if (pubkey->len < 3)
-	return "RSA public key blob way to short";	/* not even room for length! */
+	return "RSA public key blob way too short";	/* not even room for length! */
 
+    /* exponent */
     if (pubkey->ptr[0] != 0x00)
     {
+	/* one-byte length, followed by that many exponent bytes */
 	setchunk(exponent, pubkey->ptr + 1, pubkey->ptr[0]);
     }
     else
     {
+	/* 0x00 followed by 2 bytes of length (big-endian),
+	 * followed by that many exponent bytes
+	 */
 	setchunk(exponent, pubkey->ptr + 3
 	    , (pubkey->ptr[1] << BITS_PER_BYTE) + pubkey->ptr[2]);
     }
 
+    /* check that exponent fits within pubkey and leaves room for a reasonable modulus.
+     * Take care to avoid overflow in this check.
+     */
     if (pubkey->len - (exponent.ptr - pubkey->ptr) < exponent.len + RSA_MIN_OCTETS_RFC)
 	return "RSA public key blob too short";
 
+    /* modulus: all that's left in pubkey */
     mod.ptr = exponent.ptr + exponent.len;
     mod.len = &pubkey->ptr[pubkey->len] - mod.ptr;
 
@@ -1500,7 +1497,6 @@ unpack_RSA_public_key(struct RSA_public_key *rsa, const chunk_t *pubkey)
 #ifdef DEBUG
     DBG(DBG_PRIVATE, RSA_show_public_key(rsa));
 #endif
-
 
     rsa->k = mpz_sizeinbase(&rsa->n, 2);	/* size in bits, for a start */
     rsa->k = (rsa->k + BITS_PER_BYTE - 1) / BITS_PER_BYTE;	/* now octets */

@@ -58,27 +58,29 @@ temporary_cyclic_buffer(void)
 
 /* Convert textual form of id into a (temporary) struct id.
  * Note that if the id is to be kept, unshare_id_content will be necessary.
+ * This function should be split into parts so the boolean arguments can be
+ * removed -- Paul
  */
 err_t
-atoid(char *src, struct id *id, bool myid_ok)
+atoid(char *src, struct id *id, bool myid_ok, bool oe_only)
 {
     err_t ugh = NULL;
 
     *id = empty_id;
 
-    if (myid_ok && streq("%myid", src))
+    if (!oe_only && myid_ok && streq("%myid", src))
     {
 	id->kind = ID_MYID;
     }
-    else if (streq("%fromcert", src))
+    else if (!oe_only && streq("%fromcert", src))
     {
 	id->kind = ID_FROMCERT;
     }
-    else if (streq("%none", src))
+    else if (!oe_only && streq("%none", src))
     {
 	id->kind = ID_NONE;
     }
-    else if (strchr(src, '=') != NULL)
+    else if (!oe_only && strchr(src, '=') != NULL)
     {
 	/* we interpret this as an ASCII X.501 ID_DER_ASN1_DN */
 	id->kind = ID_DER_ASN1_DN;
@@ -112,7 +114,7 @@ atoid(char *src, struct id *id, bool myid_ok)
     {
 	if (*src == '@')
 	{
-	    if (*(src+1) == '#')
+	    if (!oe_only && *(src+1) == '#')
 	    {
 		/* if there is a second specifier (#) on the line
 		 * we interprete this as ID_KEY_ID
@@ -123,7 +125,7 @@ atoid(char *src, struct id *id, bool myid_ok)
 		ugh = ttodata(src+2, 0, 16, (char *)id->name.ptr
 			      , strlen(src), &id->name.len);
 	    }
-	    else if (*(src+1) == '~')
+	    else if (!oe_only && *(src+1) == '~')
 	    {
 		/* if there is a second specifier (~) on the line
 		* we interprete this as a binary ID_DER_ASN1_DN
@@ -134,7 +136,7 @@ atoid(char *src, struct id *id, bool myid_ok)
 		ugh = ttodata(src+2, 0, 16, (char *)id->name.ptr
 			      , strlen(src), &id->name.len);
 	    }
-	    else if (*(src+1) == '[')
+	    else if (!oe_only && *(src+1) == '[')
 	    {
 		/* if there is a second specifier ([) on the line
 		 * we interprete this as a text ID_KEY_ID, and we remove
@@ -275,7 +277,7 @@ idtoa(const struct id *id, char *dst, size_t dstlen)
 void
 escape_metachar(const char *src, char *dst, size_t dstlen)
 {
-    while (*src != '\0' && dstlen > 4)
+    while (*src != '\0' && dstlen > 5)
     {
 	switch (*src)
 	{
@@ -284,7 +286,7 @@ escape_metachar(const char *src, char *dst, size_t dstlen)
 	case '"':
 	case '`':
 	case '$':
-	    sprintf(dst,"\\%s%o", (*src < 64)?"0":"", *src);
+	    sprintf(dst,"\\03%o", *src & 0xFF);
 	    dst += 4;
 	    dstlen -= 4;
 	    break;

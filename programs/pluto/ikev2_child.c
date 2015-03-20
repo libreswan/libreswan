@@ -463,7 +463,7 @@ int ikev2_evaluate_connection_port_fit(struct connection *d
 
 			}
 			else if ((!ei->port) && ( ( tsi[tsi_ni].startport == ei->port ) && (tsi[tsi_ni].endport == 65535 ))) {
-				// we are on range 0 - 64K  will alloow  only the same  with our without narrowing
+				/* we are on range 0 - 64K  will alloow  only the same  with our without narrowing */
 				fitrange1 =  65535;
 				DBG(DBG_CONTROL,DBG_log("   tsi[%d] %d-%d  ==  ei 0-65535 exact match all ports  fitrange1 %d"
 							,tsi_ni, tsi[tsi_ni].startport, tsi[tsi_ni].endport, fitrange1));
@@ -508,7 +508,7 @@ int ikev2_evaluate_connection_port_fit(struct connection *d
 
 			}
 			else if ((!er->port) && ( ( tsr[tsr_ni].startport == er->port ) && (tsr[tsr_ni].endport == 65535 ))) {
-				// we are on range 0 - 64K  will alloow  only the same  with our without narrowing
+				/* we are on range 0 - 64K  will alloow  only the same  with our without narrowing */
 				fitrange2 =  65535;
 				DBG(DBG_CONTROL,DBG_log("   tsr[%d] %d-%d  ==  ei 0-65535 exact match all ports fitrange2 %d"
 							, tsr_ni, tsr[tsr_ni].startport, tsr[tsr_ni].endport, fitrange2));
@@ -801,7 +801,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md
 			for (sr = &d->spd; sr != NULL; sr = sr->next) {
 				newfit=ikev2_evaluate_connection_fit(d,sr,role
 						,tsi,tsr,tsi_n,tsr_n);
-				if(newfit > bestfit_n) {  /// will complicated this with narrowing
+				if(newfit > bestfit_n) {  /* will complicated this with narrowing */
 					DBG(DBG_CONTROLMORE, DBG_log("bfit=ikev2_evaluate_connection_fit found better fit d %s", d->name)); 
 					int bfit_p =  ikev2_evaluate_connection_port_fit (d ,sra,role,tsi,tsr,
 							tsi_n,tsr_n, &best_tsi_i, &best_tsr_i);
@@ -882,12 +882,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md
 				&r_sa_pbs, st1, FALSE);
 
 		if (rn != NOTHING_WRONG)
-			return STF_FAIL + rn; // should we delete_state st1?
+			return STF_FAIL + rn; /* should we delete_state st1? */
 	}
 
 	ret = ikev2_calc_emit_ts(md, outpbs, role
 			, c, c->policy);
-	if(ret != STF_OK) return ret; // should we delete_state st1?
+	if(ret != STF_OK) return ret; /* should we delete_state st1? */
 
 	if( role == RESPONDER ) {
 		chunk_t child_spi, notifiy_data;

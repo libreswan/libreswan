@@ -65,7 +65,7 @@ mpz_to_n(const MP_INT *mp, size_t bytes)
     return r;
 }
 
-chunk_t mpz_to_n2(const MP_INT *mp)
+chunk_t mpz_to_n_autosize(const MP_INT *mp)
 {
 	int bytes = (mpz_sizeinbase(mp, 2)+7)/8;
 

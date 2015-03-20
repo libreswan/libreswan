@@ -217,11 +217,6 @@ const x509acert_t empty_ac = {
     { NULL, 0 }, /*   signature */
 };
 
-
-/* Maximum length of ASN.1 distinquished name */
-
-#define BUF_LEN	      512
-
 /*  compare two ietfAttributes, returns zero if a equals b
  *  negative/positive if a is earlier/later in the alphabet than b
  */
@@ -439,7 +434,7 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 	    ac->version = (object.len) ? (1 + (u_int)*object.ptr) : 1;
 	    DBG(DBG_PARSING,
 		DBG_log("  v%d", ac->version);
-	    )
+	    );
 	    if (ac->version != 2)
 	    {
 		libreswan_log("v%d attribute certificates are not supported"
@@ -482,12 +477,12 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 		case OID_AUTHENTICATION_INFO:
 		    DBG(DBG_PARSING,
 			DBG_log("  need to parse authenticationInfo")
-		    )
+		    );
 		    break;
 		case OID_ACCESS_IDENTITY:
 		    DBG(DBG_PARSING,
 			DBG_log("  need to parse accessIdentity")
-		    )
+		    );
 		    break;
 		case OID_CHARGING_IDENTITY:
 		    ac->charging = parse_ietfAttrSyntax(object, level);
@@ -510,7 +505,7 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 	    critical = object.len && *object.ptr;
 	    DBG(DBG_PARSING,
 		DBG_log("  %s",(critical)?"TRUE":"FALSE");
-	    )
+	    );
 	    break;
 	case AC_OBJ_EXTN_VALUE:
 	    {
@@ -520,7 +515,7 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 		case OID_CRL_DISTRIBUTION_POINTS:
 		    DBG(DBG_PARSING,
 			DBG_log("  need to parse crlDistributionPoints")
-		    )
+		    );
 		    break;
 		case OID_AUTHORITY_KEY_ID:
 		    parse_authorityKeyIdentifier(object, level
@@ -529,7 +524,7 @@ parse_ac(chunk_t blob, x509acert_t *ac)
 		case OID_TARGET_INFORMATION:
 		    DBG(DBG_PARSING,
 			DBG_log("  need to parse targetInformation")
-		    )
+		    );
 		    break;
 		case OID_NO_REV_AVAIL:
 		    ac->noRevAvail = TRUE;
@@ -657,7 +652,7 @@ check_ac_validity(const x509acert_t *ac)
 	DBG_log("  not before  : %s", timetoa(&ac->notBefore, TRUE, tbuf, sizeof(tbuf)));
 	DBG_log("  current time: %s", timetoa(&current_time, TRUE, tbuf, sizeof(tbuf)));
 	DBG_log("  not after   : %s", timetoa(&ac->notAfter, TRUE, tbuf, sizeof(tbuf)));
-    )
+    );
 
     if (current_time < ac->notBefore)
 	return "attribute certificate is not valid yet";
@@ -678,12 +673,12 @@ verify_x509acert(x509acert_t *ac, bool strict)
     time_t valid_until = ac->notAfter;
 
     DBG(DBG_CONTROL,
-	u_char buf[BUF_LEN];
-	dntoa((char *)buf, BUF_LEN, ac->entityName);
+	u_char buf[ASN1_BUF_LEN];
+	dntoa((char *)buf, ASN1_BUF_LEN, ac->entityName);
 	DBG_log("holder: '%s'",buf);
-	dntoa((char *)buf, BUF_LEN, ac->issuerName);
+	dntoa((char *)buf, ASN1_BUF_LEN, ac->issuerName);
 	DBG_log("issuer: '%s'",buf);
-    )
+    );
     
     ugh = check_ac_validity(ac);
 
@@ -694,7 +689,7 @@ verify_x509acert(x509acert_t *ac, bool strict)
     }
     DBG(DBG_CONTROL,
 	DBG_log("attribute certificate is valid")
-    )
+    );
 
     lock_authcert_list("verify_x509acert");
     aacert = get_authcert(ac->issuerName, ac->authKeySerialNumber
@@ -708,7 +703,7 @@ verify_x509acert(x509acert_t *ac, bool strict)
     }
     DBG(DBG_CONTROL,
 	DBG_log("issuer aacert found")
-    )
+    );
 
     if (!check_signature(ac->certificateInfo, ac->signature
 			 , ac->algorithm, aacert))
@@ -718,7 +713,7 @@ verify_x509acert(x509acert_t *ac, bool strict)
     }
     DBG(DBG_CONTROL,
 	DBG_log("attribute certificate signature is valid");
-    )
+    );
 
     return verify_x509cert(aacert, strict, &valid_until);
 }
@@ -729,10 +724,10 @@ verify_x509acert(x509acert_t *ac, bool strict)
 void
 load_acerts(void)
 {
-    char buf[BUF_LEN];
+    char buf[PATH_MAX];
 
     /* change directory to specified path */
-    char *save_dir = getcwd(buf, BUF_LEN);
+    char *save_dir = getcwd(buf, PATH_MAX);
     const struct lsw_conf_options *oco = lsw_init_options(); 
 
     if (!chdir(oco->acerts_dir))
@@ -750,7 +745,7 @@ load_acerts(void)
 		chunk_t blob = empty_chunk;
 		bool pgp = FALSE;
 
-		if (load_coded_file(filelist[n]->d_name, NULL,
+		if (load_coded_file(filelist[n]->d_name,
 #ifdef SINGLE_CONF_DIR
 				FALSE, /* too verbose in a shared dir */
 #else
@@ -816,36 +811,37 @@ list_acerts(bool utc)
 
     while (ac != NULL)
     {
-	char buf[BUF_LEN];
+	char buf[ASN1_BUF_LEN];
 	char   tbuf[TIMETOA_BUF];
 
 	whack_log(RC_COMMENT, "%s",timetoa(&ac->installed, utc, tbuf, sizeof(tbuf)));
 	if (ac->entityName.ptr != NULL)
 	{
-	    dntoa(buf, BUF_LEN, ac->entityName);
+	    dntoa(buf, ASN1_BUF_LEN, ac->entityName);
 	    whack_log(RC_COMMENT, "       holder:  '%s'", buf);
 	}
 	if (ac->holderIssuer.ptr != NULL)
 	{
-	    dntoa(buf, BUF_LEN, ac->holderIssuer);
+	    dntoa(buf, ASN1_BUF_LEN, ac->holderIssuer);
 	    whack_log(RC_COMMENT, "       hissuer: '%s'", buf);
 	}
 	if (ac->holderSerial.ptr != NULL)
 	{
 	    datatot(ac->holderSerial.ptr, ac->holderSerial.len, ':'
-		, buf, BUF_LEN);
+		, buf, ASN1_BUF_LEN);
 	    whack_log(RC_COMMENT, "       hserial:  %s", buf);
 	}
-	dntoa(buf, BUF_LEN, ac->issuerName);
+	dntoa(buf, ASN1_BUF_LEN, ac->issuerName);
 	whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
 	datatot(ac->serialNumber.ptr, ac->serialNumber.len, ':'
-		, buf, BUF_LEN);
+		, buf, ASN1_BUF_LEN);
 	whack_log(RC_COMMENT, "       serial:   %s", buf);
 
 	if (ac->groups != NULL)
 	{
 	    bool first = TRUE;
 	    char *pos = buf;
+	    const char *const end = buf + sizeof(buf);
 
 	    ietfAttrList_t *list = ac->groups;
 
@@ -855,12 +851,9 @@ list_acerts(bool utc)
 
 		if (attr->kind != IETF_ATTRIBUTE_OID)
 		{
-		    int n = snprintf(pos, BUF_LEN, "%s%.*s", (first? "":", ")
-			, (int)attr->value.len, attr->value.ptr);
-		    
-		    if (n == -1) /* print buffer is full */
-			break;
-		    pos += n;
+		    snprintf(pos, end - pos, "%s%.*s", (first? "":", ")
+			     , (int)attr->value.len, attr->value.ptr);
+		    pos += strlen(pos);
 		    first = FALSE;
 		}
 		list = list->next;

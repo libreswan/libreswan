@@ -335,7 +335,7 @@ pfkey_lifetime_build(struct sadb_ext **	pfkey_ext,
 		     uint64_t		bytes,
 		     uint64_t		addtime,
 		     uint64_t		usetime,
-		     uint32_t		packets)
+		     uint32_t		packets UNUSED)
 {
 	int error = 0;
 	struct sadb_lifetime *pfkey_lifetime = (struct sadb_lifetime *)*pfkey_ext;
@@ -394,7 +394,8 @@ pfkey_address_build(struct sadb_ext**	pfkey_ext,
 		    struct sockaddr*	address)
 {
 	int error = 0;
-	int saddr_len = 0, len;
+	int saddr_len = 0;
+	int len;
 	char ipaddr_txt[ADDRTOT_BUF + 6/*extra for port number*/];
 	struct sadb_address *pfkey_address = (struct sadb_address *)*pfkey_ext;
 	
@@ -443,7 +444,7 @@ pfkey_address_build(struct sadb_ext**	pfkey_ext,
 			"found address family AF_INET.\n");
 		saddr_len = sizeof(struct sockaddr_in);
 		len = sin_addrtot(address, 0, ipaddr_txt, sizeof(ipaddr_txt));
-		if (len > 0 && len < sizeof(ipaddr_txt))
+		if (len > 0 && len < (int)sizeof(ipaddr_txt))
 			snprintf(&ipaddr_txt[len-1], sizeof(ipaddr_txt) - len, ":%d",
 				ntohs(((struct sockaddr_in*)address)->sin_port));
 		break;
@@ -774,7 +775,7 @@ pfkey_prop_build(struct sadb_ext**	pfkey_ext,
 	}
 
 	combp = (struct sadb_comb*)((char*)*pfkey_ext + sizeof(struct sadb_prop));
-	for(i = 0; i < comb_num; i++) {
+	for(i = 0; i < (int)comb_num; i++) {
 		memcpy (combp, &(comb[i]), sizeof(struct sadb_comb));
 		combp++;
 	}
@@ -882,7 +883,7 @@ errlab:
 
 int
 pfkey_spirange_build(struct sadb_ext**	pfkey_ext,
-		     uint16_t		exttype,
+		     uint16_t		exttype UNUSED,
 		     uint32_t		min, /* in network order */
 		     uint32_t		max) /* in network order */
 {

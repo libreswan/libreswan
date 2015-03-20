@@ -141,7 +141,7 @@ alg_enum_search_prefix (enum_names *ed, const char *prefix, const char *str, int
 	int ret;
 	int len=sizeof(buf)-1;	/* reserve space for final \0 */
 
-	for (ptr=buf; *prefix; *ptr++=*prefix++, len--);
+	for (ptr=buf; len&&*prefix; *ptr++=*prefix++, len--);
 
 	while (str_len--&&len--&&*str) *ptr++=toupper(*str++);
 	*ptr=0;
@@ -164,7 +164,7 @@ alg_enum_search_ppfix (enum_names *ed, const char *prefix
 	char *ptr;
 	int ret;
 	int len=sizeof(buf)-1;	/* reserve space for final \0 */
-	for (ptr=buf; *prefix; *ptr++=*prefix++, len--);
+	for (ptr=buf; len&&*prefix; *ptr++=*prefix++, len--);
 	while (str_len--&&len--&&*str) *ptr++=toupper(*str++);
 	while (len--&&*postfix) *ptr++=*postfix++;
 	*ptr=0;
@@ -278,7 +278,7 @@ static void
 alg_info_esp_add (struct alg_info *alg_info,
 		  int ealg_id, int ek_bits,
 		  int aalg_id, int ak_bits,
-		  int modp_id, bool permit_manconn)
+		  int modp_id UNUSED, bool permit_manconn)
 {
 	/*	Policy: default to 3DES */
 	if (ealg_id==0)
@@ -315,7 +315,7 @@ static void
 alg_info_ah_add (struct alg_info *alg_info,
 		  int ealg_id, int ek_bits,
 		  int aalg_id, int ak_bits,
-		  int modp_id, bool permit_manconn)
+		  int modp_id UNUSED, bool permit_manconn)
 {
     if(aalg_id > 0 ||
        (permit_manconn && aalg_id == 0))
@@ -708,18 +708,6 @@ alg_info_parse_str (struct alg_info *alg_info
 	    switch(ret) {
 	    case ST_END:
 	    case ST_EOF:
-		/*
-		 * If we detect sha2_256 with key size 96, we know they really meant
-		 * to configure sha2_256_trunc 256 bit with a hash truncation of 96
-		 */
-#warning paul check and redo me
-#if 0
-		if( !strncmp( ctx.aalg_buf, sha2_256, 8) && (ctx.eklen==0) && (ctx.aklen==96)) {
-		   DBG(DBG_CRYPT,DBG_log(" converting sha2_256-96 to sha2_256_trunc-256"));
-		   strncpy(ctx.aalg_buf, "sha2_256_trunc", sizeof("sha2_256_trunc"));
-		   ctx.aklen = 256;
-		}
-#endif
 
 		DBG(DBG_CRYPT, DBG_log("alg_info_parse_str() "
 				       "ealg_buf=%s aalg_buf=%s "
@@ -930,9 +918,10 @@ alg_info_snprint(char *buf, int buflen
 		 , bool permitike)
 {
     char *ptr=buf;
-    int np=0;
     struct esp_info *esp_info;
     struct ike_info *ike_info;
+
+    passert(buflen > 0);
 
     int cnt;
     ptr=buf;
@@ -941,43 +930,31 @@ alg_info_snprint(char *buf, int buflen
 	{
 	    struct alg_info_esp *alg_info_esp=(struct alg_info_esp *)alg_info;
 	    ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
-		np=snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d)_%03d"
+		snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d)_%03d"
 			    , enum_name(&esp_transformid_names, esp_info->esp_ealg_id)+sizeof("ESP")
 			    , esp_info->esp_ealg_id
 			    , (int)esp_info->esp_ealg_keylen
 			    , enum_name(&auth_alg_names, esp_info->esp_aalg_id) + (esp_info->esp_aalg_id ? sizeof("AUTH_ALGORITHM_HMAC") : sizeof("AUTH_ALGORITHM"))
 			    , esp_info->esp_aalg_id
 			    , (int)esp_info->esp_aalg_keylen);
-		if(np < buflen) {
-			ptr+=np;
-			buflen-=np;
-		} else {
-			ptr+=buflen;
-			buflen=0;
-               }
+		size_t np = strlen(ptr);
+		ptr += np;
+		buflen -= np;
 		if ( cnt > 0) {
-			np=snprintf(ptr, buflen, ", ");
-			if(np < buflen) {
-				ptr+=np;
-				buflen-=np;
-			} else {
-				ptr+=buflen;
-				buflen=0;
-			}
+			snprintf(ptr, buflen, ", ");
+			np = strlen(ptr);
+			ptr += np;
+			buflen -= np;
 		}
 		if(buflen <= 0) goto out;
 	    }
 	    if (alg_info_esp->esp_pfsgroup) {
-		np=snprintf(ptr, buflen, "; pfsgroup=%s(%d)"
+		snprintf(ptr, buflen, "; pfsgroup=%s(%d)"
 			, enum_name(&oakley_group_names, alg_info_esp->esp_pfsgroup)+ sizeof("OAKLEY_GROUP")
 		        , alg_info_esp->esp_pfsgroup);
-		if(np < buflen) {
-			ptr+=np;
-			buflen-=np;
-		} else {
-			ptr+=buflen;
-			buflen=0;
-		}
+		size_t np = strlen(ptr);
+		ptr += np;
+		buflen -= np;
 		if(buflen <= 0) goto out;
 	    }
 	    break;
@@ -987,40 +964,28 @@ alg_info_snprint(char *buf, int buflen
         {
 	    struct alg_info_esp *alg_info_esp=(struct alg_info_esp *)alg_info;
 	    ALG_INFO_ESP_FOREACH(alg_info_esp, esp_info, cnt) {
-		np=snprintf(ptr, buflen, "%s(%d)_%03d"
+		snprintf(ptr, buflen, "%s(%d)_%03d"
 			    , enum_name(&auth_alg_names, esp_info->esp_aalg_id)+sizeof("AUTH_ALGORITHM_HMAC")
 			    , esp_info->esp_aalg_id
 			    , (int)esp_info->esp_aalg_keylen);
-		if(np < buflen) {
-			ptr+=np;
-			buflen-=np;
-		} else {
-			ptr+=buflen;
-			buflen=0;
-               }
+		size_t np = strlen(ptr);
+		ptr += np;
+		buflen -= np;
 		if ( cnt > 0) {
-			np=snprintf(ptr, buflen, ", ");
-			if(np < buflen) {
-				ptr+=np;
-				buflen-=np;
-			} else {
-				ptr+=buflen;
-				buflen=0;
-			}
+			snprintf(ptr, buflen, ", ");
+			np = strlen(ptr);
+			ptr += np;
+			buflen -= np;
 		}
 		if(buflen <= 0) goto out;
 	    }
 	    if (alg_info_esp->esp_pfsgroup) {
-		np=snprintf(ptr, buflen, "; pfsgroup=%s(%d)"
+		snprintf(ptr, buflen, "; pfsgroup=%s(%d)"
 			, enum_name(&oakley_group_names, alg_info_esp->esp_pfsgroup)+ sizeof("OAKLEY_GROUP")
-		        , alg_info_esp->esp_pfsgroup);
-		if(np < buflen) {
-			ptr+=np;
-			buflen-=np;
-		} else {
-			ptr+=buflen;
-			buflen=0;
-		}
+			, alg_info_esp->esp_pfsgroup);
+		size_t np = strlen(ptr);
+		ptr += np;
+		buflen -= np;
 		if(buflen <= 0) goto out;
 	    }
 	    break;
@@ -1029,7 +994,7 @@ alg_info_snprint(char *buf, int buflen
     case PROTO_ISAKMP:
 	if(permitike) {
 	    ALG_INFO_IKE_FOREACH((struct alg_info_ike *)alg_info, ike_info, cnt) {
-		np=snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d)_%03d-%s(%d)"
+		snprintf(ptr, buflen, "%s(%d)_%03d-%s(%d)_%03d-%s(%d)"
 			    , enum_name(&oakley_enc_names, ike_info->ike_ealg)+sizeof("OAKLEY")
 			    , ike_info->ike_ealg
 			    , (int)ike_info->ike_eklen
@@ -1038,22 +1003,14 @@ alg_info_snprint(char *buf, int buflen
 			    , (int)ike_info->ike_hklen
 			    , enum_name(&oakley_group_names, ike_info->ike_modp)+ sizeof("OAKLEY_GROUP")
 			    , ike_info->ike_modp);
-		if(np < buflen) {
-			ptr+=np;
-			buflen-=np;
-		} else {
-			ptr+=buflen;
-			buflen=0;
-               }
+		size_t np = strlen(ptr);
+		ptr += np;
+		buflen -= np;
                 if ( cnt > 0) {
-                        np=snprintf(ptr, buflen, ", ");
-			if(np < buflen) {
-				ptr+=np;
-				buflen-=np;
-			} else {
-				ptr+=buflen;
-				buflen=0;
-                        }
+                        snprintf(ptr, buflen, ", ");
+			np = strlen(ptr);
+			ptr += np;
+			buflen -= np;
                 }
 		if(buflen <= 0) goto out;
 	    }
@@ -1062,15 +1019,11 @@ alg_info_snprint(char *buf, int buflen
 	/* FALLTHROUGH */
 
     default:
-	np=snprintf(buf, buflen, "INVALID protoid=%d\n",
-		    alg_info->alg_info_protoid);
-	if(np < buflen) {
-		ptr+=np;
-		buflen-=np;
-	} else {
-		ptr+=buflen;
-		buflen=0;
-        }
+	snprintf(buf, buflen, "INVALID protoid=%d\n",
+		 alg_info->alg_info_protoid);
+	size_t np = strlen(ptr);
+	ptr += np;
+	buflen -= np;
 	goto out;
     }
 
