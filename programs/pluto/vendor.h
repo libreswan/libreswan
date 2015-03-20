@@ -188,8 +188,8 @@ enum known_vendorid {
 	VID_MISC_HEARTBEAT_NOTIFY  =203,
 	VID_IKE_FRAGMENTATION      =204,
 	VID_INITIAL_CONTACT        =205,
-	VID_MISC_IKEv2             =206
-
+	VID_MISC_IKEv2             =206,
+	VID_DPD1_NG                =207,
 };
 
 void init_vendorid(void);
@@ -198,16 +198,7 @@ struct msg_digest;
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		     struct state *st);
 
-bool out_vendorid(u_int8_t np, pb_stream *outs, enum known_vendorid vid);
 bool out_vid(u_int8_t np, pb_stream *outs, unsigned int vid);
-
-extern const char compile_time_interop_options[];
-
-extern const char pgp_vendorid[];
-extern const int pgp_vendorid_len;
-
-extern char dpd_vendorid[];
-extern const int dpd_vendorid_len;
 
 #endif /* _VENDOR_H_ */
 

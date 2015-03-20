@@ -56,7 +56,7 @@ EXTHDRS=
 EXTLIBS=
 MANS=
 
-.PHONY:	all install clean l t lt tar check depend checkprograms
+.PHONY:	all install clean l t lt tar check checkprograms
 
 all:	$(LIBA) ${LIBL}
 programs: $(LIBA) ${LIBL}
@@ -84,9 +84,6 @@ tar:	clean
 	tar -cvf /tmp/lib.tar Makefile [a-z]*
 
 check:	libkern.a
-
-depend:
-	makedepend -Y -- $(CFLAGS) -- $(SRCS)
 
 checkprograms:
 

@@ -83,14 +83,12 @@ IPSEC_ALG_MODULE_INIT( ipsec_cryptoapi_init ){
 
 #define CIPHERNAME_AES          "aes"
 #define CIPHERNAME_3DES         "des3_ede"
-#define CIPHERNAME_BLOWFISH     "blowfish"
 #define CIPHERNAME_CAST         "cast5"
 #define CIPHERNAME_SERPENT      "serpent"
 #define CIPHERNAME_TWOFISH      "twofish"
 
 #define ESP_3DES                3
 #define ESP_AES                 12
-#define ESP_BLOWFISH            7       /* truely _constant_  :)  */
 #define ESP_CAST                6       /* quite constant :) */
 #define ESP_SERPENT             252     /* from ipsec drafts */
 #define ESP_TWOFISH             253     /* from ipsec drafts */
@@ -124,7 +122,6 @@ MODULE_PARM_DESC(noauto, "Dont try all known algos, just setup enabled ones");
 
 static int des_ede3[] = { -1, -1 };
 static int aes[] = { -1, -1 };
-static int blowfish[] = { -1, -1 };
 static int cast[] = { -1, -1 };
 static int serpent[] = { -1, -1 };
 static int twofish[] = { -1, -1 };
@@ -132,22 +129,18 @@ static int twofish[] = { -1, -1 };
 #ifdef module_param_array
 module_param_array(des_ede3, int, NULL, 0);
 module_param_array(aes, int, NULL, 0);
-module_param_array(blowfish, int, NULL, 0);
 module_param_array(cast, int, NULL, 0);
 module_param_array(serpent, int, NULL, 0);
 module_param_array(twofish, int, NULL, 0);
 #else
 MODULE_PARM(des_ede3, "1-2i");
 MODULE_PARM(aes, "1-2i");
-MODULE_PARM(blowfish, "1-2i");
 MODULE_PARM(cast, "1-2i");
 MODULE_PARM(serpent, "1-2i");
 MODULE_PARM(twofish, "1-2i");
 #endif
 MODULE_PARM_DESC(des_ede3, "0: disable | 1: force_enable | min,max: dontuse");
 MODULE_PARM_DESC(aes, "0: disable | 1: force_enable | min,max: keybitlens");
-MODULE_PARM_DESC(blowfish,
-		 "0: disable | 1: force_enable | min,max: keybitlens");
 MODULE_PARM_DESC(cast, "0: disable | 1: force_enable | min,max: keybitlens");
 MODULE_PARM_DESC(serpent,
 		 "0: disable | 1: force_enable | min,max: keybitlens");
@@ -169,8 +162,6 @@ static struct ipsec_alg_capi_cipher alg_capi_carray[] = {
 	{ CIPHERNAME_SERPENT, 16, 128, 256, serpent,
 	  { ixt_alg_id: ESP_SERPENT, } },
 	{ CIPHERNAME_CAST,     8, 128, 128, cast, { ixt_alg_id: ESP_CAST, } },
-	{ CIPHERNAME_BLOWFISH, 8,  96, 448, blowfish,
-	  { ixt_alg_id: ESP_BLOWFISH, } },
 	{ CIPHERNAME_3DES,     8, 192, 192, des_ede3,
 	  { ixt_alg_id: ESP_3DES, } },
 	{ NULL, 0, 0, 0, NULL, {} }

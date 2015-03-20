@@ -17,9 +17,6 @@
  */
 
 #define LEAK_DETECTIVE
-#define AGGRESSIVE 1
-#define XAUTH
-#define MODECFG
 #define DEBUG 1
 #define PRINT_SA_DEBUG 1
 #define USE_KEYRR 1

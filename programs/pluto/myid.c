@@ -37,7 +37,6 @@
 #include "log.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "connections.h"
 #include "packet.h"
@@ -60,7 +59,13 @@ void show_myid_status(void)
 	char idstr[IDTOA_BUF];
 
 	(void)idtoa(&myids[myid_state], idstr, sizeof(idstr));
-	whack_log(RC_COMMENT, "%%myid = %s", idstr);
+	whack_log(RC_COMMENT, "myid = %s", idstr);
+}
+
+extern char *pluto_vendorid;
+void show_myvendorid_status(void)
+{
+	whack_log(RC_COMMENT, "vendorid = %s", pluto_vendorid);
 }
 
 /* Fills in myid from environment variable IPSECmyid or defaultrouteaddr
@@ -77,7 +82,9 @@ void init_id(void)
 			myid_str[s] = NULL;
 		}
 	}
+	/* XXX Isn't this supposed to take it from the myid= in 'config setup' ? */
 	set_myid(MYID_SPECIFIED, getenv("IPSECmyid"));
+
 	set_myid(MYID_IP, getenv("defaultrouteaddr"));
 	set_myFQDN();
 }

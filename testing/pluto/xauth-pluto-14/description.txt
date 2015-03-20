@@ -1,6 +1,6 @@
 This test has a road warrior, ("road":initiator) connecting to east(responder).
-The east give out an address from the addresspool INTERNAL_IP4_ADDRESS.
-road wll get it as:
+East give out an address from the addresspool INTERNAL_IP4_ADDRESS.
+Road wll get it as:
 ISAKMP ModeCfg attribute:
 "ModeCfg attr type: INTERNAL_IP4_ADDRESS"
 authby=RSASIGKEY

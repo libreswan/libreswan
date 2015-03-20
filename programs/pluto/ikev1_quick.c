@@ -40,11 +40,7 @@
 #include "state.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "keys.h"
 #include "packet.h"
@@ -77,17 +73,13 @@
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
 
-#ifdef XAUTH
 #include "xauth.h"
-#endif
+
 #include "vendor.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 #include "dpd.h"
 #include "x509more.h"
-#include "tpm/tpm.h"
 
 /* accept_PFS_KE
  *
@@ -845,7 +837,7 @@ stf_status quick_outI1(int whack_sock,
 
 		replacestr[0] = '\0';
 		if (replacing != SOS_NOBODY)
-			snprintf(replacestr, 32, " to replace #%lu",
+			snprintf(replacestr, sizeof(replacestr), " to replace #%lu",
 				 replacing);
 
 		libreswan_log(
@@ -896,7 +888,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		return STF_FATAL;
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (isakmp_sa->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 		/* Duplicate nat_traversal status in new state */
 		st->hidden_variables.st_nat_traversal =
@@ -908,7 +899,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	} else {
 		st->hidden_variables.st_nat_traversal = 0;
 	}
-#endif
 
 	/* set up reply */
 	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
@@ -1003,7 +993,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		}
 	}
 
-#ifdef NAT_TRAVERSAL
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 	    (!(st->st_policy & POLICY_TUNNEL)) &&
 	    (st->hidden_variables.st_nat_traversal &
@@ -1015,18 +1004,6 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 			return STF_INTERNAL_ERROR;
 		}
 	}
-#endif
-
-#ifdef TPM
-	{
-		pb_stream *pbs = &rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-		r_hashval = tpm_relocateHash(pbs);
-	}
-#endif
 
 	/* finish computing  HASH(1), inserting it in output */
 	(void) quick_mode_hash12(r_hashval, r_hash_start, rbody.cur,
@@ -1247,7 +1224,6 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 		b.my.port = IDci->payload.ipsec_id.isaiid_port;
 		b.my.net.addr.u.v4.sin_port = htons(b.my.port);
 
-#ifdef NAT_TRAVERSAL
 		/*
 		 * if there is a NATOA payload, then use it as
 		 *    &st->st_connection->spd.that.client, if the type
@@ -1284,7 +1260,7 @@ stf_status quick_inI1_outR1(struct msg_digest *md)
 				       isanyaddr(&hv.st_nat_oa));
 			}
 		}
-#endif
+
 	} else {
 		/* implicit IDci and IDcr: peer and self */
 		if (!sameaddrtype(&c->spd.this.host_addr,
@@ -1725,8 +1701,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 							      b->his.proto,
 							      b->his.port);
 
-#ifdef NAT_TRAVERSAL
-#ifdef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
 		if ( (p1st->hidden_variables.st_nat_traversal &
 		      NAT_T_DETECTED) &&
 		     !(p1st->st_policy & POLICY_TUNNEL) &&
@@ -1741,8 +1715,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 				    " NAT'ed to) for transport mode connection \"%s\"",
 				    p->name));
 		}
-#endif
-#endif
 
 		if (p == NULL) {
 			/* This message occurs in very puzzling circumstances
@@ -1941,12 +1913,9 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 	 */
 
 	hv = p1st->hidden_variables;
-#ifdef NAT_TRAVERSAL
 	if ((p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    (p1st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
 		nat_traversal_natoa_lookup(md, &hv);
-
-#endif
 
 	/* now that we are sure of our connection, create our new state */
 	{
@@ -1995,7 +1964,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		st->st_policy = (p1st->st_policy & POLICY_ID_AUTH_MASK) |
 				(c->policy & ~POLICY_ID_AUTH_MASK);
 
-#ifdef NAT_TRAVERSAL
 		if (p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 			st->hidden_variables.st_nat_traversal =
 				p1st->hidden_variables.st_nat_traversal;
@@ -2003,7 +1971,6 @@ static stf_status quick_inI1_outR1_authtail(struct verify_oppo_bundle *b,
 		} else {
 			st->hidden_variables.st_nat_traversal = 0;
 		}
-#endif
 
 		passert(st->st_connection != NULL);
 		passert(st->st_connection == c);
@@ -2351,16 +2318,6 @@ static stf_status quick_inI1_outR1_cryptotail(struct dh_continuation *dh,
 		p->isaiid_np = ISAKMP_NEXT_NONE;
 	}
 
-#ifdef TPM
-	{
-		pb_stream *pbs = &md->rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-		r_hashval = tpm_relocateHash(pbs);
-	}
-#endif
 
 	/* Compute reply HASH(2) and insert in output */
 	(void)quick_mode_hash12(r_hashval, r_hash_start, md->rbody.cur,
@@ -2503,12 +2460,9 @@ stf_status quick_inR1_outI2_cryptotail(struct dh_continuation *dh,
 	if (st->st_pfs_group != NULL && r != NULL)
 		finish_dh_secret(st, r);
 
-#ifdef NAT_TRAVERSAL
 	if ((st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) &&
 	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA))
 		nat_traversal_natoa_lookup(md, &st->hidden_variables);
-
-#endif
 
 	/* [ IDci, IDcr ] in; these must match what we sent */
 
@@ -2545,7 +2499,6 @@ stf_status quick_inR1_outI2_cryptotail(struct dh_continuation *dh,
 			 *    &st->st_connection->spd.that.client, if the type
 			 * of the ID was FQDN
 			 */
-#ifdef NAT_TRAVERSAL
 			if ((st->hidden_variables.st_nat_traversal &
 			     NAT_T_DETECTED) &&
 			    (st->hidden_variables.st_nat_traversal &
@@ -2569,7 +2522,6 @@ stf_status quick_inR1_outI2_cryptotail(struct dh_continuation *dh,
 				       "IDcr was FQDN: %s, using NAT_OA=%s as IDcr",
 				       idfqdn, subnet_buf);
 			}
-#endif
 
 		} else {
 			/* no IDci, IDcr: we must check that the defaults match our proposal */
@@ -2631,17 +2583,6 @@ stf_status quick_inR1_outI2_cryptotail(struct dh_continuation *dh,
 						   ISAKMP_NEXT_NONE);
 #endif
 
-#ifdef TPM
-		{
-			pb_stream *pbs = &md->rbody;
-			size_t enc_len = pbs_offset(pbs) -
-					 sizeof(struct isakmp_hdr);
-
-			TCLCALLOUT_crypt("preHash", st, pbs,
-					 sizeof(struct isakmp_hdr), enc_len);
-			r_hashval = tpm_relocateHash(pbs);
-		}
-#endif
 
 		(void)quick_mode_hash3(r_hashval, st);
 	}

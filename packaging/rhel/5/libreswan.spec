@@ -16,7 +16,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.5
+Version: 3.6
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
@@ -102,7 +102,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 %endif
   INITSYSTEM=sysvinit \
   USERLINK="-g -pie %{?efence}" \
-  USE_DYNAMICDNS=true \
   USE_NM=%{USE_NM} \
   USE_XAUTHPAM=true \
   USE_FIPSCHECK=%{USE_FIPSCHECK} \
@@ -192,6 +191,12 @@ fi
 
 %post 
 /sbin/chkconfig --add ipsec || :
+if [ ! -f /etc/ipsec.d/cert8.db ] ; then
+echo > /var/tmp/libreswan-nss-pwd
+certutil -N -f /var/tmp/libreswan-nss-pwd -d /etc/ipsec.d
+restorecon /etc/ipsec.d/*db 2>/dev/null || :
+rm /var/tmp/libreswan-nss-pwd
+fi
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.1-1

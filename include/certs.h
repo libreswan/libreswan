@@ -24,7 +24,6 @@
 
 #include "secrets.h"
 #include "x509.h"
-#include "pgp.h"
 
 /* advance warning of imminent expiry of
  * cacerts, public keys, and crls
@@ -48,14 +47,13 @@ struct rsa_privkey {
 extern const rsa_privkey_t empty_rsa_privkey;
 
 /* certificate access structure
- * currently X.509 and OpenPGP certificates are supported
+ * currently X.509 certificates are supported
  */
 typedef struct {
 	bool forced;
 	enum ipsec_cert_type type;
 	union {
 		x509cert_t *x509;
-		pgpcert_t  *pgp;
 		chunk_t blob;
 	} u;
 } cert_t;
@@ -77,7 +75,7 @@ extern void list_certs(bool utc);
 extern struct pubkey* allocate_RSA_public_key(const cert_t cert);
 extern bool load_coded_file(const char *filename,
 			    int verbose,
-			    const char *type, chunk_t *blob, bool *pgp);
+			    const char *type, chunk_t *blob);
 
 extern bool load_cert_from_nss(bool forcedtype,
 			       const char *nssHostCertNickName,

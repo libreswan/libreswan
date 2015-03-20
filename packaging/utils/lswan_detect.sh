@@ -40,8 +40,14 @@ return_initsystem() {
 	return
     fi
 
+    if [ -f /sbin/rc-service -o -f /usr/sbin/rc-service ]; then
+	echo "openrc"
+	return
+    fi
+
+
     # really, most have this, it is probably a backwards compatiblity or
-    # really sysvinit
+    # really sysvinit - we have no other known targets at this point anyway
     if [ -d /etc/init.d ]; then
 	echo "sysvinit"
 	return

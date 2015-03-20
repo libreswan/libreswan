@@ -31,11 +31,7 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "state.h"
 #include "packet.h"
@@ -56,9 +52,7 @@
 #include "ike_alg.h"
 #include "db_ops.h"
 
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
 #ifdef HAVE_LABELED_IPSEC
 #include "security_selinux.h"
@@ -189,7 +183,7 @@ static bool parse_secctx_attr(pb_stream *pbs, struct state *st)
 		DBG(DBG_PARSING,
 		    DBG_log(
 			    "Initiator state received security context from responder state, now verifying if both are same"));
-		if (!strcmp(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
+		if (streq(st->sec_ctx->sec_ctx_value, sec_ctx_value)) {
 			DBG_log(
 				"security contexts are verified in the initiator state");
 		} else {
@@ -603,50 +597,12 @@ bool out_sa(pb_stream *outs,
 					 */
 					if (p->protoid != PROTO_IPCOMP ||
 					    st->st_policy & POLICY_TUNNEL) {
-#ifdef NAT_TRAVERSAL
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-						if ((st->hidden_variables.
-						     st_nat_traversal &
-						     NAT_T_DETECTED) &&
-						    (!(st->st_policy &
-						       POLICY_TUNNEL))) {
-							/* Inform user that we will not respect policy and only
-							 * propose Tunnel Mode
-							 */
-							loglog(RC_LOG_SERIOUS, "NAT-Traversal: "
-							       "Transport Mode not allowed due to security concerns -- "
-							       "using Tunnel mode.  Rebuild Libreswan with USE_NAT_TRAVERSAL_TRANSPORT_MODE=true in Makefile.inc to support transport mode.");
-						}
-#endif
-#endif
-
 						if (!out_attr(
-							    ENCAPSULATION_MODE
-#ifdef NAT_TRAVERSAL
-#ifdef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-							    ,
+							    ENCAPSULATION_MODE,
 							    NAT_T_ENCAPSULATION_MODE(
 								    st,
 								    st
 								    ->st_policy)
-#else
-						            /* If NAT-T is detected, use UDP_TUNNEL as long as Transport
-						             * Mode has security concerns.
-						             *
-						             * User has been informed of that
-						             */
-							    ,
-							    NAT_T_ENCAPSULATION_MODE(
-								    st,
-								    POLICY_TUNNEL)
-#endif
-#else                                           /* ! NAT_TRAVERSAL */
-							    , st->st_policy &
-							    POLICY_TUNNEL ?
-							    ENCAPSULATION_MODE_TUNNEL
-							    :
-							    ENCAPSULATION_MODE_TRANSPORT
-#endif
 							    , attr_desc,
 							    attr_val_descs,
 							    &trans_pbs))
@@ -926,8 +882,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 			          * and we must decide if they proposed what we wanted.
 			          */
 			role = "initiator";
-			xauth_init = xauth_init | spd->this.xauth_client;
-			xauth_resp = xauth_resp | spd->this.xauth_server;
+			xauth_init |= spd->this.xauth_client;
+			xauth_resp |= spd->this.xauth_server;
 		} else { /* this is the responder, they have proposed to us, what
 			  * are we willing to be?
 			  */
@@ -968,7 +924,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 	if (proposal.isap_np != ISAKMP_NEXT_NONE) {
 		loglog(RC_LOG_SERIOUS,
 		       "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
-		       enum_show(&payload_names, proposal.isap_np));
+		       enum_show(&payload_names_ikev1, proposal.isap_np));
 		return PAYLOAD_MALFORMED;
 	}
 
@@ -1086,7 +1042,7 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 				return BAD_PROPOSAL_SYNTAX;
 
 			passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) <
-				32);
+				LELEM_ROOF);
 
 			if (LHAS(seen_attrs, a.isaat_af_type &
 				 ISAKMP_ATTR_RTYPE_MASK)) {
@@ -1179,7 +1135,6 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 
 				/* check that authentication method is acceptable */
 				switch (val) {
-#ifdef XAUTH
 				case XAUTHInitPreShared:
 					if (!xauth_init) {
 						ugh = builddiag(
@@ -1187,9 +1142,8 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
-					ta.xauth = val;
-					val = OAKLEY_PRESHARED_KEY;
-					goto psk;
+					ta.doing_xauth = TRUE;
+					goto psk_common;
 
 				case XAUTHRespPreShared:
 					if (!xauth_resp) {
@@ -1198,66 +1152,57 @@ notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,          /* body of input
 							role);
 						break;
 					}
-					ta.xauth = val;
-					val = OAKLEY_PRESHARED_KEY;
-					/* No break; */
-#endif
+					ta.doing_xauth = TRUE;
+					goto psk_common;
 
 				case OAKLEY_PRESHARED_KEY:
-#ifdef XAUTH
-psk:
-					if (xauth_init && ta.xauth == 0) {
+					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with PSK of initiator (we are %s)",
 							role);
 						break;
 					}
-					if (xauth_resp && ta.xauth == 0) {
+					if (xauth_resp) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with PSK of responder (we are %s)",
 							role);
 						break;
 					}
-#endif
+psk_common:
 
 					if ((iap & POLICY_PSK) == LEMPTY) {
-						ugh =
-							"policy does not allow OAKLEY_PRESHARED_KEY authentication";
+						ugh = "policy does not allow OAKLEY_PRESHARED_KEY authentication";
 					} else {
 						/* check that we can find a preshared secret */
 						struct connection *con =
 							st->st_connection;
 
 						if (get_preshared_secret(con)
-						    ==
-						    NULL) {
+						    == NULL)
+						{
 							char mid[IDTOA_BUF],
 							     hid[IDTOA_BUF];
 
-							idtoa(
-								&con->spd.this.id, mid,
-								sizeof(mid));
-							if (
-								his_id_was_instantiated(
-									con)) {
+							idtoa(&con->spd.this.id, mid,
+							      sizeof(mid));
+							if (his_id_was_instantiated(
+									con))
+							{
 								strcpy(hid,
 								       "%any");
 							} else {
-								idtoa(
-									&con->spd.that.id, hid,
-									sizeof(
-										hid));
+								idtoa(&con->spd.that.id, hid,
+								      sizeof(hid));
 							}
 
 							ugh = builddiag(
 								"Can't authenticate: no preshared key found for `%s' and `%s'",
-								mid,
-								hid);
+								mid, hid);
 						}
-						ta.auth = val;
+						ta.auth = OAKLEY_PRESHARED_KEY;
 					}
 					break;
-#ifdef XAUTH
+
 				case XAUTHInitRSA:
 					if (!xauth_init) {
 						ugh = builddiag(
@@ -1265,9 +1210,8 @@ psk:
 							role);
 						break;
 					}
-					ta.xauth = val;
-					val = OAKLEY_RSA_SIG;
-					goto rsasig;
+					ta.doing_xauth = TRUE;
+					goto rsasig_common;
 
 				case XAUTHRespRSA:
 					if (!xauth_resp) {
@@ -1276,31 +1220,26 @@ psk:
 							role);
 						break;
 					}
-					ta.xauth = val;
-					val = OAKLEY_RSA_SIG;
-					/* No break; */
-#endif
+					ta.doing_xauth = TRUE;
+					goto rsasig_common;
 
 				case OAKLEY_RSA_SIG:
-#ifdef XAUTH
-rsasig:
-					if (xauth_init && ta.xauth == 0) {
+					if (xauth_init) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with RSA of initiator (we are %s)",
 							role);
 						break;
 					}
-					if (xauth_resp && ta.xauth == 0) {
+					if (xauth_resp) {
 						ugh = builddiag(
 							"policy mandates Extended Authentication (XAUTH) with RSA of responder (we are %s)",
 							role);
 						break;
 					}
-#endif
+rsasig_common:
 					/* Accept if policy specifies RSASIG or is default */
 					if ((iap & POLICY_RSASIG) == LEMPTY) {
-						ugh =
-							"policy does not allow OAKLEY_RSA_SIG authentication";
+						ugh = "policy does not allow OAKLEY_RSA_SIG authentication";
 					} else {
 						/* We'd like to check that we can find a public
 						 * key for him and a private key for us that is
@@ -1310,7 +1249,7 @@ rsasig:
 						 * thinks we've got it.  If we proposed it,
 						 * perhaps we know what we're doing.
 						 */
-						ta.auth = val;
+						ta.auth = OAKLEY_RSA_SIG;
 					}
 					break;
 
@@ -1563,7 +1502,7 @@ rsasig:
 		if (trans.isat_np != ISAKMP_NEXT_T) {
 			loglog(RC_LOG_SERIOUS,
 			       "unexpected %s payload in Oakley Proposal",
-			       enum_show(&payload_names, proposal.isap_np));
+			       enum_show(&payload_names_ikev1, proposal.isap_np));
 			return BAD_PROPOSAL_SYNTAX;
 		}
 	}
@@ -1571,7 +1510,6 @@ rsasig:
 	return NO_PROPOSAL_CHOSEN;
 }
 
-#if defined(AGGRESSIVE)
 /* Initialize st_oakley field of state for use when initiating in
  * aggressive mode.
  *
@@ -1661,7 +1599,6 @@ bool init_am_st_oakley(struct state *st, lset_t policy)
 
 	return TRUE;
 }
-#endif
 
 /**
  * Parse the body of an IPsec SA Payload (i.e. Phase 2 / Quick Mode).
@@ -1741,7 +1678,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	default:
 		loglog(RC_LOG_SERIOUS,
 		       "expecting Transform Payload, but found %s in Proposal",
-		       enum_show(&payload_names, trans->isat_np));
+		       enum_show(&payload_names_ikev1, trans->isat_np));
 		return FALSE;
 	}
 
@@ -1761,7 +1698,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 #ifndef HAVE_LABELED_IPSEC
 		/*This check is no longer valid when using security labels as SECCTX attribute is in private range and has value of 32001*/
-		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < 32);
+		passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF);
 #endif
 
 		if (LHAS(seen_attrs, a.isaat_af_type &
@@ -1781,10 +1718,10 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			ipsec_attr_val_descs[a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #ifdef HAVE_LABELED_IPSEC
-		                                /* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < 32, */
-		                                /* so for retaining the same behavior when this is < 32 and if more than >= 32 setting it to 0, */
+		                                /* The original code (without labeled ipsec) assumes a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) < LELEM_ROOF, */
+		                                /* so for retaining the same behavior when this is < LELEM_ROOF and if more than >= LELEM_ROOF setting it to 0, */
 		                                /* which is NULL in ipsec_attr_val_desc*/
-					     >= 32 ? 0 : a.isaat_af_type &
+					     >= LELEM_ROOF ? 0 : a.isaat_af_type &
 					     ISAKMP_ATTR_RTYPE_MASK
 #endif
 			];
@@ -1885,7 +1822,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		case ENCAPSULATION_MODE | ISAKMP_ATTR_AF_TV:
 			ipcomp_inappropriate = FALSE;
-#ifdef NAT_TRAVERSAL
 			switch (val) {
 			case ENCAPSULATION_MODE_TUNNEL:
 			case ENCAPSULATION_MODE_TRANSPORT:
@@ -1916,15 +1852,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-				loglog(RC_LOG_SERIOUS,
-				       "NAT-Traversal: Transport mode disabled due "
-				       "to security concerns");
-				return FALSE;
-
-				break;
-#endif
-
 			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
 				DBG(DBG_NATT,
 				    DBG_log(
@@ -1966,15 +1893,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
-#ifndef I_KNOW_TRANSPORT_MODE_HAS_SECURITY_CONCERN_BUT_I_WANT_IT
-				loglog(RC_LOG_SERIOUS,
-				       "NAT-Traversal: Transport mode disabled due "
-				       "to security concerns");
-				return FALSE;
-
-				break;
-#endif
-
 			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
 				DBG(DBG_NATT,
 				    DBG_log(
@@ -2013,9 +1931,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 				break;
 			}
-#else
-			attrs->encapsulation = val;
-#endif
 			break;
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 			attrs->transattrs.integ_hash = val;
@@ -2404,7 +2319,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			} else if (next_proposal.isap_np != ISAKMP_NEXT_P) {
 				loglog(RC_LOG_SERIOUS,
 				       "unexpected in Proposal: %s",
-				       enum_show(&payload_names,
+				       enum_show(&payload_names_ikev1,
 						 next_proposal.isap_np));
 				return BAD_PROPOSAL_SYNTAX;
 			}

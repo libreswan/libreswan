@@ -93,9 +93,9 @@
 
 /* Encryption algorithm block sizes */
 #define NULL_BLOCK_LEN                  1
-#define DES_BLOCK_LEN                   8
+/* #define DES_BLOCK_LEN                   8 obsoleted */
 #define DES3_BLOCK_LEN                  8
-#define BLOWFISH_BLOCK_LEN              8
+/* #define BLOWFISH_BLOCK_LEN              8 obsoleted */
 #define SKIPJACK_BLOCK_LEN              8
 #define CAST128_BLOCK_LEN               8
 #define RIJNDAEL128_BLOCK_LEN   16
@@ -107,12 +107,12 @@
 /* Encryption algorithm min and max key sizes */
 #define NULL_MIN_KEY_LEN                0
 #define NULL_MAX_KEY_LEN                0
-#define DES_MIN_KEY_LEN                 8
-#define DES_MAX_KEY_LEN                 8
+/* #define DES_MIN_KEY_LEN                 8 obsoleted */
+/* #define DES_MAX_KEY_LEN                 8 obsoleted */
 #define DES3_MIN_KEY_LEN                24
 #define DES3_MAX_KEY_LEN                24
-#define BLOWFISH_MIN_KEY_LEN    4
-#define BLOWFISH_MAX_KEY_LEN    56
+/* #define BLOWFISH_MIN_KEY_LEN    4 obsoleted */
+/* #define BLOWFISH_MAX_KEY_LEN    56 obsoleted */
 #define SKIPJACK_MIN_KEY_LEN    10
 #define SKIPJACK_MAX_KEY_LEN    10
 #define CAST128_MIN_KEY_LEN             5
@@ -130,7 +130,7 @@
 #define CRYPTO_MAX_DATA_LEN             64 * 1024 - 1
 
 #define CRYPTO_ALGORITHM_MIN    1
-#define CRYPTO_DES_CBC                  1
+/* #define CRYPTO_DES_CBC                  1 */
 #define CRYPTO_3DES_CBC                 2
 #define CRYPTO_BLF_CBC                  3
 #define CRYPTO_CAST_CBC                 4

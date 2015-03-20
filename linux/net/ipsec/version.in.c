@@ -1,6 +1,7 @@
 /*
  * return IPsec version information
  * Copyright (C) 2001  Henry Spencer.
+ * Copyright (C) 2013  Paul Wouters
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
@@ -31,8 +32,15 @@
 #include "libreswan.h"
 
 #define V       "@IPSECVERSION@"        /* substituted in by Makefile */
+#define VID    "@IPSECVIDVERSION@"     /* substituted in by Makefile */
+#define OUR_VENDOR_VID    "OE-Libreswan-@IPSECVIDVERSION@"     /* substituted in by Makefile */
 static const char libreswan_number[] = V;
 static const char libreswan_string[] = "Libreswan " V;
+#ifdef __KERNEL__
+static
+#endif
+const char libreswan_vendorid[] = OUR_VENDOR_VID;
+
 
 /*
  * pass version to modinfo
@@ -41,19 +49,17 @@ static const char libreswan_string[] = "Libreswan " V;
 MODULE_VERSION(V);
 #endif
 
-/*
-   - ipsec_version_code - return IPsec version number/code, as string
- */
 const char *ipsec_version_code()
 {
 	return libreswan_number;
 }
 
-/*
-   - ipsec_version_string - return full version string
- */
 const char *ipsec_version_string()
 {
 	return libreswan_string;
 }
 
+const char *ipsec_version_vendorid()
+{
+	return libreswan_vendorid;
+}

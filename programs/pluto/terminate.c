@@ -36,15 +36,11 @@
 #include "lswtime.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "secrets.h"
 
 #include "defs.h"
 #include "ac.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -63,15 +59,12 @@
 #include "alg_info.h"
 #include "spdb.h"
 #include "ike_alg.h"
-#include "plutocerts.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
 #include "xauth.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
 
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 
 #include "hostpair.h"
 

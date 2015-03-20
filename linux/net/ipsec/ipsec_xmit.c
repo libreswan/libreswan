@@ -2258,7 +2258,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 					  ixs->blocksize) + 2 :
 					 ((4 -
 					   ((ixs->pyldsz + 2) % 4)) % 4) + 2;
-#ifdef NAT_TRAVERSAL
+
 			if ((ixs->ipsp->ips_natt_type) && (!ixs->natt_type)) {
 				ixs->natt_type = ixs->ipsp->ips_natt_type;
 				ixs->natt_sport = ixs->ipsp->ips_natt_sport;
@@ -2286,7 +2286,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 				}
 				ixs->tailroom += ixs->natt_head;
 			}
-#endif
+
 			break;
 #endif                  /* CONFIG_KLIPS_ESP */
 #ifdef CONFIG_KLIPS_IPIP
@@ -2489,7 +2489,6 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 	}
 #endif  /* MSS_HACK_DELETE_ME_PLEASE */
 
-#ifdef NAT_TRAVERSAL
 	if ((ixs->natt_type) && (ixs->outgoing_said.proto != IPPROTO_IPIP)) {
 		/**
 		 * NAT-Traversal and Transport Mode:
@@ -2510,7 +2509,6 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 		ipp->check = 0;
 		ipp->check = ip_fast_csum((unsigned char *)ipp, ipp->ihl);
 	}
-#endif  /* NAT_TRAVERSAL */
 
 	if (!ixs->hard_header_stripped && ixs->hard_header_len > 0) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
@@ -2666,7 +2664,6 @@ static inline int ipsec_xmit_send2_mast(struct sk_buff *skb)
 
 }
 
-#ifdef NAT_TRAVERSAL
 enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs)
 {
 	if (ixs->natt_type && ixs->natt_head) {
@@ -2726,7 +2723,6 @@ enum ipsec_xmit_value ipsec_nat_encap(struct ipsec_xmit_state *ixs)
 	}
 	return IPSEC_XMIT_OK;
 }
-#endif
 
 static int ipsec_set_dst(struct ipsec_xmit_state *ixs)
 {

@@ -1,5 +1,8 @@
 This tests the RFC3706 DPD implementation, ensuring we only enable it
-when both sides support it.
+when both sides support it. Note that we don't have a way for _not_ supporting
+or announcing it. So west and east support DPD, but only east activates it. So
+only probes from east to west (and their replies) should happen. West should
+not send out R_U_THERE requests.
 
 Order of Operations:
 

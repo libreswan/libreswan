@@ -1,10 +1,6 @@
-: ==== start ====
-TESTNAME=dpd-02
-
-source /testing/pluto/bin/eastlocal.sh
-
-ipsec setup start
+/testing/guestbin/swan-prep
+ipsec _stackmanager start 
+/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
 /testing/pluto/bin/wait-until-pluto-started
-
 ipsec auto --add west-east
-
+echo "initdone"

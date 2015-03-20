@@ -121,6 +121,9 @@ export LC_ALL
 #
 #	PLUTO_STACK
 #		The kernel level IPstack used (see protostack=)
+#
+#	PLUTO_SA_REQID
+#		When using KAME or XFRM/NETKEY, the IPsec SA reqid value
 
 case $PLUTO_VERSION in
     1.*)

@@ -78,9 +78,9 @@ struct trans_attrs {
 	oakley_hash_t integ_hash;       /* Hash algorithm for integ */
 
 	oakley_auth_t auth;             /* Authentication method (RSA,PSK) */
-#ifdef XAUTH
-	u_int16_t xauth;                /* did we negotiate Extended Authentication? */
-#endif
+
+	bool doing_xauth;                /* did we negotiate Extended Authentication and still doing it? */
+
 	u_int16_t groupnum;
 
 	time_t life_seconds;            /* When this SA expires (seconds) */
@@ -155,6 +155,7 @@ struct hidden_variables {
 	bool st_got_certrequest;
 	bool st_modecfg_started;
 	bool st_skeyid_calculated;
+	bool st_liveness;			/* Liveness checks */
 	bool st_dpd;                            /* Peer supports DPD */
 	bool st_dpd_local;                      /* If we want DPD on this conn */
 	bool st_logged_p1algos;                 /* if we have logged algos */
@@ -209,8 +210,8 @@ struct state {
 	int st_usage;
 
 #ifdef XAUTH_HAVE_PAM
-	pthread_mutex_t mutex;                  /* per state mutex */
-	pthread_t tid;                          /* per state XAUTH_RO thread id */
+	pthread_mutex_t xauth_mutex;            /* per state xauth_mutex */
+	pthread_t xauth_tid;                    /* per state XAUTH_RO thread id */
 #endif
 
 	bool st_ikev2;                          /* is this an IKEv2 state? */
@@ -393,6 +394,10 @@ struct state {
 	char st_xauth_username[XAUTH_USERNAME_LEN];
 	chunk_t st_xauth_password;
 
+	time_t st_last_liveness;		/* Time of last v2 informational */
+	bool st_pend_liveness;			/* Waiting on an informational response */
+	struct event *st_liveness_event;
+
 	/* RFC 3706 Dead Peer Detection */
 	time_t st_last_dpd;                     /* Time of last DPD transmit */
 	u_int32_t st_dpd_seqno;                 /* Next R_U_THERE to send */
@@ -401,8 +406,7 @@ struct state {
 	u_int32_t st_dpd_peerseqno;             /* global variables */
 	struct event       *st_dpd_event;       /* backpointer for DPD events */
 
-	lset_t st_seen_vendorid;                /* Bit field about
-	                                             recognized Vendor ID */
+	bool st_seen_nortel_vid;                /* To work around a nortel bug */
 	struct isakmp_quirks quirks;            /* work arounds for faults in other products */
 	bool st_xauth_soft;                     /* XAUTH failed but policy is to soft fail */
 	bool st_seen_fragvid;                   /* should really use st_seen_vendorid, but no one else is */
@@ -412,9 +416,7 @@ struct state {
 /* global variables */
 
 extern u_int16_t pluto_port;            /* Pluto's port */
-#ifdef NAT_TRAVERSAL
 extern u_int16_t pluto_natt_float_port; /* Pluto's NATT floating port */
-#endif
 
 extern bool states_use_connection(struct connection *c);
 
@@ -488,8 +490,8 @@ extern ipsec_spi_t uniquify_his_cpi(ipsec_spi_t cpi, struct state *st);
 extern void fmt_state(struct state *st, const time_t n,
 		      char *state_buf, const size_t state_buf_len,
 		      char *state_buf2, const size_t state_buf_len2);
-extern void delete_states_by_peer(ip_address *peer);
-extern void replace_states_by_peer(ip_address *peer);
+extern void delete_states_by_peer(const ip_address *peer);
+extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
 
 extern void set_state_ike_endpoints(struct state *st,
@@ -499,10 +501,9 @@ extern void delete_cryptographic_continuation(struct state *st);
 extern void delete_states_dead_interfaces(void);
 
 /*
- * use this guy to change state, this gives us a handle on all state changes
+ * use these to change state, this gives us a handle on all state changes
  * which is good for tracking bugs, logging and anything else you might like
  */
-#ifdef HAVE_STATSD
 #define refresh_state(st) log_state(st, st->st_state)
 #define fake_state(st, new_state) log_state(st, new_state)
 #define change_state(st, new_state) \
@@ -512,11 +513,5 @@ extern void delete_states_dead_interfaces(void);
 			(st)->st_state = (new_state); \
 		} \
 	} while (0)
-#else
-#define refresh_state(st)               /* do nothing */
-#define fake_state(st, new_state)       /* do nothing */
-#define change_state(st, new_state) do { (st)->st_state = (new_state); \
-} while (0)
-#endif
 
 #endif /* _STATE_H */

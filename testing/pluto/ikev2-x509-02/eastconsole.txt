@@ -4443,7 +4443,7 @@ added connection description "ikev2-westnet-eastnet-x509-cr"
 |   03 00 14 00  00 00 00 00  02 00 00 00  c0 01 02 2d
 |   00 00 00 00  00 00 00 00
 | pfkey_get: K_SADB_X_GRPSA message 7
-| set up outoing SA, ref=0/4294901761
+| set up outgoing SA, ref=0/4294901761
 | pfkey_lib_debug:pfkey_msg_hdr_build: 
 | pfkey_lib_debug:pfkey_msg_hdr_build: on_entry &pfkey_ext=0p0xbf9f4340 pfkey_ext=0p0xbf9f5434 *pfkey_ext=0p(nil). 
 | pfkey_lib_debug:pfkey_msg_hdr_build: on_exit &pfkey_ext=0p0xbf9f4340 pfkey_ext=0p0xbf9f5434 *pfkey_ext=0p0x8145518. 

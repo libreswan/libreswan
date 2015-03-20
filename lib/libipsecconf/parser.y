@@ -520,11 +520,12 @@ end:
 
 static void parser_free_kwlist (struct kw_list *list)
 {
-	struct kw_list *elt;
-	while (list) {
-		elt = list;
+	while (list != NULL) {
+		struct kw_list *elt = list;
+
 		list = list->next;
-		if (elt->string) free(elt->string);
+		if (elt->string)
+			free(elt->string);
 		free(elt);
 	}
 }

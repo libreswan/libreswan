@@ -7,10 +7,10 @@ currently-accepted values are
 (signifying an
 <emphasis remap='B'>ipsec auto</emphasis>
 <option>--add</option>),
-<emphasis remap='B'>route</emphasis>
+<emphasis remap='B'>ondemand</emphasis>
 (signifying that plus an
 <emphasis remap='B'>ipsec auto</emphasis>
-<option>--route</option>),
+<option>--ondemand</option>),
 <emphasis remap='B'>start</emphasis>
 (signifying that plus an
 <emphasis remap='B'>ipsec auto</emphasis>
@@ -27,6 +27,9 @@ Relevant only locally, other end need not agree on it
 both ends should use
 <emphasis remap='B'>auto=start</emphasis>
 to ensure that any reboot causes immediate renegotiation).</para>
+<para>
+The option <emphasis remap='B'>ondemand</emphasis> used to be called <emphasis remap='B'>route</emphasis>
+</para>
   </listitem>
   </varlistentry>
 

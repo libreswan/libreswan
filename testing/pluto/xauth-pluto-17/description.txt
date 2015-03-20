@@ -1,0 +1,12 @@
+This test has a road warrior, ("road") connecting to VPN host east.
+
+It shows up from a random IP.
+
+It uses RSASIG to authenticate for phase 1.
+It uses aggressive mode.
+It then uses XAUTH to authenticate the phase 1.5.
+
+It then proceeds to phase 2.
+
+No ModeConfig is used incombination with DPD. This should confirm a fix for rhbz#841325
+

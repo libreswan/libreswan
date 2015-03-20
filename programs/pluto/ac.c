@@ -42,7 +42,6 @@
 #include "ac.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "log.h"
 #include "whack.h"
@@ -788,7 +787,6 @@ void load_acerts(void)
 		if (n > 0) {
 			while (n--) {
 				chunk_t blob = empty_chunk;
-				bool pgp = FALSE;
 
 				if (load_coded_file(filelist[n]->d_name,
 #ifdef SINGLE_CONF_DIR
@@ -796,7 +794,7 @@ void load_acerts(void)
 #else
 						    TRUE,
 #endif
-						    "acert", &blob, &pgp)) {
+						    "acert", &blob)) {
 					x509acert_t *ac = alloc_thing(
 						x509acert_t, "x509acert");
 

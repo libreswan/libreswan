@@ -1,0 +1,2 @@
+Basic pluto with on the initiator (west), and on the responder ikev2=insist. 
+The ISAKMP SA shall not establish.

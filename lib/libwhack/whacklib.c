@@ -119,20 +119,21 @@ err_t pack_whack_msg(struct whackpacker *wp)
 	    !pack_str(wp, &wp->msg->myid) ||                                    /* string 15 */
 	    !pack_str(wp, &wp->msg->ike) ||                                     /* string 16 */
 	    !pack_str(wp, &wp->msg->esp) ||                                     /* string 17 */
-	    !pack_str(wp, &wp->msg->tpmeval) ||                                 /* string 18 */
-	    !pack_str(wp, &wp->msg->left.xauth_name) ||                         /* string 19 */
-	    !pack_str(wp, &wp->msg->right.xauth_name) ||                        /* string 20 */
-	    !pack_str(wp, &wp->msg->connalias) ||                               /* string 21 */
-	    !pack_str(wp, &wp->msg->left.host_addr_name) ||                     /* string 22 */
-	    !pack_str(wp, &wp->msg->right.host_addr_name) ||                    /* string 23 */
-	    !pack_str(wp, &wp->msg->string1) ||                                 /* string 24 */
-	    !pack_str(wp, &wp->msg->string2) ||                                 /* string 25 */
-	    !pack_str(wp, &wp->msg->string3) ||                                 /* string 26 */
-	    !pack_str(wp, &wp->msg->dnshostname)                                /* string 27 ? */
+	    !pack_str(wp, &wp->msg->left.xauth_name) ||                         /* string 18 */
+	    !pack_str(wp, &wp->msg->right.xauth_name) ||                        /* string 19 */
+	    !pack_str(wp, &wp->msg->connalias) ||                               /* string 20 */
+	    !pack_str(wp, &wp->msg->left.host_addr_name) ||                     /* string 21 */
+	    !pack_str(wp, &wp->msg->right.host_addr_name) ||                    /* string 22 */
+	    !pack_str(wp, &wp->msg->string1) ||                                 /* string 23 */
+	    !pack_str(wp, &wp->msg->string2) ||                                 /* string 24 */
+	    !pack_str(wp, &wp->msg->string3) ||                                 /* string 25 */
+	    !pack_str(wp, &wp->msg->dnshostname)                                /* string 26 */
 #ifdef HAVE_LABELED_IPSEC
-	    || !pack_str(wp, &wp->msg->policy_label)                            /* string 28 */
+	    || !pack_str(wp, &wp->msg->policy_label)                            /* string 27 */
 #endif
-	    || wp->str_roof - wp->str_next < (ptrdiff_t)wp->msg->keyval.len) {  /* chunk (sort of string 28) */
+	    || !pack_str(wp, &wp->msg->modecfg_domain)				/* string 28 */
+	    || !pack_str(wp, &wp->msg->modecfg_banner)				/* string 29 */
+	    || wp->str_roof - wp->str_next < (ptrdiff_t)wp->msg->keyval.len) {  /* chunk (sort of string 30) */
 		ugh = "too many bytes of strings to fit in message to pluto";
 		return ugh;
 	}
@@ -179,19 +180,20 @@ err_t unpack_whack_msg(struct whackpacker *wp)
 	    !unpack_str(wp, &wp->msg->myid) ||                  /* string 15 */
 	    !unpack_str(wp, &wp->msg->ike) ||                   /* string 16 */
 	    !unpack_str(wp, &wp->msg->esp) ||                   /* string 17 */
-	    !unpack_str(wp, &wp->msg->tpmeval) ||               /* string 18 */
-	    !unpack_str(wp, &wp->msg->left.xauth_name) ||       /* string 19 */
-	    !unpack_str(wp, &wp->msg->right.xauth_name) ||      /* string 20 */
-	    !unpack_str(wp, &wp->msg->connalias) ||             /* string 21 */
-	    !unpack_str(wp, &wp->msg->left.host_addr_name) ||   /* string 22 */
-	    !unpack_str(wp, &wp->msg->right.host_addr_name) ||  /* string 23 */
-	    !unpack_str(wp, &wp->msg->string1) ||               /* string 24 */
-	    !unpack_str(wp, &wp->msg->string2) ||               /* string 25 */
-	    !unpack_str(wp, &wp->msg->string3) ||               /* string 26 */
-	    !unpack_str(wp, &wp->msg->dnshostname)              /* string 27 ? */
+	    !unpack_str(wp, &wp->msg->left.xauth_name) ||       /* string 18 */
+	    !unpack_str(wp, &wp->msg->right.xauth_name) ||      /* string 19 */
+	    !unpack_str(wp, &wp->msg->connalias) ||             /* string 20 */
+	    !unpack_str(wp, &wp->msg->left.host_addr_name) ||   /* string 21 */
+	    !unpack_str(wp, &wp->msg->right.host_addr_name) ||  /* string 22 */
+	    !unpack_str(wp, &wp->msg->string1) ||               /* string 23 */
+	    !unpack_str(wp, &wp->msg->string2) ||               /* string 24 */
+	    !unpack_str(wp, &wp->msg->string3) ||               /* string 25 */
+	    !unpack_str(wp, &wp->msg->dnshostname)              /* string 26 */
 #ifdef HAVE_LABELED_IPSEC
-	    || !unpack_str(wp, &wp->msg->policy_label)          /* string 28 */
+	    || !unpack_str(wp, &wp->msg->policy_label)          /* string 27 */
 #endif
+	    || !unpack_str(wp, &wp->msg->modecfg_domain)	/* string 28 */
+	    || !unpack_str(wp, &wp->msg->modecfg_banner)	/* string 29 */
 	    || wp->str_roof - wp->str_next !=
 	    (ptrdiff_t)wp->msg->keyval.len)                                     /* check chunk */
 		ugh = "message from whack contains bad string";
@@ -249,6 +251,7 @@ int whack_get_value(char *buf, size_t bufsize)
 	return len;
 }
 
+/* ??? bufsize must be PASS_MAX + 1 (documented in getpass(3)) */
 size_t whack_get_secret(char *buf, size_t bufsize)
 {
 	const char *secret;
@@ -256,10 +259,12 @@ size_t whack_get_secret(char *buf, size_t bufsize)
 
 	fflush(stdout);
 	usleep(20000); /* give fflush time for flushing */
+	/* ??? the function getpass(3) is obsolete! */
 	secret = getpass("Enter passphrase: ");
 	secret = (secret == NULL) ? "" : secret;
 
-	strncpy(buf, secret, bufsize);
+	strncpy(buf, secret, bufsize-1);
+	buf[bufsize-1] = '\n';	/* ensure NUL termination */
 
 	len = strlen(buf) + 1;
 

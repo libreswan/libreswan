@@ -8,6 +8,7 @@
  * Copyright (C) 2006-2011 Bart Trojanowski <bart@jukie.net>
  * Copyright (C) 2009-2012 David McCullough <david_mccullough@mcafee.com>
  * Copyright (C) 2012  Paul Wouters  <paul@libreswan.org>
+ * Copyright (C) 2013  David McCullough <ucdevel@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -446,18 +447,15 @@ struct eroute *ipsec_findroute(struct sockaddr_encap *eaddr)
 }
 
 #ifdef CONFIG_PROC_FS
-/** ipsec_rj_walker_procprint: print one line of eroute table output.
- *
- * Theoretical BUG: if w->length is less than the length
- * of some line we should produce, that line will never
- * be finished.  In effect, the "file" will stop part way
- * through that line.
+/*
+ * ipsec_rj_walker_show: print one line of eroute table output.
  */
-int ipsec_rj_walker_procprint(struct radij_node *rn, void *w0)
+
+int ipsec_rj_walker_show(struct radij_node *rn, void *arg)
 {
 	struct eroute *ro = (struct eroute *)rn;
 	struct rjtentry *rd = (struct rjtentry *)rn;
-	struct wsbuf *w = (struct wsbuf *)w0;
+	struct seq_file *seq = arg;
 	char buf1[SUBNETTOA_BUF], buf2[SUBNETTOA_BUF];
 	char buf3[16];
 	char sa[SATOT_BUF];
@@ -465,10 +463,7 @@ int ipsec_rj_walker_procprint(struct radij_node *rn, void *w0)
 	struct sockaddr_encap *key, *mask;
 
 	KLIPS_PRINT(debug_radij,
-		    "klips_debug:ipsec_rj_walker_procprint: "
-		    "rn=0p%p, w0=0p%p\n",
-		    rn,
-		    w0);
+		    "klips_debug:ipsec_rj_walker_show: rn=%p, arg=%p\n", rn, arg);
 	if (rn->rj_b >= 0)
 		return 0;
 
@@ -525,8 +520,7 @@ int ipsec_rj_walker_procprint(struct radij_node *rn, void *w0)
 		sprintf(buf3, ":%d", key->sen_proto);
 
 	sa_len = KLIPS_SATOT(1, &ro->er_said, 'x', sa, sizeof(sa));
-	w->len += ipsec_snprintf(w->buffer + w->len,
-				 w->length - w->len,
+	seq_printf(seq,
 				 "%-10d "
 				 "%-18s -> %-18s => %s%s\n",
 				 ro->er_count,
@@ -535,31 +529,7 @@ int ipsec_rj_walker_procprint(struct radij_node *rn, void *w0)
 				 sa_len ? sa : " (error)",
 				 buf3);
 
-	{
-		/* snprintf can only fill the last character with NUL
-		 * so the maximum useful character is w->length-1.
-		 * However, if w->length == 0, we cannot go back.
-		 * (w->length surely cannot be negative.)
-		 */
-		int max_content = w->length > 0 ? w->length - 1 : 0;
-
-		if (w->len >= max_content) {
-			/* we've done all that can fit -- stop treewalking */
-			w->len = max_content;  /* truncate crap */
-			return -ENOBUFS;
-		} else {
-			const off_t pos = w->begin + w->len;   /* file position of end of what we've generated */
-
-			if (pos <= w->offset) {
-				/* all is before first interesting character:
-				 * discard, but note where we are.
-				 */
-				w->len = 0;
-				w->begin = pos;
-			}
-			return 0;
-		}
-	}
+	return 0;
 }
 #endif          /* CONFIG_PROC_FS */
 

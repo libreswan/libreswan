@@ -1,0 +1,7 @@
+This is a basic-pluto-01 test with the only difference that on west,
+the right= is specified as a hostname only present in /etc/hosts
+
+this tests whether libunbound properly reads hostnames from /etc/hosts
+before doing DNS lookups. One connection is loaded at bootup, the
+other by ipsec auto -add. Both should be "oriented" and found east's
+IP at 192.1.2.23.

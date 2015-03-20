@@ -38,7 +38,6 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"

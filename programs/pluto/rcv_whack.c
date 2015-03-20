@@ -44,12 +44,8 @@
 #include "defs.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
 #include "ac.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
 #include "whack.h"              /* needs connections.h */
@@ -70,10 +66,6 @@
 
 #include "kernel_alg.h"
 #include "ike_alg.h"
-
-#ifdef TPM
-#include "tpm/tpm.h"
-#endif
 
 /* bits loading keys from asynchronous DNS */
 
@@ -196,7 +188,8 @@ static bool openwhackrecordfile(char *file)
 	strcpy(FQDN, "unknown host");
 	gethostname(FQDN, sizeof(FQDN));
 
-	strncpy(whackrecordname, file, sizeof(whackrecordname));
+	strncpy(whackrecordname, file, sizeof(whackrecordname)-1);
+	whackrecordname[sizeof(whackrecordname)-1] = '\0';	/* ensure NUL termination */
 	whackrecordfile = fopen(whackrecordname, "w");
 	if (whackrecordfile == NULL) {
 		libreswan_log("Failed to open whack record file: '%s'\n",
@@ -321,7 +314,7 @@ static void key_add_request(const struct whack_message *msg)
 /*
  * handle a whack message.
  */
-void whack_process(int whackfd, struct whack_message msg)
+void whack_process(int whackfd, const struct whack_message msg)
 {
 	const struct lsw_conf_options *oco = lsw_init_options();
 
@@ -448,15 +441,6 @@ void whack_process(int whackfd, struct whack_message msg)
 	if (msg.whack_reread & REREAD_CRLS)
 
 		load_crls();
-
-	if (msg.tpmeval) {
-#ifdef TPM
-		passert(msg.tpmeval != NULL);
-		tpm_eval(msg.tpmeval);
-#else
-		libreswan_log("Pluto not built with TAPROOM");
-#endif
-	}
 
 	if (msg.whack_list & LIST_PSKS)
 		list_psks();

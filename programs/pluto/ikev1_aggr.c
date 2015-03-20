@@ -36,11 +36,7 @@
 #include "state.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "keys.h"
 #include "packet.h"
@@ -71,19 +67,14 @@
 #include "ikev1.h"
 #include "ikev1_continuations.h"
 
-#ifdef XAUTH
 #include "xauth.h"
-#endif
+
 #include "vendor.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 #include "dpd.h"
 #include "x509more.h"
-#include "tpm/tpm.h"
 
-#if defined(AGGRESSIVE)
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
  */
@@ -229,13 +220,11 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 						    md->sender_port, LEMPTY);
 
 #if 0
-#ifdef NAT_TRAVERSAL
 	if (c == NULL && md->iface->ike_float) {
 		c = find_host_connection(&md->iface->addr,
 					 pluto_natt_float_port,
 					 &md->sender, md->sender_port, LEMPTY);
 	}
-#endif
 #endif
 
 	if (c == NULL) {
@@ -319,7 +308,6 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 		      ip_str(
 			      &c->spd.that.host_addr));
 
-#ifdef NAT_TRAVERSAL
 	DBG(DBG_CONTROLMORE, DBG_log("sender checking NAT-t: %d and %d",
 				     nat_traversal_enabled,
 				     md->quirks.nat_traversal_vid));
@@ -334,7 +322,6 @@ static stf_status aggr_inI1_outR1_common(struct msg_digest *md,
 					nat_traversal_vid_to_method(md->quirks.
 								    nat_traversal_vid)));
 	}
-#endif
 
 	/* save initiator SA for HASH */
 	clonereplacechunk(st->st_p1isa, sa_pd->pbs.start, pbs_room(
@@ -651,17 +638,13 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 	{
 		int np = ISAKMP_NEXT_NONE;
 
-#ifdef NAT_TRAVERSAL
 		if (st->hidden_variables.st_nat_traversal)
 			np = ISAKMP_NEXT_VID;
-
-#endif
 
 		if (!out_vid(np, &md->rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (st->hidden_variables.st_nat_traversal) {
 		if (!nat_traversal_add_natd(ISAKMP_NEXT_VID, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
@@ -671,10 +654,9 @@ static stf_status aggr_inI1_outR1_tail(struct pluto_crypto_req_cont *pcrc,
 			     md->quirks.nat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
 
 	/* finish message */
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 
 	return STF_OK;
 }
@@ -724,15 +706,11 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	/* copy the quirks we might have accumulated */
 	copy_quirks(&st->quirks, &md->quirks);
 
-#ifdef NAT_TRAVERSAL
 	if (nat_traversal_enabled && md->quirks.nat_traversal_vid)
 		st->hidden_variables.st_nat_traversal = LELEM(nat_traversal_vid_to_method(
 								      md->
 								      quirks.
 								      nat_traversal_vid));
-
-
-#endif
 
 	/* KE in */
 	RETURN_STF_FAILURE(accept_KE(&st->st_gr, "Gr", st->st_oakley.group,
@@ -747,7 +725,6 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	memcpy(st->st_rcookie, md->hdr.isa_rcookie, COOKIE_SIZE);
 	insert_state(st); /* needs cookies, connection, and msgid (0) */
 
-#ifdef NAT_TRAVERSAL
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("inR1: checking NAT-t: %d and %d",
 		    nat_traversal_enabled,
@@ -760,8 +737,6 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 	}
 	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA)
 		nat_traversal_new_ka_event();
-
-#endif
 
 	/* set up second calculation */
 	{
@@ -867,22 +842,10 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (st->hidden_variables.st_nat_traversal) {
 		if (!nat_traversal_add_natd(auth_payload, &md->rbody, md))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
-
-#ifdef TPM
-	{
-		pb_stream *pbs = &md->rbody;
-		size_t enc_len = pbs_offset(pbs) - sizeof(struct isakmp_hdr);
-
-		TCLCALLOUT_crypt("preHash", st, pbs, sizeof(struct isakmp_hdr),
-				 enc_len);
-	}
-#endif
 
 	/* HASH_I or SIG_I out */
 	{
@@ -932,11 +895,10 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 
 	/* RFC2408 says we must encrypt at this point */
 
-	/* st_new_iv was computed by generate_skeyids_iv */
+	/* st_new_iv was computed by generate_skeyids_iv (??? DOESN'T EXIST) */
 	if (!encrypt_message(&md->rbody, st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
-#ifdef XAUTH
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey */
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
@@ -946,7 +908,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -956,7 +918,6 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
-#endif
 
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
@@ -965,7 +926,7 @@ static stf_status aggr_inR1_outI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "This seems to be rekey, and XAUTH is not supposed to be done again"));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -1011,7 +972,6 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 	u_char buffer[1024];
 	struct payload_digest id_pd;
 
-#ifdef NAT_TRAVERSAL
 	if (st->hidden_variables.st_nat_traversal) {
 		nat_traversal_natd_lookup(md);
 		nat_traversal_show_result(
@@ -1020,8 +980,6 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 	}
 	if (st->hidden_variables.st_nat_traversal & NAT_T_WITH_KA)
 		nat_traversal_new_ka_event();
-
-#endif
 
 	/* Reconstruct the peer ID so the peer hash can be authenticated */
 	{
@@ -1064,7 +1022,6 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 
 	/**************** done input ****************/
 
-#ifdef XAUTH
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey */
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
@@ -1074,7 +1031,7 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "Skipping XAUTH for rekey for Cisco Peer compatibility."));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -1084,7 +1041,6 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 			st->hidden_variables.st_modecfg_started = TRUE;
 		}
 	}
-#endif
 
 	if (c->newest_isakmp_sa != SOS_NOBODY &&
 	    st->st_connection->spd.this.xauth_client &&
@@ -1093,7 +1049,7 @@ stf_status aggr_inI2_tail(struct msg_digest *md,
 		    DBG_log(
 			    "This seems to be rekey, and XAUTH is not supposed to be done again"));
 		st->hidden_variables.st_xauth_client_done = TRUE;
-		st->st_oakley.xauth = 0;
+		st->st_oakley.doing_xauth = FALSE;
 
 		if (st->st_connection->spd.this.modecfg_client) {
 			DBG(DBG_CONTROL,
@@ -1209,6 +1165,7 @@ stf_status aggr_outI1(int whack_sock,
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_name) {
+				/* ??? is this strncpy correct? */
 				strncpy(st->st_xauth_username,
 					sr->this.xauth_name,
 					sizeof(st->st_xauth_username));
@@ -1364,53 +1321,73 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 		close_output_pbs(&id_pbs);
 	}
 
+	int numvidtosend = 1; /* Always announce DPD capablity */
+
+	if (c->spd.this.xauth_client || c->spd.this.xauth_server)
+		numvidtosend++;
+
+	if (nat_traversal_enabled) 
+		numvidtosend++;
+	if(c->cisco_unity)
+		numvidtosend++;
+
+	if(c->send_vendorid)
+		numvidtosend++;
+
+	if (c->policy & POLICY_IKE_FRAG_ALLOW)
+		numvidtosend++;
+
 	/* ALWAYS Announce our ability to do Dead Peer Detection to the peer */
 	{
-		int np = ISAKMP_NEXT_NONE;
-
-		if (c->spd.this.xauth_client ||
-		    c->spd.this.xauth_server) {
-
-			/* Add supported DPD VID */
-			np = ISAKMP_NEXT_VID;
-		}
-
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 		if ( !out_vid(np, &md->rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
 	}
 
-#ifdef NAT_TRAVERSAL
 	if (nat_traversal_enabled) {
-		/* Add supported NAT-Traversal VID */
-		int np = ISAKMP_NEXT_NONE;
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
 
-#ifdef XAUTH
-		if (c->spd.this.xauth_client || c->spd.this.xauth_server)
-			np = ISAKMP_NEXT_VID;
-
-#endif
-
-		if (!nat_traversal_insert_vid(np, &md->rbody, st)) {
+		if (!nat_traversal_insert_vid(np, &md->rbody)) {
 			reset_cur_state();
 			return STF_INTERNAL_ERROR;
 		}
 	}
-#endif
 
-#ifdef XAUTH
 	if (c->spd.this.xauth_client || c->spd.this.xauth_server) {
-		if (!out_vid(ISAKMP_NEXT_NONE, &md->rbody, VID_MISC_XAUTH))
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_MISC_XAUTH))
 			return STF_INTERNAL_ERROR;
 	}
-#endif
+
+	if(c->cisco_unity) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_CISCO_UNITY))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if(c->send_vendorid) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_LIBRESWANSELF))
+			return STF_INTERNAL_ERROR;
+	}
+
+	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
+		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+		if (!out_vid(np, &md->rbody, VID_IKE_FRAGMENTATION))
+			return STF_INTERNAL_ERROR;
+	}
+
+	/* INITIAL_CONTACT is an authenticated message, no VID here */
+
+	passert(numvidtosend == 0);
+
 
 	/* finish message */
 
-	close_message(&md->rbody);
+	close_message(&md->rbody, st);
 	close_output_pbs(&reply_stream);
 
 	/* let TCL hack it before we mark the length and copy it */
-	TCLCALLOUT("avoidEmitting", st, st->st_connection, md);
 
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
@@ -1424,13 +1401,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *pcrc,
 	send_ike_msg(st, "aggr_outI1");
 
 	/* Set up a retransmission event, half a minute henceforth */
-	TCLCALLOUT("adjustTimers", st, st->st_connection, md);
-
-#ifdef TPM
-tpm_stolen:
-tpm_ignore:
-#endif
-	/* Set up a retransmission event, half a minute henceforth */
 	delete_event(st);
 	event_schedule(EVENT_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
 
@@ -1439,4 +1409,3 @@ tpm_ignore:
 	cur_state = NULL;
 	return STF_IGNORE;
 }
-#endif /* AGGRESSIVE */

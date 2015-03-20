@@ -19,29 +19,14 @@
 
 #include <libreswan.h>
 
-int ipsec_walk(char *);
-
-int ipsec_rj_walker_procprint(struct radij_node *, void *);
-int ipsec_rj_walker_delete(struct radij_node *, void *);
-
-/* This structure is used to pass information between
- * ipsec_eroute_get_info and ipsec_rj_walker_procprint
- * (through rj_walktree) and between calls of ipsec_rj_walker_procprint.
- */
-struct wsbuf {
-	/* from caller of ipsec_eroute_get_info: */
-	char *const buffer;     /* start of buffer provided */
-	const int length;       /* length of buffer provided */
-	const off_t offset;     /* file position of first character of interest */
-	/* accumulated by ipsec_rj_walker_procprint: */
-	int len;                /* number of character filled into buffer */
-	off_t begin;            /* file position contained in buffer[0] (<=offset) */
-};
+extern int ipsec_walk(char *);
+extern int ipsec_rj_walker_show(struct radij_node *, void *);
+extern int ipsec_rj_walker_delete(struct radij_node *, void *);
 
 extern struct radij_node_head *rnh;
 extern spinlock_t eroute_lock;
 
-struct eroute * ipsec_findroute(struct sockaddr_encap *);
+extern struct eroute * ipsec_findroute(struct sockaddr_encap *);
 
 #define O1(x) (int)(((x) >> 24) & 0xff)
 #define O2(x) (int)(((x) >> 16) & 0xff)
@@ -49,7 +34,7 @@ struct eroute * ipsec_findroute(struct sockaddr_encap *);
 #define O4(x) (int)(((x)) & 0xff)
 
 extern int debug_radij;
-void rj_dumptrees(void);
+extern void rj_dumptrees(void);
 
 #define DB_RJ_DUMPTREES 0x0001
 #define DB_RJ_FINDROUTE 0x0002

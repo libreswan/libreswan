@@ -1,0 +1,11 @@
+#%PAM-1.0
+# Google Authenticator with Regular System auth in combined prompt mode
+# (OTP is added to the password at the password prompt without separator)
+auth required pam_google_authenticator.so forward_pass
+auth include system-auth use_first_pass
+account required pam_nologin.so
+account include system-auth
+password include system-auth
+session optional pam_keyinit.so force revoke
+session include system-auth
+session required pam_loginuid.so

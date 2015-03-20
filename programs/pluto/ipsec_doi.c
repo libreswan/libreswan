@@ -46,11 +46,7 @@
 #include "state.h"
 #include "id.h"
 #include "x509.h"
-#include "pgp.h"
 #include "certs.h"
-#ifdef XAUTH_HAVE_PAM
-#include <security/pam_appl.h>
-#endif
 #include "connections.h"        /* needs id.h */
 #include "packet.h"
 #include "keys.h"
@@ -82,68 +78,13 @@
 #include "ikev1_continuations.h"
 #include "ikev2.h"
 
-#ifdef XAUTH
 #include "xauth.h"
-#endif
+
 #include "vendor.h"
-#ifdef NAT_TRAVERSAL
 #include "nat_traversal.h"
-#endif
-#include "virtual.h"
+#include "virtual.h"	/* needs connections.h */
 #include "dpd.h"
 #include "x509more.h"
-
-#include "tpm/tpm.h"
-
-/* Pluto's Vendor ID
- *
- * Note: it is a NUL-terminated ASCII string, but NUL won't go on the wire.
- */
-#define PLUTO_VENDORID_SIZE 12
-static bool pluto_vendorid_built = FALSE;
-char pluto_vendorid[PLUTO_VENDORID_SIZE + 1];
-
-const char *init_pluto_vendorid(void)
-{
-	MD5_CTX hc;
-	unsigned char hash[MD5_DIGEST_SIZE];
-	const char *v = ipsec_version_string();
-	int i;
-
-	if (pluto_vendorid_built)
-		return pluto_vendorid;
-
-	osMD5Init(&hc);
-	osMD5Update(&hc, (const unsigned char *)v, strlen(v));
-	osMD5Update(&hc, (const unsigned char *)compile_time_interop_options,
-		    strlen(compile_time_interop_options));
-	osMD5Final(hash, &hc);
-
-	pluto_vendorid[0] = 'O'; /* Opportunistic Encryption Rules */
-	pluto_vendorid[1] = 'E';
-	pluto_vendorid[2] = 'N';
-
-#if PLUTO_VENDORID_SIZE - 3 <= MD5_DIGEST_SIZE
-	/* truncate hash to fit our vendor ID */
-	memcpy(pluto_vendorid + 3, hash, PLUTO_VENDORID_SIZE - 2);
-#else
-	/* pad to fill our vendor ID */
-	memcpy(pluto_vendorid + 3, hash, MD5_DIGEST_SIZE);
-	memset(pluto_vendorid + 3 + MD5_DIGEST_SIZE, '\0',
-	       PLUTO_VENDORID_SIZE - 3 - MD5_DIGEST_SIZE);
-#endif
-
-	/* Make it printable!  Hahaha - MCR */
-	for (i = 3; i < PLUTO_VENDORID_SIZE; i++) {
-		/* Reset bit 7, force bit 6.  Puts it into 64-127 range */
-		pluto_vendorid[i] &= 0x7f;
-		pluto_vendorid[i] |= 0x40;
-	}
-	pluto_vendorid[PLUTO_VENDORID_SIZE] = '\0';
-	pluto_vendorid_built = TRUE;
-
-	return pluto_vendorid;
-}
 
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
@@ -256,21 +197,6 @@ bool ship_nonce(chunk_t *n, struct pluto_crypto_req *r,
 	return justship_nonce(n, outs, np, name);
 }
 
-notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
-			    const char *name, enum next_payload_types paynum)
-{
-	pb_stream *nonce_pbs = &md->chain[paynum]->pbs;
-	size_t len = pbs_left(nonce_pbs);
-
-	if (len < MINIMUM_NONCE_SIZE || MAXIMUM_NONCE_SIZE < len) {
-		loglog(RC_LOG_SERIOUS, "%s length not between %d and %d",
-		       name, MINIMUM_NONCE_SIZE, MAXIMUM_NONCE_SIZE);
-		return PAYLOAD_MALFORMED; /* ??? */
-	}
-	clonereplacechunk(*dest, nonce_pbs->cur, len, "nonce");
-	return NOTHING_WRONG;
-}
-
 /** The whole message must be a multiple of 4 octets.
  * I'm not sure where this is spelled out, but look at
  * rfc2408 3.6 Transform Payload.
@@ -278,12 +204,25 @@ notification_t accept_nonce(struct msg_digest *md, chunk_t *dest,
  *
  * @param pbs PB Stream
  */
-void close_message(pb_stream *pbs)
+void close_message(pb_stream *pbs, struct state *st)
 {
 	size_t padding =  pad_up(pbs_offset(pbs), 4);
 
-	if (padding != 0)
+	/* Workaround for overzealous Checkpoint firewal */
+	if (padding && st && st->st_connection &&
+	    (st->st_connection->policy & POLICY_NO_IKEPAD)) {
+		DBG(DBG_CONTROLMORE, DBG_log("IKE message padding of %lu bytes skipped by policy",
+			padding));
+		padding = 0;
+	}
+
+	if (padding != 0) {
+		DBG(DBG_CONTROLMORE, DBG_log("padding IKE message with %lu bytes", padding));
 		(void) out_zero(padding, pbs, "message padding");
+	} else {
+		DBG(DBG_CONTROLMORE, DBG_log("no IKE message padding required"));
+	}
+
 	close_output_pbs(pbs);
 }
 
@@ -291,20 +230,16 @@ static initiator_function *pick_initiator(struct connection *c UNUSED,
 					  lset_t policy)
 {
 	if ((policy & POLICY_IKEV1_DISABLE) == 0 &&
-	    (c->failed_ikev2 || (policy & POLICY_IKEV2_PROPOSE) == 0)) {
+	    (c->failed_ikev2 || ((policy & POLICY_IKEV2_PROPOSE) == 0))) {
+	    
 		if (policy & POLICY_AGGRESSIVE) {
-#if defined(AGGRESSIVE)
 			return aggr_outI1;
-
-#else
-			return aggr_not_present;
-
-#endif
 		} else {
 			return main_outI1;
 		}
 
-	} else if (policy & POLICY_IKEV2_PROPOSE) {
+	} else if ((policy & POLICY_IKEV2_PROPOSE) ||
+		   (c->policy & (POLICY_IKEV1_DISABLE | POLICY_IKEV2_PROPOSE)))	{
 		return ikev2parent_outI1;
 
 	} else {
@@ -445,6 +380,10 @@ void ipsecdoi_replace(struct state *st,
 			    ENCAPSULATION_MODE_TUNNEL)
 				policy |= POLICY_TUNNEL;
 		}
+		/* retain policy so child sa rekey attempt does not blow up */
+		if (st->st_state == STATE_PARENT_I3)
+			policy = st->st_connection->policy;
+
 		passert(HAS_IPSEC_POLICY(policy));
 		ipsecdoi_initiate(whack_sock, st->st_connection, policy, try,
 				  st->st_serialno, st->st_import
@@ -574,7 +513,6 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * Besides, there is no good reason for allowing these to be
 	 * other than 0 in Phase 1.
 	 */
-#ifdef NAT_TRAVERSAL
 	if ((st->hidden_variables.st_nat_traversal &
 	     NAT_T_WITH_PORT_FLOATING) &&
 	    (id->isaid_doi_specific_a == IPPROTO_UDP) &&
@@ -584,7 +522,7 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
 	} else
-#endif
+
 	if (!(id->isaid_doi_specific_a == 0 && id->isaid_doi_specific_b ==
 	      0) &&
 	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
@@ -630,7 +568,8 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	 * - if opportunistic, we'll lose our HOLD info
 	 */
 	if (initiator) {
-		if (!same_id(&st->st_connection->spd.that.id, &peer)) {
+		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
+		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
@@ -641,15 +580,25 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			       "we require peer to have ID '%s', but peer declares '%s'",
 			       expect, found);
 			return FALSE;
+		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
+			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+				loglog(RC_LOG_SERIOUS,
+				       "peer ID is not a certificate type");
+				return FALSE;
+			}
+			if (!duplicate_id(&st->st_connection->spd.that.id, &peer)) {
+				loglog(RC_LOG_SERIOUS, "failed to copy ID");
+				return FALSE;
+			}
 		}
 	} else {
 		struct connection *c = st->st_connection;
 		struct connection *r;
-
+		bool fc = 0;
 		/* check for certificate requests */
 		decode_cr(md, &c->requested_ca);
 
-		r = refine_host_connection(st, &peer, initiator, aggrmode);
+		r = refine_host_connection(st, &peer, initiator, aggrmode, &fc);
 
 		/* delete the collected certificate requests */
 		free_generalNames(c->requested_ca, TRUE);
@@ -698,6 +647,12 @@ bool decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			c->spd.that.id = peer;
 			c->spd.that.has_id_wildcards = FALSE;
 			unshare_id_content(&c->spd.that.id);
+		} else if (fc) {
+			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
+			if (!duplicate_id(&r->spd.that.id, &peer)) {
+				loglog(RC_LOG_SERIOUS, "failed to copy ID");
+				return FALSE;
+			}
 		}
 	}
 
@@ -727,6 +682,7 @@ void initialize_new_state(struct state *st,
 	for (sr = &c->spd; sr != NULL; sr = sr->next) {
 		if (sr->this.xauth_client) {
 			if (sr->this.xauth_name) {
+				/* ??? is this strncpy correct? */
 				strncpy(st->st_xauth_username,
 					sr->this.xauth_name,
 					sizeof(st->st_xauth_username));
@@ -825,7 +781,7 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 
 	/* advance b to end of string */
 	b = b + strlen(b);
-#ifdef NAT_TRAVERSAL
+
 	{
 		char oa[ADDRTOT_BUF];
 
@@ -859,7 +815,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		ini = " ";
 		fin = "}";
 	}
-#endif
 
 	/* advance b to end of string */
 	b = b + strlen(b);
@@ -873,7 +828,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 	ini = " ";
 	fin = "}";
 
-#ifdef XAUTH
 	if (st->st_xauth_username && st->st_xauth_username[0] != '\0') {
 		b = b + strlen(b);
 		snprintf(b, sad_len - (b - sadetails) - 1,
@@ -886,7 +840,6 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, int sad_len)
 		fin = "}";
 
 	}
-#endif
 
 	strcat(b, fin);
 }

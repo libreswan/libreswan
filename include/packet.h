@@ -118,8 +118,6 @@ extern void close_output_pbs(pb_stream *pbs);
 
 #ifdef DEBUG
 #define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
-extern void DBG_print_struct(const char *label, const void *struct_ptr,
-			     struct_desc *sd, bool len_meaningful);
 #else
 #define DBG_dump_pbs(pbs) do {} while (0)
 #endif
@@ -728,7 +726,8 @@ struct ikev2_sa {
 extern struct_desc ikev2_sa_desc;
 
 struct ikev2_prop {
-	u_int8_t isap_np;               /* Next payload */
+	u_int8_t isap_lp;               /* Last proposal or not */
+	                                /* Matches IKEv1 ISAKMP_NEXT_P by design */
 	u_int8_t isap_critical;
 	u_int16_t isap_length;          /* Payload length */
 	u_int8_t isap_propnum;
@@ -741,7 +740,8 @@ extern struct_desc ikev2_prop_desc;
 
 /* rfc4306, section 3.3.2 */
 struct ikev2_trans {
-	u_int8_t isat_np;               /* Next payload */
+	u_int8_t isat_lt;               /* Last transform or not */
+					/* Matches IKEv1 ISAKMP_NEXT_T by design */
 	u_int8_t isat_critical;
 	u_int16_t isat_length;          /* Payload length */
 	u_int8_t isat_type;             /* transform type */
@@ -866,7 +866,7 @@ extern struct_desc ikev2_vendor_id_desc;
 
 /* rfc4306, section 3.13 */
 struct ikev2_ts {
-	u_int8_t isat_np;       /* Next payload */
+	u_int8_t isat_lt;       /* Last Transform */
 	u_int8_t isat_critical;
 	u_int16_t isat_length;  /* Payload length */
 	u_int8_t isat_num;      /* number of TSs */
@@ -900,7 +900,7 @@ union payload {
 	struct isakmp_notification notification;
 	struct isakmp_delete delete;
 	struct isakmp_nat_oa nat_oa;
-	struct isakmp_mode_attr attribute;
+	struct isakmp_mode_attr mode_attribute;
 	struct ikev2_generic v2gen;
 	struct ikev2_ke v2ke;
 	struct ikev2_trans v2trans;

@@ -1,0 +1,23 @@
+  <varlistentry>
+  <term><emphasis remap='B'>reqid</emphasis></term>
+  <listitem>
+<para>
+a unique identifier used to match IPsec SA's using iptables with
+NETKEY/XFRM. This identifier is normally automatically allocated in groups
+of 4. It is exported to the _updown script as REQID. On Linux, reqids are
+supported with IP Connection Tracking and NAT (iptables). Automaticly
+generated values use the range 16380 and higher. Manually specified
+reqid values therefor must be between 1 and 16379.
+</para>
+<para>
+Automatically generated reqids use a range of 0-3 (eg 16380-16383 for the
+first reqid). These are used depending on the exact policy (AH, AH+ESP,
+IPCOMP, etc). Manually assigned reqids are all identical. Instantiations
+of connections (those using %any wildcards) will all use the same reqid.
+</para>
+<para>
+For KLIPS, when using the MAST variant, a different mechanism called
+SAref is in use. See overlapip and sareftrack.
+</para>
+</listitem>
+  </varlistentry>

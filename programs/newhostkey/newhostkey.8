@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: IPSEC_RANBITS
 .\"    Author: Paul Wouters
-.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 12/16/2012
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 09/06/2013
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_RANBITS" "8" "12/16/2012" "libreswan" "Executable programs"
+.TH "IPSEC_RANBITS" "8" "09/06/2013" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 ipsec_newhostkey \- generate a new raw RSA authentication key for a host
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fInewhostkey\fR [[\-\-configdira\fInssdbdir\fR] | [\-\-password\ \fIpassword\fR]] [[\-\-quiet] | [\-\-verbose]] [\-\-bits\ \fIbits\fR] [\-\-hostname\ \fIhostname\fR] \-\-output\ \fIfilename\fR
+\fBipsec\fR \fInewhostkey\fR [[\-\-configdir\fInssdbdir\fR] | [\-\-password\ \fIpassword\fR]] [[\-\-quiet] | [\-\-verbose]] [\-\-bits\ \fIbits\fR] [\-\-random\ \fIdevice\fR] [\-\-hostname\ \fIhostname\fR] [\-\-output\ \fIfilename\fR]
 .SH "DESCRIPTION"
 .PP
 \fInewhostkey\fR
@@ -57,17 +57,23 @@ option suppresses both the
 \fIrsasigkey\fR
 narrative and the existing\-file warning message\&.
 .PP
-When compiled with NSS support,
+When compiled with NSS support (the default),
 \fB\-\-configdir\fR
 specifies the nss configuration directory where the certificate key, and modsec databases reside\&. There is no default value, though /etc/ipsec\&.d might be sensible choice\&.
 .PP
-When compiled with NSS support,
+When compiled with NSS support (the default),
 \fB\-\-password\fR
 specifies a module authentication password that may be required if FIPS mode is enabled
 .PP
 The
 \fB\-\-bits\fR
-option specifies the number of bits in the key; the current default is 2192 and we do not recommend use of anything shorter unless unusual constraints demand it\&.
+option specifies the number of bits in the RSA key; the current default is a random (multiple of 16) value between 3072 and 4096\&. The minimum allowed is 2172\&.
+.PP
+The
+\fB\-\-random\fR
+is used to specify the random device (default
+/dev/random
+used to seed the crypto library RNG\&.
 .PP
 The
 \fB\-\-hostname\fR
@@ -96,19 +102,15 @@ file\&.
 \fBipsec.secrets\fR(5)
 .SH "HISTORY"
 .PP
-Written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Henry Spencer\&.
+Originally written for the Linux FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]> by Henry Spencer\&. Updated by Paul Wouters
 .SH "BUGS"
 .PP
 As with
 \fIrsasigkey\fR, the run time is difficult to predict, since depletion of the system\(^as randomness pool can cause arbitrarily long waits for random bits, and the prime\-number searches can also take unpre dictable (and potentially large) amounts of CPU time\&. See
 \fBipsec_rsasigkey\fR(8)
-for some typical performance numbers\&.
+\&.
 .PP
 A higher\-level tool which could handle the clerical details of changing to a new key would be helpful\&.
-.PP
-The requirement for
-\fB\-\-output\fR
-is a blemish, but private keys are extremely sensitive information and unusual precautions seem justified\&.
 .SH "AUTHOR"
 .PP
 \fBPaul Wouters\fR

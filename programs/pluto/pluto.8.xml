@@ -223,13 +223,12 @@
 
       <arg choice="opt">--modecfgclient</arg>
 
-      <arg choice="opt">--modecfgdns1</arg>
+      <arg choice="opt">--modecfgdns1 <replaceable>ip-address</replaceable></arg>
 
-      <arg choice="opt">--modecfgdns2</arg>
+      <arg choice="opt">--modecfgdns2 <replaceable>ip-address</replaceable></arg>
 
-      <arg choice="opt">--modecfgwins1</arg>
-
-      <arg choice="opt">--modecfgwins2</arg>
+      <arg choice="opt">--modecfgdomain <replaceable>DNS-domain</replaceable></arg>
+      <arg choice="opt">--modecfgbanner <replaceable>login-banner</replaceable></arg>
 
       <arg choice="opt">--dnskeyondemand</arg>
 
@@ -296,9 +295,7 @@
 
       <arg choice="opt">--modecfgdns2 <replaceable>ip-address</replaceable></arg>
 
-      <arg choice="opt">--modecfgwins1 <replaceable>ip-address</replaceable></arg>
-
-      <arg choice="opt">--modecfgwins2 <replaceable>ip-address</replaceable></arg>
+      <arg choice="opt">--modecfgdomain <replaceable>DNS-domain</replaceable></arg>
 
       <arg choice="opt">--dnskeyondemand</arg>
 
@@ -1864,7 +1861,9 @@
             and SA with both be cleared. Clear is really only useful on the
             server of a Road Warrior config. The action <emphasis
             remap="B">restart</emphasis> is used on tunnels that need to be
-            permanently up, and have static IP addresses.</para>
+            permanently up, and have static IP addresses. The action <emphasis
+            remap="B">restart_by_peer</emphasis>has been obsoleted and its
+            functionality has been moved into the restart action.</para>
           </listitem>
         </varlistentry>
 

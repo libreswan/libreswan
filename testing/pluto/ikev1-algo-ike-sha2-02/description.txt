@@ -1,0 +1,5 @@
+Basic pluto test:
+
+"westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24
+
+This is testing IKEv1 with SHA2 using "sha2" instead of "sha2_256"

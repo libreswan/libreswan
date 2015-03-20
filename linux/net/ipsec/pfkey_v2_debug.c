@@ -78,7 +78,6 @@ static char *pfkey_sadb_ext_strings[] = {
 	"X-source-mask",                /* K_SADB_X_EXT_ADDRESS_SRC_MASK   23 */
 	"X-dest-mask",                  /* K_SADB_X_EXT_ADDRESS_DST_MASK   24 */
 	"X-set-debug",                  /* K_SADB_X_EXT_DEBUG              25 */
-	/* NAT_TRAVERSAL */
 	"X-ext-protocol",               /* K_SADB_X_EXT_PROTOCOL           26 */
 	"X-NAT-T-type",                 /* K_SADB_X_EXT_NAT_T_TYPE         27 */
 	"X-NAT-T-sport",                /* K_SADB_X_EXT_NAT_T_SPORT        28 */

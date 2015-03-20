@@ -11,7 +11,7 @@ name argument is also present:
 <para>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <emphasis remap='I'>username:password:conname</emphasis></para>
 <para>For supported password hashing methods, see <citerefentry><refentrytitle>crypt</refentrytitle>
 <manvolnum>3</manvolnum></citerefentry>. If pluto is running in FIPS mode, some hash methods,
-such as MD5, might not be available. The pam option is only available if compiled with USE_XAUTHPAM. Threads are used
+such as MD5, might not be available. Threads are used
 to launch an xauth authentication helper for file as well as pam methods.
 </para>
 <para>The <emphasis remap='I'>alwaysok</emphasis> should only be used if the XAUTH user authentication is not really

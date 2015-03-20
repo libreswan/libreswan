@@ -1,6 +1,4 @@
 #define LEAK_DETECTIVE
-#define AGGRESSIVE 1
-#define XAUTH 1
 #define PRINT_SA_DEBUG 1
 #include "../../programs/pluto/spdb.c"
 
@@ -15,13 +13,14 @@ static struct db_attr otempty[] = {
 };
 
 static struct db_trans oakley_trans_empty[] = {
-	{ KEY_IKE, AD(otempty) },
+	{ AD_TR(KEY_IKE, otempty) },
 };
 
 static struct db_prop oakley_pc_empty[] =
-{ { PROTO_ISAKMP, AD(oakley_trans_empty) } };
+{ { AD_PR(PROTO_ISAKMP, oakley_trans_empty) } };
 
-static struct db_prop_conj oakley_props_empty[] = { { AD(oakley_pc_empty) } };
+static struct db_prop_conj oakley_props_empty[] =
+{ { AD_PC(oakley_pc_empty) } };
 
 struct db_sa oakley_empty = { AD_SAp(oakley_props_empty) };
 
