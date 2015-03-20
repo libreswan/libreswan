@@ -38,11 +38,11 @@ git archive --format=tgz --prefix=libreswan-$version/ HEAD > release/libreswan-$
 	cd release 
 	tar zxf libreswan-$version.tar.gz
 	cd libreswan-$version
-	echo "IPSECBASEVERSION?=$version" > Makefile.ver
+	echo "3.0?=$version" > Makefile.ver
 	sed -i "s/(unreleased)/(`C= LOCALE= LANG= date +"%B %d, %Y"`)/" CHANGES
-	for file in debian/NEWS debian/changelog `find packaging -type f | xargs grep IPSECBASEVERSION |sed "s/:.*$//"`
+	for file in debian/NEWS debian/changelog `find packaging -type f | xargs grep 3.0 |sed "s/:.*$//"`
 	do
-		sed -i "s/IPSECBASEVERSION/$version/" $file
+		sed -i "s/3.0/$version/" $file
 	done
 	cd .. 
 	tar zcf libreswan-$version.tar.gz libreswan-$version
