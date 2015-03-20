@@ -23,7 +23,7 @@ LIBRESWANSRCDIR=`cd ${LIBRESWANSRCDIR}; pwd`
 export LIBRESWANSRCDIR
 
 FIXUPDIR=`cd ${LIBRESWANSRCDIR}/testing/scripts/fixups && pwd`
-FIXUPDIR2=`cd ${LIBRESWANSRCDIR}/testing/klips/fixups && pwd`
+FIXUPDIR2=`cd ${LIBRESWANSRCDIR}/testing/sanitizers && pwd`
 TESTINGROOT=${LIBRESWANSRCDIR}/testing
 UTILS=`cd ${TESTINGROOT}/utils && pwd`
 

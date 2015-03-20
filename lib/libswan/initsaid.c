@@ -17,7 +17,7 @@
 #include "libreswan.h"
 
 /*
-   - initsaid - initialize SA ID from bits
+ * initsaid - initialize SA ID from bits
  */
 void initsaid(addr, spi, proto, dst)
 const ip_address * addr;

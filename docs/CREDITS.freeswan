@@ -10,11 +10,15 @@ Peter Onion has collaborated extensively with RGB on PFKEY2 stuff.  The
 original version of our IPComp code came from Svenning Soerensen, who has
 also contributed various bug fixes and improvements. 
 
+Kai Martius (admin@imib.med.tu-dresden.de) contributed the initial
+version of the code supporting PFS.
+
 The first versions of KLIPS were done by John Ioannidis <ji@hol.gr>.  The
 first versions of Pluto (and further work on KLIPS) were done by Angelos
 D. Keromytis <angelos@dsl.cis.upenn.edu>.
 
-
+Richard Guy Briggs (rgb@conscoop.ottawa.on.ca) and Peter Onion
+(ponion@srd.bt.co.uk) added the PFKEY2 support.
 
 The MD5 implementation is from RSADSI, so this package must include the
 following phrase:  "derived from the RSA Data Security, Inc. MD5

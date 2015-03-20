@@ -131,9 +131,11 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
+#include "ikev1_msgid.h"
 #include "packet.h"
 #include "md5.h"
 #include "sha1.h"
@@ -152,8 +154,7 @@
 
 #include "nat_traversal.h"
 #include "vendor.h"
-#include "dpd.h"
-#include "udpfromto.h"
+#include "ikev1_dpd.h"
 #include "hostpair.h"
 
 #ifdef HAVE_NM
@@ -190,11 +191,10 @@ struct state_microcode {
 #define SMF_ALL_AUTH    LRANGE(0, OAKLEY_AUTH_ROOF - 1)
 #define SMF_PSK_AUTH    LELEM(OAKLEY_PRESHARED_KEY)
 #define SMF_DS_AUTH     (LELEM(OAKLEY_DSS_SIG) | LELEM(OAKLEY_RSA_SIG))
-#define SMF_PKE_AUTH    (LELEM(OAKLEY_RSA_ENC) | LELEM(OAKLEY_ELGAMAL_ENC))
-#define SMF_RPKE_AUTH   (LELEM(OAKLEY_RSA_ENC_REV) | \
-			 LELEM(OAKLEY_ELGAMAL_ENC_REV))
-/* misc flags */
+#define SMF_PKE_AUTH    LELEM(OAKLEY_RSA_ENC)
+#define SMF_RPKE_AUTH   LELEM(OAKLEY_RSA_REVISED_MODE)
 
+/* misc flags */
 #define SMF_INITIATOR   LELEM(OAKLEY_AUTH_ROOF + 0)
 #define SMF_FIRST_ENCRYPTED_INPUT       LELEM(OAKLEY_AUTH_ROOF + 1)
 #define SMF_INPUT_ENCRYPTED     LELEM(OAKLEY_AUTH_ROOF + 2)
@@ -249,7 +249,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R0, STATE_MAIN_R1,
 	  SMF_ALL_AUTH | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE),
-	  EVENT_RETRANSMIT, main_inI1_outR1 },
+	  EVENT_v1_RETRANSMIT, main_inI1_outR1 },
 
 	/* STATE_MAIN_I1: R1 --> I2
 	 * HDR, SA --> auth dependent
@@ -264,7 +264,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_I1, STATE_MAIN_I2,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_REPLY,
 	  P(SA), P(VID) | P(CR), PT(NONE), /* don't know yet */
-	  EVENT_RETRANSMIT, main_inR1_outI2 },
+	  EVENT_v1_RETRANSMIT, main_inR1_outI2 },
 
 	/* STATE_MAIN_R1: I2 --> R2
 	 * SMF_PSK_AUTH, SMF_DS_AUTH: HDR, KE, Ni --> HDR, KE, Nr
@@ -277,18 +277,18 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_MAIN_R1, STATE_MAIN_R2,
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_REPLY
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(NONE)
-	  , EVENT_RETRANSMIT, main_inI2_outR2 },
+	  , EVENT_v1_RETRANSMIT, main_inI2_outR2 },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_REPLY,
 	  P(KE) | P(ID) | P(NONCE), P(VID) | P(CR) | P(HASH), PT(KE),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	{ STATE_MAIN_R1, STATE_UNDEFINED,
 	  SMF_RPKE_AUTH | SMF_REPLY,
 	  P(NONCE) | P(KE) | P(ID), P(VID) | P(CR) | P(HASH) | P(CERT), PT(
 		  NONCE),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	/* for states from here on, output message must be encrypted */
 
@@ -304,17 +304,17 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	  SMF_PSK_AUTH | SMF_DS_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED |
 	  SMF_REPLY
 	  , P(KE) | P(NONCE), P(VID) | P(CR) | P(NATD_RFC), PT(ID)
-	  , EVENT_RETRANSMIT, main_inR2_outI3 },
+	  , EVENT_v1_RETRANSMIT, main_inR2_outI3 },
 
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
 	  SMF_PKE_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
 	  P(KE) | P(ID) | P(NONCE), P(VID) | P(CR), PT(HASH),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	{ STATE_MAIN_I2, STATE_UNDEFINED,
 	  SMF_ALL_AUTH | SMF_INITIATOR | SMF_OUTPUT_ENCRYPTED | SMF_REPLY,
 	  P(NONCE) | P(KE) | P(ID), P(VID) | P(CR), PT(HASH),
-	  EVENT_RETRANSMIT, unexpected /* ??? not yet implemented */ },
+	  EVENT_v1_RETRANSMIT, unexpected /* ??? not yet implemented */ },
 
 	/* for states from here on, input message must be encrypted */
 
@@ -390,12 +390,12 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_PSK_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_RETRANSMIT, aggr_inI1_outR1_psk },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_psk },
 
 	{ STATE_AGGR_R0, STATE_AGGR_R1,
 	  SMF_DS_AUTH | SMF_REPLY,
 	  P(SA) | P(KE) | P(NONCE) | P(ID), P(VID) | P(NATD_RFC), PT(NONE),
-	  EVENT_RETRANSMIT, aggr_inI1_outR1_rsasig },
+	  EVENT_v1_RETRANSMIT, aggr_inI1_outR1_rsasig },
 
 	/* STATE_AGGR_I1:
 	 * SMF_PSK_AUTH: HDR, SA, KE, Nr, IDir, HASH_R
@@ -462,7 +462,7 @@ static const struct state_microcode v1_state_microcode_table[] = {
 	  SMF_ALL_AUTH | SMF_ENCRYPTED | SMF_REPLY
 	  , P(HASH) | P(SA) | P(NONCE), /* P(SA) | */ P(KE) | P(ID) | P(
 		  NATOA_RFC), PT(NONE)
-	  , EVENT_RETRANSMIT, quick_inI1_outR1 },
+	  , EVENT_v1_RETRANSMIT, quick_inI1_outR1 },
 
 	/* STATE_QUICK_I1:
 	 * HDR*, HASH(2), SA, Nr [, KE ] [, IDci, IDcr ] -->
@@ -658,7 +658,7 @@ static stf_status informational(struct msg_digest *md)
 			return dpd_inR(st, n, n_pbs);
 
 		case PAYLOAD_MALFORMED:
-			if (st) {
+			if (st != NULL) {
 				st->hidden_variables.st_malformed_received++;
 
 				libreswan_log(
@@ -681,7 +681,7 @@ static stf_status informational(struct msg_digest *md)
 			return STF_IGNORE;
 
 		case ISAKMP_N_CISCO_LOAD_BALANCE:
-			if (st && IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+			if (st != NULL && IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
 				char *tmp_name;
 				int tmp_whack_sock;
 				struct connection *tmp_c;
@@ -992,7 +992,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 	case ISAKMP_XCHG_AGGR:
 	case ISAKMP_XCHG_IDPROT: /* part of a Main Mode exchange */
-		if (md->hdr.isa_msgid != MAINMODE_MSGID) {
+		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
 			libreswan_log(
 				"Message ID was 0x%08lx but should be zero in phase 1",
 				(unsigned long) md->hdr.isa_msgid);
@@ -1071,8 +1071,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		break;
 
 	case ISAKMP_XCHG_INFO:  /* an informational exchange */
-		st = find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
-				     &md->sender, MAINMODE_MSGID);
+		st = ikev1_find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
+				     &md->sender, v1_MAINMODE_MSGID);
 
 		if (st == NULL) {
 			/*
@@ -1080,7 +1080,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * message, in which case, we don't know the rcookie yet.
 			 */
 			st = find_state_ikev1(md->hdr.isa_icookie, zero_cookie,
-					      MAINMODE_MSGID);
+					      v1_MAINMODE_MSGID);
 		}
 
 		if (st != NULL)
@@ -1112,7 +1112,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-			if (md->hdr.isa_msgid == MAINMODE_MSGID) {
+			if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
 				loglog(RC_LOG_SERIOUS, "Informational Exchange message is invalid because"
 				       " it has a Message ID of 0");
 				/* XXX Could send notification back */
@@ -1159,7 +1159,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		if (md->hdr.isa_msgid == MAINMODE_MSGID) {
+		if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
 			libreswan_log("Quick Mode message is invalid because"
 				      " it has a Message ID of 0");
 			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
@@ -1197,7 +1197,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 */
 			st = find_state_ikev1(md->hdr.isa_icookie,
 					      md->hdr.isa_rcookie,
-					      MAINMODE_MSGID);
+					      v1_MAINMODE_MSGID);
 
 			if (st == NULL) {
 				libreswan_log("Quick Mode message is for a non-existent (expired?)"
@@ -1212,9 +1212,11 @@ void process_v1_packet(struct msg_digest **mdp)
 				return;
 			}
 
-			if (st->st_state ==
-			    STATE_MODE_CFG_R2)                          /* Have we just given an IP address to peer? */
-				change_state(st, STATE_MAIN_R3);        /* ISAKMP is up... */
+			/* Have we just given an IP address to peer? */
+			if (st->st_state == STATE_MODE_CFG_R2) {
+				/* ISAKMP is up... */
+				change_state(st, STATE_MAIN_R3);
+			}
 
 #ifdef SOFTREMOTE_CLIENT_WORKAROUND
 			/* See: http://popoludnica.pl/?id=10100110 */
@@ -1285,7 +1287,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			return;
 		}
 
-		st = find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
+		st = ikev1_find_info_state(md->hdr.isa_icookie, md->hdr.isa_rcookie,
 				     &md->sender, md->hdr.isa_msgid);
 
 		if (st == NULL) {
@@ -1297,7 +1299,7 @@ void process_v1_packet(struct msg_digest **mdp)
 			 * See if we have a Main Mode state.
 			 * ??? what if this is a duplicate of another message?
 			 */
-			st = find_info_state(md->hdr.isa_icookie,
+			st = ikev1_find_info_state(md->hdr.isa_icookie,
 					     md->hdr.isa_rcookie,
 					     &md->sender, 0);
 
@@ -1312,7 +1314,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			DBG(DBG_CONTROLMORE, DBG_log(" processing received "
 						     "isakmp_xchg_type %s.",
-						     enum_show(&exchange_names_ikev1,
+						     enum_show(&ikev1_exchange_names,
 							       md->hdr.isa_xchg)));
 			DBG(DBG_CONTROLMORE, DBG_log(" this is a%s%s%s%s",
 						     st->st_connection->spd.
@@ -1420,7 +1422,7 @@ void process_v1_packet(struct msg_digest **mdp)
 					    "isakmp_xchg_type %s.",
 					    __func__,
 					    __LINE__,
-					    enum_show(&exchange_names_ikev1,
+					    enum_show(&ikev1_exchange_names,
 						      md->hdr.isa_xchg)));
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("this is a%s%s%s%s in state %s. "
@@ -1447,7 +1449,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				   libreswan_log("in state %s isakmp_xchg_types %s not supported."
 				   "reply UNSUPPORTED_EXCHANGE_TYPE"
 				   , enum_name(&state_names, st->st_state)
-				   , enum_show(&exchange_names_ikev1, md->hdr.isa_xchg));
+				   , enum_show(&ikev1_exchange_names, md->hdr.isa_xchg));
 				   SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 				 */
 				return;
@@ -1470,7 +1472,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	case ISAKMP_XCHG_NGRP:
 	default:
 		libreswan_log("unsupported exchange type %s in message",
-			      enum_show(&exchange_names_ikev1, md->hdr.isa_xchg));
+			      enum_show(&ikev1_exchange_names, md->hdr.isa_xchg));
 		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
@@ -1526,13 +1528,9 @@ void process_v1_packet(struct msg_digest **mdp)
 		    DBG_log("received IKE fragment id '%d', number '%u'%s",
 			    fraghdr.isafrag_id,
 			    fraghdr.isafrag_number,
-			    (fraghdr.isafrag_flags ==
-			     1) ? "(last)" : ""));
+			    (fraghdr.isafrag_flags == 1) ? "(last)" : ""));
 
 		ike_frag = alloc_thing(struct ike_frag, "ike_frag");
-		if (ike_frag == NULL)
-			return;
-
 		ike_frag->md = md;
 		ike_frag->index = fraghdr.isafrag_number;
 		ike_frag->last = (fraghdr.isafrag_flags & 1);
@@ -1544,8 +1542,8 @@ void process_v1_packet(struct msg_digest **mdp)
 		/* Strip non-ESP marker from first fragment */
 		if (md->iface->ike_float && ike_frag->index == 1 &&
 		    (ike_frag->size >= NON_ESP_MARKER_SIZE &&
-		     memcmp(non_ESP_marker, ike_frag->data,
-			    NON_ESP_MARKER_SIZE) == 0)) {
+		     memeq(non_ESP_marker, ike_frag->data,
+			    NON_ESP_MARKER_SIZE))) {
 			ike_frag->data += NON_ESP_MARKER_SIZE;
 			ike_frag->size -= NON_ESP_MARKER_SIZE;
 		}
@@ -1553,7 +1551,7 @@ void process_v1_packet(struct msg_digest **mdp)
 
 		/* Add the fragment to the state */
 		i = &st->ike_frags;
-		while (1) {
+		for (;;) {
 			if (ike_frag) {
 				/* Still looking for a place to insert ike_frag */
 				if (*i == NULL || (*i)->index >
@@ -1564,6 +1562,7 @@ void process_v1_packet(struct msg_digest **mdp)
 				} else if ((*i)->index == ike_frag->index) {
 					/* Replace fragment with same index */
 					struct ike_frag *old = *i;
+
 					ike_frag->next = old->next;
 					*i = ike_frag;
 					release_md(old->md);
@@ -1574,14 +1573,15 @@ void process_v1_packet(struct msg_digest **mdp)
 
 			if (*i == NULL)
 				break;
-			else if ((*i)->last)
+
+			if ((*i)->last)
 				last_frag_index = (*i)->index;
 
 			i = &(*i)->next;
 		}
 
 		/* We have the last fragment, reassemble if complete */
-		if (last_frag_index) {
+		if (last_frag_index != 0) {
 			size_t size = 0;
 			int prev_index = 0;
 			struct ike_frag *frag;
@@ -1603,8 +1603,9 @@ void process_v1_packet(struct msg_digest **mdp)
 
 					/* Reassemble fragments in buffer */
 					frag = st->ike_frags;
-					while (frag && frag->index <=
-					       last_frag_index) {
+					while (frag &&
+					       frag->index <= last_frag_index)
+					{
 						passert(offset + frag->size <=
 							size);
 						memcpy(buffer + offset,
@@ -1617,8 +1618,7 @@ void process_v1_packet(struct msg_digest **mdp)
 						 "packet");
 
 					process_packet(&whole_md);
-					if (whole_md != NULL)
-						release_md(whole_md);
+					release_any_md(&whole_md);
 					release_fragments(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */
 					st->st_seen_fragments = TRUE;
@@ -1687,8 +1687,8 @@ void process_v1_packet(struct msg_digest **mdp)
 	if (st != NULL &&
 	    st->st_rpacket.ptr != NULL &&
 	    st->st_rpacket.len == pbs_room(&md->packet_pbs) &&
-	    memcmp(st->st_rpacket.ptr, md->packet_pbs.start,
-		   st->st_rpacket.len) == 0) {
+	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
+		   st->st_rpacket.len)) {
 		if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE) {
 			if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS) {
 				st->st_retransmit++;
@@ -1736,11 +1736,11 @@ void process_v1_packet(struct msg_digest **mdp)
 		/* if there was a previous packet, let it go, and go with most
 		 * recent one.
 		 */
-		if (st->st_suspended_md) {
+		if (st->st_suspended_md != NULL) {
 			DBG(DBG_CONTROL,
 			    DBG_log("releasing suspended operation before completion: %p",
 				    st->st_suspended_md));
-			release_md(st->st_suspended_md);
+			release_any_md(&st->st_suspended_md);
 		}
 
 		set_suspended(st, md);
@@ -1770,7 +1770,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
 			return;
 		}
-		if (st->st_skey_ei.ptr == (u_char *) NULL) {
+		if (st->st_skey_ei_nss == NULL) {
 			loglog(RC_LOG_SERIOUS, "discarding encrypted message"
 			       " because we haven't yet negotiated keying material");
 			SEND_NOTIFICATION(INVALID_FLAGS);
@@ -1804,8 +1804,8 @@ void process_packet_tail(struct msg_digest **mdp)
 		{
 			const struct encrypt_desc *e = st->st_oakley.encrypter;
 
-			if (pbs_left(&md->message_pbs) % e->enc_blocksize !=
-			    0) {
+			if (pbs_left(&md->message_pbs) % e->enc_blocksize != 0)
+			{
 				loglog(RC_LOG_SERIOUS,
 				       "malformed message: not a multiple of encryption blocksize");
 				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
@@ -1824,10 +1824,7 @@ void process_packet_tail(struct msg_digest **mdp)
 					init_phase2_iv(st, &md->hdr.isa_msgid);
 				} else {
 					/* use old IV */
-					passert(st->st_iv_len <=
-						sizeof(st->st_new_iv));
-					st->st_new_iv_len = st->st_iv_len;
-					init_new_iv(st);
+					restore_new_iv(st, st->st_iv, st->st_iv_len);
 				}
 			}
 
@@ -1860,7 +1857,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	 */
 	{
 		struct payload_digest *pd = md->digest;
-		volatile int np = md->hdr.isa_np;
+		enum next_payload_types_ikev1 np = md->hdr.isa_np;
 		lset_t needed = smc->req_payloads;
 		const char *excuse =
 			LIN(SMF_PSK_AUTH | SMF_FIRST_ENCRYPTED_INPUT,
@@ -1885,21 +1882,25 @@ void process_packet_tail(struct msg_digest **mdp)
 			 * is no negotiation of NAT-T method. Get it right.
 			 */
 			if (st != NULL && st->st_connection != NULL &&
-			    (st->st_connection->policy & POLICY_AGGRESSIVE) ==
-			    0) {
+			    (st->st_connection->policy & POLICY_AGGRESSIVE) == LEMPTY)
+			{
 				switch (np) {
 				case ISAKMP_NEXT_NATD_RFC:
 				case ISAKMP_NEXT_NATOA_RFC:
 					if (st == NULL ||
-					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
+					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
 						/*
 						 * don't accept NAT-D/NAT-OA reloc directly in message,
 						 * unless we're using NAT-T RFC
 						 */
-						DBG_log("st_nat_traversal was: %u\n",
-							st->hidden_variables.st_nat_traversal);
+						DBG(DBG_NATT,
+						    DBG_log("st_nat_traversal was: %s",
+							    bitnamesof(natt_bit_names, 
+								       st->hidden_variables.st_nat_traversal)));
 						sd = NULL;
 					}
+					break;
+				default:
 					break;
 				}
 			}
@@ -1924,11 +1925,17 @@ void process_packet_tail(struct msg_digest **mdp)
 					sd = payload_desc(np);
 					break;
 
+				case ISAKMP_NEXT_SAK: /* AKA ISAKMP_NEXT_NATD_BADDRAFTS */
+					loglog(RC_LOG_SERIOUS,
+						"%smessage with unsupported payload ISAKMP_NEXT_SAK (as ISAKMP_NEXT_NATD_BADDRAFTS) ignored",
+						excuse);
+					break;
+
 				default:
-					loglog(RC_LOG_SERIOUS, "%smessage ignored because it contains an unknown or"
-					       " unexpected payload type (%s) at the outermost level",
+					loglog(RC_LOG_SERIOUS,
+						"%smessage ignored because it contains an unknown or unexpected payload type (%s) at the outermost level",
 					       excuse,
-					       enum_show(&payload_names_ikev1, np));
+					       enum_show(&ikev1_payload_names, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
@@ -1948,14 +1955,14 @@ void process_packet_tail(struct msg_digest **mdp)
 					loglog(RC_LOG_SERIOUS, "%smessage ignored because it "
 					       "contains an unexpected payload type (%s)",
 					       excuse,
-					       enum_show(&payload_names_ikev1, np));
+					       enum_show(&ikev1_payload_names, np));
 					SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
 					return;
 				}
 
 				DBG(DBG_PARSING,
 				    DBG_log("got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET "opt: 0x%" PRIxLSET,
-					    s, enum_show(&payload_names_ikev1, np),
+					    s, enum_show(&ikev1_payload_names, np),
 					    needed, smc->opt_payloads));
 				needed &= ~s;
 			}
@@ -1977,6 +1984,8 @@ void process_packet_tail(struct msg_digest **mdp)
 				DBG(DBG_PARSING,
 				    DBG_dump("     obj: ", pd->pbs.cur,
 					     pbs_left(&pd->pbs)));
+				break;
+			default:
 				break;
 			}
 
@@ -2087,8 +2096,8 @@ void process_packet_tail(struct msg_digest **mdp)
 			struct payload_digest *id = md->chain[ISAKMP_NEXT_ID];
 
 			if (id != NULL) {
-				if (id->next == NULL || id->next->next !=
-				    NULL) {
+				if (id->next == NULL ||
+				    id->next->next != NULL) {
 					loglog(RC_LOG_SERIOUS, "malformed Quick Mode message:"
 					       " if any ID payload is present,"
 					       " there must be exactly two");
@@ -2182,7 +2191,7 @@ void process_packet_tail(struct msg_digest **mdp)
 	/* VERIFY that we only accept NAT-D/NAT-OE when they sent us the VID */
 	if ((md->chain[ISAKMP_NEXT_NATD_RFC] != NULL ||
 	     md->chain[ISAKMP_NEXT_NATOA_RFC] != NULL) &&
-	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == 0) {
+	    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
 		/*
 		 * don't accept NAT-D/NAT-OA reloc directly in message,
 		 * unless we're using NAT-T RFC
@@ -2241,15 +2250,13 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		st->st_seen_fragvid = TRUE;
 	}
 	/* If state has DPD support, import it */
-	if ( st && md->dpd && st->hidden_variables.st_dpd != md->dpd) {
+	if ( st && md->dpd &&
+		   st->hidden_variables.st_peer_supports_dpd != md->dpd) {
 		DBG(DBG_DPD, DBG_log("peer supports dpd"));
-		st->hidden_variables.st_dpd = md->dpd;
+		st->hidden_variables.st_peer_supports_dpd = md->dpd;
 
-		if (st->st_connection->dpd_delay &&
-		    st->st_connection->dpd_timeout) {
-			/* Set local policy for DPD to be on */
-			st->hidden_variables.st_dpd_local = 1;
-			DBG(DBG_DPD, DBG_log("enabling sending dpd"));
+		if (dpd_active_locally(st)) {
+			DBG(DBG_DPD, DBG_log("dpd is active locally"));
 		}
 	}
 	/* If state has VID_NORTEL, import it to activate workaround */
@@ -2266,18 +2273,22 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 	/*
 	 * we can only be in calculating state if state is ignore,
 	 * or suspended.
+	 * ??? this code says inline is OK too.  Which is it?
 	 */
-	passert(result == STF_INLINE || result == STF_IGNORE || result == STF_SUSPEND || st->st_calculating ==
-		FALSE);
+	passert(result == STF_INLINE || result == STF_IGNORE ||
+		result == STF_SUSPEND || !st->st_calculating);
 
 	switch (result) {
 	case STF_IGNORE:
 		break;
 
-	case STF_INLINE:         /* this is second time through complete
-		                  * state transition, so the MD has already
-		                  * been freed.
-		                  */
+	case STF_INLINE:
+		/*
+		 * this is second time through complete state transition,
+		 * so the MD has already been freed.
+		 * ??? This comment is not true.
+		 * This has been proven by passert(md == NULL) failing.
+		 */
 		*mdp = NULL;
 		break;
 
@@ -2285,7 +2296,10 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		/* update the previous packet history */
 		update_retransmit_history(st, md);
 
-		/* the stf didn't complete its job: don't relase md */
+		/*
+		 * the stf didn't complete its job:
+		 * detach from *mdp so *md won't be released by our caller.
+		 */
 		*mdp = NULL;
 		break;
 
@@ -2298,7 +2312,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		if (!st->st_reserve_msgid &&
 		    IS_CHILD_SA(st) &&
-		    st->st_msgid != MAINMODE_MSGID) {
+		    st->st_msgid != v1_MAINMODE_MSGID) {
 			struct state *p1st = state_with_serialno(
 				st->st_clonedfrom);
 
@@ -2346,7 +2360,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		freeanychunk(st->st_tpacket);
 
 		/* in aggressive mode, there will be no reply packet in transition
-		 * from STATE_AGGR_R1 to STATE_AGGR_R2 */
+		 * from STATE_AGGR_R1 to STATE_AGGR_R2
+		 */
 		if (nat_traversal_enabled) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
@@ -2369,7 +2384,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			clonetochunk(st->st_tpacket, reply_stream.start,
 				     pbs_offset(&reply_stream),
-				     "reply packet");
+				     "reply packet for complete_v1_state_transition");
 
 			/* actually send the packet
 			 * Note: this is a great place to implement "impairments"
@@ -2388,7 +2403,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			struct connection *c = st->st_connection;
 
 			switch (kind) {
-			case EVENT_RETRANSMIT: /* Retransmit packet */
+			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
 				delay = EVENT_RETRANSMIT_DELAY_0;
 				break;
 
@@ -2403,44 +2418,30 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					 * rekeying.  The negative consequences seem
 					 * minor.
 					 */
-					delay = c->sa_ike_life_seconds;
+					delay = deltasecs(c->sa_ike_life_seconds);
 					if ((c->policy & POLICY_DONT_REKEY) ||
-					    delay >=
-					    st->st_oakley.life_seconds) {
+					    delay >= deltasecs(st->st_oakley.life_seconds))
+					{
 						agreed_time = TRUE;
 						delay =
-							st->st_oakley.
-							life_seconds;
+						    deltasecs(st->st_oakley.life_seconds);
 					}
 				} else {
 					/* Delay is min of up to four things:
 					 * each can limit the lifetime.
 					 */
-					delay = c->sa_ipsec_life_seconds;
-					if (st->st_ah.present &&
-					    delay >=
-					    st->st_ah.attrs.life_seconds) {
-						agreed_time = TRUE;
-						delay =
-							st->st_ah.attrs.
-							life_seconds;
-					}
-					if (st->st_esp.present &&
-					    delay >=
-					    st->st_esp.attrs.life_seconds) {
-						agreed_time = TRUE;
-						delay =
-							st->st_esp.attrs.
-							life_seconds;
-					}
-					if (st->st_ipcomp.present &&
-					    delay >=
-					    st->st_ipcomp.attrs.life_seconds) {
-						agreed_time = TRUE;
-						delay =
-							st->st_ipcomp.attrs.
-							life_seconds;
-					}
+					delay = deltasecs(c->sa_ipsec_life_seconds);
+#define clamp_delay(trans) { \
+		if (st->trans.present && \
+		    delay >= deltasecs(st->trans.attrs.life_seconds)) { \
+			agreed_time = TRUE; \
+			delay = deltasecs(st->trans.attrs.life_seconds); \
+		} \
+	}
+					clamp_delay(st_ah);
+					clamp_delay(st_esp);
+					clamp_delay(st_ipcomp);
+#undef clamp_delay
 				}
 
 				/* By default, we plan to rekey.
@@ -2472,8 +2473,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					       EVENT_SA_EXPIRE;
 				}
 				if (kind != EVENT_SA_EXPIRE) {
-					unsigned long marg =
-						c->sa_rekey_margin;
+					time_t marg = deltasecs(
+						c->sa_rekey_margin);
 
 					if (smc->flags & SMF_INITIATOR) {
 						marg += marg *
@@ -2485,17 +2486,15 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						marg /= 2;
 					}
 
-					if ((unsigned long)delay > marg) {
+					if (delay > marg) {
 						delay -= marg;
-						st->st_margin = marg;
+						st->st_margin = deltatime(marg);
 					} else {
 						kind = EVENT_SA_EXPIRE;
 					}
 				}
 				break;
 
-			case EVENT_NULL:                /* non-event */
-			case EVENT_REINIT_SECRET:       /* Refresh cookie secret */
 			default:
 				bad_case(kind);
 			}
@@ -2517,7 +2516,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			if (IS_IPSEC_SA_ESTABLISHED(st->st_state)) {
 				fmt_ipsec_sa_established(st, sadetails,
 							 sizeof(sadetails));
-
 			} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state) &&
 				   !st->hidden_variables.st_logged_p1algos) {
 				fmt_isakmp_sa_established(st, sadetails,
@@ -2543,8 +2541,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		 * SA.
 		 */
 		if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-			if (st->st_connection->dpd_delay > 0 &&
-			    st->st_connection->dpd_timeout > 0) {
+			if (deltasecs(st->st_connection->dpd_delay) > 0 &&
+			    deltasecs(st->st_connection->dpd_timeout) > 0) {
 				/* don't ignore failure */
 				if (dpd_init(st) == STF_FAIL)
 					result = STF_FAIL; /* fall through */
@@ -2690,7 +2688,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		break;
 
 	case STF_TOOMUCHCRYPTO:
-		/* well, this should never happen during a whack, since
+		/* ??? Why is this comment useful:
+		 * well, this should never happen during a whack, since
 		 * a whack will always force crypto.
 		 */
 		set_suspended(st, NULL);
@@ -2738,7 +2737,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			  "%s: %s", enum_name(&state_names, st->st_state),
 			  enum_name(&ikev1_notify_names, md->note));
 
-		if (md->note > 0)
+		if (md->note != NOTHING_WRONG)
 			SEND_NOTIFICATION(md->note);
 
 		DBG(DBG_CONTROL,
@@ -2765,5 +2764,163 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			delete_state(st);
 		break;
 	}
+}
 
+bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
+{
+	struct state *const st = md->st;
+	struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
+	const pb_stream *const id_pbs = &id_pld->pbs;
+	struct isakmp_id *const id = &id_pld->payload.id;
+	struct id peer;
+
+	/* I think that RFC2407 (IPSEC DOI) 4.6.2 is confused.
+	 * It talks about the protocol ID and Port fields of the ID
+	 * Payload, but they don't exist as such in Phase 1.
+	 * We use more appropriate names.
+	 * isaid_doi_specific_a is in place of Protocol ID.
+	 * isaid_doi_specific_b is in place of Port.
+	 * Besides, there is no good reason for allowing these to be
+	 * other than 0 in Phase 1.
+	 */
+        if (st->hidden_variables.st_nat_traversal != LEMPTY &&
+	    id->isaid_doi_specific_a == IPPROTO_UDP &&
+	    (id->isaid_doi_specific_b == 0 ||
+	     id->isaid_doi_specific_b == pluto_nat_port)) {
+		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
+			"accepted with port_floating NAT-T",
+			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
+	} else
+
+	if (!(id->isaid_doi_specific_a == 0 &&
+	      id->isaid_doi_specific_b == 0) &&
+	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
+	      id->isaid_doi_specific_b == pluto_port)) {
+		loglog(RC_LOG_SERIOUS, "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d"
+		       " but are %d/%d (attempting to continue)",
+		       IPPROTO_UDP, pluto_port,
+		       id->isaid_doi_specific_a,
+		       id->isaid_doi_specific_b);
+		/* we have turned this into a warning because of bugs in other vendors
+		 * products. Specifically CISCO VPN3000.
+		 */
+		/* return FALSE; */
+	}
+
+	zero(&peer);
+	peer.kind = id->isaid_idtype;
+
+	if (!extract_peer_id(&peer, id_pbs))
+		return FALSE;
+
+	/*
+	 * For interop with SoftRemote/aggressive mode we need to remember some
+	 * things for checking the hash
+	 */
+	st->st_peeridentity_protocol = id->isaid_doi_specific_a;
+	st->st_peeridentity_port = ntohs(id->isaid_doi_specific_b);
+
+	{
+		char buf[IDTOA_BUF];
+
+		idtoa(&peer, buf, sizeof(buf));
+		libreswan_log("%s mode peer ID is %s: '%s'",
+			      aggrmode ? "Aggressive" : "Main",
+			      enum_show(&ike_idtype_names, id->isaid_idtype), buf);
+	}
+
+	/* check for certificates */
+	ikev1_decode_cert(md);
+
+	/* Now that we've decoded the ID payload, let's see if we
+	 * need to switch connections.
+	 * We must not switch horses if we initiated:
+	 * - if the initiation was explicit, we'd be ignoring user's intent
+	 * - if opportunistic, we'll lose our HOLD info
+	 */
+	if (initiator) {
+		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
+		     id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+			char expect[IDTOA_BUF],
+			     found[IDTOA_BUF];
+
+			idtoa(&st->st_connection->spd.that.id, expect,
+			      sizeof(expect));
+			idtoa(&peer, found, sizeof(found));
+			loglog(RC_LOG_SERIOUS,
+			       "we require peer to have ID '%s', but peer declares '%s'",
+			       expect, found);
+			return FALSE;
+		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
+			if (id_kind(&peer) != ID_DER_ASN1_DN) {
+				loglog(RC_LOG_SERIOUS,
+				       "peer ID is not a certificate type");
+				return FALSE;
+			}
+			duplicate_id(&st->st_connection->spd.that.id, &peer);
+		}
+	} else {
+		struct connection *c = st->st_connection;
+		struct connection *r;
+		bool fc = 0;
+		/* check for certificate requests */
+		ikev1_decode_cr(md, &c->requested_ca);
+
+		r = refine_host_connection(st, &peer, initiator, aggrmode, &fc);
+
+		/* delete the collected certificate requests */
+		free_generalNames(c->requested_ca, TRUE);
+		c->requested_ca = NULL;
+
+		if (r == NULL) {
+			char buf[IDTOA_BUF];
+
+			idtoa(&peer, buf, sizeof(buf));
+			loglog(RC_LOG_SERIOUS,
+			       "no suitable connection for peer '%s'",
+			       buf);
+			return FALSE;
+		}
+
+		DBG(DBG_CONTROL, {
+			    char buf[IDTOA_BUF];
+
+			    dntoa_or_null(buf, IDTOA_BUF, r->spd.this.ca,
+					  "%none");
+			    DBG_log("offered CA: '%s'", buf);
+		    });
+
+		if (r != c) {
+			/* apparently, r is an improvement on c -- replace */
+
+			libreswan_log("switched from \"%s\" to \"%s\"",
+				      c->name, r->name);
+			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
+				/* instantiate it, filling in peer's ID */
+				r = rw_instantiate(r, &c->spd.that.host_addr,
+						   NULL,
+						   &peer);
+			}
+
+			st->st_connection = r; /* kill reference to c */
+
+			/* this ensures we don't move cur_connection from NULL to
+			 * something, requiring a reset_cur_connection()
+			 */
+			if (cur_connection == c)
+				set_cur_connection(r);
+
+			connection_discard(c);
+		} else if (c->spd.that.has_id_wildcards) {
+			free_id_content(&c->spd.that.id);
+			c->spd.that.id = peer;
+			c->spd.that.has_id_wildcards = FALSE;
+			unshare_id_content(&c->spd.that.id);
+		} else if (fc) {
+			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
+			duplicate_id(&r->spd.that.id, &peer);
+		}
+	}
+
+	return TRUE;
 }

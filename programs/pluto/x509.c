@@ -22,10 +22,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  *
- * Modifications to use OCF interface written by
- * Daniel Djamaludin <danield@cyberguard.com>
- * Copyright (C) 2004-2005 Intel Corporation.  All Rights Reserved.
- *
  */
 
 #include <stdlib.h>
@@ -39,13 +35,11 @@
 #include <sys/types.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "lswconf.h"
 #include "constants.h"
 #include "lswlog.h"
-#include "lswtime.h"
 
 #include "defs.h"
 #include "log.h"
@@ -159,11 +153,11 @@ static void release_x509cert(x509cert_t *cert)
 }
 
 /*  release of a certificate decreases the count by one
-   "  the certificate is freed when the counter reaches zero
+ *  the certificate is freed when the counter reaches zero
  */
 void release_cert(cert_t cert)
 {
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_NONE:
 		/* quietly forget about it */
 		break;
@@ -171,9 +165,7 @@ void release_cert(cert_t cert)
 		release_x509cert(cert.u.x509);
 		break;
 	default:
-		loglog(RC_LOG_SERIOUS,"Unknown certificate type: %s (%d)",
-		       enum_show(&cert_type_names, cert.type), cert.type);
-		break;
+		bad_case(cert.ty);
 	}
 }
 
@@ -245,13 +237,12 @@ void store_x509certs(x509cert_t **firstcert, bool strict)
 	pp = firstcert;
 
 	while (*pp != NULL) {
-		time_t valid_until;
+		realtime_t valid_until;
 		x509cert_t *cert = *pp;
 
-		if (verify_x509cert(cert, strict, &valid_until)) {
+		if (verify_x509cert(cert, strict, &valid_until /* OUT */)) {
 			DBG(DBG_X509 | DBG_PARSING,
-			    DBG_log("public key validated")
-			    );
+			    DBG_log("public key validated"));
 			add_x509_public_key(NULL, cert, valid_until,
 					    DAL_SIGNED);
 		} else {
@@ -308,8 +299,7 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 			return FALSE;
 		}
 		DBG(DBG_X509,
-		    DBG_log("crl issuer cacert found")
-		    );
+		    DBG_log("crl issuer cacert found"));
 
 		/* check the issuer's signature of the crl */
 		valid_sig = check_signature(crl->tbsCertList, crl->signature,
@@ -321,15 +311,15 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 			return FALSE;
 		}
 		DBG(DBG_X509,
-		    DBG_log("valid crl signature")
-		    );
+		    DBG_log("valid crl signature"));
 
 		lock_crl_list("insert_crl");
 		oldcrl = get_x509crl(crl->issuer, crl->authKeySerialNumber,
 				     crl->authKeyID);
 
 		if (oldcrl != NULL) {
-			if (crl->thisUpdate > oldcrl->thisUpdate) {
+			if (realbefore(oldcrl->thisUpdate, crl->thisUpdate)) {
+				/* old CRL is older than new CRL: replace */
 #if defined(LIBCURL) || defined(LDAP_VER)
 				/* keep any known CRL distribution points */
 				add_distribution_points(
@@ -340,16 +330,18 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 				/* now delete the old CRL */
 				free_first_crl();
 				DBG(DBG_X509,
-				    DBG_log("thisUpdate is newer - existing crl deleted")
-				    );
+				    DBG_log("thisUpdate is newer - existing crl deleted"));
 			} else {
+				/* old CRL is not older than new CRL: keep old one */
 				unlock_crl_list("insert_crls");
 				DBG(DBG_X509,
-				    DBG_log("thisUpdate is not newer - existing crl not replaced");
-				    );
+				    DBG_log("thisUpdate is not newer - existing crl not replaced"));
 				free_crl(crl);
-				return oldcrl->nextUpdate - time(NULL) > 2 *
-				       crl_check_interval;
+				/*
+				 * is the fetched crl valid?
+				 * now + 2 * crl_check_interval < oldcrl->nextUpdate
+				 */
+				return realbefore(realtimesum(realnow(), deltatimescale(2, 1, crl_check_interval)), oldcrl->nextUpdate);
 			}
 		}
 
@@ -359,8 +351,11 @@ bool insert_crl(chunk_t blob, chunk_t crl_uri)
 
 		unlock_crl_list("insert_crl");
 
-		/* is the fetched crl valid? */
-		return crl->nextUpdate - time(NULL) > 2 * crl_check_interval;
+		/*
+		 * is the new crl valid?
+		 * now + 2 * crl_check_interval < crl->nextUpdate
+		 */
+		return realbefore(realtimesum(realnow(), deltatimescale(2, 1, crl_check_interval)), crl->nextUpdate);
 	} else {
 		loglog(RC_LOG_SERIOUS, "  error in X.509 crl %s",
 		       (char *)crl_uri.ptr);
@@ -388,7 +383,7 @@ void load_crls(void)
 	} else {
 		DBG(DBG_CONTROL,
 		    DBG_log("Changing to directory '%s'", oco->crls_dir));
-		n = scandir(oco->crls_dir, &filelist, (void *) file_select,
+		n = scandir(oco->crls_dir, &filelist, (void *) filter_dotfiles,
 			    alphasort);
 
 		if (n > 0) {
@@ -396,13 +391,7 @@ void load_crls(void)
 				chunk_t blob = empty_chunk;
 				char *filename = filelist[n]->d_name;
 
-				if (load_coded_file(filename,
-#ifdef SINGLE_CONF_DIR
-						    FALSE, /* too verbose in a shared dir */
-#else
-						    TRUE,
-#endif
-						    "crl", &blob)) {
+				if (load_coded_file(filename, "crl", &blob)) {
 					chunk_t crl_uri;
 					crl_uri.len = 8 +
 						      strlen(oco->crls_dir) +
@@ -434,7 +423,7 @@ void load_crls(void)
  * verify if a cert hasn't been revoked by a crl
  */
 static bool verify_by_crl(/*const*/ x509cert_t *cert, bool strict,
-				    time_t *until)
+				    realtime_t *until)
 {
 	x509crl_t *crl;
 	char ibuf[ASN1_BUF_LEN], cbuf[ASN1_BUF_LEN];
@@ -465,8 +454,7 @@ static bool verify_by_crl(/*const*/ x509cert_t *cert, bool strict,
 		bool valid;
 
 		DBG(DBG_X509,
-		    DBG_log("issuer crl \"%s\" found", ibuf)
-		    );
+		    DBG_log("issuer crl \"%s\" found", ibuf));
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 		add_distribution_points(cert->crlDistributionPoints,
@@ -488,13 +476,12 @@ static bool verify_by_crl(/*const*/ x509cert_t *cert, bool strict,
 			bool revoked_crl, expired_crl;
 
 			DBG(DBG_X509,
-			    DBG_log("valid crl signature on \"%s\"", cbuf)
-			    );
+			    DBG_log("valid crl signature on \"%s\"", cbuf));
 
 			/* with strict crl policy the public key must have the same
 			 * lifetime as the crl
 			 */
-			if (strict && crl->nextUpdate < *until)
+			if (strict && realbefore(crl->nextUpdate, *until))
 				*until = crl->nextUpdate;
 
 			/* has the certificate been revoked? */
@@ -502,16 +489,17 @@ static bool verify_by_crl(/*const*/ x509cert_t *cert, bool strict,
 							    cert->serialNumber);
 
 			/* is the crl still valid? */
-			expired_crl = time(NULL) > crl->nextUpdate;
+			expired_crl = realbefore(crl->nextUpdate, realnow());
 
 			unlock_crl_list("verify_by_crl");
 
 			if (expired_crl) {
-				char tbuf[TIMETOA_BUF];
+				char tbuf[REALTIMETOA_BUF];
+
 				libreswan_log(
 					"crl update for \"%s\" is overdue since %s",
 					cbuf,
-					timetoa(&crl->nextUpdate, TRUE,
+					realtimetoa(crl->nextUpdate, TRUE,
 						tbuf, sizeof(tbuf)));
 
 #if defined(LIBCURL) || defined(LDAP_VER)
@@ -524,8 +512,7 @@ static bool verify_by_crl(/*const*/ x509cert_t *cert, bool strict,
 #endif
 			} else {
 				DBG(DBG_X509,
-				    DBG_log("crl is \"%s\" valid", cbuf)
-				    );
+				    DBG_log("crl is \"%s\" valid", cbuf));
 			}
 
 			if (revoked_crl || (strict && expired_crl)) {
@@ -550,13 +537,12 @@ static bool verify_by_crl(/*const*/ x509cert_t *cert, bool strict,
 void check_crls(void)
 {
 	x509crl_t *crl;
-	time_t current_time = time(NULL);
 
 	lock_crl_list("check_crls");
 	crl = x509crls;
 
 	while (crl != NULL) {
-		time_t time_left = crl->nextUpdate - current_time;
+		deltatime_t time_left = realtimediff(crl->nextUpdate, realnow());
 		char buf[ASN1_BUF_LEN];
 
 		DBG(DBG_X509, {
@@ -568,9 +554,9 @@ void check_crls(void)
 					    buf, ASN1_BUF_LEN);
 				    DBG_log("authkey: %s", buf);
 			    }
-			    DBG_log("%ld seconds left", time_left);
+			    DBG_log("%ld seconds left", (long)deltasecs(time_left));
 		    });
-		if (time_left < 2 * crl_check_interval)
+		if (deltaless(time_left, deltatimescale(2, 1, crl_check_interval)))
 			add_crl_fetch_request(crl->issuer,
 					      crl->distributionPoints);
 		crl = crl->next;
@@ -582,7 +568,7 @@ void check_crls(void)
 /*
  *  verifies a X.509 certificate
  */
-bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
+bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, realtime_t *until /* OUT */)
 {
 	int pathlen;
 
@@ -616,17 +602,16 @@ bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 			    }
 		    });
 
-		ugh = check_validity(cert, until);
+		ugh = check_validity(cert, until /* IN/OUT */);
 
 		if (ugh != NULL) {
-			libreswan_log("checking validity of \"%s\": %s", sbuf,
+			loglog(RC_LOG_SERIOUS,"checking validity of \"%s\": %s", sbuf,
 				      ugh);
 			return FALSE;
 		}
 
 		DBG(DBG_X509,
-		    DBG_log("valid certificate for \"%s\"", sbuf)
-		    );
+		    DBG_log("valid certificate for \"%s\"", sbuf));
 
 		lock_authcert_list("verify_x509cert");
 		issuer_cert = get_authcert(cert->issuer,
@@ -639,8 +624,7 @@ bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 			return FALSE;
 		}
 		DBG(DBG_X509,
-		    DBG_log("issuer cacert \"%s\" found", ibuf)
-		    );
+		    DBG_log("issuer cacert \"%s\" found", ibuf));
 
 		if (!check_signature(cert->tbsCertificate, cert->signature,
 				     cert->algorithm, issuer_cert)) {
@@ -652,15 +636,13 @@ bool verify_x509cert(/*const*/ x509cert_t *cert, bool strict, time_t *until)
 		}
 		DBG(DBG_X509,
 		    DBG_log("valid certificate signature (%s -> %s)",
-			    ibuf, sbuf);
-		    );
+			    ibuf, sbuf));
 		unlock_authcert_list("verify_x509cert");
 
 		/* check if cert is a self-signed root ca */
 		if (pathlen > 0 && same_dn(cert->issuer, cert->subject)) {
 			DBG(DBG_CONTROL,
-			    DBG_log("reached self-signed root ca")
-			    );
+			    DBG_log("reached self-signed root ca"));
 			return TRUE;
 		} else {
 			/* check certificate revocation crls */
@@ -687,11 +669,6 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 				u_char auth_flags,
 				bool utc)
 {
-	time_t tnow;
-
-	/* determine the current time */
-	time(&tnow);
-
 	whack_log(RC_COMMENT, " ");
 	whack_log(RC_COMMENT, "List of X.509 %s Certificates:", caption);
 
@@ -701,15 +678,15 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 			unsigned keysize;
 			char keyid[KEYID_BUF];
 			char buf[ASN1_BUF_LEN];
-			char tbuf[TIMETOA_BUF];
+			char tbuf[REALTIMETOA_BUF];
 
 			cert_t c;
 
-			c.type = CERT_X509_SIGNATURE;
+			c.ty = CERT_X509_SIGNATURE;
 			c.u.x509 = cert;
 
 			whack_log(RC_COMMENT, "%s, count: %d",
-				  timetoa(&cert->installed, utc, tbuf,
+				  realtimetoa(cert->installed, utc, tbuf,
 					  sizeof(tbuf)),
 				  cert->count);
 			dntoa(buf, ASN1_BUF_LEN, cert->subject);
@@ -728,13 +705,13 @@ static void list_x509cert_chain(const char *caption, x509cert_t* cert,
 				  has_private_key(c) ? ", has private key" : "");
 			whack_log(RC_COMMENT,
 				  "       validity: not before %s %s",
-				  timetoa(&cert->notBefore, utc, tbuf,
+				  realtimetoa(cert->notBefore, utc, tbuf,
 					  sizeof(tbuf)),
-				  (cert->notBefore <
-				   tnow) ? "ok" : "fatal (not valid yet)");
+				  realbefore(cert->notBefore, realnow()) ?
+					"ok" : "fatal (not valid yet)");
 			whack_log(RC_COMMENT,
 				  "                 not after  %s %s",
-				  timetoa(&cert->notAfter, utc, tbuf,
+				  realtimetoa(cert->notAfter, utc, tbuf,
 					  sizeof(tbuf)),
 				  check_expiry(cert->notAfter,
 					       CA_CERT_WARNING_INTERVAL,
@@ -801,7 +778,7 @@ void list_crls(bool utc, bool strict)
 		char buf[ASN1_BUF_LEN];
 		u_int revoked = 0;
 		revokedCert_t *revokedCert = crl->revokedCertificates;
-		char tbuf[TIMETOA_BUF];
+		char tbuf[REALTIMETOA_BUF];
 
 		/* count number of revoked certificates in CRL */
 		while (revokedCert != NULL) {
@@ -810,7 +787,7 @@ void list_crls(bool utc, bool strict)
 		}
 
 		whack_log(RC_COMMENT, "%s, revoked certs: %d",
-			  timetoa(&crl->installed, utc, tbuf,
+			  realtimetoa(crl->installed, utc, tbuf,
 				  sizeof(tbuf)), revoked);
 		dntoa(buf, ASN1_BUF_LEN, crl->issuer);
 		whack_log(RC_COMMENT, "       issuer:  '%s'", buf);
@@ -821,9 +798,9 @@ void list_crls(bool utc, bool strict)
 #endif
 
 		whack_log(RC_COMMENT, "       updates:  this %s",
-			  timetoa(&crl->thisUpdate, utc, tbuf, sizeof(tbuf)));
+			  realtimetoa(crl->thisUpdate, utc, tbuf, sizeof(tbuf)));
 		whack_log(RC_COMMENT, "                 next %s %s",
-			  timetoa(&crl->nextUpdate, utc, tbuf, sizeof(tbuf)),
+			  realtimetoa(crl->nextUpdate, utc, tbuf, sizeof(tbuf)),
 			  check_expiry(crl->nextUpdate, CRL_WARNING_INTERVAL,
 				       strict));
 		if (crl->authKeyID.ptr != NULL) {

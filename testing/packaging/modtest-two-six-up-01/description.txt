@@ -1,1 +1,0 @@
-This test checks that KLIPS will compile as a module for non SMP hosts

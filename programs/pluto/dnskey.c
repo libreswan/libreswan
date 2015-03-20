@@ -29,7 +29,6 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 
 #include "sysdep.h"
 #include "constants.h"
@@ -107,20 +106,19 @@ void init_adns(void)
 			 * so we use the sympolic link /proc/self/exe to
 			 * tell us of the path prefix.
 			 */
-			n =
-				readlink("/proc/self/exe", adns_path_space,
-					 sizeof(adns_path_space));
+			n = readlink("/proc/self/exe", adns_path_space,
+				      sizeof(adns_path_space));
 
-			if (n < 0)
+			if (n < 0) {
 # ifdef __uClibc__
 				/* on some nommu we have no proc/self/exe, try without path */
-				*adns_path_space = '\0', n = 0;
+				*adns_path_space = '\0';
+				n = 0;
 # else
 				exit_log_errno((e,
 						"readlink(\"/proc/self/exe\") failed in init_adns()"));
-
-
 # endif
+			}
 
 		}
 #else
@@ -281,8 +279,8 @@ static err_t decode_iii(char **pp, struct id *gw_id)
 		/* gateway specification is numeric */
 		ip_address ip;
 		err_t ugh = tnatoaddr(p, e - p,
-				      strchr(p,
-					     ':') == NULL ? AF_INET : AF_INET6,
+				      strchr(p, ':') == NULL ?
+					AF_INET : AF_INET6,
 				      &ip);
 
 		if (ugh != NULL) {
@@ -316,7 +314,7 @@ static err_t process_txt_rr_body(char *str,
 	p += strspn(p, " \t");  /* ignore leading whitespace */
 
 	/* is this for us? */
-	if (strncasecmp(p, our_TXT_attr, sizeof(our_TXT_attr) - 1) != 0)
+	if (!strncaseeq(p, our_TXT_attr, sizeof(our_TXT_attr) - 1))
 		return NULL;            /* neither interesting nor bad */
 
 	p += sizeof(our_TXT_attr) - 1;  /* ignore our attribute name */
@@ -454,7 +452,6 @@ static err_t process_txt_rr_body(char *str,
 		gi.refcnt = 1;
 		gi.pref = pref;
 		gi.key->dns_auth_level = dns_auth_level;
-		gi.key->last_tried_time = gi.key->last_worked_time = NO_TIME;
 
 		/* find insertion point */
 		for (gwip = &cr->gateways_from_dns;
@@ -1082,8 +1079,7 @@ static err_t process_answer_section(pb_stream *pbs,
 
 					if (!in_struct(&sr, &sig_rdata_desc,
 						       pbs, NULL))
-						ugh =
-							"failed to get fixed part of SIG Resource Record RDATA";
+						ugh = "failed to get fixed part of SIG Resource Record RDATA";
 
 
 					else if (sr.type_covered == type)
@@ -1097,7 +1093,8 @@ static err_t process_answer_section(pb_stream *pbs,
 			if (ugh != NULL)
 				return ugh;
 		}
-		in_raw(NULL, tail, pbs, "RR RDATA");
+		if (!in_raw(NULL, tail, pbs, "RR RDATA"))
+			return "failed to read RR RDATA";
 	}
 
 	return doit &&
@@ -1229,7 +1226,8 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 
 		tail = rrf.rdlength;
 
-		in_raw(NULL, tail, &pbs, "RR RDATA");
+		if (!in_raw(NULL, tail, &pbs, "RR RDATA"))
+			return "failed to read RR RDATA";
 	}
 
 	/* Additional Section processing (just sanity checking) */
@@ -1243,10 +1241,7 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 		TRY(eat_name_helpfully(&pbs, "Additional Section"));
 
 		if (!in_struct(&rrf, &rr_fixed_desc, &pbs, NULL))
-			return
-				"failed to get fixed part of Additional Section Resource Record";
-
-
+			return "failed to get fixed part of Additional Section Resource Record";
 
 		if (rrf.rdlength > pbs_left(&pbs))
 			return "RD Length extends beyond end of message";
@@ -1255,7 +1250,8 @@ static err_t process_dns_answer(struct adns_continuation *const cr,
 
 		tail = rrf.rdlength;
 
-		in_raw(NULL, tail, &pbs, "RR RDATA");
+		if (!in_raw(NULL, tail, &pbs, "RR RDATA"))
+			return "failed to read RR RDATA";
 	}
 
 	/* done all sections */
@@ -1637,11 +1633,10 @@ static err_t process_lwdnsq_answer(char *ts)
 	char *endofnumber;
 	struct adns_continuation *cr = NULL;
 	unsigned long qtid;
-	time_t anstime;                         /* time of answer */
-	char *atype;                            /* type of answer */
-	long ttl;                               /* ttl of answer; int, but long for conversion */
+	char *atype;		/* type of answer */
+	long ttl;		/* ttl of answer; int, but long for conversion */
 	bool AuthenticatedData = FALSE;
-	static char scratch_null_str[] = "";    /* cannot be const, but isn't written */
+	static char scratch_null_str[] = "";	/* cannot be const, but isn't written */
 
 	/* query transaction id */
 	rest = ts;
@@ -1657,12 +1652,12 @@ static err_t process_lwdnsq_answer(char *ts)
 	if (qtid != 0 && cr == NULL)
 		return "lwdnsq: unrecognized qtid"; /* can't happen! */
 
-	/* time */
+	/* time (??? discarded) */
 	p = strsep(&rest, " \t");
 	if (p == NULL)
 		return "lwdnsq: missing time";
 
-	anstime = strtoul(p, &endofnumber, 10);
+	(void)strtoul(p, &endofnumber, 10);
 	if (*endofnumber != '\0')
 		return "lwdnsq: malformed time";
 
@@ -1683,7 +1678,7 @@ static err_t process_lwdnsq_answer(char *ts)
 	/* if rest is NULL, make it "", otherwise eat whitespace after type */
 	rest = rest == NULL ? scratch_null_str : rest + strspn(rest, " \t");
 
-	if (strncasecmp(atype, "AD-", 3) == 0) {
+	if (strncaseeq(atype, "AD-", 3)) {
 		AuthenticatedData = TRUE;
 		atype += 3;
 	}
@@ -1839,9 +1834,8 @@ void handle_adns_answer(void)
 	ssize_t n;
 
 	passert(buflen < sizeof(buf));
-	n =
-		read(adns_afd, (unsigned char *)&buf + buflen,
-		     sizeof(buf) - buflen);
+	n = read(adns_afd, (unsigned char *)&buf + buflen,
+		 sizeof(buf) - buflen);
 
 	if (n < 0) {
 		if (errno != EINTR) {
@@ -1872,8 +1866,8 @@ void handle_adns_answer(void)
 
 	buflen += n;
 #ifndef USE_LWRES
-	while (buflen >=
-	       offsetof(struct adns_answer, ans) && buflen >= buf.len) {
+	while (buflen >= offsetof(struct adns_answer, ans) &&
+	       buflen >= buf.len) {
 		/* we've got a tasty answer -- process it */
 		err_t ugh;
 		struct adns_continuation *cr =

@@ -42,6 +42,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -58,8 +59,6 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 #include "vendor.h"
-#include "dpd.h"
-#include "udpfromto.h"
 #include "kernel.h"
 #include "virtual.h"	/* needs connections.h */
 #include "hostpair.h"
@@ -86,13 +85,13 @@ struct traffic_selector ikev2_end_to_ts(struct end *e)
 	struct traffic_selector ts;
 	struct in6_addr v6mask;
 
-	memset(&ts, 0, sizeof(ts));
+	zero(&ts);
 
 	switch (e->client.addr.u.v4.sin_family) {
 	case AF_INET:
 		ts.ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
 		ts.low   = e->client.addr;
-		ts.low.u.v4.sin_addr.s_addr  &=
+		ts.low.u.v4.sin_addr.s_addr &=
 			bitstomask(e->client.maskbits).s_addr;
 		ts.high  = e->client.addr;
 		ts.high.u.v4.sin_addr.s_addr |=
@@ -248,8 +247,8 @@ stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 			struct payload_digest *p;
 			for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL;
 			     p = p->next) {
-				if ( p->payload.v2n.isan_type ==
-				     v2N_USE_TRANSPORT_MODE ) {
+				if (p->payload.v2n.isan_type ==
+				    v2N_USE_TRANSPORT_MODE) {
 					DBG_log("Received v2N_USE_TRANSPORT_MODE from the other end, next payload is v2N_USE_TRANSPORT_MODE notification");
 					ret = ikev2_emit_ts(md, outpbs,
 							    ISAKMP_NEXT_v2N,
@@ -285,7 +284,7 @@ int ikev2_parse_ts(struct payload_digest *const ts_pd,
 			return -1;
 
 		if (i < array_max) {
-			memset(&array[i], 0, sizeof(*array));
+			zero(&array[i]);
 			switch (ts1.isat1_type) {
 			case IKEv2_TS_IPV4_ADDR_RANGE:
 				array[i].ts_type = IKEv2_TS_IPV4_ADDR_RANGE;
@@ -732,8 +731,7 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 		er = &sr->this;
 	}
 
-	DBG(DBG_CONTROLMORE,
-	    {
+	DBG(DBG_CONTROLMORE, {
 		    char ei3[SUBNETTOT_BUF];
 		    char er3[SUBNETTOT_BUF];
 		    subnettot(&ei->client,  0, ei3, sizeof(ei3));
@@ -743,25 +741,23 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 			    d->name, ei3, ei->protocol, ei->port,
 			    er3, er->protocol, er->port,
 			    is_virtual_connection(d) ? "(virt)" : "");
-	    }
-	    );
+	});
 
 	/* compare tsi/r array to this/that, evaluating how well it fits */
 	for (tsi_ni = 0; tsi_ni < tsi_n; tsi_ni++) {
 		for (tsr_ni = 0; tsr_ni < tsr_n; tsr_ni++) {
 			/* does it fit at all? */
 
-			DBG(DBG_CONTROLMORE,
-			    {
+			DBG(DBG_CONTROLMORE, {
 				    char lbi[ADDRTOT_BUF];
 				    char hbi[ADDRTOT_BUF];
 				    char lbr[ADDRTOT_BUF];
 				    char hbr[ADDRTOT_BUF];
-				    addrtot(&tsi[tsi_ni].low,  0, lbi,
+				    addrtot(&tsi[tsi_ni].low, 0, lbi,
 					    sizeof(lbi));
 				    addrtot(&tsi[tsi_ni].high, 0, hbi,
 					    sizeof(hbi));
-				    addrtot(&tsr[tsr_ni].low,  0, lbr,
+				    addrtot(&tsr[tsr_ni].low, 0, lbr,
 					    sizeof(lbr));
 				    addrtot(&tsr[tsr_ni].high, 0, hbr,
 					    sizeof(hbr));
@@ -775,8 +771,7 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 					    tsr[tsr_ni].ipprotoid,
 					    tsr[tsr_ni].startport,
 					    tsr[tsr_ni].endport);
-			    }
-			    );
+			});
 			/* do addresses fit into the policy? */
 
 			/*
@@ -792,19 +787,15 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 				 * now, how good a fit is it? --- sum of bits gives
 				 * how good a fit this is.
 				 */
-				int ts_range1 =
-					ikev2_calc_iprangediff(tsi[tsi_ni].low,
-							       tsi[
-								       tsi_ni].high);
+				int ts_range1 = ikev2_calc_iprangediff(
+					tsi[tsi_ni].low, tsi[tsi_ni].high);
 				int maskbits1 = ei->client.maskbits;
-				int fitbits1  = maskbits1 + ts_range1;
+				int fitbits1 = maskbits1 + ts_range1;
 
-				int ts_range2 =
-					ikev2_calc_iprangediff(tsr[tsr_ni].low,
-							       tsr[
-								       tsr_ni].high);
+				int ts_range2 = ikev2_calc_iprangediff(
+					tsr[tsr_ni].low, tsr[tsr_ni].high);
 				int maskbits2 = er->client.maskbits;
-				int fitbits2  = maskbits2 + ts_range2;
+				int fitbits2 = maskbits2 + ts_range2;
 				int fitbits = (fitbits1 << 8) + fitbits2;
 
 				/*
@@ -827,13 +818,10 @@ int ikev2_evaluate_connection_fit(struct connection *d,
 					fitbits = fitbits << 1;
 
 				DBG(DBG_CONTROLMORE,
-				    {
 					    DBG_log("      has ts_range1=%u maskbits1=%u ts_range2=%u maskbits2=%u fitbits=%d <> %d",
 						    ts_range1, maskbits1,
 						    ts_range2, maskbits2,
-						    fitbits, bestfit);
-				    }
-				    );
+						    fitbits, bestfit));
 
 				if (fitbits > bestfit)
 					bestfit = fitbits;
@@ -895,13 +883,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				DBG(DBG_CONTROLMORE,
 				    DBG_log("bfit_n=ikev2_evaluate_connection_fit found better fit c %s",
 					    c->name));
-				int bfit_p =
-					ikev2_evaluate_connection_port_fit(c,
-									   sra,
-									   role, tsi,
-									   tsr,
-									   tsi_n, tsr_n, &best_tsi_i,
-									   &best_tsr_i);
+				int bfit_p = ikev2_evaluate_connection_port_fit(
+					c, sra, role,
+					tsi, tsr,
+					tsi_n, tsr_n,
+					&best_tsi_i, &best_tsr_i);
 				if (bfit_p > bestfit_p) {
 					DBG(DBG_CONTROLMORE,
 					    DBG_log("ikev2_evaluate_connection_port_fit found better fit c %s, tsi[%d],tsr[%d]",
@@ -916,8 +902,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					if (bfit_pr > bestfit_pr ) {
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("ikev2_evaluate_connection_protocol_fit found better fit c %s, tsi[%d],tsr[%d]",
-							    c
-							    ->name, best_tsi_i,
+							    c->name,
+							    best_tsi_i,
 							    best_tsr_i));
 
 						bestfit_p = bfit_p;
@@ -938,8 +924,8 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			}
 		}
 
-		for (sra = &c->spd; hp == NULL && sra != NULL; sra =
-			     sra->next) {
+		for (sra = &c->spd; hp == NULL && sra != NULL;
+		     sra = sra->next) {
 			hp = find_host_pair(&sra->this.host_addr,
 					    sra->this.host_port,
 					    &sra->that.host_addr,
@@ -1073,7 +1059,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	/* start of SA out */
 	{
 		struct isakmp_sa r_sa = sa_pd->payload.sa;
-		notification_t rn;
+		stf_status ret;
 		pb_stream r_sa_pbs;
 
 		r_sa.isasa_np = ISAKMP_NEXT_v2TSi;
@@ -1081,12 +1067,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 			return STF_INTERNAL_ERROR;
 
 		/* SA body in and out */
-		rn = ikev2_parse_child_sa_body(&sa_pd->pbs,
+		ret = ikev2_parse_child_sa_body(&sa_pd->pbs,
 					       &sa_pd->payload.v2sa,
 					       &r_sa_pbs, st1, FALSE);
 
-		if (rn != NOTHING_WRONG)
-			return STF_FAIL + rn; /* should we delete_state st1? */
+		if (ret != STF_OK)
+			return ret;
 	}
 
 	ret = ikev2_calc_emit_ts(md, outpbs, role,
@@ -1094,12 +1080,12 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	if (ret != STF_OK)
 		return ret;           /* should we delete_state st1? */
 
-	if ( role == RESPONDER ) {
-		chunk_t child_spi, notifiy_data;
+	if (role == RESPONDER) {
 		struct payload_digest *p;
+
 		for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
-			if ( p->payload.v2n.isan_type ==
-			     v2N_USE_TRANSPORT_MODE ) {
+			if (p->payload.v2n.isan_type ==
+			    v2N_USE_TRANSPORT_MODE) {
 
 				if (st1->st_connection->policy &
 				    POLICY_TUNNEL) {
@@ -1110,18 +1096,21 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 					DBG_log("Now responding with USE_TRANSPORT_MODE notify");
 				}
 
-				memset(&child_spi, 0, sizeof(child_spi));
-				memset(&notifiy_data, 0, sizeof(notifiy_data));
-				ship_v2N(ISAKMP_NEXT_v2NONE,
+				/* In v2, for parent, protoid must be 0 and SPI must be empty */
+				if (!ship_v2N(ISAKMP_NEXT_v2NONE,
 					 ISAKMP_PAYLOAD_NONCRITICAL,
-				         /*PROTO_ISAKMP*/ 0,
-					 &child_spi,
-					 v2N_USE_TRANSPORT_MODE, &notifiy_data,
-					 outpbs);
+				         0 /* protoid */,
+					 &empty_chunk,
+					 v2N_USE_TRANSPORT_MODE, &empty_chunk,
+					 outpbs))
+					return STF_INTERNAL_ERROR;
 
 				if (st1->st_esp.present) {
-					/*libreswan supports only "esp" with ikev2 it seems, look at ikev2_parse_child_sa_body handling*/
 					st1->st_esp.attrs.encapsulation =
+						ENCAPSULATION_MODE_TRANSPORT;
+				}
+				if (st1->st_ah.present) {
+					st1->st_ah.attrs.encapsulation =
 						ENCAPSULATION_MODE_TRANSPORT;
 				}
 				break;

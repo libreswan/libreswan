@@ -1,8 +1,10 @@
 *~
 OBJ.*
 *.rej
+*.orig
 *.bak
 TAGS
+tags
 modobj
 modobj24
 modobj26
@@ -15,3 +17,4 @@ testing/x509/serial*
 testing/x509/nss-pw
 osxApp/build
 Makefile.inc.local
+kvmsetup.sh

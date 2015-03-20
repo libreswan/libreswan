@@ -1,0 +1,4 @@
+Same as dpd-08, but now with netkey on east.
+
+(note: the flush on east cannot work as west cannot reach east)
+

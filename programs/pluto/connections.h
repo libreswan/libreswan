@@ -136,21 +136,21 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
  * structures to change lots.
  */
 #include "x509.h"
+#include "x509more.h"
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
 
 struct virtual_t;
 
-struct ietfAttr;        /* forward declaration of ietfAttr defined in ac.h */
-struct host_pair;       /* opaque type */
+struct host_pair;	/* opaque type */
 
 struct end {
 	struct id id;
 	bool left;
 
 	enum keyword_host host_type;
-	char  *host_addr_name;   /* string version from whack */
+	char  *host_addr_name;	/* string version from whack */
 	ip_address
 		host_addr,
 		host_nexthop,
@@ -163,17 +163,16 @@ struct end {
 	bool has_port_wildcard;
 	bool has_id_wildcards;
 	char *updown;
-	u_int16_t host_port;            /* where the IKE port is */
-	bool host_port_specific;        /* if TRUE, then IKE ports are tested for*/
-	u_int16_t port;                 /* port number, if per-port keying. */
-	u_int8_t protocol;              /* transport-protocol number, if per-X keying.*/
+	u_int16_t host_port;		/* where the IKE port is */
+	bool host_port_specific;	/* if TRUE, then IKE ports are tested for*/
+	u_int16_t port;			/* port number, if per-port keying. */
+	u_int8_t protocol;		/* transport-protocol number, if per-X keying.*/
 
-	enum certpolicy sendcert;       /* whether or not to send the certificate */
-	char   *cert_filename;          /* where we got the certificate */
-	cert_t cert;                    /* end certificate */
+	enum certpolicy sendcert;	/* whether or not to send the certificate */
+	char   *cert_filename;		/* where we got the certificate */
+	cert_t cert;			/* end certificate */
 
-	chunk_t ca;                     /* CA distinguished name */
-	struct ietfAttrList *groups;    /* access control groups */
+	chunk_t ca;			/* CA distinguished name */
 
 	struct virtual_t *virt;
 
@@ -181,10 +180,10 @@ struct end {
 	bool xauth_client;
 	char *xauth_name;
 	char *xauth_password;
-	ip_range pool_range;    /* store start of v4 addresspool */
-	bool modecfg_server;    /* Give local addresses to tunnel's end */
-	bool modecfg_client;    /* request address for local end */
-
+	ip_range pool_range;	/* store start of v4 addresspool */
+	bool has_lease;		/* from address pool */
+	bool modecfg_server;	/* Give local addresses to tunnel's end */
+	bool modecfg_client;	/* request address for local end */
 };
 
 struct spd_route {
@@ -200,9 +199,9 @@ struct connection {
 	char *name;
 	char *connalias;
 	lset_t policy;
-	time_t sa_ike_life_seconds;
-	time_t sa_ipsec_life_seconds;
-	time_t sa_rekey_margin;
+	deltatime_t sa_ike_life_seconds;
+	deltatime_t sa_ipsec_life_seconds;
+	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	unsigned long sa_priority;
@@ -210,17 +209,18 @@ struct connection {
 	int encapsulation;
 
 	/* RFC 3706 DPD */
-	time_t dpd_delay;               /* time between checks */
-	time_t dpd_timeout;             /* time after which we are dead */
-	enum dpd_action dpd_action;     /* what to do when we die */
+	deltatime_t dpd_delay;		/* time between checks */
+	deltatime_t dpd_timeout;	/* time after which we are dead */
+	enum dpd_action dpd_action;	/* what to do when we die */
 
-	bool nat_keepalive;             /* Suppress sending NAT-T Keep-Alives */
-	bool initial_contact;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
-	bool cisco_unity;           /* Send INITIAL_CONTACT (RFC-2407) payload? */
-	bool send_vendorid;           /* Send our vendorid? Security vs Debugging help */
+	bool nat_keepalive;		/* Suppress sending NAT-T Keep-Alives */
+	bool initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
+	bool cisco_unity;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
+	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
 	bool sha2_truncbug;
+	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 
-	/*Network Manager support*/
+	/* Network Manager support */
 #ifdef HAVE_NM
 	bool nmconfigured;
 #endif
@@ -231,18 +231,18 @@ struct connection {
 	char *policy_label;
 #endif
 
-	/*Cisco interop: remote peer type*/
+	/* Cisco interop: remote peer type */
 	enum keyword_remotepeertype remotepeertype;
 
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;
 
-	bool forceencaps;                       /* always use NAT-T encap */
+	bool forceencaps;			/* always use NAT-T encap */
 
-	char              *log_file_name;       /* name of log file */
-	FILE              *log_file;            /* possibly open FILE */
-	CIRCLEQ_ENTRY(connection) log_link;     /* linked list of open conns {} */
-	bool log_file_err;                      /* only bitch once */
+	char *log_file_name;			/* name of log file */
+	FILE *log_file;				/* possibly open FILE */
+	CIRCLEQ_ENTRY(connection) log_link;	/* linked list of open conns {} */
+	bool log_file_err;			/* only bitch once */
 
 	struct spd_route spd;
 
@@ -250,38 +250,38 @@ struct connection {
 
 	unsigned long instance_serial;
 	policy_prio_t prio;
-	bool instance_initiation_ok;            /* this is an instance of a policy that mandates initiate */
+	bool instance_initiation_ok;		/* this is an instance of a policy that mandates initiate */
 	enum connection_kind kind;
-	const struct iface_port *interface;     /* filled in iff oriented */
+	const struct iface_port *interface;	/* filled in iff oriented */
 
 	bool initiated;
-	bool failed_ikev2;      /* tried ikev2, but failed */
+	bool failed_ikev2;	/* tried ikev2, but failed */
 
-	so_serial_t             /* state object serial number */
+	so_serial_t		/* state object serial number */
 		newest_isakmp_sa,
 		newest_ipsec_sa;
 
 	lset_t extra_debugging;
 
 	/* note: if the client is the gateway, the following must be equal */
-	sa_family_t addr_family;        /* between gateways */
-	sa_family_t tunnel_addr_family; /* between clients */
+	sa_family_t addr_family;	/* between gateways */
+	sa_family_t tunnel_addr_family;	/* between clients */
 
-	struct connection *policy_next; /* if multiple policies,
-	                                   next one to apply */
+	/* if multiple policies, next one to apply */
+	struct connection *policy_next;
 
 	struct gw_info *gw_info;
-	struct alg_info_esp *alg_info_esp;
+	struct alg_info_esp *alg_info_esp;	/* ??? OK for AH too? */
 	struct alg_info_ike *alg_info_ike;
 
-	struct host_pair *host_pair;    /* opaque type outside of connections.c/hostpair.c */
-	struct connection *hp_next;     /* host pair list link */
+	struct host_pair *host_pair;	/* opaque type outside of connections.c/hostpair.c */
+	struct connection *hp_next;	/* host pair list link */
 
-	struct connection *ac_next;     /* all connections list link */
+	struct connection *ac_next;	/* all connections list link */
 
-	generalName_t *requested_ca;    /* collected certificate requests */
+	generalName_t *requested_ca;	/* collected certificate requests */
 #ifdef XAUTH_HAVE_PAM
-	pam_handle_t  *pamh;            /*  PAM handle for that connection  */
+	pam_handle_t  *pamh;		/*  PAM handle for that connection  */
 #endif
 	char *dnshostname;
 
@@ -292,9 +292,9 @@ struct connection {
 	char *modecfg_domain;
 	char *modecfg_banner;
 
-	u_int8_t metric;          /* metric for tunnel routes */
-	u_int16_t connmtu;          /* mtu for tunnel routes */
-	u_int32_t statsval;             /* track what we have told statsd */
+	u_int8_t metric;	/* metric for tunnel routes */
+	u_int16_t connmtu;	/* mtu for tunnel routes */
+	u_int32_t statsval;	/* track what we have told statsd */
 };
 
 #define oriented(c) ((c).interface != NULL)
@@ -310,7 +310,7 @@ extern bool same_peer_ids(const struct connection *c,
 #define END_BUF (SUBNETTOT_BUF + ADDRTOT_BUF + IDTOA_BUF + ADDRTOT_BUF + 10)
 extern size_t format_end(char *buf, size_t buf_len,
 			 const struct end *this, const struct end *that,
-			 bool is_left, lset_t policy);
+			 bool is_left, lset_t policy, bool filter_rnh);
 
 struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm);
@@ -365,14 +365,8 @@ struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection
 *con_by_name(const char *nm, bool strict);
 
-#define find_host_connection(me, my_port, him, his_port, \
-			     policy) find_host_connection2(__FUNCTION__, me, \
-							   my_port, him, \
-							   his_port, \
-							   policy)
 extern struct connection
-	*find_host_connection2(const char *func,
-		       const ip_address *me, u_int16_t my_port,
+	*find_host_connection(const ip_address *me, u_int16_t my_port,
 		       const ip_address *him, u_int16_t his_port,
 		       lset_t policy),
 	*refine_host_connection(const struct state *st, const struct id *id,
@@ -486,3 +480,6 @@ extern int foreach_connection_by_alias(const char *alias,
 extern struct connection *unoriented_connections;
 
 extern void update_host_pairs(struct connection *c);
+
+extern void unshare_connection_end_strings(struct end *e);
+

@@ -24,13 +24,16 @@
 
 /* Attribute type and value pair.
  * Note: only "basic" values are represented so far.
+ * v2 is drastically simplified: there is only one attribute type
+ * and it applies to any v2 protocols.
  */
 struct db_attr {
 	union {
-		enum ikev1_oakley_attr oakley; /* ISAKMP_ATTR_AF_TV is implied;
-		                                  0 for end */
+		enum ikev1_oakley_attr oakley;	/* ISAKMP_ATTR_AF_TV is implied;
+						 * 0 for end
+						 */
 		enum ikev1_ipsec_attr ipsec;
-		unsigned int ikev2;
+		enum ikev2_trans_attr_type v2;	/* all v2 protocols */
 	} type;
 	u_int16_t val;
 };
@@ -150,7 +153,7 @@ extern struct db_sa ipsec_sadb[1 << 3];
 /* for db_prop_conj */
 #define AD_PC(x) .props = (x), .prop_cnt = elemsof(x)
 
-extern bool out_sa(pb_stream *outs,
+extern bool ikev1_out_sa(pb_stream *outs,
 		   struct db_sa *sadb,
 		   struct state *st,
 		   bool oakley_mode,
@@ -172,7 +175,7 @@ extern notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,           /* body 
 					   struct state *st);           /* current state object */
 
 /* initialize a state with the aggressive mode parameters */
-extern int init_am_st_oakley(struct state *st, lset_t policy);
+extern int init_aggr_st_oakley(struct state *st, lset_t policy);
 
 extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body of input SA Payload */
 					  const struct isakmp_sa *sa,   /* header of input SA Payload */
@@ -195,5 +198,7 @@ extern void sa_v2_print(struct db_sa *f);
 extern struct db_sa *sa_v2_convert(struct db_sa *f);
 
 extern bool ikev2_acceptable_group(struct state *st, oakley_group_t group);
+
+extern void clone_trans(struct db_trans *tr, int extra);
 
 #endif /*  _SPDB_H_ */

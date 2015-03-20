@@ -27,7 +27,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <getopt.h>
-#include <assert.h>
 #include <poll.h>
 
 #include <libreswan.h>
@@ -306,7 +305,7 @@ int main(int argc, char **argv)
 	const char *errstr;
 	int s;
 	int listen_only;
-	int lport, dport;
+	int lport;
 	int afamily;
 	int pfamily;
 	int c;
@@ -320,16 +319,14 @@ int main(int argc, char **argv)
 	afamily = AF_INET;
 	pfamily = PF_INET;
 	lport = 500;
-	dport = 500;
 	waitTime = 3 * 1000;
 	verbose = 0;
 	natt = 0;
 	listen_only = 0;
 	bzero(&laddr, sizeof(laddr));
 
-	while ((c =
-			getopt_long(argc, argv, "hVvsp:b:46E:M:m:L:l:w:", long_opts,
-				    0)) != EOF) {
+	while ((c = getopt_long(argc, argv, "hVvsp:b:46E:M:m:L:l:w:", long_opts,
+				0)) != EOF) {
 		switch (c) {
 		case 'h':               /* --help */
 			help();
@@ -444,7 +441,7 @@ int main(int argc, char **argv)
 			continue;
 
 		default:
-			assert(FALSE); /* unknown return value */
+			exit(1);
 		}
 	}
 
@@ -495,12 +492,12 @@ int main(int argc, char **argv)
 		while (optind < argc) {
 			char *port;
 			char *host;
+			int dport = 500;
 			char namebuf[128];
 
 			host = argv[optind];
 
 			port = strchr(host, '/');
-			dport = 500;
 			if (port) {
 				*port = '\0';
 				port++;

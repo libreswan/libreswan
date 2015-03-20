@@ -11,21 +11,20 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
  * License for more details.
- *
  */
 #include "internal.h"
 #include "libreswan.h"
 
 /*
-   - initsubnet - initialize ip_subnet from address and count
+ * initsubnet - initialize ip_subnet from address and count
  *
  * The only hard part is checking for host-part bits turned on.
  */
-err_t                           /* NULL for success, else string literal */
+err_t	/* NULL for success, else string literal */
 initsubnet(addr, count, clash, dst)
 const ip_address * addr;
 int count;
-int clash;                      /* '0' zero host-part bits, 'x' die on them */
+int clash;	/* '0' zero host-part bits, 'x' die on them */
 ip_subnet *dst;
 {
 	unsigned char *p;
@@ -61,7 +60,7 @@ ip_subnet *dst;
 
 	m = 0xff;
 	c = count % 8;
-	if (n > 0 && c != 0)    /* partial byte */
+	if (n > 0 && c != 0)	/* partial byte */
 		m >>= c;
 	for (; n > 0; n--) {
 		if ((*p & m) != 0) {
@@ -79,9 +78,9 @@ ip_subnet *dst;
 }
 
 /*
-   - addrtosubnet - initialize ip_subnet from a single address
+ * addrtosubnet - initialize ip_subnet from a single address
  */
-err_t                           /* NULL for success, else string literal */
+err_t	/* NULL for success, else string literal */
 addrtosubnet(addr, dst)
 const ip_address * addr;
 ip_subnet *dst;

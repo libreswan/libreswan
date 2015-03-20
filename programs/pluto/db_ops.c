@@ -108,12 +108,10 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
 {
 	void *ptr = alloc_bytes(size, str);
 
-	if (ptr) {
-		st->st_curr_cnt++;
-		st->st_total_cnt++;
-		if (size > st->st_maxsz)
-			st->st_maxsz = size;
-	}
+	st->st_curr_cnt++;
+	st->st_total_cnt++;
+	if (size > st->st_maxsz)
+		st->st_maxsz = size;
 	return ptr;
 }
 #define ALLOC_BYTES_ST(z, s, st) alloc_bytes_st(z, s, &st);
@@ -130,11 +128,9 @@ static __inline__ void * alloc_bytes_st(size_t size, const char *str,
  *	max_trans and max_attrs can be 0, will be dynamically expanded
  *	as a result of "add" operations
  */
-static int db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
+static void db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
 		 int max_attrs)
 {
-	int ret = -1;
-
 	ctx->trans0 = NULL;
 	ctx->attrs0 = NULL;
 
@@ -143,23 +139,14 @@ static int db_prop_init(struct db_context *ctx, u_int8_t protoid, int max_trans,
 			sizeof(struct db_trans) * max_trans,
 			"db_context->trans",
 			db_trans_st);
-		if (!ctx->trans0)
-			goto out;
 	}
 
 	if (max_attrs > 0) { /* quite silly if not */
 		ctx->attrs0 = ALLOC_BYTES_ST(
 			sizeof(struct db_attr) * max_attrs,
 			"db_context->attrs", db_attrs_st);
-		if (!ctx->attrs0)
-			goto out;
 	}
-	ret = 0;
-out:
-	if (ret < 0 && ctx->trans0) {
-		PFREE_ST(ctx->trans0, db_trans_st);
-		ctx->trans0 = NULL;
-	}
+
 	ctx->max_trans = max_trans;
 	ctx->max_attrs = max_attrs;
 	ctx->trans_cur = ctx->trans0;
@@ -167,13 +154,11 @@ out:
 	ctx->prop.protoid = protoid;
 	ctx->prop.trans = ctx->trans0;
 	ctx->prop.trans_cnt = 0;
-	return ret;
 }
 
 /*	Expand storage for transforms by number delta_trans */
-static int db_trans_expand(struct db_context *ctx, int delta_trans)
+static void db_trans_expand(struct db_context *ctx, int delta_trans)
 {
-	int ret = -1;
 	struct db_trans *new_trans, *old_trans;
 	int max_trans = ctx->max_trans + delta_trans;
 	ptrdiff_t offset;
@@ -181,8 +166,6 @@ static int db_trans_expand(struct db_context *ctx, int delta_trans)
 	old_trans = ctx->trans0;
 	new_trans = ALLOC_BYTES_ST( sizeof(struct db_trans) * max_trans,
 				    "db_context->trans (expand)", db_trans_st);
-	if (!new_trans)
-		goto out;
 	memcpy(new_trans, old_trans, ctx->max_trans * sizeof(struct db_trans));
 
 	/* update trans0 (obviously) */
@@ -200,17 +183,13 @@ static int db_trans_expand(struct db_context *ctx, int delta_trans)
 	ctx->max_trans = max_trans;
 	if (old_trans)
 		PFREE_ST(old_trans, db_trans_st);
-	ret = 0;
-out:
-	return ret;
 }
 /*
  *	Expand storage for attributes by delta_attrs number AND
  *	rewrite trans->attr pointers
  */
-static int db_attrs_expand(struct db_context *ctx, int delta_attrs)
+static void db_attrs_expand(struct db_context *ctx, int delta_attrs)
 {
-	int ret = -1;
 	struct db_attr *new_attrs, *old_attrs;
 	struct db_trans *t;
 	unsigned int ti;
@@ -220,8 +199,6 @@ static int db_attrs_expand(struct db_context *ctx, int delta_attrs)
 	old_attrs = ctx->attrs0;
 	new_attrs = ALLOC_BYTES_ST( sizeof(struct db_attr) * max_attrs,
 				    "db_context->attrs (expand)", db_attrs_st);
-	if (!new_attrs)
-		goto out;
 
 	memcpy(new_attrs, old_attrs, ctx->max_attrs * sizeof(struct db_attr));
 
@@ -253,9 +230,6 @@ static int db_attrs_expand(struct db_context *ctx, int delta_attrs)
 	ctx->max_attrs = max_attrs;
 	if (old_attrs)
 		PFREE_ST(old_attrs, db_attrs_st);
-	ret = 0;
-out:
-	return ret;
 }
 
 /*	Allocate a new db object */
@@ -265,14 +239,8 @@ struct db_context *db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
 
 	ctx = ALLOC_BYTES_ST( sizeof(struct db_context), "db_context",
 			      db_context_st);
-	if (!ctx)
-		goto out;
 
-	if (db_prop_init(ctx, protoid, max_trans, max_attrs) < 0) {
-		PFREE_ST(ctx, db_context_st);
-		ctx = NULL;
-	}
-out:
+	db_prop_init(ctx, protoid, max_trans, max_attrs);
 	return ctx;
 }
 
@@ -287,7 +255,7 @@ void db_destroy(struct db_context *ctx)
 }
 
 /*	Start a new transform, expand trans0 is needed */
-int db_trans_add(struct db_context *ctx, u_int8_t transid)
+void db_trans_add(struct db_context *ctx, u_int8_t transid)
 {
 	/*	skip incrementing current trans pointer the 1st time*/
 	if (ctx->trans_cur && ctx->trans_cur->attr_cnt)
@@ -302,43 +270,37 @@ int db_trans_add(struct db_context *ctx, u_int8_t transid)
 	 */
 	passert(ctx->trans_cur != NULL);
 	if ((ctx->trans_cur - ctx->trans0) >= ctx->max_trans) {
-		/* XXX:jjo if fails should shout and flag it */
-		if (db_trans_expand(ctx, ctx->max_trans / 2 + 1) < 0)
-			return -1;
+		db_trans_expand(ctx, ctx->max_trans / 2 + 1);
 	}
 	ctx->trans_cur->transid = transid;
 	ctx->trans_cur->attrs = ctx->attrs_cur;
 	ctx->trans_cur->attr_cnt = 0;
 	ctx->prop.trans_cnt++;
-	return 0;
 }
 
 /*	Add attr copy to current transform, expanding attrs0 if needed */
-static int db_attr_add(struct db_context *ctx, const struct db_attr *a)
+static void db_attr_add(struct db_context *ctx, const struct db_attr *a)
 {
 	/*
 	 *	Strategy: if more space is needed, expand by
 	 *	          <current_size>/2 + 1
 	 */
 	if ((ctx->attrs_cur - ctx->attrs0) >= ctx->max_attrs) {
-		/* XXX:jjo if fails should shout and flag it */
-		if (db_attrs_expand(ctx, ctx->max_attrs / 2 + 1) < 0)
-			return -1;
+		db_attrs_expand(ctx, ctx->max_attrs / 2 + 1);
 	}
 	*ctx->attrs_cur++ = *a;
 	ctx->trans_cur->attr_cnt++;
-	return 0;
 }
 /*	Add attr copy (by value) to current transform,
  *	expanding attrs0 if needed, just calls db_attr_add().
  */
-int db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
+void db_attr_add_values(struct db_context *ctx,  u_int16_t type, u_int16_t val)
 {
 	struct db_attr attr;
 
 	attr.type.oakley = type;
 	attr.val = val;
-	return db_attr_add(ctx, &attr);
+	db_attr_add(ctx, &attr);
 }
 #ifndef NO_DB_OPS_STATS
 void db_ops_show_status(void)
@@ -350,8 +312,7 @@ void db_ops_show_status(void)
 		  DB_OPS_STATS_STR("attrs"),
 		  DB_OPS_STATS_F(db_context_st),
 		  DB_OPS_STATS_F(db_trans_st),
-		  DB_OPS_STATS_F(db_attrs_st)
-		  );
+		  DB_OPS_STATS_F(db_attrs_st));
 }
 #endif /* NO_DB_OPS_STATS */
 /*
@@ -384,24 +345,21 @@ static void db_prop_print(struct db_prop *p)
 
 		for (ai = 0, a = t->attrs; ai < t->attr_cnt; ai++, a++) {
 			int i;
+
 			switch ( p->protoid) {
 			case PROTO_ISAKMP:
 				n_at = &oakley_attr_names;
 				i = a->type | ISAKMP_ATTR_AF_TV;
-				n_av =
-					oakley_attr_val_descs[(i) &
-							      ISAKMP_ATTR_RTYPE_MASK
-					];
+				n_av = oakley_attr_val_descs[
+					i & ISAKMP_ATTR_RTYPE_MASK];
 				break;
 
 			case PROTO_IPSEC_AH:
 			case PROTO_IPSEC_ESP:
 				n_at = &ipsec_attr_names;
 				i = a->type | ISAKMP_ATTR_AF_TV;
-				n_av =
-					ipsec_attr_val_descs[(i) &
-							     ISAKMP_ATTR_RTYPE_MASK
-					];
+				n_av = ipsec_attr_val_descs[
+					i & ISAKMP_ATTR_RTYPE_MASK];
 				break;
 			default:
 				continue;

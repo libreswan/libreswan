@@ -1,12 +1,8 @@
-: ==== start ====
-TESTNAME=nat-transport-02
-source /testing/pluto/bin/eastlocal.sh
-
-sh /etc/init.d/inetd restart
-
+/testing/guestbin/swan-prep
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-
-ipsec auto --add north--east-port3
-ipsec whack --debug-control --debug-controlmore --debug-crypt
-
+ipsec auto --add north-east-port3
+ipsec auto --add north-east-pass
+nc -4 -l 192.1.2.23 2 &
+nc -4 -l 192.1.2.23 3 &
+echo "initdone"

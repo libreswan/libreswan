@@ -436,12 +436,11 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips,
 		return skb;
 	}
 
-	if ( (((struct ipcomphdr*)((char*) oiph + iphlen))->ipcomp_flags !=
-	      0) ||
-	     ((((struct ipcomphdr*) ((char*) oiph + iphlen))->ipcomp_cpi !=
-	       htons(SADB_X_CALG_DEFLATE)) &&
+	if (((struct ipcomphdr*)((char*) oiph + iphlen))->ipcomp_flags != 0 ||
+	     (((struct ipcomphdr*) ((char*) oiph + iphlen))->ipcomp_cpi !=
+	       htons(SADB_X_CALG_DEFLATE) &&
 	      sysctl_ipsec_inbound_policy_check &&
-	      (!ips || (ips && (ips->ips_encalg != SADB_X_CALG_DEFLATE)))) ) {
+	      (ips == NULL || ips->ips_encalg != SADB_X_CALG_DEFLATE))) {
 		KLIPS_PRINT(sysctl_ipsec_debug_ipcomp,
 			    "klips_error:skb_decompress: "
 			    "called with incompatible IPCOMP packet (flags=%d, "
@@ -450,7 +449,7 @@ struct sk_buff *skb_decompress(struct sk_buff *skb, struct ipsec_sa *ips,
 							iphlen))->ipcomp_flags),
 			    ntohs(((struct ipcomphdr*) ((char*) oiph +
 							iphlen))->ipcomp_cpi),
-			    ips ? ips->ips_encalg : 0);
+			    ips == NULL ? 0 : ips->ips_encalg);
 		*flags |= IPCOMP_PARMERROR;
 
 		return skb;

@@ -1,4 +1,5 @@
-/* Memory allocation routines
+/*
+ * Memory allocation routines
  * Header: "lswalloc.h"
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
@@ -12,9 +13,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
+#include <pthread.h>	/* pthread.h must be first include file */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -28,27 +29,23 @@
 #include "constants.h"
 #include "lswlog.h"
 
-/* leave enabled so support functions are always in libswan, and
- * pluto can be recompiled with just the leak detective changes
- * ??? this seems dangerous and stupid
- */
-#define LEAK_DETECTIVE
 #include "lswalloc.h"
 
-int leak_detective = 0;
+bool leak_detective = FALSE;	/* must not change after first alloc! */
 
 const chunk_t empty_chunk = { NULL, 0 };
 
-static exit_log_func_t exit_log_func;
+static exit_log_func_t exit_log_func = NULL;	/* allow for customer to customize */
 
-void set_exit_log_func(exit_log_func_t func)
+void set_alloc_exit_log_func(exit_log_func_t func)
 {
 	exit_log_func = func;
 }
 
-/* memory allocation
+/*
+ * memory allocation
  *
- * LEAK_DETECTIVE puts a wrapper around each allocation and maintains
+ * --leak_detective puts a wrapper around each allocation and maintains
  * a list of live ones.  If a dead one is freed, an assertion MIGHT fail.
  * If the live list is currupted, that will often be detected.
  * In the end, report_leaks() is called, and the names of remaining
@@ -70,13 +67,16 @@ union mhdr {
 		union mhdr *older, *newer;
 		unsigned long magic;
 		unsigned long size;
-	} i;                    /* info */
-	unsigned long junk;     /* force maximal alignment */
+	} i;	/* info */
+	unsigned long long junk;	/* force maximal alignment */
 };
+
+/* protects updates to the leak-detective linked list */
+static pthread_mutex_t leak_detective_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static union mhdr *allocs = NULL;
 
-static void *alloc_bytes1(size_t size, const char *name, int ld)
+static void *alloc_bytes_raw(size_t size, const char *name)
 {
 	union mhdr *p;
 
@@ -85,7 +85,8 @@ static void *alloc_bytes1(size_t size, const char *name, int ld)
 		size = 1;
 	}
 
-	if (ld) {
+	if (leak_detective) {
+		/* fail on overflow */
 		if (sizeof(union mhdr) + size < size)
 			return NULL;
 
@@ -95,50 +96,54 @@ static void *alloc_bytes1(size_t size, const char *name, int ld)
 	}
 
 	if (p == NULL) {
-		if (getenv("LIBRESWAN_SNAPSHOT_MALLOC_FAIL")) {
-			if (fork() == 0) /* in child */
-				lsw_abort();
-		}
-		if (exit_log_func) {
+		if (exit_log_func != NULL) {
 			(*exit_log_func)("unable to malloc %lu bytes for %s",
-					 (unsigned long) size, name);
+					(unsigned long) size, name);
 		}
+		abort();
 	}
 
-	if (ld) {
+	if (leak_detective) {
 		p->i.name = name;
 		p->i.size = size;
-		p->i.older = allocs;
-		if (allocs != NULL)
-			allocs->i.newer = p;
-		allocs = p;
-		p->i.newer = NULL;
 		p->i.magic = LEAK_MAGIC;
+		p->i.newer = NULL;
+		{
+			pthread_mutex_lock(&leak_detective_mutex);
+			p->i.older = allocs;
+			if (allocs != NULL)
+				allocs->i.newer = p;
+			allocs = p;
+			pthread_mutex_unlock(&leak_detective_mutex);
+		}
 		return p + 1;
 	} else {
 		return p;
 	}
-
 }
 
-void leak_pfree(void *ptr, int leak)
+void pfree(void *ptr)
 {
-	union mhdr *p;
+	if (leak_detective) {
+		union mhdr *p;
 
-	if (leak) {
 		passert(ptr != NULL);
 		p = ((union mhdr *)ptr) - 1;
 		passert(p->i.magic == LEAK_MAGIC);
-		if (p->i.older != NULL) {
-			passert(p->i.older->i.newer == p);
-			p->i.older->i.newer = p->i.newer;
-		}
-		if (p->i.newer == NULL) {
-			passert(p == allocs);
-			allocs = p->i.older;
-		} else {
-			passert(p->i.newer->i.older == p);
-			p->i.newer->i.older = p->i.older;
+		{
+			pthread_mutex_lock(&leak_detective_mutex);
+			if (p->i.older != NULL) {
+				passert(p->i.older->i.newer == p);
+				p->i.older->i.newer = p->i.newer;
+			}
+			if (p->i.newer == NULL) {
+				passert(p == allocs);
+				allocs = p->i.older;
+			} else {
+				passert(p->i.newer->i.older == p);
+				p->i.newer->i.older = p->i.older;
+			}
+			pthread_mutex_unlock(&leak_detective_mutex);
 		}
 		p->i.magic = ~LEAK_MAGIC;
 		free(p);
@@ -147,16 +152,16 @@ void leak_pfree(void *ptr, int leak)
 	}
 }
 
-#ifdef LEAK_DETECTIVE
 void report_leaks(void)
 {
-	union mhdr
-	*p = allocs,
-	*pprev = NULL;
+	union mhdr *p,
+		*pprev = NULL;
 	unsigned long n = 0;
 	unsigned long numleaks = 0;
 	unsigned long total = 0;
 
+	pthread_mutex_lock(&leak_detective_mutex);
+	p = allocs;
 	while (p != NULL) {
 		passert(p->i.magic == LEAK_MAGIC);
 		passert(pprev == p->i.newer);
@@ -164,54 +169,43 @@ void report_leaks(void)
 		p = p->i.older;
 		n++;
 		if (p == NULL || pprev->i.name != p->i.name) {
-			if (n != 1)
-				libreswan_log("leak: %lu * %s, item size: %lu",
-					      n, pprev->i.name, pprev->i.size);
-
-
-			else
-				libreswan_log("leak: %s, item size: %lu",
-					      pprev->i.name, pprev->i.size);
-			numleaks += n;
-			total += pprev->i.size;
-			n = 0;
+			/* filter out one-time leaks we prefer to not fix */
+			if (strstr(pprev->i.name, "(ignore)") == NULL) {
+				if (n != 1)
+					libreswan_log("leak: %lu * %s, item size: %lu",
+						n, pprev->i.name, pprev->i.size);
+				else
+					libreswan_log("leak: %s, item size: %lu",
+						pprev->i.name, pprev->i.size);
+				numleaks += n;
+				total += pprev->i.size;
+				n = 0;
+			} else {
+				n = 0;
+			}
 		}
 	}
+	pthread_mutex_unlock(&leak_detective_mutex);
+
 	if (numleaks != 0)
 		libreswan_log("leak detective found %lu leaks, total size %lu",
-			      numleaks, total);
+			numleaks, total);
 	else
 		libreswan_log("leak detective found no leaks");
-
 }
 
-#endif /* !LEAK_DETECTIVE */
-
-void *alloc_bytes2(size_t size, const char *name, int ld)
+void *alloc_bytes(size_t size, const char *name)
 {
-	void *p = alloc_bytes1(size, name, ld);
+	void *p = alloc_bytes_raw(size, name);
 
-	if (p == NULL) {
-		if (exit_log_func) {
-			(*exit_log_func)("unable to malloc %lu bytes for %s",
-					 (unsigned long) size, name);
-		}
-	}
 	memset(p, '\0', size);
 	return p;
 }
 
-void *clone_bytes2(const void *orig, size_t size, const char *name,
-		   int ld)
+void *clone_bytes(const void *orig, size_t size, const char *name)
 {
-	void *p = alloc_bytes1(size, name, ld);
+	void *p = alloc_bytes_raw(size, name);
 
-	if (p == NULL) {
-		if (exit_log_func) {
-			(*exit_log_func)("unable to malloc %lu bytes for %s",
-					 (unsigned long) size, name);
-		}
-	}
 	memcpy(p, orig, size);
 	return p;
 }

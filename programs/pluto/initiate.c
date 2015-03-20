@@ -39,21 +39,18 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 #include "kameipsec.h"
 
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
 #include "secrets.h"
 
 #include "defs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -194,7 +191,7 @@ static int initiate_a_connection(struct connection *c,
 	} else if (NEVER_NEGOTIATE(c->policy)) {
 		loglog(RC_INITSHUNT,
 		       "cannot initiate an authby=never connection");
-	} else if ( (c->kind != CK_PERMANENT) &&
+	} else if ((c->kind != CK_PERMANENT) &&
 		    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
@@ -202,7 +199,7 @@ static int initiate_a_connection(struct connection *c,
 				loglog(RC_NOPEERIP,
 				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				       enum_show(&connection_kind_names,
-						 c->kind) );
+						 c->kind));
 				success = 1;
 				c->policy |= POLICY_UP;
 			} else
@@ -253,7 +250,7 @@ static int initiate_a_connection(struct connection *c,
 					c->policy, alg, TRUE);
 
 				if (alg != NULL && phase2_sa == NULL) {
-					whack_log(RC_NOALGO,
+					whack_log(RC_LOG_SERIOUS,
 						  "can not initiate: no acceptable kernel algorithms loaded");
 					reset_cur_connection();
 					close_any(is->whackfd);
@@ -484,9 +481,8 @@ static void cannot_oppo(struct connection *c,
 		if (DBGP(DBG_OPPO | DBG_CONTROLMORE)) {
 			char state_buf[LOG_WIDTH];
 			char state_buf2[LOG_WIDTH];
-			const time_t n = now();
 
-			fmt_state(st, n, state_buf, sizeof(state_buf),
+			fmt_state(st, mononow(), state_buf, sizeof(state_buf),
 				  state_buf2, sizeof(state_buf2));
 			DBG_log("cannot_oppo, failure SA1: %s", state_buf);
 			DBG_log("cannot_oppo, failure SA2: %s", state_buf2);
@@ -658,8 +654,8 @@ static err_t check_txt_recs(enum myid_state try_state,
 		struct gw_info *gwp;
 
 		ugh = "no IPSECKEY RR found for us";
-		for (gwp = ac->gateways_from_dns; gwp != NULL; gwp =
-			     gwp->next) {
+		for (gwp = ac->gateways_from_dns; gwp != NULL;
+		     gwp = gwp->next) {
 			ugh = "all our IPSECKEY RRs have the wrong public key";
 			if (gwp->key->alg == PUBKEY_ALG_RSA &&
 			    same_RSA_public_key(&our_RSA_pri->pub,
@@ -695,10 +691,9 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 	int work = 0;
 
 	/* on klips/mast assume we will do something */
-	work =
-		(kern_interface == USE_KLIPS || kern_interface ==
-		 USE_MASTKLIPS ||
-		 kern_interface == USE_NETKEY);
+	work = kern_interface == USE_KLIPS ||
+	       kern_interface == USE_MASTKLIPS ||
+	       kern_interface == USE_NETKEY;
 
 	/* What connection shall we use?
 	 * First try for one that explicitly handles the clients.
@@ -711,7 +706,8 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 
 #ifdef HAVE_LABELED_IPSEC
 	char sec_ctx_value[MAX_SECCTX_LEN];
-	memset(sec_ctx_value, 0, sizeof(sec_ctx_value));
+
+	zero(&sec_ctx_value);
 	if (uctx != NULL)
 		memcpy(sec_ctx_value, uctx->sec_ctx_value, uctx->ctx_len);
 	DBG(DBG_CONTROLMORE,
@@ -748,7 +744,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 		cannot_oppo(NULL, b, "no routed template covers this pair");
 		work = 0;
-	} else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPO) == 0) {
+	} else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
 			loggedit = TRUE;
@@ -785,8 +781,8 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 
 		/* otherwise, there is some kind of static conn that can handle
-		 * this connection, so we initiate it */
-
+		 * this connection, so we initiate it
+		 */
 		if (b->held) {
 			/* what should we do on failure? */
 			(void) assign_hold(c, sr, b->transport_proto,
@@ -827,7 +823,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		idtoa(&sr->this.id, mycredentialstr, sizeof(mycredentialstr));
 
-		passert(c->policy & POLICY_OPPO); /* can't initiate Road Warrior connections */
+		passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
 		/* handle any DNS answer; select next step */
 
@@ -925,15 +921,13 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 				 */
 				struct gw_info *gwp;
 
-				ugh =
-					"no IPSECKEY RR for our client delegates us";
+				ugh = "no IPSECKEY RR for our client delegates us";
 				for (gwp = ac->gateways_from_dns; gwp != NULL;
 				     gwp = gwp->next) {
 					passert(same_id(&gwp->gw_id,
 							&sr->this.id));
 
-					ugh =
-						"IPSECKEY RR for our client has wrong key";
+					ugh = "IPSECKEY RR for our client has wrong key";
 					/* If there is a key from the IPSECKEY record,
 					 * we count it as a win if we match the key.
 					 * If there was no key, we have a tentative win:
@@ -989,8 +983,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 					passert(same_id(&gwp->gw_id,
 							&sr->this.id));
 
-					ugh =
-						"IPSECKEY RR for us has wrong key";
+					ugh = "IPSECKEY RR for us has wrong key";
 					if (gwp->gw_key_present &&
 					    same_RSA_public_key(&our_RSA_pri->
 								pub,
@@ -1071,7 +1064,6 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 							   &b->our_client,
 							   &b->peer_client);
 				}
-				c->gw_info->key->last_tried_time = now();
 				DBG(DBG_OPPO | DBG_CONTROL,
 				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
 					    ours, ourport, his, hisport,
@@ -1163,7 +1155,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 				    myid_state != MYID_SPECIFIED) {
 					cr->b.failure_ok = TRUE;
 					cr->b.want = b->want =
-							     "IPSECKEY record for IP address as %myid";
+						"IPSECKEY record for IP address as %myid";
 					ugh = start_adns_query(&myids[MYID_IP],
 							       &myids[MYID_IP],
 							       ns_t_txt,
@@ -1179,15 +1171,13 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 				    myid_state != MYID_SPECIFIED) {
 					cr->b.failure_ok = FALSE;
 					cr->b.want = b->want =
-							     "IPSECKEY record for hostname as %myid";
-					ugh =
-						start_adns_query(&myids[
-									 MYID_HOSTNAME],
-								 &myids[
-									 MYID_HOSTNAME],
-								 ns_t_txt,
-								 continue_oppo,
-								 &cr->ac);
+						"IPSECKEY record for hostname as %myid";
+					ugh = start_adns_query(&myids[
+								 MYID_HOSTNAME],
+							       &myids[MYID_HOSTNAME],
+							       ns_t_txt,
+							       continue_oppo,
+							       &cr->ac);
 					break;
 				}
 
@@ -1201,7 +1191,7 @@ static int initiate_ondemand_body(struct find_oppo_bundle *b,
 					 * Note: {unshare|free}_id_content not needed for id: ephemeral.
 					 */
 					cr->b.want = b->want =
-							     "our client's IPSECKEY record";
+						"our client's IPSECKEY record";
 					iptoid(&b->our_client, &id);
 					ugh = start_adns_query(&id,
 							       &c->spd.this.id, /* we are the security gateway */
@@ -1260,8 +1250,7 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {
 	c->newest_isakmp_sa = serial;
 
-	if (uniqueIDs && (!c->spd.this.xauth_server)
-	    ) {
+	if (uniqueIDs && !c->spd.this.xauth_server) {
 		/*
 		 * for all connections: if the same Phase 1 IDs are used
 		 * for different IP addresses, unorient that connection.
@@ -1271,20 +1260,25 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 		struct connection *d;
 
 		for (d = connections; d != NULL; ) {
-			struct connection *next = d->ac_next; /* might move underneath us */
+			/* might move underneath us */
+			struct connection *next = d->ac_next;
 
-			if ( ((d->kind == CK_PERMANENT) ||
-			      (d->kind == CK_INSTANCE) ||
-			      (d->kind == CK_GOING_AWAY)) &&
-			     same_id(&c->spd.this.id, &d->spd.this.id) &&
-			     same_id(&c->spd.that.id, &d->spd.that.id) &&
-			     (!sameaddr(&c->spd.that.host_addr,
-					&d->spd.that.host_addr) ||
-			      (c->spd.that.host_port != d->spd.that.host_port))
-			     && !(c->dnshostname && d->dnshostname &&
-				  streq(c->dnshostname, d->dnshostname))
-			     ) {
-				/*  Paul and AA  tried to delete phase2 didn't really work.
+			if ((d->kind == CK_PERMANENT ||
+			     d->kind == CK_INSTANCE ||
+			     d->kind == CK_GOING_AWAY) &&
+			    same_id(&c->spd.this.id, &d->spd.this.id) &&
+			    same_id(&c->spd.that.id, &d->spd.that.id) &&
+			    addrtypeof(&c->spd.that.host_addr) ==
+				addrtypeof(&d->spd.that.host_addr) &&
+			    (!sameaddr(&c->spd.that.host_addr,
+				  &d->spd.that.host_addr) ||
+			      c->spd.that.host_port !=
+				  d->spd.that.host_port) &&
+			    !(c->dnshostname && d->dnshostname &&
+			      streq(c->dnshostname, d->dnshostname))) {
+				/*
+				 * Paul and AA  tried to delete phase2
+				 * didn't really work.
 				 * delete_p2states_by_connection(d);
 				 */
 				release_connection(d, FALSE);
@@ -1315,8 +1309,8 @@ struct connection *shunt_owner(const ip_subnet *ours, const ip_subnet *his)
 }
 
 
-#define PENDING_DDNS_INTERVAL (60) /* time before retrying DDNS host lookup
-	                              for phase 1*/
+/* time before retrying DDNS host lookup for phase 1 */
+#define PENDING_DDNS_INTERVAL secs_per_minute
 
 /*
  * call me periodically to check to see if any DDNS tunnel can come up
@@ -1351,7 +1345,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 	}
 
-	e = ttoaddr(c->dnshostname, 0, 0, &new_addr);
+	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
 		DBG(DBG_CONTROL,
 		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",
@@ -1425,7 +1419,8 @@ void connection_check_ddns(void)
 	check_orientations();
 }
 
-#define PENDING_PHASE2_INTERVAL (60 * 2) /*time between scans of pending phase2*/
+/* time between scans of pending phase2 */
+#define PENDING_PHASE2_INTERVAL (2 * secs_per_minute)
 
 /*
  * call me periodically to check to see if pending phase2s ever got
@@ -1461,6 +1456,7 @@ void connection_check_phase2(void)
 
 		if (pending_check_timeout(c)) {
 			struct state *p1st;
+
 			libreswan_log(
 				"pending Quick Mode with %s \"%s\" took too long -- replacing phase 1",
 				ip_str(&c->spd.that.host_addr),
@@ -1470,20 +1466,19 @@ void connection_check_phase2(void)
 						 ISAKMP_SA_ESTABLISHED_STATES |
 						 PHASE1_INITIATOR_STATES);
 
-			if (p1st) {
+			if (p1st != NULL) {
 				/* arrange to rekey the phase 1, if there was one. */
 				if (c->dnshostname != NULL) {
 					restart_connections_by_peer(c);
 				} else {
-				delete_event(p1st);
-				event_schedule(EVENT_SA_REPLACE, 0, p1st);
-			}
-
+					delete_event(p1st);
+					event_schedule(EVENT_SA_REPLACE, 0, p1st);
+				}
 			} else {
 				/* start a new connection. Something wanted it up */
 				struct initiate_stuff is;
 
-				is.whackfd   = NULL_FD;
+				is.whackfd = NULL_FD;
 				is.moredebug = 0;
 				is.importance = pcim_local_crypto;
 

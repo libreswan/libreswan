@@ -67,7 +67,7 @@ Makefile.depend: *.c ${srcdir}Makefile
 east.record: ${LIBRESWANSRCDIR}/programs/pluto/rcv_whack.c
 	(cd ${LIBRESWANSRCDIR}/programs/pluto && unset LIBRESWANSRCDIR && pl_inst.sh)
 	(cd ${LIBRESWANSRCDIR}/testing/pluto/whackrecord-01 && ../../utils/runme.sh )
-	. ${LIBRESWANSRCDIR}/umlsetup.sh; cp $$POOLSPACE/east/root/var/tmp/east.record .
+	. ${LIBRESWANSRCDIR}/kvmsetup.sh; cp $$POOLSPACE/east/root/var/tmp/east.record .
 
 updatepcaps:
 	cp lib-parentI1/parentI1.pcap lib-parentR1

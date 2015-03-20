@@ -41,11 +41,6 @@ ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
-ifeq ($(USE_DMALLOC),true)
-CFLAGS+=-DDMALLOC
-LIBS+= -ldmalloc
-endif
-
 MANDIR8=$(MANTREE)/man8
 MANDIR5=$(MANTREE)/man5
 
@@ -94,8 +89,8 @@ endif
 
 ifneq ($(NOINSTALL),true)
 
-doinstall:: $(PROGRAMLIST) $(LIBFILES)
-	@mkdir -p $(PROGRAMDIR) $(MANDIR8) $(MANDIR5) $(LIBDIR) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
+doinstall:: $(PROGRAMLIST)
+	@mkdir -p $(PROGRAMDIR) $(MANDIR8) $(MANDIR5) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
 	@if [ -n "$(PROGRAM)" ]; then $(INSTALL) $(INSTBINFLAGS) $(PROGRAM) $(PROGRAMDIR); fi
 	@$(foreach f, $(addsuffix .8, $(PROGRAM)), \
 		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
@@ -112,10 +107,6 @@ doinstall:: $(PROGRAMLIST) $(LIBFILES)
 	@$(foreach f, $(EXTRA5PROC), \
 		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
 		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR5)/ipsec_$f || exit 1 ;\
-	)
-	@$(foreach f, $(LIBFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
-		$(INSTALL) $(INSTCONFFLAGS) $$g $(LIBDIR)/$f || exit 1 ;\
 	)
 	@$(foreach f, $(CONFFILES), \
 		g=`if [ -r $f ]; then echo $f; else echo ${srcdir}/$f; fi`; \
@@ -144,9 +135,6 @@ install_file_list::
 	)
 	@$(foreach f, $(EXTRA5PROC), \
 		echo $(MANDIR5)/ipsec_$f; \
-	)
-	@$(foreach f, $(LIBFILES), \
-		echo $(LIBDIR)/$f;\
 	)
 	@$(foreach f, $(CONFFILES), \
 		echo $(CONFDIR)/$f;\

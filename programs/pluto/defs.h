@@ -32,18 +32,17 @@ typedef unsigned long so_serial_t;
 #define SOS_NOBODY      0       /* null serial number */
 #define SOS_FIRST       1       /* first normal serial number */
 
+extern monotime_t mononow(void);	/* monotonic variant of time(2) */
+
 /* warns a predefined interval before expiry */
-extern const char* check_expiry(time_t expiration_date,
-				int warning_interval, bool strict);
+extern const char *check_expiry(realtime_t expiration_date,
+				time_t warning_interval, bool strict);
 
 /* cleanly exit Pluto */
 
 extern void exit_pluto(int /*status*/) NEVER_RETURNS;
 
 typedef u_int32_t msgid_t;      /* Network order for ikev1, host order for ikev2 */
-
-/* zero all bytes */
-#define zero(x) memset((x), '\0', sizeof(*(x)))
 
 /* are all bytes 0? */
 extern bool all_zero(const unsigned char *m, size_t len);

@@ -12,5 +12,4 @@
  * for more details.
  */
 
-extern bool parse_pkcs1_private_key(chunk_t blob, rsa_privkey_t *key);
 extern bool parse_pkcs7_cert(chunk_t blob, x509cert_t **cert);

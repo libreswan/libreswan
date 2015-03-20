@@ -197,16 +197,18 @@ int ipsec_spi_format(struct ipsec_sa *sa_p, struct seq_file *seq)
 		int j;
 		seq_printf(seq, " iv_bits=%dbits iv=0x", sa_p->ips_iv_bits);
 
+		for (j = 0; j < sa_p->ips_iv_bits / 8; j++) {
 #ifdef CONFIG_KLIPS_OCF
-		if (!sa_p->ips_iv) {
-			/* ocf doesn't set the IV, fake it for the UML tests */
-			seq_printf(seq, "0cf0");
-			for (j = 0; j < (sa_p->ips_iv_bits / 8) - 2; j++)
-				seq_printf(seq, "%02x", (int) ((((long)sa_p) >> j) & 0xff));
-		} else
+			if (sa_p->ips_iv == NULL) {
+				/*
+				 * ocf doesn't set the IV
+				 * so fake it for the test cases
+				 */
+				seq_printf(seq, "%02x", 0xA5 + j);
+			} else
 #endif
-		for (j = 0; j < sa_p->ips_iv_bits / 8; j++)
-			seq_printf(seq, "%02x", (__u32)((__u8*)(sa_p->ips_iv))[j]);
+			seq_printf(seq, "%02x", ((__u8*)sa_p->ips_iv)[j]);
+		}
 	}
 
 	if (sa_p->ips_encalg || sa_p->ips_authalg) {
@@ -466,17 +468,17 @@ int ipsec_saref_show(struct seq_file *seq, void *offset)
 		    seq, offset);
 
 #ifdef IP_IPSEC_REFINFO
-	seq_printf(seq, "refinfo patch applied\n", ipsec_version_code());
+	seq_printf(seq, "refinfo patch applied\n");
 #endif
 
 #ifdef IP_IPSEC_BINDREF
-	seq_printf(seq, "bindref patch applied\n", ipsec_version_code());
+	seq_printf(seq, "bindref patch applied\n");
 #endif
 
 #ifdef CONFIG_INET_IPSEC_SAREF
-	seq_printf(seq, "saref enabled\n", ipsec_version_code());
+	seq_printf(seq, "saref enabled (%s)\n", ipsec_version_code());
 #else
-	seq_printf(seq, "saref disabled\n", ipsec_version_code());
+	seq_printf(seq, "saref disabled (%s)\n", ipsec_version_code());
 #endif
 
 	return 0;

@@ -12,9 +12,17 @@
  * for more details.
  */
 
+#ifndef PLUTO_RND_H
+#define PLUTO_RND_H
+
+/* for SHA1_DIGEST_SIZE */
+#include "constants.h"
+#include "ietf_constants.h"
+
 extern u_char secret_of_the_day[SHA1_DIGEST_SIZE];
 extern u_char ikev2_secret_of_the_day[SHA1_DIGEST_SIZE];
 
 extern void get_rnd_bytes(u_char *buffer, int length);
 extern void init_rnd_pool(void);
 extern void init_secret(void);
+#endif

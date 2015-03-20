@@ -123,8 +123,8 @@ static void confwrite_int(FILE *out,
 				int val = options[k->field];
 				fprintf(out, "\t%s%s=", side, k->keyname);
 
-				if (k->type == kt_loose_enum && val ==
-				    LOOSE_ENUM_OTHER) {
+				if (k->type == kt_loose_enum &&
+				    val == LOOSE_ENUM_OTHER) {
 					fprintf(out, "%s\n",
 						strings[k->field]);
 				} else {
@@ -350,10 +350,10 @@ static void confwrite_side(FILE *out,
 		}
 	}
 
-	if (end->rsakey1 != NULL)
+	if (end->rsakey1 != NULL && end->rsakey1[0] != '\0')
 		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsakey1);
 
-	if (end->rsakey2 != NULL)
+	if (end->rsakey2 != NULL && end->rsakey2[0] != '\0')
 		fprintf(out, "\t%srsasigkey2=%s\n", side, end->rsakey2);
 
 	if (end->port != 0 || end->protocol != 0) {
@@ -367,7 +367,7 @@ static void confwrite_side(FILE *out,
 			snprintf(protostr, sizeof(protostr), "%u", end->protocol);
 
 		fprintf(out, "\t%sprotoport=%s/%s\n", side,
-			portstr, protostr);
+			protostr, portstr);
 	}
 
 	if (end->cert)
@@ -459,7 +459,7 @@ static void confwrite_conn(FILE *out,
 			dsn = "start";
 			break;
 		}
-		cwf("auto=", dsn);
+		cwf("auto", dsn);
 	}
 
 	if (conn->policy) {

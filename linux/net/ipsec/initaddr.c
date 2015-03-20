@@ -30,8 +30,6 @@ unsigned short port;
 		break;
 	default:
 		return "unknown address family in add_port";
-
-		break;
 	}
 	return NULL;
 }
@@ -87,8 +85,6 @@ ip_address *dst;
 		break;
 	default:
 		return "unknown address family in initaddr";
-
-		break;
 	}
 	return NULL;
 }

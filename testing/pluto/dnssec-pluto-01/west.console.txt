@@ -4,10 +4,10 @@ west #
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -16,7 +16,7 @@ west #
 west #
  iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
 west #
- # confirm with a ping to east-in
+ # confirm with a ping
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -29,13 +29,12 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 west #
  # ensure this test cases has USE_DNSSEC compiled pluto
 west #
- ipsec pluto --version |grep DNSSEC
-Libreswan v3.5-270-g9a367cf-master KLIPS NSS DNSSEC NAT-T CURL(non-NSS)
+ ipsec pluto --version |grep DNSSEC | sed "s/Libreswan v[^ ]* /Libreswan vVERSION /"
+Libreswan vVERSION XFRM(netkey) KLIPS NSS DNSSEC LABELED_IPSEC LIBCAP_NG XAUTH_PAM NETWORKMANAGER KLIPS_MAST CURL(non-NSS)
 west #
  echo 192.1.2.23 east-from-hosts-file.example.com east-from-hosts-file >> /etc/hosts
 west #
- ipsec _stackmanager start
-[ 00.00] NET: Registered protocol family 15
+ ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -43,13 +42,15 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
+[ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
-west #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add westnet-eastnet-etc-hosts
+002 added connection description "westnet-eastnet-etc-hosts"
 west #
  ipsec auto --status | egrep "oriented|east-from-hosts"
 000 "westnet-eastnet-etc-hosts": 192.0.1.0/24===192.1.2.45<192.1.2.45>[@west]...192.1.2.23<east-from-hosts-file>[@east]===192.0.2.0/24; unrouted; eroute owner: #0
@@ -61,22 +62,28 @@ west #
 initdone
 west #
  ipsec auto --up  westnet-eastnet-etc-hosts
+002 "westnet-eastnet-etc-hosts" #1: initiating Main Mode
 104 "westnet-eastnet-etc-hosts" #1: STATE_MAIN_I1: initiate
 003 "westnet-eastnet-etc-hosts" #1: received Vendor ID payload [Dead Peer Detection]
 003 "westnet-eastnet-etc-hosts" #1: received Vendor ID payload [FRAGMENTATION]
+003 "westnet-eastnet-etc-hosts" #1: received Vendor ID payload [RFC 3947]
+002 "westnet-eastnet-etc-hosts" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
 106 "westnet-eastnet-etc-hosts" #1: STATE_MAIN_I2: sent MI2, expecting MR2
+003 "westnet-eastnet-etc-hosts" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
 108 "westnet-eastnet-etc-hosts" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "westnet-eastnet-etc-hosts" #1: received Vendor ID payload [CAN-IKEv2]
-004 "westnet-eastnet-etc-hosts" #1: STATE_MAIN_I4: ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=aes_128 prf=oakley_sha group=modp2048}
+002 "westnet-eastnet-etc-hosts" #1: Main mode peer ID is ID_FQDN: '@east'
+004 "westnet-eastnet-etc-hosts" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 prf=sha group=MODP2048}
+002 "westnet-eastnet-etc-hosts" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-etc-hosts" #2: STATE_QUICK_I1: initiate
-004 "westnet-eastnet-etc-hosts" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode
+004 "westnet-eastnet-etc-hosts" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
-64 bytes from 192.0.2.254: icmp_req=1 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=2 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=3 ttl=64 time=0.XXX ms
-64 bytes from 192.0.2.254: icmp_req=4 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
+64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -88,10 +95,10 @@ west #
 west NOW
 192.0.1.0/24       -> 192.0.2.0/24       => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45  natencap=none natsport=0 natdport=0   refhim=0
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128  natencap=none natsport=0 natdport=0   refhim=0
-esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128  natencap=none natsport=0 natdport=0   refhim=1
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<>  natencap=none natsport=0 natdport=0   refhim=1
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -110,7 +117,7 @@ west #
 002 shutting down
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

@@ -471,7 +471,6 @@ DEBUG_NO_STATIC void klips_header_cache_update(struct hh_cache *hh,
 		    "klips_debug:ipsec_tunnel: "
 		    "Revectored cache_update\n");
 	prv->dev->header_ops->cache_update(hh, prv->dev, haddr);
-	return;
 }
 
 const struct header_ops klips_header_ops ____cacheline_aligned = {
@@ -984,7 +983,7 @@ void ipsec_tunnel_xsm_complete(struct ipsec_xmit_state *ixs,
 	spin_unlock_bh(&eroute_lock);
 
 	if ( /*((ixs->orgdst != ixs->newdst) || (ixs->orgsrc != ixs->newsrc))*/
-		ip_address_cmp(&ixs->orgedst, &ixs->outgoing_said.dst) != 0 &&
+		!ip_address_eq(&ixs->orgedst, &ixs->outgoing_said.dst) &&
 		!ip_address_isany(&ixs->outgoing_said.dst) &&
 		ixs->eroute) {
 		KLIPS_PRINT(debug_tunnel & DB_TN_XMIT,
@@ -1180,9 +1179,8 @@ DEBUG_NO_STATIC int ipsec_tunnel_hard_header(struct sk_buff *skb,
 	tmp = skb->dev;
 	skb->dev = prv->dev;
 #ifdef HAVE_NETDEV_HEADER_OPS
-	ret =
-		prv->header_ops->create(skb, prv->dev, type, (void *)daddr,
-					(void *)saddr, len);
+	ret = prv->header_ops->create(skb, prv->dev, type, (void *)daddr,
+				      (void *)saddr, len);
 #else
 	ret = prv->hard_header(skb, prv->dev, type, (void *)daddr,
 			       (void *)saddr, len);
@@ -1368,7 +1366,6 @@ DEBUG_NO_STATIC void ipsec_tunnel_cache_update(struct hh_cache *hh,
 #else
 	prv->header_cache_update(hh, prv->dev, haddr);
 #endif
-	return;
 }
 
 #ifdef HAVE_NETDEV_HEADER_OPS
@@ -1403,8 +1400,18 @@ DEBUG_NO_STATIC int ipsec_tunnel_neigh_setup_dev(struct net_device *dev,
 
 	if (p->tbl->family == AF_INET) {
 		p->neigh_setup = ipsec_tunnel_neigh_setup;
+#ifdef NEIGH_VAR_SET
+		/*
+		 * see kernel's include/net/neighbour.h
+		 * ??? Not sure which to use:
+		 * NEIGH_VAR_INIT or NEIGH_VAR_INIT
+		 */
+		NEIGH_VAR_SET(p, UCAST_PROBES, 0);
+		NEIGH_VAR_SET(p, MCAST_PROBES, 0);
+#else
 		p->ucast_probes = 0;
 		p->mcast_probes = 0;
+#endif
 	}
 	return 0;
 }
@@ -1905,8 +1912,7 @@ int ipsec_device_event(struct notifier_block *unused, unsigned long event,
 
 			priv = netdev_to_ipsecpriv(ipsec_dev);
 			if (priv) {
-				if (((struct net_device *)(priv->dev)) ==
-				    dev) {
+				if (((struct net_device *)(priv->dev)) == dev) {
 					/* dev_close(ipsec_dev); */
 					/* return */
 					ipsec_tunnel_detach(ipsec_dev);

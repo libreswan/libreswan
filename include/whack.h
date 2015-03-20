@@ -22,7 +22,7 @@
 #define _WHACK_H
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
+#include "ietf_constants.h"
 
 /* Since the message remains on one host, native representation is used.
  * Think of this as horizontal microcode: all selected operations are
@@ -41,7 +41,7 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 39)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 40)
 
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
@@ -76,7 +76,7 @@ struct whack_end {
 	bool modecfg_client;
 	unsigned int tundev;
 	enum certpolicy sendcert;
-	enum ipsec_cert_type certtype;
+	enum ike_cert_type certtype;
 
 	char *host_addr_name;   /* DNS name for host, of hosttype==IPHOSTNAME*/
 	                        /* pluto will convert to IP address again,
@@ -120,15 +120,15 @@ struct whack_message {
 	bool whack_async;
 
 	lset_t policy;
-	time_t sa_ike_life_seconds;
-	time_t sa_ipsec_life_seconds;
-	time_t sa_rekey_margin;
+	deltatime_t sa_ike_life_seconds;
+	deltatime_t sa_ipsec_life_seconds;
+	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
-	time_t dpd_delay;
-	time_t dpd_timeout;
+	deltatime_t dpd_delay;
+	deltatime_t dpd_timeout;
 	enum dpd_action dpd_action;
 	int dpd_count;
 
@@ -140,6 +140,8 @@ struct whack_message {
 
 	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled  */
 	bool nat_keepalive;
+	/* Option to tweak sending NATT drafts, rfc or both  */
+	enum ikev1_natt_policy ikev1_natt;
 
 	/* Option to allow sending INITIAL-CONTACT payload - default is disabled */
 	bool initial_contact;
@@ -298,14 +300,9 @@ struct whack_message {
 #define LIST_PUBKEYS    0x0001  /* list all public keys */
 #define LIST_CERTS      0x0002  /* list all host/user certs */
 #define LIST_CACERTS    0x0004  /* list all ca certs */
-#define LIST_ACERTS     0x0008  /* list all attribute certs */
-#define LIST_AACERTS    0x0010  /* list all aa certs */
-/* #define LIST_OCSPCERTS	0x0020	obsoleted, was: list all ocsp certs */
-#define LIST_GROUPS     0x0020  /* list all access control groups */
-#define LIST_CRLS       0x0040  /* list all crls */
-/* #define LIST_OCSP	0x0100	obsoleted, was list all ocsp cache entries */
-#define LIST_PSKS       0x0080  /* list all preshared keys (by name) */
-#define LIST_EVENTS     0x0100  /* list all queued events */
+#define LIST_CRLS       0x0008  /* list all crls */
+#define LIST_PSKS       0x0010  /* list all preshared keys (by name) */
+#define LIST_EVENTS     0x0020  /* list all queued events */
 
 /* omit events from listing options */
 #define LIST_ALL        LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */
@@ -315,10 +312,7 @@ struct whack_message {
 #define REREAD_NONE       0x00                                  /* don't reread anything */
 #define REREAD_SECRETS    0x01                                  /* reread /etc/ipsec.secrets */
 #define REREAD_CACERTS    0x02                                  /* reread certs in /etc/ipsec.d/cacerts */
-#define REREAD_AACERTS    0x04                                  /* reread certs in /etc/ipsec.d/aacerts */
-/* #define REREAD_OCSPCERTS  0x08	obsoleted, was reread certs in /etc/ipsec.d/ocspcerts */
-#define REREAD_ACERTS     0x08                                  /* reread certs in /etc/ipsec.d/acerts */
-#define REREAD_CRLS       0x10                                  /* reread crls in /etc/ipsec.d/crls */
+#define REREAD_CRLS       0x04                                  /* reread crls in /etc/ipsec.d/crls */
 #define REREAD_ALL      LRANGES(REREAD_SECRETS, REREAD_CRLS)    /* all reread options */
 
 struct whackpacker {

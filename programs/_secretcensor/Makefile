@@ -15,6 +15,5 @@ LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=_secretcensor
-PROGRAMDIR=${LIBDIR}
 
 include ${srcdir}../Makefile.program

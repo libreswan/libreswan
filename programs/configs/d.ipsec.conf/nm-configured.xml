@@ -1,0 +1,10 @@
+  <varlistentry>
+  <term><emphasis remap='B'>nm-configured</emphasis></term>
+  <listitem>
+<para>Mark this connection as controlled by Network Manager.
+Acceptable values are <emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>no</emphasis>
+(the default). Currently, setting this to yes will cause libreswan to skip
+reconfiguring resolv.conf when used with XAUTH and ModeConfig.</para>
+  </listitem>
+  </varlistentry>
+

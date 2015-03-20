@@ -1,8 +1,5 @@
 /testing/guestbin/swan-prep
-ipsec _stackmanager start 
-/usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf 
+ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-# intentionally comment out this policy
-# ipsec auto --add westnet-eastnet
-ipsec auto --status
+ipsec auto --add westnet-all
 echo "initdone"

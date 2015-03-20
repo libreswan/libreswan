@@ -1,7 +1,6 @@
 /testing/guestbin/swan-prep
 west #
- ipsec _stackmanager start
-[ 00.00] NET: Registered protocol family 15
+ ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
 [ 00.00] ipsec_3des_init(alg_type=15 alg_id=3 name=3des): ret=0
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=12 name=cbc(aes) keyminbits=128 keymaxbits=256, found(0)
@@ -9,18 +8,15 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=252 name=cbc(serpent) keyminbits=128 keymaxbits=256, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
-[ 00.00] alg: No test for cipher_null (cipher_null-generic)
-[ 00.00] alg: No test for ecb(cipher_null) (ecb-cipher_null)
-[ 00.00] alg: No test for digest_null (digest_null-generic)
-[ 00.00] alg: No test for compress_null (compress_null-generic)
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
 [ 00.00] 
-west #
- /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+Redirecting to: systemctl start ipsec.service
+[ 00.00] 
 west #
  /testing/pluto/bin/wait-until-pluto-started
 west #
  ipsec auto --add west-east
+002 added connection description "west-east"
 west #
  echo "initdone"
 initdone
@@ -38,11 +34,19 @@ west #
  # bring up the tunnel
 west #
  ipsec auto --up west-east
+002 "west-east" #1: initiating Aggressive Mode #1, connection "west-east"
 112 "west-east" #1: STATE_AGGR_I1: initiate
 003 "west-east" #1: received Vendor ID payload [Dead Peer Detection]
-004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=OAKLEY_RSA_SIG cipher=oakley_3des_cbc_192 prf=oakley_sha group=modp1536}
+003 "west-east" #1: received Vendor ID payload [RFC 3947]
+002 "west-east" #1: Aggressive mode peer ID is ID_FQDN: '@east'
+002 "west-east" #1: enabling possible NAT-traversal with method RFC 3947 (NAT-Traversal)
+003 "west-east" #1: NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
+004 "west-east" #1: STATE_AGGR_I2: sent AI2, ISAKMP SA established {auth=RSA_SIG cipher=oakley_3des_cbc_192 prf=sha group=MODP1536}
+002 "west-east" #1: Dead Peer Detection (RFC 3706): enabled
+002 "west-east" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "west-east" #2: STATE_QUICK_I1: initiate
-004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=enabled}
+002 "west-east" #2: Dead Peer Detection (RFC 3706): enabled
+004 "west-east" #2: STATE_QUICK_I2: sent QI2, IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=active}
 west #
  # use the tunnel
 west #
@@ -98,7 +102,7 @@ west #
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms, pipe 2
 west #
  # Tunnel should be back up now
 west #
@@ -115,10 +119,10 @@ west #
 west NOW
 192.1.2.45/32      -> 192.1.2.23/32      => tun0xIPIP@192.1.2.23 esp0xESPSPI@192.1.2.23
 ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=0
-esp0xKLIPSPIK@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=na   refhim=5
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.1.2.23/32->192.1.2.45/32 flags=0x8<> jiffies=0123456789  natencap=na   refhim=5
+tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=5
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.1.2.23/32->192.1.2.45/32 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=5
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 169.254.0.0/16 dev eth0  scope link  metric 1002 
@@ -138,7 +142,7 @@ west #
 002 shutting down
 west #
 west #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 west #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

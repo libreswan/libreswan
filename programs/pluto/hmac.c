@@ -50,50 +50,49 @@ static SECOidTag nss_hash_oid(const struct hash_desc *hasher);
 
 void hmac_init(struct hmac_ctx *ctx,
 	       const struct hash_desc *h,
-	       const u_char *key, size_t key_len)
+	       /*const*/ PK11SymKey *symkey)	/* NSS doesn't like const! */
 {
+	SECStatus status;
+	PK11SymKey
+		*tkey1,
+		*tkey2;
+	unsigned int klen = PK11_GetKeyLength(symkey);
+	chunk_t hmac_opad, hmac_ipad, hmac_pad;
+
 	ctx->h = h;
 	ctx->hmac_digest_len = h->hash_digest_len;
 
 	/* DBG(DBG_CRYPT, DBG_log("NSS: hmac init")); */
-	SECStatus status;
-	PK11SymKey *symkey = NULL, *tkey1 = NULL;
-	/* PK11SymKey *tkey1=NULL; */
-	unsigned int klen;
-	chunk_t hmac_opad, hmac_ipad, hmac_pad;
-
-	memcpy(&symkey, key, key_len);
-	klen =  PK11_GetKeyLength(symkey);
 
 	hmac_opad = hmac_pads(HMAC_OPAD, h->hash_block_size);
 	hmac_ipad = hmac_pads(HMAC_IPAD, h->hash_block_size);
 	hmac_pad  = hmac_pads(0x00, h->hash_block_size - klen);
 
 	if (klen > h->hash_block_size) {
-		tkey1 = PK11_Derive_lsw(symkey, nss_key_derivation_mech(
-						h),
-					NULL, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+		tkey1 = PK11_Derive_lsw(symkey, nss_key_derivation_mech(h),
+					NULL,
+					CKM_CONCATENATE_BASE_AND_DATA,
+					CKA_DERIVE,
 					0);
 	} else {
 		tkey1 = symkey;
 	}
 
-	PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(tkey1,
-						    CKM_CONCATENATE_BASE_AND_DATA,
-						    hmac_pad, CKM_XOR_BASE_AND_DATA, CKA_DERIVE,
-						    h->hash_block_size);
+	tkey2 = pk11_derive_wrapper_lsw(tkey1, CKM_CONCATENATE_BASE_AND_DATA,
+					hmac_pad,
+					CKM_XOR_BASE_AND_DATA, CKA_DERIVE,
+					h->hash_block_size);
+	passert(tkey2 != NULL);
 
-	PR_ASSERT(tkey2 != NULL);
 	ctx->ikey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA,
-					    hmac_ipad, nss_hash_mech(
-						    h), CKA_DIGEST, 0);
+					    hmac_ipad, nss_hash_mech(h),
+					    CKA_DIGEST, 0);
+	passert(ctx->ikey != NULL);
 
-	PR_ASSERT(ctx->ikey != NULL);
 	ctx->okey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA,
-					    hmac_opad, nss_hash_mech(
-						    h), CKA_DIGEST, 0);
-
-	PR_ASSERT(ctx->okey != NULL);
+					    hmac_opad, nss_hash_mech(h),
+					    CKA_DIGEST, 0);
+	passert(ctx->okey != NULL);
 
 	if (tkey1 != symkey)
 		PK11_FreeSymKey(tkey1);
@@ -103,14 +102,13 @@ void hmac_init(struct hmac_ctx *ctx,
 	freeanychunk(hmac_ipad);
 	freeanychunk(hmac_pad);
 	ctx->ctx_nss = PK11_CreateDigestContext(nss_hash_oid(h));
-	PR_ASSERT(ctx->ctx_nss != NULL);
+	passert(ctx->ctx_nss != NULL);
 
 	status = PK11_DigestBegin(ctx->ctx_nss);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 
 	status = PK11_DigestKey(ctx->ctx_nss, ctx->ikey);
-	PR_ASSERT(status == SECSuccess);
-
+	passert(status == SECSuccess);
 }
 
 void hmac_update(struct hmac_ctx *ctx,
@@ -118,41 +116,44 @@ void hmac_update(struct hmac_ctx *ctx,
 {
 	DBG(DBG_CRYPT, DBG_dump("hmac_update data value: ", data, data_len));
 	if (data_len > 0) {
+		SECStatus status;
+
 		DBG(DBG_CRYPT, DBG_log("hmac_update: inside if"));
-		SECStatus status = PK11_DigestOp(ctx->ctx_nss, data, data_len);
+		status = PK11_DigestOp(ctx->ctx_nss, data, data_len);
 		DBG(DBG_CRYPT, DBG_log("hmac_update: after digest"));
-		PR_ASSERT(status == SECSuccess);
+		passert(status == SECSuccess);
 		DBG(DBG_CRYPT, DBG_log("hmac_update: after assert"));
 	}
 }
 
 void hmac_final(u_char *output, struct hmac_ctx *ctx)
 {
-	unsigned int outlen = 0;
-	SECStatus status = PK11_DigestFinal(ctx->ctx_nss, output, &outlen,
-					    ctx->hmac_digest_len);
+	unsigned int outlen;
+	SECStatus status;
 
-	PR_ASSERT(status == SECSuccess);
-	PR_ASSERT(outlen == ctx->hmac_digest_len);
+	status = PK11_DigestFinal(ctx->ctx_nss, output, &outlen,
+					    ctx->hmac_digest_len);
+	passert(status == SECSuccess);
+	passert(outlen == ctx->hmac_digest_len);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
 	ctx->ctx_nss = NULL;
 
 	ctx->ctx_nss = PK11_CreateDigestContext(nss_hash_oid(ctx->h));
-	PR_ASSERT(ctx->ctx_nss != NULL);
+	passert(ctx->ctx_nss != NULL);
 
 	status = PK11_DigestBegin(ctx->ctx_nss);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 
 	status = PK11_DigestKey(ctx->ctx_nss, ctx->okey);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 
 	status = PK11_DigestOp(ctx->ctx_nss, output, outlen);
-	PR_ASSERT(status == SECSuccess);
+	passert(status == SECSuccess);
 
 	status = PK11_DigestFinal(ctx->ctx_nss, output, &outlen,
 				  ctx->hmac_digest_len);
-	PR_ASSERT(status == SECSuccess);
-	PR_ASSERT(outlen == ctx->hmac_digest_len);
+	passert(status == SECSuccess);
+	passert(outlen == ctx->hmac_digest_len);
 	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
 
 	if (ctx->ikey != NULL)
@@ -164,21 +165,28 @@ void hmac_final(u_char *output, struct hmac_ctx *ctx)
 
 static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
 {
-	SECOidTag mechanism = 0;
+	SECOidTag mechanism;
 
 	switch (hasher->common.algo_id) {
-	case OAKLEY_MD5:       mechanism = SEC_OID_MD5;
+	case OAKLEY_MD5:
+		mechanism = SEC_OID_MD5;
 		break;
-	case OAKLEY_SHA1:      mechanism = SEC_OID_SHA1;
+	case OAKLEY_SHA1:
+		mechanism = SEC_OID_SHA1;
 		break;
-	case OAKLEY_SHA2_256:  mechanism = SEC_OID_SHA256;
+	case OAKLEY_SHA2_256:
+		mechanism = SEC_OID_SHA256;
 		break;
-	case OAKLEY_SHA2_384:  mechanism = SEC_OID_SHA384;
+	case OAKLEY_SHA2_384:
+		mechanism = SEC_OID_SHA384;
 		break;
-	case OAKLEY_SHA2_512:  mechanism = SEC_OID_SHA512;
+	case OAKLEY_SHA2_512:
+		mechanism = SEC_OID_SHA512;
 		break;
-	default: DBG(DBG_CRYPT,
-		     DBG_log("NSS: key derivation mechanism not supported"));
+	default:
+		libreswan_log("NSS: key derivation mechanism (hasher->common.algo_id=%d not supported",
+			hasher->common.algo_id);
+		mechanism = 0;	/* ??? what should we do to recover? */
 		break;
 	}
 	return mechanism;
@@ -186,21 +194,29 @@ static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
 
 static CK_MECHANISM_TYPE nss_hash_mech(const struct hash_desc *hasher)
 {
-	CK_MECHANISM_TYPE mechanism = 0x80000000;
+	CK_MECHANISM_TYPE mechanism;
 
 	switch (hasher->common.algo_id) {
-	case OAKLEY_MD5:       mechanism = CKM_MD5;
+	case OAKLEY_MD5:
+		mechanism = CKM_MD5;
 		break;
-	case OAKLEY_SHA1:      mechanism = CKM_SHA_1;
+	case OAKLEY_SHA1:
+		mechanism = CKM_SHA_1;
 		break;
-	case OAKLEY_SHA2_256:  mechanism = CKM_SHA256;
+	case OAKLEY_SHA2_256:
+		mechanism = CKM_SHA256;
 		break;
-	case OAKLEY_SHA2_384:  mechanism = CKM_SHA384;
+	case OAKLEY_SHA2_384:
+		mechanism = CKM_SHA384;
 		break;
-	case OAKLEY_SHA2_512:  mechanism = CKM_SHA512;
+	case OAKLEY_SHA2_512:
+		mechanism = CKM_SHA512;
 		break;
-	default:  DBG(DBG_CRYPT,
+	default:
+		/* ??? surely this requires more than a DBG entry! */
+		DBG(DBG_CRYPT,
 		      DBG_log("NSS: key derivation mechanism not supported"));
+		mechanism = 0x80000000;	/* ??? what should we do to recover? */
 		break;
 	}
 	return mechanism;
@@ -223,20 +239,21 @@ PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
 			   keySize);
 }
 
+/* MUST BE THREAD-SAFE */
 PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 			     SECItem *param, CK_MECHANISM_TYPE target,
 			     CK_ATTRIBUTE_TYPE operation, int keysize)
 {
-	SECOidTag oid;
-	PK11Context *ctx;
-	unsigned char dkey[HMAC_BUFSIZE * 2];
-	SECItem dkey_param;
-	SECStatus status;
-	unsigned int len = 0;
-	CK_EXTRACT_PARAMS bs;
-	chunk_t dkey_chunk;
+	if (param == NULL && keysize == 0) {
+		SECOidTag oid;
+		PK11Context *ctx;
+		unsigned char dkey[HMAC_BUFSIZE * 2];
+		SECItem dkey_param;
+		SECStatus status;
+		unsigned int len;
+		CK_EXTRACT_PARAMS bs;
+		chunk_t dkey_chunk;
 
-	if ( (param == NULL) && (keysize == 0)) {
 		switch (mechanism) {
 		case CKM_SHA256_KEY_DERIVATION:
 			oid = SEC_OID_SHA256;
@@ -253,12 +270,13 @@ PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 		}
 
 		ctx = PK11_CreateDigestContext(oid);
-		PR_ASSERT(ctx != NULL);
+		passert(ctx != NULL);
 		status = PK11_DigestBegin(ctx);
-		PR_ASSERT(status == SECSuccess);
+		passert(status == SECSuccess);
 		status = PK11_DigestKey(ctx, base);
-		PR_ASSERT(status == SECSuccess);
-		PK11_DigestFinal(ctx, dkey, &len, sizeof dkey);
+		passert(status == SECSuccess);
+		status = PK11_DigestFinal(ctx, dkey, &len, sizeof dkey);
+		passert(status == SECSuccess);
 		PK11_DestroyContext(ctx, PR_TRUE);
 
 		dkey_chunk.ptr = dkey;
@@ -267,7 +285,7 @@ PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(base,
 							    CKM_CONCATENATE_DATA_AND_BASE, dkey_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 							    0);
-		PR_ASSERT(tkey1 != NULL);
+		passert(tkey1 != NULL);
 
 		bs = 0;
 		dkey_param.data = (unsigned char*)&bs;
@@ -276,7 +294,7 @@ PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 						CKM_EXTRACT_KEY_FROM_KEY,
 						&dkey_param, target, operation,
 						len);
-		PR_ASSERT(tkey2 != NULL);
+		passert(tkey2 != NULL);
 
 		if (tkey1 != NULL)
 			PK11_FreeSymKey(tkey1);
@@ -287,7 +305,6 @@ PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 		return PK11_Derive(base, mechanism, param, target, operation,
 				   keysize);
 	}
-
 }
 
 CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
@@ -295,19 +312,25 @@ CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
 	CK_MECHANISM_TYPE mechanism = 0x80000000;
 
 	switch (hasher->common.algo_id) {
-	case OAKLEY_MD5:       mechanism = CKM_MD5_KEY_DERIVATION;
+	case OAKLEY_MD5:
+		mechanism = CKM_MD5_KEY_DERIVATION;
 		break;
-	case OAKLEY_SHA1:      mechanism = CKM_SHA1_KEY_DERIVATION;
+	case OAKLEY_SHA1:
+		mechanism = CKM_SHA1_KEY_DERIVATION;
 		break;
-	case OAKLEY_SHA2_256:  mechanism = CKM_SHA256_KEY_DERIVATION;
+	case OAKLEY_SHA2_256:
+		mechanism = CKM_SHA256_KEY_DERIVATION;
 		break;
-	case OAKLEY_SHA2_384:  mechanism = CKM_SHA384_KEY_DERIVATION;
+	case OAKLEY_SHA2_384:
+		mechanism = CKM_SHA384_KEY_DERIVATION;
 		break;
-	case OAKLEY_SHA2_512:  mechanism = CKM_SHA512_KEY_DERIVATION;
+	case OAKLEY_SHA2_512:
+		mechanism = CKM_SHA512_KEY_DERIVATION;
 		break;
-	default:  DBG(DBG_CRYPT,
-		      DBG_log("NSS: key derivation mechanism not supported"));
-		break;                                                                           /*should not reach here*/
+	default:
+		DBG(DBG_CRYPT,
+		    DBG_log("NSS: key derivation mechanism not supported"));
+		break;
 	}
 	return mechanism;
 }
@@ -315,36 +338,39 @@ CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
 chunk_t hmac_pads(u_char val, unsigned int len)
 {
 	chunk_t ret;
-	unsigned int i;
 
 	ret.len = len;
 	ret.ptr = alloc_bytes(ret.len, "hmac_pad");
 
-	for (i = 0; i < len; i++)
-		ret.ptr[i] = val;
+	memset(ret.ptr, val, len);
 
 	return ret;
 }
 
 void nss_symkey_log(PK11SymKey *key, const char *msg)
 {
-	if (key != NULL) {
-		DBG(DBG_CRYPT, DBG_log("computed key %s with length =%d", msg,
-				       PK11_GetKeyLength(key)));
-	} else {
+	if (key == NULL) {
+		/* ??? should we print this even if !DBG_CRYPT? */
 		DBG_log("NULL key %s", msg);
-	}
+	} else {
+		DBG(DBG_CRYPT, {
+			DBG_log("computed key %s with length =%d", msg,
+					       PK11_GetKeyLength(key));
 
-	if (!PK11_IsFIPS()) {
-		if (key != NULL) {
-			SECStatus status = PK11_ExtractKeyValue(key);
-			PR_ASSERT(status == SECSuccess);
-			SECItem *keydata = PK11_GetKeyData(key);
+			if (!PK11_IsFIPS()) {
+				SECStatus status = PK11_ExtractKeyValue(key);
 
-			DBG(DBG_CRYPT, DBG_dump("value: ", keydata->data,
-						keydata->len));
+				if (status == SECSuccess) {
+					SECItem *keydata = PK11_GetKeyData(key);
 
-			/* SECITEM_FreeItem(keydata, PR_TRUE); */
-		}
+					DBG_dump("value: ", keydata->data,
+						 keydata->len);
+
+					SECITEM_FreeItem(keydata, PR_TRUE);	/* ??? this was commented out.  Why? */
+				} else {
+					DBG_log("unobtainable key %s", msg);
+				}
+			}
+		});
 	}
 }

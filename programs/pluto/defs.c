@@ -16,17 +16,16 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>	/* for _POSIX_MONOTONIC_CLOCK etc. */
 #include <stdio.h>
 #include <dirent.h>
-#include <time.h>
 #include <sys/types.h>
 
 #include <libreswan.h>
 
 #include "sysdep.h"
 #include "constants.h"
-#include "libreswan/ipsec_policy.h"
-#include "lswtime.h"
 #include "defs.h"
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
@@ -43,46 +42,86 @@ bool all_zero(const unsigned char *m, size_t len)
 	return TRUE;
 }
 
-/*  checks if the expiration date has been reached and
- *  warns during the warning_interval of the imminent
- *  expiry. strict=TRUE declares a fatal error,
- *  strict=FALSE issues a warning upon expiry.
+/*
+ * monotonic variant of time(2)
+ *
+ * NOT INTENDED TO BE REALTIME!
  */
-const char *check_expiry(time_t expiration_date, int warning_interval,
+monotime_t mononow(void)
+{
+	monotime_t m;
+#ifdef _POSIX_MONOTONIC_CLOCK
+	struct timespec t;
+	int r = clock_gettime(
+#   if CLOCK_BOOTTIME
+		CLOCK_BOOTTIME	/* best */
+#   else
+		CLOCK_MONOTONIC	/* second best */
+#   endif
+		, &t);
+
+	passert(r == 0);
+	m.mono_secs =  t.tv_sec;
+#else
+#warning _POSIX_MONOTONIC_CLOCK not defined
+	static time_t delta = 0,
+		last_time = 0;
+	time_t n = time(NULL);	/* third best */
+
+	passert(n != (time_t)-1);
+	if (last_time > n) {
+		libreswan_log("time moved backwards %ld seconds",
+			(long)(last_time - n));
+		delta += last_time - n;
+	}
+	last_time = n;
+	m.mono_secs = n + delta;
+#endif
+	return m;
+}
+
+/*
+ * checks if the expiration date has been reached and
+ * warns during the warning_interval of the imminent
+ * expiry.
+ * warning interval is in days.
+ * strict == TRUE: expiry yields an error message
+ * strict == FALSE: expiry yields a warning message
+ *
+ * Note: not re-entrant because the message may be in a static buffer (buf).
+ */
+const char *check_expiry(realtime_t expiration_date, time_t warning_interval,
 			bool strict)
 {
-	time_t tnow;
-	int time_left;
+	time_t time_left;	/* a deltatime_t, unpacked */
 
-	if (expiration_date == UNDEFINED_TIME)
+	if (isundefinedrealtime(expiration_date))
 		return "ok (expires never)";
 
-	/* determine the current time */
-	time(&tnow);
+	time_left = deltasecs(realtimediff(expiration_date, realnow()));
 
-	time_left = (expiration_date - tnow);
 	if (time_left < 0)
 		return strict ? "fatal (expired)" : "warning (expired)";
 
-	if (time_left > 86400 * warning_interval)
+	if (time_left > warning_interval)
 		return "ok";
 
 	{
 		static char buf[35]; /* temporary storage */
-		const char* unit = "second";
+		const char *unit = "second";
 
-		if (time_left > 172800) {
-			time_left /= 86400;
+		if (time_left > 2 * secs_per_day) {
+			time_left /= secs_per_day;
 			unit = "day";
-		} else if (time_left > 7200) {
-			time_left /= 3600;
+		} else if (time_left > 2 * secs_per_hour) {
+			time_left /= secs_per_hour;
 			unit = "hour";
-		} else if (time_left > 120) {
-			time_left /= 60;
+		} else if (time_left > 2 * secs_per_minute) {
+			time_left /= secs_per_minute;
 			unit = "minute";
 		}
-		snprintf(buf, 35, "warning (expires in %d %s%s)", time_left,
-			 unit, (time_left == 1) ? "" : "s");
+		snprintf(buf, sizeof(buf), "warning (expires in %ld %s%s)",
+			time_left, unit, (time_left == 1) ? "" : "s");
 		return buf;
 	}
 }

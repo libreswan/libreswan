@@ -24,7 +24,7 @@ Redirecting to: systemctl stop ipsec.service
 [   46.777935] KLIPS cryptoapi interface: alg_type=15 alg_id=7 name=cbc(blowfish) keyminbits=96 keymaxbits=448, found(0)
 [   46.817025] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [   46.887345] 
-[root@east ikev2-delete-02]# /usr/local/libexec/ipsec/pluto --config /etc/ipsec.conf
+[root@east ikev2-delete-02]# ipsec setup start
 [root@east ikev2-delete-02]# /testing/pluto/bin/wait-until-pluto-started
 [root@east ikev2-delete-02]# ipsec auto --add west-east-delete1
 [root@east ikev2-delete-02]# echo "initdone"
@@ -51,8 +51,8 @@ ikev2-delete-02]# 000 using kernel interface: klips
 000 algorithm ESP auth attr: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
 000 algorithm ESP auth attr: id=9, name=AUTH_ALGORITHM_AES_CBC, keysizemin=128, keysizemax=128
 000  
-000 algorithm IKE encrypt: id=5, name=OAKLEY_3DES_CBC, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: id=7, name=OAKLEY_AES_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
+000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE hash: id=1, name=OAKLEY_MD5, hashsize=16
 000 algorithm IKE hash: id=2, name=OAKLEY_SHA1, hashsize=20
 000 algorithm IKE hash: id=4, name=OAKLEY_SHA2_256, hashsize=32
@@ -76,9 +76,9 @@ ikev2-delete-02]# 000 using kernel interface: klips
 000 "west-east-delete1":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]; ;
 000 "west-east-delete1":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset;
 000 "west-east-delete1":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; sha2_truncbug:no; initial_contact:no;
-000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+!IKEv1+IKEv2ALLOW+IKEv2Init+SAREFTRACK+IKE_FRAG; 
+000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW;
 000 "west-east-delete1":   prio: 24,24; interface: eth1; metric: 0, mtu: unset;
-000 "west-east-delete1":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes;
+000 "west-east-delete1":   dpd: action:clear; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
 000 "west-east-delete1":   IKE algorithm newest: _128-SHA1-MODP2048
 000 "west-east-delete1":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -88,7 +88,7 @@ ikev2-delete-02]# 000 using kernel interface: klips
 000 #2: "west-east-delete1":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in 28493s; newest IPSEC; eroute owner; nodpd; idle; import:respond to stranger
 000 #1: "west-east-delete1":500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_REPLACE in 3562s; newest ISAKMP; nodpd; idle; import:respond to stranger
 000  
-[root@east ikev2-delete-02]# if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+[root@east ikev2-delete-02]# if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 [root@east ikev2-delete-02]# if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 [root@east ikev2-delete-02]# : ==== end ====
 [root@east ikev2-delete-02]# 

@@ -139,12 +139,6 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					if (fd < 0)
 						break;
 
-					if (nat_traversal_support_non_ike &&
-					    addrtypeof(&ifp->addr) == AF_INET)
-						nat_traversal_espinudp_socket(
-							fd, "IPv4",
-							ESPINUDP_WITH_NON_IKE);
-
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
 					id = alloc_thing(struct iface_dev,
@@ -183,16 +177,15 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 					 */
 					if (nat_traversal_support_port_floating
 					    &&
-					    addrtypeof(&ifp->addr) ==
-					    AF_INET) {
+					    addrtypeof(&ifp->addr) == AF_INET)
+					{
 						fd = create_socket(ifp,
 								   id->id_vname,
-								   pluto_natt_float_port);
+								   pluto_nat_port);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(
-							fd, "IPv4",
-							ESPINUDP_WITH_NON_ESP);
+							fd, "IPv4");
 						q = alloc_thing(
 							struct iface_port,
 							"struct iface_port");
@@ -200,10 +193,9 @@ static void bsdkame_process_raw_ifaces(struct raw_iface *rifaces)
 						id->id_count++;
 
 						q->ip_addr = ifp->addr;
-						setportof(htons(pluto_natt_float_port),
+						setportof(htons(pluto_nat_port),
 							  &q->ip_addr);
-						q->port =
-							pluto_natt_float_port;
+						q->port = pluto_nat_port;
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;
@@ -299,8 +291,8 @@ static bool bsdkame_do_command(struct connection *c, struct spd_route *sr,
 			   "%s",        /* actual script */
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown ==
-			   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown == NULL ?
+			       DEFAULT_UPDOWN : sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;
@@ -385,7 +377,6 @@ static void bsdkame_pfkey_register_response(const struct sadb_msg *msg)
 static void bsdkame_pfkey_acquire(struct sadb_msg *msg UNUSED)
 {
 	DBG_log("received acquire --- discarded");
-	return;
 }
 
 /* processs a pfkey message */
@@ -465,7 +456,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 			       unsigned int transport_proto,
 			       enum eroute_type esatype UNUSED,
 			       const struct pfkey_proto_info *proto_info UNUSED,
-			       time_t use_lifetime UNUSED,
+			       deltatime_t use_lifetime UNUSED,
 			       unsigned long sa_priority UNUSED,
 			       enum pluto_sadb_operations op,
 			       const char *text_said UNUSED
@@ -530,7 +521,7 @@ static bool bsdkame_raw_eroute(const ip_address *this_host,
 		policy = IPSEC_POLICY_IPSEC;
 	}
 
-	memset(pbuf, 0, sizeof(pbuf));
+	zero(&pbuf);
 
 	/* this is sanity check that it got set properly */
 	passert(this_client->addr.u.v4.sin_len == sizeof(struct sockaddr_in));
@@ -734,7 +725,7 @@ static bool bsdkame_shunt_eroute(struct connection *c,
 		snprintf(buf2, sizeof(buf2),
 			 "eroute_connection %s", opname);
 
-		memset(pbuf, 0, sizeof(pbuf));
+		zero(&pbuf);
 
 		/* XXX need to fix this for v6 */
 		mine->addr.u.v4.sin_len  = sizeof(struct sockaddr_in);
@@ -1025,9 +1016,9 @@ static bool bsdkame_del_sa(const struct kernel_sa *sa UNUSED)
  * could mean that the SA is broken and needs to be replace anyway.
  */
 static bool bsdkame_was_eroute_idle(struct state *st UNUSED,
-				    time_t idle_max UNUSED)
+				    deltatime_t idle_max UNUSED)
 {
-	passert(0);
+	passert(FALSE);
 	return FALSE;
 }
 
@@ -1067,7 +1058,7 @@ static bool bsdkame_except_socket(int socketfd, int family)
 		return FALSE;
 	}
 
-	memset(&policy, 0, sizeof(policy));
+	zero(&policy);
 	policy.sadb_x_policy_len = PFKEY_UNIT64(sizeof(policy));
 	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
 	policy.sadb_x_policy_type = IPSEC_POLICY_BYPASS;

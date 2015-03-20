@@ -1,4 +1,6 @@
-/* misc functions to get compile time and runtime options
+/*
+ * misc functions to get compile time and runtime options
+ *
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
@@ -46,25 +48,14 @@ static void lsw_conf_calculate(struct lsw_conf_options *oco)
 {
 	char buf[PATH_MAX];
 
-	/* calculate paths to certain subdirs */
-	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/acerts"), oco->confddir);
-	oco->acerts_dir = clone_str(buf, "acert path");
-
+	/* will be phased out for NSS in the near future */
 	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/cacerts"), oco->confddir);
 	oco->cacerts_dir = clone_str(buf, "cacert path");
 
 	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/crls"), oco->confddir);
 	oco->crls_dir = clone_str(buf, "crls path");
 
-	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/private"), oco->confddir);
-	oco->private_dir = clone_str(buf, "private path");
-
-	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/certs"), oco->confddir);
-	oco->certs_dir = clone_str(buf, "certs path");
-
-	snprintf(buf, sizeof(buf), "%s" SUBDIRNAME("/aacerts"), oco->confddir);
-	oco->aacerts_dir = clone_str(buf, "aacerts path");
-
+	/* old OE policies - might get re-used in the near future */
 	snprintf(buf, sizeof(buf), "%s/policies", oco->confddir);
 	oco->policies_dir = clone_str(buf, "policies path");
 }
@@ -72,59 +63,34 @@ static void lsw_conf_calculate(struct lsw_conf_options *oco)
 static void lsw_conf_setdefault(void)
 {
 	char buf[PATH_MAX];
-	char *ipsec_conf_dir = IPSEC_CONFDIR;
-	char *ipsecd_dir = IPSEC_CONFDDIR;
-	char *conffile   = IPSEC_CONF;
-	char *var_dir    = IPSEC_VARDIR;
 
-#if 0
-	char *exec_dir   = IPSEC_EXECDIR;
-	char *lib_dir    = IPSEC_LIBDIR;
-	char *sbin_dir   = IPSEC_SBINDIR;
-#endif
-
-	memset(&global_oco, 0, sizeof(global_oco));
+	zero(&global_oco);
 
 	/* allocate them all to make it consistent */
-	ipsec_conf_dir = clone_str(ipsec_conf_dir,
-				   "default conf ipsec_conf_dir");
-	ipsecd_dir = clone_str(ipsecd_dir, "default conf ipsecd_dir");
-	conffile   = clone_str(conffile, "default conf conffile");
-	var_dir    = clone_str(var_dir, "default conf var_dir");
-
-	global_oco.rootdir = "";
-	global_oco.confddir = ipsecd_dir;
-	global_oco.vardir  = var_dir;
-	global_oco.confdir = ipsec_conf_dir;
-	global_oco.conffile = conffile;
+	global_oco.rootdir = clone_str("","rootdir");
+	global_oco.confddir = clone_str(IPSEC_CONFDDIR, "default conf ipsecd_dir");
+	global_oco.vardir  = clone_str(IPSEC_VARDIR, "default vardir");
+	global_oco.confdir = clone_str(IPSEC_CONFDIR, "default conf ipsec_conf_dir");
+	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
 
 	/* path to NSS password file */
 	snprintf(buf, sizeof(buf), "%s/nsspassword", global_oco.confddir);
 	NSSPassword.data = clone_str(buf, "nss password file path");
 	NSSPassword.source =  PW_FROMFILE;
-	/* DBG_log("default setting of ipsec.d to %s", global_oco.confddir); */
 }
 
-/* mostly estatic value, to surpress within LEAK_DETECTIVE */
 void lsw_conf_free_oco(void)
 {
 	/* Must be a nicer way to loop over this? */
-	pfree(global_oco.crls_dir);
-	/* pfree(global_oco.rootdir); */
-	pfree(global_oco.confdir); /*
-				    * there is one more alloc that did not
-				    * get freed?
-				    */
+	pfree(global_oco.rootdir);
+	pfree(global_oco.confdir);
 	pfree(global_oco.conffile);
 	pfree(global_oco.confddir);
 	pfree(global_oco.vardir);
 	pfree(global_oco.policies_dir);
-	pfree(global_oco.acerts_dir);
 	pfree(global_oco.cacerts_dir);
-	/* wrong leak magic? pfree(global_oco.crls_dir); */
-	pfree(global_oco.private_dir);
-	pfree(global_oco.certs_dir);
-	pfree(global_oco.aacerts_dir);
+	pfree(global_oco.crls_dir);
+	pfree(NSSPassword.data);
 }
 
 const struct lsw_conf_options *lsw_init_options(void)
@@ -140,18 +106,18 @@ const struct lsw_conf_options *lsw_init_options(void)
 	return &global_oco;
 }
 
-const struct lsw_conf_options *lsw_init_rootdir(const char *root_dir)
+/* This is only used in testing/crypto (and formerly in testing/lib/libpluto) */
+void lsw_init_rootdir(const char *root_dir)
 {
 	if (!setup)
 		lsw_conf_setdefault();
+	pfreeany(global_oco.rootdir);
 	global_oco.rootdir = clone_str(root_dir, "override /");
 	lsw_conf_calculate(&global_oco);
 	setup = TRUE;
-
-	return &global_oco;
 }
 
-const struct lsw_conf_options *lsw_init_ipsecdir(const char *ipsec_dir)
+void lsw_init_ipsecdir(const char *ipsec_dir)
 {
 	if (!setup)
 		lsw_conf_setdefault();
@@ -160,8 +126,6 @@ const struct lsw_conf_options *lsw_init_ipsecdir(const char *ipsec_dir)
 	setup = TRUE;
 
 	libreswan_log("adjusting ipsec.d to %s", global_oco.confddir);
-
-	return &global_oco;
 }
 
 secuPWData *lsw_return_nss_password_file_info(void)
@@ -185,9 +149,7 @@ int libreswan_selinux(void)
 		fd = fopen("/selinux/enforce","r");
 		if (fd == NULL) {
 			DBG(DBG_CONTROL,
-				DBG_log("SElinux: disabled, could not open "
-					"/sys/fs/selinux/enforce or "
-					"/selinux/enforce")
+				DBG_log("SElinux: disabled, could not open /sys/fs/selinux/enforce or /selinux/enforce");
 				);
 			return 0;
 		}
@@ -196,8 +158,7 @@ int libreswan_selinux(void)
 	n = fread((void *)selinux_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		libreswan_log("SElinux: could not read 1 byte from "
-			"the selinux enforce file");
+		libreswan_log("SElinux: could not read 1 byte from the selinux enforce file");
 		return 2;
 	}
 	if (selinux_flag[0] == '1')
@@ -220,16 +181,16 @@ int libreswan_fipskernel(void)
 
 	if (fd == NULL) {
 		DBG(DBG_CONTROL,
-			DBG_log("FIPS: could not open /proc/sys/crypto/fips_"
-				"enabled"));
+			DBG_log("FIPS: could not open /proc/sys/crypto/fips_enabled");
+			);
 		return 0;
 	}
 
 	n = fread((void *)fips_flag, 1, 1, fd);
 	fclose(fd);
 	if (n != 1) {
-		loglog(RC_LOG_SERIOUS, "FIPS: could not read 1 byte from "
-			"/proc/sys/crypto/fips_enabled");
+		loglog(RC_LOG_SERIOUS,
+			"FIPS: could not read 1 byte from /proc/sys/crypto/fips_enabled");
 		return -1;
 	}
 
@@ -251,9 +212,9 @@ libreswan_fipsproduct(void)
 		if (errno == ENOENT || errno == ENOTDIR) {
 			return 0;
 		} else {
-			loglog(RC_LOG_SERIOUS, "FIPS ABORT: FIPS product check"
-			       " failed to determine status for %s: %d: %s",
-			       FIPSPRODUCTCHECK, errno, strerror(errno));
+			loglog(RC_LOG_SERIOUS,
+				"FIPS ABORT: FIPS product check failed to determine status for %s: %d: %s",
+				FIPSPRODUCTCHECK, errno, strerror(errno));
 			return -1;
 		}
 	}
@@ -274,7 +235,7 @@ libreswan_fipsmode(void)
 	int product = libreswan_fipsproduct();
 	int kernel = libreswan_fipskernel();
 
-	if (product == -1 || kernel == -1 )
+	if (product == -1 || kernel == -1)
 		return -1;
 
 	if (product && kernel)
@@ -288,7 +249,7 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 {
 	secuPWData *pwdInfo = (secuPWData *)arg;
 	PRFileDesc *fd;
-	PRInt32 nb; /*number of bytes*/
+	PRInt32 nb;	/*number of bytes*/
 	char* password;
 	char* strings;
 	char* token = NULL;
@@ -346,15 +307,14 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 				int start = i;
 				int slen;
 
-				while (strings[i] != '\r' && strings[i] !=
-				       '\n' && i < nb)
+				while (strings[i] != '\r' &&
+				       strings[i] != '\n' && i < nb)
 					i++;
 				strings[i++] = '\0';
 
-				while ( (i < nb) &&
-					(strings[i] == '\r' || strings[i] ==
-					 '\n'))
-					strings[i++] = '\0';
+				while ((i < nb) && (strings[i] == '\r' ||
+					strings[i] == '\n'))
+					 strings[i++] = '\0';
 
 				password = &strings[start];
 

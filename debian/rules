@@ -32,12 +32,13 @@ build-stamp: patch
 	touch $(CURDIR)/debian/ipsec.secrets
 	$(MAKE) programs INC_USRLOCAL=/usr \
 			 FINALBINDIR=/usr/lib/ipsec \
-			 FINALLIBDIR=/usr/lib/ipsec \
 			 FINALLIBEXECDIR=/usr/lib/ipsec \
 			 PUBDIR=/usr/sbin \
 			 MANTREE=/usr/share/man \
 			 CONFDIR=$(CURDIR)/debian \
-			 USE_LDAP=true USE_LIBCURL=true \
+			 SYSVINIT_DEFAULT_START="2 3 4 5" \
+			 USE_LDAP=true \
+			 USE_LIBCURL=true \
 			 USE_XAUTHPAM=true \
 			 USE_FIPSCHECK=false \
 			 USE_LIBCAP_NG=false \
@@ -87,7 +88,6 @@ install-libreswan: build
 	# Add here commands to install the package into debian/tmp.
 	$(MAKE) install INC_USRLOCAL=/usr \
 			FINALBINDIR=/usr/lib/ipsec \
-			FINALLIBDIR=/usr/lib/ipsec \
 			FINALLIBEXECDIR=/usr/lib/ipsec \
 			PUBDIR=$(CURDIR)/debian/libreswan/usr/sbin \
 			MANTREE=$(CURDIR)/debian/libreswan/usr/share/man \

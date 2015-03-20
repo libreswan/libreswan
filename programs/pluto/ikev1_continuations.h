@@ -3,13 +3,6 @@
 /*
  * continuations used
  */
-#include "ike_continuations.h"
-
-struct qke_continuation {
-	struct pluto_crypto_req_cont qke_pcrc;
-	so_serial_t replacing;
-	struct msg_digest           *md;        /* used in responder */
-};
 
 typedef stf_status initiator_function (int whack_sock,
 				       struct connection *c,

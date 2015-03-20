@@ -73,7 +73,7 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 
 		if (pluto_listen) {
 			err_t e;
-			e = ttoaddr(pluto_listen, 0, 0, &lip);
+			e = ttoaddr(pluto_listen, 0, AF_UNSPEC, &lip);
 			if (e) {
 				DBG_log("invalid listen= option ignored: %s\n",
 					e);
@@ -195,23 +195,6 @@ add_entry:
 					if (fd < 0)
 						break;
 
-					DBG(DBG_NATT,
-					    DBG_log("NAT-T KLIPS: checking for nat_traversal_support_non_ike for IPv4"));
-					if (nat_traversal_support_non_ike &&
-					    addrtypeof(&ifp->addr) ==
-					    AF_INET) {
-						DBG(DBG_NATT,
-						    DBG_log("NAT-T KLIPS: found, calling nat_traversal_espinudp_socket"));
-						nat_traversal_espinudp_socket(fd, "IPv4",
-							ESPINUDP_WITH_NON_IKE);
-					} else {
-						DBG(DBG_NATT,
-						    DBG_log("NAT-T KLIPS: support not found, nat_traversal_support_non_ike = %s",
-							    nat_traversal_support_non_ike
-							    ?
-							    "TRUE" : "FALSE"));
-					}
-
 					q = alloc_thing(struct iface_port,
 							"struct iface_port");
 					id = alloc_thing(struct iface_dev,
@@ -248,20 +231,16 @@ add_entry:
 					 * the kernel did not support it, and gave an error
 					 * it one tried to turn it on.
 					 */
-					if (nat_traversal_support_port_floating
-					    &&
-					    addrtypeof(&ifp->addr) ==
-					    AF_INET) {
+					if (addrtypeof(&ifp->addr) == AF_INET) {
 						DBG(DBG_NATT,
-						    DBG_log("NAT-T KLIPS: found floating port, calling nat_traversal_espinudp_socket"));
+						    DBG_log("NAT-T KLIPS: calling nat_traversal_espinudp_socket"));
 						fd = create_socket(ifp,
 								   v->name,
-								   pluto_natt_float_port);
+								   pluto_nat_port);
 						if (fd < 0)
 							break;
 						nat_traversal_espinudp_socket(
-							fd, "IPv4",
-							ESPINUDP_WITH_NON_ESP);
+							fd, "IPv4");
 						q = alloc_thing(
 							struct iface_port,
 							"struct iface_port");
@@ -269,10 +248,9 @@ add_entry:
 						id->id_count++;
 
 						q->ip_addr = ifp->addr;
-						setportof(htons(pluto_natt_float_port),
+						setportof(htons(pluto_nat_port),
 							  &q->ip_addr);
-						q->port =
-							pluto_natt_float_port;
+						q->port = pluto_nat_port;
 						q->fd = fd;
 						q->next = interfaces;
 						q->change = IFN_ADD;
@@ -368,8 +346,8 @@ static bool klips_do_command(struct connection *c, struct spd_route *sr,
 			   "%s",        /* actual script */
 			   verb, verb_suffix,
 			   common_shell_out_str,
-			   sr->this.updown ==
-			   NULL ? DEFAULT_UPDOWN : sr->this.updown)) {
+			   sr->this.updown == NULL ?
+			     DEFAULT_UPDOWN : sr->this.updown)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 		       verb_suffix);
 		return FALSE;

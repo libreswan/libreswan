@@ -35,14 +35,28 @@
 #define  SERPENT_KEY_DEF_LEN    128
 #define  SERPENT_KEY_MAX_LEN    256
 
-static void do_serpent(u_int8_t *buf, size_t buf_size, u_int8_t *key,
-		       size_t key_size, u_int8_t *iv, bool enc)
+static void do_serpent(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
+		       u_int8_t *iv, bool enc)
 {
 	serpent_context serpent_ctx;
 	u_int8_t iv_bak[SERPENT_CBC_BLOCK_SIZE];
 	u_int8_t *new_iv = buf + buf_size - SERPENT_CBC_BLOCK_SIZE;
+	u_int8_t *bare_key_ptr;
+	size_t bare_key_len;
 
-	serpent_set_key(&serpent_ctx, key, key_size);
+	/* unpack key from PK11SymKey (or crash!) */
+	{
+		SECStatus status = PK11_ExtractKeyValue(key);
+		SECItem *keydata;
+
+		passert(status == SECSuccess);
+		keydata = PK11_GetKeyData(key);
+		bare_key_ptr = keydata->data;
+		bare_key_len = keydata->len;
+		SECITEM_FreeItem(keydata, PR_TRUE);
+	}
+
+	serpent_set_key(&serpent_ctx, bare_key_ptr, bare_key_len);
 	/*
 	 *	my SERPENT cbc does not touch passed IV (optimization for
 	 *	ESP handling), so I must "emulate" des-like IV

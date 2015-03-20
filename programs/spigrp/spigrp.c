@@ -55,7 +55,6 @@
 char *progname;
 
 int pfkey_sock;
-lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
 
 struct said_af {
@@ -112,9 +111,9 @@ int main(int argc, char **argv)
 
 	progname = argv[0];
 	for (i = 0; i < 4; i++)
-		memset(&said_af_array[i], 0, sizeof(struct said_af));
+		zero(&said_af_array[i]);
 
-	if (argc > 1 && strcmp(argv[1], "--debug") == 0) {
+	if (argc > 1 && streq(argv[1], "--debug")) {
 		debug = 1;
 		if (debug)
 			fprintf(stdout, "\"--debug\" option requested.\n");
@@ -129,7 +128,7 @@ int main(int argc, char **argv)
 			argc + 1);
 	}
 
-	if (argc > 1 && strcmp(argv[1], "--label") == 0) {
+	if (argc > 1 && streq(argv[1], "--label")) {
 		if (argc > 2) {
 			static const char combine_fmt[] = "%s --label %s";
 			size_t room = strlen(argv[0]) +
@@ -156,7 +155,7 @@ int main(int argc, char **argv)
 	if (debug)
 		fprintf(stdout, "...After check for --label option.\n");
 
-	if ( ((stat("/proc/net/pfkey", &sts)) == 0) ) {
+	if (stat("/proc/net/pfkey", &sts) == 0) {
 		fprintf(stderr,
 			"%s: NETKEY does not use the ipsec spigrp command. Use 'ip xfrm' instead.\n",
 			progname);
@@ -182,7 +181,7 @@ int main(int argc, char **argv)
 			"...After check for no option to print /proc/net/ipsec_spigrp.\n");
 
 
-	if (strcmp(argv[1], "--help") == 0) {
+	if (streq(argv[1], "--help")) {
 		if (debug)
 			fprintf(stdout, "\"--help\" option requested.\n");
 		usage(progname);
@@ -192,7 +191,7 @@ int main(int argc, char **argv)
 	if (debug)
 		fprintf(stdout, "...After check for --help option.\n");
 
-	if (strcmp(argv[1], "--version") == 0) {
+	if (streq(argv[1], "--version")) {
 		if (debug)
 			fprintf(stdout, "\"--version\" option requested.\n");
 		fprintf(stderr, "%s, %s\n", progname, ipsec_version_code());
@@ -202,7 +201,7 @@ int main(int argc, char **argv)
 	if (debug)
 		fprintf(stdout, "...After check for --version option.\n");
 
-	if (strcmp(argv[1], "--said") == 0) {
+	if (streq(argv[1], "--said")) {
 		if (debug) {
 			fprintf(stdout,
 				"processing %d args with --said flag.\n",
@@ -259,13 +258,13 @@ int main(int argc, char **argv)
 					ipaddr_txt);
 			}
 		} else {
-			if (!strcmp(argv[i * 4 + 4], "ah"))
+			if (streq(argv[i * 4 + 4], "ah"))
 				said_af_array[i].said.proto = SA_AH;
-			if (!strcmp(argv[i * 4 + 4], "esp"))
+			if (streq(argv[i * 4 + 4], "esp"))
 				said_af_array[i].said.proto = SA_ESP;
-			if (!strcmp(argv[i * 4 + 4], "tun"))
+			if (streq(argv[i * 4 + 4], "tun"))
 				said_af_array[i].said.proto = SA_IPIP;
-			if (!strcmp(argv[i * 4 + 4], "comp"))
+			if (streq(argv[i * 4 + 4], "comp"))
 				said_af_array[i].said.proto = SA_COMP;
 			if (said_af_array[i].said.proto == 0) {
 				fprintf(stderr, "%s: Badly formed proto: %s\n",
@@ -280,9 +279,9 @@ int main(int argc, char **argv)
 					progname, argv[i * 4 + 3]);
 				exit(1);
 			}
-			if (!strcmp(argv[i * 4 + 1], "inet"))
+			if (streq(argv[i * 4 + 1], "inet"))
 				said_af_array[i].af = AF_INET;
-			if (!strcmp(argv[i * 4 + 1], "inet6"))
+			if (streq(argv[i * 4 + 1], "inet6"))
 				said_af_array[i].af = AF_INET6;
 			if ((said_af_array[i].af != AF_INET) &&
 			    (said_af_array[i].af != AF_INET6)) {
@@ -364,8 +363,7 @@ int main(int argc, char **argv)
 						);
 				}
 
-				if ((error =
-					     pfkey_x_satype_build(&extensions[
+				if ((error = pfkey_x_satype_build(&extensions[
 									  K_SADB_X_EXT_SATYPE2
 								  ],
 								  proto2satype(
@@ -383,8 +381,7 @@ int main(int argc, char **argv)
 				}
 			}
 
-			if ((error =
-				     pfkey_sa_build(&extensions[!j ?
+			if ((error = pfkey_sa_build(&extensions[!j ?
 								K_SADB_EXT_SA :
 								K_SADB_X_EXT_SA2
 						    ],
@@ -408,8 +405,7 @@ int main(int argc, char **argv)
 			if (!j) {
 				anyaddr(said_af_array[i].af,
 					&pfkey_address_s_ska);                      /* Is the address family correct ?? */
-				if ((error =
-					     pfkey_address_build(&extensions[
+				if ((error = pfkey_address_build(&extensions[
 									 K_SADB_EXT_ADDRESS_SRC
 								 ],
 								 K_SADB_EXT_ADDRESS_SRC,
@@ -429,8 +425,7 @@ int main(int argc, char **argv)
 				}
 			}
 #endif
-			if ((error =
-				     pfkey_address_build(&extensions[!j ?
+			if ((error = pfkey_address_build(&extensions[!j ?
 								     SADB_EXT_ADDRESS_DST
 								     :
 								     SADB_X_EXT_ADDRESS_DST2
@@ -456,8 +451,7 @@ int main(int argc, char **argv)
 
 		}
 
-		if ((error =
-			     pfkey_msg_build(&pfkey_msg, extensions,
+		if ((error = pfkey_msg_build(&pfkey_msg, extensions,
 					     EXT_BITS_IN))) {
 			fprintf(stderr,
 				"%s: Trouble building pfkey message, error=%d.\n",

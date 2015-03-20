@@ -53,10 +53,7 @@
 #include "ikev2.h"
 #include "server.h"
 #include "vendor.h"
-#include "dpd.h"
 #include "keys.h"
-
-#include "lswcrypto.h"
 
 static u_char der_digestinfo[] = {
 	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
@@ -114,7 +111,7 @@ bool ikev2_calculate_rsa_sha1(struct state *st,
 	unsigned int sz;
 
 	if (k == NULL)
-		return 0; /* failure: no key to use */
+		return FALSE; /* failure: no key to use */
 
 	sz = k->pub.k;
 
@@ -125,19 +122,23 @@ bool ikev2_calculate_rsa_sha1(struct state *st,
 				signed_octets + der_digestinfo_len);
 	signed_len = der_digestinfo_len + SHA1_DIGEST_SIZE;
 
-	passert(RSA_MIN_OCTETS <= sz && 4 + signed_len < sz && sz <=
-		RSA_MAX_OCTETS);
+	passert(RSA_MIN_OCTETS <= sz && 4 + signed_len < sz &&
+		sz <= RSA_MAX_OCTETS);
 
 	DBG(DBG_CRYPT,
 	    DBG_dump("v2rsa octets", signed_octets, signed_len));
 
 	{
-		u_char sig_val[RSA_MAX_OCTETS];
-
 		/* now generate signature blob */
-		sign_hash(k, signed_octets, signed_len,
-			  sig_val, sz);
-		out_raw(sig_val, sz, a_pbs, "rsa signature");
+		u_char sig_val[RSA_MAX_OCTETS];
+		int shr;
+
+		shr = sign_hash(k, signed_octets, signed_len, sig_val, sz);
+		if (shr == 0)
+			return FALSE;
+		passert(shr == (int)sz);
+		if (!out_raw(sig_val, sz, a_pbs, "rsa signature"))
+			return FALSE;
 	}
 
 	return TRUE;

@@ -180,7 +180,7 @@ int family;
 		return 1;
 	}
 
-	memset(getbuf, 0, sizeof(getbuf));
+	zero(&getbuf);
 	memcpy(getbuf, policy, sizeof(struct sadb_x_policy));
 	if (getsockopt(so, proto, optname, getbuf, &len) < 0) {
 		printf("fail to get sockopt; %s\n", strerror(errno));

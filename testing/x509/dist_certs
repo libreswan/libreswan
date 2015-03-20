@@ -25,11 +25,11 @@ then
 fi
 
 # Clean
-rm -f reqs/* certs/* keys/* newcerts/* cacerts/* crls/* pkcs12/mainca/* pkcs12/otherca/* index.txt* serial* nss-pw crlnumber
+rm -f reqs/* certs/* keys/* newcerts/* cacerts/* crls/* pkcs12/mainca/* pkcs12/otherca/* pkcs12/curveca/* index.txt* serial* nss-pw crlnumber
 
 echo -n "foobar" > nss-pw
 # Prep
-mkdir -p certs crls newcerts keys reqs pkcs12/mainca pkcs12/otherca cacerts
+mkdir -p certs crls newcerts keys reqs pkcs12/mainca pkcs12/otherca pkcs12/curveca cacerts
 $TOUCH index.txt
 echo "01" > serial
 echo "01" > crlnumber
@@ -112,6 +112,27 @@ wait
 EOF
 done
 
+#Generate EC CA
+openssl ecparam -out keys/curveca.key -name secp384r1 -genkey -noout
+$EXPECT  <<EOF
+spawn openssl req -x509 -new -key keys/curveca.key -out cacerts/curveca.crt -days 3650
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "Libreswan test EC CA\n"
+expect "Email"
+send "testing@libreswan.org\n"
+wait
+EOF
+
 # Generate machine keys/certs
 for machine in east west sunset sunrise north south road pole park beet carrot nic japan revoked notyetvalid notvalidanymore signedbyotherca spaceincn bigkey wrongdnorg unwisechar hashsha2 wrongdnnum cnofca
 do
@@ -142,6 +163,37 @@ EOF
 openssl ca -batch -in reqs/$machine.req -startdate $START -enddate $FUTURE -out certs/$machine.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 # package in pkcs#12
 openssl pkcs12 -export -inkey keys/$machine.key -in certs/$machine.crt -name "$machine" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/$machine.p12 -passin pass:foobar -passout pass:foobar
+done
+
+#Generate EC machine keys/certs
+for machine in east west
+do
+openssl ecparam -out keys/$machine-ec.key -name secp384r1 -genkey -noout
+$EXPECT  <<EOF
+spawn openssl req -new -nodes -key keys/$machine-ec.key -out reqs/$machine-ec.req
+expect "Country Name"
+send "\n"
+expect "State"
+send "\n"
+expect "Locality"
+send "\n"
+expect "Organization"
+send "\n"
+expect "Organizational"
+send "\n"
+expect "Common"
+send "$machine-ec.testing.libreswan.org\n"
+expect "Email"
+send "testing@libreswan.org\n"
+expect "challenge"
+send "\n"
+expect "optional"
+send "\n"
+wait
+EOF
+# sign EC certs
+openssl ca -batch -md sha1 -startdate $START -enddate $FUTURE -in reqs/$machine-ec.req -keyfile keys/curveca.key -cert cacerts/curveca.crt -out certs/$machine-ec.crt -notext
+openssl pkcs12 -export -inkey keys/$machine-ec.key -in certs/$machine-ec.crt -name "$machine-ec" -certfile cacerts/curveca.crt -caname "curveca" -out pkcs12/curveca/$machine-ec.p12 -passin pass: -passout pass:
 done
 
 # Special Cases follow
@@ -340,7 +392,6 @@ EOF
 openssl ca -batch -in reqs/cnofca.req -startdate $START -days 365 -out certs/cnofca.crt -notext -cert cacerts/mainca.crt -keyfile keys/mainca.key  -passin pass:foobar
 openssl pkcs12 -export -inkey keys/cnofca.key -in certs/cnofca.crt -name "cnofca" -certfile cacerts/mainca.crt -caname "mainca" -out pkcs12/mainca/cnofca.p12 -passin pass:foobar -passout pass:foobar
 
-
 # Revoke and generate CRL
 openssl ca -gencrl -crldays 15 -out crls/cacrlvalid.pem  -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
 openssl ca -gencrl -startdate $START -enddate $END -out crls/cacrlexpired.pem  -keyfile keys/mainca.key -cert cacerts/mainca.crt -passin pass:foobar
@@ -366,10 +417,6 @@ do
                 days=$((days+1))
         fi;
 done
-
-
-
-
 
 echo "X509 test material generation complete"
 popd

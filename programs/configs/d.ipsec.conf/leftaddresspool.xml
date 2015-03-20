@@ -11,7 +11,7 @@ Generally, the <emphasis remap='I'>rightaddresspool=</emphasis> option will be a
 </para>
 <para>When <emphasis remap='I'>leftaddresspool=</emphasis> is specified, the connection may not specify either
 <emphasis remap='I'>leftsubnet=</emphasis> or <emphasis remap='I'>leftsubnets=</emphasis>. Address pools are
-fully allocated when the connection is loaded, so the ranges should be sane. For example, specifing a range
+fully allocated when the connection is loaded, so the ranges should be sane. For example, specifying a range
 <emphasis remap='I'>rightaddresspool=10.0.0.0-11.0.0.0</emphasis> will lead to massive memory allocation. Address pools
 specifying the exact same range are shared between different connections. Different addresspools should not be defined
 to partially overlap.</para>

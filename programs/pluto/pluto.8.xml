@@ -11,16 +11,15 @@
 
     <manvolnum>8</manvolnum>
 
-    <refmiscinfo class="date">25 February 2008</refmiscinfo>
+    <refmiscinfo class="date">29 June 2014</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
 
   <refnamediv id="name">
-    <refname>ipsec pluto</refname>
+    <refname>pluto</refname>
 
-    <refpurpose>ipsec whack : IPsec IKE keying daemon and control
-    interface</refpurpose>
+    <refpurpose>ipsec whack : IPsec IKE keying daemon and control interface</refpurpose>
   </refnamediv>
 
   <!-- body begins here -->
@@ -30,73 +29,41 @@
       <command>ipsec</command>
 
       <arg choice="plain"><replaceable>pluto</replaceable></arg>
-
       <arg choice="opt">--help</arg>
-
       <arg choice="opt">--version</arg>
-
+      <arg choice="opt">--leak-detective</arg>
+      <arg choice="opt">--config <replaceable>filename</replaceable></arg>
+      <arg choice="opt">--vendorid <replaceable>VID</replaceable></arg>
       <arg choice="opt">--nofork</arg>
-
       <arg choice="opt">--stderrlog</arg>
-
-      <arg choice="opt">--logfile
-      <replaceable>filename</replaceable></arg>
-
+      <arg choice="opt">----plutostderrlogtime</arg>
+      <arg choice="opt">--logfile <replaceable>filename</replaceable></arg>
       <arg choice="opt">--use-klips</arg>
-
       <arg choice="opt">--use-mast</arg>
-
       <arg choice="opt">--use-netkey</arg>
-
       <arg choice="opt">--use-nostack</arg>
-
       <arg choice="opt">--uniqueids</arg>
-
-      <arg choice="opt">--nat_traversal</arg>
-
-      <arg choice="opt">--virtual_private
-      <replaceable>network_list</replaceable></arg>
-
-      <arg choice="opt">--keep_alive
-      <replaceable>delay_sec</replaceable></arg>
-
-      <arg choice="opt">--force_busy</arg>
-
-      <arg choice="opt">--disable_port_floating</arg>
-
+      <arg choice="opt">--virtual-private <replaceable>network_list</replaceable></arg>
+      <arg choice="opt">--keep-alive <replaceable>delay_sec</replaceable></arg>
+      <arg choice="opt">--force-busy</arg>
       <arg choice="opt">--nocrsend</arg>
-
       <arg choice="opt">--strictcrlpolicy</arg>
-
       <arg choice="opt">--crlcheckinterval</arg>
-
-      <arg choice="opt">--interface
-      <replaceable>interfacename</replaceable></arg>
-
-      <arg choice="opt">--listen
-      <replaceable>ipaddr</replaceable></arg>
-
+      <arg choice="opt">--interface <replaceable>interfacename</replaceable></arg>
+      <arg choice="opt">--listen <replaceable>ipaddr</replaceable></arg>
       <arg choice="opt">--ikeport <replaceable>portnumber</replaceable></arg>
-
+      <arg choice="opt">--natikeport <replaceable>portnumber</replaceable></arg>
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
-
-      <arg choice="opt">--secretsfile
-      <replaceable>secrets-file</replaceable></arg>
-
+      <arg choice="opt">--secretsfile <replaceable>secrets-file</replaceable></arg>
       <arg choice="opt">--adns <replaceable>pathname</replaceable></arg>
-
       <arg choice="opt">--nhelpers <replaceable>number</replaceable></arg>
-
       <arg choice="opt">--perpeerlog</arg>
-
-      <arg choice="opt">--perpeerlogbase
-      <replaceable>dirname</replaceable></arg>
-
+      <arg choice="opt">--perpeerlogbase <replaceable>dirname</replaceable></arg>
       <arg choice="opt">--ipsecdir <replaceable>dirname</replaceable></arg>
-
       <arg choice="opt">--coredir <replaceable>dirname</replaceable></arg>
-
       <arg choice="opt">--noretransmits</arg>
+      <arg choice="opt">--statsbin <replaceable>filename</replaceable></arg>
+      <arg choice="opt">--secctx-attr-value <replaceable>number</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -115,36 +82,23 @@
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
       <arg choice="opt">--debug-none</arg>
-
       <arg choice="opt">--debug-all</arg>
-
       <arg choice="opt">--debug-raw</arg>
-
       <arg choice="opt">--debug-crypt</arg>
-
       <arg choice="opt">--debug-parsing</arg>
-
       <arg choice="opt">--debug-emitting</arg>
-
       <arg choice="opt">--debug-control</arg>
-
       <arg choice="opt">--debug-lifecycle</arg>
-
-      <arg choice="opt">--debug-klips</arg>
-
+      <arg choice="opt">--debug-kernel</arg>
       <arg choice="opt">--debug-pfkey</arg>
-
       <arg choice="opt">--debug-nat-t</arg>
-
       <arg choice="opt">--debug-dpd</arg>
-
       <arg choice="opt">--debug-dns</arg>
-
       <arg choice="opt">--debug-oppo</arg>
       <arg choice="opt">--debug-oppoinfo</arg>
       <arg choice="opt">--debug-whackwatch</arg>
-
       <arg choice="opt">--debug-private</arg>
+      <arg choice="opt">--debug-x509</arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -166,8 +120,6 @@
 
         <arg choice="opt">--tunnelipv6</arg>
       </group>
-
-      <sbr />
 
       <sbr />
 
@@ -236,11 +188,7 @@
 
       <sbr />
 
-      <sbr />
-
       <arg choice="plain">--to</arg>
-
-      <sbr />
 
       <sbr />
 
@@ -333,6 +281,12 @@
           <arg choice="opt">modp6144</arg>
 
           <arg choice="opt">modp8192</arg>
+
+          <arg choice="opt">dh22</arg>
+
+          <arg choice="opt">dh23</arg>
+
+          <arg choice="opt">dh24</arg>
         </group></arg>
 
       <arg choice="opt">--disablearrivalcheck</arg>
@@ -872,7 +826,7 @@
       Domain Name System.</para>
     </refsect2>
 
-    <refsect2 id="setting_up_fbklipsfp_for_fbplutofp">
+    <refsect2 id="setting_up_klips_for_pluto">
       <title>Setting up <emphasis remap="B">KLIPS</emphasis> for <emphasis
       remap="B">pluto</emphasis></title>
 
@@ -917,7 +871,7 @@
         </citerefentry>.</para>
     </refsect2>
 
-    <refsect2 id="setting_up_fbnetkeyfp_for_fbplutofp">
+    <refsect2 id="setting_up_netkey_for_pluto">
       <title>Setting up <emphasis remap="B">NETKEY</emphasis> for <emphasis
       remap="B">pluto</emphasis></title>
 
@@ -943,10 +897,9 @@
       <para>The file <filename>/etc/ipsec.secrets</filename> is used to keep
       preshared secret keys, RSA private keys, X.509 encoded keyfiles and
       XAUTH passwords. Smartcards are handled via NSS. For
-      debugging, there is an argument to the <emphasis
-      remap="B">pluto</emphasis> command to use a different file. This file is
-      described in <citerefentry>
-          <refentrytitle>ipsec.secrets</refentrytitle>
+      debugging, there is an argument to the <emphasis remap="B">pluto</emphasis>
+      command to use a different file. This file is described in
+      <citerefentry><refentrytitle>ipsec.secrets</refentrytitle>
 
           <manvolnum>5</manvolnum>
         </citerefentry>.</para>
@@ -974,22 +927,19 @@
       command line argument specified takes precedence.
       </para>
 
-      <para>Pluto supports the NAT-Traversal drafts and the final standard,
-      RFC 3947, if the <option>--nat_traversal</option> is specified. The
-      allowed range behind the NAT routers is submitted using the
-      <option>--virtual_private</option> option. See <citerefentry>
+      <para>Pluto supports RFC 3947 NAT-Traversal. The allowed range behind the NAT routers is submitted using the
+      <option>--virtual-private</option> option. See <citerefentry>
           <refentrytitle>ipsec.conf</refentrytitle>
 
           <manvolnum>5</manvolnum>
         </citerefentry> for the syntax. The option
-      <option>--force_keepalive</option> forces the sending of the <emphasis
+      <option>--force-keepalive</option> forces the sending of the <emphasis
       remap="I">keep-alive packets</emphasis>, which are send to prevent the
       NAT router from closing its port when there is not enough traffic on the
-      IPsec connection. The <option>--keep_alive</option> sets the delay (in
+      IPsec connection. The <option>--keep-alive</option> sets the delay (in
       seconds) of these keep-alive packets. The newer NAT-T standards support
       <emphasis remap="I">port floating</emphasis>, and Libreswan enables this
-      per default. It can be disabled using the
-      <option>--disable_port_floating</option> option.</para>
+      per default.</para>
 
       <para>Pluto supports the use of X.509 certificates and sends it
       certificate when needed. This can confuse IKE implementations that do
@@ -1027,7 +977,7 @@
       this prevents multiple <emphasis remap="B">pluto</emphasis>s from
       competing Any “leftover” lockfile must be removed before <emphasis
       remap="B">pluto</emphasis> will run. <emphasis
-      remap="B">pluto</emphasis> writes its pid into this file so that scripts
+      remap="B">pluto</emphasis> writes its PID into this file so that scripts
       can find it. This lock will not function properly if it is on an NFS
       volume (but sharing locks on multiple machines doesn't make sense
       anyway).</para>
@@ -1075,18 +1025,17 @@
       directory as specified by <option>--ipsecdir</option>.</para>
 
       <para>Pluto may core dump. It will normally do so into the current
-      working directory. The standard scripts have an option dumpdir=, which
-      can set the current directory to determine where the core dump will go.
-      In some cases, it may be more convenient to specify it on the command
-      line using --coredir. A third method is to set the environment variable
-      PLUTO_CORE_DIR. The command line argument takes precedence over the
-      environment variable. The option plutorestartoncrash can be set to no to
-      prevent multiple core files and a looping pluto process. Normally, when
-      pluto crashes, another pluto process is started.</para>
+      working directory. You can specify the --coredir option for pluto, or
+      specify the dumpdir= option in ipsec.conf.</para>
 
-      <para>At times it may be desireable to turn off all timed events in
+      <para>At times it may be desirable to turn off all timed events in
       <emphasis remap="B">pluto</emphasis>, this can be done with
       <option>--noretransmits</option>.</para>
+
+      <para>If you are investigating a potential memory leak in pluto,
+      start pluto with the --leak-detective option.  Before the leak
+      causes the system or pluto to die, shut down pluto in the regular
+      way. pluto will display a list of leaks it has detected.  </para>
 
       <para>The <emphasis remap="I">(potential) connection</emphasis> database
       describes attributes of a connection. These include the IP addresses of
@@ -1167,7 +1116,7 @@
     </refsect2>
 
     <refsect2 id="using_whack">
-      <title>Using Whack</title>
+      <title>Using whack</title>
 
       <para><emphasis remap="B">whack</emphasis> is used to command a running
       <emphasis remap="B">pluto</emphasis>. <emphasis
@@ -1388,7 +1337,7 @@
           remap="I">yes|forced|always|ifasked|no|never</emphasis></term>
 
           <listitem>
-            <para>Wether or not to send our X.509 certificate credentials.
+            <para>Whether or not to send our X.509 certificate credentials.
             This could potentially give an attacker too much information about
             which identities are allowed to connect to this host. The default
             is to use <emphasis remap="B">ifasked</emphasis> when we are a
@@ -1617,7 +1566,7 @@
 
           <listitem>
             <para>separates the specification of the left and right ends of
-            the connection. Pluto tries to decide wether it is <emphasis
+            the connection. Pluto tries to decide whether it is <emphasis
             remap="I">left</emphasis> or <emphasis remap="I">right</emphasis>
             based on the information provided on both sides of this
             option.</para>
@@ -1830,7 +1779,7 @@
           remap="I">seconds</emphasis></term>
 
           <listitem>
-            <para>Set the delay (in seconds) between Dead Peer Dectection (RFC
+            <para>Set the delay (in seconds) between Dead Peer Detection (RFC
             3706) keepalives (R_U_THERE, R_U_THERE_ACK) that are sent for this
             connection (default 30 seconds).</para>
           </listitem>
@@ -1875,9 +1824,7 @@
             when a broken IPsec peer does not properly recognise NAT, it can
             be useful to force RFC-3948 encapsulation using this option. It
             causes pluto lie and tell the remote peer that RFC-3948
-            encapsulation (ESP in UDP port 4500 packets) is required. For this
-            option to have any effect, pluto must have been started with the
-            <option>--nat_traversal</option> option.</para>
+            encapsulation (ESP in UDP port 4500 packets) is required.</para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -2312,7 +2259,7 @@
 
           <listitem>
             <para>the terminate form tells <emphasis
-            remap="b">pluto</emphasis> to delete any sas that use the
+            remap="b">pluto</emphasis> to delete any SAs that use the
             specified connection and to stop any negotiations in process. it
             does not prevent new negotiations from starting (the delete form
             has this effect).</para>
@@ -3134,7 +3081,7 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--force_busy</option></term>
+          <term><option>--force-busy</option></term>
 
           <listitem>
             <para>if this option has been selected, pluto will be forced
@@ -3457,7 +3404,7 @@
           <term>•</term>
 
           <listitem>
-            <para>Host authetication can be done by RSA Signatures or
+            <para>Host authentication can be done by RSA Signatures or
             Pre-Shared Secrets.</para>
           </listitem>
         </varlistentry>
@@ -3554,7 +3501,7 @@
     <constant>SIGHUP</constant> by issuing a suggestion that ``<emphasis
     remap="B">whack</emphasis> --listen'' might have been intended.</para>
 
-    <para><emphasis remap="B">Pluto</emphasis> exits when it recieves
+    <para><emphasis remap="B">Pluto</emphasis> exits when it receives
     <constant>SIGTERM</constant>.</para>
   </refsect1>
 
@@ -3610,10 +3557,9 @@
   <refsect1 id="environment">
     <title>ENVIRONMENT</title>
 
-    <para><emphasis remap="I">IPSEC_LIBDIR</emphasis> <!-- .br --> <emphasis
-    remap="I">IPSEC_EXECDIR</emphasis> <!-- .br --> <emphasis
-    remap="I">IPSECmyid</emphasis> <!-- .br --> <emphasis
-    remap="I">PLUTO_CORE_DIR</emphasis></para>
+    <para><emphasis remap="I">IPSEC_EXECDIR</emphasis> <!-- .br -->
+    <emphasis remap="I">IPSECmyid</emphasis> <!-- .br -->
+    <emphasis remap="I">PLUTO_CORE_DIR</emphasis></para>
   </refsect1>
 
   <refsect1 id="see_also">
@@ -3656,21 +3602,15 @@
     <!-- .nh -->
 
     <para><emphasis remap="I"><ulink
-    url="http://www.ietf.cnri.reston.va.us/html.charters/ipsec-charter.html">http://www.ietf.cnri.reston.va.us/html.charters/ipsec-charter.html</ulink></emphasis></para>
+    url="https://datatracker.ietf.org/wg/ipsecme/charter/">https://datatracker.ietf.org/wg/ipsecme/charter/</ulink></emphasis></para>
 
     <!-- .hy -->
 
     <para>At the time of writing, the most relevant IETF RFCs are:</para>
 
-    <para>RFC2409 The Internet Key Exchange (IKE)</para>
+    <para>RFC5996 Internet Key Exchange Protocol Version 2 (IKEv2)</para>
 
-    <para>RFC2408 Internet Security Association and Key Management Protocol
-    (ISAKMP)</para>
-
-    <para>RFC2407 The Internet IP Security Domain of Interpretation for
-    ISAKMP</para>
-
-    <para>The Libreswan web site &lt;htp://www.libreswan.org&gt; and the mailing
+    <para>The Libreswan web site &lt;https://libreswan.org&gt; and the mailing
     lists described there.</para>
   </refsect1>
 
@@ -3678,9 +3618,7 @@
     <title>HISTORY</title>
 
     <para>This code is released under the GPL terms. See the accompanying
-    files COPYING and CREDITS for more details. The GPL does NOT apply to
-    those pieces of code written by others which are included in this
-    distribution, except as noted by the individual authors.</para>
+    files COPYING and CREDITS.* for more details.</para>
 
     <para>This software was originally written for the FreeS/WAN project
     &lt;<ulink
@@ -3689,70 +3627,33 @@
     Keromytis (angelos@dsl.cis.upenn.edu), in May/June 1997, in Athens,
     Greece. Thanks go to John Ioannidis for his help.</para>
 
-    <para>It is currently maintained and extended by Xelerance Corporation, in
-    Canada under the Libreswan name. See CHANGES for details.</para>
-
-    <para>FreeS/WAN was developed/maintained from 2000-2004 by D. Hugh
+    <para>FreeS/WAN's Pluto was developed/maintained from 2000-2004 by D. Hugh
     Redelmeier (hugh@mimosa.com), in Canada. The regulations of Greece and
     Canada allow the code to be freely redistributable.</para>
 
-    <para>Kai Martius (admin@imib.med.tu-dresden.de) contributed the initial
-    version of the code supporting PFS.</para>
+    <para>Richard Guy Briggs &lt;rgb@conscoop.ottawa.on.ca&gt; was the main resource
+    on KLIPS development</para>
 
-    <para>Richard Guy Briggs &lt;rgb@conscoop.ottawa.on.ca&gt; and Peter Onion
-    &lt;ponion@srd.bt.co.uk&gt; added the PFKEY2 support.</para>
+    <para>IKE version 2 was initially written by Michael Richardson, Antony Antony and
+    Paul Wouters. It has since been extended by Avesh Agarwal, D. Hugh Redelmeier,
+    Matt Rogers, Antony Antony and Paul Wouters. </para>
 
-    <para>We gratefully acknowledge that we use parts of Eric Young's
-    <emphasis remap="I">libdes</emphasis> package; see <emphasis
-    remap="I">../libdes/COPYRIGHT</emphasis>.</para>
+    <para>From 2003 onwards, the code was developed and maintained by The Openswan
+    Project by developers worldwide and distributed from The Netherland and Finland.
+    Due to a lawsuit by Xelerance over the trademark, the project was forced to rename
+    itself and the code to The Libreswan Project in 2012.</para>
+
+    <para>See further: the CHANGES/CREDITS files in the main directory and the doc/ directory.</para>
   </refsect1>
 
   <refsect1 id="bugs">
     <title>BUGS</title>
 
-    <para><emphasis remap="B">pluto</emphasis> is a work-in-progress. It
-    currently has many limitations. For example, it ignores notification
-    messages that it receives, and it generates only Delete Notifications and
-    those only for IPSEC SAs.</para>
+    <para>Please see 
+    &lt;<ulink url="https://bugs.libreswan.org">https://bugs.libreswan.org</ulink>&gt;
+    for a list of currently known bugs and missing features.</para>
 
-    <para><emphasis remap="B">pluto</emphasis> does not support the Commit
-    Flag. The Commit Flag is a bad feature of the IKE protocol. It isn't
-    protected -- neither encrypted nor authenticated. A man in the middle
-    could turn it on, leading to DoS. We just ignore it, with a warning. This
-    should let us interoperate with implementations that insist on it, with
-    minor damage.</para>
-
-    <para><emphasis remap="B">pluto</emphasis> does not check that the SA
-    returned by the Responder is actually one that was proposed. It only
-    checks that the SA is acceptable. The difference is not large, but can
-    show up in attributes such as SA lifetime.</para>
-
-    <para>There is no good way for a connection to be automatically
-    terminated. This is a problem for Road Warrior and Opportunistic
-    connections. The <option>--dontrekey</option> option does prevent the SAs
-    from being rekeyed on expiry. Additonally, if a Road Warrior connection
-    has a client subnet with a fixed IP address, a negotiation with that
-    subnet will cause any other connection instantiations with that same
-    subnet to be unoriented (deleted, in effect). See also the --uniqueids
-    option for an extension of this.</para>
-
-    <para>When <emphasis remap="B">pluto</emphasis> sends a message to a peer
-    that has disappeared, <emphasis remap="B">pluto</emphasis> receives
-    incomplete information from the kernel, so it logs the unsatisfactory
-    message “some IKE message we sent has been rejected with ECONNREFUSED
-    (kernel supplied no details)”. John Denker suggests that this command is
-    useful for tracking down the source of these problems: <!-- .br -->
-    tcpdump -i eth0 icmp[0] != 8 and icmp[0] != 0 <!-- .br --> Substitute your
-    public interface for eth0 if it is different.</para>
-
-    <para>The word “authenticate” is used for two different features. We must
-    authenticate each IKE peer to the other. This is an important task of
-    Phase 1. Each packet must be authenticated, both in IKE and in IPsec, and
-    the method for IPsec is negotiated as an AH SA or part of an ESP SA.
-    Unfortunately, the protocol has no mechanism for authenticating the Phase
-    2 identities.</para>
-
-    <para>Bugs should be reported to the &lt;users@lists.libreswan.org&gt;
+    <para>Bugs should be reported to the &lt;swan-dev@lists.libreswan.org&gt;
     mailing list.</para>
   </refsect1>
 </refentry>

@@ -40,21 +40,18 @@
 #include <resolv.h>
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "libreswan/pfkeyv2.h"
 #include "kameipsec.h"
 
 #include "sysdep.h"
 #include "constants.h"
 #include "lswalloc.h"
-#include "lswtime.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
 #include "secrets.h"
 
 #include "defs.h"
-#include "ac.h"
 #include "connections.h" /* needs id.h */
 #include "pending.h"
 #include "foodgroups.h"
@@ -86,24 +83,6 @@
 struct connection *connections = NULL;
 
 struct connection *unoriented_connections = NULL;
-
-
-static void unshare_ietfAttrList(ietfAttrList_t **listp)
-{
-	ietfAttrList_t *list = *listp;
-
-	while (list != NULL) {
-		ietfAttrList_t *el =
-			alloc_thing(ietfAttrList_t, "ietfAttrList");
-
-		el->attr = list->attr;
-		el->attr->count++;
-		el->next = NULL;
-		*listp = el;
-		listp = &el->next;
-		list = list->next;
-	}
-}
 
 /*
  * Find a connection by name.
@@ -217,11 +196,13 @@ void update_host_pairs(struct connection *c)
 static void delete_end(struct end *e)
 {
 	free_id_content(&e->id);
-	pfreeany(e->updown);
 	freeanychunk(e->ca);
 	release_cert(e->cert);
-	free_ietfAttrList(e->groups);
+	pfreeany(e->updown);
+	pfreeany(e->cert_filename);
 	pfreeany(e->host_addr_name);
+	pfreeany(e->xauth_password);
+	pfreeany(e->xauth_name);
 }
 
 static void delete_sr(struct spd_route *sr)
@@ -266,7 +247,8 @@ void delete_connection(struct connection *c, bool relations)
 			ip_str(&c->spd.that.host_addr),
 			c->newest_isakmp_sa, c->newest_ipsec_sa);
 		c->kind = CK_GOING_AWAY;
-		rel_lease_addr(c);
+		if (c->pool != NULL)
+			rel_lease_addr(c);
 	} else {
 		libreswan_log("deleting connection");
 	}
@@ -275,20 +257,8 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-#if 0
-	/* TODO:  this will be enabled in the next version */
-	if ((c->pool != NULL) && (c->kind == CK_TEMPLATE)) {
-		DBG(DBG_CONTROLMORE,
-			DBG_log("free addresspool entry for the conn %s "
-				"kind %s conn serial %d pool refcnt %u",
-				c->name, enum_name(&connection_kind_names,
-						c->kind),
-				c->instance_serial,
-				c->pool->refcnt));
-		free_addresspool_entry(c->pool);
-		*&c->pool = NULL;
-	}
-#endif
+	if (c->pool != NULL)
+		unreference_addresspool(c);
 
 	/* free up any logging resources */
 	perpeer_logfree(c);
@@ -428,10 +398,10 @@ void check_orientations(void)
 				for (hp = host_pairs; hp != NULL;
 					hp = hp->next) {
 					if (sameaddr(&hp->him.addr,
-							&i->ip_addr) &&
-						(kern_interface != NO_KERNEL ||
-							hp->him.host_port ==
-							pluto_port)) {
+						     &i->ip_addr) &&
+					    (kern_interface != NO_KERNEL ||
+					     hp->him.host_port == pluto_port))
+					{
 						/*
 						 * bad news: the whole chain of
 						 * connections hanging off this
@@ -451,8 +421,7 @@ void check_orientations(void)
 
 						hp->connections = NULL;
 						while (c != NULL) {
-							struct connection *nxt
-								=
+							struct connection *nxt =
 								c->hp_next;
 
 							c->interface = NULL;
@@ -511,7 +480,8 @@ size_t format_end(char *buf,
 		const struct end *this,
 		const struct end *that,
 		bool is_left,
-		lset_t policy)
+		lset_t policy,
+		bool filter_rnh)
 {
 	char client[SUBNETTOT_BUF];
 	const char *client_sep = "";
@@ -530,21 +500,21 @@ size_t format_end(char *buf,
 	const char *id_cbrackets = "";
 	const char *id_comma = "";
 
-	memset(endopts, 0, sizeof(endopts));
+	zero(&endopts);
 
 	if (isanyaddr(&this->host_addr)) {
 		if (this->host_type == KH_IPHOSTNAME) {
 			host = strcpy(host_space, "%dns");
 			dohost_name = TRUE;
 		} else {
-			switch (policy & (POLICY_GROUP | POLICY_OPPO)) {
+			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
 			case POLICY_GROUP:
 				host = "%group";
 				break;
-			case POLICY_OPPO:
+			case POLICY_OPPORTUNISTIC:
 				host = "%opportunistic";
 				break;
-			case POLICY_GROUP | POLICY_OPPO:
+			case POLICY_GROUP | POLICY_OPPORTUNISTIC:
 				host = "%opportunisticgroup";
 				break;
 			default:
@@ -574,7 +544,7 @@ size_t format_end(char *buf,
 		}
 
 		if (isanyaddr(&client_net) && isanyaddr(&client_mask) &&
-			(policy & (POLICY_GROUP | POLICY_OPPO))) {
+			(policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC))) {
 			client_sep = ""; /* boring case */
 		} else if (is_virtual_end(this)) {
 			if (is_virtual_vhost(this))
@@ -642,9 +612,10 @@ size_t format_end(char *buf,
 	}
 
 	if (this->modecfg_server || this->modecfg_client ||
-		this->xauth_server || this->xauth_client ||
-		this->sendcert != cert_defaultcertpolicy) {
-		const char *plus = "+";
+	    this->xauth_server || this->xauth_client ||
+	    this->sendcert != cert_defaultcertpolicy) {
+		char *p = endopts;
+
 		endopts[0] = '\0';
 
 		if (id_obrackets[0] == '[') {
@@ -655,62 +626,38 @@ size_t format_end(char *buf,
 		}
 
 		if (this->modecfg_server)
-			strncat(endopts, "MS", sizeof(endopts) - strlen(
-					endopts) - 1);
+			p = jam_str(endopts, sizeof(endopts), "MS");
 
-		if (this->modecfg_client) {
-			strncat(endopts, plus, sizeof(endopts) - strlen(
-					endopts) - 1);
-			strncat(endopts, "MC", sizeof(endopts) - strlen(
-					endopts) - 1);
-		}
+		if (this->modecfg_client)
+			p = add_str(endopts, sizeof(endopts), p, "+MC");
 
-		if (this->xauth_server) {
-			strncat(endopts, plus, sizeof(endopts) - strlen(
-					endopts) - 1);
-			strncat(endopts, "XS", sizeof(endopts) - strlen(
-					endopts) - 1);
-		}
+		if (this->xauth_server)
+			p = add_str(endopts, sizeof(endopts), p, "+XS");
 
-		if (this->xauth_client) {
-			strncat(endopts, plus, sizeof(endopts) - strlen(
-					endopts) - 1);
-			strncat(endopts, "XC", sizeof(endopts) - strlen(
-					endopts) - 1);
-		}
-
+		if (this->xauth_client)
+			p = add_str(endopts, sizeof(endopts), p, "+XC");
 		{
-			const char *send_cert = "";
-			char s[32];
-
-			send_cert = ""; /* Length 3 because cert.type is 1-11 */
+			const char *send_cert = "+UNKNOWN";
 
 			switch (this->sendcert) {
 			case cert_neversend:
-				send_cert = "S-C";
+				send_cert = "+S-C";
 				break;
 			case cert_sendifasked:
-				send_cert = "S?C";
+				send_cert = "+S?C";
 				break;
 			case cert_alwayssend:
-				send_cert = "S=C";
-				break;
-			case cert_forcedtype:
-				snprintf(s, sizeof(s), "S%d", this->cert.type);
-				send_cert = s;
+				send_cert = "+S=C";
 				break;
 			}
-			strncat(endopts, plus, sizeof(endopts) -
-				strlen(endopts) - 1);
-			strncat(endopts, send_cert, sizeof(endopts) -
-				strlen(endopts) - 1);
+			p = add_str(endopts, sizeof(endopts), p, send_cert);
 		}
 	}
 
 	/* [---hop] */
 	hop[0] = '\0';
 	hop_sep = "";
-	if (that != NULL && !sameaddr(&this->host_nexthop, &that->host_addr)) {
+	if (that != NULL && !filter_rnh && !sameaddr(&this->host_nexthop, &that->host_addr)) {
 		addrtot(&this->host_nexthop, 0, hop, sizeof(hop));
 		hop_sep = "---";
 	}
@@ -744,31 +691,31 @@ static size_t format_connection(char *buf, size_t buf_len,
 			struct spd_route *sr)
 {
 	size_t w =
-		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY);
+		format_end(buf, buf_len, &sr->this, &sr->that, TRUE, LEMPTY, FALSE);
 
 	snprintf(buf + w, buf_len - w, "...");
 	w += strlen(buf + w);
 	return w + format_end(buf + w, buf_len - w, &sr->that, &sr->this,
-			FALSE, c->policy);
+			FALSE, c->policy, oriented(*c));
 }
 
-static void unshare_connection_end_strings(struct end *e)
+/* spd_route's with end's get copied in xauth.c */
+void unshare_connection_end_strings(struct end *e)
 {
 	/* do "left" */
 	unshare_id_content(&e->id);
-	e->updown = clone_str(e->updown, "updown");
 
-	if(e->cert.type != CERT_NONE) {
+	if(e->cert.ty != CERT_NONE)
 		share_cert(e->cert);
-	}
+
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
-	if (e->xauth_name)
-		e->xauth_name = clone_str(e->xauth_name, "xauth name");
-
-	if (e->host_addr_name)
-		e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	e->updown = clone_str(e->updown, "updown");
+	e->xauth_name = clone_str(e->xauth_name, "xauth name");
+	e->xauth_password = clone_str(e->xauth_password, "xauth password");
+	e->host_addr_name = clone_str(e->host_addr_name, "host ip");
+	e->cert_filename = clone_str(e->cert_filename, "cert_filename");
 }
 
 static void unshare_connection_strings(struct connection *c)
@@ -806,59 +753,58 @@ static void unshare_connection_strings(struct connection *c)
 	if (c->alg_info_esp) {
 		alg_info_addref(ESPTOINFO(c->alg_info_esp));
 	}
+	if (c->pool !=  NULL)
+		reference_addresspool(c->pool);
 }
 
-static void load_end_certificate(const char *filename, struct end *dst)
+static void load_end_certificate(const char *name, struct end *dst)
 {
-	time_t valid_until;
+	realtime_t valid_until;
 	cert_t cert;
 	err_t ugh = NULL;
 
-	memset(&dst->cert, 0, sizeof(dst->cert));
+	zero(&dst->cert);
 
 	/* initialize end certificate */
-	dst->cert.type = CERT_NONE;
+	dst->cert.ty = CERT_NONE;
 
-	if (filename == NULL)
+	if (name == NULL)
 		return;
 
-	libreswan_log("loading certificate from %s\n", filename);
-	dst->cert_filename = clone_str(filename, "certificate filename");
+	DBG(DBG_CONTROL, DBG_log("loading certificate %s\n", name));
+	dst->cert_filename = clone_str(name, "certificate name");
 
 	{
-		bool valid_cert = FALSE;
-
 		/* load cert from file */
-		valid_cert = load_cert_from_nss(FALSE, filename, TRUE,
+		bool valid_cert = load_cert_from_nss(name,
 						"host cert", &cert);
 		if (!valid_cert) {
-			whack_log(RC_FATAL,
-				"can not load certificate file %s\n",
-				filename);
+			whack_log(RC_FATAL, "can not load certificate %s\n",
+				name);
 			/* clear the ID, we're expecting it via %fromcert */
 			dst->id.kind = ID_NONE;
 			return;
 		}
 	}
 
-	switch (cert.type) {
+	switch (cert.ty) {
 	case CERT_X509_SIGNATURE:
 		if (dst->id.kind == ID_FROMCERT || dst->id.kind == ID_NONE)
 			select_x509cert_id(cert.u.x509, &dst->id);
 
 		/* check validity of cert */
+
 		valid_until = cert.u.x509->notAfter;
-		ugh = check_validity(cert.u.x509, &valid_until);
+		ugh = check_validity(cert.u.x509, &valid_until /* IN/OUT */);
 		if (ugh != NULL) {
-			libreswan_log("  %s", ugh);
+			loglog(RC_LOG_SERIOUS,"  %s", ugh);
 			free_x509cert(cert.u.x509);
 		} else {
 			DBG(DBG_CONTROL,
-				DBG_log("certificate is valid")
-				);
+				DBG_log("certificate is valid"));
 			add_x509_public_key(&dst->id, cert.u.x509, valid_until,
 					DAL_LOCAL);
-			dst->cert.type = cert.type;
+			dst->cert.ty = cert.ty;
 			dst->cert.u.x509 = add_x509cert(cert.u.x509);
 
 			/* if no CA is defined, use issuer as default */
@@ -866,13 +812,8 @@ static void load_end_certificate(const char *filename, struct end *dst)
 				dst->ca = dst->cert.u.x509->issuer;
 		}
 		break;
-	case CERT_PGP:
-		whack_log(RC_FATAL,"PGP certificates not supported");
-		return;
 	default:
-		whack_log(RC_FATAL,"Unknown certificate type (%d) not "
-			"supported", cert.type);
-		return;
+		bad_case(cert.ty);
 	}
 
 }
@@ -915,22 +856,12 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 		}
 	}
 
-	if (src->sendcert == cert_forcedtype) {
-		/* certificate is a blob */
-		dst->cert.forced = TRUE;
-		dst->cert.type = src->certtype;
-		load_cert_from_nss(TRUE, src->cert, TRUE, "forced cert",
-				&dst->cert);
-	} else {
-		/* load local end certificate and extract ID, if any */
-		load_end_certificate(src->cert, dst);
-	}
+	/* load local end certificate and extract ID, if any */
+	load_end_certificate(src->cert, dst);
+	/* ??? what should we do on load_end_certificate failure? */
 
 	/* does id has wildcards? */
 	dst->has_id_wildcards = id_count_wildcards(&dst->id) > 0;
-
-	/* decode group attributes, if any */
-	decode_groups(src->groups, &dst->groups);
 
 	/* the rest is simple copying of corresponding fields */
 	dst->host_type = src->host_type;
@@ -963,8 +894,8 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	dst->has_client = src->has_client;
 	dst->has_client_wildcard = src->has_client_wildcard;
 	dst->updown = src->updown;
-	dst->host_port = IKE_UDP_PORT;
-	if (src->host_port != IKE_UDP_PORT) {
+	dst->host_port = pluto_port;
+	if (src->host_port != pluto_port) {
 		dst->host_port = src->host_port;
 		dst->host_port_specific = TRUE;
 	}
@@ -982,7 +913,7 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 
 		switch (dst->host_type) {
 		case KH_IPHOSTNAME:
-			er = ttoaddr(dst->host_addr_name, 0, 0,
+			er = ttoaddr(dst->host_addr_name, 0, AF_UNSPEC,
 				&dst->host_addr);
 
 			/*The above call wipes out the port, put it again*/
@@ -1031,6 +962,17 @@ static bool check_connection_end(const struct whack_end *this,
 			addrtypeof(&this->host_addr),
 			addrtypeof(&this->host_nexthop));
 		return FALSE;
+	}
+
+	/* ??? seems like a nasty test (in-band, low-level) */
+	if (this->pool_range.start.u.v4.sin_addr.s_addr != 0) {
+		struct ip_pool *pool;
+		err_t er = find_addresspool(&this->pool_range, &pool);
+
+		if (er != NULL) {
+			loglog(RC_CLASH, "leftaddresspool clash");
+			return FALSE;
+		}
 	}
 
 	if (subnettypeof(&this->client) != subnettypeof(&that->client)) {
@@ -1150,7 +1092,7 @@ static uint32_t gen_reqid(void)
 	return 0; /* never reached, here to make compiler happy */
 }
 
-static bool have_local_nss_certs(const struct whack_message *wm)
+static bool have_wm_certs(const struct whack_message *wm)
 {
 	if (wm->left.cert != NULL) {
 		if (!cert_exists_in_nss(wm->left.cert)) {
@@ -1175,81 +1117,81 @@ static bool have_local_nss_certs(const struct whack_message *wm)
 	return TRUE;
 }
 
-
 void add_connection(const struct whack_message *wm)
 {
 	struct alg_info_ike *alg_info_ike;
-	const char *ugh;
 
 	alg_info_ike = NULL;
 
 	if (con_by_name(wm->name, FALSE) != NULL) {
 		loglog(RC_DUPNAME, "attempt to redefine connection \"%s\"",
 			wm->name);
+		return;
 	}
-#if 0
-	/*
-	 * A valid proposal done by others to which we need to respond is
-	 * something like  port 80 only, which is assymetric, eg
-	 * leftprotoport=6/80 rightprotoport=6/0 So this check is disabled,
-	 * but it has not been verified this assumption is not
-	 * assumed elsewhere.  -- Paul
-	 */
-	else if (wm->right.protocol != wm->left.protocol) {
-		/*
-		 * this should haven been diagnosed by whack
-		 * !!! overloaded use of RC_CLASH
-		 */
-		loglog(RC_CLASH,
-			"the protocol must be the same for leftport and "
-			"rightport");
+
+	/* pre-check for leftcert/rightcert availablility */
+	if (!have_wm_certs(wm))
+		return;
+
+	if ((wm->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
+		loglog(RC_FATAL,
+			"Failed to add connection \"%s\" with compress because kernel is not configured to do IPCOMP",
+			wm->name);
+		return;
 	}
-#endif
-	else if (wm->ike != NULL &&
-		((alg_info_ike =
-			alg_info_ike_create_from_str(wm->ike,
-						&ugh)) == NULL ||
-			alg_info_ike->alg_info_cnt == 0)) {
-		if (alg_info_ike != NULL && alg_info_ike->alg_info_cnt == 0) {
-			loglog(RC_NOALGO,
-				"got 0 transforms for ike=\"%s\"",
-				wm->ike);
+
+	switch (wm->policy & (POLICY_AUTHENTICATE  | POLICY_ENCRYPT)) {
+	case LEMPTY:
+		if (!NEVER_NEGOTIATE(wm->policy)) {
+			loglog(RC_LOG_SERIOUS,
+				"Connection without AH or ESP cannot negotiate");
 			return;
 		}
-
-		loglog(RC_NOALGO,
-			"ike string error: %s",
-			ugh ? ugh : "Unknown");
+		break;
+	case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
+		loglog(RC_LOG_SERIOUS,
+			"Must specify either AH or ESP.\n");
 		return;
-	} else if ((wm->ike == NULL || alg_info_ike != NULL) &&
+	}
+
+	if (wm->ike != NULL) {
+		char err_buf[256];	/* ??? big enough? */
+
+		alg_info_ike = alg_info_ike_create_from_str(wm->ike,
+			err_buf, sizeof(err_buf));
+
+		if (alg_info_ike == NULL) {
+			loglog(RC_LOG_SERIOUS, "ike string error: %s",
+				err_buf);
+			return;
+		}
+		if (alg_info_ike->alg_info_cnt == 0) {
+			loglog(RC_LOG_SERIOUS,
+				"got 0 transforms for ike=\"%s\"", wm->ike);
+			return;
+		}
+	}
+
+	if ((wm->ike == NULL || alg_info_ike != NULL) &&
 		check_connection_end(&wm->right, &wm->left, wm) &&
-		check_connection_end(&wm->left, &wm->right, wm)) {
+		check_connection_end(&wm->left, &wm->right, wm))
+	{
+
+		/*
+		 * Connection values are set using strings in the whack
+		 * message, unshare_connection_strings() is responsible
+		 * for cloning the strings before the whack message is
+		 * destroyed.
+		 */
+
+		char err_buf[256] = "";	/* ??? big enough? */
 		bool same_rightca, same_leftca;
 		struct connection *c = alloc_thing(struct connection,
 						"struct connection");
 
-		/*
-		 * Set this up so that we can log which end is which after
-		 * orient
-		 */
-		c->spd.this.left = TRUE;
-		c->spd.that.left = FALSE;
-
-		same_rightca = same_leftca = FALSE;
 		c->name = wm->name;
 		c->connalias = wm->connalias;
-
-#ifdef XAUTH_HAVE_PAM
-		c->pamh = NULL;
-#endif
-
-		c->cisco_dns_info = NULL;
-		c->modecfg_domain = NULL;
-		c->modecfg_banner = NULL;
-		c->dnshostname = NULL;
-		if (wm->dnshostname)
-			c->dnshostname = wm->dnshostname;
-
+		c->dnshostname = wm->dnshostname;
 		c->policy = wm->policy;
 
 		DBG(DBG_CONTROL,
@@ -1257,54 +1199,33 @@ void add_connection(const struct whack_message *wm)
 				c->name,
 				prettypolicy(c->policy)));
 
-		if ((c->policy & POLICY_COMPRESS) && !can_do_IPcomp) {
-			loglog(RC_COMMENT,
-				"ignoring --compress in \"%s\" because KLIPS "
-				"is not configured to do IPCOMP",
-				c->name);
-		}
 
 		c->alg_info_esp = NULL;
-		if (wm->esp) {
+		if (wm->esp != NULL) {
 			DBG(DBG_CONTROL,
 				DBG_log("from whack: got --esp=%s",
 					wm->esp ? wm->esp : "NULL"));
 
-			if ( (c->policy & POLICY_AUTHENTICATE) &&
-				(c->policy & POLICY_ENCRYPT)) {
-				loglog(RC_NOALGO,
-					"Can only do AH, or ESP, not AH+ESP\n");
-				pfree(c);
-				return;
-			}
-			if ( !(c->policy & POLICY_AUTHENTICATE) &&
-				!(c->policy & POLICY_ENCRYPT)) {
-				loglog(RC_NOALGO,
-					"Must do at AH or ESP, not neither.\n");
-				pfree(c);
-				return;
-			}
-
 			if (c->policy & POLICY_ENCRYPT)
 				c->alg_info_esp = alg_info_esp_create_from_str(
-					wm->esp ? wm->esp : "", &ugh);
+					wm->esp ? wm->esp : "", err_buf, sizeof(err_buf));
 
 			if (c->policy & POLICY_AUTHENTICATE)
 				c->alg_info_esp = alg_info_ah_create_from_str(
-					wm->esp ? wm->esp : "", &ugh);
+					wm->esp ? wm->esp : "",  err_buf, sizeof(err_buf));
 
-			DBG(DBG_CONTROL,
-				{static char buf[256] = "<NULL>";
+			DBG(DBG_CONTROL, {
+				static char buf[256] = "<NULL>"; /* XXX: fix magic value */
 
 				if (c->alg_info_esp != NULL)
 					alg_info_snprint(buf, sizeof(buf),
 							(struct alg_info *)c->
 							alg_info_esp);
-				DBG_log("esp string values: %s", buf); }
-			);
+				DBG_log("esp string values: %s", buf);
+			});
 			if (c->alg_info_esp != NULL) {
 				if (c->alg_info_esp->alg_info_cnt == 0) {
-					loglog(RC_NOALGO,
+					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"esp=\"%s\"",
 						wm->esp);
@@ -1312,9 +1233,9 @@ void add_connection(const struct whack_message *wm)
 					return;
 				}
 			} else {
-				loglog(RC_NOALGO,
+				loglog(RC_LOG_SERIOUS,
 					"esp string error: %s",
-					ugh ? ugh : "Unknown");
+					err_buf);
 				pfree(c);
 				return;
 			}
@@ -1324,17 +1245,17 @@ void add_connection(const struct whack_message *wm)
 		if (wm->ike) {
 			c->alg_info_ike = alg_info_ike;
 
-			DBG(DBG_CRYPT | DBG_CONTROL,
-				char buf[256];
+			DBG(DBG_CRYPT | DBG_CONTROL, {
+				char buf[256]; /* XXX: fix magic value */
 				alg_info_snprint(buf, sizeof(buf),
 						(struct alg_info *)c->
 						alg_info_ike);
-				DBG_log("ike (phase1) algorihtm values: %s",
+				DBG_log("ike (phase1) algorithm values: %s",
 					buf);
-				);
-			if (c->alg_info_ike) {
+			});
+			if (c->alg_info_ike != NULL) {
 				if (c->alg_info_ike->alg_info_cnt == 0) {
-					loglog(RC_NOALGO,
+					loglog(RC_LOG_SERIOUS,
 						"got 0 transforms for "
 						"ike=\"%s\"",
 						wm->ike);
@@ -1342,31 +1263,30 @@ void add_connection(const struct whack_message *wm)
 					return;
 				}
 			} else {
-				loglog(RC_NOALGO,
+				loglog(RC_LOG_SERIOUS,
 					"ike string error: %s",
-					ugh ? ugh : "Unknown");
+					err_buf);
 				pfree(c);
 				return;
 			}
 		}
+
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
 
-		if (c->sa_rekey_margin >= c->sa_ipsec_life_seconds) {
-			time_t new_rkm;
+		if (!deltaless(c->sa_rekey_margin, c->sa_ipsec_life_seconds)) {
+			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
 
-			new_rkm = c->sa_ipsec_life_seconds / 2;
-
-			libreswan_log("conn: %s, rekeymargin (%lus) > "
-				"salifetime (%lus); "
-				"reducing rekeymargin to %lu seconds",
+			libreswan_log("conn: %s, rekeymargin (%lds) >= "
+				"salifetime (%lds); "
+				"reducing rekeymargin to %ld seconds",
 				c->name,
-				c->sa_rekey_margin,
-				c->sa_ipsec_life_seconds,
-				new_rkm);
+				(long) deltasecs(c->sa_rekey_margin),
+				(long) deltasecs(c->sa_ipsec_life_seconds),
+				(long) deltasecs(new_rkm));
 
 			c->sa_rekey_margin = new_rkm;
 		}
@@ -1389,29 +1309,15 @@ void add_connection(const struct whack_message *wm)
 #ifdef HAVE_LABELED_IPSEC
 		c->loopback = wm->loopback;
 		c->labeled_ipsec = wm->labeled_ipsec;
-		c->policy_label = NULL;
-		if (wm->policy_label)
-			c->policy_label = clone_str(wm->policy_label,
-						"security label");
-		DBG(DBG_CONTROL,
-			DBG_log("loopback=%d, labeled_ipsec=%d;",
-				c->loopback, c->labeled_ipsec));
-		DBG(DBG_CONTROL,
-			DBG_log("policy_label=%s;", c->policy_label));
-#else
-		/* This makes our test results consistent */
-		DBG(DBG_CONTROL,
-			DBG_log("loopback=no, labeled_ipsec=no;"));
-		DBG(DBG_CONTROL, DBG_log("policy_label=unset;"));
+		c->policy_label = wm->policy_label;
 #endif
-
-
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
 		c->sa_priority = wm->sa_priority;
 
 		c->forceencaps = wm->forceencaps;
 		c->nat_keepalive = wm->nat_keepalive;
+		c->ikev1_natt = wm->ikev1_natt;
 		c->initial_contact = wm->initial_contact;
 		c->cisco_unity = wm->cisco_unity;
 		c->send_vendorid = wm->send_vendorid;
@@ -1419,12 +1325,15 @@ void add_connection(const struct whack_message *wm)
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
 
-		c->requested_ca = NULL;
 
-		/* pre-check for leftcert/rightcert availablility */
-		if (!have_local_nss_certs(wm))
-			return;
+		/*
+		 * Set this up so that we can log which end is which after
+		 * orient
+		 */
+		c->spd.this.left = TRUE;
+		c->spd.that.left = FALSE;
 
+		same_rightca = same_leftca = FALSE;
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
 
@@ -1440,13 +1349,11 @@ void add_connection(const struct whack_message *wm)
 
 		if (wm->left.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->left.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->left.pool_range);
 		}
 		if (wm->right.pool_range.start.u.v4.sin_addr.s_addr) {
 			/* there is address pool range add to the global list */
-			c->pool = install_addresspool(&wm->right.pool_range,
-						&pluto_pools);
+			c->pool = install_addresspool(&wm->right.pool_range);
 		}
 
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
@@ -1457,18 +1364,8 @@ void add_connection(const struct whack_message *wm)
 
 		c->modecfg_dns1 = wm->modecfg_dns1;
 		c->modecfg_dns2 = wm->modecfg_dns2;
-		c->modecfg_domain = NULL;
-		c->modecfg_banner = NULL;
-		if (wm->modecfg_domain)
-			c->modecfg_domain = clone_str(wm->modecfg_domain,
-						"modecfgdomain");
-		if (wm->modecfg_banner)
-			c->modecfg_domain = clone_str(wm->modecfg_banner,
-						"modecfgbanner");
-		DBG(DBG_CONTROL,
-			DBG_log("modecfgdomain=%s;", c->modecfg_domain));
-		DBG(DBG_CONTROL,
-			DBG_log("modecfgbanner=%s;", c->modecfg_banner));
+		c->modecfg_domain = wm->modecfg_domain;
+		c->modecfg_banner = wm->modecfg_banner;
 
 		default_end(&c->spd.this, &c->spd.that.host_addr);
 		default_end(&c->spd.that, &c->spd.this.host_addr);
@@ -1504,9 +1401,13 @@ void add_connection(const struct whack_message *wm)
 		c->newest_isakmp_sa = SOS_NOBODY;
 		c->newest_ipsec_sa = SOS_NOBODY;
 		c->spd.eroute_owner = SOS_NOBODY;
+		c->cisco_dns_info = NULL; /* XXX: scratchpad - should be phased out */
+#ifdef XAUTH_HAVE_PAM
+		c->pamh = NULL;
+#endif
 
 		/* force all oppo connections to have a client */
-		if (c->policy & POLICY_OPPO) {
+		if (c->policy & POLICY_OPPORTUNISTIC) {
 			c->spd.that.has_client = TRUE;
 			c->spd.that.client.maskbits = 0;
 		}
@@ -1569,6 +1470,7 @@ void add_connection(const struct whack_message *wm)
 				c->spd.that.has_client = TRUE;
 		}
 
+		/* ensure we allocate copies of all strings */
 		unshare_connection_strings(c);
 
 		(void)orient(c);
@@ -1587,8 +1489,8 @@ void add_connection(const struct whack_message *wm)
 
 #ifdef HAVE_LABELED_IPSEC
 		if (c->loopback &&
-			portof(&c->spd.this.client.addr) !=
-			portof(&c->spd.that.client.addr) ) {
+		    portof(&c->spd.this.client.addr) !=
+		      portof(&c->spd.that.client.addr) ) {
 			struct spd_route *tmp_spd;
 			u_int16_t tmp_this_port, tmp_that_port;
 
@@ -1606,12 +1508,10 @@ void add_connection(const struct whack_message *wm)
 							"updown");
 			tmp_spd->this.cert_filename = NULL;
 			tmp_spd->that.cert_filename = NULL;
-			tmp_spd->this.cert.type = 0;
-			tmp_spd->that.cert.type = 0;
+			tmp_spd->this.cert.ty = CERT_NONE;
+			tmp_spd->that.cert.ty = CERT_NONE;
 			tmp_spd->this.ca.ptr = NULL;
 			tmp_spd->that.ca.ptr = NULL;
-			tmp_spd->this.groups = NULL;
-			tmp_spd->that.groups = NULL;
 			tmp_spd->this.virt = NULL;
 			tmp_spd->that.virt = NULL;
 			tmp_spd->next = NULL;
@@ -1632,34 +1532,32 @@ void add_connection(const struct whack_message *wm)
 		passert(c->addr_family == addrtypeof(&c->spd.this.host_addr));
 		passert(c->addr_family ==
 			addrtypeof(&c->spd.this.host_nexthop));
-		passert((c->spd.this.has_client ? c->tunnel_addr_family : c->
-				addr_family) ==
+		passert((c->spd.this.has_client ?
+			  c->tunnel_addr_family : c-> addr_family) ==
 			subnettypeof(&c->spd.this.client));
 
 		passert(c->addr_family == addrtypeof(&c->spd.that.host_addr));
 		passert(c->addr_family ==
 			addrtypeof(&c->spd.that.host_nexthop));
-		passert((c->spd.that.has_client ? c->tunnel_addr_family : c->
-				addr_family) ==
+		passert((c->spd.that.has_client ?
+			  c->tunnel_addr_family : c->addr_family) ==
 			subnettypeof(&c->spd.that.client));
 #endif
 
 		DBG(DBG_CONTROL,
-			DBG_log("ike_life: %lus; ipsec_life: %lus; "
-				"rekey_margin: %lus; "
-				"rekey_fuzz: %lu%%; keyingtries: "
-				"%lu; policy: %s",
-				(unsigned long) c->sa_ike_life_seconds,
-				(unsigned long) c->sa_ipsec_life_seconds,
-				(unsigned long) c->sa_rekey_margin,
-				(unsigned long) c->sa_rekey_fuzz,
-				(unsigned long) c->sa_keying_tries,
-				prettypolicy(c->policy));
-			);
+			DBG_log("ike_life: %lds; ipsec_life: %lds; "
+				"rekey_margin: %lds; "
+				"rekey_fuzz: %lu%%; "
+				"keyingtries: %lu; policy: %s",
+				(long) deltasecs(c->sa_ike_life_seconds),
+				(long) deltasecs(c->sa_ipsec_life_seconds),
+				(long) deltasecs(c->sa_rekey_margin),
+				c->sa_rekey_fuzz,
+				c->sa_keying_tries,
+				prettypolicy(c->policy)));
 	} else {
 		loglog(RC_FATAL, "attempt to load incomplete connection");
 	}
-
 }
 
 /*
@@ -1767,8 +1665,6 @@ struct connection *instantiate(struct connection *c, const ip_address *him,
 		d->spd.that.has_id_wildcards = FALSE;
 	}
 	unshare_connection_strings(d);
-	unshare_ietfAttrList(&d->spd.this.groups);
-	unshare_ietfAttrList(&d->spd.that.groups);
 
 	d->kind = CK_INSTANCE;
 
@@ -1823,7 +1719,7 @@ struct connection *rw_instantiate(struct connection *c,
 			d->spd.that.has_client = FALSE;
 	}
 
-	if (d->policy & POLICY_OPPO) {
+	if (d->policy & POLICY_OPPORTUNISTIC) {
 		/*
 		 * This must be before we know the client addresses.
 		 * Fill in one that is impossible. This prevents anyone else
@@ -1966,7 +1862,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * Fill in peer's client side.
 	 * If the client is the peer, excise the client from the connection.
 	 */
-	passert(d->policy & POLICY_OPPO);
+	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(addrinsubnet(peer_client, &d->spd.that.client));
 	happy(addrtosubnet(peer_client, &d->spd.that.client));
 
@@ -2053,7 +1949,7 @@ char *fmt_conn_instance(const struct connection *c, char buf[CONN_INST_BUF])
 			p += strlen(p);
 		}
 
-		if (c->policy & POLICY_OPPO) {
+		if (c->policy & POLICY_OPPORTUNISTIC) {
 			size_t w = fmt_client(&c->spd.this.client,
 					&c->spd.this.host_addr, " ", p);
 
@@ -2129,17 +2025,17 @@ struct connection *find_connection_for_clients(struct spd_route **srp,
 					c->instance_initiation_ok) &&
 				addrinsubnet(our_client, &sr->this.client) &&
 				addrinsubnet(peer_client, &sr->that.client) &&
-				(!sr->this.protocol || transport_proto ==
-					sr->this.protocol) &&
+				(!sr->this.protocol ||
+				    transport_proto == sr->this.protocol) &&
 				(!sr->this.port || our_port == sr->this.port) &&
 				(!sr->that.port ||
 					peer_port == sr->that.port)) {
 
-				policy_prio_t prio = 8 *
-					(c->prio + (c->kind ==
-						CK_INSTANCE)) + 2 *
-					(sr->this.port == our_port) + 2 *
-					(sr->that.port == peer_port) +
+				policy_prio_t prio =
+					8 * (c->prio +
+					     (c->kind == CK_INSTANCE)) +
+					2 * (sr->this.port == our_port) +
+					2 * (sr->that.port == peer_port) +
 					(sr->this.protocol == transport_proto);
 
 				DBG(DBG_CONTROLMORE, {
@@ -2335,7 +2231,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 
 	if (best == NULL ||
 		NEVER_NEGOTIATE(best->policy) ||
-		(best->policy & POLICY_OPPO) == LEMPTY ||
+		(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
 		best->kind != CK_TEMPLATE)
 		return NULL;
 	else
@@ -2491,8 +2387,7 @@ struct connection *route_owner(struct connection *c,
  * We don't know enough to chose amongst those available.
  * ??? no longer usefully different from find_host_pair_connections
  */
-struct connection *find_host_connection2(const char *func,
-					const ip_address *me,
+struct connection *find_host_connection(const ip_address *me,
 					u_int16_t my_port,
 					const ip_address *him,
 					u_int16_t his_port, lset_t policy)
@@ -2502,9 +2397,8 @@ struct connection *find_host_connection2(const char *func,
 	DBG(DBG_CONTROLMORE, {
 			char mebuf[ADDRTOT_BUF];
 			char himbuf[ADDRTOT_BUF];
-			DBG_log("find_host_connection2 called from %s, "
+			DBG_log("find_host_connection "
 				"me=%s:%d him=%s:%d policy=%s",
-				func,
 				(addrtot(me, 0, mebuf,
 					sizeof(mebuf)), mebuf), my_port,
 				him ? (addrtot(him, 0, himbuf,
@@ -2533,12 +2427,12 @@ struct connection *find_host_connection2(const char *func,
 			if (NEVER_NEGOTIATE(c->policy))
 				continue;
 
-			if ((c->policy & policy) == policy)
-				break;
-
 			if ((policy & POLICY_XAUTH) !=
 				(c->policy & POLICY_XAUTH))
 				continue;
+
+			if ((c->policy & policy) == policy)
+				break;
 		}
 
 	}
@@ -2546,7 +2440,7 @@ struct connection *find_host_connection2(const char *func,
 	for (; c != NULL && NEVER_NEGOTIATE(c->policy); c = c->hp_next) ;
 
 	DBG(DBG_CONTROLMORE,
-		DBG_log("find_host_connection2 returns %s",
+		DBG_log("find_host_connection returns %s",
 			c ? c->name : "empty"));
 	return c;
 }
@@ -2783,31 +2677,33 @@ struct connection *refine_host_connection(const struct state *st,
 			bool match3 = match_requested_ca(c->requested_ca,
 							d->spd.this.ca,
 							&our_pathlen);
-			bool match = match1 && match2 && match3;
 
 			DBG(DBG_CONTROLMORE,
 				DBG_log("refine_connection: checking %s "
 					"against %s, best=%s with "
 					"match=%d(id=%d/ca=%d/reqca=%d)",
-					c->name, d->name, best_found ?
-					best_found->name : "(none)", match,
+					c->name, d->name,
+					best_found ?
+						best_found->name : "(none)",
+					match1 && match2 && match3,
 					match1, match2, match3));
 
 			/* ignore group connections */
 			if (d->policy & POLICY_GROUP)
 				continue;
 
+			/* match2 and match3 are required */
+			if (!match2 || !match3)
+				continue;
 			/*
 			 * Check if peer_id matches, exactly or after
 			 * instantiation.
 			 * Check for the match but also check to see if it's
 			 * the %fromcert + peer id match result. - matt
 			 */
-			if (!match && !(*fromcert =
-						((id_kind(&d->spd.that.id) ==
-							ID_FROMCERT) &&
-							(!match1 && match2 &&
-								match3))))
+			if (!match1 &&
+			    !(*fromcert =
+				 id_kind(&d->spd.that.id) == ID_FROMCERT))
 				continue;
 
 			/* if initiator, our ID must match exactly */
@@ -2865,8 +2761,8 @@ struct connection *refine_host_connection(const struct state *st,
 
 				if (initiator && psk != dpsk) {
 					if (psk->len != dpsk->len ||
-						memcmp(psk->ptr, dpsk->ptr,
-							psk->len) != 0)
+						!memeq(psk->ptr, dpsk->ptr,
+							psk->len))
 						continue; /* different secret */
 				}
 			}
@@ -2901,8 +2797,8 @@ struct connection *refine_host_connection(const struct state *st,
 			 * D has passed all the tests.
 			 * We'll go with it if the Peer ID was an exact match.
 			 */
-			if (match && wildcards == 0 && peer_pathlen == 0 &&
-				our_pathlen == 0)
+			if (match1 && wildcards == 0 && peer_pathlen == 0 &&
+			    our_pathlen == 0)
 				return d;
 
 			/*
@@ -3162,14 +3058,12 @@ static struct connection *fc_try(const struct connection *c,
 			if (sr->that.has_client) {
 				if (sr->that.has_client_wildcard) {
 					if (!subnetinsubnet(peer_net,
-								&sr->
-								that.client))
+							    &sr->that.client))
 						continue;
 				} else {
-					if ((!samesubnet(&sr->that.client,
-								peer_net)) &&
-						(!is_virtual_sr(sr))
-						) {
+					if (!samesubnet(&sr->that.client,
+							 peer_net) &&
+					    !is_virtual_sr(sr)) {
 						DBG(DBG_CONTROLMORE,
 							DBG_log("   their "
 								"client(%s) "
@@ -3179,19 +3073,18 @@ static struct connection *fc_try(const struct connection *c,
 						continue;
 					}
 
-					virtualwhy =
-						is_virtual_net_allowed(d,
-								peer_net,
-								&sr->
-								that.host_addr);
+					virtualwhy = is_virtual_net_allowed(
+							d,
+							peer_net,
+							&sr->that.host_addr);
 
-					if ((is_virtual_sr(sr)) &&
-						( (virtualwhy != NULL) ||
-							(is_virtual_net_used(d,
-								peer_net,
-								peer_id ?
-								peer_id : &
-								sr->that.id)) ))
+					if (is_virtual_sr(sr) &&
+					    (virtualwhy != NULL ||
+					     is_virtual_net_used(
+						d,
+						peer_net,
+						peer_id != NULL ?
+						    peer_id : &sr->that.id)))
 					{
 						DBG(DBG_CONTROLMORE,
 							DBG_log("   virtual "
@@ -3233,8 +3126,7 @@ static struct connection *fc_try(const struct connection *c,
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  fc_try concluding with %s [%ld]",
-			(best ? best->name : "none"), best_prio)
-		);
+			(best ? best->name : "none"), best_prio));
 
 	if (best == NULL) {
 		if (virtualwhy != NULL) {
@@ -3338,13 +3230,12 @@ static struct connection *fc_try_oppo(const struct connection *c,
 	/* if the best wasn't opportunistic, we fail: it must be a shunt */
 	if (best != NULL &&
 		(NEVER_NEGOTIATE(best->policy) ||
-			(best->policy & POLICY_OPPO) == LEMPTY))
+			(best->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
 		best = NULL;
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  fc_try_oppo concluding with %s [%ld]",
-			(best ? best->name : "none"), best_prio)
-		);
+			(best ? best->name : "none"), best_prio));
 	return best;
 
 }
@@ -3417,8 +3308,7 @@ struct connection *find_client_connection(struct connection *c,
 		DBG(DBG_CONTROLMORE,
 			DBG_log("  fc_try %s gives %s",
 				c->name,
-				(d ? d->name : "none"))
-			);
+				(d ? d->name : "none")));
 
 		if (d == NULL)
 			d = unrouted;
@@ -3473,8 +3363,7 @@ struct connection *find_client_connection(struct connection *c,
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("  concluding with d = %s",
-			(d ? d->name : "none"))
-		);
+			(d ? d->name : "none")));
 	return d;
 }
 
@@ -3592,12 +3481,12 @@ static void show_one_sr(struct connection *c,
 		thisxauthsemi[0] = '\0';
 		snprintf(thisxauthsemi, sizeof(thisxauthsemi) - 1,
 			"my_xauthuser=%s; ",
-			sr->this.xauth_name ? sr->this.xauth_name : "[any]");
+			sr->this.xauth_name != NULL ? sr->this.xauth_name : "[any]");
 
 		thatxauthsemi[0] = '\0';
 		snprintf(thatxauthsemi, sizeof(thatxauthsemi) - 1,
 			"their_xauthuser=%s; ",
-			sr->that.xauth_name ? sr->that.xauth_name : "[any]");
+			sr->that.xauth_name != NULL ? sr->that.xauth_name : "[any]");
 
 		whack_log(RC_COMMENT,
 			"\"%s\"%s:   xauth info: us:%s, them:%s, %s %s%s;",
@@ -3606,24 +3495,22 @@ static void show_one_sr(struct connection *c,
 			 * Both should not be set, but if they are, we want to
 			 * know
 			 */
-			(!sr->this.xauth_server &&
-				!sr->this.xauth_client) ? "none" :
-			(sr->this.xauth_server &&
-				sr->this.xauth_client) ? "both??" :
-			(sr->this.xauth_server) ? "server" : "client",
-			(!sr->that.xauth_server &&
-				!sr->that.xauth_client) ? "none" :
-			(sr->that.xauth_server &&
-				sr->that.xauth_client) ? "both??" :
-			(sr->that.xauth_server) ? "server" : "client",
+			sr->this.xauth_server ?
+				sr->this.xauth_client ? "both??" : "server" :
+				sr->this.xauth_client ? "client" : "none",
+			sr->that.xauth_server ?
+				sr->that.xauth_client ? "both??" : "server" :
+				sr->that.xauth_client ? "client" : "none",
 			/* should really be an enum name */
-			(sr->this.xauth_server) ? (c->xauthby ==
-						XAUTHBY_FILE) ? "method:file;" :
-			((c->xauthby == XAUTHBY_PAM) ?
-				"method:pam;" : "method:alwaysok;" ) : "",
+			sr->this.xauth_server ?
+				c->xauthby == XAUTHBY_FILE ?
+					"method:file;" :
+				c->xauthby == XAUTHBY_PAM ?
+					"method:pam;" :
+					"method:alwaysok;" :
+				"",
 			thisxauthsemi,
-			thatxauthsemi
-			);
+			thatxauthsemi);
 
 		if (isanyaddr(&c->modecfg_dns1))
 			strcpy(dns1, "unset");
@@ -3656,13 +3543,11 @@ static void show_one_sr(struct connection *c,
 			dns1,
 			dns2,
 			(c->modecfg_domain == NULL) ? "unset" : c->modecfg_domain,
-			(c->modecfg_banner == NULL) ? ", banner:unset" : ""
-			);
+			(c->modecfg_banner == NULL) ? ", banner:unset" : "");
 		if (c->modecfg_banner != NULL) {
 			whack_log(RC_COMMENT, "\"%s\"%s: banner:%s;",
 			c->name, instance, c->modecfg_banner);
 		}
-
 	}
 
 #ifdef HAVE_LABELED_IPSEC
@@ -3673,8 +3558,7 @@ static void show_one_sr(struct connection *c,
 		);
 	whack_log(RC_COMMENT, "\"%s\"%s:    policy_label:%s; ",
 		c->name, instance,
-		(c->policy_label == NULL) ? "unset" : c->policy_label
-		);
+		(c->policy_label == NULL) ? "unset" : c->policy_label);
 #else
 /* this makes output consistent for testing regardless of support */
 	whack_log(RC_COMMENT, "\"%s\"%s:   labeled_ipsec:no, loopback:no; ",
@@ -3726,15 +3610,15 @@ void show_one_connection(struct connection *c)
 	}
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   ike_life: %lus; ipsec_life: %lus;"
-		" rekey_margin: %lus; rekey_fuzz: %lu%%; keyingtries: %lu;",
+		"\"%s\"%s:   ike_life: %lds; ipsec_life: %lds;"
+		" rekey_margin: %lds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		c->name,
 		instance,
-		(unsigned long) c->sa_ike_life_seconds,
-		(unsigned long) c->sa_ipsec_life_seconds,
-		(unsigned long) c->sa_rekey_margin,
-		(unsigned long) c->sa_rekey_fuzz,
-		(unsigned long) c->sa_keying_tries);
+		(long) deltasecs(c->sa_ike_life_seconds),
+		(long) deltasecs(c->sa_ipsec_life_seconds),
+		(long) deltasecs(c->sa_rekey_margin),
+		c->sa_rekey_fuzz,
+		c->sa_keying_tries);
 
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   sha2_truncbug:%s; initial_contact:%s; "
@@ -3788,17 +3672,19 @@ void show_one_connection(struct connection *c)
 		mtustr, sapriostr);
 
 	/* slightly complicated stuff to avoid extra crap */
-	if (c->dpd_timeout > 0 || DBGP(DBG_DPD)) {
+	if (deltasecs(c->dpd_timeout) > 0 || DBGP(DBG_DPD)) {
 		whack_log(RC_COMMENT,
-			"\"%s\"%s:   dpd: %s; delay:%lu; timeout:%lu; "
-			"nat-t: force_encaps:%s; nat_keepalive:%s;",
+			"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; "
+			"nat-t: force_encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
 			c->name,
 			instance,
 			enum_name(&dpd_action_names, c->dpd_action),
-			(unsigned long)c->dpd_delay,
-			(unsigned long)c->dpd_timeout,
+			(long) deltasecs(c->dpd_delay),
+			(long) deltasecs(c->dpd_timeout),
 			(c->forceencaps) ? "yes" : "no",
-			(c->nat_keepalive) ? "yes" : "no");
+			(c->nat_keepalive) ? "yes" : "no",
+			(c->ikev1_natt == natt_both) ? "both" :
+			  ((c->ikev1_natt == natt_rfc) ? "rfc" : "drafts"));
 	}
 
 	if (c->extra_debugging) {

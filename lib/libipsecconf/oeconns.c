@@ -83,7 +83,7 @@ static const struct oe_conn oe_packet_default = {
 	.oe_sc = {
 		.policy = POLICY_TUNNEL | POLICY_RSASIG | POLICY_ENCRYPT |
 			  POLICY_PFS |
-			  POLICY_OPPO | POLICY_FAIL_PASS | POLICY_IKEV2_ALLOW,
+			  POLICY_OPPORTUNISTIC | POLICY_FAIL_PASS | POLICY_IKEV2_ALLOW,
 
 		.options[KBF_REKEY] = FALSE,
 		.options_set[KBF_REKEY] = TRUE,
@@ -91,10 +91,10 @@ static const struct oe_conn oe_packet_default = {
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
 
-		.options[KBF_IKELIFETIME] = 3600,
+		.options[KBF_IKELIFETIME] = secs_per_hour,
 		.options_set[KBF_IKELIFETIME] = TRUE,
 
-		.options[KBF_SALIFETIME] = 1800,
+		.options[KBF_SALIFETIME] = secs_per_hour / 2,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
 		.desired_state = STARTUP_ONDEMAND,
@@ -181,7 +181,7 @@ static const struct oe_conn oe_clear_or_private = {
 	.oe_sc = {
 		.policy = POLICY_RSASIG | POLICY_ENCRYPT | POLICY_TUNNEL |
 			  POLICY_PFS |
-			  POLICY_DONT_REKEY | POLICY_OPPO | POLICY_GROUP |
+			  POLICY_DONT_REKEY | POLICY_OPPORTUNISTIC | POLICY_GROUP |
 			  POLICY_GROUTED |
 			  POLICY_SHUNT_PASS | POLICY_FAIL_PASS |
 			  POLICY_IKEV2_ALLOW,
@@ -189,10 +189,10 @@ static const struct oe_conn oe_clear_or_private = {
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
 
-		.options[KBF_IKELIFETIME] = 3600,
+		.options[KBF_IKELIFETIME] = secs_per_hour,
 		.options_set[KBF_IKELIFETIME] = TRUE,
 
-		.options[KBF_SALIFETIME] = 1800,
+		.options[KBF_SALIFETIME] = secs_per_hour / 2,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
 		.desired_state = STARTUP_ONDEMAND,
@@ -239,7 +239,7 @@ static const struct oe_conn oe_private_or_clear = {
 	.oe_sc = {
 		.policy = POLICY_RSASIG | POLICY_ENCRYPT | POLICY_TUNNEL |
 			  POLICY_PFS |
-			  POLICY_DONT_REKEY | POLICY_OPPO | POLICY_GROUP |
+			  POLICY_DONT_REKEY | POLICY_OPPORTUNISTIC | POLICY_GROUP |
 			  POLICY_GROUTED |
 			  POLICY_FAIL_PASS | POLICY_IKEV2_ALLOW,
 
@@ -248,10 +248,10 @@ static const struct oe_conn oe_private_or_clear = {
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
 
-		.options[KBF_IKELIFETIME] = 3600,
+		.options[KBF_IKELIFETIME] = secs_per_hour,
 		.options_set[KBF_IKELIFETIME] = TRUE,
 
-		.options[KBF_SALIFETIME] = 1800,
+		.options[KBF_SALIFETIME] = secs_per_hour / 2,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
 		.left = {
@@ -297,7 +297,7 @@ static const struct oe_conn oe_private = {
 	.oe_sc = {
 		.policy = POLICY_RSASIG | POLICY_ENCRYPT | POLICY_TUNNEL |
 			  POLICY_PFS |
-			  POLICY_OPPO | POLICY_GROUP | POLICY_GROUTED |
+			  POLICY_OPPORTUNISTIC | POLICY_GROUP | POLICY_GROUTED |
 			  POLICY_FAIL_DROP | POLICY_IKEV2_ALLOW,
 
 		.options[KBF_REKEY] = FALSE,    /* really want REKEY if used */
@@ -308,10 +308,10 @@ static const struct oe_conn oe_private = {
 		.options[KBF_KEYINGTRIES] = 3,
 		.options_set[KBF_KEYINGTRIES] = TRUE,
 
-		.options[KBF_IKELIFETIME] = 3600,
+		.options[KBF_IKELIFETIME] = secs_per_hour,
 		.options_set[KBF_IKELIFETIME] = TRUE,
 
-		.options[KBF_SALIFETIME] = 1800,
+		.options[KBF_SALIFETIME] = secs_per_hour / 2,
 		.options_set[KBF_SALIFETIME] = TRUE,
 
 		.left = {
@@ -398,7 +398,6 @@ void add_any_oeconns(struct starter_config *cfg,
 	bool found_conns[OE_MAX];
 	struct section_list *sconn;
 	const struct oe_conn *const *oc;
-	err_t perr;
 	int i;
 
 	for (i = 0; i < OE_MAX; i++)
@@ -408,7 +407,7 @@ void add_any_oeconns(struct starter_config *cfg,
 	for (sconn = cfgp->sections.tqh_first; sconn != NULL;
 	     sconn = sconn->link.tqe_next) {
 		for (i = 0, oc = implicit_conns; *oc != NULL; oc++, i++) {
-			if (strcmp((*oc)->oe_cn, sconn->name) == 0) {
+			if (streq((*oc)->oe_cn, sconn->name)) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "found non-implicit conn: %s\n",
 					    sconn->name);
@@ -427,11 +426,11 @@ void add_any_oeconns(struct starter_config *cfg,
 				    "did not find conn: %s, loading implicit\n",
 				    (*oc)->oe_cn);
 
-			conn = alloc_add_conn(cfg, (*oc)->oe_cn, &perr);
+			conn = alloc_add_conn(cfg, (*oc)->oe_cn);
 			if (conn == NULL) {
 				starter_log(LOG_LEVEL_INFO,
-					    "Can not create conn %s:%s\n",
-					    (*oc)->oe_cn, perr);
+					    "Can not create conn %s\n",
+					    (*oc)->oe_cn);
 				continue;
 			}
 

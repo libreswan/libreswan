@@ -347,14 +347,16 @@
 # define __ipsec_dev_get(x) __dev_get_by_name(x)
 #endif
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(3, 9, 0)
 # define PDE_DATA(inode)	PDE(inode)->data
-#else
+#endif
+
 /*
  * We do not use CONFIG_NAMSPACES due to a kernel bug
  * that checks for namespaces in inet_add_protocol()
  * even when compiled without CONFIG_NAMSPACES
  */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 # define HAVE_NAMESPACES
 #endif
 
@@ -514,6 +516,13 @@
 
 #if !defined(DEFINE_RWLOCK)
 # define DEFINE_RWLOCK(x) rwlock_t x = RW_LOCK_UNLOCKED
+#endif
+
+/* CONFIG_USER_NS is now on in Fedora 20 kernels */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
+# if defined(CONFIG_USER_NS)
+#  define HAVE_USER_NS
+# endif
 #endif
 
 #endif /* _LIBRESWAN_KVERSIONS_H */

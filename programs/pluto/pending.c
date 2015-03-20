@@ -31,7 +31,6 @@
 #include <arpa/nameser.h>       /* missing from <resolv.h> on old systems */
 
 #include <libreswan.h>
-#include <libreswan/ipsec_policy.h>
 #include "kameipsec.h"
 
 #include "sysdep.h"
@@ -40,7 +39,6 @@
 #include "id.h"
 #include "x509.h"
 #include "certs.h"
-#include "ac.h"
 #include "connections.h"        /* needs id.h */
 #include "pending.h"
 #include "log.h"
@@ -62,7 +60,7 @@ struct pending {
 	lset_t policy;
 	unsigned long try;
 	so_serial_t replacing;
-	time_t pend_time;
+	monotime_t pend_time;
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike * uctx;
 #endif
@@ -87,7 +85,7 @@ void add_pending(int whack_sock,
 	/* look for duplicate pending phase #2, skip add operation */
 	pp = host_pair_first_pending(c);
 
-	for ( p = pp ? *pp : NULL; p != NULL; p = p->next) {
+	for (p = pp ? *pp : NULL; p != NULL; p = p->next) {
 		if (p->connection == c && p->isakmp_sa == isakmp_sa) {
 			DBG(DBG_CONTROL,
 			    DBG_log("Ignored already queued up pending Quick Mode with %s \"%s\"",
@@ -108,7 +106,7 @@ void add_pending(int whack_sock,
 	p->policy = policy;
 	p->try = try;
 	p->replacing = replacing;
-	p->pend_time = time(NULL);
+	p->pend_time = mononow();
 #ifdef HAVE_LABELED_IPSEC
 	p->uctx = NULL;
 	if (uctx != NULL) {
@@ -149,8 +147,8 @@ void release_pending_whacks(struct state *st, err_t story)
 			struct stat pst;
 
 			if (fstat(p->whack_sock, &pst) == 0 &&
-			    (stst.st_dev != pst.st_dev || stst.st_ino !=
-			     pst.st_ino)) {
+			    (stst.st_dev != pst.st_dev ||
+			     stst.st_ino != pst.st_ino)) {
 				passert(whack_log_fd == NULL_FD);
 				whack_log_fd = p->whack_sock;
 				whack_log(RC_COMMENT,
@@ -201,8 +199,7 @@ void unpend(struct state *st)
 	DBG(DBG_DPD,
 	    DBG_log("unpending state #%lu", st->st_serialno));
 
-	for (pp =
-		     host_pair_first_pending(st->st_connection);
+	for (pp = host_pair_first_pending(st->st_connection);
 	     (p = *pp) != NULL;
 	     ) {
 		if (p->isakmp_sa == st) {
@@ -214,7 +211,7 @@ void unpend(struct state *st)
 				    enum_name(&pluto_cryptoimportance_names,
 					      st->st_import)));
 
-			p->pend_time = time(NULL);
+			p->pend_time = mononow();
 			if (!st->st_ikev2) {
 				(void) quick_outI1(p->whack_sock, st, p->connection,
 						   p->policy,
@@ -243,8 +240,7 @@ struct connection *first_pending(struct state *st,
 	DBG(DBG_DPD,
 	    DBG_log("getting first pending from state #%lu", st->st_serialno));
 
-	for (pp =
-		     host_pair_first_pending(st->st_connection);
+	for (pp = host_pair_first_pending(st->st_connection);
 	     (p = *pp) != NULL;
 	     ) {
 		if (p->isakmp_sa == st) {
@@ -266,18 +262,20 @@ struct connection *first_pending(struct state *st,
 bool pending_check_timeout(struct connection *c)
 {
 	struct pending **pp, *p;
-	time_t n = time(NULL);
 
 	for (pp = host_pair_first_pending(c); (p = *pp) != NULL; ) {
-		DBG(DBG_DPD,
-		    DBG_log("checking connection \"%s\" for stuck phase 2s (%lu+ 3*%lu) <= %lu",
-			    c->name,
-			    (unsigned long)p->pend_time,
-			    (unsigned long)c->dpd_timeout,
-			    (unsigned long)n));
+		DBG(DBG_DPD, {
+			deltatime_t waited = monotimediff(mononow(), p->pend_time);
+			DBG_log("checking connection \"%s\" for stuck phase 2s (waited %lds, patience 3*%lds)",
+				c->name,
+				(long) deltasecs(waited),
+				(long) deltasecs(c->dpd_timeout));
+			});
 
-		if (c->dpd_timeout > 0) {
-			if ((p->pend_time + c->dpd_timeout * 3) <= n) {
+		if (deltasecs(c->dpd_timeout) > 0) {
+			if (!monobefore(mononow(),
+				monotimesum(p->pend_time,
+					deltatimescale(3, 1, c->dpd_timeout)))) {
 				DBG(DBG_DPD,
 				    DBG_log("connection \"%s\" stuck, restarting",
 					    c->name));

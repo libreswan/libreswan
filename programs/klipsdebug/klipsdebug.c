@@ -20,7 +20,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
-#include <stdlib.h>     /* system(), strtoul() */
+#include <stdlib.h>     /* system() */
 #include <sys/stat.h>   /* open() */
 #include <fcntl.h>      /* open() */
 #include <stdio.h>
@@ -61,7 +61,6 @@ __u32 bigbuf[1024];
 char *program_name;
 
 int pfkey_sock;
-lsw_fd_set pfkey_socks;
 uint32_t pfkey_seq = 0;
 
 char copyright[] =
@@ -129,9 +128,8 @@ int main(int argc, char **argv)
 
 	program_name = argv[0];
 
-	while ((c =
-			getopt_long(argc, argv, "" /*"s:c:anhvl:+:d"*/,
-				    longopts, 0)) != EOF) {
+	while ((c = getopt_long(argc, argv, "" /*"s:c:anhvl:+:d"*/,
+				longopts, 0)) != EOF) {
 		switch (c) {
 		case 'd':
 			pfkey_lib_debug = PF_KEY_DEBUG_PARSE_MAX;
@@ -150,47 +148,41 @@ int main(int argc, char **argv)
 			em_db_rj = em_db_es = em_db_ah = em_db_rx = em_db_ky =
 									    0;
 			em_db_gz = em_db_vb = 0;
-			if (strcmp(optarg, "all") == 0) {
+			if (streq(optarg, "all")) {
 				em_db_tn = em_db_nl = em_db_xf = em_db_er =
-									 em_db_sp
-										 =
-											 -
-											 1;
+					em_db_sp = -1;
 				em_db_rj = em_db_es = em_db_ah = em_db_rx =
-									 em_db_ky
-										 =
-											 -
-											 1;
+					em_db_ky = -1;
 				em_db_gz = -1;
 				em_db_vb = 0;
-			} else if (strcmp(optarg, "tunnel") == 0) {
+			} else if (streq(optarg, "tunnel")) {
 				em_db_tn = -1L;
-			} else if (strcmp(optarg, "tncfg") == 0) {
+			} else if (streq(optarg, "tncfg")) {
 				em_db_tn = DB_TN_REVEC;
-			} else if (strcmp(optarg, "xmit") == 0 ||
-				   strcmp(optarg, "tunnel-xmit") == 0) {
+			} else if (streq(optarg, "xmit") ||
+				   streq(optarg, "tunnel-xmit")) {
 				em_db_tn = DB_TN_XMIT;
-			} else if (strcmp(optarg, "netlink") == 0) {
+			} else if (streq(optarg, "netlink")) {
 				em_db_nl = -1L;
-			} else if (strcmp(optarg, "xform") == 0) {
+			} else if (streq(optarg, "xform")) {
 				em_db_xf = -1L;
-			} else if (strcmp(optarg, "eroute") == 0) {
+			} else if (streq(optarg, "eroute")) {
 				em_db_er = -1L;
-			} else if (strcmp(optarg, "spi") == 0) {
+			} else if (streq(optarg, "spi")) {
 				em_db_sp = -1L;
-			} else if (strcmp(optarg, "radij") == 0) {
+			} else if (streq(optarg, "radij")) {
 				em_db_rj = -1L;
-			} else if (strcmp(optarg, "esp") == 0) {
+			} else if (streq(optarg, "esp")) {
 				em_db_es = -1L;
-			} else if (strcmp(optarg, "ah") == 0) {
+			} else if (streq(optarg, "ah")) {
 				em_db_ah = -1L;
-			} else if (strcmp(optarg, "rcv") == 0) {
+			} else if (streq(optarg, "rcv")) {
 				em_db_rx = -1L;
-			} else if (strcmp(optarg, "pfkey") == 0) {
+			} else if (streq(optarg, "pfkey")) {
 				em_db_ky = -1L;
-			} else if (strcmp(optarg, "comp") == 0) {
+			} else if (streq(optarg, "comp")) {
 				em_db_gz = -1L;
-			} else if (strcmp(optarg, "verbose") == 0) {
+			} else if (streq(optarg, "verbose")) {
 				em_db_vb = -1L;
 			} else {
 				fprintf(stdout,
@@ -207,49 +199,45 @@ int main(int argc, char **argv)
 					program_name);
 				exit(1);
 			}
-			em_db_tn = em_db_nl = em_db_xf = em_db_er = em_db_sp =
-									    -1;
-			em_db_rj = em_db_es = em_db_ah = em_db_rx = em_db_ky =
-									    -1;
+			em_db_tn = em_db_nl = em_db_xf = em_db_er =
+				em_db_sp = -1;
+			em_db_rj = em_db_es = em_db_ah = em_db_rx =
+				em_db_ky = -1;
 			em_db_gz = em_db_vb = -1;
 
 			action = 'c';
-			if (strcmp(optarg, "all") == 0) {
+			if (streq(optarg, "all")) {
 				em_db_tn = em_db_nl = em_db_xf = em_db_er =
-									 em_db_sp
-										 =
-											 0;
+					em_db_sp = 0;
 				em_db_rj = em_db_es = em_db_ah = em_db_rx =
-									 em_db_ky
-										 =
-											 0;
+					em_db_ky = 0;
 				em_db_gz = em_db_vb = 0;
-			} else if (strcmp(optarg, "tunnel") == 0) {
+			} else if (streq(optarg, "tunnel")) {
 				em_db_tn = 0;
-			} else if (strcmp(optarg, "tunnel-xmit") == 0 ||
-				   strcmp(optarg, "xmit") == 0) {
+			} else if (streq(optarg, "tunnel-xmit") ||
+				   streq(optarg, "xmit")) {
 				em_db_tn = ~DB_TN_XMIT;
-			} else if (strcmp(optarg, "netlink") == 0) {
+			} else if (streq(optarg, "netlink")) {
 				em_db_nl = 0;
-			} else if (strcmp(optarg, "xform") == 0) {
+			} else if (streq(optarg, "xform")) {
 				em_db_xf = 0;
-			} else if (strcmp(optarg, "eroute") == 0) {
+			} else if (streq(optarg, "eroute")) {
 				em_db_er = 0;
-			} else if (strcmp(optarg, "spi") == 0) {
+			} else if (streq(optarg, "spi")) {
 				em_db_sp = 0;
-			} else if (strcmp(optarg, "radij") == 0) {
+			} else if (streq(optarg, "radij")) {
 				em_db_rj = 0;
-			} else if (strcmp(optarg, "esp") == 0) {
+			} else if (streq(optarg, "esp")) {
 				em_db_es = 0;
-			} else if (strcmp(optarg, "ah") == 0) {
+			} else if (streq(optarg, "ah")) {
 				em_db_ah = 0;
-			} else if (strcmp(optarg, "rcv") == 0) {
+			} else if (streq(optarg, "rcv")) {
 				em_db_rx = 0;
-			} else if (strcmp(optarg, "pfkey") == 0) {
+			} else if (streq(optarg, "pfkey")) {
 				em_db_ky = 0;
-			} else if (strcmp(optarg, "comp") == 0) {
+			} else if (streq(optarg, "comp")) {
 				em_db_gz = 0;
-			} else if (strcmp(optarg, "verbose") == 0) {
+			} else if (streq(optarg, "verbose")) {
 				em_db_vb = 0;
 			} else {
 				fprintf(stdout,
@@ -267,10 +255,10 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 			action = 'a';
-			em_db_tn = em_db_nl = em_db_xf = em_db_er = em_db_sp =
-									    -1;
-			em_db_rj = em_db_es = em_db_ah = em_db_rx = em_db_ky =
-									    -1;
+			em_db_tn = em_db_nl = em_db_xf = em_db_er =
+				em_db_sp = -1;
+			em_db_rj = em_db_es = em_db_ah = em_db_rx =
+				em_db_ky = -1;
 			em_db_gz = -1;
 			em_db_vb = 0;
 			break;
@@ -282,10 +270,10 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 			action = 'n';
-			em_db_tn = em_db_nl = em_db_xf = em_db_er = em_db_sp =
-									    0;
-			em_db_rj = em_db_es = em_db_ah = em_db_rx = em_db_ky =
-									    0;
+			em_db_tn = em_db_nl = em_db_xf = em_db_er =
+				em_db_sp = 0;
+			em_db_rj = em_db_es = em_db_ah = em_db_rx =
+				em_db_ky = 0;
 			em_db_gz = em_db_vb = 0;
 			break;
 		case 'h':

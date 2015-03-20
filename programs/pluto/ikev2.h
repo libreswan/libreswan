@@ -21,6 +21,7 @@ extern stf_status ikev2parent_outI1(int whack_sock,
 				    );
 
 extern void ikev2_delete_out(struct state *st);
+extern void v2_delete_my_family(struct state *pst, enum phase1_role role);
 
 extern bool ikev2_out_sa(pb_stream *outs,
 			 unsigned int protoid,
@@ -35,8 +36,11 @@ extern void complete_v2_state_transition(struct msg_digest **mdp,
 extern stf_status ikev2_send_informational(struct state *st);
 
 extern stf_status process_informational_ikev2(struct msg_digest *md);
+extern stf_status ikev2_in_create_child_sa(struct msg_digest *md);
+
 extern stf_status ikev2parent_inI1outR1(struct msg_digest *md);
 extern stf_status ikev2parent_inR1(struct msg_digest *md);
+extern stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md);
 extern stf_status ikev2parent_inR1outI2(struct msg_digest *md);
 extern stf_status ikev2parent_inI2outR2(struct msg_digest *md);
 extern stf_status ikev2parent_inR2(struct msg_digest *md);
@@ -59,41 +63,37 @@ extern v2_notification_t accept_v2_nonce(struct msg_digest *md, chunk_t *dest,
 	} \
 }
 
-extern v2_notification_t ikev2_parse_parent_sa_body(pb_stream *sa_pbs,                          /* body of input SA Payload */
-						    const struct ikev2_sa *sa_prop UNUSED,      /* header of input SA Payload */
-						    pb_stream *r_sa_pbs,                        /* if non-NULL, where to emit winning SA */
-						    struct state *st,                           /* current state object */
-						    bool selection                              /* if this SA is a selection, only one
-                                                                                                 * tranform can appear. */
-						    );
+extern stf_status ikev2_parse_parent_sa_body(pb_stream *sa_pbs,				/* body of input SA Payload */
+					     const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
+					     pb_stream *r_sa_pbs,			/* if non-NULL, where to emit winning SA */
+					     struct state *st,				/* current state object */
+					     bool selection				/* if this SA is a selection, only one
+											 * tranform can appear. */
+					     );
 
-extern v2_notification_t ikev2_parse_child_sa_body(pb_stream *sa_pbs,                           /* body of input SA Payload */
-						   const struct ikev2_sa *sa_prop UNUSED,       /* header of input SA Payload */
-						   pb_stream *r_sa_pbs,                         /* if non-NULL, where to emit winning SA */
-						   struct state *st,                            /* current state object */
-						   bool selection                               /* if this SA is a selection, only one
-                                                                                                 * tranform can appear. */
-						   );
+extern stf_status ikev2_parse_child_sa_body(
+	pb_stream *sa_pbs,	/* body of input SA Payload */
+	const struct ikev2_sa *sa_prop UNUSED,	/* header of input SA Payload */
+	pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
+	struct state *st,	/* current state object */
+	bool selection);	/* if this SA is a selection, only one
+				 * tranform can appear.
+				 */
 
-#if 0
-extern v2_notification_t parse_ikev2_sa_body(pb_stream *sa_pbs,
-					     const struct ikev2_sa *sa,
-					     pb_stream *r_sa_pbs,
-					     struct state *st,
-					     bool selection,
-					     bool parentSA);
-#endif
 
 extern void send_v2_notification_from_state(struct state *st,
 					    enum state_kind state,
-					    u_int16_t type, chunk_t *data);
+					    v2_notification_t type,
+					    chunk_t *data);
 
-extern void send_v2_notification_from_md(struct msg_digest *md, u_int16_t type,
+extern void send_v2_notification_from_md(struct msg_digest *md,
+					 v2_notification_t type,
 					 chunk_t *data);
 
-extern stf_status ikev2_process_encrypted_payloads(struct msg_digest *md,
+extern stf_status ikev2_process_payloads(struct msg_digest *md,
 					 pb_stream   *in_pbs,
-					 unsigned int np);
+					 enum next_payload_types_ikev2 np,
+					 bool enc);
 
 extern bool ikev2_decode_peer_id(struct msg_digest *md,
 				 enum phase1_role initiator);
@@ -178,7 +178,8 @@ extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
 extern void ikev2_update_counters(struct msg_digest *md);
 extern void ikev2_print_ts(struct traffic_selector *ts);
 
-extern void send_v2_notification(struct state *p1st, u_int16_t type,
+extern void send_v2_notification(struct state *p1st,
+				 v2_notification_t type,
 				 struct state *encst,
 				 u_char *icookie,
 				 u_char *rcookie,
@@ -192,8 +193,10 @@ extern stf_status ikev2_send_cert( struct state *st,
 				   unsigned int np,
 				   pb_stream *outpbs);
 extern bool ship_v2N(unsigned int np, u_int8_t critical,
-		     u_int8_t protoid, chunk_t *spi,
-		     u_int16_t type, chunk_t *n_data, pb_stream *rbody);
+		     u_int8_t protoid, const chunk_t *spi,
+		     u_int16_t type, const chunk_t *n_data, pb_stream *rbody);
 
-extern bool force_busy;  /* config option to emulate responder under DOS */
+extern bool force_busy;	/* config option to emulate responder under DOS */
 
+extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
+				  enum phase1_role role);

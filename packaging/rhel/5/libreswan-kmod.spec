@@ -10,7 +10,7 @@
 %{!?kversion: %define kversion 3.0.68-3.ocf.nopl-i686}
 
 Name:    %{kmod_name}-kmod
-Version: 3.8
+Version: 3.9
 Release: 1%{?dist}%{ocf}
 Group:   System Environment/Kernel
 License: GPLv2

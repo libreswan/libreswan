@@ -63,7 +63,7 @@ static struct starter_comments_list *_parser_comments;
         unsigned int num;
 	struct keyword k;
 }
-%token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION 
+%token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
 %token <s>      STRING
 %token <num>    INTEGER
 %token <num>    BOOL
@@ -79,14 +79,14 @@ static struct starter_comments_list *_parser_comments;
  */
 
 config_file:
-        blanklines versionstmt blanklines sections 
-        | blanklines sections 
+        blanklines versionstmt blanklines sections
+        | blanklines sections
         ;
 
 /* check out the version number - this is optional (and we're phasing out its use) */
 /* we have configs shipped with version 2 (INTEGER) and with version 2.0 (STRING, now  NUMBER/float was removed */
 
-versionstmt: 
+versionstmt:
         | VERSION STRING EOL
         | VERSION INTEGER EOL
 	;
@@ -95,7 +95,7 @@ blanklines: /* NULL */
 	| blanklines EOL
 	| blanklines FIRST_SPACES EOL
 	;
-                        
+
 sections: /* NULL */
 	| sections section_or_include
 	;
@@ -137,7 +137,7 @@ section_or_include:
 	} kw_sections
 	| INCLUDE STRING EOL {
  		parser_y_include($2);
-	} 
+	}
 	;
 
 kw_sections:
@@ -182,7 +182,7 @@ statement_kw:
                     case kt_ipaddr:
                     case kt_bitstring:
 		    case kt_idtype:
-		    case kt_range:	
+		    case kt_range:
 		    case kt_subnet:
 		        new->string = strdup(value);
 			break;
@@ -202,7 +202,7 @@ statement_kw:
            	    case kt_obsolete:
            	    case kt_obsolete_quiet:
                         break;
-		    }	
+		    }
 		    new->next = NULL;
 
 		    if (_parser_kw_last)
@@ -274,7 +274,7 @@ statement_kw:
            	    case kt_obsolete:
            	    case kt_obsolete_quiet:
                         break;
-		    }	
+		    }
 		    new->next = NULL;
 
 		    if (_parser_kw_last)
@@ -333,24 +333,24 @@ statement_kw:
 
 		str = $3;
 
-		val = strtoul(str, &endptr, 10);	
+		val = strtoul(str, &endptr, 10);
 
 		if(endptr == str) {
                   snprintf(buf, 80, "bad duration value %s=%s", kw.keydef->keyname, str);
                   yyerror(buf);
 		  fail = TRUE;
-	
-		} 
+
+		}
 
 		if(!fail)
                 {
-		  if(*endptr == '\0') { /* nothing */ }	
-		  else if ((*endptr == 's') && (endptr[1] == '\0')) { } 
-		  else if ((*endptr == 'm') && (endptr[1] == '\0')) { val *= 60; } 
-		  else if ((*endptr == 'h') && (endptr[1] == '\0')) { val *= 3600; } 
-		  else if ((*endptr == 'd') && (endptr[1] == '\0')) { val *= 3600*24; } 
-		  else if ((*endptr == 'w') && (endptr[1] == '\0')) { val *= 7*3600*24; } 
-		  else { 
+		  if(*endptr == '\0') { /* nothing */ }
+		  else if ((*endptr == 's') && (endptr[1] == '\0')) { }
+		  else if ((*endptr == 'm') && (endptr[1] == '\0')) { val *= secs_per_minute; }
+		  else if ((*endptr == 'h') && (endptr[1] == '\0')) { val *= secs_per_hour; }
+		  else if ((*endptr == 'd') && (endptr[1] == '\0')) { val *= secs_per_day; }
+		  else if ((*endptr == 'w') && (endptr[1] == '\0')) { val *= 7*secs_per_day; }
+		  else {
                     snprintf(buf, 80, "bad duration multiplier '%c' on %s", *endptr, str);
                     yyerror(buf);
                     fail=TRUE;
@@ -388,19 +388,19 @@ statement_kw:
 
 		str = $3;
 
-		val = strtoul(str, &endptr, 10);	
+		val = strtoul(str, &endptr, 10);
 
 		if(endptr == str) {
                   snprintf(buf, 80, "bad percent value %s=%s", kw.keydef->keyname, str);
                   yyerror(buf);
 		  fail = TRUE;
-	
-		} 
+
+		}
 
 		if(!fail)
                 {
-		  if ((*endptr == '%') && (endptr[1] == '\0')) { } 
-		  else { 
+		  if ((*endptr == '%') && (endptr[1] == '\0')) { }
+		  else {
                     snprintf(buf, 80, "bad percentage multiplier '%c' on %s", *endptr, str);
                     yyerror(buf);
                     fail=TRUE;
@@ -464,7 +464,7 @@ struct config_parsed *parser_load_conf (const char *file, err_t *perr)
 	if (perr) *perr = NULL;
 
 	cfg = (struct config_parsed *)malloc(sizeof(struct config_parsed));
-	if (!cfg) 
+	if (!cfg)
 	{
 	    snprintf(parser_errstring, ERRSTRING_LEN, "can't allocate memory");
 	    err++;
@@ -546,7 +546,7 @@ void parser_free_conf (struct config_parsed *cfg)
 			parser_free_kwlist(sec->kw);
 			free(sec);
 		}
-		
+
 		free(cfg);
 	}
 }

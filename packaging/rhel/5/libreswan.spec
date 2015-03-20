@@ -16,7 +16,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 3.8
+Version: 3.9
 
 # The default kernel version to build for is the latest of
 # the installed binary kernel
@@ -114,7 +114,6 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
   USE_LIBCURL=%{USE_CRL_FETCHING} \
   USE_DNSSEC=%{USE_DNSSEC} \
   INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libexecdir}/ipsec \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
@@ -138,7 +137,6 @@ rm -rf %{buildroot}
   DESTDIR=%{buildroot} \
   INITSYSTEM=sysvinit \
   INC_USRLOCAL=%{_prefix} \
-  FINALLIBDIR=%{_libexecdir}/ipsec \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
   MANTREE=%{buildroot}%{_mandir} \
   INC_RCDEFAULT=%{_initrddir} \
@@ -156,8 +154,8 @@ echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}/etc/rc.d/rc*
 
 %files 
-%doc BUGS CHANGES COPYING CREDITS README LICENSE
-%doc docs/*.*
+%doc CHANGES COPYING CREDITS README* LICENSE
+%doc docs/*.* docs/examples
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto

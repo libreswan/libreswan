@@ -82,9 +82,7 @@ enum keyword_numeric_config_field {
 	KBF_PRIORITY,
 	KBF_REQID,
 	KBF_STRICTCRLPOLICY,
-	KBF_NATTRAVERSAL,
 	KBF_NATIKEPORT,
-	KBF_DISABLEPORTFLOATING,
 	KBF_KEEPALIVE,
 	KBF_PLUTORESTARTONCRASH,
 	KBF_CRLCHECKINTERVAL,
@@ -132,6 +130,7 @@ enum keyword_numeric_config_field {
 	KBF_CISCO_UNITY,
 	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
 	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
+	KBF_IKEV1_NATT,		/* ikev1 NAT-T payloads to send/process */
 	KBF_MAX
 };
 
@@ -222,10 +221,9 @@ enum keyword_auto {
 enum keyword_satype {
 	KS_TUNNEL    = 0,
 	KS_TRANSPORT = 1,
-	KS_UDPENCAP  = 2,
-	KS_PASSTHROUGH=3,
-	KS_DROP      = 4,
-	KS_REJECT    = 5,
+	KS_PASSTHROUGH=2,
+	KS_DROP      = 3,
+	KS_REJECT    = 4,
 };
 
 enum keyword_type {
@@ -304,7 +302,6 @@ struct config_parsed {
 	struct starter_comments_list comments;
 
 	struct section_list conn_default;
-	bool got_default;
 };
 
 extern const struct keyword_def ipsec_conf_keywords_v2[];

@@ -41,11 +41,11 @@ git archive --format=tar --prefix=libreswan-$version/ HEAD | gzip > release/libr
 	cd release 
 	tar zxf libreswan-$version.tar.gz
 	cd libreswan-$version
-	echo "3.8?=$version" > Makefile.ver
+	echo "3.9?=$version" > Makefile.ver
 	sed -i "s/(unreleased)/(`C= LOCALE= LANG= date +"%B %d, %Y"`)/" CHANGES
-	for file in debian/NEWS debian/changelog `find packaging -type f | xargs grep 3.8 |sed "s/:.*$//"`
+	for file in debian/NEWS debian/changelog `find packaging -type f | xargs grep 3.9 |sed "s/:.*$//"`
 	do
-		sed -i "s/3.8/$version/" $file
+		sed -i "s/3.9/$version/" $file
 	done
 	cd .. 
 	tar zcf libreswan-$version.tar.gz libreswan-$version

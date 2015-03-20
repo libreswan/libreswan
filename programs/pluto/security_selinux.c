@@ -49,7 +49,7 @@ int within_range(security_context_t sl, security_context_t range)
 
 	/*
 	 * * Get the sids for the sl and range contexts
-	 * */
+	 */
 	rtn = avc_context_to_sid(sl, &slsid);
 	if (rtn != 0) {
 		DBG_log("within_range: Unable to retrieve sid for sl context (%s)",

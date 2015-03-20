@@ -14,7 +14,7 @@ Loading conn 'westnet-eastnet-ikev2'
   keyexchange=ikev2
   auto=add
   ike=3des-md5-modp2048
-[ 00.00] NET: Registered protocol family 15
+  esp=aes128-sha2_512
 found netkey IPsec stack
 east #
  echo "initdone"
@@ -29,7 +29,7 @@ westnet-eastnet-ikev2{1}:  INSTALLED, TUNNEL, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:   192.0.2.0/24 === 192.0.1.0/24 
 east #
 east #
- if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* ./; fi
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
 east #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 

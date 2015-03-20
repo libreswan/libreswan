@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: IPSEC_PLUTO
 .\"    Author: Paul Wouters
-.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
-.\"      Date: 04/04/2013
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 06/29/2014
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC_PLUTO" "8" "04/04/2013" "libreswan" "Executable programs"
+.TH "IPSEC_PLUTO" "8" "06/29/2014" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -28,32 +28,26 @@
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
 .SH "NAME"
-ipsec_pluto \- ipsec whack : IPsec IKE keying daemon and control interface
+pluto \- ipsec whack : IPsec IKE keying daemon and control interface
 .SH "SYNOPSIS"
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-nofork] [\-\-stderrlog] [\-\-logfile\ \fIfilename\fR] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-nat_traversal] [\-\-virtual_private\ \fInetwork_list\fR] [\-\-keep_alive\ \fIdelay_sec\fR] [\-\-force_busy] [\-\-disable_port_floating] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits]
+\fBipsec\fR \fIpluto\fR [\-\-help] [\-\-version] [\-\-leak\-detective] [\-\-config\ \fIfilename\fR] [\-\-vendorid\ \fIVID\fR] [\-\-nofork] [\-\-stderrlog] [\-\-\-\-plutostderrlogtime] [\-\-logfile\ \fIfilename\fR] [\-\-use\-klips] [\-\-use\-mast] [\-\-use\-netkey] [\-\-use\-nostack] [\-\-uniqueids] [\-\-virtual\-private\ \fInetwork_list\fR] [\-\-keep\-alive\ \fIdelay_sec\fR] [\-\-force\-busy] [\-\-nocrsend] [\-\-strictcrlpolicy] [\-\-crlcheckinterval] [\-\-interface\ \fIinterfacename\fR] [\-\-listen\ \fIipaddr\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-natikeport\ \fIportnumber\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-secretsfile\ \fIsecrets\-file\fR] [\-\-adns\ \fIpathname\fR] [\-\-nhelpers\ \fInumber\fR] [\-\-perpeerlog] [\-\-perpeerlogbase\ \fIdirname\fR] [\-\-ipsecdir\ \fIdirname\fR] [\-\-coredir\ \fIdirname\fR] [\-\-noretransmits] [\-\-statsbin\ \fIfilename\fR] [\-\-secctx\-attr\-value\ \fInumber\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR [\-\-help] [\-\-version]
 .HP \w'\fBipsec\fR\ 'u
-\fBipsec\fR \fIwhack\fR [\-\-debug\-none] [\-\-debug\-all] [\-\-debug\-raw] [\-\-debug\-crypt] [\-\-debug\-parsing] [\-\-debug\-emitting] [\-\-debug\-control] [\-\-debug\-lifecycle] [\-\-debug\-klips] [\-\-debug\-pfkey] [\-\-debug\-nat\-t] [\-\-debug\-dpd] [\-\-debug\-dns] [\-\-debug\-oppo] [\-\-debug\-oppoinfo] [\-\-debug\-whackwatch] [\-\-debug\-private]
+\fBipsec\fR \fIwhack\fR [\-\-debug\-none] [\-\-debug\-all] [\-\-debug\-raw] [\-\-debug\-crypt] [\-\-debug\-parsing] [\-\-debug\-emitting] [\-\-debug\-control] [\-\-debug\-lifecycle] [\-\-debug\-kernel] [\-\-debug\-pfkey] [\-\-debug\-nat\-t] [\-\-debug\-dpd] [\-\-debug\-dns] [\-\-debug\-oppo] [\-\-debug\-oppoinfo] [\-\-debug\-whackwatch] [\-\-debug\-private] [\-\-debug\-x509]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-name\ \fIconnection\-name\fR [[\-\-ipv4] | [\-\-ipv6]] [[\-\-tunnelipv4] | [\-\-tunnelipv6]]
 .br
-
-.br
-[\-\-id\ \fIidentity\fR] [\-\-host\ \fIip\-address\fR] [\-\-cert\ \fIpath\fR] [\-\-ca\ \fIdistinguished\ name\fR] [\-\-groups\ \fIaccess\ control\ groups\fR] [\-\-sendcert\ yes\ |\ forced\ |\ always\ |\ ifasked\ |\ no\ |\ never] [\-\-certtype\ \fInumber\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-nexthop\ \fIip\-address\fR] [[\-\-client\ \fIsubnet\fR] | [\-\-clientwithin\ \fIsubnet\fR]] [\-\-clientprotoport\ \fIprotocol\fR/\fIport\fR] [\-\-srcip\ \fIip\-address\fR] [\-\-xauthserver] [\-\-xauthclient] [\-\-modecfgserver] [\-\-modecfgclient] [\-\-modecfgdns1] [\-\-modecfgdns2] [\-\-modecfgwins1] [\-\-modecfgwins2] [\-\-dnskeyondemand] [\-\-updown\ \fIupdown\fR]
-.br
-
+[\-\-id\ \fIidentity\fR] [\-\-host\ \fIip\-address\fR] [\-\-cert\ \fIpath\fR] [\-\-ca\ \fIdistinguished\ name\fR] [\-\-groups\ \fIaccess\ control\ groups\fR] [\-\-sendcert\ yes\ |\ forced\ |\ always\ |\ ifasked\ |\ no\ |\ never] [\-\-certtype\ \fInumber\fR] [\-\-ikeport\ \fIportnumber\fR] [\-\-nexthop\ \fIip\-address\fR] [[\-\-client\ \fIsubnet\fR] | [\-\-clientwithin\ \fIsubnet\fR]] [\-\-clientprotoport\ \fIprotocol\fR/\fIport\fR] [\-\-srcip\ \fIip\-address\fR] [\-\-xauthserver] [\-\-xauthclient] [\-\-modecfgserver] [\-\-modecfgclient] [\-\-modecfgdns1\ \fIip\-address\fR] [\-\-modecfgdns2\ \fIip\-address\fR] [\-\-modecfgdomain\ \fIDNS\-domain\fR] [\-\-modecfgbanner\ \fIlogin\-banner\fR] [\-\-dnskeyondemand] [\-\-updown\ \fIupdown\fR]
 .br
 \-\-to
 .br
-
-.br
-[\-\-id\ \fIidentity\fR] [\-\-host\ \fIip\-address\fR] [\-\-cert\ \fIpath\fR] [\-\-ca\ \fIdistinguished\ name\fR] [\-\-groups\ \fIaccess\ control\ groups\fR] [\-\-sendcert\ yes\ |\ always\ |\ ifasked\ |\ no\ |\ never] [\-\-certtype\ \fInumber\fR] [\-\-ikeport\ \fIport\-number\fR] [\-\-nexthop\ \fIip\-address\fR] [\-\-client\ \fIsubnet\fR] [\-\-clientwithin\ \fIsubnet\fR] [\-\-clientprotoport\ \fIprotocol\fR/\fIport\fR] [\-\-srcip\ \fIip\-address\fR] [\-\-xauthserver] [\-\-xauthclient] [\-\-modecfgserver] [\-\-modecfgclient] [\-\-modecfgdns1\ \fIip\-address\fR] [\-\-modecfgdns2\ \fIip\-address\fR] [\-\-modecfgwins1\ \fIip\-address\fR] [\-\-modecfgwins2\ \fIip\-address\fR] [\-\-dnskeyondemand] [\-\-updown\ \fIupdown\fR]
+[\-\-id\ \fIidentity\fR] [\-\-host\ \fIip\-address\fR] [\-\-cert\ \fIpath\fR] [\-\-ca\ \fIdistinguished\ name\fR] [\-\-groups\ \fIaccess\ control\ groups\fR] [\-\-sendcert\ yes\ |\ always\ |\ ifasked\ |\ no\ |\ never] [\-\-certtype\ \fInumber\fR] [\-\-ikeport\ \fIport\-number\fR] [\-\-nexthop\ \fIip\-address\fR] [\-\-client\ \fIsubnet\fR] [\-\-clientwithin\ \fIsubnet\fR] [\-\-clientprotoport\ \fIprotocol\fR/\fIport\fR] [\-\-srcip\ \fIip\-address\fR] [\-\-xauthserver] [\-\-xauthclient] [\-\-modecfgserver] [\-\-modecfgclient] [\-\-modecfgdns1\ \fIip\-address\fR] [\-\-modecfgdns2\ \fIip\-address\fR] [\-\-modecfgdomain\ \fIDNS\-domain\fR] [\-\-dnskeyondemand] [\-\-updown\ \fIupdown\fR]
 .br
 
 .br
-[\-\-tunnel] [\-\-psk] [\-\-rsasig] [\-\-encrypt] [\-\-authenticate] [\-\-compress] [\-\-pfs] [\-\-pfsgroup\ [modp1024]\ |\ [modp1536]\ |\ [modp2048]\ |\ [modp3072]\ |\ [modp4096]\ |\ [modp6144]\ |\ [modp8192]] [\-\-disablearrivalcheck] [\-\-ikelifetime\ \fIseconds\fR] [\-\-ipseclifetime\ \fIseconds\fR] [\-\-rekeymargin\ \fIseconds\fR] [\-\-rekeyfuzz\ \fIpercentage\fR] [\-\-keyingtries\ \fIcount\fR] [\-\-esp\ \fIesp\-algos\fR] [\-\-dontrekey] [\-\-aggrmode] [\-\-modecfgpull] [[\-\-dpddelay\ \fIseconds\fR] | [\-\-dpdtimeout\ \fIseconds\fR]] [\-\-dpdaction\ [clear]\ |\ [hold]\ |\ [restart]] [\-\-forceencaps] [\-\-no\-keep\-alive] [[\-\-initiateontraffic]\ |\ [\-\-pass]\ |\ [\-\-drop]\ |\ [\-\-reject]] [[\-\-failnone]\ |\ [\-\-failpass]\ |\ [\-\-faildrop]\ |\ [\-\-failreject]] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
+[\-\-tunnel] [\-\-psk] [\-\-rsasig] [\-\-encrypt] [\-\-authenticate] [\-\-compress] [\-\-pfs] [\-\-pfsgroup\ [modp1024]\ |\ [modp1536]\ |\ [modp2048]\ |\ [modp3072]\ |\ [modp4096]\ |\ [modp6144]\ |\ [modp8192]\ |\ [dh22]\ |\ [dh23]\ |\ [dh24]] [\-\-disablearrivalcheck] [\-\-ikelifetime\ \fIseconds\fR] [\-\-ipseclifetime\ \fIseconds\fR] [\-\-rekeymargin\ \fIseconds\fR] [\-\-rekeyfuzz\ \fIpercentage\fR] [\-\-keyingtries\ \fIcount\fR] [\-\-esp\ \fIesp\-algos\fR] [\-\-dontrekey] [\-\-aggrmode] [\-\-modecfgpull] [[\-\-dpddelay\ \fIseconds\fR] | [\-\-dpdtimeout\ \fIseconds\fR]] [\-\-dpdaction\ [clear]\ |\ [hold]\ |\ [restart]] [\-\-forceencaps] [\-\-no\-keep\-alive] [[\-\-initiateontraffic]\ |\ [\-\-pass]\ |\ [\-\-drop]\ |\ [\-\-reject]] [[\-\-failnone]\ |\ [\-\-failpass]\ |\ [\-\-faildrop]\ |\ [\-\-failreject]] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
 \fBipsec\fR \fIwhack\fR \-\-keyid\ \fIid\fR [\-\-addkey] [\-\-pubkeyrsa\ \fIkey\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
 .HP \w'\fBipsec\fR\ 'u
@@ -278,21 +272,17 @@ and
 \fB\-\-config /etc/ipsec\&.conf\fR
 are specified, the last command line argument specified takes precedence\&.
 .PP
-Pluto supports the NAT\-Traversal drafts and the final standard, RFC 3947, if the
-\fB\-\-nat_traversal\fR
-is specified\&. The allowed range behind the NAT routers is submitted using the
-\fB\-\-virtual_private\fR
+Pluto supports RFC 3947 NAT\-Traversal\&. The allowed range behind the NAT routers is submitted using the
+\fB\-\-virtual\-private\fR
 option\&. See
 \fBipsec.conf\fR(5)
 for the syntax\&. The option
-\fB\-\-force_keepalive\fR
+\fB\-\-force\-keepalive\fR
 forces the sending of the
 \fIkeep\-alive packets\fR, which are send to prevent the NAT router from closing its port when there is not enough traffic on the IPsec connection\&. The
-\fB\-\-keep_alive\fR
+\fB\-\-keep\-alive\fR
 sets the delay (in seconds) of these keep\-alive packets\&. The newer NAT\-T standards support
-\fIport floating\fR, and Libreswan enables this per default\&. It can be disabled using the
-\fB\-\-disable_port_floating\fR
-option\&.
+\fIport floating\fR, and Libreswan enables this per default\&.
 .PP
 Pluto supports the use of X\&.509 certificates and sends it certificate when needed\&. This can confuse IKE implementations that do not implement this, such as the old FreeS/WAN implementation\&. The
 \fB\-\-nocrsend\fR
@@ -332,7 +322,7 @@ exits \- this prevents multiple
 \fBpluto\fR
 will run\&.
 \fBpluto\fR
-writes its pid into this file so that scripts can find it\&. This lock will not function properly if it is on an NFS volume (but sharing locks on multiple machines doesn\*(Aqt make sense anyway)\&.
+writes its PID into this file so that scripts can find it\&. This lock will not function properly if it is on an NFS volume (but sharing locks on multiple machines doesn\*(Aqt make sense anyway)\&.
 .PP
 \fBpluto\fR
 then forks and the parent exits\&. This is the conventional \(lqdaemon fork\(rq\&. It can make debugging awkward, so there is an option to suppress this fork\&. In certain configurations, pluto might also launch helper programs to assist with DNS queries or to offload cryptographic operations\&.
@@ -367,11 +357,13 @@ Pluto supports
 \fBfood groups\fR, and X\&.509 certificates\&. These are located in /etc/ipsec\&.d, or another directory as specified by
 \fB\-\-ipsecdir\fR\&.
 .PP
-Pluto may core dump\&. It will normally do so into the current working directory\&. The standard scripts have an option dumpdir=, which can set the current directory to determine where the core dump will go\&. In some cases, it may be more convenient to specify it on the command line using \-\-coredir\&. A third method is to set the environment variable PLUTO_CORE_DIR\&. The command line argument takes precedence over the environment variable\&. The option plutorestartoncrash can be set to no to prevent multiple core files and a looping pluto process\&. Normally, when pluto crashes, another pluto process is started\&.
+Pluto may core dump\&. It will normally do so into the current working directory\&. You can specify the \-\-coredir option for pluto, or specify the dumpdir= option in ipsec\&.conf\&.
 .PP
-At times it may be desireable to turn off all timed events in
+At times it may be desirable to turn off all timed events in
 \fBpluto\fR, this can be done with
 \fB\-\-noretransmits\fR\&.
+.PP
+If you are investigating a potential memory leak in pluto, start pluto with the \-\-leak\-detective option\&. Before the leak causes the system or pluto to die, shut down pluto in the regular way\&. pluto will display a list of leaks it has detected\&.
 .PP
 The
 \fI(potential) connection\fR
@@ -416,7 +408,7 @@ All of these routing characteristics are expected change when
 and
 \fBNETKEY\fR
 merge into a single new stack\&.
-.SS "Using Whack"
+.SS "Using whack"
 .PP
 \fBwhack\fR
 is used to command a running
@@ -519,8 +511,7 @@ or
 option
 \fB\-\-myid\fR
 or by the
-\fBipsec.conf\fR(5)
-\fBconfig setup\fR
+\fBipsec.conf\fR(5)\fBconfig setup\fR
 parameter
 \fImyid\fR)\&. Otherwise,
 \fBpluto\fR
@@ -563,7 +554,7 @@ the access control groups used\&.
 .PP
 \fB\-\-sendcert\fR\ \&\fIyes|forced|always|ifasked|no|never\fR
 .RS 4
-Wether or not to send our X\&.509 certificate credentials\&. This could potentially give an attacker too much information about which identities are allowed to connect to this host\&. The default is to use
+Whether or not to send our X\&.509 certificate credentials\&. This could potentially give an attacker too much information about which identities are allowed to connect to this host\&. The default is to use
 \fBifasked\fR
 when we are a Responder, and to use
 \fByes\fR
@@ -700,7 +691,7 @@ brings up or down a connection\&. The script is used to build a shell command, s
 .PP
 \fB\-\-to\fR
 .RS 4
-separates the specification of the left and right ends of the connection\&. Pluto tries to decide wether it is
+separates the specification of the left and right ends of the connection\&. Pluto tries to decide whether it is
 \fIleft\fR
 or
 \fIright\fR
@@ -823,7 +814,7 @@ Pull the Mode Config network information from the peer\&.
 .PP
 \fB\-\-dpddelay\fR\ \&\fIseconds\fR
 .RS 4
-Set the delay (in seconds) between Dead Peer Dectection (RFC 3706) keepalives (R_U_THERE, R_U_THERE_ACK) that are sent for this connection (default 30 seconds)\&.
+Set the delay (in seconds) between Dead Peer Detection (RFC 3706) keepalives (R_U_THERE, R_U_THERE_ACK) that are sent for this connection (default 30 seconds)\&.
 .RE
 .PP
 \fB\-\-timeout\fR\ \&\fIseconds\fR
@@ -839,14 +830,13 @@ When a DPD enabled peer is declared dead, what action should be taken\&.
 status, while
 \fBclear\fRmeans the eroute and SA with both be cleared\&. Clear is really only useful on the server of a Road Warrior config\&. The action
 \fBrestart\fR
-is used on tunnels that need to be permanently up, and have static IP addresses\&.
+is used on tunnels that need to be permanently up, and have static IP addresses\&. The action
+\fBrestart_by_peer\fRhas been obsoleted and its functionality has been moved into the restart action\&.
 .RE
 .PP
 \fB\-\-forceencaps\fR
 .RS 4
-In some cases, for example when ESP packets are filtered or when a broken IPsec peer does not properly recognise NAT, it can be useful to force RFC\-3948 encapsulation using this option\&. It causes pluto lie and tell the remote peer that RFC\-3948 encapsulation (ESP in UDP port 4500 packets) is required\&. For this option to have any effect, pluto must have been started with the
-\fB\-\-nat_traversal\fR
-option\&.
+In some cases, for example when ESP packets are filtered or when a broken IPsec peer does not properly recognise NAT, it can be useful to force RFC\-3948 encapsulation using this option\&. It causes pluto lie and tell the remote peer that RFC\-3948 encapsulation (ESP in UDP port 4500 packets) is required\&.
 .RE
 .PP
 If none of the
@@ -1100,7 +1090,7 @@ Ending an connection
 .RS 4
 the terminate form tells
 \fIpluto\fR
-to delete any sas that use the specified connection and to stop any negotiations in process\&. it does not prevent new negotiations from starting (the delete form has this effect)\&.
+to delete any SAs that use the specified connection and to stop any negotiations in process\&. it does not prevent new negotiations from starting (the delete form has this effect)\&.
 .RE
 .PP
 \fB\-\-crash\fR\ \&\fIip\-address\fR
@@ -1260,8 +1250,7 @@ to prompt the operator for username or passwords\&. Typically, these will be ent
 may look for the 041 (username) or 040 (password) prompts, and display them to the user\&.
 .PP
 For testing purposes, the options
-\fB\-\-xauthuser\ \&\fR\fIuser\fR
-\fB\-\-xauthpass\ \&\fR\fIpass\fR
+\fB\-\-xauthuser\ \&\fR\fIuser\fR\fB\-\-xauthpass\ \&\fR\fIpass\fR
 may be be given prior to the
 \fB\-\-initiate\ \&\fR
 to provide responses to the username and password prompts\&.
@@ -1577,7 +1566,7 @@ disable \(lqdaemon fork\(rq (default is to fork)\&. In addition, after the lock 
 if this option has been selected, whenever a new ISAKMP SA is established, any connection with the same Peer ID but a different Peer IP address is unoriented (causing all its SAs to be deleted)\&. This helps clean up dangling SAs when a connection is lost and then regained at another IP address\&.
 .RE
 .PP
-\fB\-\-force_busy\fR
+\fB\-\-force\-busy\fR
 .RS 4
 if this option has been selected, pluto will be forced to be "busy"\&. In this state, which happens when there is a Denial of Service attack, will force pluto to use cookies before accepting new incoming IKE packets\&. Cookies are send and required in ikev1 Aggressive Mode and in ikev2\&. This option is mostly used for testing purposes, but can be selected by paranoid administrators as well\&.
 .RE
@@ -1790,7 +1779,7 @@ Diffie Hellman Groups MODP 1024 and MODP 1536 (2 and 5) are supported\&. Group M
 .PP
 \(bu
 .RS 4
-Host authetication can be done by RSA Signatures or Pre\-Shared Secrets\&.
+Host authentication can be done by RSA Signatures or Pre\-Shared Secrets\&.
 .RE
 .PP
 \(bu
@@ -1847,7 +1836,7 @@ by issuing a suggestion that ``\fBwhack\fR
 \-\-listen\*(Aq\*(Aq might have been intended\&.
 .PP
 \fBPluto\fR
-exits when it recieves
+exits when it receives
 \fBSIGTERM\fR\&.
 .SH "EXIT STATUS"
 .PP
@@ -1875,22 +1864,10 @@ detects a problem, it will return an exit status of 1\&. If it received progress
 \fBpluto\fR, it returns as status the value of the numeric prefix from the last such message that was not a message sent to syslog or a comment (but the prefix for success is treated as 0)\&. Otherwise, the exit status is 0\&.
 .SH "FILES"
 .PP
-/var/run/pluto/pluto\&.pid
-
-/var/run/pluto/pluto\&.ctl
-
-/etc/ipsec\&.secrets
-
-/dev/urandom
+/var/run/pluto/pluto\&.pid/var/run/pluto/pluto\&.ctl/etc/ipsec\&.secrets/dev/urandom
 .SH "ENVIRONMENT"
 .PP
-\fIIPSEC_LIBDIR\fR
-
-\fIIPSEC_EXECDIR\fR
-
-\fIIPSECmyid\fR
-
-\fIPLUTO_CORE_DIR\fR
+\fIIPSEC_EXECDIR\fR\fIIPSECmyid\fR\fIPLUTO_CORE_DIR\fR
 .SH "SEE ALSO"
 .PP
 The rest of the Libreswan distribution, in particular
@@ -1909,61 +1886,33 @@ describes the format of the secrets file\&.
 .PP
 For more information on IPsec, the mailing list, and the relevant documents, see:
 .PP
-\fI\m[blue]\fBhttp://www\&.ietf\&.cnri\&.reston\&.va\&.us/html\&.charters/ipsec\-charter\&.html\fR\m[]\fR
+\fI\m[blue]\fBhttps://datatracker\&.ietf\&.org/wg/ipsecme/charter/\fR\m[]\fR
 .PP
 At the time of writing, the most relevant IETF RFCs are:
 .PP
-RFC2409 The Internet Key Exchange (IKE)
+RFC5996 Internet Key Exchange Protocol Version 2 (IKEv2)
 .PP
-RFC2408 Internet Security Association and Key Management Protocol (ISAKMP)
-.PP
-RFC2407 The Internet IP Security Domain of Interpretation for ISAKMP
-.PP
-The Libreswan web site <htp://www\&.libreswan\&.org> and the mailing lists described there\&.
+The Libreswan web site <https://libreswan\&.org> and the mailing lists described there\&.
 .SH "HISTORY"
 .PP
-This code is released under the GPL terms\&. See the accompanying files COPYING and CREDITS for more details\&. The GPL does NOT apply to those pieces of code written by others which are included in this distribution, except as noted by the individual authors\&.
+This code is released under the GPL terms\&. See the accompanying files COPYING and CREDITS\&.* for more details\&.
 .PP
 This software was originally written for the FreeS/WAN project <\m[blue]\fBhttp://www\&.freeswan\&.org\fR\m[]>, founded by John Gilmore and managed by Hugh Daniel\&. It was written by Angelos D\&. Keromytis (angelos@dsl\&.cis\&.upenn\&.edu), in May/June 1997, in Athens, Greece\&. Thanks go to John Ioannidis for his help\&.
 .PP
-It is currently maintained and extended by Xelerance Corporation, in Canada under the Libreswan name\&. See CHANGES for details\&.
+FreeS/WAN\*(Aqs Pluto was developed/maintained from 2000\-2004 by D\&. Hugh Redelmeier (hugh@mimosa\&.com), in Canada\&. The regulations of Greece and Canada allow the code to be freely redistributable\&.
 .PP
-FreeS/WAN was developed/maintained from 2000\-2004 by D\&. Hugh Redelmeier (hugh@mimosa\&.com), in Canada\&. The regulations of Greece and Canada allow the code to be freely redistributable\&.
+Richard Guy Briggs <rgb@conscoop\&.ottawa\&.on\&.ca> was the main resource on KLIPS development
 .PP
-Kai Martius (admin@imib\&.med\&.tu\-dresden\&.de) contributed the initial version of the code supporting PFS\&.
+IKE version 2 was initially written by Michael Richardson, Antony Antony and Paul Wouters\&. It has since been extended by Avesh Agarwal, D\&. Hugh Redelmeier, Matt Rogers, Antony Antony and Paul Wouters\&.
 .PP
-Richard Guy Briggs <rgb@conscoop\&.ottawa\&.on\&.ca> and Peter Onion <ponion@srd\&.bt\&.co\&.uk> added the PFKEY2 support\&.
+From 2003 onwards, the code was developed and maintained by The Openswan Project by developers worldwide and distributed from The Netherland and Finland\&. Due to a lawsuit by Xelerance over the trademark, the project was forced to rename itself and the code to The Libreswan Project in 2012\&.
 .PP
-We gratefully acknowledge that we use parts of Eric Young\*(Aqs
-\fIlibdes\fR
-package; see
-\fI\&.\&./libdes/COPYRIGHT\fR\&.
+See further: the CHANGES/CREDITS files in the main directory and the doc/ directory\&.
 .SH "BUGS"
 .PP
-\fBpluto\fR
-is a work\-in\-progress\&. It currently has many limitations\&. For example, it ignores notification messages that it receives, and it generates only Delete Notifications and those only for IPSEC SAs\&.
+Please see <\m[blue]\fBhttps://bugs\&.libreswan\&.org\fR\m[]> for a list of currently known bugs and missing features\&.
 .PP
-\fBpluto\fR
-does not support the Commit Flag\&. The Commit Flag is a bad feature of the IKE protocol\&. It isn\*(Aqt protected \-\- neither encrypted nor authenticated\&. A man in the middle could turn it on, leading to DoS\&. We just ignore it, with a warning\&. This should let us interoperate with implementations that insist on it, with minor damage\&.
-.PP
-\fBpluto\fR
-does not check that the SA returned by the Responder is actually one that was proposed\&. It only checks that the SA is acceptable\&. The difference is not large, but can show up in attributes such as SA lifetime\&.
-.PP
-There is no good way for a connection to be automatically terminated\&. This is a problem for Road Warrior and Opportunistic connections\&. The
-\fB\-\-dontrekey\fR
-option does prevent the SAs from being rekeyed on expiry\&. Additonally, if a Road Warrior connection has a client subnet with a fixed IP address, a negotiation with that subnet will cause any other connection instantiations with that same subnet to be unoriented (deleted, in effect)\&. See also the \-\-uniqueids option for an extension of this\&.
-.PP
-When
-\fBpluto\fR
-sends a message to a peer that has disappeared,
-\fBpluto\fR
-receives incomplete information from the kernel, so it logs the unsatisfactory message \(lqsome IKE message we sent has been rejected with ECONNREFUSED (kernel supplied no details)\(rq\&. John Denker suggests that this command is useful for tracking down the source of these problems:
-tcpdump \-i eth0 icmp[0] != 8 and icmp[0] != 0
-Substitute your public interface for eth0 if it is different\&.
-.PP
-The word \(lqauthenticate\(rq is used for two different features\&. We must authenticate each IKE peer to the other\&. This is an important task of Phase 1\&. Each packet must be authenticated, both in IKE and in IPsec, and the method for IPsec is negotiated as an AH SA or part of an ESP SA\&. Unfortunately, the protocol has no mechanism for authenticating the Phase 2 identities\&.
-.PP
-Bugs should be reported to the <users@lists\&.libreswan\&.org> mailing list\&.
+Bugs should be reported to the <swan\-dev@lists\&.libreswan\&.org> mailing list\&.
 .SH "AUTHOR"
 .PP
 \fBPaul Wouters\fR

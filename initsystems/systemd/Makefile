@@ -24,7 +24,7 @@ doinstall: programs installsystemdservice installsysconfig oldinitdcheck
 
 installsystemdservice:
 	@mkdir -p $(SYSTEMDDIR)
-	$(INSTALL) $(SYSTEMDFILE) $(SYSTEMDDIR)
+	$(INSTALL) $(INSTCONFFLAGS) $(SYSTEMDFILE) $(SYSTEMDDIR)
 	@if test $(SYSTEMDDIR) = ${UNITDIR} ; then \
 		systemctl --system daemon-reload ; \
 	fi
@@ -32,7 +32,9 @@ installsystemdservice:
 installsysconfig:
 	mkdir -p $(SYSCONFIGDIR)
 	@if test ! -f $(SYSCONFIGDIR)/pluto ; then \
-		$(INSTALL) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto ; \
+		$(INSTALL) $(INSTCONFFLAGS) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto ; \
+	else \
+		$(INSTALL) $(INSTCONFFLAGS) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto.new ; \
 	fi
 
 oldinitdcheck:

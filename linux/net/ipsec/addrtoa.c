@@ -52,7 +52,7 @@ size_t dstlen;
 	p = buf;
 	for (i = NBYTES - 1; i >= 0; i--) {
 		byte = (a >> (i * 8)) & 0xff;
-		p += ultoa(byte, 10, p, PERBYTE);
+		p += ultot(byte, 10, p, PERBYTE);
 		if (i != 0)
 			*(p - 1) = '.';
 	}

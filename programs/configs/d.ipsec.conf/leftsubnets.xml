@@ -7,8 +7,8 @@
 <emphasis remap='I'>networkB</emphasis><emphasis remap='B'>/</emphasis><emphasis remap='I'>netmaskB</emphasis>
 <emphasis remap='I'>[...]</emphasis>
 }
-If both a leftsubnets= and rightsubnets= is defined, all combinations of
-subnet tunnels will be instantiated. You cannot use leftsubnet and leftsubnets together. For examples see <emphasis remap='I'>testing/pluto/multinet-*</emphasis>.
+If both a leftsubnets= and rightsubnets= are defined, all combinations of
+subnet tunnels will be established as IPsec tunnels. You cannot use leftsubnet= and leftsubnets= together. For examples see <emphasis remap='I'>testing/pluto/multinet-*</emphasis>.
 </para>
   </listitem>
   </varlistentry>

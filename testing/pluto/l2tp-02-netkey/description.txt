@@ -1,0 +1,6 @@
+as l2tp-01 but now north is behind NAT using NETKEY on both sides.
+
+Note that older version of libreswan and openswan don't prioritize
+passthrough conns over regular conns, so packets might go cleartext
+depending on the load order of the connections on those older versions
+

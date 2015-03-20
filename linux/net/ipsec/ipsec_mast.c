@@ -664,7 +664,6 @@ DEBUG_NO_STATIC void ipsec_mast_cache_update(struct hh_cache *hh,
 	KLIPS_PRINT(debug_mast & DB_MAST_REVEC,
 		    "klips_debug:ipsec_mast: "
 		    "Revectored cache_update\n");
-	return;
 }
 #endif
 
@@ -692,8 +691,18 @@ DEBUG_NO_STATIC int ipsec_mast_neigh_setup_dev(struct net_device *dev,
 
 	if (p->tbl->family == AF_INET) {
 		p->neigh_setup = ipsec_mast_neigh_setup;
+#ifdef NEIGH_VAR_SET
+		/*
+		 * see kernel's include/net/neighbour.h
+		 * ??? Not sure which to use:
+		 * NEIGH_VAR_INIT or NEIGH_VAR_INIT
+		 */
+		NEIGH_VAR_SET(p, UCAST_PROBES, 0);
+		NEIGH_VAR_SET(p, MCAST_PROBES, 0);
+#else
 		p->ucast_probes = 0;
 		p->mcast_probes = 0;
+#endif
 	}
 	return 0;
 }
@@ -965,9 +974,8 @@ int ipsec_mast_createnum(int vifnum)
 	im = alloc_netdev(sizeof(struct mastpriv), name,
 			  ipsec_mast_netdev_setup);
 #else
-	im =
-		(struct net_device *)kmalloc(sizeof(struct net_device),
-					     GFP_KERNEL);
+	im = (struct net_device *)kmalloc(sizeof(struct net_device),
+					  GFP_KERNEL);
 #endif
 	if (im == NULL) {
 		printk(KERN_ERR "failed to allocate space for mast%d device\n",

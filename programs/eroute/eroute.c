@@ -19,7 +19,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/wait.h>
-#include <stdlib.h> /* system(), strtoul() */
+#include <stdlib.h> /* system() */
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -30,10 +30,6 @@
 
 #include <unistd.h>
 #include <libreswan.h>
-#if 0
-#include <linux/autoconf.h>     /* CONFIG_IPSEC_PFKEYv2 */
-#endif
-/* permanently turn it on since netlink support has been disabled */
 
 #include <stdio.h>
 #include <getopt.h>
@@ -42,6 +38,7 @@
 #include <libreswan/pfkeyv2.h>
 #include <libreswan/pfkey.h>
 
+#include "constants.h"
 #include "libreswan/radij.h"
 #include "libreswan/ipsec_encap.h"
 #include "lswlog.h"
@@ -50,20 +47,16 @@
 
 #include "lsw_select.h"
 
-#include <stdio.h>
-#include <getopt.h>
-
 char *progname;
-char me[] = "ipsec eroute";
+static char me[] = "ipsec eroute";
 
-char *eroute_af_opt, *said_af_opt, *edst_opt, *spi_opt, *proto_opt, *said_opt,
+static char *eroute_af_opt, *said_af_opt, *edst_opt, *spi_opt, *proto_opt, *said_opt,
 *dst_opt, *src_opt;
-char *transport_proto_opt, *src_port_opt, *dst_port_opt;
-int action_type = 0;
+static char *transport_proto_opt, *src_port_opt, *dst_port_opt;
+static int action_type = 0;
 
-int pfkey_sock;
-lsw_fd_set pfkey_socks;
-uint32_t pfkey_seq = 0;
+static int pfkey_sock;
+static uint32_t pfkey_seq = 0;
 
 #define EMT_IFADDR      1               /* set enc if addr */
 #define EMT_SETSPI      2               /* Set SPI properties */
@@ -146,11 +139,9 @@ int debug = 0;
 
 int main(int argc, char **argv)
 {
-/*	int fd; */
-	char *endptr;
-/*	int ret; */
+	unsigned long u;	/* for ttoulb */
 	int c;
-	const char* error_s;
+	const char *error_s;
 
 	int error = 0;
 
@@ -177,28 +168,22 @@ int main(int argc, char **argv)
 
 	progname = argv[0];
 
-	memset(&pfkey_address_s_ska, 0, sizeof(ip_address));
-	memset(&pfkey_address_sflow_ska, 0, sizeof(ip_address));
-	memset(&pfkey_address_dflow_ska, 0, sizeof(ip_address));
-	memset(&pfkey_address_smask_ska, 0, sizeof(ip_address));
-	memset(&pfkey_address_dmask_ska, 0, sizeof(ip_address));
-	memset(&said, 0, sizeof(ip_said));
-	memset(&s_subnet, 0, sizeof(ip_subnet));
-	memset(&d_subnet, 0, sizeof(ip_subnet));
+	zero(&pfkey_address_s_ska);
+	zero(&pfkey_address_sflow_ska);
+	zero(&pfkey_address_dflow_ska);
+	zero(&pfkey_address_smask_ska);
+	zero(&pfkey_address_dmask_ska);
+	zero(&said);
+	zero(&s_subnet);
+	zero(&d_subnet);
 
 	eroute_af_opt = said_af_opt = edst_opt = spi_opt = proto_opt =
-								   said_opt =
-									   dst_opt
-										   =
-											   src_opt
-												   =
-													   NULL;
+		said_opt = dst_opt = src_opt = NULL;
 
-	while ((c =
-			getopt_long(argc, argv,
-				    "" /*"acdD:e:i:hprs:S:f:vl:+:g"*/,
-				    longopts,
-				    0)) != EOF) {
+	while ((c = getopt_long(argc, argv,
+				"" /*"acdD:e:i:hprs:S:f:vl:+:g"*/,
+				longopts,
+				0)) != EOF) {
 		switch (c) {
 		case 'g':
 			debug = 1;
@@ -298,19 +283,17 @@ int main(int argc, char **argv)
 					progname, optarg, spi_opt);
 				exit(1);
 			}
-			said.spi = htonl(strtoul(optarg, &endptr, 0));
-			if (!(endptr == optarg + strlen(optarg))) {
+
+			error_s = ttoulb(optarg, 0, 0, 0xFFFFFFFF, &u);
+			if (error_s == NULL && u < 0x100)
+				error_s = "values less than 0x100 are reserved";
+			if (error_s != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in SPI parameter: %s\n",
-					progname, optarg);
+					"%s: Invalid SPI parameter \"%s\": %s\n",
+					progname, optarg, error_s);
 				exit(1);
 			}
-			if (ntohl(said.spi) < 0x100) {
-				fprintf(stderr,
-					"%s: Illegal reserved spi: %s => 0x%x Must be larger than 0x100.\n",
-					progname, optarg, ntohl(said.spi));
-				exit(1);
-			}
+			said.spi = htonl(u);
 			spi_opt = optarg;
 			break;
 		case 'p':
@@ -334,13 +317,13 @@ int main(int argc, char **argv)
 				exit(1);
 			}
 #endif
-			if (!strcmp(optarg, "ah"))
+			if (streq(optarg, "ah"))
 				said.proto = SA_AH;
-			if (!strcmp(optarg, "esp"))
+			if (streq(optarg, "esp"))
 				said.proto = SA_ESP;
-			if (!strcmp(optarg, "tun"))
+			if (streq(optarg, "tun"))
 				said.proto = SA_IPIP;
-			if (!strcmp(optarg, "comp"))
+			if (streq(optarg, "comp"))
 				said.proto = SA_COMP;
 			if (said.proto == 0) {
 				fprintf(stderr,
@@ -485,9 +468,9 @@ int main(int argc, char **argv)
 					progname, optarg, said_af_opt);
 				exit(1);
 			}
-			if (!strcmp(optarg, "inet"))
+			if (streq(optarg, "inet"))
 				said_af = AF_INET;
-			if (!strcmp(optarg, "inet6"))
+			if (streq(optarg, "inet6"))
 				said_af = AF_INET6;
 			if (said_af == 0) {
 				fprintf(stderr,
@@ -504,9 +487,9 @@ int main(int argc, char **argv)
 					progname, optarg, eroute_af_opt);
 				exit(1);
 			}
-			if (!strcmp(optarg, "inet"))
+			if (streq(optarg, "inet"))
 				eroute_af = AF_INET;
-			if (!strcmp(optarg, "inet6"))
+			if (streq(optarg, "inet6"))
 				eroute_af = AF_INET6;
 			if (eroute_af == 0) {
 				fprintf(stderr,
@@ -526,7 +509,8 @@ int main(int argc, char **argv)
 
 	if (argcount == 1) {
 		struct stat sts;
-		if ( ((stat("/proc/net/pfkey", &sts)) == 0) ) {
+
+		if (stat("/proc/net/pfkey", &sts) == 0) {
 			fprintf(stderr,
 				"%s: NETKEY does not support eroute table.\n",
 				progname);
@@ -534,7 +518,8 @@ int main(int argc, char **argv)
 			exit(1);
 		} else {
 			int ret = 1;
-			if ((stat("/proc/net/ipsec_eroute", &sts)) != 0) {
+
+			if (stat("/proc/net/ipsec_eroute", &sts) != 0) {
 				fprintf(stderr,
 					"%s: No eroute table - no IPsec support in kernel (are the modules loaded?)\n",
 					progname);
@@ -558,22 +543,15 @@ int main(int argc, char **argv)
 		if (proto != 0) {
 			transport_proto = proto->p_proto;
 		} else {
-			transport_proto = strtoul(transport_proto_opt, &endptr,
-						  0);
-			if ((*endptr != '\0') ||
-			    (transport_proto == 0 && endptr ==
-			     transport_proto_opt)) {
+			error_s = ttoulb(optarg, 0, 0, 255, &u);
+			if (error_s != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in --transport-proto parameter: %s\n",
-					progname, transport_proto_opt);
+					"%s: Invalid --transport-proto parameter \"%s\": %s\n",
+					progname, transport_proto_opt, error_s);
 				exit(1);
 			}
-			if (transport_proto > 255) {
-				fprintf(stderr,
-					"%s: --transport-proto parameter: %s must be in the range 0 to 255 inclusive\n",
-					progname, transport_proto_opt);
-				exit(1);
-			}
+
+			transport_proto = u;
 		}
 	}
 
@@ -595,20 +573,14 @@ int main(int argc, char **argv)
 		if (ent != 0) {
 			src_port = ent->s_port;
 		} else {
-			src_port = strtoul(src_port_opt, &endptr, 0);
-			if ((*endptr != '\0') ||
-			    (src_port == 0 && endptr == src_port_opt)) {
+			error_s = ttoulb(optarg, 0, 0, 0xFFFF, &u);
+			if (error_s != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in --src-port parameter: %s\n",
-					progname, src_port_opt);
+					"%s: Invalid --src-port parameter \"%s\": %s\n",
+					progname, src_port_opt, error_s);
 				exit(1);
 			}
-			if (src_port > 65535) {
-				fprintf(stderr,
-					"%s: --src-port parameter: %s must be in the range 0 to 65535 inclusive\n",
-					progname, src_port_opt);
-			}
-			src_port = htons(src_port);
+			src_port = htons(u);
 		}
 	}
 
@@ -617,20 +589,14 @@ int main(int argc, char **argv)
 		if (ent != 0) {
 			dst_port = ent->s_port;
 		} else {
-			dst_port = strtoul(dst_port_opt, &endptr, 0);
-			if ((*endptr != '\0') ||
-			    (dst_port == 0 && endptr == dst_port_opt)) {
+			error_s = ttoulb(optarg, 0, 0, 0xFFFF, &u);
+			if (error_s != NULL) {
 				fprintf(stderr,
-					"%s: Invalid character in --dst-port parameter: %s\n",
-					progname, dst_port_opt);
+					"%s: Invalid --dst-port parameter \"%s\": %s\n",
+					progname, src_port_opt, error_s);
 				exit(1);
 			}
-			if (dst_port > 65535) {
-				fprintf(stderr,
-					"%s: --dst-port parameter: %s must be in the range 0 to 65535 inclusive\n",
-					progname, dst_port_opt);
-			}
-			dst_port = htons(dst_port);
+			dst_port = htons(u);
 		}
 	}
 
@@ -651,16 +617,14 @@ int main(int argc, char **argv)
 			fprintf(stderr,
 				"%s: Error -- %s option '--src' is required.\n",
 				progname,
-				(action_type ==
-				 EMT_SETEROUTE) ? "add" : "del");
+				action_type == EMT_SETEROUTE ? "add" : "del");
 			exit(1);
 		}
 		if (!dst_opt) {
 			fprintf(stderr,
 				"%s: Error -- %s option '--dst' is required.\n",
 				progname,
-				(action_type ==
-				 EMT_SETEROUTE) ? "add" : "del");
+				action_type == EMT_SETEROUTE ? "add" : "del");
 			exit(1);
 		}
 	case EMT_CLREROUTE:
@@ -758,8 +722,7 @@ sa_build:
 	case EMT_INEROUTE:
 	case EMT_INREPLACEROUTE:
 		anyaddr(said_af, &pfkey_address_s_ska);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_EXT_ADDRESS_SRC],
 						 SADB_EXT_ADDRESS_SRC,
 						 0,
@@ -781,8 +744,7 @@ sa_build:
 				progname);
 		}
 
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_EXT_ADDRESS_DST],
 						 SADB_EXT_ADDRESS_DST,
 						 0,
@@ -812,8 +774,7 @@ sa_build:
 	case EMT_DELEROUTE:
 		networkof(&s_subnet, &pfkey_address_sflow_ska); /* src flow */
 		add_port(eroute_af, &pfkey_address_sflow_ska, src_port);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_X_EXT_ADDRESS_SRC_FLOW
 						 ],
 						 SADB_X_EXT_ADDRESS_SRC_FLOW,
@@ -838,8 +799,7 @@ sa_build:
 
 		networkof(&d_subnet, &pfkey_address_dflow_ska); /* dst flow */
 		add_port(eroute_af, &pfkey_address_dflow_ska, dst_port);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_X_EXT_ADDRESS_DST_FLOW
 						 ],
 						 SADB_X_EXT_ADDRESS_DST_FLOW,
@@ -865,8 +825,7 @@ sa_build:
 		maskof(&s_subnet, &pfkey_address_smask_ska); /* src mask */
 		add_port(eroute_af, &pfkey_address_smask_ska,
 			 src_port ? ~0 : 0);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_X_EXT_ADDRESS_SRC_MASK
 						 ],
 						 SADB_X_EXT_ADDRESS_SRC_MASK,
@@ -892,8 +851,7 @@ sa_build:
 		maskof(&d_subnet, &pfkey_address_dmask_ska); /* dst mask */
 		add_port(eroute_af, &pfkey_address_dmask_ska,
 			 dst_port ? ~0 : 0);
-		if ((error =
-			     pfkey_address_build(&extensions[
+		if ((error = pfkey_address_build(&extensions[
 							 SADB_X_EXT_ADDRESS_DST_MASK
 						 ],
 						 SADB_X_EXT_ADDRESS_DST_MASK,
@@ -918,8 +876,7 @@ sa_build:
 	}
 
 	if (transport_proto != 0) {
-		if ((error =
-			     pfkey_x_protocol_build(&extensions[
+		if ((error = pfkey_x_protocol_build(&extensions[
 							    SADB_X_EXT_PROTOCOL
 						    ],
 						    transport_proto))) {
@@ -1012,8 +969,8 @@ sa_build:
 				"eroute already in use.  Delete old one first.\n");
 			break;
 		case ENOENT:
-			if (action_type == EMT_INEROUTE || action_type ==
-			    EMT_INREPLACEROUTE) {
+			if (action_type == EMT_INEROUTE ||
+			    action_type == EMT_INREPLACEROUTE) {
 				fprintf(stderr, "non-existant IPIP SA.\n");
 				break;
 			}
@@ -1034,7 +991,7 @@ sa_build:
 				errno);
 		}
 /*		fprintf(stderr, "%s: socket write returned errno %d\n",
-                progname, errno);*/
+		progname, errno);*/
 		exit(1);
 	}
 	if (debug)

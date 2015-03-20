@@ -39,25 +39,32 @@ typedef const struct struct_desc {
  */
 
 enum field_type {
-	ft_mbz,                 /* must be zero, abort */
-	ft_nat,                 /* natural number (may be 0) */
-	ft_len,                 /* length of this struct and any following crud */
-	ft_lv,                  /* length/value field of attribute */
-	ft_enum,                /* value from an enumeration */
-	ft_loose_enum,          /* value from an enumeration with only some names known */
-	ft_af_enum,             /* Attribute Format + value from an enumeration */
-	ft_af_loose_enum,       /* Attribute Format + enumeration, some names known */
-	ft_set,                 /* bits representing set */
-	ft_raw,                 /* bytes to be left in network-order */
-	ft_zig,                 /* should be zero, ignore if not. Continue */
-	ft_end,                 /* end of field list */
+	ft_mbz,			/* must be zero, abort */
+	ft_nat,			/* natural number (may be 0) */
+	ft_len,			/* length of this struct and any following crud */
+	ft_lv,			/* length/value field of attribute */
+	ft_enum,		/* value from an enumeration */
+	ft_loose_enum,		/* value from an enumeration with only some names known */
+	ft_enum_enum,		/* value from an enumeration with name table based on previous enum */
+	ft_af_enum,		/* Attribute Format + value from an enumeration */
+	ft_af_loose_enum,	/* Attribute Format + enumeration, some names known */
+	ft_set,			/* bits representing set */
+	ft_raw,			/* bytes to be left in network-order */
+	ft_zig,			/* should be zero, ignore if not. Continue */
+	ft_end,			/* end of field list */
 };
 
 typedef const struct field_desc {
 	enum field_type field_type;
-	int size;               /* size, in bytes, of field */
+	int size;		/* size, in bytes, of field */
 	const char *name;
-	const void *desc;       /* enum_names for enum or char *[] for bits */
+	/*
+	 * cheap union:
+	 *   enum_names * for ft_enum,
+	 *   enum_enum_names * for ft_enum_enum,
+	 *   char *[] for ft_set
+	 */
+	const void *desc;
 } field_desc;
 
 /* The formatting of input and output of packets is done
@@ -67,13 +74,13 @@ typedef const struct field_desc {
  * Actual packet transfer is done elsewhere.
  */
 struct packet_byte_stream {
-	struct packet_byte_stream *container;   /* PBS of which we are part */
+	struct packet_byte_stream *container;	/* PBS of which we are part */
 	struct_desc *desc;
-	const char *name;                       /* what does this PBS represent? */
+	const char *name;			/* what does this PBS represent? */
 	u_int8_t
 	*start,
-	*cur,   /* current position in stream */
-	*roof;  /* byte after last in PBS (actually just a limit on output) */
+	*cur,		/* current position in stream */
+	*roof;		/* byte after last in PBS (actually just a limit on output) */
 	/* For an output PBS, the length field will be filled in later so
 	 * we need to record its particulars.  Note: it may not be aligned.
 	 */
@@ -95,23 +102,23 @@ extern void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len,
 		     const char *name);
 
 extern bool in_struct(void *struct_ptr, struct_desc *sd,
-		      pb_stream *ins, pb_stream *obj_pbs);
-extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name);
+		      pb_stream *ins, pb_stream *obj_pbs) MUST_USE_RESULT;
+extern bool in_raw(void *bytes, size_t len, pb_stream *ins, const char *name) MUST_USE_RESULT;
 
 extern bool out_struct(const void *struct_ptr, struct_desc *sd,
-		       pb_stream *outs, pb_stream *obj_pbs);
+		       pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
 extern bool out_generic(u_int8_t np, struct_desc *sd,
-			pb_stream *outs, pb_stream *obj_pbs);
+			pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
 extern bool out_generic_raw(u_int8_t np, struct_desc *sd,
 			    pb_stream *outs, const void *bytes, size_t len,
-			    const char *name);
+			    const char *name) MUST_USE_RESULT;
 extern void out_modify_previous_np(u_int8_t np, pb_stream *outs);
 
 #define out_generic_chunk(np, sd, outs, ch, name) \
-	out_generic_raw(np, sd, outs, (ch).ptr, (ch).len, name)
-extern bool out_zero(size_t len, pb_stream *outs, const char *name);
+	out_generic_raw((np), (sd), (outs), (ch).ptr, (ch).len, (name))
+extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 extern bool out_raw(const void *bytes, size_t len, pb_stream *outs,
-		    const char *name);
+		    const char *name) MUST_USE_RESULT;
 #define out_chunk(ch, outs, name) out_raw((ch).ptr, (ch).len, (outs), (name))
 extern void close_output_pbs(pb_stream *pbs);
 
@@ -170,21 +177,21 @@ extern void close_output_pbs(pb_stream *pbs);
  * require them to be zero).
  */
 
-#define NSIZEOF_isakmp_hdr      28      /* on-the-wire sizeof struct isakmpg_hdr */
-#define NOFFSETOF_isa_np        16      /* on-the-wire offset of isa_np (one octet) */
-#define NOFFSETOF_isag_length   2       /* on-the-wire offset of isag_length (two octets, network order */
-#define NOFFSETOF_isag_np       0       /* on-the-wire offset of isag_np (one octet) */
-#define NSIZEOF_isakmp_generic  4       /* on-the-wire sizeof isakmp_generic) */
+#define NSIZEOF_isakmp_hdr	28	/* on-the-wire sizeof struct isakmpg_hdr */
+#define NOFFSETOF_isa_np	16	/* on-the-wire offset of isa_np (one octet) */
+#define NOFFSETOF_isag_length	2	/* on-the-wire offset of isag_length (two octets, network order */
+#define NOFFSETOF_isag_np	0	/* on-the-wire offset of isag_np (one octet) */
+#define NSIZEOF_isakmp_generic	4	/* on-the-wire sizeof isakmp_generic) */
 
 struct isakmp_hdr {
 	u_int8_t isa_icookie[COOKIE_SIZE];
 	u_int8_t isa_rcookie[COOKIE_SIZE];
-	u_int8_t isa_np;        /* Next payload */
-	u_int8_t isa_version;   /* high-order 4 bits: Major; low order 4: Minor */
-	u_int8_t isa_xchg;      /* Exchange type */
+	u_int8_t isa_np;	/* Next payload */
+	u_int8_t isa_version;	/* high-order 4 bits: Major; low order 4: Minor */
+	u_int8_t isa_xchg;	/* Exchange type */
 	u_int8_t isa_flags;
-	u_int32_t isa_msgid;    /* Message ID (RAW) */
-	u_int32_t isa_length;   /* Length of message */
+	u_int32_t isa_msgid;	/* Message ID (RAW) */
+	u_int32_t isa_length;	/* Length of message */
 };
 
 extern struct_desc isakmp_hdr_desc;
@@ -229,8 +236,8 @@ struct isakmp_attribute {
 	 * The low order 15 bits of isaat_af_type is the Attribute Type.
 	 * ISAKMP_ATTR_RTYPE_MASK is the mask in host form.
 	 */
-	u_int16_t isaat_af_type;        /* high order bit: AF; lower 15: rtype */
-	u_int16_t isaat_lv;             /* Length or value */
+	u_int16_t isaat_af_type;	/* high order bit: AF; lower 15: rtype */
+	u_int16_t isaat_lv;		/* Length or value */
 };
 
 extern struct_desc
@@ -255,10 +262,10 @@ extern struct_desc
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 struct isakmp_sa {
-	u_int8_t isasa_np;              /* Next payload */
+	u_int8_t isasa_np;		/* Next payload */
 	u_int8_t isasa_reserved;
-	u_int16_t isasa_length;         /* Payload length */
-	u_int32_t isasa_doi;            /* DOI */
+	u_int16_t isasa_length;		/* Payload length */
+	u_int32_t isasa_doi;		/* DOI */
 };
 
 extern struct_desc isakmp_sa_desc;
@@ -286,7 +293,7 @@ struct isakmp_proposal {
 	u_int8_t isap_proposal;
 	u_int8_t isap_protoid;
 	u_int8_t isap_spisize;
-	u_int8_t isap_notrans;          /* Number of transforms */
+	u_int8_t isap_notrans;		/* Number of transforms */
 };
 
 extern struct_desc isakmp_proposal_desc;
@@ -311,7 +318,7 @@ struct isakmp_transform {
 	u_int8_t isat_np;
 	u_int8_t isat_reserved;
 	u_int16_t isat_length;
-	u_int8_t isat_transnum;         /* Number of the transform */
+	u_int8_t isat_transnum;		/* Number of the transform */
 	u_int8_t isat_transid;
 	u_int16_t isat_reserved2;
 };
@@ -418,7 +425,7 @@ struct isakmp_cert {
  * multiple of 4 octets.  This means that sizeof(struct isakmp_cert)
  * yields the wrong value for the length.
  */
-#define ISAKMP_CERT_SIZE                5
+#define ISAKMP_CERT_SIZE		5
 
 extern struct_desc isakmp_ipsec_certificate_desc;
 
@@ -448,7 +455,7 @@ struct isakmp_cr {
  * multiple of 4 octets.  This means that sizeof(struct isakmp_cr)
  * yields the wrong value for the length.
  */
-#define ISAKMP_CR_SIZE          5
+#define ISAKMP_CR_SIZE		5
 
 extern struct_desc isakmp_ipsec_cert_req_desc;
 
@@ -662,15 +669,15 @@ extern struct_desc isakmp_nat_oa;
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-#define NSIZEOF_isakmp_ikefrag  8       /* on-the-wire sizeof struct isakmpg_ikefrag */
+#define NSIZEOF_isakmp_ikefrag	8	/* on-the-wire sizeof struct isakmpg_ikefrag */
 struct isakmp_ikefrag {
-	u_int8_t isafrag_np;            /* always zero, this must be the only payload */
+	u_int8_t isafrag_np;		/* always zero, this must be the only payload */
 	u_int8_t isafrag_reserved;
 	u_int16_t isafrag_length;
-	u_int16_t isafrag_id;   /* MUST specify the same value for each fragment
-	                           generated from the same IKE message */
+	u_int16_t isafrag_id;	/* MUST specify the same value for each fragment
+				 * generated from the same IKE message */
 	u_int8_t isafrag_number;
-	u_int8_t isafrag_flags; /* LAST_FRAGMENT =  0x01 */
+	u_int8_t isafrag_flags;	/* LAST_FRAGMENT =  0x01 */
 };
 
 extern struct_desc isakmp_ikefrag_desc;
@@ -679,15 +686,15 @@ extern struct_desc isakmp_ikefrag_desc;
  * What is a sane and safe value? iOS/Apple uses 1280, stock racoon uses 552.
  * Why is there no RFC to guide interop people here :/
  */
-#define ISAKMP_FRAG_MAXLEN_IPv4      552  /* 576 - 24 (2*4 + 16) */
-#define ISAKMP_FRAG_MAXLEN_IPv6      1240
+#define ISAKMP_FRAG_MAXLEN_IPv4	552	/* 576 - 24 (2*4 + 16) */
+#define ISAKMP_FRAG_MAXLEN_IPv6	1240
 
 /*
  * This a really the least significant bit in the flags octet, but it's the
  * only flag at the moment. Should really change from ft_nat to ft_set so we
  * can do proper bit naming/setting
  */
-#define ISAKMP_FRAG_LAST        1
+#define ISAKMP_FRAG_LAST	1
 
 /* descriptor for each payload type
  *
@@ -714,18 +721,18 @@ struct ikev2_generic {
 extern struct_desc ikev2_generic_desc;
 
 struct ikev2_sa {
-	u_int8_t isasa_np;              /* Next payload */
+	u_int8_t isasa_np;		/* Next payload */
 	u_int8_t isasa_critical;
-	u_int16_t isasa_length;         /* Payload length */
+	u_int16_t isasa_length;		/* Payload length */
 };
 
 extern struct_desc ikev2_sa_desc;
 
 struct ikev2_prop {
-	u_int8_t isap_lp;               /* Last proposal or not */
-	                                /* Matches IKEv1 ISAKMP_NEXT_P by design */
+	u_int8_t isap_lp;		/* Last proposal or not */
+					/* Matches IKEv1 ISAKMP_NEXT_P by design */
 	u_int8_t isap_critical;
-	u_int16_t isap_length;          /* Payload length */
+	u_int16_t isap_length;		/* Payload length */
 	u_int8_t isap_propnum;
 	u_int8_t isap_protoid;
 	u_int8_t isap_spisize;
@@ -736,39 +743,39 @@ extern struct_desc ikev2_prop_desc;
 
 /* rfc4306, section 3.3.2 */
 struct ikev2_trans {
-	u_int8_t isat_lt;               /* Last transform or not */
+	u_int8_t isat_lt;		/* Last transform or not */
 					/* Matches IKEv1 ISAKMP_NEXT_T by design */
 	u_int8_t isat_critical;
-	u_int16_t isat_length;          /* Payload length */
-	u_int8_t isat_type;             /* transform type */
+	u_int16_t isat_length;		/* Payload length */
+	u_int8_t isat_type;		/* transform type */
 	u_int8_t isat_res2;
-	u_int16_t isat_transid;         /* ID */
+	u_int16_t isat_transid;		/* ID */
 };
 extern struct_desc ikev2_trans_desc;
 
 /* rfc4306, section 3.3.5 */
 struct ikev2_trans_attr {
-	u_int16_t isatr_type;           /* Attribute Type */
-	u_int16_t isatr_lv;             /* Length (AF=0) or Value (AF=1) */
-	/* u_intXX_t isatr_value;      Value if AF=0, absent if AF=1 */
+	u_int16_t isatr_type;		/* Attribute Type */
+	u_int16_t isatr_lv;		/* Length (AF=0) or Value (AF=1) */
+	/* u_intXX_t isatr_value;	Value if AF=0, absent if AF=1 */
 };
 
 /* rfc4306, section 3.4 */
 struct ikev2_ke {
-	u_int8_t isak_np;               /* Next payload */
+	u_int8_t isak_np;		/* Next payload */
 	u_int8_t isak_critical;
-	u_int16_t isak_length;          /* Payload length */
-	u_int16_t isak_group;           /* transform type */
+	u_int16_t isak_length;		/* Payload length */
+	u_int16_t isak_group;		/* transform type */
 	u_int16_t isak_res2;
 };
 extern struct_desc ikev2_ke_desc;
 
 /* rfc4306, section 3.5 */
 struct ikev2_id {
-	u_int8_t isai_np;               /* Next payload */
+	u_int8_t isai_np;		/* Next payload */
 	u_int8_t isai_critical;
-	u_int16_t isai_length;          /* Payload length */
-	u_int8_t isai_type;             /* transform type */
+	u_int16_t isai_length;		/* Payload length */
+	u_int8_t isai_type;		/* transform type */
 	u_int8_t isai_res1;
 	u_int16_t isai_res2;
 };
@@ -776,10 +783,10 @@ extern struct_desc ikev2_id_desc;
 
 /* rfc4306, section 3.8 */
 struct ikev2_a {
-	u_int8_t isaa_np;               /* Next payload */
+	u_int8_t isaa_np;		/* Next payload */
 	u_int8_t isaa_critical;
-	u_int16_t isaa_length;          /* Payload length */
-	u_int8_t isaa_type;             /* auth type */
+	u_int16_t isaa_length;		/* Payload length */
+	u_int8_t isaa_type;		/* auth type */
 	u_int8_t isaa_res1;
 	u_int16_t isaa_res2;
 };
@@ -787,32 +794,32 @@ extern struct_desc ikev2_a_desc;
 
 /* rfc4306 section 3.6 CERT Payload */
 struct ikev2_cert {
-	u_int8_t isac_np;       /* Next payload */
+	u_int8_t isac_np;	/* Next payload */
 	u_int8_t isac_critical;
-	u_int16_t isac_length;  /* Payload length */
-	u_int8_t isac_enc;      /* encoding type */
+	u_int16_t isac_length;	/* Payload length */
+	u_int8_t isac_enc;	/* encoding type */
 };
 
 /* NOTE: this packet type has a fixed portion that is not a
  * multiple of 4 octets.  This means that sizeof(struct isakmp_cr)
  * yields the wrong value for the length.
  */
-#define IKEV2_CERT_SIZE         5
+#define IKEV2_CERT_SIZE		5
 extern struct_desc ikev2_certificate_desc;
 
 /* rfc4306 section 3.6 CERTREQ Payload */
 struct ikev2_certreq {
-	u_int8_t isacertreq_np;         /* Next payload */
+	u_int8_t isacertreq_np;		/* Next payload */
 	u_int8_t isacertreq_critical;
-	u_int16_t isacertreq_length;    /* Payload length */
-	u_int8_t isacertreq_enc;        /* encoding type */
+	u_int16_t isacertreq_length;	/* Payload length */
+	u_int8_t isacertreq_enc;	/* encoding type */
 };
 
 /* NOTE: this packet type has a fixed portion that is not a
  * multiple of 4 octets.  This means that sizeof(struct isakmp_cr)
  * yields the wrong value for the length.
  */
-#define IKEV2_CERTREQ_SIZE              5
+#define IKEV2_CERTREQ_SIZE	5
 extern struct_desc ikev2_certificate_req_desc;
 
 /* rfc4306, section 3.9, nonce, uses generic header */
@@ -820,12 +827,12 @@ extern struct_desc ikev2_nonce_desc;
 
 /* rfc4306 section 3.10 NOTIFY Payload */
 struct ikev2_notify {
-	u_int8_t isan_np;       /* Next payload */
+	u_int8_t isan_np;	/* Next payload */
 	u_int8_t isan_critical;
-	u_int16_t isan_length;  /* Payload length */
-	u_int8_t isan_protoid;  /* Protocol ID: noSA=0,IKE=1,AH=2,ESP=3 */
-	u_int8_t isan_spisize;  /* SPI size: 0 for IKE_SA */
-	u_int16_t isan_type;    /* Notification type, see v2_notification_t */
+	u_int16_t isan_length;	/* Payload length */
+	u_int8_t isan_protoid;	/* Protocol ID: noSA=0,IKE=1,AH=2,ESP=3 */
+	u_int8_t isan_spisize;	/* SPI size: 0 for IKE_SA */
+	u_int16_t isan_type;	/* Notification type, see v2_notification_t */
 };
 extern struct_desc ikev2_notify_desc;
 
@@ -858,10 +865,10 @@ extern struct_desc ikev2_delete_desc;
 
 /* rfc4306, section 3.13 */
 struct ikev2_ts {
-	u_int8_t isat_lt;       /* Last Transform */
+	u_int8_t isat_lt;	/* Last Transform */
 	u_int8_t isat_critical;
-	u_int16_t isat_length;  /* Payload length */
-	u_int8_t isat_num;      /* number of TSs */
+	u_int16_t isat_length;	/* Payload length */
+	u_int8_t isat_num;	/* number of TSs */
 	u_int8_t isat_res1;
 	u_int16_t isat_res2;
 };

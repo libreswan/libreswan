@@ -1,0 +1,156 @@
+Notes on Pluto Conventions
+==========================
+
+Pluto previously had it's own stylistic conventions but they were
+abandoned and starting from Libreswan 3.4 only Linux Kernel coding style
+is accepted.
+
+Please read the Coding Style document thoroughly.
+
+https://www.kernel.org/doc/Documentation/CodingStyle
+
+- you can use checkpatch.pl utility from kernel to check your patches
+  before committing.
+
+  git diff | checkpatch.pl --no-tree --no-signoff -
+
+- sample formatting:
+
+void fun(char *s) {
+	if (s == NULL) {
+		return "";
+	} else {
+		switch (*s) {
+		default:
+			s++;
+			/* fall through */
+		case '\0':
+			return s;
+		}
+	}
+}
+
+- try to keep lines shorter than 80 columns
+
+- space should be canonical:
+  + no line should have trailing whitespace
+  + leading whitespace should use tabs where possible
+  + indentation should be precise
+  + there should be no empty lines at the end of a file.
+  + a single space separates a control flow reserved word and its operand.
+  + no space follows a function name
+
+- if a case falls through, say so explicitly.  See example above.
+
+- the operand of return need not be parenthesized
+
+- be careful with types.  For example, use size_t and ssize_t.
+  Use const wherever possible.  Avoid casts.
+
+- we pretend that C has a strong boolean type.
+  We define type bool with constants TRUE and FALSE.
+
+  Other types should not be used where a boolean is natural: as the
+  complete expression in a test or as an operand of ||, &&, or !.
+  Hence:
+    if (s == NULL)
+  One exception: lset_t values may be treated as booleans
+  (technically they are, in the original sense of the word)
+
+  It rarely makes sense to compare a boolean value with TRUE or FALSE.
+
+- don't use malloc/free -- use the wrappers (see defs.h)
+  They guarantee allocation or death.
+
+- streq(a,b) is clearer than strcmp(a,b) == 0.
+  memeq is clearer than memcmp.
+  zero is clearer than memset (but zero(&array) not zero(array)!).
+
+- use passert, not assert.
+
+- memset/calloc/alloc_thing can set memory to zero but a pointer set
+  to zero is not guaranteed be NULL (surprising feature of the C
+  language).  What makes this insidious is that on most systems
+  the result will be NULL.
+
+- side-effects of expressions are to be avoided.
+  BAD:  if (i++ == 9)
+  OK:	i++;
+
+- variables are to have as small a scope as is possible.
+  Move definitions into inner blocks whenever possible.
+  Often initializing definitions become possible and are clearer.
+  User "static" to limit a variable or function scope to a file.
+
+- within a block that has declarations, separate the declarations from
+  the other statements with a blank line.
+
+- Modern C allows declarations and statements to be mingled.  We have
+  avoided doing this but there are times where declaring in the middle
+  of a block is clearer.
+
+- all functions and variables that are exported from a .c file should
+  be declared in that file's corresponding header file.  Make sure
+  that the .c file includes the header so that the declaration and the
+  definition will be checked for consistency by the compiler.
+
+  There is almost no excuse for the "extern" keyword in a .c file.
+
+  There is almost no excuse for the declaration of an object within a
+  .h file to NOT have the "extern" keyword.  We are a bit lax about
+  this for function declarations (because a definition is clearly
+  marked by the presence of the function body).
+
+  Technical detail: C has declarations of variables and functions.
+  Some of these are definitions.  Some are even "tentative definitions".
+  We don't want definitions or tentative definitions within .h files.
+  We don't want declarations that are not definitions within .c files.
+  "extern" usually signifies a variable declaration that isn't a definition.
+
+- "magic numbers" are suspect.  Most integers in code stand for
+  something.  They should be given a name (using enum or #define), and
+  that name used consistently.
+
+  It is especially bad if the same number appears in two places in a way
+  that requires both to be changed together (eg. an array bound and
+  a loop bound).  Often sizeof or ELEMSOF can help.
+
+- Conditional compilation is to be avoided.  It makes testing hard.
+
+  When conditionally compiling large chunks of text, it is good to put
+  comments on #else and #endif to show what they match with.  I use !
+  to indicate the sense of the test:
+
+  #ifdef CRUD
+  #else /* !CRUD */
+  #endif /* !CRUD */
+
+  #ifndef CRUD
+  #else /* CRUD */
+  #endif /* CRUD */
+
+- Never put two statements on one line.  Especially empty statements.
+  REALLY BAD: if (cat);
+  Exception: some macro definitions.
+
+- C preprocessor macros are implemented by a kind of textual substitution.
+  Be sure to put parentheses around references to macro arguments and
+  around the whole macro body.
+
+  If the body is meant to be a statement, put braces around it instead.
+
+    #define RETURN_STF_FAILURE(f) \
+	{ int r = (f); if (r != NOTHING_WRONG) return STF_FAIL + r; }
+
+  Note: to make a macro body behave as a statement, some conventions
+  wrap the whole body with do { } while (0) (eg. the Linux Kernel Style).
+  This makes a difference only in this case, where a such a macro is used
+  unbraced in the then part of an if with an else.
+	if (test)
+		MACRO();
+	else
+		whatever;
+
+  If the macro body were only wrapped in braces, the result would be a
+  syntax error (automatically detected and easily fixed).  This
+  tradeoff favours simple braces.

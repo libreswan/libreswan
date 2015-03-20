@@ -6,7 +6,7 @@
 /* Libreswan config file parser (parser.l)
  * Copyright (C) 2001 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
- * Copyright (C) 2008,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2008,2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Philippe Vouters <Philippe.Vouters@laposte.net>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
@@ -48,7 +48,7 @@ char rootdir2[PATH_MAX];     /* or... try this one too */
 static int parser_y_eof(void);
 
 /* we want no actual output! */
-#define ECHO 
+#define ECHO
 
 /* do not define this function, as it is not used, and fails -Werror */
 #if 0
@@ -64,7 +64,7 @@ struct ic_inputsource {
 	int    fileglobcnt;
 	glob_t fileglob;
 };
-	
+
 static struct {
 	int stack_ptr;
 	struct ic_inputsource stack[MAX_INCLUDE_DEPTH];
@@ -120,16 +120,17 @@ static void parser_y_close(struct ic_inputsource *iis)
 	}
 }
 
+#if 0	/* never used */
 static void parser_y_fini(void)
 {
 	unsigned int i;
 
 	for (i=0; i<MAX_INCLUDE_DEPTH; i++) {
 		parser_y_close(&ic_private.stack[i]);
-		
 	}
 	memset(&ic_private, 0, sizeof(ic_private));
 }
+#endif
 
 static int parser_y_nextglobfile(struct ic_inputsource *iis)
 {
@@ -137,7 +138,7 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 	int  fcnt;
 
 #if 0
-	printf("fileglobcnt: %d pathc: %d cmp: %u\n", 
+	printf("fileglobcnt: %d pathc: %d cmp: %u\n",
 	       iis->fileglobcnt, stacktop->fileglob.gl_pathc,
 	       (iis->fileglobcnt >= (int)stacktop->fileglob.gl_pathc));
 #endif
@@ -195,23 +196,37 @@ int parser_y_include (const char *filename)
 	 * having to do any globbing.
 	 */
 
+
+/* use GNU extensions to glob(3), but only if available */
+
+#ifdef GLOB_BRACE
+# define GB GLOB_BRACE
+#else
+# define GB 0
+#endif
+
+#ifdef GLOB_NOMAGIC
+# define GNM GLOB_NOMAGIC
+#else
+# define GNM 0
+#endif
+
 	if(rootdir[0]!='\0' && filename[0]=='/')
         {
 	    snprintf(newname, PATH_MAX, "%s%s", rootdir, filename);
 	    try = newname;
 
-	    globresult = glob(try, GLOB_BRACE, NULL, &globbuf);
+	    globresult = glob(try, GB, NULL, &globbuf);
 	    if(globresult == GLOB_NOMATCH && rootdir2[0]!='\0') {
 		    /* now try with rootdir2 */
 		    snprintf(newname2, PATH_MAX,
 			     "%s%s", rootdir2, filename);
 		    try = newname2;
-			    
-		    globresult = glob(try, GLOB_BRACE|GLOB_NOMAGIC, NULL, &globbuf);
+		    globresult = glob(try, GB|GNM, NULL, &globbuf);
 	    }
 	} else {
 		/* try globbing plain name now.. */
-		globresult = glob(try, GLOB_BRACE|GLOB_NOMAGIC, NULL, &globbuf);
+		globresult = glob(try, GB|GNM, NULL, &globbuf);
 	}
 
 	if(globresult == GLOB_NOMATCH)
@@ -255,7 +270,7 @@ int parser_y_eof(void)
 
 	if(parser_y_nextglobfile(stacktop) == -1) {
 		/* no more glob'ed files to process */
-		
+
 		if (lex_verbosity > 0)
 		{
 			int stackp = ic_private.stack_ptr;
@@ -265,17 +280,17 @@ int parser_y_eof(void)
 			if(stackp > 0) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "resuming %s line %d\n"
-					    , ic_private.stack[stackp-1].filename 
+					    , ic_private.stack[stackp-1].filename
 					    , ic_private.stack[stackp-1].line);
 			}
 		}
-		
+
 		if(stacktop->state != YY_CURRENT_BUFFER)  {
 			yy_switch_to_buffer(stacktop->state);
 		}
 
 		parser_y_close(stacktop);
-		
+
 		if (--ic_private.stack_ptr < 0) {
 			return 1;
 		}
@@ -310,7 +325,7 @@ int parser_y_eof(void)
 	    ch = (char)fgetc(stacktop->file);
 	    if (ch != '\n' && stacktop->once){
 		stacktop->once = 0;
-		return EOL;	
+		return EOL;
 	    }
 	}
 	if(parser_y_eof()) {
@@ -365,7 +380,7 @@ int parser_y_eof(void)
                           BEGIN INITIAL;
 			  return BOOL;
                         }
-  
+
 <BOOLEAN>=		return EQUAL;
 
 <BOOLEAN>\n 	        {
@@ -392,7 +407,7 @@ int parser_y_eof(void)
 			   assert(len>0);
 
 			   /* remove trailing " */
-			   s[len-1]='\0'; 
+			   s[len-1]='\0';
 			   if(yydebug) { fprintf(stderr, "STRING: \"%s\"\n", s);}
 			   yylval.s = strdup(s);
 			   BEGIN INITIAL;
@@ -406,7 +421,7 @@ int parser_y_eof(void)
 			   assert(len>0);
 
 			   /* remove trailing } */
-			   s[len-1]='\0'; 
+			   s[len-1]='\0';
 			   if(yydebug) { fprintf(stderr, "STRING{}: {%s}\n", s);}
 			   yylval.s = strdup(s);
 			   BEGIN INITIAL;
@@ -431,14 +446,14 @@ int parser_y_eof(void)
 		        }
 
 =			{ BEGIN USERDEF; return EQUAL; }
-version                 return VERSION;     
-config			return CONFIG; 
+version                 return VERSION;
+config			return CONFIG;
 setup			return SETUP;
 conn			{ BEGIN USERDEF; return CONN; }
 include			return INCLUDE;
 
 [^\"= \t\n]+	        {  int tok;
-    
+
                            if(yydebug) { fprintf(stderr, "STR/KEY: %s\n", yytext); }
                            tok = parser_find_keyword(yytext, &yylval);
 			   switch(tok)

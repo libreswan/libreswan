@@ -142,7 +142,7 @@ do
 
 	if [ -f log.ref/$t/wi-log ]
 	then
-		sed -f ${TESTING}/klips/fixups/wilog.sed <$LD/wi-log >$LD/TMP
+		sed -f ${TESTING}/sanitizers/wilog.sed <$LD/wi-log >$LD/TMP
 		mv $LD/TMP $LD/wi-log
 		$CMP log.ref/$t/wi-log $LD/wi-log || CFAIL="$CFAIL $t $?"
 	else

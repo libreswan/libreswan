@@ -59,15 +59,23 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	struct v2prf_stuff childsacalc;
 
 	chunk_t ikeymat, rkeymat;
-	struct ipsec_proto_info *ipi = &st->st_esp;
+	/* ??? note assumption that AH and ESP cannot be combined */
+	struct ipsec_proto_info *ipi =
+		st->st_esp.present? &st->st_esp :
+		st->st_ah.present? &st->st_ah :
+		NULL;
 
+	assert(ipi != NULL);	/* ESP or AH must be present */
+	assert(st->st_esp.present != st->st_ah.present);	/* only one */
+
+	/* ??? there is no kernel_alg_ah_info */
 	ipi->attrs.transattrs.ei = kernel_alg_esp_info(
 		ipi->attrs.transattrs.encrypt,
 		ipi->attrs.transattrs.enckeylen,
 		ipi->attrs.transattrs.integ_hash);
 
 	passert(ipi->attrs.transattrs.ei != NULL);
-	memset(&childsacalc, 0, sizeof(childsacalc));
+	zero(&childsacalc);
 	childsacalc.prf_hasher = st->st_oakley.prf_hasher;
 
 	setchunk(childsacalc.ni, st->st_ni.ptr, st->st_ni.len);
@@ -76,55 +84,62 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 	childsacalc.spir.len = 0;
 
 	childsacalc.counter[0] = 1;
-	childsacalc.skeyseed = &st->st_skey_d;
+	childsacalc.skeyseed = st->st_skey_d_nss;
 
-	st->st_esp.present = TRUE;
+	/* ??? no account is taken of AH */
 	switch (ipi->attrs.transattrs.ei->transid) { /* transid is same as encryptalg */
+	case IKEv2_ENCR_reserved:
+		/* AH */
+		ipi->keymat_len = ipi->attrs.transattrs.ei->authkeylen;
+		break;
+
 	case IKEv2_ENCR_AES_GCM_8:
 	case IKEv2_ENCR_AES_GCM_12:
 	case IKEv2_ENCR_AES_GCM_16:
 		/* aes_gcm does not use an integ (auth) algo - see RFC 4106 */
-		st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
+		ipi->keymat_len = ipi->attrs.transattrs.ei->enckeylen +
 			AES_GCM_SALT_BYTES;
 		break;
+
 	case IKEv2_ENCR_AES_CCM_8:
 	case IKEv2_ENCR_AES_CCM_12:
 	case IKEv2_ENCR_AES_CCM_16:
 		/* aes_ccm does not use an integ (auth) algo - see RFC 4309 */
-		st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
+		ipi->keymat_len = ipi->attrs.transattrs.ei->enckeylen +
 			AES_CCM_SALT_BYTES;
 		break;
 
 	default:
-		st->st_esp.keymat_len = st->st_esp.attrs.transattrs.ei->enckeylen +
-			st->st_esp.attrs.transattrs.ei->authkeylen;
+		/* ordinary ESP */
+		ipi->keymat_len = ipi->attrs.transattrs.ei->enckeylen +
+			ipi->attrs.transattrs.ei->authkeylen;
 		break;
 	}
 
-/*
- *
- * Keying material MUST be taken from the expanded KEYMAT in the
- * following order:
- *
- *    All keys for SAs carrying data from the initiator to the responder
- *    are taken before SAs going in the reverse direction.
- *
- *    If multiple IPsec protocols are negotiated, keying material is
- *    taken in the order in which the protocol headers will appear in
- *    the encapsulated packet.
- *
- *    If a single protocol has both encryption and authentication keys,
- *    the encryption key is taken from the first octets of KEYMAT and
- *    the authentication key is taken from the next octets.
- *
- *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
- *    salt (AES_GCM_SALT_BYTES)
- */
+	/*
+	 *
+	 * Keying material MUST be taken from the expanded KEYMAT in the
+	 * following order:
+	 *
+	 *    All keys for SAs carrying data from the initiator to the responder
+	 *    are taken before SAs going in the reverse direction.
+	 *
+	 *    If multiple IPsec protocols are negotiated, keying material is
+	 *    taken in the order in which the protocol headers will appear in
+	 *    the encapsulated packet.
+	 *
+	 *    If a single protocol has both encryption and authentication keys,
+	 *    the encryption key is taken from the first octets of KEYMAT and
+	 *    the authentication key is taken from the next octets.
+	 *
+	 *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
+	 *    salt (AES_GCM_SALT_BYTES)
+	 */
 
-	v2genbytes(&ikeymat, st->st_esp.keymat_len,
+	v2genbytes(&ikeymat, ipi->keymat_len,
 		   "initiator keys", &childsacalc);
 
-	v2genbytes(&rkeymat, st->st_esp.keymat_len,
+	v2genbytes(&rkeymat, ipi->keymat_len,
 		   "responder keys", &childsacalc);
 
 	/* This should really be role == INITIATOR, but then our keys are
@@ -140,15 +155,15 @@ void ikev2_derive_child_keys(struct state *st, enum phase1_role role)
 			    DBG_dump_chunk("our  keymat", ikeymat);
 			    DBG_dump_chunk("peer keymat", rkeymat);
 		    });
-		st->st_esp.our_keymat = ikeymat.ptr;
-		st->st_esp.peer_keymat = rkeymat.ptr;
+		ipi->our_keymat = ikeymat.ptr;
+		ipi->peer_keymat = rkeymat.ptr;
 	} else {
 		DBG(DBG_CRYPT, {
 			    DBG_dump_chunk("our  keymat", rkeymat);
 			    DBG_dump_chunk("peer keymat", ikeymat);
 		    });
-		st->st_esp.peer_keymat = ikeymat.ptr;
-		st->st_esp.our_keymat = rkeymat.ptr;
+		ipi->peer_keymat = ikeymat.ptr;
+		ipi->our_keymat = rkeymat.ptr;
 	}
 
 }
