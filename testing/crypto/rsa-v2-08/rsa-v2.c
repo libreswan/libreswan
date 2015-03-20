@@ -1,4 +1,4 @@
-/* 
+/*
  * unit test for IKEv2 RSA signature/verification
  *
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
@@ -18,8 +18,8 @@
 
 #define LEAK_DETECTIVE
 #define AGGRESSIVE 1
-#define XAUTH 
-#define MODECFG 
+#define XAUTH
+#define MODECFG
 #define DEBUG 1
 #define PRINT_SA_DEBUG 1
 #define USE_KEYRR 1
@@ -46,22 +46,29 @@
 #include "seam_east.c"
 #include "seam_rnd.c"
 #include "seam_timer.c"
-#include "seam_initiate.c" 
-#include "seam_terminate.c" 
-#include "seam_kernel.c" 
+#include "seam_initiate.c"
+#include "seam_terminate.c"
+#include "seam_kernel.c"
 #include "seam_xauth.c"
 #include "seam_natt.c"
 #include "seam_state.c"
 #include "seam_kernelops.c"
 
-void gw_addref(struct gw_info *gw) {}
-void gw_delref(struct gw_info **gwp) {}
-bool in_pending_use(struct connection *c) { return FALSE; }
+void gw_addref(struct gw_info *gw)
+{
+}
+void gw_delref(struct gw_info **gwp)
+{
+}
+bool in_pending_use(struct connection *c)
+{
+	return FALSE;
+}
 
 char *progname;
 
-const char*
-check_expiry(time_t expiration_date, int warning_interval, bool strict)
+const char*check_expiry(time_t expiration_date, int warning_interval,
+			bool strict)
 {
 	return "ok (never)";
 }
@@ -69,7 +76,7 @@ check_expiry(time_t expiration_date, int warning_interval, bool strict)
 void exit_log(const char *message, ...)
 {
 	va_list args;
-	char m[LOG_WIDTH];	/* longer messages will be truncated */
+	char m[LOG_WIDTH];      /* longer messages will be truncated */
 
 	va_start(args, message);
 	vsnprintf(m, sizeof(m), message, args);
@@ -126,14 +133,15 @@ int main(int argc, char *argv[])
 	readwhackmsg("../../lib/libpluto/lib-parentI1/ikev2.record");
 	c1 = con_by_name("westnet--eastnet-ikev2", TRUE);
 
-	passert(c1!=NULL);
+	passert(c1 != NULL);
 	show_one_connection(c1);
 
 	init_pbs(&outs, outbuf, 1024, "rsa signature");
 
 	load_preshared_secrets(NULL_FD);
 
-	clonetochunk(st1.st_firstpacket_me, packet1+32, packet1_len-32, "I1");
+	clonetochunk(st1.st_firstpacket_me, packet1 + 32, packet1_len - 32,
+		     "I1");
 
 	/* write nonce to both sides, because we switch roles */
 	clonetochunk(st1.st_ni, tc3_ni, tc3_ni_len, "Ni");
@@ -144,8 +152,9 @@ int main(int argc, char *argv[])
 	st1.st_oakley.prf_hasher =
 		(struct hash_desc *)ike_alg_ikev2_find(IKE_ALG_HASH
 
-						       , st1.st_oakley.prf_hash
-						       , 0);
+						       ,
+						       st1.st_oakley.prf_hash,
+						       0);
 
 	ikev2_calculate_rsa_sha1(&st1,
 				 INITIATOR,
@@ -161,7 +170,6 @@ int main(int argc, char *argv[])
 		init_pbs(&outs, outbuf, sig_len, "rsa signature");
 	}
 
-
 	/* swap c1->this and c1->that, because to verify, we have to swap
 	 * identities.
 	 */
@@ -170,20 +178,20 @@ int main(int argc, char *argv[])
 		c1->spd.this = c1->spd.that;
 		c1->spd.that = tmp;
 	}
-	clonetochunk(st1.st_firstpacket_him, packet1+32, packet1_len-32, "R1");
+	clonetochunk(st1.st_firstpacket_him, packet1 + 32, packet1_len - 32,
+		     "R1");
 
 	show_one_connection(c1);
 	{
-		stf_status stat = ikev2_verify_rsa_sha1(&st1
-							, RESPONDER
-							, idhash
-							, NULL  /* keys from dns */
-							, NULL  /* gateways from dns */
-							, &outs);
+		stf_status stat = ikev2_verify_rsa_sha1(&st1,
+							RESPONDER,
+							idhash,
+							NULL,   /* keys from dns */
+							NULL,   /* gateways from dns */
+							&outs);
 		printf("stf status: %s\n", enum_name(&stfstatus_name, stat));
 	}
 
 	exit(0);
 }
-
 

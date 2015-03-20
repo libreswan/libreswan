@@ -21,7 +21,7 @@ static inline int safe_socket(int domain, int type, int protocol)
 		return fd;
 
 	arg = fcntl(fd, F_GETFD);
-	if (arg < 0) 
+	if (arg < 0)
 		goto out_fail;
 
 	arg |= FD_CLOEXEC;
@@ -32,6 +32,7 @@ static inline int safe_socket(int domain, int type, int protocol)
 
 out:
 	return fd;
+
 out_fail:
 	saved_errno = errno;
 	close(fd);
@@ -40,7 +41,7 @@ out_fail:
 	goto out;
 }
 #else
-#define safe_socket(d,t,p) socket(d,t,p)
+#define safe_socket(d, t, p) socket(d, t, p)
 #endif
 
 #endif

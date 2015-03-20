@@ -25,7 +25,7 @@
 #endif
 #ifndef __KERNEL__
 #ifdef NO_ERRNO_H
-    extern int errno;
+extern int errno;
 #else
 #   include <errno.h>
 #endif
@@ -36,22 +36,22 @@
 #endif
 /* compile with -Dlocal if your debugger can't find static symbols */
 
-typedef unsigned char  uch;
+typedef unsigned char uch;
 typedef uch FAR uchf;
 typedef unsigned short ush;
 typedef ush FAR ushf;
-typedef unsigned long  ulg;
+typedef unsigned long ulg;
 
 extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 /* (size given to avoid silly warnings with Visual C++) */
 
-#define ERR_MSG(err) z_errmsg[Z_NEED_DICT-(err)]
+#define ERR_MSG(err) z_errmsg[Z_NEED_DICT - (err)]
 
-#define ERR_RETURN(strm,err) \
-  return (strm->msg = ERR_MSG(err), (err))
+#define ERR_RETURN(strm, err) \
+	return (strm->msg = ERR_MSG(err), (err))
 /* To be used only when the state is known to be valid */
 
-        /* common constants */
+/* common constants */
 
 #ifndef DEF_WBITS
 #  define DEF_WBITS MAX_WBITS
@@ -76,15 +76,15 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 
 #define PRESET_DICT 0x20 /* preset dictionary flag in zlib header */
 
-        /* target dependencies */
+/* target dependencies */
 
 #ifdef MSDOS
 #  define OS_CODE  0x00
 #  if defined(__TURBOC__) || defined(__BORLANDC__)
-#    if(__STDC__ == 1) && (defined(__LARGE__) || defined(__COMPACT__))
-       /* Allow compilation with ANSI keywords only enabled */
-       void _Cdecl farfree( void *block );
-       void *_Cdecl farmalloc( unsigned long nbytes );
+#    if (__STDC__ == 1) && (defined(__LARGE__) || defined(__COMPACT__))
+/* Allow compilation with ANSI keywords only enabled */
+void _Cdecl farfree( void *block );
+void *_Cdecl farmalloc( unsigned long nbytes );
 #    else
 #     include <alloc.h>
 #    endif
@@ -104,7 +104,7 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #if defined(VAXC) || defined(VMS)
 #  define OS_CODE  0x02
 #  define F_OPEN(name, mode) \
-     fopen((name), (mode), "mbc=60", "ctx=stm", "rfm=fix", "mrs=512")
+	fopen((name), (mode), "mbc=60", "ctx=stm", "rfm=fix", "mrs=512")
 #endif
 
 #ifdef AMIGA
@@ -121,7 +121,7 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #    include <unix.h> /* for fdopen */
 #  else
 #    ifndef fdopen
-#      define fdopen(fd,mode) NULL /* No fdopen() */
+#      define fdopen(fd, mode) NULL /* No fdopen() */
 #    endif
 #  endif
 #endif
@@ -135,15 +135,14 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #endif
 
 #if defined(_BEOS_) || defined(RISCOS)
-#  define fdopen(fd,mode) NULL /* No fdopen() */
+#  define fdopen(fd, mode) NULL /* No fdopen() */
 #endif
 
 #if (defined(_MSC_VER) && (_MSC_VER > 600))
-#  define fdopen(fd,type)  _fdopen(fd,type)
+#  define fdopen(fd, type)  _fdopen(fd, type)
 #endif
 
-
-        /* Common defaults */
+/* Common defaults */
 
 #ifndef OS_CODE
 #  define OS_CODE  0x03  /* assume Unix */
@@ -153,10 +152,10 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define F_OPEN(name, mode) fopen((name), (mode))
 #endif
 
-         /* functions */
+/* functions */
 
 #ifdef HAVE_STRERROR
-   extern char *strerror OF((int));
+extern char *strerror OF((int));
 #  define zstrerror(errnum) strerror(errnum)
 #else
 #  define zstrerror(errnum) ""
@@ -166,10 +165,10 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #  define NO_MEMCPY
 #endif
 #if defined(SMALL_MEDIUM) && !defined(_MSC_VER) && !defined(__SC__)
- /* Use our own functions for small and medium model with MSC <= 5.0.
-  * You may have to use the same strategy for Borland C (untested).
-  * The __SC__ check is for Symantec.
-  */
+/* Use our own functions for small and medium model with MSC <= 5.0.
+ * You may have to use the same strategy for Borland C (untested).
+ * The __SC__ check is for Symantec.
+ */
 #  define NO_MEMCPY
 #endif
 #if defined(STDC) && !defined(HAVE_MEMCPY) && !defined(NO_MEMCPY)
@@ -186,40 +185,46 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 #    define zmemzero(dest, len) memset(dest, 0, len)
 #  endif
 #else
-   extern void zmemcpy  OF((Bytef* dest, const Bytef* source, uInt len));
-   extern int  zmemcmp  OF((const Bytef* s1, const Bytef* s2, uInt len));
-   extern void zmemzero OF((Bytef* dest, uInt len));
+extern void zmemcpy  OF((Bytef * dest, const Bytef * source, uInt len));
+extern int zmemcmp  OF((const Bytef * s1, const Bytef * s2, uInt len));
+extern void zmemzero OF((Bytef * dest, uInt len));
 #endif
 
 /* Diagnostic functions */
 #ifdef DEBUG
 #  include <stdio.h>
-   extern int z_verbose;
-   extern void z_error    OF((char *m));
-#  define Assert(cond,msg) {if(!(cond)) z_error(msg);}
-#  define Trace(x) {if (z_verbose>=0) fprintf x ;}
-#  define Tracev(x) {if (z_verbose>0) fprintf x ;}
-#  define Tracevv(x) {if (z_verbose>1) fprintf x ;}
-#  define Tracec(c,x) {if (z_verbose>0 && (c)) fprintf x ;}
-#  define Tracecv(c,x) {if (z_verbose>1 && (c)) fprintf x ;}
+extern int z_verbose;
+extern void z_error    OF((char *m));
+#  define Assert(cond, msg) { if (!(cond)) \
+				      z_error(msg); }
+#  define Trace(x) { if (z_verbose >= 0) \
+			     fprintf x; }
+#  define Tracev(x) { if (z_verbose > 0) \
+			      fprintf x; }
+#  define Tracevv(x) { if (z_verbose > 1) \
+			       fprintf x; }
+#  define Tracec(c, x) { if (z_verbose > 0 && (c)) \
+				 fprintf x; }
+#  define Tracecv(c, x) { if (z_verbose > 1 && (c)) \
+				  fprintf x; }
 #else
-#  define Assert(cond,msg)
+#  define Assert(cond, msg)
 #  define Trace(x)
 #  define Tracev(x)
 #  define Tracevv(x)
-#  define Tracec(c,x)
-#  define Tracecv(c,x)
+#  define Tracec(c, x)
+#  define Tracecv(c, x)
 #endif
 
-
-typedef uLong (ZEXPORT *check_func) OF((uLong check, const Bytef *buf,
-				       uInt len));
+typedef uLong (ZEXPORT * check_func) OF ((uLong check, const Bytef * buf,
+					  uInt len));
 voidpf zcalloc OF((voidpf opaque, unsigned items, unsigned size));
-void   zcfree  OF((voidpf opaque, voidpf ptr));
+void zcfree  OF((voidpf opaque, voidpf ptr));
 
 #define ZALLOC(strm, items, size) \
-           (*((strm)->zalloc))((strm)->opaque, (items), (size))
+	(*((strm)->zalloc))((strm)->opaque, (items), (size))
 #define ZFREE(strm, addr)  (*((strm)->zfree))((strm)->opaque, (voidpf)(addr))
-#define TRY_FREE(s, p) {if (p) ZFREE(s, p);}
+#define TRY_FREE(s, p) { if (p) \
+				 ZFREE(s, p); }
 
 #endif /* _Z_UTIL_H */

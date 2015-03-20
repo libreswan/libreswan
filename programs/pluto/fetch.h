@@ -15,8 +15,8 @@
 
 extern void wake_fetch_thread(const char *who);
 extern void init_crl_fetch(void);
-extern void add_distribution_points(const generalName_t *newPoints
-    , generalName_t **distributionPoints);
+extern void add_distribution_points(const generalName_t *newPoints,
+				    generalName_t **distributionPoints);
 extern void add_fetch_request(chunk_t issuer, const generalName_t *gn);
 extern void free_fetch_requests(void);
 extern void list_distribution_points(const generalName_t *gn);
@@ -26,5 +26,4 @@ extern void init_fetch(void);
 extern void free_crl_fetch(void);
 extern void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn);
 extern void list_crl_fetch_requests(bool utc);
-
 

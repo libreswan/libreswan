@@ -12,7 +12,7 @@
  * for more details.
  */
 
-#ifndef USE_UNBOUND	/* whole file! */
+#ifndef USE_UNBOUND     /* whole file! */
 
 /* This program executes as multiple processes.  The Master process
  * receives queries (struct adns_query messages) from Pluto and distributes
@@ -55,7 +55,7 @@
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <resolv.h>
-#include <netdb.h>	/* ??? for h_errno */
+#include <netdb.h>      /* ??? for h_errno */
 
 #include <libreswan.h>
 
@@ -67,12 +67,12 @@
 #endif
 
 #include "constants.h"
-#include "adns.h"	/* needs <resolv.h> */
+#include "adns.h"       /* needs <resolv.h> */
 #include "lsw_select.h"
 
 /* shared by all processes */
 
-static const char *name;	/* program name, for messages */
+static const char *name;        /* program name, for messages */
 
 static bool debug = FALSE;
 
@@ -83,46 +83,43 @@ static bool debug = FALSE;
  * HES_IO_ERROR_IN if errno tells the tale.
  * Others are errors.
  */
-static enum helper_exit_status
-read_pipe(int fd, unsigned char *stuff, size_t minlen, size_t maxlen)
+static enum helper_exit_status read_pipe(int fd, unsigned char *stuff,
+					 size_t minlen, size_t maxlen)
 {
-    size_t n = 0;
-    size_t goal = minlen;
+	size_t n = 0;
+	size_t goal = minlen;
 
-    do {
-	ssize_t m = read(fd, stuff + n, goal - n);
+	do {
+		ssize_t m = read(fd, stuff + n, goal - n);
 
-	if (m == -1)
-	{
-	    if (errno != EINTR)
-	    {
-		syslog(LOG_ERR, "Input error on pipe: %s", strerror(errno));
-		return HES_IO_ERROR_IN;
-	    }
-	}
-	else if (m == 0)
-	{
-	    return HES_OK;	/* treat empty message as EOF */
-	}
-	else
-	{
-	    n += m;
-	    if (n >= sizeof(size_t))
-	    {
-		goal = *(size_t *)(void *)stuff;
-		if (goal < minlen || maxlen < goal)
-		{
-		    if (debug)
-			fprintf(stderr, "%lu : [%lu, %lu]\n"
-			    , (unsigned long)goal
-			    , (unsigned long)minlen, (unsigned long)maxlen);
-		    return HES_BAD_LEN;
+		if (m == -1) {
+			if (errno != EINTR) {
+				syslog(LOG_ERR, "Input error on pipe: %s", strerror(
+					       errno));
+				return HES_IO_ERROR_IN;
+			}
+		} else if (m == 0) {
+			return HES_OK; /* treat empty message as EOF */
+		} else {
+			n += m;
+			if (n >= sizeof(size_t)) {
+				goal = *(size_t *)(void *)stuff;
+				if (goal < minlen || maxlen < goal) {
+					if (debug)
+						fprintf(stderr,
+							"%lu : [%lu, %lu]\n",
+							(unsigned long)goal,
+							(unsigned long)minlen,
+							(unsigned long)maxlen);
+
+
+					return HES_BAD_LEN;
+				}
+			}
 		}
-	    }
-	}
-    } while (n < goal);
+	} while (n < goal);
 
-    return HES_CONTINUE;
+	return HES_CONTINUE;
 }
 
 /* Write a variable-length record to a pipe.
@@ -130,30 +127,26 @@ read_pipe(int fd, unsigned char *stuff, size_t minlen, size_t maxlen)
  * HES_CONTINUE if record written
  * Others are errors.
  */
-static enum helper_exit_status
-write_pipe(int fd, const unsigned char *stuff)
+static enum helper_exit_status write_pipe(int fd, const unsigned char *stuff)
 {
-    size_t len = *(const size_t *)(const void *)stuff;
-    size_t n = 0;
+	size_t len = *(const size_t *)(const void *)stuff;
+	size_t n = 0;
 
-    do {
-	ssize_t m = write(fd, stuff + n, len - n);
+	do {
+		ssize_t m = write(fd, stuff + n, len - n);
 
-	if (m == -1)
-	{
-	    /* error, but ignore and retry if EINTR */
-	    if (errno != EINTR)
-	    {
-		syslog(LOG_ERR, "Output error from master: %s", strerror(errno));
-		return HES_IO_ERROR_OUT;
-	    }
-	}
-	else
-	{
-	    n += m;
-	}
-    } while (n != len);
-    return HES_CONTINUE;
+		if (m == -1) {
+			/* error, but ignore and retry if EINTR */
+			if (errno != EINTR) {
+				syslog(LOG_ERR, "Output error from master: %s", strerror(
+					       errno));
+				return HES_IO_ERROR_OUT;
+			}
+		} else {
+			n += m;
+		}
+	} while (n != len);
+	return HES_CONTINUE;
 }
 
 /**************** worker process ****************/
@@ -171,7 +164,7 @@ write_pipe(int fd, const unsigned char *stuff)
 #undef OLD_RESOLVER
 
 #if (__RES) <= 19960801
-# define OLD_RESOLVER	1
+# define OLD_RESOLVER   1
 #endif
 
 #ifdef __UCLIBC__
@@ -182,7 +175,7 @@ write_pipe(int fd, const unsigned char *stuff)
 
 # define res_ninit(statp) res_init()
 # define res_nquery(statp, dname, class, type, answer, anslen) \
-    res_query(dname, class, type, answer, anslen)
+	res_query(dname, class, type, answer, anslen)
 # define res_nclose(statp) res_close()
 
 #define statp  ((struct __res_state *)(&_res))
@@ -194,78 +187,80 @@ static res_state statp = &my_res_state;
 
 #endif /* !OLD_RESOLVER */
 
-static int
-worker(int qfd, int afd)
+static int worker(int qfd, int afd)
 {
-    {
-	int r = res_ninit(statp);
-
-	if (r != 0)
 	{
-	    syslog(LOG_ERR, "cannot initialize resolver");
-	    return HES_RES_INIT;
-	}
+		int r = res_ninit(statp);
+
+		if (r != 0) {
+			syslog(LOG_ERR, "cannot initialize resolver");
+			return HES_RES_INIT;
+		}
 #ifndef OLD_RESOLVER
-	statp->options |= RES_ROTATE;
+		statp->options |= RES_ROTATE;
 #endif
-	statp->options |= RES_DEBUG;
-    }
-
-    for (;;)
-    {
-	struct adns_query q;
-	struct adns_answer a;
-
-	enum helper_exit_status r = read_pipe(qfd, (unsigned char *)&q
-	    , sizeof(q), sizeof(q));
-
-	if (r != HES_CONTINUE)
-	    return r;	/* some kind of exit */
-
-	if (q.qmagic != ADNS_Q_MAGIC)
-	{
-	    syslog(LOG_ERR, "error in input from master: bad magic");
-	    return HES_BAD_MAGIC;
+		statp->options |= RES_DEBUG;
 	}
 
-	a.amagic = ADNS_A_MAGIC;
-	a.serial = q.serial;
+	for (;; ) {
+		struct adns_query q;
+		struct adns_answer a;
 
-	a.result = res_nquery(statp, q.name_buf, ns_c_in, q.type, a.ans, sizeof(a.ans));
-	a.h_errno_val = h_errno;
+		enum helper_exit_status r = read_pipe(qfd, (unsigned char *)&q,
+						      sizeof(q), sizeof(q));
 
-	a.len = offsetof(struct adns_answer, ans) + (a.result < 0? 0 : a.result);
+		if (r != HES_CONTINUE)
+			return r; /* some kind of exit */
+
+		if (q.qmagic != ADNS_Q_MAGIC) {
+			syslog(LOG_ERR,
+			       "error in input from master: bad magic");
+			return HES_BAD_MAGIC;
+		}
+
+		a.amagic = ADNS_A_MAGIC;
+		a.serial = q.serial;
+
+		a.result = res_nquery(statp, q.name_buf, ns_c_in, q.type,
+				      a.ans, sizeof(a.ans));
+		a.h_errno_val = h_errno;
+
+		a.len =
+			offsetof(struct adns_answer,
+				 ans) + (a.result < 0 ? 0 : a.result);
 
 #ifdef DEBUG
-	if (((q.debugging & IMPAIR_DELAY_ADNS_KEY_ANSWER) && q.type == ns_t_key)
-	|| ((q.debugging & IMPAIR_DELAY_ADNS_TXT_ANSWER) && q.type == ns_t_txt))
-	    sleep(30);	/* delay the answer */
+		if (((q.debugging & IMPAIR_DELAY_ADNS_KEY_ANSWER) && q.type ==
+		     ns_t_key) ||
+		    ((q.debugging & IMPAIR_DELAY_ADNS_TXT_ANSWER) && q.type ==
+		     ns_t_txt))
+			sleep(30); /* delay the answer */
 #endif
 
-	/* write answer, possibly a bit at a time */
-	r = write_pipe(afd, (const unsigned char *)&a);
+		/* write answer, possibly a bit at a time */
+		r = write_pipe(afd, (const unsigned char *)&a);
 
-	if (r != HES_CONTINUE)
-	    return r;	/* some kind of exit */
-    }
+		if (r != HES_CONTINUE)
+			return r; /* some kind of exit */
+	}
 }
 
 /**************** master process ****************/
 
 bool eof_from_pluto = FALSE;
-#define PLUTO_QFD	0	/* queries come on stdin */
-#define PLUTO_AFD	1	/* answers go out on stdout */
+#define PLUTO_QFD       0       /* queries come on stdin */
+#define PLUTO_AFD       1       /* answers go out on stdout */
 
 #ifndef MAX_WORKERS
-# define MAX_WORKERS 10	/* number of in-flight queries */
+# define MAX_WORKERS 10 /* number of in-flight queries */
 #endif
 
 struct worker_info {
-    int qfd;	/* query pipe's file descriptor */
-    int afd;	/* answer pipe's file descriptor */
-    pid_t pid;
-    bool busy;
-    void *continuation;	/* of outstanding request */
+	int qfd;        /* query pipe's file descriptor */
+	int afd;        /* answer pipe's file descriptor */
+	pid_t pid;
+	bool busy;
+	void *continuation; /* of outstanding request */
 };
 
 static struct worker_info wi[MAX_WORKERS];
@@ -274,303 +269,260 @@ static struct worker_info *wi_roof = wi;
 /* request FIFO */
 
 struct query_list {
-    struct query_list *next;
-    struct adns_query aq;
+	struct query_list *next;
+	struct adns_query aq;
 };
 
 static struct query_list *oldest_query = NULL;
-static struct query_list *newest_query;	/* undefined when oldest == NULL */
+static struct query_list *newest_query; /* undefined when oldest == NULL */
 static struct query_list *free_queries = NULL;
 
-static bool
-spawn_worker(void)
+static bool spawn_worker(void)
 {
-    int qfds[2];
-    int afds[2];
-    pid_t p;
+	int qfds[2];
+	int afds[2];
+	pid_t p;
 
-    if (pipe(qfds) != 0 || pipe(afds) != 0)
-    {
-	syslog(LOG_ERR, "pipe(2) failed: %s", strerror(errno));
-	exit(HES_PIPE);
-    }
-
-    wi_roof->qfd = qfds[1];	/* write end of query pipe */
-    wi_roof->afd = afds[0];	/* read end of answer pipe */
-
-    p = fork();
-    if (p == -1)
-    {
-	/* fork failed: ignore if at least one worker exists */
-	if (wi_roof == wi)
-	{
-	    syslog(LOG_ERR, "fork(2) error creating first worker: %s", strerror(errno));
-	    exit(HES_FORK);
+	if (pipe(qfds) != 0 || pipe(afds) != 0) {
+		syslog(LOG_ERR, "pipe(2) failed: %s", strerror(errno));
+		exit(HES_PIPE);
 	}
-	close(qfds[0]);
-	close(qfds[1]);
-	close(afds[0]);
-	close(afds[1]);
-	return FALSE;
-    }
-    else if (p == 0)
-    {
-	/* child */
-	struct worker_info *w;
 
-	close(PLUTO_QFD);
-	close(PLUTO_AFD);
-	/* close all master pipes, including ours */
-	for (w = wi; w <= wi_roof; w++)
-	{
-	    close(w->qfd);
-	    close(w->afd);
+	wi_roof->qfd = qfds[1]; /* write end of query pipe */
+	wi_roof->afd = afds[0]; /* read end of answer pipe */
+
+	p = fork();
+	if (p == -1) {
+		/* fork failed: ignore if at least one worker exists */
+		if (wi_roof == wi) {
+			syslog(LOG_ERR,
+			       "fork(2) error creating first worker: %s", strerror(
+				       errno));
+			exit(HES_FORK);
+		}
+		close(qfds[0]);
+		close(qfds[1]);
+		close(afds[0]);
+		close(afds[1]);
+		return FALSE;
+	} else if (p == 0) {
+		/* child */
+		struct worker_info *w;
+
+		close(PLUTO_QFD);
+		close(PLUTO_AFD);
+		/* close all master pipes, including ours */
+		for (w = wi; w <= wi_roof; w++) {
+			close(w->qfd);
+			close(w->afd);
+		}
+		_exit(worker(qfds[0], afds[1]));
+	} else {
+		/* parent */
+		struct worker_info *w = wi_roof++;
+
+		w->pid = p;
+		w->busy = FALSE;
+		close(qfds[0]);
+		close(afds[1]);
+		return TRUE;
 	}
-	_exit(worker(qfds[0], afds[1]));
-    }
-    else
-    {
-	/* parent */
-	struct worker_info *w = wi_roof++;
-
-	w->pid = p;
-	w->busy = FALSE;
-	close(qfds[0]);
-	close(afds[1]);
-	return TRUE;
-    }
 }
 
-static void
-send_eof(struct worker_info *w)
+static void send_eof(struct worker_info *w)
 {
-    pid_t p;
-    int status;
+	pid_t p;
+	int status;
 
-    close(w->qfd);
-    w->qfd = NULL_FD;
+	close(w->qfd);
+	w->qfd = NULL_FD;
 
-    close(w->afd);
-    w->afd = NULL_FD;
+	close(w->afd);
+	w->afd = NULL_FD;
 
-    /* reap child */
-    p = waitpid(w->pid, &status, 0);
-    /* ignore result -- what could we do with it? */
-    if(p == -1) {
-	    syslog(LOG_ERR, "waitpid(2) failed, ignored");
-    }
+	/* reap child */
+	p = waitpid(w->pid, &status, 0);
+	/* ignore result -- what could we do with it? */
+	if (p == -1)
+		syslog(LOG_ERR, "waitpid(2) failed, ignored");
 }
 
-static void
-forward_query(struct worker_info *w)
+static void forward_query(struct worker_info *w)
 {
-    struct query_list *q = oldest_query;
+	struct query_list *q = oldest_query;
 
-    if (q == NULL)
-    {
-	if (eof_from_pluto)
-	    send_eof(w);
-    }
-    else
-    {
-	enum helper_exit_status r
-	    = write_pipe(w->qfd, (const unsigned char *) &q->aq);
+	if (q == NULL) {
+		if (eof_from_pluto)
+			send_eof(w);
+	} else {
+		enum helper_exit_status r =
+			write_pipe(w->qfd, (const unsigned char *) &q->aq);
 
-	if (r != HES_CONTINUE)
-	    exit(r);
+		if (r != HES_CONTINUE)
+			exit(r);
 
-	w->busy = TRUE;
+		w->busy = TRUE;
 
-	oldest_query = q->next;
-	q->next = free_queries;
-	free_queries = q;
-    }
-}
-
-static void
-query(void)
-{
-    struct query_list *q = free_queries;
-    enum helper_exit_status r;
-
-    /* find an unused queue entry */
-    if (q == NULL)
-    {
-	q = malloc(sizeof(*q));
-	if (q == NULL)
-	{
-	    syslog(LOG_ERR, "malloc(3) failed");
-	    exit(HES_MALLOC);
+		oldest_query = q->next;
+		q->next = free_queries;
+		free_queries = q;
 	}
-    }
-    else
-    {
-	free_queries = q->next;
-    }
+}
 
-    r = read_pipe(PLUTO_QFD, (unsigned char *)&q->aq
-	, sizeof(q->aq), sizeof(q->aq));
+static void query(void)
+{
+	struct query_list *q = free_queries;
+	enum helper_exit_status r;
 
-    if (r == HES_OK)
-    {
-	/* EOF: we're done, except for unanswered queries */
-	struct worker_info *w;
+	/* find an unused queue entry */
+	if (q == NULL) {
+		q = malloc(sizeof(*q));
+		if (q == NULL) {
+			syslog(LOG_ERR, "malloc(3) failed");
+			exit(HES_MALLOC);
+		}
+	} else {
+		free_queries = q->next;
+	}
 
-	eof_from_pluto = TRUE;
-	q->next = free_queries;
-	free_queries = q;
+	r = read_pipe(PLUTO_QFD, (unsigned char *)&q->aq,
+		      sizeof(q->aq), sizeof(q->aq));
 
-	/* Send bye-bye to unbusy processes.
-	 * Note that if there are queued queries, there won't be
-	 * any non-busy workers.
-	 */
-	for (w = wi; w != wi_roof; w++)
-	    if (!w->busy)
-		send_eof(w);
-    }
-    else if (r != HES_CONTINUE)
-    {
-	exit(r);
-    }
-    else if (q->aq.qmagic != ADNS_Q_MAGIC)
-    {
-	syslog(LOG_ERR, "error in query from Pluto: bad magic");
-	exit(HES_BAD_MAGIC);
-    }
-    else
-    {
-	struct worker_info *w;
+	if (r == HES_OK) {
+		/* EOF: we're done, except for unanswered queries */
+		struct worker_info *w;
 
-	/* got a query */
+		eof_from_pluto = TRUE;
+		q->next = free_queries;
+		free_queries = q;
 
-	/* add it to FIFO */
-	q->next = NULL;
-	if (oldest_query == NULL)
-	    oldest_query = q;
-	else
-	    newest_query->next = q;
-	newest_query = q;
+		/* Send bye-bye to unbusy processes.
+		 * Note that if there are queued queries, there won't be
+		 * any non-busy workers.
+		 */
+		for (w = wi; w != wi_roof; w++)
+			if (!w->busy)
+				send_eof(w);
+	} else if (r != HES_CONTINUE) {
+		exit(r);
+	} else if (q->aq.qmagic != ADNS_Q_MAGIC) {
+		syslog(LOG_ERR, "error in query from Pluto: bad magic");
+		exit(HES_BAD_MAGIC);
+	} else {
+		struct worker_info *w;
 
-	/* See if any worker available */
-	for (w = wi; ; w++)
-	{
-	    if (w == wi_roof)
-	    {
-		/* no free worker */
-		if (w == wi + MAX_WORKERS)
-		    break;	/* no more to be created */
-		/* make a new one */
-		if (!spawn_worker())
-		    break;	/* cannot create one at this time */
-	    }
-	    if (!w->busy)
-	    {
-		/* assign first to free worker */
+		/* got a query */
+
+		/* add it to FIFO */
+		q->next = NULL;
+		if (oldest_query == NULL)
+			oldest_query = q;
+		else
+			newest_query->next = q;
+		newest_query = q;
+
+		/* See if any worker available */
+		for (w = wi;; w++) {
+			if (w == wi_roof) {
+				/* no free worker */
+				if (w == wi + MAX_WORKERS)
+					break; /* no more to be created */
+				/* make a new one */
+				if (!spawn_worker())
+					break; /* cannot create one at this time */
+			}
+			if (!w->busy) {
+				/* assign first to free worker */
+				forward_query(w);
+				break;
+			}
+		}
+	}
+	return;
+}
+
+static void answer(struct worker_info *w)
+{
+	struct adns_answer a;
+	enum helper_exit_status r = read_pipe(w->afd, (unsigned char *)&a,
+					      offsetof(struct adns_answer,
+						       ans), sizeof(a));
+
+	if (r == HES_OK) {
+		/* unexpected EOF */
+		syslog(LOG_ERR, "unexpected EOF from worker");
+		exit(HES_IO_ERROR_IN);
+	} else if (r != HES_CONTINUE) {
+		exit(r);
+	} else if (a.amagic != ADNS_A_MAGIC) {
+		syslog(LOG_ERR, "Input from worker error: bad magic");
+		exit(HES_BAD_MAGIC);
+	} else if (a.continuation != w->continuation) {
+		/* answer doesn't match query */
+		syslog(LOG_ERR,
+		       "Input from worker error: continuation mismatch");
+		exit(HES_SYNC);
+	} else {
+		/* pass the answer on to Pluto */
+		enum helper_exit_status rs =
+			write_pipe(PLUTO_AFD, (const unsigned char *) &a);
+
+		if (rs != HES_CONTINUE)
+			exit(rs);
+		w->busy = FALSE;
 		forward_query(w);
-		break;
-	    }
 	}
-    }
-    return;
-}
-
-static void
-answer(struct worker_info *w)
-{
-    struct adns_answer a;
-    enum helper_exit_status r = read_pipe(w->afd, (unsigned char *)&a
-	, offsetof(struct adns_answer, ans), sizeof(a));
-
-    if (r == HES_OK)
-    {
-	/* unexpected EOF */
-	syslog(LOG_ERR, "unexpected EOF from worker");
-	exit(HES_IO_ERROR_IN);
-    }
-    else if (r != HES_CONTINUE)
-    {
-	exit(r);
-    }
-    else if (a.amagic != ADNS_A_MAGIC)
-    {
-	syslog(LOG_ERR, "Input from worker error: bad magic");
-	exit(HES_BAD_MAGIC);
-    }
-    else if (a.continuation != w->continuation)
-    {
-	/* answer doesn't match query */
-	syslog(LOG_ERR, "Input from worker error: continuation mismatch");
-	exit(HES_SYNC);
-    }
-    else
-    {
-	/* pass the answer on to Pluto */
-	enum helper_exit_status rs
-	    = write_pipe(PLUTO_AFD, (const unsigned char *) &a);
-
-	if (rs != HES_CONTINUE)
-	    exit(rs);
-	w->busy = FALSE;
-	forward_query(w);
-    }
 }
 
 /* assumption: input limited; accept blocking on output */
-static int
-master(void)
+static int master(void)
 {
-    for (;;)
-    {
-	lsw_fd_set readfds;
-	int maxfd = PLUTO_QFD;		/* approximate lower bound */
-	int ndes = 0;
-	struct worker_info *w;
+	for (;; ) {
+		lsw_fd_set readfds;
+		int maxfd = PLUTO_QFD;  /* approximate lower bound */
+		int ndes = 0;
+		struct worker_info *w;
 
-	LSW_FD_ZERO(&readfds);
-	if (!eof_from_pluto)
-	{
-	    LSW_FD_SET(PLUTO_QFD, &readfds);
-	    ndes++;
-	}
-	for (w = wi; w != wi_roof; w++)
-	{
-	    if (w->busy)
-	    {
-		LSW_FD_SET(w->afd, &readfds);
-		ndes++;
-		if (maxfd < w->afd)
-		    maxfd = w->afd;
-	    }
-	}
-
-	if (ndes == 0)
-	    return HES_OK;	/* done! */
-
-	do {
-	    ndes = lsw_select(maxfd + 1, &readfds, NULL, NULL, NULL);
-	} while (ndes == -1 && errno == EINTR);
-	if (ndes == -1)
-	{
-	    syslog(LOG_ERR, "select(2) error: %s", strerror(errno));
-	    exit(HES_IO_ERROR_SELECT);
-	}
-	else if (ndes > 0)
-	{
-	    if (LSW_FD_ISSET(PLUTO_QFD, &readfds))
-	    {
-		query();
-		ndes--;
-	    }
-	    for (w = wi; ndes > 0 && w != wi_roof; w++)
-	    {
-		if (w->busy && LSW_FD_ISSET(w->afd, &readfds))
-		{
-		    answer(w);
-		    ndes--;
+		LSW_FD_ZERO(&readfds);
+		if (!eof_from_pluto) {
+			LSW_FD_SET(PLUTO_QFD, &readfds);
+			ndes++;
 		}
-	    }
+		for (w = wi; w != wi_roof; w++) {
+			if (w->busy) {
+				LSW_FD_SET(w->afd, &readfds);
+				ndes++;
+				if (maxfd < w->afd)
+					maxfd = w->afd;
+			}
+		}
+
+		if (ndes == 0)
+			return HES_OK; /* done! */
+
+		do
+			ndes =
+				lsw_select(maxfd + 1, &readfds, NULL, NULL,
+					   NULL);
+		while (ndes == -1 && errno == EINTR);
+		if (ndes == -1) {
+			syslog(LOG_ERR, "select(2) error: %s",
+			       strerror(errno));
+			exit(HES_IO_ERROR_SELECT);
+		} else if (ndes > 0) {
+			if (LSW_FD_ISSET(PLUTO_QFD, &readfds)) {
+				query();
+				ndes--;
+			}
+			for (w = wi; ndes > 0 && w != wi_roof; w++) {
+				if (w->busy &&
+				    LSW_FD_ISSET(w->afd, &readfds)) {
+					answer(w);
+					ndes--;
+				}
+			}
+		}
 	}
-    }
 }
 
 /* Not to be invoked by strangers -- user hostile.
@@ -578,40 +530,34 @@ master(void)
  * Optional arg: -d, signifying "debug".
  */
 
-static void
-unexpected_arg_exit(const char *arg)
+static void unexpected_arg_exit(const char *arg)
 {
-    fprintf(stderr, "%s INTERNAL TO PLUTO: DO NOT EXECUTE\n", name);
+	fprintf(stderr, "%s INTERNAL TO PLUTO: DO NOT EXECUTE\n", name);
 
-    fprintf(stderr, "unexpected argument \"%s\"\n", arg);
-    fprintf(stderr, "%s\n", ipsec_version_string());
+	fprintf(stderr, "unexpected argument \"%s\"\n", arg);
+	fprintf(stderr, "%s\n", ipsec_version_string());
 
-    syslog(LOG_ERR, "%s: unexpected argument \"%s\"", name, arg);
-    exit(HES_INVOCATION);
+	syslog(LOG_ERR, "%s: unexpected argument \"%s\"", name, arg);
+	exit(HES_INVOCATION);
 }
 
-int
-main(int argc UNUSED, char **argv)
+int main(int argc UNUSED, char **argv)
 {
-    int i = 1;
+	int i = 1;
 
-    name = argv[0];
+	name = argv[0];
 
-    while (i < argc)
-    {
-	if (streq(argv[i], "-d"))
-	{
-	    i++;
-	    debug = TRUE;
+	while (i < argc) {
+		if (streq(argv[i], "-d")) {
+			i++;
+			debug = TRUE;
+		} else {
+			unexpected_arg_exit(argv[i]);
+			/*NOTREACHED*/
+		}
 	}
-	else
-	{
-	    unexpected_arg_exit(argv[i]);
-	    /*NOTREACHED*/
-	}
-    }
 
-    return master();
+	return master();
 }
 
 #endif /* !USE_UNBOUND */

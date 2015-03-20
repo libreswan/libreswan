@@ -5,21 +5,21 @@
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,14 +49,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
 
-/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
+/* WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
  *
  * Always modify des.org since des.h is automatically generated from
  * it during SSLeay configuration.
@@ -70,7 +70,6 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
 
 /* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
  * %20 speed up (longs are 8 bytes, int's are 4). */
@@ -87,28 +86,29 @@ extern "C" {
 #endif
 
 typedef unsigned char des_cblock[8];
-typedef struct { des_cblock ks; } des_key_schedule[16];
+typedef struct { des_cblock ks;
+} des_key_schedule[16];
 
-#define DES_KEY_SZ 	(sizeof(des_cblock))
+#define DES_KEY_SZ      (sizeof(des_cblock))
 #define DES_SCHEDULE_SZ (sizeof(des_key_schedule))
 
-#define DES_ENCRYPT	1
-#define DES_DECRYPT	0
+#define DES_ENCRYPT     1
+#define DES_DECRYPT     0
 
-#define DES_CBC_MODE	0
-#define DES_PCBC_MODE	1
+#define DES_CBC_MODE    0
+#define DES_PCBC_MODE   1
 
-#define des_ecb2_encrypt(i,o,k1,k2,e) \
-	des_ecb3_encrypt((i),(o),(k1),(k2),(k1),(e))
+#define des_ecb2_encrypt(i, o, k1, k2, e) \
+	des_ecb3_encrypt((i), (o), (k1), (k2), (k1), (e))
 
-#define des_ede2_cbc_encrypt(i,o,l,k1,k2,iv,e) \
-	des_ede3_cbc_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(e))
+#define des_ede2_cbc_encrypt(i, o, l, k1, k2, iv, e) \
+	des_ede3_cbc_encrypt((i), (o), (l), (k1), (k2), (k1), (iv), (e))
 
-#define des_ede2_cfb64_encrypt(i,o,l,k1,k2,iv,n,e) \
-	des_ede3_cfb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n),(e))
+#define des_ede2_cfb64_encrypt(i, o, l, k1, k2, iv, n, e) \
+	des_ede3_cfb64_encrypt((i), (o), (l), (k1), (k2), (k1), (iv), (n), (e))
 
-#define des_ede2_ofb64_encrypt(i,o,l,k1,k2,iv,n) \
-	des_ede3_ofb64_encrypt((i),(o),(l),(k1),(k2),(k1),(iv),(n))
+#define des_ede2_ofb64_encrypt(i, o, l, k1, k2, iv, n) \
+	des_ede3_ofb64_encrypt((i), (o), (l), (k1), (k2), (k1), (iv), (n))
 
 #define C_Block des_cblock
 #define Key_schedule des_key_schedule
@@ -135,8 +135,8 @@ typedef des_key_schedule bit_64;
 #define des_fixup_key_parity des_set_odd_parity
 #define des_check_key_parity check_parity
 
-extern int des_check_key;	/* defaults to false */
-extern int des_rw_mode;		/* defaults to DES_PCBC_MODE */
+extern int des_check_key;       /* defaults to false */
+extern int des_rw_mode;         /* defaults to DES_PCBC_MODE */
 
 /* The next line is used to disable full ANSI prototypes, if your
  * compiler has problems with the prototypes, make sure this line always
@@ -146,69 +146,77 @@ extern int des_rw_mode;		/* defaults to DES_PCBC_MODE */
 #endif
 #ifndef NOPROTO
 char *des_options(void);
-void des_ecb3_encrypt(des_cblock *input,des_cblock *output,
-	des_key_schedule ks1,des_key_schedule ks2,
-	des_key_schedule ks3, int enc);
-DES_LONG des_cbc_cksum(des_cblock *input,des_cblock *output,
-	long length,des_key_schedule schedule,des_cblock *ivec);
-void des_cbc_encrypt(des_cblock *input,des_cblock *output,long length,
-	des_key_schedule schedule,des_cblock *ivec,int enc);
-void des_ncbc_encrypt(des_cblock *input,des_cblock *output,long length,
-	des_key_schedule schedule,des_cblock *ivec,int enc);
-void des_xcbc_encrypt(des_cblock *input,des_cblock *output,long length,
-	des_key_schedule schedule,des_cblock *ivec,
-	des_cblock *inw,des_cblock *outw,int enc);
-void des_cfb_encrypt(unsigned char *in,unsigned char *out,int numbits,
-	long length,des_key_schedule schedule,des_cblock *ivec,int enc);
-void des_ecb_encrypt(des_cblock *input,des_cblock *output,
-	des_key_schedule ks,int enc);
-void des_encrypt(DES_LONG *data,des_key_schedule ks, int enc);
-void des_encrypt2(DES_LONG *data,des_key_schedule ks, int enc);
+void des_ecb3_encrypt(des_cblock *input, des_cblock *output,
+		      des_key_schedule ks1, des_key_schedule ks2,
+		      des_key_schedule ks3, int enc);
+DES_LONG des_cbc_cksum(des_cblock *input, des_cblock *output,
+		       long length, des_key_schedule schedule,
+		       des_cblock *ivec);
+void des_cbc_encrypt(des_cblock *input, des_cblock *output, long length,
+		     des_key_schedule schedule, des_cblock *ivec, int enc);
+void des_ncbc_encrypt(des_cblock *input, des_cblock *output, long length,
+		      des_key_schedule schedule, des_cblock *ivec, int enc);
+void des_xcbc_encrypt(des_cblock *input, des_cblock *output, long length,
+		      des_key_schedule schedule, des_cblock *ivec,
+		      des_cblock *inw, des_cblock *outw, int enc);
+void des_cfb_encrypt(unsigned char *in, unsigned char *out, int numbits,
+		     long length, des_key_schedule schedule, des_cblock *ivec,
+		     int enc);
+void des_ecb_encrypt(des_cblock *input, des_cblock *output,
+		     des_key_schedule ks, int enc);
+void des_encrypt(DES_LONG *data, des_key_schedule ks, int enc);
+void des_encrypt2(DES_LONG *data, des_key_schedule ks, int enc);
 void des_encrypt3(DES_LONG *data, des_key_schedule ks1,
-	des_key_schedule ks2, des_key_schedule ks3);
+		  des_key_schedule ks2, des_key_schedule ks3);
 void des_decrypt3(DES_LONG *data, des_key_schedule ks1,
-	des_key_schedule ks2, des_key_schedule ks3);
-void des_ede3_cbc_encrypt(des_cblock *input, des_cblock *output, 
-	long length, des_key_schedule ks1, des_key_schedule ks2, 
-	des_key_schedule ks3, des_cblock *ivec, int enc);
+		  des_key_schedule ks2, des_key_schedule ks3);
+void des_ede3_cbc_encrypt(des_cblock *input, des_cblock *output,
+			  long length, des_key_schedule ks1,
+			  des_key_schedule ks2,
+			  des_key_schedule ks3, des_cblock *ivec, int enc);
 void des_ede3_cfb64_encrypt(unsigned char *in, unsigned char *out,
-	long length, des_key_schedule ks1, des_key_schedule ks2,
-	des_key_schedule ks3, des_cblock *ivec, int *num, int enc);
+			    long length, des_key_schedule ks1,
+			    des_key_schedule ks2,
+			    des_key_schedule ks3, des_cblock *ivec, int *num,
+			    int enc);
 void des_ede3_ofb64_encrypt(unsigned char *in, unsigned char *out,
-	long length, des_key_schedule ks1, des_key_schedule ks2,
-	des_key_schedule ks3, des_cblock *ivec, int *num);
+			    long length, des_key_schedule ks1,
+			    des_key_schedule ks2,
+			    des_key_schedule ks3, des_cblock *ivec, int *num);
 
 void des_xwhite_in2out(des_cblock (*des_key), des_cblock (*in_white),
-	des_cblock (*out_white));
+		       des_cblock (*out_white));
 
-int des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
-	des_cblock *iv);
-int des_enc_write(int fd,char *buf,int len,des_key_schedule sched,
-	des_cblock *iv);
-char *des_fcrypt(const char *buf,const char *salt, char *ret);
+int des_enc_read(int fd, char *buf, int len, des_key_schedule sched,
+		 des_cblock *iv);
+int des_enc_write(int fd, char *buf, int len, des_key_schedule sched,
+		  des_cblock *iv);
+char *des_fcrypt(const char *buf, const char *salt, char *ret);
 
-void des_ofb_encrypt(unsigned char *in,unsigned char *out,
-	int numbits,long length,des_key_schedule schedule,des_cblock *ivec);
-void des_pcbc_encrypt(des_cblock *input,des_cblock *output,long length,
-	des_key_schedule schedule,des_cblock *ivec,int enc);
-DES_LONG des_quad_cksum(des_cblock *input,des_cblock *output,
-	long length,int out_count,des_cblock *seed);
+void des_ofb_encrypt(unsigned char *in, unsigned char *out,
+		     int numbits, long length, des_key_schedule schedule,
+		     des_cblock *ivec);
+void des_pcbc_encrypt(des_cblock *input, des_cblock *output, long length,
+		      des_key_schedule schedule, des_cblock *ivec, int enc);
+DES_LONG des_quad_cksum(des_cblock *input, des_cblock *output,
+			long length, int out_count, des_cblock *seed);
 void des_random_seed(des_cblock key);
 void des_random_key(des_cblock ret);
-int des_read_password(des_cblock *key,char *prompt,int verify);
-int des_read_2passwords(des_cblock *key1,des_cblock *key2,
-	char *prompt,int verify);
-int des_read_pw_string(char *buf,int length,char *prompt,int verify);
+int des_read_password(des_cblock *key, char *prompt, int verify);
+int des_read_2passwords(des_cblock *key1, des_cblock *key2,
+			char *prompt, int verify);
+int des_read_pw_string(char *buf, int length, char *prompt, int verify);
 void des_set_odd_parity(des_cblock *key);
 int des_is_weak_key(des_cblock *key);
-int des_set_key(des_cblock *key,des_key_schedule schedule);
-int des_key_sched(des_cblock *key,des_key_schedule schedule);
-void des_string_to_key(char *str,des_cblock *key);
-void des_string_to_2keys(char *str,des_cblock *key1,des_cblock *key2);
+int des_set_key(des_cblock *key, des_key_schedule schedule);
+int des_key_sched(des_cblock *key, des_key_schedule schedule);
+void des_string_to_key(char *str, des_cblock *key);
+void des_string_to_2keys(char *str, des_cblock *key1, des_cblock *key2);
 void des_cfb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	des_key_schedule schedule, des_cblock *ivec, int *num, int enc);
+		       des_key_schedule schedule, des_cblock *ivec, int *num,
+		       int enc);
 void des_ofb64_encrypt(unsigned char *in, unsigned char *out, long length,
-	des_key_schedule schedule, des_cblock *ivec, int *num);
+		       des_key_schedule schedule, des_cblock *ivec, int *num);
 int des_read_pw(char *buf, char *buff, int size, char *prompt, int verify);
 
 /* Extra functions from Mark Murray <mark@grondar.za> */

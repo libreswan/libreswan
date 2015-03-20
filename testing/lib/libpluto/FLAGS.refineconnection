@@ -13,7 +13,3 @@ EXTRALIBS="${EXTRALIBS} ${PLUTOLIB} ${CRYPTOLIBS} ${WHACKLIB}"
 EXTRALIBS="${EXTRALIBS} ${LSWLOGLIB} ${LIBRESWANLIB} ${LSWLOGLIB} -lgmp -lefence"
 
 UNITTESTARGS="east.record idlist.txt"
-
-# Local Variables:
-# compile-command: "make TEST=refineconnection one"
-# End:

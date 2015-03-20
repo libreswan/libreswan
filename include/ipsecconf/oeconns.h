@@ -18,5 +18,4 @@
 extern void add_any_oeconns(struct starter_config *cfg,
 			    struct config_parsed *cfgp);
 
-
 #endif /* _OECONNS_H_ */

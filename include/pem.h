@@ -21,5 +21,5 @@
 
 extern err_t pemtobin(chunk_t *blob, bool *pgp);
 
-extern void do_3des_nss(u_int8_t *buf, size_t buf_len, u_int8_t *key
-    , size_t key_size, u_int8_t *iv, bool enc);
+extern void do_3des_nss(u_int8_t *buf, size_t buf_len, u_int8_t *key,
+			size_t key_size, u_int8_t *iv, bool enc);

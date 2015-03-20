@@ -22,69 +22,69 @@ struct state;
 struct connection;
 struct msg_digest;
 
-extern stf_status tpm_call_out(const char *name
-			       , struct state *st
-			       , struct connection *conn
-			       , struct msg_digest *md);
+extern stf_status tpm_call_out(const char *name,
+			       struct state *st,
+			       struct connection *conn,
+			       struct msg_digest *md);
 
 struct packet_byte_stream;
-extern stf_status tpm_call_out_crypt(const char *name
-				     , struct state *st
-				     , struct packet_byte_stream *pbs
-				     , int offset, int length);
+extern stf_status tpm_call_out_crypt(const char *name,
+				     struct state *st,
+				     struct packet_byte_stream *pbs,
+				     int offset, int length);
 
 extern void *tpm_relocateHash(struct packet_byte_stream *pbs);
-extern void tpm_findID(struct packet_byte_stream *pbs, struct packet_byte_stream *idpbs);
-
+extern void tpm_findID(struct packet_byte_stream *pbs,
+		       struct packet_byte_stream *idpbs);
 
 struct isakmp_hdr;
-extern stf_status tpm_call_out_notify(const char *name
-				      , struct state *st
-				      , struct packet_byte_stream *pbs
-				      , struct isakmp_hdr *hdr);
-				      
+extern stf_status tpm_call_out_notify(const char *name,
+				      struct state *st,
+				      struct packet_byte_stream *pbs,
+				      struct isakmp_hdr *hdr);
+
 extern int tpm_enabled;
 
 #ifdef TPM
-#define TCLCALLOUT(name,st,conn,md) do if(tpm_enabled) { \
-    stf_status ret; \
-    ret = tpm_call_out(name,st,conn,md); \
-    switch(ret) { \
-    case STF_IGNORE: \
-      goto tpm_ignore;\
-    case STF_STOLEN:  \
-      goto tpm_stolen;\
-    default: \
-      /* nothing */\
-      break;\
-    } \
+#define TCLCALLOUT(name, st, conn, md) do \
+		if (tpm_enabled) { \
+			stf_status ret; \
+			ret = tpm_call_out(name, st, conn, md); \
+			switch (ret) { \
+			case STF_IGNORE: \
+				goto tpm_ignore; \
+			case STF_STOLEN:  \
+				goto tpm_stolen; \
+			default: \
+				/* nothing */ \
+				break; \
+			} \
     \
-  } while(0)
+		}while (0)
 
-#define TCLCALLOUT_notify(name,st,pbs,hdr) do if(tpm_enabled) { \
-    stf_status ret; \
-    ret = tpm_call_out_notify(name,st,pbs,hdr);	\
-    switch(ret) { \
-    case STF_IGNORE: \
-      goto tpm_ignore;\
-    case STF_STOLEN:  \
-      goto tpm_stolen;\
-    default: \
-      /* nothing */\
-      break;\
-    } \
+#define TCLCALLOUT_notify(name, st, pbs, hdr) do \
+		if (tpm_enabled) { \
+			stf_status ret; \
+			ret = tpm_call_out_notify(name, st, pbs, hdr); \
+			switch (ret) { \
+			case STF_IGNORE: \
+				goto tpm_ignore; \
+			case STF_STOLEN:  \
+				goto tpm_stolen; \
+			default: \
+				/* nothing */ \
+				break; \
+			} \
     \
-  } while(0)
-#define TCLCALLOUT_crypt(name,st,pbs,off,len) do if(tpm_enabled) { tpm_call_out_crypt(name,st,pbs,off,len); } while(0)
+		}while (0)
+#define TCLCALLOUT_crypt(name, st, pbs, off, len) do \
+		if (tpm_enabled) { tpm_call_out_crypt(name, st, pbs, off, len); \
+		}while (0)
 #else
-#define TCLCALLOUT(name,st,conn,md) /* nothing */
-#define TCLCALLOUT_crypt(name,st,pbs,off,len) /* nothing */
-#define TCLCALLOUT_notify(name,st,pbs,hdr) /* nothing */
+#define TCLCALLOUT(name, st, conn, md)                  /* nothing */
+#define TCLCALLOUT_crypt(name, st, pbs, off, len)       /* nothing */
+#define TCLCALLOUT_notify(name, st, pbs, hdr)           /* nothing */
 #endif
 
 extern void tpm_eval(const char *string);
-
-
-
-
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2004-2008  Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2004-2009  Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
@@ -59,25 +59,25 @@ typedef u_int32_t UINT4;
  */
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
-rights reserved.
+   rights reserved.
 
-License to copy and use this software is granted provided that it
-is identified as the "RSA Data Security, Inc. MD5 Message-Digest
-Algorithm" in all material mentioning or referencing this software
-or this function.
+   License to copy and use this software is granted provided that it
+   is identified as the "RSA Data Security, Inc. MD5 Message-Digest
+   Algorithm" in all material mentioning or referencing this software
+   or this function.
 
-License is also granted to make and use derivative works provided
-that such works are identified as "derived from the RSA Data
-Security, Inc. MD5 Message-Digest Algorithm" in all material
-mentioning or referencing the derived work.
+   License is also granted to make and use derivative works provided
+   that such works are identified as "derived from the RSA Data
+   Security, Inc. MD5 Message-Digest Algorithm" in all material
+   mentioning or referencing the derived work.
 
-RSA Data Security, Inc. makes no representations concerning either
-the merchantability of this software or the suitability of this
-software for any particular purpose. It is provided "as is"
-without express or implied warranty of any kind.
+   RSA Data Security, Inc. makes no representations concerning either
+   the merchantability of this software or the suitability of this
+   software for any particular purpose. It is provided "as is"
+   without express or implied warranty of any kind.
 
-These notices must be retained in any copies of any part of this
-documentation and/or software.
+   These notices must be retained in any copies of any part of this
+   documentation and/or software.
  */
 
 #include <nss.h>
@@ -85,13 +85,12 @@ documentation and/or software.
 
 /* MD5 context. */
 typedef struct {
-  PK11Context* ctx_nss;
+	PK11Context* ctx_nss;
 } MD5_CTX;
 
-void osMD5Init PROTO_LIST ((MD5_CTX *));
-void osMD5Update PROTO_LIST
-  ((MD5_CTX *, const unsigned char *, UINT4));
-void osMD5Final PROTO_LIST ((unsigned char [16], MD5_CTX *));
+void osMD5Init PROTO_LIST((MD5_CTX *));
+void osMD5Update PROTO_LIST((MD5_CTX *, const unsigned char *, UINT4));
+void osMD5Final PROTO_LIST((unsigned char [16], MD5_CTX *));
 
 #define _MD5_H_
 #endif /* _MD5_H_ */

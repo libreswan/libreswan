@@ -3,6 +3,6 @@
 
 int panic(void)
 {
-  printf("Kernel PANIC\n");
-  assert(0);
+	printf("Kernel PANIC\n");
+	assert(0);
 }

@@ -1,12 +1,12 @@
 /*
  * convert unsigned long to text
  * Copyright (C) 2000  Henry Spencer.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
@@ -15,21 +15,21 @@
 #include "libreswan.h"
 
 /*
- - ultot - convert unsigned long to text
+   - ultot - convert unsigned long to text
  */
-size_t				/* length required for full conversion */
+size_t                          /* length required for full conversion */
 ultot(n, base, dst, dstlen)
 unsigned long n;
 int base;
-char *dst;			/* need not be valid if dstlen is 0 */
+char *dst;                      /* need not be valid if dstlen is 0 */
 size_t dstlen;
 {
-	char buf[3*sizeof(unsigned long) + 1];
+	char buf[3 * sizeof(unsigned long) + 1];
 	char *bufend = buf + sizeof(buf);
 	size_t len;
 	char *p;
 	static char hex[] = "0123456789abcdef";
-#	define	HEX32	(32/4)
+#       define  HEX32   (32 / 4)
 
 	p = bufend;
 	*--p = '\0';
@@ -37,7 +37,7 @@ size_t dstlen;
 	case 10:
 	case 'd':
 		do {
-			*--p = n%10 + '0';
+			*--p = n % 10 + '0';
 			n /= 10;
 		} while (n != 0);
 		break;
@@ -45,7 +45,7 @@ size_t dstlen;
 	case 17:
 	case 'x':
 		do {
-			*--p = hex[n&0xf];
+			*--p = hex[n & 0xf];
 			n >>= 4;
 		} while (n != 0);
 		if (base == 17)
@@ -59,7 +59,7 @@ size_t dstlen;
 	case 8:
 	case 'o':
 		do {
-			*--p = (n&07) + '0';
+			*--p = (n & 07) + '0';
 			n >>= 3;
 		} while (n != 0);
 		if (base == 'o')
@@ -67,6 +67,7 @@ size_t dstlen;
 		break;
 	default:
 		return 0;
+
 		break;
 	}
 

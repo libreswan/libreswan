@@ -22,11 +22,11 @@
 #endif
 
 typedef struct {
-    PK11Context     *ctx_nss;
+	PK11Context     *ctx_nss;
 } sha256_context;
 
 typedef struct {
-    PK11Context     *ctx_nss;
+	PK11Context     *ctx_nss;
 } sha512_context;
 
 /* no sha384_context, use sha512_context */

@@ -6,12 +6,12 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -39,7 +39,7 @@
  * Define constants
  */
 
-#define	COOKIE_SIZE	2	/* Size in 32-bit longwords */
+#define COOKIE_SIZE     2       /* Size in 32-bit longwords */
 
 #define OAKLEY_ENCRYPTION_ALGORITHM    1
 #define OAKLEY_HASH_ALGORITHM          2
@@ -58,7 +58,7 @@
 #define OAKLEY_FIELD_SIZE             15
 #define OAKLEY_GROUP_ORDER            16        /* B/V */
 #define OAKLEY_BLOCK_SIZE             17
-#define OAKLEY_GSS_ID	              16384	/* From draft-ietf-ipsec-isakmp-gss-auth-07.txt */
+#define OAKLEY_GSS_ID                 16384     /* From draft-ietf-ipsec-isakmp-gss-auth-07.txt */
 
 #define SA_LIFE_TYPE_SECONDS   1
 #define SA_LIFE_TYPE_KBYTES    2
@@ -66,27 +66,27 @@
 #define ISAKMP_DOI_ISAKMP          0
 #define ISAKMP_DOI_IPSEC           1
 
-#define ISAKMP_NEXT_NONE       0	/* No other payload following */
-#define ISAKMP_NEXT_SA         1	/* Security Association */
-#define ISAKMP_NEXT_P          2	/* Proposal */
-#define ISAKMP_NEXT_T          3	/* Transform */
-#define ISAKMP_NEXT_KE         4	/* Key Exchange */
-#define ISAKMP_NEXT_ID         5	/* Identification */
-#define ISAKMP_NEXT_CERT       6	/* Certificate */
-#define ISAKMP_NEXT_CR         7	/* Certificate Request */
-#define ISAKMP_NEXT_HASH       8	/* Hash */
-#define ISAKMP_NEXT_SIG        9	/* Signature */
-#define ISAKMP_NEXT_NONCE      10	/* Nonce */
-#define ISAKMP_NEXT_N          11	/* Notification */
-#define ISAKMP_NEXT_D          12	/* Delete */
-#define ISAKMP_NEXT_VID        13	/* Vendor ID */
+#define ISAKMP_NEXT_NONE       0        /* No other payload following */
+#define ISAKMP_NEXT_SA         1        /* Security Association */
+#define ISAKMP_NEXT_P          2        /* Proposal */
+#define ISAKMP_NEXT_T          3        /* Transform */
+#define ISAKMP_NEXT_KE         4        /* Key Exchange */
+#define ISAKMP_NEXT_ID         5        /* Identification */
+#define ISAKMP_NEXT_CERT       6        /* Certificate */
+#define ISAKMP_NEXT_CR         7        /* Certificate Request */
+#define ISAKMP_NEXT_HASH       8        /* Hash */
+#define ISAKMP_NEXT_SIG        9        /* Signature */
+#define ISAKMP_NEXT_NONCE      10       /* Nonce */
+#define ISAKMP_NEXT_N          11       /* Notification */
+#define ISAKMP_NEXT_D          12       /* Delete */
+#define ISAKMP_NEXT_VID        13       /* Vendor ID */
 
 #define ISAKMP_XCHG_NONE       0
 #define ISAKMP_XCHG_BASE       1
-#define ISAKMP_XCHG_IDPROT     2	/* ID Protection */
-#define ISAKMP_XCHG_AO         3	/* Authentication Only */
-#define ISAKMP_XCHG_AGGR       4	/* Aggressive */
-#define ISAKMP_XCHG_INFO       5	/* Informational */
+#define ISAKMP_XCHG_IDPROT     2        /* ID Protection */
+#define ISAKMP_XCHG_AO         3        /* Authentication Only */
+#define ISAKMP_XCHG_AGGR       4        /* Aggressive */
+#define ISAKMP_XCHG_INFO       5        /* Informational */
 
 #define SIT_IDENTITY_ONLY        0x01
 #define SIT_SECRECY              0x02
@@ -136,9 +136,9 @@
  */
 
 typedef const struct struct_desc {
-    const char *name;
-    const struct field_desc *fields;
-    size_t size;
+	const char *name;
+	const struct field_desc *fields;
+	size_t size;
 } struct_desc;
 
 /* Note: if an ft_af_enum field has the ISAKMP_ATTR_AF_TV bit set,
@@ -148,23 +148,23 @@ typedef const struct struct_desc {
  */
 
 enum field_type {
-    ft_mbz,     /* must be zero */
-    ft_nat,     /* natural number (may be 0) */
-    ft_len,     /* length of this struct and any following crud */
-    ft_lv,      /* length/value field of attribute */
-    ft_enum,    /* value from an enumeration */
-    ft_loose_enum,      /* value from an enumeration with only some names known */
-    ft_af_enum, /* Attribute Format + value from an enumeration */
-    ft_set,     /* bits representing set */
-    ft_raw,     /* bytes to be left in network-order */
-    ft_end      /* end of field list */
+	ft_mbz,         /* must be zero */
+	ft_nat,         /* natural number (may be 0) */
+	ft_len,         /* length of this struct and any following crud */
+	ft_lv,          /* length/value field of attribute */
+	ft_enum,        /* value from an enumeration */
+	ft_loose_enum,  /* value from an enumeration with only some names known */
+	ft_af_enum,     /* Attribute Format + value from an enumeration */
+	ft_set,         /* bits representing set */
+	ft_raw,         /* bytes to be left in network-order */
+	ft_end          /* end of field list */
 };
 
 typedef const struct field_desc {
-    enum field_type field_type;
-    int size;   /* size, in bytes, of field */
-    const char *name;
-    const void *desc;   /* enum_names for enum or char *[] for bits */
+	enum field_type field_type;
+	int size;               /* size, in bytes, of field */
+	const char *name;
+	const void *desc;       /* enum_names for enum or char *[] for bits */
 } field_desc;
 
 /* ISAKMP Header: for all messages
@@ -186,16 +186,15 @@ typedef const struct field_desc {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 
-struct isakmp_hdr
-{
-    uint32_t   isa_icookie[COOKIE_SIZE];
-    uint32_t   isa_rcookie[COOKIE_SIZE];
-    uint8_t    isa_np;                 /* Next payload */
-    uint8_t	isa_version;	/* high-order 4 bits: Major; low order 4: Minor */
-    uint8_t    isa_xchg;		/* Exchange type */
-    uint8_t    isa_flags;
-    uint32_t   isa_msgid;		/* Message ID (RAW) */
-    uint32_t   isa_length;		/* Length of message */
+struct isakmp_hdr {
+	uint32_t isa_icookie[COOKIE_SIZE];
+	uint32_t isa_rcookie[COOKIE_SIZE];
+	uint8_t isa_np;         /* Next payload */
+	uint8_t isa_version;    /* high-order 4 bits: Major; low order 4: Minor */
+	uint8_t isa_xchg;       /* Exchange type */
+	uint8_t isa_flags;
+	uint32_t isa_msgid;     /* Message ID (RAW) */
+	uint32_t isa_length;    /* Length of message */
 };
 
 /* Generic portion of all ISAKMP payloads.
@@ -208,11 +207,10 @@ struct isakmp_hdr
  * ! Next Payload  !   RESERVED    !         Payload Length        !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-struct isakmp_generic
-{
-    uint8_t    isag_np;
-    uint8_t    isag_reserved;
-    uint16_t   isag_length;
+struct isakmp_generic {
+	uint8_t isag_np;
+	uint8_t isag_reserved;
+	uint16_t isag_length;
 };
 
 /* ISAKMP Data Attribute (generic representation within payloads)
@@ -229,21 +227,19 @@ struct isakmp_generic
  * .                   AF=1  Not Transmitted                       .
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-struct isakmp_attribute
-{
-    uint16_t isaat_af_type;   /* high order bit: AF; lower 15: rtype */
-    uint16_t isaat_lv;			/* Length or value */
+struct isakmp_attribute {
+	uint16_t isaat_af_type; /* high order bit: AF; lower 15: rtype */
+	uint16_t isaat_lv;      /* Length or value */
 };
 /*
  *	This is a bodge for SA Attributes with 32-bit length.
  *	It is defined like this because I can't work out how to define
  *	the general case structure properly -rsh.
  */
-struct isakmp_attribute_l32
-{
-    uint16_t isaat_af_type;   /* high order bit: AF; lower 15: rtype */
-    uint16_t isaat_l;			/* Length - MUST BE 4 BYTES */
-    uint32_t isaat_v;		/* 32-bit value */
+struct isakmp_attribute_l32 {
+	uint16_t isaat_af_type; /* high order bit: AF; lower 15: rtype */
+	uint16_t isaat_l;       /* Length - MUST BE 4 BYTES */
+	uint32_t isaat_v;       /* 32-bit value */
 };
 
 /* ISAKMP Security Association Payload
@@ -262,13 +258,12 @@ struct isakmp_attribute_l32
  * !                                                               !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-struct isakmp_sa
-{
-    uint8_t  isasa_np;			/* Next payload */
-    uint8_t  isasa_reserved;
-    uint16_t isasa_length;		/* Payload length */
-    uint32_t isasa_doi;		/* DOI */
-    uint32_t isasa_situation;		/* Situation - 32 bits for IPsec DOI */
+struct isakmp_sa {
+	uint8_t isasa_np;               /* Next payload */
+	uint8_t isasa_reserved;
+	uint16_t isasa_length;          /* Payload length */
+	uint32_t isasa_doi;             /* DOI */
+	uint32_t isasa_situation;       /* Situation - 32 bits for IPsec DOI */
 };
 
 /* ISAKMP Proposal Payload
@@ -285,15 +280,14 @@ struct isakmp_sa
  * !                        SPI (variable)                         !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-struct isakmp_proposal
-{
-    uint8_t    isap_np;
-    uint8_t    isap_reserved;
-    uint16_t   isap_length;
-    uint8_t    isap_proposal;
-    uint8_t    isap_protoid;
-    uint8_t    isap_spisize;
-    uint8_t    isap_notrans;		/* Number of transforms */
+struct isakmp_proposal {
+	uint8_t isap_np;
+	uint8_t isap_reserved;
+	uint16_t isap_length;
+	uint8_t isap_proposal;
+	uint8_t isap_protoid;
+	uint8_t isap_spisize;
+	uint8_t isap_notrans;           /* Number of transforms */
 };
 
 /* ISAKMP Transform Payload
@@ -312,28 +306,25 @@ struct isakmp_proposal
  * !                                                               !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-struct isakmp_transform
-{
-    uint8_t    isat_np;
-    uint8_t    isat_reserved;
-    uint16_t   isat_length;
-    uint8_t    isat_transnum;		/* Number of the transform */
-    uint8_t    isat_transid;
-    uint16_t   isat_reserved2;
+struct isakmp_transform {
+	uint8_t isat_np;
+	uint8_t isat_reserved;
+	uint16_t isat_length;
+	uint8_t isat_transnum;          /* Number of the transform */
+	uint8_t isat_transid;
+	uint16_t isat_reserved2;
 };
 
-struct isakmp_kx
-{
-    uint8_t    isakx_np;
-    uint8_t    isakx_reserved;
-    uint16_t   isakx_length;
+struct isakmp_kx {
+	uint8_t isakx_np;
+	uint8_t isakx_reserved;
+	uint16_t isakx_length;
 };
 
-struct isakmp_nonce
-{
-    uint8_t    isanonce_np;
-    uint8_t    isanonce_reserved;
-    uint16_t   isanonce_length;
+struct isakmp_nonce {
+	uint8_t isanonce_np;
+	uint8_t isanonce_reserved;
+	uint16_t isanonce_length;
 };
 
 /* ISAKMP Identification Payload
@@ -353,14 +344,13 @@ struct isakmp_nonce
  * !                                                               !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-struct isakmp_id
-{
-    uint8_t    isaid_np;
-    uint8_t    isaid_reserved;
-    uint16_t   isaid_length;
-    uint8_t    isaid_idtype;
-    uint8_t    isaid_doi_specific_a;
-    uint16_t   isaid_doi_specific_b;
+struct isakmp_id {
+	uint8_t isaid_np;
+	uint8_t isaid_reserved;
+	uint16_t isaid_length;
+	uint8_t isaid_idtype;
+	uint8_t isaid_doi_specific_a;
+	uint16_t isaid_doi_specific_b;
 };
 
 /* ISAKMP Notification Payload
@@ -386,15 +376,14 @@ struct isakmp_id
  * !                                                               !
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-struct isakmp_notification
-{
-    uint8_t    isan_np;
-    uint8_t    isan_reserved;
-    uint16_t   isan_length;
-    uint32_t   isan_doi;
-    uint8_t    isan_protoid;
-    uint8_t    isan_spisize;
-    uint16_t   isan_type;
+struct isakmp_notification {
+	uint8_t isan_np;
+	uint8_t isan_reserved;
+	uint16_t isan_length;
+	uint32_t isan_doi;
+	uint8_t isan_protoid;
+	uint8_t isan_spisize;
+	uint16_t isan_type;
 };
 
 extern struct_desc isakmp_notification_desc;
@@ -402,10 +391,9 @@ extern struct_desc isakmp_notification_desc;
 /*
  *	Vendor ID (VID) payload - header only
  */
-struct isakmp_vid
-{
-    uint8_t    isavid_np;
-    uint8_t    isavid_reserved;
-    uint16_t   isavid_length;
+struct isakmp_vid {
+	uint8_t isavid_np;
+	uint8_t isavid_reserved;
+	uint16_t isavid_length;
 };
 

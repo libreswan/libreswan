@@ -15,10 +15,10 @@
 #ifndef _STARTER_KLIPS_H_
 #define _STARTER_KLIPS_H_
 
-void starter_klips_cleanup (void);
-void starter_klips_clear (void);
-int starter_klips_init (void);
-int starter_klips_set_config (struct starter_config *);
+void starter_klips_cleanup(void);
+void starter_klips_clear(void);
+int starter_klips_init(void);
+int starter_klips_set_config(struct starter_config *);
 
 #endif /* _STARTER_KLIPS_H_ */
 

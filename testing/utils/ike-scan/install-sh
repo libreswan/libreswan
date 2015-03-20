@@ -317,9 +317,3 @@ done
   (exit 0); exit
 }
 
-# Local variables:
-# eval: (add-hook 'write-file-hooks 'time-stamp)
-# time-stamp-start: "scriptversion="
-# time-stamp-format: "%:y-%02m-%02d.%02H"
-# time-stamp-end: "$"
-# End:

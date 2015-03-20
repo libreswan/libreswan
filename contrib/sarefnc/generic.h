@@ -20,9 +20,9 @@
    Updated 951104 with many patches from netcat feedback, and properly
    closed a lot of slop in open-ended comments: version 1.4
    960217 + nextstep: version 1.5
-*/
+ */
 
-#ifndef GENERIC_H		/* only run through this once */
+#ifndef GENERIC_H               /* only run through this once */
 #define GENERIC_H
 
 /* =============================== */
@@ -34,7 +34,7 @@
 #define VOID_MALLOC
 
 /* notably from fwtk/firewall.h: posix locking? */
-#define HAVE_FLOCK		/* otherwise it's lockf() */
+#define HAVE_FLOCK              /* otherwise it's lockf() */
 
 /* if you don't have setsid(), you might have setpgrp(). */
 #define HAVE_SETSID
@@ -47,8 +47,8 @@
 /* bmc@telebase and others have suggested these macros if a box *does* have
    rand48.  Will consider for later if we're doing something that really
    requires stronger random numbers, but netcat and such certainly doesn't.
-#define srandom(seed) srand48((long) seed)
-#define random()      lrand48() */
+   #define srandom(seed) srand48((long) seed)
+ #define random()      lrand48() */
 
 /* if your machine doesn't have lstat(), it should have stat() [dos...] */
 #define HAVE_LSTAT
@@ -102,9 +102,9 @@
 #define HAVE_SELECT_H
 
 /* assorted others */
-#define HAVE_PARAM_H		/* in sys/ */
-#define HAVE_SYSMACROS_H	/* in sys/ */
-#define HAVE_TTYENT_H		/* securetty et al */
+#define HAVE_PARAM_H            /* in sys/ */
+#define HAVE_SYSMACROS_H        /* in sys/ */
+#define HAVE_TTYENT_H           /* securetty et al */
 
 /* ==================== */
 
@@ -112,105 +112,105 @@
    worth it.  I just grepped a lot of these out of various code, without
    looking them up yet:
 
-#define HAVE_EINPROGRESS
-#define HAVE_F_SETOWN
-HAVE_FILIO_H ... fionbio, fiosetown, etc... will need for hairier
-  select loops.
-#define HAVE_SETENV ... now *there's* a hairy one; **environ is portable
-#define BIG_ENDIAN/little_endian ... *please* try to avoid this stupidity
+   #define HAVE_EINPROGRESS
+   #define HAVE_F_SETOWN
+   HAVE_FILIO_H ... fionbio, fiosetown, etc... will need for hairier
+   select loops.
+   #define HAVE_SETENV ... now *there's* a hairy one; **environ is portable
+   #define BIG_ENDIAN/little_endian ... *please* try to avoid this stupidity
    and LSBFIRST/MSBFIRST
-#define HAVE_GETUSERSHELL ... you could always pull it out of getpwent()
-#define HAVE_SETE[UG]ID ... lib or syscall, it varies on diff platforms
-#define HAVE_STRCHR ... should actually be handled by string/strings
-#define HAVE_PSTAT
-#define HAVE_ST_BLKSIZE ... a stat() thing?
-#define HAVE_IP_TOS
-#define HAVE_STRFTIME ... screw this, we'll just INCLUDE one for lame
+   #define HAVE_GETUSERSHELL ... you could always pull it out of getpwent()
+   #define HAVE_SETE[UG]ID ... lib or syscall, it varies on diff platforms
+   #define HAVE_STRCHR ... should actually be handled by string/strings
+   #define HAVE_PSTAT
+   #define HAVE_ST_BLKSIZE ... a stat() thing?
+   #define HAVE_IP_TOS
+   #define HAVE_STRFTIME ... screw this, we'll just INCLUDE one for lame
    old boxes that don't have it [sunos 3.x, early 4.x?]
-#define HAVE_VFPRINTF
-#define HAVE_SHADOW_PASSWD  ... in its multitudinous schemes?? ... how
+   #define HAVE_VFPRINTF
+   #define HAVE_SHADOW_PASSWD  ... in its multitudinous schemes?? ... how
    about sumpin' like #define SHADOW_PASSWD_TYPE ... could get grody.
    ... looks like sysv /etc/shadow, getspent() family is common.
-#define SIG*  ... what a swamp, punt for now; should all be in signal.h
-#define HAVE_STRCSPN  ... see larry wall's comment in the fwtk regex code
-#define ULTRIX_AUTH  ... bwahaha.
-#define HAVE_YP  or NIS or whatever you wanna call it this week
-randomness about VARARGS??
---- later stuff to be considered ---
-#define UINT4 ... u-int on alpha/osf, i.e. __alpha/__osf__, ulong elsewhere?
+   #define SIG*  ... what a swamp, punt for now; should all be in signal.h
+   #define HAVE_STRCSPN  ... see larry wall's comment in the fwtk regex code
+   #define ULTRIX_AUTH  ... bwahaha.
+   #define HAVE_YP  or NIS or whatever you wanna call it this week
+   randomness about VARARGS??
+   --- later stuff to be considered ---
+   #define UINT4 ... u-int on alpha/osf, i.e. __alpha/__osf__, ulong elsewhere?
    dont name it that, though, it'll conflict with extant .h files like md5
-randomness about machine/endian.h, machine/inline.h -- bsdi, net/2
-randomness about _PATH_WTMP vs WTMP_FILE and where they even live!!
-#define HAVE_SYS_ERRLIST ... whether it's in stdio.h or not [bsd 4.4]
---- still more stuff
-#define HAVE_SETENV
-#define _PATH_UTMP vs UTMP_FILE, a la deslogind?!
-#define HAVE_DAEMON
-#define HAVE_INETADDR  [vixie bind?]
-lseek: SEEK_SET vs L_SET and associated lossage [epi-notes, old 386Mach]
-bsdi: ioctl_compat.h ?
---- takin' some ifdefs from CNS krb:
-F_GETOWN/F_SETOWN
-CRAY: long = 8 bytes, etc  [class with alpha?]
-CGETENT
-SIGINFO
-SIGTSTP SIGTTOU SIGWINCH
-SPX?
-SYSV_TERMIO -- covered elsewhere, I hope
-TIOCEXT TIOCFLUSH TIOC[GS]WINSIZ 
-NEWINIT: something about init cleaning up dead login processes [telnet?]
-PARENT_DOES_UTMP, too  [telnet]
-VDISCARD
-VEOL/VEOL2/VLNEXT VREPRINT -- termios stuff?, and related...
-STREAMSPTY/STREAMSPTYEM
-AF_INET/AF_UNSPEC, PF_*
-ECHOCTL/ECHOKE
-F_ULOCK [?!]
-setpgrp/getpgrp() ONEARG business..
-HAVE_ALLOCA
-HAVE_GETUTENT
-HAVE_SYS_SELECT_H  [irix!]
-HAVE_DIRENT  [old 386mach has *direct.h*!]
-HAVE_SIGSET
-HAVE_VFORK_H and HAVE_VFORK
-HAVE_VHANGUP
-HAVE_VSPRINTF
-HAVE_IPTOS_*
-HAVE_STRCASECMP, STRNCASECMP
-HAVE_SYS_FCNTL_H
-HAVE_SYS_TIME_H
-HAVE_UTIMES
-NOTTYENT [?]
-HAVE_FCHMOD
-HAVE_GETUSERSHELL
-HAVE_SIGCONTEXT  [stack hair, very machine-specific]
-YYLINENO?
-POSIX_SIGNALS
-POSIX_TERMIOS
-SETPROCTITLE -- breaks some places, like fbsd sendmail
-SIG* -- actual signal names?  some are missing
-SIOCGIFCONF
-SO_BROADCAST
-SHMEM  [krb tickets]
-VARARGS, or HAVE_VARARGS
-CBAUD
-... and B300, B9600, etc etc
-HAVE_BZERO  vs  memset/memcpy
-HAVE_SETVBUF
-HAVE_STRDUP
-HAVE_GETENV
-HAVE_STRSAVE
-HAVE_STBLKSIZE  [stat?]
-HAVE_STREAM_H -- in sys/, ref sendmail 8.7 for IP_SRCROUTE
-FCHMOD
-INITGROUPS -- most machines seem to *have*
-SETREUID
-SNPRINTF
-SETPGRP semantics bsd vs. sys5 style
+   randomness about machine/endian.h, machine/inline.h -- bsdi, net/2
+   randomness about _PATH_WTMP vs WTMP_FILE and where they even live!!
+   #define HAVE_SYS_ERRLIST ... whether it's in stdio.h or not [bsd 4.4]
+   --- still more stuff
+   #define HAVE_SETENV
+   #define _PATH_UTMP vs UTMP_FILE, a la deslogind?!
+   #define HAVE_DAEMON
+   #define HAVE_INETADDR  [vixie bind?]
+   lseek: SEEK_SET vs L_SET and associated lossage [epi-notes, old 386Mach]
+   bsdi: ioctl_compat.h ?
+   --- takin' some ifdefs from CNS krb:
+   F_GETOWN/F_SETOWN
+   CRAY: long = 8 bytes, etc  [class with alpha?]
+   CGETENT
+   SIGINFO
+   SIGTSTP SIGTTOU SIGWINCH
+   SPX?
+   SYSV_TERMIO -- covered elsewhere, I hope
+   TIOCEXT TIOCFLUSH TIOC[GS]WINSIZ
+   NEWINIT: something about init cleaning up dead login processes [telnet?]
+   PARENT_DOES_UTMP, too  [telnet]
+   VDISCARD
+   VEOL/VEOL2/VLNEXT VREPRINT -- termios stuff?, and related...
+   STREAMSPTY/STREAMSPTYEM
+   AF_INET/AF_UNSPEC, PF_*
+   ECHOCTL/ECHOKE
+   F_ULOCK [?!]
+   setpgrp/getpgrp() ONEARG business..
+   HAVE_ALLOCA
+   HAVE_GETUTENT
+   HAVE_SYS_SELECT_H  [irix!]
+   HAVE_DIRENT  [old 386mach has *direct.h*!]
+   HAVE_SIGSET
+   HAVE_VFORK_H and HAVE_VFORK
+   HAVE_VHANGUP
+   HAVE_VSPRINTF
+   HAVE_IPTOS_*
+   HAVE_STRCASECMP, STRNCASECMP
+   HAVE_SYS_FCNTL_H
+   HAVE_SYS_TIME_H
+   HAVE_UTIMES
+   NOTTYENT [?]
+   HAVE_FCHMOD
+   HAVE_GETUSERSHELL
+   HAVE_SIGCONTEXT  [stack hair, very machine-specific]
+   YYLINENO?
+   POSIX_SIGNALS
+   POSIX_TERMIOS
+   SETPROCTITLE -- breaks some places, like fbsd sendmail
+   SIG* -- actual signal names?  some are missing
+   SIOCGIFCONF
+   SO_BROADCAST
+   SHMEM  [krb tickets]
+   VARARGS, or HAVE_VARARGS
+   CBAUD
+   ... and B300, B9600, etc etc
+   HAVE_BZERO  vs  memset/memcpy
+   HAVE_SETVBUF
+   HAVE_STRDUP
+   HAVE_GETENV
+   HAVE_STRSAVE
+   HAVE_STBLKSIZE  [stat?]
+   HAVE_STREAM_H -- in sys/, ref sendmail 8.7 for IP_SRCROUTE
+   FCHMOD
+   INITGROUPS -- most machines seem to *have*
+   SETREUID
+   SNPRINTF
+   SETPGRP semantics bsd vs. sys5 style
 
-There's also the issue about WHERE various .h files live, sys/ or otherwise.
-There's a BIG swamp lurking where network code of any sort lives.
-*/
+   There's also the issue about WHERE various .h files live, sys/ or otherwise.
+   There's a BIG swamp lurking where network code of any sort lives.
+ */
 
 /* ======================== */
 /* System-specific sections */
@@ -230,7 +230,7 @@ There's a BIG swamp lurking where network code of any sort lives.
 #undef UTMPX
 #undef HAVE_SYSINFO
 #undef HAVE_UNISTD_H
-#undef HAVE_DIRENT_H	/* unless you have the k00l little wrapper from L5!! */
+#undef HAVE_DIRENT_H    /* unless you have the k00l little wrapper from L5!! */
 #undef HAVE_STRINGS_H
 #undef HAVE_LASTLOG_H
 #undef HAVE_PATHS_H
@@ -261,7 +261,7 @@ There's a BIG swamp lurking where network code of any sort lives.
 /* has UTMPX */
 #undef HAVE_RANDOM
 #undef HAVE_SETPRIORITY
-#undef HAVE_STRINGS_H	/* this is genuinely the case, go figure */
+#undef HAVE_STRINGS_H   /* this is genuinely the case, go figure */
 #undef HAVE_PATHS_H
 #undef HAVE_SELECT_H
 #undef HAVE_TTYENT_H
@@ -271,7 +271,7 @@ There's a BIG swamp lurking where network code of any sort lives.
 #ifdef AIX
 #undef UTMPX
 #undef HAVE_LASTLOG_H
-#define HAVE_LOGIN_H	/* "special", in the educational sense */
+#define HAVE_LOGIN_H    /* "special", in the educational sense */
 #endif /* aix */
 
 /* linux, which is trying as desperately as the gnu folks can to be
@@ -300,7 +300,7 @@ There's a BIG swamp lurking where network code of any sort lives.
 #undef HAVE_SYSINFO
 #undef HAVE_LASTLOG_H
 #undef HAVE_SYSMACROS_H
-#undef HAVE_SELECT_H	/* actually a lie, but only for kernel */
+#undef HAVE_SELECT_H    /* actually a lie, but only for kernel */
 #endif /* freebsd */
 
 /* Originally from the sidewinder site, of all places, but subsequently
@@ -323,9 +323,9 @@ There's a BIG swamp lurking where network code of any sort lives.
 
 /* Hpux 9.0x, from BBN and various patches sent in */
 #ifdef HPUX
-#undef HAVE_RANDOM	/* but *does* have ?rand48 -- need to consider.. */
+#undef HAVE_RANDOM      /* but *does* have ?rand48 -- need to consider.. */
 #undef HAVE_UTMPX
-#undef HAVE_LASTLOG_H	/* has utmp/wtmp/btmp nonsense, and pututline() */
+#undef HAVE_LASTLOG_H   /* has utmp/wtmp/btmp nonsense, and pututline() */
 #undef HAVE_PATHS_H
 #undef HAVE_SELECT_H
 #undef HAVE_TTYENT_H
@@ -349,7 +349,7 @@ There's a BIG swamp lurking where network code of any sort lives.
 /* A/UX 3.1.x from darieb@sandia.gov */
 #ifdef AUX
 #undef HAVE_RANDOM
-#undef HAVE_SELECT_H	/* xxx: untested */
+#undef HAVE_SELECT_H    /* xxx: untested */
 #endif /* a/ux */
 
 /* NeXTSTEP 3.2 motorola mudge@l0pht.com xxx should also work with

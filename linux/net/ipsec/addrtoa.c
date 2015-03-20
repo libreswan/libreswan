@@ -1,12 +1,12 @@
 /*
  * addresses to ASCII
  * Copyright (C) 1998, 1999  Henry Spencer.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
@@ -15,22 +15,22 @@
  */
 #include "libreswan.h"
 
-#define	NBYTES	4		/* bytes in an address */
-#define	PERBYTE	4		/* three digits plus a dot or NUL */
-#define	BUFLEN	(NBYTES*PERBYTE)
+#define NBYTES  4               /* bytes in an address */
+#define PERBYTE 4               /* three digits plus a dot or NUL */
+#define BUFLEN  (NBYTES * PERBYTE)
 
 #if ADDRTOA_BUF < BUFLEN
-#error	"ADDRTOA_BUF in libreswan.h inconsistent with addrtoa() code"
+#error  "ADDRTOA_BUF in libreswan.h inconsistent with addrtoa() code"
 #endif
 
 /*
- - addrtoa - convert binary address to ASCII dotted decimal
+   - addrtoa - convert binary address to ASCII dotted decimal
  */
-size_t				/* space needed for full conversion */
+size_t                          /* space needed for full conversion */
 addrtoa(addr, format, dst, dstlen)
 struct in_addr addr;
-int format;			/* character */
-char *dst;			/* need not be valid if dstlen is 0 */
+int format;                     /* character */
+char *dst;                      /* need not be valid if dstlen is 0 */
 size_t dstlen;
 {
 	unsigned long a = ntohl(addr.s_addr);
@@ -45,15 +45,16 @@ size_t dstlen;
 		break;
 	default:
 		return 0;
+
 		break;
 	}
 
 	p = buf;
-	for (i = NBYTES-1; i >= 0; i--) {
-		byte = (a >> (i*8)) & 0xff;
+	for (i = NBYTES - 1; i >= 0; i--) {
+		byte = (a >> (i * 8)) & 0xff;
 		p += ultoa(byte, 10, p, PERBYTE);
 		if (i != 0)
-			*(p-1) = '.';
+			*(p - 1) = '.';
 	}
 	n = p - buf;
 

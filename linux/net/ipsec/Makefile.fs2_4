@@ -244,9 +244,3 @@ baz:
 
 tar:
 		tar -cvf /dev/f1 .
-
-# Local Variables:
-# compile-command: "(cd ../../.. && source umlsetup.sh && make -C ${POOLSPACE} module/ipsec.o)"
-# End Variables:
-#
-

@@ -1,12 +1,12 @@
 /*
  * extract parts of an ip_subnet, and related
  * Copyright (C) 2000  Henry Spencer.
- * 
+ *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Library General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/lgpl.txt>.
- * 
+ *
  * This library is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
@@ -17,32 +17,29 @@
 #include "libreswan.h"
 
 /*
- - subnettypeof - get the address type of an ip_subnet
+   - subnettypeof - get the address type of an ip_subnet
  */
-int
-subnettypeof(src)
-const ip_subnet *src;
+int subnettypeof(src)
+const ip_subnet * src;
 {
 	return src->addr.u.v4.sin_family;
 }
 
 /*
- - networkof - get the network address of a subnet
+   - networkof - get the network address of a subnet
  */
-void
-networkof(src, dst)
-const ip_subnet *src;
+void networkof(src, dst)
+const ip_subnet * src;
 ip_address *dst;
 {
 	*dst = src->addr;
 }
 
 /*
- - maskof - get the mask of a subnet, as an address
+   - maskof - get the mask of a subnet, as an address
  */
-void
-maskof(src, dst)
-const ip_subnet *src;
+void maskof(src, dst)
+const ip_subnet * src;
 ip_address *dst;
 {
 	int b;
@@ -50,8 +47,8 @@ ip_address *dst;
 	size_t n = addrlenof(&src->addr);
 	unsigned char *p;
 
-	if ((size_t)src->maskbits > n*8 || n > sizeof(buf))
-		return;		/* "can't happen" */
+	if ((size_t)src->maskbits > n * 8 || n > sizeof(buf))
+		return;         /* "can't happen" */
 
 	p = buf;
 	for (b = src->maskbits; b >= 8; b -= 8)
@@ -65,11 +62,11 @@ ip_address *dst;
 }
 
 /*
- - masktocount - convert a mask, expressed as an address, to a bit count
+   - masktocount - convert a mask, expressed as an address, to a bit count
  */
-int				/* -1 if not valid mask */
+int                             /* -1 if not valid mask */
 masktocount(src)
-const ip_address *src;
+const ip_address * src;
 {
 	int b;
 	unsigned char *bp;
@@ -89,14 +86,14 @@ const ip_address *src;
 		p++;
 		n += 8;
 	}
-	if (p < stop && *p != 0) {	/* boundary in mid-byte */
+	if (p < stop && *p != 0) {      /* boundary in mid-byte */
 		b = *p++;
-		while (b&0x80) {
+		while (b & 0x80) {
 			b <<= 1;
 			n++;
 		}
-		if ((b&0xff) != 0)
-			return -1;	/* bits not contiguous */
+		if ((b & 0xff) != 0)
+			return -1;      /* bits not contiguous */
 	}
 	while (p < stop && *p == 0)
 		p++;

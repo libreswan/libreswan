@@ -1,5 +1,5 @@
 #include "server.h"
-struct iface_dev  ifd1 = {
+struct iface_dev ifd1 = {
 	.id_count = 1,
 	.id_vname = "ipsec0",
 	.id_rname = "eth0"

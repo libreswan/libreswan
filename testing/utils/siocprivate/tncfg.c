@@ -16,10 +16,10 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h> /* system(), strtoul() */
-#include <unistd.h> /* getuid() */
+#include <stdlib.h>     /* system(), strtoul() */
+#include <unistd.h>     /* getuid() */
 #include <linux/types.h>
-#include <sys/ioctl.h> /* ioctl() */
+#include <sys/ioctl.h>  /* ioctl() */
 
 #include <libreswan.h>
 #ifdef NET_21 /* from libreswan.h */
@@ -38,85 +38,95 @@
 #include "socketwrapper.h"
 #include "libreswan/ipsec_tunnel.h"
 
-static void
-usage(char *name)
+static void usage(char *name)
 {
-	fprintf(stdout,"%s <virtual-device>\n",	name);
+	fprintf(stdout, "%s <virtual-device>\n", name);
 	exit(1);
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	struct ifreq ifr;
 
 	memset(&ifr, 0, sizeof(ifr));
 	program_name = argv[0];
 
-	s=safe_socket(AF_INET, SOCK_DGRAM,0);
-	if(s==-1)
-	{
-		fprintf(stderr, "%s: Socket creation failed:%s "
-			, program_name, strerror(errno));
+	s = safe_socket(AF_INET, SOCK_DGRAM, 0);
+	if (s == -1) {
+		fprintf(stderr, "%s: Socket creation failed:%s ",
+			program_name, strerror(errno));
 		exit(1);
 	}
 
 	/* if (ioctl(fd, SIOCDEVPRIVATE, &ifr) >= 0) { */
 
-	if(ioctl(s, shc->cf_cmd, &ifr)==-1)
-	{
-		if(shc->cf_cmd == IPSEC_SET_DEV) {
-			fprintf(stderr, "%s: Socket ioctl failed on attach -- ", program_name);
-			switch(errno)
-			{
+	if (ioctl(s, shc->cf_cmd, &ifr) == -1) {
+		if (shc->cf_cmd == IPSEC_SET_DEV) {
+			fprintf(stderr,
+				"%s: Socket ioctl failed on attach -- ",
+				program_name);
+			switch (errno) {
 			case EINVAL:
-				fprintf(stderr, "Invalid argument, check kernel log messages for specifics.\n");
+				fprintf(stderr,
+					"Invalid argument, check kernel log messages for specifics.\n");
 				break;
 			case ENODEV:
-				fprintf(stderr, "No such device.  Is the virtual device valid?  Is the ipsec module linked into the kernel or loaded as a module?\n");
+				fprintf(stderr,
+					"No such device.  Is the virtual device valid?  Is the ipsec module linked into the kernel or loaded as a module?\n");
 				break;
 			case ENXIO:
-				fprintf(stderr, "No such device.  Is the physical device valid?\n");
+				fprintf(stderr,
+					"No such device.  Is the physical device valid?\n");
 				break;
 			case EBUSY:
-				fprintf(stderr, "Device busy.  Virtual device %s is already attached to a physical device -- Use detach first.\n",
-				       ifr.ifr_name);
+				fprintf(stderr,
+					"Device busy.  Virtual device %s is already attached to a physical device -- Use detach first.\n",
+					ifr.ifr_name);
 				break;
 			default:
-				fprintf(stderr, "Unknown socket error %d.\n", errno);
+				fprintf(stderr, "Unknown socket error %d.\n",
+					errno);
 			}
 			exit(1);
 		}
-		if(shc->cf_cmd == IPSEC_DEL_DEV) {
-			fprintf(stderr, "%s: Socket ioctl failed on detach -- ", program_name);
-			switch(errno)
-			{
+		if (shc->cf_cmd == IPSEC_DEL_DEV) {
+			fprintf(stderr,
+				"%s: Socket ioctl failed on detach -- ",
+				program_name);
+			switch (errno) {
 			case EINVAL:
-				fprintf(stderr, "Invalid argument, check kernel log messages for specifics.\n");
+				fprintf(stderr,
+					"Invalid argument, check kernel log messages for specifics.\n");
 				break;
 			case ENODEV:
-				fprintf(stderr, "No such device.  Is the virtual device valid?  The ipsec module may not be linked into the kernel or loaded as a module.\n");
+				fprintf(stderr,
+					"No such device.  Is the virtual device valid?  The ipsec module may not be linked into the kernel or loaded as a module.\n");
 				break;
 			case ENXIO:
-				fprintf(stderr, "Device requested is not linked to any physical device.\n");
+				fprintf(stderr,
+					"Device requested is not linked to any physical device.\n");
 				break;
 			default:
-				fprintf(stderr, "Unknown socket error %d.\n", errno);
+				fprintf(stderr, "Unknown socket error %d.\n",
+					errno);
 			}
 			exit(1);
 		}
-		if(shc->cf_cmd == IPSEC_CLR_DEV) {
-			fprintf(stderr, "%s: Socket ioctl failed on clear -- ", program_name);
-			switch(errno)
-			{
+		if (shc->cf_cmd == IPSEC_CLR_DEV) {
+			fprintf(stderr, "%s: Socket ioctl failed on clear -- ",
+				program_name);
+			switch (errno) {
 			case EINVAL:
-				fprintf(stderr, "Invalid argument, check kernel log messages for specifics.\n");
+				fprintf(stderr,
+					"Invalid argument, check kernel log messages for specifics.\n");
 				break;
 			case ENODEV:
-				fprintf(stderr, "Failed.  Is the ipsec module linked into the kernel or loaded as a module?.\n");
+				fprintf(stderr,
+					"Failed.  Is the ipsec module linked into the kernel or loaded as a module?.\n");
 				break;
 			default:
-				fprintf(stderr, "Unknown socket error %d.\n", errno);
+				fprintf(stderr, "Unknown socket error %d.\n",
+					errno);
 			}
 			exit(1);
 		}

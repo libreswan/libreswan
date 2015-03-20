@@ -19,5 +19,5 @@
 
 const struct id *resolve_myid(const struct id *id)
 {
-  return id;
+	return id;
 }

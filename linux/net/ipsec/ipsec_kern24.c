@@ -12,7 +12,7 @@
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -36,7 +36,7 @@ static DEFINE_SPINLOCK(ratelimit_lock);
 
 int __printk_ratelimit(int ratelimit_jiffies, int ratelimit_burst)
 {
-	static unsigned long toks = 10*5*HZ;
+	static unsigned long toks = 10 * 5 * HZ;
 	static unsigned long last_msg;
 	static int missed;
 	unsigned long flags;
@@ -52,8 +52,11 @@ int __printk_ratelimit(int ratelimit_jiffies, int ratelimit_burst)
 		missed = 0;
 		toks -= ratelimit_jiffies;
 		spin_unlock_irqrestore(&ratelimit_lock, flags);
-		if (lost)
-			printk(KERN_WARNING "printk: %d messages suppressed.\n", lost);
+		if (lost) {
+			printk(
+				KERN_WARNING "printk: %d messages suppressed.\n",
+				lost);
+		}
 		return 1;
 	}
 	missed++;
@@ -62,7 +65,7 @@ int __printk_ratelimit(int ratelimit_jiffies, int ratelimit_burst)
 }
 
 /* minimum time in jiffies between messages */
-int printk_ratelimit_jiffies = 5*HZ;
+int printk_ratelimit_jiffies = 5 * HZ;
 
 /* number of messages we send before ratelimiting */
 int printk_ratelimit_burst = 10;
@@ -70,5 +73,5 @@ int printk_ratelimit_burst = 10;
 int printk_ratelimit(void)
 {
 	return __printk_ratelimit(printk_ratelimit_jiffies,
-				printk_ratelimit_burst);
+				  printk_ratelimit_burst);
 }
