@@ -47,9 +47,6 @@ override_dh_auto_install:
 	rm -rf $(CURDIR)/debian/libreswan/var/lock
 	rm -rf $(CURDIR)/debian/libreswan/var/run
 
-	# remove the already installed docs
-	rm -rf "$(CURDIR)/debian/libreswan/usr/share/doc"
-
 	# fix some manpage issues
 	for oldname in `find $(CURDIR)/debian/libreswan/usr/share/man -name "ipsec_ipsec*"`; \
 	do \
@@ -60,8 +57,6 @@ override_dh_auto_install:
 		mv "$$oldname" "$$newname"; \
 	    fi; \
 	done
-	# libreswan-dbg depends on libreswan so no need to ship doc twice
-	rm -rf $(CURDIR)/debian/libreswan-dbg/usr/share/doc/libreswan-dbg
 
 	# the logcheck ignore files
 	install -D --mode=0600 $(CURDIR)/debian/logcheck.ignore.paranoid $(CURDIR)/debian/libreswan/etc/logcheck/ignore.d.paranoid/libreswan
@@ -79,12 +74,6 @@ override_dh_auto_install:
 	# create /var/lib/libreswan with permissions similar to ipsec.secrets
 	mkdir -p $(CURDIR)/debian/libreswan/var/lib/libreswan
 	chmod 700 -R $(CURDIR)/debian/libreswan/var/lib/libreswan
-
-	# more lintian cleanups
-	find $(CURDIR)/debian/libreswan -name ".gitignore" | xargs --no-run-if-empty rm -f
-
-	# Empty directory
-	rmdir $(CURDIR)/debian/libreswan/usr/bin
 
 install-libreswan-doc: DH_OPTIONS=-plibreswan-doc
 install-libreswan-doc: build
