@@ -1,23 +1,9 @@
 #!/usr/bin/make -f
-# Sample debian/rules that uses debhelper.
-# GNU copyright 1997 to 1999 by Joey Hess.
 
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
+%:
+	dh $@
 
-export DH_OPTIONS
-
-configure: configure-stamp
-configure-stamp:
-	dh_testdir
-	# Add here commands to configure the package.
-
-	touch configure-stamp
-
-build-arch: build
-build-indep: build
-build: build-stamp
-build-stamp:
+override_dh_auto_build:
 	# create a dummy ipsec.secrets file before building the package so
 	# that no RSA keys are created during the build process
 	# (a package should not include a RSA key, it should produce the key
@@ -40,40 +26,7 @@ build-stamp:
 	# remove the temporary file, it will be created during install
 	rm -f $(CURDIR)/debian/ipsec.secrets
 
-	touch build-stamp
-
-clean: 
-	dh_testdir
-	dh_testroot
-	rm -f build-stamp configure-stamp
-
-	[ ! -f Makefile ] || $(MAKE) clean
-
-	# after a make clean, no binaries _should_ be left, but ....
-	-find $(CURDIR) -name "*.o" | xargs --no-run-if-empty rm
-	-find $(CURDIR)/lib/libcrypto -name "*.a" | xargs --no-run-if-empty rm
-
-	# Really clean (#356716)
-	# This is a hack: should be better implemented
-	rm -f lib/libswan/libswan.a || true
-	rm -f lib/libswan/liblswlog.a || true
-	rm -rf OBJ.* || true
-
-	# just in case something went wrong
-	rm -f $(CURDIR)/debian/ipsec.secrets
-
-	# and make sure that template are up-to-date
-	debconf-updatepo
-
-	dh_clean
-
-install-libreswan: DH_OPTIONS=-a
-install-libreswan: build
-	dh_testdir
-	dh_testroot
-	dh_prep
-	dh_installdirs
-
+override_dh_auto_install:
 	# Add here commands to install the package into debian/tmp.
 	$(MAKE) install INC_USRLOCAL=/usr \
 			FINALBINDIR=/usr/lib/ipsec \
@@ -107,10 +60,6 @@ install-libreswan: build
 		mv "$$oldname" "$$newname"; \
 	    fi; \
 	done
-
-	dh_installdocs -plibreswan -n
-	dh_installchangelogs CHANGES
-
 	# libreswan-dbg depends on libreswan so no need to ship doc twice
 	rm -rf $(CURDIR)/debian/libreswan-dbg/usr/share/doc/libreswan-dbg
 
@@ -173,30 +122,8 @@ install-libreswan-doc: build
 	# more lintian cleanups
 	find $(CURDIR)/debian/libreswan-doc -name ".gitignore" | xargs --no-run-if-empty rm -f
 
-binary-common:
-	dh_testdir
-	dh_testroot
-	dh_installdebconf
-	dh_link
+override_dh_strip:
 	dh_strip --dbg-package=libreswan-dbg
-	dh_compress
+
+override_dh_fixperms:
 	dh_fixperms -X etc/ipsec.secrets -X etc/ipsec.d/private -X var/lib/libreswan
-
-	dh_lintian
-	dh_installdeb
-	dh_shlibdeps
-	dh_gencontrol
-	dh_md5sums
-	dh_builddeb
-
-# Build architecture-independent files here.
-binary-indep: install-libreswan-doc
-	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
-
-# Build architecture-dependent files here.
-binary-arch: install-libreswan
-	$(MAKE) -f debian/rules DH_OPTIONS=-a binary-common
-
-binary: binary-indep binary-arch
-.PHONY: clean binary-indep binary-arch binary-common \
-        install-libreswan-doc install-libreswan
