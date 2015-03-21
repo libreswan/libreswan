@@ -2,5 +2,3 @@
 libreswan: non-standard-dir-perm etc/ipsec.d/private/ 0700 != 0755
 libreswan: non-standard-file-perm etc/ipsec.secrets 0600 != 0644
 libreswan: non-standard-dir-perm var/lib/libreswan/ 0700 != 0755
-# we have a right link in it too
-libreswan: copyright-refers-to-symlink-license usr/share/common-licenses/GPL

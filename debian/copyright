@@ -35,8 +35,7 @@ The contents of this LICENSE file are:
  Foundation, Inc.,  51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
  On Debian systems, a copy of the GNU General Public License, version 2,
- can be found in the file /usr/share/common-licenses/GPL-2. The symlink
- /usr/share/common-licenses/GPL points to the latest version of the GPL.
+ can be found in the file /usr/share/common-licenses/GPL-2.
 
 Files with different copyrights/licenses:
 
@@ -91,8 +90,6 @@ Files with different copyrights/licenses:
 
    On Debian systems, a copy of the GNU Lesser General Public License,
    version 2, can be found in the file /usr/share/common-licenses/LGPL-2.
-   The symlink /usr/share/common-licenses/LGPL points to the latest version
-   of the LGPL.
 
  * linux/include/zlib/*, linux/net/ipsec/zutil.c, linux/net/ipsec/infutil.c,
    linux/net/ipsec/infutil.h, linux/net/ipsec/inflate.c,
