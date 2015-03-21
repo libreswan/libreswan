@@ -1,0 +1,25 @@
+ipsec_setup: KLIPS debug \`none\'
+ipsec_setup: Stopping Libreswan IPsec\.\.\.
+ipsec_setup: stop ordered
+ipsec_setup: doing cleanup anywan...
+ipsec_setup: \.\.\.Libreswan IPsec stopped
+ipsec_setup: Starting Libreswan IPsec
+ipsec_setup: \.\.\.Libreswan IPsec started
+ipsec_plutorun: .*: initiate
+pluto.*: deleting state
+pluto.*: forgetting secrets
+pluto.*: shutting down
+pluto.*: \|
+pluto.*:   .* bytes loaded
+pluto.*:   including X\.509 patch
+pluto.*: Loading my X\.509 certificate
+pluto.*: Starting pluto
+pluto.*: added connection description
+pluto.*: adding interface
+pluto.*: listening for IKE messages
+pluto.*: loading secrets
+pluto.*: .* SA established
+pluto.*: .* SA expired
+pluto.*: replacing stale .* SA
+pluto.*: initiating Quick Mode
+pluto.*: regenerating DH private secret

@@ -58,12 +58,6 @@ override_dh_auto_install:
 	    fi; \
 	done
 
-	# the logcheck ignore files
-	install -D --mode=0600 $(CURDIR)/debian/logcheck.ignore.paranoid $(CURDIR)/debian/libreswan/etc/logcheck/ignore.d.paranoid/libreswan
-	install -D --mode=0600 $(CURDIR)/debian/logcheck.ignore.server $(CURDIR)/debian/libreswan/etc/logcheck/ignore.d.server/libreswan
-	install -D --mode=0600 $(CURDIR)/debian/logcheck.ignore.server $(CURDIR)/debian/libreswan/etc/logcheck/ignore.d.workstation/libreswan
-	install -D --mode=0600 $(CURDIR)/debian/logcheck.violations.ignore $(CURDIR)/debian/libreswan/etc/logcheck/violations.ignore.d/libreswan
-
 	# set permissions on ipsec.secrets
 	chmod 600 $(CURDIR)/debian/libreswan/etc/ipsec.secrets
 	chmod 644 $(CURDIR)/debian/libreswan/etc/ipsec.conf
