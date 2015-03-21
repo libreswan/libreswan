@@ -2,3 +2,5 @@
 libreswan: non-standard-dir-perm etc/ipsec.d/private/ 0700 != 0755
 libreswan: non-standard-file-perm etc/ipsec.secrets 0600 != 0644
 libreswan: non-standard-dir-perm var/lib/libreswan/ 0700 != 0755
+# libreswan Recommends: python. if you do not have it you cannot run ipsec verify but everything else should work
+libreswan: python-script-but-no-python-dep usr/lib/ipsec/verify

@@ -38,6 +38,7 @@ Depends: bsdmainutils,
          openssl,
          ${misc:Depends},
          ${shlibs:Depends}
+Recommends: python
 Suggests: curl,
           libreswan-doc
 Provides: ike-server
