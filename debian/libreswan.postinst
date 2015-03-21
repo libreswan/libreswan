@@ -200,26 +200,6 @@ case "$1" in
 	    mv /etc/ipsec.conf.tmp /etc/ipsec.conf
 	fi
 
-	if [ -z "$2" ]; then
-	    # no old configured version - start libreswan now
-            invoke-rc.d ipsec start || true
-        else
-  	    # does the user wish libreswan to restart?
-	    db_get libreswan/restart
-	    if [ "$RET" = "true" ]; then
-	         invoke-rc.d ipsec restart || true # sure, we'll restart it for you
-	    fi
-	fi
-
-        # does the user wish to autostart libreswan at boot?
-        db_input low libreswan/autostart || true
-        db_go
-        db_get libreswan/autostart
-        if [ "$RET" = "true" ]; then
-             update-rc.d ipsec defaults > /dev/null || true
-        fi
-
-
         db_stop
 
     ;;
