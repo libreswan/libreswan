@@ -7,7 +7,7 @@ Vcs-Git: git://git.libreswan.org//libreswan.git
 Standards-Version: 3.8.4
 Build-Depends: bison,
                bzip2,
-               debhelper (>= 7.1),
+               debhelper (>= 9),
                flex,
                htmldoc,
                libcurl4-openssl-dev,
