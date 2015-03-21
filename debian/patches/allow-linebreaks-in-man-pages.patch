@@ -1,0 +1,45 @@
+diff --git a/programs/eroute/eroute.8 b/programs/eroute/eroute.8
+index 35e6eeb..25d7bf2 100644
+--- a/programs/eroute/eroute.8
++++ b/programs/eroute/eroute.8
+@@ -31,11 +31,11 @@
+ ipsec_eroute \- manipulate IPSEC extended routing tables
+ .SH "SYNOPSIS"
+ .HP \w'\fBipsec\ eroute\fR\ 'u
+-\fBipsec eroute\fR \fB\fI\-\-add\fR\fR\ \fB\-\-eraf\fR\ \fI(inet\ |\ inet6)\fR\ \fB\-\-src\fR\ \fIsrc/srcmaskbits|srcmask\fR\ \fB\-\-dst\fR\ \fIdst/dstmaskbits|dstmask\fR\ [[\fB\-\-transport\-proto\fR\ \fItransport\-protocol\fR]]\ [\fB\-\-src\-port\ \fR\fB\fIsource\-port\fR\fR]\ [\fB\-\-dst\-port\ \fR\fB\fIdest\-port\fR\fR]\ [<SAID>] 
++\fBipsec eroute\fR \fB\fI\-\-add\fR\fR \fB\-\-eraf\fR\ \fI(inet\ |\ inet6)\fR \fB\-\-src\fR\ \fIsrc/srcmaskbits|srcmask\fR \fB\-\-dst\fR\ \fIdst/dstmaskbits|dstmask\fR [[\fB\-\-transport\-proto\fR\ \fItransport\-protocol\fR]] [\fB\-\-src\-port\ \fR\fB\fIsource\-port\fR\fR] [\fB\-\-dst\-port\ \fR\fB\fIdest\-port\fR\fR] [<SAID>] 
+ .HP \w'\fBipsec\ eroute\fR\ 'u
+-\fBipsec eroute\fR \fB\fI\-\-replace\fR\fR\ \fB\-\-eraf\fR\ \fI(inet\ |\ inet6)\fR\ \fB\-\-src\fR\ \fIsrc/srcmaskbits|srcmask\fR\ \fB\-\-dst\fR\ \fIdst/dstmaskbits|dstmask\fR\ [[\fB\-\-transport\-proto\fR\ \fItransport\-protocol\fR]]\ [\fB\-\-src\-port\ \fR\fB\fIsource\-port\fR\fR]\ [\fB\-\-dst\-port\ \fR\fB\fIdest\-port\fR\fR]\ [<SAID>] 
++\fBipsec eroute\fR \fB\fI\-\-replace\fR\fR \fB\-\-eraf\fR\ \fI(inet\ |\ inet6)\fR \fB\-\-src\fR\ \fIsrc/srcmaskbits|srcmask\fR \fB\-\-dst\fR\ \fIdst/dstmaskbits|dstmask\fR [[\fB\-\-transport\-proto\fR\ \fItransport\-protocol\fR]] [\fB\-\-src\-port\ \fR\fB\fIsource\-port\fR\fR] [\fB\-\-dst\-port\ \fR\fB\fIdest\-port\fR\fR] [<SAID>] 
+ .HP \w'\fBipsec\ eroute\fR\ 'u
+-\fBipsec eroute\fR \fB\fI\-\-del\fR\fR\-\-del\fB\-\-eraf\fR\ \fI(inet\ |\ inet6)\fR\ \fB\-\-src\fR\fIsrc/srcmaskbits|srcmask\fR\fB\-\-dst\fR\fIdst/dstmaskbits|dstmask\fR\ [[\fB\-\-transport\-proto\fR\ \fItransport\-protocol\fR]]\ [\fB\-\-src\-port\ \fR\fB\fIsource\-port\fR\fR]\ [\fB\-\-dst\-port\ \fR\fB\fIdest\-port\fR\fR]\ [<SAID>] 
++\fBipsec eroute\fR \fB\fI\-\-del\fR\fR \fB\-\-eraf\fR\ \fI(inet\ |\ inet6)\fR \fB\-\-src\fR\fIsrc/srcmaskbits|srcmask\fR\fB \-\-dst\fR\fIdst/dstmaskbits|dstmask\fR [[\fB\-\-transport\-proto\fR\ \fItransport\-protocol\fR]] [\fB\-\-src\-port\ \fR\fB\fIsource\-port\fR\fR] [\fB\-\-dst\-port\ \fR\fB\fIdest\-port\fR\fR] [<SAID>] 
+ .HP \w'\fBipsec\ eroute\fR\ 'u
+ \fBipsec eroute\fR \-\-clear
+ .HP \w'\fBipsec\ eroute\fR\ 'u
+diff --git a/programs/pluto/pluto.8 b/programs/pluto/pluto.8
+index fa2ece2..70fe405 100644
+--- a/programs/pluto/pluto.8
++++ b/programs/pluto/pluto.8
+@@ -47,7 +47,7 @@ pluto \- ipsec whack : IPsec IKE keying daemon and control interface
+ .br
+ 
+ .br
+-[\-\-tunnel] [\-\-psk] [\-\-rsasig] [\-\-encrypt] [\-\-authenticate] [\-\-compress] [\-\-pfs] [\-\-pfsgroup\ [modp1024]\ |\ [modp1536]\ |\ [modp2048]\ |\ [modp3072]\ |\ [modp4096]\ |\ [modp6144]\ |\ [modp8192]\ |\ [dh22]\ |\ [dh23]\ |\ [dh24]] [\-\-disablearrivalcheck] [\-\-ikelifetime\ \fIseconds\fR] [\-\-ipseclifetime\ \fIseconds\fR] [\-\-rekeymargin\ \fIseconds\fR] [\-\-rekeyfuzz\ \fIpercentage\fR] [\-\-keyingtries\ \fIcount\fR] [\-\-esp\ \fIesp\-algos\fR] [\-\-dontrekey] [\-\-aggrmode] [\-\-modecfgpull] [[\-\-dpddelay\ \fIseconds\fR] | [\-\-dpdtimeout\ \fIseconds\fR]] [\-\-dpdaction\ [clear]\ |\ [hold]\ |\ [restart]] [\-\-forceencaps] [\-\-no\-keep\-alive] [[\-\-initiateontraffic]\ |\ [\-\-pass]\ |\ [\-\-drop]\ |\ [\-\-reject]] [[\-\-failnone]\ |\ [\-\-failpass]\ |\ [\-\-faildrop]\ |\ [\-\-failreject]] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
++[\-\-tunnel] [\-\-psk] [\-\-rsasig] [\-\-encrypt] [\-\-authenticate] [\-\-compress] [\-\-pfs] [\-\-pfsgroup [modp1024] | [modp1536] | [modp2048] | [modp3072] | [modp4096] | [modp6144] | [modp8192] | [dh22] | [dh23] | [dh24]] [\-\-disablearrivalcheck] [\-\-ikelifetime\ \fIseconds\fR] [\-\-ipseclifetime\ \fIseconds\fR] [\-\-rekeymargin\ \fIseconds\fR] [\-\-rekeyfuzz\ \fIpercentage\fR] [\-\-keyingtries\ \fIcount\fR] [\-\-esp\ \fIesp\-algos\fR] [\-\-dontrekey] [\-\-aggrmode] [\-\-modecfgpull] [[\-\-dpddelay\ \fIseconds\fR] | [\-\-dpdtimeout\ \fIseconds\fR]] [\-\-dpdaction\ [clear]\ |\ [hold]\ |\ [restart]] [\-\-forceencaps] [\-\-no\-keep\-alive] [[\-\-initiateontraffic]\ |\ [\-\-pass]\ |\ [\-\-drop]\ |\ [\-\-reject]] [[\-\-failnone]\ |\ [\-\-failpass]\ |\ [\-\-faildrop]\ |\ [\-\-failreject]] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
+ .HP \w'\fBipsec\fR\ 'u
+ \fBipsec\fR \fIwhack\fR \-\-keyid\ \fIid\fR [\-\-addkey] [\-\-pubkeyrsa\ \fIkey\fR] [\-\-ctlbase\ \fIpath\fR] [\-\-label\ \fIstring\fR]
+ .HP \w'\fBipsec\fR\ 'u
+@@ -1882,10 +1882,10 @@ detects a problem, it will return an exit status of 1\&. If it received progress
+ \fBpluto\fR, it returns as status the value of the numeric prefix from the last such message that was not a message sent to syslog or a comment (but the prefix for success is treated as 0)\&. Otherwise, the exit status is 0\&.
+ .SH "FILES"
+ .PP
+-/var/run/pluto/pluto\&.pid/var/run/pluto/pluto\&.ctl/etc/ipsec\&.secrets/dev/urandom
++/var/run/pluto/pluto\&.pid /var/run/pluto/pluto\&.ctl /etc/ipsec\&.secrets /dev/urandom
+ .SH "ENVIRONMENT"
+ .PP
+-\fIIPSEC_EXECDIR\fR\fIIPSECmyid\fR\fIPLUTO_CORE_DIR\fR
++\fIIPSEC_EXECDIR\fR \fIIPSECmyid\fR \fIPLUTO_CORE_DIR\fR
+ .SH "SEE ALSO"
+ .PP
+ The rest of the Libreswan distribution, in particular
