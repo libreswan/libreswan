@@ -75,14 +75,6 @@ override_dh_auto_install:
 	mkdir -p $(CURDIR)/debian/libreswan/var/lib/libreswan
 	chmod 700 -R $(CURDIR)/debian/libreswan/var/lib/libreswan
 
-install-libreswan-doc: DH_OPTIONS=-plibreswan-doc
-install-libreswan-doc: build
-	dh_testdir
-	dh_testroot
-
-	dh_installdocs -plibreswan-doc -n
-	dh_installchangelogs CHANGES
-
 	# fix some doc issues
 	for oldname in `find $(CURDIR)/debian/libreswan-doc/usr/share/doc -name "ipsec_ipsec*"`; \
 	do \
@@ -107,9 +99,6 @@ install-libreswan-doc: build
 	  done )
 	# but remove the doc/src dir, which just duplicates the HTML files
 	rm -rf $(CURDIR)/debian/libreswan-doc/usr/share/doc/libreswan-doc/doc/src
-
-	# more lintian cleanups
-	find $(CURDIR)/debian/libreswan-doc -name ".gitignore" | xargs --no-run-if-empty rm -f
 
 override_dh_strip:
 	dh_strip --dbg-package=libreswan-dbg
