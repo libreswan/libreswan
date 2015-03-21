@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509 --revoked
-certutil -D -n east -d /etc/ipsec.d
+certutil -D -n east -d sql:/etc/ipsec.d
 # confirm that the network is alive
 ping -n -c 4 192.0.2.254
 # make sure that clear text does not get through
