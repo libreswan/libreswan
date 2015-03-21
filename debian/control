@@ -2,9 +2,10 @@ Source: libreswan
 Section: net
 Priority: optional
 Maintainer: Paul Wouters <paul@libreswan.org>
+Uploaders: Daniel Kahn Gillmor <dkg@fifthhorseman.net>
 Vcs-Browser: http://git.libreswan.org/libreswan.git/.git;a=summary
 Vcs-Git: git://git.libreswan.org//libreswan.git
-Standards-Version: 3.8.4
+Standards-Version: 3.9.6
 Build-Depends: bison,
                bzip2,
                debhelper (>= 9),
@@ -29,7 +30,6 @@ Architecture: any
 Pre-Depends: debconf | debconf-2.0
 Depends: bsdmainutils,
          host,
-         iproute,
          iproute (>=20041019-0.1),
          libnspr4,
          libnss3,
