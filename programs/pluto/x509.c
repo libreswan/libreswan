@@ -70,6 +70,7 @@
 #include "nss_crl_import.h"
 
 /* NSS */
+#include <prtime.h>
 #include <nss.h>
 #include <keyhi.h>
 #include <cert.h>
@@ -171,11 +172,10 @@ realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 	realtime_t ret;
 	PRTime notBefore, notAfter;
 
-	if (CERT_GetCertTimes(cert, &notBefore, &notAfter) !=
-			SECSuccess)
+	if (CERT_GetCertTimes(cert, &notBefore, &notAfter) != SECSuccess)
 		ret.real_secs = (time_t) -1;
 	else
-		ret.real_secs = (time_t) notAfter;
+		ret.real_secs = (time_t) notAfter / PR_USEC_PER_SEC;
 
 	return ret;
 }
@@ -1348,10 +1348,10 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 			DBG(DBG_CONTROL,
 			    DBG_log("connection is RW, lookup CA candidates"));
 
-			for (gn = ca; gn != NULL; gn = gn->next) {
+			for (ca = gn; ca != NULL; ca = ca->next) {
 				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-						       gn->name, outpbs,
-						       gn->next == NULL ? np :
+						       ca->name, outpbs,
+						       ca->next == NULL ? np :
 						         ISAKMP_NEXT_v2CERTREQ))
 					return STF_INTERNAL_ERROR;
 			}
