@@ -20,16 +20,27 @@ REMOTE = None
 
 # XXX: This function's behaviour should not depend on the presence of
 # FILENAME.
-def read_exec_shell_cmd( ex, filename, prompt, timer):
+def read_exec_shell_cmd( ex, filename, timer):
     if os.path.exists(filename):
-        REMOTE.read_file_run(filename, timeout=timer)
+        f_cmds = None
+        try:
+            f_cmds = open(filename, "r")
+            for line in f_cmds:
+                line = line.strip()    
+                # We need the lines with # for the cut --- tuc
+                # sections if line and not line[0] == '#':
+                if line:
+                    REMOTE.run(line, timeout=timer)
+        finally:
+            if f_cmds:
+                f_cmds.close
     else:
         REMOTE.run(filename, timeout=timer)
 
-def connect_to_kvm(args, prompt = ''):
+def connect_to_kvm(args):
 
-    if not prompt :
-        prompt = "\[root@%s " % (args.hostname) 
+    prompt = str(shell.PromptPattern(username="root", hostname=args.hostname))
+    print "Shell prompt: " + prompt
 
     vmlist = commands.getoutput("sudo virsh list")
     running = 0
@@ -60,18 +71,17 @@ def connect_to_kvm(args, prompt = ''):
     child = pexpect.spawn(cmd)
     child.delaybeforesend = 0
     child.logfile = sys.stdout
-    # don't match full prompt, we want it to work regardless cwd
 
     done = 0
     tries = 60
-    print "Waiting on %s login: or %s prompt" % (args.hostname, prompt)
+    print "Waiting on %s login: or shell prompt" % (args.hostname)
     while not done and tries != 0:
       try:
         print "sending ctrl-c return"
         #child = pexpect.spawn (cmd)
         #child.sendcontrol('c')
         child.sendline ('')
-        print "found, waiting on login: or %s" % prompt
+        print "found, waiting on login: or shell prompt"
         res = child.expect (['login: ', prompt], timeout=3) 
 	if res == 0:
            print "sending login name root"
@@ -98,51 +108,41 @@ def connect_to_kvm(args, prompt = ''):
         print 'console is not answering on host %s, aborting'%args.hostname
         return 0
 
-
-    child.sendline ('TERM=dumb; export TERM; unset LS_COLORS')
-    res = child.expect (['login: ', prompt], timeout=3) 
-    child.setecho(False) ## this does not seems to work
-    child.sendline("stty sane")
-    res = child.expect (['login: ', prompt], timeout=3) 
-    child.sendline("stty -onlcr")
-    res = child.expect (['login: ', prompt], timeout=3) 
-    child.sendline("stty -echo")
-    res = child.expect (['login: ', prompt], timeout=3) 
     return child
 
 def run_final (args, child):
     timer = 30
-    prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'a') 
     child.logfile = f
     cmd = "./final.sh"
     if os.path.exists(cmd):
-        read_exec_shell_cmd( child, cmd, prompt, timer)
+        read_exec_shell_cmd(child, cmd, timer)
     f.close 
     return
 
 def compile_on(args, remote):
-    prompt = remote.cd(args.sourcedir)
+    remote.chdir(args.sourcedir)
     timer = 900
     cmd = "%s/testing/guestbin/swan-build" % (args.sourcedir)
-    remote.run(cmd, timeout=timer)
-    remote.exit_if_error()
+    status = remote.run(cmd, timeout=timer)
+    if status:
+        sys.exit(status)
 
 def make_install(args, remote):
-    prompt = remote.cd(args.sourcedir)
+    remote.chdir(args.sourcedir)
     timer=300
     cmd = "%s/testing/guestbin/swan-install" % (args.sourcedir)
-    remote.run(cmd, timeout=timer)
-    remote.exit_if_error()
+    status = remote.run(cmd, timeout=timer)
+    if status:
+        sys.exit(status)
 
 def run_test(args, child):
     #print 'HOST : ', args.hostname 
     #print 'TEST : ', args.testname
 
     timer = 120
-    # we MUST match the entire prompt, or elsewe end up sending too soon and getting mangling!
-    prompt = cd_to(child, args, "%s/pluto/%s " % (args.testdir, args.testname))
+    REMOTE.chdir("%s/pluto/%s " % (args.testdir, args.testname))
 
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'w') 
@@ -156,11 +156,11 @@ def run_test(args, child):
 	x509 = ""
 	
     cmd = "./%sinit.sh" %  (args.hostname) 
-    read_exec_shell_cmd( child, cmd, prompt, timer)
+    read_exec_shell_cmd(child, cmd, timer)
 
     cmd = "./%srun.sh" %  (args.hostname) 
     if os.path.exists(cmd):
-        read_exec_shell_cmd( child, cmd, prompt, timer)
+        read_exec_shell_cmd(child, cmd, timer)
         run_final(args,child)
         f.close
     else:
@@ -184,20 +184,20 @@ def main():
     args = parser.parse_args()
 
     if args.final:
-        prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
-        child = connect_to_kvm(args, prompt)
+        child = connect_to_kvm(args)
     else :
         child = connect_to_kvm(args) 
 
     if not child:
         sys.exit("Failed to launch/connect to %s - aborted" % args.hostname)
 
-    REMOTE = shell.Remote(child, args.hostname)
+    # This puts the remote end into the correct stty mode.
+    REMOTE = shell.Remote(child, hostname=args.hostname, username="root")
 
     if args.run:
-        REMOTE.cd(args.sourcedir)
-        REMOTE.run(args.run, timeout=args.runtime)
-        REMOTE.exit_if_error()
+        REMOTE.chdir(args.sourcedir)
+        status = REMOTE.run(args.run, timeout=args.runtime)
+        sys.exit(status)
 
     if args.compile:
         compile_on(args, REMOTE) 

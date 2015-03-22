@@ -1348,10 +1348,10 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 			DBG(DBG_CONTROL,
 			    DBG_log("connection is RW, lookup CA candidates"));
 
-			for (gn = ca; gn != NULL; gn = gn->next) {
+			for (ca = gn; ca != NULL; ca = ca->next) {
 				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-						       gn->name, outpbs,
-						       gn->next == NULL ? np :
+						       ca->name, outpbs,
+						       ca->next == NULL ? np :
 						         ISAKMP_NEXT_v2CERTREQ))
 					return STF_INTERNAL_ERROR;
 			}

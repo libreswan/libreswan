@@ -6,8 +6,8 @@ export TESTNAME
 
 /testing/guestbin/swan-prep --testname $TESTNAME  --hostname east --x509 
 
-certutil -d /etc/ipsec.d -D road -n road
-certutil -L -d /etc/ipsec.d
+certutil -d sql:/etc/ipsec.d -D road -n road
+certutil -L -d sql:/etc/ipsec.d
 
 #iptables -I OUTPUT -f -j LOGDROP # drop UDP fragments
 iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j LOGDROP

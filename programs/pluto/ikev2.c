@@ -1666,7 +1666,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 				}
 			} else {
 				/* We are the exchange initiator */
-				pexpect(st->st_event != NULL && st->st_event->ev_type == EVENT_v2_RETRANSMIT);
+				pexpect(st !=  NULL && st->st_event != NULL &&
+						st->st_event->ev_type == EVENT_v2_RETRANSMIT);
 			}
 		}
 

@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --x509
 echo "192.9.4.245 nic.testing.libreswan.org" >> /etc/hosts
-certutil -D -n east -d /etc/ipsec.d
+certutil -D -n east -d sql:/etc/ipsec.d
 cp /testing/x509/crls/cacrlvalid.crl /etc/ipsec.d/crls
 # confirm that the network is alive
 ping -n -c 4 192.0.2.254

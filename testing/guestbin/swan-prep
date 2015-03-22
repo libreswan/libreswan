@@ -220,13 +220,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 			oldfiles = glob.glob("/etc/ipsec.d/*db")
 			for oldfile in oldfiles:
 				os.unlink(oldfile)
-			cmd = "certutil -N -d /etc/ipsec.d"
-			timer = 10
-			child = pexpect.spawn(cmd)
-			child.expect ('(?i)password')
-			child.sendline (dbpassword)
-			child.expect ('(?i)password')
-			child.sendline (dbpassword)
+			commands.getoutput("certutil -N --empty-password -d sql:/etc/ipsec.d")
 
 			if not os.path.isfile("/testing/x509/keys/mainca.key"):
 				print("\n\n---------------------------------------------------------------------\n"
@@ -256,38 +250,38 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 				# 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
 
 				#mainca and nic import
-				commands.getoutput("certutil -A -n %s -t 'CT,,' -d /etc/ipsec.d/ -a -i /testing/x509/cacerts/%s.crt%s" % (root, root, util_pw))
-				commands.getoutput("certutil -A -n nic -t 'P,,' -d /etc/ipsec.d/ -a -i /testing/x509/certs/nic.crt%s" % util_pw)
+				commands.getoutput("certutil -A -n %s -t 'CT,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/cacerts/%s.crt%s" % (root, root, util_pw))
+				commands.getoutput("certutil -A -n nic -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/nic.crt%s" % util_pw)
 
 				# install ee
-				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s.p12 -d /etc/ipsec.d %s%s" % (ee, pw, p12cmd_pw))
+				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:/etc/ipsec.d %s%s" % (ee, pw, p12cmd_pw))
 
 				# install intermediates
 				for i in range(1, icanum+1):
 					acrt = ica_p + str(i)
-					commands.getoutput("certutil -A -n %s -t ',,' -d /etc/ipsec.d/ \
+					commands.getoutput("certutil -A -n %s -t ',,' -d sql:/etc/ipsec.d/ \
 										-a -i /testing/x509/certs/%s.crt%s" % (acrt,acrt, util_pw))
 				if args.revoked:
 					commands.getoutput("pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d /etc/ipsec.d %s%s" % (hostname + "_chain", pw, p12cmd_pw))
 
 			else:
-				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d /etc/ipsec.d %s%s"%(ca, p12, pw, p12cmd_pw))
+				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d sql:/etc/ipsec.d %s%s"%(ca, p12, pw, p12cmd_pw))
 				# install all other public certs
 				# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
 
 				if args.revoked:
-					commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d /etc/ipsec.d %s%s" % (pw, p12cmd_pw))
+					commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
 
 				if args.signedbyother:
-					commands.getoutput("pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d /etc/ipsec.d %s%s" % (pw, p12cmd_pw))
+					commands.getoutput("pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
 
 				# fix trust import from p12
 				# is pw needed?
-				commands.getoutput("certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d /etc/ipsec.d/ -t 'CT,,'")
+				commands.getoutput("certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'")
 
 				for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec", "nic"):
 					if not hostname in certname:
-						commands.getoutput("certutil -A -n %s -t 'P,,' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt%s"%(certname,certname,util_pw))
+						commands.getoutput("certutil -A -n %s -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt%s"%(certname,certname,util_pw))
 		elif userland == "strongswan":
 			if args.eccert:
 				ca = "curveca"
