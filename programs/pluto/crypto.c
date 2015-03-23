@@ -41,6 +41,8 @@
 
 #include "pem.h"
 
+#include "lswconf.h" /* for libreswan_fipsmode() */
+
 /* moduli and generator. */
 
 static MP_INT
@@ -202,6 +204,12 @@ static struct hash_desc crypto_integ_sha1 =
 
 void init_crypto(void)
 {
+#ifdef FIPS_CHECK
+	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
+
 	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0
 	    ||  mpz_init_set_str(&generator_dh22, MODP_GENERATOR_DH22,
 				 16) != 0 ||
@@ -224,11 +232,13 @@ void init_crypto(void)
 		exit_log("mpz_init_set_str() failed in init_crypto()");
 
 #ifdef USE_TWOFISH
-	ike_alg_twofish_init();
+	if (!fips)
+		ike_alg_twofish_init();
 #endif
 
 #ifdef USE_SERPENT
-	ike_alg_serpent_init();
+	if (!fips)
+		ike_alg_serpent_init();
 #endif
 
 #ifdef USE_AES
@@ -236,7 +246,8 @@ void init_crypto(void)
 #endif
 
 #ifdef USE_CAMELLIA
-	ike_alg_camellia_init();
+	if (!fips)
+		ike_alg_camellia_init();
 #endif
 
 #ifdef USE_3DES
@@ -253,8 +264,10 @@ void init_crypto(void)
 #endif
 
 #ifdef USE_MD5
-	ike_alg_add(&crypto_hasher_md5.common);
-	ike_alg_add(&crypto_integ_md5.common);
+	if (!fips) {
+		ike_alg_add(&crypto_hasher_md5.common);
+		ike_alg_add(&crypto_integ_md5.common);
+	}
 #endif
 }
 

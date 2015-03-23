@@ -265,7 +265,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 					commands.getoutput("pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d /etc/ipsec.d %s%s" % (hostname + "_chain", pw, p12cmd_pw))
 
 			else:
-				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d sql:/etc/ipsec.d %s%s"%(ca, p12, pw, p12cmd_pw))
+				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -K '' -d sql:/etc/ipsec.d %s%s"%(ca, p12, pw, p12cmd_pw))
 				# install all other public certs
 				# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
 
