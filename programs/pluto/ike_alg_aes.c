@@ -410,7 +410,11 @@ static struct hash_desc integ_desc_aes_xcbc = {
 
 void ike_alg_aes_init(void)
 {
+#ifdef FIPS_CHECK
 	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
 
 	if (!fips && !test_aes_cbc(&algo_aes_cbc)) {
 		loglog(RC_LOG_SERIOUS, "CKM_AES_CBC: test failure");

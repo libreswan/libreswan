@@ -204,7 +204,11 @@ static struct hash_desc crypto_integ_sha1 =
 
 void init_crypto(void)
 {
+#ifdef FIPS_CHECK
 	bool fips = libreswan_fipsmode();
+#else
+	bool fips = FALSE;
+#endif
 
 	if (mpz_init_set_str(&groupgenerator, MODP_GENERATOR, 10) != 0
 	    ||  mpz_init_set_str(&generator_dh22, MODP_GENERATOR_DH22,
