@@ -23,6 +23,10 @@ IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 IPSEC_CONFDDIR="${IPSEC_CONFDDIR:-@IPSEC_CONFDDIR@}"
 IPSEC_NSSDIR="${IPSEC_NSSDIR:-@IPSEC_NSSDIR@}"
+IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
+IPSEC_NSSPW="${IPSEC_CONFDDIR}/nsspassword"
+NSSTMP="${IPSEC_NSSDIR}/nss_tmp"
+DBPW=""
 
 IPSEC_DIR="${IPSEC_EXECDIR}"
 export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
@@ -30,9 +34,6 @@ export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
 # standardize PATH, and export it for everything else's benefit
 PATH="${IPSEC_SBINDIR}":/sbin:/usr/sbin:/usr/local/bin:/bin:/usr/bin
 export PATH
-
-NSS_DEFAULT_DB_TYPE="sql:"
-export NSS_DEFAULT_DB_TYPE
 
 # supress ElectricFence banner changing our reference testing output
 export EF_DISABLE_BANNER=1
@@ -176,12 +177,55 @@ case "${1}" in
 	   mkdir -p "${IPSEC_NSSDIR}"
 	fi
 	if [ -f "${IPSEC_NSSDIR}/cert8.db" -o \
-	    -f "${IPSEC_NSSDIR}/cert9.db" -o \
 	    -f "${IPSEC_NSSDIR}/key3.db" -o \
-	    -f "${IPSEC_NSSDIR}/key4.db" -o \
 	    -f "${IPSEC_NSSDIR}/secmod.db" ]; then
 	    # if just checking, silently quit
-	    [ "${1}" = "checknss" -o "${1}" = "--checknss" ] && exit 0
+	    if [ "${1}" = "checknss" -o "${1}" = "--checknss" ]; then
+		if [ ! -f "${IPSEC_NSSDIR}/cert9.db" -o ! -f "${IPSEC_NSSDIR}/key4.db" ]; then
+		    echo "Migrating NSS db to ${IPSEC_NSSDIR_SQL}"
+
+		    # this section works around a few certutil quirks
+		    # to maintain the current password and merge keys
+		    if [ ! -d "${NSSTMP}" ]; then
+			mkdir "${NSSTMP}"
+		    fi
+
+		    certutil -N -d sql:"${NSSTMP}" --empty-password
+		    if [ -f "${IPSEC_NSSPW}" ]; then
+			# Look for FIPS format of token:pw, or just the pw
+			grep -q ':' "${IPSEC_NSSPW}"
+			if [ $? -eq 0 ]; then
+			    cut -d':' -f2 "${IPSEC_NSSPW}" > "${IPSEC_NSSPW}_tmp"
+			    cut -d':' -f2 "${IPSEC_NSSPW}" >> "${IPSEC_NSSPW}_tmp"
+			else
+			    cat "${IPSEC_NSSPW}" > "${IPSEC_NSSPW}_tmp"
+			    cat "${IPSEC_NSSPW}" >> "${IPSEC_NSSPW}_tmp"
+			fi
+			# For the empty password prompt:
+			echo -e "\n\n" > "${IPSEC_NSSPW}_tmp2"
+			# Change blank pw to the current, and use for certutil --upgrade-merge
+			certutil -W -d sql:"${NSSTMP}" -f "${IPSEC_NSSPW}_tmp2" -@ "${IPSEC_NSSPW}_tmp"
+			DBPW="-f ${IPSEC_NSSPW}_tmp -@ ${IPSEC_NSSPW}_tmp"
+		    fi
+
+		    certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" -d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
+		    if [ $? -ne 0 ]; then
+			echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against sql:${IPSEC_NSSDIR}"
+			exit $?
+		    fi
+		    cp "${NSSTMP}"/* "${IPSEC_NSSDIR}"
+		    rm -f "${IPSEC_NSSPW}_tmp" "${IPSEC_NSSPW}_tmp2"
+		    rm -f "${NSSTMP}"/*.db "${NSSTMP}"/*.txt
+		    echo "NSS upgrade complete"
+		fi
+		exit 0
+	    fi
+	fi
+
+	if [ -f "${IPSEC_NSSDIR}/cert9.db" -o -f "${IPSEC_NSSDIR}/key4.db" ]; then
+	    if [ "${1}" = "checknss" -o "${1}" = "--checknss" ]; then
+		exit 0
+	    fi
 	    echo "NSS database already initialised - aborted"
 	    echo "To wipe the old NSS database, issue: rm ${IPSEC_NSSDIR}/*.db"
 	    exit 42
@@ -191,7 +235,7 @@ case "${1}" in
 	echo "See 'man pluto' if you want to protect the NSS database with a password"
 	echo ""
 
-	certutil -N -d "${IPSEC_NSSDIR} --empty-password"
+	certutil -N -d "${IPSEC_NSSDIR_SQL} --empty-password"
 	if [ -x /usr/sbin/restorecon ]; then
 	    restorecon -Rv "${IPSEC_NSSDIR}"
 	fi
