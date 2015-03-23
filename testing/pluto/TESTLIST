@@ -135,6 +135,8 @@ kvmplutotest	ikev2-auth-null-01			good
 
 kvmplutotest	ikev2-ddos-01				wip
 
+kvmplutotest	ikev2-switchnat-01			wip
+kvmplutotest	ikev1-switchnat-01			good
 
 kvmplutotest	pluto-ipcmp-01	good
 
