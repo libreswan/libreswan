@@ -410,7 +410,9 @@ static struct hash_desc integ_desc_aes_xcbc = {
 
 void ike_alg_aes_init(void)
 {
-	if (!test_aes_cbc(&algo_aes_cbc)) {
+	bool fips = libreswan_fipsmode();
+
+	if (!fips && !test_aes_cbc(&algo_aes_cbc)) {
 		loglog(RC_LOG_SERIOUS, "CKM_AES_CBC: test failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
@@ -419,7 +421,7 @@ void ike_alg_aes_init(void)
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
 
-	if (!test_aes_ctr(&algo_aes_ctr)) {
+	if (!fips && !test_aes_ctr(&algo_aes_ctr)) {
 		loglog(RC_LOG_SERIOUS, "CKM_AES_CTR: test failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
@@ -428,7 +430,7 @@ void ike_alg_aes_init(void)
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}
 
-	if (!test_aes_gcm()) {
+	if (!fips && !test_aes_gcm()) {
 		loglog(RC_LOG_SERIOUS, "CKM_AES_GCM: test failure");
 	}
 	if (ike_alg_register_enc(&algo_aes_gcm_8) != 1)
