@@ -1,3 +1,4 @@
+ipsec auto --add road1
 ipsec auto --up road1
 killall -9 pluto
 ipsec start

@@ -32,14 +32,14 @@ rm -f lib/libipsecconf/lex.yy.c lib/libipsecconf/parser.dot \
 rm -f lib/libswan/Makefile.depend lib/libipsecconf/Makefile.depend \
     lib/libwhack/Makefile.depend programs/pluto/Makefile.depend
 
-echo ">>> $0 on $(hostname) at $(date)" >>compile-log.txt
-
-if make programs module >>compile-log.txt 2>&1; then
-    : 'make programs module' success
+targets="programs module"
+echo ">>> $0 'make $targets' on $(hostname) at $(date)" >>compile-log.txt
+if make $targets >>compile-log.txt 2>&1; then
+    : 'make $targets' success
 else
     status=$?
     tail -20 compile-log.txt
-    : 'make programs module' failed: ${status}\; see compile-log.txt for details
+    : 'make $targets' failed: ${status}\; see compile-log.txt for details
     exit ${status}
 fi
 
