@@ -186,6 +186,10 @@ case "${1}" in
 	    if [ "${1}" = "checknss" -o "${1}" = "--checknss" ]; then
 		if [ ! -f "${IPSEC_NSSDIR}/cert9.db" -o \
 		    ! -f "${IPSEC_NSSDIR}/key4.db" ]; then
+		    # save current umask
+		    umask=$(umask)
+		    # set safe umask
+		    umask 077
 		    echo "Migrating NSS db to ${IPSEC_NSSDIR_SQL}"
 
 		    # this section works around a few certutil quirks
@@ -215,6 +219,8 @@ case "${1}" in
 			    -f "${IPSEC_NSSPW}_tmp2" -@ "${IPSEC_NSSPW}_tmp"
 			DBPW="-f ${IPSEC_NSSPW}_tmp -@ ${IPSEC_NSSPW}_tmp"
 		    fi
+		    # restore umask
+		    umask ${umask}
 
 		    certutil --upgrade-merge --source-dir "${IPSEC_NSSDIR}" \
 			-d sql:"${NSSTMP}" --upgrade-id pluto ${DBPW}
