@@ -173,9 +173,9 @@ realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 	PRTime notBefore, notAfter;
 
 	if (CERT_GetCertTimes(cert, &notBefore, &notAfter) != SECSuccess)
-		ret.real_secs = (time_t) -1;
+		ret.real_secs = -1;
 	else
-		ret.real_secs = (time_t) notAfter / PR_USEC_PER_SEC;
+		ret.real_secs = notAfter / PR_USEC_PER_SEC;
 
 	return ret;
 }
