@@ -985,7 +985,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * into source and destination ports before passing to NETKEY.
 		 */
 		if (IPPROTO_ICMP == sa->transport_proto ||
-		    IPPROTO_ICMPV6 == sa->transport_proto) {
+			IPPROTO_ICMPV6 == sa->transport_proto) {
 			u_int16_t icmp_type;
 			u_int16_t icmp_code;
 
@@ -1210,7 +1210,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 #endif
 	ret = send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
 	if (!ret && errno == ESRCH &&
-	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
+		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		loglog(RC_LOG_SERIOUS,
 			"Warning: expected to find an existing IPsec SA - continuing as Add SA");
 		return netlink_add_sa(sa, FALSE);
@@ -1436,13 +1436,13 @@ static void netlink_acquire(struct nlmsghdr *n)
 	 *     that they aren't v4 to v6 or something goofy
 	 */
 	if (NULL == (ugh = xfrm_to_ip_address(family, srcx, &src)) &&
-	    NULL == (ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
-	    NULL == (ugh = add_port(family, &src, acquire->sel.sport)) &&
-	    NULL == (ugh = add_port(family, &dst, acquire->sel.dport)) &&
-	    NULL == (ugh = src_proto == dst_proto ?
+		NULL == (ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
+		NULL == (ugh = add_port(family, &src, acquire->sel.sport)) &&
+		NULL == (ugh = add_port(family, &dst, acquire->sel.dport)) &&
+		NULL == (ugh = src_proto == dst_proto ?
 			NULL : "src and dst protocols differ") &&
-	    NULL == (ugh = addrtosubnet(&src, &ours)) &&
-	    NULL == (ugh = addrtosubnet(&dst, &his)))
+		NULL == (ugh = addrtosubnet(&src, &ours)) &&
+		NULL == (ugh = addrtosubnet(&dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, transport_proto,
 #ifdef HAVE_LABELED_IPSEC
 						uctx,
@@ -1649,7 +1649,9 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 		return 0;
 	}
 
-	if (rsp.n.nlmsg_type == NLMSG_ERROR && rsp.u.e.error == -EINVAL && proto == IPPROTO_COMP) {
+	if (rsp.n.nlmsg_type == NLMSG_ERROR &&
+		rsp.u.e.error == -EINVAL &&
+		proto == IPPROTO_COMP) {
 		libreswan_log("netlink_get_spi: trying workaround for kernel CPI allocation bug");
 
 		req.spi.min = htonl(min);
@@ -2139,7 +2141,7 @@ add_entry:
 
 						q->ip_addr = ifp->addr;
 						setportof(htons(pluto_nat_port),
-							  &q->ip_addr);
+							&q->ip_addr);
 						q->port = pluto_nat_port;
 						q->fd = fd;
 						q->next = interfaces;
