@@ -743,8 +743,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	}
 
-	req.u.p.sel.sport_mask = (req.u.p.sel.sport) ? ~0 : 0;
-	req.u.p.sel.dport_mask = (req.u.p.sel.dport) ? ~0 : 0;
+	req.u.p.sel.sport_mask = req.u.p.sel.sport == 0 ? 0 : ~0;
+	req.u.p.sel.dport_mask = req.u.p.sel.dport == 0 ? 0 : ~0;
 	ip2xfrm(&this_client->addr, &req.u.p.sel.saddr);
 	ip2xfrm(&that_client->addr, &req.u.p.sel.daddr);
 	req.u.p.sel.prefixlen_s = this_client->maskbits;
@@ -985,8 +985,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 * into source and destination ports before passing to NETKEY.
 		 */
 		if (IPPROTO_ICMP == sa->transport_proto ||
-			IPPROTO_ICMPV6 == sa->transport_proto) {
-
+		    IPPROTO_ICMPV6 == sa->transport_proto) {
 			u_int16_t icmp_type;
 			u_int16_t icmp_code;
 
@@ -995,11 +994,10 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			req.p.sel.sport = htons(icmp_type);
 			req.p.sel.dport = htons(icmp_code);
-
 		}
 
-		req.p.sel.sport_mask = (req.p.sel.sport) ? ~0 : 0;
-		req.p.sel.dport_mask = (req.p.sel.dport) ? ~0 : 0;
+		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
+		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
 		ip2xfrm(&src->addr, &req.p.sel.saddr);
 		ip2xfrm(&dst->addr, &req.p.sel.daddr);
 		req.p.sel.prefixlen_s = src->maskbits;
@@ -1022,7 +1020,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 
-	if (sa->authkeylen) {
+	if (sa->authkeylen != 0) {
 		const char *name = sparse_name(aalg_list, sa->authalg);
 
 		if (name == NULL) {
@@ -1051,6 +1049,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			struct xfrm_algo_auth algo;
 
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
+
 			switch(sa->authalg) {
 			case AUTH_ALGORITHM_HMAC_SHA2_256:
 				algo.alg_trunc_len = 128;
@@ -1077,9 +1076,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			strcpy(algo.alg_name, name);
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(
-					attr) + sizeof(algo), sa->authkey,
-				sa->authkeylen);
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
+				sa->authkey, sa->authkeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1095,8 +1093,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 				sizeof(algo_old) + sa->authkeylen);
 			strcpy(algo_old.alg_name, name);
 			memcpy(RTA_DATA(attr), &algo_old, sizeof(algo_old));
-			memcpy((char *)RTA_DATA(
-					attr) + sizeof(algo_old), sa->authkey,
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo_old),
+				sa->authkey,
 				sa->authkeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
@@ -1212,7 +1210,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 #endif
 	ret = send_netlink_msg(&req.n, NULL, 0, "Add SA", sa->text_said);
 	if (!ret && errno == ESRCH &&
-		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
+	    req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		loglog(RC_LOG_SERIOUS,
 			"Warning: expected to find an existing IPsec SA - continuing as Add SA");
 		return netlink_add_sa(sa, FALSE);
@@ -1459,19 +1457,17 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 {
-	const xfrm_address_t *srcx, *dstx;
+	const xfrm_address_t *srcx = &pol->sel.saddr;
+	const xfrm_address_t *dstx = &pol->sel.daddr;
+	unsigned family = pol->sel.family;
+	unsigned transport_proto = pol->sel.proto;
 	ip_address src, dst;
-	unsigned family;
-	unsigned transport_proto;
-	err_t ugh = NULL;
+	err_t ugh;
 
-	srcx = &pol->sel.saddr;
-	dstx = &pol->sel.daddr;
-	family = pol->sel.family;
-	transport_proto = pol->sel.proto;
-
-	if ((ugh = xfrm_to_ip_address(family, srcx, &src)) ||
-		(ugh = xfrm_to_ip_address(family, dstx, &dst))) {
+	ugh = xfrm_to_ip_address(family, srcx, &src);
+	if (ugh == NULL)
+		ugh = xfrm_to_ip_address(family, dstx, &dst);
+	if (ugh != NULL) {
 		libreswan_log(
 			"XFRM_MSG_POLEXPIRE message from kernel malformed: %s",
 			ugh);
@@ -1545,19 +1541,18 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	}
 }
 
+/* returns FALSE iff EAGAIN */
 static bool netlink_get(void)
 {
 	struct {
 		struct nlmsghdr n;
 		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
-	ssize_t r;
 	struct sockaddr_nl addr;
-	socklen_t alen;
-
-	alen = sizeof(addr);
-	r = recvfrom(netlink_bcast_fd, &rsp, sizeof(rsp), 0,
+	socklen_t alen = sizeof(addr);
+	ssize_t r = recvfrom(netlink_bcast_fd, &rsp, sizeof(rsp), 0,
 		(struct sockaddr *)&addr, &alen);
+
 	if (r < 0) {
 		if (errno == EAGAIN)
 			return FALSE;
@@ -1565,7 +1560,7 @@ static bool netlink_get(void)
 		if (errno != EINTR)
 			log_errno((e, "recvfrom() failed in netlink_get"));
 		return TRUE;
-	} else if ((size_t) r < sizeof(rsp.n)) {
+	} else if ((size_t)r < sizeof(rsp.n)) {
 		libreswan_log(
 			"netlink_get read truncated message: %ld bytes; ignore message",
 			(long) r);
@@ -1578,7 +1573,7 @@ static bool netlink_get(void)
 						rsp.n.nlmsg_type),
 				addr.nl_pid));
 		return TRUE;
-	} else if ((size_t) r != rsp.n.nlmsg_len) {
+	} else if ((size_t)r != rsp.n.nlmsg_len) {
 		libreswan_log(
 			"netlink_get read message with length %ld that doesn't equal nlmsg_len %lu bytes; ignore message",
 			(long) r,
@@ -1607,8 +1602,7 @@ static bool netlink_get(void)
 
 static void netlink_process_msg(void)
 {
-	while (netlink_get())
-		;
+	do {} while (netlink_get());
 }
 
 static ipsec_spi_t netlink_get_spi(const ip_address *src,
@@ -1632,7 +1626,6 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 		} u;
 		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
-	static bool get_cpi_bug = FALSE;	/* sticky after failure */
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -1649,21 +1642,25 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	rsp.n.nlmsg_type = XFRM_MSG_NEWSA;
 
-retry:
-	req.spi.min = get_cpi_bug ? htonl(min) : min;
-	req.spi.max = get_cpi_bug ? htonl(max) : max;
-
+	req.spi.min = min;
+	req.spi.max = max;
 	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), "Get SPI",
 				text_said)) {
 		return 0;
-	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
-		if (rsp.u.e.error == -EINVAL && proto == IPPROTO_COMP &&
-			!get_cpi_bug) {
-			get_cpi_bug = TRUE;
-			libreswan_log("netlink_get_spi: Enabling workaround for kernel CPI allocation bug");
-			goto retry;
-		}
+	}
 
+	if (rsp.n.nlmsg_type == NLMSG_ERROR && rsp.u.e.error == -EINVAL && proto == IPPROTO_COMP) {
+		libreswan_log("netlink_get_spi: trying workaround for kernel CPI allocation bug");
+
+		req.spi.min = htonl(min);
+		req.spi.max = htonl(max);
+		if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), "Get SPI",
+					text_said)) {
+			return 0;
+		}
+	}
+
+	if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		loglog(RC_LOG_SERIOUS,
 			"ERROR: netlink_get_spi for %s failed with errno %d: %s",
 			text_said, -rsp.u.e.error, strerror(-rsp.u.e.error));
@@ -1750,8 +1747,8 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 	}
 
 	/* check for no transform at all */
-	passert(!(!st->st_ipcomp.present && !st->st_esp.present &&
-			!st->st_ah.present));
+	passert(st->st_ipcomp.present || st->st_esp.present ||
+			st->st_ah.present);
 
 	if (tunnel) {
 		int j;
@@ -1785,10 +1782,8 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 	deltatime_t idle_time;
 
 	passert(st != NULL);
-	if (!get_sa_info(st, TRUE, &idle_time))
-		return TRUE;
-	else
-		return !deltaless(idle_time, idle_max);
+	return !get_sa_info(st, TRUE, &idle_time) ||
+		!deltaless(idle_time, idle_max);
 }
 
 static bool netlink_shunt_eroute(struct connection *c,
@@ -1958,7 +1953,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		struct raw_iface *v = NULL;	/* matching ipsecX interface */
-		struct raw_iface fake_v;
+		struct raw_iface fake_v;	/* v might point here */
 		bool after = FALSE;	/* has vfp passed ifp on the list? */
 		bool bad = FALSE;
 		struct raw_iface *vfp;
@@ -2033,6 +2028,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 			if (kern_interface == NO_KERNEL) {
 				/* kludge for testing: invent a virtual device */
 				static const char fvp[] = "virtual";
+
 				fake_v = *ifp;
 				passert(sizeof(fake_v.name) > sizeof(fvp));
 				strcpy(fake_v.name, fvp);
@@ -2268,9 +2264,9 @@ static bool netkey_do_command(struct connection *c, struct spd_route *sr,
 					&sr->this.host_addr) ? hs : cs;
 	}
 
-	if (fmt_common_shell_out(common_shell_out_str,
-					sizeof(common_shell_out_str), c, sr,
-					st) == -1) {
+	if (-1 == fmt_common_shell_out(common_shell_out_str,
+					sizeof(common_shell_out_str),
+					c, sr, st)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 			verb_suffix);
 		return FALSE;
