@@ -1,8 +1,9 @@
-LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-SRCDIR?=$(shell pwd)/
+ifndef top_srcdir
+include ../../../mk/dirs.mk
+endif
 
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.ver
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 
 OBJS := md5.o
 
@@ -10,4 +11,4 @@ ONEFILE=md5.c
 LIBRARY=crypto/libmd5
 LIB=libmd5.a
 
-include ${SRCDIR}../../Makefile.library
+include $(top_srcdir)/mk/library.mk

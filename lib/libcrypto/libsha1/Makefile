@@ -1,8 +1,9 @@
-LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-SRCDIR?=$(shell pwd)/
+ifndef top_srcdir
+include ../../../mk/dirs.mk
+endif
 
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.ver
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 
 OBJS := sha1.o
 
@@ -10,4 +11,4 @@ ONEFILE=sha1.c
 LIBRARY=crypto/libsha1
 LIB=libsha1.a
 
-include ${SRCDIR}../../Makefile.library
+include $(top_srcdir)/mk/library.mk
