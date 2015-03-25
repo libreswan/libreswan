@@ -22,11 +22,6 @@ fi
 # we don't trust all makefile dependancies, esp lib/
 rm -rf OBJ.linux.* modobj
 
-# these are not wiped when running rm -rf OBJ*
-# "make programs" doesn't leave these behind.
-rm -f lib/libswan/Makefile.depend lib/libipsecconf/Makefile.depend \
-    lib/libwhack/Makefile.depend programs/pluto/Makefile.depend
-
 targets="programs module"
 echo ">>> $0 'make $targets' on $(hostname) at $(date)" >>compile-log.txt
 if make $targets >>compile-log.txt 2>&1; then
