@@ -1,7 +1,9 @@
 # Libreswan library
+#
 # Copyright (C) 1998-2001  Henry Spencer.
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -13,12 +15,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
 
-
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.ver
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 
 MANDIR=$(MANTREE)/man3
 
@@ -92,11 +94,7 @@ $(OBJS):	$(HDRS)
 cleanall:
 	rm -rf ${OBJS} $(LIB) Makefile.depend
 
-# Gather dependencies caused by explicit #includes within .c files
-Makefile.depend: $(SRCS) $(LIBRESWANSRCDIR)/lib/libwhack/Makefile
-	@(ls $(wildcard $(addprefix $(LIBRESWANSRCDIR)/lib/libwhack/,$(SRCS))) | grep '\.c' | xargs $(CC) -MM ${PORTINCLUDE} ${INCLUDES} ${ALLFLAGS} ) >Makefile.depend
 
--include Makefile.depend
-
-
-
+MK_DEPEND_CFLAGS = $(CFLAGS) ${ALLFLAGS}
+MK_DEPEND_FILES = $(SRCS)
+include $(top_srcdir)/mk/depend.mk
