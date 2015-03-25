@@ -1,4 +1,5 @@
 # Libreswan library
+
 # Copyright (C) 1998-2001  Henry Spencer.
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
@@ -16,11 +17,12 @@
 # for more details.
 #
 
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.ver
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 
 
 MANDIR=$(MANTREE)/man3
@@ -192,14 +194,6 @@ check:
 
 checkprograms:
 
-# ??? does $(SRCS) work, given the files could be in different directories?
-Makefile.depend: $(SRCS) $(LOGSRCS) ${LIBRESWANSRCDIR}/lib/libswan/Makefile
-	# note: files listed in SRCS may be in ${LIBRESWANSRCDIR}/lib/libswan/ or ${KLIPSSRCDIR}/
-	# This construction looks in both.  The wildcard function weeds out the wrong choices.
-	# The grep could be replaced by the GNU Make "filter" function.
-	(ls $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(SRCS))) \
-	    $(wildcard $(addprefix ${KLIPSSRCDIR}/,$(SRCS))) \
-	    $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(LOGSRCS))) \
-	| grep '\.c' | xargs ${CC} -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}) >Makefile.depend
-
--include Makefile.depend
+MK_DEPEND_CFLAGS =  ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}
+MK_DEPEND_FILES = $(SRCS)
+include $(top_srcdir)/mk/depend.mk
