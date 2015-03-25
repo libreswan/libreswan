@@ -252,7 +252,10 @@ static struct encrypt_desc algo_aes_ccm_8 =
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	/*
+	 * Only 128, 192 and 256 are supported
+	 * (24 bits KEYMAT for salt not included)
+	 */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
@@ -270,7 +273,10 @@ static struct encrypt_desc algo_aes_ccm_12 =
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	/*
+	 * Only 128, 192 and 256 are supported
+	 * (24 bits KEYMAT for salt not included)
+	 */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
@@ -288,7 +294,10 @@ static struct encrypt_desc algo_aes_ccm_16 =
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	/*
+	 * Only 128, 192 and 256 are supported
+	 * (24 bits KEYMAT for salt not included)
+	 */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
@@ -578,7 +587,8 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @param that_client ip_subnet
  * @param spi
  * @param proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
- * @param transport_proto int (Currently unused) Contains protocol (u=tcp, 17=udp, etc...)
+ * @param transport_proto int (Currently unused) Contains protocol
+ *	(u=tcp, 17=udp, etc...)
  * @param esatype int
  * @param pfkey_proto_info proto_info
  * @param use_lifetime monotime_t (Currently unused)
@@ -662,7 +672,10 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				return TRUE;
 
 			break;
-		/* Do we really need %hold under NETKEY? Seems not so we just ignore. */
+		/*
+		 * Do we really need %hold under NETKEY?
+		 * Seems not so we just ignore.
+		 */
 		case SPI_HOLD:
 			return TRUE;
 		}
@@ -1057,7 +1070,10 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
 				algo.alg_trunc_len = 96;
-				/* fixup to the real number, not our private number */
+				/*
+				 * fixup to the real number,
+				 * not our private number
+				 */
 				sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
 				break;
 
@@ -1104,8 +1120,10 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		}
 	}
 
-	/* ??? why does IPCOMP trump aead and ESP?  Shouldn't all be bundled? */
-
+	/*
+	 * ??? why does IPCOMP trump aead and ESP?
+	 *  Shouldn't all be bundled?
+	 */
 	aead = get_aead_alg(sa->encalg);
 	if (sa->esatype == ET_IPCOMP) {
 		struct xfrm_algo algo;
@@ -1183,7 +1201,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &natt, sizeof(natt));
 
 		req.n.nlmsg_len += attr->rta_len;
-		attr = (struct rtattr *)((char *)attr + attr->rta_len);	/* ??? why is this not used? */
+		/* ??? why is this not used? */
+		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
 #ifdef HAVE_LABELED_IPSEC
@@ -1367,7 +1386,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 		case XFRMA_SEC_CTX:
 		{
 			struct xfrm_user_sec_ctx *xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
-			size_t len = xuctx->ctx_len;	/* length of text of label */
+			/* length of text of label */
+			size_t len = xuctx->ctx_len;
 
 			DBG(DBG_KERNEL,
 				DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%zu",
@@ -1386,7 +1406,10 @@ static void netlink_acquire(struct nlmsghdr *n)
 				return;
 			}
 
-			/* note: xuctx + 1 is tricky: first byte after header */
+			/*
+			 * note: xuctx + 1 is tricky:
+			 * first byte after header
+			 */
 			DBG(DBG_KERNEL,
 				DBG_log("xfrm: xuctx security context value: %.*s",
 					xuctx->ctx_len,
@@ -1415,7 +1438,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 			uctx->ctx.ctx_alg = xuctx->ctx_alg;
 			uctx->ctx.ctx_doi = xuctx->ctx_doi;
-			uctx->ctx.ctx_len = len;	/* Length includes '\0'*/
+			/* Length includes '\0'*/
+			uctx->ctx.ctx_len = len;
 
 			break;
 		}
@@ -1425,7 +1449,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 					attr->rta_type));
 			break;
 		}
-		attr = RTA_NEXT(attr, remaining);	/* updates remaining too */
+		/* updates remaining too */
+		attr = RTA_NEXT(attr, remaining);
 	}
 #endif
 
@@ -1849,7 +1874,10 @@ static bool netlink_shunt_eroute(struct connection *c,
 			eclipse_count--;
 			break;
 		case ERO_DELETE:
-			/* delete unnecessary: we don't actually have an eroute */
+			/*
+			 * delete unnecessary:
+			 * we don't actually have an eroute
+			 */
 			eclipse_count--;
 			return TRUE;
 
@@ -2028,7 +2056,10 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 		/* what if we didn't find a virtual interface? */
 		if (v == NULL) {
 			if (kern_interface == NO_KERNEL) {
-				/* kludge for testing: invent a virtual device */
+				/*
+				 * kludge for testing:
+				 * invent a virtual device
+				 */
 				static const char fvp[] = "virtual";
 
 				fake_v = *ifp;
@@ -2080,7 +2111,10 @@ add_entry:
 
 				/* search is over if at end of list */
 				if (q == NULL) {
-					/* matches nothing -- create a new entry */
+					/*
+					 * matches nothing --
+					 * create a new entry
+					 */
 					ipstr_buf b;
 					int fd = create_socket(ifp, v->name,
 							pluto_port);
@@ -2197,7 +2231,8 @@ add_entry:
 	}
 }
 
-/* netlink_get_sa - Get SA information from the kernel
+/*
+ * netlink_get_sa - Get SA information from the kernel
  *
  * @param sa Kernel SA to be queried
  * @return bool True if successful
