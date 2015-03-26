@@ -33,6 +33,7 @@ start() {
 	checkconfig || return 1
 
 	ebegin "Starting ${SVCNAME}"
+	${IPSEC_BINARY} --checknss
 	${IPSEC_BINARY} _stackmanager start
 	start-stop-daemon --start --pidfile "${PLUTO_PIDFILE}" \
 		--exec "${PLUTO_BINARY}" -- --config "${PLUTO_CONFFILE}" \

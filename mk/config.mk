@@ -30,9 +30,6 @@ include ${LIBRESWANSRCDIR}/mk/local.mk
 # OBJDIR et.al.
 include ${LIBRESWANSRCDIR}/mk/objdir.mk
 
-# Suck in the definition of the USERLAND_CFLAGS
-include ${LIBRESWANSRCDIR}/mk/userland-cflags.mk
-
 # Variables in this file with names starting with INC_ are not for use
 # by Makefiles which include it; they are subject to change without warning.
 #
@@ -489,3 +486,7 @@ OSMEDIA?=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os
 # Ubuntu media
 # OSTYPE?=ubuntu
 # OSMEDIA?=http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
+
+# Now that all the configuration variables are defined, use them to
+# define USERLAND_CFLAGS
+include ${LIBRESWANSRCDIR}/mk/userland-cflags.mk

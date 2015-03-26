@@ -99,7 +99,7 @@ bool orient(struct connection *c)
 				if (p->ike_float)
 					continue;
 
-				for (;; ) {
+				for (;;) {
 					/* check if this interface matches this end */
 					if (sameaddr(&sr->this.host_addr,
 						     &p->ip_addr) &&
