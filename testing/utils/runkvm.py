@@ -1,16 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
-import getopt, sys
+import sys
 import time
-import os, commands
+import os
+import subprocess
 import re
 from fab import shell
+import argparse
 
 try:
-    import argparse
     import pexpect
     import setproctitle
-except ImportError , e:
+except ImportError as e:
     module = str(e)[16:]
     sys.exit("we require the python module %s " % module)
 
@@ -40,16 +41,16 @@ def read_exec_shell_cmd( ex, filename, timer):
 def connect_to_kvm(args):
 
     prompt = str(shell.PromptPattern(username="root", hostname=args.hostname))
-    print "Shell prompt: " + prompt
+    print("Shell prompt: " + prompt)
 
-    vmlist = commands.getoutput("sudo virsh list")
+    vmlist = subprocess.getoutput("sudo virsh list")
     running = 0
     for line in vmlist.split("\n")[2:]:
        try:
             num,host,state = line.split()
             if host == args.hostname and state == "running":
                running = 1
-               print "Found %s running already" % args.hostname
+               print("Found %s running already" % args.hostname)
                continue
        except:
                pass
@@ -57,55 +58,56 @@ def connect_to_kvm(args):
     if args.reboot:
        waittime = 20
        if not running:
-            print "Booting %s - pausing %s seconds" % (args.hostname,waittime)
-            commands.getoutput("sudo virsh start %s" % args.hostname)
+            print("Booting %s - pausing %s seconds" % (args.hostname,waittime))
+            subprocess.getoutput("sudo virsh start %s" % args.hostname)
             time.sleep(waittime)
        else:
-            commands.getoutput("sudo virsh reboot %s" % args.hostname)
-            print "Rebooting %s - pausing %s seconds" % (args.hostname,waittime)
+            subprocess.getoutput("sudo virsh reboot %s" % args.hostname)
+            print("Rebooting %s - pausing %s seconds" % (args.hostname,waittime))
             time.sleep(waittime)
 
-    print "Taking %s console by force" % args.hostname
+    print("Taking %s console by force" % args.hostname)
     cmd = "sudo virsh console --force %s" % args.hostname
     timer = 120
-    child = pexpect.spawn(cmd)
+    # Need to use spawnu with python3.
+    child = pexpect.spawnu(cmd)
     child.delaybeforesend = 0
     child.logfile = sys.stdout
 
     done = 0
     tries = 60
-    print "Waiting on %s login: or shell prompt" % (args.hostname)
+    print("Waiting on %s login: or shell prompt" % (args.hostname))
     while not done and tries != 0:
       try:
-        print "sending ctrl-c return"
+        print("sending ctrl-c return")
         #child = pexpect.spawn (cmd)
         #child.sendcontrol('c')
         child.sendline ('')
-        print "found, waiting on login: or shell prompt"
+        print("found, waiting on login: or shell prompt")
         res = child.expect (['login: ', prompt], timeout=3) 
-	if res == 0:
-           print "sending login name root"
+        if res == 0:
+           print("sending login name root")
            child.sendline ('root')
-           print "found, expecting password prompt"
+           print("found, expecting password prompt")
            child.expect ('Password:', timeout=1)
-           print "found, sending password"
+           print("found, sending password")
            child.sendline ('swan')
-           print "waiting on root shell prompt"
+           print("waiting on root shell prompt")
            child.expect ('root.*', timeout=1)
-           print "done"
+           print("done")
            done = 1
         elif res == 1:
-          print  '----------------------------------------------------'
-          print  'Already logged in as root on %s' % args.hostname
-          print  '----------------------------------------------------'
+          print('----------------------------------------------------')
+          print('Already logged in as root on %s' % args.hostname)
+          print('----------------------------------------------------')
           done = 1
       except:
-        print "(%s [%s] waiting)" % (args.hostname,tries)
+        print("(%s [%s] waiting)" % (args.hostname,tries))
         tries -= 1
         time.sleep(1)
  
     if not done:
-        print 'console is not answering on host %s, aborting'%args.hostname
+        print('console is not answering on host %s, aborting'%args.hostname)
         return 0
 
     return child
@@ -151,9 +153,9 @@ def run_test(args, child):
     # do we need to prep x509?
     if args.x509:
 	# call to runkvm.py forced it
-	x509 = "--x509"
+        x509 = "--x509"
     else:
-	x509 = ""
+        x509 = ""
 	
     cmd = "./%sinit.sh" %  (args.hostname) 
     read_exec_shell_cmd(child, cmd, timer)
