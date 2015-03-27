@@ -68,20 +68,20 @@ KVM_REBOOT_TARGETS = $(patsubst %,kvm-reboot-%,$(KVM_HOSTS))
 $(KVM_REBOOT_TARGETS):
 	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --reboot
 
-KVM_COMPILE_TARGETS = $(patsubst %,kvm-compile-%,$(KVM_HOSTS))
-#.PHONY: $(KVM_COMPILE_TARGETS)
-#$(KVM_COMPILE_TARGETS):
-kvm-compile-%: kvm-print-% kvm-reboot-%
-	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --compile
+KVM_BUILD_TARGETS = $(patsubst %,kvm-build-%,$(KVM_HOSTS))
+#.PHONY: $(KVM_BUILD_TARGETS)
+#$(KVM_BUILD_TARGETS):
+kvm-build-%: kvm-print-% kvm-reboot-%
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --run ./testing/guestbin/swan-build
 
 KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
 #.PHONY: $(KVM_INSTALL_TARGETS)
 #$(KVM_INSTALL_TARGETS):
 kvm-install-%: kvm-print-% kvm-reboot-%
-	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --install
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --run ./testing/guestbin/swan-install
 
 .PHONY: kvm-update
-kvm-update: kvm-compile-east | $(KVM_INSTALL_TARGETS)
+kvm-update: kvm-build-east | $(KVM_INSTALL_TARGETS)
 
 KVM_EXCLUDE = bad|wip|incomplete
 KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')

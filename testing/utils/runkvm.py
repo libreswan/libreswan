@@ -5,8 +5,9 @@ import time
 import os
 import subprocess
 import re
-from fab import shell
 import argparse
+from fab import shell
+from fab import argutil
 
 try:
     import pexpect
@@ -181,7 +182,8 @@ def main():
     parser.add_argument('--sourcedir', action='store', default='/source', help='source <directory> to build')
     parser.add_argument('--testdir', action='store', default='/testing', help='test <directory> to run tests from')
     parser.add_argument('--run', action='store', help='run <command> then exit')
-    parser.add_argument('--runtime', type=float, default=120, help='max run-time (timeout) for the run command')
+    parser.add_argument('--runtime', type=argutil.timeout, default=None,
+                        help='max run-time (timeout) for the run command (default infinite)')
     # unused parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
 
