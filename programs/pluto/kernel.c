@@ -2542,9 +2542,9 @@ bool install_inbound_ipsec_sa(struct state *st)
  * Any SA Group must have already been created.
  * On failure, steps will be unwound.
  */
-bool route_and_eroute(struct connection *c USED_BY_KLIPS,
-		      struct spd_route *sr USED_BY_KLIPS,
-		      struct state *st USED_BY_KLIPS)
+bool route_and_eroute(struct connection *c,
+		      struct spd_route *sr,
+		      struct state *st)
 {
 	struct spd_route *esr;
 	struct spd_route *rosr;
@@ -2868,7 +2868,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 	}
 }
 
-bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
+bool install_ipsec_sa(struct state *st, bool inbound_also)
 {
 	struct spd_route *sr;
 	enum routability rb;
