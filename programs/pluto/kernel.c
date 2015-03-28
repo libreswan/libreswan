@@ -822,14 +822,7 @@ void unroute_connection(struct connection *c)
 		if (erouted(cr)) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
-			if (kernel_ops->shunt_eroute != NULL) {
-				kernel_ops->shunt_eroute(c, sr, RT_UNROUTED,
-							 ERO_DELETE, "delete");
-			} else {
-				loglog(RC_COMMENT,
-					"no shunt_eroute implemented for %s interface",
-					kernel_ops->kern_name);
-			}
+			shunt_eroute(c, sr, RT_UNROUTED, ERO_DELETE, "delete");
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
