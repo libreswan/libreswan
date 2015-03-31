@@ -2,12 +2,12 @@
 .\"     Title: IPSEC.CONF
 .\"    Author: Paul Wouters
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 01/14/2015
+.\"      Date: 03/31/2015
 .\"    Manual: Executable programs
 .\"    Source: libreswan
 .\"  Language: English
 .\"
-.TH "IPSEC\&.CONF" "5" "01/14/2015" "libreswan" "Executable programs"
+.TH "IPSEC\&.CONF" "5" "03/31/2015" "libreswan" "Executable programs"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -327,7 +327,14 @@ allowed protocols and ports over connection, also called Port Selectors\&. The a
 \fI/etc/services\fR\&. A special keyword
 \fI%any\fR
 can be used to allow all ports of a certain protocol\&. The most common use of this option is for L2TP connections to only allow l2tp packets (UDP port 1701), eg:
-\fIleftprotoport=17/1701\fR\&. Some clients, notably older Windows XP and some Mac OSX clients, use a random high port as source port\&. In those cases
+\fIleftprotoport=17/1701\fR\&.
+.sp
+To filter on specific icmp type and code, use the higher 8 bits for type and the lower 8 bits for port\&. For example, to allow icmp echo packets (type 8, code 0) the \*(Aqport\*(Aq would be 0x0800, or 2048 in decimal, so you configure
+\fIleftprotoport=icmp/2048\fR\&. Similarly, to allow ipv6\-icmp Neighbour Discovery which has type 136 (0x88) and code 0(0x00) this becomes 0x8800 or in decimal 34816 resulting in
+\fIleftprotoport=ipv6\-icmp/34816\fR
+\&.
+.sp
+Some clients, notably older Windows XP and some Mac OSX clients, use a random high port as source port\&. In those cases
 \fIrightprotoport=17/%any\fR
 can be used to allow all UDP traffic on the connection\&. Note that this option is part of the proposal, so it cannot be arbitrarily left out if one end does not care about the traffic selection over this connection \- both peers have to agree\&. The Port Selectors show up in the output of
 \fIipsec eroute\fR
@@ -430,14 +437,18 @@ used to be called
 \fBauthby\fR
 .RS 4
 how the two security gateways should authenticate each other; acceptable values are
-\fBsecret\fR
-for shared secrets,
 \fBrsasig\fR
-for RSA digital signatures (the default),
+(the default) for RSA digital signatures based authentication,
+\fBsecret\fR
+for shared secrets (PSK) authentication,
 \fBsecret|rsasig\fR
-for either, and
+for either,
 \fBnever\fR
-if negotiation is never to be attempted or accepted (useful for shunt\-only conns)\&. Digital signatures are superior in every way to shared secrets\&.
+if negotiation is never to be attempted or accepted (useful for shunt\-only conns), and
+\fBnull\fR
+for null\-authentication\&.
+.sp
+Digital signatures are superior in every way to shared secrets\&. Especially IKEv1 in Aggressive Mode is vulnerable to offline dictionary attacks and is performed routinely by at least the NSA on monitored internet traffic globally\&. The never option is only used for connections that do not actually start an IKE negotiation, such as type=passthrough connections\&. The auth method null is used for "anonymous opportunistic IPsec" and should not be used for regular pre\-configured IPsec VPNs\&.
 .RE
 .PP
 \fBike\fR
@@ -453,6 +464,8 @@ symbol) between "strict mode" or not\&. That mode has been obsoleted\&. If an
 option is specified, the mode is always strict, meaning no other received proposals will be accepted\&. Some examples are
 \fBike=3des\-sha1,aes\-sha1\fR,
 \fBike=aes\fR,
+\fBike=aes_ctr\fR,
+\fBike=aes_gcm256\-sha2\fR,
 \fBike=aes128\-md5;modp2048\fR,
 \fBike=aes128\-sha1;dh22\fR,
 \fBike=3des\-md5;modp1024,aes\-sha1;modp1536\fR\&. The options must be suitable as a value of
@@ -473,6 +486,8 @@ option\&. The default is to use IKE, and to allow all combinations of:
 .if n \{\
 .RE
 .\}
+.sp
+Note that AES\-GCM is an AEAD algorithm, meaning that it performs encryption+authentication in one step\&. This means that AES\-GCM must not specify an authentication algorithm\&. However, it does require a PRF function, so the second argument to an AEAD algorithm denotes the PRF\&. So ike=aes_gcm\-sha2 means propose AES_GCM with no authentication and using SHA2 as the prf\&. Note that for phase2alg, there is no prf, so AES\-GCM is specified for ESP as phase2=aes_gcm\-null\&. The AES\-GCM and AES\-CCM algorithms support 8,12 and 16 byte ICV\*(Aqs\&. These can be specified using a postfix, for example aes_gcm_a (for 8), aes_gcm_b (for 12) and aes_gcm_c (for 16)\&. The default (aes_gcm without postfix) refers to the 16 byte ICV version\&. It is strongly recommended to NOT use the 8 or 12 byte versions of GCM or CCM\&.
 .sp
 Weak algorithms are regularly removed from libreswan\&. Currently, 1DES and modp768 have been removed and modp1024 will be removed in the near future\&. Additionally, md5 and sha1 will be removed within the next few years\&. Null encryption is available, and should only be used for testing or benchmarking purposes\&. Please do not request for insecure algorithms to be re\-added to libreswan\&.
 .sp
@@ -506,18 +521,20 @@ For RFC\-5114 DH groups, use the "dh" keyword, eg "aes256\-sha1;dh23"
 .sp
 The format for AH is AUTH followed by an optional PFSgroup\&. For instance, "md5" or "sha1;modp1536"\&.
 .sp
-AES\-GCM and AES\-CCM use a syntax like
+AEAD algorithms such as AES\-GCM and AES\-CCM require null for the authentication algorithm, for example
 \fIphase2alg=aes_ccm\-null\fR
 or
-\fIphase2alg=aes_gcm\-null\fR\&. This syntax is also used for the ike= option\&. The supported key sizes are 128, 192 and 256, which are specified similarly to plain aes, i\&.e\&.
+\fIphase2alg=aes_gcm\-null\fR\&. Note that the ike= syntax for aes_gcm does not specify a null authentication but specifies the prf instead\&. The supported key sizes are 128, 192 and 256, which are specified similarly to plain aes, i\&.e\&.
 \fIphase2alg=aes_gcm256\fR\&. A subscript of
 \fI_c\fR,
 \fI_b\fR
 or
 \fI_a\fR
-can be used to refer to the different ICV variants where a means 8 bytes, b means 12 bytes and c means 16 bytes\&. The default when not using a subscript is the 16 byte ICV, the recommended value by RFC\-4106\&. Therefor phase2alg=aes_gcm256\-null is equivalent to phase2alg=aes_gcm_c256\-null\&. It is recommended to migrate to the _c versions (without specifying _c), as support for smaller ICV\*(Aqs might be removed in the future\&.
+can be used to refer to the different ICV variants where a means 8 bytes, b means 12 bytes and c means 16 bytes\&. The default when not using a subscript is the 16 byte ICV, the recommended value by RFC\-4106\&. Therefor phase2alg=aes_gcm256\-null is equivalent to phase2alg=aes_gcm_c256\-null\&. It is recommended to migrate to the _c versions (without specifying _c), as support for smaller ICV\*(Aqs might be removed in the near future\&.
 .sp
-Note that openswan and versions of libreswan up to 3\&.6 require adding the salt size to the key size\&. Therefor, to interop with an older version of openswan or libreswan, use: "phase2alg=aes_ccm_c\-280\-null"\&. For CCM, the \*(Aqkeysize\*(Aq needs to be increased by 24, resulted in valid keysizes of 152, 215 and 280\&. For GCM the \*(Aqkeysize\*(Aq needs to be increased by 32, resulting valid \*(Aqkeysizes\*(Aq of 160, 224 and 288\&.
+The supported algorithms depend on the libreswan version, OS and kernel stack used\&. Possible ciphers are aes, 3des, aes_ctr, aes_gcm, aes_ccm, camellia, serpent and twofish\&.
+.sp
+Note that openswan and versions of libreswan up to 3\&.6 require manually adding the salt size to the key size\&. Therefor, to configure an older version of openswan or libreswan, use: "phase2alg=aes_ccm_c\-280\-null" to interop with a new libreswan using "phase2alg=aes_ccm256"\&. For CCM, the \*(Aqkeysize\*(Aq needs to be increased by 24, resulted in valid keysizes of 152, 215 and 280\&. For GCM the \*(Aqkeysize\*(Aq needs to be increased by 32, resulting valid \*(Aqkeysizes\*(Aq of 160, 224 and 288\&.
 .RE
 .PP
 \fBsha2\-truncbug\fR
@@ -1141,24 +1158,13 @@ and
 Whether labeled IPsec should be enabled or not; acceptable values are
 \fBno\fR
 (the default) and
-\fByes\fR\&. See also loopback=, policy\-label= and secctx\-attr\-type=
+\fByes\fR\&. See also policy\-label= and secctx\-attr\-type=
 .RE
 .PP
 \fBpolicy\-label\fR
 .RS 4
 The string representation of an access control security label that is interpreted by the LSM (e\&.g\&. SELinux) for use with Labeled IPsec\&. See also loopback=, labeled\-ipsec= and secctx\-attr\-type=\&. For example,
 \fIpolicy\-label=system_u:object_r:ipsec_spd_t:s0\-s15:c0\&.c1023\fR
-.RE
-.PP
-\fBloopback\fR
-.RS 4
-Whether labeled IPsec loopback should be enabled or not; acceptable values are
-\fBno\fR
-(the default) or yes\&. Note that some Linux kernels disable some XFRM/NETKEY functions required for loopback that can prevent Labeled IPsec from working correctly\&. Ensure that both
-\fI/proc/sys/net/ipv4/conf/lo/disable_xfrm\fR
-and
-\fI/proc/sys/net/ipv4/conf/lo/disable_policy\fR
-are set to 0\&.
 .RE
 .PP
 \fBfailureshunt\fR
@@ -1441,18 +1447,27 @@ file to contain
 \fBsystemd.service\fR(5)
 .RE
 .PP
-\fBplutostderrlog\fR
+\fBlogfile\fR
 .RS 4
-do not use syslog, but rather log to stderr, and direct stderr to the argument file\&.
+do not use syslog, but rather log to stderr, and direct stderr to the argument file\&. This option used to be called plutostderrlog=
 .RE
 .PP
-\fBplutostderrlogtime\fR
+\fBlogappend\fR
 .RS 4
-Whether pluto logs messages with the current timestamp as prefix\&. This might be desired when using
-\fBplutostderrlog=\fR, which per default does not log timestamps, as the output is used for the test suite and would have to be filtered out\&. Values are
-\fBno\fR(the default) or
+If pluto is instructed to log to a file using
+\fBlogfile=\fR, this option determines whether the log file should be appended to or overwritten\&. Valid options are
 \fByes\fR
-\&.
+(the default) to append and
+\fBno\fR
+to overwrite\&. Since on modern systems, pluto is restarted by other daemons, such as systemd, this option should be left at its default yes value to preserve the log entries of previous runs of pluto\&. The option is mainly of use for running the test suite, which needs to create new log files from scratch\&.
+.RE
+.PP
+\fBlogtime\fR
+.RS 4
+When pluto is directed to log to a file using
+\fBlogfile=\fR, this option determines whether or not to log the current timestamp as prefix\&. Values are
+\fByes\fR(the default) or
+\fBno\fR\&. The no value can be used to create logs without ephemeral timestamps, such as those created when running the test suite\&. This option used to be called plutostderrlogtime=
 .RE
 .PP
 \fBforce\-busy\fR
@@ -1465,7 +1480,7 @@ and take counter measures\&. The value can be
 \fIyes\fR\&. If enabled, pluto will be forced to be "busy"\&. In this state, which happens when there is a Denial of Service attack, pluto will use cookies before accepting new incoming IKE packets\&. Cookies are send and required for IKEv1 Aggressive Mode and in IKEv2\&. This option is mostly used for testing purposes, but can be selected by paranoid administrators as well\&.
 .RE
 .PP
-\fBddos\-ike\-treshold\&.xml\fR
+\fBddos\-ike\-treshold\fR
 .RS 4
 The number of half\-open IKE SAs before the pluto IKE daemon will be placed in busy mode\&. When in busy mode, pluto activates anti\-DDoS counter measures\&. The default is 25000\&. Currently, counter measures consist of requiring IKEv2 anti\-DDoS cookies on new incoming IKE requests\&. The IKE daemon can be forced into busy mode using
 \fIipsec whack \-\-busy\fR
