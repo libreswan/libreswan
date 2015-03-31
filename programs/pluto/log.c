@@ -81,9 +81,9 @@ bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
 	log_to_perpeer = FALSE,		/* should log go to per-IP file? */
-	log_with_timestamp = FALSE,	/* some people want timestamps, but we
-					 * don't want those in our test output */
-	log_to_audit = FALSE;		/* audit log messages for kernel */
+	log_with_timestamp = TRUE,	/* testsuite requires no timestamps */
+	log_to_audit = FALSE,		/* audit log messages for kernel */
+	log_append = TRUE;
 
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
@@ -134,7 +134,8 @@ void pluto_init_log(void)
 		setbuf(stderr, NULL);
 
 	if (pluto_log_file != NULL) {
-		pluto_log_fp = fopen(pluto_log_file, "w");
+		pluto_log_fp = fopen(pluto_log_file,
+			log_append ? "a" : "w");
 		if (pluto_log_fp == NULL) {
 			fprintf(stderr,
 				"Cannot open logfile '%s': %s\n",
@@ -711,7 +712,7 @@ int DBG_log(const char *message, ...)
 		if (log_with_timestamp)
 			prettynow(buf, sizeof(buf), "%b %e %T: ");
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%c %s%s\n", debug_prefix, buf, m);
+			"%s%c %s\n", buf, debug_prefix, m);
 	}
 	if (log_to_syslog)
 		syslog(LOG_DEBUG, "%c %s", debug_prefix, m);

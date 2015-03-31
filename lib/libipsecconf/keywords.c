@@ -336,10 +336,11 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  &kw_klipsdebug_list },
 	{ "plutodebug",     kv_config, kt_list,      KBF_PLUTODEBUG,
 	  &kw_plutodebug_list },
-	{ "plutostderrlog", kv_config, kt_filename,  KSF_PLUTOSTDERRLOG,
-	  NOT_ENUM },
-	{ "plutostderrlogtime",        kv_config, kt_bool,
-	  KBF_PLUTOSTDERRLOGTIME, NOT_ENUM },
+	{ "logfile", kv_config, kt_filename,  KSF_PLUTOSTDERRLOG, NOT_ENUM },
+	{ "plutostderrlog", kv_config | kv_alias, kt_filename,  KSF_PLUTOSTDERRLOG, NOT_ENUM }, /* obsolete */
+	{ "logtime",        kv_config, kt_bool, KBF_PLUTOSTDERRLOGTIME, NOT_ENUM },
+	{ "plutostderrlogtime",        kv_config | kv_alias, kt_bool, KBF_PLUTOSTDERRLOGTIME, NOT_ENUM }, /* obsolete */
+	{ "logappend",        kv_config, kt_bool, KBF_PLUTOSTDERRLOGAPPEND, NOT_ENUM },
 	{ "plutorestartoncrash", kv_config, kt_bool, KBF_PLUTORESTARTONCRASH,
 	  NOT_ENUM },
 	{ "dumpdir",        kv_config, kt_dirname,   KSF_DUMPDIR, NOT_ENUM },

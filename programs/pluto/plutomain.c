@@ -455,7 +455,8 @@ static const struct option long_opts[] = {
 	{ "nofork\0", no_argument, NULL, 'd' },
 	{ "stderrlog\0", no_argument, NULL, 'e' },
 	{ "logfile\0<filename>", required_argument, NULL, 'g' },
-	{ "plutostderrlogtime\0", no_argument, NULL, 't' },
+	{ "log-no-time\0", no_argument, NULL, 't' }, /* was --plutostderrlogtime */
+	{ "log-no-append\0", no_argument, NULL, '7' },
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
 	{ "force-unlimited\0", no_argument, NULL, 'U' },
@@ -810,8 +811,12 @@ int main(int argc, char **argv)
 			log_to_file_desired = TRUE;
 			continue;
 
-		case 't':	/* --plutostderrlogtime */
-			log_with_timestamp = TRUE;
+		case 't':	/* --log-no-time */
+			log_with_timestamp = FALSE;
+			continue;
+
+		case '7':	/* --log-no-append */
+			log_append = FALSE;
 			continue;
 
 		case 'k':	/* --use-klips */
@@ -1029,10 +1034,13 @@ int main(int argc, char **argv)
 			/* leak */
 			set_cfg_string(&pluto_log_file,
 				cfg->setup.strings[KSF_PLUTOSTDERRLOG]);
+			if (pluto_log_file != NULL)
+				log_to_syslog = FALSE;
 			/* plutofork= */
 			fork_desired = cfg->setup.options[KBF_PLUTOFORK];
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
+			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
 			pluto_ddos_mode = cfg->setup.options[KSF_DDOS_MODE];
 			if (cfg->setup.options[KBF_FORCEBUSY]) {
 				/* obsoleted */
