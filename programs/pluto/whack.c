@@ -164,7 +164,7 @@ static void help(void)
 		"	[--listcacerts]  [--listacerts] [--listaacerts] \\\n"
 		"	[--listgroups] [--listcrls] [--listpsks] [--listall]\n"
 		"\n"
-		"purge: whack --listall [--purgeocsp]\n"
+		"purge: whack --purgeocsp\n"
 		"\n"
 		"reread: whack [--rereadsecrets] [--rereadcacerts] \\\n"
 		"	[--rereadaacerts]  [--rereadacerts] \\\n"
