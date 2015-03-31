@@ -238,6 +238,9 @@ struct whack_message {
 	bool whack_deleteid;
 	bool whack_deleteid_name;
 
+	/* for WHACK_PURGEOCSP */
+	bool whack_purgeocsp;
+
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
 

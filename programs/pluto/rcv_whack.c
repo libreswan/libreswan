@@ -460,6 +460,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 	}
 #endif
 
+	if (msg.whack_purgeocsp)
+		clear_ocsp_cache();
+
 	if (msg.whack_reread & REREAD_CRLS)
 		load_crls();
 

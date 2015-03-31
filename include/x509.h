@@ -78,6 +78,7 @@ extern chunk_t get_directoryName(chunk_t blob, int level, bool implicit);
 extern void load_crls(void);
 extern void list_authcerts(void);
 extern void list_crls(void);
+extern void clear_ocsp_cache(void);
 
 /*
  * New NSS x509 converted functions

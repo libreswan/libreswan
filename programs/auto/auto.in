@@ -25,6 +25,7 @@ usage="Usage:
 	${me} [--showonly] [--utc] --checkpubkeys
 	${me} [--showonly] [--utc] --{listcacerts|listgroups}
 	${me} [--showonly] [--utc] --{listcrls|listall}
+	${me} [--showonly] [--utc] --purgeocsp
 
 	other options: [--config ipsecconfigfile] [--verbose]"
 
@@ -77,7 +78,7 @@ do
 	--listpubkeys|--listcerts|\
 	--checkpubkeys|\
 	--listcacerts|--listgroups|\
-	--listcrls|--listall)
+	--listcrls|--listall|--purgeocsp)
 	    if [ " ${op}" != " " ]; then
 		echo "${usage}" >&2
 		exit 2
@@ -179,6 +180,10 @@ case "${op}" in
 	;;
     --listall)
 	${showonly} ipsec whack ${utc} --listall
+	exit
+	;;
+    --purgeocsp)
+	${showonly} ipsec whack ${utc} --listall --purgeocsp
 	exit
 	;;
     --up)

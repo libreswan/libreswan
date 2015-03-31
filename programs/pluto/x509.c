@@ -78,6 +78,7 @@
 #include <secoid.h>
 #include <secerr.h>
 #include <secder.h>
+#include <ocsp.h>
 
 bool strict_crl_policy = FALSE;
 
@@ -1732,4 +1733,10 @@ void list_crls(void)
 void list_authcerts(void)
 {
 	cert_detail_list(CERT_TYPE_CA);
+}
+
+void clear_ocsp_cache(void)
+{
+	DBG(DBG_X509, DBG_log("calling NSS to clear OCSP cache"));
+	(void)CERT_ClearOCSPCache();
 }
