@@ -1,9 +1,3 @@
-ifndef top_srcdir
-include ../../mk/dirs.mk
-endif
-
-include $(top_srcdir)/mk/config.mk
-include $(top_srcdir)/mk/version.mk
 
 CFLAGS+=-DIPSEC_DEBUG -DIPSEC
 CFLAGS+=-DINET6
@@ -26,4 +20,8 @@ LIBRARY=bsdpfkey
 LIB=libbsdpfkey.a
 ONEFILE=pfkey.c
 
+ifdef top_srcdir
 include $(top_srcdir)/mk/library.mk
+else
+include ../../mk/library.mk
+endif

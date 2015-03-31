@@ -1,9 +1,3 @@
-ifndef top_srcdir
-include ../../../mk/dirs.mk
-endif
-
-include $(top_srcdir)/mk/config.mk
-include $(top_srcdir)/mk/version.mk
 
 OBJS := sha2.o
 
@@ -12,4 +6,8 @@ LIBRARY=crypto/libsha2
 LIB=libsha2.a
 INCLUDES+=-I${SRCDIR}../include
 
+ifdef top_srcdir
 include $(top_srcdir)/mk/library.mk
+else
+include ../../../mk/library.mk
+endif
