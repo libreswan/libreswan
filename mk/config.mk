@@ -172,7 +172,9 @@ VERFILE=$(KERNELSRC)/include/linux/version.h
 OSMOD_DESTDIR?=net/ipsec
 
 # What command to use to load the modules. openwrt does not have modprobe
-MODPROBE?=modprobe -q
+# Using -b enables blacklisting - this is needed for some known bad
+# versions of crypto acceleration modules.
+MODPROBE?=modprobe -q -b
 
 ### misc installation stuff
 
