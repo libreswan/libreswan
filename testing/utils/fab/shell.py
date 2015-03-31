@@ -13,9 +13,9 @@
 # for more details.
 
 import os
-import sys
 import logging
 import random
+import pexpect
 
 TIMEOUT = 10
 SEARCH_WINDOW_SIZE = 100
@@ -90,23 +90,56 @@ class PromptPattern:
             self.status = None
         logging.debug("prompt status: %s", self.status)
 
+# This file-like class passes all writes on to the LOGGER at the
+# specified LEVEL.  It is is used to direct pexpect's .logfile_read
+# and .logfile_send files into the logging system.
+
+class Debug:
+
+    def __init__(self, logger, level, message):
+        self.logger = logger
+        self.level = level
+        self.message = message
+
+    def close(self):
+        pass
+
+    def write(self, text):
+        self.logger.log(self.level, self.message, ascii(text))
+
+    def flush(self):
+        pass
+
 class Remote:
 
-    def __init__(self, child, hostname, username):
-        self.child = child
+    def __init__(self, command, hostname=None, username=None,
+                 logger=logging.getLogger(),
+                 level=logging.DEBUG):
+        self.child = pexpect.spawnu(command)
         self.basename = None
+        self.hostname = hostname
+        self.username = username
         self.prompt = PromptPattern(hostname=hostname, username=username)
-        # get it into the expected mode
-        self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
-        # force a sync, use a random number
+        # Interpret a -ve timeout parameter as a poll.
+        self.child.timeout = 0
+        # route low level output to the logger
+        self.child.logfile_read = Debug(logger, level, "read <<%s>>>")
+        self.child.logfile_send = Debug(logger, level, "send <<%s>>>")
+
+    def sync(self, hostname=None, username=None):
+        self.hostname = hostname or self.hostname
+        self.username = username or self.username
+        # Update the expected prompt
+        self.hostname = hostname
+        self.username = username
+        self.prompt = PromptPattern(hostname=self.hostname, username=self.username)
+        # force a prompt sync using a random number
         number = str(random.randrange(1000000, 100000000))
         self.run("echo sync=" + number + "=sync", expect="sync=" + number + "=sync\\s*")
         # Fix the prompt
         self.run("PS1='" + PS1 + "'")
-
-    def echo(self):
-        # get it back into echo mode for interactive use
-        self.run('export TERM=dumb; unset LS_COLORS; stty sane')
+        # Set noecho the PTY inside the VM (not pexpect's PTY).
+        self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
 
     def run(self, command, expect="", timeout=TIMEOUT):
         logging.debug("shell send '%s'", command)
@@ -122,3 +155,13 @@ class Remote:
     def chdir(self, directory):
         self.basename = os.path.basename(directory)
         return self.run("cd %s" % directory)
+
+    def output(self, logfile=None):
+        logfile, self.child.logfile = self.child.logfile, logfile
+        return logfile
+
+    def sendline(self, line):
+        return self.child.sendline(line)
+
+    def expect(self, expected, timeout=None):
+        return self.child.expect(expected, timeout=timeout)

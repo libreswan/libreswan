@@ -6,6 +6,7 @@ import os
 import subprocess
 import re
 import argparse
+import logging
 from fab import shell
 from fab import argutil
 
@@ -16,13 +17,9 @@ except ImportError as e:
     module = str(e)[16:]
     sys.exit("we require the python module %s " % module)
 
-# XXX: Hack so that shell.Remote can be used.  Should be passed around
-# instead of CHILD.
-REMOTE = None
-
 # XXX: This function's behaviour should not depend on the presence of
 # FILENAME.
-def read_exec_shell_cmd( ex, filename, timer):
+def read_exec_shell_cmd(child, filename, timer):
     if os.path.exists(filename):
         f_cmds = None
         try:
@@ -32,12 +29,12 @@ def read_exec_shell_cmd( ex, filename, timer):
                 # We need the lines with # for the cut --- tuc
                 # sections if line and not line[0] == '#':
                 if line:
-                    REMOTE.run(line, timeout=timer)
+                    child.run(line, timeout=timer)
         finally:
             if f_cmds:
                 f_cmds.close
     else:
-        REMOTE.run(filename, timeout=timer)
+        child.run(filename, timeout=timer)
 
 def connect_to_kvm(args):
 
@@ -71,9 +68,8 @@ def connect_to_kvm(args):
     cmd = "sudo virsh console --force %s" % args.hostname
     timer = 120
     # Need to use spawnu with python3.
-    child = pexpect.spawnu(cmd)
-    child.delaybeforesend = 0
-    child.logfile = sys.stdout
+    child = shell.Remote(cmd, hostname=args.hostname, username="root")
+    child.output(sys.stdout)
 
     done = 0
     tries = 60
@@ -94,7 +90,7 @@ def connect_to_kvm(args):
            print("found, sending password")
            child.sendline ('swan')
            print("waiting on root shell prompt")
-           child.expect ('root.*', timeout=1)
+           child.expect (prompt, timeout=1)
            print("done")
            done = 1
         elif res == 1:
@@ -109,7 +105,10 @@ def connect_to_kvm(args):
  
     if not done:
         print('console is not answering on host %s, aborting'%args.hostname)
-        return 0
+        return None
+
+    # Make certain that both ends are in sync and set up as expected.
+    child.sync()
 
     return child
 
@@ -124,19 +123,19 @@ def run_final (args, child):
     f.close 
     return
 
-def compile_on(args, remote):
-    remote.chdir(args.sourcedir)
+def compile_on(args, child):
+    child.chdir(args.sourcedir)
     timer = 900
     cmd = "%s/testing/guestbin/swan-build" % (args.sourcedir)
-    status = remote.run(cmd, timeout=timer)
+    status = child.run(cmd, timeout=timer)
     if status:
         sys.exit(status)
 
-def make_install(args, remote):
-    remote.chdir(args.sourcedir)
+def make_install(args, child):
+    child.chdir(args.sourcedir)
     timer=300
     cmd = "%s/testing/guestbin/swan-install" % (args.sourcedir)
-    status = remote.run(cmd, timeout=timer)
+    status = child.run(cmd, timeout=timer)
     if status:
         sys.exit(status)
 
@@ -145,7 +144,7 @@ def run_test(args, child):
     #print 'TEST : ', args.testname
 
     timer = 120
-    REMOTE.chdir("%s/pluto/%s " % (args.testdir, args.testname))
+    child.chdir("%s/pluto/%s " % (args.testdir, args.testname))
 
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'w') 
@@ -184,30 +183,28 @@ def main():
     parser.add_argument('--run', action='store', help='run <command> then exit')
     parser.add_argument('--runtime', type=argutil.timeout, default=None,
                         help='max run-time (timeout) for the run command (default infinite)')
+    parser.add_argument("--log-level", default="warning", metavar="LEVEL",
+                        help="Set logging level to %(metavar)s (default: %(default)s)")
     # unused parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
     args = parser.parse_args()
 
-    if args.final:
-        child = connect_to_kvm(args)
-    else :
-        child = connect_to_kvm(args) 
+    logging.basicConfig(level=args.log_level.upper())
+
+    child = connect_to_kvm(args)
 
     if not child:
         sys.exit("Failed to launch/connect to %s - aborted" % args.hostname)
 
-    # This puts the remote end into the correct stty mode.
-    REMOTE = shell.Remote(child, hostname=args.hostname, username="root")
-
     if args.run:
-        REMOTE.chdir(args.sourcedir)
-        status = REMOTE.run(args.run, timeout=args.runtime)
+        child.chdir(args.sourcedir)
+        status = child.run(args.run, timeout=args.runtime)
         sys.exit(status)
 
     if args.compile:
-        compile_on(args, REMOTE) 
+        compile_on(args, child)
 
     if args.install:
-        make_install(args, REMOTE) 
+        make_install(args, child)
 
     if (args.testname and not args.final):
         run_test(args,child)
