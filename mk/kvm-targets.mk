@@ -59,26 +59,26 @@ $(KVM_RUN_TARGETS):
 	: KVM_SOURCEDIR: $(KVM_SOURCEDIR)
 	: KVM_HOST: $(KVM_HOST)
 	test '$(RUN)' != ""
-	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --run '$(RUN)'
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) $(KVM_HOST) '$(RUN)'
 .PHONY: kvm-run
 kvm-run: $(KVM_RUN_TARGETS)
 
 KVM_REBOOT_TARGETS = $(patsubst %,kvm-reboot-%,$(KVM_HOSTS))
 .PHONY: $(KVM_REBOOT_TARGETS)
 $(KVM_REBOOT_TARGETS):
-	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --reboot
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --reboot $(KVM_HOST)
 
 KVM_BUILD_TARGETS = $(patsubst %,kvm-build-%,$(KVM_HOSTS))
 #.PHONY: $(KVM_BUILD_TARGETS)
 #$(KVM_BUILD_TARGETS):
 kvm-build-%: kvm-print-% kvm-reboot-%
-	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --run ./testing/guestbin/swan-build
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) $(KVM_HOST) ./testing/guestbin/swan-build
 
 KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
 #.PHONY: $(KVM_INSTALL_TARGETS)
 #$(KVM_INSTALL_TARGETS):
 kvm-install-%: kvm-print-% kvm-reboot-%
-	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) --hostname $(KVM_HOST) --run ./testing/guestbin/swan-install
+	$(KVM_RUNKVM_COMMAND) --sourcedir $(KVM_SOURCEDIR) $(KVM_HOST) ./testing/guestbin/swan-install
 
 .PHONY: kvm-update
 kvm-update: kvm-build-east | $(KVM_INSTALL_TARGETS)

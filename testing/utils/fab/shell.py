@@ -141,6 +141,11 @@ class Remote:
         # Set noecho the PTY inside the VM (not pexpect's PTY).
         self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
 
+    def stty_sane(self):
+        # Get the PTY inside the VM (not pexpect's PTY) into normal
+        # mode.
+        self.run('export TERM=dumb; unset LS_COLORS; stty sane')
+
     def run(self, command, expect="", timeout=TIMEOUT):
         logging.debug("shell send '%s'", command)
         self.child.sendline(command)
@@ -165,3 +170,6 @@ class Remote:
 
     def expect(self, expected, timeout=None):
         return self.child.expect(expected, timeout=timeout)
+
+    def interact(self):
+        return self.child.interact()

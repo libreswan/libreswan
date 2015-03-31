@@ -180,13 +180,19 @@ def main():
     parser.add_argument('--reboot', action="store_true", help='first reboot the host')
     parser.add_argument('--sourcedir', action='store', default='/source', help='source <directory> to build')
     parser.add_argument('--testdir', action='store', default='/testing', help='test <directory> to run tests from')
-    parser.add_argument('--run', action='store', help='run <command> then exit')
     parser.add_argument('--runtime', type=argutil.timeout, default=None,
                         help='max run-time (timeout) for the run command (default infinite)')
     parser.add_argument("--log-level", default="warning", metavar="LEVEL",
                         help="Set logging level to %(metavar)s (default: %(default)s)")
     # unused parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
+    parser.add_argument('domain', action='store', nargs='?', help="name of the domain to connect to")
+    parser.add_argument('command', action='store', nargs='?', help="command to run")
     args = parser.parse_args()
+    # HACK: Merge the hostname arguments
+    args.hostname = args.hostname or args.domain
+    if not args.hostname:
+        print("Either hostname or domain must be specified")
+        sys.exit(1)
 
     logging.basicConfig(level=args.log_level.upper())
 
@@ -195,9 +201,9 @@ def main():
     if not child:
         sys.exit("Failed to launch/connect to %s - aborted" % args.hostname)
 
-    if args.run:
+    if args.command:
         child.chdir(args.sourcedir)
-        status = child.run(args.run, timeout=args.runtime)
+        status = child.run(args.command, timeout=args.runtime)
         sys.exit(status)
 
     if args.compile:
@@ -211,6 +217,22 @@ def main():
 
     if args.final:
         run_final(args,child)
+
+    # if there's nothing else to do, create an interactive shell.
+    batch_mode = args.command or args.compile or args.install or args.testname or args.final or args.reboot
+    if not batch_mode:
+
+        print()
+        print()
+        child.output(None)
+        print("Escape character is ^]")
+        # Hack so that the prompt appears
+        child.output(sys.stdout)
+        child.run("")
+        child.output(None)
+        # Normal mode
+        child.stty_sane()
+        child.interact()
 
 if __name__ == "__main__":
     main()
