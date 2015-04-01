@@ -19,7 +19,6 @@ import re
 from fab import logutil
 
 TIMEOUT = 10
-SEARCH_WINDOW_SIZE = 100
 
 # The following prompt is assumed.  It only displays status when it is
 # non-zero:
@@ -119,16 +118,29 @@ class Remote:
         self.hostname = hostname
         self.username = username
         self.prompt = compile_prompt(self.logger, hostname=hostname, username=username)
-        # Create the child; configure -ve timeout parameter to act
-        # like poll.
+        # Create the child: configure -ve timeout parameters to act
+        # like poll, and give all methods an explicit default of
+        # TIMEOUT seconds; leave searchwindowsize set to the infinte
+        # default so that expect patterns do not mysteriously fail.
         self.logger.debug("spawning '%s'", command)
-        self.child = pexpect.spawnu(command)
+        self.child = pexpect.spawnu(command, timeout=0)
         #This crashes inside of pexpect!
         #self.logger.debug("child is '%s'", self.child)
-        self.child.timeout = 0
         # route low level output to the logger
         self.child.logfile_read = Debug(self.logger, "read <<%s>>>")
         self.child.logfile_send = Debug(self.logger, "send <<%s>>>")
+
+    def close(self):
+        """Close the console
+
+        The intent is to close the PTY.  Since COMMAND is (probably)
+        running as root, any attempt by .close() to kill the process
+        using a signal will fail.  Consequently, the caller should
+        first shutdown the process, and then call close (hint: use
+        .sendcontrol("]")
+
+        """
+        self.child.close()
 
     def sync(self, hostname=None, username=None, timeout=TIMEOUT):
         self.hostname = hostname or self.hostname
@@ -155,12 +167,12 @@ class Remote:
         # mode.
         self.run('export TERM=dumb; unset LS_COLORS; stty sane')
 
-    def run(self, command, timeout=TIMEOUT):
+    def run(self, command, timeout=TIMEOUT, searchwindowsize=-1):
         self.logger.debug("run '%s' expecting prompt", command)
         self.child.sendline(command)
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
         self.child.expect(self.prompt, timeout=timeout, \
-                          searchwindowsize=SEARCH_WINDOW_SIZE)
+                          searchwindowsize=searchwindowsize)
         status = check_prompt(self.logger, self.child.match,
                               basename=self.basename)
         self.logger.debug("run exit status %s", status)
@@ -178,8 +190,12 @@ class Remote:
     def sendline(self, line):
         return self.child.sendline(line)
 
-    def expect(self, expected, timeout=None):
-        return self.child.expect(expected, timeout=timeout)
+    def expect(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
+        return self.child.expect(expect, timeout=timeout,
+                                 searchwindowsize=searchwindowsize)
+
+    def sendcontrol(self, control):
+        return self.child.sendcontrol(control)
 
     def expect_prompt(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         """Like expect but also match the prompt
@@ -203,6 +219,12 @@ class Remote:
                               basename=self.basename)
         self.logger.debug("status %s match %s", status, self.child.match)
         return status, self.child.match
+
+    def sendcontrol(self, control):
+        return self.child.sendcontrol(control)
+
+    def sendintr(self):
+        return self.child.sendintr()
 
     def interact(self):
         self.logger.debug("entering interactive mode")
