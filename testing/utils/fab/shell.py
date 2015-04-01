@@ -130,16 +130,21 @@ class Remote:
         self.child.logfile_read = Debug(self.logger, "read <<%s>>>")
         self.child.logfile_send = Debug(self.logger, "send <<%s>>>")
 
-    def sync(self, hostname=None, username=None):
+    def sync(self, hostname=None, username=None, timeout=TIMEOUT):
         self.hostname = hostname or self.hostname
         self.username = username or self.username
         # Update the expected prompt
         self.hostname = hostname
         self.username = username
         self.prompt = compile_prompt(self.logger, hostname=self.hostname, username=self.username)
-        # force a prompt sync using a random number
+        # Sync with the remote end by matching a known and unique
+        # pattern.  Strictly match PATTERN+PROMPT so that earlier
+        # prompts that might also be lurking in the output are
+        # discarded.
         number = str(random.randrange(1000000, 100000000))
-        self.run("echo sync=" + number + "=sync", expect="sync=" + number + "=sync\\s*")
+        sync = "sync=" + number + "=cnyc"
+        self.sendline("echo " + sync)
+        self.expect(sync + "\s+" + self.prompt.pattern, timeout=timeout)
         # Fix the prompt
         self.run("PS1='" + PS1 + "'")
         # Set noecho the PTY inside the VM (not pexpect's PTY).
@@ -150,15 +155,11 @@ class Remote:
         # mode.
         self.run('export TERM=dumb; unset LS_COLORS; stty sane')
 
-    def run(self, command, expect=None, timeout=TIMEOUT):
-        self.logger.debug("shell send '%s'", command)
+    def run(self, command, timeout=TIMEOUT):
+        self.logger.debug("run '%s' expecting prompt", command)
         self.child.sendline(command)
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
-        match = self.prompt
-        if expect:
-            match = "%s%s" % (expect, self.prompt.pattern)
-        self.logger.debug("shell match '%s'", match)
-        self.child.expect(match, timeout=timeout, \
+        self.child.expect(self.prompt, timeout=timeout, \
                           searchwindowsize=SEARCH_WINDOW_SIZE)
         status = check_prompt(self.logger, self.child.match,
                               basename=self.basename)
@@ -179,6 +180,29 @@ class Remote:
 
     def expect(self, expected, timeout=None):
         return self.child.expect(expected, timeout=timeout)
+
+    def expect_prompt(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
+        """Like expect but also match the prompt
+
+        In addition to matching EXPECT+"\s+"+PROMPT, and to speed up
+        error detection, just PROMPT is also matched.  The latter is
+        treated as if a timeout occured.  If things are not kept in
+        sync, this will match an earlier prompt.  The idea is found in
+        DEJAGNU based tools.
+
+        Returns both the exit status and the re.match
+
+        """
+
+        self.logger.debug("expect '%s' and prompt", expect)
+        if self.expect([expect + "\s+" + self.prompt.pattern, self.prompt],
+                       timeout=timeout, searchwindowsize=searchwindowsize):
+            self.logger.debug("only matched prompt")
+            raise pexpect.TIMEOUT("pattern %s not found" % expect)
+        status = check_prompt(self.logger, self.child.match,
+                              basename=self.basename)
+        self.logger.debug("status %s match %s", status, self.child.match)
+        return status, self.child.match
 
     def interact(self):
         self.logger.debug("entering interactive mode")
