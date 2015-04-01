@@ -13,10 +13,10 @@
 # for more details.
 
 import os
-import logging
 import random
 import pexpect
 import re
+from fab import logutil
 
 TIMEOUT = 10
 SEARCH_WINDOW_SIZE = 100
@@ -91,42 +91,44 @@ def check_prompt(logger, match, hostname=None, username=None, basename=None, dol
     logger.debug("exit code '%s'", status)
     return status
 
-# This file-like class passes all writes on to the LOGGER at the
-# specified LEVEL.  It is is used to direct pexpect's .logfile_read
-# and .logfile_send files into the logging system.
+# This file-like class passes all writes on to the LOGGER at DEBUG.
+# It is is used to direct pexpect's .logfile_read and .logfile_send
+# files into the logging system.
 
 class Debug:
 
-    def __init__(self, logger, level, message):
+    def __init__(self, logger, message):
         self.logger = logger
-        self.level = level
         self.message = message
 
     def close(self):
         pass
 
     def write(self, text):
-        self.logger.log(self.level, self.message, ascii(text))
+        self.logger.debug(self.message, ascii(text))
 
     def flush(self):
         pass
 
 class Remote:
 
-    def __init__(self, command, hostname=None, username=None,
-                 logger=logging.getLogger(),
-                 level=logging.DEBUG):
-        self.logger = logger
-        self.child = pexpect.spawnu(command)
+    def __init__(self, command, hostname=None, username=None, logger=None):
+        # Need access to HOSTNAME.
+        self.logger = logger or logutil.getLogger(__name__, hostname)
         self.basename = None
         self.hostname = hostname
         self.username = username
         self.prompt = compile_prompt(self.logger, hostname=hostname, username=username)
-        # Interpret a -ve timeout parameter as a poll.
+        # Create the child; configure -ve timeout parameter to act
+        # like poll.
+        self.logger.debug("spawning '%s'", command)
+        self.child = pexpect.spawnu(command)
+        #This crashes inside of pexpect!
+        #self.logger.debug("child is '%s'", self.child)
         self.child.timeout = 0
         # route low level output to the logger
-        self.child.logfile_read = Debug(logger, level, "read <<%s>>>")
-        self.child.logfile_send = Debug(logger, level, "send <<%s>>>")
+        self.child.logfile_read = Debug(self.logger, "read <<%s>>>")
+        self.child.logfile_send = Debug(self.logger, "send <<%s>>>")
 
     def sync(self, hostname=None, username=None):
         self.hostname = hostname or self.hostname
@@ -149,22 +151,26 @@ class Remote:
         self.run('export TERM=dumb; unset LS_COLORS; stty sane')
 
     def run(self, command, expect=None, timeout=TIMEOUT):
-        logging.debug("shell send '%s'", command)
+        self.logger.debug("shell send '%s'", command)
         self.child.sendline(command)
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
         match = self.prompt
         if expect:
             match = "%s%s" % (expect, self.prompt.pattern)
-        logging.debug("shell match '%s'", match)
+        self.logger.debug("shell match '%s'", match)
         self.child.expect(match, timeout=timeout, \
                           searchwindowsize=SEARCH_WINDOW_SIZE)
-        return check_prompt(self.logger, self.child.match, basename=self.basename)
+        status = check_prompt(self.logger, self.child.match,
+                              basename=self.basename)
+        self.logger.debug("run exit status %s", status)
+        return status
 
     def chdir(self, directory):
         self.basename = os.path.basename(directory)
         return self.run("cd %s" % directory)
 
     def output(self, logfile=None):
+        self.logger.debug("switching output from %s to %s", self.child.logfile, logfile)
         logfile, self.child.logfile = self.child.logfile, logfile
         return logfile
 
@@ -175,4 +181,5 @@ class Remote:
         return self.child.expect(expected, timeout=timeout)
 
     def interact(self):
+        self.logger.debug("entering interactive mode")
         return self.child.interact()
