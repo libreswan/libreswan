@@ -2,6 +2,8 @@
  * Header: "defs.h"
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 2014  D. Hugh Redelmeier.
+ * Copyright (C) 2015  Paul Wouters
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,6 +32,7 @@
 #include "log.h"
 #include "whack.h"      /* for RC_LOG_SERIOUS */
 
+#include <errno.h>
 
 bool all_zero(const unsigned char *m, size_t len)
 {
@@ -47,23 +50,8 @@ bool all_zero(const unsigned char *m, size_t len)
  *
  * NOT INTENDED TO BE REALTIME!
  */
-monotime_t mononow(void)
-{
+static monotime_t mononow_fallback(void) {
 	monotime_t m;
-#ifdef _POSIX_MONOTONIC_CLOCK
-	struct timespec t;
-	int r = clock_gettime(
-#   if CLOCK_BOOTTIME
-		CLOCK_BOOTTIME	/* best */
-#   else
-		CLOCK_MONOTONIC	/* second best */
-#   endif
-		, &t);
-
-	passert(r == 0);
-	m.mono_secs =  t.tv_sec;
-#else
-#warning _POSIX_MONOTONIC_CLOCK not defined
 	static time_t delta = 0,
 		last_time = 0;
 	time_t n = time(NULL);	/* third best */
@@ -76,8 +64,45 @@ monotime_t mononow(void)
 	}
 	last_time = n;
 	m.mono_secs = n + delta;
-#endif
 	return m;
+}
+
+monotime_t mononow(void)
+{
+	monotime_t m;
+#ifdef _POSIX_MONOTONIC_CLOCK
+	struct timespec t;
+	int r = clock_gettime(
+#   if CLOCK_BOOTTIME
+		CLOCK_BOOTTIME	/* best */
+#   else
+		CLOCK_MONOTONIC	/* second best */
+#   endif
+		, &t);
+	switch(r) {
+	case 0:
+		/* OK */
+		break;
+	case EINVAL:
+		libreswan_log("Invalid clock method for clock_gettime() - possibly compiled with mismatched kernel and glibc-headers ");
+	case EPERM:
+		libreswan_log("No permission for clock_gettime()");
+	case EFAULT:
+		libreswan_log("Invalid address space return by clock_gettime()");
+		break;
+	default:
+		libreswan_log("unknown clock_gettime() error: %d", r);
+		break;
+	}
+	if (r == 0) {
+		return mononow_fallback();
+	}
+
+	m.mono_secs =  t.tv_sec;
+	return m;
+#else
+	return mononow_fallback();
+#   endif
 }
 
 /*
