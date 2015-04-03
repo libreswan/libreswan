@@ -23,3 +23,5 @@ testing/x509/nss-pw
 osxApp/build
 Makefile.inc.local
 kvmsetup.sh
+.ycm_extra_conf.py
+cscope.out

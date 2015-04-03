@@ -9,7 +9,7 @@ iptables -t nat -A POSTROUTING --source 192.1.3.0/24 --destination 0.0.0.0/0 -o 
 
 iptables -A OUTPUT -d 192.0.2.0/24 -j DROP
 
-# Display the table, so we know it's correct.
+# Display the table, so we know it is correct.
 iptables -t nat -L -v
 
 echo done.

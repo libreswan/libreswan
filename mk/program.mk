@@ -1,6 +1,11 @@
+# Make life easy, just include everything that is needed.
 
-include ${LIBRESWANSRCDIR}/Makefile.ver
-include ${LIBRESWANSRCDIR}/Makefile.inc
+ifndef top_srcdir
+include $(dir $(lastword $(MAKEFILE_LIST)))dirs.mk
+endif
+
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 
 LEX=flex
 BISON=bison
@@ -10,32 +15,11 @@ INCLUDES+=-I${LIBRESWANSRCDIR} -I${KLIPSINC} -I${LIBRESWANSRCDIR}/include ${NSSF
 
 CFLAGS+=-pthread
 
-CFLAGS+=${USERCOMPILE} ${PORTINCLUDE} ${INCLUDES} ${CROSSFLAGS}
+# XXX: hack until everything uses a consistent .c.o rule.
+CFLAGS+=$(USERLAND_CFLAGS)
+CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${CROSSFLAGS}
 
-ifeq ($(USE_LIBCURL),true)
-CFLAGS+=-DLIBCURL
-endif
-
-ifeq ($(USE_LDAP),true)
-CFLAGS+=-DLDAP_VER=3
-endif
-
-ifeq ($(USE_SAREF_KERNEL),true)
-CFLAGS+=-DSAREF_SUPPORTED
-endif
-
-ifeq ($(USE_KLIPS),true)
-CFLAGS+= -DKLIPS
-endif
-
-LIBS?=${PROGLIBS} ${LSWLOGLIB} ${LIBRESWANLIB} ${CRYPTOLIBS} 
-
-CFLAGS+=-DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
-CFLAGS+=-DIPSEC_CONFDDIR=\"$(FINALCONFDDIR)\"
-CFLAGS+=-DIPSEC_CONF=\"$(FINALCONFFILE)\"
-CFLAGS+=-DIPSEC_VARDIR=\"$(FINALVARDIR)\"
-
-CFLAGS+= ${WERROR}
+LIBS?=${PROGLIBS} ${LSWLOGLIB} ${LIBRESWANLIB} ${CRYPTOLIBS}
 
 ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
@@ -56,29 +40,22 @@ ifndef CONFDSUBDIR
 CONFDSUBDIR=.
 endif
 
-ifndef SOURCEDIR
-SOURCEDIR=${PROGRAM}
-endif
-
 # the list of stuff to be built for "make programs"
 MANDEFAULTLIST=$(addsuffix .8, $(PROGRAM))
 MANLIST=$(MANDEFAULTLIST) $(EXTRA8MAN) $(EXTRA5MAN) $(EXTRA5PROC) 
 CONFIGLIST=$(CONFFILES) $(CONFDFILES)
 PROGRAMSLIST=${PROGRAM} $(MANLIST) $(CONFIGLIST)
 
-SHOULDWERESTART=$(wildcard ../Makefile.program)
-ifeq ($(SHOULDWERESTART),../Makefile.program)
+ifeq ($(srcdir),.)
 all programs config man clean install:
-	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/${SOURCEDIR} && $(MAKE) $@
+	$(MAKE) -C $(builddir) $@
 else
 all: $(PROGRAMSLIST)
 programs: all
 man: $(MANLIST)
 config: $(CONFIGLIST)
 clean:	cleanall
-
 install: doinstall
-
 endif
 
 ifneq ($(PROGRAM),check)
@@ -88,7 +65,7 @@ endif
 
 ifneq ($(NOINSTALL),true)
 
-doinstall:: $(PROGRAMLIST)
+doinstall:: $(PROGRAMSLIST)
 	@mkdir -p $(PROGRAMDIR) $(MANDIR8) $(MANDIR5) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
 	@if [ -n "$(PROGRAM)" ]; then $(INSTALL) $(INSTBINFLAGS) $(PROGRAM) $(PROGRAMDIR); fi
 	@$(foreach f, $(addsuffix .8, $(PROGRAM)), \

@@ -164,7 +164,7 @@ static void help(void)
 		"	[--listcacerts]  [--listacerts] [--listaacerts] \\\n"
 		"	[--listgroups] [--listcrls] [--listpsks] [--listall]\n"
 		"\n"
-		"purge: whack [--listevents]\n"
+		"purge: whack --purgeocsp\n"
 		"\n"
 		"reread: whack [--rereadsecrets] [--rereadcacerts] \\\n"
 		"	[--rereadaacerts]  [--rereadacerts] \\\n"
@@ -274,6 +274,8 @@ enum option_enums {
 	OPT_REREADACERTS,
 	OPT_REREADCRLS,
 	OPT_REREADALL,
+
+	OPT_PURGEOCSP,
 
 	OPT_STATUS,
 	OPT_GLOBAL_STATUS,
@@ -480,6 +482,7 @@ static const struct option long_opts[] = {
 
 	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO },
 	{ "rereadall", no_argument, NULL, OPT_REREADALL + OO },
+	{ "purgeocsp", no_argument, NULL, OPT_PURGEOCSP + OO },
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
 	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
@@ -1164,6 +1167,10 @@ int main(int argc, char **argv)
 		case OPT_REREADACERTS:	/* --rereadacerts */
 		case OPT_REREADCRLS:	/* --rereadcrls */
 			msg.whack_reread |= LELEM(c - OPT_REREADSECRETS);
+			continue;
+
+		case OPT_PURGEOCSP:
+			msg.whack_purgeocsp = TRUE;
 			continue;
 
 		case OPT_REREADALL:	/* --rereadall */
@@ -1967,7 +1974,7 @@ int main(int argc, char **argv)
 	      msg.whack_ddos != DDOS_undefined ||
 	      msg.whack_reread || msg.whack_crash ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
-	      msg.whack_options || msg.whack_shutdown))
+	      msg.whack_options || msg.whack_shutdown || msg.whack_purgeocsp))
 		diag("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {

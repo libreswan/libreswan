@@ -89,6 +89,8 @@ void init_nat_traversal(unsigned int keep_alive_period)
 {
 	{
 		FILE *f = fopen("/proc/net/ipsec/natt", "r");
+
+		/* ??? this only checks if the file starts with '0'; seems sloppy */
 		if (f != NULL) {
 			int n = getc(f);
 
@@ -425,10 +427,10 @@ bool nat_traversal_add_natd(u_int8_t np, pb_stream *outs,
 
 	out_modify_previous_np(nat_np, outs);
 
-	first = &(md->sender);
+	first = &md->sender;
 	firstport = st->st_remoteport;
 
-	second = &(md->iface->ip_addr);
+	second = &md->iface->ip_addr;
 	secondport = st->st_localport;
 
 	if (0) {
@@ -577,11 +579,11 @@ bool nat_traversal_add_natoa(u_int8_t np, pb_stream *outs,
 	unsigned int nat_np;
 
 	if (initiator) {
-		ipinit = &(st->st_localaddr);
-		ipresp = &(st->st_remoteaddr);
+		ipinit = &st->st_localaddr;
+		ipresp = &st->st_remoteaddr;
 	} else {
-		ipresp = &(st->st_localaddr);
-		ipinit = &(st->st_remoteaddr);
+		ipresp = &st->st_localaddr;
+		ipinit = &st->st_remoteaddr;
 	}
 
 	passert(st->st_connection);
@@ -1023,8 +1025,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	/*
 	 * Find valid interface according to local port (500/4500)
 	 */
-	if (!(sameaddr(&st->st_localaddr, &st->st_interface->ip_addr) &&
-			st->st_localport == st->st_interface->port)) {
+	if (!sameaddr(&st->st_localaddr, &st->st_interface->ip_addr) ||
+	     st->st_localport != st->st_interface->port) {
 
 		DBG(DBG_NATT, {
 			ipstr_buf b1;
@@ -1037,8 +1039,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 		});
 
 		for (i = interfaces; i !=  NULL; i = i->next) {
-			if ((sameaddr(&st->st_localaddr, &i->ip_addr)) &&
-				(st->st_localport == i->port)) {
+			if (sameaddr(&st->st_localaddr, &i->ip_addr) &&
+			    st->st_localport == i->port) {
 				DBG(DBG_NATT,
 					DBG_log("NAT-T: using interface %s:%d",
 						i->ip_dev->id_rname,
@@ -1061,16 +1063,15 @@ static void nat_t_new_klips_mapp(struct state *st, void *data)
 	struct connection *c = st->st_connection;
 	struct new_klips_mapp_nfo *nfo = (struct new_klips_mapp_nfo *)data;
 
-	if ((c) && (st->st_esp.present) &&
-		sameaddr(&st->st_remoteaddr, &(nfo->src)) &&
-		(st->st_esp.our_spi == nfo->sa->sadb_sa_spi))
-		nat_traversal_new_mapping(st, &(nfo->dst), nfo->dport);
+	if (c != NULL && st->st_esp.present &&
+	    sameaddr(&st->st_remoteaddr, &nfo->src) &&
+	    st->st_esp.our_spi == nfo->sa->sadb_sa_spi)
+		nat_traversal_new_mapping(st, &nfo->dst, nfo->dport);
 }
 
-void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
-					(unused)),
-				struct sadb_ext *extensions[K_SADB_EXT_MAX +
-							1])
+void process_pfkey_nat_t_new_mapping(
+		struct sadb_msg *msg __attribute__ ((unused)),
+		struct sadb_ext *extensions[K_SADB_EXT_MAX + 1])
 {
 	struct new_klips_mapp_nfo nfo;
 	struct sadb_address *srcx =
@@ -1082,7 +1083,7 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 
 	nfo.sa = (void *) extensions[K_SADB_EXT_SA];
 
-	if ((!nfo.sa) || (!srcx) || (!dstx)) {
+	if (!nfo.sa || !srcx || !dstx) {
 		libreswan_log("K_SADB_X_NAT_T_NEW_MAPPING message from KLIPS malformed: got NULL params");
 		return;
 	}
@@ -1090,19 +1091,19 @@ void process_pfkey_nat_t_new_mapping(struct sadb_msg *msg __attribute__ (
 	srca = ((struct sockaddr *)(void *)&srcx[1]);
 	dsta = ((struct sockaddr *)(void *)&dstx[1]);
 
-	if ((srca->sa_family != AF_INET) || (dsta->sa_family != AF_INET)) {
+	if (srca->sa_family != AF_INET || dsta->sa_family != AF_INET) {
 		ugh = "only AF_INET supported";
 	} else {
 		initaddr(
 			(const void *) &((const struct sockaddr_in *)srca)->sin_addr,
 			sizeof(((const struct sockaddr_in *)srca)->sin_addr),
-			srca->sa_family, &(nfo.src));
+			srca->sa_family, &nfo.src);
 		nfo.sport =
 			ntohs(((const struct sockaddr_in *)srca)->sin_port);
 		initaddr(
 			(const void *) &((const struct sockaddr_in *)dsta)->sin_addr,
 			sizeof(((const struct sockaddr_in *)dsta)->sin_addr),
-			dsta->sa_family, &(nfo.dst));
+			dsta->sa_family, &nfo.dst);
 		nfo.dport =
 			ntohs(((const struct sockaddr_in *)dsta)->sin_port);
 
@@ -1155,13 +1156,13 @@ void ikev2_natd_lookup(struct msg_digest *md, const u_char *rcookie)
 	 * First one with my IP & port
 	 */
 	natd_hash(&crypto_hasher_sha1, hash_me, st->st_icookie, rcookie,
-		&(md->iface->ip_addr), md->iface->port);
+		&md->iface->ip_addr, md->iface->port);
 
 	/*
 	 * The others with sender IP & port
 	 */
 	natd_hash(&crypto_hasher_sha1, hash_him, st->st_icookie, rcookie,
-		&(md->sender), md->sender_port);
+		&md->sender, md->sender_port);
 
 	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		if (pbs_left(&p->pbs) != IKEV2_NATD_HASH_SIZE)

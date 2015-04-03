@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>logtime</emphasis></term>
+  <listitem>
+<para>When pluto is directed to log to a file using <emphasis remap='B'>logfile=</emphasis>,
+this option determines whether or not to log the current timestamp as prefix.
+Values are <emphasis remap='B'>yes</emphasis> (the default) or
+<emphasis remap='B'>no</emphasis>. The no value can be used to create logs without
+ephemeral timestamps, such as those created when running the test suite.
+This option used to be called plutostderrlogtime=
+</para>
+  </listitem>
+  </varlistentry>

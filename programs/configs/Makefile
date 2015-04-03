@@ -11,18 +11,17 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-include ${LIBRESWANSRCDIR}/Makefile.inc
-
 EXTRA5MAN=ipsec.conf.5
 CONFFILES=ipsec.conf
 EXCONFILES=ipsec.win2k.conf
-SOURCEDIR=configs
-
 CONFDSUBDIR=policies
 CONFDFILES=clear clear-or-private private-or-clear private block
 
-include ${SRCDIR}../Makefile.program
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../mk/program.mk
+endif
 
 ipsec.conf.5: ${SRCDIR}ipsec.conf.5.xml
 

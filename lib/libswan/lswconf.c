@@ -72,6 +72,7 @@ static void lsw_conf_setdefault(void)
 	global_oco.vardir  = clone_str(IPSEC_VARDIR, "default vardir");
 	global_oco.confdir = clone_str(IPSEC_CONFDIR, "default conf ipsec_conf_dir");
 	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
+	global_oco.nssdir = clone_str(IPSEC_NSSDIR, "default nssdir");
 
 	/* path to NSS password file */
 	snprintf(buf, sizeof(buf), "%s/nsspassword", global_oco.confddir);
@@ -90,6 +91,7 @@ void lsw_conf_free_oco(void)
 	pfree(global_oco.policies_dir);
 	pfree(global_oco.cacerts_dir);
 	pfree(global_oco.crls_dir);
+	pfree(global_oco.nssdir);
 	pfree(NSSPassword.data);
 }
 

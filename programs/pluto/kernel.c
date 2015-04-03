@@ -61,7 +61,7 @@
 #include "kernel_bsdkame.h"
 #include "packet.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "log.h"
 #include "server.h"
@@ -445,7 +445,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&sr->that.id, &key->id) &&
-			    trusted_ca(key->issuer, sr->that.ca, &pathlen)) {
+			    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen)) {
 				dntoa_or_null(peerca_str, IDTOA_BUF,
 					key->issuer, "");
 				escape_metachar(peerca_str, secure_peerca_str,
@@ -815,21 +815,14 @@ static bool sag_eroute(struct state *st,
 void unroute_connection(struct connection *c)
 {
 	struct spd_route *sr;
-	enum routing_t cr;
 
 	for (sr = &c->spd; sr; sr = sr->next) {
-		cr = sr->routing;
+		enum routing_t cr = sr->routing;
 
 		if (erouted(cr)) {
 			/* cannot handle a live one */
-			passert(sr->routing != RT_ROUTED_TUNNEL);
-			if (kernel_ops->shunt_eroute != NULL) {
-				kernel_ops->shunt_eroute(c, sr, RT_UNROUTED,
-							 ERO_DELETE, "delete");
-			} else {   loglog(RC_COMMENT,
-					  "no shunt_eroute implemented for %s interface",
-					  kernel_ops->kern_name);
-			}
+			passert(cr != RT_ROUTED_TUNNEL);
+			shunt_eroute(c, sr, RT_UNROUTED, ERO_DELETE, "delete");
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -2575,9 +2568,9 @@ bool install_inbound_ipsec_sa(struct state *st)
  * Any SA Group must have already been created.
  * On failure, steps will be unwound.
  */
-bool route_and_eroute(struct connection *c USED_BY_KLIPS,
-		      struct spd_route *sr USED_BY_KLIPS,
-		      struct state *st USED_BY_KLIPS)
+bool route_and_eroute(struct connection *c,
+		      struct spd_route *sr,
+		      struct state *st)
 {
 	struct spd_route *esr;
 	struct spd_route *rosr;
@@ -2901,7 +2894,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 	}
 }
 
-bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
+bool install_ipsec_sa(struct state *st, bool inbound_also)
 {
 	struct spd_route *sr;
 	enum routability rb;

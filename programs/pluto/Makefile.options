@@ -18,14 +18,6 @@
 
 # All of the USE_ and HAVE_ variables are controlled from libreswan/Makefile.inc
 
-ifeq ($(USE_DNSSEC),true)
-DNSSECDEF=-DDNSSEC
-endif
-
-ifeq ($(USE_LINUX_AUDIT),true)
-CFLAGS += -DUSE_LINUX_AUDIT
-endif
-
 ifeq ($(USE_LDAP),true)
 # Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
 # if you require LDAPv2 
@@ -38,8 +30,6 @@ endif
 ifeq ($(USE_XAUTHPAM),true)
 XAUTH_HAVE_PAM=1
 endif
-
-CFLAGS +=-g ${WERROR}
 
 # where to find klips headers and Libreswan headers
 # and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
@@ -124,14 +114,13 @@ endif
 
 # the files are defined here so that TAGS: can catch them.
 #
-X509_DIST_OBJS=x509.o x509more.o x509chain.o
+X509_DIST_OBJS=x509.o
 X509_DIST_SRCS=${X509_DIST_OBJS:.o=.c}
 X509_DIST_SRCS+=fetch.h 
 THREADS_DIST_OBJS=fetch.o 
 THREADS_DIST_SRCS=${THREADS_DIST_OBJS:.o=.c}
 X509_OBJS=${X509_DIST_OBJS}
 X509_SRCS=${X509_DIST_SRCS}
-X509_DEFS=-DX509_PLUTO
 
 # dynamic LDAP CRL fetching requires OpenLDAP library
 ifeq ($(USE_LDAP),true)

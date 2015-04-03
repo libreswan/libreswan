@@ -5,6 +5,6 @@ ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add north
 ipsec auto --up north
-# annother north should be caught by uniqueids but isn't yet
+# annother north should be caught by uniqueids but is not yet
 ipsec auto --up north
 echo done

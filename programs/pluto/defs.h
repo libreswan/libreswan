@@ -19,12 +19,6 @@
 
 #include "lswalloc.h"
 
-#ifdef KLIPS
-# define USED_BY_KLIPS  /* ignore */
-#else
-# define USED_BY_KLIPS  UNUSED
-#endif
-
 /* type of serial number of a state object
  * Needed in connections.h and state.h; here to simplify dependencies.
  */

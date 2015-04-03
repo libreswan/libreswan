@@ -283,7 +283,7 @@ const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2V",
 	"ISAKMP_NEXT_v2TSi",
 	"ISAKMP_NEXT_v2TSr",
-	"ISAKMP_NEXT_v2E",
+	"ISAKMP_NEXT_v2SK",
 	"ISAKMP_NEXT_v2CP",
 	"ISAKMP_NEXT_v2EAP",
 	NULL	/* termination for bitnamesof() */

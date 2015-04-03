@@ -22,6 +22,7 @@
 #ifndef _CERTS_H
 #define _CERTS_H
 
+#include <cert.h> /* NSS */
 #include "secrets.h"
 #include "x509.h"
 
@@ -50,26 +51,10 @@ typedef struct {
 	enum ike_cert_type ty;
 	union {
 		/* some day we may support more */
-		x509cert_t *x509;	/* CERT_X509_SIGNATURE */
+		CERTCertificate *nss_cert;	/* CERT_X509_SIGNATURE */
 	} u;
 } cert_t;
 
-
-extern chunk_t get_cert_chunk(cert_t cert);
-extern bool load_cert(const char *filename,
-		      const char *label, cert_t *cert);
-
-extern void share_cert(cert_t cert);
-extern void share_authcerts(cert_t chain);
-extern void release_cert(cert_t cert);
-extern void list_certs(bool utc);
-
-extern struct pubkey *allocate_RSA_public_key(const cert_t cert);
-extern bool load_coded_file(const char *filename,
-			    const char *type, chunk_t *blob);
-extern bool cert_exists_in_nss(const char *nickname);
-extern bool load_cert_from_nss(const char *nssHostCertNickName,
-			       const char *label, cert_t *cert);
-extern void load_authcerts_from_nss(const char *type, u_char auth_flags);
-
+extern void list_certs(void);
+extern bool load_nsscert_from_nss(const char *nickname, cert_t *cert);
 #endif /* _CERTS_H */

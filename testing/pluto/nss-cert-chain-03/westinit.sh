@@ -1,0 +1,13 @@
+/testing/guestbin/swan-prep --x509 --certchain
+# confirm that the network is alive
+ping -n -c2 -I 192.0.1.254 192.0.2.254
+# make sure that clear text does not get through
+iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j LOGDROP
+# confirm with a ping
+ping -n -c2 -I 192.0.1.254 192.0.2.254
+certutil -A -d sql:/etc/ipsec.d/ -i /testing/x509/certs/east_chain_int_1.crt -t ",," -n "east_chain_int_1"
+ipsec setup start
+/testing/pluto/bin/wait-until-pluto-started
+ipsec auto --add nss-cert-chain
+ipsec auto --status |grep nss-cert-chain
+echo "initdone"

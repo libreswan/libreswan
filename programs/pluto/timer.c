@@ -789,7 +789,8 @@ void timer_list(void)
 	monotime_t nw;
 	struct p_event *ev = evlist;
 
-	if (ev == (struct p_event *) NULL) { /* Just paranoid */
+	if (ev == (struct p_event *) NULL) {
+		/* Just paranoid */
 		whack_log(RC_LOG, "no events are queued");
 		return;
 	}

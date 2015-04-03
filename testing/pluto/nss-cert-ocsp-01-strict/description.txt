@@ -1,0 +1,6 @@
+ocsp: west sends OK cert
+      east sends OK cert
+
+	successful ocsp response
+strict mode on
+	pass

@@ -224,36 +224,6 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 	*keysize = n.len;
 }
 
-struct pubkey *allocate_RSA_public_key(const cert_t cert)
-{
-	switch (cert.ty) {
-	case CERT_X509_SIGNATURE:
-	{
-		struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
-		chunk_t e, n;
-
-		e = cert.u.x509->publicExponent;
-		n = cert.u.x509->modulus;
-
-		n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
-		n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
-
-		form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
-
-		DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
-
-		pk->alg = PUBKEY_ALG_RSA;
-		pk->id  = empty_id;
-		pk->issuer = empty_chunk;
-
-		return pk;
-	}
-	default:
-		libreswan_log("RSA public key allocation error");
-		return NULL;
-	}
-}
-
 void free_RSA_public_content(struct RSA_public_key *rsa)
 {
 	mpz_clear(&rsa->n);
@@ -906,37 +876,6 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 
 		return RSA_public_key_sanity(rsak);
 	}
-}
-
-/*
- * get the matching RSA private key belonging to a given X.509 certificate
- */
-const struct RSA_private_key *get_x509_private_key(struct secret *secrets,
-						x509cert_t *cert)
-{
-	struct secret *s;
-	const struct RSA_private_key *pri = NULL;
-	cert_t c;
-	struct pubkey *pubkey;
-
-	c.ty = CERT_X509_SIGNATURE;
-	c.u.x509 = cert;
-
-	pubkey = allocate_RSA_public_key(c);
-
-	if (pubkey == NULL)
-		return NULL;
-
-	for (s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PPK_RSA &&
-			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
-					&pubkey->u.rsa)) {
-			pri = &s->pks.u.RSA_private_key;
-			break;
-		}
-	}
-	free_public_key(pubkey);
-	return pri;
 }
 
 static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;

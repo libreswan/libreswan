@@ -58,7 +58,6 @@
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "whack.h"
 #include "fetch.h"
-#include "pkcs.h"
 #include "asn1.h"
 
 #include "sha1.h"
@@ -80,7 +79,7 @@
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 /* accept_PFS_KE
  *
@@ -2227,7 +2226,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 
 		e = start_dh_secret(dh, st,
 				    st->st_import,
-				    O_RESPONDER,
+				    ORIGINAL_RESPONDER,
 				    st->st_pfs_group->group);
 
 		/*
@@ -2537,7 +2536,7 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 
 		return start_dh_secret(dh, st,
 				       st->st_import,
-				       O_INITIATOR,
+				       ORIGINAL_INITIATOR,
 				       st->st_pfs_group->group);
 	} else {
 		/* just call the tail function */

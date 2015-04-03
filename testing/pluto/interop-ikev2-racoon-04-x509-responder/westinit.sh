@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
-certutil -d /etc/ipsec.d  -n east -A -t P -i /testing/x509/certs/east.crt
+certutil -d sql:/etc/ipsec.d  -n east -A -t P -i /testing/x509/certs/east.crt
 # confirm that the network is alive
 ping -n -c 4 -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through

@@ -1,2 +1,0 @@
-# For compatibility, new code should include program.mk directly.
-include ${LIBRESWANSRCDIR}/mk/program.mk

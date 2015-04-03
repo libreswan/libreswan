@@ -1770,7 +1770,8 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 	passert(st != NULL);
 
 	f = fopen(procname, "r");
-	if (f == NULL) { /** Can't open the file, perhaps were are on 26sec? */
+	if (f == NULL) {
+		/** Can't open the file, perhaps were are on 26sec? */
 		ret = TRUE;
 	} else {
 		for (;;) {
@@ -1804,7 +1805,8 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 			satot(&said, 'x', text_said, SATOT_BUF);
 
 			line = fgets(buf, sizeof(buf), f);
-			if (line == NULL) { /* Reached end of list */
+			if (line == NULL) {
+				/* Reached end of list */
 				ret = TRUE;
 				break;
 			}
@@ -1813,8 +1815,8 @@ bool pfkey_was_eroute_idle(struct state *st, deltatime_t idle_max)
 				/* we found a match, now try to find idle= */
 				char *p = strstr(line, idle);
 
-				if (p == NULL) {        /* SAs which haven't been used yet
-					                   don't have it */
+				if (p == NULL) {
+					/* unused SA: no "idle=" */
 					ret = TRUE;     /* it didn't have traffic */
 					break;
 				}

@@ -178,7 +178,8 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 			     int aalg_id, int ak_bits,
 			     int modp_id)
 {
-	if (ealg_id == 0) { /* use all our default enc algs */
+	if (ealg_id == 0) {
+		/* use all our default enc algs */
 		int i;
 
 		for (i=0; i != elemsof(default_ike_ealgs); i++) {

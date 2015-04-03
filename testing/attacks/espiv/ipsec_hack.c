@@ -168,7 +168,8 @@ void user_ipv4_handler(u8 *packet, option_data *opt)
 
 	fflush(stdout);
 
-	if (ipH->protocol != 50) { /* Not an ESP packet */
+	if (ipH->protocol != 50) {
+		/* Not an ESP packet */
 		if (opt->verbose)
 			printf("not an ESP packet\n");
 		return;

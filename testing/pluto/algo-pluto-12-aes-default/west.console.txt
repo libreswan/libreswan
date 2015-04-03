@@ -187,107 +187,107 @@ west #
 done
 west #
  grep -A 1 KEY_LENGTH /tmp/pluto.log
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 128
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 128 (0x80)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 256
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 256 (0x100)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 128
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 128
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 128 (0x80)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 128
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 256
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 256 (0x100)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 256
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 128
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 128 (0x80)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 256
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 256 (0x100)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 256
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: OAKLEY_KEY_LENGTH
-|    length/value: 256
+|    af+type: OAKLEY_KEY_LENGTH (0x800e)
+|    length/value: 256 (0x100)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 128
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 128 (0x80)
 --
-|    af+type: KEY_LENGTH
-|    length/value: 128
+|    af+type: KEY_LENGTH (0x8006)
+|    length/value: 128 (0x80)
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

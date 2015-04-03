@@ -136,7 +136,6 @@ extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
  * structures to change lots.
  */
 #include "x509.h"
-#include "x509more.h"
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
@@ -169,10 +168,9 @@ struct end {
 	u_int8_t protocol;		/* transport-protocol number, if per-X keying.*/
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
-	char *cert_filename;		/* where we got the certificate */
+	char *cert_nickname;		/* NSS certificate nickname */
 	cert_t cert;			/* end certificate */
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
-	cert_t ca_path;			/* chain of CA certs */
 
 	struct virtual_t *virt;
 

@@ -18,7 +18,7 @@
 # Copyright (C) 2002              Michael Richardson <mcr@freeswan.org>
 # Copyright (C) 2006              Michael Richardson <mcr@xelerance.com>
 # Copyright (C) 2008              Michael Richardson <mcr@sandelman.ca>
-# Copyright (C) 2008-2014         Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008-2015         Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2012              Paul Wouters <paul@libreswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -120,6 +120,8 @@ start() {
 
     # pluto searches the current directory, so this is required for making it selinux compliant
     cd /
+    # Create nss db or convert from old format to new sql format
+    ipsec --checknss
     # This script will enter an endless loop to ensure pluto restarts on crash
     ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS} &
     [ -d ${lockdir} ] || mkdir -p ${lockdir}

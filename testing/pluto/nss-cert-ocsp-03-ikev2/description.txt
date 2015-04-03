@@ -1,0 +1,7 @@
+Basic pluto X.509 test between east and west that does _not_ use a CA,
+but hardcoded certificates using leftcert= and rightcert=
+
+after swan-prep, we delete the CA from the NSS DB. Both ends have each
+other's cert in the NSS DB, and sendcert=never is set to ensure the
+endpoints don't send the cert to each other
+
