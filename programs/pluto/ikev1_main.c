@@ -951,10 +951,12 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 
+#ifdef FIPS_CHECK
 	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
 		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
                return STF_FAIL + SITUATION_NOT_SUPPORTED;
        }
+#endif
 
 	/* verify echoed SA */
 	{
@@ -1102,11 +1104,6 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *ke,
 	struct state *const st = md->st;
 	stf_status e;
 
-	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
-		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
-		return STF_FAIL + SITUATION_NOT_SUPPORTED;
-	}
-
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
 			ke->pcrc_serialno));
@@ -1220,6 +1217,13 @@ stf_status main_inI2_outR2_tail(struct pluto_crypto_req_cont *ke,
 {
 	struct msg_digest *md = ke->pcrc_md;
 	struct state *st = md->st;
+
+#ifdef FIPS_CHECK
+	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
+		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
+		return STF_FAIL + SITUATION_NOT_SUPPORTED;
+	}
+#endif
 
 	/* send CR if auth is RSA and no preloaded RSA public key exists*/
 	bool send_cr = FALSE;
