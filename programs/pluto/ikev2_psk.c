@@ -103,7 +103,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		 * But verify calls this routine with the role inverted, so we
 		 * cannot juse st->st_state either.
 		 */
-		if (role == O_INITIATOR) {
+		if (role == ORIGINAL_INITIATOR) {
 			/* we are sending initiator, or verifying responder */
 			pss = &st->st_skey_chunk_SK_pi;
 		} else {
