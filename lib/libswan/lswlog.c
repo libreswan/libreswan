@@ -157,7 +157,7 @@ void libreswan_exit_log_errno_routine(int e, const char *message, ...)
 		syslog(LOG_ERR, "FATAL ERROR: %s. Errno %d: %s",
 			m, e, strerror(e));
 
-	exit_tool(1);
+	exit(1);
 }
 
 void libreswan_log_abort(const char *file_str, int line_no)

@@ -688,7 +688,7 @@ extern struct_desc isakmp_ikefrag_desc;
  */
 #define ISAKMP_FRAG_LAST	1
 
-/* descriptor for each payload type
+/* descriptor for each V1 payload type
  *
  * There is a slight problem in that some payloads differ, depending
  * on the mode.  Since this is table only used for top-level payloads,
@@ -697,7 +697,11 @@ extern struct_desc isakmp_ikefrag_desc;
  * We make all these entries NULL.
  * ??? is there a good reason for these two things to be in one table?
  */
-extern const struct_desc *payload_desc(unsigned p);
+extern const struct_desc *v1_payload_desc(unsigned p);
+
+/* descriptor for V2 payload type.  */
+extern const struct_desc *v2_payload_desc(unsigned p);
+
 
 /*
  * IKEv2 structures
@@ -875,7 +879,7 @@ extern struct_desc ikev2_ts_desc;
 extern struct_desc ikev2_ts1_desc;
 
 /* rfc4306, section 3.14, encrypted payload, uses generic header */
-extern struct_desc ikev2_e_desc;
+extern struct_desc ikev2_sk_desc;
 
 /*
  * Configuration Payload . RFC 5996 section 3.15

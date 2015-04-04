@@ -1,2 +1,0 @@
-# For compatibility, new code should include library.mk directly.
-include ${LIBRESWANSRCDIR}/mk/library.mk

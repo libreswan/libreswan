@@ -9,7 +9,7 @@ iptables -A LOGDROP -j LOG
 iptables -A LOGDROP -j DROP
 iptables -I FORWARD 1 --proto 50 -j LOGDROP
 iptables -I FORWARD 2 --proto udp --dport 1701 -j LOGDROP
-# Display the table, so we know it's correct.
+# Display the table, so we know it is correct.
 iptables -t nat -L -n
 iptables -L -n
 echo done

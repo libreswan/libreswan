@@ -30,6 +30,10 @@
 #define IPSEC_CONFDDIR   "/etc/ipsec.d"
 #endif
 
+#ifndef IPSEC_NSSDIR
+#define IPSEC_NSSDIR   "/etc/ipsec.d"
+#endif
+
 #define DEFAULT_CTLBASE "/var/run/pluto/pluto"
 #define CTL_SUFFIX      ".ctl"
 #define PID_SUFFIX      ".pid"

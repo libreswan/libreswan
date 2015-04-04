@@ -11,25 +11,30 @@
 
 set -ue
 
+# Assuming that this script is in testing/utils, find the top-level
+# directory.
+LIBRESWANSRCDIR=$(dirname $(dirname $(dirname $(readlink -f $0))))
+
 if [ ! -d OUTPUT ] ; then
 	echo "$0: no OUTPUT subdirectory.  Is `pwd` a test directory?" >&2
 	exit 1
 fi
 
-. ../../../kvmsetup.sh
 if [ -f ./testparams.sh ] ; then
 	. ./testparams.sh
 else
-	. ../../default-testparams.sh
+	. ${LIBRESWANSRCDIR}/testing/default-testparams.sh
 fi
 
 . ../setup.sh
-. ../../utils/functions.sh
+. ${LIBRESWANSRCDIR}/testing/utils/functions.sh
 
 failure=0
 
-for host in $LIBRESWANHOSTS
+for host in $(../../utils/kvmhosts.sh)
 do
+   # The host list includes "nic" but that is ok as the checks below
+   # filter it out.
    if [ -f "${host}.console.txt" ]
    then
 	#echo "re-sanitizing ${host}"

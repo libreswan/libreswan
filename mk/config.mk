@@ -111,6 +111,9 @@ SYSCONFDIR?=$(DESTDIR)$(FINALSYSCONFDIR)
 FINALCONFDDIR?=$(FINALCONFDIR)/ipsec.d
 CONFDDIR?=$(DESTDIR)$(FINALCONFDDIR)
 
+FINALNSSDIR?=$(FINALCONFDIR)/ipsec.d
+NSSDIR?=$(DESTDIR)$(FINALNSSDIR)
+
 # sample configuration files go into
 INC_DOCDIR?=share/doc
 FINALEXAMPLECONFDIR?=$(INC_USRLOCAL)/$(INC_DOCDIR)/libreswan
@@ -124,7 +127,6 @@ FINALVARDIR?=/var
 VARDIR?=$(DESTDIR)$(FINALVARDIR)
 FINALLOGDIR?=$(FINALVARDIR)/log
 LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
-
 
 # An attempt is made to automatically figure out where boot/shutdown scripts 
 # will finally go:  the first directory in INC_RCDIRS which exists gets them.
@@ -170,7 +172,10 @@ VERFILE=$(KERNELSRC)/include/linux/version.h
 OSMOD_DESTDIR?=net/ipsec
 
 # What command to use to load the modules. openwrt does not have modprobe
-MODPROBE?=modprobe -q
+# Using -b enables blacklisting - this is needed for some known bad
+# versions of crypto acceleration modules.
+MODPROBEBIN?=modprobe
+MODPROBEARGS?=-q -b
 
 ### misc installation stuff
 
@@ -202,6 +207,9 @@ INSTCONFFLAGS?=--mode=0644
 # flags for bison, overrode in packages/default/foo
 BISONOSFLAGS?=
 
+# XXX: Don't add NSSFLAGS to USERLAND_CFLAGS for now.  It needs to go
+# after -I$(top_srcdir)/include and fixing that is an entirely
+# separate cleanup.
 NSSFLAGS?=$(shell pkg-config --cflags nss)
 NSSLIBS?=$(shell pkg-config --libs nss)
 
@@ -215,42 +223,8 @@ MAKE?=make
 # EFENCE=-lefence
 EFENCE?=
 
-ifeq ($(ARCH),i686)
-GCCM?=-m32
-endif
-ifeq ($(ARCH),x86_64)
-GCCM?=-m64
-endif
-
-GCC_LINT?=-DGCC_LINT
-
-# some defaults that cause most if not all warnings
-# eventually: -Wshadow -pedantic
-ifeq ($(origin WERROR_CFLAGS),undefined)
-#WERROR_CFLAGS ?= -Werror
-endif
-ifeq ($(origin WARNING_CFLAG),undefined)
-WARNING_CFLAGS ?= -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
-endif
-# WERROR may go away
-WERROR ?= $(WARNING_CFLAGS) $(WERROR_CFLAGS)
-
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
-
-# extra compile flags, for userland and kernel stuff, e.g. -g for debug info
-# you can add to this in the defaults file using +=
-# -DGCC_LINT uses gcc-specific declarations to improve compile-time diagnostics.
-# -DCOMPILER_HAS_NO_PRINTF_LIKE if your old compiler gives you errors with
-# PRINTF_LIKE(x)
-#
-# Warning: Using -O3 is known to cause problems with the NSS code, see
-#          https://bugzilla.redhat.com/show_bug.cgi?id=884710
-#
-# Example for a cross compile:
-# USERCOMPILE?=-g ${PORTDEFINE} -I/usr/local/arm_tools/arm-elf/inc -L/usr/local/arm_tools/lib/gcc-lib
-# USERCOMPILE?=-g -O2 ${WERROR} ${GCC_LINT}
-USERCOMPILE?=-g -O2 ${GCCM} ${WERROR} ${GCC_LINT} -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE -DFORCE_PR_ASSERT
 
 KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 # You can also run this before starting libreswan on glibc systems:
@@ -441,7 +415,6 @@ OBJDIRTOP?=${LIBRESWANSRCDIR}/${OBJDIR}
 export OBJDIR
 export OBJDIRTOP
 
-
 ### paths within the source tree
 
 KLIPSINC=${LIBRESWANSRCDIR}/linux/include
@@ -485,6 +458,7 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@EXAMPLECONFDIR@:$(EXAMPLECONFDIR):g" \
 			-e "s:@FINALBINDIR@:$(FINALBINDIR):g" \
 			-e "s:@FINALCONFDDIR@:$(FINALCONFDDIR):g" \
+			-e "s:@FINALNSSDIR@:$(FINALNSSDIR):g" \
 			-e "s:@FINALCONFDIR@:$(FINALCONFDIR):g" \
 			-e "s:@FINALCONFFILE@:$(FINALCONFFILE):g" \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
@@ -496,11 +470,13 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@FINALVARDIR@:$(FINALVARDIR):g" \
 			-e "s:@IPSEC_CONF@:$(FINALCONFFILE):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
+			-e "s:@IPSEC_NSSDIR@:$(FINALNSSDIR):g" \
 			-e "s:@IPSEC_DIR@:$(FINALBINDIR):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
-			-e "s:@MODPROBE@:$(MODPROBE):g" \
+			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
+			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 
 # For KVM testing setup
@@ -514,3 +490,7 @@ OSMEDIA?=http://76.10.157.69/linux/releases/17/Fedora/x86_64/os
 # Ubuntu media
 # OSTYPE?=ubuntu
 # OSMEDIA?=http://ftp.ubuntu.com/ubuntu/dists/precise/main/installer-amd64/
+
+# Now that all the configuration variables are defined, use them to
+# define USERLAND_CFLAGS
+include ${LIBRESWANSRCDIR}/mk/userland-cflags.mk

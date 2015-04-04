@@ -1,7 +1,3 @@
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.ver
 
 CFLAGS+=-DIPSEC_DEBUG -DIPSEC
 CFLAGS+=-DINET6
@@ -24,4 +20,8 @@ LIBRARY=bsdpfkey
 LIB=libbsdpfkey.a
 ONEFILE=pfkey.c
 
-include ${SRCDIR}../Makefile.library
+ifdef top_srcdir
+include $(top_srcdir)/mk/library.mk
+else
+include ../../mk/library.mk
+endif

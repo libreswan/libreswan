@@ -526,7 +526,7 @@ enum next_payload_types_ikev2 {
 	ISAKMP_NEXT_v2V = 43,	/* Vendor ID */
 	ISAKMP_NEXT_v2TSi = 44,	/* Traffic Selector - initiator */
 	ISAKMP_NEXT_v2TSr = 45,	/* Traffic Selector - responder */
-	ISAKMP_NEXT_v2E = 46,	/* Encrypted payload */
+	ISAKMP_NEXT_v2SK = 46,	/* Encrypted payload */
 	ISAKMP_NEXT_v2CP = 47,	/* Configuration Payload (MODECFG) */
 	ISAKMP_NEXT_v2EAP = 48,	/* Extensible Authentication Payload */
 	/* 128 - 255 Private Use */

@@ -11,13 +11,13 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-include ${LIBRESWANSRCDIR}/Makefile.inc
-
 PROGRAM=spigrp
 EXTRA5PROC=${PROGRAM}.5
 
 LIBS=${LIBRESWANLIB}
 
-include ${SRCDIR}../Makefile.program
-
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../mk/program.mk
+endif

@@ -1,5 +1,6 @@
 /*
- * IKEv2 parent SA creation routines
+ * IKEv2 parent SA creation routines, for Libreswan
+ *
  * Copyright (C) 2007-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2011 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2008 Antony Antony <antony@xelerance.com>
@@ -45,7 +46,7 @@
 
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "ike_alg.h"
 #include "kernel_alg.h"
 #include "plutoalg.h"
@@ -65,7 +66,6 @@
 #include "nat_traversal.h"
 #include "pam_conv.h"
 #include "alg_info.h" /* for ALG_INFO_IKE_FOREACH */
-
 #include "key.h" /* for SECKEY_DestroyPublicKey */
 
 #include "ietf_constants.h"
@@ -198,6 +198,7 @@ stf_status ikev2parent_outI1(int whack_sock,
 	initialize_new_state(st, c, policy, try, whack_sock, importance);
 	st->st_ikev2 = TRUE;
 	change_state(st, STATE_PARENT_I1);
+	st->st_original_role = ORIGINAL_INITIATOR;
 	st->st_msgid_lastack = v2_INVALID_MSGID;
 	st->st_msgid_lastrecv = v2_INVALID_MSGID;
 	st->st_msgid_nextuse = 0;
@@ -751,6 +752,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 				     pcim_stranger_crypto);
 		st->st_ikev2 = TRUE;
 		change_state(st, STATE_PARENT_R1);
+		st->st_original_role = ORIGINAL_RESPONDER;
 		st->st_msgid_lastack = v2_INVALID_MSGID;
 		st->st_msgid_nextuse = 0;
 
@@ -962,9 +964,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			 * the response message.  
 			 */
 			DBG(DBG_CONTROL, DBG_log("Clearing RCOOKIE for INVALID_KE reply"));
-			unhash_state(st);
-			memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
-			insert_state(st);
+			rehash_state(st, zero_cookie);
 			send_v2_notification_invalid_ke_from_state(st);
 			/* nothing to do or remember */
 			delete_state(st);
@@ -1031,7 +1031,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	if (send_certreq) {
 		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
 		DBG(DBG_CONTROL, DBG_log("going to send a certreq"));
-		ikev2_send_certreq(st, md, O_RESPONDER, np, &md->rbody);
+		ikev2_send_certreq(st, md, ORIGINAL_RESPONDER, np, &md->rbody);
 	}
 
 	/* Send VendorID VID if needed.  Only one. */
@@ -1154,9 +1154,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				clear_dh_from_state(st);
 				/* wipe out any saved RCOOKIE */
 				DBG(DBG_CONTROL, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
-				unhash_state(st);
-				memcpy(st->st_rcookie, zero_cookie, COOKIE_SIZE);
-				insert_state(st);
+				rehash_state(st, zero_cookie);
 				/* get a new KE */
 				return crypto_helper_build_ke(st);
 			} else {
@@ -1267,7 +1265,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		ikev2_natd_lookup(md, st->st_rcookie);
 
 	/* initiate calculation of g^xy */
-	return start_dh_v2(md, "ikev2_inR1outI2 KE", O_INITIATOR,
+	return start_dh_v2(md, "ikev2_inR1outI2 KE", ORIGINAL_INITIATOR,
 		ikev2_parent_inR1outI2_continue);
 }
 
@@ -1426,7 +1424,6 @@ static unsigned char *ikev2_authloc(struct state *st,
 }
 
 static stf_status ikev2_encrypt_msg(struct state *st,
-				    enum phase1_role role,
 				    unsigned char *auth_start,
 				    unsigned char *wire_iv_start,
 				    unsigned char *enc_start,
@@ -1442,7 +1439,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 	chunk_t salt;
 	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
-	if (role == O_INITIATOR) {
+	if (st->st_original_role == ORIGINAL_INITIATOR) {
 		cipherkey = pst->st_skey_ei_nss;
 		authkey = pst->st_skey_ai_nss;
 		salt = pst->st_skey_initiator_salt;
@@ -1535,6 +1532,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 	return STF_OK;
 }
 
+
 /*
  * ikev2_decrypt_msg: decode the v2E payload.
  * The result is stored in-place.
@@ -1547,14 +1545,15 @@ static stf_status ikev2_encrypt_msg(struct state *st,
  * The (optional) salt, wire-iv, and (optional) 1 are combined to form
  * the actual starting-variable (a.k.a. IV).
  */
-static
-stf_status ikev2_decrypt_msg(struct msg_digest *md,
-			     enum phase1_role role)
+
+stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md)
 {
+	/* caller should be passing in the original (parent) state. */
 	struct state *st = md->st;
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
-	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2E]->pbs;
+
+	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
 
 	if (st != NULL && !st->hidden_variables.st_skeyid_calculated)
 	{
@@ -1614,7 +1613,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	chunk_t salt;
 	PK11SymKey *cipherkey;
 	PK11SymKey *authkey;
-	if (role == O_INITIATOR) {
+	if (md->original_role == ORIGINAL_INITIATOR) {
 		cipherkey = pst->st_skey_er_nss;
 		authkey = pst->st_skey_ar_nss;
 		salt = pst->st_skey_responder_salt;
@@ -1713,10 +1712,28 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md,
 	DBG(DBG_CRYPT, DBG_log("striping %u bytes as pad", padlen));
 
 	init_pbs(&md->clr_pbs, enc_start, enc_size - padlen, "cleartext");
+	return STF_OK;
+}
 
-	return ikev2_process_payloads(md, &md->clr_pbs,
-		md->chain[ISAKMP_NEXT_v2E]->payload.generic.isag_np,
-		TRUE);
+static
+stf_status ikev2_decrypt_msg(struct msg_digest *md)
+{
+	stf_status status;
+	status = ikev2_verify_and_decrypt_sk_payload(md);
+	if (status != STF_OK) {
+		return status;
+	}
+	unsigned np = md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np;
+	struct ikev2_payloads_summary summary = ikev2_decode_payloads(md, &md->clr_pbs, np);
+	if (summary.status != STF_OK) {
+		return status;
+	}
+	struct ikev2_payload_errors errors = ikev2_verify_payloads(summary, md->svm, TRUE);
+	if (errors.status != STF_OK) {
+		ikev2_log_payload_errors(errors);
+		return errors.status;
+	}
+	return STF_OK;
 }
 
 static stf_status ikev2_ship_cp_attr_ip4(u_int16_t type, ip_address *ip4,
@@ -1783,7 +1800,7 @@ stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 
 static stf_status ikev2_send_auth(struct connection *c,
 				  struct state *st,
-				  enum phase1_role role,
+				  enum original_role role,
 				  enum next_payload_types_ikev2 np,
 				  unsigned char *idhash_out,
 				  pb_stream *outpbs)
@@ -1872,7 +1889,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	{
 		/* why not from svm->timeout_event ??? */
 		enum event_type x = EVENT_SA_REPLACE;
-		time_t delay = ikev2_replace_delay(pst, &x, O_INITIATOR);
+		time_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
 
 		event_schedule(x, delay, pst);
 	}
@@ -1900,7 +1917,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		/* clear all flags, set original initiator */
 		hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
 		hdr.isa_version = build_ikev2_version();
-		hdr.isa_np = ISAKMP_NEXT_v2E;
+		hdr.isa_np = ISAKMP_NEXT_v2SK;
 		hdr.isa_xchg = ISAKMP_v2_AUTH;
 		hdr.isa_msgid = st->st_msgid;
 		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
@@ -1924,7 +1941,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		e.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 
-	if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
+	if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* insert IV */
@@ -1962,7 +1979,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		/* decide to send CERT payload */
 		{
-			send_cert = doi_send_ikev2_cert_thinking(st);
+			send_cert = ikev2_send_cert_decision(st);
 
 			if (send_cert)
 				r_id.isai_np = ISAKMP_NEXT_v2CERT;
@@ -1994,7 +2011,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	{
 		if (send_cert) {
 			stf_status certstat = ikev2_send_cert(st, md,
-							      O_INITIATOR,
+							      ORIGINAL_INITIATOR,
 							      ISAKMP_NEXT_v2AUTH,
 							      &e_pbs_cipher);
 			if (certstat != STF_OK)
@@ -2007,7 +2024,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		int np = c->spd.this.modecfg_client ?
 				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
 
-		stf_status authstat = ikev2_send_auth(c, st, O_INITIATOR, np,
+		stf_status authstat = ikev2_send_auth(c, st, ORIGINAL_INITIATOR, np,
 				idhash, &e_pbs_cipher);
 
 		if (authstat != STF_OK)
@@ -2047,7 +2064,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
 		st->st_ts_that = ikev2_end_to_ts(&c->spd.that);
 
-		ikev2_calc_emit_ts(md, &e_pbs_cipher, O_INITIATOR, c, policy);
+		ikev2_calc_emit_ts(md, &e_pbs_cipher, ORIGINAL_INITIATOR, c, policy);
 
 		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
@@ -2081,8 +2098,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		close_output_pbs(&md->rbody);
 		close_output_pbs(&reply_stream);
 
-		ret = ikev2_encrypt_msg(st, O_INITIATOR,
-					authstart,
+		ret = ikev2_encrypt_msg(st, authstart,
 					iv, encstart, authloc,
 					&e_pbs, &e_pbs_cipher);
 		if (ret != STF_OK)
@@ -2356,7 +2372,7 @@ stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 	    DBG_log("ikev2 parent inI2outR2: calculating g^{xy} in order to decrypt I2"));
 
 	/* initiate calculation of g^xy */
-	return start_dh_v2(md, "ikev2_inI2outR2 KE", O_RESPONDER,
+	return start_dh_v2(md, "ikev2_inI2outR2 KE", ORIGINAL_RESPONDER,
 		ikev2_parent_inI2outR2_continue);
 }
 
@@ -2431,7 +2447,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 	/* decrypt things. */
 	{
-		stf_status ret = ikev2_decrypt_msg(md, O_RESPONDER);
+		stf_status ret = ikev2_decrypt_msg(md);
 
 		if (ret != STF_OK)
 			return ret;
@@ -2471,7 +2487,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	{
 		stf_status authstat = ikev2_verify_rsa_sha1(
 				st,
-				O_RESPONDER,
+				ORIGINAL_RESPONDER,
 				idhash_in,
 				NULL,	/* keys from DNS */
 				NULL,	/* gateways from DNS */
@@ -2496,7 +2512,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	{
 		stf_status authstat = ikev2_verify_psk_auth(
 				st,
-				O_RESPONDER,
+				ORIGINAL_RESPONDER,
 				idhash_in,
 				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 
@@ -2568,7 +2584,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 	delete_event(st);
 	{
 		enum event_type x = EVENT_SA_REPLACE;
-		time_t delay = ikev2_replace_delay(st, &x, O_RESPONDER);
+		time_t delay = ikev2_replace_delay(st, &x, ORIGINAL_RESPONDER);
 
 		event_schedule(x, delay, st);
 	}
@@ -2595,7 +2611,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 			/* set msg responder flag - clear others */
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
 			hdr.isa_version = build_ikev2_version();
-			hdr.isa_np = ISAKMP_NEXT_v2E;
+			hdr.isa_np = ISAKMP_NEXT_v2SK;
 			hdr.isa_xchg = ISAKMP_v2_AUTH;
 			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
@@ -2613,7 +2629,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 		e.isag_np = ISAKMP_NEXT_v2IDr;
 		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
-		if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
+		if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
 			return STF_INTERNAL_ERROR;
 
 		/* insert IV */
@@ -2630,7 +2646,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 		encstart = e_pbs_cipher.cur;
 
 		/* decide to send CERT payload before we generate IDr */
-		send_cert = doi_send_ikev2_cert_thinking(st);
+		send_cert = ikev2_send_cert_decision(st);
 
 		/* send out the IDr payload */
 		{
@@ -2673,7 +2689,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 		}
 
 		DBG(DBG_CONTROLMORE,
-		    DBG_log("assembled IDr payload -- CERT next"));
+		    DBG_log("assembled IDr payload"));
 
 		/*
 		 * send CERT payload RFC 4306 3.6, 1.2:([CERT,] )
@@ -2682,7 +2698,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 		 */
 		if (send_cert) {
 			stf_status certstat = ikev2_send_cert(st, md,
-							      O_RESPONDER,
+							      ORIGINAL_RESPONDER,
 							      ISAKMP_NEXT_v2AUTH,
 							      &e_pbs_cipher);
 
@@ -2710,7 +2726,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 		/* now send AUTH payload */
 		{
 			stf_status authstat = ikev2_send_auth(c, st,
-							      O_RESPONDER, np,
+							      ORIGINAL_RESPONDER, np,
 							      idhash_out,
 							      &e_pbs_cipher);
 
@@ -2720,7 +2736,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 
 		if (np == ISAKMP_NEXT_v2SA || np == ISAKMP_NEXT_v2CP) {
 			/* must have enough to build an CHILD_SA */
-			ret = ikev2_child_sa_respond(md, O_RESPONDER,
+			ret = ikev2_child_sa_respond(md, ORIGINAL_RESPONDER,
 						     &e_pbs_cipher,
 						     ISAKMP_v2_AUTH);
 			if (ret > STF_FAIL) {
@@ -2755,8 +2771,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 			close_output_pbs(&md->rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(st, O_RESPONDER,
-						authstart,
+			ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
 			if (ret != STF_OK)
@@ -2814,7 +2829,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	/* decrypt things. */
 	{
-		stf_status ret = ikev2_decrypt_msg(md, O_INITIATOR);
+		stf_status ret = ikev2_decrypt_msg(md);
 
 		if (ret != STF_OK)
 			return ret;
@@ -2845,7 +2860,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	{
 		stf_status authstat = ikev2_verify_rsa_sha1(
 				pst,
-				O_INITIATOR,
+				ORIGINAL_INITIATOR,
 				idhash_in,
 				NULL,	/* keys from DNS */
 				NULL,	/* gateways from DNS */
@@ -2870,7 +2885,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	{
 		stf_status authstat = ikev2_verify_psk_auth(
 				pst,
-				O_INITIATOR,
+				ORIGINAL_INITIATOR,
 				idhash_in,
 				&md->chain[ISAKMP_NEXT_v2AUTH]->pbs);
 
@@ -2965,7 +2980,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 			struct spd_route *sra;
 			sra = &c->spd;
 			int bfit_n = ikev2_evaluate_connection_fit(c, sra,
-								   O_INITIATOR,
+								   ORIGINAL_INITIATOR,
 								   tsi, tsr,
 								   tsi_n,
 								   tsr_n);
@@ -2974,7 +2989,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 				    DBG_log("prefix fitness found a better match c %s",
 					    c->name));
 				int bfit_p = ikev2_evaluate_connection_port_fit(
-						c, sra, O_INITIATOR,
+						c, sra, ORIGINAL_INITIATOR,
 						tsi, tsr,
 						tsi_n, tsr_n,
 						&best_tsi_i, &best_tsr_i);
@@ -2984,7 +2999,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 					    DBG_log("port fitness found better match c %s, tsi[%d],tsr[%d]",
 						    c->name, best_tsi_i, best_tsr_i));
 					int bfit_pr = ikev2_evaluate_connection_protocol_fit(
-							c, sra, O_INITIATOR, tsi,
+							c, sra, ORIGINAL_INITIATOR, tsi,
 							tsr, tsi_n, tsr_n,
 							&best_tsi_i,
 							&best_tsr_i);
@@ -3136,7 +3151,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 	} /* notification block */
 
-	ikev2_derive_child_keys(st, md->role);
+	ikev2_derive_child_keys(st, md->original_role);
 
 	c->newest_ipsec_sa = st->st_serialno;
 
@@ -3389,7 +3404,7 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 	/* decrypt message */
 	{
-		stf_status ret = ikev2_decrypt_msg(md, O_RESPONDER);
+		stf_status ret = ikev2_decrypt_msg(md);
 
 		if (ret != STF_OK)
 			return ret;
@@ -3511,18 +3526,16 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 		hdr.isa_xchg = ISAKMP_v2_CREATE_CHILD_SA;
-		hdr.isa_np = ISAKMP_NEXT_v2E;
+		hdr.isa_np = ISAKMP_NEXT_v2SK;
 		hdr.isa_msgid = htonl(md->msgid_received);
 
 		/* encryption role based on original originator */
-		if (IS_V2_INITIATOR(pst->st_state)) {
-			md->role = O_INITIATOR;
+		if (md->original_role == ORIGINAL_INITIATOR) {
 			/* add original initiator flag */
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
 		} else {
-			md->role = O_RESPONDER;
 			/* not adding original initiator flag */
-		}
+			}
 
 		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
@@ -3538,7 +3551,7 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 	/* insert an Encryption payload header */
 	e.isag_np = ISAKMP_NEXT_v2SA;
 	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-	if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
+	if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* IV */
@@ -3557,7 +3570,7 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 
 	unpack_nonce(&st->st_nr, r);
 
-	ret = ikev2_child_sa_respond(md, O_RESPONDER, &e_pbs_cipher,
+	ret = ikev2_child_sa_respond(md, ORIGINAL_RESPONDER, &e_pbs_cipher,
 			ISAKMP_v2_CREATE_CHILD_SA);
 
 	if (ret > STF_FAIL) {
@@ -3583,8 +3596,8 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&md->rbody);
 		close_output_pbs(&reply_stream);
-		ret = ikev2_encrypt_msg(st, O_RESPONDER, authstart, iv, encstart,
-				authloc, &e_pbs, &e_pbs_cipher);
+		ret = ikev2_encrypt_msg(st, authstart, iv, encstart,
+					authloc, &e_pbs, &e_pbs_cipher);
 
 		if (ret != STF_OK)
 			return ret;
@@ -3601,7 +3614,6 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	enum phase1_role prole;	/* parent SA's role */
 
 	/*
 	 * get parent
@@ -3625,23 +3637,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			c_serialno, st->st_serialno));
 	}
 
-	/* Since an informational exchange can be started by the original responder,
-	 * things such as encryption, decryption should be done based on the original
-	 * role and not the md->role
-	 */
-	if (IS_V2_INITIATOR(st->st_state)) {
-		prole = O_INITIATOR;
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("received informational exchange request from the original responder"));
-	} else {
-		prole = O_RESPONDER;
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("received informational exchange request from the original initiator"));
-	}
-
 	/* decrypt message */
 	{
-		stf_status ret = ikev2_decrypt_msg(md, prole);
+		stf_status ret = ikev2_decrypt_msg(md);
 
 		if (ret != STF_OK)
 			return ret;
@@ -3681,7 +3679,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 			memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
 			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-			hdr.isa_np = ISAKMP_NEXT_v2E;
+			hdr.isa_np = ISAKMP_NEXT_v2SK;
 			hdr.isa_msgid = htonl(md->msgid_received);
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
 			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
@@ -3743,7 +3741,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
-		if (!out_struct(&e, &ikev2_e_desc, &md->rbody, &e_pbs))
+		if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
 			return STF_INTERNAL_ERROR;
 
 		/* insert IV */
@@ -3937,8 +3935,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			close_output_pbs(&md->rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(st, prole,
-						authstart,
+			ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
 			if (ret != STF_OK)
@@ -4110,10 +4107,6 @@ stf_status ikev2_send_informational(struct state *st)
 		unsigned char *encstart;
 		unsigned char *iv;
 
-		/* encryption role based on role in INIT, not role in this exchange */
-		enum phase1_role role = IS_V2_INITIATOR(pst->st_state) ?
-			O_INITIATOR : O_RESPONDER;
-
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
 		pb_stream rbody;
@@ -4132,14 +4125,12 @@ stf_status ikev2_send_informational(struct state *st)
 			memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
 			memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-			hdr.isa_np = ISAKMP_NEXT_v2E;
+			hdr.isa_np = ISAKMP_NEXT_v2SK;
 			hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
 			/* encryption role based on original state not md state */
-			if (IS_V2_INITIATOR(pst->st_state)) {
+			if (pst->st_original_role == ORIGINAL_INITIATOR) {
 				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
-			} else {
-				/* not setting original initiator flag */
 			}
 			/* not setting message responder flag */
 
@@ -4158,7 +4149,7 @@ stf_status ikev2_send_informational(struct state *st)
 		/* insert an Encryption payload header */
 		e.isag_np = ISAKMP_NEXT_v2NONE;
 		e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
-		if (!out_struct(&e, &ikev2_e_desc, &rbody, &e_pbs))
+		if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
 			return STF_FATAL;
 
 		/* IV */
@@ -4192,8 +4183,7 @@ stf_status ikev2_send_informational(struct state *st)
 			close_output_pbs(&rbody);
 			close_output_pbs(&reply_stream);
 
-			ret = ikev2_encrypt_msg(st, role,
-						authstart,
+			ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
 			if (ret != STF_OK)
@@ -4230,7 +4220,6 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 	struct ikev2_generic e;
 	unsigned char *iv;
 	unsigned char *encstart;
-	enum phase1_role role;
 
 	/* make sure HDR is at start of a clean buffer */
 	zero(&reply_buffer);
@@ -4247,20 +4236,12 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 		memcpy(hdr.isa_rcookie, pst->st_rcookie, COOKIE_SIZE);
 		memcpy(hdr.isa_icookie, pst->st_icookie, COOKIE_SIZE);
 		hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
-		hdr.isa_np = ISAKMP_NEXT_v2E;
+		hdr.isa_np = ISAKMP_NEXT_v2SK;
 		hdr.isa_msgid = htonl(pst->st_msgid_nextuse);
 
 		/* set Initiator flag if we are the IKE Original Initiator */
-		/*
-		 * ??? is this isa_flag setting correct?
-		 * Should it not reflect *this* exchange?
-		 */
-		if (pst->st_state == STATE_PARENT_I2 ||
-		    pst->st_state == STATE_PARENT_I3) {
-			role = O_INITIATOR;
+		if (pst->st_original_role == ORIGINAL_INITIATOR) {
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
-		} else {
-			role = O_RESPONDER;
 		}
 		/* we are sending a request, so ISAKMP_FLAGS_v2_MSG_R is unset */
 
@@ -4280,7 +4261,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 	e.isag_np = ISAKMP_NEXT_v2D;
 	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 
-	if (!out_struct(&e, &ikev2_e_desc, &rbody, &e_pbs))
+	if (!out_struct(&e, &ikev2_sk_desc, &rbody, &e_pbs))
 		return FALSE;
 
 	/* insert IV */
@@ -4358,8 +4339,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 		close_output_pbs(&rbody);
 		close_output_pbs(&reply_stream);
 
-		ret = ikev2_encrypt_msg(st, role,
-					authstart,
+		ret = ikev2_encrypt_msg(st, authstart,
 					iv, encstart, authloc,
 					&e_pbs, &e_pbs_cipher);
 		if (ret != STF_OK)

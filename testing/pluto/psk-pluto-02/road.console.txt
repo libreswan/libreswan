@@ -25,10 +25,10 @@ road #
 000 "road-eastnet-psk":     oriented; my_ip=unset; their_ip=unset
 000 "road-eastnet-psk":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-eastnet-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "road-eastnet-psk":   labeled_ipsec:no, loopback:no; 
+000 "road-eastnet-psk":   labeled_ipsec:no; 
 000 "road-eastnet-psk":    policy_label:unset; 
 000 "road-eastnet-psk":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "road-eastnet-psk":   retransmit-interval: 500ms; retransmit-timeout: 60s;
+000 "road-eastnet-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-eastnet-psk":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "road-eastnet-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;
@@ -132,10 +132,10 @@ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUT
 000 "road-eastnet-psk":     oriented; my_ip=unset; their_ip=unset
 000 "road-eastnet-psk":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "road-eastnet-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "road-eastnet-psk":   labeled_ipsec:no, loopback:no; 
+000 "road-eastnet-psk":   labeled_ipsec:no; 
 000 "road-eastnet-psk":    policy_label:unset; 
 000 "road-eastnet-psk":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "road-eastnet-psk":   retransmit-interval: 500ms; retransmit-timeout: 60s;
+000 "road-eastnet-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "road-eastnet-psk":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "road-eastnet-psk":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto;

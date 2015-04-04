@@ -14,13 +14,6 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-ifndef top_srcdir
-include ../../mk/dirs.mk
-endif
-
-include $(top_srcdir)/mk/config.mk
-include $(top_srcdir)/mk/version.mk
-
 LIBRARY=ipsecconf
 LIB=lib${LIBRARY}.a
 MANDIR=$(MANTREE)/man3
@@ -33,21 +26,13 @@ SRCS+=interfaces.c
 #enable to get lots more debugging about semantics.
 #CFLAGS+=-DPARSER_TYPE_DEBUG
 
-ifeq ($(USE_FIPSCHECK),true)
-CFLAGS+=-DFIPS_CHECK
-endif
-
-ifeq ($(USE_NM),true)
-CFLAGS+=-DHAVE_NM
-endif
-
-ifeq ($(USE_LABELED_IPSEC),true)
-CFLAGS+=-DHAVE_LABELED_IPSEC
-endif
-
 OBJS=${SRCS:.c=.o} 
 
-include $(top_srcdir)/mk/library.mk
+ifdef top_srcdir
+include ${top_srcdir}/mk/library.mk
+else
+include ../../mk/library.mk
+endif
 
 # Hack to force the generated files to be built first.  Not too bad
 # since all the $(OBJS) indirectly depend on the header anyway.
@@ -62,9 +47,7 @@ lex.yy.c: parser.l
 %.tab.h %.tab.c: %.y
 	cd $(builddir) && $(BISON) ${BISONOSFLAGS} -v -d $(srcdir)/$$(basename $<)
 
-clean:
+clean: parser-clean
+.PHONY: parser-clean
+parser-clean:
 	cd $(builddir) && $(RM) -f parser.tab.* lex.yy.*
-
-MK_DEPEND_FILES = $(OBJS)
-MK_DEPEND_CFLAGS = $(CFLAGS)
--include $(top_srcdir)/mk/depend.mk

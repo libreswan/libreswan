@@ -91,7 +91,8 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_FRAGICMP] = FALSE; /* see sysctl_ipsec_icmp in ipsec_proc.c */
 	cfg->setup.options[KBF_HIDETOS]  = TRUE;
 	cfg->setup.options[KBF_PLUTORESTARTONCRASH]  = TRUE;
-	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = FALSE;
+	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = TRUE;
+	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND]  = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
 	cfg->setup.options[KBF_PLUTOFORK] = TRUE; /* change in the future */
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;

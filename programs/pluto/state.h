@@ -1,4 +1,5 @@
-/* state and event objects
+/* state and event objects, for libreswan
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001,2013-2014 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
@@ -22,7 +23,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #ifndef _STATE_H
@@ -44,6 +44,7 @@
 #endif
 
 #include "labeled_ipsec.h"	/* for struct xfrm_user_sec_ctx_ike and friends */
+#include "state_entry.h"
 
 /* Message ID mechanism.
  *
@@ -284,6 +285,9 @@ struct state {
 
 	/** IKEv2-only things **/
 
+	/* Am I the original initator, or orignal responder (v2 IKE_I flag). */
+	enum original_role st_original_role;
+
 	/* message ID sequence for things we send (as initiator) */
 	msgid_t st_msgid_lastack;               /* last one peer acknowledged  - host order */
 	msgid_t st_msgid_nextuse;               /* next one to use - host order */
@@ -424,8 +428,16 @@ struct state {
 
 	struct pluto_event *st_event;		/* timer event for this state object */
 
-	struct state *st_hashchain_next;	/* next in state hashbucket chain */
-	struct state *st_hashchain_prev;	/* previous in state hashbucket chain  */
+	/*
+	 * hash table entry indexed by ICOOKIE+RCOOKIE
+	 */
+	struct state_entry st_hash_entry;
+	/*
+	 * Hash table indexed by ICOOKIE+ZERO_COOKIE.
+	 *
+	 * Used to robustly find a state based only on ICOOKIE.
+	 */
+	struct state_entry st_icookie_hash_entry;
 
 	struct hidden_variables hidden_variables;
 
@@ -466,8 +478,7 @@ extern bool states_use_connection(const struct connection *c);
 extern struct state *new_state(void);
 extern void init_states(void);
 extern void insert_state(struct state *st);
-extern void unhash_state(struct state *st);
-extern void rehash_state(struct state *st);
+extern void rehash_state(struct state *st, const u_char *rcookie);
 extern void release_whack(struct state *st);
 extern void state_eroute_usage(const ip_subnet *ours, const ip_subnet *his,
 			       unsigned long count, monotime_t nw);
@@ -492,7 +503,8 @@ extern struct state
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);
 
-extern struct state *find_state_ikev2_parent_init(const u_char *icookie);
+extern struct state *find_state_ikev2_parent_init(const u_char *icookie,
+						  enum state_kind expected_state);
 
 extern struct state *find_state_ikev2_child(const u_char *icookie,
 					    const u_char *rcookie,

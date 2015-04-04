@@ -21,23 +21,15 @@ fi
 
 pidof pluto >/dev/null && ipsec setup stop 2> /dev/null
 
-echo ">>> $0 on $(hostname) at $(date)" >>compile-log.txt
-
-if make install >>compile-log.txt 2>&1; then
-    : 'make install' success
+targets="install module_install"
+echo ">>> $0 'make ${targets}' on $(hostname) at $(date)" >>compile-log.txt
+# XXX: use tee -a instead?
+if make $targets >>compile-log.txt 2>&1; then
+    : 'make ${targets}' success
 else
     status=$?
     tail -20 compile-log.txt
-    : 'make install' failed: ${status}; see compile-log.txt for details
-    exit ${status}
-fi
-
-if make module_install >>compile-log.txt 2>&1; then
-    : 'make module install' success
-else
-    status=$?
-    tail -20 compile-log.txt
-    : 'make module_install' failed: ${status}; see compile-log.txt details
+    : 'make ${targets}' failed: ${status}\; see compile-log.txt for details
     exit ${status}
 fi
 

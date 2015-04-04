@@ -32,11 +32,11 @@ You can load this machine definition into libvirt using:
     <controller type='virtio-serial' index='0'>
     </controller>
     <filesystem type='mount' accessmode='squash'>
-      <source dir='@@TESTDIR@@'/>
+      <source dir='@@TESTINGDIR@@'/>
       <target dir='testing'/>
     </filesystem>
     <filesystem type='mount' accessmode='squash'>
-      <source dir='@@LIBRESWANSRCDIR@@'/>
+      <source dir='@@SOURCEDIR@@'/>
       <target dir='swansource'/>
     </filesystem>
     <interface type='network'>

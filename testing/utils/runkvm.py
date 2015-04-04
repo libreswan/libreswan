@@ -1,55 +1,51 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
-import getopt, sys
+import sys
 import time
-import os, commands
+import os
+import subprocess
 import re
+import argparse
+import logging
+from fab import shell
+from fab import argutil
 
 try:
-    import argparse
     import pexpect
     import setproctitle
-except ImportError , e:
+except ImportError as e:
     module = str(e)[16:]
     sys.exit("we require the python module %s " % module)
 
 # XXX: This function's behaviour should not depend on the presence of
 # FILENAME.
-def read_exec_shell_cmd( ex, filename, prompt, timer):
+def read_exec_shell_cmd(child, filename, timer):
     if os.path.exists(filename):
-        f_cmds = open(filename, "r")
-        for line in f_cmds:
-            line = line.strip()    
-            # We need the lines with # for the cut --- tuc sections
-            # if line and not line[0] == '#':
-            if line:
-                # give the prompt time to appear
-		time.sleep(0.5)
-                print "%s: %s" % (prompt.replace("\\",""), line)
-                ex.sendline(line)
-                ex.expect (prompt,timeout=timer, searchwindowsize=100) 
+        f_cmds = None
+        try:
+            f_cmds = open(filename, "r")
+            for line in f_cmds:
+                line = line.strip()    
+                # We need the lines with # for the cut --- tuc
+                # sections if line and not line[0] == '#':
+                if line:
+                    child.run(line, timeout=timer)
+        finally:
+            if f_cmds:
+                f_cmds.close
     else:
-        print  filename 
-        ex.sendline(filename)
-        ex.expect (prompt,timeout=timer, searchwindowsize=100)
+        child.run(filename, timeout=timer)
 
-def run_shell_cmd(ex, command, prompt, timer):
-        ex.sendline(command)
-        ex.expect(prompt, timeout=timer, searchwindowsize=100)
+def connect_to_kvm(args):
 
-def connect_to_kvm(args, prompt = ''):
-
-    if not prompt :
-        prompt = "\[root@%s " % (args.hostname) 
-
-    vmlist = commands.getoutput("sudo virsh list")
+    vmlist = subprocess.getoutput("sudo virsh list")
     running = 0
     for line in vmlist.split("\n")[2:]:
        try:
             num,host,state = line.split()
             if host == args.hostname and state == "running":
                running = 1
-               print "Found %s running already" % args.hostname
+               print("Found %s running already" % args.hostname)
                continue
        except:
                pass
@@ -57,121 +53,97 @@ def connect_to_kvm(args, prompt = ''):
     if args.reboot:
        waittime = 20
        if not running:
-            print "Booting %s - pausing %s seconds" % (args.hostname,waittime)
-            commands.getoutput("sudo virsh start %s" % args.hostname)
+            print("Booting %s - pausing %s seconds" % (args.hostname,waittime))
+            subprocess.getoutput("sudo virsh start %s" % args.hostname)
             time.sleep(waittime)
        else:
-            commands.getoutput("sudo virsh reboot %s" % args.hostname)
-            print "Rebooting %s - pausing %s seconds" % (args.hostname,waittime)
+            subprocess.getoutput("sudo virsh reboot %s" % args.hostname)
+            print("Rebooting %s - pausing %s seconds" % (args.hostname,waittime))
             time.sleep(waittime)
 
-    print "Taking %s console by force" % args.hostname
+    print("Taking %s console by force" % args.hostname)
     cmd = "sudo virsh console --force %s" % args.hostname
     timer = 120
-    child = pexpect.spawn(cmd)
-    child.delaybeforesend = 0
-    child.logfile = sys.stdout
-    # don't match full prompt, we want it to work regardless cwd
+    # Need to use spawnu with python3.
+    child = shell.Remote(cmd, hostname=args.hostname, username="root")
+    child.output(sys.stdout)
+    prompt = child.prompt
+    print("Shell prompt '%s'" % prompt.pattern)
 
     done = 0
     tries = 60
-    print "Waiting on %s login: or %s prompt" % (args.hostname, prompt)
+    print("Waiting on %s login: or shell prompt" % (args.hostname))
     while not done and tries != 0:
       try:
-        print "sending ctrl-c return"
+        print("sending ctrl-c return")
         #child = pexpect.spawn (cmd)
         #child.sendcontrol('c')
         child.sendline ('')
-        print "found, waiting on login: or %s" % prompt
+        print("found, waiting on login: or shell prompt")
         res = child.expect (['login: ', prompt], timeout=3) 
-	if res == 0:
-           print "sending login name root"
+        if res == 0:
+           print("sending login name root")
            child.sendline ('root')
-           print "found, expecting password prompt"
+           print("found, expecting password prompt")
            child.expect ('Password:', timeout=1)
-           print "found, sending password"
+           print("found, sending password")
            child.sendline ('swan')
-           print "waiting on root shell prompt"
-           child.expect ('root.*', timeout=1)
-           print "done"
+           print("waiting on root shell prompt")
+           child.expect (prompt, timeout=1)
+           print("done")
            done = 1
         elif res == 1:
-          print  '----------------------------------------------------'
-          print  'Already logged in as root on %s' % args.hostname
-          print  '----------------------------------------------------'
+          print('----------------------------------------------------')
+          print('Already logged in as root on %s' % args.hostname)
+          print('----------------------------------------------------')
           done = 1
       except:
-        print "(%s [%s] waiting)" % (args.hostname,tries)
+        print("(%s [%s] waiting)" % (args.hostname,tries))
         tries -= 1
         time.sleep(1)
  
     if not done:
-        print 'console is not answering on host %s, aborting'%args.hostname
-        return 0
+        print('console is not answering on host %s, aborting'%args.hostname)
+        return None
 
+    # Make certain that both ends are in sync and set up as expected.
+    child.sync()
 
-    child.sendline ('TERM=dumb; export TERM; unset LS_COLORS')
-    res = child.expect (['login: ', prompt], timeout=3) 
-    child.setecho(False) ## this does not seems to work
-    child.sendline("stty sane")
-    res = child.expect (['login: ', prompt], timeout=3) 
-    child.sendline("stty -onlcr")
-    res = child.expect (['login: ', prompt], timeout=3) 
-    child.sendline("stty -echo")
-    res = child.expect (['login: ', prompt], timeout=3) 
     return child
 
 def run_final (args, child):
     timer = 30
-    prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'a') 
     child.logfile = f
     cmd = "./final.sh"
     if os.path.exists(cmd):
-        read_exec_shell_cmd( child, cmd, prompt, timer)
+        read_exec_shell_cmd(child, cmd, timer)
     f.close 
     return
 
-def check_for_error (child, prompt):
-    child.sendline("echo status=$?")
-    child.expect('status=([0-9]+)\s*' + prompt, timeout=10)
-    status = int(child.match.group(1))
-    if status:
-        # anything non-zero, pass it out
-        print ""
-        sys.exit(status)
-
-def cd_to (child, args, dir):
-    prompt = "\[root@%s %s\]# " % (args.hostname, os.path.basename(dir))
-    # if a CD takes more than 10 seconds, there's surely a problem
-    run_shell_cmd(child, "cd %s" % dir, prompt, 10)
-    # return the expected prompt
-    return prompt
-
-def compile_on (args,child):
-    prompt = cd_to(child, args, args.sourcedir)
+def compile_on(args, child):
+    child.chdir(args.sourcedir)
     timer = 900
     cmd = "%s/testing/guestbin/swan-build" % (args.sourcedir)
-    run_shell_cmd(child, cmd, prompt, timer)
-    check_for_error(child, prompt)
-    return  
+    status = child.run(cmd, timeout=timer)
+    if status:
+        sys.exit(status)
 
-def make_install (args, child):
-    prompt = cd_to(child, args, args.sourcedir)
+def make_install(args, child):
+    child.chdir(args.sourcedir)
     timer=300
     cmd = "%s/testing/guestbin/swan-install" % (args.sourcedir)
-    run_shell_cmd(child, cmd, prompt, timer)
-    check_for_error(child, prompt)
-    return
+    status = child.run(cmd, timeout=timer)
+    if status:
+        sys.exit(status)
 
 def run_test(args, child):
     #print 'HOST : ', args.hostname 
     #print 'TEST : ', args.testname
 
     timer = 120
-    # we MUST match the entire prompt, or elsewe end up sending too soon and getting mangling!
-    prompt = cd_to(child, args, "%s/pluto/%s " % (args.testdir, args.testname))
+    child.chdir("%s/pluto/%s " % (args.testdir, args.testname))
 
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
     f = open(output_file, 'w') 
@@ -180,16 +152,16 @@ def run_test(args, child):
     # do we need to prep x509?
     if args.x509:
 	# call to runkvm.py forced it
-	x509 = "--x509"
+        x509 = "--x509"
     else:
-	x509 = ""
+        x509 = ""
 	
     cmd = "./%sinit.sh" %  (args.hostname) 
-    read_exec_shell_cmd( child, cmd, prompt, timer)
+    read_exec_shell_cmd(child, cmd, timer)
 
     cmd = "./%srun.sh" %  (args.hostname) 
     if os.path.exists(cmd):
-        read_exec_shell_cmd( child, cmd, prompt, timer)
+        read_exec_shell_cmd(child, cmd, timer)
         run_final(args,child)
         f.close
     else:
@@ -207,37 +179,59 @@ def main():
     parser.add_argument('--reboot', action="store_true", help='first reboot the host')
     parser.add_argument('--sourcedir', action='store', default='/source', help='source <directory> to build')
     parser.add_argument('--testdir', action='store', default='/testing', help='test <directory> to run tests from')
-    parser.add_argument('--run', action='store', help='run <command> then exit')
-    parser.add_argument('--runtime', type=float, default=120, help='max run-time (timeout) for the run command')
+    parser.add_argument('--runtime', type=argutil.timeout, default=None,
+                        help='max run-time (timeout) for the run command (default infinite)')
+    parser.add_argument("--log-level", default="warning", metavar="LEVEL",
+                        help="Set logging level to %(metavar)s (default: %(default)s)")
     # unused parser.add_argument('--timer', default=120, help='timeout for each command for expect.')
+    parser.add_argument('domain', action='store', nargs='?', help="name of the domain to connect to")
+    parser.add_argument('command', action='store', nargs='?', help="command to run")
     args = parser.parse_args()
+    # HACK: Merge the hostname arguments
+    args.hostname = args.hostname or args.domain
+    if not args.hostname:
+        print("Either hostname or domain must be specified")
+        sys.exit(1)
 
-    if args.final:
-        prompt = "\[root@%s %s\]# " % (args.hostname, args.testname)
-        child = connect_to_kvm(args, prompt)
-    else :
-        child = connect_to_kvm(args) 
+    logging.basicConfig(level=args.log_level.upper())
+
+    child = connect_to_kvm(args)
 
     if not child:
         sys.exit("Failed to launch/connect to %s - aborted" % args.hostname)
 
-    if args.run:
-	# The explict cd gets the prompt in sync
-        prompt = cd_to(child, args, args.sourcedir)
-        run_shell_cmd(child, args.run, prompt, args.runtime)
-        check_for_error(child, prompt)
+    if args.command:
+        child.chdir(args.sourcedir)
+        status = child.run(args.command, timeout=args.runtime)
+        sys.exit(status)
 
     if args.compile:
-        compile_on(args,child) 
+        compile_on(args, child)
 
     if args.install:
-        make_install(args,child) 
+        make_install(args, child)
 
     if (args.testname and not args.final):
         run_test(args,child)
 
     if args.final:
         run_final(args,child)
+
+    # if there's nothing else to do, create an interactive shell.
+    batch_mode = args.command or args.compile or args.install or args.testname or args.final or args.reboot
+    if not batch_mode:
+
+        print()
+        print()
+        child.output(None)
+        print("Escape character is ^]")
+        # Hack so that the prompt appears
+        child.output(sys.stdout)
+        child.run("")
+        child.output(None)
+        # Normal mode
+        child.stty_sane()
+        child.interact()
 
 if __name__ == "__main__":
     main()

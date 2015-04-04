@@ -1,3 +1,12 @@
+# Make life easy, just include everything that is needed.
+
+ifndef top_srcdir
+include $(dir $(lastword $(MAKEFILE_LIST)))dirs.mk
+endif
+
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
+
 KLIPSD=${LIBRESWANSRCDIR}/linux/include
 KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
 MANSRCDIR=${LIBRESWANSRCDIR}/lib/libswan
@@ -22,16 +31,8 @@ CFLAGS+=${PORTINCLUDE} ${INCLUDES} ${CROSSFLAGS}
 
 CFLAGS+=-pthread
 
-CFLAGS+= $(USERCOMPILE)
-CFLAGS+= ${WERROR}
-
-ifeq ($(USE_DNSSEC),true)
-CFLAGS+= -DDNSSEC
-endif
-
-ifeq ($(USE_KLIPS),true)
-CFLAGS+= -DKLIPS
-endif
+# XXX: hack until everything uses a consistent .c.o rule
+CFLAGS+=$(USERLAND_CFLAGS)
 
 ARFLAGS=crvs
 MANS=
@@ -82,3 +83,7 @@ $(OBJS):	$(HDRS)
 
 cleanall::
 	rm -rf ${OBJS} $(LIB)
+
+MK_DEPEND_FILES = $(OBJS)
+MK_DEPEND_CFLAGS = $(CFLAGS)
+include $(top_srcdir)/mk/depend.mk

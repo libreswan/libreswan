@@ -135,7 +135,8 @@ void ike_alg_show_connection(struct connection *c, const char *instance)
 	if (st != NULL) {
 		struct esb_buf encbuf, prfbuf, integbuf, groupbuf;
 
-		if (!st->st_ikev2) { /* IKEv1 */
+		if (!st->st_ikev2) {
+			/* IKEv1 */
 			whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKE algorithm newest: %s_%03d-%s-%s",
 			  c->name,
@@ -145,7 +146,8 @@ void ike_alg_show_connection(struct connection *c, const char *instance)
 			  st->st_oakley.enckeylen,
 			  strip_prefix(enum_showb(&oakley_hash_names, st->st_oakley.prf_hash, &prfbuf), "OAKLEY_"),
 			  strip_prefix(enum_showb(&oakley_group_names, st->st_oakley.group->group, &groupbuf), "OAKLEY_GROUP_"));
-		} else { /* IKEv2 */
+		} else {
+			/* IKEv2 */
 			whack_log(RC_COMMENT,
 			  "\"%s\"%s:   IKEv2 algorithm newest: %s_%03d-%s-%s-%s",
 			  c->name,

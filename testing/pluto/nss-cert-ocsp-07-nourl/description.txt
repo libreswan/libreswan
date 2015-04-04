@@ -1,0 +1,1 @@
+The nic certificate has no OCSP uri.. setting the defaults should work and fail on the revoked cert

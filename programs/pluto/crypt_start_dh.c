@@ -61,7 +61,7 @@
 stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 			     struct state *st,
 			     enum crypto_importance importance,
-			     enum phase1_role role,
+			     enum original_role role,
 			     oakley_group_t oakley_group2)
 {
 	struct pluto_crypto_req r;
@@ -134,7 +134,7 @@ void finish_dh_secretiv(struct state *st,
 stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 			   struct state *st,
 			   enum crypto_importance importance,
-			   enum phase1_role role,
+			   enum original_role role,
 			   oakley_group_t oakley_group2)
 {
 	struct pluto_crypto_req r;
@@ -193,7 +193,7 @@ void finish_dh_secret(struct state *st,
  */
 stf_status start_dh_v2(struct msg_digest *md,
 		       const char *name,
-		       enum phase1_role role,
+		       enum original_role role,
 		       crypto_req_cont_func pcrc_func)
 {
 	struct state *st = md->st;
