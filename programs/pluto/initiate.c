@@ -518,6 +518,9 @@ static void cannot_oppo(struct connection *c,
 	if (b->held) {
 		int failure_shunt = b->failure_shunt;
 
+		libreswan_log("PAUL: override failure_shunt with pass");
+		failure_shunt = SPI_PASS;
+
 		/* Replace HOLD with b->failure_shunt.
 		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
 		 */
@@ -554,6 +557,7 @@ bool initiate_ondemand(const ip_address *our_client,
 {
 	struct find_oppo_bundle b;
 
+	libreswan_log("PAUL: initiate_ondemand() called - using b.failure_shunt = 0");
 	b.want = why;   /* fudge */
 	b.failure_ok = FALSE;
 	b.our_client = *our_client;
@@ -720,6 +724,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 #ifdef HAVE_LABELED_IPSEC
 	DBG(DBG_CONTROLMORE, {
 		if (uctx != NULL) {
+
+
 			DBG_log("received security label string: %.*s",
 				uctx->ctx.ctx_len,
 				uctx->sec_ctx_value);
@@ -731,6 +737,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		 "initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
 		 ours, ourport, his, hisport, b->transport_proto,
 		 oppo_step_name[b->step], b->want);
+
 
 	/* ??? DBG and real-world code mixed */
 	if (DBGP(DBG_OPPOINFO)) {
@@ -809,6 +816,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			libreswan_log("%s", demandbuf);
 			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
+
+
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
 				  SOS_NOBODY, pcim_local_crypto
 #ifdef HAVE_LABELED_IPSEC
@@ -841,6 +850,29 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
+		if (c->policy & POLICY_OPPORTUNISTIC)
+		{
+		char *addmsg = "adding protocol wide shunt while attempting opportunistic IKE negitiation";
+
+		/* Install a %pass or %hold bassed on configuration - prevents more acquires */
+		libreswan_log("PAUL: going to initiate opportunstic - replace bare shunt with pass");
+		if (kern_interface == USE_NETKEY) {
+			/* Unfortunately, for NETKEY the acquire is transport_proto specific  - delete it first */
+			char *delmsg = "del-proto-specific-shunt";
+
+			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, SPI_PASS,
+				FALSE /* delete bare shunt */, b->transport_proto, delmsg)) {
+					libreswan_log("PAUL: replace_bare_shunt() failed for %s", delmsg);
+			}
+		}
+		/* must really be done based on connection policy but failureshunt=pass causes no acquries */
+		if (!replace_bare_shunt(&b->our_client, &b->peer_client, 32768 /* prio */, SPI_PASS,
+			kern_interface != USE_NETKEY /* replace bare shunt */, 0 /* proto */, addmsg)) {
+				libreswan_log("PAUL: replace_bare_shunt() failed for %s", addmsg);
+		} else {
+				libreswan_log("PAUL: replace_bare_shunt() installed for oppo conn for %s", addmsg);
+		}
+	}
 		/* handle any DNS answer; select next step */
 
 		switch (b->step) {
@@ -1091,11 +1123,14 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
 				if (b->held) {
+					libreswan_log("PAUL:b->held is true - calling assign_hold()");
 					/* what should we do on failure? */
 					(void) assign_hold(c, &c->spd,
 							   b->transport_proto,
 							   &b->our_client,
 							   &b->peer_client);
+				} else {
+					libreswan_log("PAUL:b->held is false - not calling assign_hold()");
 				}
 				DBG(DBG_OPPO | DBG_CONTROL,
 				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
@@ -1139,7 +1174,9 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			 */
 		} else if (ugh != NULL) {
 			b->policy_prio = c->prio;
-			b->failure_shunt = shunt_policy_spi(c, FALSE);
+			// b->failure_shunt = shunt_policy_spi(c, FALSE);
+			// must be done passed on connection policy instead of hardcoded pass
+			b->failure_shunt = SPI_PASS;
 			cannot_oppo(c, b, ugh);
 		} else if (next_step == fos_done) {
 			/* nothing to do */

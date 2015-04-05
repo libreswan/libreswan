@@ -326,6 +326,32 @@ static void retransmit_v2_msg(struct state *st)
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
 	}
 
+	/* if OPPO, install pass bare shunt - bare because we will delete state */
+#if 0
+	if (c->policy & POLICY_OPPORTUNISTIC) {
+		if (!replace_bare_shunt(&c->spd.this.host_addr, &c->spd.that.host_addr,
+			c->policy, SPI_PASS /* pass */, TRUE /* no replace */,
+			0 /* any proto */,
+			"oppo-fail - installing %pass")) {
+
+			libreswan_log("PAUL: failed oppo and failed to install %pass bare shunt");
+		} else {
+			libreswan_log("PAUL: failed oppo but installed %pass bare shunt successfully");
+		}
+
+	}
+#endif
+	if (c->policy & POLICY_OPPORTUNISTIC) {
+		if (!assign_hold(c, &c->spd, 0 /*transport_proto*/, &c->spd.this.host_addr, &c->spd.that.host_addr)) {
+			libreswan_log("PAUL: failed oppo and installed %pass bare shunt");
+		} else {
+			libreswan_log("PAUL: failed oppo and failed to install pass bare shunt");
+		}
+		return; // skip delete state
+	}
+
+
+
 	delete_state(st);
 	/* note: no md->st to clear */
 }
