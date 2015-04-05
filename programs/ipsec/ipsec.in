@@ -185,7 +185,7 @@ case "${1}" in
 	    if [ "${1}" = "checknss" -o "${1}" = "--checknss" ]; then
 		if [ ! -f "${IPSEC_NSSDIR}/cert9.db" -o \
 		    ! -f "${IPSEC_NSSDIR}/key4.db" ]; then
-		    NSSTMP=$(mktemp -d ${IPSEC_NSSDIR}/nss_tmp.XXXXXXXX)
+		    NSSTMP=$(mktemp -d /tmp/ipsec_nss_tmp.XXXXXXXX)
 		    if [ $? -gt 0 ]; then
 			echo "Failed to create temporary directory for NSS db migration" >&2
 			exit 4
@@ -229,8 +229,8 @@ case "${1}" in
 			echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against sql:${IPSEC_NSSDIR}"
 			exit $?
 		    fi
-		    mv "${NSSTMP}"/*.db "${IPSEC_NSSDIR}"
-		    rm -f "${NSSTMP}"/*.txt
+		    cp "${NSSTMP}"/*.db "${IPSEC_NSSDIR}"
+		    rm -f "${NSSTMP}"/*.txt "${NSSTMP}"/*.db
 		    rmdir "${NSSTMP}"
 		    echo "NSS upgrade complete"
 		fi
