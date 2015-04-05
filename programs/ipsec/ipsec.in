@@ -185,7 +185,7 @@ case "${1}" in
 	    if [ "${1}" = "checknss" -o "${1}" = "--checknss" ]; then
 		if [ ! -f "${IPSEC_NSSDIR}/cert9.db" -o \
 		    ! -f "${IPSEC_NSSDIR}/key4.db" ]; then
-		    NSSTMP=$(mktemp -d /tmp/ipsec_nss_tmp.XXXXXXXX)
+		    NSSTMP=$(mktemp -d /tmp/ipsec_nss_tmp.XXXXXXXXXX)
 		    if [ $? -gt 0 ]; then
 			echo "Failed to create temporary directory for NSS db migration" >&2
 			exit 4
