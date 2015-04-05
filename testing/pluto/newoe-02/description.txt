@@ -1,3 +1,6 @@
-basic OE test, road east triggered by whack
+basic OE test, using road and east triggered by packet using KLIPS on road
 
-note that myid= in ipsec.conf is broken! use whack
+This also triggers OE to 254.254.254.254, so that we can test it shows a
+proper %pass during/after IKE failure with opportunistic.
+
+
