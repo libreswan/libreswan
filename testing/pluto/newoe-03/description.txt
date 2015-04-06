@@ -1,0 +1,6 @@
+basic OE test, ensuring road does not respond to acquires for its own IP address(es)
+
+first ping our native IP, then ping a second on on our own interface
+
+this test is netkey specific - klips is smart enough not to give us an acquire
+for ourselves
