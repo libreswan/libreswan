@@ -1092,7 +1092,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 				if (raw_eroute(null_host, &this_broad_client,
 					       null_host, &that_broad_client,
 					       htonl(shunt_spi), SA_INT,
-					       transport_proto,
+						/* OE for NETKEY gives acquire for transport_proto, KLIPS for proto 0 */
+						kern_interface == USE_NETKEY ? 0 : transport_proto,
 					       ET_INT, null_proto_info,
 					       deltatime(SHUNT_PATIENCE),
 					       DEFAULT_IPSEC_SA_PRIORITY,
@@ -1173,7 +1174,12 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 				&that_client,
 				0);
 
-			passert(bs_pp != NULL);
+			/* we can have proto mismatching acquires with netkey - this is a bad workaround */
+			/* passert(bs_pp != NULL); */
+			if (bs_pp == NULL) {
+				libreswan_log("PAUL: not deleting bare (port) shunt - letting kernel expire it");
+				return TRUE;
+			}
 			if (repl) {
 				/* change over to new bare eroute
 				 * ours, his, transport_proto are the same.
