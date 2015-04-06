@@ -517,6 +517,7 @@ static void cannot_oppo(struct connection *c,
 
 	if (b->held) {
 		int failure_shunt = b->failure_shunt;
+		// bool selfshunt = sameaddr(&b->our_client, &b->peer_client);
 
 		libreswan_log("PAUL: override failure_shunt with pass");
 		failure_shunt = SPI_PASS;
@@ -751,6 +752,11 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 	if (isanyaddr(&b->our_client) || isanyaddr(&b->peer_client)) {
 		cannot_oppo(NULL, b, "impossible IP address");
 		work = FALSE;
+	} else if (sameaddr(&b->our_client, &b->peer_client)) {
+		/* NETKEY gives us acquires for our own IP */
+		/* this does not catch talking to ourselves on another ip */
+		cannot_oppo(NULL, b, "acquire for our own IP address");
+		work = FALSE;
 	} else if ((c = find_connection_for_clients(&sr,
 						     &b->our_client,
 						     &b->peer_client,
@@ -766,7 +772,11 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 		cannot_oppo(NULL, b, "no routed template covers this pair");
 		work = FALSE;
-	} else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
+	} else if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c)) {
+		/* happens when dst is ourselves on a different IP */
+		cannot_oppo(NULL, b, "connection to self on another IP?");
+		work = FALSE;
+	}  else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
 			loggedit = TRUE;	/* loggedit not subsequently used */
@@ -862,7 +872,9 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, SPI_PASS,
 				FALSE /* delete bare shunt */, b->transport_proto, delmsg)) {
-					libreswan_log("PAUL: replace_bare_shunt() failed for %s", delmsg);
+					libreswan_log("PAUL: NETKEY-only replace_bare_shunt() failed for %s", delmsg);
+			} else {
+					libreswan_log("PAUL: NETKEY-only replace_bare_shunt() for %s succeeded", delmsg);
 			}
 		}
 		/* must really be done based on connection policy but failureshunt=pass causes no acquries */
