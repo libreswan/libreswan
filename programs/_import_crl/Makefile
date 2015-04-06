@@ -11,9 +11,6 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-include ${LIBRESWANSRCDIR}/Makefile.inc
-
 PROGLIBS=${NSSFLAGS}
 
 PROGRAM=_import_crl
@@ -22,4 +19,8 @@ LIBS?=${PROGLIBS} ${LIBRESWANLIB} ${LSWLOGLIB}
 #INCLUDES=-I${LIBRESWANSRCDIR}/programs/pluto
 INCLUDES+=-I${srcdir} -I${LIBRESWANSRCDIR}/include
 
-include ${SRCDIR}../Makefile.program
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../mk/program.mk
+endif

@@ -12,15 +12,16 @@
 # for more details.
 #
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-include ${LIBRESWANSRCDIR}/Makefile.inc
-
 PROGRAM=rsasigkey
 LIBS=${LSWLOGLIB} ${LIBRESWANLIB} -lgmp
 LIBS+=${NSSLIBS}
 
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../mk/program.mk
+endif
+
 ifeq ($(USE_FIPSCHECK),true)
 LIBS+=  -lfipscheck
 endif
-
-include ${SRCDIR}../Makefile.program

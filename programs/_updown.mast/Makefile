@@ -11,16 +11,15 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-include ${LIBRESWANSRCDIR}/Makefile.inc
-
 PROGRAM=_updown.mast
 
-include ${SRCDIR}../Makefile.program
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../mk/program.mk
+endif
 
 programs: ${PROGRAM}
 
 cleanall::
 	rm -f ${UPDOWN_PROGRAM} ${PROGRAM}
-
-

@@ -1,5 +1,3 @@
-LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-
 UNITTEST=rsa-v2
 CFLAGS=-DUSE_3DES
 INCLUDES=-I${SRCDIR}${LIBRESWANSRCDIR}/programs/pluto
@@ -51,7 +49,11 @@ PROGRAM=rsa-v2
 programs checkprograms: ${UNITTEST}
 	@true
 
-include ${LIBRESWANSRCDIR}/programs/Makefile.program
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../../mk/program.mk
+endif
 
 packetsI1.c: ../../lib/libpluto/lib-parentI1/parentI1.pcap
 	../../utils/pcap2skb/pcap2skb $< >packetsI1.c

@@ -1,6 +1,11 @@
+# Make life easy, just include everything that is needed.
 
-include ${LIBRESWANSRCDIR}/Makefile.ver
-include ${LIBRESWANSRCDIR}/Makefile.inc
+ifndef top_srcdir
+include $(dir $(lastword $(MAKEFILE_LIST)))dirs.mk
+endif
+
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 
 LEX=flex
 BISON=bison
