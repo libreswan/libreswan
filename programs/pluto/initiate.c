@@ -519,8 +519,8 @@ static void cannot_oppo(struct connection *c,
 		int failure_shunt = b->failure_shunt;
 		// bool selfshunt = sameaddr(&b->our_client, &b->peer_client);
 
-		libreswan_log("PAUL: override failure_shunt with pass");
-		failure_shunt = SPI_PASS;
+		// libreswan_log("PAUL: override failure_shunt with pass");
+		// failure_shunt = SPI_PASS;
 
 		/* Replace HOLD with b->failure_shunt.
 		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
@@ -870,7 +870,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			/* Unfortunately, for NETKEY the acquire is transport_proto specific  - delete it first */
 			char *delmsg = "del-proto-specific-shunt";
 
-			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, SPI_PASS,
+			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */,
+			(c->policy & POLICY_FAIL_PASS) ? SPI_PASS : SPI_HOLD,
 				FALSE /* delete bare shunt */, b->transport_proto, delmsg)) {
 					libreswan_log("PAUL: NETKEY-only replace_bare_shunt() failed for %s", delmsg);
 			} else {
@@ -878,7 +879,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			}
 		}
 		/* must really be done based on connection policy but failureshunt=pass causes no acquries */
-		if (!replace_bare_shunt(&b->our_client, &b->peer_client, 32768 /* prio */, SPI_PASS,
+		if (!replace_bare_shunt(&b->our_client, &b->peer_client, 32768 /* prio */,
+			(c->policy & POLICY_FAIL_PASS) ? SPI_PASS : SPI_HOLD,
 			kern_interface != USE_NETKEY /* replace bare shunt */, 0 /* proto */, addmsg)) {
 				libreswan_log("PAUL: replace_bare_shunt() failed for %s", addmsg);
 		} else {
@@ -1120,7 +1122,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 						&b->our_client,
 						&b->peer_client,
 						BOTTOM_PRIO,
-						SPI_PASS, /* fail into PASS */
+						(c->policy & POLICY_FAIL_PASS) ? SPI_PASS : SPI_HOLD,
 						TRUE,
 						b->transport_proto,
 						"no suitable connection");
@@ -1187,8 +1189,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		} else if (ugh != NULL) {
 			b->policy_prio = c->prio;
 			// b->failure_shunt = shunt_policy_spi(c, FALSE);
-			// must be done passed on connection policy instead of hardcoded pass
-			b->failure_shunt = SPI_PASS;
+			b->failure_shunt = (c->policy & POLICY_FAIL_PASS) ? SPI_PASS : SPI_HOLD,
 			cannot_oppo(c, b, ugh);
 		} else if (next_step == fos_done) {
 			/* nothing to do */
