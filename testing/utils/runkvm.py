@@ -38,9 +38,6 @@ def read_exec_shell_cmd(child, filename, timer):
 
 def connect_to_kvm(args):
 
-    prompt = str(shell.PromptPattern(username="root", hostname=args.hostname))
-    print("Shell prompt: " + prompt)
-
     vmlist = subprocess.getoutput("sudo virsh list")
     running = 0
     for line in vmlist.split("\n")[2:]:
@@ -70,6 +67,8 @@ def connect_to_kvm(args):
     # Need to use spawnu with python3.
     child = shell.Remote(cmd, hostname=args.hostname, username="root")
     child.output(sys.stdout)
+    prompt = child.prompt
+    print("Shell prompt '%s'" % prompt.pattern)
 
     done = 0
     tries = 60
