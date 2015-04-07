@@ -343,14 +343,12 @@ static void retransmit_v2_msg(struct state *st)
 #endif
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		if (!assign_hold(c, &c->spd, 0 /*transport_proto*/, &c->spd.this.host_addr, &c->spd.that.host_addr)) {
-			libreswan_log("PAUL: failed oppo and installed %pass bare shunt");
+			libreswan_log("PAUL: failed oppo and failed to install shunt");
 		} else {
-			libreswan_log("PAUL: failed oppo and failed to install pass bare shunt");
+			libreswan_log("PAUL: failed oppo and installed shunt");
 		}
 		return; // skip delete state
 	}
-
-
 
 	delete_state(st);
 	/* note: no md->st to clear */
