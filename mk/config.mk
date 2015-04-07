@@ -171,12 +171,11 @@ VERFILE=$(KERNELSRC)/include/linux/version.h
 # where KLIPS kernel module is install
 OSMOD_DESTDIR?=net/ipsec
 
-MODP?=modprobe
-MODARGS?=-q -b
 # What command to use to load the modules. openwrt does not have modprobe
 # Using -b enables blacklisting - this is needed for some known bad
 # versions of crypto acceleration modules.
-MODPROBE?=$(MODP) $(MODARGS)
+MODPROBEBIN?=modprobe
+MODPROBEARGS?=-q -b
 
 ### misc installation stuff
 
@@ -476,8 +475,8 @@ TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
-			-e "s:@MODP@:$(MODP):g" \
-			-e "s:@MODPROBE@:$(MODPROBE):g" \
+			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
+			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 
 # For KVM testing setup
