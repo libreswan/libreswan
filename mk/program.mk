@@ -40,29 +40,22 @@ ifndef CONFDSUBDIR
 CONFDSUBDIR=.
 endif
 
-ifndef SOURCEDIR
-SOURCEDIR=${PROGRAM}
-endif
-
 # the list of stuff to be built for "make programs"
 MANDEFAULTLIST=$(addsuffix .8, $(PROGRAM))
 MANLIST=$(MANDEFAULTLIST) $(EXTRA8MAN) $(EXTRA5MAN) $(EXTRA5PROC) 
 CONFIGLIST=$(CONFFILES) $(CONFDFILES)
 PROGRAMSLIST=${PROGRAM} $(MANLIST) $(CONFIGLIST)
 
-SHOULDWERESTART=$(wildcard ../Makefile.program)
-ifeq ($(SHOULDWERESTART),../Makefile.program)
+ifeq ($(srcdir),.)
 all programs config man clean install:
-	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/${SOURCEDIR} && $(MAKE) $@
+	$(MAKE) -C $(builddir) $@
 else
 all: $(PROGRAMSLIST)
 programs: all
 man: $(MANLIST)
 config: $(CONFIGLIST)
 clean:	cleanall
-
 install: doinstall
-
 endif
 
 ifneq ($(PROGRAM),check)

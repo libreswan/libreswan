@@ -14,7 +14,6 @@
 EXTRA5MAN=ipsec.conf.5
 CONFFILES=ipsec.conf
 EXCONFILES=ipsec.win2k.conf
-SOURCEDIR=configs
 CONFDSUBDIR=policies
 CONFDFILES=clear clear-or-private private-or-clear private block
 

@@ -33,8 +33,6 @@ And a small set of well defined targets work:
 TODO list
 ---------
 
-delete SOURCEDIR; hack in program.mk to get around directories that do not define PROGRAM
-
 delete LIBRESWANSRCDIRREL
 
 fix code like -I${SRCDIR}${LIBRESWANSRCDIR}
