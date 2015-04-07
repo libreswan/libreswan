@@ -42,10 +42,10 @@
  * Values for failureshunt={passthrough, drop, reject, none}
  */
 static const struct keyword_enum_value kw_failureshunt_values[] = {
-	{ "none",        POLICY_FAIL_NONE },
-	{ "passthrough", POLICY_FAIL_PASS },
-	{ "drop",        POLICY_FAIL_DROP },
-	{ "reject",      POLICY_FAIL_REJECT },
+	{ "none",        KFS_FAIL_NONE },
+	{ "passthrough", KFS_FAIL_PASS },
+	{ "drop",        KFS_FAIL_DROP },
+	{ "reject",      KFS_FAIL_REJECT },
 };
 
 static const struct keyword_enum_values kw_failureshunt_list = VALUES_INITIALIZER(kw_failureshunt_values);
