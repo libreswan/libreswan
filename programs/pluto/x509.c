@@ -81,6 +81,8 @@
 #include <ocsp.h>
 
 bool strict_crl_policy = FALSE;
+bool strict_ocsp_policy = FALSE;
+bool ocsp_enable = FALSE;
 
 SECItem chunk_to_secitem(chunk_t chunk)
 {
@@ -833,11 +835,11 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 
 	if (!full_chain) {
 		/*
-		 * just the issuer
+		 * just the issuer unless it's a root
 		 */
 		CERTCertificate *is = CERT_FindCertByName(CERT_GetDefaultCertDB(),
 					&end_cert->derIssuer);
-		if (is == NULL)
+		if (is == NULL || is->isRoot)
 			return 0;
 
 		out_chain[0] = dup_secitem_to_chunk(is->derCert);
@@ -866,69 +868,92 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 
 	return j;
 }
-static bool pluto_process_certs(struct state *st,
-				    chunk_t *certs,
-				    int num_certs)
+
+#define CRL_ENABLED() (deltasecs(crl_check_interval) > 0)
+
+/*
+ * Do our best to find the CA for the fetch request
+ * However, this might be overkill, and only spd.this.ca should be used
+ */
+static bool find_fetch_dn(SECItem *dn, struct connection *c,
+				       CERTCertificate *cert)
+{
+	if (dn == NULL) {
+		DBG(DBG_X509, DBG_log("%s invalid use",__FUNCTION__));
+		return FALSE;
+	}
+
+	if (cert != NULL) {
+		*dn = cert->derIssuer;
+		return TRUE;
+	}
+
+	if (c->spd.that.ca.ptr != NULL && c->spd.that.ca.len > 0) {
+		*dn = chunk_to_secitem(c->spd.that.ca);
+		return TRUE;
+	}
+
+	if (c->spd.that.cert.u.nss_cert != NULL) {
+		*dn = c->spd.that.cert.u.nss_cert->derIssuer;
+		return TRUE;
+	}
+
+	if (c->spd.this.ca.ptr != NULL && c->spd.this.ca.len > 0) {
+		*dn = chunk_to_secitem(c->spd.this.ca);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static bool pluto_process_certs(struct state *st, chunk_t *certs,
+						  int num_certs)
 {
 	struct connection *c = st->st_connection;
+	SECItem fdn = { siBuffer, NULL, 0 };
 	CERTCertificate *end_cert = NULL;
-	bool status = FALSE, fetch = FALSE;
+	bool status = FALSE;
+	bool rev_opts[RO_SZ];
+	SECItem ca;
 	int ret;
 
+	rev_opts[RO_OCSP] = ocsp_enable;
+	rev_opts[RO_OCSP_S] = strict_ocsp_policy;
+	rev_opts[RO_CRL] = CRL_ENABLED();
+	rev_opts[RO_CRL_S] = strict_crl_policy;
+
+	ca = chunk_to_secitem(c->spd.that.ca);
 	ret = verify_and_cache_chain(certs, num_certs, &end_cert,
-						       strict_crl_policy);
+						       &ca,
+						       rev_opts);
 
 	if (ret == -1) {
 		libreswan_log("Verification failed with import error");
+		return FALSE;
+	}
+
+	if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
+		libreswan_log("certificate %s OK", end_cert->subjectName);
+		DBG(DBG_X509,DBG_log("c->spd.that.cert.u.nss_cert before: %p, after: %p",
+				     c->spd.that.cert.u.nss_cert, end_cert));
+		c->spd.that.cert.u.nss_cert = end_cert;
+		c->spd.that.cert.ty = CERT_X509_SIGNATURE;
+		add_nss_cert_public_key(NULL,
+					end_cert,
+					get_nss_cert_notafter(end_cert),
+					DAL_LOCAL);
+		status = TRUE;
 	} else {
-		if (ret & VERIFY_RET_CRL_NEED)
-			fetch = TRUE;
+		libreswan_log("certificate verify failed");
+	}
 
-		if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
-			libreswan_log("certificate %s OK",
-				      end_cert->subjectName);
-			c->spd.that.cert.u.nss_cert = end_cert;
-			c->spd.that.cert.ty = CERT_X509_SIGNATURE;
-			add_nss_cert_public_key(NULL, end_cert,
-						get_nss_cert_notafter(end_cert),
-						DAL_LOCAL);
-			status = TRUE;
-		} else {
-			libreswan_log("certificate verify failed");
+	if ((ret & VERIFY_RET_CRL_NEED) && CRL_ENABLED()) {
+		if (find_fetch_dn(&fdn, c, end_cert)) {
+			add_crl_fetch_request_nss(&fdn);
 		}
 	}
 
-	if (fetch && (deltasecs(crl_check_interval) > 0)) {
-		/*
-		 * TODO:
-		 * Functionize
-		 */
-		SECItem fdn = { siBuffer, NULL, 0 };
-
-		DBG(DBG_CONTROLMORE,
-			DBG_log("a CRL fetch is needed"));
-
-		/*
-		 * Do our best to find the CA for the fetch request
-		 * However, this might be overkill, and only spd.this.ca should be used
-		 */
-		if (end_cert != NULL) {
-			fdn = end_cert->derIssuer;
-		} else if (c->spd.that.ca.ptr != NULL &&
-			   c->spd.that.ca.len > 0) {
-			fdn = chunk_to_secitem(c->spd.that.ca);
-		} else if (c->spd.that.cert.u.nss_cert != NULL) {
-			fdn = c->spd.that.cert.u.nss_cert->derIssuer;
-		} else if (c->spd.this.ca.ptr != NULL &&
-			   c->spd.this.ca.len > 0) {
-			fdn = chunk_to_secitem(c->spd.this.ca);
-		}
-
-		add_crl_fetch_request_nss(&fdn);
-
-	}
 	return status;
-
 }
 
 /*

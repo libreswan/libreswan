@@ -33,7 +33,6 @@
 #include <secder.h>
 #include <secerr.h>
 #include <certdb.h>
-
 /*
  * copies of NSS functions that are not yet exported by the library
  */
@@ -206,6 +205,11 @@ static int translate_nss_err(long err, bool ca)
 		    DBG_log("%s certificate has inadequate keyUsage flags", hd));
 		ret = VERIFY_RET_FAIL;
 		break;
+	case SEC_ERROR_INADEQUATE_CERT_TYPE:
+		DBG(DBG_X509,
+		    DBG_log("%s certificate type is not approved for this application (EKU)", hd));
+		ret = VERIFY_RET_FAIL;
+		break;
 	case SEC_ERROR_UNKNOWN_ISSUER:
 		DBG(DBG_X509,
 		    DBG_log("%s certificate issuer not recognized", hd));
@@ -307,6 +311,191 @@ static void new_vfy_log(CERTVerifyLog *log)
 	log->arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 }
 
+/*
+ * get the root ca and return it in a CERTCertList
+ * if an intermediate is provided it will look through
+ * its trust chain for the root
+ */
+static CERTCertList *get_trust_certlist(CERTCertDBHandle *handle,
+					SECItem *caname)
+{
+	CERTCertList *trustcl = NULL;
+	CERTCertList *tmpcl = NULL;
+	CERTCertificate *ca = NULL;
+	CERTCertListNode *node = NULL;
+
+	if ((ca = CERT_FindCertByName(handle, caname)) == NULL) {
+		DBG(DBG_X509, DBG_log("%s : NSS CERT_FindCertByNickname failed [%d]\n",
+				__FUNCTION__, PORT_GetError()));
+		return NULL;
+	}
+
+	if (ca->isRoot) {
+		DBG(DBG_X509, DBG_log("%s : root CA: %s\n", __FUNCTION__,
+							    ca->subjectName));
+		trustcl = CERT_NewCertList();
+		CERT_AddCertToListTail(trustcl, ca);
+	} else {
+		tmpcl = CERT_GetCertChainFromCert(ca, PR_Now(), certUsageAnyCA);
+		if (tmpcl == NULL) {
+			DBG(DBG_X509, DBG_log("%s : NSS CERT_GetCertChainFromCert failed [%d]\n",
+					__FUNCTION__, PORT_GetError()));
+			CERT_DestroyCertificate(ca);
+			return NULL;
+		}
+		for (node = CERT_LIST_HEAD(tmpcl); !CERT_LIST_END(node, tmpcl);
+				node = CERT_LIST_NEXT(node)) {
+			if (node->cert->isRoot) {
+				DBG(DBG_X509,
+				    DBG_log("%s : root CA: %s\n", __FUNCTION__,
+							node->cert->subjectName));
+				trustcl = CERT_NewCertList();
+				CERT_AddCertToListTail(trustcl, node->cert);
+				break;
+			}
+		}
+	}
+
+	if (trustcl == NULL || CERT_LIST_EMPTY(trustcl)) {
+		DBG(DBG_X509,
+		    DBG_log("%s : could not find trust anchor", __FUNCTION__));
+		if (trustcl != NULL)
+			CERT_DestroyCertList(trustcl);
+		if (tmpcl != NULL)
+			CERT_DestroyCertList(tmpcl);
+		CERT_DestroyCertificate(ca);
+		return NULL;
+	}
+
+	return trustcl;
+}
+
+static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
+						       PRUint64 *cflags)
+{
+	rev->leafTests.cert_rev_flags_per_method = lflags;
+	rev->chainTests.cert_rev_flags_per_method = cflags;
+}
+
+static unsigned int rev_val_flags(PRBool strict)
+{
+	unsigned int flags = 0;
+	flags |= CERT_REV_M_TEST_USING_THIS_METHOD;
+	if (strict) {
+		flags |= CERT_REV_M_REQUIRE_INFO_ON_MISSING_SOURCE;
+		flags |= CERT_REV_M_FAIL_ON_MISSING_FRESH_INFO;
+	}
+	return flags;
+}
+
+static void set_rev_params(CERTRevocationFlags *rev, bool crl,
+						     bool crl_strict,
+						     bool ocsp,
+						     bool ocsp_strict)
+{
+	CERTRevocationTests *rt = &rev->leafTests;
+	PRUint64 *rf = rt->cert_rev_flags_per_method;
+	DBG(DBG_X509, DBG_log("crl: %d, crl_strict: %d, ocsp: %d, ocsp_strict: %d",
+				crl, crl_strict, ocsp, ocsp_strict));
+
+	rt->number_of_defined_methods = cert_revocation_method_count;
+	rt->number_of_preferred_methods = 0;
+
+	if (crl) {
+		rf[cert_revocation_method_crl] = rev_val_flags(crl_strict);
+	}
+	if (ocsp) {
+		rf[cert_revocation_method_ocsp] = rev_val_flags(ocsp_strict);
+	}
+}
+
+#define CRL_OR_OCSP(r) (r[RO_CRL] || r[RO_OCSP])
+
+static int vfy_chain_pkix(CERTCertDBHandle *handle, CERTCertificate **chain,
+						    int chain_len,
+						    CERTCertificate **end_out,
+						    SECItem *rightca,
+						    bool *rev_opts)
+{
+	int in_idx = 0;
+	int i;
+	int fin = 0;
+	SECStatus rv;
+	CERTVerifyLog vfy_log;
+	CERTCertificate *end_cert = NULL;
+	CERTValInParam cvin[7];
+	CERTValOutParam cvout[3];
+	CERTCertList *trustcl = NULL;
+	CERTRevocationFlags rev;
+	PRUint64 revFlagsLeaf[2] = { 0, 0 };
+	PRUint64 revFlagsChain[2] = { 0, 0 };
+
+	for (i = 0; i < chain_len; i++) {
+		if (!CERT_IsCACert(chain[i], NULL)) {
+		       end_cert = chain[i];
+		       break;
+		}
+	}
+
+	if (end_cert == NULL) {
+		DBG(DBG_X509, DBG_log("no end cert in chain!"));
+		return VERIFY_RET_FAIL;
+	}
+
+	new_vfy_log(&vfy_log);
+	zero(&cvin);
+	zero(&cvout);
+	zero(&rev);
+
+	if ((trustcl = get_trust_certlist(handle, rightca)) == NULL) {
+		DBG(DBG_X509, DBG_log("no end cert in chain!"));
+		return VERIFY_RET_FAIL;
+	}
+
+	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
+	set_rev_params(&rev, rev_opts[RO_CRL], rev_opts[RO_CRL_S],
+			     rev_opts[RO_OCSP], rev_opts[RO_OCSP_S]);
+	cvin[in_idx].type = cert_pi_revocationFlags;
+	cvin[in_idx++].value.pointer.revocation = &rev;
+
+	cvin[in_idx].type = cert_pi_useAIACertFetch;
+	cvin[in_idx++].value.scalar.b = CRL_OR_OCSP(rev_opts);
+
+	cvin[in_idx].type = cert_pi_trustAnchors;
+	cvin[in_idx++].value.pointer.chain = trustcl;
+
+	cvin[in_idx].type = cert_pi_useOnlyTrustAnchors;
+	cvin[in_idx++].value.scalar.b = PR_TRUE;
+
+	cvin[in_idx].type = cert_pi_end;
+
+	cvout[0].type = cert_po_errorLog;
+	cvout[0].value.pointer.log = &vfy_log;
+	cvout[1].type = cert_po_certList;
+	cvout[1].value.pointer.chain = NULL;
+	cvout[2].type = cert_po_end;
+
+	rv = CERT_PKIXVerifyCert(end_cert, certificateUsageSSLClient, cvin,
+								      cvout,
+								      NULL);
+
+	if (rv != SECSuccess || vfy_log.count > 0) {
+		if (vfy_log.count > 0 && vfy_log.head != NULL) {
+			fin = get_node_error_status(vfy_log.head);
+		} else {
+			fin = translate_nss_err(PORT_GetError(), FALSE);
+		}
+	} else {
+		DBG(DBG_X509, DBG_log("certificate is valid"));
+		*end_out = end_cert;
+		fin = VERIFY_RET_OK;
+	}
+	CERT_DestroyCertList(trustcl);
+
+	return fin;
+}
+
+#if 0
 static int vfy_chain(CERTCertDBHandle *handle, CERTCertificate **chain,
 						  CERTCertificate **ee_out,
 						  int chain_len)
@@ -351,6 +540,7 @@ static int vfy_chain(CERTCertDBHandle *handle, CERTCertificate **chain,
 
 	return fin;
 }
+#endif
 
 static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
 						          int max_i)
@@ -358,10 +548,6 @@ static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
 	int i;
 
 	for (i = 0; i < chunk_n && i < max_i; i++) {
-		/*
-		 * clang warns:
-                 * assigning to 'SECItem' (aka 'struct SECItemStr') from incompatible type 'int'
-		 */
 		items[i] = chunk_to_secitem(chunks[i]);
 	}
 }
@@ -371,12 +557,14 @@ static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
 			       d[0].len < 1 || \
 			       n < 1 || \
 			       n > MAX_CA_PATH_LEN)
+
 /*
  * Decode and verify the chain received by pluto.
  * ee_out is the resulting end cert
  */
 int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out,
-							bool strict)
+							SECItem *ca,
+							bool *rev_opts)
 {
 	SECItem si_ders[MAX_CA_PATH_LEN] = { {siBuffer, NULL, 0} };
 	CERTCertificate **cert_chain = NULL;
@@ -410,20 +598,22 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 	if ((need_fetch = crl_update_check(handle, cert_chain,
 							 chain_len,
 							 &crlfound))) {
-		if (strict) {
+		if (rev_opts[RO_CRL_S]) {
 			DBG(DBG_X509, DBG_log("CRL expired in strict mode, failing pending update"));
 			return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
 		}
 	}
 
-	if (strict && !crlfound) {
+	if (rev_opts[RO_CRL_S] && !crlfound) {
 		DBG(DBG_X509, DBG_log("no CRL found in strict mode, failing"));
 		return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
 	}
 
 	ret |= need_fetch ? VERIFY_RET_CRL_NEED : 0;
 
-	ret |= vfy_chain(handle, cert_chain, ee_out, chain_len);
+	ret |= vfy_chain_pkix(handle, cert_chain, chain_len, ee_out,
+							     ca,
+							     rev_opts);
 
 	return ret;
 }
