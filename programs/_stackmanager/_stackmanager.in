@@ -265,7 +265,7 @@ startklips() {
 		;;
 	esac
 	# modprobe does not like specifying .o or .ko, but insmod needs it
-	if [ "@MODPROBEBIN@" = "modprobe" ]; then
+	if [ "$(basename @MODPROBEBIN@)" = "modprobe" ]; then
 	    ${MODPROBE} ipsec
 	else
 	    ${MODPROBE} ${modulename}
