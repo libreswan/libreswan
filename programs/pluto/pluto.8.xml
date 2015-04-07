@@ -3398,11 +3398,6 @@
 
       <para>whack --debug-raw</para>
 
-      <para>For testing, SSH's IKE test page is quite useful:</para>
-
-      <para><emphasis remap="I"><ulink
-      url="http://isakmp-test.ssh.fi/">http://isakmp-test.ssh.fi/</ulink></emphasis></para>
-
       <para>Hint: ISAKMP SAs are often kept alive by IKEs even after the IPsec
       SA is established. This allows future IPsec SA's to be negotiated
       directly. If one of the IKEs is restarted, the other may try to use the
