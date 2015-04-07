@@ -1,0 +1,1 @@
+On older versions, this causes a crash in hmac_init
