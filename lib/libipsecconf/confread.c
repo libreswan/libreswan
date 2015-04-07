@@ -1130,7 +1130,7 @@ static bool load_conn(struct ub_ctx *dnsctx,
 
 	if (conn->options_set[KBF_FAILURESHUNT]) {
 		conn->policy &= ~POLICY_FAIL_MASK;
-		switch(conn->options_set[KBF_FAILURESHUNT]) {
+		switch(conn->options[KBF_FAILURESHUNT]) {
 		case KFS_FAIL_NONE:
 			conn->policy |= POLICY_FAIL_NONE;
 			break;
