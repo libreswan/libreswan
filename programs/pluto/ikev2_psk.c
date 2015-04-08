@@ -73,7 +73,6 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	const char    *nonce_name;
 	const struct connection *c = st->st_connection;
 	const chunk_t *pss = &empty_chunk;
-	chunk_t nullpss;
 	unsigned int hash_len =  st->st_oakley.prf_hasher->hash_digest_len;
 	unsigned char prf_psk[hash_len];
 
@@ -84,6 +83,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 			      st->st_connection->name);
 			return FALSE; /* failure: no PSK to use */
 		}
+		DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
 	} else {
 		/*
 		 * draft-ietf-ipsecme-ikev2-null-auth-02
@@ -97,17 +97,21 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		 *
 		 */
 		passert(st->hidden_variables.st_skeyid_calculated);
-		/* concatenate SK_pi | SK_pr into a cunk_t in pss */
-		/* stored as SymKey in st->st_skey_pi_nss and t->st_skey_pr_nss */
-		nullpss.len = st->st_skey_chunk_SK_pi.len + st->st_skey_chunk_SK_pr.len;
-		nullpss.ptr = alloc_bytes(nullpss.len, "authnull psk");
-		memcpy(nullpss.ptr, st->st_skey_chunk_SK_pi.ptr, st->st_skey_chunk_SK_pi.len);
-		memcpy(nullpss.ptr + st->st_skey_chunk_SK_pi.len, st->st_skey_chunk_SK_pr.ptr,
-			st->st_skey_chunk_SK_pr.len);
-		pss = &nullpss;
-	}
 
-	DBG_dump_chunk("PSK:", *pss);
+		/* 
+		 * This is wrong as role - we need to role for THIS exchange
+		 * But verify calls this routine with the role inverted, so we
+		 * cannot juse st->st_state either.
+		 */
+		if (role == O_INITIATOR) {
+			/* we are sending initiator, or verifying responder */
+			pss = &st->st_skey_chunk_SK_pi;
+		} else {
+			/* we are verifying initiator, or sending responder */
+			pss = &st->st_skey_chunk_SK_pr;
+		}
+		 DBG(DBG_PRIVATE, DBG_dump_chunk("AUTH_NULL PSK:", *pss));
+	}
 
 	CK_EXTRACT_PARAMS bs;
 	SECItem param;
@@ -235,7 +239,7 @@ bool ikev2_calculate_psk_auth(struct state *st,
 					 signed_octets))
 		return FALSE;
 
-	DBG(DBG_CRYPT,
+	DBG(DBG_PRIVATE,
 	    DBG_dump("PSK auth octets", signed_octets, hash_len ));
 
 	if (!out_raw(signed_octets, hash_len, a_pbs, "PSK auth"))
@@ -271,7 +275,7 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 					 st->st_firstpacket_him, calc_hash))
 		return STF_FAIL;
 
-	DBG(DBG_CRYPT,
+	DBG(DBG_PRIVATE,
 	    DBG_dump("Received PSK auth octets", sig_pbs->cur, sig_len);
 	    DBG_dump("Calculated PSK auth octets", calc_hash, hash_len));
 
