@@ -58,7 +58,7 @@
 #include "id.h"
 #include "secrets.h"
 #include "keys.h"
-#include "ikev2_prfplus.h"
+#include "ikev2_prf.h"
 
 #include <nss.h>
 #include <pk11pub.h>

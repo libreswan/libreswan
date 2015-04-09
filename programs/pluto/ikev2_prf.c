@@ -50,7 +50,7 @@
 #include "id.h"
 #include "secrets.h"
 #include "keys.h"
-#include "ikev2_prfplus.h"
+#include "ikev2_prf.h"
 
 static void v2prfplus(struct v2prf_stuff *vps)
 {

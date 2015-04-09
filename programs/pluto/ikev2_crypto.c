@@ -49,7 +49,7 @@
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "demux.h"
 #include "ikev2.h"
-#include "ikev2_prfplus.h"
+#include "ikev2_prf.h"
 #include "ike_alg.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
