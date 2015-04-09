@@ -86,6 +86,8 @@
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"
 
+#include "lswconf.h" /* for libreswan_fipsmode() */
+
 /*
  * Initiate an Oakley Main Mode exchange.
  * --> HDR;SA
@@ -949,6 +951,11 @@ stf_status main_inR1_outI2(struct msg_digest *md)
 {
 	struct state *const st = md->st;
 
+	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
+		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
+               return STF_FAIL + SITUATION_NOT_SUPPORTED;
+       }
+
 	/* verify echoed SA */
 	{
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
@@ -1094,6 +1101,11 @@ static void main_inI2_outR2_continue(struct pluto_crypto_req_cont *ke,
 	struct msg_digest *md = ke->pcrc_md;
 	struct state *const st = md->st;
 	stf_status e;
+
+	if (libreswan_fipsmode() && st->st_oakley.prf_hasher == NULL) {
+		loglog(RC_LOG_SERIOUS, "Missing prf - algo not allowed in fips mode?");
+		return STF_FAIL + SITUATION_NOT_SUPPORTED;
+	}
 
 	DBG(DBG_CONTROL,
 		DBG_log("main_inI2_outR2_continue for #%lu: calculated ke+nonce, sending R2",
