@@ -109,23 +109,36 @@ PK11SymKey *skeyid_digisig(const chunk_t ni,
 	return skeyid;
 }
 
+static PK11SymKey *key_from_key_bits(PK11SymKey *base_key,
+				     CK_MECHANISM_TYPE target,
+				     CK_FLAGS flags,
+				     size_t next_bit, size_t key_size)
+{
+	/* spell out all the parameters */
+	CK_EXTRACT_PARAMS bs = next_bit;
+	SECItem param = {
+		.data = (unsigned char*)&bs,
+		.len = sizeof(bs),
+	};
+	CK_MECHANISM_TYPE derive = CKM_EXTRACT_KEY_FROM_KEY;
+	CK_ATTRIBUTE_TYPE operation = CKA_FLAGS_ONLY;
+	return PK11_DeriveWithFlags(base_key, derive, &param,
+				    target, operation, key_size, flags);
+}
+
 /*
  * Extract SIZEOF_CHUNK bytes, starting at bit NEXT_BIT, from SOURCE_KEY.
  */
-chunk_t chunk_bytes_from_symkey_bits(const char *name, PK11SymKey *source_key,
-				     size_t next_bit, size_t sizeof_chunk)
+chunk_t chunk_from_symkey_bits(const char *name, PK11SymKey *source_key,
+			       size_t next_bit, size_t sizeof_chunk)
 {
 	if (sizeof_chunk == 0) {
 		DBG(DBG_CRYPT, DBG_log("chunk_from_symkey: %s: zero size", name));
 		return empty_chunk;
 	}
-	CK_EXTRACT_PARAMS bs = next_bit;
-	SECItem param = { .data = (unsigned char*)&bs, .len = sizeof(bs) };
-	PK11SymKey *sym_key = PK11_DeriveWithFlags(source_key,
-						   CKM_EXTRACT_KEY_FROM_KEY,
-						   &param,
-						   CKM_VENDOR_DEFINED,
-						   CKA_FLAGS_ONLY, sizeof_chunk, 0);
+	PK11SymKey *sym_key = key_from_key_bits(source_key,
+						CKM_VENDOR_DEFINED, 0,
+						next_bit, sizeof_chunk);
 	if (sym_key == NULL) {
 		loglog(RC_LOG_SERIOUS, "NSS: PK11_DeriveWithFlags failed while generating %s", name);
 		return empty_chunk;
@@ -158,9 +171,53 @@ chunk_t chunk_bytes_from_symkey_bits(const char *name, PK11SymKey *source_key,
 /*
  * Extract SIZEOF_CHUNK bytes, starting at byte NEXT_BYTE, from SOURCE_KEY.
  */
-chunk_t chunk_bytes_from_symkey_bytes(const char *name, PK11SymKey *source_key,
-				      size_t next_byte, size_t sizeof_chunk)
+chunk_t chunk_from_symkey_bytes(const char *name, PK11SymKey *source_key,
+				size_t next_byte, size_t sizeof_chunk)
 {
-	return chunk_bytes_from_symkey_bits(name, source_key,
-					    next_byte * BITS_PER_BYTE, sizeof_chunk);
+	return chunk_from_symkey_bits(name, source_key,
+				      next_byte * BITS_PER_BYTE, sizeof_chunk);
+}
+
+PK11SymKey *encrypt_key_from_symkey_bits(PK11SymKey *source_key,
+					 const struct encrypt_desc *encrypter,
+					 size_t next_bit, size_t sizeof_symkey)
+{
+	return key_from_key_bits(source_key,
+				 nss_encryption_mech(encrypter),
+				 CKF_ENCRYPT | CKF_DECRYPT,
+				 next_bit, sizeof_symkey);
+}
+
+PK11SymKey *encrypt_key_from_symkey_bytes(PK11SymKey *source_key,
+					  const struct encrypt_desc *encrypter,
+					  size_t next_byte, size_t sizeof_symkey)
+{
+	return encrypt_key_from_symkey_bits(source_key, encrypter,
+					    next_byte * BITS_PER_BYTE,
+					    sizeof_symkey);
+}
+
+/*
+ * Extract key that doesn't need to support encryption.
+ */
+PK11SymKey *key_from_symkey_bits(PK11SymKey *base_key,
+				 size_t next_bit, int key_size)
+{				    
+	CK_EXTRACT_PARAMS bs = next_bit;
+	SECItem param = {
+		.data = (unsigned char*)&bs,
+		.len = sizeof(bs),
+	};
+	CK_MECHANISM_TYPE derive = CKM_EXTRACT_KEY_FROM_KEY;
+	CK_MECHANISM_TYPE target = CKM_CONCATENATE_BASE_AND_DATA;
+	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
+	/* XXX: can this use key_from_key_bits? */
+	return PK11_Derive(base_key, derive, &param, target,
+			   operation, key_size);
+}
+
+PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
+				  size_t next_byte, int sizeof_key)
+{
+	return key_from_symkey_bits(source_key, next_byte, sizeof_key);
 }

@@ -132,7 +132,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 {
 	struct v2prf_stuff vpss;
 
-	SECItem param1;
 	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
 
 	PK11SymKey
@@ -194,73 +193,44 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 						   vpss.spii, vpss.spir,
 						   total_keysize);
 
-	CK_EXTRACT_PARAMS bs = 0;
-	size_t next_bit = 0;
+	size_t next_byte = 0;
 
-	SK_d_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						 CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						 skd_bytes);
-	next_bit += skd_bytes * BITS_PER_BYTE;
+	SK_d_k = key_from_symkey_bytes(finalkey, next_byte, skd_bytes);
+	next_byte += skd_bytes;
 
-	SK_ai_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						  integ_size);
-	next_bit += integ_size * BITS_PER_BYTE;
+	SK_ai_k = key_from_symkey_bytes(finalkey, next_byte, integ_size);
+	next_byte += integ_size;
 
-	SK_ar_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						  integ_size);
-	next_bit += integ_size * BITS_PER_BYTE;
+	SK_ar_k = key_from_symkey_bytes(finalkey, next_byte, integ_size);
+	next_byte += integ_size;
 
-	bs = next_bit;
-	param1.data = (unsigned char*)&bs;
-	param1.len = sizeof(bs);
-	SK_ei_k = PK11_DeriveWithFlags(finalkey,
-				       CKM_EXTRACT_KEY_FROM_KEY,
-				       &param1,
-				       nss_encryption_mech(encrypter),
-				       CKA_FLAGS_ONLY, key_size,
-				       CKF_ENCRYPT | CKF_DECRYPT);
-	next_bit += key_size * BITS_PER_BYTE;
+	/* The encryption key and salt are extracted together. */
+	SK_ei_k = encrypt_key_from_symkey_bytes(finalkey, encrypter,
+						next_byte, key_size);
+	next_byte += key_size;
+	initiator_salt = chunk_from_symkey_bytes("initiator salt", finalkey,
+						 next_byte, salt_size);
+	next_byte += salt_size;
 
-	initiator_salt = chunk_bytes_from_symkey_bits("initiator salt", finalkey,
-						      next_bit, salt_size);
-	next_bit += salt_size * BITS_PER_BYTE;
+	/* The encryption key and salt are extracted together. */	
+	SK_er_k = encrypt_key_from_symkey_bytes(finalkey, encrypter,
+						next_byte, key_size);
+	next_byte += key_size;
+	responder_salt = chunk_from_symkey_bytes("responder salt", finalkey,
+						 next_byte, salt_size);
+	next_byte += salt_size;
 
-	bs = next_bit;
-	param1.data = (unsigned char*)&bs;
-	param1.len = sizeof(bs);
-	SK_er_k = PK11_DeriveWithFlags(finalkey,
-				       CKM_EXTRACT_KEY_FROM_KEY,
-				       &param1,
-				       nss_encryption_mech(encrypter),
-				       CKA_FLAGS_ONLY, key_size,
-				       CKF_ENCRYPT | CKF_DECRYPT);
-	next_bit += key_size * BITS_PER_BYTE;
-
-	responder_salt = chunk_bytes_from_symkey_bits("responder salt", finalkey,
-						      next_bit, salt_size);
-	next_bit += salt_size * BITS_PER_BYTE;
-
-	SK_pi_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						  skp_bytes);
-
+	SK_pi_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
 	/* store copy of SK_pi_k for later use in authnull */
-	chunk_SK_pi = chunk_bytes_from_symkey_bits("chunk_SK_pi", SK_pi_k,
-						   0, skp_bytes);
+	chunk_SK_pi = chunk_from_symkey_bytes("chunk_SK_pi", SK_pi_k,
+					      0, skp_bytes);
+	next_byte += skp_bytes;
 
-	next_bit += skp_bytes * BITS_PER_BYTE;
-
-	SK_pr_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						  skp_bytes);
-
+	SK_pr_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
 	/* store copy of SK_pr_k for later use in authnull */
-	chunk_SK_pr = chunk_bytes_from_symkey_bits("chunk_SK_pr", SK_pr_k,
-						   0, skp_bytes);
-
-	next_bit += skp_bytes * BITS_PER_BYTE;
+	chunk_SK_pr = chunk_from_symkey_bytes("chunk_SK_pr", SK_pr_k,
+					      0, skp_bytes);
+	next_byte += skp_bytes;
 
 	DBG(DBG_CRYPT,
 	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));

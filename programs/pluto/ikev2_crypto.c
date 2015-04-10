@@ -173,10 +173,10 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 						   st->st_skey_d_nss,
 						   NULL/*dh*/, ni, nr,
 						   ipi->keymat_len * 2); 
-	ikeymat = chunk_bytes_from_symkey_bytes("initiator keys", keymat,
-						0, ipi->keymat_len);
-	rkeymat = chunk_bytes_from_symkey_bytes("initiator keys", keymat,
-						ipi->keymat_len, ipi->keymat_len);
+	ikeymat = chunk_from_symkey_bytes("initiator keys", keymat,
+					  0, ipi->keymat_len);
+	rkeymat = chunk_from_symkey_bytes("initiator keys", keymat,
+					  ipi->keymat_len, ipi->keymat_len);
 	PK11_FreeSymKey(keymat);
 
 	if (role != ORIGINAL_INITIATOR) {
