@@ -1,9 +1,10 @@
 /*
- * Cryptographic helper function - calculate prf+() for ikev2
+ * Calculate IKEv2 prf and keying material, for libreswan
  *
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,6 +52,8 @@
 #include "secrets.h"
 #include "keys.h"
 #include "ikev2_prf.h"
+#include "crypt_prf.h"
+#include "crypt_dh.h"
 
 static void v2prfplus(struct v2prf_stuff *vps)
 {
@@ -104,3 +107,474 @@ void v2genbytes(chunk_t *need,
 	vps->nextbytes  += needed;
 }
 
+
+/*
+ * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.
+ */
+
+/* MUST BE THREAD-SAFE */
+static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
+			     PK11SymKey *shared,
+			     const size_t key_size,
+			     const size_t salt_size,
+			     PK11SymKey **skeyseed_out,
+			     PK11SymKey **SK_d_out,
+			     PK11SymKey **SK_ai_out,
+			     PK11SymKey **SK_ar_out,
+			     PK11SymKey **SK_ei_out,
+			     PK11SymKey **SK_er_out,
+			     PK11SymKey **SK_pi_out,
+			     PK11SymKey **SK_pr_out,
+			     chunk_t *initiator_salt_out,
+			     chunk_t *responder_salt_out,
+			     chunk_t *chunk_SK_pi_out,
+			     chunk_t *chunk_SK_pr_out)
+{
+	struct v2prf_stuff vpss;
+
+	chunk_t hmac_opad, hmac_ipad, hmac_pad_prf;
+	/* chunk_t hmac_pad_integ, hmac_zerobyte, hmac_val1, hmac_val2; */
+
+	CK_OBJECT_HANDLE keyhandle;
+	SECItem param, param1;
+	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
+
+	PK11SymKey
+		*skeyseed_k,
+		*SK_d_k,
+		*SK_ai_k,
+		*SK_ar_k,
+		*SK_ei_k,
+		*SK_er_k,
+		*SK_pi_k,
+		*SK_pr_k;
+	chunk_t initiator_salt;
+	chunk_t responder_salt;
+	chunk_t chunk_SK_pi;
+	chunk_t chunk_SK_pr;
+
+	zero(&vpss);
+
+	/* this doesn't take any memory, it's just moving pointers around */
+	setchunk_from_wire(vpss.ni, skq, &skq->ni);
+	setchunk_from_wire(vpss.nr, skq, &skq->nr);
+	setchunk_from_wire(vpss.spii, skq, &skq->icookie);
+	setchunk_from_wire(vpss.spir, skq, &skq->rcookie);
+
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
+		    enum_name(&ikev2_trans_type_prf_names, skq->prf_hash),
+		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
+		    key_size, salt_size));
+
+	const struct hash_desc *prf_hasher = (struct hash_desc *)
+		ikev2_alg_find(IKE_ALG_HASH, skq->prf_hash);
+	passert(prf_hasher != NULL);
+
+	const struct encrypt_desc *encrypter = skq->encrypter;
+	passert(encrypter != NULL);
+
+	hmac_opad = hmac_pads(HMAC_OPAD, prf_hasher->hash_block_size);
+	hmac_ipad = hmac_pads(HMAC_IPAD, prf_hasher->hash_block_size);
+	hmac_pad_prf = hmac_pads(0x00,
+				 prf_hasher->hash_block_size -
+				 prf_hasher->hash_digest_len);
+
+	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
+	skeyseed_k = skeyid_digisig(vpss.ni, vpss.nr, shared, prf_hasher);
+	passert(skeyseed_k != NULL);
+
+	/* now we have to generate the keys for everything */
+	{
+		/* need to know how many bits to generate */
+		/* SK_d needs PRF hasher key bytes */
+		/* SK_p needs PRF hasher*2 key bytes */
+		/* SK_e needs key_size*2 key bytes */
+		/* ..._salt needs salt_size*2 bytes */
+		/* SK_a needs integ's key size*2 bytes */
+
+		int skd_bytes = prf_hasher->hash_key_size;
+		int skp_bytes = prf_hasher->hash_key_size;
+		const struct hash_desc *integ_hasher =
+			(struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG, skq->integ_hash);
+		int integ_size = integ_hasher != NULL ? integ_hasher->hash_key_size : 0;
+		size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
+		DBG(DBG_CRYPT,
+		    DBG_log("calc_skeyseed_v2: %zd = %d(d) + 2*%d(p) + 2*%zd(key) + 2*%zd(salt) + 2*%d(integ) bytes",
+			    total_keysize, skd_bytes, skp_bytes, key_size, salt_size, integ_size));
+		vpss.counter[0] = 0x01;
+		vpss.t.len = 0;
+
+		DBG(DBG_CRYPT, {
+			    DBG_log("PRF+ input");
+			    DBG_dump_chunk("Ni", vpss.ni);
+			    DBG_dump_chunk("Nr", vpss.nr);
+			    DBG_dump_chunk("SPIi", vpss.spii);
+			    DBG_dump_chunk("SPIr", vpss.spir);
+			    DBG_log("Total keysize needed %zd",
+				    total_keysize);
+		    });
+
+		PK11SymKey *finalkey = NULL;
+		PK11SymKey *tkey11 = NULL;
+		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(skeyseed_k,
+							    CKM_CONCATENATE_BASE_AND_DATA,
+							    hmac_pad_prf, CKM_XOR_BASE_AND_DATA, CKA_DERIVE,
+							    prf_hasher->hash_block_size);
+		passert(tkey1 != NULL);
+
+		for (;; ) {
+			PK11SymKey *tkey3 = NULL;
+
+			if (vpss.counter[0] == 0x01) {
+				PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(
+					tkey1, CKM_XOR_BASE_AND_DATA,
+					hmac_ipad,
+					CKM_CONCATENATE_BASE_AND_DATA,
+					CKA_DERIVE,
+					0);
+				passert(tkey2 != NULL);
+
+				tkey3 = pk11_derive_wrapper_lsw(tkey2,
+								CKM_CONCATENATE_BASE_AND_DATA,
+								vpss.ni, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+								0);
+				PK11_FreeSymKey(tkey2);
+			} else {
+				PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(
+					tkey1, CKM_XOR_BASE_AND_DATA,
+					hmac_ipad,
+					CKM_CONCATENATE_BASE_AND_KEY,
+					CKA_DERIVE,
+					0);
+				passert(tkey2 != NULL);
+
+				keyhandle = PK11_GetSymKeyHandle(tkey11);
+				param.data = (unsigned char*)&keyhandle;
+				param.len = sizeof(keyhandle);
+
+				PK11SymKey *tkey12 = PK11_Derive_lsw(tkey2,
+								     CKM_CONCATENATE_BASE_AND_KEY,
+								     &param, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+								     0);
+				passert(tkey12 != NULL);
+
+				tkey3 = pk11_derive_wrapper_lsw(tkey12,
+								CKM_CONCATENATE_BASE_AND_DATA,
+								vpss.ni, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+								0);
+				PK11_FreeSymKey(tkey2);
+				PK11_FreeSymKey(tkey11);
+				PK11_FreeSymKey(tkey12);
+			}
+
+			passert(tkey3 != NULL);
+
+			PK11SymKey *tkey4 = pk11_derive_wrapper_lsw(tkey3,
+								    CKM_CONCATENATE_BASE_AND_DATA,
+								    vpss.nr,
+								    CKM_CONCATENATE_BASE_AND_DATA,
+								    CKA_DERIVE,
+								    0);
+			passert(tkey4 != NULL);
+
+			PK11SymKey *tkey5 = pk11_derive_wrapper_lsw(tkey4,
+								    CKM_CONCATENATE_BASE_AND_DATA,
+								    vpss.spii,
+								    CKM_CONCATENATE_BASE_AND_DATA,
+								    CKA_DERIVE,
+								    0);
+			passert(tkey5 != NULL);
+
+			PK11SymKey *tkey6 = pk11_derive_wrapper_lsw(tkey5,
+								    CKM_CONCATENATE_BASE_AND_DATA,
+								    vpss.spir,
+								    CKM_CONCATENATE_BASE_AND_DATA,
+								    CKA_DERIVE,
+								    0);
+			passert(tkey6 != NULL);
+
+			chunk_t counter;
+
+			setchunk(counter, &vpss.counter[0], sizeof(vpss.counter[0]));
+			PK11SymKey *tkey7 = pk11_derive_wrapper_lsw(tkey6,
+								    CKM_CONCATENATE_BASE_AND_DATA,
+								    counter,
+								    nss_key_derivation_mech(prf_hasher),
+								    CKA_DERIVE,
+								    0);
+			passert(tkey7 != NULL);
+
+			PK11SymKey *tkey8 = PK11_Derive_lsw(tkey7,
+							    nss_key_derivation_mech(prf_hasher),
+							    NULL,
+							    CKM_CONCATENATE_BASE_AND_DATA,
+							    CKA_DERIVE,
+							    0);
+			passert(tkey8 != NULL);
+
+			PK11SymKey *tkey9 = pk11_derive_wrapper_lsw(tkey1,
+								    CKM_XOR_BASE_AND_DATA,
+								    hmac_opad,
+								    CKM_CONCATENATE_BASE_AND_KEY,
+								    CKA_DERIVE,
+								    0);
+			passert(tkey9 != NULL);
+
+			keyhandle = PK11_GetSymKeyHandle(tkey8);
+			param.data = (unsigned char*)&keyhandle;
+			param.len = sizeof(keyhandle);
+
+			PK11SymKey *tkey10 = PK11_Derive_lsw(tkey9,
+							     CKM_CONCATENATE_BASE_AND_KEY,
+							     &param,
+							     nss_key_derivation_mech(prf_hasher),
+							     CKA_DERIVE,
+							     0);
+			passert(tkey10 != NULL);
+
+			if (vpss.counter[0] == 0x01) {
+				finalkey = PK11_Derive_lsw(tkey10,
+							   nss_key_derivation_mech(prf_hasher),
+							   NULL,
+							   CKM_CONCATENATE_BASE_AND_KEY,
+							   CKA_DERIVE,
+							   0);
+				passert(finalkey != NULL);
+
+				tkey11 = PK11_Derive_lsw(tkey10,
+							 nss_key_derivation_mech(prf_hasher),
+							 NULL,
+							 CKM_CONCATENATE_BASE_AND_KEY,
+							 CKA_DERIVE,
+							 0);
+				passert(tkey11 != NULL);
+			} else {
+				tkey11 = PK11_Derive_lsw(tkey10,
+							 nss_key_derivation_mech(prf_hasher),
+							 NULL,
+							 CKM_EXTRACT_KEY_FROM_KEY,
+							 CKA_DERIVE,
+							 0);
+				passert(tkey11 != NULL);
+
+				keyhandle = PK11_GetSymKeyHandle(tkey11);
+				param.data = (unsigned char*)&keyhandle;
+				param.len = sizeof(keyhandle);
+
+				if ( total_keysize <=
+				     (PK11_GetKeyLength(finalkey) +
+				      PK11_GetKeyLength(tkey11)) ) {
+					finalkey = PK11_Derive_lsw(finalkey,
+								   CKM_CONCATENATE_BASE_AND_KEY,
+								   &param,
+								   CKM_EXTRACT_KEY_FROM_KEY,
+								   CKA_DERIVE,
+								   0);
+					passert(finalkey != NULL);
+				} else {
+					finalkey = PK11_Derive_lsw(finalkey,
+								   CKM_CONCATENATE_BASE_AND_KEY,
+								   &param,
+								   CKM_CONCATENATE_BASE_AND_KEY,
+								   CKA_DERIVE,
+								   0);
+					passert(finalkey != NULL);
+				}
+			}
+
+			PK11_FreeSymKey(tkey3);
+			PK11_FreeSymKey(tkey4);
+			PK11_FreeSymKey(tkey5);
+			PK11_FreeSymKey(tkey6);
+			PK11_FreeSymKey(tkey7);
+			PK11_FreeSymKey(tkey8);
+			PK11_FreeSymKey(tkey9);
+			PK11_FreeSymKey(tkey10);
+
+			if (total_keysize <= PK11_GetKeyLength(finalkey)) {
+				PK11_FreeSymKey(tkey1);
+				PK11_FreeSymKey(tkey11);
+				break;
+			}
+
+			vpss.counter[0]++;
+		}
+
+		DBG(DBG_CRYPT,
+		    DBG_log("NSS ikev2: finished computing key material for IKEv2 SA"));
+
+		CK_EXTRACT_PARAMS bs = 0;
+		size_t next_bit = 0;
+
+		SK_d_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+							 CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+							 skd_bytes);
+		next_bit += skd_bytes * BITS_PER_BYTE;
+
+		SK_ai_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+							  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+							  integ_size);
+		next_bit += integ_size * BITS_PER_BYTE;
+
+		SK_ar_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+							  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+							  integ_size);
+		next_bit += integ_size * BITS_PER_BYTE;
+
+		bs = next_bit;
+		param1.data = (unsigned char*)&bs;
+		param1.len = sizeof(bs);
+		SK_ei_k = PK11_DeriveWithFlags(finalkey,
+					       CKM_EXTRACT_KEY_FROM_KEY,
+					       &param1,
+					       nss_encryption_mech(encrypter),
+					       CKA_FLAGS_ONLY, key_size,
+					       CKF_ENCRYPT | CKF_DECRYPT);
+		next_bit += key_size * BITS_PER_BYTE;
+
+		initiator_salt = chunk_from_symkey("initiator salt", finalkey,
+						   next_bit, salt_size);
+		next_bit += salt_size * BITS_PER_BYTE;
+
+		bs = next_bit;
+		param1.data = (unsigned char*)&bs;
+		param1.len = sizeof(bs);
+		SK_er_k = PK11_DeriveWithFlags(finalkey,
+					       CKM_EXTRACT_KEY_FROM_KEY,
+					       &param1,
+					       nss_encryption_mech(encrypter),
+					       CKA_FLAGS_ONLY, key_size,
+					       CKF_ENCRYPT | CKF_DECRYPT);
+		next_bit += key_size * BITS_PER_BYTE;
+
+		responder_salt = chunk_from_symkey("responder salt", finalkey,
+						   next_bit, salt_size);
+		next_bit += salt_size * BITS_PER_BYTE;
+
+		SK_pi_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+							  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+							  skp_bytes);
+
+		/* store copy of SK_pi_k for later use in authnull */
+		chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", SK_pi_k, 0, skp_bytes);
+
+		next_bit += skp_bytes * BITS_PER_BYTE;
+
+		SK_pr_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+							  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+							  skp_bytes);
+
+		/* store copy of SK_pr_k for later use in authnull */
+		chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k, 0, skp_bytes);
+
+		next_bit += skp_bytes * BITS_PER_BYTE;
+
+		DBG(DBG_CRYPT,
+		    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));
+		PK11_FreeSymKey(finalkey);
+
+		*skeyseed_out = skeyseed_k;
+		*SK_d_out = SK_d_k;
+		*SK_ai_out = SK_ai_k;
+		*SK_ar_out = SK_ar_k;
+		*SK_ei_out = SK_ei_k;
+		*SK_er_out = SK_er_k;
+		*SK_pi_out = SK_pi_k;
+		*SK_pr_out = SK_pr_k;
+		*initiator_salt_out = initiator_salt;
+		*responder_salt_out = responder_salt;
+		*chunk_SK_pi_out = chunk_SK_pi;
+		*chunk_SK_pr_out = chunk_SK_pr;
+
+		freeanychunk(hmac_opad);
+		freeanychunk(hmac_ipad);
+		freeanychunk(hmac_pad_prf);
+	}
+	DBG(DBG_CRYPT,
+	    DBG_log("calc_skeyseed_v2 pointers: shared %p, skeyseed %p, SK_d %p, SK_ai %p, SK_ar %p, SK_ei %p, SK_er %p, SK_pi %p, SK_pr %p",
+		    shared, skeyseed_k, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
+	    DBG_dump_chunk("calc_skeyseed_v2 initiator salt", initiator_salt);
+	    DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt);
+	    DBG_dump_chunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
+	    DBG_dump_chunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr));
+}
+
+/* MUST BE THREAD-SAFE */
+void calc_dh_v2(struct pluto_crypto_req *r)
+{
+	struct pcr_skeycalc_v2_r *skr = &r->pcr_d.dhv2;
+	struct pcr_skeyid_q dhq;
+	const struct oakley_group_desc *group;
+	PK11SymKey *shared;
+	chunk_t g;
+	SECKEYPrivateKey *ltsecret;
+	PK11SymKey *skeyseed;
+	PK11SymKey
+		*SK_d,
+		*SK_ai,
+		*SK_ar,
+		*SK_ei,
+		*SK_er,
+		*SK_pi,
+		*SK_pr;
+	chunk_t initiator_salt;
+	chunk_t responder_salt;
+	chunk_t chunk_SK_pi;
+	chunk_t chunk_SK_pr;
+	SECKEYPublicKey *pubk;
+
+	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
+	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
+
+	/* clear out the reply */
+	zero(skr);
+	INIT_WIRE_ARENA(*skr);
+
+	group = lookup_group(dhq.oakley_group);
+	passert(group != NULL);
+
+	ltsecret = dhq.secret;
+	pubk = dhq.pubk;
+
+	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
+
+	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
+
+	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
+
+	shared = calc_dh_shared(g, ltsecret, group, pubk);
+
+	/* okay, so now all the shared key material */
+	calc_skeyseed_v2(&dhq,	/* input */
+			 shared,	/* input */
+			 dhq.key_size,	/* input */
+			 dhq.salt_size, /* input */
+
+			 &skeyseed,	/* output */
+			 &SK_d,	/* output */
+			 &SK_ai,	/* output */
+			 &SK_ar,	/* output */
+			 &SK_ei,	/* output */
+			 &SK_er,	/* output */
+			 &SK_pi,	/* output */
+			 &SK_pr,	/* output */
+			 &initiator_salt, /* output */
+			 &responder_salt, /* output */
+			 &chunk_SK_pi, /* output */
+			 &chunk_SK_pr); /* output */
+
+	skr->shared = shared;
+	skr->skeyseed = skeyseed;
+	skr->skeyid_d = SK_d;
+	skr->skeyid_ai = SK_ai;
+	skr->skeyid_ar = SK_ar;
+	skr->skeyid_ei = SK_ei;
+	skr->skeyid_er = SK_er;
+	skr->skeyid_pi = SK_pi;
+	skr->skeyid_pr = SK_pr;
+	skr->skey_initiator_salt = initiator_salt;
+	skr->skey_responder_salt = responder_salt;
+	skr->skey_chunk_SK_pi = chunk_SK_pi;
+	skr->skey_chunk_SK_pr = chunk_SK_pr;
+}

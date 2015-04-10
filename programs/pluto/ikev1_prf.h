@@ -1,5 +1,5 @@
 /*
- * Calculate IKEv2 prf and keying material, for libreswan
+ * Calculate IKEv1 prf and keying material, for libreswan
  *
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
@@ -17,28 +17,11 @@
  * for more details.
  */
 
-#ifndef _IKEV2_PRF_H
-#define _IKEV2_PRF_H
-
-struct v2prf_stuff {
-	chunk_t t;
-	const struct hash_desc *prf_hasher;
-	PK11SymKey *skeyseed;
-	chunk_t ni;
-	chunk_t nr;
-	chunk_t spii;
-	chunk_t spir;
-	u_char counter[1]; /* why is this an array of 1? */
-	unsigned int availbytes;
-	unsigned int nextbytes;
-};
-
-extern void v2genbytes(chunk_t *need,
-		       unsigned int needed, const char *name,
-		       struct v2prf_stuff *vps);
+#ifndef ikev1_prf_h
+#define ikev1_prf_h
 
 struct pluto_crypto_req;
 
-void calc_dh_v2(struct pluto_crypto_req *r);
+void calc_dh_iv(struct pluto_crypto_req *r);
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Calculate IKEv2 prf and keying material, for libreswan
+ * prf and keying material helper functions, for libreswan
  *
  * Copyright (C) 2007 Michael C. Richardson <mcr@xelerance.com>
  * Copyright (C) 2010 Paul Wouters <paul@xelerance.com>
@@ -17,28 +17,21 @@
  * for more details.
  */
 
-#ifndef _IKEV2_PRF_H
-#define _IKEV2_PRF_H
+#ifndef crypt_prf_h
+#define crypt_prf_h
 
-struct v2prf_stuff {
-	chunk_t t;
-	const struct hash_desc *prf_hasher;
-	PK11SymKey *skeyseed;
-	chunk_t ni;
-	chunk_t nr;
-	chunk_t spii;
-	chunk_t spir;
-	u_char counter[1]; /* why is this an array of 1? */
-	unsigned int availbytes;
-	unsigned int nextbytes;
-};
+#include <pk11pub.h>
+#include "lswalloc.h"
 
-extern void v2genbytes(chunk_t *need,
-		       unsigned int needed, const char *name,
-		       struct v2prf_stuff *vps);
+struct hash_desc;
 
-struct pluto_crypto_req;
+/* MUST BE THREAD-SAFE */
+PK11SymKey *skeyid_digisig(const chunk_t ni,
+			   const chunk_t nr,
+			   /*const*/ PK11SymKey *shared, /* NSS doesn't do const */
+			   const struct hash_desc *hasher);
 
-void calc_dh_v2(struct pluto_crypto_req *r);
+chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key,
+			  size_t next_bit, size_t byte_size);
 
 #endif

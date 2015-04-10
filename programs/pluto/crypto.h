@@ -180,6 +180,12 @@ extern PK11SymKey *PK11_Derive_lsw(PK11SymKey *base,
 				   SECItem *param, CK_MECHANISM_TYPE target,
 				   CK_ATTRIBUTE_TYPE operation, int keySize);
 
+PK11SymKey *pk11_extract_derive_wrapper_lsw(PK11SymKey *base,
+					    CK_EXTRACT_PARAMS bs,
+					    CK_MECHANISM_TYPE target,
+					    CK_ATTRIBUTE_TYPE operation,
+					    int keySize);
+
 enum crk_proto {
 	CRK_ESPorAH,
 	CRK_IKEv1,
