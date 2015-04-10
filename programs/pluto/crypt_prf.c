@@ -349,3 +349,38 @@ PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 
 	return hashed_outer;
 }
+
+PK11SymKey *crypt_prfplus(const struct hash_desc *hasher,
+			  PK11SymKey *key, PK11SymKey *seed,
+			  size_t required_keymat)
+{
+	uint8_t count = 1;
+	chunk_t count_chunk;
+	setchunk(count_chunk, &count, sizeof(count));
+	PK11SymKey *data = NULL;
+	PK11SymKey *prfplus = NULL;
+	do {
+		if (data == NULL) {
+			/* Form: SEED|1 */
+			passert(count == 1);
+			data = concat_symkey_chunk(hasher, seed, count_chunk);
+		} else {
+			/* Form: Tn-1|SEED|n */
+			passert(count > 1);
+			append_symkey_symkey(hasher, &data, seed);
+			append_symkey_chunk(hasher, &data, count_chunk);
+		}
+		PK11SymKey *new_data = crypt_prf(hasher, key, data);
+		if (prfplus == NULL) {
+			/* Create a second copy by re-running PRF */
+			prfplus = crypt_prf(hasher, key, data);
+		} else {
+			append_symkey_symkey(hasher, &prfplus, data);
+		}
+		PK11_FreeSymKey(data);
+		data = new_data;
+		count++;
+	} while (PK11_GetKeyLength(prfplus) < required_keymat);
+	PK11_FreeSymKey(data);
+	return prfplus;
+}
