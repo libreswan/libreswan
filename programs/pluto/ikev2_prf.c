@@ -374,16 +374,88 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct hash_desc *prf_hasher,
 	passert(skeyseed != NULL);
 	return skeyseed;
 }
-#if 0
+
 PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct hash_desc *prf_hasher,
 					PK11SymKey *old_SK_d,
 					PK11SymKey *new_dh_secret,
 					const chunk_t Ni, const chunk_t Nr)
 {
+	PK11SymKey *key = old_SK_d;
 	/* generate SKEYSEED from prf(SK_d (old), g^ir (new) | Ni | Nr) */
-	return NULL;
+
+	/* XXX: what if old_SK_d isn't the same size as
+	 * prf->hash_block_size? */
+	
+	chunk_t hmac_opad = hmac_pads(HMAC_OPAD, prf_hasher->hash_block_size);
+	chunk_t hmac_ipad = hmac_pads(HMAC_IPAD, prf_hasher->hash_block_size);
+	PK11SymKey *inner = pk11_derive_wrapper_lsw(key, CKM_XOR_BASE_AND_DATA,
+						    hmac_ipad,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    CKA_DERIVE, 0);
+	PK11SymKey *outer = pk11_derive_wrapper_lsw(key, CKM_XOR_BASE_AND_DATA,
+						    hmac_opad,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    CKA_DERIVE, 0);
+	freeanychunk(hmac_opad);
+	freeanychunk(hmac_ipad);
+
+	/* Form inner|DH|Ni|Nr */
+	CK_OBJECT_HANDLE keyhandle = PK11_GetSymKeyHandle(new_dh_secret);
+	SECItem param = {
+		.data = (unsigned char*)&keyhandle,
+		.len = sizeof(keyhandle)
+	};
+	PK11SymKey *inner_dh =
+		PK11_Derive_lsw(inner, CKM_CONCATENATE_BASE_AND_KEY,
+				&param, nss_key_derivation_mech(prf_hasher),
+				CKA_DERIVE, 0);
+	PK11_FreeSymKey(inner);
+	PK11SymKey *inner_dh_ni =
+		pk11_derive_wrapper_lsw(inner_dh,
+					CKM_CONCATENATE_BASE_AND_DATA,
+					Ni, CKM_CONCATENATE_BASE_AND_DATA,
+					CKA_DERIVE, 0);
+	PK11_FreeSymKey(inner_dh);
+	PK11SymKey *inner_dh_ni_nr =
+		pk11_derive_wrapper_lsw(inner_dh_ni,
+					CKM_CONCATENATE_BASE_AND_DATA,
+					Nr, CKM_CONCATENATE_BASE_AND_DATA,
+					CKA_DERIVE, 0);
+	PK11_FreeSymKey(inner_dh_ni);
+
+	/* run that through the hash function */
+	PK11SymKey *inner_hash =
+		PK11_Derive_lsw(inner_dh_ni_nr,
+				nss_key_derivation_mech(prf_hasher),
+				NULL, CKM_CONCATENATE_BASE_AND_DATA,
+				CKA_DERIVE, 0);
+	PK11_FreeSymKey(inner_dh_ni_nr);
+
+	/* Form: outer|inner_hash */
+	keyhandle = PK11_GetSymKeyHandle(inner_hash);
+	param = (SECItem) {
+		.data = (unsigned char*)&keyhandle,
+		.len = sizeof(keyhandle)
+	};
+	PK11SymKey *outer_inner =
+		PK11_Derive_lsw(outer,
+				CKM_CONCATENATE_BASE_AND_KEY,
+				&param, nss_key_derivation_mech(prf_hasher),
+				CKA_DERIVE, 0);
+	PK11_FreeSymKey(outer);
+	PK11_FreeSymKey(inner_hash);
+
+	/* Hash outer */
+	PK11SymKey *outer_hash =
+		PK11_Derive_lsw(outer_inner,
+				nss_key_derivation_mech(prf_hasher),
+				NULL, CKM_EXTRACT_KEY_FROM_KEY,
+				CKA_DERIVE, 0);
+	PK11_FreeSymKey(outer_inner);
+
+	return outer_hash;
 }
-#endif
+
 static PK11SymKey *ikev2_prfplus(const struct hash_desc *prf_hasher,
 				 PK11SymKey *skeyseed_k,
 				 PK11SymKey *dh,
