@@ -223,8 +223,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 				       CKF_ENCRYPT | CKF_DECRYPT);
 	next_bit += key_size * BITS_PER_BYTE;
 
-	initiator_salt = chunk_from_symkey("initiator salt", finalkey,
-					   next_bit, salt_size);
+	initiator_salt = chunk_bytes_from_symkey_bits("initiator salt", finalkey,
+						      next_bit, salt_size);
 	next_bit += salt_size * BITS_PER_BYTE;
 
 	bs = next_bit;
@@ -238,8 +238,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 				       CKF_ENCRYPT | CKF_DECRYPT);
 	next_bit += key_size * BITS_PER_BYTE;
 
-	responder_salt = chunk_from_symkey("responder salt", finalkey,
-					   next_bit, salt_size);
+	responder_salt = chunk_bytes_from_symkey_bits("responder salt", finalkey,
+						      next_bit, salt_size);
 	next_bit += salt_size * BITS_PER_BYTE;
 
 	SK_pi_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
@@ -247,7 +247,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 						  skp_bytes);
 
 	/* store copy of SK_pi_k for later use in authnull */
-	chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", SK_pi_k, 0, skp_bytes);
+	chunk_SK_pi = chunk_bytes_from_symkey_bits("chunk_SK_pi", SK_pi_k,
+						   0, skp_bytes);
 
 	next_bit += skp_bytes * BITS_PER_BYTE;
 
@@ -256,7 +257,8 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 						  skp_bytes);
 
 	/* store copy of SK_pr_k for later use in authnull */
-	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k, 0, skp_bytes);
+	chunk_SK_pr = chunk_bytes_from_symkey_bits("chunk_SK_pr", SK_pr_k,
+						   0, skp_bytes);
 
 	next_bit += skp_bytes * BITS_PER_BYTE;
 

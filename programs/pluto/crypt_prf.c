@@ -109,10 +109,13 @@ PK11SymKey *skeyid_digisig(const chunk_t ni,
 	return skeyid;
 }
 
-chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key,
-			  size_t next_bit, size_t byte_size)
+/*
+ * Extract SIZEOF_CHUNK bytes, starting at bit NEXT_BIT, from SOURCE_KEY.
+ */
+chunk_t chunk_bytes_from_symkey_bits(const char *name, PK11SymKey *source_key,
+				     size_t next_bit, size_t sizeof_chunk)
 {
-	if (byte_size == 0) {
+	if (sizeof_chunk == 0) {
 		DBG(DBG_CRYPT, DBG_log("chunk_from_symkey: %s: zero size", name));
 		return empty_chunk;
 	}
@@ -122,7 +125,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key,
 						   CKM_EXTRACT_KEY_FROM_KEY,
 						   &param,
 						   CKM_VENDOR_DEFINED,
-						   CKA_FLAGS_ONLY, byte_size, 0);
+						   CKA_FLAGS_ONLY, sizeof_chunk, 0);
 	if (sym_key == NULL) {
 		loglog(RC_LOG_SERIOUS, "NSS: PK11_DeriveWithFlags failed while generating %s", name);
 		return empty_chunk;
@@ -141,7 +144,7 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key,
 	DBG(DBG_CRYPT,
 	    DBG_log("chunk_from_symkey: %s: extracted len %d bytes at %p",
 		    name, data->len, data->data));
-	if (data->len != byte_size) {
+	if (data->len != sizeof_chunk) {
 		loglog(RC_LOG_SERIOUS, "NSS: PK11_GetKeyData returned wrong number of bytes while generating %s", name);
 		return empty_chunk;
 	}
@@ -150,4 +153,14 @@ chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key,
 	DBG(DBG_CRYPT, DBG_dump_chunk(name, chunk));
 	PK11_FreeSymKey(sym_key);
 	return chunk;
+}
+
+/*
+ * Extract SIZEOF_CHUNK bytes, starting at byte NEXT_BYTE, from SOURCE_KEY.
+ */
+chunk_t chunk_bytes_from_symkey_bytes(const char *name, PK11SymKey *source_key,
+				      size_t next_byte, size_t sizeof_chunk)
+{
+	return chunk_bytes_from_symkey_bits(name, source_key,
+					    next_byte * BITS_PER_BYTE, sizeof_chunk);
 }

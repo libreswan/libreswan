@@ -31,7 +31,10 @@ PK11SymKey *skeyid_digisig(const chunk_t ni,
 			   /*const*/ PK11SymKey *shared, /* NSS doesn't do const */
 			   const struct hash_desc *hasher);
 
-chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key,
-			  size_t next_bit, size_t byte_size);
-  
+chunk_t chunk_bytes_from_symkey_bits(const char *name, PK11SymKey *source_key,
+				     size_t next_bit, size_t sizeof_chunk);
+
+chunk_t chunk_bytes_from_symkey_bytes(const char *name, PK11SymKey *source_key,
+				      size_t next_byte, size_t sizeof_chunk);
+
 #endif
