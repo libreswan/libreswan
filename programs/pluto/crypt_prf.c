@@ -221,3 +221,131 @@ PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 {
 	return key_from_symkey_bits(source_key, next_byte, sizeof_key);
 }
+
+/*
+ * Run HASHR on the key material.
+ *
+ * The bizare call results in a hash operation and a returned key.
+ */
+static PK11SymKey *hash_symkey(const struct hash_desc *hasher,
+			       PK11SymKey *material)
+{
+	return PK11_Derive_lsw(material, 
+			       nss_key_derivation_mech(hasher),
+			       NULL,
+			       CKM_CONCATENATE_BASE_AND_KEY,
+			       CKA_DERIVE,
+			       0);
+}
+
+/*
+ * Hack to convert a chunk into a symkey in a way that FIPS doesn't
+ * notice - first stuff it into an existing key, and then extract it
+ * again!
+ */
+PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk)
+{
+	PK11SymKey *tmp = pk11_derive_wrapper_lsw(scratch,
+						  CKM_CONCATENATE_DATA_AND_BASE,
+						  chunk,
+						  CKM_EXTRACT_KEY_FROM_KEY,
+						  CKA_DERIVE, 0);
+	passert(tmp != NULL);
+	PK11SymKey *key = key_from_symkey_bytes(tmp, 0, chunk.len);
+	passert(key != NULL);
+	PK11_FreeSymKey(tmp);
+	return key;
+}
+
+PK11SymKey *concat_symkey_symkey(const struct hash_desc *hasher,
+				 PK11SymKey *lhs, PK11SymKey *rhs)
+{
+	CK_OBJECT_HANDLE keyhandle = PK11_GetSymKeyHandle(rhs);
+	SECItem param = {
+		.data = (unsigned char*)&keyhandle,
+		.len = sizeof(keyhandle)
+	};
+	return PK11_Derive_lsw(lhs, CKM_CONCATENATE_BASE_AND_KEY,
+			       &param, nss_key_derivation_mech(hasher),
+			       CKA_DERIVE, 0);
+}
+
+void append_symkey_symkey(const struct hash_desc *hasher,
+			  PK11SymKey **lhs, PK11SymKey *rhs)
+{
+	PK11SymKey *newkey = concat_symkey_symkey(hasher, *lhs, rhs);
+	PK11_FreeSymKey(*lhs);
+	*lhs = newkey;
+}
+
+PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
+				PK11SymKey *lhs, chunk_t rhs)
+{
+	CK_MECHANISM_TYPE mechanism = nss_key_derivation_mech(hasher);
+	return pk11_derive_wrapper_lsw(lhs, CKM_CONCATENATE_BASE_AND_DATA,
+				       rhs, mechanism, CKA_DERIVE, 0);
+}
+
+void append_symkey_chunk(const struct hash_desc *hasher,
+			 PK11SymKey **lhs, chunk_t rhs)
+{
+	PK11SymKey *newkey = concat_symkey_chunk(hasher, *lhs, rhs);
+	PK11_FreeSymKey(*lhs);
+	*lhs = newkey;
+}
+
+PK11SymKey *crypt_prf(const struct hash_desc *hasher,
+		      PK11SymKey *raw_key, PK11SymKey *seed)
+{
+	PK11SymKey *key;
+	chunk_t hmac_pad_prf = hmac_pads(0x00, (hasher->hash_block_size -
+						hasher->hash_digest_len));
+	if (PK11_GetKeyLength(raw_key) > hasher->hash_block_size) {
+		/* when too long hash, then pad */
+		PK11SymKey *tmp = hash_symkey(hasher, raw_key);
+		key = pk11_derive_wrapper_lsw(tmp,
+					      CKM_CONCATENATE_BASE_AND_DATA,
+					      hmac_pad_prf, CKM_XOR_BASE_AND_DATA,
+					      CKA_DERIVE,
+					      hasher->hash_block_size);
+		PK11_FreeSymKey(tmp);
+	} else {
+		/* pad it to block_size. */
+		key = pk11_derive_wrapper_lsw(raw_key,
+					      CKM_CONCATENATE_BASE_AND_DATA,
+					      hmac_pad_prf, CKM_XOR_BASE_AND_DATA,
+					      CKA_DERIVE,
+					      hasher->hash_block_size);
+	}
+	freeanychunk(hmac_pad_prf);
+	passert(key != NULL);
+
+	/* Input to inner hash: (key^IPAD)|seed */
+	chunk_t hmac_ipad = hmac_pads(HMAC_IPAD, hasher->hash_block_size);
+	PK11SymKey *inner = pk11_derive_wrapper_lsw(key, CKM_XOR_BASE_AND_DATA,
+						    hmac_ipad,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    CKA_DERIVE, 0);
+	freeanychunk(hmac_ipad);
+	append_symkey_symkey(hasher, &inner, seed);
+
+	/* run that through hasher */
+	PK11SymKey *hashed_inner = hash_symkey(hasher, inner);
+	PK11_FreeSymKey(inner);
+
+	/* Input to outer hash: (key^OPAD)|hashed_inner.  */
+	chunk_t hmac_opad = hmac_pads(HMAC_OPAD, hasher->hash_block_size);
+	PK11SymKey *outer = pk11_derive_wrapper_lsw(key, CKM_XOR_BASE_AND_DATA,
+						    hmac_opad,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    CKA_DERIVE, 0);
+	freeanychunk(hmac_opad);
+	append_symkey_symkey(hasher, &outer, hashed_inner);
+	PK11_FreeSymKey(hashed_inner);
+
+	/* Finally hash that */
+	PK11SymKey *hashed_outer = hash_symkey(hasher, outer);
+	PK11_FreeSymKey(outer);
+
+	return hashed_outer;
+}
