@@ -20,6 +20,41 @@
 #ifndef _IKEV2_PRF_H
 #define _IKEV2_PRF_H
 
+/*
+ * IKE SA
+ */
+PK11SymKey *ikev2_ike_sa_skeyseed(const struct hash_desc *prf_hasher,
+				  const chunk_t Ni, const chunk_t Nr,
+				  PK11SymKey *dh_secret);
+
+PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct hash_desc *prf_hasher,
+					PK11SymKey *old_SK_d,
+					PK11SymKey *new_dh_secret,
+					const chunk_t Ni, const chunk_t Nr);
+
+PK11SymKey *ikev2_ike_sa_keymat(const struct hash_desc *prf_hasher,
+				PK11SymKey *skeyseed,
+				const chunk_t Ni, const chunk_t Nr,
+				const chunk_t SPIi, const chunk_t SPIr,
+				size_t required_bytes);
+
+/*
+ * Child SA
+ */
+PK11SymKey *ikev2_child_sa_keymat(const struct hash_desc *prf_hasher,
+				  PK11SymKey *SK_d,
+				  const chunk_t Ni, const chunk_t Nr,
+				  size_t required_bytes);
+PK11SymKey *ikev2_child_sa_keymat_dh(const struct hash_desc *prf_hasher,
+				     PK11SymKey *SK_d,
+				     PK11SymKey *new_dh_secret,
+				     const chunk_t Ni, const chunk_t Nr,
+				     size_t required_bytes);
+
+/*
+ * Old way ...
+ */
+
 struct v2prf_stuff {
 	chunk_t t;
 	const struct hash_desc *prf_hasher;

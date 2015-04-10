@@ -33,5 +33,5 @@ PK11SymKey *skeyid_digisig(const chunk_t ni,
 
 chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key,
 			  size_t next_bit, size_t byte_size);
-
+  
 #endif
