@@ -43,13 +43,9 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct hash_desc *prf_hasher,
  */
 PK11SymKey *ikev2_child_sa_keymat(const struct hash_desc *prf_hasher,
 				  PK11SymKey *SK_d,
+				  PK11SymKey *new_dh_secret,
 				  const chunk_t Ni, const chunk_t Nr,
 				  size_t required_bytes);
-PK11SymKey *ikev2_child_sa_keymat_dh(const struct hash_desc *prf_hasher,
-				     PK11SymKey *SK_d,
-				     PK11SymKey *new_dh_secret,
-				     const chunk_t Ni, const chunk_t Nr,
-				     size_t required_bytes);
 
 /*
  * Old way ...

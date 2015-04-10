@@ -112,6 +112,278 @@ void v2genbytes(chunk_t *need,
  * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.
  */
 
+/* MUST BE THREAD-SAFE */
+static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
+			     PK11SymKey *shared,
+			     const size_t key_size,
+			     const size_t salt_size,
+			     PK11SymKey **skeyseed_out,
+			     PK11SymKey **SK_d_out,
+			     PK11SymKey **SK_ai_out,
+			     PK11SymKey **SK_ar_out,
+			     PK11SymKey **SK_ei_out,
+			     PK11SymKey **SK_er_out,
+			     PK11SymKey **SK_pi_out,
+			     PK11SymKey **SK_pr_out,
+			     chunk_t *initiator_salt_out,
+			     chunk_t *responder_salt_out,
+			     chunk_t *chunk_SK_pi_out,
+			     chunk_t *chunk_SK_pr_out)
+{
+	struct v2prf_stuff vpss;
+
+	SECItem param1;
+	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
+
+	PK11SymKey
+		*skeyseed_k,
+		*SK_d_k,
+		*SK_ai_k,
+		*SK_ar_k,
+		*SK_ei_k,
+		*SK_er_k,
+		*SK_pi_k,
+		*SK_pr_k;
+	chunk_t initiator_salt;
+	chunk_t responder_salt;
+	chunk_t chunk_SK_pi;
+	chunk_t chunk_SK_pr;
+
+	zero(&vpss);
+
+	/* this doesn't take any memory, it's just moving pointers around */
+	setchunk_from_wire(vpss.ni, skq, &skq->ni);
+	setchunk_from_wire(vpss.nr, skq, &skq->nr);
+	setchunk_from_wire(vpss.spii, skq, &skq->icookie);
+	setchunk_from_wire(vpss.spir, skq, &skq->rcookie);
+
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
+		    enum_name(&ikev2_trans_type_prf_names, skq->prf_hash),
+		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
+		    key_size, salt_size));
+
+	const struct hash_desc *prf_hasher = (struct hash_desc *)
+		ikev2_alg_find(IKE_ALG_HASH, skq->prf_hash);
+	passert(prf_hasher != NULL);
+
+	const struct encrypt_desc *encrypter = skq->encrypter;
+	passert(encrypter != NULL);
+
+	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
+	skeyseed_k = ikev2_ike_sa_skeyseed(prf_hasher, vpss.ni, vpss.nr, shared);
+	passert(skeyseed_k != NULL);
+	
+	/* now we have to generate the keys for everything */
+
+	/* need to know how many bits to generate */
+	/* SK_d needs PRF hasher key bytes */
+	/* SK_p needs PRF hasher*2 key bytes */
+	/* SK_e needs key_size*2 key bytes */
+	/* ..._salt needs salt_size*2 bytes */
+	/* SK_a needs integ's key size*2 bytes */
+
+	int skd_bytes = prf_hasher->hash_key_size;
+	int skp_bytes = prf_hasher->hash_key_size;
+	const struct hash_desc *integ_hasher =
+		(struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG, skq->integ_hash);
+	int integ_size = integ_hasher != NULL ? integ_hasher->hash_key_size : 0;
+	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
+	PK11SymKey *finalkey = ikev2_ike_sa_keymat(prf_hasher, skeyseed_k,
+						   vpss.ni, vpss.nr,
+						   vpss.spii, vpss.spir,
+						   total_keysize);
+
+	CK_EXTRACT_PARAMS bs = 0;
+	size_t next_bit = 0;
+
+	SK_d_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+						 CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+						 skd_bytes);
+	next_bit += skd_bytes * BITS_PER_BYTE;
+
+	SK_ai_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+						  integ_size);
+	next_bit += integ_size * BITS_PER_BYTE;
+
+	SK_ar_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+						  integ_size);
+	next_bit += integ_size * BITS_PER_BYTE;
+
+	bs = next_bit;
+	param1.data = (unsigned char*)&bs;
+	param1.len = sizeof(bs);
+	SK_ei_k = PK11_DeriveWithFlags(finalkey,
+				       CKM_EXTRACT_KEY_FROM_KEY,
+				       &param1,
+				       nss_encryption_mech(encrypter),
+				       CKA_FLAGS_ONLY, key_size,
+				       CKF_ENCRYPT | CKF_DECRYPT);
+	next_bit += key_size * BITS_PER_BYTE;
+
+	initiator_salt = chunk_from_symkey("initiator salt", finalkey,
+					   next_bit, salt_size);
+	next_bit += salt_size * BITS_PER_BYTE;
+
+	bs = next_bit;
+	param1.data = (unsigned char*)&bs;
+	param1.len = sizeof(bs);
+	SK_er_k = PK11_DeriveWithFlags(finalkey,
+				       CKM_EXTRACT_KEY_FROM_KEY,
+				       &param1,
+				       nss_encryption_mech(encrypter),
+				       CKA_FLAGS_ONLY, key_size,
+				       CKF_ENCRYPT | CKF_DECRYPT);
+	next_bit += key_size * BITS_PER_BYTE;
+
+	responder_salt = chunk_from_symkey("responder salt", finalkey,
+					   next_bit, salt_size);
+	next_bit += salt_size * BITS_PER_BYTE;
+
+	SK_pi_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+						  skp_bytes);
+
+	/* store copy of SK_pi_k for later use in authnull */
+	chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", SK_pi_k, 0, skp_bytes);
+
+	next_bit += skp_bytes * BITS_PER_BYTE;
+
+	SK_pr_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
+						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+						  skp_bytes);
+
+	/* store copy of SK_pr_k for later use in authnull */
+	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k, 0, skp_bytes);
+
+	next_bit += skp_bytes * BITS_PER_BYTE;
+
+	DBG(DBG_CRYPT,
+	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));
+	PK11_FreeSymKey(finalkey);
+
+	*skeyseed_out = skeyseed_k;
+	*SK_d_out = SK_d_k;
+	*SK_ai_out = SK_ai_k;
+	*SK_ar_out = SK_ar_k;
+	*SK_ei_out = SK_ei_k;
+	*SK_er_out = SK_er_k;
+	*SK_pi_out = SK_pi_k;
+	*SK_pr_out = SK_pr_k;
+	*initiator_salt_out = initiator_salt;
+	*responder_salt_out = responder_salt;
+	*chunk_SK_pi_out = chunk_SK_pi;
+	*chunk_SK_pr_out = chunk_SK_pr;
+
+	DBG(DBG_CRYPT,
+	    DBG_log("calc_skeyseed_v2 pointers: shared %p, skeyseed %p, SK_d %p, SK_ai %p, SK_ar %p, SK_ei %p, SK_er %p, SK_pi %p, SK_pr %p",
+		    shared, skeyseed_k, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
+	    DBG_dump_chunk("calc_skeyseed_v2 initiator salt", initiator_salt);
+	    DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt);
+	    DBG_dump_chunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
+	    DBG_dump_chunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr));
+}
+
+/* MUST BE THREAD-SAFE */
+void calc_dh_v2(struct pluto_crypto_req *r)
+{
+	struct pcr_skeycalc_v2_r *skr = &r->pcr_d.dhv2;
+	struct pcr_skeyid_q dhq;
+	const struct oakley_group_desc *group;
+	PK11SymKey *shared;
+	chunk_t g;
+	SECKEYPrivateKey *ltsecret;
+	PK11SymKey *skeyseed;
+	PK11SymKey
+		*SK_d,
+		*SK_ai,
+		*SK_ar,
+		*SK_ei,
+		*SK_er,
+		*SK_pi,
+		*SK_pr;
+	chunk_t initiator_salt;
+	chunk_t responder_salt;
+	chunk_t chunk_SK_pi;
+	chunk_t chunk_SK_pr;
+	SECKEYPublicKey *pubk;
+
+	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
+	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
+
+	/* clear out the reply */
+	zero(skr);
+	INIT_WIRE_ARENA(*skr);
+
+	group = lookup_group(dhq.oakley_group);
+	passert(group != NULL);
+
+	ltsecret = dhq.secret;
+	pubk = dhq.pubk;
+
+	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
+
+	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
+
+	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
+
+	shared = calc_dh_shared(g, ltsecret, group, pubk);
+
+	/* okay, so now all the shared key material */
+	calc_skeyseed_v2(&dhq,	/* input */
+			 shared,	/* input */
+			 dhq.key_size,	/* input */
+			 dhq.salt_size, /* input */
+
+			 &skeyseed,	/* output */
+			 &SK_d,	/* output */
+			 &SK_ai,	/* output */
+			 &SK_ar,	/* output */
+			 &SK_ei,	/* output */
+			 &SK_er,	/* output */
+			 &SK_pi,	/* output */
+			 &SK_pr,	/* output */
+			 &initiator_salt, /* output */
+			 &responder_salt, /* output */
+			 &chunk_SK_pi, /* output */
+			 &chunk_SK_pr); /* output */
+
+	skr->shared = shared;
+	skr->skeyseed = skeyseed;
+	skr->skeyid_d = SK_d;
+	skr->skeyid_ai = SK_ai;
+	skr->skeyid_ar = SK_ar;
+	skr->skeyid_ei = SK_ei;
+	skr->skeyid_er = SK_er;
+	skr->skeyid_pi = SK_pi;
+	skr->skeyid_pr = SK_pr;
+	skr->skey_initiator_salt = initiator_salt;
+	skr->skey_responder_salt = responder_salt;
+	skr->skey_chunk_SK_pi = chunk_SK_pi;
+	skr->skey_chunk_SK_pr = chunk_SK_pr;
+}
+
+PK11SymKey *ikev2_ike_sa_skeyseed(const struct hash_desc *prf_hasher,
+				  const chunk_t Ni, const chunk_t Nr,
+				  PK11SymKey *dh_secret)
+{
+	/* generate SKEYSEED from prf(Ni | Nr, g^ir) */
+	PK11SymKey *skeyseed = skeyid_digisig(Ni, Nr, dh_secret, prf_hasher);
+	passert(skeyseed != NULL);
+	return skeyseed;
+}
+#if 0
+PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct hash_desc *prf_hasher,
+					PK11SymKey *old_SK_d,
+					PK11SymKey *new_dh_secret,
+					const chunk_t Ni, const chunk_t Nr)
+{
+	/* generate SKEYSEED from prf(SK_d (old), g^ir (new) | Ni | Nr) */
+	return NULL;
+}
+#endif
 static PK11SymKey *ikev2_prfplus(const struct hash_desc *prf_hasher,
 				 PK11SymKey *skeyseed_k,
 				 PK11SymKey *dh,
@@ -336,300 +608,25 @@ static PK11SymKey *ikev2_prfplus(const struct hash_desc *prf_hasher,
 	return finalkey;
 }
 
-/* MUST BE THREAD-SAFE */
-static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
-			     PK11SymKey *shared,
-			     const size_t key_size,
-			     const size_t salt_size,
-			     PK11SymKey **skeyseed_out,
-			     PK11SymKey **SK_d_out,
-			     PK11SymKey **SK_ai_out,
-			     PK11SymKey **SK_ar_out,
-			     PK11SymKey **SK_ei_out,
-			     PK11SymKey **SK_er_out,
-			     PK11SymKey **SK_pi_out,
-			     PK11SymKey **SK_pr_out,
-			     chunk_t *initiator_salt_out,
-			     chunk_t *responder_salt_out,
-			     chunk_t *chunk_SK_pi_out,
-			     chunk_t *chunk_SK_pr_out)
-{
-	struct v2prf_stuff vpss;
-
-	SECItem param1;
-	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
-
-	PK11SymKey
-		*skeyseed_k,
-		*SK_d_k,
-		*SK_ai_k,
-		*SK_ar_k,
-		*SK_ei_k,
-		*SK_er_k,
-		*SK_pi_k,
-		*SK_pr_k;
-	chunk_t initiator_salt;
-	chunk_t responder_salt;
-	chunk_t chunk_SK_pi;
-	chunk_t chunk_SK_pr;
-
-	zero(&vpss);
-
-	/* this doesn't take any memory, it's just moving pointers around */
-	setchunk_from_wire(vpss.ni, skq, &skq->ni);
-	setchunk_from_wire(vpss.nr, skq, &skq->nr);
-	setchunk_from_wire(vpss.spii, skq, &skq->icookie);
-	setchunk_from_wire(vpss.spir, skq, &skq->rcookie);
-
-	DBG(DBG_CONTROLMORE,
-	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
-		    enum_name(&ikev2_trans_type_prf_names, skq->prf_hash),
-		    enum_name(&ikev2_trans_type_integ_names, skq->integ_hash),
-		    key_size, salt_size));
-
-	const struct hash_desc *prf_hasher = (struct hash_desc *)
-		ikev2_alg_find(IKE_ALG_HASH, skq->prf_hash);
-	passert(prf_hasher != NULL);
-
-	const struct encrypt_desc *encrypter = skq->encrypter;
-	passert(encrypter != NULL);
-
-	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-	skeyseed_k = ikev2_ike_sa_skeyseed(prf_hasher, vpss.ni, vpss.nr, shared);
-	passert(skeyseed_k != NULL);
-	
-	/* now we have to generate the keys for everything */
-
-	/* need to know how many bits to generate */
-	/* SK_d needs PRF hasher key bytes */
-	/* SK_p needs PRF hasher*2 key bytes */
-	/* SK_e needs key_size*2 key bytes */
-	/* ..._salt needs salt_size*2 bytes */
-	/* SK_a needs integ's key size*2 bytes */
-
-	int skd_bytes = prf_hasher->hash_key_size;
-	int skp_bytes = prf_hasher->hash_key_size;
-	const struct hash_desc *integ_hasher =
-		(struct hash_desc *)ikev2_alg_find(IKE_ALG_INTEG, skq->integ_hash);
-	int integ_size = integ_hasher != NULL ? integ_hasher->hash_key_size : 0;
-	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
-	PK11SymKey *finalkey = ikev2_prfplus(prf_hasher, skeyseed_k, NULL,
-					     vpss.ni, vpss.nr,
-					     vpss.spii, vpss.spir,
-					     total_keysize);
-					     
-	CK_EXTRACT_PARAMS bs = 0;
-	size_t next_bit = 0;
-
-	SK_d_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						 CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						 skd_bytes);
-	next_bit += skd_bytes * BITS_PER_BYTE;
-
-	SK_ai_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						  integ_size);
-	next_bit += integ_size * BITS_PER_BYTE;
-
-	SK_ar_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						  integ_size);
-	next_bit += integ_size * BITS_PER_BYTE;
-
-	bs = next_bit;
-	param1.data = (unsigned char*)&bs;
-	param1.len = sizeof(bs);
-	SK_ei_k = PK11_DeriveWithFlags(finalkey,
-				       CKM_EXTRACT_KEY_FROM_KEY,
-				       &param1,
-				       nss_encryption_mech(encrypter),
-				       CKA_FLAGS_ONLY, key_size,
-				       CKF_ENCRYPT | CKF_DECRYPT);
-	next_bit += key_size * BITS_PER_BYTE;
-
-	initiator_salt = chunk_from_symkey("initiator salt", finalkey,
-					   next_bit, salt_size);
-	next_bit += salt_size * BITS_PER_BYTE;
-
-	bs = next_bit;
-	param1.data = (unsigned char*)&bs;
-	param1.len = sizeof(bs);
-	SK_er_k = PK11_DeriveWithFlags(finalkey,
-				       CKM_EXTRACT_KEY_FROM_KEY,
-				       &param1,
-				       nss_encryption_mech(encrypter),
-				       CKA_FLAGS_ONLY, key_size,
-				       CKF_ENCRYPT | CKF_DECRYPT);
-	next_bit += key_size * BITS_PER_BYTE;
-
-	responder_salt = chunk_from_symkey("responder salt", finalkey,
-					   next_bit, salt_size);
-	next_bit += salt_size * BITS_PER_BYTE;
-
-	SK_pi_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						  skp_bytes);
-
-	/* store copy of SK_pi_k for later use in authnull */
-	chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", SK_pi_k, 0, skp_bytes);
-
-	next_bit += skp_bytes * BITS_PER_BYTE;
-
-	SK_pr_k = pk11_extract_derive_wrapper_lsw(finalkey, next_bit,
-						  CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						  skp_bytes);
-
-	/* store copy of SK_pr_k for later use in authnull */
-	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k, 0, skp_bytes);
-
-	next_bit += skp_bytes * BITS_PER_BYTE;
-
-	DBG(DBG_CRYPT,
-	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));
-	PK11_FreeSymKey(finalkey);
-
-	*skeyseed_out = skeyseed_k;
-	*SK_d_out = SK_d_k;
-	*SK_ai_out = SK_ai_k;
-	*SK_ar_out = SK_ar_k;
-	*SK_ei_out = SK_ei_k;
-	*SK_er_out = SK_er_k;
-	*SK_pi_out = SK_pi_k;
-	*SK_pr_out = SK_pr_k;
-	*initiator_salt_out = initiator_salt;
-	*responder_salt_out = responder_salt;
-	*chunk_SK_pi_out = chunk_SK_pi;
-	*chunk_SK_pr_out = chunk_SK_pr;
-
-	DBG(DBG_CRYPT,
-	    DBG_log("calc_skeyseed_v2 pointers: shared %p, skeyseed %p, SK_d %p, SK_ai %p, SK_ar %p, SK_ei %p, SK_er %p, SK_pi %p, SK_pr %p",
-		    shared, skeyseed_k, SK_d_k, SK_ai_k, SK_ar_k, SK_ei_k, SK_er_k, SK_pi_k, SK_pr_k);
-	    DBG_dump_chunk("calc_skeyseed_v2 initiator salt", initiator_salt);
-	    DBG_dump_chunk("calc_skeyseed_v2 responder salt", responder_salt);
-	    DBG_dump_chunk("calc_skeyseed_v2 SK_pi", chunk_SK_pi);
-	    DBG_dump_chunk("calc_skeyseed_v2 SK_pr", chunk_SK_pr));
-}
-
-/* MUST BE THREAD-SAFE */
-void calc_dh_v2(struct pluto_crypto_req *r)
-{
-	struct pcr_skeycalc_v2_r *skr = &r->pcr_d.dhv2;
-	struct pcr_skeyid_q dhq;
-	const struct oakley_group_desc *group;
-	PK11SymKey *shared;
-	chunk_t g;
-	SECKEYPrivateKey *ltsecret;
-	PK11SymKey *skeyseed;
-	PK11SymKey
-		*SK_d,
-		*SK_ai,
-		*SK_ar,
-		*SK_ei,
-		*SK_er,
-		*SK_pi,
-		*SK_pr;
-	chunk_t initiator_salt;
-	chunk_t responder_salt;
-	chunk_t chunk_SK_pi;
-	chunk_t chunk_SK_pr;
-	SECKEYPublicKey *pubk;
-
-	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
-	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
-
-	/* clear out the reply */
-	zero(skr);
-	INIT_WIRE_ARENA(*skr);
-
-	group = lookup_group(dhq.oakley_group);
-	passert(group != NULL);
-
-	ltsecret = dhq.secret;
-	pubk = dhq.pubk;
-
-	/* now calculate the (g^x)(g^y) --- need gi on responder, gr on initiator */
-
-	setchunk_from_wire(g, &dhq, dhq.role == ORIGINAL_RESPONDER ? &dhq.gi : &dhq.gr);
-
-	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
-
-	shared = calc_dh_shared(g, ltsecret, group, pubk);
-
-	/* okay, so now all the shared key material */
-	calc_skeyseed_v2(&dhq,	/* input */
-			 shared,	/* input */
-			 dhq.key_size,	/* input */
-			 dhq.salt_size, /* input */
-
-			 &skeyseed,	/* output */
-			 &SK_d,	/* output */
-			 &SK_ai,	/* output */
-			 &SK_ar,	/* output */
-			 &SK_ei,	/* output */
-			 &SK_er,	/* output */
-			 &SK_pi,	/* output */
-			 &SK_pr,	/* output */
-			 &initiator_salt, /* output */
-			 &responder_salt, /* output */
-			 &chunk_SK_pi, /* output */
-			 &chunk_SK_pr); /* output */
-
-	skr->shared = shared;
-	skr->skeyseed = skeyseed;
-	skr->skeyid_d = SK_d;
-	skr->skeyid_ai = SK_ai;
-	skr->skeyid_ar = SK_ar;
-	skr->skeyid_ei = SK_ei;
-	skr->skeyid_er = SK_er;
-	skr->skeyid_pi = SK_pi;
-	skr->skeyid_pr = SK_pr;
-	skr->skey_initiator_salt = initiator_salt;
-	skr->skey_responder_salt = responder_salt;
-	skr->skey_chunk_SK_pi = chunk_SK_pi;
-	skr->skey_chunk_SK_pr = chunk_SK_pr;
-}
-
-PK11SymKey *ikev2_ike_sa_skeyseed(const struct hash_desc *prf_hasher,
-				  const chunk_t Ni, const chunk_t Nr,
-				  PK11SymKey *dh_secret)
-{
-	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-	PK11SymKey *skeyseed = skeyid_digisig(Ni, Nr, dh_secret, prf_hasher);
-	passert(skeyseed != NULL);
-	return skeyseed;
-}
-#if 0
-PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct hash_desc *prf_hasher,
-					PK11SymKey *old_SK_d,
-					PK11SymKey *new_dh_secret,
-					const chunk_t Ni, const chunk_t Nr)
-{
-	return NULL;
-}
-
 PK11SymKey *ikev2_ike_sa_keymat(const struct hash_desc *prf_hasher,
 				PK11SymKey *skeyseed,
 				const chunk_t Ni, const chunk_t Nr,
 				const chunk_t SPIi, const chunk_t SPIr,
 				size_t required_bytes)
 {
-	return NULL;
+	return ikev2_prfplus(prf_hasher, skeyseed, NULL,
+			     Ni, Nr, SPIi, SPIr,
+			     required_bytes);
 }
 
 PK11SymKey *ikev2_child_sa_keymat(const struct hash_desc *prf_hasher,
 				  PK11SymKey *SK_d,
+				  PK11SymKey *new_dh_secret,
 				  const chunk_t Ni, const chunk_t Nr,
 				  size_t required_bytes)
 {
-	return NULL;
+	return ikev2_prfplus(prf_hasher, SK_d,
+			     new_dh_secret, Ni, Nr,
+			     empty_chunk, empty_chunk,
+			     required_bytes);
 }
-
-PK11SymKey *ikev2_child_sa_keymat_dh(const struct hash_desc *prf_hasher,
-				     PK11SymKey *SK_d,
-				     PK11SymKey *new_dh_secret,
-				     const chunk_t Ni, const chunk_t Nr,
-				     size_t required_bytes)
-{
-	return NULL;
-}
-#endif

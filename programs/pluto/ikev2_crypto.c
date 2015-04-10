@@ -53,6 +53,8 @@
 #include "ike_alg.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
+#include "crypt_prf.h"
+#include "ikev2_prf.h"
 
 void ikev2_derive_child_keys(struct state *st, enum original_role role)
 {
@@ -149,12 +151,33 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
-
+		      
 	v2genbytes(&ikeymat, ipi->keymat_len,
 		   "initiator keys", &childsacalc);
-
 	v2genbytes(&rkeymat, ipi->keymat_len,
 		   "responder keys", &childsacalc);
+	DBG(DBG_CRYPT, {
+			DBG_dump_chunk("initiator keys", ikeymat);
+			DBG_dump_chunk("responder keys", rkeymat);
+		});
+	freeanychunk(ikeymat);
+	freeanychunk(rkeymat);
+
+	/* and repeat ... */
+	chunk_t ni;
+	chunk_t nr;
+	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
+	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
+	
+	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf_hasher, NULL,
+						   st->st_skey_d_nss, ni, nr,
+						   ipi->keymat_len * 2); 
+	ikeymat = chunk_from_symkey("initiator keys", keymat,
+				    0, ipi->keymat_len);
+	rkeymat = chunk_from_symkey("initiator keys", keymat,
+				    ipi->keymat_len * BITS_PER_BYTE,
+				    ipi->keymat_len);
+	PK11_FreeSymKey(keymat);
 
 	if (role != ORIGINAL_INITIATOR) {
 		DBG(DBG_CRYPT, {
