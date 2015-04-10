@@ -169,8 +169,9 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
 	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
 	
-	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf_hasher, NULL,
-						   st->st_skey_d_nss, ni, nr,
+	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf_hasher,
+						   st->st_skey_d_nss,
+						   NULL/*dh*/, ni, nr,
 						   ipi->keymat_len * 2); 
 	ikeymat = chunk_from_symkey("initiator keys", keymat,
 				    0, ipi->keymat_len);
