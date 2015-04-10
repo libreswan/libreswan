@@ -30,26 +30,47 @@ And a small set of well defined targets work:
 - make clean
 - make distclean?
 
-TODO list
----------
+TODO: a.k.a. what needs fixing in the existing build system
+-----------------------------------------------------------
+
+Split CONFDFILES into CONFDFILES and CONFDSUBDIRFILES.  Former goes to
+CONFDDIR and latter goes to CONFDSUBDIR.  Currently it isn't possible
+to install stuff into /etc/ipsec.d/
+
+Instead of building man pages as part of make programs have "make doc"
+and "make install-doc" (check automake for target names) build and
+install documentation including man pages.  "make all" would depend on
+both programs and doc.  Also consider "make dist" which would
+pre-generate the documentation.
+
+When on fedora/rhel, enable audit logs.  One way to implement this is
+to add packaging/defaults/fedora and pull that in.  Presumably OBJDIR
+would be updated to reflect this.
+
+Delete programs/pluto/Makefile.options; ti just adds to general
+confusion when looking for what/why things are happening.
 
 delete LIBRESWANSRCDIRREL
 
-fix code like -I${SRCDIR}${LIBRESWANSRCDIR}
+Remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
+
+move modobj to under $(OBJDIR)
+
+For install targets add the $(DESTDIR) prefix to everything; that is
+$(DESTDIR)$(BINDIR) for instance.  This convention, at least for RPMs,
+lets installs be directed to a staging area.
 
 stuff under testing could do with its own unit-test.mk file - which is
 just a tweak of program.mk; grep for UNITTEST
 
 switch lib/libswan/Makefile to library.mk; it contains conditional
-definitions
+definitions; these can be moved to after the include of library.mk.
 
 add depend.mk to program.mk
 
 switch programs/pluto to program.mk
 
 enable -std=gnu99: hopefully just slog
-
-eliminate Makefile.program
 
 eliminate Makefile.manpage
 
@@ -68,6 +89,8 @@ testing/pluto/Makefile update target
 Make --warn-undefined-variables
 
 descend srcdir not objdir
+
+do not generate OBJDIR make files!
 
 eliminate Makefile.ver: this is really messy as scripts do all sorts
 of wierd and wonderful stuff with it.
