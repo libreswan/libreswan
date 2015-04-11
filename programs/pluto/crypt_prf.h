@@ -45,6 +45,8 @@ PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
 void append_symkey_chunk(const struct hash_desc *hasher,
 			 PK11SymKey **lhs, chunk_t rhs);
 
+void dump_symkey(const char *prefix, PK11SymKey *key);
+
 /* Implement PRF described in rfc2104. */
 
 PK11SymKey *crypt_prf(const struct hash_desc *hasher,

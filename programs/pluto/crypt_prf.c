@@ -298,26 +298,31 @@ PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 		      PK11SymKey *raw_key, PK11SymKey *seed)
 {
 	PK11SymKey *key;
-	chunk_t hmac_pad_prf = hmac_pads(0x00, (hasher->hash_block_size -
-						hasher->hash_digest_len));
+	/* too big, rehash */
 	if (PK11_GetKeyLength(raw_key) > hasher->hash_block_size) {
 		/* when too long hash, then pad */
-		PK11SymKey *tmp = hash_symkey(hasher, raw_key);
-		key = pk11_derive_wrapper_lsw(tmp,
-					      CKM_CONCATENATE_BASE_AND_DATA,
-					      hmac_pad_prf, CKM_XOR_BASE_AND_DATA,
-					      CKA_DERIVE,
-					      hasher->hash_block_size);
-		PK11_FreeSymKey(tmp);
+		key = hash_symkey(hasher, raw_key);
 	} else {
-		/* pad it to block_size. */
-		key = pk11_derive_wrapper_lsw(raw_key,
-					      CKM_CONCATENATE_BASE_AND_DATA,
-					      hmac_pad_prf, CKM_XOR_BASE_AND_DATA,
-					      CKA_DERIVE,
-					      hasher->hash_block_size);
+		/* need to be careful - don't free raw_key */
+		key = raw_key;
 	}
-	freeanychunk(hmac_pad_prf);
+	/* too small, pad */
+	if (PK11_GetKeyLength(key) < hasher->hash_block_size) {
+		/* pad it to block_size. */
+		chunk_t hmac_pad_prf = hmac_pads(0x00, (hasher->hash_block_size -
+							PK11_GetKeyLength(raw_key)));
+		PK11SymKey *tmp = pk11_derive_wrapper_lsw(key,
+							  CKM_CONCATENATE_BASE_AND_DATA,
+							  hmac_pad_prf,
+							  CKM_CONCATENATE_BASE_AND_DATA,
+							  CKA_DERIVE,
+							  hasher->hash_block_size);
+		freeanychunk(hmac_pad_prf);
+		if (key != raw_key) {
+			PK11_FreeSymKey(key);
+		}
+		key = tmp;
+	}
 	passert(key != NULL);
 
 	/* Input to inner hash: (key^IPAD)|seed */
@@ -347,7 +352,19 @@ PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 	PK11SymKey *hashed_outer = hash_symkey(hasher, outer);
 	PK11_FreeSymKey(outer);
 
+	if (key != raw_key) {
+		PK11_FreeSymKey(key);
+	}
+
 	return hashed_outer;
+}
+
+void dump_symkey(const char *prefix, PK11SymKey *key)
+{
+	chunk_t chunk = chunk_from_symkey_bytes(prefix, key, 0,
+						PK11_GetKeyLength(key));
+	DBG_dump_chunk(prefix, chunk);
+	freeanychunk(chunk);
 }
 
 PK11SymKey *crypt_prfplus(const struct hash_desc *hasher,
@@ -357,30 +374,27 @@ PK11SymKey *crypt_prfplus(const struct hash_desc *hasher,
 	uint8_t count = 1;
 	chunk_t count_chunk;
 	setchunk(count_chunk, &count, sizeof(count));
-	PK11SymKey *data = NULL;
-	PK11SymKey *prfplus = NULL;
-	do {
-		if (data == NULL) {
-			/* Form: SEED|1 */
-			passert(count == 1);
-			data = concat_symkey_chunk(hasher, seed, count_chunk);
-		} else {
-			/* Form: Tn-1|SEED|n */
-			passert(count > 1);
-			append_symkey_symkey(hasher, &data, seed);
-			append_symkey_chunk(hasher, &data, count_chunk);
-		}
-		PK11SymKey *new_data = crypt_prf(hasher, key, data);
-		if (prfplus == NULL) {
-			/* Create a second copy by re-running PRF */
-			prfplus = crypt_prf(hasher, key, data);
-		} else {
-			append_symkey_symkey(hasher, &prfplus, data);
-		}
-		PK11_FreeSymKey(data);
-		data = new_data;
+
+	/* T1(prfplus) = prf(KEY, SEED|1) */
+	PK11SymKey *prfplus;
+	{
+		PK11SymKey *value = concat_symkey_chunk(hasher, seed, count_chunk);
+		prfplus = crypt_prf(hasher, key, value);
+		PK11_FreeSymKey(value);
+	}
+
+	/* make a copy to keep things easy */
+	PK11SymKey *old_t = key_from_symkey_bytes(prfplus, 0, PK11_GetKeyLength(prfplus));
+	while (PK11_GetKeyLength(prfplus) < required_keymat) {
+		/* Tn = prf(KEY, Tn-1|SEED|n) */
+		PK11SymKey *value = concat_symkey_symkey(hasher, old_t, seed);
 		count++;
-	} while (PK11_GetKeyLength(prfplus) < required_keymat);
-	PK11_FreeSymKey(data);
+		append_symkey_chunk(hasher, &value, count_chunk);
+		PK11SymKey *new_t = crypt_prf(hasher, key, value);
+		append_symkey_symkey(hasher, &prfplus, new_t);
+		PK11_FreeSymKey(value);
+		PK11_FreeSymKey(old_t);
+		old_t = new_t;
+	} 
 	return prfplus;
 }
