@@ -25,12 +25,6 @@
 
 struct hash_desc;
 
-/* MUST BE THREAD-SAFE */
-PK11SymKey *skeyid_digisig(const chunk_t ni,
-			   const chunk_t nr,
-			   /*const*/ PK11SymKey *shared, /* NSS doesn't do const */
-			   const struct hash_desc *hasher);
-
 /* For creating paramters to PRF and PRF+ */
 
 PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk);

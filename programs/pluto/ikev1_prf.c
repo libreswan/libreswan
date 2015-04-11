@@ -33,6 +33,81 @@
 #include "packet.h"
 #include "pluto_crypt.h"
 
+/* MUST BE THREAD-SAFE */
+static PK11SymKey *skeyid_digisig(const chunk_t ni,
+				  const chunk_t nr,
+				  /*const*/ PK11SymKey *shared,	/* NSS doesn't do const */
+			   const struct hash_desc *hasher)
+{
+	struct hmac_ctx ctx;
+	chunk_t nir;
+	unsigned int k;
+	CK_MECHANISM_TYPE mechanism;
+	u_char buf1[HMAC_BUFSIZE * 2], buf2[HMAC_BUFSIZE * 2];
+	chunk_t buf1_chunk, buf2_chunk;
+	PK11SymKey *skeyid;
+
+	DBG(DBG_CRYPT, {
+		    DBG_log("skeyid inputs (digi+NI+NR+shared) hasher: %s",
+			    hasher->common.name);
+		    DBG_dump_chunk("ni: ", ni);
+		    DBG_dump_chunk("nr: ", nr);
+	    });
+
+	/*
+	 * We need to hmac_init with the concatenation of Ni_b and Nr_b,
+	 * so we have to build a temporary concatentation.
+	 */
+	nir.len = ni.len + nr.len;
+	nir.ptr = alloc_bytes(nir.len, "Ni + Nr in skeyid_digisig");
+	memcpy(nir.ptr, ni.ptr, ni.len);
+	memcpy(nir.ptr + ni.len, nr.ptr, nr.len);
+	zero(&buf1);
+	if (nir.len <= hasher->hash_block_size) {
+		memcpy(buf1, nir.ptr, nir.len);
+	} else {
+		hasher->hash_init(&ctx.hash_ctx);
+		hasher->hash_update(&ctx.hash_ctx, nir.ptr, nir.len);
+		hasher->hash_final(buf1, &ctx.hash_ctx);
+	}
+
+	memcpy(buf2, buf1, hasher->hash_block_size);
+
+	for (k = 0; k < hasher->hash_block_size; k++) {
+		buf1[k] ^= HMAC_IPAD;
+		buf2[k] ^= HMAC_OPAD;
+	}
+
+	pfree(nir.ptr);
+	mechanism = nss_key_derivation_mech(hasher);
+	buf1_chunk.ptr = buf1;
+	buf1_chunk.len = hasher->hash_block_size;
+
+	buf2_chunk.ptr = buf2;
+	buf2_chunk.len = hasher->hash_block_size;
+
+	PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(shared,
+						    CKM_CONCATENATE_DATA_AND_BASE, buf1_chunk, mechanism, CKA_DERIVE,
+						    0);
+	PK11SymKey *tkey2 = PK11_Derive_lsw(tkey1, mechanism, NULL,
+					    CKM_CONCATENATE_DATA_AND_BASE,
+					    CKA_DERIVE, 0);
+	PK11SymKey *tkey3 = pk11_derive_wrapper_lsw(tkey2,
+						    CKM_CONCATENATE_DATA_AND_BASE, buf2_chunk, mechanism, CKA_DERIVE,
+						    0);
+	skeyid = PK11_Derive_lsw(tkey3, mechanism, NULL,
+				 CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE, 0);
+
+	PK11_FreeSymKey(tkey1);
+	PK11_FreeSymKey(tkey2);
+	PK11_FreeSymKey(tkey3);
+
+	DBG(DBG_CRYPT,
+	    DBG_log("NSS: digisig skeyid pointer: %p", skeyid));
+
+	return skeyid;
+}
+
 static PK11SymKey *skeyid_preshared(const chunk_t pss,
 				    const chunk_t ni,
 				    const chunk_t nr,
