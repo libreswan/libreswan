@@ -1231,8 +1231,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	if (!ret && errno == ESRCH &&
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		loglog(RC_LOG_SERIOUS,
-			"Warning: expected to find an existing IPsec SA - continuing as Add SA");
-		return netlink_add_sa(sa, FALSE);
+			"Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
 	}
 	return ret;
 }
