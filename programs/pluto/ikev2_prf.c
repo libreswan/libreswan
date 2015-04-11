@@ -55,59 +55,6 @@
 #include "crypt_prf.h"
 #include "crypt_dh.h"
 
-static void v2prfplus(struct v2prf_stuff *vps)
-{
-	struct hmac_ctx ctx;
-
-	hmac_init(&ctx, vps->prf_hasher, vps->skeyseed);
-	hmac_update_chunk(&ctx, vps->t);
-	hmac_update_chunk(&ctx, vps->ni);
-	hmac_update_chunk(&ctx, vps->nr);
-	hmac_update_chunk(&ctx, vps->spii);
-	hmac_update_chunk(&ctx, vps->spir);
-	hmac_update(&ctx, vps->counter, 1);
-	hmac_final_chunk(vps->t, "skeyseed_t1", &ctx);
-	DBG(DBG_CRYPT, {
-		    char b[20];
-		    snprintf(b, sizeof(b), "prf+[%u]:", vps->counter[0]);
-		    DBG_dump_chunk(b, vps->t);
-	    });
-
-	vps->counter[0]++;
-	vps->availbytes  = vps->t.len;
-	vps->nextbytes   = 0;
-}
-
-void v2genbytes(chunk_t *need,
-		unsigned int needed, const char *name,
-		struct v2prf_stuff *vps)
-{
-	u_char *target;
-
-	need->ptr = alloc_bytes(needed, name);
-	need->len = needed;
-	target = need->ptr;
-
-	while (needed > vps->availbytes) {
-		if (vps->availbytes) {
-			/* use any bytes which are presently in the buffer */
-			memcpy(target, &vps->t.ptr[vps->nextbytes],
-			       vps->availbytes);
-			target += vps->availbytes;
-			needed -= vps->availbytes;
-			vps->availbytes = 0;
-		}
-		/* generate more bits into t1 */
-		v2prfplus(vps);
-	}
-	passert(needed <= vps->availbytes);
-
-	memcpy(target, &vps->t.ptr[vps->nextbytes], needed);
-	vps->availbytes -= needed;
-	vps->nextbytes  += needed;
-}
-
-
 /*
  * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.
  */
@@ -130,8 +77,6 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 			     chunk_t *chunk_SK_pi_out,
 			     chunk_t *chunk_SK_pr_out)
 {
-	struct v2prf_stuff vpss;
-
 	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
 
 	PK11SymKey
@@ -148,13 +93,15 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	chunk_t chunk_SK_pi;
 	chunk_t chunk_SK_pr;
 
-	zero(&vpss);
-
 	/* this doesn't take any memory, it's just moving pointers around */
-	setchunk_from_wire(vpss.ni, skq, &skq->ni);
-	setchunk_from_wire(vpss.nr, skq, &skq->nr);
-	setchunk_from_wire(vpss.spii, skq, &skq->icookie);
-	setchunk_from_wire(vpss.spir, skq, &skq->rcookie);
+	chunk_t ni;
+	chunk_t nr;
+	chunk_t spii;
+	chunk_t spir;
+	setchunk_from_wire(ni, skq, &skq->ni);
+	setchunk_from_wire(nr, skq, &skq->nr);
+	setchunk_from_wire(spii, skq, &skq->icookie);
+	setchunk_from_wire(spir, skq, &skq->rcookie);
 
 	DBG(DBG_CONTROLMORE,
 	    DBG_log("calculating skeyseed using prf=%s integ=%s cipherkey-size=%zu salt-size=%zu",
@@ -170,7 +117,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	passert(encrypter != NULL);
 
 	/* generate SKEYSEED from key=(Ni|Nr), hash of shared */
-	skeyseed_k = ikev2_ike_sa_skeyseed(prf_hasher, vpss.ni, vpss.nr, shared);
+	skeyseed_k = ikev2_ike_sa_skeyseed(prf_hasher, ni, nr, shared);
 	passert(skeyseed_k != NULL);
 	
 	/* now we have to generate the keys for everything */
@@ -189,8 +136,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	int integ_size = integ_hasher != NULL ? integ_hasher->hash_key_size : 0;
 	size_t total_keysize = skd_bytes + 2*skp_bytes + 2*key_size + 2*salt_size + 2*integ_size;
 	PK11SymKey *finalkey = ikev2_ike_sa_keymat(prf_hasher, skeyseed_k,
-						   vpss.ni, vpss.nr,
-						   vpss.spii, vpss.spir,
+						   ni, nr, spii, spir,
 						   total_keysize);
 
 	size_t next_byte = 0;

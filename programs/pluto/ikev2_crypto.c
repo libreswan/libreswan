@@ -58,8 +58,6 @@
 
 void ikev2_derive_child_keys(struct state *st, enum original_role role)
 {
-	struct v2prf_stuff childsacalc;
-
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
 	struct ipsec_proto_info *ipi =
@@ -82,17 +80,6 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 
 	passert(ei != NULL);
 	ipi->attrs.transattrs.ei = ei;
-
-	zero(&childsacalc);
-	childsacalc.prf_hasher = st->st_oakley.prf_hasher;
-
-	setchunk(childsacalc.ni, st->st_ni.ptr, st->st_ni.len);
-	setchunk(childsacalc.nr, st->st_nr.ptr, st->st_nr.len);
-	childsacalc.spii.len = 0;
-	childsacalc.spir.len = 0;
-
-	childsacalc.counter[0] = 1;
-	childsacalc.skeyseed = st->st_skey_d_nss;
 
 	/* ??? no account is taken of AH */
 	/* transid is same as esp_ealg_id */
@@ -151,19 +138,6 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
-		      
-	v2genbytes(&ikeymat, ipi->keymat_len,
-		   "initiator keys", &childsacalc);
-	v2genbytes(&rkeymat, ipi->keymat_len,
-		   "responder keys", &childsacalc);
-	DBG(DBG_CRYPT, {
-			DBG_dump_chunk("initiator keys", ikeymat);
-			DBG_dump_chunk("responder keys", rkeymat);
-		});
-	freeanychunk(ikeymat);
-	freeanychunk(rkeymat);
-
-	/* and repeat ... */
 	chunk_t ni;
 	chunk_t nr;
 	setchunk(ni, st->st_ni.ptr, st->st_ni.len);

@@ -51,23 +51,6 @@ PK11SymKey *ikev2_child_sa_keymat(const struct hash_desc *prf_hasher,
  * Old way ...
  */
 
-struct v2prf_stuff {
-	chunk_t t;
-	const struct hash_desc *prf_hasher;
-	PK11SymKey *skeyseed;
-	chunk_t ni;
-	chunk_t nr;
-	chunk_t spii;
-	chunk_t spir;
-	u_char counter[1]; /* why is this an array of 1? */
-	unsigned int availbytes;
-	unsigned int nextbytes;
-};
-
-extern void v2genbytes(chunk_t *need,
-		       unsigned int needed, const char *name,
-		       struct v2prf_stuff *vps);
-
 struct pluto_crypto_req;
 
 void calc_dh_v2(struct pluto_crypto_req *r);
