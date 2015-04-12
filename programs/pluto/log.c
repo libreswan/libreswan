@@ -568,9 +568,7 @@ void whack_log(int mess_no, const char *message, ...)
 	      cur_state != NULL ? cur_state->st_whack_sock :
 	      NULL_FD;
 
-	if (wfd != NULL_FD
-	    || dying_breath
-	    ) {
+	if (wfd != NULL_FD || dying_breath) {
 		va_list args;
 		char m[LOG_WIDTH]; /* longer messages will be truncated */
 		int prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
@@ -635,11 +633,9 @@ void passert_fail(const char *pred_str, const char *file_str,
 		  unsigned long line_no)
 {
 	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s", file_str,
-	       line_no, pred_str);
-	if (!dying_breath) {
-		dying_breath = TRUE;
-	}
+	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",
+		file_str, line_no, pred_str);
+	dying_breath = TRUE;
 	/* exiting correctly doesn't always work */
 	libreswan_log_abort(file_str, line_no);
 }
