@@ -7,6 +7,7 @@
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 2015, Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,11 +54,7 @@ void hmac_init(struct hmac_ctx *ctx,
 	       /*const*/ PK11SymKey *symkey)	/* NSS doesn't like const! */
 {
 	SECStatus status;
-	PK11SymKey
-		*tkey1,
-		*tkey2;
 	unsigned int klen;
-	chunk_t hmac_opad, hmac_ipad, hmac_pad;
 
 	if (symkey != NULL) 
 		klen = PK11_GetKeyLength(symkey);
@@ -67,37 +64,48 @@ void hmac_init(struct hmac_ctx *ctx,
 	ctx->h = h;
 	ctx->hmac_digest_len = h->hash_digest_len;
 
-	/* DBG(DBG_CRYPT, DBG_log("NSS: hmac init")); */
-
-	hmac_opad = hmac_pads(HMAC_OPAD, h->hash_block_size);
-	hmac_ipad = hmac_pads(HMAC_IPAD, h->hash_block_size);
-	hmac_pad  = hmac_pads(0x00, h->hash_block_size - klen);
-
+	/*
+	 * If the key is too long, cut it down to size using the
+	 * hasher.
+	 */
+	PK11SymKey *tkey1;
 	if (klen > h->hash_block_size) {
 		tkey1 = hash_symkey(h, symkey);
+		klen = PK11_GetKeyLength(tkey1);
 	} else {
 		tkey1 = symkey;
 	}
 
-	tkey2 = pk11_derive_wrapper_lsw(tkey1, CKM_CONCATENATE_BASE_AND_DATA,
-					hmac_pad,
-					CKM_XOR_BASE_AND_DATA, CKA_DERIVE,
-					h->hash_block_size);
+	/*
+	 * If the (possibly hashed) key isn't long enough, pad it to
+	 * length.
+	 */
+	PK11SymKey *tkey2;
+	if (klen < h->hash_block_size) {
+		chunk_t hmac_pad  = hmac_pads(0x00, h->hash_block_size - klen);
+		tkey2 = concat_symkey_chunk(h, tkey1, hmac_pad);
+	} else {
+		tkey2 = tkey1;
+	}
 	passert(tkey2 != NULL);
-
-	ctx->ikey = xor_symkey_chunk(tkey2, hmac_ipad);
-	passert(ctx->ikey != NULL);
-
-	ctx->okey = xor_symkey_chunk(tkey2, hmac_opad);
-	passert(ctx->okey != NULL);
-
-	if (tkey1 != symkey)
+	if (tkey1 != symkey) {
 		PK11_FreeSymKey(tkey1);
-	PK11_FreeSymKey(tkey2);
-
-	freeanychunk(hmac_opad);
+	}
+	tkey1 = NULL;
+	
+	chunk_t hmac_ipad = hmac_pads(HMAC_IPAD, h->hash_block_size);
+	chunk_t hmac_opad = hmac_pads(HMAC_OPAD, h->hash_block_size);
+	ctx->ikey = xor_symkey_chunk(tkey2, hmac_ipad);
+	ctx->okey = xor_symkey_chunk(tkey2, hmac_opad);
+	passert(ctx->ikey != NULL);
+	passert(ctx->okey != NULL);
 	freeanychunk(hmac_ipad);
-	freeanychunk(hmac_pad);
+	freeanychunk(hmac_opad);
+	if (tkey2 != symkey) {
+		PK11_FreeSymKey(tkey2);
+	}
+	tkey2 = NULL;
+
 	ctx->ctx_nss = PK11_CreateDigestContext(nss_hash_oid(h));
 	passert(ctx->ctx_nss != NULL);
 
