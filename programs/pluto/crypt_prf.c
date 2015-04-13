@@ -53,14 +53,6 @@ PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 		chunk_t hmac_pad_prf = hmac_pads(0x00, (hasher->hash_block_size -
 							PK11_GetKeyLength(raw_key)));
 		PK11SymKey *tmp = concat_symkey_chunk(hasher, key, hmac_pad_prf);
-#if 0
-		  pk11_derive_wrapper_lsw(key,
-							  CKM_CONCATENATE_BASE_AND_DATA,
-							  hmac_pad_prf,
-							  CKM_CONCATENATE_BASE_AND_DATA,
-							  CKA_DERIVE,
-							  hasher->hash_block_size);
-#endif
 		freeanychunk(hmac_pad_prf);
 		if (key != raw_key) {
 			PK11_FreeSymKey(key);

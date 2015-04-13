@@ -197,24 +197,6 @@ static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
 	return mechanism;
 }
 
-PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
-				    CK_MECHANISM_TYPE mechanism,
-				    chunk_t data, CK_MECHANISM_TYPE target,
-				    CK_ATTRIBUTE_TYPE operation, int keySize)
-{
-	CK_KEY_DERIVATION_STRING_DATA string;
-	SECItem param;
-
-	string.pData = data.ptr;
-	string.ulLen = data.len;
-	param.data = (unsigned char*)&string;
-	param.len = sizeof(string);
-
-	return PK11_Derive(base, mechanism,
-		data.len == 0 ? NULL : &param,
-		target, operation, keySize);
-}
-
 CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
 {
 	CK_MECHANISM_TYPE mechanism = 0x80000000;

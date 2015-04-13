@@ -33,6 +33,24 @@
 #include "packet.h"
 #include "pluto_crypt.h"
 
+static PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
+					   CK_MECHANISM_TYPE mechanism,
+					   chunk_t data, CK_MECHANISM_TYPE target,
+					   CK_ATTRIBUTE_TYPE operation, int keySize)
+{
+	CK_KEY_DERIVATION_STRING_DATA string;
+	SECItem param;
+
+	string.pData = data.ptr;
+	string.ulLen = data.len;
+	param.data = (unsigned char*)&string;
+	param.len = sizeof(string);
+
+	return PK11_Derive(base, mechanism,
+		data.len == 0 ? NULL : &param,
+		target, operation, keySize);
+}
+
 /* MUST BE THREAD-SAFE */
 static PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
 				   SECItem *param, CK_MECHANISM_TYPE target,

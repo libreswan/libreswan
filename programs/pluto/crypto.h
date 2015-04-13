@@ -168,12 +168,6 @@ extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 
 extern CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher);
 extern chunk_t hmac_pads(u_char val, unsigned int len);
-extern PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
-					   CK_MECHANISM_TYPE mechanism,
-					   chunk_t data,
-					   CK_MECHANISM_TYPE target,
-					   CK_ATTRIBUTE_TYPE operation,
-					   int keySize);
 
 enum crk_proto {
 	CRK_ESPorAH,
