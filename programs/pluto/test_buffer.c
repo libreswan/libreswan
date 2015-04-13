@@ -40,7 +40,7 @@ static chunk_t zalloc_chunk(size_t length, const char *name)
  * If this function fails, crash and burn.  Its been fed static data
  * so should never ever have a problem.
  */
-static chunk_t decode_hex_to_chunk(const char *original, const char *string)
+chunk_t decode_hex_to_chunk(const char *original, const char *string)
 {
 	/* The decoded buffer can't be bigger than the encoded string.  */
 	chunk_t chunk = zalloc_chunk(strlen(string), original);
