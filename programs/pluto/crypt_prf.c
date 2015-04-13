@@ -52,12 +52,15 @@ PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 		/* pad it to block_size. */
 		chunk_t hmac_pad_prf = hmac_pads(0x00, (hasher->hash_block_size -
 							PK11_GetKeyLength(raw_key)));
-		PK11SymKey *tmp = pk11_derive_wrapper_lsw(key,
+		PK11SymKey *tmp = concat_symkey_chunk(hasher, key, hmac_pad_prf);
+#if 0
+		  pk11_derive_wrapper_lsw(key,
 							  CKM_CONCATENATE_BASE_AND_DATA,
 							  hmac_pad_prf,
 							  CKM_CONCATENATE_BASE_AND_DATA,
 							  CKA_DERIVE,
 							  hasher->hash_block_size);
+#endif
 		freeanychunk(hmac_pad_prf);
 		if (key != raw_key) {
 			PK11_FreeSymKey(key);
@@ -68,10 +71,7 @@ PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 
 	/* Input to inner hash: (key^IPAD)|seed */
 	chunk_t hmac_ipad = hmac_pads(HMAC_IPAD, hasher->hash_block_size);
-	PK11SymKey *inner = pk11_derive_wrapper_lsw(key, CKM_XOR_BASE_AND_DATA,
-						    hmac_ipad,
-						    CKM_CONCATENATE_BASE_AND_DATA,
-						    CKA_DERIVE, 0);
+	PK11SymKey *inner = xor_symkey_chunk(key, hmac_ipad);
 	freeanychunk(hmac_ipad);
 	append_symkey_symkey(hasher, &inner, seed);
 
@@ -81,10 +81,7 @@ PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 
 	/* Input to outer hash: (key^OPAD)|hashed_inner.  */
 	chunk_t hmac_opad = hmac_pads(HMAC_OPAD, hasher->hash_block_size);
-	PK11SymKey *outer = pk11_derive_wrapper_lsw(key, CKM_XOR_BASE_AND_DATA,
-						    hmac_opad,
-						    CKM_CONCATENATE_BASE_AND_DATA,
-						    CKA_DERIVE, 0);
+	PK11SymKey *outer = xor_symkey_chunk(key, hmac_opad);
 	freeanychunk(hmac_opad);
 	append_symkey_symkey(hasher, &outer, hashed_inner);
 	PK11_FreeSymKey(hashed_inner);

@@ -22,6 +22,27 @@
 #include "crypto.h"
 
 /*
+ * XXX: Is there any documentation on this generic operation?
+ */
+static PK11SymKey *merge_symkey_chunk(PK11SymKey *base_key, chunk_t chunk,
+				      CK_MECHANISM_TYPE derive,
+				      CK_MECHANISM_TYPE target)
+{
+	passert(chunk.len > 0);
+	CK_KEY_DERIVATION_STRING_DATA string = {
+		.pData = chunk.ptr,
+		.ulLen = chunk.len,
+	};
+	SECItem param = {
+		.data = (unsigned char*)&string,
+		.len = sizeof(string),
+	};
+	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
+	int key_size = 0;
+	return PK11_Derive(base_key, derive, &param, target, operation, key_size);
+}
+
+/*
  * SYMKEY I/O operations.
  *
  * SYMKEY_FROM_CHUNK uses the SCRATCH key as a secure starting point
@@ -32,11 +53,9 @@
 
 PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk)
 {
-	PK11SymKey *tmp = pk11_derive_wrapper_lsw(scratch,
-						  CKM_CONCATENATE_DATA_AND_BASE,
-						  chunk,
-						  CKM_EXTRACT_KEY_FROM_KEY,
-						  CKA_DERIVE, 0);
+	PK11SymKey *tmp = merge_symkey_chunk(scratch, chunk,
+					     CKM_CONCATENATE_DATA_AND_BASE,
+					     CKM_EXTRACT_KEY_FROM_KEY);
 	passert(tmp != NULL);
 	PK11SymKey *key = key_from_symkey_bytes(tmp, 0, chunk.len);
 	passert(key != NULL);
@@ -79,8 +98,8 @@ PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
 				PK11SymKey *lhs, chunk_t rhs)
 {
 	CK_MECHANISM_TYPE mechanism = nss_key_derivation_mech(hasher);
-	return pk11_derive_wrapper_lsw(lhs, CKM_CONCATENATE_BASE_AND_DATA,
-				       rhs, mechanism, CKA_DERIVE, 0);
+	return merge_symkey_chunk(lhs, rhs, CKM_CONCATENATE_BASE_AND_DATA,
+				  mechanism);
 }
 
 /*
@@ -246,4 +265,18 @@ PK11SymKey *hash_symkey(const struct hash_desc *hasher,
 	int key_size = 0;
 	return PK11_Derive(base_key, derive, param, target,
 			   operation, key_size);
+}
+
+/*
+ * XOR a symkey with a chunk.
+ *
+ * XXX: hmac.c has a very similar call, only, instead of
+ * target=CKM_CONCATENATE_BASE_AND_DATA it uses
+ * target=nss_hash_mech(hasher)=CKM_MD5 et.al.
+ */
+PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs)
+{
+	return merge_symkey_chunk(lhs, rhs,
+				  CKM_XOR_BASE_AND_DATA,
+				  CKM_CONCATENATE_BASE_AND_DATA);
 }
