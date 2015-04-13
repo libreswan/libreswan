@@ -34,6 +34,22 @@
 #include "pluto_crypt.h"
 
 /* MUST BE THREAD-SAFE */
+static PK11SymKey *pk11_extract_derive_wrapper_lsw(PK11SymKey *base,
+						   CK_EXTRACT_PARAMS bs,
+						   CK_MECHANISM_TYPE target,
+						   CK_ATTRIBUTE_TYPE operation,
+						   int keySize)
+{
+	SECItem param;
+
+	param.data = (unsigned char*)&bs;
+	param.len = sizeof(bs);
+
+	return PK11_Derive_lsw(base, CKM_EXTRACT_KEY_FROM_KEY, &param, target,
+			       operation, keySize);
+}
+
+/* MUST BE THREAD-SAFE */
 static PK11SymKey *skeyid_digisig(const chunk_t ni,
 				  const chunk_t nr,
 				  /*const*/ PK11SymKey *shared,	/* NSS doesn't do const */
