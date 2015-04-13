@@ -70,31 +70,6 @@ override_dh_auto_install:
 	mkdir -p $(CURDIR)/debian/libreswan/var/lib/libreswan
 	chmod 700 -R $(CURDIR)/debian/libreswan/var/lib/libreswan
 
-	# fix some doc issues
-	for oldname in `find $(CURDIR)/debian/libreswan-doc/usr/share/doc -name "ipsec_ipsec*"`; \
-	do \
-	    newname=`echo "$$oldname" | sed 's/ipsec_ipsec_/ipsec_/'`; \
-	    if [ -f "$$newname" ]; then \
-		rm -f "$$oldname"; \
-	    else \
-		mv "$$oldname" "$$newname"; \
-	    fi; \
-	done
-
-	# change the paths in the installed doc files (but only in regular
-	# files, not in links to the outside of the build tree !)
-	( cd $(CURDIR)/debian/libreswan-doc/; \
-	  for f in `grep "/usr/local/" --recursive --files-with-match *`; \
-	  do \
-		if [ -f $$f -a ! -L $$f ]; then \
-		    cp $$f $$f.old; \
-		    sed 's/\/usr\/local\//\/usr\//' $$f.old > $$f; \
-		    rm $$f.old; \
-		fi; \
-	  done )
-	# but remove the doc/src dir, which just duplicates the HTML files
-	rm -rf $(CURDIR)/debian/libreswan-doc/usr/share/doc/libreswan-doc/doc/src
-
 override_dh_strip:
 	dh_strip --dbg-package=libreswan-dbg
 

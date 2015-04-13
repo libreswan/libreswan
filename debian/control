@@ -39,8 +39,7 @@ Depends: bsdmainutils,
          ${misc:Depends},
          ${shlibs:Depends}
 Recommends: python
-Suggests: curl,
-          libreswan-doc
+Suggests: curl
 Provides: ike-server
 Conflicts: ike-server
 Replaces: ike-server
@@ -66,13 +65,3 @@ Description: Internet Key Exchange daemon - debugging symbols
  .
  This package provides the symbols needed for debugging of libreswan
  binaries.
-
-Package: libreswan-doc
-Architecture: all
-Section: doc
-Depends: ${misc:Depends}
-Description: Internet Key Exchange daemon - documentation
- Libreswan is an IPsec based VPN solution for the Linux kernel. Both
- IKEv1 and IKEv2 protocols are supported.
- .
- This package provides the free parts of the documentation for Libreswan.
