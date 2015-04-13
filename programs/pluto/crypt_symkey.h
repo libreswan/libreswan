@@ -84,4 +84,12 @@ PK11SymKey *key_from_symkey_bits(PK11SymKey *base_key,
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 				  size_t next_byte, int sizeof_key);
 
+/*
+ * Hash a symkey using HASHER.
+ *
+ * This gets used by the PRF when the BASE_KEY is too long.
+ */
+PK11SymKey *hash_symkey(const struct hash_desc *hasher,
+			PK11SymKey *base_key);
+
 #endif

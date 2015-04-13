@@ -40,6 +40,7 @@
 #include <secport.h>
 #include "lswconf.h"
 #include "lswlog.h"
+#include "crypt_symkey.h"
 
 /* HMAC package
  * rfc2104.txt specifies how HMAC works.
@@ -74,11 +75,7 @@ void hmac_init(struct hmac_ctx *ctx,
 	hmac_pad  = hmac_pads(0x00, h->hash_block_size - klen);
 
 	if (klen > h->hash_block_size) {
-		tkey1 = PK11_Derive_lsw(symkey, nss_key_derivation_mech(h),
-					NULL,
-					CKM_CONCATENATE_BASE_AND_DATA,
-					CKA_DERIVE,
-					0);
+		tkey1 = hash_symkey(h, symkey);
 	} else {
 		tkey1 = symkey;
 	}
@@ -243,74 +240,6 @@ PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
 	return PK11_Derive(base, mechanism,
 		data.len == 0 ? NULL : &param,
 		target, operation, keySize);
-}
-
-/* MUST BE THREAD-SAFE */
-PK11SymKey *PK11_Derive_lsw(PK11SymKey *base, CK_MECHANISM_TYPE mechanism,
-			     SECItem *param, CK_MECHANISM_TYPE target,
-			     CK_ATTRIBUTE_TYPE operation, int keysize)
-{
-	if (param == NULL && keysize == 0) {
-		SECOidTag oid;
-		PK11Context *ctx;
-		unsigned char dkey[HMAC_BUFSIZE * 2];
-		SECItem dkey_param;
-		SECStatus status;
-		unsigned int len;
-		CK_EXTRACT_PARAMS bs;
-		chunk_t dkey_chunk;
-
-		switch (mechanism) {
-		case CKM_SHA256_KEY_DERIVATION:
-			oid = SEC_OID_SHA256;
-			break;
-		case CKM_SHA384_KEY_DERIVATION:
-			oid = SEC_OID_SHA384;
-			break;
-		case CKM_SHA512_KEY_DERIVATION:
-			oid = SEC_OID_SHA512;
-			break;
-		default:
-			return PK11_Derive(base, mechanism, param, target,
-					   operation, keysize);
-		}
-
-		ctx = PK11_CreateDigestContext(oid);
-		passert(ctx != NULL);
-		status = PK11_DigestBegin(ctx);
-		passert(status == SECSuccess);
-		status = PK11_DigestKey(ctx, base);
-		passert(status == SECSuccess);
-		status = PK11_DigestFinal(ctx, dkey, &len, sizeof dkey);
-		passert(status == SECSuccess);
-		PK11_DestroyContext(ctx, PR_TRUE);
-
-		dkey_chunk.ptr = dkey;
-		dkey_chunk.len = len;
-
-		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(base,
-							    CKM_CONCATENATE_DATA_AND_BASE, dkey_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
-							    0);
-		passert(tkey1 != NULL);
-
-		bs = 0;
-		dkey_param.data = (unsigned char*)&bs;
-		dkey_param.len = sizeof(bs);
-		PK11SymKey *tkey2 = PK11_Derive(tkey1,
-						CKM_EXTRACT_KEY_FROM_KEY,
-						&dkey_param, target, operation,
-						len);
-		passert(tkey2 != NULL);
-
-		if (tkey1 != NULL)
-			PK11_FreeSymKey(tkey1);
-
-		return tkey2;
-
-	} else {
-		return PK11_Derive(base, mechanism, param, target, operation,
-				   keysize);
-	}
 }
 
 CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)

@@ -35,24 +35,6 @@
 #include "crypt_symkey.h"
 #include "crypto.h"
 
-/*
- * Run HASHER on the key.
- *
- * This assumes that NSS works.  Based on old code, 3.14 may have had
- * problems with SHA-2.
- */
-static PK11SymKey *hash_symkey(const struct hash_desc *hasher,
-			       PK11SymKey *base_key)
-{
-	CK_MECHANISM_TYPE derive = nss_key_derivation_mech(hasher);
-	SECItem *param = NULL;
-	CK_MECHANISM_TYPE target = CKM_CONCATENATE_BASE_AND_KEY;
-	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
-	int key_size = 0;
-	return PK11_Derive(base_key, derive, param, target,
-			   operation, key_size);
-}
-
 PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 		      PK11SymKey *raw_key, PK11SymKey *seed)
 {

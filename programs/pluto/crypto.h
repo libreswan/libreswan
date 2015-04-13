@@ -174,10 +174,6 @@ extern PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
 					   CK_MECHANISM_TYPE target,
 					   CK_ATTRIBUTE_TYPE operation,
 					   int keySize);
-extern PK11SymKey *PK11_Derive_lsw(PK11SymKey *base,
-				   CK_MECHANISM_TYPE mechanism,
-				   SECItem *param, CK_MECHANISM_TYPE target,
-				   CK_ATTRIBUTE_TYPE operation, int keySize);
 
 enum crk_proto {
 	CRK_ESPorAH,
