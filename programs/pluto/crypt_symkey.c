@@ -61,13 +61,18 @@ PK11SymKey *concat_symkey_symkey(const struct hash_desc *hasher,
 				 PK11SymKey *lhs, PK11SymKey *rhs)
 {
 	CK_OBJECT_HANDLE keyhandle = PK11_GetSymKeyHandle(rhs);
+	/* give the parameters explicit names - there are too many */
+	PK11SymKey *base_key = lhs;
+	CK_MECHANISM_TYPE derive = CKM_CONCATENATE_BASE_AND_KEY;
 	SECItem param = {
 		.data = (unsigned char*)&keyhandle,
 		.len = sizeof(keyhandle)
 	};
-	return PK11_Derive_lsw(lhs, CKM_CONCATENATE_BASE_AND_KEY,
-			       &param, nss_key_derivation_mech(hasher),
-			       CKA_DERIVE, 0);
+	CK_MECHANISM_TYPE target = nss_key_derivation_mech(hasher);
+	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
+	int key_size = 0;
+	return PK11_Derive(base_key, derive, &param, target, operation,
+			   key_size);
 }
 
 PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,

@@ -36,19 +36,21 @@
 #include "crypto.h"
 
 /*
- * Run HASHR on the key material.
+ * Run HASHER on the key.
  *
- * The bizare call results in a hash operation and a returned key.
+ * This assumes that NSS works.  Based on old code, 3.14 may have had
+ * problems with SHA-2.
  */
 static PK11SymKey *hash_symkey(const struct hash_desc *hasher,
-			       PK11SymKey *material)
+			       PK11SymKey *base_key)
 {
-	return PK11_Derive_lsw(material, 
-			       nss_key_derivation_mech(hasher),
-			       NULL,
-			       CKM_CONCATENATE_BASE_AND_KEY,
-			       CKA_DERIVE,
-			       0);
+	CK_MECHANISM_TYPE derive = nss_key_derivation_mech(hasher);
+	SECItem *param = NULL;
+	CK_MECHANISM_TYPE target = CKM_CONCATENATE_BASE_AND_KEY;
+	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
+	int key_size = 0;
+	return PK11_Derive(base_key, derive, param, target,
+			   operation, key_size);
 }
 
 PK11SymKey *crypt_prf(const struct hash_desc *hasher,
