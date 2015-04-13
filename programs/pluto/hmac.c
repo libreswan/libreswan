@@ -46,7 +46,6 @@
  * rfc2104.txt specifies how HMAC works.
  */
 
-static CK_MECHANISM_TYPE nss_hash_mech(const struct hash_desc *hasher);
 static SECOidTag nss_hash_oid(const struct hash_desc *hasher);
 
 void hmac_init(struct hmac_ctx *ctx,
@@ -86,14 +85,10 @@ void hmac_init(struct hmac_ctx *ctx,
 					h->hash_block_size);
 	passert(tkey2 != NULL);
 
-	ctx->ikey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA,
-					    hmac_ipad, nss_hash_mech(h),
-					    CKA_DIGEST, 0);
+	ctx->ikey = xor_symkey_chunk(tkey2, hmac_ipad);
 	passert(ctx->ikey != NULL);
 
-	ctx->okey = pk11_derive_wrapper_lsw(tkey2, CKM_XOR_BASE_AND_DATA,
-					    hmac_opad, nss_hash_mech(h),
-					    CKA_DIGEST, 0);
+	ctx->okey = xor_symkey_chunk(tkey2, hmac_opad);
 	passert(ctx->okey != NULL);
 
 	if (tkey1 != symkey)
@@ -189,36 +184,6 @@ static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
 		libreswan_log("NSS: key derivation mechanism (hasher->common.algo_id=%d not supported",
 			hasher->common.algo_id);
 		mechanism = 0;	/* ??? what should we do to recover? */
-		break;
-	}
-	return mechanism;
-}
-
-static CK_MECHANISM_TYPE nss_hash_mech(const struct hash_desc *hasher)
-{
-	CK_MECHANISM_TYPE mechanism;
-
-	switch (hasher->common.algo_id) {
-	case OAKLEY_MD5:
-		mechanism = CKM_MD5;
-		break;
-	case OAKLEY_SHA1:
-		mechanism = CKM_SHA_1;
-		break;
-	case OAKLEY_SHA2_256:
-		mechanism = CKM_SHA256;
-		break;
-	case OAKLEY_SHA2_384:
-		mechanism = CKM_SHA384;
-		break;
-	case OAKLEY_SHA2_512:
-		mechanism = CKM_SHA512;
-		break;
-	default:
-		/* ??? surely this requires more than a DBG entry! */
-		DBG(DBG_CRYPT,
-		      DBG_log("NSS: key derivation mechanism not supported"));
-		mechanism = 0x80000000;	/* ??? what should we do to recover? */
 		break;
 	}
 	return mechanism;
