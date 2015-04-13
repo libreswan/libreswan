@@ -368,30 +368,3 @@ chunk_t hmac_pads(u_char val, unsigned int len)
 
 	return ret;
 }
-
-void nss_symkey_log(PK11SymKey *key, const char *msg)
-{
-	if (key == NULL) {
-		DBG(DBG_CRYPT,DBG_log("NULL key %s", msg));
-	} else {
-		DBG(DBG_CRYPT, {
-			DBG_log("computed key %s with length =%d", msg,
-					       PK11_GetKeyLength(key));
-
-			if (!PK11_IsFIPS()) {
-				SECStatus status = PK11_ExtractKeyValue(key);
-
-				if (status == SECSuccess) {
-					SECItem *keydata = PK11_GetKeyData(key);
-
-					DBG_dump("value: ", keydata->data,
-						 keydata->len);
-
-					SECITEM_FreeItem(keydata, PR_TRUE);	/* ??? this was commented out.  Why? */
-				} else {
-					DBG_log("unobtainable key %s", msg);
-				}
-			}
-		});
-	}
-}

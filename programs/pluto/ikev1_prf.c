@@ -170,32 +170,27 @@ static PK11SymKey *skeyid_preshared(const chunk_t pss,
 	PK11SymKey *tkey4 = pk11_derive_wrapper_lsw(shared,
 						    CKM_CONCATENATE_DATA_AND_BASE, buf1_chunk, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
 						    0);
-	/* nss_symkey_log(tkey4, "pss+ipad+shared"); */
 
 	CK_EXTRACT_PARAMS bs = 0;
 	PK11SymKey *tkey5 = pk11_extract_derive_wrapper_lsw(tkey4, bs,
 							    CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
 							    hasher->hash_block_size);
-	/* nss_symkey_log(tkey5, "pss+ipad"); */
 
 	PK11SymKey *tkey6 = pk11_derive_wrapper_lsw(tkey5,
 						    CKM_CONCATENATE_BASE_AND_DATA, nir, mechanism, CKA_DERIVE,
 						    0);
 	pfree(nir.ptr);
-	/* nss_symkey_log(tkey6, "pss+ipad+nir"); */
 
 	/* PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(shared, CKM_CONCATENATE_DATA_AND_BASE, buf1_chunk, mechanism, CKA_DERIVE, 0); */
 	PK11SymKey *tkey2 = PK11_Derive_lsw(tkey6, mechanism, NULL,
 					    CKM_CONCATENATE_DATA_AND_BASE,
 					    CKA_DERIVE, 0);
-	/* nss_symkey_log(tkey2, "pss : tkey2"); */
 
 	PK11SymKey *tkey3 = pk11_derive_wrapper_lsw(tkey2,
 						    CKM_CONCATENATE_DATA_AND_BASE, buf2_chunk, mechanism, CKA_DERIVE,
 						    0);
 	skeyid = PK11_Derive_lsw(tkey3, mechanism, NULL,
 				 CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE, 0);
-	/* nss_symkey_log(tkey2, "pss : tkey3"); */
 
 	PK11_FreeSymKey(tkey4);
 	PK11_FreeSymKey(tkey5);
@@ -304,10 +299,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 		passert(tkey1 != NULL);
 
-		/*DBG(DBG_CRYPT, DBG_log("Started key computation: 1, length=%d", PK11_GetKeyLength(tkey1)));
-		 * nss_symkey_log(tkey1, "1");
-		 */
-
 		PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(tkey1,
 							    CKM_XOR_BASE_AND_DATA,
 							    hmac_ipad,
@@ -392,7 +383,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 					   CKA_DERIVE,
 					   0);
 		passert(skeyid_d != NULL);
-		/* nss_symkey_log(skeyid_d, "skeyid_d"); */
 		/*****End of SKEYID_d derivation***************************************/
 
 		/*Deriving SKEYID_a = hmac_xxx(SKEYID, SKEYID_d | g^xy | CKY-I | CKY-R | 1)*/
@@ -468,7 +458,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 					   CKA_DERIVE,
 					   0);
 		passert(skeyid_a != NULL);
-		/* nss_symkey_log(skeyid_a, "skeyid_a"); */
 		/*****End of SKEYID_a derivation***************************************/
 
 		/*Deriving SKEYID_e = prf(SKEYID, SKEYID_a | g^xy | CKY-I | CKY-R | 2)*/
@@ -545,7 +534,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 						   CKM_EXTRACT_KEY_FROM_KEY,	/* note */
 						   CKA_DERIVE, 0);
 			passert(skeyid_e != NULL);
-			/* nss_symkey_log(skeyid_e, "skeyid_e"); */
 
 			enc_key = PK11_DeriveWithFlags(skeyid_e,
 						       CKM_EXTRACT_KEY_FROM_KEY, &param1,
@@ -554,7 +542,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 						       CKF_ENCRYPT | CKF_DECRYPT);
 			passert(enc_key != NULL);
 
-			/* nss_symkey_log(enc_key, "enc_key"); */
 		} else {
 			size_t i = 0;
 			PK11SymKey *keymat;
@@ -565,7 +552,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 						   CKM_CONCATENATE_BASE_AND_DATA,	/* note */
 						   CKA_DERIVE, 0);
 			passert(skeyid_e != NULL);
-			/* nss_symkey_log(skeyid_e, "skeyid_e"); */
 
 			PK11SymKey *tkey25 = pk11_derive_wrapper_lsw(skeyid_e,
 								     CKM_CONCATENATE_BASE_AND_DATA,
@@ -697,7 +683,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 								       CKA_FLAGS_ONLY, /*0*/ keysize,
 								       CKF_ENCRYPT | CKF_DECRYPT);
 
-					/* nss_symkey_log(enc_key, "enc_key"); */
 					passert(enc_key != NULL);
 
 					PK11_FreeSymKey(tkey25);

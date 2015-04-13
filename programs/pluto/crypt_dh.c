@@ -153,8 +153,6 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 		    DBG_log("Dropped no leading zeros %d", dhshared_len));
 	}
 
-	/* nss_symkey_log(dhshared, "dhshared"); */
-
 	DBG(DBG_CRYPT, {
 		struct timeval tv1;
 		unsigned long tv_diff;
