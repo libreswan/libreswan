@@ -54,6 +54,7 @@
 #include "alg_info.h"
 #include "kernel_alg.h"
 #include "crypt_prf.h"
+#include "crypt_symkey.h"
 #include "ikev2_prf.h"
 
 void ikev2_derive_child_keys(struct state *st, enum original_role role)
