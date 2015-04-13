@@ -15,7 +15,7 @@ override_dh_auto_build:
 			 PUBDIR=/usr/sbin \
 			 MANTREE=/usr/share/man \
 			 CONFDIR=$(CURDIR)/debian \
-			 SYSVINIT_DEFAULT_START="2 3 4 5" \
+			 INITSYSTEM=systemd \
 			 NSSLIBS="-lnss3 -lnspr4" \
 			 USE_LDAP=true \
 			 USE_LIBCURL=true \
