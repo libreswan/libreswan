@@ -53,23 +53,23 @@ if "." in hostname:
 	hostname = hostname.split(".")[0]
 
 if args.testname:
-	#if os.path.isdir("/testing/pluto/%s"%args.testname):
-	#	testname = args.testname
-	#else:
-	#	sys.exit("Unknown or bad testname '%s'"%args.testname)
+        # Should this instead try to guess /testing/pluto prefix, or
+        # allow testname to specify a directory path?
 	testname = args.testname
-else:
-	testpath = "/testing/pluto/%s"%os.path.basename(os.getcwd())
-	testname = os.path.basename(testpath)
+        testpath = "/testing/pluto/" + testname
 	if not os.path.isdir(testpath):
-		sys.exit("testcase /testing/pluto/%s invalid - aborted"%testname)
+		sys.exit("Unknown or bad testname '%s'"%args.testname)
+else:
+        # Validate this is sane?
+	testpath = os.getcwd()
+	testname = os.path.basename(testpath)
 
 # Setup pluto.log softlink
 if hostname != "nic":
 	if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
 		os.unlink("/tmp/pluto.log")
 
-	outputdir="/testing/pluto/%s/OUTPUT/"%testname
+	outputdir="%s/OUTPUT/"%testpath
 	if  not os.path.isdir(outputdir):
 		os.mkdir(outputdir)
 		os.chmod(outputdir, 0777)
@@ -153,11 +153,11 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 				os.chmod(dir,0700)
 
 	# test specific files
-	ipsecconf = "/testing/pluto/%s/%s.conf"%(testname,hostname)
-	ipsecsecrets = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
-	xl2tpdconf = "/testing/pluto/%s/%s.xl2tpd.conf"%(testname,hostname)
-	pppoptions = "/testing/pluto/%s/%s.ppp-options.xl2tpd"%(testname,hostname)
-	chapfile = "/testing/pluto/%s/chap-secrets"%testname
+	ipsecconf = "%s/%s.conf"%(testpath,hostname)
+	ipsecsecrets = "%s/%s.secrets"%(testpath,hostname)
+	xl2tpdconf = "%s/%s.xl2tpd.conf"%(testpath,hostname)
+	pppoptions = "%s/%s.ppp-options.xl2tpd"%(testpath,hostname)
+	chapfile = "%s/chap-secrets"%testpath
 
 	if not os.path.isfile(ipsecconf):
 		ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf"%hostname
@@ -165,7 +165,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 		ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
 
 	if args.userland == "strongswan":
-		strongswanconf = "/testing/pluto/%s/%sstrongswan.conf"%(testname,hostname)
+		strongswanconf = "%s/%sstrongswan.conf"%(testpath,hostname)
 		shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
 		for dir in ( "/etc/strongswan/ipsec.d/aacerts", "/etc/strongswan/ipsec.d/ocspcerts"):
 			if not os.path.isdir(dir):
@@ -298,8 +298,8 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 
 if userland == "racoon2" or userland == "racoon":
 	# Racoon uses x509 files straight from /testing/x509/*
-	# shutil.copytree("/testing/pluto/%s/%s-racoon/"%(testname,hostname), "/etc/racoon2/")
-	distutils.dir_util.copy_tree("/testing/pluto/%s/%s-racoon"%(testname,hostname), "/etc/racoon2/")
+	# shutil.copytree("%s/%s-racoon/"%(testpath,hostname), "/etc/racoon2/")
+	distutils.dir_util.copy_tree("%s/%s-racoon"%(testpath,hostname), "/etc/racoon2/")
 	os.chmod("/etc/racoon2/psk/test.psk", 0600)
 	os.chmod("/etc/racoon2/spmd.pwd", 0600)
 	if not os.path.isdir("/var/run/racoon2"):
