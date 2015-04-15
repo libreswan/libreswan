@@ -135,11 +135,15 @@ static PK11SymKey *pk11_extract_derive_wrapper_lsw(PK11SymKey *base,
 			       operation, keySize);
 }
 
-/* MUST BE THREAD-SAFE */
-static PK11SymKey *skeyid_digisig(const chunk_t ni,
-				  const chunk_t nr,
-				  /*const*/ PK11SymKey *shared,	/* NSS doesn't do const */
-			   const struct hash_desc *hasher)
+/*
+ * SKEYID = prf(Ni_b | Nr_b, g^xy)
+ *
+ * MUST BE THREAD-SAFE
+ */
+PK11SymKey *ikev1_digital_signature_skeyid(const struct hash_desc *hasher,
+					   const chunk_t ni,
+					   const chunk_t nr,
+					   /*const*/ PK11SymKey *shared /* NSS doesn't do const */)
 {
 	struct hmac_ctx ctx;
 	chunk_t nir;
@@ -210,11 +214,13 @@ static PK11SymKey *skeyid_digisig(const chunk_t ni,
 	return skeyid;
 }
 
-static PK11SymKey *skeyid_preshared(const chunk_t pss,
-				    const chunk_t ni,
-				    const chunk_t nr,
-				    PK11SymKey *shared,
-				    const struct hash_desc *hasher)
+/*
+ * SKEYID = prf(pre-shared-key, Ni_b | Nr_b)
+ */
+PK11SymKey *ikev1_pre_shared_key_skeyid(const struct hash_desc *hasher,
+					chunk_t pss,
+					chunk_t ni, chunk_t nr,
+					PK11SymKey *shared)
 {
 	struct hmac_ctx ctx;
 
@@ -353,12 +359,13 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 			chunk_t pss;
 
 			setchunk_from_wire(pss, skq, &skq->pss);
-			skeyid = skeyid_preshared(pss, ni, nr, shared, hasher);
+			skeyid = ikev1_pre_shared_key_skeyid(hasher, pss,
+							     ni, nr, shared);
 		}
 		break;
 
 	case OAKLEY_RSA_SIG:
-		skeyid = skeyid_digisig(ni, nr, shared, hasher);
+		skeyid = ikev1_digital_signature_skeyid(hasher, ni, nr, shared);
 		break;
 
 	/* Not implemented */

@@ -20,6 +20,42 @@
 #ifndef ikev1_prf_h
 #define ikev1_prf_h
 
+/*
+ * IKE SA SKEYID for authentication
+ */
+PK11SymKey *ikev1_digital_signature_skeyid(const struct hash_desc *hasher,
+					   const chunk_t Ni_b, const chunk_t Nr_b,
+					   PK11SymKey *dh_secret);
+
+PK11SymKey *ikev1_pre_shared_key_skeyid(const struct hash_desc *hasher,
+					chunk_t pre_shared_key,
+					chunk_t Ni_b, chunk_t Nr_b,
+					PK11SymKey *scratch);
+
+/*
+ * Authenticated keying material.
+ *
+ *  Perhaps this should just return a struct?
+ */
+
+PK11SymKey *ikev1_skeyid_d(const struct hash_desc *hasher,
+			   PK11SymKey *skeyid,
+			   PK11SymKey *dh_secret,
+			   chunk_t cky_i, chunk_t cky_r);
+
+PK11SymKey *ikev1_skeyid_a(const struct hash_desc *hasher,
+			   PK11SymKey *skeyid,
+			   PK11SymKey *skeyid_d, PK11SymKey *dh_secret,
+			   chunk_t cky_i, chunk_t cky_r);
+
+PK11SymKey *ikev1_skeyid_e(const struct hash_desc *hasher,
+			   PK11SymKey *skeyid,
+			   PK11SymKey *skeyid_a, PK11SymKey *dh_secret,
+			   chunk_t cky_i, chunk_t cky_r);
+
+/*
+ * Old way.
+ */
 struct pluto_crypto_req;
 
 void calc_dh_iv(struct pluto_crypto_req *r);
