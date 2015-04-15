@@ -13,7 +13,6 @@ extern enum_names pluto_cryptoimportance_names;
 extern enum_names stfstatus_name;
 extern const char *const debug_bit_names[];
 extern enum_names state_names;
-extern const char *const state_story[];
 extern enum_names state_stories;
 extern enum_names connection_kind_names;
 extern enum_names routing_story;
