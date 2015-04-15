@@ -176,5 +176,3 @@ endif
 	@rm -f *.o
 
 checkprograms:
-
-LIBRESWANSRCDIRREL?=../..
