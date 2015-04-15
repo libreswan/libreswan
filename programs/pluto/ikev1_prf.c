@@ -312,6 +312,397 @@ PK11SymKey *ikev1_pre_shared_key_skeyid(const struct hash_desc *hasher,
 	return skeyid;
 }
 
+/*
+ * SKEYID_d = prf(SKEYID, g^xy | CKY-I | CKY-R | 0)
+ */
+PK11SymKey *ikev1_skeyid_d(const struct hash_desc *hasher,
+			   PK11SymKey *skeyid,
+			   PK11SymKey *shared,
+			   chunk_t icookie, chunk_t rcookie)
+{
+	chunk_t hmac_opad, hmac_ipad, hmac_pad, hmac_zerobyte;
+	CK_OBJECT_HANDLE keyhandle;
+	SECItem param;
+
+	hmac_opad = hmac_pads(HMAC_OPAD, hasher->hash_block_size);
+	hmac_ipad = hmac_pads(HMAC_IPAD, hasher->hash_block_size);
+	hmac_pad  = hmac_pads(0x00,
+			      hasher->hash_block_size -
+			      hasher->hash_digest_len);
+	hmac_zerobyte = hmac_pads(0x00, 1);
+
+	DBG(DBG_CRYPT, DBG_log("NSS: Started SKEYID_d computation"));
+
+	PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(skeyid,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    hmac_pad,
+						    CKM_XOR_BASE_AND_DATA,
+						    CKA_DERIVE,
+						    hasher->hash_block_size);
+	passert(tkey1 != NULL);
+
+	PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(tkey1,
+						    CKM_XOR_BASE_AND_DATA,
+						    hmac_ipad,
+						    CKM_CONCATENATE_BASE_AND_KEY,
+						    CKA_DERIVE,
+						    0);
+
+	passert(tkey2 != NULL);
+
+	keyhandle = PK11_GetSymKeyHandle(shared);
+	param.data = (unsigned char *) &keyhandle;
+	param.len = sizeof(keyhandle);
+	DBG(DBG_CRYPT,
+	    DBG_log("NSS: dh shared param len=%d", param.len));
+
+	PK11SymKey *tkey3 = PK11_Derive_lsw(tkey2,
+					    CKM_CONCATENATE_BASE_AND_KEY,
+					    &param,
+					    CKM_CONCATENATE_BASE_AND_DATA,
+					    CKA_DERIVE,
+					    0);
+	passert(tkey3 != NULL);
+
+	PK11SymKey *tkey4 = pk11_derive_wrapper_lsw(tkey3,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    icookie,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    CKA_DERIVE,
+						    0);
+	passert(tkey4 != NULL);
+
+	PK11SymKey *tkey5 = pk11_derive_wrapper_lsw(tkey4,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    rcookie,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    CKA_DERIVE,
+						    0);
+
+	passert(tkey5 != NULL);
+
+	PK11SymKey *tkey6 = pk11_derive_wrapper_lsw(tkey5,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    hmac_zerobyte,
+						    nss_key_derivation_mech(hasher),
+						    CKA_DERIVE,
+						    0);
+
+	passert(tkey6 != NULL);
+
+	PK11SymKey *tkey7 = PK11_Derive_lsw(tkey6,
+					    nss_key_derivation_mech(hasher),
+					    NULL,
+					    CKM_CONCATENATE_BASE_AND_DATA,
+					    CKA_DERIVE,
+					    0);
+	passert(tkey7 != NULL);
+
+	PK11SymKey *tkey8 = pk11_derive_wrapper_lsw(tkey1,
+						    CKM_XOR_BASE_AND_DATA,
+						    hmac_opad,
+						    CKM_CONCATENATE_BASE_AND_KEY,
+						    CKA_DERIVE,
+						    0);
+	passert(tkey8 != NULL);
+
+	keyhandle = PK11_GetSymKeyHandle(tkey7);
+	param.data = (unsigned char*)&keyhandle;
+	param.len = sizeof(keyhandle);
+
+	PK11SymKey *tkey9 = PK11_Derive_lsw(tkey8,
+					    CKM_CONCATENATE_BASE_AND_KEY,
+					    &param,
+					    nss_key_derivation_mech(hasher),
+					    CKA_DERIVE,
+					    0);
+	passert(tkey9 != NULL);
+
+	PK11SymKey *skeyid_d = PK11_Derive_lsw(tkey9,
+					       nss_key_derivation_mech(hasher),
+					       NULL,
+					       CKM_CONCATENATE_BASE_AND_DATA,
+					       CKA_DERIVE,
+					       0);
+	passert(skeyid_d != NULL);
+
+	PK11_FreeSymKey(tkey1);
+	PK11_FreeSymKey(tkey2);
+	PK11_FreeSymKey(tkey3);
+	PK11_FreeSymKey(tkey4);
+	PK11_FreeSymKey(tkey5);
+	PK11_FreeSymKey(tkey6);
+	PK11_FreeSymKey(tkey7);
+	PK11_FreeSymKey(tkey8);
+	PK11_FreeSymKey(tkey9);
+
+	freeanychunk(hmac_opad);
+	freeanychunk(hmac_ipad);
+	freeanychunk(hmac_pad);
+	freeanychunk(hmac_zerobyte);
+	
+	return skeyid_d;
+}
+
+/*
+ * SKEYID_a = prf(SKEYID, SKEYID_d | g^xy | CKY-I | CKY-R | 1)
+ */
+PK11SymKey *ikev1_skeyid_a(const struct hash_desc *hasher,
+			   PK11SymKey *skeyid,
+			   PK11SymKey *skeyid_d, PK11SymKey *shared,
+			   chunk_t icookie, chunk_t rcookie)
+{
+
+	chunk_t hmac_opad, hmac_ipad, hmac_pad,
+		hmac_val1;
+	CK_OBJECT_HANDLE keyhandle;
+	SECItem param;
+
+	hmac_opad = hmac_pads(HMAC_OPAD, hasher->hash_block_size);
+	hmac_ipad = hmac_pads(HMAC_IPAD, hasher->hash_block_size);
+	hmac_pad  = hmac_pads(0x00,
+			      hasher->hash_block_size -
+			      hasher->hash_digest_len);
+	hmac_val1 = hmac_pads(0x01, 1);
+
+	DBG(DBG_CRYPT, DBG_log("NSS: Started SKEYID_a computation"));
+
+	/*Deriving SKEYID_a = hmac_xxx(SKEYID, SKEYID_d | g^xy | CKY-I | CKY-R | 1)*/
+	keyhandle = PK11_GetSymKeyHandle(skeyid_d);
+	param.data = (unsigned char*)&keyhandle;
+	param.len = sizeof(keyhandle);
+
+	PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(skeyid,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    hmac_pad,
+						    CKM_XOR_BASE_AND_DATA,
+						    CKA_DERIVE,
+						    hasher->hash_block_size);
+	passert(tkey1 != NULL);
+
+	PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(tkey1,
+						    CKM_XOR_BASE_AND_DATA,
+						    hmac_ipad,
+						    CKM_CONCATENATE_BASE_AND_KEY,
+						    CKA_DERIVE,
+						    0);
+	passert(tkey2 != NULL);
+
+	PK11SymKey *tkey8 = pk11_derive_wrapper_lsw(tkey1,
+						    CKM_XOR_BASE_AND_DATA,
+						    hmac_opad,
+						    CKM_CONCATENATE_BASE_AND_KEY,
+						    CKA_DERIVE,
+						    0);
+	passert(tkey8 != NULL);
+
+	PK11SymKey *tkey10 = PK11_Derive_lsw(tkey2,
+					     CKM_CONCATENATE_BASE_AND_KEY,
+					     &param,
+					     CKM_CONCATENATE_BASE_AND_KEY,
+					     CKA_DERIVE,
+					     0);
+	passert(tkey10 != NULL);
+
+	keyhandle = PK11_GetSymKeyHandle(shared);
+	param.data = (unsigned char*)&keyhandle;
+	param.len = sizeof(keyhandle);
+
+	PK11SymKey *tkey11 = PK11_Derive_lsw(tkey10,
+					     CKM_CONCATENATE_BASE_AND_KEY,
+					     &param,
+					     CKM_CONCATENATE_BASE_AND_DATA,
+					     CKA_DERIVE,
+					     0);
+	passert(tkey11 != NULL);
+
+	PK11SymKey *tkey12 = pk11_derive_wrapper_lsw(tkey11,
+						     CKM_CONCATENATE_BASE_AND_DATA,
+						     icookie, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+						     0);
+	passert(tkey12 != NULL);
+
+	PK11SymKey *tkey13 = pk11_derive_wrapper_lsw(tkey12,
+						     CKM_CONCATENATE_BASE_AND_DATA,
+						     rcookie,
+						     CKM_CONCATENATE_BASE_AND_DATA,
+						     CKA_DERIVE,
+						     0);
+	passert(tkey13 != NULL);
+
+	PK11SymKey *tkey14 = pk11_derive_wrapper_lsw(tkey13,
+						     CKM_CONCATENATE_BASE_AND_DATA,
+						     hmac_val1,
+						     nss_key_derivation_mech(hasher),
+						     CKA_DERIVE,
+						     0);
+	passert(tkey14 != NULL);
+
+	PK11SymKey *tkey15 = PK11_Derive_lsw(tkey14,
+					     nss_key_derivation_mech(hasher),
+					     NULL,
+					     CKM_CONCATENATE_BASE_AND_DATA,
+					     CKA_DERIVE,
+					     0);
+	passert(tkey15 != NULL);
+
+	keyhandle = PK11_GetSymKeyHandle(tkey15);
+	param.data = (unsigned char*)&keyhandle;
+	param.len = sizeof(keyhandle);
+
+	PK11SymKey *tkey16 = PK11_Derive_lsw(tkey8,
+					     CKM_CONCATENATE_BASE_AND_KEY, &param,
+					     nss_key_derivation_mech(hasher),
+					     CKA_DERIVE,
+					     0);
+	passert(tkey16 != NULL);
+
+	PK11SymKey *skeyid_a = PK11_Derive_lsw(tkey16,
+					       nss_key_derivation_mech(hasher),
+					       NULL,
+					       CKM_CONCATENATE_BASE_AND_DATA,
+					       CKA_DERIVE,
+					       0);
+	passert(skeyid_a != NULL);
+	
+	PK11_FreeSymKey(tkey1);
+	PK11_FreeSymKey(tkey2);
+	PK11_FreeSymKey(tkey8);
+	PK11_FreeSymKey(tkey10);
+	PK11_FreeSymKey(tkey11);
+	PK11_FreeSymKey(tkey12);
+	PK11_FreeSymKey(tkey13);
+	PK11_FreeSymKey(tkey14);
+	PK11_FreeSymKey(tkey15);
+	PK11_FreeSymKey(tkey16);
+
+	freeanychunk(hmac_opad);
+	freeanychunk(hmac_ipad);
+	freeanychunk(hmac_pad);
+	freeanychunk(hmac_val1);
+
+	return skeyid_a;
+}
+
+/*
+ * SKEYID_e = prf(SKEYID, SKEYID_a | g^xy | CKY-I | CKY-R | 2)
+ */
+PK11SymKey *ikev1_skeyid_e(const struct hash_desc *hasher,
+			   PK11SymKey *skeyid,
+			   PK11SymKey *skeyid_a, PK11SymKey *shared,
+			   chunk_t icookie, chunk_t rcookie)
+{
+
+	chunk_t hmac_opad, hmac_ipad, hmac_pad, hmac_val2;
+	CK_OBJECT_HANDLE keyhandle;
+	SECItem param;
+
+	hmac_opad = hmac_pads(HMAC_OPAD, hasher->hash_block_size);
+	hmac_ipad = hmac_pads(HMAC_IPAD, hasher->hash_block_size);
+	hmac_pad  = hmac_pads(0x00,
+			      hasher->hash_block_size -
+			      hasher->hash_digest_len);
+	hmac_val2 = hmac_pads(0x02, 1);
+
+	DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
+
+	keyhandle = PK11_GetSymKeyHandle(skeyid_a);
+	param.data = (unsigned char*)&keyhandle;
+	param.len = sizeof(keyhandle);
+
+	PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(skeyid,
+						    CKM_CONCATENATE_BASE_AND_DATA,
+						    hmac_pad,
+						    CKM_XOR_BASE_AND_DATA,
+						    CKA_DERIVE,
+						    hasher->hash_block_size);
+	passert(tkey1 != NULL);
+
+	PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(tkey1,
+						    CKM_XOR_BASE_AND_DATA,
+						    hmac_ipad,
+						    CKM_CONCATENATE_BASE_AND_KEY,
+						    CKA_DERIVE,
+						    0);
+	passert(tkey2 != NULL);
+
+	PK11SymKey *tkey17 = PK11_Derive_lsw(tkey2,
+					     CKM_CONCATENATE_BASE_AND_KEY, &param, CKM_CONCATENATE_BASE_AND_KEY, CKA_DERIVE,
+					     0);
+	passert(tkey17 != NULL);
+
+	keyhandle = PK11_GetSymKeyHandle(shared);
+	param.data = (unsigned char*)&keyhandle;
+	param.len = sizeof(keyhandle);
+
+	PK11SymKey *tkey18 = PK11_Derive_lsw(tkey17,
+					     CKM_CONCATENATE_BASE_AND_KEY, &param, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+					     0);
+	passert(tkey18 != NULL);
+
+	PK11SymKey *tkey19 = pk11_derive_wrapper_lsw(tkey18,
+						     CKM_CONCATENATE_BASE_AND_DATA,
+						     icookie, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+						     0);
+	passert(tkey19 != NULL);
+
+	PK11SymKey *tkey20 = pk11_derive_wrapper_lsw(tkey19,
+						     CKM_CONCATENATE_BASE_AND_DATA,
+						     rcookie, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+						     0);
+	passert(tkey20 != NULL);
+
+	PK11SymKey *tkey21 = pk11_derive_wrapper_lsw(tkey20,
+						     CKM_CONCATENATE_BASE_AND_DATA,
+						     hmac_val2,
+						     nss_key_derivation_mech(
+							     hasher), CKA_DERIVE,
+						     0);
+	passert(tkey21 != NULL);
+
+	PK11SymKey *tkey22 = PK11_Derive_lsw(tkey21, nss_key_derivation_mech(
+						     hasher), NULL, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
+					     0);
+	passert(tkey22 != NULL);
+
+	keyhandle = PK11_GetSymKeyHandle(tkey22);
+	param.data = (unsigned char*)&keyhandle;
+	param.len = sizeof(keyhandle);
+
+	PK11SymKey *tkey8 = pk11_derive_wrapper_lsw(tkey1,
+						    CKM_XOR_BASE_AND_DATA,
+						    hmac_opad,
+						    CKM_CONCATENATE_BASE_AND_KEY,
+						    CKA_DERIVE,
+						    0);
+	passert(tkey8 != NULL);
+
+	PK11SymKey *tkey23 = PK11_Derive_lsw(tkey8,
+					     CKM_CONCATENATE_BASE_AND_KEY, &param,
+					     nss_key_derivation_mech(
+						     hasher), CKA_DERIVE,
+					     0);
+	passert(tkey23 != NULL);
+
+	PK11_FreeSymKey(tkey1);
+	PK11_FreeSymKey(tkey2);
+	PK11_FreeSymKey(tkey8);
+	PK11_FreeSymKey(tkey17);
+	PK11_FreeSymKey(tkey18);
+	PK11_FreeSymKey(tkey19);
+	PK11_FreeSymKey(tkey20);
+	PK11_FreeSymKey(tkey21);
+	PK11_FreeSymKey(tkey22);
+	PK11_FreeSymKey(tkey23);
+
+	freeanychunk(hmac_opad);
+	freeanychunk(hmac_ipad);
+	freeanychunk(hmac_pad);
+	freeanychunk(hmac_val2);
+
+	return tkey23;
+}
+
 /* Generate the SKEYID_* and new IV
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
@@ -336,12 +727,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 	chunk_t gr;
 	chunk_t icookie;
 	chunk_t rcookie;
-	PK11SymKey
-		*skeyid,
-		*skeyid_d,
-		*skeyid_a,
-		*skeyid_e,
-		*enc_key;
 	const struct encrypt_desc *encrypter = skq->encrypter;
 
 	/* this doesn't allocate any memory */
@@ -353,6 +738,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 	setchunk_from_wire(rcookie, skq, &skq->rcookie);
 
 	/* Generate the SKEYID */
+	PK11SymKey *skeyid;
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
 		{
@@ -380,6 +766,13 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 	}
 
 	/* generate SKEYID_* from SKEYID */
+	PK11SymKey *skeyid_d = ikev1_skeyid_d(hasher, skeyid, shared,
+					      icookie, rcookie);
+	PK11SymKey *skeyid_a = ikev1_skeyid_a(hasher, skeyid, skeyid_d,
+					      shared, icookie, rcookie);
+	/* XXX: wrong name */
+	PK11SymKey *tkey23 = ikev1_skeyid_e(hasher, skeyid, skeyid_a,
+					    shared, icookie, rcookie);
 	{
 
 		chunk_t hmac_opad, hmac_ipad, hmac_pad, hmac_zerobyte,
@@ -398,232 +791,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 		DBG(DBG_CRYPT, DBG_log("NSS: Started key computation"));
 
-		/*Deriving SKEYID_d = hmac_xxx(SKEYID, g^xy | CKY-I | CKY-R | 0) */
-		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(skeyid,
-							    CKM_CONCATENATE_BASE_AND_DATA,
-							    hmac_pad,
-							    CKM_XOR_BASE_AND_DATA,
-							    CKA_DERIVE,
-							    hasher->hash_block_size);
-
-		passert(tkey1 != NULL);
-
-		PK11SymKey *tkey2 = pk11_derive_wrapper_lsw(tkey1,
-							    CKM_XOR_BASE_AND_DATA,
-							    hmac_ipad,
-							    CKM_CONCATENATE_BASE_AND_KEY,
-							    CKA_DERIVE,
-							    0);
-
-		passert(tkey2 != NULL);
-
-		keyhandle = PK11_GetSymKeyHandle(shared);
-		param.data = (unsigned char *) &keyhandle;
-		param.len = sizeof(keyhandle);
-		DBG(DBG_CRYPT,
-		    DBG_log("NSS: dh shared param len=%d", param.len));
-
-		PK11SymKey *tkey3 = PK11_Derive_lsw(tkey2,
-						    CKM_CONCATENATE_BASE_AND_KEY,
-						    &param,
-						    CKM_CONCATENATE_BASE_AND_DATA,
-						    CKA_DERIVE,
-						    0);
-		passert(tkey3 != NULL);
-
-		PK11SymKey *tkey4 = pk11_derive_wrapper_lsw(tkey3,
-							    CKM_CONCATENATE_BASE_AND_DATA,
-							    icookie,
-							    CKM_CONCATENATE_BASE_AND_DATA,
-							    CKA_DERIVE,
-							    0);
-		passert(tkey4 != NULL);
-
-		PK11SymKey *tkey5 = pk11_derive_wrapper_lsw(tkey4,
-							    CKM_CONCATENATE_BASE_AND_DATA,
-							    rcookie,
-							    CKM_CONCATENATE_BASE_AND_DATA,
-							    CKA_DERIVE,
-							    0);
-
-		passert(tkey5 != NULL);
-
-		PK11SymKey *tkey6 = pk11_derive_wrapper_lsw(tkey5,
-							    CKM_CONCATENATE_BASE_AND_DATA,
-							    hmac_zerobyte,
-							    nss_key_derivation_mech(hasher),
-							    CKA_DERIVE,
-							    0);
-
-		passert(tkey6 != NULL);
-
-		PK11SymKey *tkey7 = PK11_Derive_lsw(tkey6,
-						    nss_key_derivation_mech(hasher),
-						    NULL,
-						    CKM_CONCATENATE_BASE_AND_DATA,
-						    CKA_DERIVE,
-						    0);
-		passert(tkey7 != NULL);
-
-		PK11SymKey *tkey8 = pk11_derive_wrapper_lsw(tkey1,
-							    CKM_XOR_BASE_AND_DATA,
-							    hmac_opad,
-							    CKM_CONCATENATE_BASE_AND_KEY,
-							    CKA_DERIVE,
-							    0);
-		passert(tkey8 != NULL);
-
-		keyhandle = PK11_GetSymKeyHandle(tkey7);
-		param.data = (unsigned char*)&keyhandle;
-		param.len = sizeof(keyhandle);
-
-		PK11SymKey *tkey9 = PK11_Derive_lsw(tkey8,
-						    CKM_CONCATENATE_BASE_AND_KEY,
-						    &param,
-						    nss_key_derivation_mech(hasher),
-						    CKA_DERIVE,
-						    0);
-		passert(tkey9 != NULL);
-
-		skeyid_d = PK11_Derive_lsw(tkey9,
-					   nss_key_derivation_mech(hasher),
-					   NULL,
-					   CKM_CONCATENATE_BASE_AND_DATA,
-					   CKA_DERIVE,
-					   0);
-		passert(skeyid_d != NULL);
-		/*****End of SKEYID_d derivation***************************************/
-
-		/*Deriving SKEYID_a = hmac_xxx(SKEYID, SKEYID_d | g^xy | CKY-I | CKY-R | 1)*/
-		keyhandle = PK11_GetSymKeyHandle(skeyid_d);
-		param.data = (unsigned char*)&keyhandle;
-		param.len = sizeof(keyhandle);
-
-		PK11SymKey *tkey10 = PK11_Derive_lsw(tkey2,
-						     CKM_CONCATENATE_BASE_AND_KEY,
-						     &param,
-						     CKM_CONCATENATE_BASE_AND_KEY,
-						     CKA_DERIVE,
-						     0);
-		passert(tkey10 != NULL);
-
-		keyhandle = PK11_GetSymKeyHandle(shared);
-		param.data = (unsigned char*)&keyhandle;
-		param.len = sizeof(keyhandle);
-
-		PK11SymKey *tkey11 = PK11_Derive_lsw(tkey10,
-						     CKM_CONCATENATE_BASE_AND_KEY,
-						     &param,
-						     CKM_CONCATENATE_BASE_AND_DATA,
-						     CKA_DERIVE,
-						     0);
-		passert(tkey11 != NULL);
-
-		PK11SymKey *tkey12 = pk11_derive_wrapper_lsw(tkey11,
-							     CKM_CONCATENATE_BASE_AND_DATA,
-							     icookie, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-							     0);
-		passert(tkey12 != NULL);
-
-		PK11SymKey *tkey13 = pk11_derive_wrapper_lsw(tkey12,
-							     CKM_CONCATENATE_BASE_AND_DATA,
-							     rcookie,
-							     CKM_CONCATENATE_BASE_AND_DATA,
-							     CKA_DERIVE,
-							     0);
-		passert(tkey13 != NULL);
-
-		PK11SymKey *tkey14 = pk11_derive_wrapper_lsw(tkey13,
-							     CKM_CONCATENATE_BASE_AND_DATA,
-							     hmac_val1,
-							     nss_key_derivation_mech(hasher),
-							     CKA_DERIVE,
-							     0);
-		passert(tkey14 != NULL);
-
-		PK11SymKey *tkey15 = PK11_Derive_lsw(tkey14,
-						     nss_key_derivation_mech(hasher),
-						     NULL,
-						     CKM_CONCATENATE_BASE_AND_DATA,
-						     CKA_DERIVE,
-						     0);
-		passert(tkey15 != NULL);
-
-		keyhandle = PK11_GetSymKeyHandle(tkey15);
-		param.data = (unsigned char*)&keyhandle;
-		param.len = sizeof(keyhandle);
-
-		PK11SymKey *tkey16 = PK11_Derive_lsw(tkey8,
-						     CKM_CONCATENATE_BASE_AND_KEY, &param,
-						     nss_key_derivation_mech(hasher),
-						     CKA_DERIVE,
-						     0);
-		passert(tkey16 != NULL);
-
-		skeyid_a = PK11_Derive_lsw(tkey16,
-					   nss_key_derivation_mech(hasher),
-					   NULL,
-					   CKM_CONCATENATE_BASE_AND_DATA,
-					   CKA_DERIVE,
-					   0);
-		passert(skeyid_a != NULL);
-		/*****End of SKEYID_a derivation***************************************/
-
-		/*Deriving SKEYID_e = prf(SKEYID, SKEYID_a | g^xy | CKY-I | CKY-R | 2)*/
-		keyhandle = PK11_GetSymKeyHandle(skeyid_a);
-		param.data = (unsigned char*)&keyhandle;
-		param.len = sizeof(keyhandle);
-
-		PK11SymKey *tkey17 = PK11_Derive_lsw(tkey2,
-						     CKM_CONCATENATE_BASE_AND_KEY, &param, CKM_CONCATENATE_BASE_AND_KEY, CKA_DERIVE,
-						     0);
-		passert(tkey17 != NULL);
-
-		keyhandle = PK11_GetSymKeyHandle(shared);
-		param.data = (unsigned char*)&keyhandle;
-		param.len = sizeof(keyhandle);
-
-		PK11SymKey *tkey18 = PK11_Derive_lsw(tkey17,
-						     CKM_CONCATENATE_BASE_AND_KEY, &param, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						     0);
-		passert(tkey18 != NULL);
-
-		PK11SymKey *tkey19 = pk11_derive_wrapper_lsw(tkey18,
-							     CKM_CONCATENATE_BASE_AND_DATA,
-							     icookie, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-							     0);
-		passert(tkey19 != NULL);
-
-		PK11SymKey *tkey20 = pk11_derive_wrapper_lsw(tkey19,
-							     CKM_CONCATENATE_BASE_AND_DATA,
-							     rcookie, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-							     0);
-		passert(tkey20 != NULL);
-
-		PK11SymKey *tkey21 = pk11_derive_wrapper_lsw(tkey20,
-							     CKM_CONCATENATE_BASE_AND_DATA,
-							     hmac_val2,
-							     nss_key_derivation_mech(
-								     hasher), CKA_DERIVE,
-							     0);
-		passert(tkey21 != NULL);
-
-		PK11SymKey *tkey22 = PK11_Derive_lsw(tkey21, nss_key_derivation_mech(
-							     hasher), NULL, CKM_CONCATENATE_BASE_AND_DATA, CKA_DERIVE,
-						     0);
-		passert(tkey22 != NULL);
-
-		keyhandle = PK11_GetSymKeyHandle(tkey22);
-		param.data = (unsigned char*)&keyhandle;
-		param.len = sizeof(keyhandle);
-
-		PK11SymKey *tkey23 = PK11_Derive_lsw(tkey8,
-						     CKM_CONCATENATE_BASE_AND_KEY, &param,
-						     nss_key_derivation_mech(
-							     hasher), CKA_DERIVE,
-						     0);
-		passert(tkey23 != NULL);
-
 		DBG(DBG_CRYPT, DBG_log("NSS: enc keysize=%d", (int)keysize));
 		/* Deriving encryption key from SKEYID_e */
 		/* Oakley Keying Material
@@ -636,6 +803,8 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		param1.data = (unsigned char*)&bitstart;
 		param1.len = sizeof(bitstart);
 
+		PK11SymKey *skeyid_e;
+		PK11SymKey *enc_key;
 		if (keysize <= hasher->hash_digest_len) {
 			skeyid_e = PK11_Derive_lsw(tkey23,
 						   nss_key_derivation_mech(hasher),
@@ -859,28 +1028,6 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 
 
 		/*****Freeing tmp keys***************************************/
-		PK11_FreeSymKey(tkey1);
-		PK11_FreeSymKey(tkey2);
-		PK11_FreeSymKey(tkey3);
-		PK11_FreeSymKey(tkey4);
-		PK11_FreeSymKey(tkey5);
-		PK11_FreeSymKey(tkey6);
-		PK11_FreeSymKey(tkey7);
-		PK11_FreeSymKey(tkey8);
-		PK11_FreeSymKey(tkey9);
-		PK11_FreeSymKey(tkey10);
-		PK11_FreeSymKey(tkey11);
-		PK11_FreeSymKey(tkey12);
-		PK11_FreeSymKey(tkey13);
-		PK11_FreeSymKey(tkey14);
-		PK11_FreeSymKey(tkey15);
-		PK11_FreeSymKey(tkey16);
-		PK11_FreeSymKey(tkey17);
-		PK11_FreeSymKey(tkey18);
-		PK11_FreeSymKey(tkey19);
-		PK11_FreeSymKey(tkey20);
-		PK11_FreeSymKey(tkey21);
-		PK11_FreeSymKey(tkey22);
 		PK11_FreeSymKey(tkey23);
 
 		DBG(DBG_CRYPT, DBG_log("NSS: Freed symkeys 1-23"));
