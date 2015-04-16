@@ -38,55 +38,12 @@
 PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 		      PK11SymKey *raw_key, PK11SymKey *seed)
 {
-	PK11SymKey *key;
-	/* too big, rehash */
-	if (PK11_GetKeyLength(raw_key) > hasher->hash_block_size) {
-		/* when too long hash, then pad */
-		key = hash_symkey(hasher, raw_key);
-	} else {
-		/* need to be careful - don't free raw_key */
-		key = raw_key;
-	}
-	/* too small, pad */
-	if (PK11_GetKeyLength(key) < hasher->hash_block_size) {
-		/* pad it to block_size. */
-		chunk_t hmac_pad_prf = hmac_pads(0x00, (hasher->hash_block_size -
-							PK11_GetKeyLength(raw_key)));
-		PK11SymKey *tmp = concat_symkey_chunk(hasher, key, hmac_pad_prf);
-		freeanychunk(hmac_pad_prf);
-		if (key != raw_key) {
-			PK11_FreeSymKey(key);
-		}
-		key = tmp;
-	}
-	passert(key != NULL);
-
-	/* Input to inner hash: (key^IPAD)|seed */
-	chunk_t hmac_ipad = hmac_pads(HMAC_IPAD, hasher->hash_block_size);
-	PK11SymKey *inner = xor_symkey_chunk(key, hmac_ipad);
-	freeanychunk(hmac_ipad);
-	append_symkey_symkey(hasher, &inner, seed);
-
-	/* run that through hasher */
-	PK11SymKey *hashed_inner = hash_symkey(hasher, inner);
-	PK11_FreeSymKey(inner);
-
-	/* Input to outer hash: (key^OPAD)|hashed_inner.  */
-	chunk_t hmac_opad = hmac_pads(HMAC_OPAD, hasher->hash_block_size);
-	PK11SymKey *outer = xor_symkey_chunk(key, hmac_opad);
-	freeanychunk(hmac_opad);
-	append_symkey_symkey(hasher, &outer, hashed_inner);
-	PK11_FreeSymKey(hashed_inner);
-
-	/* Finally hash that */
-	PK11SymKey *hashed_outer = hash_symkey(hasher, outer);
-	PK11_FreeSymKey(outer);
-
-	if (key != raw_key) {
-		PK11_FreeSymKey(key);
-	}
-
-	return hashed_outer;
+	/* Here raw_key is "scratch" */
+	struct crypt_prf *prf = crypt_prf_init(hasher, raw_key);
+	crypt_prf_init_symkey(prf, raw_key);
+	crypt_prf_update(prf);
+	crypt_prf_update_symkey(prf, seed);
+	return crypt_prf_final(prf);
 }
 
 struct crypt_prf {
@@ -106,7 +63,7 @@ struct crypt_prf {
 struct crypt_prf *crypt_prf_init(const struct hash_desc *hasher,
 				 PK11SymKey *scratch)
 {
-	struct crypt_prf *prf = alloc_bytes(sizeof(crypt_prf), "crypt_prf");
+	struct crypt_prf *prf = alloc_bytes(sizeof(struct crypt_prf), "crypt_prf");
 	prf->hasher = hasher;
 	prf->scratch = scratch;
 	prf->we_own_key = FALSE;
@@ -170,6 +127,8 @@ void crypt_prf_update(struct crypt_prf *prf)
 		freeanychunk(hmac_pad_prf);
 	}
 	passert(prf->key != NULL);
+	DBG(DBG_CRYPT,
+	    dbg_dump_symkey("crypt prf padded key", prf->key));
 
 	/* Start forming the inner hash input: (key^IPAD)|... */
 	passert(prf->inner == NULL);
@@ -198,10 +157,11 @@ void crypt_prf_update_byte(struct crypt_prf *prf,
 
 PK11SymKey *crypt_prf_final(struct crypt_prf *prf)
 {
+	passert(prf->inner != NULL);
 	/* run that through hasher */
 	PK11SymKey *hashed_inner = hash_symkey(prf->hasher, prf->inner);
 	PK11_FreeSymKey(prf->inner);
-	prf->inner = NULL; /* help keep track */
+	prf->inner = NULL; /* help debug */
 
 	/* Input to outer hash: (key^OPAD)|hashed_inner.  */
 	chunk_t hmac_opad = hmac_pads(HMAC_OPAD, prf->hasher->hash_block_size);
@@ -214,8 +174,10 @@ PK11SymKey *crypt_prf_final(struct crypt_prf *prf)
 	PK11SymKey *hashed_outer = hash_symkey(prf->hasher, outer);
 	PK11_FreeSymKey(outer);
 
-	PK11_FreeSymKey(prf->key);
-	prf->key = NULL;
+	if (prf->we_own_key) {
+		PK11_FreeSymKey(prf->key);
+	}
+	prf->key = NULL; /* help debug */
 	pfree(prf);
 
 	return hashed_outer;
