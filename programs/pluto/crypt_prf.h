@@ -26,9 +26,4 @@
 PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 		      PK11SymKey *key, PK11SymKey *seed);
 
-/* Implement PRF+ described in RFC 7296. */
-PK11SymKey *crypt_prfplus(const struct hash_desc *hasher,
-			  PK11SymKey *key, PK11SymKey *seed,
-			  size_t required_keymat);
-
 #endif

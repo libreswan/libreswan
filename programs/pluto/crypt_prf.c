@@ -88,35 +88,3 @@ PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 
 	return hashed_outer;
 }
-
-PK11SymKey *crypt_prfplus(const struct hash_desc *hasher,
-			  PK11SymKey *key, PK11SymKey *seed,
-			  size_t required_keymat)
-{
-	uint8_t count = 1;
-	chunk_t count_chunk;
-	setchunk(count_chunk, &count, sizeof(count));
-
-	/* T1(prfplus) = prf(KEY, SEED|1) */
-	PK11SymKey *prfplus;
-	{
-		PK11SymKey *value = concat_symkey_chunk(hasher, seed, count_chunk);
-		prfplus = crypt_prf(hasher, key, value);
-		PK11_FreeSymKey(value);
-	}
-
-	/* make a copy to keep things easy */
-	PK11SymKey *old_t = key_from_symkey_bytes(prfplus, 0, PK11_GetKeyLength(prfplus));
-	while (PK11_GetKeyLength(prfplus) < required_keymat) {
-		/* Tn = prf(KEY, Tn-1|SEED|n) */
-		PK11SymKey *value = concat_symkey_symkey(hasher, old_t, seed);
-		count++;
-		append_symkey_chunk(hasher, &value, count_chunk);
-		PK11SymKey *new_t = crypt_prf(hasher, key, value);
-		append_symkey_symkey(hasher, &prfplus, new_t);
-		PK11_FreeSymKey(value);
-		PK11_FreeSymKey(old_t);
-		old_t = new_t;
-	} 
-	return prfplus;
-}
