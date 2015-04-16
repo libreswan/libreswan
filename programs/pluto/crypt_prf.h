@@ -22,8 +22,46 @@
 
 #include <pk11pub.h>
 
-/* Implement PRF described in rfc2104. */
+struct hash_desc;
+
+/*
+ * Implement PRF described in rfc2104.
+ */
+
 PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 		      PK11SymKey *key, PK11SymKey *seed);
+
+/*
+ * Primitives implementing PRF described in rfc2104.
+ *
+ * The interface is chunky; but then so are some calls.  Currently
+ * things are not the most efficient.
+ *
+ * prf = crypt_prf_init(hasher)
+ * crypt_prf_init_XXX(prf, key)+
+ * crypt_prf_update(prf)
+ * crypt_prf_update_xxxx(prf, material)+
+ * key = crypt_prf_final(prf)
+ */
+
+struct crypt_prf;
+
+struct crypt_prf *crypt_prf_init(const struct hash_desc *hasher,
+				 PK11SymKey *scratch);
+void crypt_prf_init_symkey(struct crypt_prf *prf, PK11SymKey *key);
+void crypt_prf_init_chunk(struct crypt_prf *prf, chunk_t key);
+#if 0
+void crypt_prf_init_bytes(struct crypt_prf *prf, void *key, size_t sizeof_key);
+#endif
+
+void crypt_prf_update(struct crypt_prf *prf);
+void crypt_prf_update_chunk(struct crypt_prf *prf, chunk_t update);
+void crypt_prf_update_symkey(struct crypt_prf *prf, PK11SymKey *update);
+void crypt_prf_update_byte(struct crypt_prf *prf, uint8_t byte);
+#if 0
+void crypt_prf_update_bytes(struct crypt_prf *prf, void *bytes, size_t count);
+#endif
+
+PK11SymKey *crypt_prf_final(struct crypt_prf *prf);
 
 #endif

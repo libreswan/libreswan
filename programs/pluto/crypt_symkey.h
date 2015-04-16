@@ -38,6 +38,8 @@ PK11SymKey *concat_symkey_symkey(const struct hash_desc *hasher,
 				 PK11SymKey *lhs, PK11SymKey *rhs);
 PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
 				PK11SymKey *lhs, chunk_t rhs);
+PK11SymKey *concat_symkey_byte(const struct hash_desc *hasher,
+			       PK11SymKey *lhs, uint8_t rhs);
 
 /*
  * Append new keying material to an existing key; replace the existing
@@ -49,6 +51,8 @@ void append_symkey_symkey(const struct hash_desc *hasher,
 			  PK11SymKey **lhs, PK11SymKey *rhs);
 void append_symkey_chunk(const struct hash_desc *hasher,
 			 PK11SymKey **lhs, chunk_t rhs);
+void append_symkey_byte(const struct hash_desc *hasher,
+			PK11SymKey **lhs, uint8_t rhs);
 
 /*
  * Extract SIZEOF_CHUNK raw-bytes from a SYMKEY.
