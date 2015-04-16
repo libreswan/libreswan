@@ -119,7 +119,6 @@ bool orient(struct connection *c)
 									c->name, c->interface->ip_dev->id_rname,
 									p->ip_dev->id_rname);
 							}
-							terminate_connection(c->name);
 							c->interface = NULL; /* withdraw orientation */
 							return FALSE;
 						}
