@@ -1,0 +1,12 @@
+basic netkey test but now using auto=route for on-demand
+
+It can be seen that the bare shunt remains active under reqid 0,
+so replace_bare_shunt() seems broken even for the non-OE case.
+
+This test currently fails due to the bare shunt not being replaced:
+
+src 192.0.1.254 dst 192.0.2.254
+        proto esp spi 0xSPISPIXX reqid REQID mode transport
+        replay-window 0
+        sel src 192.0.1.254/32 dst 192.0.2.254/32 proto icmp type 8 code 0 dev eth1
+
