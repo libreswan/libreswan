@@ -62,8 +62,6 @@ static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 	unsigned long delay_cap = deltamillisecs(c->r_timeout); /* ms */
 	u_int8_t x = st->st_retransmit++;	/* ??? odd type */
 
-	libreswan_log("PAUL:increased st->st_retransmit to %d", st->st_retransmit);
-
 	/*
 	 * Very carefully calculate capped exponential backoff.
 	 * The test is expressed as a right shift to avoid overflow.
@@ -76,20 +74,24 @@ static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 			delay_cap >> x < delay_ms) ?
 		delay_cap : delay_ms << x;
 
-	libreswan_log("%s: retransmission; will wait %lums for response",
-			enum_name(&state_names, st->st_state),
-			(unsigned long)delay_ms);
-       if (x > 1 && delay_ms == delay_cap) 
-       {
-               x--;
-               unsigned long delay_p = (x > MAXIMUM_RETRANSMITS_PER_EXCHANGE ||
-                               delay_cap >> x < delay_ms) ?  delay_cap :
-                       delay_ms << x; 
-               if (delay_p == delay_ms) /* previus delay was already caped retrun zero */
-                       delay_ms = 0;
+	if (x > 1 && delay_ms == delay_cap)
+	{
+		/* if delay_ms > c->r_timeout no re-transmit */
+		x--;
+		unsigned long delay_p = (x > MAXIMUM_RETRANSMITS_PER_EXCHANGE ||
+				delay_cap >> x < delay_ms) ?  delay_cap :
+			delay_ms << x;
+		if (delay_p == delay_ms) /* previus delay was already caped retrun zero */
+			delay_ms = 0;
 
-       }
+	}
 
+	if (delay_ms > 0) {
+		whack_log(RC_RETRANSMISSION,
+				"%s: retransmission; will wait %lums for response",
+				enum_name(&state_names, st->st_state),
+				(unsigned long)delay_ms);
+	}
 	return delay_ms;
 }
 
@@ -255,12 +257,12 @@ static void retransmit_v2_msg(struct state *st)
 
 	if (delay_ms != 0) {
 		delay_ms =  retrans_delay(st, delay_ms);
-               if (delay_ms != 0) {
-                       send_ike_msg(st, "EVENT_v2_RETRANSMIT");
-                       event_schedule_ms(EVENT_v2_RETRANSMIT, delay_ms, st);
-                       return;
-               }
-       }
+		if (delay_ms != 0) {
+			send_ike_msg(st, "EVENT_v2_RETRANSMIT");
+			event_schedule_ms(EVENT_v2_RETRANSMIT, delay_ms, st);
+			return;
+		}
+	}
 
 	/*
 	 * check if we've tried rekeying enough times.
@@ -324,30 +326,6 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "next attempt will be IKEv1");
 		}
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
-	}
-
-	/* if OPPO, install pass bare shunt - bare because we will delete state */
-#if 0
-	if (c->policy & POLICY_OPPORTUNISTIC) {
-		if (!replace_bare_shunt(&c->spd.this.host_addr, &c->spd.that.host_addr,
-			c->policy, SPI_PASS /* pass */, TRUE /* no replace */,
-			0 /* any proto */,
-			"oppo-fail - installing %pass")) {
-
-			libreswan_log("PAUL: failed oppo and failed to install %pass bare shunt");
-		} else {
-			libreswan_log("PAUL: failed oppo but installed %pass bare shunt successfully");
-		}
-
-	}
-#endif
-	if (c->policy & POLICY_OPPORTUNISTIC) {
-		if (!assign_hold(c, &c->spd, 0 /*transport_proto*/, &c->spd.this.host_addr, &c->spd.that.host_addr)) {
-			libreswan_log("PAUL: failed oppo and failed to install shunt");
-		} else {
-			libreswan_log("PAUL: failed oppo and installed shunt");
-		}
-		return; // skip delete state
 	}
 
 	delete_state(st);
