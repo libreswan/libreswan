@@ -39,10 +39,10 @@
  *
  * MUST BE THREAD-SAFE
  */
-PK11SymKey *ikev1_digital_signature_skeyid(const struct hash_desc *hasher,
-					   const chunk_t Ni,
-					   const chunk_t Nr,
-					   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */)
+PK11SymKey *ikev1_signature_skeyid(const struct hash_desc *hasher,
+				   const chunk_t Ni,
+				   const chunk_t Nr,
+				   /*const*/ PK11SymKey *dh_secret /* NSS doesn't do const */)
 {
 	/* key = Ni|Nr */
 	PK11SymKey *key = symkey_from_chunk(dh_secret, Ni);
@@ -225,7 +225,7 @@ static void calc_skeyids_iv(struct pcr_skeyid_q *skq,
 		break;
 
 	case OAKLEY_RSA_SIG:
-		skeyid = ikev1_digital_signature_skeyid(hasher, ni, nr, shared);
+		skeyid = ikev1_signature_skeyid(hasher, ni, nr, shared);
 		break;
 
 	/* Not implemented */

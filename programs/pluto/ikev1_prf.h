@@ -22,10 +22,13 @@
 
 /*
  * IKE SA SKEYID for authentication
+ *
+ * Be warned, this is not DSS (even though NIST call it Digital
+ * Signature Algorithm).  It is used by RSA-SIG.
  */
-PK11SymKey *ikev1_digital_signature_skeyid(const struct hash_desc *hasher,
-					   const chunk_t Ni_b, const chunk_t Nr_b,
-					   PK11SymKey *dh_secret);
+PK11SymKey *ikev1_signature_skeyid(const struct hash_desc *hasher,
+				   const chunk_t Ni_b, const chunk_t Nr_b,
+				   PK11SymKey *dh_secret);
 
 PK11SymKey *ikev1_pre_shared_key_skeyid(const struct hash_desc *hasher,
 					chunk_t pre_shared_key,
