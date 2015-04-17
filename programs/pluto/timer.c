@@ -74,10 +74,24 @@ static unsigned long retrans_delay(struct state *st, unsigned long delay_ms)
 			delay_cap >> x < delay_ms) ?
 		delay_cap : delay_ms << x;
 
-	whack_log(RC_RETRANSMISSION,
-			"%s: retransmission; will wait %lums for response",
-			enum_name(&state_names, st->st_state),
-			(unsigned long)delay_ms);
+	if (x > 1 && delay_ms == delay_cap)
+	{
+		/* if delay_ms > c->r_timeout no re-transmit */
+		x--;
+		unsigned long delay_p = (x > MAXIMUM_RETRANSMITS_PER_EXCHANGE ||
+				delay_cap >> x < delay_ms) ?  delay_cap :
+			delay_ms << x;
+		if (delay_p == delay_ms) /* previus delay was already caped retrun zero */
+			delay_ms = 0;
+
+	}
+
+	if (delay_ms > 0) {
+		whack_log(RC_RETRANSMISSION,
+				"%s: retransmission; will wait %lums for response",
+				enum_name(&state_names, st->st_state),
+				(unsigned long)delay_ms);
+	}
 	return delay_ms;
 }
 
@@ -243,9 +257,11 @@ static void retransmit_v2_msg(struct state *st)
 
 	if (delay_ms != 0) {
 		delay_ms =  retrans_delay(st, delay_ms);
-		send_ike_msg(st, "EVENT_v2_RETRANSMIT");
-		event_schedule_ms(EVENT_v2_RETRANSMIT, delay_ms, st);
-		return;
+		if (delay_ms != 0) {
+			send_ike_msg(st, "EVENT_v2_RETRANSMIT");
+			event_schedule_ms(EVENT_v2_RETRANSMIT, delay_ms, st);
+			return;
+		}
 	}
 
 	/*
