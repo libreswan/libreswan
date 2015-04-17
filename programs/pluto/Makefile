@@ -196,7 +196,7 @@ OBJSADNS = adns.o
 OBJSWHACK = whack.o
 OBJSWHACKINIT = whackinit.o
 
-CAVP += cavp_ikev1_psk
+CAVP += cavp_ikev1_psk cavp_ikev1_sig
 
 SHOULDWERESTART=$(wildcard plutomain.c)
 ifeq ($(SHOULDWERESTART),plutomain.c)
@@ -286,9 +286,14 @@ checkprograms:
 
 # Cryptographic Algorithm Validation Program (CAVP)
 # see: http://csrc.nist.gov/groups/STM/cavp/index.html
-DISTSRC += cavp.c cavp_stubs.c cavp_ikev1_psk.c
+DISTSRC += cavp.c cavp_stubs.c
 OBJSCAVP = cavp.o cavp_stubs.o $(filter-out plutomain.o, $(OBJSPLUTO))
+DISTSRC += cavp_ikev1_psk.c
 cavp_ikev1_psk: $(OBJSCAVP) cavp_ikev1_psk.o 
+	$(CC) -o $@ $(OBJSCAVP) $@.o \
+		$(LDFLAGS) $(USERLINK) $(LIBSPLUTO) ${PLUTOMINUSL}
+DISTSRC += cavp_ikev1_sig.c
+cavp_ikev1_sig: $(OBJSCAVP) cavp_ikev1_sig.o 
 	$(CC) -o $@ $(OBJSCAVP) $@.o \
 		$(LDFLAGS) $(USERLINK) $(LIBSPLUTO) ${PLUTOMINUSL}
 
