@@ -59,7 +59,6 @@
 #include "id.h"
 #include "secrets.h"
 #include "keys.h"
-#include "crypt_prf.h"
 #include "crypt_dh.h"
 #include <nss.h>
 #include <pk11pub.h>

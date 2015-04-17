@@ -53,7 +53,6 @@
 #include "ike_alg.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
-#include "crypt_prf.h"
 #include "crypt_symkey.h"
 #include "ikev2_prf.h"
 
