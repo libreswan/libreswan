@@ -196,13 +196,15 @@ OBJSADNS = adns.o
 OBJSWHACK = whack.o
 OBJSWHACKINIT = whackinit.o
 
+CAVP += cavp_ikev1_psk
+
 SHOULDWERESTART=$(wildcard plutomain.c)
 ifeq ($(SHOULDWERESTART),plutomain.c)
 all programs clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/pluto && $(MAKE) $@
 else
-all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) #$(BINNAMEWHACKINIT)
-programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(MANPAGES) #$(BINNAMEWHACKINIT) 
+all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
+programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(MANPAGES) $(CAVP) #$(BINNAMEWHACKINIT) 
 clean:	cleanall
 install: doinstall
 endif
@@ -282,9 +284,17 @@ check:
 
 checkprograms:
 
+# Cryptographic Algorithm Validation Program (CAVP)
+# see: http://csrc.nist.gov/groups/STM/cavp/index.html
+DISTSRC += cavp.c cavp_stubs.c cavp_ikev1_psk.c
+OBJSCAVP = cavp.o cavp_stubs.o $(filter-out plutomain.o, $(OBJSPLUTO))
+cavp_ikev1_psk: $(OBJSCAVP) cavp_ikev1_psk.o 
+	$(CC) -o $@ $(OBJSCAVP) $@.o \
+		$(LDFLAGS) $(USERLINK) $(LIBSPLUTO) ${PLUTOMINUSL}
+
 %.i: %.c
 	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
 
-MK_DEPEND_FILES = $(DIST)
+MK_DEPEND_FILES = $(DISTSRC)
 MK_DEPEND_CFLAGS = $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(DEFINES) $(NSSFLAGS) $(CFLAGS) ${CROSSFLAGS}
 include $(top_srcdir)/mk/depend.mk
