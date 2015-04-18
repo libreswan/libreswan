@@ -27,18 +27,20 @@
 #include "test_buffer.h"
 
 #include "cavp.h"
+#include "cavp_print.h"
+#include "cavp_ikev1.h"
+#include "cavp_ikev2.h"
 
-const char crlf[] = "\r\n";
-
-struct cavp_entry {
-	const char *key;
-	void (*op)(struct cavp_entry *key, const char *value);
-	chunk_t *chunk;
-	PK11SymKey **symkey;
-	int val;
+struct cavp *cavps[] = {
+	&cavp_ikev1_sig,
+	&cavp_ikev1_psk,
+	&cavp_ikev2,
+	NULL
 };
 
-static struct cavp_entry *lookup(struct cavp_entry *entries, const char *key)
+#define BUF_SIZE 2048
+
+static struct cavp_entry *lookup_entry(struct cavp_entry *entries, const char *key)
 {
 	struct cavp_entry *entry;
 	for (entry = entries; entry->op != NULL; entry++) {
@@ -56,6 +58,8 @@ static void error_state(enum what state, enum what what)
 	fprintf(stderr, "bad state %d what %d\n", state, what);
 	exit(1);
 }
+
+static struct cavp *cavp;
 
 static void next_state(enum what what)
 {
@@ -76,6 +80,7 @@ static void next_state(enum what what)
 		case CONFIG:
 			break;
 		case BLANK:
+			cavp->print_config();
 			state = DATA;
 			break;
 		default:
@@ -87,7 +92,7 @@ static void next_state(enum what what)
 		case DATA:
 			break;
 		case BLANK:
-			cavp_run();
+			cavp->run();
 			state = RUN;
 			break;
 		default:
@@ -114,56 +119,28 @@ static void next_state(enum what what)
 	}
 }
 
-static void print_config(struct cavp_entry *key,
-			 const char *value)
-{
-	if (value) {
-		printf("[%s = %s]%s", key->key, value, crlf);
-	} else {
-		printf("[%s]%s", key->key, crlf);
-	}
-}
+struct hash_desc *hasher;
+char hasher_name[BUF_SIZE];
 
-static void hash(struct cavp_entry *entry,
-		 const char *value UNUSED)
+void hash(struct cavp_entry *entry,
+	  const char *value UNUSED)
 {
-	cavp_config.hasher = ike_alg_get_hasher(entry->val);
-	if (cavp_config.hasher != NULL) {
-		printf("[%s]%s", entry->key, crlf);
-	} else {
+	strcpy(hasher_name, entry->key);
+	hasher = ike_alg_get_hasher(entry->value);
+	if (hasher == NULL) {
 		fprintf(stderr, "hasher %s not found\n", entry->key);
 	}
 }
 
-static struct cavp_entry config_entries[] = {
-	{ .key = "SHA-1", .op = hash, .val = OAKLEY_SHA1 },
-	{ .key = "SHA-224", .op = hash, .val = 0 },
-	{ .key = "SHA-256", .op = hash, .val = OAKLEY_SHA2_256 },
-	{ .key = "SHA-384", .op = hash, .val = OAKLEY_SHA2_384 },
-	{ .key = "SHA-512", .op = hash, .val = OAKLEY_SHA2_512 },
-	{ .key = "Ni length", .op = print_config },
-	{ .key = "Nr length", .op = print_config },
-	{ .key = "pre-shared-key length", .op = print_config },
-	{ .key = "g^xy length", .op = print_config },
-	{ .key = NULL }
-};
-
-static void print_data(struct cavp_entry *entry,
-		       const char *value)
-{
-	printf("%s = %s%s", entry->key, value, crlf);
-}
-
-static void chunk(struct cavp_entry *entry,
-		  const char *value)
+void chunk(struct cavp_entry *entry,
+	   const char *value)
 {
 	freeanychunk(*(entry->chunk));
 	*(entry->chunk) = decode_hex_to_chunk(entry->key, value);
-	print_chunk(entry->key, *(entry->chunk), 0);
 }
 
-static void symkey(struct cavp_entry *entry,
-		   const char *value)
+void symkey(struct cavp_entry *entry,
+	    const char *value)
 {
 	if (*(entry->symkey) != NULL) {
 		PK11_FreeSymKey(*(entry->symkey));
@@ -171,34 +148,22 @@ static void symkey(struct cavp_entry *entry,
 	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
 	*(entry->symkey) = chunk_to_key(CKM_DH_PKCS_DERIVE, chunk);
 	freeanychunk(chunk);
-	print_symkey(entry->key, *(entry->symkey), 0);
 }
 
-static void ignore(struct cavp_entry *entry UNUSED,
-		   const char *value UNUSED)
+void number(struct cavp_entry *entry,
+	    const char *value)
 {
-	fprintf(stderr, "'%s' = '%s'%s", entry->key, value, crlf);
+	*(entry->number) = atoi(value);
 }
 
-static struct cavp_entry data_entries[] = {
-	{ .key = "COUNT", .op = print_data },
-	{ .key = "g^xy", .op = symkey, .symkey = &cavp_data.g_xy },
-	{ .key = "Ni", .op = chunk, .chunk = &cavp_data.ni },
-	{ .key = "Nr", .op = chunk, .chunk = &cavp_data.nr },
-	{ .key = "CKY_I", .op = chunk, .chunk = &cavp_data.cky_i },
-	{ .key = "CKY_R", .op = chunk, .chunk = &cavp_data.cky_r },
-	{ .key = "pre-shared-key", .op = chunk, .chunk = &cavp_data.psk },
-	{ .key = "SKEYID", .op = ignore },
-	{ .key = "SKEYID_d", .op = ignore },
-	{ .key = "SKEYID_a", .op = ignore },
-	{ .key = "SKEYID_e", .op = ignore },
-	{ .key = "SKEYID_", .op = ignore },
-	{ .op = NULL }
-};
+void ignore(struct cavp_entry *entry UNUSED,
+	    const char *value UNUSED)
+{
+}
 
 static void cavp_parser()
 {
-	char line[2048];
+	char line[BUF_SIZE];
 	while (TRUE) {
 		if (fgets(line, sizeof(line), stdin) == NULL) {
 			int error = ferror(stdin);
@@ -211,7 +176,7 @@ static void cavp_parser()
 		}
 		/* trim trailing cr/nl. */
 		int last = strlen(line) - 1;
-		while (last >= 0 && strchr(crlf, line[last]) != NULL) {
+		while (last >= 0 && strchr("\r\n", line[last]) != NULL) {
 			last--;
 		}
 		line[last + 1] = '\0';
@@ -222,12 +187,20 @@ static void cavp_parser()
 		if (line[0] == '\0') {
 			next_state(BLANK);
 			/* blank */
-			fputs(line, stdout);
-			fputs(crlf, stdout);
+			print_line(line);
 		} else if (line[0] == '#') {
 			/* # .... comment */
-			fputs(line, stdout);
-			fputs(crlf, stdout);
+			if (cavp == NULL) {
+				struct cavp **cavpp;
+				for (cavpp = cavps; *cavpp != NULL; cavpp++) {
+					if (strstr(line, (*cavpp)->description) != NULL) {
+						cavp = *cavpp;
+						fprintf(stderr, "\ntest: %s (guess)\n\n", cavp->description);
+						break;
+					}
+				}
+			}
+			print_line(line);
 		} else if (lparen != NULL && rparen != NULL) {
 			next_state(CONFIG);
 			/* "[" <key> [ " = " <value> ] "]" */
@@ -240,55 +213,88 @@ static void cavp_parser()
 				value = eq + 2;
 				*(eq - 1) = '\0';
 			}
-			struct cavp_entry *entry = lookup(config_entries, key);
-			if (entry != NULL) {
-				entry->op(entry, value);
-			} else {
-				fprintf(stderr, "['%s' = '%s']%s",
-					key, value, crlf);
+			struct cavp_entry *entry = lookup_entry(cavp->config, key);
+			if (entry == NULL) {
+				fprintf(stderr, "unknown config entry: ['%s' = '%s']\n", key, value);
+				exit(1);
 			}
+			entry->op(entry, value);
 		} else if (eq != NULL) {
 			next_state(DATA);
 			*(eq - 1) = '\0';
 			char *key = line;
 			char *value = eq + 2;
-			struct cavp_entry *entry = lookup(data_entries, key);
-			if (entry != NULL) {
-				entry->op(entry, value);
-			} else {
-				fprintf(stderr, "'%s' = '%s'%s",
-					key, value, crlf);
+			struct cavp_entry *entry = lookup_entry(cavp->data, key);
+			if (entry == NULL) {
+				fprintf(stderr, "unknown data entry: '%s' = '%s'\n", key, value);
+				exit(1);
 			}
+			entry->op(entry, value);
 		} else {
 			fprintf(stderr, "bad line: '%s'\n", line);
 		}
 	}
 }
 
-void print_chunk(const char *prefix, chunk_t chunk, size_t binlen)
+static void usage()
 {
-	printf("%s = ", prefix);
-        size_t len = binlen == 0 ? chunk.len
-                : binlen < chunk.len ? binlen
-                : chunk.len;
-        
-        size_t i = 0;
-        for (i = 0; i < len; i++) {
-                printf("%02x", chunk.ptr[i]);
-        }
-        printf("%s", crlf);
+	fprintf(stderr, "Usage: cavp [ -OPTION ] <test-vector>|-\n");
+	struct cavp **cavpp;
+	for (cavpp = cavps; *cavpp != NULL; cavpp++) {
+		fprintf(stderr, "\t-%s\t%s\n", (*cavpp)->alias, (*cavpp)->description);
+	}
 }
 
-void print_symkey(const char *prefix, PK11SymKey *key, size_t binlen)
+int main(int argc, char *argv[])
 {
-        chunk_t chunk = chunk_from_symkey_bytes(prefix, key, 0,
-                                                PK11_GetKeyLength(key));
-	print_chunk(prefix, chunk, binlen);
-        freeanychunk(chunk);
-}
+	if (argc <= 1) {
+		usage();
+		exit(1);
+	}
+	char **argp = argv + 1;
 
-int main()
-{
+	/* a -XXX option? */
+	if ((*argp)[0] == '-' && (*argp)[1] != '\0') {
+		struct cavp **cavpp;
+		for (cavpp = cavps; *cavpp != NULL; cavpp++) {
+			if (strcmp(argv[1]+1, (*cavpp)->alias) == 0) {
+				cavp = *cavpp;
+				fprintf(stderr, "test: %s\n", cavp->description);
+				break;
+			}
+		}
+		if (cavp == NULL) {
+			fprintf(stderr, "Unknown test %s\n", argv[1]);
+			usage();
+			exit(1);
+		}
+		argp++;
+	} else {
+		fprintf(stderr, "Guessing test type ...\n");
+	}
+
+	if (*argp == NULL) {
+		fprintf(stderr, "missing test file\n");
+		usage();
+		exit(1);
+	}
+	if (strcmp(*argp, "-") == 0) {
+		fprintf(stderr, "Reading from stdin\n");
+	} else {
+		fprintf(stderr, "reading from %s\n", *argp);
+		if (freopen(*argp, "r", stdin) == NULL) {
+			perror("freopen");
+			exit(1);
+		}
+	}
+	argp++;
+
+	if (*argp != NULL) {
+		fprintf(stderr, "unexpected %s", *argp);
+		usage();
+		exit(1);
+	}
+	
 	setbuf(stdout, NULL);
 
 	NSS_NoDB_Init(".");

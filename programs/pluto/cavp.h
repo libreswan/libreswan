@@ -16,20 +16,30 @@
 
 struct hash_desc;
 
-struct cavp_config {
-	struct hash_desc *hasher;
-} cavp_config;
+struct cavp_entry {
+	const char *key;
+	void (*op)(struct cavp_entry *key, const char *value);
+	chunk_t *chunk;
+	PK11SymKey **symkey;
+	int *number;
+	struct hash_desc **hasher;
+	int value;
+};
 
-struct cavp_data {
-	chunk_t psk;
-	chunk_t ni;
-	chunk_t nr;
-	chunk_t cky_i;
-	chunk_t cky_r;
-	PK11SymKey *g_xy;
-} cavp_data;
+struct cavp {
+	const char *alias;
+	const char *description;
+	void (*print_config)(void);
+	void (*run)(void);
+	struct cavp_entry *config;
+	struct cavp_entry *data;
+};
 
-void cavp_run(void);
+extern struct hash_desc *hasher;
+extern char hasher_name[];
+void hash(struct cavp_entry *entry, const char *value);
 
-void print_chunk(const char *prefix, chunk_t chunk, size_t binlen);
-void print_symkey(const char *prefix, PK11SymKey *key, size_t binlen);
+void ignore(struct cavp_entry *entry, const char *value);
+void chunk(struct cavp_entry *entry, const char *value);
+void symkey(struct cavp_entry *entry, const char *value);
+void number(struct cavp_entry *entry, const char *value);
