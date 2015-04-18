@@ -34,14 +34,29 @@ PK11SymKey *crypt_prf(const struct hash_desc *hasher,
 /*
  * Primitives implementing PRF described in rfc2104.
  *
- * The interface is chunky; but then so are some calls.  Currently
- * things are not the most efficient.
+ * This implementation tries to keep all the input and output material
+ * secure inside SymKeys.  To that end, it should be good for
+ * generating keying material.
  *
- * prf = crypt_prf_init(hasher)
- * crypt_prf_init_XXX(prf, key)+
- * crypt_prf_update(prf)
- * crypt_prf_update_xxxx(prf, material)+
- * key = crypt_prf_final(prf)
+ * The slightly clunky, nterface expects a call sequence like:
+ *
+ *   struct crypt_prf *prf = crypt_prf_init(hasher)
+ *   crypt_prf_init_XXX(prf, key) ...
+ *   crypt_prf_update(prf)
+ *   crypt_prf_update_XXX(prf, data)...
+ *   key = crypt_prf_final(prf)
+ *
+ * where the crypt_prf_init_XXX calls feed the PRF the key (some calls
+ * need to assemble the key from several pieces of data); and the
+ * crypt_prf_update_XXX calls feed the PRF the corresponding data
+ * (a.k.a., text, and seed).
+
+ * hmac.c contains an alternative, less flexible interface.  However,
+ * one that deals better with data intended for the wire - it isn't as
+ * good at keeping stuff secure in PK11SymKeys.
+ *
+ * What is really needed is for NSS to implement an interface that
+ * provides the best of both worlds.
  */
 
 struct crypt_prf;
