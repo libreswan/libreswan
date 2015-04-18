@@ -22,6 +22,7 @@
 #include "lswalloc.h"
 
 struct hash_desc;
+struct encrypt_desc;
 
 /*
  * SYMKEY_FROM_CHUNK uses the SCRATCH key as a secure starting point
