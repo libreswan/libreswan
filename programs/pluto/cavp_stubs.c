@@ -14,4 +14,5 @@ extern void show_setup_plutomain();
 void show_setup_plutomain() { }
 extern char *pluto_listen;
 char *pluto_listen = NULL;
+u_int16_t secctx_attr_type = 0;
 deltatime_t crl_check_interval = { 0 };

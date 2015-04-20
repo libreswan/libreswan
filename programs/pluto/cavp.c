@@ -31,12 +31,6 @@
 #include "cavp_ikev1.h"
 #include "cavp_ikev2.h"
 
-/* plutomain seams */
-#ifdef HAVE_LABELED_IPSEC
-u_int16_t secctx_attr_type = 0;
-#endif
-
-
 
 struct cavp *cavps[] = {
 	&cavp_ikev1_sig,
