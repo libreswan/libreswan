@@ -67,7 +67,6 @@ void dbg_dump_symkey(const char *prefix, PK11SymKey *key)
 {
 	chunk_t chunk = chunk_from_symkey_bytes(prefix, key, 0,
 						PK11_GetKeyLength(key));
-	DBG_dump_chunk(prefix, chunk);
 	freeanychunk(chunk);
 }
 
@@ -262,7 +261,9 @@ PK11SymKey *key_from_symkey_bits(PK11SymKey *base_key,
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 				  size_t next_byte, int sizeof_key)
 {
-	return key_from_symkey_bits(source_key, next_byte, sizeof_key);
+	return key_from_symkey_bits(source_key,
+				    next_byte * BITS_PER_BYTE,
+				    sizeof_key);
 }
 
 /*
