@@ -39,7 +39,7 @@ struct cavp *cavps[] = {
 	NULL
 };
 
-#define BUF_SIZE 2048
+#define BUF_SIZE 4096
 
 static struct cavp_entry *lookup_entry(struct cavp_entry *entries, const char *key)
 {
