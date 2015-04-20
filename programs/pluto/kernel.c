@@ -116,21 +116,21 @@ static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
 	DBG(DBG_KERNEL,
 	    {
-		    int ourport = ntohs(portof(&(bs)->ours.addr));
-		    int hisport = ntohs(portof(&(bs)->his.addr));
+		    int ourport = ntohs(portof(&bs->ours.addr));
+		    int hisport = ntohs(portof(&bs->his.addr));
 		    char ourst[SUBNETTOT_BUF];
 		    char hist[SUBNETTOT_BUF];
 		    char sat[SATOT_BUF];
 		    char prio[POLICY_PRIO_BUF];
 
-		    subnettot(&(bs)->ours, 0, ourst, sizeof(ourst));
-		    subnettot(&(bs)->his, 0, hist, sizeof(hist));
-		    satot(&(bs)->said, 0, sat, sizeof(sat));
+		    subnettot(&bs->ours, 0, ourst, sizeof(ourst));
+		    subnettot(&bs->his, 0, hist, sizeof(hist));
+		    satot(&bs->said, 0, sat, sizeof(sat));
 		    fmt_policy_prio(bs->policy_prio, prio);
 		    DBG_log("%s bare shunt %p %s:%d --%d--> %s:%d => %s %s    %s",
-			    op, (const void *)(bs), ourst, ourport,
-			    (bs)->transport_proto, hist, hisport,
-			    sat, prio, (bs)->why);
+			    op, (const void *)bs, ourst, ourport,
+			    bs->transport_proto, hist, hisport,
+			    sat, prio, bs->why);
 	    });
 }
 
@@ -840,11 +840,11 @@ void unroute_connection(struct connection *c)
 #include "kernel_alg.h"
 
 static void set_text_said(char *text_said, const ip_address *dst,
-			  ipsec_spi_t spi, int proto)
+			  ipsec_spi_t spi, int sa_proto)
 {
 	ip_said said;
 
-	initsaid(dst, spi, proto, &said);
+	initsaid(dst, spi, sa_proto, &said);
 	satot(&said, 0, text_said, SATOT_BUF);
 }
 
@@ -921,7 +921,7 @@ static bool raw_eroute(const ip_address *this_host,
 		       const ip_address *that_host,
 		       const ip_subnet *that_client,
 		       ipsec_spi_t spi,
-		       unsigned int proto,
+		       int sa_proto,
 		       unsigned int transport_proto,
 		       enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
@@ -937,7 +937,7 @@ static bool raw_eroute(const ip_address *this_host,
 	char text_said[SATOT_BUF];
 	bool result;
 
-	set_text_said(text_said, that_host, spi, proto);
+	set_text_said(text_said, that_host, spi, sa_proto);
 
 	DBG(DBG_CONTROL | DBG_KERNEL,
 	    {
@@ -960,7 +960,7 @@ static bool raw_eroute(const ip_address *this_host,
 
 	result = kernel_ops->raw_eroute(this_host, this_client,
 					that_host, that_client,
-					spi, proto,
+					spi, sa_proto,
 					transport_proto,
 					esatype, proto_info,
 					use_lifetime, sa_priority, op, text_said
@@ -1042,9 +1042,9 @@ static void clear_narrow_holds(const ip_subnet *ours,
  * Issues the PF_KEY commands and updates the bare_shunts table.
  */
 bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
-			policy_prio_t policy_prio,
-			ipsec_spi_t shunt_spi,  /* in host order! */
-			bool repl,              /* if TRUE, replace; if FALSE, delete */
+			policy_prio_t policy_prio,	/* of replacing shunt*/
+			ipsec_spi_t shunt_spi,	/* in host order! */
+			bool repl,		/* if TRUE, replace; if FALSE, delete */
 			int transport_proto,
 			const char *why)
 {
@@ -1056,11 +1056,11 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 	happy(addrtosubnet(dst, &that_client));
 
 	/*
-	 * if the transport protocol is not the wildcard, then we need
+	 * if the transport protocol is not the wildcard (0), then we need
 	 * to look for a host<->host shunt, and replace that with the
 	 * shunt spi, and then we add a %HOLD for what was there before.
 	 *
-	 * this is at odds with repl == 0, which should delete things.
+	 * this is at odds with !repl, which should delete things.
 	 *
 	 */
 
@@ -1076,7 +1076,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			struct bare_shunt **bs_pp = bare_shunt_ptr(
 				&this_broad_client,
 				&that_broad_client,
-				0);
+				0 /* transport_proto */);
 
 			/* is there already a broad host-to-host bare shunt? */
 			if (bs_pp == NULL) {
@@ -1085,7 +1085,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 				if (raw_eroute(null_host, &this_broad_client,
 					       null_host, &that_broad_client,
 					       htonl(shunt_spi), SA_INT,
-						/* OE for NETKEY gives acquire for transport_proto, KLIPS for proto 0 */
+						/* acquire's transport_proto from NETKEY is filled in, but from KLIPS it's 0 */
 						kern_interface == USE_NETKEY ? 0 : transport_proto,
 					       ET_INT, null_proto_info,
 					       deltatime(SHUNT_PATIENCE),
@@ -1120,8 +1120,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 
 		DBG(DBG_KERNEL,
 		    DBG_log("adding specific host-to-host bare shunt"));
-		if (raw_eroute(null_host, &this_client, null_host,
-			       &that_client,
+		if (raw_eroute(null_host, &this_client,
+				null_host, &that_client,
 			       htonl(shunt_spi),
 			       SA_INT,
 			       transport_proto,
@@ -1145,13 +1145,13 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			return FALSE;
 		}
 	} else {
-		unsigned int op = repl ? ERO_REPLACE : ERO_DELETE;
+		enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
 
 		DBG(DBG_KERNEL,
 		    DBG_log("%s specific host-to-host bare shunt",
 			    repl ? "replacing" : "removing"));
-		if (raw_eroute(null_host, &this_client, null_host,
-			       &that_client,
+		if (raw_eroute(null_host, &this_client,
+				null_host, &that_client,
 			       htonl(shunt_spi), SA_INT,
 			       0, /* transport_proto */
 			       ET_INT, null_proto_info,
@@ -1165,7 +1165,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			struct bare_shunt **bs_pp = bare_shunt_ptr(
 				&this_client,
 				&that_client,
-				0);
+				0 /* transport_proto */);
 
 			/* we can have proto mismatching acquires with netkey - this is a bad workaround */
 			/* passert(bs_pp != NULL); */
@@ -1201,7 +1201,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 }
 
 bool eroute_connection(struct spd_route *sr,
-		       ipsec_spi_t spi, unsigned int proto,
+		       ipsec_spi_t spi, int sa_proto,
 		       enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
 		       unsigned int op, const char *opname
@@ -1216,14 +1216,13 @@ bool eroute_connection(struct spd_route *sr,
 	snprintf(buf2, sizeof(buf2),
 		 "eroute_connection %s", opname);
 
-	if (proto == SA_INT)
+	if (sa_proto == SA_INT)
 		peer = aftoinfo(addrtypeof(peer))->any;
 
 	return raw_eroute(&sr->this.host_addr, &sr->this.client,
-			  peer,
-			  &sr->that.client,
+			  peer, &sr->that.client,
 			  spi,
-			  proto,
+			  sa_proto,
 			  sr->this.protocol,
 			  esatype,
 			  proto_info,
@@ -2122,7 +2121,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				  &c->spd.this.host_addr,	/* that_host */
 				  &c->spd.this.client,		/* that_client */
 				  inner_spi,			/* spi */
-				  proto,			/* proto */
+				  proto,			/* SA proto */
 				  c->spd.this.protocol,		/* transport_proto */
 				  esatype,			/* esatype */
 				  proto_info,			/* " */
