@@ -586,9 +586,9 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @param that_host ip_address
  * @param that_client ip_subnet
  * @param spi
- * @param proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
- * @param transport_proto int (Currently unused) Contains protocol
- *	(u=tcp, 17=udp, etc...)
+ * @param sa_proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
+ * @param transport_proto unsigned int Contains protocol
+ *	(6=tcp, 17=udp, etc...)
  * @param esatype int
  * @param pfkey_proto_info proto_info
  * @param use_lifetime monotime_t (Currently unused)
@@ -601,7 +601,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			const ip_address *that_host,
 			const ip_subnet *that_client,
 			ipsec_spi_t spi,
-			unsigned int proto,
+			int sa_proto,
 			unsigned int transport_proto,
 			enum eroute_type esatype,
 			const struct pfkey_proto_info *proto_info,
@@ -698,7 +698,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 * so eroute must be done to natted, visible ip. If we don't hide
 	 * internal IP, communication doesn't work.
 	 */
-	if (esatype == ET_ESP || esatype == ET_IPCOMP || proto == SA_ESP) {
+	if (esatype == ET_ESP || esatype == ET_IPCOMP || sa_proto == SA_ESP) {
 		/*
 		 * Variable "that" should be remote, but here it's not.
 		 * We must check "dir" to find out remote address.
