@@ -1499,7 +1499,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 		return;
 	}
 
-	replace_bare_shunt(&src, &dst, BOTTOM_PRIO, SPI_PASS, FALSE,
+	(void) replace_bare_shunt(&src, &dst, BOTTOM_PRIO, SPI_PASS, FALSE,
 			transport_proto, "delete expired bare shunt");
 }
 
