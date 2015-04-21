@@ -23,6 +23,7 @@
 #include <pk11pub.h>
 
 struct hash_desc;
+struct crypt_prf;
 
 /*
  * Primitives implementing PRF described in rfc2104.
@@ -31,38 +32,39 @@ struct hash_desc;
  * secure inside SymKeys.  To that end, it should be good for
  * generating keying material.
  *
- * The slightly clunky, nterface expects a call sequence like:
- *
- *   struct crypt_prf *prf = crypt_prf_init(hasher)
- *   crypt_prf_init_XXX(prf, key) ...
- *   crypt_prf_update(prf)
- *   crypt_prf_update_XXX(prf, data)...
- *   key = crypt_prf_final(prf)
- *
- * where the crypt_prf_init_XXX calls feed the PRF the key (some calls
- * need to assemble the key from several pieces of data); and the
- * crypt_prf_update_XXX calls feed the PRF the corresponding data
- * (a.k.a., text, and seed).
-
- * hmac.c contains an alternative, less flexible interface.  However,
- * one that deals better with data intended for the wire - it isn't as
- * good at keeping stuff secure in PK11SymKeys.
- *
- * What is really needed is for NSS to implement an interface that
- * provides the best of both worlds.
+ * The slightly clunky, interface is described in-line below.
  */
 
-struct crypt_prf;
-
+/*
+ * Call this first; always.
+ *
+ * SCRATCH is used as a secure starting point when the key is formed
+ * from raw bytes (or memory).
+ */
 struct crypt_prf *crypt_prf_init(const struct hash_desc *hasher,
 				 PK11SymKey *scratch);
+
+/*
+ * Next load up the raw-key by calling one or more of the following.
+ * Multiple calls concatenate the key.
+ *
+ * Even when SCRATCH above was passed the KEY, the below must be
+ * called.
+ */
 void crypt_prf_init_symkey(struct crypt_prf *prf, PK11SymKey *key);
 void crypt_prf_init_chunk(struct crypt_prf *prf, chunk_t key);
 #if 0
 void crypt_prf_init_bytes(struct crypt_prf *prf, void *key, size_t sizeof_key);
 #endif
 
+/*
+ * Then call this to flip to seed/data/text mode; always.
+ */
 void crypt_prf_update(struct crypt_prf *prf);
+
+/*
+ * Call these to accumulate the seed/data/text.
+ */
 void crypt_prf_update_chunk(struct crypt_prf *prf, chunk_t update);
 void crypt_prf_update_symkey(struct crypt_prf *prf, PK11SymKey *update);
 void crypt_prf_update_byte(struct crypt_prf *prf, uint8_t byte);
@@ -70,6 +72,11 @@ void crypt_prf_update_byte(struct crypt_prf *prf, uint8_t byte);
 void crypt_prf_update_bytes(struct crypt_prf *prf, void *bytes, size_t count);
 #endif
 
+/*
+ * Finally ...
+ *
+ * This will free PRF.
+ */
 PK11SymKey *crypt_prf_final(struct crypt_prf *prf);
 
 #endif
