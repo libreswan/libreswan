@@ -67,6 +67,7 @@ void dbg_dump_symkey(const char *prefix, PK11SymKey *key)
 {
 	chunk_t chunk = chunk_from_symkey_bytes(prefix, key, 0,
 						PK11_GetKeyLength(key));
+	DBG_dump_chunk(prefix, chunk);
 	freeanychunk(chunk);
 }
 
