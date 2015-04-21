@@ -25,13 +25,6 @@
 struct hash_desc;
 
 /*
- * Implement PRF described in rfc2104.
- */
-
-PK11SymKey *crypt_prf(const struct hash_desc *hasher,
-		      PK11SymKey *key, PK11SymKey *seed);
-
-/*
  * Primitives implementing PRF described in rfc2104.
  *
  * This implementation tries to keep all the input and output material

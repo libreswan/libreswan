@@ -35,17 +35,6 @@
 #include "crypt_symkey.h"
 #include "crypto.h"
 
-PK11SymKey *crypt_prf(const struct hash_desc *hasher,
-		      PK11SymKey *raw_key, PK11SymKey *seed)
-{
-	/* Here raw_key is "scratch" */
-	struct crypt_prf *prf = crypt_prf_init(hasher, raw_key);
-	crypt_prf_init_symkey(prf, raw_key);
-	crypt_prf_update(prf);
-	crypt_prf_update_symkey(prf, seed);
-	return crypt_prf_final(prf);
-}
-
 struct crypt_prf {
 	const struct hash_desc *hasher;
 	/* for converting chunks to symkeys */
