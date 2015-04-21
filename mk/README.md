@@ -37,18 +37,33 @@ Split CONFDFILES into CONFDFILES and CONFDSUBDIRFILES.  Former goes to
 CONFDDIR and latter goes to CONFDSUBDIR.  Currently it isn't possible
 to install stuff into /etc/ipsec.d/
 
-Instead of building man pages as part of make programs have "make doc"
-and "make install-doc" (check automake for target names) build and
-install documentation including man pages.  "make all" would depend on
-both programs and doc.  Also consider "make dist" which would
-pre-generate the documentation.
+Instead of including generated man pages in the source, and maybe
+building them with make-programs, have make-doc and make-install-doc
+targets (check automake for target names) that build and install all
+documentation including man pages.  The existing make-all /
+make-install targets would also build/install manages.  Finally,
+consider make-dist which would pre-generate the documentation.
 
 When on fedora/rhel, enable audit logs.  One way to implement this is
 to add packaging/defaults/fedora and pull that in.  Presumably OBJDIR
-would be updated to reflect this.
+would be updated to reflect this.  Mumble something about how it would
+be nice if audit tests were not run on systems that did not have
+audit.
 
-Delete programs/pluto/Makefile.options; ti just adds to general
+When a test fails early, should sanitize.sh still be run?
+
+Delete programs/pluto/Makefile.options; it just adds to general
 confusion when looking for what/why things are happening.
+
+Have *init.sh et.al. scripts always succeed.  This means that commands
+like ping that are expected to fail (demonstrating no conectivity)
+will need a "!" prefix so the failure is success.
+
+As a separate line in the log file print the basename, line, and
+function of DBG calls.
+
+Run swan-init et.al. from ../../../testing/guestbin/ (a relative
+path), and not /testing/guestbin/
 
 delete LIBRESWANSRCDIRREL
 
@@ -56,8 +71,8 @@ Remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
 
 move modobj to under $(OBJDIR)
 
-For install targets add the $(DESTDIR) prefix to everything; that is
-$(DESTDIR)$(BINDIR) for instance.  This convention, at least for RPMs,
+For install targets add the $(DESTDIR) prefix to everything; for
+instance $(DESTDIR)$(BINDIR).  This convention, at least for RPMs,
 lets installs be directed to a staging area.
 
 stuff under testing could do with its own unit-test.mk file - which is
@@ -80,7 +95,8 @@ clean up the pluto directory some more
 
 Free up CFLAGS, like autoconf/automake?
 
-subdir.mk to a hard case
+Always decend the source directory (instead of OBJDIR) so that
+subdir.mk can be used everywhere.
 
 testing/pluto/Makefile update target
 
@@ -88,15 +104,11 @@ testing/pluto/Makefile update target
 
 Make --warn-undefined-variables
 
-descend srcdir not objdir
-
-do not generate OBJDIR make files!
+Do not generate OBJDIR make files.
 
 eliminate Makefile.ver: this is really messy as scripts do all sorts
 of wierd and wonderful stuff with it.
 
 kvm-build-east use "make" and not "swan-build"
 
-have swantest check exit status and bail when tests start to fail.
-
-more stuff that shouldn't be in the repo such as generated manual pages.
+"make" run "make all".
