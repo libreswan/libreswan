@@ -896,11 +896,12 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
  *  contain a single certificate.
  *
  */
-void ikev1_decode_cert(struct msg_digest *md)
+bool ikev1_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct payload_digest *p;
 	chunk_t der_list[32] = { {NULL, 0} };
+	bool ret = TRUE;
 	int der_num = 0;
 
 	for (p = md->chain[ISAKMP_NEXT_CERT]; p != NULL; p = p->next) {
@@ -916,25 +917,27 @@ void ikev1_decode_cert(struct msg_digest *md)
 		}
 	}
 
-	if (der_num == 0)
-		return;
+	if (der_num > 0) {
+		if (!pluto_process_certs(st, der_list, der_num)) {
+			libreswan_log("Peer public key is not available for this exchange");
+			ret = FALSE;
+		}
 
-	if (!pluto_process_certs(st, der_list, der_num))
-		libreswan_log("Peer public key is not available for this exchange");
+		while (der_num-- > 0)
+			freeanychunk(der_list[der_num]);
+	}
 
-	while (der_num-- > 0)
-		freeanychunk(der_list[der_num]);
-
-	return;
+	return ret;
 }
 
 /* Decode IKEV2 CERT Payload */
 
-void ikev2_decode_cert(struct msg_digest *md)
+bool ikev2_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct payload_digest *p;
 	chunk_t der_list[32] = { {NULL, 0} };
+	bool ret = TRUE;
 	int der_num = 0;
 
 	for (p = md->chain[ISAKMP_NEXT_v2CERT]; p != NULL; p = p->next) {
@@ -950,16 +953,18 @@ void ikev2_decode_cert(struct msg_digest *md)
 						v2cert->isac_enc));
 		}
 	}
-	if (der_num == 0)
-		return;
 
-	if (!pluto_process_certs(st, der_list, der_num))
-		libreswan_log("Peer public key is not available for this exchange");
+	if (der_num > 0) {
+		if (!pluto_process_certs(st, der_list, der_num)) {
+			libreswan_log("Peer public key is not available for this exchange");
+			ret = FALSE;
+		}
 
-	while (der_num-- > 0)
-		freeanychunk(der_list[der_num]);
+		while (der_num-- > 0)
+			freeanychunk(der_list[der_num]);
+	}
 
-	return;
+	return ret;
 }
 
 /*

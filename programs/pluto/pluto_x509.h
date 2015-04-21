@@ -32,8 +32,8 @@
 /* forward reference */
 struct msg_digest;
 
-extern void ikev1_decode_cert(struct msg_digest *md);
-extern void ikev2_decode_cert(struct msg_digest *md);
+extern bool ikev1_decode_cert(struct msg_digest *md);
+extern bool ikev2_decode_cert(struct msg_digest *md);
 extern void ikev1_decode_cr(struct msg_digest *md, generalName_t **requested_ca);
 extern void ikev2_decode_cr(struct msg_digest *md, generalName_t **requested_ca);
 
