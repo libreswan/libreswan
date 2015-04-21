@@ -73,7 +73,7 @@ monotime_t mononow(void)
 #ifdef _POSIX_MONOTONIC_CLOCK
 	struct timespec t;
 	int r = clock_gettime(
-#   if CLOCK_BOOTTIME
+#   ifdef CLOCK_BOOTTIME
 		CLOCK_BOOTTIME	/* best */
 #   else
 		CLOCK_MONOTONIC	/* second best */
