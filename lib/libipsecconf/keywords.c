@@ -45,10 +45,22 @@ static const struct keyword_enum_value kw_failureshunt_values[] = {
 	{ "none",        KFS_FAIL_NONE },
 	{ "passthrough", KFS_FAIL_PASS },
 	{ "drop",        KFS_FAIL_DROP },
+	{ "hold",        KFS_FAIL_DROP }, /* alias */
 	{ "reject",      KFS_FAIL_REJECT },
 };
 
 static const struct keyword_enum_values kw_failureshunt_list = VALUES_INITIALIZER(kw_failureshunt_values);
+
+/*
+ * Values for negotiationshunt={passthrough, drop}
+ */
+static const struct keyword_enum_value kw_negotiationshunt_values[] = {
+	{ "passthrough", KNS_FAIL_PASS },
+	{ "drop",        KNS_FAIL_DROP },
+	{ "hold",        KNS_FAIL_DROP }, /* alias */
+};
+
+static const struct keyword_enum_values kw_negotiationshunt_list = VALUES_INITIALIZER(kw_negotiationshunt_values);
 
 /*
  * Values for keyexchange=
@@ -587,6 +599,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_ARRIVALCHECK, NOT_ENUM },
 	{ "failureshunt",   kv_conn | kv_auto, kt_enum,   KBF_FAILURESHUNT,
 	  &kw_failureshunt_list },
+	{ "negotiationshunt",   kv_conn | kv_auto, kt_enum,   KBF_NEGOTIATIONSHUNT,
+	  &kw_negotiationshunt_list },
 	{ "connalias",      kv_conn | kv_processed | kv_auto | kv_manual,
 	  kt_appendstring,   KSF_CONNALIAS, NOT_ENUM },
 

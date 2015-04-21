@@ -1147,6 +1147,17 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		}
 	}
 
+	if (conn->options_set[KBF_NEGOTIATIONSHUNT]) {
+		switch(conn->options[KBF_NEGOTIATIONSHUNT]) {
+		case KNS_FAIL_PASS:
+			conn->policy |= POLICY_NEGO_PASS;
+			break;
+		case KNS_FAIL_DROP:
+			conn->policy &= ~POLICY_NEGO_PASS;
+			break;
+		}
+	}
+
 	KW_POLICY_FLAG(KBF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KBF_PFS,  POLICY_PFS);
 

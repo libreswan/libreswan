@@ -76,6 +76,7 @@ d.ipsec.conf/disablearrivalcheck.xml
 d.ipsec.conf/labeled-ipsec.xml
 d.ipsec.conf/policy-label.xml
 d.ipsec.conf/failureshunt.xml
+d.ipsec.conf/negotiationshunt.xml
 d.ipsec.conf/connautoend.xml
 d.ipsec.conf/configsections.xml
 d.ipsec.conf/myid.xml

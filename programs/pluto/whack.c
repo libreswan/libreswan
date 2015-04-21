@@ -120,6 +120,7 @@ static void help(void)
 		"	[--metric <metric>] \\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
+		"	[--negopass ] \\\n"
 		"	--to\n"
 		"\n"
 		"routing: whack (--route | --unroute) --name <connection_name>\n"
@@ -568,6 +569,7 @@ static const struct option long_opts[] = {
 	{ "failreject", no_argument, NULL,
 		CDP_FAIL + (POLICY_FAIL_REJECT >> POLICY_FAIL_SHIFT << AUX_SHIFT) + OO },
 
+	PS("negopass", NEGO_PASS),
 	PS("dontrekey", DONT_REKEY),
 	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE },
@@ -1456,6 +1458,9 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
 		/* --disablearrivalcheck */
 		case CDP_SINGLETON + POLICY_DISABLEARRIVALCHECK_IX:
+
+		/* --negopass */
+		case CDP_SINGLETON + POLICY_NEGO_PASS_IX:
 
 		/* --donotrekey */
 		case CDP_SINGLETON + POLICY_DONT_REKEY_IX:

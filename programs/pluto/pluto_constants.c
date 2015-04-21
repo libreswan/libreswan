@@ -302,6 +302,7 @@ const char *const sa_policy_bit_names[] = {
 	"SHUNT1",
 	"FAIL0",
 	"FAIL1",
+	"NEGO_PASS",
 	"DONT_REKEY",
 	"OPPORTUNISTIC",
 	"GROUP",
