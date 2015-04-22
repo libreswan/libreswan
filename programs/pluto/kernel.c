@@ -969,9 +969,8 @@ static bool raw_eroute(const ip_address *this_host,
 #endif
 					);
 
-	/* ??? this is kind of odd: regular control flow only selecting DBG output */
-	if (!result || DBGP(DBG_CONTROL | DBG_KERNEL))
-		DBG_log("raw_eroute result=%u", result);
+	DBG(DBG_CONTROL | DBG_KERNEL, DBG_log("raw_eroute result=%s",
+		result ? "success" : "failed"));
 
 	return result;
 }
@@ -1024,11 +1023,13 @@ static void clear_narrow_holds(const ip_subnet *ours,
 		    portof(&ours->addr) == portof(&p->ours.addr) &&
 		    portof(&his->addr) == portof(&p->his.addr)) {
 
-			(void) replace_bare_shunt(&p->ours.addr, &p->his.addr,
+			if (!replace_bare_shunt(&p->ours.addr, &p->his.addr,
 						  BOTTOM_PRIO,
 						  SPI_PASS, /* not used */
 						  FALSE, transport_proto,
-						  "removing clashing narrow holds");
+						  "removing clashing narrow holds")) {
+				libreswan_log("PAUL: replace_bare_shunt() in clear_narrow_holds() failed for removing clashing narrow holds");
+			}
 
 			/* restart from beginning as we just removed and entry */
 			pp = &bare_shunts;
@@ -2116,7 +2117,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		/* MCR - should be passed a spd_eroute structure here */
 		/* note: this and that are intentionally reversed */
-		(void) raw_eroute(&c->spd.that.host_addr,	/* this_host */
+		if (!raw_eroute(&c->spd.that.host_addr,		/* this_host */
 				  &c->spd.that.client,		/* this_client */
 				  &c->spd.this.host_addr,	/* that_host */
 				  &c->spd.this.client,		/* that_client */
@@ -2132,7 +2133,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 #ifdef HAVE_LABELED_IPSEC
 				  , st->st_connection->policy_label
 #endif
-				  );
+				  )) {
+			libreswan_log("PAUL:raw_eroute in setup_half_ipsec_sa() failed to add inbound");
+		}
 	}
 
 	/* If there are multiple SPIs, group them. */
@@ -2169,7 +2172,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 fail:
 	{
-		DBG_log("setup_half_ipsec_sa() hit fail:");
+		libreswan_log("setup_half_ipsec_sa() hit fail:");
 		/* undo the done SPIs */
 		while (said_next-- != said) {
 			if (said_next->proto) {
@@ -2202,7 +2205,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	i = 0;
 	if (kernel_ops->inbound_eroute && inbound &&
 	    c->spd.eroute_owner == SOS_NOBODY) {
-		(void) raw_eroute(&c->spd.that.host_addr, &c->spd.that.client,
+		if (!raw_eroute(&c->spd.that.host_addr, &c->spd.that.client,
 				  &c->spd.this.host_addr, &c->spd.this.client,
 				  256,
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY,
@@ -2215,7 +2218,9 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 #ifdef HAVE_LABELED_IPSEC
 				  , c->policy_label
 #endif
-				  );
+				  )) {
+			 libreswan_log("PAUL:raw_eroute in teardown_half_ipsec_sa() failed to delete inbound");
+		}
 	}
 
 	if (kernel_ops->grp_sa == NULL) {
@@ -2832,7 +2837,7 @@ bool route_and_eroute(struct connection *c,
 				 */
 				struct bare_shunt *bs = *bspp;
 
-				(void) raw_eroute(&bs->said.dst,        /* should be useless */
+				if (!raw_eroute(&bs->said.dst,        /* should be useless */
 						  &bs->ours,
 						  &bs->said.dst,        /* should be useless */
 						  &bs->his,
@@ -2847,16 +2852,20 @@ bool route_and_eroute(struct connection *c,
 #ifdef HAVE_LABELED_IPSEC
 						  , NULL /* bare shunt are not associated with any connection so no security label*/
 #endif
-						  );
+						  )) {
+					libreswan_log("PAUL:raw_eroute() in route_and_eroute() failed to restore/replace SA");
+				}
 			} else if (ero != NULL) {
 				passert(esr != NULL);
 				/* restore ero's former glory */
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
-					(void) shunt_eroute(ero, esr,
+					if (!shunt_eroute(ero, esr,
 							    esr->routing,
 							    ERO_REPLACE,
-							    "restore");
+							    "restore")) {
+						libreswan_log("PAUL:shunt_eroute() in route_and_eroute() failed restore/replace");
+					}
 				} else {
 					/* Try to find state that owned eroute.
 					 * Don't do anything if it cannot be found.
@@ -2869,22 +2878,28 @@ bool route_and_eroute(struct connection *c,
 							esr->eroute_owner);
 
 					if (ost != NULL) {
-						(void) sag_eroute(ost, esr,
+						if (!sag_eroute(ost, esr,
 								  ERO_REPLACE,
-								  "restore");
+								  "restore")) {
+						libreswan_log("PAUL:sag_eroute() in route_and_eroute() failed restore/replace");
+					}
 					}
 				}
 			} else {
 				/* there was no previous eroute: delete whatever we installed */
 				if (st == NULL) {
-					(void) shunt_eroute(c, sr,
+					if (!shunt_eroute(c, sr,
 							    sr->routing,
 							    ERO_DELETE,
-							    "delete");
+							    "delete")) {
+						libreswan_log("PAUL:shunt_eroute() in route_and_eroute() failed in !st case for delete");
+					}
 				} else {
-					(void) sag_eroute(st, sr,
+					if (!sag_eroute(st, sr,
 							  ERO_DELETE,
-							  "delete");
+							  "delete")) {
+						libreswan_log("PAUL:shunt_eroute() in route_and_eroute() failed in st case for delete");
+					}
 				}
 			}
 		}
@@ -3043,17 +3058,21 @@ void delete_ipsec_sa(struct state *st, bool inbound_only)
 						 */
 						unroute_connection(c);
 					} else {
-						(void) shunt_eroute(c, sr,
+						if (!shunt_eroute(c, sr,
 								    sr->routing, ERO_REPLACE,
-								    "replace with shunt");
+								    "replace with shunt")) {
+							libreswan_log("PAUL:shunt_eroute failed replace with shunt in delete_ipsec_sa");
+						}
 					}
 
 #ifdef KLIPS_MAST
 					/* in mast mode we must also delete the iptables rule */
 					if (kern_interface == USE_MASTKLIPS)
-						(void) sag_eroute(st, sr,
+						if (!sag_eroute(st, sr,
 								  ERO_DELETE,
-								  "delete");
+								  "delete")) {
+							libreswan_log("PAUL:sag_eroute failed delete in delete_ipsec_sa");
+						}
 #endif
 				}
 			}
