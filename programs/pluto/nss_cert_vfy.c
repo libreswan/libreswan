@@ -420,13 +420,17 @@ static int vfy_chain_pkix(CERTCertDBHandle *handle, CERTCertificate **chain,
 	int in_idx = 0;
 	int i;
 	int fin = 0;
+	bool reverify = TRUE;
 	SECStatus rv;
 	CERTVerifyLog vfy_log;
+	CERTVerifyLog vfy_log2;
+	CERTVerifyLog *cur_log = NULL;
 	CERTCertificate *end_cert = NULL;
 	CERTValInParam cvin[7];
 	CERTValOutParam cvout[3];
 	CERTCertList *trustcl = NULL;
 	CERTRevocationFlags rev;
+	SECCertificateUsage usage = certificateUsageSSLClient;
 	PRUint64 revFlagsLeaf[2] = { 0, 0 };
 	PRUint64 revFlagsChain[2] = { 0, 0 };
 
@@ -443,6 +447,7 @@ static int vfy_chain_pkix(CERTCertDBHandle *handle, CERTCertificate **chain,
 	}
 
 	new_vfy_log(&vfy_log);
+	new_vfy_log(&vfy_log2);
 	zero(&cvin);
 	zero(&cvout);
 	zero(&rev);
@@ -471,17 +476,37 @@ static int vfy_chain_pkix(CERTCertDBHandle *handle, CERTCertificate **chain,
 
 	cvout[0].type = cert_po_errorLog;
 	cvout[0].value.pointer.log = &vfy_log;
+	cur_log = &vfy_log;
 	cvout[1].type = cert_po_certList;
 	cvout[1].value.pointer.chain = NULL;
 	cvout[2].type = cert_po_end;
 
-	rv = CERT_PKIXVerifyCert(end_cert, certificateUsageSSLClient, cvin,
-								      cvout,
-								      NULL);
+	/* kludge alert!!
+	 * verification may be performed twice: once with the
+	 * 'client' usage and once with 'server', which is an NSS
+	 * detail and not related to IKE. In the absense of a real
+	 * IKE profile being available for NSS, this covers more
+	 * KU/EKU combinations
+	 */
+retry:
+	rv = CERT_PKIXVerifyCert(end_cert, usage, cvin, cvout, NULL);
 
-	if (rv != SECSuccess || vfy_log.count > 0) {
-		if (vfy_log.count > 0 && vfy_log.head != NULL) {
-			fin = get_node_error_status(vfy_log.head);
+	if (rv != SECSuccess || cur_log->count > 0) {
+		if (cur_log->count > 0 && cur_log->head != NULL) {
+			fin = get_node_error_status(cur_log->head);
+			if (fin == SEC_ERROR_INADEQUATE_CERT_TYPE ||
+			        fin == SEC_ERROR_INADEQUATE_KEY_USAGE) {
+				if (reverify) {
+					DBG(DBG_X509,
+					    DBG_log("retrying verification with the NSS server profile"));
+					cur_log = &vfy_log2;
+					cvout[0].value.pointer.log = cur_log;
+					cvout[1].value.pointer.chain = NULL;
+					usage = certificateUsageSSLServer;
+					reverify = FALSE;
+					goto retry;
+				}
+			}
 		} else {
 			fin = translate_nss_err(PORT_GetError(), FALSE);
 		}
