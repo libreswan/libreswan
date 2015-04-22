@@ -852,16 +852,48 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		if (c->policy & POLICY_OPPORTUNISTIC)
 		{
-			char *addmsg = "replace bare shunt with  negotiationshunt";
-			ipsec_spi_t shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+#if 0
+			char *replacemsg = "replace bare shunt with negotiationshunt";
+#endif
+			char *addwidemsg = "add bare shunt with negotiationshunt=passthrough";
+			ipsec_spi_t shunt_spi = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+        		ip_subnet this_client, that_client;
+
+        		happy(addrtosubnet(&b->our_client, &this_client));
+        		happy(addrtosubnet(&b->peer_client, &that_client));
 
 			libreswan_log("PAUL: going to initiate opportunstic, first installing %s negotiationshunt",
-				(shunt == SPI_PASS) ? "pass" : "hold");
+				(shunt_spi == SPI_PASS) ? "pass" : "hold");
 
-			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, shunt,
-				TRUE /* replace bare shunt */, b->transport_proto, addmsg)) {
-					libreswan_log("PAUL: Failed to: %s", addmsg);
+			// insert negotiationshunt, which is wider than bare shunt, and either hold or pass
+			setportof(0, &this_client.addr);
+			setportof(0, &that_client.addr);
+
+			if (!kernel_ops->raw_eroute(&b->our_client, &this_client,
+				&b->peer_client, &that_client,
+				htonl(shunt_spi), SA_INT,
+				0,
+				ET_INT, null_proto_info,
+				deltatime(SHUNT_PATIENCE),
+				DEFAULT_IPSEC_SA_PRIORITY,
+				ERO_ADD, addwidemsg
+#ifdef HAVE_LABELED_IPSEC
+				, NULL
+#endif
+				)) {
+					libreswan_log("PAUL: add bare wide passthrough negotiationshunt failed");
+			} else {
+					libreswan_log("PAUL: add bare wide passthrough negotiationshunt succeeded using illegal API");
 			}
+#if 0
+			// now take ownership of the (obsoleted) bare shunt, as before
+			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, shunt_spi,
+				TRUE /* replace bare shunt */, b->transport_proto, replacemsg)) {
+					libreswan_log("PAUL: Failed to: %s", replacemsg);
+			} else {
+				libreswan_log("PAUL: Success taking bare shunt : %s", replacemsg);
+			}
+#endif
 		}
 
 		/* handle any DNS answer; select next step */
