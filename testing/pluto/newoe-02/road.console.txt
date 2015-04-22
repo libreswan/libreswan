@@ -102,14 +102,14 @@ road #
  echo "initdone"
 initdone
 road #
- ping -n -c 4 192.1.2.23
+ ping -n -c 4 -I 192.1.3.209 192.1.2.23
 PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 64 bytes from 192.1.2.23: icmp_seq=4 ttl=64 time=0.XXX ms
 --- 192.1.2.23 ping statistics ---
 4 packets transmitted, 1 received, 75% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
- ping -n -c 1 254.254.254.254
+ ping -n -c 1 -I 192.1.3.209 254.254.254.254
 PING 254.254.254.254 (254.254.254.254) 56(84) bytes of data.
 From 192.1.3.254 icmp_seq=1 Destination Net Unreachable
 --- 254.254.254.254 ping statistics ---
