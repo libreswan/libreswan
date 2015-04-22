@@ -514,27 +514,20 @@ static void cannot_oppo(struct connection *c,
 		return;
 	}
 
-	if (b->held) {
-		int failure_shunt = b->failure_shunt;
-		// bool selfshunt = sameaddr(&b->our_client, &b->peer_client);
+	if (c != NULL) {
+		/* ignoring b->held, should probable be removed from the oppo bundle */
+		bool leak = (c->policy & POLICY_FAIL_PASS);
+		libreswan_log("PAUL: %s to %s: failureshunt=%s",
+			ocb, pcb, leak ? "pass" : "hold");
 
-		// libreswan_log("PAUL: override failure_shunt with pass");
-		// failure_shunt = SPI_PASS;
-
-		/* Replace HOLD with b->failure_shunt.
-		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
-		 */
-		if (failure_shunt == 0) {
-			DBG(DBG_OPPO,
-			    DBG_log("no explicit failure shunt for %s to %s; removing spurious hold shunt",
-				    ocb, pcb));
-		}
 		(void) replace_bare_shunt(&b->our_client, &b->peer_client,
 					  b->policy_prio,
-					  failure_shunt,
-					  failure_shunt != 0,
+					  leak ? SPI_PASS : SPI_HOLD, /* seems to convey hold/pass ? */
+					  TRUE,
 					  b->transport_proto,
 					  ughmsg);
+	} else {
+		libreswan_log("PAUL: did not find a connection - don't know which failureshunt= to install");
 	}
 }
 
@@ -814,9 +807,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		/* otherwise, there is some kind of static conn that can handle
 		 * this connection, so we initiate it
 		 */
-		if (b->held) {
-			/* what should we do on failure? */
-			/* check connection for "leak-during-ike" property */
+		if (!(c->policy & POLICY_NEGO_PASS)) {
 			(void) assign_hold(c, sr, b->transport_proto,
 					   &b->our_client, &b->peer_client);
 		}
@@ -861,31 +852,18 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		if (c->policy & POLICY_OPPORTUNISTIC)
 		{
-		char *addmsg = "adding protocol wide shunt while attempting opportunistic IKE negitiation";
+			char *addmsg = "replace bare shunt with  negotiationshunt";
+			ipsec_spi_t shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
-		/* Install a %pass or %hold bassed on configuration - prevents more acquires */
-		libreswan_log("PAUL: going to initiate opportunstic - replace bare shunt with pass");
-		if (kern_interface == USE_NETKEY) {
-			/* Unfortunately, for NETKEY the acquire is transport_proto specific  - delete it first */
-			char *delmsg = "del-proto-specific-shunt";
+			libreswan_log("PAUL: going to initiate opportunstic, first installing %s negotiationshunt",
+				(shunt == SPI_PASS) ? "pass" : "hold");
 
-			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */,
-			(c->policy & POLICY_FAIL_PASS) ? SPI_PASS : SPI_HOLD,
-				FALSE /* delete bare shunt */, b->transport_proto, delmsg)) {
-					libreswan_log("PAUL: NETKEY-only replace_bare_shunt() failed for %s", delmsg);
-			} else {
-					libreswan_log("PAUL: NETKEY-only replace_bare_shunt() for %s succeeded", delmsg);
+			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, shunt,
+				TRUE /* replace bare shunt */, b->transport_proto, addmsg)) {
+					libreswan_log("PAUL: Failed to: %s", addmsg);
 			}
 		}
-		/* must really be done based on connection policy but failureshunt=pass causes no acquries */
-		if (!replace_bare_shunt(&b->our_client, &b->peer_client, 32768 /* prio */,
-			(c->policy & POLICY_FAIL_PASS) ? SPI_PASS : SPI_HOLD,
-			kern_interface != USE_NETKEY /* replace bare shunt */, 0 /* proto */, addmsg)) {
-				libreswan_log("PAUL: replace_bare_shunt() failed for %s", addmsg);
-		} else {
-				libreswan_log("PAUL: replace_bare_shunt() installed for oppo conn for %s", addmsg);
-		}
-	}
+
 		/* handle any DNS answer; select next step */
 
 		switch (b->step) {
@@ -1112,21 +1090,22 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				       ipstr(&b->peer_client, &b2),
 				       ipstr(&ac->gateways_from_dns->gw_id.ip_addr, &b3));
 
-				if (b->held) {
-					/* Replace HOLD with PASS.
-					 * The type of replacement *ought* to be
-					 * specified by policy.
-					 */
-					(void) replace_bare_shunt(
-						&b->our_client,
-						&b->peer_client,
-						BOTTOM_PRIO,
-						(c->policy & POLICY_FAIL_PASS) ? SPI_PASS : SPI_HOLD,
-						TRUE,
-						b->transport_proto,
-						"no suitable connection");
+				/*
+				 * Replace negotiationshunt with failureshunt
+				 * The type of replacement *ought* to be
+				 * specified by policy, but we did not find a connection, so
+				 * default to HOLD
+				 */
+				if (!replace_bare_shunt(
+					&b->our_client,
+					&b->peer_client,
+					BOTTOM_PRIO,
+					SPI_HOLD, /* best guess */
+					TRUE,
+					b->transport_proto,
+					"no suitable connection")) {
+						libreswan_log("PAUL: Failed to replace negotiatinshunt with failurehunt=hold");
 				}
-				/* c == NULL: act accordingly */
 			} else {
 				/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
 				passert(c->kind == CK_INSTANCE);
@@ -1135,15 +1114,18 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				passert(LHAS(LELEM(RT_UNROUTED) |
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
-				if (b->held) {
-					libreswan_log("PAUL:b->held is true - calling assign_hold()");
+				if (!(c->policy & POLICY_FAIL_PASS)) {
+					libreswan_log("PAUL: failureshunt=hold - calling assign_hold()");
 					/* what should we do on failure? */
-					(void) assign_hold(c, &c->spd,
+					if (!assign_hold(c, &c->spd,
 							   b->transport_proto,
 							   &b->our_client,
-							   &b->peer_client);
+							   &b->peer_client)) {
+						libreswan_log("PAUL: assign_hold failed!");
+					}
 				} else {
-					libreswan_log("PAUL:b->held is false - not calling assign_hold()");
+					/* if we had negotationshunt=hold we would need to delete that?? */
+					libreswan_log("PAUL: failureshunt=pass - not calling assign_hold");
 				}
 				DBG(DBG_OPPO | DBG_CONTROL,
 				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
