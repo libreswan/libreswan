@@ -1065,6 +1065,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 	 *
 	 */
 
+#if 0
 	if (transport_proto != 0) {
 		ip_subnet this_broad_client, that_broad_client;
 
@@ -1145,7 +1146,9 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 		} else {
 			return FALSE;
 		}
-	} else {
+	} else 
+#endif
+	{
 		enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
 
 		DBG(DBG_KERNEL,
@@ -1154,7 +1157,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 		if (raw_eroute(null_host, &this_client,
 				null_host, &that_client,
 			       htonl(shunt_spi), SA_INT,
-			       0, /* transport_proto */
+			       transport_proto,
 			       ET_INT, null_proto_info,
 			       deltatime(SHUNT_PATIENCE),
 			       DEFAULT_IPSEC_SA_PRIORITY,
@@ -1166,7 +1169,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			struct bare_shunt **bs_pp = bare_shunt_ptr(
 				&this_client,
 				&that_client,
-				0 /* transport_proto */);
+				transport_proto);
 
 			/* we can have proto mismatching acquires with netkey - this is a bad workaround */
 			/* passert(bs_pp != NULL); */
@@ -1237,7 +1240,7 @@ bool eroute_connection(struct spd_route *sr,
 
 /* assign a bare hold to a connection */
 
-bool assign_hold(struct connection *c,
+bool assign_holdpass(struct connection *c,
 		 struct spd_route *sr,
 		 int transport_proto,
 		 const ip_address *src, const ip_address *dst)
@@ -1250,14 +1253,13 @@ bool assign_hold(struct connection *c,
 	enum routing_t ro = sr->routing,        /* routing, old */
 		       rn = ro;                 /* routing, new */
 
-	libreswan_log("PAUL: assign_hold() called for %s", c->name);
+	libreswan_log("PAUL: assign_holdpass() called for %s", c->name);
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
 	/* figure out what routing should become */
 	switch (ro) {
 	case RT_UNROUTED:
-		// should be a config item - for now just check for opportunstic to do %pass
-		if (c->policy & POLICY_OPPORTUNISTIC)
+		if (c->policy & POLICY_NEGO_PASS)
 			rn = RT_UNROUTED_PASS;
 		else
 			rn = RT_UNROUTED_HOLD;
@@ -1278,7 +1280,7 @@ bool assign_hold(struct connection *c,
 	// eclipsable is supposed to return TRUE if src and dst are a host (eg /24) - but it didn't ??
 	// if (eclipsable(sr)) {
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-	libreswan_log("PAUL: assign_hold() removing bare shunt");
+	libreswan_log("PAUL: assign_holdpass() removing bare shunt");
 		/* although %hold is appropriately broad, it will no longer be bare
 		 * so we must ditch it from the bare table.
 		 */
@@ -1286,7 +1288,7 @@ bool assign_hold(struct connection *c,
 					       &sr->that.client,
 					       sr->this.protocol));
 	} else {
-		libreswan_log("PAUL: assign_hold() need broad(er) shunt");
+		libreswan_log("PAUL: assign_holdpass() need broad(er) shunt");
 		/* we need a broad %hold, not the narrow one.
 		 * First we ensure that there is a broad %hold.
 		 * There may already be one (race condition): no need to create one.
@@ -1300,16 +1302,14 @@ bool assign_hold(struct connection *c,
 
 			if (erouted(ro)) {
 				op = ERO_REPLACE;
-				// reason = "replace %trap with broad %hold";
-				reason = "replace %trap with broad %pass";
+				reason = "replace %trap with broad %pass or %hold";
 			} else {
 				op = ERO_ADD;
-				// reason = "add broad %hold";
-				reason = "add broad %pass";
+				reason = "add broad %pass or %hold";
 			}
 
-			// if (!eroute_connection(sr, htonl(SPI_HOLD),
-			if (!eroute_connection(sr, htonl(SPI_PASS),
+			if (!eroute_connection(sr, htonl(
+				(c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD),
 					       SA_INT, ET_INT,
 					       null_proto_info,
 					       op,
@@ -1318,25 +1318,24 @@ bool assign_hold(struct connection *c,
 					       , c->policy_label
 #endif
 					       )) {
-			libreswan_log("PAUL: assign_hold() eroute_connection() failed");
+				libreswan_log("PAUL: assign_holdpass() eroute_connection() failed");
 				return FALSE;
 			}
 		}
 
 		if (!replace_bare_shunt(src, dst,
 					BOTTOM_PRIO,
-					// SPI_HOLD,
-					SPI_PASS,
+					(c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
 					FALSE,
 					transport_proto,
 					// "delete narrow %hold"))
 					"delete narrow %pass")) {
-			libreswan_log("PAUL: assign_hold() replace_bare_shunt() failed");
+			libreswan_log("PAUL: assign_holdpass() replace_bare_shunt() failed");
 			return FALSE;
 		}
 	}
 	sr->routing = rn;
-	libreswan_log("PAUL: assign_hold() done - returning success");
+	libreswan_log("PAUL: assign_holdpas() done - returning success");
 	return TRUE;
 }
 

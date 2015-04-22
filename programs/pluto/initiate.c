@@ -808,7 +808,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		 * this connection, so we initiate it
 		 */
 		if (!(c->policy & POLICY_NEGO_PASS)) {
-			(void) assign_hold(c, sr, b->transport_proto,
+			(void) assign_holdpass(c, sr, b->transport_proto,
 					   &b->our_client, &b->peer_client);
 		}
 
@@ -1146,18 +1146,13 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				passert(LHAS(LELEM(RT_UNROUTED) |
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
-				if (!(c->policy & POLICY_FAIL_PASS)) {
-					libreswan_log("PAUL: failureshunt=hold - calling assign_hold()");
-					/* what should we do on failure? */
-					if (!assign_hold(c, &c->spd,
-							   b->transport_proto,
-							   &b->our_client,
-							   &b->peer_client)) {
-						libreswan_log("PAUL: assign_hold failed!");
-					}
-				} else {
-					/* if we had negotationshunt=hold we would need to delete that?? */
-					libreswan_log("PAUL: failureshunt=pass - not calling assign_hold");
+				libreswan_log("PAUL: failureshunt=hold - calling assign_holdpass()");
+				/* what should we do on failure? */
+				if (!assign_holdpass(c, &c->spd,
+						   b->transport_proto,
+						   &b->our_client,
+						   &b->peer_client)) {
+					libreswan_log("PAUL: assign_holdpass failed!");
 				}
 				DBG(DBG_OPPO | DBG_CONTROL,
 				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
