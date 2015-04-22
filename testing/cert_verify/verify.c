@@ -48,6 +48,8 @@ char *db_dir = NULL;
 char *end_file = NULL;
 char *sub_file = NULL;
 char *rightca_nick = NULL;
+PRBool retry_verify = PR_FALSE;
+PRBool retried = PR_FALSE;
 
 static void get_file(SECItem *cert, const char *path)
 {
@@ -239,6 +241,9 @@ int main(int argc, char *argv[])
 	CERTCertDBHandle *handle = NULL;
 	CERTCertificate **certout = NULL;
 	CERTVerifyLog vfy_log;
+	CERTVerifyLog vfy_log2;
+	CERTVerifyLog *cur_log;
+	CERTValOutParam *pkixout = NULL;
 
 	SECItem c1;
 	SECItem c2;
@@ -247,7 +252,7 @@ int main(int argc, char *argv[])
 	certs[1] = &c2;
 
 	int numcerts = 0;
-	while ((opt = getopt(argc, argv, "u:d:e:pn:s:coS")) != -1) {
+	while ((opt = getopt(argc, argv, "u:d:e:pn:s:coSr")) != -1) {
 		switch(opt) {
 			/* usage type */
 		case 'u':
@@ -276,6 +281,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'n':
 			rightca_nick = optarg;
+			break;
+		case 'r':
+			retry_verify = PR_TRUE;
 			break;
 		default:
 			print_usage();
@@ -322,6 +330,11 @@ int main(int argc, char *argv[])
 	vfy_log.tail = NULL;
 	vfy_log.arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 
+	vfy_log2.count = 0;
+	vfy_log2.head = NULL;
+	vfy_log2.tail = NULL;
+	vfy_log2.arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+
 	if (use_pkix) {
 		int in_idx = 0;
 		CERTValInParam cvin[7];
@@ -358,39 +371,70 @@ int main(int argc, char *argv[])
 
 		cvout[0].type = cert_po_errorLog;
 		cvout[0].value.pointer.log = &vfy_log;
+		cur_log = &vfy_log;
 		cvout[1].type = cert_po_certList;
 		cvout[1].value.pointer.chain = NULL;
 		cvout[2].type = cert_po_end;
+		pkixout = &cvout[0];
 
+pkixredo:
 		rv = CERT_PKIXVerifyCert(*certout, pkixusage, cvin, cvout,
 				NULL);
 
-		CERT_DestroyCertList(trustcl);
+		//CERT_DestroyCertList(trustcl);
 
 	} else {
+		cur_log = &vfy_log;
+vfyredo:
 		rv = CERT_VerifyCert(handle, *certout, PR_TRUE, usage, PR_Now(),
 								       NULL,
-								       &vfy_log);
+								       cur_log);
 	}
 
-	if (rv != SECSuccess || vfy_log.count > 0) {
-		if (vfy_log.count > 0 && vfy_log.head != NULL) {
-			fin = err_stat(vfy_log.head);
+	if (rv != SECSuccess || cur_log->count > 0) {
+		if (cur_log->count > 0 && cur_log->head != NULL) {
+			fin = err_stat(cur_log->head);
 		} else {
 			fin = PORT_GetError();
 		}
 		if (fin == SEC_ERROR_INADEQUATE_KEY_USAGE) {
-			printf("SEC_ERROR_INADEQUATE_KEY_USAGE : Certificate key usage inadequate for attempted operation."
+			printf("SEC_ERROR_INADEQUATE_KEY_USAGE : Certificate key usage inadequate for attempted operation.\n"
 				);
 		} else if (fin == SEC_ERROR_INADEQUATE_CERT_TYPE) {
-			printf("SEC_ERROR_INADEQUATE_CERT_TYPE : Certificate type not approved for application."
+			printf("SEC_ERROR_INADEQUATE_CERT_TYPE : Certificate type not approved for application.\n"
 				);
 		} else {
 			printf("OTHER : %ld", fin);
 		}
 	}
+	if ((fin == SEC_ERROR_INADEQUATE_CERT_TYPE ||
+			fin == SEC_ERROR_INADEQUATE_KEY_USAGE) &&
+					 retry_verify && !retried) {
+		printf("Retrying verification\n");
+		fin = 0;
+		retried = PR_TRUE;
+		if (use_pkix) {
+			pkixout[0].value.pointer.log = &vfy_log2;
+			cur_log = &vfy_log2;
+			pkixout[1].value.pointer.chain = NULL;
+			if (pkixusage == certificateUsageSSLClient) {
+				pkixusage = certificateUsageSSLServer;
+			} else {
+				pkixusage = certificateUsageSSLClient;
+			}
+			goto pkixredo;
+		} else {
+			if (usage == certUsageSSLClient) {
+				usage = certUsageSSLServer;
+			} else {
+				usage = certUsageSSLClient;
+			}
+			goto vfyredo;
+		}
+	}
 
 	PORT_FreeArena(vfy_log.arena, PR_FALSE);
+	PORT_FreeArena(vfy_log2.arena, PR_FALSE);
 	NSS_Shutdown();
 	exit(fin == 0 ? 0 : 1);
 }

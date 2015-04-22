@@ -86,6 +86,7 @@ parser.add_argument('--subcrit', '-C', action='store_true', default=False, help=
 parser.add_argument('--endku', '-e', action='store', default='', help='end cert keyUsage string')
 parser.add_argument('--endeku', '-E', action='store', default='', help='end extendedKeyUsage string')
 parser.add_argument('--pkix', '-p', action='store_true', default='', help='use the pkix validator')
+parser.add_argument('--retry', '-x', action='store_true', default='', help='use the usage failover retry')
 parser.add_argument('--ocsp', '-O', action='store_true', default='', help='ocsp checking')
 parser.add_argument('--crl', '-L', action='store_true', default='', help='ocsp checking')
 parser.add_argument('--strict', '-z', action='store_true', default='', help='strict checks')
@@ -233,6 +234,8 @@ class usageTest:
 			cmd = cmd + " -c"
 		if args.strict:
 			cmd = cmd + " -S"
+		if args.retry:
+			cmd = cmd + " -r"
 		if args.use_sub:
 			cmd = cmd + " -s " + FILE_DIR + "sub.pem"
 
