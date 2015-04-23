@@ -799,8 +799,17 @@ static bool shunt_eroute(struct connection *c,
 			 enum pluto_sadb_operations op,
 			 const char *opname)
 {
-	if (kernel_ops->shunt_eroute != NULL)
+	if (kernel_ops->shunt_eroute != NULL) {
+		libreswan_log("PAUL:shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s'",
+			c->name, opname, enum_name(&routing_story, rt_kind));
+		if ((c->policy & POLICY_OPPORTUNISTIC) && (c->policy & POLICY_FAIL_PASS) &&
+			rt_kind == RT_UNROUTED && op == ERO_DELETE) {
+			libreswan_log("PAUL:shunt_eroute() deleting shunt, need to install pass shunt with timer");
+			return kernel_ops->shunt_eroute(c, sr, RT_UNROUTED_PASS, ERO_ADD, "add");
+		}
+		libreswan_log("PAUL:shunt_eroute() no pass shunt added, continue deleting bare shunt");
 		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname);
+	}
 
 	loglog(RC_COMMENT, "no shunt_eroute implemented for %s interface",
 	       kernel_ops->kern_name);
