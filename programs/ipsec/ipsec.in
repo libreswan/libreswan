@@ -162,10 +162,6 @@ case "${1}" in
 	exit 0
 	;;
     initnss|--initnss|checknss|--checknss)
-	if [ $(id -u) -ne 0 ]; then
-	    echo "permision denied on nss operation (must be superuser)"
-	    exit 4
-	fi
 	if [ -n "${2}" ]; then
 	    # A lot of nss commands use -d or --configdir to specify
 	    # NSS db location
