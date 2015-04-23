@@ -2,7 +2,7 @@
 # STACK startup script
 # Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
-# Copyright (C) 2008-2014 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008-2015 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -419,8 +419,7 @@ if [ $(id -u) -ne 0 ]; then
     exit 4
 fi
 
-if [ "$2" = "--netkey" ]
-then
+if [ "$2" = "--netkey" ]; then
 	# manual override for use in docker
 	stack=netkey
 else
@@ -442,15 +441,18 @@ esac
 
 case ${action} in
     stop)
-	# We don't unload NETKEY/XFRM on stop - only when we detect a stack change.
+	# We don't unload NETKEY/XFRM on stop - only when we detect a stack
+	# change.
 	if [ -f ${ipsecpfkey} ]; then
 		ipsec eroute --clear
-		# this clears all IP addresses on ipsecX interfaces by unloading the module
+		# this clears all IP addresses on ipsecX interfaces by
+		# unloading the module
 		stopklips
 	elif [ -f ${kamepfkey} ]; then
 		ip xfrm state flush
 		ip xfrm policy flush
-		# module unloading skipped on purpose - can hang for a long time or fail
+		# module unloading skipped on purpose - can hang for a long
+		# time or fail
 	fi
 	;;
     start)
