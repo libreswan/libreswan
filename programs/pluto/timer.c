@@ -144,6 +144,8 @@ static void retransmit_v1_msg(struct state *st)
 
 	if (delay_ms != 0) {
 		delay_ms =  retrans_delay(st, delay_ms);
+
+	if (delay_ms != 0) {
 		resend_ike_v1_msg(st, "EVENT_v1_RETRANSMIT");
 		event_schedule_ms(EVENT_v1_RETRANSMIT, delay_ms, st);
 	} else {
