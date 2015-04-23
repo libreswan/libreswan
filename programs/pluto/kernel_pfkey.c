@@ -1218,7 +1218,8 @@ void pfkey_close(void)
 	pfkeyfd = NULL_FD;
 }
 
-/* Add/replace/delete a shunt eroute.
+/*
+ * Add/replace/delete a shunt eroute.
  * Such an eroute determines the fate of packets without the use
  * of any SAs.  These are defaults, in effect.
  * If a negotiation has not been attempted, use %trap.
