@@ -64,6 +64,7 @@ chunk_t chunk_from_symkey_bits(const char *name, PK11SymKey *source_key,
 			       size_t next_bit, size_t sizeof_chunk);
 chunk_t chunk_from_symkey_bytes(const char *name, PK11SymKey *source_key,
 				size_t next_byte, size_t sizeof_chunk);
+chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key);
 
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key

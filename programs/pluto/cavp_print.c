@@ -56,8 +56,7 @@ void print_chunk(const char *prefix, chunk_t chunk, size_t binlen)
 
 void print_symkey(const char *prefix, PK11SymKey *key, size_t binlen)
 {
-        chunk_t chunk = chunk_from_symkey_bytes(prefix, key, 0,
-                                                PK11_GetKeyLength(key));
+        chunk_t chunk = chunk_from_symkey(prefix, key);
 	print_chunk(prefix, chunk, binlen);
         freeanychunk(chunk);
 }

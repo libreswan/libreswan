@@ -47,9 +47,7 @@ static PK11SymKey *merge_symkey_bytes(PK11SymKey *base_key,
  * SYMKEY I/O operations.
  *
  * SYMKEY_FROM_CHUNK uses the SCRATCH key as a secure starting point
- * for creating the key.  The others don't so are not FIPS friendly.
- *
- * DECODE_TO_KEY decodes a hex encoded string.
+ * for creating the key.
  */
 
 PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk)
@@ -66,8 +64,7 @@ PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk)
 
 void dbg_dump_symkey(const char *prefix, PK11SymKey *key)
 {
-	chunk_t chunk = chunk_from_symkey_bytes(prefix, key, 0,
-						PK11_GetKeyLength(key));
+	chunk_t chunk = chunk_from_symkey(prefix, key);
 	DBG_dump_chunk(prefix, chunk);
 	freeanychunk(chunk);
 }
@@ -210,6 +207,12 @@ chunk_t chunk_from_symkey_bytes(const char *name, PK11SymKey *source_key,
 {
 	return chunk_from_symkey_bits(name, source_key,
 				      next_byte * BITS_PER_BYTE, sizeof_chunk);
+}
+
+chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key)
+{
+	return chunk_from_symkey_bits(name, source_key, 0,
+				      PK11_GetKeyLength(source_key));
 }
 
 /*

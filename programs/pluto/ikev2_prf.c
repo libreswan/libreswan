@@ -169,14 +169,12 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	SK_pi_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
 	/* store copy of SK_pi_k for later use in authnull */
-	chunk_SK_pi = chunk_from_symkey_bytes("chunk_SK_pi", SK_pi_k,
-					      0, skp_bytes);
+	chunk_SK_pi = chunk_from_symkey("chunk_SK_pi", SK_pi_k);
 	next_byte += skp_bytes;
 
 	SK_pr_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);
 	/* store copy of SK_pr_k for later use in authnull */
-	chunk_SK_pr = chunk_from_symkey_bytes("chunk_SK_pr", SK_pr_k,
-					      0, skp_bytes);
+	chunk_SK_pr = chunk_from_symkey("chunk_SK_pr", SK_pr_k);
 	next_byte += skp_bytes;
 
 	DBG(DBG_CRYPT,
