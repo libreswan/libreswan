@@ -24,14 +24,15 @@
 /*
  * XXX: Is there any documentation on this generic operation?
  */
-static PK11SymKey *merge_symkey_chunk(PK11SymKey *base_key, chunk_t chunk,
+static PK11SymKey *merge_symkey_bytes(PK11SymKey *base_key,
+				      const void *bytes, size_t sizeof_bytes,
 				      CK_MECHANISM_TYPE derive,
 				      CK_MECHANISM_TYPE target)
 {
-	passert(chunk.len > 0);
+	passert(sizeof_bytes > 0);
 	CK_KEY_DERIVATION_STRING_DATA string = {
-		.pData = chunk.ptr,
-		.ulLen = chunk.len,
+		.pData = (void *)bytes,
+		.ulLen = sizeof_bytes,
 	};
 	SECItem param = {
 		.data = (unsigned char*)&string,
@@ -53,7 +54,7 @@ static PK11SymKey *merge_symkey_chunk(PK11SymKey *base_key, chunk_t chunk,
 
 PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk)
 {
-	PK11SymKey *tmp = merge_symkey_chunk(scratch, chunk,
+	PK11SymKey *tmp = merge_symkey_bytes(scratch, chunk.ptr, chunk.len,
 					     CKM_CONCATENATE_DATA_AND_BASE,
 					     CKM_EXTRACT_KEY_FROM_KEY);
 	passert(tmp != NULL);
@@ -98,7 +99,8 @@ PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
 				PK11SymKey *lhs, chunk_t rhs)
 {
 	CK_MECHANISM_TYPE mechanism = nss_key_derivation_mech(hasher);
-	return merge_symkey_chunk(lhs, rhs, CKM_CONCATENATE_BASE_AND_DATA,
+	return merge_symkey_bytes(lhs, rhs.ptr, rhs.len,
+				  CKM_CONCATENATE_BASE_AND_DATA,
 				  mechanism);
 }
 
@@ -299,7 +301,7 @@ PK11SymKey *hash_symkey(const struct hash_desc *hasher,
  */
 PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs)
 {
-	return merge_symkey_chunk(lhs, rhs,
+	return merge_symkey_bytes(lhs, rhs.ptr, rhs.len,
 				  CKM_XOR_BASE_AND_DATA,
 				  CKM_CONCATENATE_BASE_AND_DATA);
 }
