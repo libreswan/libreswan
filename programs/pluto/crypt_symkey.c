@@ -98,21 +98,26 @@ PK11SymKey *concat_symkey_symkey(const struct hash_desc *hasher,
 			   key_size);
 }
 
+PK11SymKey *concat_symkey_bytes(const struct hash_desc *hasher,
+				PK11SymKey *lhs, const void *rhs,
+				size_t sizeof_rhs)
+{
+	CK_MECHANISM_TYPE mechanism = nss_key_derivation_mech(hasher);
+	return merge_symkey_bytes(lhs, rhs, sizeof_rhs,
+				  CKM_CONCATENATE_BASE_AND_DATA,
+				  mechanism);
+}
+
 PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
 				PK11SymKey *lhs, chunk_t rhs)
 {
-	CK_MECHANISM_TYPE mechanism = nss_key_derivation_mech(hasher);
-	return merge_symkey_bytes(lhs, rhs.ptr, rhs.len,
-				  CKM_CONCATENATE_BASE_AND_DATA,
-				  mechanism);
+	return concat_symkey_bytes(hasher, lhs, rhs.ptr, rhs.len);
 }
 
 PK11SymKey *concat_symkey_byte(const struct hash_desc *hasher,
 			       PK11SymKey *lhs, uint8_t rhs)
 {
-	chunk_t byte;
-	setchunk(byte, &rhs, sizeof(rhs));
-	return concat_symkey_chunk(hasher, lhs, byte);
+	return concat_symkey_bytes(hasher, lhs, &rhs, sizeof(rhs));
 }
 
 /*
@@ -130,20 +135,26 @@ void append_symkey_symkey(const struct hash_desc *hasher,
 	*lhs = newkey;
 }
 
+void append_symkey_bytes(const struct hash_desc *hasher,
+			 PK11SymKey **lhs, const void *rhs,
+			 size_t sizeof_rhs)
+{
+	PK11SymKey *newkey = concat_symkey_bytes(hasher, *lhs,
+						 rhs, sizeof_rhs);
+	PK11_FreeSymKey(*lhs);
+	*lhs = newkey;
+}
+
 void append_symkey_chunk(const struct hash_desc *hasher,
 			 PK11SymKey **lhs, chunk_t rhs)
 {
-	PK11SymKey *newkey = concat_symkey_chunk(hasher, *lhs, rhs);
-	PK11_FreeSymKey(*lhs);
-	*lhs = newkey;
+	append_symkey_bytes(hasher, lhs, rhs.ptr, rhs.len);
 }
 
 void append_symkey_byte(const struct hash_desc *hasher,
 			PK11SymKey **lhs, uint8_t rhs)
 {
-	chunk_t byte;
-	setchunk(byte, &rhs, sizeof(rhs));
-	append_symkey_chunk(hasher, lhs, byte);
+	append_symkey_bytes(hasher, lhs, &rhs, sizeof(rhs));
 }
 
 /*
