@@ -464,7 +464,6 @@ static void confwrite_conn(FILE *out,
 		lset_t phase2_policy =
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
-		lset_t failure_policy = (conn->policy & POLICY_FAIL_MASK);
 		lset_t shunt_policy = (conn->policy & POLICY_SHUNT_MASK);
 		lset_t ikev2_policy = (conn->policy & POLICY_IKEV2_MASK);
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
@@ -483,9 +482,6 @@ static void confwrite_conn(FILE *out,
 
 			cwpb("pfs", POLICY_PFS);
 			cwpbf("ikepad", POLICY_NO_IKEPAD);
-			/* ??? the following used to write out "rekey=no  #duplicate?" */
-			cwpbf("rekey", POLICY_DONT_REKEY);
-			cwpbf("overlapip", POLICY_OVERLAPIP);
 
 			{
 				const char *abs = "UNKNOWN";
@@ -536,34 +532,6 @@ static void confwrite_conn(FILE *out,
 				cwf("phase2", p2ps);
 			}
 
-			{
-				const char *fps = "UNKNOWN";
-
-				switch (failure_policy) {
-				case POLICY_FAIL_NONE:
-					fps = NULL;	/* uninteresting */
-					break;
-
-				case POLICY_FAIL_PASS:
-					fps = "passthrough";
-					break;
-
-				case POLICY_FAIL_DROP:
-					fps = "drop";
-					break;
-
-				case POLICY_FAIL_REJECT:
-					fps = "reject";
-					break;
-
-				default:
-					fps = "UNKNOWN";
-					break;
-				}
-				if (fps != NULL)
-					cwf("failureshunt", fps);
-			}
-
 			/* ikev2= */
 			{
 				const char *v2ps = "UNKNOWN";
@@ -590,24 +558,24 @@ static void confwrite_conn(FILE *out,
 			}
 
 			{
-				const char *fps = "UNKNOWN";
+				const char *ifp = "UNKNOWN";
 
 				switch (ike_frag_policy) {
 				case LEMPTY:
-					fps = "never";
+					ifp = "never";
 					break;
 
 				case POLICY_IKE_FRAG_ALLOW:
 					/* it's the default, do not print anything */
-					fps = NULL;
+					ifp = NULL;
 					break;
 
 				case POLICY_IKE_FRAG_ALLOW | POLICY_IKE_FRAG_FORCE:
-					fps = "force";
+					ifp = "force";
 					break;
 				}
-				if (fps != NULL)
-					cwf("ike_frag", fps);
+				if (ifp != NULL)
+					cwf("ike_frag", ifp);
 			}
 
 			break; /* end of case POLICY_SHUNT_TRAP */

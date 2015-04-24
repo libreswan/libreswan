@@ -458,6 +458,10 @@ bool same_id(const struct id *a, const struct id *b)
 				(char *)b->name.ptr, al);
 	}
 
+	case ID_FROMCERT:
+		DBG(DBG_CONTROL,
+			DBG_log("same_id() received ID_FROMCERT - unexpected"));
+		/* FALLTHROUGH */
 	case ID_DER_ASN1_DN:
 		return same_dn(a->name, b->name);
 

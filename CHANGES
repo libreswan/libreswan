@@ -40,6 +40,8 @@ v3.13 (unreleased)
 * NETKEY: Increase netlink message buffer for larger SElinux labels [Paul]
 * whack: cleanup help text [Tuomo]
 * _stackmanager: Don't load blacklisted modules (rhbz#1207689) [Paul]
+* Bugtracker bugs fixed:
+  #260: libswan: extra safetey around same_id() when ID_FROMCERT is used [Paul]
 
 v3.12 (November 6, 2014)
 * IKEv2: CP payload now installs internal address and dns [Antony]

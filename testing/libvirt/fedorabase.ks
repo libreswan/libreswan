@@ -105,6 +105,7 @@ yum install -y \
     vim-enhanced \
     wget \
     xl2tpd \
+    xmlto \
     yum-utils
 
 debuginfo-install -y \
