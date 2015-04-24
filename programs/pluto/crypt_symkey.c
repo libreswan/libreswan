@@ -50,16 +50,22 @@ static PK11SymKey *merge_symkey_bytes(PK11SymKey *base_key,
  * for creating the key.
  */
 
-PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk)
+PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
+			      size_t sizeof_bytes)
 {
-	PK11SymKey *tmp = merge_symkey_bytes(scratch, chunk.ptr, chunk.len,
+	PK11SymKey *tmp = merge_symkey_bytes(scratch, bytes, sizeof_bytes,
 					     CKM_CONCATENATE_DATA_AND_BASE,
 					     CKM_EXTRACT_KEY_FROM_KEY);
 	passert(tmp != NULL);
-	PK11SymKey *key = key_from_symkey_bytes(tmp, 0, chunk.len);
+	PK11SymKey *key = key_from_symkey_bytes(tmp, 0, sizeof_bytes);
 	passert(key != NULL);
 	PK11_FreeSymKey(tmp);
 	return key;
+}
+
+PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk)
+{
+	return symkey_from_bytes(scratch, chunk.ptr, chunk.len);
 }
 
 void dbg_dump_symkey(const char *prefix, PK11SymKey *key)

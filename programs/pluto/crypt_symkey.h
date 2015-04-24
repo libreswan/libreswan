@@ -25,10 +25,15 @@ struct hash_desc;
 struct encrypt_desc;
 
 /*
- * SYMKEY_FROM_CHUNK uses the SCRATCH key as a secure starting point
- * for creating the key.  The others don't so are not FIPS friendly.
+ * Use SCRATCH key as a secure starting point for creating the key
+ * from the raw bytes, or chunk.
  */
+
+PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
+			      size_t sizeof_bytes);
+  
 PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk);
+
 void dbg_dump_symkey(const char *prefix, PK11SymKey *key);
 
 /*
