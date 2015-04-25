@@ -1186,6 +1186,9 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 				&that_client,
 				transport_proto);
 
+			libreswan_log("PAUL:raw_eroute to delete kernel shunt succeeded, bare shunt lookup %s",
+				(bs_pp == NULL) ? "failed" : "succeeded");
+
 			/* we can have proto mismatching acquires with netkey - this is a bad workaround */
 			/* passert(bs_pp != NULL); */
 			if (bs_pp == NULL) {
@@ -1213,6 +1216,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			}
 			return TRUE;
 		} else {
+			libreswan_log("PAUL:raw_eroute to delete kernel shunt failed");
 			return FALSE;
 		}
 	}
