@@ -1858,10 +1858,10 @@ struct connection *oppo_instantiate(struct connection *c,
 	if (sameaddr(peer_client, &d->spd.that.host_addr))
 		d->spd.that.has_client = FALSE;
 
-	pexpect(d->gw_info == NULL);
-	if (d->gw_info == NULL) {
-	gw_addref(gw);
-	d->gw_info = gw;
+	if (!(d->policy & POLICY_AUTH_NULL)) {
+		passert(d->gw_info == NULL);
+		gw_addref(gw);
+		d->gw_info = gw;
 	}
 
 	/*
