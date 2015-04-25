@@ -900,7 +900,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			// now delete the (obsoleted) narrow bare kernel shunt
 			setportof(ourport, &this_client.addr);
 			setportof(hisport, &that_client.addr);
-			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, shunt_spi,
+			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, SPI_HOLD /* dictated by kernel */,
 				FALSE /* delete bare shunt */, b->transport_proto, delmsg)) {
 					libreswan_log("PAUL: Failed to: %s", delmsg);
 			} else {
