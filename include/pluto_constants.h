@@ -549,7 +549,6 @@ enum routing_t {
 	RT_ROUTED_FAILURE,      /* routed, and failure-context shunt installed */
 	RT_ROUTED_TUNNEL,       /* routed, and erouted to an IPSEC SA group */
 	RT_UNROUTED_KEYED,       /* keyed, but not routed, on purpose */
-	RT_UNROUTED_PASS	/* unrouted, but PASS shunt installed */
 };
 
 #define routed(rs) ((rs) > RT_UNROUTED_HOLD)

@@ -799,15 +799,9 @@ static bool shunt_eroute(struct connection *c,
 			 enum pluto_sadb_operations op,
 			 const char *opname)
 {
-	if (kernel_ops->shunt_eroute != NULL) {
-		libreswan_log("PAUL:shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s'",
+	libreswan_log("PAUL:shunt_eroute() called for connection '%s' to '%s' for rt_kind '%s'",
 			c->name, opname, enum_name(&routing_story, rt_kind));
-		if ((c->policy & POLICY_OPPORTUNISTIC) && (c->policy & POLICY_FAIL_PASS) &&
-			rt_kind == RT_UNROUTED && op == ERO_DELETE) {
-			libreswan_log("PAUL:shunt_eroute() deleting shunt, need to install pass shunt with timer");
-			return kernel_ops->shunt_eroute(c, sr, RT_UNROUTED_PASS, ERO_ADD, "add");
-		}
-		libreswan_log("PAUL:shunt_eroute() no pass shunt added, continue deleting bare shunt");
+	if (kernel_ops->shunt_eroute != NULL) {
 		return kernel_ops->shunt_eroute(c, sr, rt_kind, op, opname);
 	}
 
@@ -1048,7 +1042,7 @@ static void clear_narrow_holds(const ip_subnet *ours,
 				libreswan_log("PAUL: replace_bare_shunt() in clear_narrow_holds() failed for removing clashing narrow holds");
 			}
 
-			/* restart from beginning as we just removed and entry */
+			/* restart from beginning as we just removed an entry */
 			pp = &bare_shunts;
 			continue;
 		}
@@ -1262,9 +1256,9 @@ bool eroute_connection(struct spd_route *sr,
 /* assign a bare hold or pass to a connection */
 
 bool assign_holdpass(struct connection *c,
-		 struct spd_route *sr,
-		 int transport_proto,
-		 const ip_address *src, const ip_address *dst)
+		struct spd_route *sr,
+		int transport_proto, ipsec_spi_t failure_shunt,
+		const ip_address *src, const ip_address *dst)
 {
 	/* either the automatically installed %hold eroute is broad enough
 	 * or we try to add a broader one and delete the automatic one.
@@ -1280,16 +1274,13 @@ bool assign_holdpass(struct connection *c,
 	/* figure out what routing should become */
 	switch (ro) {
 	case RT_UNROUTED:
-		if (c->policy & POLICY_NEGO_PASS)
-			rn = RT_UNROUTED_PASS;
-		else
-			rn = RT_UNROUTED_HOLD;
+		rn = RT_UNROUTED_HOLD;
 		break;
 	case RT_ROUTED_PROSPECTIVE:
 		rn = RT_ROUTED_HOLD;
 		break;
 	default:
-		/* no change: this %hold is old news and should just be deleted */
+		/* no change: this %hold or %pass is old news */
 		break;
 	}
 
@@ -1298,11 +1289,10 @@ bool assign_holdpass(struct connection *c,
 		    enum_name(&routing_story, ro),
 		    enum_name(&routing_story, rn)));
 
-	// eclipsable is supposed to return TRUE if src and dst are a host (eg /24) - but it didn't ??
-	// if (eclipsable(sr)) {
-	if (c->policy & POLICY_OPPORTUNISTIC) {
+	if (eclipsable(sr)) {
+	//if (c->policy & POLICY_OPPORTUNISTIC) {
 	libreswan_log("PAUL: assign_holdpass() removing bare shunt");
-		/* although %hold is appropriately broad, it will no longer be bare
+		/* although %hold or %pass is appropriately broad, it will no longer be bare
 		 * so we must ditch it from the bare table.
 		 */
 		free_bare_shunt(bare_shunt_ptr(&sr->this.client,
@@ -1329,8 +1319,7 @@ bool assign_holdpass(struct connection *c,
 				reason = "add broad %pass or %hold";
 			}
 
-			if (!eroute_connection(sr, htonl(
-				(c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD),
+			if (eroute_connection(sr, htonl(failure_shunt),
 					       SA_INT, ET_INT,
 					       null_proto_info,
 					       op,
@@ -1339,6 +1328,8 @@ bool assign_holdpass(struct connection *c,
 					       , c->policy_label
 #endif
 					       )) {
+				DBG(DBG_CONTROL, DBG_log("PAUL: assign_holdpass() eroute_connection() done"));
+			} else {
 				libreswan_log("PAUL: assign_holdpass() eroute_connection() failed");
 				return FALSE;
 			}

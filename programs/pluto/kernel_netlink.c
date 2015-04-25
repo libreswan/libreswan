@@ -1498,8 +1498,12 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 		return;
 	}
 
-	(void) replace_bare_shunt(&src, &dst, BOTTOM_PRIO, SPI_PASS, FALSE,
-			transport_proto, "delete expired bare shunt");
+	if (replace_bare_shunt(&src, &dst, BOTTOM_PRIO, SPI_PASS, FALSE,
+			transport_proto, "delete expired bare shunt")) {
+		DBG(DBG_CONTROL, DBG_log("netlink_shunt_expire() called replace_bare_shunt() with success"));
+	} else {
+		libreswan_log("netlink_shunt_expire() called replace_bare_shunt() which failed!");
+	}
 }
 
 static void netlink_policy_expire(struct nlmsghdr *n)

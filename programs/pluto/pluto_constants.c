@@ -264,11 +264,10 @@ static const char *const routing_story_strings[] = {
 	"fail erouted",         /* RT_ROUTED_FAILURE: routed, and failure-context shunt eroute installed */
 	"erouted",              /* RT_ROUTED_TUNNEL: routed, and erouted to an IPSEC SA group */
 	"keyed, unrouted",      /* RT_UNROUTED_KEYED: was routed+keyed, but it got turned into an outer policy */
-	"unrouted PASS",	/* RT_UNROUTED_PASS: unrouted, but PASS shunt installed */
 };
 
 enum_names routing_story =
-	{ RT_UNROUTED, RT_UNROUTED_PASS, routing_story_strings, NULL };
+	{ RT_UNROUTED, RT_ROUTED_TUNNEL, routing_story_strings, NULL };
 
 static const char *const stfstatus_names[] = {
 	"STF_IGNORE",

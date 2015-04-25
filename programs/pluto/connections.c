@@ -1858,7 +1858,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	if (sameaddr(peer_client, &d->spd.that.host_addr))
 		d->spd.that.has_client = FALSE;
 
-	//passert(d->gw_info == NULL);
+	pexpect(d->gw_info == NULL);
 	if (d->gw_info == NULL) {
 	gw_addref(gw);
 	d->gw_info = gw;
@@ -3698,8 +3698,10 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 	 * It should be caught by the testing/pluto/co-terminal test cases
 	 */
 
-	if (sr1 == NULL)
+	if (sr1 == NULL) {
+		libreswan_log("PAUL: eclipsed() returning NULL due to sr1 == NULL");
 		return NULL;
+	}
 
 	for (ue = connections; ue != NULL; ue = ue->ac_next) {
 		struct spd_route *srue = &ue->spd;
@@ -3713,6 +3715,11 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 			*esrp = srue;
 			break;
 		}
+	}
+	if (ue == NULL) {
+		libreswan_log("PAUL: eclipsed() returning NULL due to ue == NULL");
+	} else {
+		libreswan_log("PAUL: eclipsed() returning non-NULL ue");
 	}
 	return ue;
 }
