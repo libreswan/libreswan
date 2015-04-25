@@ -1164,7 +1164,11 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			return FALSE;
 		}
 	} else 
-#endif
+#else
+	if (transport_proto != 0) {
+		libreswan_log("PAUL: replace_bare_shunt with transport_proto %d", transport_proto);
+	}
+#endif /* if 0 */
 	{
 		enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
 
@@ -1255,7 +1259,7 @@ bool eroute_connection(struct spd_route *sr,
 			  );
 }
 
-/* assign a bare hold to a connection */
+/* assign a bare hold or pass to a connection */
 
 bool assign_holdpass(struct connection *c,
 		 struct spd_route *sr,
@@ -1345,8 +1349,8 @@ bool assign_holdpass(struct connection *c,
 					(c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
 					FALSE,
 					transport_proto,
-					// "delete narrow %hold"))
-					"delete narrow %pass")) {
+					(c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
+						"delete narrow %hold")) {
 			libreswan_log("PAUL: assign_holdpass() replace_bare_shunt() failed");
 			return FALSE;
 		}

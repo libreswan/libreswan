@@ -862,7 +862,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
         		happy(addrtosubnet(&b->our_client, &this_client));
         		happy(addrtosubnet(&b->peer_client, &that_client));
 
-			libreswan_log("PAUL: going to initiate opportunstic, first installing %s negotiationshunt",
+			libreswan_log("PAUL: going to initiate opportunistic, first installing '%s' negotiationshunt",
 				(shunt_spi == SPI_PASS) ? "pass" : "hold");
 
 			// insert negotiationshunt, which is wider than bare shunt, and either hold or pass
