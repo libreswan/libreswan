@@ -22,7 +22,6 @@
 
 extern int verify_and_cache_chain(chunk_t *ders, int num_ders,
 						 CERTCertificate **ee_out,
-						 SECItem *ca,
 						 bool *rev_opts);
 
 /* rev_opts index */

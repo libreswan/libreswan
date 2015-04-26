@@ -832,15 +832,18 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 	return FALSE;
 }
 
+/* returns FALSE for a REVOKED cert or internal failure. returns
+ * TRUE for a good cert or a failed verify (for continuing with
+ * connection refining)
+ */
 static bool pluto_process_certs(struct state *st, chunk_t *certs,
 						  int num_certs)
 {
 	struct connection *c = st->st_connection;
 	SECItem fdn = { siBuffer, NULL, 0 };
 	CERTCertificate *end_cert = NULL;
-	bool status = FALSE;
+	bool cont = TRUE;
 	bool rev_opts[RO_SZ];
-	SECItem ca;
 	int ret;
 
 	rev_opts[RO_OCSP] = ocsp_enable;
@@ -848,26 +851,22 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 	rev_opts[RO_CRL] = CRL_ENABLED();
 	rev_opts[RO_CRL_S] = strict_crl_policy;
 
-	ca = chunk_to_secitem(c->spd.that.ca);
 	ret = verify_and_cache_chain(certs, num_certs, &end_cert,
-						       &ca,
 						       rev_opts);
 
 	if (ret == -1) {
-		libreswan_log("Verification failed with import error");
+		libreswan_log("cert verify failed with internal error");
 		return FALSE;
 	}
 
 	if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
 		libreswan_log("certificate %s OK", end_cert->subjectName);
-		DBG(DBG_X509,DBG_log("c->spd.that.cert.u.nss_cert before: %p, after: %p",
-				     c->spd.that.cert.u.nss_cert, end_cert));
 		c->spd.that.cert.u.nss_cert = end_cert;
 		c->spd.that.cert.ty = CERT_X509_SIGNATURE;
 		add_rsa_pubkey_from_cert(&c->spd.that.id, end_cert);
-		status = TRUE;
-	} else {
-		libreswan_log("certificate verify failed");
+	} else if (ret & VERIFY_RET_REVOKED) {
+		libreswan_log("certificate revoked!");
+		cont = FALSE;
 	}
 
 	if ((ret & VERIFY_RET_CRL_NEED) && CRL_ENABLED()) {
@@ -876,7 +875,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		}
 	}
 
-	return status;
+	return cont;
 }
 
 /*

@@ -853,14 +853,6 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	/* load local end certificate and extract ID, if any */
 	if (!load_end_nss_certificate(src->cert, dst)) {
 		DBG_log("certificate not loaded for this end");
-		/* 
-		 * with no cert loaded and no specific ca
-		 * assume same_ca. for a connection not
-		 * specifying the remote cert, a ca name is
-		 * needed for a possible remote cert verification
-		 */
-		if (src->ca == NULL)
-			same_ca = TRUE;
 	}
 
 	/* ??? what should we do on load_end_certificate failure? */

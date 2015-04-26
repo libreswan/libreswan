@@ -311,63 +311,39 @@ static void new_vfy_log(CERTVerifyLog *log)
 	log->arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 }
 
-/*
- * get the root ca and return it in a CERTCertList
- * if an intermediate is provided it will look through
- * its trust chain for the root
- */
-static CERTCertList *get_trust_certlist(CERTCertDBHandle *handle,
-					SECItem *caname)
+static CERTCertList *get_all_root_certs(void)
 {
-	CERTCertList *trustcl = NULL;
-	CERTCertList *tmpcl = NULL;
-	CERTCertificate *ca = NULL;
+	PK11SlotInfo *slot = NULL;
+	CERTCertList *allcerts = NULL;
+	CERTCertList *roots = NULL;
 	CERTCertListNode *node = NULL;
 
-	if ((ca = CERT_FindCertByName(handle, caname)) == NULL) {
-		DBG(DBG_X509, DBG_log("%s : NSS CERT_FindCertByNickname failed [%d]\n",
-				__FUNCTION__, PORT_GetError()));
+	if ((slot = PK11_GetInternalKeySlot()) == NULL)
 		return NULL;
-	}
 
-	if (ca->isRoot) {
-		DBG(DBG_X509, DBG_log("%s : root CA: %s\n", __FUNCTION__,
-							    ca->subjectName));
-		trustcl = CERT_NewCertList();
-		CERT_AddCertToListTail(trustcl, ca);
-	} else {
-		tmpcl = CERT_GetCertChainFromCert(ca, PR_Now(), certUsageAnyCA);
-		if (tmpcl == NULL) {
-			DBG(DBG_X509, DBG_log("%s : NSS CERT_GetCertChainFromCert failed [%d]\n",
-					__FUNCTION__, PORT_GetError()));
-			CERT_DestroyCertificate(ca);
+	if (PK11_NeedLogin(slot)) {
+		SECStatus rv = PK11_Authenticate(slot, PR_TRUE,
+				lsw_return_nss_password_file_info());
+		if (rv != SECSuccess)
 			return NULL;
-		}
-		for (node = CERT_LIST_HEAD(tmpcl); !CERT_LIST_END(node, tmpcl);
-				node = CERT_LIST_NEXT(node)) {
-			if (node->cert->isRoot) {
-				DBG(DBG_X509,
-				    DBG_log("%s : root CA: %s\n", __FUNCTION__,
-							node->cert->subjectName));
-				trustcl = CERT_NewCertList();
-				CERT_AddCertToListTail(trustcl, node->cert);
-				break;
-			}
-		}
 	}
+	allcerts = PK11_ListCertsInSlot(slot);
 
-	if (trustcl == NULL || CERT_LIST_EMPTY(trustcl)) {
-		DBG(DBG_X509,
-		    DBG_log("%s : could not find trust anchor", __FUNCTION__));
-		if (trustcl != NULL)
-			CERT_DestroyCertList(trustcl);
-		if (tmpcl != NULL)
-			CERT_DestroyCertList(tmpcl);
-		CERT_DestroyCertificate(ca);
+	if (allcerts == NULL)
 		return NULL;
+
+	roots = CERT_NewCertList();
+
+	for (node = CERT_LIST_HEAD(allcerts); !CERT_LIST_END(node, allcerts);
+					        node = CERT_LIST_NEXT(node)) {
+		if (node->cert->isRoot)
+			CERT_AddCertToListTail(roots, node->cert);
 	}
 
-	return trustcl;
+	if (roots == NULL || CERT_LIST_EMPTY(roots))
+		return NULL;
+
+	return roots;
 }
 
 static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
@@ -411,11 +387,9 @@ static void set_rev_params(CERTRevocationFlags *rev, bool crl,
 
 #define CRL_OR_OCSP(r) (r[RO_CRL] || r[RO_OCSP])
 
-static int vfy_chain_pkix(CERTCertDBHandle *handle, CERTCertificate **chain,
-						    int chain_len,
-						    CERTCertificate **end_out,
-						    SECItem *rightca,
-						    bool *rev_opts)
+static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
+						   CERTCertificate **end_out,
+						   bool *rev_opts)
 {
 	int in_idx = 0;
 	int i;
@@ -446,16 +420,16 @@ static int vfy_chain_pkix(CERTCertDBHandle *handle, CERTCertificate **chain,
 		return VERIFY_RET_FAIL;
 	}
 
+	if ((trustcl = get_all_root_certs()) == NULL) {
+		DBG(DBG_X509, DBG_log("no trust anchor available for verification"));
+		return VERIFY_RET_FAIL;
+	}
+
 	new_vfy_log(&vfy_log);
 	new_vfy_log(&vfy_log2);
 	zero(&cvin);
 	zero(&cvout);
 	zero(&rev);
-
-	if ((trustcl = get_trust_certlist(handle, rightca)) == NULL) {
-		DBG(DBG_X509, DBG_log("no end cert in chain!"));
-		return VERIFY_RET_FAIL;
-	}
 
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
 	set_rev_params(&rev, rev_opts[RO_CRL], rev_opts[RO_CRL_S],
@@ -520,53 +494,6 @@ retry:
 	return fin;
 }
 
-#if 0
-static int vfy_chain(CERTCertDBHandle *handle, CERTCertificate **chain,
-						  CERTCertificate **ee_out,
-						  int chain_len)
-{
-	int i;
-	int fin = 0;
-	SECStatus rv;
-	CERTVerifyLog vfy_log;
-	CERTCertificate *end_cert = NULL;
-
-	for (i = 0; i < chain_len; i++) {
-		if (!CERT_IsCACert(chain[i], NULL)) {
-		       end_cert = chain[i];
-		       break;
-		}
-	}
-
-	if (end_cert == NULL) {
-		DBG(DBG_X509, DBG_log("no end cert in chain!"));
-		return VERIFY_RET_FAIL;
-	}
-
-
-	new_vfy_log(&vfy_log);
-
-	rv = CERT_VerifyCert(handle, end_cert, PR_TRUE, certUsageSSLClient,
-							PR_Now(),
-							NULL,
-							&vfy_log);
-
-	if (rv != SECSuccess || vfy_log.count > 0) {
-		if (vfy_log.count > 0 && vfy_log.head != NULL) {
-			fin = get_node_error_status(vfy_log.head);
-		} else {
-			fin = translate_nss_err(PORT_GetError(), FALSE);
-		}
-	} else {
-		DBG(DBG_X509, DBG_log("certificate is valid"));
-		*ee_out = end_cert;
-		fin = VERIFY_RET_OK;
-	}
-
-	return fin;
-}
-#endif
-
 static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
 						          int max_i)
 {
@@ -588,7 +515,6 @@ static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
  * ee_out is the resulting end cert
  */
 int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out,
-							SECItem *ca,
 							bool *rev_opts)
 {
 	SECItem si_ders[MAX_CA_PATH_LEN] = { {siBuffer, NULL, 0} };
@@ -636,9 +562,7 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 
 	ret |= need_fetch ? VERIFY_RET_CRL_NEED : 0;
 
-	ret |= vfy_chain_pkix(handle, cert_chain, chain_len, ee_out,
-							     ca,
-							     rev_opts);
+	ret |= vfy_chain_pkix(cert_chain, chain_len, ee_out, rev_opts);
 
 	return ret;
 }
