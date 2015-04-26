@@ -65,8 +65,6 @@ function of DBG calls.
 Run swan-init et.al. from ../../../testing/guestbin/ (a relative
 path), and not /testing/guestbin/
 
-delete LIBRESWANSRCDIRREL
-
 Remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
 
 move modobj to under $(OBJDIR)
