@@ -291,11 +291,12 @@ static PK11SymKey *ikev2_prfplus(const struct hash_desc *hasher,
 	/* T1(prfplus) = prf(KEY, SEED|1) */
 	PK11SymKey *prfplus;
 	{
-		struct crypt_prf *prf = crypt_prf_init(hasher, key);
-		crypt_prf_init_symkey(prf, key);
+		struct crypt_prf *prf = crypt_prf_init("prf+0",
+						       hasher, key);
+		crypt_prf_init_symkey("key", prf, key);
 		crypt_prf_update(prf);
-		crypt_prf_update_symkey(prf, seed);
-		crypt_prf_update_byte(prf, count++);
+		crypt_prf_update_symkey("seed", prf, seed);
+		crypt_prf_update_byte("1++", prf, count++);
 		prfplus = crypt_prf_final(prf);
 	}
 
@@ -303,12 +304,13 @@ static PK11SymKey *ikev2_prfplus(const struct hash_desc *hasher,
 	PK11SymKey *old_t = key_from_symkey_bytes(prfplus, 0, PK11_GetKeyLength(prfplus));
 	while (PK11_GetKeyLength(prfplus) < required_keymat) {
 		/* Tn = prf(KEY, Tn-1|SEED|n) */
-		struct crypt_prf *prf = crypt_prf_init(hasher, key);
-		crypt_prf_init_symkey(prf, key);
+		struct crypt_prf *prf = crypt_prf_init("prf+N",
+						       hasher, key);
+		crypt_prf_init_symkey("key", prf, key);
 		crypt_prf_update(prf);
-		crypt_prf_update_symkey(prf, old_t);
-		crypt_prf_update_symkey(prf, seed);
-		crypt_prf_update_byte(prf, count++);
+		crypt_prf_update_symkey("old_t", prf, old_t);
+		crypt_prf_update_symkey("seed", prf, seed);
+		crypt_prf_update_byte("N++", prf, count++);
 		PK11SymKey *new_t = crypt_prf_final(prf);
 		append_symkey_symkey(hasher, &prfplus, new_t);
 		PK11_FreeSymKey(old_t);
@@ -324,14 +326,15 @@ PK11SymKey *ikev2_ike_sa_skeyseed(const struct hash_desc *hasher,
 				  const chunk_t Ni, const chunk_t Nr,
 				  PK11SymKey *dh_secret)
 {
-	struct crypt_prf *prf = crypt_prf_init(hasher, dh_secret);
+	struct crypt_prf *prf = crypt_prf_init("ike sa SKEYSEED",
+					       hasher, dh_secret);
 	/* key = Ni|Nr */
-	crypt_prf_init_chunk(prf, Ni);
-	crypt_prf_init_chunk(prf, Nr);
+	crypt_prf_init_chunk("Ni", prf, Ni);
+	crypt_prf_init_chunk("Nr", prf, Nr);
 	/* seed = g^ir */
 	crypt_prf_update(prf);
 	/* generate */
-	crypt_prf_update_symkey(prf, dh_secret);
+	crypt_prf_update_symkey("g^ir", prf, dh_secret);
 	return crypt_prf_final(prf);
 }
 
@@ -343,14 +346,15 @@ PK11SymKey *ikev2_ike_sa_rekey_skeyseed(const struct hash_desc *hasher,
 					PK11SymKey *new_dh_secret,
 					const chunk_t Ni, const chunk_t Nr)
 {
-	struct crypt_prf *prf = crypt_prf_init(hasher, new_dh_secret);
+	struct crypt_prf *prf = crypt_prf_init("ike sa rekey skeyseed",
+					       hasher, new_dh_secret);
 	/* key = SK_d (old) */
-	crypt_prf_init_symkey(prf, SK_d_old);
+	crypt_prf_init_symkey("SK_d (old)", prf, SK_d_old);
 	/* seed: g^ir (new) | Ni | Nr) */
 	crypt_prf_update(prf);
-	crypt_prf_update_symkey(prf, new_dh_secret);
-	crypt_prf_update_chunk(prf, Ni);
-	crypt_prf_update_chunk(prf, Nr);
+	crypt_prf_update_symkey("g^ir (new)", prf, new_dh_secret);
+	crypt_prf_update_chunk("Ni", prf, Ni);
+	crypt_prf_update_chunk("Nr", prf, Nr);
 	/* generate */
 	return crypt_prf_final(prf);
 }

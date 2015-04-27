@@ -41,7 +41,8 @@ struct crypt_prf;
  * SCRATCH is used as a secure starting point when the key is formed
  * from raw bytes (or memory).
  */
-struct crypt_prf *crypt_prf_init(const struct hash_desc *hasher,
+struct crypt_prf *crypt_prf_init(const char *name,
+				 const struct hash_desc *hasher,
 				 PK11SymKey *scratch);
 
 /*
@@ -51,10 +52,12 @@ struct crypt_prf *crypt_prf_init(const struct hash_desc *hasher,
  * Even when SCRATCH above was passed the KEY, the below must be
  * called.
  */
-void crypt_prf_init_symkey(struct crypt_prf *prf, PK11SymKey *key);
-void crypt_prf_init_chunk(struct crypt_prf *prf, chunk_t key);
+void crypt_prf_init_symkey(const char *name, struct crypt_prf *prf, PK11SymKey *key);
+void crypt_prf_init_chunk(const char *name, struct crypt_prf *prf,
+			  chunk_t key);
 #if 0
-void crypt_prf_init_bytes(struct crypt_prf *prf, void *key, size_t sizeof_key);
+void crypt_prf_init_bytes(, const char *name, struct crypt_prf *prf,
+			  const void *key, size_t sizeof_key);
 #endif
 
 /*
@@ -65,11 +68,14 @@ void crypt_prf_update(struct crypt_prf *prf);
 /*
  * Call these to accumulate the seed/data/text.
  */
-void crypt_prf_update_chunk(struct crypt_prf *prf, chunk_t update);
-void crypt_prf_update_symkey(struct crypt_prf *prf, PK11SymKey *update);
-void crypt_prf_update_byte(struct crypt_prf *prf, uint8_t byte);
+void crypt_prf_update_chunk(const char *name, struct crypt_prf *prf,
+			    chunk_t update);
+void crypt_prf_update_symkey(const char *name, struct crypt_prf *prf,
+			     PK11SymKey *update);
+void crypt_prf_update_byte(const char *name, struct crypt_prf *prf, uint8_t byte);
 #if 0
-void crypt_prf_update_bytes(struct crypt_prf *prf, void *bytes, size_t count);
+void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
+			    const void *bytes, size_t count);
 #endif
 
 /*

@@ -24,6 +24,8 @@
 struct hash_desc;
 struct encrypt_desc;
 
+void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
+
 /*
  * Use SCRATCH key as a secure starting point for creating the key
  * from the raw bytes, or chunk.
@@ -33,8 +35,6 @@ PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
 			      size_t sizeof_bytes);
   
 PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk);
-
-void dbg_dump_symkey(const char *prefix, PK11SymKey *key);
 
 /*
  * Concatenate two pieces of keying material creating a
@@ -106,9 +106,9 @@ PK11SymKey *encrypt_key_from_symkey_bits(PK11SymKey *source_key,
  * Offset into the SYMKEY is in either BITS or BYTES.
  */
 PK11SymKey *key_from_symkey_bits(PK11SymKey *base_key,
-				 size_t next_bit, int key_size);
+				 size_t next_bit, size_t key_size);
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
-				  size_t next_byte, int sizeof_key);
+				  size_t next_byte, size_t sizeof_key);
 
 /*
  * Hash a symkey using HASHER.
