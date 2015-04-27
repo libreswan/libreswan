@@ -50,15 +50,23 @@ static const char *ckm_to_string(CK_MECHANISM_TYPE mechanism)
 
 void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
 {
-	DBG_log("%s key %p %d mechanism(type) %s",
-		prefix, key, PK11_GetKeyLength(key),
-		ckm_to_string(PK11_GetMechanism(key)));
-	if (DBGP(DBG_PRIVATE)) {
-		chunk_t chunk = chunk_from_symkey(prefix, key);
-		DBG_dump_chunk(prefix, chunk);
-		freeanychunk(chunk);
+	if (key == NULL) {
+		/*
+		 * For instance, when a zero-length key gets extracted
+		 * from an existing key.
+		 */
+		DBG_log("%s key is NULL", prefix);
 	} else {
-		DBG_log("%s contents are private", prefix);
+		DBG_log("%s key %p %d mechanism(type) %s",
+			prefix, key, PK11_GetKeyLength(key),
+			ckm_to_string(PK11_GetMechanism(key)));
+		if (DBGP(DBG_PRIVATE)) {
+			chunk_t chunk = chunk_from_symkey(prefix, key);
+			DBG_dump_chunk(prefix, chunk);
+			freeanychunk(chunk);
+		} else {
+			DBG_log("%s contents are private", prefix);
+		}
 	}
 }
 
