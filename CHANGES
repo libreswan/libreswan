@@ -35,6 +35,7 @@ v3.13 (unreleased)
 * pluto: do not terminate_connection() in-flight [Hugh]
 * pluto: don't use an expired reserved kernel SPI as fallback [Herbert Xu]
 * pluto: Use "third best" monotime() on mismatched kernel/glibc headers [Paul]
+* pluto: removed bool inbound_only from delete_ipsec_sa() [Paul/Herbert]
 * libipsecconf: Improve parser for pipe case (with NM) [Hugh/Lubomir Rintel]
 * readwriteconf: improve error handling [Hugh]
 * ipsec: ipsec --import does not need to run restorecon [Paul]
