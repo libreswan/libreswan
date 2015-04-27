@@ -481,13 +481,10 @@ enum original_role {
 
 /* IKEv1 or IKEv2 */
 #define IS_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_I2 || \
+				    (s) == STATE_QUICK_R1 || \
 				    (s) == STATE_QUICK_R2 || \
 				    (s) == STATE_PARENT_I3 || \
 				    (s) == STATE_PARENT_R2)
-
-/* Only relevant to IKEv1 */
-
-#define IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(s) ((s) == STATE_QUICK_R1)
 
 #define IS_MODE_CFG_ESTABLISHED(s) ((s) == STATE_MODE_CFG_R2)
 

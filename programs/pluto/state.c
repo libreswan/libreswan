@@ -622,8 +622,7 @@ void delete_state(struct state *st)
 	 */
 	if (IS_IPSEC_SA_ESTABLISHED(st->st_state) ||
 		IS_CHILD_SA_ESTABLISHED(st) ||
-		st->st_state == STATE_CHILDSA_DEL ||
-		IS_ONLY_INBOUND_IPSEC_SA_ESTABLISHED(st->st_state)) {
+		st->st_state == STATE_CHILDSA_DEL) {
 			delete_ipsec_sa(st);
 	}
 
