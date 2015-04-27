@@ -145,8 +145,8 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 	passert(samesubnettype(ours, his));
 
 	/* Add the kernel shunt to the pluto bare shunt list.
-	 * We need to do this because the shunt was installed by KLIPS
-	 * which can't do this itself.
+	 * We need to do this because the shunt was installed by kernel
+	 * and we want to keep track of it
 	 */
 	{
 		struct bare_shunt *bs = alloc_thing(struct bare_shunt,
@@ -186,16 +186,21 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 			struct bare_shunt **bspp = bare_shunt_ptr(ours, his,
 								  transport_proto);
 			if (bspp) {
+				DBG(DBG_OPPO, DBG_log("PAUL: record_and_initiate_opportunistic(): freeing bare shunt"));
 				passert(*bspp == bare_shunts);
-				free_bare_shunt(bspp);
+				free_bare_shunt(bspp); /* remove from pluto's list */
+			} else {
+				DBG(DBG_OPPO, DBG_log("PAUL: record_and_initiate_opportunistic(): no bare shunt to free"));
 			}
 		}
 	}
 
 	pexpect(kernel_ops->remove_orphaned_holds != NULL);
-	if (kernel_ops->remove_orphaned_holds != NULL)
+	if (kernel_ops->remove_orphaned_holds != NULL) { /* remove from kernel's list */
+		DBG(DBG_OPPO, DBG_log("PAUL: record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt"));
 		(*kernel_ops->remove_orphaned_holds)(transport_proto, ours,
 						     his);
+	}
 }
 
 static reqid_t get_proto_reqid(reqid_t base, int proto)
@@ -899,7 +904,7 @@ void show_shunt_status(void)
 {
 	struct bare_shunt *bs;
 
-	whack_log(RC_COMMENT, "Shunt list:"); /* spacer */
+	whack_log(RC_COMMENT, "Bare Shunt list:"); /* spacer */
 	whack_log(RC_COMMENT, " "); /* spacer */
 	for (bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
@@ -1186,8 +1191,8 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 				&that_client,
 				transport_proto);
 
-			libreswan_log("PAUL:raw_eroute to delete kernel shunt succeeded, bare shunt lookup %s",
-				(bs_pp == NULL) ? "failed" : "succeeded");
+			libreswan_log("PAUL:raw_eroute to delete kernel shunt succeeded, pluto bare shunt lookup returned %s",
+				(bs_pp == NULL) ? "no bare shunt" : "a bare shunt");
 
 			/* we can have proto mismatching acquires with netkey - this is a bad workaround */
 			/* passert(bs_pp != NULL); */
@@ -1211,7 +1216,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 				bs->last_activity = mononow();
 				DBG_bare_shunt("change", bs);
 			} else {
-				/* delete bare eroute */
+				/* delete pluto bare shunt */
 				free_bare_shunt(bs_pp);
 			}
 			return TRUE;
