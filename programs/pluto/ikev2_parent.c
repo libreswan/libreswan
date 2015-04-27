@@ -2431,7 +2431,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 {
 	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
-	struct connection *c = st->st_connection;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
 
 	/* extract calculated values from r */
@@ -2451,8 +2450,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
-
-	c = st->st_connection; /* in case we refined */
 
 	{
 		struct hmac_ctx id_ctx;
