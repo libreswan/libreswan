@@ -55,10 +55,8 @@ struct crypt_prf *crypt_prf_init(const char *name,
 void crypt_prf_init_symkey(const char *name, struct crypt_prf *prf, PK11SymKey *key);
 void crypt_prf_init_chunk(const char *name, struct crypt_prf *prf,
 			  chunk_t key);
-#if 0
-void crypt_prf_init_bytes(, const char *name, struct crypt_prf *prf,
+void crypt_prf_init_bytes(const char *name, struct crypt_prf *prf,
 			  const void *key, size_t sizeof_key);
-#endif
 
 /*
  * Then call this to flip to seed/data/text mode; always.
@@ -73,10 +71,8 @@ void crypt_prf_update_chunk(const char *name, struct crypt_prf *prf,
 void crypt_prf_update_symkey(const char *name, struct crypt_prf *prf,
 			     PK11SymKey *update);
 void crypt_prf_update_byte(const char *name, struct crypt_prf *prf, uint8_t byte);
-#if 0
 void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
 			    const void *bytes, size_t count);
-#endif
 
 /*
  * Finally ...
@@ -84,5 +80,7 @@ void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
  * This will free PRF.
  */
 PK11SymKey *crypt_prf_final(struct crypt_prf *prf);
+void crypt_prf_final_bytes(struct crypt_prf *prf,
+			   void *bytes, size_t sizeof_bytes);
 
 #endif

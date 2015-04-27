@@ -157,6 +157,14 @@ void crypt_prf_update_byte(const char *name, struct crypt_prf *prf,
 	append_symkey_byte(prf->hasher, &(prf->inner), update);
 }
 
+void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
+			    const void *update, size_t sizeof_update)
+{
+	DBG(DBG_CRYPT, DBG_log("%s prf: update bytes %s %p (length %zd)",
+			       prf->name, name, update, sizeof_update));
+	append_symkey_bytes(prf->hasher, &(prf->inner), update, sizeof_update);
+}
+
 PK11SymKey *crypt_prf_final(struct crypt_prf *prf)
 {
 	DBG(DBG_CRYPT, DBG_log("%s prf: final", prf->name));
@@ -184,4 +192,17 @@ PK11SymKey *crypt_prf_final(struct crypt_prf *prf)
 	pfree(prf);
 
 	return hashed_outer;
+}
+
+void crypt_prf_final_bytes(struct crypt_prf *prf,
+			   void *bytes, size_t sizeof_bytes)
+{
+	const char *name = prf->name;
+	PK11SymKey *result = crypt_prf_final(prf);
+	prf = NULL; /* no longer valid */
+	bytes_from_symkey_bytes(name, result, 0, bytes, sizeof_bytes);
+	DBG(DBG_CRYPT,
+	    DBG_log("crypt_prf_final_bytes freeing symkey %p", result));
+			       
+	PK11_FreeSymKey(result);
 }
