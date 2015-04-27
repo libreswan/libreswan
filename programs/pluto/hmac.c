@@ -42,160 +42,41 @@
 #include "lswconf.h"
 #include "lswlog.h"
 #include "crypt_symkey.h"
+#include "crypt_prf.h"
 
 /* HMAC package
  * rfc2104.txt specifies how HMAC works.
  */
 
-static SECOidTag nss_hash_oid(const struct hash_desc *hasher);
-
 void hmac_init(struct hmac_ctx *ctx,
 	       const struct hash_desc *h,
 	       /*const*/ PK11SymKey *symkey)	/* NSS doesn't like const! */
 {
-	SECStatus status;
-	unsigned int klen;
-
-	if (symkey != NULL) 
-		klen = PK11_GetKeyLength(symkey);
-	else
-		klen = 0;
-
-	ctx->h = h;
+	/*
+	 * Note: The SYMKEY passed to crypt_prf_init is used to
+	 * generate secure keying material from nothing.
+	 * crypt_prf_init_symkey() establishes the actual key.
+	 */
+	ctx->prf = crypt_prf_init("hmac", h, symkey);
 	ctx->hmac_digest_len = h->hash_digest_len;
-
-	/*
-	 * If the key is too long, cut it down to size using the
-	 * hasher.
-	 */
-	PK11SymKey *tkey1;
-	if (klen > h->hash_block_size) {
-		tkey1 = hash_symkey(h, symkey);
-		klen = PK11_GetKeyLength(tkey1);
-	} else {
-		tkey1 = symkey;
-	}
-
-	/*
-	 * If the (possibly hashed) key isn't long enough, pad it to
-	 * length.
-	 */
-	PK11SymKey *tkey2;
-	if (klen < h->hash_block_size) {
-		chunk_t hmac_pad  = hmac_pads(0x00, h->hash_block_size - klen);
-		tkey2 = concat_symkey_chunk(h, tkey1, hmac_pad);
-	} else {
-		tkey2 = tkey1;
-	}
-	passert(tkey2 != NULL);
-	if (tkey1 != symkey) {
-		PK11_FreeSymKey(tkey1);
-	}
-	tkey1 = NULL;
-	
-	chunk_t hmac_ipad = hmac_pads(HMAC_IPAD, h->hash_block_size);
-	chunk_t hmac_opad = hmac_pads(HMAC_OPAD, h->hash_block_size);
-	ctx->ikey = xor_symkey_chunk(tkey2, hmac_ipad);
-	ctx->okey = xor_symkey_chunk(tkey2, hmac_opad);
-	passert(ctx->ikey != NULL);
-	passert(ctx->okey != NULL);
-	freeanychunk(hmac_ipad);
-	freeanychunk(hmac_opad);
-	if (tkey2 != symkey) {
-		PK11_FreeSymKey(tkey2);
-	}
-	tkey2 = NULL;
-
-	ctx->ctx_nss = PK11_CreateDigestContext(nss_hash_oid(h));
-	passert(ctx->ctx_nss != NULL);
-
-	status = PK11_DigestBegin(ctx->ctx_nss);
-	passert(status == SECSuccess);
-
-	status = PK11_DigestKey(ctx->ctx_nss, ctx->ikey);
-	passert(status == SECSuccess);
+	crypt_prf_init_symkey("symkey", ctx->prf, symkey);
+	crypt_prf_update(ctx->prf);
 }
 
 void hmac_update(struct hmac_ctx *ctx,
 		 const u_char *data, size_t data_len)
 {
-	DBG(DBG_CRYPT, DBG_dump("hmac_update data value: ", data, data_len));
-	if (data_len > 0) {
-		SECStatus status;
-
-		DBG(DBG_CRYPT, DBG_log("hmac_update: inside if"));
-		status = PK11_DigestOp(ctx->ctx_nss, data, data_len);
-		DBG(DBG_CRYPT, DBG_log("hmac_update: after digest"));
-		passert(status == SECSuccess);
-		DBG(DBG_CRYPT, DBG_log("hmac_update: after assert"));
-	}
+	crypt_prf_update_bytes("data", ctx->prf, data, data_len);
 }
 
 void hmac_final(u_char *output, struct hmac_ctx *ctx)
 {
-	unsigned int outlen;
-	SECStatus status;
-
-	status = PK11_DigestFinal(ctx->ctx_nss, output, &outlen,
-					    ctx->hmac_digest_len);
-	passert(status == SECSuccess);
-	passert(outlen == ctx->hmac_digest_len);
-	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
-	ctx->ctx_nss = NULL;
-
-	ctx->ctx_nss = PK11_CreateDigestContext(nss_hash_oid(ctx->h));
-	passert(ctx->ctx_nss != NULL);
-
-	status = PK11_DigestBegin(ctx->ctx_nss);
-	passert(status == SECSuccess);
-
-	status = PK11_DigestKey(ctx->ctx_nss, ctx->okey);
-	passert(status == SECSuccess);
-
-	status = PK11_DigestOp(ctx->ctx_nss, output, outlen);
-	passert(status == SECSuccess);
-
-	status = PK11_DigestFinal(ctx->ctx_nss, output, &outlen,
-				  ctx->hmac_digest_len);
-	passert(status == SECSuccess);
-	passert(outlen == ctx->hmac_digest_len);
-	PK11_DestroyContext(ctx->ctx_nss, PR_TRUE);
-
-	if (ctx->ikey != NULL)
-		PK11_FreeSymKey(ctx->ikey);
-	if (ctx->okey != NULL)
-		PK11_FreeSymKey(ctx->okey);
-	/* DBG(DBG_CRYPT, DBG_log("NSS: hmac final end")); */
+	crypt_prf_final_bytes(ctx->prf, output, ctx->hmac_digest_len);
 }
 
-static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
-{
-	SECOidTag mechanism;
-
-	switch (hasher->common.algo_id) {
-	case OAKLEY_MD5:
-		mechanism = SEC_OID_MD5;
-		break;
-	case OAKLEY_SHA1:
-		mechanism = SEC_OID_SHA1;
-		break;
-	case OAKLEY_SHA2_256:
-		mechanism = SEC_OID_SHA256;
-		break;
-	case OAKLEY_SHA2_384:
-		mechanism = SEC_OID_SHA384;
-		break;
-	case OAKLEY_SHA2_512:
-		mechanism = SEC_OID_SHA512;
-		break;
-	default:
-		libreswan_log("NSS: key derivation mechanism (hasher->common.algo_id=%d not supported",
-			hasher->common.algo_id);
-		mechanism = 0;	/* ??? what should we do to recover? */
-		break;
-	}
-	return mechanism;
-}
+/*
+ * XXX: This should be moved to crypt_symkey.c and made private.
+ */
 
 CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
 {
@@ -224,6 +105,11 @@ CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
 	}
 	return mechanism;
 }
+
+/*
+ * XXX: This has nothing to do with HMAC; it should be made part of
+ * the chunk_t library code.
+ */
 
 chunk_t hmac_pads(u_char val, unsigned int len)
 {

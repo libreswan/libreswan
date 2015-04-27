@@ -24,12 +24,17 @@
 struct hash_desc;
 struct encrypt_desc;
 
+void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
+
 /*
- * SYMKEY_FROM_CHUNK uses the SCRATCH key as a secure starting point
- * for creating the key.  The others don't so are not FIPS friendly.
+ * Use SCRATCH key as a secure starting point for creating the key
+ * from the raw bytes, or chunk.
  */
+
+PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
+			      size_t sizeof_bytes);
+  
 PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk);
-void dbg_dump_symkey(const char *prefix, PK11SymKey *key);
 
 /*
  * Concatenate two pieces of keying material creating a
@@ -37,6 +42,9 @@ void dbg_dump_symkey(const char *prefix, PK11SymKey *key);
  */
 PK11SymKey *concat_symkey_symkey(const struct hash_desc *hasher,
 				 PK11SymKey *lhs, PK11SymKey *rhs);
+PK11SymKey *concat_symkey_bytes(const struct hash_desc *hasher,
+				PK11SymKey *lhs, const void *rhs,
+				size_t sizeof_rhs);
 PK11SymKey *concat_symkey_chunk(const struct hash_desc *hasher,
 				PK11SymKey *lhs, chunk_t rhs);
 PK11SymKey *concat_symkey_byte(const struct hash_desc *hasher,
@@ -50,20 +58,33 @@ PK11SymKey *concat_symkey_byte(const struct hash_desc *hasher,
  */
 void append_symkey_symkey(const struct hash_desc *hasher,
 			  PK11SymKey **lhs, PK11SymKey *rhs);
+void append_symkey_bytes(const struct hash_desc *hasher,
+			 PK11SymKey **lhs, const void *rhs,
+			 size_t sizeof_rhs);
 void append_symkey_chunk(const struct hash_desc *hasher,
 			 PK11SymKey **lhs, chunk_t rhs);
 void append_symkey_byte(const struct hash_desc *hasher,
 			PK11SymKey **lhs, uint8_t rhs);
 
 /*
- * Extract SIZEOF_CHUNK raw-bytes from a SYMKEY.
+ * Extract raw-bytes from a SYMKEY.
  *
  * Offset into the SYMKEY is in either BITS or BYTES.
+ *
+ * bytes_from_ has a querk where, if BYTES is NULL, the buffer is
+ * allocated.
  */
+void *bytes_from_symkey_bits(const char *name, PK11SymKey *source_key,
+			     size_t next_bit, void *bytes,
+			     size_t sizeof_bytes);
+void *bytes_from_symkey_bytes(const char *name, PK11SymKey *source_key,
+			      size_t next_byte, void *bytes,
+			      size_t sizeof_bytes);
 chunk_t chunk_from_symkey_bits(const char *name, PK11SymKey *source_key,
 			       size_t next_bit, size_t sizeof_chunk);
 chunk_t chunk_from_symkey_bytes(const char *name, PK11SymKey *source_key,
 				size_t next_byte, size_t sizeof_chunk);
+chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key);
 
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
@@ -85,9 +106,9 @@ PK11SymKey *encrypt_key_from_symkey_bits(PK11SymKey *source_key,
  * Offset into the SYMKEY is in either BITS or BYTES.
  */
 PK11SymKey *key_from_symkey_bits(PK11SymKey *base_key,
-				 size_t next_bit, int key_size);
+				 size_t next_bit, size_t key_size);
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
-				  size_t next_byte, int sizeof_key);
+				  size_t next_byte, size_t sizeof_key);
 
 /*
  * Hash a symkey using HASHER.
