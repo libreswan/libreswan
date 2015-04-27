@@ -158,7 +158,7 @@ void append_symkey_byte(const struct hash_desc *hasher,
 }
 
 /*
- * Extract SIZEOF_CHUNK raw-bytes from a SYMKEY.
+ * Extract raw-bytes from a SYMKEY.
  *
  * Offset into the SYMKEY is in either BITS or BYTES.
  */
@@ -180,42 +180,75 @@ static PK11SymKey *key_from_key_bits(PK11SymKey *base_key,
 				    target, operation, key_size, flags);
 }
 
-chunk_t chunk_from_symkey_bits(const char *name, PK11SymKey *source_key,
-			       size_t next_bit, size_t sizeof_chunk)
+void *bytes_from_symkey_bits(const char *name,
+			     PK11SymKey *source_key, size_t next_bit,
+			     void *bytes, size_t sizeof_bytes)
 {
-	if (sizeof_chunk == 0) {
-		DBG(DBG_CRYPT, DBG_log("chunk_from_symkey: %s: zero size", name));
-		return empty_chunk;
+	DBG(DBG_CRYPT,
+	    DBG_log("%s: extracting %zd bytes starting at bit %zd from symkey %p into %p",
+		    name, sizeof_bytes, next_bit, source_key, bytes));
+	if (sizeof_bytes == 0) {
+		return NULL;
 	}
 	PK11SymKey *sym_key = key_from_key_bits(source_key,
 						CKM_VENDOR_DEFINED, 0,
-						next_bit, sizeof_chunk);
+						next_bit, sizeof_bytes);
 	if (sym_key == NULL) {
 		loglog(RC_LOG_SERIOUS, "NSS: PK11_DeriveWithFlags failed while generating %s", name);
-		return empty_chunk;
+		return NULL;
 	}
 	SECStatus s = PK11_ExtractKeyValue(sym_key);
 	if (s != SECSuccess) {
 		loglog(RC_LOG_SERIOUS, "NSS: PK11_ExtractKeyValue failed while generating %s", name);
-		return empty_chunk;
+		return NULL;
 	}
 	/* Internal structure address, do not free.  */
 	SECItem *data = PK11_GetKeyData(sym_key);
 	if (data == NULL) {
 		loglog(RC_LOG_SERIOUS, "NSS: PK11_GetKeyData failed while generating %s", name);
-		return empty_chunk;
+		return NULL;
 	}
 	DBG(DBG_CRYPT,
 	    DBG_log("chunk_from_symkey: %s: extracted len %d bytes at %p",
 		    name, data->len, data->data));
-	if (data->len != sizeof_chunk) {
+	if (data->len != sizeof_bytes) {
 		loglog(RC_LOG_SERIOUS, "NSS: PK11_GetKeyData returned wrong number of bytes while generating %s", name);
+		return NULL;
+	}
+	/* Only alloc, when all looks good.  */
+	if (bytes == NULL) {
+		bytes = alloc_bytes(sizeof_bytes, name);
+		DBG(DBG_CRYPT,
+		    DBG_log("%s: allocated %zd bytes at %p",
+			    name, sizeof_bytes, bytes));
+	}
+	memcpy(bytes, data->data, sizeof_bytes);
+	DBG(DBG_PRIVATE,
+	    DBG_dump(name, bytes, sizeof_bytes));
+	PK11_FreeSymKey(sym_key);
+	
+	return bytes;
+}
+
+void *bytes_from_symkey_bytes(const char *name, PK11SymKey *source_key,
+			      size_t next_byte, void *bytes,
+			      size_t sizeof_bytes)
+{
+	return bytes_from_symkey_bits(name, source_key,
+				      next_byte * BITS_PER_BYTE,
+				      bytes, sizeof_bytes);
+}
+
+chunk_t chunk_from_symkey_bits(const char *name, PK11SymKey *source_key,
+			       size_t next_bit, size_t sizeof_chunk)
+{
+	void *bytes = bytes_from_symkey_bits(name, source_key, next_bit,
+					     NULL, sizeof_chunk);
+	if (bytes == NULL) {
 		return empty_chunk;
 	}
 	chunk_t chunk;
-	clonetochunk(chunk, data->data, data->len, name);
-	DBG(DBG_CRYPT, DBG_dump_chunk(name, chunk));
-	PK11_FreeSymKey(sym_key);
+	setchunk(chunk, bytes, sizeof_chunk);
 	return chunk;
 }
 
