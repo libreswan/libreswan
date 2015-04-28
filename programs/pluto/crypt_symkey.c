@@ -60,6 +60,17 @@ static const char *ckm_to_string(CK_MECHANISM_TYPE mechanism)
 #undef CASE
 }
 
+void free_any_symkey(const char *prefix, PK11SymKey **key)
+{
+	if (*key != NULL) {
+		DBG(DBG_CRYPT, DBG_log("%s: free key %p", prefix, *key));
+		PK11_FreeSymKey(*key);
+	} else {
+		DBG(DBG_CRYPT, DBG_log("%s: free key NULL", prefix));
+	}
+	*key = NULL;
+}
+
 void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
 {
 	if (key == NULL) {
@@ -130,8 +141,7 @@ PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
 	passert(tmp != NULL);
 	PK11SymKey *key = key_from_symkey_bytes(tmp, 0, sizeof_bytes);
 	passert(key != NULL);
-	DBG(DBG_CRYPT, DBG_log("symkey_from_bytes freeing key at %p", tmp));
-	PK11_FreeSymKey(tmp);
+	free_any_symkey(__func__, &tmp);
 	return key;
 }
 
@@ -205,8 +215,7 @@ void append_symkey_symkey(const struct hash_desc *hasher,
 			  PK11SymKey **lhs, PK11SymKey *rhs)
 {
 	PK11SymKey *newkey = concat_symkey_symkey(hasher, *lhs, rhs);
-	DBG(DBG_CRYPT, DBG_log("append_symkey_symkey freeing key at %p", *lhs));
-	PK11_FreeSymKey(*lhs);
+	free_any_symkey(__func__, lhs);
 	*lhs = newkey;
 }
 
@@ -216,8 +225,7 @@ void append_symkey_bytes(const struct hash_desc *hasher,
 {
 	PK11SymKey *newkey = concat_symkey_bytes(hasher, *lhs,
 						 rhs, sizeof_rhs);
-	DBG(DBG_CRYPT, DBG_log("append_symkey_bytes freeing key at %p", *lhs));
-	PK11_FreeSymKey(*lhs);
+	free_any_symkey(__func__, lhs);
 	*lhs = newkey;
 }
 
@@ -308,10 +316,8 @@ void *bytes_from_symkey_bits(const char *name,
 			    name, sizeof_bytes, bytes));
 	}
 	memcpy(bytes, data->data, sizeof_bytes);
-	DBG(DBG_PRIVATE,
-	    DBG_dump(name, bytes, sizeof_bytes));
-	DBG(DBG_CRYPT, DBG_log("bytes_from_symkey_bits freeing key at %p", sym_key));
-	PK11_FreeSymKey(sym_key);
+	DBG(DBG_PRIVATE, DBG_dump(name, bytes, sizeof_bytes));
+	free_any_symkey(__func__, &sym_key);
 	
 	return bytes;
 }

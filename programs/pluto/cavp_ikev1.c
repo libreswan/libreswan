@@ -20,6 +20,7 @@
 #include "ike_alg.h"
 
 #include "ikev1_prf.h"
+#include "crypt_symkey.h"
 
 #include "cavp.h"
 #include "cavp_print.h"
@@ -84,9 +85,9 @@ static void ikev1_skeyid_alphabet(PK11SymKey *skeyid)
 			       g_xy, cky_i, cky_r);
 	print_symkey("SKEYID_e", skeyid_e, 0);
 
-	PK11_FreeSymKey(skeyid_d);
-	PK11_FreeSymKey(skeyid_e);
-	PK11_FreeSymKey(skeyid_a);
+	free_any_symkey("skeyid_d", &skeyid_d);
+	free_any_symkey("skeyid_e", &skeyid_e);
+	free_any_symkey("skeyid_a", &skeyid_a);
 }
 
 static void print_sig_config()
@@ -117,7 +118,7 @@ static void run_sig(void)
 				       g_xy);
 	print_symkey("SKEYID", skeyid, 0);
 	ikev1_skeyid_alphabet(skeyid);
-	PK11_FreeSymKey(skeyid);
+	free_any_symkey("skeyid", &skeyid);
 }
 
 struct cavp cavp_ikev1_sig = {
@@ -160,7 +161,7 @@ static void run_psk(void)
 					    g_xy);
 	print_symkey("SKEYID", skeyid, 0);
 	ikev1_skeyid_alphabet(skeyid);
-	PK11_FreeSymKey(skeyid);
+	free_any_symkey("skeyid", &skeyid);
 }
 
 struct cavp cavp_ikev1_psk = {

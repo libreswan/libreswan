@@ -179,7 +179,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 
 	DBG(DBG_CRYPT,
 	    DBG_log("NSS ikev2: finished computing individual keys for IKEv2 SA"));
-	PK11_FreeSymKey(finalkey);
+	free_any_symkey("finalkey", &finalkey);
 
 	*skeyseed_out = skeyseed_k;
 	*SK_d_out = SK_d_k;
@@ -313,10 +313,10 @@ static PK11SymKey *ikev2_prfplus(const struct hash_desc *hasher,
 		crypt_prf_update_byte("N++", prf, count++);
 		PK11SymKey *new_t = crypt_prf_final(prf);
 		append_symkey_symkey(hasher, &prfplus, new_t);
-		PK11_FreeSymKey(old_t);
+		free_any_symkey("old_t[N]", &old_t);
 		old_t = new_t;
 	}
-	PK11_FreeSymKey(old_t);
+	free_any_symkey("old_t[final]", &old_t);
 	return prfplus;
 }
 
@@ -375,7 +375,7 @@ PK11SymKey *ikev2_ike_sa_keymat(const struct hash_desc *hasher,
 	append_symkey_chunk(hasher, &data, SPIr);
 	PK11SymKey *prfplus = ikev2_prfplus(hasher, skeyseed, data,
 					    required_bytes);
-	PK11_FreeSymKey(data);
+	free_any_symkey(__func__, &data);
 	return prfplus;
 }
 
@@ -398,6 +398,6 @@ PK11SymKey *ikev2_child_sa_keymat(const struct hash_desc *hasher,
 	}
 	PK11SymKey *prfplus = ikev2_prfplus(hasher, SK_d, data,
 					    required_bytes);
-	PK11_FreeSymKey(data);
+	free_any_symkey(__func__, &data);
 	return prfplus;
 }

@@ -143,9 +143,7 @@ void chunk(struct cavp_entry *entry,
 void symkey(struct cavp_entry *entry,
 	    const char *value)
 {
-	if (*(entry->symkey) != NULL) {
-		PK11_FreeSymKey(*(entry->symkey));
-	}
+	free_any_symkey(__func__, entry->symkey);
 	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
 	*(entry->symkey) = chunk_to_key(CKM_DH_PKCS_DERIVE, chunk);
 	freeanychunk(chunk);

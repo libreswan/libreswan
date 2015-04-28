@@ -123,12 +123,12 @@ static void run_ikev2(void)
                 ikev2_ike_sa_rekey_skeyseed(hasher, SK_d, g_ir_new, ni, nr);
         print_symkey("SKEYSEED(Rekey)", skeyseed_rekey, 0);
 
-	PK11_FreeSymKey(skeyseed);
-	PK11_FreeSymKey(dkm);
-	PK11_FreeSymKey(SK_d);
-	PK11_FreeSymKey(child_sa_dkm);
-	PK11_FreeSymKey(child_sa_dkm_dh);
-	PK11_FreeSymKey(skeyseed_rekey);
+	free_any_symkey("skeyseed", &skeyseed);
+	free_any_symkey("dkm", &dkm);
+	free_any_symkey("SK_d", &SK_d);
+	free_any_symkey("child_sa_dkm", &child_sa_dkm);
+	free_any_symkey("child_sa_dkm_dh", &child_sa_dkm_dh);
+	free_any_symkey("skeyseed_rekey", &skeyseed_rekey);
 }
 
 struct cavp cavp_ikev2 = {

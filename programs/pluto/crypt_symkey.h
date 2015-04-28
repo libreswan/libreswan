@@ -27,6 +27,11 @@ struct encrypt_desc;
 void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
 
 /*
+ * Free any symkey and then stomp on the pointer.
+ */
+void free_any_symkey(const char *prefix, PK11SymKey **key);
+
+/*
  * Use SCRATCH key as a secure starting point for creating the key
  * from the raw bytes, or chunk.
  */
