@@ -24,28 +24,40 @@
 /*
  * XXX: Is there an NSS version of this?
  */
+
 static const char *ckm_to_string(CK_MECHANISM_TYPE mechanism)
 {
+	const char *t;
+#define CASE(T) case T: t = #T; eat(t, "CKM_"); return t
 	switch (mechanism) {
-	case CKM_CONCATENATE_BASE_AND_DATA: return "concatentate base and data";
-	case CKM_CONCATENATE_BASE_AND_KEY: return "concatentate base and key";
-	case CKM_CONCATENATE_DATA_AND_BASE: return "concatentate data and base";
-	case CKM_XOR_BASE_AND_DATA: return "xor base and data";
-	case CKM_EXTRACT_KEY_FROM_KEY: return "extract key from key";
 
-	case CKM_VENDOR_DEFINED: return "vendor defined";
+		CASE(CKM_CONCATENATE_BASE_AND_DATA);
+		CASE(CKM_CONCATENATE_BASE_AND_KEY);
+		CASE(CKM_CONCATENATE_DATA_AND_BASE);
 
-	case CKM_AES_CBC: return "aes cbc";
+		CASE(CKM_XOR_BASE_AND_DATA);
 
-	case CKM_MD5_KEY_DERIVATION: return "md5 key derivation";
-	case CKM_SHA1_KEY_DERIVATION: return "sha1 key derivation";
-	case CKM_SHA256_KEY_DERIVATION: return "sha256 key derivation";
-	case CKM_SHA384_KEY_DERIVATION: return "sha384 key derivation";
-	case CKM_SHA512_KEY_DERIVATION: return "sha512 key derivation";
+		CASE(CKM_EXTRACT_KEY_FROM_KEY);
+
+		CASE(CKM_VENDOR_DEFINED);
+
+		CASE(CKM_AES_CBC);
+		CASE(CKM_DES3_CBC);
+		CASE(CKM_CAMELLIA_CBC);
+		CASE(CKM_AES_CTR);
+		CASE(CKM_AES_GCM);
+
+		CASE(CKM_MD5_KEY_DERIVATION);
+		CASE(CKM_SHA1_KEY_DERIVATION);
+		CASE(CKM_SHA256_KEY_DERIVATION);
+		CASE(CKM_SHA384_KEY_DERIVATION);
+		CASE(CKM_SHA512_KEY_DERIVATION);
+
 	default:
 		DBG(DBG_CRYPT, DBG_log("unknown mechanism 0x%08x", (int) mechanism));
-		return "unknown";
+		return "unknown-mechanism";
 	}
+#undef CASE
 }
 
 void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
