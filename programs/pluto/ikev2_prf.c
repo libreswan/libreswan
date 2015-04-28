@@ -315,7 +315,8 @@ static PK11SymKey *ikev2_prfplus(const struct hash_desc *hasher,
 		append_symkey_symkey(hasher, &prfplus, new_t);
 		PK11_FreeSymKey(old_t);
 		old_t = new_t;
-	} 
+	}
+	PK11_FreeSymKey(old_t);
 	return prfplus;
 }
 
