@@ -127,24 +127,15 @@ union hash_ctx {
 	aes_xcbc_context ctx_aes_xcbc;
 };
 
-/* HMAC package
- * Note that hmac_ctx can be (and is) copied since there are
- * no persistent pointers into it.
+/*
+ * HMAC package (new code should use crypt_prf).
  */
 
-struct hmac_ctx {
-	const struct hash_desc *h;      /* underlying hash function */
-	size_t hmac_digest_len;         /* copy of h->hash_digest_len */
-	union hash_ctx hash_ctx;        /* ctx for hash function */
-	u_char buf1[HMAC_BUFSIZE], buf2[HMAC_BUFSIZE];
-#ifdef USE_SHA2
-	sha256_context ctx_sha256;
-	sha512_context ctx_sha512;
-#endif
-	aes_xcbc_context ctx_aes_xcbc;
+struct crypt_prf;
 
-	PK11SymKey *ikey, *okey;
-	PK11Context *ctx_nss;
+struct hmac_ctx {
+	struct crypt_prf *prf;
+	size_t hmac_digest_len;
 };
 
 extern void hmac_init(struct hmac_ctx *ctx,
@@ -167,18 +158,7 @@ extern void hmac_final(u_char *output, struct hmac_ctx *ctx);
 }
 
 extern CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher);
-extern void nss_symkey_log(PK11SymKey *key, const char *msg);
 extern chunk_t hmac_pads(u_char val, unsigned int len);
-extern PK11SymKey *pk11_derive_wrapper_lsw(PK11SymKey *base,
-					   CK_MECHANISM_TYPE mechanism,
-					   chunk_t data,
-					   CK_MECHANISM_TYPE target,
-					   CK_ATTRIBUTE_TYPE operation,
-					   int keySize);
-extern PK11SymKey *PK11_Derive_lsw(PK11SymKey *base,
-				   CK_MECHANISM_TYPE mechanism,
-				   SECItem *param, CK_MECHANISM_TYPE target,
-				   CK_ATTRIBUTE_TYPE operation, int keySize);
 
 enum crk_proto {
 	CRK_ESPorAH,
