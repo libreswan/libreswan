@@ -34,7 +34,10 @@ endif
 USERLAND_CFLAGS+=$(DEBUG_CFLAGS)
 
 ifeq ($(origin OPTIMIZE_CFLAGS),undefined)
-OPTIMIZE_CFLAGS=-O2 -Wp,-D_FORTIFY_SOURCE=2
+# _FORTIFY_SOURCE requires at least -O.  Gentoo, pre-defines
+# _FORTIFY_SOURCE (to what? who knows!); force it to our prefered
+# value.
+OPTIMIZE_CFLAGS=-O2 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 endif
 USERLAND_CFLAGS+=$(OPTIMIZE_CFLAGS)
 
