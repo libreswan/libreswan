@@ -668,6 +668,85 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 	return top;
 }
 
+/*
+ *  Converts a X.500 generalName into an ID
+ */
+static void gntoid(struct id *id, const generalName_t *gn)
+{
+	*id  = empty_id;
+
+	switch (gn->kind) {
+	case GN_DNS_NAME:	/* ID type: ID_FQDN */
+		id->kind = ID_FQDN;
+		id->name = gn->name;
+		break;
+	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
+	{
+		const struct af_info *afi = &af_inet4_info;
+		err_t ugh = NULL;
+
+		id->kind = afi->id_addr;
+		ugh = initaddr(gn->name.ptr, gn->name.len, afi->af,
+			&id->ip_addr);
+		if (!ugh) {
+			libreswan_log(
+				"Warning: gntoid() failed to initaddr(): %s",
+				ugh);
+		}
+
+	}
+	break;
+	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
+		id->kind = ID_USER_FQDN;
+		id->name = gn->name;
+		break;
+	case GN_DIRECTORY_NAME:
+		id->kind = ID_DER_ASN1_DN;
+		id->name = gn->name;
+		break;
+	default:
+		id->kind = ID_NONE;
+		id->name = empty_chunk;
+	}
+}
+
+/*
+ * Convert all CERTCertificate general names to a list of pluto generalName_t
+ * Results go in *gn_out.
+ */
+void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
+{
+	generalName_t *pgn_list = NULL;
+	CERTGeneralName *cur_nss_gn, *first_nss_gn;
+	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+
+	if (arena == NULL) {
+		DBG(DBG_X509, DBG_log("%s PORT_NewArena failed!", __FUNCTION__));
+		*gn_out = NULL;
+		return;
+	}
+
+	cur_nss_gn = first_nss_gn = CERT_GetCertificateNames(cert, arena);
+
+	if (cur_nss_gn != NULL) {
+		do {
+			generalName_t *pluto_gn = alloc_thing(generalName_t, "converted gn");
+			DBG(DBG_X509, DBG_log("%s: allocated pluto_gn %p",
+						__FUNCTION__, pluto_gn));
+			convert_nss_gn_to_pluto_gn(cur_nss_gn, pluto_gn);
+			pluto_gn->next = pgn_list;
+			pgn_list = pluto_gn;
+			/*
+			 * CERT_GetNextGeneralName just loops around, does not end at NULL.
+			 */
+			cur_nss_gn = CERT_GetNextGeneralName(cur_nss_gn);
+		} while (cur_nss_gn != first_nss_gn);
+	}
+
+	PORT_FreeArena(arena, PR_FALSE);
+	*gn_out = pgn_list;
+}
+
 struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 {
 	SECKEYPublicKey *nsspk = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
@@ -723,12 +802,33 @@ static void create_cert_subjectdn_pubkey(struct pubkey **pkp,
 	create_cert_pubkey(pkp, &id, cert);
 }
 
+static void add_cert_san_pubkeys(CERTCertificate *cert)
+{
+	generalName_t *gn = NULL;
+	generalName_t *gnt = NULL;
+
+	get_pluto_gn_from_nss_cert(cert, &gn);
+
+	for (gnt = gn; gn != NULL; gn = gn->next) {
+		struct id id;
+		struct pubkey *pk = NULL;
+
+		gntoid(&id, gn);
+		if (id.kind != ID_NONE) {
+			create_cert_pubkey(&pk, &id, cert);
+			replace_public_key(pk);
+		}
+	}
+
+	free_generalNames(gnt, FALSE);
+}
+
 /*
  * Adds pubkey entries from a certificate.
- * An entry with the ID_DER_ASN1_DN subject is always added,
+ * An entry with the ID_DER_ASN1_DN subject is always added
+ * with subjectAltNames
  * @keyid provides an id for a secondary entry
  */
-
 void add_rsa_pubkey_from_cert(const struct id *keyid, CERTCertificate *cert)
 {
 	struct pubkey *pk = NULL;
@@ -741,6 +841,8 @@ void add_rsa_pubkey_from_cert(const struct id *keyid, CERTCertificate *cert)
 
 	create_cert_subjectdn_pubkey(&pk, cert);
 	replace_public_key(pk);
+
+	add_cert_san_pubkeys(cert);
 
 	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
 			     keyid->kind != ID_NONE &&
@@ -1693,87 +1795,3 @@ void clear_ocsp_cache(void)
 	(void)CERT_ClearOCSPCache();
 }
 
-/*
- * warning: cryogenic code storage
- * unsure if we'll still need these at some point..
- */
-#if 0
-/*
- *  Converts a X.500 generalName into an ID
- */
-static void gntoid(struct id *id, const generalName_t *gn)
-{
-	*id  = empty_id;
-
-	switch (gn->kind) {
-	case GN_DNS_NAME:	/* ID type: ID_FQDN */
-		id->kind = ID_FQDN;
-		id->name = gn->name;
-		break;
-	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
-	{
-		const struct af_info *afi = &af_inet4_info;
-		err_t ugh = NULL;
-
-		id->kind = afi->id_addr;
-		ugh = initaddr(gn->name.ptr, gn->name.len, afi->af,
-			&id->ip_addr);
-		if (!ugh) {
-			libreswan_log(
-				"Warning: gntoid() failed to initaddr(): %s",
-				ugh);
-		}
-
-	}
-	break;
-	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
-		id->kind = ID_USER_FQDN;
-		id->name = gn->name;
-		break;
-	case GN_DIRECTORY_NAME:
-		id->kind = ID_DER_ASN1_DN;
-		id->name = gn->name;
-		break;
-	default:
-		id->kind = ID_NONE;
-		id->name = empty_chunk;
-	}
-}
-
-/*
- * Convert all CERTCertificate general names to a list of pluto generalName_t
- * Results go in *gn_out.
- */
-void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
-{
-	generalName_t *pgn_list = NULL;
-	CERTGeneralName *cur_nss_gn, *first_nss_gn;
-	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-
-	if (arena == NULL) {
-		DBG(DBG_X509, DBG_log("%s PORT_NewArena failed!", __FUNCTION__));
-		*gn_out = NULL;
-		return;
-	}
-
-	cur_nss_gn = first_nss_gn = CERT_GetCertificateNames(cert, arena);
-
-	if (cur_nss_gn != NULL) {
-		do {
-			generalName_t *pluto_gn = alloc_thing(generalName_t, "converted gn");
-			DBG(DBG_X509, DBG_log("%s: allocated pluto_gn %p",
-						__FUNCTION__, pluto_gn));
-			convert_nss_gn_to_pluto_gn(cur_nss_gn, pluto_gn);
-			pluto_gn->next = pgn_list;
-			pgn_list = pluto_gn;
-			/*
-			 * CERT_GetNextGeneralName just loops around, does not end at NULL.
-			 */
-			cur_nss_gn = CERT_GetNextGeneralName(cur_nss_gn);
-		} while (cur_nss_gn != first_nss_gn);
-	}
-
-	PORT_FreeArena(arena, PR_FALSE);
-	*gn_out = pgn_list;
-}
-#endif
