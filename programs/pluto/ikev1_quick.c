@@ -69,6 +69,7 @@
 #include "plutoalg.h"
 
 #include "pluto_crypt.h"
+#include "crypt_prf.h"
 #include "ikev1.h"
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
@@ -469,13 +470,8 @@ static void compute_proto_keymat(struct state *st,
 
 		for (i = 0;; ) {
 			if (st->st_shared_nss != NULL) {
-				/* PFS: include the g^xy */
-				SECStatus s;
-
-				s = PK11_DigestKey(ctx_me.ctx_nss, st->st_shared_nss);
-				passert(s == SECSuccess);
-				s = PK11_DigestKey(ctx_peer.ctx_nss, st->st_shared_nss);
-				passert(s == SECSuccess);
+				crypt_prf_update_symkey("g^xy", ctx_me.prf, st->st_shared_nss);
+				crypt_prf_update_symkey("g^xy", ctx_peer.prf, st->st_shared_nss);
 			}
 			hmac_update(&ctx_me, &protoid, sizeof(protoid));
 			hmac_update(&ctx_peer, &protoid, sizeof(protoid));

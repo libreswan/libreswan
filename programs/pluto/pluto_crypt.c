@@ -66,6 +66,9 @@
 
 #include "lsw_select.h"
 #include  "server.h"
+#include "ikev2_prf.h"
+#include "crypt_dh.h"
+#include "ikev1_prf.h"
 
 struct pluto_crypto_req_cont *new_pcrc(
 	crypto_req_cont_func fn,

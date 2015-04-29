@@ -389,10 +389,6 @@ extern stf_status start_dh_v2(struct msg_digest *md,
 extern void finish_dh_v2(struct state *st,
 			 const struct pluto_crypto_req *r);
 
-extern void calc_dh_iv(struct pluto_crypto_req *r);
-extern void calc_dh(struct pluto_crypto_req *r);
-extern void calc_dh_v2(struct pluto_crypto_req *r);
-
 extern void unpack_KE_from_helper(
 	struct state *st,
 	const struct pluto_crypto_req *r,
