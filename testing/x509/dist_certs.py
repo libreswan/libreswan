@@ -95,32 +95,14 @@ def create_csr(pkey, CN,
 	req.sign(pkey, algo)
 	return req
 
+def add_ext(cert, kind, crit, string):
+	cert.add_extensions([crypto.X509Extension(kind, crit, string)])
 
 def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocspuri=True):
-	""" Set some cert extensions. isCA/isRoot for a few different profiles
-	Some notes about these extensions
-	: extensions from the testing/x509/openssl.cnf:
-	: keyUsage = nonRepudiation, digitalSignature, keyEncipherment
-	: extendedKeyUsage=1.3.6.1.5.5.7.3.2,1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.3
-	: subjectKeyIdentifier=hash
-	: authorityKeyIdentifier=keyid,issuer:always
-	: basicConstraints=CA:FALSE
-	: crlDistributionPoints= CRL_URI in all
-	: dontYouLoveCerts = True
-	How are we supposed to specify this ldap URI with add_extensions??
-	cert.add_extensions([crypto.X509Extension('crlDistributionPoints', False,
-	'URI:ldap://nic.testing.libreswan.org/o=Libreswan,
-	c=CA?certificateRevocationList?base?(objectClass=certificationAuthority)')])
-	Can't. 1. try a raw string or something 2. time to send an email
-	"""
-	#crit_str = ""
-	#crit = False
-	ku_str = 'digitalSignature,nonRepudiation,keyEncipherment'
-	#eku_str = 'serverAuth,clientAuth,codeSigning'
-	#aki_str = 'keyid:always,issuer:always'
-
-	#if ocsp:
-	#	eku_str = eku_str + ',OCSPSigning'
+	ku_str = 'digitalSignature'
+	eku_str = ''
+	ocspeku = 'serverAuth,clientAuth,codeSigning,OCSPSigning'
+	cnstr = str(cert.get_subject().commonName)
 
 	if isCA:
 		ku_str = ku_str + ',keyCertSign,cRLSign'
@@ -128,49 +110,35 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 	else:
 		bc = "CA:FALSE"
 
-	cert.add_extensions([
-		crypto.X509Extension('basicConstraints',
-							 False, bc)])
-	if not isCA:
-		dnsname = "DNS: " + str(cert.get_subject().commonName)
-		cert.add_extensions([
-			crypto.X509Extension('subjectAltName', False, dnsname)])
-
-	if isRoot:
-		skisub = issuer
-		cert.add_extensions([
-			crypto.X509Extension('keyUsage',
-								 False, ku_str)])
-	else:
-		if ocsp:
-			ku_str = ku_str + ",keyCertSign,cRLSign"
-		skisub = cert
-		cert.add_extensions([
-			crypto.X509Extension('keyUsage',
-								 False, ku_str)])
-		if ocsp:
-			cert.add_extensions([
-				crypto.X509Extension('extendedKeyUsage',
-									 False, 'serverAuth,clientAuth,codeSigning,OCSPSigning')])
-#	cert.add_extensions([
-#		crypto.X509Extension('subjectKeyIdentifier',
-#							 False, 'hash', subject=skisub)])
-#	cert.add_extensions([
-#		crypto.X509Extension('authorityKeyIdentifier',
-#							 False, aki_str, issuer=issuer)])
+	add_ext(cert, 'basicConstraints', False, bc)
 
 	if not isCA:
-		cert.add_extensions([crypto.X509Extension('extendedKeyUsage',
-							False, 'serverAuth')])
+		dnsname = "DNS: " + cnstr 
+		add_ext(cert, 'subjectAltName', False, dnsname)
+
+	if cnstr == 'usage-server.testing.libreswan.org':
+		eku_str = 'serverAuth'
+		ku_str = ku_str + ',keyEncipherment'
+	elif cnstr == 'usage-client.testing.libreswan.org':
+		eku_str = 'clientAuth'
+		ku_str = ku_str + ',nonRepudiation'
+	elif cnstr == 'usage-both.testing.libreswan.org':
+		eku_str = 'serverAuth,clientAuth'
+		ku_str = ku_str + ',keyEncipherment,nonRepudiation'
+
+	if ocsp:
+		ku_str = ku_str + ',keyCertSign,cRLSign'
+		eku_str = ocspeku
+
+	add_ext(cert, 'keyUsage', False, ku_str)
+	if eku_str is not '':
+		add_ext(cert, 'extendedKeyUsage', False, eku_str)
 
 	if ocspuri:
-		cert.add_extensions([
-			crypto.X509Extension('authorityInfoAccess',
-					False, 'OCSP;URI:http://nic.testing.libreswan.org:2560')])
-	cert.add_extensions([
-		crypto.X509Extension('crlDistributionPoints',
-							 False, CRL_URI)])
+		add_ext(cert, 'authorityInfoAccess', False,
+		  		'OCSP;URI:http://nic.testing.libreswan.org:2560')
 
+	add_ext(cert, 'crlDistributionPoints', False, CRL_URI)
 
 def create_sub_cert(CN, CACert, CAkey, snum, START, END,
 					C='ca', ST='Ontario', L='Toronto',
@@ -616,6 +584,8 @@ def run_dist_certs():
 	mainca_end_certs = ('nic','east','west','sunset',
 						'sunrise','north','south',
 						'pole','park','beet','carrot',
+					    'usage-server', 'usage-client',
+					    'usage-both', 
 						'nic-noext', 'nic-nourl',
 						'japan','bigkey',
 						'notyetvalid','notvalidanymore',
