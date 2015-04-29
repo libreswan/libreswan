@@ -2482,7 +2482,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	/* encrypt message, except for fixed part of header */
 
 	if (!encrypt_message(&md->rbody, st)) {
-		delete_ipsec_sa(st, TRUE);
+		delete_ipsec_sa(st);
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -2742,7 +2742,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 	/* encrypt message, except for fixed part of header */
 
 	if (!encrypt_message(&md->rbody, st)) {
-		delete_ipsec_sa(st, FALSE);
+		delete_ipsec_sa(st);
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -2764,7 +2764,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
 	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
-			delete_ipsec_sa(st, FALSE);
+			delete_ipsec_sa(st);
 			return STF_FAIL;
 		}
 	}
@@ -2816,7 +2816,7 @@ stf_status quick_inI2(struct msg_digest *md)
 	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
 	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
-			delete_ipsec_sa(st, FALSE);
+			delete_ipsec_sa(st);
 			return STF_FAIL;
 		}
 	}

@@ -958,6 +958,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	bool initiator = md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R;
 
 	unsigned int hisID = initiator ? ISAKMP_NEXT_v2IDr : ISAKMP_NEXT_v2IDi;
+	struct state *const st = md->st;
 	struct payload_digest *const id_him = md->chain[hisID];
 	struct connection *c = md->st->st_connection;
 	const pb_stream *id_pbs;
@@ -984,27 +985,35 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	/* check for certificate requests */
 	ikev2_decode_cr(md, &c->requested_ca);
 
-	if (!same_id(&md->st->st_connection->spd.that.id, &peer) &&
-		id_kind(&md->st->st_connection->spd.that.id) != ID_FROMCERT) {
+	/* Now that we've decoded the ID payload, let's see if we
+	 * need to switch connections.
+	 * We must not switch horses if we initiated:
+	 * - if the initiation was explicit, we'd be ignoring user's intent
+	 * - if opportunistic, we'll lose our HOLD info
+	 */
+	if (initiator) {
+		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
+		    id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];
 
-			idtoa(&md->st->st_connection->spd.that.id, expect,
+			idtoa(&st->st_connection->spd.that.id, expect,
 				sizeof(expect));
 			idtoa(&peer, found, sizeof(found));
 			loglog(RC_LOG_SERIOUS,
 				"we require IKEv2 peer to have ID '%s', but peer declares '%s'",
 				expect, found);
 			return FALSE;
-	} else if (id_kind(&md->st->st_connection->spd.that.id) == ID_FROMCERT) {
+	} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
 		if (id_kind(&peer) != ID_DER_ASN1_DN) {
 			loglog(RC_LOG_SERIOUS, "peer ID is not a certificate type");
 			return FALSE;
 		}
-		duplicate_id(&md->st->st_connection->spd.that.id, &peer);
+		duplicate_id(&st->st_connection->spd.that.id, &peer);
 	}
 
-	if (!initiator) {
+	} else {
 		struct connection *r = NULL;
 		bool fromcert = FALSE;
 		uint16_t auth = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2a.isaa_type;
@@ -1025,13 +1034,6 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 			DBG(DBG_CONTROL, DBG_log("ikev2 skipping refine_host_connection due to unknown policy"));
 		}
 
-		/*
-		 * Now that we've decoded the ID payload, let's see if we
-		 * need to switch connections.
-		 * We must not switch horses if we initiated:
-		 * - if the initiation was explicit, we'd be ignoring user's intent
-		 * - if opportunistic, we'll lose our HOLD info
-		 */
 		if (auth_policy != LEMPTY) {
 			/* should really return c if no better match found */
 			r = refine_host_connection(md->st, &peer, FALSE /*initiator*/, auth_policy, &fromcert);
