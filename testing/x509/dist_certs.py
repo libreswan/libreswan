@@ -131,6 +131,11 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 	cert.add_extensions([
 		crypto.X509Extension('basicConstraints',
 							 False, bc)])
+	if not isCA:
+		dnsname = "DNS: " + str(cert.get_subject().commonName)
+		cert.add_extensions([
+			crypto.X509Extension('subjectAltName', False, dnsname)])
+
 	if isRoot:
 		skisub = issuer
 		cert.add_extensions([
