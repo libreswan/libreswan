@@ -386,6 +386,8 @@ static void set_rev_params(CERTRevocationFlags *rev, bool crl,
 }
 
 #define CRL_OR_OCSP(r) (r[RO_CRL] || r[RO_OCSP])
+#define RETRY_TYPE(err, re) ((err == SEC_ERROR_INADEQUATE_CERT_TYPE || \
+			      err == SEC_ERROR_INADEQUATE_KEY_USAGE) && re)
 
 static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 						   CERTCertificate **end_out,
@@ -467,20 +469,17 @@ retry:
 
 	if (rv != SECSuccess || cur_log->count > 0) {
 		if (cur_log->count > 0 && cur_log->head != NULL) {
-			fin = get_node_error_status(cur_log->head);
-			if (fin == SEC_ERROR_INADEQUATE_CERT_TYPE ||
-			        fin == SEC_ERROR_INADEQUATE_KEY_USAGE) {
-				if (reverify) {
-					DBG(DBG_X509,
-					    DBG_log("retrying verification with the NSS server profile"));
-					cur_log = &vfy_log2;
-					cvout[0].value.pointer.log = cur_log;
-					cvout[1].value.pointer.chain = NULL;
-					usage = certificateUsageSSLServer;
-					reverify = FALSE;
-					goto retry;
-				}
+			if (RETRY_TYPE(cur_log->head->error, reverify)) {
+				DBG(DBG_X509,
+				    DBG_log("retrying verification with the NSS serverAuth profile"));
+				cur_log = &vfy_log2;
+				cvout[0].value.pointer.log = cur_log;
+				cvout[1].value.pointer.chain = NULL;
+				usage = certificateUsageSSLServer;
+				reverify = FALSE;
+				goto retry;
 			}
+			fin = get_node_error_status(cur_log->head);
 		} else {
 			fin = translate_nss_err(PORT_GetError(), FALSE);
 		}
