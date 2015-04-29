@@ -300,5 +300,7 @@ int main(int argc, char *argv[])
         init_crypto();
 
 	cavp_parser();
+
+	NSS_Shutdown();
 	return 0;
 }
