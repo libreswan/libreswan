@@ -78,9 +78,9 @@ void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
 		 * For instance, when a zero-length key gets extracted
 		 * from an existing key.
 		 */
-		DBG_log("%s key is NULL", prefix);
+		DBG_log("%s: key is NULL", prefix);
 	} else {
-		DBG_log("%s key %p %d mechanism(type) %s",
+		DBG_log("%s: key %p (length %d) type(mechanism): %s",
 			prefix, key, PK11_GetKeyLength(key),
 			ckm_to_string(PK11_GetMechanism(key)));
 		if (DBGP(DBG_PRIVATE)) {
@@ -88,7 +88,7 @@ void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
 			DBG_dump_chunk(prefix, chunk);
 			freeanychunk(chunk);
 		} else {
-			DBG_log("%s contents are private", prefix);
+			DBG_log("%s: contents are private", prefix);
 		}
 	}
 }
@@ -114,13 +114,14 @@ static PK11SymKey *merge_symkey_bytes(PK11SymKey *base_key,
 	int key_size = 0;
 
 	DBG(DBG_CRYPT,
-	    DBG_log("derive %s using %s", ckm_to_string(derive),
+	    DBG_log("merge_symkey_bytes: derive(op): %s target: %s",
+		    ckm_to_string(derive),
 		    ckm_to_string(target));
 	    DBG_dump_symkey("base", base_key);
 	    DBG_dump("data", bytes, sizeof_bytes));
 	PK11SymKey *result = PK11_Derive(base_key, derive, &param, target,
 					 operation, key_size);
-	DBG(DBG_CRYPT, DBG_dump_symkey("result", result))
+	DBG(DBG_CRYPT, DBG_dump_symkey("merge_symkey_bytes: result", result))
 
 	return result;
 }
