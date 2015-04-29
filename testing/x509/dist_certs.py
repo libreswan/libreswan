@@ -115,7 +115,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 	"""
 	#crit_str = ""
 	#crit = False
-	ku_str = 'digitalSignature,nonRepudiation'
+	ku_str = 'digitalSignature,nonRepudiation,keyEncipherment'
 	#eku_str = 'serverAuth,clientAuth,codeSigning'
 	#aki_str = 'keyid:always,issuer:always'
 
@@ -158,6 +158,11 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 #	cert.add_extensions([
 #		crypto.X509Extension('authorityKeyIdentifier',
 #							 False, aki_str, issuer=issuer)])
+
+	if not isCA:
+		cert.add_extensions([crypto.X509Extension('extendedKeyUsage',
+							False, 'serverAuth')])
+
 	if ocspuri:
 		cert.add_extensions([
 			crypto.X509Extension('authorityInfoAccess',
