@@ -50,6 +50,7 @@ v3.13 (unreleased)
 * testing: test case updates/additions [Antony/Paul/Andrew/Matt]
 * NETKEY: Increase netlink message buffer for larger SElinux labels [Paul]
 * KLIPS: move udp_encap_enable() to not be within spinlock [Wolfgang]
+* KLIPS: ipsec_rcv_decap_ipip broken for IPv6 [Frank Schmirler]
 * whack: New command ipsec whack --purgeocsp [Matt]
 * whack: cleanup help text [Tuomo]
 * _stackmanager: Don't load blacklisted modules (rhbz#1207689) [Paul/Tuomo]
