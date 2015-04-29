@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v3.13 (unreleased)
+* NSS: Major rewrite of PRF / PRFPLUS / integrity functions [Andrew]
+* CAVS: Added programs/pluto/cavp for NIST CVAS testing [Andrew]
 * IKEv2: authby=null support (draft-ietf-ipsecme-authnull) [Paul/Antony/Hugh]
 * IKEv2: whack and smc related time out fixes [Antony]
 * IKEv2: do not pad IKE messages (fix interop w. InsideSecure) [Paul]
