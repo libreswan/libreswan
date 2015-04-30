@@ -3438,8 +3438,8 @@ static void show_one_sr(struct connection *c,
 		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg "
 		"policy:%s, dns1:%s, dns2:%s, domain:%s%s;",
 		c->name, instance,
-		COMBO(sr->this, modecfg_client, modecfg_server),
-		COMBO(sr->that, modecfg_client, modecfg_server),
+		COMBO(sr->this, modecfg_server, modecfg_client),
+		COMBO(sr->that, modecfg_server, modecfg_client),
 
 		(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
 		isanyaddr(&c->modecfg_dns1) ? "unset" : ipstr(&c->modecfg_dns1, &dns1b),
