@@ -10,7 +10,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Panagiotis Tamtamis <tamtamis@gmail.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  *
@@ -516,7 +516,7 @@ static void cannot_oppo(struct connection *c,
 
 	if (b->held) {
 		/* this was filled in for us based on packet trigger vs whack --oppo trigger */
-		libreswan_log("PAUL: cannot_oppo() detected packet triggered shunt from bundle");
+		DBG(DBG_CONTROL, DBG_log("cannot_oppo() detected packet triggered shunt from bundle"));
 		/*
 		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass)
 		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
@@ -528,12 +528,12 @@ static void cannot_oppo(struct connection *c,
 					  TRUE, /* replace */
 					  b->transport_proto,
 					  ughmsg)) {
-			DBG(DBG_CONTROL, DBG_log("PAUL:cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
+			DBG(DBG_CONTROL, DBG_log("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
 				(b->failure_shunt == SPI_PASS) ? "pass" :
 					(b->failure_shunt == SPI_HOLD) ? "hold" : "very-unexpected"
 			));
 		} else {
-		 libreswan_log("PAUL:cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
+		 libreswan_log("cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
 		}
 	}
 }
@@ -557,7 +557,6 @@ bool initiate_ondemand(const ip_address *our_client,
 {
 	struct find_oppo_bundle b;
 
-	libreswan_log("PAUL: initiate_ondemand() called - using b.failure_shunt = 0");
 	b.want = why;   /* fudge */
 	b.failure_ok = FALSE;
 	b.our_client = *our_client;
@@ -819,9 +818,9 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		if (b->held) {
 			if (assign_holdpass(c, sr, b->transport_proto, b->failure_shunt,
 					   &b->our_client, &b->peer_client)) {
-				DBG(DBG_CONTROL, DBG_log("PAUL:initiate_ondemand_body() installed failureshunt"));
+				DBG(DBG_CONTROL, DBG_log("initiate_ondemand_body() installed failureshunt"));
 			} else {
-				libreswan_log("PAUL:initiate_ondemand_body() failed to install failureshunt");
+				libreswan_log("initiate_ondemand_body() failed to install failureshunt");
 			}
 		}
 
@@ -873,10 +872,10 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
         		happy(addrtosubnet(&b->our_client, &this_client));
         		happy(addrtosubnet(&b->peer_client, &that_client));
 
-			libreswan_log("PAUL: going to initiate opportunistic, first installing '%s' negotiationshunt",
-				(shunt_spi == SPI_PASS) ? "pass" : "hold");
+			DBG(DBG_CONTROL, DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
+				(shunt_spi == SPI_PASS) ? "pass" : "hold"));
 
-			// insert negotiationshunt, which is wider than bare shunt, and either hold or pass
+			/* negotiationshunt can be wider than bare shunt, esp on NETKEY */
 			setportof(0, &this_client.addr);
 			setportof(0, &that_client.addr);
 
@@ -893,18 +892,18 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				, NULL
 #endif
 				)) {
-					libreswan_log("PAUL: add bare wide passthrough negotiationshunt failed");
+					libreswan_log("adding bare wide passthrough negotiationshunt failed");
 			} else {
-					libreswan_log("PAUL: add bare wide passthrough negotiationshunt succeeded using illegal API");
+					DBG(DBG_CONTROLMORE, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
 			}
 			// now delete the (obsoleted) narrow bare kernel shunt
 			setportof(ourport, &this_client.addr);
 			setportof(hisport, &that_client.addr);
 			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, SPI_HOLD /* dictated by kernel */,
 				FALSE /* delete bare shunt */, b->transport_proto, delmsg)) {
-					libreswan_log("PAUL: Failed to: %s", delmsg);
+					libreswan_log("Failed to: %s", delmsg);
 			} else {
-				libreswan_log("PAUL: Success taking down narrow bare shunt : %s", delmsg);
+				DBG(DBG_CONTROLMORE, DBG_log("success taking down narrow bare shunt : %s", delmsg));
 			}
 		}
 
@@ -1149,9 +1148,9 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 						TRUE,
 						b->transport_proto,
 						"no suitable connection")) {
-							DBG(DBG_CONTROL, DBG_log("PAUL: replaced negotiatinshunt with failurehunt=hold because no connection was found"));
+							DBG(DBG_CONTROL, DBG_log("replaced negotiatinshunt with failurehunt=hold because no connection was found"));
 					} else {
-						libreswan_log("PAUL: Failed to replace negotiatinshunt with failurehunt=hold");
+						libreswan_log("failed to replace negotiatinshunt with failurehunt=hold");
 					}
 				}
 			} else {
@@ -1162,19 +1161,17 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				passert(LHAS(LELEM(RT_UNROUTED) |
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
-				if (b->held) {
-					libreswan_log("PAUL: installing failureshunt (from bundle set previously)");
+				if (b->held) { /* packet triggered - not whack triggered */
+					DBG(DBG_CONTROL, DBG_log("installing failureshunt from bundle"));
 					if (assign_holdpass(c, &c->spd,
 						   b->transport_proto,
 						   b->failure_shunt,
 						   &b->our_client,
 						   &b->peer_client)) {
-						DBG(DBG_CONTROL, DBG_log("PAUL: assign_holdpass succeeded"));
+						DBG(DBG_CONTROL, DBG_log("assign_holdpass succeeded"));
 					} else {
-						libreswan_log("PAUL: assign_holdpass failed!");
+						libreswan_log("assign_holdpass failed!");
 					}
-				} else {
-					libreswan_log("PAUL: whack triggered oppo failed, not installing failureshunt as there is no kernel shunt to replace");
 				}
 				DBG(DBG_OPPO | DBG_CONTROL,
 				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",

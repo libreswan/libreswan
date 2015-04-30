@@ -6,7 +6,7 @@
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -332,17 +332,17 @@ static void retransmit_v2_msg(struct state *st)
 
 	if (LIN(POLICY_AUTH_NULL | POLICY_OPPORTUNISTIC, c->policy)) {
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
-		libreswan_log("PAUL: timeout for OE, orphaning hold with failureshunt");
+		DBG(DBG_CONTROL, DBG_log("timeout for OE, orphaning hold with failureshunt"));
 
 		/* do we need to update negotiationshunt to failureshunt? */
 		if (failure_shunt != (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_DROP) {
-			libreswan_log("PAUL: failureshunt != negotiationshunt, needs replacing [TODO]");
+			DBG(DBG_CONTROL, DBG_log("failureshunt != negotiationshunt, needs replacing"));
 		} else {
-			libreswan_log("PAUL: failureshunt == negotiationshunt, no replace needed");
+			DBG(DBG_CONTROL, DBG_log("failureshunt == negotiationshunt, no replace needed"));
 		}
 
 		orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt);
-		libreswan_log("PAUL: orphaned, should be able to safely delete state and connection");
+		DBG(DBG_CONTROL, DBG_log("orphaned, state & connection can now safely be deleted"));
 	}
 
 	delete_state(st);

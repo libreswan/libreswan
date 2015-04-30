@@ -16,6 +16,7 @@
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -3699,7 +3700,7 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 	 */
 
 	if (sr1 == NULL) {
-		libreswan_log("PAUL: eclipsed() returning NULL due to sr1 == NULL");
+		DBG(DBG_CONTROLMORE, DBG_log("eclipsed() returning NULL due to sr1 == NULL"));
 		return NULL;
 	}
 
@@ -3717,9 +3718,9 @@ struct connection *eclipsed(struct connection *c, struct spd_route **esrp)
 		}
 	}
 	if (ue == NULL) {
-		libreswan_log("PAUL: eclipsed() returning NULL due to ue == NULL");
+		DBG(DBG_CONTROLMORE, DBG_log("eclipsed() returning NULL due to ue == NULL"));
 	} else {
-		libreswan_log("PAUL: eclipsed() returning non-NULL ue");
+		DBG(DBG_CONTROLMORE, DBG_log("eclipsed() returning non-NULL ue"));
 	}
 	return ue;
 }
