@@ -349,6 +349,9 @@ extern bool assign_holdpass(struct connection *c,
 			ipsec_spi_t failure_shunt,
 			const ip_address *src, const ip_address *dst);
 
+extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
+                int transport_proto, ipsec_spi_t failure_shunt);
+
 extern ipsec_spi_t shunt_policy_spi(struct connection *c, bool prospective);
 
 struct state;   /* forward declaration of tag */

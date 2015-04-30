@@ -1191,8 +1191,10 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 				&that_client,
 				transport_proto);
 
-			libreswan_log("PAUL:raw_eroute to delete kernel shunt succeeded, pluto bare shunt lookup returned %s",
-				(bs_pp == NULL) ? "no bare shunt" : "a bare shunt");
+			libreswan_log("PAUL:raw_eroute with op='%s' for transport_proto='%d' kernel shunt succeeded, bare shunt lookup %s",
+				repl ? "replace" : "delete",
+				transport_proto,
+				(bs_pp == NULL) ? "failed" : "succeeded");
 
 			/* we can have proto mismatching acquires with netkey - this is a bad workaround */
 			/* passert(bs_pp != NULL); */
@@ -1221,7 +1223,9 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			}
 			return TRUE;
 		} else {
-			libreswan_log("PAUL:raw_eroute to delete kernel shunt failed");
+			libreswan_log("PAUL:raw_eroute to op='%s'  with transport_proto='%d' kernel shunt failed",
+				repl ? "replace" : "delete",
+				transport_proto);
 			return FALSE;
 		}
 	}
@@ -1300,7 +1304,7 @@ bool assign_holdpass(struct connection *c,
 
 	if (eclipsable(sr)) {
 	//if (c->policy & POLICY_OPPORTUNISTIC) {
-	libreswan_log("PAUL: assign_holdpass() removing bare shunt");
+		libreswan_log("PAUL: assign_holdpass() removing bare shunt");
 		/* although %hold or %pass is appropriately broad, it will no longer be bare
 		 * so we must ditch it from the bare table.
 		 */
@@ -3225,3 +3229,60 @@ void free_kernelfd(void)
 	}
 
 }
+
+bool orphan_holdpass(struct connection *c, struct spd_route *sr,
+		int transport_proto, ipsec_spi_t failure_shunt)
+{
+	enum routing_t ro = sr->routing,        /* routing, old */
+			rn = ro;                 /* routing, new */
+
+	libreswan_log("PAUL: orphan_holdpass() called for %s", c->name);
+
+	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
+
+	switch (ro) {
+	case RT_UNROUTED_HOLD:
+		rn = RT_UNROUTED;
+		break;
+	case RT_ROUTED_HOLD:
+		rn = RT_ROUTED_PROSPECTIVE;
+		break;
+	default:
+		libreswan_log("PAUL: orphan_holdpass() connection '%s' has unexpected/same routing_t",
+			c->name);
+		break;
+	}
+
+	DBG(DBG_CONTROL,
+		DBG_log("orphaning holdpass for connection '%s', routing was %s, needs to be %s",
+			c->name,
+			enum_name(&routing_story, ro),
+			enum_name(&routing_story, rn)));
+
+	/* create the bare shunt and link into the list */
+	{
+		struct bare_shunt *bs = alloc_thing(struct bare_shunt, "orphan shunt");
+
+		bs->why = clone_str("oe-failed", "orphaning shunt");
+		bs->ours = sr->this.client;
+		bs->his = sr->that.client;
+		bs->transport_proto = sr->this.protocol;
+		bs->policy_prio = BOTTOM_PRIO;
+
+		bs->said.proto = SA_INT;
+		bs->said.spi = htonl(failure_shunt);
+		bs->said.dst = *aftoinfo(subnettypeof(&sr->this.client))->any;
+
+		bs->count = 0;
+		bs->last_activity = mononow();
+
+		bs->next = bare_shunts;
+		bare_shunts = bs;
+		DBG_bare_shunt("add", bs);
+	}
+	/* change routing so we don't get cleared out when state/connection dies */
+	sr->routing = rn;
+	libreswan_log("PAUL: orphan_holdpas() done - returning success");
+	return TRUE;
+}
+

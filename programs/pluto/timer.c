@@ -330,6 +330,21 @@ static void retransmit_v2_msg(struct state *st)
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
 	}
 
+	if (LIN(POLICY_AUTH_NULL | POLICY_OPPORTUNISTIC, c->policy)) {
+		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
+		libreswan_log("PAUL: timeout for OE, orphaning hold with failureshunt");
+
+		/* do we need to update negotiationshunt to failureshunt? */
+		if (failure_shunt != (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_DROP) {
+			libreswan_log("PAUL: failureshunt != negotiationshunt, needs replacing [TODO]");
+		} else {
+			libreswan_log("PAUL: failureshunt == negotiationshunt, no replace needed");
+		}
+
+		orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt);
+		libreswan_log("PAUL: orphaned, should be able to safely delete state and connection");
+	}
+
 	delete_state(st);
 	/* note: no md->st to clear */
 }

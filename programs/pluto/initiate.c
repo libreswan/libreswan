@@ -904,7 +904,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				FALSE /* delete bare shunt */, b->transport_proto, delmsg)) {
 					libreswan_log("PAUL: Failed to: %s", delmsg);
 			} else {
-				libreswan_log("PAUL: Success taking bare shunt : %s", delmsg);
+				libreswan_log("PAUL: Success taking down narrow bare shunt : %s", delmsg);
 			}
 		}
 
