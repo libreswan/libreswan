@@ -714,6 +714,11 @@ void unshare_connection_end_strings(struct end *e)
 	/* do "left" */
 	unshare_id_content(&e->id);
 
+	if (e->cert.u.nss_cert) {
+		e->cert.u.nss_cert = CERT_DupCertificate(e->cert.u.nss_cert);
+		passert(e->cert.u.nss_cert);
+	}
+
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
