@@ -13,6 +13,7 @@
  * for more details.
  */
 
+chunk_t decode_hex_to_chunk(const char *original, const char *string);
 chunk_t decode_to_chunk(const char *prefix, const char *string);
 int compare_chunks(const char *prefix,
 		   chunk_t expected,
@@ -24,3 +25,5 @@ chunk_t extract_chunk(const char *prefix, chunk_t input,
 		      size_t offset, size_t length);
 
 PK11SymKey *decode_to_key(CK_MECHANISM_TYPE cipher_mechanism, const char *string);
+
+PK11SymKey *chunk_to_key(CK_MECHANISM_TYPE cipher_mechanism, chunk_t raw_key);

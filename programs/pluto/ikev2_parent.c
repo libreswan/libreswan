@@ -78,6 +78,7 @@
 			send_v2_notification_from_md(md, t, NULL); \
 	}
 
+#ifdef XAUTH_HAVE_PAM
 struct ikev2_pam_helper {
 	struct pam_thread_arg pam;	/* writable inside thread */
 	bool pam_status;		/* set inside the thread */
@@ -91,9 +92,10 @@ struct ikev2_pam_helper {
 	struct event *evm;              /* callback event on master_fd. */
 };
 
-static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md, bool pam_status);
-
 static struct ikev2_pam_helper *pluto_v2_pam_helpers = NULL;
+#endif
+
+static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md, bool pam_status);
 
 static crypto_req_cont_func ikev2_parent_outI1_continue;	/* type assertion */
 
@@ -2435,8 +2437,10 @@ static stf_status ikev2_parent_inI2outR2_tail(
 {
 	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
-	struct connection *c = st->st_connection;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
+#ifdef XAUTH_HAVE_PAM
+	struct connection *c = st->st_connection;
+#endif
 
 	/* extract calculated values from r */
 	finish_dh_v2(st, r);
@@ -2456,7 +2460,9 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
 
+#ifdef XAUTH_HAVE_PAM
 	c = st->st_connection; /* in case we refined */
+#endif
 
 	{
 		struct hmac_ctx id_ctx;

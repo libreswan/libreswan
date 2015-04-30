@@ -7,12 +7,13 @@ Andrew Cagney <andrew.cagney@gmail.com>
 Wes Hardaker <opensource@hardakers.net>
 Kim B. Heino <b@bbbs.net>
 David McCullough <david_mccullough@mcafee.com>
+Wolfgang Nothdurft <wolfgang@linogate.de>
 Hugh Redelmeier <hugh@mimosa.com>
 Matt Rogers <mrogers@redhat.com>
 Tuomo Soini <tis@foobar.fi>
 Philippe Vouters <Philippe.Vouters@laposte.net>
 Paul Wouters <pwouters@redhat.com>
-
+Herbert Xu <herbert@gondor.apana.org.au>
 
 Libreswan is a fork of the Openswan 2.6.38 codebase.
 Please see the docs/CREDITS.openswan file from Openswan for details on

@@ -363,7 +363,7 @@ extern ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel_mode);
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
-extern void delete_ipsec_sa(struct state *st, bool inbound_only);
+extern void delete_ipsec_sa(struct state *st);
 extern bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
 			     struct state *st);

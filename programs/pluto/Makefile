@@ -114,7 +114,8 @@ DISTSRC = \
 	ikev1_dpd.c ikev1_dpd.h ikev1_spdb_struct.c \
 	ikev1_msgid.c \
         ikev2.c ikev2_parent.c ikev2_child.c ikev2_crypto.c \
-	ikev2_prfplus.c ikev2_spdb_struct.c \
+	crypt_symkey.c crypt_prf.c ikev1_prf.c ikev2_prf.c \
+	ikev2_spdb_struct.c \
 	ikev2_rsa.c ikev2_psk.c \
 	kernel.c kernel.h \
 	${NETKEY_SRCS} \
@@ -166,7 +167,8 @@ OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
 OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o 
-OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o ikev2_prfplus.o
+OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
+OBJSPLUTO += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
 OBJSPLUTO += kernel.o
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}
 OBJSPLUTO += kernel_noklips.o rcv_whack.o
@@ -194,13 +196,15 @@ OBJSADNS = adns.o
 OBJSWHACK = whack.o
 OBJSWHACKINIT = whackinit.o
 
+CAVP += cavp
+
 SHOULDWERESTART=$(wildcard plutomain.c)
 ifeq ($(SHOULDWERESTART),plutomain.c)
 all programs clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/pluto && $(MAKE) $@
 else
-all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) #$(BINNAMEWHACKINIT)
-programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(MANPAGES) #$(BINNAMEWHACKINIT) 
+all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
+programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(MANPAGES) $(CAVP) #$(BINNAMEWHACKINIT) 
 clean:	cleanall
 install: doinstall
 endif
@@ -280,9 +284,22 @@ check:
 
 checkprograms:
 
+# Cryptographic Algorithm Validation Program (CAVP)
+# see: http://csrc.nist.gov/groups/STM/cavp/index.html
+CAVPSRC += cavp.c
+CAVPSRC += cavp_print.c
+CAVPSRC += cavp_stubs.c
+CAVPSRC += cavp_ikev1.c
+CAVPSRC += cavp_ikev2.c
+DISTSRC += $(CAVPSRC)
+OBJSCAVP = $(CAVPSRC:.c=.o) $(filter-out plutomain.o, $(OBJSPLUTO))
+cavp: $(OBJSCAVP)
+	$(CC) -o $@ $(OBJSCAVP) \
+		$(LDFLAGS) $(USERLINK) $(LIBSPLUTO) ${PLUTOMINUSL}
+
 %.i: %.c
 	$(CC) $(MK_DEPEND_CFLAGS) -E -o $@ $<
 
-MK_DEPEND_FILES = $(DIST)
+MK_DEPEND_FILES = $(DISTSRC)
 MK_DEPEND_CFLAGS = $(USERLAND_CFLAGS) ${PORTINCLUDE} $(COPTS) $(HDRDIRS) $(DEFINES) $(NSSFLAGS) $(CFLAGS) ${CROSSFLAGS}
 include $(top_srcdir)/mk/depend.mk

@@ -113,6 +113,7 @@ struct xauth_thread_arg {
 	char *name;
 	char *password;
 	char *connname;
+	char *ipaddr;
 	st_jbuf_t *ptr;
 };
 
@@ -1148,6 +1149,9 @@ static bool do_file_authentication(void *varg)
 		char *userid;
 		char *passwdhash;
 		char *connectionname = NULL;
+		char *addresspool = NULL;
+		struct connection *c = arg->st->st_connection;
+		ip_range *pool_range;
 
 		lineno++;
 
@@ -1169,25 +1173,37 @@ static bool do_file_authentication(void *varg)
 			continue;
 		}
 
-		*p++ ='\0';	/* terminate string by overwriting : */
+		*p++ ='\0'; /* terminate string by overwriting : */
 
 		/* get password hash */
 		passwdhash = p;
-		p = strchr(passwdhash, ':');	/* find end */
+		p = strchr(passwdhash, ':'); /* find end */
+		if (p == NULL) {
+			/* no end: skip line */
+			libreswan_log("XAUTH: %s:%d missing connection name field", pwdfile, lineno);
+			continue;
+		}
+
+		*p++ ='\0';     /* terminate string by overwriting : */
+
+		/* get connection name */
+		connectionname = p;
+		p = strchr(connectionname, ':'); /* find end */
 		if (p != NULL) {
-			/* optional connectionname */
-			*p++ ='\0';	/* terminate password string by overwriting : */
-			connectionname = p;
+			/* optional addresspool */
+			*p++ ='\0'; /* terminate password string by overwriting : */
+			addresspool = p;
 		}
 
 		/* If connectionname is null, it applies
 		 * to all connections
 		 */
 		DBG(DBG_CONTROL,
-		    DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s)",
-			    userid, arg->name,
-			    passwdhash,
-			    connectionname == NULL? "<any>" : connectionname, arg->connname));
+			DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
+				userid, arg->name,
+				passwdhash,
+				connectionname == NULL? "" : connectionname, arg->connname,
+				addresspool == NULL? "" : addresspool));
 
 		if (streq(userid, arg->name) &&
 		    (connectionname == NULL || streq(connectionname, arg->connname)))
@@ -1217,9 +1233,33 @@ static bool do_file_authentication(void *varg)
 					      userid, connectionname);
 			}
 
-			if (win)
-				break;
+			if (win) {
 
+				if(addresspool != NULL) {
+					/* set user defined ip address or pool */
+					char *temp;
+					temp = strchr(addresspool, '-');
+					if (temp == NULL ) {
+						ttoaddr(addresspool, 0, AF_INET, &c->spd.that.client.addr);
+						if ((c->pool != NULL)) {
+							DBG(DBG_CONTROLMORE,
+								DBG_log("free addresspool entry for the conn %s ",
+								c->name));
+							unreference_addresspool(c);
+						}
+					} else {
+						pool_range = alloc_thing(ip_range, "pool_range");
+						if(pool_range != NULL){
+							ttorange(addresspool, 0, AF_INET, pool_range, TRUE);
+							if(pool_range->start.u.v4.sin_addr.s_addr){
+								c->pool = install_addresspool(pool_range);
+							}
+							pfree(pool_range);
+						}
+					}
+				}
+				break;
+			}
 			libreswan_log("XAUTH: nope");
 		}
 	}

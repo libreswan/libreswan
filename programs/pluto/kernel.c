@@ -3000,7 +3000,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		if (sr->eroute_owner != st->st_serialno &&
 		    sr->routing != RT_UNROUTED_KEYED) {
 			if (!route_and_eroute(st->st_connection, sr, st)) {
-				delete_ipsec_sa(st, FALSE);
+				delete_ipsec_sa(st);
 				/* XXX go and unroute any SRs that were successfully
 				 * routed already.
 				 */
@@ -3028,8 +3028,11 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 /* delete an IPSEC SA.
  * we may not succeed, but we bull ahead anyway because
  * we cannot do anything better by recognizing failure
+ * This used to have a parameter bool inbound_only, but
+ * the saref code changed to always install inbound before
+ * outbound so this it was always false, and thus removed
  */
-void delete_ipsec_sa(struct state *st, bool inbound_only)
+void delete_ipsec_sa(struct state *st)
 {
 #ifdef USE_LINUX_AUDIT
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
@@ -3040,7 +3043,7 @@ void delete_ipsec_sa(struct state *st, bool inbound_only)
 	case USE_MASTKLIPS:
 	case USE_KLIPS:
 	case USE_NETKEY:
-		if (!inbound_only) {
+		{
 			/* If the state is the eroute owner, we must adjust
 			 * the routing for the connection.
 			 */

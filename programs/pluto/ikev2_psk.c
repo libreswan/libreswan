@@ -56,6 +56,7 @@
 #include "server.h"
 #include "vendor.h"
 #include "keys.h"
+#include "crypt_symkey.h"
 
 #include <nss.h>
 #include <pk11pub.h>
@@ -113,9 +114,6 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		 DBG(DBG_PRIVATE, DBG_dump_chunk("AUTH_NULL PSK:", *pss));
 	}
 
-	CK_EXTRACT_PARAMS bs;
-	SECItem param;
-
 	/* RFC 4306 2.15:
 	 * AUTH = prf(prf(Shared Secret,"Key Pad for IKEv2"), <msg octets>)
 	 */
@@ -123,26 +121,12 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	/* calculate inner prf */
 	{
 		struct hmac_ctx id_ctx;
+		/* Turn the chunk into a symkey.  */
+		PK11SymKey *key = symkey_from_chunk(st->st_shared_nss, *pss);
+		passert(key != NULL);
+		hmac_init(&id_ctx, st->st_oakley.prf_hasher, key);
+		PK11_FreeSymKey(key);
 
-		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(st->st_shared_nss,
-							    CKM_CONCATENATE_DATA_AND_BASE, *pss, CKM_EXTRACT_KEY_FROM_KEY, CKA_DERIVE,
-							    0);
-		passert(tkey1 != NULL);
-
-		bs = 0;
-		param.data = (unsigned char*)&bs;
-		param.len = sizeof(bs);
-		PK11SymKey *tkey2 = PK11_Derive(tkey1,
-						CKM_EXTRACT_KEY_FROM_KEY,
-						&param,
-						CKM_CONCATENATE_BASE_AND_DATA,
-						CKA_DERIVE, pss->len);
-		passert(tkey2 != NULL);
-
-		hmac_init(&id_ctx, st->st_oakley.prf_hasher, tkey2);
-
-		PK11_FreeSymKey(tkey1);
-		PK11_FreeSymKey(tkey2);
 		hmac_update(&id_ctx, psk_key_pad_str, psk_key_pad_str_len);
 		hmac_final(prf_psk, &id_ctx);
 	}
@@ -172,33 +156,13 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 	/* calculate outer prf */
 	{
 		struct hmac_ctx id_ctx;
-		chunk_t pp_chunk;
-
-		pp_chunk.ptr = prf_psk;
-		pp_chunk.len = hash_len;
-
-		PK11SymKey *tkey1 = pk11_derive_wrapper_lsw(st->st_shared_nss,
-							    CKM_CONCATENATE_DATA_AND_BASE,
-							    pp_chunk,
-							    CKM_EXTRACT_KEY_FROM_KEY,
-							    CKA_DERIVE,
-							    0);
-		passert(tkey1 != NULL);
-
-		bs = 0;
-		param.data = (unsigned char*)&bs;
-		param.len = sizeof(bs);
-		PK11SymKey *tkey2 = PK11_Derive(tkey1,
-						CKM_EXTRACT_KEY_FROM_KEY,
-						&param,
-						CKM_CONCATENATE_BASE_AND_DATA,
-						CKA_DERIVE, hash_len);
-		passert(tkey2 != NULL);
-
-		hmac_init(&id_ctx, st->st_oakley.prf_hasher, tkey2);
-
-		PK11_FreeSymKey(tkey1);
-		PK11_FreeSymKey(tkey2);
+		chunk_t pp_chunk = {
+			.ptr = prf_psk,
+			.len = hash_len
+		};
+		PK11SymKey *key = symkey_from_chunk(st->st_shared_nss, pp_chunk);
+		hmac_init(&id_ctx, st->st_oakley.prf_hasher, key);
+		PK11_FreeSymKey(key);
 
 /*
  *  For the responder, the octets to

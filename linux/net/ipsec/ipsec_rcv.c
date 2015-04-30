@@ -727,7 +727,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_ipip(struct ipsec_rcv_state *irs)
 #ifdef CONFIG_KLIPS_IPV6
 		else if (ipp->version == 6) {
 			/* boilerplate macro for Bad Bits in address */
-#define BB(end, i) ((ipp6->end##addr.s6_addr32[0] & \
+#define BB(end, i) ((ipp6->end##addr.s6_addr32[i] & \
 		     ipsp->ips_mask_##end.u.v6.sin6_addr.s6_addr32[i]) ^ \
 		    ipsp->ips_flow_##end.u.v6.sin6_addr.s6_addr32[i])
 

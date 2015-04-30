@@ -186,5 +186,6 @@ extern void ike_alg_camellia_init(void);
 extern void ike_alg_sha2_init(void);
 #endif
 
+CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter);
 
 #endif /* _IKE_ALG_H */
