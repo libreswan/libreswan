@@ -60,6 +60,7 @@
 #include "secrets.h"
 #include "keys.h"
 #include "crypt_dh.h"
+#include "crypt_symkey.h"
 #include <nss.h>
 #include <pk11pub.h>
 #include <keyhi.h>
@@ -144,7 +145,7 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 					  CKM_CONCATENATE_DATA_AND_BASE,
 					  CKA_DERIVE, 0);
 		passert(newdhshared != NULL);
-		PK11_FreeSymKey(dhshared);
+		free_any_symkey("dhshared", &dhshared);
 		dhshared = newdhshared;
 		freeanychunk(zeros);
 	} else {

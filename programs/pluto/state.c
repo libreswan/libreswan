@@ -70,6 +70,7 @@
 #include "md5.h"
 #include "cookie.h"
 #include "crypto.h"	/* requires sha1.h and md5.h */
+#include "crypt_symkey.h"
 #include "spdb.h"
 
 #include <nss.h>
@@ -671,12 +672,7 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_nr);
 
 
-#    define free_any_nss_symkey(p)  { \
-		if ((p) != NULL) { \
-			PK11_FreeSymKey(p); \
-			(p) = NULL; \
-		} \
-	}
+#    define free_any_nss_symkey(p)  free_any_symkey(#p, &(p))
 	/* ??? free_any_nss_symkey(st->st_shared_nss); */
 
 	/* same as st_skeyid_nss */
