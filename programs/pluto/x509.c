@@ -1596,17 +1596,26 @@ static bool cert_detail_notafter_to_str(char *buf, size_t buflen,
 	return cert_time_to_str(buf, buflen, cert, FALSE);
 }
 
+static int certsntoa(CERTCertificate *cert, char *dst, size_t dstlen)
+{
+	if (cert == NULL || cert->serialNumber.len >= dstlen)
+		return 0;
+
+	return datatot(cert->serialNumber.data, cert->serialNumber.len,
+			'x', dst, dstlen);
+}
+
 static void cert_detail_to_whacklog(CERTCertificate *cert)
 {
-	char before[256] = {0},
-	      after[256] = {0};
+	char before[256] = {0};
+	char after[256] = {0};
+	char sn[128] = {0};
+	char *print_sn = "(NULL)";
 	SECKEYPublicKey *pub_k = NULL;
 	KeyType pub_k_t = nullKey;
 	bool is_CA = FALSE;
 	bool is_root = FALSE;
 	bool has_priv = FALSE;
-
-	int sn = 0;
 
 	if (cert == NULL)
 		return;
@@ -1616,6 +1625,9 @@ static void cert_detail_to_whacklog(CERTCertificate *cert)
 
 	pub_k = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
 
+	if (certsntoa(cert, sn, sizeof(sn)))
+		print_sn = sn;
+
 	has_priv = cert_has_private_key(cert);
 
 	if (pub_k == NULL)
@@ -1623,12 +1635,10 @@ static void cert_detail_to_whacklog(CERTCertificate *cert)
 
 	pub_k_t = SECKEY_GetPublicKeyType(pub_k);
 
-	sn = DER_GetInteger(&cert->serialNumber);
-
 	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, "%s%s certificate \"%s\" - SN: %d", is_root ? "Root ":"",
+	whack_log(RC_COMMENT, "%s%s certificate \"%s\" - SN: %s", is_root ? "Root ":"",
 						         is_CA ? "CA":"End",
-							 cert->nickname, sn);
+							 cert->nickname, print_sn);
 	whack_log(RC_COMMENT, "  subject: %s", cert->subjectName);
 	whack_log(RC_COMMENT, "  issuer: %s", cert->issuerName);
 	if (cert_detail_notbefore_to_str(before, sizeof(before), cert))
