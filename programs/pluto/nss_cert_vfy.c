@@ -336,7 +336,7 @@ static CERTCertList *get_all_root_certs(void)
 
 	for (node = CERT_LIST_HEAD(allcerts); !CERT_LIST_END(node, allcerts);
 					        node = CERT_LIST_NEXT(node)) {
-		if (node->cert->isRoot)
+		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot)
 			CERT_AddCertToListTail(roots, node->cert);
 	}
 
