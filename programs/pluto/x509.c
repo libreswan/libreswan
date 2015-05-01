@@ -899,6 +899,7 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 
 #define CRL_ENABLED() (deltasecs(crl_check_interval) > 0)
 
+#if defined(LIBCURL) || defined(LDAP_VER)
 /*
  * Do our best to find the CA for the fetch request
  * However, this might be overkill, and only spd.this.ca should be used
@@ -933,6 +934,7 @@ static bool find_fetch_dn(SECItem *dn, struct connection *c,
 
 	return FALSE;
 }
+#endif
 
 /* returns FALSE for a REVOKED cert or internal failure. returns
  * TRUE for a good cert or a failed verify (for continuing with
@@ -942,7 +944,9 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 						  int num_certs)
 {
 	struct connection *c = st->st_connection;
+#if defined(LIBCURL) || defined(LDAP_VER)
 	SECItem fdn = { siBuffer, NULL, 0 };
+#endif
 	CERTCertificate *end_cert = NULL;
 	bool cont = TRUE;
 	bool rev_opts[RO_SZ];
@@ -970,12 +974,13 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		libreswan_log("certificate revoked!");
 		cont = FALSE;
 	}
-
+#if defined(LIBCURL) || defined(LDAP_VER)
 	if ((ret & VERIFY_RET_CRL_NEED) && CRL_ENABLED()) {
 		if (find_fetch_dn(&fdn, c, end_cert)) {
 			add_crl_fetch_request_nss(&fdn);
 		}
 	}
+#endif
 
 	return cont;
 }
@@ -1779,19 +1784,21 @@ static void cert_detail_list(show_cert_t type)
 		CERT_DestroyCertList(certs);
 }
 
+#if defined(LIBCURL) || defined(LDAP_VER)
 void check_crls(void)
 {
 	return;
+}
+#endif
+
+void list_crls(void)
+{
+	crl_detail_list();
 }
 
 void list_certs(void)
 {
 	cert_detail_list(CERT_TYPE_END);
-}
-
-void list_crls(void)
-{
-	crl_detail_list();
 }
 
 void list_authcerts(void)

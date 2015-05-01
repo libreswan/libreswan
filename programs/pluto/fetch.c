@@ -702,5 +702,5 @@ void list_crl_fetch_requests(bool utc)
 }
 
 #else
-#warning no LIBCURL or LDAP defined, file should not be used
+/* we'll just ignore for now - this is all going away anyway */
 #endif
