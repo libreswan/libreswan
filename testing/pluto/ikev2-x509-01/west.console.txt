@@ -54,8 +54,8 @@ west #
 133 "ikev2-westnet-eastnet-x509-cr" #1: STATE_PARENT_I1: initiate
 133 "ikev2-westnet-eastnet-x509-cr" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
 134 "ikev2-westnet-eastnet-x509-cr" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha group=MODP2048}
-002 "ikev2-westnet-eastnet-x509-cr" #2: no crl from issuer "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org" found (strict=no)
-002 "ikev2-westnet-eastnet-x509-cr" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+002 "ikev2-westnet-eastnet-x509-cr" #2: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
+002 "ikev2-westnet-eastnet-x509-cr" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
 002 "ikev2-westnet-eastnet-x509-cr" #2: negotiated tunnel [192.0.1.0,192.0.1.255:0-65535 0] -> [192.0.2.0,192.0.2.255:0-65535 0]
 004 "ikev2-westnet-eastnet-x509-cr" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
 west #
@@ -83,16 +83,6 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 dev ipsec0  scope link  src 192.0.1.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
 192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-east                                                         P,,  
-east-ec                                                      P,,  
-hashsha2                                                     P,,  
-mainca                                                       ,,   
-north                                                        P,,  
-road                                                         P,,  
-west                                                         u,u,u
 west #
  echo "done"
 done
@@ -113,16 +103,6 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 dev ipsec0  scope link  src 192.0.1.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
 192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-east                                                         P,,  
-east-ec                                                      P,,  
-hashsha2                                                     P,,  
-mainca                                                       ,,   
-north                                                        P,,  
-road                                                         P,,  
-west                                                         u,u,u
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

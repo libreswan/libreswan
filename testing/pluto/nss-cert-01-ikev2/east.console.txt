@@ -20,13 +20,13 @@ east #
 002 added connection description "nss-cert"
 east #
  ipsec auto --status |grep nss-cert
-000 "nss-cert": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org,+S-C]...192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org,+S-C]===192.0.1.254/32; unrouted; eroute owner: #0
+000 "nss-cert": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org,+S-C]...192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org,+S-C]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "nss-cert":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east; hiscert=west
 000 "nss-cert":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert":   labeled_ipsec:no; 
 000 "nss-cert":    policy_label:unset; 
-000 "nss-cert":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "nss-cert":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "nss-cert":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;

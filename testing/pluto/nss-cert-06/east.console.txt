@@ -27,13 +27,13 @@ east #
 002 added connection description "nss-cert-wrong"
 east #
  ipsec auto --status |grep nss-cert
-000 "nss-cert-correct": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]---192.1.2.45...%any[@west.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
+000 "nss-cert-correct": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]---192.1.2.45...%any[@west.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "nss-cert-correct":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east
 000 "nss-cert-correct":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert-correct":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert-correct":   labeled_ipsec:no; 
 000 "nss-cert-correct":    policy_label:unset; 
-000 "nss-cert-correct":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "nss-cert-correct":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "nss-cert-correct":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert-correct":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert-correct":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -41,13 +41,13 @@ east #
 000 "nss-cert-correct":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "nss-cert-correct":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-correct":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
-000 "nss-cert-wrong": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]---192.1.2.45...%any[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=testing@libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
+000 "nss-cert-wrong": 192.0.2.254/32===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]---192.1.2.45...%any[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=testing@libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "nss-cert-wrong":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east
 000 "nss-cert-wrong":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert-wrong":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert-wrong":   labeled_ipsec:no; 
 000 "nss-cert-wrong":    policy_label:unset; 
-000 "nss-cert-wrong":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
+000 "nss-cert-wrong":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
 000 "nss-cert-wrong":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert-wrong":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert-wrong":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;

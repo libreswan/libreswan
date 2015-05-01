@@ -1,7 +1,8 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- certutil  -d /etc/ipsec.d -D -n mainca
+ certutil  -d sql:/etc/ipsec.d -D -n mainca
+certutil: could not find certificate named "mainca": SEC_ERROR_UNRECOGNIZED_OID: Unrecognized Object Identifier.
 east #
  ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
@@ -22,14 +23,15 @@ east #
 002 added connection description "westnet-eastnet-x509-nosend"
 east #
  ipsec auto --status |grep westnet-eastnet-x509-nosend
-000 "westnet-eastnet-x509-nosend": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org,+S-C]...192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org,+S-C]===192.0.1.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-x509-nosend": 192.0.2.0/24===192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org,+S-C]...192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org,+S-C]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-x509-nosend":     oriented; my_ip=192.0.2.254; their_ip=192.0.1.254; mycert=east; hiscert=west
 000 "westnet-eastnet-x509-nosend":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-x509-nosend":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-x509-nosend":   labeled_ipsec:no; 
 000 "westnet-eastnet-x509-nosend":    policy_label:unset; 
-000 "westnet-eastnet-x509-nosend":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "westnet-eastnet-x509-nosend":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-x509-nosend":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-x509-nosend":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-x509-nosend":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-x509-nosend":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-x509-nosend":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
@@ -53,15 +55,6 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-east                                                         u,u,u
-hashsha2                                                     P,,  
-north                                                        P,,  
-road                                                         P,,  
-west                                                         P,,  
-west-ec                                                      P,,  
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

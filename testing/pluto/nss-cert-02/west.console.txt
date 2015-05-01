@@ -45,13 +45,13 @@ west #
 002 added connection description "nss-cert"
 west #
  ipsec auto --status |grep nss-cert
-000 "nss-cert": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
+000 "nss-cert": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=west
 000 "nss-cert":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert":   labeled_ipsec:no; 
 000 "nss-cert":    policy_label:unset; 
-000 "nss-cert":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "nss-cert":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "nss-cert":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -76,8 +76,8 @@ west #
 002 "nss-cert" #1: I am sending a certificate request
 108 "nss-cert" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "nss-cert" #1: received Vendor ID payload [CAN-IKEv2]
-002 "nss-cert" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
-002 "nss-cert" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=ca OK
+002 "nss-cert" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+002 "nss-cert" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
 004 "nss-cert" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "nss-cert" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "nss-cert" #2: STATE_QUICK_I1: initiate
