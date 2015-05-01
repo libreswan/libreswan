@@ -141,7 +141,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 	add_ext(cert, 'crlDistributionPoints', False, CRL_URI)
 
 def create_sub_cert(CN, CACert, CAkey, snum, START, END,
-					C='ca', ST='Ontario', L='Toronto',
+					C='CA', ST='Ontario', L='Toronto',
 					O='Libreswan', OU='Test Department',
 					emailAddress='testing@libreswan.org',
 					ty=crypto.TYPE_RSA, keybits=1024,
@@ -176,7 +176,7 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
 
 
 def create_root_ca(CN, START, END,
-				   C='ca', ST='Ontario', L='Toronto',
+				   C='CA', ST='Ontario', L='Toronto',
 				   O='Libreswan', OU='Test Department',
 				   emailAddress='testing@libreswan.org',
 				   ty=crypto.TYPE_RSA, keybits=1024,
@@ -521,7 +521,7 @@ def create_ec_certs():
 						  '-out cacerts/curveca.crt '
 						  '-days 3650 -set_serial 1')
 	child.expect('Country Name')
-	child.sendline('ca')
+	child.sendline('CA')
 	child.expect('State')
 	child.sendline('Ontario')
 	child.expect('Locality')
@@ -548,7 +548,7 @@ def create_ec_certs():
 							  '-ec.crt -days 365 -set_serial ' +
 							  str(serial))
 		child.expect('Country Name')
-		child.sendline('ca')
+		child.sendline('CA')
 		child.expect('State')
 		child.sendline('Ontario')
 		child.expect('Locality')
