@@ -293,7 +293,7 @@ static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 		goto done;
 	}
 
-	for (cc = *chain; *cc != NULL && fin_count < nonroot; cc++) {
+	for (cc = *chain; fin_count < nonroot && *cc != NULL; cc++) {
 		DBG(DBG_X509, DBG_log("decoded %s", (*cc)->subjectName));
 		fin_count++;
 	}
