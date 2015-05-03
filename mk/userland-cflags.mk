@@ -123,7 +123,7 @@ USERLAND_CFLAGS+=-DALLOW_MICROSOFT_BAD_PROPOSAL
 
 # eventually: -Wshadow -pedantic
 ifeq ($(origin WERROR_CFLAGS),undefined)
-#WERROR_CFLAGS = -Werror
+WERROR_CFLAGS = -Werror
 endif
 ifeq ($(origin WARNING_CFLAG),undefined)
 WARNING_CFLAGS = -Wall -Wextra -Wformat -Wformat-nonliteral -Wformat-security -Wundef -Wmissing-declarations -Wredundant-decls -Wnested-externs
