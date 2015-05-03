@@ -144,6 +144,60 @@ case "${1}" in
 	echo "${IPSEC_DIR}"
 	exit 0
 	;;
+
+    --stopnflog|stopnflog)
+	NFGROUP=$(ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	if [ -z "${NFGROUP}" ]; then
+		exit 0
+	fi
+	iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	exit 0
+	;;
+
+    --checknflog|checknflog|nflog)
+	NFGROUP=$(ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	if [ -z "${NFGROUP}" ]; then
+	    OLDNFGROUP=$(iptables -L -n |grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
+	    if [ -n "${OLDNFGROUP}" ]; then
+		    echo "deleting rules with old nflog group ${OLDNFGROUP}"
+		    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+		    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+		fi
+	    echo "nflog ipsec capture disabled"
+	    exit 0
+	else
+	    OLDNFGROUP=$(iptables -L -n |grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
+	    if [ -n "${OLDNFGROUP}" ]; then
+		if [ "${NFGROUP}" = "${OLDNFGROUP}" ]; then
+		    # nothing to do
+		    echo "nflog ipsec capture enabled on nflog:${NFGROUP}"
+		    exit 0
+		else
+		    # delete rules with old group number
+		    echo "deleting rules with old nflog group ${OLDNFGROUP}"
+		    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+		    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+		fi
+	    fi
+	    # insert rules with current group number
+	    iptables -I INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	    iptables -I OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	    echo "nflog ipsec capture enabled on nflog:${NFGROUP}"
+	fi
+	exit 0
+	;;
+
+    sniff|--sniff)
+	if [ -z "${2}" ]; then
+	    NFGROUP=$(ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	    tcpdump -n -i nflog:${NFGROUP}
+	else
+	    echo "conn specific coming soon"
+	fi
+	exit 0
+	;;
+
     import|--import)
 	if [ $(id -u) -ne 0 ]; then
 	    echo "permision denied on nss operation (must be superuser)"

@@ -34,6 +34,7 @@ start() {
 
 	ebegin "Starting ${SVCNAME}"
 	${IPSEC_BINARY} --checknss
+	${IPSEC_BINARY} --checknflog
 	${IPSEC_BINARY} _stackmanager start
 	start-stop-daemon --start --pidfile "${PLUTO_PIDFILE}" \
 		--exec "${PLUTO_BINARY}" -- --config "${PLUTO_CONFFILE}" \
@@ -49,6 +50,7 @@ stop() {
 	start-stop-daemon --stop --pidfile "${PLUTO_PIDFILE}"
 	RETVAL=$?
 	${IPSEC_BINARY} _stackmanager stop
+	${IPSEC_BINARY} --stopnflog
 	eend $RETVAL
 }
 

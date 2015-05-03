@@ -406,6 +406,15 @@ void whack_process(int whackfd, const struct whack_message msg)
 		for_each_state(delete_state_by_id_name, msg.name);
 	}
 
+#if defined (PLUTO_NFLOG)
+	/* isn't this per connection  AA_APR_2015 */
+	pluto_nflog_group = msg.whack_nfloggroup;
+	if (msg.whack_nfloggroup) {
+		DBG_log("received whack to set global nflog-group to %lu",
+			msg.whack_nfloggroup);
+	}
+#endif
+
 	if (msg.whack_deletestate) {
 		struct state *st =
 			state_with_serialno(msg.whack_deletestateno);

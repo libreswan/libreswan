@@ -443,7 +443,7 @@ u_int16_t secctx_attr_type = SECCTX;
  *
  * The table should be ordered to maximize the clarity of --help.
  *
- * val values free due to removal of options: '1', '3', '4', 'G'
+ * val values free due to removal of options: '1', '3', '4'
  */
 
 #define DBG_OFFSET 256
@@ -482,6 +482,7 @@ static const struct option long_opts[] = {
 	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
 	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
 	{ "ikeport\0<port-number>", required_argument, NULL, 'p' },
+	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
 	{ "natikeport\0<port-number>", required_argument, NULL, 'q' },
 	{ "ctlbase\0<path>", required_argument, NULL, 'b' },
 	{ "secretsfile\0<secrets-file>", required_argument, NULL, 's' },
@@ -946,6 +947,17 @@ int main(int argc, char **argv)
 			pluto_nat_port = u;
 			continue;
 
+		case 'G':	/* --nflog-all <group-number> */
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			if (u == 0) {
+				ugh = "must not be 0";
+				break;
+			}
+			pluto_nflog_group = u;
+			continue;
+
 		case 'b':	/* --ctlbase <path> */
 			/*
 			 * ??? work to be done here:
@@ -1079,6 +1091,10 @@ int main(int argc, char **argv)
 
 			/* --ikeport */
 			pluto_port = cfg->setup.options[KBF_IKEPORT];
+
+			/* --nflog-all */
+			pluto_nflog_group = cfg->setup.options[KBF_NFLOG_ALL];
+
 			/* no config option: ctlbase */
 			/* --secrets */
 			set_cfg_string(&pluto_shared_secrets_file,
@@ -1618,11 +1634,13 @@ void show_setup_plutomain()
 			(pluto_ddos_mode == DDOS_FORCE_BUSY) ? "busy" : "unlimited");
 
 	whack_log(RC_COMMENT,
-		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s",
+		"ikeport=%d, strictcrlpolicy=%s, crlcheckinterval=%lu, listen=%s, nflog-all=%d",
 		pluto_port,
 		strict_crl_policy ? "yes" : "no",
 		deltasecs(crl_check_interval),
-		pluto_listen ? pluto_listen : "<any>");
+		pluto_listen ? pluto_listen : "<any>",
+		pluto_nflog_group
+		);
 
 #ifdef HAVE_LABELED_IPSEC
 	whack_log(RC_COMMENT, "secctx-attr-type=%d", secctx_attr_type);
