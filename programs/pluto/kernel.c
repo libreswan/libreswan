@@ -3250,7 +3250,8 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 	enum routing_t ro = sr->routing,        /* routing, old */
 			rn = ro;                 /* routing, new */
 
-	DBG(DBG_CONTROL, DBG_log("orphan_holdpass() called for %s", c->name));
+	DBG(DBG_CONTROL, DBG_log("orphan_holdpass() called for %s with transport_proto '%d'",
+		 c->name, transport_proto));
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
 
