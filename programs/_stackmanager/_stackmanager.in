@@ -127,6 +127,10 @@ startnetkey() {
 	${MODPROBE} xfrm_user 2>/dev/null
 
     fi
+    # Time before kernel ACQUIRE for ondemand/ Opportunistic expires
+    # Also Time before reserved kernel SPI times out
+    # 300 seconds is so embedded systems have enough time to generate DH
+    echo > 300 > /proc/sys/net/core/xfrm_acq_expires
 }
 
 stopklips() {
