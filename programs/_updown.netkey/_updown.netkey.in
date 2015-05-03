@@ -475,6 +475,26 @@ doroute() {
     return ${st}
 }
 
+# TODO: We need to specify CIDR mask but our _MASK variables are in old school format
+# TODO: Exclude udp 4500 traffic
+addnflog() {
+    if [ -n "${NFLOG}" ]; then
+	iptables -A OUTPUT -m policy --dir out  --pol ipsec -s ${PLUTO_MY_CLIENT} \
+		 -d ${PLUTO_PEER_CLIENT} -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
+	iptables -A INPUT  -m policy --dir in   --pol ipsec -s ${PLUTO_PEER_CLIENT} \
+		 -d ${PLUTO_MY_CLIENT}   -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
+    fi
+}
+
+delnflog() {
+    if [ -n "${NFLOG}" ]; then
+	iptables -D OUTPUT -m policy --dir out  --pol ipsec -s ${PLUTO_MY_CLIENT} \
+		 -d ${PLUTO_PEER_CLIENT} -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
+	iptables -D INPUT  -m policy --dir in   --pol ipsec -s ${PLUTO_PEER_CLIENT} \
+		 -d ${PLUTO_MY_CLIENT}   -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
+    fi
+}
+
 
 # the big choice
 case "${PLUTO_VERB}" in
@@ -503,12 +523,14 @@ case "${PLUTO_VERB}" in
 	# connection to my client subnet coming up
 	# If you are doing a custom version, firewall commands go here.
 	updateresolvconf
+	addnflog
 	;;
     down-client)
 	# connection to my client subnet going down
 	downrule
 	# If you are doing a custom version, firewall commands go here.
 	restoreresolvconf
+	delnflog
 	;;
     disconnectNM-host|disconnectNM-client)
 	# sending disconnect signal to NM, as something went wrong.

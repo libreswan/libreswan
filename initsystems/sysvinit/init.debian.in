@@ -114,6 +114,10 @@ verify_config() {
         echo "IKE daemon status was not modified"
         exit $RETVAL
     fi
+    # Create nss db or convert from old format to new sql format
+    ipsec --checknss
+    # Enable nflog if configured
+    ipsec --checknflog > /dev/null
 }
 
 start() {
@@ -143,7 +147,8 @@ start() {
 
 
 stop() {
-
+    ipsec --stopnflog > /dev/null
+    ipsec whack --shutdown
 }
 
 restart() {

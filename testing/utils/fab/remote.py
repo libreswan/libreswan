@@ -182,7 +182,7 @@ def start(domain, startup_timeout=STARTUP_TIMEOUT):
             # The first attempt at starting the domain _must_ succeed.
             # Failing is a sign that the domain was running.  Further
             # attempts might fail as things get racey.
-            raise pexpect.TIMEOUT("failed to start domain: %s", output)
+            raise pexpect.TIMEOUT("failed to start domain: %s" % output)
         time.sleep(1)
         # try opening the console again
         console = domain.console()

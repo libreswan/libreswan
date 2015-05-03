@@ -178,6 +178,7 @@ struct whack_message {
 
 	int sa_priority;
 	reqid_t sa_reqid;
+	int nflog_group;
 
 	bool labeled_ipsec;
 	char *policy_label;
@@ -229,6 +230,9 @@ struct whack_message {
 	/* for WHACK_DELETESTATE: */
 	bool whack_deletestate;
 	long unsigned int whack_deletestateno;
+
+	/* for WHACK_NFLOG_GROUP: */
+	long unsigned int whack_nfloggroup;
 
 	/* for WHACK_DELETEUSER: */
 	bool whack_deleteuser;

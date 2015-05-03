@@ -70,6 +70,7 @@ d.ipsec.conf/retransmit-interval.xml
 d.ipsec.conf/compress.xml
 d.ipsec.conf/metric.xml
 d.ipsec.conf/mtu.xml
+d.ipsec.conf/nflog.xml
 d.ipsec.conf/priority.xml
 d.ipsec.conf/sendca.xml
 d.ipsec.conf/disablearrivalcheck.xml
@@ -84,6 +85,7 @@ d.ipsec.conf/protostack.xml
 d.ipsec.conf/interfaces.xml
 d.ipsec.conf/listen.xml
 d.ipsec.conf/ikeport.xml
+d.ipsec.conf/nflog-all.xml
 d.ipsec.conf/nat_traversal.xml
 d.ipsec.conf/disable_port_floating.xml
 d.ipsec.conf/force_keepalive.xml

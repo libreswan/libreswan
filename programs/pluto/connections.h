@@ -295,6 +295,7 @@ struct connection {
 	u_int8_t metric;	/* metric for tunnel routes */
 	u_int16_t connmtu;	/* mtu for tunnel routes */
 	u_int32_t statsval;	/* track what we have told statsd */
+	u_int16_t nflog_group;	/* NFLOG group - 0 means disabled  */
 };
 
 #define oriented(c) ((c).interface != NULL)

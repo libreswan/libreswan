@@ -31,3 +31,5 @@ ${SRCDIR}ipsec.conf.5.xml: $(wildcard d.ipsec.conf/*.xml) ${SRCDIR}d.ipsec.conf/
 diff:	ipsec.conf.5.xml
 	diff -B -w -u ipsec.conf.5.xml ipsec.conf.5.xml-ref
 
+clean:
+	rm -f ${SRCDIR}ipsec.conf.5.xml

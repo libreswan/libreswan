@@ -1329,6 +1329,7 @@ void add_connection(const struct whack_message *wm)
 		c->metric = wm->metric;
 		c->connmtu = wm->connmtu;
 		c->sa_priority = wm->sa_priority;
+		c->nflog_group = wm->nflog_group;
 
 		c->forceencaps = wm->forceencaps;
 		c->nat_keepalive = wm->nat_keepalive;
@@ -3475,6 +3476,7 @@ void show_one_connection(struct connection *c)
 	char prio[POLICY_PRIO_BUF];
 	char mtustr[8];
 	char sapriostr[13];
+	char nflogstr[8];
 
 	ifn = oriented(*c) ? c->interface->ip_dev->id_rname : "";
 
@@ -3566,16 +3568,21 @@ void show_one_connection(struct connection *c)
 	else
 		strcpy(sapriostr, "auto");
 
+	if (c->nflog_group > 0)
+		snprintf(nflogstr, 7, "%d", c->nflog_group);
+	else
+		strcpy(nflogstr, "unset");
+
 	fmt_policy_prio(c->prio, prio);
 	whack_log(RC_COMMENT,
 		"\"%s\"%s:   conn_prio: %s; interface: %s; metric: %lu; "
-		"mtu: %s; sa_prio:%s;",
+		"mtu: %s; sa_prio:%s; nflog-group: %s;",
 		c->name,
 		instance,
 		prio,
 		ifn,
 		(unsigned long)c->metric,
-		mtustr, sapriostr);
+		mtustr, sapriostr, nflogstr);
 
 	/* slightly complicated stuff to avoid extra crap */
 	/* ??? real-world and DBG control flow mixed */

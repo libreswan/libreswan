@@ -523,9 +523,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.metric = conn->options[KBF_METRIC];
 
 	if (conn->options_set[KBF_CONNMTU])
-		msg.connmtu   = conn->options[KBF_CONNMTU];
+		msg.connmtu = conn->options[KBF_CONNMTU];
 	if (conn->options_set[KBF_PRIORITY])
-		msg.sa_priority   = conn->options[KBF_PRIORITY];
+		msg.sa_priority = conn->options[KBF_PRIORITY];
+	if (conn->options_set[KBF_NFLOG_CONN])
+		msg.nflog_group = conn->options[KBF_NFLOG_CONN];
 
 	if (conn->options_set[KBF_REQID]) {
 		if (conn->options[KBF_REQID] <= 0 ||

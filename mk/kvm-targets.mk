@@ -74,7 +74,7 @@ KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')
 KVM_INCLUDE =
 KVM_INCLUDE_FLAG = $(if $(KVM_INCLUDE),--include '$(KVM_INCLUDE)')
 .PHONY: kvm-check
-kvm-check: kvm-print
+kvm-check:
 	: $@:
 	:   PWD: $(PWD)
 	:   KVM_HOSTS: $(KVM_HOSTS)
