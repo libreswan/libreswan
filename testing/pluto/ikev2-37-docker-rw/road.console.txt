@@ -28,7 +28,7 @@ ipsec auto --status
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
 000 nhelpers=-1, uniqueids=yes, force-busy=no
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
+000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
