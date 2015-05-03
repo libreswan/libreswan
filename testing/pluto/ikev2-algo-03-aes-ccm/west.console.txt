@@ -145,7 +145,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms wanted: AES_CCM_A(14)_128-NONE(0)_000

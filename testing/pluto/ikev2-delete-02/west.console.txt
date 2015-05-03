@@ -119,7 +119,7 @@ west #
 000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
@@ -230,7 +230,7 @@ west #
 000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #2; 
 000 "west-east-delete1":   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA1-MODP2048
@@ -342,7 +342,7 @@ west #
 000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #0; 
 000 "west-east-delete1":   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA1-MODP2048
@@ -445,7 +445,7 @@ west #
 000 "west-east-delete1":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "west-east-delete1":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "west-east-delete1":   policy: PSK+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW+IKEV2_PROPOSE+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "west-east-delete1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "west-east-delete1":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "west-east-delete1":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  

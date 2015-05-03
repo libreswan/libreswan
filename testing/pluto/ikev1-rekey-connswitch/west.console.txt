@@ -152,7 +152,7 @@ west #
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2; 
 000 "TUNNEL-A":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
@@ -167,7 +167,7 @@ west #
 000 "TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-B":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "TUNNEL-B":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "TUNNEL-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-B":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-B":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-B":   newest ISAKMP SA: #5; newest IPsec SA: #0; 
 000 "TUNNEL-B":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
@@ -181,7 +181,7 @@ west #
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4; 
 000 "TUNNEL-C":   IKE algorithm newest: AES_CBC_256-SHA1-MODP2048
@@ -209,7 +209,7 @@ west #
 000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "TUNNEL-A":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-A":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-A":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-A":   newest ISAKMP SA: #5; newest IPsec SA: #2; 
 000 "TUNNEL-A":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
@@ -223,7 +223,7 @@ west #
 000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "TUNNEL-C":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "TUNNEL-C":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "TUNNEL-C":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "TUNNEL-C":   newest ISAKMP SA: #5; newest IPsec SA: #4; 
 000 "TUNNEL-C":   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
