@@ -26,7 +26,8 @@ include ../../mk/dirs.mk
 endif
 
 # XXX: Pluto doesn't include mk/program.mk?
-include ${LIBRESWANSRCDIR}/Makefile.inc
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/manpages.mk
 
 ifeq ($(USE_LDAP),true)
 # Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
@@ -242,9 +243,6 @@ endif
 ifeq ($(USE_NM),true)
 DEFINES+=-DHAVE_NM
 endif
-
--include ${SRCDIR}Makefile.extra
-include ${SRCDIR}../Makefile.manpages
 
 FMANDIR=$(MANTREE)/man5
 PMANDIR=$(MANTREE)/man8
