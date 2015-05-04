@@ -379,6 +379,7 @@ static void set_rev_params(CERTRevocationFlags *rev, bool crl,
 
 	if (crl) {
 		rf[cert_revocation_method_crl] = rev_val_flags(crl_strict);
+		rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
 	}
 	if (ocsp) {
 		rf[cert_revocation_method_ocsp] = rev_val_flags(ocsp_strict);
