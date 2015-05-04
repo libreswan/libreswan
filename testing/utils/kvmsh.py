@@ -63,7 +63,9 @@ def main():
     parser.add_argument("command", nargs="?",
                         help="run shell command non-interactively")
 
+    logutil.add_arguments(parser)
     args = parser.parse_args()
+    logutil.config(args)
 
     # Get things started
     domain = virsh.Domain(args.domain)
@@ -120,6 +122,8 @@ def main():
             output = console.output(None)
             if output:
                 print("info: disabled --output as it makes pexpect crash when in interactive mode.")
+            if args.debug:
+                print("info: pexpect ignores --debug in interactive mode!")
             print("Escape character is ^]")
             # Hack so that the prompt appears
             console.output(sys.stdout)
