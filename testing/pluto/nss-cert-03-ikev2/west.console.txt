@@ -99,7 +99,7 @@ west #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/run/pluto, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes
+000 nhelpers=-1, uniqueids=yes, perpeerlog=no
 000 ddos-cookies-treshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
