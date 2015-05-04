@@ -307,13 +307,13 @@ enum option_enums {
 	LST_PUBKEYS,
 	LST_CERTS,
 	LST_CACERTS,
+	LST_CRLS,
+	LST_PSKS,
+	LST_EVENTS,
 	LST_ACERTS,
 	LST_AACERTS,
 	LST_GROUPS,
-	LST_CRLS,
 	LST_CARDS,
-	LST_PSKS,
-	LST_EVENTS,
 	LST_ALL,
 
 #   define LST_LAST LST_ALL	/* last list option */
