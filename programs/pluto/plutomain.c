@@ -1016,7 +1016,7 @@ int main(int argc, char **argv)
 			base_perpeer_logdir = optarg;
 			continue;
 
-		case 'l':
+		case 'l':	/* --perpeerlog */
 			log_to_perpeer = TRUE;
 			continue;
 
@@ -1104,12 +1104,20 @@ int main(int argc, char **argv)
 				/* --ipsecdir */
 				lsw_init_ipsecdir(cfg->setup.strings[KSF_IPSECDIR]);
 			}
-			/* --perpeerlogbase */
-			set_cfg_string(&base_perpeer_logdir,
-				cfg->setup.strings[KSF_PERPEERDIR]);
+
 			/* --perpeerlog */
 			log_to_perpeer = cfg->setup.options[KBF_PERPEERLOG];
-			if(cfg->setup.strings[KSF_DUMPDIR]) {
+			if (log_to_perpeer) {
+				/* --perpeerlogbase */
+				if (cfg->setup.strings[KSF_PERPEERDIR]) {
+					set_cfg_string(&base_perpeer_logdir,
+						cfg->setup.strings[KSF_PERPEERDIR]);
+				} else {
+					base_perpeer_logdir = clone_str("/var/log/pluto/", "perpeer_logdir");
+				}
+			}
+
+			if (cfg->setup.strings[KSF_DUMPDIR]) {
 				pfree(coredir);
 				/* dumpdir= */
 				coredir = clone_str(cfg->setup.strings[KSF_DUMPDIR],
@@ -1622,9 +1630,10 @@ void show_setup_plutomain()
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s",
+		"nhelpers=%d, uniqueids=%s, perpeerlog=%s",
 		nhelpers,
-		uniqueIDs ? "yes" : "no");
+		uniqueIDs ? "yes" : "no",
+		!log_to_perpeer ? "no" : base_perpeer_logdir);
 
 	whack_log(RC_COMMENT,
 		"ddos-cookies-treshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",
