@@ -78,8 +78,6 @@ enum keyword_numeric_config_field {
 	KBF_PLUTOSTDERRLOGTIME,
 	KBF_PLUTOSTDERRLOGAPPEND,
 	KBF_IKEPORT,
-	KBF_NFLOG_ALL,
-	KBF_NFLOG_CONN,
 	KBF_PLUTOFORK,
 	KBF_PERPEERLOG,
 	KBF_OVERRIDEMTU,
@@ -145,6 +143,8 @@ enum keyword_numeric_config_field {
 	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
 	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
 	KBF_IKEV1_NATT,		/* ikev1 NAT-T payloads to send/process */
+	KBF_NFLOG_ALL,
+	KBF_NFLOG_CONN,
 	KBF_MAX
 };
 
