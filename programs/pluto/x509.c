@@ -1695,21 +1695,6 @@ static void crl_detail_to_whacklog(CERTCrl *crl)
 	if (crl_time_to_str(nu, sizeof(nu), &crl->nextUpdate))
 		whack_log(RC_COMMENT, "Next update: %s", nu);
 
-	if (crl->entries != NULL) {
-		int i = 0;
-		CERTCrlEntry *e;
-
-		while ((e = crl->entries[i++]) != NULL) {
-			char rd[256] = {0};
-			whack_log(RC_COMMENT, " Entry %d", i);
-			whack_log(RC_COMMENT, " Serial: %lu",
-					DER_GetInteger(&e->serialNumber));
-			if (crl_time_to_str(rd, sizeof(rd), &e->revocationDate))
-				whack_log(RC_COMMENT, " Revoked: %s", rd);
-		}
-
-	}
-
 	if (issuer != NULL)
 		PORT_Free(issuer);
 }
