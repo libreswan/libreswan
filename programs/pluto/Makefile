@@ -1,7 +1,12 @@
 # Pluto Makefile
 #
 # Copyright (C) 1997 Angelos D. Keromytis.
-# Copyright (C) 1998-2001  D. Hugh Redelmeier
+# Copyright (C) 1998-2001 D. Hugh Redelmeier
+# Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
+# Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
+# Copyright (C) 2008-2009 Paul Wouters <paul@xelerance.com>
+# Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
+# Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -21,10 +26,223 @@ include ../../mk/dirs.mk
 endif
 
 # XXX: Pluto doesn't include mk/program.mk?
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${SRCDIR}Makefile.options
--include ${SRCDIR}Makefile.extra
-include ${SRCDIR}../Makefile.manpages
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/manpages.mk
+
+ifeq ($(USE_LDAP),true)
+# Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
+# if you require LDAPv2 
+LDAP_VERSION=3
+endif
+
+# compile with PAM support will increase the size of the distribution
+# and thus it may not be the best solution for embeded systems. XAUTH
+# will use the crypt() lib and a password file by default.
+ifeq ($(USE_XAUTHPAM),true)
+XAUTH_HAVE_PAM=1
+endif
+
+# where to find klips headers and Libreswan headers
+# and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
+HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC) 
+
+
+# BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=BIG_ENDIAN
+# BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=LITTLE_ENDIAN
+
+# -DKLIPS enables interface to Kernel LINUX IPsec code
+# -DNETKEY enables interface to Kernel NETKEY/XFRM IPsec code
+# -DOLD_RESOLVER.  At some point, the resolver interface changed.
+#    This macro enables Pluto support for the old interface.
+#    It is automatically defined, based on the value of the <resolver.h>
+#    macro __RES.  We don't know the correct threshold, so you may
+#    find that you must manually define this.  If so, please inform
+#    us so that we can refine the threshold.
+
+# The following are best left undefined -- each can be overridden at runtime
+# if need be.
+# -DPORT=n sets the default UDP port for IKE messages (otherwise 500)
+# -DSHARED_SECRETS_FILE=string overrides /etc/ipsec.secrets as the
+#    default name of the file containing secrets used to authenticate other
+#    IKE daemons.  In the Makefile, two levels of quoting are needed:
+#    -DSHARED_SECRETS_FILE='"/etc/ipsec.secrets"'
+# -DDEFAULT_CTLBASE=string overrides /var/run/pluto as default directory
+#    and basename for pluto's lockfile (.pid) and control socket (.ctl).
+#    Double quoting may be needed.
+
+
+USE_ADNS=true
+BINNAMEADNSIFNEEDED=$(BINNAMEADNS)
+
+ifeq ($(USE_KEYRR),true)
+KEYRR_DEFINES=-DUSE_KEYRR
+endif
+
+ifeq ($(USE_PFKEYv2),true)
+PFKEYv2_DIST_SRC=kernel_pfkey.c kernel_pfkey.h
+PFKEYv2_OBJS=kernel_pfkey.o
+else
+PFKEYv2_DIST_SRC=
+PFKEYv2_OBJS=
+endif
+
+NETKEY_DIST_SRCS=kernel_netlink.c kernel_netlink.h 
+ifeq ($(USE_NETKEY),true)
+NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
+NETKEY_SRCS=${NETKEY_DIST_SRCS}
+NETKEY_OBJS=kernel_netlink.o 
+endif
+
+KLIPS_DIST_SRCS=kernel_klips.c
+ifeq ($(USE_KLIPS),true)
+KLIPS_SRCS=${KLIPS_DIST_SRCS}
+KLIPS_DEFS=-DKLIPS -DPFKEY
+KLIPS_OBJS=kernel_klips.o 
+endif
+
+MAST_DIST_SRCS=kernel_mast.c 
+ifeq ($(USE_MAST),true)
+MAST_SRCS=${MAST_DIST_SRCS}
+MAST_DEFS=-DKLIPS_MAST 
+MAST_OBJS=kernel_mast.o
+endif
+
+WIN2K_DIST_SRCS=kernel_win2k.c
+ifeq ($(USE_WIN2K_NATIVE),true)
+WIN2K_SRCS=${WIN2K_DIST_SRCS}
+WIN2K_DEFS=-DWIN2K_NATIVE_IPSEC
+WIN2K_OBJS=kernel_win2k.o
+endif
+
+BSDKAME_DIST_SRCS=kernel_bsdkame.c
+ifeq ($(USE_BSDKAME),true)
+BSDKAME_SRCS=${BSDKAME_DIST_SRCS}
+BSDKAME_DEFS=-DBSD_KAME
+BSDKAME_OBJS=kernel_bsdkame.o
+BSDKAME_LIBS=${LIBBSDPFKEY}
+endif
+
+
+# the files are defined here so that TAGS: can catch them.
+#
+X509_DIST_OBJS=x509.o
+X509_DIST_SRCS=${X509_DIST_OBJS:.o=.c}
+X509_DIST_SRCS+=fetch.h 
+THREADS_DIST_OBJS=fetch.o 
+THREADS_DIST_SRCS=${THREADS_DIST_OBJS:.o=.c}
+X509_OBJS=${X509_DIST_OBJS}
+X509_SRCS=${X509_DIST_SRCS}
+
+# dynamic LDAP CRL fetching requires OpenLDAP library
+ifeq ($(USE_LDAP),true)
+X509_LLIBS+= -lldap -llber
+PLUTOMINUSL+= -llber
+ifdef LDAP_VERSION
+X509_DEFS+= -DLDAP_VER=$(LDAP_VERSION)
+endif
+endif
+
+THREADS_OBJS=${THREADS_DIST_OBJS}
+THREADS_SRCS=${THREADS_DIST_SRCS}
+THREADS_LLIBS=-lpthread
+
+ifeq ($(USE_IPSEC_CONNECTION_LIMIT),true)
+IPSEC_CONNECTION_LIMIT_DEFS=-DIPSEC_CONNECTION_LIMIT=$(IPSEC_CONNECTION_LIMIT)
+endif
+
+XAUTH_DIST_SRCS=ikev1_xauth.c ikev1_xauth.h addresspool.c addresspool.h pam_conv.c pam_conv.h
+XAUTH_DIST_OBJS=ikev1_xauth.o addresspool.o pam_conv.o
+XAUTH_OBJS=${XAUTH_DIST_OBJS}
+XAUTH_SRCS=${XAUTH_DIST_SRCS}
+ifneq ($(BUILDENV), darwin)
+XAUTH_LLIBS=-lcrypt
+endif
+# if we use pam for password checking then add it too
+ifeq ($(USE_XAUTHPAM),true)
+XAUTHPAM_DEFS=-DXAUTH_HAVE_PAM
+XAUTHPAM_LIBS=-lpam -ldl
+endif
+
+AGGRESSIVE_DIST_OBJS=ikev1_aggr.o
+AGGRESSIVE_DIST_SRCS=${AGGRESSIVE_DIST_OBJS:.o=.c}
+AGGRESSIVE_OBJS=${AGGRESSIVE_DIST_OBJS}
+AGGRESSIVE_SRCS=${AGGRESSIVE_DIST_SRCS}
+
+# LABELED IPSEC support - requires SElinux
+LABELED_IPSEC_DIST_OBJS=security_selinux.o
+LABELED_IPSEC_DIST_SRCS=${LABELED_IPSEC_DIST_OBJS:.o=.c}
+ifeq ($(USE_LABELED_IPSEC),true)
+LABELED_IPSEC_DEFS=-DHAVE_LABELED_IPSEC
+LABELED_IPSEC_OBJS=${LABELED_IPSEC_DIST_OBJS}
+LABELED_IPSEC_SRCS=${LABELED_IPSEC_DIST_SRCS}
+LABELED_IPSEC_LIBS=-lselinux
+endif
+
+ifeq ($(USE_LIBCURL),true)
+# This compile option activates dynamic URL fetching
+# with libcurl in the source code
+CURL_DEFS=-DLIBCURL
+CURL_LLIBS=-lcurl
+endif
+
+ifeq ($(USE_EXTRACRYPTO),true)
+EXTRA_CRYPTO_DEFS=-DUSE_TWOFISH -DUSE_SERPENT 
+EXTRA_CRYPTO_SRCS=ike_alg_twofish.c ike_alg_serpent.c 
+EXTRA_CRYPTO_OBJS=ike_alg_twofish.o ike_alg_serpent.o 
+EXTRA_CRYPTO_LIBS=$(LIBTWOFISH) $(LIBSERPENT) 
+endif
+
+ifeq ($(USE_SINGLE_CONF_DIR),true)
+SINGLE_CONF_DIR=-DSINGLE_CONF_DIR
+endif
+
+DEFINES = $(EXTRA_DEFINES) \
+	${VENDORID} \
+	$(KEYRR_DEFINES) \
+	$(BYTE_ORDER) \
+	$(DNSSECDEF) \
+	$(NETKEY_DEFS) \
+	$(X509_DEFS) \
+	${EXTRA_CRYPTO_DEFS} \
+	${KLIPS_DEFS} ${WIN2K_DEFS} ${MAST_DEFS} ${BSDKAME_DEFS} \
+	-DBUILDER=\"${BUILDER}\" \
+	-DUSE_AES -DUSE_3DES -DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5 -DUSE_CAMELLIA \
+	${LABELED_IPSEC_DEFS} \
+	${XAUTH_DEFS} ${XAUTHPAM_DEFS} \
+	${CURL_DEFS}\
+	${SINGLE_CONF_DIR} \
+	${IPSEC_CONNECTION_LIMIT_DEFS} \
+
+
+# libefence is a free memory allocation debugger
+# Solaris 2 needs -lsocket -lnsl
+LIBSPLUTO+=$(LIBRESWANLIB) $(LIBPLUTO)
+LIBSPLUTO+=${LIBSHA1} ${LIBMD5} $(LIBSHA2) ${LIBAES_XCBC}
+LIBSPLUTO+=$(X509_LIBS) 
+LIBSPLUTO+=$(THREADS_LIBS)
+LIBSPLUTO+=${CURL_LIBS}
+LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS}
+LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} ${NSSLIBS}
+PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS} 
+PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} ${NSSLIBS}
+PLUTOMINUSL+= ${LIBCRYPT} -lgmp #-lefence
+
+# For avoiding implicit DSO linking
+LIBSPLUTO+= -lpthread
+ifeq ($(USE_FIPSCHECK),true)
+DEFINES+=-DFIPS_CHECK
+LIBSPLUTO+= -lfipscheck
+endif
+
+ifeq ($(USE_LIBCAP_NG),true)
+DEFINES+=-DHAVE_LIBCAP_NG
+LIBSPLUTO+= -lcap-ng
+endif
+
+# NetworkManager support
+ifeq ($(USE_NM),true)
+DEFINES+=-DHAVE_NM
+endif
 
 FMANDIR=$(MANTREE)/man5
 PMANDIR=$(MANTREE)/man8
