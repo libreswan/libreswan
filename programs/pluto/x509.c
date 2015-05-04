@@ -1578,7 +1578,7 @@ static bool crl_time_to_str(char *buf, size_t buflen, SECItem *t)
 	PRExplodedTime printtime;
 	PRTime time;
 
-	if (DER_GeneralizedTimeToTime(&time, t) != SECSuccess)
+	if (DER_DecodeTimeChoice(&time, t) != SECSuccess)
 		return FALSE;
 
 	PR_ExplodeTime(time, PR_GMTParameters, &printtime);
