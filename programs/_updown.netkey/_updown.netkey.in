@@ -390,7 +390,7 @@ delsource() {
 
 doproxyarp() {
     # Check if client has a single ip only client net
-    if [ ${PLUTO_PEER_CLIENT#/} = 32 -o ${PLUTO_PEER_CLIENT#/} = 128 ]; then
+    if [ ${PLUTO_PEER_CLIENT#*/} = 32 -o ${PLUTO_PEER_CLIENT#*/} = 128 ]; then
 	# check if client is routeable local
 	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | grep -qs -v via; then
 	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \

@@ -38,8 +38,8 @@ KVMSH_TARGETS = $(patsubst %,kvmsh-%,$(KVM_HOSTS))
 .PHONY: $(KVMSH_TARGETS)
 $(KVMSH_TARGETS):
 	: COMMAND: '$(COMMAND)'
-	: KVM_HOST: $(KVM_HOST)
-	$(KVMSH_COMMAND) --chdir . $(KVM_HOST) $(if $(COMMAND),'$(COMMAND)')
+	: KVM_HOST: '$(KVM_HOST)'
+	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' $(if $(COMMAND),'$(COMMAND)')
 .PHONY: kvmsh
 kvmsh: kvmsh-command | $(KVMSH_TARGETS)
 .PHONY: kvmsh-command
@@ -49,22 +49,22 @@ kvmsh-command:
 KVM_SHUTDOWN_TARGETS = $(patsubst %,kvm-shutdown-%,$(KVM_HOSTS))
 .PHONY: $(KVM_SHUTDOWN_TARGETS)
 $(KVM_SHUTDOWN_TARGETS):
-	: KVM_HOST: $(KVM_HOST)
-	$(KVMSH_COMMAND) --shutdown $(KVM_HOST)
+	: KVM_HOST: '$(KVM_HOST)'
+	$(KVMSH_COMMAND) --shutdown '$(KVM_HOST)'
 .PHONY: kvm-shutdown
 kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
 
 KVM_BUILD_TARGETS = $(patsubst %,kvm-build-%,$(KVM_HOSTS))
 .PHONY: $(KVM_BUILD_TARGETS)
 $(KVM_BUILD_TARGETS):
-	: KVM_HOST: $(KVM_HOST)
-	$(KVMSH_COMMAND) --chdir . $(KVM_HOST) ./testing/guestbin/swan-build
+	: KVM_HOST: '$(KVM_HOST)'
+	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' ./testing/guestbin/swan-build
 
 KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
 .PHONY: $(KVM_INSTALL_TARGETS)
 $(KVM_INSTALL_TARGETS):
-	: KVM_HOST: $(KVM_HOST)
-	$(KVMSH_COMMAND) --chdir . $(KVM_HOST) ./testing/guestbin/swan-install
+	: KVM_HOST: '$(KVM_HOST)'
+	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' ./testing/guestbin/swan-install
 
 .PHONY: kvm-update
 kvm-update: kvm-build-east | $(KVM_INSTALL_TARGETS)
