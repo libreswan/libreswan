@@ -56,6 +56,7 @@ v3.13 (unreleased)
 * whack: New command ipsec whack --purgeocsp [Matt]
 * whack: cleanup help text [Tuomo]
 * _stackmanager: Don't load blacklisted modules (rhbz#1207689) [Paul/Tuomo]
+* _updown: add proxy arp for cases where routing won't work [Tuomo/Wolfgang]
 * Bugtracker bugs fixed:
   #260: libswan: extra safetey around same_id() when ID_FROMCERT is used [Paul]
 
