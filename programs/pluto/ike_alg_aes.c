@@ -411,7 +411,7 @@ static struct hash_desc integ_desc_aes_xcbc = {
 void ike_alg_aes_init(void)
 {
 #ifdef FIPS_CHECK
-	bool fips = libreswan_fipsmode();
+	bool fips = libreswan_fipsproduct() || libreswan_fipskernel();
 #else
 	bool fips = FALSE;
 #endif

@@ -95,7 +95,7 @@ struct encrypt_desc algo_camellia_ctr =
 void ike_alg_camellia_init(void)
 {
 #ifdef FIPS_CHECK
-	bool fips = libreswan_fipsmode();
+	bool fips = libreswan_fipsproduct() || libreswan_fipskernel();
 #else
 	bool fips = FALSE;
 #endif
