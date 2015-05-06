@@ -115,22 +115,24 @@ static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
 	return TRUE;
 }
 
-/*
- * returns true if there's a CRL for the cert (from its issuer) that is needing an update
- * *found is for a strict mode check outside this function
- */
-static bool crl_needs_update(CERTCertDBHandle *handle,
-			     CERTCertificate *cert, bool *found)
+static bool crl_is_current(CERTSignedCrl *crl)
+{
+	return _NSSCPY_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
+}
+
+static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
+				     CERTCertificate *cert)
 {
 	CERTCrlHeadNode *crl_list = NULL;
 	CERTCrlNode *crl_node = NULL;
 	CERTSignedCrl *crl = NULL;
 
-	if (cert == NULL || handle == NULL || found == NULL)
-		return FALSE;
+	if (handle == NULL || cert == NULL)
+		return NULL;
 
-	*found = FALSE;
-
+	DBG(DBG_X509,
+	    DBG_log("%s : looking for a CRL issued by %s", __FUNCTION__,
+							   cert->issuerName));
 	/* 
 	 * Use SEC_LookupCrls method instead of SEC_FindCrlByName.
 	 * For some reason, SEC_FindCrlByName was giving out bad pointers!
@@ -138,8 +140,7 @@ static bool crl_needs_update(CERTCertDBHandle *handle,
 	 * crl = (CERTSignedCrl *)SEC_FindCrlByName(handle, &searchName, SEC_CRL_TYPE);
 	 */
 	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess) {
-		DBG(DBG_X509, DBG_log("no CRLs found"));
-		return FALSE;
+		return NULL;
 	}
 
 	crl_node = crl_list->first;
@@ -149,25 +150,23 @@ static bool crl_needs_update(CERTCertDBHandle *handle,
 				SECITEM_ItemsAreEqual(&cert->derIssuer,
 						 &crl_node->crl->crl.derName)) {
 			crl = crl_node->crl;
+			DBG(DBG_X509,
+			    DBG_log("%s : CRL found", __FUNCTION__));
 			break;
 		}
-
 		crl_node = crl_node->next;
 	}
 
-	if (crl != NULL) {
-		DBG(DBG_X509, DBG_log("CRL for %s found, checking if CRL is up to date",
-				      cert->issuerName));
-		*found = TRUE;
-		if (_NSSCPY_CheckCrlTimes(&crl->crl,
-					  PR_Now()) == secCertTimeExpired) {
-			DBG(DBG_X509,
-			    DBG_log("CRL has expired!"));
-			return TRUE;
-		}
-		DBG(DBG_X509,
-		    DBG_log("CRL is current"));
-	}
+	return crl;
+}
+
+static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
+				 CERTCertificate *cert)
+{
+	CERTSignedCrl *crl = get_issuer_crl(handle, cert);
+
+	if (crl != NULL && crl_is_current(crl))
+		return TRUE;
 
 	return FALSE;
 }
@@ -177,21 +176,16 @@ static bool crl_needs_update(CERTCertDBHandle *handle,
  */
 static bool crl_update_check(CERTCertDBHandle *handle,
 				   CERTCertificate **chain,
-				   int chain_len,
-				   bool *found)
+				   int chain_len)
 {
 	int i;
-	bool needupdate = FALSE;
 
 	for (i = 0; i < chain_len && chain[i] != NULL; i++) {
-		if (crl_needs_update(handle, chain[i], found)) {
-			needupdate = TRUE;
-			DBG(DBG_X509,
-			    DBG_log("CRL update needed"));
-			break;
+		if (!cert_issuer_has_current_crl(handle, chain[i])) {
+			return TRUE;
 		}
 	}
-	return needupdate;
+	return FALSE;
 }
 
 static int translate_nss_err(long err, bool ca)
@@ -523,8 +517,6 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 	CERTCertDBHandle *handle = NULL;
 	int chain_len = 0;
 	int ret = 0;
-	bool need_fetch = FALSE;
-	bool crlfound = FALSE;
 
 	if (VFY_INVALID_USE(ders, num_ders))
 		return -1;
@@ -546,21 +538,14 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 					          num_ders)) < 1)
 		return -1;
 
-	if ((need_fetch = crl_update_check(handle, cert_chain,
-							 chain_len,
-							 &crlfound))) {
+	if (crl_update_check(handle, cert_chain, chain_len)) {
 		if (rev_opts[RO_CRL_S]) {
-			DBG(DBG_X509, DBG_log("CRL expired in strict mode, failing pending update"));
+			DBG(DBG_X509, DBG_log("missing or expired CRL in strict mode, failing pending update"));
 			return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
 		}
+		DBG(DBG_X509, DBG_log("missing or expired CRL"));
+		ret |= VERIFY_RET_CRL_NEED;
 	}
-
-	if (rev_opts[RO_CRL_S] && !crlfound) {
-		DBG(DBG_X509, DBG_log("no CRL found in strict mode, failing"));
-		return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
-	}
-
-	ret |= need_fetch ? VERIFY_RET_CRL_NEED : 0;
 
 	ret |= vfy_chain_pkix(cert_chain, chain_len, ee_out, rev_opts);
 
