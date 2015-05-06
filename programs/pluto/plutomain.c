@@ -363,7 +363,7 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf)
 		ndone += got;
 	}
 	close(dev);
-	DBG(DBG_CONTROL,DBG_log("read %ld bytes from /dev/random for NSS PRNG",
+	DBG(DBG_CONTROL,DBG_log("read %zu bytes from /dev/random for NSS PRNG",
 		nbytes));
 }
 

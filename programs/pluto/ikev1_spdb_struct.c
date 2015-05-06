@@ -1661,10 +1661,11 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 		}
 
 		if (vdesc != NULL) {
+			/* reject unknown enum values */
 			if (enum_name(vdesc, val) == NULL) {
 				loglog(RC_LOG_SERIOUS,
-				       "invalid value %u for attribute %s in IPsec Transform",
-				       (unsigned)val,
+				       "invalid value %" PRIu32 " for attribute %s in IPsec Transform",
+				       val,
 				       enum_show(&ipsec_attr_names,
 						 a.isaat_af_type));
 				return FALSE;
@@ -1673,8 +1674,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				    if ((a.isaat_af_type &
 					 ISAKMP_ATTR_AF_MASK) ==
 					ISAKMP_ATTR_AF_TV) {
-					    DBG_log("   [%u is %s]",
-						    (unsigned)val,
+					    DBG_log("   [%" PRIu32 " is %s]",
+						    val,
 						    enum_show(vdesc, val));
 				    }
 			    });
@@ -1724,6 +1725,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				bad_case(life_type);
 			}
 			break;
+
 		case GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
 			if (proto == PROTO_IPCOMP) {
 				/* Accept reluctantly.  Should not happen, according to
@@ -1737,7 +1739,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			pfs_group = lookup_group(val);
 			if (pfs_group == NULL) {
 				loglog(RC_LOG_SERIOUS,
-				       "OAKLEY_GROUP %d not supported for PFS",
+				       "OAKLEY_GROUP %" PRIu32 " not supported for PFS",
 				       val);
 				return FALSE;
 			}
@@ -1759,7 +1761,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 							 val));
 					return FALSE;
 				}
-				attrs->encapsulation = val;
 				break;
 
 			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
@@ -1774,25 +1775,14 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 					       enum_name(&enc_mode_names,
 							 val));
 					if (st->st_connection->remotepeertype
-					    == CISCO) {
-						DBG_log("Allowing, as this may be due to remote_peer Cisco rekey");
-						attrs->encapsulation =
-						    val -
-						    ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS
-						    + ENCAPSULATION_MODE_TUNNEL;
-					} else {
+					    != CISCO) {
 						return FALSE;
 					}
-				} else if (st->hidden_variables.st_nat_traversal &
-				           NAT_T_DETECTED) {
-					attrs->encapsulation = val -
-							       ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS
-							       +
-							       ENCAPSULATION_MODE_TUNNEL;
-				} else {
+					DBG_log("Allowing, as this may be due to remote_peer Cisco rekey");
+				} else if (!(st->hidden_variables.st_nat_traversal &
+				           NAT_T_DETECTED)) {
 					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if "
-					       "NAT-Traversal is detected",
+					       "%s must only be used if NAT-Traversal is detected",
 					       enum_name(&enc_mode_names,
 							 val));
 					return FALSE;
@@ -1804,46 +1794,51 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				DBG(DBG_NATT,
 				    DBG_log("NAT-T RFC: Installing IPsec SA with ENCAP, st->hidden_variables.st_nat_traversal is %s",
 					    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
-				if ((st->hidden_variables.st_nat_traversal &
-				     NAT_T_DETECTED) &&
-				    (st->hidden_variables.st_nat_traversal &
-				     NAT_T_WITH_ENCAPSULATION_RFC_VALUES)) {
-					/* ??? just what is this arithmetic doing? */
-					attrs->encapsulation = val -
-							       ENCAPSULATION_MODE_UDP_TUNNEL_RFC
-							       +
-							       ENCAPSULATION_MODE_TUNNEL;
-				} else if (st->hidden_variables.st_nat_traversal &
-						NAT_T_DETECTED) {
+				if (!(st->hidden_variables.st_nat_traversal &
+				     NAT_T_DETECTED)) {
+					loglog(RC_LOG_SERIOUS,
+					       "%s must only be used if NAT-Traversal is detected",
+					       enum_name(&enc_mode_names, val));
+					return FALSE;
+				} else if (!(st->hidden_variables.st_nat_traversal &
+					    NAT_T_WITH_ENCAPSULATION_RFC_VALUES)) {
 					loglog(RC_LOG_SERIOUS,
 					       "%s must only be used with NAT-T RFC",
 					       enum_name(&enc_mode_names,
 							 val));
 					return FALSE;
-				} else {
-					loglog(RC_LOG_SERIOUS,
-					       "%s must only be used if "
-					       "NAT-Traversal is detected",
-					       enum_name(&enc_mode_names,
-							 val));
-					return FALSE;
 				}
 				break;
-			default:
-				loglog(RC_LOG_SERIOUS,
-				       "unknown ENCAPSULATION_MODE %d in IPsec SA",
-				       val);
-				return FALSE;
 
+			default:
+				/* should already be filtered out by enum checker */
+				bad_case(val);
+			}
+
+			/* normalize the actual attribute value */
+			switch (val) {
+			case ENCAPSULATION_MODE_TRANSPORT:
+			case ENCAPSULATION_MODE_UDP_TRANSPORT_DRAFTS:
+			case ENCAPSULATION_MODE_UDP_TRANSPORT_RFC:
+				val = ENCAPSULATION_MODE_TRANSPORT;
+				break;
+			case ENCAPSULATION_MODE_TUNNEL:
+			case ENCAPSULATION_MODE_UDP_TUNNEL_DRAFTS:
+			case ENCAPSULATION_MODE_UDP_TUNNEL_RFC:
+				val = ENCAPSULATION_MODE_TUNNEL;
 				break;
 			}
+			attrs->encapsulation = val;
 			break;
+
 		case AUTH_ALGORITHM | ISAKMP_ATTR_AF_TV:
 			attrs->transattrs.integ_hash = val;
 			break;
+
 		case KEY_LENGTH | ISAKMP_ATTR_AF_TV:
 			attrs->transattrs.enckeylen = val;
 			break;
+
 		default:
 #ifdef HAVE_LABELED_IPSEC
 			if (a.isaat_af_type ==

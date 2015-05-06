@@ -296,7 +296,7 @@ int main(int argc, char **argv)
 			/* SPI */
 			{
 				unsigned long spi;
-				err_t ugh = ttoulb(p[2], 0, 0, 0xFFFFFFFF, &spi);
+				err_t ugh = ttoulb(p[2], 0, 0, 0xFFFFFFFFul, &spi);
 
 				if (ugh != NULL) {
 					fprintf(stderr, "%s: Badly formed spi: %s \"%s\"\n",

@@ -126,7 +126,7 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 	dhshared_len = PK11_GetKeyLength(dhshared);
 	if (group->bytes > dhshared_len) {
 		DBG(DBG_CRYPT,
-		    DBG_log("Dropped %lu leading zeros",
+		    DBG_log("Dropped %tu leading zeros",
 			    group->bytes - dhshared_len));
 		chunk_t zeros;
 		PK11SymKey *newdhshared;

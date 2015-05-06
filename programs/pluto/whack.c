@@ -233,8 +233,8 @@ static void diagq(err_t ugh, const char *this)
 
 /*
  * complex combined operands return one of these enumerated values
- * Note: these become flags in an lset_t.  Since there are more than
- * 32, we partition them into:
+ * Note: these become flags in an lset_t.  Since there could be more
+ * than lset_t could hold (currently 64), we partition them into:
  * - OPT_* options (most random options)
  * - LST_* options (list various internal data)
  * - DBGOPT_* option (DEBUG options)

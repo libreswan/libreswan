@@ -38,9 +38,9 @@ endif
 # since all the $(OBJS) indirectly depend on the header anyway.
 $(OBJS): parser.tab.h
 
-# Use UNIX basename to strip off the directory.
+# Use UNIX basename to strip off the directory. Use grep to workaround flex < 2.5.35
 lex.yy.c: parser.l
-	cd $(builddir) && $(LEX) $(srcdir)/$$(basename $<)
+	cd $(builddir) && $(LEX) -t $(srcdir)/$$(basename $<) | grep -v '^extern int isatty' > $@
 
 # Use wild card rule so that GNU Make knows that both are output from
 # single program.  Use UNIX basename to strip off the directory.
