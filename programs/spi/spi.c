@@ -780,7 +780,7 @@ int main(int argc, char *argv[])
 					progname, optarg, spi_opt);
 				exit(1);
 			}
-			ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFFFFFFFFFF, &u);
+			ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFFul, &u);
 			if (ugh == NULL && u < 0x100)
 				ugh = "0 - 0xFF are reserved";
 			if (ugh != NULL) {
@@ -1004,7 +1004,7 @@ int main(int argc, char *argv[])
 			} else {
 				/* ??? what does this do?  Where is it documented? */
 				unsigned long u;
-				err_t ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFF, &u);
+				err_t ugh = ttoulb(optarg, 0, 0, 0xFFFFFFFFul, &u);
 
 				if (ugh != NULL) {
 					fprintf(stderr,
