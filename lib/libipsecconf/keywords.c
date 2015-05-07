@@ -3,10 +3,10 @@
  * Copyright (C) 2003-2006 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2007-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
- * Copyright (C) 2013 Antony Antony <antony@phenome.org>
+ * Copyright (C) 2013-2015 Antony Antony <antony@phenome.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -81,17 +81,24 @@ static const struct keyword_enum_value kw_ynf_values[] = {
 	{ "never",     ynf_no },
 	{ "no",        ynf_no },
 	{ "yes",       ynf_yes },
-	{ "insist",     ynf_force },
+	{ "insist",    ynf_force },
 	{ "force",     ynf_force },
 };
-
 static const struct keyword_enum_values kw_ynf_list = VALUES_INITIALIZER(kw_ynf_values);
 
+static const struct keyword_enum_value kw_ddos_values[] = {
+	{ "auto",      DDOS_AUTO },
+	{ "busy",      DDOS_FORCE_BUSY },
+	{ "unlimited", DDOS_FORCE_UNLIMITED },
+};
+static const struct keyword_enum_values kw_ddos_list = VALUES_INITIALIZER(kw_ddos_values);
+
 /*
- * Values for authby={rsasig, secret}
+ * Values for authby={rsasig, secret, null}
  */
 static const struct keyword_enum_value kw_authby_values[] = {
 	{ "never",     LEMPTY },
+	{ "null",      POLICY_AUTH_NULL},
 	{ "secret",    POLICY_PSK },
 	{ "rsasig",    POLICY_RSASIG },
 	{ "secret|rsasig",    POLICY_PSK | POLICY_RSASIG},
@@ -256,11 +263,6 @@ static const struct keyword_enum_value kw_plutodebug_values[] = {
 	/* backwards compatibility */
 	{ "klips",    DBG_KERNEL },
 	{ "netkey",    DBG_KERNEL },
-
-	{ "impair-delay-adns-key-answer", IMPAIR_DELAY_ADNS_KEY_ANSWER },
-	{ "impair-delay-adns-txt-answer", IMPAIR_DELAY_ADNS_TXT_ANSWER },
-	{ "impair-bust-mi2", IMPAIR_BUST_MI2 },
-	{ "impair-bust-mr2", IMPAIR_BUST_MR2 },
 };
 
 static const struct keyword_enum_values kw_plutodebug_list = VALUES_INITIALIZER(kw_plutodebug_values);
@@ -334,10 +336,11 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  &kw_klipsdebug_list },
 	{ "plutodebug",     kv_config, kt_list,      KBF_PLUTODEBUG,
 	  &kw_plutodebug_list },
-	{ "plutostderrlog", kv_config, kt_filename,  KSF_PLUTOSTDERRLOG,
-	  NOT_ENUM },
-	{ "plutostderrlogtime",        kv_config, kt_bool,
-	  KBF_PLUTOSTDERRLOGTIME, NOT_ENUM },
+	{ "logfile", kv_config, kt_filename,  KSF_PLUTOSTDERRLOG, NOT_ENUM },
+	{ "plutostderrlog", kv_config | kv_alias, kt_filename,  KSF_PLUTOSTDERRLOG, NOT_ENUM }, /* obsolete */
+	{ "logtime",        kv_config, kt_bool, KBF_PLUTOSTDERRLOGTIME, NOT_ENUM },
+	{ "plutostderrlogtime",        kv_config | kv_alias, kt_bool, KBF_PLUTOSTDERRLOGTIME, NOT_ENUM }, /* obsolete */
+	{ "logappend",        kv_config, kt_bool, KBF_PLUTOSTDERRLOGAPPEND, NOT_ENUM },
 	{ "plutorestartoncrash", kv_config, kt_bool, KBF_PLUTORESTARTONCRASH,
 	  NOT_ENUM },
 	{ "dumpdir",        kv_config, kt_dirname,   KSF_DUMPDIR, NOT_ENUM },
@@ -358,14 +361,26 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "uniqueids",      kv_config, kt_bool,      KBF_UNIQUEIDS, NOT_ENUM },
 	{ "overridemtu",    kv_config, kt_number,    KBF_OVERRIDEMTU,
 	  NOT_ENUM },
-	{ "strictcrlpolicy", kv_config, kt_bool,      KBF_STRICTCRLPOLICY,
+	{ "crl_strict", kv_config, kt_bool,      KBF_STRICTCRLPOLICY,
+	  NOT_ENUM },
+	{ "ocsp_strict", kv_config, kt_bool,      KBF_STRICTOCSPPOLICY,
+	  NOT_ENUM },
+	{ "ocsp_enable", kv_config, kt_bool,      KBF_OCSPENABLE,
+	  NOT_ENUM },
+	{ "ocsp_uri",     kv_config, kt_string,    KSF_OCSPURI, NOT_ENUM },
+	{ "ocsp_timeout", kv_config, kt_number,     KBF_OCSPTIMEOUT,
+	  NOT_ENUM },
+	{ "ocsp_trust_name",     kv_config, kt_string,    KSF_OCSPTRUSTNAME,
 	  NOT_ENUM },
 	{ "crlcheckinterval", kv_config, kt_time,     KBF_CRLCHECKINTERVAL,
 	  NOT_ENUM },
-	{ "force_busy",     kv_config | kv_alias, kt_bool,      KBF_FORCEBUSY, NOT_ENUM },	/* obsolete _ */
-	{ "force-busy",     kv_config, kt_bool,      KBF_FORCEBUSY, NOT_ENUM },
+	{ "force_busy",     kv_config | kv_alias, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },	/* obsolete _ */
+	{ "force-busy",     kv_config, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },
+	{ "ddos-mode",     kv_config | kv_processed , kt_enum, KSF_DDOS_MODE, &kw_ddos_list },
+	{ "ddos-ike-treshold",        kv_config, kt_number,     KBF_DDOS_IKE_TRESHOLD, NOT_ENUM },
+	{ "max-halfopen-ike",        kv_config, kt_number,     KBF_MAX_HALFOPEN_IKE, NOT_ENUM },
 	{ "ikeport",        kv_config, kt_number,     KBF_IKEPORT, NOT_ENUM },
-
+	{ "nflog-all",        kv_config, kt_number,     KBF_NFLOG_ALL, NOT_ENUM },
 	{ "virtual_private", kv_config | kv_alias, kt_string,     KSF_VIRTUALPRIVATE, NOT_ENUM },	/* obsolete _ */
 	{ "virtual-private", kv_config, kt_string,     KSF_VIRTUALPRIVATE, NOT_ENUM },
 	{ "nat_ikeport",   kv_config | kv_alias, kt_number,      KBF_NATIKEPORT, NOT_ENUM },	/* obsolete _ */
@@ -450,6 +465,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_IKE_FRAG, &kw_ynf_list },
 	{ "narrowing",      kv_conn | kv_auto, kt_bool,
 	  KBF_IKEv2_ALLOW_NARROWING, NOT_ENUM },
+	{ "pam-authorize",      kv_conn | kv_auto, kt_bool,
+	  KBF_IKEv2_PAM_AUTHORIZE, NOT_ENUM },
 	{ "sareftrack",     kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_SAREFTRACK, &kw_sareftrack_list },
 	{ "pfs",            kv_conn | kv_auto, kt_bool,   KBF_PFS,
@@ -482,13 +499,17 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_SALIFETIME, NOT_ENUM },
 	{ "salifetime",     kv_conn | kv_auto, kt_time,   KBF_SALIFETIME,
 	  NOT_ENUM },
+
+	{ "retransmit-timeout", kv_conn | kv_auto, kt_time,   KBF_RETRANSMIT_TIMEOUT,
+	  NOT_ENUM },
+	{ "retransmit-interval", kv_conn | kv_auto, kt_number, KBF_RETRANSMIT_INTERVAL,
+	  NOT_ENUM },
+
 	{"ikepad",          kv_conn | kv_auto, kt_bool,   KBF_IKEPAD,
 	  NOT_ENUM },
 	{ "nat-ikev1-method", kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKEV1_NATT, &kw_ikev1natt_list },
 #ifdef HAVE_LABELED_IPSEC
-	{ "loopback",       kv_conn | kv_auto, kt_bool, KBF_LOOPBACK,
-	  NOT_ENUM },
 	{ "labeled_ipsec",   kv_conn | kv_auto | kv_alias, kt_bool, KBF_LABELED_IPSEC,
 	  NOT_ENUM },	/* obsolete _ */
 	{ "labeled-ipsec",   kv_conn | kv_auto, kt_bool, KBF_LABELED_IPSEC,
@@ -607,6 +628,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "priority",       kv_conn | kv_auto, kt_number, KBF_PRIORITY,
 	  NOT_ENUM },
 	{ "reqid",          kv_conn | kv_auto, kt_number, KBF_REQID,
+	  NOT_ENUM },
+	{ "nflog",    kv_conn | kv_auto, kt_number, KBF_NFLOG_CONN,
 	  NOT_ENUM },
 
 	{ "aggrmode",    kv_conn | kv_auto, kt_invertbool,      KBF_AGGRMODE,

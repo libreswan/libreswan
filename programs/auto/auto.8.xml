@@ -77,6 +77,7 @@ connection</replaceable></arg>
     <arg choice='opt'>--listacerts | --rereadacerts </arg>
     <arg choice='opt'>--listaacerts | --rereadaacerts </arg>
     <arg choice='opt'>--listgroups | --rereadgroups </arg>
+    <arg choice='opt'>--purgeocsp </arg>
 
 </cmdsynopsis>
 </refsect1>
@@ -250,9 +251,8 @@ but that may change.)</para>
 <para>      The  <option>--checkpubkeys</option>  operation  lists  all loaded X.509 certificates
        which are about to expire or have been expired.  
 </para>
-<para>       The  <option>--listcacerts</option>  operation  lists  all  X.509 CA certificates either
-       loaded locally from the /etc/ipsec.d/cacerts directory or  received  in
-       PKCS#7-wrapped certificate payloads via the IKE protocol.
+<para>       The  <option>--listcacerts</option>  operation  lists  all  X.509 CA certificates contained in
+	the NSS database.
 </para>
 <para>       The  <option>--listgroups</option>  operation  lists  all groups that are either used in
        connection definitions in ipsec.conf(5) or are embedded in loaded X.509
@@ -264,6 +264,8 @@ but that may change.)</para>
 </para>
 <para>       The  <option>--listall</option>  operation is equivalent to the execution of 
        --listpubkeys,  --listcerts,  --listcacerts,  --listgroups, --listcrls.
+</para>
+<para>       The  <option>--purgeocsp</option>  operation displays --listall and purges the NSS OCSP cache.
 </para>
 
 <para>The

@@ -111,7 +111,7 @@ static void print_key(struct secret *secret,
 			'x', pskbuf, sizeof(pskbuf));
 	}
 
-	while (l) {
+	while (l != NULL) {
 		idtoa(&l->id, idb, IDTOA_BUF);
 
 		switch (pks->kind) {
@@ -132,6 +132,10 @@ static void print_key(struct secret *secret,
 			if (disclose)
 				printf("    xauth: \"%s\"\n", pskbuf);
 			break;
+		case PPK_NULL:
+			/* can't happen but the compiler does not know that */
+			printf("%d(%d): NULL authentication -- cannot happen: %s\n", lineno, count, idb);
+			abort();
 		}
 
 		l = l->next;
@@ -187,10 +191,9 @@ static struct secret *pick_key(struct secret *host_secrets,
 {
 	struct id id;
 	struct secret *s;
-	err_t e;
+	err_t e = atoid(idname, &id, FALSE, FALSE);
 
-	e = atoid(idname, &id, FALSE, FALSE);
-	if (e) {
+	if (e != NULL) {
 		printf("%s: key '%s' is invalid\n", progname, idname);
 		exit(4);
 	}

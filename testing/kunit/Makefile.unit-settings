@@ -1,5 +1,5 @@
 PCAP2SKB=${LIBRESWANSRCDIR}/testing/utils/pcap2skb/pcap2skb
-KLIPS_FLAGS=-I${srcdir}../include
+KLIPS_FLAGS=-I${SRCDIR}../include
 KLIPS_FLAGS+=-I../include
 
 #UMLPLAIN=$(shell source ${LIBRESWANSRCDIR}/umlsetup.sh; echo $${POOLSPACE}/plain$${KERNVER})
@@ -16,7 +16,7 @@ KLIPS_FLAGS+=-fno-common -ffreestanding -fomit-frame-pointer
 
 KLIPS_FLAGS+=-DCONFIG_NETFILTER
 
-UCFLAGS=-I. -I${srcdir} ${KLIPS_FLAGS} 
+UCFLAGS=-I. -I${SRCDIR} ${KLIPS_FLAGS} 
 
 #KCFLAGS+=-nostdinc -isystem /usr/lib/gcc-lib/i486-linux/3.3.5/include
 KCFLAGS+=${KLIPS_FLAGS} 

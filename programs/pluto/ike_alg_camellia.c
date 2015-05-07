@@ -94,7 +94,13 @@ struct encrypt_desc algo_camellia_ctr =
 
 void ike_alg_camellia_init(void)
 {
-	if (!test_camellia_cbc(&algo_camellia_cbc)) {
+#ifdef FIPS_CHECK
+	bool fips = libreswan_fipsproduct() || libreswan_fipskernel();
+#else
+	bool fips = FALSE;
+#endif
+
+	if (!fips && !test_camellia_cbc(&algo_camellia_cbc)) {
 		loglog(RC_LOG_SERIOUS, "CKM_CAMELLIA_CBC: test failure");
 		exit_pluto(PLUTO_EXIT_NSS_FAIL);
 	}

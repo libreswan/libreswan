@@ -129,14 +129,13 @@ typedef unsigned long policy_prio_t;
 extern void fmt_policy_prio(policy_prio_t pp, char buf[POLICY_PRIO_BUF]);
 
 #ifdef XAUTH_HAVE_PAM
-# include <security/pam_appl.h>	/* needed for pam_handle_t */
+# include <security/pam_appl.h>	/* from pam devel; needed for pam_handle_t */
 #endif
 
 /* Note that we include this even if not X509, because we do not want the
  * structures to change lots.
  */
 #include "x509.h"
-#include "x509more.h"
 #include "certs.h"
 #include "defs.h"
 #include <sys/queue.h>
@@ -169,10 +168,9 @@ struct end {
 	u_int8_t protocol;		/* transport-protocol number, if per-X keying.*/
 
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
-	char *cert_filename;		/* where we got the certificate */
+	char *cert_nickname;		/* NSS certificate nickname */
 	cert_t cert;			/* end certificate */
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
-	cert_t ca_path;			/* chain of CA certs */
 
 	struct virtual_t *virt;
 
@@ -205,6 +203,8 @@ struct connection {
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	unsigned long sa_priority;
+	unsigned long r_interval; /* initial retransmit time in msec, doubles each time */
+	deltatime_t r_timeout; /* max time (in secs) for one packet exchange attempt */
 	reqid_t sa_reqid;
 	int encapsulation;
 
@@ -226,7 +226,6 @@ struct connection {
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	bool loopback;
 	bool labeled_ipsec;
 	char *policy_label;
 #endif
@@ -296,6 +295,7 @@ struct connection {
 	u_int8_t metric;	/* metric for tunnel routes */
 	u_int16_t connmtu;	/* mtu for tunnel routes */
 	u_int32_t statsval;	/* track what we have told statsd */
+	u_int16_t nflog_group;	/* NFLOG group - 0 means disabled  */
 };
 
 #define oriented(c) ((c).interface != NULL)
@@ -372,8 +372,8 @@ extern struct connection
 		       lset_t req_policy, lset_t policy_exact_mask),
 	*find_next_host_connection(struct connection *c,
 		       lset_t req_policy, lset_t policy_exact_mask),
-	*refine_host_connection(const struct state *st, const struct id *id,
-			bool initiator, bool aggrmode, bool *fromcert),
+	*refine_host_connection(const struct state *st, const struct id *peer_id,
+			bool initiator, lset_t auth_policy, bool *fromcert),
 	*find_client_connection(struct connection *c,
 			const ip_subnet *our_net,
 			const ip_subnet *peer_net,

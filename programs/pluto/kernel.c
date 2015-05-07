@@ -38,6 +38,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <event2/event.h>
+#include <event2/event_struct.h>
+#include <event2/thread.h>
+
 #include <libreswan.h>
 
 #include "sysdep.h"
@@ -57,7 +61,7 @@
 #include "kernel_bsdkame.h"
 #include "packet.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "log.h"
 #include "server.h"
@@ -101,7 +105,12 @@ static struct bare_shunt *bare_shunts = NULL;
 static int num_ipsec_eroute = 0;
 #endif
 
+
+static struct event *ev_fd = NULL; /* could these two go in kernel_ops AA_2015 ??? */
+static struct event *ev_pq = NULL;
+
 static void free_bare_shunt(struct bare_shunt **pp);
+
 
 static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
@@ -355,7 +364,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		nexthop_str[sizeof("PLUTO_NEXT_HOP='' ") + ADDRTOT_BUF],
 		secure_xauth_username_str[IDTOA_BUF] = "",
 		traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
-		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
+		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
+		nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "";
 
 	ipstr_buf bme, bpeer;
 	ip_address ta;
@@ -415,6 +425,12 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 	}
 	fmt_traffic_str(st, traffic_in_str, sizeof(traffic_in_str), traffic_out_str, sizeof(traffic_out_str));
 
+	nflogstr[0] = '\0';
+	if (c->nflog_group) {
+		snprintf(nflogstr, sizeof(nflogstr), "NFLOG=%d ",
+			c->nflog_group);
+	}
+
 	srcip_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
 	    !isanyaddr(&sr->this.host_srcip)) {
@@ -436,7 +452,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&sr->that.id, &key->id) &&
-			    trusted_ca(key->issuer, sr->that.ca, &pathlen)) {
+			    trusted_ca_nss(key->issuer, sr->that.ca, &pathlen)) {
 				dntoa_or_null(peerca_str, IDTOA_BUF,
 					key->issuer, "");
 				escape_metachar(peerca_str, secure_peerca_str,
@@ -488,6 +504,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 #endif
 			"%s" /* traffic in stats - if any */
 			"%s" /* traffic out stats - if any */
+			"%s" /* nflog-group - if any */
 
 		, c->name,
 		c->interface->ip_dev->id_vname,
@@ -516,7 +533,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		kernel_ops->kern_name,
 		metric_str,
 		connmtu_str,
-		(u_int64_t)(st == NULL ? 0U : st->st_esp.add_time),
+		st == NULL ? (u_int64_t)0 : st->st_esp.add_time,
 		prettypolicy(c->policy),	/* 25 */
 		(c->addr_family == AF_INET) ? 4 : 6,
 		(st != NULL && st->st_xauth_soft) ? 1 : 0,
@@ -530,7 +547,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		c->nmconfigured,
 #endif
 		traffic_in_str,
-		traffic_out_str
+		traffic_out_str,
+		nflogstr
 		);
 	/*
 	 * works for both old and new way of snprintf() returning
@@ -806,21 +824,14 @@ static bool sag_eroute(struct state *st,
 void unroute_connection(struct connection *c)
 {
 	struct spd_route *sr;
-	enum routing_t cr;
 
 	for (sr = &c->spd; sr; sr = sr->next) {
-		cr = sr->routing;
+		enum routing_t cr = sr->routing;
 
 		if (erouted(cr)) {
 			/* cannot handle a live one */
-			passert(sr->routing != RT_ROUTED_TUNNEL);
-			if (kernel_ops->shunt_eroute != NULL) {
-				kernel_ops->shunt_eroute(c, sr, RT_UNROUTED,
-							 ERO_DELETE, "delete");
-			} else {   loglog(RC_COMMENT,
-					  "no shunt_eroute implemented for %s interface",
-					  kernel_ops->kern_name);
-			}
+			passert(cr != RT_ROUTED_TUNNEL);
+			shunt_eroute(c, sr, RT_UNROUTED, ERO_DELETE, "delete");
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -1707,7 +1718,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 					break;
 
 				loglog(RC_LOG_SERIOUS,
-				       "ESP transform %s(%d) / auth %s not implemented yet",
+				       "ESP transform %s(%d) / auth %s not implemented or allowed",
 				       enum_showb(&esp_transformid_names,
 						ta->encrypt,
 						&buftn),
@@ -2243,10 +2254,34 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	return result;
 }
 
-const struct kernel_ops *kernel_ops;
+static event_callback_routine kernel_process_msg_cb;
+
+static void kernel_process_msg_cb(evutil_socket_t fd UNUSED,
+		const short event UNUSED, void *arg)
+{
+	const struct kernel_ops *kernel_ops = (const struct kernel_ops *) arg;
+
+	DBG(DBG_KERNEL, DBG_log(" %s process netlink message", __func__));
+	kernel_ops->process_msg();
+	passert(GLOBALS_ARE_RESET());
+}
+
+static event_callback_routine kernel_process_queue_cb;
+
+static void kernel_process_queue_cb(evutil_socket_t fd UNUSED,
+		const short event UNUSED, void *arg)
+{
+	const struct kernel_ops *kernel_ops = (const struct kernel_ops *) arg;
+
+	kernel_ops->process_queue();
+	passert(GLOBALS_ARE_RESET());
+
+}
 
 /* keep track of kernel version  */
 static char kversion[256];
+
+const struct kernel_ops *kernel_ops;
 
 void init_kernel(void)
 {
@@ -2348,6 +2383,26 @@ void init_kernel(void)
 
 	if (!kernel_ops->policy_lifetime)
 		event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
+
+	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
+
+	/* Note: kernel_ops is const but pluto_event_new cannot know that */
+	ev_fd = pluto_event_new(*kernel_ops->async_fdp, EV_READ | EV_PERSIST,
+			kernel_process_msg_cb, (void *)kernel_ops, NULL);
+
+	if (kernel_ops->process_queue != NULL) {
+		/*
+		 * AA_2015 this is untested code. only for non netkey ???
+		 * It seems in klips we should, besides kernel_process_msg,
+		 * call process_queue periodically.  Does the order
+		 * matter?
+		 */
+		static const struct timeval delay = {KERNEL_PROCESS_Q_PERIOD, 0};
+
+		/* Note: kernel_ops is read-only but pluto_event_new cannot know that */
+		ev_pq = pluto_event_new(NULL_FD, EV_TIMEOUT | EV_PERSIST,
+				kernel_process_queue_cb, (void *)kernel_ops, &delay);
+	}
 }
 
 void show_kernel_interface()
@@ -2473,21 +2528,13 @@ bool install_inbound_ipsec_sa(struct state *st)
 	 */
 	if (st->st_refhim == IPSEC_SAREF_NULL && !st->st_outbound_done) {
 
-#ifdef HAVE_LABELED_IPSEC
-		if (st->st_connection->loopback) {
-			DBG(DBG_CONTROL,
-			    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install outgoing SAs, so skipping this"));
-		} else
-#endif
-		{
-			DBG(DBG_CONTROL,
-			    DBG_log("installing outgoing SA now as refhim=%u",
-				    st->st_refhim));
-			if (!setup_half_ipsec_sa(st, FALSE)) {
-				DBG_log("failed to install outgoing SA: %u",
-					st->st_refhim);
-				return FALSE;
-			}
+		DBG(DBG_CONTROL,
+		    DBG_log("installing outgoing SA now as refhim=%u",
+			    st->st_refhim));
+		if (!setup_half_ipsec_sa(st, FALSE)) {
+			DBG_log("failed to install outgoing SA: %u",
+				st->st_refhim);
+			return FALSE;
 		}
 
 		st->st_outbound_done = TRUE;
@@ -2496,13 +2543,6 @@ bool install_inbound_ipsec_sa(struct state *st)
 
 	/* (attempt to) actually set up the SAs */
 
-#ifdef HAVE_LABELED_IPSEC
-	if (st->st_connection->loopback) {
-		DBG(DBG_CONTROL,
-		    DBG_log("in case of loopback, the state that initiated this quick mode exchange will install incoming SAs, so skipping this"));
-		return TRUE;
-	}
-#endif
 	return setup_half_ipsec_sa(st, TRUE);
 }
 
@@ -2511,9 +2551,9 @@ bool install_inbound_ipsec_sa(struct state *st)
  * Any SA Group must have already been created.
  * On failure, steps will be unwound.
  */
-bool route_and_eroute(struct connection *c USED_BY_KLIPS,
-		      struct spd_route *sr USED_BY_KLIPS,
-		      struct state *st USED_BY_KLIPS)
+bool route_and_eroute(struct connection *c,
+		      struct spd_route *sr,
+		      struct state *st)
 {
 	struct spd_route *esr;
 	struct spd_route *rosr;
@@ -2837,7 +2877,7 @@ bool route_and_eroute(struct connection *c USED_BY_KLIPS,
 	}
 }
 
-bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
+bool install_ipsec_sa(struct state *st, bool inbound_also)
 {
 	struct spd_route *sr;
 	enum routability rb;
@@ -2846,10 +2886,6 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 				 st->st_serialno,
 				 inbound_also ?
 				 "inbound and outbound" : "outbound only"));
-#ifdef HAVE_LABELED_IPSEC
-	if (st->st_connection->loopback && st->st_state == STATE_QUICK_R1)
-		return TRUE;
-#endif
 
 	rb = could_route(st->st_connection);
 	switch (rb) {
@@ -2865,11 +2901,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 	/* (attempt to) actually set up the SA group */
 
 	/* setup outgoing SA if we haven't already */
-	if (!st->st_outbound_done
-#ifdef HAVE_LABELED_IPSEC
-	    && !st->st_connection->loopback
-#endif
-	    ) {
+	if (!st->st_outbound_done) {
 		if (!setup_half_ipsec_sa(st, FALSE))
 			return FALSE;
 
@@ -2913,7 +2945,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 		if (sr->eroute_owner != st->st_serialno &&
 		    sr->routing != RT_UNROUTED_KEYED) {
 			if (!route_and_eroute(st->st_connection, sr, st)) {
-				delete_ipsec_sa(st, FALSE);
+				delete_ipsec_sa(st);
 				/* XXX go and unroute any SRs that were successfully
 				 * routed already.
 				 */
@@ -2941,8 +2973,11 @@ bool install_ipsec_sa(struct state *st, bool inbound_also USED_BY_KLIPS)
 /* delete an IPSEC SA.
  * we may not succeed, but we bull ahead anyway because
  * we cannot do anything better by recognizing failure
+ * This used to have a parameter bool inbound_only, but
+ * the saref code changed to always install inbound before
+ * outbound so this it was always false, and thus removed
  */
-void delete_ipsec_sa(struct state *st, bool inbound_only)
+void delete_ipsec_sa(struct state *st)
 {
 #ifdef USE_LINUX_AUDIT
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
@@ -2953,7 +2988,7 @@ void delete_ipsec_sa(struct state *st, bool inbound_only)
 	case USE_MASTKLIPS:
 	case USE_KLIPS:
 	case USE_NETKEY:
-		if (!inbound_only) {
+		{
 			/* If the state is the eroute owner, we must adjust
 			 * the routing for the connection.
 			 */
@@ -3009,20 +3044,9 @@ void delete_ipsec_sa(struct state *st, bool inbound_only)
 #endif
 				}
 			}
-#ifdef HAVE_LABELED_IPSEC
-			if (!st->st_connection->loopback)
-#endif
-			{
-				(void) teardown_half_ipsec_sa(st, FALSE);
-			}
+			(void) teardown_half_ipsec_sa(st, FALSE);
 		}
-#ifdef HAVE_LABELED_IPSEC
-		if (!st->st_connection->loopback ||
-		    st->st_state == STATE_QUICK_I2)
-#endif
-		{
-			(void) teardown_half_ipsec_sa(st, TRUE);
-		}
+		(void) teardown_half_ipsec_sa(st, TRUE);
 
 		break;
 #if defined(WIN32) && defined(WIN32_NATIVE)
@@ -3135,4 +3159,17 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 			*ago = monotimediff(mononow(), p2->peer_lastused);
 	}
 	return TRUE;
+}
+
+void free_kernelfd(void)
+{
+	if (ev_fd != NULL) {
+		event_free(ev_fd);
+		ev_fd = NULL;
+	}
+	if (ev_pq != NULL) {
+		event_free(ev_pq);
+		ev_pq = NULL;
+	}
+
 }

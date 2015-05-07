@@ -87,35 +87,31 @@ extern void send_v2_notification_from_md(struct msg_digest *md,
 					 v2_notification_t type,
 					 chunk_t *data);
 
-extern stf_status ikev2_process_payloads(struct msg_digest *md,
-					 pb_stream   *in_pbs,
-					 enum next_payload_types_ikev2 np,
-					 bool enc);
+extern stf_status ikev2_process_decrypted_payloads(struct msg_digest *md);
 
-extern bool ikev2_decode_peer_id(struct msg_digest *md,
-				 enum phase1_role initiator);
+extern bool ikev2_decode_peer_id_and_certs(struct msg_digest *md);
 
 extern void ikev2_log_parentSA(struct state *st);
 
 extern bool ikev2_calculate_rsa_sha1(struct state *st,
-				     enum phase1_role role,
+				     enum original_role role,
 				     unsigned char *idhash,
 				     pb_stream *a_pbs);
 
 extern bool ikev2_calculate_psk_auth(struct state *st,
-				     enum phase1_role role,
+				     enum original_role role,
 				     unsigned char *idhash,
 				     pb_stream *a_pbs);
 
 extern stf_status ikev2_verify_rsa_sha1(struct state *st,
-					enum phase1_role role,
+					enum original_role role,
 					unsigned char *idhash,
 					const struct pubkey_list *keys_from_dns,
 					const struct gw_info *gateways_from_dns,
 					pb_stream *sig_pbs);
 
 extern stf_status ikev2_verify_psk_auth(struct state *st,
-					enum phase1_role role,
+					enum original_role role,
 					unsigned char *idhash,
 					pb_stream *sig_pbs);
 
@@ -126,13 +122,13 @@ extern stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 				      lset_t policy);
 
 extern void ikev2_derive_child_keys(struct state *st,
-				    enum phase1_role role);
+				    enum original_role role);
 
 extern struct traffic_selector ikev2_end_to_ts(struct end *e);
 
 extern int ikev2_evaluate_connection_fit(const struct connection *d,
 					 const struct spd_route *sr,
-					 enum phase1_role role,
+					 enum original_role role,
 					 const struct traffic_selector *tsi,
 					 const struct traffic_selector *tsr,
 					 int tsi_n,
@@ -140,7 +136,7 @@ extern int ikev2_evaluate_connection_fit(const struct connection *d,
 
 extern int ikev2_evaluate_connection_port_fit(const struct connection *d,
 					      const struct spd_route *sr,
-					      enum phase1_role role,
+					      enum original_role role,
 					      const struct traffic_selector *tsi,
 					      const struct traffic_selector *tsr,
 					      int tsi_n,
@@ -150,7 +146,7 @@ extern int ikev2_evaluate_connection_port_fit(const struct connection *d,
 
 extern stf_status ikev2_calc_emit_ts(struct msg_digest *md,
 				     pb_stream *outpbs,
-				     enum phase1_role role,
+				     enum original_role role,
 				     struct connection *c0,
 				     lset_t policy);
 
@@ -160,7 +156,7 @@ extern int ikev2_parse_ts(struct payload_digest *ts_pd,
 
 extern int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 						  const struct spd_route *sr,
-						  enum phase1_role role,
+						  enum original_role role,
 						  const struct traffic_selector *tsi,
 						  const struct traffic_selector *tsr,
 						  int tsi_n,
@@ -169,7 +165,7 @@ extern int ikev2_evaluate_connection_protocol_fit(const struct connection *d,
 						  int *best_tsr_i);
 
 extern stf_status ikev2_child_sa_respond(struct msg_digest *md,
-					 enum phase1_role role,
+					 enum original_role role,
 					 pb_stream *outpbs,
 					 enum isakmp_xchg_types isa_xchg);
 
@@ -183,14 +179,6 @@ extern void send_v2_notification(struct state *p1st,
 				 u_char *rcookie,
 				 chunk_t *data);
 
-extern bool doi_send_ikev2_cert_thinking(struct state *st);
-
-extern stf_status ikev2_send_cert(struct state *st,
-				  struct msg_digest *md,
-				  enum phase1_role role,
-				  enum next_payload_types_ikev2 np,
-				  pb_stream *outpbs);
-
 extern bool ship_v2N(enum next_payload_types_ikev2 np,
 		     u_int8_t critical,
 		     u_int8_t protoid,
@@ -198,21 +186,39 @@ extern bool ship_v2N(enum next_payload_types_ikev2 np,
 		     v2_notification_t type,
 		     const chunk_t *n_data, pb_stream *rbody);
 
-extern bool force_busy;	/* config option to emulate responder under DOS */
-
 extern time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
-				  enum phase1_role role);
+				  enum original_role role);
 
 stf_status ikev2_send_cp(struct connection *c, enum next_payload_types_ikev2 np,
 		pb_stream *outpbs);
 
-stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-                                     enum phase1_role role UNUSED,
-                                     enum next_payload_types_ikev2 np,
-                                     pb_stream *outpbs);
 bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct state *st);
 
-void send_v2_notification_invalid_ke(struct state *st);
+void send_v2_notification_invalid_ke_from_state(struct state *st);
 bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list);
 oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list);
+
+stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md);
+
+struct ikev2_payloads_summary {
+	stf_status status;
+	lset_t seen;
+	lset_t repeated;
+};
+
+struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
+						    pb_stream *in_pbs,
+						    enum next_payload_types_ikev2 np);
+
+struct ikev2_payload_errors {
+	stf_status status;
+	lset_t bad_repeat;
+	lset_t missing;
+	lset_t unexpected;
+};
+
+struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
+						  const struct state_v2_microcode *svm, bool enc);
+
+void ikev2_log_payload_errors(struct ikev2_payload_errors errors);
 

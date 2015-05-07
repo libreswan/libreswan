@@ -1,6 +1,8 @@
 # Libreswan library for parsing configuration files
+#
 # Copyright (C) 2005 Michael Richardson <mcr@xelerance.com> Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -11,12 +13,6 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
-
-
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.ver
 
 LIBRARY=ipsecconf
 LIB=lib${LIBRARY}.a
@@ -30,34 +26,28 @@ SRCS+=interfaces.c
 #enable to get lots more debugging about semantics.
 #CFLAGS+=-DPARSER_TYPE_DEBUG
 
-#ifeq ($(USE_FIPSCHECK),true)
-#CFLAGS+=-DFIPS_CHECK
-#endif
-
-ifeq ($(USE_NM),true)
-CFLAGS+=-DHAVE_NM
-endif
-
-ifeq ($(USE_LABELED_IPSEC),true)
-CFLAGS+=-DHAVE_LABELED_IPSEC
-endif
-
 OBJS=${SRCS:.c=.o} 
 
-include ${srcdir}../Makefile.library
+ifdef top_srcdir
+include ${top_srcdir}/mk/library.mk
+else
+include ../../mk/library.mk
+endif
 
-keywords.c: parser.tab.h
+# Hack to force the generated files to be built first.  Not too bad
+# since all the $(OBJS) indirectly depend on the header anyway.
+$(OBJS): parser.tab.h
 
-lex.yy.c: parser.tab.c parser.l parser.y 
-	$(LEX) ${srcdir}parser.l
+# Use UNIX basename to strip off the directory. Use grep to workaround flex < 2.5.35
+lex.yy.c: parser.l
+	cd $(builddir) && $(LEX) -t $(srcdir)/$$(basename $<) | grep -v '^extern int isatty' > $@
 
-parser.tab.h parser.tab.c: parser.l parser.y 
-	$(BISON) ${BISONOSFLAGS} -v -d ${srcdir}parser.y
+# Use wild card rule so that GNU Make knows that both are output from
+# single program.  Use UNIX basename to strip off the directory.
+%.tab.h %.tab.c: %.y
+	cd $(builddir) && $(BISON) ${BISONOSFLAGS} -v -d $(srcdir)/$$(basename $<)
 
-cleanall::
-	$(RM) -f parser.tab.* lex.yy.* Makefile.depend
-
-Makefile.depend: $(SRCS) $(LIBRESWANSRCDIR)/lib/libipsecconf/Makefile
-	(ls $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libipsecconf/,$(SRCS))) | grep '\.c' | xargs ${CC} -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}) >Makefile.depend
-
--include Makefile.depend
+clean: parser-clean
+.PHONY: parser-clean
+parser-clean:
+	cd $(builddir) && $(RM) -f parser.tab.* lex.yy.*

@@ -1,8 +1,7 @@
 /testing/guestbin/swan-prep --x509
-# remove west's cert so it must come via IKE
-certutil -D -n west -d /etc/ipsec.d
+certutil -D -n north -d sql:/etc/ipsec.d
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
-ipsec auto --add westnet-eastnet-x509-cr
-ipsec auto --status | grep westnet-eastnet-x509-cr
+ipsec auto --add north-east-x509-pluto-02
+ipsec auto --status | grep north-east-x509-pluto-02
 echo "initdone"

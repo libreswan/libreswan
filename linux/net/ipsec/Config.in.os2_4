@@ -43,3 +43,5 @@ bool '   IPsec: IP Compression' CONFIG_KLIPS_IPCOMP
 bool '   IPsec Debugging Option' CONFIG_KLIPS_DEBUG
 
 bool '   IPsec: OCF HW Acceleration support' CONFIG_KLIPS_OCF
+
+bool '   IPsec: Backwards compatible NAT NFMARK' CONFIG_KLIPS_COMPAT_NAT_NFMARK

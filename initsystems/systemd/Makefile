@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/initsystems/systemd/
+SRCDIR?=${LIBRESWANSRCDIR}/initsystems/systemd/
 UNITDIR=$(shell pkg-config systemd --variable=systemdsystemunitdir)
 
 SYSTEMDFILE=ipsec.service
@@ -67,7 +67,7 @@ postcheck:
 		echo "**********************************************************************" ; \
 	fi
 
-%: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< > $@
 	@if [ -x $< ]; then chmod +x $@; fi

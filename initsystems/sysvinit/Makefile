@@ -1,5 +1,5 @@
 LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-srcdir?=${LIBRESWANSRCDIR}/initsystems/sysvinit/
+SRCDIR?=${LIBRESWANSRCDIR}/initsystems/sysvinit/
 
 INITDFILE=ipsec.init
 SYSCONFIGFILE=sysconfig.pluto
@@ -42,7 +42,7 @@ checkenabled:
 		echo "**********************************************************************" ; \
 	fi
 
-%: ${srcdir}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
+%: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@
 	${TRANSFORM_VARIABLES} < $< | sed -e "s:@SYSVINIT_DEFAULT_START@:${SYSVINIT_DEFAULT_START}:g" > $@
 	@if [ -x $< ]; then chmod +x $@; fi

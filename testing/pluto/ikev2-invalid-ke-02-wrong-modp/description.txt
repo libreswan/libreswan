@@ -1,0 +1,5 @@
+IKEv2 test with the wrong DH-group for the chosen algorithm.
+
+While west's explicitly selected DH-group is found in some of east's
+policies, the group is wrong for the selected policy.  East responds
+with INVALID_KE suggesting the group required for that policy.

@@ -179,6 +179,10 @@ void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl, struct end *end)
 	case ID_IPV6_ADDR:
 		tl->len = addrbytesptr(&id->ip_addr, &tl->ptr); /* sets tl->ptr too */
 		break;
+	case ID_NULL:
+		tl->len = 0;
+		tl->ptr = NULL;
+		break;
 	default:
 		bad_case(id->kind);
 	}

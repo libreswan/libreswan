@@ -1,10 +1,10 @@
-include ${srcdir}../Makefile.unit-settings
+include ${SRCDIR}../Makefile.unit-settings
 
 ${TESTCASE}:	${TESTCASE}.o ${IPSEC_OBJS} Makefile
 	${CC} -g -o ${TESTCASE} ${TESTCASE}.o ${IPSEC_OBJS} ${KUTILLIB} ${LIBRESWANLIB} -lefence
 
-${TESTCASE}.o: ${srcdir}${TESTCASE}.c 
-	${CC} ${UCFLAGS} -c -o ${TESTCASE}.o ${srcdir}${TESTCASE}.c
+${TESTCASE}.o: ${SRCDIR}${TESTCASE}.c 
+	${CC} ${UCFLAGS} -c -o ${TESTCASE}.o ${SRCDIR}${TESTCASE}.c
 
 %.o: %.c 
 	${CC} ${UCFLAGS} -DKBUILD_BASENAME=$* -c -o $*.o $< 
@@ -33,5 +33,5 @@ clean:
 	rm -rf *.o ${PACKFILE}.c
 
 check:	${TESTCASE}
-	(./${TESTCASE} && echo done)| sed -f ${srcdir}../fixup.sed | tee ${TESTCASE}-check.txt | diff - ${srcdir}${TESTCASE}.out
+	(./${TESTCASE} && echo done)| sed -f ${SRCDIR}../fixup.sed | tee ${TESTCASE}-check.txt | diff - ${SRCDIR}${TESTCASE}.out
 

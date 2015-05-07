@@ -173,7 +173,4 @@ extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
 extern void lock_certs_and_keys(const char *who);
 extern void unlock_certs_and_keys(const char *who);
 
-extern const struct RSA_private_key *get_x509_private_key(struct secret *secrets,
-							  x509cert_t *cert);
-
 #endif /* _SECRETS_H */

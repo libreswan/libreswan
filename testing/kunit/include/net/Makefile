@@ -1,2 +1,2 @@
-include ${srcdir}../../Makefile.links
+include ${SRCDIR}../../Makefile.links
 

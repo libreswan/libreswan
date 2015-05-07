@@ -1,6 +1,6 @@
 /*
  * tables of names for values defined in constants.h
- * Copyright (C) 2012 Paul Wouteirs <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 1998-2002  D. Hugh Redelmeier.
  *
@@ -181,24 +181,20 @@ const char *const debug_bit_names[] = {
 	"dpd",
 	"oppoinfo",	/* 14 */
 	"whackwatch",
-	"res16",
-	"res17",
-	"res18",
-	"res19",
-	"private",	/* 20 */
-	"impair-delay-adns-key-answer",	/* 21 */
-	"impair-delay-adns-txt-answer",	/* 22 */
-	"impair-bust-mi2",	/* 23 */
-	"impair-bust-mr2",	/* 24 */
-	"impair-sa-creation",	/* 25 */
-	"impair-die-oninfo",	/* 26 */
-	"impair-jacob-two-two",	/* 27 */
-	"impair-major-version-bump",	/* 28 */
-	"impair-minor-version-bump",	/* 29 */
-	"impair-retransmits",	/* 30 */
-	"impair-send-bogus-isakmp-flag",	/* 31 */
-	"impair-send-ikev2-ke",	/* 32 */
-	"impair-send-key-size-check", /* 33 */
+	"private",
+	"impair-bust-mi2",
+	"impair-bust-mr2",
+	"impair-sa-creation",
+	"impair-die-oninfo",
+	"impair-jacob-two-two",
+	"impair-major-version-bump",
+	"impair-minor-version-bump",
+	"impair-retransmits",
+	"impair-send-bogus-payload-flag",
+	"impair-send-bogus-isakmp-flag",
+	"impair-send-ikev2-ke",
+	"impair-send-no-delete",
+	"impair-send-key-size-check",
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -287,7 +283,7 @@ const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2V",
 	"ISAKMP_NEXT_v2TSi",
 	"ISAKMP_NEXT_v2TSr",
-	"ISAKMP_NEXT_v2E",
+	"ISAKMP_NEXT_v2SK",
 	"ISAKMP_NEXT_v2CP",
 	"ISAKMP_NEXT_v2EAP",
 	NULL	/* termination for bitnamesof() */
@@ -662,6 +658,7 @@ static const char *const ike_idtype_name[] = {
 	"ID_DER_ASN1_GN",
 	"ID_KEY_ID",
 	"ID_FC_NAME", /* RFC 3554 */
+	"ID_NULL", /* draft-ietf-ipsecme-ikev2-null-auth */
 };
 
 /* IKEv1 */
@@ -672,7 +669,7 @@ enum_names ike_idtype_names = {
 };
 
 static enum_names ikev2_idtype_names_3 = {
-	ID_DER_ASN1_DN, ID_FC_NAME,
+	ID_DER_ASN1_DN, ID_NULL,
 	&ike_idtype_name[ID_DER_ASN1_DN],
 	NULL
 };
@@ -1365,11 +1362,12 @@ static const char *const ikev2_auth_name[] = {
 	"IKEv2_AUTH_ECDSA_P384",
 	"IKEv2_AUTH_ECDSA_P521",
 	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
+	"IKEv2_AUTH_NULL",
 };
 
 enum_names ikev2_auth_names = {
 	IKEv2_AUTH_RSA,
-	IKEv2_AUTH_GSPM,
+	IKEv2_AUTH_NULL,
 	ikev2_auth_name,
 	NULL
 };
@@ -2055,12 +2053,13 @@ static const char *const ppk_name[] = {
 	"PPK_PSK",
 	"PPK_RSA",
 	"PPK_XAUTH",
+	"PPK_NULL",
 	NULL
 };
 
 enum_names ppk_names = {
 	PPK_PSK,
-	PPK_XAUTH,
+	PPK_NULL,
 	ppk_name,
 	NULL
 };

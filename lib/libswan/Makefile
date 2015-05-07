@@ -1,8 +1,10 @@
 # Libreswan library
+
 # Copyright (C) 1998-2001  Henry Spencer.
 # Copyright (C) 2003, 2004 Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,11 +17,12 @@
 # for more details.
 #
 
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.ver
+include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/version.mk
 
 
 MANDIR=$(MANTREE)/man3
@@ -56,19 +59,6 @@ PFKEYV2_SRCS+=pfkey_v2_build.c pfkey_v2_ext_bits.c pfkey_v2_parse.c
 PFKEYV2_SRCS+=pfkey_v2_debug.c 
 endif
 
-ifeq ($(USE_LIBCURL),true)
-CFLAGS+=-DLIBCURL
-endif
-
-ifeq ($(USE_LDAP),true)
-CFLAGS+=-DLDAP_VER=3
-endif
-
-ifeq ($(USE_FIPSCHECK),true)
-CFLAGS+=-DFIPSPRODUCTCHECK=\"${FIPSPRODUCTCHECK}\" -DFIPS_CHECK
-endif
-
-CFLAGS+=-DUSE_SHA2 -DUSE_SHA1 -DUSE_MD5
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libaes_xcbc
 
@@ -91,27 +81,10 @@ LIBL=liblswlog.a
 CFLAGS+=${PORTINCLUDE} -I. -I${KLIPSSRCDIR} -I${KLIPSINC}
 CFLAGS+=-I${LIBRESWANSRCDIR}
 CFLAGS+=${PFKEYV2_DEFS} ${KLIPS_DEFS} $(NSSFLAGS)
-CFLAGS+= -I${LIBRESWANSRCDIR}/include ${PORTINCLUDE} $(USERCOMPILE) ${CROSSFLAGS}
-CFLAGS+= ${WERROR}
-
-ifeq ($(USE_SINGLE_CONF_DIR),true)
-CFLAGS+= -DSINGLE_CONF_DIR=1
-endif
-
-ifeq ($(USE_LABELED_IPSEC),true)
-CFLAGS+=-DHAVE_LABELED_IPSEC
-endif
-
-ifeq ($(USE_DNSSEC),true)
-CFLAGS+=-DDNSSEC
-endif
-
-CFLAGS+=-DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
-CFLAGS+=-DIPSEC_CONFDDIR=\"$(FINALCONFDDIR)\"
-CFLAGS+=-DIPSEC_CONF=\"$(FINALCONFFILE)\"
-CFLAGS+=-DIPSEC_VARDIR=\"$(FINALVARDIR)\"
-CFLAGS+=-DIPSEC_EXECDIR=\"$(FINALLIBEXECDIR)\"
-CFLAGS+=-DIPSEC_SBINDIR=\"$(FINALSBINDIR)\"
+CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
+# XXX: hack until everything uses a consistent .c.o rule
+CFLAGS+=$(USERLAND_CFLAGS) 
+CFLAGS+=${CROSSFLAGS}
 
 ARFLAGS=crvs
 EXTHDRS=des.h
@@ -122,9 +95,8 @@ MANS=anyaddr.3 atoaddr.3 atoul.3 goodmask.3 \
 
 .PHONY:	all install clean l t lt tar check depend checkprograms
 
-# we can't do tests with two conditions, but we can concatenate the strings
-SHOULDWERESTART=${USE_OBJDIR}$(wildcard ttodata.3.xml)
-ifeq ($(SHOULDWERESTART),truettodata.3.xml)
+SHOULDWERESTART=$(wildcard ttodata.3.xml)
+ifeq ($(SHOULDWERESTART),ttodata.3.xml)
 all programs clean install:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/libswan && make $@
 else
@@ -222,14 +194,6 @@ check:
 
 checkprograms:
 
-# ??? does $(SRCS) work, given the files could be in different directories?
-Makefile.depend: $(SRCS) $(LOGSRCS) ${LIBRESWANSRCDIR}/lib/libswan/Makefile
-	# note: files listed in SRCS may be in ${LIBRESWANSRCDIR}/lib/libswan/ or ${KLIPSSRCDIR}/
-	# This construction looks in both.  The wildcard function weeds out the wrong choices.
-	# The grep could be replaced by the GNU Make "filter" function.
-	(ls $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(SRCS))) \
-	    $(wildcard $(addprefix ${KLIPSSRCDIR}/,$(SRCS))) \
-	    $(wildcard $(addprefix ${LIBRESWANSRCDIR}/lib/libswan/,$(LOGSRCS))) \
-	| grep '\.c' | xargs ${CC} -MM ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}) >Makefile.depend
-
--include Makefile.depend
+MK_DEPEND_CFLAGS =  ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}
+MK_DEPEND_FILES = $(SRCS)
+include $(top_srcdir)/mk/depend.mk

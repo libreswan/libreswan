@@ -36,6 +36,7 @@ Provides: openswan-doc = %{version}-%{release}
 BuildRequires: pkgconfig hostname
 BuildRequires: nss-devel >= 3.14.3, nspr-devel
 BuildRequires: pam-devel
+BuildRequires: libevent-devel
 %if %{USE_DNSSEC}
 BuildRequires: unbound-devel
 %endif
@@ -91,9 +92,10 @@ rm ./programs/configs/ipsec.conf.5
 #796683: -fno-strict-aliasing
 %{__make} \
 %if %{development}
-   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+  USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %else
   USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+  WERROR_CFLAGS= \
 %endif
   USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
   INITSYSTEM=systemd \
@@ -201,11 +203,6 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %if %{USE_FIPSCHECK}
 prelink -u %{_libexecdir}/ipsec/* 2>/dev/null || :
 %endif
-if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
-     ! -f %{_sysconfdir}/ipsec.d/cert9.db ] ; then
-    certutil -N -d %{_sysconfdir}/ipsec.d --empty-password
-    restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
-fi
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1

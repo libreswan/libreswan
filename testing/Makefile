@@ -14,7 +14,7 @@
 LIBRESWANSRCDIR?=$(shell cd ..; pwd)
 include $(LIBRESWANSRCDIR)/Makefile.inc
 
-srcdir?=${LIBRESWANSRCDIR}/testing/
+SRCDIR?=${LIBRESWANSRCDIR}/testing/
 
 SUBDIRS+=pluto 
 #SUBDIRS=lib utils 
@@ -34,6 +34,6 @@ def:
 prerequisites cleanall distclean mostlyclean realclean install check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
-		 ${MAKE} -C $$d srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ;\
+		 ${MAKE} -C $$d SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ;\
 	done; 
 

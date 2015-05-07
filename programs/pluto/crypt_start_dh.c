@@ -6,6 +6,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redaht.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,7 +61,7 @@
 stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 			     struct state *st,
 			     enum crypto_importance importance,
-			     enum phase1_role role,
+			     enum original_role role,
 			     oakley_group_t oakley_group2)
 {
 	struct pluto_crypto_req r;
@@ -133,7 +134,7 @@ void finish_dh_secretiv(struct state *st,
 stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 			   struct state *st,
 			   enum crypto_importance importance,
-			   enum phase1_role role,
+			   enum original_role role,
 			   oakley_group_t oakley_group2)
 {
 	struct pluto_crypto_req r;
@@ -192,7 +193,7 @@ void finish_dh_secret(struct state *st,
  */
 stf_status start_dh_v2(struct msg_digest *md,
 		       const char *name,
-		       enum phase1_role role,
+		       enum original_role role,
 		       crypto_req_cont_func pcrc_func)
 {
 	struct state *st = md->st;
@@ -271,6 +272,8 @@ void finish_dh_v2(struct state *st,
 	st->st_skey_er_nss = dhv2->skeyid_er;
 	st->st_skey_initiator_salt = dhv2->skey_initiator_salt;
 	st->st_skey_responder_salt = dhv2->skey_responder_salt;
+	st->st_skey_chunk_SK_pi = dhv2->skey_chunk_SK_pi;
+	st->st_skey_chunk_SK_pr = dhv2->skey_chunk_SK_pr;
 
 	st->hidden_variables.st_skeyid_calculated = TRUE;
 }

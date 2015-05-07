@@ -1,0 +1,5 @@
+IKEv2 test with the initiator's default DH-group being invalid.
+
+Since west's default DH-group is not found in east's explicitly listed
+policies, east responds with INVALID_KE and suggests the group from
+the selected policy.

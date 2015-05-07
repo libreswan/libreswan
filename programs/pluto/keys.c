@@ -9,6 +9,7 @@
  * Copyright (C) 2009 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,7 +62,7 @@
 #include "mpzfuncs.h"
 
 #include "fetch.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 #include "nat_traversal.h"
 
@@ -451,7 +452,7 @@ stf_status RSA_check_signature_gen(struct state *st,
 
 			if (key->alg == PUBKEY_ALG_RSA &&
 			    same_id(&c->spd.that.id, &key->id) &&
-			    trusted_ca(key->issuer, c->spd.that.ca,
+			    trusted_ca_nss(key->issuer, c->spd.that.ca,
 				       &pathlen)) {
 
 				DBG(DBG_CONTROL, {
@@ -591,9 +592,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    enum_name(&ppk_names, kind)));
 
 	/* is there a certificate assigned to this connection? */
-	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE) {
-		struct pubkey *my_public_key = allocate_RSA_public_key(
-			c->spd.this.cert);
+	if (kind == PPK_RSA && c->spd.this.cert.ty == CERT_X509_SIGNATURE &&
+			c->spd.this.cert.u.nss_cert != NULL) {
+		struct pubkey *my_public_key = allocate_RSA_public_key_nss(
+			c->spd.this.cert.u.nss_cert);
 
 		passert(my_public_key != NULL);
 
@@ -693,6 +695,11 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 					  PPK_PSK, FALSE);
 	const struct private_key_stuff *pks = NULL;
 
+	if (c->policy & POLICY_AUTH_NULL) {
+	DBG(DBG_PRIVATE, DBG_log("PAUL:authnull method uses empty_chunk"));
+		return &empty_chunk;
+	}
+
 	if (s != NULL)
 		pks = lsw_get_pks(s);
 
@@ -704,24 +711,6 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 					   pks->u.preshared_secret);
 	    });
 	return s == NULL ? NULL : &pks->u.preshared_secret;
-}
-
-/* check the existence of an RSA private key matching an RSA public
- * key contained in an X.509
- */
-bool has_private_key(cert_t cert)
-{
-	bool has_key = FALSE;
-	struct pubkey *pubkey;
-
-	pubkey = allocate_RSA_public_key(cert);
-	if (pubkey == NULL)
-		return FALSE;
-
-	has_key = lsw_has_private_rawkey(pluto_secrets, pubkey);
-
-	free_public_key(pubkey);
-	return has_key;
 }
 
 /* find the appropriate RSA private key (see get_secret).

@@ -1,0 +1,15 @@
+  <varlistentry>
+  <term><emphasis remap='B'>nflog-all</emphasis></term>
+  <listitem>
+<para>If set, the NFLOG group number to log <emphasis remap='B'>all</emphasis> pre-crypt and post-decrypt traffic to.
+The default value of <emphasis remap='B'>0</emphasis> means no logging at all.
+This option is only available on linux kernel 2.6.14 and later. It allows
+common network utilities such as tcpdump, wireshark and dumpcap, to use
+nflog:XXX pseudo interfaces where XXX is the nflog group number. During
+startup and shutdown of the IPsec service, iptables commands will be used to
+add or remove the global NFLOG table rules. The rules are setup with the
+nflog-prefix <emphasis remap='I'>all-ipsec</emphasis>. See also the per-connection
+<emphasis remap='B'>nflog</emphasis> option.
+</para>
+  </listitem>
+  </varlistentry>

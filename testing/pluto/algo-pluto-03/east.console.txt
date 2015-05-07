@@ -31,8 +31,9 @@ east #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, force-busy=no
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
+000 nhelpers=-1, uniqueids=yes, perpeerlog=no
+000 ddos-cookies-treshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
+000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
@@ -56,6 +57,9 @@ east #
 000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
 000 algorithm IKE encrypt: v1id=24, v1name=OAKLEY_CAMELLIA_CTR, v2id=24, v2name=CAMELLIA_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=20, v1name=OAKLEY_AES_GCM_C, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=19, v1name=OAKLEY_AES_GCM_B, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
+000 algorithm IKE encrypt: v1id=18, v1name=OAKLEY_AES_GCM_A, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
 000 algorithm IKE encrypt: v1id=65004, v1name=OAKLEY_SERPENT_CBC, v2id=65004, v2name=SERPENT_CBC, blocksize=16, keydeflen=128
@@ -86,12 +90,13 @@ east #
 000 "westnet-eastnet-ah-sha1-pfs":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-ah-sha1-pfs":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ah-sha1-pfs":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-ah-sha1-pfs":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-ah-sha1-pfs":   labeled_ipsec:no; 
 000 "westnet-eastnet-ah-sha1-pfs":    policy_label:unset; 
 000 "westnet-eastnet-ah-sha1-pfs":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ah-sha1-pfs":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-ah-sha1-pfs":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ah-sha1-pfs":   policy: RSASIG+AUTHENTICATE+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "westnet-eastnet-ah-sha1-pfs":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-ah-sha1-pfs":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "westnet-eastnet-ah-sha1-pfs":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-ah-sha1-pfs":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-ah-sha1-pfs":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)_000-MODP2048(14)
@@ -101,9 +106,11 @@ east #
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
-000 State list:
+000 State Information: DDoS cookies not required, Accepting new IKE connections
+000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
+000 IPsec SAs: total(0), anonymous(<todo>)
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 east #
  echo "initdone"

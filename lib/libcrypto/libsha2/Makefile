@@ -1,15 +1,13 @@
-LIBRESWANSRCDIR?=$(shell cd ../../..; pwd)
-srcdir?=./
-
-include ${LIBRESWANSRCDIR}/Makefile.inc
-include ${LIBRESWANSRCDIR}/Makefile.ver
 
 OBJS := sha2.o
 
 ONEFILE=sha2.c
 LIBRARY=crypto/libsha2
 LIB=libsha2.a
-INCLUDES+=-I${srcdir}../include
+INCLUDES+=-I${SRCDIR}../include
 
-include ${srcdir}../../Makefile.library
-
+ifdef top_srcdir
+include $(top_srcdir)/mk/library.mk
+else
+include ../../../mk/library.mk
+endif

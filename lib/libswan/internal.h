@@ -62,7 +62,5 @@
 #define MALLOC(n)       malloc(n)
 #define FREE(p)         free(p)
 
-#define MIN_SHANNON_ENTROPY 3.5
-
 #endif /* __KERNEL__ */
 

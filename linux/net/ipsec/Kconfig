@@ -112,6 +112,17 @@ config KLIPS_OCF
 	   the hardware managed by OCF,  then enable this option.
 	   OCF is a kernel patch, see http://ocf-linux.sourceforge.net/
 
+config KLIPS_COMPAT_NAT_NFMARK
+	bool 'IPsec: Backwards compatible NAT NFMARK'
+	default n
+	help
+	   Pre-2.6.23 kernels requiring the NAT-Traversal patch use
+	   the NFmark feature to mark packets for UDP decapsulation.
+	   Kernels since 2.6.23 have native support and do not need
+	   to place this nfmark - leaving all nfmark space available
+	   to other kernel modules or userland applications. Leave this
+	   off when using kernels > 2.6.23
+
 config KLIPS_DEBUG
 	bool 'IPsec debugging'
 	default y 

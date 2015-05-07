@@ -23,12 +23,13 @@ east #
 000 "westnet-eastnet-aggr":     oriented; my_ip=unset; their_ip=unset
 000 "westnet-eastnet-aggr":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-aggr":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-aggr":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-aggr":   labeled_ipsec:no; 
 000 "westnet-eastnet-aggr":    policy_label:unset; 
 000 "westnet-eastnet-aggr":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-aggr":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-aggr":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-aggr":   policy: PSK+ENCRYPT+TUNNEL+PFS+AGGRESSIVE+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "westnet-eastnet-aggr":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-aggr":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "westnet-eastnet-aggr":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-aggr":   IKE algorithms wanted: 3DES_CBC(5)_000-SHA1(2)_000-MODP1536(5)
 000 "westnet-eastnet-aggr":   IKE algorithms found:  3DES_CBC(5)_192-SHA1(2)_160-MODP1536(5)

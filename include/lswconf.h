@@ -23,7 +23,7 @@
 #include "constants.h"
 
 # include <nss.h>
-# include <pk11pub.h>
+# include <pk11pub.h>	/* from nss3 devel */
 
 struct lsw_conf_options {
 	char *rootdir;			/* default is "" --- used for testing */
@@ -34,6 +34,7 @@ struct lsw_conf_options {
 	char *policies_dir;		/* "/etc/ipsec.d/policies" */
 	char *cacerts_dir;		/* "/etc/ipsec.d/cacerts" */
 	char *crls_dir;			/* "/etc/ipsec.d/crls" */
+	char *nssdir;			/* "/var/lib/pluto" */
 };
 
 typedef struct {

@@ -1,8 +1,10 @@
 /* parsing packets: formats and tools
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2001,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1188,11 +1190,11 @@ struct_desc ikev2_ts1_desc = { "IKEv2 Traffic Selector",
  *
  *             Figure 21:  Encrypted Payload Format
  */
-struct_desc ikev2_e_desc = { "IKEv2 Encryption Payload",
+struct_desc ikev2_sk_desc = { "IKEv2 Encryption Payload",
 			     ikev2generic_fields,
 			     sizeof(struct ikev2_generic) };
 
-/* descriptor for each payload type
+/* descriptor for each V1 payload type
  *
  * There is a slight problem in that some payloads differ, depending
  * on the mode.  Since this is table only used for top-level payloads,
@@ -1200,7 +1202,7 @@ struct_desc ikev2_e_desc = { "IKEv2 Encryption Payload",
  * That leaves only Identification payloads as a problem.
  * We make all these entries NULL
  */
-static struct_desc *const payload_descs[] = {
+static struct_desc *const v1_payload_descs[] = {
 	NULL,                           /* 0 ISAKMP_NEXT_NONE (No other payload following) */
 	&isakmp_sa_desc,                /* 1 ISAKMP_NEXT_SA (Security Association) */
 	NULL,                           /* 2 ISAKMP_NEXT_P (Proposal) */
@@ -1223,17 +1225,9 @@ static struct_desc *const payload_descs[] = {
 	NULL,                           /* 19 */
 	&isakmp_nat_d,                  /* 20=130 ISAKMP_NEXT_NATD_RFC=ISAKMP_NEXT_NATD_DRAFTS (NAT-D) */
 	&isakmp_nat_oa,                 /* 21=131 ISAKMP_NEXT_NATOA_RFC=ISAKMP_NEXT_NATOA_DRAFTS (NAT-OA) */
-	NULL,				/* 22 */
-	NULL,				/* 23 */
-	NULL,				/* 24 */
-	NULL,				/* 25 */
-	NULL,				/* 26 */
-	NULL,				/* 27 */
-	NULL,				/* 28 */
-	NULL,				/* 29 */
-	NULL,				/* 30 */
-	NULL,				/* 31 */
-	NULL,				/* 32 */
+};
+
+static struct_desc *const v2_payload_descs[] = {
 	&ikev2_sa_desc,                 /* 33 ISAKMP_NEXT_v2SA */
 	&ikev2_ke_desc,                 /* 34 ISAKMP_NEXT_v2KE */
 	&ikev2_id_desc,			/* 35 ISAKMP_NEXT_v2IDi */
@@ -1247,7 +1241,7 @@ static struct_desc *const payload_descs[] = {
 	&ikev2_vendor_id_desc,          /* 43 ISAKMP_NEXT_v2V */
 	&ikev2_ts_desc,			/* 44 ISAKMP_NEXT_v2TSi */
 	&ikev2_ts_desc,			/* 45 ISAKMP_NEXT_v2TSr */
-	&ikev2_e_desc,                  /* 46 ISAKMP_NEXT_v2E */
+	&ikev2_sk_desc,                 /* 46 ISAKMP_NEXT_v2SK */
 	&ikev2_cp_desc,			/* 57 ISAKMP_NEXT_v2CP */
 };
 
@@ -1286,9 +1280,21 @@ struct_desc sec_ctx_desc = {
 
 #endif
 
-const struct_desc *payload_desc(unsigned p)
+const struct_desc *v1_payload_desc(unsigned p)
 {
-	return p < elemsof(payload_descs) ? payload_descs[p] : NULL;
+	return p < elemsof(v1_payload_descs) ? v1_payload_descs[p] : NULL;
+}
+
+const struct_desc *v2_payload_desc(unsigned p)
+{
+	if (p < ISAKMP_v2PAYLOAD_TYPE_BASE) {
+		return NULL;
+	}
+	unsigned q = p - ISAKMP_v2PAYLOAD_TYPE_BASE;
+	if (q >= elemsof(v2_payload_descs)) {
+		return NULL;
+	}
+	return v2_payload_descs[q];
 }
 
 void init_pbs(pb_stream *pbs, u_int8_t *start, size_t len, const char *name)
@@ -1322,10 +1328,10 @@ static err_t enum_enum_checker(
 	enum_names *ed = enum_enum_table(fp, last_enum);
 
 	if (ed == NULL) {
-		return builddiag(
-			"%s of %s has an unknown type: %lu",
-			fp->name, struct_name,
-			(unsigned long)last_enum);
+		return builddiag("%s of %s has an unknown type: %lu (0x%lx)",
+				 fp->name, struct_name,
+				 (unsigned long)last_enum,
+				 (unsigned long)last_enum);
 	}
 	return NULL;
 }
@@ -1386,7 +1392,8 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 					break;
 			/* FALL THROUGH */
 			case ft_nat: /* natural number (may be 0) */
-				DBG_log("   %s: %lu", fp->name,
+				DBG_log("   %s: %lu (0x%lx)", fp->name,
+					(unsigned long)n,
 					(unsigned long)n);
 				break;
 
@@ -1399,8 +1406,9 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			case ft_enum:           /* value from an enumeration */
 			case ft_loose_enum:     /* value from an enumeration with only some names known */
 				last_enum = n;
-				DBG_log("   %s: %s", fp->name,
-					enum_show(fp->desc, n));
+				DBG_log("   %s: %s (0x%lx)", fp->name,
+					enum_show(fp->desc, n),
+					(unsigned long)n);
 				break;
 
 			case ft_loose_enum_enum:
@@ -1408,18 +1416,21 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 				enum_names *ed = enum_enum_table(fp, last_enum);
 
 				if (ed == NULL) {
-					DBG_log("   %s: %lu", fp->name,
+					DBG_log("   %s: %lu (0x%lx)", fp->name,
+						(unsigned long)n,
 						(unsigned long)n);
 				} else {
-					DBG_log("   %s: %s", fp->name,
-						enum_show(ed, n));
+					DBG_log("   %s: %s (0x%lx)", fp->name,
+						enum_show(ed, n),
+						(unsigned long)n);
 				}
 			}
 				break;
 
 			case ft_set: /* bits representing set */
-				DBG_log("   %s: %s", fp->name,
-					bitnamesof(fp->desc, n));
+				DBG_log("   %s: %s (0x%lx)", fp->name,
+					bitnamesof(fp->desc, n),
+					(unsigned long)n);
 				break;
 			default:
 				bad_case(fp->field_type);
@@ -1585,10 +1596,10 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 				/* FALL THROUGH */
 				case ft_enum:   /* value from an enumeration */
 					if (enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag(
-							"%s of %s has an unknown value: %lu",
-							fp->name, sd->name,
-							(unsigned long)n);
+						ugh = builddiag("%s of %s has an unknown value: %lu (0x%lx)",
+								fp->name, sd->name,
+								(unsigned long)n,
+								(unsigned long)n);
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
@@ -1601,11 +1612,10 @@ bool in_struct(void *struct_ptr, struct_desc *sd,
 
 				case ft_set:            /* bits representing set */
 					if (!testset(fp->desc, n)) {
-						ugh = builddiag(
-							"bitset %s of %s has unknown member(s): %s",
-							fp->name, sd->name,
-							bitnamesof(fp->desc,
-								   n));
+						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%lx)",
+								fp->name, sd->name,
+								bitnamesof(fp->desc, n),
+								(unsigned long)n);
 					}
 					break;
 
@@ -1814,10 +1824,10 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 				/* FALL THROUGH */
 				case ft_enum:   /* value from an enumeration */
 					if (enum_name(fp->desc, n) == NULL) {
-						ugh = builddiag(
-							"%s of %s has an unknown value: %lu",
-							fp->name, sd->name,
-							(unsigned long)n);
+						ugh = builddiag("%s of %s has an unknown value: %lu (0x%lx)",
+								fp->name, sd->name,
+								(unsigned long)n,
+								(unsigned long)n);
 					}
 				/* FALL THROUGH */
 				case ft_loose_enum:     /* value from an enumeration with only some names known */
@@ -1830,11 +1840,10 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 
 				case ft_set:            /* bits representing set */
 					if (!testset(fp->desc, n)) {
-						ugh = builddiag(
-							"bitset %s of %s has unknown member(s): %s",
-							fp->name, sd->name,
-							bitnamesof(fp->desc,
-								   n));
+						ugh = builddiag("bitset %s of %s has unknown member(s): %s (0x%lx)",
+								fp->name, sd->name,
+								bitnamesof(fp->desc, n),
+								(unsigned long)n);
 					}
 					break;
 

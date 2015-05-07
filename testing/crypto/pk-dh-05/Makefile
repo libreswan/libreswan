@@ -1,5 +1,3 @@
-LIBRESWANSRCDIR=$(shell cd ../../..; pwd)
-
 UNITTEST=pk-dh
 CFLAGS=-DUSE_3DES -I${LIBRESWANSRCDIR}/programs/pluto
 
@@ -16,6 +14,8 @@ pk-dh: ${SOURCES}
 programs checkprograms: ${UNITTEST}
 	@true
 
-include ${LIBRESWANSRCDIR}/programs/Makefile.program
-
-
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../../mk/program.mk
+endif

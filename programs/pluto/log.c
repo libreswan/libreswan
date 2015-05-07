@@ -6,7 +6,7 @@
  * Copyright (C) 2008-2012 Paul Wouters
  * Copyright (C) 2008-2010 David McCullough.
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2013,2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -81,9 +81,9 @@ bool
 	log_to_stderr = TRUE,		/* should log go to stderr? */
 	log_to_syslog = TRUE,		/* should log go to syslog? */
 	log_to_perpeer = FALSE,		/* should log go to per-IP file? */
-	log_with_timestamp = FALSE,	/* some people want timestamps, but we
-					 * don't want those in our test output */
-	log_to_audit = FALSE;		/* audit log messages for kernel */
+	log_with_timestamp = TRUE,	/* testsuite requires no timestamps */
+	log_to_audit = FALSE,		/* audit log messages for kernel */
+	log_append = TRUE;
 
 bool
 	logged_txt_warning = FALSE; /* should we complain about finding KEY? */
@@ -134,7 +134,8 @@ void pluto_init_log(void)
 		setbuf(stderr, NULL);
 
 	if (pluto_log_file != NULL) {
-		pluto_log_fp = fopen(pluto_log_file, "w");
+		pluto_log_fp = fopen(pluto_log_file,
+			log_append ? "a" : "w");
 		if (pluto_log_fp == NULL) {
 			fprintf(stderr,
 				"Cannot open logfile '%s': %s\n",
@@ -567,9 +568,7 @@ void whack_log(int mess_no, const char *message, ...)
 	      cur_state != NULL ? cur_state->st_whack_sock :
 	      NULL_FD;
 
-	if (wfd != NULL_FD
-	    || dying_breath
-	    ) {
+	if (wfd != NULL_FD || dying_breath) {
 		va_list args;
 		char m[LOG_WIDTH]; /* longer messages will be truncated */
 		int prelen = snprintf(m, sizeof(m), "%03d ", mess_no);
@@ -634,11 +633,9 @@ void passert_fail(const char *pred_str, const char *file_str,
 		  unsigned long line_no)
 {
 	/* we will get a possibly unplanned prefix.  Hope it works */
-	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s", file_str,
-	       line_no, pred_str);
-	if (!dying_breath) {
-		dying_breath = TRUE;
-	}
+	loglog(RC_LOG_SERIOUS, "ASSERTION FAILED at %s:%lu: %s",
+		file_str, line_no, pred_str);
+	dying_breath = TRUE;
 	/* exiting correctly doesn't always work */
 	libreswan_log_abort(file_str, line_no);
 }
@@ -711,7 +708,7 @@ int DBG_log(const char *message, ...)
 		if (log_with_timestamp)
 			prettynow(buf, sizeof(buf), "%b %e %T: ");
 		fprintf(log_to_stderr ? stderr : pluto_log_fp,
-			"%c %s%s\n", debug_prefix, buf, m);
+			"%s%c %s\n", buf, debug_prefix, m);
 	}
 	if (log_to_syslog)
 		syslog(LOG_DEBUG, "%c %s", debug_prefix, m);
@@ -798,6 +795,11 @@ static void show_system_security(void)
                 selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
 	whack_log(RC_COMMENT, " ");     /* spacer */
 
+}
+
+void show_global_status(void)
+{
+	show_globalstate_status();
 }
 
 void show_status(void)
@@ -1173,6 +1175,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	bool initiator = FALSE;
 	char head[IDTOA_BUF];
 	char integname[IDTOA_BUF];
+	char prfname[IDTOA_BUF];
 	struct esb_buf esb;
 	/* we need to free() this */
 	char *conn_encode = audit_encode_nv_string("conn-name",c->name,0);
@@ -1183,7 +1186,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	switch(op) {
 	case LAK_PARENT_START:
 	case LAK_PARENT_DESTROY:
-		initiator = IS_V2_INITIATOR(st->st_state) || IS_PHASE1_INIT(st->st_state);
+		initiator = (st->st_original_role == ORIGINAL_INITIATOR) || IS_PHASE1_INIT(st->st_state);
 		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=%ld ike-version=%s auth=%s",
 			op == LAK_PARENT_START ? "start" : "destroy",
 			initiator ? "initiator" : "responder",
@@ -1193,20 +1196,30 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			st->st_ikev2 ? ((c->policy & POLICY_PSK) ? "PRESHARED_KEY" : "RSA_SIG") :
 				strip_prefix(enum_show(&oakley_auth_names,
 					st->st_oakley.auth), "OAKLEY_"));
-		if (st->st_ikev2)
+
+		snprintf(prfname, sizeof(prfname), "%s",
+			st->st_oakley.prf_hasher->common.officname);
+
+		if (st->st_oakley.integ_hasher != NULL) {
 			snprintf(integname, sizeof(integname), "%s_%zu",
 				st->st_oakley.integ_hasher->common.officname,
 				st->st_oakley.integ_hasher->hash_integ_len *
 				BITS_PER_BYTE);
-		else
-			snprintf(integname, sizeof(integname), "%s",
-				strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"));
+		} else {
+			if (!st->st_ikev2) {
+				/* ikev1 takes integ from prf, ecept of cause gcm */
+				/* but we dont support gcm in ikev1 for now */
+				jam_str(integname, sizeof(integname), prfname);
+			} else {
+				snprintf(integname, sizeof(integname), "none");
+			}
+                }
 
 		snprintf(cipher_str, sizeof(cipher_str),
-			"cipher=%s ksize=%d integ=%s pfs=%s",
-			st->st_oakley.encrypter->common.name,
+			"cipher=%s ksize=%d integ=%s prf=%s pfs=%s",
+			st->st_oakley.encrypter->common.officname,
 			st->st_oakley.enckeylen,
-			integname,
+			integname, prfname,
 			strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
 		break;
 

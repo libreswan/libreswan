@@ -2,7 +2,7 @@
 # STACK startup script
 # Copyright (C) 2007 Ken Bantoft <ken@xelerance.com>
 # Copyright (C) 2007-2008 Paul Wouters <paul@xelerance.com>
-# Copyright (C) 2008-2014 Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2008-2015 Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ PATH=@FINALSBINDIR@:${PATH}
 export PATH
 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
+MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
 
 kamepfkey=/proc/net/pfkey
 ipsecpfkey=/proc/net/ipsec/version
@@ -119,16 +120,17 @@ startnetkey() {
 	    xfrm4_mode_beet esp4 esp6 ah4 ah6 af_key ip_vti
 	do
 	    # echo -n "${mod} " >&2
-	    @MODPROBE@ ${mod} 2>/dev/null
+	    ${MODPROBE} ${mod} 2>/dev/null
 	done
 
 	# xfrm_user is the old name for xfrm4_tunnel - backwards compatibility
-	@MODPROBE@ xfrm_user 2>/dev/null
+	${MODPROBE} xfrm_user 2>/dev/null
 
     fi
-    # Required for Labeled IPsec
-    echo 0 >/proc/sys/net/ipv4/conf/lo/disable_xfrm
-    echo 0 >/proc/sys/net/ipv4/conf/lo/disable_policy
+    # Time before kernel ACQUIRE for ondemand/ Opportunistic expires
+    # Also Time before reserved kernel SPI times out
+    # 300 seconds is so embedded systems have enough time to generate DH
+    echo 300 > /proc/sys/net/core/xfrm_acq_expires
 }
 
 stopklips() {
@@ -184,19 +186,19 @@ stop() {
 cryptomodules() {
     # load hardware random and crypto related modules.
     # some changed names over time
-    @MODPROBE@ hw_random 2>/dev/null
-    @MODPROBE@ hwrng 2>/dev/null
-    @MODPROBE@ virtio-rng 2>/dev/null
-    @MODPROBE@ amd-rng 2>/dev/null
-    @MODPROBE@ intel-rng 2>/dev/null
-    @MODPROBE@ geode-rng 2>/dev/null
-    @MODPROBE@ timeriomem-rng 2>/dev/null
-    @MODPROBE@ tpm-rng 2>/dev/null
+    ${MODPROBE} hw_random 2>/dev/null
+    ${MODPROBE} hwrng 2>/dev/null
+    ${MODPROBE} virtio-rng 2>/dev/null
+    ${MODPROBE} amd-rng 2>/dev/null
+    ${MODPROBE} intel-rng 2>/dev/null
+    ${MODPROBE} geode-rng 2>/dev/null
+    ${MODPROBE} timeriomem-rng 2>/dev/null
+    ${MODPROBE} tpm-rng 2>/dev/null
 
     # load any OCF and CryptoAPI modules we might need for acceleration
     # (OCF works for NETKEY and KLIPS/MAST)
     # OCF cryptosoft is for kernel acceleration (ESP/AH)
-    @MODPROBE@ cryptosoft 2>/dev/null
+    ${MODPROBE} cryptosoft 2>/dev/null
     # We skip cryptodev.ko because we no longer support /dev/crypto offloading
     # (the overhead of cryptodev is not worth it even on embedded platforms)
 
@@ -219,9 +221,9 @@ cryptomodules() {
     # padlock must load before aes module - though does not exist on newer
     # kernels
     # padlock-aes must load before padlock-sha for some reason
-    @MODPROBE@ padlock 2>/dev/null
-    @MODPROBE@ padlock-aes 2>/dev/null
-    @MODPROBE@ padlock-sha 2>/dev/null
+    ${MODPROBE} padlock 2>/dev/null
+    ${MODPROBE} padlock-aes 2>/dev/null
+    ${MODPROBE} padlock-sha 2>/dev/null
     # load the most common ciphers/algo's
     # aes-x86_64 has higher priority in via crypto api
     # kernel directory does not match uname -m on x86_64 :(
@@ -234,7 +236,7 @@ cryptomodules() {
     do
 	module=$(basename ${module} | sed "s/\.ko$//")
 	# echo -n "${module} " >&2
-	@MODPROBE@ ${module} 2>/dev/null
+	${MODPROBE} ${module} 2>/dev/null
     done
 }
 
@@ -264,10 +266,10 @@ startklips() {
 		;;
 	esac
 	# modprobe does not like specifying .o or .ko, but insmod needs it
-	if [ "$(basename @MODPROBE@)" = "modprobe" ]; then
-	    @MODPROBE@ ipsec
+	if [ "$(basename "@MODPROBEBIN@")" = "modprobe" ]; then
+	    ${MODPROBE} ipsec
 	else
-	    @MODPROBE@ ${modulename}
+	    ${MODPROBE} ${modulename}
 	fi
 
 	if [ ! -f ${ipsecpfkey} ]; then
@@ -418,8 +420,7 @@ if [ $(id -u) -ne 0 ]; then
     exit 4
 fi
 
-if [ "$2" == "--netkey" ]
-then
+if [ "$2" = "--netkey" ]; then
 	# manual override for use in docker
 	stack=netkey
 else
@@ -441,15 +442,18 @@ esac
 
 case ${action} in
     stop)
-	# We don't unload NETKEY/XFRM on stop - only when we detect a stack change.
+	# We don't unload NETKEY/XFRM on stop - only when we detect a stack
+	# change.
 	if [ -f ${ipsecpfkey} ]; then
 		ipsec eroute --clear
-		# this clears all IP addresses on ipsecX interfaces by unloading the module
+		# this clears all IP addresses on ipsecX interfaces by
+		# unloading the module
 		stopklips
 	elif [ -f ${kamepfkey} ]; then
 		ip xfrm state flush
 		ip xfrm policy flush
-		# module unloading skipped on purpose - can hang for a long time or fail
+		# module unloading skipped on purpose - can hang for a long
+		# time or fail
 	fi
 	;;
     start)

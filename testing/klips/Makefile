@@ -32,11 +32,11 @@ checkmod:
 	KLIPS_MODULE=-module ./dotests.sh
 
 spotcheck:
-	@. ${LIBRESWANSRCDIR}/umlsetup.sh; . ./setup.sh; . $${UTILS}/functions.sh; eval `sed -e '/^#/d' -e '/^$$/d' ${srcdir}TESTLIST | perl $${UTILS}/shuffle.pl 1`
+	@. ${LIBRESWANSRCDIR}/umlsetup.sh; . ./setup.sh; . $${UTILS}/functions.sh; eval `sed -e '/^#/d' -e '/^$$/d' ${SRCDIR}TESTLIST | perl $${UTILS}/shuffle.pl 1`
 
 
 checkcon:
-	cat ${srcdir}TESTLIST | sed -e '/^#/d' -e '/^$$/d' | while read testtype name status; \
+	cat ${SRCDIR}TESTLIST | sed -e '/^#/d' -e '/^$$/d' | while read testtype name status; \
 	do\
 		echo Working on $$name; \
 		(cd $$name && ../../utils/redocon.sh); \
@@ -49,7 +49,7 @@ install install_file_list checkprograms programs:
 	@true
 
 clean:
-	cat ${srcdir}TESTLIST | while read testtype name status; \
+	cat ${SRCDIR}TESTLIST | while read testtype name status; \
 	do\
 		rm -rf $$name/OUTPUT;\
 	done

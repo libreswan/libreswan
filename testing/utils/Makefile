@@ -1,5 +1,7 @@
 # FreeS/WAN subdir makefile
+#
 # Copyright (C) 1998-2001  Henry Spencer.
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -11,20 +13,11 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-include $(LIBRESWANSRCDIR)/Makefile.inc
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
+include $(top_srcdir)/Makefile.inc
 
 SUBDIRS=pcap2skb
 
-def:
-	@echo "Please read doc/intro.html or INSTALL before running make"
-	@false
-
-# programs
-
-cleanall distclean mostlyclean realclean install programs checkprograms check clean spotless install_file_list:
-	@for d in $(SUBDIRS) ; \
-	do \
-		(cd $$d && $(MAKE) srcdir=${srcdir}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
-	done; 
-
+include $(top_srcdir)/mk/subdirs.mk

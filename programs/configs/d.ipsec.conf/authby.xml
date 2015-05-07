@@ -2,15 +2,22 @@
   <term><emphasis remap='B'>authby</emphasis></term>
   <listitem>
 <para>how the two security gateways should authenticate each other;
-acceptable values are
-<emphasis remap='B'>secret</emphasis>
-for shared secrets,
-<emphasis remap='B'>rsasig</emphasis>
-for RSA digital signatures (the default),
-<emphasis remap='B'>secret|rsasig</emphasis>
-for either, and
-<emphasis remap='B'>never</emphasis>
-if negotiation is never to be attempted or accepted (useful for shunt-only conns).
-Digital signatures are superior in every way to shared secrets.</para>
+acceptable values are <emphasis remap='B'>rsasig</emphasis> (the default)
+for RSA digital signatures based authentication,
+<emphasis remap='B'>secret</emphasis> for shared secrets (PSK) authentication,
+<emphasis remap='B'>secret|rsasig</emphasis> for either, 
+<emphasis remap='B'>never</emphasis> if negotiation is never to be attempted
+or accepted (useful for shunt-only conns), and
+<emphasis remap='B'>null</emphasis> for null-authentication.
+</para>
+<para>
+Digital signatures are superior in every way to shared secrets. Especially
+IKEv1 in Aggressive Mode is vulnerable to offline dictionary attacks and
+is performed routinely by at least the NSA on monitored internet traffic
+globally. The never option is only used for connections that do not actually
+start an IKE negotiation, such as type=passthrough connections. The auth
+method null is used for "anonymous opportunistic IPsec" and should not be
+used for regular pre-configured IPsec VPNs.
+ </para>
   </listitem>
   </varlistentry>

@@ -14,11 +14,11 @@
 #
 # setup is now a wrapper that redirects the start/stop/status calls to the
 # proper init system being used (systemd, upstart, sysvinit)
-#
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-include ${LIBRESWANSRCDIR}/Makefile.inc
 
 PROGRAM=setup
 
-include ${srcdir}../Makefile.program
-
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../mk/program.mk
+endif

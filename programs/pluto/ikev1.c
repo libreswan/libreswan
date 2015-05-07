@@ -131,7 +131,7 @@
 #include "cookie.h"
 #include "id.h"
 #include "x509.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "state.h"
@@ -960,22 +960,6 @@ void process_v1_packet(struct msg_digest **mdp)
 					      md->hdr.isa_rcookie,
 					      md->hdr.isa_msgid);
 
-#ifdef HAVE_LABELED_IPSEC
-			if (st != NULL && st->st_connection->loopback) {
-				DBG(DBG_CONTROL,
-				    DBG_log("loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
-
-				st = find_state_ikev1_loopback(
-					md->hdr.isa_icookie,
-					md->hdr.isa_rcookie, md->hdr.isa_msgid,
-					md);
-				DBG(DBG_CONTROL,
-					DBG_log(st == NULL ?
-						"loopback scenario: did not find any state; perhaps a first message from the responder" :
-						"loopback scenario: found a correct state for the received message"));
-			}
-#endif
-
 			if (st == NULL) {
 				/* perhaps this is a first message from the responder
 				 * and contains a responder cookie that we've not yet seen.
@@ -1095,21 +1079,6 @@ void process_v1_packet(struct msg_digest **mdp)
 		st = find_state_ikev1(md->hdr.isa_icookie, md->hdr.isa_rcookie,
 				      md->hdr.isa_msgid);
 
-#ifdef HAVE_LABELED_IPSEC
-		if (st != NULL && st->st_connection->loopback) {
-			DBG(DBG_CONTROL,
-			    DBG_log("loopback scenario: verifying if this is really a correct state, if not, find the correct state"));
-
-			st = find_state_ikev1_loopback(md->hdr.isa_icookie,
-						       md->hdr.isa_rcookie,
-						       md->hdr.isa_msgid, md);
-
-			DBG(DBG_CONTROL,
-				DBG_log(st == NULL ?
-					"loopback scenario: did not found any state; perhaps a first message from the responder" :
-					"loopback scenario: found a correct state for the received message"));
-		}
-#endif
 		if (st == NULL) {
 			/* No appropriate Quick Mode state.
 			 * See if we have a Main Mode state.
@@ -1589,7 +1558,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
 		   st->st_rpacket.len)) {
 		if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE) {
-			if (st->st_retransmit < MAXIMUM_RETRANSMISSIONS) {
+			if (st->st_retransmit < MAXIMUM_v1_ACCEPED_DUPLICATES) {
 				st->st_retransmit++;
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",
@@ -1780,7 +1749,7 @@ void process_packet_tail(struct msg_digest **mdp)
 			"";
 
 		while (np != ISAKMP_NEXT_NONE) {
-			struct_desc *sd = payload_desc(np);
+			struct_desc *sd = v1_payload_desc(np);
 
 			if (pd == &md->digest[PAYLIMIT]) {
 				loglog(RC_LOG_SERIOUS,
@@ -1830,12 +1799,12 @@ void process_packet_tail(struct msg_digest **mdp)
 
 				case ISAKMP_NEXT_NATD_DRAFTS:
 					np = ISAKMP_NEXT_NATD_RFC; /* NAT-D was a private use type before RFC-3947 */
-					sd = payload_desc(np);
+					sd = v1_payload_desc(np);
 					break;
 
 				case ISAKMP_NEXT_NATOA_DRAFTS:
 					np = ISAKMP_NEXT_NATOA_RFC; /* NAT-OA was a private use type before RFC-3947 */
-					sd = payload_desc(np);
+					sd = v1_payload_desc(np);
 					break;
 
 				case ISAKMP_NEXT_SAK: /* AKA ISAKMP_NEXT_NATD_BADDRAFTS */
@@ -2342,14 +2311,14 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* Schedule for whatever timeout is specified */
 		if (!md->event_already_set) {
-			time_t delay;
+			unsigned long delay_ms; /* delay is in milliseconds here */
 			enum event_type kind = smc->timeout_event;
 			bool agreed_time = FALSE;
 			struct connection *c = st->st_connection;
 
 			switch (kind) {
 			case EVENT_v1_RETRANSMIT: /* Retransmit packet */
-				delay = EVENT_RETRANSMIT_DELAY_0;
+				delay_ms = c->r_interval;
 				break;
 
 			case EVENT_SA_REPLACE: /* SA replacement event */
@@ -2363,19 +2332,19 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					 * rekeying.  The negative consequences seem
 					 * minor.
 					 */
-					delay = deltasecs(c->sa_ike_life_seconds);
+					delay_ms = deltamillisecs(c->sa_ike_life_seconds);
 					if ((c->policy & POLICY_DONT_REKEY) ||
-					    delay >= deltasecs(st->st_oakley.life_seconds))
+					    delay_ms >= deltamillisecs(st->st_oakley.life_seconds))
 					{
 						agreed_time = TRUE;
-						delay =
-						    deltasecs(st->st_oakley.life_seconds);
+						delay_ms = deltamillisecs(st->st_oakley.life_seconds);
 					}
 				} else {
 					/* Delay is min of up to four things:
 					 * each can limit the lifetime.
 					 */
-					delay = deltasecs(c->sa_ipsec_life_seconds);
+					time_t delay = deltasecs(c->sa_ipsec_life_seconds);
+
 #define clamp_delay(trans) { \
 		if (st->trans.present && \
 		    delay >= deltasecs(st->trans.attrs.life_seconds)) { \
@@ -2386,6 +2355,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					clamp_delay(st_ah);
 					clamp_delay(st_esp);
 					clamp_delay(st_ipcomp);
+					delay_ms = delay * 1000;
 #undef clamp_delay
 				}
 
@@ -2418,8 +2388,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 					       EVENT_SA_EXPIRE;
 				}
 				if (kind != EVENT_SA_EXPIRE) {
-					time_t marg = deltasecs(
-						c->sa_rekey_margin);
+					time_t marg =
+						deltasecs(c->sa_rekey_margin);
 
 					if (smc->flags & SMF_INITIATOR) {
 						marg += marg *
@@ -2431,8 +2401,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 						marg /= 2;
 					}
 
-					if (delay > marg) {
-						delay -= marg;
+					if (delay_ms > (unsigned long)marg * 1000) {
+						delay_ms -= (unsigned long)marg * 1000;
 						st->st_margin = deltatime(marg);
 					} else {
 						kind = EVENT_SA_EXPIRE;
@@ -2443,7 +2413,7 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 			default:
 				bad_case(kind);
 			}
-			event_schedule(kind, delay, st);
+			event_schedule_ms(kind, delay_ms, st);
 		}
 
 		/* tell whack and log of progress */
@@ -2505,10 +2475,12 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 		if (st->st_connection->spd.this.xauth_server) {
 			if (st->st_oakley.doing_xauth &&
 			    IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
-				libreswan_log(
-					"XAUTH: Sending XAUTH Login/Password Request");
-				xauth_send_request(st);
-				break;
+				DBG(DBG_CONTROL,
+						DBG_log("XAUTH: "
+						       "Sending XAUTH Login/Password Request"));
+				event_schedule_ms(EVENT_v1_SEND_XAUTH,
+						EVENT_v1_SEND_XAUTH_DELAY, st);
+						break;
 			}
 		}
 
@@ -2812,7 +2784,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			      sizeof(expect));
 			idtoa(&peer, found, sizeof(found));
 			loglog(RC_LOG_SERIOUS,
-			       "we require peer to have ID '%s', but peer declares '%s'",
+			       "we require IKEv1 peer to have ID '%s', but peer declares '%s'",
 			       expect, found);
 			return FALSE;
 		} else if (id_kind(&st->st_connection->spd.that.id) == ID_FROMCERT) {
@@ -2825,12 +2797,40 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		}
 	} else {
 		struct connection *c = st->st_connection;
-		struct connection *r;
-		bool fc = 0;
+		struct connection *r = NULL;
+		bool fromcert;
+		uint16_t auth = xauth_calcbaseauth(st->st_oakley.auth);
+		lset_t auth_policy = LEMPTY;
+
+		switch (auth) {
+		case OAKLEY_PRESHARED_KEY:
+			auth_policy = POLICY_PSK;
+			break;
+		case OAKLEY_RSA_SIG:
+			auth_policy = POLICY_RSASIG;
+			break;
+		/* Not implemented */
+		case OAKLEY_DSS_SIG:
+		case OAKLEY_RSA_ENC:
+		case OAKLEY_RSA_REVISED_MODE:
+		case OAKLEY_ECDSA_P256:
+		case OAKLEY_ECDSA_P384:
+		case OAKLEY_ECDSA_P521:
+		default:
+			DBG(DBG_CONTROL, DBG_log("ikev1 ikev1_decode_peer_id bad_case due to not supported policy"));
+			// bad_case(auth);
+		}
+
+		if (aggrmode)
+			auth_policy |=  POLICY_AGGRESSIVE;
+
 		/* check for certificate requests */
 		ikev1_decode_cr(md, &c->requested_ca);
 
-		r = refine_host_connection(st, &peer, initiator, aggrmode, &fc);
+		if ((auth_policy & ~POLICY_AGGRESSIVE) != LEMPTY) {
+			r = refine_host_connection(st, &peer, initiator, auth_policy, &fromcert);
+			pexpect(r != NULL);
+		}
 
 		if (r == NULL) {
 			char buf[IDTOA_BUF];
@@ -2850,10 +2850,15 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		    });
 
 		if (r != c) {
-			/* apparently, r is an improvement on c -- replace */
+			char b1[CONN_INST_BUF];
+			char b2[CONN_INST_BUF];
 
-			libreswan_log("switched from \"%s\" to \"%s\"",
-				      c->name, r->name);
+			/* apparently, r is an improvement on c -- replace */
+			libreswan_log("switched from \"%s\"%s to \"%s\"%s",
+				c->name,
+				fmt_conn_instance(c, b1),
+				r->name,
+				fmt_conn_instance(r, b2));
 			if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 				/* instantiate it, filling in peer's ID */
 				r = rw_instantiate(r, &c->spd.that.host_addr,
@@ -2875,7 +2880,7 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 			c->spd.that.id = peer;
 			c->spd.that.has_id_wildcards = FALSE;
 			unshare_id_content(&c->spd.that.id);
-		} else if (fc) {
+		} else if (fromcert) {
 			DBG(DBG_CONTROL, DBG_log("copying ID for fromcert"));
 			duplicate_id(&r->spd.that.id, &peer);
 		}
@@ -2884,37 +2889,20 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	return TRUE;
 }
 
-/*
- * ships the full ca chain or only the end cert's issuer. This won't
- * include any root certs as the chain will not have any.
- *
- * todo: incorporate certreq contents -
- * http://tools.ietf.org/html/rfc4945#section-3.2.7
- */
-bool ikev1_ship_ca_chain(cert_t chain, cert_t end_cert, pb_stream *outs,
-						  u_int8_t setnp,
-						  bool send_full_chain)
+bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
+					     u_int8_t type,
+					     u_int8_t setnp)
 {
-	x509cert_t *ca;
-	bool found_issuer = FALSE;
+	int i;
+	u_int8_t np;
 
-	for (ca = chain.u.x509; ca != NULL; ca = ca->next) {
-		u_int8_t np;
+	for (i = 0; i < n; i++) {
+		/* set np for last cert, or another */
+		np = i == n - 1 ? setnp : ISAKMP_NEXT_CERT;
 
-		if (!send_full_chain) {
-			/* the chain should start with the issuer */
-			if (same_dn(end_cert.u.x509->issuer, ca->subject)) {
-				found_issuer = TRUE;
-				np = setnp;
-			} else
-				continue;
-		} else
-			np = ca->next == NULL ? setnp : ISAKMP_NEXT_CERT;
-
-		if (!ikev1_ship_CERT(chain.ty, ca->certificate, outs, np))
-				return FALSE;
-		if (found_issuer)
-			break;
+		if (!ikev1_ship_CERT(type, chain[i], outs, np))
+			return FALSE;
 	}
+
 	return TRUE;
 }

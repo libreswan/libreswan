@@ -42,7 +42,7 @@
     The purpose of this program is to validate the input processing. This can
     also be used to validate the syntax of a configuration file.</para>
 
-    <para>The options --debug and --verbose are currently synonums. </para>
+    <para>The options --debug and --verbose are currently synonyms. </para>
 
     <para>The --rootdir option changes the programs idea of what "/" is when
     processing include directives. This is useful when validating a

@@ -1,0 +1,4 @@
+east and west only send their end and issuer
+	this fails, because it leaves a gap in the trust
+	if this test turns into a pass that means we erroneously
+	sent the whole chain and send_ca=issuer didn't work

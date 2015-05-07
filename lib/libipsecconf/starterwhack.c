@@ -236,7 +236,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlbase)
 
 	ugh = pack_whack_msg(&wp);
 
-	if (ugh) {
+	if (ugh != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"send_wack_msg(): can't pack strings: %s", ugh);
 		return -1;
@@ -513,6 +513,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_rekey_fuzz = conn->options[KBF_REKEYFUZZ];
 	msg.sa_keying_tries = conn->options[KBF_KEYINGTRIES];
 
+	msg.r_interval = conn->options[KBF_RETRANSMIT_INTERVAL];
+	msg.r_timeout = deltatime(conn->options[KBF_RETRANSMIT_TIMEOUT]);
+
 	msg.policy = conn->policy;
 
 	msg.connalias = conn->connalias;
@@ -520,9 +523,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.metric = conn->options[KBF_METRIC];
 
 	if (conn->options_set[KBF_CONNMTU])
-		msg.connmtu   = conn->options[KBF_CONNMTU];
+		msg.connmtu = conn->options[KBF_CONNMTU];
 	if (conn->options_set[KBF_PRIORITY])
-		msg.sa_priority   = conn->options[KBF_PRIORITY];
+		msg.sa_priority = conn->options[KBF_PRIORITY];
+	if (conn->options_set[KBF_NFLOG_CONN])
+		msg.nflog_group = conn->options[KBF_NFLOG_CONN];
 
 	if (conn->options_set[KBF_REQID]) {
 		if (conn->options[KBF_REQID] <= 0 ||
@@ -609,11 +614,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 #ifdef HAVE_LABELED_IPSEC
 	/* Labeled ipsec support */
-	if (conn->options_set[KBF_LOOPBACK])
-		msg.loopback = conn->options[KBF_LOOPBACK];
-	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" loopback=%d", conn->name,
-		msg.loopback);
-
 	if (conn->options_set[KBF_LABELED_IPSEC])
 		msg.labeled_ipsec = conn->options[KBF_LABELED_IPSEC];
 	starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" labeled_ipsec=%d",
@@ -702,7 +702,7 @@ static bool one_subnet_from_string(struct starter_conn *conn,
 		subnets++;
 
 	e = ttosubnet(eln, subnets - eln, af, sn);
-	if (e) {
+	if (e != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			"conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets)",
 			conn->name,

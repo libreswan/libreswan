@@ -2,9 +2,11 @@
  * Kernel runtime algorithm handling interface definitions
  * Originally by: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
  * Reworked into openswan 2.x by Michael Richardson <mcr@xelerance.com>
+ *
  * (C)opyright 2012 Paul Wouters <pwouters@redhat.com>
  * (C)opyright 2012-2013 Paul Wouters <paul@libreswan.org>
  * (C)opyright 2012-2013 D. Hugh Redelmeier
+ * (C)opyright 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,20 +48,18 @@
  *              "3des_cbc" <=> "OAKLEY_3DES_CBC"
  *
  * @param str String containing ALG name (eg: AES, 3DES)
- * @param len Length of str (note: not NUL-terminated)
  * @return int Registered # of ALG if loaded or -1 on failure.
  */
-static int ealg_getbyname_ike(const char *const str, size_t len)
+static int ealg_getbyname_ike(const char *const str)
 {
 	int ret;
 
 	if (str == NULL || *str == '\0')
 		return -1;
-	ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "", str, len);
+	ret = alg_enum_search(&oakley_enc_names, "OAKLEY_", "", str);
 	if (ret >= 0)
 		return ret;
-	return alg_enum_search(&oakley_enc_names, "OAKLEY_", "_CBC", str,
-				    len);
+	return alg_enum_search(&oakley_enc_names, "OAKLEY_", "_CBC", str);
 }
 
 /**
@@ -69,46 +69,27 @@ static int ealg_getbyname_ike(const char *const str, size_t len)
  * @param len Length of str (note: not NUL-terminated)
  * @return int Registered # of Hash ALG if loaded.
  */
-static int aalg_getbyname_ike(const char *str, size_t len)
+static int aalg_getbyname_ike(const char *str)
 {
 	int ret = -1;
 	int num_read;
-	static const char sha2_256_aka[] = "sha2";
-	static const char sha1_aka[] = "sha";
 
 	DBG(DBG_CONTROL, DBG_log("entering aalg_getbyname_ike()"));
 	if (str == NULL || str == '\0')
 		return ret;
 
-	/* handle "sha2" as "sha2_256" */
-	if (len == sizeof(sha2_256_aka)-1 &&
-	    strncaseeq(str, sha2_256_aka, sizeof(sha2_256_aka)-1)) {
-		DBG_log("interpreting sha2 as sha2_256");
-		str = "sha2_256";
-		len = strlen(str);
-	}
-
-	/* now "sha" as "sha1" */
-	if (len == sizeof(sha1_aka)-1 &&
-	    strncaseeq(str, sha1_aka, sizeof(sha1_aka)-1)) {
-		DBG_log("interpreting sha as sha1");
-		str = "sha1";
-		len = strlen(str);
-	}
-
-	ret = alg_enum_search(&oakley_hash_names, "OAKLEY_", "",  str, len);
+	ret = alg_enum_search(&oakley_hash_names, "OAKLEY_", "",  str);
 	if (ret >= 0)
 		return ret;
 
 	/* Special value for no authentication since zero is already used. */
-	ret = INT_MAX;
-	if (len == 4 && strncaseeq(str, "null", len))
-		return ret;
+	if (strcaseeq(str, "null"))
+		return INT_MAX;
 
 	/* support idXXX as syntax, matching iana numbers directly */
-	/* ??? this sscanf is bogus since we don't know what appears at str[len] */
 	num_read = -1;
-	if (sscanf(str, "id%d%n", &ret, &num_read) >= 1 && num_read == (int)len)
+	if (sscanf(str, "id%d%n", &ret, &num_read) >= 1 &&
+	    num_read == (int) strlen(str))
 		return ret;
 
 	return -1;
@@ -117,21 +98,19 @@ static int aalg_getbyname_ike(const char *str, size_t len)
  *      Search oakley_group_names for a match, eg:
  *              "modp1024" <=> "OAKLEY_GROUP_MODP1024"
  * @param str String MODP Name (eg: MODP)
- * @param len Length of str (note: not NUL-terminated)
  * @return int Registered # of MODP Group, if supported.
  */
-static int modp_getbyname_ike(const char *const str, size_t len)
+static int modp_getbyname_ike(const char *const str)
 {
 	int ret = -1;
 
 	if (str == NULL || *str == '\0')
 		return -1;
-	ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "",
-				     str, len);
+	ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "", str);
 	if (ret >= 0)
 		return ret;
 	return alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
-				    " (extension)", str, len);
+			       " (extension)", str);
 }
 
 /*
@@ -169,18 +148,27 @@ static void raw_alg_info_ike_add(struct alg_info_ike *alg_info, int ealg_id,
 	ike_info[cnt].ike_modp = modp_id;
 	alg_info->ai.alg_info_cnt++;
 	DBG(DBG_CRYPT, DBG_log("raw_alg_info_ike_add() "
-			       "ealg=%d aalg=%d modp_id=%d, cnt=%d",
-			       ealg_id, aalg_id, modp_id,
-			       alg_info->ai.alg_info_cnt));
+			       "ealg_id=%d ek_bits=%d "
+			       "aalg_id=%d ak_bits=%d "
+			       "modp_id=%d, cnt=%d",
+			       ealg_id, ek_bits,
+			       aalg_id, ak_bits,
+			       modp_id, alg_info->ai.alg_info_cnt));
 }
 
 /*
  *      Proposals will be built by looping over default_ike_groups array and
  *      merging alg_info (ike_info) contents
  */
-/* default_ike_groups now non-static and moved to plutoalg.h */
-static const int default_ike_ealgs[] = { DEFAULT_OAKLEY_EALGS };
-static const int default_ike_aalgs[] = { DEFAULT_OAKLEY_AALGS };
+static const enum ike_trans_type_dh default_ike_groups[] = {
+	DEFAULT_OAKLEY_GROUPS
+};
+static const enum ikev1_encr_attribute default_ike_ealgs[] = {
+	DEFAULT_OAKLEY_EALGS
+};
+static const enum ikev1_hash_attribute default_ike_aalgs[] = {
+	DEFAULT_OAKLEY_AALGS
+};
 
 /*
  *	Add IKE alg info _with_ logic (policy):
@@ -190,7 +178,8 @@ static void per_group_alg_info_ike_add(struct alg_info *alg_info,
 			     int aalg_id, int ak_bits,
 			     int modp_id)
 {
-	if (ealg_id == 0) { /* use all our default enc algs */
+	if (ealg_id == 0) {
+		/* use all our default enc algs */
 		int i;
 
 		for (i=0; i != elemsof(default_ike_ealgs); i++) {

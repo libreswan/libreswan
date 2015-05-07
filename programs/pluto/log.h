@@ -35,7 +35,8 @@ extern bool
 	log_to_syslog,          /* should log go to syslog? */
 	log_to_perpeer,         /* should log go to per-IP file? */
 	log_to_audit,         /* audit logs for kernel/auditd */
-	log_with_timestamp;     /* prefix timestamp */
+	log_with_timestamp,     /* prefix timestamp */
+	log_append;
 
 extern char *base_perpeer_logdir;
 extern char *pluto_log_file;
@@ -137,6 +138,7 @@ extern void daily_log_event(void);
 
 extern void show_setup_plutomain(void);
 extern void show_setup_natt(void);
+extern void show_global_status(void);
 
 #ifdef USE_LINUX_AUDIT
 #include <libaudit.h>

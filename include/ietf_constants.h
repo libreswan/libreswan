@@ -6,7 +6,7 @@
  * Copyright (C) 2004 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -526,7 +526,7 @@ enum next_payload_types_ikev2 {
 	ISAKMP_NEXT_v2V = 43,	/* Vendor ID */
 	ISAKMP_NEXT_v2TSi = 44,	/* Traffic Selector - initiator */
 	ISAKMP_NEXT_v2TSr = 45,	/* Traffic Selector - responder */
-	ISAKMP_NEXT_v2E = 46,	/* Encrypted payload */
+	ISAKMP_NEXT_v2SK = 46,	/* Encrypted payload */
 	ISAKMP_NEXT_v2CP = 47,	/* Configuration Payload (MODECFG) */
 	ISAKMP_NEXT_v2EAP = 48,	/* Extensible Authentication Payload */
 	/* 128 - 255 Private Use */
@@ -964,6 +964,7 @@ enum ikev1_ipsec_attr {
 
 #define SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* RFC2407 4.5 */
 #define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* pluto(8) */
+#define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute / 6 ) /* our policy */
 #define SA_LIFE_DURATION_MAXIMUM secs_per_day
 
 #define SA_REPLACEMENT_MARGIN_DEFAULT (9 * secs_per_minute) /* IPSEC & IKE */
@@ -1020,6 +1021,7 @@ typedef u_int16_t ipsec_auth_t;
 #define OAKLEY_LIFE_SECONDS 1
 #define OAKLEY_LIFE_KILOBYTES 2
 
+/* XXX These are not IETF constants but pluto constants */
 #define OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT secs_per_hour
 #define OAKLEY_ISAKMP_SA_LIFETIME_MAXIMUM secs_per_day
 
@@ -1112,7 +1114,7 @@ enum ikev1_auth_method {
 	OAKLEY_ECDSA_P384 = 10, /* RFC 4754 */
 	OAKLEY_ECDSA_P521 = 11, /* RFC 4754 */
 	/* 12 - 65000 Unassigned */
-
+	OAKLEY_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
 	/*
 	 * Note: the below xauth names are mapped via xauth_calcbaseauth()
 	 * to the base functions 1-4
@@ -1176,15 +1178,25 @@ enum ikev2_cp_type {
 	IKEv2_CP_CFG_ACK = 4
 };
 
-/* extern enum_names ikev2_auth_names; */
+/*
+ * extern enum_names ikev2_auth_names;
+ * http://www.iana.nl/assignments/ikev2-parameters/ikev2-parameters.xhtml
+ * IKEv2 Authentication Method
+ */
+
 enum ikev2_auth_method {
 	IKEv2_AUTH_RSA = 1,
 	IKEv2_AUTH_PSK = 2,
 	IKEv2_AUTH_DSA = 3,
-	IKEv2_AUTH_P256 = 9,
-	IKEv2_AUTH_P384 = 10,
-	IKEv2_AUTH_P521 = 11,
+	/* 4 - 8 unassigned */
+	IKEv2_AUTH_P256 = 9, /* RFC 4754 */
+	IKEv2_AUTH_P384 = 10, /* RFC 4754 */
+	IKEv2_AUTH_P521 = 11, /* RFC 4754 */
 	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
+	IKEv2_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
+	IKEv2_AUTH_SIG = 14, /* RFC 7427 */
+	/* 15 - 200 unassigned */
+	/* 201 - 255 private use */
 };
 
 /*
@@ -1449,8 +1461,9 @@ enum ike_id_type {
 	ID_DER_ASN1_GN = 10,
 	ID_KEY_ID = 11,
 	ID_FC_NAME = 12,	/* RFC 4595 */
+	ID_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
 	/* In IKEv1 registry, non-IKE value ID_LIST = 12 as per RFC 3554 */
-	/* 13-248 Unassigned */
+	/* 14-248 Unassigned */
 	/* 249-255 Reserved for private use */
 };
 

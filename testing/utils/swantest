@@ -64,25 +64,31 @@ class guest (threading.Thread):
         self.status = "NEW"
         self.bootwait = args.bootwait
         self.stoponerror = args.stoponerror
-
+        self.testingdir = args.testingdir
         self.reboot = True
         if args.noreboot:
             self.reboot = None
 
     def run(self):
-        self.start = time.time()
-        e = self.boot_n_grab_console()
-        self.status = "INIT"
-        if e:
-            self.clean_abort()
-        else:
-            e = self.run_test()
+        try:
+            self.start = time.time()
+            e = self.boot_n_grab_console()
+            self.status = "INIT"
+            if e:
+                self.clean_abort()
+            else:
+                e = self.run_test()
 
-        if not e:
-            e = "end"
-        self.log_line('OUTPUT/RESULT', e)
-        logging.info("%s done %s ran %s sec %s", self.hostname, self.testname,
-                     round(time.time() - self.start, 2), e)
+                if not e:
+                    e = "end"
+            self.log_line('OUTPUT/RESULT', e)
+            logging.info("%s done %s ran %s sec %s", self.hostname, self.testname,
+                         round(time.time() - self.start, 2), e)
+        except Exception as x:
+            # XXXX: Bad, but easiest way to get rid of a deadlock when
+            # things go wrong
+            self.clean_abort()
+            raise x
 
     def boot_n_grab_console(self):
         e = self.connect_to_kvm()
@@ -110,13 +116,14 @@ class guest (threading.Thread):
         timer = 120
         ret = True
 
-        cmd = "cd /testing/pluto/%s " % (self.testname)
+        cmd = "cd %s/pluto/%s " % (self.testingdir, self.testname)
+        print("sending command: " + cmd + " expecting prompt: " + prompt)
         child.sendline(str(cmd))
         try:
             child.expect(prompt, searchwindowsize=100, timeout=timer)
         except:
-            err = "failed [%s] test directory" % (cmd)
-            logging.error("%s", self.hostname, err)
+            err = "failed [%s] test directory on %s" % (cmd, self.hostname)
+            logging.error("%s", err)
             return err
 
         if self.role == "initiator":
@@ -301,18 +308,146 @@ class guest (threading.Thread):
                 self.log_line('../stop-tests-now', err)
             return err
 
-        child.sendline('TERM=dumb; export TERM; unset LS_COLORS')
-        res = child.expect(['login: ', prompt], timeout=3)
+        remote = Remote(child, self.hostname)
+        remote.run('TERM=dumb; export TERM; unset LS_COLORS')
         child.setecho(False)  # this does not seems to work
-        child.sendline("stty sane")
-        res = child.expect(['login: ', prompt], timeout=3)
-        child.sendline("stty -onlcr")
-        res = child.expect(['login: ', prompt], timeout=3)
-        child.sendline("stty -echo")
-        res = child.expect(['login: ', prompt], timeout=3)
+        remote.run("stty sane")
+        remote.run("stty -onlcr")
+        remote.run("stty -echo")
 
 # end of class
 
+TIMEOUT = 10
+SEARCH_WINDOW_SIZE = 100
+
+class Remote:
+
+    def __init__(self, child, hostname, prompt="\[root@[^ ]+ [^\]]+\]# "):
+        self.child = child
+        self.hostname = hostname
+        self.prompt = prompt
+        self.logging = False
+
+    def run(self, command, timeout=TIMEOUT):
+        # "swantest" just, sometimes, prints the prompt/command to the
+        # console.  An alternative would be to use fab.tee.Tee so that
+        # everything is written to both the file, and stdout.
+        if self.logging:
+            # The re.replace() strips the \ from \[.  The result is
+            # pretty but misleading.
+            print(("%s: %s" % (self.prompt.replace("\\", ""), command)))
+        self.child.sendline(command)
+        self.child.expect(self.prompt, timeout=timeout, searchwindowsize=SEARCH_WINDOW_SIZE)
+
+    def cd(self, directory):
+        self.prompt = "\[root@%s %s\]# " % (self.hostname, os.path.basename(directory))
+        self.run("cd %s" % directory)
+        return self.prompt
+
+    # Read the contents of a local file and run each line.  assumes
+    # that all lines contain simple shell commands.
+    #
+    # For anything more complicated, use run() above to run the script
+    # remotely.
+    def read_file_run(self, filename, timeout=TIMEOUT):
+        f_cmds = None
+        try:
+            f_cmds = open(filename, "r")
+            for line in f_cmds:
+                line = line.strip()    
+                # We need the lines with # for the cut --- tuc
+                # sections if line and not line[0] == '#':
+                if line:
+                    self.run(line, timeout)
+        finally:
+            if f_cmds:
+                f_cmds.close
+
+    # Capture and return last command's exit status.
+    #
+    # Unfortunately, as side effect, this eats the exit code.  It
+    # would be nice if run, above, directly captured the exit code.
+    def exit_status(self):
+        self.child.sendline("echo status=$?")
+        self.child.expect('status=([0-9]+)\s*' + self.prompt, timeout=TIMEOUT)
+        status = int(self.child.match.group(1))
+        # child.sendline("(exit %s)" % status)
+        return status
+
+    def exit_if_error(self):
+        status = self.exit_status()
+        if status:
+            # anything non-zero, pass it out
+            sys.exit(status)
+
+# end of class
+
+class TestList:
+
+    def __iter__(self):
+        return self
+
+    def __init__(self, testlist, args, verbose = True):
+        self.verbose = verbose
+        self.args = args
+        self.file = open(testlist, 'r')
+
+    def __next__(self):
+        for line in self.file:
+            line = line.strip()
+            if not line:
+                logging.debug("skip blank lines")
+                continue
+            if line[0] == '#':
+                logging.debug("skip comment: %s", line)
+                continue
+            try:
+                testtype, testdir, testexpect = line.split()
+            except:
+                # This is serious
+                logging.error("****** malformed line: %s", line)
+                continue
+            if not os.path.exists(testdir):
+                # This is serious
+                logging.error("****** invalid test %s: directory %s/%s not found", testdir, os.getcwd(), testdir)
+                continue
+            reason = self.skip_test(testtype, testdir, testexpect)
+            if reason and self.verbose:
+                TestList.log_skip(testdir, reason)
+                continue
+            logging.debug("read: %s %s %s", testtype, testdir, testexpect)
+            return (testtype, testdir, testexpect)
+
+        self.file.close
+        raise StopIteration
+
+    def log_skip(testdir, reason):
+        # At error level so it it always appear, verbose above can
+        # suppress it.
+        logging.warning("****** skipping test %s: %s", testdir, reason)
+
+    def skip_test(self, testtype, testdir, testexpect):
+        if testtype == "skiptest":
+            return "type is skiptest"
+
+        if testtype != "dockerplutotest" and testtype != "kvmplutotest":
+            return "type %s yet to be migrated to kvm style" % testtype
+
+        if self.args.include:
+            if not self.args.include.search(testtype) and \
+               not self.args.include.search(testdir) and \
+               not self.args.include.search(testexpect):
+                return "does not match '--include %s' regular expression" % self.args.include.pattern
+
+        if self.args.exclude:
+            if self.args.exclude.search(testtype) or \
+               self.args.exclude.search(testdir) or \
+               self.args.exclude.search(testexpect):
+                return "matches '--exclude %s' regular expression" % self.args.exclude.pattern
+
+        return None
+
+# end of class
 
 class scantests:
 
@@ -387,12 +522,13 @@ class scantests:
                 json.dumps(self.htmlsums, ensure_ascii=True, indent=2))
 
     def scan_trun(self):
+        self.nopath = ''
         if self.stdir:
             trpath = self.stdir
-            self.nopath = setup_result_dir(self.args, True)
+            if not self.args.scancwd:
+                self.nopath = setup_result_dir(self.args, True)
         else:
             trpath = self.npath + '/' + self.tdir
-            self.nopath = ''
 
         if not os.path.isdir(trpath):
             e = "test run directory %s is not a directory" % trpath
@@ -405,7 +541,7 @@ class scantests:
         if not self.read_testlist(self.trpath):
             logging.info(
                 "can not read %s/TESTLIST will try other locations", self.trpath)
-            if self.args.resanitize:
+            if self.args.resanitize or self.args.scancwd:
                 # we need the TESTLIST in the self.trpath
                 return True
             if not self.read_testlist(self.npath):
@@ -429,38 +565,18 @@ class scantests:
 
         logging.debug("TESTLIST %s" % r)
 
-        f = open(r, 'r')
         i = 0
         self.tests = collections.OrderedDict()
         self.tests.clear()
 
-        for l in f:
-            line = l.strip()
-            if not line:
-                continue
-
-            logging.debug("red %s", line)
-
-            if skip_testlist_line(line, verbose=False):
-                continue
-            try:
-                testtype, testdir, testexpect = line.split()
-            except:
-                continue
-            # if  not ((testtype != "kvmplutotest" ) or  (testtype !=
-            # "dockerplutotest" )):
-            if (testtype != "dockerplutotest" and testtype != "kvmplutotest"):
-                continue
-            logging.debug(
-                "will checkout %s %s %s", testtype, testdir, testexpect)
-
+        logging.debug("Reading testlist file %s", r)
+        for testtype, testdir, testexpect in TestList(r, self.args, verbose=False):
             self.tests[testdir] = {}
             self.tests[testdir]["name"] = testdir
             self.tests[testdir]["type"] = testtype
             self.tests[testdir]["expect"] = testexpect
             i += 1
 
-        f.close
         logging.debug("red %s tests from %s" % (i, r))
         return True
 
@@ -1052,10 +1168,10 @@ def re_write_result(sanity):
         return
 
     output_file = "OUTPUT/RESULT"
-    logging.debug("re write result to %s", output_file)
     if not os.path.exists(output_file):
-        logging.debug("no re write %s missing", output_file)
+        logging.debug("can not rewrite %s missing", output_file)
         return
+    logging.debug("read result %s", output_file)
 
     lines = []
     f = open(output_file, 'r')
@@ -1078,7 +1194,7 @@ def re_write_result(sanity):
 
             changed = True
             logging.info(
-                "testcase %s result new '%s' old '%s'", x["testname"], x["result"],  result)
+                "testcase %s new result '%s' old '%s'", x["testname"], x["result"],  result)
             x["result"] = result
             x["resanitized"] = time.strftime(
                 "%Y-%m-%d %H:%M", time.localtime())
@@ -1149,6 +1265,8 @@ DEFAULTCONFIG = {
         'testlist': "TESTLIST"
 }
 
+def compile_regex_arg(string):
+    return re.compile(string)
 
 def cmdline():
 
@@ -1166,8 +1284,12 @@ def cmdline():
         "--dockerimage", default=DEFAULTCONFIG['dockerimage'],
             help="docker image id, default %s" % DEFAULTCONFIG['dockerimage'])
 
+    parser.add_argument("--exclude", default=None, type=compile_regex_arg, help="Exclude tests that match <regex>")
+
     parser.add_argument("--graphs", default=False, action="store_true",
                         help="generate graphs and JSON tables.")
+
+    parser.add_argument("--include", default=None, type=compile_regex_arg, help="Only include tests that match <regex>")
 
     parser.add_argument(
         '--kvm', default=DEFAULTCONFIG["kvm"], action="store_true",
@@ -1202,6 +1324,8 @@ def cmdline():
     parser.add_argument("--sanitizer", default=DEFAULTCONFIG['sanitizer'],
                         help="sanitizer script. %s" % DEFAULTCONFIG['sanitizer'])
 
+    parser.add_argument("--scancwd", default=False, action="store_true",
+                        help="san/resanitize  results, run in cwd")
     parser.add_argument(
         "--shutdownwait", default=DEFAULTCONFIG['shutdownwait'],
             type=int, help="seconds to wait for guest to shutdown. Default %s seconds" % DEFAULTCONFIG['shutdownwait'])
@@ -1218,6 +1342,8 @@ def cmdline():
     parser.add_argument(
         "--tcpdumpfilter", default=DEFAULTCONFIG['tcpdumpfilter'],
             help="tcpdump_filter used by tcpdump command. Default %s" % DEFAULTCONFIG['tcpdumpfilter'])
+
+    parser.add_argument("--testingdir", default="/testing", help="Change the /testing directory")
 
     parser.add_argument("--testlist", default=DEFAULTCONFIG['testlist'],
                         help="read kvmpluto tests from  %s" % DEFAULTCONFIG['testlist'])
@@ -1732,43 +1858,28 @@ def do_single_test(args, start='', test=None, st=None):
         os.chdir("..")
         # chdir end
 
+def scancwd(args):
+    r = args.testlist
+    stdir=os.getcwd()
+    logging.info(
+        "re scan results in CWD %s.", stdir, r)
 
-def skip_testlist_line(line, verbose=False):
+    if not os.path.exists(r):
+        logging.error(
+            "ABORT re sanitize missing %s/%s. Did it start from right place", stdir, r)
+        logging.info("run it from libreswan/testing/pluto?")
+        return None
 
-    if line[0] == '#' or re.match('^[ \t]*$', line):
-        logging.debug("skip the comments")
-        return True
+    s = scantests(args, stdir=stdir)
+    s.scan_test_runs()
 
-    try:
-        testtype, testdir, testexpect = line.split()
-    except:
-        logging.error("****** skipping malformed: %s", line)
-        return True
-
-    if testtype == "skiptest":
-        if verbose:
-            logging.error("****** %s", line)
-        return True
-    elif testtype == "dockerplutotest":
-        return False
-    elif testtype != "kvmplutotest":
-        if verbose:
-            logging.error(
-                "****** skipping test %s: yet to be migrated to kvm style ", testdir)
-        return True
-    elif not os.path.exists(testdir):
-        if verbose:
-            logging.error("**** Skipping missing %s/%s *****",
-                          os.getcwd(), testdir)
-        return True
-
-    return False
+    return
 
 
 def resanitize(args):
     r = args.testlist
     logging.info(
-        "re sanitize the existing results in the current directory for %s.", r)
+        "re sanitize the existing results in the CWD %s.", r)
 
     if not os.path.exists(r):
         logging.error(
@@ -1874,40 +1985,31 @@ def do_test_list(args, start, tried, output_dir):
     tests.clear()
 
     logging.info("** read tests from file %s **", args.testlist)
-    f = open(args.testlist, 'r')
-
-    for line in f:
+    for testtype, testdir, testexpect in TestList(args.testlist, args, verbose=True):
         st["n_lines"] = st["n_lines"] + 1
-        logging.debug("%s", line)
         if os.path.exists(s):
             logging.error("* stop all tests now. Found %s *", s)
             return (odir, True, ran)
 
-        if skip_testlist_line(line, verbose=True):
-            st["n_lines_skip"] = st["n_lines_skip"] + 1
-            continue
-
-        testtype, testdir, testexpect = line.split()
         r_file = odir + '/' + testdir + '/OUTPUT/RESULT'
-
-        if os.path.exists(r_file) and tried and (tried < args.retry):
-            if kvm_error(r_file):
-                logging.info(
-                    "result [%s] KVMERROR. delete previous run, retry %s/%s", r_file, tried, args.retry)
-                o = odir + '/' + testdir
-                shutil.rmtree(o)
+        if os.path.exists(r_file):
+            if tried and (tried < args.retry):
+                if kvm_error(r_file):
+                    logging.info(
+                        "result [%s] KVMERROR. deleting previous run, retrying %s/%s", r_file, tried, args.retry)
+                    o = odir + '/' + testdir
+                    shutil.rmtree(o)
+                else:
+                    TestList.log_skip(testdir, "%s exists and max retry count %s exceeded" % (r_file, args.retry))
+                    continue
             else:
+                # output already exists: skip test
+                TestList.log_skip(testdir, "%s exists, do not run again" % r_file)
+                if testtype == 'kvmplutotest':
+                    st["knottorun"] = st["knottorun"] + 1
+                if testtype == 'dockerplutotest':
+                    st["dnottorun"] = st["dnottorun"] + 1
                 continue
-        elif os.path.exists(r_file):
-            # output already exists: skip test
-            logging.debug("%s exist. Do not run %s again", r_file, testdir)
-            if testtype == 'kvmplutotest':
-                st["knottorun"] = st["knottorun"] + 1
-
-            if testtype == 'dockerplutotest':
-                st["dnottorun"] = st["dnottorun"] + 1
-
-            continue
 
         tests[testdir] = {}
         tests[testdir]["name"] = testdir  # do i need it double? may be not
@@ -1919,8 +2021,6 @@ def do_test_list(args, start, tried, output_dir):
 
         if testtype == 'dockerplutotest':
             st["dtorun"] = st["dtorun"] + 1
-
-    f.close
 
     if not (st["dtorun"] + st["ktorun"]):
 
@@ -2056,6 +2156,9 @@ def main():
         resanitize(args)
         # gen_graphs_tables(args)
         return
+    elif args.scancwd:
+       scancwd(args)
+       return
 
     if not args.leavezombies:
         kill_zombies("swantest")

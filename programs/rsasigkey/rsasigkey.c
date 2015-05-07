@@ -75,7 +75,7 @@
 #define E       3               /* standard public exponent */
 /* #define F4	65537 */	/* possible future public exponent, Fermat's 4th number */
 
-#define NSSDIR "/etc/ipsec.d"
+#define NSSDIR "sql:/etc/ipsec.d"
 
 char *progname;
 char usage[] =
@@ -396,7 +396,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "%s: overlarge bit count (max %d)\n", me,
 			MAXBITS);
 		exit(1);
-	} else if (nbits % (BITS_PER_BYTE * 2) != 0) { /* *2 for nbits/2-bit primes */
+	} else if (nbits % (BITS_PER_BYTE * 2) != 0) {
 		fprintf(stderr, "%s: bit count (%d) not multiple of %d\n", me,
 			nbits, (int)BITS_PER_BYTE * 2);
 		exit(1);
@@ -611,9 +611,11 @@ static const char *hexout(mpz_t var)
 	char *hexp;
 
 	mpz_get_str(hexbuf + 3, 16, var);
-	if (strlen(hexbuf + 3) % 2 == 0) {      /* even number of hex digits */
+	if (strlen(hexbuf + 3) % 2 == 0) {
+		/* even number of hex digits */
 		hexp = hexbuf + 1;
-	} else {                                /* odd, must pad */
+	} else {
+		/* odd, must pad */
 		hexp = hexbuf;
 		hexp[2] = '0';
 	}

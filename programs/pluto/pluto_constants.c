@@ -1,6 +1,8 @@
 /* tables of names for values defined in constants.h
+ *
  * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -84,6 +86,7 @@ static const char *const timer_event_name[] = {
 
 	"EVENT_SO_DISCARD",
 	"EVENT_v1_RETRANSMIT",
+	"EVENT_v1_SEND_XAUTH",
 	"EVENT_SA_REPLACE",
 	"EVENT_SA_REPLACE_IF_USED",
 	"EVENT_SA_EXPIRE",
@@ -162,7 +165,10 @@ enum_names state_names =
 
 /* story for state */
 
-const char *const state_story[] = {
+static const char *const state_story[] = {
+	"not defined and probably dead (internal)",             /* STATE_UNDEFINED */
+	"got an ACQUIRE message for this pair (internal)",      /* OPPO_QCQUIRE */
+	"got TXT specifying gateway (internal)",                /* OPPO_GW_DISCOVERED */
 	"expecting MI1",                                        /* STATE_MAIN_R0 */
 	"sent MI1, expecting MR1",                              /* STATE_MAIN_I1 */
 	"sent MR1, expecting MI2",                              /* STATE_MAIN_R1 */
@@ -208,7 +214,7 @@ const char *const state_story[] = {
 };
 
 enum_names state_stories =
-	{ STATE_MAIN_R0, STATE_IKEv2_ROOF - 1, state_story, NULL };
+	{ STATE_UNDEFINED, STATE_IKEv2_ROOF - 1, state_story, NULL };
 
 static const char *const natt_method_result_name[] = {
 };
@@ -284,6 +290,7 @@ enum_names stfstatus_name =
 const char *const sa_policy_bit_names[] = {
 	"PSK",
 	"RSASIG",
+	"AUTHNULL",
 	"ENCRYPT",
 	"AUTHENTICATE",
 	"COMPRESS",
@@ -307,6 +314,7 @@ const char *const sa_policy_bit_names[] = {
 	"IKEV2_ALLOW",
 	"IKEV2_PROPOSE",
 	"IKEV2_ALLOW_NARROWING",
+	"IKEV2_PAM_AUTHORIZE",
 	"SAREF_TRACK",
 	"SAREF_TRACK_CONNTRACK",
 	"IKE_FRAG_ALLOW",

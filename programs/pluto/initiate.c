@@ -99,20 +99,7 @@ bool orient(struct connection *c)
 				if (p->ike_float)
 					continue;
 
-#ifdef HAVE_LABELED_IPSEC
-				if (c->loopback &&
-				    sameaddr(&sr->this.host_addr,
-					     &p->ip_addr)) {
-					DBG(DBG_CONTROLMORE,
-					    DBG_log("loopback connections \"%s\" with interface %s!",
-						    c->name,
-						    p->ip_dev->id_rname));
-					c->interface = p;
-					break;
-				}
-#endif
-
-				for (;; ) {
+				for (;;) {
 					/* check if this interface matches this end */
 					if (sameaddr(&sr->this.host_addr,
 						     &p->ip_addr) &&
@@ -132,7 +119,6 @@ bool orient(struct connection *c)
 									c->name, c->interface->ip_dev->id_rname,
 									p->ip_dev->id_rname);
 							}
-							terminate_connection(c->name);
 							c->interface = NULL; /* withdraw orientation */
 							return FALSE;
 						}
@@ -232,18 +218,19 @@ static int initiate_a_connection(struct connection *c,
 					POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
 				success = 1;
 				c->policy |= POLICY_UP;
-			} else
-			loglog(RC_NOPEERIP,
-			       "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-			       enum_show(&connection_kind_names,
-					 c->kind),
+			} else {
+				loglog(RC_NOPEERIP,
+			       		"cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+			       		enum_show(&connection_kind_names,
+						c->kind),
 			       (c->policy &
 				POLICY_IKEV2_ALLOW_NARROWING) ? "yes" : "no");
-
+			}
 		} else {
-			if ((c->policy &  POLICY_IKEV2_PROPOSE) &&
-					(c->policy & POLICY_IKEV2_ALLOW_NARROWING))
-				c = instantiate(c, NULL, NULL);
+			if (LIN(POLICY_IKEV2_PROPOSE | POLICY_IKEV2_ALLOW_NARROWING, c->policy) &&
+				c->kind == CK_TEMPLATE) {
+					c = instantiate(c, NULL, NULL);
+			}
 
 			/* We will only request an IPsec SA if policy isn't empty
 			 * (ignoring Main Mode items).
@@ -1445,6 +1432,9 @@ static void connection_check_ddns1(struct connection *c)
 void connection_check_ddns(void)
 {
 	struct connection *c, *cnext;
+	struct timeval tv1;
+
+	gettimeofday(&tv1, NULL);
 
 	/* reschedule */
 	event_schedule(EVENT_PENDING_DDNS, PENDING_DDNS_INTERVAL, NULL);
@@ -1458,6 +1448,18 @@ void connection_check_ddns(void)
 		connection_check_ddns1(c);
 	}
 	check_orientations();
+
+	DBG(DBG_CONTROL, {
+		struct timeval tv2;
+		unsigned long borrow;
+
+		gettimeofday(&tv2, NULL);
+		borrow = tv2.tv_usec < tv1.tv_usec ? 1 : 0;
+		DBG_log("elapsed time in %s for hostname lookup %lu.%06lu",
+			__func__,
+			(unsigned long)(tv2.tv_sec - borrow - tv2.tv_sec),
+			(unsigned long)(tv2.tv_usec + borrow * 1000000 - tv2.tv_usec));
+	});
 }
 
 /* time between scans of pending phase2 */

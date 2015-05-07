@@ -1,8 +1,10 @@
 /* Security Policy Data Base (such as it is)
+ *
  * Copyright (C) 1998,1999,2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Florian Weimer <fweimer@redhat.com>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -169,21 +171,25 @@ struct db_sa {
 	unsigned int prop_disj_cnt;	/* v2: number of elements... OR */
 };
 
-/* The oakley sadb is subscripted by a bitset computed by sadb_index().
+/*
+ * IKE policies.
  *
- * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (ideosyncratic).
+ * For IKEv2, it is described using IKEv1 constructs (e.g., constants
+ * such as OAKLEY_...), and then converted to IKEv2 using
+ * sa_v2_convert().  There really should be a pure IKEv2 table.
+ *
+ * am == agressive mode
  */
-#define sadb_index(x, c) \
-	(((x) & LRANGES(POLICY_PSK, POLICY_RSASIG)) | \
-	(((c)->spd.this.xauth_server) << (POLICY_RSASIG_IX+1)) | \
-	(((c)->spd.this.xauth_client) << (POLICY_RSASIG_IX+2)))
+struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c);
+struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c);
+struct db_sa *IKEv2_oakley_sadb(lset_t x);
 
-extern struct db_sa oakley_sadb[1 << 4];
-extern struct db_sa oakley_am_sadb[1 << 4];
-
-/* The oakley sadb for aggressive mode.
+/*
+ * Terminated by OAKLEY_GROUP_invalid.  Must contain all groups found
+ * in IKEv2_oakley_sadb.
  */
-extern struct db_sa oakley_sadb_am;
+extern const enum ike_trans_type_dh IKEv2_oakley_sadb_groups[];
+const enum ike_trans_type_dh IKEv2_oakley_sadb_default_group;
 
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS

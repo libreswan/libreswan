@@ -57,7 +57,6 @@
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "whack.h"
 #include "fetch.h"
-#include "pkcs.h"
 #include "asn1.h"
 
 #include "sha1.h"
@@ -77,7 +76,7 @@
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R
@@ -201,7 +200,7 @@ static void aggr_inI1_outR1_continue1(struct pluto_crypto_req_cont *ke,
 
 		e = start_dh_secretiv(dh, st,
 				      st->st_import,
-				      O_RESPONDER,
+				      ORIGINAL_RESPONDER,
 				      st->st_oakley.group->group);
 
 		if (e != STF_SUSPEND) {
@@ -229,6 +228,10 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 	 */
 	struct state *st;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
+
+       if (drop_new_exchanges()) {
+		return STF_IGNORE;
+	}
 
 	const lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) |
 		POLICY_AGGRESSIVE | POLICY_IKEV1_ALLOW;
@@ -272,6 +275,11 @@ stf_status aggr_inI1_outR1(struct msg_digest *md)
 		c = rw_instantiate(c, &md->sender, NULL, NULL);
 	}
 
+	/* warn for especially dangerous Aggressive Mode and PSK */
+	if ((c->policy & POLICY_AGGRESSIVE) != LEMPTY){
+		loglog(RC_LOG_SERIOUS,
+			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
+	} 
 	/* Set up state */
 	cur_state = md->st = st = new_state();  /* (caller will reset cur_state) */
 	st->st_connection = c;
@@ -450,7 +458,7 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 	 * to always send one.
 	 */
 	send_cert = st->st_oakley.auth == OAKLEY_RSA_SIG &&
-		    mycert.ty != CERT_NONE &&
+		    mycert.ty != CERT_NONE && mycert.u.nss_cert != NULL &&
 		    ((st->st_connection->spd.this.sendcert ==
 		        cert_sendifasked &&
 		      st->hidden_variables.st_got_certrequest) ||
@@ -567,7 +575,8 @@ static stf_status aggr_inI1_outR1_tail(struct msg_digest *md,
 				&cert_pbs))
 			return STF_INTERNAL_ERROR;
 
-		if (!out_chunk(get_cert_chunk(mycert), &cert_pbs, "CERT"))
+		if (!out_chunk(get_dercert_from_nss_cert(mycert.u.nss_cert),
+								&cert_pbs, "CERT"))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&cert_pbs);
@@ -711,9 +720,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 
 	/* moved the following up as we need Rcookie for hash, skeyids */
 	/* Reinsert the state, using the responder cookie we just received */
-	unhash_state(st);
-	memcpy(st->st_rcookie, md->hdr.isa_rcookie, COOKIE_SIZE);
-	insert_state(st); /* needs cookies, connection, and msgid (0) */
+	rehash_state(st, md->hdr.isa_rcookie);
 
 	ikev1_natd_init(st, md);
 
@@ -726,7 +733,7 @@ stf_status aggr_inR1_outI2(struct msg_digest *md)
 
 		return start_dh_secretiv(dh, st,
 					 st->st_import,
-					 O_INITIATOR,
+					 ORIGINAL_INITIATOR,
 					 st->st_oakley.group->group);
 	}
 }
@@ -1120,6 +1127,18 @@ stf_status aggr_outI1(int whack_sock,
 	struct state *st;
 	struct spd_route *sr;
 
+	if (drop_new_exchanges()) {
+		/* Only drop outgoing opportunistic connections */
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			return STF_IGNORE;
+		}
+	}
+
+	if ((c->policy & POLICY_AGGRESSIVE) != LEMPTY){
+		loglog(RC_LOG_SERIOUS,
+			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
+	}
+ 
 	/* set up new state */
 	cur_state = st = new_state();
 	st->st_connection = c;
@@ -1260,9 +1279,8 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 		u_char *sa_start = md->rbody.cur;
 
 		if (!ikev1_out_sa(&md->rbody,
-			    &oakley_am_sadb[sadb_index(st->st_policy, c)],
-			    st,
-			    TRUE, TRUE, ISAKMP_NEXT_KE)) {
+				  IKEv1_oakley_am_sadb(st->st_policy, c),
+				  st, TRUE, TRUE, ISAKMP_NEXT_KE)) {
 			cur_state = NULL;
 			return STF_INTERNAL_ERROR;
 		}
@@ -1368,8 +1386,6 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	close_output_pbs(&reply_stream);
 
-	/* let TCL hack it before we mark the length and copy it */
-
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet from aggr_outI1");
@@ -1383,7 +1399,7 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	/* Set up a retransmission event, half a minute hence */
 	delete_event(st);
-	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule_ms(EVENT_v1_RETRANSMIT, c->r_interval, st);
 
 	whack_log(RC_NEW_STATE + STATE_AGGR_I1,
 		  "%s: initiate", enum_name(&state_names, st->st_state));

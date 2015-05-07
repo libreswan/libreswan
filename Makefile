@@ -21,7 +21,7 @@ export TERMCAP
 
 include ${LIBRESWANSRCDIR}/Makefile.inc
 
-srcdir?=$(shell pwd)
+SRCDIR?=$(shell pwd)/
 
 # dummy default rule
 def:
@@ -158,31 +158,22 @@ klipsdefaults:
 
 # programs
 
-ifeq ($(strip $(OBJDIR)),.) # If OBJDIR is LIBRESWANSRCDIR (ie dot) then the simple case:
-programs man config install clean:: 
-	@for d in $(SUBDIRS) ; \
-	do \
-		(cd $$d && $(MAKE) srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
-	done; 
-else
 ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
 
 programs man config install clean:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
-	(cd ${ABSOBJDIR} && OBJDIRTOP=${ABSOBJDIR} OBJDIR=${ABSOBJDIR} ${MAKE} $@ )
+	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
 
-${OBJDIR}/Makefile: ${srcdir}/Makefile packaging/utils/makeshadowdir
+${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
-	@packaging/utils/makeshadowdir `(cd ${srcdir}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
-
-endif
+	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
 
 checkprograms:: 
 	@for d in $(SUBDIRS) ; \
 	do \
-		(cd $$d && $(MAKE) srcdir=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
+		(cd $$d && $(MAKE) SRCDIR=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
 	done; 
 
 clean::
@@ -454,7 +445,7 @@ kinstall:
 	( cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) install ) 2>&1 | tee -a out.kinstall
 	${ERRCHECK} out.kinstall
 
-kernelpatch3.5 kernelpatch2.6 kernelpatch:
+kernelpatch3 kernelpatch3.5 kernelpatch2.6 kernelpatch:
 	packaging/utils/kernelpatch 2.6
 
 kernelpatch2.4:
@@ -612,3 +603,5 @@ install::
 		echo "was already present.  You may wish to update it yourself if desired." ; \
 		echo -e "**********************************************************************\n" ; \
 	fi
+
+include ${LIBRESWANSRCDIR}/mk/kvm-targets.mk

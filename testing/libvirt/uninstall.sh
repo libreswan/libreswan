@@ -1,19 +1,25 @@
 #!/bin/sh
 
-TESTING=$(readlink -f $0 | sed "s/libvirt.*$/libvirt/")
-TESTDIR=$(readlink -f $0 | sed "s/libvirt.*$//")
-LIBRESWANSRCDIR=$(readlink -f $0 | sed "s/libreswan.*$/libreswan/")
+TESTING=$(dirname $(readlink -f $0))
+TESTDIR=$(dirname $TESTING)
+LIBRESWANSRCDIR=$(dirname $TESTDIR)
 
 source ${LIBRESWANSRCDIR}/kvmsetup.sh
 
 cd $TESTING
 
-for hostfilename in vm/*; do
+for netname in net/*; do
+    net=$(basename $netname)
+    sudo virsh net-destroy $net
+    sudo virsh net-undefine $net
+done
+
+for hostfilename in swan${OSTYPE}base vm/*; do
     hostname=$(basename ${hostfilename})
     sudo virsh destroy $hostname
 done
 
-for hostfilename in vm/*; do
+for hostfilename in swan${OSTYPE}base vm/*; do
     hostname=$(basename ${hostfilename})
     sudo virsh undefine $hostname --remove-all-storage
 done

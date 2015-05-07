@@ -1,7 +1,9 @@
 /*
  * Algorithm info parsing and creation functions
  * Author: JuanJo Ciarlante <jjo-ipsec@mendoza.gov.ar>
+ *
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,10 +43,52 @@ struct oakley_group_desc;
 
 #define MAX_ALG_ALIASES 16
 
-typedef struct alg_alias {
+struct alg_alias {
 	const char *alg;
-	const char *alias_set[MAX_ALG_ALIASES];
-} alg_alias;
+	const char *const alias_set[MAX_ALG_ALIASES];
+};
+
+/* if str is a known alias, return the real alg */
+static const char *find_alg_alias(const struct alg_alias *alias, const char *str)
+{
+	const struct alg_alias *aa;
+	for (aa = alias; aa->alg != NULL; aa++) {
+		const char *const *aset;
+		for (aset = aa->alias_set; *aset != NULL; aset++) {
+			if (strcaseeq(str, (*aset))) {
+				return aa->alg;
+			}
+		}
+	}
+	return NULL;
+}
+
+static int alg_getbyname_or_alias(const struct alg_alias *aliases, const char *str,
+				  int (*getbyname)(const char *const str))
+{
+	const char *alias = find_alg_alias(aliases, str);
+	if (alias != NULL) {
+		return getbyname(alias);
+	} else {
+		return getbyname(str);
+	}
+}
+
+static int aalg_getbyname_or_alias(const struct parser_context *context,
+				   const char *str)
+{
+	static struct alg_alias aliases[] = {
+		/* alg */	/* aliases */
+		{ "sha2_256",	{ "sha2", NULL } },
+		{ "sha2_256",	{ "sha256", NULL } },
+		{ "sha2_384",	{ "sha384", NULL } },
+		{ "sha2_512",	{ "sha512", NULL } },
+		{ "sha1",	{ "sha", NULL } },
+		{ "sha1",	{ "sha1_96", NULL } },
+		{ NULL, { NULL } }
+	};
+	return alg_getbyname_or_alias(aliases, str, context->aalg_getbyname);
+}
 
 /*
  * Aliases should NOT be used to match a base cipher to a key size,
@@ -52,29 +96,24 @@ typedef struct alg_alias {
  * examples aes cannot become an alias for aes128 or else a responder
  * with esp=aes would reject aes256.
  */
-static const alg_alias auth_alg_aliases[] = {
-	/* alg */	/* aliases */
-	{ "sha2_256",	{ "sha2", NULL } },
-	{ "sha2_256",	{ "sha256", NULL } },
-	{ "sha2_384",	{ "sha384", NULL } },
-	{ "sha2_512",	{ "sha512", NULL } },
-	{ "sha1",	{ "sha", NULL } },
-	{ "sha1",	{ "sha1_96", NULL } },
-	{ NULL, { NULL } }
-};
 
-static const alg_alias esp_trans_aliases[] = {
-	/* alg */	/* aliases */
-	{ "aes_ccm_a",	{ "aes_ccm_8",  NULL } },
-	{ "aes_ccm_b",	{ "aes_ccm_12", NULL } },
-	{ "aes_ccm_c",	{ "aes_ccm_16", "aes_ccm", NULL } },
-	{ "aes_gcm_a",	{ "aes_gcm_8", NULL } },
-	{ "aes_gcm_b",	{ "aes_gcm_12", NULL } },
-	{ "aes_gcm_c",	{ "aes_gcm_16", "aes_gcm", NULL } },
-	{ "aes_ctr",	{ "aesctr", NULL } },
-	{ "aes",	{ "aes_cbc", NULL } },
-	{ NULL, { NULL } }
-};
+static int ealg_getbyname_or_alias(const struct parser_context *context,
+				   const char *str)
+{
+	static const struct alg_alias aliases[] = {
+		/* alg */	/* aliases */
+		{ "aes_ccm_a",	{ "aes_ccm_8",  NULL } },
+		{ "aes_ccm_b",	{ "aes_ccm_12", NULL } },
+		{ "aes_ccm_c",	{ "aes_ccm_16", "aes_ccm", NULL } },
+		{ "aes_gcm_a",	{ "aes_gcm_8", NULL } },
+		{ "aes_gcm_b",	{ "aes_gcm_12", NULL } },
+		{ "aes_gcm_c",	{ "aes_gcm_16", "aes_gcm", NULL } },
+		{ "aes_ctr",	{ "aesctr", NULL } },
+		{ "aes",	{ "aes_cbc", NULL } },
+		{ NULL, { NULL } }
+	};
+	return alg_getbyname_or_alias(aliases, str, context->ealg_getbyname);
+}
 
 /*
  * sadb/ESP aa attrib converters - conflicting for v1 and v2
@@ -251,12 +290,12 @@ int alg_info_esp_sadb2aa(int sadb_aalg)
  * Search enum_name array with string, uppercased, prefixed, and postfixed
  */
 int alg_enum_search(enum_names *ed, const char *prefix,
-		const char *postfix, const char *name,
-		size_t name_len)
+		    const char *postfix, const char *name)
 {
 	char buf[64];
 	size_t prelen = strlen(prefix);
 	size_t postlen = strlen(postfix);
+	size_t name_len = strlen(name);
 
 	if (prelen + name_len + postlen >= sizeof(buf))
 		return -1;	/* cannot match */
@@ -272,19 +311,19 @@ int alg_enum_search(enum_names *ed, const char *prefix,
  * Search esp_transformid_names for a match, eg:
  *	"3des" <=> "ESP_3DES"
  */
-static int ealg_getbyname_esp(const char *const str, size_t len)
+static int ealg_getbyname_esp(const char *const str)
 {
 	if (str == NULL || *str == '\0')
 		return -1;
 
-	return alg_enum_search(&esp_transformid_names, "ESP_", "", str, len);
+	return alg_enum_search(&esp_transformid_names, "ESP_", "", str);
 }
 
 /*
  * Search auth_alg_names for a match, eg:
  *	"md5" <=> "AUTH_ALGORITHM_HMAC_MD5"
  */
-static int aalg_getbyname_esp(const char *str, size_t len)
+static int aalg_getbyname_esp(const char *str)
 {
 	int ret = -1;
 	static const char null_esp[] = "null";
@@ -292,12 +331,10 @@ static int aalg_getbyname_esp(const char *str, size_t len)
 	if (str == NULL || *str == '\0')
 		return -1;
 
-	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "",
-			str, len);
+	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_HMAC_", "", str);
 	if (ret >= 0)
 		return ret;
-	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_", "",
-			str, len);
+	ret = alg_enum_search(&auth_alg_names, "AUTH_ALGORITHM_", "", str);
 	if (ret >= 0)
 		return ret;
 
@@ -306,56 +343,19 @@ static int aalg_getbyname_esp(const char *str, size_t len)
 	 * since 0 is already used.
 	 * ??? this is extremely ugly.
 	 */
-	if (len == sizeof(null_esp)-1 && strncaseeq(str, null_esp, len))
+	if (strcaseeq(str, null_esp))
 		return INT_MAX;
 
 	return ret;
 }
 
-/* if str is a known alias, return the real alg */
-static const char *alg_find_alias(const alg_alias *alias, const char *str)
+static int modp_getbyname_esp(const char *const str)
 {
-	const alg_alias *aa;
-	int i;
-
-	for (aa = alias; aa->alg != NULL; aa++) {
-		const char *const *aset = aa->alias_set;
-
-		for (i = 0; i < MAX_ALG_ALIASES && aset[i] != NULL; i++) {
-			if (strcaseeq(str, aset[i]))
-				return aa->alg;
-		}
-	}
-
-	return NULL;
-}
-
-static int ealg_getbyname_or_alias_esp(const char *str, size_t len)
-{
-	const char *astr = alg_find_alias(esp_trans_aliases, str);
-
-	return astr == NULL ?
-		ealg_getbyname_esp(str, len) :
-		ealg_getbyname_esp(astr, strlen(astr));
-}
-
-static int aalg_getbyname_or_alias_esp(const char *str, size_t len)
-{
-	const char *astr = alg_find_alias(auth_alg_aliases, str);
-
-	return astr == NULL ?
-		aalg_getbyname_esp(str, len) :
-		aalg_getbyname_esp(astr, strlen(astr));
-}
-
-static int modp_getbyname_esp(const char *const str, size_t len)
-{
-	int ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "",
-			str, len);
+	int ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_", "", str);
 
 	if (ret < 0)
 		ret = alg_enum_search(&oakley_group_names, "OAKLEY_GROUP_",
-				" (extension)", str, len);
+				      " (extension)", str);
 	return ret;
 }
 
@@ -689,8 +689,8 @@ static void parser_init_esp(struct parser_context *p_ctx)
 	p_ctx->aalg_permit = TRUE;
 	p_ctx->state = ST_INI;
 
-	p_ctx->ealg_getbyname = ealg_getbyname_or_alias_esp;
-	p_ctx->aalg_getbyname = aalg_getbyname_or_alias_esp;
+	p_ctx->ealg_getbyname = ealg_getbyname_esp;
+	p_ctx->aalg_getbyname = aalg_getbyname_esp;
 
 }
 
@@ -709,7 +709,7 @@ static void parser_init_ah(struct parser_context *p_ctx)
 	p_ctx->modp_str = p_ctx->modp_buf;
 	p_ctx->state = ST_INI_AA;
 
-	p_ctx->aalg_getbyname = aalg_getbyname_or_alias_esp;
+	p_ctx->aalg_getbyname = aalg_getbyname_esp;
 
 }
 
@@ -728,8 +728,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 
 	ealg_id = aalg_id = -1;
 	if (p_ctx->ealg_permit && p_ctx->ealg_buf[0] != '\0') {
-		ealg_id = p_ctx->ealg_getbyname(p_ctx->ealg_buf,
-					strlen(p_ctx->ealg_buf));
+		ealg_id = ealg_getbyname_or_alias(p_ctx, p_ctx->ealg_buf);
 		if (ealg_id < 0) {
 			return "enc_alg not found";
 		}
@@ -783,11 +782,22 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 						return "CAST is only supported for 128 bits (to avoid padding)";
 					}
 					break;
-				case OAKLEY_AES_CBC:
-				case OAKLEY_CAMELLIA_CBC:
 				case OAKLEY_SERPENT_CBC:
 				case OAKLEY_TWOFISH_CBC:
 				case OAKLEY_TWOFISH_CBC_SSH:
+				case OAKLEY_AES_CBC:
+				case OAKLEY_AES_CTR:
+				case OAKLEY_AES_GCM_8:
+				case OAKLEY_AES_GCM_12:
+				case OAKLEY_AES_GCM_16:
+				case OAKLEY_AES_CCM_8:
+				case OAKLEY_AES_CCM_12:
+				case OAKLEY_AES_CCM_16:
+				case OAKLEY_CAMELLIA_CBC:
+				case OAKLEY_CAMELLIA_CTR:
+				case OAKLEY_CAMELLIA_CCM_A:
+				case OAKLEY_CAMELLIA_CCM_B:
+				case OAKLEY_CAMELLIA_CCM_C:
 					if (!COMMON_KEY_LENGTHS(p_ctx->eklen)) {
 						return "wrong encryption key length - key size must be 128 (default), 192 or 256";
 					}
@@ -835,19 +845,21 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 
 	}
 	if (p_ctx->aalg_permit && *p_ctx->aalg_buf != '\0') {
-		aalg_id = p_ctx->aalg_getbyname(p_ctx->aalg_buf,
-					strlen(p_ctx->aalg_buf));
+		aalg_id = aalg_getbyname_or_alias(p_ctx, p_ctx->aalg_buf);
 		if (aalg_id < 0) {
 			return "hash_alg not found";
 		}
 
 		/* some code stupidly uses INT_MAX for "null" */
 		if (aalg_id == AH_NONE || aalg_id == AH_NULL || aalg_id == INT_MAX) {
-			if (p_ctx->protoid == PROTO_IPSEC_AH)
-				return "AH cannot have null authentication";
-			/* aalg can and must be only be null for AEAD ciphers */
 			switch (p_ctx->protoid) {
 			case PROTO_IPSEC_ESP:
+				/*
+				 * ESP AEAD ciphers do not require
+				 * separate authentication (by
+				 * defintion, authentication is
+				 * built-in).
+				 */
 				switch(ealg_id) {
 				case ESP_AES_GCM_8:
 				case ESP_AES_GCM_12:
@@ -861,14 +873,26 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				}
 				break;
 			case PROTO_ISAKMP:
+				/*
+				 * While IKE AEAD ciphers do not
+				 * require separate authentication (by
+				 * defintion, authentication is
+				 * built-in), they do require a PRF.
+				 *
+				 * The non-empty authentication
+				 * algorithm will be used as the PRF.
+				 */
 				switch(ealg_id) {
-				case IKEv2_ENCR_AES_CCM_8:
-				case IKEv2_ENCR_AES_CCM_12:
-				case IKEv2_ENCR_AES_CCM_16:
-				case IKEv2_ENCR_AES_GCM_8:
-				case IKEv2_ENCR_AES_GCM_12:
-				case IKEv2_ENCR_AES_GCM_16:
-					break; /* ok */
+				case OAKLEY_AES_CCM_8:
+				case OAKLEY_AES_CCM_12:
+				case OAKLEY_AES_CCM_16:
+				case OAKLEY_AES_GCM_8:
+				case OAKLEY_AES_GCM_12:
+				case OAKLEY_AES_GCM_16:
+				case OAKLEY_CAMELLIA_CCM_A:
+				case OAKLEY_CAMELLIA_CCM_B:
+				case OAKLEY_CAMELLIA_CCM_C:
+					return "AEAD IKE cipher cannot have null pseudo-random-function";
 				default:
 					return "non-AEAD IKE cipher cannot have null authentication";
 				}
@@ -877,9 +901,17 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				return "AH cannot have null authentication";
 			}
 		} else {
-			/* auth is non-null, so we cannot have AEAD ciphers */
 			switch (p_ctx->protoid) {
 			case PROTO_IPSEC_ESP:
+				/*
+				 * ESP AEAD ciphers do not require
+				 * separate authentication (by
+				 * defintion, authentication is
+				 * built-in).
+				 *
+				 * Reject any non-null authentication
+				 * algorithm
+				 */
 				switch(ealg_id) {
 				case ESP_AES_GCM_8:
 				case ESP_AES_GCM_12:
@@ -893,17 +925,16 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 				}
 				break;
 			case PROTO_ISAKMP:
-				switch(ealg_id) {
-				case IKEv2_ENCR_AES_CCM_8:
-				case IKEv2_ENCR_AES_CCM_12:
-				case IKEv2_ENCR_AES_CCM_16:
-				case IKEv2_ENCR_AES_GCM_8:
-				case IKEv2_ENCR_AES_GCM_12:
-				case IKEv2_ENCR_AES_GCM_16:
-					return "AEAD IKE cipher must have null authentication";
-				default:
-					break; /* ok */
-				}
+				/*
+				 * While IKE AEAD ciphers do not
+				 * require separate authentication (by
+				 * defintion, authentication is
+				 * built-in), they do require a PRF.
+				 *
+				 * So regardless of the algorithm type
+				 * allow an explicit authentication.
+				 * (IKE AEAD uses it for the PRF).
+				 */
 				break;
 			}
 		}
@@ -924,8 +955,7 @@ static err_t parser_alg_info_add(struct parser_context *p_ctx,
 	}
 
 	if (p_ctx->modp_getbyname != NULL && *p_ctx->modp_buf != '\0') {
-		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf,
-					strlen(p_ctx->modp_buf));
+		modp_id = p_ctx->modp_getbyname(p_ctx->modp_buf);
 		if (modp_id < 0) {
 			return "modp group not found";
 		}
@@ -1037,7 +1067,7 @@ static bool alg_info_discover_pfsgroup_hack(struct alg_info_esp *aie,
 
 		/* if pfs string not null AND first char is not '0' */
 		if (*pfs_name != '\0' && pfs_name[0] != '0') {
-			int ret = modp_getbyname_esp(pfs_name, strlen(pfs_name));
+			int ret = modp_getbyname_esp(pfs_name);
 
 			if (ret < 0) {
 				/* Bomb if pfsgroup not found */

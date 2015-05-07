@@ -1,0 +1,13 @@
+  <varlistentry>
+  <term><emphasis remap='B'>nflog</emphasis></term>
+  <listitem>
+<para>If set, the NFLOG group number to log <emphasis remap='B'>this connection's</emphasis> pre-crypt and post-decrypt traffic to.
+The default value of <emphasis remap='B'>0</emphasis> means no logging at all.
+This option is only available on linux kernel 2.6.14 and later. It allows common network
+utilities such as tcpdump, wireshark and dumpcap, to use nflog:XXX pseudo interfaces where XXX
+is the nflog group number. During the updown phase of a connection, iptables will be used to add
+and remove the source/destination pair to the nflog group specified. The rules are setup with the
+nflog-prefix matching the connection name. See also the global <emphasis remap='B'>nflog-all</emphasis> option.
+</para>
+  </listitem>
+  </varlistentry>

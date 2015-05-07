@@ -658,7 +658,7 @@ TIMESTAMP [DEBUG]: algorithm.c:499:alg_oakley_encdef(): encryption(3des)
 TIMESTAMP [DEBUG]: algorithm.c:499:alg_oakley_encdef(): encryption(aes)
 TIMESTAMP [DEBUG]: algorithm.c:499:alg_oakley_encdef(): encryption(aes)
 TIMESTAMP [DEBUG]: algorithm.c:499:alg_oakley_encdef(): encryption(3des)
-TIMESTAMP [DEBUG]: if_spmd.c:359: spmd I/F connection ok: 220 D5C4E76128D0BB7B80B7E5718A07913DD19E3EC7
+TIMESTAMP [DEBUG]: if_spmd.c:359: spmd I/F connection ok: 220 HEXBLOB
 TIMESTAMP [DEBUG]: cfsetup.c:3853: read 16 bytes
 TIMESTAMP [DEBUG]: if_spmd.c:421: spmd LOGIN ok: 250 OK
 TIMESTAMP [DEBUG]: ike_spmif.c:69:ike_spmif_init(): spmif_socket: 4

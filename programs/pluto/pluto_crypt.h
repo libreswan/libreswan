@@ -8,7 +8,8 @@
  * Copyright (C) 2012 Wes Hardaker <opensource@hardakers.net>
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
- *
+ * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
+ * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -170,7 +171,7 @@ struct pcr_skeyid_q {
 	oakley_auth_t auth;
 	oakley_hash_t integ_hash;
 	oakley_hash_t prf_hash;
-	enum phase1_role role;
+	enum original_role role;
 	size_t key_size; /* of encryptor, in bytes */
 	size_t salt_size; /* ov IV salt, in bytes */
 	wire_chunk_t gi;
@@ -214,6 +215,8 @@ struct pcr_skeycalc_v2_r {
 	PK11SymKey *skeyid_pr;
 	chunk_t skey_initiator_salt;
 	chunk_t skey_responder_salt;
+	chunk_t skey_chunk_SK_pi;
+	chunk_t skey_chunk_SK_pr;
 };
 
 struct pluto_crypto_req {
@@ -363,7 +366,7 @@ extern void compute_dh_shared(struct state *st, const chunk_t g,
 extern stf_status start_dh_secretiv(struct pluto_crypto_req_cont *dh,
 				    struct state *st,
 				    enum crypto_importance importance,
-				    enum phase1_role role,
+				    enum original_role role,
 				    oakley_group_t oakley_group2);
 
 extern void finish_dh_secretiv(struct state *st,
@@ -372,7 +375,7 @@ extern void finish_dh_secretiv(struct state *st,
 extern stf_status start_dh_secret(struct pluto_crypto_req_cont *cn,
 				  struct state *st,
 				  enum crypto_importance importance,
-				  enum phase1_role role,
+				  enum original_role role,
 				  oakley_group_t oakley_group2);
 
 extern void finish_dh_secret(struct state *st,
@@ -380,15 +383,11 @@ extern void finish_dh_secret(struct state *st,
 
 extern stf_status start_dh_v2(struct msg_digest *md,
 			      const char *name,
-			      enum phase1_role role,
+			      enum original_role role,
 			      crypto_req_cont_func pcrc_func);
 
 extern void finish_dh_v2(struct state *st,
 			 const struct pluto_crypto_req *r);
-
-extern void calc_dh_iv(struct pluto_crypto_req *r);
-extern void calc_dh(struct pluto_crypto_req *r);
-extern void calc_dh_v2(struct pluto_crypto_req *r);
 
 extern void unpack_KE_from_helper(
 	struct state *st,

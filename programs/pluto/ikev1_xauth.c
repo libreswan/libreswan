@@ -77,6 +77,7 @@
 #include "ikev1_xauth.h"
 #include "virtual.h"	/* needs connections.h */
 #include "addresspool.h"
+#include "pam_conv.h"
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
@@ -112,13 +113,9 @@ struct xauth_thread_arg {
 	char *name;
 	char *password;
 	char *connname;
+	char *ipaddr;
 	st_jbuf_t *ptr;
 };
-
-#ifdef XAUTH_HAVE_PAM
-static int xauth_pam_conv(int num_msg, const struct pam_message **msgm,
-			  struct pam_response **response, void *appdata_ptr);
-#endif
 
 /*
  * pointer to an array of st_jbuf_t elements.
@@ -676,7 +673,7 @@ static stf_status modecfg_send_set(struct state *st)
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT &&
 	    st->st_event->ev_type != EVENT_NULL) {
 		delete_event(st);
-		event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+		event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
 	}
 
 	return STF_OK;
@@ -791,8 +788,8 @@ stf_status xauth_send_request(struct state *st)
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
-		event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0,
-			       st);
+		event_schedule_ms(EVENT_v1_RETRANSMIT,
+				st->st_connection->r_interval, st);
 	}
 
 	return STF_OK;
@@ -916,8 +913,7 @@ stf_status modecfg_send_request(struct state *st)
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
 		delete_event(st);
-		event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0 * 3,
-			       st);
+		event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
 	}
 	st->hidden_variables.st_modecfg_started = TRUE;
 
@@ -1010,7 +1006,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with master thread */
 	delete_event(st);
-	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
 
 	/* Transmit */
 
@@ -1023,61 +1019,6 @@ static stf_status xauth_send_status(struct state *st, int status)
 }
 
 #ifdef XAUTH_HAVE_PAM
-/** XAUTH PAM conversation
- *
- * @param num_msg Int.
- * @param msgm Pam Message Struct
- * @param response Where PAM will put the results
- * @param appdata_ptr Pointer to data struct (as we are using threads)
- * @return int PAM Return Code (possibly fudged)
- */
-static int xauth_pam_conv(int num_msg,
-			  const struct pam_message **msgm,
-			  struct pam_response **response,
-			  void *appdata_ptr)
-{
-	struct xauth_thread_arg *const arg = appdata_ptr;
-	int count = 0;
-	struct pam_response *reply;
-
-	if (num_msg <= 0)
-		return PAM_CONV_ERR;
-
-	reply = alloc_bytes(
-			num_msg * sizeof(struct pam_response), "pam_response");
-
-	for (count = 0; count < num_msg; ++count) {
-		const char *s = NULL;
-
-		switch (msgm[count]->msg_style) {
-		case PAM_PROMPT_ECHO_OFF:
-			s = arg->password;
-			break;
-		case PAM_PROMPT_ECHO_ON:
-			s = arg->name;
-			break;
-		}
-
-		if (s != NULL) {
-			/*
-			 * Add s to list of responses.
-			 * According to pam_conv(3), our caller will
-			 * use free(3) to free these arguments so
-			 * we must allocate them with malloc,
-			 * not our own allocators.
-			 */
-			size_t len = strlen(s) + 1;
-			char *t = malloc(len);	/* must be malloced */
-
-			memcpy(t, s, len);
-			reply[count].resp_retcode = 0;
-			reply[count].resp = t;
-		}
-	}
-
-	*response = reply;
-	return PAM_SUCCESS;
-}
 
 /** Do authentication via PAM (Plugable Authentication Modules)
  *
@@ -1101,7 +1042,7 @@ static bool do_pam_authentication(void *varg)
 	do {
 		ipstr_buf ra;
 
-		conv.conv = xauth_pam_conv;
+		conv.conv = pam_conv;
 		conv.appdata_ptr = varg;
 
 		what = "pam_start";
@@ -1208,6 +1149,9 @@ static bool do_file_authentication(void *varg)
 		char *userid;
 		char *passwdhash;
 		char *connectionname = NULL;
+		char *addresspool = NULL;
+		struct connection *c = arg->st->st_connection;
+		ip_range *pool_range;
 
 		lineno++;
 
@@ -1229,25 +1173,37 @@ static bool do_file_authentication(void *varg)
 			continue;
 		}
 
-		*p++ ='\0';	/* terminate string by overwriting : */
+		*p++ ='\0'; /* terminate string by overwriting : */
 
 		/* get password hash */
 		passwdhash = p;
-		p = strchr(passwdhash, ':');	/* find end */
+		p = strchr(passwdhash, ':'); /* find end */
+		if (p == NULL) {
+			/* no end: skip line */
+			libreswan_log("XAUTH: %s:%d missing connection name field", pwdfile, lineno);
+			continue;
+		}
+
+		*p++ ='\0';     /* terminate string by overwriting : */
+
+		/* get connection name */
+		connectionname = p;
+		p = strchr(connectionname, ':'); /* find end */
 		if (p != NULL) {
-			/* optional connectionname */
-			*p++ ='\0';	/* terminate password string by overwriting : */
-			connectionname = p;
+			/* optional addresspool */
+			*p++ ='\0'; /* terminate password string by overwriting : */
+			addresspool = p;
 		}
 
 		/* If connectionname is null, it applies
 		 * to all connections
 		 */
 		DBG(DBG_CONTROL,
-		    DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s)",
-			    userid, arg->name,
-			    passwdhash,
-			    connectionname == NULL? "<any>" : connectionname, arg->connname));
+			DBG_log("XAUTH: found user(%s/%s) pass(%s) connid(%s/%s) addresspool(%s)",
+				userid, arg->name,
+				passwdhash,
+				connectionname == NULL? "" : connectionname, arg->connname,
+				addresspool == NULL? "" : addresspool));
 
 		if (streq(userid, arg->name) &&
 		    (connectionname == NULL || streq(connectionname, arg->connname)))
@@ -1277,9 +1233,33 @@ static bool do_file_authentication(void *varg)
 					      userid, connectionname);
 			}
 
-			if (win)
-				break;
+			if (win) {
 
+				if(addresspool != NULL) {
+					/* set user defined ip address or pool */
+					char *temp;
+					temp = strchr(addresspool, '-');
+					if (temp == NULL ) {
+						ttoaddr(addresspool, 0, AF_INET, &c->spd.that.client.addr);
+						if ((c->pool != NULL)) {
+							DBG(DBG_CONTROLMORE,
+								DBG_log("free addresspool entry for the conn %s ",
+								c->name));
+							unreference_addresspool(c);
+						}
+					} else {
+						pool_range = alloc_thing(ip_range, "pool_range");
+						if(pool_range != NULL){
+							ttorange(addresspool, 0, AF_INET, pool_range, TRUE);
+							if(pool_range->start.u.v4.sin_addr.s_addr){
+								c->pool = install_addresspool(pool_range);
+							}
+							pfree(pool_range);
+						}
+					}
+				}
+				break;
+			}
 			libreswan_log("XAUTH: nope");
 		}
 	}
@@ -2226,8 +2206,8 @@ stf_status modecfg_inR1(struct msg_digest *md)
 						caddr,
 						tmp_spd->that.client.maskbits);
 
-					tmp_spd->this.cert_filename = NULL;
-					tmp_spd->that.cert_filename = NULL;
+					tmp_spd->this.cert_nickname = NULL;
+					tmp_spd->that.cert_nickname = NULL;
 
 					tmp_spd->this.cert.ty = CERT_NONE;
 					tmp_spd->that.cert.ty = CERT_NONE;
@@ -2428,19 +2408,18 @@ static stf_status xauth_client_resp(struct state *st,
 
 					if (st->st_xauth_password.ptr ==
 					    NULL) {
-						struct secret *s;
+						struct secret *s =
+							lsw_get_xauthsecret(
+								st->st_connection,
+								st->st_xauth_username);
 
-						s = lsw_get_xauthsecret(
-							st->st_connection,
-							st->st_xauth_username);
 						DBG(DBG_CONTROLMORE,
 						    DBG_log("looked up username=%s, got=%p",
 							    st->st_xauth_username,
 							    s));
-						if (s) {
-							struct
-							private_key_stuff *pks
-								= lsw_get_pks(s);
+						if (s != NULL) {
+							struct private_key_stuff
+								*pks = lsw_get_pks(s);
 
 							clonetochunk(
 								st->st_xauth_password,
@@ -2450,8 +2429,7 @@ static stf_status xauth_client_resp(struct state *st,
 						}
 					}
 
-					if (st->st_xauth_password.ptr ==
-					    NULL) {
+					if (st->st_xauth_password.ptr == NULL) {
 						char xauth_password[64];
 
 						if (st->st_whack_sock == -1) {

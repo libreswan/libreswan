@@ -235,6 +235,10 @@ static void ip2xfrm(const ip_address *addr, xfrm_address_t *xaddr)
 		memcpy(xaddr->a6, &addr->u.v6.sin6_addr, sizeof(xaddr->a6));
 }
 
+/*
+ * XXX: This code is duplicated in ike_alg_aes.c.  When the latter is
+ * enabled, this should be deleted.
+ */
 
 static struct encrypt_desc algo_aes_ccm_8 =
 {
@@ -248,7 +252,10 @@ static struct encrypt_desc algo_aes_ccm_8 =
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	/*
+	 * Only 128, 192 and 256 are supported
+	 * (24 bits KEYMAT for salt not included)
+	 */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
@@ -266,7 +273,10 @@ static struct encrypt_desc algo_aes_ccm_12 =
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.wire_iv_size =  8,
 	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	/*
+	 * Only 128, 192 and 256 are supported
+	 * (24 bits KEYMAT for salt not included)
+	 */
 	.keyminlen =      AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =      AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =      AEAD_AES_KEY_MAX_LEN,
@@ -284,64 +294,13 @@ static struct encrypt_desc algo_aes_ccm_16 =
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,
 	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (24 bits KEYMAT for salt not included) */
+	/*
+	 * Only 128, 192 and 256 are supported
+	 * (24 bits KEYMAT for salt not included)
+	 */
 	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
 	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
 	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_gcm_8 =
-{
-	.common = {
-		.name = "aes_gcm_8",
-		.officname = "aes_gcm_8",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_v2id =   IKEv2_ENCR_AES_GCM_8,
-		.algo_next =   NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.wire_iv_size = 8,
-	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_gcm_12 =
-{
-	.common = {
-		.name = "aes_gcm_12",
-		.officname = "aes_gcm_12",
-		.algo_type =   IKE_ALG_ENCRYPT,
-		.algo_v2id =   IKEv2_ENCR_AES_GCM_12,
-		.algo_next =   NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.wire_iv_size = 8,
-	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
-	.keyminlen =     AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =     AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =     AEAD_AES_KEY_MAX_LEN,
-};
-
-static struct encrypt_desc algo_aes_gcm_16 =
-{
-	.common = {
-		.name = "aes_gcm_16",
-		.officname = "aes_gcm_16",
-		.algo_type =  IKE_ALG_ENCRYPT,
-		.algo_v2id =    IKEv2_ENCR_AES_GCM_16,
-		.algo_next =  NULL,
-	},
-	.enc_blocksize = AES_BLOCK_SIZE,
-	.wire_iv_size = 8,
-	.pad_to_blocksize = FALSE,
-	/* Only 128, 192 and 256 are supported (32 bits KEYMAT for salt not included) */
-	.keyminlen =    AEAD_AES_KEY_MIN_LEN,
-	.keydeflen =    AEAD_AES_KEY_DEF_LEN,
-	.keymaxlen =    AEAD_AES_KEY_MAX_LEN,
 };
 
 /*
@@ -361,21 +320,21 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV8;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_A(8) for ESP");
 
 	alg.sadb_alg_ivlen = 12;
 	alg.sadb_alg_minbits = 128;
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV12;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_B(12) for ESP");
 
 	alg.sadb_alg_ivlen = 16;
 	alg.sadb_alg_minbits = 128;
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_GCM_ICV16;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_GCM_C(16) for ESP");
 
 	/* keeping aes-ccm behaviour intact as before */
 	alg.sadb_alg_ivlen = 8;
@@ -383,29 +342,26 @@ static void linux_pfkey_add_aead(void)
 	alg.sadb_alg_maxbits = 256;
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV8;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_A(8) for ESP");
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV12;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_B(12) for ESP");
 
 	alg.sadb_alg_id = SADB_X_EALG_AES_CCM_ICV16;
 	if (kernel_alg_add(SADB_SATYPE_ESP, SADB_EXT_SUPPORTED_ENCRYPT, &alg) != 1)
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for ESP");
+		loglog(RC_LOG_SERIOUS, "Warning: failed to register AES_CCM_C(16) for ESP");
 
-	/* IKE algos (encryption and authentication combined) */
+	/*
+	 * XXX: This code is duplicated in ike_alg_aes.c.  When the
+	 * latter is enabled, this should be deleted.
+	 */
 	if (!ike_alg_register_enc(&algo_aes_ccm_8))
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_8 for IKE");
 	if (!ike_alg_register_enc(&algo_aes_ccm_12))
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_12 for IKE");
 	if (!ike_alg_register_enc(&algo_aes_ccm_16))
 		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_ccm_16 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_gcm_8))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_8 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_gcm_12))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_12 for IKE");
-	if (!ike_alg_register_enc(&algo_aes_gcm_16))
-		loglog(RC_LOG_SERIOUS, "Warning: failed to register algo_aes_gcm_16 for IKE");
 
 	DBG(DBG_CONTROLMORE,
 		DBG_log("Registered AEAD AES CCM/GCM algorithms"));
@@ -631,7 +587,8 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @param that_client ip_subnet
  * @param spi
  * @param proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
- * @param transport_proto int (Currently unused) Contains protocol (u=tcp, 17=udp, etc...)
+ * @param transport_proto int (Currently unused) Contains protocol
+ *	(u=tcp, 17=udp, etc...)
  * @param esatype int
  * @param pfkey_proto_info proto_info
  * @param use_lifetime monotime_t (Currently unused)
@@ -715,7 +672,10 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				return TRUE;
 
 			break;
-		/* Do we really need %hold under NETKEY? Seems not so we just ignore. */
+		/*
+		 * Do we really need %hold under NETKEY?
+		 * Seems not so we just ignore.
+		 */
 		case SPI_HOLD:
 			return TRUE;
 		}
@@ -796,8 +756,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	}
 
-	req.u.p.sel.sport_mask = (req.u.p.sel.sport) ? ~0 : 0;
-	req.u.p.sel.dport_mask = (req.u.p.sel.dport) ? ~0 : 0;
+	req.u.p.sel.sport_mask = req.u.p.sel.sport == 0 ? 0 : ~0;
+	req.u.p.sel.dport_mask = req.u.p.sel.dport == 0 ? 0 : ~0;
 	ip2xfrm(&this_client->addr, &req.u.p.sel.saddr);
 	ip2xfrm(&that_client->addr, &req.u.p.sel.daddr);
 	req.u.p.sel.prefixlen_s = this_client->maskbits;
@@ -1039,7 +999,6 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		 */
 		if (IPPROTO_ICMP == sa->transport_proto ||
 			IPPROTO_ICMPV6 == sa->transport_proto) {
-
 			u_int16_t icmp_type;
 			u_int16_t icmp_code;
 
@@ -1048,11 +1007,10 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			req.p.sel.sport = htons(icmp_type);
 			req.p.sel.dport = htons(icmp_code);
-
 		}
 
-		req.p.sel.sport_mask = (req.p.sel.sport) ? ~0 : 0;
-		req.p.sel.dport_mask = (req.p.sel.dport) ? ~0 : 0;
+		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
+		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
 		ip2xfrm(&src->addr, &req.p.sel.saddr);
 		ip2xfrm(&dst->addr, &req.p.sel.daddr);
 		req.p.sel.prefixlen_s = src->maskbits;
@@ -1075,7 +1033,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 	attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 
-	if (sa->authkeylen) {
+	if (sa->authkeylen != 0) {
 		const char *name = sparse_name(aalg_list, sa->authalg);
 
 		if (name == NULL) {
@@ -1104,6 +1062,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 			struct xfrm_algo_auth algo;
 
 			algo.alg_key_len = sa->authkeylen * BITS_PER_BYTE;
+
 			switch(sa->authalg) {
 			case AUTH_ALGORITHM_HMAC_SHA2_256:
 				algo.alg_trunc_len = 128;
@@ -1111,7 +1070,10 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			case AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG:
 				algo.alg_trunc_len = 96;
-				/* fixup to the real number, not our private number */
+				/*
+				 * fixup to the real number,
+				 * not our private number
+				 */
 				sa->authalg = AUTH_ALGORITHM_HMAC_SHA2_256;
 				break;
 
@@ -1130,9 +1092,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 
 			strcpy(algo.alg_name, name);
 			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(
-					attr) + sizeof(algo), sa->authkey,
-				sa->authkeylen);
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
+				sa->authkey, sa->authkeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1148,8 +1109,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 				sizeof(algo_old) + sa->authkeylen);
 			strcpy(algo_old.alg_name, name);
 			memcpy(RTA_DATA(attr), &algo_old, sizeof(algo_old));
-			memcpy((char *)RTA_DATA(
-					attr) + sizeof(algo_old), sa->authkey,
+			memcpy((char *)RTA_DATA(attr) + sizeof(algo_old),
+				sa->authkey,
 				sa->authkeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
@@ -1159,8 +1120,10 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		}
 	}
 
-	/* ??? why does IPCOMP trump aead and ESP?  Shouldn't all be bundled? */
-
+	/*
+	 * ??? why does IPCOMP trump aead and ESP?
+	 *  Shouldn't all be bundled?
+	 */
 	aead = get_aead_alg(sa->encalg);
 	if (sa->esatype == ET_IPCOMP) {
 		struct xfrm_algo algo;
@@ -1238,7 +1201,8 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 		memcpy(RTA_DATA(attr), &natt, sizeof(natt));
 
 		req.n.nlmsg_len += attr->rta_len;
-		attr = (struct rtattr *)((char *)attr + attr->rta_len);	/* ??? why is this not used? */
+		/* ??? why is this not used? */
+		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 	}
 
 #ifdef HAVE_LABELED_IPSEC
@@ -1267,8 +1231,7 @@ static bool netlink_add_sa(struct kernel_sa *sa, bool replace)
 	if (!ret && errno == ESRCH &&
 		req.n.nlmsg_type == XFRM_MSG_UPDSA) {
 		loglog(RC_LOG_SERIOUS,
-			"Warning: expected to find an existing IPsec SA - continuing as Add SA");
-		return netlink_add_sa(sa, FALSE);
+			"Warning: kernel expired our reserved IPsec SA SPI - negotiation took too long? Try increasing /proc/sys/net/core/xfrm_acq_expires");
 	}
 	return ret;
 }
@@ -1422,7 +1385,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 		case XFRMA_SEC_CTX:
 		{
 			struct xfrm_user_sec_ctx *xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
-			size_t len = xuctx->ctx_len;	/* length of text of label */
+			/* length of text of label */
+			size_t len = xuctx->ctx_len;
 
 			DBG(DBG_KERNEL,
 				DBG_log("xfrm xuctx: exttype=%d, len=%d, ctx_doi=%d, ctx_alg=%d, ctx_len=%zu",
@@ -1441,7 +1405,10 @@ static void netlink_acquire(struct nlmsghdr *n)
 				return;
 			}
 
-			/* note: xuctx + 1 is tricky: first byte after header */
+			/*
+			 * note: xuctx + 1 is tricky:
+			 * first byte after header
+			 */
 			DBG(DBG_KERNEL,
 				DBG_log("xfrm: xuctx security context value: %.*s",
 					xuctx->ctx_len,
@@ -1470,7 +1437,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 			uctx->ctx.ctx_alg = xuctx->ctx_alg;
 			uctx->ctx.ctx_doi = xuctx->ctx_doi;
-			uctx->ctx.ctx_len = len;	/* Length includes '\0'*/
+			/* Length includes '\0'*/
+			uctx->ctx.ctx_len = len;
 
 			break;
 		}
@@ -1480,7 +1448,8 @@ static void netlink_acquire(struct nlmsghdr *n)
 					attr->rta_type));
 			break;
 		}
-		attr = RTA_NEXT(attr, remaining);	/* updates remaining too */
+		/* updates remaining too */
+		attr = RTA_NEXT(attr, remaining);
 	}
 #endif
 
@@ -1491,13 +1460,13 @@ static void netlink_acquire(struct nlmsghdr *n)
 	 *     that they aren't v4 to v6 or something goofy
 	 */
 	if (NULL == (ugh = xfrm_to_ip_address(family, srcx, &src)) &&
-	    NULL == (ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
-	    NULL == (ugh = add_port(family, &src, acquire->sel.sport)) &&
-	    NULL == (ugh = add_port(family, &dst, acquire->sel.dport)) &&
-	    NULL == (ugh = src_proto == dst_proto ?
+		NULL == (ugh = xfrm_to_ip_address(family, dstx, &dst)) &&
+		NULL == (ugh = add_port(family, &src, acquire->sel.sport)) &&
+		NULL == (ugh = add_port(family, &dst, acquire->sel.dport)) &&
+		NULL == (ugh = src_proto == dst_proto ?
 			NULL : "src and dst protocols differ") &&
-	    NULL == (ugh = addrtosubnet(&src, &ours)) &&
-	    NULL == (ugh = addrtosubnet(&dst, &his)))
+		NULL == (ugh = addrtosubnet(&src, &ours)) &&
+		NULL == (ugh = addrtosubnet(&dst, &his)))
 		record_and_initiate_opportunistic(&ours, &his, transport_proto,
 #ifdef HAVE_LABELED_IPSEC
 						uctx,
@@ -1512,19 +1481,17 @@ static void netlink_acquire(struct nlmsghdr *n)
 
 static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 {
-	const xfrm_address_t *srcx, *dstx;
+	const xfrm_address_t *srcx = &pol->sel.saddr;
+	const xfrm_address_t *dstx = &pol->sel.daddr;
+	unsigned family = pol->sel.family;
+	unsigned transport_proto = pol->sel.proto;
 	ip_address src, dst;
-	unsigned family;
-	unsigned transport_proto;
-	err_t ugh = NULL;
+	err_t ugh;
 
-	srcx = &pol->sel.saddr;
-	dstx = &pol->sel.daddr;
-	family = pol->sel.family;
-	transport_proto = pol->sel.proto;
-
-	if ((ugh = xfrm_to_ip_address(family, srcx, &src)) ||
-		(ugh = xfrm_to_ip_address(family, dstx, &dst))) {
+	ugh = xfrm_to_ip_address(family, srcx, &src);
+	if (ugh == NULL)
+		ugh = xfrm_to_ip_address(family, dstx, &dst);
+	if (ugh != NULL) {
 		libreswan_log(
 			"XFRM_MSG_POLEXPIRE message from kernel malformed: %s",
 			ugh);
@@ -1598,19 +1565,18 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	}
 }
 
+/* returns FALSE iff EAGAIN */
 static bool netlink_get(void)
 {
 	struct {
 		struct nlmsghdr n;
 		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
-	ssize_t r;
 	struct sockaddr_nl addr;
-	socklen_t alen;
-
-	alen = sizeof(addr);
-	r = recvfrom(netlink_bcast_fd, &rsp, sizeof(rsp), 0,
+	socklen_t alen = sizeof(addr);
+	ssize_t r = recvfrom(netlink_bcast_fd, &rsp, sizeof(rsp), 0,
 		(struct sockaddr *)&addr, &alen);
+
 	if (r < 0) {
 		if (errno == EAGAIN)
 			return FALSE;
@@ -1618,7 +1584,7 @@ static bool netlink_get(void)
 		if (errno != EINTR)
 			log_errno((e, "recvfrom() failed in netlink_get"));
 		return TRUE;
-	} else if ((size_t) r < sizeof(rsp.n)) {
+	} else if ((size_t)r < sizeof(rsp.n)) {
 		libreswan_log(
 			"netlink_get read truncated message: %ld bytes; ignore message",
 			(long) r);
@@ -1631,7 +1597,7 @@ static bool netlink_get(void)
 						rsp.n.nlmsg_type),
 				addr.nl_pid));
 		return TRUE;
-	} else if ((size_t) r != rsp.n.nlmsg_len) {
+	} else if ((size_t)r != rsp.n.nlmsg_len) {
 		libreswan_log(
 			"netlink_get read message with length %ld that doesn't equal nlmsg_len %lu bytes; ignore message",
 			(long) r,
@@ -1660,8 +1626,7 @@ static bool netlink_get(void)
 
 static void netlink_process_msg(void)
 {
-	while (netlink_get())
-		;
+	do {} while (netlink_get());
 }
 
 static ipsec_spi_t netlink_get_spi(const ip_address *src,
@@ -1685,7 +1650,6 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 		} u;
 		char data[MAX_NETLINK_DATA_SIZE];
 	} rsp;
-	static bool get_cpi_bug = FALSE;	/* sticky after failure */
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -1702,21 +1666,27 @@ static ipsec_spi_t netlink_get_spi(const ip_address *src,
 
 	rsp.n.nlmsg_type = XFRM_MSG_NEWSA;
 
-retry:
-	req.spi.min = get_cpi_bug ? htonl(min) : min;
-	req.spi.max = get_cpi_bug ? htonl(max) : max;
-
+	req.spi.min = min;
+	req.spi.max = max;
 	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), "Get SPI",
 				text_said)) {
 		return 0;
-	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
-		if (rsp.u.e.error == -EINVAL && proto == IPPROTO_COMP &&
-			!get_cpi_bug) {
-			get_cpi_bug = TRUE;
-			libreswan_log("netlink_get_spi: Enabling workaround for kernel CPI allocation bug");
-			goto retry;
-		}
+	}
 
+	if (rsp.n.nlmsg_type == NLMSG_ERROR &&
+		rsp.u.e.error == -EINVAL &&
+		proto == IPPROTO_COMP) {
+		libreswan_log("netlink_get_spi: trying workaround for kernel CPI allocation bug");
+
+		req.spi.min = htonl(min);
+		req.spi.max = htonl(max);
+		if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), "Get SPI",
+					text_said)) {
+			return 0;
+		}
+	}
+
+	if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		loglog(RC_LOG_SERIOUS,
 			"ERROR: netlink_get_spi for %s failed with errno %d: %s",
 			text_said, -rsp.u.e.error, strerror(-rsp.u.e.error));
@@ -1803,8 +1773,8 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 	}
 
 	/* check for no transform at all */
-	passert(!(!st->st_ipcomp.present && !st->st_esp.present &&
-			!st->st_ah.present));
+	passert(st->st_ipcomp.present || st->st_esp.present ||
+			st->st_ah.present);
 
 	if (tunnel) {
 		int j;
@@ -1838,10 +1808,8 @@ static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
 	deltatime_t idle_time;
 
 	passert(st != NULL);
-	if (!get_sa_info(st, TRUE, &idle_time))
-		return TRUE;
-	else
-		return !deltaless(idle_time, idle_max);
+	return !get_sa_info(st, TRUE, &idle_time) ||
+		!deltaless(idle_time, idle_max);
 }
 
 static bool netlink_shunt_eroute(struct connection *c,
@@ -1905,7 +1873,10 @@ static bool netlink_shunt_eroute(struct connection *c,
 			eclipse_count--;
 			break;
 		case ERO_DELETE:
-			/* delete unnecessary: we don't actually have an eroute */
+			/*
+			 * delete unnecessary:
+			 * we don't actually have an eroute
+			 */
 			eclipse_count--;
 			return TRUE;
 
@@ -2011,7 +1982,7 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
 		struct raw_iface *v = NULL;	/* matching ipsecX interface */
-		struct raw_iface fake_v;
+		struct raw_iface fake_v;	/* v might point here */
 		bool after = FALSE;	/* has vfp passed ifp on the list? */
 		bool bad = FALSE;
 		struct raw_iface *vfp;
@@ -2084,8 +2055,12 @@ static void netlink_process_raw_ifaces(struct raw_iface *rifaces)
 		/* what if we didn't find a virtual interface? */
 		if (v == NULL) {
 			if (kern_interface == NO_KERNEL) {
-				/* kludge for testing: invent a virtual device */
+				/*
+				 * kludge for testing:
+				 * invent a virtual device
+				 */
 				static const char fvp[] = "virtual";
+
 				fake_v = *ifp;
 				passert(sizeof(fake_v.name) > sizeof(fvp));
 				strcpy(fake_v.name, fvp);
@@ -2135,7 +2110,10 @@ add_entry:
 
 				/* search is over if at end of list */
 				if (q == NULL) {
-					/* matches nothing -- create a new entry */
+					/*
+					 * matches nothing --
+					 * create a new entry
+					 */
 					ipstr_buf b;
 					int fd = create_socket(ifp, v->name,
 							pluto_port);
@@ -2196,7 +2174,7 @@ add_entry:
 
 						q->ip_addr = ifp->addr;
 						setportof(htons(pluto_nat_port),
-							  &q->ip_addr);
+							&q->ip_addr);
 						q->port = pluto_nat_port;
 						q->fd = fd;
 						q->next = interfaces;
@@ -2252,7 +2230,8 @@ add_entry:
 	}
 }
 
-/* netlink_get_sa - Get SA information from the kernel
+/*
+ * netlink_get_sa - Get SA information from the kernel
  *
  * @param sa Kernel SA to be queried
  * @return bool True if successful
@@ -2321,9 +2300,9 @@ static bool netkey_do_command(struct connection *c, struct spd_route *sr,
 					&sr->this.host_addr) ? hs : cs;
 	}
 
-	if (fmt_common_shell_out(common_shell_out_str,
-					sizeof(common_shell_out_str), c, sr,
-					st) == -1) {
+	if (-1 == fmt_common_shell_out(common_shell_out_str,
+					sizeof(common_shell_out_str),
+					c, sr, st)) {
 		loglog(RC_LOG_SERIOUS, "%s%s command too long!", verb,
 			verb_suffix);
 		return FALSE;

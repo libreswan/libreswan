@@ -359,7 +359,7 @@ extern ipsec_spi_t get_my_cpi(struct spd_route *sr, bool tunnel_mode);
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
-extern void delete_ipsec_sa(struct state *st, bool inbound_only);
+extern void delete_ipsec_sa(struct state *st);
 extern bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
 			     struct state *st);
@@ -396,6 +396,7 @@ extern const struct kernel_ops mast_kernel_ops;
 extern bool kernel_overlap_supported(void);
 extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
+extern void free_kernelfd(void);
 
 /*
  * Used to pass default priority from kernel_ops-> functions.

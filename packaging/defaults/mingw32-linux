@@ -1,6 +1,5 @@
 
 # this is the debian installed mingw32 package.
-USE_OBJDIR=true
 CC=i586-mingw32msvc-gcc
 AR=i586-mingw32msvc-ar
 CYGWINDIR?=/0g/sandboxes/cygwin

@@ -132,7 +132,7 @@ north #
  # testing passthrough plaintext
 north #
  echo quit | nc 192.0.2.254 22
-SSH-2.0-OpenSSH_6.4
+SSH-2.0-OpenSSH_XXX
 Protocol mismatch.
 north #
  ip addr show dev ppp0

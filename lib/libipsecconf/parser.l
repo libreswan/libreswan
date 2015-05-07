@@ -163,8 +163,9 @@ static int parser_y_nextglobfile(struct ic_inputsource *iis)
 	f = fopen(iis->filename, "r");
 	if (f == NULL) {
 		char ebuf[128];
+
 		snprintf(ebuf, sizeof(ebuf),
-			"can not open include filename: '%s'",
+			"cannot open include filename: '%s'",
 			iis->fileglob.gl_pathv[fcnt]);
 		yyerror(ebuf);
 		return -1;

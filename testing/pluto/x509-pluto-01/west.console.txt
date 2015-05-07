@@ -53,13 +53,13 @@ west #
 000 "westnet-eastnet-x509-nosend":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=west; hiscert=east
 000 "westnet-eastnet-x509-nosend":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-x509-nosend":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
-000 "westnet-eastnet-x509-nosend":   labeled_ipsec:no, loopback:no; 
+000 "westnet-eastnet-x509-nosend":   labeled_ipsec:no; 
 000 "westnet-eastnet-x509-nosend":    policy_label:unset; 
 000 "westnet-eastnet-x509-nosend":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-x509-nosend":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-x509-nosend":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-x509-nosend":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "westnet-eastnet-x509-nosend":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-x509-nosend":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "westnet-eastnet-x509-nosend":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-x509-nosend":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 west #

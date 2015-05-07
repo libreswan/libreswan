@@ -10,6 +10,6 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 
 TESTCASE=spi01
 
-include ${srcdir}../Makefile.pfkey
+include ${SRCDIR}../Makefile.pfkey
 
 spi01.o: ../../../programs/spi/spi.c

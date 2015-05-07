@@ -49,6 +49,7 @@ enum keyword_string_config_field {
 	KSF_MYVENDORID,
 	KSF_PLUTOSTDERRLOG,
 	KSF_PROTOSTACK,
+	KSF_DDOS_MODE,
 	KSF_IKE,
 	KSF_ESP,
 	KSF_ALSO,
@@ -60,6 +61,8 @@ enum keyword_string_config_field {
 	KSF_MODECFGDNS2,
 	KSF_MODECFGDOMAIN,
 	KSF_MODECFGBANNER,
+	KSF_OCSPURI,
+	KSF_OCSPTRUSTNAME,
 	KSF_MAX
 };
 
@@ -73,6 +76,7 @@ enum keyword_numeric_config_field {
 	KBF_HIDETOS,
 	KBF_UNIQUEIDS,
 	KBF_PLUTOSTDERRLOGTIME,
+	KBF_PLUTOSTDERRLOGAPPEND,
 	KBF_IKEPORT,
 	KBF_PLUTOFORK,
 	KBF_PERPEERLOG,
@@ -81,6 +85,9 @@ enum keyword_numeric_config_field {
 	KBF_PRIORITY,
 	KBF_REQID,
 	KBF_STRICTCRLPOLICY,
+	KBF_STRICTOCSPPOLICY,
+	KBF_OCSPENABLE,
+	KBF_OCSPTIMEOUT,
 	KBF_SEND_CA,
 	KBF_NATIKEPORT,
 	KBF_SEEDBITS,
@@ -108,17 +115,21 @@ enum keyword_numeric_config_field {
 	KBF_KEYINGTRIES,
 	KBF_ARRIVALCHECK,
 	KBF_IKELIFETIME,
+	KBF_RETRANSMIT_TIMEOUT,
+	KBF_RETRANSMIT_INTERVAL,
 	KBF_AGGRMODE,
 	KBF_MODECONFIGPULL,
 	KBF_FORCEENCAP,
 	KBF_IKEv2,
 	KBF_IKEv2_ALLOW_NARROWING,
+	KBF_IKEv2_PAM_AUTHORIZE,
 	KBF_CONNADDRFAMILY,
-	KBF_FORCEBUSY,
+	KBF_FORCEBUSY, /* obsoleted for KBF_DDOS_MODE */
+	KBF_DDOS_IKE_TRESHOLD,
+	KBF_MAX_HALFOPEN_IKE,
 	KBF_OVERLAPIP,
 	KBF_REMOTEPEERTYPE,     /*Cisco interop: remote peer type */
 	KBF_NMCONFIGURED,       /*Network Manager support */
-	KBF_LOOPBACK,
 	KBF_LABELED_IPSEC,
 	KBF_SAREFTRACK,         /* saref tracking paramter for _updown */
 	KBF_WARNIGNORE,         /* to ignore obsoleted keywords */
@@ -132,6 +143,8 @@ enum keyword_numeric_config_field {
 	KBF_SEND_VENDORID,      /* per conn sending of our own libreswan vendorid */
 	KBF_IKEPAD,             /* pad IKE packets to 4 bytes */
 	KBF_IKEV1_NATT,		/* ikev1 NAT-T payloads to send/process */
+	KBF_NFLOG_ALL,
+	KBF_NFLOG_CONN,
 	KBF_MAX
 };
 

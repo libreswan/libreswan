@@ -44,7 +44,7 @@
  */
 
 #define WHACK_BASIC_MAGIC (((((('w' << 8) + 'h') << 8) + 'k') << 8) + 25)
-#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 41)
+#define WHACK_MAGIC (((((('o' << 8) + 'h') << 8) + 'k') << 8) + 42)
 
 /* struct whack_end is a lot like connection.h's struct end
  * It differs because it is going to be shipped down a socket
@@ -98,12 +98,10 @@ enum whack_opt_set {
 struct whack_message {
 	unsigned int magic;
 
-	/* for WHACK_STATUS: */
 	bool whack_status;
-
+	bool whack_global_status;
 	bool whack_traffic_status;
 
-	/* for WHACK_SHUTDOWN */
 	bool whack_shutdown;
 
 	/* END OF BASIC COMMANDS
@@ -131,6 +129,8 @@ struct whack_message {
 	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
+	deltatime_t r_timeout; /* in secs */
+	unsigned long  r_interval; /* in msec */
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */
 	deltatime_t dpd_delay;
@@ -178,8 +178,8 @@ struct whack_message {
 
 	int sa_priority;
 	reqid_t sa_reqid;
+	int nflog_group;
 
-	bool loopback;
 	bool labeled_ipsec;
 	char *policy_label;
 
@@ -231,12 +231,25 @@ struct whack_message {
 	bool whack_deletestate;
 	long unsigned int whack_deletestateno;
 
+	/* for WHACK_NFLOG_GROUP: */
+	long unsigned int whack_nfloggroup;
+
 	/* for WHACK_DELETEUSER: */
 	bool whack_deleteuser;
 	bool whack_deleteuser_name;
 
+	/* for WHACK_DELETEUSER: */
+	bool whack_deleteid;
+	bool whack_deleteid_name;
+
+	/* for WHACK_PURGEOCSP */
+	bool whack_purgeocsp;
+
 	/* for WHACK_LISTEN: */
 	bool whack_listen, whack_unlisten;
+
+	/* for DDOS modes */
+	enum ddos_mode whack_ddos;
 
 	/* for WHACK_CRASH - note if a remote peer is known to have rebooted */
 	bool whack_crash;

@@ -12,14 +12,13 @@
 # for more details.
 #
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-include ${LIBRESWANSRCDIR}/Makefile.inc
-
 PROGRAM=showhostkey
 
-include ${srcdir}../Makefile.program
-
-CFLAGS+= -lm
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../mk/program.mk
+endif
 
 # Enable for workaround for bug in nspr 4.8.2 
 #CFLAGS+=-Wno-strict-prototypes

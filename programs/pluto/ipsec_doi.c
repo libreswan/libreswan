@@ -1,4 +1,5 @@
 /* IPsec DOI and Oakley resolution routines
+ *
  * Copyright (C) 1997 Angelos D. Keromytis.
  * Copyright (C) 1998-2002,2010-2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2006  Michael Richardson <mcr@xelerance.com>
@@ -9,6 +10,7 @@
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
+ * Copyright (C) 2014 Andrew Cagney <andrew.cagney@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,7 +63,6 @@
 #include "ikev1_quick.h"
 #include "whack.h"
 #include "fetch.h"
-#include "pkcs.h"
 #include "asn1.h"
 
 #include "sha1.h"
@@ -82,7 +83,7 @@
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 /* MAGIC: perform f, a function that returns notification_t
  * and return from the ENCLOSING stf_status returning function if it fails.
@@ -471,6 +472,9 @@ bool extract_peer_id(struct id *peer, const pb_stream *id_pbs)
 		    DBG_dump_chunk("DER ASN1 DN:", peer->name));
 		break;
 
+	case ID_NULL:
+		break;
+
 	default:
 		/* XXX Could send notification back */
 		loglog(RC_LOG_SERIOUS,
@@ -518,6 +522,11 @@ void initialize_new_state(struct state *st,
 
 bool send_delete(struct state *st)
 {
+	if (DBGP(IMPAIR_SEND_NO_DELETE)) {
+		DBG(DBG_CONTROL,
+			DBG_log("send_delete(): impair-send-no-delete set - not sending Delete/Notify"));
+		return TRUE;
+	}
 	return st->st_ikev2 ? ikev2_delete_out(st) : ikev1_delete_out(st);
 }
 
@@ -618,43 +627,72 @@ void fmt_ipsec_sa_established(struct state *st, char *sadetails, size_t sad_len)
 	add_str(sadetails, sad_len, b, "}");
 }
 
-void fmt_isakmp_sa_established(struct state *st, char *sadetails, size_t sad_len)
+void fmt_isakmp_sa_established(struct state *st, char *sa_details,
+			       size_t sa_details_size)
 {
-
-	/* document ISAKMP SA details for admin's pleasure */
-	char *b = sadetails;
-	const char *authname, *prfname;
-	const char *integstr, *integname;
-	char integname_tmp[20];
-
 	passert(st->st_oakley.encrypter != NULL);
 	passert(st->st_oakley.prf_hasher != NULL);
 	passert(st->st_oakley.group != NULL);
+	/*
+	 * Note: for IKEv1 and AEAD encrypters,
+	 * st->st_oakley.integ_hasher is NULL!
+	 */
 
+	const char *auth_name;
 	if (st->st_ikev2) {
-		authname = "IKEv2";
-		integstr = " integ=";
-		prfname = "prf=";
-		snprintf(integname_tmp, sizeof(integname_tmp), "%s_%zu",
-			 st->st_oakley.integ_hasher->common.officname,
-			 st->st_oakley.integ_hasher->hash_integ_len *
-			 BITS_PER_BYTE);
-		integname = (const char*)integname_tmp;
+		auth_name = "IKEv2";
 	} else {
-		authname = enum_show(&oakley_auth_names, st->st_oakley.auth);
-		integstr = "";
-		integname = "";
-		prfname = "integ=";
+		auth_name = enum_show(&oakley_auth_names, st->st_oakley.auth);
+		auth_name = strip_prefix(auth_name, "OAKLEY_");
 	}
 
-	snprintf(b, sad_len - (b - sadetails) - 1,
-		 " {auth=%s cipher=%s_%d%s%s %s%s group=%s}",
-		 strip_prefix(authname,"OAKLEY_"),
+	/*
+	 * [2015-01-10] Some PRFs get their common.name set to
+	 * "OAKLEY_..." and this leads to the below printing the full
+	 * uppercase name (e.x., prf=OAKLEY_SHA2_256).  This is an
+	 * historic "feature".  See ike_alg.c:ike_alg_register_hash
+	 * for where those names come from.
+	 */
+	const char *prf_common_name =
+		strip_prefix(st->st_oakley.prf_hasher->common.name,
+			     "oakley_");
+
+	char prf_name[30] = "";
+	if (st->st_ikev2) {
+		snprintf(prf_name, sizeof(prf_name),
+			 " prf=%s", prf_common_name);
+	}
+
+	char integ_name[30] = "";
+	if (st->st_ikev2) {
+		if (st->st_oakley.integ_hasher == NULL) {
+			jam_str(integ_name, sizeof(integ_name), " integ=n/a");
+		} else {
+			snprintf(integ_name, sizeof(integ_name),
+				 " integ=%s_%zu",
+				 st->st_oakley.integ_hasher->common.officname,
+				 (st->st_oakley.integ_hasher->hash_integ_len *
+				  BITS_PER_BYTE));
+		}
+	} else {
+		/*
+		 * For IKEv1, since the INTEG algorithm is potentially
+		 * (always?) NULL.  Display the PRF.  The choice and
+		 * behaviour are historic.
+		 */
+		snprintf(integ_name, sizeof(integ_name),
+			 " integ=%s", prf_common_name);
+	}
+
+	const char *group_name = enum_name(&oakley_group_names,
+					   st->st_oakley.group->group);
+	group_name = strip_prefix(group_name, "OAKLEY_GROUP_");
+
+	snprintf(sa_details, sa_details_size,
+		 " {auth=%s cipher=%s_%d%s%s group=%s}",
+		 auth_name,
 		 st->st_oakley.encrypter->common.name,
 		 st->st_oakley.enckeylen,
-		 integstr, integname,
-		 prfname,
-		 strip_prefix(st->st_oakley.prf_hasher->common.name,"oakley_"),
-		 strip_prefix(enum_name(&oakley_group_names, st->st_oakley.group->group), "OAKLEY_GROUP_"));
+		 integ_name, prf_name, group_name);
 	st->hidden_variables.st_logged_p1algos = TRUE;
 }

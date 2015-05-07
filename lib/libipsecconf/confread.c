@@ -87,26 +87,32 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	TAILQ_INIT(&cfg->conns);
 
+	/* config setup */
 	cfg->setup.options[KBF_FRAGICMP] = FALSE; /* see sysctl_ipsec_icmp in ipsec_proc.c */
 	cfg->setup.options[KBF_HIDETOS]  = TRUE;
 	cfg->setup.options[KBF_PLUTORESTARTONCRASH]  = TRUE;
-	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = FALSE;
+	cfg->setup.options[KBF_PLUTOSTDERRLOGTIME]  = TRUE;
+	cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND]  = TRUE;
 	cfg->setup.options[KBF_UNIQUEIDS] = TRUE;
 	cfg->setup.options[KBF_PLUTOFORK] = TRUE; /* change in the future */
 	cfg->setup.options[KBF_PERPEERLOG] = FALSE;
 	cfg->setup.options[KBF_IKEPORT] = IKE_UDP_PORT;
+	cfg->setup.options[KBF_NFLOG_ALL] = 0; /* disabled per default */
 	cfg->setup.options[KBF_NHELPERS] = -1; /* see also plutomain.c */
 
 	cfg->setup.options[KBF_KEEPALIVE] = 0;                  /* config setup */
 	cfg->setup.options[KBF_NATIKEPORT] = NAT_IKE_UDP_PORT;
-
+	cfg->setup.options[KBF_DDOS_IKE_TRESHOLD] = DEFAULT_IKE_SA_DDOS_TRESHOLD;
+	cfg->setup.options[KBF_MAX_HALFOPEN_IKE] = DEFAULT_MAXIMIM_HALFOPEN_IKE_SA;
 	/* Don't inflict BSI requirements on everyone */
 	cfg->setup.options[KBF_SEEDBITS] = 0;
 
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;
 #endif
+	cfg->setup.options[KSF_DDOS_MODE] = DDOS_AUTO;
 
+	/* conn %default */
 	cfg->conn_default.options[KBF_NAT_KEEPALIVE] = TRUE;    /* per conn */
 	cfg->conn_default.options[KBF_TYPE] = KS_TUNNEL;
 
@@ -128,7 +134,6 @@ void ipsecconf_default_values(struct starter_config *cfg)
 #endif
 
 #ifdef HAVE_LABELED_IPSEC
-	cfg->conn_default.options[KBF_LOOPBACK] = FALSE;
 	cfg->conn_default.options[KBF_LABELED_IPSEC] = FALSE;
 #endif
 
@@ -143,6 +148,10 @@ void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->conn_default.options[KBF_IKELIFETIME] =
 		OAKLEY_ISAKMP_SA_LIFETIME_DEFAULT;
+
+	cfg->conn_default.options[KBF_RETRANSMIT_TIMEOUT] = RETRANSMIT_TIMEOUT_DEFAULT;
+	cfg->conn_default.options[KBF_RETRANSMIT_INTERVAL] = RETRANSMIT_INTERVAL_DEFAULT;
+
 	cfg->conn_default.options[KBF_SALIFETIME]  = SA_LIFE_DURATION_DEFAULT;
 	cfg->conn_default.options[KBF_REKEYMARGIN] =
 		SA_REPLACEMENT_MARGIN_DEFAULT;
@@ -1129,8 +1138,8 @@ static bool load_conn(struct ub_ctx *dnsctx,
 		conn->policy &= ~(POLICY_ID_AUTH_MASK);
 
 #ifdef FIPS_CHECK
-		if (Pluto_IsFIPS()) {
-			if (LIN(POLICY_PSK, conn->options[KBF_AUTHBY]) {
+		if (libreswan_fipsmode()) {
+			if (LIN(POLICY_PSK, conn->options[KBF_AUTHBY])) {
 				starter_log(LOG_LEVEL_INFO,
 					    "while loading conn '%s', PSK not allowed in FIPS mode with NSS",
 					    conn->name);
@@ -1162,6 +1171,9 @@ static bool load_conn(struct ub_ctx *dnsctx,
 
 	KW_POLICY_FLAG(KBF_IKEv2_ALLOW_NARROWING,
 		       POLICY_IKEV2_ALLOW_NARROWING);
+
+	KW_POLICY_FLAG(KBF_IKEv2_PAM_AUTHORIZE,
+		       POLICY_IKEV2_PAM_AUTHORIZE);
 
 	if (conn->strings_set[KSF_ESP])
 		conn->esp = clone_str(conn->strings[KSF_ESP],"KSF_ESP");

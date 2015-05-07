@@ -19,6 +19,7 @@ if os.path.isfile("/usr/sbin/ipsec") or os.path.isfile("/sbin/ipsec"):
                              "ABORT: found a swan userland in the base system as well as /usr/local\n"
 			     "---------------------------------------------------------------------\n")    
 
+os.environ['NSS_DEFAULT_DB_TYPE'] = 'sql:'
 
 # just in case a new copy was installed
 if os.path.isfile("/usr/local/sbin/ipsec") and os.path.isfile("/usr/sbin/restorecon"):
@@ -33,7 +34,9 @@ parser.add_argument('--hostname', '-H', action='store', default='', help='The na
 parser.add_argument('--userland', '-u', action='store', default='libreswan', help='which userland to prepapre')
 parser.add_argument('--x509', '-x', action='store_true',  help='create X509 NSS file by importing test certs')
 parser.add_argument('--revoked', '-r', action='store_true',  help='load a revoked certificate')
+parser.add_argument('--signedbyother', '-o', action='store_true',  help='load the signedbyother certificate')
 parser.add_argument('--eccert', '-e', action='store_true', help='enable an EC cert for this host')
+parser.add_argument('--nsspw', '-P', action='store_true', help='enable an nss passworded db')
 parser.add_argument('--certchain', '-c', action='store_true', help='import the ca-chain test certs')
 parser.add_argument('--46', '--64', action='store_true', help='Do not disable IPv6. Default is disable IPv6 ', dest = 'ipv', default = False)
 parser.add_argument('--6', action='store_true', help='Enable IPv6 and run - /etc/init.d/network restart', dest = 'ipv6', default = False)
@@ -50,23 +53,23 @@ if "." in hostname:
 	hostname = hostname.split(".")[0]
 
 if args.testname:
-	#if os.path.isdir("/testing/pluto/%s"%args.testname):
-	#	testname = args.testname
-	#else:
-	#	sys.exit("Unknown or bad testname '%s'"%args.testname)
+        # Should this instead try to guess /testing/pluto prefix, or
+        # allow testname to specify a directory path?
 	testname = args.testname
-else:
-	testpath = "/testing/pluto/%s"%os.path.basename(os.getcwd())
-	testname = os.path.basename(testpath)
+        testpath = "/testing/pluto/" + testname
 	if not os.path.isdir(testpath):
-		sys.exit("testcase /testing/pluto/%s invalid - aborted"%testname)
+		sys.exit("Unknown or bad testname '%s'"%args.testname)
+else:
+        # Validate this is sane?
+	testpath = os.getcwd()
+	testname = os.path.basename(testpath)
 
 # Setup pluto.log softlink
 if hostname != "nic":
 	if os.path.isfile("/tmp/pluto.log") or os.path.islink("/tmp/pluto.log"):
 		os.unlink("/tmp/pluto.log")
 
-	outputdir="/testing/pluto/%s/OUTPUT/"%testname
+	outputdir="%s/OUTPUT/"%testpath
 	if  not os.path.isdir(outputdir):
 		os.mkdir(outputdir)
 		os.chmod(outputdir, 0777)
@@ -150,11 +153,11 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 				os.chmod(dir,0700)
 
 	# test specific files
-	ipsecconf = "/testing/pluto/%s/%s.conf"%(testname,hostname)
-	ipsecsecrets = "/testing/pluto/%s/%s.secrets"%(testname,hostname)
-	xl2tpdconf = "/testing/pluto/%s/%s.xl2tpd.conf"%(testname,hostname)
-	pppoptions = "/testing/pluto/%s/%s.ppp-options.xl2tpd"%(testname,hostname)
-	chapfile = "/testing/pluto/%s/chap-secrets"%testname
+	ipsecconf = "%s/%s.conf"%(testpath,hostname)
+	ipsecsecrets = "%s/%s.secrets"%(testpath,hostname)
+	xl2tpdconf = "%s/%s.xl2tpd.conf"%(testpath,hostname)
+	pppoptions = "%s/%s.ppp-options.xl2tpd"%(testpath,hostname)
+	chapfile = "%s/chap-secrets"%testpath
 
 	if not os.path.isfile(ipsecconf):
 		ipsecconf = "/testing/baseconfigs/%s/etc/ipsec.conf"%hostname
@@ -162,7 +165,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 		ipsecsecrets = "/testing/baseconfigs/%s/etc/ipsec.secrets"%hostname
 
 	if args.userland == "strongswan":
-		strongswanconf = "/testing/pluto/%s/%sstrongswan.conf"%(testname,hostname)
+		strongswanconf = "%s/%sstrongswan.conf"%(testpath,hostname)
 		shutil.copy(strongswanconf, "/etc/strongswan/strongswan.conf")
 		for dir in ( "/etc/strongswan/ipsec.d/aacerts", "/etc/strongswan/ipsec.d/ocspcerts"):
 			if not os.path.isdir(dir):
@@ -185,20 +188,44 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	for dbfile in dbfiles:
 		os.chown(dbfile,0,0)
 
+	# restore /etc/hosts to original - some tests make changes
+	shutil.copyfile("/testing/baseconfigs/all/etc/hosts", "/etc/hosts")
+	resolv = "/testing/baseconfigs/all/etc/resolv.conf"
+	if os.path.isfile("/testing/baseconfigs/%s/etc/resolv.conf"%hostname):
+		resolv = "/testing/baseconfigs/%s/etc/resolv.conf"%hostname
+	else:
+		resolv = "/testing/baseconfigs/all/etc/resolv.conf"
+	shutil.copyfile(resolv, "/etc/resolv.conf")
+
+	# this section is getting rough. could use a nice refactoring
 	if args.x509: 
 		if (userland == "libreswan" or userland == "openswan"):
 			print "Preparing X.509 files"
-			# clean out old db files and generate new ones from scratch, does not support -w for password
+			dbpassword = ''
+			util_pw = ''
+			p12cmd_pw = ''
+
+			if args.nsspw:
+				dbpassword = 's3cret'
+				util_pw = ' -f /etc/ipsec.d/nsspassword'
+				p12cmd_pw = ' -k /etc/ipsec.d/nsspassword'
+				if not os.path.isfile('/etc/ipsec.d/nsspassword'):
+					with open('/etc/ipsec.d/nsspassword', 'w') as f:
+						f.write(dbpassword + '\n')
+
+			# clean out old db files and generate new ones from scratch
+			# certutil accepts --empty-password, however the following way
+			# is useful for both empty and passworded tests.
+
 			oldfiles = glob.glob("/etc/ipsec.d/*db")
 			for oldfile in oldfiles:
 				os.unlink(oldfile)
-			cmd = "certutil -N -d /etc/ipsec.d"
-			timer = 10
-			child = pexpect.spawn(cmd)
-			child.expect ('(?i)password')
-			child.sendline ('')
-			child.expect ('(?i)password')
-			child.sendline ('')
+			commands.getoutput("certutil -N --empty-password -d sql:/etc/ipsec.d")
+
+			if not os.path.isfile("/testing/x509/keys/mainca.key"):
+				print("\n\n---------------------------------------------------------------------\n"
+					  "WARNING: no mainca.key file, did you run testing/x509/dist_certs.py?\n"
+					  "---------------------------------------------------------------------\n")
 
 			if args.eccert:
 				p12 = hostname + "-ec"
@@ -210,40 +237,51 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 				pw = "-w /testing/x509/nss-pw"
 
 			if args.certchain:
-				icanum = 3
+				icanum = 2
 				pw = "-w /testing/x509/nss-pw"
-				root = hostname + "_chain_root"
-				ica_p = hostname + "_chain_intermediate_"
+				root = "mainca"
+				ica_p = hostname + "_chain_int_"
 				ee = hostname + "_chain_endcert"
 
-				# install root
-				commands.getoutput("certutil -A -n %s -t 'c,,' -d /etc/ipsec.d/ \
-									-a -i /testing/x509/cacerts/%s.crt" % (root,root))
+				# a note about DB trusts
+				# 'CT,,' is our root's trust. T is important!! it is for verifying "SSLClient" x509 KU
+				# ',,' is an intermediate's trust
+				# 'P,,' (trusted peer) is nic's for OCSP
+				# 'u,u,u' will be end cert trusts that are p12 imported (with privkey)
+
+				#mainca and nic import
+				commands.getoutput("certutil -A -n %s -t 'CT,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/cacerts/%s.crt%s" % (root, root, util_pw))
+				commands.getoutput("certutil -A -n nic -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/nic.crt%s" % util_pw)
+
+				# install ee
+				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s.p12 -d sql:/etc/ipsec.d %s%s" % (ee, pw, p12cmd_pw))
 
 				# install intermediates
 				for i in range(1, icanum+1):
 					acrt = ica_p + str(i)
-					commands.getoutput("certutil -A -n %s -t 'c,,' -d /etc/ipsec.d/ \
-										-a -i /testing/x509/cacerts/%s.crt" % (acrt,acrt))
-				# install ee
-				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s.p12 -d /etc/ipsec.d %s" % (ee, pw))
+					commands.getoutput("certutil -A -n %s -t ',,' -d sql:/etc/ipsec.d/ \
+										-a -i /testing/x509/certs/%s.crt%s" % (acrt,acrt, util_pw))
+				if args.revoked:
+					commands.getoutput("pk12util -i /testing/x509/pkcs12/%s_revoked.p12 -d /etc/ipsec.d %s%s" % (hostname + "_chain", pw, p12cmd_pw))
 
-				# install the other side's root CA
-				for side in ( "west", "east"):
-					if not hostname in side:
-						commands.getoutput("certutil -A -n %s_chain_root -t 'c,,' -d /etc/ipsec.d/ \
-											-a -i /testing/x509/cacerts/%s_chain_root.crt" % (side,side))
 			else:
-				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -d /etc/ipsec.d %s"%(ca,p12,pw))
+				commands.getoutput("pk12util -i /testing/x509/pkcs12/%s/%s.p12 -K '' -d sql:/etc/ipsec.d %s%s"%(ca, p12, pw, p12cmd_pw))
 				# install all other public certs
 				# libreswanhost = os.getenv("LIBRESWANHOSTS") #kvmsetu.sh is not sourced
 
 				if args.revoked:
-					commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d /etc/ipsec.d %s" % pw)
+					commands.getoutput("pk12util -i /testing/x509/pkcs12/mainca/revoked.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
 
-				for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec"):
+				if args.signedbyother:
+					commands.getoutput("pk12util -i /testing/x509/pkcs12/otherca/signedbyother.p12 -d sql:/etc/ipsec.d %s%s" % (pw, p12cmd_pw))
+
+				# fix trust import from p12
+				# is pw needed?
+				commands.getoutput("certutil -M -n 'Libreswan test CA for mainca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'")
+
+				for certname in ( "west", "east", "road", "north", "hashsha2", "west-ec", "east-ec", "nic"):
 					if not hostname in certname:
-						commands.getoutput("certutil -A -n %s -t 'P,u' -d /etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt"%(certname,certname))
+						commands.getoutput("certutil -A -n %s -t 'P,,' -d sql:/etc/ipsec.d/ -a -i /testing/x509/certs/%s.crt%s"%(certname,certname,util_pw))
 		elif userland == "strongswan":
 			if args.eccert:
 				ca = "curveca"
@@ -260,8 +298,8 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 
 if userland == "racoon2" or userland == "racoon":
 	# Racoon uses x509 files straight from /testing/x509/*
-	# shutil.copytree("/testing/pluto/%s/%s-racoon/"%(testname,hostname), "/etc/racoon2/")
-	distutils.dir_util.copy_tree("/testing/pluto/%s/%s-racoon"%(testname,hostname), "/etc/racoon2/")
+	# shutil.copytree("%s/%s-racoon/"%(testpath,hostname), "/etc/racoon2/")
+	distutils.dir_util.copy_tree("%s/%s-racoon"%(testpath,hostname), "/etc/racoon2/")
 	os.chmod("/etc/racoon2/psk/test.psk", 0600)
 	os.chmod("/etc/racoon2/spmd.pwd", 0600)
 	if not os.path.isdir("/var/run/racoon2"):

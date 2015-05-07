@@ -13,13 +13,20 @@ EnvironmentFile=-@FINALSYSCONFDIR@/sysconfig/pluto
 #Environment=IPSEC_EXECDIR=@FINALSBINDIR@/ipsec
 #PIDFile=@FINALVARDIR@/run/pluto/pluto.pid
 #
+# Check configuration file
 ExecStartPre=@FINALLIBEXECDIR@/addconn --config @FINALCONFFILE@ --checkconfig
+# Check for kernel modules
 ExecStartPre=@FINALLIBEXECDIR@/_stackmanager start
+# Check for nss database status and migration
 ExecStartPre=@FINALSBINDIR@/ipsec --checknss
+# Check for nflog setup
+ExecStartPre=@FINALSBINDIR@/ipsec --checknflog
+# Start the actual IKE daemon
 ExecStart=@FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS
 ExecStop=@FINALLIBEXECDIR@/whack --shutdown
 ExecStopPost=/sbin/ip xfrm policy flush
 ExecStopPost=/sbin/ip xfrm state flush
+ExecStopPost=@FINALSBINDIR@/ipsec --stopnflog
 ExecReload=@FINALLIBEXECDIR@/whack --listen
 
 [Install]

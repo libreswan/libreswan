@@ -454,7 +454,7 @@ int ipsec_version_show(struct seq_file *seq, void *offset)
 	KLIPS_PRINT(debug_tunnel & DB_TN_PROCFS,
 		    "klips_debug:ipsec_version_show: seq=%p offset=%p\n",
 		    seq, offset);
-	seq_printf(seq, "Openswan version: %s\n", ipsec_version_code());
+	seq_printf(seq, "Libreswan version: %s\n", ipsec_version_code());
 	return 0;
 }
 

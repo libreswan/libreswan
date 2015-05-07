@@ -7,7 +7,7 @@
  * Copyright (C) 1998-2004  D. Hugh Redelmeier.
  * Copyright (C) 2005 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009-2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
+ * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,8 +19,6 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
-#include <math.h>
-
 #include <pthread.h>	/* pthread.h must be first include file */
 #include <stddef.h>
 #include <stdlib.h>
@@ -59,8 +57,6 @@
 #include <key.h>
 #include "lswconf.h"
 
-#include "internal.h"
-
 /* this does not belong here, but leave it here for now */
 const struct id empty_id;	/* ID_NONE */
 
@@ -90,35 +86,6 @@ static void lsw_process_secret_records(struct secret **psecrets);
 static void lsw_process_secrets_file(struct secret **psecrets,
 				const char *file_pat);
 
-
-static double shannon_entropy(const unsigned char *p, size_t size)
-{
-	double entropy = 0.0;
-	int histogram[UCHAR_MAX + 1];
-	unsigned int i;
-
-	zero(&histogram);
-
-	for (i = 0; i < size; ++i)
-		++histogram[p[i]];
-
-	for (i = 0; i <= UCHAR_MAX; ++i) {
-		if (histogram[i] != 0) {
-			double p = (double)histogram[i] / size;
-
-			entropy -=  p * log2(p);
-		}
-	}
-	DBG(DBG_CONTROL,
-		DBG_log("Shannon entropy of PSK is %f", entropy));
-
-	if (entropy < MIN_SHANNON_ENTROPY) {
-		loglog(RC_LOG,"WARNING: PSK entropy of %f is less than minimum Shannon Entropy of %f - this will be rejected as of July 1st, 2015",
-			entropy, MIN_SHANNON_ENTROPY);
-	}
-
-        return entropy;
-}
 
 static void RSA_show_key_fields(struct RSA_private_key *k, int fieldcnt)
 {
@@ -255,36 +222,6 @@ static void form_keyid_from_nss(SECItem e, SECItem n, char *keyid,
 
 	/* return the RSA modulus size in octets */
 	*keysize = n.len;
-}
-
-struct pubkey *allocate_RSA_public_key(const cert_t cert)
-{
-	switch (cert.ty) {
-	case CERT_X509_SIGNATURE:
-	{
-		struct pubkey *pk = alloc_thing(struct pubkey, "pubkey");
-		chunk_t e, n;
-
-		e = cert.u.x509->publicExponent;
-		n = cert.u.x509->modulus;
-
-		n_to_mpz(&pk->u.rsa.e, e.ptr, e.len);
-		n_to_mpz(&pk->u.rsa.n, n.ptr, n.len);
-
-		form_keyid(e, n, pk->u.rsa.keyid, &pk->u.rsa.k);
-
-		DBG(DBG_PRIVATE, RSA_show_public_key(&pk->u.rsa));
-
-		pk->alg = PUBKEY_ALG_RSA;
-		pk->id  = empty_id;
-		pk->issuer = empty_chunk;
-
-		return pk;
-	}
-	default:
-		libreswan_log("RSA public key allocation error");
-		return NULL;
-	}
 }
 
 void free_RSA_public_content(struct RSA_public_key *rsa)
@@ -497,6 +434,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					bool same = 0;
 
 					switch (kind) {
+					case PPK_NULL:
+							same = TRUE;
+						break;
 					case PPK_PSK:
 						same = s->pks.u.preshared_secret.len ==
 						       best->pks.u.preshared_secret.len &&
@@ -765,20 +705,14 @@ static err_t lsw_process_rsa_keycert(struct RSA_private_key *rsak)
 static err_t lsw_process_psk_secret(chunk_t *psk)
 {
 	err_t ugh = NULL;
-	double shannon;
 
 	if (*flp->tok == '"' || *flp->tok == '\'') {
-		clonetochunk(*psk, flp->tok + 1, flp->cur - flp->tok  - 2,
-			"PSK");
-		shannon = shannon_entropy(psk->ptr, psk->len);
-#ifdef AS_OF_JULY_1_2015
-		if (shannon < MIN_SHANNON_ENTROPY) {
-			ugh = builddiag("PSK entropy of %f is too weak - rejected (%s)", shannon, flp->tok);
-			libreswan_log("unloaded weak PSK");
-			freeanychunk(*psk);
-		} else
-#endif
-		DBG(DBG_CONTROLMORE, DBG_log("PSK entropy has Shannon Entropy of %f", shannon));
+		size_t len = flp->cur - flp->tok  - 2;
+
+		if (len < 8) {
+			loglog(RC_LOG_SERIOUS,"WARNING: using a weak secret (PSK)");
+		}
+		clonetochunk(*psk, flp->tok + 1, len, "PSK");
 		(void) shift();
 	} else {
 		char buf[RSA_MAX_ENCODING_BYTES];	/*
@@ -800,16 +734,7 @@ static err_t lsw_process_psk_secret(chunk_t *psk)
 					flp->tok);
 		} else {
 			clonetochunk(*psk, buf, sz, "PSK");
-			shannon = shannon_entropy(psk->ptr, psk->len);
-#ifdef AS_OF_JULY_1_2015
-			if (shannon < MIN_SHANNON_ENTROPY) {
-				ugh = builddiag("PSK entropy of %f is too weak - rejected (%s)", shannon, flp->tok);
-				libreswan_log("unloaded weak PSK");
-				freeanychunk(*psk);
-			} else
-#endif
 			(void) shift();
-			DBG(DBG_CONTROLMORE, DBG_log("PSK entropy has Shannon Entropy of %f", shannon));
 		}
 	}
 
@@ -951,37 +876,6 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 
 		return RSA_public_key_sanity(rsak);
 	}
-}
-
-/*
- * get the matching RSA private key belonging to a given X.509 certificate
- */
-const struct RSA_private_key *get_x509_private_key(struct secret *secrets,
-						x509cert_t *cert)
-{
-	struct secret *s;
-	const struct RSA_private_key *pri = NULL;
-	cert_t c;
-	struct pubkey *pubkey;
-
-	c.ty = CERT_X509_SIGNATURE;
-	c.u.x509 = cert;
-
-	pubkey = allocate_RSA_public_key(c);
-
-	if (pubkey == NULL)
-		return NULL;
-
-	for (s = secrets; s != NULL; s = s->next) {
-		if (s->pks.kind == PPK_RSA &&
-			same_RSA_public_key(&s->pks.u.RSA_private_key.pub,
-					&pubkey->u.rsa)) {
-			pri = &s->pks.u.RSA_private_key;
-			break;
-		}
-	}
-	free_public_key(pubkey);
-	return pri;
 }
 
 static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -1563,5 +1457,3 @@ void delete_public_keys(struct pubkey_list **head,
 			pp = &p->next;
 	}
 }
-
-

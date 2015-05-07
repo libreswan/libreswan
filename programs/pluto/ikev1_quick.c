@@ -58,7 +58,6 @@
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "whack.h"
 #include "fetch.h"
-#include "pkcs.h"
 #include "asn1.h"
 
 #include "sha1.h"
@@ -70,6 +69,7 @@
 #include "plutoalg.h"
 
 #include "pluto_crypt.h"
+#include "crypt_prf.h"
 #include "ikev1.h"
 #include "ikev1_quick.h"
 #include "ikev1_continuations.h"
@@ -80,7 +80,7 @@
 #include "nat_traversal.h"
 #include "virtual.h"	/* needs connections.h */
 #include "ikev1_dpd.h"
-#include "x509more.h"
+#include "pluto_x509.h"
 
 /* accept_PFS_KE
  *
@@ -470,13 +470,8 @@ static void compute_proto_keymat(struct state *st,
 
 		for (i = 0;; ) {
 			if (st->st_shared_nss != NULL) {
-				/* PFS: include the g^xy */
-				SECStatus s;
-
-				s = PK11_DigestKey(ctx_me.ctx_nss, st->st_shared_nss);
-				passert(s == SECSuccess);
-				s = PK11_DigestKey(ctx_peer.ctx_nss, st->st_shared_nss);
-				passert(s == SECSuccess);
+				crypt_prf_update_symkey("g^xy", ctx_me.prf, st->st_shared_nss);
+				crypt_prf_update_symkey("g^xy", ctx_peer.prf, st->st_shared_nss);
 			}
 			hmac_update(&ctx_me, &protoid, sizeof(protoid));
 			hmac_update(&ctx_peer, &protoid, sizeof(protoid));
@@ -577,9 +572,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 	case ID_IPV6_ADDR:
 	{
 		ip_address temp_address;
-		err_t ughmsg;
-
-		ughmsg = initaddr(id_pbs->cur, pbs_left(
+		err_t ughmsg = initaddr(id_pbs->cur, pbs_left(
 					  id_pbs), afi->af, &temp_address);
 
 		if (ughmsg != NULL) {
@@ -949,6 +942,7 @@ stf_status quick_outI1(int whack_sock,
 	st->st_peeruserport = c->spd.that.port;
 
 	st->st_msgid = generate_msgid(isakmp_sa);
+	st->st_state = STATE_UNDEFINED; /* change_state ignores from == to */
 	change_state(st, STATE_QUICK_I1);
 
 	insert_state(st); /* needs cookies, connection, and msgid */
@@ -1182,7 +1176,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 	send_ike_msg(st, "quick_outI1");
 
 	delete_event(st);
-	event_schedule(EVENT_v1_RETRANSMIT, EVENT_RETRANSMIT_DELAY_0, st);
+	event_schedule_ms(EVENT_v1_RETRANSMIT, c->r_interval, st);
 
 	if (qke->pcrc_replacing == SOS_NOBODY) {
 		whack_log(RC_NEW_STATE + STATE_QUICK_I1,
@@ -2228,7 +2222,7 @@ static void quick_inI1_outR1_cryptocontinue1(
 
 		e = start_dh_secret(dh, st,
 				    st->st_import,
-				    O_RESPONDER,
+				    ORIGINAL_RESPONDER,
 				    st->st_pfs_group->group);
 
 		/*
@@ -2484,7 +2478,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 	/* encrypt message, except for fixed part of header */
 
 	if (!encrypt_message(&md->rbody, st)) {
-		delete_ipsec_sa(st, TRUE);
+		delete_ipsec_sa(st);
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -2538,7 +2532,7 @@ stf_status quick_inR1_outI2(struct msg_digest *md)
 
 		return start_dh_secret(dh, st,
 				       st->st_import,
-				       O_INITIATOR,
+				       ORIGINAL_INITIATOR,
 				       st->st_pfs_group->group);
 	} else {
 		/* just call the tail function */
@@ -2744,7 +2738,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 	/* encrypt message, except for fixed part of header */
 
 	if (!encrypt_message(&md->rbody, st)) {
-		delete_ipsec_sa(st, FALSE);
+		delete_ipsec_sa(st);
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -2766,7 +2760,7 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
 	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
-			delete_ipsec_sa(st, FALSE);
+			delete_ipsec_sa(st);
 			return STF_FAIL;
 		}
 	}
@@ -2818,7 +2812,7 @@ stf_status quick_inI2(struct msg_digest *md)
 	if (deltasecs(st->st_connection->dpd_delay) != 0 &&
 	    deltasecs(st->st_connection->dpd_timeout) != 0) {
 		if (dpd_init(st) != STF_OK) {
-			delete_ipsec_sa(st, FALSE);
+			delete_ipsec_sa(st);
 			return STF_FAIL;
 		}
 	}

@@ -24,7 +24,7 @@
 #include <string.h>
 
 #ifdef LIBCURL
-#include <curl/curl.h>
+#include <curl/curl.h>	/* from libcurl devel */
 #endif
 
 #include <libreswan.h>
@@ -422,7 +422,7 @@ static void fetch_crls(void)
 				chunk_t crl_uri;
 				clonetochunk(crl_uri, gn->name.ptr,
 					     gn->name.len, "crl uri");
-				if (insert_crl(blob, crl_uri)) {
+				if (insert_crl_nss(&blob, &crl_uri, NULL)) {
 					DBG(DBG_CONTROL,
 					    DBG_log("we have a valid crl"));
 					valid_crl = TRUE;
@@ -567,27 +567,67 @@ void add_distribution_points(const generalName_t *newPoints,
 /*
  * add a crl fetch request to the chained list
  */
-void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
+void add_crl_fetch_request_nss(SECItem *issuer_dn)
 {
+	CERTCertificate *ca = NULL;
+	generalName_t *new_dp = NULL;
 	fetch_req_t *req;
+	chunk_t idn;
+
+	DBG(DBG_CONTROL, DBG_log("attempting to add a new CRL fetch request"));
+
+	if (issuer_dn == NULL || issuer_dn->data == NULL ||
+				 issuer_dn->len < 1) {
+		DBG(DBG_CONTROL,
+		    DBG_log("no issuer dn to gather fetch information from"));
+		return;
+	}
+
+	if ((ca = CERT_FindCertByName(CERT_GetDefaultCertDB(),
+							issuer_dn)) == NULL) {
+		DBG_log("no CA cert found to add fetch request: [%d]",
+							       PORT_GetError());
+		return;
+	}
+
+	idn = secitem_to_chunk(*issuer_dn);
 
 	lock_crl_fetch_list("add_crl_fetch_request");
 	req = crl_fetch_reqs;
 
 	while (req != NULL) {
-		if (same_dn(issuer, req->issuer)) {
+		if (same_dn(idn, req->issuer)) {
 			/* there is already a fetch request */
 			DBG(DBG_CONTROL,
 			    DBG_log("crl fetch request already exists"));
 
 			/* there might be new distribution points */
-			add_distribution_points(gn, &req->distributionPoints);
+			if ((new_dp = gndp_from_nss_cert(ca)) != NULL) {
+				DBG(DBG_CONTROL,
+				    DBG_log("new distribution point available"));
+				add_distribution_points(new_dp,
+						      &req->distributionPoints);
+			}
 
 			unlock_crl_fetch_list("add_crl_fetch_request");
+			if (ca != NULL)
+				CERT_DestroyCertificate(ca);
 			return;
 		}
 		req = req->next;
 	}
+
+	if (new_dp == NULL) {
+		if ((new_dp = gndp_from_nss_cert(ca)) == NULL) {
+			DBG(DBG_CONTROL,
+				DBG_log("no distribution point available for new fetch request"));
+			unlock_crl_fetch_list("add_crl_fetch_request");
+			if (ca != NULL)
+				CERT_DestroyCertificate(ca);
+			return;
+		}
+	}
+
 	/* create a new fetch request */
 	req = alloc_thing(fetch_req_t, "fetch request");
 	*req = empty_fetch_req;
@@ -596,10 +636,10 @@ void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 	req->installed = realnow();
 
 	/* clone issuer */
-	clonetochunk(req->issuer, issuer.ptr, issuer.len, "issuer dn");
+	clonetochunk(req->issuer, idn.ptr, idn.len, "issuer dn");
 
 	/* copy distribution points */
-	add_distribution_points(gn, &req->distributionPoints);
+	add_distribution_points(new_dp, &req->distributionPoints);
 
 	/* insert new fetch request at the head of the queue */
 	req->next = crl_fetch_reqs;
@@ -608,6 +648,10 @@ void add_crl_fetch_request(chunk_t issuer, const generalName_t *gn)
 	DBG(DBG_CONTROL,
 	    DBG_log("crl fetch request added"));
 	unlock_crl_fetch_list("add_crl_fetch_request");
+
+	if (ca != NULL)
+		CERT_DestroyCertificate(ca);
+
 }
 
 /*
