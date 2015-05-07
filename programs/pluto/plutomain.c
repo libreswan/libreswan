@@ -1053,10 +1053,10 @@ int main(int argc, char **argv)
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
-			pluto_ddos_mode = cfg->setup.options[KSF_DDOS_MODE];
+			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 			if (cfg->setup.options[KBF_FORCEBUSY]) {
 				/* obsoleted */
-				pluto_ddos_mode = cfg->setup.options[KSF_DDOS_MODE] = DDOS_FORCE_BUSY;
+				pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE] = DDOS_FORCE_BUSY;
 			}
 			/* ddos-ike-treshold and max-halfopen-ike */
 			pluto_ddos_treshold = cfg->setup.options[KBF_DDOS_IKE_TRESHOLD];

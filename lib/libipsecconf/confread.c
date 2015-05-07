@@ -110,7 +110,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 #ifdef HAVE_LABELED_IPSEC
 	cfg->setup.options[KBF_SECCTX] = SECCTX;
 #endif
-	cfg->setup.options[KSF_DDOS_MODE] = DDOS_AUTO;
+	cfg->setup.options[KBF_DDOS_MODE] = DDOS_AUTO;
 
 	/* conn %default */
 	cfg->conn_default.options[KBF_NAT_KEEPALIVE] = TRUE;    /* per conn */
