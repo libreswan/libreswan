@@ -246,6 +246,10 @@ void append_symkey_byte(const struct hash_desc *hasher,
  * Extract raw-bytes from a SYMKEY.
  *
  * Offset into the SYMKEY is in either BITS or BYTES.
+ *
+ * This function is called by DBG_dump_symkey() when DBG_PRIVATE is
+ * set, so do not add a call that function here unless you're testing
+ * infinite recursions :)
  */
 
 static PK11SymKey *key_from_key_bits(PK11SymKey *base_key,
@@ -264,12 +268,10 @@ static PK11SymKey *key_from_key_bits(PK11SymKey *base_key,
 
 	DBG(DBG_CRYPT,
 	    DBG_log("%s key from base key bits %zd length %zd flags 0x%lx",
-		    ckm_to_string(target), next_bit, key_size, flags);
-	    DBG_dump_symkey("base key", base_key));
+		    ckm_to_string(target), next_bit, key_size, flags));
 	PK11SymKey *result = PK11_DeriveWithFlags(base_key, derive, &param,
 						  target, operation,
 						  key_size, flags);
-	DBG(DBG_CRYPT, DBG_dump_symkey("result", result));
 
 	return result;
 }
