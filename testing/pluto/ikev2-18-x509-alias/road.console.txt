@@ -182,7 +182,7 @@ road #
 000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 road #
  echo "initdone"

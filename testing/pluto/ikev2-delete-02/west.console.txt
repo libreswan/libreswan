@@ -129,7 +129,7 @@ west #
 000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 west #
  echo "initdone"
@@ -247,7 +247,7 @@ west #
 000 #1: "west-east-delete1":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; isakmp#0; idle; import:admin initiate
 000 #1: "west-east-delete1" ref=0 refhim=0 Traffic: 
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 west #
  echo "sleeping a bit.. 2"
@@ -356,7 +356,7 @@ west #
 000 #1: "west-east-delete1":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; isakmp#0; idle; import:admin initiate
 000 #1: "west-east-delete1" ref=0 refhim=0 Traffic: 
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 west #
  echo "sleeping a bit.. 2"
@@ -455,7 +455,7 @@ west #
 000 IKE SAs: total(0), half-open(0), authenticated(1), anonymous(-1)
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 west #
  echo done

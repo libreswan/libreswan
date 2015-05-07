@@ -204,7 +204,7 @@ west #
 000 #1: "nss-cert-ocsp":500 STATE_MAIN_I3 (sent MI3, expecting MR3); EVENT_v1_RETRANSMIT in 3s; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 000 #1: pending Phase 2 for "nss-cert-ocsp" replacing #0
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

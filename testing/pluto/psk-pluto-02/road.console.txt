@@ -153,7 +153,7 @@ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUT
 000 #1: "road-eastnet-psk":500 STATE_AGGR_I1 (sent AI1, expecting AR1); none in -1s; nodpd; idle; import:admin initiate
 000 #1: pending Phase 2 for "road-eastnet-psk" replacing #0
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
