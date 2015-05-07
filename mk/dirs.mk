@@ -144,11 +144,21 @@ abs_top_srcdir := $(abspath $(top_srcdir))
 abs_builddir := $(abspath $(builddir))
 abs_top_builddir := $(abspath $(top_builddir))
 
+# Always include the other directory in the search path.
+#
+# XXX: The VPATH+=$(srcdir) will hopefully go away and this will
+# become unconditional.
+ifeq ($(srcdir),.)
+VPATH += $(builddir)
+endif
+ifeq ($(builddir),.)
+VPATH += $(srcdir)
+endif
+
 # For compatibility with existing include files:
 LIBRESWANSRCDIR?=$(abs_top_srcdir)
 SRCDIR?=$(abs_srcdir)/
 OBJDIRTOP?=$(abs_top_builddir)
-
 
 # Dot targets are never the default.
 .PHONY: .dirs.mk
