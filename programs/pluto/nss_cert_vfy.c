@@ -358,29 +358,26 @@ static unsigned int rev_val_flags(PRBool strict)
 	return flags;
 }
 
-static void set_rev_params(CERTRevocationFlags *rev, bool crl,
-						     bool crl_strict,
+static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
 						     bool ocsp,
 						     bool ocsp_strict)
 {
 	CERTRevocationTests *rt = &rev->leafTests;
 	PRUint64 *rf = rt->cert_rev_flags_per_method;
-	DBG(DBG_X509, DBG_log("crl: %d, crl_strict: %d, ocsp: %d, ocsp_strict: %d",
-				crl, crl_strict, ocsp, ocsp_strict));
+	DBG(DBG_X509, DBG_log("crl_strict: %d, ocsp: %d, ocsp_strict: %d",
+				crl_strict, ocsp, ocsp_strict));
 
 	rt->number_of_defined_methods = cert_revocation_method_count;
 	rt->number_of_preferred_methods = 0;
 
-	if (crl) {
-		rf[cert_revocation_method_crl] = rev_val_flags(crl_strict);
-		rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
-	}
+	rf[cert_revocation_method_crl] = rev_val_flags(crl_strict);
+	rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
+
 	if (ocsp) {
 		rf[cert_revocation_method_ocsp] = rev_val_flags(ocsp_strict);
 	}
 }
 
-#define CRL_OR_OCSP(r) (r[RO_CRL] || r[RO_OCSP])
 #define RETRY_TYPE(err, re) ((err == SEC_ERROR_INADEQUATE_CERT_TYPE || \
 			      err == SEC_ERROR_INADEQUATE_KEY_USAGE) && re)
 
@@ -429,13 +426,13 @@ static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
 	zero(&rev);
 
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
-	set_rev_params(&rev, rev_opts[RO_CRL], rev_opts[RO_CRL_S],
-			     rev_opts[RO_OCSP], rev_opts[RO_OCSP_S]);
+	set_rev_params(&rev, rev_opts[RO_CRL_S], rev_opts[RO_OCSP],
+						 rev_opts[RO_OCSP_S]);
 	cvin[in_idx].type = cert_pi_revocationFlags;
 	cvin[in_idx++].value.pointer.revocation = &rev;
 
 	cvin[in_idx].type = cert_pi_useAIACertFetch;
-	cvin[in_idx++].value.scalar.b = CRL_OR_OCSP(rev_opts);
+	cvin[in_idx++].value.scalar.b = rev_opts[RO_OCSP];
 
 	cvin[in_idx].type = cert_pi_trustAnchors;
 	cvin[in_idx++].value.pointer.chain = trustcl;

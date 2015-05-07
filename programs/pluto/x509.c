@@ -897,7 +897,7 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 	return j;
 }
 
-#define CRL_ENABLED() (deltasecs(crl_check_interval) > 0)
+#define CRL_CHECK_ENABLED() (deltasecs(crl_check_interval) > 0)
 
 #if defined(LIBCURL) || defined(LDAP_VER)
 /*
@@ -954,7 +954,6 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 
 	rev_opts[RO_OCSP] = ocsp_enable;
 	rev_opts[RO_OCSP_S] = strict_ocsp_policy;
-	rev_opts[RO_CRL] = CRL_ENABLED();
 	rev_opts[RO_CRL_S] = strict_crl_policy;
 
 	ret = verify_and_cache_chain(certs, num_certs, &end_cert,
@@ -975,7 +974,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		cont = FALSE;
 	}
 #if defined(LIBCURL) || defined(LDAP_VER)
-	if ((ret & VERIFY_RET_CRL_NEED) && CRL_ENABLED()) {
+	if ((ret & VERIFY_RET_CRL_NEED) && CRL_CHECK_ENABLED()) {
 		if (find_fetch_dn(&fdn, c, end_cert)) {
 			add_crl_fetch_request_nss(&fdn);
 		}
