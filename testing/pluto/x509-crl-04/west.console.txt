@@ -219,7 +219,7 @@ west #
 000 #3: "westnet-eastnet-x509-cr" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=1 Traffic:! ESPmax=4194303B 
 000 #2: "westnet-eastnet-x509-cr":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
