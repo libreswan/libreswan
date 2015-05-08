@@ -31,6 +31,7 @@ def:
 
 # XXX: Should switch this directory to using subdirs.mk
 manpages install-manpages install-programs list list-manpages list-programs:
+clean-manpages:
 
 prerequisites cleanall distclean mostlyclean realclean install check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \
