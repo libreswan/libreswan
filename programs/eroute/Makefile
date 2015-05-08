@@ -14,7 +14,7 @@
 # for more details.
 
 PROGRAM=eroute
-EXTRA5PROC=eroute.5
+MANPAGES += ipsec_$(PROGRAM).5
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

@@ -13,7 +13,7 @@
 # for more details.
 
 PROGRAM=klipsdebug
-EXTRA5PROC=${PROGRAM}.5
+MANPAGES=ipsec_$(PROGRAM).5
 
 LIBS=${LIBRESWANLIB}
 

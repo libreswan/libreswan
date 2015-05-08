@@ -23,15 +23,12 @@ include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
 include $(top_srcdir)/mk/targets.mk
 
-MANDIR=$(MANTREE)/man3
-
 SRCS=whacklib.c aliascomp.c
 
 OBJS=${SRCS:.c=.o} 
 
 KLIPSD=${LIBRESWANSRCDIR}/linux/include
 KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
-MANSRCDIR=${LIBRESWANSRCDIR}/lib/libswan
 
 VPATH+= ${KLIPSSRCDIR}
 
@@ -47,7 +44,6 @@ CFLAGS+=$(USERLAND_CFLAGS)
 CFLAGS+=$(NSSFLAGS)
 
 ARFLAGS=crvs
-MANS=
 
 .PHONY:	all install clean l t lt tar check checkprograms
 
@@ -59,34 +55,7 @@ else
 all:	$(LIB) ${LIBL}
 programs: $(LIB) ${LIBL}
 clean:	cleanall
-install: doinstall
-install-programs: doinstall
-
 endif
-
-doinstall:
-	@mkdir -p $(MANDIR)
-	@for f in $(MANS) ; \
-	do \
-		$(INSTALL) $(INSTMANFLAGS) $(MANSRCDIR)/$$f $(MANDIR)/ipsec_$$f || exit 1 ; \
-	done
-	@$(LIBRESWANSRCDIR)/packaging/utils/manlink $(foreach man, $(MANS), ${MANSRCDIR}/$(man)) | \
-	while read from to; \
-	do \
-		ln -s -f ipsec_$$from $(MANDIR)/$$to; \
-	done
-
-
-install_file_list:
-	@for f in $(MANS) ; \
-	do \
-		echo $(MANDIR)/ipsec_$$f;\
-	done;
-	@$(LIBRESWANSRCDIR)/packaging/utils/manlink $(foreach man, $(MANS), ${MANSRCDIR}/$(man)) | \
-	while read from to; \
-	do \
-		echo $(MANDIR)/$$to; \
-	done
 
 $(LIB): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJS)
