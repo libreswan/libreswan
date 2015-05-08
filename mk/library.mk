@@ -42,7 +42,7 @@ MANS=
 
 SHOULDWERESTART=$(wildcard ${ONEFILE})
 ifeq ($(SHOULDWERESTART),${ONEFILE})
-all programs man config clean install:
+all programs man config clean install install-programs:
 	set -e ; \
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/lib${LIBRARY} && ${MAKE} $@
 else
@@ -50,6 +50,7 @@ all:	$(LIB)
 programs: $(LIB) 
 clean:	cleanall
 install: doinstall
+install-programs: doinstall
 
 endif
 

@@ -53,6 +53,7 @@ include ${LIBRESWANSRCDIR}/Makefile.top
 # to use a local TARGET-local target.
 BROKEN_TARGETS += clean
 BROKEN_TARGETS += install
+BROKEN_TARGETS += install-programs
 BROKEN_TARGETS += programs
 BROKEN_TARGETS += distclean
 BROKEN_TARGETS += check
@@ -180,7 +181,7 @@ ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
 
-programs man config install clean:: ${OBJDIR}/Makefile
+programs man config install clean install-programs:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
 	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
 
@@ -596,7 +597,7 @@ deb:
 release:
 	packaging/utils/makerelease 
 
-install::
+install install-programs::
 	@if test -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \

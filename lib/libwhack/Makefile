@@ -53,13 +53,14 @@ MANS=
 
 SHOULDWERESTART=$(wildcard whacklib.c)
 ifeq ($(SHOULDWERESTART),whacklib.c)
-all programs clean install:
+all programs clean install install-programs:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/libwhack && make $@
 else
 all:	$(LIB) ${LIBL}
 programs: $(LIB) ${LIBL}
 clean:	cleanall
 install: doinstall
+install-programs: doinstall
 
 endif
 

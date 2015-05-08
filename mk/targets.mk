@@ -36,7 +36,11 @@ install: install-local-programs install-local-manpages
 else
 install:: install-local-programs install-local-manpages
 endif
+ifeq ($(filter install-programs,$(BROKEN_TARGETS)),)
 install-programs: install-local-programs
+else
+install-programs:: install-local-programs
+endif
 install-manpages: install-local-manpages
 
 GLOBAL_TARGETS += clean clean-programs clean-manpages

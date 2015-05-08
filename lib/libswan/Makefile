@@ -97,13 +97,14 @@ MANS=anyaddr.3 atoaddr.3 atoul.3 goodmask.3 \
 
 SHOULDWERESTART=$(wildcard ttodata.3.xml)
 ifeq ($(SHOULDWERESTART),ttodata.3.xml)
-all programs clean install:
+all programs clean install install-programs:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/libswan && make $@
 else
 all:	$(LIBA) ${LIBL}
 programs: $(LIBA) ${LIBL}
 clean:	cleanall
 install: doinstall
+install-programs: doinstall
 
 endif
 

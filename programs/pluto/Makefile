@@ -419,13 +419,14 @@ CAVP += cavp
 
 SHOULDWERESTART=$(wildcard plutomain.c)
 ifeq ($(SHOULDWERESTART),plutomain.c)
-all programs clean install:
+all programs clean install install-programs:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/pluto && $(MAKE) $@
 else
 all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
 programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(MANPAGES) $(CAVP) #$(BINNAMEWHACKINIT) 
 clean:	cleanall
 install: doinstall
+install-programs: doinstall
 endif
 
 doinstall: all
