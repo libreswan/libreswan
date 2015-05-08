@@ -902,6 +902,19 @@ struct ikev2_cp_attribute {
 
 extern struct_desc ikev2_cp_attribute_desc;
 
+/*
+ * Fragment Message. RFC 7383 section 2.5
+ */
+struct ikev2_skf {
+	u_int8_t isaskf_np;
+	u_int8_t isaskf_critical;
+	u_int16_t isaskf_length;
+	u_int16_t isaskf_number;
+	u_int16_t isaskf_total;
+};
+
+extern struct_desc ikev2_skf_desc;
+
 /* union of all payloads */
 
 union payload {
@@ -931,6 +944,7 @@ union payload {
 	struct ikev2_delete v2delete;
 	struct ikev2_cp v2cp;
 	struct ikev2_cp_attribute v2cp_attribute;
+	struct ikev2_skf v2skf;
 };
 
 struct suggested_group {

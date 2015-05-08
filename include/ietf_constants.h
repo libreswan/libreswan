@@ -529,6 +529,11 @@ enum next_payload_types_ikev2 {
 	ISAKMP_NEXT_v2SK = 46,	/* Encrypted payload */
 	ISAKMP_NEXT_v2CP = 47,	/* Configuration Payload (MODECFG) */
 	ISAKMP_NEXT_v2EAP = 48,	/* Extensible Authentication Payload */
+	ISAKMP_NEXT_v2GSPM = 49,
+	ISAKMP_NEXT_v2IDG = 50,
+	ISAKMP_NEXT_v2GSA = 51,
+	ISAKMP_NEXT_v2KD = 52,
+	ISAKMP_NEXT_v2SKF = 53,	/* Encrypted fragment */
 	/* 128 - 255 Private Use */
 	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
 	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
@@ -1415,8 +1420,14 @@ typedef enum {
 	v2N_IKEV2_MESSAGE_ID_SYNC = 16422, /* RFC-6311 */
 	v2N_IPSEC_REPLAY_COUNTER_SYNC = 16423, /* RFC-6311 */
 	v2N_SECURE_PASSWORD_METHODS = 16424, /* RFC-6467 */
+	v2N_PSK_PERSIST = 16425,
+	v2N_PSK_CONFIRM = 16426,
+	v2N_ERX_SUPPORTED = 16427,
+	v2N_IFOM_CAPABILITY = 16428,
+	v2N_SENDER_REQUEST_ID = 16429,
+	v2N_FRAGMENTATION_SUPPORTED = 16430, /* RFC-7383 */
 
-	/* 16425 - 40969 Unassigned */
+	/* 16431 - 40969 Unassigned */
 	/* 40960 - 65535 Private Use */
 } v2_notification_t;
 

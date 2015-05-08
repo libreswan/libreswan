@@ -1194,6 +1194,41 @@ struct_desc ikev2_sk_desc = { "IKEv2 Encryption Payload",
 			     ikev2generic_fields,
 			     sizeof(struct ikev2_generic) };
 
+/*
+ * 2.5.  Fragmenting Message
+ *
+ *                         1                   2                   3
+ *     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    | Next Payload  |C|  RESERVED   |         Payload Length        |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |        Fragment Number        |        Total Fragments        |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |                     Initialization Vector                     |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    ~                      Encrypted content                        ~
+ *    +               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    |               |             Padding (0-255 octets)            |
+ *    +-+-+-+-+-+-+-+-+                               +-+-+-+-+-+-+-+-+
+ *    |                                               |  Pad Length   |
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *    ~                    Integrity Checksum Data                    ~
+ *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
+ *                         Encrypted Fragment Payload
+ */
+static field_desc ikev2skf_fields[] = {
+	{ ft_enum, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_set, 8 / BITS_PER_BYTE, "flags", critical_names },
+	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_nat, 16 / BITS_PER_BYTE, "fragment number", NULL },
+	{ ft_nat, 16 / BITS_PER_BYTE, "total fragments", NULL },
+	{ ft_end,  0, NULL, NULL }
+};
+
+struct_desc ikev2_skf_desc = { "IKEv2 Encrypted Fragment",
+			      ikev2skf_fields, sizeof(struct ikev2_skf) };
+
 /* descriptor for each V1 payload type
  *
  * There is a slight problem in that some payloads differ, depending
@@ -1242,7 +1277,13 @@ static struct_desc *const v2_payload_descs[] = {
 	&ikev2_ts_desc,			/* 44 ISAKMP_NEXT_v2TSi */
 	&ikev2_ts_desc,			/* 45 ISAKMP_NEXT_v2TSr */
 	&ikev2_sk_desc,                 /* 46 ISAKMP_NEXT_v2SK */
-	&ikev2_cp_desc,			/* 57 ISAKMP_NEXT_v2CP */
+	&ikev2_cp_desc,			/* 47 ISAKMP_NEXT_v2CP */
+	NULL,				/* 48 */
+	NULL,				/* 49 */
+	NULL,				/* 50 */
+	NULL,				/* 51 */
+	NULL,				/* 52 */
+	&ikev2_skf_desc,                /* 53 ISAKMP_NEXT_v2SKF */
 };
 
 static field_desc suggested_group_fields[] = {

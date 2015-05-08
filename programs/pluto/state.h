@@ -149,6 +149,16 @@ struct ike_frag {
 	size_t size;
 };
 
+struct ikev2_frag {
+	struct ikev2_frag *next;
+	int np;
+	int index;
+	int total;
+	unsigned int iv;
+	struct chunk cipher;
+	struct chunk plain;
+};
+
 /*
  * internal state that
  * should get copied by god... to the child SA state.
@@ -230,7 +240,11 @@ struct state {
 	const char        *st_suspended_md_func;
 	int st_suspended_md_line;
 
-	struct ike_frag *ike_frags;		/* collected ike fragments */
+	/* collected ike fragments */
+	union {
+		struct ike_frag *ike_frags;
+		struct ikev2_frag *ikev2_frags;
+	};
 
 	struct trans_attrs st_oakley;
 
@@ -315,6 +329,7 @@ struct state {
 
 	/* my stuff */
 	chunk_t st_tpacket;                     /* Transmitted packet */
+	struct ikev2_frag *st_tfrags;		/* Transmitted fragments */
 
 #ifdef HAVE_LABELED_IPSEC
 	struct xfrm_user_sec_ctx_ike *sec_ctx;
@@ -545,6 +560,7 @@ extern void fmt_state(struct state *st, const monotime_t n,
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
+extern void release_v2fragments(struct ikev2_frag **fragp);
 extern void v1_delete_state_by_xauth_name(struct state *st, void *name);
 extern void delete_state_by_id_name(struct state *st, void *name);
 

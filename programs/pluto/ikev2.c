@@ -566,6 +566,7 @@ struct ikev2_payloads_summary ikev2_decode_payloads(struct msg_digest *md,
 
 		switch (np) {
 		case ISAKMP_NEXT_v2SK:
+		case ISAKMP_NEXT_v2SKF:
 			/* RFC 5996 2.14 "Encrypted Payload":
 			 *
 			 * Next Payload - The payload type of the
@@ -633,6 +634,108 @@ void ikev2_log_payload_errors(struct ikev2_payload_errors errors)
 		       bitnamesof(payload_name_ikev2_main,
 				  errors.bad_repeat));
 	}
+}
+
+static bool ikev2_check_fragment(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+	struct ikev2_frag *i;
+
+	if (!(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
+		libreswan_log("discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)");
+		return TRUE;
+	}
+
+	DBG(DBG_CONTROL,
+	    DBG_log("received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
+		    skf->isaskf_number, skf->isaskf_total, skf->isaskf_np));
+
+	if (!skf->isaskf_number || !skf->isaskf_total ||
+	    skf->isaskf_number > skf->isaskf_total ||
+	    (skf->isaskf_number == 1 ? !skf->isaskf_np : skf->isaskf_np)) {
+		libreswan_log("Ignoring invalid IKE encrypted fragment");
+		return TRUE;
+	}
+
+	for (i = st->ikev2_frags; i; i = i->next) {
+		if (i->index != skf->isaskf_number)
+			continue;
+
+		if (i->total == skf->isaskf_total) {
+			libreswan_log("Ignoring duplicate IKE encrypted fragment");
+			return TRUE;
+		}
+
+		if (i->total > skf->isaskf_total) {
+			libreswan_log("Ignoring odd IKE encrypted fragment");
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static bool ikev2_collect_fragment(struct msg_digest *md)
+{
+	struct state *st = md->st;
+	struct ikev2_skf *skf = &md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf;
+	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SKF]->pbs;
+	struct ikev2_frag *frag, **i;
+	int num_frags;
+
+	if (ikev2_check_fragment(md))
+		return TRUE;
+
+	frag = alloc_thing(struct ikev2_frag, "ikev2_frag");
+	frag->np = skf->isaskf_np;
+	frag->index = skf->isaskf_number;
+	frag->total = skf->isaskf_total;
+	frag->iv = e_pbs->cur - md->packet_pbs.start;
+	clonetochunk(frag->cipher, md->packet_pbs.start,
+		     e_pbs->roof - md->packet_pbs.start,
+		     "IKEv2 encrypted fragment");
+
+	/* Add the fragment to the state */
+	i = &st->ikev2_frags;
+	if (*i && (*i)->total < skf->isaskf_total)
+		do {
+			struct ikev2_frag *old = *i;
+
+			(*i) = old->next;
+			freeanychunk(old->cipher);
+			pfree(old);
+		} while (*i);
+
+	num_frags = 0;
+	for (;;) {
+		if (frag) {
+			/* Still looking for a place to insert frag */
+			if (!*i || (*i)->index > frag->index) {
+				frag->next = *i;
+				*i = frag;
+				frag = NULL;
+			}
+		}
+
+		if (!*i)
+			break;
+
+		num_frags++;
+
+		i = &(*i)->next;
+	}
+
+	if (num_frags < skf->isaskf_total)
+		return TRUE;
+
+	/* optimize: if receiving fragments, immediately respond with fragments too */
+	st->st_seen_fragments = TRUE;
+
+	DBG(DBG_CONTROL,
+	    DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
+
+	return FALSE;
 }
 
 /*
@@ -822,8 +925,6 @@ void process_v2_packet(struct msg_digest **mdp)
 	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
 	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
 
-	struct ikev2_payloads_summary enc_payload_summary =  { .status = STF_IGNORE };
-	struct ikev2_payload_errors enc_payload_status = { .status = STF_OK };
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
@@ -858,46 +959,23 @@ void process_v2_packet(struct msg_digest **mdp)
 				complete_v2_state_transition(mdp, clear_payload_summary.status);
 				return;
 			}
+
+			if (clear_payload_summary.seen &
+			    LELEM(PINDEX(ISAKMP_NEXT_v2SKF)))
+				clear_payload_summary.seen ^=
+					LELEM(PINDEX(ISAKMP_NEXT_v2SK)) |
+					LELEM(PINDEX(ISAKMP_NEXT_v2SKF));
+			if (clear_payload_summary.repeated &
+			    LELEM(PINDEX(ISAKMP_NEXT_v2SKF)))
+				clear_payload_summary.repeated ^=
+					LELEM(PINDEX(ISAKMP_NEXT_v2SK)) |
+					LELEM(PINDEX(ISAKMP_NEXT_v2SKF));
 		}
 		struct ikev2_payload_errors clear_payload_errors
 			= ikev2_verify_payloads(clear_payload_summary, svm, FALSE);
 		if (clear_payload_errors.status != STF_OK) {
 			/* Save this failure for later logging. */
 			clear_payload_status = clear_payload_errors;
-			continue;
-		}
-		/*
-		 * Continue checking by unpacking the SK payload but
-		 * only its ok and there's one to unpack.  Otherwise
-		 * assume its a correct match.
-		 */
-		if (!(svm->flags & SMF2_UNPACK_SK)) {
-			break;
-		}
-		if (!(svm->req_clear_payloads & LELEM(PINDEX(ISAKMP_NEXT_v2SK)))) {
-			break;
-		}
-		if (enc_payload_summary.status != STF_OK) {
-			DBG(DBG_CONTROL,
-			    DBG_log("Unpacking encrypted payload for svm: %s",
-				    svm->story));
-			stf_status status = ikev2_verify_and_decrypt_sk_payload(md);
-			if (status != STF_OK) {
-				complete_v2_state_transition(mdp, status);
-				return;
-			}
-			unsigned np = md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np;
-			enc_payload_summary = ikev2_decode_payloads(md, &md->clr_pbs, np);
-			if (enc_payload_summary.status != STF_OK) {
-				complete_v2_state_transition(mdp, enc_payload_summary.status);
-				return;
-			}
-		}
-		struct ikev2_payload_errors enc_payload_errors
-			= ikev2_verify_payloads(enc_payload_summary, svm, TRUE);
-		if (enc_payload_errors.status != STF_OK) {
-			/* Save this failure for later logging. */
-			enc_payload_status = enc_payload_errors;
 			continue;
 		}
 		/* must be the right state machine entry */
@@ -917,9 +995,6 @@ void process_v2_packet(struct msg_digest **mdp)
 		if (clear_payload_status.status != STF_OK) {
 			ikev2_log_payload_errors(clear_payload_status);
 			complete_v2_state_transition(mdp, clear_payload_status.status);
-		} else if (enc_payload_status.status != STF_OK) {
-			ikev2_log_payload_errors(enc_payload_status);
-			complete_v2_state_transition(mdp, enc_payload_status.status);
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*
 			 * We are the responder to this message so
@@ -934,6 +1009,9 @@ void process_v2_packet(struct msg_digest **mdp)
 	}
 
 	if (state_busy(st))
+		return;
+
+	if (md->chain[ISAKMP_NEXT_v2SKF] && ikev2_collect_fragment(md))
 		return;
 
 	DBG(DBG_PARSING, {
@@ -1371,9 +1449,6 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 	/* if requested, send the new reply packet */
 	if (svm->flags & SMF2_REPLY) {
-		/* free previously transmitted packet */
-		freeanychunk(st->st_tpacket);
-
 		if (nat_traversal_enabled && from_state != STATE_PARENT_I1) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
@@ -1386,11 +1461,6 @@ static void success_v2_state_transition(struct msg_digest *md)
 				    st->st_remoteport,
 				    st->st_interface->port);
 		    });
-
-		close_output_pbs(&reply_stream); /* good form, but actually a no-op */
-
-		clonetochunk(st->st_tpacket, reply_stream.start,
-			     pbs_offset(&reply_stream), "reply packet");
 
 		/* actually send the packet
 		 * Note: this is a great place to implement "impairments"

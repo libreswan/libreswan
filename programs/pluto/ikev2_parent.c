@@ -497,6 +497,17 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 		close_output_pbs(&pb);
 	}
 
+	/* Send fragmentation support notification */
+	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
+		int np = ISAKMP_NEXT_v2N;
+
+		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+			      PROTO_v2_RESERVED, &empty_chunk,
+			      v2N_FRAGMENTATION_SUPPORTED, &empty_chunk,
+			      &md->rbody))
+			return STF_INTERNAL_ERROR;
+	}
+
 	/* Send NAT-T Notify payloads */
 	{
 		int np = c->send_vendorid ? ISAKMP_NEXT_v2V : ISAKMP_NEXT_v2NONE;
@@ -527,6 +538,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet for ikev2_parent_outI1_tail");
+	release_v2fragments(&st->st_tfrags);
 
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
@@ -538,6 +550,26 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	reset_cur_state();
 	return STF_OK;
+}
+
+static void ikev2_check_frag_support(struct msg_digest *md)
+{
+	struct payload_digest *p;
+	struct state *st = md->st;
+
+	passert(st);
+
+	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
+		switch (p->payload.v2n.isan_type) {
+		case v2N_FRAGMENTATION_SUPPORTED:
+			st->st_seen_fragvid = TRUE;
+			break;
+		default:
+			continue;
+		}
+
+		break;
+	}
 }
 
 /*
@@ -790,8 +822,10 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	 * check v2N_NAT_DETECTION_DESTINATION_IP or/and
 	 * v2N_NAT_DETECTION_SOURCE_IP
 	 */
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL)
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		ikev2_natd_lookup(md, zero_cookie);
+		ikev2_check_frag_support(md);
+	}
 
 	/* calculate the nonce and the KE */
 	{
@@ -1010,6 +1044,17 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			!has_preloaded_public_key(st);
 	}
 
+	/* Send fragmentation support notification */
+	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
+		int np = ISAKMP_NEXT_v2N;
+
+		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
+			      PROTO_v2_RESERVED, &empty_chunk,
+			      v2N_FRAGMENTATION_SUPPORTED, &empty_chunk,
+			      &md->rbody))
+			return STF_INTERNAL_ERROR;
+	}
+
 	/* Send NAT-T Notify payloads */
 	{
 		struct ikev2_generic in;
@@ -1048,6 +1093,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet for ikev2_parent_inI1outR1_tail");
+	release_v2fragments(&st->st_tfrags);
 
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
@@ -1210,6 +1256,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		case v2N_USE_TRANSPORT_MODE:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
+		case v2N_FRAGMENTATION_SUPPORTED:
 			/* we do handle these further down */
 			break;
 		default:
@@ -1257,8 +1304,10 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	/* check v2N_NAT_DETECTION_DESTINATION_IP or/and
 	 * v2N_NAT_DETECTION_SOURCE_IP
 	 */
-	if (md->chain[ISAKMP_NEXT_v2N] != NULL)
+	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		ikev2_natd_lookup(md, st->st_rcookie);
+		ikev2_check_frag_support(md);
+	}
 
 	/* initiate calculation of g^xy */
 	return start_dh_v2(md, "ikev2_inR1outI2 KE", ORIGINAL_INITIATOR,
@@ -1542,14 +1591,14 @@ static stf_status ikev2_encrypt_msg(struct state *st,
  * the actual starting-variable (a.k.a. IV).
  */
 
-stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md)
+static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
+						      struct chunk *chunk,
+						      unsigned int iv)
 {
 	/* caller should be passing in the original (parent) state. */
 	struct state *st = md->st;
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
-
-	pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
 
 	if (st != NULL && !st->hidden_variables.st_skeyid_calculated)
 	{
@@ -1565,7 +1614,7 @@ stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md)
 		return STF_FAIL;
 	}
 
-	u_char *wire_iv_start = e_pbs->cur;
+	u_char *wire_iv_start = chunk->ptr + iv;
 	size_t wire_iv_size = pst->st_oakley.encrypter->wire_iv_size;
 	size_t integ_size = (ike_alg_enc_requires_integ(pst->st_oakley.encrypter)
 			     ? pst->st_oakley.integ_hasher->hash_integ_len
@@ -1578,14 +1627,14 @@ stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md)
 	 * - at least one padding-length byte
 	 * - truncated integrity digest / tag
 	 */
-	u_char *payload_end = e_pbs->roof;
+	u_char *payload_end = chunk->ptr + chunk->len;
 	if (payload_end < (wire_iv_start + wire_iv_size + 1 + integ_size)) {
 		libreswan_log("encrypted payload impossibly short (%zu)",
 			      payload_end - wire_iv_start);
 		return STF_FAIL;
 	}
 
-	u_char *auth_start = md->packet_pbs.start;
+	u_char *auth_start = chunk->ptr;
 	u_char *enc_start = wire_iv_start + wire_iv_size;
 	u_char *integ_start = payload_end - integ_size;
 	size_t enc_size = integ_start - enc_start;
@@ -1707,7 +1756,57 @@ stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md)
 	/* don't bother to check any other pad octets */
 	DBG(DBG_CRYPT, DBG_log("striping %u bytes as pad", padlen));
 
-	init_pbs(&md->clr_pbs, enc_start, enc_size - padlen, "cleartext");
+	setchunk(*chunk, enc_start, enc_size - padlen);
+	return STF_OK;
+}
+
+static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
+					     struct chunk *chunk)
+{
+	struct state *st = md->st;
+	struct ikev2_frag *frag;
+	stf_status status;
+	unsigned int size;
+	unsigned int offset;
+
+	size = 0;
+	for (frag = st->ikev2_frags; frag; frag = frag->next) {
+		setchunk(frag->plain, frag->cipher.ptr, frag->cipher.len);
+
+		status = ikev2_verify_and_decrypt_sk_payload(
+			md, &frag->plain, frag->iv);
+		if (status != STF_OK) {
+			release_v2fragments(&st->ikev2_frags);
+			return status;
+		}
+
+		size += frag->plain.len;
+	}
+
+	/* We have all the fragments */
+	md->raw_packet.ptr = alloc_bytes(size, "IKE fragments buffer");
+
+	/* Reassemble fragments in buffer */
+	frag = st->ikev2_frags;
+	md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np = frag->np;
+	offset = 0;
+	do {
+		struct ikev2_frag *old = frag;
+
+		passert(offset + frag->plain.len <= size);
+		memcpy(md->raw_packet.ptr + offset, frag->plain.ptr,
+		       frag->plain.len);
+		offset += frag->plain.len;
+		frag = frag->next;
+
+		freeanychunk(old->cipher);
+		pfree(old);
+	} while (frag);
+
+	st->ikev2_frags = NULL;
+
+	setchunk(*chunk, md->raw_packet.ptr, size);
+
 	return STF_OK;
 }
 
@@ -1715,11 +1814,29 @@ static
 stf_status ikev2_decrypt_msg(struct msg_digest *md)
 {
 	stf_status status;
-	status = ikev2_verify_and_decrypt_sk_payload(md);
+	struct chunk chunk;
+
+	if (md->chain[ISAKMP_NEXT_v2SKF]) {
+		status = ikev2_reassemble_fragments(md, &chunk);
+	} else {
+		pb_stream *e_pbs = &md->chain[ISAKMP_NEXT_v2SK]->pbs;
+
+		setchunk(chunk, md->packet_pbs.start,
+			 e_pbs->roof - md->packet_pbs.start);
+
+		status = ikev2_verify_and_decrypt_sk_payload(
+			md, &chunk, e_pbs->cur - md->packet_pbs.start);
+	}
+
 	if (status != STF_OK) {
 		return status;
 	}
-	unsigned np = md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np;
+
+	init_pbs(&md->clr_pbs, chunk.ptr, chunk.len, "cleartext");
+
+	unsigned np = md->chain[ISAKMP_NEXT_v2SK] ?
+		      md->chain[ISAKMP_NEXT_v2SK]->payload.generic.isag_np :
+		      md->chain[ISAKMP_NEXT_v2SKF]->payload.v2skf.isaskf_np;
 	struct ikev2_payloads_summary summary = ikev2_decode_payloads(md, &md->clr_pbs, np);
 	if (summary.status != STF_OK) {
 		return status;
@@ -1851,6 +1968,158 @@ static stf_status ikev2_send_auth(struct connection *c,
 	return STF_OK;
 }
 
+static stf_status ikev2_send_fragment(struct msg_digest *md,
+				      struct isakmp_hdr *hdr,
+				      struct ikev2_generic *oe,
+				      struct ikev2_frag **fragp,
+				      struct chunk *payload,
+				      unsigned int count, unsigned int total,
+				      const char *desc)
+{
+	struct state *st = md->st;
+	struct ikev2_skf e;
+	unsigned char *encstart;
+	pb_stream e_pbs, e_pbs_cipher;
+	unsigned char *iv;
+	unsigned char *authstart;
+
+	/* make sure HDR is at start of a clean buffer */
+	zero(&reply_buffer);
+	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
+		 "reply packet");
+
+	/* beginning of data going out */
+	authstart = reply_stream.cur;
+
+	/* HDR out */
+	{
+		hdr->isa_np = ISAKMP_NEXT_v2SKF;
+
+		if (!out_struct(hdr, &isakmp_hdr_desc, &reply_stream,
+				&md->rbody))
+			return STF_INTERNAL_ERROR;
+	}
+
+	/* insert an Encryption payload header */
+	e.isaskf_np = count == 1 ? oe->isag_np : 0;
+	e.isaskf_critical = oe->isag_critical;
+	e.isaskf_number = count;
+	e.isaskf_total = total;
+
+	if (!out_struct(&e, &ikev2_skf_desc, &md->rbody, &e_pbs))
+		return STF_INTERNAL_ERROR;
+
+	/* insert IV */
+	iv = e_pbs.cur;
+	if (!emit_wire_iv(st, &e_pbs))
+		return STF_INTERNAL_ERROR;
+
+	/* note where cleartext starts */
+	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
+		 "cleartext");
+	e_pbs_cipher.container = &e_pbs;
+	e_pbs_cipher.desc = NULL;
+	e_pbs_cipher.cur = e_pbs.cur;
+	encstart = e_pbs_cipher.cur;
+
+	if (!out_raw(payload->ptr, payload->len, &e_pbs_cipher,
+		     "cleartext fragment"))
+		return STF_INTERNAL_ERROR;
+
+	/*
+	 * need to extend the packet so that we will know how big it is
+	 * since the length is under the integrity check
+	 */
+	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
+		return STF_INTERNAL_ERROR;
+
+	close_output_pbs(&e_pbs_cipher);
+
+	{
+		unsigned char *authloc = ikev2_authloc(st, &e_pbs);
+		int ret;
+
+		if (authloc == NULL)
+			return STF_INTERNAL_ERROR;
+
+		close_output_pbs(&e_pbs);
+		close_output_pbs(&md->rbody);
+		close_output_pbs(&reply_stream);
+
+		ret = ikev2_encrypt_msg(st, authstart,
+					iv, encstart, authloc,
+					&e_pbs, &e_pbs_cipher);
+		if (ret != STF_OK)
+			return ret;
+	}
+
+	*fragp = alloc_thing(struct ikev2_frag, "ikev2_frag");
+	clonetochunk((*fragp)->cipher, reply_stream.start,
+		     pbs_offset(&reply_stream), desc);
+
+	return STF_OK;
+}
+
+static stf_status ikev2_send_fragments(struct msg_digest *md,
+				       struct isakmp_hdr *hdr,
+				       struct ikev2_generic *e,
+				       struct chunk *payload,
+				       const char *desc)
+{
+	struct state *st = md->st;
+	unsigned int len;
+	unsigned int offset;
+	unsigned int total;
+	unsigned int count;
+	struct ikev2_frag **fragp;
+	int ret;
+
+	len = (st->st_connection->addr_family == AF_INET) ?
+	      ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6;
+
+	if (st->st_interface && st->st_interface->ike_float)
+		len -= NON_ESP_MARKER_SIZE;
+
+	len -= NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag;
+	len -= ike_alg_enc_requires_integ(st->st_oakley.encrypter) ?
+	       st->st_oakley.integ_hasher->hash_integ_len :
+	       st->st_oakley.encrypter->aead_tag_size;
+
+	if (st->st_oakley.encrypter->pad_to_blocksize)
+		len &= ~(st->st_oakley.encrypter->enc_blocksize - 1);
+
+	len -= 2;
+
+	total = (payload->len - 1) / len + 1;
+	if (total >= 128) {
+		loglog(RC_LOG_SERIOUS, "Too many frags %u %u",
+		       (unsigned int)payload->len, len);
+		return STF_INTERNAL_ERROR;
+	}
+
+	count = 1;
+	offset = 0;
+	fragp = &st->st_tfrags;
+
+	for (;;) {
+		struct chunk cipher;
+
+		if (offset + len > payload->len)
+			len = payload->len - offset;
+		setchunk(cipher, payload->ptr + offset, len);
+		offset += len;
+		ret = ikev2_send_fragment(md, hdr, e, fragp, &cipher,
+					  count++, total, desc);
+
+		if (ret != STF_OK || offset >= payload->len)
+			break;
+
+		fragp = &(*fragp)->next;
+	}
+
+	return ret;
+}
+
 static stf_status ikev2_parent_inR1outI2_tail(
 	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r)
@@ -1867,6 +2136,9 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	unsigned char *authstart;
 	struct state *pst = st;
 	bool send_cert = FALSE;
+	struct isakmp_hdr hdr = md->hdr;
+	unsigned char *authloc;
+	unsigned int len;
 
 	finish_dh_v2(st, r);
 
@@ -1908,8 +2180,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* HDR out */
 	{
-		struct isakmp_hdr hdr = md->hdr;
-
 		/* clear all flags, set original initiator */
 		hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
 		hdr.isa_version = build_ikev2_version();
@@ -2075,6 +2345,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		}
 	}
 
+	len = pbs_offset(&e_pbs_cipher);
+
 	/*
 	 * need to extend the packet so that we will know how big it is
 	 * since the length is under the integrity check
@@ -2084,15 +2356,29 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	close_output_pbs(&e_pbs_cipher);
 
+	authloc = ikev2_authloc(st, &e_pbs);
+
+	if (authloc == NULL)
+		return STF_INTERNAL_ERROR;
+
+	close_output_pbs(&e_pbs);
+	close_output_pbs(&md->rbody);
+	close_output_pbs(&reply_stream);
+
+	if (should_fragment_ike_msg(st, pbs_offset(&reply_stream), TRUE)) {
+		struct chunk payload;
+
+		clonetochunk(payload, e_pbs_cipher.start, len,
+			     "cleartext for ikev2_parent_outR1_I2");
+
+		ret = ikev2_send_fragments(md, &hdr, &e, &payload,
+					   "reply fragment for ikev2_parent_outR1_I2");
+
+		freeanychunk(payload);
+		return ret;
+	}
+
 	{
-		unsigned char *authloc = ikev2_authloc(st, &e_pbs);
-
-		if (authloc == NULL)
-			return STF_INTERNAL_ERROR;
-
-		close_output_pbs(&e_pbs);
-		close_output_pbs(&md->rbody);
-		close_output_pbs(&reply_stream);
 
 		ret = ikev2_encrypt_msg(st, authstart,
 					iv, encstart, authloc,
@@ -2108,6 +2394,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	clonetochunk(pst->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet for ikev2_parent_outI1");
+	release_v2fragments(&pst->st_tfrags);
 
 	return STF_OK;
 }
@@ -2594,10 +2881,13 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 	{
 		unsigned char *encstart;
 		unsigned char *iv;
+		unsigned char *authloc;
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
 		stf_status ret;
 		bool send_cert = FALSE;
+		unsigned int len;
+		struct isakmp_hdr hdr;
 
 		/* make sure HDR is at start of a clean buffer */
 		zero(&reply_buffer);
@@ -2606,7 +2896,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 
 		/* HDR out */
 		{
-			struct isakmp_hdr hdr = md->hdr; /* grab cookies */
+			hdr = md->hdr; /* grab cookies */
 
 			/* set msg responder flag - clear others */
 			hdr.isa_flags = ISAKMP_FLAGS_v2_MSG_R;
@@ -2755,22 +3045,37 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 			}
 		}
 
+		len = pbs_offset(&e_pbs_cipher);
+
 		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&e_pbs_cipher);
 
+		authloc = ikev2_authloc(st, &e_pbs);
+
+		if (authloc == NULL)
+			return STF_INTERNAL_ERROR;
+
+		close_output_pbs(&e_pbs);
+		close_output_pbs(&md->rbody);
+		close_output_pbs(&reply_stream);
+
+		if (should_fragment_ike_msg(st, pbs_offset(&reply_stream),
+						TRUE)) {
+			struct chunk payload;
+
+			clonetochunk(payload, e_pbs_cipher.start, len,
+				     "cleartext for ikev2_parent_inI2outR2_tail");
+
+			ret = ikev2_send_fragments(md, &hdr, &e, &payload,
+						   "reply fragment for ikev2_parent_inI2outR2_tail");
+
+			freeanychunk(payload);
+			return ret;
+		}
+
 		{
-			unsigned char *authloc = ikev2_authloc(st, &e_pbs);
-
-			if (authloc == NULL)
-				return STF_INTERNAL_ERROR;
-
-			close_output_pbs(&e_pbs);
-
-			close_output_pbs(&md->rbody);
-			close_output_pbs(&reply_stream);
-
 			ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
@@ -2784,6 +3089,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet for ikev2_parent_inI2outR2_tail");
+	release_v2fragments(&st->st_tfrags);
 
 	/* note: retransmission is driven by initiator */
 
@@ -3317,6 +3623,7 @@ void send_v2_notification(struct state *p1st,
 
 	clonetochunk(p1st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream),
 		     "notification packet");
+	release_v2fragments(&p1st->st_tfrags);
 
 	send_ike_msg(p1st, __FUNCTION__);
 }
@@ -3605,6 +3912,7 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 
 	freeanychunk(pst->st_tpacket);
 	clonetochunk(pst->st_tpacket, reply_stream.start, pbs_offset(&reply_stream), "reply packet for CREATE_CHILD_SA exchange");
+	release_v2fragments(&pst->st_tfrags);
 
 	send_ike_msg(pst, __FUNCTION__);
 
@@ -3948,6 +4256,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		clonetochunk(st->st_tpacket, reply_stream.start,
 			     pbs_offset(&reply_stream),
 			     "reply packet for informational exchange");
+		release_v2fragments(&st->st_tfrags);
 
 		send_ike_msg(st, __FUNCTION__);
 	}
@@ -4195,6 +4504,7 @@ stf_status ikev2_send_informational(struct state *st)
 		clonetochunk(pst->st_tpacket, reply_stream.start,
 			     pbs_offset(&reply_stream),
 			     "reply packet for informational exchange");
+		release_v2fragments(&st->st_tfrags);
 		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 		send_ike_msg(pst, __FUNCTION__);
 	}
@@ -4351,6 +4661,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 	clonetochunk(pst->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "request packet for informational exchange");
+	release_v2fragments(&pst->st_tfrags);
 
 	send_ike_msg(pst, __FUNCTION__);
 

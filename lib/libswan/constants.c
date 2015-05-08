@@ -286,6 +286,11 @@ const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SK",
 	"ISAKMP_NEXT_v2CP",
 	"ISAKMP_NEXT_v2EAP",
+	"ISAKMP_NEXT_v2GSPM",
+	"ISAKMP_NEXT_v2IDG",
+	"ISAKMP_NEXT_v2GSA",
+	"ISAKMP_NEXT_v2KD",
+	"ISAKMP_NEXT_v2SKF",
 	NULL	/* termination for bitnamesof() */
 };
 
@@ -306,7 +311,7 @@ static enum_names payload_names_ikev2_private_use = {
 
 static enum_names payload_names_ikev2_main = {
 	ISAKMP_NEXT_v2SA,
-	ISAKMP_NEXT_v2EAP,
+	ISAKMP_NEXT_v2SKF,
 	payload_name_ikev2_main,
 	&payload_names_ikev2_private_use
 };
@@ -321,7 +326,7 @@ enum_names ikev2_payload_names = {
 /* either V1 or V2 payload kind */
 static enum_names payload_names_ikev2copy_main = {
 	ISAKMP_NEXT_v2SA,
-	ISAKMP_NEXT_v2EAP,
+	ISAKMP_NEXT_v2SKF,
 	payload_name_ikev2_main,
 	&payload_names_ikev1_private_use
 };
@@ -1603,12 +1608,18 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_IPSEC_REPLAY_COUNTER_SYNC_SUPPORTED",
 	"v2N_IKEV2_MESSAGE_ID_SYNC",
 	"v2N_IPSEC_REPLAY_COUNTER_SYNC",
-	"v2N_SECURE_PASSWORD_METHODS",    /* 16423 */
+	"v2N_SECURE_PASSWORD_METHODS",
+	"v2N_PSK_PERSIST",
+	"v2N_PSK_CONFIRM",
+	"v2N_ERX_SUPPORTED",
+	"v2N_IFOM_CAPABILITY",
+	"v2N_SENDER_REQUEST_ID",
+	"v2N_FRAGMENTATION_SUPPORTED",    /* 16430 */
 };
 
 static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
-	v2N_SECURE_PASSWORD_METHODS,
+	v2N_FRAGMENTATION_SUPPORTED,
 	ikev2_notify_name_16384,
 	NULL
 };

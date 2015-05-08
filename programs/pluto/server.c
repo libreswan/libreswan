@@ -1215,6 +1215,32 @@ static bool send_frags(struct state *st, const char *where)
 	return TRUE;
 }
 
+bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
+{
+	if (st->st_interface && st->st_interface->ike_float)
+		len += NON_ESP_MARKER_SIZE;
+
+	return len >= (st->st_connection->addr_family == AF_INET ?
+		       ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
+	       (resending ?
+		(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
+		st->st_seen_fragvid :
+		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
+		st->st_seen_fragments);
+}
+
+static bool send_ikev2_frags(struct state *st, const char *where)
+{
+	struct ikev2_frag *frag;
+
+	for (frag = st->st_tfrags; frag; frag = frag->next)
+		if (!send_packet(st, where, FALSE,
+				 frag->cipher.ptr, frag->cipher.len, NULL, 0))
+			return FALSE;
+
+	return TRUE;
+}
+
 static bool send_or_resend_ike_msg(struct state *st, const char *where,
 				   bool resending)
 {
@@ -1234,15 +1260,10 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 	/* decide of whether we're to fragment  - IKEv1 only, draft-smyslov-ipsecme-ikev2-fragmentation not implemented yet */
 	if (!st->st_ikev2 &&
 	    st->st_state != STATE_MAIN_I1 &&
-	    len + natt_bonus >=
-		(st->st_connection->addr_family == AF_INET ?
-		 ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
-	    ((resending &&
-	      (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
-	      st->st_seen_fragvid) ||
-	     ((st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-	      st->st_seen_fragments))) {
+	    should_fragment_ike_msg(st, len + natt_bonus, resending)) {
 		return send_frags(st, where);
+	} else if (st->st_ikev2 && st->st_tfrags) {
+		return send_ikev2_frags(st, where);
 	} else {
 		return send_packet(st, where, FALSE, st->st_tpacket.ptr,
 				   st->st_tpacket.len, NULL, 0);
