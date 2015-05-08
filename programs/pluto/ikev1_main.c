@@ -792,8 +792,8 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 	}
 
 	/* Increase VID counter for NAT-T VID */
-	if (nat_traversal_enabled && md->quirks.qnat_traversal_vid != VID_none) {
-		DBG(DBG_NATT, DBG_log("nat-t detected, sending nat-t VID"));
+	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
+		DBG(DBG_NATT, DBG_log("nat-t VID detected, sending nat-t VID"));
 		numvidtosend++;
 	}
 
