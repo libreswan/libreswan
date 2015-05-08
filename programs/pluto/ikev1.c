@@ -1390,14 +1390,14 @@ void process_v1_packet(struct msg_digest **mdp)
 		pb_stream frag_pbs;
 
 		if (st == NULL) {
-			libreswan_log(
-				"received IKE fragment, but have no state. Ignoring packet.");
+			DBG(DBG_CONTROL, DBG_log(
+				"received IKE fragment, but have no state. Ignoring packet."));
 			return;
 		}
 
 		if ((st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) == 0) {
-			loglog(RC_LOG,
-			       "discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)");
+			DBG(DBG_CONTROL, DBG_log(
+			       "discarding IKE fragment packet - fragmentation not allowed by local policy (ike_frag=no)"));
 			return;
 		}
 

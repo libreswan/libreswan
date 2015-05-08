@@ -643,18 +643,20 @@ static bool ikev2_check_fragment(struct msg_digest *md)
 	struct ikev2_frag *i;
 
 	if (!(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
-		libreswan_log("discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)");
+		DBG(DBG_CONTROL, DBG_log(
+			"discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)"));
 		return TRUE;
 	}
 
-	DBG(DBG_CONTROL,
-	    DBG_log("received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
+	DBG(DBG_CONTROL, DBG_log(
+		"received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
 		    skf->isaskf_number, skf->isaskf_total, skf->isaskf_np));
 
 	if (!skf->isaskf_number || !skf->isaskf_total ||
 	    skf->isaskf_number > skf->isaskf_total ||
 	    (skf->isaskf_number == 1 ? !skf->isaskf_np : skf->isaskf_np)) {
-		libreswan_log("Ignoring invalid IKE encrypted fragment");
+		DBG(DBG_CONTROL, DBG_log(
+			"ignoring invalid IKE encrypted fragment"));
 		return TRUE;
 	}
 
@@ -663,12 +665,14 @@ static bool ikev2_check_fragment(struct msg_digest *md)
 			continue;
 
 		if (i->total == skf->isaskf_total) {
-			libreswan_log("Ignoring duplicate IKE encrypted fragment");
+			DBG(DBG_CONTROL, DBG_log(
+				"ignoring duplicate IKE encrypted fragment"));
 			return TRUE;
 		}
 
 		if (i->total > skf->isaskf_total) {
-			libreswan_log("Ignoring odd IKE encrypted fragment");
+			DBG(DBG_CONTROL, DBG_log(
+				"ignoring odd IKE encrypted fragment"));
 			return TRUE;
 		}
 	}
@@ -729,7 +733,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md)
 	if (num_frags < skf->isaskf_total)
 		return TRUE;
 
-	/* optimize: if receiving fragments, immediately respond with fragments too */
+	/* if receiving fragments, respond with fragments too */
 	st->st_seen_fragments = TRUE;
 
 	DBG(DBG_CONTROL,
