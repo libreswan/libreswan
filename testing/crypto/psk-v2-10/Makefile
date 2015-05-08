@@ -2,7 +2,6 @@ UNITTEST=psk-v2
 CFLAGS=-DUSE_3DES
 INCLUDES=-I${SRCDIR}${LIBRESWANSRCDIR}/programs/pluto
 INCLUDES+=-I${SRCDIR}${LIBRESWANSRCDIR}/testing/lib/libpluto
-VPATH += ${SRCDIR}
 
 SOURCES=psk-v2.c packetsI1psk.c 
 
