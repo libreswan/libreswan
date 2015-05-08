@@ -115,6 +115,11 @@ chunk_t get_dercert_from_nss_cert(CERTCertificate *cert)
 	return secitem_to_chunk(cert->derCert);
 }
 
+static int dntoasi(char *dst, size_t dstlen, SECItem si)
+{
+	chunk_t ch = secitem_to_chunk(si);
+	return dntoa(dst, dstlen, ch);
+}
 
 bool cert_key_is_rsa(CERTCertificate *cert)
 {
@@ -1620,6 +1625,8 @@ static void cert_detail_to_whacklog(CERTCertificate *cert)
 	bool is_CA = FALSE;
 	bool is_root = FALSE;
 	bool has_priv = FALSE;
+	char sbuf[ASN1_BUF_LEN];
+	char ibuf[ASN1_BUF_LEN];
 
 	if (cert == NULL)
 		return;
@@ -1638,13 +1645,15 @@ static void cert_detail_to_whacklog(CERTCertificate *cert)
 		return;
 
 	pub_k_t = SECKEY_GetPublicKeyType(pub_k);
+	dntoasi(sbuf, ASN1_BUF_LEN, cert->derSubject);
+	dntoasi(ibuf, ASN1_BUF_LEN, cert->derIssuer);
 
 	whack_log(RC_COMMENT, " ");
 	whack_log(RC_COMMENT, "%s%s certificate \"%s\" - SN: %s", is_root ? "Root ":"",
 						         is_CA ? "CA":"End",
 							 cert->nickname, print_sn);
-	whack_log(RC_COMMENT, "  subject: %s", cert->subjectName);
-	whack_log(RC_COMMENT, "  issuer: %s", cert->issuerName);
+	whack_log(RC_COMMENT, "  subject: %s", sbuf);
+	whack_log(RC_COMMENT, "  issuer: %s", ibuf);
 	if (cert_detail_notbefore_to_str(before, sizeof(before), cert))
 		whack_log(RC_COMMENT, "  not before: %s", before);
 
