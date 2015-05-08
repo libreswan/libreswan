@@ -29,7 +29,8 @@ def:
 	@echo "Please read doc/intro.html or INSTALL before running make"
 	@false
 
-# programs
+# XXX: Should switch this directory to using subdirs.mk
+manpages install-manpages install-programs list list-manpages list-programs:
 
 prerequisites cleanall distclean mostlyclean realclean install check clean spotless install_file_list:
 	@for d in $(SUBDIRS) ; \

@@ -6,6 +6,7 @@ endif
 
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
+include $(top_srcdir)/mk/targets.mk
 
 LEX=flex
 BISON=bison

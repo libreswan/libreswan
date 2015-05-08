@@ -27,6 +27,7 @@ endif
 
 # XXX: Pluto doesn't include mk/program.mk?
 include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/manpages.mk
 
 ifeq ($(USE_LDAP),true)
