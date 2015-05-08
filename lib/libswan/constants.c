@@ -1614,12 +1614,13 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_ERX_SUPPORTED",
 	"v2N_IFOM_CAPABILITY",
 	"v2N_SENDER_REQUEST_ID",
-	"v2N_FRAGMENTATION_SUPPORTED",    /* 16430 */
+	"v2N_IKEV2_FRAGMENTATION_SUPPORTED",    /* 16430 */
+	"v2N_SIGNATURE_HASH_ALGORITHMS",
 };
 
 static enum_names ikev2_notify_names_16384 = {
 	v2N_INITIAL_CONTACT,
-	v2N_FRAGMENTATION_SUPPORTED,
+	v2N_SIGNATURE_HASH_ALGORITHMS,
 	ikev2_notify_name_16384,
 	NULL
 };
@@ -1670,11 +1671,13 @@ static const char *const ikev2_notify_name[] = {
 	"v2N_USE_ASSIGNED_HoA",
 	"v2N_TEMPORARY_FAILURE",
 	"v2N_CHILD_SA_NOT_FOUND",	/* 45 */
+	"v2N_INVALID_GROUP_ID",
+	"v2N_AUTHORIZATION_FAILED",
 };
 
 enum_names ikev2_notify_names = {
 	v2N_NOTHING_WRONG,
-	v2N_CHILD_SA_NOT_FOUND,
+	v2N_AUTHORIZATION_FAILED,
 	ikev2_notify_name,
 	&ikev2_notify_names_16384
 };

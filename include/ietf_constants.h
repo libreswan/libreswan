@@ -529,11 +529,12 @@ enum next_payload_types_ikev2 {
 	ISAKMP_NEXT_v2SK = 46,	/* Encrypted payload */
 	ISAKMP_NEXT_v2CP = 47,	/* Configuration Payload (MODECFG) */
 	ISAKMP_NEXT_v2EAP = 48,	/* Extensible Authentication Payload */
-	ISAKMP_NEXT_v2GSPM = 49,
-	ISAKMP_NEXT_v2IDG = 50,
-	ISAKMP_NEXT_v2GSA = 51,
-	ISAKMP_NEXT_v2KD = 52,
-	ISAKMP_NEXT_v2SKF = 53,	/* Encrypted fragment */
+	ISAKMP_NEXT_v2GSPM = 49, /* RFC-6467 Generic Secure Password Method */
+	ISAKMP_NEXT_v2IDG = 50, /* Group Identification draft-yeung-g-ikev2 */
+	ISAKMP_NEXT_v2GSA = 51, /* Group Security Association draft-yeung-g-ikev2 */
+	ISAKMP_NEXT_v2KD = 52, /* Key Download draft-yeung-g-ikev2 */
+	ISAKMP_NEXT_v2SKF = 53,	/* Encrypted and Authenticated Fragment fragment */
+	/* 54-127 Unassigned */
 	/* 128 - 255 Private Use */
 	/* Cisco/Microsoft proprietary IKE fragmentation - private use for libreswan */
 	ISAKMP_NEXT_v2IKE_FRAGMENTATION = 132,
@@ -1373,8 +1374,10 @@ typedef enum {
 	v2N_UNACCEPTABLE_ADDRESSES = 40,
 	v2N_UNEXPECTED_NAT_DETECTED = 41,
 	v2N_USE_ASSIGNED_HoA = 42, /* RFC 5026 */
-	v2N_TEMPORARY_FAILURE = 43,
-	v2N_CHILD_SA_NOT_FOUND = 44,
+	v2N_TEMPORARY_FAILURE = 43, /* RFC 7296 */
+	v2N_CHILD_SA_NOT_FOUND = 44, /* RFC 7296 */
+	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
+	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
 
 	/* old IKEv1 entries - might be in private use for IKEv2N */
 	v2N_INITIAL_CONTACT = 16384,
@@ -1420,14 +1423,15 @@ typedef enum {
 	v2N_IKEV2_MESSAGE_ID_SYNC = 16422, /* RFC-6311 */
 	v2N_IPSEC_REPLAY_COUNTER_SYNC = 16423, /* RFC-6311 */
 	v2N_SECURE_PASSWORD_METHODS = 16424, /* RFC-6467 */
-	v2N_PSK_PERSIST = 16425,
-	v2N_PSK_CONFIRM = 16426,
-	v2N_ERX_SUPPORTED = 16427,
-	v2N_IFOM_CAPABILITY = 16428,
-	v2N_SENDER_REQUEST_ID = 16429,
-	v2N_FRAGMENTATION_SUPPORTED = 16430, /* RFC-7383 */
+	v2N_PSK_PERSIST = 16425, /* RFC-6631 */
+	v2N_PSK_CONFIRM = 16426, /* RFC-6631 */
+	v2N_ERX_SUPPORTED = 16427, /* RFC-6867 */
+	v2N_IFOM_CAPABILITY = 16428, /* 3GPP TS 24.303 v10.6.0 annex B.2 */
+	v2N_SENDER_REQUEST_ID = 16429, /* draft-yeung-g-ikev2 */
+	v2N_IKEV2_FRAGMENTATION_SUPPORTED = 16430, /* RFC-7383 */
+	v2N_SIGNATURE_HASH_ALGORITHMS = 16431, /* RFC-7427 */
 
-	/* 16431 - 40969 Unassigned */
+	/* 16432 - 40969 Unassigned */
 	/* 40960 - 65535 Private Use */
 } v2_notification_t;
 

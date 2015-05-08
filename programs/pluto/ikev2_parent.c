@@ -503,7 +503,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 			      PROTO_v2_RESERVED, &empty_chunk,
-			      v2N_FRAGMENTATION_SUPPORTED, &empty_chunk,
+			      v2N_IKEV2_FRAGMENTATION_SUPPORTED, &empty_chunk,
 			      &md->rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -561,7 +561,7 @@ static void ikev2_check_frag_support(struct msg_digest *md)
 
 	for (p = md->chain[ISAKMP_NEXT_v2N]; p != NULL; p = p->next) {
 		switch (p->payload.v2n.isan_type) {
-		case v2N_FRAGMENTATION_SUPPORTED:
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 			st->st_seen_fragvid = TRUE;
 			break;
 		default:
@@ -1050,7 +1050,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 		if (!ship_v2N(np, ISAKMP_PAYLOAD_NONCRITICAL,
 			      PROTO_v2_RESERVED, &empty_chunk,
-			      v2N_FRAGMENTATION_SUPPORTED, &empty_chunk,
+			      v2N_IKEV2_FRAGMENTATION_SUPPORTED, &empty_chunk,
 			      &md->rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1256,7 +1256,7 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		case v2N_USE_TRANSPORT_MODE:
 		case v2N_NAT_DETECTION_SOURCE_IP:
 		case v2N_NAT_DETECTION_DESTINATION_IP:
-		case v2N_FRAGMENTATION_SUPPORTED:
+		case v2N_IKEV2_FRAGMENTATION_SUPPORTED:
 			/* we do handle these further down */
 			break;
 		default:
