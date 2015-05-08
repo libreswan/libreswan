@@ -2,7 +2,6 @@ UNITTEST=rsa-v2
 CFLAGS=-DUSE_3DES
 INCLUDES=-I${SRCDIR}${LIBRESWANSRCDIR}/programs/pluto
 INCLUDES+=-I${SRCDIR}${LIBRESWANSRCDIR}/testing/lib/libpluto
-VPATH += ${SRCDIR}
 
 SOURCES=rsa-v2.c packetsI1.c 
 

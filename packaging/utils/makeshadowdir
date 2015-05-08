@@ -34,7 +34,6 @@ do
 # top_srcdir, abs_top_srcdir, ...
 include ${top_builddir}/../mk/dirs.mk
 
-VPATH+=\${abs_srcdir}
 include \${srcdir}/Makefile
 -include Makefile.depend
 EOF
@@ -52,7 +51,6 @@ cat <<EOF > $OBJDIR/Makefile.tmp
 # top_srcdir, abs_top_srcdir, ...
 include ../mk/dirs.mk
 
-VPATH+=\${abs_srcdir}
 include \${top_srcdir}/Makefile.top
 
 programs config man install clean checkprograms::

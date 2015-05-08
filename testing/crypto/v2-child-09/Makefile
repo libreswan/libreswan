@@ -2,7 +2,6 @@ UNITTEST=v2-child
 CFLAGS=-DUSE_3DES
 INCLUDES=-I${SRCDIR}${LIBRESWANSRCDIR}/programs/pluto
 INCLUDES+=-I${SRCDIR}${LIBRESWANSRCDIR}/testing/lib/libpluto
-VPATH += ${SRCDIR}
 
 SOURCES=v2-child.c
 

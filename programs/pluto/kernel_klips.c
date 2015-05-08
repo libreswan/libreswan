@@ -81,6 +81,10 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 			}
 		}
 
+		/* ignore loopback */
+		if (streq(ifp->name, "lo"))
+			continue;
+
 		/* ignore if virtual (ipsec*) interface */
 		if (startswith(ifp->name, IPSECDEVPREFIX))
 			continue;
