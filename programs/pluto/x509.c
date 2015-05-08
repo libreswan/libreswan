@@ -146,7 +146,6 @@ realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 
 	return ret;
 }
-
 /*
  * does our CA match one of the requested CAs?
  */
@@ -272,7 +271,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	*pathlen = 0;
 
 	/* CA a equals CA b -> we have a match */
-	if (same_dn(a, b))
+	if (same_dn_any_order(a, b))
 		return TRUE;
 
 	handle = CERT_GetDefaultCertDB();
@@ -295,7 +294,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 		/* does the issuer of CA a match CA b? */
 		i_dn = secitem_to_chunk(cacert->derIssuer);
-		match = same_dn(i_dn, b);
+		match = same_dn_any_order(i_dn, b);
 
 		/* we have a match and exit the loop */
 		if (match)
@@ -336,7 +335,7 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 	if (end_id->kind == ID_DER_ASN1_DN) {
 		chunk_t certdn = secitem_to_chunk(cert->derSubject);
 
-		if (!same_dn(end_id->name, certdn)) {
+		if (!same_dn_any_order(end_id->name, certdn)) {
 			char idb[IDTOA_BUF];
 
 			idtoa(end_id, idb, IDTOA_BUF);
@@ -664,7 +663,8 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 					top = gn;
 					break;
 				}
-				if (same_dn(gn->name, d->spd.that.ca)) {
+				if (same_dn_any_order(gn->name,
+						      d->spd.that.ca)) {
 					break;
 				}
 			}
