@@ -40,9 +40,7 @@ mk.target = $(shell echo $@ | tr '[-a-z]' '[_A-Z]')
 $(filter-out $(BROKEN_TARGETS),$(SUBDIR_TARGETS) $(GLOBAL_TARGETS)):
 	@set -eu ; \
 	subdirs="$(SUBDIRS)" ; \
-	echo "subdirs=$$subdirs" ; \
 	broken="$(strip $(BROKEN_$(mk.target)_SUBDIRS))" ; \
-	echo "broken=$$broken" ; \
 	for d in $$subdirs ; do \
 		case " $$broken " in \
 		*" $$d "* ) \
