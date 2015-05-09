@@ -40,7 +40,7 @@ static chunk_t zalloc_chunk(size_t length, const char *name)
  * If this function fails, crash and burn.  Its been fed static data
  * so should never ever have a problem.
  */
-static chunk_t decode_hex_to_chunk(const char *original, const char *string)
+chunk_t decode_hex_to_chunk(const char *original, const char *string)
 {
 	/* The decoded buffer can't be bigger than the encoded string.  */
 	chunk_t chunk = zalloc_chunk(strlen(string), original);
@@ -154,8 +154,15 @@ chunk_t extract_chunk(const char *prefix, const chunk_t input, size_t offset, si
 PK11SymKey *decode_to_key(CK_MECHANISM_TYPE cipher_mechanism,
 			  const char *encoded_key)
 {
-	PK11SlotInfo *slot = PK11_GetBestSlot(cipher_mechanism, NULL);
 	chunk_t raw_key = decode_to_chunk("key", encoded_key);
+	PK11SymKey *sym_key = chunk_to_key(cipher_mechanism, raw_key);
+	freeanychunk(raw_key);
+	return sym_key;
+}
+
+PK11SymKey *chunk_to_key(CK_MECHANISM_TYPE cipher_mechanism, chunk_t raw_key)
+{
+	PK11SlotInfo *slot = PK11_GetBestSlot(cipher_mechanism, NULL);
 	SECItem key_item;
 	key_item.type = siBuffer;
 	key_item.data = raw_key.ptr; /* ptr to an array of key bytes */
@@ -163,7 +170,6 @@ PK11SymKey *decode_to_key(CK_MECHANISM_TYPE cipher_mechanism,
 	PK11SymKey *sym_key = PK11_ImportSymKey(slot, cipher_mechanism,
 						PK11_OriginUnwrap,
 						CKA_ENCRYPT, &key_item, NULL);
-	freeanychunk(raw_key);
 	PK11_FreeSlot(slot);
 	return sym_key;
 }

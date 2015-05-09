@@ -364,7 +364,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		nexthop_str[sizeof("PLUTO_NEXT_HOP='' ") + ADDRTOT_BUF],
 		secure_xauth_username_str[IDTOA_BUF] = "",
 		traffic_in_str[sizeof("PLUTO_IN_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
-		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "";
+		traffic_out_str[sizeof("PLUTO_OUT_BYTES='' ") + MAX_DISPLAY_BYTES] = "",
+		nflogstr[sizeof("NFLOG='' ") + MAX_DISPLAY_BYTES] = "";
 
 	ipstr_buf bme, bpeer;
 	ip_address ta;
@@ -423,6 +424,12 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 			sizeof(secure_xauth_username_str), p, "' ");
 	}
 	fmt_traffic_str(st, traffic_in_str, sizeof(traffic_in_str), traffic_out_str, sizeof(traffic_out_str));
+
+	nflogstr[0] = '\0';
+	if (c->nflog_group) {
+		snprintf(nflogstr, sizeof(nflogstr), "NFLOG=%d ",
+			c->nflog_group);
+	}
 
 	srcip_str[0] = '\0';
 	if (addrbytesptr(&sr->this.host_srcip, NULL) != 0 &&
@@ -497,6 +504,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 #endif
 			"%s" /* traffic in stats - if any */
 			"%s" /* traffic out stats - if any */
+			"%s" /* nflog-group - if any */
 
 		, c->name,
 		c->interface->ip_dev->id_vname,
@@ -525,7 +533,7 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		kernel_ops->kern_name,
 		metric_str,
 		connmtu_str,
-		(u_int64_t)(st == NULL ? 0U : st->st_esp.add_time),
+		st == NULL ? (u_int64_t)0 : st->st_esp.add_time,
 		prettypolicy(c->policy),	/* 25 */
 		(c->addr_family == AF_INET) ? 4 : 6,
 		(st != NULL && st->st_xauth_soft) ? 1 : 0,
@@ -539,7 +547,8 @@ int fmt_common_shell_out(char *buf, int blen, struct connection *c,
 		c->nmconfigured,
 #endif
 		traffic_in_str,
-		traffic_out_str
+		traffic_out_str,
+		nflogstr
 		);
 	/*
 	 * works for both old and new way of snprintf() returning
@@ -888,7 +897,7 @@ void show_shunt_status(void)
 {
 	struct bare_shunt *bs;
 
-	whack_log(RC_COMMENT, "Shunt list:"); /* spacer */
+	whack_log(RC_COMMENT, "Bare Shunt list:"); /* spacer */
 	whack_log(RC_COMMENT, " "); /* spacer */
 	for (bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */

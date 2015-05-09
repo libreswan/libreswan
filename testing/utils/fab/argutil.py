@@ -12,6 +12,8 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+import sys
+
 def timeout(arg):
     arg = arg.lower()
     if arg == "none" or arg == "infinite":
@@ -21,3 +23,13 @@ def timeout(arg):
         return None
     else:
         return v
+
+def stdout_or_open_file(arg):
+    if arg == "-":
+        return sys.stdout
+    elif arg.endswith("+"):
+        return open(arg[:-1], "a")
+    elif arg.startswith("-"):
+        return open(arg[1:], "a")
+    else:
+        return open(arg, "w")

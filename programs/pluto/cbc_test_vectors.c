@@ -25,6 +25,7 @@
 
 #include "nss.h"
 #include "pk11pub.h"
+#include "crypt_symkey.h"
 
 struct cbc_test_vector {
 	const char *description;
@@ -195,7 +196,7 @@ static int test_cbc_vector(CK_MECHANISM_TYPE cipher_mechanism,
 	}
 
 	/* Clean up.  */
-	PK11_FreeSymKey(sym_key);
+	free_any_symkey("sym_key", &sym_key);
 
 	DBG(DBG_CRYPT, DBG_log("test_ctr_vector: %s %s",
 			       test->description, ok ? "passed" : "failed"));

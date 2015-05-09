@@ -31,9 +31,9 @@ east #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes
+000 nhelpers=-1, uniqueids=yes, perpeerlog=no
 000 ddos-cookies-treshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
+000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
@@ -96,7 +96,7 @@ east #
 000 "westnet-eastnet-aes128":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-aes128":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-aes128":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "westnet-eastnet-aes128":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "westnet-eastnet-aes128":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "westnet-eastnet-aes128":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "westnet-eastnet-aes128":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000 "westnet-eastnet-aes128":   IKE algorithms wanted: AES_CBC(7)_256-SHA1(2)_000-MODP2048(14), AES_CBC(7)_256-MD5(1)_000-MODP2048(14), AES_CBC(7)_256-SHA1(2)_000-MODP1536(5), AES_CBC(7)_256-MD5(1)_000-MODP1536(5), AES_CBC(7)_256-SHA1(2)_000-MODP1024(2), AES_CBC(7)_256-MD5(1)_000-MODP1024(2)
@@ -110,7 +110,7 @@ east #
 000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 east #
  echo "initdone"

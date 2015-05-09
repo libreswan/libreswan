@@ -1726,8 +1726,6 @@ DEBUG_NO_STATIC int ipsec_tunnel_udp_encap_prepare(int fd, int encap_type)
 	if (!ctx)
 		goto error;
 
-	spin_lock_irqsave(&ipsec_tunnel_udp_encap_lock, flags);
-
 	/* setup the context */
 	ctx->magic           = IPSEC_TUNNEL_UDP_ENCAP_MAGIC;
 	ctx->sk              = sk;
@@ -1741,6 +1739,7 @@ DEBUG_NO_STATIC int ipsec_tunnel_udp_encap_prepare(int fd, int encap_type)
 	udp_encap_enable();
 #endif
 
+	spin_lock_irqsave(&ipsec_tunnel_udp_encap_lock, flags);
 	/* add the tunnel to our list so we can check on it later */
 	list_add(&ctx->link, &ipsec_tunnel_udp_encap_list);
 

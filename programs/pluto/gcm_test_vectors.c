@@ -24,6 +24,7 @@
 
 #include "nss.h"
 #include "pk11pub.h"
+#include "crypt_symkey.h"
 
 struct gcm_test_vector {
 	const char *key;
@@ -165,14 +166,17 @@ static bool test_gcm_vector(CK_MECHANISM_TYPE cipher_mechanism,
 	}
 
 	freeanychunk(salted_iv);
-	freeanychunk(wire_iv);
 	freeanychunk(salt);
-	freeanychunk(tag);
+	freeanychunk(wire_iv);
+	freeanychunk(aad);
 	freeanychunk(plaintext);
 	freeanychunk(ciphertext);
+	freeanychunk(tag);
 	freeanychunk(text_and_tag);
 
-	PK11_FreeSymKey(sym_key);	
+	/* Clean up.  */
+	free_any_symkey("sym_key", &sym_key);
+
 	DBG(DBG_CRYPT, DBG_log("test_gcm_vector: %s", ok ? "passed" : "failed"));
 	return ok;
 }

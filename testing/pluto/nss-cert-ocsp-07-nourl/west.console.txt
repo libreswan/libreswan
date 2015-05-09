@@ -56,7 +56,7 @@ west #
 000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert-ocsp":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "nss-cert-ocsp":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-ocsp":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 west #
@@ -136,9 +136,9 @@ west #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/var/run/pluto, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes
+000 nhelpers=-1, uniqueids=yes, perpeerlog=no
 000 ddos-cookies-treshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
-000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>
+000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
 000 myid = (none)
 000 debug raw+crypt+parsing+emitting+control+lifecycle+kernel+dns+oppo+controlmore+pfkey+nattraversal+x509+dpd+oppoinfo
@@ -202,7 +202,7 @@ west #
 000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert-ocsp":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
+000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "nss-cert-ocsp":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-ocsp":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 000  
@@ -215,7 +215,7 @@ west #
 000 #1: "nss-cert-ocsp":500 STATE_MAIN_I3 (sent MI3, expecting MR3); EVENT_v1_RETRANSMIT in 52s; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 000 #1: pending Phase 2 for "nss-cert-ocsp" replacing #0
 000  
-000 Shunt list:
+000 Bare Shunt list:
 000  
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

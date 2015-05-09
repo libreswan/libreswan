@@ -1,2 +1,0 @@
-# For compatibility, new code should include manpages.mk directly
-include ${LIBRESWANSRCDIR}/mk/manpages.mk

@@ -49,15 +49,15 @@
 #include "crypto.h" /* requires sha1.h and md5.h */
 #include "demux.h"
 #include "ikev2.h"
-#include "ikev2_prfplus.h"
+#include "ikev2_prf.h"
 #include "ike_alg.h"
 #include "alg_info.h"
 #include "kernel_alg.h"
+#include "crypt_symkey.h"
+#include "ikev2_prf.h"
 
 void ikev2_derive_child_keys(struct state *st, enum original_role role)
 {
-	struct v2prf_stuff childsacalc;
-
 	chunk_t ikeymat, rkeymat;
 	/* ??? note assumption that AH and ESP cannot be combined */
 	struct ipsec_proto_info *ipi =
@@ -80,17 +80,6 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 
 	passert(ei != NULL);
 	ipi->attrs.transattrs.ei = ei;
-
-	zero(&childsacalc);
-	childsacalc.prf_hasher = st->st_oakley.prf_hasher;
-
-	setchunk(childsacalc.ni, st->st_ni.ptr, st->st_ni.len);
-	setchunk(childsacalc.nr, st->st_nr.ptr, st->st_nr.len);
-	childsacalc.spii.len = 0;
-	childsacalc.spir.len = 0;
-
-	childsacalc.counter[0] = 1;
-	childsacalc.skeyseed = st->st_skey_d_nss;
 
 	/* ??? no account is taken of AH */
 	/* transid is same as esp_ealg_id */
@@ -149,12 +138,20 @@ void ikev2_derive_child_keys(struct state *st, enum original_role role)
 	 *    For AES GCM (RFC 4106 Section 8,1) we need to add 4 bytes for
 	 *    salt (AES_GCM_SALT_BYTES)
 	 */
-
-	v2genbytes(&ikeymat, ipi->keymat_len,
-		   "initiator keys", &childsacalc);
-
-	v2genbytes(&rkeymat, ipi->keymat_len,
-		   "responder keys", &childsacalc);
+	chunk_t ni;
+	chunk_t nr;
+	setchunk(ni, st->st_ni.ptr, st->st_ni.len);
+	setchunk(nr, st->st_nr.ptr, st->st_nr.len);
+	
+	PK11SymKey *keymat = ikev2_child_sa_keymat(st->st_oakley.prf_hasher,
+						   st->st_skey_d_nss,
+						   NULL/*dh*/, ni, nr,
+						   ipi->keymat_len * 2); 
+	ikeymat = chunk_from_symkey_bytes("initiator keys", keymat,
+					  0, ipi->keymat_len);
+	rkeymat = chunk_from_symkey_bytes("initiator keys", keymat,
+					  ipi->keymat_len, ipi->keymat_len);
+	free_any_symkey("keymat", &keymat);
 
 	if (role != ORIGINAL_INITIATOR) {
 		DBG(DBG_CRYPT, {

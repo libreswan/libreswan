@@ -985,7 +985,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	/* check for certificate requests */
 	ikev2_decode_cr(md, &c->requested_ca);
 
-	/* Now that we've decoded the ID payload, let's see if we
+	/*
+	 * Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.
 	 * We must not switch horses if we initiated:
 	 * - if the initiation was explicit, we'd be ignoring user's intent
@@ -993,7 +994,8 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	 */
 	if (initiator) {
 		if (!same_id(&st->st_connection->spd.that.id, &peer) &&
-		    id_kind(&st->st_connection->spd.that.id) != ID_FROMCERT) {
+			id_kind(&st->st_connection->spd.that.id) !=
+			ID_FROMCERT) {
 
 			char expect[IDTOA_BUF],
 			     found[IDTOA_BUF];

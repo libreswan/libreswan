@@ -39,7 +39,7 @@
 from within the init sub-system (systemd, upstart, sysv initscripts)
 to bring up the Libreswan kernel component as configured via the
 <emphasis remap='I'>protostack=</emphasis> option in the <emphasis
-remap='I'>ipsec.conf</emphasis>i configuration file.</para>
+remap='I'>ipsec.conf</emphasis> configuration file.</para>
 
 <para>This involves loading and optionally unloading of the required
 kernel modules. Because the Linux kernel cannot autodetect most crypto

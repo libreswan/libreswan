@@ -142,6 +142,9 @@ kvmplutotest	pluto-ipcmp-01	good
 
 kvmplutotest	ikev1-connswitch-ports-01	wip
 
+kvmplutotest	ikev2-38-psk-65bytes			good
+kvmplutotest	ikev2-39-psk-64bytes 			good
+
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
 ctltest	pluto-unit-01	good

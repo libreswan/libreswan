@@ -137,6 +137,8 @@ static void help(void)
 		"\n"
 		"deletestate: whack --deletestate <state_object_number>\n"
 		"\n"
+		"nflog-group: whack --nflog-group <group_number>\n"
+		"\n"
 		"delete xauth user: whack --deleteuser --name <xauth_user_name> \\\n"
 		"	[--crash <ip-address>]\n"
 		"\n"
@@ -230,8 +232,8 @@ static void diagq(err_t ugh, const char *this)
 
 /*
  * complex combined operands return one of these enumerated values
- * Note: these become flags in an lset_t.  Since there are more than
- * 32, we partition them into:
+ * Note: these become flags in an lset_t.  Since there could be more
+ * than lset_t could hold (currently 64), we partition them into:
  * - OPT_* options (most random options)
  * - LST_* options (list various internal data)
  * - DBGOPT_* option (DEBUG options)
@@ -261,6 +263,7 @@ enum option_enums {
 	OPT_DELETEID,
 	OPT_DELETESTATE,
 	OPT_DELETEUSER,
+	OPT_NFLOG_ALL,
 	OPT_LISTEN,
 	OPT_UNLISTEN,
 
@@ -358,6 +361,7 @@ enum option_enums {
 	CD_CONNMTU,
 	CD_PRIORITY,
 	CD_REQID,
+	CD_NFLOG_GROUP,
 	CD_TUNNELIPV4,
 	CD_TUNNELIPV6,
 	CD_CONNIPV4,
@@ -465,6 +469,8 @@ static const struct option long_opts[] = {
 	{ "delete", no_argument, NULL, OPT_DELETE + OO },
 	{ "deleteid", no_argument, NULL, OPT_DELETEID + OO },
 	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + OO +
+	  NUMERIC_ARG },
+	{ "nflog-all", required_argument, NULL, OPT_NFLOG_ALL + OO +
 	  NUMERIC_ARG },
 	{ "deleteuser", no_argument, NULL, OPT_DELETEUSER + OO },
 	{ "crash", required_argument, NULL, OPT_DELETECRASH + OO },
@@ -600,6 +606,7 @@ static const struct option long_opts[] = {
 	{ "mtu", required_argument, NULL, CD_CONNMTU + OO + NUMERIC_ARG },
 	{ "priority", required_argument, NULL, CD_PRIORITY + OO + NUMERIC_ARG },
 	{ "reqid", required_argument, NULL, CD_REQID + OO + NUMERIC_ARG },
+	{ "nflog-group", required_argument, NULL, CD_NFLOG_GROUP + OO + NUMERIC_ARG },
 	{ "sendcert", required_argument, NULL, END_SENDCERT + OO },
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
@@ -1124,6 +1131,19 @@ int main(int argc, char **argv)
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
 			msg.whack_deletestate = TRUE;
 			msg.whack_deletestateno = opt_whole;
+			continue;
+
+		case OPT_NFLOG_ALL: /* --nflog-all <group_number> */
+                        if (opt_whole <= 0  ||
+                            opt_whole > 65535) {
+                                char buf[120];
+
+                                snprintf(buf, sizeof(buf),
+                                        "invalid nflog-group value - range must be 1-65535 \"%s\"",
+                                        optarg);
+                                diag(buf);
+			}
+			msg.whack_nfloggroup = opt_whole;
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
@@ -1801,6 +1821,19 @@ int main(int argc, char **argv)
 			msg.sa_priority = opt_whole;
 			continue;
 
+		case CD_NFLOG_GROUP:
+                        if (opt_whole <= 0  ||
+                            opt_whole > 65535) {
+                                char buf[120];
+
+                                snprintf(buf, sizeof(buf),
+                                        "invalid nflog-group value - range must be 1-65535 \"%s\"",
+                                        optarg);
+                                diag(buf);
+                        }
+			msg.nflog_group = opt_whole;
+			continue;
+
 		case CD_REQID:
 			if (opt_whole <= 0  ||
 			    opt_whole > IPSEC_MANUAL_REQID_MAX) {
@@ -1966,7 +1999,7 @@ int main(int argc, char **argv)
 
 	if (!(msg.whack_connection || msg.whack_key || msg.whack_myid ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
-	      msg.whack_deleteuser ||
+	      msg.whack_deleteuser || msg.whack_nfloggroup ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||

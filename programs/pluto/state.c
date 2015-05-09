@@ -70,6 +70,7 @@
 #include "md5.h"
 #include "cookie.h"
 #include "crypto.h"	/* requires sha1.h and md5.h */
+#include "crypt_symkey.h"
 #include "spdb.h"
 
 #include <nss.h>
@@ -84,6 +85,7 @@ void update_state_stats(struct state *st, enum state_kind new_state);
 
 u_int16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
 u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
+u_int16_t pluto_nflog_group = 0;	/* default NFLOG group - 0 means no logging */
 
 /*
  * This file has the functions that handle the
@@ -671,12 +673,7 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_nr);
 
 
-#    define free_any_nss_symkey(p)  { \
-		if ((p) != NULL) { \
-			PK11_FreeSymKey(p); \
-			(p) = NULL; \
-		} \
-	}
+#    define free_any_nss_symkey(p)  free_any_symkey(#p, &(p))
 	/* ??? free_any_nss_symkey(st->st_shared_nss); */
 
 	/* same as st_skeyid_nss */
@@ -1446,7 +1443,7 @@ void fmt_list_traffic(struct state *st, char *state_buf,
 	{
 		char *mode = st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN";
 		char *mbcp = traffic_buf + snprintf(traffic_buf,
-				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%lu", mode,  st->st_esp.add_time);
+				sizeof(traffic_buf) - 1, ", type=%s,  add_time=%" PRIu64, mode,  st->st_esp.add_time);
 
 		if (get_sa_info(st, FALSE, NULL)) {
 			u_int inb = st->st_esp.present ? st->st_esp.peer_bytes :

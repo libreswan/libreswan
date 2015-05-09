@@ -52,9 +52,6 @@ audit.
 
 When a test fails early, should sanitize.sh still be run?
 
-Delete programs/pluto/Makefile.options; it just adds to general
-confusion when looking for what/why things are happening.
-
 Have *init.sh et.al. scripts always succeed.  This means that commands
 like ping that are expected to fail (demonstrating no conectivity)
 will need a "!" prefix so the failure is success.

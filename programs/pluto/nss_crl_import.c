@@ -55,7 +55,7 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 		return -1;
 	}
 
-	snprintf(lenarg, sizeof(lenarg), "%lu", len);
+	snprintf(lenarg, sizeof(lenarg), "%zu", len);
 	arg[1] = (char *)url;
 	arg[2] = lenarg;
 

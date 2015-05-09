@@ -4,12 +4,13 @@
 # Copyright (C) 2003-2006   Xelerance Corporation
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
-# 
+# Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -128,7 +129,7 @@ VARDIR?=$(DESTDIR)$(FINALVARDIR)
 FINALLOGDIR?=$(FINALVARDIR)/log
 LOGDIR?=$(DESTDIR)$(FINALLOGDIR)
 
-# An attempt is made to automatically figure out where boot/shutdown scripts 
+# An attempt is made to automatically figure out where boot/shutdown scripts
 # will finally go:  the first directory in INC_RCDIRS which exists gets them.
 # If none of those exists (or INC_RCDIRS is empty), INC_RCDEFAULT gets them.
 # With a non-null DESTDIR, INC_RCDEFAULT will be used unless one of the
@@ -175,7 +176,7 @@ OSMOD_DESTDIR?=net/ipsec
 # Using -b enables blacklisting - this is needed for some known bad
 # versions of crypto acceleration modules.
 MODPROBEBIN?=modprobe
-MODPROBEARGS?=-q -b
+MODPROBEARGS?=--quiet --use-blacklist
 
 ### misc installation stuff
 
@@ -274,11 +275,11 @@ POD2MAN?=$(shell which pod2man | grep / | head -n1)
 USE_DNSSEC?=true
 
 # Do we want all the configuration files like ipsec.conf and ipsec.secrets
-# and any certificates to be in a single directory defined by 
+# and any certificates to be in a single directory defined by
 # FINALCONFDDIR?
 USE_SINGLE_CONF_DIR?=false
 
-# Build support for KEY RR 
+# Build support for KEY RR
 # this will become false in the future, as all OE sites transition to
 # using IPSECKEY instead of KEY records.  See references to 'Flag Day'
 # Except this to change in Q1 2011
@@ -336,7 +337,7 @@ ifeq ($(OSDEP),sunos)
 USE_XAUTHPAM?=true
 endif
 
-# Build support for integrity check for libreswan on startup 
+# Build support for integrity check for libreswan on startup
 USE_FIPSCHECK?=false
 FIPSPRODUCTCHECK?=/etc/system-fips
 
@@ -368,8 +369,8 @@ USE_LIBCURL?=true
 
 # should we include additional (strong) algorithms?  It adds a measureable
 # amount of code space to pluto, and many of the algorithms have not had
-# the same scrutiny that AES and 3DES have received, but offers possibilities 
-# of switching away from AES/3DES quickly. 
+# the same scrutiny that AES and 3DES have received, but offers possibilities
+# of switching away from AES/3DES quickly.
 USE_EXTRACRYPTO?=true
 
 # Do we want to limit the number of ipsec connections artificially
@@ -442,14 +443,14 @@ WHACKLIB=${OBJDIRTOP}/lib/libwhack/libwhack.a
 IPSECCONFLIB=${OBJDIRTOP}/lib/libipsecconf/libipsecconf.a
 
 # export everything so that scripts can use them.
-export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE 
-export LIBRESWANLIB LSWLOGLIB 
+export LIBSWANDIR LIBRESWANSRCDIR ARCH PORTINCLUDE
+export LIBRESWANLIB LSWLOGLIB
 export LIBDESSRCDIR
 export LIBMD5 LIBSHA1 LIBTWOFISH LIBSERPENT
 export LIBSHA2 LIBAES_XCBC CRYPTOLIBS WHACKLIB IPSECCONFLIB
 export NSSFLAGS NSSLIBS
 
-#KERNELBUILDMFLAGS=--debug=biv V=1 
+#KERNELBUILDMFLAGS=--debug=biv V=1
 
 # how to do variable substitution in sed-transformed files
 TRANSFORM_VARIABLES = sed -e "s:@IPSECVERSION@:$(IPSECVERSION):g" \

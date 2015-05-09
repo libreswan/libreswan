@@ -322,3 +322,53 @@ const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);
 	return ret;
 }
+
+CK_MECHANISM_TYPE nss_encryption_mech(const struct encrypt_desc *encrypter)
+{
+	/* the best wey have for "undefined" */
+	CK_MECHANISM_TYPE mechanism = CKM_VENDOR_DEFINED;
+
+	switch (encrypter->common.algo_id) {
+	case OAKLEY_3DES_CBC:
+		mechanism = CKM_DES3_CBC;
+		break;
+#ifdef NOT_YET
+	case OAKLEY_CAST_CBC:
+		mechanism = CKM_CAST5_CBC:
+		break;
+#endif
+	case OAKLEY_AES_CBC:
+		mechanism = CKM_AES_CBC;
+		break;
+	case OAKLEY_CAMELLIA_CBC:
+		mechanism = CKM_CAMELLIA_CBC;
+		break;
+	case OAKLEY_AES_CTR:
+		mechanism = CKM_AES_CTR;
+		break;
+#ifdef NOT_YET
+	case OAKLEY_AES_CCM_8:
+	case OAKLEY_AES_CCM_12:
+	case OAKLEY_AES_CCM_16:
+		mechanism = CKM_AES_CCM;
+		break;
+#endif
+	case OAKLEY_AES_GCM_8:
+	case OAKLEY_AES_GCM_12:
+	case OAKLEY_AES_GCM_16:
+		mechanism = CKM_AES_GCM;
+		break;
+#ifdef NOT_YET
+	case OAKLEY_TWOFISH_CBC:
+		mechanism = CKM_TWOFISH_CBC;
+		break;
+#endif
+	default:
+		loglog(RC_LOG_SERIOUS,
+			"NSS: Unsupported encryption mechanism for %s",
+			strip_prefix(enum_name(&oakley_enc_names,
+				encrypter->common.algo_id), "OAKLEY_"));
+		break;
+	}
+	return mechanism;
+}

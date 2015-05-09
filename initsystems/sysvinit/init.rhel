@@ -122,6 +122,8 @@ start() {
     cd /
     # Create nss db or convert from old format to new sql format
     ipsec --checknss
+    # Enable nflog if configured
+    ipsec --checknflog > /dev/null
     # This script will enter an endless loop to ensure pluto restarts on crash
     ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS} &
     [ -d ${lockdir} ] || mkdir -p ${lockdir}
@@ -176,6 +178,7 @@ stop() {
     fi
 
     ipsec _stackmanager stop
+    ipsec --stopnflog > /dev/null
 
     # cleaning up backup resolv.conf
     if [ -e ${LIBRESWAN_RESOLV_CONF} ]; then

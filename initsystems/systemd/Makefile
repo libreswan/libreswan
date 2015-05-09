@@ -19,6 +19,7 @@ programs:     systemdfiles sysconfigfiles
 systemdfiles: $(SYSTEMDFILE)
 sysconfigfiles: $(SYSCONFIGFILE)
 install:      programs doinstall postcheck
+install-programs: doinstall postcheck
 
 doinstall: programs installsystemdservice installsysconfig oldinitdcheck 
 

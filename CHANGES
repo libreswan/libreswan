@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v3.13 (unreleased)
+* NSS: Major rewrite of PRF / PRFPLUS / integrity functions [Andrew]
+* CAVS: Added programs/pluto/cavp for NIST CVAS testing [Andrew]
 * IKEv2: authby=null support (draft-ietf-ipsecme-authnull) [Paul/Antony/Hugh]
 * IKEv2: whack and smc related time out fixes [Antony]
 * IKEv2: do not pad IKE messages (fix interop w. InsideSecure) [Paul]
@@ -36,6 +38,9 @@ v3.13 (unreleased)
 * pluto: don't use an expired reserved kernel SPI as fallback [Herbert Xu]
 * pluto: Use "third best" monotime() on mismatched kernel/glibc headers [Paul]
 * pluto: removed bool inbound_only from delete_ipsec_sa() [Paul/Herbert]
+* pluto: fix modecfg client/server status display (was swapped) [Herbert]
+* pluto: NFLOG support via nflog-all= and nflog= keywords [Paul]
+* pluto: Fix bogus "no RSA public key known for '%fromcert'" [Herbert Xu]
 * libipsecconf: Improve parser for pipe case (with NM) [Hugh/Lubomir Rintel]
 * readwriteconf: improve error handling [Hugh]
 * ipsec: ipsec --import does not need to run restorecon [Paul]
@@ -47,9 +52,12 @@ v3.13 (unreleased)
 * testing: docker test type support [Antony]
 * testing: test case updates/additions [Antony/Paul/Andrew/Matt]
 * NETKEY: Increase netlink message buffer for larger SElinux labels [Paul]
+* KLIPS: move udp_encap_enable() to not be within spinlock [Wolfgang]
+* KLIPS: ipsec_rcv_decap_ipip broken for IPv6 lsb#227 [Frank Schmirler]
 * whack: New command ipsec whack --purgeocsp [Matt]
 * whack: cleanup help text [Tuomo]
 * _stackmanager: Don't load blacklisted modules (rhbz#1207689) [Paul/Tuomo]
+* _updown: add proxy arp for cases where routing won't work [Tuomo/Wolfgang]
 * Bugtracker bugs fixed:
   #260: libswan: extra safetey around same_id() when ID_FROMCERT is used [Paul]
 

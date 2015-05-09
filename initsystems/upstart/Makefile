@@ -14,6 +14,7 @@ programs:     upstartfiles defaultfiles
 upstartfiles: $(UPSTARTFILE)
 defaultfiles: $(DEFAULTFILE)
 install:      programs doinstall
+install-programs: doinstall
 
 doinstall: programs installupstartconf installdefault
 
