@@ -2617,7 +2617,6 @@ struct connection *refine_host_connection(const struct state *st,
 	d = c->host_pair->connections;
 	for (wcpip = FALSE;; wcpip = TRUE) {
 		for (; d != NULL; d = d->hp_next) {
-			bool d_fromcert = FALSE;
 			bool match1 = match_id(peer_id, &d->spd.that.id,
 					&wildcards);
 			bool match2 = trusted_ca_nss(peer_ca, d->spd.that.ca,
@@ -2656,9 +2655,9 @@ struct connection *refine_host_connection(const struct state *st,
 			 * the %fromcert + peer id match result. - matt
 			 */
 			if (!match1) {
-				d_fromcert = id_kind(&d->spd.that.id) == ID_FROMCERT;
-				if (!d_fromcert)
-					continue;
+			    *fromcert = id_kind(&d->spd.that.id) == ID_FROMCERT;
+			    if (!*fromcert)
+				continue;
 			}
 
 			/* if initiator, our ID must match exactly */
@@ -2761,10 +2760,8 @@ struct connection *refine_host_connection(const struct state *st,
 			 * We'll go with it if the Peer ID was an exact match.
 			 */
 			if (match1 && wildcards == 0 &&
-			    peer_pathlen == 0 && our_pathlen == 0) {
-				*fromcert = d_fromcert;
+			    peer_pathlen == 0 && our_pathlen == 0)
 				return d;
-			}
 
 			/*
 			 * If it was a non-exact (wildcard) match, we'll
@@ -2785,7 +2782,6 @@ struct connection *refine_host_connection(const struct state *st,
 						d->name,
 						wildcards, peer_pathlen,
 						our_pathlen));
-				*fromcert = d_fromcert;
 				best_found = d;
 				best_wildcards = wildcards;
 				best_peer_pathlen = peer_pathlen;
