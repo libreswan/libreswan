@@ -370,7 +370,7 @@ static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
 	rt->number_of_defined_methods = cert_revocation_method_count;
 	rt->number_of_preferred_methods = 0;
 
-	rf[cert_revocation_method_crl] = rev_val_flags(crl_strict);
+	rf[cert_revocation_method_crl] |= CERT_REV_M_TEST_USING_THIS_METHOD;
 	rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
 
 	if (ocsp) {
