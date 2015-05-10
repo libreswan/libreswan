@@ -221,6 +221,23 @@ static const struct aead_alg *get_aead_alg(int algid)
 }
 
 /*
+ * xfrm2ip - Take an xfrm and convert to an IP address
+ *
+ * @param xaddr xfrm_address_t
+ * @param addr ip_address IPv[46] Address from addr is copied here.
+ */
+static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_family_t family)
+{
+        if (family == AF_INET) { /* If it's an IPv4 address */
+                addr->u.v4.sin_family = AF_INET;
+                addr->u.v4.sin_addr.s_addr = xaddr->a4;
+        } else {        /* Must be IPv6 */
+                memcpy(&addr->u.v6.sin6_addr, xaddr->a6, sizeof(xaddr->a6));
+                addr->u.v4.sin_family = AF_INET6;
+        }
+}
+
+/*
  * ip2xfrm - Take an IP address and convert to an xfrm.
  *
  * @param addr ip_address
@@ -1507,6 +1524,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 static void netlink_policy_expire(struct nlmsghdr *n)
 {
 	struct xfrm_user_polexpire *upe;
+	ip_address src, dst;
 
 	struct {
 		struct nlmsghdr n;
@@ -1527,6 +1545,18 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	}
 
 	upe = NLMSG_DATA(n);
+	xfrm2ip(&upe->pol.sel.saddr, &src, upe->pol.sel.family);
+	xfrm2ip(&upe->pol.sel.daddr, &dst, upe->pol.sel.family);
+	DBG( DBG_KERNEL, {
+			ipstr_buf a;
+			ipstr_buf b;
+			DBG_log("%s src %s/%u dst %s/%u dir %d index %d",
+					__func__,
+					ipstr(&src, &a), upe->pol.sel.prefixlen_s,
+					ipstr(&dst, &b), upe->pol.sel.prefixlen_d,
+					upe->pol.dir, upe->pol.index);
+			});
+
 	req.id.dir = upe->pol.dir;
 	req.id.index = upe->pol.index;
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -1534,7 +1564,8 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	rsp.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
-	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp),
+        /* ??? would next call ever succeed AA_2015 MAY */
+	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), 
 				"Get policy", "?")) {
 		return;
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
