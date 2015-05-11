@@ -27,6 +27,7 @@ SUBDIR_TARGETS = cleanall distclean mostlyclean realclean man config checkprogra
 ifneq ($(filter $(GLOBAL_TARGETS),$(SUBDIR_TARGETS)),)
 $(error Extra targets in $(SUBDIR_TARGETS))
 endif
+.PHONY: $(SUBDIR_TARGETS)
 
 # generate $(TARGET) variable name, where TARGET is the current
 # target.  Uses $@ so only works within the target rule below.
