@@ -65,9 +65,6 @@ ifneq ($(PROGRAM),check)
 check: $(PROGRAM)
 endif
 
-
-ifneq ($(NOINSTALL),true)
-
 doinstall:: $(PROGRAMSLIST)
 	@mkdir -p $(PROGRAMDIR) $(MANDIR8) $(MANDIR5) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
 	@if [ -n "$(PROGRAM)" ]; then $(INSTALL) $(INSTBINFLAGS) $(PROGRAM) $(PROGRAMDIR); fi
@@ -125,8 +122,6 @@ list-local-programs:
 	@$(foreach f, $(CONFDFILES), \
 		echo $(CONFDDIR)/${CONFDSUBDIR}/$f;\
 	)
-
-endif
 
 # set values for implicit rules.
 LOADLIBS=${OBJS} 
