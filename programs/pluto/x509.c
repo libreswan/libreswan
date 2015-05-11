@@ -1693,18 +1693,25 @@ static bool show_cert_of_type(CERTCertificate *cert, show_cert_t type)
 
 static void crl_detail_to_whacklog(CERTCrl *crl)
 {
-	char *issuer = CERT_NameToAscii(&crl->name);
+	char ibuf[ASN1_BUF_LEN];
 	char lu[256] = {0}, nu[256] = {0};
+	int entries = 0;
+
+	dntoasi(ibuf, ASN1_BUF_LEN, crl->derName);
+
+	if (crl->entries != NULL) {
+		while (crl->entries[entries] != NULL)
+			entries++;
+	}
 
 	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, "Issuer: %s", issuer);
+	whack_log(RC_COMMENT, "issuer: %s", ibuf);
+	whack_log(RC_COMMENT, "revoked certs: %d", entries);
 	if (crl_time_to_str(lu, sizeof(lu), &crl->lastUpdate))
-		whack_log(RC_COMMENT, "This update: %s", lu);
+		whack_log(RC_COMMENT, "updates: this %s", lu);
 	if (crl_time_to_str(nu, sizeof(nu), &crl->nextUpdate))
-		whack_log(RC_COMMENT, "Next update: %s", nu);
+		whack_log(RC_COMMENT, "         next %s", nu);
 
-	if (issuer != NULL)
-		PORT_Free(issuer);
 }
 
 static void crl_detail_list(void)
