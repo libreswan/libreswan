@@ -110,6 +110,15 @@ default via 192.1.2.254 dev eth1
 192.0.2.254 dev ipsec0  scope link  src 192.0.1.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
 192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east_chain_int_1                                             ,,   
+mainca                                                       CT,, 
+nic                                                          P,,  
+west_chain_endcert                                           u,u,u
+west_chain_int_1                                             ,,   
+west_chain_int_2                                             ,,   
 west #
  certutil -L -d sql:/etc/ipsec.d
 Certificate Nickname                                         Trust Attributes

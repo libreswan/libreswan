@@ -88,6 +88,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
+ done
 000 using kernel interface: klips
 000 interface ipsec0/eth1 192.1.2.45@4500
 000 interface ipsec0/eth1 192.1.2.45@500
@@ -177,10 +178,10 @@ west #
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
 000 #3: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in  00s; idle; import:admin initiate
-000 #6: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_v2_RETRANSMIT in  00s; idle; import:admin initiate
-000 #5: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in  00s; idle; import:admin initiate
 000 #1: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in  00s; idle; import:admin initiate
 000 #1: pending Phase 2 for "nss-cert" replacing #0
+000 #6: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_v2_RETRANSMIT in  00s; idle; import:admin initiate
+000 #5: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in  00s; idle; import:admin initiate
 000  
 000 Bare Shunt list:
 000  

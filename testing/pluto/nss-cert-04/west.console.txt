@@ -77,32 +77,32 @@ west #
 108 "nss-cert" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
+003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
 010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 500ms for response
-003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
+003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
 010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 1000ms for response
-003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
+003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
 010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 2000ms for response
-003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
-010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 4000ms for response
 003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
+010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 4000ms for response
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
 010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 8000ms for response
 003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
-010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 16000ms for response
 003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
+010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 16000ms for response
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
-010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 32000ms for response
 003 "nss-cert" #1: discarding duplicate packet; already STATE_MAIN_I3
+010 "nss-cert" #1: STATE_MAIN_I3: retransmission; will wait 32000ms for response
 003 "nss-cert" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "nss-cert" #1: received and ignored informational message
 031 "nss-cert" #1: max number of retransmissions (8) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
@@ -127,6 +127,17 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 via 192.1.2.23 dev eth1 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
 192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+Libreswan test CA for mainca - Libreswan                     CT,, 
+Libreswan test CA for otherca - Libreswan                    ,,   
+east-ec                                                      P,,  
+hashsha2                                                     P,,  
+nic                                                          P,,  
+north                                                        P,,  
+signedbyother                                                u,u,u
+west                                                         u,u,u
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
