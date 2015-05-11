@@ -26,7 +26,8 @@ script
 end script
 
 pre-stop script
-    @FINALSBINDIR@/ipsec whack --shutdown
+    # do not run whack --shutdown in pre-stop, it confused stop into restarting
+    # @FINALSBINDIR@/ipsec whack --shutdown
     @FINALSBINDIR@/ipsec --stopnflog
     ip xfrm policy flush
     ip xfrm state flush
