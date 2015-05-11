@@ -67,7 +67,7 @@ doinstall:
 	done
 
 
-install_file_list:
+list-local-programs:
 	@for f in $(MANS) ; \
 	do \
 		echo $(MANDIR)/ipsec_$$f;\

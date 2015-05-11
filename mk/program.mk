@@ -101,7 +101,7 @@ doinstall:: $(PROGRAMSLIST)
 		if [ ! -f $(CONFDDIR)/$(CONFDSUBDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDDIR)/$(CONFDSUBDIR)/$f || exit 1; fi;\
 	)
 
-install_file_list::
+list-local-programs:
 	@if [ -n "$(PROGRAM)" ]; then echo $(PROGRAMDIR)/$(PROGRAM); fi
 	@$(foreach f, $(addsuffix .8, $(PROGRAM)), \
 		echo $(MANDIR8)/${MANPROGPREFIX}$f; \

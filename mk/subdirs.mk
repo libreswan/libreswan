@@ -23,7 +23,7 @@ include $(top_srcdir)/mk/targets.mk
 # (an/or quietly dropped).  They are here until the top-level Makefile
 # gets cleaned up.
 
-SUBDIR_TARGETS = cleanall distclean mostlyclean realclean man config checkprograms check spotless install_file_list
+SUBDIR_TARGETS = cleanall distclean mostlyclean realclean man config checkprograms check spotless
 ifneq ($(filter $(GLOBAL_TARGETS),$(SUBDIR_TARGETS)),)
 $(error Extra targets in $(SUBDIR_TARGETS))
 endif

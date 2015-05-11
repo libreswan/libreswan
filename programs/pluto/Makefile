@@ -458,7 +458,7 @@ doinstall: all
 		 ln -s -f $$from $(FMANDIR)/$$to; \
 		done
 
-install_file_list:
+list-local-programs:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
 	@if $(USE_ADNS) ; then echo $(LIBEXECDIR)/$(BINNAMEADNS) ; fi
 	@echo $(LIBEXECDIR)/$(BINNAMEWHACK)

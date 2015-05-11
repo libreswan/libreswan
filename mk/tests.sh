@@ -11,6 +11,7 @@ make $j clean
 make $j programs
 make $j list
 make $j manpages
+make $j install_file_list 2>/dev/null
 
 find lib programs -name Makefile -print \
     | while read makefile ; do

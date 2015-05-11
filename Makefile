@@ -57,7 +57,6 @@ BROKEN_TARGETS += install-programs
 BROKEN_TARGETS += programs
 BROKEN_TARGETS += distclean
 BROKEN_TARGETS += check
-BROKEN_TARGETS += install_file_list
 BROKEN_TARGETS += man
 BROKEN_TARGETS += config
 BROKEN_TARGETS += checkprograms
@@ -75,7 +74,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 	precheck verset confcheck kernel \
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
-	backup unpatch uninstall install_file_list \
+	backup unpatch uninstall \
 	check \
 
 kpatch: unapplypatch applypatch klipsdefaults

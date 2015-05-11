@@ -107,3 +107,7 @@ of wierd and wonderful stuff with it.
 kvm-build-east use "make" and not "swan-build"
 
 "make" run "make all".
+
+switch initsystems/Makefile to using subdirs.mk
+
+switch packaging/Makefile to using subdirs.mk
