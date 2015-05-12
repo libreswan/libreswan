@@ -18,7 +18,15 @@ should be specified vis:
 If the .xml file specifies multiple <refname></refname> entries then
 they will all be installed (see packaging/utils/refname.sh).
 
-mk/tests.mk
+mk/find.sh
+----------
+
+This script outputs a list of everything that might be make file
+related.  For instance:
+
+  ./mk/find.sh | xargs grep PROGRAMS
+
+mk/tests.sh
 -----------
 
 This script goes through a whole heap of make commands, such as
@@ -57,13 +65,40 @@ Split CONFDFILES into CONFDFILES and CONFDSUBDIRFILES.  Former goes to
 CONFDDIR and latter goes to CONFDSUBDIR.  Currently it isn't possible
 to install stuff into /etc/ipsec.d/
 
+switch lib/libswan to using library.mk; having more recursive targets
+descend $(srcdir) is predicated on this.
+
+switch programs/pluto to using program.mk; having more recursive
+targets descend $(srcdir) is predicated on this.
+
+switch initsystems to using subdirs.mk; this means also cleaning up
+sub-directories; for now might be safer to keep adding hacks.
+
+switch packaging to using subdirs.mkl this means also cleaning up
+sub-directories; for now might be safer to keep adding hacks.
+
+have "make install-programs" descend $(srcdir)
+
+have "make install" descend $(srcdir); "make install-manpages" already
+works so just need to fix above.
+
+have "make programs" descend $(srcdir)
+
+have "make all" descend $(srcdir); "make manpages" already works so
+just need to fix above.
+
+Expand $(OBJDIR) to include more build specific information such as
+.kvm, the actual kernel, and any thing else.
+
 When on fedora/rhel, enable audit logs.  One way to implement this is
 to add packaging/defaults/fedora and pull that in.  Presumably OBJDIR
 would be updated to reflect this.  Mumble something about how it would
 be nice if audit tests were not run on systems that did not have
 audit.
 
-When a test fails early, should sanitize.sh still be run?
+merge sanitize.sh and re-sanitize.sh
+
+when a test fails early, should sanitize.sh still be run?
 
 Have *init.sh et.al. scripts always succeed.  This means that commands
 like ping that are expected to fail (demonstrating no conectivity)
@@ -77,38 +112,20 @@ path), and not /testing/guestbin/
 
 Remove the redundant prefix in -I${SRCDIR}${LIBRESWANSRCDIR}
 
-move modobj to under $(OBJDIR)
+move modobj to under $(builddir)
 
-For install targets add the $(DESTDIR) prefix to everything; for
-instance $(DESTDIR)$(BINDIR).  This convention, at least for RPMs,
-lets installs be directed to a staging area.
-
-stuff under testing could do with its own unit-test.mk file - which is
-just a tweak of program.mk; grep for UNITTEST
-
-switch lib/libswan/Makefile to library.mk; it contains conditional
-definitions; these can be moved to after the include of library.mk.
+stuff built under testing/ could do with its own unit-test.mk file -
+which is just a tweak of program.mk; grep for UNITTEST
 
 add depend.mk to program.mk
 
-switch programs/pluto to program.mk
-
 enable -std=gnu99: hopefully just slog
-
-eliminate Makefile.manpage
-
-OBJ.* include kernel and KVM
-
-clean up the pluto directory some more
 
 Free up CFLAGS, like autoconf/automake?
 
-Always decend the source directory (instead of OBJDIR) so that
-subdir.mk can be used everywhere.
+= vs :=
 
-testing/pluto/Makefile update target
-
-= vs := and overrides
+eliminate :: rules
 
 Make --warn-undefined-variables
 
@@ -120,7 +137,3 @@ of wierd and wonderful stuff with it.
 kvm-build-east use "make" and not "swan-build"
 
 "make" run "make all".
-
-switch initsystems/Makefile to using subdirs.mk
-
-switch packaging/Makefile to using subdirs.mk
