@@ -98,6 +98,8 @@ else
 all:	$(LIBA) ${LIBL}
 programs: $(LIBA) ${LIBL}
 clean:	cleanall
+# XXX: hack to get liba built
+install-local-programs: $(LIBA) $(LIBL)
 endif
 
 $(LIBA): $(OBJS)

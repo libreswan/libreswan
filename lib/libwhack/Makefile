@@ -55,6 +55,8 @@ else
 all:	$(LIB) ${LIBL}
 programs: $(LIB) ${LIBL}
 clean:	cleanall
+# XXX: Hack so that "make install" always works
+install-local-programs: $(LIB)
 endif
 
 $(LIB): $(OBJS)

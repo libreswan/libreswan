@@ -39,7 +39,7 @@ local-manpages: $(MANPAGES)
 
 refnames = $(foreach manpage, $(1), \
 		$(addsuffix $(suffix $(manpage)), \
-			$(shell $(abs_top_srcdir)/packaging/utils/refnames.sh $(manpage).xml)))
+			$(shell $(SHELL) $(abs_top_srcdir)/packaging/utils/refnames.sh $(manpage).xml)))
 
 ifeq ($(srcdir),.)
 install-local-manpages: local-manpages

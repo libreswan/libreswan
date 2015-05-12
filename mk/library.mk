@@ -47,6 +47,8 @@ else
 all:	$(LIB) 
 programs: $(LIB) 
 clean:	cleanall
+# XXX: Hack until build works from either directory
+install-local-programs: $(LIB)
 endif
 
 $(LIB): $(OBJS)
