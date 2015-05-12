@@ -29,66 +29,11 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "x509.h"
+#include "nss_copies.h"
 #include "nss_cert_vfy.h"
 #include <secder.h>
 #include <secerr.h>
 #include <certdb.h>
-/*
- * copies of NSS functions that are not yet exported by the library
- */
-static SECStatus _NSSCPY_GetCrlTimes(CERTCrl *date, PRTime *notBefore,
-					     PRTime *notAfter)
-{
-	int rv;
-	/* convert DER not-before time */
-	rv = DER_DecodeTimeChoice(notBefore, &date->lastUpdate);
-	if (rv) {
-		return(SECFailure);
-	}
-
-	/* convert DER not-after time */
-	if (date->nextUpdate.data) {
-		rv = DER_DecodeTimeChoice(notAfter, &date->nextUpdate);
-		if (rv) {
-			return(SECFailure);
-		}
-	} else {
-		LL_I2L(*notAfter, 0L);
-	}
-
-	return(SECSuccess);
-}
-
-static SECCertTimeValidity _NSSCPY_CheckCrlTimes(CERTCrl *crl, PRTime t)
-{
-	PRTime notBefore, notAfter, llPendingSlop, tmp1;
-	SECStatus rv;
-	PRInt32 pSlop = CERT_GetSlopTime();
-
-	rv = _NSSCPY_GetCrlTimes(crl, &notBefore, &notAfter);
-	if (rv) {
-		return(secCertTimeExpired); 
-	}
-	LL_I2L(llPendingSlop, pSlop);
-	/* convert to micro seconds */
-	LL_I2L(tmp1, PR_USEC_PER_SEC);
-	LL_MUL(llPendingSlop, llPendingSlop, tmp1);
-	LL_SUB(notBefore, notBefore, llPendingSlop);
-	if ( LL_CMP( t, <, notBefore ) ) {
-		return(secCertTimeNotValidYet);
-	}
-	/* If next update is omitted and the test for notBefore passes, then
-	 * we assume that the crl is up to date.
-	 */
-	if ( LL_IS_ZERO(notAfter) ) {
-		return(secCertTimeValid);
-	}
-	if ( LL_CMP( t, >, notAfter) ) {
-		return(secCertTimeExpired);
-	}
-	return(secCertTimeValid);
-}
-/* end NSS copies */
 
 /*
  * set up the slot/handle/trust things that NSS needs
@@ -117,7 +62,7 @@ static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
 
 static bool crl_is_current(CERTSignedCrl *crl)
 {
-	return _NSSCPY_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
+	return NSSCERT_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
 }
 
 static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,

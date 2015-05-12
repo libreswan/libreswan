@@ -31,6 +31,7 @@ SRCS=addrtoa.c addrtot.c addrtypeof.c alg_info.c anyaddr.c \
 	constants.c datatot.c \
 	alloc.c diag.c \
 	goodmask.c id.c initaddr.c initsaid.c initsubnet.c \
+	nss_copies.c \
 	iprange.c \
         keyblobtoid.c \
 	kernel_alg.c lex.c mpzfuncs.c \
