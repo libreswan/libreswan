@@ -66,14 +66,15 @@ clean-local-manpages:
 
 # Always write the output to $(builddir).
 #
-# Note: XMLTO seems to fail even when it succeeds so ignore its status
-# and check for the expected output.
+# Note: XMLTO seems to fail even when it succeeds so ignore its exit
+# status.  Instead check for the expected output.
 #
-# Note: When the .xml file is generated, $@ will already include the
-# path to $(builddir); so strip that off.
+# Note: When the .xml file is generated, both $< and $@ will include
+# $(buildpath) (when .xml isn't generated, they both do not).  The
+# $(notdir $@) in the test is to take care of both possibilities.
 
 %: %.xml
-	: VPATH=$(VPATH)
 	@mkdir -p $(builddir)
-	-$(XMLTO) -o $(builddir) man $<
+	: ignoring $(XMLTO) exit status
+	$(XMLTO) -o $(builddir) man $< || true
 	test -r $(builddir)/$(notdir $@)
