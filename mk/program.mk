@@ -55,34 +55,64 @@ ifneq ($(PROGRAM),check)
 check: $(PROGRAM)
 endif
 
+foreach-file = @set -eu ; $(foreach f, $(1), \
+		file=$(f) ; \
+		destdir=$(strip $(2)) ; \
+		src=$(firstword $(wildcard $(srcdir)/$(f)) $(builddir)/$(f)) ; \
+		$(3) \
+	)
+
 doinstall: $(PROGRAMSLIST)
-	@mkdir -p $(PROGRAMDIR) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
-	@if [ -n "$(PROGRAM)" ]; then $(INSTALL) $(INSTBINFLAGS) $(PROGRAM) $(PROGRAMDIR); fi
-	@$(foreach f, $(CONFFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		if [ ! -f $(CONFDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDIR)/$f || exit 1; fi;\
-		$(INSTALL) $(INSTCONFFLAGS) $$g $(EXAMPLECONFDIR)/$f-sample || exit 1; \
+	$(call foreach-file, $(PROGRAM),  $(PROGRAMDIR), \
+		echo Install: $$src '->' $$destdir/$$file ; \
+		mkdir -p $$destdir ; \
+		$(INSTALL) $(INSTBINFLAGS) $$src $$destdir/$$file ; \
 	)
-	@$(foreach f, $(EXCONFFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTCONFFLAGS) $$g $(EXAMPLECONFDIR)/$f-sample || exit 1; \
+	$(call foreach-file, $(CONFFILES), $(CONFDIR), \
+		if [ ! -f $$destdir/$$file ]; then \
+			echo Install: $$src '->' $$destdir/$$file ; \
+			mkdir -p $$destdir ; \
+			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
+		fi ; \
+		echo Install: $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
+		mkdir -p $(EXAMPLECONFDIR) ; \
+		$(INSTALL) $(INSTCONFFLAGS) $$src $(EXAMPLECONFDIR)/$$file-sample ; \
 	)
-	@$(foreach f, $(CONFDFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		if [ ! -f $(CONFDDIR)/$(CONFDSUBDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDDIR)/$(CONFDSUBDIR)/$f || exit 1; fi;\
+	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
+		echo Install: $$src '->' $$destdir/$$file-sample ; \
+		$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file-sample ; \
+	)
+	@$(call foreach-file, $(CONFDFILES), $(CONFDDIR), \
+		if [ ! -f $$destdir/$$file ]; then \
+			echo Install: $$src '->' $$destdir/$$file ; \
+			mkdir -p $$destdir ; \
+			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
+		fi ; \
+	)
+	@$(call foreach-file, $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
+		if [ ! -f $$destdir/$$file ]; then \
+			echo Install: $$src '->' $$destdir/$$file ; \
+			mkdir -p $$destdir ; \
+			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
+		fi ; \
 	)
 
 list-local-programs:
-	@if [ -n "$(PROGRAM)" ]; then echo $(PROGRAMDIR)/$(PROGRAM); fi
-	@$(foreach f, $(CONFFILES), \
-		echo $(CONFDIR)/$f;\
-		echo $(EXAMPLECONFDIR)/$f-sample;\
+	@$(call foreach-file, $(PROGRAM), $(PROGRAMDIR), \
+		echo $$destdir/$$file ; \
 	)
-	@$(foreach f, $(EXCONFFILES), \
-		echo $(EXAMPLECONFDIR)/$f-sample;\
+	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
+		echo $$destdir/$$file ; \
+		echo $(EXAMPLECONFDIR)/$$file-sample ; \
 	)
-	@$(foreach f, $(CONFDFILES), \
-		echo $(CONFDDIR)/${CONFDSUBDIR}/$f;\
+	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
+		echo $$destdir/$$file-sample ; \
+	)
+	@$(call foreach-file,  $(CONFDFILES), $(CONFDDIR), \
+		echo $$destdir/$$file ; \
+	)
+	@$(call foreach-file,  $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
+		echo $$destdir/$$file ; \
 	)
 
 # set values for implicit rules.

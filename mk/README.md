@@ -61,10 +61,6 @@ And a small set of well defined targets work:
 TODO: a.k.a. what needs fixing in the existing build system
 -----------------------------------------------------------
 
-Split CONFDFILES into CONFDFILES and CONFDSUBDIRFILES.  Former goes to
-CONFDDIR and latter goes to CONFDSUBDIR.  Currently it isn't possible
-to install stuff into /etc/ipsec.d/
-
 switch lib/libswan to using library.mk; having more recursive targets
 descend $(srcdir) is predicated on this.
 
