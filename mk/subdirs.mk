@@ -36,7 +36,7 @@ mk.target = $(shell echo $@ | tr '[-a-z]' '[_A-Z]')
 # Define recursive targets for anything not broken.
 #
 # Use standard backward filter trick to skip directories found in
-# $(BROKEN_$(TARGET)_SUBDIRS)
+# $(BROKEN_$(TARGET)_SUBDIRS) and should not be built.
 
 $(filter-out $(BROKEN_TARGETS),$(SUBDIR_TARGETS) $(GLOBAL_TARGETS)):
 	@set -eu ; \

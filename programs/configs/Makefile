@@ -16,8 +16,10 @@ MANPAGES += $(builddir)/ipsec.conf.5
 
 CONFFILES=ipsec.conf
 EXCONFILES=ipsec.win2k.conf
-CONFDSUBDIR=policies
-CONFDFILES=clear clear-or-private private-or-clear private block
+
+CONFDFILES = v6neighbor-hole.conf
+CONFDSUBDIR = policies
+CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
@@ -28,6 +30,7 @@ endif
 xmlsources := $(patsubst d.ipsec.conf/%,${srcdir}/d.ipsec.conf/%,$(shell cat ${srcdir}/d.ipsec.conf/order.txt))
 
 $(builddir)/ipsec.conf.5.xml: $(xmlsources)
+	@mkdir -p $(builddir)
 	cat $(xmlsources) > $@
 
 clean-local-manpages: clean-local-xml-manpages
