@@ -60,7 +60,10 @@ BROKEN_TARGETS += check
 BROKEN_TARGETS += man
 BROKEN_TARGETS += config
 BROKEN_TARGETS += checkprograms
+BROKEN_TARGETS += all
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
+
+all:: programs manpages
 
 # kernel details
 # what variant of our patches should we use, and where is it

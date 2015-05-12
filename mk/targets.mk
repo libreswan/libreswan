@@ -21,7 +21,11 @@
 
 GLOBAL_TARGETS += all programs manpages
 LOCAL_TARGETS += local-programs local-manpages
+ifeq ($(filter all,$(BROKEN_TARGETS)),)
 all: local-programs local-manpages
+else
+all:: local-programs local-manpages
+endif
 ifeq ($(filter programs,$(BROKEN_TARGETS)),)
 programs: local-programs
 else
