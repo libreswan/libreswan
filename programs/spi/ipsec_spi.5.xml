@@ -14,7 +14,7 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec_spi</refname>
+<refname>ipsec spi</refname>
 <refpurpose>list IPSEC Security Associations</refpurpose>
 </refnamediv>
 <!-- body begins here -->

@@ -14,7 +14,7 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec_pf_key</refname>
+<refname>ipsec pf_key</refname>
 <refpurpose>lists PF_KEY sockets registered with KLIPS</refpurpose>
 </refnamediv>
 <!-- body begins here -->

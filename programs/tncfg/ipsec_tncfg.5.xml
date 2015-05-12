@@ -14,7 +14,7 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec_tncfg</refname>
+<refname>ipsec tncfg</refname>
 <refpurpose>lists IPSEC virtual interfaces attached to real interfaces</refpurpose>
 </refnamediv>
 <!-- body begins here -->

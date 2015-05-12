@@ -27,15 +27,8 @@ ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
-MANDIR8=$(MANTREE)/man8
-MANDIR5=$(MANTREE)/man5
-
 ifndef PROGRAMDIR
 PROGRAMDIR=${LIBEXECDIR}
-endif
-
-ifndef MANPROGPREFIX
-MANPROGPREFIX=ipsec_
 endif
 
 ifndef CONFDSUBDIR
@@ -43,18 +36,15 @@ CONFDSUBDIR=.
 endif
 
 # the list of stuff to be built for "make programs"
-MANDEFAULTLIST=$(addsuffix .8, $(PROGRAM))
-MANLIST=$(MANDEFAULTLIST) $(EXTRA8MAN) $(EXTRA5MAN) $(EXTRA5PROC) 
 CONFIGLIST=$(CONFFILES) $(CONFDFILES)
-PROGRAMSLIST=${PROGRAM} $(MANLIST) $(CONFIGLIST)
+PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
 
 ifeq ($(srcdir),.)
 all programs config man clean install install-programs:
 	$(MAKE) -C $(builddir) $@
 else
-all: $(PROGRAMSLIST)
-programs: all
-man: $(MANLIST)
+all: programs
+programs: $(PROGRAMSLIST)
 config: $(CONFIGLIST)
 clean:	cleanall
 install: doinstall
@@ -65,25 +55,9 @@ ifneq ($(PROGRAM),check)
 check: $(PROGRAM)
 endif
 
-doinstall:: $(PROGRAMSLIST)
-	@mkdir -p $(PROGRAMDIR) $(MANDIR8) $(MANDIR5) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
+doinstall: $(PROGRAMSLIST)
+	@mkdir -p $(PROGRAMDIR) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
 	@if [ -n "$(PROGRAM)" ]; then $(INSTALL) $(INSTBINFLAGS) $(PROGRAM) $(PROGRAMDIR); fi
-	@$(foreach f, $(addsuffix .8, $(PROGRAM)), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR8)/$(MANPROGPREFIX)$f || exit 1; \
-	)
-	@$(foreach f, $(EXTRA8MAN), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR8)/ipsec_$f || exit 1; \
-	)
-	@$(foreach f, $(EXTRA5MAN), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR5)/$f || exit 1 ;\
-	)
-	@$(foreach f, $(EXTRA5PROC), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR5)/ipsec_$f || exit 1 ;\
-	)
 	@$(foreach f, $(CONFFILES), \
 		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
 		if [ ! -f $(CONFDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDIR)/$f || exit 1; fi;\
@@ -100,18 +74,6 @@ doinstall:: $(PROGRAMSLIST)
 
 list-local-programs:
 	@if [ -n "$(PROGRAM)" ]; then echo $(PROGRAMDIR)/$(PROGRAM); fi
-	@$(foreach f, $(addsuffix .8, $(PROGRAM)), \
-		echo $(MANDIR8)/${MANPROGPREFIX}$f; \
-	)
-	@$(foreach f, $(EXTRA8MAN), \
-		echo $(MANDIR8)/ipsec_$f; \
-	)
-	@$(foreach f, $(EXTRA5MAN), \
-		echo $(MANDIR5)/$f;\
-	)
-	@$(foreach f, $(EXTRA5PROC), \
-		echo $(MANDIR5)/ipsec_$f; \
-	)
 	@$(foreach f, $(CONFFILES), \
 		echo $(CONFDIR)/$f;\
 		echo $(EXAMPLECONFDIR)/$f-sample;\

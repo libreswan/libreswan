@@ -14,7 +14,7 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec_spigrp</refname>
+<refname>ipsec spigrp</refname>
 <refpurpose>list IPSEC Security Association groupings</refpurpose>
 </refnamediv>
 <!-- body begins here -->

@@ -14,7 +14,7 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec_version</refname>
+<refname>ipsec version</refname>
 <refpurpose>lists KLIPS version information</refpurpose>
 </refnamediv>
 <!-- body begins here -->

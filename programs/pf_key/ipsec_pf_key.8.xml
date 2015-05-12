@@ -14,7 +14,7 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec_pf_key</refname>
+<refname>ipsec pf_key</refname>
 <refpurpose>shows pfkey messages emitted by the kernel when using the KLIPS or MAST stack.</refpurpose>
 </refnamediv>
 <!-- body begins here -->

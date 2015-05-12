@@ -17,6 +17,7 @@
   </refmeta>
 
   <refnamediv id="name">
+    <refname>ipsec pluto</refname>
     <refname>pluto</refname>
 
     <refpurpose>ipsec whack : IPsec IKE keying daemon and control interface</refpurpose>

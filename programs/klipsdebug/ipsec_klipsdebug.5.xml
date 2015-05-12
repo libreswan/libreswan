@@ -14,7 +14,7 @@
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec_klipsdebug</refname>
+<refname>ipsec klipsdebug</refname>
 <refpurpose>list KLIPS (kernel IPSEC support) debug features and level</refpurpose>
 </refnamediv>
 <!-- body begins here -->

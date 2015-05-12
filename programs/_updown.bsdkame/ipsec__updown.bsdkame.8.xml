@@ -18,7 +18,7 @@
   </refmeta>
 
   <refnamediv id="name">
-    <refname>ipsec _updown</refname>
+    <refname>ipsec _updown.bsdkame</refname>
 
     <refpurpose>bsd manipulation script</refpurpose>
   </refnamediv>

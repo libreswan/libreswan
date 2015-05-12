@@ -9,12 +9,12 @@
 <refmeta>
 <refentrytitle>_UPDOWN</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>25 February 2008</refmiscinfo>
+<refmiscinfo class='date'>25 Apr 2002</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
-<refname>ipsec _updown</refname>
+<refname>ipsec _updown.mast</refname>
 <refpurpose>klips manipulation script</refpurpose>
 </refnamediv>
 <!-- body begins here -->
