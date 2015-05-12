@@ -500,11 +500,6 @@ kvmplutotest	netkey-algo-null-01	good
 kvmplutotest	netkey-algo-null-02	good
 
 #
-# a test of using twofish with pluto, twofish for phase2
-#
-umlplutotest	basic-pluto-08		bad
-
-#
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
 kvmplutotest    algo-pluto-01          good
