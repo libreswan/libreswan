@@ -3263,8 +3263,8 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		rn = RT_ROUTED_PROSPECTIVE;
 		break;
 	default:
-		libreswan_log("orphan_holdpass() connection '%s' has unexpected/same routing_t",
-			c->name);
+		DBG(DBG_CONTROL, DBG_log(
+			"no routing change needed - negotiation shunt matched failure shunt"));
 		break;
 	}
 
