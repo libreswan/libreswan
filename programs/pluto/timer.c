@@ -126,6 +126,7 @@ static void retransmit_v1_msg(struct state *st)
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 
+	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
 		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
@@ -177,7 +178,7 @@ static void retransmit_v1_msg(struct state *st)
 			st->st_retransmit,
 			enum_show(&state_names, st->st_state),
 			details);
-		if (try != 0 && try != try_limit) {
+		if (try != 0 && try <= try_limit) {
 			/*
 			 * A lot like EVENT_SA_REPLACE, but over again.
 			 * Since we know that st cannot be in use,
@@ -203,7 +204,7 @@ static void retransmit_v1_msg(struct state *st)
 						story);
 					release_pending_whacks(st, story);
 				} else {
-					/* no whack: just log to syslog */
+					/* no whack: just log */
 					libreswan_log("%s", story);
 				}
 			} else {
@@ -241,6 +242,7 @@ static void retransmit_v2_msg(struct state *st)
 	try_limit = c->sa_keying_tries;
 	try = st->st_try + 1;
 
+	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
 		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
@@ -288,7 +290,7 @@ static void retransmit_v2_msg(struct state *st)
 		enum_show(&state_names, st->st_state),
 		details);
 
-	if (try != 0 && try != try_limit) {
+	if (try != 0 && try <= try_limit) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.
 		 * Since we know that st cannot be in use,
@@ -328,6 +330,8 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "next attempt will be IKEv1");
 		}
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
+	} else {
+		loglog(RC_COMMENT, "maximum number of keyingtries reached - deleting state");
 	}
 
 	if (LIN(POLICY_AUTH_NULL | POLICY_OPPORTUNISTIC, c->policy)) {
