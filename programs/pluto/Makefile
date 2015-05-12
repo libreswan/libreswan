@@ -27,6 +27,7 @@ endif
 
 # XXX: Pluto doesn't include mk/program.mk?
 include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/manpages.mk
 
 ifeq ($(USE_LDAP),true)
@@ -418,13 +419,14 @@ CAVP += cavp
 
 SHOULDWERESTART=$(wildcard plutomain.c)
 ifeq ($(SHOULDWERESTART),plutomain.c)
-all programs clean install:
+all programs clean install install-programs:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/pluto && $(MAKE) $@
 else
 all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
 programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(MANPAGES) $(CAVP) #$(BINNAMEWHACKINIT) 
 clean:	cleanall
 install: doinstall
+install-programs: doinstall
 endif
 
 doinstall: all

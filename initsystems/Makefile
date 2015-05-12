@@ -6,7 +6,11 @@ SUBDIRS=$(INITSYSTEM)
 include $(LIBRESWANSRCDIR)/Makefile.inc
 include $(LIBRESWANSRCDIR)/Makefile.top
 
-cleanall mostlyclean realclean install programs man config checkprograms spotless:
+# XXX: Should switch this directory to using subdirs.mk
+manpages install-manpages list list-manpages list-programs:
+clean-manpages:
+
+cleanall mostlyclean realclean install programs man config checkprograms spotless install-programs:
 	@for d in $(SUBDIRS) ; \
 	do \
 		(cd $$d && $(MAKE) SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\

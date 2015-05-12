@@ -6,6 +6,8 @@ endif
 
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
+include $(top_srcdir)/mk/targets.mk
+include $(top_srcdir)/mk/manpages.mk
 
 LEX=flex
 BISON=bison
@@ -47,7 +49,7 @@ CONFIGLIST=$(CONFFILES) $(CONFDFILES)
 PROGRAMSLIST=${PROGRAM} $(MANLIST) $(CONFIGLIST)
 
 ifeq ($(srcdir),.)
-all programs config man clean install:
+all programs config man clean install install-programs:
 	$(MAKE) -C $(builddir) $@
 else
 all: $(PROGRAMSLIST)
@@ -56,6 +58,7 @@ man: $(MANLIST)
 config: $(CONFIGLIST)
 clean:	cleanall
 install: doinstall
+install-programs: doinstall
 endif
 
 ifneq ($(PROGRAM),check)
@@ -142,8 +145,6 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp ${NSSLIBS}
 
 %.o: ${SRCDIR}%.c
 	${CC} -c ${CFLAGS} $<
-
-include ${LIBRESWANSRCDIR}/programs/Makefile.manpages
 
 %.i: %.c 
 	$(CC) $(CFLAGS) -E -o $@ $< 

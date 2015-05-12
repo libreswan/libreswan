@@ -15,6 +15,7 @@ programs:     initdfiles sysconfigfiles
 initdfiles:   $(INITDFILE)
 sysconfigfiles: $(SYSCONFIGFILE)
 install:      programs doinstall
+install-programs: doinstall
 
 doinstall: programs installinitfiles installsysconfig checkenabled
 

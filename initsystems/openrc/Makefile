@@ -11,6 +11,7 @@ include ${LIBRESWANSRCDIR}/Makefile.top
 programs:     ipsec.init 
 initdfiles:   $(INITDFILE)
 install:      programs doinstall
+install-programs: doinstall
 
 doinstall: programs installinitfiles checkenabled
 

@@ -6,7 +6,11 @@ echo - $j
 sleep 1
 
 make $j distclean
+
+make $j clean
 make $j programs
+make $j list
+make $j manpages
 
 find lib programs -name Makefile -print \
     | while read makefile ; do

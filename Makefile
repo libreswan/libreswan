@@ -13,6 +13,10 @@
 # for more details.
 #
 
+ifndef top_srcdir
+include mk/dirs.mk
+endif
+
 LIBRESWANSRCDIR?=$(shell pwd)
 export LIBRESWANSRCDIR
 
@@ -43,6 +47,21 @@ def:
 	@echo
 	@echo
 include ${LIBRESWANSRCDIR}/Makefile.top
+
+# Broken targets have some sort of existing rule in this, or an
+# included, Makefile.  The rules should either be deleted or changed
+# to use a local TARGET-local target.
+BROKEN_TARGETS += clean
+BROKEN_TARGETS += install
+BROKEN_TARGETS += install-programs
+BROKEN_TARGETS += programs
+BROKEN_TARGETS += distclean
+BROKEN_TARGETS += check
+BROKEN_TARGETS += install_file_list
+BROKEN_TARGETS += man
+BROKEN_TARGETS += config
+BROKEN_TARGETS += checkprograms
+include ${LIBRESWANSRCDIR}/mk/subdirs.mk
 
 # kernel details
 # what variant of our patches should we use, and where is it
@@ -162,7 +181,7 @@ ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
 
-programs man config install clean:: ${OBJDIR}/Makefile
+programs man config install clean install-programs:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
 	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
 
@@ -578,7 +597,7 @@ deb:
 release:
 	packaging/utils/makerelease 
 
-install::
+install install-programs::
 	@if test -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \

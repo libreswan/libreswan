@@ -37,6 +37,7 @@ endif
 mk.depend.file := $(lastword $(MAKEFILE_LIST))
 mk.depend.dependencies.file := $(builddir)/Makefile.depend.mk
 $(mk.depend.dependencies.file): $(srcdir)/Makefile $(mk.depend.file)
+	mkdir -p $(builddir)
 	set -e ; \
 	for f in $(MK_DEPEND_FILES) ; do \
 		case $$f in \

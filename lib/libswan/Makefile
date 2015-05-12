@@ -23,9 +23,7 @@ endif
 
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
-
-
-MANDIR=$(MANTREE)/man3
+include $(top_srcdir)/mk/targets.mk
 
 X509LIB=x509dn.c asn1.c oid.c
 
@@ -69,7 +67,6 @@ OBJS=${SRCS:.c=.o} ${PFKEYV2_SRCS:.c=.o} version.o
 LOGOBJS=${LOGSRCS:.c=.o}
 
 KLIPSSRCDIR?=${LIBRESWANSRCDIR}/linux/net/ipsec
-MANSRCDIR=${LIBRESWANSRCDIR}/lib/libswan
 
 VPATH+= ${KLIPSSRCDIR}
 
@@ -89,48 +86,18 @@ CFLAGS+=${CROSSFLAGS}
 ARFLAGS=crvs
 EXTHDRS=des.h
 EXTLIBS=libdes.a
-MANS=anyaddr.3 atoaddr.3 atoul.3 goodmask.3 \
-	initaddr.3 initsubnet.3 portof.3 rangetosubnet.3 \
-	sameaddr.3 subnetof.3 ttoaddr.3 ttodata.3 ttosa.3 ttoul.3 
 
-.PHONY:	all install clean l t lt tar check depend checkprograms
+.PHONY:	all clean l t lt tar check depend checkprograms
 
 SHOULDWERESTART=$(wildcard ttodata.3.xml)
 ifeq ($(SHOULDWERESTART),ttodata.3.xml)
-all programs clean install:
+all programs clean:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/libswan && make $@
 else
 all:	$(LIBA) ${LIBL}
 programs: $(LIBA) ${LIBL}
 clean:	cleanall
-install: doinstall
-
 endif
-
-
-doinstall:
-	@mkdir -p $(MANDIR)
-	@for f in $(MANS) ; \
-	do \
-		$(INSTALL) $(INSTMANFLAGS) $(MANSRCDIR)/$$f $(MANDIR)/ipsec_$$f || exit 1 ; \
-	done
-	@$(LIBRESWANSRCDIR)/packaging/utils/manlink $(foreach man, $(MANS), ${MANSRCDIR}/$(man)) | \
-	while read from to; \
-	do \
-		ln -s -f ipsec_$$from $(MANDIR)/$$to; \
-	done
-
-
-install_file_list:
-	@for f in $(MANS) ; \
-	do \
-		echo $(MANDIR)/ipsec_$$f;\
-	done;
-	@$(LIBRESWANSRCDIR)/packaging/utils/manlink $(foreach man, $(MANS), ${MANSRCDIR}/$(man)) | \
-	while read from to; \
-	do \
-		echo $(MANDIR)/$$to; \
-	done
 
 $(LIBA): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIBA) $(OBJS)

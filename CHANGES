@@ -40,6 +40,7 @@ v3.13 (unreleased)
 * pluto: removed bool inbound_only from delete_ipsec_sa() [Paul/Herbert]
 * pluto: fix modecfg client/server status display (was swapped) [Herbert]
 * pluto: NFLOG support via nflog-all= and nflog= keywords [Paul]
+* pluto: Fix bogus "no RSA public key known for '%fromcert'" [Herbert Xu]
 * libipsecconf: Improve parser for pipe case (with NM) [Hugh/Lubomir Rintel]
 * readwriteconf: improve error handling [Hugh]
 * ipsec: ipsec --import does not need to run restorecon [Paul]
