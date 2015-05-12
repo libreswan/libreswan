@@ -317,7 +317,8 @@ void delete_connection(struct connection *c, bool relations)
 
 	free_generalNames(c->requested_ca, TRUE);
 
-	gw_delref(&c->gw_info);
+	if ((c->policy & POLICY_AUTH_NULL) == LEMPTY)
+		gw_delref(&c->gw_info);
 
 	if (c->alg_info_ike != NULL) {
 		alg_info_delref(&c->alg_info_ike->ai);
