@@ -13,7 +13,8 @@
 
 PROGRAM=ipsec
 PROGRAMDIR=${SBINDIR}
-MANPROGPREFIX:=./
+# Do not prefix man page with "ipsec_"
+MANPROGPREFIX=
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

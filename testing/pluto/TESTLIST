@@ -97,6 +97,9 @@ kvmplutotest	ikev1-algo-esp-sha2-05			good
 kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-07			wip
 kvmplutotest	ikev2-algo-sha2-08			good
+# interop tests for KLIPS-NETKEY with SHA2
+kvmplutotest	ikev1-algo-esp-sha2-01			good
+kvmplutotest	ikev1-algo-esp-sha2-02			good
 
 # various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-ike-sha2-01			good
@@ -144,6 +147,8 @@ kvmplutotest	ikev1-connswitch-ports-01	wip
 
 kvmplutotest	ikev2-38-psk-65bytes			good
 kvmplutotest	ikev2-39-psk-64bytes 			good
+
+kvmplutotest	ikev2-40-nflog-global 			good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate

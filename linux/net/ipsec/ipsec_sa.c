@@ -1044,8 +1044,18 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 	ips->ips_natt_oa = NULL;
 
 	if (ips->ips_key_a != NULL) {
-		memset((caddr_t)(ips->ips_key_a), 0, ips->ips_key_a_size);
-		kfree(ips->ips_key_a);
+#ifdef CONFIG_KLIPS_ALG
+		if (ips->ips_alg_auth &&
+		    ips->ips_alg_auth->ixt_a_destroy_key)
+		{
+			ips->ips_alg_auth->ixt_a_destroy_key(ips->ips_alg_auth, 
+							     ips->ips_key_a);
+		} else
+#endif
+		{
+			memset((caddr_t)(ips->ips_key_a), 0, ips->ips_key_a_size);
+			kfree(ips->ips_key_a);
+		}
 	}
 	ips->ips_key_a = NULL;
 

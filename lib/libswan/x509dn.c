@@ -59,30 +59,6 @@
 #include "lswconf.h"
 
 static void hex_str(chunk_t bin, chunk_t *str);	/* forward */
-/*
- * These are likely not used now
- */
-#define BASIC_CONSTRAINTS_CA 1
-#define BASIC_CONSTRAINTS_ROOF 4
-
-#define TIME_UTC 0
-#define TIME_GENERALIZED 2
-#define TIME_ROOF 4
-
-#define ALGORITHM_IDENTIFIER_ALG 1
-#define ALGORITHM_IDENTIFIER_ROOF 2
-
-#define AUTH_KEY_ID_KEY_ID 1
-#define AUTH_KEY_ID_CERT_ISSUER 3
-#define AUTH_KEY_ID_CERT_SERIAL 5
-#define AUTH_KEY_ID_ROOF 7
-
-#define AUTH_INFO_ACCESS_METHOD 2
-#define AUTH_INFO_ACCESS_LOCATION 3
-#define AUTH_INFO_ACCESS_ROOF 5
-
-#define EXT_KEY_USAGE_PURPOSE_ID 1
-#define EXT_KEY_USAGE_ROOF 3
 
 /* ASN.1 definition of generalNames */
 

@@ -13,7 +13,7 @@
 # for more details.
 
 PROGRAM=tncfg
-EXTRA5PROC=${PROGRAM}.5
+MANPAGES += ipsec_$(PROGRAM).5
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

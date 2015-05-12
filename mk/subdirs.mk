@@ -23,10 +23,11 @@ include $(top_srcdir)/mk/targets.mk
 # (an/or quietly dropped).  They are here until the top-level Makefile
 # gets cleaned up.
 
-SUBDIR_TARGETS = cleanall distclean mostlyclean realclean man config checkprograms check spotless install_file_list
+SUBDIR_TARGETS = cleanall distclean mostlyclean realclean man config checkprograms check spotless
 ifneq ($(filter $(GLOBAL_TARGETS),$(SUBDIR_TARGETS)),)
 $(error Extra targets in $(SUBDIR_TARGETS))
 endif
+.PHONY: $(SUBDIR_TARGETS)
 
 # generate $(TARGET) variable name, where TARGET is the current
 # target.  Uses $@ so only works within the target rule below.
@@ -35,7 +36,7 @@ mk.target = $(shell echo $@ | tr '[-a-z]' '[_A-Z]')
 # Define recursive targets for anything not broken.
 #
 # Use standard backward filter trick to skip directories found in
-# $(BROKEN_$(TARGET)_SUBDIRS)
+# $(BROKEN_$(TARGET)_SUBDIRS) and should not be built.
 
 $(filter-out $(BROKEN_TARGETS),$(SUBDIR_TARGETS) $(GLOBAL_TARGETS)):
 	@set -eu ; \

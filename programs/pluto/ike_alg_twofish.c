@@ -53,7 +53,7 @@ static void do_twofish(u_int8_t *buf, size_t buf_size, PK11SymKey *key,
 		keydata = PK11_GetKeyData(key);
 		bare_key_ptr = keydata->data;
 		bare_key_len = keydata->len;
-		SECITEM_FreeItem(keydata, PR_TRUE);
+		// SECITEM_FreeItem(keydata, PR_TRUE);
 	}
 
 	twofish_set_key(&twofish_ctx, bare_key_ptr, bare_key_len);

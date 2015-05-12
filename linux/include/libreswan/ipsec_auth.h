@@ -37,7 +37,7 @@
 
 #define AH_BLKLEN_MAX           128             /* keep up to date! */
 
-#define AH_AMAX                 AHSHA196_ALEN   /* keep up to date! */
+#define AH_AMAX                 64              /* increased for sha2_512 * keep up to date! */
 #define AHHMAC_HASHLEN          12              /* authenticator length of 96bits */
 #define AHHMAC_RPLLEN           4               /* 32 bit replay counter */
 
