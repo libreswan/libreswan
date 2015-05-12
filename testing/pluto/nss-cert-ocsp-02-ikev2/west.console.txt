@@ -45,13 +45,13 @@ west #
 002 added connection description "nss-cert-ocsp"
 west #
  ipsec auto --status |grep nss-cert-ocsp
-000 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
+000 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert-ocsp":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=revoked
 000 "nss-cert-ocsp":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert-ocsp":   labeled_ipsec:no; 
 000 "nss-cert-ocsp":    policy_label:unset; 
-000 "nss-cert-ocsp":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "nss-cert-ocsp":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "nss-cert-ocsp":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert-ocsp":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -75,7 +75,8 @@ west #
 010 "nss-cert-ocsp" #2: STATE_PARENT_I2: retransmission; will wait 8000ms for response
 010 "nss-cert-ocsp" #2: STATE_PARENT_I2: retransmission; will wait 16000ms for response
 010 "nss-cert-ocsp" #2: STATE_PARENT_I2: retransmission; will wait 32000ms for response
-010 "nss-cert-ocsp" #2: STATE_PARENT_I2: retransmission; will wait 60000ms for response
+031 "nss-cert-ocsp" #2: max number of retransmissions (8) reached STATE_PARENT_I2.  Possible authentication failure: no acceptable response to our first encrypted message
+002 "nss-cert-ocsp" #2: deleting state #2 (STATE_PARENT_I2)
 #\[root@west ]#  timedout send line: ipsec auto --up nss-cert-ocsp
  echo done
 west #
@@ -83,7 +84,7 @@ west #
 # this test should log that west's certificate is revoked
 done
 west #
- west Wed Mar 11 03:22:42 EDT 2015
+ west Thu Apr 30 20:35:52 EDT 2015
 ipsec0->eth1 mtu=16260(1500)->1500
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
@@ -163,13 +164,13 @@ west #
 000  
 000 Connection list:
 000  
-000 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
+000 "nss-cert-ocsp": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert-ocsp":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=revoked
 000 "nss-cert-ocsp":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert-ocsp":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert-ocsp":   labeled_ipsec:no; 
 000 "nss-cert-ocsp":    policy_label:unset; 
-000 "nss-cert-ocsp":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
+000 "nss-cert-ocsp":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "nss-cert-ocsp":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert-ocsp":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -181,10 +182,9 @@ west #
 000 Total IPsec connections: loaded 1, active 0
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
-000 IKE SAs: total(2), half-open(0), authenticated(0), anonymous(1)
+000 IKE SAs: total(1), half-open(0), authenticated(0), anonymous(1)
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
-000 #2: "nss-cert-ocsp":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_v2_RETRANSMIT in  00s; idle; import:admin initiate
 000 #1: "nss-cert-ocsp":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in  00s; idle; import:admin initiate
 000 #1: pending Phase 2 for "nss-cert-ocsp" replacing #0
 000  

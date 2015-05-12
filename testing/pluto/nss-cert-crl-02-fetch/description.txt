@@ -1,0 +1,6 @@
+crl: west sends REVOKED cert
+      east sends OK cert
+
+this test has east start without a CRL, so this triggers a fetch
+The second negotiation attempt from west will fail now that east has the
+crl cached.
