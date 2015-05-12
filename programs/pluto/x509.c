@@ -723,15 +723,8 @@ void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
 {
 	generalName_t *pgn_list = NULL;
 	CERTGeneralName *cur_nss_gn, *first_nss_gn;
-	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 
-	if (arena == NULL) {
-		DBG(DBG_X509, DBG_log("%s PORT_NewArena failed!", __FUNCTION__));
-		*gn_out = NULL;
-		return;
-	}
-
-	cur_nss_gn = first_nss_gn = CERT_GetCertificateNames(cert, arena);
+	cur_nss_gn = first_nss_gn = CERT_GetCertificateNames(cert, cert->arena);
 
 	if (cur_nss_gn != NULL) {
 		do {
@@ -748,7 +741,6 @@ void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
 		} while (cur_nss_gn != first_nss_gn);
 	}
 
-	PORT_FreeArena(arena, PR_FALSE);
 	*gn_out = pgn_list;
 }
 
