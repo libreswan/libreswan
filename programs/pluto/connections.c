@@ -2659,7 +2659,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 */
 			if (!match1) {
 				d_fromcert = id_kind(&d->spd.that.id) ==
-					     ID_FROMCERT;
+					ID_FROMCERT;
 				if (!d_fromcert)
 					continue;
 			}
@@ -2764,7 +2764,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 * We'll go with it if the Peer ID was an exact match.
 			 */
 			if (match1 && wildcards == 0 &&
-			    peer_pathlen == 0 && our_pathlen == 0) {
+				peer_pathlen == 0 && our_pathlen == 0) {
 				*fromcert = d_fromcert;
 				return d;
 			}

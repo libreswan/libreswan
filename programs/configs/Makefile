@@ -11,7 +11,9 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-EXTRA5MAN=ipsec.conf.5
+# the man page source is generated
+MANPAGES += $(builddir)/ipsec.conf.5
+
 CONFFILES=ipsec.conf
 EXCONFILES=ipsec.win2k.conf
 CONFDSUBDIR=policies
@@ -23,13 +25,12 @@ else
 include ../../mk/program.mk
 endif
 
-ipsec.conf.5: ${SRCDIR}ipsec.conf.5.xml
+xmlsources := $(patsubst d.ipsec.conf/%,${srcdir}/d.ipsec.conf/%,$(shell cat ${srcdir}/d.ipsec.conf/order.txt))
 
-${SRCDIR}ipsec.conf.5.xml: $(wildcard d.ipsec.conf/*.xml) ${SRCDIR}d.ipsec.conf/order.txt
-	cd ${SRCDIR} && cat `cat ${SRCDIR}d.ipsec.conf/order.txt` >ipsec.conf.5.xml
+$(builddir)/ipsec.conf.5.xml: $(xmlsources)
+	cat $(xmlsources) > $@
 
-diff:	ipsec.conf.5.xml
-	diff -B -w -u ipsec.conf.5.xml ipsec.conf.5.xml-ref
-
-clean-local:
-	rm -f ${SRCDIR}ipsec.conf.5.xml
+clean-local-manpages: clean-local-xml-manpages
+.PHONY: clean-local-xml-manpages
+clean-local-xml-manpages:
+	rm -f $(builddir)/ipsec.conf.5.xml

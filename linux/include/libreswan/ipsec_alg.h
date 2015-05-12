@@ -109,6 +109,9 @@ struct ipsec_alg_auth {
 	int (*ixt_a_hmac_hash)(struct ipsec_alg_auth *alg, __u8 *key_a,
 			       const __u8 *dat, int len, __u8 *hash,
 			       int hashlen);
+	__u8 *(*ixt_a_hmac_new_key)(struct ipsec_alg_auth *alg, const __u8 *key,
+			       int keylen);
+	void (*ixt_a_destroy_key)(struct ipsec_alg_auth *alg, __u8 *key_a);
 };
 /*
  *	These are _copies_ of SADB_EXT_SUPPORTED_{AUTH,ENCRYPT},

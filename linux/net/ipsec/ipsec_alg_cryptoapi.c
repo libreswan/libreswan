@@ -197,8 +197,11 @@ struct hash_desc {
 /* 1DES no longer supported */
 #undef CIPHERNAME_1DES
 
-#define DIGESTNAME_MD5          "md5"
-#define DIGESTNAME_SHA1         "sha1"
+#define DIGESTNAME_MD5          "hmac(md5)"
+#define DIGESTNAME_SHA          "hmac(sha1)"
+#define DIGESTNAME_SHA2_256     "hmac(sha256)"
+#define DIGESTNAME_SHA2_384     "hmac(sha384)"
+#define DIGESTNAME_SHA2_512     "hmac(sha512)"
 
 #define ESP_NULL                11
 #define ESP_SERPENT             252     /* from ipsec drafts */
@@ -222,6 +225,11 @@ static int aes[] = { -1, -1 };
 static int cast[] = { -1, -1 };
 static int serpent[] = { -1, -1 };
 static int twofish[] = { -1, -1 };
+static int md5[] = {-1, -1};
+static int sha1[] = {-1, -1};
+static int sha256[] = {-1, -1};
+static int sha512[] = {-1, -1};
+static int sha384[] = {-1, -1};
 
 module_param_array(cipher_null, int, NULL, 0444);
 module_param_array(des_ede3, int, NULL, 0444);
@@ -265,18 +273,23 @@ static struct ipsec_alg_capi_cipher alg_capi_carray[] = {
 	{ NULL, 0, 0, 0, NULL, {} }
 };
 
-#ifdef NOT_YET
 struct ipsec_alg_capi_digest {
 	const char *digestname;         /* cryptoapi's digestname */
-	struct digest_implementation *di;
+	unsigned blocksize;
+	unsigned short minbits;
+	unsigned short maxbits;
+	unsigned short authlen;
+	int *parm;		/* lkm param for this digest */
 	struct ipsec_alg_auth alg;      /* note it's not a pointer */
 };
-static struct ipsec_alg_capi_cipher alg_capi_darray[] = {
-	{ DIGESTNAME_MD5,     NULL, { ixt_alg_id: AH_MD5, } },
-	{ DIGESTNAME_SHA1,    NULL, { ixt_alg_id: AH_SHA, } },
-	{ NULL, NULL, {} }
+static struct ipsec_alg_capi_digest alg_capi_darray[] = {
+	{ DIGESTNAME_MD5,       64, 128, 128, 12,    md5, { ixt_common:{ ixt_support:{ ias_id: AH_MD5, }}}},
+	{ DIGESTNAME_SHA,       64, 160, 160, 12,   sha1, { ixt_common:{ ixt_support:{ ias_id: AH_SHA, }}}},
+	{ DIGESTNAME_SHA2_256,  64, 256, 256, 16, sha256, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_256,}}}},
+	{ DIGESTNAME_SHA2_384, 128, 384, 384, 24, sha384, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_384,}}}},
+	{ DIGESTNAME_SHA2_512, 128, 512, 512, 32, sha512, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_512,}}}},
+	{ NULL, 0, 0, 0, 0, NULL, {} }
 };
-#endif
 /*
  *      "generic" linux cryptoapi setup_cipher() function
  */
@@ -541,6 +554,260 @@ static int test_cipher_list(struct ipsec_alg_capi_cipher *clist)
 	}
 	return 0;
 }
+/*
+ * 	"generic" linux cryptoapi setup_digest() function
+ */
+int setup_digest(const char *digestname)
+{
+    return crypto_has_hash(digestname, 0, 0);
+}
+/*
+ *      setups ipsec_alg_capi_dgest "hyper" struct components, calling
+ *      register_ipsec_alg for cointaned ipsec_alg object
+ */
+static void _capi_destroy_hmac_key (struct ipsec_alg_auth *alg, __u8 *key_a);
+static __u8 * _capi_hmac_new_key(struct ipsec_alg_auth *alg, const __u8 *key, int keylen);
+static int _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int len, __u8 *hash, int hashlen);
+
+static int
+setup_ipsec_alg_capi_digest(struct ipsec_alg_capi_digest *dptr)
+{
+	int ret;
+	dptr->alg.ixt_common.ixt_version = IPSEC_ALG_VERSION;
+	dptr->alg.ixt_common.ixt_module  = THIS_MODULE;
+	atomic_set (& dptr->alg.ixt_common.ixt_refcnt, 0);
+	strncpy (dptr->alg.ixt_common.ixt_name , dptr->digestname, sizeof (dptr->alg.ixt_common.ixt_name));
+
+	dptr->alg.ixt_common.ixt_blocksize=dptr->blocksize;
+	dptr->alg.ixt_common.ixt_support.ias_keyminbits=dptr->minbits;
+	dptr->alg.ixt_common.ixt_support.ias_keymaxbits=dptr->maxbits;
+	dptr->alg.ixt_common.ixt_support.ias_ivlen=0;
+	dptr->alg.ixt_common.ixt_state = 0;
+	if (excl_crypto) dptr->alg.ixt_common.ixt_state |= IPSEC_ALG_ST_EXCL;
+	dptr->alg.ixt_a_keylen=dptr->alg.ixt_common.ixt_support.ias_keymaxbits/8;
+	dptr->alg.ixt_a_ctx_size = sizeof(struct crypto_tfm);
+	dptr->alg.ixt_a_authlen = dptr->authlen;
+	dptr->alg.ixt_common.ixt_support.ias_exttype = IPSEC_ALG_TYPE_AUTH;
+	dptr->alg.ixt_a_hmac_new_key = _capi_hmac_new_key;
+	dptr->alg.ixt_a_hmac_hash = _capi_hmac_hash;
+	dptr->alg.ixt_a_destroy_key = _capi_destroy_hmac_key;
+	dptr->alg.ixt_common.ixt_data = dptr;
+
+	ret=register_ipsec_alg_auth(&dptr->alg);
+	printk(KERN_INFO "KLIPS cryptoapi interface: " 
+			"alg_type=%d alg_id=%d name=%s "
+			"ctx_size=%d keyminbits=%d keymaxbits=%d, %s(%d)\n", 
+				dptr->alg.ixt_common.ixt_support.ias_exttype, 
+				dptr->alg.ixt_common.ixt_support.ias_id, 
+				dptr->alg.ixt_common.ixt_name, 
+				dptr->alg.ixt_a_ctx_size,
+				dptr->alg.ixt_common.ixt_support.ias_keyminbits,
+				dptr->alg.ixt_common.ixt_support.ias_keymaxbits,
+	       ret ? "not found" : "found", ret);
+	return ret;
+}
+/*
+ *      called in ipsec_sa_wipe() time, will destroy key contexts
+ *      and do 1 unbind()
+ */
+static void 
+_capi_destroy_hmac_key (struct ipsec_alg_auth *alg, __u8 *key_a)
+{
+	struct crypto_tfm *tfm=(struct crypto_tfm*)key_a;
+
+	if (debug_crypto > 0)
+		printk(KERN_DEBUG "klips_debug: _capi_destroy_hmac_key:"
+		       "name=%s key_e=%p \n",
+		       alg->ixt_common.ixt_name, key_a);
+	if (!key_a) {
+		printk(KERN_ERR "klips_debug: _capi_destroy_hmac_key:"
+		       "name=%s NULL key_e!\n",
+		       alg->ixt_common.ixt_name);
+		return;
+	}
+	crypto_free_tfm(tfm);
+}
+/*
+ *      create hash
+ *      
+ */
+static __u8 *
+_capi_hmac_new_key(struct ipsec_alg_auth *alg, const __u8 *key, int keylen)
+{
+	struct ipsec_alg_capi_digest *dptr;
+	struct crypto_hash *tfm  = NULL;
+	int ret = 0;
+
+	dptr = alg->ixt_common.ixt_data;
+	if (!dptr) {
+		printk(KERN_ERR "_capi_hmac_new_key_auth(): "
+		       "NULL ixt_data (?!) for \"%s\" algo\n" 
+		       , alg->ixt_common.ixt_name);
+		goto err;
+	}
+	if (debug_crypto > 0)
+		printk(KERN_DEBUG "klips_debug:_capi_hmac_new_key_auth:"
+				"name=%s dptr=%p key=%p keysize=%zd\n",
+				alg->ixt_common.ixt_name, dptr, key, keylen);
+
+	tfm = crypto_alloc_hash(dptr->digestname, 0, CRYPTO_ALG_ASYNC);
+	if (IS_ERR(tfm)) {
+		printk(KERN_ERR "_capi_hmac_new_key_auth(): "
+				"NULL hmac for \"%s\" cryptoapi (\"%s\") algo\n" 
+				, alg->ixt_common.ixt_name, dptr->digestname);
+		goto err;
+	}
+	if (crypto_hash_setkey(tfm, key, keylen)<0)
+	{
+		printk(KERN_ERR "_capi_hmac_new_key_auth(): "
+				"failed set_key() for \"%s\" cryptoapi algo (key=%p, keylen=%zd, err=%d)\n" 
+				, alg->ixt_common.ixt_name, key, keylen, ret);
+		crypto_free_hash(tfm);
+		tfm=NULL;
+		goto err;
+	}
+err:
+	if (debug_crypto > 0)
+		printk(KERN_DEBUG "klips_debug:_capi_hmac_new_key:"
+				"name=%s key=%p keylen=%zd tfm=%p\n",
+				alg->ixt_common.ixt_name, key, keylen, tfm);
+	return (__u8 *) tfm;
+}
+/*
+ *      core encryption function
+ *      
+ */
+static int 
+_capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int len, __u8 *hash, int hashlen)
+{
+	struct crypto_hash *tfm = (struct crypto_hash*)key_a;
+	struct scatterlist sg;
+	struct hash_desc desc;
+	int ret = 0;
+	char hash_buf[512];
+	
+	if (debug_crypto > 0)
+		printk(KERN_DEBUG "klips_debug: _capi_hmac_hash:"
+				"name=%s key_a=%p hash=%p dat=%p len=%d keylen=%d\n",
+				alg->ixt_common.ixt_name, key_a, hash, dat, len, hashlen);
+	if (!key_a) {
+		printk(KERN_ERR "klips_debug: _capi_hmac_hash:"
+				"name=%s NULL key_a!\n",
+				alg->ixt_common.ixt_name);
+		return -1;
+	}
+
+	memset(&sg, 0, sizeof(sg));
+	sg_init_table(&sg, 1);
+	sg_set_buf(&sg, dat, len);
+
+	memset(&desc, 0, sizeof(desc));
+	desc.tfm = tfm;
+	desc.flags = 0;
+
+	ret = crypto_hash_digest(&desc, &sg, len, hash_buf);
+	memcpy(hash, hash_buf, hashlen);
+
+	return ret;
+}
+ /*
+ * 	main initialization loop: for each digest in list, do
+ * 	1) setup cryptoapi digest else continue
+ * 	2) register ipsec_alg object
+ */
+static int
+setup_digest_list (struct ipsec_alg_capi_digest* dlist) 
+{
+	struct ipsec_alg_capi_digest *dptr;
+	/* foreach digest in list ... */
+	for (dptr=dlist;dptr->digestname;dptr++) {
+		/* 
+		 * see if digest has been disabled (0) or
+		 * if noauto set and not enabled (1)
+		 */
+		if (dptr->parm[0] == 0 || (noauto && dptr->parm[0] < 0)) {
+			if (debug_crypto>0)
+				printk(KERN_INFO "setup_digest_list(): "
+					"digest=%s skipped at user request: "
+					"noauto=%d parm[0]=%d parm[1]=%d\n"
+					, dptr->digestname
+					, noauto
+					, dptr->parm[0]
+					, dptr->parm[1]);
+			continue;
+		} else {
+ 			if (debug_crypto>0)
+ 				printk(KERN_INFO "setup_digest_list(): going to init digest=%s: noauto=%d parm[0]=%d parm[1]=%d\n"
+ 				, dptr->digestname
+				, noauto
+				, dptr->parm[0]
+				, dptr->parm[1]);
+			}
+		/* 
+		 * 	use a local ci to avoid touching dptr->ci,
+		 * 	if register ipsec_alg success then bind digest
+		 */
+		if(dptr->alg.ixt_common.ixt_support.ias_name == NULL) {
+		   dptr->alg.ixt_common.ixt_support.ias_name = dptr->digestname;
+		}
+
+		if( setup_digest(dptr->digestname) ) {
+			if (debug_crypto > 0)
+				printk(KERN_DEBUG "klips_debug:"
+						"setup_digest_list():"
+						"digestname=%s found\n"
+						, dptr->digestname);
+
+			if (setup_ipsec_alg_capi_digest(dptr) != 0) {
+				printk(KERN_ERR "klips_debug:"
+				       "setup_digest_list():"
+				       "digestname=%s failed ipsec_alg_register\n"
+				       , dptr->digestname);
+			}
+		} else {
+			printk(KERN_INFO "KLIPS: lookup for digestname=%s: not found \n",
+			       dptr->digestname);
+		}
+	}
+	return 0;
+}
+/*
+ *      deregister ipsec_alg objects and unbind digests
+ */
+static int
+unsetup_digest_list (struct ipsec_alg_capi_digest* dlist) 
+{
+	struct ipsec_alg_capi_digest *dptr;
+	/* foreach digest in list ... */
+	for (dptr=dlist;dptr->digestname;dptr++) {
+		if (dptr->alg.ixt_common.ixt_state & IPSEC_ALG_ST_REGISTERED) {
+			unregister_ipsec_alg_auth(&dptr->alg);
+		}
+	}
+	return 0;
+}
+/*
+ *      test loop for registered algos
+ */
+ static int test_digest_list (struct ipsec_alg_capi_digest* dlist) 
+{
+	int test_ret;
+	struct ipsec_alg_capi_digest *dptr;
+	/* foreach digest in list ... */
+	for (dptr=dlist;dptr->digestname;dptr++) {
+		if (dptr->alg.ixt_common.ixt_state & IPSEC_ALG_ST_REGISTERED) {
+			test_ret=ipsec_alg_test(
+					dptr->alg.ixt_common.ixt_support.ias_exttype,
+					dptr->alg.ixt_common.ixt_support.ias_id, 
+					test_crypto);
+			printk("test_digest_list(alg_type=%d alg_id=%d): test_ret=%d\n", 
+			       dptr->alg.ixt_common.ixt_support.ias_exttype, 
+			       dptr->alg.ixt_common.ixt_support.ias_id,
+			       test_ret);
+		}
+	}
+	return 0;
+}
 
 IPSEC_ALG_MODULE_INIT_STATIC( ipsec_cryptoapi_init ){
 	int ret, test_ret;
@@ -550,11 +817,20 @@ IPSEC_ALG_MODULE_INIT_STATIC( ipsec_cryptoapi_init ){
 
 	if (ret == 0 && test_crypto)
 		test_ret = test_cipher_list(alg_capi_carray);
+
+	if ((ret=setup_digest_list(alg_capi_darray)) < 0)
+		return  -EPROTONOSUPPORT;
+
+	if (ret==0 && test_crypto) {
+		test_ret=test_digest_list(alg_capi_darray);
+	}
+
 	return ret;
 }
 
 IPSEC_ALG_MODULE_EXIT_STATIC( ipsec_cryptoapi_fini ){
 	unsetup_cipher_list(alg_capi_carray);
+	unsetup_digest_list(alg_capi_darray);
 	return;
 }
 #ifdef MODULE_LICENSE
