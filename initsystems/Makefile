@@ -9,6 +9,8 @@ include $(LIBRESWANSRCDIR)/Makefile.top
 # XXX: Should switch this directory to using subdirs.mk
 manpages install-manpages list list-manpages list-programs:
 clean-manpages:
+install_file_list:
+	@true
 
 cleanall mostlyclean realclean install programs man config checkprograms spotless install-programs:
 	@for d in $(SUBDIRS) ; \

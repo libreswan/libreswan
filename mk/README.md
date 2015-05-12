@@ -1,3 +1,23 @@
+Overview
+--------
+
+mk/manpages.mk
+--------------
+
+The make variable MANPAGES contains the list of man pages to be built
+and installed.  For instance, assuming there is foo.3.xml source, then:
+
+  MANPAGES += foo.3
+
+will build/install foo.3 into $(MANDIR.3) (man3).  If the .xml source
+is being generated (into $(builddir)/foo.3.xml) then $(builddir)
+should be specified vis:
+
+  MANPAGES += $(builddir)/foo.3
+
+If the .xml file specifies multiple <refname></refname> entries then
+they will all be installed (see packaging/utils/refname.sh).
+
 mk/tests.mk
 -----------
 
@@ -36,13 +56,6 @@ TODO: a.k.a. what needs fixing in the existing build system
 Split CONFDFILES into CONFDFILES and CONFDSUBDIRFILES.  Former goes to
 CONFDDIR and latter goes to CONFDSUBDIR.  Currently it isn't possible
 to install stuff into /etc/ipsec.d/
-
-Instead of including generated man pages in the source, and maybe
-building them with make-programs, have make-doc and make-install-doc
-targets (check automake for target names) that build and install all
-documentation including man pages.  The existing make-all /
-make-install targets would also build/install manages.  Finally,
-consider make-dist which would pre-generate the documentation.
 
 When on fedora/rhel, enable audit logs.  One way to implement this is
 to add packaging/defaults/fedora and pull that in.  Presumably OBJDIR
@@ -107,3 +120,7 @@ of wierd and wonderful stuff with it.
 kvm-build-east use "make" and not "swan-build"
 
 "make" run "make all".
+
+switch initsystems/Makefile to using subdirs.mk
+
+switch packaging/Makefile to using subdirs.mk

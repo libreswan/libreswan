@@ -21,7 +21,11 @@
 
 GLOBAL_TARGETS += all programs manpages
 LOCAL_TARGETS += local-programs local-manpages
+ifeq ($(filter all,$(BROKEN_TARGETS)),)
 all: local-programs local-manpages
+else
+all:: local-programs local-manpages
+endif
 ifeq ($(filter programs,$(BROKEN_TARGETS)),)
 programs: local-programs
 else
@@ -53,9 +57,32 @@ endif
 clean-programs: clean-local-programs
 clean-manpages: clean-local-manpages
 
-GLOBAL_TARGETS += list
-LOCAL_TARGETS += list-local
-list: list-local
+# The install_file_list target is special; the command:
+#
+#    $ make install_file_list > file-list
+#
+# must contain nothing but the list of installed files printed by the
+# list-local-programs et.al. sub-targets.  Consequently:
+#
+# - to stop "Nothing to be done" messages, the target is never empty
+#
+# - to stop make's directory messages, --no-print-directory is
+#   specified
+install_file_list:
+	@set -eu ; $(foreach dir,$(SUBDIRS), \
+		echo $(PWD)/$(dir): 1>&2 ; \
+		$(MAKE) -C $(dir) --no-print-directory $@ ; \
+	)
+.PHONY: install_file_list
+install_file_list:  list-local-manpages list-local-programs
+GLOBAL_TARGETS += list-manpages list-programs
+LOCAL_TARGETS += list-local-manpages list-local-programs
+list-manpages: list-local-manpages
+list-programs: list-local-programs
 
+# Global targets defined above
+.PHONY: $(GLOBAL_TARGETS)
+
+# Force default local target definition
 .PHONY: $(LOCAL_TARGETS)
 $(LOCAL_TARGETS):

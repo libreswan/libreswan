@@ -101,6 +101,10 @@ stopnetkey() {
 }
 
 startnetkey() {
+    # in case pluto crashed
+    ip xfrm policy flush
+    ip xfrm state flush
+
     cryptomodules
 
     if [ -f ${ipsecpfkey} ]; then

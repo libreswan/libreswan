@@ -57,11 +57,13 @@ BROKEN_TARGETS += install-programs
 BROKEN_TARGETS += programs
 BROKEN_TARGETS += distclean
 BROKEN_TARGETS += check
-BROKEN_TARGETS += install_file_list
 BROKEN_TARGETS += man
 BROKEN_TARGETS += config
 BROKEN_TARGETS += checkprograms
+BROKEN_TARGETS += all
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
+
+all:: programs manpages
 
 # kernel details
 # what variant of our patches should we use, and where is it
@@ -75,7 +77,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 	precheck verset confcheck kernel \
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
-	backup unpatch uninstall install_file_list \
+	backup unpatch uninstall \
 	check \
 
 kpatch: unapplypatch applypatch klipsdefaults
