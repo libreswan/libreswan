@@ -896,17 +896,14 @@ struct bare_shunt **bare_shunt_ptr(const ip_subnet *ours, const ip_subnet *his,
 /* free a bare_shunt entry, given a pointer to the pointer */
 static void free_bare_shunt(struct bare_shunt **pp)
 {
-	if (pp == NULL) {
-		DBG(DBG_CONTROL,
-		    DBG_log("delete bare shunt: null pointer"));
-	} else {
-		struct bare_shunt *p = *pp;
+	pexpect(pp != NULL);
 
-		*pp = p->next;
-		DBG_bare_shunt("delete", p);
-		pfree(p->why);
-		pfree(p);
-	}
+	struct bare_shunt *p = *pp;
+
+	*pp = p->next;
+	DBG_bare_shunt("delete", p);
+	pfree(p->why);
+	pfree(p);
 }
 
 void show_shunt_status(void)
