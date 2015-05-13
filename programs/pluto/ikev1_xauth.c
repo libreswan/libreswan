@@ -1178,23 +1178,21 @@ static bool do_file_authentication(void *varg)
 		/* get password hash */
 		passwdhash = p;
 		p = strchr(passwdhash, ':'); /* find end */
-		if (p == NULL) {
-			/* no end: skip line */
-			libreswan_log("XAUTH: %s:%d missing connection name field", pwdfile, lineno);
-			continue;
+		if (p != NULL) {
+			/* optional connectionname */
+			*p++='\0';     /* terminate string by overwriting : */
+			connectionname = p;
+			p = strchr(connectionname, ':'); /* find end */
 		}
 
-		*p++ ='\0';     /* terminate string by overwriting : */
-
-		/* get connection name */
-		connectionname = p;
-		p = strchr(connectionname, ':'); /* find end */
 		if (p != NULL) {
 			/* optional addresspool */
-			*p++ ='\0'; /* terminate password string by overwriting : */
+			*p++ ='\0'; /* terminate connectionname string by overwriting : */
 			addresspool = p;
 		}
-
+		/* set connectionname to NULL if empty */
+		if (connectionname != NULL && strlen(connectionname) == 0)
+			connectionname = NULL;
 		/* If connectionname is null, it applies
 		 * to all connections
 		 */
@@ -1235,27 +1233,34 @@ static bool do_file_authentication(void *varg)
 
 			if (win) {
 
-				if(addresspool != NULL) {
+				if(addresspool != NULL && strlen(addresspool)>0) {
 					/* set user defined ip address or pool */
 					char *temp;
-					temp = strchr(addresspool, '-');
-					if (temp == NULL ) {
-						ttoaddr(addresspool, 0, AF_INET, &c->spd.that.client.addr);
-						if ((c->pool != NULL)) {
+					char single_addresspool[128];
+					pool_range = alloc_thing(ip_range, "pool_range");
+					if(pool_range != NULL){
+						temp = strchr(addresspool, '-');
+						if (temp == NULL ) {
+							/* convert single ip address to addresspool */
+							sprintf(single_addresspool, "%s-%s", addresspool, addresspool);
 							DBG(DBG_CONTROLMORE,
-								DBG_log("free addresspool entry for the conn %s ",
-								c->name));
-							unreference_addresspool(c);
-						}
-					} else {
-						pool_range = alloc_thing(ip_range, "pool_range");
-						if(pool_range != NULL){
+								DBG_log("XAUTH: adding single ip addresspool entry %s for the conn %s ",
+								single_addresspool, c->name));
+							ttorange(single_addresspool, 0, AF_INET, pool_range, TRUE);
+						} else {
+							DBG(DBG_CONTROLMORE,
+								DBG_log("XAUTH: adding addresspool entry %s for the conn %s ",
+								addresspool, c->name));
 							ttorange(addresspool, 0, AF_INET, pool_range, TRUE);
-							if(pool_range->start.u.v4.sin_addr.s_addr){
-								c->pool = install_addresspool(pool_range);
-							}
-							pfree(pool_range);
 						}
+						/* if valid install new addresspool */
+						if(pool_range->start.u.v4.sin_addr.s_addr){
+						    /* delete existing pool if exits */
+							if(c->pool)
+								unreference_addresspool(c);
+							c->pool = install_addresspool(pool_range);
+						}
+						pfree(pool_range);
 					}
 				}
 				break;
