@@ -36,7 +36,7 @@ CONFDSUBDIR=.
 endif
 
 # the list of stuff to be built for "make programs"
-CONFIGLIST=$(CONFFILES) $(CONFDFILES)
+CONFIGLIST=$(CONFFILES) $(CONFDFILES) $(CONFDSUBDIRFILES)
 PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
 
 ifeq ($(srcdir),.)
