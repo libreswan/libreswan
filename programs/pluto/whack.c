@@ -285,6 +285,7 @@ enum option_enums {
 	OPT_GLOBAL_STATUS,
 	OPT_SHUTDOWN,
 	OPT_TRAFFIC_STATUS,
+	OPT_SHUNT_STATUS,
 
 	OPT_OPPO_HERE,
 	OPT_OPPO_THERE,
@@ -493,6 +494,7 @@ static const struct option long_opts[] = {
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
 	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
+	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
 	{ "xauthname", required_argument, NULL, OPT_XAUTHNAME + OO },
 	{ "xauthuser", required_argument, NULL, OPT_XAUTHNAME + OO },
@@ -1209,6 +1211,10 @@ int main(int argc, char **argv)
 
 		case OPT_TRAFFIC_STATUS:	/* --trafficstatus */
 			msg.whack_traffic_status = TRUE;
+			continue;
+
+		case OPT_SHUNT_STATUS:	/* --shuntstatus */
+			msg.whack_shunt_status = TRUE;
 			continue;
 
 		case OPT_SHUTDOWN:	/* --shutdown */
@@ -2010,7 +2016,7 @@ int main(int argc, char **argv)
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
 	      msg.whack_unlisten || msg.whack_list ||
 	      msg.whack_ddos != DDOS_undefined ||
-	      msg.whack_reread || msg.whack_crash ||
+	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
 	      msg.whack_options || msg.whack_shutdown || msg.whack_purgeocsp))
 		diag("no action specified; try --help for hints");

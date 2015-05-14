@@ -664,6 +664,7 @@
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
       <arg choice="plain">--trafficstatus</arg>
+      <arg choice="plain">--shuntstatus</arg>
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
 

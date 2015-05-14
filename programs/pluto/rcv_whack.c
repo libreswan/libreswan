@@ -590,6 +590,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_traffic_status)
 		show_states_status(TRUE);
 
+	if (msg.whack_shunt_status)
+		show_shunt_status();
+
 	if (msg.whack_shutdown) {
 		libreswan_log("shutting down");
 		exit_pluto(PLUTO_EXIT_OK); /* delete lock and leave, with 0 status */
