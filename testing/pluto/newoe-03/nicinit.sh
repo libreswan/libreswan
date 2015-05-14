@@ -1,2 +1,2 @@
-#/usr/sbin/named
+# /usr/sbin/named
 iptables -F
