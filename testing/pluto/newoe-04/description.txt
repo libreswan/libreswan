@@ -1,4 +1,13 @@
-as newoe-02 but now with both sides on netkey.
-nic uses ip 7.7.7.7 on its spare uplink eth3, so we can confirm the
-%pass using a ping on road that actually answers, but is not in any
-of the foodgroups (so hits packetdefault)
+basic OE test, using road and east triggered by packet using NETKEY on road
+
+this test is identical to newoe-2 except that it uses NETKEY.
+
+This also triggers OE to 7.7.7.7, so that we can test it shows a
+proper %pass during/after IKE failure with opportunistic.
+
+keyingtries=1 in private-or-clear to trigger faster IKE failure
+
+unlike the KLIPS testcase, packetflow for 7.7.7.7 works properly with
+the %pass.
+
+still an issue: 7.7.7.7 shows up twice in the shunt table
