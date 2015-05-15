@@ -505,6 +505,7 @@ case "${PLUTO_VERB}" in
     route-host|route-client)
 	# connection to me or my client subnet being routed
 	uproute
+	addnflog
 	;;
     unroute-host|unroute-client)
 	# connection to me or my client subnet being unrouted
@@ -517,20 +518,20 @@ case "${PLUTO_VERB}" in
     down-host)
 	# connection to me going down
 	downrule
+	delnflog
 	# If you are doing a custom version, firewall commands go here.
 	;;
     up-client)
 	# connection to my client subnet coming up
 	# If you are doing a custom version, firewall commands go here.
 	updateresolvconf
-	addnflog
 	;;
     down-client)
 	# connection to my client subnet going down
 	downrule
+	delnflog
 	# If you are doing a custom version, firewall commands go here.
 	restoreresolvconf
-	delnflog
 	;;
     disconnectNM-host|disconnectNM-client)
 	# sending disconnect signal to NM, as something went wrong.
