@@ -150,10 +150,6 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp ${NSSLIBS}
 
 distclean: clean
 
-mostlyclean: clean
-
-realclean: clean
-
 cleanall::
 ifneq ($(strip $(PROGRAM)),)
 	@if [ -r ${SRCDIR}$(PROGRAM).in ]; then rm -f $(PROGRAM); fi

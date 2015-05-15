@@ -463,10 +463,6 @@ cleanall:
 
 distclean: clean
 
-mostlyclean: clean
-
-realclean: clean
-
 check:
 	echo no checks in lib right now.
 

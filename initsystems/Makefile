@@ -15,7 +15,7 @@
 SUBDIR = $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
 # XXX: Should not be switching to the build directory
-cleanall mostlyclean realclean install programs man config checkprograms spotless install-programs:
+cleanall install programs man config checkprograms install-programs:
 	$(MAKE) -C $(builddir)/$(SUBDIR) $@
 # XXX: Should not rename all back to programs
 all:
