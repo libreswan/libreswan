@@ -9,5 +9,6 @@ ping -n -c 4 -I 192.0.1.254 192.0.2.254
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet
-ipsec auto --status |grep passthrough
+ipsec auto --add passthrough
+ipsec auto --route passthrough
 echo "initdone"
