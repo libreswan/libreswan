@@ -85,7 +85,13 @@ void update_state_stats(struct state *st, enum state_kind new_state);
 
 u_int16_t pluto_port = IKE_UDP_PORT;	/* Pluto's port */
 u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
-u_int16_t pluto_nflog_group = 0;	/* default NFLOG group - 0 means no logging */
+
+/*
+ * default global NFLOG group - 0 means no logging
+ * Note: variable is only used to display in ipsec status
+ * actual work is done outside pluto, by ipsec --checknflog
+ */
+u_int16_t pluto_nflog_group = 0;
 
 /*
  * This file has the functions that handle the

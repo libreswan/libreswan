@@ -947,17 +947,6 @@ int main(int argc, char **argv)
 			pluto_nat_port = u;
 			continue;
 
-		case 'G':	/* --nflog-all <group-number> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
-			if (u == 0) {
-				ugh = "must not be 0";
-				break;
-			}
-			pluto_nflog_group = u;
-			continue;
-
 		case 'b':	/* --ctlbase <path> */
 			/*
 			 * ??? work to be done here:
@@ -1092,7 +1081,7 @@ int main(int argc, char **argv)
 			/* --ikeport */
 			pluto_port = cfg->setup.options[KBF_IKEPORT];
 
-			/* --nflog-all */
+			/* nflog-all= only used for status display inside pluto */
 			pluto_nflog_group = cfg->setup.options[KBF_NFLOG_ALL];
 
 			/* no config option: ctlbase */
