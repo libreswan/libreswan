@@ -28,6 +28,8 @@ IPSEC_NSSDIR="${IPSEC_NSSDIR:-@IPSEC_NSSDIR@}"
 IPSEC_NSSDIR_SQL="sql:${IPSEC_NSSDIR}"
 IPSEC_NSSPW="${IPSEC_CONFDDIR}/nsspassword"
 DBPW=""
+CACERTDIR="${IPSEC_CONFDDIR}/cacerts"
+CRLDIR="${IPSEC_CONFDDIR}/crls"
 
 IPSEC_DIR="${IPSEC_EXECDIR}"
 export IPSEC_DIR IPSEC_EXECDIR IPSEC_CONF
@@ -73,6 +75,17 @@ fixversion() {
 	version="U${version}/K${kv}"
     fi
     version="${version}${stack} on $(uname -r)"
+}
+
+set_db_trusts() {
+    # has to handle a NSS nick with spaces
+    certutil -L -d "${IPSEC_NSSDIR_SQL}" | egrep -v 'Certificate|MIME' | awk '{$NF=""; print $0}' | grep -v "^$" | while read -r cert; do
+	if certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | grep -q 'Is a CA' &&
+	  [ $(certutil -L -d ${IPSEC_NSSDIR_SQL} -n "${cert}" | grep -i -A3 'ssl flags' | grep -i 'trusted' | wc -l) -ne 2 ]; then
+	    echo "correcting trust bits for ${cert}"
+	    certutil -M -d "${IPSEC_NSSDIR_SQL}" -n "${cert}" -t 'CT,,'
+	fi
+    done
 }
 
 case "${1}" in
@@ -212,7 +225,9 @@ case "${1}" in
 		exit 1
 	    fi
 	fi
-	pk12util -i "${2}" -d "${IPSEC_NSSDIR}"
+	pk12util -i "${2}" -d "${IPSEC_NSSDIR_SQL}"
+	# check and correct trust bits
+	set_db_trusts
 	exit 0
 	;;
     initnss|--initnss|checknss|--checknss)
@@ -235,6 +250,7 @@ case "${1}" in
 	    if [ "${1}" = "checknss" -o "${1}" = "--checknss" ]; then
 		if [ ! -f "${IPSEC_NSSDIR}/cert9.db" -o \
 		    ! -f "${IPSEC_NSSDIR}/key4.db" ]; then
+		    IMPORTDBPW=""
 		    NSSTMP=$(mktemp -d /tmp/ipsec_nss_tmp.XXXXXXXXXX)
 		    if [ $? -gt 0 ]; then
 			echo "Failed to create temporary directory for NSS db migration" >&2
@@ -269,6 +285,7 @@ case "${1}" in
 			    -f "${NSSTMP}/nsspassword2.txt" \
 			    -@ "${NSSTMP}/nsspassword.txt"
 			DBPW="-f ${NSSTMP}/nsspassword.txt -@ ${NSSTMP}/nsspassword.txt"
+			IMPORTDBPW="-f ${NSSTMP}/nsspassword.txt"
 		    fi
 		    # restore umask
 		    umask ${umask}
@@ -279,6 +296,19 @@ case "${1}" in
 			echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against sql:${IPSEC_NSSDIR}"
 			exit $?
 		    fi
+		    CABACKUP=$(mktemp -d "${IPSEC_NSSDIR}/.cacertbackup.XXXXXXXXXX")
+		    CRLBACKUP=$(mktemp -d "${IPSEC_NSSDIR}/.crlbackup.XXXXXXXXXX")
+		    # import cacerts and crls
+		    for file in "${CACERTDIR}"/*; do
+			filename=$(basename "${file}")
+			name=${filename%%.*}
+			certutil -A -i "${file}" -d sql:"${NSSTMP}" -n "${name}" -t 'CT,,' ${IMPORTDBPW}
+			mv "${file}" "${CABACKUP}/"
+		    done
+		    for file in "${CRLDIR}"/*; do
+			crlutil -I -i "${file}" -d sql:"${NSSTMP}" -B ${IMPORTDBPW}
+			mv "${file}" "${CRLBACKUP}/"
+		    done
 		    cp "${NSSTMP}"/*.db "${IPSEC_NSSDIR}"
 		    rm -f "${NSSTMP}"/*.txt "${NSSTMP}"/*.db
 		    rmdir "${NSSTMP}"
