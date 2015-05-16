@@ -29,7 +29,7 @@ road #
 000 "modecfg-road-eastnet-psk": 192.1.3.209[@roadrandom,+MC+XC+S=C]---192.1.3.254...192.1.2.23<192.1.2.23>[@east,MS+XS+S=C]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "modecfg-road-eastnet-psk":     oriented; my_ip=unset; their_ip=unset
 000 "modecfg-road-eastnet-psk":   xauth info: us:client, them:server,  my_xauthuser=[any]; their_xauthuser=[any]
-000 "modecfg-road-eastnet-psk":   modecfg info: us:server, them:client, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
+000 "modecfg-road-eastnet-psk":   modecfg info: us:client, them:server, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "modecfg-road-eastnet-psk":   labeled_ipsec:no; 
 000 "modecfg-road-eastnet-psk":    policy_label:unset; 
 000 "modecfg-road-eastnet-psk":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
