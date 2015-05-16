@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- certutil  -d /etc/ipsec.d -D -n west
+ certutil  -d sql:/etc/ipsec.d -D -n west
 east #
  ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
@@ -30,9 +30,10 @@ east #
 000 "nss-cert-ocsp":    policy_label:unset; 
 000 "nss-cert-ocsp":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
 000 "nss-cert-ocsp":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "nss-cert-ocsp":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert-ocsp":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
-000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
-000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
+000 "nss-cert-ocsp":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
+000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto;
 000 "nss-cert-ocsp":   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
 000 "nss-cert-ocsp":   newest ISAKMP SA: #0; newest IPsec SA: #0; 
 east #
@@ -48,15 +49,6 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
-east                                                         u,u,u
-hashsha2                                                     P,,  
-nic                                                          P,,  
-north                                                        P,,  
-west-ec                                                      P,,  
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

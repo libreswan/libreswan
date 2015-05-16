@@ -210,6 +210,7 @@ static void delete_end(struct end *e)
 		CERT_DestroyCertificate(e->cert.u.nss_cert);
 
 	freeanychunk(e->ca);
+	pfreeany(e->cert_nickname);
 	pfreeany(e->updown);
 	pfreeany(e->host_addr_name);
 	pfreeany(e->xauth_password);
@@ -715,6 +716,11 @@ void unshare_connection_end_strings(struct end *e)
 	/* do "left" */
 	unshare_id_content(&e->id);
 
+	if (e->cert.u.nss_cert) {
+		e->cert.u.nss_cert = CERT_DupCertificate(e->cert.u.nss_cert);
+		passert(e->cert.u.nss_cert);
+	}
+
 	if (e->ca.ptr != NULL)
 		clonetochunk(e->ca, e->ca.ptr, e->ca.len, "ca string");
 
@@ -768,48 +774,43 @@ static bool load_end_nss_certificate(const char *name, struct end *dst)
 	cert_t cert;
 
 	zero(&dst->cert);
-
 	dst->cert.ty = CERT_NONE;
 
 	if (name == NULL)
 		return FALSE;
 
-	DBG(DBG_CONTROL, DBG_log("loading certificate %s", name));
-	dst->cert_nickname = clone_str(name, "certificate nickname");
-
 	if (!load_nss_cert_from_db(name, &cert)) {
-		whack_log(RC_FATAL, "cannot load certificate %s",
-			name);
-		/* clear the ID, we're expecting it via %fromcert */
+		whack_log(RC_FATAL, "cannot load certificate \'%s\'", name);
+		/* No cert, default to IP ID */
 		dst->id.kind = ID_NONE;
 		return FALSE;
 	}
 
+	dst->cert_nickname = (char *)name;
+	DBG(DBG_CONTROL, DBG_log("loaded certificate \'%s\'", name));
+
 	switch (cert.ty) {
 	case CERT_X509_SIGNATURE:
-		if (dst->id.kind == ID_FROMCERT || dst->id.kind == ID_NONE)
-			select_nss_cert_id(cert.u.nss_cert, &dst->id);
-
 		/* check validity of cert */
 		if (CERT_CheckCertValidTimes(cert.u.nss_cert,
 					     PR_Now(),FALSE) !=
 						secCertTimeValid) {
 			loglog(RC_LOG_SERIOUS,"certificate time is expired/invalid");
 			CERT_DestroyCertificate(cert.u.nss_cert);
+			cert.ty = CERT_NONE;
 			return FALSE;
-		} else {
-			DBG(DBG_CONTROL,
-				DBG_log("certificate is valid"));
-			add_nss_cert_public_key(&dst->id, cert.u.nss_cert,
-					   get_nss_cert_notafter(cert.u.nss_cert),
-					   DAL_LOCAL);
-			dst->cert = cert;
-
-			/* if no CA is defined, use issuer as default */
-			if (dst->ca.ptr == NULL)
-				dst->ca = secitem_to_chunk(
-						    cert.u.nss_cert->derIssuer);
 		}
+
+		select_nss_cert_id(cert.u.nss_cert, &dst->id);
+
+		DBG(DBG_CONTROL, DBG_log("certificate is valid"));
+		add_rsa_pubkey_from_cert(&dst->id, cert.u.nss_cert);
+		dst->cert = cert;
+
+		/* if no CA is defined, use issuer as default */
+		if (dst->ca.ptr == NULL)
+			dst->ca = secitem_to_chunk(
+					    cert.u.nss_cert->derIssuer);
 		break;
 	default:
 		bad_case(cert.ty);
@@ -857,8 +858,9 @@ static bool extract_end(struct end *dst, const struct whack_end *src,
 	}
 
 	/* load local end certificate and extract ID, if any */
-	if (!load_end_nss_certificate(src->cert, dst))
+	if (!load_end_nss_certificate(src->cert, dst)) {
 		DBG_log("certificate not loaded for this end");
+	}
 
 	/* ??? what should we do on load_end_certificate failure? */
 
@@ -2653,7 +2655,8 @@ struct connection *refine_host_connection(const struct state *st,
 			 * the %fromcert + peer id match result. - matt
 			 */
 			if (!match1) {
-				d_fromcert = id_kind(&d->spd.that.id) == ID_FROMCERT;
+				d_fromcert = id_kind(&d->spd.that.id) ==
+					ID_FROMCERT;
 				if (!d_fromcert)
 					continue;
 			}
@@ -2758,7 +2761,7 @@ struct connection *refine_host_connection(const struct state *st,
 			 * We'll go with it if the Peer ID was an exact match.
 			 */
 			if (match1 && wildcards == 0 &&
-			    peer_pathlen == 0 && our_pathlen == 0) {
+				peer_pathlen == 0 && our_pathlen == 0) {
 				*fromcert = d_fromcert;
 				return d;
 			}

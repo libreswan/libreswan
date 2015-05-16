@@ -45,13 +45,13 @@ west #
 002 added connection description "nss-cert"
 west #
  ipsec auto --status |grep nss-cert
-000 "nss-cert": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
+000 "nss-cert": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=signedbyother
 000 "nss-cert":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert":   labeled_ipsec:no; 
 000 "nss-cert":    policy_label:unset; 
-000 "nss-cert":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "nss-cert":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "nss-cert":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -75,7 +75,8 @@ west #
 010 "nss-cert" #2: STATE_PARENT_I2: retransmission; will wait 8000ms for response
 010 "nss-cert" #2: STATE_PARENT_I2: retransmission; will wait 16000ms for response
 010 "nss-cert" #2: STATE_PARENT_I2: retransmission; will wait 32000ms for response
-010 "nss-cert" #2: STATE_PARENT_I2: retransmission; will wait 60000ms for response
+031 "nss-cert" #2: max number of retransmissions (8) reached STATE_PARENT_I2.  Possible authentication failure: no acceptable response to our first encrypted message
+000 "nss-cert" #2: starting keying attempt 1 of an unlimited number, but releasing whack
 #\[root@west ]#  timedout send line: ipsec auto --up nss-cert
  ping -n -c2 -I 192.0.1.254 192.0.2.254
 west #
@@ -87,7 +88,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
 west #
-done
+ done
 000 using kernel interface: klips
 000 interface ipsec0/eth1 192.1.2.45@4500
 000 interface ipsec0/eth1 192.1.2.45@500
@@ -155,13 +156,13 @@ done
 000  
 000 Connection list:
 000  
-000 "nss-cert": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
+000 "nss-cert": 192.0.1.254/32===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=signedbyother.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[%fromcert]===192.0.2.254/32; unrouted; eroute owner: #0
 000 "nss-cert":     oriented; my_ip=192.0.1.254; their_ip=192.0.2.254; mycert=signedbyother
 000 "nss-cert":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "nss-cert":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "nss-cert":   labeled_ipsec:no; 
 000 "nss-cert":    policy_label:unset; 
-000 "nss-cert":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "nss-cert":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "nss-cert":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "nss-cert":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "nss-cert":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
@@ -173,12 +174,14 @@ done
 000 Total IPsec connections: loaded 1, active 0
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
-000 IKE SAs: total(2), half-open(0), authenticated(0), anonymous(1)
+000 IKE SAs: total(4), half-open(0), authenticated(0), anonymous(3)
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
-000 #2: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_v2_RETRANSMIT in  00s; idle; import:admin initiate
+000 #3: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in  00s; idle; import:admin initiate
 000 #1: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in  00s; idle; import:admin initiate
 000 #1: pending Phase 2 for "nss-cert" replacing #0
+000 #6: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_v2_RETRANSMIT in  00s; idle; import:admin initiate
+000 #5: "nss-cert":500 STATE_PARENT_I2 (sent v2I2, expected v2R2); EVENT_SA_REPLACE in  00s; idle; import:admin initiate
 000  
 000 Bare Shunt list:
 000  

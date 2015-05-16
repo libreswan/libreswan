@@ -1,40 +1,73 @@
-#!/bin/sh -eu
+#!/bin/sh -eux
 
 # A script to put various build sequences through their paces.
+
 j=-j$(grep ^processor /proc/cpuinfo | wc -l)
-echo - $j
+echo make $j
 sleep 1
 
-make $j distclean
+while read target
+do
+    case "$target" in
+	"#"* ) ;;
+	* )
+	    if test ! -r "mk/$target .log"
+	    then
+		rm -rf OBJ.*
+		make $j $target | tee "mk/$target .tmp"
+		mv  "mk/$target .tmp"  "mk/$target .log"
+	    fi
+	    ;;
+    esac
+done <<EOF
+#
+# GNU's "Standard 'Makefile' Targets"
+#
 
-make $j clean
-make $j programs
-make $j list
-make $j manpages
+all
+install
+# install-strip
+uninstall
+clean
+distclean
+#check
+#installcheck
+dist
+#
+# Standard combinations
+#
+all install clean
+all install distclean
+#
+# Local variants
+#
+clean-manpages manpages clean-manpages
+install_file_list
+EOF
 
-find lib programs -name Makefile -print \
-    | while read makefile ; do
-	  dir=$(dirname $makefile)
-	  case $dir in
-	      lib/libbsdpfkey|programs/_realsetup.bsd)
-		  echo Skipping directory $dir
-		  continue;;
-	  esac
-	  if grep /library.mk $makefile 2>&1 ; then
-	      echo $makefile - library.mk
-	      make $j -C $dir clean    >> test.log
-	      make $j -C $dir          >> test.log
-	      make $j -C $dir clean    >> test.log
-	      make $j -C $dir programs >> test.log
-	  elif grep /program.mk $makefile 2>&1 ; then
-	      echo $makefile - program.mk
-	      make $j -C $dir clean    >> test.log
-	      make $j -C $dir          >> test.log
-	      make $j -C $dir clean    >> test.log
-	      make $j -C $dir programs >> test.log
-	  elif grep /subdirs.mk $makefile 2>&1 ; then
-	      echo skipping $makefile - subdirs.mk
-	  else
-	      echo unknown $makefile
-	  fi
-      done
+exit 1
+
+# Minimum support in sub-directories:
+find lib programs -name Makefile -print | while read makefile ; do
+    dir=$(dirname $makefile)
+    case $dir in
+	lib/libbsdpfkey|programs/_realsetup.bsd)
+	    echo Skipping directory $dir
+	    continue;;
+    esac
+    if grep /library.mk $makefile 2>&1 ; then
+	echo $makefile - library.mk
+	make $j -C $dir clean    >> test.log
+	make $j -C $dir          >> test.log
+	make $j -C $dir clean    >> test.log
+    elif grep /program.mk $makefile 2>&1 ; then
+	echo $makefile - program.mk
+	make $j -C $dir clean    >> test.log
+	make $j -C $dir          >> test.log
+	make $j -C $dir clean    >> test.log
+    elif grep /subdirs.mk $makefile 2>&1 ; then
+	echo skipping $makefile - subdirs.mk
+    else
+	echo unknown $makefile
+    fi
+done

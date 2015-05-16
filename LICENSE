@@ -23,3 +23,5 @@ following phrase:
 "derived from the RSA Data Security, Inc. MD5 Message-Digest Algorithm".  
 It is not under the GPL; see details in linux/net/ipsec/ipsec_md5c.c.
 
+Code in lib/libswan/nss_copies.c is used under the Mozilla Public License
+Version 2.0. https://www.mozilla.org/MPL/2.0/

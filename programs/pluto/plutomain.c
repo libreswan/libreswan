@@ -116,9 +116,9 @@ static int pluto_nss_seedbits;
 static int nhelpers = -1;
 
 extern bool strict_crl_policy;
+extern bool strict_ocsp_policy;
+extern bool ocsp_enable;
 
-static bool strict_ocsp_policy = FALSE;
-static bool ocsp_enable = FALSE;
 static char *ocsp_default_uri = NULL;
 static char *ocsp_trust_name = NULL;
 static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;

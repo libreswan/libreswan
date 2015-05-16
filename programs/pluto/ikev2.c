@@ -979,7 +979,9 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		return FALSE;
 	}
 
-	ikev2_decode_cert(md);
+	if (!ikev2_decode_cert(md))
+		return FALSE;
+
 	/* check for certificate requests */
 	ikev2_decode_cr(md, &c->requested_ca);
 

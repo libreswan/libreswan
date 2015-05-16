@@ -2766,7 +2766,8 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 	}
 
 	/* check for certificates */
-	ikev1_decode_cert(md);
+	if (!ikev1_decode_cert(md))
+		return FALSE;
 
 	/* Now that we've decoded the ID payload, let's see if we
 	 * need to switch connections.

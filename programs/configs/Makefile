@@ -11,11 +11,15 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-EXTRA5MAN=ipsec.conf.5
+# the man page source is generated
+MANPAGES += $(builddir)/ipsec.conf.5
+
 CONFFILES=ipsec.conf
 EXCONFILES=ipsec.win2k.conf
-CONFDSUBDIR=policies
-CONFDFILES=clear clear-or-private private-or-clear private block
+
+CONFDFILES = v6neighbor-hole.conf
+CONFDSUBDIR = policies
+CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
@@ -25,10 +29,11 @@ endif
 
 xmlsources := $(patsubst d.ipsec.conf/%,${srcdir}/d.ipsec.conf/%,$(shell cat ${srcdir}/d.ipsec.conf/order.txt))
 
-ipsec.conf.5: ipsec.conf.5.xml
+$(builddir)/ipsec.conf.5.xml: $(xmlsources)
+	@mkdir -p $(builddir)
+	cat $(xmlsources) > $@
 
-ipsec.conf.5.xml: $(xmlsources)
-	cat $(xmlsources) >$@
-
-clean-local:
-	rm -f ipsec.conf.5.xml
+clean-local-manpages: clean-local-xml-manpages
+.PHONY: clean-local-xml-manpages
+clean-local-xml-manpages:
+	rm -f $(builddir)/ipsec.conf.5.xml

@@ -94,8 +94,6 @@ SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 INC_MANDIR?=man
 # the full pathname
 MANTREE?=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
-# all relevant subdirectories of MANTREE
-MANPLACES?=man3 man5 man8
 
 # where configuration files go
 FINALSYSCONFDIR?=/etc
@@ -257,9 +255,6 @@ KERNEL?=$(shell if expr " `uname -m`" : ' i.86' >/dev/null ; \
 	then echo $(INC_B)zImage ; \
 	else echo boot ; \
 	fi)
-
-# look for XMLTO command
-XMLTO?=$(shell which xmlto | grep / | head -n1)
 
 # look for POD2MAN command
 POD2MAN?=$(shell which pod2man | grep / | head -n1)

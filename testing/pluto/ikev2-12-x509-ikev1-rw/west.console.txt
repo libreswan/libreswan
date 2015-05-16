@@ -111,14 +111,15 @@ west #
 000  
 000 Connection list:
 000  
-000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.0/24; unrouted; eroute owner: #0
+000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45<192.1.2.45>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=testing@libreswan.org]...192.1.2.23<192.1.2.23>[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=west; hiscert=east
 000 "westnet-eastnet-ikev2":   xauth info: us:none, them:none,  my_xauthuser=[any]; their_xauthuser=[any]
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns1:unset, dns2:unset, domain:unset, banner:unset;
 000 "westnet-eastnet-ikev2":   labeled_ipsec:no; 
 000 "westnet-eastnet-ikev2":    policy_label:unset; 
-000 "westnet-eastnet-ikev2":   CAs: 'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+000 "westnet-eastnet-ikev2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 000 "westnet-eastnet-ikev2":   ike_life: 3600s; ipsec_life: 28800s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s;
 000 "westnet-eastnet-ikev2":   sha2_truncbug:no; initial_contact:no; cisco_unity:no; send_vendorid:no;
 000 "westnet-eastnet-ikev2":   policy: RSASIG+ENCRYPT+TUNNEL+PFS+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
@@ -140,10 +141,12 @@ west #
  ipsec auto --up  westnet-eastnet-ikev2
 002 "westnet-eastnet-ikev2" #1: initiating Main Mode
 104 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: initiate
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 1s for response
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 2s for response
-010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 4s for response
-031 "westnet-eastnet-ikev2" #1: max number of retransmissions (3) reached STATE_MAIN_I1.  No response (or no acceptable response) to our first IKEv1 message
+010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 2000ms for response
+010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 4000ms for response
+010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 8000ms for response
+010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 16000ms for response
+010 "westnet-eastnet-ikev2" #1: STATE_MAIN_I1: retransmission; will wait 32000ms for response
+031 "westnet-eastnet-ikev2" #1: max number of retransmissions (6) reached STATE_MAIN_I1.  No response (or no acceptable response) to our first IKEv1 message
 000 "westnet-eastnet-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  ping -n -c 2 -I 192.0.1.254 192.0.2.254
@@ -162,16 +165,6 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 via 192.1.2.23 dev eth1 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
 192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-east                                                         P,,  
-east-ec                                                      P,,  
-hashsha2                                                     P,,  
-mainca                                                       ,,   
-north                                                        P,,  
-road                                                         P,,  
-west                                                         u,u,u
 west #
  echo done
 done
@@ -185,16 +178,6 @@ default via 192.1.2.254 dev eth1
 192.0.2.0/24 via 192.1.2.23 dev eth1 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.45 
 192.9.4.0/24 dev eth2  proto kernel  scope link  src 192.9.4.45 
-NSS_CERTIFICATES
-Certificate Nickname                                         Trust Attributes
-                                                             SSL,S/MIME,JAR/XPI
-east                                                         P,,  
-east-ec                                                      P,,  
-hashsha2                                                     P,,  
-mainca                                                       ,,   
-north                                                        P,,  
-road                                                         P,,  
-west                                                         u,u,u
 west #
 west #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

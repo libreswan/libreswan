@@ -57,11 +57,13 @@ BROKEN_TARGETS += install-programs
 BROKEN_TARGETS += programs
 BROKEN_TARGETS += distclean
 BROKEN_TARGETS += check
-BROKEN_TARGETS += install_file_list
 BROKEN_TARGETS += man
 BROKEN_TARGETS += config
 BROKEN_TARGETS += checkprograms
+BROKEN_TARGETS += all
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
+
+all:: programs manpages
 
 # kernel details
 # what variant of our patches should we use, and where is it
@@ -75,7 +77,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 	precheck verset confcheck kernel \
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
-	backup unpatch uninstall install_file_list \
+	backup unpatch uninstall \
 	check \
 
 kpatch: unapplypatch applypatch klipsdefaults
@@ -348,11 +350,26 @@ mod24clean module24clean:
 	rm -rf ${MOD24BUILDDIR}
 
 #autoodetect 2.4 and 2.6
-module_install: minstall
-minstall:
-	@if [ -f ${KERNELSRC}/Rules.make ] ; then \
-                ${MAKE} minstall24 ; else ${MAKE} minstall26; \
+module_install minstall install-module:
+	@if [ -f $(KERNELSRC)/Rules.make ] ; then \
+                $(MAKE) minstall24 ; \
+	else \
+		$(MAKE) minstall26 ; \
         fi;
+
+# Extract the value of MODLIB from the output of $(MAKE).  Also hide
+# the sup-process $(MAKE) so that GNU Make doesn't always invoke the
+# target ("make -n" ignored).
+#
+# If $(MAKE) directly appears in a target (for instance in minstall26)
+# then GNU Make will assume that it is a recursive make invocation and
+# invoke the target regardless of -n.
+#
+# XXX: minstall24 should also use this.
+
+osmodlib-from-make = \
+	OSMODLIB=$$($(MAKE) $(1) 2>/dev/null | sed -n -e 's/^MODLIB[ :=]*\([^;]*\).*/\1/p' | head -1) ; \
+	test -z "$$OSMODLIB" || echo "OSMODLIB=$$OSMODLIB ($(MAKE) $(1))"
 
 # module-only install, with error checks
 minstall24:
@@ -421,9 +438,9 @@ mod26clean module26clean:
 
 # module-only install, with error checks
 minstall26:
-	( OSMODLIB=`${MAKE} -C $(KERNELSRC) -p help | ( sed -n -e '/^MODLIB/p' -e '/^MODLIB/q' ; cat > /dev/null ) | sed -e 's/^MODLIB[ :=]*\([^;]*\).*/\1/'` ; \
+	$(call osmodlib-from-make,-C $(KERNELSRC) -p help) ; \
 	if [ -z "$$OSMODLIB" ] ; then \
-		OSMODLIB=`${MAKE} -C $(KERNELSRC) -n -p modules_install | ( sed -n -e '/^MODLIB/p' -e '/^MODLIB/q' ; cat > /dev/null ) | sed -e 's/^MODLIB[ :=]*\([^;]*\).*/\1/'` ; \
+		$(call osmodlib-from-make,-C $(KERNELSRC) -n -p modules_install) ; \
 	fi ; \
 	if [ -z "$$OSMODLIB" ] ; then \
 		echo "No known place to install module. Aborting." ; \
@@ -432,16 +449,17 @@ minstall26:
 	set -x ; \
 	mkdir -p $$OSMODLIB/kernel/$(OSMOD_DESTDIR) ; \
 	cp $(MODBUILDDIR)/ipsec.ko $$OSMODLIB/kernel/$(OSMOD_DESTDIR) ; \
-	if [ -f /sbin/depmod ] ; then /sbin/depmod -a ; fi; \
+	if [ -f /sbin/depmod ] ; then \
+		/sbin/depmod -a ; \
+	fi ; \
 	if [ -n "$(OSMOD_DESTDIR)" ] ; then \
-	mkdir -p $$OSMODLIB/kernel/$(OSMOD_DESTDIR) ; \
+		mkdir -p $$OSMODLIB/kernel/$(OSMOD_DESTDIR) ; \
 		if [ -f $$OSMODLIB/kernel/ipsec.ko -a -f $$OSMODLIB/kernel/$(OSMOD_DESTDIR)/ipsec.ko ] ; then \
 			echo "WARNING: two ipsec.ko modules found in $$OSMODLIB/kernel:" ; \
 			ls -l $$OSMODLIB/kernel/ipsec.ko $$OSMODLIB/kernel/$(OSMOD_DESTDIR)/ipsec.ko ; \
 			exit 1; \
 		fi ; \
-	fi ; \
-	set -x ) ;
+	fi
 
 
 else

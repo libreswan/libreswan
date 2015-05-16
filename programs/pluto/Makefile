@@ -25,6 +25,10 @@ ifndef top_srcdir
 include ../../mk/dirs.mk
 endif
 
+# XXX: Pluto doesn't include mk/program.mk and define PROGRAM
+MANPAGES += ipsec_pluto.8
+MANPAGES += ipsec.secrets.5
+
 # XXX: Pluto doesn't include mk/program.mk?
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/targets.mk
@@ -245,10 +249,6 @@ ifeq ($(USE_NM),true)
 DEFINES+=-DHAVE_NM
 endif
 
-FMANDIR=$(MANTREE)/man5
-PMANDIR=$(MANTREE)/man8
-MANPAGES=pluto.8 ipsec.secrets.5
-
 BINNAMEPLUTO = pluto
 BINNAMEWHACK = whack
 BINNAMEWHACKINIT = whackinit
@@ -423,7 +423,7 @@ all programs clean install install-programs:
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/pluto && $(MAKE) $@
 else
 all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
-programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(MANPAGES) $(CAVP) #$(BINNAMEWHACKINIT) 
+programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT) 
 clean:	cleanall
 install: doinstall
 install-programs: doinstall
@@ -432,48 +432,16 @@ endif
 doinstall: all
 	mkdir -p ${LIBEXECDIR}
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/cacerts
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/aacerts
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/certs
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/crls
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/private
 	mkdir -p -m 755 $(VARDIR)/run/pluto
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
 	#
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
 	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
-	g=`if [ -r pluto.8 ]; then echo pluto.8; else echo ${SRCDIR}/pluto.8; fi`; \
-	$(INSTALL) $(INSTMANFLAGS) $$g $(PMANDIR)/ipsec_pluto.8 || exit 1; \
-	echo '.so man8/ipsec_pluto.8' > $(PMANDIR)/ipsec_whack.8 || exit 1; \
-	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \
-		while read from to ; \
-		do \
-			ln -s -f ipsec_$$from $(PMANDIR)/$$to; \
-		done
-	g=`if [ -r ipsec.secrets.5 ]; then echo ipsec.secrets.5; else echo ${SRCDIR}/ipsec.secrets.5; fi`; \
-	$(INSTALL) $(INSTMANFLAGS) $$g $(FMANDIR)/ipsec.secrets.5 || exit 1; \
-	sh ${LIBRESWANSRCDIR}/packaging/utils/manlink $$g | \
-		while read from to ; \
-		do \
-		 ln -s -f $$from $(FMANDIR)/$$to; \
-		done
 
-install_file_list:
+list-local-programs:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
 	@if $(USE_ADNS) ; then echo $(LIBEXECDIR)/$(BINNAMEADNS) ; fi
 	@echo $(LIBEXECDIR)/$(BINNAMEWHACK)
-	@echo $(PMANDIR)/ipsec_pluto.8
-	@sh ${LIBRESWANSRCDIR}/packaging/utils/manlink pluto.8 | \
-		while read from to; \
-		do\
-			 echo $(PMANDIR)/$$to; \
-		done
-	@echo $(FMANDIR)/ipsec.secrets.5
-	@sh ${LIBRESWANSRCDIR}/packaging/utils/manlink ipsec.secrets.5 | \
-		while read from to; \
-		do \
-			echo $(FMANDIR)/$$to; \
-		done
 
 $(BINNAMEPLUTO): $(OBJSPLUTO) $(ALG_LIBS) $(LIBRESWANLIB)
 	$(CC) -o $(BINNAMEPLUTO) $(LDFLAGS) $(USERLINK) $(OBJSPLUTO) $(LIBSPLUTO) ${PLUTOMINUSL}
@@ -494,10 +462,6 @@ cleanall:
 		$(OBJSADNS) $(BINNAMEADNS)
 
 distclean: clean
-
-mostlyclean: clean
-
-realclean: clean
 
 check:
 	echo no checks in lib right now.
