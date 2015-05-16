@@ -331,7 +331,7 @@ case "${1}" in
 	echo "See 'man pluto' if you want to protect the NSS database with a password"
 	echo ""
 
-	certutil -N -d "${IPSEC_NSSDIR_SQL} --empty-password"
+	certutil -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
 	if [ -x /usr/sbin/restorecon ]; then
 	    restorecon -Rv "${IPSEC_NSSDIR}"
 	fi
