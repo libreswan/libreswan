@@ -1,5 +1,4 @@
 ipsec auto --up  westnet-eastnet
-
 ip xfrm state
 ip xfrm policy
 route -n
