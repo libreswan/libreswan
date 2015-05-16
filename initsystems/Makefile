@@ -1,19 +1,28 @@
-LIBRESWANSRCDIR?=$(shell cd ..; pwd)
-SRCDIR?=$(LIBRESWANSRCDIR)/initsystems/
-INITSYSTEM?=$(shell $(SHELL) $(LIBRESWANSRCDIR)/packaging/utils/lswan_detect.sh init)
-SUBDIRS=$(INITSYSTEM)
+# Makefile for init systems, for libreswan.
+#
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# 
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
+# 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
 
-include $(LIBRESWANSRCDIR)/Makefile.inc
-include $(LIBRESWANSRCDIR)/Makefile.top
+SUBDIR = $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
-# XXX: Should switch this directory to using subdirs.mk
-manpages install-manpages list list-manpages list-programs:
-clean-manpages:
-install_file_list:
-	@true
+# XXX: Should not be switching to the build directory
+cleanall install programs man config checkprograms install-programs:
+	$(MAKE) -C $(builddir)/$(SUBDIR) $@
+# XXX: Should not rename all back to programs
+all:
+	$(MAKE) -C $(builddir)/$(SUBDIR) programs
 
-cleanall mostlyclean realclean install programs man config checkprograms spotless install-programs:
-	@for d in $(SUBDIRS) ; \
-	do \
-		(cd $$d && $(MAKE) SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ) || exit 1;\
-	done; \
+# XXX: should be including mk/subdirs.mk
+ifndef top_srcdir
+include ../mk/dirs.mk
+endif
+include $(top_srcdir)/mk/targets.mk

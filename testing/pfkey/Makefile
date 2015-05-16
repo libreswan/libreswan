@@ -23,7 +23,7 @@ def:	check
 
 # programs
 
-cleanall distclean mostlyclean realclean install programs checkprograms check clean spotless install_file_list:
+cleanall distclean install programs checkprograms check clean install_file_list:
 	@for d in $(SUBDIRS) ; \
 	do \
 		${MAKE} -C $$d SRCDIR=${SRCDIR}$$d/ LIBRESWANSRCDIR=$(LIBRESWANSRCDIR) $@ ;\

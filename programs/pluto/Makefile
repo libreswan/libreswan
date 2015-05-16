@@ -432,11 +432,6 @@ endif
 doinstall: all
 	mkdir -p ${LIBEXECDIR}
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/cacerts
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/aacerts
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/certs
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/crls
-	mkdir -p -m 700 $(CONFDIR)/ipsec.d/private
 	mkdir -p -m 755 $(VARDIR)/run/pluto
 	$(INSTALL) $(INSTBINFLAGS) $(BINNAMEPLUTO) $(BINNAMEWHACK) $(LIBEXECDIR)
 	#
@@ -467,10 +462,6 @@ cleanall:
 		$(OBJSADNS) $(BINNAMEADNS)
 
 distclean: clean
-
-mostlyclean: clean
-
-realclean: clean
 
 check:
 	echo no checks in lib right now.

@@ -1,5 +1,7 @@
 # Libreswan testing makefile
+#
 # Copyright (C) 2002 Michael Richardson <mcr@freeswan.org>
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -11,17 +13,17 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-SRCDIR?=$(shell pwd)/
-export LIBRESWANSRCDIR
-include $(LIBRESWANSRCDIR)/Makefile.inc
-
-SUBDIRS=
-UTILS=${LIBRESWANSRCDIR}/testing/utils
-
 def:
 	@echo "Please read doc/intro.html or INSTALL before running make"
 	@false
+
+ifndef top_srcdir
+include ../../mk/dirs.mk
+endif
+include $(top_srcdir)/mk/targets.mk
+include $(top_srcdir)/mk/config.mk
+
+UTILS=${LIBRESWANSRCDIR}/testing/utils
 
 # Don't depend on nss-pw and generated certificates, creating
 # certificates and running those tests is not reliable.
@@ -42,7 +44,7 @@ endif
 ${LIBRESWANSRCDIR}/testing/x509/keys/mainca.key: ${LIBRESWANSRCDIR}/testing/x509/dist_certs.py
 	cd ${LIBRESWANSRCDIR}/testing/x509/ && ./dist_certs.py
 
-install install_file_list checkprograms programs:
+install checkprograms programs:
 	@true
 
 clean:
@@ -54,7 +56,3 @@ clean:
 cleanall: clean
 
 distclean: clean
-
-mostlyclean: clean
-
-realclean: clean

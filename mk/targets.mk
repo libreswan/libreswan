@@ -90,6 +90,21 @@ LOCAL_TARGETS += list-local-manpages list-local-programs
 list-manpages: list-local-manpages
 list-programs: list-local-programs
 
+
+# Extra direct recursive targets
+
+GLOBAL_TARGETS += checkprograms check
+ifeq ($(filter checkprograms,$(BROKEN_TARGETS)),)
+checkprograms:
+else
+checkprograms::
+endif
+ifeq ($(filter check,$(BROKEN_TARGETS)),)
+check:
+else
+check:
+endif
+
 # Global targets defined above
 .PHONY: $(GLOBAL_TARGETS)
 

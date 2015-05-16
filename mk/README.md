@@ -1,6 +1,34 @@
 Overview
 --------
 
+Where is this code going?
+-------------------------
+
+The basic idea is to reduce things to the point that a Makefile looks
+something like:
+
+    PROGRAMS=foo
+    include ../../mk/program.mk
+    ifdef EXTRA_STUFF
+    LIBS+=-lextra
+    endif
+
+Either subdirs.mk, program.mk, or library.mk gets included.
+
+This means:
+
+- the srcdir/objdir shuffle has to go
+- all the flags get set up
+- all the auto-dependency stuff is delt with
+- makefiles use a small well-defined set of flags
+
+And a small set of well defined targets work:
+
+- make (default to programs or all?)
+- make install
+- make clean
+- make distclean?
+
 mk/manpages.mk
 --------------
 
@@ -32,34 +60,10 @@ mk/tests.sh
 This script goes through a whole heap of make commands, such as
 sub-directory clean/build, that should work.
 
-Where is this code going?
--------------------------
-
-The basic idea is to reduce things to the point that a Makefile looks
-something like:
-
-    PROGRAMS=foo
-    include ../../mk/program.mk
-    ifdef EXTRA_STUFF
-    LIBS+=-lextra
-    endif
-
-This means:
-
-- the srcdir/objdir shuffle has to go
-- all the flags get set up
-- all the auto-dependency stuff is delt with
-- makefiles use a small well-defined set of flags
-
-And a small set of well defined targets work:
-
-- make (default to programs or all?)
-- make install
-- make clean
-- make distclean?
-
 TODO: a.k.a. what needs fixing in the existing build system
 -----------------------------------------------------------
+
+delete any targets that are not recursive, "spotless" for instance.
 
 switch lib/libswan to using library.mk; having more recursive targets
 descend $(srcdir) is predicated on this.
@@ -67,18 +71,8 @@ descend $(srcdir) is predicated on this.
 switch programs/pluto to using program.mk; having more recursive
 targets descend $(srcdir) is predicated on this.
 
-switch initsystems to using subdirs.mk; this means also cleaning up
-sub-directories; for now might be safer to keep adding hacks.
-
-switch packaging to using subdirs.mkl this means also cleaning up
-sub-directories; for now might be safer to keep adding hacks.
-
-have "make install-programs" descend $(srcdir)
-
 have "make install" descend $(srcdir); "make install-manpages" already
 works so just need to fix above.
-
-have "make programs" descend $(srcdir)
 
 have "make all" descend $(srcdir); "make manpages" already works so
 just need to fix above.
