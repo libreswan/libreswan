@@ -904,7 +904,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			}
 			/* now delete the (obsoleted) narrow bare kernel shunt - we have a broadened negotiationshunt replacement installed */
 			if (!delete_bare_shunt(&b->our_client, &b->peer_client,
-				b->transport_proto, delmsg))
+				b->transport_proto, SPI_HOLD /* kernel dictated */, delmsg))
 			{
 				libreswan_log("Failed to: %s", delmsg);
 			} else {

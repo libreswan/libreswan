@@ -1058,7 +1058,7 @@ static void clear_narrow_holds(const ip_subnet *ours,
 		    portof(&his->addr) == portof(&p->his.addr)) {
 
 			if (!delete_bare_shunt(&p->ours.addr, &p->his.addr,
-					transport_proto,
+					transport_proto, SPI_HOLD,
 					"removing clashing narrow hold"))
 			{
 				libreswan_log("delete_bare_shunt() in clear_narrow_holds() failed removing clashing narrow hold");
@@ -1084,6 +1084,8 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 {
 	ip_subnet this_client, that_client;
 	const ip_address *null_host = aftoinfo(addrtypeof(src))->any;
+
+	DBG(DBG_CONTROL, DBG_log("fiddle_bare_shunt called"));
 
 	passert(addrtypeof(src) == addrtypeof(dst));
 	happy(addrtosubnet(src, &this_client));
@@ -1176,10 +1178,10 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 }
 
 bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
-			int transport_proto,
+			int transport_proto, ipsec_spi_t shunt_spi,
 			const char *why)
 {
-	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, SPI_PASS, FALSE, transport_proto, why);
+	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, shunt_spi, FALSE, transport_proto, why);
 }
 
 bool eroute_connection(struct spd_route *sr,
@@ -1300,6 +1302,7 @@ bool assign_holdpass(struct connection *c,
 
 		if (!delete_bare_shunt(src, dst,
 					transport_proto,
+					(c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
 					(c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
 						"delete narrow %hold"))
 		{
@@ -3258,10 +3261,12 @@ void expire_bare_shunts()
 	for (bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
+		char *msg = "expire_bare_shunt_event called for deletion";
 
 		if (age > 60) {
 			DBG(DBG_CONTROL, DBG_log("Expired shunt(%s)", bsp->why));
-			free_bare_shunt(bspp);
+			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
+				bsp->transport_proto, ntohs(bsp->said.spi), msg);
 		} else {
 			DBG(DBG_CONTROL, DBG_log("Keeping recent shunt(%s)", bsp->why));
 			bspp = &bsp->next;

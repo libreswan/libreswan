@@ -335,7 +335,7 @@ extern bool has_bare_hold(const ip_address *src, const ip_address *dst,
 			  int transport_proto);
 
 extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
-			       int transport_proto,
+			       int transport_proto, ipsec_spi_t shunt_spi,
 			       const char *why);
 
 extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,

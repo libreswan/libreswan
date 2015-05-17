@@ -1754,7 +1754,7 @@ void pfkey_scan_shunts(void)
 		networkof(&p->his, &dst);
 
 		if (delete_bare_shunt(&src, &dst,
-				p->transport_proto,
+				p->transport_proto, SPI_HOLD, /* what spi to use? */
 				"delete expired bare shunts"))
 		{
 			DBG(DBG_CONTROL, DBG_log("pfkey_scan_shunts() called delete_bare_shunt() with success"));

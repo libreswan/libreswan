@@ -1495,7 +1495,8 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 	}
 
 	if (delete_bare_shunt(&src, &dst,
-			transport_proto, "delete expired bare shunt"))
+			transport_proto, SPI_HOLD /* why spi to use? */,
+			"delete expired bare shunt"))
 	{
 		DBG(DBG_CONTROL, DBG_log("netlink_shunt_expire() called delete_bare_shunt() with success"));
 	} else {
