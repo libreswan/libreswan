@@ -53,6 +53,8 @@
 #include "ikev2.h"
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
+#include "kernel.h" /* for scan_shunts() */
+#include "kernel_pfkey.h" /* for pfkey_scan_shunts */
 
 #include "nat_traversal.h"
 
@@ -475,9 +477,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	 */
 	switch (type) {
 	case EVENT_REINIT_SECRET:
-#ifdef KLIPS
 	case EVENT_SHUNT_SCAN:
-#endif
 	case EVENT_PENDING_DDNS:
 	case EVENT_PENDING_PHASE2:
 	case EVENT_LOG_DAILY:
@@ -533,11 +533,15 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		init_secret();
 		break;
 
-#ifdef KLIPS
 	case EVENT_SHUNT_SCAN:
-		scan_proc_shunts();
+		if (!kernel_ops->policy_lifetime) {
+			/* KLIPS or MAST - scan eroutes */
+			pfkey_scan_shunts();
+		} else {
+			/* eventually obsoleted via policy expire msg from kernel */
+			expire_bare_shunts();
+		}
 		break;
-#endif
 
 	case EVENT_PENDING_DDNS:
 		connection_check_ddns();

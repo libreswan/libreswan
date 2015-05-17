@@ -600,7 +600,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			const ip_subnet *this_client,
 			const ip_address *that_host,
 			const ip_subnet *that_client,
-			ipsec_spi_t spi,
+			ipsec_spi_t spi,	/* new SPI */
 			int sa_proto,
 			unsigned int transport_proto,
 			enum eroute_type esatype,
@@ -660,6 +660,9 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		case SPI_PASS:
 			policy = IPSEC_POLICY_NONE;
 			break;
+		case SPI_HOLD:
+			DBG_log("netlink_raw_eroute: SPI_HOLD?!?");
+			/* FALL THROUGH */
 		case SPI_DROP:
 		case SPI_REJECT:
 		default:
@@ -672,14 +675,10 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 				return TRUE;
 
 			break;
-		/*
-		 * Do we really need %hold under NETKEY?
-		 * Seems not so we just ignore.
-		 */
-		case SPI_HOLD:
-			return TRUE;
 		}
 		break;
+	default:
+		bad_case(esatype);
 	}
 	if (satype != 0) {
 		DBG(DBG_KERNEL,
@@ -824,6 +823,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	if (policy == IPSEC_POLICY_IPSEC && sadb_op != ERO_DELETE) {
 		struct rtattr *attr;
+
 		struct xfrm_user_tmpl tmpl[4];
 		int i;
 
@@ -881,11 +881,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	}
 #endif
 
-	enoent_ok = FALSE;
-	if (sadb_op == ERO_DEL_INBOUND)
-		enoent_ok = TRUE;
-	else if (sadb_op == ERO_DELETE && ntohl(spi) == SPI_HOLD)
-		enoent_ok = TRUE;
+	enoent_ok = sadb_op == ERO_DEL_INBOUND || (sadb_op == ERO_DELETE && ntohl(spi) == SPI_HOLD);
 
 	ok = netlink_policy(&req.n, enoent_ok, text_said);
 	switch (dir) {
@@ -1498,11 +1494,12 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 		return;
 	}
 
-	if (replace_bare_shunt(&src, &dst, BOTTOM_PRIO, SPI_PASS, FALSE,
-			transport_proto, "delete expired bare shunt")) {
-		DBG(DBG_CONTROL, DBG_log("netlink_shunt_expire() called replace_bare_shunt() with success"));
+	if (delete_bare_shunt(&src, &dst,
+			transport_proto, "delete expired bare shunt"))
+	{
+		DBG(DBG_CONTROL, DBG_log("netlink_shunt_expire() called delete_bare_shunt() with success"));
 	} else {
-		libreswan_log("netlink_shunt_expire() called replace_bare_shunt() which failed!");
+		libreswan_log("netlink_shunt_expire() called delete_bare_shunt() which failed!");
 	}
 }
 

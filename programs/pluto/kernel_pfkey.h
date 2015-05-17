@@ -65,6 +65,8 @@ extern bool pfkey_shunt_eroute(struct connection *c,
 			       enum pluto_sadb_operations op,
 			       const char *opname);
 
+extern void pfkey_scan_shunts(void);
+
 extern int pfkeyfd;
 
 #endif /* PFKEY */

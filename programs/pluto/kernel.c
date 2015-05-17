@@ -134,6 +134,31 @@ static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 	    });
 }
 
+void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
+	int transport_proto, ipsec_spi_t shunt_spi,
+	const char *why)
+{
+	struct bare_shunt *bs = alloc_thing(struct bare_shunt,
+					    "bare shunt");
+
+	bs->why = clone_str(why, "story for bare shunt");
+	bs->ours = *ours;
+	bs->his = *his;
+	bs->transport_proto = transport_proto;
+	bs->policy_prio = BOTTOM_PRIO;
+
+	bs->said.proto = SA_INT;
+	bs->said.spi = htonl(shunt_spi);
+	bs->said.dst = *aftoinfo(subnettypeof(ours))->any;
+
+	bs->count = 0;
+	bs->last_activity = mononow();
+
+	bs->next = bare_shunts;
+	bare_shunts = bs;
+	DBG_bare_shunt("add", bs);
+}
+
 void record_and_initiate_opportunistic(const ip_subnet *ours,
 				       const ip_subnet *his,
 				       int transport_proto
@@ -148,27 +173,7 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 	 * We need to do this because the shunt was installed by kernel
 	 * and we want to keep track of it
 	 */
-	{
-		struct bare_shunt *bs = alloc_thing(struct bare_shunt,
-						    "bare shunt");
-
-		bs->why = clone_str(why, "story for bare shunt");
-		bs->ours = *ours;
-		bs->his = *his;
-		bs->transport_proto = transport_proto;
-		bs->policy_prio = BOTTOM_PRIO;
-
-		bs->said.proto = SA_INT;
-		bs->said.spi = htonl(SPI_HOLD);
-		bs->said.dst = *aftoinfo(subnettypeof(ours))->any;
-
-		bs->count = 0;
-		bs->last_activity = mononow();
-
-		bs->next = bare_shunts;
-		bare_shunts = bs;
-		DBG_bare_shunt("add", bs);
-	}
+	add_bare_shunt(ours, his, transport_proto, SPI_HOLD, why);
 
 	/* actually initiate opportunism / ondemand */
 	{
@@ -176,25 +181,26 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 
 		networkof(ours, &src);
 		networkof(his, &dst);
-		if (initiate_ondemand(&src, &dst, transport_proto,
+		if (!initiate_ondemand(&src, &dst, transport_proto,
 				      TRUE, NULL_FD,
 #ifdef HAVE_LABELED_IPSEC
 				      uctx,
 #endif
-				      "acquire") == 0) {
+				      "acquire")) {
 			/* if we didn't do any ondemand stuff the shunt is not needed */
 			struct bare_shunt **bspp = bare_shunt_ptr(ours, his,
 								  transport_proto);
-			if (bspp) {
-				DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic(): freeing bare shunt"));
+			if (bspp != NULL) {
+				DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic() found no conn: freeing bare shunt"));
 				passert(*bspp == bare_shunts);
 				free_bare_shunt(bspp); /* remove from pluto's list */
 			} else {
-				DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic(): no bare shunt to free"));
+				DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic() found no conn: no bare shunt to free"));
 			}
 		}
 	}
 
+	/* there will never be orphaned holds on netlink since we only find these scanning klips /proc files */
 	pexpect(kernel_ops->remove_orphaned_holds != NULL);
 	if (kernel_ops->remove_orphaned_holds != NULL) { /* remove from kernel's list */
 		DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt"));
@@ -898,7 +904,9 @@ static void free_bare_shunt(struct bare_shunt **pp)
 {
 	struct bare_shunt *p;
 
-	pexpect(pp != NULL);
+	/* ??? the following 3 lines are embarassing */
+	//pexpect(pp != NULL);
+	passert(pp != NULL);
 	if (pp == NULL)
 		return;
 
@@ -1049,12 +1057,11 @@ static void clear_narrow_holds(const ip_subnet *ours,
 		    portof(&ours->addr) == portof(&p->ours.addr) &&
 		    portof(&his->addr) == portof(&p->his.addr)) {
 
-			if (!replace_bare_shunt(&p->ours.addr, &p->his.addr,
-						  BOTTOM_PRIO,
-						  SPI_PASS, /* not used */
-						  FALSE, transport_proto,
-						  "removing clashing narrow hold")) {
-				libreswan_log("replace_bare_shunt() in clear_narrow_holds() failed removing clashing narrow hold");
+			if (!delete_bare_shunt(&p->ours.addr, &p->his.addr,
+					transport_proto,
+					"removing clashing narrow hold"))
+			{
+				libreswan_log("delete_bare_shunt() in clear_narrow_holds() failed removing clashing narrow hold");
 			}
 
 			/* restart from beginning as we just removed an entry */
@@ -1068,9 +1075,9 @@ static void clear_narrow_holds(const ip_subnet *ours,
 /* Replace (or delete) a shunt that is in the bare_shunts table.
  * Issues the PF_KEY commands and updates the bare_shunts table.
  */
-bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
+static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			policy_prio_t policy_prio,	/* of replacing shunt*/
-			ipsec_spi_t shunt_spi,	/* in host order! */
+			ipsec_spi_t new_shunt_spi,	/* in host order! */
 			bool repl,		/* if TRUE, replace; if FALSE, delete */
 			int transport_proto,
 			const char *why)
@@ -1082,7 +1089,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 	happy(addrtosubnet(src, &this_client));
 	happy(addrtosubnet(dst, &that_client));
 
-	/*
+	/* ??? this comment might be obsolete.
 	 * if the transport protocol is not the wildcard (0), then we need
 	 * to look for a host<->host shunt, and replace that with the
 	 * shunt spi, and then we add a %HOLD for what was there before.
@@ -1091,93 +1098,10 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 	 *
 	 */
 
-#if 0
 	if (transport_proto != 0) {
-		ip_subnet this_broad_client, that_broad_client;
-
-		this_broad_client = this_client;
-		that_broad_client = that_client;
-		setportof(0, &this_broad_client.addr);
-		setportof(0, &that_broad_client.addr);
-
-		if (repl) {
-			struct bare_shunt **bs_pp = bare_shunt_ptr(
-				&this_broad_client,
-				&that_broad_client,
-				0 /* transport_proto */);
-
-			/* is there already a broad host-to-host bare shunt? */
-			if (bs_pp == NULL) {
-				DBG(DBG_KERNEL,
-				    DBG_log("replacing broad host-to-host bare shunt"));
-				if (raw_eroute(null_host, &this_broad_client,
-					       null_host, &that_broad_client,
-					       htonl(shunt_spi), SA_INT,
-						/* acquire's transport_proto from NETKEY is filled in, but from KLIPS it's 0 */
-						kern_interface == USE_NETKEY ? 0 : transport_proto,
-					       ET_INT, null_proto_info,
-					       deltatime(SHUNT_PATIENCE),
-					       DEFAULT_IPSEC_SA_PRIORITY,
-					       ERO_REPLACE, why
-#ifdef HAVE_LABELED_IPSEC
-					       , NULL
-#endif
-					       )) {
-					struct bare_shunt *bs = alloc_thing(
-						struct bare_shunt,
-						"bare shunt");
-
-					bs->ours = this_broad_client;
-					bs->his =  that_broad_client;
-					bs->transport_proto = transport_proto;
-					bs->said.proto = SA_INT;
-					bs->why = clone_str(why,
-							    "bare shunt story");
-					bs->policy_prio = policy_prio;
-					bs->said.spi = htonl(shunt_spi);
-					bs->said.dst = *null_host;
-					bs->count = 0;
-					bs->last_activity = mononow();
-					bs->next = bare_shunts;
-					bare_shunts = bs;
-					DBG_bare_shunt("add", bs);
-				}
-			}
-			shunt_spi = SPI_HOLD;
-		}
-
-		DBG(DBG_KERNEL,
-		    DBG_log("adding specific host-to-host bare shunt"));
-		if (raw_eroute(null_host, &this_client,
-				null_host, &that_client,
-			       htonl(shunt_spi),
-			       SA_INT,
-			       transport_proto,
-			       ET_INT, null_proto_info,
-			       deltatime(SHUNT_PATIENCE),
-			       ERO_ADD,
-			       DEFAULT_IPSEC_SA_PRIORITY, why
-#ifdef HAVE_LABELED_IPSEC
-			       , NULL
-#endif
-			       )) {
-			struct bare_shunt **bs_pp = bare_shunt_ptr(
-				&this_client, &that_client,
-				transport_proto);
-
-			/* delete bare eroute */
-			free_bare_shunt(bs_pp);
-
-			return TRUE;
-		} else {
-			return FALSE;
-		}
-	} else 
-#else
-	if (transport_proto != 0) {
-		DBG(DBG_CONTROL, DBG_log("replace_bare_shunt with transport_proto %d", transport_proto));
+		DBG(DBG_CONTROL, DBG_log("fiddle_bare_shunt with transport_proto %d", transport_proto));
 	}
-#endif /* if 0 */
+
 	{
 		enum pluto_sadb_operations op = repl ? ERO_REPLACE : ERO_DELETE;
 
@@ -1186,7 +1110,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			    repl ? "replacing" : "removing"));
 		if (raw_eroute(null_host, &this_client,
 				null_host, &that_client,
-			       htonl(shunt_spi), SA_INT,
+			       htonl(new_shunt_spi), SA_INT,
 			       transport_proto,
 			       ET_INT, null_proto_info,
 			       deltatime(SHUNT_PATIENCE),
@@ -1221,7 +1145,7 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 				pfree(bs->why);
 				bs->why = clone_str(why, "bare shunt story");
 				bs->policy_prio = policy_prio;
-				bs->said.spi = htonl(shunt_spi);
+				bs->said.spi = htonl(new_shunt_spi);
 				bs->said.proto = SA_INT;
 				bs->said.dst = *null_host;
 				bs->count = 0;
@@ -1240,6 +1164,22 @@ bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 		}
 	}
 
+}
+
+bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
+			policy_prio_t policy_prio,	/* of replacing shunt*/
+			ipsec_spi_t new_shunt_spi,	/* in host order! */
+			int transport_proto,
+			const char *why)
+{
+	return fiddle_bare_shunt(src, dst, policy_prio, new_shunt_spi, TRUE, transport_proto, why);
+}
+
+bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
+			int transport_proto,
+			const char *why)
+{
+	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, SPI_PASS, FALSE, transport_proto, why);
 }
 
 bool eroute_connection(struct spd_route *sr,
@@ -1358,16 +1298,15 @@ bool assign_holdpass(struct connection *c,
 			}
 		}
 
-		if (!replace_bare_shunt(src, dst,
-					BOTTOM_PRIO,
-					(c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD,
-					FALSE,
+		if (!delete_bare_shunt(src, dst,
 					transport_proto,
 					(c->policy & POLICY_NEGO_PASS) ? "delete narrow %pass" :
-						"delete narrow %hold")) {
-				 DBG(DBG_CONTROL, DBG_log("assign_holdpass() replace_bare_shunt() succeeded"));
-			} else {
-				libreswan_log("assign_holdpass() replace_bare_shunt() failed");
+						"delete narrow %hold"))
+		{
+
+			 DBG(DBG_CONTROL, DBG_log("assign_holdpass() delete_bare_shunt() succeeded"));
+		} else {
+			libreswan_log("assign_holdpass() delete_bare_shunt() failed");
 				return FALSE;
 		}
 	}
@@ -2438,8 +2377,7 @@ void init_kernel(void)
 	if (kernel_ops->pfkey_register != NULL)
 		kernel_ops->pfkey_register();
 
-	if (!kernel_ops->policy_lifetime)
-		event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
+	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 
 	DBG(DBG_KERNEL, DBG_log("setup kernel fd callback"));
 
@@ -3275,6 +3213,15 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			enum_name(&routing_story, ro),
 			enum_name(&routing_story, rn)));
 
+	{
+	/* are we replacing a bare shunt ? */
+		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol);
+
+		if (old != NULL) {
+			free_bare_shunt(old);
+		}
+	}
+
 	/* create the bare shunt and link into the list */
 	{
 		struct bare_shunt *bs = alloc_thing(struct bare_shunt, "orphan shunt");
@@ -3296,9 +3243,31 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		bare_shunts = bs;
 		DBG_bare_shunt("add", bs);
 	}
+
 	/* change routing so we don't get cleared out when state/connection dies */
 	sr->routing = rn;
 	DBG(DBG_CONTROL, DBG_log("orphan_holdpas() done - returning success"));
 	return TRUE;
+}
+
+void expire_bare_shunts()
+{
+	struct bare_shunt **bspp;
+
+	DBG(DBG_CONTROL, DBG_log("expire_bare_shunts() called"));
+	for (bspp = &bare_shunts; *bspp != NULL; ) {
+		struct bare_shunt *bsp = *bspp;
+		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
+
+		if (age > 60) {
+			DBG(DBG_CONTROL, DBG_log("Expired shunt(%s)", bsp->why));
+			free_bare_shunt(bspp);
+		} else {
+			DBG(DBG_CONTROL, DBG_log("Keeping recent shunt(%s)", bsp->why));
+			bspp = &bsp->next;
+		}
+	}
+
+	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 }
 

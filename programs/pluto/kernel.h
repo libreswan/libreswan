@@ -202,7 +202,6 @@ struct kernel_ops {
 			  struct state *st);
 	void (*process_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
-
 };
 
 extern int create_socket(struct raw_iface *ifp, const char *v_name, int port);
@@ -282,7 +281,8 @@ struct eroute_info {
  * which %holds are news and which others should expire.
  */
 
-#define SHUNT_SCAN_INTERVAL     (2 * secs_per_minute)   /* time between scans of eroutes */
+//#define SHUNT_SCAN_INTERVAL     (2 * secs_per_minute)   /* time between scans of eroutes */
+#define SHUNT_SCAN_INTERVAL     (2 * 10)   /* time between scans of eroutes */
 
 /* SHUNT_PATIENCE only has resolution down to a multiple of the sample rate,
  * SHUNT_SCAN_INTERVAL.
@@ -327,8 +327,6 @@ extern void record_and_initiate_opportunistic(const ip_subnet *,
 					      , const char *why);
 extern void init_kernel(void);
 
-extern void scan_proc_shunts(void);
-
 struct connection;      /* forward declaration of tag */
 extern bool trap_connection(struct connection *c);
 extern void unroute_connection(struct connection *c);
@@ -336,10 +334,13 @@ extern void unroute_connection(struct connection *c);
 extern bool has_bare_hold(const ip_address *src, const ip_address *dst,
 			  int transport_proto);
 
+extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
+			       int transport_proto,
+			       const char *why);
+
 extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       policy_prio_t policy_prio,
-			       ipsec_spi_t shunt_spi,   /* in host order! */
-			       bool repl,
+			       ipsec_spi_t new_shunt_spi,   /* in host order! */
 			       int transport_proto,
 			       const char *why);
 
@@ -401,6 +402,11 @@ extern bool kernel_overlap_supported(void);
 extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
 extern void free_kernelfd(void);
+extern void expire_bare_shunts(void);
+
+extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
+		int transport_proto, ipsec_spi_t shunt_spi,
+		const char *why);
 
 /*
  * Used to pass default priority from kernel_ops-> functions.

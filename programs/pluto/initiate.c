@@ -525,9 +525,9 @@ static void cannot_oppo(struct connection *c,
 		if (replace_bare_shunt(&b->our_client, &b->peer_client,
 					  b->policy_prio,
 					  b->failure_shunt,
-					  TRUE, /* replace */
 					  b->transport_proto,
-					  ughmsg)) {
+					  ughmsg))
+		{
 			DBG(DBG_CONTROL, DBG_log("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
 				(b->failure_shunt == SPI_PASS) ? "pass" :
 					(b->failure_shunt == SPI_HOLD) ? "hold" : "very-unexpected"
@@ -768,6 +768,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			libreswan_log("%s", demandbuf);
 			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
+
 		cannot_oppo(NULL, b, "no routed template covers this pair");
 		work = FALSE;
 	} else if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c)) {
@@ -862,7 +863,11 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
-		if (c->policy & POLICY_OPPORTUNISTIC)
+		/* this is to broaden a hold on netkey - only needed if ports or transport_proto are non-zero */
+		if ((c->policy & POLICY_OPPORTUNISTIC) &&
+			(b->transport_proto != 0 ||
+			portof(&b->our_client) != 0 ||
+			portof(&b->peer_client) != 0))
 		{
 			char *delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 			char *addwidemsg = "add negotiationshunt";
@@ -871,19 +876,18 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
         		happy(addrtosubnet(&b->our_client, &this_client));
         		happy(addrtosubnet(&b->peer_client, &that_client));
+			/* negotiationshunt must be wider than bare shunt, esp on NETKEY */
+			setportof(0, &this_client.addr);
+			setportof(0, &that_client.addr);
 
 			DBG(DBG_CONTROL, DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
 				(shunt_spi == SPI_PASS) ? "pass" : "hold"));
-
-			/* negotiationshunt can be wider than bare shunt, esp on NETKEY */
-			setportof(0, &this_client.addr);
-			setportof(0, &that_client.addr);
 
 			// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
 			if (!kernel_ops->raw_eroute(&b->our_client, &this_client,
 				&b->peer_client, &that_client,
 				htonl(shunt_spi), SA_INT,
-				0,
+				0, /* transport_proto */
 				ET_INT, null_proto_info,
 				deltatime(SHUNT_PATIENCE),
 				DEFAULT_IPSEC_SA_PRIORITY,
@@ -891,17 +895,18 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 #ifdef HAVE_LABELED_IPSEC
 				, NULL
 #endif
-				)) {
-					libreswan_log("adding bare wide passthrough negotiationshunt failed");
+				)) 
+			{
+				libreswan_log("adding bare wide passthrough negotiationshunt failed");
 			} else {
-					DBG(DBG_CONTROLMORE, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
+				DBG(DBG_CONTROLMORE, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
+				add_bare_shunt(&this_client, &that_client, 0 /* broadened transport_proto */, SPI_HOLD, addwidemsg);
 			}
-			// now delete the (obsoleted) narrow bare kernel shunt
-			setportof(ourport, &this_client.addr);
-			setportof(hisport, &that_client.addr);
-			if (!replace_bare_shunt(&b->our_client, &b->peer_client, 0 /* prio */, SPI_HOLD /* dictated by kernel */,
-				FALSE /* delete bare shunt */, b->transport_proto, delmsg)) {
-					libreswan_log("Failed to: %s", delmsg);
+			/* now delete the (obsoleted) narrow bare kernel shunt - we have a broadened negotiationshunt replacement installed */
+			if (!delete_bare_shunt(&b->our_client, &b->peer_client,
+				b->transport_proto, delmsg))
+			{
+				libreswan_log("Failed to: %s", delmsg);
 			} else {
 				DBG(DBG_CONTROLMORE, DBG_log("success taking down narrow bare shunt : %s", delmsg));
 			}
@@ -1143,9 +1148,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 					if (replace_bare_shunt(
 						&b->our_client,
 						&b->peer_client,
-						BOTTOM_PRIO,
-						SPI_HOLD, /* best guess */
-						TRUE,
+						b->policy_prio,
+						SPI_HOLD,	/* ??? b->failure_shunt? */
 						b->transport_proto,
 						"no suitable connection")) {
 							DBG(DBG_CONTROL, DBG_log("replaced negotiatinshunt with failurehunt=hold because no connection was found"));

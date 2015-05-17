@@ -74,9 +74,12 @@ int pfkeyfd = NULL_FD;
 typedef u_int32_t pfkey_seq_t;
 static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messages */
 
-/* The orphaned_holds table records %holds for which we
- * scan_proc_shunts found no representation of in any connection.
+
+/* The orphaned_holds table records %holds for which
+ * klips_scan_shunts() found no representation of in any connection.
  * The corresponding ACQUIRE message might have been lost.
+ *
+ * Paul: this concept is KLIPS-centric and not used on other stacks
  */
 static struct eroute_info *orphaned_holds = NULL;
 
@@ -1513,13 +1516,15 @@ static const char *read_proto(const char * s, size_t * len,
  * searching for each is sequential.  If this becomes a problem, faster
  * searches could be implemented (hash or radix tree, for example).
  */
-void scan_proc_shunts(void)
+void pfkey_scan_shunts(void)
 {
 	static const char procname[] = "/proc/net/ipsec_eroute";
 	FILE *f;
 	monotime_t nw = mononow();
 	int lino;
 	struct eroute_info *expired = NULL;
+
+	passert(kern_interface == USE_KLIPS || kern_interface == USE_MASTKLIPS);
 
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 
@@ -1747,11 +1752,15 @@ void scan_proc_shunts(void)
 
 		networkof(&p->ours, &src);
 		networkof(&p->his, &dst);
-		(void) replace_bare_shunt(&src, &dst,
-					  BOTTOM_PRIO,  /* not used because we are deleting.  This value is a filler */
-					  SPI_PASS,     /* not used because we are deleting.  This value is a filler */
-					  FALSE, p->transport_proto,
-					  "delete expired bare shunts");
+
+		if (delete_bare_shunt(&src, &dst,
+				p->transport_proto,
+				"delete expired bare shunts"))
+		{
+			DBG(DBG_CONTROL, DBG_log("pfkey_scan_shunts() called delete_bare_shunt() with success"));
+		} else {
+			libreswan_log("pfkey_scan_shunts() called delete_bare_shunt() which failed!");
+		}
 		expired = p->next;
 		pfree(p);
 	}
