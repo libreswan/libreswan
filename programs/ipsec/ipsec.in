@@ -296,18 +296,14 @@ case "${1}" in
 			echo "NSS upgrade failed. You should run certutil --upgrade-merge manually against sql:${IPSEC_NSSDIR}"
 			exit $?
 		    fi
-		    CABACKUP=$(mktemp -d "${IPSEC_NSSDIR}/.cacertbackup.XXXXXXXXXX")
-		    CRLBACKUP=$(mktemp -d "${IPSEC_NSSDIR}/.crlbackup.XXXXXXXXXX")
 		    # import cacerts and crls
 		    for file in "${CACERTDIR}"/*; do
 			filename=$(basename "${file}")
 			name=${filename%%.*}
 			certutil -A -i "${file}" -d sql:"${NSSTMP}" -n "${name}" -t 'CT,,' ${IMPORTDBPW}
-			mv "${file}" "${CABACKUP}/"
 		    done
 		    for file in "${CRLDIR}"/*; do
 			crlutil -I -i "${file}" -d sql:"${NSSTMP}" -B ${IMPORTDBPW}
-			mv "${file}" "${CRLBACKUP}/"
 		    done
 		    cp "${NSSTMP}"/*.db "${IPSEC_NSSDIR}"
 		    rm -f "${NSSTMP}"/*.txt "${NSSTMP}"/*.db
