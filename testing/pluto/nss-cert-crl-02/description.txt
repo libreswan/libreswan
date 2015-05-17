@@ -1,5 +1,5 @@
-ocsp: west sends REVOKED cert
-      east sends OK cert
+crl: west sends REVOKED cert
+     east sends OK cert
 
-	using mainca CRL: revoked is on it
-	fail
+using cacrlvalid.crl
+fail

@@ -35,11 +35,18 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
 [ 00.00] 
 Redirecting to: systemctl start ipsec.service
 [ 00.00] 
 west #
  /testing/pluto/bin/wait-until-pluto-started
+west #
+ ipsec whack --debug-all --impair-retransmits
 west #
  ipsec auto --add nss-cert-ocsp
 002 added connection description "nss-cert-ocsp"
@@ -78,35 +85,9 @@ west #
 003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
 003 "nss-cert-ocsp" #1: received and ignored informational message
 003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 500ms for response
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 1000ms for response
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 2000ms for response
-003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 4000ms for response
-003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 8000ms for response
-003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 16000ms for response
-003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-010 "nss-cert-ocsp" #1: STATE_MAIN_I3: retransmission; will wait 32000ms for response
-003 "nss-cert-ocsp" #1: discarding duplicate packet; already STATE_MAIN_I3
-003 "nss-cert-ocsp" #1: ignoring informational payload INVALID_ID_INFORMATION, msgid=00000000, length=12
-003 "nss-cert-ocsp" #1: received and ignored informational message
-031 "nss-cert-ocsp" #1: max number of retransmissions (8) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
-000 "nss-cert-ocsp" #1: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "nss-cert-ocsp" #1: supressing retransmit because IMPAIR_RETRANSMITS is set
+031 "nss-cert-ocsp" #1: max number of retransmissions (0) reached STATE_MAIN_I3.  Possible authentication failure: no acceptable response to our first encrypted message
+002 "nss-cert-ocsp" #1: deleting state #1 (STATE_MAIN_I3)
 west #
  echo done
 done
