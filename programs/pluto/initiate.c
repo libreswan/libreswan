@@ -870,7 +870,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			portof(&b->peer_client) != 0))
 		{
 			char *delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
-			char *addwidemsg = "add negotiationshunt";
+			char *addwidemsg = "oe-negotiating";
 			ipsec_spi_t shunt_spi = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
         		ip_subnet this_client, that_client;
 
