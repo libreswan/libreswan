@@ -347,7 +347,7 @@ extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 extern bool assign_holdpass(struct connection *c,
 			struct spd_route *sr,
 			int transport_proto,
-			ipsec_spi_t failure_shunt,
+			ipsec_spi_t negotiation_shunt,
 			const ip_address *src, const ip_address *dst);
 
 extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,

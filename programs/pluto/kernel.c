@@ -170,8 +170,8 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 	passert(samesubnettype(ours, his));
 
 	/* Add the kernel shunt to the pluto bare shunt list.
-	 * We need to do this because the shunt was installed by kernel
-	 * and we want to keep track of it
+	 * We need to do this because the %hold shunt was installed by kernel
+	 * and we want to keep track of it inside pluto.
 	 */
 	add_bare_shunt(ours, his, transport_proto, SPI_HOLD, why);
 
@@ -1222,7 +1222,7 @@ bool eroute_connection(struct spd_route *sr,
 
 bool assign_holdpass(struct connection *c,
 		struct spd_route *sr,
-		int transport_proto, ipsec_spi_t failure_shunt,
+		int transport_proto, ipsec_spi_t negotiation_shunt,
 		const ip_address *src, const ip_address *dst)
 {
 	/* either the automatically installed %hold eroute is broad enough
@@ -1284,7 +1284,7 @@ bool assign_holdpass(struct connection *c,
 				reason = "add broad %pass or %hold";
 			}
 
-			if (eroute_connection(sr, htonl(failure_shunt),
+			if (eroute_connection(sr, htonl(negotiation_shunt),
 					       SA_INT, ET_INT,
 					       null_proto_info,
 					       op,
