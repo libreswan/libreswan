@@ -197,11 +197,12 @@ struct hash_desc {
 /* 1DES no longer supported */
 #undef CIPHERNAME_1DES
 
-#define DIGESTNAME_MD5          "hmac(md5)"
-#define DIGESTNAME_SHA          "hmac(sha1)"
-#define DIGESTNAME_SHA2_256     "hmac(sha256)"
-#define DIGESTNAME_SHA2_384     "hmac(sha384)"
-#define DIGESTNAME_SHA2_512     "hmac(sha512)"
+#define DIGESTNAME_MD5            "hmac(md5)"
+#define DIGESTNAME_SHA            "hmac(sha1)"
+#define DIGESTNAME_SHA2_256       "hmac(sha256)"
+#define DIGESTNAME_SHA2_256_TRUNC "hmac(sha256)"
+#define DIGESTNAME_SHA2_384       "hmac(sha384)"
+#define DIGESTNAME_SHA2_512       "hmac(sha512)"
 
 #define ESP_NULL                11
 #define ESP_SERPENT             252     /* from ipsec drafts */
@@ -283,11 +284,12 @@ struct ipsec_alg_capi_digest {
 	struct ipsec_alg_auth alg;      /* note it's not a pointer */
 };
 static struct ipsec_alg_capi_digest alg_capi_darray[] = {
-	{ DIGESTNAME_MD5,       64, 128, 128, 12,    md5, { ixt_common:{ ixt_support:{ ias_id: AH_MD5, }}}},
-	{ DIGESTNAME_SHA,       64, 160, 160, 12,   sha1, { ixt_common:{ ixt_support:{ ias_id: AH_SHA, }}}},
-	{ DIGESTNAME_SHA2_256,  64, 256, 256, 16, sha256, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_256,}}}},
-	{ DIGESTNAME_SHA2_384, 128, 384, 384, 24, sha384, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_384,}}}},
-	{ DIGESTNAME_SHA2_512, 128, 512, 512, 32, sha512, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_512,}}}},
+	{ DIGESTNAME_MD5,             64, 128, 128, 12,    md5, { ixt_common:{ ixt_support:{ ias_id: AH_MD5, }}}},
+	{ DIGESTNAME_SHA,             64, 160, 160, 12,   sha1, { ixt_common:{ ixt_support:{ ias_id: AH_SHA, }}}},
+	{ DIGESTNAME_SHA2_256,        64, 256, 256, 16, sha256, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_256,}}}},
+	{ DIGESTNAME_SHA2_384,       128, 384, 384, 24, sha384, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_384,}}}},
+	{ DIGESTNAME_SHA2_512,       128, 512, 512, 32, sha512, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_512,}}}},
+	{ DIGESTNAME_SHA2_256_TRUNC,  64, 256, 256, 12, sha256, { ixt_common:{ ixt_support:{ ias_id: AH_SHA2_256_TRUNC,}}}},
 	{ NULL, 0, 0, 0, 0, NULL, {} }
 };
 /*
