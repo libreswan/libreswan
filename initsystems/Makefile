@@ -1,6 +1,7 @@
 # Makefile for init systems, for libreswan.
 #
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -11,8 +12,8 @@
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
-
-SUBDIR = $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
+INITSYSTEM ?= $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
+SUBDIR = $(INITSYSTEM)
 
 # XXX: Should not be switching to the build directory
 cleanall install programs man config checkprograms install-programs:
