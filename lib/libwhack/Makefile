@@ -45,7 +45,7 @@ CFLAGS+=$(NSSFLAGS)
 
 ARFLAGS=crvs
 
-.PHONY:	all install clean l t lt tar check checkprograms
+.PHONY:	all install clean l t lt tar check
 
 SHOULDWERESTART=$(wildcard whacklib.c)
 ifeq ($(SHOULDWERESTART),whacklib.c)

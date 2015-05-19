@@ -90,15 +90,17 @@ LOCAL_TARGETS += list-local-manpages list-local-programs
 list-manpages: list-local-manpages
 list-programs: list-local-programs
 
-
 # Extra direct recursive targets
 
-GLOBAL_TARGETS += checkprograms check
-ifeq ($(filter checkprograms,$(BROKEN_TARGETS)),)
+# XXX: It isn't clear how "checkprograms" is different to programs,
+# and a top-level "make checkprograms" doesn't descend into any
+# directory with a non-empty "checkprograms" target.  However
+# testing/utils/functions.sh does use it, and "make check" seems to
+# insist it should be run.
+GLOBAL_TARGETS += checkprograms
 checkprograms:
-else
-checkprograms::
-endif
+
+GLOBAL_TARGETS += check
 ifeq ($(filter check,$(BROKEN_TARGETS)),)
 check:
 else

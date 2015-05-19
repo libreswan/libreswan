@@ -88,7 +88,7 @@ ARFLAGS=crvs
 EXTHDRS=des.h
 EXTLIBS=libdes.a
 
-.PHONY:	all clean l t lt tar check depend checkprograms
+.PHONY:	all clean l t lt tar check depend
 
 SHOULDWERESTART=$(wildcard ttodata.3.xml)
 ifeq ($(SHOULDWERESTART),ttodata.3.xml)
@@ -161,8 +161,6 @@ tar:	clean
 
 check:
 	echo no checks in lib right now.
-
-checkprograms:
 
 MK_DEPEND_CFLAGS =  ${CFLAGS} ${PORTINCLUDE} ${ALLFLAGS}
 MK_DEPEND_FILES = $(SRCS)

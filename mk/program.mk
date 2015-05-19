@@ -158,5 +158,3 @@ ifneq ($(strip $(PROGRAM)),)
 	@if [ -n "$(OBJS)" ];     then rm -f $(PROGRAM); fi
 endif
 	@rm -f *.o
-
-checkprograms:

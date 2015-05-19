@@ -16,7 +16,7 @@ INITSYSTEM ?= $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh ini
 SUBDIR = $(INITSYSTEM)
 
 # XXX: Should not be switching to the build directory
-cleanall install programs man config checkprograms install-programs:
+cleanall install programs man config install-programs:
 	$(MAKE) -C $(builddir)/$(SUBDIR) $@
 # XXX: Should not rename all back to programs
 all:

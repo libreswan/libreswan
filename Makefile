@@ -59,7 +59,6 @@ BROKEN_TARGETS += distclean
 BROKEN_TARGETS += check
 BROKEN_TARGETS += man
 BROKEN_TARGETS += config
-BROKEN_TARGETS += checkprograms
 BROKEN_TARGETS += all
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
 
@@ -190,12 +189,6 @@ programs man config install clean install-programs:: ${OBJDIR}/Makefile
 ${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
 	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
-
-checkprograms:: 
-	@for d in $(SUBDIRS) ; \
-	do \
-		(cd $$d && $(MAKE) SRCDIR=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
-	done; 
 
 clean::
 	rm -rf $(RPMTMPDIR) $(RPMDEST)

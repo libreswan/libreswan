@@ -52,7 +52,7 @@ include ${LIBRESWANSRCDIR}/mk/objdir.mk
 SHELL=/bin/bash
 export SHELL
 
-.PHONY:	programs man config checkprograms clean
+.PHONY:	programs man config clean
 
 # location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
 BINSH=/bin/sh
