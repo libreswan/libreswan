@@ -1,5 +1,5 @@
-ipsec look
 grep "already in use" /tmp/pluto.log
+ipsec look
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
