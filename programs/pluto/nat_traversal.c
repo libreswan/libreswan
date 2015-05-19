@@ -287,7 +287,7 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 
 void set_nat_traversal(struct state *st, const struct msg_digest *md)
 {
-	DBG(DBG_CONTROLMORE, DBG_log("sender checking NAT-t: %s and %d",
+	DBG(DBG_CONTROLMORE, DBG_log("sender checking NAT-T: %s and %d",
 				     nat_traversal_enabled ? "enabled" : "disabled",
 				     md->quirks.qnat_traversal_vid));
 	if (nat_traversal_enabled && md->quirks.qnat_traversal_vid != VID_none) {

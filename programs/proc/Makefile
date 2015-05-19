@@ -12,7 +12,9 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-EXTRA5PROC=version.5 trap_count.5 trap_sendcount.5
+MANPAGES += ipsec_version.5
+MANPAGES += ipsec_trap_count.5
+MANPAGES += ipsec_trap_sendcount.5
 
 LIBS=${FREESWANLIB}
 

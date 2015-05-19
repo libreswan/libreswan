@@ -97,6 +97,9 @@ kvmplutotest	ikev1-algo-esp-sha2-05			good
 kvmplutotest	ikev2-algo-sha2-06			good
 kvmplutotest	ikev2-algo-sha2-07			wip
 kvmplutotest	ikev2-algo-sha2-08			good
+# interop tests for KLIPS-NETKEY with SHA2
+kvmplutotest	ikev1-algo-esp-sha2-01			good
+kvmplutotest	ikev1-algo-esp-sha2-02			good
 
 # various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
 kvmplutotest	ikev2-algo-ike-sha2-01			good
@@ -144,6 +147,8 @@ kvmplutotest	ikev1-connswitch-ports-01	wip
 
 kvmplutotest	ikev2-38-psk-65bytes			good
 kvmplutotest	ikev2-39-psk-64bytes 			good
+
+kvmplutotest	ikev2-40-nflog-global 			good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
@@ -495,11 +500,6 @@ kvmplutotest	netkey-algo-null-01	good
 kvmplutotest	netkey-algo-null-02	good
 
 #
-# a test of using twofish with pluto, twofish for phase2
-#
-umlplutotest	basic-pluto-08		bad
-
-#
 # a test of using aes256 for phase 1 and phase 2,
 # with appropriate modp group
 kvmplutotest    algo-pluto-01          good
@@ -562,8 +562,10 @@ umlplutotest	protoport-02		good
 kvmplutotest    algo-pluto-07			good
 kvmplutotest    netkey-pluto-01			good
 kvmplutotest    netkey-pluto-02			good
+kvmplutotest    netkey-pluto-03			good
 umlplutotest    netkey-pluto-04			good
 umlplutotest    netkey-pluto-05			good
+kvmplutotest    netkey-pluto-06			good
 umlplutotest    netkey-psk-pluto-06		good
 umlplutotest	netkey-psk-vhost-01		good
 umlplutotest	netkey-psk-vhost-02		good

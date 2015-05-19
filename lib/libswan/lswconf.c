@@ -124,6 +124,7 @@ void lsw_init_ipsecdir(const char *ipsec_dir)
 	if (!setup)
 		lsw_conf_setdefault();
 	global_oco.confddir = clone_str(ipsec_dir, "override ipsec.d");
+	global_oco.nssdir = clone_str(ipsec_dir, "override nssdir");
 	lsw_conf_calculate(&global_oco);
 	setup = TRUE;
 

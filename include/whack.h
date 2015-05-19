@@ -318,8 +318,9 @@ struct whack_message {
 	unsigned char string[4096];
 };
 
-/* options of whack --list*** command */
-
+/* options of whack --list*** command
+ * these should be kept in order of option_enums LST_ values
+ */
 #define LIST_NONE	0x0000	/* don't list anything */
 #define LIST_PUBKEYS	0x0001	/* list all public keys */
 #define LIST_CERTS	0x0002	/* list all host/user certs */

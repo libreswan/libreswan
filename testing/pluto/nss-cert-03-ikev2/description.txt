@@ -1,9 +1,1 @@
-testing a wildcard dn match
-
-This shows a bug with ikev2:
-
-| required CA is 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-"nss-cert" #1: no RSA public key known for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=*, E=*'
-"nss-cert" #1: RSA authentication failed
-"nss-cert" #1: sending unencrypted notification v2N_AUTHENTICATION_FAILED to 192.1.2.45:500
-
+testing a wildcard dn match for ikev2

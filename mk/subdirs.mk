@@ -12,52 +12,42 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-TARGETS = cleanall distclean mostlyclean realclean install man config programs checkprograms check clean spotless install_file_list
-.PHONY: $(TARGETS)
-
 default:
 	@echo "Please read INSTALL before running make"
 	@false
 .PHONY: default
 
-# Give each target a subdirs target so that there is something to
-# depend on should there be some sort of ordering problem.  (better
-# handled by not using recursive make).
+include $(top_srcdir)/mk/targets.mk
 
-SUBDIR_TARGETS = $(patsubst %,%.subdirs,$(TARGETS))
+# These extra recursive-targets need to be migrated to targets.mk
+# (an/or quietly dropped).  They are here until the top-level Makefile
+# gets cleaned up.
+
+SUBDIR_TARGETS = distclean man config
+ifneq ($(filter $(GLOBAL_TARGETS),$(SUBDIR_TARGETS)),)
+$(error Extra targets in $(SUBDIR_TARGETS))
+endif
 .PHONY: $(SUBDIR_TARGETS)
-# Need to do this explicitly, make ignores implict targets here.
-cleanall: cleanall.subdirs
-distclean: distclean.subdirs
-mostlyclean: mostlyclean.subdirs
-realclean: realclean.subdirs
-install: install.subdirs
-man: man.subdirs
-config: config.subdirs
-programs: programs.subdirs
-checkprograms: checkprograms.subdirs
-check: check.subdirs
-clean: clean.subdirs
-spotless: spotless.subdirs
-install_file_list: install_file_list.subdirs
-# add more here
 
 # generate $(TARGET) variable name, where TARGET is the current
 # target.  Uses $@ so only works within the target rule below.
-mk.subdirs.target = $(shell echo $(basename $@) | tr '[a-z]' '[A-Z]')
+mk.target = $(shell echo $@ | tr '[-a-z]' '[_A-Z]')
 
-# Decend into each of $(SUBDIRS) and run the target.  Use standard
-# backward filter trick to skip directories also found in
-# $(BROKEN_$(TARGET)_SUBDIRS)
-$(SUBDIR_TARGETS):
+# Define recursive targets for anything not broken.
+#
+# Use standard backward filter trick to skip directories found in
+# $(BROKEN_$(TARGET)_SUBDIRS) and should not be built.
+
+$(filter-out $(BROKEN_TARGETS),$(SUBDIR_TARGETS) $(GLOBAL_TARGETS)):
 	@set -eu ; \
 	subdirs="$(SUBDIRS)" ; \
-	echo "subdirs=$$subdirs" ; \
-	broken="$(strip $(BROKEN_$(mk.subdirs.target)_SUBDIRS))" ; \
-	echo "broken=$$broken" ; \
+	broken="$(strip $(BROKEN_$(mk.target)_SUBDIRS))" ; \
 	for d in $$subdirs ; do \
 		case " $$broken " in \
-		*" $$d "* ) echo "SKIPPING: make $(basename $@) in $$d" ;; \
+		*" $$d "* ) \
+			echo "" ; \
+			echo "SKIPPING: make $(basename $@) in $$d" ; \
+			echo "" ;; \
 		*) $(MAKE) -C $$d $(basename $@) ;; \
 		esac ; \
 	done

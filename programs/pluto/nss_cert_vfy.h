@@ -22,7 +22,13 @@
 
 extern int verify_and_cache_chain(chunk_t *ders, int num_ders,
 						 CERTCertificate **ee_out,
-						 bool strict);
+						 bool *rev_opts);
+
+/* rev_opts index */
+#define RO_OCSP 0
+#define RO_OCSP_S 1
+#define RO_CRL_S 2
+#define RO_SZ 3
 
 #define VERIFY_RET_OK       0x0001
 #define VERIFY_RET_REVOKED  0x0002

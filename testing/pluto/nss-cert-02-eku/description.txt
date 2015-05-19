@@ -1,0 +1,4 @@
+west sends a clientAuth profile cert
+east sends a serverAuth profile cert
+
+this tests both EKU profile types

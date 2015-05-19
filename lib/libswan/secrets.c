@@ -880,7 +880,9 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 
 static pthread_mutex_t certs_and_keys_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+#if defined(LIBCURL) || defined(LDAP_VER)
 static pthread_mutex_t authcert_list_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 /*
  * lock access to my certs and keys

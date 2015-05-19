@@ -81,6 +81,8 @@
 #include <ocsp.h>
 
 bool strict_crl_policy = FALSE;
+bool strict_ocsp_policy = FALSE;
+bool ocsp_enable = FALSE;
 
 SECItem chunk_to_secitem(chunk_t chunk)
 {
@@ -113,46 +115,10 @@ chunk_t get_dercert_from_nss_cert(CERTCertificate *cert)
 	return secitem_to_chunk(cert->derCert);
 }
 
-/*
- *  Converts a X.500 generalName into an ID
- */
-static void gntoid(struct id *id, const generalName_t *gn)
+static int dntoasi(char *dst, size_t dstlen, SECItem si)
 {
-	*id  = empty_id;
-
-	switch (gn->kind) {
-	case GN_DNS_NAME:	/* ID type: ID_FQDN */
-		id->kind = ID_FQDN;
-		id->name = gn->name;
-		break;
-	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
-	{
-		const struct af_info *afi = &af_inet4_info;
-		err_t ugh = NULL;
-
-		id->kind = afi->id_addr;
-		ugh = initaddr(gn->name.ptr, gn->name.len, afi->af,
-			&id->ip_addr);
-		if (!ugh) {
-			libreswan_log(
-				"Warning: gntoid() failed to initaddr(): %s",
-				ugh);
-		}
-
-	}
-	break;
-	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
-		id->kind = ID_USER_FQDN;
-		id->name = gn->name;
-		break;
-	case GN_DIRECTORY_NAME:
-		id->kind = ID_DER_ASN1_DN;
-		id->name = gn->name;
-		break;
-	default:
-		id->kind = ID_NONE;
-		id->name = empty_chunk;
-	}
+	chunk_t ch = secitem_to_chunk(si);
+	return dntoa(dst, dstlen, ch);
 }
 
 bool cert_key_is_rsa(CERTCertificate *cert)
@@ -180,7 +146,6 @@ realtime_t get_nss_cert_notafter(CERTCertificate *cert)
 
 	return ret;
 }
-
 /*
  * does our CA match one of the requested CAs?
  */
@@ -212,47 +177,47 @@ void convert_nss_gn_to_pluto_gn(CERTGeneralName *nss_gn,
 {
 	switch(nss_gn->type) {
 	case certOtherName:
-		pluto_gn->name = dup_secitem_to_chunk(nss_gn->name.OthName.name);
+		pluto_gn->name = secitem_to_chunk(nss_gn->name.OthName.name);
 		pluto_gn->kind = GN_OTHER_NAME;
 		break;
 
 	case certRFC822Name:
-		pluto_gn->name = dup_secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_RFC822_NAME;
 		break;
 
 	case certDNSName:
-		pluto_gn->name = dup_secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_DNS_NAME;
 		break;
 
         case certX400Address:
-		pluto_gn->name = dup_secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_X400_ADDRESS;
 		break;
 
         case certEDIPartyName:
-		pluto_gn->name = dup_secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_EDI_PARTY_NAME;
 		break;
 
         case certURI:
-		pluto_gn->name = dup_secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_URI;
 		break;
 
         case certIPAddress:
-		pluto_gn->name = dup_secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_IP_ADDRESS;
 		break;
 
         case certRegisterID:
-		pluto_gn->name = dup_secitem_to_chunk(nss_gn->name.other);
+		pluto_gn->name = secitem_to_chunk(nss_gn->name.other);
 		pluto_gn->kind = GN_REGISTERED_ID;
 		break;
 
         case certDirectoryName:
-		pluto_gn->name = dup_secitem_to_chunk(nss_gn->derDirectoryName);
+		pluto_gn->name = secitem_to_chunk(nss_gn->derDirectoryName);
 		pluto_gn->kind = GN_DIRECTORY_NAME;
 		break;
 
@@ -306,7 +271,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	*pathlen = 0;
 
 	/* CA a equals CA b -> we have a match */
-	if (same_dn(a, b))
+	if (same_dn_any_order(a, b))
 		return TRUE;
 
 	handle = CERT_GetDefaultCertDB();
@@ -329,7 +294,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 		/* does the issuer of CA a match CA b? */
 		i_dn = secitem_to_chunk(cacert->derIssuer);
-		match = same_dn(i_dn, b);
+		match = same_dn_any_order(i_dn, b);
 
 		/* we have a match and exit the loop */
 		if (match)
@@ -346,72 +311,47 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 
 	return match;
 }
-/*
- * Convert all CERTCertificate general names to a list of pluto generalName_t
- * Results go in *gn_out.
- */
-void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
-{
-	generalName_t *pgn_list = NULL;
-	CERTGeneralName *cur_nss_gn, *first_nss_gn;
-
-	cur_nss_gn = first_nss_gn = CERT_GetCertificateNames(cert, cert->arena);
-
-	if (cur_nss_gn != NULL) {
-		do {
-			generalName_t *pluto_gn = alloc_thing(generalName_t, "converted gn");
-			convert_nss_gn_to_pluto_gn(cur_nss_gn, pluto_gn);
-			pluto_gn->next = pgn_list;
-			pgn_list = pluto_gn;
-			/*
-			 * CERT_GetNextGeneralName just loops around, does not end at NULL.
-			 */
-			cur_nss_gn = CERT_GetNextGeneralName(cur_nss_gn);
-		} while (cur_nss_gn != first_nss_gn);
-	}
-
-	*gn_out = pgn_list;
-}
 
 /*
  * choose either subject DN or a subjectAltName as connection end ID
  */
 void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 {
-	bool copy_subject_dn = TRUE;	/* ID is subject DN */
+	bool use_dn = FALSE;	/* ID is subject DN */
 
-	if (end_id->kind != ID_NONE) {	/* check for matching subjectAltName */
-		generalName_t *gn = NULL;
-		get_pluto_gn_from_nss_cert(cert, &gn);
+	/* check for cert email addr first */
+	if (end_id->kind == ID_USER_FQDN) {
+		char email[IDTOA_BUF];
 
-		for (; gn != NULL; gn = gn->next) {
-			struct id id = empty_id;
-
-			gntoid(&id, gn);
-			if (same_id(&id, end_id)) {
-				/* take subjectAltName instead */
-				copy_subject_dn = FALSE;
-				break;
-			}
+		idtoa(end_id, email, IDTOA_BUF);
+		if (cert->emailAddr == NULL || !streq(cert->emailAddr, email)) {
+			DBG(DBG_CONTROL,
+			    DBG_log("no email \'%s\' for cert, using ASN1 subjectName",
+						email));
+			use_dn = TRUE;
 		}
 	}
 
-	if (copy_subject_dn) {
-		if (end_id->kind != ID_NONE &&
-			end_id->kind != ID_DER_ASN1_DN &&
-			end_id->kind != ID_FROMCERT) {
-			char buf[IDTOA_BUF];
+	if (end_id->kind == ID_DER_ASN1_DN) {
+		chunk_t certdn = secitem_to_chunk(cert->derSubject);
 
-			idtoa(end_id, buf, IDTOA_BUF);
-			libreswan_log(
-				"  no subjectAltName matches ID '%s', replaced by subject DN",
-				buf);
+		if (!same_dn_any_order(end_id->name, certdn)) {
+			char idb[IDTOA_BUF];
+
+			idtoa(end_id, idb, IDTOA_BUF);
+			DBG(DBG_CONTROL,
+			    DBG_log("no subject \'%s\' for cert, using ASN1 subjectName \'%s\'",
+						idb, cert->subjectName));
+			use_dn = TRUE;
 		}
+	}
+
+	if (end_id->kind == ID_FROMCERT || end_id->kind == ID_NONE || use_dn) {
+		DBG(DBG_CONTROL,
+		    DBG_log("setting ID to ID_DER_ASN1_DN: \'%s\'",
+			    cert->subjectName));
+		end_id->name = secitem_to_chunk(cert->derSubject);
 		end_id->kind = ID_DER_ASN1_DN;
-		end_id->name.len = cert->derSubject.len;
-		end_id->name.ptr = temporary_cyclic_buffer();
-		memcpy(end_id->name.ptr, cert->derSubject.data,
-					 cert->derSubject.len);
 	}
 }
 
@@ -723,13 +663,85 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 					top = gn;
 					break;
 				}
-				if (same_dn(gn->name, d->spd.that.ca)) {
+				if (same_dn_any_order(gn->name,
+						      d->spd.that.ca)) {
 					break;
 				}
 			}
 		}
 	}
 	return top;
+}
+
+/*
+ *  Converts a X.500 generalName into an ID
+ */
+static void gntoid(struct id *id, const generalName_t *gn)
+{
+	*id  = empty_id;
+
+	switch (gn->kind) {
+	case GN_DNS_NAME:	/* ID type: ID_FQDN */
+		id->kind = ID_FQDN;
+		id->name = gn->name;
+		break;
+	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
+	{
+		const struct af_info *afi = &af_inet4_info;
+		err_t ugh = NULL;
+
+		id->kind = afi->id_addr;
+		ugh = initaddr(gn->name.ptr, gn->name.len, afi->af,
+			&id->ip_addr);
+		if (!ugh) {
+			libreswan_log(
+				"Warning: gntoid() failed to initaddr(): %s",
+				ugh);
+		}
+
+	}
+	break;
+	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
+		id->kind = ID_USER_FQDN;
+		id->name = gn->name;
+		break;
+	case GN_DIRECTORY_NAME:
+		id->kind = ID_DER_ASN1_DN;
+		id->name = gn->name;
+		break;
+	default:
+		id->kind = ID_NONE;
+		id->name = empty_chunk;
+	}
+}
+
+/*
+ * Convert all CERTCertificate general names to a list of pluto generalName_t
+ * Results go in *gn_out.
+ */
+void get_pluto_gn_from_nss_cert(CERTCertificate *cert, generalName_t **gn_out)
+{
+	generalName_t *pgn_list = NULL;
+	CERTGeneralName *cur_nss_gn, *first_nss_gn;
+
+	cur_nss_gn = first_nss_gn = CERT_GetCertificateNames(cert, cert->arena);
+
+	if (cur_nss_gn != NULL) {
+		do {
+			generalName_t *pluto_gn = alloc_thing(generalName_t, "converted gn");
+			DBG(DBG_X509, DBG_log("%s: allocated pluto_gn %p",
+						__FUNCTION__, pluto_gn));
+			convert_nss_gn_to_pluto_gn(cur_nss_gn, pluto_gn);
+			pluto_gn->next = pgn_list;
+			pgn_list = pluto_gn;
+			/*
+			 * CERT_GetNextGeneralName just loops around, does not end at NULL.
+			 */
+			cur_nss_gn = CERT_GetNextGeneralName(cur_nss_gn);
+		} while (cur_nss_gn != first_nss_gn);
+	}
+
+	*gn_out = pgn_list;
 }
 
 struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
@@ -758,67 +770,82 @@ struct pubkey *allocate_RSA_public_key_nss(CERTCertificate *cert)
 	return pk;
 }
 
-/*
- * Extract the id and public key from an NSS certificate and
- * insert it into a pubkeyrec
- */
-void add_nss_cert_public_key(const struct id *keyid,
-			CERTCertificate *cert,
-			realtime_t until,
-			enum dns_auth_level dns_auth_level)
+static void replace_public_key(struct pubkey *pk)
 {
-	generalName_t *gn;
-	struct pubkey *pk;
+	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
+	install_public_key(pk, &pluto_pubkeys);
+}
 
-	/*
-	 * We support RSA only right now.
-	 */
+static void create_cert_pubkey(struct pubkey **pkp,
+				      const struct id *id,
+				      CERTCertificate *cert)
+{
+	struct pubkey *pk = NULL;
+	pk = allocate_RSA_public_key_nss(cert);
+	passert(pk != NULL);
+	pk->id = *id;
+	pk->dns_auth_level = DAL_LOCAL;
+	pk->until_time = get_nss_cert_notafter(cert);
+	pk->issuer = secitem_to_chunk(cert->derIssuer);
+	*pkp = pk;
+}
+
+static void create_cert_subjectdn_pubkey(struct pubkey **pkp,
+				       CERTCertificate *cert)
+{
+	struct id id;
+	id.kind = ID_DER_ASN1_DN;
+	id.name = secitem_to_chunk(cert->derSubject);
+	create_cert_pubkey(pkp, &id, cert);
+}
+
+static void add_cert_san_pubkeys(CERTCertificate *cert)
+{
+	generalName_t *gn = NULL;
+	generalName_t *gnt = NULL;
+
+	get_pluto_gn_from_nss_cert(cert, &gn);
+
+	for (gnt = gn; gn != NULL; gn = gn->next) {
+		struct id id;
+		struct pubkey *pk = NULL;
+
+		gntoid(&id, gn);
+		if (id.kind != ID_NONE) {
+			create_cert_pubkey(&pk, &id, cert);
+			replace_public_key(pk);
+		}
+	}
+
+	free_generalNames(gnt, FALSE);
+}
+
+/*
+ * Adds pubkey entries from a certificate.
+ * An entry with the ID_DER_ASN1_DN subject is always added
+ * with subjectAltNames
+ * @keyid provides an id for a secondary entry
+ */
+void add_rsa_pubkey_from_cert(const struct id *keyid, CERTCertificate *cert)
+{
+	struct pubkey *pk = NULL;
+	struct pubkey *pk2 = NULL;
+
 	if (!cert_key_is_rsa(cert)) {
 		libreswan_log("cert key is not rsa type!");
 		return;
 	}
 
-	/* ID type: ID_DER_ASN1_DN  (X.509 subject field) */
-	pk = allocate_RSA_public_key_nss(cert);
-	passert(pk != NULL);
-	pk->id.kind = ID_DER_ASN1_DN;
-	pk->id.name = secitem_to_chunk(cert->derSubject);
-	pk->dns_auth_level = dns_auth_level;
-	pk->until_time = until;
-	pk->issuer = secitem_to_chunk(cert->derIssuer);
-	delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-	install_public_key(pk, &pluto_pubkeys);
+	create_cert_subjectdn_pubkey(&pk, cert);
+	replace_public_key(pk);
 
-	gn = NULL;
-	get_pluto_gn_from_nss_cert(cert, &gn);
+	add_cert_san_pubkeys(cert);
 
-	while (gn != NULL) { /* insert all subjectAltNames */
-		struct id id;
-
-		gntoid(&id, gn);
-		if (id.kind != ID_NONE) {
-			pk = allocate_RSA_public_key_nss(cert);
-			pk->id = id;
-			pk->dns_auth_level = dns_auth_level;
-			pk->until_time = until;
-			pk->issuer = secitem_to_chunk(cert->derIssuer);
-			delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-			install_public_key(pk, &pluto_pubkeys);
-		}
-		gn = gn->next;
-	}
-
-	if (keyid != NULL &&
-		keyid->kind != ID_DER_ASN1_DN &&
-		keyid->kind != ID_DER_ASN1_GN) {
-		pk = allocate_RSA_public_key_nss(cert);
-		pk->id = *keyid;
-
-		pk->dns_auth_level = dns_auth_level;
-		pk->until_time = until;
-		pk->issuer = secitem_to_chunk(cert->derIssuer);
-		delete_public_keys(&pluto_pubkeys, &pk->id, pk->alg);
-		install_public_key(pk, &pluto_pubkeys);
+	if (keyid != NULL && keyid->kind != ID_DER_ASN1_DN &&
+			     keyid->kind != ID_NONE &&
+			     keyid->kind != ID_FROMCERT) {
+		create_cert_pubkey(&pk2, keyid, cert);
+		replace_public_key(pk2);
 	}
 }
 
@@ -833,11 +860,11 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 
 	if (!full_chain) {
 		/*
-		 * just the issuer
+		 * just the issuer unless it's a root
 		 */
 		CERTCertificate *is = CERT_FindCertByName(CERT_GetDefaultCertDB(),
 					&end_cert->derIssuer);
-		if (is == NULL)
+		if (is == NULL || is->isRoot)
 			return 0;
 
 		out_chain[0] = dup_secitem_to_chunk(is->derCert);
@@ -866,69 +893,92 @@ int get_auth_chain(chunk_t *out_chain, int chain_max, CERTCertificate *end_cert,
 
 	return j;
 }
-static bool pluto_process_certs(struct state *st,
-				    chunk_t *certs,
-				    int num_certs)
+
+#define CRL_CHECK_ENABLED() (deltasecs(crl_check_interval) > 0)
+
+#if defined(LIBCURL) || defined(LDAP_VER)
+/*
+ * Do our best to find the CA for the fetch request
+ * However, this might be overkill, and only spd.this.ca should be used
+ */
+static bool find_fetch_dn(SECItem *dn, struct connection *c,
+				       CERTCertificate *cert)
+{
+	if (dn == NULL) {
+		DBG(DBG_X509, DBG_log("%s invalid use",__FUNCTION__));
+		return FALSE;
+	}
+
+	if (cert != NULL) {
+		*dn = cert->derIssuer;
+		return TRUE;
+	}
+
+	if (c->spd.that.ca.ptr != NULL && c->spd.that.ca.len > 0) {
+		*dn = chunk_to_secitem(c->spd.that.ca);
+		return TRUE;
+	}
+
+	if (c->spd.that.cert.u.nss_cert != NULL) {
+		*dn = c->spd.that.cert.u.nss_cert->derIssuer;
+		return TRUE;
+	}
+
+	if (c->spd.this.ca.ptr != NULL && c->spd.this.ca.len > 0) {
+		*dn = chunk_to_secitem(c->spd.this.ca);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+#endif
+
+/* returns FALSE for a REVOKED cert or internal failure. returns
+ * TRUE for a good cert or a failed verify (for continuing with
+ * connection refining)
+ */
+static bool pluto_process_certs(struct state *st, chunk_t *certs,
+						  int num_certs)
 {
 	struct connection *c = st->st_connection;
+#if defined(LIBCURL) || defined(LDAP_VER)
+	SECItem fdn = { siBuffer, NULL, 0 };
+#endif
 	CERTCertificate *end_cert = NULL;
-	bool status = FALSE, fetch = FALSE;
+	bool cont = TRUE;
+	bool rev_opts[RO_SZ];
 	int ret;
 
+	rev_opts[RO_OCSP] = ocsp_enable;
+	rev_opts[RO_OCSP_S] = strict_ocsp_policy;
+	rev_opts[RO_CRL_S] = strict_crl_policy;
+
 	ret = verify_and_cache_chain(certs, num_certs, &end_cert,
-						       strict_crl_policy);
+						       rev_opts);
 
 	if (ret == -1) {
-		libreswan_log("Verification failed with import error");
-	} else {
-		if (ret & VERIFY_RET_CRL_NEED)
-			fetch = TRUE;
-
-		if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
-			libreswan_log("certificate %s OK",
-				      end_cert->subjectName);
-			c->spd.that.cert.u.nss_cert = end_cert;
-			c->spd.that.cert.ty = CERT_X509_SIGNATURE;
-			add_nss_cert_public_key(NULL, end_cert,
-						get_nss_cert_notafter(end_cert),
-						DAL_LOCAL);
-			status = TRUE;
-		} else {
-			libreswan_log("certificate verify failed");
-		}
+		libreswan_log("cert verify failed with internal error");
+		return FALSE;
 	}
 
-	if (fetch && (deltasecs(crl_check_interval) > 0)) {
-		/*
-		 * TODO:
-		 * Functionize
-		 */
-		SECItem fdn = { siBuffer, NULL, 0 };
-
-		DBG(DBG_CONTROLMORE,
-			DBG_log("a CRL fetch is needed"));
-
-		/*
-		 * Do our best to find the CA for the fetch request
-		 * However, this might be overkill, and only spd.this.ca should be used
-		 */
-		if (end_cert != NULL) {
-			fdn = end_cert->derIssuer;
-		} else if (c->spd.that.ca.ptr != NULL &&
-			   c->spd.that.ca.len > 0) {
-			fdn = chunk_to_secitem(c->spd.that.ca);
-		} else if (c->spd.that.cert.u.nss_cert != NULL) {
-			fdn = c->spd.that.cert.u.nss_cert->derIssuer;
-		} else if (c->spd.this.ca.ptr != NULL &&
-			   c->spd.this.ca.len > 0) {
-			fdn = chunk_to_secitem(c->spd.this.ca);
-		}
-
-		add_crl_fetch_request_nss(&fdn);
-
+	if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
+		libreswan_log("certificate %s OK", end_cert->subjectName);
+		c->spd.that.cert.u.nss_cert = end_cert;
+		c->spd.that.cert.ty = CERT_X509_SIGNATURE;
+		add_rsa_pubkey_from_cert(&c->spd.that.id, end_cert);
+	} else if (ret & VERIFY_RET_REVOKED) {
+		libreswan_log("certificate revoked!");
+		cont = FALSE;
 	}
-	return status;
+#if defined(LIBCURL) || defined(LDAP_VER)
+	if ((ret & VERIFY_RET_CRL_NEED) && CRL_CHECK_ENABLED()) {
+		if (find_fetch_dn(&fdn, c, end_cert)) {
+			add_crl_fetch_request_nss(&fdn);
+		}
+	}
+#endif
 
+	return cont;
 }
 
 /*
@@ -948,11 +998,12 @@ static bool pluto_process_certs(struct state *st,
  *  contain a single certificate.
  *
  */
-void ikev1_decode_cert(struct msg_digest *md)
+bool ikev1_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct payload_digest *p;
 	chunk_t der_list[32] = { {NULL, 0} };
+	bool ret = TRUE;
 	int der_num = 0;
 
 	for (p = md->chain[ISAKMP_NEXT_CERT]; p != NULL; p = p->next) {
@@ -968,25 +1019,27 @@ void ikev1_decode_cert(struct msg_digest *md)
 		}
 	}
 
-	if (der_num == 0)
-		return;
+	if (der_num > 0) {
+		if (!pluto_process_certs(st, der_list, der_num)) {
+			libreswan_log("Peer public key is not available for this exchange");
+			ret = FALSE;
+		}
 
-	if (!pluto_process_certs(st, der_list, der_num))
-		libreswan_log("Peer public key is not available for this exchange");
+		while (der_num-- > 0)
+			freeanychunk(der_list[der_num]);
+	}
 
-	while (der_num-- > 0)
-		freeanychunk(der_list[der_num]);
-
-	return;
+	return ret;
 }
 
 /* Decode IKEV2 CERT Payload */
 
-void ikev2_decode_cert(struct msg_digest *md)
+bool ikev2_decode_cert(struct msg_digest *md)
 {
 	struct state *st = md->st;
 	struct payload_digest *p;
 	chunk_t der_list[32] = { {NULL, 0} };
+	bool ret = TRUE;
 	int der_num = 0;
 
 	for (p = md->chain[ISAKMP_NEXT_v2CERT]; p != NULL; p = p->next) {
@@ -1002,16 +1055,18 @@ void ikev2_decode_cert(struct msg_digest *md)
 						v2cert->isac_enc));
 		}
 	}
-	if (der_num == 0)
-		return;
 
-	if (!pluto_process_certs(st, der_list, der_num))
-		libreswan_log("Peer public key is not available for this exchange");
+	if (der_num > 0) {
+		if (!pluto_process_certs(st, der_list, der_num)) {
+			libreswan_log("Peer public key is not available for this exchange");
+			ret = FALSE;
+		}
 
-	while (der_num-- > 0)
-		freeanychunk(der_list[der_num]);
+		while (der_num-- > 0)
+			freeanychunk(der_list[der_num]);
+	}
 
-	return;
+	return ret;
 }
 
 /*
@@ -1519,7 +1574,7 @@ static bool crl_time_to_str(char *buf, size_t buflen, SECItem *t)
 	PRExplodedTime printtime;
 	PRTime time;
 
-	if (DER_GeneralizedTimeToTime(&time, t) != SECSuccess)
+	if (DER_DecodeTimeChoice(&time, t) != SECSuccess)
 		return FALSE;
 
 	PR_ExplodeTime(time, PR_GMTParameters, &printtime);
@@ -1542,17 +1597,28 @@ static bool cert_detail_notafter_to_str(char *buf, size_t buflen,
 	return cert_time_to_str(buf, buflen, cert, FALSE);
 }
 
+static int certsntoa(CERTCertificate *cert, char *dst, size_t dstlen)
+{
+	if (cert == NULL || cert->serialNumber.len >= dstlen)
+		return 0;
+
+	return datatot(cert->serialNumber.data, cert->serialNumber.len,
+			'x', dst, dstlen);
+}
+
 static void cert_detail_to_whacklog(CERTCertificate *cert)
 {
-	char before[256] = {0},
-	      after[256] = {0};
+	char before[256] = {0};
+	char after[256] = {0};
+	char sn[128] = {0};
+	char *print_sn = "(NULL)";
 	SECKEYPublicKey *pub_k = NULL;
 	KeyType pub_k_t = nullKey;
 	bool is_CA = FALSE;
 	bool is_root = FALSE;
 	bool has_priv = FALSE;
-
-	int sn = 0;
+	char sbuf[ASN1_BUF_LEN];
+	char ibuf[ASN1_BUF_LEN];
 
 	if (cert == NULL)
 		return;
@@ -1562,21 +1628,24 @@ static void cert_detail_to_whacklog(CERTCertificate *cert)
 
 	pub_k = SECKEY_ExtractPublicKey(&cert->subjectPublicKeyInfo);
 
+	if (certsntoa(cert, sn, sizeof(sn)))
+		print_sn = sn;
+
 	has_priv = cert_has_private_key(cert);
 
 	if (pub_k == NULL)
 		return;
 
 	pub_k_t = SECKEY_GetPublicKeyType(pub_k);
-
-	sn = DER_GetInteger(&cert->serialNumber);
+	dntoasi(sbuf, ASN1_BUF_LEN, cert->derSubject);
+	dntoasi(ibuf, ASN1_BUF_LEN, cert->derIssuer);
 
 	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, "%s%s certificate \"%s\" - SN: %d", is_root ? "Root ":"",
+	whack_log(RC_COMMENT, "%s%s certificate \"%s\" - SN: %s", is_root ? "Root ":"",
 						         is_CA ? "CA":"End",
-							 cert->nickname, sn);
-	whack_log(RC_COMMENT, "  subject: %s", cert->subjectName);
-	whack_log(RC_COMMENT, "  issuer: %s", cert->issuerName);
+							 cert->nickname, print_sn);
+	whack_log(RC_COMMENT, "  subject: %s", sbuf);
+	whack_log(RC_COMMENT, "  issuer: %s", ibuf);
 	if (cert_detail_notbefore_to_str(before, sizeof(before), cert))
 		whack_log(RC_COMMENT, "  not before: %s", before);
 
@@ -1616,33 +1685,25 @@ static bool show_cert_of_type(CERTCertificate *cert, show_cert_t type)
 
 static void crl_detail_to_whacklog(CERTCrl *crl)
 {
-	char *issuer = CERT_NameToAscii(&crl->name);
+	char ibuf[ASN1_BUF_LEN];
 	char lu[256] = {0}, nu[256] = {0};
+	int entries = 0;
 
-	whack_log(RC_COMMENT, " ");
-	whack_log(RC_COMMENT, "Issuer: %s", issuer);
-	if (crl_time_to_str(lu, sizeof(lu), &crl->lastUpdate))
-		whack_log(RC_COMMENT, "This update: %s", lu);
-	if (crl_time_to_str(nu, sizeof(nu), &crl->nextUpdate))
-		whack_log(RC_COMMENT, "Next update: %s", nu);
+	dntoasi(ibuf, ASN1_BUF_LEN, crl->derName);
 
 	if (crl->entries != NULL) {
-		int i = 0;
-		CERTCrlEntry *e;
-
-		while ((e = crl->entries[i++]) != NULL) {
-			char rd[256] = {0};
-			whack_log(RC_COMMENT, " Entry %d", i);
-			whack_log(RC_COMMENT, " Serial: %lu",
-					DER_GetInteger(&e->serialNumber));
-			if (crl_time_to_str(rd, sizeof(rd), &e->revocationDate))
-				whack_log(RC_COMMENT, " Revoked: %s", rd);
-		}
-
+		while (crl->entries[entries] != NULL)
+			entries++;
 	}
 
-	if (issuer != NULL)
-		PORT_Free(issuer);
+	whack_log(RC_COMMENT, " ");
+	whack_log(RC_COMMENT, "issuer: %s", ibuf);
+	whack_log(RC_COMMENT, "revoked certs: %d", entries);
+	if (crl_time_to_str(lu, sizeof(lu), &crl->lastUpdate))
+		whack_log(RC_COMMENT, "updates: this %s", lu);
+	if (crl_time_to_str(nu, sizeof(nu), &crl->nextUpdate))
+		whack_log(RC_COMMENT, "         next %s", nu);
+
 }
 
 static void crl_detail_list(void)
@@ -1715,19 +1776,21 @@ static void cert_detail_list(show_cert_t type)
 		CERT_DestroyCertList(certs);
 }
 
+#if defined(LIBCURL) || defined(LDAP_VER)
 void check_crls(void)
 {
 	return;
+}
+#endif
+
+void list_crls(void)
+{
+	crl_detail_list();
 }
 
 void list_certs(void)
 {
 	cert_detail_list(CERT_TYPE_END);
-}
-
-void list_crls(void)
-{
-	crl_detail_list();
 }
 
 void list_authcerts(void)
@@ -1740,3 +1803,4 @@ void clear_ocsp_cache(void)
 	DBG(DBG_X509, DBG_log("calling NSS to clear OCSP cache"));
 	(void)CERT_ClearOCSPCache();
 }
+

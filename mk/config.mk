@@ -52,7 +52,7 @@ include ${LIBRESWANSRCDIR}/mk/objdir.mk
 SHELL=/bin/bash
 export SHELL
 
-.PHONY:	programs man config checkprograms clean
+.PHONY:	programs man config clean
 
 # location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
 BINSH=/bin/sh
@@ -77,7 +77,7 @@ PUBDIR?=$(DESTDIR)$(INC_USRLOCAL)/sbin
 # BINDIR is where sub-commands get put, FINALBINDIR is where the "ipsec"
 # command will look for them when it is run. Also called LIBEXECDIR.
 FINALLIBEXECDIR?=$(INC_USRLOCAL)/libexec/ipsec
-LIBEXECDIR?=$(DESTDIR)$(FINALBINDIR)
+LIBEXECDIR?=$(DESTDIR)$(FINALLIBEXECDIR)
 
 FINALBINDIR?=$(FINALLIBEXECDIR)
 BINDIR?=$(LIBEXECDIR)
@@ -94,8 +94,6 @@ SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 INC_MANDIR?=man
 # the full pathname
 MANTREE?=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
-# all relevant subdirectories of MANTREE
-MANPLACES?=man3 man5 man8
 
 # where configuration files go
 FINALSYSCONFDIR?=/etc
@@ -257,9 +255,6 @@ KERNEL?=$(shell if expr " `uname -m`" : ' i.86' >/dev/null ; \
 	then echo $(INC_B)zImage ; \
 	else echo boot ; \
 	fi)
-
-# look for XMLTO command
-XMLTO?=$(shell which xmlto | grep / | head -n1)
 
 # look for POD2MAN command
 POD2MAN?=$(shell which pod2man | grep / | head -n1)

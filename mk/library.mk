@@ -6,10 +6,10 @@ endif
 
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/version.mk
+include $(top_srcdir)/mk/targets.mk
 
 KLIPSD=${LIBRESWANSRCDIR}/linux/include
 KLIPSSRCDIR=${LIBRESWANSRCDIR}/linux/net/ipsec
-MANSRCDIR=${LIBRESWANSRCDIR}/lib/libswan
 
 LEX=flex
 ifeq ($(USE_YACC),true)
@@ -35,46 +35,21 @@ CFLAGS+=-pthread
 CFLAGS+=$(USERLAND_CFLAGS)
 
 ARFLAGS=crvs
-MANS=
 
-.PHONY:	all install clean l t lt tar check checkprograms
+.PHONY:	all install clean l t lt tar check
 
 SHOULDWERESTART=$(wildcard ${ONEFILE})
 ifeq ($(SHOULDWERESTART),${ONEFILE})
-all programs man config clean install:
+all programs man config clean:
 	set -e ; \
 	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/lib${LIBRARY} && ${MAKE} $@
 else
 all:	$(LIB) 
 programs: $(LIB) 
 clean:	cleanall
-install: doinstall
-
+# XXX: Hack until build works from either directory
+install-local-programs: $(LIB)
 endif
-
-doinstall:
-	@for d in $(MANDIR); do mkdir -p $$d; done
-	@for f in $(MANS) ; \
-	do \
-		$(INSTALL) $(INSTMANFLAGS) $(MANSRCDIR)/$$f $(MANDIR)/ipsec_$$f || exit 1 ; \
-	done
-	@$(LIBRESWANSRCDIR)/packaging/utils/manlink $(foreach man, $(MANS), ${MANSRCDIR}/$(man)) | \
-	while read from to; \
-	do \
-		ln -s -f ipsec_$$from $(MANDIR)/$$to; \
-	done
-
-
-install_file_list:
-	@for f in $(MANS) ; \
-	do \
-		echo $(MANDIR)/ipsec_$$f;\
-	done;
-	@$(LIBRESWANSRCDIR)/packaging/utils/manlink $(foreach man, $(MANS), ${MANSRCDIR}/$(man)) | \
-	while read from to; \
-	do \
-		echo $(MANDIR)/$$to; \
-	done
 
 $(LIB): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJS)

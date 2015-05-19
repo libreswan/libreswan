@@ -72,6 +72,8 @@ extern void build_id_payload(struct isakmp_ipsec_id *hd, chunk_t *tl,
 			     struct end *end);
 
 extern void duplicate_id(struct id *dst, const struct id *src);
+extern bool same_dn_any_order(chunk_t a, chunk_t b);
+extern bool match_dn_any_order_wild(chunk_t a, chunk_t b, int *wildcards);
 
 #endif /* _ID_H */
 

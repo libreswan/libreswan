@@ -49,7 +49,6 @@ enum keyword_string_config_field {
 	KSF_MYVENDORID,
 	KSF_PLUTOSTDERRLOG,
 	KSF_PROTOSTACK,
-	KSF_DDOS_MODE,
 	KSF_IKE,
 	KSF_ESP,
 	KSF_ALSO,
@@ -145,6 +144,7 @@ enum keyword_numeric_config_field {
 	KBF_IKEV1_NATT,		/* ikev1 NAT-T payloads to send/process */
 	KBF_NFLOG_ALL,
 	KBF_NFLOG_CONN,
+	KBF_DDOS_MODE,
 	KBF_MAX
 };
 
@@ -198,10 +198,13 @@ enum keyword_numeric_conn_field {
 	KNCF_MAX
 };
 
-#define KEY_STRINGS_MAX ((int)KSF_MAX > \
-			 (int)KSCF_MAX ? (int)KSF_MAX : (int)KSCF_MAX) + 1
-#define KEY_NUMERIC_MAX ((int)KBF_MAX > \
-			 (int)KNCF_MAX ? (int)KBF_MAX : (int)KNCF_MAX) + 1
+/* ??? seems a little funny that KEY_STRINGS_MAX is really +1 */
+#define KEY_STRINGS_MAX (((int)KSF_MAX > \
+			  (int)KSCF_MAX ? (int)KSF_MAX : (int)KSCF_MAX) + 1)
+
+/* ??? seems a little funny that KEY_NUMERIC_MAX is really +1 */
+#define KEY_NUMERIC_MAX (((int)KBF_MAX > \
+			  (int)KNCF_MAX ? (int)KBF_MAX : (int)KNCF_MAX) + 1)
 
 /* these are bits set in a word */
 enum keyword_valid {

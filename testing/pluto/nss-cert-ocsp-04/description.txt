@@ -1,1 +1,1 @@
-west sends revoked cert, with a bogus OCSP uri on east
+west sends revoked cert, no default URI set

@@ -116,9 +116,9 @@ static int pluto_nss_seedbits;
 static int nhelpers = -1;
 
 extern bool strict_crl_policy;
+extern bool strict_ocsp_policy;
+extern bool ocsp_enable;
 
-static bool strict_ocsp_policy = FALSE;
-static bool ocsp_enable = FALSE;
 static char *ocsp_default_uri = NULL;
 static char *ocsp_trust_name = NULL;
 static int ocsp_timeout = OCSP_DEFAULT_TIMEOUT;
@@ -1053,10 +1053,10 @@ int main(int argc, char **argv)
 			log_with_timestamp =
 				cfg->setup.options[KBF_PLUTOSTDERRLOGTIME];
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
-			pluto_ddos_mode = cfg->setup.options[KSF_DDOS_MODE];
+			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 			if (cfg->setup.options[KBF_FORCEBUSY]) {
 				/* obsoleted */
-				pluto_ddos_mode = cfg->setup.options[KSF_DDOS_MODE] = DDOS_FORCE_BUSY;
+				pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE] = DDOS_FORCE_BUSY;
 			}
 			/* ddos-ike-treshold and max-halfopen-ike */
 			pluto_ddos_treshold = cfg->setup.options[KBF_DDOS_IKE_TRESHOLD];

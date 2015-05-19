@@ -741,8 +741,7 @@ enum ipsec_xmit_value ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 #ifdef CONFIG_KLIPS_ALG
 
 		if ((ixs->ixt_a = ixs->ipsp->ips_alg_auth)) {
-			ixs->tailroom += AHHMAC_HASHLEN;
-			ixs->authlen = AHHMAC_HASHLEN;
+			ixs->authlen = ixs->ixt_a->ixt_a_authlen;
 		} else
 #endif          /* CONFIG_KLIPS_ALG */
 		switch (ixs->ipsp->ips_authalg) {
@@ -2175,7 +2174,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 #endif                  /* CONFIG_KLIPS_OCF */
 #ifdef CONFIG_KLIPS_ALG
 			if ((ixs->ixt_a = ixs->ipsp->ips_alg_auth))
-				ixs->tailroom += AHHMAC_HASHLEN;
+				ixs->tailroom += ixs->ixt_a->ixt_a_authlen;
 			else
 #endif                  /* CONFIG_KLIPS_ALG */
 			switch (ixs->ipsp->ips_authalg) {

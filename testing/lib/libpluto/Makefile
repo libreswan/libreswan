@@ -53,10 +53,6 @@ cleanall: clean
 
 distclean: clean
 
-mostlyclean: clean
-
-realclean: clean
-
 Makefile.depend: *.c ${SRCDIR}Makefile
 	(ls $(wildcard $(addprefix $(SRCDIR),*.c)) | grep '\.c' | xargs ${CC} -MM) >Makefile.depend
 

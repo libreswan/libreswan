@@ -4,8 +4,6 @@ default: check
 .PHONY: check default
 check: ikev2.cavp ikev1_dsa.cavp ikev1_psk.cavp
 
-VPATH += $(builddir)
-
 .PRECIOUS: %.fax
 %.fax:
 	mkdir -p $(builddir)
