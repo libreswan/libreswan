@@ -950,7 +950,8 @@ void show_shunt_status(void)
  * op is one of the ERO_* operators.
  */
 
-static bool raw_eroute(const ip_address *this_host,
+// should be made static again once we fix initiate.c calling this directly!
+bool raw_eroute(const ip_address *this_host,
 		       const ip_subnet *this_client,
 		       const ip_address *that_host,
 		       const ip_subnet *that_client,

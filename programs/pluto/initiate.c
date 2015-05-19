@@ -884,7 +884,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				(shunt_spi == SPI_PASS) ? "pass" : "hold"));
 
 			// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
-			if (!kernel_ops->raw_eroute(&b->our_client, &this_client,
+			if (!raw_eroute(&b->our_client, &this_client,
 				&b->peer_client, &that_client,
 				htonl(shunt_spi), SA_INT,
 				0, /* transport_proto */
