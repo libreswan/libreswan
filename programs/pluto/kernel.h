@@ -158,7 +158,8 @@ struct kernel_ops {
 			   const ip_subnet *this_client,
 			   const ip_address *that_host,
 			   const ip_subnet *that_client,
-			   ipsec_spi_t spi,
+			   ipsec_spi_t cur_spi,
+			   ipsec_spi_t new_spi,
 			   int sa_proto,
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
@@ -340,6 +341,7 @@ extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 
 extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       policy_prio_t policy_prio,
+			       ipsec_spi_t cur_shunt_spi,   /* in host order! */
 			       ipsec_spi_t new_shunt_spi,   /* in host order! */
 			       int transport_proto,
 			       const char *why);
@@ -373,8 +375,9 @@ extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 
 extern bool eroute_connection(struct spd_route *sr,
-			      ipsec_spi_t spi, int proto,
-			      enum eroute_type esatype,
+			      ipsec_spi_t cur_spi,
+			      ipsec_spi_t new_spi,
+			      int proto, enum eroute_type esatype,
 			      const struct pfkey_proto_info *proto_info,
 			      unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
@@ -421,7 +424,8 @@ extern bool raw_eroute(const ip_address *this_host,
                        const ip_subnet *this_client,
                        const ip_address *that_host,
                        const ip_subnet *that_client,
-                       ipsec_spi_t spi,
+                       ipsec_spi_t cur_spi,
+                       ipsec_spi_t new_spi,
                        int sa_proto,
                        unsigned int transport_proto,
                        enum eroute_type esatype,

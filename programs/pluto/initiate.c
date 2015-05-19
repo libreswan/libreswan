@@ -416,7 +416,8 @@ struct find_oppo_bundle {
 	int transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
-	ipsec_spi_t failure_shunt; /* in host order!  0 for delete. */
+	ipsec_spi_t negotiation_shunt; /* in host order! */
+	ipsec_spi_t failure_shunt; /* in host order! */
 	int whackfd;
 };
 
@@ -524,6 +525,7 @@ static void cannot_oppo(struct connection *c,
 		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
 		if (replace_bare_shunt(&b->our_client, &b->peer_client,
 					  b->policy_prio,
+					  b->negotiation_shunt,
 					  b->failure_shunt,
 					  b->transport_proto,
 					  ughmsg))
@@ -564,7 +566,8 @@ bool initiate_ondemand(const ip_address *our_client,
 	b.transport_proto = transport_proto;
 	b.held = held;
 	b.policy_prio = BOTTOM_PRIO;
-	b.failure_shunt = 0;
+	b.negotiation_shunt = SPI_HOLD; /* until we found connection policy */
+	b.failure_shunt = SPI_HOLD; /* until we found connection policy */
 	b.whackfd = whackfd;
 	b.step = fos_start;
 	return initiate_ondemand_body(&b, NULL, NULL
@@ -628,11 +631,16 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 		       ipstr(&cr->b.our_client, &a),
 		       ipstr(&cr->b.peer_client, &b));
 	} else {
-		(void)initiate_ondemand_body(&cr->b, &cr->ac, ugh
+		if (initiate_ondemand_body(&cr->b, &cr->ac, ugh
 #ifdef HAVE_LABELED_IPSEC
 					     , NULL
 #endif
-					     );
+					     ))
+		{
+			DBG(DBG_CONTROLMORE, DBG_log("initiate_ondemand_body() returned successfully"));
+		} else {
+			libreswan_log("initiate_ondemand_body() failed - ignoring");
+		}
 		whackfd = NULL_FD; /* was handed off */
 	}
 
@@ -811,6 +819,10 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			 */
 		}
 
+		/* we have a connection, fill in the negotiation_shunt and failure_shunt */
+		b->failure_shunt = shunt_policy_spi(c, FALSE);
+		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+
 		/*
 		 * otherwise, there is some kind of static conn that can handle
 		 * this connection, so we initiate it.
@@ -863,15 +875,17 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
-		/* this is to broaden a hold on netkey - only needed if ports or transport_proto are non-zero */
-		if ((c->policy & POLICY_OPPORTUNISTIC) &&
+		/* we have a connection, fill in the negotiation_shunt and failure_shunt */
+		b->failure_shunt = shunt_policy_spi(c, FALSE);
+		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+
+		if (b->negotiation_shunt != SPI_HOLD ||
 			(b->transport_proto != 0 ||
 			portof(&b->our_client) != 0 ||
 			portof(&b->peer_client) != 0))
 		{
 			char *delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 			char *addwidemsg = "oe-negotiating";
-			ipsec_spi_t shunt_spi = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
         		ip_subnet this_client, that_client;
 
         		happy(addrtosubnet(&b->our_client, &this_client));
@@ -881,13 +895,15 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			setportof(0, &that_client.addr);
 
 			DBG(DBG_CONTROL, DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
-				(shunt_spi == SPI_PASS) ? "pass" : "hold"));
+				(b->negotiation_shunt == SPI_PASS) ? "pass" : 
+					(b->negotiation_shunt == SPI_HOLD) ? "hold" : "unknown?"));
 
 			// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
 			if (!raw_eroute(&b->our_client, &this_client,
 				&b->peer_client, &that_client,
-				htonl(shunt_spi), SA_INT,
-				0, /* transport_proto */
+				htonl(b->negotiation_shunt),
+				htonl(b->failure_shunt),
+				SA_INT, 0, /* transport_proto */
 				ET_INT, null_proto_info,
 				deltatime(SHUNT_PATIENCE),
 				DEFAULT_IPSEC_SA_PRIORITY,
@@ -929,11 +945,16 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				}
 				next_step = fos_his_client;
 				b->step = fos_his_client; /* skip all DNS */
-				initiate_ondemand_body(b, ac, ac_ugh
+				if (initiate_ondemand_body(b, ac, ac_ugh
 #ifdef HAVE_LABELED_IPSEC
 						, uctx 
 #endif
-						);
+						))
+				{
+					DBG(DBG_CONTROLMORE, DBG_log("initiate_ondemand_body() returned successfully"));
+				} else {
+					libreswan_log("initiate_ondemand_body() failed!");
+				}
 			} else {
 			   	DBG_log("just starting out: select first query step");
 				/* just starting out: select first query step */
@@ -1139,7 +1160,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				       ipstr(&ac->gateways_from_dns->gw_id.ip_addr, &b3));
 
 				/*
-				 * Replace negotiationshunt with failureshunt
+				 * Replace negotiatio_nshunt with failure_shunt
 				 * The type of replacement *ought* to be
 				 * specified by policy, but we did not find a connection, so
 				 * default to HOLD
@@ -1149,7 +1170,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 						&b->our_client,
 						&b->peer_client,
 						b->policy_prio,
-						SPI_HOLD,	/* ??? b->failure_shunt? */
+						b->negotiation_shunt, /* if not from conn, where did this come from? */
+						b->failure_shunt, /* if not from conn, where did this come from? */
 						b->transport_proto,
 						"no suitable connection")) {
 							DBG(DBG_CONTROL, DBG_log("replaced negotiatinshunt with failurehunt=hold because no connection was found"));
@@ -1219,6 +1241,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			 */
 		} else if (ugh != NULL) {
 			b->policy_prio = c->prio;
+			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 			b->failure_shunt = shunt_policy_spi(c, FALSE);
 			cannot_oppo(c, b, ugh);
 		} else if (next_step == fos_done) {
@@ -1233,6 +1256,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			struct id id;
 
 			b->policy_prio = c->prio;
+			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 			b->failure_shunt = shunt_policy_spi(c, FALSE);
 			cr->b = *b; /* copy; start hand off of whackfd */
 			cr->b.failure_ok = FALSE;

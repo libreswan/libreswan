@@ -853,7 +853,8 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      const ip_subnet *this_client,
 		      const ip_address *that_host,
 		      const ip_subnet *that_client,
-		      ipsec_spi_t spi,
+		      ipsec_spi_t cur_spi,
+		      ipsec_spi_t new_spi,
 		      int sa_proto UNUSED,
 		      unsigned int transport_proto,
 		      enum eroute_type esatype,
@@ -902,10 +903,16 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		ERO_DELETE);
 #endif
 
+
+// temp squash a warning
+
+	DBG(DBG_CONTROL, DBG_log(" useless SPI printing for cur(%d) and new(%d) spi",
+		cur_spi, new_spi));
+
 	if (op != ERO_DELETE) {
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
 						 K_SADB_EXT_SA,
-						 spi, /* in network order */
+						 new_spi, /* in network order */
 						 0, 0, 0, 0, klips_op >>
 						 KLIPS_OP_FLAG_SHIFT),
 				  "pfkey_sa add flow", text_said, extensions)
@@ -924,7 +931,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	else if (kernel_ops->type == USE_MASTKLIPS) {
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
 						 K_SADB_EXT_SA,
-						 spi, /* in network order */
+						 cur_spi, /* in network order */
 						 0, 0, 0, 0, klips_op >>
 						 KLIPS_OP_FLAG_SHIFT),
 				  "pfkey_sa del flow", text_said, extensions)))
@@ -1347,6 +1354,7 @@ bool pfkey_shunt_eroute(struct connection *c,
 					fam->any,
 					&sr->that.client,
 					htonl(spi),
+					htonl(spi),
 					SA_INT,
 					sr->this.protocol,
 					ET_INT,
@@ -1440,7 +1448,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 	}
 
 	return eroute_connection(sr,
-				 inner_spi, inner_proto,
+				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
 				 op, opname
 #ifdef HAVE_LABELED_IPSEC

@@ -617,7 +617,8 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			const ip_subnet *this_client,
 			const ip_address *that_host,
 			const ip_subnet *that_client,
-			ipsec_spi_t spi,	/* new SPI */
+			ipsec_spi_t cur_spi,	/* current SPI */
+			ipsec_spi_t new_spi,	/* new SPI */
 			int sa_proto,
 			unsigned int transport_proto,
 			enum eroute_type esatype,
@@ -673,7 +674,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	case ET_INT:
 		/* shunt route */
-		switch (ntohl(spi)) {
+		switch (ntohl(new_spi)) {
 		case SPI_PASS:
 			policy = IPSEC_POLICY_NONE;
 			break;
@@ -898,7 +899,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	}
 #endif
 
-	enoent_ok = sadb_op == ERO_DEL_INBOUND || (sadb_op == ERO_DELETE && ntohl(spi) == SPI_HOLD);
+	enoent_ok = sadb_op == ERO_DEL_INBOUND || (sadb_op == ERO_DELETE && ntohl(cur_spi) == SPI_HOLD);
 
 	ok = netlink_policy(&req.n, enoent_ok, text_said);
 	switch (dir) {
@@ -1822,7 +1823,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 				ENCAPSULATION_MODE_TRANSPORT;
 	}
 
-	return eroute_connection(sr, inner_spi, inner_proto,
+	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
 				op, opname
 #ifdef HAVE_LABELED_IPSEC
@@ -1940,6 +1941,7 @@ static bool netlink_shunt_eroute(struct connection *c,
 					&sr->that.host_addr,
 					&sr->that.client,
 					htonl(spi),
+					htonl(spi),
 					c->encapsulation ==
 						ENCAPSULATION_MODE_TRANSPORT ?
 						SA_ESP : SA_INT,
@@ -1973,6 +1975,7 @@ static bool netlink_shunt_eroute(struct connection *c,
 					&sr->that.client,
 					&sr->this.host_addr,
 					&sr->this.client,
+					htonl(spi),
 					htonl(spi),
 					c->encapsulation ==
 					ENCAPSULATION_MODE_TRANSPORT ?

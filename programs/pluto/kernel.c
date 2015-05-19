@@ -955,7 +955,8 @@ bool raw_eroute(const ip_address *this_host,
 		       const ip_subnet *this_client,
 		       const ip_address *that_host,
 		       const ip_subnet *that_client,
-		       ipsec_spi_t spi,
+		       ipsec_spi_t cur_spi,
+		       ipsec_spi_t new_spi,
 		       int sa_proto,
 		       unsigned int transport_proto,
 		       enum eroute_type esatype,
@@ -972,7 +973,7 @@ bool raw_eroute(const ip_address *this_host,
 	char text_said[SATOT_BUF];
 	bool result;
 
-	set_text_said(text_said, that_host, spi, sa_proto);
+	set_text_said(text_said, that_host, new_spi, sa_proto);
 
 	DBG(DBG_CONTROL | DBG_KERNEL,
 	    {
@@ -995,7 +996,7 @@ bool raw_eroute(const ip_address *this_host,
 
 	result = kernel_ops->raw_eroute(this_host, this_client,
 					that_host, that_client,
-					spi, sa_proto,
+					cur_spi, new_spi, sa_proto,
 					transport_proto,
 					esatype, proto_info,
 					use_lifetime, sa_priority, op, text_said
@@ -1078,6 +1079,7 @@ static void clear_narrow_holds(const ip_subnet *ours,
  */
 static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			policy_prio_t policy_prio,	/* of replacing shunt*/
+			ipsec_spi_t cur_shunt_spi,	/* in host order! */
 			ipsec_spi_t new_shunt_spi,	/* in host order! */
 			bool repl,		/* if TRUE, replace; if FALSE, delete */
 			int transport_proto,
@@ -1113,8 +1115,9 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			    repl ? "replacing" : "removing"));
 		if (raw_eroute(null_host, &this_client,
 				null_host, &that_client,
-			       htonl(new_shunt_spi), SA_INT,
-			       transport_proto,
+			       htonl(cur_shunt_spi),
+			       htonl(new_shunt_spi),
+			       SA_INT, transport_proto,
 			       ET_INT, null_proto_info,
 			       deltatime(SHUNT_PATIENCE),
 			       DEFAULT_IPSEC_SA_PRIORITY,
@@ -1171,23 +1174,25 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 
 bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			policy_prio_t policy_prio,	/* of replacing shunt*/
+			ipsec_spi_t cur_shunt_spi,	/* in host order! */
 			ipsec_spi_t new_shunt_spi,	/* in host order! */
 			int transport_proto,
 			const char *why)
 {
-	return fiddle_bare_shunt(src, dst, policy_prio, new_shunt_spi, TRUE, transport_proto, why);
+	return fiddle_bare_shunt(src, dst, policy_prio, cur_shunt_spi, new_shunt_spi, TRUE, transport_proto, why);
 }
 
 bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
-			int transport_proto, ipsec_spi_t shunt_spi,
+			int transport_proto, ipsec_spi_t cur_shunt_spi,
 			const char *why)
 {
-	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, shunt_spi, FALSE, transport_proto, why);
+	return fiddle_bare_shunt(src, dst, BOTTOM_PRIO, cur_shunt_spi, SPI_PASS /* unused */, FALSE, transport_proto, why);
 }
 
 bool eroute_connection(struct spd_route *sr,
-		       ipsec_spi_t spi, int sa_proto,
-		       enum eroute_type esatype,
+		       ipsec_spi_t cur_spi,
+		       ipsec_spi_t new_spi,
+		       int sa_proto, enum eroute_type esatype,
 		       const struct pfkey_proto_info *proto_info,
 		       unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
@@ -1206,7 +1211,8 @@ bool eroute_connection(struct spd_route *sr,
 
 	return raw_eroute(&sr->this.host_addr, &sr->this.client,
 			  peer, &sr->that.client,
-			  spi,
+			  cur_spi,
+			  new_spi,
 			  sa_proto,
 			  sr->this.protocol,
 			  esatype,
@@ -1285,7 +1291,7 @@ bool assign_holdpass(struct connection *c,
 				reason = "add broad %pass or %hold";
 			}
 
-			if (eroute_connection(sr, htonl(negotiation_shunt),
+			if (eroute_connection(sr, htonl(SPI_HOLD) /* kernel induced */, htonl(negotiation_shunt),
 					       SA_INT, ET_INT,
 					       null_proto_info,
 					       op,
@@ -1449,7 +1455,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 #endif
 
 	if (kernel_ops->inbound_eroute) {
-		inner_spi = 256;
+		inner_spi = SPI_PASS;
 		if (encapsulation == ENCAPSULATION_MODE_TUNNEL) {
 			/* If we are tunnelling, set up IP in IP pseudo SA */
 			proto = SA_IPIP;
@@ -2100,7 +2106,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				  &c->spd.that.client,		/* this_client */
 				  &c->spd.this.host_addr,	/* that_host */
 				  &c->spd.this.client,		/* that_client */
-				  inner_spi,			/* spi */
+				  inner_spi,			/* current spi - might not be used? */
+				  inner_spi,			/* new spi */
 				  proto,			/* SA proto */
 				  c->spd.this.protocol,		/* transport_proto */
 				  esatype,			/* esatype */
@@ -2186,7 +2193,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 	    c->spd.eroute_owner == SOS_NOBODY) {
 		if (!raw_eroute(&c->spd.that.host_addr, &c->spd.that.client,
 				  &c->spd.this.host_addr, &c->spd.this.client,
-				  256,
+				  SPI_PASS, SPI_PASS,
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? SA_ESP : IPSEC_PROTO_ANY,
 				  c->spd.this.protocol,
 				  c->encapsulation == ENCAPSULATION_MODE_TRANSPORT ? ET_ESP : ET_UNSPEC,
@@ -2819,6 +2826,7 @@ bool route_and_eroute(struct connection *c,
 						  &bs->ours,
 						  &bs->said.dst,        /* should be useless */
 						  &bs->his,
+						  bs->said.spi,         /* unused? network order */
 						  bs->said.spi,         /* network order */
 						  SA_INT,               /* proto */
 						  0,                    /* transport_proto */
