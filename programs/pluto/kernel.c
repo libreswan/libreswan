@@ -3266,18 +3266,18 @@ void expire_bare_shunts()
 {
 	struct bare_shunt **bspp;
 
-	DBG(DBG_CONTROL, DBG_log("expire_bare_shunts() called"));
+	DBG(DBG_OPPO, DBG_log("expiring aged bare shunts"));
 	for (bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
 		char *msg = "expire_bare_shunt";
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
-			DBG(DBG_CONTROL, DBG_log("Expired shunt(%s)", bsp->why));
+			DBG(DBG_OPPO, DBG_bare_shunt("expiring old", bsp));
 			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
 				bsp->transport_proto, ntohs(bsp->said.spi), msg);
 		} else {
-			DBG(DBG_CONTROL, DBG_log("Keeping recent shunt(%s)", bsp->why));
+			DBG(DBG_OPPO, DBG_bare_shunt("keeping recent", bsp));
 			bspp = &bsp->next;
 		}
 	}
