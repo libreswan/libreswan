@@ -173,7 +173,7 @@ static void help(void)
 		"	[--rereadaacerts]  [--rereadacerts] \\\n"
 		"	[--rereadcrls] [--rereadall]\n"
 		"\n"
-		"status: whack --status --trafficstatus --globalstatus\n"
+		"status: whack --status --trafficstatus --globalstatus --shuntstatus\n"
 		"\n"
 		"shutdown: whack --shutdown\n"
 		"\n"
