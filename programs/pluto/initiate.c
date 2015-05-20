@@ -879,59 +879,61 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		b->failure_shunt = shunt_policy_spi(c, FALSE);
 		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 
-		if (b->negotiation_shunt != SPI_HOLD ||
-			(b->transport_proto != 0 ||
-			portof(&b->our_client) != 0 ||
-			portof(&b->peer_client) != 0))
-		{
-			char *delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
-			char *addwidemsg = "oe-negotiating";
-        		ip_subnet this_client, that_client;
-
-        		happy(addrtosubnet(&b->our_client, &this_client));
-        		happy(addrtosubnet(&b->peer_client, &that_client));
-			/* negotiationshunt must be wider than bare shunt, esp on NETKEY */
-			setportof(0, &this_client.addr);
-			setportof(0, &that_client.addr);
-
-			DBG(DBG_CONTROL, DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
-				(b->negotiation_shunt == SPI_PASS) ? "pass" : 
-					(b->negotiation_shunt == SPI_HOLD) ? "hold" : "unknown?"));
-
-			// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
-			if (!raw_eroute(&b->our_client, &this_client,
-				&b->peer_client, &that_client,
-				htonl(b->negotiation_shunt),
-				htonl(b->failure_shunt),
-				SA_INT, 0, /* transport_proto */
-				ET_INT, null_proto_info,
-				deltatime(SHUNT_PATIENCE),
-				DEFAULT_IPSEC_SA_PRIORITY,
-				ERO_ADD, addwidemsg
-#ifdef HAVE_LABELED_IPSEC
-				, NULL
-#endif
-				)) 
-			{
-				libreswan_log("adding bare wide passthrough negotiationshunt failed");
-			} else {
-				DBG(DBG_CONTROLMORE, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
-				add_bare_shunt(&this_client, &that_client, 0 /* broadened transport_proto */, SPI_HOLD, addwidemsg);
-			}
-			/* now delete the (obsoleted) narrow bare kernel shunt - we have a broadened negotiationshunt replacement installed */
-			if (!delete_bare_shunt(&b->our_client, &b->peer_client,
-				b->transport_proto, SPI_HOLD /* kernel dictated */, delmsg))
-			{
-				libreswan_log("Failed to: %s", delmsg);
-			} else {
-				DBG(DBG_CONTROLMORE, DBG_log("success taking down narrow bare shunt : %s", delmsg));
-			}
-		}
 
 		/* handle any DNS answer; select next step */
 
 		switch (b->step) {
 		case fos_start:
+
+			if (b->negotiation_shunt != SPI_HOLD ||
+				(b->transport_proto != 0 ||
+				portof(&b->our_client) != 0 ||
+				portof(&b->peer_client) != 0))
+			{
+				char *delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
+				char *addwidemsg = "oe-negotiating";
+	        		ip_subnet this_client, that_client;
+	
+	        		happy(addrtosubnet(&b->our_client, &this_client));
+	        		happy(addrtosubnet(&b->peer_client, &that_client));
+				/* negotiationshunt must be wider than bare shunt, esp on NETKEY */
+				setportof(0, &this_client.addr);
+				setportof(0, &that_client.addr);
+	
+				DBG(DBG_CONTROL, DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
+					(b->negotiation_shunt == SPI_PASS) ? "pass" : 
+						(b->negotiation_shunt == SPI_HOLD) ? "hold" : "unknown?"));
+	
+				// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
+				if (!raw_eroute(&b->our_client, &this_client,
+					&b->peer_client, &that_client,
+					htonl(b->negotiation_shunt),
+					htonl(b->failure_shunt),
+					SA_INT, 0, /* transport_proto */
+					ET_INT, null_proto_info,
+					deltatime(SHUNT_PATIENCE),
+					DEFAULT_IPSEC_SA_PRIORITY,
+					ERO_ADD, addwidemsg
+	#ifdef HAVE_LABELED_IPSEC
+					, NULL
+	#endif
+					)) 
+				{
+					libreswan_log("adding bare wide passthrough negotiationshunt failed");
+				} else {
+					DBG(DBG_CONTROLMORE, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
+					add_bare_shunt(&this_client, &that_client, 0 /* broadened transport_proto */, SPI_HOLD, addwidemsg);
+				}
+				/* now delete the (obsoleted) narrow bare kernel shunt - we have a broadened negotiationshunt replacement installed */
+				if (!delete_bare_shunt(&b->our_client, &b->peer_client,
+					b->transport_proto, SPI_HOLD /* kernel dictated */, delmsg))
+				{
+					libreswan_log("Failed to: %s", delmsg);
+				} else {
+					DBG(DBG_CONTROLMORE, DBG_log("success taking down narrow bare shunt : %s", delmsg));
+				}
+			}
+
 			if (c != NULL && ((c->policy & POLICY_RSASIG) == LEMPTY)) {
 				/* no dns queries to find the gateway. create one here */
 				if (c->policy & POLICY_AUTH_NULL) {
@@ -1160,7 +1162,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				       ipstr(&ac->gateways_from_dns->gw_id.ip_addr, &b3));
 
 				/*
-				 * Replace negotiatio_nshunt with failure_shunt
+				 * Replace negotiation_shunt with failure_shunt
 				 * The type of replacement *ought* to be
 				 * specified by policy, but we did not find a connection, so
 				 * default to HOLD
@@ -1240,9 +1242,10 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			 * This case has been handled already.
 			 */
 		} else if (ugh != NULL) {
-			b->policy_prio = c->prio;
-			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
-			b->failure_shunt = shunt_policy_spi(c, FALSE);
+			/* i dont think this can happen without DNS, and then these value are already set */
+			// b->policy_prio = c->prio;
+			// b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+			// b->failure_shunt = shunt_policy_spi(c, FALSE);
 			cannot_oppo(c, b, ugh);
 		} else if (next_step == fos_done) {
 			/* nothing to do */
