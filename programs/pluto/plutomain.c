@@ -1054,6 +1054,8 @@ int main(int argc, char **argv)
 			strict_crl_policy =
 				cfg->setup.options[KBF_STRICTCRLPOLICY];
 
+			pluto_shunt_lifetime = deltatime(cfg->setup.options[KBF_SHUNTLIFETIME]);
+
 			strict_ocsp_policy =
 				cfg->setup.options[KBF_STRICTOCSPPOLICY];
 
@@ -1620,10 +1622,10 @@ void show_setup_plutomain()
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, perpeerlog=%s",
+		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shunt_lifetime=%lu",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
-		!log_to_perpeer ? "no" : base_perpeer_logdir);
+		!log_to_perpeer ? "no" : base_perpeer_logdir, deltasecs(pluto_shunt_lifetime));
 
 	whack_log(RC_COMMENT,
 		"ddos-cookies-treshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",

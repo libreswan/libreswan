@@ -3270,9 +3270,9 @@ void expire_bare_shunts()
 	for (bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
-		char *msg = "expire_bare_shunt_event called for deletion";
+		char *msg = "expire_bare_shunt";
 
-		if (age > 60) {
+		if (age > deltasecs(pluto_shunt_lifetime)) {
 			DBG(DBG_CONTROL, DBG_log("Expired shunt(%s)", bsp->why));
 			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
 				bsp->transport_proto, ntohs(bsp->said.spi), msg);

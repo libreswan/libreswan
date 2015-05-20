@@ -386,6 +386,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  NOT_ENUM },
 	{ "crlcheckinterval", kv_config, kt_time,     KBF_CRLCHECKINTERVAL,
 	  NOT_ENUM },
+	{ "shuntlifetime",    kv_config, kt_time, KBF_SHUNTLIFETIME, NOT_ENUM },
 	{ "force_busy",     kv_config | kv_alias, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },	/* obsolete _ */
 	{ "force-busy",     kv_config, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },
 	{ "ddos-mode",     kv_config | kv_processed , kt_enum, KBF_DDOS_MODE, &kw_ddos_list },

@@ -964,6 +964,7 @@ enum ikev1_ipsec_attr {
 
 #define SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* RFC2407 4.5 */
 #define PLUTO_SA_LIFE_DURATION_DEFAULT (8 * secs_per_hour) /* pluto(8) */
+#define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute / 6 ) /* our policy */
 #define SA_LIFE_DURATION_MAXIMUM secs_per_day
 
