@@ -676,10 +676,11 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		/* shunt route */
 		switch (ntohl(new_spi)) {
 		case SPI_PASS:
+			DBG_log("netlink_raw_eroute: SPI_PASS");
 			policy = IPSEC_POLICY_NONE;
 			break;
 		case SPI_HOLD:
-			DBG_log("netlink_raw_eroute: SPI_HOLD?!?");
+			DBG_log("netlink_raw_eroute: SPI_HOLD (used to be no-op??)");
 			/* FALL THROUGH */
 		case SPI_DROP:
 		case SPI_REJECT:
