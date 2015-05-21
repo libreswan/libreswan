@@ -829,11 +829,11 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		 * Only needed if we this was triggered by a packet, not by whack
 		 */
 		if (b->held) {
-			if (assign_holdpass(c, sr, b->transport_proto, b->failure_shunt,
+			if (assign_holdpass(c, sr, b->transport_proto, b->negotiation_shunt,
 					   &b->our_client, &b->peer_client)) {
-				DBG(DBG_CONTROL, DBG_log("initiate_ondemand_body() installed failureshunt"));
+				DBG(DBG_CONTROL, DBG_log("initiate_ondemand_body() installed negotiation_shunt,"));
 			} else {
-				libreswan_log("initiate_ondemand_body() failed to install failureshunt");
+				libreswan_log("initiate_ondemand_body() failed to install negotiation_shunt,");
 			}
 		}
 
@@ -907,8 +907,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
 				if (!raw_eroute(&b->our_client, &this_client,
 					&b->peer_client, &that_client,
+					htonl(SPI_HOLD), /* kernel induced */
 					htonl(b->negotiation_shunt),
-					htonl(b->failure_shunt),
 					SA_INT, 0, /* transport_proto */
 					ET_INT, null_proto_info,
 					deltatime(SHUNT_PATIENCE),
@@ -945,18 +945,10 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 					nullgw.gw_id.ip_addr = b->peer_client;
 					c->gw_info = clone_thing(nullgw, "nullgw info");
 				}
-				next_step = fos_his_client;
-				b->step = fos_his_client; /* skip all DNS */
-				if (initiate_ondemand_body(b, ac, ac_ugh
-#ifdef HAVE_LABELED_IPSEC
-						, uctx 
-#endif
-						))
-				{
-					DBG(DBG_CONTROLMORE, DBG_log("initiate_ondemand_body() returned successfully"));
-				} else {
-					libreswan_log("initiate_ondemand_body() failed!");
-				}
+
+				b->step = fos_his_client;
+				libreswan_log("Going to hell... bring hand basket");
+				goto hell;
 			} else {
 			   	DBG_log("just starting out: select first query step");
 				/* just starting out: select first query step */
@@ -1131,6 +1123,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 		break;
 
+hell:
 		case fos_his_client: /* IPSECKEY for his client */
 		{
 			/* We've finished last DNS queries: IPSECKEY for his client.
@@ -1190,10 +1183,10 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
 				if (b->held) { /* packet triggered - not whack triggered */
-					DBG(DBG_CONTROL, DBG_log("installing failureshunt from bundle"));
+					DBG(DBG_CONTROL, DBG_log("assigning negotiation_shunt to connection"));
 					if (assign_holdpass(c, &c->spd,
 						   b->transport_proto,
-						   b->failure_shunt,
+						   b->negotiation_shunt,
 						   &b->our_client,
 						   &b->peer_client)) {
 						DBG(DBG_CONTROL, DBG_log("assign_holdpass succeeded"));
@@ -1243,13 +1236,13 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			 */
 		} else if (ugh != NULL) {
 			/* i dont think this can happen without DNS, and then these value are already set */
-			// b->policy_prio = c->prio;
-			// b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
-			// b->failure_shunt = shunt_policy_spi(c, FALSE);
+			b->policy_prio = c->prio;
+			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+			b->failure_shunt = shunt_policy_spi(c, FALSE);
 			cannot_oppo(c, b, ugh);
 		} else if (next_step == fos_done) {
 			/* nothing to do */
-			DBG_log("fos_done - should we enter continue_oppo ?");
+			DBG_log("fos_done - whatever happens will happen");
 		} else {
 			DBG_log("setup up the next query");
 			/* set up the next query */
