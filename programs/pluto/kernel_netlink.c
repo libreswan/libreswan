@@ -2389,7 +2389,7 @@ const struct kernel_ops netkey_kernel_ops = {
 	 * We should implement netlink_remove_orphaned_holds
 	 * if netlink  specific changes are needed.
 	 */
-	.remove_orphaned_holds = pfkey_remove_orphaned_holds,
+	.remove_orphaned_holds = NULL, /* only used for klips /proc scanner */
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
 };
