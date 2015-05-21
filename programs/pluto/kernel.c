@@ -1321,7 +1321,7 @@ bool assign_holdpass(struct connection *c,
 		}
 	}
 	sr->routing = rn;
-	DBG(DBG_CONTROL, DBG_log(" assign_holdpas() done - returning success"));
+	DBG(DBG_CONTROL, DBG_log(" assign_holdpass() done - returning success"));
 	return TRUE;
 }
 
