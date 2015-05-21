@@ -680,7 +680,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			policy = IPSEC_POLICY_NONE;
 			break;
 		case SPI_HOLD:
-			DBG_log("netlink_raw_eroute: SPI_HOLD (used to be no-op??)");
+			DBG_log("netlink_raw_eroute: SPI_HOLD (used to be no-op)");
 			/* FALL THROUGH */
 		case SPI_DROP:
 		case SPI_REJECT:
