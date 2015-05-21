@@ -3209,13 +3209,20 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 	switch (ro) {
 	case RT_UNROUTED_HOLD:
 		rn = RT_UNROUTED;
+		DBG(DBG_CONTROL, DBG_log("orphan_holdpass unrouted: hold -> pass"));
+		break;
+	case RT_UNROUTED:
+		rn = RT_UNROUTED_HOLD;
+		DBG(DBG_CONTROL, DBG_log("orphan_holdpass unrouted: pass -> hold"));
 		break;
 	case RT_ROUTED_HOLD:
 		rn = RT_ROUTED_PROSPECTIVE;
+		DBG(DBG_CONTROL, DBG_log("orphan_holdpass routed: hold -> trap (?)"));
 		break;
 	default:
 		DBG(DBG_CONTROL, DBG_log(
-			"no routing change needed - negotiation shunt matched failure shunt"));
+			"no routing change needed for ro=%s - negotiation shunt matched failure shunt?", 
+			enum_name(&routing_story, ro)));
 		break;
 	}
 
