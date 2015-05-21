@@ -45,19 +45,14 @@ CFLAGS+=$(NSSFLAGS)
 
 ARFLAGS=crvs
 
-.PHONY:	all install clean l t lt tar check
-
-SHOULDWERESTART=$(wildcard whacklib.c)
-ifeq ($(SHOULDWERESTART),whacklib.c)
-all programs clean install install-programs:
-	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/libwhack && make $@
-else
-all:	$(LIB) ${LIBL}
-programs: $(LIB) ${LIBL}
-clean:	cleanall
-# XXX: Hack so that "make install" always works
-install-local-programs: $(LIB)
-endif
+# XXX: Switch directory hack
+local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) buildall
+clean-local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) cleanall
+buildall: $(LIB)
+list-local-base:
+	@: never nothing to do
 
 $(LIB): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJS)

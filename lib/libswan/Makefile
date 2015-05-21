@@ -88,19 +88,14 @@ ARFLAGS=crvs
 EXTHDRS=des.h
 EXTLIBS=libdes.a
 
-.PHONY:	all clean l t lt tar check depend
-
-SHOULDWERESTART=$(wildcard ttodata.3.xml)
-ifeq ($(SHOULDWERESTART),ttodata.3.xml)
-all programs clean:
-	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/libswan && make $@
-else
-all:	$(LIBA) ${LIBL}
-programs: $(LIBA) ${LIBL}
-clean:	cleanall
-# XXX: hack to get liba built
-install-local-programs: $(LIBA) $(LIBL)
-endif
+# XXX: Switch directory hack
+local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) buildall
+clean-local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) cleanall
+buildall: $(LIBA) $(LIBL)
+list-local-base:
+	@: never nothing to do
 
 $(LIBA): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIBA) $(OBJS)

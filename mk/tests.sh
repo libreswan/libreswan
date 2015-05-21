@@ -11,11 +11,12 @@ do
     case "$target" in
 	"#"* ) ;;
 	* )
-	    if test ! -r "mk/$target .log"
+	    log=$(echo mk/make $target | tr '[ ]' '[_]')
+	    if test ! -r $log.log
 	    then
 		rm -rf OBJ.*
-		make $j $target | tee "mk/$target .tmp"
-		mv  "mk/$target .tmp"  "mk/$target .log"
+		make $j $target | tee $log.tmp
+		mv $log.tmp $log.log
 	    fi
 	    ;;
     esac
@@ -32,7 +33,7 @@ clean
 distclean
 #check
 #installcheck
-dist
+#dist
 #
 # Standard combinations
 #
@@ -41,11 +42,13 @@ all install distclean
 #
 # Local variants
 #
-clean-manpages manpages clean-manpages
+programs
+clean-manpages manpages install-manpages clean-manpages
+clean-base base install-base clean-base
 install_file_list
 EOF
 
-exit 1
+exit 0
 
 # Minimum support in sub-directories:
 find lib programs -name Makefile -print | while read makefile ; do
