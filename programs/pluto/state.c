@@ -77,7 +77,8 @@
 #include <pk11pub.h>
 #include <keyhi.h>
 
-void update_state_stats(struct state *st, enum state_kind new_state);
+static void update_state_stats(struct state *st, enum state_kind old_state,
+			       enum state_kind new_state);
 
 /*
  * Global variables: had to go somewhere, might as well be this file.
@@ -94,104 +95,245 @@ u_int16_t pluto_nflog_group = 0;	/* default NFLOG group - 0 means no logging */
 
 /* for DDoS tracking, used in change_state */
 static unsigned int state_count[MAX_STATES];
-static unsigned int st_total;
-static unsigned int st_children;	/* duplicates states for IPsec SAs */
-static unsigned int st_parents;	/* new states for IKE SAs */
-/* all I-0 IKE SAs - initiating (and responding because of OE) */
-static unsigned int st_half_open;
-/* established peer IKE SAs that used AUTH_NULL */
-static unsigned int st_anonymous;
-/* established authenticated peer IKE SAs */
-static unsigned int st_authenticated;
 
 void change_state(struct state *st, enum state_kind new_state)
 {
 	enum state_kind old_state = st->st_state;
+
+	/*
+	 * This always logs the state transition (even when nothing
+	 * happens), and the state category.
+	 */
+	update_state_stats(st, old_state, new_state);
 
 	if (new_state == old_state)
 		return;
 
 	log_state(st, new_state);
 	st->st_state = new_state;
-
-	update_state_stats(st, old_state);
 }
 
-void update_state_stats(struct state *st, enum state_kind old_state)
+/* non-intersecting state categories */
+struct state_category {
+	const char *description;
+	unsigned int count;
+};
+
+struct {
+	struct state_category ignore;
+	struct state_category half_open_ike;
+	struct state_category open_ike;
+	struct state_category anonymous_ike;
+	struct state_category authenticated_ike;
+	struct state_category child_sa;
+	struct state_category informational;
+	struct state_category unknown;
+} category = {
+	.ignore = { .description = "ignore" },
+	.half_open_ike = { .description = "half-open-ike" },
+	.open_ike = { .description = "open-ike" },
+	.anonymous_ike = { .description = "established-anonymous-ike" },
+	.authenticated_ike = { .description = "established-authenticated-ike" },
+	.child_sa = { .description = "child_sa", },
+	.informational = { .description = "informational", },
+	.unknown = { .description = "unknown", },
+};
+
+/* space for unknown as well */
+static unsigned int total_established_ike(void)
 {
-	struct connection *c = st->st_connection;
-	enum state_kind new_state = st->st_state;
-	enum state_kind s;
+	return (category.anonymous_ike.count +
+		category.authenticated_ike.count);
+}
 
-	/* don't count STATE_UNDEFINED */
-	if (old_state != STATE_UNDEFINED)
-		state_count[old_state]--;
-	if (new_state != STATE_UNDEFINED)
-		state_count[new_state]++;
+static unsigned int total_ike(void)
+{
+	return (category.half_open_ike.count +
+		category.open_ike.count +
+		total_established_ike());
+}
 
-	st_total = st_parents = st_children = 0;
-	/* skip counting STATE_UNDEFINED states */
-	for (s = 1; s < MAX_STATES; s++) {
-		if (IS_IKE_STATE(s)) {
-			st_parents += state_count[s];
-		} else {
-			st_children += state_count[s];
-		}
-	}
-	st_total = st_parents + st_children;
-	/*
-	 * we count I1 as half-open too because with OE, a plaintext
-	 * packet (that is spoofed) will trigger an outgoing IKE SA
-	 *
-	 * we could do better and check POLICY_OPPORTUNISTIC on I1's
-	 */
-	st_half_open = state_count[STATE_AGGR_R0] +
-		state_count[STATE_AGGR_I1] +
-		state_count[STATE_MAIN_R0] +
-		state_count[STATE_MAIN_I1] +
-		state_count[STATE_PARENT_R1] +
-		state_count[STATE_PARENT_I1];
+static unsigned int total_child_sa(void)
+{
+	return category.child_sa.count;
+}
+
+static unsigned int total()
+{
+	return total_child_sa() + total_ike() + category.unknown.count;
+}
+
+static struct state_category *categorize_state(struct state *st,
+					       enum state_kind state)
+{
+	bool is_parent = IS_PARENT_SA(st);
+	struct state_category *established_category
+		= ((st->st_connection != NULL &&
+		    st->st_connection->policy & POLICY_OPPORTUNISTIC)
+		   ? &category.anonymous_ike
+		   : &category.authenticated_ike);
 
 	/*
-	 * st_anonymous and st_authenticated only count IKE SAs not IPsec SAs
+	 * Use a switch with no default so that missing and extra
+	 * states get a -Wswitch diagnostic
 	 */
-	if (IS_PARENT_SA(st)) {
-		/* we have to count auth/anon based on connection property */
-		if (new_state == STATE_UNDEFINED) {
-			/* this is a delete */
-			if (c == NULL || c->policy & POLICY_OPPORTUNISTIC) {
-				st_anonymous--;
-			} else {
-				st_authenticated--;
-			}
-		}
-		if (old_state == STATE_UNDEFINED) {
-			/* this is an add - always unauth/anon at first */
-			st_anonymous++;
-		}
+	switch (state) {
+		     
 		/*
-		 * check changed state for change from unauthenticated
-		 * -> authenticated (count auth_null as unauthenticated)
+		 * IKEv2 initiators, while the INIT packet is being
+		 * constructed, are in STATE_IKEv2_BASE.  Only when
+		 * the packet is sent out do they transition into
+		 * STATE_PARENT_I1 and start being counted as
+		 * half-open.
 		 */
-		if (new_state == STATE_PARENT_I3 || new_state == STATE_PARENT_R2 ||
-			new_state == STATE_MAIN_I4 || new_state == STATE_MAIN_R3 ||
-			new_state == STATE_AGGR_I2 || new_state == STATE_AGGR_R2)
-			
-			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				st_anonymous--;
-				st_authenticated++;
-			}
-	} /* we don't track anony/auth for child sa's */
-	DBG(DBG_CONTROLMORE, DBG_log("%d total, %d children and %d parents of which %d anon and %d authenticated and %d half_open",
-		st_total, st_children, st_parents, st_anonymous, st_authenticated, st_half_open));
-#if 0
-	/* known to mismatch for now */
-	pexpect(st_parents == st_anonymous + st_authenticated);
-#endif
+	case STATE_IKEv2_BASE:
+	case STATE_IKEv2_ROOF:
+	case STATE_UNDEFINED:
+	case STATE_IKE_ROOF:
+		return &category.ignore;
+		
+		/*
+		 * Count I1 as half-open too because with OE,
+		 * a plaintext packet (that is spoofed) will
+		 * trigger an outgoing IKE SA
+		 *
+		 * we could do better and check
+		 * POLICY_OPPORTUNISTIC on I1's
+		 */
+	case STATE_PARENT_I1:
+	case STATE_PARENT_R1:
+	case STATE_AGGR_R0:
+	case STATE_AGGR_I1:
+	case STATE_MAIN_R0:
+	case STATE_MAIN_I1:
+		return &category.half_open_ike;
+
+		/*
+		 * All IKEv1 MAIN modes except the first
+		 * (half-open) and last ones are not
+		 * authenticated.
+		 */
+	case STATE_PARENT_I2:
+	case STATE_MAIN_R1:
+	case STATE_MAIN_R2:
+	case STATE_MAIN_I2:
+	case STATE_MAIN_I3:
+	case STATE_AGGR_R1:
+		return &category.open_ike;
+
+		/*
+		 * IKEv1 established states.
+		 *
+		 * XAUTH, seems to a second level of authentication
+		 * performed after the connection is established and
+		 * authenticated.
+		 */
+	case STATE_MAIN_I4:
+	case STATE_MAIN_R3:
+	case STATE_AGGR_I2:
+	case STATE_AGGR_R2:
+	case STATE_XAUTH_I0:
+	case STATE_XAUTH_I1:
+	case STATE_XAUTH_R0:
+	case STATE_XAUTH_R1:
+		return established_category;
+
+		/*
+		 * IKEv2 established states.
+		 */
+	case STATE_PARENT_I3:
+	case STATE_PARENT_R2:
+	case STATE_IKESA_DEL:
+		return established_category;
+
+		/*
+		 * Some internal state, will it ever occure?
+		 */
+	case OPPO_ACQUIRE:
+	case OPPO_GW_DISCOVERED:
+		return &category.unknown;
+
+		/*
+		 * IKEv1: QUICK is for child connections children.
+		 * Probably won't occure as a parent?
+		 */
+	case STATE_QUICK_I1:
+	case STATE_QUICK_I2:
+	case STATE_QUICK_R0:
+	case STATE_QUICK_R1:
+	case STATE_QUICK_R2:
+		pexpect(!is_parent)
+		return &category.child_sa;
+
+		/*
+		 * IKEv1: Post established negotiation.
+		 */
+	case STATE_MODE_CFG_I1:
+	case STATE_MODE_CFG_R1:
+	case STATE_MODE_CFG_R2:
+		return established_category;
+		
+	case STATE_INFO:
+	case STATE_INFO_PROTECTED:
+	case STATE_MODE_CFG_R0:
+	case STATE_CHILDSA_DEL:
+		pexpect(!is_parent);
+		return &category.informational;
+	}
+
+	return &category.unknown;
+}
+
+void update_state_stats(struct state *st, enum state_kind old_state,
+			enum state_kind new_state)
+{
+	struct state_category *old_category = categorize_state(st, old_state);
+	struct state_category *new_category = categorize_state(st, new_state);
+
+	/*
+	 * Count everything except STATE_UNDEFINED et.al. All states
+	 * start and end in those states.
+	 */
+	if (old_category != &category.ignore) {
+		state_count[old_state]--;
+		old_category->count--;
+	}
+	if (new_category != &category.ignore) {
+		state_count[new_state]++;
+		new_category->count++;
+	}
+
+	DBG(DBG_CONTROLMORE,
+	    DBG_log("%s state #%lu: %s(%s) > %s(%s)",
+		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+		    enum_show(&state_names, old_state), old_category->description,
+		    enum_show(&state_names, new_state), new_category->description);
+	    struct state_category *state_category;
+	    int category_states = 0;
+	    for (state_category = (struct state_category *)&category;
+		 state_category < (struct state_category *)(&category+1);
+		 state_category++) {
+		    DBG_log("category %s: %d", state_category->description,
+			    state_category->count);
+		    category_states += state_category->count;
+	    }
+	    int count_states = 0;
+	    int s;
+	    for (s = STATE_MAIN_R0; s < MAX_STATES; s++) {
+		    count_states += state_count[s];
+	    }
+	    DBG_log("category states: %d count states: %d",
+		    category_states, count_states);
+	    pexpect(category_states == count_states));
+
+	/* catch / log unexpected cases */
+	pexpect(old_category != &category.unknown);
+	pexpect(new_category != &category.unknown);
+
 }
 
 /*
- * humanize_number: make large numbers clearer by expressing them as KB or MB,
+ * Humanize_number: make large numbers clearer by expressing them as KB or MB,
  * as appropriate.
  * The prefix is literally copied into the output.
  * Tricky representation: if the prefix starts with !, the number
@@ -312,7 +454,13 @@ struct state *new_state(void)
 	anyaddr(AF_INET, &st->hidden_variables.st_natd);
 
 	DBG(DBG_CONTROL, DBG_log("creating state object #%lu at %p",
-				st->st_serialno, (void *) st));
+				 st->st_serialno, (void *) st));
+	DBG(DBG_CONTROLMORE,
+	    struct state_category *category = categorize_state(st, st->st_state);
+	    DBG_log("%s state #%lu: new > %s(%s)",
+		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+		    enum_show(&state_names, st->st_state), category->description));
+	
 	return st;
 }
 
@@ -479,7 +627,12 @@ void delete_state(struct state *st)
 	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
 	libreswan_log("deleting state #%lu (%s)", st->st_serialno,
-				enum_show(&state_names, st->st_state));
+		      enum_show(&state_names, st->st_state));
+	DBG(DBG_CONTROLMORE,
+	    struct state_category *category = categorize_state(st, st->st_state);
+	    DBG_log("%s state #%lu: %s(%s) > delete",
+		    IS_PARENT_SA(st) ? "parent" : "child", st->st_serialno,
+		    enum_show(&state_names, st->st_state), category->description));
 
 #ifdef USE_LINUX_AUDIT
 	/*
@@ -987,15 +1140,14 @@ struct state *duplicate_state(struct state *st)
 {
 	struct state *nst;
 
-	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu",
-				 st->st_serialno));
-
 	/* record use of the Phase 1 / Parent state */
 	st->st_outbound_count++;
 	st->st_outbound_time = mononow();
 
 	nst = new_state();
-	st_children++;
+
+	DBG(DBG_CONTROL, DBG_log("duplicating state object #%lu as #%lu",
+				 st->st_serialno, nst->st_serialno));
 
 	memcpy(nst->st_icookie, st->st_icookie, COOKIE_SIZE);
 	memcpy(nst->st_rcookie, st->st_rcookie, COOKIE_SIZE);
@@ -1765,12 +1917,14 @@ void show_states_status(bool list_traffic)
 		whack_log(RC_COMMENT, "State Information: DDoS cookies %s, %s new IKE connections",
 			require_ddos_cookies() ? "REQUIRED" : "not required",
 			drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
-
-		whack_log(RC_COMMENT, "IKE SAs: total(%d), half-open(%d), authenticated(%d), anonymous(%d)",
-			st_total - st_children, st_half_open,
-			st_authenticated, st_anonymous);
+		
+		whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), authenticated(%u), anonymous(%u)",
+			  total_ike(),
+			  category.half_open_ike.count,
+			  category.authenticated_ike.count,
+			  category.anonymous_ike.count);
 		whack_log(RC_COMMENT, "IPsec SAs: total(%d), anonymous(<todo>)",
-			st_children);
+			  total_child_sa());
 		whack_log(RC_COMMENT, " ");             /* spacer */
 	}
 
@@ -2037,24 +2191,29 @@ bool require_ddos_cookies()
 {
 	return (pluto_ddos_mode == DDOS_FORCE_BUSY) ||
 		((pluto_ddos_mode == DDOS_AUTO) &&
-			(st_half_open >= pluto_ddos_treshold));
+		 (category.half_open_ike.count >= pluto_ddos_treshold));
 }
 
 bool drop_new_exchanges()
 {
-	return st_half_open >= pluto_max_halfopen;
+	return category.half_open_ike.count >= pluto_max_halfopen;
 }
 
 void show_globalstate_status(void)
 {
 	enum state_kind s;
 
-	whack_log(RC_COMMENT, "~states.total %d",st_total);
-	whack_log(RC_COMMENT, "~states.ipsec %d",st_children);
-	whack_log(RC_COMMENT, "~states.ike %d",st_parents);
-	whack_log(RC_COMMENT, "~states.ike.anonymous %d",st_anonymous);
-	whack_log(RC_COMMENT, "~states.ike.authenticated %d",st_authenticated);
-	whack_log(RC_COMMENT, "~states.ike.halfopen %d",st_half_open);
+	whack_log(RC_COMMENT, "~states.total %d", total());
+	whack_log(RC_COMMENT, "~states.child %d", total_child_sa());
+	whack_log(RC_COMMENT, "~states.ike %d", total_ike());
+	whack_log(RC_COMMENT, "~states.ike.anonymous %d",
+		  category.anonymous_ike.count);
+	whack_log(RC_COMMENT, "~states.ike.authenticated %d",
+		  category.authenticated_ike.count);
+	whack_log(RC_COMMENT, "~states.ike.halfopen %d",
+		  category.half_open_ike.count);
+	whack_log(RC_COMMENT, "~states.ike.open %d",
+		  category.open_ike.count);
 	whack_log(RC_COMMENT, "~states.ike.ddos_threshold %d",pluto_ddos_treshold);
 	whack_log(RC_COMMENT, "~states.ike.max.all %d",pluto_max_halfopen);
 	for (s = STATE_MAIN_R0; s < MAX_STATES; s++)

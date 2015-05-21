@@ -148,7 +148,7 @@ static const char *const state_name[] = {
 	"STATE_IKE_ROOF",
 
 	/* v2 */
-	"STATE_IKEv2_START",
+	"STATE_IKEv2_BASE",
 	"STATE_PARENT_I1",
 	"STATE_PARENT_I2",
 	"STATE_PARENT_I3",
