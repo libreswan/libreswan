@@ -692,6 +692,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			return TRUE; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:
+		case 0: /* used with type=passthrough - can it not use SPI_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
 			break;
 		case SPI_TRAP:
