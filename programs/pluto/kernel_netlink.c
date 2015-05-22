@@ -680,20 +680,29 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			policy = IPSEC_POLICY_NONE;
 			break;
 		case SPI_HOLD:
-			DBG_log("netlink_raw_eroute: SPI_HOLD (used to be no-op)");
-			/* FALL THROUGH */
+			/*
+			 * We don't know how to implement %hold, but it is okay
+			 * When we need a hold, the kernel XFRM acquire state
+			 * will do the job (by dropping, not holding the packet)
+			 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
+			 * After expiration, the underlying policy causing the original acquire
+			 * will fire again, dropping further packets.
+			 */
+			DBG_log("netlink_raw_eroute: SPI_HOLD implemented by faery dust, not a SPI_HOLD policy");
+			return TRUE; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:
-		default:
 			policy = IPSEC_POLICY_DISCARD;
 			break;
 		case SPI_TRAP:
-		case SPI_TRAPSUBNET:
 			if (sadb_op == ERO_ADD_INBOUND ||
 				sadb_op == ERO_DEL_INBOUND)
 				return TRUE;
 
 			break;
+		case SPI_TRAPSUBNET: /* unused in our code */
+		default:
+			bad_case(ntohl(new_spi));
 		}
 		break;
 	default:
