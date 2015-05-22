@@ -930,7 +930,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				{
 					libreswan_log("Failed to: %s", delmsg);
 				} else {
-					DBG(DBG_CONTROLMORE, DBG_log("success taking down narrow bare shunt : %s", delmsg));
+					DBG(DBG_CONTROLMORE, DBG_log("success taking down narrow bare shunt"));
 				}
 			}
 
