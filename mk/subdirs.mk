@@ -29,25 +29,8 @@ $(error Extra targets in $(SUBDIR_TARGETS))
 endif
 .PHONY: $(SUBDIR_TARGETS)
 
-# generate $(TARGET) variable name, where TARGET is the current
-# target.  Uses $@ so only works within the target rule below.
-mk.target = $(shell echo $@ | tr '[-a-z]' '[_A-Z]')
-
-# Define recursive targets for anything not broken.
-#
-# Use standard backward filter trick to skip directories found in
-# $(BROKEN_$(TARGET)_SUBDIRS) and should not be built.
-
 $(filter-out $(BROKEN_TARGETS),$(SUBDIR_TARGETS) $(GLOBAL_TARGETS)):
 	@set -eu ; \
-	subdirs="$(SUBDIRS)" ; \
-	broken="$(strip $(BROKEN_$(mk.target)_SUBDIRS))" ; \
-	for d in $$subdirs ; do \
-		case " $$broken " in \
-		*" $$d "* ) \
-			echo "" ; \
-			echo "SKIPPING: make $(basename $@) in $$d" ; \
-			echo "" ;; \
-		*) $(MAKE) -C $$d $(basename $@) ;; \
-		esac ; \
+	for d in $(SUBDIRS) ; do \
+		$(MAKE) -C $$d $(basename $@) ; \
 	done

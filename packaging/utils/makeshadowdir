@@ -53,7 +53,7 @@ include ../mk/dirs.mk
 
 include \${top_srcdir}/Makefile.top
 
-programs config man install clean checkprograms install-programs::
+programs config man install clean install-programs::
 	set -e ; \\
 	for d in \$(SUBDIRS) ; \\
 	do \\

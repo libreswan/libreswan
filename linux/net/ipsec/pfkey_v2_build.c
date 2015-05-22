@@ -236,13 +236,13 @@ int pfkey_sa_builds(struct sadb_ext **pfkey_ext,
 		SENDERR(EINVAL);
 	}
 
-#if SADB_AALG_MAX < 255
-	if (sab.sa_base.sadb_sa_auth > SADB_AALG_MAX) {
+#if K_SADB_AALG_MAX < 255
+	if (sab.sa_base.sadb_sa_auth > K_SADB_AALG_MAX) {
 		DEBUGGING(PF_KEY_DEBUG_BUILD,
 			  "pfkey_sa_build: "
-			  "auth=%d > SADB_AALG_MAX=%d.\n",
+			  "auth=%d > K_SADB_AALG_MAX=%d.\n",
 			  sab.sa_base.sadb_sa_auth,
-			  SADB_AALG_MAX);
+			  K_SADB_AALG_MAX);
 		SENDERR(EINVAL);
 	}
 #endif

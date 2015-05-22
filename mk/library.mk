@@ -36,20 +36,14 @@ CFLAGS+=$(USERLAND_CFLAGS)
 
 ARFLAGS=crvs
 
-.PHONY:	all install clean l t lt tar check checkprograms
-
-SHOULDWERESTART=$(wildcard ${ONEFILE})
-ifeq ($(SHOULDWERESTART),${ONEFILE})
-all programs man config clean:
-	set -e ; \
-	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/lib/lib${LIBRARY} && ${MAKE} $@
-else
-all:	$(LIB) 
-programs: $(LIB) 
-clean:	cleanall
-# XXX: Hack until build works from either directory
-install-local-programs: $(LIB)
-endif
+# XXX: Switch directory hack
+local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) buildall
+clean-local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) cleanall
+buildall: $(LIB)
+list-local-base:
+	@: never nothing to do
 
 $(LIB): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIB) $(OBJS)
