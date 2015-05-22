@@ -1,0 +1,3 @@
+this test is identical to newoe-4 except it uses 
+negotiationshunt=hold for private-or-clear and packetdefault
+
