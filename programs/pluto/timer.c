@@ -338,14 +338,8 @@ static void retransmit_v2_msg(struct state *st)
 
 	if (LIN(POLICY_AUTH_NULL | POLICY_OPPORTUNISTIC, c->policy)) {
 		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
-		DBG(DBG_CONTROL, DBG_log("timeout for OE, orphaning hold with failureshunt"));
 
-		/* do we need to update negotiationshunt to failureshunt? */
-		if (failure_shunt != (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_DROP) {
-			DBG(DBG_CONTROL, DBG_log("failureshunt != negotiationshunt, needs replacing"));
-		} else {
-			DBG(DBG_CONTROL, DBG_log("failureshunt == negotiationshunt, no replace needed"));
-		}
+		DBG(DBG_CONTROL, DBG_log("timeout for OE, orphaning hold with failureshunt"));
 
 		orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt);
 		DBG(DBG_CONTROL, DBG_log("orphaned, state & connection can now safely be deleted"));
