@@ -17,7 +17,7 @@ RUN yum install -y wget vim-enhanced bison flex gmp-devel nss-devel \
  audit-libs-devel strace unbound pexpect strongswan net-tools bind-utils \
  rpm-build nc psmisc lsof valgrind ElectricFence yum-utils screen xl2tpd i\
  curl-devel pam-devel redhat-rpm-config openldap-devel hping3 nmap mtr \
- libevent-devel pyOpenSSL;
+ libevent-devel pyOpenSSL xmlto;
  yum clean all
 RUN debuginfo-install -y ElectricFence audit-libs cyrus-sasl glibc keyutils \
  krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux \
