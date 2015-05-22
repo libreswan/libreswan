@@ -647,7 +647,8 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	struct state *st = md->st;
 
 	/* What we know is little.  And exact mask is LEMPTY. */
-	const lset_t policy = POLICY_IKEV2_ALLOW;
+	const lset_t policy = POLICY_IKEV2_ALLOW | POLICY_PSK | POLICY_RSASIG;
+	const lset_t policy_null = POLICY_IKEV2_ALLOW | POLICY_AUTH_NULL;
 
 	struct connection *c = NULL;
 
@@ -655,6 +656,15 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 			md->iface->port, &md->sender, md->sender_port, policy);
 	if (e != 0 )
 		return e;
+
+	if (c == NULL) {
+		stf_status e = ikev2_find_host_connection(&c,
+				&md->iface->ip_addr,
+				md->iface->port, &md->sender, md->sender_port,
+				policy_null);
+		if (e != 0 )
+			return e;
+	}
 
 	DBG(DBG_CONTROL, DBG_log("found connection: %s", c ? c->name : "<none>"));
 
