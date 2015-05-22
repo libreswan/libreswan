@@ -649,96 +649,12 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 	/* What we know is little.  And exact mask is LEMPTY. */
 	const lset_t policy = POLICY_IKEV2_ALLOW;
 
-	struct connection *c = find_host_connection(
-		&md->iface->ip_addr, md->iface->port,
-		&md->sender, md->sender_port,
-		policy, LEMPTY);
+	struct connection *c = NULL;
 
-	/* retrieve st->st_gi */
-
-	if (c == NULL) {
-		/* See if a wildcarded connection can be found.
-		 * We cannot pick the right connection, so we're making a guess.
-		 * All Road Warrior connections are fair game:
-		 * we pick the first we come across (if any).
-		 * If we don't find any, we pick the first opportunistic
-		 * with the smallest subnet that includes the peer.
-		 * There is, of course, no necessary relationship between
-		 * an Initiator's address and that of its client,
-		 * but Food Groups kind of assumes one.
-		 */
-		{
-			struct connection *d = find_host_connection(
-				&md->iface->ip_addr, pluto_port,
-				(ip_address*)NULL, md->sender_port,
-				policy, LEMPTY);
-
-			while (d != NULL) {
-				if (d->kind == CK_GROUP) {
-					/* ignore */
-				} else {
-					if (d->kind == CK_TEMPLATE &&
-					    !(d->policy & POLICY_OPPORTUNISTIC)) {
-						/* must be Road Warrior: we have a winner */
-						c = d;
-						break;
-					}
-
-					/* Opportunistic or Shunt: pick tightest match */
-					if (addrinsubnet(
-						&md->sender,
-						&d->spd.that.client) &&
-					    (c == NULL ||
-					     !subnetinsubnet(
-						&c->spd.that.client,
-						&d->spd.that.client))) {
-						c = d;
-					}
-				}
-				d = find_next_host_connection(d->hp_next,
-					policy, LEMPTY);
-			}
-		}
-		if (c == NULL) {
-			ipstr_buf b;
-
-			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no connection has been authorized with policy %s",
-				ipstr(&md->iface->ip_addr, &b),
-				ntohs(portof(&md->iface->ip_addr)),
-				bitnamesof(sa_policy_bit_names, policy));
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-		if (c->kind != CK_TEMPLATE) {
-			ipstr_buf b;
-
-			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
-			       " but \"%s\" forbids connection",
-			       ipstr(&md->iface->ip_addr, &b), pluto_port, c->name);
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			/* opporstunistic */
-			c = oppo_instantiate(c, &md->sender, &c->spd.that.id, NULL, &c->spd.this.host_addr, &md->sender);
-		} else {
-			/* regular roadwarrior */
-			c = rw_instantiate(c, &md->sender, NULL, NULL);
-		}
-	} else {
-		/* We found a non-wildcard connection.
-		 * Double check whether it needs instantiation anyway (eg. vnet=)
-		 */
-		/* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
-			DBG(DBG_CONTROL,
-			    DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
-			c = rw_instantiate(c, &md->sender, NULL, NULL);
-		} else if ((c->kind == CK_TEMPLATE) &&
-			   (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-			DBG(DBG_CONTROL,
-			    DBG_log("local endpoint has narrowing=yes - needs instantiation"));
-			c = rw_instantiate(c, &md->sender, NULL, NULL);
-		}
-	}
+	stf_status e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
+			md->iface->port, &md->sender, md->sender_port, policy);
+	if (e != 0 )
+		return e;
 
 	DBG(DBG_CONTROL, DBG_log("found connection: %s", c ? c->name : "<none>"));
 
