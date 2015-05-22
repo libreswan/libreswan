@@ -970,10 +970,32 @@ bool raw_eroute(const ip_address *this_host,
 #endif
 		       )
 {
-	char text_said[SATOT_BUF];
+	char text_said[SATOT_BUF + SATOT_BUF];
 	bool result;
 
-	set_text_said(text_said, that_host, new_spi, sa_proto);
+	switch (op) {
+	case ERO_ADD:
+	case ERO_ADD_INBOUND:
+		set_text_said(text_said, that_host, new_spi, sa_proto);
+		break;
+	case ERO_DELETE:
+	case ERO_DEL_INBOUND:
+		set_text_said(text_said, that_host, cur_spi, sa_proto);
+		break;
+	case ERO_REPLACE:
+	case ERO_REPLACE_INBOUND:
+	{
+		size_t w;
+
+		set_text_said(text_said, that_host, cur_spi, sa_proto);
+		w = strlen(text_said);
+		text_said[w] = '>';
+		set_text_said(text_said + w + 1, that_host, new_spi, sa_proto);
+		break;
+	}
+	default:
+		bad_case(op);
+	}
 
 	DBG(DBG_CONTROL | DBG_KERNEL,
 	    {
