@@ -1,6 +1,8 @@
 # Libreswan master makefile
+#
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -28,24 +30,19 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 SRCDIR?=$(shell pwd)/
 
 # dummy default rule
-def:
-	@echo "Please read the README for detailed build instructions"
+def help:
+	@echo "To build and install on a recent Linux kernel that has NETKEY:"
 	@echo
-	@echo "Commonly used build commands:"
+	@echo "   make all && sudo make install"
 	@echo
-	@echo "When using KLIPS:"
-	@echo " make module module_install programs install"
+	@echo "For a minimal install (no manpages) type:"
 	@echo
-	@echo "When using KLIPS with OCF:"
-	@echo " make CONFIG_KLIPS_OCF=y MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/ocf/config-all.hmodules module module_install programs install"
+	@echo "   make base && sudo make install-base"
 	@echo
-	@echo "When using NETKEY:"
-	@echo " make programs install"
-	@echo
-	@echo "When called in openwrt/packaging/libreswan/Makefile to build kmod-libreswan"
-	@echo " make MODULE_DEFCONFIG=$${LIBRESWANSRCDIR}/packaging/openwrt/defconfig MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/openwrt/config-all.h module"
-	@echo
-	@echo
+	@echo "See the files INSTALL and README for more general information,"
+	@echo "and details on how to build / install on KLIPS and other systems"
+.PHONY: def help
+
 include ${LIBRESWANSRCDIR}/Makefile.top
 
 # Broken targets have some sort of existing rule in this, or an
@@ -53,17 +50,13 @@ include ${LIBRESWANSRCDIR}/Makefile.top
 # to use a local TARGET-local target.
 BROKEN_TARGETS += clean
 BROKEN_TARGETS += install
-BROKEN_TARGETS += install-programs
-BROKEN_TARGETS += programs
 BROKEN_TARGETS += distclean
 BROKEN_TARGETS += check
 BROKEN_TARGETS += man
 BROKEN_TARGETS += config
-BROKEN_TARGETS += checkprograms
-BROKEN_TARGETS += all
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
-
-all:: programs manpages
+# XXX: Until builds stop depending on $(builddir)/Makefile
+all base clean-base install-base: $(builddir)/Makefile
 
 # kernel details
 # what variant of our patches should we use, and where is it
@@ -183,19 +176,13 @@ ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
 
-programs man config install clean install-programs:: ${OBJDIR}/Makefile
+man config install clean:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
 	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
 
 ${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
 	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
-
-checkprograms:: 
-	@for d in $(SUBDIRS) ; \
-	do \
-		(cd $$d && $(MAKE) SRCDIR=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
-	done; 
 
 clean::
 	rm -rf $(RPMTMPDIR) $(RPMDEST)

@@ -1,6 +1,7 @@
 # Makefile for init systems, for libreswan.
 #
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2015 Tuomo Soini <tis@foobar.fi>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,16 +13,22 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-SUBDIR = $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
+# Note: this variable gets passed in, as in "make INITSYSTEM=systemd"
+INITSYSTEM ?= $(shell $(SHELL) $(top_srcdir)/packaging/utils/lswan_detect.sh init)
 
-# XXX: Should not be switching to the build directory
-cleanall install programs man config checkprograms install-programs:
-	$(MAKE) -C $(builddir)/$(SUBDIR) $@
-# XXX: Should not rename all back to programs
-all:
-	$(MAKE) -C $(builddir)/$(SUBDIR) programs
+# XXX: Switch directory hack
+config:
+	$(MAKE) -C $(builddir)/$(INITSYSTEM) $@
+# XXX: Both switch directory and change the target.
+local-base:
+	$(MAKE) -C $(builddir)/$(INITSYSTEM) programs
+install-local-base:
+	$(MAKE) -C $(builddir)/$(INITSYSTEM) install
+local-clean:
+	$(MAKE) -C $(builddir)/$(INITSYSTEM) cleanall
 
-# XXX: should be including mk/subdirs.mk
+# Note: since this cherry-picks the sub-directory to "build" this
+# isn't really a mk/subdirs.mk candidate.
 ifndef top_srcdir
 include ../mk/dirs.mk
 endif

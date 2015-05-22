@@ -417,19 +417,15 @@ OBJSWHACKINIT = whackinit.o
 
 CAVP += cavp
 
-SHOULDWERESTART=$(wildcard plutomain.c)
-ifeq ($(SHOULDWERESTART),plutomain.c)
-all programs clean install install-programs:
-	cd ${LIBRESWANSRCDIR} && cd ${OBJDIRTOP}/programs/pluto && $(MAKE) $@
-else
-all: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
-programs: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT) 
-clean:	cleanall
-install: doinstall
-install-programs: doinstall
-endif
+local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) buildall
+clean-local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) cleanall
+install-local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) doinstall
+buildall: $(BINNAMEPLUTO) $(BINNAMEADNSIFNEEDED) $(BINNAMEWHACK) $(CAVP) #$(BINNAMEWHACKINIT)
 
-doinstall: all
+doinstall:
 	mkdir -p ${LIBEXECDIR}
 	mkdir -p -m 700 $(CONFDIR)/ipsec.d
 	mkdir -p -m 755 $(VARDIR)/run/pluto
@@ -438,7 +434,7 @@ doinstall: all
 	#$(INSTALL) $(INSTSUIDFLAGS) $(BINNAMEWHACKINIT) $(LIBEXECDIR)
 	if $(USE_ADNS) ; then $(INSTALL) $(INSTBINFLAGS) $(BINNAMEADNS)  $(LIBEXECDIR) ; fi
 
-list-local-programs:
+list-local-base:
 	@echo $(LIBEXECDIR)/$(BINNAMEPLUTO)
 	@if $(USE_ADNS) ; then echo $(LIBEXECDIR)/$(BINNAMEADNS) ; fi
 	@echo $(LIBEXECDIR)/$(BINNAMEWHACK)

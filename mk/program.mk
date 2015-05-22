@@ -39,21 +39,14 @@ endif
 CONFIGLIST=$(CONFFILES) $(CONFDFILES) $(CONFDSUBDIRFILES)
 PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
 
-ifeq ($(srcdir),.)
-all programs config man clean install install-programs:
-	$(MAKE) -C $(builddir) $@
-else
-all: programs
-programs: $(PROGRAMSLIST)
-config: $(CONFIGLIST)
-clean:	cleanall
-install: doinstall
-install-programs: doinstall
-endif
-
-ifneq ($(PROGRAM),check)
-check: $(PROGRAM)
-endif
+# XXX: Switch directory hack
+local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) buildall
+clean-local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) cleanall
+install-local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) doinstall
+buildall: $(PROGRAMSLIST)
 
 foreach-file = @set -eu ; $(foreach f, $(1), \
 		file=$(f) ; \
@@ -62,7 +55,7 @@ foreach-file = @set -eu ; $(foreach f, $(1), \
 		$(3) \
 	)
 
-doinstall: $(PROGRAMSLIST)
+doinstall:
 	$(call foreach-file, $(PROGRAM),  $(PROGRAMDIR), \
 		echo Install: $$src '->' $$destdir/$$file ; \
 		mkdir -p $$destdir ; \
@@ -97,7 +90,7 @@ doinstall: $(PROGRAMSLIST)
 		fi ; \
 	)
 
-list-local-programs:
+list-local-base:
 	@$(call foreach-file, $(PROGRAM), $(PROGRAMDIR), \
 		echo $$destdir/$$file ; \
 	)
@@ -158,5 +151,3 @@ ifneq ($(strip $(PROGRAM)),)
 	@if [ -n "$(OBJS)" ];     then rm -f $(PROGRAM); fi
 endif
 	@rm -f *.o
-
-checkprograms:

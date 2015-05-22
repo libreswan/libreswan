@@ -54,6 +54,8 @@ v3.13 (unreleased)
 * NETKEY: Increase netlink message buffer for larger SElinux labels [Paul]
 * KLIPS: move udp_encap_enable() to not be within spinlock [Wolfgang]
 * KLIPS: ipsec_rcv_decap_ipip broken for IPv6 lsb#227 [Frank Schmirler]
+* KLIPS: Support for SHA2 via CryptoAPI [Wolfgang]
+* KLIPS: Support for sha2_truncbug [Wolfgang]
 * whack: New command ipsec whack --purgeocsp [Matt]
 * whack: cleanup help text [Tuomo]
 * _stackmanager: Don't load blacklisted modules (rhbz#1207689) [Paul/Tuomo]

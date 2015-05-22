@@ -52,7 +52,7 @@ include ${LIBRESWANSRCDIR}/mk/objdir.mk
 SHELL=/bin/bash
 export SHELL
 
-.PHONY:	programs man config checkprograms clean
+.PHONY:	programs man config clean
 
 # location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
 BINSH=/bin/sh
@@ -77,7 +77,7 @@ PUBDIR?=$(DESTDIR)$(INC_USRLOCAL)/sbin
 # BINDIR is where sub-commands get put, FINALBINDIR is where the "ipsec"
 # command will look for them when it is run. Also called LIBEXECDIR.
 FINALLIBEXECDIR?=$(INC_USRLOCAL)/libexec/ipsec
-LIBEXECDIR?=$(DESTDIR)$(FINALBINDIR)
+LIBEXECDIR?=$(DESTDIR)$(FINALLIBEXECDIR)
 
 FINALBINDIR?=$(FINALLIBEXECDIR)
 BINDIR?=$(LIBEXECDIR)
