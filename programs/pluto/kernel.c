@@ -970,10 +970,32 @@ bool raw_eroute(const ip_address *this_host,
 #endif
 		       )
 {
-	char text_said[SATOT_BUF];
+	char text_said[SATOT_BUF + SATOT_BUF];
 	bool result;
 
-	set_text_said(text_said, that_host, new_spi, sa_proto);
+	switch (op) {
+	case ERO_ADD:
+	case ERO_ADD_INBOUND:
+		set_text_said(text_said, that_host, new_spi, sa_proto);
+		break;
+	case ERO_DELETE:
+	case ERO_DEL_INBOUND:
+		set_text_said(text_said, that_host, cur_spi, sa_proto);
+		break;
+	case ERO_REPLACE:
+	case ERO_REPLACE_INBOUND:
+	{
+		size_t w;
+
+		set_text_said(text_said, that_host, cur_spi, sa_proto);
+		w = strlen(text_said);
+		text_said[w] = '>';
+		set_text_said(text_said + w + 1, that_host, new_spi, sa_proto);
+		break;
+	}
+	default:
+		bad_case(op);
+	}
 
 	DBG(DBG_CONTROL | DBG_KERNEL,
 	    {
@@ -3200,6 +3222,13 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 {
 	enum routing_t ro = sr->routing,        /* routing, old */
 			rn = ro;                 /* routing, new */
+	ipsec_spi_t negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_DROP;
+
+	if (negotiation_shunt != failure_shunt ) {
+		DBG(DBG_CONTROL, DBG_log("failureshunt != negotiationshunt, needs replacing"));
+	} else {
+		DBG(DBG_CONTROL, DBG_log("failureshunt == negotiationshunt, no replace needed"));
+	}
 
 	DBG(DBG_CONTROL, DBG_log("orphan_holdpass() called for %s with transport_proto '%d'",
 		 c->name, transport_proto));
@@ -3221,7 +3250,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		break;
 	default:
 		DBG(DBG_CONTROL, DBG_log(
-			"no routing change needed for ro=%s - negotiation shunt matched failure shunt?", 
+			"no routing change needed for ro=%s - negotiation shunt matched failure shunt?",
 			enum_name(&routing_story, ro)));
 		break;
 	}
@@ -3233,7 +3262,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			enum_name(&routing_story, rn)));
 
 	{
-	/* are we replacing a bare shunt ? */
+		/* are we replacing a bare shunt ? */
 		struct bare_shunt **old = bare_shunt_ptr(&sr->this.client, &sr->that.client, sr->this.protocol);
 
 		if (old != NULL) {
@@ -3241,18 +3270,18 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		}
 	}
 
-	/* create the bare shunt and link into the list */
+	/* create the bare shunt and update kernel policy if needed */
 	{
 		struct bare_shunt *bs = alloc_thing(struct bare_shunt, "orphan shunt");
 
-		bs->why = clone_str("oe-failed", "orphaning shunt");
+		bs->why = clone_str("oe-failing", "orphaning shunt");
 		bs->ours = sr->this.client;
 		bs->his = sr->that.client;
 		bs->transport_proto = sr->this.protocol;
 		bs->policy_prio = BOTTOM_PRIO;
 
 		bs->said.proto = SA_INT;
-		bs->said.spi = htonl(failure_shunt);
+		bs->said.spi = htonl(negotiation_shunt);
 		bs->said.dst = *aftoinfo(subnettypeof(&sr->this.client))->any;
 
 		bs->count = 0;
@@ -3261,6 +3290,16 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		bs->next = bare_shunts;
 		bare_shunts = bs;
 		DBG_bare_shunt("add", bs);
+
+		/* update kernel policy if needed */
+		if (negotiation_shunt != failure_shunt ) {
+			if (!replace_bare_shunt(&sr->this.host_addr, &sr->that.host_addr, bs->policy_prio,
+				negotiation_shunt, failure_shunt, bs->transport_proto,
+				"oe-failed"))
+			{
+				libreswan_log("assign_holdpass() failed to update shunt policy");
+			}
+		}
 	}
 
 	/* change routing so we don't get cleared out when state/connection dies */
