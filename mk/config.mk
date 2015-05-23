@@ -222,6 +222,12 @@ MAKE?=make
 # EFENCE=-lefence
 EFENCE?=
 
+# Enable AddressSanitizer - see https://libreswan.org/wiki/Compiling_with_AddressSanitizer
+# requires clang or gcc >= 4.8 and libasan. Do not combine with Electric Fence and do not
+# run pluto with --leak-detective
+# ASAN=-fsanitize=address
+ASAN?=
+
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
 
@@ -230,7 +236,7 @@ KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
 # extra link flags
-USERLINK?=-Wl,-z,relro,-z,now -g -pie ${EFENCE}
+USERLINK?=-Wl,-z,relro,-z,now -g -pie ${EFENCE} ${ASAN}
 
 PORTINCLUDE?=
 
