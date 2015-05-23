@@ -1401,7 +1401,6 @@ def runcmd_check_output(cmd):
         logging.error("ERROR %s %s", cmd, e.output)
         return (None, e)
 
-
 def docker_stop_container(dname):
     if not dname:
         return
@@ -1640,6 +1639,9 @@ def docker_run_script(host, testname, script, timer=60):
             output = subprocess.check_output(cmd, shell=True, timeout=timer)
         except subprocess.TimeoutExpired:
             f_log.write("%s #timedout %s\n" % (cmd, timer))
+        except subprocess.CalledProcessError as e:
+            logging.error("ERROR %s %s", cmd, e.output)
+            return (None, e)
 
         f_log.write(output.decode('ascii'))
         f_log.write("\n")
