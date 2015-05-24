@@ -2480,7 +2480,7 @@ stf_status ikev2_find_host_connection( struct connection **cp,
 		}
 	}
 	*cp = c;
-	return FALSE;
+	return STF_OK;
 }
 
 struct connection *find_next_host_connection(

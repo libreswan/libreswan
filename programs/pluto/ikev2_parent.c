@@ -652,17 +652,15 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 	struct connection *c = NULL;
 
-	stf_status e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
+	ikev2_find_host_connection(&c, &md->iface->ip_addr,
 			md->iface->port, &md->sender, md->sender_port, policy);
-	if (e != 0 )
-		return e;
 
 	if (c == NULL) {
 		stf_status e = ikev2_find_host_connection(&c,
 				&md->iface->ip_addr,
 				md->iface->port, &md->sender, md->sender_port,
 				policy_null);
-		if (e != 0 )
+		if (e != STF_OK )
 			return e;
 	}
 
