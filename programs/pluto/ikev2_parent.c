@@ -2165,8 +2165,12 @@ static void *ikev2_pam_autherize_thread (void *x)
 	return NULL;
 }
 
-static void free_pam_thread_entry(struct ikev2_pam_helper *p)
+static void free_pam_thread_entry(struct ikev2_pam_helper **pp)
 {
+	if (pp == NULL)
+		return;
+	struct ikev2_pam_helper *p = *pp;
+	*pp = p->next;
 	pfreeany(p->pam.name);
 	pfreeany(p->pam.password);
 	pfreeany(p->pam.c_name);
@@ -2235,7 +2239,7 @@ static void ikev2_pam_continue(struct ikev2_pam_helper *p)
 		stf = STF_FAIL + v2N_AUTHENTICATION_FAILED;
 	}
 
-	free_pam_thread_entry(p);
+	ikev2_free_auth_pam(p->pam.st_serialno);
 
 	complete_v2_state_transition(&md, stf);
 	release_any_md(&md);
@@ -4419,7 +4423,7 @@ static int build_ikev2_version()
 }
 
 #ifdef XAUTH_HAVE_PAM
-void state_deletion_cleanup(so_serial_t st_serialno)
+void ikev2_free_auth_pam (so_serial_t st_serialno)
 {
 	struct ikev2_pam_helper **pp;
 	struct ikev2_pam_helper *p;
@@ -4433,7 +4437,8 @@ void state_deletion_cleanup(so_serial_t st_serialno)
 						p->pam.c_instance_serial,
 						p->pam_status ? "SUCCESS" : "FAIL",
 						p->pam.name));
-			free_pam_thread_entry(p);
+			free_pam_thread_entry(pp);
+			return;
 		}
 	}
 }
