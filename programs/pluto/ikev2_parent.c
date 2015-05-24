@@ -646,29 +646,29 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		    DBG_log("anti-DDoS cookies not required"));
 	}
 
-	/* ??? from here on looks a lot like main_inI1_outR1 */
-
 	struct state *st = md->st;
-
-	/* What we know is little.  And exact mask is LEMPTY. */
-	const lset_t policy = POLICY_IKEV2_ALLOW | POLICY_PSK | POLICY_RSASIG;
-	const lset_t policy_null = POLICY_IKEV2_ALLOW | POLICY_AUTH_NULL;
-
+	/* policies is an ordered list. and NULL is at the end */
+	const lset_t policies[] = {POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL};
+	lset_t policy;
 	struct connection *c = NULL;
+	stf_status e;
+	unsigned int i;
 
-	ikev2_find_host_connection(&c, &md->iface->ip_addr,
-			md->iface->port, &md->sender, md->sender_port, policy);
-
-	if (c == NULL) {
-		stf_status e = ikev2_find_host_connection(&c,
-				&md->iface->ip_addr,
+	for(i=0; i < sizeof(policies); i++){
+		policy = policies[i] | POLICY_IKEV2_ALLOW;
+		e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
 				md->iface->port, &md->sender, md->sender_port,
-				policy_null);
-		if (e != STF_OK )
-			return e;
+				policy);
+		if (c != NULL)
+			break;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("found connection: %s", c ? c->name : "<none>"));
+	if (e != STF_OK )
+		return e;
+
+	DBG(DBG_CONTROL, DBG_log("found connection: %s with policy %s",
+				c ? c->name : "<none>",
+				bitnamesof(sa_policy_bit_names, policy)));
 
 	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
