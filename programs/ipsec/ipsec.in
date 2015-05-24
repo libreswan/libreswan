@@ -265,6 +265,10 @@ case "${1}" in
 		    # this section works around a few certutil quirks
 		    # to maintain the current password and merge keys
 		    certutil -N -d sql:"${NSSTMP}" --empty-password
+		    if [ $? -gt 0 ]; then
+			echo "Failed to initialize nss database sql:${NSSTMP}" >&2
+			exit 4
+		    fi
 		    if [ -f "${IPSEC_NSSPW}" ]; then
 			# Look for FIPS format of token:pw, or just the pw
 			grep -q ':' "${IPSEC_NSSPW}"
@@ -310,6 +314,8 @@ case "${1}" in
 		    cp "${NSSTMP}"/*.db "${IPSEC_NSSDIR}"
 		    rm -f "${NSSTMP}"/*.txt "${NSSTMP}"/*.db
 		    rmdir "${NSSTMP}"
+		    # Skip cleanup if pkcs11.txt was there before
+		    [ "${PKCS11TXT}" = Yes ] || rm -f "${IPSEC_NSSDIR}"/pkcs11.txt
 		    echo "NSS upgrade complete"
 		fi
 		exit 0
@@ -329,8 +335,16 @@ case "${1}" in
 	echo "See 'man pluto' if you want to protect the NSS database with a password"
 	echo ""
 
+	# Check if pkcs11.txt was there before
+	if [ -f "${IPSEC_NSSDIR}"/pkcs11.txt ]; then
+	    PKCS11TXT="Yes"
+	fi
 	certutil -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
-	if [ -x /usr/sbin/restorecon ]; then
+	if [ $? -gt 0 ]; then
+	    echo "Failed to initialize nss database ${IPSEC_NSSDIR_SQL}" >&2
+	    exit 4
+	fi
+	if [ -x "$(which restorecon)" ]; then
 	    restorecon -Rv "${IPSEC_NSSDIR}"
 	fi
 	exit 0
