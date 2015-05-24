@@ -2167,9 +2167,8 @@ static void *ikev2_pam_autherize_thread (void *x)
 
 static void free_pam_thread_entry(struct ikev2_pam_helper **pp)
 {
-	if (pp == NULL)
-		return;
 	struct ikev2_pam_helper *p = *pp;
+
 	*pp = p->next;
 	pfreeany(p->pam.name);
 	pfreeany(p->pam.password);
@@ -2181,8 +2180,7 @@ static void free_pam_thread_entry(struct ikev2_pam_helper **pp)
 		close(p->master_fd);
 	if (p->helper_fd != NULL_FD)
 		close(p->helper_fd);
-	pfreeany(p);
-	p = NULL;
+	pfree(p);
 }
 
 static void ikev2_pam_continue(struct ikev2_pam_helper *p)
@@ -4423,7 +4421,7 @@ static int build_ikev2_version()
 }
 
 #ifdef XAUTH_HAVE_PAM
-void ikev2_free_auth_pam (so_serial_t st_serialno)
+void ikev2_free_auth_pam(so_serial_t st_serialno)
 {
 	struct ikev2_pam_helper **pp;
 	struct ikev2_pam_helper *p;
@@ -4431,16 +4429,15 @@ void ikev2_free_auth_pam (so_serial_t st_serialno)
 	/* search for finished pam threads */
 	for (pp = &pluto_v2_pam_helpers; (p = *pp) != NULL; pp = &p->next) {
 		if (p->pam.st_serialno == st_serialno) {
-			DBG(DBG_CONTROL, DBG_log("Deleting IKEv2 PAM helper thread for #%lu,"
-						" %s[%lu] status %s '%s'",
-						p->pam.st_serialno, p->pam.c_name,
-						p->pam.c_instance_serial,
-						p->pam_status ? "SUCCESS" : "FAIL",
-						p->pam.name));
+			DBG(DBG_CONTROL,
+				DBG_log("Deleting IKEv2 PAM helper thread for #%lu, %s[%lu] status %s '%s'",
+					p->pam.st_serialno, p->pam.c_name,
+					p->pam.c_instance_serial,
+					p->pam_status ? "SUCCESS" : "FAIL",
+					p->pam.name));
 			free_pam_thread_entry(pp);
 			return;
 		}
 	}
 }
-
 #endif
