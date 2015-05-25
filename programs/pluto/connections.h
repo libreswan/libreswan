@@ -325,7 +325,7 @@ extern void restart_connections_by_peer(struct connection *c);
 struct xfrm_user_sec_ctx_ike; /* forward declaration */
 #endif
 
-extern bool initiate_ondemand(const ip_address *our_client,
+extern void initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
 			     int transport_proto,
 			     bool held,

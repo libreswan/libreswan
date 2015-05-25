@@ -109,9 +109,6 @@ static int num_ipsec_eroute = 0;
 static struct event *ev_fd = NULL; /* could these two go in kernel_ops AA_2015 ??? */
 static struct event *ev_pq = NULL;
 
-static void free_bare_shunt(struct bare_shunt **pp);
-
-
 static void DBG_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
 	DBG(DBG_KERNEL,
@@ -181,23 +178,12 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 
 		networkof(ours, &src);
 		networkof(his, &dst);
-		if (!initiate_ondemand(&src, &dst, transport_proto,
+		initiate_ondemand(&src, &dst, transport_proto,
 				      TRUE, NULL_FD,
 #ifdef HAVE_LABELED_IPSEC
 				      uctx,
 #endif
-				      "acquire")) {
-			/* if we didn't do any ondemand stuff the shunt is not needed */
-			struct bare_shunt **bspp = bare_shunt_ptr(ours, his,
-								  transport_proto);
-			if (bspp != NULL) {
-				DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic() found no conn: freeing bare shunt"));
-				passert(*bspp == bare_shunts);
-				free_bare_shunt(bspp); /* remove from pluto's list */
-			} else {
-				DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic() found no conn: no bare shunt to free"));
-			}
-		}
+				      "acquire");
 	}
 
 	if (kernel_ops->remove_orphaned_holds != NULL) { /* remove from KLIPS's list */

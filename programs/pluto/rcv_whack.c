@@ -556,7 +556,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			whack_log(RC_DEAF,
 				  "need --listen before opportunistic initiation");
 		} else {
-			(void)initiate_ondemand(&msg.oppo_my_client,
+			initiate_ondemand(&msg.oppo_my_client,
 						&msg.oppo_peer_client, 0,
 						FALSE,
 						msg.whack_async ?

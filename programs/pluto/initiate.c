@@ -540,14 +540,14 @@ static void cannot_oppo(struct connection *c,
 	}
 }
 
-static bool initiate_ondemand_body(struct find_oppo_bundle *b,
+static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac, err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
 				  , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				  ); /* forward */
 
-bool initiate_ondemand(const ip_address *our_client,
+void initiate_ondemand(const ip_address *our_client,
 		      const ip_address *peer_client,
 		      int transport_proto,
 		      bool held,
@@ -570,7 +570,7 @@ bool initiate_ondemand(const ip_address *our_client,
 	b.failure_shunt = SPI_HOLD; /* until we found connection policy */
 	b.whackfd = whackfd;
 	b.step = fos_start;
-	return initiate_ondemand_body(&b, NULL, NULL
+	initiate_ondemand_body(&b, NULL, NULL
 #ifdef HAVE_LABELED_IPSEC
 				      , uctx
 #endif
@@ -631,16 +631,11 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 		       ipstr(&cr->b.our_client, &a),
 		       ipstr(&cr->b.peer_client, &b));
 	} else {
-		if (initiate_ondemand_body(&cr->b, &cr->ac, ugh
+		initiate_ondemand_body(&cr->b, &cr->ac, ugh
 #ifdef HAVE_LABELED_IPSEC
 					     , NULL
 #endif
-					     ))
-		{
-			DBG(DBG_CONTROLMORE, DBG_log("initiate_ondemand_body() returned successfully"));
-		} else {
-			libreswan_log("initiate_ondemand_body() failed - ignoring");
-		}
+					     );
 		whackfd = NULL_FD; /* was handed off */
 	}
 
@@ -696,8 +691,7 @@ static err_t check_txt_recs(enum myid_state try_state,
 }
 
 /* note: gateways_from_dns must be NULL iff this is the first call */
-/* return true if we did something */
-static bool initiate_ondemand_body(struct find_oppo_bundle *b,
+static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac,
 				  err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
@@ -713,11 +707,6 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 	int hisport;
 	char demandbuf[256];
 	bool loggedit = FALSE;
-
-	/* on klips/mast assume we will do something */
-	bool work = kern_interface == USE_KLIPS ||
-	       kern_interface == USE_MASTKLIPS ||
-	       kern_interface == USE_NETKEY;
 
 	/* What connection shall we use?
 	 * First try for one that explicitly handles the clients.
@@ -757,12 +746,10 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 	if (isanyaddr(&b->our_client) || isanyaddr(&b->peer_client)) {
 		cannot_oppo(NULL, b, "impossible IP address");
-		work = FALSE;
 	} else if (sameaddr(&b->our_client, &b->peer_client)) {
 		/* NETKEY gives us acquires for our own IP */
 		/* this does not catch talking to ourselves on another ip */
 		cannot_oppo(NULL, b, "acquire for our own IP address");
-		work = FALSE;
 	} else if ((c = find_connection_for_clients(&sr,
 						     &b->our_client,
 						     &b->peer_client,
@@ -778,11 +765,9 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 
 		cannot_oppo(NULL, b, "no routed template covers this pair");
-		work = FALSE;
 	} else if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c)) {
 		/* happens when dst is ourselves on a different IP */
 		cannot_oppo(NULL, b, "connection to self on another IP?");
-		work = FALSE;
 	}  else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
@@ -791,7 +776,6 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		loglog(RC_NOPEERIP,
 		       "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
 		       ours, ourport, his, hisport, b->transport_proto);
-		work = FALSE;
 	} else if (c->kind != CK_TEMPLATE) {
 		/* We've found a connection that can serve.
 		 * Do we have to initiate it?
@@ -1374,7 +1358,6 @@ hell:
 		}
 	}
 	close_any(b->whackfd);
-	return work;
 }
 
 /* an ISAKMP SA has been established.
