@@ -33,7 +33,6 @@ else
 fi
 
 . ../setup.sh
-. ${LIBRESWANSRCDIR}/testing/utils/functions.sh
 
 failure=0
 
