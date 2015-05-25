@@ -1,0 +1,8 @@
+This uses a basic IKEv1 PSK setup, and then sends known broken
+and malicious packets from the IKE fuzzer by Javantea <jvoss@altsci.com>
+
+These packets are IKEv1 I1 packets of "west" being sent to "east"
+
+libreswan-3.8 up to 3.12 would crash on these packets. This issue is
+known as CVE-2015-3204
+
