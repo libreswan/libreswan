@@ -73,8 +73,9 @@ KVM_EXCLUDE = bad|wip|incomplete
 KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')
 KVM_INCLUDE =
 KVM_INCLUDE_FLAG = $(if $(KVM_INCLUDE),--include '$(KVM_INCLUDE)')
+NEWRUN = $(if $(wildcard kvm-checksum.new),--newrun)
 .PHONY: kvm-check
-kvm-check:
+kvm-check: kvm-checksum
 	: $@:
 	:   PWD: $(PWD)
 	:   KVM_HOSTS: $(KVM_HOSTS)
@@ -84,5 +85,28 @@ kvm-check:
 	:     KVM_EXCLUDE_FLAG: $(KVM_EXCLUDE_FLAG)
 	:   KVM_INCLUDE: '$(KVM_INCLUDE)'
 	:     KVM_INCLUDE_FLAG: $(KVM_INCLUDE_FLAG)
-	cd testing/pluto && $(KVM_SWANTEST_COMMAND) --testingdir $(KVM_EASTDIR)/testing $(KVM_INCLUDE_FLAG) $(KVM_EXCLUDE_FLAG)
-	cd testing/pluto && $(KVM_SWANTEST_COMMAND) --testingdir $(KVM_EASTDIR)/testing --scancwd
+	:   NEWRUN: $(NEWRUN)
+	cd testing/pluto && $(KVM_SWANTEST_COMMAND) $(NEWRUN) --testingdir $(KVM_EASTDIR)/testing $(KVM_INCLUDE_FLAG) $(KVM_EXCLUDE_FLAG)
+
+# Hide a make call
+SHOWVERSION = $(MAKE) showversion
+
+# Detect either a new or updated install or test.
+#
+# The file kvm-checksum.new is left as a marker for $(NEWRUN).
+#
+# The checksums for both the installed tree (on east) and the source
+# tree are recorded.  Presumably if either changes then it is a new
+# run.  The /etc directory is excluded as the tests play havoc with
+# its contents.
+.PHONY: kvm-checksum
+kvm-checksum:
+	$(KVMSH_COMMAND) --chdir . east 'make list-base | grep '^/' | grep -v '^/etc' | xargs md5sum' | tee kvm-checksum.new
+	$(SHOWVERSION) | tee -a kvm-checksum.new
+	if test -r kvm-checksum && cmp kvm-checksum.new kvm-checksum ; then \
+		echo "Checksum file unchanged" ; \
+		rm kvm-checksum.new ; \
+	else \
+		echo "Checksum file CHANGED" ; \
+		cp kvm-checksum.new kvm-checksum ; \
+	fi
