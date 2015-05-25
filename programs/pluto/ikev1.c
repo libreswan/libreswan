@@ -1852,12 +1852,12 @@ void process_packet_tail(struct msg_digest **mdp)
 
 				case ISAKMP_NEXT_SAK: /* or ISAKMP_NEXT_NATD_BADDRAFTS */
 					/*
-                                         * Official standards say that this is ISAKMP_NEXT_SAK,
-                                         * a part of Group DOI, something we don't implement.
-                                         * Old non-updated Cisco gear abused this number in ancient NAT drafts.
-                                         * We ignore (rather than reject) this in support of people
-                                         * with crufty Cisco machines.
-                                        */
+					 * Official standards say that this is ISAKMP_NEXT_SAK,
+					 * a part of Group DOI, something we don't implement.
+					 * Old non-updated Cisco gear abused this number in ancient NAT drafts.
+					 * We ignore (rather than reject) this in support of people
+					 * with crufty Cisco machines.
+					 */
 					loglog(RC_LOG_SERIOUS,
 						"%smessage with unsupported payload ISAKMP_NEXT_SAK (or ISAKMP_NEXT_NATD_BADDRAFTS) ignored",
 						excuse);
