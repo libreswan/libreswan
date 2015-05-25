@@ -643,6 +643,8 @@ struct isakmp_nat_oa {
 extern struct_desc isakmp_nat_d;
 extern struct_desc isakmp_nat_oa;
 
+extern struct_desc isakmp_ignore_desc; /* generic payload (when ignoring) */
+
 /* ISAKMP IKE Fragmentation Payload
  * Cisco proprietary, undocumented
  * Microsoft documentation link: http://msdn.microsoft.com/en-us/library/cc233452.aspx
