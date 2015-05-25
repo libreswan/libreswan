@@ -2,7 +2,7 @@
  * tables of names for values defined in constants.h
  * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 1998-2002  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2002,2015  D. Hugh Redelmeier.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,12 +43,11 @@
  * The buffer bound (size) must be greater than 0.
  * That allows a guarantee that the result is NUL-terminated.
  *
- * The result is a pointer:
- *   if the string fits, to the NUL at the end of the string in dest;
- *   if the string was truncated, to the roof of dest.
+ * The result is a pointer to the NUL at the end of the string in dest.
  *
- * Warning: Is it really wise to silently truncate?  Only the caller knows.
- * The caller SHOULD check by seeing if the result equals dest's roof.
+ * Warning: no indication of truncation is returned.
+ * An earlier version did indicate truncation, but that feature was never used.
+ * This version is more robust and has a simpler contract.
  */
 char *jam_str(char *dest, size_t size, const char *src)
 {
@@ -56,12 +55,11 @@ char *jam_str(char *dest, size_t size, const char *src)
 
 	{
 		size_t full_len = strlen(src);
-		bool oflow = size - 1 < full_len;
-		size_t copy_len = oflow ? size - 1 : full_len;
+		size_t copy_len = size - 1 < full_len ? size - 1 : full_len;
 
 		memcpy(dest, src, copy_len);
 		dest[copy_len] = '\0';
-		return dest + copy_len + (oflow ? 1 : 0);
+		return dest + copy_len;
 	}
 }
 
