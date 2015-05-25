@@ -159,7 +159,7 @@ case "${1}" in
 	;;
 
     --stopnflog|stopnflog)
-	NFGROUP=$(ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
 	if [ -z "${NFGROUP}" ]; then
 		exit 0
 	fi
@@ -169,7 +169,7 @@ case "${1}" in
 	;;
 
     --checknflog|checknflog|nflog)
-	NFGROUP=$(ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
 	if [ -z "${NFGROUP}" ]; then
 	    OLDNFGROUP=$(iptables -L -n |grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	    if [ -n "${OLDNFGROUP}" ]; then
@@ -203,7 +203,7 @@ case "${1}" in
 
     sniff|--sniff)
 	if [ -z "${2}" ]; then
-	    NFGROUP=$(ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+	    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --configsetup|grep nflog| sed -e "s/^.*=//" -e "s/'//g");
 	    tcpdump -n -i nflog:${NFGROUP}
 	else
 	    echo "conn specific coming soon"

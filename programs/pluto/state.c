@@ -555,7 +555,7 @@ void delete_state(struct state *st)
 
 #ifdef XAUTH_HAVE_PAM
 	state_deletion_xauth_cleanup(st);
-	state_deletion_cleanup(st->st_serialno);
+	ikev2_free_auth_pam(st->st_serialno);
 #endif
 
 	/* If DPD is enabled on this state object, clear any pending events */

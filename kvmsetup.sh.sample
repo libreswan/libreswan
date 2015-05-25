@@ -27,7 +27,7 @@ LIBRESWANDIR=$(readlink -f $0 | sed "s/libreswan.*$/libreswan/")
 
 REGRESSRESULTS=${KVMPREFIX}/results
 
-# set this to someplace with at least 100Mb free.
+# set this to someplace with at least 16GB free.
 POOLSPACE=${KVMPREFIX}/pool
 
 # Fedora media

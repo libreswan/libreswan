@@ -28,7 +28,7 @@ endif
 	$(CC) $(MK_DEPEND_CFLAGS) \
 		-MMD -MF $(builddir)/$(basename $(notdir $@)).d \
 		-o $(builddir)/$(notdir $@) \
-		-c $<
+		-c $(abspath $<)
 
 # Assume each source file has its own generated dependency file that
 # is updated whenever the corresponding output is updated.  Given

@@ -35,7 +35,6 @@ do
 include ${top_builddir}/../mk/dirs.mk
 
 include \${srcdir}/Makefile
--include Makefile.depend
 EOF
 	    mv Makefile.tmp Makefile
 	)

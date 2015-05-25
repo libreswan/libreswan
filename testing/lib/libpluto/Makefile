@@ -53,12 +53,6 @@ cleanall: clean
 
 distclean: clean
 
-Makefile.depend: *.c ${SRCDIR}Makefile
-	(ls $(wildcard $(addprefix $(SRCDIR),*.c)) | grep '\.c' | xargs ${CC} -MM) >Makefile.depend
-
--include Makefile.depend
-
-
 east.record: ${LIBRESWANSRCDIR}/programs/pluto/rcv_whack.c
 	(cd ${LIBRESWANSRCDIR}/programs/pluto && unset LIBRESWANSRCDIR && pl_inst.sh)
 	(cd ${LIBRESWANSRCDIR}/testing/pluto/whackrecord-01 && ../../utils/runme.sh )

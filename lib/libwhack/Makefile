@@ -60,7 +60,7 @@ $(LIB): $(OBJS)
 $(OBJS):	$(HDRS)
 
 cleanall:
-	rm -rf ${OBJS} $(LIB) Makefile.depend
+	rm -rf ${OBJS} $(LIB)
 
 
 MK_DEPEND_CFLAGS = $(CFLAGS) ${ALLFLAGS}
