@@ -81,9 +81,6 @@ static field_desc isag_fields[] = {
 	{ ft_end, 0, NULL, NULL }
 };
 
-static struct_desc isakmp_generic_desc =
-	{ "ISAKMP Generic Payload", isag_fields, sizeof(struct isakmp_generic) };
-
 /* ISAKMP Data Attribute (generic representation within payloads)
  * layout from RFC 2408 "ISAKMP" section 3.3
  * This is not a payload type.
@@ -646,6 +643,11 @@ static field_desc isanat_oa_fields[] = {
 struct_desc isakmp_nat_oa =
 	{ "ISAKMP NAT-OA Payload", isanat_oa_fields,
 	  sizeof(struct isakmp_nat_oa) };
+
+/* Generic payload (when ignoring) */
+
+struct_desc isakmp_ignore_desc =
+	{ "ignored ISAKMP Generic Payload", isag_fields, sizeof(struct isakmp_generic) };
 
 /* ISAKMP IKE Fragmentation Payload
  * Cisco proprietary, undocumented
@@ -1892,7 +1894,7 @@ bool out_generic(u_int8_t np, struct_desc *sd,
 {
 	struct isakmp_generic gen;
 
-	passert(sd->fields == isakmp_generic_desc.fields);
+	passert(sd->fields == isag_fields);
 	gen.isag_np = np;
 	return out_struct(&gen, sd, outs, obj_pbs);
 }
