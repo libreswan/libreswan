@@ -118,6 +118,8 @@ done
 
 if [ $failure -eq 0 ]; then
     echo "$(basename $(pwd)): passed"
+    exit 0
 else
     echo "$(basename $(pwd)): FAILED"
+    exit 1
 fi
