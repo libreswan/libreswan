@@ -7,7 +7,13 @@
 #
 # Each OUTPUT/${host}.console.verbose.txt will be used to create a new
 # OUTPUT/${host}.console.txt and OUTPUT/${host}.console.diff
-# If the resulting OUTPUT/${host}.console.diff is empty, it is removed.
+#
+# If every ${host}.console.txt file has a corresponding, and empty,
+# OUTPUT/${host}.console.diff file, then the test finished and passed.
+#
+# Note: while leaving empty console.diff files around is somewhat
+# annoying it is backward compatible and makes verifying completion
+# easier.
 
 set -ue
 
@@ -36,8 +42,14 @@ for host in $(../../utils/kvmhosts.sh); do
     # filter it out.
     if [ -f "${host}.console.txt" ]; then
 	#echo "re-sanitizing ${host}"
+	rm -f OUTPUT/${host}.console.tmp	
+	touch OUTPUT/${host}.console.tmp
 	# sanitize last run
-	if [ -f OUTPUT/${host}.console.verbose.txt ]; then
+	if [ ! -f OUTPUT/${host}.console.verbose.txt ]; then
+	    echo "# ${host}.console.verbose.txt missing"
+	    echo "${host}.console.verbose.txt" >> OUTPUT/${host}.console.tmp
+	    failure=1
+	else
 	    cleanups="cat OUTPUT/${host}.console.verbose.txt "
 	    for fixup in `echo $REF_CONSOLE_FIXUPS`; do
 
@@ -62,20 +74,17 @@ for host in $(../../utils/kvmhosts.sh); do
 	    done
 
 	    fixedoutput=OUTPUT/${host}.console.txt
-	    rm -f $fixedoutput OUTPUT/${host}.console.diff
 	    ## debug echo $cleanups
 	    eval $cleanups >$fixedoutput
 	    # stick terminating newline in for fun.
 	    echo >>$fixedoutput
-	    if diff -N -u -w -b -B ${host}.console.txt $fixedoutput >OUTPUT/${host}.console.diff; then
+	    if diff -N -u -w -b -B ${host}.console.txt $fixedoutput >OUTPUT/${host}.console.tmp; then
 		echo "# ${host}Console output matched"
 	    else
 		echo "# ${host}Console output differed"
 		failure=1
 	    fi
-	    if [ -f OUTPUT/${host}.console.diff -a \! -s OUTPUT/${host}.console.diff ]; then
-		rm OUTPUT/${host}.console.diff
-	    fi
+	    mv OUTPUT/${host}.console.tmp OUTPUT/${host}.console.diff
 	fi
     fi
 done
