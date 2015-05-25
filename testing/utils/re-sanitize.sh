@@ -78,9 +78,9 @@ for host in $(../../utils/kvmhosts.sh); do
 	    # stick terminating newline in for fun.
 	    echo >>$fixedoutput
 	    if diff -N -u -w -b -B ${host}.console.txt $fixedoutput >OUTPUT/${host}.console.tmp; then
-		echo "# ${host}Console output matched"
+		echo "# ${host} Console output matched"
 	    else
-		echo "# ${host}Console output differed"
+		echo "# ${host} Console output differed"
 		failure=1
 	    fi
 	    mv OUTPUT/${host}.console.tmp OUTPUT/${host}.console.diff
