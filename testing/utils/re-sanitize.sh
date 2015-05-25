@@ -111,6 +111,13 @@ for host in $(../../utils/kvmhosts.sh); do
 	    check_console_log_for GPFAULT
 	    check_pluto_log_for 'ASSERTION FAILED'
 	    check_pluto_log_for 'EXPECTATION FAILED'
+	    # this blats CORE into all the .diff files; better than nothing
+	    for i in OUTPUT/core* ; do
+		if [ -f "$i" ] ; then
+		    echo "# CORE: $i"
+		    echo "$i " >> OUTPUT/${host}.console.tmp
+		fi
+	    done
 	    mv OUTPUT/${host}.console.tmp OUTPUT/${host}.console.diff
 	fi
     fi
