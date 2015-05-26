@@ -516,7 +516,7 @@ static void cannot_oppo(struct connection *c,
 	}
 
 	if (b->held) {
-		/* this was filled in for us based on packet trigger vs whack --oppo trigger */
+		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
 		DBG(DBG_CONTROL, DBG_log("cannot_oppo() detected packet triggered shunt from bundle"));
 		/*
 		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass)

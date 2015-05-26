@@ -498,16 +498,15 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 			if (c != NULL) {
 				set_cur_connection(c);
-				if (!oriented(*c))
+
+				if (!oriented(*c)) {
 					whack_log(RC_ORIENT,
 						  "we cannot identify ourselves with either end of this connection");
-
-
-				else if (c->policy & POLICY_GROUP)
+				} else if (c->policy & POLICY_GROUP) {
 					route_group(c);
-				else if (!trap_connection(c))
+				} else if (!trap_connection(c)) {
 					whack_log(RC_ROUTE, "could not route");
-
+				}
 
 				reset_cur_connection();
 			}
