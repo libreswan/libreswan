@@ -101,8 +101,9 @@ SHOWVERSION = $(MAKE) showversion
 # its contents.
 .PHONY: kvm-checksum
 kvm-checksum:
-	$(KVMSH_COMMAND) --chdir . east 'make list-base | grep '^/' | grep -v '^/etc' | xargs md5sum' | tee kvm-checksum.new
-	$(SHOWVERSION) | tee -a kvm-checksum.new
+	$(SHOWVERSION) | tee kvm-checksum.new
+	$(KVMSH_COMMAND) --output ++kvm-checksum.new --chdir . east \
+		'make list-base | grep '^/' | grep -v '^/etc' | xargs md5sum'
 	if test -r kvm-checksum && cmp kvm-checksum.new kvm-checksum ; then \
 		echo "Checksum file unchanged" ; \
 		rm kvm-checksum.new ; \
