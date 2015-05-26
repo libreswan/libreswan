@@ -646,29 +646,32 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		    DBG_log("anti-DDoS cookies not required"));
 	}
 
+	/* authentication policy alternatives in order of decreasing preference */
+	static const lset_t policies[] = {POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL};
+
 	struct state *st = md->st;
-	/* policies is an ordered list. and NULL is at the end */
-	const lset_t policies[] = {POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL};
 	lset_t policy;
-	struct connection *c = NULL;
+	struct connection *c;
 	stf_status e;
 	unsigned int i;
 
-	for(i=0; i < sizeof(policies); i++){
+	for (i=0; i < elemsof(policies); i++){
 		policy = policies[i] | POLICY_IKEV2_ALLOW;
 		e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
 				md->iface->port, &md->sender, md->sender_port,
 				policy);
-		if (c != NULL)
+		if (e == STF_OK)
 			break;
 	}
 
-	if (e != STF_OK )
+	if (e != STF_OK)
 		return e;
 
-	DBG(DBG_CONTROL, DBG_log("found connection: %s with policy %s",
-				c ? c->name : "<none>",
-				bitnamesof(sa_policy_bit_names, policy)));
+	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
+
+	DBG(DBG_CONTROL,
+		DBG_log("found connection: %s with policy %s",
+			c->name, bitnamesof(sa_policy_bit_names, policy)));
 
 	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
@@ -688,8 +691,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
+	} else {
+		/* ??? should st->st_connection be changed to c? */
 	}
-
 
 	{
 		struct ikev2_ke *ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
