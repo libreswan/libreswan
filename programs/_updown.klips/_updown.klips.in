@@ -455,6 +455,11 @@ dorule() {
 doproxyarp() {
     # Check if client has a single ip only client net
     if [ ${PLUTO_PEER_CLIENT#*/} = 32 -o ${PLUTO_PEER_CLIENT#*/} = 128 ]; then
+	# Skip OE special connections
+	if [ ${PLUTO_PEER_CLIENT_NET} = 0.0.0.0 -o \
+	    ${PLUTO_PEER_CLIENT_NET} = "::" ]; then
+	    return 0
+	fi
 	# check if client is routeable local
 	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | grep -qs -v via; then
 	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
