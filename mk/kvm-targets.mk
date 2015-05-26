@@ -26,13 +26,28 @@ KVM_SWANTEST_COMMAND ?= $(abs_top_srcdir)/testing/utils/swantest
 KVM_OBJDIR = OBJ.kvm
 KVM_HOSTS = east west road north
 
+# Determine the target's indented host.  Assumes the target looks like
+# xxx-yyy-HOST, defaults to 'east'.
+KVM_HOST = $(firstword $(filter $(KVM_HOSTS),$(lastword $(subst -, ,$@))) east)
+
 # NOTE: Use this from make rules only.  Determines the KVM path to
-# $(abs_top_srcdir).  If broken, override using Makefile.inc.local
-KVM_HOST = $(lastword $(subst -, ,$@))
+# $(abs_top_srcdir).  If broken, override using Makefile.inc.local.
 KVM_BUILD_MOUNT ?= $(shell $(KVM_MOUNTS_COMMAND) $(1) swansource)
 KVM_BUILD_SUBDIR ?= $(subst $(call KVM_BUILD_MOUNT,$(1)),,$(abs_top_srcdir))
 KVM_TARGET_SOURCEDIR ?= $(patsubst %/,%,/source/$(patsubst /%,%,$(call KVM_BUILD_SUBDIR,$(1))))
 KVM_EASTDIR ?= $(call KVM_TARGET_SOURCEDIR,east)
+
+# Run "make $(1) on $(KVM_HOST); unless specified as part of the make
+# target $(KVM_HOST) will default to "east"
+define kvm-make
+	: KVM_HOST: '$(KVM_HOST)'
+	: KVM_OBJDIR: '$(KVM_OBJDIR)'
+	$(KVMSH_COMMAND) \
+		--output ++compile-log.txt \
+		--chdir . \
+		'$(KVM_HOST)' \
+		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) $(1)'
+endef
 
 KVMSH_TARGETS = $(patsubst %,kvmsh-%,$(KVM_HOSTS))
 .PHONY: $(KVMSH_TARGETS)
@@ -54,12 +69,13 @@ $(KVM_SHUTDOWN_TARGETS):
 .PHONY: kvm-shutdown
 kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
 
-KVM_BUILD_TARGETS = $(patsubst %,kvm-build-%,$(KVM_HOSTS))
-.PHONY: $(KVM_BUILD_TARGETS)
-$(KVM_BUILD_TARGETS):
-	: KVM_HOST: '$(KVM_HOST)'
-	: KVM_OBJDIR: '$(KVM_OBJDIR)'
-	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-build OBJDIR=$(KVM_OBJDIR)'
+.PHONY: kvm-build kvm-clean kvm-distclean
+kvm-build:
+	$(call kvm-make, base module)
+kvm-clean:
+	$(call kvm-make, clean)
+kvm-distclean:
+	$(call kvm-make, distclean)
 
 KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
 .PHONY: $(KVM_INSTALL_TARGETS)
@@ -68,8 +84,11 @@ $(KVM_INSTALL_TARGETS):
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
 
+# To avoid kvm-build $(KVM_INSTALL_TARGETS) all being run in parallel,
+# use a sub-make to perform the installs.
 .PHONY: kvm-update
-kvm-update: kvm-build-east | $(KVM_INSTALL_TARGETS)
+kvm-update: kvm-build
+	$(MAKE) --no-print-directory $(KVM_INSTALL_TARGETS)
 
 KVM_EXCLUDE = bad|wip|incomplete
 KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')
