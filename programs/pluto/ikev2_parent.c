@@ -1982,8 +1982,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		if (c == NULL) {
 			c = st->st_connection;
-			DBG_log("no pending CHILD SAs found for %s: Reauthentication so use the original policy",
-				c->name);
+			DBG(DBG_CONTROL, DBG_log("no pending CHILD SAs found for %s: Reauthentication so use the original policy",
+				c->name));
 			policy = c->policy;
 		}
 		st->st_connection = c;
@@ -1997,7 +1997,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		ikev2_calc_emit_ts(md, &e_pbs_cipher, ORIGINAL_INITIATOR, c, policy);
 
 		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
-			DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
+			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
 			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
 						ISAKMP_PAYLOAD_NONCRITICAL,
