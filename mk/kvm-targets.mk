@@ -23,7 +23,7 @@ abs_top_srcdir ?= $(abspath ${LIBRESWANSRCDIR})
 KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
 KVM_MOUNTS_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmmounts.sh
 KVM_SWANTEST_COMMAND ?= $(abs_top_srcdir)/testing/utils/swantest
-
+KVM_OBJDIR = OBJ.kvm
 KVM_HOSTS = east west road north
 
 # NOTE: Use this from make rules only.  Determines the KVM path to
@@ -58,13 +58,15 @@ KVM_BUILD_TARGETS = $(patsubst %,kvm-build-%,$(KVM_HOSTS))
 .PHONY: $(KVM_BUILD_TARGETS)
 $(KVM_BUILD_TARGETS):
 	: KVM_HOST: '$(KVM_HOST)'
-	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' ./testing/guestbin/swan-build
+	: KVM_OBJDIR: '$(KVM_OBJDIR)'
+	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-build OBJDIR=$(KVM_OBJDIR)'
 
 KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
 .PHONY: $(KVM_INSTALL_TARGETS)
 $(KVM_INSTALL_TARGETS):
 	: KVM_HOST: '$(KVM_HOST)'
-	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' ./testing/guestbin/swan-install
+	: KVM_OBJDIR: '$(KVM_OBJDIR)'
+	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
 
 .PHONY: kvm-update
 kvm-update: kvm-build-east | $(KVM_INSTALL_TARGETS)

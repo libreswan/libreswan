@@ -585,6 +585,8 @@ showrpmversion:
 	@echo ${IPSECVERSION} | sed "s/^v//" | sed "s/-.*//"
 showrpmrelease:
 	@echo ${IPSECVERSION} | sed "s/^v//" | sed "s/^[^-]*-\(.*\)/\1/"
+showobjdir:
+	@echo $(OBJDIR)
 
 # these need to move elsewhere and get fixed not to use root
 
