@@ -1601,7 +1601,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		}
 
 		if (!kernel_ops->add_sa(said_next, replace)) {
-			DBG_log("add_sa ipcomp failed");
+			libreswan_log("add_sa ipcomp failed");
 			goto fail;
 		}
 
@@ -1816,7 +1816,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (said_next->authalg == AUTH_ALGORITHM_HMAC_SHA2_256 &&
 		    st->st_connection->sha2_truncbug) {
 			if (kernel_ops->sha2_truncbug_support) {
-				DBG_log(" authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits");
+				DBG(DBG_KERNEL, DBG_log(" authalg converted for sha2 truncation at 96bits instead of IETF's mandated 128bits"));
 				/* We need to tell the kernel to mangle the sha2_256, as instructed by the user */
 				said_next->authalg =
 					AUTH_ALGORITHM_HMAC_SHA2_256_TRUNCBUG;
@@ -2145,7 +2145,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 				    s[0].text_said, s[0].ref,
 				    s[1].text_said, s[1].ref));
 			if (!kernel_ops->grp_sa(s + 1, s)) {
-				DBG_log("grp_sa failed");
+				libreswan_log("grp_sa failed");
 				goto fail;
 			}
 		}

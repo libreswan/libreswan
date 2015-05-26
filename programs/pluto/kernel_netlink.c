@@ -688,7 +688,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_HOLD implemented by faery dust, not a SPI_HOLD policy");
+			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_HOLD implemented as no-op"));
 			return TRUE; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:

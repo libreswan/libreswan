@@ -1317,12 +1317,13 @@ static void success_v2_state_transition(struct msg_digest *md)
 	const struct state_v2_microcode *svm = md->svm;
 	enum state_kind from_state = md->from_state;
 	struct state *st = md->st;
+	struct connection *c = st->st_connection;
 	enum rc_type w;
 
 	if (from_state != svm->next_state) {
-		libreswan_log("transition from state %s to state %s",
+		DBG(DBG_CONTROL, DBG_log("transition from state %s to state %s",
 			      enum_name(&state_names, from_state),
-			      enum_name(&state_names, svm->next_state));
+			      enum_name(&state_names, svm->next_state)));
 	}
 
 	change_state(st, svm->next_state);
@@ -1363,7 +1364,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 						  sizeof(sadetails));
 		}
 
-		/* tell whack and logs our progress */
+		/* tell whack and logs our progress - unless OE, then be quiet*/
+		if (c == NULL || (c != NULL && (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
 		loglog(w,
 		       "%s: %s%s",
 		       enum_name(&state_names, st->st_state),

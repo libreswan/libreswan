@@ -946,6 +946,7 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					/* note dirty trick to suppress ~ at start of format
 					 * if we know what state to blame.
 					 */
+					if (DBGP(DBG_OPPO)) /* we need a rate limit when doing OE */
 					libreswan_log((sender != NULL) + "~"
 						      "ERROR: asynchronous network error report on %s (sport=%d)"
 						      "%s"

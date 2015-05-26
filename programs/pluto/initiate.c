@@ -884,7 +884,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				setportof(0, &this_client.addr);
 				setportof(0, &that_client.addr);
 	
-				DBG(DBG_CONTROL, DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
+				DBG(DBG_OPPO, DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
 					(b->negotiation_shunt == SPI_PASS) ? "pass" : 
 						(b->negotiation_shunt == SPI_HOLD) ? "hold" : "unknown?"));
 	
@@ -905,7 +905,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				{
 					libreswan_log("adding bare wide passthrough negotiationshunt failed");
 				} else {
-					DBG(DBG_CONTROLMORE, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
+					DBG(DBG_OPPO, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
 					add_bare_shunt(&this_client, &that_client, 0 /* broadened transport_proto */, SPI_HOLD, addwidemsg);
 				}
 				/* now delete the (obsoleted) narrow bare kernel shunt - we have a broadened negotiationshunt replacement installed */
@@ -914,7 +914,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				{
 					libreswan_log("Failed to: %s", delmsg);
 				} else {
-					DBG(DBG_CONTROLMORE, DBG_log("success taking down narrow bare shunt"));
+					DBG(DBG_OPPO, DBG_log("success taking down narrow bare shunt"));
 				}
 			}
 
@@ -923,7 +923,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				if (c->policy & POLICY_AUTH_NULL) {
 					struct gw_info nullgw;
 
-					DBG_log("setting c->gw_info for POLICY_AUTH_NULL");
+					DBG(DBG_OPPO, DBG_log("setting c->gw_info for POLICY_AUTH_NULL"));
 					nullgw.client_id.kind = ID_NULL;
 					nullgw.gw_id.kind = ID_NULL;
 					nullgw.gw_id.ip_addr = b->peer_client;
@@ -931,10 +931,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				}
 
 				b->step = fos_his_client;
-				libreswan_log("Going to hell... bring hand basket");
-				goto hell;
+				goto fos_his_client;
 			} else {
-			   	DBG_log("just starting out: select first query step");
 				/* just starting out: select first query step */
 				next_step = fos_myid_ip_txt;
 			}
@@ -1096,7 +1094,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 								pub,
 								&gwp->key->u.
 								rsa)) {
-						DBG(DBG_CONTROL,
+						DBG(DBG_OPPO,
 						    DBG_log("initiate on demand found IPSECKEY with right public key at: %s",
 							    mycredentialstr));
 						ugh = NULL;
@@ -1107,7 +1105,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 		break;
 
-hell:
+fos_his_client:
 		case fos_his_client: /* IPSECKEY for his client */
 		{
 			/* We've finished last DNS queries: IPSECKEY for his client.
@@ -1153,7 +1151,7 @@ hell:
 						b->failure_shunt, /* if not from conn, where did this come from? */
 						b->transport_proto,
 						"no suitable connection")) {
-							DBG(DBG_CONTROL, DBG_log("replaced negotiatinshunt with failurehunt=hold because no connection was found"));
+							DBG(DBG_OPPO, DBG_log("replaced negotiatinshunt with failurehunt=hold because no connection was found"));
 					} else {
 						libreswan_log("failed to replace negotiatinshunt with failurehunt=hold");
 					}
@@ -1167,7 +1165,7 @@ hell:
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
 				if (b->held) { /* packet triggered - not whack triggered */
-					DBG(DBG_CONTROL, DBG_log("assigning negotiation_shunt to connection"));
+					DBG(DBG_OPPO, DBG_log("assigning negotiation_shunt to connection"));
 					if (assign_holdpass(c, &c->spd,
 						   b->transport_proto,
 						   b->negotiation_shunt,
@@ -1201,7 +1199,7 @@ hell:
 		}
 
 		/* the second chunk: initiate the next DNS query (if any) */
-		DBG(DBG_CONTROL, {
+		DBG(DBG_OPPO | DBG_CONTROL, {
 			ipstr_buf b1;
 			ipstr_buf b2;
 			DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
@@ -1224,11 +1222,7 @@ hell:
 			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 			b->failure_shunt = shunt_policy_spi(c, FALSE);
 			cannot_oppo(c, b, ugh);
-		} else if (next_step == fos_done) {
-			/* nothing to do */
-			DBG_log("fos_done - whatever happens will happen");
-		} else {
-			DBG_log("setup up the next query");
+		} else if (next_step != fos_done) {
 			/* set up the next query */
 			struct find_oppo_continuation *cr = alloc_thing(
 				struct find_oppo_continuation,
@@ -1475,7 +1469,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 
 	if (!isanyaddr(&c->spd.that.host_addr)) {
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_DNS,
 		    DBG_log("pending ddns: connection \"%s\" has address",
 			    c->name));
 		return;
@@ -1484,7 +1478,7 @@ static void connection_check_ddns1(struct connection *c)
 	if (c->spd.that.has_client_wildcard || c->spd.that.has_port_wildcard ||
 	    ((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
 	     c->spd.that.has_id_wildcards)) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_DNS,
 		    DBG_log("pending ddns: connection \"%s\" with wildcard not started",
 			    c->name));
 		return;
@@ -1492,14 +1486,14 @@ static void connection_check_ddns1(struct connection *c)
 
 	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_DNS,
 		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",
 			    c->name, c->dnshostname, e));
 		return;
 	}
 
 	if (isanyaddr(&new_addr)) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_DNS,
 		    DBG_log("pending ddns: connection \"%s\" still no address for \"%s\"",
 			    c->name, c->dnshostname));
 		return;
@@ -1559,7 +1553,7 @@ void connection_check_ddns(void)
 	}
 	check_orientations();
 
-	DBG(DBG_CONTROL, {
+	DBG(DBG_DNS, {
 		struct timeval tv2;
 		unsigned long borrow;
 
