@@ -676,7 +676,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		/* shunt route */
 		switch (ntohl(new_spi)) {
 		case SPI_PASS:
-			DBG_log("netlink_raw_eroute: SPI_PASS");
+			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_PASS"));
 			policy = IPSEC_POLICY_NONE;
 			break;
 		case SPI_HOLD:
@@ -688,7 +688,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			 * After expiration, the underlying policy causing the original acquire
 			 * will fire again, dropping further packets.
 			 */
-			DBG_log("netlink_raw_eroute: SPI_HOLD implemented by faery dust, not a SPI_HOLD policy");
+			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_HOLD implemented by faery dust, not a SPI_HOLD policy");
 			return TRUE; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:
