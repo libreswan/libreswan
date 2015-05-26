@@ -30,13 +30,6 @@ KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
 
 SUBDIRS?=lib programs initsystems testing
 
-clean::
-	-(cd ${LIBRESWANSRCDIR} && $(MAKE) modclean && $(MAKE) mod26clean)
-
-distclean:	clean
-	rm -f out.kpatch
-	if [ -d OBJ.$$OSDEP.$$ARCH ]; then rm -rf OBJ.$$OSDEP.$$ARCH/; fi
-
 TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/openswan/*.h linux/net/ipsec/*.[ch])
 
 tags:	$(TAGSFILES)
