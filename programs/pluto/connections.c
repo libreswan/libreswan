@@ -248,12 +248,14 @@ void delete_connection(struct connection *c, bool relations)
 	if (c->kind == CK_INSTANCE) {
 		ipstr_buf b;
 
-		libreswan_log(
-			"deleting connection \"%s\" instance with peer %s "
-			"{isakmp=#%lu/ipsec=#%lu}",
-			c->name,
-			ipstr(&c->spd.that.host_addr, &b),
-			c->newest_isakmp_sa, c->newest_ipsec_sa);
+		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			libreswan_log(
+				"deleting connection \"%s\" instance with peer %s "
+				"{isakmp=#%lu/ipsec=#%lu}",
+				c->name,
+				ipstr(&c->spd.that.host_addr, &b),
+				c->newest_isakmp_sa, c->newest_ipsec_sa);
+		}
 		c->kind = CK_GOING_AWAY;
 		if (c->pool != NULL)
 			rel_lease_addr(c);

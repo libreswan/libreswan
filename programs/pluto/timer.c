@@ -205,7 +205,7 @@ static void retransmit_v1_msg(struct state *st)
 						"%s, but releasing whack",
 						story);
 					release_pending_whacks(st, story);
-				} else {
+				} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 					/* no whack: just log */
 					libreswan_log("%s", story);
 				}
@@ -335,7 +335,7 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "next attempt will be IKEv1");
 		}
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
-	} else {
+	} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 		loglog(RC_COMMENT, "maximum number of keyingtries reached - deleting state");
 	}
 

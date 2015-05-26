@@ -223,15 +223,19 @@ stf_status ikev2parent_outI1(int whack_sock,
 	}
 
 	if (predecessor != NULL) {
-		libreswan_log("initiating v2 parent SA to replace #%lu",
+		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			libreswan_log("initiating v2 parent SA to replace #%lu",
 				predecessor->st_serialno);
+		}
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1,
 			  "%s: initiate, replacing #%lu",
 			  enum_name(&state_names, st->st_state),
 			  predecessor->st_serialno);
 	} else {
-		libreswan_log("initiating v2 parent SA");
+		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			libreswan_log("initiating v2 parent SA");
+		}
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1, "%s: initiate",
 			  enum_name(&state_names, st->st_state));
 	}
