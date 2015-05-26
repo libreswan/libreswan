@@ -209,9 +209,8 @@ static void retransmit_v1_msg(struct state *st)
 					/* no whack: just log */
 					libreswan_log("%s", story);
 				}
-			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) /* too spammy for OE */
-			{
-				loglog(RC_COMMENT, "%s", story);
+			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+					loglog(RC_COMMENT, "%s", story);
 			}
 
 			if (try % 3 == 0 &&
@@ -318,7 +317,7 @@ static void retransmit_v2_msg(struct state *st)
 				loglog(RC_COMMENT, "%s, but releasing whack",
 					story);
 				release_pending_whacks(st, story);
-			} else {
+			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				/* no whack: just log to syslog */
 				libreswan_log("%s", story);
 			}
