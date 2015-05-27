@@ -646,29 +646,32 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		    DBG_log("anti-DDoS cookies not required"));
 	}
 
-	/* ??? from here on looks a lot like main_inI1_outR1 */
+	/* authentication policy alternatives in order of decreasing preference */
+	static const lset_t policies[] = {POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL};
 
 	struct state *st = md->st;
+	lset_t policy;
+	struct connection *c;
+	stf_status e;
+	unsigned int i;
 
-	/* What we know is little.  And exact mask is LEMPTY. */
-	const lset_t policy = POLICY_IKEV2_ALLOW | POLICY_PSK | POLICY_RSASIG;
-	const lset_t policy_null = POLICY_IKEV2_ALLOW | POLICY_AUTH_NULL;
-
-	struct connection *c = NULL;
-
-	ikev2_find_host_connection(&c, &md->iface->ip_addr,
-			md->iface->port, &md->sender, md->sender_port, policy);
-
-	if (c == NULL) {
-		stf_status e = ikev2_find_host_connection(&c,
-				&md->iface->ip_addr,
+	for (i=0; i < elemsof(policies); i++){
+		policy = policies[i] | POLICY_IKEV2_ALLOW;
+		e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
 				md->iface->port, &md->sender, md->sender_port,
-				policy_null);
-		if (e != STF_OK )
-			return e;
+				policy);
+		if (e == STF_OK)
+			break;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("found connection: %s", c ? c->name : "<none>"));
+	if (e != STF_OK)
+		return e;
+
+	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
+
+	DBG(DBG_CONTROL,
+		DBG_log("found connection: %s with policy %s",
+			c->name, bitnamesof(sa_policy_bit_names, policy)));
 
 	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
@@ -688,8 +691,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
+	} else {
+		/* ??? should st->st_connection be changed to c? */
 	}
-
 
 	{
 		struct ikev2_ke *ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
