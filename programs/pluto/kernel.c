@@ -186,7 +186,8 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 				      "acquire");
 	}
 
-	if (kernel_ops->remove_orphaned_holds != NULL) { /* remove from KLIPS's list */
+	if (kernel_ops->remove_orphaned_holds != NULL) {
+		/* remove from KLIPS's list */
 		DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt"));
 		(*kernel_ops->remove_orphaned_holds)(transport_proto, ours,
 						     his);

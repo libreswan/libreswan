@@ -1701,10 +1701,11 @@ static err_t process_lwdnsq_answer(char *ts)
 			cr->cont_fn(cr, rest);
 			cr->used = TRUE;
 		}
-	} else if (strcaseeq(atype, "TIMEOUT")) { /* for now, treat as if it was a fatal error, and run failure
-		                                   * shunt. Later, we will consider a valid answer and re-evaluate
-		                                   * life, the universe and everything
-		                                   */
+	} else if (strcaseeq(atype, "TIMEOUT")) {
+		/* for now, treat as if it was a fatal error, and run failure
+		 * shunt. Later, we will consider a valid answer and re-evaluate
+		 * life, the universe and everything
+		 */
 		if (!cr->used) {
 			cr->cont_fn(cr, rest);
 			cr->used = TRUE;

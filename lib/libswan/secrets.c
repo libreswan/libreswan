@@ -957,10 +957,12 @@ static void process_secret(struct secret **psecrets,
 		s->pks.kind = PPK_RSA;
 		if (!shift()) {
 			ugh = "ERROR: bad RSA key syntax";
-		} else if (tokeq("{")) { /* raw RSA key in NSS */
+		} else if (tokeq("{")) {
+			/* raw RSA key in NSS */
 			ugh = lsw_process_rsa_secret(
 					&s->pks.u.RSA_private_key);
-		} else { /* RSA key in certificate in NSS */
+		} else {
+			/* RSA key in certificate in NSS */
 			ugh = lsw_process_rsa_keycert(
 				&s->pks.u.RSA_private_key);
 		}

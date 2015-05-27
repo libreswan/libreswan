@@ -771,8 +771,8 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 			numfound++;
 
 			valresult |= kev->value;
-		} else { /* we didn't find anything, complain */
-
+		} else {
+			/* we didn't find anything, complain */
 			snprintf(complaintbuf, sizeof(complaintbuf),
 				 "%s: %d: keyword %s, invalid value: %s",
 				 parser_cur_filename(), parser_cur_lineno(),

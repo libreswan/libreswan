@@ -1365,12 +1365,11 @@ static void success_v2_state_transition(struct msg_digest *md)
 		}
 
 		/* tell whack and logs our progress - unless OE, then be quiet*/
-		if (c == NULL || (c != NULL && (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY))
-		loglog(w,
-		       "%s: %s%s",
-		       enum_name(&state_names, st->st_state),
-		       enum_name(&state_stories, st->st_state),
-		       sadetails);
+		if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)
+			loglog(w, "%s: %s%s",
+				enum_name(&state_names, st->st_state),
+				enum_name(&state_stories, st->st_state),
+				sadetails);
 	}
 
 	/* if requested, send the new reply packet */
