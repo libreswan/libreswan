@@ -78,17 +78,18 @@ kvm-distclean:
 	$(call kvm-make, distclean)
 
 KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
-.PHONY: $(KVM_INSTALL_TARGETS)
+.PHONY: kvm-install $(KVM_INSTALL_TARGETS)
 $(KVM_INSTALL_TARGETS):
 	: KVM_HOST: '$(KVM_HOST)'
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
 	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
+kvm-install: $(KVM_INSTALL_TARGETS)
 
-# To avoid kvm-build $(KVM_INSTALL_TARGETS) all being run in parallel,
-# use a sub-make to perform the installs.
+# To avoid kvm-build and one or more of the $(KVM_INSTALL_TARGETS)
+# being run in parallel, use a sub-make to trigger the installs.
 .PHONY: kvm-update
 kvm-update: kvm-build
-	$(MAKE) --no-print-directory $(KVM_INSTALL_TARGETS)
+	$(MAKE) --no-print-directory kvm-install
 
 KVM_EXCLUDE = bad|wip|incomplete
 KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')
