@@ -83,6 +83,8 @@
 bool strict_crl_policy = FALSE;
 bool strict_ocsp_policy = FALSE;
 bool ocsp_enable = FALSE;
+char *curl_iface = NULL;
+long curl_timeout = -1;
 
 SECItem chunk_to_secitem(chunk_t chunk)
 {
