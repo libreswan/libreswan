@@ -891,7 +891,7 @@ int main(int argc, char **argv)
 			if (ugh != NULL)
 				break;
 			if (u <= 0) {
-				ugh = "must not be > 0";
+				ugh = "must not be < 1";
 				break;
 			}
 			curl_timeout = u;
