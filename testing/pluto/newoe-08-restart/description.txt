@@ -1,0 +1,6 @@
+basic OE test, using road and east triggered by packet using NETKEY on road
+
+This test has policies so that east has road in clear-or-private, and road
+has east in private-or-clear, so one clean OE connection happens even after
+restart.
+
