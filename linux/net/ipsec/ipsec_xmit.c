@@ -100,7 +100,7 @@
 #endif
 
 #if defined(CONFIG_KLIPS_AH)
-#if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1)
+#if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1) || defined(CONFIG_KLIPS_ALG)
 static __u32 zeroes[64];
 #endif
 #endif
@@ -680,6 +680,11 @@ enum ipsec_xmit_value ipsec_xmit_encap_init(struct ipsec_xmit_state *ixs)
 	switch (ixs->ipsp->ips_said.proto) {
 #ifdef CONFIG_KLIPS_AH
 	case IPPROTO_AH:
+#ifdef CONFIG_KLIPS_ALG
+		if ((ixs->ixt_a = ixs->ipsp->ips_alg_auth)) {
+			ixs->authlen = AHHMAC_HASHLEN;
+		}
+#endif          /* CONFIG_KLIPS_ALG */
 		ixs->headroom += sizeof(struct ahhdr);
 		break;
 #endif          /* CONFIG_KLIPS_AH */
@@ -1072,6 +1077,10 @@ enum ipsec_xmit_value ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 {
 	struct iphdr ipo;
 	struct ahhdr *ahp;
+#ifdef CONFIG_KLIPS_ALG
+	unsigned char *buf;
+	int len = 0;
+#endif
 
 #if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1)
 	__u8 hash[AH_AMAX];
@@ -1115,6 +1124,35 @@ enum ipsec_xmit_value ipsec_xmit_ah(struct ipsec_xmit_state *ixs)
 	ipo.check = 0;
 	dmp("ipo", (char*)&ipo, sizeof(ipo));
 
+#ifdef CONFIG_KLIPS_ALG
+	if (ixs->ixt_a) {
+
+		if (ixs->ipsp->ips_authalg != AH_SHA && ixs->ipsp->ips_authalg != AH_MD5) {
+			printk("KLIPS AH doesn't support authalg=%d yet\n",ixs->ipsp->ips_authalg);
+			return IPSEC_XMIT_AH_BADALG;
+		}
+		if ((buf = kmalloc(sizeof(struct iphdr)+ixs->skb->len, GFP_KERNEL)) == NULL)
+			return IPSEC_XMIT_ERRMEMALLOC;
+
+		memcpy(buf, (unsigned char *)&ipo,sizeof(struct iphdr));
+		len = sizeof(struct iphdr);
+		memcpy(buf+len, (unsigned char*)ahp,ixs->headroom - sizeof(ahp->ah_data));
+		len+=(ixs->headroom - sizeof(ahp->ah_data));
+		memcpy(buf+len, (unsigned char *)zeroes, AHHMAC_HASHLEN);
+		len+=AHHMAC_HASHLEN;
+		memcpy(buf+len,  ixs->dat + ixs->iphlen + ixs->headroom, ixs->len - ixs->iphlen - ixs->headroom);
+		len+=(ixs->len - ixs->iphlen - ixs->headroom);
+
+		ipsec_alg_sa_ah_hash(ixs->ipsp,
+				     (caddr_t)buf,
+				     len,
+				     ahp->ah_data,
+				     AHHMAC_HASHLEN);
+
+		if(buf)
+			kfree(buf);
+	} else
+#endif  /* CONFIG_KLIPS_ALG */
 	switch (ixs->ipsp->ips_authalg) {
 #ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
 	case AH_MD5:

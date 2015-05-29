@@ -178,6 +178,11 @@ int ipsec_alg_sa_esp_hash(const struct ipsec_sa *sa_p, const __u8 *espp,
 #define ipsec_alg_sa_esp_update(c, k, l) \
 		ipsec_alg_sa_esp_hash(c, k, l, NULL, 0)
 
+int ipsec_alg_sa_ah_hash(const struct ipsec_sa *sa_p, const __u8 *ahp,
+			  int len, __u8 *hash, int hashlen);
+#define ipsec_alg_sa_ah_update(c, k, l) \
+		ipsec_alg_sa_ah_hash(c, k, l, NULL, 0)
+
 /* only called from ipsec_init.c */
 int ipsec_alg_init(void);
 
