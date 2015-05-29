@@ -1093,12 +1093,14 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		DBG_log("offered CA: '%s'", buf);
 	});
 
-	{
+	if (!(c->policy & POLICY_AUTH_NULL)) {
 		char buf[IDTOA_BUF];
 
 		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			      enum_show(&ikev2_idtype_names, v2id->isai_type), buf);
+		      enum_show(&ikev2_idtype_names, v2id->isai_type), buf);
+	} else {
+		DBG(DBG_OPPO, DBG_log("IKEv2 mode peer ID is ID_NULL"));
 	}
 
 	return TRUE;
