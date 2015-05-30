@@ -1257,7 +1257,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		if (IS_IKE_SA_ESTABLISHED(st)) {
 			delay = deltasecs(c->sa_ike_life_seconds);
 		} else {
-			delay = time(0) + PLUTO_HALFOPEN_SA_LIFE; 
+			delay = PLUTO_HALFOPEN_SA_LIFE;
 		}
 	} else {
 		/* Delay is what the user said, no negotiation. */
