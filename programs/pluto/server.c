@@ -198,7 +198,7 @@ void delete_ctl_socket(void)
 bool listening = FALSE;  /* should we pay attention to IKE messages? */
 
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
-unsigned int pluto_max_halfopen = DEFAULT_MAXIMIM_HALFOPEN_IKE_SA;
+unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 unsigned int pluto_ddos_treshold = DEFAULT_IKE_SA_DDOS_TRESHOLD;
 deltatime_t pluto_shunt_lifetime = { PLUTO_SHUNT_LIFE_DURATION_DEFAULT };
 

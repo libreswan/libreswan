@@ -204,7 +204,7 @@ typedef enum {
 #define MAX_IKE_FRAGMENTS       16
 
 #define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
-#define DEFAULT_MAXIMIM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
+#define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
 #define DEFAULT_IKE_SA_DDOS_TRESHOLD 25000 /* fairly arbitrary */
 
 /* debugging settings: a set of selections for reporting
@@ -513,8 +513,8 @@ enum original_role {
 
 #define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
 
-#define IS_IKE_SA(st) (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) ||\
-		IS_PARENT_SA(st))
+#define IS_IKE_SA(st) ( ((st)->st_clonedfrom == SOS_NOBODY) &&  (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) ||\
+		IS_PARENT_SA(st)) )
 #define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
 #define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
 
