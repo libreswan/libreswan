@@ -1343,7 +1343,8 @@ void process_v1_packet(struct msg_digest **mdp)
 			}
 		} else {
 			if (st->st_connection->spd.this.xauth_server &&
-			    IS_PHASE1(st->st_state)) { /* Switch from Phase1 to Mode Config */
+			    IS_PHASE1(st->st_state)) {
+				/* Switch from Phase1 to Mode Config */
 				libreswan_log(
 					"We were in phase 1, with no state, so we went to XAUTH_R0");
 				change_state(st, STATE_XAUTH_R0);

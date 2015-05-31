@@ -938,7 +938,13 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					/* don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled
 					 */
-				} else {
+				} else if (sender == NULL ||
+					sender->st_connection == NULL ||
+					(sender->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
+					DBGP(DBG_OPPO))
+				{
+					/* we need a rate limit when doing OE */
+					/* ??? DBGP is controlling non-DBG logging! */
 					struct state *old_state = cur_state;
 
 					cur_state = sender;
@@ -946,30 +952,28 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					/* note dirty trick to suppress ~ at start of format
 					 * if we know what state to blame.
 					 */
-					if (DBGP(DBG_OPPO)) /* we need a rate limit when doing OE */
 					libreswan_log((sender != NULL) + "~"
-						      "ERROR: asynchronous network error report on %s (sport=%d)"
-						      "%s"
-						      ", complainant %s"
-						      ": %s"
-						      " [errno %lu, origin %s"
-					                /* ", pad %d, info %ld" */
-					                /* ", data %ld" */
-						      "]",
-						      ifp->ip_dev->id_rname,
-						      ifp->port,
-						      fromstr,
-						      offstr,
-						      strerror(ee->ee_errno),
-						      (unsigned long) ee->ee_errno,
-						      orname
-					                /* , ee->ee_pad, (unsigned long)ee->ee_info */
-					                /* , (unsigned long)ee->ee_data */
-						      );
+						"ERROR: asynchronous network error report on %s (sport=%d)"
+						"%s"
+						", complainant %s"
+						": %s"
+						" [errno %lu, origin %s"
+						/* ", pad %d, info %ld" */
+						/* ", data %ld" */
+						"]",
+						ifp->ip_dev->id_rname, ifp->port,
+						fromstr,
+						offstr,
+						strerror(ee->ee_errno),
+						(unsigned long) ee->ee_errno, orname
+						/* , ee->ee_pad, (unsigned long)ee->ee_info */
+						/* , (unsigned long)ee->ee_data */
+						);
 					cur_state = old_state;
 				}
-			} else if (cm->cmsg_level == SOL_IP   &&
+			} else if (cm->cmsg_level == SOL_IP &&
 				   cm->cmsg_type == IP_PKTINFO) {
+				/* do nothing */
 			} else {
 				/* .cmsg_len is a kernel_size_t(!), but the value
 				 * certainly ought to fit in an unsigned long.

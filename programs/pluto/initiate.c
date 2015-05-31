@@ -516,7 +516,7 @@ static void cannot_oppo(struct connection *c,
 	}
 
 	if (b->held) {
-		/* this was filled in for us based on packet trigger vs whack --oppo trigger */
+		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
 		DBG(DBG_CONTROL, DBG_log("cannot_oppo() detected packet triggered shunt from bundle"));
 		/*
 		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass)
@@ -884,9 +884,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				setportof(0, &this_client.addr);
 				setportof(0, &that_client.addr);
 	
-				DBG(DBG_OPPO, DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
-					(b->negotiation_shunt == SPI_PASS) ? "pass" : 
-						(b->negotiation_shunt == SPI_HOLD) ? "hold" : "unknown?"));
+				DBG(DBG_OPPO,
+					DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
+						(b->negotiation_shunt == SPI_PASS) ? "pass" : 
+						(b->negotiation_shunt == SPI_HOLD) ? "hold" :
+						"unknown?"));
 	
 				// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
 				if (!raw_eroute(&b->our_client, &this_client,
@@ -931,7 +933,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				}
 
 				b->step = fos_his_client;
-				goto fos_his_client;
+				goto CASE_fos_his_client;
 			} else {
 				/* just starting out: select first query step */
 				next_step = fos_myid_ip_txt;
@@ -1105,7 +1107,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 		break;
 
-fos_his_client:
+		CASE_fos_his_client:
 		case fos_his_client: /* IPSECKEY for his client */
 		{
 			/* We've finished last DNS queries: IPSECKEY for his client.
@@ -1164,7 +1166,8 @@ fos_his_client:
 				passert(LHAS(LELEM(RT_UNROUTED) |
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
-				if (b->held) { /* packet triggered - not whack triggered */
+				if (b->held) {
+					/* packet triggered - not whack triggered */
 					DBG(DBG_OPPO, DBG_log("assigning negotiation_shunt to connection"));
 					if (assign_holdpass(c, &c->spd,
 						   b->transport_proto,

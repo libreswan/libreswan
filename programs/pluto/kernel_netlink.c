@@ -228,10 +228,12 @@ static const struct aead_alg *get_aead_alg(int algid)
  */
 static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_family_t family)
 {
-        if (family == AF_INET) { /* If it's an IPv4 address */
+        if (family == AF_INET) {
+		/* an IPv4 address */
                 addr->u.v4.sin_family = AF_INET;
                 addr->u.v4.sin_addr.s_addr = xaddr->a4;
-        } else {        /* Must be IPv6 */
+        } else {
+		/* Must be IPv6 */
                 memcpy(&addr->u.v6.sin6_addr, xaddr->a6, sizeof(xaddr->a6));
                 addr->u.v4.sin_family = AF_INET6;
         }

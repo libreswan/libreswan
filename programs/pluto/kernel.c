@@ -186,7 +186,8 @@ void record_and_initiate_opportunistic(const ip_subnet *ours,
 				      "acquire");
 	}
 
-	if (kernel_ops->remove_orphaned_holds != NULL) { /* remove from KLIPS's list */
+	if (kernel_ops->remove_orphaned_holds != NULL) {
+		/* remove from KLIPS's list */
 		DBG(DBG_OPPO, DBG_log("record_and_initiate_opportunistic(): tell kernel to remove orphan hold for our bare shunt"));
 		(*kernel_ops->remove_orphaned_holds)(transport_proto, ours,
 						     his);
@@ -595,12 +596,47 @@ bool do_command(struct connection *c, struct spd_route *sr, const char *verb,
 /* Check that we can route (and eroute).  Diagnose if we cannot. */
 
 enum routability {
-	route_impossible = 0,
-	route_easy = 1,
-	route_nearconflict = 2,
-	route_farconflict = 3,
-	route_unnecessary = 4
+	route_impossible,
+	route_easy,
+	route_nearconflict,
+	route_farconflict,
+	route_unnecessary
 };
+
+/* handle co-terminal attempt of the "near" kind */
+static enum routability note_nearconflict(
+	struct connection *outside,	/* CK_PERMANENT */
+	struct connection *inside)	/* CK_TEMPLATE */
+{
+	char inst[CONN_INST_BUF];
+
+	/* this is a co-terminal attempt of the "near" kind. */
+	/* when chaining, we chain from inside to outside */
+
+	/* XXX permit multiple deep connections? */
+	passert(inside->policy_next == NULL);
+
+	inside->policy_next = outside;
+
+	/* since we are going to steal the eroute from the secondary
+	 * policy, we need to make sure that it no longer thinks that
+	 * it owns the eroute.
+	 */
+	outside->spd.eroute_owner = SOS_NOBODY;
+	outside->spd.routing = RT_UNROUTED_KEYED;
+
+	/* set the priority of the new eroute owner to be higher
+	 * than that of the current eroute owner
+	 */
+	inside->prio = outside->prio + 1;
+
+	loglog(RC_LOG_SERIOUS,
+	       "conflict on eroute (%s), switching eroute to %s and linking %s",
+	       fmt_conn_instance(inside, inst),
+	       inside->name, outside->name);
+
+	return route_nearconflict;
+}
 
 static enum routability could_route(struct connection *c)
 {
@@ -670,109 +706,81 @@ static enum routability could_route(struct connection *c)
 		 * connection was marked that overlapping is OK.  Below we will
 		 * check the other eroute, ero.
 		 */
-		if (!compatible_overlapping_connections(c, ero))
-			return route_impossible; /* another connection already using the
-		                                    eroute. TODO: NETKEY can do this? */
+		if (!compatible_overlapping_connections(c, ero)) {
+			/*
+			 * Another connection is already using the eroute.
+		         * TODO: NETKEY can do this?
+			 */
+			return route_impossible;
+		}
 	}
 
 	/* if there is an eroute for another connection, there is a problem */
 	if (ero != NULL && ero != c) {
-		struct connection *ero2;
-		struct connection *inside, *outside;
-
 		/*
 		 * note, wavesec (PERMANENT) goes *outside* and
 		 * OE goes *inside* (TEMPLATE)
 		 */
-		inside = NULL;
-		outside = NULL;
+		char inst[CONN_INST_BUF];
+		struct connection *ep;
+
 		if (ero->kind == CK_PERMANENT &&
 		    c->kind == CK_TEMPLATE) {
-			outside = ero;
-			inside = c;
-		} else if (c->kind == CK_PERMANENT   &&
+			return note_nearconflict(ero, c);
+		} else if (c->kind == CK_PERMANENT &&
 			   ero->kind == CK_TEMPLATE) {
-			outside = c;
-			inside = ero;
-		}
-
-		/* okay, check again, with correct order */
-		if (outside && outside->kind == CK_PERMANENT &&
-		    inside && inside->kind == CK_TEMPLATE) {
-			char inst[CONN_INST_BUF];
-
-			/* this is a co-terminal attempt of the "near" kind. */
-			/* when chaining, we chain from inside to outside */
-
-			/* XXX permit multiple deep connections? */
-			passert(inside->policy_next == NULL);
-
-			inside->policy_next = outside;
-
-			/* since we are going to steal the eroute from the secondary
-			 * policy, we need to make sure that it no longer thinks that
-			 * it owns the eroute.
-			 */
-			outside->spd.eroute_owner = SOS_NOBODY;
-			outside->spd.routing = RT_UNROUTED_KEYED;
-
-			/* set the priority of the new eroute owner to be higher
-			 * than that of the current eroute owner
-			 */
-			inside->prio = outside->prio + 1;
-
-			loglog(RC_LOG_SERIOUS,
-			       "conflict on eroute (%s), switching eroute to %s and linking %s",
-			       fmt_conn_instance(inside, inst),
-			       inside->name, outside->name);
-
-			return route_nearconflict;
+			return note_nearconflict(c, ero);
 		}
 
 		/* look along the chain of policies for one with the same name */
 
-		for (ero2 = ero; ero2 != NULL; ero2 = ero->policy_next) {
-			if (ero2->kind == CK_TEMPLATE &&
-			    streq(ero2->name, c->name))
-				break;
+		for (ep = ero; ep != NULL; ep = ero->policy_next) {
+			if (ep->kind == CK_TEMPLATE &&
+			    streq(ep->name, c->name))
+				return route_easy;
 		}
 
-		/* If we fell of the end of the list, then we found no TEMPLATE
+		/* If we fell off the end of the list, then we found no TEMPLATE
 		 * so there must be a conflict that we can't resolve.
 		 * As the names are not equal, then we aren't replacing/rekeying.
+		 *
+		 * ??? should there not be a conflict if ANYTHING in the list,
+		 * other than c, conflicts with c?
 		 */
-		if (ero2 == NULL) {
-			char inst[CONN_INST_BUF];
 
-			fmt_conn_instance(ero, inst);
+		fmt_conn_instance(ero, inst);
 
-			if (!LIN(POLICY_OVERLAPIP, c->policy) ||
-			    !LIN(POLICY_OVERLAPIP, ero->policy)) {
-				loglog(RC_LOG_SERIOUS,
-				       "cannot install eroute -- it is in use for \"%s\"%s #%lu",
-				       ero->name, inst, esr->eroute_owner);
-				return FALSE; /* another connection already using the eroute,
-				                 TODO: NETKEY apparently can do this though */
-			}
-
-			DBG(DBG_CONTROL,
-			    DBG_log("overlapping permitted with \"%s\"%s #%lu",
-				    ero->name, inst, esr->eroute_owner));
+		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy)) {
+			/*
+			 * another connection is already using the eroute,
+			 * TODO: NETKEY apparently can do this though
+			 */
+			loglog(RC_LOG_SERIOUS,
+			       "cannot install eroute -- it is in use for \"%s\"%s #%lu",
+			       ero->name, inst, esr->eroute_owner);
+			return route_impossible;
 		}
+
+		DBG(DBG_CONTROL,
+		    DBG_log("overlapping permitted with \"%s\"%s #%lu",
+			    ero->name, inst, esr->eroute_owner));
 	}
 	return route_easy;
 }
 
 bool trap_connection(struct connection *c)
 {
-	switch (could_route(c)) {
+	enum routability r = could_route(c);
+
+	switch (r) {
 	case route_impossible:
 		return FALSE;
 
-	case route_nearconflict:
 	case route_easy:
+	case route_nearconflict:
 		/* RT_ROUTED_TUNNEL is treated specially: we don't override
 		 * because we don't want to lose track of the IPSEC_SAs etc.
+		 * ??? The test treats RT_UNROUTED_KEYED specially too.
 		 */
 		if (c->spd.routing < RT_ROUTED_TUNNEL)
 			return route_and_eroute(c, &c->spd, NULL);
@@ -784,13 +792,14 @@ bool trap_connection(struct connection *c)
 
 	case route_unnecessary:
 		return TRUE;
+	default:
+		bad_case(r);
 	}
-
-	return FALSE;
 }
 
 /*
  * Add/replace/delete a shunt eroute.
+ *
  * Such an eroute determines the fate of packets without the use
  * of any SAs.  These are defaults, in effect.
  * If a negotiation has not been attempted, use %trap.

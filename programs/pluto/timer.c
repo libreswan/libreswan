@@ -210,7 +210,7 @@ static void retransmit_v1_msg(struct state *st)
 					libreswan_log("%s", story);
 				}
 			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-					loglog(RC_COMMENT, "%s", story);
+				loglog(RC_COMMENT, "%s", story);
 			}
 
 			if (try % 3 == 0 &&
@@ -286,7 +286,8 @@ static void retransmit_v2_msg(struct state *st)
 		break;
 	}
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) { /* too spammy for OE */
+	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		/* too spammy for OE */
 		loglog(RC_NORETRANSMISSION,
 			"max number of retransmissions (%d) reached %s%s",
 			st->st_retransmit,
