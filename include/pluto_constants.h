@@ -204,7 +204,7 @@ typedef enum {
 #define MAX_IKE_FRAGMENTS       16
 
 #define KERNEL_PROCESS_Q_PERIOD 1 /* seconds */
-#define DEFAULT_MAXIMIM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
+#define DEFAULT_MAXIMUM_HALFOPEN_IKE_SA 50000 /* fairly arbitrary */
 #define DEFAULT_IKE_SA_DDOS_TRESHOLD 25000 /* fairly arbitrary */
 
 /* debugging settings: a set of selections for reporting
