@@ -1258,12 +1258,15 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		 */
 		if (IS_IKE_SA_ESTABLISHED(st)) {
 			delay = deltasecs(c->sa_ike_life_seconds);
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ikelifetime=%lu", delay));
 		} else {
 			delay = PLUTO_HALFOPEN_SA_LIFE;
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ikelifetime=%lu", delay));
 		}
 	} else {
 		/* Delay is what the user said, no negotiation. */
 		delay = deltasecs(c->sa_ipsec_life_seconds);
+		DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up salifetime=%lu", delay));
 	}
 
 	/* By default, we plan to rekey.
@@ -1441,16 +1444,20 @@ static void success_v2_state_transition(struct msg_digest *md)
 						EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
 				delay = ikev2_replace_delay(st, &kind, md->original_role);
+				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %lu seconds", delay));
 				event_schedule(kind, delay, st);
 
 			}  else {
+				DBG(DBG_LIFECYCLE,DBG_log(
+					"success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%lu",
+					c->r_interval));
 				event_schedule_ms(EVENT_v2_RETRANSMIT,
 						c->r_interval, st);
 			}
 			break;
 		case EVENT_SA_REPLACE: /* SA replacement event */
-
 			delay = ikev2_replace_delay(st, &kind, md->original_role);
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %lu seconds", delay));
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;

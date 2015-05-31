@@ -565,13 +565,19 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_SA_REPLACE_IF_USED:
 	{
 		struct connection *c = st->st_connection;
-		so_serial_t newest = IS_IKE_SA(st) ?
-			c->newest_isakmp_sa : c->newest_ipsec_sa;
+		so_serial_t newest;
+
+		if (IS_IKE_SA(st)) {
+			newest = c->newest_isakmp_sa;
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_isakmp_sa"));
+		} else {
+			newest = c->newest_ipsec_sa;
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_REPLACE{IF_USED} picked newest_ipsec_sa"));
+		}
 
 		if (newest != SOS_NOBODY && newest > st->st_serialno) {
 			/* not very interesting: no need to replace */
-			DBG(DBG_LIFECYCLE,
-				libreswan_log(
+			DBG(DBG_LIFECYCLE, DBG_log(
 					"not replacing stale %s SA: #%lu will do",
 					IS_IKE_SA(st) ?
 					"ISAKMP" : "IPsec", newest));
@@ -592,21 +598,14 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			 * This is just an optimization: correctness is not
 			 * at stake.
 			 */
-			/* ??? we are abusing the DBG mechanism to control
-			 * normal log output.
-			 */
-			DBG(DBG_LIFECYCLE,
-				libreswan_log(
+			DBG(DBG_LIFECYCLE, DBG_log(
 					"not replacing stale %s SA: inactive for %lds",
 					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
 					(long)deltasecs(monotimediff(mononow(),
 						st->st_outbound_time))));
 		} else {
-			/* ??? we are abusing the DBG mechanism to control
-			 * normal log output.
-			 */
-			DBG(DBG_LIFECYCLE,
-				libreswan_log("replacing stale %s SA",
+			DBG(DBG_LIFECYCLE, DBG_log(
+				"replacing stale %s SA",
 					IS_IKE_SA(st) ? "ISAKMP" : "IPsec"));
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
@@ -629,15 +628,17 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		if (IS_IKE_SA(st)) {
 			satype = "ISAKMP";
 			latest = c->newest_isakmp_sa;
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_EXPIRE picked newest_isakmp_sa"));
 		} else {
 			satype = "IPsec";
 			latest = c->newest_ipsec_sa;
+			DBG(DBG_LIFECYCLE, DBG_log("EVENT_SA_EXPIRE picked newest_ipsec_sa"));
 		}
 
 		if (st->st_serialno < latest) {
 			/* not very interesting: already superseded */
-			DBG(DBG_LIFECYCLE,
-				libreswan_log("%s SA expired (superseded by #%lu)",
+			DBG(DBG_LIFECYCLE, DBG_log(
+				"%s SA expired (superseded by #%lu)",
 					satype, latest));
 		} else {
 			libreswan_log("%s %s (%s)", satype,
@@ -674,7 +675,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		break;
 
 	case EVENT_CRYPTO_FAILED:
-		DBG(DBG_CONTROL,
+		DBG(DBG_LIFECYCLE,
 			DBG_log("event crypto_failed on state #%lu, aborting",
 				st->st_serialno));
 		delete_state(st);
@@ -841,6 +842,16 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	struct pluto_event *ev = alloc_thing(struct pluto_event,
 				"struct pluto_event in event_schedule()");
 
+	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_tv called for about %lu seconds and change",
+		delay.tv_sec));
+
+	/*
+	 * Scheduling a month into the future is most likely a bug.
+	 * pexpect() causes us to flag this in our test cases
+	 * But do allow (unwise) people to set insame > 1m lifetimes
+	 */
+	pexpect(delay.tv_sec < 3600 * 24 * 31);
+
 	ev->ev_type = type;
 
 	/* ??? ev_time lacks required precision */
@@ -910,6 +921,8 @@ void event_schedule_ms(enum event_type type, unsigned long delay_ms, struct stat
 {
 	struct timeval delay;
 
+        DBG(DBG_LIFECYCLE, DBG_log("event_schedule_ms called for about %lu ms", delay_ms));
+
 	delay.tv_sec =  delay_ms / 1000;
 	delay.tv_usec = (delay_ms % 1000) * 1000;
 	event_schedule_tv(type, delay, st);
@@ -919,7 +932,10 @@ void event_schedule(enum event_type type, time_t delay_sec, struct state *st)
 {
 	struct timeval delay;
 
-	passert(delay_sec >= 0);
+        DBG(DBG_LIFECYCLE, DBG_log("event_schedule called for %lu seconds", delay_sec));
+
+	/* unexpectedly far away, pexpect will flag in test cases */
+	pexpect(delay_sec < 3600 * 24 * 31);
 	delay.tv_sec = delay_sec;
 	delay.tv_usec = 0;
 	event_schedule_tv(type, delay, st);
