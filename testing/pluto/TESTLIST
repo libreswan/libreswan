@@ -49,7 +49,7 @@ kvmplutotest	ikev2-12-transport-psk			good
 kvmplutotest	ikev2-13-ah				good
 kvmplutotest	ikev2-14-missing-ke			good
 kvmplutotest	ikev2-15-fuzzer				good
-kvmplutotest	ikev2-17-rekey				good
+kvmplutotest	ikev2-17-rekey-ipsec			good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
 
