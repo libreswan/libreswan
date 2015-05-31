@@ -1243,7 +1243,9 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 	time_t delay;   /* unwrapped deltatime_t */
 	struct connection *c = st->st_connection;
 
-	if (IS_PARENT_SA(st)) {
+	if (IS_PARENT_SA(st) &&
+		(st)->st_clonedfrom == SOS_NOBODY ) /* workaround for child appearing as parent */
+	{
 		/* Note: we will defer to the "negotiated" (dictated)
 		 * lifetime if we are POLICY_DONT_REKEY.
 		 * This allows the other side to dictate
