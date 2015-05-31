@@ -118,6 +118,8 @@ static int nhelpers = -1;
 extern bool strict_crl_policy;
 extern bool strict_ocsp_policy;
 extern bool ocsp_enable;
+extern char *curl_iface;
+extern long curl_timeout;
 
 static char *ocsp_default_uri = NULL;
 static char *ocsp_trust_name = NULL;
@@ -460,12 +462,18 @@ static const struct option long_opts[] = {
 	{ "force_busy\0_", no_argument, NULL, 'D' },	/* _ */
 	{ "force-busy\0", no_argument, NULL, 'D' },
 	{ "force-unlimited\0", no_argument, NULL, 'U' },
-	{ "crl_strict\0", no_argument, NULL, 'r' },
-	{ "ocsp_strict\0", no_argument, NULL, 'o' },
-	{ "ocsp_enable\0", no_argument, NULL, 'O' },
-	{ "ocsp_uri\0", required_argument, NULL, 'Y' },
-	{ "ocsp_timeout\0", required_argument, NULL, 'T' },
-	{ "ocsp_trust_name\0", required_argument, NULL, 'J' },
+	{ "crl-strict\0", no_argument, NULL, 'r' },
+	{ "crl_strict\0", no_argument, NULL, 'r' }, /* _ */
+	{ "ocsp-strict\0", no_argument, NULL, 'o' },
+	{ "ocsp_strict\0", no_argument, NULL, 'o' }, /* _ */
+	{ "ocsp-enable\0", no_argument, NULL, 'O' },
+	{ "ocsp_enable\0", no_argument, NULL, 'O' }, /* _ */
+	{ "ocsp-uri\0", required_argument, NULL, 'Y' },
+	{ "ocsp_uri\0", required_argument, NULL, 'Y' }, /* _ */
+	{ "ocsp-timeout\0", required_argument, NULL, 'T' },
+	{ "ocsp_timeout\0", required_argument, NULL, 'T' }, /* _ */
+	{ "ocsp-trust_name\0", required_argument, NULL, 'J' },
+	{ "ocsp_trust_name\0", required_argument, NULL, 'J' }, /* _ */
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
@@ -480,6 +488,10 @@ static const struct option long_opts[] = {
 	{ "use-mastklips\0",   no_argument, NULL, 'M' },
 	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
 	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
+	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
+	{ "curl_iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' }, /* _ */
+	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
+	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' }, /* _ */
 	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
 	{ "ikeport\0<port-number>", required_argument, NULL, 'p' },
 	{ "nflog-all\0<group-number>", required_argument, NULL, 'G' },
@@ -870,6 +882,21 @@ int main(int argc, char **argv)
 			pluto_ddos_mode = DDOS_FORCE_UNLIMITED;
 			continue;
 
+		case 'Z':	/* --curl-iface */
+			curl_iface = optarg;
+			continue;
+
+		case 'I':	/* --curl-timeout */
+			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
+			if (ugh != NULL)
+				break;
+			if (u <= 0) {
+				ugh = "must not be < 1";
+				break;
+			}
+			curl_timeout = u;
+			continue;
+
 		case 'r':	/* --strictcrlpolicy */
 			strict_crl_policy = TRUE;
 			continue;
@@ -1107,6 +1134,16 @@ int main(int argc, char **argv)
 					base_perpeer_logdir = clone_str("/var/log/pluto/", "perpeer_logdir");
 				}
 			}
+
+			if (cfg->setup.strings[KSF_CURLIFACE]) {
+				pfreeany(curl_iface);
+				/* curl-iface= */
+				curl_iface = clone_str(cfg->setup.strings[KSF_CURLIFACE],
+						"curl-iface= via --config");
+			}
+
+			if (cfg->setup.options[KBF_CURLTIMEOUT])
+				curl_timeout = cfg->setup.options[KBF_CURLTIMEOUT];
 
 			if (cfg->setup.strings[KSF_DUMPDIR]) {
 				pfree(coredir);

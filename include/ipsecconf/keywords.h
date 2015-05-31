@@ -38,6 +38,7 @@
 enum keyword_string_config_field {
 	KSF_INTERFACES    = 0, /* loose_enum eventually */
 	/* KSF_PACKETDEFAULT = 5, */
+	KSF_CURLIFACE,
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,
 	KSF_DUMPDIR,
@@ -88,6 +89,7 @@ enum keyword_numeric_config_field {
 	KBF_STRICTOCSPPOLICY,
 	KBF_OCSPENABLE,
 	KBF_OCSPTIMEOUT,
+	KBF_CURLTIMEOUT,
 	KBF_SEND_CA,
 	KBF_NATIKEPORT,
 	KBF_SEEDBITS,

@@ -48,15 +48,14 @@ include ${LIBRESWANSRCDIR}/Makefile.top
 # Broken targets have some sort of existing rule in this, or an
 # included, Makefile.  The rules should either be deleted or changed
 # to use a local TARGET-local target.
-BROKEN_TARGETS += clean
 BROKEN_TARGETS += install
-BROKEN_TARGETS += distclean
 BROKEN_TARGETS += check
 BROKEN_TARGETS += man
 BROKEN_TARGETS += config
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
-# XXX: Until builds stop depending on $(builddir)/Makefile
-all base clean-base install-base: $(builddir)/Makefile
+# XXX: Without this sub-directories that still require
+# $(builddir)/Makefile will fail.
+all clean base clean-base install-base: $(builddir)/Makefile
 
 # kernel details
 # what variant of our patches should we use, and where is it
@@ -176,7 +175,7 @@ ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
 
-man config install clean:: ${OBJDIR}/Makefile
+man config install:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
 	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
 
@@ -184,9 +183,18 @@ ${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
 	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
 
-clean::
-	rm -rf $(RPMTMPDIR) $(RPMDEST)
-	rm -f out.*build out.*install	# but leave out.kpatch
+# Recursive clean dealt with elsewhere.
+clean-local-base: moduleclean
+	$(foreach file,$(RPMTMPDIR) $(RPMDEST) out.*build out.*install, \
+		rm -rf $(file) ; )	# but leave out.kpatch
+
+# "distclean" does not depend on "clean" as that results in $(OBJDIR)
+# being built only to then delete it.
+#
+# This assumes that $(srcdir) contains no generated files, true?
+distclean: clean-local-base module24clean module26clean
+	rm -f out.kpatch
+	rm -rf $(OBJDIR)
 
 # proxies for major kernel make operations
 
@@ -585,6 +593,8 @@ showrpmversion:
 	@echo ${IPSECVERSION} | sed "s/^v//" | sed "s/-.*//"
 showrpmrelease:
 	@echo ${IPSECVERSION} | sed "s/^v//" | sed "s/^[^-]*-\(.*\)/\1/"
+showobjdir:
+	@echo $(OBJDIR)
 
 # these need to move elsewhere and get fixed not to use root
 

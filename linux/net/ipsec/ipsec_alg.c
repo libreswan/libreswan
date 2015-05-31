@@ -540,6 +540,29 @@ int ipsec_alg_sa_esp_hash(const struct ipsec_sa *sa_p, const __u8 *espp,
 	return 0;
 }
 
+int ipsec_alg_sa_ah_hash(const struct ipsec_sa *sa_p, const __u8 *ahp,
+			  int len, __u8 *hash, int hashlen)
+{
+	struct ipsec_alg_auth *ixt_a = sa_p->ips_alg_auth;
+
+	if (!ixt_a) {
+		KLIPS_PRINT(debug_pfkey,
+			    "klips_debug:ipsec_sa_ah_hash: "
+			    "NULL ipsec_alg_auth object\n");
+		return -EPROTO;
+	}
+	KLIPS_PRINT(debug_tunnel | debug_rcv,
+		    "klips_debug:ipsec_sa_ah_hash: "
+		    "hashing %p (%d bytes) to %p (%d bytes)\n",
+		    ahp, len,
+		    hash, hashlen);
+	ixt_a->ixt_a_hmac_hash(ixt_a,
+			       sa_p->ips_key_a,
+			       ahp, len,
+			       hash, hashlen);
+	return 0;
+}
+
 /***************************************************************
 *
 *       INTERFACE for module loading,testing, and unloading

@@ -2189,9 +2189,9 @@ static void ikev2_pam_continue_cb(evutil_socket_t fd UNUSED, const short event U
 }
 
 /*
- * in the middle of IKEv2 AUTH exchange, the AUTH payload is verified succsfully,
- * now invoke PAM helper to authrorize connection.
- * when pam helper is done state will be woken up and continue
+ * In the middle of IKEv2 AUTH exchange, the AUTH payload is verified succsfully.
+ * Now invoke the PAM helper to authorize connection (based on name only, not password)
+ * When pam helper is done state will be woken up and continue.
  */
 
 static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
@@ -2497,8 +2497,8 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 
 	if (!pam_status) {
 		/*
-		 * TBD: send this notification encrypted because
-		 * because AUTH payload succeed
+		 * TBD: send this notification encrypted because the
+		 * AUTH payload succeed
 		 */
 		SEND_V2_NOTIFICATION(v2N_AUTHENTICATION_FAILED);
 		return STF_FATAL;

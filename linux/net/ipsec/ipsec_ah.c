@@ -44,6 +44,9 @@
 #include "libreswan/radij.h"
 #include "libreswan/ipsec_encap.h"
 #include "libreswan/ipsec_sa.h"
+#ifdef CONFIG_KLIPS_ALG
+#include "libreswan/ipsec_alg.h"
+#endif
 
 #include "libreswan/ipsec_radij.h"
 #include "libreswan/ipsec_xform.h"
@@ -120,15 +123,28 @@ enum ipsec_rcv_value ipsec_rcv_ah_setup_auth(struct ipsec_rcv_state *irs,
 enum ipsec_rcv_value ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 					   struct sk_buff *skb)
 {
-	struct auth_alg *aa;
 	struct ahhdr *ahp = irs->protostuff.ahstuff.ahp;
+#if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1)
+	struct auth_alg *aa;
 
 	union {
 		MD5_CTX md5;
 		SHA1_CTX sha1;
 	} tctx;
+#endif
 	struct iphdr ipo;
 	int ahhlen;
+#ifdef CONFIG_KLIPS_ALG
+	unsigned char *buf;
+	int len = 0;
+#endif
+
+	KLIPS_PRINT(debug_rcv,
+		    "klips_debug:ipsec_rcv: "
+		    "ipsec_alg hashing proto=%d... ",
+		    irs->said.proto);
+	if (irs->said.proto != IPPROTO_AH)
+		return IPSEC_RCV_BADPROTO;
 
 #ifdef CONFIG_KLIPS_OCF
 	if (irs->ipsp->ocf_in_use)
@@ -136,16 +152,45 @@ enum ipsec_rcv_value ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 
 #endif
 
-	aa = irs->authfuncs;
-
-	/* copy the initialized keying material */
-	memcpy(&tctx, irs->ictx, irs->ictx_len);
-
 	ipo = *lsw_ip4_hdr(irs);
 	ipo.tos = 0;    /* mutable RFC 2402 3.3.3.1.1.1 */
 	ipo.frag_off = 0;
 	ipo.ttl = 0;
 	ipo.check = 0;
+
+	ahhlen = AH_BASIC_LEN + (ahp->ah_hl << 2);
+
+#ifdef CONFIG_KLIPS_ALG
+	if (irs->ipsp->ips_alg_auth) {
+
+		if ((buf = kmalloc(sizeof(struct iphdr)+skb->len, GFP_KERNEL)) == NULL)
+			return IPSEC_RCV_ERRMEMALLOC;
+
+		/* do the sanitized header */
+		memcpy(buf,(caddr_t)&ipo,  sizeof(struct iphdr));
+		len =  sizeof(struct iphdr);
+		/* now do the AH header itself */
+		memcpy(buf+len, (caddr_t)ahp,  ahhlen - AHHMAC_HASHLEN);
+		len += (ahhlen - AHHMAC_HASHLEN);
+		/* now, do some zeroes */
+		memcpy(buf+len, (caddr_t)zeroes, AHHMAC_HASHLEN);
+		len += AHHMAC_HASHLEN;
+		/* finally, do the packet contents themselves */
+		memcpy(buf+len, (caddr_t)skb_transport_header(skb) + ahhlen, skb->len - ahhlen);
+		len += (skb->len - ahhlen);
+
+		ipsec_alg_sa_ah_hash(irs->ipsp,
+				     (caddr_t)buf, len,
+				     irs->hash, AHHMAC_HASHLEN);
+		if (buf)
+			kfree(buf);
+	} else {
+#endif
+#if defined(CONFIG_KLIPS_AUTH_HMAC_MD5) || defined(CONFIG_KLIPS_AUTH_HMAC_SHA1)
+	aa = irs->authfuncs;
+
+	/* copy the initialized keying material */
+	memcpy(&tctx, irs->ictx, irs->ictx_len);
 
 	/* do the sanitized header */
 	(*aa->update)((void*)&tctx, (caddr_t)&ipo, sizeof(struct iphdr));
@@ -153,7 +198,6 @@ enum ipsec_rcv_value ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 	/* XXX we didn't do the options here! */
 
 	/* now do the AH header itself */
-	ahhlen = AH_BASIC_LEN + (ahp->ah_hl << 2);
 	(*aa->update)((void*)&tctx, (caddr_t)ahp,  ahhlen - AHHMAC_HASHLEN);
 
 	/* now, do some zeroes */
@@ -171,6 +215,10 @@ enum ipsec_rcv_value ipsec_rcv_ah_authcalc(struct ipsec_rcv_state *irs,
 	(*aa->update)((void *)&tctx, irs->hash, aa->hashlen);
 	(*aa->final)(irs->hash, (void *)&tctx);
 
+#endif
+#ifdef CONFIG_KLIPS_ALG
+	}
+#endif
 	return IPSEC_RCV_OK;
 }
 
