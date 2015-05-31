@@ -724,7 +724,7 @@ void delete_event(struct state *st)
 				enum_show(&timer_event_names,
 					st->st_event->ev_type)));
 
-	if (st->st_event->ev_type == EVENT_v1_RETRANSMIT)
+	if (st->st_event->ev_type == EVENT_v1_RETRANSMIT || st->st_event->ev_type == EVENT_v2_RETRANSMIT)
 		st->st_retransmit = 0;
 	delete_pluto_event(&st->st_event);
 }
