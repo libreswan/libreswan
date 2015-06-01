@@ -1455,9 +1455,10 @@ static void success_v2_state_transition(struct msg_digest *md)
 						c->r_interval, st);
 			}
 			break;
-		case EVENT_SA_REPLACE: /* SA replacement event */
+		case EVENT_SA_REPLACE: /* IKE or IPsec SA replacement event */
 			delay = ikev2_replace_delay(st, &kind, md->original_role);
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %lu seconds", delay));
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %lu seconds",
+				IS_IKE_SA(st) ? "parent" : "child", delay));
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;
