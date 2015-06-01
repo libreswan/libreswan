@@ -2914,6 +2914,8 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		return STF_FAIL;
 	}
 
+	/* authentication good */
+
 	/*
 	 * update the parent state to make sure that it knows we have
 	 * authenticated properly.
@@ -2921,7 +2923,9 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	change_state(pst, STATE_PARENT_I3);
 	c->newest_isakmp_sa = pst->st_serialno;
 
-	/* authentication good */
+	/* replace HALFOPEN IKE expire time with ikelifetime= */
+	delete_event(pst);
+	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), pst);
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
