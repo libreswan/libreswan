@@ -1,6 +1,6 @@
 /* State machine for IKEv1
  * Copyright (C) 1997 Angelos D. Keromytis.
- * Copyright (C) 1998-2010,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2010,2013-2015 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2008 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2008-2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
@@ -1770,8 +1770,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				switch (np) {
 				case ISAKMP_NEXT_NATD_RFC:
 				case ISAKMP_NEXT_NATOA_RFC:
-					if (st == NULL ||
-					    (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
+					if ((st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES) == LEMPTY) {
 						/*
 						 * don't accept NAT-D/NAT-OA reloc directly in message,
 						 * unless we're using NAT-T RFC
@@ -1792,6 +1791,7 @@ void process_packet_tail(struct msg_digest **mdp)
 				/* payload type is out of range or requires special handling */
 				switch (np) {
 				case ISAKMP_NEXT_ID:
+					/* ??? two kinds of ID payloads */
 					sd = (IS_PHASE1(from_state) ||
 					      IS_PHASE15(from_state)) ?
 						&isakmp_identification_desc :
@@ -1799,20 +1799,48 @@ void process_packet_tail(struct msg_digest **mdp)
 					break;
 
 				case ISAKMP_NEXT_NATD_DRAFTS:
-					np = ISAKMP_NEXT_NATD_RFC; /* NAT-D was a private use type before RFC-3947 */
+					/* NAT-D was a private use type before RFC-3947 -- same format */
+					np = ISAKMP_NEXT_NATD_RFC;
 					sd = v1_payload_desc(np);
 					break;
 
 				case ISAKMP_NEXT_NATOA_DRAFTS:
-					np = ISAKMP_NEXT_NATOA_RFC; /* NAT-OA was a private use type before RFC-3947 */
+					/* NAT-OA was a private use type before RFC-3947 -- same format */
+					np = ISAKMP_NEXT_NATOA_RFC;
 					sd = v1_payload_desc(np);
 					break;
 
-				case ISAKMP_NEXT_SAK: /* AKA ISAKMP_NEXT_NATD_BADDRAFTS */
+				case ISAKMP_NEXT_SAK: /* or ISAKMP_NEXT_NATD_BADDRAFTS */
+					/*
+					 * Official standards say that this is ISAKMP_NEXT_SAK,
+					 * a part of Group DOI, something we don't implement.
+					 * Old non-updated Cisco gear abused this number in ancient NAT drafts.
+					 * We ignore (rather than reject) this in support of people
+					 * with crufty Cisco machines.
+					 */
 					loglog(RC_LOG_SERIOUS,
-						"%smessage with unsupported payload ISAKMP_NEXT_SAK (as ISAKMP_NEXT_NATD_BADDRAFTS) ignored",
+						"%smessage with unsupported payload ISAKMP_NEXT_SAK (or ISAKMP_NEXT_NATD_BADDRAFTS) ignored",
 						excuse);
-					break;
+					/*
+					 * Hack to discard payload, whatever it was.
+					 * Since we are skipping the rest of the loop
+					 * body we must do some things ourself:
+					 * - demarshall the payload
+					 * - grab the next payload number (np)
+					 * - don't keep payload (don't increment pd)
+					 * - skip rest of loop body
+					 */
+					if (!in_struct(&pd->payload, &isakmp_ignore_desc, &md->message_pbs,
+						       &pd->pbs)) {
+						loglog(RC_LOG_SERIOUS,
+						       "%smalformed payload in packet",
+						       excuse);
+						SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+						return;
+					}
+					np = pd->payload.generic.isag_np;
+					/* NOTE: we do not increment pd! */
+					continue;  /* skip rest of the loop */
 
 				default:
 					loglog(RC_LOG_SERIOUS,
@@ -1824,6 +1852,8 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 				passert(sd != NULL);
 			}
+
+			passert(np < LELEM_ROOF);
 
 			{
 				lset_t s = LELEM(np);
