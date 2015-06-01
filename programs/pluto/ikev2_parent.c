@@ -2660,6 +2660,11 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
 		}
 
+		/* replace HALFOPEN IKE expire time with ikelifetime= */
+		delete_event(st);
+		event_schedule(EVENT_SA_REPLACE,
+			deltasecs(c->sa_ipsec_life_seconds), st);
+
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("going to assemble AUTH payload"));
 

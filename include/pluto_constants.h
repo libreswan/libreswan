@@ -496,7 +496,8 @@ enum original_role {
 
 #define IS_IKE_SA_ESTABLISHED(st) \
 	( IS_ISAKMP_SA_ESTABLISHED(st->st_state) || \
-		(IS_PARENT_SA_ESTABLISHED(st) && st->st_clonedfrom) )
+		(IS_PARENT_SA_ESTABLISHED(st) && \
+		 (st->st_clonedfrom == SOS_NOBODY)))
 
 /*
  * ??? Issue here is that our child SA appears as a
