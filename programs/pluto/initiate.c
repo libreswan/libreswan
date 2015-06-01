@@ -1373,7 +1373,8 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {
 	c->newest_isakmp_sa = serial;
 
-	if (uniqueIDs && !c->spd.this.xauth_server) {
+	if (uniqueIDs && !c->spd.this.xauth_server &&
+		(c->policy & POLICY_AUTH_NULL) == LEMPTY) {
 		/*
 		 * for all connections: if the same Phase 1 IDs are used
 		 * for different IP addresses, unorient that connection.
