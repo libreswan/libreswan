@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v3.13 (unreleased)
+v3.14 (unreleased)
 * NSS: Major rewrite of PRF / PRFPLUS / integrity functions [Andrew]
 * CAVS: Added programs/pluto/cavp for NIST CVAS testing [Andrew]
 * IKEv2: authby=null support (draft-ietf-ipsecme-authnull) [Paul/Antony/Hugh]
@@ -62,6 +62,9 @@ v3.13 (unreleased)
 * _updown: add proxy arp for cases where routing won't work [Tuomo/Wolfgang]
 * Bugtracker bugs fixed:
   #260: libswan: extra safetey around same_id() when ID_FROMCERT is used [Paul]
+
+v3.13 (June 1, 2015)
+* SECURITY: CVE-2015-3204 malicious payload causing restart [Javantea/Hugh]
 
 v3.12 (November 6, 2014)
 * IKEv2: CP payload now installs internal address and dns [Antony]
