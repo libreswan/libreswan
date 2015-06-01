@@ -494,7 +494,9 @@ enum original_role {
 
 #define IS_V2_ESTABLISHED(s) ((s) == STATE_PARENT_R2 || (s) == STATE_PARENT_I3)
 
-#define IS_IKE_SA_ESTABLISHED(st) (IS_ISAKMP_SA_ESTABLISHED(st->st_state) || IS_PARENT_SA_ESTABLISHED(st))
+#define IS_IKE_SA_ESTABLISHED(st) \
+	( IS_ISAKMP_SA_ESTABLISHED(st->st_state) || \
+		(IS_PARENT_SA_ESTABLISHED(st) && st->st_clonedfrom) )
 
 /*
  * ??? Issue here is that our child SA appears as a
@@ -513,8 +515,9 @@ enum original_role {
 
 #define IS_PARENT_SA(st) (!IS_CHILD_SA(st))
 
-#define IS_IKE_SA(st) ( ((st)->st_clonedfrom == SOS_NOBODY) &&  (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) ||\
+#define IS_IKE_SA(st) ( (st->st_clonedfrom == SOS_NOBODY) &&  (IS_PHASE1(st->st_state) || IS_PHASE15(st->st_state) || \
 		IS_PARENT_SA(st)) )
+
 #define IS_PARENT_STATE(s) ((s) >= STATE_PARENT_I1 && (s) <= STATE_IKESA_DEL)
 #define IS_IKE_STATE(s) (IS_PHASE1(s) || IS_PHASE15(s) || IS_PARENT_STATE(s))
 

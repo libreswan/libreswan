@@ -472,8 +472,8 @@ static const struct option long_opts[] = {
 	{ "ocsp_uri\0", required_argument, NULL, 'Y' }, /* _ */
 	{ "ocsp-timeout\0", required_argument, NULL, 'T' },
 	{ "ocsp_timeout\0", required_argument, NULL, 'T' }, /* _ */
-	{ "ocsp-trust_name\0", required_argument, NULL, 'J' },
-	{ "ocsp_trust_name\0", required_argument, NULL, 'J' }, /* _ */
+	{ "ocsp-trustname\0", required_argument, NULL, 'J' },
+	{ "ocsp_trustname\0", required_argument, NULL, 'J' }, /* _ */
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "noklips\0>use-nostack", no_argument, NULL, 'n' },	/* redundant spelling */
