@@ -27,15 +27,8 @@ ifneq ($(LD_LIBRARY_PATH),)
 LDFLAGS+=-L$(LD_LIBRARY_PATH)
 endif
 
-MANDIR8=$(MANTREE)/man8
-MANDIR5=$(MANTREE)/man5
-
 ifndef PROGRAMDIR
 PROGRAMDIR=${LIBEXECDIR}
-endif
-
-ifndef MANPROGPREFIX
-MANPROGPREFIX=ipsec_
 endif
 
 ifndef CONFDSUBDIR
@@ -43,90 +36,77 @@ CONFDSUBDIR=.
 endif
 
 # the list of stuff to be built for "make programs"
-MANDEFAULTLIST=$(addsuffix .8, $(PROGRAM))
-MANLIST=$(MANDEFAULTLIST) $(EXTRA8MAN) $(EXTRA5MAN) $(EXTRA5PROC) 
-CONFIGLIST=$(CONFFILES) $(CONFDFILES)
-PROGRAMSLIST=${PROGRAM} $(MANLIST) $(CONFIGLIST)
+CONFIGLIST=$(CONFFILES) $(CONFDFILES) $(CONFDSUBDIRFILES)
+PROGRAMSLIST=${PROGRAM} $(CONFIGLIST)
 
-ifeq ($(srcdir),.)
-all programs config man clean install install-programs:
-	$(MAKE) -C $(builddir) $@
-else
-all: $(PROGRAMSLIST)
-programs: all
-man: $(MANLIST)
-config: $(CONFIGLIST)
-clean:	cleanall
-install: doinstall
-install-programs: doinstall
-endif
+# XXX: Switch directory hack
+local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) buildall
+clean-local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) cleanall
+install-local-base: $(builddir)/Makefile
+	$(MAKE) -C $(builddir) doinstall
+buildall: $(PROGRAMSLIST)
 
-ifneq ($(PROGRAM),check)
-check: $(PROGRAM)
-endif
-
-
-ifneq ($(NOINSTALL),true)
-
-doinstall:: $(PROGRAMSLIST)
-	@mkdir -p $(PROGRAMDIR) $(MANDIR8) $(MANDIR5) $(CONFDIR) $(CONFDDIR) $(CONFDDIR)/$(CONFDSUBDIR) $(EXAMPLECONFDIR)
-	@if [ -n "$(PROGRAM)" ]; then $(INSTALL) $(INSTBINFLAGS) $(PROGRAM) $(PROGRAMDIR); fi
-	@$(foreach f, $(addsuffix .8, $(PROGRAM)), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR8)/$(MANPROGPREFIX)$f || exit 1; \
-	)
-	@$(foreach f, $(EXTRA8MAN), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR8)/ipsec_$f || exit 1; \
-	)
-	@$(foreach f, $(EXTRA5MAN), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR5)/$f || exit 1 ;\
-	)
-	@$(foreach f, $(EXTRA5PROC), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTMANFLAGS) $$g $(MANDIR5)/ipsec_$f || exit 1 ;\
-	)
-	@$(foreach f, $(CONFFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		if [ ! -f $(CONFDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDIR)/$f || exit 1; fi;\
-		$(INSTALL) $(INSTCONFFLAGS) $$g $(EXAMPLECONFDIR)/$f-sample || exit 1; \
-	)
-	@$(foreach f, $(EXCONFFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		$(INSTALL) $(INSTCONFFLAGS) $$g $(EXAMPLECONFDIR)/$f-sample || exit 1; \
-	)
-	@$(foreach f, $(CONFDFILES), \
-		g=`if [ -r $f ]; then echo $f; else echo ${SRCDIR}/$f; fi`; \
-		if [ ! -f $(CONFDDIR)/$(CONFDSUBDIR)/$f ]; then $(INSTALL) $(INSTCONFFLAGS) $$g $(CONFDDIR)/$(CONFDSUBDIR)/$f || exit 1; fi;\
+foreach-file = @set -eu ; $(foreach f, $(1), \
+		file=$(f) ; \
+		destdir=$(strip $(2)) ; \
+		src=$(firstword $(wildcard $(srcdir)/$(f)) $(builddir)/$(f)) ; \
+		$(3) \
 	)
 
-install_file_list::
-	@if [ -n "$(PROGRAM)" ]; then echo $(PROGRAMDIR)/$(PROGRAM); fi
-	@$(foreach f, $(addsuffix .8, $(PROGRAM)), \
-		echo $(MANDIR8)/${MANPROGPREFIX}$f; \
+doinstall:
+	$(call foreach-file, $(PROGRAM),  $(PROGRAMDIR), \
+		echo Install: $$src '->' $$destdir/$$file ; \
+		mkdir -p $$destdir ; \
+		$(INSTALL) $(INSTBINFLAGS) $$src $$destdir/$$file ; \
 	)
-	@$(foreach f, $(EXTRA8MAN), \
-		echo $(MANDIR8)/ipsec_$f; \
+	$(call foreach-file, $(CONFFILES), $(CONFDIR), \
+		if [ ! -f $$destdir/$$file ]; then \
+			echo Install: $$src '->' $$destdir/$$file ; \
+			mkdir -p $$destdir ; \
+			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
+		fi ; \
+		echo Install: $$src '->' $(EXAMPLECONFDIR)/$$file-sample ; \
+		mkdir -p $(EXAMPLECONFDIR) ; \
+		$(INSTALL) $(INSTCONFFLAGS) $$src $(EXAMPLECONFDIR)/$$file-sample ; \
 	)
-	@$(foreach f, $(EXTRA5MAN), \
-		echo $(MANDIR5)/$f;\
+	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
+		echo Install: $$src '->' $$destdir/$$file-sample ; \
+		$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file-sample ; \
 	)
-	@$(foreach f, $(EXTRA5PROC), \
-		echo $(MANDIR5)/ipsec_$f; \
+	@$(call foreach-file, $(CONFDFILES), $(CONFDDIR), \
+		if [ ! -f $$destdir/$$file ]; then \
+			echo Install: $$src '->' $$destdir/$$file ; \
+			mkdir -p $$destdir ; \
+			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
+		fi ; \
 	)
-	@$(foreach f, $(CONFFILES), \
-		echo $(CONFDIR)/$f;\
-		echo $(EXAMPLECONFDIR)/$f-sample;\
-	)
-	@$(foreach f, $(EXCONFFILES), \
-		echo $(EXAMPLECONFDIR)/$f-sample;\
-	)
-	@$(foreach f, $(CONFDFILES), \
-		echo $(CONFDDIR)/${CONFDSUBDIR}/$f;\
+	@$(call foreach-file, $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
+		if [ ! -f $$destdir/$$file ]; then \
+			echo Install: $$src '->' $$destdir/$$file ; \
+			mkdir -p $$destdir ; \
+			$(INSTALL) $(INSTCONFFLAGS) $$src $$destdir/$$file ; \
+		fi ; \
 	)
 
-endif
+list-local-base:
+	@$(call foreach-file, $(PROGRAM), $(PROGRAMDIR), \
+		echo $$destdir/$$file ; \
+	)
+	@$(call foreach-file, $(CONFFILES), $(CONFDIR), \
+		echo $$destdir/$$file ; \
+		echo $(EXAMPLECONFDIR)/$$file-sample ; \
+	)
+	@$(call foreach-file, $(EXCONFFILES), $(EXAMPLECONFDIR), \
+		echo $$destdir/$$file-sample ; \
+	)
+	@$(call foreach-file,  $(CONFDFILES), $(CONFDDIR), \
+		echo $$destdir/$$file ; \
+	)
+	@$(call foreach-file,  $(CONFDSUBDIRFILES), $(CONFDDIR)/$(CONFDSUBDIR), \
+		echo $$destdir/$$file ; \
+	)
 
 # set values for implicit rules.
 LOADLIBS=${OBJS} 
@@ -163,10 +143,6 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp ${NSSLIBS}
 
 distclean: clean
 
-mostlyclean: clean
-
-realclean: clean
-
 cleanall::
 ifneq ($(strip $(PROGRAM)),)
 	@if [ -r ${SRCDIR}$(PROGRAM).in ]; then rm -f $(PROGRAM); fi
@@ -175,5 +151,3 @@ ifneq ($(strip $(PROGRAM)),)
 	@if [ -n "$(OBJS)" ];     then rm -f $(PROGRAM); fi
 endif
 	@rm -f *.o
-
-checkprograms:

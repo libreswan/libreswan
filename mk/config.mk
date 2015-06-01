@@ -52,7 +52,7 @@ include ${LIBRESWANSRCDIR}/mk/objdir.mk
 SHELL=/bin/bash
 export SHELL
 
-.PHONY:	programs man config checkprograms clean
+.PHONY:	programs man config clean
 
 # location of shell, practicall always /bin/sh, but can be /usr/bin/sh on Fedora/RHEL
 BINSH=/bin/sh
@@ -77,7 +77,7 @@ PUBDIR?=$(DESTDIR)$(INC_USRLOCAL)/sbin
 # BINDIR is where sub-commands get put, FINALBINDIR is where the "ipsec"
 # command will look for them when it is run. Also called LIBEXECDIR.
 FINALLIBEXECDIR?=$(INC_USRLOCAL)/libexec/ipsec
-LIBEXECDIR?=$(DESTDIR)$(FINALBINDIR)
+LIBEXECDIR?=$(DESTDIR)$(FINALLIBEXECDIR)
 
 FINALBINDIR?=$(FINALLIBEXECDIR)
 BINDIR?=$(LIBEXECDIR)
@@ -94,8 +94,6 @@ SBINDIR?=$(DESTDIR)$(FINALSBINDIR)
 INC_MANDIR?=man
 # the full pathname
 MANTREE?=$(DESTDIR)$(INC_USRLOCAL)/$(INC_MANDIR)
-# all relevant subdirectories of MANTREE
-MANPLACES?=man3 man5 man8
 
 # where configuration files go
 FINALSYSCONFDIR?=/etc
@@ -224,6 +222,12 @@ MAKE?=make
 # EFENCE=-lefence
 EFENCE?=
 
+# Enable AddressSanitizer - see https://libreswan.org/wiki/Compiling_with_AddressSanitizer
+# requires clang or gcc >= 4.8 and libasan. Do not combine with Electric Fence and do not
+# run pluto with --leak-detective
+# ASAN=-fsanitize=address
+ASAN?=
+
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
 
@@ -232,7 +236,7 @@ KLIPSCOMPILE?=-O2 -DCONFIG_KLIPS_ALG -DDISABLE_UDP_CHECKSUM
 #export MALLOC_PERTURB_=$(($RANDOM % 255 + 1))
 
 # extra link flags
-USERLINK?=-Wl,-z,relro,-z,now -g -pie ${EFENCE}
+USERLINK?=-Wl,-z,relro,-z,now -g -pie ${EFENCE} ${ASAN}
 
 PORTINCLUDE?=
 
@@ -257,9 +261,6 @@ KERNEL?=$(shell if expr " `uname -m`" : ' i.86' >/dev/null ; \
 	then echo $(INC_B)zImage ; \
 	else echo boot ; \
 	fi)
-
-# look for XMLTO command
-XMLTO?=$(shell which xmlto | grep / | head -n1)
 
 # look for POD2MAN command
 POD2MAN?=$(shell which pod2man | grep / | head -n1)

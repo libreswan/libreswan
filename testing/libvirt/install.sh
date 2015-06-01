@@ -1,5 +1,7 @@
 #!/bin/sh -x
 
+set -eu
+
 # Assume this script is in testing/libvirt/ adjacent to testing/utils/
 TESTING=$(dirname $(readlink -f $0))
 TESTDIR=$(dirname $TESTING)
@@ -13,7 +15,7 @@ TESTINGDIR=${TESTINGDIR:-${TESTDIR}}
 SOURCEDIR=${SOURCEDIR:-${LIBRESWANSRCDIR}}
 
 echo "TESTINGDIR=${TESTINGDIR}"
-echo "SOURCEDIR=${SOURCEDIR}
+echo "SOURCEDIR=${SOURCEDIR}"
 echo "POOLSPACE=${POOLSPACE}"
 echo "OSTYPE=${OSTYPE}"
 echo "OSMEDIA=${OSMEDIA}"

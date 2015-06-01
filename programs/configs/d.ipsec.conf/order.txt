@@ -42,6 +42,7 @@ d.ipsec.conf/leftmodecfgserver.xml
 d.ipsec.conf/leftmodecfgclient.xml
 d.ipsec.conf/xauthby.xml
 d.ipsec.conf/xauthfail.xml
+d.ipsec.conf/pam-authorize.xml
 d.ipsec.conf/modecfgpull.xml
 d.ipsec.conf/modecfgoptions.xml
 d.ipsec.conf/remote-peer-type.xml
@@ -99,6 +100,7 @@ d.ipsec.conf/secctx-attr-type.xml
 d.ipsec.conf/plutofork.xml
 d.ipsec.conf/crlcheckinterval.xml
 d.ipsec.conf/strictcrlpolicy.xml
+d.ipsec.conf/ocsp-global.xml
 d.ipsec.conf/forwardcontrol.xml
 d.ipsec.conf/rp_filter.xml
 d.ipsec.conf/syslog.xml

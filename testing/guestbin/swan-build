@@ -20,11 +20,11 @@ if [ -f /usr/libexec/ipsec/pluto ]; then
 fi
 
 # we don't trust all makefile dependancies, esp lib/
-rm -rf OBJ.linux.* modobj
+rm -rf $(make showobjdir) modobj
 
-targets="programs module"
+targets="base module"
 echo ">>> $0 'make $targets' on $(hostname) at $(date)" >>compile-log.txt
-if make $targets >>compile-log.txt 2>&1; then
+if make "$@" $targets >>compile-log.txt 2>&1; then
     : 'make $targets' success
 else
     status=$?

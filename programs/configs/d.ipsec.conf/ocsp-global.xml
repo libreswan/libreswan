@@ -1,0 +1,65 @@
+  <varlistentry>
+  <term><emphasis remap='B'>ocsp-enable</emphasis></term>
+  <listitem>
+<para>
+Whether to perform Online Certificate Store Protocol ("OCSP") checks on
+those certificates that have an OCSP URI defined. Acceptable values are
+<emphasis remap='B'>yes</emphasis> or <emphasis remap='B'>no</emphasis>
+(the default).
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>ocsp-strict</emphasis></term>
+  <listitem>
+<para>if set to no, pluto is tolerant about failing to obtain an OCSP
+responses and a certificate is not rejected when the OCSP request
+fails, only when the OCSP request succeeds and lists the certificate as
+revoked. If set to yes, any failure on obtaining an OCSP status for a
+certificate will be fatal and the certificate will be rejected.
+Acceptable values are <emphasis remap='B'>yes</emphasis> or
+<emphasis remap='B'>no</emphasis> (the default).
+</para>
+<para>
+The strict mode refers to the NSS ocspMode_FailureIsVerificationFailure
+mode, while non-strict mode refers to the NSS
+ocspMode_FailureIsNotAVerificationFailure mode.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>ocsp-timeout</emphasis></term>
+  <listitem>
+<para>
+The time until an OCSP request is aborted and considered failed. The
+default value is 2 seconds.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>ocsp-uri</emphasis></term>
+  <listitem>
+<para>
+The URI to use for OCSP requests instead of the default OCSP URI listed
+in the CA certificate. This requires the ocsp-trustname option to be set
+to the nick (friendly name) of the OCSP server certificate, which needs
+to be present in the NSS database. These option combined with the next
+option sets the OCSP <emphasis remap='I'>default responder</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>
+
+  <varlistentry>
+  <term><emphasis remap='B'>ocsp-trustname</emphasis></term>
+  <listitem>
+<para>
+The nickname of the certificate that has been imported into the NSS
+database of the server handling the OCSP requests. This requires the
+ocsp-uri option to be set as well. This option and the previous options
+sets the OCSP <emphasis remap='I'>default responder</emphasis>.
+</para>
+  </listitem>
+  </varlistentry>

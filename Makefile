@@ -1,6 +1,8 @@
 # Libreswan master makefile
+#
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
+# Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
 # 
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -28,40 +30,32 @@ include ${LIBRESWANSRCDIR}/Makefile.inc
 SRCDIR?=$(shell pwd)/
 
 # dummy default rule
-def:
-	@echo "Please read the README for detailed build instructions"
+def help:
+	@echo "To build and install on a recent Linux kernel that has NETKEY:"
 	@echo
-	@echo "Commonly used build commands:"
+	@echo "   make all && sudo make install"
 	@echo
-	@echo "When using KLIPS:"
-	@echo " make module module_install programs install"
+	@echo "For a minimal install (no manpages) type:"
 	@echo
-	@echo "When using KLIPS with OCF:"
-	@echo " make CONFIG_KLIPS_OCF=y MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/ocf/config-all.hmodules module module_install programs install"
+	@echo "   make base && sudo make install-base"
 	@echo
-	@echo "When using NETKEY:"
-	@echo " make programs install"
-	@echo
-	@echo "When called in openwrt/packaging/libreswan/Makefile to build kmod-libreswan"
-	@echo " make MODULE_DEFCONFIG=$${LIBRESWANSRCDIR}/packaging/openwrt/defconfig MODULE_DEF_INCLUDE=$${LIBRESWANSRCDIR}/packaging/openwrt/config-all.h module"
-	@echo
-	@echo
+	@echo "See the files INSTALL and README for more general information,"
+	@echo "and details on how to build / install on KLIPS and other systems"
+.PHONY: def help
+
 include ${LIBRESWANSRCDIR}/Makefile.top
 
 # Broken targets have some sort of existing rule in this, or an
 # included, Makefile.  The rules should either be deleted or changed
 # to use a local TARGET-local target.
-BROKEN_TARGETS += clean
 BROKEN_TARGETS += install
-BROKEN_TARGETS += install-programs
-BROKEN_TARGETS += programs
-BROKEN_TARGETS += distclean
 BROKEN_TARGETS += check
-BROKEN_TARGETS += install_file_list
 BROKEN_TARGETS += man
 BROKEN_TARGETS += config
-BROKEN_TARGETS += checkprograms
 include ${LIBRESWANSRCDIR}/mk/subdirs.mk
+# XXX: Without this sub-directories that still require
+# $(builddir)/Makefile will fail.
+all clean base clean-base install-base: $(builddir)/Makefile
 
 # kernel details
 # what variant of our patches should we use, and where is it
@@ -75,7 +69,7 @@ KERNELREL=$(shell ${KVSHORTUTIL} ${KERNELSRC}/Makefile)
 	precheck verset confcheck kernel \
 	module module24 module26 kinstall minstall minstall24 minstall26 \
 	moduleclean mod24clean module24clean mod26clean module26clean \
-	backup unpatch uninstall install_file_list \
+	backup unpatch uninstall \
 	check \
 
 kpatch: unapplypatch applypatch klipsdefaults
@@ -181,7 +175,7 @@ ABSOBJDIR:=$(shell mkdir -p ${OBJDIR}; cd ${OBJDIR} && pwd)
 OBJDIRTOP=${ABSOBJDIR}
 export OBJDIRTOP
 
-programs man config install clean install-programs:: ${OBJDIR}/Makefile
+man config install:: ${OBJDIR}/Makefile
 	@echo OBJDIR: ${OBJDIR}
 	set -e ; cd ${ABSOBJDIR} && ${MAKE} $@
 
@@ -189,15 +183,18 @@ ${OBJDIR}/Makefile: ${SRCDIR}/Makefile packaging/utils/makeshadowdir
 	@echo Setting up for OBJDIR=${OBJDIR}
 	@packaging/utils/makeshadowdir `(cd ${SRCDIR}; echo $$PWD)` ${OBJDIR} "${SUBDIRS}"
 
-checkprograms:: 
-	@for d in $(SUBDIRS) ; \
-	do \
-		(cd $$d && $(MAKE) SRCDIR=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} $@ ) || exit 1; \
-	done; 
+# Recursive clean dealt with elsewhere.
+clean-local-base: moduleclean
+	$(foreach file,$(RPMTMPDIR) $(RPMDEST) out.*build out.*install, \
+		rm -rf $(file) ; )	# but leave out.kpatch
 
-clean::
-	rm -rf $(RPMTMPDIR) $(RPMDEST)
-	rm -f out.*build out.*install	# but leave out.kpatch
+# "distclean" does not depend on "clean" as that results in $(OBJDIR)
+# being built only to then delete it.
+#
+# This assumes that $(srcdir) contains no generated files, true?
+distclean: clean-local-base module24clean module26clean
+	rm -f out.kpatch
+	rm -rf $(OBJDIR)
 
 # proxies for major kernel make operations
 
@@ -348,11 +345,26 @@ mod24clean module24clean:
 	rm -rf ${MOD24BUILDDIR}
 
 #autoodetect 2.4 and 2.6
-module_install: minstall
-minstall:
-	@if [ -f ${KERNELSRC}/Rules.make ] ; then \
-                ${MAKE} minstall24 ; else ${MAKE} minstall26; \
+module_install minstall install-module:
+	@if [ -f $(KERNELSRC)/Rules.make ] ; then \
+                $(MAKE) minstall24 ; \
+	else \
+		$(MAKE) minstall26 ; \
         fi;
+
+# Extract the value of MODLIB from the output of $(MAKE).  Also hide
+# the sup-process $(MAKE) so that GNU Make doesn't always invoke the
+# target ("make -n" ignored).
+#
+# If $(MAKE) directly appears in a target (for instance in minstall26)
+# then GNU Make will assume that it is a recursive make invocation and
+# invoke the target regardless of -n.
+#
+# XXX: minstall24 should also use this.
+
+osmodlib-from-make = \
+	OSMODLIB=$$($(MAKE) $(1) 2>/dev/null | sed -n -e 's/^MODLIB[ :=]*\([^;]*\).*/\1/p' | head -1) ; \
+	test -z "$$OSMODLIB" || echo "OSMODLIB=$$OSMODLIB ($(MAKE) $(1))"
 
 # module-only install, with error checks
 minstall24:
@@ -421,9 +433,9 @@ mod26clean module26clean:
 
 # module-only install, with error checks
 minstall26:
-	( OSMODLIB=`${MAKE} -C $(KERNELSRC) -p help | ( sed -n -e '/^MODLIB/p' -e '/^MODLIB/q' ; cat > /dev/null ) | sed -e 's/^MODLIB[ :=]*\([^;]*\).*/\1/'` ; \
+	$(call osmodlib-from-make,-C $(KERNELSRC) -p help) ; \
 	if [ -z "$$OSMODLIB" ] ; then \
-		OSMODLIB=`${MAKE} -C $(KERNELSRC) -n -p modules_install | ( sed -n -e '/^MODLIB/p' -e '/^MODLIB/q' ; cat > /dev/null ) | sed -e 's/^MODLIB[ :=]*\([^;]*\).*/\1/'` ; \
+		$(call osmodlib-from-make,-C $(KERNELSRC) -n -p modules_install) ; \
 	fi ; \
 	if [ -z "$$OSMODLIB" ] ; then \
 		echo "No known place to install module. Aborting." ; \
@@ -432,16 +444,17 @@ minstall26:
 	set -x ; \
 	mkdir -p $$OSMODLIB/kernel/$(OSMOD_DESTDIR) ; \
 	cp $(MODBUILDDIR)/ipsec.ko $$OSMODLIB/kernel/$(OSMOD_DESTDIR) ; \
-	if [ -f /sbin/depmod ] ; then /sbin/depmod -a ; fi; \
+	if [ -f /sbin/depmod ] ; then \
+		/sbin/depmod -a ; \
+	fi ; \
 	if [ -n "$(OSMOD_DESTDIR)" ] ; then \
-	mkdir -p $$OSMODLIB/kernel/$(OSMOD_DESTDIR) ; \
+		mkdir -p $$OSMODLIB/kernel/$(OSMOD_DESTDIR) ; \
 		if [ -f $$OSMODLIB/kernel/ipsec.ko -a -f $$OSMODLIB/kernel/$(OSMOD_DESTDIR)/ipsec.ko ] ; then \
 			echo "WARNING: two ipsec.ko modules found in $$OSMODLIB/kernel:" ; \
 			ls -l $$OSMODLIB/kernel/ipsec.ko $$OSMODLIB/kernel/$(OSMOD_DESTDIR)/ipsec.ko ; \
 			exit 1; \
 		fi ; \
-	fi ; \
-	set -x ) ;
+	fi
 
 
 else
@@ -580,6 +593,8 @@ showrpmversion:
 	@echo ${IPSECVERSION} | sed "s/^v//" | sed "s/-.*//"
 showrpmrelease:
 	@echo ${IPSECVERSION} | sed "s/^v//" | sed "s/^[^-]*-\(.*\)/\1/"
+showobjdir:
+	@echo $(OBJDIR)
 
 # these need to move elsewhere and get fixed not to use root
 

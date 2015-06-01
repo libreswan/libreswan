@@ -1044,8 +1044,18 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 	ips->ips_natt_oa = NULL;
 
 	if (ips->ips_key_a != NULL) {
-		memset((caddr_t)(ips->ips_key_a), 0, ips->ips_key_a_size);
-		kfree(ips->ips_key_a);
+#ifdef CONFIG_KLIPS_ALG
+		if (ips->ips_alg_auth &&
+		    ips->ips_alg_auth->ixt_a_destroy_key)
+		{
+			ips->ips_alg_auth->ixt_a_destroy_key(ips->ips_alg_auth, 
+							     ips->ips_key_a);
+		} else
+#endif
+		{
+			memset((caddr_t)(ips->ips_key_a), 0, ips->ips_key_a_size);
+			kfree(ips->ips_key_a);
+		}
 	}
 	ips->ips_key_a = NULL;
 
@@ -1216,6 +1226,17 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 			break;
 #endif
 
+#ifdef CONFIG_KLIPS_ALG
+		error = ipsec_alg_auth_key_create(ipsp);
+		if ((error < 0) && (error != -EPROTO))
+			SENDERR(-error);
+
+		if (error == -EPROTO) {
+			/* perform manual key generation,
+			   ignore this particular error */
+			error = 0;
+#endif              /* CONFIG_KLIPS_ALG */
+
 		switch (ipsp->ips_authalg) {
 # ifdef CONFIG_KLIPS_AUTH_HMAC_MD5
 		case AH_MD5: {
@@ -1383,6 +1404,10 @@ int ipsec_sa_init(struct ipsec_sa *ipsp)
 				    ipsp->ips_authalg);
 			SENDERR(EINVAL);
 		}
+#ifdef CONFIG_KLIPS_ALG
+			/* closure of the -EPROTO condition above */
+		}
+#endif
 		break;
 #endif          /* CONFIG_KLIPS_AH */
 

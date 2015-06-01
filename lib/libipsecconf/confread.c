@@ -103,7 +103,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_KEEPALIVE] = 0;                  /* config setup */
 	cfg->setup.options[KBF_NATIKEPORT] = NAT_IKE_UDP_PORT;
 	cfg->setup.options[KBF_DDOS_IKE_TRESHOLD] = DEFAULT_IKE_SA_DDOS_TRESHOLD;
-	cfg->setup.options[KBF_MAX_HALFOPEN_IKE] = DEFAULT_MAXIMIM_HALFOPEN_IKE_SA;
+	cfg->setup.options[KBF_MAX_HALFOPEN_IKE] = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 	/* Don't inflict BSI requirements on everyone */
 	cfg->setup.options[KBF_SEEDBITS] = 0;
 

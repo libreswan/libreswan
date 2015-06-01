@@ -1,0 +1,4 @@
+NETKEY and KLIPS interop test with netkey passthrough as pluto-netkey-03
+
+this tests interop between KLIPS and NETKEY for 3des-md5.
+

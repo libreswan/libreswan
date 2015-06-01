@@ -109,6 +109,9 @@ struct ipsec_alg_auth {
 	int (*ixt_a_hmac_hash)(struct ipsec_alg_auth *alg, __u8 *key_a,
 			       const __u8 *dat, int len, __u8 *hash,
 			       int hashlen);
+	__u8 *(*ixt_a_hmac_new_key)(struct ipsec_alg_auth *alg, const __u8 *key,
+			       int keylen);
+	void (*ixt_a_destroy_key)(struct ipsec_alg_auth *alg, __u8 *key_a);
 };
 /*
  *	These are _copies_ of SADB_EXT_SUPPORTED_{AUTH,ENCRYPT},
@@ -174,6 +177,11 @@ int ipsec_alg_sa_esp_hash(const struct ipsec_sa *sa_p, const __u8 *espp,
 			  int len, __u8 *hash, int hashlen);
 #define ipsec_alg_sa_esp_update(c, k, l) \
 		ipsec_alg_sa_esp_hash(c, k, l, NULL, 0)
+
+int ipsec_alg_sa_ah_hash(const struct ipsec_sa *sa_p, const __u8 *ahp,
+			  int len, __u8 *hash, int hashlen);
+#define ipsec_alg_sa_ah_update(c, k, l) \
+		ipsec_alg_sa_ah_hash(c, k, l, NULL, 0)
 
 /* only called from ipsec_init.c */
 int ipsec_alg_init(void);

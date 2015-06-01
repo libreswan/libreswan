@@ -33,12 +33,9 @@ def main():
                         help=("maximum runtime for the command"
                               "; -1 for no timeout"
                               " (default: no timeout)"))
-    parser.add_argument("--output", "-o", default=sys.stdout, metavar="FILE",
-                        type=argutil.stdout_or_open_file,
-                        help=("write console output to %(metavar)s"
-                              "; '-' for stdout"
-                              "; '+%(metavar)s' to append to %(metavar)s"
-                              " (default: write console output to stdout)"))
+    argutil.add_redirect_argument(parser, "re-direct console output from stdout to %(metavar)s",
+                                  "--output", "-o",
+                                  default=sys.stdout, metavar="FILE")
 
     parser.add_argument("--chdir", default=None, action="store", metavar="DIR",
                         help=("change to %(metavar)s on remote machine;"

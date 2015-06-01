@@ -100,7 +100,11 @@ stopnetkey() {
     fi
 }
 
+# We can get called even if we abort with "pluto already running"
 startnetkey() {
+    # in case pluto crashed
+    pidof pluto > /dev/null || ip xfrm policy flush && ip xfrm state flush
+
     cryptomodules
 
     if [ -f ${ipsecpfkey} ]; then
@@ -284,7 +288,8 @@ startklips() {
     fi
 
     # If present, need to change for all interfaces (ipsecX, mastX)
-    eval $(ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport | grep overridemtu);
+    # AddressSanitizer leak output confuses init system startup scripts
+    eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport | grep overridemtu);
 
     if [ ${stack} = "mast" ]; then
 	# we really just ignore the interfaces= line completely
@@ -337,7 +342,7 @@ startklips() {
 
 	phys=$(ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/")
 
-	eval $(ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport |grep interfaces);
+	eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport |grep interfaces);
 	if [ -z "${interfaces}" ]; then
 		interfaces="%defaultroute"
 		if [ -z "$phys" ]; then
@@ -403,11 +408,11 @@ startklips() {
     fi
 
     # global module options for KLIPS
-    eval $(ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport | grep fragicmp);
+    eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport | grep fragicmp);
     if [ "${fragicmp}" = "yes" ]; then
 	echo 1 >/proc/sys/net/ipsec/icmp
     fi
-    eval $(ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport | grep hidetos);
+    eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport | grep hidetos);
     if [ "${hidetos}" = "no" ]; then
 	echo 0 >/proc/sys/net/ipsec/tos
     fi
@@ -424,7 +429,7 @@ if [ "$2" = "--netkey" ]; then
 	# manual override for use in docker
 	stack=netkey
 else
-	stack="$(ipsec addconn --config ${IPSEC_CONF} --liststack)"
+	stack="$(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF} --liststack)"
 fi
 
 case ${stack} in

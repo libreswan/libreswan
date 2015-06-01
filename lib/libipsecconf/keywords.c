@@ -327,8 +327,9 @@ static const struct keyword_enum_values kw_ikev1natt_list = VALUES_INITIALIZER(k
  * Note: this table is terminated by an entry with keyname == NULL.
  */
 const struct keyword_def ipsec_conf_keywords_v2[] = {
-	{ "interfaces",     kv_config, kt_string,    KSF_INTERFACES,
-	  NOT_ENUM },
+	{ "interfaces",     kv_config, kt_string, KSF_INTERFACES, NOT_ENUM },
+	{ "curl-iface",     kv_config, kt_string, KSF_CURLIFACE, NOT_ENUM },
+	{ "curl-timeout",   kv_config, kt_number, KBF_CURLTIMEOUT, NOT_ENUM },
 	{ "myid",           kv_config, kt_string,    KSF_MYID, NOT_ENUM },
 	{ "myvendorid",     kv_config, kt_string,    KSF_MYVENDORID, NOT_ENUM },
 	{ "syslog",         kv_config, kt_string,    KSF_SYSLOG, NOT_ENUM },
@@ -359,21 +360,22 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "fragicmp",       kv_config, kt_bool,      KBF_FRAGICMP, NOT_ENUM },
 	{ "hidetos",        kv_config, kt_bool,      KBF_HIDETOS, NOT_ENUM },
 	{ "uniqueids",      kv_config, kt_bool,      KBF_UNIQUEIDS, NOT_ENUM },
-	{ "overridemtu",    kv_config, kt_number,    KBF_OVERRIDEMTU,
-	  NOT_ENUM },
-	{ "crl_strict", kv_config, kt_bool,      KBF_STRICTCRLPOLICY,
-	  NOT_ENUM },
-	{ "ocsp_strict", kv_config, kt_bool,      KBF_STRICTOCSPPOLICY,
-	  NOT_ENUM },
-	{ "ocsp_enable", kv_config, kt_bool,      KBF_OCSPENABLE,
-	  NOT_ENUM },
-	{ "ocsp_uri",     kv_config, kt_string,    KSF_OCSPURI, NOT_ENUM },
-	{ "ocsp_timeout", kv_config, kt_number,     KBF_OCSPTIMEOUT,
-	  NOT_ENUM },
-	{ "ocsp_trust_name",     kv_config, kt_string,    KSF_OCSPTRUSTNAME,
-	  NOT_ENUM },
-	{ "crlcheckinterval", kv_config, kt_time,     KBF_CRLCHECKINTERVAL,
-	  NOT_ENUM },
+	{ "overridemtu",    kv_config, kt_number,    KBF_OVERRIDEMTU, NOT_ENUM },
+
+	{ "crl-strict", kv_config, kt_bool,      KBF_STRICTCRLPOLICY, NOT_ENUM },
+	{ "ocsp-strict", kv_config, kt_bool,      KBF_STRICTOCSPPOLICY, NOT_ENUM },
+	{ "ocsp-enable", kv_config, kt_bool,      KBF_OCSPENABLE, NOT_ENUM },
+	{ "ocsp-uri",     kv_config, kt_string,    KSF_OCSPURI, NOT_ENUM },
+	{ "ocsp-timeout", kv_config, kt_number,     KBF_OCSPTIMEOUT, NOT_ENUM },
+	{ "ocsp-trustname",     kv_config, kt_string,    KSF_OCSPTRUSTNAME, NOT_ENUM },
+	{ "crlcheckinterval", kv_config, kt_time,     KBF_CRLCHECKINTERVAL, NOT_ENUM },
+	{ "crl_strict", kv_config | kv_alias, kt_bool,      KBF_STRICTCRLPOLICY, NOT_ENUM }, /* obsolete _ */
+	{ "ocsp_strict", kv_config | kv_alias, kt_bool,      KBF_STRICTOCSPPOLICY, NOT_ENUM }, /* obsolete _ */
+	{ "ocsp_enable", kv_config | kv_alias, kt_bool,      KBF_OCSPENABLE, NOT_ENUM }, /* obsolete _ */
+	{ "ocsp_uri", kv_config | kv_alias, kt_string,    KSF_OCSPURI, NOT_ENUM }, /* obsolete _ */
+	{ "ocsp_timeout", kv_config | kv_alias, kt_number,     KBF_OCSPTIMEOUT, NOT_ENUM }, /* obsolete _ */
+	{ "ocsp_trust_name", kv_config | kv_alias, kt_string,    KSF_OCSPTRUSTNAME, NOT_ENUM }, /* obsolete _ */
+
 	{ "force_busy",     kv_config | kv_alias, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },	/* obsolete _ */
 	{ "force-busy",     kv_config, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },
 	{ "ddos-mode",     kv_config | kv_processed , kt_enum, KBF_DDOS_MODE, &kw_ddos_list },

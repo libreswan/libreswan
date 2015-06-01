@@ -40,8 +40,3 @@ clean:
 cleanall: clean
 
 distclean: clean
-
-mostlyclean: clean
-
-realclean: clean
-

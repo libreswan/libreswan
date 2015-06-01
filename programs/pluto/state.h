@@ -586,7 +586,7 @@ extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(void);
 
 #ifdef XAUTH_HAVE_PAM
-void state_deletion_cleanup(so_serial_t st_serialno);
+void ikev2_free_auth_pam(so_serial_t st_serialno);
 #endif
 
 #endif /* _STATE_H */

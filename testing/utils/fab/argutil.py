@@ -24,12 +24,47 @@ def timeout(arg):
     else:
         return v
 
+def add_redirect_argument(parser, what, *args, **kwargs):
+    parser.add_argument(*args, type=stdout_or_open_file,
+                        help=(what +
+                              "; by default %(metavar)s will be overwritten"
+                              "; '+%(metavar)s' instead appends"
+                              "; '++%(metavar)s' instead appends and copies to stdout"
+                              "; '-' directs output to stdout"
+                                  "; '-%(metavar)s' instead overwrites and copies to stdout"),
+                        **kwargs)
+
 def stdout_or_open_file(arg):
     if arg == "-":
         return sys.stdout
-    elif arg.endswith("+"):
-        return open(arg[:-1], "a")
     elif arg.startswith("-"):
+        return Tee(sys.stdout, files=[open(arg[:1], "w")])
+    elif arg.startswith("++"):
+        return Tee(sys.stdout, files=[open(arg[2:], "a")])
+    elif arg.startswith("+"):
         return open(arg[1:], "a")
     else:
         return open(arg, "w")
+
+class Tee:
+
+    def __init__(self, *streams, files=[]):
+        self.files = files
+        # XXX: Better way?
+        self.streams = []
+        for s in streams:
+            self.streams.append(s)
+        for f in files:
+            self.streams.append(f)
+
+    def close(self):
+        for f in self.files:
+            f.close()
+
+    def write(self, text):
+        for stream in self.streams:
+            stream.write(text)
+
+    def flush(self):
+        for stream in self.streams:
+            stream.flush()

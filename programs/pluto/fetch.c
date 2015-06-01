@@ -79,6 +79,9 @@ static pthread_mutex_t crl_fetch_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t fetch_wake_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t fetch_wake_cond = PTHREAD_COND_INITIALIZER;
 
+extern char *curl_iface;
+extern long curl_timeout;
+
 /* lock access to the chained crl list
  * ??? declared in x509.h
  */
@@ -173,6 +176,7 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 	char errorbuffer[CURL_ERROR_SIZE] = "";
 	char *uri;
 	chunk_t response = empty_chunk;	/* managed by realloc/free */
+	long timeout = FETCH_CMD_TIMEOUT;
 	CURLcode res;
 
 	/* get it with libcurl */
@@ -184,18 +188,24 @@ static err_t fetch_curl(chunk_t url LIBCURL_UNUSED,
 		memcpy(uri, url.ptr, url.len);
 		*(uri + url.len) = '\0';
 
+		if (curl_timeout > 0)
+			timeout = curl_timeout;
+
 		DBG(DBG_CONTROL,
-		    DBG_log("Trying cURL '%s'", uri));
+		    DBG_log("Trying cURL '%s' with connect timeout of %ld",
+			uri, timeout));
 
 		curl_easy_setopt(curl, CURLOPT_URL, uri);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_buffer);
 		curl_easy_setopt(curl, CURLOPT_FILE, (void *)&response);
 		curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorbuffer);
-		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT,
-				 FETCH_CMD_TIMEOUT);
-		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2 * FETCH_CMD_TIMEOUT);
+		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, timeout);
+		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2 * timeout);
 		/* work around for libcurl signal bug */
 		curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
+		if (curl_iface != NULL)
+			curl_easy_setopt(curl, CURLOPT_INTERFACE, curl_iface);
+
 		res = curl_easy_perform(curl);
 
 		if (res == CURLE_OK) {
@@ -702,5 +712,5 @@ void list_crl_fetch_requests(bool utc)
 }
 
 #else
-#warning no LIBCURL or LDAP defined, file should not be used
+/* we'll just ignore for now - this is all going away anyway */
 #endif

@@ -81,10 +81,6 @@ static void klips_process_raw_ifaces(struct raw_iface *rifaces)
 			}
 		}
 
-		/* ignore loopback */
-		if (streq(ifp->name, "lo"))
-			continue;
-
 		/* ignore if virtual (ipsec*) interface */
 		if (startswith(ifp->name, IPSECDEVPREFIX))
 			continue;
@@ -392,6 +388,6 @@ const struct kernel_ops klips_kernel_ops = {
 	.process_ifaces = klips_process_raw_ifaces,
 	.kern_name = "klips",
 	.overlap_supported = FALSE,
-	.sha2_truncbug_support = FALSE,
+	.sha2_truncbug_support = TRUE,
 };
 #endif /* KLIPS */

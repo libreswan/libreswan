@@ -879,6 +879,9 @@ static void handle_helper_answer_cb(evutil_socket_t fd UNUSED, const short event
 	handle_helper_answer((struct pluto_crypto_worker *) arg);
 }
 
+#define MAX_HELPER_BASIC_WORK 200
+#define MAX_HELPER_CRIT_WORK 400
+
 /*
  * initialize a helper.
  */
@@ -905,8 +908,8 @@ static void init_crypto_helper(struct pluto_crypto_worker *w, int n)
 
 	w->pcw_master_fd = fds[0];
 	w->pcw_helper_fd = fds[1];
-	w->pcw_maxbasicwork = 2;
-	w->pcw_maxcritwork = 4;
+	w->pcw_maxbasicwork = MAX_HELPER_BASIC_WORK;
+	w->pcw_maxcritwork = MAX_HELPER_CRIT_WORK;
 	w->pcw_work = 0;
 	w->pcw_dead = FALSE;
 	TAILQ_INIT(&w->pcw_active);

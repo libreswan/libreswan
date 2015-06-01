@@ -1061,7 +1061,9 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 		return FALSE;
 	}
 
-	ikev2_decode_cert(md);
+	if (!ikev2_decode_cert(md))
+		return FALSE;
+
 	/* check for certificate requests */
 	ikev2_decode_cr(md, &c->requested_ca);
 
@@ -1323,7 +1325,9 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 	time_t delay;   /* unwrapped deltatime_t */
 	struct connection *c = st->st_connection;
 
-	if (IS_PARENT_SA(st)) {
+	if (IS_PARENT_SA(st) &&
+		(st)->st_clonedfrom == SOS_NOBODY ) /* workaround for child appearing as parent */
+	{
 		/* Note: we will defer to the "negotiated" (dictated)
 		 * lifetime if we are POLICY_DONT_REKEY.
 		 * This allows the other side to dictate
@@ -1336,12 +1340,15 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		 */
 		if (IS_IKE_SA_ESTABLISHED(st)) {
 			delay = deltasecs(c->sa_ike_life_seconds);
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ikelifetime=%lu", delay));
 		} else {
-			delay = time(0) + PLUTO_HALFOPEN_SA_LIFE; 
+			delay = PLUTO_HALFOPEN_SA_LIFE;
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ikelifetime=%lu", delay));
 		}
 	} else {
 		/* Delay is what the user said, no negotiation. */
 		delay = deltasecs(c->sa_ipsec_life_seconds);
+		DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up salifetime=%lu", delay));
 	}
 
 	/* By default, we plan to rekey.
@@ -1511,16 +1518,21 @@ static void success_v2_state_transition(struct msg_digest *md)
 						EVENT_RELEASE_WHACK_DELAY, st);
 				kind = EVENT_SA_REPLACE;
 				delay = ikev2_replace_delay(st, &kind, md->original_role);
+				DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_v2_RETRANSMIT: for %lu seconds", delay));
 				event_schedule(kind, delay, st);
 
 			}  else {
+				DBG(DBG_LIFECYCLE,DBG_log(
+					"success_v2_state_transition scheduling EVENT_v2_RETRANSMIT of c->r_interval=%lu",
+					c->r_interval));
 				event_schedule_ms(EVENT_v2_RETRANSMIT,
 						c->r_interval, st);
 			}
 			break;
-		case EVENT_SA_REPLACE: /* SA replacement event */
-
+		case EVENT_SA_REPLACE: /* IKE or IPsec SA replacement event */
 			delay = ikev2_replace_delay(st, &kind, md->original_role);
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2 case EVENT_SA_REPLACE for %s state for %lu seconds",
+				IS_IKE_SA(st) ? "parent" : "child", delay));
 			delete_event(st);
 			event_schedule(kind, delay, st);
 			break;

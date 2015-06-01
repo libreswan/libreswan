@@ -1428,7 +1428,7 @@ static enum ipsec_rcv_value ipsec_rcv_auth_decap(struct ipsec_rcv_state *irs)
 #ifdef CONFIG_KLIPS_ALG
 	/* authenticate, if required */
 	if ((irs->ixt_a = irs->ipsp->ips_alg_auth)) {
-		irs->authlen = AHHMAC_HASHLEN;
+		irs->authlen = irs->ixt_a->ixt_a_authlen;
 		irs->authfuncs = NULL;
 		irs->ictx = NULL;
 		irs->octx = NULL;

@@ -28,20 +28,7 @@ ERRCHECK=${MAKEUTILS}/errcheck
 KVUTIL=${MAKEUTILS}/kernelversion
 KVSHORTUTIL=${MAKEUTILS}/kernelversion-short
 
-SUBDIRS?=lib programs initsystems packaging testing
-
-clean::
-	-(cd ${LIBRESWANSRCDIR} && $(MAKE) modclean && $(MAKE) mod26clean)
-
-distclean:	clean
-	rm -f out.kpatch
-	if [ -d OBJ.$$OSDEP.$$ARCH ]; then rm -rf OBJ.$$OSDEP.$$ARCH/; fi
-
-install_file_list:
-	@for d in $(SUBDIRS) ; \
-	do \
-		(cd $$d && $(MAKE) --no-print-directory SRCDIR=${LIBRESWANSRCDIR}/$$d/ LIBRESWANSRCDIR=${LIBRESWANSRCDIR} install_file_list ) || exit 1; \
-	done;
+SUBDIRS?=lib programs initsystems testing
 
 TAGSFILES=$(wildcard include/*.h lib/lib*/*.c programs/*/*.c linux/include/*.h linux/include/openswan/*.h linux/net/ipsec/*.[ch])
 

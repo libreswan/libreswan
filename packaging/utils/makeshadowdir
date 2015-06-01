@@ -35,7 +35,6 @@ do
 include ${top_builddir}/../mk/dirs.mk
 
 include \${srcdir}/Makefile
--include Makefile.depend
 EOF
 	    mv Makefile.tmp Makefile
 	)
@@ -53,7 +52,7 @@ include ../mk/dirs.mk
 
 include \${top_srcdir}/Makefile.top
 
-programs config man install clean checkprograms install-programs::
+programs config man install clean install-programs::
 	set -e ; \\
 	for d in \$(SUBDIRS) ; \\
 	do \\

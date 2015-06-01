@@ -43,10 +43,9 @@ commontest() {
 	if [ ! -d "$testname/OUTPUT" ] ; then
 		notes="$notes,NO-OUTPUT"
 	else
-		(
-			cd $testname
-			$preprocess
-		)
+		if ! ( cd $testname ; $preprocess ) ; then
+		    notes="$notes,SANITIZE-FAILED"
+		fi
 	fi
 
 	if [ -f "$testname/OUTPUT/RESULT" ] ; then

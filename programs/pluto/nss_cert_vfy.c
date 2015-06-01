@@ -29,67 +29,11 @@
 #include "constants.h"
 #include "lswlog.h"
 #include "x509.h"
+#include "nss_copies.h"
 #include "nss_cert_vfy.h"
 #include <secder.h>
 #include <secerr.h>
 #include <certdb.h>
-
-/*
- * copies of NSS functions that are not yet exported by the library
- */
-static SECStatus _NSSCPY_GetCrlTimes(CERTCrl *date, PRTime *notBefore,
-					     PRTime *notAfter)
-{
-	int rv;
-	/* convert DER not-before time */
-	rv = DER_DecodeTimeChoice(notBefore, &date->lastUpdate);
-	if (rv) {
-		return(SECFailure);
-	}
-
-	/* convert DER not-after time */
-	if (date->nextUpdate.data) {
-		rv = DER_DecodeTimeChoice(notAfter, &date->nextUpdate);
-		if (rv) {
-			return(SECFailure);
-		}
-	} else {
-		LL_I2L(*notAfter, 0L);
-	}
-
-	return(SECSuccess);
-}
-
-static SECCertTimeValidity _NSSCPY_CheckCrlTimes(CERTCrl *crl, PRTime t)
-{
-	PRTime notBefore, notAfter, llPendingSlop, tmp1;
-	SECStatus rv;
-	PRInt32 pSlop = CERT_GetSlopTime();
-
-	rv = _NSSCPY_GetCrlTimes(crl, &notBefore, &notAfter);
-	if (rv) {
-		return(secCertTimeExpired); 
-	}
-	LL_I2L(llPendingSlop, pSlop);
-	/* convert to micro seconds */
-	LL_I2L(tmp1, PR_USEC_PER_SEC);
-	LL_MUL(llPendingSlop, llPendingSlop, tmp1);
-	LL_SUB(notBefore, notBefore, llPendingSlop);
-	if ( LL_CMP( t, <, notBefore ) ) {
-		return(secCertTimeNotValidYet);
-	}
-	/* If next update is omitted and the test for notBefore passes, then
-	 * we assume that the crl is up to date.
-	 */
-	if ( LL_IS_ZERO(notAfter) ) {
-		return(secCertTimeValid);
-	}
-	if ( LL_CMP( t, >, notAfter) ) {
-		return(secCertTimeExpired);
-	}
-	return(secCertTimeValid);
-}
-/* end NSS copies */
 
 /*
  * set up the slot/handle/trust things that NSS needs
@@ -116,22 +60,24 @@ static bool prepare_nss_import(PK11SlotInfo **slot, CERTCertDBHandle **handle)
 	return TRUE;
 }
 
-/*
- * returns true if there's a CRL for the cert (from its issuer) that is needing an update
- * *found is for a strict mode check outside this function
- */
-static bool crl_needs_update(CERTCertDBHandle *handle,
-			     CERTCertificate *cert, bool *found)
+static bool crl_is_current(CERTSignedCrl *crl)
+{
+	return NSSCERT_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
+}
+
+static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
+				     CERTCertificate *cert)
 {
 	CERTCrlHeadNode *crl_list = NULL;
 	CERTCrlNode *crl_node = NULL;
 	CERTSignedCrl *crl = NULL;
 
-	if (cert == NULL || handle == NULL || found == NULL)
-		return FALSE;
+	if (handle == NULL || cert == NULL)
+		return NULL;
 
-	*found = FALSE;
-
+	DBG(DBG_X509,
+	    DBG_log("%s : looking for a CRL issued by %s", __FUNCTION__,
+							   cert->issuerName));
 	/* 
 	 * Use SEC_LookupCrls method instead of SEC_FindCrlByName.
 	 * For some reason, SEC_FindCrlByName was giving out bad pointers!
@@ -139,8 +85,7 @@ static bool crl_needs_update(CERTCertDBHandle *handle,
 	 * crl = (CERTSignedCrl *)SEC_FindCrlByName(handle, &searchName, SEC_CRL_TYPE);
 	 */
 	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess) {
-		DBG(DBG_X509, DBG_log("no CRLs found"));
-		return FALSE;
+		return NULL;
 	}
 
 	crl_node = crl_list->first;
@@ -150,25 +95,23 @@ static bool crl_needs_update(CERTCertDBHandle *handle,
 				SECITEM_ItemsAreEqual(&cert->derIssuer,
 						 &crl_node->crl->crl.derName)) {
 			crl = crl_node->crl;
+			DBG(DBG_X509,
+			    DBG_log("%s : CRL found", __FUNCTION__));
 			break;
 		}
-
 		crl_node = crl_node->next;
 	}
 
-	if (crl != NULL) {
-		DBG(DBG_X509, DBG_log("CRL for %s found, checking if CRL is up to date",
-				      cert->issuerName));
-		*found = TRUE;
-		if (_NSSCPY_CheckCrlTimes(&crl->crl,
-					  PR_Now()) == secCertTimeExpired) {
-			DBG(DBG_X509,
-			    DBG_log("CRL has expired!"));
-			return TRUE;
-		}
-		DBG(DBG_X509,
-		    DBG_log("CRL is current"));
-	}
+	return crl;
+}
+
+static bool cert_issuer_has_current_crl(CERTCertDBHandle *handle,
+				 CERTCertificate *cert)
+{
+	CERTSignedCrl *crl = get_issuer_crl(handle, cert);
+
+	if (crl != NULL && crl_is_current(crl))
+		return TRUE;
 
 	return FALSE;
 }
@@ -178,21 +121,16 @@ static bool crl_needs_update(CERTCertDBHandle *handle,
  */
 static bool crl_update_check(CERTCertDBHandle *handle,
 				   CERTCertificate **chain,
-				   int chain_len,
-				   bool *found)
+				   int chain_len)
 {
 	int i;
-	bool needupdate = FALSE;
 
 	for (i = 0; i < chain_len && chain[i] != NULL; i++) {
-		if (crl_needs_update(handle, chain[i], found)) {
-			needupdate = TRUE;
-			DBG(DBG_X509,
-			    DBG_log("CRL update needed"));
-			break;
+		if (!cert_issuer_has_current_crl(handle, chain[i])) {
+			return TRUE;
 		}
 	}
-	return needupdate;
+	return FALSE;
 }
 
 static int translate_nss_err(long err, bool ca)
@@ -204,6 +142,11 @@ static int translate_nss_err(long err, bool ca)
 	case SEC_ERROR_INADEQUATE_KEY_USAGE:
 		DBG(DBG_X509,
 		    DBG_log("%s certificate has inadequate keyUsage flags", hd));
+		ret = VERIFY_RET_FAIL;
+		break;
+	case SEC_ERROR_INADEQUATE_CERT_TYPE:
+		DBG(DBG_X509,
+		    DBG_log("%s certificate type is not approved for this application (EKU)", hd));
 		ret = VERIFY_RET_FAIL;
 		break;
 	case SEC_ERROR_UNKNOWN_ISSUER:
@@ -289,7 +232,7 @@ static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 		goto done;
 	}
 
-	for (cc = *chain; *cc != NULL && fin_count < nonroot; cc++) {
+	for (cc = *chain; fin_count < nonroot && *cc != NULL; cc++) {
 		DBG(DBG_X509, DBG_log("decoded %s", (*cc)->subjectName));
 		fin_count++;
 	}
@@ -307,15 +250,102 @@ static void new_vfy_log(CERTVerifyLog *log)
 	log->arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 }
 
-static int vfy_chain(CERTCertDBHandle *handle, CERTCertificate **chain,
-						  CERTCertificate **ee_out,
-						  int chain_len)
+static CERTCertList *get_all_root_certs(void)
 {
+	PK11SlotInfo *slot = NULL;
+	CERTCertList *allcerts = NULL;
+	CERTCertList *roots = NULL;
+	CERTCertListNode *node = NULL;
+
+	if ((slot = PK11_GetInternalKeySlot()) == NULL)
+		return NULL;
+
+	if (PK11_NeedLogin(slot)) {
+		SECStatus rv = PK11_Authenticate(slot, PR_TRUE,
+				lsw_return_nss_password_file_info());
+		if (rv != SECSuccess)
+			return NULL;
+	}
+	allcerts = PK11_ListCertsInSlot(slot);
+
+	if (allcerts == NULL)
+		return NULL;
+
+	roots = CERT_NewCertList();
+
+	for (node = CERT_LIST_HEAD(allcerts); !CERT_LIST_END(node, allcerts);
+					        node = CERT_LIST_NEXT(node)) {
+		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot)
+			CERT_AddCertToListTail(roots, node->cert);
+	}
+
+	if (roots == NULL || CERT_LIST_EMPTY(roots))
+		return NULL;
+
+	return roots;
+}
+
+static void set_rev_per_meth(CERTRevocationFlags *rev, PRUint64 *lflags,
+						       PRUint64 *cflags)
+{
+	rev->leafTests.cert_rev_flags_per_method = lflags;
+	rev->chainTests.cert_rev_flags_per_method = cflags;
+}
+
+static unsigned int rev_val_flags(PRBool strict)
+{
+	unsigned int flags = 0;
+	flags |= CERT_REV_M_TEST_USING_THIS_METHOD;
+	if (strict) {
+		flags |= CERT_REV_M_REQUIRE_INFO_ON_MISSING_SOURCE;
+		flags |= CERT_REV_M_FAIL_ON_MISSING_FRESH_INFO;
+	}
+	return flags;
+}
+
+static void set_rev_params(CERTRevocationFlags *rev, bool crl_strict,
+						     bool ocsp,
+						     bool ocsp_strict)
+{
+	CERTRevocationTests *rt = &rev->leafTests;
+	PRUint64 *rf = rt->cert_rev_flags_per_method;
+	DBG(DBG_X509, DBG_log("crl_strict: %d, ocsp: %d, ocsp_strict: %d",
+				crl_strict, ocsp, ocsp_strict));
+
+	rt->number_of_defined_methods = cert_revocation_method_count;
+	rt->number_of_preferred_methods = 0;
+
+	rf[cert_revocation_method_crl] |= CERT_REV_M_TEST_USING_THIS_METHOD;
+	rf[cert_revocation_method_crl] |= CERT_REV_M_FORBID_NETWORK_FETCHING;
+
+	if (ocsp) {
+		rf[cert_revocation_method_ocsp] = rev_val_flags(ocsp_strict);
+	}
+}
+
+#define RETRY_TYPE(err, re) ((err == SEC_ERROR_INADEQUATE_CERT_TYPE || \
+			      err == SEC_ERROR_INADEQUATE_KEY_USAGE) && re)
+
+static int vfy_chain_pkix(CERTCertificate **chain, int chain_len,
+						   CERTCertificate **end_out,
+						   bool *rev_opts)
+{
+	int in_idx = 0;
 	int i;
 	int fin = 0;
+	bool reverify = TRUE;
 	SECStatus rv;
 	CERTVerifyLog vfy_log;
+	CERTVerifyLog vfy_log2;
+	CERTVerifyLog *cur_log = NULL;
 	CERTCertificate *end_cert = NULL;
+	CERTValInParam cvin[7];
+	CERTValOutParam cvout[3];
+	CERTCertList *trustcl = NULL;
+	CERTRevocationFlags rev;
+	SECCertificateUsage usage = certificateUsageSSLClient;
+	PRUint64 revFlagsLeaf[2] = { 0, 0 };
+	PRUint64 revFlagsChain[2] = { 0, 0 };
 
 	for (i = 0; i < chain_len; i++) {
 		if (!CERT_IsCACert(chain[i], NULL)) {
@@ -329,25 +359,73 @@ static int vfy_chain(CERTCertDBHandle *handle, CERTCertificate **chain,
 		return VERIFY_RET_FAIL;
 	}
 
+	if ((trustcl = get_all_root_certs()) == NULL) {
+		DBG(DBG_X509, DBG_log("no trust anchor available for verification"));
+		return VERIFY_RET_FAIL;
+	}
 
 	new_vfy_log(&vfy_log);
+	new_vfy_log(&vfy_log2);
+	zero(&cvin);
+	zero(&cvout);
+	zero(&rev);
 
-	rv = CERT_VerifyCert(handle, end_cert, PR_TRUE, certUsageSSLClient,
-							PR_Now(),
-							NULL,
-							&vfy_log);
+	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
+	set_rev_params(&rev, rev_opts[RO_CRL_S], rev_opts[RO_OCSP],
+						 rev_opts[RO_OCSP_S]);
+	cvin[in_idx].type = cert_pi_revocationFlags;
+	cvin[in_idx++].value.pointer.revocation = &rev;
 
-	if (rv != SECSuccess || vfy_log.count > 0) {
-		if (vfy_log.count > 0 && vfy_log.head != NULL) {
-			fin = get_node_error_status(vfy_log.head);
+	cvin[in_idx].type = cert_pi_useAIACertFetch;
+	cvin[in_idx++].value.scalar.b = rev_opts[RO_OCSP];
+
+	cvin[in_idx].type = cert_pi_trustAnchors;
+	cvin[in_idx++].value.pointer.chain = trustcl;
+
+	cvin[in_idx].type = cert_pi_useOnlyTrustAnchors;
+	cvin[in_idx++].value.scalar.b = PR_TRUE;
+
+	cvin[in_idx].type = cert_pi_end;
+
+	cvout[0].type = cert_po_errorLog;
+	cvout[0].value.pointer.log = &vfy_log;
+	cur_log = &vfy_log;
+	cvout[1].type = cert_po_certList;
+	cvout[1].value.pointer.chain = NULL;
+	cvout[2].type = cert_po_end;
+
+	/* kludge alert!!
+	 * verification may be performed twice: once with the
+	 * 'client' usage and once with 'server', which is an NSS
+	 * detail and not related to IKE. In the absense of a real
+	 * IKE profile being available for NSS, this covers more
+	 * KU/EKU combinations
+	 */
+retry:
+	rv = CERT_PKIXVerifyCert(end_cert, usage, cvin, cvout, NULL);
+
+	if (rv != SECSuccess || cur_log->count > 0) {
+		if (cur_log->count > 0 && cur_log->head != NULL) {
+			if (RETRY_TYPE(cur_log->head->error, reverify)) {
+				DBG(DBG_X509,
+				    DBG_log("retrying verification with the NSS serverAuth profile"));
+				cur_log = &vfy_log2;
+				cvout[0].value.pointer.log = cur_log;
+				cvout[1].value.pointer.chain = NULL;
+				usage = certificateUsageSSLServer;
+				reverify = FALSE;
+				goto retry;
+			}
+			fin = get_node_error_status(cur_log->head);
 		} else {
 			fin = translate_nss_err(PORT_GetError(), FALSE);
 		}
 	} else {
 		DBG(DBG_X509, DBG_log("certificate is valid"));
-		*ee_out = end_cert;
+		*end_out = end_cert;
 		fin = VERIFY_RET_OK;
 	}
+	CERT_DestroyCertList(trustcl);
 
 	return fin;
 }
@@ -358,10 +436,6 @@ static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
 	int i;
 
 	for (i = 0; i < chunk_n && i < max_i; i++) {
-		/*
-		 * clang warns:
-                 * assigning to 'SECItem' (aka 'struct SECItemStr') from incompatible type 'int'
-		 */
 		items[i] = chunk_to_secitem(chunks[i]);
 	}
 }
@@ -371,12 +445,13 @@ static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
 			       d[0].len < 1 || \
 			       n < 1 || \
 			       n > MAX_CA_PATH_LEN)
+
 /*
  * Decode and verify the chain received by pluto.
  * ee_out is the resulting end cert
  */
 int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out,
-							bool strict)
+							bool *rev_opts)
 {
 	SECItem si_ders[MAX_CA_PATH_LEN] = { {siBuffer, NULL, 0} };
 	CERTCertificate **cert_chain = NULL;
@@ -384,8 +459,6 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 	CERTCertDBHandle *handle = NULL;
 	int chain_len = 0;
 	int ret = 0;
-	bool need_fetch = FALSE;
-	bool crlfound = FALSE;
 
 	if (VFY_INVALID_USE(ders, num_ders))
 		return -1;
@@ -407,23 +480,16 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 					          num_ders)) < 1)
 		return -1;
 
-	if ((need_fetch = crl_update_check(handle, cert_chain,
-							 chain_len,
-							 &crlfound))) {
-		if (strict) {
-			DBG(DBG_X509, DBG_log("CRL expired in strict mode, failing pending update"));
+	if (crl_update_check(handle, cert_chain, chain_len)) {
+		if (rev_opts[RO_CRL_S]) {
+			DBG(DBG_X509, DBG_log("missing or expired CRL in strict mode, failing pending update"));
 			return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
 		}
+		DBG(DBG_X509, DBG_log("missing or expired CRL"));
+		ret |= VERIFY_RET_CRL_NEED;
 	}
 
-	if (strict && !crlfound) {
-		DBG(DBG_X509, DBG_log("no CRL found in strict mode, failing"));
-		return VERIFY_RET_FAIL | VERIFY_RET_CRL_NEED;
-	}
-
-	ret |= need_fetch ? VERIFY_RET_CRL_NEED : 0;
-
-	ret |= vfy_chain(handle, cert_chain, ee_out, chain_len);
+	ret |= vfy_chain_pkix(cert_chain, chain_len, ee_out, rev_opts);
 
 	return ret;
 }
