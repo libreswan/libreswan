@@ -367,7 +367,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "ocsp-enable", kv_config, kt_bool,      KBF_OCSPENABLE, NOT_ENUM },
 	{ "ocsp-uri",     kv_config, kt_string,    KSF_OCSPURI, NOT_ENUM },
 	{ "ocsp-timeout", kv_config, kt_number,     KBF_OCSPTIMEOUT, NOT_ENUM },
-	{ "ocsp-trust_name",     kv_config, kt_string,    KSF_OCSPTRUSTNAME, NOT_ENUM },
+	{ "ocsp-trustname",     kv_config, kt_string,    KSF_OCSPTRUSTNAME, NOT_ENUM },
 	{ "crlcheckinterval", kv_config, kt_time,     KBF_CRLCHECKINTERVAL, NOT_ENUM },
 	{ "crl_strict", kv_config | kv_alias, kt_bool,      KBF_STRICTCRLPOLICY, NOT_ENUM }, /* obsolete _ */
 	{ "ocsp_strict", kv_config | kv_alias, kt_bool,      KBF_STRICTOCSPPOLICY, NOT_ENUM }, /* obsolete _ */
