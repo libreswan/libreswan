@@ -1800,13 +1800,13 @@ void process_packet_tail(struct msg_digest **mdp)
 				case ISAKMP_NEXT_NATD_DRAFTS:
 					/* NAT-D was a private use type before RFC-3947 -- same format */
 					np = ISAKMP_NEXT_NATD_RFC;
-					sd = payload_desc(np);
+					sd = v1_payload_desc(np);
 					break;
 
 				case ISAKMP_NEXT_NATOA_DRAFTS:
 					/* NAT-OA was a private use type before RFC-3947 -- same format */
 					np = ISAKMP_NEXT_NATOA_RFC;
-					sd = payload_desc(np);
+					sd = v1_payload_desc(np);
 					break;
 
 				case ISAKMP_NEXT_SAK: /* or ISAKMP_NEXT_NATD_BADDRAFTS */
