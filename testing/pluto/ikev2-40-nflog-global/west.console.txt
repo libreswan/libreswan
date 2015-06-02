@@ -74,17 +74,16 @@ west #
 [B] PID
 west #
  ping -n -c 5 -I 192.0.1.254 192.0.2.254
-tcpdump: WARNING: SIOCGIFADDR: nflog:50: No such device
-tcpdump: listening on nflog:50, link-type NFLOG (Linux netfilter log messages), capture size 65535 bytes
+tcpdump: listening on nflog:50, link-type NFLOG (Linux netfilter log messages), capture size 262144 bytes
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 64 bytes from 192.0.2.254: icmp_seq=1 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=2 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=3 ttl=64 time=0.XXX ms
 64 bytes from 192.0.2.254: icmp_seq=4 ttl=64 time=0.XXX ms
-8 packets captured
-8 packets received by filter
-0 packets dropped by kernel
 64 bytes from 192.0.2.254: icmp_seq=5 ttl=64 time=0.XXX ms
+10 packets captured
+10 packets received by filter
+0 packets dropped by kernel
 --- 192.0.2.254 ping statistics ---
 5 packets transmitted, 5 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
@@ -102,6 +101,8 @@ IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 3, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 3, length 64
 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 4, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 4, length 64
+IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 5, length 64
+IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 5, length 64
 west #
  echo done
 done
