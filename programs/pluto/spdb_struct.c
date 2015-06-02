@@ -1,5 +1,5 @@
 /* Security Policy Data Base (such as it is)
- * Copyright (C) 1998-2001  D. Hugh Redelmeier.
+ * Copyright (C) 1998-2001 D. Hugh Redelmeier.
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2003-2008 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2015 Andrew Cagney <andrew.cagney@gmail.com>
@@ -120,17 +120,18 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 		struct db_sa *emp_sp;
 
 		if (!ike_info->ike_default) {
-
 			unsigned ealg = ike_info->ike_ealg;
 			unsigned halg = ike_info->ike_halg;
 			unsigned modp = ike_info->ike_modp;
 			unsigned eklen = ike_info->ike_eklen;
+
 			DBG(DBG_CONTROL,
 			    DBG_log("oakley_alg_makedb() "
 				    "processing ealg=%u halg=%u modp=%u eklen=%u",
 				    ealg, halg, modp, eklen));
 
 			struct encrypt_desc *enc_desc = ike_alg_get_encrypter(ealg);
+
 			if (enc_desc == NULL) {
 				DBG_log("oakley_alg_makedb() "
 					"ike enc ealg=%d not present",
@@ -157,13 +158,13 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 			if (eklen != 0 &&
 			    (eklen < enc_desc->keyminlen ||
-			     eklen >  enc_desc->keymaxlen)) {
-			  DBG_log("ike_alg_db_new() ealg=%d (specified) keylen:%d, not valid min=%d, max=%d",
-				  ealg,
-				  eklen,
-				  enc_desc->keyminlen,
-				  enc_desc->keymaxlen);
-			  continue;
+			     eklen > enc_desc->keymaxlen)) {
+				DBG_log("ike_alg_db_new() ealg=%d (specified) keylen:%d, not valid min=%d, max=%d",
+					ealg,
+					eklen,
+					enc_desc->keyminlen,
+					enc_desc->keymaxlen);
+				continue;
 			}
 
 			/*
@@ -213,8 +214,9 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			struct db_attr *grp  = &trans->attrs[3];
 
 			if (eklen > 0) {
-				passert(trans->attr_cnt == 5);
 				struct db_attr *enc_keylen = &trans->attrs[4];
+
+				passert(trans->attr_cnt == 5);
 				passert(enc_keylen->type.oakley == OAKLEY_KEY_LENGTH);
 				enc_keylen->val = eklen;
 			} else {
@@ -266,7 +268,6 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			passert(grp->type.oakley == OAKLEY_GROUP_DESCRIPTION);
 			if (modp > 0)
 				grp->val = modp;
-
 		} else {
 			emp_sp = sa_copy_sa(base);
 		}
