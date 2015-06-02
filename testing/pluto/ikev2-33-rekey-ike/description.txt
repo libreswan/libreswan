@@ -1,2 +1,0 @@
-as ikev2-03-basic-rawrsa, but test IKE rekey after 1 minute
-

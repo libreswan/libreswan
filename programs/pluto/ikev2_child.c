@@ -982,6 +982,7 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 				  enum isakmp_xchg_types isa_xchg)
 {
 	struct state *cst;	/* child state */
+	struct state *pst = md->st;	/* parent state */
 	struct connection *c = md->st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_v2SA];
 	stf_status ret;
@@ -1091,14 +1092,11 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 
 	ikev2_derive_child_keys(cst, role);
 
-	ISAKMP_SA_established(cst->st_connection, cst->st_serialno);
+	ISAKMP_SA_established(pst->st_connection, pst->st_serialno);
 
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(cst, TRUE))
 		return STF_FATAL;
-
-	/* mark the connection as now having an IPsec SA associated with it. */
-	cst->st_connection->newest_ipsec_sa = cst->st_serialno;
 
 	return STF_OK;
 }

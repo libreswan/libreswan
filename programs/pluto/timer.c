@@ -452,12 +452,17 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	struct pluto_event *ev = arg;
 	enum event_type type;
 	struct state *st;
+	char statenum[32];
 
 	type = ev->ev_type;
 	st = ev->ev_state;
 
-	DBG(DBG_CONTROL, DBG_log("handling event %s",
-			enum_show(&timer_event_names, type)));
+	if (st != NULL) {
+		snprintf(statenum, sizeof(statenum), " for state #%ld", st->st_serialno);
+	}
+	DBG(DBG_CONTROL, DBG_log("handling event %s%s",
+				enum_show(&timer_event_names, type), (st == NULL) ? "" : statenum));
+
 
 	passert(GLOBALS_ARE_RESET());
 

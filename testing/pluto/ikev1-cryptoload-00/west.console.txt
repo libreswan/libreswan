@@ -36,6 +36,12 @@ west #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=252 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
 [ 00.00] 
 Redirecting to: systemctl start ipsec.service
 [ 00.00] 
@@ -58,7 +64,7 @@ west #
 000  
 000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d, dumpdir=/tmp, statsbin=unset
 000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=0, uniqueids=yes
+000 nhelpers=0, uniqueids=yes, perpeerlog=no
 000 ddos-cookies-treshold=50000, ddos-max-halfopen=25000, ddos-mode=auto
 000 ikeport=500, strictcrlpolicy=no, crlcheckinterval=0, listen=<any>, nflog-all=0
 000 secctx-attr-type=XXXX
@@ -77,7 +83,11 @@ west #
 000 algorithm ESP encrypt: id=253, name=ESP_TWOFISH, ivlen=128, keysizemin=128, keysizemax=256
 000 algorithm AH/ESP auth: id=1, name=AUTH_ALGORITHM_HMAC_MD5, keysizemin=128, keysizemax=128
 000 algorithm AH/ESP auth: id=2, name=AUTH_ALGORITHM_HMAC_SHA1, keysizemin=160, keysizemax=160
+000 algorithm AH/ESP auth: id=5, name=AUTH_ALGORITHM_HMAC_SHA2_256, keysizemin=256, keysizemax=256
+000 algorithm AH/ESP auth: id=6, name=AUTH_ALGORITHM_HMAC_SHA2_384, keysizemin=384, keysizemax=384
+000 algorithm AH/ESP auth: id=7, name=AUTH_ALGORITHM_HMAC_SHA2_512, keysizemin=512, keysizemax=512
 000 algorithm AH/ESP auth: id=9, name=AUTH_ALGORITHM_AES_XCBC, keysizemin=128, keysizemax=128
+000 algorithm AH/ESP auth: id=252, name=(null), keysizemin=256, keysizemax=256
 000  
 000 IKE algorithms supported:
 000  

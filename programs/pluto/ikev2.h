@@ -216,6 +216,18 @@ struct ikev2_payload_errors {
 	lset_t missing;
 	lset_t unexpected;
 };
+struct state_v2_microcode {
+        const char *const story;
+        enum state_kind state, next_state;
+        enum isakmp_xchg_types recv_type;
+        lset_t flags;
+        lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
+        lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
+        lset_t req_enc_payloads;  /* required encrypted payloads (allows just one) for received packet */
+        lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
+        enum event_type timeout_event;
+        state_transition_fn *processor;
+};
 
 struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
 						  const struct state_v2_microcode *svm, bool enc);
