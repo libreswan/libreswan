@@ -1,0 +1,4 @@
+basic OE test, using road and east triggered by packet using NETKEY on road
+The responder has IKE SA replace and has short ikelfietime.  Responder will replace the IKE SA
+
+to verify this watch the state number in --trafficstatus output
