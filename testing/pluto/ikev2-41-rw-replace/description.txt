@@ -1,0 +1,7 @@
+IKEv2 RW test with rekey=no on the responder.
+rekey=yes on initiator, rod. ikelifetime 90s. Initiator will replace IKE SA.
+
+1. Road initiates and establish connection.
+2. Initiator keeps the tunnel up.
+3. Initiator ike expires and rekey/reauthenticate, brings up the tunnel.
+
