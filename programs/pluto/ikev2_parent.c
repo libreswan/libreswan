@@ -115,6 +115,28 @@ static crypto_req_cont_func ikev2_child_inIoutR_continue;	/* type assertion */
 static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 					   struct pluto_crypto_req *r);
 
+static void ikev2_iskamp_established(struct state *st, const struct state_v2_microcode *svm,
+                enum state_kind new_state, enum original_role role)
+{
+        struct connection *c = st->st_connection;
+        /*
+         * taking it current from current state I2/R1. The parent has advanced but not the svm???
+         * Ideally this should be timeout of I3/R2 state svm. how to find that svm
+         */
+        enum event_type kind = svm->timeout_event;
+        time_t delay;
+
+        /*
+         * update the parent state to make sure that it knows we have
+         * authenticated properly.
+         */
+        change_state(st, new_state);
+        c->newest_ipsec_sa = st->st_serialno;
+        delay = ikev2_replace_delay(st, &kind, role);
+        delete_event(st);
+        event_schedule(kind, delay, st);
+}
+
 /*
  * This code assumes that the encrypted part of an IKE message starts
  * with an Initialization Vector (IV) of enc_blocksize of random octets.
@@ -1883,8 +1905,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	/* ??? seems wrong: not conditional at all */
 	delete_event(pst);
 	{
-		/* why not from svm->timeout_event ??? */
-		enum event_type x = EVENT_SA_REPLACE;
+		const struct state_v2_microcode *svm = md->svm;
+		enum event_type x = svm->timeout_event;
 		time_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
 
 		event_schedule(x, delay, pst);
@@ -2576,20 +2598,13 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 	/* note: as we will switch to child state, we force the parent to the
 	 * new state now
 	 */
-	change_state(st, STATE_PARENT_R2);
-	c->newest_isakmp_sa = st->st_serialno;
+
+	ikev2_iskamp_established(st, md->svm, STATE_PARENT_R2,
+			md->original_role);
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
 #endif
-
-	delete_event(st);
-	{
-		enum event_type x = EVENT_SA_REPLACE;
-		time_t delay = ikev2_replace_delay(st, &x, ORIGINAL_RESPONDER);
-
-		event_schedule(x, delay, st);
-	}
 
 	authstart = reply_stream.cur;
 	/* send response */
@@ -2721,11 +2736,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 			np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
 				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
 		}
-
-		/* replace HALFOPEN IKE expire time with ikelifetime= */
-		delete_event(st);
-		event_schedule(EVENT_SA_REPLACE,
-			deltasecs(c->sa_ipsec_life_seconds), st);
 
 		DBG(DBG_CONTROLMORE,
 		    DBG_log("going to assemble AUTH payload"));
@@ -2925,12 +2935,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	 * update the parent state to make sure that it knows we have
 	 * authenticated properly.
 	 */
-	change_state(pst, STATE_PARENT_I3);
-	c->newest_isakmp_sa = pst->st_serialno;
-
-	/* replace HALFOPEN IKE expire time with ikelifetime= */
-	delete_event(pst);
-	event_schedule(EVENT_SA_REPLACE, deltasecs(c->sa_ike_life_seconds), pst);
+	ikev2_iskamp_established(pst, md->svm, STATE_PARENT_I3, md->original_role);
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
@@ -3163,8 +3168,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	} /* notification block */
 
 	ikev2_derive_child_keys(st, md->original_role);
-
-	c->newest_ipsec_sa = st->st_serialno;
 
 	/* now install child SAs */
 	if (!install_ipsec_sa(st, TRUE))

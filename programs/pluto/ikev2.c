@@ -80,19 +80,6 @@
 		else \
 			send_v2_notification_from_md(md, t, NULL); }
 
-struct state_v2_microcode {
-	const char *const story;
-	enum state_kind state, next_state;
-	enum isakmp_xchg_types recv_type;
-	lset_t flags;
-	lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
-	lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
-	lset_t req_enc_payloads;  /* required encrypted payloads (allows just one) for received packet */
-	lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
-	enum event_type timeout_event;
-	state_transition_fn *processor;
-};
-
 enum smf2_flags {
 	/*
 	 * Check the value of the IKE_I flag in the header.
@@ -1243,8 +1230,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 	time_t delay;   /* unwrapped deltatime_t */
 	struct connection *c = st->st_connection;
 
-	if (IS_PARENT_SA(st) &&
-		(st)->st_clonedfrom == SOS_NOBODY ) /* workaround for child appearing as parent */
+	if (IS_PARENT_SA(st)) /* workaround for child appearing as parent */
 	{
 		/* Note: we will defer to the "negotiated" (dictated)
 		 * lifetime if we are POLICY_DONT_REKEY.
