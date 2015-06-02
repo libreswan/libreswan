@@ -9,6 +9,12 @@ road #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=252 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
 [ 00.00] 
 Redirecting to: systemctl start ipsec.service
 [ 00.00] 
@@ -24,6 +30,7 @@ road #
 initdone
 road #
  ipsec whack --name road-east-psk --initiate
+003 "road-east-psk": IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's
 002 "road-east-psk" #1: initiating Aggressive Mode #1, connection "road-east-psk"
 112 "road-east-psk" #1: STATE_AGGR_I1: initiate
 002 "road-east-psk" #1: supressing retransmit because IMPAIR_RETRANSMITS is set
