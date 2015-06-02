@@ -2070,3 +2070,18 @@ void show_globalstate_status(void)
 			enum_show(&state_names, s), state_count[s]);
 	}
 }
+
+
+void log_newest_sa_change(char *f, struct state *const st)
+{
+
+	DBG(DBG_CONTROLMORE,
+			DBG_log("%s: instance %s[%ld], setting %s newest_ipsec_sa to #%ld (was #%ld) (spd.eroute=#%ld) cloned from #%lu",f,
+				st->st_connection->name,
+				st->st_connection->instance_serial,
+				st->st_ikev2 ? "IKEv2" : "IKEv1",
+				st->st_serialno,
+				st->st_connection->newest_ipsec_sa,
+				st->st_connection->spd.
+				eroute_owner, st->st_clonedfrom));
+}

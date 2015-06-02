@@ -115,7 +115,7 @@ static crypto_req_cont_func ikev2_child_inIoutR_continue;	/* type assertion */
 static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 					   struct pluto_crypto_req *r);
 
-static void ikev2_iskamp_established(struct state *st, const struct state_v2_microcode *svm,
+static void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode *svm,
                 enum state_kind new_state, enum original_role role)
 {
         struct connection *c = st->st_connection;
@@ -131,7 +131,7 @@ static void ikev2_iskamp_established(struct state *st, const struct state_v2_mic
          * authenticated properly.
          */
         change_state(st, new_state);
-        c->newest_ipsec_sa = st->st_serialno;
+        c->newest_isakmp_sa = st->st_serialno;
         delay = ikev2_replace_delay(st, &kind, role);
         delete_event(st);
         event_schedule(kind, delay, st);
@@ -2537,7 +2537,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
 	 * new state now
 	 */
 
-	ikev2_iskamp_established(st, md->svm, STATE_PARENT_R2,
+	ikev2_isakamp_established(st, md->svm, STATE_PARENT_R2,
 			md->original_role);
 
 #ifdef USE_LINUX_AUDIT
@@ -2873,7 +2873,7 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	 * update the parent state to make sure that it knows we have
 	 * authenticated properly.
 	 */
-	ikev2_iskamp_established(pst, md->svm, STATE_PARENT_I3, md->original_role);
+	ikev2_isakamp_established(pst, md->svm, STATE_PARENT_I3, md->original_role);
 
 #ifdef USE_LINUX_AUDIT
 	linux_audit_conn(st, LAK_PARENT_START);
@@ -3110,6 +3110,9 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 	/* now install child SAs */
 	if (!install_ipsec_sa(st, TRUE))
 		return STF_FATAL;
+
+	c->newest_ipsec_sa = st->st_serialno;
+	log_newest_sa_change("inR2", st);
 
 	/*
 	 * Delete previous retransmission event.
