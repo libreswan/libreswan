@@ -49,6 +49,7 @@ Certificate Nickname                                         Trust Attributes
 east                                                         u,u,u
 hashsha2                                                     P,,  
 mainca                                                       ,,   
+nic                                                          P,,  
 north                                                        P,,  
 road                                                         P,,  
 west                                                         P,,  
