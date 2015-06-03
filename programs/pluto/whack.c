@@ -164,14 +164,11 @@ static void help(void)
 		"	--ddos-auto)\n"
 		"\n"
 		"list: whack [--utc] [--checkpubkeys] [--listpubkeys] [--listcerts] \\\n"
-		"	[--listcacerts]  [--listacerts] [--listaacerts] \\\n"
-		"	[--listgroups] [--listcrls] [--listpsks] [--listall]\n"
+		"	[--listcacerts] [--listcrls] [--listpsks] [--listall]\n"
 		"\n"
 		"purge: whack --purgeocsp\n"
 		"\n"
-		"reread: whack [--rereadsecrets] [--rereadcacerts] \\\n"
-		"	[--rereadaacerts]  [--rereadacerts] \\\n"
-		"	[--rereadcrls] [--rereadall]\n"
+		"reread: whack [--rereadsecrets] [--rereadcrls] [--rereadall] \\\n"
 		"\n"
 		"status: whack --status --trafficstatus --globalstatus --shuntstatus\n"
 		"\n"
@@ -273,9 +270,6 @@ enum option_enums {
 	OPT_DDOS_AUTO,
 
 	OPT_REREADSECRETS,
-	OPT_REREADCACERTS,
-	OPT_REREADAACERTS,
-	OPT_REREADACERTS,
 	OPT_REREADCRLS,
 	OPT_REREADALL,
 
@@ -482,13 +476,11 @@ static const struct option long_opts[] = {
 	{ "ddos-auto", no_argument, NULL, OPT_DDOS_AUTO + OO },
 
 	{ "rereadsecrets", no_argument, NULL, OPT_REREADSECRETS + OO },
-	{ "rereadcacerts", no_argument, NULL, OPT_REREADCACERTS + OO },
-	{ "rereadaacerts", no_argument, NULL, OPT_REREADAACERTS + OO },
-	{ "rereadacerts", no_argument, NULL, OPT_REREADACERTS + OO },
-
 	{ "rereadcrls", no_argument, NULL, OPT_REREADCRLS + OO },
 	{ "rereadall", no_argument, NULL, OPT_REREADALL + OO },
+
 	{ "purgeocsp", no_argument, NULL, OPT_PURGEOCSP + OO },
+
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
 	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
@@ -510,9 +502,6 @@ static const struct option long_opts[] = {
 	{ "listpubkeys", no_argument, NULL, LST_PUBKEYS + OO },
 	{ "listcerts", no_argument, NULL, LST_CERTS + OO },
 	{ "listcacerts", no_argument, NULL, LST_CACERTS + OO },
-	{ "listacerts", no_argument, NULL, LST_ACERTS + OO },
-	{ "listaacerts", no_argument, NULL, LST_AACERTS + OO },
-	{ "listgroups", no_argument, NULL, LST_GROUPS + OO },
 	{ "listcrls", no_argument, NULL, LST_CRLS + OO },
 	{ "listpsks", no_argument, NULL, LST_PSKS + OO },
 	{ "listevents", no_argument, NULL, LST_EVENTS + OO },
@@ -1171,19 +1160,16 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
-		case OPT_REREADCACERTS:	/* --rereadcacerts */
-		case OPT_REREADAACERTS:	/* --rereadaacerts */
-		case OPT_REREADACERTS:	/* --rereadacerts */
-		case OPT_REREADCRLS:	/* --rereadcrls */
+		case OPT_REREADCRLS:    /* --rereadcrls */
 			msg.whack_reread |= LELEM(c - OPT_REREADSECRETS);
-			continue;
-
-		case OPT_PURGEOCSP:
-			msg.whack_purgeocsp = TRUE;
 			continue;
 
 		case OPT_REREADALL:	/* --rereadall */
 			msg.whack_reread = REREAD_ALL;
+			continue;
+
+		case OPT_PURGEOCSP:
+			msg.whack_purgeocsp = TRUE;
 			continue;
 
 		case OPT_STATUS:	/* --status */
@@ -1239,9 +1225,6 @@ int main(int argc, char **argv)
 		case LST_PUBKEYS:	/* --listpubkeys */
 		case LST_CERTS:	/* --listcerts */
 		case LST_CACERTS:	/* --listcacerts */
-		case LST_ACERTS:	/* --listacerts */
-		case LST_AACERTS:	/* --listaacerts */
-		case LST_GROUPS:	/* --listgroups */
 		case LST_CRLS:	/* --listcrls */
 		case LST_PSKS:	/* --listpsks */
 		case LST_EVENTS:	/* --listevents */

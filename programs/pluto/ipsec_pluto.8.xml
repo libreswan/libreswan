@@ -603,12 +603,6 @@
 
       <arg choice="opt">--listcacerts</arg>
 
-      <arg choice="opt">--listacerts</arg>
-
-      <arg choice="opt">--listaacerts</arg>
-
-      <arg choice="opt">--listgroups</arg>
-
       <arg choice="opt">--listcrls</arg>
 
     </cmdsynopsis>
@@ -621,22 +615,9 @@
       <arg choice="opt">--utc</arg>
 
       <arg choice="opt">--rereadsecrets</arg>
-
+      <arg choice="opt">--rereadcrls</arg>
       <arg choice="opt">--rereadall</arg>
 
-      <arg choice="opt">--rereadcacerts</arg>
-
-      <arg choice="opt">--rereadacerts</arg>
-
-      <arg choice="opt">--rereadaacerts</arg>
-
-      <arg choice="opt">--rereadcrls</arg>
-    </cmdsynopsis>
-
-    <cmdsynopsis>
-      <command>ipsec</command>
-
-      <arg choice="plain"><replaceable>whack</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -646,6 +627,15 @@
 
       <arg choice="plain">--listevents</arg>
     </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>ipsec</command>
+
+      <arg choice="plain"><replaceable>whack</replaceable></arg>
+
+      <arg choice="plain">--purgeocsp</arg>
+    </cmdsynopsis>
+
 
     <cmdsynopsis>
       <command>ipsec</command>
@@ -2013,33 +2003,8 @@
           <term><option>--listcacerts</option></term>
 
           <listitem>
-            <para>list all the X.509 Certificate Authority (CA) certificates that
-            are currently loaded.</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--listacerts</option></term>
-
-          <listitem>
-            <para>list all the X.509 Attribute certificates that are currently
-            loaded</para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--listaacerts</option></term>
-
-          <listitem>
-            <para></para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term><option>--listgroups</option></term>
-
-          <listitem>
-            <para></para>
+            <para>list all the Certificate Authority X.509 certificates that are currently
+            loaded.</para>
           </listitem>
         </varlistentry>
 
@@ -2055,19 +2020,11 @@
       </variablelist>
 
       <para>The corresponding options <option>--rereadsecrets</option>,
-      <option>--rereadall</option>, <option>--rereadcacerts</option>,
-      <option>--rereadacerts</option>, <option>--rereadaacerts</option>,
+      <option>--rereadall</option>,
       and <option>--rereadcrls</option> options reread this information from their
       respective sources, and purge all the online obtained information. The
       option <option>--listevents</option> lists all pending CRL fetch
       commands.</para>
-
-      <para>More work is needed to allow for flexible policies. Currently
-      policy is hardwired in the source file spdb.c. The ISAKMP SAs may use
-      Oakley groups MODP1024 and MODP1536; AES or 3DES encryption; SHA1-96 and
-      MD5-96 authentication. The IPsec SAs may use AES or 3DES and MD5-96 or
-      SHA1-96 for ESP, or just MD5-96 or SHA1-96 for AH. IPCOMP Compression is
-      always Deflate.</para>
 
       <variablelist remap="TP">
         <varlistentry>

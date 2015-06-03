@@ -390,7 +390,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "ocsp_trust_name", kv_config | kv_alias, kt_string,    KSF_OCSPTRUSTNAME, NOT_ENUM }, /* obsolete _ */
 
 	{ "force_busy",     kv_config | kv_alias, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },	/* obsolete _ */
-	{ "force-busy",     kv_config, kt_bool,      KBF_WARNIGNORE, NOT_ENUM },
+	{ "force-busy",     kv_config, kt_bool,      KBF_FORCEBUSY, NOT_ENUM }, /* obsoleted for ddos-mode=busy */
 	{ "ddos-mode",     kv_config | kv_processed , kt_enum, KBF_DDOS_MODE, &kw_ddos_list },
 	{ "ddos-ike-treshold",        kv_config, kt_number,     KBF_DDOS_IKE_TRESHOLD, NOT_ENUM },
 	{ "max-halfopen-ike",        kv_config, kt_number,     KBF_MAX_HALFOPEN_IKE, NOT_ENUM },

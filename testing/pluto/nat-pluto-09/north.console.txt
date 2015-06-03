@@ -52,8 +52,8 @@ north #
 002 "northnet-eastnet-nat" #1: I am sending a certificate request
 108 "northnet-eastnet-nat" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "northnet-eastnet-nat" #1: received Vendor ID payload [CAN-IKEv2]
-002 "northnet-eastnet-nat" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
-002 "northnet-eastnet-nat" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
+002 "northnet-eastnet-nat" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
+002 "northnet-eastnet-nat" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,ST=Ontario,C=ca OK
 004 "northnet-eastnet-nat" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "northnet-eastnet-nat" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "northnet-eastnet-nat" #2: STATE_QUICK_I1: initiate
