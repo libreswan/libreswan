@@ -62,9 +62,12 @@ west #
 004 "westnet-eastnet-3des" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=aes_256 integ=sha group=MODP2048}
 002 "westnet-eastnet-3des" #2: initiating Quick Mode RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKEV1_ALLOW+IKEV2_ALLOW+SAREF_TRACK+IKE_FRAG_ALLOW
 117 "westnet-eastnet-3des" #2: STATE_QUICK_I1: initiate
-010 "westnet-eastnet-3des" #2: STATE_QUICK_I1: retransmission; will wait 10s for response
-010 "westnet-eastnet-3des" #2: STATE_QUICK_I1: retransmission; will wait 20s for response
-031 "westnet-eastnet-3des" #2: max number of retransmissions (2) reached STATE_QUICK_I1.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+010 "westnet-eastnet-3des" #2: STATE_QUICK_I1: retransmission; will wait 2000ms for response
+010 "westnet-eastnet-3des" #2: STATE_QUICK_I1: retransmission; will wait 4000ms for response
+010 "westnet-eastnet-3des" #2: STATE_QUICK_I1: retransmission; will wait 8000ms for response
+010 "westnet-eastnet-3des" #2: STATE_QUICK_I1: retransmission; will wait 16000ms for response
+010 "westnet-eastnet-3des" #2: STATE_QUICK_I1: retransmission; will wait 32000ms for response
+031 "westnet-eastnet-3des" #2: max number of retransmissions (6) reached STATE_QUICK_I1.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
 000 "westnet-eastnet-3des" #2: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
  ping -n -c 4 -I 192.0.1.254 192.0.2.254
@@ -81,16 +84,28 @@ west #
 done
 west #
  grep BAD_PROPOSAL_SYNTAX /tmp/pluto.log
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
 "westnet-eastnet-3des" #1: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
 | processing informational BAD_PROPOSAL_SYNTAX (15)
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
 "westnet-eastnet-3des" #1: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
 | processing informational BAD_PROPOSAL_SYNTAX (15)
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
 "westnet-eastnet-3des" #1: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
 | processing informational BAD_PROPOSAL_SYNTAX (15)
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
+"westnet-eastnet-3des" #1: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
+| processing informational BAD_PROPOSAL_SYNTAX (15)
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
+"westnet-eastnet-3des" #1: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
+| processing informational BAD_PROPOSAL_SYNTAX (15)
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
+"westnet-eastnet-3des" #1: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
+| processing informational BAD_PROPOSAL_SYNTAX (15)
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
+"westnet-eastnet-3des" #1: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
+| processing informational BAD_PROPOSAL_SYNTAX (15)
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
 "westnet-eastnet-3des" #1: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
 | processing informational BAD_PROPOSAL_SYNTAX (15)
 west #

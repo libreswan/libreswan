@@ -50,19 +50,35 @@ east #
  grep BAD_PROPOSAL_SYNTAX /tmp/pluto.log
 | complete v1 state transition with BAD_PROPOSAL_SYNTAX
 "westnet-eastnet-3des" #2: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
 | state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
 | complete v1 state transition with BAD_PROPOSAL_SYNTAX
 "westnet-eastnet-3des" #3: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
 | state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
 | complete v1 state transition with BAD_PROPOSAL_SYNTAX
 "westnet-eastnet-3des" #4: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
 | state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
 | complete v1 state transition with BAD_PROPOSAL_SYNTAX
 "westnet-eastnet-3des" #5: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
-|    Notify Message Type: BAD_PROPOSAL_SYNTAX
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
+| state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
+| complete v1 state transition with BAD_PROPOSAL_SYNTAX
+"westnet-eastnet-3des" #6: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
+| state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
+| complete v1 state transition with BAD_PROPOSAL_SYNTAX
+"westnet-eastnet-3des" #7: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
+| state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
+| complete v1 state transition with BAD_PROPOSAL_SYNTAX
+"westnet-eastnet-3des" #8: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
+| state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
+| complete v1 state transition with BAD_PROPOSAL_SYNTAX
+"westnet-eastnet-3des" #9: sending encrypted notification BAD_PROPOSAL_SYNTAX to 192.1.2.45:500
+|    Notify Message Type: BAD_PROPOSAL_SYNTAX (0xf)
 | state transition function for STATE_QUICK_R0 failed: BAD_PROPOSAL_SYNTAX
 east #
 east #
