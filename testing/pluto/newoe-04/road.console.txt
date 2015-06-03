@@ -26,7 +26,7 @@ road #
  sleep 5
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &
-[1] 1780
+[x] PID
 road #
  echo "initdone"
 initdone
@@ -52,13 +52,13 @@ road #
 road #
  ipsec whack --trafficstatus
 000  
-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP,  add_time=1432161986, inBytes=168, outBytes=168, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP,  add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL'
 000  
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
-000 192.1.3.209/32:0 -0-> 7.7.7.7/32:0 => %pass 0    oe-failed
+000 192.1.3.209/32:0 -0-> 7.7.7.7/32:0 => %pass 0    oe-failing
 road #
  # if 7.7.7.7 shows as %pass, we should be able to ping it
 road #
