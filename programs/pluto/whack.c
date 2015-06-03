@@ -118,6 +118,7 @@ static void help(void)
 		"	[--modecfgdomain <dns-domain>] \\\n"
 		"	[--modecfgbanner <login banner>] \\\n"
 		"	[--metric <metric>] \\\n"
+		"	[--nflog-group <groupnum>] \\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	--to\n"
@@ -136,8 +137,6 @@ static void help(void)
 		"delete: whack --deleteid --name <id>\n"
 		"\n"
 		"deletestate: whack --deletestate <state_object_number>\n"
-		"\n"
-		"nflog-group: whack --nflog-group <group_number>\n"
 		"\n"
 		"delete xauth user: whack --deleteuser --name <xauth_user_name> \\\n"
 		"	[--crash <ip-address>]\n"
@@ -260,7 +259,6 @@ enum option_enums {
 	OPT_DELETEID,
 	OPT_DELETESTATE,
 	OPT_DELETEUSER,
-	OPT_NFLOG_ALL,
 	OPT_LISTEN,
 	OPT_UNLISTEN,
 
@@ -463,8 +461,6 @@ static const struct option long_opts[] = {
 	{ "delete", no_argument, NULL, OPT_DELETE + OO },
 	{ "deleteid", no_argument, NULL, OPT_DELETEID + OO },
 	{ "deletestate", required_argument, NULL, OPT_DELETESTATE + OO +
-	  NUMERIC_ARG },
-	{ "nflog-all", required_argument, NULL, OPT_NFLOG_ALL + OO +
 	  NUMERIC_ARG },
 	{ "deleteuser", no_argument, NULL, OPT_DELETEUSER + OO },
 	{ "crash", required_argument, NULL, OPT_DELETECRASH + OO },
@@ -1120,19 +1116,6 @@ int main(int argc, char **argv)
 		case OPT_DELETESTATE: /* --deletestate <state_object_number> */
 			msg.whack_deletestate = TRUE;
 			msg.whack_deletestateno = opt_whole;
-			continue;
-
-		case OPT_NFLOG_ALL: /* --nflog-all <group_number> */
-                        if (opt_whole <= 0  ||
-                            opt_whole > 65535) {
-                                char buf[120];
-
-                                snprintf(buf, sizeof(buf),
-                                        "invalid nflog-group value - range must be 1-65535 \"%s\"",
-                                        optarg);
-                                diag(buf);
-			}
-			msg.whack_nfloggroup = opt_whole;
 			continue;
 
 		case OPT_DELETECRASH:	/* --crash <ip-address> */

@@ -320,6 +320,10 @@
 
       <arg choice="opt">--modecfgpull</arg>
 
+      <arg choice="opt">--metric <replaceable>metric</replaceable></arg>
+
+      <arg choice="opt">--nflog-group <replaceable>nflognum</replaceable></arg>
+
       <group choice="opt">
         <arg choice="opt">--dpddelay <replaceable>seconds</replaceable></arg>
 
