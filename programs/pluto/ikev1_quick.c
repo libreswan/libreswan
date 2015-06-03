@@ -1167,6 +1167,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 	}
 
 	/* save packet, now that we know its size */
+	passert(st->st_tpacket.ptr == NULL);
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet from quick_outI1");

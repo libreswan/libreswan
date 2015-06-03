@@ -290,6 +290,7 @@ stf_status main_outI1(int whack_sock,
 
 	close_output_pbs(&reply_stream);
 
+	passert(st->st_tpacket.ptr == NULL);
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		pbs_offset(&reply_stream),
 		"reply packet for main_outI1");
@@ -2843,6 +2844,11 @@ bool ikev1_delete_out(struct state *st)
 		if (!encrypt_message(&r_hdr_pbs, p1st))
 			impossible();
 
+		/*
+		 * NOTE: p1st->st_tpacket will not "own" the reply
+		 * so we must restore p1st->st_tpacket
+		 * without freeing the reply.
+		 */
 		setchunk(p1st->st_tpacket, reply_pbs.start,
 			 pbs_offset(&reply_pbs));
 		send_ike_msg(p1st, "delete notify");

@@ -1382,6 +1382,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 		close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
+		passert(st->st_tpacket.ptr == NULL);
 		clonetochunk(st->st_tpacket, reply_stream.start,
 			     pbs_offset(&reply_stream), "reply packet");
 
