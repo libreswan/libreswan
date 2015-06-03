@@ -317,7 +317,7 @@ const struct oakley_group_desc *ike_alg_pfsgroup(struct connection *c,
 {
 	const struct oakley_group_desc * ret = NULL;
 
-	if ( (policy & POLICY_PFS) &&
+	if ((policy & POLICY_PFS) &&
 	     c->alg_info_esp && c->alg_info_esp->esp_pfsgroup)
 		ret = lookup_group(c->alg_info_esp->esp_pfsgroup);
 	return ret;

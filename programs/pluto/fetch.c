@@ -499,9 +499,9 @@ static void *fetch_thread(void *arg UNUSED)
  */
 void init_fetch(void)
 {
-	int status;
-
 	if (deltasecs(crl_check_interval) > 0) {
+		int status;
+
 #ifdef LIBCURL
 		/* init curl */
 		status = curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -509,10 +509,10 @@ void init_fetch(void)
 			libreswan_log("libcurl could not be initialized, status = %d",
 			     status);
 #endif
-		status = pthread_create( &thread, NULL, fetch_thread, NULL);
+		status = pthread_create(&thread, NULL, fetch_thread, NULL);
 		if (status != 0)
 			libreswan_log(
-				"fetching thread could not be started, status = %d",
+				"could not start thread for fetching certificate, status = %d",
 				status);
 	}
 }

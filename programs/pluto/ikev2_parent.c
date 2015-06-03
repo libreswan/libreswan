@@ -2570,7 +2570,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	return ikev2_parent_inI2outR2_auth_tail(md, TRUE);
 }
 
-static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
+static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		bool pam_status)
 {
 	struct state *const st = md->st;

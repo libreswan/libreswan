@@ -1422,7 +1422,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 		case EVENT_v2_RETRANSMIT:
 			delete_event(st);
 			if (DBGP(IMPAIR_RETRANSMITS)) {
-				libreswan_log( "supressing retransmit because IMPAIR_RETRANSMITS is set.");
+				libreswan_log("supressing retransmit because IMPAIR_RETRANSMITS is set.");
 				if (st->st_rel_whack_event != NULL) {
 					pfreeany(st->st_rel_whack_event);
 					st->st_rel_whack_event = NULL;

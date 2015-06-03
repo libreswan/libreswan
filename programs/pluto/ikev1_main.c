@@ -839,6 +839,7 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 
 	if (c->send_vendorid) {
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		if (!out_generic_raw(np, &isakmp_vendor_id_desc, &md->rbody,
 					pluto_vendorid, strlen(pluto_vendorid), "Vendor ID"))
 			return STF_INTERNAL_ERROR;
@@ -850,14 +851,16 @@ stf_status main_inI1_outR1(struct msg_digest *md)
 		 * Dead Peer Detection
 		 */
 		int np = --numvidtosend ? ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
-		if ( !out_vid(np, &md->rbody, VID_MISC_DPD))
+
+		if (!out_vid(np, &md->rbody, VID_MISC_DPD))
 			return STF_INTERNAL_ERROR;
 	}
 
 	/* Announce our ability to do (non-RFC) IKE Fragmentation */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		int np = --numvidtosend > 0 ? ISAKMP_NEXT_VID :
-			ISAKMP_NEXT_NONE;
+		int np = --numvidtosend > 0 ?
+			ISAKMP_NEXT_VID : ISAKMP_NEXT_NONE;
+
 		if (!out_vid(np, &md->rbody, VID_IKE_FRAGMENTATION))
 			return STF_INTERNAL_ERROR;
 	}
@@ -2178,7 +2181,7 @@ static stf_status main_inI3_outR3_tail(struct msg_digest *md,
 	 * are not supposed to be performed again during rekey
 	 */
 
-	if ( st->st_connection->remotepeertype == CISCO &&
+	if (st->st_connection->remotepeertype == CISCO &&
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,
@@ -2251,7 +2254,7 @@ static stf_status main_inR3_tail(struct msg_digest *md,
 	 * It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
 	 */
-	if ( st->st_connection->remotepeertype == CISCO &&
+	if (st->st_connection->remotepeertype == CISCO &&
 		st->st_connection->newest_isakmp_sa != SOS_NOBODY &&
 		st->st_connection->spd.this.xauth_client) {
 		DBG(DBG_CONTROL,

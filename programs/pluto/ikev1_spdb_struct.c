@@ -615,7 +615,7 @@ bool ikev1_out_sa(pb_stream *outs,
 				for (an = 0; an != t->attr_cnt; an++) {
 					struct db_attr *a = &t->attrs[an];
 
-					if (!out_attr( oakley_mode ? a->type.oakley : a->type.ipsec ,
+					if (!out_attr(oakley_mode ? a->type.oakley : a->type.ipsec ,
 						      a->val,
 						      attr_desc,
 						      attr_val_descs,
