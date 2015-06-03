@@ -513,7 +513,7 @@ static void termhandler(int sig UNUSED)
 
 static void huphandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)
 {
-	libreswan_log( "Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
+	libreswan_log("Pluto ignores SIGHUP -- perhaps you want \"whack --listen\"");
 }
 
 static void termhandler_cb(int unused UNUSED, const short event UNUSED, void *arg UNUSED)

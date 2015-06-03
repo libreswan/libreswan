@@ -1322,8 +1322,10 @@ struct state *find_sender(size_t packet_len, u_char *packet)
 {
 	if (packet_len >= sizeof(struct isakmp_hdr)) {
 		int i;
+
 		for (i = 0; i < STATE_TABLE_SIZE; i++) {
 			struct state *st;
+
 			FOR_EACH_ENTRY(st, i, {
 				if (st->st_tpacket.ptr != NULL &&
 				    st->st_tpacket.len == packet_len &&

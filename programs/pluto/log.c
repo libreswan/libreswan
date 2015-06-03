@@ -1274,7 +1274,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		spi_str,
 		laddr);
 
-	linux_audit( (op == LAK_CHILD_START || op == LAK_CHILD_DESTROY) ?
+	linux_audit((op == LAK_CHILD_START || op == LAK_CHILD_DESTROY) ?
 			AUDIT_CRYPTO_IPSEC_SA : AUDIT_CRYPTO_IKE_SA,
 		audit_str, raddr, AUDIT_RESULT_OK);
 }

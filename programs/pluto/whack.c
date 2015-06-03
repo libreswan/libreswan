@@ -118,6 +118,7 @@ static void help(void)
 		"	[--modecfgdomain <dns-domain>] \\\n"
 		"	[--modecfgbanner <login banner>] \\\n"
 		"	[--metric <metric>] \\\n"
+		"	[--nflog-group <groupnum>] \\\n"
 		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
@@ -137,8 +138,6 @@ static void help(void)
 		"delete: whack --deleteid --name <id>\n"
 		"\n"
 		"deletestate: whack --deletestate <state_object_number>\n"
-		"\n"
-		"nflog-group: whack --nflog-group <group_number>\n"
 		"\n"
 		"delete xauth user: whack --deleteuser --name <xauth_user_name> \\\n"
 		"	[--crash <ip-address>]\n"
@@ -261,7 +260,6 @@ enum option_enums {
 	OPT_DELETEID,
 	OPT_DELETESTATE,
 	OPT_DELETEUSER,
-	OPT_NFLOG_ALL,
 	OPT_LISTEN,
 	OPT_UNLISTEN,
 

@@ -1110,7 +1110,8 @@ int main(int argc, char **argv)
 			/* --ikeport */
 			pluto_port = cfg->setup.options[KBF_IKEPORT];
 
-			/* nflog-all= only used for status display inside pluto */
+			/* --nflog-all */
+			/* only causes nflog nmber to show in ipsec status */
 			pluto_nflog_group = cfg->setup.options[KBF_NFLOG_ALL];
 
 			/* no config option: ctlbase */
