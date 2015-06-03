@@ -151,8 +151,9 @@ road #
 000 "road-east-x509-ipv4"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "road-east-x509-ipv4"[1]:   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "road-east-x509-ipv4"[1]:   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "road-east-x509-ipv4"[1]:   newest ISAKMP SA: #1; newest IPsec SA: #1; 
+000 "road-east-x509-ipv4"[1]:   newest ISAKMP SA: #1; newest IPsec SA: #2; 
 000 "road-east-x509-ipv4"[1]:   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA1-MODP2048
+000 "road-east-x509-ipv4"[1]:   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000  
 000 Total IPsec connections: loaded 2, active 1
 000  
@@ -160,9 +161,9 @@ road #
 000 IKE SAs: total(2), half-open(0), authenticated(1), anonymous(0)
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
-000 #2: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_EXPIRE in  XXs; eroute owner; isakmp#1; idle; import:admin initiate
+000 #2: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_EXPIRE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
 000 #2: "road-east-x509-ipv4"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 ref=0 refhim=4294901761 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
-000 #1: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; newest IPSEC; isakmp#0; idle; import:admin initiate
+000 #1: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; isakmp#0; idle; import:admin initiate
 000 #1: "road-east-x509-ipv4"[1] 192.1.2.23 ref=0 refhim=0 Traffic: 
 000  
 000 Bare Shunt list:
@@ -303,8 +304,9 @@ road #
 000 "road-east-x509-ipv4"[1]:   policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW; 
 000 "road-east-x509-ipv4"[1]:   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; nflog-group: unset;
 000 "road-east-x509-ipv4"[1]:   dpd: action:hold; delay:0; timeout:0; nat-t: force_encaps:no; nat_keepalive:yes; ikev1_natt:both
-000 "road-east-x509-ipv4"[1]:   newest ISAKMP SA: #3; newest IPsec SA: #3; 
+000 "road-east-x509-ipv4"[1]:   newest ISAKMP SA: #3; newest IPsec SA: #4; 
 000 "road-east-x509-ipv4"[1]:   IKEv2 algorithm newest: AES_GCM_C_256-AUTH_NONE-PRF_HMAC_SHA1-MODP2048
+000 "road-east-x509-ipv4"[1]:   ESP algorithm newest: AES_128-HMAC_SHA1; pfsgroup=<Phase1>
 000  
 000 Total IPsec connections: loaded 2, active 1
 000  
@@ -312,9 +314,9 @@ road #
 000 IKE SAs: total(2), half-open(0), authenticated(2), anonymous(-1)
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
-000 #4: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_EXPIRE in  XXs; eroute owner; isakmp#3; idle; import:respond to stranger
+000 #4: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_EXPIRE in  XXs; newest IPSEC; eroute owner; isakmp#3; idle; import:respond to stranger
 000 #4: "road-east-x509-ipv4"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 ref=0 refhim=4294901761 Traffic: ESPin=336B ESPout=336B! ESPmax=0B 
-000 #3: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; newest IPSEC; isakmp#0; idle; import:respond to stranger
+000 #3: "road-east-x509-ipv4"[1] 192.1.2.23:500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; isakmp#0; idle; import:respond to stranger
 000 #3: "road-east-x509-ipv4"[1] 192.1.2.23 ref=0 refhim=0 Traffic: 
 000  
 000 Bare Shunt list:
