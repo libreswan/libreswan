@@ -336,8 +336,7 @@ struct whack_message {
 
 #define REREAD_NONE	0x00		/* don't reread anything */
 #define REREAD_SECRETS	0x01		/* reread /etc/ipsec.secrets */
-#define REREAD_CACERTS	0x02		/* reread certs in /etc/ipsec.d/cacerts */
-#define REREAD_CRLS	0x04		/* reread crls in /etc/ipsec.d/crls */
+#define REREAD_CRLS	0x02		/* reread crls in /etc/ipsec.d/crls */
 #define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_CRLS)	/* all reread options */
 
 struct whackpacker {

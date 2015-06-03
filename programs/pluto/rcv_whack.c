@@ -462,13 +462,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 	if (msg.whack_list & LIST_PUBKEYS)
 		list_public_keys(msg.whack_utc, msg.whack_check_pub_keys);
 
-#if 0
-	if (msg.whack_reread & REREAD_CACERTS) {
-		load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
-		load_authcerts_from_nss("CA cert", AUTH_CA);
-	}
-#endif
-
 	if (msg.whack_purgeocsp)
 		clear_ocsp_cache();
 
