@@ -112,6 +112,7 @@ d.ipsec.conf/logfile.xml
 d.ipsec.conf/logappend.xml
 d.ipsec.conf/logtime.xml
 d.ipsec.conf/force-busy.xml
+d.ipsec.conf/ddos-mode.xml
 d.ipsec.conf/ddos-ike-treshold.xml
 d.ipsec.conf/max-halfopen-ike.xml
 d.ipsec.conf/dumpdir.xml
