@@ -484,9 +484,9 @@ doroute() {
 # TODO: Exclude udp 4500 traffic
 addnflog() {
     if [ -n "${NFLOG}" ]; then
-	iptables -A OUTPUT -m policy --dir out  --pol ipsec -s ${PLUTO_MY_CLIENT} \
+	iptables -I OUTPUT -m policy --dir out  --pol ipsec -s ${PLUTO_MY_CLIENT} \
 		 -d ${PLUTO_PEER_CLIENT} -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
-	iptables -A INPUT  -m policy --dir in   --pol ipsec -s ${PLUTO_PEER_CLIENT} \
+	iptables -I INPUT  -m policy --dir in   --pol ipsec -s ${PLUTO_PEER_CLIENT} \
 		 -d ${PLUTO_MY_CLIENT}   -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
     fi
 }

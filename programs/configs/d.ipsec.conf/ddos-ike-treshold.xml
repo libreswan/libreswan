@@ -3,10 +3,9 @@
 <listitem>
 <para>The number of half-open IKE SAs before the pluto IKE daemon will be
 placed in busy mode. When in busy mode, pluto activates anti-DDoS counter
-measures. The default is 25000. Currently, counter measures consist of
-requiring IKEv2 anti-DDoS cookies on new incoming IKE requests.  The IKE
-daemon can be forced into busy mode using <emphasis remap='I'>ipsec
-whack --busy</emphasis> or by specifying the <emphasis remap='I'>force-busy=yes</emphasis> option.
+measures. The default is 25000.
+See also <emphasis remap='B'>ddos-mode</emphasis> and
+ <emphasis remap='I'>ipsec whack --ddos-XXX</emphasis>.
 </para>
   </listitem>
   </varlistentry>
