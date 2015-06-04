@@ -191,14 +191,14 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 : CAVS tests passed
 %endif
 
+%post
+%systemd_post ipsec.service
+
 %preun
 %systemd_preun ipsec.service
 
 %postun
 %systemd_postun_with_restart ipsec.service
-
-%post
-%systemd_post ipsec.service
 
 %files
 %doc CHANGES COPYING CREDITS README* LICENSE
