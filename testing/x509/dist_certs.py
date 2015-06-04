@@ -581,7 +581,7 @@ def run_dist_certs():
 	# Add root CAs here
 	basic_pluto_cas =  ('mainca', 'otherca')
 	# Add end certs here
-	mainca_end_certs = ('nic','east','west','sunset',
+	mainca_end_certs = ('nic','east','west', 'road', 'sunset',
 						'sunrise','north','south',
 						'pole','park','beet','carrot',
 					    'usage-server', 'usage-client',
