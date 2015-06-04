@@ -2570,7 +2570,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	return ikev2_parent_inI2outR2_auth_tail(md, TRUE);
 }
 
-static stf_status ikev2_parent_inI2outR2_auth_tail( struct msg_digest *md,
+static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		bool pam_status)
 {
 	struct state *const st = md->st;
@@ -3332,10 +3332,20 @@ void send_v2_notification(struct state *p1st,
 
 	close_output_pbs(&reply_stream);
 
-	clonetochunk(p1st->st_tpacket, reply_stream.start, pbs_offset(&reply_stream),
-		     "notification packet");
+	/*
+	 * The notification is piggybacked on the existing parent state.
+	 * This notification is fire-and-forget (not a proper exchange,
+	 * one with retrying).  So we need not preserve the packet we
+	 * are sending.
+	 */
+	{
+		chunk_t old_tpacket = p1st->st_tpacket;
 
-	send_ike_msg(p1st, __FUNCTION__);
+		setchunk(p1st->st_tpacket, reply_stream.start,
+			pbs_offset(&reply_stream));
+		send_ike_msg(p1st, __FUNCTION__);
+		p1st->st_tpacket = old_tpacket;
+	}
 }
 
 /* add notify payload to the rbody */

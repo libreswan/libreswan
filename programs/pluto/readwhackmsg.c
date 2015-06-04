@@ -45,7 +45,7 @@ void readwhackmsg(char *infile)
 
 		if (fread(&a, 4, 2, record) == 0) /* eat time stamp */
 			DBG(DBG_PARSING,
-			    DBG_log( "readwhackmsg: fread returned 0"));
+			    DBG_log("readwhackmsg: fread returned 0"));
 
 		/* account for this header we just consumed */
 		plen -= 12;
