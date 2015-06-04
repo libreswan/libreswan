@@ -143,13 +143,13 @@ FS=$(pwd)
 rm -rf %{buildroot}
 make \
     DESTDIR=%{buildroot} \
-  INITSYSTEM=sysvinit \
-  INC_USRLOCAL=%{_prefix} \
-  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-  MANTREE=%{buildroot}%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
-  INSTMANFLAGS="-m 644" \
-  install
+    INITSYSTEM=sysvinit \
+    INC_USRLOCAL=%{_prefix} \
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    MANTREE=%{buildroot}%{_mandir} \
+    INC_RCDEFAULT=%{_initrddir} \
+    INSTMANFLAGS="-m 644" \
+    install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
@@ -158,8 +158,42 @@ install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
-echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+echo "include /etc/ipsec.d/*.secrets" \
+    > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}/etc/rc.d/rc*
+
+%if %{cavstests}
+%check
+# There is an elaborate upstream testing infrastructure which we do not
+# run here.
+# We only run the CAVS tests here.
+cp %{SOURCE10} %{SOURCE11} %{SOURCE12} .
+bunzip2 *.fax.bz2
+: starting CAVS test for IKEv2
+OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
+    diff -u ikev2.fax - > /dev/null
+: starting CAVS test for IKEv1 RSASIG
+OBJ.linux.*/programs/pluto/cavp -v1sig ikev1_dsa.fax | \
+    diff -u ikev1_dsa.fax - > /dev/null
+: starting CAVS test for IKEv1 PSK
+OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
+    diff -u ikev1_psk.fax - > /dev/null
+: CAVS tests passed
+%endif
+
+%post 
+/sbin/chkconfig --add ipsec || :
+
+%preun
+if [ $1 -eq 0 ]; then
+    /sbin/service ipsec stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del ipsec
+fi
+
+%postun
+if [ $1 -ge 1 ] ; then
+    /sbin/service ipsec condrestart 2>&1 >/dev/null || :
+fi
 
 %files 
 %doc CHANGES COPYING CREDITS README* LICENSE
@@ -179,24 +213,9 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %{_libexecdir}/ipsec
 %{_sbindir}/ipsec
 %attr(0644,root,root) %{_mandir}/*/*.gz
-
 %if %{USE_FIPSCHECK}
 %{_sbindir}/.ipsec.hmac
 %endif
-
-%preun
-if [ $1 -eq 0 ]; then
-        /sbin/service ipsec stop > /dev/null 2>&1 || :
-        /sbin/chkconfig --del ipsec
-fi
-
-%postun
-if [ $1 -ge 1 ] ; then
- /sbin/service ipsec condrestart 2>&1 >/dev/null || :
-fi
-
-%post 
-/sbin/chkconfig --add ipsec || :
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.1-1
