@@ -290,13 +290,9 @@ stf_status main_outI1(int whack_sock,
 
 	close_output_pbs(&reply_stream);
 
-	passert(st->st_tpacket.ptr == NULL);
-	clonetochunk(st->st_tpacket, reply_stream.start,
-		pbs_offset(&reply_stream),
-		"reply packet for main_outI1");
-
 	/* Transmit */
-	send_ike_msg(st, "main_outI1");
+	record_and_send_ike_msg(st, &reply_stream,
+		"reply packet for main_outI1");
 
 	delete_event(st);
 	event_schedule_ms(EVENT_v1_RETRANSMIT, c->r_interval, st);
@@ -2411,14 +2407,8 @@ stf_status send_isakmp_notification(struct state *st,
 		if (!encrypt_message(&rbody, st))
 			return STF_INTERNAL_ERROR;
 
-		{
-			chunk_t saved_tpacket = st->st_tpacket;
+		send_ike_msg_without_recording(st, &reply_stream, "ISAKMP notify");
 
-			setchunk(st->st_tpacket, reply_stream.start,
-				pbs_offset(&reply_stream));
-			send_ike_msg(st, "ISAKMP notify");
-			st->st_tpacket = saved_tpacket;
-		}
 		/* get back old IV for this state */
 		restore_iv(st, old_iv, old_iv_len);
 		restore_new_iv(st, old_new_iv, old_new_iv_len);
@@ -2597,14 +2587,7 @@ static void send_notification(struct state *sndst, notification_t type,
 		close_output_pbs(&r_hdr_pbs);
 	}
 
-	/* Send packet (preserve st_tpacket) */
-	{
-		chunk_t saved_tpacket = sndst->st_tpacket;
-
-		setchunk(sndst->st_tpacket, pbs.start, pbs_offset(&pbs));
-		send_ike_msg(sndst, "notification packet");
-		sndst->st_tpacket = saved_tpacket;
-	}
+	send_ike_msg_without_recording(sndst, &pbs, "notification packet");
 }
 
 void send_notification_from_state(struct state *st, enum state_kind from_state,
@@ -2839,7 +2822,6 @@ bool ikev1_delete_out(struct state *st)
 	{
 		u_char old_iv[MAX_DIGEST_LEN];
 		unsigned int old_iv_len;
-		chunk_t saved_tpacket = p1st->st_tpacket;
 
 		save_iv(p1st, old_iv, old_iv_len);
 		init_phase2_iv(p1st, &msgid);
@@ -2847,15 +2829,7 @@ bool ikev1_delete_out(struct state *st)
 		if (!encrypt_message(&r_hdr_pbs, p1st))
 			impossible();
 
-		/*
-		 * NOTE: p1st->st_tpacket will not "own" the reply
-		 * so we must restore p1st->st_tpacket
-		 * without freeing the reply.
-		 */
-		setchunk(p1st->st_tpacket, reply_pbs.start,
-			 pbs_offset(&reply_pbs));
-		send_ike_msg(p1st, "delete notify");
-		p1st->st_tpacket = saved_tpacket;
+		send_ike_msg_without_recording(p1st, &reply_pbs, "delete notify");
 
 		/* get back old IV for this state */
 		restore_iv(p1st, old_iv, old_iv_len);

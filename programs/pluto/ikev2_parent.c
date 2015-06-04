@@ -544,19 +544,13 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	close_output_pbs(&reply_stream);
 
-	/* keep it for a retransmit if necessary */
-	freeanychunk(st->st_tpacket);
-	clonetochunk(st->st_tpacket, reply_stream.start,
-		     pbs_offset(&reply_stream),
-		     "reply packet for ikev2_parent_outI1_tail");
-
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
 	clonetochunk(st->st_firstpacket_me, reply_stream.start,
 		     pbs_offset(&reply_stream), "saved first packet");
 
 	/* Transmit */
-	send_ike_msg(st, __FUNCTION__);
+	record_and_send_ike_msg(st, &reply_stream, "reply packet for ikev2_parent_outI1_tail");
 
 	reset_cur_state();
 	return STF_OK;
@@ -1065,11 +1059,8 @@ static stf_status ikev2_parent_inI1outR1_tail(
 
 	close_output_pbs(&reply_stream);
 
-	/* keep it for a retransmit if necessary */
-	freeanychunk(st->st_tpacket);
-	clonetochunk(st->st_tpacket, reply_stream.start,
-		     pbs_offset(&reply_stream),
-		     "reply packet for ikev2_parent_inI1outR1_tail");
+	record_outbound_ike_msg(st, &reply_stream,
+		"reply packet for ikev2_parent_inI1outR1_tail");
 
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
@@ -2123,13 +2114,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			return ret;
 	}
 
-	/* keep it for a retransmit if necessary, but on initiator
-	 * we never do that, but send_ike_msg() uses it.
-	 */
-	freeanychunk(pst->st_tpacket);
-	clonetochunk(pst->st_tpacket, reply_stream.start,
-		     pbs_offset(&reply_stream),
-		     "reply packet for ikev2_parent_outI1");
+	record_outbound_ike_msg(st, &reply_stream,
+		"reply packet for ikev2_parent_outI1");
 
 	return STF_OK;
 }
@@ -2796,16 +2782,13 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		}
 	}
 
-	/* keep it for a retransmit if necessary */
-	freeanychunk(st->st_tpacket);
-	clonetochunk(st->st_tpacket, reply_stream.start,
-		     pbs_offset(&reply_stream),
-		     "reply packet for ikev2_parent_inI2outR2_tail");
-
-	/* note: retransmission is driven by initiator */
+	record_outbound_ike_msg(st, &reply_stream,
+		"reply packet for ikev2_parent_inI2outR2_tail");
 
 	/* if the child failed, delete its state here - we sent the packet */
 	/* PAUL */
+	/* ??? what does that mean? */
+
 	return STF_OK;
 }
 
@@ -3338,14 +3321,7 @@ void send_v2_notification(struct state *p1st,
 	 * one with retrying).  So we need not preserve the packet we
 	 * are sending.
 	 */
-	{
-		chunk_t old_tpacket = p1st->st_tpacket;
-
-		setchunk(p1st->st_tpacket, reply_stream.start,
-			pbs_offset(&reply_stream));
-		send_ike_msg(p1st, __FUNCTION__);
-		p1st->st_tpacket = old_tpacket;
-	}
+	send_ike_msg_without_recording(p1st, &reply_stream, __FUNCTION__);
 }
 
 /* add notify payload to the rbody */
@@ -3630,10 +3606,7 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 			return ret;
 	}
 
-	freeanychunk(pst->st_tpacket);
-	clonetochunk(pst->st_tpacket, reply_stream.start, pbs_offset(&reply_stream), "reply packet for CREATE_CHILD_SA exchange");
-
-	send_ike_msg(pst, __FUNCTION__);
+	record_and_send_ike_msg(st, &reply_stream, "reply packet for CREATE_CHILD_SA exchange");
 
 	return STF_OK;
 }
@@ -3970,13 +3943,8 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		}
 
 
-		/* keep it for a retransmit if necessary */
-		freeanychunk(st->st_tpacket);
-		clonetochunk(st->st_tpacket, reply_stream.start,
-			     pbs_offset(&reply_stream),
-			     "reply packet for informational exchange");
-
-		send_ike_msg(st, __FUNCTION__);
+		record_and_send_ike_msg(st, &reply_stream,
+			"reply packet for informational exchange");
 	}
 
 	/* end of Responder-only code */
@@ -4217,13 +4185,9 @@ stf_status ikev2_send_informational(struct state *st)
 				return STF_FATAL;
 		}
 
-		/* keep it for a retransmit if necessary */
-		freeanychunk(pst->st_tpacket);
-		clonetochunk(pst->st_tpacket, reply_stream.start,
-			     pbs_offset(&reply_stream),
-			     "reply packet for informational exchange");
 		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
-		send_ike_msg(pst, __FUNCTION__);
+		record_and_send_ike_msg(pst, &reply_stream,
+			"reply packet for informational exchange");
 	}
 
 	return STF_OK;
@@ -4373,13 +4337,8 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 			return FALSE;
 	}
 
-	/* keep it for a retransmit if necessary */
-	freeanychunk(pst->st_tpacket);
-	clonetochunk(pst->st_tpacket, reply_stream.start,
-		     pbs_offset(&reply_stream),
+	record_and_send_ike_msg(pst, &reply_stream,
 		     "request packet for informational exchange");
-
-	send_ike_msg(pst, __FUNCTION__);
 
 	/*
 	 * delete messages may not be acknowledged.

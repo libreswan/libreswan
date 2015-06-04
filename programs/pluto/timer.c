@@ -258,7 +258,8 @@ static void retransmit_v2_msg(struct state *st)
 	}
 
 	if (delay_ms != 0) {
-		delay_ms =  retrans_delay(st, delay_ms);
+		delay_ms = retrans_delay(st, delay_ms);
+
 		if (delay_ms != 0) {
 			send_ike_msg(st, "EVENT_v2_RETRANSMIT");
 			event_schedule_ms(EVENT_v2_RETRANSMIT, delay_ms, st);
