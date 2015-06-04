@@ -802,12 +802,12 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 				   "recvmsg(,, MSG_ERRQUEUE) on %s failed in comm_handle",
 				   ifp->ip_dev->id_rname));
 			break;
-		} else if (packet_len == sizeof(buffer)) {
+		} else if (packet_len == (ssize_t)sizeof(buffer)) {
 			libreswan_log(
 				"MSG_ERRQUEUE message longer than %lu bytes; truncated",
 				(unsigned long) sizeof(buffer));
-		} else {
-			sender = find_sender((size_t) packet_len, buffer);
+		} else if (packet_len >= (ssize_t)sizeof(struct isakmp_hdr)) {
+			sender = find_likely_sender((size_t) packet_len, buffer);
 		}
 
 		DBG_cond_dump(DBG_ALL, "rejected packet:\n", buffer,

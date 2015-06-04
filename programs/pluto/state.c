@@ -1315,10 +1315,10 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 }
 
 /*
- * Find the state that sent a packet
+ * Find the state that sent a packet with this prefix
  * ??? this could be expensive -- it should be rate-limited to avoid DoS
  */
-struct state *find_sender(size_t packet_len, u_char *packet)
+struct state *find_likely_sender(size_t packet_len, u_char *packet)
 {
 	if (packet_len >= sizeof(struct isakmp_hdr)) {
 		int i;
@@ -1328,17 +1328,14 @@ struct state *find_sender(size_t packet_len, u_char *packet)
 
 			FOR_EACH_ENTRY(st, i, {
 				if (st->st_tpacket.ptr != NULL &&
-					/* Not true -  st->st_tpacket.len == packet_len && */
-					st->st_tpacket.len >= packet_len &&
-					memeq(st->st_tpacket.ptr, packet,
-					   packet_len)) {
-					// libreswan_log("PAUL: sender found");
+				    st->st_tpacket.len >= packet_len &&
+				    memeq(st->st_tpacket.ptr, packet, packet_len))
+				{
 					return st;
-					}
+				}
 			});
 		}
 	}
-	// libreswan_log("PAUL: sender not found");
 	return NULL;
 }
 
