@@ -129,15 +129,13 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck \
-        %{buildroot}%{_libexecdir}/ipsec/* \
-    fipshmac -d %{buildroot}%{_libdir}/fipscheck \
-        %{buildroot}%{_sbindir}/ipsec \
+    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/* \
+    fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
 %{nil}
 %endif
 
 %install
-rm -rf ${RPM_BUILD_ROOT}
+rm -rf %{buildroot}
 make \
     DESTDIR=%{buildroot} \
     INC_USRLOCAL=%{_prefix} \
