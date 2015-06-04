@@ -30,7 +30,7 @@ Version: IPSECBASEVERSION
 
 Release: 1%{?dist}
 License: GPLv2
-Url: https://www.libreswan.org/
+Url: https://libreswan.org/
 Source0: %{name}-%{srcpkgver}.tar.gz
 %if %{cavstests}
 Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
@@ -202,10 +202,9 @@ fi
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
-%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/cacerts
-%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
+%attr(0700,root,root) %dir %{_localstatedir}/log/pluto
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto

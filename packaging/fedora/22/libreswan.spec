@@ -21,7 +21,7 @@ Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 Version: IPSECBASEVERSION
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
-Url: https://www.libreswan.org/
+Url: https://libreswan.org/
 Source0: https://download.libreswan.org/%{prever:development/}%{name}-%{version}%{?prever}.tar.gz
 %if %{cavstests}
 Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
@@ -207,8 +207,6 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
-%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/cacerts
-%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
