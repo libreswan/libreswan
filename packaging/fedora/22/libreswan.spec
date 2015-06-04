@@ -135,7 +135,6 @@ FS=$(pwd)
 %endif
 
 %install
-rm -rf %{buildroot}
 make \
     DESTDIR=%{buildroot} \
     INC_USRLOCAL=%{_prefix} \
@@ -192,7 +191,6 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 : CAVS tests passed
 %endif
 
-
 %preun
 %systemd_preun ipsec.service
 
@@ -214,6 +212,7 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysctl.d/50-libreswan.conf
+%attr(0700,root,root) %dir %{_localstatedir}/log/pluto
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %{_tmpfilesdir}/libreswan.conf

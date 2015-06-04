@@ -12,6 +12,7 @@
 %define fipscheck_version 1.2.0-1
 %define buildefence 0
 %define development 0
+%define cavstests 0
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -30,7 +31,12 @@ Version: IPSECBASEVERSION
 Release: 1%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
-Source: %{name}-%{srcpkgver}.tar.gz
+Source0: %{name}-%{srcpkgver}.tar.gz
+%if %{cavstests}
+Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
+Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
+Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
+%endif
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
 Requires(post): coreutils bash
@@ -88,57 +94,55 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{srcpkgver}
-# remove man page for ipsec.conf so it is forced to regenerate
-rm ./programs/configs/ipsec.conf.5
 
 %build
 %if %{buildefence}
- %define efence "-lefence"
+%define efence "-lefence"
 %endif
 
 #796683: -fno-strict-aliasing
-%{__make} \
+make %{?_smp_mflags} \
 %if %{development}
-  USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
+    USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %else
-  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
-  WERROR_CFLAGS= \
+    USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
+    WERROR_CFLAGS= \
 %endif
-  INITSYSTEM=sysvinit \
-  USERLINK="-g -pie %{?efence}" \
-  USE_NM=%{USE_NM} \
-  USE_XAUTHPAM=true \
-  USE_FIPSCHECK=%{USE_FIPSCHECK} \
-  USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
+    INITSYSTEM=sysvinit \
+    USERLINK="-g -pie %{?efence}" \
+    USE_NM=%{USE_NM} \
+    USE_XAUTHPAM=true \
+    USE_FIPSCHECK=%{USE_FIPSCHECK} \
+    USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
 %if %{USE_OCF}
-  USE_OCF=true \
+    USE_OCF=true \
 %endif
-  USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
-  USE_LDAP=%{USE_CRL_FETCHING} \
-  USE_LIBCURL=%{USE_CRL_FETCHING} \
-  USE_DNSSEC=%{USE_DNSSEC} \
-  INC_USRLOCAL=%{_prefix} \
-  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-  MANTREE=%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
-  programs
+    USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
+    USE_LDAP=%{USE_CRL_FETCHING} \
+    USE_LIBCURL=%{USE_CRL_FETCHING} \
+    USE_DNSSEC=%{USE_DNSSEC} \
+    INC_USRLOCAL=%{_prefix} \
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    MANTREE=%{_mandir} \
+    INC_RCDEFAULT=%{_initrddir} \
+    programs
 FS=$(pwd)
 
 %if %{USE_FIPSCHECK}
 # Add generation of HMAC checksums of the final stripped binaries
 %define __spec_install_post \
-  %{?__debug_package:%{__debug_install_post}} \
-  %{__arch_install_post} \
-  %{__os_install_post} \
-  fipshmac %{buildroot}%{_sbindir}/ipsec \
-  fipshmac %{buildroot}%{_libexecdir}/ipsec/* \
+    %{?__debug_package:%{__debug_install_post}} \
+    %{__arch_install_post} \
+    %{__os_install_post} \
+    fipshmac %{buildroot}%{_sbindir}/ipsec \
+    fipshmac %{buildroot}%{_libexecdir}/ipsec/* \
 %{nil}
 %endif
 
 %install
 rm -rf %{buildroot}
-%{__make} \
-  DESTDIR=%{buildroot} \
+make \
+    DESTDIR=%{buildroot} \
   INITSYSTEM=sysvinit \
   INC_USRLOCAL=%{_prefix} \
   FINALLIBEXECDIR=%{_libexecdir}/ipsec \
