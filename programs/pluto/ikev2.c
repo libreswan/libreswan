@@ -1364,9 +1364,6 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 	/* if requested, send the new reply packet */
 	if (svm->flags & SMF2_REPLY) {
-		/* free previously transmitted packet */
-		freeanychunk(st->st_tpacket);
-
 		if (nat_traversal_enabled && from_state != STATE_PARENT_I1) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
@@ -1382,17 +1379,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 		close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
-		passert(st->st_tpacket.ptr == NULL);
-		clonetochunk(st->st_tpacket, reply_stream.start,
-			     pbs_offset(&reply_stream), "reply packet");
-
-		/* actually send the packet
-		 * Note: this is a great place to implement "impairments"
-		 * for testing purposes.  Suppress or duplicate the
-		 * send_ike_msg call depending on st->st_state.
-		 */
-
-		send_ike_msg(st, enum_name(&state_names, from_state));
+		record_and_send_ike_msg(st, &reply_stream, enum_name(&state_names, from_state));
 	}
 
 	if (w == RC_SUCCESS) {

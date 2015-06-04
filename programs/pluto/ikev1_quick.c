@@ -1166,15 +1166,8 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 		return STF_INTERNAL_ERROR;
 	}
 
-	/* save packet, now that we know its size */
-	passert(st->st_tpacket.ptr == NULL);
-	clonetochunk(st->st_tpacket, reply_stream.start,
-		     pbs_offset(&reply_stream),
-		     "reply packet from quick_outI1");
-
-	/* send the packet */
-
-	send_ike_msg(st, "quick_outI1");
+	record_and_send_ike_msg(st, &reply_stream,
+		"reply packet from quick_outI1");
 
 	delete_event(st);
 	event_schedule_ms(EVENT_v1_RETRANSMIT, c->r_interval, st);
