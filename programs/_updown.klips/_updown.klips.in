@@ -460,11 +460,14 @@ doproxyarp() {
 	    ${PLUTO_PEER_CLIENT_NET} = "::" ]; then
 	    return 0
 	fi
-	# check if client is routeable local
-	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | grep -qs -v via; then
+	# check if client is routeable
+	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
+	    egrep -q -s -v " via |^local"; then
 	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
 		awk '{print $3}')
-	    macaddr=$(cat /sys/class/net/${iface}/address)
+	    if [ -r /sys/class/net/${iface}/address ]; then
+		macaddr=$(cat /sys/class/net/${iface}/address)
+	    fi
 	    # add/remove arp entry for the client on ethernet devices only
 	    if [ -n "${macaddr}" ]; then
 		if [ "$1" = add ]; then
