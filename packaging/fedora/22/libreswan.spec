@@ -11,6 +11,7 @@
 %global fipscheck_version 1.3.0
 %global buildefence 0
 %global development 0
+%global cavstests 0
 
 #global prever rc1
 
@@ -21,7 +22,12 @@ Version: IPSECBASEVERSION
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://www.libreswan.org/
-Source: https://download.libreswan.org/%{name}-%{version}%{?prever}.tar.gz
+Source0: https://download.libreswan.org/%{prever:development/}%{name}-%{version}%{?prever}.tar.gz
+%if %{cavstests}
+Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
+Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
+Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
+%endif
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
 BuildRequires: systemd systemd-units
@@ -82,41 +88,39 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{version}%{?prever}
-# remove man page for ipsec.conf so it is forced to regenerate
-rm ./programs/configs/ipsec.conf.5
 
 %build
 %if %{buildefence}
- %define efence "-lefence"
+%global efence "-lefence"
 %endif
 
 #796683: -fno-strict-aliasing
-%{__make} \
+make %{?_smp_mflags} \
 %if %{development}
-   USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %else
-  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
+    USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing -Wformat-nonliteral -Wformat-security" \
 %endif
-  USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
-  INITSYSTEM=systemd \
-  USE_NM=%{USE_NM} \
-  USE_XAUTHPAM=true \
+    USERLINK="-g -pie -Wl,-z,relro,-z,now %{?efence}" \
+    INITSYSTEM=systemd \
+    USE_NM=%{USE_NM} \
+    USE_XAUTHPAM=true \
 %if %{USE_FIPSCHECK}
-  USE_FIPSCHECK="%{USE_FIPSCHECK}" \
-  FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
+    USE_FIPSCHECK="%{USE_FIPSCHECK}" \
+    FIPSPRODUCTCHECK=%{_sysconfdir}/system-fips \
 %endif
-  USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
-  USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
+    USE_LIBCAP_NG="%{USE_LIBCAP_NG}" \
+    USE_LABELED_IPSEC="%{USE_LABELED_IPSEC}" \
 %if %{USE_CRL_FETCHING}
-  USE_LDAP=true \
-  USE_LIBCURL=true \
+    USE_LDAP=true \
+    USE_LIBCURL=true \
 %endif
-  USE_DNSSEC="%{USE_DNSSEC}" \
-  INC_USRLOCAL=%{_prefix} \
-  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-  MANTREE=%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
-  programs
+    USE_DNSSEC="%{USE_DNSSEC}" \
+    INC_USRLOCAL=%{_prefix} \
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    MANTREE=%{_mandir} \
+    INC_RCDEFAULT=%{_initrddir} \
+    programs
 FS=$(pwd)
 
 %if %{USE_FIPSCHECK}
@@ -125,22 +129,24 @@ FS=$(pwd)
     %{?__debug_package:%{__debug_install_post}} \
     %{__arch_install_post} \
     %{__os_install_post} \
-  fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_libexecdir}/ipsec/* \
-  fipshmac -d %{buildroot}%{_libdir}/fipscheck %{buildroot}%{_sbindir}/ipsec \
+    fipshmac -d %{buildroot}%{_libdir}/fipscheck \
+        %{buildroot}%{_libexecdir}/ipsec/* \
+    fipshmac -d %{buildroot}%{_libdir}/fipscheck \
+        %{buildroot}%{_sbindir}/ipsec \
 %{nil}
 %endif
 
 %install
 rm -rf ${RPM_BUILD_ROOT}
-%{__make} \
-  DESTDIR=%{buildroot} \
-  INC_USRLOCAL=%{_prefix} \
-  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-  MANTREE=%{buildroot}%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
-  INSTMANFLAGS="-m 644" \
-  INITSYSTEM=systemd \
-  install
+make \
+    DESTDIR=%{buildroot} \
+    INC_USRLOCAL=%{_prefix} \
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    MANTREE=%{buildroot}%{_mandir} \
+    INC_RCDEFAULT=%{_initrddir} \
+    INSTMANFLAGS="-m 644" \
+    INITSYSTEM=systemd \
+    install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
@@ -151,21 +157,52 @@ install -d %{buildroot}%{_sbindir}
 
 install -d %{buildroot}%{_sysconfdir}/sysctl.d
 install -m 0644 packaging/fedora/libreswan-sysctl.conf \
-  %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
+    %{buildroot}%{_sysconfdir}/sysctl.d/50-libreswan.conf
 
 install -d %{buildroot}%{_tmpfilesdir}
 install -m 0644 packaging/fedora/libreswan-tmpfiles.conf  \
-  %{buildroot}%{_tmpfilesdir}/libreswan.conf
+    %{buildroot}%{_tmpfilesdir}/libreswan.conf
 
 
 %if %{USE_FIPSCHECK}
 mkdir -p %{buildroot}%{_libdir}/fipscheck
 install -d %{buildroot}%{_sysconfdir}/prelink.conf.d/
-install -m644 packaging/fedora/libreswan-prelink.conf %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
+install -m644 packaging/fedora/libreswan-prelink.conf \
+    %{buildroot}%{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
 
-echo "include %{_sysconfdir}/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+echo "include %{_sysconfdir}/ipsec.d/*.secrets" \
+    > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
+
+%if %{cavstests}
+%check
+# There is an elaborate upstream testing infrastructure which we do not
+# run here.
+# We only run the CAVS tests here.
+cp %{SOURCE10} %{SOURCE11} %{SOURCE12} .
+bunzip2 *.fax.bz2
+: starting CAVS test for IKEv2
+OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
+    diff -u ikev2.fax - > /dev/null
+: starting CAVS test for IKEv1 RSASIG
+OBJ.linux.*/programs/pluto/cavp -v1sig ikev1_dsa.fax | \
+    diff -u ikev1_dsa.fax - > /dev/null
+: starting CAVS test for IKEv1 PSK
+OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
+    diff -u ikev1_psk.fax - > /dev/null
+: CAVS tests passed
+%endif
+
+
+%preun
+%systemd_preun ipsec.service
+
+%postun
+%systemd_postun_with_restart ipsec.service
+
+%post
+%systemd_post ipsec.service
 
 %files
 %doc CHANGES COPYING CREDITS README* LICENSE
@@ -187,27 +224,12 @@ rm -fr %{buildroot}%{_sysconfdir}/rc.d/rc*
 %{_sbindir}/ipsec
 %{_libexecdir}/ipsec
 %attr(0644,root,root) %doc %{_mandir}/*/*
-
 %if %{USE_FIPSCHECK}
 %{_libdir}/fipscheck/*.hmac
 # We own the directory so we don't have to require prelink
 %attr(0755,root,root) %dir %{_sysconfdir}/prelink.conf.d/
 %{_sysconfdir}/prelink.conf.d/libreswan-fips.conf
 %endif
-
-%preun
-%systemd_preun ipsec.service
-
-%postun
-%systemd_postun_with_restart ipsec.service
-
-%post
-%systemd_post ipsec.service
-if [ ! -f %{_sysconfdir}/ipsec.d/cert8.db -a \
-     ! -f %{_sysconfdir}/ipsec.d/cert9.db ] ; then
-    certutil -N -d %{_sysconfdir}/ipsec.d --empty-password
-    restorecon %{_sysconfdir}/ipsec.d/*db 2>/dev/null || :
-fi
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - IPSECBASEVERSION-1
