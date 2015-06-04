@@ -1328,14 +1328,17 @@ struct state *find_sender(size_t packet_len, u_char *packet)
 
 			FOR_EACH_ENTRY(st, i, {
 				if (st->st_tpacket.ptr != NULL &&
-				    st->st_tpacket.len == packet_len &&
-				    memeq(st->st_tpacket.ptr, packet,
-					   packet_len))
+					/* Not true -  st->st_tpacket.len == packet_len && */
+					st->st_tpacket.len >= packet_len &&
+					memeq(st->st_tpacket.ptr, packet,
+					   packet_len)) {
+					// libreswan_log("PAUL: sender found");
 					return st;
+					}
 			});
 		}
 	}
-
+	// libreswan_log("PAUL: sender not found");
 	return NULL;
 }
 
