@@ -1167,6 +1167,7 @@ static stf_status quick_outI1_tail(struct pluto_crypto_req_cont *qke,
 	}
 
 	/* save packet, now that we know its size */
+	passert(st->st_tpacket.ptr == NULL);
 	clonetochunk(st->st_tpacket, reply_stream.start,
 		     pbs_offset(&reply_stream),
 		     "reply packet from quick_outI1");
@@ -2742,18 +2743,8 @@ stf_status quick_inR1_outI2_cryptotail(struct msg_digest *md,
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	{
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("inR1_outI2: instance %s[%ld], setting newest_ipsec_sa to #%ld (was #%ld) (spd.eroute=#%ld)",
-			    st->st_connection->name,
-			    st->st_connection->instance_serial,
-			    st->st_serialno,
-			    st->st_connection->newest_ipsec_sa,
-			    st->st_connection->spd.
-			    eroute_owner));
-	}
-
 	st->st_connection->newest_ipsec_sa = st->st_serialno;
+	log_newest_sa_change("inR1_outI2", st);
 
 	/* If we have dpd delay and dpdtimeout set, then we are doing DPD
 	    on this conn, so initialize it */
@@ -2790,18 +2781,8 @@ stf_status quick_inI2(struct msg_digest *md)
 	if (!install_ipsec_sa(st, FALSE))
 		return STF_INTERNAL_ERROR;
 
-	{
-		DBG(DBG_CONTROLMORE,
-		    DBG_log("inI2: instance %s[%ld], setting newest_ipsec_sa to #%ld (was #%ld) (spd.eroute=#%ld)",
-			    st->st_connection->name,
-			    st->st_connection->instance_serial,
-			    st->st_serialno,
-			    st->st_connection->newest_ipsec_sa,
-			    st->st_connection->spd.
-			    eroute_owner));
-	}
-
 	st->st_connection->newest_ipsec_sa = st->st_serialno;
+	log_newest_sa_change("inI2", st);
 
 	update_iv(st);  /* not actually used, but tidy */
 

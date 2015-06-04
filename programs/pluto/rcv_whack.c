@@ -406,15 +406,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 		for_each_state(delete_state_by_id_name, msg.name);
 	}
 
-#if defined (PLUTO_NFLOG)
-	/* isn't this per connection  AA_APR_2015 */
-	pluto_nflog_group = msg.whack_nfloggroup;
-	if (msg.whack_nfloggroup) {
-		DBG_log("received whack to set global nflog-group to %lu",
-			msg.whack_nfloggroup);
-	}
-#endif
-
 	if (msg.whack_deletestate) {
 		struct state *st =
 			state_with_serialno(msg.whack_deletestateno);
@@ -461,13 +452,6 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_list & LIST_PUBKEYS)
 		list_public_keys(msg.whack_utc, msg.whack_check_pub_keys);
-
-#if 0
-	if (msg.whack_reread & REREAD_CACERTS) {
-		load_authcerts("CA cert", oco->cacerts_dir, AUTH_CA);
-		load_authcerts_from_nss("CA cert", AUTH_CA);
-	}
-#endif
 
 	if (msg.whack_purgeocsp)
 		clear_ocsp_cache();

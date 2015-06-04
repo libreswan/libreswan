@@ -10,6 +10,12 @@ road #
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=6 name=cbc(cast5) keyminbits=128 keymaxbits=128, found(0)
 [ 00.00] KLIPS cryptoapi interface: alg_type=15 alg_id=3 name=cbc(des3_ede) keyminbits=192 keymaxbits=192, found(0)
 [ 00.00] KLIPS: lookup for ciphername=cipher_null: not found 
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=2 name=hmac(md5) ctx_size=88 keyminbits=128 keymaxbits=128, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=3 name=hmac(sha1) ctx_size=88 keyminbits=160 keymaxbits=160, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=5 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=6 name=hmac(sha384) ctx_size=88 keyminbits=384 keymaxbits=384, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=7 name=hmac(sha512) ctx_size=88 keyminbits=512 keymaxbits=512, found(0)
+[ 00.00] KLIPS cryptoapi interface: alg_type=14 alg_id=252 name=hmac(sha256) ctx_size=88 keyminbits=256 keymaxbits=256, found(0)
 [ 00.00] 
 Redirecting to: systemctl start ipsec.service
 [ 00.00] 
@@ -37,7 +43,7 @@ road #
 108 "modecfg-road-east" #1: STATE_MAIN_I3: sent MI3, expecting MR3
 003 "modecfg-road-east" #1: received Vendor ID payload [CAN-IKEv2]
 002 "modecfg-road-east" #1: Main mode peer ID is ID_DER_ASN1_DN: 'C=ca, ST=Ontario, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
-002 "modecfg-road-east" #1: no crl from issuer "C=ca, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org" found (strict=no)
+002 "modecfg-road-east" #1: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,ST=Ontario,C=ca OK
 004 "modecfg-road-east" #1: STATE_MAIN_I4: ISAKMP SA established {auth=RSA_SIG cipher=oakley_3des_cbc_192 integ=sha group=MODP2048}
 041 "modecfg-road-east" #1: modecfg-road-east prompt for Username:
 040 "modecfg-road-east" #1: modecfg-road-east prompt for Password:
@@ -91,6 +97,7 @@ east                                                         P,,
 east-ec                                                      P,,  
 hashsha2                                                     P,,  
 mainca                                                       ,,   
+nic                                                          P,,  
 north                                                        P,,  
 road                                                         u,u,u
 west                                                         P,,  

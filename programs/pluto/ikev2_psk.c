@@ -63,7 +63,7 @@
 #include <pk11pub.h>
 
 static const char psk_key_pad_str[] = "Key Pad for IKEv2";  /* 4306  2:15 */
-static const size_t psk_key_pad_str_len = 17;                  /* sizeof( psk_key_pad_str); -1 */
+static const size_t psk_key_pad_str_len = 17;                  /* sizeof(psk_key_pad_str); -1 */
 
 static bool ikev2_calculate_psk_sighash(struct state *st,
 					enum original_role role,

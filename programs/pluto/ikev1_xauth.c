@@ -663,6 +663,7 @@ static stf_status modecfg_send_set(struct state *st)
 		     0 /* XXX ID */);
 #undef MODECFG_SET_ITEM
 
+	passert(st->st_tpacket.ptr == NULL);
 	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
 		     "ModeCfg set");
 
@@ -778,6 +779,7 @@ stf_status xauth_send_request(struct state *st)
 	if (!encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
+	freeanychunk(st->st_tpacket);
 	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
 		     "XAUTH: req");
 
@@ -903,6 +905,7 @@ stf_status modecfg_send_request(struct state *st)
 	if (!encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
+	freeanychunk(st->st_tpacket);
 	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
 		     "modecfg: req");
 

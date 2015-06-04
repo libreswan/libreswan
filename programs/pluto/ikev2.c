@@ -80,19 +80,6 @@
 		else \
 			send_v2_notification_from_md(md, t, NULL); }
 
-struct state_v2_microcode {
-	const char *const story;
-	enum state_kind state, next_state;
-	enum isakmp_xchg_types recv_type;
-	lset_t flags;
-	lset_t req_clear_payloads;  /* required unencrypted payloads (allows just one) for received packet */
-	lset_t opt_clear_payloads;  /* optional unencrypted payloads (none or one) for received packet */
-	lset_t req_enc_payloads;  /* required encrypted payloads (allows just one) for received packet */
-	lset_t opt_enc_payloads;  /* optional encrypted payloads (none or one) for received packet */
-	enum event_type timeout_event;
-	state_transition_fn *processor;
-};
-
 enum smf2_flags {
 	/*
 	 * Check the value of the IKE_I flag in the header.
@@ -1325,8 +1312,7 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 	time_t delay;   /* unwrapped deltatime_t */
 	struct connection *c = st->st_connection;
 
-	if (IS_PARENT_SA(st) &&
-		(st)->st_clonedfrom == SOS_NOBODY ) /* workaround for child appearing as parent */
+	if (IS_PARENT_SA(st)) /* workaround for child appearing as parent */
 	{
 		/* Note: we will defer to the "negotiated" (dictated)
 		 * lifetime if we are POLICY_DONT_REKEY.
@@ -1340,10 +1326,10 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 		 */
 		if (IS_IKE_SA_ESTABLISHED(st)) {
 			delay = deltasecs(c->sa_ike_life_seconds);
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ikelifetime=%lu", delay));
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up estalibhsed ike_life:%lu", delay));
 		} else {
 			delay = PLUTO_HALFOPEN_SA_LIFE;
-			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ikelifetime=%lu", delay));
+			DBG(DBG_LIFECYCLE, DBG_log("ikev2_replace_delay() picked up half-open SA ike_life:%lu", delay));
 		}
 	} else {
 		/* Delay is what the user said, no negotiation. */
@@ -1473,6 +1459,12 @@ static void success_v2_state_transition(struct msg_digest *md)
 				    st->st_interface->port);
 		    });
 
+		close_output_pbs(&reply_stream); /* good form, but actually a no-op */
+
+		passert(st->st_tpacket.ptr == NULL);
+		clonetochunk(st->st_tpacket, reply_stream.start,
+			     pbs_offset(&reply_stream), "reply packet");
+
 		/* actually send the packet
 		 * Note: this is a great place to implement "impairments"
 		 * for testing purposes.  Suppress or duplicate the
@@ -1509,7 +1501,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 		case EVENT_v2_RETRANSMIT:
 			delete_event(st);
 			if (DBGP(IMPAIR_RETRANSMITS)) {
-				libreswan_log( "supressing retransmit because IMPAIR_RETRANSMITS is set.");
+				libreswan_log("supressing retransmit because IMPAIR_RETRANSMITS is set.");
 				if (st->st_rel_whack_event != NULL) {
 					pfreeany(st->st_rel_whack_event);
 					st->st_rel_whack_event = NULL;

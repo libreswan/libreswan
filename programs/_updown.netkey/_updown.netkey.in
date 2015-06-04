@@ -396,11 +396,14 @@ doproxyarp() {
 	    ${PLUTO_PEER_CLIENT_NET} = "::" ]; then
 	    return 0
 	fi
-	# check if client is routeable local
-	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | grep -qs -v via; then
+	# check if client is routeable
+	if ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
+	    egrep -q -s -v " via |^local"; then
 	    iface=$(ip -o route get ${PLUTO_PEER_CLIENT_NET} | \
 		awk '{print $3}')
-	    macaddr=$(cat /sys/class/net/${iface}/address)
+	    if [ -r /sys/class/net/${iface}/address ]; then
+		macaddr=$(cat /sys/class/net/${iface}/address)
+	    fi
 	    # add/remove arp entry for the client on ethernet devices only
 	    if [ -n "${macaddr}" ]; then
 		if [ "$1" = add ]; then
@@ -484,9 +487,9 @@ doroute() {
 # TODO: Exclude udp 4500 traffic
 addnflog() {
     if [ -n "${NFLOG}" ]; then
-	iptables -A OUTPUT -m policy --dir out  --pol ipsec -s ${PLUTO_MY_CLIENT} \
+	iptables -I OUTPUT -m policy --dir out  --pol ipsec -s ${PLUTO_MY_CLIENT} \
 		 -d ${PLUTO_PEER_CLIENT} -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
-	iptables -A INPUT  -m policy --dir in   --pol ipsec -s ${PLUTO_PEER_CLIENT} \
+	iptables -I INPUT  -m policy --dir in   --pol ipsec -s ${PLUTO_PEER_CLIENT} \
 		 -d ${PLUTO_MY_CLIENT}   -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
     fi
 }
@@ -510,6 +513,7 @@ case "${PLUTO_VERB}" in
     route-host|route-client)
 	# connection to me or my client subnet being routed
 	uproute
+	addnflog
 	;;
     unroute-host|unroute-client)
 	# connection to me or my client subnet being unrouted
@@ -522,20 +526,20 @@ case "${PLUTO_VERB}" in
     down-host)
 	# connection to me going down
 	downrule
+	delnflog
 	# If you are doing a custom version, firewall commands go here.
 	;;
     up-client)
 	# connection to my client subnet coming up
 	# If you are doing a custom version, firewall commands go here.
 	updateresolvconf
-	addnflog
 	;;
     down-client)
 	# connection to my client subnet going down
 	downrule
+	delnflog
 	# If you are doing a custom version, firewall commands go here.
 	restoreresolvconf
-	delnflog
 	;;
     disconnectNM-host|disconnectNM-client)
 	# sending disconnect signal to NM, as something went wrong.

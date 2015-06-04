@@ -161,7 +161,7 @@ static void db_trans_expand(struct db_context *ctx, int delta_trans)
 {
 	int max_trans = ctx->max_trans + delta_trans;
 	struct db_trans *const old_trans = ctx->trans0;
-	struct db_trans *const new_trans = ALLOC_BYTES_ST( sizeof(struct db_trans) * max_trans,
+	struct db_trans *const new_trans = ALLOC_BYTES_ST(sizeof(struct db_trans) * max_trans,
 				    "db_context->trans (expand)", db_trans_st);
 
 	memcpy(new_trans, old_trans, ctx->max_trans * sizeof(struct db_trans));
@@ -188,7 +188,7 @@ static void db_attrs_expand(struct db_context *ctx, int delta_attrs)
 	unsigned int ti;
 	int max_attrs = ctx->max_attrs + delta_attrs;
 	struct db_attr *const old_attrs = ctx->attrs0;
-	struct db_attr *const new_attrs = ALLOC_BYTES_ST( sizeof(struct db_attr) * max_attrs,
+	struct db_attr *const new_attrs = ALLOC_BYTES_ST(sizeof(struct db_attr) * max_attrs,
 				    "db_context->attrs (expand)", db_attrs_st);
 
 	memcpy(new_attrs, old_attrs, ctx->max_attrs * sizeof(struct db_attr));
@@ -213,7 +213,7 @@ static void db_attrs_expand(struct db_context *ctx, int delta_attrs)
 /* Allocate a new db object */
 struct db_context *db_prop_new(u_int8_t protoid, int max_trans, int max_attrs)
 {
-	struct db_context *ctx = ALLOC_BYTES_ST( sizeof(struct db_context), "db_context",
+	struct db_context *ctx = ALLOC_BYTES_ST(sizeof(struct db_context), "db_context",
 			      db_context_st);
 
 	db_prop_init(ctx, protoid, max_trans, max_attrs);
@@ -311,7 +311,7 @@ static void db_prop_print(struct db_prop *p)
 
 	DBG_log("protoid=\"%s\"", enum_name(&protocol_names, p->protoid));
 	for (ti = 0, t = p->trans; ti < p->trans_cnt; ti++, t++) {
-		switch ( p->protoid) {
+		switch (p->protoid) {
 		case PROTO_ISAKMP:
 			n = &isakmp_transformid_names;
 			break;
@@ -329,7 +329,7 @@ static void db_prop_print(struct db_prop *p)
 		for (ai = 0, a = t->attrs; ai < t->attr_cnt; ai++, a++) {
 			int i;
 
-			switch ( p->protoid) {
+			switch (p->protoid) {
 			case PROTO_ISAKMP:
 				n_at = &oakley_attr_names;
 				i = a->type.oakley | ISAKMP_ATTR_AF_TV;

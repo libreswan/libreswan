@@ -54,6 +54,8 @@ kvmplutotest	ikev2-15-fuzzer				good
 kvmplutotest	ikev2-17-rekey-ipsec			good
 kvmplutotest	ikev2-18-x509-alias			good
 kvmplutotest	ikev2-19-x509-auto-start		good
+kvmplutotest	ikev2-41-rw-replace			good
+kvmplutotest	ikev2-42-rw-replace-responder		good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
@@ -628,7 +630,6 @@ kvmplutotest	interop-ikev1-strongswan-07-cast128		good
 # is broken for netkey/xfrm in strongswan itself too - kernel changed?
 kvmplutotest	interop-ikev1-strongswan-08-strongswan-cast	good
 
-umlplutotest    interop-ikev2-strongswan-01-noconn		good
 kvmplutotest    interop-ikev2-strongswan-02-psk-responder	good
 kvmplutotest    interop-ikev2-strongswan-03-psk-initiator	good
 kvmplutotest    interop-ikev2-strongswan-04-x509-responder	good

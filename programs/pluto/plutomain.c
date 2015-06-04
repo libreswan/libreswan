@@ -1082,7 +1082,7 @@ int main(int argc, char **argv)
 			log_append = cfg->setup.options[KBF_PLUTOSTDERRLOGAPPEND];
 			pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE];
 			if (cfg->setup.options[KBF_FORCEBUSY]) {
-				/* obsoleted */
+				/* force-busy is obsoleted, translate to ddos-mode= */
 				pluto_ddos_mode = cfg->setup.options[KBF_DDOS_MODE] = DDOS_FORCE_BUSY;
 			}
 			/* ddos-ike-treshold and max-halfopen-ike */
@@ -1120,6 +1120,7 @@ int main(int argc, char **argv)
 			pluto_port = cfg->setup.options[KBF_IKEPORT];
 
 			/* --nflog-all */
+			/* only causes nflog nmber to show in ipsec status */
 			pluto_nflog_group = cfg->setup.options[KBF_NFLOG_ALL];
 
 			/* no config option: ctlbase */
