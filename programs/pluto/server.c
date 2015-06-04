@@ -935,13 +935,22 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 
 				if (packet_len == 1 && buffer[0] == 0xff &&
 				    (cur_debugging & DBG_NATT) == 0) {
-					/* don't log NAT-T keepalive related errors unless NATT debug is
+					/*
+					 * don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled
 					 */
-				} else if (DBGP(DBG_OPPO) || (sender != NULL && sender->st_connection != NULL &&
-					(sender->st_connection->policy & POLICY_AUTH_NULL) == LEMPTY) )
+				} else if (DBGP(DBG_OPPO) ||
+				           (sender != NULL && sender->st_connection != NULL &&
+					    LDISJOINT(sender->st_connection->policy, POLICY_AUTH_NULL)))
 				{
-					/* we need a rate limit when doing OE */
+					/*
+					 * We are selective about printing this
+					 * diagnostic since it pours out when
+					 * we are doing unrequited authnull OE.
+					 * That's the point of the condition
+					 * above.
+					 * ??? the condition treats all authnull as OE.
+					 */
 					/* ??? DBGP is controlling non-DBG logging! */
 					struct state *old_state = cur_state;
 
