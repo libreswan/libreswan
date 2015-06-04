@@ -590,11 +590,12 @@ void load_crls(void)
 	int n;
 	const struct lsw_conf_options *oco = lsw_init_options();
 
+	/* legacy CRL reading - will go away soon */
 	/* change directory to specified path */
 	save_dir = getcwd(buf, PATH_MAX);
 	if (chdir(oco->crls_dir) == -1) {
-		libreswan_log("Could not change to directory '%s': %d %s",
-			      oco->crls_dir, errno, strerror(errno));
+		DBG(DBG_CONTROL, DBG_log("Could not change to legacy CRL directory '%s': %d %s",
+			      oco->crls_dir, errno, strerror(errno)));
 	} else {
 		DBG(DBG_CONTROL,
 		    DBG_log("Changing to directory '%s'", oco->crls_dir));
