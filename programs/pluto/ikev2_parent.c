@@ -1103,20 +1103,20 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				st->st_oakley.groupnum = sg.sg_group;
 				st->st_oakley.group = lookup_group(sg.sg_group);
-				libreswan_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
+				DBG(DBG_CONTROL, DBG_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
 					strip_prefix(enum_show(&oakley_group_names,
-						sg.sg_group), "OAKLEY_GROUP_"));
+						sg.sg_group), "OAKLEY_GROUP_")));
 				/* wipe our mismatched KE */
 				clear_dh_from_state(st);
 				/* wipe out any saved RCOOKIE */
-				DBG(DBG_CONTROL, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
+				DBG(DBG_CONTROLMORE, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
 				rehash_state(st, zero_cookie);
 				/* get a new KE */
 				return crypto_helper_build_ke(st);
 			} else {
-				libreswan_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
+				DBG(DBG_CONTROL, DBG_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
 					strip_prefix(enum_show(&oakley_group_names,
-						sg.sg_group), "OAKLEY_GROUP_"));
+						sg.sg_group), "OAKLEY_GROUP_")));
 				return STF_IGNORE;
 			}
 		}
@@ -1129,10 +1129,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 * The responder SPI ought to have been 0 (but might not be).
 			 * See rfc5996bis-04 2.6.
 			 */
-			libreswan_log("%s: received unauthenticated %s - ignored",
+			DBG(DBG_CONTROL, DBG_log("%s: received unauthenticated %s - ignored",
 				enum_name(&state_names, st->st_state),
 				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type));
+					ntfy->payload.v2n.isan_type)));
 		}
 	}
 	return STF_IGNORE;
@@ -1162,9 +1162,9 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		case v2N_COOKIE:
 		case v2N_INVALID_KE_PAYLOAD:
 		case v2N_NO_PROPOSAL_CHOSEN:
-			libreswan_log("%s cannot appear with other payloads",
+			DBG(DBG_CONTROL, DBG_log("%s cannot appear with other payloads",
 				enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type));
+						ntfy->payload.v2n.isan_type)));
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 
 		case v2N_USE_TRANSPORT_MODE:
@@ -1173,10 +1173,10 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 			/* we do handle these further down */
 			break;
 		default:
-			libreswan_log("%s: received %s but ignoring it",
+			DBG(DBG_CONTROL, DBG_log("%s: received %s but ignoring it",
 				enum_name(&state_names, st->st_state),
 				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type));
+					ntfy->payload.v2n.isan_type)));
 		}
 	}
 
