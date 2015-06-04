@@ -938,10 +938,8 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					/* don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled
 					 */
-				} else if (sender == NULL ||
-					sender->st_connection == NULL ||
-					(sender->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY ||
-					DBGP(DBG_OPPO))
+				} else if (DBGP(DBG_OPPO) || (sender != NULL && sender->st_connection != NULL &&
+					(sender->st_connection->policy & POLICY_AUTH_NULL) == LEMPTY) )
 				{
 					/* we need a rate limit when doing OE */
 					/* ??? DBGP is controlling non-DBG logging! */
