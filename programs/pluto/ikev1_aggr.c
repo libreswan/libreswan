@@ -1386,17 +1386,8 @@ static stf_status aggr_outI1_tail(struct pluto_crypto_req_cont *ke,
 
 	close_output_pbs(&reply_stream);
 
-	passert(st->st_tpacket.ptr == NULL);
-	clonetochunk(st->st_tpacket, reply_stream.start,
-		     pbs_offset(&reply_stream),
-		     "reply packet from aggr_outI1");
-
 	/* Transmit */
-
-	DBG_cond_dump(DBG_RAW, "sending:\n",
-		      st->st_tpacket.ptr, st->st_tpacket.len);
-
-	send_ike_msg(st, "aggr_outI1");
+	record_and_send_ike_msg(st, &reply_stream, "aggr_outI1");
 
 	/* Set up a retransmission event, half a minute hence */
 	delete_event(st);
