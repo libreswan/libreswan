@@ -665,11 +665,16 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			DBG(DBG_LIFECYCLE, DBG_log(
 				"%s SA expired (superseded by #%lu)",
 					satype, latest));
+		} else if (!IS_IKE_SA_ESTABLISHED(st)) {
+			/* not very interesting: failed IKE attempt */
+			DBG(DBG_LIFECYCLE, DBG_log(
+				"un-established partial ISAKMP SA timeout (%s)",
+					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout"));
 		} else {
-			libreswan_log("%s %s (%s)", satype,
-				type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
-				(c->policy & POLICY_DONT_REKEY) ?
-					"--dontrekey" : "LATEST!");
+				libreswan_log("%s %s (%s)", satype,
+					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
+					(c->policy & POLICY_DONT_REKEY) ?
+						"--dontrekey" : "LATEST!");
 		}
 	}
 	/* FALLTHROUGH */
