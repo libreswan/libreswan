@@ -790,7 +790,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		if (c->kind == CK_INSTANCE) {
 			char cib[CONN_INST_BUF];
-			/* there is already an instance being negotiated, do nothing */
+			/* there is already an instance being negotiated */
+#if 0
 			libreswan_log(
 				"rekeying existing instance \"%s\"%s, due to acquire",
 				c->name,
@@ -801,6 +802,20 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			 * got the acquire, it is because something turned stuff into a
 			 * %trap, or something got deleted, perhaps due to an expiry.
 			 */
+#else
+			/* 
+			 * XXX We got an acquire (NETKEY only?) for
+			 * something we already have an instance for ??
+			 * We cannot process as normal because the
+			 * bare_shunts table and assign_holdpass()
+			 * would get confused between this new entry
+			 * and the existing one. So we return without
+			 * doing anything
+			 */
+			libreswan_log("found existing state, ignoring instance \"%s\"%s, due to duplicate acquire",
+				c->name, fmt_conn_instance(c, cib));
+			return;
+#endif
 		}
 
 		/* we have a connection, fill in the negotiation_shunt and failure_shunt */
