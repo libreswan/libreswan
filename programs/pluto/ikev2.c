@@ -599,9 +599,17 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary 
 	return errors;
 }
 
-void ikev2_log_payload_errors(struct ikev2_payload_errors errors)
+/* report problems - but less so when OE */
+void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *st)
 {
-	/* report problems */
+	if (!st && !DBGP(DBG_OPPO))
+		return;
+
+	else if (st != NULL && st->st_connection != NULL &&
+ 		(st->st_connection->policy & POLICY_OPPORTUNISTIC) && !DBGP(DBG_OPPO)) {
+			return;
+	}
+
 	if (errors.missing) {
 		loglog(RC_LOG_SERIOUS,
 		       "missing payload(s) (%s). Message dropped.",
@@ -902,10 +910,10 @@ void process_v2_packet(struct msg_digest **mdp)
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
 		/* no useful state microcode entry */
 		if (clear_payload_status.status != STF_OK) {
-			ikev2_log_payload_errors(clear_payload_status);
+			ikev2_log_payload_errors(clear_payload_status, st);
 			complete_v2_state_transition(mdp, clear_payload_status.status);
 		} else if (enc_payload_status.status != STF_OK) {
-			ikev2_log_payload_errors(enc_payload_status);
+			ikev2_log_payload_errors(enc_payload_status, st);
 			complete_v2_state_transition(mdp, enc_payload_status.status);
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*

@@ -1677,7 +1677,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md)
 	}
 	struct ikev2_payload_errors errors = ikev2_verify_payloads(summary, md->svm, TRUE);
 	if (errors.status != STF_OK) {
-		ikev2_log_payload_errors(errors);
+		ikev2_log_payload_errors(errors, md->st);
 		return errors.status;
 	}
 	return STF_OK;
