@@ -830,7 +830,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
 			req.u.p.action = XFRM_POLICY_BLOCK;
-		req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime);
+		// req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime);
 		req.u.p.lft.soft_byte_limit = XFRM_INF;
 		req.u.p.lft.soft_packet_limit = XFRM_INF;
 		req.u.p.lft.hard_byte_limit = XFRM_INF;
