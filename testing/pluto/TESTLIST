@@ -154,6 +154,7 @@ kvmplutotest	ikev2-38-psk-65bytes			good
 kvmplutotest	ikev2-39-psk-64bytes 			good
 
 kvmplutotest	ikev2-40-nflog-global 			good
+kvmplutotest	ikev2-43-init-retransmit		good
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
