@@ -3308,6 +3308,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 	return TRUE;
 }
 
+/* XXX move to proper kernel_ops in kernel_netlink */
 void expire_bare_shunts()
 {
 	struct bare_shunt **bspp;
@@ -3321,7 +3322,7 @@ void expire_bare_shunts()
 		if (age > deltasecs(pluto_shunt_lifetime)) {
 			DBG(DBG_OPPO, DBG_bare_shunt("expiring old", bsp));
 			delete_bare_shunt(&bsp->ours.addr, &bsp->his.addr,
-				bsp->transport_proto, ntohs(bsp->said.spi), msg);
+				bsp->transport_proto, ntohl(bsp->said.spi), msg);
 		} else {
 			DBG(DBG_OPPO, DBG_bare_shunt("keeping recent", bsp));
 			bspp = &bsp->next;
