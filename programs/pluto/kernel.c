@@ -1177,9 +1177,17 @@ static bool fiddle_bare_shunt(const ip_address *src, const ip_address *dst,
 			}
 			return TRUE;
 		} else {
-			libreswan_log("raw_eroute() to op='%s'  with transport_proto='%d' kernel shunt failed",
+			struct bare_shunt **bs_pp = bare_shunt_ptr(
+				&this_client,
+				&that_client,
+				transport_proto);
+
+			free_bare_shunt(bs_pp);
+			libreswan_log("raw_eroute() to op='%s'  with transport_proto='%d' kernel shunt failed - deleting from pluto shunt table",
 				repl ? "replace" : "delete",
 				transport_proto);
+			
+			
 			return FALSE;
 		}
 	}
