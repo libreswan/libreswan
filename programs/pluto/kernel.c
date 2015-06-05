@@ -898,8 +898,7 @@ static void free_bare_shunt(struct bare_shunt **pp)
 	struct bare_shunt *p;
 
 	/* ??? the following 3 lines are embarassing */
-	//pexpect(pp != NULL);
-	passert(pp != NULL);
+	pexpect(pp != NULL);
 	if (pp == NULL)
 		return;
 
