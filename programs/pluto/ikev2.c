@@ -700,6 +700,22 @@ void process_v2_packet(struct msg_digest **mdp)
 			 */
 			rehash_state(st, md->hdr.isa_rcookie);
 		}
+
+
+		/*
+		 * We need to check if this IKE_INIT is a retransmit
+		 */
+		if (st != NULL && md->original_role == ORIGINAL_RESPONDER) {
+			if (st->st_msgid_lastrecv == md->msgid_received) {
+				/* this is a recent retransmit. */
+				DBG(DBG_CONTROLMORE, DBG_log(
+					"duplicate IKE_INIT_I message received, retransmiting previous packet"));
+				send_ike_msg(st, "ikev2-responder-retransmit");
+				return;
+			}
+			/* update lastrecv later on */
+		}
+
 	} else if (!msg_r) {
 		/*
 		 * A request; send it to the parent.
