@@ -484,11 +484,17 @@ void delete_state(struct state *st)
 	struct connection *const c = st->st_connection;
 	struct state *old_cur_state = cur_state == st ? NULL : cur_state;
 
-	/* don't print obvious OE failure cleanup where remote was not running IKE */
-	if (st->st_state != STATE_PARENT_I1 || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-		libreswan_log("deleting state #%lu (%s)", st->st_serialno,
-				enum_show(&state_names, st->st_state));
+	/* reduce logging of OE failures */
+	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
+		libreswan_log("deleting state #%lu (%s)",
+			st->st_serialno,
+			enum_show(&state_names, st->st_state));
+	} else {
+		DBG(DBG_LIFECYCLE, DBG_log("deleting state #%lu (%s)",
+			st->st_serialno,
+			enum_show(&state_names, st->st_state)));
 	}
+
 
 #ifdef USE_LINUX_AUDIT
 	/*
