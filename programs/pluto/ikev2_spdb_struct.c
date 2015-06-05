@@ -400,6 +400,9 @@ static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 	}
 }
 
+/*
+ * ??? this really ought to be an in situ converter
+ */
 struct db_sa *sa_v2_convert(struct db_sa *f)
 {
 	unsigned int pcc, pr_cnt, pc_cnt, propnum;
@@ -412,8 +415,17 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 
 	DBG(DBG_CONTROL, DBG_log("FIXME: sa_v2_convert() called - known to be called a few times in a row"));
 
+	pexpect(f != NULL);	/* we expect an actual SA */
 	if (f == NULL)
 		return NULL;
+
+	passert((f->prop_disj == NULL) == (f->prop_disj_cnt == 0));
+
+	/* make sa_v2_convert idempotent */
+	if (f->prop_disj != NULL) {
+		DBG(DBG_CONTROL, DBG_log("FIXME: sa_v2_convert() called redundantly"));
+		return f;
+	}
 
 	if (!f->dynamic)
 		f = sa_copy_sa(f);
@@ -571,10 +583,11 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 			if (dtflast->protoid == dtfone->protoid) {
 				/* need to extend pr (list of disjunctions) by one */
 				struct db_v2_prop *pr1;
+
 				pr_cnt++;
 				pr1 = alloc_bytes(sizeof(struct db_v2_prop) *
 						    (pr_cnt + 1),
-						    "db_v2_prop");
+						    "extended db_v2_prop");
 				memcpy(pr1, pr,
 				       sizeof(struct db_v2_prop) * pr_cnt);
 				pfree(pr);
@@ -585,13 +598,14 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 				pc = NULL;
 				pc_cnt = 0;
 			} else {
+				/* need to extend pc (list of conjunctions) by one */
 				struct db_v2_prop_conj *pc1;
-				/* need to extend pc (list of conjuections) by one */
+
 				pc_cnt++;
 
 				pc1 = alloc_bytes(
 					sizeof(struct db_v2_prop_conj) *
-					(pc_cnt + 1), "db_v2_prop_conj");
+					(pc_cnt + 1), "extended db_v2_prop_conj");
 				memcpy(pc1, pc,
 				       sizeof(struct db_v2_prop_conj) *
 				       pc_cnt);
@@ -645,6 +659,7 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 			tr[tr_pos].transform_type = IKEv2_TRANS_TYPE_PRF;
 			tr[tr_pos].transid = dtfone->prf_transid;
 			tr_pos++;
+
 			tr[tr_pos].transform_type = IKEv2_TRANS_TYPE_DH;
 			tr[tr_pos].transid = dtfone->group_transid;
 			tr_pos++;
@@ -1330,12 +1345,12 @@ stf_status ikev2_parse_parent_sa_body(
 	/* find the policy structures: quite a dance */
 	sadb = st->st_sadb;
 	if (sadb == NULL) {
-		st->st_sadb = IKEv2_oakley_sadb(c->policy);
+		struct db_sa *t = IKEv2_oakley_sadb(c->policy);
+
 		sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
-					 st->st_sadb, FALSE);
-		if (sadb != NULL)
-			st->st_sadb = sadb;
-		sadb = st->st_sadb;
+					 t, FALSE);
+		if (sadb == NULL)
+			sadb = t;
 	}
 	sadb = st->st_sadb = sa_v2_convert(sadb);
 
@@ -1969,7 +1984,7 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 
 	p2alg = sa_v2_convert(p2alg);
 
-	if(!ikev2_out_sa(outpbs, proto, p2alg, md->st, FALSE, np)) {
+	if (!ikev2_out_sa(outpbs, proto, p2alg, md->st, FALSE, np)) {
 		free_sa(p2alg);
 		p2alg = NULL;
 		libreswan_log("ikev2_emit_ipsec_sa: ikev2_out_sa() failed");
