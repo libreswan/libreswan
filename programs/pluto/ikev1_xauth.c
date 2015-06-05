@@ -663,12 +663,8 @@ static stf_status modecfg_send_set(struct state *st)
 		     0 /* XXX ID */);
 #undef MODECFG_SET_ITEM
 
-	passert(st->st_tpacket.ptr == NULL);
-	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
-		     "ModeCfg set");
-
 	/* Transmit */
-	send_ike_msg(st, "ModeCfg set");
+	record_and_send_ike_msg(st, &reply, "ModeCfg set");
 
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT &&
@@ -779,13 +775,8 @@ stf_status xauth_send_request(struct state *st)
 	if (!encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
-	freeanychunk(st->st_tpacket);
-	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
-		     "XAUTH: req");
-
 	/* Transmit */
-
-	send_ike_msg(st, "XAUTH: req");
+	record_and_send_ike_msg(st, &reply, "XAUTH: req");
 
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
@@ -905,13 +896,8 @@ stf_status modecfg_send_request(struct state *st)
 	if (!encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
-	freeanychunk(st->st_tpacket);
-	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
-		     "modecfg: req");
-
 	/* Transmit */
-
-	send_ike_msg(st, "modecfg: req");
+	record_and_send_ike_msg(st, &reply, "modecfg: req");
 
 	/* RETRANSMIT if Main, SA_REPLACE if Aggressive */
 	if (st->st_event->ev_type != EVENT_v1_RETRANSMIT) {
@@ -1000,20 +986,13 @@ static stf_status xauth_send_status(struct state *st, int status)
 	if (!encrypt_message(&rbody, st))
 		return STF_INTERNAL_ERROR;
 
-	/* free previous transmit packet */
-	freeanychunk(st->st_tpacket);
-
-	clonetochunk(st->st_tpacket, reply.start, pbs_offset(&reply),
-		     "XAUTH: status");
-
 	/* Set up a retransmission event, half a minute hence */
 	/* Schedule retransmit before sending, to avoid race with master thread */
 	delete_event(st);
 	event_schedule_ms(EVENT_v1_RETRANSMIT, st->st_connection->r_interval, st);
 
 	/* Transmit */
-
-	send_ike_msg(st, "XAUTH: status");
+	record_and_send_ike_msg(st, &reply, "XAUTH: status");
 
 	if (status)
 		change_state(st, STATE_XAUTH_R1);

@@ -12,6 +12,7 @@
 %define fipscheck_version 1.2.0-1
 %define buildefence 0
 %define development 0
+%define cavstests 0
 
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
@@ -29,8 +30,13 @@ Version: IPSECBASEVERSION
 
 Release: 1%{?dist}
 License: GPLv2
-Url: https://www.libreswan.org/
-Source: %{name}-%{srcpkgver}.tar.gz
+Url: https://libreswan.org/
+Source0: %{name}-%{srcpkgver}.tar.gz
+%if %{cavstests}
+Source10: https://download.libreswan.org/cavs/ikev1_dsa.fax.bz2
+Source11: https://download.libreswan.org/cavs/ikev1_psk.fax.bz2
+Source12: https://download.libreswan.org/cavs/ikev2.fax.bz2
+%endif
 Group: System Environment/Daemons
 BuildRequires: gmp-devel bison flex redhat-rpm-config pkgconfig
 Requires(post): coreutils bash
@@ -88,64 +94,62 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 
 %prep
 %setup -q -n libreswan-%{srcpkgver}
-# remove man page for ipsec.conf so it is forced to regenerate
-rm ./programs/configs/ipsec.conf.5
 
 %build
 %if %{buildefence}
- %define efence "-lefence"
+%define efence "-lefence"
 %endif
 
 #796683: -fno-strict-aliasing
-%{__make} \
+make %{?_smp_mflags} \
 %if %{development}
-  USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
+    USERCOMPILE="-g -DGCC_LINT %(echo %{optflags} | sed -e s/-O[0-9]*/ /) %{?efence} -fPIE -pie -fno-strict-aliasing" \
 %else
-  USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
-  WERROR_CFLAGS= \
+    USERCOMPILE="-g -DGCC_LINT %{optflags} %{?efence} -fPIE -pie -fno-strict-aliasing" \
+    WERROR_CFLAGS= \
 %endif
-  INITSYSTEM=sysvinit \
-  USERLINK="-g -pie %{?efence}" \
-  USE_NM=%{USE_NM} \
-  USE_XAUTHPAM=true \
-  USE_FIPSCHECK=%{USE_FIPSCHECK} \
-  USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
+    INITSYSTEM=sysvinit \
+    USERLINK="-g -pie %{?efence}" \
+    USE_NM=%{USE_NM} \
+    USE_XAUTHPAM=true \
+    USE_FIPSCHECK=%{USE_FIPSCHECK} \
+    USE_LIBCAP_NG=%{USE_LIBCAP_NG} \
 %if %{USE_OCF}
-  USE_OCF=true \
+    USE_OCF=true \
 %endif
-  USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
-  USE_LDAP=%{USE_CRL_FETCHING} \
-  USE_LIBCURL=%{USE_CRL_FETCHING} \
-  USE_DNSSEC=%{USE_DNSSEC} \
-  INC_USRLOCAL=%{_prefix} \
-  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-  MANTREE=%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
-  programs
+    USE_LABELED_IPSEC=%{USE_LABELED_IPSEC} \
+    USE_LDAP=%{USE_CRL_FETCHING} \
+    USE_LIBCURL=%{USE_CRL_FETCHING} \
+    USE_DNSSEC=%{USE_DNSSEC} \
+    INC_USRLOCAL=%{_prefix} \
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    MANTREE=%{_mandir} \
+    INC_RCDEFAULT=%{_initrddir} \
+    programs
 FS=$(pwd)
 
 %if %{USE_FIPSCHECK}
 # Add generation of HMAC checksums of the final stripped binaries
 %define __spec_install_post \
-  %{?__debug_package:%{__debug_install_post}} \
-  %{__arch_install_post} \
-  %{__os_install_post} \
-  fipshmac %{buildroot}%{_sbindir}/ipsec \
-  fipshmac %{buildroot}%{_libexecdir}/ipsec/* \
+    %{?__debug_package:%{__debug_install_post}} \
+    %{__arch_install_post} \
+    %{__os_install_post} \
+    fipshmac %{buildroot}%{_sbindir}/ipsec \
+    fipshmac %{buildroot}%{_libexecdir}/ipsec/* \
 %{nil}
 %endif
 
 %install
 rm -rf %{buildroot}
-%{__make} \
-  DESTDIR=%{buildroot} \
-  INITSYSTEM=sysvinit \
-  INC_USRLOCAL=%{_prefix} \
-  FINALLIBEXECDIR=%{_libexecdir}/ipsec \
-  MANTREE=%{buildroot}%{_mandir} \
-  INC_RCDEFAULT=%{_initrddir} \
-  INSTMANFLAGS="-m 644" \
-  install
+make \
+    DESTDIR=%{buildroot} \
+    INITSYSTEM=sysvinit \
+    INC_USRLOCAL=%{_prefix} \
+    FINALLIBEXECDIR=%{_libexecdir}/ipsec \
+    MANTREE=%{buildroot}%{_mandir} \
+    INC_RCDEFAULT=%{_initrddir} \
+    INSTMANFLAGS="-m 644" \
+    install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
@@ -154,8 +158,42 @@ install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
-echo "include /etc/ipsec.d/*.secrets" > %{buildroot}%{_sysconfdir}/ipsec.secrets
+echo "include /etc/ipsec.d/*.secrets" \
+    > %{buildroot}%{_sysconfdir}/ipsec.secrets
 rm -fr %{buildroot}/etc/rc.d/rc*
+
+%if %{cavstests}
+%check
+# There is an elaborate upstream testing infrastructure which we do not
+# run here.
+# We only run the CAVS tests here.
+cp %{SOURCE10} %{SOURCE11} %{SOURCE12} .
+bunzip2 *.fax.bz2
+: starting CAVS test for IKEv2
+OBJ.linux.*/programs/pluto/cavp -v2 ikev2.fax | \
+    diff -u ikev2.fax - > /dev/null
+: starting CAVS test for IKEv1 RSASIG
+OBJ.linux.*/programs/pluto/cavp -v1sig ikev1_dsa.fax | \
+    diff -u ikev1_dsa.fax - > /dev/null
+: starting CAVS test for IKEv1 PSK
+OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
+    diff -u ikev1_psk.fax - > /dev/null
+: CAVS tests passed
+%endif
+
+%post 
+/sbin/chkconfig --add ipsec || :
+
+%preun
+if [ $1 -eq 0 ]; then
+    /sbin/service ipsec stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del ipsec
+fi
+
+%postun
+if [ $1 -ge 1 ] ; then
+    /sbin/service ipsec condrestart 2>&1 >/dev/null || :
+fi
 
 %files 
 %doc CHANGES COPYING CREDITS README* LICENSE
@@ -164,10 +202,9 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %attr(0600,root,root) %config(noreplace) %{_sysconfdir}/ipsec.secrets
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/pluto
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d
-%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/cacerts
-%attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/crls
 %attr(0700,root,root) %dir %{_sysconfdir}/ipsec.d/policies
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.d/policies/*
+%attr(0700,root,root) %dir %{_localstatedir}/log/pluto
 %attr(0700,root,root) %dir %{_localstatedir}/log/pluto/peer
 %attr(0755,root,root) %dir %{_localstatedir}/run/pluto
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/pam.d/pluto
@@ -175,24 +212,9 @@ rm -fr %{buildroot}/etc/rc.d/rc*
 %{_libexecdir}/ipsec
 %{_sbindir}/ipsec
 %attr(0644,root,root) %{_mandir}/*/*.gz
-
 %if %{USE_FIPSCHECK}
 %{_sbindir}/.ipsec.hmac
 %endif
-
-%preun
-if [ $1 -eq 0 ]; then
-        /sbin/service ipsec stop > /dev/null 2>&1 || :
-        /sbin/chkconfig --del ipsec
-fi
-
-%postun
-if [ $1 -ge 1 ] ; then
- /sbin/service ipsec condrestart 2>&1 >/dev/null || :
-fi
-
-%post 
-/sbin/chkconfig --add ipsec || :
 
 %changelog
 * Tue Jan 01 2013 Team Libreswan <team@libreswan.org> - 3.1-1

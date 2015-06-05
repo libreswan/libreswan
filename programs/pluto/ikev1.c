@@ -2316,7 +2316,6 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 		/* if requested, send the new reply packet */
 		if (smc->flags & SMF_REPLY) {
-
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
 				DBG_log("sending reply packet to %s:%u (from port %u)",
@@ -2327,18 +2326,8 @@ void complete_v1_state_transition(struct msg_digest **mdp, stf_status result)
 
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
-			passert(st->st_tpacket.ptr == NULL);
-			clonetochunk(st->st_tpacket, reply_stream.start,
-				     pbs_offset(&reply_stream),
-				     "reply packet for complete_v1_state_transition");
-
-			/* actually send the packet
-			 * Note: this is a great place to implement "impairments"
-			 * for testing purposes.  Suppress or duplicate the
-			 * send_ike_msg call depending on st->st_state.
-			 */
-
-			send_ike_msg(st, enum_name(&state_names, from_state));
+			record_and_send_ike_msg(st, &reply_stream,
+				enum_name(&state_names, from_state));
 		}
 
 		/* Schedule for whatever timeout is specified */
