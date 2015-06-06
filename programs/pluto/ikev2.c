@@ -1324,9 +1324,12 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 			*pkind = kind = EVENT_SA_EXPIRE;
 		}
 
-		if (c->policy & POLICY_DONT_REKEY) {
-                        *pkind = kind = EVENT_SA_EXPIRE;
-                }
+		if ((c->policy & POLICY_OPPORTUNISTIC) && (IS_IKE_SA_ESTABLISHED(st))) {
+			*pkind = kind = EVENT_SA_REPLACE_IF_USED;
+		}
+		else if (c->policy & POLICY_DONT_REKEY) {
+			*pkind = kind = EVENT_SA_EXPIRE;
+		}
 	}
 	return delay;
 }
