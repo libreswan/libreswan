@@ -204,7 +204,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 }
 
 /* MUST BE THREAD-SAFE */
-void calc_dh_v2(struct pluto_crypto_req *r)
+void calc_dh_v2(struct pluto_crypto_req *r, char **story)
 {
 	struct pcr_skeycalc_v2_r *skr = &r->pcr_d.dhv2;
 	struct pcr_skeyid_q dhq;
@@ -246,7 +246,7 @@ void calc_dh_v2(struct pluto_crypto_req *r)
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	shared = calc_dh_shared(g, ltsecret, group, pubk);
+	shared = calc_dh_shared(g, ltsecret, group, pubk, story);
 
 	/* okay, so now all the shared key material */
 	calc_skeyseed_v2(&dhq,	/* input */

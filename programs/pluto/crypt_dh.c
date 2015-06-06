@@ -74,9 +74,8 @@
 PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 			   /*const*/ SECKEYPrivateKey *privk,	/* NSS doesn't do const */
 			   const struct oakley_group_desc *group,
-			   const SECKEYPublicKey *local_pubk)
+			   const SECKEYPublicKey *local_pubk, char **story)
 {
-	struct timeval tv0;
 	SECKEYPublicKey *remote_pubk;
 	SECItem nss_g;
 	PK11SymKey *dhshared;
@@ -86,8 +85,6 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 
 	DBG(DBG_CRYPT,
 		DBG_log("Started DH shared-secret computation in NSS:"));
-
-	gettimeofday(&tv0, NULL);
 
 	arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	passert(arena != NULL);
@@ -153,17 +150,7 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 		    DBG_log("Dropped no leading zeros %d", dhshared_len));
 	}
 
-	DBG(DBG_CRYPT, {
-		struct timeval tv1;
-		unsigned long tv_diff;
-
-		gettimeofday(&tv1, NULL);
-		tv_diff = (tv1.tv_sec  - tv0.tv_sec) * 1000000 +
-			  (tv1.tv_usec - tv0.tv_usec);
-		DBG_log("calc_dh_shared(): time elapsed (%s): %ld usec",
-			       enum_show(&oakley_group_names, group->group),
-			       tv_diff);
-	});
+	*story = (char *)enum_show(&oakley_group_names, group->group);
 
 	SECKEY_DestroyPublicKey(remote_pubk);
 	return dhshared;
@@ -178,6 +165,7 @@ void calc_dh(struct pluto_crypto_req *r)
 	chunk_t g;
 	SECKEYPrivateKey *ltsecret;
 	SECKEYPublicKey *pubk;
+	char *story = NULL;
 
 	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
 	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));
@@ -198,5 +186,5 @@ void calc_dh(struct pluto_crypto_req *r)
 
 	DBG(DBG_CRYPT, DBG_dump_chunk("peer's g: ", g));
 
-	skr->shared = calc_dh_shared(g, ltsecret, group, pubk);
+	skr->shared = calc_dh_shared(g, ltsecret, group, pubk, &story);
 }
