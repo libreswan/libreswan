@@ -1232,17 +1232,14 @@ bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
 	 *        && st->st_seen_fragvid)
 	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
 	 *     || st->st_seen_fragments))
-	 *
-	 * ??? why does POLICY_IKE_FRAG_FORCE not have an effect
-	 * when we are resending?
 	 */
 	return len >= (st->st_connection->addr_family == AF_INET ?
 		       ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
-	       (resending ?
-		(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
-		st->st_seen_fragvid :
+	    (   (resending &&
+			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
+			st->st_seen_fragvid) ||
 		(st->st_connection->policy & POLICY_IKE_FRAG_FORCE) ||
-		st->st_seen_fragments);
+		st->st_seen_fragments   );
 }
 
 static bool send_ikev2_frags(struct state *st, const char *where)
