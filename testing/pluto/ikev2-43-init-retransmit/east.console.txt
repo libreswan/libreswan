@@ -1,5 +1,4 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep
 east #
  ipsec setup start
 [ 00.00] registered KLIPS /proc/sys/net
@@ -22,52 +21,33 @@ Redirecting to: systemctl start ipsec.service
 east #
  /testing/pluto/bin/wait-until-pluto-started
 east #
- # this should succeed
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 added connection description "westnet-eastnet-ipv4-psk-ikev2"
 east #
- ipsec auto --add modecfg-east-21
-002 added connection description "modecfg-east-21"
-east #
- # these should fail due to overlapping address pools
-east #
- ipsec auto --add modecfg-east-20
-023 ERROR: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
-023 leftaddresspool clash
-036 attempt to load incomplete connection
-east #
- ipsec auto --add modecfg-road-east
-023 ERROR: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
-023 leftaddresspool clash
-036 attempt to load incomplete connection
-east #
- echo initdone
+ echo "initdone"
 initdone
 east #
  ipsec look
 east NOW
-0.0.0.0/0          -> 192.0.2.1/32       => tun0xIPIP@192.1.2.254 esp0xESPSPI@192.1.2.254
+192.0.2.0/24       -> 192.0.1.0/24       => tun0xIPIP@192.1.2.45 esp0xESPSPI@192.1.2.45
 ipsec0->eth1 mtu=16260(9999)->1500
-tun0xTUN#@192.1.2.254 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.254 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=0
-esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.254 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=nonesp natsport=4500 natdport=4500   refhim=1
-tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.254 policy=192.0.2.1/32->0.0.0.0/0 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+tun0xTUN#@192.1.2.45 IPIP: dir=out src=192.1.2.23 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+tun0xTUN#@192.1.2.23 IPIP: dir=in  src=192.1.2.45 policy=192.0.1.0/24->192.0.2.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
-192.0.1.0/24 via 192.1.2.45 dev eth1 
+192.0.1.0/24 dev ipsec0  scope link 
 192.0.2.0/24 dev eth0  proto kernel  scope link  src 192.0.2.254 
-192.0.2.1 dev ipsec0  scope link 
 192.1.2.0/24 dev eth1  proto kernel  scope link  src 192.1.2.23 
 192.9.2.0/24 dev eth2  proto kernel  scope link  src 192.9.2.23 
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
-east                                                         u,u,u
-hashsha2                                                     P,,  
-nic                                                          P,,  
-north                                                        P,,  
-road                                                         P,,  
-west                                                         P,,  
-west-ec                                                      P,,  
+east #
+ grep retransmit /tmp/pluto.log
+| sending 416 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
+| sending 189 bytes for ikev2-responder-retransmit through eth1:500 to 192.1.2.45:500 (using #1)
 east #
 east #
  if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi

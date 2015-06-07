@@ -1217,9 +1217,25 @@ static bool send_frags(struct state *st, const char *where)
 
 bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
 {
-	if (st->st_interface && st->st_interface->ike_float)
+	if (st->st_interface != NULL && st->st_interface->ike_float)
 		len += NON_ESP_MARKER_SIZE;
 
+	/* This condition is complex.  Formatting is meant to help reader.
+	 *
+	 * Hugh thinks his banished style would make this earlier version
+	 * a little clearer:
+	 * len + natt_bonus
+	 *    >= (st->st_connection->addr_family == AF_INET
+	 *       ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
+	 * && ((  resending
+	 *        && (st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)
+	 *        && st->st_seen_fragvid)
+	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
+	 *     || st->st_seen_fragments))
+	 *
+	 * ??? why does POLICY_IKE_FRAG_FORCE not have an effect
+	 * when we are resending?
+	 */
 	return len >= (st->st_connection->addr_family == AF_INET ?
 		       ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
 	       (resending ?
@@ -1257,7 +1273,11 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 
 	natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
 
-	/* decide of whether we're to fragment  - IKEv1 only, draft-smyslov-ipsecme-ikev2-fragmentation not implemented yet */
+	/*
+	 * Decide of whether we're to fragment.
+	 * Only for IKEv1.
+	 * draft-smyslov-ipsecme-ikev2-fragmentation not implemented yet.
+	 */
 	if (!st->st_ikev2 &&
 	    st->st_state != STATE_MAIN_I1 &&
 	    should_fragment_ike_msg(st, len + natt_bonus, resending)) {
@@ -1270,9 +1290,34 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 	}
 }
 
+void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+{
+	release_v2fragments(&st->st_tfrags);
+	freeanychunk(st->st_tpacket);
+	clonetochunk(st->st_tpacket, pbs->start, pbs_offset(pbs), what);
+}
+
 bool send_ike_msg(struct state *st, const char *where)
 {
 	return send_or_resend_ike_msg(st, where, FALSE);
+}
+
+bool record_and_send_ike_msg(struct state *st, pb_stream *pbs, const char *what)
+{
+	record_outbound_ike_msg(st, pbs, what);
+	return send_ike_msg(st, what);
+}
+
+/* hack!  Leaves st->st_tpacket as it was found. */
+bool send_ike_msg_without_recording(struct state *st, pb_stream *pbs, const char *where)
+{
+	chunk_t saved_tpacket = st->st_tpacket;
+	bool r;
+
+	setchunk(st->st_tpacket, pbs->start, pbs_offset(pbs));
+	r = send_ike_msg(st, where);
+	st->st_tpacket = saved_tpacket;
+	return r;
 }
 
 bool resend_ike_v1_msg(struct state *st, const char *where)

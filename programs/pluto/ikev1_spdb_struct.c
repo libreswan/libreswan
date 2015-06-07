@@ -234,7 +234,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 		/* add IPcomp proposal if policy asks for it */
 
-		if (revised_sadb && ((st->st_policy) & POLICY_COMPRESS)) {
+		if (revised_sadb != NULL && (st->st_policy & POLICY_COMPRESS)) {
 			struct db_trans *ipcomp_trans = alloc_thing(
 				struct db_trans, "ipcomp_trans");
 
@@ -665,9 +665,7 @@ bool ikev1_out_sa(pb_stream *outs,
 	ret = TRUE;
 
 return_out:
-
-	if (revised_sadb)
-		free_sa(revised_sadb);
+	free_sa(&revised_sadb);
 	return ret;
 }
 

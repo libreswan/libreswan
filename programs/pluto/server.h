@@ -88,4 +88,12 @@ extern void set_whack_pluto_ddos(enum ddos_mode mode);
 extern bool should_fragment_ike_msg(struct state *st, size_t len,
 				    bool resending);
 
+struct packet_byte_stream;	/* forward decl of tag */
+extern void record_outbound_ike_msg(struct state *st, struct packet_byte_stream *pbs, const char *what);
+extern bool send_ike_msg(struct state *st, const char *where);
+extern bool record_and_send_ike_msg(struct state *st, struct packet_byte_stream *pbs, const char *what);
+extern bool send_ike_msg_without_recording(struct state *st, struct packet_byte_stream *pbs, const char *where);
+extern bool resend_ike_v1_msg(struct state *st, const char *where);
+extern bool send_keepalive(struct state *st, const char *where);
+
 #endif /* _SERVER_H */

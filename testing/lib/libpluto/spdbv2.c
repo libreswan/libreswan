@@ -77,12 +77,12 @@ main(int argc, char *argv[]){
 				FALSE);
 	sa_print(gsp);
 
-	gsp = sa_v2_convert(gsp);
+	sa_v2_convert(&gsp);
 
 	sa_v2_print(gsp);
 
 	tool_close_log();
 
-	free_sa(gsp);
+	free_sa(&gsp);
 	exit(0);
 }

@@ -678,8 +678,7 @@ void delete_state(struct state *st)
 	unreference_key(&st->st_peer_pubkey);
 	release_fragments(st);
 
-	free_sa(st->st_sadb);
-	st->st_sadb = NULL;
+	free_sa(&st->st_sadb);
 
 	clear_dh_from_state(st);
 
@@ -1583,8 +1582,7 @@ void fmt_state(struct state *st, const monotime_t n,
 		 st->st_remoteport,
 		 enum_name(&state_names, st->st_state),
 		 enum_name(&state_stories, st->st_state),
-		 st->st_event ? enum_name(&timer_event_names,
-					  st->st_event->ev_type) : "none",
+		 enum_name(&timer_event_names, st->st_event->ev_type),
 		 delta,
 		 np1, np2, eo, dpdbuf,
 		 idlestr,

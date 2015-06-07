@@ -1720,6 +1720,7 @@ struct db_sa IKEv2_oakley_sadb_table[] = {
 struct db_sa *IKEv2_oakley_sadb(lset_t x)
 {
 	unsigned index = x & LRANGES(POLICY_PSK, POLICY_AUTH_NULL);
+
 	passert(index <= elemsof(IKEv2_oakley_sadb_table));
 	return &IKEv2_oakley_sadb_table[index];
 }
@@ -1921,6 +1922,7 @@ static void free_sa_prop(struct db_prop *dp)
 		dp->trans = NULL;
 		dp->trans_cnt = 0;
 	}
+	passert(dp->trans_cnt == 0);
 }
 
 static void free_sa_v2_prop(struct db_v2_prop_conj *dp)
@@ -1934,6 +1936,7 @@ static void free_sa_v2_prop(struct db_v2_prop_conj *dp)
 		dp->trans = NULL;
 		dp->trans_cnt = 0;
 	}
+	passert(dp->trans_cnt == 0);
 }
 
 static void free_sa_prop_conj(struct db_prop_conj *pc)
@@ -1947,6 +1950,7 @@ static void free_sa_prop_conj(struct db_prop_conj *pc)
 		pc->props = NULL;
 		pc->prop_cnt = 0;
 	}
+	passert(pc->prop_cnt == 0);
 }
 
 static void free_sa_v2_prop_disj(struct db_v2_prop *pc)
@@ -1960,10 +1964,13 @@ static void free_sa_v2_prop_disj(struct db_v2_prop *pc)
 		pc->props = NULL;
 		pc->prop_cnt = 0;
 	}
+	passert(pc->prop_cnt == 0);
 }
 
-void free_sa(struct db_sa *f)
+void free_sa(struct db_sa **sapp)
 {
+	struct db_sa *f = *sapp;
+
 	if (f != NULL) {
 		unsigned int i;
 
@@ -1974,16 +1981,19 @@ void free_sa(struct db_sa *f)
 			f->prop_conjs = NULL;
 			f->prop_conj_cnt = 0;
 		}
+		passert(f->prop_conj_cnt == 0);
 
-		if (f->prop_disj != NULL) {
-			for (i = 0; i < f->prop_disj_cnt; i++)
-				free_sa_v2_prop_disj(&f->prop_disj[i]);
-			pfree(f->prop_disj);
-			f->prop_disj = NULL;
-			f->prop_disj_cnt = 0;
+		if (f->v2_prop_disj != NULL) {
+			for (i = 0; i < f->v2_prop_disj_cnt; i++)
+				free_sa_v2_prop_disj(&f->v2_prop_disj[i]);
+			pfree(f->v2_prop_disj);
+			f->v2_prop_disj = NULL;
+			f->v2_prop_disj_cnt = 0;
 		}
+		passert(f->v2_prop_disj_cnt == 0);
 
 		pfree(f);
+		*sapp = NULL;
 	}
 }
 
@@ -2050,11 +2060,13 @@ struct db_sa *sa_copy_sa_first(struct db_sa *sa)
 	struct db_prop_conj *pc;
 	struct db_prop *p;
 
+	/* first do a shallow copy */
 	nsa = clone_thing(*sa, "sa copy prop_conj");
 	nsa->dynamic = TRUE;
 	if (nsa->prop_conj_cnt == 0)
 		return nsa;
 
+	/* truncate to first prop_conj */
 	nsa->prop_conj_cnt = 1;
 	nsa->prop_conjs = clone_bytes(nsa->prop_conjs,
 				      sizeof(nsa->prop_conjs[0]),
@@ -2064,6 +2076,7 @@ struct db_sa *sa_copy_sa_first(struct db_sa *sa)
 	if (pc->prop_cnt == 0)
 		return nsa;
 
+	/* truncate to first prop */
 	pc->prop_cnt = 1;
 	pc->props = clone_bytes(pc->props,
 				sizeof(pc->props[0]),
@@ -2073,6 +2086,7 @@ struct db_sa *sa_copy_sa_first(struct db_sa *sa)
 	if (p->trans_cnt == 0)
 		return nsa;
 
+	/* truncate to first trans */
 	p->trans_cnt = 1;
 	p->trans = clone_bytes(p->trans,
 			       sizeof(p->trans[0]),

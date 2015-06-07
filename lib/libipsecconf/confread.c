@@ -396,7 +396,12 @@ static bool load_setup(struct starter_config *cfg,
  * @param perr pointer to char containing error value
  * @return bool TRUE if failed
  */
-static bool validate_end(struct ub_ctx *dnsctx,
+
+#ifndef DNSSEC
+static bool validate_end(struct ub_ctx *dnsctx UNUSED,
+#else
+static bool validate_end(struct ub_ctx *dnsctx ,
+#endif
 			struct starter_conn *conn_st,
 			struct starter_end *end,
 			const char *leftright,

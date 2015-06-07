@@ -60,9 +60,9 @@ main(int argc, char *argv[]){
 		printf("sa2:\n");
 		sa_print(sa2);
 
-		free_sa(sa1);
-		free_sa(sa2);
-		free_sa(gsp);
+		free_sa(&sa1);
+		free_sa(&sa2);
+		free_sa(&gsp);
 		report_leaks();
 	}
 

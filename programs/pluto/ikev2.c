@@ -807,6 +807,22 @@ void process_v2_packet(struct msg_digest **mdp)
 			 */
 			rehash_state(st, md->hdr.isa_rcookie);
 		}
+
+
+		/*
+		 * We need to check if this IKE_INIT is a retransmit
+		 */
+		if (st != NULL && md->original_role == ORIGINAL_RESPONDER) {
+			if (st->st_msgid_lastrecv == md->msgid_received) {
+				/* this is a recent retransmit. */
+				DBG(DBG_CONTROLMORE, DBG_log(
+					"duplicate IKE_INIT_I message received, retransmiting previous packet"));
+				send_ike_msg(st, "ikev2-responder-retransmit");
+				return;
+			}
+			/* update lastrecv later on */
+		}
+
 	} else if (!msg_r) {
 		/*
 		 * A request; send it to the parent.
@@ -1461,17 +1477,7 @@ static void success_v2_state_transition(struct msg_digest *md)
 
 		close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
-		passert(st->st_tpacket.ptr == NULL);
-		clonetochunk(st->st_tpacket, reply_stream.start,
-			     pbs_offset(&reply_stream), "reply packet");
-
-		/* actually send the packet
-		 * Note: this is a great place to implement "impairments"
-		 * for testing purposes.  Suppress or duplicate the
-		 * send_ike_msg call depending on st->st_state.
-		 */
-
-		send_ike_msg(st, enum_name(&state_names, from_state));
+		record_and_send_ike_msg(st, &reply_stream, enum_name(&state_names, from_state));
 	}
 
 	if (w == RC_SUCCESS) {
@@ -1809,7 +1815,8 @@ bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list)
 		return FALSE;
 	} else {
 		const enum ike_trans_type_dh *group;
-		DBG(DBG_CONTROL,DBG_log("check our default proposal for receievd DH group"));
+
+		DBG(DBG_CONTROL,DBG_log("check our default proposal for received DH group"));
 		for (group = IKEv2_oakley_sadb_groups;
 		     *group != OAKLEY_GROUP_invalid; group++) {
 			if (received == (*group))
@@ -1826,6 +1833,7 @@ oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list)
 	if (ai_list != NULL) {
 		struct ike_info *ike_info;
 		int cnt;
+
 		ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
 			if (ike_info->ike_modp != OAKLEY_GROUP_invalid) {
 				/* confirm we support it */
@@ -1834,6 +1842,7 @@ oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list)
 			}
 		}
 	}
+
 	/* no valid groups, again pick first from default list */
 	return IKEv2_oakley_sadb_default_group;
 }
