@@ -298,8 +298,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 					enum_name(&oakley_hash_names, ike_info->ike_halg),
 					enum_name(&oakley_group_names, ike_info->ike_modp),
 					(long)ike_info->ike_eklen);
-				free_sa(emp_sp);
-				emp_sp = NULL;
+				free_sa(&emp_sp);
 			} else {
 				/*
 				 * The previous group won't work on old Cisco gear,
@@ -315,8 +314,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 				loglog(RC_LOG_SERIOUS,
 					"Deleting previous proposal in the hopes of selecting DH 2 or DH 5");
 
-				free_sa(gsp);
-				gsp = NULL;
+				free_sa(&gsp);
 			}
 
 			warned_dropped_dhgr = TRUE;
@@ -377,21 +375,20 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 					} else {
 						struct db_sa *new = sa_merge_proposals(gsp, emp_sp);
 
-						free_sa(gsp);
+						free_sa(&gsp);
 						gsp = new;
 					}
 					if (ks == max_ks)
 						break;
 				}
-				free_sa(emp_sp);
+				free_sa(&emp_sp);
 			} else {
 				if (gsp != NULL) {
 					/* now merge emp_sa and gsp */
 					struct db_sa *new = sa_merge_proposals(gsp, emp_sp);
 
-					free_sa(gsp);
-					free_sa(emp_sp);
-					emp_sp = NULL;
+					free_sa(&gsp);
+					free_sa(&emp_sp);
 					gsp = new;
 				} else {
 					gsp = emp_sp;

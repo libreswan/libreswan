@@ -1733,7 +1733,8 @@ bool modp_in_propset(oakley_group_t received, struct alg_info_ike *ai_list)
 		return FALSE;
 	} else {
 		const enum ike_trans_type_dh *group;
-		DBG(DBG_CONTROL,DBG_log("check our default proposal for receievd DH group"));
+
+		DBG(DBG_CONTROL,DBG_log("check our default proposal for received DH group"));
 		for (group = IKEv2_oakley_sadb_groups;
 		     *group != OAKLEY_GROUP_invalid; group++) {
 			if (received == (*group))
@@ -1750,6 +1751,7 @@ oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list)
 	if (ai_list != NULL) {
 		struct ike_info *ike_info;
 		int cnt;
+
 		ALG_INFO_IKE_FOREACH(ai_list, ike_info, cnt) {
 			if (ike_info->ike_modp != OAKLEY_GROUP_invalid) {
 				/* confirm we support it */
@@ -1758,6 +1760,7 @@ oakley_group_t first_modp_from_propset(struct alg_info_ike *ai_list)
 			}
 		}
 	}
+
 	/* no valid groups, again pick first from default list */
 	return IKEv2_oakley_sadb_default_group;
 }

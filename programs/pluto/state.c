@@ -657,8 +657,7 @@ void delete_state(struct state *st)
 	unreference_key(&st->st_peer_pubkey);
 	release_fragments(st);
 
-	free_sa(st->st_sadb);
-	st->st_sadb = NULL;
+	free_sa(&st->st_sadb);
 
 	clear_dh_from_state(st);
 

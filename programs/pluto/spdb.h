@@ -160,15 +160,24 @@ struct db_v2_prop {
 	unsigned int prop_cnt;		/* number of conjunctive proposals */
 };
 
-/* security association */
+/*
+ * Security Association
+ *
+ * Heap memory is owned by one pointer, usually st->st_sadb.
+ * Other pointers' lifetimes must nest within this allocation duration.
+ * If "dynamic" is false, things are not on the heap and must not be mutated.
+ * V2 uses the V1 substructures and then converts them with sa_v2_convert().
+ * If the v2 substructures are present, they are based on the v1 substructures
+ * and conversion will not be required.
+ */
 struct db_sa {
 	bool dynamic;	/* set if these items were unshared on heap */
 	bool parentSA;	/* set if this is a parent/oakley */
 	struct db_prop_conj *prop_conjs;	/* v1: [prop_conj_cnt] conjunctions of proposals (disjunction) */
 	unsigned int prop_conj_cnt;	/* v1: number of conjunctions of proposals */
 
-	struct db_v2_prop *prop_disj;	/* v2: [prop_disj_cnt] */
-	unsigned int prop_disj_cnt;	/* v2: number of elements... OR */
+	struct db_v2_prop *v2_prop_disj;	/* v2: [v2_prop_disj_cnt] */
+	unsigned int v2_prop_disj_cnt;	/* v2: number of elements... OR */
 };
 
 /*
@@ -180,16 +189,16 @@ struct db_sa {
  *
  * am == agressive mode
  */
-struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c);
-struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c);
-struct db_sa *IKEv2_oakley_sadb(lset_t x);
+extern struct db_sa *IKEv1_oakley_sadb(lset_t x, struct connection *c);
+extern struct db_sa *IKEv1_oakley_am_sadb(lset_t x, struct connection *c);
+extern struct db_sa *IKEv2_oakley_sadb(lset_t x);
 
 /*
  * Terminated by OAKLEY_GROUP_invalid.  Must contain all groups found
  * in IKEv2_oakley_sadb.
  */
 extern const enum ike_trans_type_dh IKEv2_oakley_sadb_groups[];
-const enum ike_trans_type_dh IKEv2_oakley_sadb_default_group;
+extern const enum ike_trans_type_dh IKEv2_oakley_sadb_default_group;
 
 /* The ipsec sadb is subscripted by a bitset with members
  * from POLICY_ENCRYPT, POLICY_AUTHENTICATE, POLICY_COMPRESS
@@ -243,7 +252,7 @@ extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body 
 					  struct state *st);            /* current state object */
 
 extern void free_sa_attr(struct db_attr *attr);
-extern void free_sa(struct db_sa *f);
+extern void free_sa(struct db_sa **sapp);
 extern struct db_sa *sa_copy_sa(struct db_sa *sa);
 extern struct db_sa *sa_copy_sa_first(struct db_sa *sa);
 extern struct db_sa *sa_merge_proposals(struct db_sa *a, struct db_sa *b);
@@ -254,6 +263,6 @@ extern void sa_log(struct db_sa *f);
 extern void sa_v2_log(struct db_sa *f);
 
 /* IKEv1 <-> IKEv2 things */
-extern struct db_sa *sa_v2_convert(struct db_sa *f);
+extern void sa_v2_convert(struct db_sa **sapp);
 
 #endif /*  _SPDB_H_ */

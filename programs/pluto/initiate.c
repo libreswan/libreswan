@@ -252,7 +252,7 @@ static int initiate_a_connection(struct connection *c,
 					close_any(is->whackfd);
 					return 0;
 				}
-				free_sa(phase2_sa);
+				free_sa(&phase2_sa);
 			}
 
 			{

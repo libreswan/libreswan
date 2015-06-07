@@ -185,7 +185,7 @@ void sa_v2_log(struct db_sa *f)
 	unsigned int i;
 
 	DBG_log("sav2 disjoint cnt: %u\n",
-	       f->prop_disj_cnt);
-	for (i = 0; i < f->prop_disj_cnt; i++)
-		log_sa_v2_prop(&f->prop_disj[i]);
+	       f->v2_prop_disj_cnt);
+	for (i = 0; i < f->v2_prop_disj_cnt; i++)
+		log_sa_v2_prop(&f->v2_prop_disj[i]);
 }

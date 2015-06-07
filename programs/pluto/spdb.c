@@ -1720,6 +1720,7 @@ struct db_sa IKEv2_oakley_sadb_table[] = {
 struct db_sa *IKEv2_oakley_sadb(lset_t x)
 {
 	unsigned index = x & LRANGES(POLICY_PSK, POLICY_AUTH_NULL);
+
 	passert(index <= elemsof(IKEv2_oakley_sadb_table));
 	return &IKEv2_oakley_sadb_table[index];
 }
@@ -1966,8 +1967,10 @@ static void free_sa_v2_prop_disj(struct db_v2_prop *pc)
 	passert(pc->prop_cnt == 0);
 }
 
-void free_sa(struct db_sa *f)
+void free_sa(struct db_sa **sapp)
 {
+	struct db_sa *f = *sapp;
+
 	if (f != NULL) {
 		unsigned int i;
 
@@ -1980,16 +1983,17 @@ void free_sa(struct db_sa *f)
 		}
 		passert(f->prop_conj_cnt == 0);
 
-		if (f->prop_disj != NULL) {
-			for (i = 0; i < f->prop_disj_cnt; i++)
-				free_sa_v2_prop_disj(&f->prop_disj[i]);
-			pfree(f->prop_disj);
-			f->prop_disj = NULL;
-			f->prop_disj_cnt = 0;
+		if (f->v2_prop_disj != NULL) {
+			for (i = 0; i < f->v2_prop_disj_cnt; i++)
+				free_sa_v2_prop_disj(&f->v2_prop_disj[i]);
+			pfree(f->v2_prop_disj);
+			f->v2_prop_disj = NULL;
+			f->v2_prop_disj_cnt = 0;
 		}
-		passert(f->prop_disj_cnt == 0);
+		passert(f->v2_prop_disj_cnt == 0);
 
 		pfree(f);
+		*sapp = NULL;
 	}
 }
 

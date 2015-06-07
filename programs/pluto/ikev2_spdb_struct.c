@@ -163,8 +163,8 @@ bool ikev2_out_sa(pb_stream *outs,
 						    TRUE /* tunnel */);
 
 	/* now send out all the proposals */
-	for (pc_cnt = 0; pc_cnt < sadb->prop_disj_cnt; pc_cnt++) {
-		struct db_v2_prop *vp = &sadb->prop_disj[pc_cnt];
+	for (pc_cnt = 0; pc_cnt < sadb->v2_prop_disj_cnt; pc_cnt++) {
+		struct db_v2_prop *vp = &sadb->v2_prop_disj[pc_cnt];
 		unsigned int pr_cnt;
 
 		/* now send out all the transforms */
@@ -205,7 +205,7 @@ bool ikev2_out_sa(pb_stream *outs,
 
 			/* See RFC5996bis Section 3.3 */
 			if (pr_cnt + 1 < vp->prop_cnt || pc_cnt + 1 <
-			    sadb->prop_disj_cnt)
+			    sadb->v2_prop_disj_cnt)
 				p.isap_lp = v2_PROPOSAL_NON_LAST;
 			else
 				p.isap_lp = v2_PROPOSAL_LAST;
@@ -401,10 +401,13 @@ static enum ikev2_trans_type_prf v1tov2_prf(enum ikev2_trans_type_prf oakley)
 }
 
 /*
- * ??? this really ought to be an in situ converter
+ * Create a V2 replica of a V1 SA, in situ
+ * - idempotent: if the work has been done, don't do it again
+ * - as a side effect, the resulting struct db_sa will be dynamic.
  */
-struct db_sa *sa_v2_convert(struct db_sa *f)
+void sa_v2_convert(struct db_sa **sapp)
 {
+	struct db_sa *f = *sapp;
 	unsigned int pcc, pr_cnt, pc_cnt, propnum;
 	int tot_trans;
 	int i;
@@ -413,22 +416,19 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	struct db_v2_prop_conj *pc;
 	struct db_v2_prop *pr;
 
-	DBG(DBG_CONTROL, DBG_log("FIXME: sa_v2_convert() called - known to be called a few times in a row"));
+	passert(f != NULL);	/* we expect an actual SA */
 
-	pexpect(f != NULL);	/* we expect an actual SA */
-	if (f == NULL)
-		return NULL;
-
-	passert((f->prop_disj == NULL) == (f->prop_disj_cnt == 0));
+	passert((f->v2_prop_disj == NULL) == (f->v2_prop_disj_cnt == 0));
 
 	/* make sa_v2_convert idempotent */
-	if (f->prop_disj != NULL) {
+	if (f->v2_prop_disj != NULL) {
 		DBG(DBG_CONTROL, DBG_log("FIXME: sa_v2_convert() called redundantly"));
-		return f;
+		return;
 	}
 
+	/* ensure *sapp is mutable */
 	if (!f->dynamic)
-		f = sa_copy_sa(f);
+		*sapp = f = sa_copy_sa(f);
 
 	/* count transforms and allocate space for result */
 	{
@@ -671,12 +671,10 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 		passert(tr_cnt == tr_pos);
 	}
 
-	f->prop_disj = pr;
-	f->prop_disj_cnt = pr_cnt + 1;
+	f->v2_prop_disj = pr;
+	f->v2_prop_disj_cnt = pr_cnt + 1;
 
 	pfree(dtfset);
-
-	return f;
 }
 
 static bool spdb_v2_match_parent(struct db_sa *sadb,
@@ -692,8 +690,8 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 {
 	unsigned int pd_cnt;
 
-	for (pd_cnt = 0; pd_cnt < sadb->prop_disj_cnt; pd_cnt++) {
-		struct db_v2_prop *pd = &sadb->prop_disj[pd_cnt];
+	for (pd_cnt = 0; pd_cnt < sadb->v2_prop_disj_cnt; pd_cnt++) {
+		struct db_v2_prop *pd = &sadb->v2_prop_disj[pd_cnt];
 		struct db_v2_prop_conj *pj;
 		unsigned int tr_cnt;
 		bool encr_matched = FALSE;
@@ -1299,22 +1297,21 @@ stf_status ikev2_parse_parent_sa_body(
 	unsigned int nextpropnum = 1;
 	bool gotmatch = FALSE;
 	struct ikev2_prop winning_prop;
-	struct db_sa *sadb;
 	struct trans_attrs ta;
 	struct connection *c = st->st_connection;
 	struct ikev2_transform_list itl0;
 
-	/* find the policy structures: quite a dance */
-	sadb = st->st_sadb;
-	if (sadb == NULL) {
+	/* find the policy structures: quite a dance (see ikev2parent_outI1) */
+	if (st->st_sadb == NULL) {
 		struct db_sa *t = IKEv2_oakley_sadb(c->policy);
-
-		sadb = oakley_alg_makedb(st->st_connection->alg_info_ike,
+		struct db_sa *u = oakley_alg_makedb(st->st_connection->alg_info_ike,
 					 t, FALSE);
-		if (sadb == NULL)
-			sadb = t;
+
+		/* ??? if u is NULL, perhaps we should bail? */
+		pexpect(u != NULL);
+		st->st_sadb = u == NULL ? t : u;
 	}
-	sadb = st->st_sadb = sa_v2_convert(sadb);
+	sa_v2_convert(&st->st_sadb);
 
 	zero(&ta);
 
@@ -1396,7 +1393,7 @@ stf_status ikev2_parse_parent_sa_body(
 
 		/* Note: only try to match if we haven't had one */
 		if (!gotmatch &&
-		    ikev2_match_transform_list_parent(sadb,
+		    ikev2_match_transform_list_parent(st->st_sadb,
 						      proposal.isap_propnum,
 						      proposal.isap_protoid,
 						      &itl0)) {
@@ -1463,7 +1460,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 {
 	unsigned int pd_cnt;
 
-	for (pd_cnt = 0; pd_cnt < sadb->prop_disj_cnt; pd_cnt++) {
+	for (pd_cnt = 0; pd_cnt < sadb->v2_prop_disj_cnt; pd_cnt++) {
 		struct db_v2_prop_conj  *pj;
 		unsigned int tr_cnt;
 
@@ -1479,7 +1476,7 @@ static bool spdb_v2_match_child(struct db_sa *sadb,
 		int observed_integ_keylen = 0;
 
 		{
-			struct db_v2_prop *pd = &sadb->prop_disj[pd_cnt];
+			struct db_v2_prop *pd = &sadb->v2_prop_disj[pd_cnt];
 
 			/* XXX need to fix this */
 			if (pd->prop_cnt != 1)
@@ -1711,7 +1708,6 @@ stf_status ikev2_parse_child_sa_body(
 	unsigned int nextpropnum = 1;
 	bool gotmatch = FALSE;
 	struct ikev2_prop winning_prop;
-	struct db_sa *p2alg;
 	struct trans_attrs ta;
 	struct connection *c = st->st_connection;
 	struct ikev2_transform_list itl0;
@@ -1721,10 +1717,11 @@ stf_status ikev2_parse_child_sa_body(
 	/*
 	 * Find the policy structures.
 	 * ??? does this only work for ESP?
-	 * There is not c->alg_info_ah.
+	 * There is no c->alg_info_ah.
 	 */
-	p2alg = sa_v2_convert(kernel_alg_makedb(c->policy, c->alg_info_esp, TRUE));
-	st->st_sadb = p2alg; /* stick it here so it get freed along with st */
+	passert(st->st_sadb == NULL);
+	st->st_sadb = kernel_alg_makedb(c->policy, c->alg_info_esp, TRUE);
+	sa_v2_convert(&st->st_sadb);
 
 	zero(&ta);
 
@@ -1816,8 +1813,8 @@ stf_status ikev2_parse_child_sa_body(
 		}
 
 		/* Note: only try to match if we haven't had one */
-		if (!gotmatch && p2alg != NULL &&
-		    ikev2_match_transform_list_child(p2alg,
+		if (!gotmatch &&
+		    ikev2_match_transform_list_child(st->st_sadb,
 						     proposal.isap_propnum,
 						     proposal.isap_protoid,
 						     &itl0)) {
@@ -1944,16 +1941,14 @@ stf_status ikev2_emit_ipsec_sa(struct msg_digest *md,
 
 	p2alg = kernel_alg_makedb(policy, c->alg_info_esp, TRUE);
 
-	p2alg = sa_v2_convert(p2alg);
+	sa_v2_convert(&p2alg);
 
 	if (!ikev2_out_sa(outpbs, proto, p2alg, md->st, FALSE, np)) {
-		free_sa(p2alg);
-		p2alg = NULL;
+		free_sa(&p2alg);
 		libreswan_log("ikev2_emit_ipsec_sa: ikev2_out_sa() failed");
 		return STF_INTERNAL_ERROR;
 	}
-	free_sa(p2alg);
-	p2alg = NULL;
+	free_sa(&p2alg);
 
 	return STF_OK;
 }

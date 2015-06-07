@@ -258,31 +258,27 @@ stf_status ikev2parent_outI1(int whack_sock,
 			  enum_name(&state_names, st->st_state));
 	}
 
+	/* inscrutable dance of the sadbs (see ikev2_parse_parent_sa_body) */
+	passert(st->st_sadb == NULL);	/* because we just created st */
+	{
+		struct db_sa *t = IKEv2_oakley_sadb(policy);
+		struct db_sa *u = oakley_alg_makedb(
+			st->st_connection->alg_info_ike, t, FALSE);
+
+		/* ??? if u is NULL, perhaps we should bail? */
+		pexpect(u != NULL);
+		st->st_sadb = u == NULL ? t : u;
+	}
+	sa_v2_convert(&st->st_sadb);
+
 	/*
-	 * now, we need to initialize st->st_oakley, specifically, the group
-	 * number needs to be initialized.
+	 * Initialize st->st_oakley, including the group number.
+	 * Grab the DH group from the first configured proposal and build KE.
 	 */
 	{
-		oakley_group_t groupnum = OAKLEY_GROUP_invalid;
-		struct db_sa *sadb;
+		oakley_group_t groupnum = first_modp_from_propset(c->alg_info_ike);
 		stf_status e;
 
-		/* inscrutable dance of the sadbs */
-		sadb = IKEv2_oakley_sadb(policy);
-		{
-			struct db_sa *sadb_plus =
-				oakley_alg_makedb(st->st_connection->alg_info_ike,
-					 sadb, FALSE);
-
-			if (sadb_plus != NULL)
-				sadb = sadb_plus;
-		}
-		sadb = sa_v2_convert(sadb);
-		free_sa(st->st_sadb);
-		st->st_sadb = sadb;
-
-		/* Grab the DH group from the first configured proposal to build KE */
-		groupnum = first_modp_from_propset(c->alg_info_ike);
 		st->st_oakley.group = lookup_group(groupnum);	/* NULL if unknown */
 		passert(st->st_oakley.group != NULL);
 		st->st_oakley.groupnum = groupnum;
@@ -466,10 +462,7 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
 		u_char *sa_start = md->rbody.cur;
 
-		passert((st->st_sadb->prop_disj_cnt == 0) == (st->st_sadb->prop_disj == NULL));
-
-		if (st->st_sadb->prop_disj == NULL)
-			st->st_sadb = sa_v2_convert(st->st_sadb);
+		sa_v2_convert(&st->st_sadb);
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {
 			if (!ikev2_out_sa(&md->rbody, PROTO_v2_ISAKMP, st->st_sadb, st,
