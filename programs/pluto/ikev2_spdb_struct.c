@@ -679,44 +679,6 @@ struct db_sa *sa_v2_convert(struct db_sa *f)
 	return f;
 }
 
-bool ikev2_acceptable_group(struct state *st, oakley_group_t group)
-{
-	struct db_sa *sadb = st->st_sadb;
-	struct db_v2_prop *pd;
-	unsigned int pd_cnt;
-
-	for (pd_cnt = 0; pd_cnt < sadb->prop_disj_cnt; pd_cnt++) {
-		struct db_v2_prop_conj *pj;
-		struct db_v2_trans *tr;
-		unsigned int tr_cnt;
-
-		pd = &sadb->prop_disj[pd_cnt];
-
-		/* In PARENT SAs, we only support one conjunctive item */
-		if (pd->prop_cnt != 1)
-			continue;
-
-		pj = &pd->props[0];
-		if (pj->protoid  != PROTO_ISAKMP)
-			continue;
-
-		for (tr_cnt = 0; tr_cnt < pj->trans_cnt; tr_cnt++) {
-
-			tr = &pj->trans[tr_cnt];
-
-			switch (tr->transform_type) {
-			case IKEv2_TRANS_TYPE_DH:
-				if (tr->transid == group)
-					return TRUE;
-				break;
-			default:
-				break;
-			}
-		}
-	}
-	return FALSE;
-}
-
 static bool spdb_v2_match_parent(struct db_sa *sadb,
 				 unsigned propnum,
 				 unsigned encr_transform,
