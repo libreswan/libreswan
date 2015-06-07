@@ -845,8 +845,8 @@ static unsigned long envnumber(const char *name,
  */
 static void event_schedule_tv(enum event_type type, const struct timeval delay, struct state *st)
 {
-	struct pluto_event *ev = alloc_thing(struct pluto_event,
-				"struct pluto_event in event_schedule()");
+	const char *en = enum_name(&timer_event_names, type);
+	struct pluto_event *ev = alloc_thing(struct pluto_event, en);
 
 	DBG(DBG_LIFECYCLE, DBG_log("event_schedule_tv called for about %lu seconds and change",
 		delay.tv_sec));
@@ -910,12 +910,12 @@ static void event_schedule_tv(enum event_type type, const struct timeval delay, 
 	DBG(DBG_CONTROL, {
 			if (st == NULL) {
 				DBG_log("inserting event %s, timeout in %lu.%06lu seconds",
-					enum_show(&timer_event_names, type),
+					en,
 					(unsigned long)delay.tv_sec,
 					(unsigned long)delay.tv_usec);
 			} else {
 				DBG_log("inserting event %s, timeout in %lu.%06lu seconds for #%lu",
-					enum_show(&timer_event_names, type),
+					en,
 					(unsigned long)delay.tv_sec,
 					(unsigned long)delay.tv_usec,
 					ev->ev_state->st_serialno);
