@@ -201,6 +201,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 	if args.fips:
 		fp = open("/etc/system-fips","w")
 		fp.close()
+		commands.getoutput("/testing/guestbin/fipson")
 		# the test also requires using a modutil cmd which we cannot run here
 	else:
 		if os.path.isfile("/etc/system-fips"):
