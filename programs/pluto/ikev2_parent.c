@@ -376,8 +376,15 @@ static bool justship_v2KE(struct state *st UNUSED,
 	if (!out_struct(&v2ke, &ikev2_ke_desc, outs, &kepbs))
 		return FALSE;
 
-	if (!out_chunk(*g, &kepbs, "ikev2 g^x"))
-		return FALSE;
+	if (DBGP(IMPAIR_SEND_ZERO_GX))	{
+		libreswan_log("sending bogus g^x == 0 value to break DH calculations because impair-send-zero-gx was set");
+		/* Only used to test sending/receiving bogus g^x */
+		if (!out_zero(g->len, &kepbs, "ikev2 impair g^x == 0"))
+			return FALSE;
+	} else {
+		if (!out_chunk(*g, &kepbs, "ikev2 g^x"))
+			return FALSE;
+	}
 
 	close_output_pbs(&kepbs);
 	return TRUE;
