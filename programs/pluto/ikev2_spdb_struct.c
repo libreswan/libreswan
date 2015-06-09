@@ -1307,8 +1307,7 @@ stf_status ikev2_parse_parent_sa_body(
 		struct db_sa *u = oakley_alg_makedb(st->st_connection->alg_info_ike,
 					 t, FALSE);
 
-		/* ??? if u is NULL, perhaps we should bail? */
-		pexpect(u != NULL);
+		/* ??? why is u often NULL? */
 		st->st_sadb = u == NULL ? t : u;
 	}
 	sa_v2_convert(&st->st_sadb);
