@@ -20,7 +20,7 @@ from fab import logutil
 
 def main():
     parser = argparse.ArgumentParser(description="results")
-
+    parser.add_argument("baseline", nargs="?")
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
     args = parser.parse_args()
@@ -28,16 +28,23 @@ def main():
 
     logger = logutil.getLogger("kvmresults")
 
+    # Preload the baseline.  This avoids re-scanning the TESTLIST and,
+    # when errors, printing those repeatedly.  Also, passing the full
+    # baseline to Test.results() lets that function differentiate
+    # between a baseline missing results or being entirely absent.
+    baseline = None
+    if args.baseline:
+        baseline = {}
+        for test in testsuite.Testsuite(directory=args.baseline):
+            baseline[test.name] = test
+
     for test in testsuite.Testsuite(directory=args.testsuite_directory):
         skip = testsuite.skip(test, args)
         if skip:
             logger.debug("skipping test %s: %s", test.name, skip)
             continue
-        result = test.result()
-        if result:
-            print("%s: passed" % (test.name))
-        else:
-            print("%s: %s" % (test.name, result))
+        result = test.result(baseline=baseline)
+        print("%s: %s" % (test.name, result))
 
 if __name__ == "__main__":
     main()
