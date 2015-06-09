@@ -643,26 +643,26 @@ _capi_hmac_new_key(struct ipsec_alg_auth *alg, const __u8 *key, int keylen)
 	dptr = alg->ixt_common.ixt_data;
 	if (!dptr) {
 		printk(KERN_ERR "_capi_hmac_new_key_auth(): "
-		       "NULL ixt_data (?!) for \"%s\" algo\n" 
+		       "NULL ixt_data (?!) for \"%s\" algo\n"
 		       , alg->ixt_common.ixt_name);
 		goto err;
 	}
 	if (debug_crypto > 0)
 		printk(KERN_DEBUG "klips_debug:_capi_hmac_new_key_auth:"
-				"name=%s dptr=%p key=%p keysize=%zd\n",
+				"name=%s dptr=%p key=%p keysize=%d\n",
 				alg->ixt_common.ixt_name, dptr, key, keylen);
 
 	tfm = crypto_alloc_hash(dptr->digestname, 0, CRYPTO_ALG_ASYNC);
 	if (IS_ERR(tfm)) {
 		printk(KERN_ERR "_capi_hmac_new_key_auth(): "
-				"NULL hmac for \"%s\" cryptoapi (\"%s\") algo\n" 
+				"NULL hmac for \"%s\" cryptoapi (\"%s\") algo\n"
 				, alg->ixt_common.ixt_name, dptr->digestname);
 		goto err;
 	}
 	if (crypto_hash_setkey(tfm, key, keylen)<0)
 	{
 		printk(KERN_ERR "_capi_hmac_new_key_auth(): "
-				"failed set_key() for \"%s\" cryptoapi algo (key=%p, keylen=%zd, err=%d)\n" 
+				"failed set_key() for \"%s\" cryptoapi algo (key=%p, keylen=%d, err=%d)\n"
 				, alg->ixt_common.ixt_name, key, keylen, ret);
 		crypto_free_hash(tfm);
 		tfm=NULL;
@@ -671,7 +671,7 @@ _capi_hmac_new_key(struct ipsec_alg_auth *alg, const __u8 *key, int keylen)
 err:
 	if (debug_crypto > 0)
 		printk(KERN_DEBUG "klips_debug:_capi_hmac_new_key:"
-				"name=%s key=%p keylen=%zd tfm=%p\n",
+				"name=%s key=%p keylen=%d tfm=%p\n",
 				alg->ixt_common.ixt_name, key, keylen, tfm);
 	return (__u8 *) tfm;
 }

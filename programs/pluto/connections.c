@@ -2235,7 +2235,10 @@ struct connection *route_owner(struct connection *c,
 	struct spd_route *best_sr, *best_esr;
 	enum routing_t best_routing, best_erouting;
 
-	passert(oriented(*c));
+	if (!oriented(*c)) {
+		libreswan_log("route_owner: connection no longer oriented - system interface change?");
+		return NULL;
+	}
 	best_sr = NULL;
 	best_esr = NULL;
 	best_routing = cur_spd->routing;
