@@ -22,17 +22,32 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 #Just core packages
 #ensure we never accidentally get the openswan package
 %packages
+
 @core
+
+# Note: The install repo is a cut-down version of "Everything", stuff
+# is missing.  Consequently leave installing most stuff to the POST
+# stage where YUM is available and pointing at the repo "Everything".
+
+# To avoid an accidental kernel upgrade (KLIPS doesn't build with the
+# 4.x kernels), install everything kernel dependent here.  If you find
+# the kernel still being upgraded look at the log files in /var/tmp.
+
+kernel-devel
+kernel-headers
+kernel-core
+kernel-modules
+kernel-modules-extra
+glibc-devel
+xl2tpd
+
 # for now, let's not try and mix openswan rpm and /usr/local install of openswan
 # later on, we will add an option to switch between "stock" and /usr/local openswan
 -openswan
 -sendmail
+
 # nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
 -NetworkManager
-
-# The install repo is a cut-down version of Everything so stuff is
-# missing.  Leave installing most stuff to the POST stage where YUM is
-# available and pointing at the Everything repo.
 
 %end
 
@@ -51,15 +66,23 @@ echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 # Tuomo switched to this alternative work-around for pmtu issues
 sysctl -w net.ipv4.tcp_mtu_probing=1
 
-# Install extra stuff.  Since some of these RPMs are only found in the
-# Everything repository it is easier to to do it during POST when yum
-# is set up and pointing at the latest Everything repository.
+# Install everything in the yum repo here.  Since some of these RPMs
+# are only found in the Everything repository it is easier to to do it
+# during POST when yum is set up and pointing at the latest Everything
+# repository.
 
-# NOTE: There is also extra install stuff at the very end of this
-# file.
+# There is also extra stuff, not in a repo, being installed at the
+# very end of this file.
+
+# Capture a before "yum install" log.  If something (such as a 4.x
+# kernel) is inadvertently installed, check this and yum-install.log
+# for what triggered it.
+
+rpm -qa > /var/tmp/rpm-qa.log
 
 # TODO: if rhel/centos, we should install epel-release too
-yum install -y \
+
+yum install -y 2>&1 \
     ElectricFence \
     audit-libs-devel \
     bind-utils \
@@ -74,7 +97,6 @@ yum install -y \
     gmp-devel \
     hping3 \
     ipsec-tools \
-    kernel-devel \
     libcap-ng-devel \
     libevent-devel \
     lsof \
@@ -107,9 +129,9 @@ yum install -y \
     valgrind \
     vim-enhanced \
     wget \
-    xl2tpd \
     xmlto \
-    yum-utils
+    yum-utils \
+    | tee /var/tmp/yum-install.log
 
 debuginfo-install -y \
     ElectricFence \
@@ -243,9 +265,13 @@ EOD
 # still essentially OK.
 
 # Need pyOpenSSL with ability to dump all certificates
-yum upgrade -y https://nohats.ca/ftp/pyOpenSSL/pyOpenSSL-0.14-4.fc21.noarch.rpm 2>&1 | tee /var/tmp/pyOpenSSL.log
+yum upgrade -y 2>&1 \
+    https://nohats.ca/ftp/pyOpenSSL/pyOpenSSL-0.14-4.fc21.noarch.rpm \
+    | tee /var/tmp/pyOpenSSL.log
 
 # Need strongswan with CTR, GCM, and other fixes
-yum upgrade -y https://nohats.ca/ftp/ssw/strongswan-5.3.2-1.0.lsw.fc21.x86_64.rpm 2>&1 | tee /var/tmp/strongswan.log
+yum upgrade -y 2>&1 \
+    https://nohats.ca/ftp/ssw/strongswan-5.3.2-1.0.lsw.fc21.x86_64.rpm \
+    | tee /var/tmp/strongswan.log
 
 %end
