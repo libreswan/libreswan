@@ -27,8 +27,6 @@ services --disabled=sm-client,sendmail,network,smartd,crond,atd
 # later on, we will add an option to switch between "stock" and /usr/local openswan
 -openswan
 -sendmail
-gdb
-tcpdump
 # nm causes problems and steals our interfaces desipte NM_CONTROLLED="no"
 -NetworkManager
 
@@ -55,7 +53,10 @@ sysctl -w net.ipv4.tcp_mtu_probing=1
 
 # Install extra stuff.  Since some of these RPMs are only found in the
 # Everything repository it is easier to to do it during POST when yum
-# is set up and pointing at Everything.
+# is set up and pointing at the latest Everything repository.
+
+# NOTE: There is also extra install stuff at the very end of this
+# file.
 
 # TODO: if rhel/centos, we should install epel-release too
 yum install -y \
@@ -67,6 +68,7 @@ yum install -y \
     fipscheck-devel \
     flex \
     gcc \
+    gdb \
     git \
     gmp-devel \
     gmp-devel \
@@ -98,6 +100,7 @@ yum install -y \
     screen \
     strace \
     strongswan \
+    tcpdump \
     unbound \
     unbound-devel \
     unbound-libs \
@@ -211,9 +214,6 @@ WantedBy=shutdown.target reboot.target poweroff.target
 EOD
 systemctl enable sshd-shutdown.service
 
-# Needed for newer nss
-yum update -y 
-
 # ensure pluto does not get restarted by systemd on crash
 sed -i "s/Restart=always/Restart=no" /lib/systemd/system/ipsec.service
 
@@ -236,5 +236,16 @@ cat << EOD >> /etc/hosts
 192.1.3.209 road
 192.1.2.254 nic
 EOD
+
+# Extra yum stuff
+
+# Do this last so that should something barf or hang the install is
+# still essentially OK.
+
+# Need pyOpenSSL with ability to dump all certificates
+yum upgrade -y https://nohats.ca/ftp/pyOpenSSL/pyOpenSSL-0.14-4.fc21.noarch.rpm 2>&1 | tee /var/tmp/pyOpenSSL.log
+
+# Need strongswan with CTR, GCM, and other fixes
+yum upgrade -y https://nohats.ca/ftp/ssw/strongswan-5.3.2-1.0.lsw.fc21.x86_64.rpm 2>&1 | tee /var/tmp/strongswan.log
 
 %end
