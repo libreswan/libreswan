@@ -68,7 +68,6 @@
 
 #include "cookie.h"
 #include "sha1.h"
-#include "md5.h"
 #include "crypto.h"
 #include "vendor.h"
 
@@ -691,8 +690,18 @@ void ikev1_natd_init(struct state *st, struct msg_digest *md)
 	    DBG_log("checking NAT-t: %s and %s",
 		    nat_traversal_enabled ? "enabled" : "disabled",
 		    bitnamesof(natt_bit_names, st->hidden_variables.st_nat_traversal)));
+
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
+		if (md->st->st_oakley.prf_hasher == NULL) {
+			/*
+			 * This connection is doomed - no PRF for NATD hash
+			 * Probably in FIPS trying MD5 ?
+			 * Nothing will get send, so just do nothing
+			 */
+			return;
+		}
 		ikev1_natd_lookup(md);
+
 		if (st->hidden_variables.st_nat_traversal != LEMPTY) {
 			nat_traversal_show_result(
 				st->hidden_variables.st_nat_traversal,

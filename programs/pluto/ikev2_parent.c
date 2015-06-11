@@ -470,8 +470,9 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 	{
 		u_char *sa_start = md->rbody.cur;
 
-		/* XXX: already done at this point and the check is broken so it repeats */
-		if (st->st_sadb->prop_disj_cnt == 0 || st->st_sadb->prop_disj)
+		passert((st->st_sadb->prop_disj_cnt == 0) == (st->st_sadb->prop_disj == NULL));
+
+		if (st->st_sadb->prop_disj == NULL)
 			st->st_sadb = sa_v2_convert(st->st_sadb);
 
 		if (!DBGP(IMPAIR_SEND_IKEv2_KE)) {

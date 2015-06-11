@@ -61,7 +61,6 @@ kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			wip
 kvmplutotest	ikev2-29-no-rekey			good
-kvmplutotest	ikev2-33-rekey-ike			good
 kvmplutotest	ikev2-ddns-01				good
 kvmplutotest	ikev2-ddns-02				good
 kvmplutotest	ikev1-cryptoload-01			good
@@ -156,6 +155,9 @@ kvmplutotest	ikev2-39-psk-64bytes 			good
 kvmplutotest	nflog-01-global				good
 kvmplutotest	nflog-02-conn				good
 kvmplutotest	nflog-03-conns				good
+
+kvmplutotest	ikev2-43-init-retransmit		good
+
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate

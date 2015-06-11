@@ -13,6 +13,7 @@
 # for more details.
 
 import sys
+from fab import tee
 
 def timeout(arg):
     arg = arg.lower()
@@ -25,46 +26,27 @@ def timeout(arg):
         return v
 
 def add_redirect_argument(parser, what, *args, **kwargs):
+    # Can't use '-FILE' as the argument as the parser doesn't like it.
+    # The prefix syntax is hacky.
     parser.add_argument(*args, type=stdout_or_open_file,
                         help=(what +
-                              "; by default %(metavar)s will be overwritten"
-                              "; '+%(metavar)s' instead appends"
-                              "; '++%(metavar)s' instead appends and copies to stdout"
-                              "; '-' directs output to stdout"
-                                  "; '-%(metavar)s' instead overwrites and copies to stdout"),
+                              "; '-' is an alias for /dev/stdout"
+                              "; '+%(metavar)s': append to %(metavar)s"
+                              "; '=%(metavar)s': overwrite %(metavar)s (default behaviour)"
+                              "; '++%(metavar)s': copy to stdout, append to %(metavar)s"
+                              "; '+=%(metavar)s': copy to stdout, overwrite %(metavar)s"),
                         **kwargs)
 
 def stdout_or_open_file(arg):
     if arg == "-":
         return sys.stdout
-    elif arg.startswith("-"):
-        return Tee(sys.stdout, files=[open(arg[:1], "w")])
     elif arg.startswith("++"):
-        return Tee(sys.stdout, files=[open(arg[2:], "a")])
+        return tee.open(sys.stdout, files=[open(arg[2:], "a")])
+    elif arg.startswith("+="):
+        return tee.open(sys.stdout, files=[open(arg[2:], "w")])
     elif arg.startswith("+"):
         return open(arg[1:], "a")
+    elif arg.startswith("="):
+        return open(arg[1:], "w")
     else:
         return open(arg, "w")
-
-class Tee:
-
-    def __init__(self, *streams, files=[]):
-        self.files = files
-        # XXX: Better way?
-        self.streams = []
-        for s in streams:
-            self.streams.append(s)
-        for f in files:
-            self.streams.append(f)
-
-    def close(self):
-        for f in self.files:
-            f.close()
-
-    def write(self, text):
-        for stream in self.streams:
-            stream.write(text)
-
-    def flush(self):
-        for stream in self.streams:
-            stream.flush()

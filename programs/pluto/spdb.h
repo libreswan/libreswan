@@ -256,6 +256,4 @@ extern void sa_v2_log(struct db_sa *f);
 /* IKEv1 <-> IKEv2 things */
 extern struct db_sa *sa_v2_convert(struct db_sa *f);
 
-extern bool ikev2_acceptable_group(struct state *st, oakley_group_t group);
-
 #endif /*  _SPDB_H_ */
