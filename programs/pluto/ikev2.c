@@ -975,6 +975,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	const pb_stream *id_pbs;
 	struct ikev2_id *v2id;
 	struct id peer;
+	char idbuf[IDTOA_BUF];
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
@@ -1098,20 +1099,21 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	}
 
 	DBG(DBG_CONTROL, {
-		char buf[IDTOA_BUF];
 
-		dntoa_or_null(buf, IDTOA_BUF, c->spd.this.ca, "%none");
-		DBG_log("offered CA: '%s'", buf);
+		dntoa_or_null(idbuf, IDTOA_BUF, c->spd.this.ca, "%none");
+		DBG_log("offered CA: '%s'", idbuf);
 	});
 
-	if (!(c->policy & POLICY_AUTH_NULL)) {
-		char buf[IDTOA_BUF];
+	idtoa(&peer, idbuf, sizeof(idbuf));
+	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 
-		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-		      enum_show(&ikev2_idtype_names, v2id->isai_type), buf);
+			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			idbuf);
 	} else {
-		DBG(DBG_OPPO, DBG_log("IKEv2 mode peer ID is ID_NULL"));
+		DBG(DBG_OPPO, DBG_log("IKEv2 mode peer ID is %s: '%s'",
+			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			idbuf));
 	}
 
 	return TRUE;

@@ -696,7 +696,7 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 	const struct private_key_stuff *pks = NULL;
 
 	if (c->policy & POLICY_AUTH_NULL) {
-	DBG(DBG_PRIVATE, DBG_log("PAUL:authnull method uses empty_chunk"));
+		DBG(DBG_PRIVATE, DBG_log("AUTH_NULl secret - returning empty_chunk"));
 		return &empty_chunk;
 	}
 

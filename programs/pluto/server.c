@@ -941,7 +941,7 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					 */
 				} else if (DBGP(DBG_OPPO) ||
 				           (sender != NULL && sender->st_connection != NULL &&
-					    LDISJOINT(sender->st_connection->policy, POLICY_AUTH_NULL)))
+					    LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)))
 				{
 					/*
 					 * We are selective about printing this
