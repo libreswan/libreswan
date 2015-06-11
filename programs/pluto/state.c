@@ -486,13 +486,13 @@ void delete_state(struct state *st)
 
 	/* reduce logging of OE failures */
 	if ((c->policy & POLICY_OPPORTUNISTIC) && !IS_IKE_SA_ESTABLISHED(st)) {
-		libreswan_log("deleting state #%lu (%s)",
-			st->st_serialno,
-			enum_show(&state_names, st->st_state));
-	} else {
 		DBG(DBG_LIFECYCLE, DBG_log("deleting state #%lu (%s)",
 			st->st_serialno,
 			enum_show(&state_names, st->st_state)));
+	} else {
+		libreswan_log("deleting state #%lu (%s)",
+			st->st_serialno,
+			enum_show(&state_names, st->st_state));
 	}
 
 

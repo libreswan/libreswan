@@ -2654,10 +2654,14 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
 			/* initiator didn't propose anything. Weird. Try unpending our end. */
 			/* UNPEND XXX */
-			libreswan_log("No CHILD SA proposals received.");
+			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				libreswan_log("No CHILD SA proposals received.");
+			} else {
+				DBG(DBG_CONTROLMORE, DBG_log("No CHILD SA proposals received"));
+			}
 			np = ISAKMP_NEXT_v2NONE;
 		} else {
-			DBG_log("CHILD SA proposals received");
+			DBG(DBG_CONTROLMORE, DBG_log("CHILD SA proposals received"));
 			np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
 				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
 		}

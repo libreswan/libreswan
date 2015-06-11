@@ -64,18 +64,19 @@
 #include "hostpair.h"
 #include "addresspool.h"
 
-/* ??? this routine only produces DBG output.  Calls should be conditional but they are not */
 void ikev2_print_ts(struct traffic_selector *ts)
 {
 	ipstr_buf b;
 
-	DBG_log("printing contents struct traffic_selector");
-	DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
-	DBG_log("  ipprotoid: %d", ts->ipprotoid);
-	DBG_log("  startport: %d", ts->startport);
-	DBG_log("  endport: %d", ts->endport);
-	DBG_log("  ip low: %s", ipstr(&ts->low, &b));
-	DBG_log("  ip high: %s", ipstr(&ts->high, &b));
+	DBG(DBG_CONTROLMORE,
+		DBG_log("printing contents struct traffic_selector");
+		DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
+		DBG_log("  ipprotoid: %d", ts->ipprotoid);
+		DBG_log("  startport: %d", ts->startport);
+		DBG_log("  endport: %d", ts->endport);
+		DBG_log("  ip low: %s", ipstr(&ts->low, &b));
+		DBG_log("  ip high: %s", ipstr(&ts->high, &b));
+	);
 }
 
 /* rewrite me with addrbytesptr() */
