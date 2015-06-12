@@ -31,7 +31,7 @@
      <arg choice='opt'>--verbose </arg>
     </group>
     <arg choice='opt'>--bits <replaceable>bits</replaceable></arg>
-    <arg choice='opt'>--random <replaceable>device</replaceable></arg>
+    <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
     <arg choice='opt'>--hostname <replaceable>hostname</replaceable></arg>
     <arg choice='opt'>--output <replaceable>filename</replaceable></arg>
 </cmdsynopsis>
@@ -65,10 +65,10 @@ mode is enabled </para>
 
 <para>The <option>--bits</option> option specifies the number of bits
 in the RSA key; the current default is a random (multiple of 16) value
-between 3072 and 4096. The minimum allowed is 2172.  </para>
+between 3072 and 4096. The minimum allowed is 2192.  </para>
 
 <para>
-The <option>--random</option> is used to specify the random device
+The <option>--seeddev</option> is used to specify the random device
 (default <filename>/dev/random</filename> used to seed the crypto
 library RNG. </para>
 
@@ -102,8 +102,9 @@ by Henry Spencer. Updated by Paul Wouters</para>
 <refsect1 id='bugs'><title>BUGS</title>
 <para>As with <emphasis remap='I'>rsasigkey</emphasis>, the run time is
 difficult to predict, since depletion of the system’s randomness pool
-can cause arbitrarily long waits for random bits, and the prime-number searches
-can also take unpre dictable (and potentially large) amounts of CPU time.
+can cause arbitrarily long waits for random bits for seeding the NSS library,
+and the prime-number searches can also take unpredictable (and potentially large)
+amounts of CPU time.
 See <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 .</para>
 
