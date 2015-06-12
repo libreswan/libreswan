@@ -981,6 +981,7 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 		}
 		if (find_fetch_dn(&fdn, c, end_cert)) {
 			add_crl_fetch_request_nss(&fdn, end_cert_dp);
+			wake_fetch_thread(__FUNCTION__);
 		}
 	}
 #endif
