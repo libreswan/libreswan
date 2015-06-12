@@ -975,8 +975,12 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 	}
 #if defined(LIBCURL) || defined(LDAP_VER)
 	if ((ret & VERIFY_RET_CRL_NEED) && CRL_CHECK_ENABLED()) {
+		generalName_t *end_cert_dp = NULL;
+		if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
+			end_cert_dp = gndp_from_nss_cert(end_cert);
+		}
 		if (find_fetch_dn(&fdn, c, end_cert)) {
-			add_crl_fetch_request_nss(&fdn);
+			add_crl_fetch_request_nss(&fdn, end_cert_dp);
 		}
 	}
 #endif
@@ -1806,7 +1810,7 @@ void check_crls(void)
 				continue;
 
 			if (time - now < interval)
-				add_crl_fetch_request_nss(issuer);
+				add_crl_fetch_request_nss(issuer, NULL);
 
 		}
 		crl_node = crl_node->next;
