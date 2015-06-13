@@ -1415,8 +1415,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 	}
 
 	if (w == RC_SUCCESS) {
-		DBG_log("releasing whack for #%lu (sock=%d)",
-			st->st_serialno, st->st_whack_sock);
+		DBG(DBG_CONTROL, DBG_log("releasing whack for #%lu (sock=%d)",
+			st->st_serialno, st->st_whack_sock));
 		release_whack(st);
 
 		/* XXX should call unpend again on parent SA */
@@ -1424,8 +1424,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 			/* with failed child sa, we end up here with an orphan?? */
 			struct state *pst = state_with_serialno(st->st_clonedfrom);
 
-			DBG_log("releasing whack and unpending for parent #%lu",
-				pst->st_serialno);
+			DBG(DBG_CONTROL, DBG_log("releasing whack and unpending for parent #%lu",
+				pst->st_serialno));
 			unpend(pst);
 			release_whack(pst);
 		}

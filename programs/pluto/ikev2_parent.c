@@ -1063,7 +1063,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 					   st->st_dcookie);
 			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
 
-			libreswan_log("Received anti-DDOS COOKIE, resending I1 with cookie payload");
+			if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				libreswan_log("Received anti-DDOS COOKIE, resending I1 with cookie payload");
+			}
+
 			md->svm = &ikev2_parent_firststate_microcode;
 
 			change_state(st, STATE_PARENT_I1);
@@ -1095,7 +1098,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				st->st_oakley.groupnum = sg.sg_group;
 				st->st_oakley.group = lookup_group(sg.sg_group);
-				DBG(DBG_CONTROL, DBG_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
+				DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
 					strip_prefix(enum_show(&oakley_group_names,
 						sg.sg_group), "OAKLEY_GROUP_")));
 				/* wipe our mismatched KE */
@@ -1106,7 +1109,7 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				/* get a new KE */
 				return crypto_helper_build_ke(st);
 			} else {
-				DBG(DBG_CONTROL, DBG_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
+				DBG(DBG_CONTROLMORE, DBG_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
 					strip_prefix(enum_show(&oakley_group_names,
 						sg.sg_group), "OAKLEY_GROUP_")));
 				return STF_IGNORE;
@@ -1121,10 +1124,12 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 * The responder SPI ought to have been 0 (but might not be).
 			 * See rfc5996bis-04 2.6.
 			 */
-			DBG(DBG_CONTROL, DBG_log("%s: received unauthenticated %s - ignored",
-				enum_name(&state_names, st->st_state),
-				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type)));
+			if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				libreswan_log("%s: received unauthenticated %s - ignored",
+					enum_name(&state_names, st->st_state),
+					enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type));
+			}
 		}
 	}
 	return STF_IGNORE;
