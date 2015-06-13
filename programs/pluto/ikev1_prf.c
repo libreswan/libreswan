@@ -321,7 +321,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 	DBG(DBG_CRYPT,
 	    DBG_dump_chunk("peer's g: ", g));
 
-	shared = calc_dh_shared(g, ltsecret, group, pubk, story);
+	shared = calc_dh_shared(g, ltsecret, group, pubk, &story);
 
 	zero(&new_iv);
 
