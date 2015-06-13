@@ -2048,12 +2048,13 @@ void process_packet_tail(struct msg_digest **mdp)
 				}
 				/* FALL THROUGH */
 			default:
-				if (st == NULL) {
-					loglog(RC_LOG_SERIOUS,
+				if (st == NULL || (st != NULL &&
+						   (st->st_connection->policy & POLICY_OPPORTUNISTIC))) {
+					DBG(DBG_CONTROL, DBG_log(
 					       "ignoring informational payload %s, no corresponding state",
 					       enum_show(& ikev1_notify_names,
 							 p->payload.
-							 notification.isan_type));
+							 notification.isan_type)));
 				} else {
 					loglog(RC_LOG_SERIOUS,
 					       "ignoring informational payload %s, msgid=%08x, length=%d",
