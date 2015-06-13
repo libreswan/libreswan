@@ -161,7 +161,7 @@ def create_sub_cert(CN, CACert, CAkey, snum, START, END,
 	cert.set_issuer(CACert.get_subject())
 	cert.set_subject(certreq.get_subject())
 	cert.set_pubkey(certreq.get_pubkey())
-	cert.set_version(3)
+	cert.set_version(2)
 
 	if CN == 'nic-nourl.testing.libreswan.org':
 		ocspuri = False
@@ -194,7 +194,7 @@ def create_root_ca(CN, START, END,
 	cacert.set_issuer(careq.get_subject())
 	cacert.set_subject(careq.get_subject())
 	cacert.set_pubkey(careq.get_pubkey())
-	cacert.set_version(3)
+	cacert.set_version(2)
 
 	set_cert_extensions(cacert, cacert,
 						isCA=True, isRoot=True, ocsp=True, ocspuri=True)

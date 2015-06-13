@@ -975,8 +975,13 @@ static bool pluto_process_certs(struct state *st, chunk_t *certs,
 	}
 #if defined(LIBCURL) || defined(LDAP_VER)
 	if ((ret & VERIFY_RET_CRL_NEED) && CRL_CHECK_ENABLED()) {
+		generalName_t *end_cert_dp = NULL;
+		if ((ret & VERIFY_RET_OK) && end_cert != NULL) {
+			end_cert_dp = gndp_from_nss_cert(end_cert);
+		}
 		if (find_fetch_dn(&fdn, c, end_cert)) {
-			add_crl_fetch_request_nss(&fdn);
+			add_crl_fetch_request_nss(&fdn, end_cert_dp);
+			wake_fetch_thread(__FUNCTION__);
 		}
 	}
 #endif
@@ -1782,6 +1787,35 @@ static void cert_detail_list(show_cert_t type)
 #if defined(LIBCURL) || defined(LDAP_VER)
 void check_crls(void)
 {
+	CERTCrlHeadNode *crl_list = NULL;
+	CERTCrlNode *crl_node = NULL;
+	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
+	PRTime now = PR_Now();
+
+	if (handle == NULL)
+		return;
+
+	if (SEC_LookupCrls(handle, &crl_list, SEC_CRL_TYPE) != SECSuccess)
+		return;
+
+	crl_node = crl_list->first;
+
+	while (crl_node != NULL) {
+		if (crl_node->crl != NULL) {
+			PRTime time;
+			PRTime interval = (deltasecs(crl_check_interval) * 2) * PR_NSEC_PER_MSEC;
+			SECItem *n = &crl_node->crl->crl.nextUpdate;
+			SECItem *issuer = &crl_node->crl->crl.derName;
+
+			if (DER_DecodeTimeChoice(&time, n) != SECSuccess)
+				continue;
+
+			if (time - now < interval)
+				add_crl_fetch_request_nss(issuer, NULL);
+
+		}
+		crl_node = crl_node->next;
+	}
 	return;
 }
 #endif
