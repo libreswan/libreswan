@@ -107,7 +107,6 @@ west #
 Tunnel should be down with %trap or %hold preventing packet leaks
 west #
  ipsec eroute
-8          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1000@192.1.2.23
 west #
  # Remove the Blockage
 west #
@@ -130,7 +129,7 @@ west #
 Tunnel should be up even without trigger traffic
 west #
  ipsec eroute
-8          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1000@192.1.2.23
+0          192.0.1.0/24       -> 192.0.2.0/24       => tun0x1002@192.1.2.23
 west #
  ping -q -n -c 8 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -147,8 +146,8 @@ west NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
