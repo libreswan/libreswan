@@ -74,9 +74,12 @@ int pfkeyfd = NULL_FD;
 typedef u_int32_t pfkey_seq_t;
 static pfkey_seq_t pfkey_seq = 0;       /* sequence number for our PF_KEY messages */
 
-/* The orphaned_holds table records %holds for which we
- * scan_proc_shunts found no representation of in any connection.
+
+/* The orphaned_holds table records %holds for which
+ * klips_scan_shunts() found no representation of in any connection.
  * The corresponding ACQUIRE message might have been lost.
+ *
+ * Paul: this concept is KLIPS-centric and not used on other stacks
  */
 static struct eroute_info *orphaned_holds = NULL;
 
@@ -850,8 +853,9 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		      const ip_subnet *this_client,
 		      const ip_address *that_host,
 		      const ip_subnet *that_client,
-		      ipsec_spi_t spi,
-		      unsigned int proto UNUSED,
+		      ipsec_spi_t cur_spi,
+		      ipsec_spi_t new_spi,
+		      int sa_proto UNUSED,
 		      unsigned int transport_proto,
 		      enum eroute_type esatype,
 		      const struct pfkey_proto_info *proto_info UNUSED,
@@ -899,10 +903,16 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 		ERO_DELETE);
 #endif
 
+
+// temp squash a warning
+
+	DBG(DBG_CONTROL, DBG_log(" useless SPI printing for cur(%d) and new(%d) spi",
+		cur_spi, new_spi));
+
 	if (op != ERO_DELETE) {
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
 						 K_SADB_EXT_SA,
-						 spi, /* in network order */
+						 new_spi, /* in network order */
 						 0, 0, 0, 0, klips_op >>
 						 KLIPS_OP_FLAG_SHIFT),
 				  "pfkey_sa add flow", text_said, extensions)
@@ -921,7 +931,7 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 	else if (kernel_ops->type == USE_MASTKLIPS) {
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
 						 K_SADB_EXT_SA,
-						 spi, /* in network order */
+						 cur_spi, /* in network order */
 						 0, 0, 0, 0, klips_op >>
 						 KLIPS_OP_FLAG_SHIFT),
 				  "pfkey_sa del flow", text_said, extensions)))
@@ -1218,7 +1228,8 @@ void pfkey_close(void)
 	pfkeyfd = NULL_FD;
 }
 
-/* Add/replace/delete a shunt eroute.
+/*
+ * Add/replace/delete a shunt eroute.
  * Such an eroute determines the fate of packets without the use
  * of any SAs.  These are defaults, in effect.
  * If a negotiation has not been attempted, use %trap.
@@ -1343,6 +1354,7 @@ bool pfkey_shunt_eroute(struct connection *c,
 					fam->any,
 					&sr->that.client,
 					htonl(spi),
+					htonl(spi),
 					SA_INT,
 					sr->this.protocol,
 					ET_INT,
@@ -1436,7 +1448,7 @@ bool pfkey_sag_eroute(struct state *st, struct spd_route *sr,
 	}
 
 	return eroute_connection(sr,
-				 inner_spi, inner_proto,
+				 inner_spi, inner_spi, inner_proto,
 				 inner_esatype, proto_info + i,
 				 op, opname
 #ifdef HAVE_LABELED_IPSEC
@@ -1512,13 +1524,15 @@ static const char *read_proto(const char * s, size_t * len,
  * searching for each is sequential.  If this becomes a problem, faster
  * searches could be implemented (hash or radix tree, for example).
  */
-void scan_proc_shunts(void)
+void pfkey_scan_shunts(void)
 {
 	static const char procname[] = "/proc/net/ipsec_eroute";
 	FILE *f;
 	monotime_t nw = mononow();
 	int lino;
 	struct eroute_info *expired = NULL;
+
+	passert(kern_interface == USE_KLIPS || kern_interface == USE_MASTKLIPS);
 
 	event_schedule(EVENT_SHUNT_SCAN, SHUNT_SCAN_INTERVAL, NULL);
 
@@ -1746,11 +1760,15 @@ void scan_proc_shunts(void)
 
 		networkof(&p->ours, &src);
 		networkof(&p->his, &dst);
-		(void) replace_bare_shunt(&src, &dst,
-					  BOTTOM_PRIO,  /* not used because we are deleting.  This value is a filler */
-					  SPI_PASS,     /* not used because we are deleting.  This value is a filler */
-					  FALSE, p->transport_proto,
-					  "delete expired bare shunts");
+
+		if (delete_bare_shunt(&src, &dst,
+				p->transport_proto, SPI_HOLD, /* what spi to use? */
+				"delete expired bare shunts"))
+		{
+			DBG(DBG_CONTROL, DBG_log("pfkey_scan_shunts() called delete_bare_shunt() with success"));
+		} else {
+			libreswan_log("pfkey_scan_shunts() called delete_bare_shunt() which failed!");
+		}
 		expired = p->next;
 		pfree(p);
 	}

@@ -600,9 +600,17 @@ struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary 
 	return errors;
 }
 
-void ikev2_log_payload_errors(struct ikev2_payload_errors errors)
+/* report problems - but less so when OE */
+void ikev2_log_payload_errors(struct ikev2_payload_errors errors, struct state *st)
 {
-	/* report problems */
+	if (!st && !DBGP(DBG_OPPO))
+		return;
+
+	else if (st != NULL && st->st_connection != NULL &&
+ 		(st->st_connection->policy & POLICY_OPPORTUNISTIC) && !DBGP(DBG_OPPO)) {
+			return;
+	}
+
 	if (errors.missing) {
 		loglog(RC_LOG_SERIOUS,
 		       "missing payload(s) (%s). Message dropped.",
@@ -1000,8 +1008,11 @@ void process_v2_packet(struct msg_digest **mdp)
 		DBG(DBG_CONTROL, DBG_log("ended up with STATE_IKEv2_ROOF"));
 		/* no useful state microcode entry */
 		if (clear_payload_status.status != STF_OK) {
-			ikev2_log_payload_errors(clear_payload_status);
+			ikev2_log_payload_errors(clear_payload_status, st);
 			complete_v2_state_transition(mdp, clear_payload_status.status);
+		} else if (enc_payload_status.status != STF_OK) {
+			ikev2_log_payload_errors(enc_payload_status, st);
+			complete_v2_state_transition(mdp, enc_payload_status.status);
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*
 			 * We are the responder to this message so
@@ -1049,6 +1060,7 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	const pb_stream *id_pbs;
 	struct ikev2_id *v2id;
 	struct id peer;
+	char idbuf[IDTOA_BUF];
 
 	if (id_him == NULL) {
 		libreswan_log("IKEv2 mode no peer ID (hisID)");
@@ -1172,18 +1184,21 @@ bool ikev2_decode_peer_id_and_certs(struct msg_digest *md)
 	}
 
 	DBG(DBG_CONTROL, {
-		char buf[IDTOA_BUF];
 
-		dntoa_or_null(buf, IDTOA_BUF, c->spd.this.ca, "%none");
-		DBG_log("offered CA: '%s'", buf);
+		dntoa_or_null(idbuf, IDTOA_BUF, c->spd.this.ca, "%none");
+		DBG_log("offered CA: '%s'", idbuf);
 	});
 
-	{
-		char buf[IDTOA_BUF];
+	idtoa(&peer, idbuf, sizeof(idbuf));
+	if (!(c->policy & POLICY_OPPORTUNISTIC)) {
 
-		idtoa(&peer, buf, sizeof(buf));
 		libreswan_log("IKEv2 mode peer ID is %s: '%s'",
-			      enum_show(&ikev2_idtype_names, v2id->isai_type), buf);
+			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			idbuf);
+	} else {
+		DBG(DBG_OPPO, DBG_log("IKEv2 mode peer ID is %s: '%s'",
+			enum_show(&ikev2_idtype_names, v2id->isai_type),
+			idbuf));
 	}
 
 	return TRUE;
@@ -1394,9 +1409,12 @@ time_t ikev2_replace_delay(struct state *st, enum event_type *pkind,
 			*pkind = kind = EVENT_SA_EXPIRE;
 		}
 
-		if (c->policy & POLICY_DONT_REKEY) {
-                        *pkind = kind = EVENT_SA_EXPIRE;
-                }
+		if ((c->policy & POLICY_OPPORTUNISTIC) && (IS_IKE_SA_ESTABLISHED(st))) {
+			*pkind = kind = EVENT_SA_REPLACE_IF_USED;
+		}
+		else if (c->policy & POLICY_DONT_REKEY) {
+			*pkind = kind = EVENT_SA_EXPIRE;
+		}
 	}
 	return delay;
 }
@@ -1406,12 +1424,13 @@ static void success_v2_state_transition(struct msg_digest *md)
 	const struct state_v2_microcode *svm = md->svm;
 	enum state_kind from_state = md->from_state;
 	struct state *st = md->st;
+	struct connection *c = st->st_connection;
 	enum rc_type w;
 
 	if (from_state != svm->next_state) {
-		libreswan_log("transition from state %s to state %s",
+		DBG(DBG_CONTROL, DBG_log("transition from state %s to state %s",
 			      enum_name(&state_names, from_state),
-			      enum_name(&state_names, svm->next_state));
+			      enum_name(&state_names, svm->next_state)));
 	}
 
 	change_state(st, svm->next_state);
@@ -1452,12 +1471,12 @@ static void success_v2_state_transition(struct msg_digest *md)
 						  sizeof(sadetails));
 		}
 
-		/* tell whack and logs our progress */
-		loglog(w,
-		       "%s: %s%s",
-		       enum_name(&state_names, st->st_state),
-		       enum_name(&state_stories, st->st_state),
-		       sadetails);
+		/* tell whack and logs our progress - unless OE, then be quiet*/
+		if (c == NULL || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY)
+			loglog(w, "%s: %s%s",
+				enum_name(&state_names, st->st_state),
+				enum_name(&state_stories, st->st_state),
+				sadetails);
 	}
 
 	/* if requested, send the new reply packet */
@@ -1481,8 +1500,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 	}
 
 	if (w == RC_SUCCESS) {
-		DBG_log("releasing whack for #%lu (sock=%d)",
-			st->st_serialno, st->st_whack_sock);
+		DBG(DBG_CONTROL, DBG_log("releasing whack for #%lu (sock=%d)",
+			st->st_serialno, st->st_whack_sock));
 		release_whack(st);
 
 		/* XXX should call unpend again on parent SA */
@@ -1490,8 +1509,8 @@ static void success_v2_state_transition(struct msg_digest *md)
 			/* with failed child sa, we end up here with an orphan?? */
 			struct state *pst = state_with_serialno(st->st_clonedfrom);
 
-			DBG_log("releasing whack and unpending for parent #%lu",
-				pst->st_serialno);
+			DBG(DBG_CONTROL, DBG_log("releasing whack and unpending for parent #%lu",
+				pst->st_serialno));
 			unpend(pst);
 			release_whack(pst);
 		}

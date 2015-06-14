@@ -50,10 +50,16 @@ char *myid_str[MYID_SPECIFIED + 1];     /* string form of IDs */
 
 const struct id *resolve_myid(const struct id *id)
 {
-	if ((id)->kind == ID_MYID)
+	// char tmpid[IDTOA_BUF];
+
+	// idtoa(id, tmpid, sizeof(tmpid));
+	// loglog(RC_LOG_SERIOUS,"resolve_myid() called for id:%s",tmpid);
+
+	if ((id)->kind == ID_MYID) {
 		return &myids[myid_state];
-	else
+	} else {
 		return id;
+	}
 }
 
 void show_myid_status(void)

@@ -226,6 +226,10 @@ static int crypto_helper_delay;
 
 static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 {
+	struct timeval tv0;
+	gettimeofday(&tv0, NULL);
+	char *story = NULL;
+
 	DBG(DBG_CONTROL,
 	    DBG_log("crypto helper %d doing %s; request ID %u",
 		    helpernum,
@@ -255,9 +259,22 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 		break;
 
 	case pcr_compute_dh_v2:
-		calc_dh_v2(r);
+		calc_dh_v2(r, &story);
 		break;
 	}
+
+	DBG(DBG_CONTROL, {
+			struct timeval tv1;
+			unsigned long tv_diff;
+			gettimeofday(&tv1, NULL);
+			tv_diff = (tv1.tv_sec  - tv0.tv_sec) * 1000000 + (tv1.tv_usec - tv0.tv_usec);
+			DBG_log("crypto helper %d finished %s%s; request ID %u time elapsed %ld usec",
+					helpernum,
+					enum_show(&pluto_cryptoop_names, r->pcr_type),
+					(story != NULL) ? story : "",
+					r->pcr_id, tv_diff));
+	}
+
 }
 
 /* IN A HELPER THREAD */

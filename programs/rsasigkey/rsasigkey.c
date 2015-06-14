@@ -79,13 +79,14 @@
 
 char *progname;
 char usage[] =
-	"rsasigkey [--verbose] [--random <device>] [--configdir <dir>] [--password <password>] [--hostname host] [--seedbits bits] [<keybits>]";
+	"rsasigkey [--verbose] [--seeddev <device>] [--configdir <dir>] [--password <password>] [--hostname host] [--seedbits bits] [<keybits>]";
 struct option opts[] = {
 	{ "rounds",    1,      NULL,   'p', }, /* obsoleted */
 	{ "noopt",     0,      NULL,   'n', }, /* obsoleted */
 
 	{ "verbose",   0,      NULL,   'v', },
-	{ "random",    1,      NULL,   'r', },
+	{ "seeddev",   1,      NULL,   'S', },
+	{ "random",    1,      NULL,   'r', }, /* compat alias for seeddev */
 	{ "hostname",  1,      NULL,   'H', },
 	{ "help",              0,      NULL,   'h', },
 	{ "version",   0,      NULL,   'V', },
@@ -315,9 +316,15 @@ int main(int argc, char *argv[])
 		case 'v':       /* verbose description */
 			verbose = 1;
 			break;
-		case 'r':       /* nonstandard /dev/random */
+
+		case 'r':
+			fprintf(stderr, "%s: Warning: --random is obsoleted for --seeddev. It no longer specifies the random device used for obtaining random key material",
+				me);
+			/* FALLTHROUGH */
+		case 'S':       /* nonstandard random device for seed */
 			device = optarg;
 			break;
+
 		case 'H':       /* set hostname for output */
 			{
 				size_t full_len = strlen(optarg);
@@ -560,7 +567,8 @@ void rsasigkey(int nbits, int seedbits, char *configdir, char *password)
 }
 
 /*
-   - getrandom - get some random bytes from /dev/random (or wherever)
+ * getrandom - get some random bytes from /dev/random (or wherever)
+ * NOTE: This is only used for additional seeding of the NSS RNG
  */
 void getrandom(size_t nbytes, unsigned char *buf)
 {

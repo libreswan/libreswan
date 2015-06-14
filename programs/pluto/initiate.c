@@ -10,7 +10,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2012 Panagiotis Tamtamis <tamtamis@gmail.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Antony Antony <antony@phenome.org>
  *
  *
@@ -392,7 +392,7 @@ enum find_oppo_step {
 	fos_our_client,
 	fos_our_txt,
 	fos_his_client,
-	fos_done
+	fos_done,
 };
 
 static const char *const oppo_step_name[] = {
@@ -416,7 +416,8 @@ struct find_oppo_bundle {
 	int transport_proto;
 	bool held;
 	policy_prio_t policy_prio;
-	ipsec_spi_t failure_shunt; /* in host order!  0 for delete. */
+	ipsec_spi_t negotiation_shunt; /* in host order! */
+	ipsec_spi_t failure_shunt; /* in host order! */
 	int whackfd;
 };
 
@@ -515,33 +516,38 @@ static void cannot_oppo(struct connection *c,
 	}
 
 	if (b->held) {
-		int failure_shunt = b->failure_shunt;
-
-		/* Replace HOLD with b->failure_shunt.
+		/* this was filled in for us based on packet trigger, not whack --oppo trigger */
+		DBG(DBG_CONTROL, DBG_log("cannot_oppo() detected packet triggered shunt from bundle"));
+		/*
+		 * Replace negotiationshunt (hold or pass) with failureshunt (hold or pass)
 		 * If no failure_shunt specified, use SPI_PASS -- THIS MAY CHANGE.
 		 */
-		if (failure_shunt == 0) {
-			DBG(DBG_OPPO,
-			    DBG_log("no explicit failure shunt for %s to %s; removing spurious hold shunt",
-				    ocb, pcb));
-		}
-		(void) replace_bare_shunt(&b->our_client, &b->peer_client,
+		pexpect(b->failure_shunt != 0); /* PAUL: I don't think this can/should happen? */
+		if (replace_bare_shunt(&b->our_client, &b->peer_client,
 					  b->policy_prio,
-					  failure_shunt,
-					  failure_shunt != 0,
+					  b->negotiation_shunt,
+					  b->failure_shunt,
 					  b->transport_proto,
-					  ughmsg);
+					  ughmsg))
+		{
+			DBG(DBG_CONTROL, DBG_log("cannot_oppo() replaced negotiationshunt with bare failureshunt=%s",
+				(b->failure_shunt == SPI_PASS) ? "pass" :
+					(b->failure_shunt == SPI_HOLD) ? "hold" : "very-unexpected"
+			));
+		} else {
+		 libreswan_log("cannot_oppo() failed to replace negotiationshunt with bare failureshunt");
+		}
 	}
 }
 
-static bool initiate_ondemand_body(struct find_oppo_bundle *b,
+static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac, err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
 				  , const struct xfrm_user_sec_ctx_ike *uctx
 #endif
 				  ); /* forward */
 
-bool initiate_ondemand(const ip_address *our_client,
+void initiate_ondemand(const ip_address *our_client,
 		      const ip_address *peer_client,
 		      int transport_proto,
 		      bool held,
@@ -560,10 +566,11 @@ bool initiate_ondemand(const ip_address *our_client,
 	b.transport_proto = transport_proto;
 	b.held = held;
 	b.policy_prio = BOTTOM_PRIO;
-	b.failure_shunt = 0;
+	b.negotiation_shunt = SPI_HOLD; /* until we found connection policy */
+	b.failure_shunt = SPI_HOLD; /* until we found connection policy */
 	b.whackfd = whackfd;
 	b.step = fos_start;
-	return initiate_ondemand_body(&b, NULL, NULL
+	initiate_ondemand_body(&b, NULL, NULL
 #ifdef HAVE_LABELED_IPSEC
 				      , uctx
 #endif
@@ -624,7 +631,7 @@ static void continue_oppo(struct adns_continuation *acr, err_t ugh)
 		       ipstr(&cr->b.our_client, &a),
 		       ipstr(&cr->b.peer_client, &b));
 	} else {
-		(void)initiate_ondemand_body(&cr->b, &cr->ac, ugh
+		initiate_ondemand_body(&cr->b, &cr->ac, ugh
 #ifdef HAVE_LABELED_IPSEC
 					     , NULL
 #endif
@@ -684,8 +691,7 @@ static err_t check_txt_recs(enum myid_state try_state,
 }
 
 /* note: gateways_from_dns must be NULL iff this is the first call */
-/* return true if we did something */
-static bool initiate_ondemand_body(struct find_oppo_bundle *b,
+static void initiate_ondemand_body(struct find_oppo_bundle *b,
 				  struct adns_continuation *ac,
 				  err_t ac_ugh
 #ifdef HAVE_LABELED_IPSEC
@@ -702,11 +708,6 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 	char demandbuf[256];
 	bool loggedit = FALSE;
 
-	/* on klips/mast assume we will do something */
-	bool work = kern_interface == USE_KLIPS ||
-	       kern_interface == USE_MASTKLIPS ||
-	       kern_interface == USE_NETKEY;
-
 	/* What connection shall we use?
 	 * First try for one that explicitly handles the clients.
 	 */
@@ -719,6 +720,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 #ifdef HAVE_LABELED_IPSEC
 	DBG(DBG_CONTROLMORE, {
 		if (uctx != NULL) {
+
+
 			DBG_log("received security label string: %.*s",
 				uctx->ctx.ctx_len,
 				uctx->sec_ctx_value);
@@ -731,6 +734,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		 ours, ourport, his, hisport, b->transport_proto,
 		 oppo_step_name[b->step], b->want);
 
+
 	/* ??? DBG and real-world code mixed */
 	if (DBGP(DBG_OPPOINFO)) {
 		libreswan_log("%s", demandbuf);
@@ -742,7 +746,10 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 	if (isanyaddr(&b->our_client) || isanyaddr(&b->peer_client)) {
 		cannot_oppo(NULL, b, "impossible IP address");
-		work = FALSE;
+	} else if (sameaddr(&b->our_client, &b->peer_client)) {
+		/* NETKEY gives us acquires for our own IP */
+		/* this does not catch talking to ourselves on another ip */
+		cannot_oppo(NULL, b, "acquire for our own IP address");
 	} else if ((c = find_connection_for_clients(&sr,
 						     &b->our_client,
 						     &b->peer_client,
@@ -756,9 +763,12 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			libreswan_log("%s", demandbuf);
 			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
+
 		cannot_oppo(NULL, b, "no routed template covers this pair");
-		work = FALSE;
-	} else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
+	} else if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c)) {
+		/* happens when dst is ourselves on a different IP */
+		cannot_oppo(NULL, b, "connection to self on another IP?");
+	}  else if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
 			loggedit = TRUE;	/* loggedit not subsequently used */
@@ -766,7 +776,6 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		loglog(RC_NOPEERIP,
 		       "cannot initiate connection for packet %s:%d -> %s:%d proto=%d - template conn",
 		       ours, ourport, his, hisport, b->transport_proto);
-		work = FALSE;
 	} else if (c->kind != CK_TEMPLATE) {
 		/* We've found a connection that can serve.
 		 * Do we have to initiate it?
@@ -781,7 +790,8 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		if (c->kind == CK_INSTANCE) {
 			char cib[CONN_INST_BUF];
-			/* there is already an instance being negotiated, do nothing */
+			/* there is already an instance being negotiated */
+#if 0
 			libreswan_log(
 				"rekeying existing instance \"%s\"%s, due to acquire",
 				c->name,
@@ -792,21 +802,46 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			 * got the acquire, it is because something turned stuff into a
 			 * %trap, or something got deleted, perhaps due to an expiry.
 			 */
+#else
+			/* 
+			 * XXX We got an acquire (NETKEY only?) for
+			 * something we already have an instance for ??
+			 * We cannot process as normal because the
+			 * bare_shunts table and assign_holdpass()
+			 * would get confused between this new entry
+			 * and the existing one. So we return without
+			 * doing anything
+			 */
+			libreswan_log("found existing state, ignoring instance \"%s\"%s, due to duplicate acquire",
+				c->name, fmt_conn_instance(c, cib));
+			return;
+#endif
 		}
 
-		/* otherwise, there is some kind of static conn that can handle
-		 * this connection, so we initiate it
+		/* we have a connection, fill in the negotiation_shunt and failure_shunt */
+		b->failure_shunt = shunt_policy_spi(c, FALSE);
+		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+
+		/*
+		 * otherwise, there is some kind of static conn that can handle
+		 * this connection, so we initiate it.
+		 * Only needed if we this was triggered by a packet, not by whack
 		 */
 		if (b->held) {
-			/* what should we do on failure? */
-			(void) assign_hold(c, sr, b->transport_proto,
-					   &b->our_client, &b->peer_client);
+			if (assign_holdpass(c, sr, b->transport_proto, b->negotiation_shunt,
+					   &b->our_client, &b->peer_client)) {
+				DBG(DBG_CONTROL, DBG_log("initiate_ondemand_body() installed negotiation_shunt,"));
+			} else {
+				libreswan_log("initiate_ondemand_body() failed to install negotiation_shunt,");
+			}
 		}
 
 		if (!loggedit) {
 			libreswan_log("%s", demandbuf);
 			loggedit = TRUE;	/* loggedit not subsequently used */
 		}
+
+
 		ipsecdoi_initiate(b->whackfd, c, c->policy, 1,
 				  SOS_NOBODY, pcim_local_crypto
 #ifdef HAVE_LABELED_IPSEC
@@ -839,12 +874,85 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 
 		passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
+		/* we have a connection, fill in the negotiation_shunt and failure_shunt */
+		b->failure_shunt = shunt_policy_spi(c, FALSE);
+		b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
+
+
 		/* handle any DNS answer; select next step */
 
 		switch (b->step) {
 		case fos_start:
-			/* just starting out: select first query step */
-			next_step = fos_myid_ip_txt;
+
+			if (b->negotiation_shunt != SPI_HOLD ||
+				(b->transport_proto != 0 ||
+				portof(&b->our_client) != 0 ||
+				portof(&b->peer_client) != 0))
+			{
+				char *delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
+				char *addwidemsg = "oe-negotiating";
+	        		ip_subnet this_client, that_client;
+	
+	        		happy(addrtosubnet(&b->our_client, &this_client));
+	        		happy(addrtosubnet(&b->peer_client, &that_client));
+				/* negotiationshunt must be wider than bare shunt, esp on NETKEY */
+				setportof(0, &this_client.addr);
+				setportof(0, &that_client.addr);
+	
+				DBG(DBG_OPPO,
+					DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
+						(b->negotiation_shunt == SPI_PASS) ? "pass" : 
+						(b->negotiation_shunt == SPI_HOLD) ? "hold" :
+						"unknown?"));
+	
+				// PAUL: should this use shunt_eroute() instead of API violation into raw_eroute()
+				if (!raw_eroute(&b->our_client, &this_client,
+					&b->peer_client, &that_client,
+					htonl(SPI_HOLD), /* kernel induced */
+					htonl(b->negotiation_shunt),
+					SA_INT, 0, /* transport_proto */
+					ET_INT, null_proto_info,
+					deltatime(SHUNT_PATIENCE),
+					DEFAULT_IPSEC_SA_PRIORITY,
+					ERO_ADD, addwidemsg
+	#ifdef HAVE_LABELED_IPSEC
+					, NULL
+	#endif
+					)) 
+				{
+					libreswan_log("adding bare wide passthrough negotiationshunt failed");
+				} else {
+					DBG(DBG_OPPO, DBG_log("added bare wide passthrough negotiationshunt succeeded (violating API)"));
+					add_bare_shunt(&this_client, &that_client, 0 /* broadened transport_proto */, SPI_HOLD, addwidemsg);
+				}
+				/* now delete the (obsoleted) narrow bare kernel shunt - we have a broadened negotiationshunt replacement installed */
+				if (!delete_bare_shunt(&b->our_client, &b->peer_client,
+					b->transport_proto, SPI_HOLD /* kernel dictated */, delmsg))
+				{
+					libreswan_log("Failed to: %s", delmsg);
+				} else {
+					DBG(DBG_OPPO, DBG_log("success taking down narrow bare shunt"));
+				}
+			}
+
+			if (c != NULL && ((c->policy & POLICY_RSASIG) == LEMPTY)) {
+				/* no dns queries to find the gateway. create one here */
+				if (c->policy & POLICY_AUTH_NULL) {
+					struct gw_info nullgw;
+
+					DBG(DBG_OPPO, DBG_log("setting c->gw_info for POLICY_AUTH_NULL"));
+					nullgw.client_id.kind = ID_NULL;
+					nullgw.gw_id.kind = ID_NULL;
+					nullgw.gw_id.ip_addr = b->peer_client;
+					c->gw_info = clone_thing(nullgw, "nullgw info");
+				}
+
+				b->step = fos_his_client;
+				goto CASE_fos_his_client;
+			} else {
+				/* just starting out: select first query step */
+				next_step = fos_myid_ip_txt;
+			}
 			break;
 
 		case fos_myid_ip_txt: /* IPSECKEY for our default IP address as %myid */
@@ -1003,7 +1111,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 								pub,
 								&gwp->key->u.
 								rsa)) {
-						DBG(DBG_CONTROL,
+						DBG(DBG_OPPO,
 						    DBG_log("initiate on demand found IPSECKEY with right public key at: %s",
 							    mycredentialstr));
 						ugh = NULL;
@@ -1014,6 +1122,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 		break;
 
+		CASE_fos_his_client:
 		case fos_his_client: /* IPSECKEY for his client */
 		{
 			/* We've finished last DNS queries: IPSECKEY for his client.
@@ -1026,7 +1135,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			next_step = fos_done; /* no more queries */
 
 			c = build_outgoing_opportunistic_connection(
-				ac->gateways_from_dns,
+				(ac == NULL) ? c->gw_info : ac->gateways_from_dns,
 				&b->our_client,
 				&b->peer_client);
 
@@ -1044,35 +1153,46 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 				       ipstr(&b->peer_client, &b2),
 				       ipstr(&ac->gateways_from_dns->gw_id.ip_addr, &b3));
 
+				/*
+				 * Replace negotiation_shunt with failure_shunt
+				 * The type of replacement *ought* to be
+				 * specified by policy, but we did not find a connection, so
+				 * default to HOLD
+				 */
 				if (b->held) {
-					/* Replace HOLD with PASS.
-					 * The type of replacement *ought* to be
-					 * specified by policy.
-					 */
-					(void) replace_bare_shunt(
+					if (replace_bare_shunt(
 						&b->our_client,
 						&b->peer_client,
-						BOTTOM_PRIO,
-						SPI_PASS, /* fail into PASS */
-						TRUE,
+						b->policy_prio,
+						b->negotiation_shunt, /* if not from conn, where did this come from? */
+						b->failure_shunt, /* if not from conn, where did this come from? */
 						b->transport_proto,
-						"no suitable connection");
+						"no suitable connection")) {
+							DBG(DBG_OPPO, DBG_log("replaced negotiatinshunt with failurehunt=hold because no connection was found"));
+					} else {
+						libreswan_log("failed to replace negotiatinshunt with failurehunt=hold");
+					}
 				}
-				/* c == NULL: act accordingly */
 			} else {
 				/* If we are to proceed asynchronously, b->whackfd will be NULL_FD. */
 				passert(c->kind == CK_INSTANCE);
-				passert(c->gw_info != NULL);
+				// passert(c->gw_info != NULL);
 				passert(HAS_IPSEC_POLICY(c->policy));
 				passert(LHAS(LELEM(RT_UNROUTED) |
 					     LELEM(RT_ROUTED_PROSPECTIVE),
 					     c->spd.routing));
 				if (b->held) {
-					/* what should we do on failure? */
-					(void) assign_hold(c, &c->spd,
-							   b->transport_proto,
-							   &b->our_client,
-							   &b->peer_client);
+					/* packet triggered - not whack triggered */
+					DBG(DBG_OPPO, DBG_log("assigning negotiation_shunt to connection"));
+					if (assign_holdpass(c, &c->spd,
+						   b->transport_proto,
+						   b->negotiation_shunt,
+						   &b->our_client,
+						   &b->peer_client)) {
+						DBG(DBG_CONTROL, DBG_log("assign_holdpass succeeded"));
+					} else {
+						libreswan_log("assign_holdpass failed!");
+					}
 				}
 				DBG(DBG_OPPO | DBG_CONTROL,
 				    DBG_log("initiate on demand from %s:%d to %s:%d proto=%d state: %s because: %s",
@@ -1097,14 +1217,16 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 
 		/* the second chunk: initiate the next DNS query (if any) */
-		DBG(DBG_CONTROL, {
+		DBG(DBG_OPPO | DBG_CONTROL, {
 			ipstr_buf b1;
 			ipstr_buf b2;
-			DBG_log("initiate on demand from %s to %s new state: %s with ugh: %s",
+			DBG_log("initiate on demand using %s from %s to %s new state: %s%s%s",
+				(c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
 				ipstr(&b->our_client, &b1),
 				ipstr(&b->peer_client, &b2),
 				oppo_step_name[b->step],
-				ugh ? ugh : "ok");
+				ugh ? " - error:" : "",
+				ugh ? ugh : "");
 		});
 
 		if (c == NULL) {
@@ -1113,12 +1235,12 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			 * This case has been handled already.
 			 */
 		} else if (ugh != NULL) {
+			/* i dont think this can happen without DNS, and then these value are already set */
 			b->policy_prio = c->prio;
+			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 			b->failure_shunt = shunt_policy_spi(c, FALSE);
 			cannot_oppo(c, b, ugh);
-		} else if (next_step == fos_done) {
-			/* nothing to do */
-		} else {
+		} else if (next_step != fos_done) {
 			/* set up the next query */
 			struct find_oppo_continuation *cr = alloc_thing(
 				struct find_oppo_continuation,
@@ -1126,6 +1248,7 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 			struct id id;
 
 			b->policy_prio = c->prio;
+			b->negotiation_shunt = (c->policy & POLICY_NEGO_PASS) ? SPI_PASS : SPI_HOLD;
 			b->failure_shunt = shunt_policy_spi(c, FALSE);
 			cr->b = *b; /* copy; start hand off of whackfd */
 			cr->b.failure_ok = FALSE;
@@ -1247,7 +1370,6 @@ static bool initiate_ondemand_body(struct find_oppo_bundle *b,
 		}
 	}
 	close_any(b->whackfd);
-	return work;
 }
 
 /* an ISAKMP SA has been established.
@@ -1266,7 +1388,8 @@ void ISAKMP_SA_established(struct connection *c, so_serial_t serial)
 {
 	c->newest_isakmp_sa = serial;
 
-	if (uniqueIDs && !c->spd.this.xauth_server) {
+	if (uniqueIDs && !c->spd.this.xauth_server &&
+		(c->policy & POLICY_AUTH_NULL) == LEMPTY) {
 		/*
 		 * for all connections: if the same Phase 1 IDs are used
 		 * for different IP addresses, unorient that connection.
@@ -1365,7 +1488,7 @@ static void connection_check_ddns1(struct connection *c)
 		return;
 
 	if (!isanyaddr(&c->spd.that.host_addr)) {
-		DBG(DBG_CONTROLMORE,
+		DBG(DBG_DNS,
 		    DBG_log("pending ddns: connection \"%s\" has address",
 			    c->name));
 		return;
@@ -1374,7 +1497,7 @@ static void connection_check_ddns1(struct connection *c)
 	if (c->spd.that.has_client_wildcard || c->spd.that.has_port_wildcard ||
 	    ((c->policy & POLICY_SHUNT_MASK) == POLICY_SHUNT_TRAP &&
 	     c->spd.that.has_id_wildcards)) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_DNS,
 		    DBG_log("pending ddns: connection \"%s\" with wildcard not started",
 			    c->name));
 		return;
@@ -1382,14 +1505,14 @@ static void connection_check_ddns1(struct connection *c)
 
 	e = ttoaddr(c->dnshostname, 0, AF_UNSPEC, &new_addr);
 	if (e != NULL) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_DNS,
 		    DBG_log("pending ddns: connection \"%s\" lookup of \"%s\" failed: %s",
 			    c->name, c->dnshostname, e));
 		return;
 	}
 
 	if (isanyaddr(&new_addr)) {
-		DBG(DBG_CONTROL,
+		DBG(DBG_DNS,
 		    DBG_log("pending ddns: connection \"%s\" still no address for \"%s\"",
 			    c->name, c->dnshostname));
 		return;
@@ -1449,7 +1572,7 @@ void connection_check_ddns(void)
 	}
 	check_orientations();
 
-	DBG(DBG_CONTROL, {
+	DBG(DBG_DNS, {
 		struct timeval tv2;
 		unsigned long borrow;
 

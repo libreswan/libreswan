@@ -268,9 +268,9 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 
 	toklen = PORT_Strlen(token);
 
-	/*
-	 * libreswan_log("authentication needed for token name %s with length %d", token, toklen);
-	 */
+	 DBG(DBG_CRYPT, DBG_log(
+		"authentication needed for token name %s with length %d",
+		token, toklen));
 
 	if (retry)
 		return NULL;
@@ -338,9 +338,9 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 		    p[toklen] == ':') {
 			/* we have a winner! */
 			p = PORT_Strdup(&p[toklen + 1]);
-			/*
-			 * libreswan_log("Password passed to NSS is %s with length %d", p, PORT_Strlen(p));
-			 */
+			DBG(DBG_PRIVATE, DBG_log(
+				"Password passed to NSS is %s with length %zu",
+				 p, PORT_Strlen(p)));
 			PORT_Free(strings);
 			return p;
 		}

@@ -514,7 +514,7 @@ extern struct state
 	*find_phase2_state_to_delete(const struct state *p1st, u_int8_t protoid,
 			     ipsec_spi_t spi, bool *bogus),
 	*find_phase1_state(const struct connection *c, lset_t ok_states),
-	*find_sender(size_t packet_len, u_char * packet);
+	*find_likely_sender(size_t packet_len, u_char * packet);
 
 extern struct state *find_state_ikev2_parent(const u_char *icookie,
 					     const u_char *rcookie);

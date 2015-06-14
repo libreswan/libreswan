@@ -325,7 +325,7 @@ extern void restart_connections_by_peer(struct connection *c);
 struct xfrm_user_sec_ctx_ike; /* forward declaration */
 #endif
 
-extern bool initiate_ondemand(const ip_address *our_client,
+extern void initiate_ondemand(const ip_address *our_client,
 			     const ip_address *peer_client,
 			     int transport_proto,
 			     bool held,
@@ -365,6 +365,10 @@ extern void ISAKMP_SA_established(struct connection *c, so_serial_t serial);
 struct state;   /* forward declaration of tag (defined in state.h) */
 extern struct connection
 *con_by_name(const char *nm, bool strict);
+
+stf_status ikev2_find_host_connection(struct connection **cp,
+		const ip_address *me, u_int16_t my_port, const ip_address *him,
+		u_int16_t his_port, lset_t req_policy);
 
 extern struct connection
 	*find_host_connection(const ip_address *me, u_int16_t my_port,

@@ -1,0 +1,12 @@
+  <varlistentry>
+  <term><emphasis remap='B'>shuntlifetime</emphasis></term>
+<listitem>
+<para>The time until bare shunts (kernel policies not associated with connections) are deleted
+from the kernel. The default value is 15m. When using Opportunistic Encryption to a specific host
+fails, the system will either install a %pass or %hold shunt to let the traffic out clear text or
+block it. During the the shuntlifetime, no new Opportunistic Encryption attempt will be started,
+although the system will still respond to incoming OE requests from the remote IP. See also
+<emphasis remap='B'>failureshunt</emphasis> and <emphasis remap='B'>negotiationshunt</emphasis>
+</para>
+  </listitem>
+  </varlistentry>

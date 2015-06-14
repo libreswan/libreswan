@@ -221,6 +221,25 @@ static const struct aead_alg *get_aead_alg(int algid)
 }
 
 /*
+ * xfrm2ip - Take an xfrm and convert to an IP address
+ *
+ * @param xaddr xfrm_address_t
+ * @param addr ip_address IPv[46] Address from addr is copied here.
+ */
+static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_family_t family)
+{
+        if (family == AF_INET) {
+		/* an IPv4 address */
+                addr->u.v4.sin_family = AF_INET;
+                addr->u.v4.sin_addr.s_addr = xaddr->a4;
+        } else {
+		/* Must be IPv6 */
+                memcpy(&addr->u.v6.sin6_addr, xaddr->a6, sizeof(xaddr->a6));
+                addr->u.v4.sin_family = AF_INET6;
+        }
+}
+
+/*
  * ip2xfrm - Take an IP address and convert to an xfrm.
  *
  * @param addr ip_address
@@ -586,9 +605,9 @@ static bool netlink_policy(struct nlmsghdr *hdr, bool enoent_ok,
  * @param that_host ip_address
  * @param that_client ip_subnet
  * @param spi
- * @param proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
- * @param transport_proto int (Currently unused) Contains protocol
- *	(u=tcp, 17=udp, etc...)
+ * @param sa_proto int (4=tunnel, 50=esp, 108=ipcomp, etc ...)
+ * @param transport_proto unsigned int Contains protocol
+ *	(6=tcp, 17=udp, etc...)
  * @param esatype int
  * @param pfkey_proto_info proto_info
  * @param use_lifetime monotime_t (Currently unused)
@@ -600,8 +619,9 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 			const ip_subnet *this_client,
 			const ip_address *that_host,
 			const ip_subnet *that_client,
-			ipsec_spi_t spi,
-			unsigned int proto,
+			ipsec_spi_t cur_spi,	/* current SPI */
+			ipsec_spi_t new_spi,	/* new SPI */
+			int sa_proto,
 			unsigned int transport_proto,
 			enum eroute_type esatype,
 			const struct pfkey_proto_info *proto_info,
@@ -656,30 +676,40 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	case ET_INT:
 		/* shunt route */
-		switch (ntohl(spi)) {
+		switch (ntohl(new_spi)) {
 		case SPI_PASS:
+			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_PASS"));
 			policy = IPSEC_POLICY_NONE;
 			break;
+		case SPI_HOLD:
+			/*
+			 * We don't know how to implement %hold, but it is okay
+			 * When we need a hold, the kernel XFRM acquire state
+			 * will do the job (by dropping, not holding the packet)
+			 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
+			 * After expiration, the underlying policy causing the original acquire
+			 * will fire again, dropping further packets.
+			 */
+			DBG(DBG_KERNEL, DBG_log("netlink_raw_eroute: SPI_HOLD implemented as no-op"));
+			return TRUE; /* yes really */
 		case SPI_DROP:
 		case SPI_REJECT:
-		default:
+		case 0: /* used with type=passthrough - can it not use SPI_PASS ?? */
 			policy = IPSEC_POLICY_DISCARD;
 			break;
 		case SPI_TRAP:
-		case SPI_TRAPSUBNET:
 			if (sadb_op == ERO_ADD_INBOUND ||
 				sadb_op == ERO_DEL_INBOUND)
 				return TRUE;
 
 			break;
-		/*
-		 * Do we really need %hold under NETKEY?
-		 * Seems not so we just ignore.
-		 */
-		case SPI_HOLD:
-			return TRUE;
+		case SPI_TRAPSUBNET: /* unused in our code */
+		default:
+			bad_case(ntohl(new_spi));
 		}
 		break;
+	default:
+		bad_case(esatype);
 	}
 	if (satype != 0) {
 		DBG(DBG_KERNEL,
@@ -698,7 +728,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	 * so eroute must be done to natted, visible ip. If we don't hide
 	 * internal IP, communication doesn't work.
 	 */
-	if (esatype == ET_ESP || esatype == ET_IPCOMP || proto == SA_ESP) {
+	if (esatype == ET_ESP || esatype == ET_IPCOMP || sa_proto == SA_ESP) {
 		/*
 		 * Variable "that" should be remote, but here it's not.
 		 * We must check "dir" to find out remote address.
@@ -800,7 +830,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 		req.u.p.action = XFRM_POLICY_ALLOW;
 		if (policy == IPSEC_POLICY_DISCARD)
 			req.u.p.action = XFRM_POLICY_BLOCK;
-		req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime);
+		// req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime);
 		req.u.p.lft.soft_byte_limit = XFRM_INF;
 		req.u.p.lft.soft_packet_limit = XFRM_INF;
 		req.u.p.lft.hard_byte_limit = XFRM_INF;
@@ -824,6 +854,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 
 	if (policy == IPSEC_POLICY_IPSEC && sadb_op != ERO_DELETE) {
 		struct rtattr *attr;
+
 		struct xfrm_user_tmpl tmpl[4];
 		int i;
 
@@ -881,11 +912,7 @@ static bool netlink_raw_eroute(const ip_address *this_host,
 	}
 #endif
 
-	enoent_ok = FALSE;
-	if (sadb_op == ERO_DEL_INBOUND)
-		enoent_ok = TRUE;
-	else if (sadb_op == ERO_DELETE && ntohl(spi) == SPI_HOLD)
-		enoent_ok = TRUE;
+	enoent_ok = sadb_op == ERO_DEL_INBOUND || (sadb_op == ERO_DELETE && ntohl(cur_spi) == SPI_HOLD);
 
 	ok = netlink_policy(&req.n, enoent_ok, text_said);
 	switch (dir) {
@@ -1498,13 +1525,20 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol)
 		return;
 	}
 
-	replace_bare_shunt(&src, &dst, BOTTOM_PRIO, SPI_PASS, FALSE,
-			transport_proto, "delete expired bare shunt");
+	if (delete_bare_shunt(&src, &dst,
+			transport_proto, SPI_HOLD /* why spi to use? */,
+			"delete expired bare shunt"))
+	{
+		DBG(DBG_CONTROL, DBG_log("netlink_shunt_expire() called delete_bare_shunt() with success"));
+	} else {
+		libreswan_log("netlink_shunt_expire() called delete_bare_shunt() which failed!");
+	}
 }
 
 static void netlink_policy_expire(struct nlmsghdr *n)
 {
 	struct xfrm_user_polexpire *upe;
+	ip_address src, dst;
 
 	struct {
 		struct nlmsghdr n;
@@ -1525,6 +1559,18 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	}
 
 	upe = NLMSG_DATA(n);
+	xfrm2ip(&upe->pol.sel.saddr, &src, upe->pol.sel.family);
+	xfrm2ip(&upe->pol.sel.daddr, &dst, upe->pol.sel.family);
+	DBG( DBG_KERNEL, {
+			ipstr_buf a;
+			ipstr_buf b;
+			DBG_log("%s src %s/%u dst %s/%u dir %d index %d",
+					__func__,
+					ipstr(&src, &a), upe->pol.sel.prefixlen_s,
+					ipstr(&dst, &b), upe->pol.sel.prefixlen_d,
+					upe->pol.dir, upe->pol.index);
+			});
+
 	req.id.dir = upe->pol.dir;
 	req.id.index = upe->pol.index;
 	req.n.nlmsg_flags = NLM_F_REQUEST;
@@ -1532,7 +1578,8 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	rsp.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
-	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp),
+        /* ??? would next call ever succeed AA_2015 MAY */
+	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), 
 				"Get policy", "?")) {
 		return;
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
@@ -1789,7 +1836,7 @@ static bool netlink_sag_eroute(struct state *st, struct spd_route *sr,
 				ENCAPSULATION_MODE_TRANSPORT;
 	}
 
-	return eroute_connection(sr, inner_spi, inner_proto,
+	return eroute_connection(sr, inner_spi, inner_spi, inner_proto,
 				inner_esatype, proto_info + i,
 				op, opname
 #ifdef HAVE_LABELED_IPSEC
@@ -1907,6 +1954,7 @@ static bool netlink_shunt_eroute(struct connection *c,
 					&sr->that.host_addr,
 					&sr->that.client,
 					htonl(spi),
+					htonl(spi),
 					c->encapsulation ==
 						ENCAPSULATION_MODE_TRANSPORT ?
 						SA_ESP : SA_INT,
@@ -1940,6 +1988,7 @@ static bool netlink_shunt_eroute(struct connection *c,
 					&sr->that.client,
 					&sr->this.host_addr,
 					&sr->this.client,
+					htonl(spi),
 					htonl(spi),
 					c->encapsulation ==
 					ENCAPSULATION_MODE_TRANSPORT ?
@@ -2352,7 +2401,7 @@ const struct kernel_ops netkey_kernel_ops = {
 	 * We should implement netlink_remove_orphaned_holds
 	 * if netlink  specific changes are needed.
 	 */
-	.remove_orphaned_holds = pfkey_remove_orphaned_holds,
+	.remove_orphaned_holds = NULL, /* only used for klips /proc scanner */
 	.overlap_supported = FALSE,
 	.sha2_truncbug_support = TRUE,
 };

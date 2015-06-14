@@ -311,7 +311,6 @@ conn west-east-base-id-nss
 conn road-east-base
 	also=road-east-base-id-nss
 	right=192.1.2.23
-	rightnexthop=192.1.2.45
 	#left not specified as test case picks "random" ip
 
 conn road-east-base-id-nss

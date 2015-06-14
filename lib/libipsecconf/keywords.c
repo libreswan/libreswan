@@ -42,13 +42,25 @@
  * Values for failureshunt={passthrough, drop, reject, none}
  */
 static const struct keyword_enum_value kw_failureshunt_values[] = {
-	{ "none",        POLICY_FAIL_NONE },
-	{ "passthrough", POLICY_FAIL_PASS },
-	{ "drop",        POLICY_FAIL_DROP },
-	{ "reject",      POLICY_FAIL_REJECT },
+	{ "none",        KFS_FAIL_NONE },
+	{ "passthrough", KFS_FAIL_PASS },
+	{ "drop",        KFS_FAIL_DROP },
+	{ "hold",        KFS_FAIL_DROP }, /* alias */
+	{ "reject",      KFS_FAIL_REJECT },
 };
 
 static const struct keyword_enum_values kw_failureshunt_list = VALUES_INITIALIZER(kw_failureshunt_values);
+
+/*
+ * Values for negotiationshunt={passthrough, drop}
+ */
+static const struct keyword_enum_value kw_negotiationshunt_values[] = {
+	{ "passthrough", KNS_FAIL_PASS },
+	{ "drop",        KNS_FAIL_DROP },
+	{ "hold",        KNS_FAIL_DROP }, /* alias */
+};
+
+static const struct keyword_enum_values kw_negotiationshunt_list = VALUES_INITIALIZER(kw_negotiationshunt_values);
 
 /*
  * Values for keyexchange=
@@ -360,6 +372,7 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	{ "fragicmp",       kv_config, kt_bool,      KBF_FRAGICMP, NOT_ENUM },
 	{ "hidetos",        kv_config, kt_bool,      KBF_HIDETOS, NOT_ENUM },
 	{ "uniqueids",      kv_config, kt_bool,      KBF_UNIQUEIDS, NOT_ENUM },
+	{ "shuntlifetime",    kv_config, kt_time, KBF_SHUNTLIFETIME, NOT_ENUM },
 	{ "overridemtu",    kv_config, kt_number,    KBF_OVERRIDEMTU, NOT_ENUM },
 
 	{ "crl-strict", kv_config, kt_bool,      KBF_STRICTCRLPOLICY, NOT_ENUM },
@@ -589,6 +602,8 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_ARRIVALCHECK, NOT_ENUM },
 	{ "failureshunt",   kv_conn | kv_auto, kt_enum,   KBF_FAILURESHUNT,
 	  &kw_failureshunt_list },
+	{ "negotiationshunt",   kv_conn | kv_auto, kt_enum,   KBF_NEGOTIATIONSHUNT,
+	  &kw_negotiationshunt_list },
 	{ "connalias",      kv_conn | kv_processed | kv_auto | kv_manual,
 	  kt_appendstring,   KSF_CONNALIAS, NOT_ENUM },
 
@@ -758,8 +773,8 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 			numfound++;
 
 			valresult |= kev->value;
-		} else { /* we didn't find anything, complain */
-
+		} else {
+			/* we didn't find anything, complain */
 			snprintf(complaintbuf, sizeof(complaintbuf),
 				 "%s: %d: keyword %s, invalid value: %s",
 				 parser_cur_filename(), parser_cur_lineno(),

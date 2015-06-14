@@ -2227,7 +2227,7 @@ const char *bitnamesofb(const char *const table[], lset_t val,
  */
 const char *bitnamesof(const char *const table[], lset_t val)
 {
-	static char bitnamesbuf[200]; /* I hope that it is big enough! */
+	static char bitnamesbuf[8192]; /* I hope that it is big enough! */
 
 	return bitnamesofb(table, val, bitnamesbuf, sizeof(bitnamesbuf));
 }

@@ -448,28 +448,28 @@ static bool mast_do_command(struct connection *c, struct spd_route *sr,
 	return invoke_command(verb, verb_suffix, cmd);
 }
 
-static bool mast_raw_eroute(const ip_address *this_host UNUSED,
-			    const ip_subnet *this_client UNUSED,
-			    const ip_address *that_host UNUSED,
-			    const ip_subnet *that_client UNUSED,
-			    ipsec_spi_t spi UNUSED,
-			    unsigned int proto UNUSED,
-			    unsigned int transport_proto UNUSED,
-			    unsigned int satype UNUSED,
-			    const struct pfkey_proto_info *proto_info UNUSED,
-			    deltatime_t use_lifetime UNUSED,
-			    unsigned long sa_priority UNUSED,
-			    enum pluto_sadb_operations op UNUSED,
-			    const char *text_said UNUSED
+static bool mast_raw_eroute(const ip_address *this_host,
+			    const ip_subnet *this_client,
+			    const ip_address *that_host,
+			    const ip_subnet *that_client,
+			    ipsec_spi_t spi,
+			    int sa_proto,
+			    unsigned int transport_proto,
+			    unsigned int satype,
+			    const struct pfkey_proto_info *proto_info,
+			    deltatime_t use_lifetime,
+			    unsigned long sa_priority,
+			    enum pluto_sadb_operations op,
+			    const char *text_said
 #ifdef HAVE_LABELED_IPSEC
-			    , const char *policy_label UNUSED
+			    , const char *policy_label
 #endif
 			    )
 {
 	/* actually, we did all the work with iptables in _updown */
 	DBG_log("mast_raw_eroute called op=%u said=%s", op, text_said);
 	return pfkey_raw_eroute(this_host, this_client, that_host, that_client,
-				spi, proto, transport_proto, satype,
+				spi, sa_proto, transport_proto, satype,
 				proto_info, use_lifetime, sa_priority, op, text_said
 #ifdef HAVE_LABELED_IPSEC
 				, policy_label

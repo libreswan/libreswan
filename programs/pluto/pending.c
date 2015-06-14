@@ -99,7 +99,7 @@ void add_pending(int whack_sock,
 
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
-		DBG_log("Queuing pending Quick Mode with %s \"%s\"",
+		DBG_log("Queuing pending IPsec SA negotiating with %s \"%s\"",
 			ipstr(&c->spd.that.host_addr, &b),
 			c->name);
 	});

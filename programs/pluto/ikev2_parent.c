@@ -245,15 +245,19 @@ stf_status ikev2parent_outI1(int whack_sock,
 	}
 
 	if (predecessor != NULL) {
-		libreswan_log("initiating v2 parent SA to replace #%lu",
+		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			libreswan_log("initiating v2 parent SA to replace #%lu",
 				predecessor->st_serialno);
+		}
 		update_pending(predecessor, st);
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1,
 			  "%s: initiate, replacing #%lu",
 			  enum_name(&state_names, st->st_state),
 			  predecessor->st_serialno);
 	} else {
-		libreswan_log("initiating v2 parent SA");
+		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			libreswan_log("initiating v2 parent SA");
+		}
 		whack_log(RC_NEW_STATE + STATE_PARENT_I1, "%s: initiate",
 			  enum_name(&state_names, st->st_state));
 	}
@@ -685,99 +689,32 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		    DBG_log("anti-DDoS cookies not required"));
 	}
 
-	/* ??? from here on looks a lot like main_inI1_outR1 */
+	/* authentication policy alternatives in order of decreasing preference */
+	static const lset_t policies[] = {POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL};
 
 	struct state *st = md->st;
+	lset_t policy;
+	struct connection *c;
+	stf_status e;
+	unsigned int i;
 
-	/* What we know is little.  And exact mask is LEMPTY. */
-	const lset_t policy = POLICY_IKEV2_ALLOW;
-
-	struct connection *c = find_host_connection(
-		&md->iface->ip_addr, md->iface->port,
-		&md->sender, md->sender_port,
-		policy, LEMPTY);
-
-	/* retrieve st->st_gi */
-
-	if (c == NULL) {
-		/* See if a wildcarded connection can be found.
-		 * We cannot pick the right connection, so we're making a guess.
-		 * All Road Warrior connections are fair game:
-		 * we pick the first we come across (if any).
-		 * If we don't find any, we pick the first opportunistic
-		 * with the smallest subnet that includes the peer.
-		 * There is, of course, no necessary relationship between
-		 * an Initiator's address and that of its client,
-		 * but Food Groups kind of assumes one.
-		 */
-		{
-			struct connection *d = find_host_connection(
-				&md->iface->ip_addr, pluto_port,
-				(ip_address*)NULL, md->sender_port,
-				policy, LEMPTY);
-
-			while (d != NULL) {
-				if (d->kind == CK_GROUP) {
-					/* ignore */
-				} else {
-					if (d->kind == CK_TEMPLATE &&
-					    !(d->policy & POLICY_OPPORTUNISTIC)) {
-						/* must be Road Warrior: we have a winner */
-						c = d;
-						break;
-					}
-
-					/* Opportunistic or Shunt: pick tightest match */
-					if (addrinsubnet(
-						&md->sender,
-						&d->spd.that.client) &&
-					    (c == NULL ||
-					     !subnetinsubnet(
-						&c->spd.that.client,
-						&d->spd.that.client))) {
-						c = d;
-					}
-				}
-				d = find_next_host_connection(d->hp_next,
-					policy, LEMPTY);
-			}
-		}
-		if (c == NULL) {
-			ipstr_buf b;
-
-			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u but no connection has been authorized with policy %s",
-				ipstr(&md->iface->ip_addr, &b),
-				ntohs(portof(&md->iface->ip_addr)),
-				bitnamesof(sa_policy_bit_names, policy));
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-		if (c->kind != CK_TEMPLATE) {
-			ipstr_buf b;
-
-			loglog(RC_LOG_SERIOUS, "initial parent SA message received on %s:%u"
-			       " but \"%s\" forbids connection",
-			       ipstr(&md->iface->ip_addr, &b), pluto_port, c->name);
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-		c = rw_instantiate(c, &md->sender, NULL, NULL);
-	} else {
-		/* We found a non-wildcard connection.
-		 * Double check whether it needs instantiation anyway (eg. vnet=)
-		 */
-		/* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
-		if ((c->kind == CK_TEMPLATE) && c->spd.that.virt) {
-			DBG(DBG_CONTROL,
-			    DBG_log("local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation"));
-			c = rw_instantiate(c, &md->sender, NULL, NULL);
-		} else if ((c->kind == CK_TEMPLATE) &&
-			   (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-			DBG(DBG_CONTROL,
-			    DBG_log("local endpoint has narrowing=yes - needs instantiation"));
-			c = rw_instantiate(c, &md->sender, NULL, NULL);
-		}
+	for (i=0; i < elemsof(policies); i++){
+		policy = policies[i] | POLICY_IKEV2_ALLOW;
+		e = ikev2_find_host_connection(&c, &md->iface->ip_addr,
+				md->iface->port, &md->sender, md->sender_port,
+				policy);
+		if (e == STF_OK)
+			break;
 	}
 
-	DBG(DBG_CONTROL, DBG_log("found connection: %s", c ? c->name : "<none>"));
+	if (e != STF_OK)
+		return e;
+
+	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
+
+	DBG(DBG_CONTROL,
+		DBG_log("found connection: %s with policy %s",
+			c->name, bitnamesof(sa_policy_bit_names, policy)));
 
 	pexpect(st == NULL);	/* ??? where would a state come from? Duplicate packet? */
 
@@ -797,8 +734,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 
 		md->st = st;
 		md->from_state = STATE_IKEv2_BASE;
+	} else {
+		/* ??? should st->st_connection be changed to c? */
 	}
-
 
 	{
 		struct ikev2_ke *ke = &md->chain[ISAKMP_NEXT_v2KE]->payload.v2ke;
@@ -1164,7 +1102,10 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 					   st->st_dcookie);
 			    DBG_log("next STATE_PARENT_I1 resend I1 with the dcookie"));
 
-			libreswan_log("Received anti-DDOS COOKIE, resending I1 with cookie payload");
+			if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				libreswan_log("Received anti-DDOS COOKIE, resending I1 with cookie payload");
+			}
+
 			md->svm = &ikev2_parent_firststate_microcode;
 
 			change_state(st, STATE_PARENT_I1);
@@ -1196,20 +1137,20 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 				DBG(DBG_CONTROLMORE, DBG_log("Suggested modp group is acceptable"));
 				st->st_oakley.groupnum = sg.sg_group;
 				st->st_oakley.group = lookup_group(sg.sg_group);
-				libreswan_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
+				DBG(DBG_CONTROLMORE, DBG_log("Received unauthenticated INVALID_KE with suggested group %s; resending with updated modp group",
 					strip_prefix(enum_show(&oakley_group_names,
-						sg.sg_group), "OAKLEY_GROUP_"));
+						sg.sg_group), "OAKLEY_GROUP_")));
 				/* wipe our mismatched KE */
 				clear_dh_from_state(st);
 				/* wipe out any saved RCOOKIE */
-				DBG(DBG_CONTROL, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
+				DBG(DBG_CONTROLMORE, DBG_log("zeroing any RCOOKIE from unauthenticated INVALID_KE packet"));
 				rehash_state(st, zero_cookie);
 				/* get a new KE */
 				return crypto_helper_build_ke(st);
 			} else {
-				libreswan_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
+				DBG(DBG_CONTROLMORE, DBG_log("Ignoring received unauthenticated INVALID_KE with unacceptable DH group suggestion %s",
 					strip_prefix(enum_show(&oakley_group_names,
-						sg.sg_group), "OAKLEY_GROUP_"));
+						sg.sg_group), "OAKLEY_GROUP_")));
 				return STF_IGNORE;
 			}
 		}
@@ -1222,10 +1163,12 @@ stf_status ikev2parent_inR1BoutI1B(struct msg_digest *md)
 			 * The responder SPI ought to have been 0 (but might not be).
 			 * See rfc5996bis-04 2.6.
 			 */
-			libreswan_log("%s: received unauthenticated %s - ignored",
-				enum_name(&state_names, st->st_state),
-				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type));
+			if (DBGP(DBG_OPPO) || (st->st_connection->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				libreswan_log("%s: received unauthenticated %s - ignored",
+					enum_name(&state_names, st->st_state),
+					enum_name(&ikev2_notify_names,
+						ntfy->payload.v2n.isan_type));
+			}
 		}
 	}
 	return STF_IGNORE;
@@ -1255,9 +1198,9 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 		case v2N_COOKIE:
 		case v2N_INVALID_KE_PAYLOAD:
 		case v2N_NO_PROPOSAL_CHOSEN:
-			libreswan_log("%s cannot appear with other payloads",
+			DBG(DBG_CONTROL, DBG_log("%s cannot appear with other payloads",
 				enum_name(&ikev2_notify_names,
-						ntfy->payload.v2n.isan_type));
+						ntfy->payload.v2n.isan_type)));
 			return STF_FAIL + v2N_INVALID_SYNTAX;
 
 		case v2N_USE_TRANSPORT_MODE:
@@ -1267,10 +1210,10 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 			/* we do handle these further down */
 			break;
 		default:
-			libreswan_log("%s: received %s but ignoring it",
+			DBG(DBG_CONTROL, DBG_log("%s: received %s but ignoring it",
 				enum_name(&state_names, st->st_state),
 				enum_name(&ikev2_notify_names,
-					ntfy->payload.v2n.isan_type));
+					ntfy->payload.v2n.isan_type)));
 		}
 	}
 
@@ -1850,7 +1793,7 @@ stf_status ikev2_decrypt_msg(struct msg_digest *md)
 	}
 	struct ikev2_payload_errors errors = ikev2_verify_payloads(summary, md->svm, TRUE);
 	if (errors.status != STF_OK) {
-		ikev2_log_payload_errors(errors);
+		ikev2_log_payload_errors(errors, md->st);
 		return errors.status;
 	}
 	return STF_OK;
@@ -2325,8 +2268,8 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 		if (c == NULL) {
 			c = st->st_connection;
-			DBG_log("no pending CHILD SAs found for %s: Reauthentication so use the original policy",
-				c->name);
+			DBG(DBG_CONTROL, DBG_log("no pending CHILD SAs found for %s: Reauthentication so use the original policy",
+				c->name));
 			policy = c->policy;
 		}
 		st->st_connection = c;
@@ -2340,7 +2283,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		ikev2_calc_emit_ts(md, &e_pbs_cipher, ORIGINAL_INITIATOR, c, policy);
 
 		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
-			DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE");
+			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
 			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
 						ISAKMP_PAYLOAD_NONCRITICAL,
@@ -2998,10 +2941,14 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		    md->chain[ISAKMP_NEXT_v2TSr] == NULL) {
 			/* initiator didn't propose anything. Weird. Try unpending our end. */
 			/* UNPEND XXX */
-			libreswan_log("No CHILD SA proposals received.");
+			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				libreswan_log("No CHILD SA proposals received.");
+			} else {
+				DBG(DBG_CONTROLMORE, DBG_log("No CHILD SA proposals received"));
+			}
 			np = ISAKMP_NEXT_v2NONE;
 		} else {
-			DBG_log("CHILD SA proposals received");
+			DBG(DBG_CONTROLMORE, DBG_log("CHILD SA proposals received"));
 			np = (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) ?
 				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
 		}

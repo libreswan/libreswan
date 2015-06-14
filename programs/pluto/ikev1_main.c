@@ -2438,11 +2438,12 @@ static void send_notification(struct state *sndst, notification_t type,
 	static monotime_t last_malformed;
 	monotime_t n = mononow();
 	struct isakmp_hdr hdr; /* keep it around for TPM */
+	struct connection *c = sndst->st_connection;
 
 	r_hashval = NULL;
 	r_hash_start = NULL;
 
-	passert((sndst) && (sndst->st_connection));
+	passert(sndst != NULL && c != NULL);
 
 	switch (type) {
 	case PAYLOAD_MALFORMED:
@@ -2454,9 +2455,11 @@ static void send_notification(struct state *sndst, notification_t type,
 		sndst->hidden_variables.st_malformed_sent++;
 		if (sndst->hidden_variables.st_malformed_sent >
 			MAXIMUM_MALFORMED_NOTIFY) {
-			libreswan_log(
-				"too many (%d) malformed payloads. Deleting state",
-				sndst->hidden_variables.st_malformed_sent);
+			if (DBGP(DBG_OPPO) || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+				libreswan_log(
+					"too many (%d) malformed payloads. Deleting state",
+					sndst->hidden_variables.st_malformed_sent);
+			}
 			delete_state(sndst);
 			/* note: no md->st to clear */
 			return;
@@ -2490,11 +2493,13 @@ static void send_notification(struct state *sndst, notification_t type,
 	{
 		ipstr_buf b;
 
-		libreswan_log("sending %snotification %s to %s:%u",
-			encst ? "encrypted " : "",
-			enum_name(&ikev1_notify_names, type),
-			ipstr(&sndst->st_remoteaddr, &b),
-			sndst->st_remoteport);
+		if (DBGP(DBG_OPPO) || (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			libreswan_log("sending %snotification %s to %s:%u",
+				encst ? "encrypted " : "",
+				enum_name(&ikev1_notify_names, type),
+				ipstr(&sndst->st_remoteaddr, &b),
+				sndst->st_remoteport);
+		}
 	}
 
 	zero(&buffer);

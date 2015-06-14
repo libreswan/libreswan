@@ -659,6 +659,7 @@
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
       <arg choice="plain">--trafficstatus</arg>
+      <arg choice="plain">--shuntstatus</arg>
 
       <arg choice="opt">--ctlbase <replaceable>path</replaceable></arg>
 
@@ -3177,11 +3178,11 @@
       the superuser account.</para>
 
       <para><emphasis remap="B">pluto</emphasis> is willing to produce a
-      prodigious amount of debugging information. To do so, it must be
-      compiled with -DDEBUG. There are several classes of debugging output,
-      and <emphasis remap="B">pluto</emphasis> may be directed to produce a
-      selection of them. All lines of debugging output are prefixed with
-      “|&nbsp;” to distinguish them from error messages.</para>
+      prodigious amount of debugging information. There are several classes
+      of debugging output, and <emphasis remap="B">pluto</emphasis> may be
+      directed to produce a selection of them. All lines of debugging output
+      are prefixed with “|&nbsp;” to distinguish them from error messages.
+      </para>
 
       <para>When <emphasis remap="B">pluto</emphasis> is invoked, it may be
       given arguments to specify which classes to output. The current options
@@ -3359,11 +3360,6 @@
       display raw bytes:</para>
 
       <para>whack --debug-raw</para>
-
-      <para>For testing, SSH's IKE test page is quite useful:</para>
-
-      <para><emphasis remap="I"><ulink
-      url="http://isakmp-test.ssh.fi/">http://isakmp-test.ssh.fi/</ulink></emphasis></para>
 
       <para>Hint: ISAKMP SAs are often kept alive by IKEs even after the IPsec
       SA is established. This allows future IPsec SA's to be negotiated

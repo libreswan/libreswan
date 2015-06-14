@@ -230,5 +230,6 @@ struct state_v2_microcode {
 struct ikev2_payload_errors ikev2_verify_payloads(struct ikev2_payloads_summary summary,
 						  const struct state_v2_microcode *svm, bool enc);
 
-void ikev2_log_payload_errors(struct ikev2_payload_errors errors);
+void ikev2_log_payload_errors(struct ikev2_payload_errors errors,
+			      struct state *st);
 
