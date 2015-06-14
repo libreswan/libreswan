@@ -3896,6 +3896,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 		record_and_send_ike_msg(st, &reply_stream,
 			"reply packet for informational exchange");
+
 	}
 
 	/* end of Responder-only code */
@@ -4135,10 +4136,15 @@ stf_status ikev2_send_informational(struct state *st)
 			if (ret != STF_OK)
 				return STF_FATAL;
 		}
+		/* cannot use ikev2_update_msgid_counters - no md here */
+		/* But we know we are the initiator for thie exchange */
+		pst->st_msgid_lastack += 1;
+		pst->st_msgid_nextuse += 1;
 
 		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 		record_and_send_ike_msg(pst, &reply_stream,
 			"reply packet for informational exchange");
+
 	}
 
 	return STF_OK;
