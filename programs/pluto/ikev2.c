@@ -778,23 +778,35 @@ void process_v2_packet(struct msg_digest **mdp)
 				 *
 				 * Beware of unsigned arrithmetic.
 				 */
-				if (st->st_msgid_lastack != v2_INVALID_MSGID &&
-				    st->st_msgid_lastrecv != v2_INVALID_MSGID &&
-				    md->msgid_received <= st->st_msgid_lastack) {
-					/* it's fine, it's just a retransmit */
-					DBG(DBG_CONTROL,
-					    DBG_log("dropping retransmitted responce with msgid %u from peer",
-						    md->msgid_received));
-					return;
-				} else {
-					/*
-					 * A reply for an unknown request.  Huh!
-					 */
-					libreswan_log("dropping unknown responce with msgid %u from peer (our last ack is %u)",
+
+				if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
+					/* Response to our request */
+					if (st->st_msgid_lastack != v2_INVALID_MSGID &&
+					    st->st_msgid_lastack > md->msgid_received)
+					{
+						DBG(DBG_CONTROL, DBG_log(
+							"dropping retransmitted responce with msgid %u from peer - we already processed %u.",
+						    md->msgid_received, st->st_msgid_lastack));
+						return;
+					}
+					if (st->st_msgid_nextuse != v2_INVALID_MSGID &&
+					    md->msgid_received >= st->st_msgid_nextuse) {
+						/*
+						 * A reply for an unknown request.  Huh!
+						 */
+						DBG(DBG_CONTROL, DBG_log(
+							"dropping unasked response with msgid %u from peer (our last used msgid is %u)",
 						      md->msgid_received,
-						      st->st_msgid_lastack);
-					return;
+						      st->st_msgid_nextuse - 1));
+						return;
+					}
+
+				} else {
+					/* We always need to respond to peer's request - else retransmits */
 				}
+
+
+
 			}
 		}
 	}
