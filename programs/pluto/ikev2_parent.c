@@ -3908,6 +3908,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			hdr.isa_np = ISAKMP_NEXT_v2SK;
 			hdr.isa_msgid = htonl(md->msgid_received);
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
+			if (md->original_role == ORIGINAL_INITIATOR) {
+				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
+			}
 			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 			}
@@ -4203,7 +4206,6 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
 		st->st_last_liveness = mononow();
 		st->st_pend_liveness = FALSE;
-		ikev2_update_msgid_counters(md);
 	} else {
 		/*
 		 * IPsec SA deletion
@@ -4301,6 +4303,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		}  /* for */
 	}
 
+	ikev2_update_msgid_counters(md);
 	return STF_OK;
 }
 
@@ -4410,10 +4413,19 @@ stf_status ikev2_send_informational(struct state *st)
 			if (ret != STF_OK)
 				return STF_FATAL;
 		}
+		/* cannot use ikev2_update_msgid_counters - no md here */
+		/* But we know we are the initiator for thie exchange */
+		pst->st_msgid_lastack += 1;
+		pst->st_msgid_nextuse += 1;
 
 		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 		record_and_send_ike_msg(pst, &reply_stream,
+<<<<<<< HEAD
 			"packet for ikev2_send_informational");
+=======
+			"reply packet for informational exchange");
+
+>>>>>>> master
 	}
 
 	return STF_OK;

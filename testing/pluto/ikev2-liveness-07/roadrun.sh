@@ -18,8 +18,8 @@ echo "Tunnel should be down (%trap/%hold)"
 ipsec look
 iptables -D INPUT -s 192.1.2.23/32 -d 0/0 -j DROP
 iptables -D OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
-# as long as retransmits might take 20,40,40 seconds
-sleep 60
+# as long as retransmits might take
+sleep 30
 # Tunnel should be back up now even without triggering traffic
 echo "Tunnel should be up even without trigger traffic"
 ipsec look
