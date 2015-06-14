@@ -1010,9 +1010,6 @@ void process_v2_packet(struct msg_digest **mdp)
 		if (clear_payload_status.status != STF_OK) {
 			ikev2_log_payload_errors(clear_payload_status, st);
 			complete_v2_state_transition(mdp, clear_payload_status.status);
-		} else if (enc_payload_status.status != STF_OK) {
-			ikev2_log_payload_errors(enc_payload_status, st);
-			complete_v2_state_transition(mdp, enc_payload_status.status);
 		} else if (!(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R)) {
 			/*
 			 * We are the responder to this message so
