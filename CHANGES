@@ -4,6 +4,7 @@ See also https://libreswan.org/
 v3.14 (unreleased)
 * NSS: Major rewrite of PRF / PRFPLUS / integrity functions [Andrew]
 * CAVS: Added programs/pluto/cavp for NIST CVAS testing [Andrew]
+* IKEv2: RFC 7383 IKEv2 Fragmentation support [Herbert/Hugh]
 * IKEv2: authby=null support (draft-ietf-ipsecme-authnull) [Paul/Antony/Hugh]
 * IKEv2: leftid=%null support (draft-ietf-ipsecme-authnull) [Paul/Antony/Hugh]
 * IKEv2: whack and smc related time out fixes [Antony]
@@ -12,6 +13,7 @@ v3.14 (unreleased)
 * IKEv2: Fix memory leaks in addresspool and child exchange sadb [Antony]
 * IKEv2: Support for INVALID_KE DH group re-transmits [Paul/Hugh]
 * IKEv2: if applicable, add CERTREQ payload to IKE_SA_INIT response [Antony]
+* IKEv2: Various memory leak fixes [Hugh]
 * IKEv1: Don't copy isakmp_sa from received packet [Paul]
 * FIPS: Enforce crypto restrictions in FIPS mode (no md5,twofish, etc) [Paul]
 * XAUTH: retransmit user/password request in 10s (instead of 30s) [Wolfgang]
