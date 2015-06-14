@@ -1187,7 +1187,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 	case LAK_PARENT_START:
 	case LAK_PARENT_DESTROY:
 		initiator = (st->st_original_role == ORIGINAL_INITIATOR) || IS_PHASE1_INIT(st->st_state);
-		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=%ld ike-version=%s auth=%s",
+		snprintf(head, sizeof(head), "op=%s direction=%s %s connstate=#%lu ike-version=%s auth=%s",
 			op == LAK_PARENT_START ? "start" : "destroy",
 			initiator ? "initiator" : "responder",
 			conn_encode,
@@ -1225,7 +1225,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 	case LAK_CHILD_START:
 	case LAK_CHILD_DESTROY:
-		snprintf(head, sizeof(head), "op=%s %s connstate=%ld, satype=%s samode=%s",
+		snprintf(head, sizeof(head), "op=%s %s connstate=#%lu, satype=%s samode=%s",
 			op == LAK_CHILD_START ? "start" : "destroy",
 			conn_encode,
 			st->st_serialno,

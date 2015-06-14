@@ -2048,7 +2048,7 @@ void process_packet_tail(struct msg_digest **mdp)
 							 notification.isan_type)));
 				} else {
 					loglog(RC_LOG_SERIOUS,
-					       "ignoring informational payload %s, msgid=%08x, length=%d",
+					       "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
 					       enum_show(&ikev1_notify_names,
 							 p->payload.
 							 notification.isan_type),

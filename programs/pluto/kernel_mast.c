@@ -514,12 +514,12 @@ static bool mast_sag_eroute_replace(struct state *st, struct spd_route *sr)
 	if (!old_st)
 		old_st = st;
 
-	DBG_log("mast_sag_eroute_replace state #%d{ref=%d refhim=%d} "
-		"with #%d{ref=%d refhim=%d}",
-		(int)old_st->st_serialno,
+	DBG_log("mast_sag_eroute_replace state #%lu{ref=%d refhim=%d} "
+		"with #%lu{ref=%d refhim=%d}",
+		old_st->st_serialno,
 		(int)old_st->st_ref,
 		(int)old_st->st_refhim,
-		(int)st->st_serialno,
+		st->st_serialno,
 		(int)st->st_ref,
 		(int)st->st_refhim);
 

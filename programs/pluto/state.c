@@ -519,6 +519,7 @@ struct state *state_with_serialno(so_serial_t sn)
 {
 	if (sn >= SOS_FIRST) {
 		int i;
+
 		for (i = 0; i < STATE_TABLE_SIZE; i++) {
 			struct state *st;
 			FOR_EACH_ENTRY(st, i, {
@@ -947,7 +948,7 @@ static void foreach_states_by_connection_func_delete(struct connection *c,
 			struct state *this;
 			FOR_EACH_ENTRY(this, i, {
 					DBG(DBG_CONTROL,
-					    DBG_log("index %d state #%ld", i,
+					    DBG_log("index %d state #%lu", i,
 						    this->st_serialno));
 
 				/* on pass 2, ignore phase2 states */
@@ -1278,10 +1279,10 @@ struct state *find_state_ikev1(const u_char *icookie,
 		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE) &&
 		    !st->st_ikev2) {
 			DBG(DBG_CONTROL,
-			    DBG_log("v1 peer and cookies match on #%ld, provided msgid %08lx vs %08lx",
+			    DBG_log("v1 peer and cookies match on #%lu, provided msgid %08" PRIx32 " == %08" PRIx32,
 				    st->st_serialno,
-				    (long unsigned)ntohl(msgid),
-				    (long unsigned)ntohl(st->st_msgid)));
+				    ntohl(msgid),
+				    ntohl(st->st_msgid)));
 			if (msgid == st->st_msgid)
 				break;
 		}
@@ -1314,7 +1315,7 @@ struct state *find_state_ikev2_parent(const u_char *icookie,
 		    st->st_ikev2 &&
 		    !IS_CHILD_SA(st)) {
 			DBG(DBG_CONTROL,
-			    DBG_log("parent v2 peer and cookies match on #%ld",
+			    DBG_log("parent v2 peer and cookies match on #%lu",
 				    st->st_serialno));
 			break;
 		}
@@ -1358,7 +1359,7 @@ struct state *find_state_ikev2_parent_init(const u_char *icookie,
 				continue;
 			}
 			DBG(DBG_CONTROL,
-			    DBG_log("parent_init v2 peer and cookies match on #%ld",
+			    DBG_log("parent_init v2 peer and cookies match on #%lu",
 				    st->st_serialno);
 			    DBG_log("v2 state object #%lu found, in %s",
 				    st->st_serialno,
@@ -1384,7 +1385,7 @@ struct state *find_state_ikev2_child(const u_char *icookie,
 		    st->st_ikev2 &&
 		    st->st_msgid == msgid) {
 			DBG(DBG_CONTROL,
-			    DBG_log("v2 peer, cookies and msgid match on #%ld",
+			    DBG_log("v2 peer, cookies and msgid match on #%lu",
 				    st->st_serialno));
 			break;
 		}
@@ -1466,11 +1467,11 @@ struct state *ikev1_find_info_state(const u_char *icookie,
 		if (memeq(icookie, st->st_icookie, COOKIE_SIZE) &&
 		    memeq(rcookie, st->st_rcookie, COOKIE_SIZE)) {
 			DBG(DBG_CONTROL,
-			    DBG_log("peer and cookies match on #%ld, provided msgid %08lx vs %08lx/%08lx",
+			    DBG_log("peer and cookies match on #%lu; msgid=%08" PRIx32 " st_msgid=%08" PRIx32 " st_msgid_phase15=%08" PRIx32,
 				    st->st_serialno,
-				    (long unsigned)ntohl(msgid),
-				    (long unsigned)ntohl(st->st_msgid),
-				    (long unsigned)ntohl(st->st_msgid_phase15)));
+				    ntohl(msgid),
+				    ntohl(st->st_msgid),
+				    ntohl(st->st_msgid_phase15)));
 			if ((st->st_msgid_phase15 != v1_MAINMODE_MSGID &&
 			     msgid == st->st_msgid_phase15) ||
 			    msgid == st->st_msgid)
@@ -2262,7 +2263,7 @@ void log_newest_sa_change(char *f, struct state *const st)
 {
 
 	DBG(DBG_CONTROLMORE,
-			DBG_log("%s: instance %s[%ld], setting %s newest_ipsec_sa to #%ld (was #%ld) (spd.eroute=#%ld) cloned from #%lu",f,
+			DBG_log("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",f,
 				st->st_connection->name,
 				st->st_connection->instance_serial,
 				st->st_ikev2 ? "IKEv2" : "IKEv1",

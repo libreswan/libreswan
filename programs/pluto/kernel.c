@@ -2454,9 +2454,9 @@ static void look_for_replacement_state(struct state *st)
 
 	DBG(DBG_CONTROL, {
 		    DBG_log("checking if this is a replacement state");
-		    DBG_log("  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu ",
+		    DBG_log("  st=%p ost=%p st->serialno=#%lu ost->serialno=#%lu",
 			    st, ost, st->st_serialno,
-			    ost ? ost->st_serialno : 0);
+			    ost == NULL ? 0 : ost->st_serialno);
 	    });
 
 	if (ost != NULL && ost != st && ost->st_serialno != st->st_serialno) {
@@ -2599,7 +2599,7 @@ bool route_and_eroute(struct connection *c,
 	ro = route_owner(c, sr, &rosr, &ero, &esr);
 
 	DBG(DBG_CONTROLMORE,
-	    DBG_log("route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: %lu",
+	    DBG_log("route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
 		    c->name,
 		    (c->policy_next ? c->policy_next->name : "none"),
 		    ero == NULL ? "null" : ero->name,
@@ -2796,7 +2796,7 @@ bool route_and_eroute(struct connection *c,
 
 			DBG(DBG_CONTROL, {
 				    char cib[CONN_INST_BUF];
-				    DBG_log("route_and_eroute: instance \"%s\"%s, setting eroute_owner {spd=%p,sr=%p} to #%ld (was #%ld) (newest_ipsec_sa=#%ld)",
+				    DBG_log("route_and_eroute: instance \"%s\"%s, setting eroute_owner {spd=%p,sr=%p} to #%lu (was #%lu) (newest_ipsec_sa=#%lu)",
 					    st->st_connection->name,
 					    fmt_conn_instance(st->st_connection,
 							      cib),
@@ -2921,7 +2921,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	struct spd_route *sr;
 	enum routability rb;
 
-	DBG(DBG_CONTROL, DBG_log("install_ipsec_sa() for #%ld: %s",
+	DBG(DBG_CONTROL, DBG_log("install_ipsec_sa() for #%lu: %s",
 				 st->st_serialno,
 				 inbound_also ?
 				 "inbound and outbound" : "outbound only"));
@@ -2969,7 +2969,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
 	for (; sr != NULL; sr = sr->next) {
-		DBG(DBG_CONTROL, DBG_log("sr for #%ld: %s",
+		DBG(DBG_CONTROL, DBG_log("sr for #%lu: %s",
 					 st->st_serialno,
 					 enum_name(&routing_story,
 						   sr->routing)));

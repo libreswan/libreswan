@@ -913,15 +913,15 @@ static void nat_traversal_find_new_mapp_state(struct state *st, void *data)
 	struct new_mapp_nfo *nfo = (struct new_mapp_nfo *)data;
 
 	if ((IS_CHILD_SA(nfo->st) &&
-			(st->st_serialno == nfo->st->st_clonedfrom ||
-				st->st_clonedfrom ==
-				nfo->st->st_clonedfrom)) ||
-		st->st_serialno == nfo->st->st_serialno) {
+		(st->st_serialno == nfo->st->st_clonedfrom ||
+		 st->st_clonedfrom == nfo->st->st_clonedfrom)) ||
+	    st->st_serialno == nfo->st->st_serialno)
+	{
 		ipstr_buf b1, b2;
 		struct connection *c = st->st_connection;
 
-		libreswan_log("new NAT mapping for #%u, was %s:%d, now %s:%d",
-			(unsigned int)st->st_serialno,
+		libreswan_log("new NAT mapping for #%lu, was %s:%d, now %s:%d",
+			st->st_serialno,
 			ipstr(&st->st_remoteaddr, &b1),
 			st->st_remoteport,
 			ipstr(&nfo->addr, &b2),
@@ -945,8 +945,8 @@ static int nat_traversal_new_mapping(struct state *st,
 
 	DBG(DBG_CONTROLMORE, {
 		ipstr_buf b;
-		DBG_log("state #%u NAT-T: new mapping %s:%d",
-			(unsigned int)st->st_serialno,
+		DBG_log("state #%lu NAT-T: new mapping %s:%d",
+			st->st_serialno,
 			ipstr(nsrc, &b),
 			nsrcport);
 	});
@@ -984,7 +984,7 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 	if (st == NULL)
 		return;
 
-	if (md) {
+	if (md != NULL) {
 		/*
 		 * If source port/address has changed, update (including other
 		 * states and established kernel SA)

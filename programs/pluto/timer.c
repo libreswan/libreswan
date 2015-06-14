@@ -459,7 +459,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	st = ev->ev_state;
 
 	if (st != NULL) {
-		snprintf(statenum, sizeof(statenum), " for state #%ld", st->st_serialno);
+		snprintf(statenum, sizeof(statenum), " for state #%lu", st->st_serialno);
 	}
 	DBG(DBG_CONTROL, DBG_log("handling event %s%s",
 				enum_show(&timer_event_names, type), (st == NULL) ? "" : statenum));
@@ -490,7 +490,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_v1_SEND_XAUTH:
 		passert(st != NULL && st->st_send_xauth_event == ev);
-		DBG_log("event EVENT_v1_SEND_XAUTH %lu %s", st->st_serialno,
+		DBG_log("event EVENT_v1_SEND_XAUTH #%lu %s", st->st_serialno,
 				enum_name(&state_names, st->st_state));
 		st->st_send_xauth_event = NULL;
 		break;
@@ -509,7 +509,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_v2_RELEASE_WHACK:
 		passert(st != NULL && st->st_rel_whack_event == ev);
-		DBG_log("event EVENT_v2_RELEASE_WHACK st_rel_whack_event=NULL %lu %s",  st->st_serialno, enum_name(&state_names, st->st_state));
+		DBG_log("event EVENT_v2_RELEASE_WHACK st_rel_whack_event=NULL #%lu %s",  st->st_serialno, enum_name(&state_names, st->st_state));
 		st->st_rel_whack_event = NULL;
 		break;
 
@@ -746,12 +746,12 @@ void delete_event(struct state *st)
 	/* ??? isn't this a bug?  Should we not passert? */
 	if (st->st_event == NULL) {
 		DBG(DBG_CONTROLMORE,
-				DBG_log("state: #%ld requesting to delete non existing event",
+				DBG_log("state: #%lu requesting to delete non existing event",
 					st->st_serialno));
 		return;
 	}
 	DBG(DBG_CONTROLMORE,
-			DBG_log("state: #%ld requesting %s to be deleted",
+			DBG_log("state: #%lu requesting %s to be deleted",
 				st->st_serialno,
 				enum_show(&timer_event_names,
 					st->st_event->ev_type)));
@@ -764,7 +764,7 @@ void delete_event(struct state *st)
 void delete_liveness_event(struct state *st)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
-			DBG_log("state: #%ld requesting event %s to be deleted",
+			DBG_log("state: #%lu requesting event %s to be deleted",
 				st->st_serialno,
 				(st->st_liveness_event != NULL ?
 				 enum_show(&timer_event_names,
@@ -781,7 +781,7 @@ void delete_liveness_event(struct state *st)
 void delete_dpd_event(struct state *st)
 {
 	DBG(DBG_DPD | DBG_CONTROL,
-		DBG_log("state: %ld requesting DPD event %s to be deleted",
+		DBG_log("state: %lu requesting DPD event %s to be deleted",
 			st->st_serialno,
 			(st->st_dpd_event != NULL ?
 				enum_show(&timer_event_names,

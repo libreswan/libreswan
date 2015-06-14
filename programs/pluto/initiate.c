@@ -492,7 +492,7 @@ static void cannot_oppo(struct connection *c,
 		 * connections
 		 */
 
-		DBG(DBG_OPPO, DBG_log("installing state: %ld for %s to %s",
+		DBG(DBG_OPPO, DBG_log("installing state: %lu for %s to %s",
 				      nc->newest_ipsec_sa,
 				      ocb, pcb));
 

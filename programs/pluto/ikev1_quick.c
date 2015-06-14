@@ -987,7 +987,7 @@ stf_status quick_outI1(int whack_sock,
 				 replacing);
 
 		libreswan_log(
-			"initiating Quick Mode %s%s {using isakmp#%lu msgid:%08x proposal=%s pfsgroup=%s}",
+			"initiating Quick Mode %s%s {using isakmp#%lu msgid:%08" PRIx32 " proposal=%s pfsgroup=%s}",
 			prettypolicy(policy),
 			replacestr,
 			isakmp_sa->st_serialno, st->st_msgid, p2alg,
@@ -1468,7 +1468,7 @@ static void report_verify_failure(struct verify_oppo_bundle *b, err_t ugh)
 	}
 
 	loglog(RC_OPPOFAILURE,
-	       "gateway %s wants connection with %s as %s client, but DNS fails to confirm delegation: %s {msgid:%08x}",
+	       "gateway %s wants connection with %s as %s client, but DNS fails to confirm delegation: %s {msgid:%08" PRIx32 "}",
 	       ipstr(&st->st_connection->spd.that.host_addr, &ib1),
 	       ipstr(&client, &ib2),
 	       which, ugh, st->st_msgid);
@@ -2351,7 +2351,7 @@ static stf_status quick_inI1_outR1_cryptotail(struct msg_digest *md,
 		return STF_FAIL + NO_PROPOSAL_CHOSEN; /* ??? */
 	}
 
-	libreswan_log("responding to Quick Mode proposal {msgid:%08x}",
+	libreswan_log("responding to Quick Mode proposal {msgid:%08" PRIx32 "}",
 		      st->st_msgid);
 	{
 		char instbuf[END_BUF];

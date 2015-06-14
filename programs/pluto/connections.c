@@ -3713,7 +3713,7 @@ void show_one_connection(struct connection *c)
 	}
 
 	whack_log(RC_COMMENT,
-		"\"%s\"%s:   newest ISAKMP SA: #%ld; newest IPsec SA: #%ld; ",
+		"\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; ",
 		c->name,
 		instance,
 		c->newest_isakmp_sa,

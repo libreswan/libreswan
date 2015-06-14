@@ -944,7 +944,7 @@ void process_v2_packet(struct msg_digest **mdp)
 					    : st->st_state);
 	DBG(DBG_CONTROL,
 	    if (st != NULL) {
-		    DBG_log("found state #%ld", (long int)st->st_serialno);
+		    DBG_log("found state #%lu", st->st_serialno);
 	    }
 	    DBG_log("from_state is %s", enum_show(&state_names, from_state)));
 	passert((st == NULL) == (from_state == STATE_UNDEFINED));
