@@ -3630,6 +3630,9 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 			hdr.isa_np = ISAKMP_NEXT_v2SK;
 			hdr.isa_msgid = htonl(md->msgid_received);
 			hdr.isa_flags |= ISAKMP_FLAGS_v2_MSG_R;
+			if (md->original_role == ORIGINAL_INITIATOR) {
+				hdr.isa_flags |= ISAKMP_FLAGS_v2_IKE_I;
+			}
 			if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
 				hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 			}
