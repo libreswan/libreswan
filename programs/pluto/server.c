@@ -200,6 +200,7 @@ bool listening = FALSE;  /* should we pay attention to IKE messages? */
 enum ddos_mode pluto_ddos_mode = DDOS_AUTO; /* default to auto-detect */
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
 unsigned int pluto_ddos_treshold = DEFAULT_IKE_SA_DDOS_TRESHOLD;
+deltatime_t pluto_shunt_lifetime = { PLUTO_SHUNT_LIFE_DURATION_DEFAULT };
 
 struct iface_port  *interfaces = NULL;  /* public interfaces */
 
@@ -349,6 +350,13 @@ int create_socket(struct raw_iface *ifp, const char *v_name, int port)
 	}
 #endif
 
+/*
+ * NETKEY requires us to poke an IPsec policy hole that allows IKE packets,
+ * unlike KLIPS which implicitly always allows plaintext IKE.
+ * This installs one IPsec policy per socket but this function is called for each:
+ * IPv4 port 500 and 4500
+ * IPv6 port 500
+ */
 #if defined(linux) && defined(NETKEY_SUPPORT)
 	if (kern_interface == USE_NETKEY) {
 		struct sadb_x_policy policy;
@@ -794,12 +802,12 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 				   "recvmsg(,, MSG_ERRQUEUE) on %s failed in comm_handle",
 				   ifp->ip_dev->id_rname));
 			break;
-		} else if (packet_len == sizeof(buffer)) {
+		} else if (packet_len == (ssize_t)sizeof(buffer)) {
 			libreswan_log(
 				"MSG_ERRQUEUE message longer than %lu bytes; truncated",
 				(unsigned long) sizeof(buffer));
-		} else {
-			sender = find_sender((size_t) packet_len, buffer);
+		} else if (packet_len >= (ssize_t)sizeof(struct isakmp_hdr)) {
+			sender = find_likely_sender((size_t) packet_len, buffer);
 		}
 
 		DBG_cond_dump(DBG_ALL, "rejected packet:\n", buffer,
@@ -927,10 +935,23 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 
 				if (packet_len == 1 && buffer[0] == 0xff &&
 				    (cur_debugging & DBG_NATT) == 0) {
-					/* don't log NAT-T keepalive related errors unless NATT debug is
+					/*
+					 * don't log NAT-T keepalive related errors unless NATT debug is
 					 * enabled
 					 */
-				} else {
+				} else if (DBGP(DBG_OPPO) ||
+				           (sender != NULL && sender->st_connection != NULL &&
+					    LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)))
+				{
+					/*
+					 * We are selective about printing this
+					 * diagnostic since it pours out when
+					 * we are doing unrequited authnull OE.
+					 * That's the point of the condition
+					 * above.
+					 * ??? the condition treats all authnull as OE.
+					 */
+					/* ??? DBGP is controlling non-DBG logging! */
 					struct state *old_state = cur_state;
 
 					cur_state = sender;
@@ -939,28 +960,27 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					 * if we know what state to blame.
 					 */
 					libreswan_log((sender != NULL) + "~"
-						      "ERROR: asynchronous network error report on %s (sport=%d)"
-						      "%s"
-						      ", complainant %s"
-						      ": %s"
-						      " [errno %lu, origin %s"
-					                /* ", pad %d, info %ld" */
-					                /* ", data %ld" */
-						      "]",
-						      ifp->ip_dev->id_rname,
-						      ifp->port,
-						      fromstr,
-						      offstr,
-						      strerror(ee->ee_errno),
-						      (unsigned long) ee->ee_errno,
-						      orname
-					                /* , ee->ee_pad, (unsigned long)ee->ee_info */
-					                /* , (unsigned long)ee->ee_data */
-						      );
+						"ERROR: asynchronous network error report on %s (sport=%d)"
+						"%s"
+						", complainant %s"
+						": %s"
+						" [errno %lu, origin %s"
+						/* ", pad %d, info %ld" */
+						/* ", data %ld" */
+						"]",
+						ifp->ip_dev->id_rname, ifp->port,
+						fromstr,
+						offstr,
+						strerror(ee->ee_errno),
+						(unsigned long) ee->ee_errno, orname
+						/* , ee->ee_pad, (unsigned long)ee->ee_info */
+						/* , (unsigned long)ee->ee_data */
+						);
 					cur_state = old_state;
 				}
-			} else if (cm->cmsg_level == SOL_IP   &&
+			} else if (cm->cmsg_level == SOL_IP &&
 				   cm->cmsg_type == IP_PKTINFO) {
+				/* do nothing */
 			} else {
 				/* .cmsg_len is a kernel_size_t(!), but the value
 				 * certainly ought to fit in an unsigned long.

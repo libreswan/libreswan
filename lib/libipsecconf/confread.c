@@ -104,6 +104,7 @@ void ipsecconf_default_values(struct starter_config *cfg)
 	cfg->setup.options[KBF_NATIKEPORT] = NAT_IKE_UDP_PORT;
 	cfg->setup.options[KBF_DDOS_IKE_TRESHOLD] = DEFAULT_IKE_SA_DDOS_TRESHOLD;
 	cfg->setup.options[KBF_MAX_HALFOPEN_IKE] = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
+	cfg->setup.options[KBF_SHUNTLIFETIME] = PLUTO_SHUNT_LIFE_DURATION_DEFAULT;
 	/* Don't inflict BSI requirements on everyone */
 	cfg->setup.options[KBF_SEEDBITS] = 0;
 
@@ -1131,6 +1132,35 @@ static bool load_conn(struct ub_ctx *dnsctx,
 				  POLICY_TUNNEL | POLICY_RSASIG);
 			conn->policy &= ~POLICY_SHUNT_MASK;
 			conn->policy |= POLICY_SHUNT_REJECT;
+			break;
+		}
+	}
+
+	if (conn->options_set[KBF_FAILURESHUNT]) {
+		conn->policy &= ~POLICY_FAIL_MASK;
+		switch(conn->options[KBF_FAILURESHUNT]) {
+		case KFS_FAIL_NONE:
+			conn->policy |= POLICY_FAIL_NONE;
+			break;
+		case KFS_FAIL_PASS:
+			conn->policy |= POLICY_FAIL_PASS;
+			break;
+		case KFS_FAIL_DROP:
+			conn->policy |= POLICY_FAIL_DROP;
+			break;
+		case KFS_FAIL_REJECT:
+			conn->policy |= POLICY_FAIL_REJECT;
+			break;
+		}
+	}
+
+	if (conn->options_set[KBF_NEGOTIATIONSHUNT]) {
+		switch(conn->options[KBF_NEGOTIATIONSHUNT]) {
+		case KNS_FAIL_PASS:
+			conn->policy |= POLICY_NEGO_PASS;
+			break;
+		case KNS_FAIL_DROP:
+			conn->policy &= ~POLICY_NEGO_PASS;
 			break;
 		}
 	}

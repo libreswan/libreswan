@@ -49,11 +49,11 @@ enum pluto_sadb_operations {
 #define IPSEC_PROTO_ANY         255
 
 /* KLIPS has:
-   #define ERO_DELETE	SADB_X_DELFLOW
-   #define ERO_ADD	SADB_X_ADDFLOW
-   #define ERO_REPLACE	(SADB_X_ADDFLOW | (SADB_X_SAFLAGS_REPLACEFLOW << ERO_FLAG_SHIFT))
-   #define ERO_ADD_INBOUND	(SADB_X_ADDFLOW | (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
-   #define ERO_DEL_INBOUND	(SADB_X_DELFLOW | (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
+ * #define ERO_DELETE	SADB_X_DELFLOW
+ * #define ERO_ADD	SADB_X_ADDFLOW
+ * #define ERO_REPLACE	(SADB_X_ADDFLOW | (SADB_X_SAFLAGS_REPLACEFLOW << ERO_FLAG_SHIFT))
+ * #define ERO_ADD_INBOUND	(SADB_X_ADDFLOW | (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
+ * #define ERO_DEL_INBOUND	(SADB_X_DELFLOW | (SADB_X_SAFLAGS_INFLOW << ERO_FLAG_SHIFT))
  */
 
 struct pfkey_proto_info {
@@ -158,8 +158,9 @@ struct kernel_ops {
 			   const ip_subnet *this_client,
 			   const ip_address *that_host,
 			   const ip_subnet *that_client,
-			   ipsec_spi_t spi,
-			   unsigned int proto,
+			   ipsec_spi_t cur_spi,
+			   ipsec_spi_t new_spi,
+			   int sa_proto,
 			   unsigned int transport_proto,
 			   enum eroute_type satype,
 			   const struct pfkey_proto_info *proto_info,
@@ -202,7 +203,6 @@ struct kernel_ops {
 			  struct state *st);
 	void (*process_ifaces)(struct raw_iface *rifaces);
 	bool (*exceptsocket)(int socketfd, int family);
-
 };
 
 extern int create_socket(struct raw_iface *ifp, const char *v_name, int port);
@@ -282,7 +282,8 @@ struct eroute_info {
  * which %holds are news and which others should expire.
  */
 
-#define SHUNT_SCAN_INTERVAL     (2 * secs_per_minute)   /* time between scans of eroutes */
+//#define SHUNT_SCAN_INTERVAL     (2 * secs_per_minute)   /* time between scans of eroutes */
+#define SHUNT_SCAN_INTERVAL     (2 * 10)   /* time between scans of eroutes */
 
 /* SHUNT_PATIENCE only has resolution down to a multiple of the sample rate,
  * SHUNT_SCAN_INTERVAL.
@@ -327,8 +328,6 @@ extern void record_and_initiate_opportunistic(const ip_subnet *,
 					      , const char *why);
 extern void init_kernel(void);
 
-extern void scan_proc_shunts(void);
-
 struct connection;      /* forward declaration of tag */
 extern bool trap_connection(struct connection *c);
 extern void unroute_connection(struct connection *c);
@@ -336,17 +335,25 @@ extern void unroute_connection(struct connection *c);
 extern bool has_bare_hold(const ip_address *src, const ip_address *dst,
 			  int transport_proto);
 
+extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
+			       int transport_proto, ipsec_spi_t shunt_spi,
+			       const char *why);
+
 extern bool replace_bare_shunt(const ip_address *src, const ip_address *dst,
 			       policy_prio_t policy_prio,
-			       ipsec_spi_t shunt_spi,   /* in host order! */
-			       bool repl,
+			       ipsec_spi_t cur_shunt_spi,   /* in host order! */
+			       ipsec_spi_t new_shunt_spi,   /* in host order! */
 			       int transport_proto,
 			       const char *why);
 
-extern bool assign_hold(struct connection *c,
+extern bool assign_holdpass(struct connection *c,
 			struct spd_route *sr,
 			int transport_proto,
+			ipsec_spi_t negotiation_shunt,
 			const ip_address *src, const ip_address *dst);
+
+extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
+                int transport_proto, ipsec_spi_t failure_shunt);
 
 extern ipsec_spi_t shunt_policy_spi(struct connection *c, bool prospective);
 
@@ -368,8 +375,9 @@ extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */);
 
 extern bool eroute_connection(struct spd_route *sr,
-			      ipsec_spi_t spi, unsigned int proto,
-			      enum eroute_type esatype,
+			      ipsec_spi_t cur_spi,
+			      ipsec_spi_t new_spi,
+			      int proto, enum eroute_type esatype,
 			      const struct pfkey_proto_info *proto_info,
 			      unsigned int op, const char *opname
 #ifdef HAVE_LABELED_IPSEC
@@ -397,6 +405,11 @@ extern bool kernel_overlap_supported(void);
 extern const char *kernel_if_name(void);
 extern void show_kernel_interface(void);
 extern void free_kernelfd(void);
+extern void expire_bare_shunts(void);
+
+extern void add_bare_shunt(const ip_subnet *ours, const ip_subnet *his,
+		int transport_proto, ipsec_spi_t shunt_spi,
+		const char *why);
 
 /*
  * Used to pass default priority from kernel_ops-> functions.
@@ -405,6 +418,26 @@ extern void free_kernelfd(void);
  * might need to be translated depending on the IPsec stack.
  */
 #define DEFAULT_IPSEC_SA_PRIORITY 0
+
+// TEMPORARY
+extern bool raw_eroute(const ip_address *this_host,
+                       const ip_subnet *this_client,
+                       const ip_address *that_host,
+                       const ip_subnet *that_client,
+                       ipsec_spi_t cur_spi,
+                       ipsec_spi_t new_spi,
+                       int sa_proto,
+                       unsigned int transport_proto,
+                       enum eroute_type esatype,
+                       const struct pfkey_proto_info *proto_info,
+                       deltatime_t use_lifetime,
+                       unsigned long sa_priority,
+                       enum pluto_sadb_operations op,
+                       const char *opname
+#ifdef HAVE_LABELED_IPSEC
+                       , const char *policy_label
+#endif
+                       );
 
 #define _KERNEL_H_
 #endif /* _KERNEL_H_ */

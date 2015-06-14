@@ -1,0 +1,8 @@
+basic OE test, ensuring road does not respond to acquires for its own IP address(es)
+
+192.1.3.0/24 is in private-or-clear, so it should trigger OE attempts. But since
+we are 192.1.3.209 and 192.1.3.210 ourselves, it should notice this and the pings
+to ourselves should not trigger OE activity.
+
+this test is netkey specific - klips is smart enough not to give us an acquire
+for ourselves

@@ -974,17 +974,6 @@ int main(int argc, char **argv)
 			pluto_nat_port = u;
 			continue;
 
-		case 'G':	/* --nflog-all <group-number> */
-			ugh = ttoulb(optarg, 0, 10, 0xFFFF, &u);
-			if (ugh != NULL)
-				break;
-			if (u == 0) {
-				ugh = "must not be 0";
-				break;
-			}
-			pluto_nflog_group = u;
-			continue;
-
 		case 'b':	/* --ctlbase <path> */
 			/*
 			 * ??? work to be done here:
@@ -1091,6 +1080,8 @@ int main(int argc, char **argv)
 
 			strict_crl_policy =
 				cfg->setup.options[KBF_STRICTCRLPOLICY];
+
+			pluto_shunt_lifetime = deltatime(cfg->setup.options[KBF_SHUNTLIFETIME]);
 
 			strict_ocsp_policy =
 				cfg->setup.options[KBF_STRICTOCSPPOLICY];
@@ -1583,6 +1574,7 @@ int main(int argc, char **argv)
 	init_crypto_helpers(nhelpers);
 	init_demux();
 	init_kernel();
+	init_adns();
 	init_id();
 	init_vendorid();
 
@@ -1668,10 +1660,10 @@ void show_setup_plutomain()
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, perpeerlog=%s",
+		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shunt_lifetime=%lu",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
-		!log_to_perpeer ? "no" : base_perpeer_logdir);
+		!log_to_perpeer ? "no" : base_perpeer_logdir, deltasecs(pluto_shunt_lifetime));
 
 	whack_log(RC_COMMENT,
 		"ddos-cookies-treshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",

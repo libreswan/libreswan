@@ -69,9 +69,10 @@ enum keyword_string_config_field {
 /* Numeric fields also include boolean fields */
 /* and do not come in right/left variants */
 enum keyword_numeric_config_field {
-	KBF_DPDACTION        = 0,
-	KBF_FAILURESHUNT = 1,
-	KBF_TYPE         = 2,
+	KBF_DPDACTION,
+	KBF_FAILURESHUNT,
+	KBF_NEGOTIATIONSHUNT,
+	KBF_TYPE,
 	KBF_FRAGICMP,
 	KBF_HIDETOS,
 	KBF_UNIQUEIDS,
@@ -116,6 +117,7 @@ enum keyword_numeric_config_field {
 	KBF_KEYINGTRIES,
 	KBF_ARRIVALCHECK,
 	KBF_IKELIFETIME,
+	KBF_SHUNTLIFETIME,
 	KBF_RETRANSMIT_TIMEOUT,
 	KBF_RETRANSMIT_INTERVAL,
 	KBF_AGGRMODE,
@@ -243,6 +245,18 @@ enum keyword_satype {
 	KS_PASSTHROUGH=2,
 	KS_DROP      = 3,
 	KS_REJECT    = 4,
+};
+
+enum keyword_failure_shunt {
+	KFS_FAIL_NONE,
+	KFS_FAIL_PASS,
+	KFS_FAIL_DROP,
+	KFS_FAIL_REJECT
+};
+
+enum keyword_negotiation_shunt {
+	KNS_FAIL_PASS,
+	KNS_FAIL_DROP
 };
 
 enum keyword_type {

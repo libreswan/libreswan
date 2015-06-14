@@ -101,6 +101,7 @@ struct whack_message {
 	bool whack_status;
 	bool whack_global_status;
 	bool whack_traffic_status;
+	bool whack_shunt_status;
 
 	bool whack_shutdown;
 

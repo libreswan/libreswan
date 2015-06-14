@@ -6,7 +6,7 @@
  * Copyright (C) 2008-2010 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2009 David McCullough <david_mccullough@securecomputing.com>
  * Copyright (C) 2012 Avesh Agarwal <avagarwa@redhat.com>
- * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2012-2015 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -53,6 +53,8 @@
 #include "ikev2.h"
 #include "pending.h" /* for flush_pending_by_connection */
 #include "ikev1_xauth.h"
+#include "kernel.h" /* for scan_shunts() */
+#include "kernel_pfkey.h" /* for pfkey_scan_shunts */
 
 #include "nat_traversal.h"
 
@@ -126,6 +128,7 @@ static void retransmit_v1_msg(struct state *st)
 	unsigned long try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 
+	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
 		DBG_log("handling event EVENT_v1_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
@@ -177,7 +180,7 @@ static void retransmit_v1_msg(struct state *st)
 			st->st_retransmit,
 			enum_show(&state_names, st->st_state),
 			details);
-		if (try != 0 && try != try_limit) {
+		if (try != 0 && try <= try_limit) {
 			/*
 			 * A lot like EVENT_SA_REPLACE, but over again.
 			 * Since we know that st cannot be in use,
@@ -202,11 +205,11 @@ static void retransmit_v1_msg(struct state *st)
 						"%s, but releasing whack",
 						story);
 					release_pending_whacks(st, story);
-				} else {
-					/* no whack: just log to syslog */
+				} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+					/* no whack: just log */
 					libreswan_log("%s", story);
 				}
-			} else {
+			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				loglog(RC_COMMENT, "%s", story);
 			}
 
@@ -241,6 +244,7 @@ static void retransmit_v2_msg(struct state *st)
 	try_limit = c->sa_keying_tries;
 	try = st->st_try + 1;
 
+	/* Paul: this line can stay attempt 3 of 2 because the cleanup happens when over the maximum */
 	DBG(DBG_CONTROL, {
 		ipstr_buf b;
 		DBG_log("handling event EVENT_v2_RETRANSMIT for %s \"%s\" #%lu attempt %lu of %lu",
@@ -283,13 +287,16 @@ static void retransmit_v2_msg(struct state *st)
 		break;
 	}
 
-	loglog(RC_NORETRANSMISSION,
-		"max number of retransmissions (%d) reached %s%s",
-		st->st_retransmit,
-		enum_show(&state_names, st->st_state),
-		details);
+	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		/* too spammy for OE */
+		loglog(RC_NORETRANSMISSION,
+			"max number of retransmissions (%d) reached %s%s",
+			st->st_retransmit,
+			enum_show(&state_names, st->st_state),
+			details);
+	}
 
-	if (try != 0 && try != try_limit) {
+	if (try != 0 && try <= try_limit) {
 		/*
 		 * A lot like EVENT_SA_REPLACE, but over again.
 		 * Since we know that st cannot be in use,
@@ -312,7 +319,7 @@ static void retransmit_v2_msg(struct state *st)
 				loglog(RC_COMMENT, "%s, but releasing whack",
 					story);
 				release_pending_whacks(st, story);
-			} else {
+			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				/* no whack: just log to syslog */
 				libreswan_log("%s", story);
 			}
@@ -329,6 +336,17 @@ static void retransmit_v2_msg(struct state *st)
 			loglog(RC_COMMENT, "next attempt will be IKEv1");
 		}
 		ipsecdoi_replace(st, LEMPTY, LEMPTY, try);
+	} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		loglog(RC_COMMENT, "maximum number of keyingtries reached - deleting state");
+	}
+
+	if (LIN(POLICY_AUTH_NULL | POLICY_OPPORTUNISTIC, c->policy)) {
+		ipsec_spi_t failure_shunt = shunt_policy_spi(c, FALSE /* failure_shunt */);
+
+		DBG(DBG_CONTROL, DBG_log("timeout for OE, orphaning hold with failureshunt"));
+
+		orphan_holdpass(c, &c->spd, 0 /* transport_proto */, failure_shunt);
+		DBG(DBG_CONTROL, DBG_log("orphaned, state & connection can now safely be deleted"));
 	}
 
 	delete_state(st);
@@ -462,9 +480,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	 */
 	switch (type) {
 	case EVENT_REINIT_SECRET:
-#ifdef KLIPS
 	case EVENT_SHUNT_SCAN:
-#endif
 	case EVENT_PENDING_DDNS:
 	case EVENT_PENDING_PHASE2:
 	case EVENT_LOG_DAILY:
@@ -520,11 +536,15 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		init_secret();
 		break;
 
-#ifdef KLIPS
 	case EVENT_SHUNT_SCAN:
-		scan_proc_shunts();
+		if (!kernel_ops->policy_lifetime) {
+			/* KLIPS or MAST - scan eroutes */
+			pfkey_scan_shunts();
+		} else {
+			/* eventually obsoleted via policy expire msg from kernel */
+			expire_bare_shunts();
+		}
 		break;
-#endif
 
 	case EVENT_PENDING_DDNS:
 		connection_check_ddns();
@@ -646,11 +666,16 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 			DBG(DBG_LIFECYCLE, DBG_log(
 				"%s SA expired (superseded by #%lu)",
 					satype, latest));
+		} else if (!IS_IKE_SA_ESTABLISHED(st)) {
+			/* not very interesting: failed IKE attempt */
+			DBG(DBG_LIFECYCLE, DBG_log(
+				"un-established partial ISAKMP SA timeout (%s)",
+					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout"));
 		} else {
-			libreswan_log("%s %s (%s)", satype,
-				type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
-				(c->policy & POLICY_DONT_REKEY) ?
-					"--dontrekey" : "LATEST!");
+				libreswan_log("%s %s (%s)", satype,
+					type == EVENT_SA_EXPIRE ? "SA expired" : "Responder timeout",
+					(c->policy & POLICY_DONT_REKEY) ?
+						"--dontrekey" : "LATEST!");
 		}
 	}
 	/* FALLTHROUGH */

@@ -78,6 +78,7 @@ d.ipsec.conf/disablearrivalcheck.xml
 d.ipsec.conf/labeled-ipsec.xml
 d.ipsec.conf/policy-label.xml
 d.ipsec.conf/failureshunt.xml
+d.ipsec.conf/negotiationshunt.xml
 d.ipsec.conf/connautoend.xml
 d.ipsec.conf/configsections.xml
 d.ipsec.conf/myid.xml
@@ -115,6 +116,7 @@ d.ipsec.conf/force-busy.xml
 d.ipsec.conf/ddos-mode.xml
 d.ipsec.conf/ddos-ike-treshold.xml
 d.ipsec.conf/max-halfopen-ike.xml
+d.ipsec.conf/shuntlifetime.xml
 d.ipsec.conf/dumpdir.xml
 d.ipsec.conf/statsbin.xml
 d.ipsec.conf/ipsecdir.xml

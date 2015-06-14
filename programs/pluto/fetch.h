@@ -21,6 +21,6 @@ extern void list_distribution_points(const generalName_t *gn);
 
 extern void init_fetch(void);
 extern void free_crl_fetch(void);
-extern void add_crl_fetch_request_nss(SECItem *issuer_dn);
+extern void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp);
 extern void list_crl_fetch_requests(bool utc);
 

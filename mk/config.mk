@@ -291,7 +291,7 @@ USE_KEYRR?=true
 USE_KLIPS?=true
 
 # Build support for 2.6 KLIPS/MAST variation in pluto
-USE_MAST?=true
+USE_MAST?=false
 
 # MAST requires KLIPS
 ifeq ($(USE_MAST),true)

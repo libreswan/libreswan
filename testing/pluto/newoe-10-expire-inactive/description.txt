@@ -1,0 +1,2 @@
+basic OE test, using road and east triggered by packet using NETKEY on road.
+road has short ikelifetime and IKE SA will NOT replaced. It will expire du inactivity.

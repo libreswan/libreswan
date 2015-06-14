@@ -64,18 +64,19 @@
 #include "hostpair.h"
 #include "addresspool.h"
 
-/* ??? this routine only produces DBG output.  Calls should be conditional but they are not */
 void ikev2_print_ts(struct traffic_selector *ts)
 {
 	ipstr_buf b;
 
-	DBG_log("printing contents struct traffic_selector");
-	DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
-	DBG_log("  ipprotoid: %d", ts->ipprotoid);
-	DBG_log("  startport: %d", ts->startport);
-	DBG_log("  endport: %d", ts->endport);
-	DBG_log("  ip low: %s", ipstr(&ts->low, &b));
-	DBG_log("  ip high: %s", ipstr(&ts->high, &b));
+	DBG(DBG_CONTROLMORE,
+		DBG_log("printing contents struct traffic_selector");
+		DBG_log("  ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
+		DBG_log("  ipprotoid: %d", ts->ipprotoid);
+		DBG_log("  startport: %d", ts->startport);
+		DBG_log("  endport: %d", ts->endport);
+		DBG_log("  ip low: %s", ipstr(&ts->low, &b));
+		DBG_log("  ip high: %s", ipstr(&ts->high, &b));
+	);
 }
 
 /* rewrite me with addrbytesptr() */
@@ -590,7 +591,7 @@ int ikev2_evaluate_connection_fit(const struct connection *d,
 		subnettot(&ei->client,  0, ei3, sizeof(ei3));
 		subnettot(&er->client,  0, er3, sizeof(er3));
 		DBG_log("  ikev2_evaluate_connection_fit evaluating our "
-			"I=%s:%s:%d/%d R=%s:%d/%d %s to their:",
+			"conn=\"%s\" I=%s:%d/%d R=%s:%d/%d %s to their:",
 			d->name, ei3, ei->protocol, ei->port,
 			er3, er->protocol, er->port,
 			is_virtual_connection(d) ? "(virt)" : "");

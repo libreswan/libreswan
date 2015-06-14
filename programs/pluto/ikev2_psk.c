@@ -84,6 +84,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 			      st->st_connection->name);
 			return FALSE; /* failure: no PSK to use */
 		}
+		DBG(DBG_PRIVATE, DBG_dump_chunk("User PSK:", *pss));
 	} else {
 		/*
 		 * draft-ietf-ipsecme-ikev2-null-auth-02
@@ -100,19 +101,20 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		 * and st_skey_pr_nss
 		 */
 		passert(st->hidden_variables.st_skeyid_calculated);
+
 		/* 
 		 * This is wrong as role - we need to role for THIS exchange
 		 * But verify calls this routine with the role inverted, so we
 		 * cannot juse st->st_state either.
 		 */
-               if (role == ORIGINAL_INITIATOR) {
-                       /* we are sending initiator, or verifying responder */
-                       pss = &st->st_skey_chunk_SK_pi;
-               } else {
-                       /* we are verifying initiator, or sending responder */
-                       pss = &st->st_skey_chunk_SK_pr;
-               }
-                DBG(DBG_PRIVATE, DBG_dump_chunk("AUTH_NULL PSK:", *pss));
+		if (role == ORIGINAL_INITIATOR) {
+			/* we are sending initiator, or verifying responder */
+			pss = &st->st_skey_chunk_SK_pi;
+		} else {
+			/* we are verifying initiator, or sending responder */
+			pss = &st->st_skey_chunk_SK_pr;
+		}
+		 DBG(DBG_PRIVATE, DBG_dump_chunk("AUTH_NULL PSK:", *pss));
 	}
 
 	/*
@@ -195,7 +197,7 @@ bool ikev2_calculate_psk_auth(struct state *st,
 					 signed_octets))
 		return FALSE;
 
-	DBG(DBG_CRYPT,
+	DBG(DBG_PRIVATE,
 	    DBG_dump("PSK auth octets", signed_octets, hash_len ));
 
 	if (!out_raw(signed_octets, hash_len, a_pbs, "PSK auth"))
@@ -231,7 +233,7 @@ stf_status ikev2_verify_psk_auth(struct state *st,
 					 st->st_firstpacket_him, calc_hash))
 		return STF_FAIL;
 
-	DBG(DBG_CRYPT,
+	DBG(DBG_PRIVATE,
 	    DBG_dump("Received PSK auth octets", sig_pbs->cur, sig_len);
 	    DBG_dump("Calculated PSK auth octets", calc_hash, hash_len));
 

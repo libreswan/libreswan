@@ -45,8 +45,9 @@ extern bool pfkey_raw_eroute(const ip_address *this_host,
 			     const ip_subnet *this_client,
 			     const ip_address *that_host,
 			     const ip_subnet *that_client,
-			     ipsec_spi_t spi,
-			     unsigned int proto UNUSED,
+			     ipsec_spi_t cur_spi,
+			     ipsec_spi_t new_spi,
+			     int sa_proto UNUSED,
 			     unsigned int transport_proto,
 			     enum eroute_type esatype,
 			     const struct pfkey_proto_info *proto_info UNUSED,
@@ -64,6 +65,8 @@ extern bool pfkey_shunt_eroute(struct connection *c,
 			       enum routing_t rt_kind,
 			       enum pluto_sadb_operations op,
 			       const char *opname);
+
+extern void pfkey_scan_shunts(void);
 
 extern int pfkeyfd;
 

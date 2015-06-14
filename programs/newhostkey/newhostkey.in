@@ -18,13 +18,13 @@
 #
 
 me="ipsec newhostkey"
-usage="Usage: $me [--output filename] [--random device] [--bits n] \\
+usage="Usage: $me [--output filename] [--seeddev device] [--bits n] \\
     [--quiet] [--hostname host] [--configdir nssdbdir] [--password password] "
 
 bits=
 verbose=
 host=
-random="--random /dev/random"
+seeddev="--seeddev /dev/seeddev"
 output="@FINALCONFDIR@/ipsec.secrets"
 configdir="@FINALNSSDIR@"
 password=
@@ -47,13 +47,16 @@ for dummy; do
 	    ;;
 	--verbose)
 	    verbose="--verbose"
- 	    ;;
+	    ;;
 	--version)
 	    echo "$me $IPSEC_VERSION"
 	    exit 0
 	    ;;
 	--random)
-	    random="--random ${2}"
+	    echo "$me warning: --random is obsoleted for --seeddev"
+	    /* FALLTHROUGH */
+	--seeddev)
+	    seeddev="--seeddev ${2}"
 	    shift
 	    ;;
 	--configdir)
@@ -105,7 +108,7 @@ if [ ${RETVAL} -eq 255 ]; then
     exit 255
 fi
 
-key=$(ipsec rsasigkey ${verbose} ${random} --configdir sql:${configdir} ${password} ${host} ${bits})
+key=$(ipsec rsasigkey ${verbose} ${seeddev} --configdir sql:${configdir} ${password} ${host} ${bits})
 RETVAL=$?
 if [ ${RETVAL} -eq 0 ]; then
     umask 077

@@ -577,7 +577,7 @@ void add_distribution_points(const generalName_t *newPoints,
 /*
  * add a crl fetch request to the chained list
  */
-void add_crl_fetch_request_nss(SECItem *issuer_dn)
+void add_crl_fetch_request_nss(SECItem *issuer_dn, generalName_t *end_dp)
 {
 	CERTCertificate *ca = NULL;
 	generalName_t *new_dp = NULL;
@@ -617,8 +617,11 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn)
 				    DBG_log("new distribution point available"));
 				add_distribution_points(new_dp,
 						      &req->distributionPoints);
+			} else if (end_dp != NULL) {
+				DBG(DBG_CONTROL,
+					DBG_log("no CA crl DP available, adding provided DP"));
+				add_distribution_points(end_dp, &req->distributionPoints);
 			}
-
 			unlock_crl_fetch_list("add_crl_fetch_request");
 			if (ca != NULL)
 				CERT_DestroyCertificate(ca);
@@ -629,12 +632,18 @@ void add_crl_fetch_request_nss(SECItem *issuer_dn)
 
 	if (new_dp == NULL) {
 		if ((new_dp = gndp_from_nss_cert(ca)) == NULL) {
-			DBG(DBG_CONTROL,
-				DBG_log("no distribution point available for new fetch request"));
-			unlock_crl_fetch_list("add_crl_fetch_request");
-			if (ca != NULL)
-				CERT_DestroyCertificate(ca);
-			return;
+			if (end_dp != NULL) {
+				DBG(DBG_CONTROL,
+					DBG_log("no CA crl DP available, using provided DP"));
+				new_dp = end_dp;
+			} else {
+				DBG(DBG_CONTROL,
+					DBG_log("no distribution point available for new fetch request"));
+				unlock_crl_fetch_list("add_crl_fetch_request");
+				if (ca != NULL)
+					CERT_DestroyCertificate(ca);
+				return;
+			}
 		}
 	}
 

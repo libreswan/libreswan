@@ -491,16 +491,15 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 			if (c != NULL) {
 				set_cur_connection(c);
-				if (!oriented(*c))
+
+				if (!oriented(*c)) {
 					whack_log(RC_ORIENT,
 						  "we cannot identify ourselves with either end of this connection");
-
-
-				else if (c->policy & POLICY_GROUP)
+				} else if (c->policy & POLICY_GROUP) {
 					route_group(c);
-				else if (!trap_connection(c))
+				} else if (!trap_connection(c)) {
 					whack_log(RC_ROUTE, "could not route");
-
+				}
 
 				reset_cur_connection();
 			}
@@ -549,7 +548,7 @@ void whack_process(int whackfd, const struct whack_message msg)
 			whack_log(RC_DEAF,
 				  "need --listen before opportunistic initiation");
 		} else {
-			(void)initiate_ondemand(&msg.oppo_my_client,
+			initiate_ondemand(&msg.oppo_my_client,
 						&msg.oppo_peer_client, 0,
 						FALSE,
 						msg.whack_async ?
@@ -573,6 +572,9 @@ void whack_process(int whackfd, const struct whack_message msg)
 
 	if (msg.whack_traffic_status)
 		show_states_status(TRUE);
+
+	if (msg.whack_shunt_status)
+		show_shunt_status();
 
 	if (msg.whack_shutdown) {
 		libreswan_log("shutting down");
