@@ -1236,8 +1236,14 @@ void send_v2_notification_from_md(struct msg_digest *md,
 void ikev2_update_msgid_counters(struct msg_digest *md)
 {
 	struct state *st = md->st;
-	struct state *ikesa = IS_CHILD_SA(st) ?
-		state_with_serialno(st->st_clonedfrom) : st;
+	struct state *ikesa;
+
+	if (st == NULL) {
+		/* current processer deleted the state, nothing to update */
+		return;
+	}
+
+	ikesa = IS_CHILD_SA(st) ?  state_with_serialno(st->st_clonedfrom) : st;
 
 	if (md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) {
 		/* we were initiator for this message exchange */

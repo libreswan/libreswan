@@ -3928,7 +3928,6 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		    DBG_log("Received an INFORMATIONAL response; updating liveness, no longer pending."));
 		st->st_last_liveness = mononow();
 		st->st_pend_liveness = FALSE;
-		ikev2_update_msgid_counters(md);
 	} else {
 		/*
 		 * IPsec SA deletion
@@ -4026,6 +4025,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 		}  /* for */
 	}
 
+	ikev2_update_msgid_counters(md);
 	return STF_OK;
 }
 
