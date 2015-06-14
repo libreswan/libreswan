@@ -266,6 +266,7 @@ static const char *const payload_name_ikev2[] = {
 	"ISAKMP_NEXT_v2NONE", /* same for IKEv1 */
 };
 
+/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-2 */
 /* dual-use: for enum_name and for bitnamesof */
 const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SA",	/* 33 */
@@ -284,16 +285,17 @@ const char *const payload_name_ikev2_main[] = {
 	"ISAKMP_NEXT_v2SK",
 	"ISAKMP_NEXT_v2CP",
 	"ISAKMP_NEXT_v2EAP",
-	"ISAKMP_NEXT_v2GSPM",
-	"ISAKMP_NEXT_v2IDG",
-	"ISAKMP_NEXT_v2GSA",
-	"ISAKMP_NEXT_v2KD",
-	"ISAKMP_NEXT_v2SKF",
+	"ISAKMP_NEXT_v2GSPM", /* RFC 6467 */
+	"ISAKMP_NEXT_v2IDG", /* [draft-yeung-g-ikev2] */
+	"ISAKMP_NEXT_v2GSA", /* [draft-yeung-g-ikev2] */
+	"ISAKMP_NEXT_v2KD", /* [draft-yeung-g-ikev2] */
+	"ISAKMP_NEXT_v2SKF", /* RFC 7383 */
 	NULL	/* termination for bitnamesof() */
 };
 
 /*
  * Old IKEv1 method applied to IKEv2, different from IKEv2's RFC7383
+ * Can be removed
  */
 static const char *const payload_name_ikev2_private_use[] = {
 	"ISAKMP_NEXT_v2IKE_FRAGMENTATION",
@@ -382,15 +384,16 @@ static const char *const exchange_name_doi[] = {
 	"ISAKMP_XCHG_NGRP",
 };
 
+/* http://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xhtml#ikev2-parameters-1 */
 static const char *const exchange_name_ikev2[] = {
-	"ISAKMP_v2_SA_INIT",
+	"ISAKMP_v2_SA_INIT", /* RFC 7296 */
 	"ISAKMP_v2_AUTH",
 	"ISAKMP_v2_CREATE_CHILD_SA",
 	"ISAKMP_v2_INFORMATIONAL",
-	"ISAKMP_v2_IKE_SESSION_RESUME",
-	"ISAKMP_v2_GSA_AUTH",
-	"ISAKMP_v2_GSA_REGISTRATION",
-	"ISAKMP_v2_GSA_REKEY",
+	"ISAKMP_v2_IKE_SESSION_RESUME", /* RFC 5753 */
+	"ISAKMP_v2_GSA_AUTH", /* draft-yeung-g-ikev2 */
+	"ISAKMP_v2_GSA_REGISTRATION", /* draft-yeung-g-ikev2 */
+	"ISAKMP_v2_GSA_REKEY", /* draft-yeung-g-ikev2 */
 };
 
 static const char *const exchange_name_private_use[] = {
