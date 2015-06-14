@@ -293,8 +293,7 @@ const char *const payload_name_ikev2_main[] = {
 };
 
 /*
- * Old IKEv1 method, different from
- * draft-smyslov-ipsecme-ikev2-fragmentation-01
+ * Old IKEv1 method applied to IKEv2, different from IKEv2's RFC7383
  */
 static const char *const payload_name_ikev2_private_use[] = {
 	"ISAKMP_NEXT_v2IKE_FRAGMENTATION",

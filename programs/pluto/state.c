@@ -610,41 +610,40 @@ void release_whack(struct state *st)
 	close_any(st->st_whack_sock);
 }
 
-void release_v2fragments(struct ikev2_frag **fragp)
+void release_v2fragments(struct state *st)
 {
-	struct ikev2_frag *frag = *fragp;
+	struct ikev2_frag *frag = st->st_tfrags;
 
 	while (frag != NULL) {
 		struct ikev2_frag *this = frag;
 
 		frag = this->next;
 		freeanychunk(this->cipher);
-
 		pfree(this);
 	}
 
-	*fragp = NULL;
+	st->st_tfrags = NULL;
 }
 
+/*
+ * Release both V1 and V2 fragments
+ * (of course only one kind could appear in a state)
+ */
 void release_fragments(struct state *st)
 {
 	struct ike_frag *frag = st->ike_frags;
-
-	if (st->st_ikev2) {
-		release_v2fragments(&st->ikev2_frags);
-		return;
-	}
 
 	while (frag != NULL) {
 		struct ike_frag *this = frag;
 
 		frag = this->next;
 		release_md(this->md);
-
 		pfree(this);
 	}
 
 	st->ike_frags = NULL;
+
+	release_v2fragments(st);
 }
 
 /* delete a state object */
@@ -853,7 +852,6 @@ void delete_state(struct state *st)
 	freeanychunk(st->st_firstpacket_me);
 	freeanychunk(st->st_firstpacket_him);
 	freeanychunk(st->st_tpacket);
-	release_v2fragments(&st->st_tfrags);
 	freeanychunk(st->st_rpacket);
 	freeanychunk(st->st_p1isa);
 	freeanychunk(st->st_gi);

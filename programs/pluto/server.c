@@ -1266,7 +1266,7 @@ static bool send_ikev2_frags(struct state *st, const char *where)
 {
 	struct ikev2_frag *frag;
 
-	for (frag = st->st_tfrags; frag; frag = frag->next)
+	for (frag = st->st_tfrags; frag != NULL; frag = frag->next)
 		if (!send_packet(st, where, FALSE,
 				 frag->cipher.ptr, frag->cipher.len, NULL, 0))
 			return FALSE;
@@ -1278,28 +1278,29 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 				   bool resending)
 {
 	size_t len = st->st_tpacket.len;
-	/* Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
-	 * natt_bonus is the size of the addition (0 if not needed).
-	 */
-	size_t natt_bonus;
 
 	if (st->st_interface == NULL) {
 		libreswan_log("Cannot send packet - interface vanished!");
 		return FALSE;
 	}
 
-	natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
+	/*
+	 * Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
+	 * natt_bonus is the size of the addition (0 if not needed).
+	 */
+	size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
 
 	/*
 	 * Decide of whether we're to fragment.
-	 * Only for IKEv1.
-	 * draft-smyslov-ipsecme-ikev2-fragmentation not implemented yet.
+	 * Only for IKEv1 (V2 fragments earlier).
+	 * ??? why can't we fragment in STATE_MAIN_I1?
 	 */
 	if (!st->st_ikev2 &&
 	    st->st_state != STATE_MAIN_I1 &&
 	    should_fragment_ike_msg(st, len + natt_bonus, resending)) {
 		return send_frags(st, where);
-	} else if (st->st_ikev2 && st->st_tfrags) {
+	} else if (st->st_tfrags != NULL) {
+		passert(st->st_ikev2);
 		return send_ikev2_frags(st, where);
 	} else {
 		return send_packet(st, where, FALSE, st->st_tpacket.ptr,
@@ -1309,7 +1310,7 @@ static bool send_or_resend_ike_msg(struct state *st, const char *where,
 
 void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 {
-	release_v2fragments(&st->st_tfrags);
+	release_v2fragments(st);
 	freeanychunk(st->st_tpacket);
 	clonetochunk(st->st_tpacket, pbs->start, pbs_offset(pbs), what);
 }

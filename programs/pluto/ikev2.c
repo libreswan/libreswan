@@ -105,7 +105,7 @@ enum smf2_flags {
 	SMF2_IKE_I_SET = LELEM(1),
 	SMF2_IKE_I_CLEAR = LELEM(2),
 
-	SMF2_REPLY = LELEM(3),
+	SMF2_SEND = LELEM(3),
 
 	/*
 	 * Is the MSG_R bit set.
@@ -272,7 +272,7 @@ const struct state_v2_microcode ikev2_parent_firststate_microcode =
 	{ .story      = "initiate IKE_SA_INIT",
 	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_I1,
-	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET,
+	  .flags      = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .processor  = NULL,
 	  .timeout_event = EVENT_v2_RETRANSMIT, };
 
@@ -286,7 +286,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process anti-spoofing cookie",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I1,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .req_clear_payloads = P(N),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = ikev2parent_inR1BoutI1B,
@@ -302,7 +302,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Initiator: process IKE_SA_INIT reply, initiate IKE_AUTH",
 	  .state      = STATE_PARENT_I1,
 	  .next_state = STATE_PARENT_I2,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_SET | SMF2_SEND,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Nr),
 	  .opt_clear_payloads = P(CERTREQ),
 	  .processor  = ikev2parent_inR1outI2,
@@ -332,7 +332,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "Respond to IKE_SA_INIT",
 	  .state      = STATE_UNDEFINED,
 	  .next_state = STATE_PARENT_R1,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SA) | P(KE) | P(Ni),
 	  .processor  = ikev2parent_inI1outR1,
 	  .recv_type  = ISAKMP_v2_SA_INIT,
@@ -350,7 +350,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "respond to IKE_AUTH",
 	  .state      = STATE_PARENT_R1,
 	  .next_state = STATE_PARENT_R2,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH) | P(SA) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP),
@@ -372,7 +372,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "I3: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_I3,
 	  .next_state = STATE_PARENT_I3,
-	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_CLEAR | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_CLEAR | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
@@ -384,7 +384,7 @@ static const struct state_v2_microcode v2_state_microcode_table[] = {
 	{ .story      = "R2: CREATE_CHILD_SA",
 	  .state      = STATE_PARENT_R2,
 	  .next_state = STATE_PARENT_R2,
-	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_REPLY,
+	  .flags = SMF2_IKE_I_SET | SMF2_MSG_R_CLEAR | SMF2_SEND,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni),
 	  .opt_enc_payloads = P(KE) | P(N) | P(TSi) | P(TSr),
@@ -1477,23 +1477,30 @@ static void success_v2_state_transition(struct msg_digest *md)
 	}
 
 	/* if requested, send the new reply packet */
-	if (svm->flags & SMF2_REPLY) {
-		if (nat_traversal_enabled && from_state != STATE_PARENT_I1) {
+	if (svm->flags & SMF2_SEND) {
+		/*
+		 * Adjust NAT but not for initial state
+		 *
+		 * STATE_IKEv2_BASE is used when an md is invented
+		 * for an initial outbound message that is not a response.
+		 * ??? why should STATE_PARENT_I1 be excluded?
+		 */
+		if (nat_traversal_enabled &&
+		    from_state != STATE_IKEv2_BASE &&
+		    from_state != STATE_PARENT_I1) {
 			/* adjust our destination port if necessary */
 			nat_traversal_change_port_lookup(md, st);
 		}
 
 		DBG(DBG_CONTROL, {
 			    ipstr_buf b;
-			    DBG_log("sending reply packet to %s:%u (from port %u)",
+			    DBG_log("sending V2 reply packet to %s:%u (from port %u)",
 				    ipstr(&st->st_remoteaddr, &b),
 				    st->st_remoteport,
 				    st->st_interface->port);
 		    });
 
-		close_output_pbs(&reply_stream); /* good form, but actually a no-op */
-
-		record_and_send_ike_msg(st, &reply_stream, enum_name(&state_names, from_state));
+		send_ike_msg(st, enum_name(&state_names, from_state));
 	}
 
 	if (w == RC_SUCCESS) {
@@ -1606,7 +1613,7 @@ static void success_v2_state_transition(struct msg_digest *md)
  * - success_v2_state_transition(md);
  *   - for svm:
  *     - svm->next_state,
- *     - svm->flags & SMF2_REPLY,
+ *     - svm->flags & SMF2_SEND,
  *     - svm->timeout_event,
  *     -svm->flags, story
  *   - find from_state (st might be gone)

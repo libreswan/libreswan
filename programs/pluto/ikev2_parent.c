@@ -552,16 +552,13 @@ static stf_status ikev2_parent_outI1_common(struct msg_digest *md,
 
 	close_output_pbs(&reply_stream);
 
-	record_outbound_ike_msg(st, &reply_stream,
-		"reply packet for ikev2_parent_inI1outR1_tail");
-
 	/* save packet for later signing */
 	freeanychunk(st->st_firstpacket_me);
 	clonetochunk(st->st_firstpacket_me, reply_stream.start,
 		     pbs_offset(&reply_stream), "saved first packet");
 
 	/* Transmit */
-	record_and_send_ike_msg(st, &reply_stream, "reply packet for ikev2_parent_outI1_tail");
+	record_outbound_ike_msg(st, &reply_stream, "reply packet for ikev2_parent_outI1_common");
 
 	reset_cur_state();
 	return STF_OK;
@@ -1366,8 +1363,8 @@ static bool ikev2_padup_pre_encrypt(struct state *st,
 		size_t blocksize = pst->st_oakley.encrypter->enc_blocksize;
 		char b[MAX_CBC_BLOCK_SIZE];
 		unsigned int i;
-
 		size_t padding;
+
 		if (pst->st_oakley.encrypter->pad_to_blocksize) {
 			padding = pad_up(pbs_offset(e_pbs_cipher), blocksize);
 			if (padding == 0) {
@@ -1542,7 +1539,7 @@ static stf_status ikev2_encrypt_msg(struct state *st,
  */
 
 static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
-						      struct chunk *chunk,
+						      chunk_t *chunk,
 						      unsigned int iv)
 {
 	/* caller should be passing in the original (parent) state. */
@@ -1711,7 +1708,7 @@ static stf_status ikev2_verify_and_decrypt_sk_payload(struct msg_digest *md,
 }
 
 static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
-					     struct chunk *chunk)
+					     chunk_t *chunk)
 {
 	struct state *st = md->st;
 	struct ikev2_frag *frag;
@@ -1726,7 +1723,7 @@ static stf_status ikev2_reassemble_fragments(struct msg_digest *md,
 		status = ikev2_verify_and_decrypt_sk_payload(
 			md, &frag->plain, frag->iv);
 		if (status != STF_OK) {
-			release_v2fragments(&st->ikev2_frags);
+			release_v2fragments(st);
 			return status;
 		}
 
@@ -1764,7 +1761,7 @@ static
 stf_status ikev2_decrypt_msg(struct msg_digest *md)
 {
 	stf_status status;
-	struct chunk chunk;
+	chunk_t chunk;
 
 	if (md->chain[ISAKMP_NEXT_v2SKF]) {
 		status = ikev2_reassemble_fragments(md, &chunk);
@@ -1918,11 +1915,11 @@ static stf_status ikev2_send_auth(struct connection *c,
 	return STF_OK;
 }
 
-static stf_status ikev2_send_fragment(struct msg_digest *md,
+static stf_status ikev2_record_fragment(struct msg_digest *md,
 				      struct isakmp_hdr *hdr,
 				      struct ikev2_generic *oe,
 				      struct ikev2_frag **fragp,
-				      struct chunk *payload,
+				      chunk_t *payload,	/* read-only */
 				      unsigned int count, unsigned int total,
 				      const char *desc)
 {
@@ -1932,20 +1929,23 @@ static stf_status ikev2_send_fragment(struct msg_digest *md,
 	pb_stream e_pbs, e_pbs_cipher;
 	unsigned char *iv;
 	unsigned char *authstart;
+	pb_stream frag_stream;
+	unsigned char frag_buffer[
+		PMAX(ISAKMP_FRAG_MAXLEN_IPv4, ISAKMP_FRAG_MAXLEN_IPv6)];
 
 	/* make sure HDR is at start of a clean buffer */
-	zero(&reply_buffer);
-	init_pbs(&reply_stream, reply_buffer, sizeof(reply_buffer),
-		 "reply packet");
+	zero(&frag_buffer);
+	init_pbs(&frag_stream, frag_buffer, sizeof(frag_buffer),
+		 "reply frag packet");
 
 	/* beginning of data going out */
-	authstart = reply_stream.cur;
+	authstart = frag_stream.cur;
 
 	/* HDR out */
 	{
 		hdr->isa_np = ISAKMP_NEXT_v2SKF;
 
-		if (!out_struct(hdr, &isakmp_hdr_desc, &reply_stream,
+		if (!out_struct(hdr, &isakmp_hdr_desc, &frag_stream,
 				&md->rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1994,7 +1994,7 @@ static stf_status ikev2_send_fragment(struct msg_digest *md,
 
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&md->rbody);
-		close_output_pbs(&reply_stream);
+		close_output_pbs(&frag_stream);
 
 		ret = ikev2_encrypt_msg(st, authstart,
 					iv, encstart, authloc,
@@ -2004,25 +2004,21 @@ static stf_status ikev2_send_fragment(struct msg_digest *md,
 	}
 
 	*fragp = alloc_thing(struct ikev2_frag, "ikev2_frag");
-	clonetochunk((*fragp)->cipher, reply_stream.start,
-		     pbs_offset(&reply_stream), desc);
+	(*fragp)->next = NULL;
+	clonetochunk((*fragp)->cipher, frag_stream.start,
+		     pbs_offset(&frag_stream), desc);
 
 	return STF_OK;
 }
 
-static stf_status ikev2_send_fragments(struct msg_digest *md,
+static stf_status ikev2_record_fragments(struct msg_digest *md,
 				       struct isakmp_hdr *hdr,
 				       struct ikev2_generic *e,
-				       struct chunk *payload,
+				       chunk_t *payload, /* read-only */
 				       const char *desc)
 {
 	struct state *st = md->st;
 	unsigned int len;
-	unsigned int offset;
-	unsigned int total;
-	unsigned int count;
-	struct ikev2_frag **fragp;
-	int ret;
 
 	len = (st->st_connection->addr_family == AF_INET) ?
 	      ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6;
@@ -2038,33 +2034,34 @@ static stf_status ikev2_send_fragments(struct msg_digest *md,
 	if (st->st_oakley.encrypter->pad_to_blocksize)
 		len &= ~(st->st_oakley.encrypter->enc_blocksize - 1);
 
-	len -= 2;
+	len -= 2;	/* ??? what's this? */
 
-	total = (payload->len - 1) / len + 1;
-	if (total >= 128) {
-		loglog(RC_LOG_SERIOUS, "Too many frags %u %u",
-		       (unsigned int)payload->len, len);
+	unsigned int nfrags = (payload->len + len - 1) / len;
+
+	if (nfrags >= 128) {
+		loglog(RC_LOG_SERIOUS, "Fragmenting this %zu byte message into %u byte chunks leads to too many frags",
+		       payload->len, len);
 		return STF_INTERNAL_ERROR;
 	}
 
-	count = 1;
-	offset = 0;
-	fragp = &st->st_tfrags;
+	unsigned int count = 0;
+	unsigned int offset = 0;
+	struct ikev2_frag **fragp;
+	int ret = STF_INTERNAL_ERROR;
 
-	for (;;) {
-		struct chunk cipher;
+	for (fragp = &st->st_tfrags; ; fragp = &(*fragp)->next) {
+		chunk_t cipher;
 
-		if (offset + len > payload->len)
-			len = payload->len - offset;
-		setchunk(cipher, payload->ptr + offset, len);
-		offset += len;
-		ret = ikev2_send_fragment(md, hdr, e, fragp, &cipher,
-					  count++, total, desc);
+		passert(*fragp == NULL);
+		setchunk(cipher, payload->ptr + offset,
+			PMIN(payload->len - offset, len));
+		offset += cipher.len;
+		count++;
+		ret = ikev2_record_fragment(md, hdr, e, fragp, &cipher,
+					  count, nfrags, desc);
 
-		if (ret != STF_OK || offset >= payload->len)
+		if (ret != STF_OK || offset == payload->len)
 			break;
-
-		fragp = &(*fragp)->next;
 	}
 
 	return ret;
@@ -2081,7 +2078,6 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	unsigned char *encstart;
 	pb_stream e_pbs, e_pbs_cipher;
 	unsigned char *iv;
-	stf_status ret;
 	unsigned char idhash[MAX_DIGEST_LEN];
 	unsigned char *authstart;
 	struct state *pst = st;
@@ -2316,31 +2312,21 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	close_output_pbs(&reply_stream);
 
 	if (should_fragment_ike_msg(st, pbs_offset(&reply_stream), TRUE)) {
-		struct chunk payload;
+		chunk_t payload;
 
-		clonetochunk(payload, e_pbs_cipher.start, len,
-			     "cleartext for ikev2_parent_outR1_I2");
-
-		ret = ikev2_send_fragments(md, &hdr, &e, &payload,
+		setchunk(payload, e_pbs_cipher.start, len);
+		return ikev2_record_fragments(md, &hdr, &e, &payload,
 					   "reply fragment for ikev2_parent_outR1_I2");
-
-		freeanychunk(payload);
-		return ret;
-	}
-
-	{
-
-		ret = ikev2_encrypt_msg(st, authstart,
+	} else {
+		stf_status ret = ikev2_encrypt_msg(st, authstart,
 					iv, encstart, authloc,
 					&e_pbs, &e_pbs_cipher);
-		if (ret != STF_OK)
-			return ret;
+
+		if (ret == STF_OK)
+			record_outbound_ike_msg(st, &reply_stream,
+				"reply packet for ikev2_parent_inR1outI2_tail");
+		return ret;
 	}
-
-	record_outbound_ike_msg(st, &reply_stream,
-		"reply packet for ikev2_parent_outI1");
-
-	return STF_OK;
 }
 
 #ifdef XAUTH_HAVE_PAM
@@ -2823,7 +2809,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		unsigned char *authloc;
 		struct ikev2_generic e;
 		pb_stream e_pbs, e_pbs_cipher;
-		stf_status ret;
 		bool send_cert = FALSE;
 		unsigned int len;
 		struct isakmp_hdr hdr;
@@ -2969,9 +2954,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 
 		if (np == ISAKMP_NEXT_v2SA || np == ISAKMP_NEXT_v2CP) {
 			/* must have enough to build an CHILD_SA */
-			ret = ikev2_child_sa_respond(md, ORIGINAL_RESPONDER,
+			stf_status ret = ikev2_child_sa_respond(md, ORIGINAL_RESPONDER,
 						     &e_pbs_cipher,
 						     ISAKMP_v2_AUTH);
+
 			if (ret > STF_FAIL) {
 				int v2_notify_num = ret - STF_FAIL;
 				DBG(DBG_CONTROL,
@@ -3006,29 +2992,24 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 
 		if (should_fragment_ike_msg(st, pbs_offset(&reply_stream),
 						TRUE)) {
-			struct chunk payload;
+			chunk_t payload;
 
-			clonetochunk(payload, e_pbs_cipher.start, len,
-				     "cleartext for ikev2_parent_inI2outR2_tail");
-
-			ret = ikev2_send_fragments(md, &hdr, &e, &payload,
+			setchunk(payload, e_pbs_cipher.start, len);
+			return ikev2_record_fragments(md, &hdr, &e, &payload,
 						   "reply fragment for ikev2_parent_inI2outR2_tail");
-
-			freeanychunk(payload);
-			return ret;
-		}
-
-		{
-			ret = ikev2_encrypt_msg(st, authstart,
+		} else {
+			stf_status ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
 						&e_pbs, &e_pbs_cipher);
-			if (ret != STF_OK)
-				return ret;
+
+			if (ret == STF_OK)
+				record_outbound_ike_msg(st, &reply_stream,
+					"reply packet for ikev2_parent_inI2outR2_auth_tail");
+
+			return ret;
 		}
 	}
 
-	record_outbound_ike_msg(st, &reply_stream,
-		"reply packet for ikev2_parent_inI2outR2_tail");
 
 	/* if the child failed, delete its state here - we sent the packet */
 	/* PAUL */
@@ -3851,7 +3832,7 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 			return ret;
 	}
 
-	record_and_send_ike_msg(st, &reply_stream, "reply packet for CREATE_CHILD_SA exchange");
+	record_outbound_ike_msg(st, &reply_stream, "reply packet for ikev2_child_inIoutR_tail");
 
 	return STF_OK;
 }
@@ -4189,7 +4170,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 
 		record_and_send_ike_msg(st, &reply_stream,
-			"reply packet for informational exchange");
+			"reply packet for process_encrypted_informational_ikev2");
 	}
 
 	/* end of Responder-only code */
@@ -4432,7 +4413,7 @@ stf_status ikev2_send_informational(struct state *st)
 
 		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 		record_and_send_ike_msg(pst, &reply_stream,
-			"reply packet for informational exchange");
+			"packet for ikev2_send_informational");
 	}
 
 	return STF_OK;
@@ -4583,7 +4564,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 	}
 
 	record_and_send_ike_msg(pst, &reply_stream,
-		     "request packet for informational exchange");
+		     "packet for ikev2_delete_out_guts");
 
 	/*
 	 * delete messages may not be acknowledged.

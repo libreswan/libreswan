@@ -151,12 +151,13 @@ struct ike_frag {
 
 struct ikev2_frag {
 	struct ikev2_frag *next;
+	chunk_t cipher;
+	/* the rest are only used in re-assembly */
 	int np;
 	int index;
 	int total;
 	unsigned int iv;
-	struct chunk cipher;
-	struct chunk plain;
+	chunk_t plain;
 };
 
 /*
@@ -560,7 +561,7 @@ extern void fmt_state(struct state *st, const monotime_t n,
 extern void delete_states_by_peer(const ip_address *peer);
 extern void replace_states_by_peer(const ip_address *peer);
 extern void release_fragments(struct state *st);
-extern void release_v2fragments(struct ikev2_frag **fragp);
+extern void release_v2fragments(struct state *st);
 extern void v1_delete_state_by_xauth_name(struct state *st, void *name);
 extern void delete_state_by_id_name(struct state *st, void *name);
 
