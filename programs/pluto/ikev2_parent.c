@@ -4420,12 +4420,7 @@ stf_status ikev2_send_informational(struct state *st)
 
 		pst->st_pend_liveness = TRUE; /* we should only do this when dpd/liveness is active? */
 		record_and_send_ike_msg(pst, &reply_stream,
-<<<<<<< HEAD
 			"packet for ikev2_send_informational");
-=======
-			"reply packet for informational exchange");
-
->>>>>>> master
 	}
 
 	return STF_OK;
