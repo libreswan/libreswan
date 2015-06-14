@@ -7,10 +7,16 @@
 # The result is, for each test, a one-line report on the latest result.
 # The set of tests is specified by testing/pluto/TESTLIST.
 #
-# Bonus: the flag --re-sanitize will run ../../utils/re-sanitize.sh
-# for each test (but the output will clutter the report).
+# Bonus:
 #
-# Copyright 2014 D. Hugh Redelmeier
+# --re-sanitize will run ../../utils/re-sanitize.sh
+#   for each test (but the output will clutter the report).
+#
+# --meld will cause meld to be invoked where a diff is found
+#
+# --meld-show will report meld commands worth running
+#
+# Copyright 2014,2015 D. Hugh Redelmeier
 
 set -ue
 
@@ -31,6 +37,9 @@ else
 fi
 
 export preprocess=""
+
+# : is a command that does nothing
+export meldop=":"
 
 previous=""
 
@@ -97,6 +106,7 @@ commontest() {
 					notes="$notes,$i:authenc-noise"
 				else
 					notes="$notes,$i:bad"
+					$meldop "$testname/$i.console.txt" "$testname/OUTPUT/$i.console.diff"
 				fi
 			fi
 		done
@@ -143,6 +153,12 @@ for arg ; do
 	case "$arg" in
 	--re-sanitize)
 		preprocess="../../utils/re-sanitize.sh"
+		;;
+	--meld)
+		meldop="meld"
+		;;
+	--meld-show)
+		meldop="echo meld"
 		;;
 	*)
 		echo "$me: unexpected operand: $arg" >&2
