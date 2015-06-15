@@ -145,6 +145,9 @@ typedef uint_fast64_t lset_t;
 #define LHAS(set, elem)  (((set) & LELEM(elem)) != LEMPTY)
 #define LIN(subset, set)  (((subset) & (set)) == (subset))
 #define LDISJOINT(a, b)  (((a) & (b)) == LEMPTY)
+/* LFIRST: find first element of a set (tricky use of twos complement) */
+#define LFIRST(s) ((s) & -(s))
+#define LSINGLETON(s) ((s) != LEMPTY && LFIRST(s) == (s))
 
 /* Routines to check and display values.
  *

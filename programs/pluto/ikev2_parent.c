@@ -1874,10 +1874,22 @@ static stf_status ikev2_send_auth(struct connection *c,
 {
 	struct ikev2_a a;
 	pb_stream a_pbs;
-	struct state *pst = st;
+	struct state *pst = IS_CHILD_SA(st) ?
+		state_with_serialno(st->st_clonedfrom) : st;
+	lset_t authpolicy = c->policy & POLICY_ID_AUTH_MASK; 
 
-	if (IS_CHILD_SA(st))
-		pst = state_with_serialno(st->st_clonedfrom);
+	/* ??? isn't c redundant? */
+	pexpect(c == st->st_connection)
+
+	/*
+	 * ??? it isn't obvious that a connection's auth policy
+	 * would allow only one auth method.
+	 * Since this code assumes so, let's check.
+	 */
+	pexpect(LSINGLETON(authpolicy));
+
+	/* ??? shouldn't the authpolicy in the state match the connection? */
+	pexpect (authpolicy == (st->st_policy & POLICY_ID_AUTH_MASK));
 
 	a.isaa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
@@ -1888,11 +1900,11 @@ static stf_status ikev2_send_auth(struct connection *c,
 
 	a.isaa_np = np;
 
-	if (c->policy & POLICY_RSASIG) {
+	if (authpolicy & POLICY_RSASIG) {
 		a.isaa_type = IKEv2_AUTH_RSA;
-	} else if (c->policy & POLICY_PSK) {
+	} else if (authpolicy & POLICY_PSK) {
 		a.isaa_type = IKEv2_AUTH_PSK;
-	} else if (c->policy & POLICY_AUTH_NULL) {
+	} else if (authpolicy & POLICY_AUTH_NULL) {
 		a.isaa_type = IKEv2_AUTH_NULL;
 	} else {
 		/* what else is there?... DSS not implemented. */
@@ -1900,22 +1912,24 @@ static stf_status ikev2_send_auth(struct connection *c,
 		return STF_FATAL;
 	}
 
-	if (!out_struct(&a,
-			&ikev2_a_desc,
-			outpbs,
-			&a_pbs))
+	if (!out_struct(&a, &ikev2_a_desc, outpbs, &a_pbs))
 		return STF_INTERNAL_ERROR;
 
-	if (c->policy & POLICY_RSASIG) {
+	switch (a.isaa_type) {
+	case IKEv2_AUTH_RSA:
 		if (!ikev2_calculate_rsa_sha1(pst, role, idhash_out, &a_pbs)) {
 				loglog(RC_LOG_SERIOUS, "Failed to find our RSA key");
 			return STF_FATAL;
 		}
-	} else if ((c->policy & POLICY_PSK) || (c->policy & POLICY_AUTH_NULL)) {
+		break;
+
+	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_NULL:
 		if (!ikev2_calculate_psk_auth(pst, role, idhash_out, &a_pbs)) {
 				loglog(RC_LOG_SERIOUS, "Failed to find our PreShared Key");
 			return STF_FATAL;
 		}
+		break;
 	}
 
 	close_output_pbs(&a_pbs);
