@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --46 --x509
-certutil -A -n bigkey -t P,, -d  sql:/etc/ipsec.d -i /testing/x509/certs/bigkey.crt 
+certutil -A -n key4096 -t P,, -d  sql:/etc/ipsec.d -i /testing/x509/certs/key4096.crt 
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec auto --add v6-tunnel

@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --46 --x509 --x509name bigkey
+/testing/guestbin/swan-prep --46 --x509 --x509name key4096
 Preparing X.509 files
 west #
  # confirm that the network is alive
@@ -62,6 +62,7 @@ west #
 |    fragment number: 2 (0x2)
 |    fragment number: 3 (0x3)
 |    fragment number: 4 (0x4)
+|    fragment number: 5 (0x5)
 |    fragment number: 1 (0x1)
 | received IKE encrypted fragment number '1', total number '3', next payload '36'
 |    fragment number: 2 (0x2)
@@ -179,10 +180,10 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 Libreswan test CA for mainca - Libreswan                     CT,, 
-bigkey                                                       u,u,u
 east                                                         P,,  
 east-ec                                                      P,,  
 hashsha2                                                     P,,  
+key4096                                                      u,u,u
 nic                                                          P,,  
 north                                                        P,,  
 road                                                         P,,  
