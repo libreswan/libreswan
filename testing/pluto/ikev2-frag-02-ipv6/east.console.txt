@@ -1,6 +1,8 @@
 /testing/guestbin/swan-prep --46 --x509
 Preparing X.509 files
 east #
+ certutil -A -n bigkey -t P,, -d  sql:/etc/ipsec.d -i /testing/x509/certs/bigkey.crt
+east #
  ipsec setup start
 Redirecting to: systemctl start ipsec.service
 east #
@@ -119,6 +121,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 Libreswan test CA for mainca - Libreswan                     CT,, 
+bigkey                                                       P,,  
 east                                                         u,u,u
 hashsha2                                                     P,,  
 nic                                                          P,,  
