@@ -24,7 +24,7 @@ d.ipsec.conf/sha2-truncbug.xml
 d.ipsec.conf/nat-ikev1-method.xml
 d.ipsec.conf/esp.xml
 d.ipsec.conf/ah.xml
-d.ipsec.conf/ike-frag.xml
+d.ipsec.conf/fragmentation.xml
 d.ipsec.conf/ikepad.xml
 d.ipsec.conf/ikev2.xml
 d.ipsec.conf/narrowing.xml

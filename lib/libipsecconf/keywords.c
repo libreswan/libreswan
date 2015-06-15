@@ -87,7 +87,7 @@ static const struct keyword_enum_value kw_fourvalued_values[] = {
 static const struct keyword_enum_values kw_fourvalued_list = VALUES_INITIALIZER(kw_fourvalued_values);
 
 /*
- * Values for yes/no/force, used by ike_frag
+ * Values for yes/no/force, used by fragmentation=
  */
 static const struct keyword_enum_value kw_ynf_values[] = {
 	{ "never",     ynf_no },
@@ -476,7 +476,9 @@ const struct keyword_def ipsec_conf_keywords_v2[] = {
 	  KBF_IKEv2, &kw_fourvalued_list },
 	{ "ike_frag",       kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,
 	  KBF_IKE_FRAG, &kw_ynf_list },	/* obsolete _ */
-	{ "ike-frag",       kv_conn | kv_auto | kv_processed, kt_enum,
+	{ "ike-frag",       kv_conn | kv_auto | kv_processed | kv_alias, kt_enum,
+	  KBF_IKE_FRAG, &kw_ynf_list }, /* obsolete name */
+	{ "fragmentation",       kv_conn | kv_auto | kv_processed, kt_enum,
 	  KBF_IKE_FRAG, &kw_ynf_list },
 	{ "narrowing",      kv_conn | kv_auto, kt_bool,
 	  KBF_IKEv2_ALLOW_NARROWING, NOT_ENUM },
