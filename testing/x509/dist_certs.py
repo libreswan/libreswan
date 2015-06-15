@@ -286,7 +286,10 @@ def create_mainca_end_certs(mainca_end_certs):
 		if name == 'bigkey':
 			keysize = 2048
 		else:
-			keysize = 1024
+			if name == 'key4096':
+				keysize = 4096
+			else:
+				keysize = 1024
 
 		if name == 'notyetvalid':
 			startdate = dates['FUTURE']
@@ -587,7 +590,7 @@ def run_dist_certs():
 					    'usage-server', 'usage-client',
 					    'usage-both', 
 						'nic-noext', 'nic-nourl',
-						'japan','bigkey',
+						'japan','bigkey', 'key4096',
 						'notyetvalid','notvalidanymore',
 						'signedbyother','wrongdnorg',
 						'unwisechar','spaceincn','hashsha2',
