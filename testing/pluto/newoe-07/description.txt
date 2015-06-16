@@ -1,0 +1,16 @@
+OE AUTHNULL test with failureshunt=passthrough
+
+this test is similar to newoe-4 except now east has no OE connections
+loaded at all. IKE responses will be NO_PROPOSAL_CHOSEN.
+
+road will attempt IKE, fail and a passthrough shunt should be installed.
+
+Both negotiationshunt and failureshunt are passthrough so no packet loss
+should happen.
+
+note1: the shunt status at the beginning should show a shunt but it does not?
+       This needs to be explained/fixed?
+
+note2: Also because we dont replace identical failureshunt with negotiationshunt
+       the "why" is listed as "oe-failing" instead of "oe-failed".
+
