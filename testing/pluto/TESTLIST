@@ -161,6 +161,22 @@ kvmplutotest	ikev2-43-init-retransmit		good
 kvmplutotest	ikev2-frag-01				good
 kvmlputotest	ikev2-frag-02-ipv6			good
 
+# Opportunstic Encryption using AUTH NULL
+kvmlputotest	newoe-01-whack				good
+kvmlputotest	newoe-02-klips				good
+kvmlputotest	newoe-03-oeself				good
+kvmlputotest	newoe-04-01				good
+kvmlputotest	newoe-04-pass-pass			good
+kvmlputotest	newoe-05-hold-pass			good
+kvmlputotest	newoe-06-prio				good
+kvmlputotest	newoe-07-ike-replace			good
+kvmlputotest	newoe-08-ike-replace			good
+kvmlputotest	newoe-08-restart			good
+kvmlputotest	newoe-09-mutual				good
+kvmlputotest	newoe-10-expire-inactive		good
+kvmlputotest	newoe-11-failike			good
+
+
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
 ctltest	pluto-unit-01	good
