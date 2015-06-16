@@ -2038,7 +2038,7 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 
 	unsigned int nfrags = (payload->len + len - 1) / len;
 
-	if (nfrags >= 128) {
+	if (nfrags > MAX_IKE_FRAGMENTS) {
 		loglog(RC_LOG_SERIOUS, "Fragmenting this %zu byte message into %u byte chunks leads to too many frags",
 		       payload->len, len);
 		return STF_INTERNAL_ERROR;
