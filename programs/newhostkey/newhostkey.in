@@ -53,8 +53,10 @@ for dummy; do
 	    exit 0
 	    ;;
 	--random)
-	    echo "$me warning: --random is obsoleted for --seeddev"
-	    /* FALLTHROUGH */
+	    echo "$me warning: --random is obsoleted, using --seeddev"
+	    seeddev="--seeddev ${2}"
+	    shift
+	    ;;
 	--seeddev)
 	    seeddev="--seeddev ${2}"
 	    shift
