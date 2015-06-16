@@ -3170,6 +3170,26 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 		return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
 	}
 
+	/* are we expecting a v2CP (RESP) ?  */
+	if (c->spd.this.modecfg_client) {
+		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
+			/* not really anything to here... but it would be worth unpending again */
+			libreswan_log("missing v2CP reply, not attempting to setup child SA");
+			/* Delete previous retransmission event. */
+			delete_event(st);
+			/*
+			 * ??? this isn't really a failure, is it?
+			 * If none of those payloads appeared, isn't this is a
+			 * legitimate negotiation of a parent?
+			 */
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], st))
+		{
+			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
+		}
+	}
+
 	/* check TS payloads */
 	{
 		int bestfit_n, bestfit_p, bestfit_pr;
@@ -3310,26 +3330,6 @@ stf_status ikev2parent_inR2(struct msg_digest *md)
 
 		if (ret != STF_OK)
 			return ret;
-	}
-
-	/* are we expecting a v2CP (RESP) ?  */
-	if (c->spd.this.modecfg_client) {
-		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
-			/* not really anything to here... but it would be worth unpending again */
-			libreswan_log("missing v2CP reply, not attempting to setup child SA");
-			/* Delete previous retransmission event. */
-			delete_event(st);
-			/*
-			 * ??? this isn't really a failure, is it?
-			 * If none of those payloads appeared, isn't this is a
-			 * legitimate negotiation of a parent?
-			 */
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
-		if (!ikev2_parse_cp_r_body(md->chain[ISAKMP_NEXT_v2CP], st))
-		{
-			return STF_FAIL + v2N_NO_PROPOSAL_CHOSEN;
-		}
 	}
 
 	/* examine each notification payload */
