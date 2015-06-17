@@ -169,8 +169,8 @@ kvmlputotest	newoe-04-01				good
 kvmlputotest	newoe-04-pass-pass			good
 kvmlputotest	newoe-05-hold-pass			good
 kvmlputotest	newoe-06-prio				good
-kvmlputotest	newoe-07-ike-replace			good
-kvmlputotest	newoe-08-ike-replace			good
+kvmlputotest	newoe-07-ike-replace-initiator		good
+kvmlputotest	newoe-08-ike-replace-responder		good
 kvmlputotest	newoe-08-restart			good
 kvmlputotest	newoe-09-mutual				good
 kvmlputotest	newoe-10-expire-inactive		good
