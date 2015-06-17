@@ -248,19 +248,6 @@ ctltest	pluto-dontreky-expiry-01 good
 # when changed
 # umlplutotest	food-groups-orderly-transition-01	good
 #
-kvmplutotest newoe-01	good
-kvmplutotest newoe-02	good
-kvmplutotest newoe-03	good
-kvmplutotest newoe-04	good
-kvmplutotest newoe-04-01	good
-kvmplutotest newoe-05	good
-kvmplutotest newoe-06-prio good
-kvmplutotest newoe-07	good
-kvmplutotest newoe-07-ike-replace good
-kvmplutotest newoe-08-ike-replace good
-kvmplutotest newoe-08-restart	good
-kvmplutotest newoe-09-mutual	good
-kvmplutotest newoe-10-expire-inactive good
 
 # RFC 3706 DPD test
 kvmplutotest	dpd-01	good
