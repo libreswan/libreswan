@@ -159,7 +159,7 @@ kvmplutotest	nflog-03-conns				good
 kvmplutotest	ikev2-43-init-retransmit		good
 
 kvmplutotest	ikev2-frag-01				good
-kvmlputotest	ikev2-frag-02-ipv6			good
+kvmplutotest	ikev2-frag-02-ipv6			good
 
 # Opportunstic Encryption using AUTH NULL
 kvmlputotest	newoe-01-whack				good
