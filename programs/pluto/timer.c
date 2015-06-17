@@ -447,6 +447,25 @@ static void liveness_check(struct state *st)
 		st);
 }
 
+static void ikev2_log_v2_sa_expired (struct state *st, enum event_type type)
+{
+	struct connection *c = st->st_connection;
+	deltatime_t last_used_age;
+
+	DBG(DBG_LIFECYCLE, {
+			char story[80] = "";
+			if (type == EVENT_v2_SA_REPLACE_IF_USED) {
+			snprintf(story, sizeof(story),
+					"last used %lds ago < %ld ",
+					(long)deltasecs(last_used_age),
+					(long)deltasecs(c->sa_rekey_margin));
+			}
+			DBG_log("replacing stale %s SA %s",
+					IS_IKE_SA(st) ? "ISAKMP" : "IPsec",
+					story);
+			});
+}
+
 static event_callback_routine timer_event_cb;
 static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
 {
@@ -454,6 +473,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	enum event_type type;
 	struct state *st;
 	char statenum[32];
+	deltatime_t last_used_age;
 
 	type = ev->ev_type;
 	st = ev->ev_state;
@@ -499,6 +519,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 	case EVENT_v2_RETRANSMIT:
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_REPLACE_IF_USED:
+	case EVENT_v2_SA_REPLACE_IF_USED:
 	case EVENT_v2_RESPONDER_TIMEOUT:
 	case EVENT_SA_EXPIRE:
 	case EVENT_SO_DISCARD:
@@ -589,6 +610,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 
 	case EVENT_SA_REPLACE:
 	case EVENT_SA_REPLACE_IF_USED:
+	case EVENT_v2_SA_REPLACE_IF_USED:
 	{
 		struct connection *c = st->st_connection;
 		so_serial_t newest;
@@ -607,8 +629,18 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					"not replacing stale %s SA: #%lu will do",
 					IS_IKE_SA(st) ?
 					"ISAKMP" : "IPsec", newest));
+		} else if ((type == EVENT_v2_SA_REPLACE_IF_USED) &&
+				(get_sa_info(st, TRUE, &last_used_age) &&
+				 deltaless(c->sa_rekey_margin, last_used_age))) {
+			/* we observed no traffic, let IPSEC SA expire */
+			DBG(DBG_LIFECYCLE, DBG_log("not replacing unused IPSEC SA: "
+						"last used %lds ago > %ld "
+						"let it expire",
+						(long)deltasecs(last_used_age),
+						(long)deltasecs(c->sa_rekey_margin)));
+
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
-			!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
+				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
 			/*
 			 * we observed no recent use: no need to replace
 			 *
@@ -630,9 +662,7 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 					(long)deltasecs(monotimediff(mononow(),
 						st->st_outbound_time))));
 		} else {
-			DBG(DBG_LIFECYCLE, DBG_log(
-				"replacing stale %s SA",
-					IS_IKE_SA(st) ? "ISAKMP" : "IPsec"));
+			ikev2_log_v2_sa_expired(st, type);
 			ipsecdoi_replace(st, LEMPTY, LEMPTY, 1);
 		}
 		delete_liveness_event(st);

@@ -89,6 +89,7 @@ static const char *const timer_event_name[] = {
 	"EVENT_v1_SEND_XAUTH",
 	"EVENT_SA_REPLACE",
 	"EVENT_SA_REPLACE_IF_USED",
+	"EVENT_v2_SA_REPLACE_IF_USED",
 	"EVENT_SA_EXPIRE",
 	"EVENT_NAT_T_KEEPALIVE",
 	"EVENT_DPD",
