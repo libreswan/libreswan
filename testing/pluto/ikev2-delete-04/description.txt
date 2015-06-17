@@ -1,0 +1,3 @@
+This test is part of the ikev2-delete suite to track deletion commands between peers.
+
+02 - west initiates, west uses ipsec whack --deletestate 2 and check xfrm policy

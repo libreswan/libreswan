@@ -41,6 +41,7 @@ kvmplutotest	ikev2-08-delete-notify			good
 kvmplutotest	ikev2-delete-01				good
 kvmplutotest	ikev2-delete-02				good
 kvmplutotest	ikev2-delete-03-valgrind		bad
+kvmplutotest	ikev2-delete-04				wip
 
 
 kvmplutotest	ikev2-09-rw-rsa				good
