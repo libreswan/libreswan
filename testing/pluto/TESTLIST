@@ -162,19 +162,19 @@ kvmplutotest	ikev2-frag-01				good
 kvmplutotest	ikev2-frag-02-ipv6			good
 
 # Opportunstic Encryption using AUTH NULL
-kvmlputotest	newoe-01-whack				good
-kvmlputotest	newoe-02-klips				good
-kvmlputotest	newoe-03-oeself				good
-kvmlputotest	newoe-04-01				good
-kvmlputotest	newoe-04-pass-pass			good
-kvmlputotest	newoe-05-hold-pass			good
-kvmlputotest	newoe-06-prio				good
-kvmlputotest	newoe-07-ike-replace-initiator		good
-kvmlputotest	newoe-08-ike-replace-responder		good
-kvmlputotest	newoe-08-restart			good
-kvmlputotest	newoe-09-mutual				good
-kvmlputotest	newoe-10-expire-inactive		good
-kvmlputotest	newoe-11-failike			good
+kvmplutotest	newoe-01-whack				good
+kvmplutotest	newoe-02-klips				good
+kvmplutotest	newoe-03-oeself				good
+kvmplutotest	newoe-04-01				good
+kvmplutotest	newoe-04-pass-pass			good
+kvmplutotest	newoe-05-hold-pass			good
+kvmplutotest	newoe-06-prio				good
+kvmplutotest	newoe-07-ike-replace-initiator		good
+kvmplutotest	newoe-08-ike-replace-responder		good
+kvmplutotest	newoe-08-restart			good
+kvmplutotest	newoe-09-mutual				good
+kvmplutotest	newoe-10-expire-inactive		good
+kvmplutotest	newoe-11-failike			good
 
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
