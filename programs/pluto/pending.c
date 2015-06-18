@@ -1,6 +1,6 @@
 /* information about connections between hosts and clients
  *
- * Copyright (C) 1998-2002,2013 D. Hugh Redelmeier <hugh@mimosa.com>
+ * Copyright (C) 1998-2002,2013,2015 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2003-2007 Michael Richardson <mcr@xelerance.com>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
@@ -167,6 +167,15 @@ void release_pending_whacks(struct state *st, err_t story)
 	}
 }
 
+/*
+ * remove a pending from a linked list.
+ *
+ * pp points to the link to the entry.
+ * *pp will be updated to point to the successor to the original *pp.
+ * In effect, we advance *pp.
+ * Note: If you are traversing a linked list and deleting some entries,
+ * you should not advance pp after calling delete_pending.
+ */
 static void delete_pending(struct pending **pp)
 {
 	struct pending *p = *pp;
@@ -198,15 +207,14 @@ static void delete_pending(struct pending **pp)
  */
 void unpend(struct state *st)
 {
-	struct pending **pp,
-	*p;
+	struct pending **pp, *p;
 
 	DBG(DBG_DPD,
 	    DBG_log("unpending state #%lu", st->st_serialno));
 
 	for (pp = host_pair_first_pending(st->st_connection);
-	     (p = *pp) != NULL;
-	     ) {
+	     (p = *pp) != NULL; )
+	{
 		if (p->isakmp_sa == st) {
 			DBG(DBG_CONTROL, {
 				ipstr_buf b;
@@ -230,32 +238,29 @@ void unpend(struct state *st)
 			}
 			p->whack_sock = NULL_FD;        /* ownership transferred */
 			p->connection = NULL;           /* ownership transferred */
-			delete_pending(pp);
+			delete_pending(pp);	/* in effect, advances pp */
 		} else {
 			pp = &p->next;
 		}
 	}
 }
 
-struct connection *first_pending(struct state *st,
+struct connection *first_pending(const struct state *st,
 				 lset_t *policy,
 				 int *p_whack_sock)
 {
-	struct pending **pp,
-	*p;
+	struct pending **pp, *p;
 
 	DBG(DBG_DPD,
 	    DBG_log("getting first pending from state #%lu", st->st_serialno));
 
 	for (pp = host_pair_first_pending(st->st_connection);
-	     (p = *pp) != NULL;
-	     ) {
+	     (p = *pp) != NULL; pp = &p->next)
+	{
 		if (p->isakmp_sa == st) {
 			*p_whack_sock = p->whack_sock;
 			*policy = p->policy;
 			return p->connection;
-		} else {
-			pp = &p->next;
 		}
 	}
 	return NULL;
@@ -266,7 +271,7 @@ struct connection *first_pending(struct state *st,
  * have been pending exceeds a DPD timeout that was set, then we call the
  * dpd_timeout() on this state, which hopefully kills this pending state.
  */
-bool pending_check_timeout(struct connection *c)
+bool pending_check_timeout(const struct connection *c)
 {
 	struct pending **pp, *p;
 
@@ -303,19 +308,15 @@ void update_pending(struct state *os, struct state *ns)
 	if (pp == NULL)
 		return;
 
-	for (p = *pp;
-	     p != NULL;
-	     p = p->next) {
+	for (p = *pp; p != NULL; p = p->next)
 		if (p->isakmp_sa == os)
 			p->isakmp_sa = ns;
-	}
 }
 
 /* a Main Mode negotiation has failed; discard any pending */
 void flush_pending_by_state(struct state *st)
 {
-	struct pending **pp,
-	*p;
+	struct pending **pp, *p;
 
 	pp = host_pair_first_pending(st->st_connection);
 	if (pp == NULL)
@@ -327,7 +328,7 @@ void flush_pending_by_state(struct state *st)
 			 * *pp, because delete_pending updates pp to
 			 * point to the next element before it frees *pp
 			 */
-			delete_pending(pp);
+			delete_pending(pp);	/* in effect, advances pp */
 		} else {
 			pp = &p->next;
 		}
@@ -335,10 +336,9 @@ void flush_pending_by_state(struct state *st)
 }
 
 /* a connection has been deleted; discard any related pending */
-void flush_pending_by_connection(struct connection *c)
+void flush_pending_by_connection(const struct connection *c)
 {
-	struct pending **pp,
-	*p;
+	struct pending **pp, *p;
 
 	pp = host_pair_first_pending(c);
 	if (pp == NULL)
@@ -347,7 +347,7 @@ void flush_pending_by_connection(struct connection *c)
 	while ((p = *pp) != NULL) {
 		if (p->connection == c) {
 			p->connection = NULL; /* prevent delete_pending from releasing */
-			delete_pending(pp);
+			delete_pending(pp);	/* in effect, advances pp */
 		} else {
 			pp = &p->next;
 		}
@@ -356,8 +356,7 @@ void flush_pending_by_connection(struct connection *c)
 
 void show_pending_phase2(const struct connection *c, const struct state *st)
 {
-	struct pending **pp,
-	*p;
+	struct pending **pp, *p;
 
 	pp = host_pair_first_pending(c);
 	if (pp == NULL)
@@ -379,7 +378,7 @@ void show_pending_phase2(const struct connection *c, const struct state *st)
 	}
 }
 
-bool in_pending_use(struct connection *c)
+bool in_pending_use(const struct connection *c)
 {
 	/* see if it is being used by a pending */
 	struct pending **pp, *p;
