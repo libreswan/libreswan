@@ -1930,8 +1930,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 	unsigned char *iv;
 	unsigned char *authstart;
 	pb_stream frag_stream;
-	unsigned char frag_buffer[
-		PMAX(ISAKMP_FRAG_MAXLEN_IPv4, ISAKMP_FRAG_MAXLEN_IPv6)];
+	unsigned char frag_buffer[PMAX(MIN_MAX_UDP_DATA_v4, MIN_MAX_UDP_DATA_v6)];
 
 	/* make sure HDR is at start of a clean buffer */
 	zero(&frag_buffer);

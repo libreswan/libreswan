@@ -679,7 +679,15 @@ extern struct_desc isakmp_ikefrag_desc;
 /*
  * What is a sane and safe value? iOS/Apple uses 1280, stock racoon uses 552.
  * Why is there no RFC to guide interop people here :/
+ *
+ * UDP packet overhead: the number of bytes of header and pseudo header
+ * - v4 UDP: 20 source addr, dest addr, protocol, length, source port, destination port, length, checksum
+ * - v6 UDP: 48 (similar)
  */
+
+#define MIN_MAX_UDP_DATA_v4	(576 - 20)	/* this length must work */
+#define MIN_MAX_UDP_DATA_v6	(1280 - 48)	/* this length must work */
+
 #define ISAKMP_FRAG_MAXLEN_IPv4	552	/* 576 - 24 (2*4 + 16) */
 #define ISAKMP_FRAG_MAXLEN_IPv6	1240
 
