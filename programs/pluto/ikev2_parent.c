@@ -1888,8 +1888,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	 */
 	pexpect(LSINGLETON(authpolicy));
 
-	/* ??? shouldn't the authpolicy in the state match the connection? */
-	pexpect (authpolicy == (st->st_policy & POLICY_ID_AUTH_MASK));
+	/* ??? authpolicy often different from (st->st_policy & POLICY_ID_AUTH_MASK) */
 
 	a.isaa_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
