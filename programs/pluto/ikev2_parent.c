@@ -2090,38 +2090,27 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	struct pluto_crypto_req_cont *dh,
 	struct pluto_crypto_req *r)
 {
-	struct msg_digest *md = dh->pcrc_md;
-	struct state *st = md->st;
-	struct connection *c = st->st_connection;
-	struct ikev2_generic e;
-	unsigned char *encstart;
-	pb_stream e_pbs, e_pbs_cipher;
-	unsigned char *iv;
-	unsigned char idhash[MAX_DIGEST_LEN];
-	unsigned char *authstart;
-	struct state *pst = st;
-	bool send_cert = FALSE;
-	struct isakmp_hdr hdr = md->hdr;
-	unsigned char *authloc;
-	unsigned int len;
+	struct msg_digest *const md = dh->pcrc_md;
+	struct state *const pst = md->st;	/* parent's state object */
+	struct connection *const pc = pst->st_connection;	/* parent connection */
 
-	finish_dh_v2(st, r);
+	finish_dh_v2(pst, r);
 
 	/* ??? this is kind of odd: regular control flow only selecting DBG output */
 	if (DBGP(DBG_PRIVATE) && DBGP(DBG_CRYPT))
-		ikev2_log_parentSA(st);
+		ikev2_log_parentSA(pst);
 
-	st = duplicate_state(pst);
-	st->st_msgid = htonl(pst->st_msgid_nextuse); /* PAUL: note ordering */
-	insert_state(st);
-	md->st = st;
+	struct state *cst = duplicate_state(pst);	/* child state */
+
+	cst->st_msgid = htonl(pst->st_msgid_nextuse); /* PAUL: note ordering */
+	insert_state(cst);
+	md->st = cst;
 
 	/* parent had crypto failed, replace it with rekey! */
 	/* ??? seems wrong: not conditional at all */
 	delete_event(pst);
 	{
-		const struct state_v2_microcode *svm = md->svm;
-		enum event_type x = svm->timeout_event;
+		enum event_type x = md->svm->timeout_event;
 		time_t delay = ikev2_replace_delay(pst, &x, ORIGINAL_INITIATOR);
 
 		event_schedule(x, delay, pst);
@@ -2132,11 +2121,12 @@ static stf_status ikev2_parent_inR1outI2_tail(
 
 	/* record first packet for later checking of signature */
 	clonetochunk(pst->st_firstpacket_him, md->message_pbs.start,
-		     pbs_offset(
-			     &md->message_pbs), "saved first received packet");
+		     pbs_offset(&md->message_pbs),
+		     "saved first received packet");
 
 	/* beginning of data going out */
-	authstart = reply_stream.cur;
+
+	unsigned char *const authstart = reply_stream.cur;
 
 	/* make sure HDR is at start of a clean buffer */
 	zero(&reply_buffer);
@@ -2144,63 +2134,76 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		 "reply packet");
 
 	/* HDR out */
-	{
-		/* clear all flags, set original initiator */
-		hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
-		hdr.isa_version = build_ikev2_version();
-		hdr.isa_np = ISAKMP_NEXT_v2SK;
-		hdr.isa_xchg = ISAKMP_v2_AUTH;
-		hdr.isa_msgid = st->st_msgid;
-		memcpy(hdr.isa_icookie, st->st_icookie, COOKIE_SIZE);
-		memcpy(hdr.isa_rcookie, st->st_rcookie, COOKIE_SIZE);
 
-		if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
-			hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
-		}
+	struct isakmp_hdr hdr;
 
-		if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
-				&md->rbody))
-			return STF_INTERNAL_ERROR;
+	memcpy(hdr.isa_icookie, cst->st_icookie, COOKIE_SIZE);
+	memcpy(hdr.isa_rcookie, cst->st_rcookie, COOKIE_SIZE);
+	hdr.isa_np = ISAKMP_NEXT_v2SK;
+	hdr.isa_version = build_ikev2_version();
+	hdr.isa_xchg = ISAKMP_v2_AUTH;
+	/* set original initiator; all other flags clear */
+	hdr.isa_flags = ISAKMP_FLAGS_v2_IKE_I;
+	hdr.isa_msgid = cst->st_msgid;
+
+	if (DBGP(IMPAIR_SEND_BOGUS_ISAKMP_FLAG)) {
+		hdr.isa_flags |= ISAKMP_FLAGS_RESERVED_BIT6;
 	}
 
+	if (!out_struct(&hdr, &isakmp_hdr_desc, &reply_stream,
+			&md->rbody))
+		return STF_INTERNAL_ERROR;
+
 	/* insert an Encryption payload header */
-	e.isag_np = ISAKMP_NEXT_v2IDi;
-	e.isag_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+
+	struct ikev2_generic e = {ISAKMP_NEXT_v2IDi, ISAKMP_PAYLOAD_NONCRITICAL, 0};
+
 	if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 		libreswan_log(
 			" setting bogus ISAKMP_PAYLOAD_LIBRESWAN_BOGUS flag in ISAKMP payload");
 		e.isag_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 	}
 
+	pb_stream e_pbs;
+
 	if (!out_struct(&e, &ikev2_sk_desc, &md->rbody, &e_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* insert IV */
-	iv = e_pbs.cur;
-	if (!emit_wire_iv(st, &e_pbs))
+
+	unsigned char *const iv = e_pbs.cur;
+
+	if (!emit_wire_iv(cst, &e_pbs))
 		return STF_INTERNAL_ERROR;
 
 	/* note where cleartext starts */
+
+	pb_stream e_pbs_cipher;	/* ??? it might be possible to eliminate this */
+
 	init_pbs(&e_pbs_cipher, e_pbs.cur, e_pbs.roof - e_pbs.cur,
 		 "cleartext");
 	e_pbs_cipher.container = &e_pbs;
-	e_pbs_cipher.desc = NULL;
-	e_pbs_cipher.cur = e_pbs.cur;
-	encstart = e_pbs_cipher.cur;
+
+	unsigned char *const encstart = e_pbs_cipher.cur;
+
+	/* decide whether to send CERT payload */
+
+	bool send_cert = ikev2_send_cert_decision(cst);
 
 	/* send out the IDi payload */
+
+	unsigned char idhash[MAX_DIGEST_LEN];
+
 	{
 		struct ikev2_id r_id;
 		pb_stream r_id_pbs;
 		chunk_t id_b;
 		struct hmac_ctx id_ctx;
-		unsigned char *id_start;
-		unsigned int id_len;
 
 		hmac_init(&id_ctx, pst->st_oakley.prf_hasher,
 				pst->st_skey_pi_nss);
 		build_id_payload((struct isakmp_ipsec_id *)&r_id, &id_b,
-				 &c->spd.this);
+				 &pc->spd.this);
 		r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
 		if (DBGP(IMPAIR_SEND_BOGUS_PAYLOAD_FLAG)) {
 			libreswan_log(
@@ -2208,17 +2211,14 @@ static stf_status ikev2_parent_inR1outI2_tail(
 			r_id.isai_critical |= ISAKMP_PAYLOAD_LIBRESWAN_BOGUS;
 		}
 
-		/* decide to send CERT payload */
-		{
-			send_cert = ikev2_send_cert_decision(st);
 
-			if (send_cert)
-				r_id.isai_np = ISAKMP_NEXT_v2CERT;
-			else
-				r_id.isai_np = ISAKMP_NEXT_v2AUTH;
-		}
+		r_id.isai_np = send_cert ?
+			ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_v2AUTH;
 
-		id_start = e_pbs_cipher.cur;
+		/* HASH of ID is not done over common header */
+		unsigned char *const id_start =
+			e_pbs_cipher.cur + NSIZEOF_isakmp_generic;
+
 		if (!out_struct(&r_id,
 				&ikev2_id_desc,
 				&e_pbs_cipher,
@@ -2226,78 +2226,80 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		    !out_chunk(id_b, &r_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
 
-		/* HASH of ID is not done over common header */
-		id_start += 4;
 
 		close_output_pbs(&r_id_pbs);
 
 		/* calculate hash of IDi for AUTH below */
-		id_len = e_pbs_cipher.cur - id_start;
+
+		const size_t id_len = e_pbs_cipher.cur - id_start;
+
 		DBG(DBG_CRYPT, DBG_dump("idhash calc I2", id_start, id_len));
 		hmac_update(&id_ctx, id_start, id_len);
 		hmac_final(idhash, &id_ctx);
 	}
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
-	{
-		if (send_cert) {
-			stf_status certstat = ikev2_send_cert(st, md,
-							      ORIGINAL_INITIATOR,
-							      ISAKMP_NEXT_v2AUTH,
-							      &e_pbs_cipher);
-			if (certstat != STF_OK)
-				return certstat;
-		}
+	if (send_cert) {
+		stf_status certstat = ikev2_send_cert(cst, md,
+						      ORIGINAL_INITIATOR,
+						      ISAKMP_NEXT_v2AUTH,
+						      &e_pbs_cipher);
+
+		if (certstat != STF_OK)
+			return certstat;
 	}
 
 	/* send out the AUTH payload */
 	{
-		int np = c->spd.this.modecfg_client ?
+		int np = pc->spd.this.modecfg_client ?
 				ISAKMP_NEXT_v2CP : ISAKMP_NEXT_v2SA;
 
-		stf_status authstat = ikev2_send_auth(c, st, ORIGINAL_INITIATOR, np,
+		stf_status authstat = ikev2_send_auth(pc, cst, ORIGINAL_INITIATOR, np,
 				idhash, &e_pbs_cipher);
 
 		if (authstat != STF_OK)
 			return authstat;
 	}
 
-	if (c->spd.this.modecfg_client){
-		stf_status cpstat = ikev2_send_cp(c, ISAKMP_NEXT_v2SA,
+	if (pc->spd.this.modecfg_client){
+		stf_status cpstat = ikev2_send_cp(pc, ISAKMP_NEXT_v2SA,
 				&e_pbs_cipher);
 
 		if (cpstat != STF_OK)
 			return cpstat;
 	}
 
+	/*
+	 * Switch to first pending child request for this host pair.
+	 * ??? Why so late in this game?
+	 *
+	 * Then emit SA2i, TSi and TSr and
+	 * (v2N_USE_TRANSPORT_MODE notification in transport mode)
+	 * for it.
+	 */
+	/* so far child's connection is same as parent's */
+	passert(pc == cst->st_connection);
 	{
-		/*
-		 * emit SA2i, TSi and TSr and
-		 * (v2N_USE_TRANSPORT_MODE notification in transport mode)
-		 * for it.
-		 */
-		lset_t policy;
+		lset_t policy = pc->policy;
+		/* child connection */
+		struct connection *cc = first_pending(pst, &policy, &cst->st_whack_sock);
 
-		passert(c == st->st_connection);
-		c = first_pending(pst, &policy, &st->st_whack_sock);
-
-		if (c == NULL) {
-			c = st->st_connection;
-			DBG(DBG_CONTROL, DBG_log("no pending CHILD SAs found for %s: Reauthentication so use the original policy",
-				c->name));
-			policy = c->policy;
+		if (cc == NULL) {
+			cc = pc;
+			DBG(DBG_CONTROL, DBG_log("no pending CHILD SAs found for %s Reauthentication so use the original policy",
+				cc->name));
 		}
-		st->st_connection = c;
+		cst->st_connection = cc;
 
 		ikev2_emit_ipsec_sa(md, &e_pbs_cipher,
-				ISAKMP_NEXT_v2TSi, c, policy);
+				ISAKMP_NEXT_v2TSi, cc, policy);
 
-		st->st_ts_this = ikev2_end_to_ts(&c->spd.this);
-		st->st_ts_that = ikev2_end_to_ts(&c->spd.that);
+		cst->st_ts_this = ikev2_end_to_ts(&cc->spd.this);
+		cst->st_ts_that = ikev2_end_to_ts(&cc->spd.that);
 
-		ikev2_calc_emit_ts(md, &e_pbs_cipher, ORIGINAL_INITIATOR, c, policy);
+		ikev2_calc_emit_ts(md, &e_pbs_cipher, ORIGINAL_INITIATOR, cc, policy);
 
-		if ((c->policy & POLICY_TUNNEL) == LEMPTY) {
+		if ((cc->policy & POLICY_TUNNEL) == LEMPTY) {
 			DBG(DBG_CONTROL, DBG_log("Initiator child policy is transport mode, sending v2N_USE_TRANSPORT_MODE"));
 			/* In v2, for parent, protoid must be 0 and SPI must be empty */
 			if (!ship_v2N(ISAKMP_NEXT_v2NONE,
@@ -2310,18 +2312,18 @@ static stf_status ikev2_parent_inR1outI2_tail(
 		}
 	}
 
-	len = pbs_offset(&e_pbs_cipher);
+	const unsigned int len = pbs_offset(&e_pbs_cipher);
 
 	/*
 	 * need to extend the packet so that we will know how big it is
 	 * since the length is under the integrity check
 	 */
-	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
+	if (!ikev2_padup_pre_encrypt(cst, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&e_pbs_cipher);
 
-	authloc = ikev2_authloc(st, &e_pbs);
+	unsigned char *const authloc = ikev2_authloc(cst, &e_pbs);
 
 	if (authloc == NULL)
 		return STF_INTERNAL_ERROR;
@@ -2330,19 +2332,19 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	close_output_pbs(&md->rbody);
 	close_output_pbs(&reply_stream);
 
-	if (should_fragment_ike_msg(st, pbs_offset(&reply_stream), TRUE)) {
+	if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream), TRUE)) {
 		chunk_t payload;
 
 		setchunk(payload, e_pbs_cipher.start, len);
 		return ikev2_record_fragments(md, &hdr, &e, &payload,
 					   "reply fragment for ikev2_parent_outR1_I2");
 	} else {
-		stf_status ret = ikev2_encrypt_msg(st, authstart,
+		stf_status ret = ikev2_encrypt_msg(cst, authstart,
 					iv, encstart, authloc,
 					&e_pbs, &e_pbs_cipher);
 
 		if (ret == STF_OK)
-			record_outbound_ike_msg(st, &reply_stream,
+			record_outbound_ike_msg(cst, &reply_stream,
 				"reply packet for ikev2_parent_inR1outI2_tail");
 		return ret;
 	}
@@ -2796,7 +2798,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		bool pam_status)
 {
 	struct state *const st = md->st;
-	struct connection *c = st->st_connection;
+	struct connection *const c = st->st_connection;
 	unsigned char idhash_out[MAX_DIGEST_LEN];
 	unsigned char *authstart;
 	unsigned int np;
