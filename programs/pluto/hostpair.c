@@ -75,7 +75,6 @@
 
 /* struct host_pair: a nexus of information about a pair of hosts.
  * A host is an IP address, UDP port pair.  This is a debatable choice:
-
  * - should port be considered (no choice of port in standard)?
  * - should ID be considered (hard because not always known)?
  * - should IP address matter on our end (we don't know our end)?
@@ -117,7 +116,6 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
  * returns a host_pair entry that covers it. It also moves the relevant
  * pair description to the beginning of the list, so that it can be
  * found faster next time.
- *
  */
 struct host_pair *find_host_pair(const ip_address *myaddr,
 				 u_int16_t myport,
