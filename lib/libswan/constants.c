@@ -192,6 +192,7 @@ const char *const debug_bit_names[] = {
 	"impair-send-bogus-isakmp-flag",
 	"impair-send-ikev2-ke",
 	"impair-send-no-delete",
+	"impair-send-no-ikev2-auth",
 	"impair-send-key-size-check",
 	NULL	/* termination for bitnamesof() */
 };

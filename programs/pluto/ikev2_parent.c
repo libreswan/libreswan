@@ -1190,6 +1190,13 @@ stf_status ikev2parent_inR1outI2(struct msg_digest *md)
 	/* struct connection *c = st->st_connection; */
 	struct payload_digest *ntfy;
 
+	/* for testing only */
+	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
+		libreswan_log(
+			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		return STF_IGNORE;
+	}
+
 	for (ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
 		switch (ntfy->payload.v2n.isan_type) {
 		case v2N_COOKIE:
@@ -2574,6 +2581,14 @@ static stf_status ikev2_parent_inI2outR2_tail(
 stf_status ikev2parent_inI2outR2(struct msg_digest *md)
 {
 	struct state *st = md->st;
+
+	/* for testing only */
+	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH)) {
+		libreswan_log(
+			"IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
+		return STF_IGNORE;
+	}
+
 
 	nat_traversal_change_port_lookup(md, st);
 

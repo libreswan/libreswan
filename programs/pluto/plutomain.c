@@ -568,6 +568,7 @@ static const struct option long_opts[] = {
 	I("send-ikev2-ke\0", IMPAIR_SEND_IKEv2_KE_IX),
 	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK_IX),
 	I("send-no-delete\0", IMPAIR_SEND_NO_DELETE_IX),
+	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
 #undef I
 	{ 0, 0, 0, 0 }
 };
@@ -1557,6 +1558,8 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_SEND_KEY_SIZE_CHECK enabled");
 	if (DBGP(IMPAIR_SEND_NO_DELETE))
 		libreswan_log("Warning: IMPAIR_SEND_NO_DELETE enabled");
+	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH))
+		libreswan_log("Warning: IMPAIR_SEND_NO_IKEV2_AUTH enabled");
 
 
 

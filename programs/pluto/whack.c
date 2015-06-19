@@ -691,6 +691,8 @@ static const struct option long_opts[] = {
 		IMPAIR_SEND_IKEv2_KE_IX + DO },
 	{ "impair-send-no-delete", no_argument, NULL,
 		IMPAIR_SEND_NO_DELETE_IX + DO },
+	{ "impair-send-no-ikev2-auth", no_argument, NULL,
+		IMPAIR_SEND_NO_IKEV2_AUTH_IX + DO },
 	{ "impair-send-key-size-check", no_argument, NULL,
 		IMPAIR_SEND_KEY_SIZE_CHECK_IX + DO },
 #    undef DO
