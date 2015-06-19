@@ -29,13 +29,8 @@ import shutil
 import subprocess
 import time
 from datetime import datetime, timedelta
-
-try:
-	import pexpect
-	from OpenSSL import crypto
-except ImportError as e:
-	module = str(e)[16:]
-	sys.exit("Python module %s required! " % module)
+import pexpect
+from OpenSSL import crypto
 
 CRL_URI = 'URI:http://nic.testing.libreswan.org/revoked.crl'
 

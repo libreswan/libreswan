@@ -97,7 +97,7 @@ KVM_INCLUDE =
 KVM_INCLUDE_FLAG = $(if $(KVM_INCLUDE),--include '$(KVM_INCLUDE)')
 NEWRUN = $(if $(wildcard kvm-checksum.new),--newrun)
 .PHONY: kvm-check
-kvm-check: kvm-checksum
+kvm-check: testing/x509/keys/mainca.key
 	: $@:
 	:   PWD: $(PWD)
 	:   KVM_HOSTS: $(KVM_HOSTS)
@@ -133,3 +133,25 @@ kvm-checksum:
 		echo "Checksum file CHANGED" ; \
 		cp kvm-checksum.new kvm-checksum ; \
 	fi
+
+# Re-build the keys/certificates.
+#
+# Strangely, dist_certs.py can't create a directory called "certs/" on
+# a 9p mounted file system (OSError: [Errno 13] Permission denied:
+# 'certs/').  Get around it by first creating the certs in /tmp and
+# then copying them over.
+#
+# By copying "dist_certs.py" to /tmp the need to compute the remote
+# path to the local dist_certs.py is avoided (do not assume it is
+# under /testing).  Better might be for dist_certs.py to take an
+# output directory argument.
+kvm-keys testing/x509/keys/mainca.key: testing/x509/dist_certs.py
+	$(KVMSH_COMMAND) --chdir .         east 'rm -rf /tmp/x509'
+	$(KVMSH_COMMAND) --chdir .         east 'mkdir /tmp/x509'
+	$(KVMSH_COMMAND) --chdir .         east 'cp -f testing/x509/dist_certs.py /tmp'
+	$(KVMSH_COMMAND) --chdir /tmp/x509 east '../dist_certs.py'
+	rm -f testing/x509/x509.tar
+	$(KVMSH_COMMAND) --chdir .         east '( cd /tmp && tar cf - x509 ) > testing/x509.tar'
+	cd testing && tar xpvf x509.tar
+	rm testing/x509.tar
+.PHONY: kvm-keys
