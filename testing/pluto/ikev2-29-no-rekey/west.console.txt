@@ -267,7 +267,7 @@ west #
 000 IPsec SAs: total(0), anonymous(<todo>)
 000  
 000 #2: "westnet-eastnet-ikev2":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_EXPIRE in  XXs; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #2: "westnet-eastnet-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=1 Traffic:! ESPmax=0B 
+000 #2: "westnet-eastnet-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=0 Traffic:! ESPmax=0B 
 000 #1: "westnet-eastnet-ikev2":500 STATE_PARENT_I3 (PARENT SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; isakmp#0; idle; import:admin initiate
 000 #1: "westnet-eastnet-ikev2" ref=0 refhim=0 Traffic: 
 000  

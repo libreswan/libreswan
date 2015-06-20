@@ -265,7 +265,7 @@ west #
 000 IPsec SAs: total(1), anonymous(<todo>)
 000  
 000 #2: "west-east-delete1":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
-000 #2: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=1 Traffic:! ESPmax=4194303B 
+000 #2: "west-east-delete1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.1000@192.1.2.23 tun.1001@192.1.2.45 ref=3 refhim=0 Traffic:! ESPmax=4194303B 
 000 #1: "west-east-delete1":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 000  
 000 Bare Shunt list:

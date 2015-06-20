@@ -79,8 +79,8 @@ west NOW
 ipsec0->eth1 mtu=16260(9999)->1500
 tun0xTUN#@192.1.2.23 IPIP: dir=out src=192.1.2.45 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 esp0xSPISPI@192.1.2.23 ESP_AES_HMAC_SHA1: dir=out src=192.1.2.45 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64  alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
-esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
-tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=1
+esp0xSPISPI@192.1.2.45 ESP_AES_HMAC_SHA1: dir=in  src=192.1.2.23 iv_bits=128bits iv=0xIVISFORRANDOM000IVISFORRANDOM000 ooowin=64   alen=160 aklen=160 eklen=128 jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
+tun0xTUN#@192.1.2.45 IPIP: dir=in  src=192.1.2.23 policy=192.0.2.0/24->192.0.1.0/24 flags=0x8<> jiffies=0123456789  natencap=none natsport=0 natdport=0   refhim=0
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 
 192.0.1.0/24 dev eth0  proto kernel  scope link  src 192.0.1.254 
