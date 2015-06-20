@@ -466,6 +466,25 @@ static void ikev2_log_v2_sa_expired (struct state *st, enum event_type type)
 			});
 }
 
+static void ikev2_expire_parent(struct state *st, deltatime_t last_used_age)
+{
+	struct connection *c = st->st_connection;
+	struct state *pst = state_with_serialno(st->st_clonedfrom);
+	passert(pst != NULL); /* no orphan child allowed */
+
+	/* we observed no traffic, let IPSEC SA and IKE SA expire */
+	DBG(DBG_LIFECYCLE, DBG_log("not replacing unused IPSEC SA #%lu: "
+				"last used %lds ago > %ld "
+				"let it and the parent #%lu expire",
+				st->st_serialno,
+				(long)deltasecs(last_used_age),
+				(long)deltasecs(c->sa_rekey_margin),
+				pst->st_serialno));
+
+	delete_event(pst);
+	event_schedule(EVENT_SA_EXPIRE, 0, pst);
+}
+
 static event_callback_routine timer_event_cb;
 static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, void *arg)
 {
@@ -632,13 +651,8 @@ static void timer_event_cb(evutil_socket_t fd UNUSED, const short event UNUSED, 
 		} else if ((type == EVENT_v2_SA_REPLACE_IF_USED) &&
 				(get_sa_info(st, TRUE, &last_used_age) &&
 				 deltaless(c->sa_rekey_margin, last_used_age))) {
-			/* we observed no traffic, let IPSEC SA expire */
-			DBG(DBG_LIFECYCLE, DBG_log("not replacing unused IPSEC SA: "
-						"last used %lds ago > %ld "
-						"let it expire",
-						(long)deltasecs(last_used_age),
-						(long)deltasecs(c->sa_rekey_margin)));
-
+			ikev2_expire_parent(st, last_used_age);
+			break;
 		} else if (type == EVENT_SA_REPLACE_IF_USED &&
 				!monobefore(mononow(), monotimesum(st->st_outbound_time, c->sa_rekey_margin))) {
 			/*
