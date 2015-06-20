@@ -599,7 +599,9 @@ class scantests:
         self.tsum['failed'] = 0
         self.tsum['abort'] = 0
         self.tsum['missing baseline'] = 0
-        self.tsum['missing output'] = 0
+        self.tsum['missing console output'] = 0
+        self.tsum['missing OUTPUT'] = 0
+        self.tsum['missing RESULT'] = 0
 
         self.tsum['ASSERT'] = 0
         self.tsum['CORE'] = 0
@@ -615,16 +617,26 @@ class scantests:
         for tname in tests:
             if not os.path.isdir(self.trpath + '/' + tname):
                 continue
+            self.tests[tname] = {}
+            self.tests[tname]["name"] = tname
+            self.tests[tname]["type"] = "unknown"
+
             r = self.trpath + '/' + tname + '/OUTPUT/RESULT'
             if not os.path.exists(r):
                 e = "missing %s " % r
+                r = self.trpath + '/' + tname + '/OUTPUT'
+                if not os.path.exists(r):
+                    e = "missing %s " % r
+                    self.tsum['missing OUTPUT'] += 1
+                    self.tests[tname]["output"] = 'missing OUTPUT'
+                else:
+                    self.tsum['missing RESULT'] += 1
+                    self.tests[tname]["output"] = 'missing RESULT'
+
                 logging.info(e)
                 continue
 
             if not tname in self.tests:
-                self.tests[tname] = {}
-                self.tests[tname]["name"] = tname
-                self.tests[tname]["type"] = "unknown"
                 self.tests[tname]["expect"] = "not in TESTLIST"
 
             self.testname = tname
@@ -688,7 +700,11 @@ class scantests:
         for key, test in self.tests.items():
             row = []
             row.append(test["name"])
-            row.append(test["expect"])
+            if "expect" in test:
+                row.append(test["expect"])
+            elif "output" in test:
+                row.append(test["output"])
+				
             if "result" in test:
                 row.append(test["result"])
             else:
@@ -716,7 +732,7 @@ class scantests:
 
             table["rows"].append(list(row))
 
-        self.tsum["Total"] = self.tsum['failed'] + self.tsum['passed']
+        self.tsum["Total"] = self.tsum['failed'] + self.tsum['passed'] + self.tsum['missing OUTPUT'] + self.tsum['missing RESULT']
 
         if not self.tsum["Total"]:
             e = "no tests in %s" % self.trpath
@@ -808,7 +824,7 @@ class scantests:
                             "failed %s" % table["summary"]["failed"],
                             "missing baseline %s" % table[
                                 "summary"]["missing baseline"],
-                            "nooutput %s" % table["summary"]["missing output"],
+                            "nooutput %s" % table["summary"]["missing console output"],
                             "ASSERT %s" % table["summary"]["ASSERT"],
                             "CORE %s" % table["summary"]["CORE"],
                             "EXPECT %s" % table["summary"]["EXPECT"],
@@ -838,8 +854,8 @@ class scantests:
                 self.tests[self.testname]["result"] = "missing baseline"
         else:
             diffr = " missing OUTPUT/" + host + '.console.txt'
-            self.tsum["missing output"] += 1
-            self.tests[self.testname]["result"] = "missing output"
+            self.tsum["missing console output"] += 1
+            self.tests[self.testname]["result"] = "missing console output"
 
         key = "%s-status" % host
         if key in self.tests[self.testname]:
@@ -1986,6 +2002,9 @@ def do_test_list(args, start, tried, output_dir):
     tests = collections.OrderedDict()  # slow but keeps the order
     tests.clear()
 
+    progress = scantests(args, stdir=os.getcwd())
+    progress.scan_test_runs()
+
     logging.info("** read tests from file %s **", args.testlist)
     for testtype, testdir, testexpect in TestList(args.testlist, args, verbose=True):
         st["n_lines"] = st["n_lines"] + 1
@@ -2170,9 +2189,10 @@ def main():
     (output_dir, testlist, ran_tests) = do_test_list(
         args, start, tried, output_dir)
     if testlist:
+        tried = 1 + tried
         logging.info("ran  %s retry %s %s/%s ",
                      ran_tests, args.testlist, tried, args.retry)
-        while (tried <= args.retry):
+        while (tried < args.retry):
             if ran_tests > 0:
                 gen_graphs_tables(args)
                 logging.info(
