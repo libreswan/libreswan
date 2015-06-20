@@ -1103,7 +1103,6 @@ stf_status ikev2_child_sa_respond(struct msg_digest *md,
 	cst->st_connection->newest_ipsec_sa = cst->st_serialno;
 	log_newest_sa_change("inR2", cst);
 
-
 	return STF_OK;
 }
 

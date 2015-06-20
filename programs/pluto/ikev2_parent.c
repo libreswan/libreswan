@@ -116,25 +116,26 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 					   struct pluto_crypto_req *r);
 
 static void ikev2_isakamp_established(struct state *st, const struct state_v2_microcode *svm,
-                enum state_kind new_state, enum original_role role)
+		enum state_kind new_state, enum original_role role)
 {
-        struct connection *c = st->st_connection;
-        /*
-         * taking it current from current state I2/R1. The parent has advanced but not the svm???
-         * Ideally this should be timeout of I3/R2 state svm. how to find that svm
-         */
-        enum event_type kind = svm->timeout_event;
-        time_t delay;
+	struct connection *c = st->st_connection;
+	/*
+	 * taking it current from current state I2/R1. The parent has advanced but not the svm???
+	 * Ideally this should be timeout of I3/R2 state svm. how to find that svm
+	 * ??? I wonder what this comment means?  Needs rewording.
+	 */
+	enum event_type kind = svm->timeout_event;
+	time_t delay;
 
-        /*
-         * update the parent state to make sure that it knows we have
-         * authenticated properly.
-         */
-        change_state(st, new_state);
-        c->newest_isakmp_sa = st->st_serialno;
-        delay = ikev2_replace_delay(st, &kind, role);
-        delete_event(st);
-        event_schedule(kind, delay, st);
+	/*
+	 * update the parent state to make sure that it knows we have
+	 * authenticated properly.
+	 */
+	change_state(st, new_state);
+	c->newest_isakmp_sa = st->st_serialno;
+	delay = ikev2_replace_delay(st, &kind, role);
+	delete_event(st);
+	event_schedule(kind, delay, st);
 }
 
 /*
@@ -613,9 +614,9 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		return STF_IGNORE;
 	}
 
-        if (require_ddos_cookies()) {
-                u_char dcookie[SHA1_DIGEST_SIZE];
-                chunk_t dc, ni, spiI;
+	if (require_ddos_cookies()) {
+		u_char dcookie[SHA1_DIGEST_SIZE];
+		chunk_t dc, ni, spiI;
 
 		setchunk(spiI, md->hdr.isa_icookie, COOKIE_SIZE);
 		setchunk(ni, md->chain[ISAKMP_NEXT_v2Ni]->pbs.cur,
@@ -1373,6 +1374,7 @@ static bool ikev2_padup_pre_encrypt(struct state *st,
 		size_t padding;
 
 		if (pst->st_oakley.encrypter->pad_to_blocksize) {
+			passert(blocksize <= MAX_CBC_BLOCK_SIZE);
 			padding = pad_up(pbs_offset(e_pbs_cipher), blocksize);
 			if (padding == 0) {
 				padding = blocksize;
@@ -1427,7 +1429,6 @@ static stf_status ikev2_encrypt_msg(struct state *st,
 				    unsigned char *wire_iv_start,
 				    unsigned char *enc_start,
 				    unsigned char *integ_start,
-				    pb_stream *e_pbs UNUSED,
 				    pb_stream *e_pbs_cipher)
 {
 	struct state *pst = st;
@@ -1935,6 +1936,15 @@ static stf_status ikev2_send_auth(struct connection *c,
 	return STF_OK;
 }
 
+/*
+ * fragment contents:
+ * - sometimes:	NON_ESP_MARKER (RFC3948) (NON_ESP_MARKER_SIZE) (4)
+ * - always:	isakmp header (NSIZEOF_isakmp_hdr) (28)
+ * - always:	ikev2_skf header (NSIZEOF_ikev2_skf) (8)
+ * - variable:	IV (no IV is longer than SHA2_512_DIGEST_SIZE) (64 or less)
+ * - variable:	fragment's data
+ * - variable:	padding (no padding is longer than MAX_CBC_BLOCK_SIZE) (16 or less)
+ */
 static stf_status ikev2_record_fragment(struct msg_digest *md,
 				      struct isakmp_hdr *hdr,
 				      struct ikev2_generic *oe,
@@ -2017,7 +2027,7 @@ static stf_status ikev2_record_fragment(struct msg_digest *md,
 
 		ret = ikev2_encrypt_msg(st, authstart,
 					iv, encstart, authloc,
-					&e_pbs, &e_pbs_cipher);
+					&e_pbs_cipher);
 		if (ret != STF_OK)
 			return ret;
 	}
@@ -2036,16 +2046,17 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 				       chunk_t *payload, /* read-only */
 				       const char *desc)
 {
-	struct state *st = md->st;
+	struct state *const st = md->st;
 	unsigned int len;
 
 	len = (st->st_connection->addr_family == AF_INET) ?
-	      ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6;
+	      ISAKMP_V2_FRAG_MAXLEN_IPv4 : ISAKMP_V2_FRAG_MAXLEN_IPv6;
 
-	if (st->st_interface && st->st_interface->ike_float)
+	if (st->st_interface != NULL && st->st_interface->ike_float)
 		len -= NON_ESP_MARKER_SIZE;
 
-	len -= NSIZEOF_isakmp_hdr + NSIZEOF_isakmp_ikefrag;
+	len -= NSIZEOF_isakmp_hdr + NSIZEOF_ikev2_skf;
+
 	len -= ike_alg_enc_requires_integ(st->st_oakley.encrypter) ?
 	       st->st_oakley.integ_hasher->hash_integ_len :
 	       st->st_oakley.encrypter->aead_tag_size;
@@ -2054,6 +2065,8 @@ static stf_status ikev2_record_fragments(struct msg_digest *md,
 		len &= ~(st->st_oakley.encrypter->enc_blocksize - 1);
 
 	len -= 2;	/* ??? what's this? */
+
+	passert(payload->len != 0);
 
 	unsigned int nfrags = (payload->len + len - 1) / len;
 
@@ -2341,7 +2354,7 @@ static stf_status ikev2_parent_inR1outI2_tail(
 	} else {
 		stf_status ret = ikev2_encrypt_msg(cst, authstart,
 					iv, encstart, authloc,
-					&e_pbs, &e_pbs_cipher);
+					&e_pbs_cipher);
 
 		if (ret == STF_OK)
 			record_outbound_ike_msg(cst, &reply_stream,
@@ -2365,7 +2378,7 @@ static void *ikev2_pam_autherize_thread (void *x)
 	pthread_setcancelstate (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
 	p->pam_status = ikev2_do_pam_authentication(&p->pam);
-        gettimeofday(&p->done_time, NULL);
+	gettimeofday(&p->done_time, NULL);
 	timersub(&p->done_time, &p->start_time, &done_delta);
 
 	DBG(DBG_CONTROL, DBG_log("#%lu %s[%lu] IKEv2 PAM helper thread"
@@ -2468,7 +2481,7 @@ static void ikev2_pam_continue(struct ikev2_pam_helper *p)
 	unset_suspended(md->st);
 	st->has_pam_thread = FALSE;
 
-	if(p->pam_status) {
+	if (p->pam_status) {
 		/* This is a hardcoded continue, convert this to micro state. */
 		stf = ikev2_parent_inI2outR2_auth_tail(md, p->pam_status);
 	} else {
@@ -2521,7 +2534,7 @@ static stf_status ikev2_start_pam_authorize(struct msg_digest *md)
 	idtoa(&st->st_connection->spd.that.id, thatid, sizeof(thatid));
 	p->pam.name = clone_str(thatid, "pam name thatid");
 
-	/* ??? if password is always "password" (seems odd) then wny is a copy needed? */
+	/* ??? if password is always "password" (seems odd) then why is a copy needed? */
 	p->pam.password = clone_str("password", "password");
 	p->pam.c_name = clone_str(st->st_connection->name, "connection name, ikev2 pam");
 	p->pam.ra = clone_str(ipstr(&st->st_remoteaddr, &ra), "st remote address");
@@ -2680,9 +2693,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	struct msg_digest *md = dh->pcrc_md;
 	struct state *const st = md->st;
 	unsigned char idhash_in[MAX_DIGEST_LEN];
-#ifdef XAUTH_HAVE_PAM
-	struct connection *c = st->st_connection;
-#endif
 
 	/* extract calculated values from r */
 	finish_dh_v2(st, r);
@@ -2701,10 +2711,6 @@ static stf_status ikev2_parent_inI2outR2_tail(
 
 	if (!ikev2_decode_peer_id_and_certs(md))
 		return STF_FAIL + v2N_AUTHENTICATION_FAILED;
-
-#ifdef XAUTH_HAVE_PAM
-	c = st->st_connection; /* in case we refined */
-#endif
 
 	{
 		struct hmac_ctx id_ctx;
@@ -2788,7 +2794,7 @@ static stf_status ikev2_parent_inI2outR2_tail(
 	}
 
 #ifdef XAUTH_HAVE_PAM
-	if (c->policy & POLICY_IKEV2_PAM_AUTHORIZE)
+	if (st->st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE)
 		return ikev2_start_pam_authorize(md);
 #endif
 	return ikev2_parent_inI2outR2_auth_tail(md, TRUE);
@@ -2906,13 +2912,10 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 					 &id_b,
 					 &c->spd.this);
 			r_id.isai_critical = ISAKMP_PAYLOAD_NONCRITICAL;
+			r_id.isai_np = send_cert ?
+				ISAKMP_NEXT_v2CERT : ISAKMP_NEXT_v2AUTH;
 
-			if (send_cert)
-				r_id.isai_np = ISAKMP_NEXT_v2CERT;
-			else
-				r_id.isai_np = ISAKMP_NEXT_v2AUTH;
-
-			id_start = e_pbs_cipher.cur;
+			id_start = e_pbs_cipher.cur + NSIZEOF_isakmp_generic;
 
 			if (!out_struct(&r_id, &ikev2_id_desc, &e_pbs_cipher,
 					&r_id_pbs) ||
@@ -2920,8 +2923,6 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 				return STF_INTERNAL_ERROR;
 
 			close_output_pbs(&r_id_pbs);
-
-			id_start += 4;
 
 			/* calculate hash of IDi for AUTH below */
 			id_len = e_pbs_cipher.cur - id_start;
@@ -2987,8 +2988,11 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 						     &e_pbs_cipher,
 						     ISAKMP_v2_AUTH);
 
+			/* note: st: parent; md->st: child */
+
 			if (ret > STF_FAIL) {
 				int v2_notify_num = ret - STF_FAIL;
+
 				DBG(DBG_CONTROL,
 				    DBG_log("ikev2_child_sa_respond returned STF_FAIL with %s",
 					    enum_name(&ikev2_notify_names,
@@ -3003,14 +3007,22 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			}
 		}
 
+		/*
+		 * note:
+		 * st: parent state
+		 * cst: child, if any, else parent
+		 * There is probablly no good reason to use st from here on.
+		 */
+		struct state *const cst = md->st;	/* may actually be parent if no child */
+
 		len = pbs_offset(&e_pbs_cipher);
 
-		if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
+		if (!ikev2_padup_pre_encrypt(cst, &e_pbs_cipher))
 			return STF_INTERNAL_ERROR;
 
 		close_output_pbs(&e_pbs_cipher);
 
-		authloc = ikev2_authloc(st, &e_pbs);
+		authloc = ikev2_authloc(cst, &e_pbs);
 
 		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
@@ -3019,7 +3031,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 		close_output_pbs(&md->rbody);
 		close_output_pbs(&reply_stream);
 
-		if (should_fragment_ike_msg(st, pbs_offset(&reply_stream),
+		if (should_fragment_ike_msg(cst, pbs_offset(&reply_stream),
 						TRUE)) {
 			chunk_t payload;
 
@@ -3027,12 +3039,12 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 			return ikev2_record_fragments(md, &hdr, &e, &payload,
 						   "reply fragment for ikev2_parent_inI2outR2_tail");
 		} else {
-			stf_status ret = ikev2_encrypt_msg(st, authstart,
+			stf_status ret = ikev2_encrypt_msg(cst, authstart,
 						iv, encstart, authloc,
-						&e_pbs, &e_pbs_cipher);
+						&e_pbs_cipher);
 
 			if (ret == STF_OK)
-				record_outbound_ike_msg(st, &reply_stream,
+				record_outbound_ike_msg(cst, &reply_stream,
 					"reply packet for ikev2_parent_inI2outR2_auth_tail");
 
 			return ret;
@@ -3042,9 +3054,7 @@ static stf_status ikev2_parent_inI2outR2_auth_tail(struct msg_digest *md,
 
 	/* if the child failed, delete its state here - we sent the packet */
 	/* PAUL */
-	/* ??? what does that mean? */
-
-	return STF_OK;
+	/* ??? what does that mean?  We cannot even reach here. */
 }
 
 /*
@@ -3831,6 +3841,9 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 	ret = ikev2_child_sa_respond(md, ORIGINAL_RESPONDER, &e_pbs_cipher,
 			ISAKMP_v2_CREATE_CHILD_SA);
 
+	/* note: st: parent; md->st: child */
+	struct state *const cst = md->st;
+
 	if (ret > STF_FAIL) {
 		int v2_notify_num = ret - STF_FAIL;
 
@@ -3840,13 +3853,13 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 		DBG_log("ikev2_child_sa_respond returned %s",
 				enum_name(&stfstatus_name, ret));
 	}
-	if (!ikev2_padup_pre_encrypt(st, &e_pbs_cipher))
+	if (!ikev2_padup_pre_encrypt(cst, &e_pbs_cipher))
 		return STF_INTERNAL_ERROR;
 
 	close_output_pbs(&e_pbs_cipher);
 
 	{
-		unsigned char *authloc = ikev2_authloc(st, &e_pbs);
+		unsigned char *authloc = ikev2_authloc(cst, &e_pbs);
 
 		if (authloc == NULL)
 			return STF_INTERNAL_ERROR;
@@ -3854,14 +3867,14 @@ static stf_status ikev2_child_inIoutR_tail(struct pluto_crypto_req_cont *qke,
 		close_output_pbs(&e_pbs);
 		close_output_pbs(&md->rbody);
 		close_output_pbs(&reply_stream);
-		ret = ikev2_encrypt_msg(st, authstart, iv, encstart,
-					authloc, &e_pbs, &e_pbs_cipher);
+		ret = ikev2_encrypt_msg(cst, authstart, iv, encstart,
+					authloc, &e_pbs_cipher);
 
 		if (ret != STF_OK)
 			return ret;
 	}
 
-	record_outbound_ike_msg(st, &reply_stream, "reply packet for ikev2_child_inIoutR_tail");
+	record_outbound_ike_msg(cst, &reply_stream, "reply packet for ikev2_child_inIoutR_tail");
 
 	return STF_OK;
 }
@@ -4195,7 +4208,7 @@ stf_status process_encrypted_informational_ikev2(struct msg_digest *md)
 
 			ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
-						&e_pbs, &e_pbs_cipher);
+						&e_pbs_cipher);
 			if (ret != STF_OK)
 				return ret;
 		}
@@ -4438,7 +4451,7 @@ stf_status ikev2_send_informational(struct state *st)
 
 			ret = ikev2_encrypt_msg(st, authstart,
 						iv, encstart, authloc,
-						&e_pbs, &e_pbs_cipher);
+						&e_pbs_cipher);
 			if (ret != STF_OK)
 				return STF_FATAL;
 		}
@@ -4594,7 +4607,7 @@ static bool ikev2_delete_out_guts(struct state *const st, struct state *const ps
 
 		ret = ikev2_encrypt_msg(st, authstart,
 					iv, encstart, authloc,
-					&e_pbs, &e_pbs_cipher);
+					&e_pbs_cipher);
 		if (ret != STF_OK)
 			return FALSE;
 	}

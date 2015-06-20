@@ -1162,7 +1162,7 @@ static bool send_frags(struct state *st, const char *where)
 	 */
 	const size_t max_data_len =
 		((st->st_connection->addr_family ==
-		  AF_INET) ? ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6)
+		  AF_INET) ? ISAKMP_V1_FRAG_MAXLEN_IPv4 : ISAKMP_V1_FRAG_MAXLEN_IPv6)
 		-
 		(natt_bonus + NSIZEOF_isakmp_hdr +
 		 NSIZEOF_isakmp_ikefrag);
@@ -1252,9 +1252,11 @@ bool should_fragment_ike_msg(struct state *st, size_t len, bool resending)
 	 *        && st->st_seen_fragvid)
 	 *     || (st->st_connection->policy & POLICY_IKE_FRAG_FORCE)
 	 *     || st->st_seen_fragments))
+	 *
+	 * ??? the following test does not account for natt_bonus
 	 */
 	return len >= (st->st_connection->addr_family == AF_INET ?
-		       ISAKMP_FRAG_MAXLEN_IPv4 : ISAKMP_FRAG_MAXLEN_IPv6) &&
+		       ISAKMP_V1_FRAG_MAXLEN_IPv4 : ISAKMP_V1_FRAG_MAXLEN_IPv6) &&
 	    (   (resending &&
 			(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW) &&
 			st->st_seen_fragvid) ||
@@ -1277,39 +1279,46 @@ static bool send_ikev2_frags(struct state *st, const char *where)
 static bool send_or_resend_ike_msg(struct state *st, const char *where,
 				   bool resending)
 {
-	size_t len = st->st_tpacket.len;
-
 	if (st->st_interface == NULL) {
 		libreswan_log("Cannot send packet - interface vanished!");
 		return FALSE;
 	}
 
-	/*
-	 * Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
-	 * natt_bonus is the size of the addition (0 if not needed).
-	 */
-	size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
-
-	/*
-	 * Decide of whether we're to fragment.
-	 * Only for IKEv1 (V2 fragments earlier).
-	 * ??? why can't we fragment in STATE_MAIN_I1?
-	 */
-	if (!st->st_ikev2 &&
-	    st->st_state != STATE_MAIN_I1 &&
-	    should_fragment_ike_msg(st, len + natt_bonus, resending)) {
-		return send_frags(st, where);
-	} else if (st->st_tfrags != NULL) {
+	if (st->st_tfrags != NULL) {
+		/* if a V2 packet needs fragmenting it would have already happened */
 		passert(st->st_ikev2);
+		passert(st->st_tpacket.ptr == NULL);
 		return send_ikev2_frags(st, where);
 	} else {
-		return send_packet(st, where, FALSE, st->st_tpacket.ptr,
-				   st->st_tpacket.len, NULL, 0);
+		/*
+		 * Each fragment, if we are doing NATT, needs a non-ESP_Marker prefix.
+		 * natt_bonus is the size of the addition (0 if not needed).
+		 */
+		size_t natt_bonus = st->st_interface->ike_float ? NON_ESP_MARKER_SIZE : 0;
+		size_t len = st->st_tpacket.len;
+
+		passert(len != 0);
+
+		/*
+		 * Decide of whether we're to fragment.
+		 * Only for IKEv1 (V2 fragments earlier).
+		 * ??? why can't we fragment in STATE_MAIN_I1?
+		 */
+		if (!st->st_ikev2 &&
+		    st->st_state != STATE_MAIN_I1 &&
+		    should_fragment_ike_msg(st, len + natt_bonus, resending))
+		{
+			return send_frags(st, where);
+		} else {
+			return send_packet(st, where, FALSE, st->st_tpacket.ptr,
+					   st->st_tpacket.len, NULL, 0);
+		}
 	}
 }
 
 void record_outbound_ike_msg(struct state *st, pb_stream *pbs, const char *what)
 {
+	passert(pbs_offset(pbs) != 0);
 	release_v2fragments(st);
 	freeanychunk(st->st_tpacket);
 	clonetochunk(st->st_tpacket, pbs->start, pbs_offset(pbs), what);

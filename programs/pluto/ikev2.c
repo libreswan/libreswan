@@ -640,39 +640,71 @@ static bool ikev2_check_fragment(struct msg_digest *md)
 	if (!(st->st_connection->policy & POLICY_IKE_FRAG_ALLOW)) {
 		DBG(DBG_CONTROL, DBG_log(
 			"discarding IKE encrypted fragment - fragmentation not allowed by local policy (ike_frag=no)"));
-		return TRUE;
+		return FALSE;
 	}
 
 	DBG(DBG_CONTROL, DBG_log(
 		"received IKE encrypted fragment number '%u', total number '%u', next payload '%u'",
 		    skf->isaskf_number, skf->isaskf_total, skf->isaskf_np));
 
-	if (!skf->isaskf_number || !skf->isaskf_total ||
-	    skf->isaskf_number > skf->isaskf_total ||
-	    (skf->isaskf_number == 1 ? !skf->isaskf_np : skf->isaskf_np)) {
+	/*
+	 * Sanity check:
+	 * fragment number must be 1 or greater (not 0)
+	 * fragment number must be no greater than the total number of fragments
+	 * total number of fragments must be no more than MAX_IKE_FRAGMENTS
+	 * first fragment's next payload must not be ISAKMP_NEXT_v2NONE.
+	 * later fragments' next payload must be ISAKMP_NEXT_v2NONE.
+	 */
+	if (!(skf->isaskf_number != 0 &&
+	      skf->isaskf_number <= skf->isaskf_total &&
+	      skf->isaskf_total <= MAX_IKE_FRAGMENTS &&
+	      (skf->isaskf_number == 1) != (skf->isaskf_np == ISAKMP_NEXT_v2NONE)))
+	{
 		DBG(DBG_CONTROL, DBG_log(
 			"ignoring invalid IKE encrypted fragment"));
-		return TRUE;
+		return FALSE;
 	}
 
-	for (i = st->ikev2_frags; i; i = i->next) {
-		if (i->index != skf->isaskf_number)
-			continue;
+	i = st->ikev2_frags;
 
-		if (i->total == skf->isaskf_total) {
+	if (i != NULL && skf->isaskf_total != i->total) {
+		/*
+		 * total number of fragments changed.
+		 * Either this fragment is wrong or all the
+		 * stored fragments are wrong or superseded.
+		 * The only reason the other end would have
+		 * started over with a different number of fragments
+		 * is because it decided to ratchet down the packet size
+		 * (and thus increase total).
+		 * OK: skf->isaskf_total > i->total
+		 * Bad: skf->isaskf_total < i->total
+		 */
+		if (skf->isaskf_total > i->total) {
+			DBG(DBG_CONTROL, DBG_log(
+				"discarding saved fragments because this fragment has larger total"));
+			do {
+				st->ikev2_frags = i->next;
+				freeanychunk(i->cipher);
+				pfree(i);
+				i = st->ikev2_frags;
+			} while (i != NULL);
+			return TRUE;
+		} else {
+			DBG(DBG_CONTROL, DBG_log(
+				"ignoring odd IKE encrypted fragment (total shrank)"));
+			return FALSE;
+		}
+	}
+
+	for (; i != NULL; i = i->next) {
+		if (i->index == skf->isaskf_number) {
 			DBG(DBG_CONTROL, DBG_log(
 				"ignoring duplicate IKE encrypted fragment"));
-			return TRUE;
-		}
-
-		if (i->total > skf->isaskf_total) {
-			DBG(DBG_CONTROL, DBG_log(
-				"ignoring odd IKE encrypted fragment"));
-			return TRUE;
+			return FALSE;
 		}
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 static bool ikev2_collect_fragment(struct msg_digest *md)
@@ -683,8 +715,8 @@ static bool ikev2_collect_fragment(struct msg_digest *md)
 	struct ikev2_frag *frag, **i;
 	int num_frags;
 
-	if (ikev2_check_fragment(md))
-		return TRUE;
+	if (!ikev2_check_fragment(md))
+		return FALSE;
 
 	frag = alloc_thing(struct ikev2_frag, "ikev2_frag");
 	frag->np = skf->isaskf_np;
@@ -695,38 +727,30 @@ static bool ikev2_collect_fragment(struct msg_digest *md)
 		     e_pbs->roof - md->packet_pbs.start,
 		     "IKEv2 encrypted fragment");
 
-	/* Add the fragment to the state */
-	i = &st->ikev2_frags;
-	if (*i && (*i)->total < skf->isaskf_total)
-		do {
-			struct ikev2_frag *old = *i;
-
-			(*i) = old->next;
-			freeanychunk(old->cipher);
-			pfree(old);
-		} while (*i);
-
+	/*
+	 * Loop for two purposes:
+	 * - Add frag into ordered linked list
+	 * - set num_frags to lenght ot the list
+	 */
 	num_frags = 0;
-	for (;;) {
-		if (frag) {
+	for (i = &st->ikev2_frags; ; i = &(*i)->next) {
+		if (frag != NULL) {
 			/* Still looking for a place to insert frag */
-			if (!*i || (*i)->index > frag->index) {
+			if (*i == NULL || (*i)->index > frag->index) {
 				frag->next = *i;
 				*i = frag;
 				frag = NULL;
 			}
 		}
 
-		if (!*i)
+		if (*i == NULL)
 			break;
 
 		num_frags++;
-
-		i = &(*i)->next;
 	}
 
 	if (num_frags < skf->isaskf_total)
-		return TRUE;
+		return FALSE;
 
 	/* if receiving fragments, respond with fragments too */
 	st->st_seen_fragments = TRUE;
@@ -734,7 +758,7 @@ static bool ikev2_collect_fragment(struct msg_digest *md)
 	DBG(DBG_CONTROL,
 	    DBG_log(" updated IKE fragment state to respond using fragments without waiting for re-transmits"));
 
-	return FALSE;
+	return TRUE;
 }
 
 /*
@@ -1038,7 +1062,7 @@ void process_v2_packet(struct msg_digest **mdp)
 	if (state_busy(st))
 		return;
 
-	if (md->chain[ISAKMP_NEXT_v2SKF] && ikev2_collect_fragment(md))
+	if (md->chain[ISAKMP_NEXT_v2SKF] != NULL && !ikev2_collect_fragment(md))
 		return;
 
 	DBG(DBG_PARSING, {
