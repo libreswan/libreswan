@@ -290,7 +290,7 @@ static struct state_category *categorize_state(struct state *st,
 	return &category.unknown;
 }
 
-void update_state_stats(struct state *st, enum state_kind old_state,
+static void update_state_stats(struct state *st, enum state_kind old_state,
 			enum state_kind new_state)
 {
 	struct state_category *old_category = categorize_state(st, old_state);
