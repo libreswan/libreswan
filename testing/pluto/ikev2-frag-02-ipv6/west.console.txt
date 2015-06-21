@@ -1,31 +1,6 @@
 /testing/guestbin/swan-prep --46 --x509 --x509name key4096
 Preparing X.509 files
 west #
- # confirm that the network is alive
-west #
- ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
-64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- # make sure that clear text does not get through
-west #
- ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::23 -p ipv6-icmp --icmpv6-type echo-reply -j DROP
-west #
- ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
-west #
- # confirm with a ping
-west #
- ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 0 received, 100% packet loss, time XXXX
-west #
  ipsec setup start
 Redirecting to: systemctl start ipsec.service
 west #
@@ -41,34 +16,19 @@ west #
 002 "v6-tunnel" #1: initiating v2 parent SA
 133 "v6-tunnel" #1: STATE_PARENT_I1: initiate
 133 "v6-tunnel" #1: STATE_PARENT_I1: sent v2I1, expected v2R1
-134 "v6-tunnel" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=sha group=MODP2048}
+134 "v6-tunnel" #2: STATE_PARENT_I2: sent v2I2, expected v2R2 {auth=IKEv2 cipher=aes_gcm_16_256 integ=n/a prf=OAKLEY_SHA2_256 group=MODP2048}
 002 "v6-tunnel" #2: certificate E=testing@libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA OK
 002 "v6-tunnel" #2: IKEv2 mode peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=testing@libreswan.org'
-002 "v6-tunnel" #2: negotiated tunnel [2001:db8:1:2::45,2001:db8:1:2::45:0-65535 0] -> [2001:db8:1:2::23,2001:db8:1:2::23:0-65535 0]
-004 "v6-tunnel" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_128-HMAC_SHA1 NATOA=none NATD=none DPD=passive}
-west #
- ping6 -n -c 4 -I 2001:db8:1:2::45 2001:db8:1:2::23
-PING 2001:db8:1:2::23(2001:db8:1:2::23) from 2001:db8:1:2::45 : 56 data bytes
-64 bytes from 2001:db8:1:2::23: icmp_seq=1 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=2 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=3 ttl=64 time=0.XXX ms
-64 bytes from 2001:db8:1:2::23: icmp_seq=4 ttl=64 time=0.XXX ms
---- 2001:db8:1:2::23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+002 "v6-tunnel" #2: negotiated tunnel [2001:111:1111::,2001:111:1111:ffff:ffff:ffff:ffff:ffff:0-65535 0] -> [2001:2222:222:2200::,2001:2222:222:22ff:ffff:ffff:ffff:ffff:0-65535 0]
+004 "v6-tunnel" #2: STATE_PARENT_I3: PARENT SA established tunnel mode {ESP=>0xESPESP<0xESPESP xfrm=AES_GCM_C_256-NONE NATOA=none NATD=none DPD=passive}
 west #
  grep "fragment number" /tmp/pluto.log
 |    fragment number: 1 (0x1)
 |    fragment number: 2 (0x2)
-|    fragment number: 3 (0x3)
-|    fragment number: 4 (0x4)
-|    fragment number: 5 (0x5)
 |    fragment number: 1 (0x1)
-| received IKE encrypted fragment number '1', total number '3', next payload '36'
+| received IKE encrypted fragment number '1', total number '2', next payload '36'
 |    fragment number: 2 (0x2)
-| received IKE encrypted fragment number '2', total number '3', next payload '0'
-|    fragment number: 3 (0x3)
-| received IKE encrypted fragment number '3', total number '3', next payload '0'
+| received IKE encrypted fragment number '2', total number '2', next payload '0'
 west #
  echo done
 done
@@ -79,24 +39,22 @@ XFRM state:
 src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 	proto esp spi 0xSPISPIXX reqid REQID mode tunnel
 	replay-window 32 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 XFRM policy:
-src 2001:db8:1:2::45/128 dst 2001:db8:1:2::23/128 
-	dir out priority 17536 ptype main 
+src 2001:111:1111::/48 dst 2001:2222:222:2200::/56 
+	dir out priority 27848 ptype main 
 	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
 		proto esp reqid REQID mode tunnel
-src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
-	dir fwd priority 17536 ptype main 
+src 2001:2222:222:2200::/56 dst 2001:111:1111::/48 
+	dir fwd priority 27848 ptype main 
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto esp reqid REQID mode tunnel
-src 2001:db8:1:2::23/128 dst 2001:db8:1:2::45/128 
-	dir in priority 17536 ptype main 
+src 2001:2222:222:2200::/56 dst 2001:111:1111::/48 
+	dir in priority 27848 ptype main 
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
 		proto esp reqid REQID mode tunnel
 src ::/0 dst ::/0 
