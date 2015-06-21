@@ -360,7 +360,6 @@ ctltest	 	vpn-dns-01		good
 #
 kvmplutotest	x509-pluto-01		good
 
-#umlplutotest	x509-pluto-frag-01		good
 #
 #
 # a test of sending and validating an X.509 cert
@@ -691,11 +690,11 @@ kvmplutotest	dnssec-pluto-01					good
 umlplutotest	phase1-expire-01-reconnect-klips		good
 umlplutotest	phase1-expire-02-reconnect-netkey		good
 
-umlplutotest	x509-pluto-frag-00			good
-umlplutotest	x509-pluto-frag-01			good
-umlplutotest	x509-pluto-frag-02			good
-umlplutotest	x509-pluto-frag-03			good
-umlplutotest	x509-pluto-frag-04			good
+kvmplutotest	x509-pluto-frag-00			good
+kvmplutotest	x509-pluto-frag-01			good
+kvmplutotest	x509-pluto-frag-02			good
+kvmplutotest	x509-pluto-frag-03			good
+kvmplutotest	x509-pluto-frag-04			good
 
 kvmplutotest	replay-authip-01			good
 

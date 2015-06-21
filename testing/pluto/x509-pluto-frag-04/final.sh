@@ -1,4 +1,4 @@
-ipsec look
+grep "fragment" /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====

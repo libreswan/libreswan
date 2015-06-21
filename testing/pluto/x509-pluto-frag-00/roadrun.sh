@@ -1,3 +1,4 @@
+ipsec whack --debug-all --impair-retransmits
 ipsec auto --up x509
-ipsec eroute
+grep "fragment number" /tmp/pluto.log
 echo done
