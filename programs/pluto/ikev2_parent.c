@@ -3698,10 +3698,10 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 
 	RETURN_STF_FAILURE(accept_v2_nonce(md, &st->st_ni, "Ni"));
 
-	/* calculate new nonce and the KE */
+	/* calculate new nonce. a new KE is not supported yet */
 	{
 		struct pluto_crypto_req_cont *qke = new_pcrc(
-			ikev2_child_inIoutR_continue, "IKEv2 CHILD KE AND NONCE",
+			ikev2_child_inIoutR_continue, "IKEv2 CHILD NONCE",
 			st, md);
 		stf_status e;
 		enum crypto_importance ci;
@@ -3709,10 +3709,6 @@ stf_status ikev2_child_inIoutR(struct msg_digest *md)
 		ci = pcim_ongoing_crypto;
 		if (ci < st->st_import)
 			ci = st->st_import;
-		/*
-		 * ??? I'm not sure of the logic of this bit.
-		 * For one thing, no KE, despite mentions above.
-		 */
 
 		if (!st->st_sec_in_use) {
 			DBG(DBG_CONTROLMORE, DBG_log("Generate new nonce for CREATE_CHILD_SA exchange."));

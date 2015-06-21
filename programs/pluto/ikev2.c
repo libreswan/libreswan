@@ -1688,7 +1688,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 		/* FALL THROUGH */
 	case STF_IGNORE:
 		DBG(DBG_CONTROL,
-		    DBG_log("complete v2 state transition with %s",
+		    DBG_log("#%lu complete v2 state transition with %s",
+			    cur_state->st_serialno,
 			    enum_show(&stfstatus_name, result)));
 		return;
 
@@ -1727,8 +1728,8 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 	 */
 
 	DBG(DBG_CONTROL,
-	    DBG_log("complete v2 state transition from %s with %s",
-		from_state_name,
+	    DBG_log("#%lu complete v2 state transition from %s with %s",
+		st->st_serialno, from_state_name,
 		result > STF_FAIL ?
 		    enum_name(&ikev2_notify_names, result - STF_FAIL) :
 		    enum_name(&stfstatus_name, result)));
