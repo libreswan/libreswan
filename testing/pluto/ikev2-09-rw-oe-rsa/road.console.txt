@@ -98,7 +98,7 @@ ipsec auto --status
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
 000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
-000 IPsec SAs: total(0), anonymous(<todo>)
+000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 000  
 000 Bare Shunt list:
 000  
@@ -372,7 +372,7 @@ ipsec status
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
 000 IKE SAs: total(2), half-open(0), authenticated(0), anonymous(1)
-000 IPsec SAs: total(0), anonymous(<todo>)
+000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 000  
 000 #2: "packetdefault"[1] ...192.1.2.23:500 STATE_PARENT_R2 (received v2I2, PARENT SA established); EVENT_SA_EXPIRE in  XXs; newest ISAKMP; newest IPSEC; eroute owner; isakmp#1; idle; import:respond to stranger
 000 #2: "packetdefault"[1] ...192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 ref=0 refhim=4294901761 Traffic: ESPin=0B ESPout=0B! ESPmax=0B 

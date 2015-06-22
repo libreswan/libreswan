@@ -146,7 +146,7 @@ west #
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
 000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
-000 IPsec SAs: total(0), anonymous(<todo>)
+000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 000  
 000 Bare Shunt list:
 000  
