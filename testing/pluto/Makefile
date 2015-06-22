@@ -36,7 +36,7 @@ ifneq ($(UPDATE)$(UPDATEONLY),)
 	${LIBRESWANSRCDIR}/testing/utils/runkvm.py --reboot --install --hostname north
 endif
 ifeq ($(UPDATEONLY),)
-	make clean
+	rm -rf */OUTPUT
 	../utils/swantest
 	../utils/swantest --scancwd
 endif
@@ -46,13 +46,3 @@ ${LIBRESWANSRCDIR}/testing/x509/keys/mainca.key: ${LIBRESWANSRCDIR}/testing/x509
 
 install checkprograms programs:
 	@true
-
-clean:
-	grep -v '^#' ${SRCDIR}TESTLIST | while read testtype name status; \
-	do\
-		rm -rf $$name/OUTPUT; \
-	done
-
-cleanall: clean
-
-distclean: clean
