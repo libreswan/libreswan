@@ -141,8 +141,6 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp ${NSSLIBS}
 	@if [ -x $< ]; then chmod +x $@; fi
 	@if [ "${PROGRAM}.pl" = $< ]; then chmod +x $@; fi
 
-distclean: clean
-
 cleanall::
 ifneq ($(strip $(PROGRAM)),)
 	@if [ -r ${SRCDIR}$(PROGRAM).in ]; then rm -f $(PROGRAM); fi
