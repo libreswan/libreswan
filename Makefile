@@ -194,6 +194,7 @@ clean-local-base: moduleclean
 # This assumes that $(srcdir) contains no generated files, true?
 distclean: clean-local-base module24clean module26clean
 	rm -f out.kpatch
+	rm -rf testing/pluto/*/OUTPUT
 	rm -rf $(OBJDIR)
 
 # proxies for major kernel make operations
