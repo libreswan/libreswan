@@ -1965,9 +1965,10 @@ void show_states_status(bool list_traffic)
 			require_ddos_cookies() ? "REQUIRED" : "not required",
 			drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
 		
-		whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), authenticated(%u), anonymous(%u)",
+		whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), open(%u), authenticated(%u), anonymous(%u)",
 			  total_ike(),
 			  category.half_open_ike.count,
+			  category.open_ike.count,
 			  category.authenticated_ike.count,
 			  category.anonymous_ike.count);
 		whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%d)",
