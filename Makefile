@@ -190,11 +190,14 @@ clean-local-base: moduleclean
 
 # "distclean" does not depend on "clean" as that results in $(OBJDIR)
 # being built only to then delete it.
-#
-# This assumes that $(srcdir) contains no generated files, true?
 distclean: clean-local-base module24clean module26clean
 	rm -f out.kpatch
 	rm -rf testing/pluto/*/OUTPUT
+	rm -rf testing/x509/*/
+	rm -f testing/x509/index.*
+	rm -f testing/x509/crlnumber.*
+	rm -f testing/x509/serial*
+	rm -f testing/x509/nss-pw
 	rm -rf $(OBJDIR)
 
 # proxies for major kernel make operations
