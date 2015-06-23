@@ -136,7 +136,7 @@ west #
 000 Total IPsec connections: loaded 1, active 0
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
-000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
+000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
 000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 000  
 000 Bare Shunt list:
@@ -261,7 +261,7 @@ west #
 000 Total IPsec connections: loaded 1, active 1
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
-000 IKE SAs: total(1), half-open(0), authenticated(1), anonymous(0)
+000 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 000 IPsec SAs: total(1), authenticated(1), anonymous(0)
 000  
 000 #2: "west-east-delete1":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); EVENT_SA_REPLACE in  00s; newest IPSEC; eroute owner; isakmp#1; idle; import:admin initiate
@@ -375,7 +375,7 @@ west #
 000 Total IPsec connections: loaded 1, active 0
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
-000 IKE SAs: total(1), half-open(0), authenticated(1), anonymous(0)
+000 IKE SAs: total(1), half-open(0), open(0), authenticated(1), anonymous(0)
 000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 000  
 000 #1: "west-east-delete1":500 STATE_MAIN_I4 (ISAKMP SA established); EVENT_SA_REPLACE in  00s; newest ISAKMP; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
@@ -480,7 +480,7 @@ west #
 000 Total IPsec connections: loaded 1, active 0
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
-000 IKE SAs: total(0), half-open(0), authenticated(0), anonymous(0)
+000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
 000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 000  
 000 Bare Shunt list:
