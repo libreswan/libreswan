@@ -210,7 +210,7 @@ west #
 000  
 000 State Information: DDoS cookies not required, Accepting new IKE connections
 000 IKE SAs: total(1), half-open(0), authenticated(0), anonymous(1)
-000 IPsec SAs: total(0), anonymous(<todo>)
+000 IPsec SAs: total(0), authenticated(0), anonymous(0)
 000  
 000 #1: "nss-cert-ocsp":500 STATE_MAIN_I3 (sent MI3, expecting MR3); EVENT_v1_RETRANSMIT in 52s; lastdpd=-1s(seq in:0 out:0); idle; import:admin initiate
 000 #1: pending Phase 2 for "nss-cert-ocsp" replacing #0

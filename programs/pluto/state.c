@@ -131,7 +131,8 @@ struct {
 	struct state_category open_ike;
 	struct state_category anonymous_ike;
 	struct state_category authenticated_ike;
-	struct state_category child_sa;
+	struct state_category anonymous_ipsec;
+	struct state_category authenticated_ipsec;
 	struct state_category informational;
 	struct state_category unknown;
 } category = {
@@ -140,7 +141,8 @@ struct {
 	.open_ike = { .description = "open-ike" },
 	.anonymous_ike = { .description = "established-anonymous-ike" },
 	.authenticated_ike = { .description = "established-authenticated-ike" },
-	.child_sa = { .description = "child_sa", },
+	.anonymous_ipsec = { .description = "anonymous-ipsec", },
+	.authenticated_ipsec = { .description = "authenticated-ipsec", },
 	.informational = { .description = "informational", },
 	.unknown = { .description = "unknown", },
 };
@@ -159,25 +161,29 @@ static unsigned int total_ike(void)
 		total_established_ike());
 }
 
-static unsigned int total_child_sa(void)
+static unsigned int total_ipsec(void)
 {
-	return category.child_sa.count;
+	return (category.authenticated_ipsec.count +
+		category.anonymous_ipsec.count);
 }
 
 static unsigned int total()
 {
-	return total_child_sa() + total_ike() + category.unknown.count;
+	return total_ike() + total_ipsec() + category.unknown.count;
 }
 
 static struct state_category *categorize_state(struct state *st,
 					       enum state_kind state)
 {
 	bool is_parent = IS_PARENT_SA(st);
-	struct state_category *established_category
-		= ((st->st_connection != NULL &&
-		    st->st_connection->policy & POLICY_OPPORTUNISTIC)
-		   ? &category.anonymous_ike
-		   : &category.authenticated_ike);
+	bool opportunistic = (st->st_connection != NULL &&
+			      st->st_connection->policy & POLICY_OPPORTUNISTIC);
+	struct state_category *established_ike = (opportunistic
+						  ? &category.anonymous_ike
+						  : &category.authenticated_ike);
+	struct state_category *established_ipsec = (opportunistic
+						    ? &category.anonymous_ipsec
+						    : &category.authenticated_ipsec);
 
 	/*
 	 * Use a switch with no default so that missing and extra
@@ -242,15 +248,21 @@ static struct state_category *categorize_state(struct state *st,
 	case STATE_XAUTH_I1:
 	case STATE_XAUTH_R0:
 	case STATE_XAUTH_R1:
-		return established_category;
+		return established_ike;
 
 		/*
 		 * IKEv2 established states.
 		 */
 	case STATE_PARENT_I3:
 	case STATE_PARENT_R2:
+		if (is_parent) {
+			return established_ike;
+		} else {
+			return established_ipsec;
+		}
+
 	case STATE_IKESA_DEL:
-		return established_category;
+		return established_ike;
 
 		/*
 		 * Some internal state, will it ever occure?
@@ -269,7 +281,7 @@ static struct state_category *categorize_state(struct state *st,
 	case STATE_QUICK_R1:
 	case STATE_QUICK_R2:
 		pexpect(!is_parent)
-		return &category.child_sa;
+		return established_ipsec;
 
 		/*
 		 * IKEv1: Post established negotiation.
@@ -277,7 +289,7 @@ static struct state_category *categorize_state(struct state *st,
 	case STATE_MODE_CFG_I1:
 	case STATE_MODE_CFG_R1:
 	case STATE_MODE_CFG_R2:
-		return established_category;
+		return established_ike;
 		
 	case STATE_INFO:
 	case STATE_INFO_PROTECTED:
@@ -319,7 +331,7 @@ static void update_state_stats(struct state *st, enum state_kind old_state,
 	    for (state_category = (struct state_category *)&category;
 		 state_category < (struct state_category *)(&category+1);
 		 state_category++) {
-		    DBG_log("category %s: %d", state_category->description,
+		    DBG_log("%s states: %d", state_category->description,
 			    state_category->count);
 		    category_states += state_category->count;
 	    }
@@ -1953,13 +1965,15 @@ void show_states_status(bool list_traffic)
 			require_ddos_cookies() ? "REQUIRED" : "not required",
 			drop_new_exchanges() ? "NOT ACCEPTING" : "Accepting");
 		
-		whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), authenticated(%u), anonymous(%u)",
+		whack_log(RC_COMMENT, "IKE SAs: total(%u), half-open(%u), open(%u), authenticated(%u), anonymous(%u)",
 			  total_ike(),
 			  category.half_open_ike.count,
+			  category.open_ike.count,
 			  category.authenticated_ike.count,
 			  category.anonymous_ike.count);
-		whack_log(RC_COMMENT, "IPsec SAs: total(%d), anonymous(<todo>)",
-			  total_child_sa());
+		whack_log(RC_COMMENT, "IPsec SAs: total(%u), authenticated(%u), anonymous(%d)",
+			  total_ipsec(),
+			  category.authenticated_ipsec.count, category.anonymous_ipsec.count);
 		whack_log(RC_COMMENT, " ");             /* spacer */
 	}
 
@@ -2239,7 +2253,7 @@ void show_globalstate_status(void)
 	enum state_kind s;
 
 	whack_log(RC_COMMENT, "~states.total %d", total());
-	whack_log(RC_COMMENT, "~states.child %d", total_child_sa());
+	whack_log(RC_COMMENT, "~states.child %d", total_ipsec());
 	whack_log(RC_COMMENT, "~states.ike %d", total_ike());
 	whack_log(RC_COMMENT, "~states.ike.anonymous %d",
 		  category.anonymous_ike.count);
