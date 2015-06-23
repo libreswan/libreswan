@@ -1,4 +1,0 @@
-as newoe-02 but now with both sides on netkey.
-nic uses ip 7.7.7.7 on its spare uplink eth3, so we can confirm the
-%pass using a ping on road that actually answers, but is not in any
-of the foodgroups (so hits packetdefault)
