@@ -1666,7 +1666,7 @@ void show_setup_plutomain()
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shunt_lifetime=%lu, xfrmlifetime=%ds",
+		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shuntlifetime=%lus, xfrmlifetime=%ds",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
 		!log_to_perpeer ? "no" : base_perpeer_logdir,
