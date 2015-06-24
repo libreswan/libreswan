@@ -2738,12 +2738,11 @@ bool ikev1_decode_peer_id(struct msg_digest *md, bool initiator, bool aggrmode)
 		DBG_log("protocol/port in Phase 1 ID Payload is %d/%d. "
 			"accepted with port_floating NAT-T",
 			id->isaid_doi_specific_a, id->isaid_doi_specific_b);
-	} else
-
-	if (!(id->isaid_doi_specific_a == 0 &&
-	      id->isaid_doi_specific_b == 0) &&
-	    !(id->isaid_doi_specific_a == IPPROTO_UDP &&
-	      id->isaid_doi_specific_b == pluto_port)) {
+	} else if (!(id->isaid_doi_specific_a == 0 &&
+		     id->isaid_doi_specific_b == 0) &&
+		   !(id->isaid_doi_specific_a == IPPROTO_UDP &&
+		     id->isaid_doi_specific_b == pluto_port))
+	{
 		loglog(RC_LOG_SERIOUS, "protocol/port in Phase 1 ID Payload MUST be 0/0 or %d/%d"
 		       " but are %d/%d (attempting to continue)",
 		       IPPROTO_UDP, pluto_port,

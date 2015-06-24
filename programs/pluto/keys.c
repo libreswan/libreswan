@@ -494,9 +494,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    take_a_crack(&s, gwp->key,
 						 "key from DNS TXT"))
 					return STF_OK;
-		}
 #ifdef USE_KEYRR
-		else if (keys_from_dns != NULL) {
+		} else if (keys_from_dns != NULL) {
 			/* KEY keys */
 			const struct pubkey_list *kr;
 
@@ -505,9 +504,8 @@ stf_status RSA_check_signature_gen(struct state *st,
 				    take_a_crack(&s, kr->key,
 						 "key from DNS KEY"))
 					return STF_OK;
-		}
 #endif          /* USE_KEYRR */
-		else {
+		} else {
 			/* nothing yet: ask for asynch DNS lookup */
 			return STF_SUSPEND;
 		}
@@ -704,12 +702,12 @@ const chunk_t *get_preshared_secret(const struct connection *c)
 		pks = lsw_get_pks(s);
 
 	DBG(DBG_PRIVATE, {
-		    if (s == NULL)
-			    DBG_log("no Preshared Key Found");
-		    else
-			    DBG_dump_chunk("Preshared Key",
-					   pks->u.preshared_secret);
-	    });
+		if (s == NULL)
+			DBG_log("no Preshared Key Found");
+		else
+			DBG_dump_chunk("Preshared Key",
+				       pks->u.preshared_secret);
+	});
 	return s == NULL ? NULL : &pks->u.preshared_secret;
 }
 
@@ -727,12 +725,12 @@ const struct RSA_private_key *get_RSA_private_key(const struct connection *c)
 		pks = lsw_get_pks(s);
 
 	DBG(DBG_PRIVATE, {
-		    if (s == NULL)
-			    DBG_log("no RSA key Found");
-		    else
-			    DBG_log("rsa key %s found",
-				    pks->u.RSA_private_key.pub.keyid);
-	    });
+		if (s == NULL)
+			DBG_log("no RSA key Found");
+		else
+			DBG_log("rsa key %s found",
+				pks->u.RSA_private_key.pub.keyid);
+	});
 	return s == NULL ? NULL : &pks->u.RSA_private_key;
 }
 

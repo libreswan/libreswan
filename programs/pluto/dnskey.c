@@ -1757,9 +1757,8 @@ static err_t process_lwdnsq_answer(char *ts)
 		/* ignore */
 	} else if (strcaseeq(atype, "PTR")) {
 		/* ignore */
-	}
 #ifdef USE_KEYRR
-	else if (strcaseeq(atype, "KEY")) {
+	} else if (strcaseeq(atype, "KEY")) {
 		err_t key_ugh = process_lwdnsq_key(rest,
 						   AuthenticatedData ? DAL_SIGNED : DAL_NOTSEC,
 						   cr);
@@ -1771,9 +1770,8 @@ static err_t process_lwdnsq_answer(char *ts)
 			cr->cont_fn(cr, key_ugh);
 			cr->used = TRUE;
 		}
-	}
 #endif  /* USE_KEYRR */
-	else {
+	} else {
 		ugh = "lwdnsq: unrecognized type";
 	}
 	return ugh;
@@ -1908,14 +1906,14 @@ void handle_adns_answer(void)
 					typename, name_buf, ugh);
 		}
 		DBG(DBG_RAW | DBG_CRYPT | DBG_PARSING | DBG_CONTROL | DBG_DNS, {
-			    if (ugh == NULL)
-				    DBG_log("asynch DNS answer %lu for %s of %s",
-					    cr->query.serial, typename,
-					    name_buf);
-			    else
-				    DBG_log("asynch DNS answer %lu %s",
-					    cr->query.serial, ugh);
-		    });
+			if (ugh == NULL)
+				DBG_log("asynch DNS answer %lu for %s of %s",
+					cr->query.serial, typename,
+					name_buf);
+			else
+				DBG_log("asynch DNS answer %lu %s",
+					cr->query.serial, ugh);
+		});
 
 		passert(GLOBALS_ARE_RESET());
 		cr->cont_fn(cr, ugh);

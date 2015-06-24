@@ -925,10 +925,9 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 					  "pfkey_addr_d add flow", text_said,
 					  extensions)))
 			return FALSE;
-	}
 #if defined(KLIPS_MAST)
-	/* in mast mode, deletes also include the extension flags */
-	else if (kernel_ops->type == USE_MASTKLIPS) {
+	} else if (kernel_ops->type == USE_MASTKLIPS) {
+		/* in mast mode, deletes also include the extension flags */
 		if (!(pfkey_build(pfkey_sa_build(&extensions[K_SADB_EXT_SA],
 						 K_SADB_EXT_SA,
 						 cur_spi, /* in network order */
@@ -936,8 +935,8 @@ bool pfkey_raw_eroute(const ip_address *this_host,
 						 KLIPS_OP_FLAG_SHIFT),
 				  "pfkey_sa del flow", text_said, extensions)))
 			return FALSE;
-	}
 #endif
+	}
 
 	if (!pfkeyext_address(K_SADB_X_EXT_ADDRESS_SRC_FLOW, &sflow_ska,
 			      "pfkey_addr_sflow", text_said, extensions))

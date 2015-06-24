@@ -277,8 +277,7 @@ static void show_dnskey(struct secret *s,
 		if (ttoaddr(gateway, strlen(gateway), AF_INET,
 			    &test) == NULL) {
 			gateway_type = 1;
-		} else
-		if (ttoaddr(gateway, strlen(gateway), AF_INET6,
+		} else if (ttoaddr(gateway, strlen(gateway), AF_INET6,
 			    &test) == NULL) {
 			gateway_type = 2;
 		} else {

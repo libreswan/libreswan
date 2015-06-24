@@ -954,15 +954,13 @@ int main(int argc, char **argv)
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			lst_seen |= f;
-		}
-		else if (DBGOPT_FIRST <= c && c <= DBGOPT_LAST) {
+		} else if (DBGOPT_FIRST <= c && c <= DBGOPT_LAST) {
 			/*
 			 * DBGOPT_* options are treated separately to reduce
 			 * potential members of opts1_seen.
 			 */
 			msg.whack_options = TRUE;
-		}
-		else if (END_FIRST <= c && c <= END_LAST) {
+		} else if (END_FIRST <= c && c <= END_LAST) {
 			/*
 			 * END_* options are added to end_seen.
 			 * Reject repeated options (unless later code

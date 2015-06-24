@@ -186,17 +186,17 @@ static int initiate_a_connection(struct connection *c,
 		    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (isanyaddr(&c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
-
 				loglog(RC_NOPEERIP,
 				       "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				       enum_show(&connection_kind_names,
 						 c->kind));
 				success = 1;
 				c->policy |= POLICY_UP;
-			} else
-			loglog(RC_NOPEERIP,
-			       "cannot initiate connection without knowing peer IP address (kind=%s)",
-			       enum_show(&connection_kind_names, c->kind));
+			} else {
+				loglog(RC_NOPEERIP,
+				       "cannot initiate connection without knowing peer IP address (kind=%s)",
+				       enum_show(&connection_kind_names, c->kind));
+			}
 		} else if (!(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			loglog(RC_WILDCARD,
 			       "cannot initiate connection with narrowing=no and (kind=%s)",

@@ -3065,8 +3065,7 @@ void delete_ipsec_sa(struct state *st)
 						 * the IPSEC SA
 						 */
 						unroute_connection(c);
-					}
-					else if ((c->policy & POLICY_DONT_REKEY) &&
+					} else if ((c->policy & POLICY_DONT_REKEY) &&
 					    c->kind == CK_INSTANCE) {
 						/* in this special case, even if the connection
 						 * is still alive (due to an ISAKMP SA),

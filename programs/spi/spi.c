@@ -806,15 +806,15 @@ int main(int argc, char *argv[])
 					progname, optarg, proto_opt);
 				exit(1);
 			}
-			if (streq(optarg, "ah"))
+			if (streq(optarg, "ah")) {
 				proto = SA_AH;
-			else if (streq(optarg, "esp"))
+			} else if (streq(optarg, "esp")) {
 				proto = SA_ESP;
-			else if (streq(optarg, "tun"))
+			} else if (streq(optarg, "tun")) {
 				proto = SA_IPIP;
-			else if (streq(optarg, "comp"))
+			} else if (streq(optarg, "comp")) {
 				proto = SA_COMP;
-			else {
+			} else {
 				fprintf(stderr,
 					"%s: Invalid PROTO parameter: %s\n",
 					progname, optarg);

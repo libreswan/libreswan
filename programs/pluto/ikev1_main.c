@@ -2711,9 +2711,8 @@ bool ikev1_delete_out(struct state *st)
 		}
 
 		passert(ns != said); /* there must be some SAs to delete */
-	}
-	/* or ISAKMP SA's... */
-	else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+	} else if (IS_ISAKMP_SA_ESTABLISHED(st->st_state)) {
+		/* or ISAKMP SA's... */
 		p1st = st;
 		isakmp_sa = TRUE;
 	} else {
