@@ -487,6 +487,7 @@ struct state {
 extern u_int16_t pluto_port;		/* Pluto's port */
 extern u_int16_t pluto_nat_port;	/* Pluto's NATT floating port */
 extern u_int16_t pluto_nflog_group;	/* NFLOG group - 0 means no logging  */
+extern u_int16_t pluto_xfrmlifetime;	/* only used to display in status */
 
 extern bool states_use_connection(const struct connection *c);
 

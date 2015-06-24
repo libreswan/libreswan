@@ -117,6 +117,7 @@ d.ipsec.conf/ddos-mode.xml
 d.ipsec.conf/ddos-ike-treshold.xml
 d.ipsec.conf/max-halfopen-ike.xml
 d.ipsec.conf/shuntlifetime.xml
+d.ipsec.conf/xfrmlifetime.xml
 d.ipsec.conf/dumpdir.xml
 d.ipsec.conf/statsbin.xml
 d.ipsec.conf/ipsecdir.xml

@@ -1115,6 +1115,9 @@ int main(int argc, char **argv)
 			/* only causes nflog nmber to show in ipsec status */
 			pluto_nflog_group = cfg->setup.options[KBF_NFLOG_ALL];
 
+			/* only causes nflog nmber to show in ipsec status */
+			pluto_xfrmlifetime = cfg->setup.options[KBF_XFRMLIFETIME];
+
 			/* no config option: ctlbase */
 			/* --secrets */
 			set_cfg_string(&pluto_shared_secrets_file,
@@ -1663,10 +1666,13 @@ void show_setup_plutomain()
 		pluto_vendorid);
 
 	whack_log(RC_COMMENT,
-		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shunt_lifetime=%lu",
+		"nhelpers=%d, uniqueids=%s, perpeerlog=%s, shunt_lifetime=%lu, xfrmlifetime=%ds",
 		nhelpers,
 		uniqueIDs ? "yes" : "no",
-		!log_to_perpeer ? "no" : base_perpeer_logdir, deltasecs(pluto_shunt_lifetime));
+		!log_to_perpeer ? "no" : base_perpeer_logdir,
+		deltasecs(pluto_shunt_lifetime),
+		pluto_xfrmlifetime
+	);
 
 	whack_log(RC_COMMENT,
 		"ddos-cookies-treshold=%d, ddos-max-halfopen=%d, ddos-mode=%s",

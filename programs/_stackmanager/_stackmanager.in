@@ -22,6 +22,8 @@
 IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
 PATH=@FINALSBINDIR@:${PATH}
 export PATH
+# export config setup items needs rename of - to _
+eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn  --configsetup|sed "s/-/_/g")
 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
@@ -134,7 +136,7 @@ startnetkey() {
     # Time before kernel ACQUIRE for ondemand/ Opportunistic expires
     # Also Time before reserved kernel SPI times out
     # 300 seconds is so embedded systems have enough time to generate DH
-    echo 300 > /proc/sys/net/core/xfrm_acq_expires
+    echo $xfrmlifetime > /proc/sys/net/core/xfrm_acq_expires
 }
 
 stopklips() {
@@ -287,10 +289,7 @@ startklips() {
 	fi
     fi
 
-    # If present, need to change for all interfaces (ipsecX, mastX)
-    # AddressSanitizer leak output confuses init system startup scripts
-    eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport | grep overridemtu);
-
+    # If overridemtu present, need to change for all interfaces (ipsecX, mastX)
     if [ ${stack} = "mast" ]; then
 	# we really just ignore the interfaces= line completely
 	# make sure this mast device exists, if not create it
@@ -342,7 +341,6 @@ startklips() {
 
 	phys=$(ip ro li | grep default | sed "s/^.* dev \([^ ]*\) .*$/\1/")
 
-	eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport |grep interfaces);
 	if [ -z "${interfaces}" ]; then
 		interfaces="%defaultroute"
 		if [ -z "$phys" ]; then
@@ -408,11 +406,9 @@ startklips() {
     fi
 
     # global module options for KLIPS
-    eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport | grep fragicmp);
     if [ "${fragicmp}" = "yes" ]; then
 	echo 1 >/proc/sys/net/ipsec/icmp
     fi
-    eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn --config ${IPSEC_CONF}  --configsetup --noexport | grep hidetos);
     if [ "${hidetos}" = "no" ]; then
 	echo 0 >/proc/sys/net/ipsec/tos
     fi

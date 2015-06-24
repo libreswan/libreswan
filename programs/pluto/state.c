@@ -95,6 +95,12 @@ u_int16_t pluto_nat_port = NAT_IKE_UDP_PORT;	/* Pluto's NAT-T port */
 u_int16_t pluto_nflog_group = 0;
 
 /*
+ * Note: variable is only used to display in ipsec status
+ * actual work is done outside pluto, by ipsec _stackmanager
+ */
+u_int16_t pluto_xfrmlifetime = 300;
+
+/*
  * This file has the functions that handle the
  * state hash table and the Message ID list.
  */
