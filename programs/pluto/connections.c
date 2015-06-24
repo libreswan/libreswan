@@ -1174,7 +1174,7 @@ void add_connection(const struct whack_message *wm)
 		return;
 	}
 
-	if (wm->ike != NULL) {
+	if (!NEVER_NEGOTIATE(wm->policy) && wm->ike != NULL) {
 		char err_buf[256];	/* ??? big enough? */
 
 		alg_info_ike = alg_info_ike_create_from_str(wm->ike,
@@ -1218,6 +1218,9 @@ void add_connection(const struct whack_message *wm)
 			DBG_log("Added new connection %s with policy %s",
 				c->name,
 				prettypolicy(c->policy)));
+
+		if (!NEVER_NEGOTIATE(wm->policy))
+		{
 
 		c->alg_info_esp = NULL;
 		if (wm->esp != NULL) {
@@ -1342,6 +1345,16 @@ void add_connection(const struct whack_message *wm)
 		c->initial_contact = wm->initial_contact;
 		c->cisco_unity = wm->cisco_unity;
 		c->send_vendorid = wm->send_vendorid;
+		c->send_ca = wm->send_ca;
+		c->xauthby = wm->xauthby;
+		c->xauthfail = wm->xauthfail;
+
+		c->modecfg_dns1 = wm->modecfg_dns1;
+		c->modecfg_dns2 = wm->modecfg_dns2;
+		c->modecfg_domain = wm->modecfg_domain;
+		c->modecfg_banner = wm->modecfg_banner;
+
+		}
 
 		c->addr_family = wm->addr_family;
 		c->tunnel_addr_family = wm->tunnel_addr_family;
@@ -1352,8 +1365,6 @@ void add_connection(const struct whack_message *wm)
 		 */
 		c->spd.this.left = TRUE;
 		c->spd.that.left = FALSE;
-
-		c->send_ca = wm->send_ca;
 
 		same_leftca = extract_end(&c->spd.this, &wm->left, "left");
 		same_rightca = extract_end(&c->spd.that, &wm->right, "right");
@@ -1381,13 +1392,6 @@ void add_connection(const struct whack_message *wm)
 		if (c->spd.this.xauth_server || c->spd.that.xauth_server)
 			c->policy |= POLICY_XAUTH;
 
-		c->xauthby = wm->xauthby;
-		c->xauthfail = wm->xauthfail;
-
-		c->modecfg_dns1 = wm->modecfg_dns1;
-		c->modecfg_dns2 = wm->modecfg_dns2;
-		c->modecfg_domain = wm->modecfg_domain;
-		c->modecfg_banner = wm->modecfg_banner;
 
 		default_end(&c->spd.this, &c->spd.that.host_addr);
 		default_end(&c->spd.that, &c->spd.this.host_addr);
