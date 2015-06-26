@@ -82,25 +82,6 @@ void append_symkey_byte(const struct hash_desc *hasher,
 			PK11SymKey **lhs, uint8_t rhs);
 
 /*
- * Extract raw-bytes from a SYMKEY.
- *
- * Offset into the SYMKEY is in either BITS or BYTES.
- *
- * bytes_from_ has a querk where, if BYTES is NULL, the buffer is
- * allocated.
- */
-void *bytes_from_symkey_bits(const char *name, PK11SymKey *source_key,
-			     size_t next_bit, void *bytes,
-			     size_t sizeof_bytes);
-void *bytes_from_symkey_bytes(const char *name, PK11SymKey *source_key,
-			      size_t next_byte, void *bytes,
-			      size_t sizeof_bytes);
-chunk_t chunk_from_symkey_bits(const char *name, PK11SymKey *source_key,
-			       size_t next_bit, size_t sizeof_chunk);
-chunk_t chunk_from_symkey_bytes(const char *name, PK11SymKey *source_key,
-				size_t next_byte, size_t sizeof_chunk);
-
-/*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
  * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
  *

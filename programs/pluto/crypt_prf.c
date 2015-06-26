@@ -33,6 +33,7 @@
 #include "ike_alg.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
+#include "crypt_dbg.h"
 #include "crypto.h"
 
 struct crypt_prf {
@@ -197,6 +198,8 @@ void crypt_prf_final_bytes(struct crypt_prf *prf,
 	const char *name = prf->name;
 	PK11SymKey *result = crypt_prf_final(prf);
 	prf = NULL; /* no longer valid */
-	bytes_from_symkey_bytes(name, result, 0, bytes, sizeof_bytes);
-	free_any_symkey(__func__, &result);
+	PK11SymKey *tmp = key_from_symkey_bytes(result, 0, sizeof_bytes);
+	bytes_from_symkey(name, tmp, bytes);
+	free_any_symkey("tmp:", &tmp);
+	free_any_symkey(name, &result);
 }
