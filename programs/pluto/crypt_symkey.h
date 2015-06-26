@@ -85,23 +85,18 @@ void append_symkey_byte(const struct hash_desc *hasher,
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
  * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
  *
- * Offset into the SYMKEY is in either BITS or BYTES.
+ * Offset into the SYMKEY is in BYTES.
  */
 PK11SymKey *encrypt_key_from_symkey_bytes(PK11SymKey *source_key,
 					  const struct encrypt_desc *encrypter,
 					  size_t next_byte, size_t sizeof_symkey);
-PK11SymKey *encrypt_key_from_symkey_bits(PK11SymKey *source_key,
-					 const struct encrypt_desc *encrypter,
-					 size_t next_bit, size_t sizeof_symkey);
 
 /*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.  It inherits
  * the BASE_KEYs type.  Good for hash keys.
  *
- * Offset into the SYMKEY is in either BITS or BYTES.
+ * Offset into the SYMKEY is in BYTES.
  */
-PK11SymKey *key_from_symkey_bits(PK11SymKey *base_key,
-				 size_t next_bit, size_t key_size);
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 				  size_t next_byte, size_t sizeof_key);
 

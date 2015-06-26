@@ -248,28 +248,9 @@ PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk)
 PK11SymKey *concat_symkey_symkey(const struct hash_desc *hasher,
 				 PK11SymKey *lhs, PK11SymKey *rhs)
 {
-	CK_OBJECT_HANDLE keyhandle = PK11_GetSymKeyHandle(rhs);
-	/* give the parameters explicit names - there are too many */
-	PK11SymKey *base_key = lhs;
-	CK_MECHANISM_TYPE derive = CKM_CONCATENATE_BASE_AND_KEY;
-	SECItem param = {
-		.data = (unsigned char*)&keyhandle,
-		.len = sizeof(keyhandle)
-	};
-	CK_MECHANISM_TYPE target = nss_key_derivation_mech(hasher);
-	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
-	int key_size = 0;
-
-	DBG(DBG_CRYPT,
-	    DBG_log("concate symkey(base) symkey(key) target %s",
-		    ckm_to_string(target));
-	    DBG_dump_symkey("base", lhs);
-	    DBG_dump_symkey("key", rhs));
-	PK11SymKey *result = PK11_Derive(base_key, derive, &param, target,
-					 operation, key_size);
-	DBG(DBG_CRYPT, DBG_dump_symkey("result", result));
-
-	return result;
+	return merge_symkey_symkey("concat:", lhs, rhs,
+				   CKM_CONCATENATE_BASE_AND_KEY,
+				   nss_key_derivation_mech(hasher));
 }
 
 PK11SymKey *concat_symkey_bytes(const struct hash_desc *hasher,
@@ -333,103 +314,27 @@ void append_symkey_byte(const struct hash_desc *hasher,
 }
 
 /*
- * Extract raw-bytes from a SYMKEY.
- *
- * Offset into the SYMKEY is in either BITS or BYTES.
- *
- * This function is called by DBG_dump_symkey() when DBG_PRIVATE is
- * set, so do not add a call that function here unless you're testing
- * infinite recursions :)
- */
-
-static PK11SymKey *key_from_key_bits(PK11SymKey *base_key,
-				     CK_MECHANISM_TYPE target,
-				     CK_FLAGS flags,
-				     size_t next_bit, size_t key_size)
-{
-	/* spell out all the parameters */
-	CK_EXTRACT_PARAMS bs = next_bit;
-	SECItem param = {
-		.data = (unsigned char*)&bs,
-		.len = sizeof(bs),
-	};
-	CK_MECHANISM_TYPE derive = CKM_EXTRACT_KEY_FROM_KEY;
-	CK_ATTRIBUTE_TYPE operation = CKA_FLAGS_ONLY;
-
-	DBG(DBG_CRYPT,
-	    DBG_log("%s key from base key bits %zd length %zd flags 0x%lx",
-		    ckm_to_string(target), next_bit, key_size, flags));
-	PK11SymKey *result = PK11_DeriveWithFlags(base_key, derive, &param,
-						  target, operation,
-						  key_size, flags);
-
-	return result;
-}
-
-/*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
  * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
  *
  * Offset into the SYMKEY is in either BITS or BYTES.
  */
 
-PK11SymKey *encrypt_key_from_symkey_bits(PK11SymKey *source_key,
-					 const struct encrypt_desc *encrypter,
-					 size_t next_bit, size_t sizeof_symkey)
-{
-	return key_from_key_bits(source_key,
-				 nss_encryption_mech(encrypter),
-				 CKF_ENCRYPT | CKF_DECRYPT,
-				 next_bit, sizeof_symkey);
-}
-
 PK11SymKey *encrypt_key_from_symkey_bytes(PK11SymKey *source_key,
 					  const struct encrypt_desc *encrypter,
 					  size_t next_byte, size_t sizeof_symkey)
 {
-	return encrypt_key_from_symkey_bits(source_key, encrypter,
-					    next_byte * BITS_PER_BYTE,
-					    sizeof_symkey);
-}
-
-/*
- * Extract SIZEOF_KEY bytes of keying material as a KEY.  It inherits
- * the BASE_KEYs type.  Good for hash keys.
- *
- * Offset into the SYMKEY is in either BITS or BYTES.
- */
-
-PK11SymKey *key_from_symkey_bits(PK11SymKey *base_key,
-				 size_t next_bit, size_t key_size)
-{				    
-	CK_EXTRACT_PARAMS bs = next_bit;
-	SECItem param = {
-		.data = (unsigned char*)&bs,
-		.len = sizeof(bs),
-	};
-	CK_MECHANISM_TYPE derive = CKM_EXTRACT_KEY_FROM_KEY;
-	CK_MECHANISM_TYPE target = CKM_CONCATENATE_BASE_AND_DATA;
-	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
-	/* XXX: can this use key_from_key_bits? */
-
-	DBG(DBG_CRYPT,
-	    DBG_log("%s key from symkey(base key) bits %zd length %zd",
-		    ckm_to_string(target),
-		     next_bit, key_size);
-	    DBG_dump_symkey("base key", base_key));
-	PK11SymKey *result = PK11_Derive(base_key, derive, &param, target,
-					 operation, key_size);
-	DBG(DBG_CRYPT, DBG_dump_symkey("result", result));
-
-	return result;
+	return symkey_from_symkey("crypt key:", source_key,
+				  nss_encryption_mech(encrypter),
+				  CKF_ENCRYPT | CKF_DECRYPT,
+				  next_byte, sizeof_symkey);
 }
 
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 				  size_t next_byte, size_t sizeof_key)
 {
-	return key_from_symkey_bits(source_key,
-				    next_byte * BITS_PER_BYTE,
-				    sizeof_key);
+	return symkey_from_symkey("key:", source_key, CKM_EXTRACT_KEY_FROM_KEY,
+				  0, next_byte, sizeof_key);
 }
 
 /*
