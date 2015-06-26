@@ -11,7 +11,7 @@ check: ikev2.cavp ikev1_dsa.cavp ikev1_psk.cavp
 	bunzip2 $(builddir)/$@.bz2
 
 .PRECIOUS: %.out
-%.out: %.fax
+%.out: %.fax $(top_builddir)/programs/pluto/cavp
 	mkdir -p $(builddir)
 	$(top_builddir)/programs/pluto/cavp \
 		$(builddir)/$*.fax \
