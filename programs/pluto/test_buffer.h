@@ -25,5 +25,3 @@ chunk_t extract_chunk(const char *prefix, chunk_t input,
 		      size_t offset, size_t length);
 
 PK11SymKey *decode_to_key(CK_MECHANISM_TYPE cipher_mechanism, const char *string);
-
-PK11SymKey *chunk_to_key(CK_MECHANISM_TYPE cipher_mechanism, chunk_t raw_key);

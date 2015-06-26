@@ -333,6 +333,7 @@ DISTSRC = \
 	ikev1_dpd.c ikev1_dpd.h ikev1_spdb_struct.c \
 	ikev1_msgid.c \
         ikev2.c ikev2_parent.c ikev2_child.c ikev2_crypto.c \
+	crypt_dbg.c \
 	crypt_symkey.c crypt_prf.c ikev1_prf.c ikev2_prf.c \
 	ikev2_spdb_struct.c \
 	ikev2_rsa.c ikev2_psk.c \
@@ -387,6 +388,7 @@ OBJSPLUTO += myid.o ipsec_doi.o
 OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o 
 OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
+OBJSPLUTO += crypt_dbg.o
 OBJSPLUTO += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o
 OBJSPLUTO += kernel.o
 OBJSPLUTO += $(NETKEY_OBJS) $(BSDKAME_OBJS) ${KLIPS_OBJS} ${MAST_OBJS} ${WIN2K_OBJS} ${PFKEYv2_OBJS}

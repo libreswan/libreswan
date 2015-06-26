@@ -19,7 +19,11 @@
 #include "lswlog.h"
 #include "ike_alg.h"
 #include "crypt_symkey.h"
+#ifndef FIPS_CHECK
+#include "crypt_dbg.h"
+#endif
 #include "crypto.h"
+#include "lswconf.h"
 
 /*
  * XXX: Is there an NSS version of this?
@@ -39,13 +43,13 @@ static const char *ckm_to_string(CK_MECHANISM_TYPE mechanism)
 
 		CASE(CKM_EXTRACT_KEY_FROM_KEY);
 
-		CASE(CKM_VENDOR_DEFINED);
-
 		CASE(CKM_AES_CBC);
 		CASE(CKM_DES3_CBC);
 		CASE(CKM_CAMELLIA_CBC);
 		CASE(CKM_AES_CTR);
 		CASE(CKM_AES_GCM);
+
+		CASE(CKM_AES_KEY_GEN);
 
 		CASE(CKM_MD5_KEY_DERIVATION);
 		CASE(CKM_SHA1_KEY_DERIVATION);
@@ -53,8 +57,11 @@ static const char *ckm_to_string(CK_MECHANISM_TYPE mechanism)
 		CASE(CKM_SHA384_KEY_DERIVATION);
 		CASE(CKM_SHA512_KEY_DERIVATION);
 
+		CASE(CKM_DH_PKCS_DERIVE);
+
+		CASE(CKM_VENDOR_DEFINED);
+
 	default:
-		DBG(DBG_CRYPT, DBG_log("unknown mechanism 0x%08x", (int) mechanism));
 		return "unknown-mechanism";
 	}
 #undef CASE
@@ -71,42 +78,59 @@ void free_any_symkey(const char *prefix, PK11SymKey **key)
 	*key = NULL;
 }
 
-void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
+void DBG_symkey(const char *prefix, PK11SymKey *key)
 {
 	if (key == NULL) {
 		/*
 		 * For instance, when a zero-length key gets extracted
 		 * from an existing key.
 		 */
-		DBG_log("%s: key is NULL", prefix);
+		DBG_log("%s key is NULL", prefix);
 	} else {
-		DBG_log("%s: key %p (length %d) type(mechanism): %s",
+		DBG_log("%s key(%p) length(%d) type/mechanism(%s 0x%08x)",
 			prefix, key, PK11_GetKeyLength(key),
-			ckm_to_string(PK11_GetMechanism(key)));
+			ckm_to_string(PK11_GetMechanism(key)),
+			(int)PK11_GetMechanism(key));
+	}
+}
+
+void DBG_dump_symkey(const char *prefix, PK11SymKey *key)
+{
+	DBG_symkey(prefix, key);
+	if (key != NULL) {
 		if (DBGP(DBG_PRIVATE)) {
-			chunk_t chunk = chunk_from_symkey(prefix, key);
-			DBG_dump_chunk(prefix, chunk);
-			freeanychunk(chunk);
-		} else {
-			DBG_log("%s: contents are private", prefix);
+#ifdef FIPS_CHECK
+			if (libreswan_fipsmode()) {
+				DBG_log("%s secured by FIPS", prefix);
+				return;
+			}
+#else
+			void *bytes = symkey_bytes(prefix, key, NULL, 0);
+			DBG_dump(prefix, bytes, PK11_GetKeyLength(key));
+			pfreeany(bytes);
+#endif
 		}
 	}
 }
 
 /*
- * XXX: Is there any documentation on this generic operation?
+ * Merge a symkey and an array of bytes into a new SYMKEY.
+ *
+ * derive: the operation that is to be performed; target: the
+ * mechanism/type of the resulting symkey.
  */
-static PK11SymKey *merge_symkey_bytes(PK11SymKey *base_key,
-				      const void *bytes, size_t sizeof_bytes,
-				      CK_MECHANISM_TYPE derive,
-				      CK_MECHANISM_TYPE target)
+PK11SymKey *merge_symkey_bytes(const char *prefix,
+			       PK11SymKey *base_key,
+			       const void *bytes, size_t sizeof_bytes,
+			       CK_MECHANISM_TYPE derive,
+			       CK_MECHANISM_TYPE target)
 {
 	passert(sizeof_bytes > 0);
 	CK_KEY_DERIVATION_STRING_DATA string = {
 		.pData = (void *)bytes,
 		.ulLen = sizeof_bytes,
 	};
-	SECItem param = {
+	SECItem data_param = {
 		.data = (unsigned char*)&string,
 		.len = sizeof(string),
 	};
@@ -114,15 +138,79 @@ static PK11SymKey *merge_symkey_bytes(PK11SymKey *base_key,
 	int key_size = 0;
 
 	DBG(DBG_CRYPT,
-	    DBG_log("merge_symkey_bytes: derive(op): %s target: %s",
+	    DBG_log("%s merge symkey(%p) bytes(%p/%zd) - derive(%s) target(%s)",
+		    prefix,
+		    base_key, bytes, sizeof_bytes,
 		    ckm_to_string(derive),
 		    ckm_to_string(target));
-	    DBG_dump_symkey("base", base_key);
-	    DBG_dump("data", bytes, sizeof_bytes));
-	PK11SymKey *result = PK11_Derive(base_key, derive, &param, target,
+	    DBG_symkey("symkey:", base_key);
+	    DBG_dump("bytes:", bytes, sizeof_bytes));
+	PK11SymKey *result = PK11_Derive(base_key, derive, &data_param, target,
 					 operation, key_size);
-	DBG(DBG_CRYPT, DBG_dump_symkey("merge_symkey_bytes: result", result))
+	DBG(DBG_CRYPT, DBG_symkey(prefix, result))
+	return result;
+}
 
+/*
+ * Merge two SYMKEYs into a new SYMKEY.
+ *
+ * derive: the operation to be performed; target: the mechanism/type
+ * of the resulting symkey.
+ */
+
+PK11SymKey *merge_symkey_symkey(const char *prefix,
+				PK11SymKey *base_key, PK11SymKey *key,
+				CK_MECHANISM_TYPE derive,
+				CK_MECHANISM_TYPE target)
+{
+	CK_OBJECT_HANDLE key_handle = PK11_GetSymKeyHandle(key);
+	SECItem key_param = {
+		.data = (unsigned char*)&key_handle,
+		.len = sizeof(key_handle)
+	};
+	CK_ATTRIBUTE_TYPE operation = CKA_DERIVE;
+	int key_size = 0;
+	DBG(DBG_CRYPT,
+	    DBG_log("%s merge symkey(1: %p) symkey(2: %p) - derive(%s) target(%s)",
+		    prefix, base_key, key,
+		    ckm_to_string(derive),
+		    ckm_to_string(target));
+	    DBG_symkey("symkey 1:", base_key);
+	    DBG_symkey("symkey 2:", key));
+	PK11SymKey *result = PK11_Derive(base_key, derive, &key_param, target,
+					 operation, key_size);
+	DBG(DBG_CRYPT, DBG_symkey(prefix, result));
+	return result;
+}
+
+/*
+ * Extract a SYMKEY from an existing SYMKEY.
+ */
+
+PK11SymKey *symkey_from_symkey(const char *prefix,
+			       PK11SymKey *base_key,
+			       CK_MECHANISM_TYPE target,
+			       CK_FLAGS flags,
+			       size_t next_byte, size_t key_size)
+{
+	/* spell out all the parameters */
+	CK_EXTRACT_PARAMS bs = next_byte * BITS_PER_BYTE;
+	SECItem param = {
+		.data = (unsigned char*)&bs,
+		.len = sizeof(bs),
+	};
+	CK_MECHANISM_TYPE derive = CKM_EXTRACT_KEY_FROM_KEY;
+	CK_ATTRIBUTE_TYPE operation = CKA_FLAGS_ONLY;
+
+	DBG(DBG_CRYPT,
+	    DBG_log("%s symkey from symkey(%p) - next-byte(%zd) key-size(%zd) flags(0x%lx) derive(%s) target(%s)",
+		    prefix, base_key, next_byte, key_size, (long)flags,
+		    ckm_to_string(derive), ckm_to_string(target));
+	    DBG_symkey("symkey:", base_key));
+	PK11SymKey *result = PK11_DeriveWithFlags(base_key, derive, &param,
+						  target, operation,
+						  key_size, flags);
+	DBG(DBG_CRYPT, DBG_symkey(prefix, result));
 	return result;
 }
 
@@ -136,7 +224,8 @@ static PK11SymKey *merge_symkey_bytes(PK11SymKey *base_key,
 PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
 			      size_t sizeof_bytes)
 {
-	PK11SymKey *tmp = merge_symkey_bytes(scratch, bytes, sizeof_bytes,
+	PK11SymKey *tmp = merge_symkey_bytes("symkey_from_bytes",
+					     scratch, bytes, sizeof_bytes,
 					     CKM_CONCATENATE_DATA_AND_BASE,
 					     CKM_EXTRACT_KEY_FROM_KEY);
 	passert(tmp != NULL);
@@ -188,7 +277,8 @@ PK11SymKey *concat_symkey_bytes(const struct hash_desc *hasher,
 				size_t sizeof_rhs)
 {
 	CK_MECHANISM_TYPE mechanism = nss_key_derivation_mech(hasher);
-	return merge_symkey_bytes(lhs, rhs, sizeof_rhs,
+	return merge_symkey_bytes("concat_symkey_bytes",
+				  lhs, rhs, sizeof_rhs,
 				  CKM_CONCATENATE_BASE_AND_DATA,
 				  mechanism);
 }
@@ -354,12 +444,6 @@ chunk_t chunk_from_symkey_bytes(const char *name, PK11SymKey *source_key,
 				      next_byte * BITS_PER_BYTE, sizeof_chunk);
 }
 
-chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key)
-{
-	return chunk_from_symkey_bits(name, source_key, 0,
-				      PK11_GetKeyLength(source_key));
-}
-
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
  * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
@@ -465,7 +549,7 @@ PK11SymKey *hash_symkey(const struct hash_desc *hasher,
  */
 PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs)
 {
-	return merge_symkey_bytes(lhs, rhs.ptr, rhs.len,
+	return merge_symkey_bytes("xor_symkey_chunk", lhs, rhs.ptr, rhs.len,
 				  CKM_XOR_BASE_AND_DATA,
 				  CKM_CONCATENATE_BASE_AND_DATA);
 }

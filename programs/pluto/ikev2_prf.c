@@ -55,6 +55,7 @@
 #include "crypt_prf.h"
 #include "crypt_dh.h"
 #include "crypt_symkey.h"
+#include "crypt_dbg.h"
 
 /*
  * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.

@@ -24,6 +24,16 @@
 struct hash_desc;
 struct encrypt_desc;
 
+/*
+ * Log the details of a SYMKEY.
+ *
+ * PREFIX should include an explicit colon - it's passed to DBG_dump /
+ * DBG_dump_chunk and they do not add a colon.
+ *
+ * DBG_dump_symkey, when allowed, dumps the contents of the symkey
+ * (DBG_PRIVATE and not FIPS).
+ */
+void DBG_symkey(const char *prefix, PK11SymKey *key);
 void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
 
 /*
@@ -89,7 +99,6 @@ chunk_t chunk_from_symkey_bits(const char *name, PK11SymKey *source_key,
 			       size_t next_bit, size_t sizeof_chunk);
 chunk_t chunk_from_symkey_bytes(const char *name, PK11SymKey *source_key,
 				size_t next_byte, size_t sizeof_chunk);
-chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key);
 
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
@@ -127,5 +136,23 @@ PK11SymKey *hash_symkey(const struct hash_desc *hasher,
  * XOR a symkey with a chunk.
  */
 PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
+
+
+/*
+ * Low level primitives.
+ */
+PK11SymKey *merge_symkey_bytes(const char *prefix,
+			       PK11SymKey *base_key,
+			       const void *bytes, size_t sizeof_bytes,
+			       CK_MECHANISM_TYPE derive,
+			       CK_MECHANISM_TYPE target);
+PK11SymKey *merge_symkey_symkey(const char *prefix,
+			       PK11SymKey *base_key, PK11SymKey *key,
+				CK_MECHANISM_TYPE derive,
+				CK_MECHANISM_TYPE target);
+PK11SymKey *symkey_from_symkey(const char *prefix,
+			       PK11SymKey *base_key,
+			       CK_MECHANISM_TYPE target, CK_FLAGS flags,
+			       size_t next_byte, size_t key_size);
 
 #endif

@@ -23,6 +23,7 @@
 #include "nss.h"
 #include "pk11pub.h"
 
+#include "crypt_dbg.h"
 #include "test_buffer.h"
 
 static chunk_t zalloc_chunk(size_t length, const char *name)
@@ -155,21 +156,7 @@ PK11SymKey *decode_to_key(CK_MECHANISM_TYPE cipher_mechanism,
 			  const char *encoded_key)
 {
 	chunk_t raw_key = decode_to_chunk("key", encoded_key);
-	PK11SymKey *sym_key = chunk_to_key(cipher_mechanism, raw_key);
+	PK11SymKey *sym_key = chunk_to_symkey(cipher_mechanism, raw_key);
 	freeanychunk(raw_key);
-	return sym_key;
-}
-
-PK11SymKey *chunk_to_key(CK_MECHANISM_TYPE cipher_mechanism, chunk_t raw_key)
-{
-	PK11SlotInfo *slot = PK11_GetBestSlot(cipher_mechanism, NULL);
-	SECItem key_item;
-	key_item.type = siBuffer;
-	key_item.data = raw_key.ptr; /* ptr to an array of key bytes */
-	key_item.len = raw_key.len; /* length of the array of key bytes */
-	PK11SymKey *sym_key = PK11_ImportSymKey(slot, cipher_mechanism,
-						PK11_OriginUnwrap,
-						CKA_ENCRYPT, &key_item, NULL);
-	PK11_FreeSlot(slot);
 	return sym_key;
 }
