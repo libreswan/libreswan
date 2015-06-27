@@ -46,6 +46,10 @@ static PK11SymKey *ephemeral_symkey(int debug)
 void *symkey_bytes(const char *name, PK11SymKey *symkey, void *bytes, int debug)
 {
 	SECStatus status;
+	if (symkey == NULL) {
+		DBG(debug, DBG_log("%s NULL key has no bytes", name));
+		return NULL;
+	}
 
 	size_t sizeof_bytes = PK11_GetKeyLength(symkey);
 	DBG(debug, DBG_log("%s extracting %zd bytes symkey %p into %p",
