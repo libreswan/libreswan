@@ -24,6 +24,16 @@
 struct hash_desc;
 struct encrypt_desc;
 
+/*
+ * Log the details of a SYMKEY.
+ *
+ * PREFIX should include an explicit colon - it's passed to DBG_dump /
+ * DBG_dump_chunk and they do not add a colon.
+ *
+ * DBG_dump_symkey, when allowed, dumps the contents of the symkey
+ * (DBG_PRIVATE and not FIPS).
+ */
+void DBG_symkey(const char *prefix, PK11SymKey *key);
 void DBG_dump_symkey(const char *prefix, PK11SymKey *key);
 
 /*
@@ -72,60 +82,59 @@ void append_symkey_byte(const struct hash_desc *hasher,
 			PK11SymKey **lhs, uint8_t rhs);
 
 /*
- * Extract raw-bytes from a SYMKEY.
- *
- * Offset into the SYMKEY is in either BITS or BYTES.
- *
- * bytes_from_ has a querk where, if BYTES is NULL, the buffer is
- * allocated.
- */
-void *bytes_from_symkey_bits(const char *name, PK11SymKey *source_key,
-			     size_t next_bit, void *bytes,
-			     size_t sizeof_bytes);
-void *bytes_from_symkey_bytes(const char *name, PK11SymKey *source_key,
-			      size_t next_byte, void *bytes,
-			      size_t sizeof_bytes);
-chunk_t chunk_from_symkey_bits(const char *name, PK11SymKey *source_key,
-			       size_t next_bit, size_t sizeof_chunk);
-chunk_t chunk_from_symkey_bytes(const char *name, PK11SymKey *source_key,
-				size_t next_byte, size_t sizeof_chunk);
-chunk_t chunk_from_symkey(const char *name, PK11SymKey *source_key);
-
-/*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ENCRYPTER key
  * (i.e., can be used to encrypt/decrypt data using ENCRYPTER).
  *
- * Offset into the SYMKEY is in either BITS or BYTES.
+ * Offset into the SYMKEY is in BYTES.
  */
 PK11SymKey *encrypt_key_from_symkey_bytes(PK11SymKey *source_key,
 					  const struct encrypt_desc *encrypter,
 					  size_t next_byte, size_t sizeof_symkey);
-PK11SymKey *encrypt_key_from_symkey_bits(PK11SymKey *source_key,
-					 const struct encrypt_desc *encrypter,
-					 size_t next_bit, size_t sizeof_symkey);
 
 /*
  * Extract SIZEOF_KEY bytes of keying material as a KEY.  It inherits
  * the BASE_KEYs type.  Good for hash keys.
  *
- * Offset into the SYMKEY is in either BITS or BYTES.
+ * Offset into the SYMKEY is in BYTES.
  */
-PK11SymKey *key_from_symkey_bits(PK11SymKey *base_key,
-				 size_t next_bit, size_t key_size);
 PK11SymKey *key_from_symkey_bytes(PK11SymKey *source_key,
 				  size_t next_byte, size_t sizeof_key);
 
 /*
- * Hash a symkey using HASHER.
+ * Hash a symkey using HASHER to either bytes or a SYMKEY.
  *
- * This gets used by the PRF when the BASE_KEY is too long.
+ * This gets used by the PRF code.
  */
-PK11SymKey *hash_symkey(const struct hash_desc *hasher,
-			PK11SymKey *base_key);
+PK11SymKey *hash_symkey_to_symkey(const char *prefix,
+				  const struct hash_desc *hasher,
+				  PK11SymKey *base_key);
+
+void *hash_symkey_to_bytes(const char *prefix,
+			   const struct hash_desc *hasher,
+			   PK11SymKey *base_key,
+			   void *bytes, size_t sizeof_bytes);
 
 /*
  * XOR a symkey with a chunk.
  */
 PK11SymKey *xor_symkey_chunk(PK11SymKey *lhs, chunk_t rhs);
+
+
+/*
+ * Low level primitives.
+ */
+PK11SymKey *merge_symkey_bytes(const char *prefix,
+			       PK11SymKey *base_key,
+			       const void *bytes, size_t sizeof_bytes,
+			       CK_MECHANISM_TYPE derive,
+			       CK_MECHANISM_TYPE target);
+PK11SymKey *merge_symkey_symkey(const char *prefix,
+			       PK11SymKey *base_key, PK11SymKey *key,
+				CK_MECHANISM_TYPE derive,
+				CK_MECHANISM_TYPE target);
+PK11SymKey *symkey_from_symkey(const char *prefix,
+			       PK11SymKey *base_key,
+			       CK_MECHANISM_TYPE target, CK_FLAGS flags,
+			       size_t next_byte, size_t key_size);
 
 #endif

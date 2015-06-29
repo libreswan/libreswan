@@ -23,6 +23,7 @@
 #include "lswalloc.h"
 #include "ike_alg.h"
 #include "crypto.h"
+#include "crypt_dbg.h"
 #include "crypt_symkey.h"
 #include "test_buffer.h"
 
@@ -145,7 +146,7 @@ void symkey(struct cavp_entry *entry,
 {
 	free_any_symkey(__func__, entry->symkey);
 	chunk_t chunk = decode_hex_to_chunk(entry->key, value);
-	*(entry->symkey) = chunk_to_key(CKM_DH_PKCS_DERIVE, chunk);
+	*(entry->symkey) = chunk_to_symkey(CKM_DH_PKCS_DERIVE, chunk);
 	freeanychunk(chunk);
 }
 

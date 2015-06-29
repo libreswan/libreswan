@@ -33,6 +33,7 @@
 #include "ike_alg.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
+#include "crypt_dbg.h"
 #include "crypto.h"
 
 struct crypt_prf {
@@ -110,7 +111,8 @@ void crypt_prf_update(struct crypt_prf *prf)
 	passert(prf->key != NULL);
 	/* If the key is too big, re-hash it down to size. */
 	if (PK11_GetKeyLength(prf->key) > prf->hasher->hash_block_size) {
-		update_key(prf, hash_symkey(prf->hasher, prf->key));
+		update_key(prf, hash_symkey_to_symkey("prf hash to size:",
+						      prf->hasher, prf->key));
 	}
 	/* If the key is too small, pad it. */
 	if (PK11_GetKeyLength(prf->key) < prf->hasher->hash_block_size) {
@@ -163,40 +165,48 @@ void crypt_prf_update_bytes(const char *name, struct crypt_prf *prf,
 	append_symkey_bytes(prf->hasher, &(prf->inner), update, sizeof_update);
 }
 
-PK11SymKey *crypt_prf_final(struct crypt_prf *prf)
+static PK11SymKey *compute_outer(struct crypt_prf *prf)
 {
 	DBG(DBG_CRYPT, DBG_log("%s prf: final", prf->name));
+
 	passert(prf->inner != NULL);
 	/* run that through hasher */
-	PK11SymKey *hashed_inner = hash_symkey(prf->hasher, prf->inner);
-	free_any_symkey("prf inner", &prf->inner);
+	PK11SymKey *hashed_inner = hash_symkey_to_symkey("prf inner hash:",
+							 prf->hasher, prf->inner);
+	free_any_symkey("prf inner:", &prf->inner);
 
 	/* Input to outer hash: (key^OPAD)|hashed_inner.  */
 	chunk_t hmac_opad = hmac_pads(HMAC_OPAD, prf->hasher->hash_block_size);
 	PK11SymKey *outer = xor_symkey_chunk(prf->key, hmac_opad);
 	freeanychunk(hmac_opad);
 	append_symkey_symkey(prf->hasher, &outer, hashed_inner);
-	free_any_symkey("prf hashed inner", &hashed_inner);
-
-	/* Finally hash that */
-	PK11SymKey *hashed_outer = hash_symkey(prf->hasher, outer);
-	free_any_symkey("prf outer", &outer);
-
+	free_any_symkey("prf hashed inner:", &hashed_inner);
 	if (prf->we_own_key) {
 		free_any_symkey("prf key", &prf->key);
 	}
-	pfree(prf);
 
-	DBG(DBG_CRYPT, DBG_dump_symkey("prf result", hashed_outer));
+	return outer;
+}
+
+PK11SymKey *crypt_prf_final(struct crypt_prf *prf)
+{
+	PK11SymKey *outer = compute_outer(prf);
+	/* Finally hash that */
+	PK11SymKey *hashed_outer = hash_symkey_to_symkey("prf outer hash",
+							 prf->hasher, outer);
+	free_any_symkey("prf outer", &outer);
+	pfree(prf);
+	DBG(DBG_CRYPT, DBG_dump_symkey("prf final result", hashed_outer));
 	return hashed_outer;
 }
 
 void crypt_prf_final_bytes(struct crypt_prf *prf,
 			   void *bytes, size_t sizeof_bytes)
 {
-	const char *name = prf->name;
-	PK11SymKey *result = crypt_prf_final(prf);
-	prf = NULL; /* no longer valid */
-	bytes_from_symkey_bytes(name, result, 0, bytes, sizeof_bytes);
-	free_any_symkey(__func__, &result);
+	PK11SymKey *outer = compute_outer(prf);
+	/* Finally hash that */
+	hash_symkey_to_bytes("prf outer hash", prf->hasher, outer, bytes, sizeof_bytes);
+	free_any_symkey("prf outer", &outer);
+	pfree(prf);
+	DBG(DBG_CRYPT, DBG_dump("prf final bytes", bytes, sizeof_bytes));
 }

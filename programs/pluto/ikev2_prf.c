@@ -55,6 +55,7 @@
 #include "crypt_prf.h"
 #include "crypt_dh.h"
 #include "crypt_symkey.h"
+#include "crypt_dbg.h"
 
 /*
  * IKEv2 - RFC4306 2.14 SKEYSEED - calculation.
@@ -155,16 +156,21 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 	SK_ei_k = encrypt_key_from_symkey_bytes(finalkey, encrypter,
 						next_byte, key_size);
 	next_byte += key_size;
-	initiator_salt = chunk_from_symkey_bytes("initiator salt", finalkey,
-						 next_byte, salt_size);
+	PK11SymKey *initiator_salt_key = key_from_symkey_bytes(finalkey, next_byte,
+							       salt_size);
+	initiator_salt = chunk_from_symkey("initiator salt", initiator_salt_key);
+	free_any_symkey("initiator salt key:", &initiator_salt_key);
+						 
 	next_byte += salt_size;
 
 	/* The encryption key and salt are extracted together. */	
 	SK_er_k = encrypt_key_from_symkey_bytes(finalkey, encrypter,
 						next_byte, key_size);
 	next_byte += key_size;
-	responder_salt = chunk_from_symkey_bytes("responder salt", finalkey,
-						 next_byte, salt_size);
+	PK11SymKey *responder_salt_key = key_from_symkey_bytes(finalkey, next_byte,
+							       salt_size);
+	responder_salt = chunk_from_symkey("responder salt", responder_salt_key);
+	free_any_symkey("responder salt key:", &responder_salt_key);
 	next_byte += salt_size;
 
 	SK_pi_k = key_from_symkey_bytes(finalkey, next_byte, skp_bytes);

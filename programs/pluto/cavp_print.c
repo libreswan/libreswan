@@ -19,7 +19,7 @@
 
 #include "constants.h"
 #include "lswalloc.h"
-#include "crypt_symkey.h"
+#include "crypt_dbg.h"
 #include "cavp_print.h"
 
 /*
