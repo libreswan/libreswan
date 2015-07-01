@@ -262,6 +262,9 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 	if (slot == NULL)
 		return NULL;
 
+	if (pwdInfo == NULL)
+		return NULL;
+
 	token = PK11_GetTokenName(slot);
 	if (token == NULL)
 		return NULL;
