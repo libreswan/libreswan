@@ -199,14 +199,31 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 		resolv = "/testing/baseconfigs/all/etc/resolv.conf"
 	shutil.copyfile(resolv, "/etc/resolv.conf")
 
+	if args.nsspw or args.fips:
+		dbpassword = 's3cret'
+		util_pw = ' -f /etc/ipsec.d/nsspassword'
+		p12cmd_pw = ' -k /etc/ipsec.d/nsspassword'
+		if not os.path.isfile('/etc/ipsec.d/nsspassword'):
+			with open('/etc/ipsec.d/nsspassword', 'w') as f:
+				f.write(dbpassword + '\n')
+
 	if args.fips:
 		fp = open("/etc/system-fips","w")
 		fp.close()
 		commands.getoutput("/testing/guestbin/fipson")
 		# the test also requires using a modutil cmd which we cannot run here
+		shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto.fips", "/etc/sysconfig/pluto")
+		# passwd required
+		fp = open("/tmp/pw","w")
+		fp.write("\n")
+		fp.close()
+		out = commands.getoutput("certutil -W -f /tmp/pw -@ /etc/ipsec.d/nsspassword -d sql:/etc/ipsec.d")
+		print "certutil out:%s"%out
 	else:
+		shutil.copyfile("/testing/baseconfigs/all/etc/sysconfig/pluto", "/etc/sysconfig/pluto")
 		if os.path.isfile("/etc/system-fips"):
 			os.unlink("/etc/system-fips")
+
 
 	# this section is getting rough. could use a nice refactoring
 	if args.x509: 
@@ -216,13 +233,7 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 			util_pw = ''
 			p12cmd_pw = ''
 
-			if args.nsspw:
-				dbpassword = 's3cret'
-				util_pw = ' -f /etc/ipsec.d/nsspassword'
-				p12cmd_pw = ' -k /etc/ipsec.d/nsspassword'
-				if not os.path.isfile('/etc/ipsec.d/nsspassword'):
-					with open('/etc/ipsec.d/nsspassword', 'w') as f:
-						f.write(dbpassword + '\n')
+
 
 			# clean out old db files and generate new ones from scratch
 			# certutil accepts --empty-password, however the following way
