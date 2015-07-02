@@ -569,6 +569,7 @@ static const struct option long_opts[] = {
 	I("send-key-size-check\0", IMPAIR_SEND_KEY_SIZE_CHECK_IX),
 	I("send-no-delete\0", IMPAIR_SEND_NO_DELETE_IX),
 	I("send-no-ikev2-auth\0", IMPAIR_SEND_NO_IKEV2_AUTH_IX),
+	I("force-fips\0", IMPAIR_FORCE_FIPS_IX),
 #undef I
 	{ 0, 0, 0, 0 }
 };
@@ -1425,6 +1426,11 @@ int main(int argc, char **argv)
 	int fips_mode = libreswan_fipsmode();
 	int fips_files_check_ok = FIPSCHECK_verify_files(fips_package_files);
 
+	if (DBGP(IMPAIR_FORCE_FIPS)) {
+		libreswan_log("Setting all FIPS checks to true to emulate FIPS mode");
+		fips_kernel = fips_product = fips_mode = fips_files_check_ok = 1;
+	}
+
 	if (fips_mode == -1) {
 		loglog(RC_LOG_SERIOUS, "ABORT: FIPS mode could not be determined");
 		exit_pluto(PLUTO_EXIT_FIPS_FAIL);
@@ -1561,9 +1567,10 @@ int main(int argc, char **argv)
 		libreswan_log("Warning: IMPAIR_SEND_KEY_SIZE_CHECK enabled");
 	if (DBGP(IMPAIR_SEND_NO_DELETE))
 		libreswan_log("Warning: IMPAIR_SEND_NO_DELETE enabled");
+	if (DBGP(IMPAIR_FORCE_FIPS))
+		libreswan_log("Warning: IMPAIR_FORCE_FIPS enabled");
 	if (DBGP(IMPAIR_SEND_NO_IKEV2_AUTH))
 		libreswan_log("Warning: IMPAIR_SEND_NO_IKEV2_AUTH enabled");
-
 
 
 /* Initialize all of the various features */
