@@ -301,16 +301,20 @@ case "${1}" in
 			exit $?
 		    fi
 		    # import cacerts and crls
-		    for file in "${CACERTDIR}"/*; do
-			filename=$(basename "${file}")
-			name=${filename%%.*}
-			certutil -A -i "${file}" -d sql:"${NSSTMP}" -n "${name}" -t 'CT,,' ${IMPORTDBPW}
-			[ $? -eq 0 ] || echo "${file}"
-		    done
-		    for file in "${CRLDIR}"/*; do
-			crlutil -I -i "${file}" -d sql:"${NSSTMP}" -B ${IMPORTDBPW}
-			[ $? -eq 0 ] || echo "${file}"
-		    done
+		    if [ -d "${CACERTDIR}" ]; then
+			for file in "${CACERTDIR}"/*; do
+			    filename=$(basename "${file}")
+			    name=${filename%%.*}
+			    certutil -A -i "${file}" -d sql:"${NSSTMP}" -n "${name}" -t 'CT,,' ${IMPORTDBPW}
+			    [ $? -eq 0 ] || echo "${file}"
+			done
+		    fi
+		    if [ -d "${CRLDIR}" ]; then
+			for file in "${CRLDIR}"/*; do
+			    crlutil -I -i "${file}" -d sql:"${NSSTMP}" -B ${IMPORTDBPW}
+			    [ $? -eq 0 ] || echo "${file}"
+			done
+		    fi
 		    cp "${NSSTMP}"/*.db "${IPSEC_NSSDIR}"
 		    rm -f "${NSSTMP}"/*.txt "${NSSTMP}"/*.db
 		    rmdir "${NSSTMP}"
