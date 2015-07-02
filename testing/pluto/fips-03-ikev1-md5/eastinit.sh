@@ -1,8 +1,10 @@
 /testing/guestbin/swan-prep --fips
-/usr/bin/modutil -dbdir /etc/ipsec.d -fips true -force
-/usr/bin/modutil -dbdir /etc/ipsec.d -chkfips true
+ipsec checknss
+/usr/bin/modutil -dbdir sql:/etc/ipsec.d -fips true -force
+/usr/bin/modutil -dbdir sql:/etc/ipsec.d -chkfips true
 fipscheck
-ipsec setup start
+ipsec start
 /testing/pluto/bin/wait-until-pluto-started
+grep FIPS /tmp/pluto.log
 ipsec auto --add westnet-eastnet-md5
 echo "initdone"
