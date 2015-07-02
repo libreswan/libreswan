@@ -47,7 +47,7 @@ Requires(preun): /sbin/service
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: pkgconfig net-tools
-BuildRequires: nss-devel >= 3.12.6-2, nspr-devel
+BuildRequires: nss-devel >= 3.16.1-2, nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent2-devel
 %if %{USE_DNSSEC}

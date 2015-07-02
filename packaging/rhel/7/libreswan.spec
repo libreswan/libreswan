@@ -40,7 +40,7 @@ Provides: openswan = %{version}-%{release}
 Provides: openswan-doc = %{version}-%{release}
 
 BuildRequires: pkgconfig hostname
-BuildRequires: nss-devel >= 3.14.3, nspr-devel
+BuildRequires: nss-devel >= 3.16.2, nspr-devel
 BuildRequires: pam-devel
 BuildRequires: libevent-devel
 %if %{USE_DNSSEC}
