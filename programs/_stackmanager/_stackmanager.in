@@ -105,7 +105,12 @@ stopnetkey() {
 # We can get called even if we abort with "pluto already running"
 startnetkey() {
     # in case pluto crashed
-    pidof pluto > /dev/null || ip xfrm policy flush && ip xfrm state flush
+    if pidof pluto > /dev/null; then
+	: pluto is running, skip cleanup
+    else
+	ip xfrm policy flush
+	ip xfrm state flush
+    fi
 
     cryptomodules
 
