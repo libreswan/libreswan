@@ -117,7 +117,7 @@ case "${1}" in
 	echo "where <command> is one of:"
 	echo ""
 	GOTTWO=""
-	for f in start stop restart status import initnss checknss \
+	for f in start stop restart status import initnss checknss checknflog \
 	    $(ls "${IPSEC_EXECDIR}" | egrep -v -i "${DONTMENTION}"); do
 	    if [ -z "${GOTTWO}" ]; then
 		# first of two entries
