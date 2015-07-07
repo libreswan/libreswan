@@ -72,34 +72,15 @@ for host in $(../../utils/kvmhosts.sh); do
 	    echo "${host}.console.verbose.txt" >> OUTPUT/${host}.console.tmp
 	    failure=1
 	else
-	    cleanups="cat OUTPUT/${host}.console.verbose.txt "
-	    for fixup in `echo $REF_CONSOLE_FIXUPS`; do
-
-		if [ -f $FIXUPDIR/$fixup ]; then
-		    case $fixup in
-			*.sed) cleanups="$cleanups | sed -f $FIXUPDIR/$fixup";;
-			*.pl)  cleanups="$cleanups | perl $FIXUPDIR/$fixup";;
-			*.awk) cleanups="$cleanups | awk -f $FIXUPDIR/$fixup";;
-			*) echo Unknown fixup type: $fixup;;
-		    esac
-		elif [ -f $FIXUPDIR2/$fixup ]; then
-		    case $fixup in
-			*.sed) cleanups="$cleanups | sed -f $FIXUPDIR2/$fixup";;
-			*.pl)  cleanups="$cleanups | perl $FIXUPDIR2/$fixup";;
-			*.awk) cleanups="$cleanups | awk -f $FIXUPDIR2/$fixup";;
-			*) echo Unknown fixup type: $fixup;;
-		    esac
-		else
-		    echo Fixup $fixup not found.
-		    return
-		fi
-	    done
-
 	    fixedoutput=OUTPUT/${host}.console.txt
-	    ## debug echo $cleanups
-	    eval $cleanups >$fixedoutput
+	    ${LIBRESWANSRCDIR}/testing/utils/sanitizer.sh \
+			      OUTPUT/${host}.console.verbose.txt \
+			      $PWD \
+			      ${FIXUPDIR} ${FIXUPDIR2:-} \
+			      > ${fixedoutput}
 	    # stick terminating newline in for fun.
 	    echo >>$fixedoutput
+
 	    if diff -N -u -w -b -B ${host}.console.txt $fixedoutput >OUTPUT/${host}.console.tmp; then
 		echo "# ${host} Console output matched"
 	    else
@@ -118,8 +99,8 @@ for host in $(../../utils/kvmhosts.sh); do
 		    echo "$i " >> OUTPUT/${host}.console.tmp
 		fi
 	    done
-	    mv OUTPUT/${host}.console.tmp OUTPUT/${host}.console.diff
 	fi
+	mv OUTPUT/${host}.console.tmp OUTPUT/${host}.console.diff
     fi
 done
 
