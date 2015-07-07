@@ -48,6 +48,7 @@ class TestPassed(TestResult):
     value = "passed"
     passed = True
 
+
 # Compare two files; how can "diff -N -w -B" be done in python?
 def fuzzy_diff(logger, l, r):
     logger.debug("fuzzy compare '%s' '%s'", l, r)
@@ -67,20 +68,25 @@ def add_error(errors, what, who=None):
         errors[what] = set()
     errors[what].add(who)
 
+
 def re_check(errors, what, line, who):
     if re.search(what, line):
         add_error(errors, what, who)
 
+
 class Test:
 
-    def __init__(self, testsuite, line):
+    def __init__(self, directory, kind, name, expected_result):
         self.logger = logutil.getLogger(__name__)
-        self.kind, self.name, self.expected_result = line.split()
+        # basics
+        self.directory = os.path.relpath(directory)
+        self.kind = kind
+        self.name = name
+        self.expected_result = expected_result
+        # construct the rest
         self.full_name = "test " + self.name
-        self.testsuite = testsuite
-        self.directory = os.path.join(testsuite.directory, self.name)
-        self.output_directory = os.path.join(self.directory, "OUTPUT")
-        self.result_file = os.path.join(self.output_directory, "RESULT")
+        self.output_directory = os.path.relpath(os.path.join(self.directory, "OUTPUT"))
+        self.result_file = os.path.relpath(os.path.join(self.output_directory, "RESULT"))
         self.domains = None
         self.initiators = None
 
@@ -201,6 +207,7 @@ class Test:
             self.initiators = self.files_with_suffix("run.sh")
         return self.initiators
 
+
 class TestIterator:
 
     def __init__(self, testsuite):
@@ -219,7 +226,9 @@ class TestIterator:
                 self.logger.debug("ignore comment line")
                 continue
             try:
-                test = Test(self.testsuite, line)
+                kind, name, expected_result = line.split()
+                test = Test(directory=os.path.join(self.testsuite.directory, name),
+                            kind=kind, name=name, expected_result=expected_result)
             except ValueError:
                 # This is serious
                 self.logger.error("****** malformed line: %s", line)
@@ -236,66 +245,93 @@ class TestIterator:
         raise StopIteration
 
 
-TESTLIST = "TESTLIST"
-
-
 class Testsuite:
 
-    def __init__(self, directory, testlist=TESTLIST):
+    def __init__(self, directory, testlist):
         self.directory = directory
-        self.testlist = os.path.join(directory, testlist)
+        self.testlist = testlist
 
     def __iter__(self):
         return TestIterator(self)
 
 
-def _directory():
-    # Detect a script run from a testsuite(./TESTLIST) or
-    # test(../TESTLIST) directory.  Fallback is the pluto directory
-    # next to the script's directory.
-    utils_directory = os.path.dirname(sys.argv[0])
-    pluto_directory = os.path.join(utils_directory, "..", "pluto")
-    for directory in [".", "..", pluto_directory]:
-        if os.path.exists(os.path.join(directory, TESTLIST)):
-            return os.path.abspath(directory)
-    return None
-DEFAULT_DIRECTORY = _directory()
-
-def _test_name_pattern():
-    if os.path.exists(os.path.join("..", TESTLIST)):
-        return "^" + os.path.basename(os.getcwd()) + "$"
-    else:
-        return ''
-
 def add_arguments(parser):
 
-    parser.add_argument("--testsuite-directory", default=DEFAULT_DIRECTORY,
-                        help="default: %(default)s")
-
-    parser.add_argument("--test-name", default=_test_name_pattern(), type=re.compile,
-                        help=("Limit run to name tests"
-                              " (default: %(default)s)"))
-    parser.add_argument("--test-kind", default="kvmplutotest", type=re.compile,
-                        help=("Limit run to kind tests"
-                              " (default: %(default)s)"))
-    parser.add_argument("--test-expected-result", default="good", type=re.compile,
-                        help=("Limit run to expected-result tests"
-                              " (default: %(default)s)"))
-    parser.add_argument("--exclude", default='', type=re.compile,
-                        help=("Exclude tests that match <regex>"
-                              " (default: %(default)s)"))
+    group = parser.add_argument_group("Test arguments",
+                                      "Options for selecting the tests to run")
+    group.add_argument("--test-name", default="",
+                       type=re.compile, metavar="REGULAR-EXPRESSION",
+                       help=("Select tests with name matching %(metavar)s"
+                             " (default: '%(default)s')"))
+    group.add_argument("--test-kind", default="kvmplutotest",
+                       type=re.compile, metavar="REGULAR-EXPRESSION",
+                       help=("Select tests with kind matching %(metavar)s"
+                             " (default: '%(default)s')"))
+    group.add_argument("--test-expected-result", default="good",
+                       type=re.compile, metavar="REGULAR-EXPRESSION",
+                       help=("Select tests with expected-result matching %(metavar)s"
+                             " (default: '%(default)s')"))
+    group.add_argument("--test-exclude", default="",
+                       type=re.compile, metavar="REGULAR-EXPRESSION",
+                       help=("Exclude tests that match %(metavar)s"
+                             " (default: '%(default)s')"))
 
 
 def log_arguments(logger, args):
     logger.info("Testsuite arguments:")
-    logger.info("  testsuite-directory: %s" , args.testsuite_directory)
     logger.info("  test-kind: '%s'" , args.test_kind.pattern)
     logger.info("  test-name: '%s'" , args.test_name.pattern)
     logger.info("  test-result: '%s'" , args.test_expected_result.pattern)
-    logger.info("  exclude: '%s'" , args.exclude.pattern)
+    logger.info("  test-exclude: '%s'" , args.test_exclude.pattern)
 
 
-def skip(test, args):
+TESTLIST = "TESTLIST"
+
+
+def load(logger, directory):
+    """Load the testsuite (TESTLIST) found in DIRECTORY"""
+
+    testlist = os.path.join(directory, TESTLIST)
+    if os.path.exists(testlist):
+        logger.debug("loading testsuite in '%s'", directory)
+        return Testsuite(directory, testlist)
+
+    return None
+
+
+def load_testsuite_or_tests(logger, directories):
+
+    # Is it a single testsuite directory?
+    if len(directories) == 1:
+        tests = load(logger, directories[0])
+        if tests:
+            logger.debug("tests loaded from testsuite '%s'", tests.directory)
+            return tests
+
+    # Presumably this is a list of directories, each specifying one
+    # test.
+    tests = []
+    for test_directory in directories:
+        directory = os.path.abspath(test_directory)
+        # XXX: Should figure out kind by looking at directory and
+        # should validate the directory.
+        tests.append(Test(directory=directory, kind="kvmplutotest",
+                          name=os.path.basename(directory),
+                          expected_result="good"))
+
+    return tests
+
+
+def ignore(test, args):
+
+    """Identify tests that should be ignored due to filters
+
+    The ignore reason is returned.
+
+    This is different to SKIP where a test isn't run because it has
+    been run before.
+
+    """
 
     if args.test_kind.pattern and not args.test_kind.search(test.kind):
         return "kind '%s' does not match '%s'" % (test.kind, args.test_kind.pattern)
@@ -304,10 +340,10 @@ def skip(test, args):
     if args.test_expected_result.pattern and not args.test_expected_result.search(test.expected_result):
         return "expected test result '%s' does not match '%s'" % (test.expected_result, args.test_expected_result.pattern)
 
-    if args.exclude.pattern:
-        if args.exclude.search(test.kind) or \
-           args.exclude.search(test.name) or \
-           args.exclude.search(test.expected_result):
-            return "matches exclude regular expression: %s" % args.exclude.pattern
+    if args.test_exclude.pattern:
+        if args.test_exclude.search(test.kind) or \
+           args.test_exclude.search(test.name) or \
+           args.test_exclude.search(test.expected_result):
+            return "matches exclude regular expression: %s" % args.test_exclude.pattern
 
     return None

@@ -88,17 +88,26 @@ def getLogger(name, *suffixes):
 
 def add_arguments(parser):
     log_format = _LOG_FORMAT.replace("%", "%%")
-    parser.add_argument("--log-format",
-                        help=("console log message format"
-                              " (default: '" + log_format + "')"))
-    parser.add_argument("--log-level", default=None,
-                        help=("console log level"
-                              " (default: " + _LOG_LEVEL + ")"))
-    parser.add_argument("--debug", "-d", default=None, metavar="FILE",
-                        type=argutil.stdout_or_open_file,
-                        help=("write a debug-level log to %(metavar)s"
-                              "; specify '-' to write output to the screeen (stdout)"
-                              "; append '+' to append-to instead of overwrite %(metavar)s"))
+    group = parser.add_argument_group("Logging arguments",
+                                      "Options for directing logging level and output")
+    group.add_argument("--log-format",
+                       help=("console log message format"
+                             " (default: '" + log_format + "')"))
+    group.add_argument("--log-level", default=None,
+                       help=("console log level"
+                             " (default: " + _LOG_LEVEL + ")"))
+    group.add_argument("--debug", "-d", default=None, metavar="FILE",
+                       type=argutil.stdout_or_open_file,
+                       help=("write a debug-level log to %(metavar)s"
+                             "; specify '-' to write output to the screeen (stdout)"
+                             "; append '+' to append-to instead of overwrite %(metavar)s"))
+
+
+def log_arguments(logger, args):
+    logger.info("Logging arguments:")
+    logger.info("  log-format: '%s'", args.log_format or _LOG_FORMAT)
+    logger.info("  log-level: '%s'", args.log_level or _LOG_LEVEL)
+    logger.info("  debug: '%s'", args.debug)
 
 
 def config(args):
