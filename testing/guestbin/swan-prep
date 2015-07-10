@@ -205,7 +205,8 @@ if userland == "libreswan" or userland == "openswan" or userland == "strongswan"
 		p12cmd_pw = ' -k /etc/ipsec.d/nsspassword'
 		if not os.path.isfile('/etc/ipsec.d/nsspassword'):
 			with open('/etc/ipsec.d/nsspassword', 'w') as f:
-				f.write(dbpassword + '\n')
+				f.write("NSS FIPS 140-2 Certificate DB:" + dbpassword + '\n')
+				f.write("NSS Certificate DB:" + dbpassword + '\n')
 
 	if args.fips:
 		fp = open("/etc/system-fips","w")
