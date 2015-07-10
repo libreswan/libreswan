@@ -33,7 +33,7 @@ fi
 
 # <console.verbose.txt>
 if test "x$1" = "x-"; then
-    intput=- ; shift
+    input=- ; shift
 else
     input=$(readlink -f $1) ; shift
     if test ! -r "$input"; then
