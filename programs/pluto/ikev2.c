@@ -1729,10 +1729,10 @@ void complete_v2_state_transition(struct msg_digest **mdp,
 
 	DBG(DBG_CONTROL,
 	    DBG_log("#%lu complete v2 state transition from %s with %s",
-		st->st_serialno, from_state_name,
-		result > STF_FAIL ?
-		    enum_name(&ikev2_notify_names, result - STF_FAIL) :
-		    enum_name(&stfstatus_name, result)));
+		    (st ? st->st_serialno : 0), from_state_name,
+		    (result > STF_FAIL
+		     ? enum_name(&ikev2_notify_names, result - STF_FAIL)
+		     : enum_name(&stfstatus_name, result))));
 
 	switch (result) {
 	case STF_OK:
