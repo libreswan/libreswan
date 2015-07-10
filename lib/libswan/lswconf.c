@@ -253,7 +253,6 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 	secuPWData *pwdInfo = (secuPWData *)arg;
 	PRFileDesc *fd;
 	PRInt32 nb;	/* number of bytes */
-	char *strings;
 	char *token;
 	int toklen;
 	const long maxPwdFileSize = NSSpwdfilesize;
@@ -271,36 +270,34 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 
 	toklen = PORT_Strlen(token);
 
-	 DBG(DBG_CRYPT, DBG_log(
-		"authentication needed for token name %s with length %d",
-		token, toklen));
+	/* Start all log messages with "NSS Password ..."! */
+	DBG(DBG_CRYPT, DBG_log("NSS Password for token '%s' required", token));
 
 	if (retry)
 		return NULL;
 
-	strings = PORT_ZAlloc(maxPwdFileSize);
+	if (pwdInfo->source != PW_FROMFILE) {
+		libreswan_log("NSS Password source is not a file");
+		return NULL;
+	}
+
+	if (pwdInfo->data == NULL) {
+		libreswan_log("NSS Password file name not provided");
+		return NULL;
+	}
+
+	char *strings = PORT_ZAlloc(maxPwdFileSize);
 	if (strings == NULL) {
-		libreswan_log("Not able to allocate memory for reading NSS password file");
+		libreswan_log("NSS Password file could not be loaded, NSS memory allocate failed");
 		return NULL;
 	}
 
 	/* From here on, every return must be preceded by PORT_Free(strings) */
 
-	if (pwdInfo->source != PW_FROMFILE) {
-		libreswan_log("NSS password source is not specified as file");
-		PORT_Free(strings);
-		return NULL;
-	}
-
-	if (pwdInfo->data == NULL) {
-		libreswan_log("Name of file with Password to NSS DB is not provided");
-		PORT_Free(strings);
-		return NULL;
-	}
-
 	fd = PR_Open(pwdInfo->data, PR_RDONLY, 0);
 	if (fd == NULL) {
-		libreswan_log("No password file \"%s\" exists.", pwdInfo->data);
+		libreswan_log("NSS Password file \"%s\" could not be opened for reading",
+			      pwdInfo->data);
 		PORT_Free(strings);
 		return NULL;
 	}
@@ -350,6 +347,8 @@ char *getNSSPassword(PK11SlotInfo *slot, PRBool retry, void *arg)
 	}
 
 	/* no match found in password file */
+	libreswan_log("NSS Password file \"%s\" does not contain token '%s'",
+		      pwdInfo->data, token);
 	PORT_Free(strings);
 	return NULL;
 }
