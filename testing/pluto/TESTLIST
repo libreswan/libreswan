@@ -176,7 +176,9 @@ kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
 kvmplutotest	newoe-10-expire-inactive		good
 kvmplutotest	newoe-11-failike			good
-
+kvmplutotest	newoe-12-clear				good
+kvmplutotest	newoe-13-block				good
+	
 
 # pluto-unit-01 - pluto vs. pluto, without KLIPS
 # This runs in a single UML, so ctltest is appropriate
