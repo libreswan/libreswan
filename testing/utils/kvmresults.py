@@ -24,18 +24,22 @@ def main():
     parser = argparse.ArgumentParser(description="list all tests in the form: <test> [ <directory> ] [ <result> <details...> ]")
     parser.add_argument("--verbose", "-v", action="count", default=0)
 
-    parser.add_argument("--print-result", action="store_true")
     parser.add_argument("--print-directory", action="store_true")
+    parser.add_argument("--print-name", action="store_true")
+    parser.add_argument("--print-result", action="store_true")
 
     parser.add_argument("--list-ignored", action="store_true",
                         help="include ignored tests in the list")
     parser.add_argument("--list-untested", action="store_true",
                         help="include untested tests in the list")
 
-    parser.add_argument("directories", metavar="DIRECTORY", nargs="*",
-                        help=("Either a testsuite directory or"
-                              " a list of test directories; optionally followed"
-                              " by a baseline testuite directory"))
+    parser.add_argument("directories", metavar="TEST-DIRECTORY", nargs="+",
+                        help=("Either a testsuite (only one) or test directory"))
+    # Note: this argument serves as documentation only.  The
+    # TEST-DIRECTORY argument always consume all remaining parameters.
+    parser.add_argument("baseline", metavar="BASELINE-DIRECTORY", nargs="?",
+                        help=("An optional testsuite directory containing"
+                              " results from a previous test run"))
     testsuite.add_arguments(parser)
     logutil.add_arguments(parser)
 
@@ -47,11 +51,19 @@ def main():
     # The option -vvvvvvv is a short circuit for these; make
     # re-ordering easy by using V as a counter.
     v = 0
-    args.print_directory = args.print_directory or args.verbose > v ; v += 1
+    args.print_directory = args.print_directory or args.verbose > v
+    args.print_name = args.print_name or args.verbose > v
+    v += 1
     args.list_untested = args.list_untested or args.verbose > v ; v += 1
     args.list_ignored = args.list_ignored or args.verbose > v ; v += 1
 
-    # Decode all the arguments using a flawed heuristic.
+    # By default print the relative directory path.
+    if not args.print_directory and not args.print_name:
+        args.print_directory = True
+
+    # If there is more than one directory then the last might be the
+    # baseline.  Try loading it as a testsuite (baselines are
+    # testsuites) to see if that is the case.
     basetests = None
     tests = None
     if len(args.directories) > 1:
@@ -67,6 +79,11 @@ def main():
     if not tests:
         logger.error("Invalid testsuite or test directories")
         return 1
+
+    # When an explicit list of directories was specified always print
+    # all of them (otherwise, tests seem to get lost).
+    if isinstance(tests, list):
+        args.list_untested = True
 
     # Preload the baseline.  This avoids re-scanning the TESTLIST and,
     # when errors, printing those repeatedly.  Also, passing the full
@@ -92,15 +109,27 @@ def main():
             if not result and not args.list_untested:
                 continue
 
-        print(test.name, end="")
+        sep = ""
+
+        if args.print_name:
+            print(sep, end="")
+            print(test.name, end="")
+            sep = " "
 
         if args.print_directory:
-            print("", test.directory, end="")
+            print(sep, end="")
+            print(test.directory, end="")
+            sep = " "
 
         if ignore:
-            print("", "ignored", ignore, end="")
-        elif result:
-            print("", result, end="")
+            print(sep, end="")
+            print("ignored", ignore, end="")
+            sep = " "
+
+        if result:
+            print(sep, end="")
+            print(result, end="")
+            sep = " "
 
         print()
 

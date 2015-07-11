@@ -35,11 +35,8 @@ class TestResult:
         else:
             return self.value
 
-class TestNotStarted(TestResult):
-    value = "not started"
-    passed = None
-class TestNotFinished(TestResult):
-    value = "not finished"
+class TestIncomplete(TestResult):
+    value = "incomplete"
     passed = None
 class TestFailed(TestResult):
     value = "failed"
@@ -76,17 +73,23 @@ def re_check(errors, what, line, who):
 
 class Test:
 
-    def __init__(self, directory, kind, name, expected_result):
+    def __init__(self, directory, kind, expected_result):
         self.logger = logutil.getLogger(__name__)
         # basics
-        self.directory = os.path.relpath(directory)
         self.kind = kind
-        self.name = name
         self.expected_result = expected_result
-        # construct the rest
+        # name must match the directory's basename; since directory
+        # could be ".", need to first convert it to an absolute path.
+        self.name = os.path.basename(os.path.abspath(directory))
         self.full_name = "test " + self.name
-        self.output_directory = os.path.relpath(os.path.join(self.directory, "OUTPUT"))
-        self.result_file = os.path.relpath(os.path.join(self.output_directory, "RESULT"))
+        # avoid "." as a directory, construct the sub-directory paths
+        # using the parent's directory (don't abspath or relpath).
+        self.directory = os.path.relpath(directory)
+        if self.directory == ".":
+            self.directory = os.path.join("..", self.name)
+        self.output_directory = os.path.join(self.directory, "OUTPUT")
+        self.result_file = os.path.join(self.output_directory, "RESULT")
+        # will be filled in later
         self.domains = None
         self.initiators = None
 
@@ -102,12 +105,12 @@ class Test:
         return s
 
     def result(self, baseline=None):
-        errors = {}
 
-        self.logger.debug("output dir? %s", self.output_directory)
         if not os.path.exists(self.output_directory):
-            add_error(errors, "OUTPUT missing")
-            return TestNotStarted(self, errors=errors)
+            self.logger.debug("output dir missing: %s", self.output_directory)
+            return None
+
+        errors = {}
 
         # XXX: Look at self.result_file?
 
@@ -189,13 +192,13 @@ class Test:
                     re_check(errors, "EXPECTATION FAILED", line, domain)
                 pluto_file.close()
 
-        # The test, at least its analysis, didn't complete.
+        # The final result
         if not finished:
-            return TestNotFinished(self, errors = errors)
-        if errors:
-            return TestFailed(self, errors = errors)
-            
-        return TestPassed(self)
+            return TestIncomplete(self, errors=errors)
+        elif errors:
+            return TestFailed(self, errors=errors)
+        else:
+            return TestPassed(self)
 
     def domain_names(self):
         if not self.domains:
@@ -228,7 +231,7 @@ class TestIterator:
             try:
                 kind, name, expected_result = line.split()
                 test = Test(directory=os.path.join(self.testsuite.directory, name),
-                            kind=kind, name=name, expected_result=expected_result)
+                            kind=kind, expected_result=expected_result)
             except ValueError:
                 # This is serious
                 self.logger.error("****** malformed line: %s", line)
@@ -311,12 +314,11 @@ def load_testsuite_or_tests(logger, directories):
     # Presumably this is a list of directories, each specifying one
     # test.
     tests = []
-    for test_directory in directories:
-        directory = os.path.abspath(test_directory)
-        # XXX: Should figure out kind by looking at directory and
-        # should validate the directory.
+    for directory in directories:
+        # XXX: Should figure out kind by looking at directory.  Should
+        # validate that it is a test directory.
+        logger.debug("test loaded from directory '%s'", directory)
         tests.append(Test(directory=directory, kind="kvmplutotest",
-                          name=os.path.basename(directory),
                           expected_result="good"))
 
     return tests
