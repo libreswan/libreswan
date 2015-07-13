@@ -73,6 +73,7 @@ v3.14 (unreleased)
 * pluto: Added config setup keyword max-halfopen-ike= (default 50000) [Paul]
 * pluto: route_owner() don't passert on changed interface [Paul]
 * libipsecconf: Improve parser for pipe case (with NM) [Hugh/Lubomir Rintel]
+* libcrypto/twofish: Fix CALC_SB_* macros [Lubomir Rintel]
 * readwriteconf: improve error handling [Hugh]
 * ipsec: ipsec --import does not need to run restorecon [Paul]
 * ipsec: --checknss option automatically updates NSS DB to SQL [Matt]
