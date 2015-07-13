@@ -656,26 +656,32 @@ static const u8 calc_sb_tbl[512] = {
  * respectively. */
 
 #define CALC_SB_2(i, a, b) \
-	ctx->s[0][i] = mds[0][q0[(a) ^ sa] ^ se]; \
-	ctx->s[1][i] = mds[1][q0[(b) ^ sb] ^ sf]; \
-	ctx->s[2][i] = mds[2][q1[(a) ^ sc] ^ sg]; \
-	ctx->s[3][i] = mds[3][q1[(b) ^ sd] ^ sh]
+	do { \
+		ctx->s[0][i] = mds[0][q0[(a) ^ sa] ^ se]; \
+		ctx->s[1][i] = mds[1][q0[(b) ^ sb] ^ sf]; \
+		ctx->s[2][i] = mds[2][q1[(a) ^ sc] ^ sg]; \
+		ctx->s[3][i] = mds[3][q1[(b) ^ sd] ^ sh]; \
+	} while (0)
 
 /* Macro exactly like CALC_SB_2, but for 192-bit keys. */
 
 #define CALC_SB192_2(i, a, b) \
-	ctx->s[0][i] = mds[0][q0[q0[(b) ^ sa] ^ se] ^ si]; \
-	ctx->s[1][i] = mds[1][q0[q1[(b) ^ sb] ^ sf] ^ sj]; \
-	ctx->s[2][i] = mds[2][q1[q0[(a) ^ sc] ^ sg] ^ sk]; \
-	ctx->s[3][i] = mds[3][q1[q1[(a) ^ sd] ^ sh] ^ sl];
+	do { \
+		ctx->s[0][i] = mds[0][q0[q0[(b) ^ sa] ^ se] ^ si]; \
+		ctx->s[1][i] = mds[1][q0[q1[(b) ^ sb] ^ sf] ^ sj]; \
+		ctx->s[2][i] = mds[2][q1[q0[(a) ^ sc] ^ sg] ^ sk]; \
+		ctx->s[3][i] = mds[3][q1[q1[(a) ^ sd] ^ sh] ^ sl]; \
+	} while (0)
 
 /* Macro exactly like CALC_SB_2, but for 256-bit keys. */
 
 #define CALC_SB256_2(i, a, b) \
-	ctx->s[0][i] = mds[0][q0[q0[q1[(b) ^ sa] ^ se] ^ si] ^ sm]; \
-	ctx->s[1][i] = mds[1][q0[q1[q1[(a) ^ sb] ^ sf] ^ sj] ^ sn]; \
-	ctx->s[2][i] = mds[2][q1[q0[q0[(a) ^ sc] ^ sg] ^ sk] ^ so]; \
-	ctx->s[3][i] = mds[3][q1[q1[q0[(b) ^ sd] ^ sh] ^ sl] ^ sp];
+	do { \
+		ctx->s[0][i] = mds[0][q0[q0[q1[(b) ^ sa] ^ se] ^ si] ^ sm]; \
+		ctx->s[1][i] = mds[1][q0[q1[q1[(a) ^ sb] ^ sf] ^ sj] ^ sn]; \
+		ctx->s[2][i] = mds[2][q1[q0[q0[(a) ^ sc] ^ sg] ^ sk] ^ so]; \
+		ctx->s[3][i] = mds[3][q1[q1[q0[(b) ^ sd] ^ sh] ^ sl] ^ sp]; \
+	} while (0)
 
 /* Macros to calculate the whitening and round subkeys.  CALC_K_2 computes the
  * last two stages of the h() function for a given index (either 2i or 2i+1).
