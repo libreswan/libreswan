@@ -1,0 +1,7 @@
+Basic pluto with IKEv2 using PSK on the initiator (west), and on the responder.
+
+Testing that NO_PROPOSAL_CHOSEN is returned using IKE_AUTH, not IKE_INIT
+
+The IKE_SA preferably should stay up but it is ok if it is torn down.
+
+There should not be any v2N_INVALID_MESSAGE_ID notifications.
