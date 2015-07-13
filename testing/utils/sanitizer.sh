@@ -101,3 +101,8 @@ for fixup in `echo $REF_CONSOLE_FIXUPS`; do
 done
 
 eval $cleanups
+status=$?
+# The "known-good" output contains an extra trailing blank line so add
+# one here.
+echo
+exit $status

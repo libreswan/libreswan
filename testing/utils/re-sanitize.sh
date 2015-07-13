@@ -78,8 +78,6 @@ for host in $(../../utils/kvmhosts.sh); do
 			      $PWD \
 			      ${FIXUPDIR} ${FIXUPDIR2:-} \
 			      > ${fixedoutput}
-	    # stick terminating newline in for fun.
-	    echo >>$fixedoutput
 
 	    if diff -N -u -w -b -B ${host}.console.txt $fixedoutput >OUTPUT/${host}.console.tmp; then
 		echo "# ${host} Console output matched"

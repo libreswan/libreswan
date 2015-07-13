@@ -30,8 +30,6 @@ consolediff() {
 		      $PWD \
 		      ${FIXUPDIR} ${FIXUPDIR2:-} \
 		      > ${fixedoutput}
-    # stick terminating newline in for fun.
-    echo >>$fixedoutput
 
     if diff -N -u -w -b -B $ref $fixedoutput >OUTPUT/${prefix}.console.diff
     then
