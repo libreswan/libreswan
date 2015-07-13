@@ -1,0 +1,7 @@
+Basic pluto with IKEv1 using PSK on the initiator (west), and Strongswan on
+the responder testing AES GCM
+
+This uses ike=serpent-sha1 on both sides to test interoperability
+
+note: this requires a patched strongswan to ignore vendorid restrictions
+

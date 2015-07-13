@@ -1,0 +1,49 @@
+/testing/guestbin/swan-prep --userland strongswan
+east #
+ strongswan starter --debug-all
+Starting strongSwan X.X.X IPsec [starter]...
+Loading config setup
+Loading conn 'westnet-eastnet-ikev1'
+  authby=secret
+  auto=add
+  esp=aes256gcm16-modp2048
+  ike=twofish-sha1-modp2048
+  left=192.1.2.45
+  leftid=@west
+  leftsubnet=192.0.1.0/24
+  right=192.1.2.23
+  rightid=@east
+  rightsubnet=192.0.2.0/24
+found netkey IPsec stack
+east #
+ echo "initdone"
+initdone
+east #
+ if [ -f /var/run/pluto/pluto.pid ]; then ipsec look ; fi
+east #
+ if [ -f /var/run/charon.pid ]; then strongswan statusall ; fi
+Status of IKE charon daemon (strongSwan VERSION):
+  uptime: XXX seconds, since YYY
+  malloc sbrk XXXXXX,mmap X, used XXXXXX, free XXXXX
+Listening IP addresses:
+  192.0.2.254
+  192.1.2.23
+  192.9.2.23
+Connections:
+westnet-eastnet-ikev1:  192.1.2.23...192.1.2.45  IKEv1/2
+westnet-eastnet-ikev1:   local:  [east] uses pre-shared key authentication
+westnet-eastnet-ikev1:   remote: [west] uses pre-shared key authentication
+westnet-eastnet-ikev1:   child:  192.0.2.0/24 === 192.0.1.0/24 TUNNEL
+Security Associations (1 up, 0 connecting):
+westnet-eastnet-ikev1[1]: ESTABLISHED XXX seconds ago, 192.1.2.23[east]...192.1.2.45[west]
+westnet-eastnet-ikev1[1]: IKEv1 SPIs: SPISPI_i SPISPI_r*, pre-shared key reauthentication in 2 hours
+westnet-eastnet-ikev1[1]: IKE proposal: TWOFISH_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/MODP_2048
+westnet-eastnet-ikev1{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
+westnet-eastnet-ikev1{1}:  AES_GCM_16_256, XXX bytes_i (4 pkts, XXs ago), XXX bytes_o (4 pkts, XXs ago), rekeying in XX minutes
+westnet-eastnet-ikev1{1}:   192.0.2.0/24 === 192.0.1.0/24 
+east #
+east #
+ if [ -n "`ls /tmp/core* 2>/dev/null`" ]; then echo CORE FOUND; mv /tmp/core* OUTPUT/; fi
+east #
+ if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
+
