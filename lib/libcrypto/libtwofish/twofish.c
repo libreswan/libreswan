@@ -815,7 +815,7 @@ int twofish_set_key(TWOFISH_context *ctx,
 
 		/* Compute the S-boxes. */
 		for ( i = j = 0, k = 1; i < 256; i++, j += 2, k += 2 )
-			CALC_SB256_2( i, calc_sb_tbl[j], calc_sb_tbl[k] );
+			CALC_SB256_2( i, calc_sb_tbl[j], k < 512 ? calc_sb_tbl[k] : 0 );
 
 		/* Calculate whitening and round subkeys.  The constants are
 		 * indices of subkeys, preprocessed through q0 and q1. */
@@ -842,7 +842,7 @@ int twofish_set_key(TWOFISH_context *ctx,
 	} else if (key_len == 24) { /* 192-bit key */
 		/* Compute the S-boxes. */
 		for ( i = j = 0, k = 1; i < 256; i++, j += 2, k += 2 )
-			CALC_SB192_2( i, calc_sb_tbl[j], calc_sb_tbl[k] );
+			CALC_SB192_2( i, calc_sb_tbl[j], k < 512 ? calc_sb_tbl[k] : 0 );
 
 		/* Calculate whitening and round subkeys.  The constants are
 		 * indices of subkeys, preprocessed through q0 and q1. */
@@ -869,7 +869,7 @@ int twofish_set_key(TWOFISH_context *ctx,
 	} else { /* 128-bit key */
 		 /* Compute the S-boxes. */
 		for ( i = j = 0, k = 1; i < 256; i++, j += 2, k += 2 )
-			CALC_SB_2( i, calc_sb_tbl[j], calc_sb_tbl[k] );
+			CALC_SB_2( i, calc_sb_tbl[j], k < 512 ? calc_sb_tbl[k] : 0 );
 
 		/* Calculate whitening and round subkeys.  The constants are
 		 * indices of subkeys, preprocessed through q0 and q1. */
