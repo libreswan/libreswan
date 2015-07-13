@@ -68,9 +68,9 @@ if [ -f $testdir/testparams.sh ]; then
     # testparams.sh expects to be sourced from its directory,
     # expecting to be able to include the relative pathed
     # ../../default-testparams.sh
-    pushd $testdir
+    pushd $testdir > /dev/null
     . ./testparams.sh
-    popd
+    popd > /dev/null
 else
     . $testingdir/default-testparams.sh
 fi
