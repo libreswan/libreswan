@@ -146,6 +146,8 @@ kvm-checksum:
 # under /testing).  Better might be for dist_certs.py to take an
 # output directory argument.
 kvm-keys testing/x509/keys/mainca.key: testing/x509/dist_certs.py
+	$(KVMSH_COMMAND) --chdir .         east 'rm -f /etc/system-fips'
+	$(KVMSH_COMMAND) --chdir .         east './testing/guestbin/fipsoff'
 	$(KVMSH_COMMAND) --chdir .         east 'rm -rf /tmp/x509'
 	$(KVMSH_COMMAND) --chdir .         east 'mkdir /tmp/x509'
 	$(KVMSH_COMMAND) --chdir .         east 'cp -f testing/x509/dist_certs.py /tmp'
