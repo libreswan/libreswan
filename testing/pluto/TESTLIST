@@ -583,6 +583,8 @@ kvmplutotest	interop-ikev2-strongswan-23-initiator-cp	good
 kvmplutotest	interop-ikev2-strongswan-24-aes_ctr	good
 kvmplutotest	interop-ikev2-strongswan-25-ke-mismatch-initiator	good
 kvmplutotest	interop-ikev2-strongswan-26-ke-mismatch-responder	good
+kvmplutotest	interop-ikev1-strongswan-15-twofish		good
+kvmplutotest	interop-ikev1-strongswan-16-serpent		good
 
 
 umlplutotest	protoport-01		good
