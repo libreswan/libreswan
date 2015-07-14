@@ -1,4 +1,5 @@
-ipsec look
+# should not show any hits
+grep fos_start /tmp/pluto.log
 : ==== cut ====
 ipsec auto --status
 : ==== tuc ====
