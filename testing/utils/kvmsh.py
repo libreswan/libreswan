@@ -37,9 +37,14 @@ def main():
                                   "--output", "-o",
                                   default=sys.stdout, metavar="FILE")
 
-    parser.add_argument("--chdir", default=None, action="store", metavar="DIR",
-                        help=("change to %(metavar)s on remote machine;"
-                              " '.' changes to the current directory"
+    parser.add_argument("--chdir", default=None, action="store", metavar="PATH",
+                        help=("first change directory to %(metavar)s on the remote"
+                              " domain and update prompt-match logic to expect"
+                              " that directory"
+                              "; an absolute %(metavar)s is used unmodified"
+                              "; a relative  %(metavar)s, which is interpreted"
+                              " as relative to the current local working directory"
+                              ", is converted to an absolute remote path before use"
                               " (default: leave directory unchanged)"))
     parser.add_argument("--boot", default=None, action="store",
                         choices=set(["cold", "warm"]),
@@ -95,10 +100,10 @@ def main():
             console = remote.start(domain)
         remote.login(domain, console)
 
-        if args.chdir == ".":
-            chdir = remote.directory(domain, console, directory=os.getcwd())
-        elif args.chdir:
+        if os.path.isabs(args.chdir):
             chdir = args.chdir
+        elif args.chdir:
+            chdir = remote.directory(domain, console, directory=os.path.abspath(args.chdir))
         else:
             chdir = None
         if chdir:
