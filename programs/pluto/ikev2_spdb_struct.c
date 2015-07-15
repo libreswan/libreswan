@@ -140,6 +140,7 @@ bool ikev2_out_sa(pb_stream *outs,
 
 	switch (protoid) {
 	case PROTO_v2_ISAKMP:
+		ipprotoid = 0; /* makes old gcc 4.4.7-11 happy */
 		break;
 
 	case PROTO_v2_AH:
@@ -156,7 +157,7 @@ bool ikev2_out_sa(pb_stream *outs,
 		bad_case(protoid);
 	}
 
-	if (proto_info != NULL)
+	if (ipprotoid == IPPROTO_ESP || ipprotoid == IPPROTO_AH)
 		proto_info->our_spi = get_ipsec_spi(0, /* avoid this # */
 						    ipprotoid,
 						    &st->st_connection->spd,
