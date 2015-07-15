@@ -59,12 +59,12 @@ postcheck:
 	fi ; \
 	if test $(shell systemctl is-active ipsec.service) = "disabled" ; then \
 		echo "The ipsec service is currently disabled. To enable this service on boot issue:" ; \
-		echo " systemctl enable ipsec.servce" ; \
+		echo " systemctl enable ipsec.service" ; \
 	fi ; \
 	if test $(shell systemctl is-active ipsec.service) = "active" ; then \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently running. You need to restart the service using:" ; \
-		echo " systemctl restart ipsec.servce" ; \
+		echo " systemctl restart ipsec.service" ; \
 		echo "**********************************************************************" ; \
 	fi
 
