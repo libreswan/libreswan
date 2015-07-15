@@ -140,8 +140,7 @@ startnetkey() {
     fi
     # Time before kernel ACQUIRE for ondemand/ Opportunistic expires
     # Also Time before reserved kernel SPI times out
-    # 300 seconds is so embedded systems have enough time to generate DH
-    echo $xfrmlifetime > /proc/sys/net/core/xfrm_acq_expires
+    echo ${xfrmlifetime} >/proc/sys/net/core/xfrm_acq_expires
 }
 
 stopklips() {
@@ -225,7 +224,7 @@ cryptomodules() {
 		#echo "OCF limit set to ${limit}" >&2
 	    fi
 	fi
-	echo ${limit}  >/sys/module/ocf/parameters/crypto_q_max
+	echo ${limit} >/sys/module/ocf/parameters/crypto_q_max
     fi
 
     # load the most common ciphers/algo's
