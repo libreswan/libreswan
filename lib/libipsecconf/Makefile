@@ -44,8 +44,13 @@ lex.yy.c: parser.l
 
 # Use wild card rule so that GNU Make knows that both are output from
 # single program.  Use UNIX basename to strip off the directory.
+# workaround for older bison using sed
 %.tab.h %.tab.c: %.y
 	cd $(builddir) && $(BISON) ${BISONOSFLAGS} -v -d $(srcdir)/$$(basename $<)
+	cd $(builddir) && sed -i 's/if YYENABLE_NLS/if defined YYENABLE_NLS \&\& YYENABLE_NLS/g' parser.tab.c
+	cd $(builddir) && sed -i 's/if YYLTYPE_IS_TRIVIAL/if defined YYLTYPE_IS_TRIVIAL \&\& YYLTYPE_IS_TRIVIAL/g' parser.tab.c
+
+
 
 clean: parser-clean
 .PHONY: parser-clean
