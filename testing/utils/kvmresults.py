@@ -18,15 +18,30 @@ import argparse
 import sys
 from fab import testsuite
 from fab import logutil
+from fab import post
 
 def main():
 
     parser = argparse.ArgumentParser(description="list all tests in the form: <test> [ <directory> ] [ <result> <details...> ]")
     parser.add_argument("--verbose", "-v", action="count", default=0)
 
+    parser.add_argument("--quick", action="store_true",
+                        help=("Use the previously generated '.console.txt' and '.console.diff' files"))
+    parser.add_argument("--quick-sanitize", action="store_true",
+                        help=("Use the previously generated '.console.txt' file"))
+    parser.add_argument("--quick-diff", action="store_true",
+                        help=("Use the previously generated '.console.diff' file"))
+    parser.add_argument("--update", action="store_true",
+                        help=("Update the '.console.txt' and '.console.diff' files"))
+    parser.add_argument("--update-sanitize", action="store_true",
+                        help=("Update the '.console.txt' file"))
+    parser.add_argument("--update-diff", action="store_true",
+                        help=("Update the '.console.diff' file"))
+
     parser.add_argument("--print-directory", action="store_true")
     parser.add_argument("--print-name", action="store_true")
     parser.add_argument("--print-result", action="store_true")
+    parser.add_argument("--print-diff", action="store_true")
 
     parser.add_argument("--list-ignored", action="store_true",
                         help="include ignored tests in the list")
@@ -105,7 +120,11 @@ def main():
         # Filter out tests that have not been run?
         result = None
         if not ignore:
-            result = test.result(baseline)
+            result = post.mortem(test, baseline=baseline,
+                                 skip_sanitize=args.quick or args.quick_sanitize,
+                                 skip_diff=args.quick or args.quick_diff,
+                                 update_sanitize=args.update or args.update_sanitize,
+                                 update_diff=args.update or args.update_diff)
             if not result and not args.list_untested:
                 continue
 
@@ -132,6 +151,12 @@ def main():
             sep = " "
 
         print()
+
+        if args.print_diff and result:
+            for domain in result.diffs:
+                for line in result.diffs[domain]:
+                    if line:
+                        print(line)
 
         sys.stdout.flush()
 
