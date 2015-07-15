@@ -31,7 +31,12 @@ static PK11SymKey *ephemeral_symkey(int debug)
 	if (!tried) {
 		tried = 1;
 		/* get a secret key */
-		PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN, NULL);
+		PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
+						      lsw_return_nss_password_file_info());
+		if (slot == NULL) {
+			loglog(RC_LOG_SERIOUS, "NSS: ephemeral slot error");
+			return NULL;
+		}
 		ephemeral_key = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
 					    NULL, 128/8, NULL);
 		PK11_FreeSlot(slot); /* reference counted */
