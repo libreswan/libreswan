@@ -710,6 +710,19 @@ kvmplutotest	l2tp-05-netkey				wip
 kvmplutotest	ikeport-01				wip
 
 #################################################################
+# FIPS mode tests
+#################################################################
+kvmplutotest	fips-01-ikev1-default			wip
+kvmplutotest	fips-02-ikev2-default			good
+kvmplutotest	fips-03-ikev1-md5			wip
+kvmplutotest	fips-04-ikev2-md5			wip
+kvmplutotest	fips-05-ikev1-gcm			wip
+kvmplutotest	fips-06-ikev1-sha1			wip
+kvmplutotest	fips-07-ikev2-3des-sha256		good
+kvmplutotest	fips-08-ikev2-x509			good
+kvmplutotest	fips-09-ikev2-gcm			good
+
+#################################################################
 # passthrough tests
 #################################################################
 kvmplutotest	netkey-passthrough-ipxfrm		good
