@@ -864,7 +864,7 @@ void timer_list(void)
 			enum_show(&timer_event_names, type),
 			(long)ev->ev_time.mono_secs,
 			(long)deltasecs(monotimediff(ev->ev_time, nw)),
-			st != NULL ? st->st_serialno : 0);
+			st == NULL ? SOS_NOBODY : st->st_serialno);
 
 		if (st != NULL && st->st_connection != NULL)
 			whack_log(RC_LOG, "    connection: \"%s\"",
