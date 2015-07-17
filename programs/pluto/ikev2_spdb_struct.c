@@ -113,7 +113,7 @@ bool ikev2_out_sa(pb_stream *outs,
 		  enum next_payload_types_ikev2 np)
 {
 	struct ipsec_proto_info *proto_info = NULL;
-	unsigned ipprotoid;
+	int ipprotoid = 0;	/* initialize to placate old GCC (4.4.7-11) */
 	pb_stream sa_pbs;
 	unsigned int pc_cnt;
 
@@ -140,7 +140,6 @@ bool ikev2_out_sa(pb_stream *outs,
 
 	switch (protoid) {
 	case PROTO_v2_ISAKMP:
-		ipprotoid = 0; /* makes old gcc 4.4.7-11 happy */
 		break;
 
 	case PROTO_v2_AH:
@@ -157,11 +156,12 @@ bool ikev2_out_sa(pb_stream *outs,
 		bad_case(protoid);
 	}
 
-	if (ipprotoid == IPPROTO_ESP || ipprotoid == IPPROTO_AH)
+	if (proto_info != NULL) {
 		proto_info->our_spi = get_ipsec_spi(0, /* avoid this # */
 						    ipprotoid,
 						    &st->st_connection->spd,
 						    TRUE /* tunnel */);
+	}
 
 	/* now send out all the proposals */
 	for (pc_cnt = 0; pc_cnt < sadb->v2_prop_disj_cnt; pc_cnt++) {
@@ -1143,7 +1143,7 @@ static stf_status ikev2_emit_winning_sa(struct state *st,
 		/* cipher + integrity check + PRF hash + DH group */
 		r_proposal.isap_numtrans = 4;
 	} else {
-		unsigned ipprotoid;
+		int ipprotoid;
 
 		is_ah = ta.encrypt == ESP_reserved;
 		if (is_ah) {
