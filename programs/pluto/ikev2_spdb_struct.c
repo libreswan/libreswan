@@ -112,6 +112,13 @@ bool ikev2_out_sa(pb_stream *outs,
 		  bool parentSA,
 		  enum next_payload_types_ikev2 np)
 {
+	/*
+	 * See RFC 7296 Section 3.3: Security Association Payload
+	 *
+	 * XXX this code does not yet handle rekeying because it assumes
+	 * that a PROTO_v2_ISAKMP SPI should be empty.
+	 * In rekeying, the PROTO_v2_ISAKMP SPI is 8 bytes.
+	 */
 	struct ipsec_proto_info *proto_info = NULL;
 	int ipprotoid = 0;	/* initialize to placate old GCC (4.4.7-11) */
 	pb_stream sa_pbs;
@@ -164,6 +171,7 @@ bool ikev2_out_sa(pb_stream *outs,
 	}
 
 	/* now send out all the proposals */
+
 	for (pc_cnt = 0; pc_cnt < sadb->v2_prop_disj_cnt; pc_cnt++) {
 		struct db_v2_prop *vp = &sadb->v2_prop_disj[pc_cnt];
 		unsigned int pr_cnt;
@@ -204,36 +212,31 @@ bool ikev2_out_sa(pb_stream *outs,
 				}
 			}
 
-			/* See RFC5996bis Section 3.3 */
-			if (pr_cnt + 1 < vp->prop_cnt || pc_cnt + 1 <
-			    sadb->v2_prop_disj_cnt)
-				p.isap_lp = v2_PROPOSAL_NON_LAST;
-			else
-				p.isap_lp = v2_PROPOSAL_LAST;
+			p.isap_lp = (pr_cnt + 1 < vp->prop_cnt ||
+					pc_cnt + 1 < sadb->v2_prop_disj_cnt) ?
+				v2_PROPOSAL_NON_LAST : v2_PROPOSAL_LAST;
 
 			p.isap_length = 0;
 			p.isap_propnum = vpc->propnum;
 			p.isap_protoid = protoid;
-			if (parentSA)
-				p.isap_spisize = 0; /* set when we rekey */
-			else
-				p.isap_spisize = sizeof(proto_info->our_spi);
 
-			p.isap_numtrans = skip_encr == ts_cnt ?
+			p.isap_spisize = parentSA ?
+				0 :	/* XXX fix to handle rekeying */
+				sizeof(proto_info->our_spi);
+
+			p.isap_numtrans = (skip_encr == ts_cnt) ?
 				ts_cnt : ts_cnt - 1;
 
 			if (!out_struct(&p, &ikev2_prop_desc, &sa_pbs, &t_pbs))
 				return FALSE;
 
-			if (p.isap_spisize > 0) {
-				if (parentSA) {
-					/* XXX set when rekeying */
-				} else {
-					if (!out_raw(&proto_info->our_spi,
-						     sizeof(proto_info->our_spi),
-						     &t_pbs, "our spi"))
-						return FALSE;
-				}
+			if (parentSA) {
+				/* XXX fix to handle rekeying */
+			} else {
+				if (!out_raw(&proto_info->our_spi,
+					     sizeof(proto_info->our_spi),
+					     &t_pbs, "our spi"))
+					return FALSE;
 			}
 
 			for (ts_i = 0; ts_i < ts_cnt; ts_i++) {
@@ -263,11 +266,18 @@ bool ikev2_out_sa(pb_stream *outs,
 					struct db_attr *attr =
 						&tr->attrs[attr_cnt];
 
-					if(!ikev2_out_attr(attr->type.v2,
+					if (!ikev2_out_attr(attr->type.v2,
 						       attr->val,
 						       &ikev2_trans_attr_desc,
 						       ikev2_trans_attr_val_descs,
 						       &at_pbs)) {
+						/*
+						 * ??? this message is not
+						 * helpful to a user.
+						 * Is it redundant?
+						 * It should be improved or
+						 * eliminated.
+						 */
 						libreswan_log("ikev2_out_attr() failed");
 						return FALSE;
 					}
