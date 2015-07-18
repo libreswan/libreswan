@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 	struct pluto_crypto_req r;
 	struct pcr_skeycalc_v2_r *skr = &r.pcr_d.dhv2;
 	struct pcr_skeyid_q    *skq = &r.pcr_d.dhq;
-	char *story = NULL;
+	const char *story = NULL;
 
 	progname = argv[0];
 	cur_debugging = DBG_CRYPT;

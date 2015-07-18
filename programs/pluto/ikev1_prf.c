@@ -297,7 +297,7 @@ void calc_dh_iv(struct pluto_crypto_req *r)
 		*enc_key;
 	chunk_t new_iv;
 	SECKEYPublicKey *pubk;
-	char *story = NULL;
+	const char *story = NULL;
 
 	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
 	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));

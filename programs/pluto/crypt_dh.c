@@ -74,7 +74,7 @@
 PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 			   /*const*/ SECKEYPrivateKey *privk,	/* NSS doesn't do const */
 			   const struct oakley_group_desc *group,
-			   const SECKEYPublicKey *local_pubk, char **story)
+			   const SECKEYPublicKey *local_pubk, const char **story)
 {
 	SECKEYPublicKey *remote_pubk;
 	SECItem nss_g;
@@ -150,7 +150,7 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 		    DBG_log("Dropped no leading zeros %d", dhshared_len));
 	}
 
-	*story = (char *)enum_show(&oakley_group_names, group->group);
+	*story = enum_name(&oakley_group_names, group->group);
 
 	SECKEY_DestroyPublicKey(remote_pubk);
 	return dhshared;
@@ -165,7 +165,7 @@ void calc_dh(struct pluto_crypto_req *r)
 	chunk_t g;
 	SECKEYPrivateKey *ltsecret;
 	SECKEYPublicKey *pubk;
-	char *story = NULL;
+	const char *story = NULL;
 
 	/* copy the request, since the reply will re-use the memory of the r->pcr_d.dhq */
 	memcpy(&dhq, &r->pcr_d.dhq, sizeof(r->pcr_d.dhq));

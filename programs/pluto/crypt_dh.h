@@ -36,7 +36,7 @@ struct oakley_group_desc;
 PK11SymKey *calc_dh_shared(chunk_t g,	/* converted to SECItem */
 			   /*const*/ SECKEYPrivateKey *privk,	/* NSS doesn't do const */
 			   const struct oakley_group_desc *group,
-			   const SECKEYPublicKey *local_pubk, char **story);
+			   const SECKEYPublicKey *local_pubk, const char **story);
 
 
 struct pluto_crypto_req;

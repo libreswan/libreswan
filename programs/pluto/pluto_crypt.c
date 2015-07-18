@@ -228,7 +228,7 @@ static void pluto_do_crypto_op(struct pluto_crypto_req *r, int helpernum)
 {
 	struct timeval tv0;
 	gettimeofday(&tv0, NULL);
-	char *story = NULL;
+	const char *story = NULL;
 
 	DBG(DBG_CONTROL,
 	    DBG_log("crypto helper %d doing %s; request ID %u",

@@ -210,7 +210,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 }
 
 /* MUST BE THREAD-SAFE */
-void calc_dh_v2(struct pluto_crypto_req *r, char **story)
+void calc_dh_v2(struct pluto_crypto_req *r, const char **story)
 {
 	struct pcr_skeycalc_v2_r *skr = &r->pcr_d.dhv2;
 	struct pcr_skeyid_q dhq;

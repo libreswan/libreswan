@@ -53,6 +53,6 @@ PK11SymKey *ikev2_child_sa_keymat(const struct hash_desc *prf_hasher,
 
 struct pluto_crypto_req;
 
-void calc_dh_v2(struct pluto_crypto_req *r, char **story);
+void calc_dh_v2(struct pluto_crypto_req *r, const char **story);
 
 #endif
