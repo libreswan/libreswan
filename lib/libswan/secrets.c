@@ -569,6 +569,7 @@ static err_t extract_and_add_secret_from_nss_cert_file(struct RSA_private_key
 
 	rsak->pub.nssCert = nssCert;
 
+	passert(sizeof(rsak->ckaid) >= certCKAID->len);
 	rsak->ckaid_len = certCKAID->len;
 	memcpy(rsak->ckaid, certCKAID->data, certCKAID->len);
 
@@ -835,6 +836,7 @@ static err_t lsw_process_rsa_secret(struct RSA_private_key *rsak)
 			return builddiag("RSA data malformed (%s): %s",
 					ugh, flp->tok);
 		} else if (streq(p->name, "CKAIDNSS")) {
+			passert(sizeof(rsak->ckaid) >= bvlen);
 			memcpy(rsak->ckaid, bv, bvlen);
 			rsak->ckaid_len = bvlen;
 		} else {

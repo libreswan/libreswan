@@ -58,7 +58,7 @@ struct RSA_private_key {
 		dP,				/* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
 		dQ,				/* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
 		qInv;				/* (q^-1) mod p */
-	unsigned char ckaid[HMAC_BUFSIZE];	/* ckaid for use in NSS */
+	unsigned char ckaid[HMAC_RFC2104_BLOCKSIZE];	/* ckaid for use in NSS */
 	unsigned int ckaid_len;
 };
 

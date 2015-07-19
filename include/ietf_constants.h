@@ -1037,11 +1037,21 @@ typedef u_int16_t ipsec_auth_t;
  * draft-ietf-ipsec-ike-01.txt appendix A
  */
 
-/* HMAC (see rfc2104.txt) */
-
+/*
+ * HMAC
+ * - see RFC 2104 for the definition of the HMAC procedure for early hash algorithms
+ * - see RFC 4868 for how to construct HMAC for SHA2 functions
+ */
 #define HMAC_IPAD 0x36
 #define HMAC_OPAD 0x5C
-#define HMAC_BUFSIZE 64
+
+/* "B" value -- block size for hash function input */
+#define HMAC_RFC2104_BLOCKSIZE	64	/* RFC 2104 */
+#define HMAC_SHA256_BLOCKSIZE	64	/* RFC 4868 */
+#define HMAC_SHA512_BLOCKSIZE	128	/* RFC 4868 */
+
+/* Needs to be a compile-time constant for array allocation */
+#define MAX_HMAC_BLOCKSIZE	HMAC_SHA512_BLOCKSIZE
 
 /*
  * IKEv1 Oakley Encryption Algorithm attribute
