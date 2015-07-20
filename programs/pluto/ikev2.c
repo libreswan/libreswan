@@ -819,7 +819,7 @@ void process_v2_packet(struct msg_digest **mdp)
 		 * state STATE_PARENT_R1 and has set its RCOOKIE to
 		 * something non-zero, that won't match.
 		 *
-		 * An INIT-responce as RCOOKIE!=0 (lets ignore
+		 * An INIT-response as RCOOKIE!=0 (lets ignore
 		 * INVALID_KE).  Since the original responder, which
 		 * is in state STATE_PARENT_i1, still has RCOOKIE=0
 		 * that won't match.
@@ -916,7 +916,7 @@ void process_v2_packet(struct msg_digest **mdp)
 					    st->st_msgid_lastack > md->msgid_received)
 					{
 						DBG(DBG_CONTROL, DBG_log(
-							"dropping retransmitted responce with msgid %u from peer - we already processed %u.",
+							"dropping retransmitted response with msgid %u from peer - we already processed %u.",
 						    md->msgid_received, st->st_msgid_lastack));
 						return;
 					}

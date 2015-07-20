@@ -426,7 +426,7 @@ enum state_kind {
  *
  * Separate to this is the IKEv2 "R (Response)" flag
  * (ISAKMP_FLAGS_v2_MSG_R) in the payload header.  The response flag
- * that a message is a responce to a previous request.  Since either
+ * that a message is a response to a previous request.  Since either
  * end can send requests, either end can also set the "R" flag.
  *
  * The IKEv1 equivalent is the phase1 role.  It is identified by the
