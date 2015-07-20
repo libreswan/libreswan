@@ -1549,7 +1549,7 @@ void process_v1_packet(struct msg_digest **mdp)
 	    memeq(st->st_rpacket.ptr, md->packet_pbs.start,
 		   st->st_rpacket.len)) {
 		if (smc->flags & SMF_RETRANSMIT_ON_DUPLICATE) {
-			if (st->st_retransmit < MAXIMUM_v1_ACCEPED_DUPLICATES) {
+			if (st->st_retransmit < MAXIMUM_v1_ACCEPTED_DUPLICATES) {
 				st->st_retransmit++;
 				loglog(RC_RETRANSMISSION,
 				       "retransmitting in response to duplicate packet; already %s",

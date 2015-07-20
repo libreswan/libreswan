@@ -187,7 +187,7 @@ typedef enum {
 
 /* Misc. stuff */
 
-#define MAXIMUM_v1_ACCEPED_DUPLICATES        2
+#define MAXIMUM_v1_ACCEPTED_DUPLICATES        2
 /*
  * maximum retransmits per exchange, for IKEv1 (initiator and responder),
  * IKEv2 initiator
