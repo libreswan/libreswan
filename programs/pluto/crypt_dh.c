@@ -76,20 +76,15 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 			   const struct oakley_group_desc *group,
 			   const SECKEYPublicKey *local_pubk, const char **story)
 {
-	SECKEYPublicKey *remote_pubk;
-	SECItem nss_g;
-	PK11SymKey *dhshared;
-	PRArenaPool *arena;
 	SECStatus status;
-	unsigned int dhshared_len;
 
 	DBG(DBG_CRYPT,
 		DBG_log("Started DH shared-secret computation in NSS:"));
 
-	arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	passert(arena != NULL);
 
-	remote_pubk = (SECKEYPublicKey *)
+	SECKEYPublicKey *remote_pubk = (SECKEYPublicKey *)
 		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
 
 	remote_pubk->arena = arena;
@@ -97,9 +92,11 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 	remote_pubk->pkcs11Slot = NULL;
 	remote_pubk->pkcs11ID = CK_INVALID_HANDLE;
 
-	nss_g.data = g.ptr;
-	nss_g.len = (unsigned int)g.len;
-	nss_g.type = siBuffer;
+	SECItem nss_g = {
+		.data = g.ptr,
+		.len = (unsigned int)g.len,
+		.type = siBuffer
+	};
 
 	status = SECITEM_CopyItem(remote_pubk->arena, &remote_pubk->u.dh.prime,
 				  &local_pubk->u.dh.prime);
@@ -113,41 +110,49 @@ PK11SymKey *calc_dh_shared(const chunk_t g,	/* converted to SECItem */
 				  &remote_pubk->u.dh.publicValue, &nss_g);
 	passert(status == SECSuccess);
 
-	dhshared = PK11_PubDerive(privk, remote_pubk, PR_FALSE, NULL, NULL,
+	PK11SymKey *dhshared = PK11_PubDerive(privk, remote_pubk, PR_FALSE, NULL, NULL,
 				  CKM_DH_PKCS_DERIVE,
 				  CKM_CONCATENATE_DATA_AND_BASE,
 				  CKA_DERIVE, group->bytes,
 				  lsw_return_nss_password_file_info());
 	passert(dhshared != NULL);
 
-	dhshared_len = PK11_GetKeyLength(dhshared);
-	if (group->bytes > dhshared_len) {
+	unsigned int shortfall = group->bytes - PK11_GetKeyLength(dhshared);
+
+	if (shortfall > 0) {
+		/*
+		 * We've got to pad the result with [shortfall] 0x00 bytes.
+		 * The chance of shortfall being n should be 1 in 256^n.
+		 * So really zauto ought to be big enough for the zeros.
+		 * If it isn't, we allocate space on the heap
+		 * (this will likely never be executed).
+		 */
 		DBG(DBG_CRYPT,
-		    DBG_log("Dropped %tu leading zeros",
-			    group->bytes - dhshared_len));
-		chunk_t zeros;
-		PK11SymKey *newdhshared;
-		CK_KEY_DERIVATION_STRING_DATA string_params;
-		SECItem params;
-
-		zeros = hmac_pads(0x00, group->bytes - dhshared_len);
-		params.data = (unsigned char *)&string_params;
-		params.len = sizeof(string_params);
-		string_params.pData = zeros.ptr;
-		string_params.ulLen = zeros.len;
-
-		newdhshared = PK11_Derive(dhshared,
-					  CKM_CONCATENATE_DATA_AND_BASE,
-					  &params,
-					  CKM_CONCATENATE_DATA_AND_BASE,
-					  CKA_DERIVE, 0);
+			DBG_log("restoring %u DHshared leading zeros", shortfall));
+		unsigned char zauto[10];
+		unsigned char *z =
+			shortfall <= sizeof(zauto) ?
+				zauto : alloc_bytes(shortfall, "DH shortfall");
+		memset(z, 0x00, shortfall);
+		CK_KEY_DERIVATION_STRING_DATA string_params = {
+			.pData = z,
+			.ulLen = shortfall
+		};
+		SECItem params = {
+			.data = (unsigned char *)&string_params,
+			.len = sizeof(string_params)
+		};
+		PK11SymKey *newdhshared =
+			PK11_Derive(dhshared,
+				    CKM_CONCATENATE_DATA_AND_BASE,
+				    &params,
+				    CKM_CONCATENATE_DATA_AND_BASE,
+				    CKA_DERIVE, 0);
 		passert(newdhshared != NULL);
+		if (z != zauto)
+			pfree(z);
 		free_any_symkey("dhshared", &dhshared);
 		dhshared = newdhshared;
-		freeanychunk(zeros);
-	} else {
-		DBG(DBG_CRYPT,
-		    DBG_log("Dropped no leading zeros %d", dhshared_len));
 	}
 
 	*story = enum_name(&oakley_group_names, group->group);

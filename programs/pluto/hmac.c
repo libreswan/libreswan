@@ -105,20 +105,3 @@ CK_MECHANISM_TYPE nss_key_derivation_mech(const struct hash_desc *hasher)
 	}
 	return mechanism;
 }
-
-/*
- * XXX: This has nothing to do with HMAC; it should be made part of
- * the chunk_t library code.
- */
-
-chunk_t hmac_pads(u_char val, unsigned int len)
-{
-	chunk_t ret;
-
-	ret.len = len;
-	ret.ptr = alloc_bytes(ret.len, "hmac_pad");
-
-	memset(ret.ptr, val, len);
-
-	return ret;
-}
