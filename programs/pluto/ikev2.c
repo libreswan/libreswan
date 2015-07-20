@@ -93,7 +93,7 @@ enum smf2_flags {
 	 * is no such field so, instead, the value is implicitly
 	 * verified by the by the state machine being split into
 	 * original initiator and original responder halves.
-	 * 
+	 *
 	 * Don't assume this flag is present.  If initiator and
 	 * responder share states then this value will absent.
 	 *
@@ -795,7 +795,6 @@ void process_v2_packet(struct msg_digest **mdp)
 			DBG_log("I am receiving an IKE Request");
 	});
 
-	
 	if (ike_i) {
 		DBG(DBG_CONTROL, DBG_log("I am the IKE SA Original Responder"));
 		md->original_role = ORIGINAL_RESPONDER;
@@ -847,9 +846,14 @@ void process_v2_packet(struct msg_digest **mdp)
 		if (st != NULL && md->original_role == ORIGINAL_RESPONDER) {
 			if (st->st_msgid_lastrecv == md->msgid_received) {
 				/* this is a recent retransmit. */
+				set_cur_state(st);
 				DBG(DBG_CONTROLMORE, DBG_log(
 					"duplicate IKE_INIT_I message received, retransmiting previous packet"));
-				send_ike_msg(st, "ikev2-responder-retransmit");
+				if (st->st_suspended_md != NULL) {
+					libreswan_log("IKE_INIT_I retransmission ignored: we're still working on the previous one");
+				} else {
+					send_ike_msg(st, "ikev2-responder-retransmit IKE_INIT_I");
+				}
 				return;
 			}
 			/* update lastrecv later on */
@@ -872,6 +876,7 @@ void process_v2_packet(struct msg_digest **mdp)
 			if (st->st_msgid_lastrecv != v2_INVALID_MSGID &&
 			    st->st_msgid_lastrecv > md->msgid_received) {
 				/* this is an OLD retransmit. we can't do anything */
+				set_cur_state(st);
 				libreswan_log(
 					"received too old retransmit: %u < %u",
 					md->msgid_received,
@@ -880,7 +885,12 @@ void process_v2_packet(struct msg_digest **mdp)
 			}
 			if (st->st_msgid_lastrecv == md->msgid_received) {
 				/* this is a recent retransmit. */
-				send_ike_msg(st, "ikev2-responder-retransmit");
+				set_cur_state(st);
+				if (st->st_suspended_md != NULL) {
+					libreswan_log("retransmission ignored: we're still working on the previous one");
+				} else {
+					send_ike_msg(st, "ikev2-responder-retransmit");
+				}
 				return;
 			}
 			/* update lastrecv later on */
@@ -935,9 +945,6 @@ void process_v2_packet(struct msg_digest **mdp)
 				} else {
 					/* We always need to respond to peer's request - else retransmits */
 				}
-
-
-
 			}
 		}
 	}
@@ -964,8 +971,8 @@ void process_v2_packet(struct msg_digest **mdp)
 	 * According to the RFC: no.  Instead a small table of
 	 * constants can be used to generate cookies on the fly.
 	 */
-	const enum state_kind from_state = (st == NULL ? STATE_UNDEFINED
-					    : st->st_state);
+	const enum state_kind from_state =
+		st == NULL ? STATE_UNDEFINED : st->st_state;
 	DBG(DBG_CONTROL,
 	    if (st != NULL) {
 		    DBG_log("found state #%lu", st->st_serialno);
@@ -975,7 +982,6 @@ void process_v2_packet(struct msg_digest **mdp)
 
 	struct ikev2_payloads_summary clear_payload_summary = { .status = STF_IGNORE };
 	struct ikev2_payload_errors clear_payload_status = { .status = STF_OK };
-
 
 	for (svm = v2_state_microcode_table; svm->state != STATE_IKEv2_ROOF;
 	     svm++) {
