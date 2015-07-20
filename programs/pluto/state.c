@@ -1705,7 +1705,6 @@ void fmt_state(struct state *st, const monotime_t n,
 	/* XXX spd-enum */
 	const char *eo = c->spd.eroute_owner == st->st_serialno ?
 			 "; eroute owner" : "";
-	const char *idlestr;
 
 	fmt_conn_instance(c, inst);
 
@@ -1752,12 +1751,6 @@ void fmt_state(struct state *st, const monotime_t n,
 	}
 
 	DBG(DBG_CONTROLMORE, DBG_log("#%lu %s:%u st->st_calculating == %s;", st->st_serialno, __FUNCTION__, __LINE__, st->st_calculating ? "TRUE" : "FALSE"));
-	if (st->st_calculating)
-		idlestr = "crypto_calculating";
-	else if (st->st_suspended_md)
-		idlestr = "crypto/dns-lookup";
-	else
-		idlestr = "idle";
 
 	snprintf(state_buf, state_buf_len,
 		 "#%lu: \"%s\"%s:%u %s (%s); %s in %lds%s%s%s%s; %s; %s",
@@ -1770,7 +1763,9 @@ void fmt_state(struct state *st, const monotime_t n,
 			enum_name(&timer_event_names, st->st_event->ev_type),
 		 delta,
 		 np1, np2, eo, dpdbuf,
-		 idlestr,
+		 st->st_calculating ? "crypto_calculating" :
+			st->st_suspended_md != NULL ?  "crypto/dns-lookup" :
+			"idle",
 		 enum_name(&pluto_cryptoimportance_names, st->st_import));
 
 	/* print out SPIs if SAs are established */
