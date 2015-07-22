@@ -2507,9 +2507,6 @@ struct connection *find_next_host_connection(
 					c->policy),
 				c->name));
 
-		if (NEVER_NEGOTIATE(c->policy))
-			continue;
-
 		/*
 		 * Success may require exact match of:
 		 * (1) XAUTH (POLICY_XAUTH)
