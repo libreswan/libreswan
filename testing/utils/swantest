@@ -1428,7 +1428,7 @@ def docker_stop_container(dname):
 
 
 def docker_start_container(dhost, dname, dimage):
-    cmd = "docker run -h %s --privileged --name %s -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
+    cmd = "docker run -h %s --privileged --net=none --name %s -v /home/build/libreswan:/home/build/libreswan -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d %s /usr/sbin/init" % (
         dhost, dname, dimage)
     return (runcmd(cmd))
 
@@ -1505,11 +1505,6 @@ def docker_containers_start_stop(args, test, st, stop):
     if "nic" in test:
         didn = docker_start_container(test["nic"], dnamen, args.dockerimage)
 
-    docker_flush_eth0(dhost=test["initiator"], dname=dnamei)
-    docker_flush_eth0(dhost=test["responder"], dname=dnamer)
-    if didn:
-        docker_flush_eth0(dhost=test["nic"], dname=dnamen)
-
     try:
         docker_add_net_bridges(args, test, dnamei=dnamei, dnamer=dnamer, dnamen=dnamen)
     except:
@@ -1551,20 +1546,20 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
     pcap_file = 'OUTPUT/' + 'swan12' + pcap_file_ext
 
     if test["initiator"] == "west":
-        iface = "eth2"
+        iface = "eth1"
         prefix = "192.0.1.254/24"
         brname = "br%s" % bidw
         docker_net_bridge(
             dname=dnamei, brname=brname, iface=iface, prefix=prefix)
 
-        iface = "eth1"
+        iface = "eth0"
         prefix = "192.1.2.45/24"
         brname = "br%s" % bidc
         docker_net_bridge(
             dname=dnamei, brname=brname, iface=iface, prefix=prefix)
 
     elif test["initiator"] == "road":
-        iface = "eth1"
+        iface = "eth0"
         prefix = "192.1.3.209/24"
         brname = "br%s" % bidn
         docker_net_bridge(
@@ -1572,13 +1567,13 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
         pcap_file = 'OUTPUT/' + 'swan13' + pcap_file_ext
 
     elif test["initiator"] == "north":
-        iface = "eth2"
+        iface = "eth1"
         prefix = "192.0.3.254/24"
         brname = "br%s" % bidno
         docker_net_bridge(
             danme=dnamei, brname=brname, iface=iface, prefix=prefix)
 
-        iface = "eth1"
+        iface = "eth0"
         prefix = "192.1.3.33/24"
         brname = "br%s" % bidn
         docker_net_bridge(
@@ -1589,13 +1584,13 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
         " -w %s -i %s " % (pcap_file, brname) + args.tcpdumpfilter
 
     if "nic" in test:
-        iface = "eth2"
+        iface = "eth1"
         prefix = "192.1.2.254/24"
         brname = "br%s" % bidc
         docker_net_bridge(
             dname=dnamen, brname=brname, iface=iface, prefix=prefix)
 
-        iface = "eth1"
+        iface = "eth0"
         prefix = "192.1.3.254/24"
         brname = "br%s" % bidn
         docker_net_bridge(
@@ -1603,13 +1598,13 @@ def docker_add_net_bridges(args, test, dnamei, dnamer, dnamen):
 
     if test["responder"] == "east":
 
-        iface = "eth2"
+        iface = "eth1"
         prefix = "192.0.2.254/24"
         brname = "br%s" % bide
         docker_net_bridge(
             dname=dnamer, brname=brname, iface=iface, prefix=prefix)
 
-        iface = "eth1"
+        iface = "eth0"
         prefix = "192.1.2.23/24"
         brname = "br%s" % bidc
         docker_net_bridge(
