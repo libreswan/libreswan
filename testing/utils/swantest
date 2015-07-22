@@ -808,7 +808,7 @@ class scantests:
                         test["result"], test["expect"], test["name"], st1, st2)
             else:
                 line = "%s %s\t%s, %s, %s" % (
-                    test["result"], test["expect"], test["name"], st1, st2)
+                    test["result"], "unknown", test["name"], st1, st2)
         else:
             line = "%s no result" % test["name"]
         return line
