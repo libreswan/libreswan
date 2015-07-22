@@ -17,7 +17,7 @@ auto lo
 iface lo inet loopback
 iface lo inet6 loopback
 
-auto eth0 
+auto eth0
 
 #
 # This is a config for UML machine "beet", which is used as a DNS root

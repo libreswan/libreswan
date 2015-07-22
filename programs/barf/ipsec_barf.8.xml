@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>barf</replaceable></arg>
     <arg choice='opt'><arg choice='plain'>--short </arg><arg choice='plain'>--maxlines <replaceable>&lt;100&gt;</replaceable></arg></arg>
 </cmdsynopsis>
@@ -46,7 +46,7 @@ output, which can otherwise be extremely voluminous
 if debug logging is turned on.</para>
 
 <para><option>--maxlines &lt;100&gt;</option>
-option sets the length of some bits of information, 
+option sets the length of some bits of information,
 currently netstat -rn.  Useful on boxes where the routing
 table is thousands of lines long.  Default is 100.</para>
 

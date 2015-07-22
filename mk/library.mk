@@ -23,7 +23,7 @@ OSDEP?=$(shell uname -s | tr 'A-Z' 'a-z')
 
 # Original flags
 INCLUDES+=-I. -I${KLIPSSRCDIR} -I${KLIPSD} -I${LIBRESWANSRCDIR}
-INCLUDES+=-I${LIBRESWANSRCDIR}/include 
+INCLUDES+=-I${LIBRESWANSRCDIR}/include
 # nss
 INCLUDES+=${NSSFLAGS}
 

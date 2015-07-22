@@ -25,7 +25,7 @@ def read_exec_shell_cmd(child, filename, timer):
         try:
             f_cmds = open(filename, "r")
             for line in f_cmds:
-                line = line.strip()    
+                line = line.strip()
                 # We need the lines with # for the cut --- tuc
                 # sections if line and not line[0] == '#':
                 if line:
@@ -80,7 +80,7 @@ def connect_to_kvm(args):
         #child.sendcontrol('c')
         child.sendline ('')
         print("found, waiting on login: or shell prompt")
-        res = child.expect (['login: ', prompt], timeout=3) 
+        res = child.expect (['login: ', prompt], timeout=3)
         if res == 0:
            print("sending login name root")
            child.sendline ('root')
@@ -101,7 +101,7 @@ def connect_to_kvm(args):
         print("(%s [%s] waiting)" % (args.hostname,tries))
         tries -= 1
         time.sleep(1)
- 
+
     if not done:
         print('console is not answering on host %s, aborting'%args.hostname)
         return None
@@ -114,12 +114,12 @@ def connect_to_kvm(args):
 def run_final (args, child):
     timer = 30
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
-    f = open(output_file, 'a') 
+    f = open(output_file, 'a')
     child.logfile = f
     cmd = "./final.sh"
     if os.path.exists(cmd):
         read_exec_shell_cmd(child, cmd, timer)
-    f.close 
+    f.close
     return
 
 def compile_on(args, child):
@@ -139,14 +139,14 @@ def make_install(args, child):
         sys.exit(status)
 
 def run_test(args, child):
-    #print 'HOST : ', args.hostname 
+    #print 'HOST : ', args.hostname
     #print 'TEST : ', args.testname
 
     timer = 120
     child.chdir("%s/pluto/%s " % (args.testdir, args.testname))
 
     output_file = "./OUTPUT/%s.console.verbose.txt" % (args.hostname)
-    f = open(output_file, 'w') 
+    f = open(output_file, 'w')
     child.logfile = f
 
     # do we need to prep x509?
@@ -156,10 +156,10 @@ def run_test(args, child):
     else:
         x509 = ""
 	
-    cmd = "./%sinit.sh" %  (args.hostname) 
+    cmd = "./%sinit.sh" %  (args.hostname)
     read_exec_shell_cmd(child, cmd, timer)
 
-    cmd = "./%srun.sh" %  (args.hostname) 
+    cmd = "./%srun.sh" %  (args.hostname)
     if os.path.exists(cmd):
         read_exec_shell_cmd(child, cmd, timer)
         run_final(args,child)

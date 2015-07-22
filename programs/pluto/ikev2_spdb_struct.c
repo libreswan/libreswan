@@ -777,7 +777,7 @@ static bool spdb_v2_match_parent(struct db_sa *sadb,
 				break;
 
 			case IKEv2_TRANS_TYPE_INTEG:
-				/* 
+				/*
 				 * When AEAD, current logic
 				 * (2015-01-08) still sends a single
 				 * AUTH_NONE INTEG transform, handle

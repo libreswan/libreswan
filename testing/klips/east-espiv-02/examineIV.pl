@@ -12,7 +12,7 @@ sub extractlastcipherblock {
   print STDERR "LAST3: $lastPacketLine3" if $debug;
   @bytes_last_two   = split(/\s+/,$lastPacketLine2);
   @bytes_last_three = split(/\s+/,$lastPacketLine3);
-  
+
   # get rid of offset
   shift @bytes_last_two;
   shift @bytes_last_three;
@@ -22,16 +22,16 @@ sub extractlastcipherblock {
   pop @bytes_last_three;
 
   @bytes = (@bytes_last_three, @bytes_last_two);
-  
+
   # now skip the last 12 bytes as the AUTH MAC.
   # sizes halved because bytes are presented as 16-items
   $len = $#bytes;
   print STDERR "EXTRACT: ".($len-9)."-".($len-6)." of ",join('|',@bytes)."\n" if $debug;
   @cbcbytes = @bytes[($len-9)..($len-6)];
-  
+
   $cbc = join('',@cbcbytes);
   $myiv= $first4IV.$last4IV;
-  
+
   print STDERR "MyIV: ".$myiv." LastCBC: $cbc\n" if $debug;
 
   if($myiv eq $cbc) {
@@ -64,7 +64,7 @@ while(<>) {
     $inpacket=1;
     next;
   }
-  
+
   if(/^\s+0x0010/) {
       print STDERR " FIRST: $_" if $debug;
     @bytes=split(/\s+/,$_);
@@ -72,7 +72,7 @@ while(<>) {
     next;
   }
 
-  if(/^\s+0x0020/) { 
+  if(/^\s+0x0020/) {
       print STDERR "SECOND: $_" if $debug;
     @bytes=split(/\s+/,$_);
     $last4IV = $bytes[1].$bytes[2];

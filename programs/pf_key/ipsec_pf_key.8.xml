@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>pf_key</command>    
+  <command>pf_key</command>
     <arg choice='plain'>--ah </arg>
     <arg choice='plain'>--esp </arg>
     <arg choice='plain'>--ipip </arg>
@@ -46,7 +46,7 @@ options, then it will listen only to those protocols which are listed.</para>
 
 <para>If the messages are recognized, the messages will be decoded.</para>
 
-<para>If the option 
+<para>If the option
 <option>--daemon</option>
 is provided, then after doing the registrations, the program will fork
 into the background. The provided file will be opened and the process ID of

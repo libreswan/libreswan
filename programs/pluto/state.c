@@ -196,7 +196,7 @@ static struct state_category *categorize_state(struct state *st,
 	 * states get a -Wswitch diagnostic
 	 */
 	switch (state) {
-		     
+		
 		/*
 		 * IKEv2 initiators, while the INIT packet is being
 		 * constructed, are in STATE_IKEv2_BASE.  Only when
@@ -561,7 +561,7 @@ void insert_state(struct state *st)
 		    st->st_serialno))
 	insert_by_state_cookies(&statetable, &st->st_hash_entry,
 				st->st_icookie, st->st_rcookie);
-	/* 
+	/*
 	 * Also insert it into the icookie table.  Should be more
 	 * selective about when this is done.
 	 */

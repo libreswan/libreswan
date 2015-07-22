@@ -25,7 +25,7 @@
 <funcsynopsisinfo>
 #include &lt;libreswan.h&gt;
 
-typedef struct { ip_address dst; ipsec_spi_t spi; int proto; 
+typedef struct { ip_address dst; ipsec_spi_t spi; int proto;
  } ip_said; </funcsynopsisinfo>
 <funcprototype>
 <funcdef>const char *<function>ttosa</function></funcdef>
@@ -261,7 +261,7 @@ see DIAGNOSTICS.
 returns
 <literal>0</literal>
 for a failure, and otherwise
-always returns the size of buffer which would 
+always returns the size of buffer which would
 be needed to
 accommodate the full conversion result, including terminating NUL;
 it is the caller's responsibility to check this against the size of

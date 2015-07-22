@@ -397,8 +397,8 @@
 /*!	@brief	Tries to fill in missing keys in a notification dictionary.
  *	@param	notifDict	The dictionary to fill in.
  *	@return	The dictionary with the keys filled in. This will be a separate instance from \a notifDict.
- *	@discussion	This function examines the \a notifDict for missing keys, and 
- *	 tries to get them from the last known registration dictionary. As of 1.1, 
+ *	@discussion	This function examines the \a notifDict for missing keys, and
+ *	 tries to get them from the last known registration dictionary. As of 1.1,
  *	 the keys that it will look for are:
  *
  *	 \li <code>GROWL_APP_NAME</code>

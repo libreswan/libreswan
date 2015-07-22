@@ -108,7 +108,7 @@ def set_cert_extensions(cert, issuer, isCA=False, isRoot=False, ocsp=False, ocsp
 	add_ext(cert, 'basicConstraints', False, bc)
 
 	if not isCA:
-		dnsname = "DNS: " + cnstr 
+		dnsname = "DNS: " + cnstr
 		add_ext(cert, 'subjectAltName', False, dnsname)
 
 	if cnstr == 'usage-server.testing.libreswan.org':
@@ -393,7 +393,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
 				create_pkcs12("pkcs12/", endcert_name, ecert, ekey, signpair[0])
 				serial += 1
 
-				endrev_name = prefix + chainca + "_revoked" 
+				endrev_name = prefix + chainca + "_revoked"
 				top_caname = cname
 				print " - creating %s" % endrev_name
 				ercert, erkey = create_sub_cert(endrev_name + ".testing.libreswan.org",
@@ -406,7 +406,7 @@ def create_chained_certs(chain_ca_roots, max_path, prefix=''):
 				create_pkcs12("pkcs12/", endrev_name, ercert, erkey, signpair[0])
 
 # this special crl was for a openswan/nss freebl combo bug, both of which should
-# long be done with. 
+# long be done with.
 
 def create_leading_zero_crl():
 	""" Create our special crl with a signature that starts out with '00:'
@@ -583,7 +583,7 @@ def run_dist_certs():
 						'sunrise','north','south',
 						'pole','park','beet','carrot',
 					    'usage-server', 'usage-client',
-					    'usage-both', 
+					    'usage-both',
 						'nic-noext', 'nic-nourl',
 						'japan','bigkey', 'key4096',
 						'notyetvalid','notvalidanymore',

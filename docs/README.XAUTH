@@ -25,7 +25,7 @@ Installation:
     /etc/pam.d/pluto policy file for pam authentication.
 
 5.  If you choose the password file then create /etc/ipsec.d/passwd
-    with the following format. 
+    with the following format.
 
 	userid:password:conname
 
@@ -54,12 +54,12 @@ Configure as normal in /etc/ipsec.secrets  - eg:
 On your conn block, simply add "{left|right}xauthserver=yes"
 to enable XAUTH, and "{right|left}xauthclient=yes" for the client side.
 
-Client Configurations - these assume you already have a working 
+Client Configurations - these assume you already have a working
 non-XAUTH connection setup.  These are tested and known to work.
 
 SSH Sentinel 1.4.1
 
-Note: 1.4.0 has a bug where it will only propose Single DES, 
+Note: 1.4.0 has a bug where it will only propose Single DES,
 even if Single DES is disabled.  Please upgrade to 1.4.1
 
 1.	On the Rule Properties page, enabled Extended Authentication.

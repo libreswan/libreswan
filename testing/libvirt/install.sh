@@ -38,7 +38,7 @@ else
 fi
 
 if [ ! -d "${POOLSPACE}" ]; then
-    mkdir -p ${POOLSPACE} 
+    mkdir -p ${POOLSPACE}
     chmod a+x ${POOLSPACE}
 fi
 
@@ -61,7 +61,7 @@ for netname in net/*; do
 	awk '{ print $1 }')" ]; then
 	sudo virsh net-define net/${net}
 	sudo virsh net-autostart ${net}
-	echo ${net} created 
+	echo ${net} created
 	sudo virsh net-start ${net}
 	echo ${net} activated
     elif [ -n "$(sudo virsh net-list --all | grep inactive | grep ${net} | \
@@ -125,7 +125,7 @@ for hostname in $(${TESTDIR}/utils/kvmhosts.sh); do
     fi
 
     # Create VM
-    rm -f vm/${hostname}.converted 
+    rm -f vm/${hostname}.converted
     cp vm/${hostname} vm/${hostname}.converted
     sed -i \
 	-e "s:@@TESTINGDIR@@:${TESTINGDIR}:" \

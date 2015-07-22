@@ -3,7 +3,7 @@
 #umount /usr/local && mount /usr/local
 
 # NOTE: nss threads don't use PLUTO_CRYPTO_HELPER_DEBUG!
-export PLUTO_CRYPTO_HELPER_DEBUG=true 
+export PLUTO_CRYPTO_HELPER_DEBUG=true
 
 TESTNAME=helper-queue-01
 source /testing/pluto/bin/westlocal.sh
@@ -34,7 +34,7 @@ ipsec whack --name westnet-bogus08 --initiate >/dev/null &
 ipsec whack --name westnet-bogus09 --initiate >/dev/null &
 ipsec whack --name westnet-bogus10 --initiate >/dev/null &
 
-ipsec whack --name westnet-eastnet-aggr --initiate 
+ipsec whack --name westnet-eastnet-aggr --initiate
 
-echo done westinit.sh 
+echo done westinit.sh
 

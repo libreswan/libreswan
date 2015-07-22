@@ -10,7 +10,7 @@ if [ "${1}" == "list" -o "${1}" == "--list" ]; then
     cd /vol/git/libreswan/testing/pluto
     ls -d *
     cd ${olddir}
-    exit 
+    exit
 fi
 
 if [ ! -f /testing/pluto/${1}/testparams.sh ]; then

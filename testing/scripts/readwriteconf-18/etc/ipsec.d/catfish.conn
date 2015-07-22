@@ -7,7 +7,7 @@ conn catfish-vpn
 
 conn catfish-transport-irc
 		 rightsubnet=205.150.200.165/32
-	         rightprotoport=tcp/6667 
+	         rightprotoport=tcp/6667
 		 leftprotoport=tcp/1701
 	         type=transport
                  also=catfish-base
@@ -21,7 +21,7 @@ conn catfish-base
                 rightnexthop=205.150.200.241
                 #ike=aes128-sha1-modp1024,aes128-sha1-modp1536,aes128-sha1-modp2048,aes128-sha1-modp3072,aes128-sha1-modp4096
                 #aggrmode=yes
-                # To authorize this connection, but not actually start it, 
+                # To authorize this connection, but not actually start it,
                 # at startup, uncomment this.
 
 

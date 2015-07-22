@@ -1,9 +1,9 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 #
 # (c) Xelerance <ken@xelerance.com>
 #
 # I whipped this up in 15 minutes after switching my laptop to 2.6
-# so it's ugly, and could use some major improvement.  setkey output is 
+# so it's ugly, and could use some major improvement.  setkey output is
 # ugly to parse
 
 open(SETKEY,"setkey -PD|");

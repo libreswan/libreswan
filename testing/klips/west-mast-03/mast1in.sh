@@ -19,7 +19,7 @@ ipsec spi --af inet --edst 192.1.2.45 --spi 0x12345678 --proto esp --src 192.1.2
 
 ipsec spi --af inet --edst 192.1.2.45 --spi 0x12345678 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4 --outif $mastnu
 
-ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp 
+ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp
 
 ifconfig mast0 inet 192.1.2.45 netmask 255.255.255.255 up
 iptables -A INPUT -i mast0 -j DROP

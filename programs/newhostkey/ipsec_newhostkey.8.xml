@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>newhostkey</replaceable></arg>
     <group choice='opt'>
      <arg choice='opt'>--configdir<replaceable>nssdbdir</replaceable></arg>
@@ -47,7 +47,7 @@ outputs (into <emphasis remap='I'>filename</emphasis>, which can be
 using the <option>--quiet</option> option per default.
 </para>
 <para>The <option>--output</option> option is mandatory.
-The specified <emphasis remap='I'>filename</emphasis> is created under umask 
+The specified <emphasis remap='I'>filename</emphasis> is created under umask
 <emphasis remap='B'>077</emphasis> if nonexistent; if it already exists and is
 non-empty, a warning message about that is sent to standard error,
 and the output is appended to the file.</para>
@@ -79,8 +79,8 @@ the output with (via its <option>--hostname</option> option).</para>
 <para>The output format is that of <emphasis remap='I'>rsasigkey</emphasis>,
 with bracketing added to complete the <emphasis remap='I'>ipsec.secrets</emphasis>
 format. In the usual case, where <emphasis remap='I'>ipsec.secrets</emphasis>
-contains only the host’s own private key, the output of 
-<emphasis remap='I'>newhostkey</emphasis> is sufficient as a complete 
+contains only the host’s own private key, the output of
+<emphasis remap='I'>newhostkey</emphasis> is sufficient as a complete
 <emphasis remap='I'>ipsec.secrets</emphasis> file.</para>
 
 </refsect1>

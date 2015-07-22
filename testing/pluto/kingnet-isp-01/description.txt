@@ -2,7 +2,7 @@ This is a test of setting up a VPN in a situation where the ISP has
 provided a single public /32, it has been *routed* (layer 3) to the
 customer at a private 10.net address.
 
-NOTE: NAT is *not* involved. 
+NOTE: NAT is *not* involved.
 
 We will use north, nic, east.
 

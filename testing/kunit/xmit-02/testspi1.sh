@@ -11,9 +11,9 @@ ipsec spi --af inet --edst 205.150.200.252 --spi 0x12345678 --proto esp --src 20
 
 ipsec spi --af inet --edst 205.150.200.252 --spi 0x12345678 --proto tun --src 205.150.200.232 --dst 205.150.200.252 --ip4
 
-ipsec spigrp inet 205.150.200.252 0x12345678 tun inet 205.150.200.252 0x12345678 esp 
+ipsec spigrp inet 205.150.200.252 0x12345678 tun inet 205.150.200.252 0x12345678 esp
 
-ipsec eroute --del --eraf inet --src 205.150.200.163/32 --dst 205.150.200.252/32 
+ipsec eroute --del --eraf inet --src 205.150.200.163/32 --dst 205.150.200.252/32
 ipsec eroute --add --eraf inet --src 205.150.200.163/32 --dst 205.150.200.252/32 --said tun0x12345678@205.150.200.252
 
 # magic route command

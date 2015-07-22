@@ -1,8 +1,8 @@
 #!/usr/bin/python
 #
 # Livetest
-# Tests for functionality of basic ipsec features. 
-# 
+# Tests for functionality of basic ipsec features.
+#
 # Copyright (C) 2009 Daniel Snider <danielsnider12@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ configsetup = "config setup"
 nat_traversal = "nat_traversal=yes"
 
 def outmsg(msg):
-        
+
 	sys.stdout.write(msg)
 	sys.stdout.flush()
 	return len(msg)
@@ -53,7 +53,7 @@ def output(mod, state):
 		sys.stdout.write (s.expandtabs(70 - mod - len (state)))
 		if state == "FAIL": sys.exit(1)
 
-	else: 
+	else:
 		s = "\t["
 		sys.stdout.write(s.expandtabs(70-mod-len(state)))
 
@@ -63,7 +63,7 @@ def output(mod, state):
 
 		sys.stdout.write (state)
 		sys.stdout.write ('\033[0m')
-		sys.stdout.write ("]\n") 
+		sys.stdout.write ("]\n")
 
 		if state == "FAIL": sys.exit(1)
 
@@ -83,11 +83,11 @@ def timeout_command(command, timeout):
                   os.kill(process.pid, signal.SIGKILL)
                   os.waitpid(-1, os.WNOHANG)
                   return None
-	 
+	
 	  return process.wait()
 
 #Check pluto. It should not be running
-def checkPluto():                     
+def checkPluto():
 
 	(status,output) = commands.getstatusoutput("ipsec setup status")
 	
@@ -95,18 +95,18 @@ def checkPluto():
 	#0 - ipsec running	
 	#256 - could be started or stopped
 	#512 - subsystem locked
-	#768 - ipsec stopped 
+	#768 - ipsec stopped
 	
 	if "can not load config" in output:
 		if nocolour: print "\nError: " + output
 		else: print "\n\033[91mError\033[0m: " + output
 		sys.exit(1)	
 	
-	elif status == 0: 
+	elif status == 0:
 		if returnhelp: print "\n\nTo stop pluto use the command: \"ipsec setup stop\"\n"	
 		return "FAIL"
 	
-	elif status == 256: 
+	elif status == 256:
 		outp = commands.getoutput("ipsec ikeping")
 		if "v4 bind: Address already in use" in outp:
 			if returnhelp: print "\n\nTo stop pluto use the command: \"ipsec setup stop\"\n"	
@@ -150,7 +150,7 @@ def checkForwarding():
 #check that send and accept icmp redirects are disabled if netkey is detected
 def check_icmp_redirect(option):
 
-	if "1" in open("/proc/sys/net/ipv4/conf/default/" + option + "_redirects").read(): 
+	if "1" in open("/proc/sys/net/ipv4/conf/default/" + option + "_redirects").read():
 		if returnhelp: print "\n\nTry \"for f in /proc/sys/net/ipv4/conf/*/"+option+"_redirects; do echo 0 > $f; done\"	to fix this problem\n"
 		return "WARNING"
 	else: return "OK"
@@ -231,7 +231,7 @@ def checkNAT():
 
 	else:
 		natflag = 0 #you are not behind natt	
-		return "NO" 
+		return "NO"
 
 #check to make sure NAT address is within RFC1918 address space
 def checkLocalIP():
@@ -253,7 +253,7 @@ def openConf():
 	if f: return "OK"
 	else: return "FAIL"
 
-#check ipsec.conf 
+#check ipsec.conf
 def checkConf(s):
 
 	f = open("/etc/ipsec.conf", 'r')
@@ -265,37 +265,37 @@ def checkConf(s):
 	return "FAIL"
 
 #port check host originating
-def checkPort(port, addr):        
+def checkPort(port, addr):
 	
 	global retryflag, verbose
 	cmd = "ipsec ikeping --ikeport " + str(port) + " " + addr + "/" + str(port)
 	(status,output) = commands.getstatusoutput("ipsec ikeping --ikeport " + str(port) + " " + addr + "/" + str(port))
 
-	if verbose: 
+	if verbose:
 		print "\nPrinting command: " + cmd
 		print "Printing output: " + output + "\n"
 	
-	if (status == 0) | (status > 60000): 
+	if (status == 0) | (status > 60000):
 		retryflag = 0	
 		return "OK"
 
-	else: 
+	else:
 		retryflag = 1	
-		return "FAILED" 
+		return "FAILED"
 
 #start libreswan
 def startPluto():
 
 	status = timeout_command("ipsec setup start", 10)
 
-	if status == 0: return "OK" 
+	if status == 0: return "OK"
 
-	elif "None" in str(status): return "LAG" 
+	elif "None" in str(status): return "LAG"
 
 	else: return "FAIL"
 
 #try to set up tunnel
-def whack(command, timeout):                                
+def whack(command, timeout):
 
 	global retryflag	
 	retryflag = 0
@@ -306,16 +306,16 @@ def whack(command, timeout):
 		if status == 0: return "OK"
 		else: return "FAILED"
 	
-	else: 
+	else:
 		status = timeout_command(command, timeout)
 
 		if status == 0: return "OK"
 
-              	elif "None" in str(status): 
+              	elif "None" in str(status):
 			retryflag = 1	
 			return "FAILED" #more logic could be here for why a command stalled
 
-		else: 
+		else:
 			retryflag = 1	
 			return "FAILED"
 
@@ -330,7 +330,7 @@ def livetestPing():
 
 	if status == 0: return "OK"
 
-        else: 
+        else:
 		retryflag = 1	
 		return "FAILED"
 
@@ -361,7 +361,7 @@ def checkLog():
 	elif "unknown exchange" in output:
                 return "unknown exchange"
 
-	elif "Quick Mode message is for a non-existent" in output: 
+	elif "Quick Mode message is for a non-existent" in output:
 		return "pfs not supported?"
 
 	else: return "not-sure"
@@ -403,7 +403,7 @@ def stopPluto():
 	else: return "FAILED"
 
 #barfanalyse
-def barfAnalyze():     
+def barfAnalyze():
 
         conn = httplib.HTTPConnection(ADDRWEB, 80)
         conn.request("GET", "/cgi-bin/barfanalyze.py")
@@ -443,7 +443,7 @@ def main():
 	global retryflag
 
 	#check privileges
-	if os.getuid() != 0: 
+	if os.getuid() != 0:
 		sys.exit("You are not superuser")
 
 	try:
@@ -464,7 +464,7 @@ def main():
 			if (o == "--nointernets") | (o == "-i"):
 				no_net = 1	
 			if (o == "--quick") | (o == "-q"):
-				quick = 1 
+				quick = 1
 
 	except getopt.GetoptError:
 		print "usage:"
@@ -498,12 +498,12 @@ def main():
 		output (outmsg("Checking for ipsec support in kernel"), checkKern())
 		output (outmsg("Checking for 'ip' command"), checkCommandIP())
 		output (outmsg("Checking for 'iptables' command"), checkCommandIPtables())
-		try: 
+		try:
 			if not no_net: output (outmsg("Checking Internet connectivity"), checkNet())
-		except SystemExit: 
+		except SystemExit:
 			try: output (outmsg("Retry: Checking Internet connectivity"), checkNet())
-			except SystemExit: 
-				if commands.getstatusoutput("ping www.google.com -c 1")[0] == 0: 
+			except SystemExit:
+				if commands.getstatusoutput("ping www.google.com -c 1")[0] == 0:
 					print "Livetest's test facility is currenlty offline. Sorry for the inconvienence, please try again later."
 					sys.exit(1)
 				else: sys.exit(1)
@@ -534,7 +534,7 @@ def main():
 		
 		if not no_net: output (outmsg("Loading \"livetest\" preshared key"), whack("ipsec whack --listen", 0))
 		if not no_net: output (outmsg("Starting \"livetest\" connection (this may take sometime)"), whack("ipsec whack --initiate --name livetest", 60))
-		if retryflag: 
+		if retryflag:
 			output (outmsg("Checking log about tunnel"), checkLog())
 			commands.getoutput("ipsec setup stop")	
 			sys.exit(1)
@@ -549,7 +549,7 @@ def main():
 
 	except KeyboardInterrupt:
 		commands.getoutput("ipsec setup stop")
-		print 
+		print
 		sys.exit(1)
 
 main()

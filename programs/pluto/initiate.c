@@ -353,7 +353,7 @@ void restart_connections_by_peer(struct connection *c)
 
 	for (d = hp->connections; d != NULL; d = d->hp_next) {
 		if (same_host(dnshostname, &host_addr, d->dnshostname,
-					&d->spd.that.host_addr)) 
+					&d->spd.that.host_addr))
 			initiate_connection(d->name, NULL_FD, LEMPTY,
 					pcim_demand_crypto);
 	}
@@ -803,7 +803,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			 * %trap, or something got deleted, perhaps due to an expiry.
 			 */
 #else
-			/* 
+			/*
 			 * XXX We got an acquire (NETKEY only?) for
 			 * something we already have an instance for ??
 			 * We cannot process as normal because the
@@ -901,7 +901,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 	
 				DBG(DBG_OPPO,
 					DBG_log("going to initiate opportunistic, first installing '%s' negotiationshunt",
-						(b->negotiation_shunt == SPI_PASS) ? "pass" : 
+						(b->negotiation_shunt == SPI_PASS) ? "pass" :
 						(b->negotiation_shunt == SPI_HOLD) ? "hold" :
 						"unknown?"));
 	
@@ -918,7 +918,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 	#ifdef HAVE_LABELED_IPSEC
 					, NULL
 	#endif
-					)) 
+					))
 				{
 					libreswan_log("adding bare wide passthrough negotiationshunt failed");
 				} else {
@@ -1378,7 +1378,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
  */
 bool uniqueIDs = FALSE; /* --uniqueids? */
 
-/* 
+/*
  * Called by main_inI3_outR3_tail() which is called for initiator and responder
  * alike! So this function should not be in initiate.c. It is also not called
  * in IKEv2 code. All it does is set latest serial in connection and check xauth,

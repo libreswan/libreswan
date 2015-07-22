@@ -1,7 +1,7 @@
 // This is the primary configuration file for the BIND DNS server named.
 //
-// Please read /usr/share/doc/bind9/README.Debian for information on the 
-// structure of BIND configuration files in Debian, *BEFORE* you customize 
+// Please read /usr/share/doc/bind9/README.Debian for information on the
+// structure of BIND configuration files in Debian, *BEFORE* you customize
 // this configuration file.
 //
 
@@ -16,9 +16,9 @@ options {
 
 	// query-source address * port 53;
 
-	// If your ISP provided one or more IP addresses for stable 
-	// nameservers, you probably want to use them as forwarders.  
-	// Uncomment the following block, and insert the addresses replacing 
+	// If your ISP provided one or more IP addresses for stable
+	// nameservers, you probably want to use them as forwarders.
+	// Uncomment the following block, and insert the addresses replacing
 	// the all-0's placeholder.
 
 	// forwarders {
@@ -30,7 +30,7 @@ options {
 };
 
 // define a key - you should really change the secret since
-// all Debian boxes everywhere will have the same secret 
+// all Debian boxes everywhere will have the same secret
 key "key" {
         algorithm       hmac-md5;
         secret "c3Ryb25nIGVub3VnaCBmb3IgYSBtYW4gYnV0IG1hZGUgZm9yIGEgd29tYW4K";

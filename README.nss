@@ -4,9 +4,9 @@
 # Based on initial documentation by Avesh Agarwal <avagarwa@redhat.com>
 #########################################################################
 
-For detailed developer information about NSS, see 
+For detailed developer information about NSS, see
 http://www.mozilla.org/projects/security/pki/nss/
- 
+
 The NSS crypto library is user space library. It is only used with the
 libreswan userspace IKE daemon pluto for cryptographic operations. NSS
 does not perform IPsec crypto operations inside the kernel (KLIPS
@@ -87,7 +87,7 @@ file must exist for pluto to start.
 The syntax of the "nsspassword" file is:
 
 token_1_name:the_password
-token_2_name:the_password  
+token_2_name:the_password
 
 The name of NSS softtoken (the default software NSS db) when NOT running
 in FIPS mode is "NSS Certificate DB". If you wish to use software NSS
@@ -96,7 +96,7 @@ nsspassword file:
 
 NSS Certificate DB:secret
 
-If running NSS in FIPS mode, the name of NSS softtoken is 
+If running NSS in FIPS mode, the name of NSS softtoken is
 "NSS FIPS 140-2 Certificate DB". If there are smartcards in the system, the
 entries for passwords should be entered in this file as well.
 
@@ -111,7 +111,7 @@ creating raw RSA keys. If a non-default NSS directory is used, this can
 be specified using the -d option.
 
 	ipsec newhostkey --configdir /etc/ipsec.d [--password password] \
-		--output /etc/ipsec.secrets 
+		--output /etc/ipsec.secrets
 
 The password is only required if the NSS database is protected with a
 non-empty password.  All "private" compontents of the raw RSA key in
@@ -157,11 +157,11 @@ certificate can be obtained from anywhere in the world.
 		-w 12 -t "u,u,u" -d sql:/etc/ipsec.d
 
 It creates a user cert with nick name "user1" with attributes
-"u,u,u" signed by the CA cert "ExampleCA". 
+"u,u,u" signed by the CA cert "ExampleCA".
 
 NOTE: You must provide a nick name when creating a user certificate,
 because pluto reads the user certificate from the NSS database based on
-the user certificate's nickname. 
+the user certificate's nickname.
 
 
 #########################################################################
@@ -263,7 +263,7 @@ To make smartcard tokens visible through NSS
 
 	modutil -add <module_name> -libfile libcoolkeypk11.so \
 		-dbdir <nss_database_dir_name> \
-		-mechanisms  <mechanisms_separted_by_colons> 
+		-mechanisms  <mechanisms_separted_by_colons>
 
 An example of mechanisms can be
 RC2:RC4:DES:DH:SHA1:MD5:MD2:SSL:TLS:AES:CAMELLIA.

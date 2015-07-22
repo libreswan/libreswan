@@ -2148,7 +2148,7 @@ struct connection *build_outgoing_opportunistic_connection(struct gw_info *gw,
 	passert(!isanyaddr(our_client) && !isanyaddr(peer_client));
 
 	/* We don't know his ID yet, so gw id must be an ipaddr */
-	// valid for AUTH_NULL 
+	// valid for AUTH_NULL
 	// passert(gw->key != NULL);
 	// passert(id_is_ipaddr(&gw->gw_id));
 
@@ -2841,7 +2841,7 @@ struct connection *refine_host_connection(const struct state *st,
 				if (pri == NULL)
 					continue;	/* no key */
 
-				if (initiator && 
+				if (initiator &&
 				    !same_RSA_public_key(&my_RSA_pri->pub, &pri->pub)) {
 					continue;	/* different key */
 				}

@@ -41,7 +41,7 @@ git archive --format=tar --prefix=libreswan-$VERSION/ HEAD | gzip > release/libr
 
 # subshell for easier path
 (
-	cd release 
+	cd release
 	tar zxf libreswan-$VERSION.tar.gz
 	cd libreswan-$VERSION
 	echo "IPSECBASEVERSION?=$VERSION" > Makefile.ver
@@ -50,7 +50,7 @@ git archive --format=tar --prefix=libreswan-$VERSION/ HEAD | gzip > release/libr
 	do
 		sed -i "s/IPSECBASEVERSION/$VERSION/" $file
 	done
-	cd .. 
+	cd ..
 	tar zcf libreswan-$VERSION.tar.gz libreswan-$VERSION
 )
 ls -l release/libreswan-$VERSION.tar.gz

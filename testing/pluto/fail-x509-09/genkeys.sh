@@ -23,8 +23,8 @@ openssl x509 -days 3650 -CA keyA.crt -CAkey keyA-priv.pem -CAserial fakeindex.tx
 
 # cert certificates to DER format, and concatenate them.
 # we keep a uuencoded copy of the concatenation.
-openssl asn1parse -inform pem -in keyAB.crt -noout -out keyAB.der 
-openssl asn1parse -inform pem -in keyB.crt -noout -out keyB.der 
+openssl asn1parse -inform pem -in keyAB.crt -noout -out keyAB.der
+openssl asn1parse -inform pem -in keyB.crt -noout -out keyB.der
 
 cat keyAB.der keyB.der | uuencode keyChain.der >keyChain.duu
 

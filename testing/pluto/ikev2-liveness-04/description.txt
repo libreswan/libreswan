@@ -5,5 +5,5 @@ when west is killed, east goes without a response until
 the dpdtimeout is hit and the dpdaction is taken
 
 testing dpdaction=restart
-with liveness settings on both east and west, to 
+with liveness settings on both east and west, to
 catch any problems crossing exchanges

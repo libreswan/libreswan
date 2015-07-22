@@ -18,7 +18,7 @@ ipsec auto  $CFG --route clear
 
 /testing/pluto/co-terminal-02/eroutewait.sh pass
 
-ipsec whack --debug-oppo --debug-control --debug-controlmore 
+ipsec whack --debug-oppo --debug-control --debug-controlmore
 
 ipsec auto  $CFG --add private-or-clear
 ipsec whack --listen

@@ -46,7 +46,7 @@ void print_chunk(const char *prefix, chunk_t chunk, size_t binlen)
         size_t len = binlen == 0 ? chunk.len
                 : binlen < chunk.len ? binlen
                 : chunk.len;
-        
+
         size_t i = 0;
         for (i = 0; i < len; i++) {
                 printf("%02x", chunk.ptr[i]);

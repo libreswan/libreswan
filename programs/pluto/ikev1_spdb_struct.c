@@ -775,7 +775,7 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	 * These policy bits will be used in a call to find_host_connection.
 	 * The meaning is: each of these present bits must be present
 	 * in a connection's policy.
-	 * 
+	 *
 	 * If both PSK and RSASIG are present now, that means that
 	 * either is acceptible.  The right way to express this is
 	 * to turn both off!

@@ -43,7 +43,7 @@ ike_alg_register_enc(): Activating aes_gcm_8: Ok
 ike_alg_register_enc(): Activating aes_gcm_12: Ok
 ike_alg_register_enc(): Activating aes_gcm_16: Ok
 | Registered AEAD AES CCM/GCM algorithms
-| finish_pfkey_msg: K_SADB_REGISTER message 1 for AH 
+| finish_pfkey_msg: K_SADB_REGISTER message 1 for AH
 | status value returned by setting the priority of this thread (crypto helper 0) 22
 | crypto helper 0 waiting on fd 9
 |   02 07 00 02  02 00 00 00  01 00 00 00  b4 29 00 00
@@ -97,7 +97,7 @@ ike_alg_register_enc(): Activating aes_gcm_16: Ok
 | kernel_alg_add(2,15,13) fails because alg combo is invalid
 | kernel_alg_register_pfkey(): SADB_SATYPE_AH: alg[17], exttype=15, satype=2, alg_id=13, alg_ivlen=8, alg_minbits=160, alg_maxbits=288, res=0, ret=-1
 | AH registered with kernel.
-| finish_pfkey_msg: K_SADB_REGISTER message 2 for ESP 
+| finish_pfkey_msg: K_SADB_REGISTER message 2 for ESP
 |   02 07 00 03  02 00 00 00  02 00 00 00  b4 29 00 00
 | pfkey_get: K_SADB_REGISTER message 2
 | kernel_alg_register_pfkey(): SADB_SATYPE_ESP: sadb_msg_len=22 sadb_supported_len=72
@@ -149,7 +149,7 @@ ike_alg_register_enc(): Activating aes_gcm_16: Ok
 | kernel_alg_add(): satype=3, exttype=15, alg_id=13(ESP_AES_CTR)
 | kernel_alg_register_pfkey(): SADB_SATYPE_ESP: alg[17], exttype=15, satype=3, alg_id=13, alg_ivlen=8, alg_minbits=160, alg_maxbits=288, res=0, ret=1
 | ESP registered with kernel.
-| finish_pfkey_msg: K_SADB_REGISTER message 3 for IPCOMP 
+| finish_pfkey_msg: K_SADB_REGISTER message 3 for IPCOMP
 |   02 07 00 09  02 00 00 00  03 00 00 00  b4 29 00 00
 | pfkey_get: K_SADB_REGISTER message 3
 | IPCOMP registered with kernel.
@@ -160,18 +160,18 @@ ike_alg_register_enc(): Activating aes_gcm_16: Ok
 | event added after event EVENT_REINIT_SECRET
 | next event EVENT_PENDING_DDNS in 59 seconds
 | calling addconn helper using execve
-|  
+|
 | *received whack message
 listening for IKE messages
-| Inspecting interface lo 
+| Inspecting interface lo
 | found lo with address 127.0.0.1
-| Inspecting interface eth0 
+| Inspecting interface eth0
 | found eth0 with address 10.211.55.31
-| Inspecting interface eth1 
+| Inspecting interface eth1
 | found eth1 with address 10.37.129.25
-| Inspecting interface eth2 
+| Inspecting interface eth2
 | found eth2 with address 192.1.2.23
-| Inspecting interface eth2 
+| Inspecting interface eth2
 | found eth2 with address 192.0.2.254
 adding interface eth2/eth2 192.0.2.254:500
 | NAT-Traversal: Trying new style NAT-T
@@ -215,18 +215,18 @@ loading secrets from "/etc/ipsec.secrets"
 | next event EVENT_PENDING_DDNS in 58 seconds
 | next event EVENT_PENDING_DDNS in 58 seconds
 | reaped addconn helper child
-|  
+|
 | *received whack message
 listening for IKE messages
-| Inspecting interface lo 
+| Inspecting interface lo
 | found lo with address 127.0.0.1
-| Inspecting interface eth0 
+| Inspecting interface eth0
 | found eth0 with address 10.211.55.31
-| Inspecting interface eth1 
+| Inspecting interface eth1
 | found eth1 with address 10.37.129.25
-| Inspecting interface eth2 
+| Inspecting interface eth2
 | found eth2 with address 192.1.2.23
-| Inspecting interface eth2 
+| Inspecting interface eth2
 | found eth2 with address 192.0.2.254
 | certs and keys locked by 'free_preshared_secrets'
 forgetting secrets
@@ -240,7 +240,7 @@ loading secrets from "/etc/ipsec.secrets"
 | * processed 0 messages from cryptographic helpers
 | next event EVENT_PENDING_DDNS in 58 seconds
 | next event EVENT_PENDING_DDNS in 58 seconds
-|  
+|
 | *received whack message
 | Added new connection roadnet-eastnet-ipv4-psk-ikev2 with policy PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW
 | counting wild cards for @road is 0
@@ -254,12 +254,12 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | * processed 0 messages from cryptographic helpers
 | next event EVENT_PENDING_DDNS in 58 seconds
 | next event EVENT_PENDING_DDNS in 58 seconds
-|  
+|
 | *received whack message
 | * processed 0 messages from cryptographic helpers
 | next event EVENT_PENDING_DDNS in 58 seconds
 | next event EVENT_PENDING_DDNS in 58 seconds
-|  
+|
 | *received 664 bytes from 192.1.3.209:500 on eth2 (port=500)
 |   eb 68 75 06  3d f3 09 7e  00 00 00 00  00 00 00 00
 |   21 20 22 08  00 00 00 00  00 00 02 98  22 00 01 18
@@ -454,7 +454,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 |   48 6c 45 11  ff de eb eb  49 d4 c0 d6  62 b3 9b 4c
 | NSS: Local DH public value (pointer): 0x7fb50e1b7820
 | Generated nonce:  2c 12 25 90  56 49 63 75  90 2e 85 46  06 33 75 92
-|  
+|
 | crypto helper 0 has finished work (pcw_work now 1)
 | crypto helper 0 replies to request ID 1
 | calling continuation function 0x7fb515d84bd5
@@ -883,7 +883,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | * processed 1 messages from cryptographic helpers
 | next event EVENT_PENDING_DDNS in 52 seconds
 | next event EVENT_PENDING_DDNS in 52 seconds
-|  
+|
 | *received 356 bytes from 192.1.3.209:500 on eth2 (port=500)
 |   eb 68 75 06  3d f3 09 7e  27 ea 14 3b  d1 bb 4f 51
 |   2e 20 23 08  00 00 00 01  00 00 01 64  23 00 01 48
@@ -990,14 +990,14 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | NSS ikev2: finished computing key material for IKEv2 SA
 | NSS ikev2: finished computing individual keys for IKEv2 SA
 | calc_skeyseed_v2 pointers: shared 0x7fb50e05af80, skeyseed 0x7fb50e094f80, SK_d 0x7fb50e08df80, SK_ai 0x7fb50e087f80, SK_ar 0x7fb50e0b2f80, SK_ei 0x7fb50e078f80, SK_er 0x7fb50e06bf80, SK_pi 0x7fb50e0c1f80, SK_pr 0x7fb50ded1f80
-|  
+|
 | crypto helper 0 has finished work (pcw_work now 1)
 | crypto helper 0 replies to request ID 2
 | calling continuation function 0x7fb515d87330
 | ikev2_parent_inI2outR2_continue for #1: calculating g^{xy}, sending R2
 | processing connection roadnet-eastnet-ipv4-psk-ikev2[1] 192.1.3.209
 | #1 ikev2_parent_inI2outR2_continue:1972 st->st_calculating = FALSE;
-| hmac_update data value: 
+| hmac_update data value:
 |   eb 68 75 06  3d f3 09 7e  27 ea 14 3b  d1 bb 4f 51
 |   2e 20 23 08  00 00 00 01  00 00 01 64  23 00 01 48
 |   a3 a1 21 54  98 f0 65 6e  2e 8a 43 04  d7 73 d0 b2
@@ -1164,7 +1164,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | processing payload: ISAKMP_NEXT_v2N (len=8)
 "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.3.209 #1: IKEv2 mode peer ID is ID_FQDN: '@road'
 | idhash verify I2  02 00 00 00  72 6f 61 64
-| hmac_update data value: 
+| hmac_update data value:
 |   02 00 00 00  72 6f 61 64
 | hmac_update: inside if
 | hmac_update: after digest
@@ -1181,7 +1181,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | line 1: match=12
 | best_match 0>12 best=0x7fb50e11bef8 (line=1)
 | concluding with best_match=12 best=0x7fb50e11bef8 (lineno=1)
-| hmac_update data value: 
+| hmac_update data value:
 |   4b 65 79 20  50 61 64 20  66 6f 72 20  49 4b 45 76
 |   32
 | hmac_update: inside if
@@ -1189,7 +1189,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | hmac_update: after assert
 | negotiated prf: oakley_md5 hash length: 16
 | inner prf output  8d dd d6 a0  26 08 49 b6  f8 38 8e a7  b5 aa e3 d0
-| hmac_update data value: 
+| hmac_update data value:
 |   eb 68 75 06  3d f3 09 7e  00 00 00 00  00 00 00 00
 |   21 20 22 08  00 00 00 00  00 00 02 98  22 00 01 18
 |   02 00 00 28  01 01 00 04  03 00 00 08  01 00 00 03
@@ -1235,12 +1235,12 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   2c 12 25 90  56 49 63 75  90 2e 85 46  06 33 75 92
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   ba 00 ce 0c  6d f3 ae 12  da 0e d3 a8  8c cb ae 13
 | hmac_update: inside if
 | hmac_update: after digest
@@ -1316,7 +1316,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | IV  78 50 e3 2e  1d 9d c0 2b
 | IKEv2 thinking whether to send my certificate:
 |  my policy has no RSASIG, the policy is : PSK+ENCRYPT+TUNNEL+PFS+IKEV1_DISABLE+IKEV2_ALLOW+IKEV2_PROPOSE+IKEV2_ALLOW_NARROWING+SAREF_TRACK+IKE_FRAG_ALLOW
-|  sendcert: CERT_ALWAYSSEND and I did not get a certificate request 
+|  sendcert: CERT_ALWAYSSEND and I did not get a certificate request
 |  so do not send cert.
 | I did not send a certificate because digital signatures are not being used. (PSK)
 | *****emit IKEv2 Identification Payload:
@@ -1327,7 +1327,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | my identity  65 61 73 74
 | emitting length of IKEv2 Identification Payload: 12
 | idhash calc R2  02 00 00 00  65 61 73 74
-| hmac_update data value: 
+| hmac_update data value:
 |   02 00 00 00  65 61 73 74
 | hmac_update: inside if
 | hmac_update: after digest
@@ -1347,7 +1347,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | line 1: match=12
 | best_match 0>12 best=0x7fb50e11bef8 (line=1)
 | concluding with best_match=12 best=0x7fb50e11bef8 (lineno=1)
-| hmac_update data value: 
+| hmac_update data value:
 |   4b 65 79 20  50 61 64 20  66 6f 72 20  49 4b 45 76
 |   32
 | hmac_update: inside if
@@ -1355,7 +1355,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | hmac_update: after assert
 | negotiated prf: oakley_md5 hash length: 16
 | inner prf output  8d dd d6 a0  26 08 49 b6  f8 38 8e a7  b5 aa e3 d0
-| hmac_update data value: 
+| hmac_update data value:
 |   eb 68 75 06  3d f3 09 7e  27 ea 14 3b  d1 bb 4f 51
 |   21 20 22 20  00 00 00 00  00 00 01 9c  22 00 00 2c
 |   00 00 00 28  01 01 00 04  03 00 00 08  01 00 00 03
@@ -1385,13 +1385,13 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   4f 67 51 bb  2a c8 fd 85  d1 8d 6d 34  7f a9 4b fb
 |   80 ce 63 fc  eb 83 8d 59  c0 fb 51 dd  9a 39 b6 cf
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   09 28 2a 30  5d aa 9f 44  c9 2f c6 60  d1 91 34 a2
 | hmac_update: inside if
 | hmac_update: after digest
@@ -1743,128 +1743,128 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | emitting length of IKEv2 Traffic Selector Payload: 24
 | kernel_alg_esp_info(): transid=12, auth=2, ei=0x7fb51606ccd0, enckeylen=16, authkeylen=20, encryptalg=12, authalg=3
 | enckeylen=16, authkeylen=20, keymat_len=36
-| hmac_update data value: 
-| 
-| hmac_update data value: 
+| hmac_update data value:
+|
+| hmac_update data value:
 |   4f 67 51 bb  2a c8 fd 85  d1 8d 6d 34  7f a9 4b fb
 |   80 ce 63 fc  eb 83 8d 59  c0 fb 51 dd  9a 39 b6 cf
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   2c 12 25 90  56 49 63 75  90 2e 85 46  06 33 75 92
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
-| 
-| hmac_update data value: 
-| 
-| hmac_update data value: 
+| hmac_update data value:
+|
+| hmac_update data value:
+|
+| hmac_update data value:
 |   01
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
 | prf+[1]:  64 b5 db 50  a3 d4 19 07  f9 15 05 65  0b 71 9a 31
-| hmac_update data value: 
+| hmac_update data value:
 |   64 b5 db 50  a3 d4 19 07  f9 15 05 65  0b 71 9a 31
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   4f 67 51 bb  2a c8 fd 85  d1 8d 6d 34  7f a9 4b fb
 |   80 ce 63 fc  eb 83 8d 59  c0 fb 51 dd  9a 39 b6 cf
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   2c 12 25 90  56 49 63 75  90 2e 85 46  06 33 75 92
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
-| 
-| hmac_update data value: 
-| 
-| hmac_update data value: 
+| hmac_update data value:
+|
+| hmac_update data value:
+|
+| hmac_update data value:
 |   02
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
 | prf+[2]:  a2 56 61 68  41 9a eb 8a  7b 9b 38 d2  06 31 bf 41
-| hmac_update data value: 
+| hmac_update data value:
 |   a2 56 61 68  41 9a eb 8a  7b 9b 38 d2  06 31 bf 41
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   4f 67 51 bb  2a c8 fd 85  d1 8d 6d 34  7f a9 4b fb
 |   80 ce 63 fc  eb 83 8d 59  c0 fb 51 dd  9a 39 b6 cf
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   2c 12 25 90  56 49 63 75  90 2e 85 46  06 33 75 92
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
-| 
-| hmac_update data value: 
-| 
-| hmac_update data value: 
+| hmac_update data value:
+|
+| hmac_update data value:
+|
+| hmac_update data value:
 |   03
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
 | prf+[3]:  67 c5 c8 55  ad 58 72 c3  3c da 39 22  aa c6 23 c8
-| hmac_update data value: 
+| hmac_update data value:
 |   67 c5 c8 55  ad 58 72 c3  3c da 39 22  aa c6 23 c8
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   4f 67 51 bb  2a c8 fd 85  d1 8d 6d 34  7f a9 4b fb
 |   80 ce 63 fc  eb 83 8d 59  c0 fb 51 dd  9a 39 b6 cf
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   2c 12 25 90  56 49 63 75  90 2e 85 46  06 33 75 92
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
-| 
-| hmac_update data value: 
-| 
-| hmac_update data value: 
+| hmac_update data value:
+|
+| hmac_update data value:
+|
+| hmac_update data value:
 |   04
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
 | prf+[4]:  21 0b 3c f2  bf 73 97 8a  cf b5 9b 35  89 b4 ab 52
-| hmac_update data value: 
+| hmac_update data value:
 |   21 0b 3c f2  bf 73 97 8a  cf b5 9b 35  89 b4 ab 52
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   4f 67 51 bb  2a c8 fd 85  d1 8d 6d 34  7f a9 4b fb
 |   80 ce 63 fc  eb 83 8d 59  c0 fb 51 dd  9a 39 b6 cf
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
+| hmac_update data value:
 |   2c 12 25 90  56 49 63 75  90 2e 85 46  06 33 75 92
 | hmac_update: inside if
 | hmac_update: after digest
 | hmac_update: after assert
-| hmac_update data value: 
-| 
-| hmac_update data value: 
-| 
-| hmac_update data value: 
+| hmac_update data value:
+|
+| hmac_update data value:
+|
+| hmac_update data value:
 |   05
 | hmac_update: inside if
 | hmac_update: after digest
@@ -1995,7 +1995,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | Inside authloc
 | authkey pointer: 0x7fb50e0b2f80
 | Inside authloc after init
-| hmac_update data value: 
+| hmac_update data value:
 |   eb 68 75 06  3d f3 09 7e  27 ea 14 3b  d1 bb 4f 51
 |   2e 20 23 20  00 00 00 01  00 00 00 cc  24 00 00 b0
 |   78 50 e3 2e  1d 9d c0 2b  d8 58 38 24  fa 60 d8 5e
@@ -2055,7 +2055,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | * processed 1 messages from cryptographic helpers
 | next event EVENT_PENDING_DDNS in 51 seconds
 | next event EVENT_PENDING_DDNS in 51 seconds
-|  
+|
 | *received 356 bytes from 192.1.3.209:500 on eth2 (port=500)
 |   eb 68 75 06  3d f3 09 7e  27 ea 14 3b  d1 bb 4f 51
 |   2e 20 23 08  00 00 00 01  00 00 01 64  23 00 01 48
@@ -2116,7 +2116,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | * processed 0 messages from cryptographic helpers
 | next event EVENT_PENDING_DDNS in 48 seconds
 | next event EVENT_PENDING_DDNS in 48 seconds
-|  
+|
 | *received 356 bytes from 192.1.3.209:500 on eth2 (port=500)
 |   eb 68 75 06  3d f3 09 7e  27 ea 14 3b  d1 bb 4f 51
 |   2e 20 23 08  00 00 00 01  00 00 01 64  23 00 01 48
@@ -2177,7 +2177,7 @@ added connection description "roadnet-eastnet-ipv4-psk-ikev2"
 | * processed 0 messages from cryptographic helpers
 | next event EVENT_PENDING_DDNS in 41 seconds
 | next event EVENT_PENDING_DDNS in 41 seconds
-|  
+|
 | *received 356 bytes from 192.1.3.209:500 on eth2 (port=500)
 |   eb 68 75 06  3d f3 09 7e  27 ea 14 3b  d1 bb 4f 51
 |   2e 20 23 08  00 00 00 01  00 00 01 64  23 00 01 48

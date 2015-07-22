@@ -21,10 +21,10 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>_realsetup</emphasis>
-is called by the system init scripts to start the FreeS/WAN 
-system. It starts 
+is called by the system init scripts to start the FreeS/WAN
+system. It starts
 <emphasis remap='B'>KLIPS</emphasis>
-(the kernel component) and 
+(the kernel component) and
 <emphasis remap='B'>pluto</emphasis>
 (the userspace keying component).</para>
 </refsect1>

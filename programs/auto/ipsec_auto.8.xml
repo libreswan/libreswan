@@ -20,26 +20,26 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
     <arg choice='opt'>--showonly </arg>
     <arg choice='opt'>--asynchronous </arg>
     <sbr/>
     <arg choice='opt'><arg choice='plain'>--config </arg><arg choice='plain'><replaceable>configfile</replaceable></arg></arg>
     <arg choice='opt'>--verbose </arg>
-    <arg choice='plain'><replaceable>operation 
+    <arg choice='plain'><replaceable>operation
 connection</replaceable></arg>
     <sbr/>
 </cmdsynopsis>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
     <arg choice='opt'>--showonly </arg>
     <arg choice='opt'>--asynchronous </arg>
     <sbr/>
     <arg choice='opt'><arg choice='plain'>--config </arg><arg choice='plain'><replaceable>configfile</replaceable></arg></arg>
     <arg choice='opt'>--verbose </arg>
-    <arg choice='plain'><replaceable>operation 
+    <arg choice='plain'><replaceable>operation
 connection</replaceable></arg>
     <sbr/>
 </cmdsynopsis>
@@ -47,24 +47,24 @@ connection</replaceable></arg>
 
 <refsect1 id='examples'><title>EXAMPLES</title>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
     <arg choice='plain'>{ --add | --delete | --replace | --up | --down }</arg>
-    <arg choice='plain'><replaceable>connection</replaceable></arg> 
+    <arg choice='plain'><replaceable>connection</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
     <arg choice='plain'>{ --status | --ready  }</arg>
 </cmdsynopsis>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
     <arg choice='plain'>{ --route | --unroute  }</arg>
-    <arg choice='plain'><replaceable>connection</replaceable></arg> 
+    <arg choice='plain'><replaceable>connection</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>auto</replaceable></arg>
     <arg choice='opt'>--utc </arg>
     <arg choice='opt'>--listall | --rereadall </arg>
@@ -249,7 +249,7 @@ but that may change.)</para>
        ipsec.conf(5). To see all certificates in the NSS database, use <option>certutil -d /etc/ipsec.d -L</option>.
 </para>
 <para>      The  <option>--checkpubkeys</option>  operation  lists  all loaded X.509 certificates
-       which are about to expire or have been expired.  
+       which are about to expire or have been expired.
 </para>
 <para>       The  <option>--listcacerts</option>  operation  lists  all  X.509 CA certificates contained in
 	the NSS database.
@@ -262,7 +262,7 @@ but that may change.)</para>
        either  loaded  locally from the /etc/ipsec.d/crls directory or fetched
        dynamically from an HTTP or LDAP server.
 </para>
-<para>       The  <option>--listall</option>  operation is equivalent to the execution of 
+<para>       The  <option>--listall</option>  operation is equivalent to the execution of
        --listpubkeys,  --listcerts,  --listcacerts,  --listgroups, --listcrls.
 </para>
 <para>       The  <option>--purgeocsp</option>  operation displays --listall and purges the NSS OCSP cache.

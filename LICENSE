@@ -3,24 +3,24 @@ this software is under the GNU Public License, see the file COPYING.
 See the file CREDITS for details on origins of more of the code.
 
 The linux/net/ipsec/radij.c code is derived from BSD 4.4lite code
-from sys/net/radix.c. 
+from sys/net/radix.c.
 
 In addition to the terms set out under the GPL, permission is granted to
 link the software against the libdes, md5c.c, and radij.c libraries just
-mentioned.  
+mentioned.
 
 
 The following additional notes apply if if you are NOT using CrytpoAPI:
 
 The DES library is under a BSD style license, see
 	linux/crypto/ciphers/des/COPYRIGHT.
-	Note that this software has a advertising clause in it. 
+	Note that this software has a advertising clause in it.
 
 
 The MD5 implementation is from RSADSI, so this package must include the
-following phrase:  
+following phrase:
 
-"derived from the RSA Data Security, Inc. MD5 Message-Digest Algorithm".  
+"derived from the RSA Data Security, Inc. MD5 Message-Digest Algorithm".
 It is not under the GPL; see details in linux/net/ipsec/ipsec_md5c.c.
 
 Code in lib/libswan/nss_copies.c is used under the Mozilla Public License

@@ -24,7 +24,7 @@ OBJS+=${OBJDIRTOP}/programs/pluto/ike_alg_aes.o
 OBJS+=${OBJDIRTOP}/programs/pluto/ike_alg_sha2.o
 OBJS+=${OBJDIRTOP}/programs/pluto/kernel_noklips.o
 
-OBJS+=${PLUTOLIB} 
+OBJS+=${PLUTOLIB}
 PROGLIBS=
 EXTRALIBS+=${PLUTOLIB} ${CRYPTOLIBS} ${WHACKLIB}
 

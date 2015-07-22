@@ -8,6 +8,6 @@ echo "sleeping a bit.. 2"
 sleep 2
 ipsec auto --status
 ipsec look
-ip xfrm pol 
+ip xfrm pol
 ip xfrm state
 echo done

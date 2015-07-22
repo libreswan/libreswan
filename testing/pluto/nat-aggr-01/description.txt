@@ -9,7 +9,7 @@ The network is configured as follows:
       NIC---EAST--SUNRISE
 
 A NAT is setup on NIC that does traditional NAPT on the
-NORTH network. 
+NORTH network.
 
 The simple test is to connect the POLE and SUNRISE networks
 together. This is tested with a ping, a la "basic-pluto-03"

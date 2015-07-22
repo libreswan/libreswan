@@ -1,2 +1,2 @@
-ipsec auto --up road-east-psk 
+ipsec auto --up road-east-psk
 echo done.

@@ -109,13 +109,13 @@ list-local-base:
 	)
 
 # set values for implicit rules.
-LOADLIBS=${OBJS} 
+LOADLIBS=${OBJS}
 
 LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp ${NSSLIBS}
 
 
 %: %.o $(OBJS) ${LIBS}
-	$(CC) $(CFLAGS) -o $@ $@.o ${OBJS} $(LDFLAGS) $(LDLIBS) $(USERLINK) 
+	$(CC) $(CFLAGS) -o $@ $@.o ${OBJS} $(LDFLAGS) $(LDLIBS) $(USERLINK)
 
 # cancel direct version
 %: %.c
@@ -126,8 +126,8 @@ LDLIBS=${LIBS} ${USERLINK} ${LIBS} ${EXTRALIBS} -lgmp ${NSSLIBS}
 %.o: ${SRCDIR}%.c
 	${CC} -c ${CFLAGS} $<
 
-%.i: %.c 
-	$(CC) $(CFLAGS) -E -o $@ $< 
+%.i: %.c
+	$(CC) $(CFLAGS) -E -o $@ $<
 
 %: ${SRCDIR}%.in ${LIBRESWANSRCDIR}/Makefile.inc ${LIBRESWANSRCDIR}/Makefile.ver ${LIBRESWANSRCDIR}/Makefile.top
 	@echo  'IN' $< '->' $@

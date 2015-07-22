@@ -19,7 +19,7 @@ ipsec setup start
 ipsec whack --whackrecord /var/tmp/ikev2.record
 ipsec auto --add westnet-eastnet-ipv4
 ipsec auto --status
-ipsec whack --debug-control --debug-controlmore 
+ipsec whack --debug-control --debug-controlmore
 
 echo "initdone"
 

@@ -140,7 +140,7 @@ PK11SymKey *ikev1_skeyid_e(const struct hash_desc *hasher,
 }
 
 static PK11SymKey *appendix_b_keymat_e(const struct hash_desc *hasher,
-				       const struct encrypt_desc *encrypter, 
+				       const struct encrypt_desc *encrypter,
 				       PK11SymKey *skeyid_e,
 				       unsigned required_keymat)
 {
@@ -171,7 +171,7 @@ static PK11SymKey *appendix_b_keymat_e(const struct hash_desc *hasher,
 		append_symkey_symkey(hasher, &keymat, new_k);
 		free_any_symkey("old_k#N", &old_k);
 		old_k = new_k;
-	} 
+	}
 	free_any_symkey("old_k#final", &old_k);
 	PK11SymKey *cryptkey = encrypt_key_from_symkey_bytes(keymat, encrypter, 0,
 							     required_keymat);

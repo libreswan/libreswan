@@ -31,7 +31,7 @@
 
 static const char crl_name[] = "_import_crl";
 
-/* 
+/*
  * Calls the _import_crl process to add a CRL to the NSS db.
  */
 int send_crl_to_import(u_char *der, size_t len, const char *url)

@@ -9,17 +9,17 @@ KLIPS_FLAGS+=-I../include
 #KLIPS_FLAGS+=-I${UMLPLAIN}/arch/um/kernel/skas/include
 
 KLIPS_FLAGS+=-D__KERNEL__ -DKUNIT
-KLIPS_FLAGS+=-g -O2 -U__i386__ -Ui386  -D__arch_um__ -DSUBARCH=\"i386\" 
-KLIPS_FLAGS+=-D_LARGEFILE64_SOURCE 
+KLIPS_FLAGS+=-g -O2 -U__i386__ -Ui386  -D__arch_um__ -DSUBARCH=\"i386\"
+KLIPS_FLAGS+=-D_LARGEFILE64_SOURCE
 KLIPS_FLAGS+=-Wall -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing
 KLIPS_FLAGS+=-fno-common -ffreestanding -fomit-frame-pointer
 
 KLIPS_FLAGS+=-DCONFIG_NETFILTER
 
-UCFLAGS=-I. -I${SRCDIR} ${KLIPS_FLAGS} 
+UCFLAGS=-I. -I${SRCDIR} ${KLIPS_FLAGS}
 
 #KCFLAGS+=-nostdinc -isystem /usr/lib/gcc-lib/i486-linux/3.3.5/include
-KCFLAGS+=${KLIPS_FLAGS} 
+KCFLAGS+=${KLIPS_FLAGS}
 KCFLAGS+=-DHASH_DEBUG
 KCFLAGS+=-include ${LIBRESWANSRCDIR}/packaging/linus/config-all.h
 KCFLAGS+=-DIPCOMP_PREFIX  -DMODULE -DKBUILD_MODNAME=rcv01test

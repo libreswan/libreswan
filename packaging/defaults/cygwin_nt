@@ -1,7 +1,7 @@
 CC=gcc
-PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/win2k/include 
+PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/win2k/include
 USERCOMPILE+=-mcygwin -D__CYGWIN__ -D__CYGWIN32__
-USERLINK=-mcygwin 
+USERLINK=-mcygwin
 OSDEP=cygwin
 
 USE_KLIPS=false

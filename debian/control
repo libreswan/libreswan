@@ -17,8 +17,8 @@ Provides: ike-server
 Conflicts: ike-server
 Replaces: ike-server
 Description: Internet Key Exchange daemon
- Libreswan is an IPsec implementation for Linux. It has support for most 
- of the extensions (RFC + IETF drafts) related to IPsec, including 
+ Libreswan is an IPsec implementation for Linux. It has support for most
+ of the extensions (RFC + IETF drafts) related to IPsec, including
  IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
  .
  Libreswan has been forked from Openswan 2.6.38, which was forked from

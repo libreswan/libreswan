@@ -13,4 +13,4 @@ Order of Operations:
 4) West blocks traffic on eth0
 5) Both sides trigger a DPD Timeout:
 	East clears the eroute & SA
-	West clears the eroute 
+	West clears the eroute

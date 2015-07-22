@@ -17,4 +17,4 @@ sleep 10
 # DPD should have triggered now
 echo "Tunnel should be cleared, no trap/hold"
 ipsec eroute
-echo done 
+echo done

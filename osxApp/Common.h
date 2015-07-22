@@ -29,12 +29,12 @@
 
 #define kSampleLowNumberedPortsForceFailure	"ForceFailure"              // CFBoolean (optional, presence implies true)
 
-// response keys (none, descriptors for the ports are in kBASDescriptorArrayKey, 
+// response keys (none, descriptors for the ports are in kBASDescriptorArrayKey,
 // the number of descriptors should be kNumberOfLowNumberedPorts)
 
 #define kNumberOfLowNumberedPorts			3
 
-// The kSampleCommandSet is used by both the app and the tool to communicate the set of 
+// The kSampleCommandSet is used by both the app and the tool to communicate the set of
 // supported commands to the BetterAuthorizationSampleLib module.
 
 extern const BASCommandSpec kCommandSet[];

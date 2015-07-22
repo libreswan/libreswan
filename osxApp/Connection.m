@@ -11,7 +11,7 @@
 @implementation Connection
 @synthesize connName;
 //Connection Options
-@synthesize 
+@synthesize
 selAuto,
 selType,
 selMode,
@@ -24,7 +24,7 @@ selRemoteID,
 selRemoteSubnets,
 selRemoteProtocolPort;
 //Auth Options
-@synthesize 
+@synthesize
 selAuthBy,
 selPSK,
 selPKCS,
@@ -94,7 +94,7 @@ selUpdownScript;
 - (id)init
 {
 	//first initialize the base class
-    self = [super init]; 
+    self = [super init];
     //then initialize the instance variables
 	
 	connName = [NSString stringWithString:@"New Connection"];

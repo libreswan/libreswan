@@ -354,7 +354,7 @@ class Remote:
         try:
             f_cmds = open(filename, "r")
             for line in f_cmds:
-                line = line.strip()    
+                line = line.strip()
                 # We need the lines with # for the cut --- tuc
                 # sections if line and not line[0] == '#':
                 if line:

@@ -33,8 +33,8 @@ RFC 2409	The Internet Key Exchange (IKE)
 RFC 2412	The OAKLEY Key Determination Protocol
 RFC 2528	Internet X.509 Public Key Infrastructure
 
-RFC 3526	More Modular Exponential (MODP) Diffie-Hellman groups for Internet Key Exchange (IKE) 
-RFC 3664	The AES-XCBC-PRF-128 Algorithm for the Internet Key Exchange Protocol (IKE) 
+RFC 3526	More Modular Exponential (MODP) Diffie-Hellman groups for Internet Key Exchange (IKE)
+RFC 3664	The AES-XCBC-PRF-128 Algorithm for the Internet Key Exchange Protocol (IKE)
 RFC 4109	Algorithms for Internet Key Exchange version 1 (IKEv1)
 RFC 4210	Internet X.509 Public Key Infrastructure Certificate Management Protocol (CMP)
 RFC 4304	Extended Sequence Number (ESN) Addendum to IPsec Domain of Interpretation (DOI) for Internet Security Association and Key Management Protocol (ISAKMP)
@@ -67,9 +67,9 @@ RFC 2405	The ESP DES-CBC Cipher Algorithm With Explicit IV
 RFC 2410	The NULL Encryption Algorithm and Its Use With IPsec
 RFC 2451	The ESP CBC-Mode Cipher Algorithms
 RFC 2521	ICMP Security Failures Messages
-RFC 3566	The AES-XCBC-MAC-96 Algorithm and Its Use With IPsec 
-RFC 3602	The AES-CBC Cipher Algorithm and Its Use with IPsec  
-RFC 3686	Using Advanced Encryption Standard (AES) Counter Mode With IPsec Encapsulating Security Payload (ESP)  
+RFC 3566	The AES-XCBC-MAC-96 Algorithm and Its Use With IPsec
+RFC 3602	The AES-CBC Cipher Algorithm and Its Use with IPsec
+RFC 3686	Using Advanced Encryption Standard (AES) Counter Mode With IPsec Encapsulating Security Payload (ESP)
 RFC 4196	The SEED Cipher Algorithm and Its Use with IPsec
 RFC 4106	The Use of Galois/Counter Mode (GCM) in IPsec Encapsulating Security Payload (ESP)
 RFC 4305	 Cryptographic Algorithm Implementation Requirements for Encapsulating Security Payload (ESP) and Authentication Header (AH)
@@ -98,16 +98,16 @@ RFC 2536	DSA KEYs and SIGs in the Domain Name System (DNS)
 RFC 2537	RSA/MD5 KEYs and SIGs in the Domain Name System (DNS)
 RFC 2538	Storing Certificates in the Domain Name System (DNS)
 RFC 2539	Storage of Diffie-Hellman Keys in the Domain Name System (DNS)
-RFC 3007	Secure Domain Name System (DNS) Dynamic Update 
+RFC 3007	Secure Domain Name System (DNS) Dynamic Update
 RFC 3008	Domain Name System Security (DNSSEC) Signing Authority  [obsoleted]
-RFC 3130	Notes from the State-Of-The-Technology: DNSSEC 
-RFC 3225	Indicating Resolver Support of DNSSEC 
-RFC 3226	DNSSEC and IPv6 A6 aware server/resolver message size requirements 
+RFC 3130	Notes from the State-Of-The-Technology: DNSSEC
+RFC 3225	Indicating Resolver Support of DNSSEC
+RFC 3226	DNSSEC and IPv6 A6 aware server/resolver message size requirements
 RFC 3757	Domain Name System KEY (DNSKEY) Resource Record (RR) Secure Entry Point (SEP) Flag [obsoleted]
 RFC 3845	DNS Security (DNSSEC) NextSECure (NSEC) RDATA Format [obsoleted]
 RFC 4025	A Method for Storing IPsec Keying Material in DNS
 RFC 4033	DNS Security Introduction and Requirements
-RFC 4034	Resource Records for the DNS Security Extensions 
+RFC 4034	Resource Records for the DNS Security Extensions
 RFC 4035	Protocol Modifications for the DNS Security Extensions
 RFC 4322	Opportunistic Encryption using the Internet Key Exchange (IKE)
 
@@ -134,13 +134,13 @@ RFC's on IPsec in relation to other protocols
 
 RFC 2207	RSVP Extensions for IPSEC Data Flows
 RFC 2521	ICMP Security Failures Messages
-RFC 3104	RSIP Support for End-to-end IPsec  
-RFC 3554	On the Use of Stream Control Transmission Protocol (SCTP) with IPsec  
-RFC 3776	Using IPsec to Protect Mobile IPv6 Signaling Between Mobile Nodes and Home Agents 
-RFC 3884	Use of IPsec Transport Mode for Dynamic Routing 
+RFC 3104	RSIP Support for End-to-end IPsec
+RFC 3554	On the Use of Stream Control Transmission Protocol (SCTP) with IPsec
+RFC 3776	Using IPsec to Protect Mobile IPv6 Signaling Between Mobile Nodes and Home Agents
+RFC 3884	Use of IPsec Transport Mode for Dynamic Routing
 
 RFCs that are not really in use or implemented across multiple vendors
 
 RFC 2522	Photuris: Session-Key Management Protocol
 RFC 2523	Photuris: Extended Schemes and Attributes
-RFC 3456	Dynamic Host Configuration Protocol (DHCPv4) Configuration of IPsec Tunnel Mode  
+RFC 3456	Dynamic Host Configuration Protocol (DHCPv4) Configuration of IPsec Tunnel Mode

@@ -89,8 +89,8 @@ proc insertVendorId {msg vendorid} {
     #hexdump_pb "2: " $newpb
 
     # insert vendor ID as np.
-    global ISAKMP_NEXT_VID			   
-    pbs_poke $newpb $thispayloc $ISAKMP_NEXT_VID  
+    global ISAKMP_NEXT_VID			
+    pbs_poke $newpb $thispayloc $ISAKMP_NEXT_VID
 
     set preVidLoc $outLoc
     # insert our VID ID payload
@@ -98,16 +98,16 @@ proc insertVendorId {msg vendorid} {
     incr outLoc
     pbs_poke $newpb $outLoc 0
     incr outLoc
-    set b1 [expr $vidlen >> 8] 
+    set b1 [expr $vidlen >> 8]
     set b2 [expr $vidlen & 0xff]
-    puts stderr "VIDlen: $vidlen $b1 $b2" 
+    puts stderr "VIDlen: $vidlen $b1 $b2"
     pbs_poke $newpb $outLoc $b1
-    incr outLoc 
+    incr outLoc
     pbs_poke $newpb $outLoc $b2
-    incr outLoc 
-    
+    incr outLoc
+
     binary scan $vendorid c* vidbytes
-    
+
     foreach byte $vidbytes {
 	pbs_poke $newpb $outLoc $byte
 	incr outLoc
@@ -131,7 +131,7 @@ proc avoidEmitting {state conn md} {
 
     if { ($STATE_MAIN_I1 != $st_state)} {
 	return "ignore"
-    } 
+    }
 
     set pb [msg_digest_reply_get $md]
 

@@ -1,2 +1,2 @@
-ipsec auto --up road-eastnet-psk 
+ipsec auto --up road-eastnet-psk
 echo done

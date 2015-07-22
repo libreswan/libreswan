@@ -15,7 +15,7 @@ remote 193.110.157.149 {
    proposal_check obey;
    xauth_login "test";
    mode_cfg on;
-   
+
    proposal {
       authentication_method xauth_psk_client;
       hash_algorithm sha1;
@@ -23,7 +23,7 @@ remote 193.110.157.149 {
       lifetime time 3600 sec;
       dh_group 2;
    }
-   
+
    proposal {
       authentication_method xauth_psk_client;
       hash_algorithm sha1;
@@ -31,7 +31,7 @@ remote 193.110.157.149 {
       lifetime time 3600 sec;
       dh_group 2;
    }
-   
+
    proposal {
       authentication_method xauth_psk_client;
       hash_algorithm md5;
@@ -39,7 +39,7 @@ remote 193.110.157.149 {
       lifetime time 3600 sec;
       dh_group 2;
    }
-   
+
    proposal {
       authentication_method xauth_psk_client;
       hash_algorithm md5;
@@ -47,7 +47,7 @@ remote 193.110.157.149 {
       lifetime time 3600 sec;
       dh_group 2;
    }
-   
+
    proposal {
       authentication_method xauth_psk_client;
       hash_algorithm sha1;
@@ -55,7 +55,7 @@ remote 193.110.157.149 {
       lifetime time 3600 sec;
       dh_group 2;
    }
-   
+
    proposal {
       authentication_method xauth_psk_client;
       hash_algorithm md5;
@@ -63,7 +63,7 @@ remote 193.110.157.149 {
       lifetime time 3600 sec;
       dh_group 2;
    }
-   
+
    proposal {
       authentication_method xauth_psk_client;
       hash_algorithm sha1;
@@ -71,7 +71,7 @@ remote 193.110.157.149 {
       lifetime time 3600 sec;
       dh_group 2;
    }
-   
+
    proposal {
       authentication_method xauth_psk_client;
       hash_algorithm md5;

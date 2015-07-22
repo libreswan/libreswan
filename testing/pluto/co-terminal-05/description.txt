@@ -1,4 +1,4 @@
-This is what happens when Ken is at Patrick's House and wants to IPsec 
+This is what happens when Ken is at Patrick's House and wants to IPsec
 to his house:
 
 		209.112.44.2 [Sunrise]
@@ -25,6 +25,6 @@ the 192.168.10.0/24 <=> 209.112.44.0/24 networks.  West does NAT
 of 192.168.0.0/16 to 24.141.1.2
 
 KLIPS and/or iptables trip over each other trying to figure out
-in what shape the packets from Sunset should be when heading to 
+in what shape the packets from Sunset should be when heading to
 East to establish a tunnel.
 

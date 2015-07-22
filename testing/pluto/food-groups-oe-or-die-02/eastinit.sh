@@ -3,7 +3,7 @@ route delete -net default
 route add -net default gw 192.1.2.45
 
 # start the local name server
-named 
+named
 
 # verify that we have some dns data
 dig sunrise-oe.uml.freeswan.org a

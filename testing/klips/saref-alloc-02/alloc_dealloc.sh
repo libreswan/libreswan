@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script allocates a number of SPIs, then deallocates them in a 
+# This script allocates a number of SPIs, then deallocates them in a
 # different order. It is driven by an input file which contains some
 # generated SPI data.
 
@@ -44,4 +44,4 @@ do
 done
 
 
-    
+

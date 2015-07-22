@@ -24,4 +24,4 @@ sleep 30
 echo "Tunnel should be up even without trigger traffic"
 ipsec look
 ping -q -n -c 4 -I 192.0.2.100 192.1.2.23
-echo done 
+echo done

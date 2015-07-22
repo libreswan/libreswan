@@ -4,7 +4,7 @@ text
 reboot
 lang en_US.UTF-8
 keyboard us
-network --bootproto=dhcp --hostname swanbase 
+network --bootproto=dhcp --hostname swanbase
 # static network does not work with recent dracut, use kernel args instead
 #network --bootproto=static --ip=76.10.157.78 --netmask=255.255.255.240 --gateway=76.10.157.65 --hostname swanbase
 rootpw swan
@@ -15,7 +15,7 @@ timezone --utc America/New_York
 bootloader --location=mbr --append="console=tty0 console=ttyS0,115200 rd_NO_PLYMOUTH"
 zerombr
 clearpart --all --initlabel
-part / --asprimary --grow 
+part / --asprimary --grow
 part swap --size 1024
 services --disabled=sm-client,sendmail,network,smartd,crond,atd
 
@@ -58,7 +58,7 @@ xl2tpd
 #%end
 
 
-%post 
+%post
 echo "nameserver 193.110.157.123" >> /etc/resolv.conf
 /sbin/restorecon /etc/resolv.conf
 # Paul needs this due to broken isp
@@ -184,7 +184,7 @@ sysfs                   /sys                    sysfs   defaults        0 0
 proc                    /proc                   proc    defaults        0 0
 EOD
 
-cat << EOD >> /etc/rc.d/rc.local 
+cat << EOD >> /etc/rc.d/rc.local
 #!/bin/sh
 mount /testing
 mount /source

@@ -13,8 +13,8 @@ CONFIG_INET=y
 # This must be on for subnet protection.
 CONFIG_IP_FORWARD=y
 
-# Shut off IPSEC masquerading if it has been enabled, since it will 
-# break the compile.  IPPROTO_ESP and IPPROTO_AH were included in 
+# Shut off IPSEC masquerading if it has been enabled, since it will
+# break the compile.  IPPROTO_ESP and IPPROTO_AH were included in
 # net/ipv4/ip_masq.c when they should have gone into include/linux/in.h.
 CONFIG_IP_MASQUERADE_IPSEC=n
 

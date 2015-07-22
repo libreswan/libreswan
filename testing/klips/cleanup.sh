@@ -5,7 +5,7 @@
 # $Id: cleanup.sh,v 1.4 2002/04/24 07:36:13 mcr Exp $
 #
 unset SCRIPT
-unset REFCONSOLEOUTPUT 
+unset REFCONSOLEOUTPUT
 unset PRIVINPUT
 unset PUBINPUT
 unset REFPRIVOUTPUT
@@ -26,4 +26,4 @@ unset TCPDUMPARGS
 # Revision 1.1.2.1  2001/10/23 04:43:18  mcr
 # 	shell/testing cleaning script.
 #
-# 
+#

@@ -39,7 +39,7 @@ me --name ike-algo-05 --psk --ike aes-sha1  $EASTHOST $TO $WESTHOST $TIMES2 ;
 me --name ike-algo-06 --psk --ike aes-sha   $EASTHOST $TO $WESTHOST $TIMES2 ;
 me --status
 
-$DOWHACK shutdown 
+$DOWHACK shutdown
 
 if [ -f pluto/west/core ];
 then

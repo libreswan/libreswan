@@ -8,7 +8,7 @@ INITDDIR=$(RCDIR)
 include ${LIBRESWANSRCDIR}/Makefile.inc
 include ${LIBRESWANSRCDIR}/Makefile.top
 
-programs:     ipsec.init 
+programs:     ipsec.init
 initdfiles:   $(INITDFILE)
 install:      programs doinstall
 install-programs: doinstall

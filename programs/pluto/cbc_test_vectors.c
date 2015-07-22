@@ -51,10 +51,10 @@ const struct cbc_test_vector aes_cbc_test_vectors[] = {
 		.description = "Encrypting 32 bytes (2 blocks) using AES-CBC with 128-bit key",
 		.key = "0xc286696d887c9aa0611bbb3e2025a45a",
 		.iv = "0x562e17996d093d28ddb3ba695a2e6f58",
-		.plaintext = 
+		.plaintext =
 		"0x000102030405060708090a0b0c0d0e0f"
 		"101112131415161718191a1b1c1d1e1f",
-		.ciphertext = 
+		.ciphertext =
 		"0xd296cd94c2cccf8a3a863028b5e1dc0a"
 		"7586602d253cfff91b8266bea6d61ab1"
 	},

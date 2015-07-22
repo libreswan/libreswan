@@ -9,7 +9,7 @@ ping -n -c 1 -n 192.1.2.45
 ping -n -c 8 -n 192.0.1.1
 ipsec eroute
 
-#arp -s 192.1.2.45 10:00:00:64:64:45 
+#arp -s 192.1.2.45 10:00:00:64:64:45
 
 : we expect that this will result in a tunnel, as 1.3 is OE enabled.
 ping -n -c 8 -n 192.0.1.3

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # this script is used by "west" UMLs that want to have per-test
-# configuration files. 
+# configuration files.
 
 /testing/pluto/bin/wait-until-network-ready
 
@@ -46,7 +46,7 @@ else
 
 	cp /testing/pluto/$TESTNAME/west.conf /tmp/$TESTNAME/ipsec.conf
 	cp /etc/ipsec.secrets                    /tmp/$TESTNAME
-	if [ -f /testing/pluto/$TESTNAME/west.secrets ] 
+	if [ -f /testing/pluto/$TESTNAME/west.secrets ]
 	then
 	    	cat /testing/pluto/$TESTNAME/west.secrets >>/tmp/$TESTNAME/ipsec.secrets
 	fi

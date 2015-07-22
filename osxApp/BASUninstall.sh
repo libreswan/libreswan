@@ -43,7 +43,7 @@
 #               (INCLUDING NEGLIGENCE), STRICT LIABILITY OR OTHERWISE, EVEN IF APPLE HAS BEEN
 #               ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# This uninstalls everything installed by the sample.  It's useful 
+# This uninstalls everything installed by the sample.  It's useful
 # when testing to ensure that you start from scratch.
 
 sudo launchctl unload -w /Library/LaunchDaemons/com.xelerance.Libreswan.plist

@@ -12,7 +12,7 @@ depmod -a
 modprobe ipsec
 
 tncfg attach ipsec0 eth1
-ifconfig ipsec0 $gw1 
+ifconfig ipsec0 $gw1
 
 #
 # Transport mode

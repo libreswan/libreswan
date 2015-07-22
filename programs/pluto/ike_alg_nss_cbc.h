@@ -15,4 +15,4 @@
 extern void ike_alg_nss_cbc(CK_MECHANISM_TYPE ciphermech, const struct encrypt_desc *algo,
 			    u_int8_t *buf, size_t buf_len, PK11SymKey *symkey,
 			    u_int8_t *iv, bool enc);
-  
+

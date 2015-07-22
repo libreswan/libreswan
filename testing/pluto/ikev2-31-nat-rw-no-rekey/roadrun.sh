@@ -12,4 +12,4 @@ iptables -I OUTPUT -d 192.1.2.23/32 -s 0/0 -j DROP
 echo "sleep 110 seconds"
 sleep 60
 sleep 50
-echo end 
+echo end

@@ -8,7 +8,7 @@ all:	check
 ${TESTCASE}:	${TESTCASE}.o ${IPSEC_OBJS} Makefile
 	${CC} -g -o ${TESTCASE} ${TESTCASE}.o ${IPSEC_OBJS} ${KUTILLIB} ${LIBRESWANLIB} ${LSWLOGLIB} ${LIBRESWANLIB} -lefence
 
-${TESTCASE}.o: ${SRCDIR}${TESTCASE}.c 
+${TESTCASE}.o: ${SRCDIR}${TESTCASE}.c
 	${CC} ${UCFLAGS} -c -o ${TESTCASE}.o ${SRCDIR}${TESTCASE}.c
 
 # build version.c using version number from Makefile.ver
@@ -16,7 +16,7 @@ version.c:	${KLIPSSRC}/version.in.c ${LIBRESWANSRCDIR}/Makefile.ver
 	sed '/"/s/@IPSECVERSION@/$(IPSECVERSION)/' ${KLIPSSRC}/version.in.c >$@
 
 ifneq (${PACKFILE},)
-${TESTCASE}.o: ${PACKFILE}.c 
+${TESTCASE}.o: ${PACKFILE}.c
 endif
 
 ${PACKFILE}.c: ${INPUTS}

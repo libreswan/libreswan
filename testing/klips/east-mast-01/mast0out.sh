@@ -17,9 +17,9 @@ echo 0xffffffff >/proc/sys/net/ipsec/debug_tunnel
 
 
 # set up the SA itself
-ipsec spi --af inet --edst 192.1.2.45 --spi 0x1bbdd678 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey $enckey --authkey $authkey 
+ipsec spi --af inet --edst 192.1.2.45 --spi 0x1bbdd678 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey $enckey --authkey $authkey
 ipsec spi --af inet --edst 192.1.2.45 --spi 0x1bbdd678 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4 --saref $saref
-ipsec spigrp inet 192.1.2.45 0x1bbdd678 tun inet 192.1.2.45 0x1bbdd678 esp 
+ipsec spigrp inet 192.1.2.45 0x1bbdd678 tun inet 192.1.2.45 0x1bbdd678 esp
 
 # we do *NOT* need to setup an EROUTE, because mast0 accepts packets based
 # the SAref# and encrypt them appropriately.

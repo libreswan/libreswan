@@ -4,7 +4,7 @@ TEST_TYPE=klipstest
 TESTNAME=west-rcv-nfmark-set-02
 TESTHOST=west
 EXITONEMPTY=--exitonempty
-ARPREPLY=--arpreply 
+ARPREPLY=--arpreply
 
 PUB_INPUT=../inputs/public-two-1.pcap
 REF_PRIV_OUTPUT=icmp-priv-flow.txt

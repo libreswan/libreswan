@@ -18,7 +18,7 @@ for CRL fetching support: openldap-devel curl-devel
 Building userland
 -----------------
 
-	make all 
+	make all
 	sudo make install
 
 For a minimal install (no manpages) type:
@@ -43,7 +43,7 @@ Build for a kernel different from the running kernel:
 
 Building KLIPS kernel module for the old Linux 2.4 kernel
 
-	make module24 
+	make module24
 	sudo make minstall24
 
 When using KLIPS with OCF:

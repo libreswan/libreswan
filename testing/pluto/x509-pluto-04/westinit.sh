@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 certutil -D -n east -d sql:/etc/ipsec.d
 certutil -D -n east-ec -d sql:/etc/ipsec.d
-ipsec import /testing/x509/pkcs12/otherca/signedbyotherca.p12 
+ipsec import /testing/x509/pkcs12/otherca/signedbyotherca.p12
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 ipsec whack --debug-all --impair-retransmits

@@ -15,7 +15,7 @@ case "$1" in
 #		modprobe ipsec
 		# Attach and configure the interface
 		ipsec tncfg attach ipsec0 eth0
-		ifconfig ipsec0 $gw1 
+		ifconfig ipsec0 $gw1
 		;;
 	unload)
 		ifconfig ipsec0 down

@@ -3,12 +3,12 @@
 # Copyright (C) 1998-2002  Henry Spencer.
 # Copyright (C) 2003-2004  Xelerance Corporation
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -95,7 +95,7 @@ unapplynpatch:
 	fi
 
 applynpatch:
-	@echo "info: Now performing forward NAT patches in `pwd`"; 
+	@echo "info: Now performing forward NAT patches in `pwd`";
 	${MAKE} nattpatch${KERNELREL} | tee ${KERNELSRC}/natt.patch | (cd ${KERNELSRC} && patch -p1 -b -z .preipsec --forward --ignore-whitespace )
 
 unapplysarefpatch:
@@ -205,8 +205,8 @@ distclean: clean-local-base module24clean module26clean
 # do-everything entries
 KINSERT_PRE=precheck verset insert
 PRE=precheck verset kpatch
-POST=confcheck programs kernel install 
-MPOST=confcheck programs module install 
+POST=confcheck programs kernel install
+MPOST=confcheck programs module install
 
 # preliminaries
 precheck:
@@ -248,7 +248,7 @@ pcf:
 	-cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) config
 
 ocf:
-	-cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) oldconfig 
+	-cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) oldconfig
 
 rcf:
 	cd $(KERNELSRC) ; $(MAKE) $(KERNMAKEOPTS) ${NONINTCONFIG} </dev/null
@@ -282,7 +282,7 @@ confcheck:
 # kernel building, with error checks
 kernel:
 	rm -f out.kbuild out.kinstall
-	# undocumented kernel folklore: clean BEFORE dep. 
+	# undocumented kernel folklore: clean BEFORE dep.
 	# we run make dep seperately, because there is no point in running ERRCHECK
 	# on the make dep output.
 	# see LKML thread "clean before or after dep?"
@@ -331,21 +331,21 @@ module24:
         fi ; \
         ${MAKE} ${MOD24BUILDDIR}/Makefile
 	${MAKE} -C ${MOD24BUILDDIR}  LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} V=${V} ${MODULE_FLAGS} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} TOPDIR=${KERNELSRC} -f Makefile ipsec.o
-	@echo 
+	@echo
 	@echo '========================================================='
-	@echo 
+	@echo
 	@echo 'KLIPS24 module built successfully. '
 	@echo ipsec.o is in ${MOD24BUILDDIR}
-	@echo 
+	@echo
 	@(cd ${MOD24BUILDDIR}; ls -l ipsec.o)
 	@(cd ${MOD24BUILDDIR}; size ipsec.o)
-	@echo 
+	@echo
 	@echo 'use make minstall as root to install it'
-	@echo 
+	@echo
 	@echo '========================================================='
-	@echo 
+	@echo
 
-mod24clean module24clean: 
+mod24clean module24clean:
 	rm -rf ${MOD24BUILDDIR}
 
 #autoodetect 2.4 and 2.6
@@ -396,7 +396,7 @@ minstall24:
 
 
 else
-module: 
+module:
 	echo 'Building in place is no longer supported. Please set MOD24BUILDDIR='
 	exit 1
 
@@ -418,21 +418,21 @@ module26:
         fi ; \
         ${MAKE}  ${MODBUILDDIR}/Makefile
 	${MAKE} -C ${KERNELSRC} ${KERNELBUILDMFLAGS} BUILDDIR=${MODBUILDDIR} SUBDIRS=${MODBUILDDIR} MODULE_DEF_INCLUDE=${MODULE_DEF_INCLUDE} MODULE_DEFCONFIG=${MODULE_DEFCONFIG}  MODULE_EXTRA_INCLUDE=${MODULE_EXTRA_INCLUDE} ARCH=${ARCH} V=${V} modules
-	@echo 
+	@echo
 	@echo '========================================================='
-	@echo 
+	@echo
 	@echo 'KLIPS module built successfully. '
 	@echo ipsec.ko is in ${MODBUILDDIR}
-	@echo 
+	@echo
 	@(cd ${MODBUILDDIR}; ls -l ipsec.ko)
 	@(cd ${MODBUILDDIR}; size ipsec.ko)
-	@echo 
+	@echo
 	@echo 'use make minstall as root to install it'
-	@echo 
+	@echo
 	@echo '========================================================='
-	@echo 
+	@echo
 
-mod26clean module26clean: 
+mod26clean module26clean:
 	rm -rf ${MODBUILDDIR}
 
 # module-only install, with error checks
@@ -462,7 +462,7 @@ minstall26:
 
 
 else
-module26: 
+module26:
 	echo 'Building in place is no longer supported. Please set MODBUILDDIR='
 	exit 1
 
@@ -537,7 +537,7 @@ buildready:
 
 rpm:
 	@echo To build an rpm, use: rpmbuild -ba packaging/XXX/libreswan.spec
-	@echo where XXX is your rpm based vendor 
+	@echo where XXX is your rpm based vendor
 	rpmbuild -bs packaging/fedora/libreswan.spec
 
 ipkg_strip:
@@ -568,7 +568,7 @@ ipkg_clean:
 
 
 ipkg: programs install ipkg_strip ipkg_module
-	@echo "Generating ipkg..."; 
+	@echo "Generating ipkg...";
 	DESTDIR=${DESTDIR} LIBRESWANSRCDIR=${LIBRESWANSRCDIR} ARCH=${ARCH} IPSECVERSION=${IPSECVERSION} ./packaging/ipkg/generate-ipkg
 
 tarpkg:
@@ -576,7 +576,7 @@ tarpkg:
 	@rm -rf /var/tmp/libreswan-${USER}
 	@make DESTDIR=/var/tmp/libreswan-${USER} programs install
 	@rm /var/tmp/libreswan-${USER}/etc/ipsec.conf
-	@(cd /var/tmp/libreswan-${USER} && tar czf - . ) >libreswan-${IPSECVERSION}.tgz 
+	@(cd /var/tmp/libreswan-${USER} && tar czf - . ) >libreswan-${IPSECVERSION}.tgz
 	@ls -l libreswan-${IPSECVERSION}.tgz
 	@rm -rf /var/tmp/libreswan-${USER}
 
@@ -614,7 +614,7 @@ deb:
 	sudo module-assistant -u . build libreswan
 
 release:
-	packaging/utils/makerelease 
+	packaging/utils/makerelease
 
 install install-programs::
 	@if test -x /usr/sbin/selinuxenabled -a $(PUBDIR) != "$(DESTDIR)/usr/sbin" ; then \

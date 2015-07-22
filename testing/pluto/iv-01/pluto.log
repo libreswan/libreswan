@@ -22,7 +22,7 @@ crl issuer cacert not found for (file:///tmp/iv-01/ipsec.d/crls/crashcrl-1.pem)
 added connection description "westnet-eastnet"
 | base debugging = crypt+control+controlmore+impair-jacob-two-two
 | next event EVENT_PENDING_PHASE2 in 116 seconds
-|  
+|
 | *received whack message
 listening for IKE messages
 | found eth0 with address 192.0.2.254
@@ -35,28 +35,28 @@ listening for IKE messages
 adding interface ipsec0/eth1 192.1.2.23:500
 | IP interface eth0 192.0.2.254 has no matching ipsec* interface -- ignored
 | could not open /proc/net/if_inet6
-| connect_to_host_pair: 192.1.2.23:500 192.1.2.45:500 -> hp:none 
+| connect_to_host_pair: 192.1.2.23:500 192.1.2.45:500 -> hp:none
 loading secrets from "/tmp/iv-01/ipsec.secrets"
 | loaded private key for keyid: PPK_RSA:AQN3cn11F
   loaded private key file '/etc/ipsec.d/private/east.pem' (963 bytes)
 |   decrypting file using 'DES-EDE3-CBC'
 | loaded private key for keyid: PPK_RSA:AwEAAaFHY
 | next event EVENT_PENDING_PHASE2 in 116 seconds
-|  
+|
 | *received whack message
-| find_host_pair: comparing to 192.1.2.23:500 192.1.2.45:500 
-| find_host_pair_conn (check_connection_end): 192.1.2.23:500 %any:500 -> hp:none 
+| find_host_pair: comparing to 192.1.2.23:500 192.1.2.45:500
+| find_host_pair_conn (check_connection_end): 192.1.2.23:500 %any:500 -> hp:none
 | Added new connection packetdefault with policy RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failurePASS
 | counting wild cards for (none) is 0
 | counting wild cards for (none) is 15
 | based upon policy, the connection is a template.
-| find_host_pair: comparing to 192.1.2.23:500 192.1.2.45:500 
-| connect_to_host_pair: 192.1.2.23:500 0.0.0.0:500 -> hp:none 
+| find_host_pair: comparing to 192.1.2.23:500 192.1.2.45:500
+| connect_to_host_pair: 192.1.2.23:500 0.0.0.0:500 -> hp:none
 added connection description "packetdefault"
 | 0.0.0.0/0===192.1.2.23[%myid]---192.1.2.254...%opportunistic
 | ike_life: 3600s; ipsec_life: 3600s; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 3; policy: RSASIG+ENCRYPT+TUNNEL+PFS+DONTREKEY+OPPORTUNISTIC+failurePASS
 | next event EVENT_PENDING_PHASE2 in 112 seconds
-|  
+|
 | *received whack message
 listening for IKE messages
 | found eth0 with address 192.0.2.254
@@ -75,20 +75,20 @@ loading secrets from "/tmp/iv-01/ipsec.secrets"
 |   decrypting file using 'DES-EDE3-CBC'
 | loaded private key for keyid: PPK_RSA:AwEAAaFHY
 | next event EVENT_PENDING_PHASE2 in 112 seconds
-|  
+|
 | *received whack message
 | processing connection packetdefault
 | route owner of "packetdefault" unrouted: NULL; eroute owner: NULL
 | Jacob two two says that the SA will fail
 | next event EVENT_PENDING_PHASE2 in 111 seconds
-|  
+|
 | *received 212 bytes from 192.1.2.45:500 on eth1 (port=500)
 packet from 192.1.2.45:500: received Vendor ID payload [Libreswan (this version) cvs2005Jul22_10:11:19  X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR]
 packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | find_host_connection called from main_inI1_outR1
-| find_host_pair: comparing to 192.1.2.23:500 0.0.0.0:500 
-| find_host_pair: comparing to 192.1.2.23:500 192.1.2.45:500 
-| find_host_pair_conn (find_host_connection2): 192.1.2.23:500 192.1.2.45:500 -> hp:westnet-eastnet 
+| find_host_pair: comparing to 192.1.2.23:500 0.0.0.0:500
+| find_host_pair: comparing to 192.1.2.23:500 192.1.2.45:500
+| find_host_pair_conn (find_host_connection2): 192.1.2.23:500 192.1.2.45:500 -> hp:westnet-eastnet
 | creating state object #1 at 0x8105b48
 | processing connection westnet-eastnet
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
@@ -109,7 +109,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | modecfg pull: noquirk policy:push not-client
 | phase 1 is done, looking for phase 1 to unpend
 | next event EVENT_PENDING_PHASE2 in -12 seconds
-|  
+|
 | *time to handle event
 | handling event EVENT_PENDING_PHASE2
 | event after this is EVENT_SHUNT_SCAN in -11 seconds
@@ -117,20 +117,20 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | pending review: connection "packetdefault" was not up, skipped
 | pending review: connection "westnet-eastnet" was not up, skipped
 | next event EVENT_SHUNT_SCAN in -11 seconds
-|  
+|
 | *time to handle event
 | handling event EVENT_SHUNT_SCAN
 | event after this is EVENT_RETRANSMIT in 10 seconds
 | inserting event EVENT_SHUNT_SCAN, timeout in 120 seconds
 | scanning for shunt eroutes
 | next event EVENT_RETRANSMIT in 10 seconds for #1
-|  
+|
 | *received 212 bytes from 192.1.2.45:500 on eth1 (port=500)
 packet from 192.1.2.45:500: received Vendor ID payload [Libreswan (this version) cvs2005Jul22_10:11:19  X.509-1.5.4 PLUTO_SENDS_VENDORID PLUTO_USES_KEYRR]
 packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | find_host_connection called from main_inI1_outR1
-| find_host_pair: comparing to 192.1.2.23:500 192.1.2.45:500 
-| find_host_pair_conn (find_host_connection2): 192.1.2.23:500 192.1.2.45:500 -> hp:westnet-eastnet 
+| find_host_pair: comparing to 192.1.2.23:500 192.1.2.45:500
+| find_host_pair_conn (find_host_connection2): 192.1.2.23:500 192.1.2.45:500 -> hp:westnet-eastnet
 | creating state object #2 at 0x8105fb8
 | processing connection westnet-eastnet
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
@@ -151,7 +151,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | modecfg pull: noquirk policy:push not-client
 | phase 1 is done, looking for phase 1 to unpend
 | next event EVENT_RETRANSMIT in 10 seconds for #2
-|  
+|
 | *received 244 bytes from 192.1.2.45:500 on eth1 (port=500)
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
 | RCOOKIE:  5d 0b 5b 27  07 43 62 f7
@@ -258,7 +258,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | modecfg pull: noquirk policy:push not-client
 | phase 1 is done, looking for phase 1 to unpend
 | next event EVENT_RETRANSMIT in 9 seconds for #2
-|  
+|
 | *received 244 bytes from 192.1.2.45:500 on eth1 (port=500)
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
 | RCOOKIE:  5d 0b 5b 27  07 43 62 f7
@@ -269,7 +269,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | processing connection westnet-eastnet
 "westnet-eastnet" #1: discarding duplicate packet; already STATE_MAIN_R2
 | next event EVENT_RETRANSMIT in 9 seconds for #2
-|  
+|
 | *received 300 bytes from 192.1.2.45:500 on eth1 (port=500)
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
 | RCOOKIE:  5d 0b 5b 27  07 43 62 f7
@@ -311,8 +311,8 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | an RSA Sig check passed with *AQNzGEFs1 [preloaded key]
 | authentication succeeded
 | thinking about whether to send my certificate:
-|   I have RSA key: OAKLEY_RSA_SIG cert.type: CERT_NONE 
-|   sendcert: CERT_ALWAYSSEND and I did not get a certificate request 
+|   I have RSA key: OAKLEY_RSA_SIG cert.type: CERT_NONE
+|   sendcert: CERT_ALWAYSSEND and I did not get a certificate request
 |   so do not send cert.
 "westnet-eastnet" #1: I did not send a certificate because I do not have one.
 | hashing 144 bytes of SA
@@ -357,7 +357,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | modecfg pull: noquirk policy:push not-client
 | phase 1 is done, looking for phase 1 to unpend
 | next event EVENT_RETRANSMIT in 9 seconds for #2
-|  
+|
 | *received 300 bytes from 192.1.2.45:500 on eth1 (port=500)
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
 | RCOOKIE:  5d 0b 5b 27  07 43 62 f7
@@ -370,7 +370,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | sending 300 bytes for retransmit in response to duplicate through eth1:500 to 192.1.2.45:500:
 | JACOB 2-2: resending 300 bytes for retransmit in response to duplicate through eth1:500 to 192.1.2.45:500:
 | next event EVENT_RETRANSMIT in 8 seconds for #2
-|  
+|
 | *received 348 bytes from 192.1.2.45:500 on eth1 (port=500)
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
 | RCOOKIE:  5d 0b 5b 27  07 43 62 f7
@@ -456,7 +456,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | inserting event EVENT_CRYPTO_FAILED, timeout in 300 seconds for #3
 | complete state transition with STF_SUSPEND
 | next event EVENT_RETRANSMIT in 8 seconds for #2
-|  
+|
 | *received 348 bytes from 192.1.2.45:500 on eth1 (port=500)
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
 | RCOOKIE:  5d 0b 5b 27  07 43 62 f7
@@ -508,7 +508,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | complete state transition with STF_INTERNAL_ERROR
 | state transition function for STATE_QUICK_R0 had internal error
 | next event EVENT_RETRANSMIT in 8 seconds for #2
-|  
+|
 | *time to handle event
 | handling event EVENT_RETRANSMIT
 | event after this is EVENT_SHUNT_SCAN in 109 seconds
@@ -518,7 +518,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | JACOB 2-2: resending 116 bytes for EVENT_RETRANSMIT through eth1:500 to 192.1.2.45:500:
 | inserting event EVENT_RETRANSMIT, timeout in 20 seconds for #2
 | next event EVENT_RETRANSMIT in 20 seconds for #2
-|  
+|
 | *received 348 bytes from 192.1.2.45:500 on eth1 (port=500)
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
 | RCOOKIE:  5d 0b 5b 27  07 43 62 f7
@@ -561,7 +561,7 @@ packet from 192.1.2.45:500: received Vendor ID payload [Dead Peer Detection]
 | sending 40 bytes for notification packet through eth1:500 to 192.1.2.45:500:
 | JACOB 2-2: resending 40 bytes for notification packet through eth1:500 to 192.1.2.45:500:
 | next event EVENT_RETRANSMIT in 20 seconds for #2
-|  
+|
 | *received 348 bytes from 192.1.2.45:500 on eth1 (port=500)
 | ICOOKIE:  57 7e 39 e6  d5 b0 99 72
 | RCOOKIE:  5d 0b 5b 27  07 43 62 f7

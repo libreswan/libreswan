@@ -671,7 +671,7 @@ Notably, we need some way of dealing with the lack of fully signed DNSSEC
 records right away.
 Without user interaction, probably the best we can do is to
 remember the results of old fetches, compare them to the results of new
-fetches, and complain and disbelieve all of it if there's a mismatch. 
+fetches, and complain and disbelieve all of it if there's a mismatch.
 This does mean that somebody who gets fake data into our very first fetch
 will fool us, at least for a while, but that seems an acceptable tradeoff.
 (Obviously there needs to be a way to manually flush the remembered results
@@ -1076,7 +1076,7 @@ that communication is about to fail.
 attempts by the other SGs to negotiate new tunnels as replacements
 should be ignored at this point.)
 And when possible, SGs should attempt to preserve information
-about currently-connected SGs in non-volatile storage, 
+about currently-connected SGs in non-volatile storage,
 so that after a crash,
 an Initial-Contact can be sent to previous partners to
 indicate loss of all previously-established connections.

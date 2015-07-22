@@ -63,7 +63,7 @@ ${BUILDDIR}/inftrees.c: ${BUILDDIR}/inffixed.h
 ${BUILDDIR}/trees.c: ${BUILDDIR}/trees.h
 
 MODULE26=true
-include ${LIBRESWANSRCDIR}/packaging/makefiles/module.defs 
+include ${LIBRESWANSRCDIR}/packaging/makefiles/module.defs
 ifneq ($(strip $(MODULE_DEFCONFIG)),)
 include ${MODULE_DEFCONFIG}
 endif

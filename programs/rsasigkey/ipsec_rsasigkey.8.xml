@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>rsasigkey</replaceable></arg>
     <arg choice='opt'>--verbose </arg>
     <arg choice='opt'>--seeddev <replaceable>device</replaceable></arg>
@@ -35,7 +35,7 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>Rsasigkey</emphasis>
-generates an RSA public/private key pair, suitable for digital signatures, of (exactly) 
+generates an RSA public/private key pair, suitable for digital signatures, of (exactly)
 <emphasis remap='I'>nbits</emphasis> bits (that is, two primes each of exactly
 <emphasis remap='I'>nbits</emphasis>/2 bits, and related numbers) and emits it on standard
  output as ASCII (mostly hex) data. <emphasis remap='I'>nbits</emphasis> must be a multiple of 16.
