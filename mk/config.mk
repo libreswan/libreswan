@@ -399,7 +399,7 @@ export IPSECVIDVERSION
 endif
 
 # include OSDEP/ARCH specific makefiles, if any.
-include ${LIBRESWANSRCDIR}/packaging/defaults/${BUILDENV}
+include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 
 # On MAC OSX , we have to use YACC and not BISON. And use different backup
 # file suffix.
