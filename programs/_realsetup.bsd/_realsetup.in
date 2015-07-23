@@ -2,12 +2,12 @@
 #
 # IPsec startup and shutdown command
 # Copyright (C) 2006 Michael Richardson <mcr@xelerance.com>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -197,7 +197,7 @@ case "$1" in
 		lsmod 2>&1 | grep "^af_key" > /dev/null && rmmod af_key
 		# old name for xfrm4_tunnel
 		lsmod 2>&1 | grep "^xfrm_user" > /dev/null && rmmod xfrm_user
-	fi 
+	fi
 
 	perform test -d `dirname $subsyslock` "&&" rm -f $subsyslock
 
@@ -253,7 +253,7 @@ case "$1" in
 	then
 		echo "IPsec running"  " - pluto pid: `cat $plutopid`"
 		# might not be a subsystem lock dir, ignore that issue
-		if test "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \) 
+		if test "$plutokind" = "normal" -a \( "$klips" = "yes" -o "$lk26sec" = "yes" \)
 		then
 			echo "pluto pid `cat $plutopid`"
                         case "$eroutes" in

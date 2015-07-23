@@ -21,7 +21,7 @@
 
 <refsect1 id='description'><title>DESCRIPTION</title>
 <para><emphasis remap='I'>_keycensor</emphasis>
-is used by 
+is used by
 <emphasis remap='B'>ipsec barf</emphasis>
 to process the /etc/ipsec.secrets file, removing private key info.</para>
 </refsect1>

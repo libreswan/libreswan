@@ -544,7 +544,7 @@ char *find_dercrl_uri(chunk_t *dercrl)
 		goto out;
 	}
 
-	/* 
+	/*
 	 * MR - do only the first distribution point. could support more
 	 * in the future
 	 */
@@ -553,7 +553,7 @@ char *find_dercrl_uri(chunk_t *dercrl)
 	if (point != NULL && point->distPointType == generalName &&
 			     point->distPoint.fullName != NULL) {
 		CERTGeneralName *dp_gn = point->distPoint.fullName;
-		/* 
+		/*
 		 * XXX - name or OthName.name? Needs a look
 		 */
 		SECItem *name = &dp_gn->name.other;

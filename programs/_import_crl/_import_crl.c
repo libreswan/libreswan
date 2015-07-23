@@ -71,7 +71,7 @@ static bool init_nss(const char *nssdb)
 	return TRUE;
 }
 
-/* 
+/*
  * _import_crl <url> <der size>
  * the der blob is passed through STDIN from pluto's fork
  */

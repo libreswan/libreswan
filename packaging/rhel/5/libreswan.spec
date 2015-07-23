@@ -77,11 +77,11 @@ Requires: nss-tools
 Requires: iproute >= 2.6.8
 
 %description
-Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is 
+Libreswan is a free implementation of IPsec & IKE for Linux.  IPsec is
 the Internet Protocol Security and uses strong cryptography to provide
 both authentication and encryption services.  These services allow you
 to build secure tunnels through untrusted networks.  Everything passing
-through the untrusted net is encrypted by the ipsec gateway machine and 
+through the untrusted net is encrypted by the ipsec gateway machine and
 decrypted by the gateway at the other end of the tunnel.  The resulting
 tunnel is a virtual private network or VPN.
 
@@ -154,7 +154,7 @@ FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 
 install -d -m 0755 %{buildroot}%{_localstatedir}/run/pluto
-# used when setting --perpeerlog without --perpeerlogbase 
+# used when setting --perpeerlog without --perpeerlogbase
 install -d -m 0700 %{buildroot}%{_localstatedir}/log/pluto/peer
 install -d %{buildroot}%{_sbindir}
 
@@ -181,7 +181,7 @@ OBJ.linux.*/programs/pluto/cavp -v1psk ikev1_psk.fax | \
 : CAVS tests passed
 %endif
 
-%post 
+%post
 /sbin/chkconfig --add ipsec || :
 
 %preun
@@ -195,7 +195,7 @@ if [ $1 -ge 1 ] ; then
     /sbin/service ipsec condrestart 2>&1 >/dev/null || :
 fi
 
-%files 
+%files
 %doc CHANGES COPYING CREDITS README* LICENSE
 %doc docs/*.* docs/examples
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/ipsec.conf

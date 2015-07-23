@@ -34,7 +34,7 @@ config setup
 	# "raw crypt parsing emitting control kernel pfkey natt x509 dpd
 	#  private".
 	# Note: "crypt" is not included with "all", as it can show confidential
-	#       information. It must be specifically specified 
+	#       information. It must be specifically specified
 	# examples:
 	# plutodebug="control parsing"
 	# plutodebug="all crypt"

@@ -102,7 +102,7 @@ static bool ikev2_calculate_psk_sighash(struct state *st,
 		 */
 		passert(st->hidden_variables.st_skeyid_calculated);
 
-		/* 
+		/*
 		 * This is wrong as role - we need to role for THIS exchange
 		 * But verify calls this routine with the role inverted, so we
 		 * cannot juse st->st_state either.

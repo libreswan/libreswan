@@ -4,7 +4,7 @@
 hostname road.uml.freeswan.org.
 
 ifconfig eth0 inet 192.1.3.209
-route delete -net default 
+route delete -net default
 route add -net default gw 192.1.3.254
 
 netstat -rne

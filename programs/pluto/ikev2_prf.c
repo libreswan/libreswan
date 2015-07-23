@@ -160,7 +160,7 @@ static void calc_skeyseed_v2(struct pcr_skeyid_q *skq,
 							       salt_size);
 	initiator_salt = chunk_from_symkey("initiator salt", initiator_salt_key);
 	free_any_symkey("initiator salt key:", &initiator_salt_key);
-						 
+						
 	next_byte += salt_size;
 
 	/* The encryption key and salt are extracted together. */	

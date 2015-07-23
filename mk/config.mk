@@ -28,8 +28,20 @@
 include ${LIBRESWANSRCDIR}/mk/local.mk
 
 # Pull in the target/build/host description and get a definition of
-# OBJDIR et.al.
+# OBJDIR, BUILDENV, et.al.
 include ${LIBRESWANSRCDIR}/mk/objdir.mk
+
+# Pull in OSDEP specific makefile stub.
+#
+# Don't try to deal with OS family variants (debian vs fedora vs ...)
+# needing different build options (e.g., auditing, fips).  Instead,
+# put all that code in the OS family ${BUILDENV}.mk file - the logic
+# ends up being a horrible mess so that hopefully keeps it a little
+# contained.
+#
+# Using the "build" machine to select "target" configuration options
+# is, to say the least, a little weird.  It's "historic".
+include ${LIBRESWANSRCDIR}/mk/defaults/${BUILDENV}.mk
 
 # Variables in this file with names starting with INC_ are not for use
 # by Makefiles which include it; they are subject to change without warning.
@@ -397,10 +409,6 @@ export IPSECVERSION
 IPSECVIDVERSION:=$(shell echo ${IPSECVERSION} | sed 's/^\([^-]*\)-\([^-]*\)-.*/\1-\2/')
 export IPSECVIDVERSION
 endif
-
-# include OSDEP/ARCH specific makefiles, if any.
-include ${LIBRESWANSRCDIR}/packaging/defaults/${BUILDENV}
--include ${LIBRESWANSRCDIR}/packaging/defaults/${BUILDENV}.${ARCH}
 
 # On MAC OSX , we have to use YACC and not BISON. And use different backup
 # file suffix.

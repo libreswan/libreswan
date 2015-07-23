@@ -1,20 +1,20 @@
 {
     IBClasses = (
-        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; },
         {
-            ACTIONS = {cancel = id; dontAskAgain = id; installGrowl = id; }; 
-            CLASS = GrowlInstallationPrompt; 
-            LANGUAGE = ObjC; 
+            ACTIONS = {cancel = id; dontAskAgain = id; installGrowl = id; };
+            CLASS = GrowlInstallationPrompt;
+            LANGUAGE = ObjC;
             OUTLETS = {
-                "button_cancel" = NSButton; 
-                "button_install" = NSButton; 
-                "checkBox_dontAskAgain" = NSButton; 
-                "scrollView_growlInfo" = NSScrollView; 
-                spinner = NSProgressIndicator; 
-                "textView_growlInfo" = NSTextView; 
-            }; 
-            SUPERCLASS = NSWindowController; 
+                "button_cancel" = NSButton;
+                "button_install" = NSButton;
+                "checkBox_dontAskAgain" = NSButton;
+                "scrollView_growlInfo" = NSScrollView;
+                spinner = NSProgressIndicator;
+                "textView_growlInfo" = NSTextView;
+            };
+            SUPERCLASS = NSWindowController;
         }
-    ); 
-    IBVersion = 1; 
+    );
+    IBVersion = 1;
 }

@@ -3,7 +3,7 @@
   <listitem>
 <para>Whether or not to allow IKE fragmentation. Valid values are are
 <emphasis remap='B'>yes</emphasis>, (the default), <emphasis remap='B'>no</emphasis>
-or <emphasis remap='B'>force</emphasis>. 
+or <emphasis remap='B'>force</emphasis>.
     </para><para>
 IKEv1 fragmentation capabilities are negotiated via a well-known private
 <emphasis remap='I'>vendor id</emphasis>. IKEv2 fragmentation support is implemented

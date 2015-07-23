@@ -78,7 +78,7 @@ static CERTSignedCrl *get_issuer_crl(CERTCertDBHandle *handle,
 	DBG(DBG_X509,
 	    DBG_log("%s : looking for a CRL issued by %s", __FUNCTION__,
 							   cert->issuerName));
-	/* 
+	/*
 	 * Use SEC_LookupCrls method instead of SEC_FindCrlByName.
 	 * For some reason, SEC_FindCrlByName was giving out bad pointers!
 	 *
@@ -194,7 +194,7 @@ static int get_node_error_status(CERTVerifyLogNode *node)
 
 /*
  * Does a temporary import, which decodes the entire chain and allows
- * CERT_VerifyCert to verify the chain when passed the end certificate 
+ * CERT_VerifyCert to verify the chain when passed the end certificate
  */
 static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 						      SECItem *ders,

@@ -1,11 +1,11 @@
-conn amsterdam--ssw-net2 
-        leftsubnet=193.111.228.0/24 
+conn amsterdam--ssw-net2
+        leftsubnet=193.111.228.0/24
 	rightsubnet=205.150.200.160/28
 	also=amsterdam--ssw-base
 	auto=start
 
-conn amsterdam--ssw-net1 
-        leftsubnet=193.110.157.0/24 
+conn amsterdam--ssw-net1
+        leftsubnet=193.110.157.0/24
 	rightsubnet=205.150.200.160/28
 	also=amsterdam--ssw-base
 	auto=start

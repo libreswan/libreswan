@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>spigrp</replaceable></arg>
     <sbr/>
     <arg choice='plain'><replaceable>cat/proc/net/ipsec_spigrp</replaceable></arg>
@@ -67,7 +67,7 @@ identified by its SAID, which consists of protocol ("ah", "esp", "comp" or
   </varlistentry>
 </variablelist>
 
-<para>is a group of 3 SAs, destined for 
+<para>is a group of 3 SAs, destined for
 <literal>192.168.2.110</literal>
 with an IPv4-in-IPv4 tunnel SA applied first with an SPI of
 <emphasis remap='B'>3d0</emphasis>
@@ -95,7 +95,7 @@ machine.</para>
   </varlistentry>
 </variablelist>
 
-<para>is a group of 3 SAs, destined for 
+<para>is a group of 3 SAs, destined for
 <emphasis remap='B'>3049:1::2</emphasis>
 with an IPv6-in-IPv6 tunnel SA applied first with an SPI of
 <emphasis remap='B'>3d0</emphasis>

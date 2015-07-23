@@ -1,6 +1,6 @@
 Lifetime of shunts with negotiationshunt=hold and failureshunt=passthrough
 
-this test is similar to newoe-4 except it uses 
+this test is similar to newoe-4 except it uses
 negotiationshunt=hold for private-or-clear and packetdefault
 
 to ensure we see the negotiationshunt, we allow more keying

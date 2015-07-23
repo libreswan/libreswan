@@ -13,12 +13,12 @@ authkey=0x87658765876587658765876587658765
 # make first SA.
 ipsec spi --saref --af inet --edst 192.1.2.45 --spi 0x12345678 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey $enckey --authkey $authkey
 ipsec spi --saref --af inet --edst 192.1.2.45 --spi 0x12345678 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4
-ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp 
+ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp
 
-# make second SA. 
+# make second SA.
 ipsec spi --saref --af inet --edst 192.1.2.44 --spi 0x23456789 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey $enckey --authkey $authkey
 ipsec spi --saref --af inet --edst 192.1.2.44 --spi 0x23456789 --proto tun --src 192.1.2.23 --dst 192.1.2.44 --ip4
-ipsec spigrp inet 192.1.2.44 0x23456789 tun inet 192.1.2.44 0x23456789 esp 
+ipsec spigrp inet 192.1.2.44 0x23456789 tun inet 192.1.2.44 0x23456789 esp
 
 
 ipsec eroute

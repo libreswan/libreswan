@@ -6,4 +6,4 @@ to see they get properly rejected. Currenly lists one test:
 esp=aes256-sha2_256-4096
 
 When using NETKEY, this crashed pluto. This is openswan bug #496 (of old mantis tracker)
-The "4096" is bogus and we should fail to load this conn. 
+The "4096" is bogus and we should fail to load this conn.

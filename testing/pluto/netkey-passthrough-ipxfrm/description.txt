@@ -1,7 +1,7 @@
-one connections and a specific passthrough created using ip xfrm policy command 
+one connections and a specific passthrough created using ip xfrm policy command
 In this case we pick ports symmetrically using 222 <-> 222
 
 ip xfrm policy should have priority lower than that of created by pluto. create in out and fwd polcy.
 
-to verify using tcpdump 
+to verify using tcpdump
 tcpdump -s 0  -A -r ./OUTPUT/swan12.pcap port 222 | grep PLAIN

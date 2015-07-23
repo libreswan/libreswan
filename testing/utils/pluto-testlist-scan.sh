@@ -24,9 +24,10 @@ set -ue
 me=`readlink -f $0`
 
 # be flexible about current directory
-if [ -f TESTLIST -a TESTLIST -ef ../../testing/pluto/TESTLIST ] ; then
-	# we're where we need to be
-	:
+if [ -f TESTLIST ] ; then
+	if [ ! TESTLIST -ef ../../testing/pluto/TESTLIST ] ; then
+		echo "$me: may not be in correct directory" >&2
+	fi
 elif [ -f pluto/TESTLIST -a pluto/TESTLIST -ef ../testing/pluto/TESTLIST ] ; then
 	cd pluto
 elif [ -f testing/pluto/TESTLIST ] ; then

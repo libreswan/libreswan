@@ -762,7 +762,7 @@ stf_status ikev2parent_inI1outR1(struct msg_digest *md)
 		 * Don't try to check if the group is acceptable here.
 		 * Need to first select the policy, and that happens
 		 * much later (although it shouldn't).
-		*/ 
+		*/
 	}
 
 	/*
@@ -938,7 +938,7 @@ static stf_status ikev2_parent_inI1outR1_tail(
 			 * exchange does not result in the creation of an
 			 * IKE SA due to INVALID_KE_PAYLOAD, NO_PROPOSAL_CHOSEN,
 			 * or COOKIE, the responder's SPI will be zero also in
-			 * the response message.  
+			 * the response message.
 			 */
 			DBG(DBG_CONTROL, DBG_log("Clearing RCOOKIE for INVALID_KE reply"));
 			rehash_state(st, zero_cookie);
@@ -1877,7 +1877,7 @@ static stf_status ikev2_send_auth(struct connection *c,
 	pb_stream a_pbs;
 	struct state *pst = IS_CHILD_SA(st) ?
 		state_with_serialno(st->st_clonedfrom) : st;
-	lset_t authpolicy = c->policy & POLICY_ID_AUTH_MASK; 
+	lset_t authpolicy = c->policy & POLICY_ID_AUTH_MASK;
 
 	/* ??? isn't c redundant? */
 	pexpect(c == st->st_connection)

@@ -1579,7 +1579,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 
 	rsp.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
         /* ??? would next call ever succeed AA_2015 MAY */
-	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp), 
+	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp),
 				"Get policy", "?")) {
 		return;
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {

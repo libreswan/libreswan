@@ -62,7 +62,7 @@ return_distro() {
     # try to detect the distro
     if [ -z "$(uname -o 2> /dev/null | grep inux)" ]; then
 	# non-Linux, so this will be BSD, OSX or cygwin/Windows
-	echo "Error: This system is not supported yet." >&2 
+	echo "Error: This system is not supported yet." >&2
 	return 88
     fi
 

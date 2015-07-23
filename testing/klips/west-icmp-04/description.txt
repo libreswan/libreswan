@@ -1,2 +1,2 @@
-This tests reception (decryption) of ESP-3DES-MD5 packets with a source 
+This tests reception (decryption) of ESP-3DES-MD5 packets with a source
 of encrypted ICMP packets.

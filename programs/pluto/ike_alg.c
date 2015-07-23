@@ -197,7 +197,7 @@ struct ike_alg *ikev2_alg_find(unsigned algo_type,
 
 	/*
 	 * these types are mixed up, so go along with it :(
-	 * IKEv2_ENCR_CAMELLIA_CBC_ikev1 == ESP_CAMELLIAv1 
+	 * IKEv2_ENCR_CAMELLIA_CBC_ikev1 == ESP_CAMELLIAv1
 	 * IKEv2_ENCR_CAMELLIA_CBC == ESP_CAMELLIA
 	 */
 	if (algo_type == IKE_ALG_ENCRYPT && algo_v2id == IKEv2_ENCR_CAMELLIA_CBC_ikev1)

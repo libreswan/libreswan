@@ -3,7 +3,7 @@
   <listitem>
 <para>When IKEv1 XAUTH support is available, set the method used by XAUTH to authenticate
 the user with IKEv1. The currently supported values are <emphasis remap='I'>file</emphasis> (the default),
- <emphasis remap='I'>pam</emphasis> or  <emphasis remap='I'>alwaysok</emphasis>. 
+ <emphasis remap='I'>pam</emphasis> or  <emphasis remap='I'>alwaysok</emphasis>.
 The password file is located at <emphasis remap='I'>/etc/ipsec.d/passwd</emphasis>,
 and follows a syntax similar to the Apache htpasswd file, except an additional connection
 name argument (and optional static IP address) are also present:

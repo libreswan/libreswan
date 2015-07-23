@@ -34,7 +34,7 @@ trahmd5)
 		-key 979899a0a1a2a3a4a5a6a7a8a9b0b1b2
 ;;
 trahmd5del)
-	ipsecadm delspi -spi 545 -dst $gw2 
+	ipsecadm delspi -spi 545 -dst $gw2
 	rtdelete $gw1 $hostmask $gw2 $hostmask \
 		-1 -1 -1
 	rtdelete $default $hostmask $gw2 $hostmask \
@@ -53,7 +53,7 @@ trahsha1)
 		-key 3c3d3e3f4a4b4c4d4e4f5a5b5c5d5e5f6a6b6c6d
 ;;
 trahsha1del)
-	ipsecadm delspi -spi 585 -dst $gw2 
+	ipsecadm delspi -spi 585 -dst $gw2
 	rtdelete $gw1 $hostmask $gw2 $hostmask \
 		-1 -1 -1
 	rtdelete $default $hostmask $gw2 $hostmask \
@@ -74,7 +74,7 @@ tresp3desmd5)
 		-authkey 65666768697071727374757677787980 -iv $iv
 ;;
 tresp3desmd5del)
-	ipsecadm delspi -spi 525 -dst $gw2 
+	ipsecadm delspi -spi 525 -dst $gw2
 	rtdelete $gw1 $hostmask $gw2 $hostmask \
 		-1 -1 -1
 	rtdelete $default $hostmask $gw2 $hostmask \
@@ -95,7 +95,7 @@ tresp3des)
 		-iv $iv
 ;;
 tresp3desdel)
-	ipsecadm delspi -spi 525 -dst $gw2 
+	ipsecadm delspi -spi 525 -dst $gw2
 	rtdelete $gw1 $hostmask $gw2 $hostmask \
 		-1 -1 -1
 	rtdelete $default $hostmask $gw2 $hostmask \
@@ -116,7 +116,7 @@ tresp3dessha1)
 		-authkey 6566676869707172737475767778798081828384 -iv $iv
 ;;
 tresp3dessha1del)
-	ipsecadm delspi -spi 525 -dst $gw2 
+	ipsecadm delspi -spi 525 -dst $gw2
 	rtdelete $gw1 $hostmask $gw2 $hostmask \
 		-1 -1 -1
 	rtdelete $default $hostmask $gw2 $hostmask \
@@ -137,7 +137,7 @@ trespdesmd5)
 		-authkey e5e6e7e8e9f0f1f2f3f4f5f6f7f8f900 -iv $iv
 ;;
 trespdesmd5del)
-	ipsecadm delspi -spi 565 -dst $gw2 
+	ipsecadm delspi -spi 565 -dst $gw2
 	rtdelete $gw1 $hostmask $gw2 $hostmask \
 		-1 -1 -1
 	rtdelete $default $hostmask $gw2 $hostmask \
@@ -156,7 +156,7 @@ trespdes)
 		-key d7d8d9e0e1e2e3e4 -iv $iv
 ;;
 trespdesdel)
-	ipsecadm delspi -spi 565 -dst $gw2 
+	ipsecadm delspi -spi 565 -dst $gw2
 	rtdelete $gw1 $hostmask $gw2 $hostmask \
 		-1 -1 -1
 	rtdelete $default $hostmask $gw2 $hostmask \
@@ -177,7 +177,7 @@ trespdessha1)
 		-authkey e5e6e7e8e9f0f1f2f3f4f5f6f7f8f90001020304
 ;;
 trespdessha1del)
-	ipsecadm delspi -spi 565 -dst $gw2 
+	ipsecadm delspi -spi 565 -dst $gw2
 	rtdelete $gw1 $hostmask $gw2 $hostmask \
 		-1 -1 -1
 	rtdelete $default $hostmask $gw2 $hostmask \

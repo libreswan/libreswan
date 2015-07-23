@@ -8,7 +8,7 @@ ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started
 
 ipsec auto --add dns--westnet-eastnet
-ipsec whack --debug-dns 
+ipsec whack --debug-dns
 ipsec whack --status
 
 echo done

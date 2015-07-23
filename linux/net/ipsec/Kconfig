@@ -1,12 +1,12 @@
 #
 # IPSEC configuration
 # Copyright (C) 2004 Michael Richardson <mcr@freeswan.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -20,7 +20,7 @@ config KLIPS
 	help
 	  KLIPS is the Libreswan (www.libreswan.org) Kernel Level IP Security
 	  system. It is extensively tested, and has interoperated with
-	  many other systems. 
+	  many other systems.
 	  It provides "ipsecX" devices on which one can do firewalling.
 	  The Libreswan userland, is compatible with both KLIPS and NETKEY
 	  You cannot build KLIPS and NETKEY inline into the kernel.
@@ -47,25 +47,25 @@ config KLIPS_AH
 	   It is not recommended to enable this.  RFC2402
 
 config KLIPS_AUTH_HMAC_MD5
-	bool 'HMAC-MD5 authentication algorithm' 
+	bool 'HMAC-MD5 authentication algorithm'
 	default y
 	help
            The HMAC-MD5 algorithm is used by ESP (and AH) to guarantee packet
 	   integrity. There is little reason not to include it.
 
 config KLIPS_AUTH_HMAC_SHA1
-	bool 'HMAC-SHA1 authentication algorithm' 
+	bool 'HMAC-SHA1 authentication algorithm'
 	default y
 	help
            The HMAC-SHA1 algorithm is used by ESP (and AH) to guarantee packet
-	   integrity. SHA1 is a little slower than MD5, but is said to be 
+	   integrity. SHA1 is a little slower than MD5, but is said to be
 	   a bit more secure. There is little reason not to include it.
 
 config KLIPS_ALG
 	bool 'KLIPS_ALG software encryption'
 	default y
 	help
-	   This option provides support for loading new algorithms into the 
+	   This option provides support for loading new algorithms into the
 	   kernel for crypto use. You may disable this if using the
 	   CONFIG_KLIPS_OCF option for hardware offload.
 
@@ -100,7 +100,7 @@ config KLIPS_IPCOMP
 	help
            The IPcomp protocol is used prior to ESP to make the packet
 	   smaller. Once encrypted, compression will fail, so any link
-	   layer efforts (e.g. PPP) will not work. 
+	   layer efforts (e.g. PPP) will not work.
 
 config KLIPS_OCF
 	bool 'IPsec OCF Acceleration Support'
@@ -125,7 +125,7 @@ config KLIPS_COMPAT_NAT_NFMARK
 
 config KLIPS_DEBUG
 	bool 'IPsec debugging'
-	default y 
+	default y
 	help
            KLIPS includes a lot of debugging code. Unless there is a real
 	   tangible benefit to removing this code, it should be left in place.

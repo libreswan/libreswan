@@ -182,7 +182,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 			 * To be honest, the attrs should be a list OR
 			 * the eklen>0 path should always be taken OR
 			 * ...
-			 * 
+			 *
 			 * The convoluted assignment is copying the
 			 * auth field (see "struct db_attr otempty"
 			 * above), from base to the new proposal.
@@ -203,7 +203,7 @@ struct db_sa *oakley_alg_makedb(struct alg_info_ike *ai,
 
 			struct db_trans *trans = &emp_sp->prop_conjs[0].props[0].trans[0];
 
-			/* 
+			/*
 			 * See "struct db_attr otempty" above for
 			 * where these magic values come from.
 			 */

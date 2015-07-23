@@ -3,11 +3,11 @@
 killall -9 pluto  2>/dev/null
 killall -9 pluto  2>/dev/null
 ip netns del nswest
-ip netns del nseast 
+ip netns del nseast
 #
 # load netkey stack on host
 ipsec _stackmanager start
-ipsec version |grep klips && echo you need netkey 
+ipsec version |grep klips && echo you need netkey
 mkdir -p  /var/run/netnspluto/nswest
 mkdir -p  /var/run/netnspluto/nseast
 mkdir -p  /var/run/pluto
@@ -50,7 +50,7 @@ ip link add heeth1 type veth peer name eeth1
 ip link set heeth1 up
 ip link set eeth1 netns nseast
 ip netns exec nseast ip link set dev eeth1 name eth1
-ip netns exec nseast ip addr add 192.1.2.23/24 dev eth1 
+ip netns exec nseast ip addr add 192.1.2.23/24 dev eth1
 ip netns exec nseast ip link set eth1 up
 
 #
@@ -78,7 +78,7 @@ ip netns exec nseast ipsec pluto --config /etc/ipsec.conf
 sleep 8
 ip netns exec nswest ipsec whack --listen
 ip netns exec nswest ipsec whack --listen
-ip netns exec nseast ipsec auto --add westnet-eastnet-ipv4-psk-ikev2 
+ip netns exec nseast ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 ip netns exec nswest ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
 ip netns exec nswest ipsec whack --initiate --name westnet-eastnet-ipv4-psk-ikev2
 ip netns exec nswest ipsec status

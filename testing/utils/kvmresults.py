@@ -3,12 +3,12 @@
 # Print a test result summary gathered by scanning the OUTPUT.
 #
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -113,53 +113,60 @@ def main():
 
     for test in tests:
 
-        # Filter out tests that are being ignored?
-        ignore = testsuite.ignore(test, args)
-        if ignore and not args.list_ignored:
-            continue
+        # Produce separate runtimes for each test.
+        with logutil.TIMER:
 
-        # Filter out tests that have not been run?
-        result = None
-        if not ignore:
-            result = post.mortem(test, baseline=baseline,
-                                 skip_sanitize=args.quick or args.quick_sanitize,
-                                 skip_diff=args.quick or args.quick_diff,
-                                 update_sanitize=args.update or args.update_sanitize,
-                                 update_diff=args.update or args.update_diff)
-            if not result and not args.list_untested:
+            logger.debug("start processing test %s", test.name)
+
+            # Filter out tests that are being ignored?
+            ignore = testsuite.ignore(test, args)
+            if ignore and not args.list_ignored:
                 continue
 
-        sep = ""
+            # Filter out tests that have not been run?
+            result = None
+            if not ignore:
+                result = post.mortem(test, baseline=baseline,
+                                     skip_sanitize=args.quick or args.quick_sanitize,
+                                     skip_diff=args.quick or args.quick_diff,
+                                     update_sanitize=args.update or args.update_sanitize,
+                                     update_diff=args.update or args.update_diff)
+                if not result and not args.list_untested:
+                    continue
 
-        if args.print_name:
-            print(sep, end="")
-            print(test.name, end="")
-            sep = " "
+            sep = ""
 
-        if args.print_directory:
-            print(sep, end="")
-            print(test.directory, end="")
-            sep = " "
+            if args.print_name:
+                print(sep, end="")
+                print(test.name, end="")
+                sep = " "
 
-        if ignore:
-            print(sep, end="")
-            print("ignored", ignore, end="")
-            sep = " "
+            if args.print_directory:
+                print(sep, end="")
+                print(test.directory, end="")
+                sep = " "
 
-        if result:
-            print(sep, end="")
-            print(result, end="")
-            sep = " "
+            if ignore:
+                print(sep, end="")
+                print("ignored", ignore, end="")
+                sep = " "
 
-        print()
+            if result:
+                print(sep, end="")
+                print(result, end="")
+                sep = " "
 
-        if args.print_diff and result:
-            for domain in result.diffs:
-                for line in result.diffs[domain]:
-                    if line:
-                        print(line)
+            print()
 
-        sys.stdout.flush()
+            if args.print_diff and result:
+                for domain in result.diffs:
+                    for line in result.diffs[domain]:
+                        if line:
+                            print(line)
+
+            sys.stdout.flush()
+
+            logger.debug("stop processing test %s", test.name)
 
     return 0
 

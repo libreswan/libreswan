@@ -3,7 +3,7 @@ CFLAGS=-DUSE_3DES
 INCLUDES=-I${SRCDIR}${LIBRESWANSRCDIR}/programs/pluto
 INCLUDES+=-I${SRCDIR}${LIBRESWANSRCDIR}/testing/lib/libpluto
 
-SOURCES=rsa-v2.c packetsI1.c 
+SOURCES=rsa-v2.c packetsI1.c
 
 # what we are testing
 OBJS+=${OBJDIRTOP}/programs/pluto/ikev2_rsa.o
@@ -38,7 +38,7 @@ OBJS+=${OBJDIRTOP}/programs/pluto/ike_alg_aes.o
 OBJS+=${OBJDIRTOP}/programs/pluto/ike_alg_sha2.o
 OBJS+=${OBJDIRTOP}/programs/pluto/kernel_noklips.o
 
-OBJS+=${PLUTOLIB} 
+OBJS+=${PLUTOLIB}
 PROGLIBS=
 EXTRALIBS+=${PLUTOLIB} ${CRYPTOLIBS} ${WHACKLIB}
 

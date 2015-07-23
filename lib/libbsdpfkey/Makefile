@@ -5,7 +5,7 @@ CFLAGS+=-DINET6
 SRCS=	pfkey.c pfkey_dump.c
 SRCS+=	ipsec_strerror.c #policy_parse.y policy_token.l
 #SRCS+=	ipsec_dump_policy.c ipsec_get_policylen.c
-OBJS=${SRCS:.c=.o} 
+OBJS=${SRCS:.c=.o}
 
 CLEANFILES+=	y.tab.c y.tab.h
 

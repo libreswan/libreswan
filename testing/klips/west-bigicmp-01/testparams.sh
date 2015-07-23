@@ -4,7 +4,7 @@ TEST_TYPE=klipstest
 TESTNAME=west-bigicmp-01
 TESTHOST=west
 EXITONEMPTY=--exitonempty
-ARPREPLY=--arpreply 
+ARPREPLY=--arpreply
 
 #THREEEIGHT=true
 

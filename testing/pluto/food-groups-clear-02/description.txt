@@ -8,8 +8,8 @@ allowed to do OE, so it attempts.
 East however, is NOT set up to do OE, so it refuses the connection,
 and the *return* packet comes back in the clear.
 
-Contrast this with clear-or-oe-02, where the same scenario occurs, but  
+Contrast this with clear-or-oe-02, where the same scenario occurs, but
 east *is* configured to accept OE for this address, so it will accept the
-connection. 
+connection.
 
 

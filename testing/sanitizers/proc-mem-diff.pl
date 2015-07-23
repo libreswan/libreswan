@@ -31,12 +31,12 @@ while(<>) {
   $values{"$pass $thing"}=$value;
 }
 
-foreach $loaded ("no-", "") 
+foreach $loaded ("no-", "")
 {
 
   # base values are those that occured from proc_meminfo-.*ipsec-mod-.*1
   $base="/tmp/proc_meminfo-" . $loaded . "ipsec-mod-01";
-  
+
   print "MEMINFO: " . $loaded . " ipsec module loaded (KLIPS) base is $base\n";
   print "MEMINFO:		Free	Shared	Buffers	Cached	Active	Inactive\n";
   #print "BASE:value	";
@@ -47,12 +47,12 @@ foreach $loaded ("no-", "")
     #print sprintf("	%d", $values{$base . " Active:"});
     #print sprintf("	%d", $values{$base . " Inactive:"});
     #print "\n";
-  
+
   for($pass=2; $pass <= 5; $pass++)
   #for($pass=2; $pass <= $ENV{"$MOD_LOAD_ITERATIONS"}; $pass++)
   {
     $passbase="/tmp/proc_meminfo-" . $loaded . "ipsec-mod-" . sprintf("%02d",$pass);
-  
+
     #print "PASSBASE:	" .  $passbase . "\n";
     print sprintf("PASS-%02d:diff	", $pass);
     print sprintf("	%d", $values{$passbase . " MemFree:"} - $values{$base . " MemFree:"});
@@ -65,7 +65,7 @@ foreach $loaded ("no-", "")
   }
 
 }
-  
+
 #foreach $key (keys %values) {
   #print "KEY $key is ".$values{$key}."\n";
 #}

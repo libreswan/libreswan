@@ -8,32 +8,32 @@ Packets for port 222 SHOULD be encrypted with IPsec
 This test case fails the policy checks within NETKEY. The passthrough connection
 on west yields:
 
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22 
-	dir fwd priority 1768 ptype main 
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22 
-	dir in priority 1768 ptype main 
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22 
-	dir out priority 1768 ptype main 
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22
+	dir fwd priority 1768 ptype main
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22
+	dir in priority 1768 ptype main
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22
+	dir out priority 1768 ptype main
 
 West should yield:
 
-src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22 
-	dir fwd priority 1704 ptype main 
-src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22 
-	dir in priority 1704 ptype main 
-src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22 
-	dir out priority 1704 ptype main 
+src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22
+	dir fwd priority 1704 ptype main
+src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22
+	dir in priority 1704 ptype main
+src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22
+	dir out priority 1704 ptype main
 
 which was confirmed using no passthrough route and running the below on west:
 
-ip xfrm policy add src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22 dir fwd priority 1704 ptype main 
-ip xfrm policy add src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22 dir  in priority 1704 ptype main 
-ip xfrm policy add src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22 dir out priority 1704 ptype main 
+ip xfrm policy add src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22 dir fwd priority 1704 ptype main
+ip xfrm policy add src 192.0.2.0/24 dst 192.0.1.0/24 proto tcp sport 22 dir  in priority 1704 ptype main
+ip xfrm policy add src 192.0.1.0/24 dst 192.0.2.0/24 proto tcp dport 22 dir out priority 1704 ptype main
 
 There seems to also be a bogus state:
 
 src 192.0.1.254 dst 192.0.2.254
 	proto esp spi 0xSPISPIXX reqid REQID mode transport
-	replay-window 0 
-	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto tcp sport 34102 dport 22 dev eth1 
+	replay-window 0
+	sel src 192.0.1.254/32 dst 192.0.2.254/32 proto tcp sport 34102 dport 22 dev eth1
 

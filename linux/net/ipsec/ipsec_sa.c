@@ -1048,7 +1048,7 @@ int ipsec_sa_wipe(struct ipsec_sa *ips)
 		if (ips->ips_alg_auth &&
 		    ips->ips_alg_auth->ixt_a_destroy_key)
 		{
-			ips->ips_alg_auth->ixt_a_destroy_key(ips->ips_alg_auth, 
+			ips->ips_alg_auth->ixt_a_destroy_key(ips->ips_alg_auth,
 							     ips->ips_key_a);
 		} else
 #endif

@@ -1,4 +1,4 @@
-This test case examines the ESP packets to make sure that they are 
+This test case examines the ESP packets to make sure that they are
 produced with IVs that look random. Specifically, that they aren't
 using the last cipher block as the IV.
 

@@ -92,7 +92,7 @@ parser.add_argument('--crl', '-L', action='store_true', default='', help='ocsp c
 parser.add_argument('--strict', '-z', action='store_true', default='', help='strict checks')
 args = parser.parse_args()
 
-ADD_CERT_FMT = "%s -A -d sql:%s -n '%s' -t '%s' -i %s" 
+ADD_CERT_FMT = "%s -A -d sql:%s -n '%s' -t '%s' -i %s"
 CREATE_DB_FMT = "%s -N -d sql:%s --empty-password"
 CU_PATH = "/usr/bin/certutil"
 VERIFIER_FMT = "%s -u %s"
@@ -251,7 +251,7 @@ class usageTest:
 
 	def set_root_bc(self, crit=False):
 		self.root_use_bc = True
-		self.root_bc_crit = crit 
+		self.root_bc_crit = crit
 
 	def set_sub_bc(self, crit=False):
 		self.sub_use_bc = True

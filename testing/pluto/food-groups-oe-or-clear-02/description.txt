@@ -1,7 +1,7 @@
 This test sets up east to send a packet to sunset (behind west).
 
 East doesn't think it should do OE.
-West, however, does want to try OE. 
+West, however, does want to try OE.
 
 In this test, west will init, which it turns out is okay with east.
 (Contrast to food-groups-clear-02)

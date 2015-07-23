@@ -4,7 +4,7 @@ TEST_TYPE=klipstest
 TESTNAME=west-esp-short-01
 TESTHOST=west
 EXITONEMPTY=--exitonempty
-ARPREPLY=--arpreply 
+ARPREPLY=--arpreply
 
 PUB_INPUT=../inputs/01-sunrise-sunset-esp-short.pcap
 REF_PRIV_OUTPUT=spi1-cleartext.txt

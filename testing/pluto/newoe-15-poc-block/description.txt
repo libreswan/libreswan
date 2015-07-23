@@ -1,4 +1,4 @@
-basic OE test, using road and east triggered by packet using NETKEY 
+basic OE test, using road and east triggered by packet using NETKEY
 On road east is in private-or-clear, so IKE will be initiated.
 On east road is in block, so it should return NO_PROPOSAL_CHOSEN
 

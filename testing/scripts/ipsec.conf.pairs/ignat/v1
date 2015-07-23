@@ -69,13 +69,13 @@ conn mms1
 conn wap
         # Left security gateway, subnet behind it, next hop toward right.
         leftid=@202.139.125.54
-        left=202.139.125.54 
-        leftsubnet=192.168.0.0/24 
+        left=202.139.125.54
+        leftsubnet=192.168.0.0/24
         leftnexthop=202.139.125.49
         leftrsasigkey=0sAQN...
         # Right security gateway, subnet behind it, next hop toward left.
-        rightid=@203.202.188.202  
-        rightsubnet=10.59.4.16/30 
+        rightid=@203.202.188.202
+        rightsubnet=10.59.4.16/30
         rightrsasigkey=0sAQP....
         authby=rsasig
         auto=start
@@ -112,9 +112,9 @@ conn singtel1 #FW-1
         keyexchange=ike
         auth=esp
         pfs=no
-        
 
-      
+
+
 
 conn lateral #FW-1
      type=tunnel
@@ -129,7 +129,7 @@ conn lateral #FW-1
      keyexchange=ike
      auth=esp
      pfs=no
-     
+
 
 # elogic-futurelab connection
 conn elogic
@@ -172,7 +172,7 @@ conn Sasme
         rightsubnet=10.59.4.16/30
         rightrsasigkey=0sAQP...
         authby=rsasig
-        
+
 
 
 

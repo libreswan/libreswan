@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --x509 
+/testing/guestbin/swan-prep --x509
 iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j LOGDROP
 ipsec setup start
 /testing/pluto/bin/wait-until-pluto-started

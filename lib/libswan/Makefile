@@ -5,12 +5,12 @@
 # Copyright (C) 2012 Paul Wouters <pwouters@redhat.com>
 # Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -49,13 +49,13 @@ endif
 SRCS+=sanitizestring.c pfkey_print.c pfkey_sock.c pfkey_error.c
 
 ifeq ($(USE_KLIPS),true)
-KLIPS_DEFS=-DKLIPS 
+KLIPS_DEFS=-DKLIPS
 endif
 
 ifeq ($(USE_PFKEYv2),true)
 PFKEYV2_DEFS=-DPFKEYV2
 PFKEYV2_SRCS+=pfkey_v2_build.c pfkey_v2_ext_bits.c pfkey_v2_parse.c
-PFKEYV2_SRCS+=pfkey_v2_debug.c 
+PFKEYV2_SRCS+=pfkey_v2_debug.c
 endif
 
 CFLAGS+=-I${LIBRESWANSRCDIR}/lib/libcrypto/libsha2
@@ -81,7 +81,7 @@ CFLAGS+=-I${LIBRESWANSRCDIR}
 CFLAGS+=${PFKEYV2_DEFS} ${KLIPS_DEFS} $(NSSFLAGS)
 CFLAGS+=-I${LIBRESWANSRCDIR}/include ${PORTINCLUDE}
 # XXX: hack until everything uses a consistent .c.o rule
-CFLAGS+=$(USERLAND_CFLAGS) 
+CFLAGS+=$(USERLAND_CFLAGS)
 CFLAGS+=${CROSSFLAGS}
 
 ARFLAGS=crvs
@@ -134,7 +134,7 @@ l:
 	$(MAKE) $(LIB) ARFLAGS=crv CFLAGS=-O
 	$(RANLIB) $(LIB)
 
-t:	$(LIB) 
+t:	$(LIB)
 	ln -f -s ${KLIPSSRCDIR}/ttosubnet.c try1a.c
 	${CC} ${CFLAGS} -DTTOSUBNET_MAIN try1a.c $(LIB) -o try1a
 	./try1a -r

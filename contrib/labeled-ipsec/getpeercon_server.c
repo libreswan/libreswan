@@ -4,7 +4,7 @@
  * compile: gcc -Wall -o getpeercon_server -lselinux getpeercon_server.c
  *
  * Copyright Paul Moore <paul@paul-moore.com>
- * 
+ *
  * Paul Wouters <pwouters@redhat.com> added simplistic quit option. If
  * the server receives the text "quit" it will quit.
  */
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
 				buffer[rc] = '\0';
 				/* ??? should this format include a \n? */
 				printf("   %s", buffer);
-				if (strcmp(buffer, "quit") == 0) 
+				if (strcmp(buffer, "quit") == 0)
 					break;
 			}
 		}

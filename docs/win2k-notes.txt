@@ -3,7 +3,7 @@ The Libreswan IKE daemon has been ported to work on CYGWIN32.
 It presently has no kernel component, so it is useful only to those who want
 to do some kind of testing using IKE using a Windows 2000/XP platform.
 
-It assumed that a CYGWIN32 compiler environment exists. 
+It assumed that a CYGWIN32 compiler environment exists.
 
 The code cross compiles, and has passed approximately 90% of our test
 cases as of this time.
@@ -38,7 +38,7 @@ done
 
 if [ $# -gt 0 ]
 then
-        echo "$@" 
+        echo "$@"
 else
         cat -
 fi
@@ -48,7 +48,7 @@ bash-3.00$ chmod +x /bin/logger
 
 To start up libreswan, you can do:
 
-bash-3.00% ipsec setup start  
+bash-3.00% ipsec setup start
 
 note that "ipsec setup stop" does not quite function as yet. The "ps"
 program does not quite behave.
@@ -61,7 +61,7 @@ Extract the tar.gz file in some place that is convenient.
 Type "make programs"
 Type "make install"
 
-You will need appropriate tools installed on cygwin: 
+You will need appropriate tools installed on cygwin:
 
 Package              Version            Status
 bash                 3.0-11             OK

@@ -35,7 +35,7 @@ for hostname in macs.keys():
 
 		# install files common to all GUESTOS types
 		output += "\n" + commands.getoutput("hostname %s"%hostname)
-		# fixup /etc/sysctl.conf 
+		# fixup /etc/sysctl.conf
 		sysctl = "/testing/baseconfigs/%s/etc/sysctl.conf"%hostname
 		if not os.path.isfile(sysctl):
 			sysctl = "/testing/baseconfigs/all/etc/sysctl.conf"

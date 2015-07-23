@@ -5,7 +5,7 @@
 hostname road
 
 ifconfig eth0 inet 192.1.3.194
-route delete -net default 
+route delete -net default
 route add -net default gw 192.1.3.254
 
 netstat -rn
@@ -19,7 +19,7 @@ ipsec setup start
 ipsec auto --replace xauth-road--eastnet
 ipsec whack --status | grep xauth-road--eastnet
 
-ipsec whack --debug-control --debug-controlmore 
+ipsec whack --debug-control --debug-controlmore
 
 echo done
 

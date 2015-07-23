@@ -1,7 +1,7 @@
 #!/bin/bash
-# on the host 
+# on the host
 # ipsec _stackmanager start
-# ipsec start 
+# ipsec start
 # ipsec status should show stack is netkey
 #
 #
@@ -35,10 +35,10 @@ pipework br3 -i eth2 $didn 192.1.2.254/24
 sleep 2
 docker exec -it $dnamer ip route add default via 192.1.3.254
 docker exec -it $dnamee ip route add default via 192.1.2.254
-docker exec -it $dnamer ip route 
-docker exec -it $dnamee ip route 
-rm -fr OUTPUT 
-mkdir OUTPUT 
+docker exec -it $dnamer ip route
+docker exec -it $dnamee ip route
+rm -fr OUTPUT
+mkdir OUTPUT
 eastc=OUTPUT/east.console.verbose.txt
 roadc=OUTPUT/road.console.verbose.txt
 nicc=OUTPUT/nic.console.verbose.txt

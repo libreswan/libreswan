@@ -3,8 +3,8 @@ Type: boolean
 Default: false
 _Description: Autostart Libreswan at boot?
  It is possible to have Libreswan (ipsec) to start automatically at boot time
- by adding its init script (/etc/init.d/ipsec) to the boot sequence. Most 
- people will prefer to configure the daemon before enabling autostart. To 
+ by adding its init script (/etc/init.d/ipsec) to the boot sequence. Most
+ people will prefer to configure the daemon before enabling autostart. To
  enable it manually, simply run "update-rc.d ipsec defaults".
 
 Template: libreswan/restart

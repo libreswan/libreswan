@@ -4,7 +4,7 @@ TEST_TYPE=klipstest
 TESTNAME=west-badspi-01
 TESTHOST=west
 EXITONEMPTY=--exitonempty
-ARPREPLY=--arpreply 
+ARPREPLY=--arpreply
 
 PUB_INPUT=../inputs/02-sunrise-sunset-esp.pcap
 REF_PUB=icmp-warn.txt

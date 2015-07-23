@@ -21,7 +21,7 @@
 <refsynopsisdiv id='synopsis'>
 <para>Note: In the following,</para>
 <cmdsynopsis>
-  <command>&lt;SA&gt;</command>    
+  <command>&lt;SA&gt;</command>
     <arg choice='plain'><replaceable>means:</replaceable></arg>
     <arg choice='plain'>--af </arg>
     <arg choice='plain'><replaceable>(inet | inet6)</replaceable></arg>
@@ -161,7 +161,7 @@ arguments specify the SA to be created or deleted.
 is the address family (inet for IPv4, inet6 for IPv6).
 <emphasis remap='I'>Daddr</emphasis>
 is a destination address
-in dotted-decimal notation for IPv4 
+in dotted-decimal notation for IPv4
 or in a coloned hex notation for IPv6.
 <emphasis remap='I'>Spi</emphasis>
 is a number, preceded by '0x' for hexadecimal,
@@ -483,7 +483,7 @@ of course, be the full length required for the particular algorithm.</para>
 <emphasis remap='B'>gw1</emphasis>
 to
 <emphasis remap='B'>gw2</emphasis>
-with an SPI of 
+with an SPI of
 <emphasis remap='B'>0x125</emphasis>
 and protocol
 <emphasis remap='B'>ESP</emphasis>
@@ -509,7 +509,7 @@ and an authentication key of
 <emphasis remap='B'>3049:9::9000:3101</emphasis>
 to
 <emphasis remap='B'>3049:9::9000:3100</emphasis>
-with an SPI of 
+with an SPI of
 <emphasis remap='B'>0x150</emphasis>
 and protocol
 <emphasis remap='B'>AH</emphasis>
@@ -523,7 +523,7 @@ authentication transform, using an authentication key of
 
 <para>deletes an SA to
 <literal>192.168.100.100</literal>
-with an SPI of 
+with an SPI of
 <emphasis remap='B'>0x987</emphasis>
 and protocol
 <emphasis remap='B'>IPv4-in-IPv4</emphasis>
@@ -533,7 +533,7 @@ and protocol
 
 <para>deletes an SA to
 <emphasis remap='B'>3049:9::1000:1</emphasis>
-with an SPI of 
+with an SPI of
 <emphasis remap='B'>0x500</emphasis>
 and protocol
 <emphasis remap='B'>IPv6-in-IPv6</emphasis>

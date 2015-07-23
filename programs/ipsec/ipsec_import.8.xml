@@ -19,7 +19,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec import</command>    
+  <command>ipsec import</command>
 </cmdsynopsis>
 </refsynopsisdiv>
 

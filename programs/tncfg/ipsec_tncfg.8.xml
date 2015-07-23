@@ -19,7 +19,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'>tncfg</arg>
     <sbr/>
     <arg choice='plain'>ipsec tncfg</arg>
@@ -59,7 +59,7 @@ bound to physical interfaces</para>
 </refsect1>
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para>The purpose of <emphasis remap='I'>tncfg</emphasis> is to 
+<para>The purpose of <emphasis remap='I'>tncfg</emphasis> is to
 attach/detach IPsec virtual interfaces (e.g. ipsec0) to/from physical interfaces
 (e.g. eth0) through which packets will be forwarded once processed by KLIPS.</para>
 

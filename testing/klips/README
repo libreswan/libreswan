@@ -16,7 +16,7 @@ ENVIRONMENT
 ===========
 
 The tests can be run either on a live system or under User-Mode-Linux (UML).
-The User-Mode-Linux version is designed to run automated. 
+The User-Mode-Linux version is designed to run automated.
 
 If you do not have UML setup, you'll want to go to ../../testing/utils
 and read "make-uml.sh". You need to have ../../umlsetup.sh configured.
@@ -33,7 +33,7 @@ ORGANIZATION
 
 Each test lives in a seperate directory. In some cases there is a good
 reason to have a sequence of tests. Each test is therefore given a number
-(-XX). 
+(-XX).
 
 The script "dotests.sh" will run all tests that are described in the file
 "TESTLIST". While TESTLIST is used as if it was a shell script (it is
@@ -48,8 +48,8 @@ There are several other helper programs and scripts.
 	Documentation is currently at the top of the C file.
 
 	The --startup option calls system with its argument after
-	setting up the right sockets. Once the system call returns, 
-	it starts to relay data, feeding data in/out, etc. 
+	setting up the right sockets. Once the system call returns,
+	it starts to relay data, feeding data in/out, etc.
 
 	If called with --exitonempty, then once all the packets are
 	inserted, uml_netjig exits.
@@ -68,7 +68,7 @@ There are several other helper programs and scripts.
 
 3)	fixups.
 	This is a directory of sed/perl/awk scripts used to massage
-	the console output in to make it more uniform for regression 
+	the console output in to make it more uniform for regression
 	testing.
 
 4)	inputs.

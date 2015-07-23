@@ -5,10 +5,10 @@ AR=i586-mingw32msvc-ar
 CYGWINDIR?=/0g/sandboxes/cygwin
 SYSINCDIR=$(shell i586-mingw32msvc-gcc --print-file-name=include)
 LIBGCC=$(shell i586-mingw32msvc-gcc --print-file-name=libgcc.a)
-USERCOMPILE=-g -O3 
+USERCOMPILE=-g -O3
 PORTINCLUDE=-nostdinc -isystem ${SYSINCDIR}
 PORTINCLUDE+=-isystem ${CYGWINDIR}include
-PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/win2k/include 
+PORTINCLUDE+=-I${LIBRESWANSRCDIR}/ports/win2k/include
 USERCOMPILE+=-mcygwin -D__CYGWIN__ -D__CYGWIN32__
 USERLINK=-mcygwin -nostdlib ${CYGWINDIR}/lib/crt0.o
 USERLINK+=-L${CYGWINDIR}/lib -lcygwin ${LIBGCC}

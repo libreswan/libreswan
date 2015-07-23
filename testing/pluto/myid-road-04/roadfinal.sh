@@ -4,6 +4,6 @@ ipsec auto --status | grep '%myid ='
 : ==== cut ====
 cat /tmp/pluto.log
 ipsec look
-ipsec auto --status 
+ipsec auto --status
 : ==== tuc ====
 : ==== end ====

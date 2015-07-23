@@ -11,7 +11,7 @@
 <manvolnum>8</manvolnum>
 <refmiscinfo class='date'>23 Dec 2012</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
-<refmiscinfo class="manual">Executable programs</refmiscinfo> 
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
 <refnamediv id='name'>
 <refname>ipsec verify</refname>
@@ -20,14 +20,14 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>verify</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 id='description'><title>DESCRIPTION</title>
-<para>The 
+<para>The
 <emphasis remap='I'>ipsec verify</emphasis>
 examines the local system for a number of common system faults and
 configuration mistakes.</para>

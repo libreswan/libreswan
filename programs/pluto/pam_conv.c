@@ -109,7 +109,7 @@ int pam_conv(int num_msg,
 	return PAM_SUCCESS;
 }
 
-/* 
+/*
  * Do IKEv2 second authentication via PAM (Plugable Authentication Modules)
  *
  * @return bool success

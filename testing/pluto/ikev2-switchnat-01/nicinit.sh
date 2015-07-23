@@ -1,6 +1,6 @@
 iptables -t nat -F
 iptables -F
-# NAT 
+# NAT
 iptables -t nat -A POSTROUTING --source 192.1.3.208/32 --destination 0.0.0.0/0 -j SNAT --to-source 192.1.2.254
 # NAT one differently
 ip addr add 192.1.2.222/24 dev eth0

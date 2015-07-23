@@ -162,7 +162,7 @@ struct host_pair *find_host_pair(const ip_address *myaddr,
 			ipstr_buf b1;
 			ipstr_buf b2;
 
-			DBG_log("find_host_pair: comparing to %s:%d %s:%d",
+			DBG_log("find_host_pair: comparing %s:%d to %s:%d",
 				ipstr(&p->me.addr, &b1), p->me.host_port,
 				ipstr(&p->him.addr, &b2), p->him.host_port);
 		    });

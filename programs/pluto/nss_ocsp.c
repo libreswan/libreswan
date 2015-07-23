@@ -39,7 +39,7 @@ bool init_nss_ocsp(const char *responder_url, const char *trust_cert_name,
 		return FALSE;
 	}
 
-	/* 
+	/*
 	 * enable a default responder
 	 */
 	if (responder_url != NULL && trust_cert_name != NULL) {
@@ -87,7 +87,7 @@ responder_done:
 	}
 
 	/*
-	 * set failure mode 
+	 * set failure mode
 	 */
 	if (strict) {
 		if (CERT_SetOCSPFailureMode(

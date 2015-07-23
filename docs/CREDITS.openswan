@@ -11,13 +11,13 @@ your company are missing, please contact paul@nohats.ca.
 	David McCullough <David_Mccullough@securecomputing.com> - KLIPS, OCF
 	D. Hugh Redelmeier <hugh@mimosa.com> - Bug fixer extraordinaire
 	Andreas Steffen <andreas.steffen@strongsec.com> - X.509 Certificates
-	Dr{Who} on Freenode - Porting NAT-T + XAUTH to Openswan 2.x 
+	Dr{Who} on Freenode - Porting NAT-T + XAUTH to Openswan 2.x
 	Jacco de Leeuw <jacco2@dds.nl> - Fixes for MS Interop
 	Mathieu Lafon <mlafon@arkoon.net> - NAT-T Support
 	Nate Carlson - Force NAT-T framework, KLIPS for 2.6, etc...
 	Stephen Bevan <stephen@dino.dnsalias.com> - RFC2409 port selectors
 	Tuomo Soini <tis@foobar.fi> - NETKEY, KLIPS, _updown scripts and more
-	Matthew Galgoci <mgalgoci@redhat.com> 
+	Matthew Galgoci <mgalgoci@redhat.com>
 	Miloslav Trmac <mitr@redhat.com>
 	Avesh Agarwal <avagarwa@redhat.com>, USE_LIBNSS, SElinux
 	Hiren Joshi Cyberoam [www.cyberoam.com] - Various fixes

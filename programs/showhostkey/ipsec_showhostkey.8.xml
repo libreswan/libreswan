@@ -21,7 +21,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
 
     <arg choice='plain'><replaceable>showhostkey</replaceable></arg>
     <arg choice='opt'>--ipseckey </arg>
@@ -76,7 +76,7 @@ format (RFC 4025). A gateway can be specified with the <option>--gateway</option
 which currently supports IPv4 and IPv6 addresses. The host name is the one included in the key information
 (or, if that is not available, the output of
 <userinput>hostname&nbsp;--fqdn</userinput>),
-with a <emphasis remap='B'>.</emphasis> appended. 
+with a <emphasis remap='B'>.</emphasis> appended.
 
 For example,
 <option>--ipseckey --gateway 10.11.12.13</option>

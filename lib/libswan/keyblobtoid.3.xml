@@ -106,7 +106,7 @@ which is the size of a buffer large enough for worst-case results.</para>
 <para>Both functions return
 <literal>0</literal>
 for a failure, and otherwise
-always return the size of buffer which would 
+always return the size of buffer which would
 be needed to
 accommodate the full conversion result, including terminating NUL;
 it is the caller's responsibility to check this against the size of

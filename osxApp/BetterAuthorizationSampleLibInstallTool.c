@@ -64,13 +64,13 @@
 extern char **environ;
 
 static int RunLaunchCtl(
-	bool						junkStdIO, 
-	const char					*command, 
+	bool						junkStdIO,
+	const char					*command,
 	const char					*plistPath
 )
 	// Handles all the invocations of launchctl by doing the fork() + execve()
 	// for proper clean-up. Only two commands are really supported by our
-	// implementation; loading and unloading of a job via the plist pointed at 
+	// implementation; loading and unloading of a job via the plist pointed at
 	// (const char *) plistPath.
 {	
 	int				err;
@@ -84,13 +84,13 @@ static int RunLaunchCtl(
 	assert(plistPath != NULL);
 	
     // Make sure we get sensible logging even if we never get to the waitpid.
-    
+
     status = 0;
-    
-    // Set up the launchctl arguments.  We run launchctl using StartupItemContext 
-	// because, in future system software, launchctl may decide on the launchd 
+
+    // Set up the launchctl arguments.  We run launchctl using StartupItemContext
+	// because, in future system software, launchctl may decide on the launchd
 	// to talk to based on your Mach bootstrap namespace rather than your RUID.
-    
+
 	args[0] = "/bin/launchctl";
 	args[1] = command;				// "load" or "unload"
 	args[2] = "-w";
@@ -100,16 +100,16 @@ static int RunLaunchCtl(
     fprintf(stderr, "launchctl %s %s '%s'\n", args[1], args[2], args[3]);
 	
     // Do the standard fork/exec dance.
-    
+
 	childPID = fork();
 	switch (childPID) {
 		case 0:
 			// child
 			err = 0;
-            
-            // If we've been told to junk the I/O for launchctl, open 
+
+            // If we've been told to junk the I/O for launchctl, open
             // /dev/null and dup that down to stdin, stdout, and stderr.
-            
+
 			if (junkStdIO) {
 				int		fd;
 				int		err2;
@@ -157,7 +157,7 @@ static int RunLaunchCtl(
 			break;
 	}
 	
-    // Only the parent gets here.  Wait for the child to complete and get its 
+    // Only the parent gets here.  Wait for the child to complete and get its
     // exit status.
 	
 	if (err == 0) {
@@ -182,13 +182,13 @@ static int RunLaunchCtl(
 }
 
 static int CopyFileOverwriting(
-	const char					*sourcePath, 
-	mode_t						destMode, 
+	const char					*sourcePath,
+	mode_t						destMode,
 	const char					*destPath
 )
 	// Our own version of a file copy. This routine will either handle
 	// the copy of the tool binary or the plist file associated with
-	// that binary. As the function name suggests, it writes over any 
+	// that binary. As the function name suggests, it writes over any
 	// existing file pointed to by (const char *) destPath.
 {
 	int			err;
@@ -259,8 +259,8 @@ static int CopyFileOverwriting(
 }
 
 static int InstallCommand(
-	const char *				bundleID, 
-	const char *				toolSourcePath, 
+	const char *				bundleID,
+	const char *				toolSourcePath,
 	const char *				plistSourcePath
 )
 	// Heavy lifting function for handling all the necessary steps to install a
@@ -287,9 +287,9 @@ static int InstallCommand(
 
 	(void) RunLaunchCtl(true, "unload", plistDestPath);
 
-    // Create the PrivilegedHelperTools directory.  The owner will be "root" because 
-    // we're running as root (our EUID is 0).  The group will be "admin" because 
-    // it's inherited from "/Library".  The permissions will be rwxr-xr-x because 
+    // Create the PrivilegedHelperTools directory.  The owner will be "root" because
+    // we're running as root (our EUID is 0).  The group will be "admin" because
+    // it's inherited from "/Library".  The permissions will be rwxr-xr-x because
     // of kDirectoryMode combined with our umask.
 
 	err = mkdir(kBASToolDirPath, kDirectoryMode);
@@ -303,21 +303,21 @@ static int InstallCommand(
 			err = errno;
 		}
     }
-    
+
     // /Library/PrivilegedHelperTools may have come from a number of places:
     //
-    // A. We may have just created it.  In this case it will be 
+    // A. We may have just created it.  In this case it will be
     //    root:admin rwxr-xr-x.
     //
-    // B. It may have been correctly created by someone else.  By definition, 
+    // B. It may have been correctly created by someone else.  By definition,
     //    that makes it root:wheel rwxr-xr-x.
     //
-    // C. It may have been created (or moved here) incorrectly (or maliciously) 
-    //    by someone else.  In that case it will be u:g xxxxxxxxx, where u is 
-    //    not root, or root:g xxxxwxxwx (that is, root-owned by writeable by 
+    // C. It may have been created (or moved here) incorrectly (or maliciously)
+    //    by someone else.  In that case it will be u:g xxxxxxxxx, where u is
+    //    not root, or root:g xxxxwxxwx (that is, root-owned by writeable by
     //    someone other than root).
     //
-    // In case A, we want to correct the group.  In case B, we want to do 
+    // In case A, we want to correct the group.  In case B, we want to do
     // nothing.  In case C, we want to fail.
 
     if (err == 0) {
@@ -325,10 +325,10 @@ static int InstallCommand(
             // case B -- do nothing
         } else if ( (sb.st_uid == 0) && (sb.st_gid != 0) && ((sb.st_mode & ALLPERMS) == kDirectoryMode) ) {
             // case A -- fix the group ID
-            // 
-            // This is safe because /Library is sticky and the file is owned 
-            // by root, which means that only root can move it.  Also, we 
-            // don't have to worry about malicious files existing within the 
+            //
+            // This is safe because /Library is sticky and the file is owned
+            // by root, which means that only root can move it.  Also, we
+            // don't have to worry about malicious files existing within the
             // directory because its only writeable by root.
 
             err = chown(kBASToolDirPath, -1, 0);
@@ -342,32 +342,32 @@ static int InstallCommand(
         }
 	}
 
-    // Then create the known good copy.  The ownership and permissions 
-    // will be set appropriately, as described in the comments for mkdir. 
-    // We don't have to worry about atomicity because this tool won't be 
+    // Then create the known good copy.  The ownership and permissions
+    // will be set appropriately, as described in the comments for mkdir.
+    // We don't have to worry about atomicity because this tool won't be
     // looked at until our plist is installed.
 
 	if (err == 0) {
 		err = CopyFileOverwriting(toolSourcePath, kExecutableMode, toolDestPath);
 	}
 
-    // For the plist, our caller has created the file in /tmp and we just copy it 
-    // into the correct location.  This ensures that the file is complete 
-    // and valid before anyone starts looking at it and will also overwrite 
+    // For the plist, our caller has created the file in /tmp and we just copy it
+    // into the correct location.  This ensures that the file is complete
+    // and valid before anyone starts looking at it and will also overwrite
 	// any existing file with this new version.
-    // 
-	// Since we have to read/write in the file byte by byte to make sure that 
-	// the file is complete we are rolling our own 'copy'. This clearly is 
-	// ignoring atomicity since we do not roll back to the state of 'what was 
-	// previously there' if there is an error; rather, whatever has been 
-	// written up to that point of granular failure /is/ the state of the 
+    //
+	// Since we have to read/write in the file byte by byte to make sure that
+	// the file is complete we are rolling our own 'copy'. This clearly is
+	// ignoring atomicity since we do not roll back to the state of 'what was
+	// previously there' if there is an error; rather, whatever has been
+	// written up to that point of granular failure /is/ the state of the
 	// plist file.
 
 	if (err == 0) {
 		err = CopyFileOverwriting(plistSourcePath, kFileMode, plistDestPath);
 	}
 	
-    // Use launchctl to load our job.  The plist file starts out disabled, 
+    // Use launchctl to load our job.  The plist file starts out disabled,
     // so we pass "-w" to enable it permanently.
 
 	if (err == 0) {
@@ -404,8 +404,8 @@ int main(int argc, char **argv)
 	fprintf(stdout, kBASAntiZombiePIDToken1 "%ld" kBASAntiZombiePIDToken2 "\n", (long) getpid());
 	fflush(stdout);
 
-    // On the client side, AEWP only gives a handle to stdout, so we dup stdout 
-    // downto stderr for the rest of this tool.  This ensures that all our output 
+    // On the client side, AEWP only gives a handle to stdout, so we dup stdout
+    // downto stderr for the rest of this tool.  This ensures that all our output
 	// makes it to the client.
 
 	err = dup2(STDOUT_FILENO, STDERR_FILENO);
@@ -415,9 +415,9 @@ int main(int argc, char **argv)
 		err = 0;
 	}
 
-    // Set up the standard umask.  The goal here is to be robust in the 
+    // Set up the standard umask.  The goal here is to be robust in the
 	// face of common environmental changes, not to resist a malicious attack.
-	// Also sync the RUID to the 0 because launchctl keys off the RUID (at least 
+	// Also sync the RUID to the 0 because launchctl keys off the RUID (at least
 	// on 10.4.x).
 
 	if (err == 0) {
@@ -435,7 +435,7 @@ int main(int argc, char **argv)
 		err = EINVAL;
 	}
 
-	// The first argument is the command.  Switch off that and extract the 
+	// The first argument is the command.  Switch off that and extract the
 	// remaining arguments and pass them to our command routines.
 	
 	if (err == 0) {
@@ -459,7 +459,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	// Write "oK" to stdout and quit.  The presence of the "oK" on the last 
+	// Write "oK" to stdout and quit.  The presence of the "oK" on the last
 	// line of output is used by the calling code to detect success.
 	
 	if (err == 0) {

@@ -5,7 +5,7 @@
 acceptable values are <emphasis remap='B'>rsasig</emphasis> (the default)
 for RSA digital signatures based authentication,
 <emphasis remap='B'>secret</emphasis> for shared secrets (PSK) authentication,
-<emphasis remap='B'>secret|rsasig</emphasis> for either, 
+<emphasis remap='B'>secret|rsasig</emphasis> for either,
 <emphasis remap='B'>never</emphasis> if negotiation is never to be attempted
 or accepted (useful for shunt-only conns), and
 <emphasis remap='B'>null</emphasis> for null-authentication.

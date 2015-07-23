@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 	
 	file = fopen(cPath,"w");
 	confwrite(cfg, file);
-	fclose(file); 
+	fclose(file);
 	
 	return 0;
 }

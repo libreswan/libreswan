@@ -6,4 +6,4 @@ sleep 60
 sleep 50
 ping -q -n -c 8 -I 192.0.2.100 192.1.2.23
 ipsec status
-echo end 
+echo end

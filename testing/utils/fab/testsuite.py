@@ -1,12 +1,12 @@
 # Lists the tests
 #
 # Copyright (C) 2015 Andrew Cagney <cagney@gnu.org>
-# 
+#
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.  See <http://www.fsf.org/copyleft/gpl.txt>.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
@@ -26,11 +26,14 @@ class Test:
         self.expected_result = expected_result
         # name must match the directory's basename; since directory
         # could be ".", need to first convert it to an absolute path.
-        self.name = os.path.basename(os.path.abspath(directory))
+        directory = os.path.abspath(directory)
+        self.name = os.path.basename(directory)
         self.full_name = "test " + self.name
-        # avoid "." as a directory, construct the sub-directory paths
-        # using the parent's directory (don't abspath or relpath).
-        self.directory = os.path.relpath(directory)
+        # Rewrite the directory path so that the test name always
+        # appears.  For instance "." gets rewritten as ../TEST; and
+        # ".." gets rewritten as "../../TEST".  Avoids confusing
+        # output were only "." or ".." appears.
+        self.directory = os.path.join(os.path.relpath(os.path.dirname(directory)), self.name)
         if self.directory == ".":
             self.directory = os.path.join("..", self.name)
         self.output_directory = os.path.join(self.directory, "OUTPUT")
@@ -152,23 +155,26 @@ def load(logger, directory):
     return None
 
 
-def load_testsuite_or_tests(logger, directories):
+def load_testsuite_or_tests(logger, directories, log_level=logutil.DEBUG):
 
     # Is it a single testsuite directory?
     if len(directories) == 1:
         tests = load(logger, directories[0])
         if tests:
-            logger.debug("tests loaded from testsuite '%s'", tests.directory)
+            logger.log(log_level, "tests loaded from testsuite '%s'", tests.directory)
             return tests
 
     # Presumably this is a list of directories, each specifying one
     # test.
     tests = []
     for directory in directories:
-        # XXX: Should figure out kind by looking at directory.  Should
-        # validate that it is a test directory.
-        logger.debug("test loaded from directory '%s'", directory)
-        tests.append(Test(directory=directory, kind="kvmplutotest",
+        logger.log(log_level, "adding test directory '%s'", directory)
+        # Deal with a directory specifying the test's OUTPUT
+        # sub-directory.
+        test_directory = os.path.abspath(directory)
+        if os.path.basename(test_directory) == "OUTPUT":
+            test_directory = os.path.dirname(test_directory)
+        tests.append(Test(directory=test_directory, kind="kvmplutotest",
                           expected_result="good"))
 
     return tests

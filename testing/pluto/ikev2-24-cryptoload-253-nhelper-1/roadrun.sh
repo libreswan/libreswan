@@ -1,7 +1,7 @@
-echo "it takes time to add 253 connections. sleep a while" 
+echo "it takes time to add 253 connections. sleep a while"
 sleep 60
 ipsec auto --up road-eastnet-nonat-1 &
-ipsec auto --up road-eastnet-nonat-1 & 
+ipsec auto --up road-eastnet-nonat-1 &
 ipsec auto --up road-eastnet-nonat-2 &
 ipsec auto --up road-eastnet-nonat-3 &
 ipsec auto --up road-eastnet-nonat-4 &
@@ -507,6 +507,6 @@ ping -q -c 2 -I 192.1.3.251 192.1.2.23  &
 ping -q -c 2 -I 192.1.3.252 192.1.2.23  &
 ping -q -c 2 -I 192.1.3.253 192.1.2.23  &
 sleep 60
-ipsec whack --trafficstatus 
+ipsec whack --trafficstatus
 ipsec whack --trafficstatus  |wc -l
-echo done  
+echo done

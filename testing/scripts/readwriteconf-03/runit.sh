@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# assumes that 
+# assumes that
 #          ROOTDIR=    set to root of source code.
 #          OBJDIRTOP=  set to location of object files
 #
@@ -10,5 +10,5 @@ args="--rootdir=${ROOTDIR} --config ${ROOTDIR}/testing/pluto/mast-pluto-01/east.
 echo "file $exe" >.gdbinit
 echo "set args $args >OUTPUT/east-flat.conf-out" >>.gdbinit
 
-eval $exe $args 
+eval $exe $args
 

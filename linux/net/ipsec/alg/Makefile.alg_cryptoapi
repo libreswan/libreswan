@@ -9,6 +9,6 @@ else
 $(warning "Linux CryptoAPI (2.4.22+ or 2.6.x) not found, not building ipsec_cryptoapi.o")
 endif
 
-CRYPTOAPI_OBJS := ipsec_alg_cryptoapi.o 
+CRYPTOAPI_OBJS := ipsec_alg_cryptoapi.o
 $(MOD_CRYPTOAPI): $(CRYPTOAPI_OBJS)
 	$(LD) -r $(CRYPTOAPI_OBJS) -o $@

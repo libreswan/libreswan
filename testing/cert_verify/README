@@ -2,7 +2,7 @@ The usage_test program will generate a CA and end certificate
 (and sub CA if desired) with the specified extensions. The end
 certificate is then verified under a certUsage profile. The
 purpose is to identify how the KUs and EKUs on a certificate
-are treated by NSS. 
+are treated by NSS.
 
 --usage option is one of:
 	certUsageSSLClient

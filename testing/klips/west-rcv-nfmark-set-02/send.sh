@@ -15,14 +15,14 @@ ipsec spi --af inet --edst 192.1.2.45 --spi 0x88447755 --proto esp --src 192.1.2
 
 ipsec spi --af inet --edst 192.1.2.45 --spi 0x88447755 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4 --saref
 
-ipsec spigrp inet 192.1.2.45 0x88447755 tun inet 192.1.2.45 0x88447755 esp 
+ipsec spigrp inet 192.1.2.45 0x88447755 tun inet 192.1.2.45 0x88447755 esp
 
 : set up SPI 2
 ipsec spi --af inet --edst 192.1.2.45 --spi 0x12345678 --proto esp --src 192.1.2.23 --esp 3des-md5-96 --enckey $enckey2 --authkey $authkey2 --saref
 
 ipsec spi --af inet --edst 192.1.2.45 --spi 0x12345678 --proto tun --src 192.1.2.23 --dst 192.1.2.45 --ip4 --saref
 
-ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp 
+ipsec spigrp inet 192.1.2.45 0x12345678 tun inet 192.1.2.45 0x12345678 esp
 
 
 ipsec tncfg --attach --virtual ipsec0 --physical eth1
@@ -36,7 +36,7 @@ ipsec eroute --add --eraf inet --src 192.0.2.0/24 --dst 192.0.1.0/24 --said tun0
 echo Send packet set 1
 read ans
 
-ipsec eroute --del --eraf inet --src 192.0.2.0/24 --dst 192.0.1.0/24 
+ipsec eroute --del --eraf inet --src 192.0.2.0/24 --dst 192.0.1.0/24
 
 ipsec eroute --add --eraf inet --src 192.0.2.0/24 --dst 192.0.1.0/24 --said tun0x12345678@192.1.2.45
 

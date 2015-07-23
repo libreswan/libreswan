@@ -9,7 +9,7 @@ same.
 
 This library requires the inclusion of 'des.h'.
 
-All of the encryption functions take what is called a des_key_schedule as an 
+All of the encryption functions take what is called a des_key_schedule as an
 argument.  A des_key_schedule is an expanded form of the des key.
 A des_key is 8 bytes of odd parity, the type used to hold the key is a
 des_cblock.  A des_cblock is an array of 8 bytes, often in this library
@@ -104,7 +104,7 @@ des_key_schedule ks1,
 des_key_schedule ks2,
 des_key_schedule ks3,
 int enc);
-	This is the 3 key EDE mode of ECB DES.  What this means is that 
+	This is the 3 key EDE mode of ECB DES.  What this means is that
 	the 8 bytes of input is encrypted with ks1, decrypted with ks2 and
 	then encrypted again with ks3, before being put into output;
 	C=E(ks3,D(ks2,E(ks1,M))).  There is a macro, des_ecb2_encrypt()
@@ -127,7 +127,7 @@ int enc);
 	This function does not modify this variable.  To correctly implement
 	cbc mode, you need to do one of 2 things; copy the last 8 bytes of
 	cipher text for use as the next ivec in your application,
-	or use des_ncbc_encrypt(). 
+	or use des_ncbc_encrypt().
 	Only this routine has this problem with updating the ivec, all
 	other routines that are implementing cbc mode update ivec.
 	
@@ -179,11 +179,11 @@ int enc);
 	
 void des_ede3_cbc_encrypt(
 des_cblock *input,
-des_cblock *output, 
+des_cblock *output,
 long length,
 des_key_schedule ks1,
-des_key_schedule ks2, 
-des_key_schedule ks3, 
+des_key_schedule ks2,
+des_key_schedule ks3,
 des_cblock *ivec,
 int enc);
 	This function implements inner triple CBC DES encryption with 3

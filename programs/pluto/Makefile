@@ -36,7 +36,7 @@ include $(top_srcdir)/mk/manpages.mk
 
 ifeq ($(USE_LDAP),true)
 # Everyone (should) be using LDAPv3, however LDAP_VERSION=2 is an option
-# if you require LDAPv2 
+# if you require LDAPv2
 LDAP_VERSION=3
 endif
 
@@ -49,7 +49,7 @@ endif
 
 # where to find klips headers and Libreswan headers
 # and 2.6 kernel's <rtnetlink.h> and <xfrm.h>
-HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC) 
+HDRDIRS = -I${LIBRESWANSRCDIR}/programs/pluto/linux26 -I${LIBRESWANSRCDIR}/include -I$(LIBRESWANSRCDIR)/lib/libcrypto -I$(KLIPSINC)
 
 
 # BYTE_ORDER = -DBIG_ENDIAN=4321 -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=BIG_ENDIAN
@@ -91,24 +91,24 @@ PFKEYv2_DIST_SRC=
 PFKEYv2_OBJS=
 endif
 
-NETKEY_DIST_SRCS=kernel_netlink.c kernel_netlink.h 
+NETKEY_DIST_SRCS=kernel_netlink.c kernel_netlink.h
 ifeq ($(USE_NETKEY),true)
 NETKEY_DEFS=-DNETKEY_SUPPORT -DKERNEL26_HAS_KAME_DUPLICATES -DPFKEY
 NETKEY_SRCS=${NETKEY_DIST_SRCS}
-NETKEY_OBJS=kernel_netlink.o 
+NETKEY_OBJS=kernel_netlink.o
 endif
 
 KLIPS_DIST_SRCS=kernel_klips.c
 ifeq ($(USE_KLIPS),true)
 KLIPS_SRCS=${KLIPS_DIST_SRCS}
 KLIPS_DEFS=-DKLIPS -DPFKEY
-KLIPS_OBJS=kernel_klips.o 
+KLIPS_OBJS=kernel_klips.o
 endif
 
-MAST_DIST_SRCS=kernel_mast.c 
+MAST_DIST_SRCS=kernel_mast.c
 ifeq ($(USE_MAST),true)
 MAST_SRCS=${MAST_DIST_SRCS}
-MAST_DEFS=-DKLIPS_MAST 
+MAST_DEFS=-DKLIPS_MAST
 MAST_OBJS=kernel_mast.o
 endif
 
@@ -132,8 +132,8 @@ endif
 #
 X509_DIST_OBJS=x509.o
 X509_DIST_SRCS=${X509_DIST_OBJS:.o=.c}
-X509_DIST_SRCS+=fetch.h 
-THREADS_DIST_OBJS=fetch.o 
+X509_DIST_SRCS+=fetch.h
+THREADS_DIST_OBJS=fetch.o
 THREADS_DIST_SRCS=${THREADS_DIST_OBJS:.o=.c}
 X509_OBJS=${X509_DIST_OBJS}
 X509_SRCS=${X509_DIST_SRCS}
@@ -191,10 +191,10 @@ CURL_LLIBS=-lcurl
 endif
 
 ifeq ($(USE_EXTRACRYPTO),true)
-EXTRA_CRYPTO_DEFS=-DUSE_TWOFISH -DUSE_SERPENT 
-EXTRA_CRYPTO_SRCS=ike_alg_twofish.c ike_alg_serpent.c 
-EXTRA_CRYPTO_OBJS=ike_alg_twofish.o ike_alg_serpent.o 
-EXTRA_CRYPTO_LIBS=$(LIBTWOFISH) $(LIBSERPENT) 
+EXTRA_CRYPTO_DEFS=-DUSE_TWOFISH -DUSE_SERPENT
+EXTRA_CRYPTO_SRCS=ike_alg_twofish.c ike_alg_serpent.c
+EXTRA_CRYPTO_OBJS=ike_alg_twofish.o ike_alg_serpent.o
+EXTRA_CRYPTO_LIBS=$(LIBTWOFISH) $(LIBSERPENT)
 endif
 
 ifeq ($(USE_SINGLE_CONF_DIR),true)
@@ -223,12 +223,12 @@ DEFINES = $(EXTRA_DEFINES) \
 # Solaris 2 needs -lsocket -lnsl
 LIBSPLUTO+=$(LIBRESWANLIB) $(LIBPLUTO)
 LIBSPLUTO+=${LIBSHA1} ${LIBMD5} $(LIBSHA2) ${LIBAES_XCBC}
-LIBSPLUTO+=$(X509_LIBS) 
+LIBSPLUTO+=$(X509_LIBS)
 LIBSPLUTO+=$(THREADS_LIBS)
 LIBSPLUTO+=${CURL_LIBS}
 LIBSPLUTO+=${EXTRA_CRYPTO_LIBS} ${LABELED_IPSEC_LIBS}
 LIBSPLUTO+=${WHACKLIB} ${BSDKAME_LIBS} ${NSSLIBS}
-PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS} 
+PLUTOMINUSL+= ${X509_LLIBS} ${CURL_LLIBS} ${THREADS_LLIBS}
 PLUTOMINUSL+= ${XAUTH_LLIBS} ${XAUTHPAM_LIBS} ${NSSLIBS}
 PLUTOMINUSL+= ${LIBCRYPT} -lgmp #-lefence
 
@@ -386,7 +386,7 @@ OBJSPLUTO += state_entry.o
 OBJSPLUTO += timer.o hmac.o hostpair.o
 OBJSPLUTO += myid.o ipsec_doi.o
 OBJSPLUTO += ikev1.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
-OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o 
+OBJSPLUTO += ikev2.o ikev2_parent.o ikev2_child.o ikev2_spdb_struct.o
 OBJSPLUTO += ikev2_rsa.o ikev2_psk.o ikev2_crypto.o
 OBJSPLUTO += crypt_dbg.o
 OBJSPLUTO += crypt_symkey.o crypt_prf.o ikev1_prf.o ikev2_prf.o

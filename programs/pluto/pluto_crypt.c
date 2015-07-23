@@ -146,7 +146,7 @@ struct pluto_crypto_worker {
 	int pcw_helpernum;
 	pthread_t pcw_pid;
 
-	/* 
+	/*
 	 * socketpair's file descriptors
 	 * Each socket is bidirectional and they are cross-connected.
 	 */

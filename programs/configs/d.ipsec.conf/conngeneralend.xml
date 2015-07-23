@@ -12,7 +12,7 @@ script (see
 <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>).</para>
 
 <para>The implementation of this makes certain assumptions about firewall setup,
-and the availability of the 
+and the availability of the
 <emphasis remap='I'>Linux Advanced Routing</emphasis> tools.
 In situations calling for more control,
 it may be preferable for the user to supply his own

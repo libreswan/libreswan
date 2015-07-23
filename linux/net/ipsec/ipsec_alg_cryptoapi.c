@@ -596,12 +596,12 @@ setup_ipsec_alg_capi_digest(struct ipsec_alg_capi_digest *dptr)
 	dptr->alg.ixt_common.ixt_data = dptr;
 
 	ret=register_ipsec_alg_auth(&dptr->alg);
-	printk(KERN_INFO "KLIPS cryptoapi interface: " 
+	printk(KERN_INFO "KLIPS cryptoapi interface: "
 			"alg_type=%d alg_id=%d name=%s "
-			"ctx_size=%d keyminbits=%d keymaxbits=%d, %s(%d)\n", 
-				dptr->alg.ixt_common.ixt_support.ias_exttype, 
-				dptr->alg.ixt_common.ixt_support.ias_id, 
-				dptr->alg.ixt_common.ixt_name, 
+			"ctx_size=%d keyminbits=%d keymaxbits=%d, %s(%d)\n",
+				dptr->alg.ixt_common.ixt_support.ias_exttype,
+				dptr->alg.ixt_common.ixt_support.ias_id,
+				dptr->alg.ixt_common.ixt_name,
 				dptr->alg.ixt_a_ctx_size,
 				dptr->alg.ixt_common.ixt_support.ias_keyminbits,
 				dptr->alg.ixt_common.ixt_support.ias_keymaxbits,
@@ -612,7 +612,7 @@ setup_ipsec_alg_capi_digest(struct ipsec_alg_capi_digest *dptr)
  *      called in ipsec_sa_wipe() time, will destroy key contexts
  *      and do 1 unbind()
  */
-static void 
+static void
 _capi_destroy_hmac_key (struct ipsec_alg_auth *alg, __u8 *key_a)
 {
 	struct crypto_tfm *tfm=(struct crypto_tfm*)key_a;
@@ -631,7 +631,7 @@ _capi_destroy_hmac_key (struct ipsec_alg_auth *alg, __u8 *key_a)
 }
 /*
  *      create hash
- *      
+ *
  */
 static __u8 *
 _capi_hmac_new_key(struct ipsec_alg_auth *alg, const __u8 *key, int keylen)
@@ -677,9 +677,9 @@ err:
 }
 /*
  *      core encryption function
- *      
+ *
  */
-static int 
+static int
 _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int len, __u8 *hash, int hashlen)
 {
 	struct crypto_hash *tfm = (struct crypto_hash*)key_a;
@@ -718,12 +718,12 @@ _capi_hmac_hash(struct ipsec_alg_auth *alg, __u8 *key_a, const __u8 *dat, int le
  * 	2) register ipsec_alg object
  */
 static int
-setup_digest_list (struct ipsec_alg_capi_digest* dlist) 
+setup_digest_list (struct ipsec_alg_capi_digest* dlist)
 {
 	struct ipsec_alg_capi_digest *dptr;
 	/* foreach digest in list ... */
 	for (dptr=dlist;dptr->digestname;dptr++) {
-		/* 
+		/*
 		 * see if digest has been disabled (0) or
 		 * if noauto set and not enabled (1)
 		 */
@@ -745,7 +745,7 @@ setup_digest_list (struct ipsec_alg_capi_digest* dlist)
 				, dptr->parm[0]
 				, dptr->parm[1]);
 			}
-		/* 
+		/*
 		 * 	use a local ci to avoid touching dptr->ci,
 		 * 	if register ipsec_alg success then bind digest
 		 */
@@ -777,7 +777,7 @@ setup_digest_list (struct ipsec_alg_capi_digest* dlist)
  *      deregister ipsec_alg objects and unbind digests
  */
 static int
-unsetup_digest_list (struct ipsec_alg_capi_digest* dlist) 
+unsetup_digest_list (struct ipsec_alg_capi_digest* dlist)
 {
 	struct ipsec_alg_capi_digest *dptr;
 	/* foreach digest in list ... */
@@ -791,7 +791,7 @@ unsetup_digest_list (struct ipsec_alg_capi_digest* dlist)
 /*
  *      test loop for registered algos
  */
- static int test_digest_list (struct ipsec_alg_capi_digest* dlist) 
+ static int test_digest_list (struct ipsec_alg_capi_digest* dlist)
 {
 	int test_ret;
 	struct ipsec_alg_capi_digest *dptr;
@@ -800,10 +800,10 @@ unsetup_digest_list (struct ipsec_alg_capi_digest* dlist)
 		if (dptr->alg.ixt_common.ixt_state & IPSEC_ALG_ST_REGISTERED) {
 			test_ret=ipsec_alg_test(
 					dptr->alg.ixt_common.ixt_support.ias_exttype,
-					dptr->alg.ixt_common.ixt_support.ias_id, 
+					dptr->alg.ixt_common.ixt_support.ias_id,
 					test_crypto);
-			printk("test_digest_list(alg_type=%d alg_id=%d): test_ret=%d\n", 
-			       dptr->alg.ixt_common.ixt_support.ias_exttype, 
+			printk("test_digest_list(alg_type=%d alg_id=%d): test_ret=%d\n",
+			       dptr->alg.ixt_common.ixt_support.ias_exttype,
 			       dptr->alg.ixt_common.ixt_support.ias_id,
 			       test_ret);
 		}

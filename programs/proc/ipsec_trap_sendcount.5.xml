@@ -20,7 +20,7 @@
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>cat</command>    
+  <command>cat</command>
     <arg choice='plain'><replaceable>/proc/net/ipsec/stats/trap_sendcount</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

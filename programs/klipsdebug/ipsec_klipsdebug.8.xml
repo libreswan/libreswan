@@ -21,7 +21,7 @@ not supported.</refpurpose>
 <!-- body begins here -->
 <refsynopsisdiv id='synopsis'>
 <cmdsynopsis>
-  <command>ipsec</command>    
+  <command>ipsec</command>
     <arg choice='plain'><replaceable>klipsdebug</replaceable></arg>
     <sbr/>
     <arg choice='plain'><replaceable>ipsec klipsdebug</replaceable></arg>
@@ -59,9 +59,9 @@ form turns the specified flag on,
 while the
 <option>--clear</option>
 form turns the specified flag off.
-The 
+The
 <option>--all</option>
-form 
+form
 turns all flags on except verbose, while the
 <option>--none</option>
 form turns all flags off.</para>

@@ -6,7 +6,7 @@ rm -fr /tmp/east/pluto.pid
 rm -fr /tmp/west/pluto.pid
 # load netkey stack on host
 ipsec _stackmanager --config /testing/pluto/ikev2-34-lxc/west.conf start
-ipsec version |grep klips && echo you need netkey 
+ipsec version |grep klips && echo you need netkey
 # prep host for two pluto's
 mkdir -p /tmp/west/ipsec.d /tmp/east/ipsec.d
 echo hit return a few times for certutil

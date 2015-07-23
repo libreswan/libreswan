@@ -1,6 +1,6 @@
 #!/bin/sh
 
-enckey=0xaaaabbbbccccdddd4043434545464649 
+enckey=0xaaaabbbbccccdddd4043434545464649
 authkey=0x8765876587658765876587658765876587658765
 
 ipsec spi --af inet --edst 205.150.200.180 --spi 0xED123456 --proto esp --src 205.150.200.246 --esp aes128-sha1-96 --enckey $enckey --authkey $authkey

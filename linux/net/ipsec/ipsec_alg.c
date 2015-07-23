@@ -462,7 +462,7 @@ int ipsec_alg_auth_key_create(struct ipsec_sa *sa_p)
 		KLIPS_PRINT(debug_pfkey,
 			    "klips_debug:ipsec_alg_auth_key_create: "
 			    "using ixt_a_new_key to generate key\n");
-		if ((akp =  ixt_a->ixt_a_hmac_new_key(ixt_a, 
+		if ((akp =  ixt_a->ixt_a_hmac_new_key(ixt_a,
 						      sa_p->ips_key_a,
 						      sa_p->ips_key_bits_a/8)) == NULL) {
 		    ret = -ENOMEM;
@@ -923,7 +923,7 @@ static int ipsec_alg_test_auth(int auth_alg, int test)
 		    auth_alg, blocksize, key_a_size, keysize);
 	if (ixt_a->ixt_a_hmac_new_key){
 		get_random_bytes(test_key, keysize);
-		if ((buf =  ixt_a->ixt_a_hmac_new_key(ixt_a, 
+		if ((buf =  ixt_a->ixt_a_hmac_new_key(ixt_a,
 			test_key,
 			keysize)) == NULL) {
 			ret= -ENOMEM;

@@ -1,7 +1,7 @@
 This is a test case for the prototype=17/%any case
 
 For L2TP, OSX clients do not use udp/1701 to send L2TP packets. Instead
-they use some random high port. So the policy must allow this. 
+they use some random high port. So the policy must allow this.
 
 The problem is that the server tries to instantiate the conn because of
 the %any.

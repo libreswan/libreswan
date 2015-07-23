@@ -85,7 +85,7 @@ The NFMARK mechanism is used by more traditional VPN topologies, and by Opportun
 The NMBA mechanism, where an ARP\-like layer two is maintained, is most appropriate for layered systems like the xbone, where there may be too many tunnels for it to be practical to create a device per tunnel. At the same time, the reachability information that the layer\-two tables provide can be used by routing systems to determine the optimal path.
 
 .PP
-The mast device permits kernel code to create them with: 
+The mast device permits kernel code to create them with:
 
 .nf
 
@@ -95,7 +95,7 @@ The mast device permits kernel code to create them with:
 	                 unit, max_flowref, context)
 
 .fi
- 
+
 
 .PP
 A new mast device is create per address family. This is not strictly necessary, but may simplify policy checks as well.

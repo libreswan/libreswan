@@ -1,5 +1,5 @@
 basic psk connection but now we manually start pluto and give it
-configuration files in directories not owned by root. 
+configuration files in directories not owned by root.
 
 This tests that we can properly read the configuration files
 before we drop the CAP_DAC_OVERRIDE capability

@@ -4,8 +4,8 @@
 
 The Libreswan Project   https://libreswan.org/
 
-Libreswan is an IPsec implementation for Linux. It has support for most 
-of the extensions (RFC + IETF drafts) related to IPsec, including 
+Libreswan is an IPsec implementation for Linux. It has support for most
+of the extensions (RFC + IETF drafts) related to IPsec, including
 IKEv2, X.509 Digital Certificates, NAT Traversal, and many others.
 Libreswan uses the native Linux IPsec stack (NETKEY/XFRM) per default.
 For more information about the alternative Libreswan kernel IPsec stack,
@@ -157,7 +157,7 @@ Wiki:
 
 IRC:
 
-    Libreswan developers and users can be found on IRC, on #swan 
+    Libreswan developers and users can be found on IRC, on #swan
     irc.freenode.net.
 
 #########################################################################

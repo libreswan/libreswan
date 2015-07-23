@@ -48,7 +48,7 @@ void free_any_symkey(const char *prefix, PK11SymKey **key);
 
 PK11SymKey *symkey_from_bytes(PK11SymKey *scratch, const void *bytes,
 			      size_t sizeof_bytes);
-  
+
 PK11SymKey *symkey_from_chunk(PK11SymKey *scratch, chunk_t chunk);
 
 /*
