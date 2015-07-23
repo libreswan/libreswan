@@ -1,8 +1,8 @@
-FROM fedora:21
+FROM fedora:22
 MAINTAINER "Antony Antony" <antony@phenome.org>
 ENV container docker
-RUN yum -y update; yum clean all
-RUN yum -y install systemd; yum clean all; \
+RUN dnf -y update; dnf clean all
+RUN dnf -y install systemd; dnf clean all; \
 (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done); \
 rm -f /lib/systemd/system/multi-user.target.wants/*;\
 rm -f /etc/systemd/system/*.wants/*;\
@@ -11,19 +11,19 @@ rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
 rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
 rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*;
-RUN yum install -y wget vim-enhanced bison flex gmp-devel nss-devel \
+RUN dnf install -y wget vim-enhanced bison flex gmp-devel nss-devel \
  nspr-devel nss-tools  gcc make unbound-libs ipsec-tools pexpect racoon2 \
  nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel \
  audit-libs-devel strace unbound pexpect strongswan net-tools bind-utils \
- rpm-build nc psmisc lsof valgrind ElectricFence yum-utils screen xl2tpd i\
+ rpm-build nc psmisc lsof valgrind ElectricFence dnf-utils screen xl2tpd i\
  curl-devel pam-devel redhat-rpm-config openldap-devel hping3 nmap mtr \
  libevent-devel pyOpenSSL xmlto;
- yum clean all
+ dnf clean all
 RUN debuginfo-install -y ElectricFence audit-libs cyrus-sasl glibc keyutils \
  krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux \
  libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap
  openssl-libs pam pcre python-libs sqlite unbound-libs xz-libs zlib gmp nspr \
- nss libevent-devel; yum clean all
+ nss libevent-devel; dnf clean all
 RUN mkdir -p /home/build/libreswan
 VOLUME ["/home/build/libreswan:/home/build/libreswan"]
 RUN ln -s /home/build/libreswan/testing /testing
@@ -31,8 +31,8 @@ RUN echo " * soft core unlimited" >> /etc/security/limits.conf
 RUN echo " DAEMON_COREFILE_LIMIT='unlimited'" >> /etc/sysconfig/pluto
 #
 #ssh
-RUN yum -y install openssh-server
-RUN yum -y install openssh-clients
+RUN dnf -y install openssh-server
+RUN dnf -y install openssh-clients
 RUN mkdir /root/.ssh
 RUN mkdir /var/run/sshd
 # create host keys
