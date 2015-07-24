@@ -113,6 +113,10 @@ def main():
 
     for test in tests:
 
+        # Produce separate runtimes for each test.
+        logutil.TIMER.push()
+        logger.debug("start processing test %s", test.name)
+
         # Filter out tests that are being ignored?
         ignore = testsuite.ignore(test, args)
         if ignore and not args.list_ignored:
@@ -160,6 +164,9 @@ def main():
                         print(line)
 
         sys.stdout.flush()
+
+        logger.debug("stop processing test %s", test.name)
+        logutil.TIMER.pop()
 
     return 0
 

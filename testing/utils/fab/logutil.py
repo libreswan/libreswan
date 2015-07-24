@@ -28,8 +28,17 @@
 # (the inversion) restricting console log records to just INFO-level
 # say.
 
+# Add '"%(name)s %(runtime)s: ' prefix to all messages.
+#
+# Ref: https://docs.python.org/3.6/howto/logging-cookbook.html#using-loggeradapters-to-impart-contextual-information
+#
+# It uses the msg edit hack as that seems simple and straight forward.
+# The timer used to generate "runtime" can also nest/stack times
+# making it easy to track sub-processes.
+
 import logging
 import sys
+from datetime import datetime
 from fab import argutil
 
 DEBUG = logging.DEBUG
@@ -39,24 +48,27 @@ NONE = 100 # something large
 _STDOUT_HANDLER = None
 _DEBUG_HANDLER = None
 _LOG_LEVEL = "info"
-_LOG_FORMAT = "%(name)s: %(message)s"
-_DEBUG_FORMAT = "%(levelname)s %(name)s %(relativeCreated)d: %(message)s"
+
+TIMER = None
 
 def __init__():
 
     global _STDOUT_HANDLER
     _STDOUT_HANDLER = logging.StreamHandler(sys.stdout)
-    _STDOUT_HANDLER.setFormatter(logging.Formatter(_LOG_FORMAT))
+    _STDOUT_HANDLER.setFormatter(logging.Formatter("%(message)s"))
     _STDOUT_HANDLER.setLevel(_LOG_LEVEL.upper())
 
     global _DEBUG_HANDLER
     _DEBUG_HANDLER = DebugHandler()
-    _DEBUG_HANDLER.setFormatter(logging.Formatter(_DEBUG_FORMAT))
+    _DEBUG_HANDLER.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
 
     # Force the root-logger to pass everything on to the handlers; and
     # then let the handlers filter just their log-records.
     logging.basicConfig(level=logging.NOTSET,
                         handlers=[_STDOUT_HANDLER, _DEBUG_HANDLER])
+
+    global TIMER
+    TIMER = Timer()
 
 
 def getLogger(name, *suffixes):
@@ -87,16 +99,13 @@ def getLogger(name, *suffixes):
     # loggers, dependent on --log-level and --debug.
     logger.setLevel(logging.NOTSET + 1)
 
-    return logger
+    return CustomMessageAdapter(logger, "%(name)s %(runtime)s: ",
+                                name=name, runtime=TIMER)
 
 
 def add_arguments(parser):
-    log_format = _LOG_FORMAT.replace("%", "%%")
     group = parser.add_argument_group("Logging arguments",
                                       "Options for directing logging level and output")
-    group.add_argument("--log-format",
-                       help=("console log message format"
-                             " (default: '" + log_format + "')"))
     group.add_argument("--log-level", default=None,
                        help=("console log level"
                              " (default: " + _LOG_LEVEL + ")"))
@@ -109,7 +118,6 @@ def add_arguments(parser):
 
 def log_arguments(logger, args):
     logger.info("Logging arguments:")
-    logger.info("  log-format: '%s'", args.log_format or _LOG_FORMAT)
     logger.info("  log-level: '%s'", args.log_level or _LOG_LEVEL)
     logger.info("  debug: '%s'", args.debug)
 
@@ -118,8 +126,6 @@ def config(args):
     # Update the log-level
     if args.log_level:
         _STDOUT_HANDLER.setLevel(args.log_level.upper())
-    if args.log_format:
-        _STDOUT_HANDLER.setFormatter(logging.Formatter(args.log_format))
     # Direct debugging to a stream if specified
     if args.debug:
         debug(args.debug)
@@ -161,5 +167,59 @@ class DebugHandler(logging.Handler):
     def flush(self):
         if self.stream_handler:
             self.stream_handler.flush()
+
+
+class Timer:
+    """A stopwatch timer to count time since things started."""
+
+    def __init__(self):
+        self.start_times = list()
+        self.push()
+
+    def push(self):
+        self.start_times.append(datetime.now())
+
+    def pop(self):
+        self.start_times.pop()
+
+    def runtime(self, start_time, now):
+        delta = now - start_time
+        milliseconds = (delta.microseconds / 1000)
+        seconds = delta.seconds % 60
+        minutes = (delta.seconds // 60) % 60
+        hours = (delta.seconds // 60 // 60) % 24
+        days = delta.days
+        if days > 0:
+            # need days
+            return str(delta)
+        elif hours > 0:
+            return "%d:%02d:%02d.%03d" % (hours, minutes, seconds, milliseconds)
+        elif minutes > 0:
+            return "%d:%02d.%03d" % (minutes, seconds, milliseconds)
+        else:
+            return "%d.%03d" % (seconds, milliseconds)
+
+    def __str__(self):
+        runtimes = ""
+        now = datetime.now()
+        for start_time in self.start_times:
+            runtime = self.runtime(start_time, now)
+            if runtimes:
+                runtimes = runtimes + "/" + runtime
+            else:
+                runtimes = runtime
+        return runtimes
+
+class CustomMessageAdapter(logging.LoggerAdapter):
+
+    def __init__(self, logger, prefix, **kwargs):
+        self.kwargs = kwargs
+        logging.LoggerAdapter.__init__(self, logger, kwargs)
+        self.prefix = prefix
+
+    def process(self, msg, kwargs):
+        msg = (self.prefix % self.kwargs) + msg
+        return msg, kwargs
+
 
 __init__()
