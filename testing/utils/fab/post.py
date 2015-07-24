@@ -67,8 +67,16 @@ class Errors:
             s += ",".join(sorted(self.errors[who]))
         return s
 
+    # So, like a real collection, can easily test if non-empty.
     def __bool__(self):
         return len(self.errors) > 0
+
+    # Iterate over the actual errors, not who had them.
+    def __iter__(self):
+        values = set()
+        for errors in self.errors.values():
+            values |= errors
+        return values.__iter__()
 
     def add(self, what, who="all"):
         if not who in self.errors:

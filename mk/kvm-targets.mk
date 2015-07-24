@@ -21,21 +21,15 @@
 abs_top_srcdir ?= $(abspath ${LIBRESWANSRCDIR})
 
 KVMSH_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmsh.py
-KVM_MOUNTS_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmmounts.sh
-KVM_SWANTEST_COMMAND ?= $(abs_top_srcdir)/testing/utils/swantest
+KVMTEST_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmtest.py
+KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
+
 KVM_OBJDIR = OBJ.kvm
 KVM_HOSTS = east west road north
 
 # Determine the target's indented host.  Assumes the target looks like
 # xxx-yyy-HOST, defaults to 'east'.
 KVM_HOST = $(firstword $(filter $(KVM_HOSTS),$(lastword $(subst -, ,$@))) east)
-
-# NOTE: Use this from make rules only.  Determines the KVM path to
-# $(abs_top_srcdir).  If broken, override using Makefile.inc.local.
-KVM_BUILD_MOUNT ?= $(shell $(KVM_MOUNTS_COMMAND) $(1) swansource)
-KVM_BUILD_SUBDIR ?= $(subst $(call KVM_BUILD_MOUNT,$(1)),,$(abs_top_srcdir))
-KVM_TARGET_SOURCEDIR ?= $(patsubst %/,%,/source/$(patsubst /%,%,$(call KVM_BUILD_SUBDIR,$(1))))
-KVM_EASTDIR ?= $(call KVM_TARGET_SOURCEDIR,east)
 
 # Run "make $(1) on $(KVM_HOST); unless specified as part of the make
 # target $(KVM_HOST) will default to "east"
@@ -91,24 +85,16 @@ kvm-install: $(KVM_INSTALL_TARGETS)
 kvm-update: kvm-build
 	$(MAKE) --no-print-directory kvm-install
 
-KVM_EXCLUDE = bad|wip|incomplete
+KVM_EXCLUDE =
 KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')
-KVM_INCLUDE =
-KVM_INCLUDE_FLAG = $(if $(KVM_INCLUDE),--include '$(KVM_INCLUDE)')
 NEWRUN = $(if $(wildcard kvm-checksum.new),--newrun)
 .PHONY: kvm-check
 kvm-check: testing/x509/keys/mainca.key
 	: $@:
 	:   PWD: $(PWD)
-	:   KVM_HOSTS: $(KVM_HOSTS)
-	:   KVM_PRINT_TARGETS: $(KVM_PRINT_TARGETS)
-	:   KVM_EASTDIR: $(KVM_EASTDIR)
 	:   KVM_EXCLUDE: '$(KVM_EXCLUDE)'
 	:     KVM_EXCLUDE_FLAG: $(KVM_EXCLUDE_FLAG)
-	:   KVM_INCLUDE: '$(KVM_INCLUDE)'
-	:     KVM_INCLUDE_FLAG: $(KVM_INCLUDE_FLAG)
-	:   NEWRUN: $(NEWRUN)
-	cd testing/pluto && $(KVM_SWANTEST_COMMAND) $(NEWRUN) --testingdir $(KVM_EASTDIR)/testing $(KVM_INCLUDE_FLAG) $(KVM_EXCLUDE_FLAG)
+	$(KVMRUNNER_COMMAND) testing/pluto
 
 # Hide a make call
 SHOWVERSION = $(MAKE) showversion
