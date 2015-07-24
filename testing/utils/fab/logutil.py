@@ -128,45 +128,61 @@ def config(args):
         _STDOUT_HANDLER.setLevel(args.log_level.upper())
     # Direct debugging to a stream if specified
     if args.debug:
-        debug(args.debug)
+        _DEBUG_HANDLER.push(args.debug)
 
 
-def debug(stream):
-    return _DEBUG_HANDLER.stream(stream)
+class Debug:
+    """Debug file open/close wrapper for use with 'with'"""
+
+    def __init__(self, logger, file_name):
+        # XXX: Can logger argument be eliminated - log direct to
+        # handler?
+        self.logger = logger
+        self.file_name = file_name
+        self.debug_stream = None
+
+    def __enter__(self):
+        self.logger.debug("open debug logfile %s", self.file_name)
+        self.debug_stream = open(self.file_name, "a")
+        _DEBUG_HANDLER.push(self.debug_stream)
+        self.logger.debug("starting debug log")
+
+    def __exit__(self, type, value, traceback):
+        # Restore debug logging before closing the debugfile.
+        self.logger.debug("ending debug log")
+        _DEBUG_HANDLER.pop()
+        self.debug_stream.close()
+        self.logger.debug("close debug logfile %s", self.file_name)
 
 
 class DebugHandler(logging.Handler):
 
-    NONE = 100
-
     def __init__(self):
         logging.Handler.__init__(self)
-        self.stream_handler = None
-        self.stream_output = None
-        self.setLevel(self.NONE)
+        self.stream_handlers = list()
+        self.setLevel(NONE)
 
     def emit(self, record):
-        if self.stream_handler:
-            self.stream_handler.emit(record)
+        for stream_handler in self.stream_handlers:
+            stream_handler.emit(record)
 
-    def stream(self, stream):
-        if self.stream_handler:
-            self.stream_handler.flush()
-            # This doesn't close the file; and probably does nothing.
-            self.stream_handler.close()
-            self.stream_handler = None
-            self.setLevel(self.NONE)
-        if stream:
-            self.stream_handler = logging.StreamHandler(stream)
-            self.stream_handler.setFormatter(self.formatter)
-            self.setLevel(logging.DEBUG)
-        # Finally, cross the streams ...
-        self.stream_output, stream = stream, self.stream_output
-        return stream
+    def push(self, stream):
+        stream_handler = logging.StreamHandler(stream)
+        stream_handler.setFormatter(self.formatter)
+        self.stream_handlers.append(stream_handler)
+        self.setLevel(DEBUG)
+
+    def pop(self):
+        stream_handler = self.stream_handlers.pop()
+        stream_handler.flush()
+        # This doesn't close the file; and probably does nothing.
+        stream_handler.close()
+        if not self.stream_handlers:
+            self.setLevel(NONE)
 
     def flush(self):
-        if self.stream_handler:
-            self.stream_handler.flush()
+        for stream_handler in self.stream_handlers:
+            stream_handler.flush()
 
 
 class Timer:
@@ -174,12 +190,12 @@ class Timer:
 
     def __init__(self):
         self.start_times = list()
-        self.push()
+        self.__enter__()
 
-    def push(self):
+    def __enter__(self):
         self.start_times.append(datetime.now())
 
-    def pop(self):
+    def __exit__(self, type, value, traceback):
         self.start_times.pop()
 
     def runtime(self, start_time, now):
@@ -209,6 +225,7 @@ class Timer:
             else:
                 runtimes = runtime
         return runtimes
+
 
 class CustomMessageAdapter(logging.LoggerAdapter):
 
