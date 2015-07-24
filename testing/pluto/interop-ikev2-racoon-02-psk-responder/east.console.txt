@@ -42,7 +42,7 @@ reading config file /etc/racoon2/vals.conf
 /etc/racoon2/vals.conf:20:1[;] len=1
 /etc/racoon2/vals.conf:22:1[### Certicate Setting ###] len=25
 /etc/racoon2/vals.conf:23:1[# Set following parameters if you use certificates in IKE negotiation] len=69
-/etc/racoon2/vals.conf:24:1[# and _SET_ 'kmp_auth_method { rsasig; };' in each remote{} section of ] len=71
+/etc/racoon2/vals.conf:24:1[# and _SET_ 'kmp_auth_method { rsasig; };' in each remote{} section of] len=70
 /etc/racoon2/vals.conf:25:1[# tunnel_ike{_natt}.conf/transport_ike.conf files.] len=50
 /etc/racoon2/vals.conf:26:1[# For more information, please see USAGE.] len=41
 /etc/racoon2/vals.conf:27:1[#] len=1
@@ -81,13 +81,13 @@ reading config file /etc/racoon2/vals.conf
 /etc/racoon2/vals.conf:51:1["192.1.2.45"] len=12
 /etc/racoon2/vals.conf:51:1[;] len=1
 /etc/racoon2/vals.conf:53:1[# Peer's SGW Address] len=20
-/etc/racoon2/vals.conf:54:1[# You don't need to specify if you're IKE responder ] len=52
+/etc/racoon2/vals.conf:54:1[# You don't need to specify if you're IKE responder] len=51
 /etc/racoon2/vals.conf:55:1[# talking to an IKE initiator behind NAT.] len=41
 /etc/racoon2/vals.conf:56:1[PEERS_GWADDRESS] len=15
 /etc/racoon2/vals.conf:56:1["192.1.2.23"] len=12
 /etc/racoon2/vals.conf:56:1[;] len=1
 /etc/racoon2/vals.conf:58:1[### KINK ###] len=12
-/etc/racoon2/vals.conf:59:1[# Kerberos5 principal ] len=22
+/etc/racoon2/vals.conf:59:1[# Kerberos5 principal] len=21
 /etc/racoon2/vals.conf:60:1[PEERS_PRINCIPAL] len=15
 /etc/racoon2/vals.conf:60:1["kink/yourname.example.com@EXAMPLE.COM"] len=39
 /etc/racoon2/vals.conf:60:1[;] len=1
@@ -642,7 +642,7 @@ reading config file /etc/racoon2/tunnel_ike.conf
 /etc/racoon2/tunnel_ike.conf:71:1[}] len=1
 /etc/racoon2/tunnel_ike.conf:71:1[;] len=1
 /etc/racoon2/racoon2.conf:59:1[## Tunnel mode IKEv2 (responder; natt support)] len=46
-/etc/racoon2/racoon2.conf:60:1[## Enable this if you're a responder in global net and ] len=55
+/etc/racoon2/racoon2.conf:60:1[## Enable this if you're a responder in global net and] len=54
 /etc/racoon2/racoon2.conf:61:1[## the peer is an initiator behind NAT.] len=39
 /etc/racoon2/racoon2.conf:62:1[# include "/etc/racoon2/tunnel_ike_natt.conf";] len=46
 /etc/racoon2/racoon2.conf:64:1[## Transport mode KINK] len=22
