@@ -32,6 +32,10 @@ import logging
 import sys
 from fab import argutil
 
+DEBUG = logging.DEBUG
+INFO = logging.INFO
+NONE = 100 # something large
+
 _STDOUT_HANDLER = None
 _DEBUG_HANDLER = None
 _LOG_LEVEL = "info"
