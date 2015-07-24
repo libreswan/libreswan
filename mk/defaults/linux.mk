@@ -17,3 +17,14 @@ USE_KLIPS?=true
 # build modules, etc. for KLIPS.
 BUILD_KLIPS?=true
 BISONOSFLAGS=-g --verbose
+
+# Detect linux variants and releases (for now just fedora and assume
+# >= 22).
+ifneq ($(wildcard /etc/fedora-release),)
+LINUX_VARIANT?=fedora
+endif
+
+ifeq ($(LINUX_VARIANT),fedora)
+USE_FIPSCHECK?=true
+USE_LINUX_AUDIT?=true
+endif
