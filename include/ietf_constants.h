@@ -1045,13 +1045,14 @@ typedef u_int16_t ipsec_auth_t;
 #define HMAC_IPAD 0x36
 #define HMAC_OPAD 0x5C
 
-/* "B" value -- block size for hash function input */
-#define HMAC_RFC2104_BLOCKSIZE	64	/* RFC 2104 */
-#define HMAC_SHA256_BLOCKSIZE	64	/* RFC 4868 */
-#define HMAC_SHA512_BLOCKSIZE	128	/* RFC 4868 */
-
-/* Needs to be a compile-time constant for array allocation */
-#define MAX_HMAC_BLOCKSIZE	HMAC_SHA512_BLOCKSIZE
+/*
+ * Largest HMAC hash function blocksize ("B" in RFC 2104).
+ *
+ * Needs to be a compile-time constant for array allocation.
+ * Must be as large as the largest value that appears in a
+ * struct hash_desc's hash_block_size field.
+ */
+#define MAX_HMAC_BLOCKSIZE	128	/* RFC 4868 specifies this for SHA512 */
 
 /*
  * IKEv1 Oakley Encryption Algorithm attribute

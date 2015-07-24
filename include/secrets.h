@@ -58,7 +58,14 @@ struct RSA_private_key {
 		dP,				/* first factor's exponent: (e^-1) mod (p-1) == d mod (p-1) */
 		dQ,				/* second factor's exponent: (e^-1) mod (q-1) == d mod (q-1) */
 		qInv;				/* (q^-1) mod p */
-	unsigned char ckaid[HMAC_RFC2104_BLOCKSIZE];	/* ckaid for use in NSS */
+	/*
+	 * ckaid for use in NSS
+	 *
+	 * Value returned by PK11_GetLowLevelKeyIDForCert().
+	 * ??? Bound on size doesn't seem to be documented in NSS.
+	 * Empirically, 64 bytes is sufficient.
+	 */
+	unsigned char ckaid[64];
 	unsigned int ckaid_len;
 };
 

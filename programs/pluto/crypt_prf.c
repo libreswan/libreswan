@@ -109,11 +109,15 @@ void crypt_prf_update(struct crypt_prf *prf)
 	DBG(DBG_CRYPT, DBG_log("%s prf: update", prf->name));
 	/* create the prf key from KEY.  */
 	passert(prf->key != NULL);
+
+	passert(prf->hasher->hash_block_size <= MAX_HMAC_BLOCKSIZE);
+
 	/* If the key is too big, re-hash it down to size. */
 	if (PK11_GetKeyLength(prf->key) > prf->hasher->hash_block_size) {
 		update_key(prf, hash_symkey_to_symkey("prf hash to size:",
 						      prf->hasher, prf->key));
 	}
+
 	/* If the key is too small, pad it. */
 	if (PK11_GetKeyLength(prf->key) < prf->hasher->hash_block_size) {
 		/* pad it to block_size. */
@@ -177,6 +181,7 @@ static PK11SymKey *compute_outer(struct crypt_prf *prf)
 	free_any_symkey("prf inner:", &prf->inner);
 
 	/* Input to outer hash: (key^OPAD)|hashed_inner.  */
+	passert(prf->hasher->hash_block_size <= MAX_HMAC_BLOCKSIZE);
 	unsigned char op[MAX_HMAC_BLOCKSIZE];
 	memset(op, HMAC_OPAD, prf->hasher->hash_block_size);
 	chunk_t hmac_opad = { op, prf->hasher->hash_block_size };
