@@ -1482,11 +1482,13 @@ def docker_swan_build(args, dname):
 
     cmd = "sudo docker exec -ti %s /bin/bash -c 'cd /home/build/libreswan; make showobjdir'" % dname
     (line, e) = runcmd_check_output(cmd)
-    objdir = line.strip()
+    objdir = line.decode('ascii')
+    objdir = objdir.strip()
     if e:
         return(e.output) 
-    cmd =  "sudo chown build -R /home/build/libreswan/%s" % objdir
-    line = subprocess.getoutput(cmd)
+    cmd =  "sudo chown build.build -R /home/build/libreswan/%s" % objdir
+    logging.debug("%s",cmd)
+    subprocess.getoutput(cmd)
 
 def docker_containers_start_stop(args, test, st, stop):
     dnamei = test["initiator"] + "-" + test["name"]
