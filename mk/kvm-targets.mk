@@ -27,12 +27,13 @@ KVMRUNNER_COMMAND ?= $(abs_top_srcdir)/testing/utils/kvmrunner.py
 KVM_OBJDIR = OBJ.kvm
 KVM_HOSTS = east west road north
 
-# Determine the target's indented host.  Assumes the target looks like
-# xxx-yyy-HOST, defaults to 'east'.
+# Uses "$@" to determine the current make target's indented host.
+# Assumes the target looks like xxx-yyy-HOST, defaults to 'east' (the
+# choice is arbitrary).
 KVM_HOST = $(firstword $(filter $(KVM_HOSTS),$(lastword $(subst -, ,$@))) east)
 
-# Run "make $(1) on $(KVM_HOST); unless specified as part of the make
-# target $(KVM_HOST) will default to "east"
+# Run "make $(1)" on $(KVM_HOST); see $(KVM_HOST) above for how the
+# host is identified.
 define kvm-make
 	: KVM_HOST: '$(KVM_HOST)'
 	: KVM_OBJDIR: '$(KVM_OBJDIR)'
@@ -42,6 +43,29 @@ define kvm-make
 		'$(KVM_HOST)' \
 		'export OBJDIR=$(KVM_OBJDIR) ; make OBJDIR=$(KVM_OBJDIR) $(1)'
 endef
+
+# Standard targets; just mirror the local target names.
+
+KVM_MAKE_TARGETS = kvm-all kvm-base kvm-module kvm-clean kvm-manpages kvm-clean-base kvm-clean-manpages kvm-distclean
+.PHONY: $(KVM_MAKE_TARGETS)
+$(KVM_MAKE_TARGETS):
+	$(call kvm-make, $(patsubst kvm-%,%,$@))
+
+# "install" is a little wierd.  It needs to be run on all VMs, and it
+# needs to use the swan-install script.  Also, to avoid parallel
+# builds getting in the way, this uses sub-makes to explicitly
+# serialize things.
+KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
+PHONY: kvm-install $(KVM_INSTALL_TARGETS)
+$(KVM_INSTALL_TARGETS):
+	: KVM_HOST: '$(KVM_HOST)'
+	: KVM_OBJDIR: '$(KVM_OBJDIR)'
+	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
+kvm-install:
+	$(MAKE) --no-print-directory kvm-base
+	$(MAKE) --no-print-directory kvm-module
+	$(MAKE) --no-print-directory $(KVM_INSTALL_TARGETS)
+
 
 KVMSH_TARGETS = $(patsubst %,kvmsh-%,$(KVM_HOSTS))
 .PHONY: $(KVMSH_TARGETS)
@@ -63,27 +87,6 @@ $(KVM_SHUTDOWN_TARGETS):
 .PHONY: kvm-shutdown
 kvm-shutdown: $(KVM_SHUTDOWN_TARGETS)
 
-.PHONY: kvm-build kvm-clean kvm-distclean
-kvm-build:
-	$(call kvm-make, base module)
-kvm-clean:
-	$(call kvm-make, clean)
-kvm-distclean:
-	$(call kvm-make, distclean)
-
-KVM_INSTALL_TARGETS = $(patsubst %,kvm-install-%,$(KVM_HOSTS))
-.PHONY: kvm-install $(KVM_INSTALL_TARGETS)
-$(KVM_INSTALL_TARGETS):
-	: KVM_HOST: '$(KVM_HOST)'
-	: KVM_OBJDIR: '$(KVM_OBJDIR)'
-	$(KVMSH_COMMAND) --chdir . '$(KVM_HOST)' 'export OBJDIR=$(KVM_OBJDIR) ; ./testing/guestbin/swan-install OBJDIR=$(KVM_OBJDIR)'
-kvm-install: $(KVM_INSTALL_TARGETS)
-
-# To avoid kvm-build and one or more of the $(KVM_INSTALL_TARGETS)
-# being run in parallel, use a sub-make to trigger the installs.
-.PHONY: kvm-update
-kvm-update: kvm-build
-	$(MAKE) --no-print-directory kvm-install
 
 KVM_EXCLUDE =
 KVM_EXCLUDE_FLAG = $(if $(KVM_EXCLUDE),--exclude '$(KVM_EXCLUDE)')
