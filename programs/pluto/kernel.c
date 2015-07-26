@@ -709,7 +709,7 @@ static enum routability could_route(struct connection *c)
 		if (!compatible_overlapping_connections(c, ero)) {
 			/*
 			 * Another connection is already using the eroute.
-		         * TODO: NETKEY can do this?
+			 * TODO: NETKEY can do this?
 			 */
 			return route_impossible;
 		}

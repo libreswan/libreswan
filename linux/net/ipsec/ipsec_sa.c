@@ -124,7 +124,7 @@ static int ipsec_SAref_recycle(void)
 		    "recycling, continuing from SAref=%d (0p%p), table=%d, entry=%d.\n",
 		    ipsec_sadb.refFreeListCont,
 		    (ipsec_sadb.refTable[IPsecSAref2table(ipsec_sadb.
-		        refFreeListCont)] != NULL) ?
+			refFreeListCont)] != NULL) ?
 			    IPsecSAref2SA(ipsec_sadb.refFreeListCont) : NULL,
 		    IPsecSAref2table(ipsec_sadb.refFreeListCont),
 		    IPsecSAref2entry(ipsec_sadb.refFreeListCont));

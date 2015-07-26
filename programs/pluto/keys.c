@@ -622,7 +622,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		    (c->spd.that.id.kind == ID_NONE)) ||
 		   ((c->kind == CK_INSTANCE) &&
 		    (id_is_ipaddr(&c->spd.that.id))
-	            /* Check if we are a road warrior instantiation, not a vnet: instantiation */
+		    /* Check if we are a road warrior instantiation, not a vnet: instantiation */
 		    && (isanyaddr(&c->spd.that.host_addr)))
 		  )
 		  ) {

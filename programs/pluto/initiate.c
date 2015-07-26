@@ -891,10 +891,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b,
 			{
 				char *delmsg = "delete bare kernel shunt - was replaced with  negotiationshunt";
 				char *addwidemsg = "oe-negotiating";
-	        		ip_subnet this_client, that_client;
+				ip_subnet this_client, that_client;
 	
-	        		happy(addrtosubnet(&b->our_client, &this_client));
-	        		happy(addrtosubnet(&b->peer_client, &that_client));
+				happy(addrtosubnet(&b->our_client, &this_client));
+				happy(addrtosubnet(&b->peer_client, &that_client));
 				/* negotiationshunt must be wider than bare shunt, esp on NETKEY */
 				setportof(0, &this_client.addr);
 				setportof(0, &that_client.addr);

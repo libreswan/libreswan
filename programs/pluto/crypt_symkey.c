@@ -367,17 +367,17 @@ PK11SymKey *hash_symkey_to_symkey(const char *prefix,
 
 static SECOidTag nss_hash_oid(const struct hash_desc *hasher)
 {
-        switch (hasher->common.algo_id) {
-        case OAKLEY_MD5:
-                return SEC_OID_MD5;
-        case OAKLEY_SHA1:
-                return SEC_OID_SHA1;
-        case OAKLEY_SHA2_256:
-                return SEC_OID_SHA256;
-        case OAKLEY_SHA2_384:
-                return SEC_OID_SHA384;
-        case OAKLEY_SHA2_512:
-                return SEC_OID_SHA512;
+	switch (hasher->common.algo_id) {
+	case OAKLEY_MD5:
+		return SEC_OID_MD5;
+	case OAKLEY_SHA1:
+		return SEC_OID_SHA1;
+	case OAKLEY_SHA2_256:
+		return SEC_OID_SHA256;
+	case OAKLEY_SHA2_384:
+		return SEC_OID_SHA384;
+	case OAKLEY_SHA2_512:
+		return SEC_OID_SHA512;
 	}
 	libreswan_log("NSS: hash algorithm %s not supported",
 		      hasher->common.name);

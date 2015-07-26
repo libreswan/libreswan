@@ -58,7 +58,7 @@ const struct ctr_test_vector aes_ctr_test_vectors[] = {
 		.cb = "0x 00 6C B6 DB C0 54 3B 59 DA 48 D9 0B 00 00 00 01",
 		.ciphertext = "0x"
 		"51 04 A1 06 16 8A 72 D9 79 0D 41 EE 8E DA D3 88"
-                "EB 2E 1E FC 46 DA 57 C8 FC E6 30 DF 91 41 BE 28",
+		"EB 2E 1E FC 46 DA 57 C8 FC E6 30 DF 91 41 BE 28",
 		.output_cb = "0x 00 6C B6 DB C0 54 3B 59 DA 48 D9 0B 00 00 00 03",
 	},
 	{

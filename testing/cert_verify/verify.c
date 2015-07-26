@@ -320,7 +320,7 @@ int main(int argc, char *argv[])
 	}
 
 	rv = CERT_ImportCerts(handle, 0, numcerts, certs, &certout, PR_FALSE,
-						         PR_FALSE, NULL);
+							 PR_FALSE, NULL);
 	if (rv != SECSuccess) {
 		printf("CERT_ImportCerts failed %d\n", PORT_GetError());
 		exit(-1);

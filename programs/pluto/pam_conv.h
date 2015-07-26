@@ -27,6 +27,6 @@ struct pam_thread_arg {
 
 extern bool ikev2_do_pam_authentication(void *varg);
 int pam_conv(int num_msg, const struct pam_message **msgm,
-		                          struct pam_response **response, void
+					  struct pam_response **response, void
 					  *appdata_ptr);
 #endif /* XAUTH_HAVE_PAM */

@@ -38,11 +38,11 @@ static void _NSSCPY_canonicalize(SECItem * foo)
     }
     dest = 0; lastch = ' ';
     while (src < len) {
-        ch = foo->data[src++];
+	ch = foo->data[src++];
 	if (ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n') {
 	    ch = ' ';
 	    if (ch == lastch)
-	        continue;
+		continue;
 	} else if (ch >= 'A' && ch <= 'Z') {
 	    ch |= 0x20;  /* downshift */
 	}
@@ -80,7 +80,7 @@ static SECComparison _NSSCPY_CERT_CompareAVA(const CERTAVA *a, const CERTAVA *b)
     /* Let's be optimistic.  Maybe the values will just compare equal. */
     rv = SECITEM_CompareItem(&a->value, &b->value);
     if (SECEqual == rv)
-        return rv;  /* values compared exactly. */
+	return rv;  /* values compared exactly. */
     if (a->value.len && a->value.data && b->value.len && b->value.data) {
 	/* Here, the values did not match.
 	** If the values had different encodings, convert them to the same
@@ -91,7 +91,7 @@ static SECComparison _NSSCPY_CERT_CompareAVA(const CERTAVA *a, const CERTAVA *b)
 	    SECItem * aVal = CERT_DecodeAVAValue(&a->value);
 	    SECItem * bVal = CERT_DecodeAVAValue(&b->value);
 	    if (aVal && aVal->len && aVal->data &&
-	        bVal && bVal->len && bVal->data) {
+		bVal && bVal->len && bVal->data) {
 		rv = SECITEM_CompareItem(aVal, bVal);
 	    }
 	    SECITEM_FreeItem(aVal, PR_TRUE);

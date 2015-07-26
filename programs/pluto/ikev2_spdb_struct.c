@@ -1453,7 +1453,7 @@ stf_status ikev2_parse_parent_sa_body(
 	if (r_sa_pbs != NULL) {
 		return ikev2_emit_winning_sa(st, r_sa_pbs,
 					     ta,
-		                             /*parentSA*/ TRUE,
+					     /*parentSA*/ TRUE,
 					     winning_prop);
 	}
 	return STF_OK;
@@ -1924,7 +1924,7 @@ stf_status ikev2_parse_child_sa_body(
 	if (r_sa_pbs != NULL) {
 		return ikev2_emit_winning_sa(st, r_sa_pbs,
 					     ta,
-		                             /*parentSA*/ FALSE,
+					     /*parentSA*/ FALSE,
 					     winning_prop);
 	}
 

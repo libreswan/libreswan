@@ -834,7 +834,7 @@ static int ipsec_alg_test_encrypt(int enc_alg, int test)
 	       "klips_info: ipsec_alg_test_encrypt: "
 	       "memcmp(dec,tmp) ret=%d: %s\n", ret,
 	       ret == 0 ?
-	           "OK. (encr->decr->SAME)" : "FAIL! (encr->decr->DIFFers)" );
+		   "OK. (encr->decr->SAME)" : "FAIL! (encr->decr->DIFFers)" );
 	{
 		/*	Shamelessly taken from drivers/md sources  O:)  */
 		unsigned long now;

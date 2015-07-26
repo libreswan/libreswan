@@ -225,8 +225,8 @@ static int crt_tmp_import(CERTCertDBHandle *handle, CERTCertificate ***chain,
 	}
 
 	rv = CERT_ImportCerts(handle, 0, nonroot, derlist, chain, PR_FALSE,
-							          PR_FALSE,
-							          NULL);
+								  PR_FALSE,
+								  NULL);
 	if (rv != SECSuccess || *chain == NULL) {
 		DBG(DBG_X509, DBG_log("could not decode any certs"));
 		goto done;
@@ -274,7 +274,7 @@ static CERTCertList *get_all_root_certs(void)
 	roots = CERT_NewCertList();
 
 	for (node = CERT_LIST_HEAD(allcerts); !CERT_LIST_END(node, allcerts);
-					        node = CERT_LIST_NEXT(node)) {
+						node = CERT_LIST_NEXT(node)) {
 		if (CERT_IsCACert(node->cert, NULL) && node->cert->isRoot)
 			CERT_AddCertToListTail(roots, node->cert);
 	}
@@ -431,7 +431,7 @@ retry:
 }
 
 static void chunks_to_si(chunk_t *chunks, SECItem *items, int chunk_n,
-						          int max_i)
+							  int max_i)
 {
 	int i;
 
@@ -476,8 +476,8 @@ int verify_and_cache_chain(chunk_t *ders, int num_ders, CERTCertificate **ee_out
 	 * together to try to complete the chain.
 	 */
 	if ((chain_len = crt_tmp_import(handle, &cert_chain,
-					          si_ders,
-					          num_ders)) < 1)
+						  si_ders,
+						  num_ders)) < 1)
 		return -1;
 
 	if (crl_update_check(handle, cert_chain, chain_len)) {

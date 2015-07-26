@@ -375,36 +375,36 @@ static struct encrypt_desc algo_aes_ccm_16 =
 #endif
 
 static struct hash_desc hash_desc_aes_xcbc = {
-        .common = { .officname =  "aes_xcbc",
-                    .algo_type = IKE_ALG_HASH,
-                    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
-                    .algo_v2id = IKEv2_PRF_AES128_XCBC,
-                    .algo_next = NULL, },
-        .hash_ctx_size = sizeof(aes_xcbc_context),
-        .hash_key_size = AES_XCBC_DIGEST_SIZE,
-        .hash_digest_len = AES_XCBC_DIGEST_SIZE,
-        .hash_integ_len = 0,    /* Not applicable */
-        .hash_block_size = AES_CBC_BLOCK_SIZE,
-        .hash_init = aes_xcbc_init_thunk,
-        .hash_update = aes_xcbc_write_thunk,
-        .hash_final = aes_xcbc_final_thunk,
+	.common = { .officname =  "aes_xcbc",
+		    .algo_type = IKE_ALG_HASH,
+		    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+		    .algo_v2id = IKEv2_PRF_AES128_XCBC,
+		    .algo_next = NULL, },
+	.hash_ctx_size = sizeof(aes_xcbc_context),
+	.hash_key_size = AES_XCBC_DIGEST_SIZE,
+	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
+	.hash_integ_len = 0,    /* Not applicable */
+	.hash_block_size = AES_CBC_BLOCK_SIZE,
+	.hash_init = aes_xcbc_init_thunk,
+	.hash_update = aes_xcbc_write_thunk,
+	.hash_final = aes_xcbc_final_thunk,
 };
 
 #ifdef NOT_YET
 static struct hash_desc integ_desc_aes_xcbc = {
-        .common = { .officname =  "aes_xcbc",
-                    .algo_type = IKE_ALG_INTEG,
-                    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
-                    .algo_v2id = IKEv2_AUTH_AES_XCBC_96,
-                    .algo_next = NULL, },
-        .hash_ctx_size = sizeof(aes_xcbc_context),
-        .hash_key_size = AES_XCBC_DIGEST_SIZE,
-        .hash_digest_len = AES_XCBC_DIGEST_SIZE,
-        .hash_integ_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
-        .hash_block_size = AES_CBC_BLOCK_SIZE,
-        .hash_init = aes_xcbc_init_thunk,
-        .hash_update = aes_xcbc_write_thunk,
-        .hash_final = aes_xcbc_final_thunk,
+	.common = { .officname =  "aes_xcbc",
+		    .algo_type = IKE_ALG_INTEG,
+		    .algo_id = OAKLEY_AES_XCBC, /* stolen from IKEv2 */
+		    .algo_v2id = IKEv2_AUTH_AES_XCBC_96,
+		    .algo_next = NULL, },
+	.hash_ctx_size = sizeof(aes_xcbc_context),
+	.hash_key_size = AES_XCBC_DIGEST_SIZE,
+	.hash_digest_len = AES_XCBC_DIGEST_SIZE,
+	.hash_integ_len = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
+	.hash_block_size = AES_CBC_BLOCK_SIZE,
+	.hash_init = aes_xcbc_init_thunk,
+	.hash_update = aes_xcbc_write_thunk,
+	.hash_final = aes_xcbc_final_thunk,
 };
 #endif
 

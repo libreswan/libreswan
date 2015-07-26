@@ -2543,7 +2543,7 @@ enum ipsec_xmit_value ipsec_xmit_init2(struct ipsec_xmit_state *ixs)
 		struct sk_buff *tskb;
 
 		tskb = skb_copy_expand(ixs->skb,
-		                       /* The need for 2 * link layer length here remains unexplained...RGB */
+				       /* The need for 2 * link layer length here remains unexplained...RGB */
 				       ixs->max_headroom + 2 * ixs->ll_headroom,
 				       ixs->max_tailroom,
 				       GFP_ATOMIC);
@@ -2779,7 +2779,7 @@ static int ipsec_set_dst(struct ipsec_xmit_state *ixs)
 				lsw_ip4_hdr(ixs)->daddr,
 				ixs->pass ? 0 : lsw_ip4_hdr(ixs)->saddr,
 				RT_TOS(lsw_ip4_hdr(ixs)->tos),
-	                        /* mcr->rgb: should this be 0 instead? */
+				/* mcr->rgb: should this be 0 instead? */
 				ixs->physdev->ifindex);
 	if (ixs->route)
 		dst = &ipsec_route_dst(ixs->route);
@@ -2897,7 +2897,7 @@ enum ipsec_xmit_value ipsec_xmit_send(struct ipsec_xmit_state *ixs)
 			err = NF_HOOK(PF_INET, LSW_NF_INET_LOCAL_OUT, ixs->skb,
 				      NULL,
 				      ixs->route ?
-				        ipsec_route_dst(ixs->route).dev :
+					ipsec_route_dst(ixs->route).dev :
 					skb_dst(ixs->skb)->dev,
 				      ipsec_xmit_send2);
 		}

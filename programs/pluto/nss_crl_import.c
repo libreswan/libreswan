@@ -82,7 +82,7 @@ int send_crl_to_import(u_char *der, size_t len, const char *url)
 #endif
 
 	if ((size_t)n > sizeof(crl_path_space) - sizeof(crl_name))
-                        exit_log("path to %s is too long", crl_name);
+		exit_log("path to %s is too long", crl_name);
 
 	while (n > 0 && crl_path_space[n - 1] != '/')
 		n--;

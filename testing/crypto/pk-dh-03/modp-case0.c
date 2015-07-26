@@ -206,10 +206,10 @@ int main(int argc, char *argv[])
 
 	/* ask to have the exponentiation done now! */
 	expModP.pk_program[0] = /* sizes are ModLen=96(*32=3072),
-	                           EXP_len=1,RED_len=0 */
+				   EXP_len=1,RED_len=0 */
 				(0 << 24) | (1 << 8) | (96);
 	expModP.pk_program[1] = /* opcode 1100=0xC (mod-exp),
-	                           with A=0, B=1(6),M=4(24) */
+				   with A=0, B=1(6),M=4(24) */
 				(0x1 << 24) | (24 << 16) | (6 << 8) | (0 << 0);
 
 	expModP.pk_proglen = 2;

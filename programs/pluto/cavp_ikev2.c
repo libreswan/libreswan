@@ -95,33 +95,33 @@ static void run_ikev2(void)
 		return;
 	}
 
-        /* SKEYSEED = prf(Ni | Nr, g^ir) */
-        PK11SymKey *skeyseed =
-                ikev2_ike_sa_skeyseed(hasher, ni, nr, g_ir);
-        print_symkey("SKEYSEED", skeyseed, 0);
+	/* SKEYSEED = prf(Ni | Nr, g^ir) */
+	PK11SymKey *skeyseed =
+		ikev2_ike_sa_skeyseed(hasher, ni, nr, g_ir);
+	print_symkey("SKEYSEED", skeyseed, 0);
 
-        /* prf+(SKEYSEED, Ni | Nr | SPIi | SPIr) */
-        PK11SymKey *dkm =
-                ikev2_ike_sa_keymat(hasher, skeyseed,
-                                    ni, nr, spi_i, spi_r, dkm_length / 8);
-        print_symkey("DKM", dkm, dkm_length / 8);
+	/* prf+(SKEYSEED, Ni | Nr | SPIi | SPIr) */
+	PK11SymKey *dkm =
+		ikev2_ike_sa_keymat(hasher, skeyseed,
+				    ni, nr, spi_i, spi_r, dkm_length / 8);
+	print_symkey("DKM", dkm, dkm_length / 8);
 
-        /* prf+(SK_d, Ni | Nr) */
-        PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, hasher->hash_digest_len);
-        PK11SymKey *child_sa_dkm =
-                ikev2_child_sa_keymat(hasher, SK_d, NULL, ni, nr, child_sa_dkm_length / 8);
-        print_symkey("DKM(Child SA)", child_sa_dkm, child_sa_dkm_length / 8);
+	/* prf+(SK_d, Ni | Nr) */
+	PK11SymKey *SK_d = key_from_symkey_bytes(dkm, 0, hasher->hash_digest_len);
+	PK11SymKey *child_sa_dkm =
+		ikev2_child_sa_keymat(hasher, SK_d, NULL, ni, nr, child_sa_dkm_length / 8);
+	print_symkey("DKM(Child SA)", child_sa_dkm, child_sa_dkm_length / 8);
 
-        /* prf+(SK_d, g^ir (new) | Ni | Nr) */
-        PK11SymKey *child_sa_dkm_dh =
-                ikev2_child_sa_keymat(hasher, SK_d, g_ir_new, ni, nr,
+	/* prf+(SK_d, g^ir (new) | Ni | Nr) */
+	PK11SymKey *child_sa_dkm_dh =
+		ikev2_child_sa_keymat(hasher, SK_d, g_ir_new, ni, nr,
 				      child_sa_dkm_length / 8);
-        print_symkey("DKM(Child SA D-H)", child_sa_dkm_dh, child_sa_dkm_length / 8);
+	print_symkey("DKM(Child SA D-H)", child_sa_dkm_dh, child_sa_dkm_length / 8);
 
-        /* prf(SK_d (old), g^ir (new) | Ni | Nr) */
-        PK11SymKey *skeyseed_rekey =
-                ikev2_ike_sa_rekey_skeyseed(hasher, SK_d, g_ir_new, ni, nr);
-        print_symkey("SKEYSEED(Rekey)", skeyseed_rekey, 0);
+	/* prf(SK_d (old), g^ir (new) | Ni | Nr) */
+	PK11SymKey *skeyseed_rekey =
+		ikev2_ike_sa_rekey_skeyseed(hasher, SK_d, g_ir_new, ni, nr);
+	print_symkey("SKEYSEED(Rekey)", skeyseed_rekey, 0);
 
 	free_any_symkey("skeyseed", &skeyseed);
 	free_any_symkey("dkm", &dkm);

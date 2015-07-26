@@ -1692,7 +1692,7 @@ static enum ipsec_rcv_value ipsec_rcv_decap_cont(struct ipsec_rcv_state *irs)
 		nexthdroff =
 			ipsec_ipv6_skip_exthdr(irs->skb,
 					       (void *)(lsw_ip6_hdr(irs) + 1) -
-					         (void *)irs->skb->data,
+						 (void *)irs->skb->data,
 					       &nexthdr, &frag_off);
 		irs->iphlen = nexthdroff - (irs->iph - (void*)irs->skb->data);
 		skb_set_transport_header(skb,
@@ -1851,7 +1851,7 @@ static enum ipsec_rcv_value ipsec_rcv_cleanup(struct ipsec_rcv_state *irs)
 				(unsigned char *)irs->iph, lsw_ip4_hdr(
 					irs)->ihl);
 			KLIPS_PRINT(debug_rcv, "csum: %04x\n",
-			            lsw_ip4_hdr(irs)->check);
+				    lsw_ip4_hdr(irs)->check);
 		}
 /*
  * This fails when both systems are behind NAT

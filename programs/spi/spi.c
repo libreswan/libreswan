@@ -117,7 +117,7 @@ static const char *usage_string =
 	"Usage:\n"
 	"	in the following, <SA> is: --af <inet | inet6> --edst <dstaddr> --spi <spi> --proto <proto>\n"
 	"                               OR: --said <proto><.|:><spi>@<dstaddr>\n"
-	"	                  <life> is: --life <soft|hard>-<allocations|bytes|addtime|usetime|packets>=<value>[,...]\n"
+	"                         <life> is: --life <soft|hard>-<allocations|bytes|addtime|usetime|packets>=<value>[,...]\n"
 	"spi --clear\n"
 	"spi --help\n"
 	"spi --version\n"
@@ -427,8 +427,8 @@ static void decode_blob(const char *optarg, const char *name, unsigned char **pp
 	size_t len;
 	/*
 	 * err_t ttodatav(const char *src, size_t srclen, int base,
-         *                char *dst, size_t dstlen, size_t *lenp,
-         *                char *errp, size_t errlen, int flags);
+	 *                char *dst, size_t dstlen, size_t *lenp,
+	 *                char *errp, size_t errlen, int flags);
 	 */
 	err_t ugh = ttodatav(optarg, 0, 0, NULL, 0, &len, err_buf, sizeof(err_buf), 0);
 

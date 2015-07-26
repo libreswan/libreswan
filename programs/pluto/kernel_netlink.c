@@ -228,15 +228,15 @@ static const struct aead_alg *get_aead_alg(int algid)
  */
 static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_family_t family)
 {
-        if (family == AF_INET) {
+	if (family == AF_INET) {
 		/* an IPv4 address */
-                addr->u.v4.sin_family = AF_INET;
-                addr->u.v4.sin_addr.s_addr = xaddr->a4;
-        } else {
+		addr->u.v4.sin_family = AF_INET;
+		addr->u.v4.sin_addr.s_addr = xaddr->a4;
+	} else {
 		/* Must be IPv6 */
-                memcpy(&addr->u.v6.sin6_addr, xaddr->a6, sizeof(xaddr->a6));
-                addr->u.v4.sin_family = AF_INET6;
-        }
+		memcpy(&addr->u.v6.sin6_addr, xaddr->a6, sizeof(xaddr->a6));
+		addr->u.v4.sin_family = AF_INET6;
+	}
 }
 
 /*
@@ -1578,7 +1578,7 @@ static void netlink_policy_expire(struct nlmsghdr *n)
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
 
 	rsp.n.nlmsg_type = XFRM_MSG_NEWPOLICY;
-        /* ??? would next call ever succeed AA_2015 MAY */
+	/* ??? would next call ever succeed AA_2015 MAY */
 	if (!send_netlink_msg(&req.n, &rsp.n, sizeof(rsp),
 				"Get policy", "?")) {
 		return;

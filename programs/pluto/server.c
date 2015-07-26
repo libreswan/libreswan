@@ -940,7 +940,7 @@ bool check_msg_errqueue(const struct iface_port *ifp, short interest)
 					 * enabled
 					 */
 				} else if (DBGP(DBG_OPPO) ||
-				           (sender != NULL && sender->st_connection != NULL &&
+					   (sender != NULL && sender->st_connection != NULL &&
 					    LDISJOINT(sender->st_connection->policy, POLICY_OPPORTUNISTIC)))
 				{
 					/*
