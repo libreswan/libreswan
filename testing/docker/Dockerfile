@@ -14,12 +14,12 @@ rm -f /lib/systemd/system/anaconda.target.wants/*;
 RUN dnf install -y wget vim-enhanced bison flex gmp-devel nss-devel \
  nspr-devel nss-tools  gcc make unbound-libs ipsec-tools pexpect racoon2 \
  nc6 unbound-devel fipscheck-devel libcap-ng-devel git pam-devel \
- audit-libs-devel strace unbound pexpect strongswan net-tools bind-utils \
- rpm-build nc psmisc lsof valgrind ElectricFence dnf-utils screen xl2tpd i\
+ audit-libs-devel strace unbound pexpect net-tools bind-utils \
+ rpm-build nc psmisc lsof valgrind ElectricFence screen xl2tpd \
  curl-devel pam-devel redhat-rpm-config openldap-devel hping3 nmap mtr \
- libevent-devel pyOpenSSL xmlto;
- dnf clean all
-RUN debuginfo-install -y ElectricFence audit-libs cyrus-sasl glibc keyutils \
+ libevent-devel pyOpenSSL xmlto dnf-plugins-core python3-cryptography trousers; 
+RUN dnf clean all;
+RUN dnf -y  debuginfo-install ElectricFence audit-libs cyrus-sasl glibc keyutils \
  krb5-libs ldns libcap-ng libcom_err libcurl libevent libgcc libidn libselinux \
  libssh2 nspr nss nss-softokn nss-softokn-freebl nss-util openldap
  openssl-libs pam pcre python-libs sqlite unbound-libs xz-libs zlib gmp nspr \
@@ -47,7 +47,14 @@ RUN chown -R root:root /root/.ssh
 RUN  systemctl enable sshd.service
 # tell ssh to not use ugly PAM
 RUN sed -i 's/UsePAM\syes/UsePAM no/' /etc/ssh/sshd_config
+RUN echo "UseDNS no" >> /etc/ssh/sshd_config
 # make the terminal prettier
+RUN wget ftp://ftp.nohats.ca/pyOpenSSL/python3-pyOpenSSL-0.14-4.fc22.noarch.rpm
+RUN wget ftp://ftp.nohats.ca/pyOpenSSL/pyOpenSSL-0.14-4.fc22.noarch.rpm
+#RUN rpm -i pyOpenSSL-0.14-4.fc22.noarch.rpm python3-pyOpenSSL-0.14-4.fc22.noarch.rpm
+RUN wget ftp://ftp.nohats.ca/ssw/strongswan-debuginfo-5.3.2-1.0.lsw.fc22.x86_64.rpm 
+RUN wget ftp://ftp.nohats.ca/ssw/strongswan-debuginfo-5.3.1-0.2.lsw.fc22.x86_64.rpm
+#RUN rpm -i strongswan-debuginfo-5.3.1-0.2.lsw.fc22.x86_64.rpm
 RUN echo 'export GIT_PS1_SHOWDIRTYSTATE=true' >> /root/.bash_profile
 RUN echo 'export PS1="[\u@i\h] \w # "' >> /root/.bash_profile
 RUN echo 'export EDITOR=vim' >> /root/.bash_profile
