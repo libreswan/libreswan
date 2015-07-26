@@ -32,7 +32,7 @@ try:
     import setproctitle
 except ImportError as e:
     module = str(e)[16:]
-    sys.exit("we require the python module %s " % module)
+    sys.exit("we require the python module %s" % module)
 
 q = Queue()
 
@@ -116,7 +116,7 @@ class guest (threading.Thread):
         timer = 120
         ret = True
 
-        cmd = "cd %s/pluto/%s " % (self.testingdir, self.testname)
+        cmd = "cd %s/pluto/%s" % (self.testingdir, self.testname)
         print("sending command: " + cmd + " expecting prompt: " + prompt)
         child.sendline(str(cmd))
         try:
@@ -488,7 +488,7 @@ class scantests:
 
         if not self.tdirs:
             logging.info("node directory %s is empty", rnode)
-            return "no testruns found %s in " % rnode
+            return "no testruns found in %s" % rnode
 
         for d in self.tdirs:
             self.tdir = d
@@ -623,10 +623,10 @@ class scantests:
 
             r = self.trpath + '/' + tname + '/OUTPUT/RESULT'
             if not os.path.exists(r):
-                e = "missing %s " % r
+                e = "missing %s" % r
                 r = self.trpath + '/' + tname + '/OUTPUT'
                 if not os.path.exists(r):
-                    e = "missing %s " % r
+                    e = "missing %s" % r
                     self.tsum['missing OUTPUT'] += 1
                     self.tests[tname]["output"] = 'missing OUTPUT'
                 else:
@@ -664,7 +664,7 @@ class scantests:
                     x = json.loads(line)
                 except TypeError:
                     logging.error(
-                        "TypeError can not convert this line %s to json ", line)
+                        "TypeError can not convert '%s' to json", line)
                     continue
                 if not "result" in x:
                     continue
@@ -936,7 +936,7 @@ def get_results(r):
             x = json.loads(line)
         except TypeError:
             logging.error(
-                "TypeError can not convert this line %s to json ", line)
+                "TypeError can not convert '%s' to json", line)
             continue
         if "result" in x and "testname" in x:
             return x
@@ -958,7 +958,7 @@ def shut_down_hosts(args, test_hosts):
                 if h is t:
                     all_hosts.remove(t)
 
-    logging.debug("shutdown list [%s] ", ' '.join(map(str, all_hosts)))
+    logging.debug("shutdown list [%s]", ' '.join(map(str, all_hosts)))
 
     vmlist = subprocess.getoutput("sudo virsh list")
     for line in vmlist.split("\n")[2:]:
@@ -1180,7 +1180,7 @@ def re_write_result(sanity):
     if sanity:
         result = split_sanity(sanity)
     else:
-        logging.debug("nothing sane to re write ")
+        logging.debug("nothing sane to re-write")
         return
 
     output_file = "OUTPUT/RESULT"
@@ -1277,7 +1277,7 @@ DEFAULTCONFIG = {
         'stoponerror': None,
         'swanhosts': ['east', 'west', 'road', 'north'],
         'tcpdumpfilter': "-s  0 -n not stp and not port 22",
-        'tcpdump': "/usr/sbin/tcpdump ",
+        'tcpdump': "/usr/sbin/tcpdump",
         'testlist': "TESTLIST"
 }
 
@@ -1862,10 +1862,10 @@ def do_single_test(args, start='', test=None, st=None):
     write_result(args, start, test["name"], s, testexpect=test["expect"])
 
     if "odir" in st:
-        logging.info("copyig results ")
+        logging.info("copying results")
         rsync_file_to_dir(os.getcwd(), st["odir"])
     else:
-        logging.debug("not copyig results ")
+        logging.debug("not copying results")
 
     if "is_testlist" in st:
         os.chdir("..")
@@ -1912,7 +1912,7 @@ def resanitize(args):
     #               cmd = "egrep '^[+-]' %s | egrep -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
     #               (status, output) =  commands.getstatusoutput(cmd);
     #               if not status:
-    #                       print "cp %s/OUTPUT/%s.console.txt %s/ "%(testdir,h,testdir)
+    #                       print "cp %s/OUTPUT/%s.console.txt %s/" % (testdir,h,testdir)
     #                       print "cat %s/%s"%(testdir,f)
 
 
@@ -2185,16 +2185,16 @@ def main():
         args, start, tried, output_dir)
     if testlist:
         tried = 1 + tried
-        logging.info("ran  %s retry %s %s/%s ",
+        logging.info("ran %s retry %s %s/%s",
                      ran_tests, args.testlist, tried, args.retry)
         while (tried < args.retry):
             if ran_tests > 0:
                 gen_graphs_tables(args)
                 logging.info(
-                    "retry %s %s/%s ", args.testlist, tried, args.retry)
+                    "retry %s %s/%s", args.testlist, tried, args.retry)
             (output_dir, testlist, ran_tests) = do_test_list(
                 args, start, tried, output_dir)
-            logging.info("ran  %s retry %s %s/%s ",
+            logging.info("ran %s retry %s %s/%s",
                          ran_tests, args.testlist, tried, args.retry)
             tried = 1 + tried
 
